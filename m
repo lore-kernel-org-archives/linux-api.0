@@ -1,170 +1,142 @@
-From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Subject: [RFC PATCH 14/14] kthread_worker: Add set_kthread_worker_scheduler*()
-Date: Tue, 28 Jul 2015 16:39:31 +0200
-Message-ID: <1438094371-8326-15-git-send-email-pmladek@suse.com>
-References: <1438094371-8326-1-git-send-email-pmladek@suse.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1438094371-8326-1-git-send-email-pmladek-IBi9RG/b67k@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
+From: Julien Grall <julien.grall@citrix.com>
+Subject: [PATCH 0/8] Use correctly the Xen memory terminologies in Linux
+Date: Tue, 28 Jul 2015 16:02:41 +0100
+Message-ID: <1438095769-2560-1-git-send-email-julien.grall@citrix.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: xen-devel@lists.xenproject.org
+Cc: ian.campbell@citrix.com, stefano.stabellini@eu.citrix.com, linux-kernel@vger.kernel.org, Julien Grall <julien.grall@citrix.com>, Boris Ostrovsky <boris.ostrovsky@oracle.com>, David Vrabel <david.vrabel@citrix.com>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, "James E.J. Bottomley" <JBottomley@odin.com>, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>, Jiri Slaby <jslaby@suse.com>, Juergen Gross <jgross@suse.com>, Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-fbdev@vger.kernel.org, linux-input@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-scsi@vger.kernel.org, netdev@vger.kernel.org, =?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>R
 List-Id: linux-api@vger.kernel.org
 
-The kthread worker API will be used for kthreads that need to modify
-the scheduling policy.
+Hi all,
 
-This patch adds a function that allows to make it easily, safe way,
-and hides implementation details. It might even help to get rid
-of an init work.
+This patch series aims to use the memory terminologies described in
+include/linux/mm.h [1] for Linux xen code.
 
-It uses @sched_priority as a parameter instead of struct sched_param.
-The structure has been there already in the initial kernel git commit
-(April 2005) and always included only one member: sched_priority.
-So, it rather looks like an overkill that is better to hide.
+Linux is using mistakenly MFN when GFN is meant, I suspect this is beca=
+use the
+first support of Xen was for PV. This has brought some misimplementatio=
+n
+of memory helpers on ARM and make the developper confused about the exp=
+ected
+behavior.
 
-Signed-off-by: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
----
- include/linux/kthread.h              |  5 +++
- kernel/kthread.c                     | 59 ++++++++++++++++++++++++++++++++++++
- kernel/rcu/tree.c                    | 10 +++---
- kernel/trace/ring_buffer_benchmark.c | 11 +++----
- 4 files changed, 72 insertions(+), 13 deletions(-)
+=46or instance, with pfn_to_mfn, we expect to get a MFN based on the na=
+me.
+Although, if we look at the implementation on x86, it's returning a GFN=
+=2E
+Most of the callers are also using it this way.
 
-diff --git a/include/linux/kthread.h b/include/linux/kthread.h
-index b75847e1a4c9..d503dc16613c 100644
---- a/include/linux/kthread.h
-+++ b/include/linux/kthread.h
-@@ -144,6 +144,11 @@ int create_kthread_worker_on_node(struct kthread_worker *worker,
- 
- void set_kthread_worker_user_nice(struct kthread_worker *worker, long nice);
- 
-+int set_kthread_worker_scheduler(struct kthread_worker *worker,
-+				 int policy, int sched_priority);
-+int set_kthread_worker_scheduler_nocheck(struct kthread_worker *worker,
-+					 int policy, int sched_priority);
-+
- bool queue_kthread_work(struct kthread_worker *worker,
- 			struct kthread_work *work);
- void flush_kthread_work(struct kthread_work *work);
-diff --git a/kernel/kthread.c b/kernel/kthread.c
-index ab2e235b6144..4ab31b914676 100644
---- a/kernel/kthread.c
-+++ b/kernel/kthread.c
-@@ -662,6 +662,65 @@ void set_kthread_worker_user_nice(struct kthread_worker *worker, long nice)
- }
- EXPORT_SYMBOL(set_kthread_worker_user_nice);
- 
-+static int
-+__set_kthread_worker_scheduler(struct kthread_worker *worker,
-+			       int policy, int sched_priority, bool check)
-+{
-+	struct task_struct *task = worker->task;
-+	const struct sched_param sp = {
-+		.sched_priority = sched_priority
-+	};
-+	int ret;
-+
-+	WARN_ON(!task);
-+
-+	if (check)
-+		ret = sched_setscheduler(task, policy, &sp);
-+	else
-+		ret = sched_setscheduler_nocheck(task, policy, &sp);
-+
-+	return ret;
-+}
-+
-+/**
-+ * set_kthread_worker_scheduler - change the scheduling policy and/or RT
-+ *	priority of a kthread worker.
-+ * @worker: target kthread_worker
-+ * @policy: new policy
-+ * @sched_priority: new RT priority
-+ *
-+ * Return: 0 on success. An error code otherwise.
-+ */
-+int set_kthread_worker_scheduler(struct kthread_worker *worker,
-+				 int policy, int sched_priority)
-+{
-+	return __set_kthread_worker_scheduler(worker, policy, sched_priority,
-+					      true);
-+}
-+EXPORT_SYMBOL(set_kthread_worker_scheduler);
-+
-+/**
-+ * set_kthread_worker_scheduler_nocheck - change the scheduling policy and/or RT
-+ *	priority of a kthread worker.
-+ * @worker: target kthread_worker
-+ * @policy: new policy
-+ * @sched_priority: new RT priority
-+ *
-+ * Just like set_kthread_worker_sheduler(), only don't bother checking
-+ * if the current context has permission. For example, this is needed
-+ * in stop_machine(): we create temporary high priority worker threads,
-+ * but our caller might not have that capability.
-+ *
-+ * Return: 0 on success. An error code otherwise.
-+ */
-+int set_kthread_worker_scheduler_nocheck(struct kthread_worker *worker,
-+					 int policy, int sched_priority)
-+{
-+	return __set_kthread_worker_scheduler(worker, policy, sched_priority,
-+					      false);
-+}
-+EXPORT_SYMBOL(set_kthread_worker_scheduler_nocheck);
-+
- /* insert @work before @pos in @worker */
- static void insert_kthread_work(struct kthread_worker *worker,
- 			       struct kthread_work *work,
-diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
-index 3a286f3b8b3c..d882464c71d7 100644
---- a/kernel/rcu/tree.c
-+++ b/kernel/rcu/tree.c
-@@ -3916,7 +3916,6 @@ static int __init rcu_spawn_gp_kthread(void)
- 	int kthread_prio_in = kthread_prio;
- 	struct rcu_node *rnp;
- 	struct rcu_state *rsp;
--	struct sched_param sp;
- 	int ret;
- 
- 	/* Force priority into range. */
-@@ -3940,11 +3939,10 @@ static int __init rcu_spawn_gp_kthread(void)
- 		BUG_ON(ret);
- 		rnp = rcu_get_root(rsp);
- 		raw_spin_lock_irqsave(&rnp->lock, flags);
--		if (kthread_prio) {
--			sp.sched_priority = kthread_prio;
--			sched_setscheduler_nocheck(rsp->gp_worker.task,
--						   SCHED_FIFO, &sp);
--		}
-+		if (kthread_prio)
-+			set_kthread_worker_scheduler_nocheck(&rsp->gp_worker,
-+							     SCHED_FIFO,
-+							     kthread_prio);
- 		queue_kthread_work(&rsp->gp_worker, &rsp->gp_init_work);
- 		raw_spin_unlock_irqrestore(&rnp->lock, flags);
- 	}
-diff --git a/kernel/trace/ring_buffer_benchmark.c b/kernel/trace/ring_buffer_benchmark.c
-index 73e4c7f11a2c..89028165bb22 100644
---- a/kernel/trace/ring_buffer_benchmark.c
-+++ b/kernel/trace/ring_buffer_benchmark.c
-@@ -469,13 +469,10 @@ static int __init ring_buffer_benchmark_init(void)
- 			set_user_nice(consumer, consumer_nice);
- 	}
- 
--	if (producer_fifo >= 0) {
--		struct sched_param param = {
--			.sched_priority = producer_fifo
--		};
--		sched_setscheduler(rb_producer_worker.task,
--				   SCHED_FIFO, &param);
--	} else
-+	if (producer_fifo >= 0)
-+		set_kthread_worker_scheduler(&rb_producer_worker,
-+					     SCHED_FIFO, producer_fifo);
-+	else
- 		set_kthread_worker_user_nice(&rb_producer_worker,
- 					     producer_nice);
- 
--- 
-1.8.5.6
+The first 2 patches of this series is ARM related in order to remove
+PV specific helpers which should not be used and fixing the implementat=
+ion of
+pfn_to_mfn.
+
+The rest of the series is here rename most of the usage in the common c=
+ode
+of MFN to GFN. I also took the opportunity to replace most of the call =
+to
+pfn_to_gfn in the common code by page_to_gfn avoid construction such
+as pfn_to_gfn(page_to_pfn(...).
+
+Note the one xen-blkfront will be dropped by 64K series [2], I can incl=
+ude it
+if necessary.
+
+This series is based on Linux 4.2-rc4. A branch with all the patches
+can be found here:
+    git://xenbits.xen.org/people/julieng/linux-arm.git branch page-rena=
+ming-v1
+
+Sincerely yours,
+
+[1] Xen tree: e758ed14f390342513405dd766e874934573e6cb
+[2] https://lkml.org/lkml/2015/7/9/628
+
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: David Vrabel <david.vrabel@citrix.com>
+Cc: Dmitry Torokhov <dmitry.torokhov@gmail.com>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: "H. Peter Anvin" <hpa@zytor.com>
+Cc: Ian Campbell <ian.campbell@citrix.com>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: "James E.J. Bottomley" <JBottomley@odin.com>
+Cc: Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>
+Cc: Jiri Slaby <jslaby@suse.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>
+Cc: linux-api@vger.kernel.org
+Cc: linux-arm-kernel@lists.infradead.org
+Cc: linux-fbdev@vger.kernel.org
+Cc: linux-input@vger.kernel.org
+Cc: linuxppc-dev@lists.ozlabs.org
+Cc: linux-scsi@vger.kernel.org
+Cc: netdev@vger.kernel.org
+Cc: "Roger Pau Monn=C3=A9" <roger.pau@citrix.com>
+Cc: Russell King <linux@arm.linux.org.uk>
+Cc: Stefano Stabellini <stefano.stabellini@eu.citrix.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Tomi Valkeinen <tomi.valkeinen@ti.com>
+Cc: Wei Liu <wei.liu2@citrix.com>
+Cc: x86@kernel.org
+
+Julien Grall (8):
+  arm/xen: Remove helpers which are PV specific
+  xen: Make clear that swiotlb and biomerge are dealing with DMA addres=
+s
+  arm/xen: implement correctly pfn_to_mfn
+  xen: Use the correctly the Xen memory terminologies
+  xen/tmem: Use page_to_gfn rather than pfn_to_gfn
+  video/xen-fbfront: Further s/MFN/GFN clean-up
+  hvc/xen: Further s/MFN/GFN clean-up
+  xen/privcmd: Further s/MFN/GFN/ clean-up
+
+ arch/arm/include/asm/xen/page.h         | 44 +++++++++++++++----------=
+-----
+ arch/arm/xen/enlighten.c                | 18 ++++++-------
+ arch/arm/xen/mm.c                       |  4 +--
+ arch/x86/include/asm/xen/page.h         | 34 +++++++++++++----------
+ arch/x86/xen/enlighten.c                |  4 +--
+ arch/x86/xen/mmu.c                      | 48 ++++++++++++++++---------=
+--------
+ arch/x86/xen/p2m.c                      | 32 +++++++++++-----------
+ arch/x86/xen/setup.c                    | 12 ++++-----
+ arch/x86/xen/smp.c                      |  4 +--
+ arch/x86/xen/suspend.c                  |  8 +++---
+ drivers/block/xen-blkfront.c            |  6 ++---
+ drivers/input/misc/xen-kbdfront.c       |  4 +--
+ drivers/net/xen-netback/netback.c       |  4 +--
+ drivers/net/xen-netfront.c              |  8 +++---
+ drivers/scsi/xen-scsifront.c            |  8 +++---
+ drivers/tty/hvc/hvc_xen.c               | 18 +++++--------
+ drivers/video/fbdev/xen-fbfront.c       | 20 +++++++-------
+ drivers/xen/balloon.c                   |  2 +-
+ drivers/xen/biomerge.c                  |  6 ++---
+ drivers/xen/events/events_base.c        |  2 +-
+ drivers/xen/events/events_fifo.c        |  4 +--
+ drivers/xen/gntalloc.c                  |  3 ++-
+ drivers/xen/manage.c                    |  2 +-
+ drivers/xen/privcmd.c                   | 44 +++++++++++++++----------=
+-----
+ drivers/xen/swiotlb-xen.c               | 16 +++++------
+ drivers/xen/tmem.c                      | 21 +++++----------
+ drivers/xen/xenbus/xenbus_client.c      |  2 +-
+ drivers/xen/xenbus/xenbus_dev_backend.c |  2 +-
+ drivers/xen/xenbus/xenbus_probe.c       |  8 +++---
+ drivers/xen/xlate_mmu.c                 | 18 ++++++-------
+ include/uapi/xen/privcmd.h              |  4 +++
+ include/xen/page.h                      |  4 +--
+ include/xen/xen-ops.h                   | 10 +++----
+ 33 files changed, 210 insertions(+), 214 deletions(-)
+
+--=20
+2.1.4
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
