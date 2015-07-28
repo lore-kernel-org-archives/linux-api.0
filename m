@@ -1,129 +1,32 @@
-From: Eric B Munson <emunson@akamai.com>
-Subject: Re: [PATCH V5 0/7] Allow user to request memory to be locked on page
- fault
-Date: Tue, 28 Jul 2015 14:06:42 -0400
-Message-ID: <20150728180642.GE2407@akamai.com>
-References: <1437773325-8623-1-git-send-email-emunson@akamai.com>
- <55B5F4FF.9070604@suse.cz>
- <20150727133555.GA17133@akamai.com>
- <55B63D37.20303@suse.cz>
- <20150727145409.GB21664@akamai.com>
- <20150728111725.GG24972@dhcp22.suse.cz>
- <20150728134942.GB2407@akamai.com>
- <55B79B7F.9010604@suse.cz>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: Revised futex(2) man page for review
+Date: Tue, 28 Jul 2015 20:09:33 +0200
+Message-ID: <55B7C55D.5010700@gmail.com>
+References: <55166C01.7000803@gmail.com>	 <20150328114725.GJ27490@worktop.programming.kicks-ass.net>	 <1427813146.20009.2.camel@stgolabs.net> <55B611B3.7030005@gmail.com>	 <1438053377.2249.25.camel@stgolabs.net> <55B732C6.9080905@gmail.com> <1438105974.2249.67.camel@stgolabs.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="gDGSpKKIBgtShtf+"
-Return-path: <linux-alpha-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <55B79B7F.9010604@suse.cz>
-Sender: linux-alpha-owner@vger.kernel.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Michal Hocko <mhocko@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Shuah Khan <shuahkh@osg.samsung.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Jonathan Corbet <corbet@lwn.net>, Ralf Baechle <ralf@linux-mips.org>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1438105974.2249.67.camel-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Torvald Riegel <triegel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anton Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, bill o gallmeister <bgallmeister-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kiszka <jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, bert hubert <bert.hubert-dxZxOz86jR8sYtaaK7K+xw@public.gmane.org>, Rusty Russell <rusty@rustco>
 List-Id: linux-api@vger.kernel.org
 
+On 07/28/2015 07:52 PM, Davidlohr Bueso wrote:
+> On Tue, 2015-07-28 at 09:44 +0200, Michael Kerrisk (man-pages) wrote:
+>> Maybe you still have some further improvements for the paragraph?
+> 
+> Nah, this is fine enough. Looks good.
 
---gDGSpKKIBgtShtf+
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Okay. Thanks. I added a Reviewed-by: for you.
 
-On Tue, 28 Jul 2015, Vlastimil Babka wrote:
+Cheers,
 
-> On 07/28/2015 03:49 PM, Eric B Munson wrote:
-> >On Tue, 28 Jul 2015, Michal Hocko wrote:
-> >
->=20
-> [...]
->=20
-> >The only
-> >remaining question I have is should we have 2 new mlockall flags so that
-> >the caller can explicitly set VM_LOCKONFAULT in the mm->def_flags vs
-> >locking all current VMAs on fault.  I ask because if the user wants to
-> >lock all current VMAs the old way, but all future VMAs on fault they
-> >have to call mlockall() twice:
-> >
-> >	mlockall(MCL_CURRENT);
-> >	mlockall(MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT);
-> >
-> >This has the side effect of converting all the current VMAs to
-> >VM_LOCKONFAULT, but because they were all made present and locked in the
-> >first call, this should not matter in most cases.
->=20
-> Shouldn't the user be able to do this?
->=20
-> mlockall(MCL_CURRENT)
-> mlockall(MCL_FUTURE | MCL_ONFAULT);
->=20
-> Note that the second call shouldn't change (i.e. munlock) existing
-> vma's just because MCL_CURRENT is not present. The current
-> implementation doesn't do that thanks to the following in
-> do_mlockall():
->=20
->         if (flags =3D=3D MCL_FUTURE)
->                 goto out;
->=20
-> before current vma's are processed and MCL_CURRENT is checked. This
-> is probably so that do_mlockall() can also handle the munlockall()
-> syscall.
-> So we should be careful not to break this, but otherwise there are
-> no limitations by not having two MCL_ONFAULT flags. Having to do
-> invoke syscalls instead of one is not an issue as this shouldn't be
-> frequent syscall.
-
-Good catch, my current implementation did break this and is now fixed.
-
->=20
-> >The catch is that,
-> >like mmap(MAP_LOCKED), mlockall() does not communicate if mm_populate()
-> >fails.  This has been true of mlockall() from the beginning so I don't
-> >know if it needs more than an entry in the man page to clarify (which I
-> >will add when I add documentation for MCL_ONFAULT).
->=20
-> Good point.
->=20
-> >In a much less
-> >likely corner case, it is not possible in the current setup to request
-> >all current VMAs be VM_LOCKONFAULT and all future be VM_LOCKED.
->=20
-> So again this should work:
->=20
-> mlockall(MCL_CURRENT | MCL_ONFAULT)
-> mlockall(MCL_FUTURE);
->=20
-> But the order matters here, as current implementation of
-> do_mlockall() will clear VM_LOCKED from def_flags if MCL_FUTURE is
-> not passed. So *it's different* from how it handles MCL_CURRENT (as
-> explained above). And not documented in manpage. Oh crap, this API
-> is a closet full of skeletons. Maybe it was an unnoticed regression
-> and we can restore some sanity?
-
-I will add a note about the ordering problem to the manpage as well.
-Unfortunately, the basic idea of clearing VM_LOCKED from mm->def_flags
-if MCL_FUTURE is not specified but not doing the same for MCL_CURRENT
-predates the move to git, so I am not sure if it was ever different.
+Michael
 
 
---gDGSpKKIBgtShtf+
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBAgAGBQJVt8SyAAoJELbVsDOpoOa9ZesP/1N/oMkXQdcSEZVI2hPN/lg2
-9mWtmYEND1iC1vy7m8SDPnbAhVEDe7QS1LnkybW7h+ZPDdEcYndvaWGlwVZfAcFF
-ibAYaG7hkQ5mOwpRrAqIf0Fmgya0W1tJjIxg59FyHxsFZBGe+NiCZ7CmZGpTp8sY
-5QcFKUSFRGoIfAp2A4akeitUr3Eq62QEDOGrGq7TJboHJeNklRqRwDjYgMSe6NHq
-lR7KOBP/iPu3W2yWpOcfqxQiv4V0d7C4cZTi4NcQeaOy4tkolspMZaUuA4n0u+ZI
-1uyUaVo24RhGucRALQ5oM5l6pQLL+cGeWGmJtrB9lwydD0H5aVxYqVKAXylYDhBN
-VeVocCkLkpQZX8NnMpWcqMDpq0gSuM0YbtMHpaU04suBNBCHb4nnc9uql5GHm5TX
-WyrTKCj9tG5vmM94RKhreI4SpN2v1K0BwmRWDV0hgSl1/WIizxSOgnrs5VBEzrXo
-78HoY24TPsDTs6bhsfuQ6uaKmy1Q8fQpkGCenVaveOW4igVJvvZEVKKvZwDu0VzD
-HrAKkRfYO427d8Xk46ZJzav0RcwR7LWeBfm68QkswXhMWEMVcxXf3hAJxl+rWsCa
-WJenAR2HADZCQrfLWp5bLYcdWww8LHoWRiT8M2jBjn/BNTblo0yLd3o+kdFxJ2V9
-f6X8bsOxQAhqSGzrGcnK
-=OZR5
------END PGP SIGNATURE-----
-
---gDGSpKKIBgtShtf+--
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
