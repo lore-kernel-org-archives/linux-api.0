@@ -1,69 +1,31 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [RFC PATCH 03/14] kthread: Add drain_kthread_worker()
-Date: Tue, 28 Jul 2015 13:18:22 -0400
-Message-ID: <20150728171822.GA5322@mtj.duckdns.org>
-References: <1438094371-8326-1-git-send-email-pmladek@suse.com>
- <1438094371-8326-4-git-send-email-pmladek@suse.com>
+From: David Vrabel <david.vrabel-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [Xen-devel] [PATCH 8/8] xen/privcmd: Further s/MFN/GFN/ clean-up
+Date: Tue, 28 Jul 2015 18:19:09 +0100
+Message-ID: <55B7B98D.3050008@citrix.com>
+References: <1438095769-2560-1-git-send-email-julien.grall@citrix.com>
+ <1438095769-2560-9-git-send-email-julien.grall@citrix.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1438094371-8326-4-git-send-email-pmladek-IBi9RG/b67k@public.gmane.org>
+In-Reply-To: <1438095769-2560-9-git-send-email-julien.grall-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Julien Grall <julien.grall-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org
+Cc: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, ian.campbell-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stefano.stabellini-mvvWK6WmYclDPfheJLI6IQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Vrabel <david.vrabel-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Boris Ostrovsky <boris.ostrovsky-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+On 28/07/15 16:02, Julien Grall wrote:
+> The privcmd code is mixing the usage of GFN and MFN within the same
+> functions which make the code difficult to understand when you only work
+> with auto-translated guests.
+> 
+> The privcmd driver is only dealing with GFN so replace all the mention
+> of MFN into GFN.
+> 
+> The ioctl structure used to map foreign change has been left unchanged
+> given that the userspace is using it. Nonetheless, add a comment to
+> explain the expected value within the "mfn" field.
 
-On Tue, Jul 28, 2015 at 04:39:20PM +0200, Petr Mladek wrote:
-> +/*
-> + * Test whether @work is being queued from another work
-> + * executing on the same kthread.
-> + */
-> +static bool is_chained_work(struct kthread_worker *worker)
-> +{
-> +	struct kthread_worker *current_worker;
-> +
-> +	current_worker = current_kthread_worker();
-> +	/*
-> +	 * Return %true if I'm a kthread worker executing a work item on
-> +	 * the given @worker.
-> +	 */
-> +	return current_worker && current_worker == worker;
-> +}
+Reviewed-by: David Vrabel <david.vrabel-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>
 
-I'm not sure full-on chained work detection is necessary here.
-kthread worker's usages tend to be significantly simpler and draining
-is only gonna be used for destruction.
-
-> +void drain_kthread_worker(struct kthread_worker *worker)
-> +{
-> +	int flush_cnt = 0;
-> +
-> +	spin_lock_irq(&worker->lock);
-> +	worker->nr_drainers++;
-> +
-> +	while (!list_empty(&worker->work_list)) {
-> +		/*
-> +		 * Unlock, so we could move forward. Note that queuing
-> +		 * is limited by @nr_drainers > 0.
-> +		 */
-> +		spin_unlock_irq(&worker->lock);
-> +
-> +		flush_kthread_worker(worker);
-> +
-> +		if (++flush_cnt == 10 ||
-> +		    (flush_cnt % 100 == 0 && flush_cnt <= 1000))
-> +			pr_warn("kthread worker %s: drain_kthread_worker() isn't complete after %u tries\n",
-> +				worker->task->comm, flush_cnt);
-> +
-> +		spin_lock_irq(&worker->lock);
-> +	}
-
-I'd just do something like WARN_ONCE(flush_cnt++ > 10, "kthread worker: ...").
-
-Thanks.
-
--- 
-tejun
+David
