@@ -1,46 +1,59 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH RFC 0/1] Document how to add a new syscall
-Date: Tue, 28 Jul 2015 07:59:16 -0600
-Message-ID: <55B78AB4.2010807@osg.samsung.com>
+From: Eric B Munson <emunson@akamai.com>
+Subject: Re: [PATCH RFC 1/1] Documentation: describe how to add a system call
+Date: Tue, 28 Jul 2015 10:14:47 -0400
+Message-ID: <20150728141447.GC2407@akamai.com>
 References: <1438083663-24814-1-git-send-email-drysdale@google.com>
+ <1438083663-24814-2-git-send-email-drysdale@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1438083663-24814-1-git-send-email-drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
-Cc: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, Milosz Tanski <milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org>, Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-fy+rA21nqHI@public.gmane.org
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="S1BNGpv0yoYahz37"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1438083663-24814-2-git-send-email-drysdale@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Drysdale <drysdale@google.com>
+Cc: linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, Shuah Khan <shuahkh@osg.samsung.com>, Jonathan Corbet <corbet@lwn.net>, Andrea Arcangeli <aarcange@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Andy Lutomirski <luto@amacapital.net>, Al Viro <viro@zeniv.linux.org.uk>, Rusty Russell <rusty@rustcorp.com.au>, Peter Zijlstra <peterz@infradead.org>, Vivek Goyal <vgoyal@redhat.com>, Alexei Starovoitov <ast@plumgrid.com>, David Herrmann <dh.herrmann@gmail.com>, Theodore Ts'o <tytso@mit.edu>, Kees Cook <keescook@chromium.org>, Miklos Szeredi <mszeredi@suse.cz>, Milosz Tanski <milos>
 List-Id: linux-api@vger.kernel.org
 
-On 07/28/2015 05:41 AM, David Drysdale wrote:
-> Given that I've gotten some of the details wrong in the past (and I've
-> seen others do likewise), I thought it might be helpful to collate the
-> best practices for adding a new system call to the kernel.
-> 
-> Apologies for the wide circulation -- I've tried to include folk who've
-> recently added or proposed a system call, as they're most likely to
-> have opinions on:
->  - whether this a useful addition to Documentation/
->  - whether the details of the advice are correct and complete.
-> 
-> Shuah, is there anything more that should be added for the Testing
-> section in particular?
-> 
 
-David,
+--S1BNGpv0yoYahz37
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Looks good. You could add a one liner on in some cases, it might be
-necessary to install headers before test compiles. Other than that,
-the information looks good.
+On Tue, 28 Jul 2015, David Drysdale wrote:
 
-thanks,
--- Shuah
+> Add a document describing the process of adding a new system call,
+> including the need for a flags argument for future compatibility, and
+> covering 32-bit/64-bit concerns (albeit in an x86-centric way).
+>=20
+> Signed-off-by: David Drysdale <drysdale@google.com>
+> Reviewed-by: Michael Kerrisk <mtk.manpages@gmail.com>
 
+This is really helpful
 
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+Reviewed-by: Eric B Munson <emunson@akamai.com>
+
+--S1BNGpv0yoYahz37
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBAgAGBQJVt45XAAoJELbVsDOpoOa97sEQAM87QLX1AGYi7Yq0GcIRY+D8
+Iwd/C96KXwGSHZ0pT4hA1j78Q7AnSkdekWKRAz6hpsUHZs+SpXtVpaswfmIlvsqY
+B28UFp/zkJqZuvX8fTAqC60MAMEyu96c8mYQonjA+IXyP7lwCPMz4yNJLbXKA+U8
+MDQghNnzfJeR2IQvx8PJmaRI3DtxZ88mmZcPlQGVkXkCOydGjGIbKzAcn1CwC5UL
+rxdMS8Wz+hDXj/udF5qYVKEiSkKfH48K7irAoBoYjdnA/I59burdgUCXtzetiC66
+ROVXW5PdVKg7bYK4T0R19xalA5leFmLDf1PkfhbAscYvUCAaEiP2WPUsTgkhlxWo
+Mk/VO9sPF/uniCZQrrC7Dah+pU6eQusu9/c2gj57M0H6lKE3NQsfNw0pN+jL65Rk
++yVQApnlqGppbwRo6vK7w60cg+FLjVTNQz5zvaQKb+ysff0LbyX1nF+6Prhu/KLX
+gpwR8seMbXkfXvGI1hjBViV25S0DJBEpz+8X4Jdp1A9tKAzwyUd/VB+4s4HD091o
+Ivrx6UgkIeL8P5KOttLRlMeG07PvwC3PElq6BWL4LcX35p3x/GSkX3MoOBrSCKsd
+DNIh8tXXK1DJHSWue6cUSI6+xu+iGpGb2PoOVsCj4UHyMP98YDaeQoSP2YKoHB02
+Syw9Cms/1NtCqOiv/3N8
+=q5Cf
+-----END PGP SIGNATURE-----
+
+--S1BNGpv0yoYahz37--
