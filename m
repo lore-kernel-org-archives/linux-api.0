@@ -1,128 +1,84 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Revised futex(2) man page for review
-Date: Tue, 28 Jul 2015 09:44:06 +0200
-Message-ID: <55B732C6.9080905@gmail.com>
-References: <55166C01.7000803@gmail.com>	 <20150328114725.GJ27490@worktop.programming.kicks-ass.net>	 <1427813146.20009.2.camel@stgolabs.net> <55B611B3.7030005@gmail.com> <1438053377.2249.25.camel@stgolabs.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1438053377.2249.25.camel-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Torvald Riegel <triegel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anton Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, bill o gallmeister <bgallmeister-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kiszka <jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, bert hubert <bert.hubert-dxZxOz86jR8sYtaaK7K+xw@public.gmane.org>, Rusty Russell <rusty@rustco>
+From: David Drysdale <drysdale@google.com>
+Subject: [PATCH RFC 1/1] UAPI,x86: export syscall numbers for all x86 archs
+Date: Tue, 28 Jul 2015 09:05:31 +0100
+Message-ID: <1438070731-17764-2-git-send-email-drysdale@google.com>
+References: <1438070731-17764-1-git-send-email-drysdale@google.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1438070731-17764-1-git-send-email-drysdale@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: x86@kernel.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Andy Lutomirski <luto@amacapital.net>, "H. Peter Anvin" <hpa@zytor.com>
+Cc: Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Eric Paris <eparis@redhat.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, David Drysdale <drysdale@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi David,
+Some userspace code occasionally has a need to reference the syscall
+numbers for different-but-compatible architectures, so explicitly
+export the generated files that contain the __NR_ia32_<name> and
+__NR_x32_<name> constants.
 
-On 07/28/2015 05:16 AM, Davidlohr Bueso wrote:
-> On Mon, 2015-07-27 at 13:10 +0200, Michael Kerrisk (man-pages) wrote:
->> Hi David,
->>
->> On 03/31/2015 04:45 PM, Davidlohr Bueso wrote:
->>> On Sat, 2015-03-28 at 12:47 +0100, Peter Zijlstra wrote:
->>>
->>>>        The condition is represented by the futex word, which is an=
- address  in
->>>>        memory  supplied to the futex() system call, and the value =
-at this mem=E2=80=90
->>>>        ory location.  (While the virtual addresses for the same me=
-mory in sep=E2=80=90
->>>>        arate  processes  may  not be equal, the kernel maps them i=
-nternally so
->>>>        that the same memory mapped in different locations will cor=
-respond  for
->>>>        futex() calls.)
->>>>
->>>>        When  executing  a futex operation that requests to block a=
- thread, the
->>>>        kernel will only block if the futex word has the value that=
- the calling
->>>
->>> Given the use of "word", you should probably state right away that
->>> futexes are only 32bit.
->>
->> So, I made the opening sentence here:
->>
->>        The  condition  is  represented  by  the  futex word, which i=
-s an
->>        address in memory supplied to the futex() system  call,  and =
- the
->>        32-bit  value  at  this  memory  location.=20
->>
->> Okay?
->=20
-> I think we can still improve :)
->=20
-> I've re-read the whole first paragraphs, and have a few comments that
-> touch upon this specific wording. Lets see. You have:
->=20
->>        The  futex()  system call provides a method for waiting until=
- a certain
->>        condition becomes true.  It is typically used as a  blocking =
- construct
->>        in the context of shared-memory synchronization: The program =
-implements
->>        the majority of the synchronization in user  space,  and  use=
-s  one  of
->>        operations  of  the  system call when it is likely that it ha=
-s to block
->>        for a longer time until the condition becomes true.  The  pro=
-gram  uses
->>        another  operation of the system call to wake anyone waiting =
-for a par=E2=80=90
->>        ticular condition.
->=20
-> I've rephrased the next paragraph. How about adding this to follow?
->=20
->        A futex is in essence a 32-bit user-space address. All futex o=
-perations and
->        conditions are governed by this variable, from now on referred=
- to as 'futex
->        word'. As such, a futex is identified by the address in shared=
- memory, which
->        may or may not be shared between different processes. For virt=
-ual memory, the
->        kernel will internally handle and resolve the later. This fute=
-x word, along
->        with the value at its the memory location, are supplied to the=
- futex() system
->        call.
->=20
-> Feel free to reword however you think is better.
+Also, add a new generated unistd_64_amd64.h file, holding amd64
+system call numbers in form __NR_amd64_<name>.
 
+For example, this allows a seccomp-bpf filter to include filtering
+for multiple architectures, and (in particular) to include x32
+syscalls in an x86_64 filter.  (Programmatic control of the audit
+framework is another possible use case.)
 
-I agree with you that that second paragraph is a bit broken. But, like =
-Heinrich,
-I'm confused by this term "32-bit ... address".
+Signed-off-by: David Drysdale <drysdale@google.com>
+---
+ arch/x86/entry/syscalls/Makefile | 11 ++++++++---
+ arch/x86/include/uapi/asm/Kbuild |  3 +++
+ 2 files changed, 11 insertions(+), 3 deletions(-)
 
-I've rewritten the paragraph as:
+diff --git a/arch/x86/entry/syscalls/Makefile b/arch/x86/entry/syscalls/Makefile
+index 57aa59fd140c..ec6811d0db0b 100644
+--- a/arch/x86/entry/syscalls/Makefile
++++ b/arch/x86/entry/syscalls/Makefile
+@@ -28,7 +28,7 @@ $(uapi)/unistd_32.h: $(syscall32) $(syshdr)
 
-       A futex is a 32-bit value=E2=80=94referred to below as a futex w=
-ord=E2=80=94whose
-       address is supplied to the futex()  system  call.   (Futexes  ar=
-e
-       32-bits in size on all platforms, including 64-bit systems.)  Al=
-l
-       futex operations are governed by this value.  In order to share =
-a
-       futex  between  processes,  the  futex  is  placed in a region o=
-f
-       shared memory, created using (for example) mmap(2)  or  shmat(2)=
-=2E
-       (Thus the futex word may have different virtual addresses in dif=
-=E2=80=90
-       ferent processes, but these addresses all refer to the same loca=
-=E2=80=90
-       tion in physical memory.)
+ syshdr_abi_unistd_32_ia32 := i386
+ syshdr_pfx_unistd_32_ia32 := ia32_
+-$(out)/unistd_32_ia32.h: $(syscall32) $(syshdr)
++$(uapi)/unistd_32_ia32.h: $(syscall32) $(syshdr)
+ 	$(call if_changed,syshdr)
 
-Maybe you still have some further improvements for the paragraph?
+ syshdr_abi_unistd_x32 := common,x32
+@@ -42,7 +42,12 @@ $(uapi)/unistd_64.h: $(syscall64) $(syshdr)
 
-Cheers,
+ syshdr_abi_unistd_64_x32 := x32
+ syshdr_pfx_unistd_64_x32 := x32_
+-$(out)/unistd_64_x32.h: $(syscall64) $(syshdr)
++$(uapi)/unistd_64_x32.h: $(syscall64) $(syshdr)
++	$(call if_changed,syshdr)
++
++syshdr_abi_unistd_64_amd64 := common,64
++syshdr_pfx_unistd_64_amd64 := amd64_
++$(uapi)/unistd_64_amd64.h: $(syscall64) $(syshdr)
+ 	$(call if_changed,syshdr)
 
-Michael
+ $(out)/syscalls_32.h: $(syscall32) $(systbl)
+@@ -56,8 +61,8 @@ $(out)/xen-hypercalls.h: $(srctree)/scripts/xen-hypercalls.sh
+ $(out)/xen-hypercalls.h: $(srctree)/include/xen/interface/xen*.h
 
---=20
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+ uapisyshdr-y			+= unistd_32.h unistd_64.h unistd_x32.h
++uapisyshdr-$(CONFIG_X86_64)		+= unistd_32_ia32.h unistd_64_amd64.h unistd_64_x32.h
+ syshdr-y			+= syscalls_32.h
+-syshdr-$(CONFIG_X86_64)		+= unistd_32_ia32.h unistd_64_x32.h
+ syshdr-$(CONFIG_X86_64)		+= syscalls_64.h
+ syshdr-$(CONFIG_XEN)		+= xen-hypercalls.h
+
+diff --git a/arch/x86/include/uapi/asm/Kbuild b/arch/x86/include/uapi/asm/Kbuild
+index 3dec769cadf7..68805cba2fad 100644
+--- a/arch/x86/include/uapi/asm/Kbuild
++++ b/arch/x86/include/uapi/asm/Kbuild
+@@ -4,6 +4,9 @@ include include/uapi/asm-generic/Kbuild.asm
+ genhdr-y += unistd_32.h
+ genhdr-y += unistd_64.h
+ genhdr-y += unistd_x32.h
++genhdr-y += unistd_64_amd64.h
++genhdr-y += unistd_64_x32.h
++genhdr-y += unistd_32_ia32.h
+ header-y += a.out.h
+ header-y += auxvec.h
+ header-y += bitsperlong.h
+--
+2.4.3.573.g4eafbef
