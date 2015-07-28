@@ -1,34 +1,61 @@
-From: David Drysdale <drysdale@google.com>
-Subject: [PATCH RFC 0/1] UAPI,x86: export syscall numbers for all x86 archs
-Date: Tue, 28 Jul 2015 09:05:30 +0100
-Message-ID: <1438070731-17764-1-git-send-email-drysdale@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: x86@kernel.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Andy Lutomirski <luto@amacapital.net>, "H. Peter Anvin" <hpa@zytor.com>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Eric Paris <eparis@redhat.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, David Drysdale <drysdale@google.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH V5 0/7] Allow user to request memory to be locked on page
+ fault
+Date: Tue, 28 Jul 2015 13:17:25 +0200
+Message-ID: <20150728111725.GG24972@dhcp22.suse.cz>
+References: <1437773325-8623-1-git-send-email-emunson@akamai.com>
+ <55B5F4FF.9070604@suse.cz>
+ <20150727133555.GA17133@akamai.com>
+ <55B63D37.20303@suse.cz>
+ <20150727145409.GB21664@akamai.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-alpha-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150727145409.GB21664@akamai.com>
+Sender: linux-alpha-owner@vger.kernel.org
+To: Eric B Munson <emunson@akamai.com>
+Cc: Vlastimil Babka <vbabka@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Shuah Khan <shuahkh@osg.samsung.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Jonathan Corbet <corbet@lwn.net>, Ralf Baechle <ralf@linux-mips.org>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-A while ago I was trying to build a seccomp-bpf filter program that would
-survive a change of x86 architecture.  This was complicated for all sorts of
-reasons, but one of the problems was that the different syscall numbers aren't
-all available at the same time -- hence this patch.
+[I am sorry but I didn't get to this sooner.]
 
-Naming-wise, Andy Lutomirski has indicated he'd prefer the prefixes to be
-__NR_x86_64_, __NR_x86_64_x32_ and __NR_i386_; however, for the latter two
-sets of numbers there are existing headers that use different prefixes
-(__NR_x32_ and __NR_ia32_), so altering those would involve a change and/or an
-additional set of definitions.  For the new constants I've left in my
-original suggestion (__NR_amd64_) for the time being.
+On Mon 27-07-15 10:54:09, Eric B Munson wrote:
+> Now that VM_LOCKONFAULT is a modifier to VM_LOCKED and
+> cannot be specified independentally, it might make more sense to mirror
+> that relationship to userspace.  Which would lead to soemthing like the
+> following:
 
-What are folks' thoughts about the preferred naming for these?
+A modifier makes more sense.
+ 
+> To lock and populate a region:
+> mlock2(start, len, 0);
+> 
+> To lock on fault a region:
+> mlock2(start, len, MLOCK_ONFAULT);
+> 
+> If LOCKONFAULT is seen as a modifier to mlock, then having the flags
+> argument as 0 mean do mlock classic makes more sense to me.
+> 
+> To mlock current on fault only:
+> mlockall(MCL_CURRENT | MCL_ONFAULT);
+> 
+> To mlock future on fault only:
+> mlockall(MCL_FUTURE | MCL_ONFAULT);
+> 
+> To lock everything on fault:
+> mlockall(MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT);
 
+Makes sense to me. The only remaining and still tricky part would be
+the munlock{all}(flags) behavior. What should munlock(MLOCK_ONFAULT)
+do? Keep locked and poppulate the range or simply ignore the flag an
+just unlock?
 
-David Drysdale (1):
-  UAPI,x86: export syscall numbers for all x86 archs
+I can see some sense to allow munlockall(MCL_FUTURE[|MLOCK_ONFAULT]),
+munlockall(MCL_CURRENT) resp. munlockall(MCL_CURRENT|MCL_FUTURE) but
+other combinations sound weird to me.
 
- arch/x86/entry/syscalls/Makefile | 11 ++++++++---
- arch/x86/include/uapi/asm/Kbuild |  3 +++
- 2 files changed, 11 insertions(+), 3 deletions(-)
-
---
-2.4.3.573.g4eafbef
+Anyway munlock with flags opens new doors of trickiness.
+-- 
+Michal Hocko
+SUSE Labs
