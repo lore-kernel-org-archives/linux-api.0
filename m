@@ -1,77 +1,27 @@
-From: Gioh Kim <gioh.kim@lge.com>
-Subject: Re: [PATCH 4/4] mm: remove direct calling of migration
-Date: Tue, 28 Jul 2015 09:26:18 +0900
-Message-ID: <55B6CC2A.3050107@lge.com>
-References: <1436776519-17337-1-git-send-email-gioh.kim@lge.com> <1436776519-17337-5-git-send-email-gioh.kim@lge.com> <55B638F1.9090407@suse.cz>
+From: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
+Subject: Re: Revised futex(2) man page for review
+Date: Mon, 27 Jul 2015 19:52:44 -0700
+Message-ID: <1438051964.2249.9.camel@stgolabs.net>
+References: <55166C01.7000803@gmail.com>
+	 <20150328114725.GJ27490@worktop.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <55B638F1.9090407@suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vlastimil Babka <vbabka@suse.cz>, jlayton@poochiereds.net, bfields@fieldses.org, iamjoonsoo.kim@lge.com, viro@zeniv.linux.org.uk, mst@redhat.com, koct9i@gmail.com, minchan@kernel.org, aquini@redhat.com, linux-fsdevel@vger.kernel.org, virtualization@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org
-Cc: dri-devel@lists.freedesktop.org, akpm@linux-foundation.org, Gioh Kim <gurugio@hanmail.net>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150328114725.GJ27490-IIpfhp3q70z/8w/KjCw3T+5/BudmfyzbbVWyRVo5IupeoWH0uzbU5w@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Torvald Riegel <triegel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anton Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, bill o gallmeister <bgallmeister-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kiszka <jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, bert hubert <bert.hubert-dxZxOz86jR8sYtaaK7K+xw@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb8U04JRNCRQjg@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Sat, 2015-03-28 at 12:47 +0100, Peter Zijlstra wrote:
+> SEE ALSO
+>        get_robust_list(2), restart_syscall(2), futex(7)
 
+For pi futexes, I also suggest pthread_mutexattr_getprotocol(3), which
+is a common entry point.
 
-2015-07-27 =EC=98=A4=ED=9B=84 10:58=EC=97=90 Vlastimil Babka =EC=9D=B4(=
-=EA=B0=80) =EC=93=B4 =EA=B8=80:
-> On 07/13/2015 10:35 AM, Gioh Kim wrote:
->> From: Gioh Kim <gurugio@hanmail.net>
->>
->> Migration is completely generalized so that migrating mobile page
->> is processed with lru-pages in move_to_new_page.
->>
->> Signed-off-by: Gioh Kim <gioh.kim@lge.com>
->> Acked-by: Rafael Aquini <aquini@redhat.com>
->
-> Why not just fold this to Patch 3? You already modify this hunk there=
-, and prior to patch 3, the hunk was balloon-pages specific. You made i=
-t look generic only to remove it, which is unneeded code churn and I do=
-n't think it adds anything wrt e.g. bisectability.
-Yes, you have a point.
-I'll be merged into 3/4 at next spin.
-
-I wanted to show the process how migration is generalized with this pat=
-ch.
-On second thought it is not necessary.
-
->
->> ---
->>   mm/migrate.c | 15 ---------------
->>   1 file changed, 15 deletions(-)
->>
->> diff --git a/mm/migrate.c b/mm/migrate.c
->> index 53f0081d..e6644ac 100644
->> --- a/mm/migrate.c
->> +++ b/mm/migrate.c
->> @@ -844,21 +844,6 @@ static int __unmap_and_move(struct page *page, =
-struct page *newpage,
->>           }
->>       }
->>
->> -    if (unlikely(mobile_page(page))) {
->> -        /*
->> -         * A mobile page does not need any special attention from
->> -         * physical to virtual reverse mapping procedures.
->> -         * Skip any attempt to unmap PTEs or to remap swap cache,
->> -         * in order to avoid burning cycles at rmap level, and perf=
-orm
->> -         * the page migration right away (proteced by page lock).
->> -         */
->> -        lock_page(newpage);
->> -        rc =3D page->mapping->a_ops->migratepage(page->mapping,
->> -                               newpage, page, mode);
->> -        unlock_page(newpage);
->> -        goto out_unlock;
->> -    }
->> -
->>       /*
->>        * Corner case handling:
->>        * 1. When a new swap-cache page is read into, it is added to =
-the LRU
->>
->
->
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
