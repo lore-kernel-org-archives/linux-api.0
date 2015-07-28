@@ -1,70 +1,39 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH V5 0/7] Allow user to request memory to be locked on page
- fault
-Date: Tue, 28 Jul 2015 13:23:29 +0200
-Message-ID: <55B76631.6040802@suse.cz>
-References: <1437773325-8623-1-git-send-email-emunson@akamai.com>
- <55B5F4FF.9070604@suse.cz> <20150727133555.GA17133@akamai.com>
- <55B63D37.20303@suse.cz> <20150727145409.GB21664@akamai.com>
- <20150728111725.GG24972@dhcp22.suse.cz>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-parisc-owner@vger.kernel.org>
-In-Reply-To: <20150728111725.GG24972@dhcp22.suse.cz>
-Sender: linux-parisc-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>, Eric B Munson <emunson@akamai.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Shuah Khan <shuahkh@osg.samsung.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Jonathan Corbet <corbet@lwn.net>, Ralf Baechle <ralf@linux-mips.org>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+From: David Drysdale <drysdale@google.com>
+Subject: [PATCH RFC 0/1] Document how to add a new syscall
+Date: Tue, 28 Jul 2015 12:41:02 +0100
+Message-ID: <1438083663-24814-1-git-send-email-drysdale@google.com>
+Return-path: <linux-doc-owner@vger.kernel.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, Shuah Khan <shuahkh@osg.samsung.com>, Jonathan Corbet <corbet@lwn.net>
+Cc: Andrea Arcangeli <aarcange@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Eric B Munson <emunson@akamai.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Andy Lutomirski <luto@amacapital.net>, Al Viro <viro@zeniv.linux.org.uk>, Rusty Russell <rusty@rustcorp.com.au>, Peter Zijlstra <peterz@infradead.org>, Vivek Goyal <vgoyal@redhat.com>, Alexei Starovoitov <ast@plumgrid.com>, David Herrmann <dh.herrmann@gmail.com>, Theodore Ts'o <tytso@mit.edu>, Kees Cook <keescook@chromium.org>, Miklos Szeredi <mszeredi@suse.cz>, Milosz Tanski <milosz@adfin.com>, Fam Zheng <famz@redhat.com>, Josh Triplett <josh@joshtriplett.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, linux-doc@vger.kernel.org, linux-kernel@vger.ke
 List-Id: linux-api@vger.kernel.org
 
-On 07/28/2015 01:17 PM, Michal Hocko wrote:
-> [I am sorry but I didn't get to this sooner.]
->
-> On Mon 27-07-15 10:54:09, Eric B Munson wrote:
->> Now that VM_LOCKONFAULT is a modifier to VM_LOCKED and
->> cannot be specified independentally, it might make more sense to mirror
->> that relationship to userspace.  Which would lead to soemthing like the
->> following:
->
-> A modifier makes more sense.
->
->> To lock and populate a region:
->> mlock2(start, len, 0);
->>
->> To lock on fault a region:
->> mlock2(start, len, MLOCK_ONFAULT);
->>
->> If LOCKONFAULT is seen as a modifier to mlock, then having the flags
->> argument as 0 mean do mlock classic makes more sense to me.
->>
->> To mlock current on fault only:
->> mlockall(MCL_CURRENT | MCL_ONFAULT);
->>
->> To mlock future on fault only:
->> mlockall(MCL_FUTURE | MCL_ONFAULT);
->>
->> To lock everything on fault:
->> mlockall(MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT);
->
-> Makes sense to me. The only remaining and still tricky part would be
-> the munlock{all}(flags) behavior. What should munlock(MLOCK_ONFAULT)
-> do? Keep locked and poppulate the range or simply ignore the flag an
-> just unlock?
+Given that I've gotten some of the details wrong in the past (and I've
+seen others do likewise), I thought it might be helpful to collate the
+best practices for adding a new system call to the kernel.
 
-munlock(all) already lost both MLOCK_LOCKED and MLOCK_ONFAULT flags in 
-this revision, so I suppose in the next revision it will also not accept 
-MLOCK_ONFAULT, and will just munlock whatever was mlocked in either mode.
+Apologies for the wide circulation -- I've tried to include folk who've
+recently added or proposed a system call, as they're most likely to
+have opinions on:
+ - whether this a useful addition to Documentation/
+ - whether the details of the advice are correct and complete.
 
-> I can see some sense to allow munlockall(MCL_FUTURE[|MLOCK_ONFAULT]),
-> munlockall(MCL_CURRENT) resp. munlockall(MCL_CURRENT|MCL_FUTURE) but
-> other combinations sound weird to me.
+Shuah, is there anything more that should be added for the Testing
+section in particular?
 
-The effect of munlockall(MCL_FUTURE|MLOCK_ONFAULT), which you probably 
-intended for converting the onfault to full prepopulation for future 
-mappings, can be achieved by calling mlockall(MCL_FUTURE) (without 
-MLOCK_ONFAULT).
+Thanks,
+David
 
-> Anyway munlock with flags opens new doors of trickiness.
+(With thanks to Andrew Morton for looking over an initial draft, and to
+Michael Kerrisk for suggesting several clarifications and additions.)
 
 
+David Drysdale (1):
+  Documentation: describe how to add a system call
 
+ Documentation/adding-syscalls.txt | 454 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 454 insertions(+)
+ create mode 100644 Documentation/adding-syscalls.txt
+
+--
+2.2.0.rc0.207.ga3a616c
