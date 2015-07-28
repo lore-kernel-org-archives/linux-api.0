@@ -1,7 +1,7 @@
 From: Petr Mladek <pmladek@suse.com>
-Subject: [RFC PATCH 07/14] mm/huge_page: Convert khugepaged() into kthread worker API
-Date: Tue, 28 Jul 2015 16:39:24 +0200
-Message-ID: <1438094371-8326-8-git-send-email-pmladek@suse.com>
+Subject: [RFC PATCH 09/14] ring_buffer: Initialize completions statically in the benchmark
+Date: Tue, 28 Jul 2015 16:39:26 +0200
+Message-ID: <1438094371-8326-10-git-send-email-pmladek@suse.com>
 References: <1438094371-8326-1-git-send-email-pmladek@suse.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1438094371-8326-1-git-send-email-pmladek@suse.com>
@@ -10,206 +10,57 @@ To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, 
 Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-Kthreads are currently implemented as an infinite loop. Each
-has its own variant of checks for terminating, freezing,
-awakening. In many cases it is unclear to say in which state
-it is and sometimes it is done a wrong way.
+It looks strange to initialize the completions repeatedly.
 
-The plan is to convert kthreads into kthread_worker or workqueues
-API. It allows to split the functionality into separate operations.
-It helps to make a better structure. Also it defines a clean state
-where no locks are taken, IRQs blocked, the kthread might sleep
-or even be safely migrated.
-
-The kthread worker API is useful when we want to have a dedicated
-single thread for the work. It helps to make sure that it is
-available when needed. Also it allows a better control, e.g.
-define a scheduling priority.
-
-This patch converts khugepaged() in kthread worker API
-because it modifies the scheduling.
-
-It keeps the functionality except that we do not wakeup
-the worker when it is already created and someone
-calls start() once again.
-
-Note that we could not longer check for kthread_should_stop()
-in the works. The kthread used by the worker has to stay alive
-until all queued works are finished. Instead, we use the existing
-check khugepaged_enabled() that returns false when we are going down.
+This patch uses static initialization. It simplifies the code
+and even helps to get rid of two memory barriers.
 
 Signed-off-by: Petr Mladek <pmladek@suse.com>
 ---
- mm/huge_memory.c | 91 +++++++++++++++++++++++++++++++++++---------------------
- 1 file changed, 57 insertions(+), 34 deletions(-)
+ kernel/trace/ring_buffer_benchmark.c | 12 ++----------
+ 1 file changed, 2 insertions(+), 10 deletions(-)
 
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index c107094f79ba..55733735a487 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -54,7 +54,17 @@ static unsigned int khugepaged_full_scans;
- static unsigned int khugepaged_scan_sleep_millisecs __read_mostly = 10000;
- /* during fragmentation poll the hugepage allocator once every minute */
- static unsigned int khugepaged_alloc_sleep_millisecs __read_mostly = 60000;
--static struct task_struct *khugepaged_thread __read_mostly;
-+
-+static void khugepaged_init_func(struct kthread_work *dummy);
-+static void khugepaged_do_scan_func(struct kthread_work *dummy);
-+static void khugepaged_wait_func(struct kthread_work *dummy);
-+static void khugepaged_cleanup_func(struct kthread_work *dummy);
-+static DEFINE_KTHREAD_WORKER(khugepaged_worker);
-+static DEFINE_KTHREAD_WORK(khugepaged_init_work, khugepaged_init_func);
-+static DEFINE_KTHREAD_WORK(khugepaged_do_scan_work, khugepaged_do_scan_func);
-+static DEFINE_KTHREAD_WORK(khugepaged_wait_work, khugepaged_wait_func);
-+static DEFINE_KTHREAD_WORK(khugepaged_cleanup_work, khugepaged_cleanup_func);
-+
- static DEFINE_MUTEX(khugepaged_mutex);
- static DEFINE_SPINLOCK(khugepaged_mm_lock);
- static DECLARE_WAIT_QUEUE_HEAD(khugepaged_wait);
-@@ -65,7 +75,6 @@ static DECLARE_WAIT_QUEUE_HEAD(khugepaged_wait);
-  */
- static unsigned int khugepaged_max_ptes_none __read_mostly = HPAGE_PMD_NR-1;
+diff --git a/kernel/trace/ring_buffer_benchmark.c b/kernel/trace/ring_buffer_benchmark.c
+index a1503a027ee2..ccb1a0b95f64 100644
+--- a/kernel/trace/ring_buffer_benchmark.c
++++ b/kernel/trace/ring_buffer_benchmark.c
+@@ -24,8 +24,8 @@ struct rb_page {
+ static int wakeup_interval = 100;
  
--static int khugepaged(void *none);
- static int khugepaged_slab_init(void);
- static void khugepaged_slab_exit(void);
+ static int reader_finish;
+-static struct completion read_start;
+-static struct completion read_done;
++static DECLARE_COMPLETION(read_start);
++static DECLARE_COMPLETION(read_done);
  
-@@ -146,25 +155,34 @@ static int start_stop_khugepaged(void)
+ static struct ring_buffer *buffer;
+ static struct task_struct *producer;
+@@ -270,11 +270,6 @@ static void ring_buffer_producer(void)
+ 	trace_printk("End ring buffer hammer\n");
+ 
+ 	if (consumer) {
+-		/* Init both completions here to avoid races */
+-		init_completion(&read_start);
+-		init_completion(&read_done);
+-		/* the completions must be visible before the finish var */
+-		smp_wmb();
+ 		reader_finish = 1;
+ 		/* finish var visible before waking up the consumer */
+ 		smp_wmb();
+@@ -389,13 +384,10 @@ static int ring_buffer_consumer_thread(void *arg)
+ 
+ static int ring_buffer_producer_thread(void *arg)
  {
- 	int err = 0;
- 	if (khugepaged_enabled()) {
--		if (!khugepaged_thread)
--			khugepaged_thread = kthread_run(khugepaged, NULL,
--							"khugepaged");
--		if (unlikely(IS_ERR(khugepaged_thread))) {
--			pr_err("khugepaged: kthread_run(khugepaged) failed\n");
--			err = PTR_ERR(khugepaged_thread);
--			khugepaged_thread = NULL;
--			goto fail;
-+		if (kthread_worker_created(&khugepaged_worker))
-+			goto out;
-+
-+		err = create_kthread_worker(&khugepaged_worker,
-+					    "khugepaged");
-+
-+		if (unlikely(err)) {
-+			pr_err("khugepaged: failed to create kthread worker\n");
-+			goto out;
+-	init_completion(&read_start);
+-
+ 	while (!kthread_should_stop() && !kill_test) {
+ 		ring_buffer_reset(buffer);
+ 
+ 		if (consumer) {
+-			smp_wmb();
+ 			wake_up_process(consumer);
+ 			wait_for_completion(&read_start);
  		}
- 
--		if (!list_empty(&khugepaged_scan.mm_head))
--			wake_up_interruptible(&khugepaged_wait);
-+		queue_kthread_work(&khugepaged_worker,
-+				   &khugepaged_init_work);
-+
-+		if (list_empty(&khugepaged_scan.mm_head))
-+			queue_kthread_work(&khugepaged_worker,
-+					   &khugepaged_wait_work);
-+		else
-+			queue_kthread_work(&khugepaged_worker,
-+					   &khugepaged_do_scan_work);
- 
- 		set_recommended_min_free_kbytes();
--	} else if (khugepaged_thread) {
--		kthread_stop(khugepaged_thread);
--		khugepaged_thread = NULL;
-+	} else if (kthread_worker_created(&khugepaged_worker)) {
-+		queue_kthread_work(&khugepaged_worker,
-+				   &khugepaged_cleanup_work);
-+		wakeup_and_destroy_kthread_worker(&khugepaged_worker);
- 	}
--fail:
-+out:
- 	return err;
- }
- 
-@@ -2780,11 +2798,17 @@ static int khugepaged_has_work(void)
- 
- static int khugepaged_wait_event(void)
- {
--	return !list_empty(&khugepaged_scan.mm_head) ||
--		kthread_should_stop();
-+	return (!list_empty(&khugepaged_scan.mm_head) ||
-+		!khugepaged_enabled());
-+}
-+
-+static void khugepaged_init_func(struct kthread_work *dummy)
-+{
-+	set_freezable();
-+	set_user_nice(current, MAX_NICE);
- }
- 
--static void khugepaged_do_scan(void)
-+static void khugepaged_do_scan_func(struct kthread_work *dummy)
- {
- 	struct page *hpage = NULL;
- 	unsigned int progress = 0, pass_through_head = 0;
-@@ -2799,7 +2823,7 @@ static void khugepaged_do_scan(void)
- 
- 		cond_resched();
- 
--		if (unlikely(kthread_should_stop() || try_to_freeze()))
-+		if (unlikely(!khugepaged_enabled() || try_to_freeze()))
- 			break;
- 
- 		spin_lock(&khugepaged_mm_lock);
-@@ -2816,43 +2840,42 @@ static void khugepaged_do_scan(void)
- 
- 	if (!IS_ERR_OR_NULL(hpage))
- 		put_page(hpage);
-+
-+	if (khugepaged_enabled())
-+		queue_kthread_work(&khugepaged_worker, &khugepaged_wait_work);
- }
- 
--static void khugepaged_wait_work(void)
-+static void khugepaged_wait_func(struct kthread_work *dummy)
- {
- 	if (khugepaged_has_work()) {
- 		if (!khugepaged_scan_sleep_millisecs)
--			return;
-+			goto out;
- 
- 		wait_event_freezable_timeout(khugepaged_wait,
--					     kthread_should_stop(),
-+					     !khugepaged_enabled(),
- 			msecs_to_jiffies(khugepaged_scan_sleep_millisecs));
--		return;
-+		goto out;
- 	}
- 
- 	if (khugepaged_enabled())
- 		wait_event_freezable(khugepaged_wait, khugepaged_wait_event());
-+
-+out:
-+	if (khugepaged_enabled())
-+		queue_kthread_work(&khugepaged_worker,
-+				   &khugepaged_do_scan_work);
- }
- 
--static int khugepaged(void *none)
-+static void khugepaged_cleanup_func(struct kthread_work *dummy)
- {
- 	struct mm_slot *mm_slot;
- 
--	set_freezable();
--	set_user_nice(current, MAX_NICE);
--
--	while (!kthread_should_stop()) {
--		khugepaged_do_scan();
--		khugepaged_wait_work();
--	}
--
- 	spin_lock(&khugepaged_mm_lock);
- 	mm_slot = khugepaged_scan.mm_slot;
- 	khugepaged_scan.mm_slot = NULL;
- 	if (mm_slot)
- 		collect_mm_slot(mm_slot);
- 	spin_unlock(&khugepaged_mm_lock);
--	return 0;
- }
- 
- static void __split_huge_zero_page_pmd(struct vm_area_struct *vma,
 -- 
 1.8.5.6
 
