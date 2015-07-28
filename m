@@ -1,51 +1,44 @@
-From: Andrew Cooper <andrew.cooper3@citrix.com>
-Subject: Re: [Xen-devel] [PATCH 0/8] Use correctly the Xen memory terminologies
- in Linux
-Date: Tue, 28 Jul 2015 22:12:21 +0100
-Message-ID: <55B7F035.6010201@citrix.com>
-References: <1438095769-2560-1-git-send-email-julien.grall@citrix.com>
- <55B7EECD.8050605@zytor.com>
+From: Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH RFC 1/1] Documentation: describe how to add a system call
+Date: Tue, 28 Jul 2015 14:22:44 -0700
+Message-ID: <55B7F2A4.2040902@infradead.org>
+References: <1438083663-24814-1-git-send-email-drysdale@google.com> <1438083663-24814-2-git-send-email-drysdale@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <55B7EECD.8050605@zytor.com>
-Sender: netdev-owner@vger.kernel.org
-To: "H. Peter Anvin" <hpa@zytor.com>, Julien Grall <julien.grall@citrix.com>, xen-devel@lists.xenproject.org
-Cc: linux-fbdev@vger.kernel.org, x86@kernel.org, netdev@vger.kernel.org, Jiri Slaby <jslaby@suse.com>, Thomas Gleixner <tglx@linutronix.de>, Russell King <linux@arm.linux.org.uk>, linux-scsi@vger.kernel.org, Tomi Valkeinen <tomi.valkeinen@ti.com>, stefano.stabellini@eu.citrix.com, Ingo Molnar <mingo@redhat.com>, linux-input@vger.kernel.org, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>, ian.campbell@citrix.com, "James E.J. Bottomley" <JBottomley@odin.com>, Boris Ostrovsky <boris.ostrovsky@oracle.com>, linux-arm-kernel@lists.infradead.org, Juergen Gross <jgross@suse.com>, Wei Liu <wei.liu2@citrix.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-kernel@vger.kernel.org, David Vrabel <david.vrabel@citrix.com>, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, =?windows-1
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1438083663-24814-2-git-send-email-drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+Cc: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, Milosz Tanski <milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org>, Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-fy+rA21nqHI@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 28/07/15 22:06, H. Peter Anvin wrote:
-> On 07/28/2015 08:02 AM, Julien Grall wrote:
->> Hi all,
->>
->> This patch series aims to use the memory terminologies described in
->> include/linux/mm.h [1] for Linux xen code.
->>
->> Linux is using mistakenly MFN when GFN is meant, I suspect this is because the
->> first support of Xen was for PV. This has brought some misimplementation
->> of memory helpers on ARM and make the developper confused about the expected
->> behavior.
->>
->> For instance, with pfn_to_mfn, we expect to get a MFN based on the name.
->> Although, if we look at the implementation on x86, it's returning a GFN.
->> Most of the callers are also using it this way.
->>
->> The first 2 patches of this series is ARM related in order to remove
->> PV specific helpers which should not be used and fixing the implementation of
->> pfn_to_mfn.
->>
->> The rest of the series is here rename most of the usage in the common code
->> of MFN to GFN. I also took the opportunity to replace most of the call to
->> pfn_to_gfn in the common code by page_to_gfn avoid construction such
->> as pfn_to_gfn(page_to_pfn(...).
->>
->> Note the one xen-blkfront will be dropped by 64K series [2], I can include it
->> if necessary.
->>
-> Can we actually get some documentation for Xen before starting to change
-> names around?
+On 07/28/15 04:41, David Drysdale wrote:
+> Add a document describing the process of adding a new system call,
+> including the need for a flags argument for future compatibility, and
+> covering 32-bit/64-bit concerns (albeit in an x86-centric way).
+> 
+> Signed-off-by: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> Reviewed-by: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-http://xenbits.xen.org/gitweb/?p=xen.git;a=commitdiff;h=e758ed14f390342513405dd766e874934573e6cb
+Nice job.  and long overdue.  Thanks.
 
-~Andrew
+Reviewed-by: Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+
+> 
+> ---
+>  Documentation/adding-syscalls.txt | 454 ++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 454 insertions(+)
+>  create mode 100644 Documentation/adding-syscalls.txt
+> 
+> diff --git a/Documentation/adding-syscalls.txt b/Documentation/adding-syscalls.txt
+> new file mode 100644
+> index 000000000000..5f52edda8951
+> --- /dev/null
+> +++ b/Documentation/adding-syscalls.txt
+> @@ -0,0 +1,454 @@
+
+
+
+-- 
+~Randy
