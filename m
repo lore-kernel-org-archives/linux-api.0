@@ -1,125 +1,46 @@
-From: Eric B Munson <emunson@akamai.com>
-Subject: Re: [PATCH V5 0/7] Allow user to request memory to be locked on page
- fault
-Date: Tue, 28 Jul 2015 09:49:42 -0400
-Message-ID: <20150728134942.GB2407@akamai.com>
-References: <1437773325-8623-1-git-send-email-emunson@akamai.com>
- <55B5F4FF.9070604@suse.cz>
- <20150727133555.GA17133@akamai.com>
- <55B63D37.20303@suse.cz>
- <20150727145409.GB21664@akamai.com>
- <20150728111725.GG24972@dhcp22.suse.cz>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH RFC 0/1] Document how to add a new syscall
+Date: Tue, 28 Jul 2015 07:59:16 -0600
+Message-ID: <55B78AB4.2010807@osg.samsung.com>
+References: <1438083663-24814-1-git-send-email-drysdale@google.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="61jdw2sOBCFtR2d/"
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150728111725.GG24972@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Vlastimil Babka <vbabka@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Shuah Khan <shuahkh@osg.samsung.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Jonathan Corbet <corbet@lwn.net>, Ralf Baechle <ralf@linux-mips.org>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1438083663-24814-1-git-send-email-drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+Cc: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, Milosz Tanski <milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org>, Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-fy+rA21nqHI@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On 07/28/2015 05:41 AM, David Drysdale wrote:
+> Given that I've gotten some of the details wrong in the past (and I've
+> seen others do likewise), I thought it might be helpful to collate the
+> best practices for adding a new system call to the kernel.
+> 
+> Apologies for the wide circulation -- I've tried to include folk who've
+> recently added or proposed a system call, as they're most likely to
+> have opinions on:
+>  - whether this a useful addition to Documentation/
+>  - whether the details of the advice are correct and complete.
+> 
+> Shuah, is there anything more that should be added for the Testing
+> section in particular?
+> 
 
---61jdw2sOBCFtR2d/
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+David,
 
-On Tue, 28 Jul 2015, Michal Hocko wrote:
+Looks good. You could add a one liner on in some cases, it might be
+necessary to install headers before test compiles. Other than that,
+the information looks good.
 
-> [I am sorry but I didn't get to this sooner.]
->=20
-> On Mon 27-07-15 10:54:09, Eric B Munson wrote:
-> > Now that VM_LOCKONFAULT is a modifier to VM_LOCKED and
-> > cannot be specified independentally, it might make more sense to mirror
-> > that relationship to userspace.  Which would lead to soemthing like the
-> > following:
->=20
-> A modifier makes more sense.
-> =20
-> > To lock and populate a region:
-> > mlock2(start, len, 0);
-> >=20
-> > To lock on fault a region:
-> > mlock2(start, len, MLOCK_ONFAULT);
-> >=20
-> > If LOCKONFAULT is seen as a modifier to mlock, then having the flags
-> > argument as 0 mean do mlock classic makes more sense to me.
-> >=20
-> > To mlock current on fault only:
-> > mlockall(MCL_CURRENT | MCL_ONFAULT);
-> >=20
-> > To mlock future on fault only:
-> > mlockall(MCL_FUTURE | MCL_ONFAULT);
-> >=20
-> > To lock everything on fault:
-> > mlockall(MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT);
->=20
-> Makes sense to me. The only remaining and still tricky part would be
-> the munlock{all}(flags) behavior. What should munlock(MLOCK_ONFAULT)
-> do? Keep locked and poppulate the range or simply ignore the flag an
-> just unlock?
->=20
-> I can see some sense to allow munlockall(MCL_FUTURE[|MLOCK_ONFAULT]),
-> munlockall(MCL_CURRENT) resp. munlockall(MCL_CURRENT|MCL_FUTURE) but
-> other combinations sound weird to me.
->=20
-> Anyway munlock with flags opens new doors of trickiness.
-
-In the current revision there are no new munlock[all] system calls
-introduced.  munlockall() unconditionally cleared both MCL_CURRENT and
-MCL_FUTURE before the set and now unconditionally clears all three.
-munlock() does the same for VM_LOCK and VM_LOCKONFAULT.  If the user
-wants to adjust mlockall flags today, they need to call mlockall a
-second time with the new flags, this remains true for mlockall after
-this set and the same behavior is mirrored in mlock2.  The only
-remaining question I have is should we have 2 new mlockall flags so that
-the caller can explicitly set VM_LOCKONFAULT in the mm->def_flags vs
-locking all current VMAs on fault.  I ask because if the user wants to
-lock all current VMAs the old way, but all future VMAs on fault they
-have to call mlockall() twice:
-
-	mlockall(MCL_CURRENT);
-	mlockall(MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT);
-
-This has the side effect of converting all the current VMAs to
-VM_LOCKONFAULT, but because they were all made present and locked in the
-first call, this should not matter in most cases.  The catch is that,
-like mmap(MAP_LOCKED), mlockall() does not communicate if mm_populate()
-fails.  This has been true of mlockall() from the beginning so I don't
-know if it needs more than an entry in the man page to clarify (which I
-will add when I add documentation for MCL_ONFAULT).  In a much less
-likely corner case, it is not possible in the current setup to request
-all current VMAs be VM_LOCKONFAULT and all future be VM_LOCKED.
+thanks,
+-- Shuah
 
 
---61jdw2sOBCFtR2d/
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBAgAGBQJVt4h2AAoJELbVsDOpoOa9oHIQAIcQd4UyZvk7S3Gk5qbrOB18
-DBwAWsh9b5MmgjqQJ6VY9tveNG54UTtmGIt5ToxjkoJdN+y7i0Bcen7t5sh0ZJpY
-cm7qGFkP9Mz+zp0cnwNi6SxjhmNdPZbFgcq7JPD4eXG73Guha/ov1yKGUCaE9I8z
-NhWJEDf2QaXAeTYZMAp3QsZUE2A2vGtpVvgqXfVsoFiTXdO59wFfj7ZWs7Tvd8tA
-7gFjWP2gUd3F5CxKVx7W7CujDyjqPYqjGe6GRq4RXvjgKlnzn19Dz71XM40WlQfy
-mK1jm7TyXcFLT7oxcCJfzdiy72ViZ3n+lv6QbshOBkrmbTKk+WkPcmoY84Gg05mz
-GyR0BeJ02Q/QWMPlCHTq8E+iBgRYrGXQxC7/0zjXizRCUxMoNtMbzYmEo63jHIUS
-BpiaDFIS4b48qznxLcKn1zeG6I1tiRgVcYVLWOieVBFgKG5g0ae7Gsy5FhTHwohn
-TFbs8PMRs+bZcLrY8dFFsS7/l7EBx/KZmA2Zcpj+Lcdr/LdwokV8rDN/R23spu1a
-NVMoBoBXxXuDqA1pUTVCoBimDF2U5GArsy0yjHnVWzjZNqQSh1+eTEEZp+lu6eeC
-briVmyabn8fCItemDJrAK/6RdvzbqHHri7Ny2d3GSyMPO36aM/lVN1wlF1qMZ3GA
-9sHKsbhENoi90n42sc8Q
-=YK5t
------END PGP SIGNATURE-----
-
---61jdw2sOBCFtR2d/--
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
