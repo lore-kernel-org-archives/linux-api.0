@@ -1,50 +1,61 @@
-From: Michel Lespinasse <walken@google.com>
+From: Michal Hocko <mhocko@kernel.org>
 Subject: Re: [PATCH -mm v9 0/8] idle memory tracking
-Date: Wed, 29 Jul 2015 08:08:22 -0700
-Message-ID: <CANN689Euq3Y-CHQo8q88vzFAYZX4S6rK+rZRfbuSKfS74u=gcg@mail.gmail.com>
+Date: Wed, 29 Jul 2015 17:08:55 +0200
+Message-ID: <20150729150855.GM15801@dhcp22.suse.cz>
 References: <cover.1437303956.git.vdavydov@parallels.com>
-	<20150729123629.GI15801@dhcp22.suse.cz>
-	<20150729135907.GT8100@esperanza>
-	<CANN689HJX2ZL891uOd8TW9ct4PNH9d5odQZm86WMxkpkCWhA-w@mail.gmail.com>
-	<20150729144539.GU8100@esperanza>
+ <20150729123629.GI15801@dhcp22.suse.cz>
+ <20150729135907.GT8100@esperanza>
+ <CANN689HJX2ZL891uOd8TW9ct4PNH9d5odQZm86WMxkpkCWhA-w@mail.gmail.com>
+ <20150729144539.GU8100@esperanza>
 Mime-Version: 1.0
-Content-Type: multipart/alternative; boundary=001a11398bee328a01051c04f509
+Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
 In-Reply-To: <20150729144539.GU8100@esperanza>
 Sender: owner-linux-mm@kvack.org
 To: Vladimir Davydov <vdavydov@parallels.com>
-Cc: Michal Hocko <mhocko@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Andres Lagar-Cavilla <andreslc@google.com>, Minchan Kim <minchan@kernel.org>, Raghavendra K T <raghavendra.kt@linux.vnet.ibm.com>, Johannes Weiner <hannes@cmpxchg.org>, Greg Thelen <gthelen@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: Michel Lespinasse <walken@google.com>, Andrew Morton <akpm@linux-foundation.org>, Andres Lagar-Cavilla <andreslc@google.com>, Minchan Kim <minchan@kernel.org>, Raghavendra K T <raghavendra.kt@linux.vnet.ibm.com>, Johannes Weiner <hannes@cmpxchg.org>, Greg Thelen <gthelen@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
---001a11398bee328a01051c04f509
-Content-Type: text/plain; charset=UTF-8
-
-On Wed, Jul 29, 2015 at 7:45 AM, Vladimir Davydov <vdavydov@parallels.com>
-wrote:
+On Wed 29-07-15 17:45:39, Vladimir Davydov wrote:
+> On Wed, Jul 29, 2015 at 07:12:13AM -0700, Michel Lespinasse wrote:
+> > On Wed, Jul 29, 2015 at 6:59 AM, Vladimir Davydov <vdavydov@parallels.com>
+> > wrote:
+> > >> I guess the primary reason to rely on the pfn rather than the LRU walk,
+> > >> which would be more targeted (especially for memcg cases), is that we
+> > >> cannot hold lru lock for the whole LRU walk and we cannot continue
+> > >> walking after the lock is dropped. Maybe we can try to address that
+> > >> instead? I do not think this is easy to achieve but have you considered
+> > >> that as an option?
+> > >
+> > > Yes, I have, and I've come to a conclusion it's not doable, because LRU
+> > > lists can be constantly rotating at an arbitrary rate. If you have an
+> > > idea in mind how this could be done, please share.
+> > >
+> > > Speaking of LRU-vs-PFN walk, iterating over PFNs has its own advantages:
+> > >  - You can distribute a walk in time to avoid CPU bursts.
+> > >  - You are free to parallelize the scanner as you wish to decrease the
+> > >    scan time.
+> > 
+> > There is a third way: one could go through every MM in the system and scan
+> > their page tables. Doing things that way turns out to be generally faster
+> > than scanning by physical address, because you don't have to go through
+> > RMAP for every page. But, you end up needing to take the mmap_sem lock of
+> > every MM (in turn) while scanning them, and that degrades quickly under
+> > memory load, which is exactly when you most need this feature. So, scan by
+> > address is still what we use here.
+> 
 > Page table scan approach has the inherent problem - it ignores unmapped
 > page cache. If a workload does a lot of read/write or map-access-unmap
 > operations, we won't be able to even roughly estimate its wss.
 
-You can catch that in mark_page_accessed on those paths, though.
+That page cache is trivially reclaimable if it is clean. If it needs
+writeback then it is non-idle only until the next writeback. So why does
+it matter for the estimation?
 
 -- 
-Michel "Walken" Lespinasse
-A program is never fully debugged until the last user dies.
-
---001a11398bee328a01051c04f509
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-On Wed, Jul 29, 2015 at 7:45 AM, Vladimir Davydov &lt;<a href=3D"mailto:vda=
-vydov@parallels.com">vdavydov@parallels.com</a>&gt; wrote:<br>&gt; Page tab=
-le scan approach has the inherent problem - it ignores unmapped<br>&gt; pag=
-e cache. If a workload does a lot of read/write or map-access-unmap<br>&gt;=
- operations, we won&#39;t be able to even roughly estimate its wss.<br><br>=
-You can catch that in mark_page_accessed on those paths, though.<br><br>-- =
-<br>Michel &quot;Walken&quot; Lespinasse<br>A program is never fully debugg=
-ed until the last user dies.<br>
-
---001a11398bee328a01051c04f509--
+Michal Hocko
+SUSE Labs
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
