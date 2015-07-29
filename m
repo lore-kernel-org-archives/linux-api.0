@@ -1,34 +1,90 @@
-From: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+From: Michel Lespinasse <walken@google.com>
 Subject: Re: [PATCH -mm v9 0/8] idle memory tracking
-Date: Wed, 29 Jul 2015 18:31:35 +0300
-Message-ID: <20150729153135.GW8100@esperanza>
+Date: Wed, 29 Jul 2015 08:34:52 -0700
+Message-ID: <CANN689GNzwjc5AsAfSGRWM=Tr=ouHSgJ76fSvvPvA_hmiGjFSA@mail.gmail.com>
 References: <cover.1437303956.git.vdavydov@parallels.com>
- <20150729123629.GI15801@dhcp22.suse.cz>
- <20150729135907.GT8100@esperanza>
- <CANN689HJX2ZL891uOd8TW9ct4PNH9d5odQZm86WMxkpkCWhA-w@mail.gmail.com>
- <20150729144539.GU8100@esperanza>
- <CANN689Euq3Y-CHQo8q88vzFAYZX4S6rK+rZRfbuSKfS74u=gcg@mail.gmail.com>
+	<20150729123629.GI15801@dhcp22.suse.cz>
+	<20150729135907.GT8100@esperanza>
+	<CANN689HJX2ZL891uOd8TW9ct4PNH9d5odQZm86WMxkpkCWhA-w@mail.gmail.com>
+	<20150729144539.GU8100@esperanza>
+	<CANN689Euq3Y-CHQo8q88vzFAYZX4S6rK+rZRfbuSKfS74u=gcg@mail.gmail.com>
+	<20150729153135.GW8100@esperanza>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CANN689Euq3Y-CHQo8q88vzFAYZX4S6rK+rZRfbuSKfS74u=gcg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Raghavendra K T <raghavendra.kt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Greg Thelen <gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: multipart/alternative; boundary=94eb2c0335d0f2164a051c055333
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20150729153135.GW8100@esperanza>
+Sender: owner-linux-mm@kvack.org
+To: Vladimir Davydov <vdavydov@parallels.com>
+Cc: Michal Hocko <mhocko@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Andres Lagar-Cavilla <andreslc@google.com>, Minchan Kim <minchan@kernel.org>, Raghavendra K T <raghavendra.kt@linux.vnet.ibm.com>, Johannes Weiner <hannes@cmpxchg.org>, Greg Thelen <gthelen@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 29, 2015 at 08:08:22AM -0700, Michel Lespinasse wrote:
-> On Wed, Jul 29, 2015 at 7:45 AM, Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-> wrote:
-> > Page table scan approach has the inherent problem - it ignores unmapped
-> > page cache. If a workload does a lot of read/write or map-access-unmap
-> > operations, we won't be able to even roughly estimate its wss.
-> 
-> You can catch that in mark_page_accessed on those paths, though.
+--94eb2c0335d0f2164a051c055333
+Content-Type: text/plain; charset=UTF-8
 
-Actually, the problem here is how to find an unmapped page cache page
-*to mark it idle*, not to mark it accessed.
+On Wed, Jul 29, 2015 at 8:31 AM, Vladimir Davydov <vdavydov@parallels.com>
+wrote:
 
-Thanks,
-Vladimir
+> On Wed, Jul 29, 2015 at 08:08:22AM -0700, Michel Lespinasse wrote:
+> > On Wed, Jul 29, 2015 at 7:45 AM, Vladimir Davydov <
+> vdavydov@parallels.com>
+> > wrote:
+> > > Page table scan approach has the inherent problem - it ignores unmapped
+> > > page cache. If a workload does a lot of read/write or map-access-unmap
+> > > operations, we won't be able to even roughly estimate its wss.
+> >
+> > You can catch that in mark_page_accessed on those paths, though.
+>
+> Actually, the problem here is how to find an unmapped page cache page
+> *to mark it idle*, not to mark it accessed.
+>
+
+Ah, yes.
+
+When I tried that I was still scanning memory by address at the end just to
+compute such totals - but I did not have to do rmap at that point anymore.
+
+It did look incredibly lame, though.
+
+-- 
+Michel "Walken" Lespinasse
+A program is never fully debugged until the last user dies.
+
+--94eb2c0335d0f2164a051c055333
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div class=3D"gmail_quote">On Wed, Jul 29, 2015 at 8:31 AM, Vladimir Davydo=
+v <span dir=3D"ltr">&lt;<a href=3D"mailto:vdavydov@parallels.com" target=3D=
+"_blank">vdavydov@parallels.com</a>&gt;</span> wrote:<br><blockquote class=
+=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
+ing-left:1ex">On Wed, Jul 29, 2015 at 08:08:22AM -0700, Michel Lespinasse w=
+rote:<br>
+&gt; On Wed, Jul 29, 2015 at 7:45 AM, Vladimir Davydov &lt;<a href=3D"mailt=
+o:vdavydov@parallels.com">vdavydov@parallels.com</a>&gt;<br>
+<span class=3D"">&gt; wrote:<br>
+&gt; &gt; Page table scan approach has the inherent problem - it ignores un=
+mapped<br>
+&gt; &gt; page cache. If a workload does a lot of read/write or map-access-=
+unmap<br>
+&gt; &gt; operations, we won&#39;t be able to even roughly estimate its wss=
+.<br>
+&gt;<br>
+&gt; You can catch that in mark_page_accessed on those paths, though.<br>
+<br>
+</span>Actually, the problem here is how to find an unmapped page cache pag=
+e<br>
+*to mark it idle*, not to mark it accessed.<br></blockquote><div><br>Ah, ye=
+s.<br><br>When I tried that I was still scanning memory by address at the e=
+nd just to compute such totals - but I did not have to do rmap at that poin=
+t anymore.<br><br>It did look incredibly lame, though.<br clear=3D"all"></d=
+iv></div><br>-- <br><div class=3D"gmail_signature">Michel &quot;Walken&quot=
+; Lespinasse<br>A program is never fully debugged until the last user dies.=
+</div>
+
+--94eb2c0335d0f2164a051c055333--
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
