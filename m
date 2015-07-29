@@ -1,38 +1,122 @@
-From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Subject: Re: [RFC PATCH 06/14] kthread: Add kthread_worker_created()
-Date: Wed, 29 Jul 2015 12:07:37 +0200
-Message-ID: <20150729100737.GJ2673@pathway.suse.cz>
-References: <1438094371-8326-1-git-send-email-pmladek@suse.com>
- <1438094371-8326-7-git-send-email-pmladek@suse.com>
- <20150728172657.GC5322@mtj.duckdns.org>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH V5 0/7] Allow user to request memory to be locked on page
+ fault
+Date: Wed, 29 Jul 2015 12:45:32 +0200
+Message-ID: <20150729104532.GE15801@dhcp22.suse.cz>
+References: <1437773325-8623-1-git-send-email-emunson@akamai.com>
+ <55B5F4FF.9070604@suse.cz>
+ <20150727133555.GA17133@akamai.com>
+ <55B63D37.20303@suse.cz>
+ <20150727145409.GB21664@akamai.com>
+ <20150728111725.GG24972@dhcp22.suse.cz>
+ <20150728134942.GB2407@akamai.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-alpha-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150728172657.GC5322-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <20150728134942.GB2407@akamai.com>
+Sender: linux-alpha-owner@vger.kernel.org
+To: Eric B Munson <emunson@akamai.com>
+Cc: Vlastimil Babka <vbabka@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Shuah Khan <shuahkh@osg.samsung.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Jonathan Corbet <corbet@lwn.net>, Ralf Baechle <ralf@linux-mips.org>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue 2015-07-28 13:26:57, Tejun Heo wrote:
-> Hello,
+On Tue 28-07-15 09:49:42, Eric B Munson wrote:
+> On Tue, 28 Jul 2015, Michal Hocko wrote:
 > 
-> On Tue, Jul 28, 2015 at 04:39:23PM +0200, Petr Mladek wrote:
-> > I would like to make cleaner kthread worker API and hide the definition
-> > of struct kthread_worker. It will prevent any custom hacks and make
-> > the API more secure.
+> > [I am sorry but I didn't get to this sooner.]
 > > 
-> > This patch provides an API to check if the worker has been created
-> > and hides the implementation details.
+> > On Mon 27-07-15 10:54:09, Eric B Munson wrote:
+> > > Now that VM_LOCKONFAULT is a modifier to VM_LOCKED and
+> > > cannot be specified independentally, it might make more sense to mirror
+> > > that relationship to userspace.  Which would lead to soemthing like the
+> > > following:
+> > 
+> > A modifier makes more sense.
+> >  
+> > > To lock and populate a region:
+> > > mlock2(start, len, 0);
+> > > 
+> > > To lock on fault a region:
+> > > mlock2(start, len, MLOCK_ONFAULT);
+> > > 
+> > > If LOCKONFAULT is seen as a modifier to mlock, then having the flags
+> > > argument as 0 mean do mlock classic makes more sense to me.
+> > > 
+> > > To mlock current on fault only:
+> > > mlockall(MCL_CURRENT | MCL_ONFAULT);
+> > > 
+> > > To mlock future on fault only:
+> > > mlockall(MCL_FUTURE | MCL_ONFAULT);
+> > > 
+> > > To lock everything on fault:
+> > > mlockall(MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT);
+> > 
+> > Makes sense to me. The only remaining and still tricky part would be
+> > the munlock{all}(flags) behavior. What should munlock(MLOCK_ONFAULT)
+> > do? Keep locked and poppulate the range or simply ignore the flag an
+> > just unlock?
+> > 
+> > I can see some sense to allow munlockall(MCL_FUTURE[|MLOCK_ONFAULT]),
+> > munlockall(MCL_CURRENT) resp. munlockall(MCL_CURRENT|MCL_FUTURE) but
+> > other combinations sound weird to me.
+> > 
+> > Anyway munlock with flags opens new doors of trickiness.
 > 
-> Maybe it'd be a better idea to make create_kthread_worker() allocate
-> and return pointer to struct kthread_worker?  You're adding
-> create/destroy interface anyway, it won't need a separate created
-> query function and the synchronization rules would be self-evident.
+> In the current revision there are no new munlock[all] system calls
+> introduced.  munlockall() unconditionally cleared both MCL_CURRENT and
+> MCL_FUTURE before the set and now unconditionally clears all three.
+> munlock() does the same for VM_LOCK and VM_LOCKONFAULT. 
 
-Makes sense. I actually did it this way in one temporary version and reverted
-it from some ugly reason.
+OK if new munlock{all}(flags) is not introduced then this is much saner
+IMO.
 
-Best Regards,
-Petr
+> If the user
+> wants to adjust mlockall flags today, they need to call mlockall a
+> second time with the new flags, this remains true for mlockall after
+> this set and the same behavior is mirrored in mlock2. 
+
+OK, this makes sense to me.
+
+> The only
+> remaining question I have is should we have 2 new mlockall flags so that
+> the caller can explicitly set VM_LOCKONFAULT in the mm->def_flags vs
+> locking all current VMAs on fault.  I ask because if the user wants to
+> lock all current VMAs the old way, but all future VMAs on fault they
+> have to call mlockall() twice:
+> 
+> 	mlockall(MCL_CURRENT);
+> 	mlockall(MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT);
+> 
+> This has the side effect of converting all the current VMAs to
+> VM_LOCKONFAULT, but because they were all made present and locked in the
+> first call, this should not matter in most cases. 
+
+I think this is OK (worth documenting though) considering that ONFAULT
+is just modifier for the current mlock* operation. The memory is locked
+the same way for both - aka once the memory is present you do not know
+whether it was done during mlock call or later during the fault.
+
+> The catch is that,
+> like mmap(MAP_LOCKED), mlockall() does not communicate if mm_populate()
+> fails.  This has been true of mlockall() from the beginning so I don't
+> know if it needs more than an entry in the man page to clarify (which I
+> will add when I add documentation for MCL_ONFAULT).
+
+Yes this is true but unlike mmap it seems fixable I guess. We do not have
+to unmap and we can downgrade mmap_sem to read and the fault so nobody
+can race with a concurent mlock.
+
+> In a much less
+> likely corner case, it is not possible in the current setup to request
+> all current VMAs be VM_LOCKONFAULT and all future be VM_LOCKED.
+
+Vlastimil has already pointed that out. MCL_FUTURE doesn't clear
+MCL_CURRENT. I was quite surprised in the beginning but it makes a
+perfect sense. mlockall call shouldn't lead into munlocking, that would
+be just weird. Clearing MCL_FUTURE on MCL_CURRENT makes sense on the
+other hand because the request is explicit about _current_ memory and it
+doesn't lead to any munlocking.
+
+-- 
+Michal Hocko
+SUSE Labs
