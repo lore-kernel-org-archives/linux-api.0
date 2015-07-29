@@ -1,92 +1,51 @@
-From: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: Re: [PATCH v7 4/6] block: loop: prepare for supporing direct IO
-Date: Wed, 29 Jul 2015 07:21:47 -0400
-Message-ID: <CACVXFVMOuCk0bHZfrV=VZWLtgsa4oWxrpnu6aoB1LKZ50UMhZA@mail.gmail.com>
-References: <1437061068-26118-1-git-send-email-ming.lei@canonical.com>
-	<1437061068-26118-5-git-send-email-ming.lei@canonical.com>
-	<20150727084020.GA28336@infradead.org>
-	<CACVXFVOvnVHNtTkt_kiNZu9BuZHZ==EF4y3qXx+Qo=LHoytODQ@mail.gmail.com>
-	<20150727094530.GA15507@infradead.org>
-	<CACVXFVMKycx768HtAJXMgEZNjsQrNm_f3UzW9kUysSHAMM5FPQ@mail.gmail.com>
-	<20150727173331.GA17594@infradead.org>
-	<CACVXFVMkU0TLxys_e3arGChdmgM-P2zQhPBfYx5kUXGbUtd_8A@mail.gmail.com>
-	<20150729084102.GB16638@dastard>
+From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
+Subject: Re: [RFC PATCH 13/14] kthread_worker: Add
+ set_kthread_worker_user_nice()
+Date: Wed, 29 Jul 2015 13:23:54 +0200
+Message-ID: <20150729112354.GK2673@pathway.suse.cz>
+References: <1438094371-8326-1-git-send-email-pmladek@suse.com>
+ <1438094371-8326-14-git-send-email-pmladek@suse.com>
+ <20150728174058.GF5322@mtj.duckdns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150729084102.GB16638@dastard>
+Content-Disposition: inline
+In-Reply-To: <20150728174058.GF5322-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Justin M. Forbes" <jforbes-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 29, 2015 at 4:41 AM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
-> On Wed, Jul 29, 2015 at 03:33:52AM -0400, Ming Lei wrote:
->> On Mon, Jul 27, 2015 at 1:33 PM, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
->> > On Mon, Jul 27, 2015 at 05:53:33AM -0400, Ming Lei wrote:
->> >> Because size has to be 4k aligned too.
->> >
->> > Yes.  But again I don't see any reason to limit us to a hardcoded 512
->> > byte block size here, especially considering the patches to finally
->>
->> From loop block's view, the request size can be any count of 512-byte
->> sectors, then the transfer size to backing device can't  guarantee to be
->> 4k aligned always.
->
-> In theory, yes. In practise, doesn't happen very often.
->
->> > allow enabling other block sizes from userspace.
->>
->> I have some questions about the patchset, and looks the author doesn't
->> reply it yet.
->>
->> On Mon, Jul 27, 2015 at 6:06 PM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
->> >> Because size has to be 4k aligned too.
->> >
->> > So check that, too. Any >= 4k block size filesystem should be doing
->> > mostly 4k aligned and sized IO...
->>
->> I guess you mean we only use direct IO for the 4k aligned and sized IO?
->> If so, that won't be efficient because the page cache has to be flushed
->> during the switch.
->
-> It will be extremely rare for a 4k block size filesystem to do
-> anything other than 4k aligned and sized IO. Think about it for a
-> minute: what does the page cache do to unaligned IO patterns (i.e.
-> buffered IO)?  It does IO in page sizes, and so if the application
-> if doing badly aligned or sized IO with buffered IO, then the
-> underlying device will only ever size page sized and aligned IO.
->
-> Hence sector aligned IO will only come from applications doing
-> direct IO.  If the application is doing direct IO and it's not
-> properly aligned, then it already is going to get sucky performance
-> because most filesystem serialise sub-block size direct IO because
-> concurrent sub-block IOs to the same block usually leads to data
-> corruption.
+On Tue 2015-07-28 13:40:58, Tejun Heo wrote:
+> On Tue, Jul 28, 2015 at 04:39:30PM +0200, Petr Mladek wrote:
+> ...
+> > +/*
+> > + * set_kthread_worker_user_nice - set scheduling priority for the kthread worker
+> > + * @worker: target kthread_worker
+> > + * @nice: niceness value
+> > + */
+> > +void set_kthread_worker_user_nice(struct kthread_worker *worker, long nice)
+> > +{
+> > +	struct task_struct *task = worker->task;
+> > +
+> > +	WARN_ON(!task);
+> > +	set_user_nice(task, nice);
+> > +}
+> > +EXPORT_SYMBOL(set_kthread_worker_user_nice);
+> 
+> kthread_worker is explcitly associated with a single kthread.  Why do
+> we want to create explicit wrappers for kthread operations?  This is
+> encapsulation for encapsulation's sake.  It doesn't buy us anything at
+> all.  Just let the user access the associated kthread and operate on
+> it.
 
-The blocksize of filesysten over loop can be 512, 1024, 2048, and
-suppose sector size of backing device is 4096, then filesystem
-can see aligned direct IO when IO size/offset from application is aligned
-with fs block size, but loop still can't do direct IO for all this
-kind of requests
-against backing file.
+My plan is to make the API cleaner and hide struct kthread_worker
+definition into kthread.c. It would prevent anyone doing any hacks
+with it. BTW, we do the same with struct workqueue_struct.
 
-Another case is that application may access loop block directly, such
-as 'dd if=/dev/loopN', but it may not be common, and maybe it needn't
-to consider.
+Another possibility would be to add helper function to get the
+associated task struct but this might cause inconsistencies when
+the worker is restarted.
 
-Thanks,
-
->
-> So, really, sector aligned/sized direct IO is a sucky performance
-> path before we even get to the loop device, so we don't really need
-> to care how fast the loop device handles this case. The loop device
-> just needs to ensure that it doesn't corrupt data when badly aligned
-> IOs come in... ;)
->
-> Cheers,
->
-> Dave.
-> --
-> Dave Chinner
-> david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+Best Regards,
+Petr
