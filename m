@@ -1,95 +1,61 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [PATCH v7 4/6] block: loop: prepare for supporing direct IO
-Date: Thu, 30 Jul 2015 08:08:29 +1000
-Message-ID: <20150729220829.GM3902@dastard>
-References: <1437061068-26118-1-git-send-email-ming.lei@canonical.com>
- <1437061068-26118-5-git-send-email-ming.lei@canonical.com>
- <20150727084020.GA28336@infradead.org>
- <CACVXFVOvnVHNtTkt_kiNZu9BuZHZ==EF4y3qXx+Qo=LHoytODQ@mail.gmail.com>
- <20150727094530.GA15507@infradead.org>
- <CACVXFVMKycx768HtAJXMgEZNjsQrNm_f3UzW9kUysSHAMM5FPQ@mail.gmail.com>
- <20150727173331.GA17594@infradead.org>
- <CACVXFVMkU0TLxys_e3arGChdmgM-P2zQhPBfYx5kUXGbUtd_8A@mail.gmail.com>
- <20150729084102.GB16638@dastard>
- <CACVXFVMOuCk0bHZfrV=VZWLtgsa4oWxrpnu6aoB1LKZ50UMhZA@mail.gmail.com>
+From: NeilBrown <neil@brown.name>
+Subject: Re: [Gta04-owner] [PATCH 08/14] twl4030_charger: allow max_current
+ to be managed via sysfs.
+Date: Thu, 30 Jul 2015 08:10:46 +1000
+Message-ID: <20150730081046.027ba82e@home.neil.brown.name>
+References: <20150322231635.23789.70149.stgit@notabene.brown>
+	<20150322232029.23789.13768.stgit@notabene.brown>
+	<a05a88a7a3ea4519ada7216ab5bfe097@rommel.stw.uni-erlangen.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CACVXFVMOuCk0bHZfrV=VZWLtgsa4oWxrpnu6aoB1LKZ50UMhZA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Justin M. Forbes" <jforbes-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <a05a88a7a3ea4519ada7216ab5bfe097@rommel.stw.uni-erlangen.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: jake42 <jake42@rommel.stw.uni-erlangen.de>
+Cc: Sebastian Reichel <sre@kernel.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, inux-pm@vger.kernel.org, Pavel Machek <pavel@ucw.cz>, linux-omap@vger.kernel.org, Lee Jones <lee.jones@linaro.org>, List for communicating with real GTA04 owners <gta04-owner@goldelico.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 29, 2015 at 07:21:47AM -0400, Ming Lei wrote:
-> On Wed, Jul 29, 2015 at 4:41 AM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
-> > On Wed, Jul 29, 2015 at 03:33:52AM -0400, Ming Lei wrote:
-> >> On Mon, Jul 27, 2015 at 1:33 PM, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
-> >> > On Mon, Jul 27, 2015 at 05:53:33AM -0400, Ming Lei wrote:
-> >> >> Because size has to be 4k aligned too.
-> >> >
-> >> > Yes.  But again I don't see any reason to limit us to a hardcoded 512
-> >> > byte block size here, especially considering the patches to finally
-> >>
-> >> From loop block's view, the request size can be any count of 512-byte
-> >> sectors, then the transfer size to backing device can't  guarantee to be
-> >> 4k aligned always.
-> >
-> > In theory, yes. In practise, doesn't happen very often.
-> >
-> >> > allow enabling other block sizes from userspace.
-> >>
-> >> I have some questions about the patchset, and looks the author doesn't
-> >> reply it yet.
-> >>
-> >> On Mon, Jul 27, 2015 at 6:06 PM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
-> >> >> Because size has to be 4k aligned too.
-> >> >
-> >> > So check that, too. Any >= 4k block size filesystem should be doing
-> >> > mostly 4k aligned and sized IO...
-> >>
-> >> I guess you mean we only use direct IO for the 4k aligned and sized IO?
-> >> If so, that won't be efficient because the page cache has to be flushed
-> >> during the switch.
-> >
-> > It will be extremely rare for a 4k block size filesystem to do
-> > anything other than 4k aligned and sized IO. Think about it for a
-> > minute: what does the page cache do to unaligned IO patterns (i.e.
-> > buffered IO)?  It does IO in page sizes, and so if the application
-> > if doing badly aligned or sized IO with buffered IO, then the
-> > underlying device will only ever size page sized and aligned IO.
-> >
-> > Hence sector aligned IO will only come from applications doing
-> > direct IO.  If the application is doing direct IO and it's not
-> > properly aligned, then it already is going to get sucky performance
-> > because most filesystem serialise sub-block size direct IO because
-> > concurrent sub-block IOs to the same block usually leads to data
-> > corruption.
+On Mon, 23 Mar 2015 13:14:50 +0100 jake42
+<jake42@rommel.stw.uni-erlangen.de> wrote:
+
+> Hello Neil,
 > 
-> The blocksize of filesysten over loop can be 512, 1024, 2048, and
-> suppose sector size of backing device is 4096, then filesystem
-> can see aligned direct IO when IO size/offset from application is aligned
-> with fs block size, but loop still can't do direct IO for all this
-> kind of requests
-> against backing file.
+> some suggestions:
+> 
+> On 23.03.2015 00:20, NeilBrown wrote:
+> > From: NeilBrown <neilb@suse.de>
+> > diff --git a/Documentation/ABI/testing/sysfs-class-power-twl4030
+> > b/Documentation/ABI/testing/sysfs-class-power-twl4030
+> > new file mode 100644
+> > index 000000000000..06092209d851
+> > --- /dev/null
+> > +++ b/Documentation/ABI/testing/sysfs-class-power-twl4030
+> > @@ -0,0 +1,15 @@
+> > +What: /sys/class/power_supply/twl4030_ac/max_current
+> > +      /sys/class/power_supply/twl4030_usb/max_current
+> > +Description:
+> > +	Read/Write limit on current which which may
+> one less which                        ^^
+> > +	be drawn from the ac (Accessory Charger) or
+> > +	USB port.
+> > +
+> > +	Value is in micro-Amps.
+> > +
+> > +	Value is set automatically to an appropriate
+> > +	value when a cable is plugged on unplugged.
+> s/on/or                               ^^
+> > +
+> > +	Value can the set by writing to the attribute.
+>                    ^^ be set?
+> > +	The change will only persist until the next
+> > +	plug event.  These event are reported via udev.
+> 
+> Regards
+> Jake
+> 
 
-Sure, but again you're talking about a fairly rare configuration.
-The vast majority of filesystems use 4k block sizes, just like the
-vast majority of applications use buffered IO. Don't jump through
-hoops to optimise a case that probably doesn't need optimising. Make
-it work correctly first, then optimise performance later when
-someone has a need for it to be really fast.
+Thanks.
+I've made those two changes.
 
-> Another case is that application may access loop block directly, such
-> as 'dd if=/dev/loopN', but it may not be common, and maybe it needn't
-> to consider.
-
-'dd if=/dev/loopN bs=4k....'
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+NeilBrown
