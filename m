@@ -1,30 +1,92 @@
-From: Julien Grall <julien.grall@citrix.com>
-Subject: Re: [PATCH 0/8] Use correctly the Xen memory terminologies in Linux
-Date: Wed, 29 Jul 2015 12:02:50 +0100
-Message-ID: <55B8B2DA.8090900@citrix.com>
-References: <1438095769-2560-1-git-send-email-julien.grall@citrix.com>
+From: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Subject: Re: [PATCH v7 4/6] block: loop: prepare for supporing direct IO
+Date: Wed, 29 Jul 2015 07:21:47 -0400
+Message-ID: <CACVXFVMOuCk0bHZfrV=VZWLtgsa4oWxrpnu6aoB1LKZ50UMhZA@mail.gmail.com>
+References: <1437061068-26118-1-git-send-email-ming.lei@canonical.com>
+	<1437061068-26118-5-git-send-email-ming.lei@canonical.com>
+	<20150727084020.GA28336@infradead.org>
+	<CACVXFVOvnVHNtTkt_kiNZu9BuZHZ==EF4y3qXx+Qo=LHoytODQ@mail.gmail.com>
+	<20150727094530.GA15507@infradead.org>
+	<CACVXFVMKycx768HtAJXMgEZNjsQrNm_f3UzW9kUysSHAMM5FPQ@mail.gmail.com>
+	<20150727173331.GA17594@infradead.org>
+	<CACVXFVMkU0TLxys_e3arGChdmgM-P2zQhPBfYx5kUXGbUtd_8A@mail.gmail.com>
+	<20150729084102.GB16638@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1438095769-2560-1-git-send-email-julien.grall@citrix.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: xen-devel@lists.xenproject.org
-Cc: ian.campbell@citrix.com, stefano.stabellini@eu.citrix.com, linux-kernel@vger.kernel.org, Boris Ostrovsky <boris.ostrovsky@oracle.com>, David Vrabel <david.vrabel@citrix.com>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, "James E.J. Bottomley" <JBottomley@odin.com>, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>, Jiri Slaby <jslaby@suse.com>, Juergen Gross <jgross@suse.com>, Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-fbdev@vger.kernel.org, linux-input@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-scsi@vger.kernel.org, netdev@vger.kernel.org, =?UTF-8?B?Um9nZXIgUGF1IE1vbm7DqQ==?= <roger.pau@citrix.com>, Russell King <linux@arm.linux.org.uk>T
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150729084102.GB16638@dastard>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Justin M. Forbes" <jforbes-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 28/07/15 16:02, Julien Grall wrote:
-> Hi all,
-> 
-> This patch series aims to use the memory terminologies described in
-> include/linux/mm.h [1] for Linux xen code.
+On Wed, Jul 29, 2015 at 4:41 AM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
+> On Wed, Jul 29, 2015 at 03:33:52AM -0400, Ming Lei wrote:
+>> On Mon, Jul 27, 2015 at 1:33 PM, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+>> > On Mon, Jul 27, 2015 at 05:53:33AM -0400, Ming Lei wrote:
+>> >> Because size has to be 4k aligned too.
+>> >
+>> > Yes.  But again I don't see any reason to limit us to a hardcoded 512
+>> > byte block size here, especially considering the patches to finally
+>>
+>> From loop block's view, the request size can be any count of 512-byte
+>> sectors, then the transfer size to backing device can't  guarantee to be
+>> 4k aligned always.
+>
+> In theory, yes. In practise, doesn't happen very often.
+>
+>> > allow enabling other block sizes from userspace.
+>>
+>> I have some questions about the patchset, and looks the author doesn't
+>> reply it yet.
+>>
+>> On Mon, Jul 27, 2015 at 6:06 PM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
+>> >> Because size has to be 4k aligned too.
+>> >
+>> > So check that, too. Any >= 4k block size filesystem should be doing
+>> > mostly 4k aligned and sized IO...
+>>
+>> I guess you mean we only use direct IO for the 4k aligned and sized IO?
+>> If so, that won't be efficient because the page cache has to be flushed
+>> during the switch.
+>
+> It will be extremely rare for a 4k block size filesystem to do
+> anything other than 4k aligned and sized IO. Think about it for a
+> minute: what does the page cache do to unaligned IO patterns (i.e.
+> buffered IO)?  It does IO in page sizes, and so if the application
+> if doing badly aligned or sized IO with buffered IO, then the
+> underlying device will only ever size page sized and aligned IO.
+>
+> Hence sector aligned IO will only come from applications doing
+> direct IO.  If the application is doing direct IO and it's not
+> properly aligned, then it already is going to get sucky performance
+> because most filesystem serialise sub-block size direct IO because
+> concurrent sub-block IOs to the same block usually leads to data
+> corruption.
 
-I mistakenly wrote the wrong include here. It should be include/xen/mm.h
-from the Xen tree:
+The blocksize of filesysten over loop can be 512, 1024, 2048, and
+suppose sector size of backing device is 4096, then filesystem
+can see aligned direct IO when IO size/offset from application is aligned
+with fs block size, but loop still can't do direct IO for all this
+kind of requests
+against backing file.
 
-http://xenbits.xen.org/gitweb/?p=xen.git;a=commitdiff;h=e758ed14f390342513405dd766e874934573e6cb
+Another case is that application may access loop block directly, such
+as 'dd if=/dev/loopN', but it may not be common, and maybe it needn't
+to consider.
 
-Regards,
+Thanks,
 
--- 
-Julien Grall
+>
+> So, really, sector aligned/sized direct IO is a sucky performance
+> path before we even get to the loop device, so we don't really need
+> to care how fast the loop device handles this case. The loop device
+> just needs to ensure that it doesn't corrupt data when badly aligned
+> IOs come in... ;)
+>
+> Cheers,
+>
+> Dave.
+> --
+> Dave Chinner
+> david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
