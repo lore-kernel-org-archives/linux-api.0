@@ -1,103 +1,114 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCHv2 1/1] Documentation: describe how to add a system call
-Date: Thu, 30 Jul 2015 10:38:31 +0200
-Message-ID: <20150730083831.GA22182@gmail.com>
-References: <1438242731-27756-1-git-send-email-drysdale@google.com>
- <1438242731-27756-2-git-send-email-drysdale@google.com>
+From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH -mm v9 0/8] idle memory tracking
+Date: Thu, 30 Jul 2015 11:07:09 +0200
+Message-ID: <20150730090708.GE9387@dhcp22.suse.cz>
+References: <cover.1437303956.git.vdavydov@parallels.com>
+ <20150729123629.GI15801@dhcp22.suse.cz>
+ <20150729135907.GT8100@esperanza>
+ <20150729142618.GJ15801@dhcp22.suse.cz>
+ <20150729152817.GV8100@esperanza>
+ <20150729154718.GN15801@dhcp22.suse.cz>
+ <20150729162908.GY8100@esperanza>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1438242731-27756-2-git-send-email-drysdale@google.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: David Drysdale <drysdale@google.com>
-Cc: linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, Shuah Khan <shuahkh@osg.samsung.com>, Jonathan Corbet <corbet@lwn.net>, Eric B Munson <emunson@akamai.com>, Randy Dunlap <rdunlap@infradead.org>, Andrea Arcangeli <aarcange@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Andy Lutomirski <luto@amacapital.net>, Al Viro <viro@zeniv.linux.org.uk>, Rusty Russell <rusty@rustcorp.com.au>, Peter Zijlstra <peterz@infradead.org>, Vivek Goyal <vgoyal@redhat.com>, Alexei Starovoitov <ast@plumgrid.com>, David Herrmann <dh.herrmann@gmail.com>, Theodore Ts'o <tytso@mit.edu>, Kees Cook <keesc>
+In-Reply-To: <20150729162908.GY8100@esperanza>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Raghavendra K T <raghavendra.kt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Greg Thelen <gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On Wed 29-07-15 19:29:08, Vladimir Davydov wrote:
+> On Wed, Jul 29, 2015 at 05:47:18PM +0200, Michal Hocko wrote:
+[...]
+> > If you use the low limit for isolating an important load then you do not
+> > have to care about the others that much. All you care about is to set
+> > the reasonable protection level and let others to compete for the rest.
+> 
+> That's a use case, you're right. Well, it's a natural limitation of this
+> API - you just have to perform a full PFN scan then. You can avoid
+> costly rmap walks for the cgroups you are not interested in by filtering
+> them out using /proc/kpagecgroup though.
 
-* David Drysdale <drysdale@google.com> wrote:
+You still have to read through the whole memory and that is inherent to
+the API and there no way for a better implementation later on other than
+a new exported file.
 
-> +Designing the API
-> +-----------------
-> +
-> +A new system call forms part of the API of the kernel, and has to be supported
-> +indefinitely.  As such, it's a very good idea to explicitly discuss the
-> +interface on the kernel mailing list, and to plan for future extensions of the
-> +interface.  In particular:
-> +
-> +  **Include a flags argument for every new system call**
+[...]
 
-Sorry, but I think that's bad avice, because even a 'flags' field is inflexible 
-and stupid in many cases - it fosters an 'ioctl' kind of design.
+> > > Because there is too much to be taken care of in the kernel with such an
+> > > approach and chances are high that it won't satisfy everyone. What
+> > > should the scan period be equal too?
+> > 
+> > No, just gather the data on the read request and let the userspace
+> > to decide when/how often etc. If we are clever enough we can cache
+> > the numbers and prevent from the walk. Write to the file and do the
+> > mark_idle stuff.
+> 
+> Still, scan rate limiting would be an issue IMO.
 
-> +The syscall table is littered with historical examples where this wasn't done, 
-> +together with the corresponding follow-up system calls (eventfd/eventfd2, 
-> +dup2/dup3, inotify_init/inotify_init1, pipe/pipe2, renameat/renameat2), so 
-> +learn from the history of the kernel and include a flags argument from the 
-> +start.
+Not sure what you mean here. Scan rate would be defined by the userspace
+by reading/writing to the knob. No background kernel thread is really
+necessary.
 
-The syscall table is also littered with system calls that have an argument space 
-considerably larger than what 6 parameters can express, where various 'flags' are 
-used to bring in different parts of new APIs, in a rather messy way.
+> > > Knob. How many kthreads do we want?
+> > > Knob. I want to keep history for last N intervals (this was a part of
+> > > Michel's implementation), what should N be equal to? Knob.
+> > 
+> > This all relates to the kernel thread implementation which I wasn't
+> > suggesting. I was referring to Michel's work which might induce that.
+> > I was merely referring to a single number output. Sorry about the
+> > confusion.
+> 
+> Still, what about idle stats history? I mean having info about how many
+> pages were idle for N scans. It might be useful for more robust/accurate
+> wss estimation.
 
-The right approach IMHO is to think about how extensible a system call is expected 
-to be, and to plan accordingly.
+Why cannot userspace remember those numbers?
 
-If you are anywhere close to 6 parameters, you should not introduce 'flags' but 
-you should _reduce_ the number of parameters to a clean essential of 2 or 3 
-parameters and should shuffle parameters out to a separate 'parameters/attributes' 
-structure that is passed in by pointer:
+> > > I want to be
+> > > able to choose between an instant scan and a scan distributed in time.
+> > > Knob. I want to see stats for anon/locked/file/dirty memory separately,
+> > 
+> > Why is this useful for the memcg limits setting or the wss estimation? I
+> > can imagine that a further drop down numbers might be interesting
+> > from the debugging POV but I fail to see what kind of decisions from
+> > userspace you would do based on them.
+> 
+> A couple examples that pop up in my mind:
+> 
+> It's difficult to make wss estimation perfect. By mlocking pages, a
+> workload might give a hint to the system that it will be really unhappy
+> if they are evicted.
+> 
+> One might want to consider anon pages and/or dirty pages as not idle in
+> order to protect them and hence avoid expensive pageout/swapout.
 
-	SYSCALL_DEFINE2(syscall, int, fd, struct params __user *, params);
+I still seem to miss the point. How do you do that via the proposed
+interface which doesn't influence the reclaim AFAIU and you do not have
+means to achieve the above (except for swappiness). What am I missing?
 
-And it's the design of 'struct params' that determines future flexibility of the 
-interface. A very flexible approach is to not use flags but a 'size' argument:
+> > [...]
+> > > > Yes this is really tricky with the current LRU implementation. I
+> > > > was playing with some ideas (do some checkpoints on the way) but
+> > > > none of them was really working out on a busy systems. But the LRU
+> > > > implementation might change in the future.
+> > > 
+> > > It might. Then we could come up with a new /proc or /sys file which
+> > > would do the same as /proc/kpageidle, but on per LRU^w whatever-it-is
+> > > basis, and give people a choice which one to use.
+> > 
+> > This just leads to proc files count explosion we are seeing
+> > already... Proc ended up in dump ground for different things which
+> > didn't fit elsewhere and I am not very much happy about it to be honest.
+> 
+> Moving the API to memcg is not a good idea either IMO, because the
+> feature can actually be useful with memcg disabled, e.g. it might help
+> estimate if the system is over- or underloaded.
 
-	struct params {
-		u32 size;
-		u32 param_1;
-		u64 param_2;
-		u64 param_3;
-	};
+I agree and that's why I was referring to memcg/global knobs.
 
-Where 'size' is set by user-space to the size of 'struct params' known to it at 
-build time:
-
-	params->size = sizeof(*params);
-
-In the normal case the kernel will get param->size == sizeof(*params) as known to 
-the kernel.
-
-When the system call is extended in the future on the kernel side, with 'u64 
-param_4', then the structure expands from an old size of 24 to a new size of 32 
-bytes. The following scenarios might occur:
-
- - the common case: new user-space calls the new kernel code, ->size is 32 on both 
-   sides.
-
- - old binaries might call the kernel with params->size == 24, in which case the 
-   kernel sets the new fields to 0. The new feature should be written
-   accordingly, so that a value of 0 means the old behavior.
-
- - new binaries might run on old kernels, with params->size == 32. In this case 
-   the old kernel will check that all the new fields it does not know about are 
-   set to 0 - if they are nonzero (if the new feature is used) it returns with 
-   -ENOSYS or -EINVAL.
-
-With this approach we have both backwards and forwards binary compatibility: new 
-binaries will run on old kernels just fine, even if they have ->size set to 32, as 
-long as they make use of the features.
-
-This design simplifies application design considerably: as new code can mostly 
-forget about old ABIs, there's no multiple versions to be taken care of, there's 
-just a single 'struct param' known to both sides, and there's no version skew.
-
-We are using such a design in perf_event_open(), see perf_copy_attr() in 
-kernel/events/core.c. And yes, ironically that system call still has a historic 
-'flags' argument, but it's not used anymore for extension: we've made over 30 
-extensions to the ABI in the last 3 years, which would have been impossible with a 
-'flags' approach.
-
-Thanks,
-
-	Ingo
+-- 
+Michal Hocko
+SUSE Labs
