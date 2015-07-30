@@ -1,47 +1,43 @@
-From: Alexander Shishkin <alexander.shishkin@linux.intel.com>
-Subject: Re: [PATCH v3 01/11] stm class: Introduce an abstraction for System Trace Module devices
-Date: Thu, 30 Jul 2015 10:16:19 +0300
-Message-ID: <87si869ku4.fsf@ashishki-desk.ger.corp.intel.com>
-References: <1436177344-16751-1-git-send-email-alexander.shishkin@linux.intel.com> <1436177344-16751-2-git-send-email-alexander.shishkin@linux.intel.com> <CAAfSe-vOgnMXCy6fb8yuQ0O_5x1L1QtCmGjNjH+OtGAg6KJHrg@mail.gmail.com> <877fpjkseh.fsf@ashishki-desk.ger.corp.intel.com> <CAAfSe-vgFSxA7OX7DSOB4XXdsan_3PWne0-16kSKZv_8HkHjgg@mail.gmail.com> <87vbd29mm6.fsf@ashishki-desk.ger.corp.intel.com> <CAAfSe-vBnqC4QNMXLK2H2b8XUAiXz5qk8BO90Y=a5azfqWe+nw@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain
+From: David Drysdale <drysdale@google.com>
+Subject: [PATCHv2 0/1] Document how to add a new syscall
+Date: Thu, 30 Jul 2015 08:52:10 +0100
+Message-ID: <1438242731-27756-1-git-send-email-drysdale@google.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAAfSe-vBnqC4QNMXLK2H2b8XUAiXz5qk8BO90Y=a5azfqWe+nw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Chunyan Zhang <zhang.lyra@gmail.com>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Mathieu Poirier <mathieu.poirier@linaro.org>, peter.lachner@intel.com, norbert.schulz@intel.com, keven.boell@intel.com, yann.fouassier@intel.com, laurent.fert@intel.com, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Chunyan Zhang <zhang.chunyan@linaro.org>, Mark Brown <broonie@kernel.org>
+To: linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, Shuah Khan <shuahkh@osg.samsung.com>, Jonathan Corbet <corbet@lwn.net>, Eric B Munson <emunson@akamai.com>, Randy Dunlap <rdunlap@infradead.org>
+Cc: Andrea Arcangeli <aarcange@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Andy Lutomirski <luto@amacapital.net>, Al Viro <viro@zeniv.linux.org.uk>, Rusty Russell <rusty@rustcorp.com.au>, Peter Zijlstra <peterz@infradead.org>, Vivek Goyal <vgoyal@redhat.com>, Alexei Starovoitov <ast@plumgrid.com>, David Herrmann <dh.herrmann@gmail.com>, Theodore Ts'o <tytso@mit.edu>, Kees Cook <keescook@chromium.org>, Miklos Szeredi <mszeredi@suse.cz>, Milosz Tanski <milosz@adfin.com>, Fam Zheng <famz@redhat.com>, Josh Triplett <josh@joshtriplett.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, David Drysdale <drysdale@g>
 List-Id: linux-api@vger.kernel.org
 
-Chunyan Zhang <zhang.lyra@gmail.com> writes:
+Given that I've gotten some of the details wrong in the past (and I've
+seen others do likewise), I thought it might be helpful to collate the
+best practices for adding a new system call to the kernel.
 
-> The code has already been submitted like I said in the earlier emails,
-> you may refer [1].
->
-> Thanks,
-> Chunyan
->
-> [1] https://lkml.org/lkml/2015/2/4/729
+Apologies for the wide circulation -- I've tried to include folk who've
+recently added or proposed a system call, as they're most likely to
+have opinions on:
+ - whether this a useful addition to Documentation/
+ - whether the details of the advice are correct and complete.
 
-This code does the following (pasting from that patch):
+Thanks,
+David
 
-in stm_probe():
+(With thanks to Andrew Morton for looking over an initial draft, and to
+Michael Kerrisk for suggesting several clarifications and additions.)
 
-drvdata = devm_kzalloc(dev, sizeof(*drvdata), GFP_KERNEL);
 
-... something irrelevant ...
+Changes since v1:
+ - added paragraph on build requirements to Testing section [Shuah Khan,
+   Peter Zijlstra]
+ - various text clarifications [Kees Cook]
+ - added Reviewed-by markers
 
-ret = clk_prepare_enable(drvdata->clk);
 
-... something irrelevant ...
+David Drysdale (1):
+  Documentation: describe how to add a system call
 
-clk_disable_unprepare(drvdata->clk);
+ Documentation/adding-syscalls.txt | 463 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 463 insertions(+)
+ create mode 100644 Documentation/adding-syscalls.txt
 
-... something irrelevant ...
-
-drvdata->clk = adev->pclk;
-
-How is this supposed to even work?
-
-Regards,
 --
-Alex
+2.2.0.rc0.207.ga3a616c
