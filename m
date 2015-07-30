@@ -1,50 +1,71 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: Re: [PATCHv2 1/1] Documentation: describe how to add a system call
-Date: Thu, 30 Jul 2015 09:45:23 -0700
-Message-ID: <20150730164523.GA5364@kroah.com>
-References: <1438242731-27756-1-git-send-email-drysdale@google.com>
- <1438242731-27756-2-git-send-email-drysdale@google.com>
- <20150730163007.GA10522@rei.suse.de>
+From: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] kdbus/samples: skip on CROSS_COMPILE
+Date: Thu, 30 Jul 2015 19:00:13 +0200
+Message-ID: <CANq1E4SnQQq42m9YMCc_wKoZY=P19MsZTdxVnWUVwoCNvmHP7g@mail.gmail.com>
+References: <1438272805-19029-1-git-send-email-dh.herrmann@gmail.com>
+	<20150730163307.GA20048@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150730163007.GA10522@rei.suse.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Cyril Hrubis <chrubis@suse.cz>
-Cc: David Drysdale <drysdale@google.com>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, Shuah Khan <shuahkh@osg.samsung.com>, Jonathan Corbet <corbet@lwn.net>, Eric B Munson <emunson@akamai.com>, Randy Dunlap <rdunlap@infradead.org>, Andrea Arcangeli <aarcange@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Al Viro <viro@zeniv.linux.org.uk>, Rusty Russell <rusty@rustcorp.com.au>, Peter Zijlstra <peterz@infradead.org>, Vivek Goyal <vgoyal@redhat.com>, Alexei Starovoitov <ast@plumgrid.com>, David Herrmann <dh.herrmann@gmail.com>, Theodore Ts'o <tytso@mit.edu>, Kees Cook <keescook@chromium>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150730163307.GA20048-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Gortmaker <paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 30, 2015 at 06:30:07PM +0200, Cyril Hrubis wrote:
-> Hi!
-> > +Testing
-> > +-------
-> > +
-> > +A new system call should obviously be tested; it is also useful to provide
-> > +reviewers with a demonstration of how user space programs will use the system
-> > +call.  A good way to combine these aims is to include a simple self-test
-> > +program in a new directory under tools/testing/selftests/.
-> 
-> I know that this is a bit off topic, but since the selftest is now the
-> official place to add kernel testcases to let me rant about it a bit.
-> 
-> It's a bit of a pain seeing people reinvent the wheel and trying to
-> figure out consistent test interface while most of the problems has been
-> solved in LTP[1] test library quite some time ago. Especially use of the
-> SAFE_MACROS[2] would simplify writing test setups quite a lot.
-> 
-> I wonder if we can at least share the test library, pulling it out of
-> LTP, or at least the interesting parts, wouldn't be hard at all.
-> 
-> [1]
-> https://github.com/linux-test-project/ltp/wiki/Test-Writing-Guidelines#221-basic-test-structure
-> 
-> [2]
-> https://github.com/linux-test-project/ltp/wiki/Test-Writing-Guidelines#224-safe-macros
+Hi
 
-That would be great, please send patches to do so to the linux-api
-mailing list and the test maintainer.
+On Thu, Jul 30, 2015 at 6:33 PM, Greg Kroah-Hartman
+<gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> wrote:
+> On Thu, Jul 30, 2015 at 06:13:25PM +0200, David Herrmann wrote:
+>> Apparently we cannot rely on up-to-date kernel headers to be available
+>> when cross-compiling, not even for HOSTCC. That's sad, but it's how it
+>> is. Skip samples on cross-compiles as suggested by Paul, so allmodconfig
+>> runs smoothly again.
+>>
+>> Tested-by: Paul Gortmaker <paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org>
+>> Signed-off-by: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>> ---
+>>  samples/kdbus/Makefile | 4 ++++
+>>  1 file changed, 4 insertions(+)
+>>
+>> diff --git a/samples/kdbus/Makefile b/samples/kdbus/Makefile
+>> index 137f842..dbd9de8 100644
+>> --- a/samples/kdbus/Makefile
+>> +++ b/samples/kdbus/Makefile
+>> @@ -1,9 +1,13 @@
+>>  # kbuild trick to avoid linker error. Can be omitted if a module is built.
+>>  obj- := dummy.o
+>>
+>> +ifndef CROSS_COMPILE
+>
+> This really feels like the wrong solution.
+>
+>> +
+>>  hostprogs-$(CONFIG_SAMPLE_KDBUS) += kdbus-workers
+>>
+>>  always := $(hostprogs-y)
+>>
+>>  HOSTCFLAGS_kdbus-workers.o += -I$(objtree)/usr/include
+>>  HOSTLOADLIBES_kdbus-workers := -lrt
+>> +
+>> +endif
+>
+> Shuah, how should we fix this "properly"?  How is this resolved for the
+> kernel test scripts, it should have the same issue that the samples do.
 
-thanks,
+./samples/ is built as part of "make vmlinux", tests are not.
+Therefore, tests don't break allmodconfig and friends. The underlying
+issue is, that ./samples/ provides both: examples for kernel modules
+*and* examples for user-space code.
 
-greg k-h
+Maybe the real fix is to eventually split user-space examples from
+kernel-module-examples (./samples/kernel/ and ./samples/user/). But I
+don't want to include such split in the kdbus tree. Instead, I tried
+to follow the recent fixes that are already upstream: 65f6f092a6987,
+f59514b6a8c5ca6dd, and 6a407a81a9abcf.
+
+Suggestions welcome!
+
+Thanks
+David
