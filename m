@@ -1,104 +1,107 @@
-From: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: Re: [PATCH v7 4/6] block: loop: prepare for supporing direct IO
-Date: Thu, 30 Jul 2015 04:01:39 -0400
-Message-ID: <CACVXFVPqLMoT0j_GUvd6EeMYBSz2qs4ELDZtDx1vNVrK8qguEQ@mail.gmail.com>
-References: <1437061068-26118-1-git-send-email-ming.lei@canonical.com>
-	<1437061068-26118-5-git-send-email-ming.lei@canonical.com>
-	<20150727084020.GA28336@infradead.org>
-	<CACVXFVOvnVHNtTkt_kiNZu9BuZHZ==EF4y3qXx+Qo=LHoytODQ@mail.gmail.com>
-	<20150727094530.GA15507@infradead.org>
-	<CACVXFVMKycx768HtAJXMgEZNjsQrNm_f3UzW9kUysSHAMM5FPQ@mail.gmail.com>
-	<20150727173331.GA17594@infradead.org>
-	<CACVXFVMkU0TLxys_e3arGChdmgM-P2zQhPBfYx5kUXGbUtd_8A@mail.gmail.com>
-	<20150729084102.GB16638@dastard>
-	<CACVXFVMOuCk0bHZfrV=VZWLtgsa4oWxrpnu6aoB1LKZ50UMhZA@mail.gmail.com>
-	<20150729220829.GM3902@dastard>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: Next round: revised futex(2) man page for review
+Date: Thu, 30 Jul 2015 10:19:03 +0200
+Message-ID: <55B9DDF7.4010308@gmail.com>
+References: <55B61EF3.7080302@gmail.com> <alpine.DEB.2.11.1507282054370.3825@nanos> <20150729041141.GE3171@vmdeb7> <20150729042141.GA62059@vmdeb7>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150729220829.GM3902@dastard>
+In-Reply-To: <20150729042141.GA62059@vmdeb7>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Justin M. Forbes" <jforbes-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Torvald Riegel <triegel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Anton Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, bill o gallmeister <bgallmeister-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kiszka <jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, bert hubert <bert.hubert-dxZxOz86jR8sYtaaK7K+xw@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 29, 2015 at 6:08 PM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
-> On Wed, Jul 29, 2015 at 07:21:47AM -0400, Ming Lei wrote:
->> On Wed, Jul 29, 2015 at 4:41 AM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
->> > On Wed, Jul 29, 2015 at 03:33:52AM -0400, Ming Lei wrote:
->> >> On Mon, Jul 27, 2015 at 1:33 PM, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
->> >> > On Mon, Jul 27, 2015 at 05:53:33AM -0400, Ming Lei wrote:
->> >> >> Because size has to be 4k aligned too.
->> >> >
->> >> > Yes.  But again I don't see any reason to limit us to a hardcoded 512
->> >> > byte block size here, especially considering the patches to finally
->> >>
->> >> From loop block's view, the request size can be any count of 512-byte
->> >> sectors, then the transfer size to backing device can't  guarantee to be
->> >> 4k aligned always.
->> >
->> > In theory, yes. In practise, doesn't happen very often.
->> >
->> >> > allow enabling other block sizes from userspace.
->> >>
->> >> I have some questions about the patchset, and looks the author doesn't
->> >> reply it yet.
->> >>
->> >> On Mon, Jul 27, 2015 at 6:06 PM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
->> >> >> Because size has to be 4k aligned too.
->> >> >
->> >> > So check that, too. Any >= 4k block size filesystem should be doing
->> >> > mostly 4k aligned and sized IO...
->> >>
->> >> I guess you mean we only use direct IO for the 4k aligned and sized IO?
->> >> If so, that won't be efficient because the page cache has to be flushed
->> >> during the switch.
->> >
->> > It will be extremely rare for a 4k block size filesystem to do
->> > anything other than 4k aligned and sized IO. Think about it for a
->> > minute: what does the page cache do to unaligned IO patterns (i.e.
->> > buffered IO)?  It does IO in page sizes, and so if the application
->> > if doing badly aligned or sized IO with buffered IO, then the
->> > underlying device will only ever size page sized and aligned IO.
->> >
->> > Hence sector aligned IO will only come from applications doing
->> > direct IO.  If the application is doing direct IO and it's not
->> > properly aligned, then it already is going to get sucky performance
->> > because most filesystem serialise sub-block size direct IO because
->> > concurrent sub-block IOs to the same block usually leads to data
->> > corruption.
+On 07/29/2015 06:21 AM, Darren Hart wrote:
+> On Tue, Jul 28, 2015 at 09:11:41PM -0700, Darren Hart wrote:
+>> On Tue, Jul 28, 2015 at 10:23:51PM +0200, Thomas Gleixner wrote:
+>>> On Mon, 27 Jul 2015, Michael Kerrisk (man-pages) wrote:
 >>
->> The blocksize of filesysten over loop can be 512, 1024, 2048, and
->> suppose sector size of backing device is 4096, then filesystem
->> can see aligned direct IO when IO size/offset from application is aligned
->> with fs block size, but loop still can't do direct IO for all this
->> kind of requests
->> against backing file.
->
-> Sure, but again you're talking about a fairly rare configuration.
-> The vast majority of filesystems use 4k block sizes, just like the
-> vast majority of applications use buffered IO. Don't jump through
-> hoops to optimise a case that probably doesn't need optimising. Make
-> it work correctly first, then optimise performance later when
-> someone has a need for it to be really fast.
+>> ...
+>>
+>>>>        FUTEX_REQUEUE (since Linux 2.6.0)
+>>>> .\" FIXME(Torvald) Is there some indication that FUTEX_REQUEUE is broken
+>>>> .\"     in general, or is this comment implicitly speaking about the
+>>>> .\"     condvar (?) use case? If the latter we might want to weaken the
+>>>> .\"     advice below a little.
+>>>> .\" [Anyone else have input on this?]
+>>>
+>>> The condvar use case exposes the flaw nicely, but that's pretty much
+>>> true for everything which wants a sane requeue operation.
+>>
+>> In an earlier discussion I argued this point (that FUTURE_REQUEUE is broken and
+>> should not be used in new code) and someone argued strongly against... stating
+>> that there were legitimate uses for it. Of course I'm struggling to find the
+>> thread and the reference at the moment - immensely useful, I know.
+>>
+>> I'll continue trying to find it and see if it can be useful here. I believe
+>> Torvald was on the thread as well.
+>>
+> 
+> Found it on libc-alpha, here it is for reference:
+> 
+> 	From: Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>
+> 	Date: Wed, 29 Oct 2014 22:43:17 -0400
+> 	To: Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+> 	Cc: Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>,
+> 	Torvald Riegel <triegel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, GLIBC Devel <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>,
+> 	Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> 	Subject: Re: Add futex wrapper to glibc?
+> 
+> 	On Wed, Oct 29, 2014 at 06:59:15PM -0700, Darren Hart wrote:
+> 	> > We are IMO at the stage where futex is stable, few things are
+> 	> > changing, and with documentation in place, I would consider adding a
+> 	> > futex wrapper.
+> 	> 
+> 	> Yes, at least for the defined OP codes. New OPs may be added of
+> 	> course, but that isn't a concern for supporting what exists today, and
+> 	> doesn't break compatibility.
+> 	> 
+> 	> I wonder though... can we not wrap FUTEX_REQUEUE? It's fundamentally
+> 	> broken.  FUTEX_CMP_REQUEUE should *always* be used instead. The glibc
+> 	> wrapper is one way to encourage developers to do the right thing
+> 	> (don't expose the bad op in the header).
+> 
+> 	You're mistaken here. There are plenty of valid ways to use
+> 	FUTEX_REQUEUE - for example if the calling thread is requeuing the
+> 	target(s) to a lock that the calling thread owns. Just because it
+> 	doesn't meet the needs of the way glibc was using it internally
+> 	doesn't mean it's useless for other applications.
+> 
+> 	In any case, I don't think there's a proposal to intercept/modify the
+> 	commands to futex, just to pass them through (and possibly do a
+> 	cancellable syscall for some of them).
+> 
+> 	Rich
+> 
+> 
+>>>
+>>>>               Avoid using this operation.  It is broken for its intended
+>>>>               purpose.  Use FUTEX_CMP_REQUEUE instead.
+>>>>
+>>>>               This    operation    performs    the    same    task    as
+>>>>               FUTEX_CMP_REQUEUE, except that no check is made using  the
+>>>>               value in val3.  (The argument val3 is ignored.)
 
-OK, I will support 1024, 2048 and 4096 sector size in v8.
+Thanks, Darren, that's really helpful! I've removed the statement in the man
+page that FUTEX_REQUEUE is broken.
 
->
->> Another case is that application may access loop block directly, such
->> as 'dd if=/dev/loopN', but it may not be common, and maybe it needn't
->> to consider.
->
-> 'dd if=/dev/loopN bs=4k....'
->
-> Cheers,
->
-> Dave.
-> --
-> Dave Chinner
-> david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+By the way, Darren. There were a couple of FIXMEs in the page where you are
+explicitly mentioned by name. Could you take a look at those? Specifically,
+the large block of text starting at:
+
+    >> .\" FIXME XXX The following is my attempt at a definition of PI futexes,
+    >> .\"       based on mail discussions with Darren Hart. Does it seem okay?
+
+   (tglx looked at this and blessed it, but I'd like you also to check.)
+
+Cheers,
+
+Michael
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
