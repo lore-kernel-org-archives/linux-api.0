@@ -1,92 +1,202 @@
-From: Gioh Kim <gioh.kim@lge.com>
-Subject: Re: [PATCH 0/4] enable migration of driver pages
-Date: Thu, 30 Jul 2015 09:21:09 +0900
-Message-ID: <55B96DF5.40602@lge.com>
-References: <1436776519-17337-1-git-send-email-gioh.kim@lge.com>
- <20150729104945.GA30872@techsingularity.net>
- <20150729105554.GU16722@phenom.ffwll.local>
- <20150729121614.GA19352@techsingularity.net>
- <20150729124635.GW16722@phenom.ffwll.local>
+From: Chunyan Zhang <zhang.lyra@gmail.com>
+Subject: Re: [PATCH v3 01/11] stm class: Introduce an abstraction for System
+ Trace Module devices
+Date: Thu, 30 Jul 2015 11:19:54 +0800
+Message-ID: <CAAfSe-vgFSxA7OX7DSOB4XXdsan_3PWne0-16kSKZv_8HkHjgg@mail.gmail.com>
+References: <1436177344-16751-1-git-send-email-alexander.shishkin@linux.intel.com>
+	<1436177344-16751-2-git-send-email-alexander.shishkin@linux.intel.com>
+	<CAAfSe-vOgnMXCy6fb8yuQ0O_5x1L1QtCmGjNjH+OtGAg6KJHrg@mail.gmail.com>
+	<877fpjkseh.fsf@ashishki-desk.ger.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150729124635.GW16722@phenom.ffwll.local>
-Sender: owner-linux-mm@kvack.org
-To: Mel Gorman <mgorman@techsingularity.net>, jlayton@poochiereds.net, bfields@fieldses.org, vbabka@suse.cz, iamjoonsoo.kim@lge.com, viro@zeniv.linux.org.uk, mst@redhat.com, koct9i@gmail.com, minchan@kernel.org, aquini@redhat.com, linux-fsdevel@vger.kernel.org, virtualization@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org, dri-devel@lists.freedesktop.org, akpm@linux-foundation.org, Gioh Kim <gurugio@hanmail.net>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <877fpjkseh.fsf@ashishki-desk.ger.corp.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexander Shishkin <alexander.shishkin@linux.intel.com>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Mathieu Poirier <mathieu.poirier@linaro.org>, peter.lachner@intel.com, norbert.schulz@intel.com, keven.boell@intel.com, yann.fouassier@intel.com, laurent.fert@intel.com, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Chunyan Zhang <zhang.chunyan@linaro.org>, Mark Brown <broonie@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-
-
-2015-07-29 =EC=98=A4=ED=9B=84 9:46=EC=97=90 Daniel Vetter =EC=9D=B4(=EA=B0=
-=80) =EC=93=B4 =EA=B8=80:
-> On Wed, Jul 29, 2015 at 01:16:14PM +0100, Mel Gorman wrote:
->> On Wed, Jul 29, 2015 at 12:55:54PM +0200, Daniel Vetter wrote:
->>> On Wed, Jul 29, 2015 at 11:49:45AM +0100, Mel Gorman wrote:
->>>> On Mon, Jul 13, 2015 at 05:35:15PM +0900, Gioh Kim wrote:
->>>>> My ARM-based platform occured severe fragmentation problem after lo=
-ng-term
->>>>> (several days) test. Sometimes even order-3 page allocation failed.=
- It has
->>>>> memory size 512MB ~ 1024MB. 30% ~ 40% memory is consumed for graphi=
-c processing
->>>>> and 20~30 memory is reserved for zram.
->>>>>
->>>>
->>>> The primary motivation of this series is to reduce fragmentation by =
-allowing
->>>> more kernel pages to be moved. Conceptually that is a worthwhile goa=
-l but
->>>> there should be at least one major in-kernel user and while balloon
->>>> pages were a good starting point, I think we really need to see what=
- the
->>>> zram changes look like at the same time.
->>>
->>> I think gpu drivers really would be the perfect candidate for compact=
-ing
->>> kernel page allocations. And this also seems the primary motivation f=
-or
->>> this patch series, so I think that's really what we should use to jud=
-ge
->>> these patches.
->>>
->>> Of course then there's the seemingly eternal chicken/egg problem of
->>> upstream gpu drivers for SoCs :(
+On Wed, Jul 29, 2015 at 9:25 PM, Alexander Shishkin
+<alexander.shishkin@linux.intel.com> wrote:
+> Chunyan Zhang <zhang.lyra@gmail.com> writes:
+>
+>>> +/**
+>>> + * stm_source_register_device() - register an stm_source device
+>>> + * @parent:    parent device
+>>> + * @data:      device description structure
+>>> + *
+>>> + * This will create a device of stm_source class that can write
+>>> + * data to an stm device once linked.
+>>> + *
+>>> + * Return:     0 on success, -errno otherwise.
+>>> + */
+>>> +int stm_source_register_device(struct device *parent,
+>>> +                              struct stm_source_data *data)
+>>> +{
+>>> +       struct stm_source_device *src;
+>>> +       int err;
+>>> +
+>>> +       if (!stm_core_up)
+>>> +               return -EPROBE_DEFER;
+>>> +
 >>
->> I recognised that the driver he had modified was not an in-tree user s=
-o
->> it did not really help the review or the design. I did not think it wa=
-s
->> very fair to ask that an in-tree GPU driver be converted when it would=
- not
->> help the embedded platform of interest. Converting zram is both a usef=
-ul
->> illustration of the aops requirements and is expected to be beneficial=
- on
->> the embedded platform. Now, if a GPU driver author was willing to conv=
-ert
->> theirs as an example then that would be useful!
+>> I tried to update Coresight-stm driver[1] based on your this version
+>> patch, but the Coresight-stm driver probe() failed.
+>> the reason was:
+>> In the end of Coresight stm_probe(), we called this function, but
+>> "stm_core_up" was zero then, so the error returned value
+>> "-EPROBE_DEFER" was received.
 >
-> Well my concern is more with merging infrastructure to upstream for
-> drivers which aren't upstream and with no plan to make that happen anyt=
-ime
-> soon. Seems like just offload a bit to me ... but in the end core mm is=
-n't
-> my thing so not my decision.
-> -Daniel
+> Yes, that is the intended behavior if stm core is not initialized yet.
 >
+>> In fact, "stm_core_up" would increase itself until "stm_core_init" be
+>> called - it's the root of this problem, I'll explain this where the
+>> function "stm_core_init" defined.
+>
+> I'm sorry, I didn't understand this, can you rephrase?
 
-I get idea from the out-tree driver but this infrastructure will be usefu=
-l
-for zram and balloon. That is agreed by the maintainers of each driver.
+Sure, I mean, the root reason of this problem is here ( i.e.
+"stm_core_up" was zero then):
+     if (!stm_core_up)
+         return -EPROBE_DEFER;
 
-I'm currently accepting feedbacks from
-balloon and zram and trying to be applicable for them.
-Of course I hope there will be more application. It'll be more useful
-if it has more application.
+Why it was zero?
+Because the function (i.e. stm_core_init() ) in which "stm_core_up"
+would be added one hasn't been executed at this moment. It would be
+executed on module_init stage for you this version of patch.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
+>
+>> And redoing Coresight stm_probe() will incur a WARN_ON() like below:
+>>
+>> [    1.075746] coresight-stm 10006000.stm: stm_register_device failed
+>> [    1.082118] ------------[ cut here ]------------
+>> [    1.086819] WARNING: CPU: 1 PID: 1 at drivers/clk/clk.c:657
+>> clk_core_disable+0x138/0x13c()
+>> [    1.095353] Modules linked in:
+>> [    1.098487] CPU: 1 PID: 1 Comm: swapper/0 Tainted: G S
+>> 4.2.0-rc1+ #107
+>> [    1.106398] Hardware name: Spreadtrum SC9836 Openphone Board (DT)
+>> [    1.112678] Call trace:
+>> [    1.115194] [<ffffffc00008a5b4>] dump_backtrace+0x0/0x138
+>> [    1.120761] [<ffffffc00008a708>] show_stack+0x1c/0x28
+>> [    1.125972] [<ffffffc0003320e0>] dump_stack+0x84/0xc8
+>> [    1.131179] [<ffffffc00009b580>] warn_slowpath_common+0xa4/0xdc
+>> [    1.137285] [<ffffffc00009b700>] warn_slowpath_null+0x34/0x44
+>> [    1.143213] [<ffffffc000321eb4>] clk_core_disable+0x134/0x13c
+>
+> Well, like I said in the offline thread, this has to do with cleaning up
+> in the error path of stm_probe(). What happens if stm_probe() fails for
+> any other reason? I'm guessing the same warning.
+
+The reason of this warning is:
+After stm_probe() failed, clk_core_disable() would be called from
+amba_put_disable_pclk(), then WARN_ON() happened:
+         if (WARN_ON(core->enable_count == 0))
+                 return;
+
+I'm guessing the reason why "core->enable_count" was 0 at this moment is:
+I don't know who created a thread to process the
+amba_pm_runtime_suspend(), in which clk_core_disable() was already
+called, "core->enable_count" was, of course, cleared to zero then.
+And this thread run before amba_put_disable_pclk(pcdev) which is just
+the one called from amba_probe() after
+"->probe"(i.e. stm_probe in this case) returning a non-zero value.
+
+In a word, if clk_core_disable() is called again after
+"core->enable_count" has already been cleared to zero in the first
+round of clk_core_disable()'s.
+
+As such, the WARN_ON occurred.
+
+>
+>>> +static int __init stm_core_init(void)
+>>> +{
+>>> +       int err;
+>>> +
+>>> +       err = class_register(&stm_class);
+>>> +       if (err)
+>>> +               return err;
+>>> +
+>>> +       err = class_register(&stm_source_class);
+>>> +       if (err)
+>>> +               goto err_stm;
+>>> +
+>>> +       err = stp_configfs_init();
+>>> +       if (err)
+>>> +               goto err_src;
+>>> +
+>>> +       init_srcu_struct(&stm_source_srcu);
+>>> +
+>>> +       stm_core_up++;
+>>> +
+>>> +       return 0;
+>>> +
+>>> +err_src:
+>>> +       class_unregister(&stm_source_class);
+>>> +err_stm:
+>>> +       class_unregister(&stm_class);
+>>> +
+>>> +       return err;
+>>> +}
+>>> +
+>>> +module_init(stm_core_init);
+>>
+>> Since you are using module_init() instead of postcore_initcall() which
+>> was in the last version patch, as such, this function would be
+>> executed after Coresight "stm_probe" finished.
+>
+> Yes, iirc on arm the initcall order somehow forced postcore
+> stm_core_init() before configfs, which it relies on, causing a
+> crash. Now I see that somebody hacked configfs to start at core_initcall
+> (f5b697700c8) instead.
+>
+> There has to be a way to defer stm_probe(), although a quick look at
+> amba code suggests it's not implemented.
+>
+>> So, we think there a few optional solutions:
+>> 1) Remove the "stm_register_device" out from Coresight "stm_probe",
+>> but we have to save another global variable:
+>>
+>>     struct device *stm_dev;
+>>
+>> in the process of Coresight "stm_probe".
+>
+> Sorry, didn't understand this one.
+>
+> Except for I can say that having a global variable like that is a bad
+> idea, but that's not relevant to the problem at hand.
+
+Agree, it's not a good policy :)
+
+>
+>> 2) Change module_init() to other XYX_init() which would run prior to
+>> "amba_probe()" (i.e. the caller of Coresight stm_probe), this may be a
+>> better one.
+>
+> I'm really not a big fan of the initcall games, to be honest, it will
+> always be a problem on some architecture or other. Having said that, if
+> stm_core_init() runs at postcore_initcall level, does that solve your
+> problem?
+
+Yes of course, what you were using in your last version of patch was
+just postcore_initcall(), and it works.
+
+>
+>> 3) stm_core_init() could be turned into a library call where
+>> initialisation of the internals is done when first called.
+>
+> Well, it's not that simple: stm is used by both stm and stm_source
+> devices, in this case we'll need to make sure that the first call to
+> either of the {stm,stm_source}_register_device() results in the actual
+> initialization of the stm core. I think it's a cleaner solution than the
+> initcall games, though.
+
+Ok, I see.
+
+Thanks,
+Chunyan
+
+>
+> Regards,
+> --
+> Alex
