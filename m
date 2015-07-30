@@ -1,32 +1,54 @@
-From: Ralf Baechle <ralf@linux-mips.org>
-Subject: Re: [PATCH V6 6/6] mips: Add entry for new mlock2 syscall
-Date: Thu, 30 Jul 2015 16:32:52 +0200
-Message-ID: <20150730143252.GF25552@linux-mips.org>
-References: <1438184575-10537-1-git-send-email-emunson@akamai.com>
- <1438184575-10537-7-git-send-email-emunson@akamai.com>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH v8 4/6] block: loop: prepare for supporing direct IO
+Date: Thu, 30 Jul 2015 08:09:00 -0700
+Message-ID: <20150730150900.GA13082@infradead.org>
+References: <1438256184-23645-1-git-send-email-ming.lei@canonical.com>
+ <1438256184-23645-5-git-send-email-ming.lei@canonical.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-arch-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1438184575-10537-7-git-send-email-emunson@akamai.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Eric B Munson <emunson@akamai.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mips@linux-mips.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org
+In-Reply-To: <1438256184-23645-5-git-send-email-ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Kleikamp <dave.kleikamp-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Zach Brown <zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Maxim Patlasov <mpatlasov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 29, 2015 at 11:42:55AM -0400, Eric B Munson wrote:
+On Thu, Jul 30, 2015 at 07:36:22AM -0400, Ming Lei wrote:
+> This patches provides one interface for enabling direct IO
+> from user space:
+> 
+> 	- userspace(such as losetup) can pass 'file' which is
+> 	opened/fcntl as O_DIRECT
+> 
+> Also __loop_update_dio() is introduced to check if direct I/O
+> can be used on current loop setting.
+> 
+> The last big change is to introduce LO_FLAGS_DIRECT_IO flag
+> for userspace to know if direct IO is used to access backing
+> file.
 
-> A previous commit introduced the new mlock2 syscall, add entries for the
-> MIPS architecture.
+Maybe i'm missing something because I was too busy to follow the
+current discussion, but this still doesn't check that the loop
+device sector size is aligned to the sector size of the underlying
+filesystem.
 
-Looking good, so
+E.g. with this you could create a loop device with a 512 byte
+sector size on a filesystem with 4k sector size, and it would attempt
+to use direct I/O and fail.
 
-Acked-by: Ralf Baechle <ralf@linux-mips.org>
+> +	unsigned dio_align = inode->i_sb->s_bdev ?
+> +		(bdev_io_min(inode->i_sb->s_bdev) - 1) : 0;
+> +
+> +	/*
+> +	 * We support direct I/O only if lo_offset is aligned
+> +	 * with the min I/O size of backing device.
+> +	 *
+> +	 * Request's offset and size will be checked in I/O path.
+> +	 */
+> +	if (dio) {
+> +		if (!dio_align || (lo->lo_offset & dio_align))
+> +			use_dio = false;
 
-Recently somebody else was floating around a patch that was adding
-three syscalls.  Not sure if in the end the adding the syscall part to
-non-x86 was dropped.  Just mentioning in case there are any conflicts;
-in particulary nobody should rely on syscall numbers unless they're
-for something in Linus' tree!
-
-  Ralf
+Also this means you'll never use direct I/O on network filesystems,
+which really would benefit from it.
