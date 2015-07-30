@@ -1,200 +1,48 @@
-From: Chunyan Zhang <zhang.lyra@gmail.com>
+From: Chunyan Zhang <zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: [PATCH v3 01/11] stm class: Introduce an abstraction for System
  Trace Module devices
-Date: Thu, 30 Jul 2015 11:19:54 +0800
-Message-ID: <CAAfSe-vgFSxA7OX7DSOB4XXdsan_3PWne0-16kSKZv_8HkHjgg@mail.gmail.com>
+Date: Thu, 30 Jul 2015 11:38:45 +0800
+Message-ID: <CAAfSe-sQjPHQQ7-jh-Xq6nR3O0gtP3AM4m=gGJjUE26rsbQDMQ@mail.gmail.com>
 References: <1436177344-16751-1-git-send-email-alexander.shishkin@linux.intel.com>
 	<1436177344-16751-2-git-send-email-alexander.shishkin@linux.intel.com>
 	<CAAfSe-vOgnMXCy6fb8yuQ0O_5x1L1QtCmGjNjH+OtGAg6KJHrg@mail.gmail.com>
 	<877fpjkseh.fsf@ashishki-desk.ger.corp.intel.com>
+	<20150729133529.GI20130@sirena.org.uk>
+	<871tfrkree.fsf@ashishki-desk.ger.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <877fpjkseh.fsf@ashishki-desk.ger.corp.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alexander Shishkin <alexander.shishkin@linux.intel.com>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Mathieu Poirier <mathieu.poirier@linaro.org>, peter.lachner@intel.com, norbert.schulz@intel.com, keven.boell@intel.com, yann.fouassier@intel.com, laurent.fert@intel.com, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Chunyan Zhang <zhang.chunyan@linaro.org>, Mark Brown <broonie@kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <871tfrkree.fsf-qxRn5AmX6ZD9BXuAQUXR0fooFf0ArEBIu+b9c/7xato@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexander Shishkin <alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, peter.lachner-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, norbert.schulz-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, keven.boell-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yann.fouassier-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, laurent.fert-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 29, 2015 at 9:25 PM, Alexander Shishkin
-<alexander.shishkin@linux.intel.com> wrote:
-> Chunyan Zhang <zhang.lyra@gmail.com> writes:
+On Wed, Jul 29, 2015 at 9:46 PM, Alexander Shishkin
+<alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
+> Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> writes:
 >
->>> +/**
->>> + * stm_source_register_device() - register an stm_source device
->>> + * @parent:    parent device
->>> + * @data:      device description structure
->>> + *
->>> + * This will create a device of stm_source class that can write
->>> + * data to an stm device once linked.
->>> + *
->>> + * Return:     0 on success, -errno otherwise.
->>> + */
->>> +int stm_source_register_device(struct device *parent,
->>> +                              struct stm_source_data *data)
->>> +{
->>> +       struct stm_source_device *src;
->>> +       int err;
->>> +
->>> +       if (!stm_core_up)
->>> +               return -EPROBE_DEFER;
->>> +
+>> On Wed, Jul 29, 2015 at 04:25:10PM +0300, Alexander Shishkin wrote:
 >>
->> I tried to update Coresight-stm driver[1] based on your this version
->> patch, but the Coresight-stm driver probe() failed.
->> the reason was:
->> In the end of Coresight stm_probe(), we called this function, but
->> "stm_core_up" was zero then, so the error returned value
->> "-EPROBE_DEFER" was received.
->
-> Yes, that is the intended behavior if stm core is not initialized yet.
->
->> In fact, "stm_core_up" would increase itself until "stm_core_init" be
->> called - it's the root of this problem, I'll explain this where the
->> function "stm_core_init" defined.
->
-> I'm sorry, I didn't understand this, can you rephrase?
-
-Sure, I mean, the root reason of this problem is here ( i.e.
-"stm_core_up" was zero then):
-     if (!stm_core_up)
-         return -EPROBE_DEFER;
-
-Why it was zero?
-Because the function (i.e. stm_core_init() ) in which "stm_core_up"
-would be added one hasn't been executed at this moment. It would be
-executed on module_init stage for you this version of patch.
-
->
->> And redoing Coresight stm_probe() will incur a WARN_ON() like below:
+>>> There has to be a way to defer stm_probe(), although a quick look at
+>>> amba code suggests it's not implemented.
 >>
->> [    1.075746] coresight-stm 10006000.stm: stm_register_device failed
->> [    1.082118] ------------[ cut here ]------------
->> [    1.086819] WARNING: CPU: 1 PID: 1 at drivers/clk/clk.c:657
->> clk_core_disable+0x138/0x13c()
->> [    1.095353] Modules linked in:
->> [    1.098487] CPU: 1 PID: 1 Comm: swapper/0 Tainted: G S
->> 4.2.0-rc1+ #107
->> [    1.106398] Hardware name: Spreadtrum SC9836 Openphone Board (DT)
->> [    1.112678] Call trace:
->> [    1.115194] [<ffffffc00008a5b4>] dump_backtrace+0x0/0x138
->> [    1.120761] [<ffffffc00008a708>] show_stack+0x1c/0x28
->> [    1.125972] [<ffffffc0003320e0>] dump_stack+0x84/0xc8
->> [    1.131179] [<ffffffc00009b580>] warn_slowpath_common+0xa4/0xdc
->> [    1.137285] [<ffffffc00009b700>] warn_slowpath_null+0x34/0x44
->> [    1.143213] [<ffffffc000321eb4>] clk_core_disable+0x134/0x13c
+>> What makes you say this?  Probe deferral is implemented in the driver
+>> core rather than individual buses, the buses don't need to know anything
+>> about it.
 >
-> Well, like I said in the offline thread, this has to do with cleaning up
-> in the error path of stm_probe(). What happens if stm_probe() fails for
-> any other reason? I'm guessing the same warning.
-
-The reason of this warning is:
-After stm_probe() failed, clk_core_disable() would be called from
-amba_put_disable_pclk(), then WARN_ON() happened:
-         if (WARN_ON(core->enable_count == 0))
-                 return;
-
-I'm guessing the reason why "core->enable_count" was 0 at this moment is:
-I don't know who created a thread to process the
-amba_pm_runtime_suspend(), in which clk_core_disable() was already
-called, "core->enable_count" was, of course, cleared to zero then.
-And this thread run before amba_put_disable_pclk(pcdev) which is just
-the one called from amba_probe() after
-"->probe"(i.e. stm_probe in this case) returning a non-zero value.
-
-In a word, if clk_core_disable() is called again after
-"core->enable_count" has already been cleared to zero in the first
-round of clk_core_disable()'s.
-
-As such, the WARN_ON occurred.
-
+> I stand corrected, it indeed is.
 >
->>> +static int __init stm_core_init(void)
->>> +{
->>> +       int err;
->>> +
->>> +       err = class_register(&stm_class);
->>> +       if (err)
->>> +               return err;
->>> +
->>> +       err = class_register(&stm_source_class);
->>> +       if (err)
->>> +               goto err_stm;
->>> +
->>> +       err = stp_configfs_init();
->>> +       if (err)
->>> +               goto err_src;
->>> +
->>> +       init_srcu_struct(&stm_source_srcu);
->>> +
->>> +       stm_core_up++;
->>> +
->>> +       return 0;
->>> +
->>> +err_src:
->>> +       class_unregister(&stm_source_class);
->>> +err_stm:
->>> +       class_unregister(&stm_class);
->>> +
->>> +       return err;
->>> +}
->>> +
->>> +module_init(stm_core_init);
->>
->> Since you are using module_init() instead of postcore_initcall() which
->> was in the last version patch, as such, this function would be
->> executed after Coresight "stm_probe" finished.
->
-> Yes, iirc on arm the initcall order somehow forced postcore
-> stm_core_init() before configfs, which it relies on, causing a
-> crash. Now I see that somebody hacked configfs to start at core_initcall
-> (f5b697700c8) instead.
->
-> There has to be a way to defer stm_probe(), although a quick look at
-> amba code suggests it's not implemented.
->
->> So, we think there a few optional solutions:
->> 1) Remove the "stm_register_device" out from Coresight "stm_probe",
->> but we have to save another global variable:
->>
->>     struct device *stm_dev;
->>
->> in the process of Coresight "stm_probe".
->
-> Sorry, didn't understand this one.
->
-> Except for I can say that having a global variable like that is a bad
-> idea, but that's not relevant to the problem at hand.
+> So returning EPROBE_DEFER from stm_probe() should Just Work (provided
+> stm_probe() handles its error paths correctly).
 
-Agree, it's not a good policy :)
+If let stm_probe() implement probe deferral, it has to have a global
+variable for the later calling of "stm_register_device", because the
+first parameter of "stm_register_device" is " struct device * " which
+comes from amba_probe(), after finished amba_probe(), we may not get
+this structure by other means.
 
->
->> 2) Change module_init() to other XYX_init() which would run prior to
->> "amba_probe()" (i.e. the caller of Coresight stm_probe), this may be a
->> better one.
->
-> I'm really not a big fan of the initcall games, to be honest, it will
-> always be a problem on some architecture or other. Having said that, if
-> stm_core_init() runs at postcore_initcall level, does that solve your
-> problem?
-
-Yes of course, what you were using in your last version of patch was
-just postcore_initcall(), and it works.
-
->
->> 3) stm_core_init() could be turned into a library call where
->> initialisation of the internals is done when first called.
->
-> Well, it's not that simple: stm is used by both stm and stm_source
-> devices, in this case we'll need to make sure that the first call to
-> either of the {stm,stm_source}_register_device() results in the actual
-> initialization of the stm core. I think it's a cleaner solution than the
-> initcall games, though.
-
-Ok, I see.
-
-Thanks,
-Chunyan
+This was a similar policy that we both thought was not good :)
 
 >
 > Regards,
