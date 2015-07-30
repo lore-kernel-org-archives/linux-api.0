@@ -1,69 +1,196 @@
-From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: [PATCH] userfaultfd: register syscall numbers for x86 32bit and x86-64 64bit
-Date: Thu, 30 Jul 2015 17:34:27 +0200
-Message-ID: <1438270467-13324-1-git-send-email-aarcange@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: Stephen Rothwell <sfr@canb.auug.org.au>, Andrew Morton <akpm@linux-foundation.org>, Ingo Molnar <mingo@elte.hu>, "\\\"H. Peter Anvin\\\"" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, linux-next@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, Eric B Munson <emunson@akamai.com>, Pavel Emelyanov <xemul@parallels.com>, "\\\"Dr. David Alan Gilbert\\\"" <dgilbert@redhat.com>
+From: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Subject: Re: [PATCH v8 4/6] block: loop: prepare for supporing direct IO
+Date: Thu, 30 Jul 2015 11:45:42 -0400
+Message-ID: <CACVXFVOLsUOH5qvjQ=jZL=QsJ82Xx+pW2mW8p4t9P=S5qE_-HQ@mail.gmail.com>
+References: <1438256184-23645-1-git-send-email-ming.lei@canonical.com>
+	<1438256184-23645-5-git-send-email-ming.lei@canonical.com>
+	<55BA432F.3050603@oracle.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <55BA432F.3050603-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dave Kleikamp <dave.kleikamp-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Zach Brown <zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Maxim Patlasov <mpatlasov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This registers the official numbers of the userfaultfd syscall for x86
-32bit and x86-64 64bit. This registration allows to ship kernels in
-production using these two syscall numbers for userfaultfd.
+On Thu, Jul 30, 2015 at 11:30 AM, Dave Kleikamp
+<dave.kleikamp-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
+> On 07/30/2015 06:36 AM, Ming Lei wrote:
+>> This patches provides one interface for enabling direct IO
+>> from user space:
+>>
+>>       - userspace(such as losetup) can pass 'file' which is
+>>       opened/fcntl as O_DIRECT
+>>
+>> Also __loop_update_dio() is introduced to check if direct I/O
+>> can be used on current loop setting.
+>>
+>> The last big change is to introduce LO_FLAGS_DIRECT_IO flag
+>> for userspace to know if direct IO is used to access backing
+>> file.
+>
+> lo->use_dio and LO_FLAGS_DIRECT_IO seem redundant. Wouldn't it be
+> simpler to use one or the other?
 
-Acked-by: Pavel Emelyanov <xemul@parallels.com>
-Signed-off-by: Andrea Arcangeli <aarcange@redhat.com>
----
- arch/x86/entry/syscalls/syscall_32.tbl | 1 +
- arch/x86/entry/syscalls/syscall_64.tbl | 1 +
- include/linux/syscalls.h               | 1 +
- kernel/sys_ni.c                        | 1 +
- 4 files changed, 4 insertions(+)
+losetup is a stateless utility, which means it need to retrieve the dio status
+via the flag of LO_FLAGS_DIRECT_IO, which is one API change.
 
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 25e3cf1..178c5c2 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -380,3 +380,4 @@
- 371	i386	recvfrom		sys_recvfrom			compat_sys_recvfrom
- 372	i386	recvmsg			sys_recvmsg			compat_sys_recvmsg
- 373	i386	shutdown		sys_shutdown
-+374	i386	userfaultfd		sys_userfaultfd
-\ No newline at end of file
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 9ef32d5..81c4906 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -329,6 +329,7 @@
- 320	common	kexec_file_load		sys_kexec_file_load
- 321	common	bpf			sys_bpf
- 322	64	execveat		stub_execveat
-+323	common	userfaultfd		sys_userfaultfd
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index b45c45b..0800131 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -810,6 +810,7 @@ asmlinkage long sys_timerfd_gettime(int ufd, struct itimerspec __user *otmr);
- asmlinkage long sys_eventfd(unsigned int count);
- asmlinkage long sys_eventfd2(unsigned int count, int flags);
- asmlinkage long sys_memfd_create(const char __user *uname_ptr, unsigned int flags);
-+asmlinkage long sys_userfaultfd(int flags);
- asmlinkage long sys_fallocate(int fd, int mode, loff_t offset, loff_t len);
- asmlinkage long sys_old_readdir(unsigned int, struct old_linux_dirent __user *, unsigned int);
- asmlinkage long sys_pselect6(int, fd_set __user *, fd_set __user *,
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index 7995ef5..8b3e10ea 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -218,6 +218,7 @@ cond_syscall(compat_sys_timerfd_gettime);
- cond_syscall(sys_eventfd);
- cond_syscall(sys_eventfd2);
- cond_syscall(sys_memfd_create);
-+cond_syscall(sys_userfaultfd);
- 
- /* performance counters: */
- cond_syscall(sys_perf_event_open);
+>
+>>
+>> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>> Signed-off-by: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+>> ---
+>>  drivers/block/loop.c      | 63 ++++++++++++++++++++++++++++++++++++++++++++++-
+>>  drivers/block/loop.h      |  2 ++
+>>  include/uapi/linux/loop.h |  1 +
+>>  3 files changed, 65 insertions(+), 1 deletion(-)
+>>
+>> diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+>> index 1875aad..799cc23 100644
+>> --- a/drivers/block/loop.c
+>> +++ b/drivers/block/loop.c
+>> @@ -164,6 +164,47 @@ static loff_t get_loop_size(struct loop_device *lo, struct file *file)
+>>       return get_size(lo->lo_offset, lo->lo_sizelimit, file);
+>>  }
+>>
+>> +static void __loop_update_dio(struct loop_device *lo, bool dio)
+>> +{
+>> +     struct file *file = lo->lo_backing_file;
+>> +     struct inode *inode = file->f_mapping->host;
+>> +     bool use_dio;
+>> +     unsigned dio_align = inode->i_sb->s_bdev ?
+>> +             (bdev_io_min(inode->i_sb->s_bdev) - 1) : 0;
+>> +
+>> +     /*
+>> +      * We support direct I/O only if lo_offset is aligned
+>> +      * with the min I/O size of backing device.
+>> +      *
+>> +      * Request's offset and size will be checked in I/O path.
+>> +      */
+>> +     if (dio) {
+>> +             if (!dio_align || (lo->lo_offset & dio_align))
+>> +                     use_dio = false;
+>> +             else
+>> +                     use_dio = true;
+>> +     } else {
+>> +             use_dio = false;
+>> +     }
+>> +
+>> +     /* flush dirty pages before changing direct IO */
+>> +     vfs_fsync(file, 0);
+>> +
+>> +     /*
+>> +      * The flag of LO_FLAGS_DIRECT_IO is handled similarly with
+>> +      * LO_FLAGS_READ_ONLY, both are set from kernel, and losetup
+>> +      * will get updated by ioctl(LOOP_GET_STATUS)
+>> +      */
+>> +     blk_mq_freeze_queue(lo->lo_queue);
+>> +     lo->use_dio = use_dio;
+>> +     lo->dio_align = dio_align;
+>> +     if (use_dio)
+>> +             lo->lo_flags |= LO_FLAGS_DIRECT_IO;
+>> +     else
+>> +             lo->lo_flags &= ~LO_FLAGS_DIRECT_IO;
+>> +     blk_mq_unfreeze_queue(lo->lo_queue);
+>> +}
+>> +
+>>  static int
+>>  figure_loop_size(struct loop_device *lo, loff_t offset, loff_t sizelimit)
+>>  {
+>> @@ -173,8 +214,12 @@ figure_loop_size(struct loop_device *lo, loff_t offset, loff_t sizelimit)
+>>
+>>       if (unlikely((loff_t)x != size))
+>>               return -EFBIG;
+>> -     if (lo->lo_offset != offset)
+>> +     if (lo->lo_offset != offset) {
+>>               lo->lo_offset = offset;
+>> +
+>> +             /* update dio if lo_offset is changed*/
+>> +             __loop_update_dio(lo, lo->use_dio);
+>> +     }
+>>       if (lo->lo_sizelimit != sizelimit)
+>>               lo->lo_sizelimit = sizelimit;
+>>       set_capacity(lo->lo_disk, x);
+>> @@ -421,6 +466,11 @@ struct switch_request {
+>>       struct completion wait;
+>>  };
+>>
+>> +static inline void loop_update_dio(struct loop_device *lo)
+>> +{
+>> +     __loop_update_dio(lo, io_is_direct(lo->lo_backing_file));
+>> +}
+>> +
+>>  /*
+>>   * Do the actual switch; called from the BIO completion routine
+>>   */
+>> @@ -441,6 +491,7 @@ static void do_loop_switch(struct loop_device *lo, struct switch_request *p)
+>>               mapping->host->i_bdev->bd_block_size : PAGE_SIZE;
+>>       lo->old_gfp_mask = mapping_gfp_mask(mapping);
+>>       mapping_set_gfp_mask(mapping, lo->old_gfp_mask & ~(__GFP_IO|__GFP_FS));
+>> +     loop_update_dio(lo);
+>>  }
+>>
+>>  /*
+>> @@ -627,11 +678,19 @@ static ssize_t loop_attr_partscan_show(struct loop_device *lo, char *buf)
+>>       return sprintf(buf, "%s\n", partscan ? "1" : "0");
+>>  }
+>>
+>> +static ssize_t loop_attr_dio_show(struct loop_device *lo, char *buf)
+>> +{
+>> +     int dio = (lo->lo_flags & LO_FLAGS_DIRECT_IO);
+>> +
+>> +     return sprintf(buf, "%s\n", dio ? "1" : "0");
+>> +}
+>> +
+>>  LOOP_ATTR_RO(backing_file);
+>>  LOOP_ATTR_RO(offset);
+>>  LOOP_ATTR_RO(sizelimit);
+>>  LOOP_ATTR_RO(autoclear);
+>>  LOOP_ATTR_RO(partscan);
+>> +LOOP_ATTR_RO(dio);
+>>
+>>  static struct attribute *loop_attrs[] = {
+>>       &loop_attr_backing_file.attr,
+>> @@ -639,6 +698,7 @@ static struct attribute *loop_attrs[] = {
+>>       &loop_attr_sizelimit.attr,
+>>       &loop_attr_autoclear.attr,
+>>       &loop_attr_partscan.attr,
+>> +     &loop_attr_dio.attr,
+>>       NULL,
+>>  };
+>>
+>> @@ -783,6 +843,7 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
+>>       if (!(lo_flags & LO_FLAGS_READ_ONLY) && file->f_op->fsync)
+>>               blk_queue_flush(lo->lo_queue, REQ_FLUSH);
+>>
+>> +     loop_update_dio(lo);
+>>       set_capacity(lo->lo_disk, size);
+>>       bd_set_size(bdev, size << 9);
+>>       loop_sysfs_init(lo);
+>> diff --git a/drivers/block/loop.h b/drivers/block/loop.h
+>> index b6c7d21..63f8e14 100644
+>> --- a/drivers/block/loop.h
+>> +++ b/drivers/block/loop.h
+>> @@ -58,6 +58,8 @@ struct loop_device {
+>>       struct mutex            lo_ctl_mutex;
+>>       struct kthread_worker   worker;
+>>       struct task_struct      *worker_task;
+>> +     unsigned                dio_align;
+>> +     bool                    use_dio;
+>>
+>>       struct request_queue    *lo_queue;
+>>       struct blk_mq_tag_set   tag_set;
+>> diff --git a/include/uapi/linux/loop.h b/include/uapi/linux/loop.h
+>> index e0cecd2..949851c 100644
+>> --- a/include/uapi/linux/loop.h
+>> +++ b/include/uapi/linux/loop.h
+>> @@ -21,6 +21,7 @@ enum {
+>>       LO_FLAGS_READ_ONLY      = 1,
+>>       LO_FLAGS_AUTOCLEAR      = 4,
+>>       LO_FLAGS_PARTSCAN       = 8,
+>> +     LO_FLAGS_DIRECT_IO      = 16,
+>>  };
+>>
+>>  #include <asm/posix_types.h> /* for __kernel_old_dev_t */
+>>
