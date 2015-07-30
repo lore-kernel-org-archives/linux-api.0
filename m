@@ -1,67 +1,67 @@
-From: Pablo Neira Ayuso <pablo@netfilter.org>
-Subject: Re: [PATCH nf-next v2] netfilter: nf_ct_sctp: minimal multihoming
- support
-Date: Thu, 30 Jul 2015 13:54:34 +0200
-Message-ID: <20150730115434.GA6960@salvia>
-References: <20150717141757.01EBFA0A84@unicorn.suse.cz>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Boris Brezillon <boris.brezillon@free-electrons.com>
+Subject: [RFC PATCH] mtd: add an MTD_IS_PARTITION flag
+Date: Thu, 30 Jul 2015 14:14:00 +0200
+Message-ID: <1438258440-21459-1-git-send-email-boris.brezillon@free-electrons.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150717141757.01EBFA0A84@unicorn.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Kubecek <mkubecek@suse.cz>
-Cc: netfilter-devel@vger.kernel.org, coreteam@netfilter.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, Patrick McHardy <kaber@trash.net>, Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>, "David S. Miller" <davem@davemloft.net>, Florian Westphal <fw@strlen.de>, Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>
+To: David Woodhouse <dwmw2@infradead.org>, Brian Norris <computersforpeace@gmail.com>, linux-mtd@lists.infradead.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Boris Brezillon <boris.brezillon@free-electrons.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 17, 2015 at 04:17:56PM +0200, Michal Kubecek wrote:
-> Currently nf_conntrack_proto_sctp module handles only packets between
-> primary addresses used to establish the connection. Any packets between
-> secondary addresses are classified as invalid so that usual firewall
-> configurations drop them. Allowing HEARTBEAT and HEARTBEAT-ACK chunks to
-> establish a new conntrack would allow traffic between secondary
-> addresses to pass through. A more sophisticated solution based on the
-> addresses advertised in the initial handshake (and possibly also later
-> dynamic address addition and removal) would be much harder to implement.
-> Moreover, in general we cannot assume to always see the initial
-> handshake as it can be routed through a different path.
+Add an MTD_IS_PARTITION flag so that the test to check whether an
+MTD device is a partition or not is faster.
+This also allows user-space programs to know whether they are
+manipulating a partition or a real device.
 
-Applied, thanks.
+Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
+---
+ drivers/mtd/mtdpart.c      | 14 ++------------
+ include/uapi/mtd/mtd-abi.h |  1 +
+ 2 files changed, 3 insertions(+), 12 deletions(-)
 
-I have remove the chunks below though, see explanation below.
-
-> @@ -705,6 +756,18 @@ static struct ctl_table sctp_compat_sysctl_table[] = {
->  		.mode		= 0644,
->  		.proc_handler	= proc_dointvec_jiffies,
->  	},
-> +	{
-> +		.procname	= "ip_conntrack_sctp_timeout_heartbeat_sent",
-> +		.maxlen		= sizeof(unsigned int),
-> +		.mode		= 0644,
-> +		.proc_handler	= proc_dointvec_jiffies,
-> +	},
-> +	{
-> +		.procname	= "ip_conntrack_sctp_timeout_heartbeat_acked",
-> +		.maxlen		= sizeof(unsigned int),
-> +		.mode		= 0644,
-> +		.proc_handler	= proc_dointvec_jiffies,
-> +	},
->  	{ }
->  };
->  #endif /* CONFIG_NF_CONNTRACK_PROC_COMPAT */
-[...]
-> @@ -752,6 +817,8 @@ static int sctp_kmemdup_compat_sysctl_table(struct nf_proto_net *pn,
->  	pn->ctl_compat_table[4].data = &sn->timeouts[SCTP_CONNTRACK_SHUTDOWN_SENT];
->  	pn->ctl_compat_table[5].data = &sn->timeouts[SCTP_CONNTRACK_SHUTDOWN_RECD];
->  	pn->ctl_compat_table[6].data = &sn->timeouts[SCTP_CONNTRACK_SHUTDOWN_ACK_SENT];
-> +	pn->ctl_compat_table[7].data = &sn->timeouts[SCTP_CONNTRACK_HEARTBEAT_SENT];
-> +	pn->ctl_compat_table[8].data = &sn->timeouts[SCTP_CONNTRACK_HEARTBEAT_ACKED];
->  #endif
->  #endif
->  	return 0;
-
-These are part of the compat sysctl interface (those entries that are
-prefixed by "ip_conntrack_*) that we should remove at some point (the
-new entries that are prefixed by "nf_conntrack_*" has been already
-there for a bit less than ~10 years and we got a netlink interface to
-configure this for several years already), so better skip those spots.
+diff --git a/drivers/mtd/mtdpart.c b/drivers/mtd/mtdpart.c
+index 919a936..3dc479f 100644
+--- a/drivers/mtd/mtdpart.c
++++ b/drivers/mtd/mtdpart.c
+@@ -370,6 +370,7 @@ static struct mtd_part *allocate_partition(struct mtd_info *master,
+ 	/* set up the MTD object for this partition */
+ 	slave->mtd.type = master->type;
+ 	slave->mtd.flags = master->flags & ~part->mask_flags;
++	slave->mtd.flags |= MTD_IS_PARTITION;
+ 	slave->mtd.size = part->size;
+ 	slave->mtd.writesize = master->writesize;
+ 	slave->mtd.writebufsize = master->writebufsize;
+@@ -779,18 +780,7 @@ int parse_mtd_partitions(struct mtd_info *master, const char *const *types,
+ 
+ int mtd_is_partition(const struct mtd_info *mtd)
+ {
+-	struct mtd_part *part;
+-	int ispart = 0;
+-
+-	mutex_lock(&mtd_partitions_mutex);
+-	list_for_each_entry(part, &mtd_partitions, list)
+-		if (&part->mtd == mtd) {
+-			ispart = 1;
+-			break;
+-		}
+-	mutex_unlock(&mtd_partitions_mutex);
+-
+-	return ispart;
++	return mtd->flags & MTD_IS_PARTITION;
+ }
+ EXPORT_SYMBOL_GPL(mtd_is_partition);
+ 
+diff --git a/include/uapi/mtd/mtd-abi.h b/include/uapi/mtd/mtd-abi.h
+index 763bb69..ffc1903 100644
+--- a/include/uapi/mtd/mtd-abi.h
++++ b/include/uapi/mtd/mtd-abi.h
+@@ -103,6 +103,7 @@ struct mtd_write_req {
+ #define MTD_BIT_WRITEABLE	0x800	/* Single bits can be flipped */
+ #define MTD_NO_ERASE		0x1000	/* No erase necessary */
+ #define MTD_POWERUP_LOCK	0x2000	/* Always locked after reset */
++#define MTD_IS_PARTITION	0x4000	/* Device is an MTD partition */
+ 
+ /* Some common devices / combinations of capabilities */
+ #define MTD_CAP_ROM		0
+-- 
+1.9.1
