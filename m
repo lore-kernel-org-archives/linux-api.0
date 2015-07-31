@@ -1,54 +1,60 @@
-From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
-Subject: Re: [PATCH] userfaultfd: register syscall numbers for x86 32bit and
- x86-64 64bit
-Date: Fri, 31 Jul 2015 10:13:52 +0100
-Message-ID: <20150731091351.GC2272@work-vm>
-References: <1438270467-13324-1-git-send-email-aarcange@redhat.com>
- <20150731083130.GA24624@gmail.com>
+From: Vladimir Davydov <vdavydov@parallels.com>
+Subject: Re: [PATCH -mm v9 0/8] idle memory tracking
+Date: Fri, 31 Jul 2015 12:34:57 +0300
+Message-ID: <20150731093457.GG8100@esperanza>
+References: <cover.1437303956.git.vdavydov@parallels.com>
+ <20150729123629.GI15801@dhcp22.suse.cz>
+ <20150729135907.GT8100@esperanza>
+ <20150729142618.GJ15801@dhcp22.suse.cz>
+ <20150729152817.GV8100@esperanza>
+ <20150729154718.GN15801@dhcp22.suse.cz>
+ <20150729162908.GY8100@esperanza>
+ <20150729143015.e8420eca17acbd36d1ce9242@linux-foundation.org>
+ <20150730091212.GA8100@esperanza>
+ <20150730130122.GC8100@esperanza>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-next-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Return-path: <linux-doc-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150731083130.GA24624@gmail.com>
-Sender: linux-next-owner@vger.kernel.org
-To: Ingo Molnar <mingo@kernel.org>
-Cc: Andrea Arcangeli <aarcange@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Stephen Rothwell <sfr@canb.auug.org.au>, Andrew Morton <akpm@linux-foundation.org>, Ingo Molnar <mingo@elte.hu>, "\\\"H. Peter Anvin\\\"" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, linux-next@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, Eric B Munson <emunson@akamai.com>, Pavel Emelyanov <xemul@parallels.com>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <a.p.zijlstra@chello.nl>
+In-Reply-To: <20150730130122.GC8100@esperanza>
+Sender: linux-doc-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Michal Hocko <mhocko@kernel.org>, Andres Lagar-Cavilla <andreslc@google.com>, Minchan Kim <minchan@kernel.org>, Raghavendra K T <raghavendra.kt@linux.vnet.ibm.com>, Johannes Weiner <hannes@cmpxchg.org>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-* Ingo Molnar (mingo@kernel.org) wrote:
-> 
-> * Andrea Arcangeli <aarcange@redhat.com> wrote:
-> 
-> > This registers the official numbers of the userfaultfd syscall for x86
-> > 32bit and x86-64 64bit. This registration allows to ship kernels in
-> > production using these two syscall numbers for userfaultfd.
+On Thu, Jul 30, 2015 at 04:01:22PM +0300, Vladimir Davydov wrote:
+> On Thu, Jul 30, 2015 at 12:12:12PM +0300, Vladimir Davydov wrote:
+> > On Wed, Jul 29, 2015 at 02:30:15PM -0700, Andrew Morton wrote:
+> > > On Wed, 29 Jul 2015 19:29:08 +0300 Vladimir Davydov <vdavydov@parallels.com> wrote:
+> > > 
+> > > > /proc/kpageidle should probably live somewhere in /sys/kernel/mm, but I
+> > > > added it where similar files are located (kpagecount, kpageflags) to
+> > > > keep things consistent.
+> > > 
+> > > I think these files should be moved elsewhere.  Consistency is good,
+> > > but not when we're being consistent with a bad thing.
+> > > 
+> > > So let's place these in /sys/kernel/mm and then start being consistent
+> > > with that?
 > > 
-> > Acked-by: Pavel Emelyanov <xemul@parallels.com>
-> > Signed-off-by: Andrea Arcangeli <aarcange@redhat.com>
-> > ---
-> >  arch/x86/entry/syscalls/syscall_32.tbl | 1 +
-> >  arch/x86/entry/syscalls/syscall_64.tbl | 1 +
-> >  include/linux/syscalls.h               | 1 +
-> >  kernel/sys_ni.c                        | 1 +
-> >  4 files changed, 4 insertions(+)
+> > I really don't think we should separate kpagecgroup from kpagecount and
+> > kpageflags, because they look very similar (each of them is read-only,
+> > contains an array of u64 values referenced by PFN). Scattering these
+> > files between different filesystems would look ugly IMO.
+> > 
+> > However, kpageidle is somewhat different (it's read-write, contains a
+> > bitmap) so I think it's worth moving it to /sys/kernel/mm. We have to
+> > move the code from fs/proc to mm/something then to remove dependency
+> > from PROC_FS, which would be unnecessary. Let me give it a try.
 > 
-> Hm, is there consensus on the upstream desirability of this sytem call?
-
-I hope so:
-   a) It's generic enough that there's interest in using it in
-      a range of projects - there's nothing QEMU specific in it.
-   b) It's worked very well on the QEMU code that I wrote that uses it
-      for postcopy, and has been solid doing that for many months now.
-   c) I'm not aware of any suggestions for a different, generic solution
-      to solve the same set of problems.
-   d) It's got a good self test, that's survived heavy testing.
-   e) I think Andrea has addressed all previous comments on it.
-
-Dave
-
+> Here it goes:
 > 
-> Thanks,
-> 
-> 	Ingo
---
-Dr. David Alan Gilbert / dgilbert@redhat.com / Manchester, UK
+> From: Vladimir Davydov <vdavydov@parallels.com>
+> Subject: [PATCH] Move /proc/kpageidle to /sys/kernel/mm/page_idle/bitmap
+
+Since it is rather difficult to merge it into proc-add-kpageidle, should
+I resend the whole series with all fixes included, provided you find
+this patch OK of course?
+
+Thanks,
+Vladimir
