@@ -1,84 +1,213 @@
-From: Andreas Gruenbacher <andreas.gruenbacher@gmail.com>
-Subject: [RFC v6 03/40] vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD permission flags
-Date: Tue,  4 Aug 2015 13:53:01 +0200
-Message-ID: <1438689218-6921-4-git-send-email-agruenba@redhat.com>
+From: Andreas Gruenbacher <andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [RFC v6 08/40] richacl: Compute maximum file masks from an acl
+Date: Tue,  4 Aug 2015 13:53:06 +0200
+Message-ID: <1438689218-6921-9-git-send-email-agruenba@redhat.com>
 References: <1438689218-6921-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1438689218-6921-1-git-send-email-agruenba@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org, linux-cifs@vger.kernel.org, linux-security-module@vger.kernel.org, Andreas Gruenbacher <agruenba@redhat.com>
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1438689218-6921-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Normally, deleting a file requires write and execute access to the parent
-directory.  With Richacls, a process with MAY_DELETE_SELF access to a file
-may delete the file even without write access to the parent directory.
+Compute upper bound owner, group, and other file masks with as few
+permissions as possible without denying any permissions that the NFSv4
+acl in a richacl grants.
 
-To support that, pass the MAY_DELETE_CHILD mask flag to inode_permission()
-when checking for delete access inside a directory, and MAY_DELETE_SELF
-when checking for delete access to a file itelf.
+This algorithm is used when a file inherits an acl at create time and
+when an acl is set via a mechanism that does not provide file masks
+(such as setting an acl via nfsd).  When user-space sets an acl via
+setxattr, the extended attribute already includes the file masks.
 
-The MAY_DELETE_SELF permission does not override the sticky directory
-check.  It probably should.
+Setting an acl also sets the file mode permission bits: they are
+determined by the file masks; see richacl_masks_to_mode().
 
-Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Reviewed-by: J. Bruce Fields <bfields-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- fs/namei.c         | 15 +++++++++++----
- include/linux/fs.h |  2 ++
- 2 files changed, 13 insertions(+), 4 deletions(-)
+ fs/richacl_base.c       | 156 ++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/richacl.h |   1 +
+ 2 files changed, 157 insertions(+)
 
-diff --git a/fs/namei.c b/fs/namei.c
-index 3504d36..2ac759c 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -454,7 +454,7 @@ static int sb_permission(struct super_block *sb, struct inode *inode, int mask)
-  * changing the "normal" UIDs which are used for other things.
-  *
-  * When checking for MAY_APPEND, MAY_CREATE_FILE, MAY_CREATE_DIR,
-- * MAY_WRITE must also be set in @mask.
-+ * MAY_DELETE_CHILD, MAY_DELETE_SELF, MAY_WRITE must also be set in @mask.
-  */
- int inode_permission(struct inode *inode, int mask)
- {
-@@ -2527,7 +2527,7 @@ static int may_delete(struct inode *dir, struct dentry *victim,
- 		      bool isdir, bool replace)
- {
- 	struct inode *inode = d_backing_inode(victim);
--	int error, mask = MAY_WRITE | MAY_EXEC;
-+	int error, mask = MAY_EXEC;
- 
- 	if (d_is_negative(victim))
- 		return -ENOENT;
-@@ -2537,8 +2537,15 @@ static int may_delete(struct inode *dir, struct dentry *victim,
- 	audit_inode_child(dir, victim, AUDIT_TYPE_CHILD_DELETE);
- 
- 	if (replace)
--		mask |= isdir ? MAY_CREATE_DIR : MAY_CREATE_FILE;
--	error = inode_permission(dir, mask);
-+		mask |= MAY_WRITE | (isdir ? MAY_CREATE_DIR : MAY_CREATE_FILE);
-+	error = inode_permission(dir, mask | MAY_WRITE | MAY_DELETE_CHILD);
-+	if (error && IS_RICHACL(inode)) {
-+		/* Deleting is also permitted with MAY_EXEC on the directory
-+		 * and MAY_DELETE_SELF on the inode.  */
-+		if (!inode_permission(inode, MAY_DELETE_SELF) &&
-+		    !inode_permission(dir, mask))
-+			error = 0;
+diff --git a/fs/richacl_base.c b/fs/richacl_base.c
+index 063dbe4..8426600 100644
+--- a/fs/richacl_base.c
++++ b/fs/richacl_base.c
+@@ -182,3 +182,159 @@ richacl_want_to_mask(unsigned int want)
+ 	return mask;
+ }
+ EXPORT_SYMBOL_GPL(richacl_want_to_mask);
++
++/*
++ * Note: functions like richacl_allowed_to_who(), richacl_group_class_allowed(),
++ * and richacl_compute_max_masks() iterate through the entire acl in reverse
++ * order as an optimization.
++ *
++ * In the standard algorithm, aces are considered in forward order.  When a
++ * process matches an ace, the permissions in the ace are either allowed or
++ * denied depending on the ace type.  Once a permission has been allowed or
++ * denied, it is no longer considered in further aces.
++ *
++ * By iterating through the acl in reverse order, we can compute the same
++ * result without having to keep track of which permissions have been allowed
++ * and denied already.
++ */
++
++/**
++ * richacl_allowed_to_who  -  permissions allowed to a specific who value
++ *
++ * Compute the maximum mask values allowed to a specific who value, taking
++ * everyone@ aces into account.
++ */
++static unsigned int richacl_allowed_to_who(struct richacl *acl,
++					   struct richace *who)
++{
++	struct richace *ace;
++	unsigned int allowed = 0;
++
++	richacl_for_each_entry_reverse(ace, acl) {
++		if (richace_is_inherit_only(ace))
++			continue;
++		if (richace_is_same_identifier(ace, who) ||
++		    richace_is_everyone(ace)) {
++			if (richace_is_allow(ace))
++				allowed |= ace->e_mask;
++			else if (richace_is_deny(ace))
++				allowed &= ~ace->e_mask;
++		}
 +	}
- 	if (error)
- 		return error;
- 	if (IS_APPEND(dir))
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 9c44f27..abf5b0e 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -83,6 +83,8 @@ typedef void (dax_iodone_t)(struct buffer_head *bh_map, int uptodate);
- #define MAY_NOT_BLOCK		0x00000080
- #define MAY_CREATE_FILE		0x00000100
- #define MAY_CREATE_DIR		0x00000200
-+#define MAY_DELETE_CHILD	0x00000400
-+#define MAY_DELETE_SELF		0x00000800
++	return allowed;
++}
++
++/**
++ * richacl_group_class_allowed  -  maximum permissions of the group class
++ *
++ * Compute the maximum mask values allowed to a process in the group class
++ * (i.e., a process which is not the owner but is in the owning group or
++ * matches a user or group acl entry).  This includes permissions granted or
++ * denied by everyone@ aces.
++ *
++ * See richacl_compute_max_masks().
++ */
++static unsigned int richacl_group_class_allowed(struct richacl *acl)
++{
++	struct richace *ace;
++	unsigned int everyone_allowed = 0, group_class_allowed = 0;
++	int had_group_ace = 0;
++
++	richacl_for_each_entry_reverse(ace, acl) {
++		if (richace_is_inherit_only(ace) ||
++		    richace_is_owner(ace))
++			continue;
++
++		if (richace_is_everyone(ace)) {
++			if (richace_is_allow(ace))
++				everyone_allowed |= ace->e_mask;
++			else if (richace_is_deny(ace))
++				everyone_allowed &= ~ace->e_mask;
++		} else {
++			group_class_allowed |=
++				richacl_allowed_to_who(acl, ace);
++
++			if (richace_is_group(ace))
++				had_group_ace = 1;
++		}
++	}
++	/*
++	 * If the acl doesn't contain any group@ aces, richacl_allowed_to_who()
++	 * wasn't called for the owning group.  We could make that call now, but
++	 * we already know the result (everyone_allowed).
++	 */
++	if (!had_group_ace)
++		group_class_allowed |= everyone_allowed;
++	return group_class_allowed;
++}
++
++/**
++ * richacl_compute_max_masks  -  compute upper bound masks
++ *
++ * Computes upper bound owner, group, and other masks so that none of
++ * the mask flags allowed by the acl are disabled (for any user with any
++ * group membership).
++ */
++void richacl_compute_max_masks(struct richacl *acl, kuid_t owner)
++{
++	unsigned int gmask = ~0;
++	struct richace *ace;
++
++	/*
++	 * @gmask contains all permissions which the group class is ever
++	 * allowed.  We use it to avoid adding permissions to the group mask
++	 * from everyone@ allow aces which the group class is always denied
++	 * through other aces.  For example, the following acl would otherwise
++	 * result in a group mask of rw:
++	 *
++	 *	group@:w::deny
++	 *	everyone@:rw::allow
++	 *
++	 * Avoid computing @gmask for acls which do not include any group class
++	 * deny aces: in such acls, the group class is never denied any
++	 * permissions from everyone@ allow aces, and the group class cannot
++	 * have fewer permissions than the other class.
++	 */
++
++restart:
++	acl->a_owner_mask = 0;
++	acl->a_group_mask = 0;
++	acl->a_other_mask = 0;
++
++	richacl_for_each_entry_reverse(ace, acl) {
++		if (richace_is_inherit_only(ace))
++			continue;
++
++		if (richace_is_owner(ace) ||
++		    (richace_is_unix_user(ace) &&
++		     uid_eq(ace->e_id.uid, owner))) {
++			if (richace_is_allow(ace))
++				acl->a_owner_mask |= ace->e_mask;
++			else if (richace_is_deny(ace))
++				acl->a_owner_mask &= ~ace->e_mask;
++		} else if (richace_is_everyone(ace)) {
++			if (richace_is_allow(ace)) {
++				acl->a_owner_mask |= ace->e_mask;
++				acl->a_group_mask |= ace->e_mask & gmask;
++				acl->a_other_mask |= ace->e_mask;
++			} else if (richace_is_deny(ace)) {
++				acl->a_owner_mask &= ~ace->e_mask;
++				acl->a_group_mask &= ~ace->e_mask;
++				acl->a_other_mask &= ~ace->e_mask;
++			}
++		} else {
++			if (richace_is_allow(ace)) {
++				acl->a_owner_mask |= ace->e_mask & gmask;
++				acl->a_group_mask |= ace->e_mask & gmask;
++			} else if (richace_is_deny(ace) && gmask == ~0) {
++				gmask = richacl_group_class_allowed(acl);
++				if (likely(gmask != ~0))
++					/* should always be true */
++					goto restart;
++			}
++		}
++	}
++
++	acl->a_flags &= ~(RICHACL_WRITE_THROUGH | RICHACL_MASKED);
++}
++EXPORT_SYMBOL_GPL(richacl_compute_max_masks);
+diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+index f4ba113..3d719db 100644
+--- a/include/linux/richacl.h
++++ b/include/linux/richacl.h
+@@ -303,5 +303,6 @@ extern void richace_copy(struct richace *, const struct richace *);
+ extern int richacl_masks_to_mode(const struct richacl *);
+ extern unsigned int richacl_mode_to_mask(mode_t);
+ extern unsigned int richacl_want_to_mask(unsigned int);
++extern void richacl_compute_max_masks(struct richacl *, kuid_t);
  
- /*
-  * flags in file.f_mode.  Note that FMODE_READ and FMODE_WRITE must correspond
+ #endif /* __RICHACL_H */
 -- 
 2.5.0
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
