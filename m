@@ -1,30 +1,113 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: Persistent Reservation API
-Date: Tue,  4 Aug 2015 09:11:05 +0200
-Message-ID: <1438672271-11309-1-git-send-email-hch@lst.de>
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Sender: linux-scsi-owner@vger.kernel.org
+Subject: [PATCH 5/6] dm: split out a helper to find the ioctl target
+Date: Tue,  4 Aug 2015 09:11:10 +0200
+Message-ID: <1438672271-11309-6-git-send-email-hch@lst.de>
+References: <1438672271-11309-1-git-send-email-hch@lst.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1438672271-11309-1-git-send-email-hch@lst.de>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Jens Axboe <axboe@fb.com>
 Cc: linux-scsi@vger.kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This series adds support for a simplified persistent reservation API
-to the block layer.  The intent is that both in-kernel and userspace
-consumers can use the API instead of having to hand craft SCSI or NVMe
-command through the various pass through interfaces.  It also adds
-DM support as getting reservations through dm-multipath is a major
-pain with the current scheme.
+We want to reuse this code for the persistent reservation handling,
+so move it into a helper.
 
-NVMe support currently isn't included as I don't have a multihost
-NVMe setup to test on, but if I can find a volunteer to test it I'm
-happy to write the code for it.
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ drivers/md/dm.c | 50 ++++++++++++++++++++++++++++++++------------------
+ 1 file changed, 32 insertions(+), 18 deletions(-)
 
-The ioctl API is documented in Documentation/block/pr.txt, but to
-fully understand the concept you'll have to read up the SPC spec,
-PRs are too complicated that trying to rephrase them into different
-terminology is just going to create confusion.
-
-I also have a set of simple test tools available at:
-
-	git://git.infradead.org/users/hch/pr-tests.git
-
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index c68eb91..8dfc760 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -556,18 +556,16 @@ static int dm_blk_getgeo(struct block_device *bdev, struct hd_geometry *geo)
+ 	return dm_get_geometry(md, geo);
+ }
+ 
+-static int dm_blk_ioctl(struct block_device *bdev, fmode_t mode,
+-			unsigned int cmd, unsigned long arg)
++static int dm_get_ioctl_table(struct mapped_device *md,
++		struct dm_target **tgt, struct block_device **bdev,
++		fmode_t *mode, int *srcu_idx)
+ {
+-	struct mapped_device *md = bdev->bd_disk->private_data;
+-	int srcu_idx;
+ 	struct dm_table *map;
+-	struct dm_target *tgt;
+-	int r = -ENOTTY;
++	int r;
+ 
+ retry:
+-	map = dm_get_live_table(md, &srcu_idx);
+-
++	r = -ENOTTY;
++	map = dm_get_live_table(md, srcu_idx);
+ 	if (!map || !dm_table_get_size(map))
+ 		goto out;
+ 
+@@ -575,8 +573,9 @@ retry:
+ 	if (dm_table_get_num_targets(map) != 1)
+ 		goto out;
+ 
+-	tgt = dm_table_get_target(map, 0);
+-	if (!tgt->type->ioctl)
++	*tgt = dm_table_get_target(map, 0);
++
++	if (!(*tgt)->type->ioctl)
+ 		goto out;
+ 
+ 	if (dm_suspended_md(md)) {
+@@ -584,10 +583,32 @@ retry:
+ 		goto out;
+ 	}
+ 
+-	r = tgt->type->ioctl(tgt, &bdev, &mode);
++	r = (*tgt)->type->ioctl(*tgt, bdev, mode);
+ 	if (r < 0)
+ 		goto out;
+ 
++	return r;
++
++out:
++	dm_put_live_table(md, *srcu_idx);
++	if (r == -ENOTCONN) {
++		msleep(10);
++		goto retry;
++	}
++	return r;
++}
++
++static int dm_blk_ioctl(struct block_device *bdev, fmode_t mode,
++			unsigned int cmd, unsigned long arg)
++{
++	struct mapped_device *md = bdev->bd_disk->private_data;
++	struct dm_target *tgt;
++	int srcu_idx, r;
++
++	r = dm_get_ioctl_table(md, &tgt, &bdev, &mode, &srcu_idx);
++	if (r < 0)
++		return r;
++
+ 	if (r > 0) {
+ 		r = scsi_verify_blk_ioctl(NULL, cmd);
+ 		if (r)
+@@ -595,15 +616,8 @@ retry:
+ 	}
+ 
+ 	r =  __blkdev_driver_ioctl(bdev, mode, cmd, arg);
+-
+ out:
+ 	dm_put_live_table(md, srcu_idx);
+-
+-	if (r == -ENOTCONN) {
+-		msleep(10);
+-		goto retry;
+-	}
+-
+ 	return r;
+ }
+ 
+-- 
+1.9.1
