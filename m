@@ -1,469 +1,110 @@
 From: Julien Grall <julien.grall@citrix.com>
-Subject: [PATCH v2 8/8] xen/privcmd: Further s/MFN/GFN/ clean-up
-Date: Tue, 4 Aug 2015 19:12:52 +0100
-Message-ID: <1438711972-18752-9-git-send-email-julien.grall@citrix.com>
-References: <1438711972-18752-1-git-send-email-julien.grall@citrix.com>
+Subject: [PATCH v2 0/8] Use correctly the Xen memory terminologies in Linux
+Date: Tue, 4 Aug 2015 19:12:44 +0100
+Message-ID: <1438711972-18752-1-git-send-email-julien.grall@citrix.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1438711972-18752-1-git-send-email-julien.grall@citrix.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
 To: xen-devel@lists.xenproject.org
-Cc: ian.campbell@citrix.com, stefano.stabellini@eu.citrix.com, linux-kernel@vger.kernel.org, Julien Grall <julien.grall@citrix.com>, David Vrabel <david.vrabel@citrix.com>, Russell King <linux@arm.linux.org.uk>, Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>, Boris Ostrovsky <boris.ostrovsky@oracle.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org
+Cc: linux-fbdev@vger.kernel.org, x86@kernel.org, netdev@vger.kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Jiri Slaby <jslaby@suse.com>, Thomas Gleixner <tglx@linutronix.de>, Russell King <linux@arm.linux.org.uk>, linux-scsi@vger.kernel.org, Tomi Valkeinen <tomi.valkeinen@ti.com>, stefano.stabellini@eu.citrix.com, Ingo Molnar <mingo@redhat.com>, linux-input@vger.kernel.org, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>, ian.campbell@citrix.com, Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>, "James E.J. Bottomley" <JBottomley@odin.com>, Boris Ostrovsky <boris.ostrovsky@oracle.com>, linux-arm-kernel@lists.infradead.org, Juergen Gross <jgross@suse.com>, Wei Liu <wei.liu2@citrix.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-kernel@vger.kernel.org, Julien Grall <julien.grall@citrix.com>, David Vrabel <david.v>
 List-Id: linux-api@vger.kernel.org
 
-The privcmd code is mixing the usage of GFN and MFN within the same
-functions which make the code difficult to understand when you only work
-with auto-translated guests.
-
-The privcmd driver is only dealing with GFN so replace all the mention
-of MFN into GFN.
-
-The ioctl structure used to map foreign change has been left unchanged
-given that the userspace is using it. Nonetheless, add a comment to
-explain the expected value within the "mfn" field.
-
-Signed-off-by: Julien Grall <julien.grall@citrix.com>
-Reviewed-by: David Vrabel <david.vrabel@citrix.com>
-Cc: Stefano Stabellini <stefano.stabellini@eu.citrix.com>
-Cc: Russell King <linux@arm.linux.org.uk>
-Cc: Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>
-Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: "H. Peter Anvin" <hpa@zytor.com>
-Cc: x86@kernel.org
-Cc: linux-arm-kernel@lists.infradead.org
-Cc: linux-api@vger.kernel.org
-
----
-    Changes in v2:
-        - Add David's reviewed-by
----
- arch/arm/xen/enlighten.c   | 18 +++++++++---------
- arch/x86/xen/mmu.c         | 32 ++++++++++++++++----------------
- drivers/xen/privcmd.c      | 44 ++++++++++++++++++++++----------------------
- drivers/xen/xlate_mmu.c    | 18 +++++++++---------
- include/uapi/xen/privcmd.h |  4 ++++
- include/xen/xen-ops.h      | 10 +++++-----
- 6 files changed, 65 insertions(+), 61 deletions(-)
-
-diff --git a/arch/arm/xen/enlighten.c b/arch/arm/xen/enlighten.c
-index 6c09cc4..a8b8806 100644
---- a/arch/arm/xen/enlighten.c
-+++ b/arch/arm/xen/enlighten.c
-@@ -56,35 +56,35 @@ static __read_mostly unsigned int xen_events_irq;
- 
- static __initdata struct device_node *xen_node;
- 
--int xen_remap_domain_mfn_array(struct vm_area_struct *vma,
-+int xen_remap_domain_gfn_array(struct vm_area_struct *vma,
- 			       unsigned long addr,
--			       xen_pfn_t *mfn, int nr,
-+			       xen_pfn_t *gfn, int nr,
- 			       int *err_ptr, pgprot_t prot,
- 			       unsigned domid,
- 			       struct page **pages)
- {
--	return xen_xlate_remap_gfn_array(vma, addr, mfn, nr, err_ptr,
-+	return xen_xlate_remap_gfn_array(vma, addr, gfn, nr, err_ptr,
- 					 prot, domid, pages);
- }
--EXPORT_SYMBOL_GPL(xen_remap_domain_mfn_array);
-+EXPORT_SYMBOL_GPL(xen_remap_domain_gfn_array);
- 
- /* Not used by XENFEAT_auto_translated guests. */
--int xen_remap_domain_mfn_range(struct vm_area_struct *vma,
-+int xen_remap_domain_gfn_range(struct vm_area_struct *vma,
-                               unsigned long addr,
--                              xen_pfn_t mfn, int nr,
-+                              xen_pfn_t gfn, int nr,
-                               pgprot_t prot, unsigned domid,
-                               struct page **pages)
- {
- 	return -ENOSYS;
- }
--EXPORT_SYMBOL_GPL(xen_remap_domain_mfn_range);
-+EXPORT_SYMBOL_GPL(xen_remap_domain_gfn_range);
- 
--int xen_unmap_domain_mfn_range(struct vm_area_struct *vma,
-+int xen_unmap_domain_gfn_range(struct vm_area_struct *vma,
- 			       int nr, struct page **pages)
- {
- 	return xen_xlate_unmap_gfn_range(vma, nr, pages);
- }
--EXPORT_SYMBOL_GPL(xen_unmap_domain_mfn_range);
-+EXPORT_SYMBOL_GPL(xen_unmap_domain_gfn_range);
- 
- static void xen_percpu_init(void)
- {
-diff --git a/arch/x86/xen/mmu.c b/arch/x86/xen/mmu.c
-index dd151b2..87db1ff 100644
---- a/arch/x86/xen/mmu.c
-+++ b/arch/x86/xen/mmu.c
-@@ -2465,9 +2465,9 @@ static int remap_area_mfn_pte_fn(pte_t *ptep, pgtable_t token,
- 	return 0;
- }
- 
--static int do_remap_mfn(struct vm_area_struct *vma,
-+static int do_remap_gfn(struct vm_area_struct *vma,
- 			unsigned long addr,
--			xen_pfn_t *mfn, int nr,
-+			xen_pfn_t *gfn, int nr,
- 			int *err_ptr, pgprot_t prot,
- 			unsigned domid,
- 			struct page **pages)
-@@ -2483,14 +2483,14 @@ static int do_remap_mfn(struct vm_area_struct *vma,
- 	if (xen_feature(XENFEAT_auto_translated_physmap)) {
- #ifdef CONFIG_XEN_PVH
- 		/* We need to update the local page tables and the xen HAP */
--		return xen_xlate_remap_gfn_array(vma, addr, mfn, nr, err_ptr,
-+		return xen_xlate_remap_gfn_array(vma, addr, gfn, nr, err_ptr,
- 						 prot, domid, pages);
- #else
- 		return -EINVAL;
- #endif
-         }
- 
--	rmd.mfn = mfn;
-+	rmd.mfn = gfn;
- 	rmd.prot = prot;
- 	/* We use the err_ptr to indicate if there we are doing a contigious
- 	 * mapping or a discontigious mapping. */
-@@ -2518,8 +2518,8 @@ static int do_remap_mfn(struct vm_area_struct *vma,
- 						    batch_left, &done, domid);
- 
- 			/*
--			 * @err_ptr may be the same buffer as @mfn, so
--			 * only clear it after each chunk of @mfn is
-+			 * @err_ptr may be the same buffer as @gfn, so
-+			 * only clear it after each chunk of @gfn is
- 			 * used.
- 			 */
- 			if (err_ptr) {
-@@ -2549,19 +2549,19 @@ out:
- 	return err < 0 ? err : mapped;
- }
- 
--int xen_remap_domain_mfn_range(struct vm_area_struct *vma,
-+int xen_remap_domain_gfn_range(struct vm_area_struct *vma,
- 			       unsigned long addr,
--			       xen_pfn_t mfn, int nr,
-+			       xen_pfn_t gfn, int nr,
- 			       pgprot_t prot, unsigned domid,
- 			       struct page **pages)
- {
--	return do_remap_mfn(vma, addr, &mfn, nr, NULL, prot, domid, pages);
-+	return do_remap_gfn(vma, addr, &gfn, nr, NULL, prot, domid, pages);
- }
--EXPORT_SYMBOL_GPL(xen_remap_domain_mfn_range);
-+EXPORT_SYMBOL_GPL(xen_remap_domain_gfn_range);
- 
--int xen_remap_domain_mfn_array(struct vm_area_struct *vma,
-+int xen_remap_domain_gfn_array(struct vm_area_struct *vma,
- 			       unsigned long addr,
--			       xen_pfn_t *mfn, int nr,
-+			       xen_pfn_t *gfn, int nr,
- 			       int *err_ptr, pgprot_t prot,
- 			       unsigned domid, struct page **pages)
- {
-@@ -2570,13 +2570,13 @@ int xen_remap_domain_mfn_array(struct vm_area_struct *vma,
- 	 * cause of "wrong memory was mapped in".
- 	 */
- 	BUG_ON(err_ptr == NULL);
--	return do_remap_mfn(vma, addr, mfn, nr, err_ptr, prot, domid, pages);
-+	return do_remap_gfn(vma, addr, gfn, nr, err_ptr, prot, domid, pages);
- }
--EXPORT_SYMBOL_GPL(xen_remap_domain_mfn_array);
-+EXPORT_SYMBOL_GPL(xen_remap_domain_gfn_array);
- 
- 
- /* Returns: 0 success */
--int xen_unmap_domain_mfn_range(struct vm_area_struct *vma,
-+int xen_unmap_domain_gfn_range(struct vm_area_struct *vma,
- 			       int numpgs, struct page **pages)
- {
- 	if (!pages || !xen_feature(XENFEAT_auto_translated_physmap))
-@@ -2588,4 +2588,4 @@ int xen_unmap_domain_mfn_range(struct vm_area_struct *vma,
- 	return -EINVAL;
- #endif
- }
--EXPORT_SYMBOL_GPL(xen_unmap_domain_mfn_range);
-+EXPORT_SYMBOL_GPL(xen_unmap_domain_gfn_range);
-diff --git a/drivers/xen/privcmd.c b/drivers/xen/privcmd.c
-index 5a29616..c6deb87 100644
---- a/drivers/xen/privcmd.c
-+++ b/drivers/xen/privcmd.c
-@@ -193,16 +193,16 @@ static int traverse_pages_block(unsigned nelem, size_t size,
- 	return ret;
- }
- 
--struct mmap_mfn_state {
-+struct mmap_gfn_state {
- 	unsigned long va;
- 	struct vm_area_struct *vma;
- 	domid_t domain;
- };
- 
--static int mmap_mfn_range(void *data, void *state)
-+static int mmap_gfn_range(void *data, void *state)
- {
- 	struct privcmd_mmap_entry *msg = data;
--	struct mmap_mfn_state *st = state;
-+	struct mmap_gfn_state *st = state;
- 	struct vm_area_struct *vma = st->vma;
- 	int rc;
- 
-@@ -216,7 +216,7 @@ static int mmap_mfn_range(void *data, void *state)
- 	    ((msg->va+(msg->npages<<PAGE_SHIFT)) > vma->vm_end))
- 		return -EINVAL;
- 
--	rc = xen_remap_domain_mfn_range(vma,
-+	rc = xen_remap_domain_gfn_range(vma,
- 					msg->va & PAGE_MASK,
- 					msg->mfn, msg->npages,
- 					vma->vm_page_prot,
-@@ -236,7 +236,7 @@ static long privcmd_ioctl_mmap(void __user *udata)
- 	struct vm_area_struct *vma;
- 	int rc;
- 	LIST_HEAD(pagelist);
--	struct mmap_mfn_state state;
-+	struct mmap_gfn_state state;
- 
- 	/* We only support privcmd_ioctl_mmap_batch for auto translated. */
- 	if (xen_feature(XENFEAT_auto_translated_physmap))
-@@ -273,7 +273,7 @@ static long privcmd_ioctl_mmap(void __user *udata)
- 
- 	rc = traverse_pages(mmapcmd.num, sizeof(struct privcmd_mmap_entry),
- 			    &pagelist,
--			    mmap_mfn_range, &state);
-+			    mmap_gfn_range, &state);
- 
- 
- out_up:
-@@ -299,18 +299,18 @@ struct mmap_batch_state {
- 	int global_error;
- 	int version;
- 
--	/* User-space mfn array to store errors in the second pass for V1. */
--	xen_pfn_t __user *user_mfn;
-+	/* User-space gfn array to store errors in the second pass for V1. */
-+	xen_pfn_t __user *user_gfn;
- 	/* User-space int array to store errors in the second pass for V2. */
- 	int __user *user_err;
- };
- 
--/* auto translated dom0 note: if domU being created is PV, then mfn is
-- * mfn(addr on bus). If it's auto xlated, then mfn is pfn (input to HAP).
-+/* auto translated dom0 note: if domU being created is PV, then gfn is
-+ * mfn(addr on bus). If it's auto xlated, then gfn is pfn (input to HAP).
-  */
- static int mmap_batch_fn(void *data, int nr, void *state)
- {
--	xen_pfn_t *mfnp = data;
-+	xen_pfn_t *gfnp = data;
- 	struct mmap_batch_state *st = state;
- 	struct vm_area_struct *vma = st->vma;
- 	struct page **pages = vma->vm_private_data;
-@@ -321,8 +321,8 @@ static int mmap_batch_fn(void *data, int nr, void *state)
- 		cur_pages = &pages[st->index];
- 
- 	BUG_ON(nr < 0);
--	ret = xen_remap_domain_mfn_array(st->vma, st->va & PAGE_MASK, mfnp, nr,
--					 (int *)mfnp, st->vma->vm_page_prot,
-+	ret = xen_remap_domain_gfn_array(st->vma, st->va & PAGE_MASK, gfnp, nr,
-+					 (int *)gfnp, st->vma->vm_page_prot,
- 					 st->domain, cur_pages);
- 
- 	/* Adjust the global_error? */
-@@ -347,22 +347,22 @@ static int mmap_return_error(int err, struct mmap_batch_state *st)
- 
- 	if (st->version == 1) {
- 		if (err) {
--			xen_pfn_t mfn;
-+			xen_pfn_t gfn;
- 
--			ret = get_user(mfn, st->user_mfn);
-+			ret = get_user(gfn, st->user_gfn);
- 			if (ret < 0)
- 				return ret;
- 			/*
- 			 * V1 encodes the error codes in the 32bit top
--			 * nibble of the mfn (with its known
-+			 * nibble of the gfn (with its known
- 			 * limitations vis-a-vis 64 bit callers).
- 			 */
--			mfn |= (err == -ENOENT) ?
-+			gfn |= (err == -ENOENT) ?
- 				PRIVCMD_MMAPBATCH_PAGED_ERROR :
- 				PRIVCMD_MMAPBATCH_MFN_ERROR;
--			return __put_user(mfn, st->user_mfn++);
-+			return __put_user(gfn, st->user_gfn++);
- 		} else
--			st->user_mfn++;
-+			st->user_gfn++;
- 	} else { /* st->version == 2 */
- 		if (err)
- 			return __put_user(err, st->user_err++);
-@@ -388,7 +388,7 @@ static int mmap_return_errors(void *data, int nr, void *state)
- 	return 0;
- }
- 
--/* Allocate pfns that are then mapped with gmfns from foreign domid. Update
-+/* Allocate pfns that are then mapped with gfns from foreign domid. Update
-  * the vma with the page info to use later.
-  * Returns: 0 if success, otherwise -errno
-  */
-@@ -526,7 +526,7 @@ static long privcmd_ioctl_mmap_batch(void __user *udata, int version)
- 
- 	if (state.global_error) {
- 		/* Write back errors in second pass. */
--		state.user_mfn = (xen_pfn_t *)m.arr;
-+		state.user_gfn = (xen_pfn_t *)m.arr;
- 		state.user_err = m.err;
- 		ret = traverse_pages_block(m.num, sizeof(xen_pfn_t),
- 					   &pagelist, mmap_return_errors, &state);
-@@ -587,7 +587,7 @@ static void privcmd_close(struct vm_area_struct *vma)
- 	if (!xen_feature(XENFEAT_auto_translated_physmap) || !numpgs || !pages)
- 		return;
- 
--	rc = xen_unmap_domain_mfn_range(vma, numpgs, pages);
-+	rc = xen_unmap_domain_gfn_range(vma, numpgs, pages);
- 	if (rc == 0)
- 		free_xenballooned_pages(numpgs, pages);
- 	else
-diff --git a/drivers/xen/xlate_mmu.c b/drivers/xen/xlate_mmu.c
-index 58a5389..cff2387 100644
---- a/drivers/xen/xlate_mmu.c
-+++ b/drivers/xen/xlate_mmu.c
-@@ -38,8 +38,8 @@
- #include <xen/interface/xen.h>
- #include <xen/interface/memory.h>
- 
--/* map fgmfn of domid to lpfn in the current domain */
--static int map_foreign_page(unsigned long lpfn, unsigned long fgmfn,
-+/* map fgfn of domid to lpfn in the current domain */
-+static int map_foreign_page(unsigned long lpfn, unsigned long fgfn,
- 			    unsigned int domid)
- {
- 	int rc;
-@@ -49,7 +49,7 @@ static int map_foreign_page(unsigned long lpfn, unsigned long fgmfn,
- 		.size = 1,
- 		.space = XENMAPSPACE_gmfn_foreign,
- 	};
--	xen_ulong_t idx = fgmfn;
-+	xen_ulong_t idx = fgfn;
- 	xen_pfn_t gpfn = lpfn;
- 	int err = 0;
- 
-@@ -62,13 +62,13 @@ static int map_foreign_page(unsigned long lpfn, unsigned long fgmfn,
- }
- 
- struct remap_data {
--	xen_pfn_t *fgmfn; /* foreign domain's gmfn */
-+	xen_pfn_t *fgfn; /* foreign domain's gfn */
- 	pgprot_t prot;
- 	domid_t  domid;
- 	struct vm_area_struct *vma;
- 	int index;
- 	struct page **pages;
--	struct xen_remap_mfn_info *info;
-+	struct xen_remap_gfn_info *info;
- 	int *err_ptr;
- 	int mapped;
- };
-@@ -82,20 +82,20 @@ static int remap_pte_fn(pte_t *ptep, pgtable_t token, unsigned long addr,
- 	pte_t pte = pte_mkspecial(pfn_pte(pfn, info->prot));
- 	int rc;
- 
--	rc = map_foreign_page(pfn, *info->fgmfn, info->domid);
-+	rc = map_foreign_page(pfn, *info->fgfn, info->domid);
- 	*info->err_ptr++ = rc;
- 	if (!rc) {
- 		set_pte_at(info->vma->vm_mm, addr, ptep, pte);
- 		info->mapped++;
- 	}
--	info->fgmfn++;
-+	info->fgfn++;
- 
- 	return 0;
- }
- 
- int xen_xlate_remap_gfn_array(struct vm_area_struct *vma,
- 			      unsigned long addr,
--			      xen_pfn_t *mfn, int nr,
-+			      xen_pfn_t *gfn, int nr,
- 			      int *err_ptr, pgprot_t prot,
- 			      unsigned domid,
- 			      struct page **pages)
-@@ -108,7 +108,7 @@ int xen_xlate_remap_gfn_array(struct vm_area_struct *vma,
- 	   x86 PVOPS */
- 	BUG_ON(!((vma->vm_flags & (VM_PFNMAP | VM_IO)) == (VM_PFNMAP | VM_IO)));
- 
--	data.fgmfn = mfn;
-+	data.fgfn = gfn;
- 	data.prot  = prot;
- 	data.domid = domid;
- 	data.vma   = vma;
-diff --git a/include/uapi/xen/privcmd.h b/include/uapi/xen/privcmd.h
-index a853168..7ddeeda 100644
---- a/include/uapi/xen/privcmd.h
-+++ b/include/uapi/xen/privcmd.h
-@@ -44,6 +44,10 @@ struct privcmd_hypercall {
- 
- struct privcmd_mmap_entry {
- 	__u64 va;
-+	/*
-+	 * This should be a GFN. It's not possible to change the name because
-+	 * it's exposed to the user-space.
-+	 */
- 	__u64 mfn;
- 	__u64 npages;
- };
-diff --git a/include/xen/xen-ops.h b/include/xen/xen-ops.h
-index 0ce4f32..e4e214a 100644
---- a/include/xen/xen-ops.h
-+++ b/include/xen/xen-ops.h
-@@ -30,7 +30,7 @@ void xen_destroy_contiguous_region(phys_addr_t pstart, unsigned int order);
- struct vm_area_struct;
- 
- /*
-- * xen_remap_domain_mfn_array() - map an array of foreign frames
-+ * xen_remap_domain_gfn_array() - map an array of foreign frames
-  * @vma:     VMA to map the pages into
-  * @addr:    Address at which to map the pages
-  * @gfn:     Array of GFNs to map
-@@ -46,14 +46,14 @@ struct vm_area_struct;
-  * Returns the number of successfully mapped frames, or a -ve error
-  * code.
-  */
--int xen_remap_domain_mfn_array(struct vm_area_struct *vma,
-+int xen_remap_domain_gfn_array(struct vm_area_struct *vma,
- 			       unsigned long addr,
- 			       xen_pfn_t *gfn, int nr,
- 			       int *err_ptr, pgprot_t prot,
- 			       unsigned domid,
- 			       struct page **pages);
- 
--/* xen_remap_domain_mfn_range() - map a range of foreign frames
-+/* xen_remap_domain_gfn_range() - map a range of foreign frames
-  * @vma:     VMA to map the pages into
-  * @addr:    Address at which to map the pages
-  * @gfn:     First GFN to map.
-@@ -65,12 +65,12 @@ int xen_remap_domain_mfn_array(struct vm_area_struct *vma,
-  * Returns the number of successfully mapped frames, or a -ve error
-  * code.
-  */
--int xen_remap_domain_mfn_range(struct vm_area_struct *vma,
-+int xen_remap_domain_gfn_range(struct vm_area_struct *vma,
- 			       unsigned long addr,
- 			       xen_pfn_t gfn, int nr,
- 			       pgprot_t prot, unsigned domid,
- 			       struct page **pages);
--int xen_unmap_domain_mfn_range(struct vm_area_struct *vma,
-+int xen_unmap_domain_gfn_range(struct vm_area_struct *vma,
- 			       int numpgs, struct page **pages);
- int xen_xlate_remap_gfn_array(struct vm_area_struct *vma,
- 			      unsigned long addr,
--- 
-2.1.4
+SGkgYWxsLAoKVGhpcyBwYXRjaCBzZXJpZXMgYWltcyB0byB1c2UgdGhlIG1lbW9yeSB0ZXJtaW5v
+bG9naWVzIGRlc2NyaWJlZCBpbgppbmNsdWRlL3hlbi9tbS5oIFsxXSBmb3IgTGludXggeGVuIGNv
+ZGUuCgpMaW51eCBpcyB1c2luZyBtaXN0YWtlbmx5IE1GTiB3aGVuIEdGTiBpcyBtZWFudCwgSSBz
+dXNwZWN0IHRoaXMgaXMgYmVjYXVzZSB0aGUKZmlyc3Qgc3VwcG9ydCBvZiBYZW4gd2FzIGZvciBQ
+Vi4gVGhpcyBoYXMgYnJvdWdodCBzb21lIG1pc2ltcGxlbWVudGF0aW9uCm9mIG1lbW9yeSBoZWxw
+ZXJzIG9uIEFSTSBhbmQgbWFrZSB0aGUgZGV2ZWxvcHBlciBjb25mdXNlZCBhYm91dCB0aGUgZXhw
+ZWN0ZWQKYmVoYXZpb3IuCgpGb3IgaW5zdGFuY2UsIHdpdGggcGZuX3RvX21mbiwgd2UgZXhwZWN0
+IHRvIGdldCBhIE1GTiBiYXNlZCBvbiB0aGUgbmFtZS4KQWx0aG91Z2gsIGlmIHdlIGxvb2sgYXQg
+dGhlIGltcGxlbWVudGF0aW9uIG9uIHg4NiwgaXQncyByZXR1cm5pbmcgYSBHRk4uCk1vc3Qgb2Yg
+dGhlIGNhbGxlcnMgYXJlIGFsc28gdXNpbmcgaXQgdGhpcyB3YXkuCgpUaGUgZmlyc3QgMiBwYXRj
+aGVzIG9mIHRoaXMgc2VyaWVzIGlzIEFSTSByZWxhdGVkIGluIG9yZGVyIHRvIHJlbW92ZQpQViBz
+cGVjaWZpYyBoZWxwZXJzIHdoaWNoIHNob3VsZCBub3QgYmUgdXNlZCBhbmQgZml4aW5nIHRoZSBp
+bXBsZW1lbnRhdGlvbiBvZgpwZm5fdG9fbWZuLgoKVGhlIHJlc3Qgb2YgdGhlIHNlcmllcyBpcyBo
+ZXJlIHJlbmFtZSBtb3N0IG9mIHRoZSB1c2FnZSBpbiB0aGUgY29tbW9uIGNvZGUKb2YgTUZOIHRv
+IEdGTi4gSSBhbHNvIHRvb2sgdGhlIG9wcG9ydHVuaXR5IHRvIHJlcGxhY2UgbW9zdCBvZiB0aGUg
+Y2FsbCB0bwpwZm5fdG9fZ2ZuIGluIHRoZSBjb21tb24gY29kZSBieSBwYWdlX3RvX2dmbiBhdm9p
+ZCBjb25zdHJ1Y3Rpb24gc3VjaAphcyBwZm5fdG9fZ2ZuKHBhZ2VfdG9fcGZuKC4uLikuCgpOb3Rl
+IHRoZSBvbmUgeGVuLWJsa2Zyb250IHdpbGwgYmUgZHJvcHBlZCBieSA2NEsgc2VyaWVzIFsyXSwg
+SSBjYW4gaW5jbHVkZSBpdAppZiBuZWNlc3NhcnkuCgpNYWpvciBjaGFuZ2VzIGluIHYyOgogICAg
+LSBVc2UgYmZuIHJhdGhlciB0aGFuIGRmbiBmb3IgdGhlIERNQSBhZGRyZXNzCiAgICAtIFJlLWlu
+dHJvZHVjZWQgcGZuX3RvX21mbiBmb3IgUFYgZ3Vlc3RzIG9ubHkKICAgIC0gVHlwb2VzCgpGb3Ig
+YWxsIHRoZSBjaGFuZ2VzIHNlZSBpbiBlYWNoIHBhdGNoLgoKVGhpcyBzZXJpZXMgaXMgYmFzZWQg
+b24gbGludXMncyBicmFuY2guIEEgYnJhbmNoIHdpdGggYWxsIHRoZSBwYXRjaGVzCmNhbiBiZSBm
+b3VuZCBoZXJlOgogICAgZ2l0Oi8veGVuYml0cy54ZW4ub3JnL3Blb3BsZS9qdWxpZW5nL2xpbnV4
+LWFybS5naXQgYnJhbmNoIHBhZ2UtcmVuYW1pbmctdjIKCkl0IHdhcyBiZWVuIGJvb3QgdGVzdGVk
+IG9uIEFSTTY0IGFuZCBvbmx5IGJ1aWx0IGZvciB4ODYgYW5kIEFSTTMyLgpJIHdvdWxkIGJlIGhh
+cHB5IGlmIHNvbWVvbmUgY2FuIGdpdmUgYSB0cnkgb24geDg2IGFzIEkgZG9uJ3QgaGF2ZSBhIHg4
+Ngpib3ggc2V0dXAgd2l0aCBYZW4uCgpTaW5jZXJlbHkgeW91cnMsCgpbMV0gaHR0cDovL3hlbmJp
+dHMueGVuLm9yZy9naXR3ZWIvP3A9eGVuLmdpdDthPWNvbW1pdGRpZmY7aD1lNzU4ZWQxNGYzOTAz
+NDI1MTM0MDVkZDc2NmU4NzQ5MzQ1NzNlNmNiClsyXSBodHRwczovL2xrbWwub3JnL2xrbWwvMjAx
+NS83LzkvNjI4CgpDYzogQm9yaXMgT3N0cm92c2t5IDxib3Jpcy5vc3Ryb3Zza3lAb3JhY2xlLmNv
+bT4KQ2M6IERhdmlkIFZyYWJlbCA8ZGF2aWQudnJhYmVsQGNpdHJpeC5jb20+CkNjOiBEbWl0cnkg
+VG9yb2tob3YgPGRtaXRyeS50b3Jva2hvdkBnbWFpbC5jb20+CkNjOiBHcmVnIEtyb2FoLUhhcnRt
+YW4gPGdyZWdraEBsaW51eGZvdW5kYXRpb24ub3JnPgpDYzogIkguIFBldGVyIEFudmluIiA8aHBh
+QHp5dG9yLmNvbT4KQ2M6IElhbiBDYW1wYmVsbCA8aWFuLmNhbXBiZWxsQGNpdHJpeC5jb20+CkNj
+OiBJbmdvIE1vbG5hciA8bWluZ29AcmVkaGF0LmNvbT4KQ2M6ICJKYW1lcyBFLkouIEJvdHRvbWxl
+eSIgPEpCb3R0b21sZXlAb2Rpbi5jb20+CkNjOiBKZWFuLUNocmlzdG9waGUgUGxhZ25pb2wtVmls
+bGFyZCA8cGxhZ25pb2pAamNyb3NvZnQuY29tPgpDYzogSmlyaSBTbGFieSA8anNsYWJ5QHN1c2Uu
+Y29tPgpDYzogSnVlcmdlbiBHcm9zcyA8amdyb3NzQHN1c2UuY29tPgpDYzogS29ucmFkIFJ6ZXN6
+dXRlayBXaWxrIDxrb25yYWQud2lsa0BvcmFjbGUuY29tPgpDYzogbGludXgtYXBpQHZnZXIua2Vy
+bmVsLm9yZwpDYzogbGludXgtYXJtLWtlcm5lbEBsaXN0cy5pbmZyYWRlYWQub3JnCkNjOiBsaW51
+eC1mYmRldkB2Z2VyLmtlcm5lbC5vcmcKQ2M6IGxpbnV4LWlucHV0QHZnZXIua2VybmVsLm9yZwpD
+YzogbGludXhwcGMtZGV2QGxpc3RzLm96bGFicy5vcmcKQ2M6IGxpbnV4LXNjc2lAdmdlci5rZXJu
+ZWwub3JnCkNjOiBuZXRkZXZAdmdlci5rZXJuZWwub3JnCkNjOiAiUm9nZXIgUGF1IE1vbm7DqSIg
+PHJvZ2VyLnBhdUBjaXRyaXguY29tPgpDYzogUnVzc2VsbCBLaW5nIDxsaW51eEBhcm0ubGludXgu
+b3JnLnVrPgpDYzogU3RlZmFubyBTdGFiZWxsaW5pIDxzdGVmYW5vLnN0YWJlbGxpbmlAZXUuY2l0
+cml4LmNvbT4KQ2M6IFRob21hcyBHbGVpeG5lciA8dGdseEBsaW51dHJvbml4LmRlPgpDYzogVG9t
+aSBWYWxrZWluZW4gPHRvbWkudmFsa2VpbmVuQHRpLmNvbT4KQ2M6IFdlaSBMaXUgPHdlaS5saXUy
+QGNpdHJpeC5jb20+CkNjOiB4ODZAa2VybmVsLm9yZwoKSnVsaWVuIEdyYWxsICg4KToKICBhcm0v
+eGVuOiBSZW1vdmUgaGVscGVycyB3aGljaCBhcmUgUFYgc3BlY2lmaWMKICB4ZW46IE1ha2UgY2xl
+YXIgdGhhdCBzd2lvdGxiIGFuZCBiaW9tZXJnZSBhcmUgZGVhbGluZyB3aXRoIERNQSBhZGRyZXNz
+CiAgYXJtL3hlbjogaW1wbGVtZW50IGNvcnJlY3RseSBwZm5fdG9fbWZuCiAgeGVuOiBVc2UgdGhl
+IGNvcnJlY3RseSB0aGUgWGVuIG1lbW9yeSB0ZXJtaW5vbG9naWVzCiAgeGVuL3RtZW06IFVzZSBw
+YWdlX3RvX2dmbiByYXRoZXIgdGhhbiBwZm5fdG9fZ2ZuCiAgdmlkZW8veGVuLWZiZnJvbnQ6IEZ1
+cnRoZXIgcy9NRk4vR0ZOIGNsZWFuLXVwCiAgaHZjL3hlbjogRnVydGhlciBzL01GTi9HRk4gY2xl
+YW4tdXAKICB4ZW4vcHJpdmNtZDogRnVydGhlciBzL01GTi9HRk4vIGNsZWFuLXVwCgogYXJjaC9h
+cm0vaW5jbHVkZS9hc20veGVuL3BhZ2UuaCAgICAgICAgIHwgNDQgKysrKysrKysrKysrKysrKy0t
+LS0tLS0tLS0tLS0tLS0tCiBhcmNoL2FybS94ZW4vZW5saWdodGVuLmMgICAgICAgICAgICAgICAg
+fCAxOCArKysrKysrLS0tLS0tLQogYXJjaC9hcm0veGVuL21tLmMgICAgICAgICAgICAgICAgICAg
+ICAgIHwgIDQgKy0tCiBhcmNoL3g4Ni9pbmNsdWRlL2FzbS94ZW4vcGFnZS5oICAgICAgICAgfCAz
+NyArKysrKysrKysrKysrKysrKysrKystLS0tLS0KIGFyY2gveDg2L3hlbi9tbXUuYyAgICAgICAg
+ICAgICAgICAgICAgICB8IDMyICsrKysrKysrKysrKy0tLS0tLS0tLS0tLQogYXJjaC94ODYveGVu
+L3NtcC5jICAgICAgICAgICAgICAgICAgICAgIHwgIDIgKy0KIGRyaXZlcnMvYmxvY2sveGVuLWJs
+a2Zyb250LmMgICAgICAgICAgICB8ICA2ICsrLS0tCiBkcml2ZXJzL2lucHV0L21pc2MveGVuLWti
+ZGZyb250LmMgICAgICAgfCAgNCArLS0KIGRyaXZlcnMvbmV0L3hlbi1uZXRiYWNrL25ldGJhY2su
+YyAgICAgICB8ICA0ICstLQogZHJpdmVycy9uZXQveGVuLW5ldGZyb250LmMgICAgICAgICAgICAg
+IHwgIDggKysrLS0tCiBkcml2ZXJzL3Njc2kveGVuLXNjc2lmcm9udC5jICAgICAgICAgICAgfCAg
+OCArKystLS0KIGRyaXZlcnMvdHR5L2h2Yy9odmNfeGVuLmMgICAgICAgICAgICAgICB8IDE4ICsr
+KysrKy0tLS0tLS0tCiBkcml2ZXJzL3ZpZGVvL2ZiZGV2L3hlbi1mYmZyb250LmMgICAgICAgfCAy
+MCArKysrKysrLS0tLS0tLS0KIGRyaXZlcnMveGVuL2JhbGxvb24uYyAgICAgICAgICAgICAgICAg
+ICB8ICAyICstCiBkcml2ZXJzL3hlbi9iaW9tZXJnZS5jICAgICAgICAgICAgICAgICAgfCAgNiAr
+Ky0tLQogZHJpdmVycy94ZW4vZXZlbnRzL2V2ZW50c19iYXNlLmMgICAgICAgIHwgIDIgKy0KIGRy
+aXZlcnMveGVuL2V2ZW50cy9ldmVudHNfZmlmby5jICAgICAgICB8ICA0ICstLQogZHJpdmVycy94
+ZW4vZ250YWxsb2MuYyAgICAgICAgICAgICAgICAgIHwgIDMgKystCiBkcml2ZXJzL3hlbi9tYW5h
+Z2UuYyAgICAgICAgICAgICAgICAgICAgfCAgMiArLQogZHJpdmVycy94ZW4vcHJpdmNtZC5jICAg
+ICAgICAgICAgICAgICAgIHwgNDQgKysrKysrKysrKysrKysrKy0tLS0tLS0tLS0tLS0tLS0tCiBk
+cml2ZXJzL3hlbi9zd2lvdGxiLXhlbi5jICAgICAgICAgICAgICAgfCAxNiArKysrKystLS0tLS0K
+IGRyaXZlcnMveGVuL3RtZW0uYyAgICAgICAgICAgICAgICAgICAgICB8IDIxICsrKysrKy0tLS0t
+LS0tLS0KIGRyaXZlcnMveGVuL3hlbmJ1cy94ZW5idXNfY2xpZW50LmMgICAgICB8ICAyICstCiBk
+cml2ZXJzL3hlbi94ZW5idXMveGVuYnVzX2Rldl9iYWNrZW5kLmMgfCAgMiArLQogZHJpdmVycy94
+ZW4veGVuYnVzL3hlbmJ1c19wcm9iZS5jICAgICAgIHwgIDggKysrLS0tCiBkcml2ZXJzL3hlbi94
+bGF0ZV9tbXUuYyAgICAgICAgICAgICAgICAgfCAxOCArKysrKysrLS0tLS0tLQogaW5jbHVkZS91
+YXBpL3hlbi9wcml2Y21kLmggICAgICAgICAgICAgIHwgIDQgKysrCiBpbmNsdWRlL3hlbi9wYWdl
+LmggICAgICAgICAgICAgICAgICAgICAgfCAgNCArLS0KIGluY2x1ZGUveGVuL3hlbi1vcHMuaCAg
+ICAgICAgICAgICAgICAgICB8IDEwICsrKystLS0tCiAyOSBmaWxlcyBjaGFuZ2VkLCAxODMgaW5z
+ZXJ0aW9ucygrKSwgMTcwIGRlbGV0aW9ucygtKQoKLS0gCjIuMS40CgoKX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KbGludXgtYXJtLWtlcm5lbCBtYWlsaW5n
+IGxpc3QKbGludXgtYXJtLWtlcm5lbEBsaXN0cy5pbmZyYWRlYWQub3JnCmh0dHA6Ly9saXN0cy5p
+bmZyYWRlYWQub3JnL21haWxtYW4vbGlzdGluZm8vbGludXgtYXJtLWtlcm5lbAo=
