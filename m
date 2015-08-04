@@ -1,136 +1,155 @@
 From: Andreas Gruenbacher <andreas.gruenbacher@gmail.com>
-Subject: [RFC v6 27/40] richacl: Create richacl from mode values
-Date: Tue,  4 Aug 2015 13:53:25 +0200
-Message-ID: <1438689218-6921-28-git-send-email-agruenba@redhat.com>
+Subject: [RFC v6 26/40] richacl: Apply the file masks to a richacl
+Date: Tue,  4 Aug 2015 13:53:24 +0200
+Message-ID: <1438689218-6921-27-git-send-email-agruenba@redhat.com>
 References: <1438689218-6921-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 In-Reply-To: <1438689218-6921-1-git-send-email-agruenba@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org, linux-cifs@vger.kernel.org, linux-security-module@vger.kernel.org, Andreas Gruenbacher <agruenba@redhat.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org, linux-cifs@vger.kernel.org, linux-security-module@vger.kernel.org, Andreas Gruenbacher <agruenba@redhat.com>, Andreas Gruenbacher <agruen@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-A file can have "no acl" in the sense that only the file mode permission
-bits determine access.  In that case, the getxattr system call fails with
-errno == ENODATA (No such attribute).
+Put all the pieces of the acl transformation puzzle together for
+computing a richacl which has the file masks "applied" so that the
+standard nfsv4 access check algorithm can be used on the richacl.
 
-Over the NFSv4 protocol, a file always has an acl, and we convert the file
-mode permission bits into an equivalent acl with richacl_from_mode.  Such
-"trivial" acls can be converted back to a file mode with
-richacl_equiv_mode.
-
-Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+Signed-off-by: Andreas Gruenbacher <agruen@kernel.org>
 ---
- fs/richacl_compat.c     | 88 +++++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/richacl.h |  1 +
- 2 files changed, 89 insertions(+)
+ fs/richacl_compat.c     | 110 ++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/richacl.h |   3 ++
+ 2 files changed, 113 insertions(+)
 
 diff --git a/fs/richacl_compat.c b/fs/richacl_compat.c
-index e552c95..50839a1 100644
+index d708603..e552c95 100644
 --- a/fs/richacl_compat.c
 +++ b/fs/richacl_compat.c
-@@ -839,3 +839,91 @@ richacl_apply_masks(struct richacl **acl, kuid_t owner)
+@@ -729,3 +729,113 @@ richacl_isolate_group_class(struct richacl_alloc *alloc)
+ 	}
  	return 0;
  }
- EXPORT_SYMBOL_GPL(richacl_apply_masks);
 +
 +/**
-+ * richacl_from_mode  -  create an acl which corresponds to @mode
++ * __richacl_apply_masks  -  apply the file masks to all aces
++ * @alloc:	acl and number of allocated entries
 + *
-+ * The resulting acl doesn't have the RICHACL_MASKED flag set.
++ * Apply the owner mask to owner@ aces, the other mask to
++ * everyone@ aces, and the group mask to all other aces.
 + *
-+ * @mode:	file mode including the file type
++ * The previous transformations have brought the acl into a
++ * form in which applying the masks will not lead to the
++ * accidental loss of permissions anymore.
 + */
-+struct richacl *
-+richacl_from_mode(mode_t mode)
++static int
++__richacl_apply_masks(struct richacl_alloc *alloc, kuid_t owner)
 +{
-+	unsigned int owner_mask = richacl_mode_to_mask(mode >> 6);
-+	unsigned int group_mask = richacl_mode_to_mask(mode >> 3);
-+	unsigned int other_mask = richacl_mode_to_mask(mode);
-+	unsigned int denied;
-+	unsigned int entries = 0;
-+	struct richacl *acl;
 +	struct richace *ace;
 +
-+	/* RICHACE_DELETE_CHILD is meaningless for non-directories. */
-+	if (!S_ISDIR(mode)) {
-+		owner_mask &= ~RICHACE_DELETE_CHILD;
-+		group_mask &= ~RICHACE_DELETE_CHILD;
-+		other_mask &= ~RICHACE_DELETE_CHILD;
-+	}
++	richacl_for_each_entry(ace, alloc->acl) {
++		unsigned int mask;
 +
-+	denied = ~owner_mask & (group_mask | other_mask);
-+	if (denied)
-+		entries++;  /* owner@ deny entry needed */
-+	if (owner_mask & ~(group_mask & other_mask))
-+		entries++;  /* owner@ allow entry needed */
-+	denied = ~group_mask & other_mask;
-+	if (denied)
-+		entries++;  /* group@ deny entry needed */
-+	if (group_mask & ~other_mask)
-+		entries++;  /* group@ allow entry needed */
-+	if (other_mask)
-+		entries++;  /* everyone@ allow entry needed */
-+
-+	acl = richacl_alloc(entries, GFP_KERNEL);
-+	if (!acl)
-+		return NULL;
-+	acl->a_owner_mask = owner_mask;
-+	acl->a_group_mask = group_mask;
-+	acl->a_other_mask = other_mask;
-+	ace = acl->a_entries;
-+
-+	denied = ~owner_mask & (group_mask | other_mask);
-+	if (denied) {
-+		ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
-+		ace->e_flags = RICHACE_SPECIAL_WHO;
-+		ace->e_mask = denied;
-+		ace->e_id.special = RICHACE_OWNER_SPECIAL_ID;
-+		ace++;
++		if (richace_is_inherit_only(ace) || !richace_is_allow(ace))
++			continue;
++		if (richace_is_owner(ace) ||
++		    (richace_is_unix_user(ace) && uid_eq(owner, ace->e_id.uid)))
++			mask = alloc->acl->a_owner_mask;
++		else if (richace_is_everyone(ace))
++			mask = alloc->acl->a_other_mask;
++		else
++			mask = alloc->acl->a_group_mask;
++		if (richace_change_mask(alloc, &ace, ace->e_mask & mask))
++			return -1;
 +	}
-+	if (owner_mask & ~(group_mask & other_mask)) {
-+		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
-+		ace->e_flags = RICHACE_SPECIAL_WHO;
-+		ace->e_mask = owner_mask;
-+		ace->e_id.special = RICHACE_OWNER_SPECIAL_ID;
-+		ace++;
-+	}
-+	denied = ~group_mask & other_mask;
-+	if (denied) {
-+		ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
-+		ace->e_flags = RICHACE_SPECIAL_WHO;
-+		ace->e_mask = denied;
-+		ace->e_id.special = RICHACE_GROUP_SPECIAL_ID;
-+		ace++;
-+	}
-+	if (group_mask & ~other_mask) {
-+		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
-+		ace->e_flags = RICHACE_SPECIAL_WHO;
-+		ace->e_mask = group_mask;
-+		ace->e_id.special = RICHACE_GROUP_SPECIAL_ID;
-+		ace++;
-+	}
-+	if (other_mask) {
-+		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
-+		ace->e_flags = RICHACE_SPECIAL_WHO;
-+		ace->e_mask = other_mask;
-+		ace->e_id.special = RICHACE_EVERYONE_SPECIAL_ID;
-+		ace++;
-+	}
-+
-+	return acl;
++	return 0;
 +}
-+EXPORT_SYMBOL_GPL(richacl_from_mode);
++
++/**
++ * richacl_apply_masks  -  apply the masks to the acl
++ *
++ * Transform @acl so that the standard NFSv4 permission check algorithm (which
++ * is not aware of file masks) will compute the same access decisions as the
++ * richacl permission check algorithm (which looks at the acl and the file
++ * masks).
++ *
++ * This algorithm is split into several steps:
++ *
++ *   - Move everyone@ aces to the end of the acl.  This simplifies the other
++ *     transformations, and allows the everyone@ allow ace at the end of the
++ *     acl to eventually allow permissions to the other class only.
++ *
++ *   - Propagate everyone@ permissions up the acl.  This transformation makes
++ *     sure that the owner and group class aces won't lose any permissions when
++ *     we apply the other mask to the everyone@ allow ace at the end of the acl.
++ *
++ *   - Apply the file masks to all aces.
++ *
++ *   - Make sure the owner is granted the owner mask permissions.
++ *
++ *   - Make sure everyone is granted the other mask permissions.
++ *
++ *   - Make sure that the owner is not granted any permissions beyond the owner
++ *     mask from group class aces or from everyone@.
++ *
++ *   - Make sure that the group class is not granted any permissions from
++ *     everyone@.
++ *
++ * The algorithm is exact except for richacls which cannot be represented as an
++ * acl alone: for example, given this acl:
++ *
++ *    group@:rw::allow
++ *
++ * when file masks corresponding to mode 0600 are applied, the owner would only
++ * get rw access if he is a member of the owning group.  This algorithm would
++ * produce an empty acl in this case.  We fix this case by modifying
++ * richacl_permission() so that the group mask is always applied to group class
++ * aces.  With this fix, the owner would not have any access (beyond the
++ * implicit permissions always granted to owners).
++ *
++ * NOTE: Depending on the acl and file masks, this algorithm can increase the
++ * number of aces by almost a factor of three in the worst case. This may make
++ * the acl too large for some purposes.
++ */
++int
++richacl_apply_masks(struct richacl **acl, kuid_t owner)
++{
++	if ((*acl)->a_flags & RICHACL_MASKED) {
++		struct richacl_alloc alloc = {
++			.acl = richacl_clone(*acl, GFP_KERNEL),
++			.count = (*acl)->a_count,
++		};
++		if (!alloc.acl)
++			return -ENOMEM;
++
++		if (richacl_move_everyone_aces_down(&alloc) ||
++		    richacl_propagate_everyone(&alloc) ||
++		    __richacl_apply_masks(&alloc, owner) ||
++		    richacl_set_owner_permissions(&alloc) ||
++		    richacl_set_other_permissions(&alloc) ||
++		    richacl_isolate_owner_class(&alloc) ||
++		    richacl_isolate_group_class(&alloc)) {
++			richacl_put(alloc.acl);
++			return -ENOMEM;
++		}
++
++		alloc.acl->a_flags &= ~(RICHACL_WRITE_THROUGH | RICHACL_MASKED);
++		richacl_put(*acl);
++		*acl = alloc.acl;
++	}
++	return 0;
++}
++EXPORT_SYMBOL_GPL(richacl_apply_masks);
 diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-index 8723ec9..fce5d84 100644
+index 565f12f..8723ec9 100644
 --- a/include/linux/richacl.h
 +++ b/include/linux/richacl.h
-@@ -340,5 +340,6 @@ extern struct richacl *richacl_create(struct inode *, struct inode *);
+@@ -338,4 +338,7 @@ extern struct richacl *richacl_inherit(const struct richacl *, int);
+ extern int richacl_permission(struct inode *, const struct richacl *, int);
+ extern struct richacl *richacl_create(struct inode *, struct inode *);
  
- /* richacl_compat.c */
- extern int richacl_apply_masks(struct richacl **, kuid_t);
-+extern struct richacl *richacl_from_mode(mode_t);
- 
++/* richacl_compat.c */
++extern int richacl_apply_masks(struct richacl **, kuid_t);
++
  #endif /* __RICHACL_H */
 -- 
 2.5.0
+
