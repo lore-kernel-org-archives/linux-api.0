@@ -1,292 +1,338 @@
-From: Andreas Gruenbacher <andreas.gruenbacher@gmail.com>
-Subject: [RFC v6 25/40] richacl: Isolate the owner and group classes
-Date: Tue,  4 Aug 2015 13:53:23 +0200
-Message-ID: <1438689218-6921-26-git-send-email-agruenba@redhat.com>
+From: Andreas Gruenbacher <andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [RFC v6 30/40] nfsd: Add richacl support
+Date: Tue,  4 Aug 2015 13:53:28 +0200
+Message-ID: <1438689218-6921-31-git-send-email-agruenba@redhat.com>
 References: <1438689218-6921-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1438689218-6921-1-git-send-email-agruenba@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org, linux-cifs@vger.kernel.org, linux-security-module@vger.kernel.org, Andreas Gruenbacher <agruenba@redhat.com>, Andreas Gruenbacher <agruen@kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1438689218-6921-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-When applying the file masks to an acl, we need to ensure that no
-process gets more permissions than allowed by its file mask.
+On file systems with richacls enabled, get and set richacls directly
+instead of converting from / to posix acls.
 
-This may require inserting an owner@ deny ace to ensure this if the
-owner mask contains fewer permissions than the group or other mask.  For
-example, when applying mode 0466 to the following acl:
-
-   everyone@:rw::allow
-
-A deny ace needs to be inserted so that the owner won't get elevated
-write access:
-
-   owner@:w::deny
-   everyone@:rw::allow
-
-Likewise, we may need to insert group class deny aces if the group mask
-contains fewer permissions than the other mask.  For example, when
-applying mode 0646 to the following acl:
-
-   owner@:rw::allow
-   everyone@:rw::allow
-
-A deny ace needs to be inserted so that the owning group won't get
-elevated write access:
-
-   owner@:rw::allow
-   group@:w::deny
-   everyone@:rw::allow
-
-Signed-off-by: Andreas Gruenbacher <agruen@kernel.org>
+Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- fs/richacl_compat.c | 236 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 236 insertions(+)
+ fs/nfsd/acl.h      |   3 +-
+ fs/nfsd/nfs4acl.c  | 124 ++++++++++++++++++++++++++++++++++++++---------------
+ fs/nfsd/nfs4proc.c |   2 +-
+ fs/nfsd/nfs4xdr.c  |  34 +++++++++++----
+ 4 files changed, 117 insertions(+), 46 deletions(-)
 
-diff --git a/fs/richacl_compat.c b/fs/richacl_compat.c
-index 76d5ab9..d708603 100644
---- a/fs/richacl_compat.c
-+++ b/fs/richacl_compat.c
-@@ -493,3 +493,239 @@ richacl_set_other_permissions(struct richacl_alloc *alloc)
- 		richace_change_mask(alloc, &ace, other_mask);
- 	return 0;
+diff --git a/fs/nfsd/acl.h b/fs/nfsd/acl.h
+index 1c5deb5..d73c664 100644
+--- a/fs/nfsd/acl.h
++++ b/fs/nfsd/acl.h
+@@ -53,8 +53,7 @@ __be32 nfsd4_decode_ace_who(struct richace *ace, struct svc_rqst *rqstp,
+ __be32 nfsd4_encode_ace_who(struct xdr_stream *xdr, struct svc_rqst *rqstp,
+ 			    struct richace *ace);
+ 
+-int nfsd4_get_acl(struct svc_rqst *rqstp, struct dentry *dentry,
+-		  struct richacl **acl);
++struct richacl *nfsd4_get_acl(struct svc_rqst *rqstp, struct dentry *dentry);
+ __be32 nfsd4_set_acl(struct svc_rqst *rqstp, struct svc_fh *fhp,
+ 		     struct richacl *acl);
+ 
+diff --git a/fs/nfsd/nfs4acl.c b/fs/nfsd/nfs4acl.c
+index 18fe74d..86a3d41 100644
+--- a/fs/nfsd/nfs4acl.c
++++ b/fs/nfsd/nfs4acl.c
+@@ -38,6 +38,8 @@
+ #include <linux/nfs_fs.h>
+ #include <linux/richacl_compat.h>
+ #include <linux/nfs4acl.h>
++#include <linux/xattr.h>
++#include <linux/richacl_xattr.h>
+ #include "nfsfh.h"
+ #include "nfsd.h"
+ #include "idmap.h"
+@@ -127,32 +129,28 @@ static short ace2type(struct richace *);
+ static void _posix_to_richacl_one(struct posix_acl *, struct richacl_alloc *,
+ 				unsigned int);
+ 
+-int
+-nfsd4_get_acl(struct svc_rqst *rqstp, struct dentry *dentry,
+-	      struct richacl **acl)
++static struct richacl *
++nfsd4_get_posix_acl(struct svc_rqst *rqstp, struct dentry *dentry)
+ {
+ 	struct inode *inode = d_inode(dentry);
+-	int error = 0;
+ 	struct posix_acl *pacl = NULL, *dpacl = NULL;
+ 	struct richacl_alloc alloc;
+ 	unsigned int flags = 0;
+ 	int count;
+ 
+ 	pacl = get_acl(inode, ACL_TYPE_ACCESS);
+-	if (!pacl)
+-		pacl = posix_acl_from_mode(inode->i_mode, GFP_KERNEL);
+-
+-	if (IS_ERR(pacl))
+-		return PTR_ERR(pacl);
++	if (IS_ERR_OR_NULL(pacl))
++		return (void *)pacl;
+ 
+-	/* allocate for worst case: one (deny, allow) pair each: */
++	/* Allocate for worst case: one (deny, allow) pair each.  The resulting
++	   acl will be released shortly and won't be cached. */
+ 	count = 2 * pacl->a_count;
+ 
+ 	if (S_ISDIR(inode->i_mode)) {
+ 		flags = FLAG_DIRECTORY;
+ 		dpacl = get_acl(inode, ACL_TYPE_DEFAULT);
+ 		if (IS_ERR(dpacl)) {
+-			error = PTR_ERR(dpacl);
++			alloc.acl = (void *)dpacl;
+ 			goto rel_pacl;
+ 		}
+ 
+@@ -161,7 +159,7 @@ nfsd4_get_acl(struct svc_rqst *rqstp, struct dentry *dentry,
+ 	}
+ 
+ 	if (!richacl_prepare(&alloc, count)) {
+-		error = -ENOMEM;
++		alloc.acl = ERR_PTR(-ENOMEM);
+ 		goto out;
+ 	}
+ 
+@@ -170,13 +168,37 @@ nfsd4_get_acl(struct svc_rqst *rqstp, struct dentry *dentry,
+ 	if (dpacl)
+ 		_posix_to_richacl_one(dpacl, &alloc, flags | FLAG_DEFAULT_ACL);
+ 
+-	*acl = alloc.acl;
+-
+ out:
+ 	posix_acl_release(dpacl);
+ rel_pacl:
+ 	posix_acl_release(pacl);
+-	return error;
++	return alloc.acl;
++}
++
++struct richacl *
++nfsd4_get_acl(struct svc_rqst *rqstp, struct dentry *dentry)
++{
++	struct inode *inode = d_inode(dentry);
++	struct richacl *acl;
++	int error;
++
++	if (IS_RICHACL(inode))
++		acl = get_richacl(inode);
++	else
++		acl = nfsd4_get_posix_acl(rqstp, dentry);
++	if (IS_ERR(acl))
++		return acl;
++	else if (acl == NULL) {
++		acl = richacl_from_mode(inode->i_mode);
++		if (acl == NULL)
++			acl = ERR_PTR(-ENOMEM);
++	}
++	error = richacl_apply_masks(&acl, inode->i_uid);
++	if (error) {
++		richacl_put(acl);
++		acl = ERR_PTR(error);
++	}
++	return acl;
  }
-+
-+/**
-+ * richacl_max_allowed  -  maximum permissions that anybody is allowed
-+ */
-+static unsigned int
-+richacl_max_allowed(struct richacl *acl)
-+{
-+	struct richace *ace;
-+	unsigned int allowed = 0;
-+
-+	richacl_for_each_entry_reverse(ace, acl) {
-+		if (richace_is_inherit_only(ace))
-+			continue;
-+		if (richace_is_allow(ace))
-+			allowed |= ace->e_mask;
-+		else if (richace_is_deny(ace)) {
-+			if (richace_is_everyone(ace))
-+				allowed &= ~ace->e_mask;
-+		}
-+	}
-+	return allowed;
-+}
-+
-+/**
-+ * richacl_isolate_owner_class  -  limit the owner class to the owner file mask
-+ * @alloc:	acl and number of allocated entries
-+ *
-+ * POSIX requires that after a chmod, the owner class is granted no more
-+ * permissions than the owner file permission bits.  For richacls, this
-+ * means that the owner class must not be granted any permissions that the
-+ * owner mask does not include.
-+ *
-+ * When we apply file masks to an acl which grant more permissions to the group
-+ * or other class than to the owner class, we may end up in a situation where
-+ * the owner is granted additional permissions from other aces.  For example,
-+ * given this acl:
-+ *
-+ *    everyone:rwx::allow
-+ *
-+ * when file masks corresponding to mode 0466 are applied, after
-+ * richacl_propagate_everyone() and __richacl_apply_masks(), we end up with:
-+ *
-+ *    owner@:r::allow
-+ *    everyone@:rw::allow
-+ *
-+ * This acl still grants the owner rw access through the everyone@ allow ace.
-+ * To fix this, we must deny the owner w access:
-+ *
-+ *    owner@:w::deny
-+ *    owner@:r::allow
-+ *    everyone@:rw::allow
-+ */
+ 
+ struct posix_acl_summary {
+@@ -739,56 +761,88 @@ out_estate:
+ 	return ret;
+ }
+ 
+-__be32
+-nfsd4_set_acl(struct svc_rqst *rqstp, struct svc_fh *fhp, struct richacl *acl)
 +static int
-+richacl_isolate_owner_class(struct richacl_alloc *alloc)
-+{
-+	struct richace *ace;
-+	unsigned int allowed = 0;
-+
-+	allowed = richacl_max_allowed(alloc->acl);
-+	if (allowed & ~alloc->acl->a_owner_mask) {
-+		/*
-+		 * Figure out if we can update an existig OWNER@ DENY entry.
-+		 */
-+		richacl_for_each_entry(ace, alloc->acl) {
-+			if (richace_is_inherit_only(ace))
-+				continue;
-+			if (richace_is_deny(ace)) {
-+				if (richace_is_owner(ace))
-+					break;
-+			} else if (richace_is_allow(ace)) {
-+				ace = alloc->acl->a_entries +
-+				      alloc->acl->a_count;
-+				break;
-+			}
-+		}
-+		if (ace != alloc->acl->a_entries + alloc->acl->a_count) {
-+			if (richace_change_mask(alloc, &ace, ace->e_mask |
-+					(allowed & ~alloc->acl->a_owner_mask)))
-+				return -1;
-+		} else {
-+			/* Insert an owner@ deny entry at the front. */
-+			ace = alloc->acl->a_entries;
-+			if (richacl_insert_entry(alloc, &ace))
-+				return -1;
-+			ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
-+			ace->e_flags = RICHACE_SPECIAL_WHO;
-+			ace->e_mask = allowed & ~alloc->acl->a_owner_mask;
-+			ace->e_id.special = RICHACE_OWNER_SPECIAL_ID;
-+		}
-+	}
-+	return 0;
++nfsd4_set_posix_acl(struct svc_rqst *rqstp, struct dentry *dentry,
++		    struct richacl *acl)
+ {
+-	__be32 error;
+ 	int host_error;
+-	struct dentry *dentry;
+-	struct inode *inode;
++	struct inode *inode = d_inode(dentry);
+ 	struct posix_acl *pacl = NULL, *dpacl = NULL;
+ 	unsigned int flags = 0;
+ 
+-	/* Get inode */
+-	error = fh_verify(rqstp, fhp, 0, NFSD_MAY_SATTR);
+-	if (error)
+-		return error;
+-
+-	dentry = fhp->fh_dentry;
+-	inode = d_inode(dentry);
+-
+ 	if (!inode->i_op->set_acl || !IS_POSIXACL(inode))
+-		return nfserr_attrnotsupp;
++		return -EOPNOTSUPP;
+ 
+ 	if (S_ISDIR(inode->i_mode))
+ 		flags = FLAG_DIRECTORY;
+ 
+ 	host_error = nfs4_richacl_to_posix(acl, &pacl, &dpacl, flags);
+ 	if (host_error == -EINVAL)
+-		return nfserr_attrnotsupp;
++		return -EOPNOTSUPP;
+ 	if (host_error < 0)
+-		goto out_nfserr;
++		return host_error;
+ 
+ 	host_error = inode->i_op->set_acl(inode, pacl, ACL_TYPE_ACCESS);
+ 	if (host_error < 0)
+ 		goto out_release;
+ 
+-	if (S_ISDIR(inode->i_mode)) {
++	if (S_ISDIR(inode->i_mode))
+ 		host_error = inode->i_op->set_acl(inode, dpacl,
+ 						  ACL_TYPE_DEFAULT);
+-	}
+ 
+ out_release:
+ 	posix_acl_release(pacl);
+ 	posix_acl_release(dpacl);
+-out_nfserr:
++	return host_error;
 +}
 +
-+/**
-+ * __richacl_isolate_who  -  isolate entry from everyone@ allow entry
-+ * @alloc:	acl and number of allocated entries
-+ * @who:	identifier to isolate
-+ * @deny:	permissions this identifier should not be allowed
-+ *
-+ * See richacl_isolate_group_class().
-+ */
 +static int
-+__richacl_isolate_who(struct richacl_alloc *alloc, struct richace *who,
-+		      unsigned int deny)
++nfsd4_set_richacl(struct svc_rqst *rqstp, struct dentry *dentry,
++		  struct richacl *acl)
 +{
-+	struct richacl *acl = alloc->acl;
-+	struct richace *ace;
-+	int n;
-+	/*
-+	 * Compute the permissions already denied to @who.
-+	 */
-+	richacl_for_each_entry(ace, acl) {
-+		if (richace_is_inherit_only(ace))
-+			continue;
-+		if (richace_is_same_identifier(ace, who) &&
-+		    richace_is_deny(ace))
-+			deny &= ~ace->e_mask;
-+	}
-+	if (!deny)
-+		return 0;
++	int host_error;
++	struct inode *inode = d_inode(dentry);
++	size_t size = richacl_xattr_size(acl);
++	char *buffer;
 +
-+	/*
-+	 * Figure out if we can update an existig deny entry.  Start from the
-+	 * entry before the trailing everyone@ allow entry. We will not hit
-+	 * everyone@ entries in the loop.
-+	 */
-+	for (n = acl->a_count - 2; n != -1; n--) {
-+		ace = acl->a_entries + n;
-+		if (richace_is_inherit_only(ace))
-+			continue;
-+		if (richace_is_deny(ace)) {
-+			if (richace_is_same_identifier(ace, who))
-+				break;
-+		} else if (richace_is_allow(ace) &&
-+			   (ace->e_mask & deny)) {
-+			n = -1;
-+			break;
-+		}
-+	}
-+	if (n != -1) {
-+		if (richace_change_mask(alloc, &ace, ace->e_mask | deny))
-+			return -1;
-+	} else {
-+		/*
-+		 * Insert a new entry before the trailing everyone@ deny entry.
-+		 */
-+		struct richace who_copy;
++	if (!inode->i_op->setxattr || !IS_RICHACL(inode))
++		return -EOPNOTSUPP;
 +
-+		richace_copy(&who_copy, who);
-+		ace = acl->a_entries + acl->a_count - 1;
-+		if (richacl_insert_entry(alloc, &ace))
-+			return -1;
-+		richace_copy(ace, &who_copy);
-+		ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
-+		richace_clear_inheritance_flags(ace);
-+		ace->e_mask = deny;
-+	}
-+	return 0;
++	richacl_compute_max_masks(acl, inode->i_uid);
++
++	buffer = kmalloc(size, GFP_KERNEL);
++	if (!buffer)
++		return -ENOMEM;
++	richacl_to_xattr(&init_user_ns, acl, buffer, size);
++	host_error = inode->i_op->setxattr(dentry, RICHACL_XATTR,
++					   buffer, size, 0);
++	kfree(buffer);
++	return host_error;
 +}
 +
-+/**
-+ * richacl_isolate_group_class  -  limit the group class to the group file mask
-+ * @alloc:	acl and number of allocated entries
-+ *
-+ * POSIX requires that after a chmod, the group class is granted no more
-+ * permissions than the group file permission bits.  For richacls, this
-+ * means that the group class must not be granted any permissions that the
-+ * group mask does not include.
-+ *
-+ * When we apply file masks to an acl which grant more permissions to the other
-+ * class than to the group class, we may end up in a situation where processes
-+ * in the group class are granted additional permission from other aces.  For
-+ * example, given this acl:
-+ *
-+ *    joe:rwx::allow
-+ *    everyone:rwx::allow
-+ *
-+ * when file masks corresponding to mode 0646 are applied, after
-+ * richacl_propagate_everyone() and __richacl_apply_masks(), we end up with:
-+ *
-+ *    joe:r::allow
-+ *    owner@:rw::allow
-+ *    group@:r::allow
-+ *    everyone@:rw::allow
-+ *
-+ * This acl still grants joe and group@ rw access through the everyone@ allow
-+ * ace.  To fix this, we must deny w access to group class aces before the
-+ * everyone@ allow ace at the end of the acl:
-+ *
-+ *    joe:r::allow
-+ *    owner@:rw::allow
-+ *    group@:r::allow
-+ *    joe:w::deny
-+ *    group@:w::deny
-+ *    everyone@:rw::allow
-+ */
-+static int
-+richacl_isolate_group_class(struct richacl_alloc *alloc)
++__be32
++nfsd4_set_acl(struct svc_rqst *rqstp, struct svc_fh *fhp, struct richacl *acl)
 +{
-+	struct richace who = {
-+		.e_flags = RICHACE_SPECIAL_WHO,
-+		.e_id.special = RICHACE_GROUP_SPECIAL_ID,
-+	};
-+	struct richace *ace;
-+	unsigned int deny;
++	struct dentry *dentry;
++	int host_error;
++	__be32 error;
 +
-+	if (!alloc->acl->a_count)
-+		return 0;
-+	ace = alloc->acl->a_entries + alloc->acl->a_count - 1;
-+	if (richace_is_inherit_only(ace) || !richace_is_everyone(ace))
-+		return 0;
-+	deny = ace->e_mask & ~alloc->acl->a_group_mask;
++	error = fh_verify(rqstp, fhp, 0, NFSD_MAY_SATTR);
++	if (error)
++		return error;
++	dentry = fhp->fh_dentry;
 +
-+	if (deny) {
-+		unsigned int n;
++	if (IS_RICHACL(d_inode(dentry)))
++		host_error = nfsd4_set_richacl(rqstp, dentry, acl);
++	else
++		host_error = nfsd4_set_posix_acl(rqstp, dentry, acl);
 +
-+		if (__richacl_isolate_who(alloc, &who, deny))
-+			return -1;
-+		/*
-+		 * Start from the entry before the trailing everyone@ allow
-+		 * entry.  We will not hit everyone@ entries in the loop.
-+		 */
-+		for (n = alloc->acl->a_count - 2; n != -1; n--) {
-+			ace = alloc->acl->a_entries + n;
+ 	if (host_error == -EOPNOTSUPP)
+ 		return nfserr_attrnotsupp;
+ 	else
+ 		return nfserrno(host_error);
+ }
+ 
+-
+ static short
+ ace2type(struct richace *ace)
+ {
+diff --git a/fs/nfsd/nfs4proc.c b/fs/nfsd/nfs4proc.c
+index 8c2cb16..9f8f0a8 100644
+--- a/fs/nfsd/nfs4proc.c
++++ b/fs/nfsd/nfs4proc.c
+@@ -110,7 +110,7 @@ check_attr_support(struct svc_rqst *rqstp, struct nfsd4_compound_state *cstate,
+ 	 * in current environment or not.
+ 	 */
+ 	if (bmval[0] & FATTR4_WORD0_ACL) {
+-		if (!IS_POSIXACL(d_inode(dentry)))
++		if (!IS_ACL(d_inode(dentry)))
+ 			return nfserr_attrnotsupp;
+ 	}
+ 
+diff --git a/fs/nfsd/nfs4xdr.c b/fs/nfsd/nfs4xdr.c
+index b66e292..8628065 100644
+--- a/fs/nfsd/nfs4xdr.c
++++ b/fs/nfsd/nfs4xdr.c
+@@ -340,11 +340,24 @@ nfsd4_decode_fattr(struct nfsd4_compoundargs *argp, u32 *bmval,
+ 
+ 		richacl_for_each_entry(ace, *acl) {
+ 			READ_BUF(16); len += 16;
+-			ace->e_type = be32_to_cpup(p++);
+-			ace->e_flags = be32_to_cpup(p++);
+-			ace->e_mask = be32_to_cpup(p++);
+-			if (ace->e_flags & RICHACE_SPECIAL_WHO)
 +
-+			if (richace_is_inherit_only(ace) ||
-+			    richace_is_owner(ace) ||
-+			    richace_is_group(ace) ||
-+			    richace_is_everyone(ace))
-+				continue;
-+			if (__richacl_isolate_who(alloc, ace, deny))
-+				return -1;
++			dummy32 = be32_to_cpup(p++);
++			if (dummy32 > RICHACE_ACCESS_DENIED_ACE_TYPE)
++				return nfserr_inval;
++			ace->e_type = dummy32;
++
++			dummy32 = be32_to_cpup(p++);
++			if (dummy32 & (~RICHACE_VALID_FLAGS |
++				       RICHACE_INHERITED_ACE |
++				       RICHACE_SPECIAL_WHO))
+ 				return nfserr_inval;
++			ace->e_flags = dummy32;
++
++			dummy32 = be32_to_cpup(p++);
++			if (dummy32 & ~NFS4_ACE_MASK_ALL)
++				return nfserr_inval;
++			ace->e_mask = dummy32;
++
+ 			dummy32 = be32_to_cpup(p++);
+ 			READ_BUF(dummy32);
+ 			len += XDR_QUADLEN(dummy32) << 2;
+@@ -2275,7 +2288,11 @@ nfsd4_encode_fattr(struct xdr_stream *xdr, struct svc_fh *fhp,
+ 		fhp = tempfh;
+ 	}
+ 	if (bmval0 & FATTR4_WORD0_ACL) {
+-		err = nfsd4_get_nfs4_acl(rqstp, dentry, &acl);
++		acl = nfsd4_get_acl(rqstp, dentry);
++		if (IS_ERR(acl)) {
++			err = PTR_ERR(acl);
++			acl = NULL;
 +		}
-+	}
-+	return 0;
-+}
+ 		if (err == -EOPNOTSUPP)
+ 			bmval0 &= ~FATTR4_WORD0_ACL;
+ 		else if (err == -EINVAL) {
+@@ -2334,7 +2351,7 @@ nfsd4_encode_fattr(struct xdr_stream *xdr, struct svc_fh *fhp,
+ 		u32 word1 = nfsd_suppattrs1(minorversion);
+ 		u32 word2 = nfsd_suppattrs2(minorversion);
+ 
+-		if (!IS_POSIXACL(dentry->d_inode))
++		if (!IS_ACL(d_inode(dentry)))
+ 			word0 &= ~FATTR4_WORD0_ACL;
+ 		if (!contextsupport)
+ 			word2 &= ~FATTR4_WORD2_SECURITY_LABEL;
+@@ -2469,7 +2486,8 @@ nfsd4_encode_fattr(struct xdr_stream *xdr, struct svc_fh *fhp,
+ 			if (!p)
+ 				goto out_resource;
+ 			*p++ = cpu_to_be32(ace->e_type);
+-			*p++ = cpu_to_be32(ace->e_flags & ~RICHACE_SPECIAL_WHO);
++			*p++ = cpu_to_be32(ace->e_flags &
++				~(RICHACE_SPECIAL_WHO | RICHACE_INHERITED_ACE));
+ 			*p++ = cpu_to_be32(ace->e_mask & NFS4_ACE_MASK_ALL);
+ 			status = nfsd4_encode_ace_who(xdr, rqstp, ace);
+ 			if (status)
+@@ -2481,7 +2499,7 @@ out_acl:
+ 		p = xdr_reserve_space(xdr, 4);
+ 		if (!p)
+ 			goto out_resource;
+-		*p++ = cpu_to_be32(IS_POSIXACL(dentry->d_inode) ?
++		*p++ = cpu_to_be32(IS_ACL(d_inode(dentry)) ?
+ 			ACL4_SUPPORT_ALLOW_ACL|ACL4_SUPPORT_DENY_ACL : 0);
+ 	}
+ 	if (bmval0 & FATTR4_WORD0_CANSETTIME) {
 -- 
 2.5.0
