@@ -1,65 +1,138 @@
 From: Andreas Gruenbacher <andreas.gruenbacher@gmail.com>
-Subject: [RFC v6 24/40] richacl: Set the other permissions to the other mask
-Date: Tue,  4 Aug 2015 13:53:22 +0200
-Message-ID: <1438689218-6921-25-git-send-email-agruenba@redhat.com>
+Subject: [RFC v6 19/40] ext4: Add richacl feature flag
+Date: Tue,  4 Aug 2015 13:53:17 +0200
+Message-ID: <1438689218-6921-20-git-send-email-agruenba@redhat.com>
 References: <1438689218-6921-1-git-send-email-agruenba@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1438689218-6921-1-git-send-email-agruenba@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org, linux-cifs@vger.kernel.org, linux-security-module@vger.kernel.org, Andreas Gruenbacher <agruenba@redhat.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org, linux-cifs@vger.kernel.org, linux-security-module@vger.kernel.org, "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>, Andreas Gruenbacher <agruenba@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Change the acl so that everyone@ is granted the permissions set in the
-other mask.
+From: "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>
+
+This feature flag selects richacl instead of posix acl support on the
+file system. In addition, the "acl" mount option is needed for enabling
+either of the two kinds of acls.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 ---
- fs/richacl_compat.c | 35 +++++++++++++++++++++++++++++++++++
- 1 file changed, 35 insertions(+)
+ fs/ext4/ext4.h  |  6 ++++--
+ fs/ext4/super.c | 42 +++++++++++++++++++++++++++++++++---------
+ 2 files changed, 37 insertions(+), 11 deletions(-)
 
-diff --git a/fs/richacl_compat.c b/fs/richacl_compat.c
-index 807372d..76d5ab9 100644
---- a/fs/richacl_compat.c
-+++ b/fs/richacl_compat.c
-@@ -458,3 +458,38 @@ richacl_set_owner_permissions(struct richacl_alloc *alloc)
- 	}
- 	return 0;
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index f5e9f04..e69c8ea 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -991,7 +991,7 @@ struct ext4_inode_info {
+ #define EXT4_MOUNT_UPDATE_JOURNAL	0x01000	/* Update the journal format */
+ #define EXT4_MOUNT_NO_UID32		0x02000  /* Disable 32-bit UIDs */
+ #define EXT4_MOUNT_XATTR_USER		0x04000	/* Extended user attributes */
+-#define EXT4_MOUNT_POSIX_ACL		0x08000	/* POSIX Access Control Lists */
++#define EXT4_MOUNT_ACL			0x08000	/* Access Control Lists */
+ #define EXT4_MOUNT_NO_AUTO_DA_ALLOC	0x10000	/* No auto delalloc mapping */
+ #define EXT4_MOUNT_BARRIER		0x20000 /* Use block barriers */
+ #define EXT4_MOUNT_QUOTA		0x80000 /* Some quota option set */
+@@ -1582,6 +1582,7 @@ static inline int ext4_encrypted_inode(struct inode *inode)
+ #define EXT4_FEATURE_INCOMPAT_LARGEDIR		0x4000 /* >2GB or 3-lvl htree */
+ #define EXT4_FEATURE_INCOMPAT_INLINE_DATA	0x8000 /* data in inode */
+ #define EXT4_FEATURE_INCOMPAT_ENCRYPT		0x10000
++#define EXT4_FEATURE_INCOMPAT_RICHACL		0x20000
+ 
+ #define EXT2_FEATURE_COMPAT_SUPP	EXT4_FEATURE_COMPAT_EXT_ATTR
+ #define EXT2_FEATURE_INCOMPAT_SUPP	(EXT4_FEATURE_INCOMPAT_FILETYPE| \
+@@ -1607,7 +1608,8 @@ static inline int ext4_encrypted_inode(struct inode *inode)
+ 					 EXT4_FEATURE_INCOMPAT_FLEX_BG| \
+ 					 EXT4_FEATURE_INCOMPAT_MMP | \
+ 					 EXT4_FEATURE_INCOMPAT_INLINE_DATA | \
+-					 EXT4_FEATURE_INCOMPAT_ENCRYPT)
++					 EXT4_FEATURE_INCOMPAT_ENCRYPT | \
++					 EXT4_FEATURE_INCOMPAT_RICHACL)
+ #define EXT4_FEATURE_RO_COMPAT_SUPP	(EXT4_FEATURE_RO_COMPAT_SPARSE_SUPER| \
+ 					 EXT4_FEATURE_RO_COMPAT_LARGE_FILE| \
+ 					 EXT4_FEATURE_RO_COMPAT_GDT_CSUM| \
+diff --git a/fs/ext4/super.c b/fs/ext4/super.c
+index 58987b5..05d6537 100644
+--- a/fs/ext4/super.c
++++ b/fs/ext4/super.c
+@@ -1257,6 +1257,28 @@ static ext4_fsblk_t get_sb_block(void **data)
+ 	return sb_block;
  }
-+
-+/**
-+ * richacl_set_other_permissions  -  set the other permissions to the other mask
-+ *
-+ * Change the acl so that everyone@ is granted the permissions set in the other
-+ * mask.  This leaves at most one efective everyone@ allow entry at the end of
-+ * the acl.
-+ */
-+static int
-+richacl_set_other_permissions(struct richacl_alloc *alloc)
+ 
++static int enable_acl(struct super_block *sb)
 +{
-+	struct richacl *acl = alloc->acl;
-+	unsigned int x = RICHACE_POSIX_ALWAYS_ALLOWED;
-+	unsigned int other_mask = acl->a_other_mask & ~x;
-+	struct richace *ace = acl->a_entries + acl->a_count - 1;
-+
-+	if (!(other_mask &&
-+	      (acl->a_flags & RICHACL_WRITE_THROUGH) &&
-+	      (acl->a_flags & RICHACL_MASKED)))
-+		return 0;
-+
-+	if (acl->a_count == 0 ||
-+	    !richace_is_everyone(ace) ||
-+	    richace_is_inherit_only(ace)) {
-+		ace++;
-+		if (richacl_insert_entry(alloc, &ace))
-+			return -1;
-+		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
-+		ace->e_flags = RICHACE_SPECIAL_WHO;
-+		ace->e_mask = other_mask;
-+		ace->e_id.special = RICHACE_EVERYONE_SPECIAL_ID;
-+	} else
-+		richace_change_mask(alloc, &ace, other_mask);
++	sb->s_flags &= ~(MS_POSIXACL | MS_RICHACL);
++	if (test_opt(sb, ACL)) {
++		if (EXT4_HAS_INCOMPAT_FEATURE(sb,
++					      EXT4_FEATURE_INCOMPAT_RICHACL)) {
++#ifdef CONFIG_EXT4_FS_RICHACL
++			sb->s_flags |= MS_RICHACL;
++#else
++			return -EOPNOTSUPP;
++#endif
++		} else {
++#ifdef CONFIG_EXT4_FS_POSIX_ACL
++			sb->s_flags |= MS_POSIXACL;
++#else
++			return -EOPNOTSUPP;
++#endif
++		}
++	}
 +	return 0;
 +}
++
+ #define DEFAULT_JOURNAL_IOPRIO (IOPRIO_PRIO_VALUE(IOPRIO_CLASS_BE, 3))
+ static char deprecated_msg[] = "Mount option \"%s\" will be removed by %s\n"
+ 	"Contact linux-ext4@vger.kernel.org if you think we should keep it.\n";
+@@ -1403,9 +1425,9 @@ static const struct mount_opts {
+ 	 MOPT_NO_EXT2 | MOPT_DATAJ},
+ 	{Opt_user_xattr, EXT4_MOUNT_XATTR_USER, MOPT_SET},
+ 	{Opt_nouser_xattr, EXT4_MOUNT_XATTR_USER, MOPT_CLEAR},
+-#ifdef CONFIG_EXT4_FS_POSIX_ACL
+-	{Opt_acl, EXT4_MOUNT_POSIX_ACL, MOPT_SET},
+-	{Opt_noacl, EXT4_MOUNT_POSIX_ACL, MOPT_CLEAR},
++#if defined(CONFIG_EXT4_FS_POSIX_ACL) || defined(CONFIG_EXT4_FS_RICHACL)
++	{Opt_acl, EXT4_MOUNT_ACL, MOPT_SET},
++	{Opt_noacl, EXT4_MOUNT_ACL, MOPT_CLEAR},
+ #else
+ 	{Opt_acl, 0, MOPT_NOSUPPORT},
+ 	{Opt_noacl, 0, MOPT_NOSUPPORT},
+@@ -3563,8 +3585,8 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
+ 		set_opt(sb, NO_UID32);
+ 	/* xattr user namespace & acls are now defaulted on */
+ 	set_opt(sb, XATTR_USER);
+-#ifdef CONFIG_EXT4_FS_POSIX_ACL
+-	set_opt(sb, POSIX_ACL);
++#if defined(CONFIG_EXT4_FS_POSIX_ACL) || defined(CONFIG_EXT4_FS_RICHACL)
++	set_opt(sb, ACL);
+ #endif
+ 	/* don't forget to enable journal_csum when metadata_csum is enabled. */
+ 	if (ext4_has_metadata_csum(sb))
+@@ -3645,8 +3667,9 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
+ 			clear_opt(sb, DELALLOC);
+ 	}
+ 
+-	sb->s_flags = (sb->s_flags & ~MS_POSIXACL) |
+-		(test_opt(sb, POSIX_ACL) ? MS_POSIXACL : 0);
++	err = enable_acl(sb);
++	if (err)
++		goto failed_mount;
+ 
+ 	if (le32_to_cpu(es->s_rev_level) == EXT4_GOOD_OLD_REV &&
+ 	    (EXT4_HAS_COMPAT_FEATURE(sb, ~0U) ||
+@@ -4960,8 +4983,9 @@ static int ext4_remount(struct super_block *sb, int *flags, char *data)
+ 	if (sbi->s_mount_flags & EXT4_MF_FS_ABORTED)
+ 		ext4_abort(sb, "Abort forced by user");
+ 
+-	sb->s_flags = (sb->s_flags & ~MS_POSIXACL) |
+-		(test_opt(sb, POSIX_ACL) ? MS_POSIXACL : 0);
++	err = enable_acl(sb);
++	if (err)
++		goto restore_opts;
+ 
+ 	es = sbi->s_es;
+ 
 -- 
 2.5.0
