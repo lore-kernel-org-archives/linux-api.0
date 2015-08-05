@@ -1,110 +1,36 @@
-From: Julien Grall <julien.grall@citrix.com>
-Subject: [PATCH v2 0/8] Use correctly the Xen memory terminologies in Linux
-Date: Tue, 4 Aug 2015 19:12:44 +0100
-Message-ID: <1438711972-18752-1-git-send-email-julien.grall@citrix.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: xen-devel@lists.xenproject.org
-Cc: linux-fbdev@vger.kernel.org, x86@kernel.org, netdev@vger.kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Jiri Slaby <jslaby@suse.com>, Thomas Gleixner <tglx@linutronix.de>, Russell King <linux@arm.linux.org.uk>, linux-scsi@vger.kernel.org, Tomi Valkeinen <tomi.valkeinen@ti.com>, stefano.stabellini@eu.citrix.com, Ingo Molnar <mingo@redhat.com>, linux-input@vger.kernel.org, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>, ian.campbell@citrix.com, Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>, "James E.J. Bottomley" <JBottomley@odin.com>, Boris Ostrovsky <boris.ostrovsky@oracle.com>, linux-arm-kernel@lists.infradead.org, Juergen Gross <jgross@suse.com>, Wei Liu <wei.liu2@citrix.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-kernel@vger.kernel.org, Julien Grall <julien.grall@citrix.com>, David Vrabel <david.v>
+From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Subject: [PATCH v3 1/4] mm, documentation: clarify /proc/pid/status VmSwap limitations
+Date: Wed,  5 Aug 2015 15:01:22 +0200
+Message-ID: <1438779685-5227-2-git-send-email-vbabka@suse.cz>
+References: <1438779685-5227-1-git-send-email-vbabka@suse.cz>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1438779685-5227-1-git-send-email-vbabka-AlSwsSmVLrQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jerome Marchand <jmarchan-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-SGkgYWxsLAoKVGhpcyBwYXRjaCBzZXJpZXMgYWltcyB0byB1c2UgdGhlIG1lbW9yeSB0ZXJtaW5v
-bG9naWVzIGRlc2NyaWJlZCBpbgppbmNsdWRlL3hlbi9tbS5oIFsxXSBmb3IgTGludXggeGVuIGNv
-ZGUuCgpMaW51eCBpcyB1c2luZyBtaXN0YWtlbmx5IE1GTiB3aGVuIEdGTiBpcyBtZWFudCwgSSBz
-dXNwZWN0IHRoaXMgaXMgYmVjYXVzZSB0aGUKZmlyc3Qgc3VwcG9ydCBvZiBYZW4gd2FzIGZvciBQ
-Vi4gVGhpcyBoYXMgYnJvdWdodCBzb21lIG1pc2ltcGxlbWVudGF0aW9uCm9mIG1lbW9yeSBoZWxw
-ZXJzIG9uIEFSTSBhbmQgbWFrZSB0aGUgZGV2ZWxvcHBlciBjb25mdXNlZCBhYm91dCB0aGUgZXhw
-ZWN0ZWQKYmVoYXZpb3IuCgpGb3IgaW5zdGFuY2UsIHdpdGggcGZuX3RvX21mbiwgd2UgZXhwZWN0
-IHRvIGdldCBhIE1GTiBiYXNlZCBvbiB0aGUgbmFtZS4KQWx0aG91Z2gsIGlmIHdlIGxvb2sgYXQg
-dGhlIGltcGxlbWVudGF0aW9uIG9uIHg4NiwgaXQncyByZXR1cm5pbmcgYSBHRk4uCk1vc3Qgb2Yg
-dGhlIGNhbGxlcnMgYXJlIGFsc28gdXNpbmcgaXQgdGhpcyB3YXkuCgpUaGUgZmlyc3QgMiBwYXRj
-aGVzIG9mIHRoaXMgc2VyaWVzIGlzIEFSTSByZWxhdGVkIGluIG9yZGVyIHRvIHJlbW92ZQpQViBz
-cGVjaWZpYyBoZWxwZXJzIHdoaWNoIHNob3VsZCBub3QgYmUgdXNlZCBhbmQgZml4aW5nIHRoZSBp
-bXBsZW1lbnRhdGlvbiBvZgpwZm5fdG9fbWZuLgoKVGhlIHJlc3Qgb2YgdGhlIHNlcmllcyBpcyBo
-ZXJlIHJlbmFtZSBtb3N0IG9mIHRoZSB1c2FnZSBpbiB0aGUgY29tbW9uIGNvZGUKb2YgTUZOIHRv
-IEdGTi4gSSBhbHNvIHRvb2sgdGhlIG9wcG9ydHVuaXR5IHRvIHJlcGxhY2UgbW9zdCBvZiB0aGUg
-Y2FsbCB0bwpwZm5fdG9fZ2ZuIGluIHRoZSBjb21tb24gY29kZSBieSBwYWdlX3RvX2dmbiBhdm9p
-ZCBjb25zdHJ1Y3Rpb24gc3VjaAphcyBwZm5fdG9fZ2ZuKHBhZ2VfdG9fcGZuKC4uLikuCgpOb3Rl
-IHRoZSBvbmUgeGVuLWJsa2Zyb250IHdpbGwgYmUgZHJvcHBlZCBieSA2NEsgc2VyaWVzIFsyXSwg
-SSBjYW4gaW5jbHVkZSBpdAppZiBuZWNlc3NhcnkuCgpNYWpvciBjaGFuZ2VzIGluIHYyOgogICAg
-LSBVc2UgYmZuIHJhdGhlciB0aGFuIGRmbiBmb3IgdGhlIERNQSBhZGRyZXNzCiAgICAtIFJlLWlu
-dHJvZHVjZWQgcGZuX3RvX21mbiBmb3IgUFYgZ3Vlc3RzIG9ubHkKICAgIC0gVHlwb2VzCgpGb3Ig
-YWxsIHRoZSBjaGFuZ2VzIHNlZSBpbiBlYWNoIHBhdGNoLgoKVGhpcyBzZXJpZXMgaXMgYmFzZWQg
-b24gbGludXMncyBicmFuY2guIEEgYnJhbmNoIHdpdGggYWxsIHRoZSBwYXRjaGVzCmNhbiBiZSBm
-b3VuZCBoZXJlOgogICAgZ2l0Oi8veGVuYml0cy54ZW4ub3JnL3Blb3BsZS9qdWxpZW5nL2xpbnV4
-LWFybS5naXQgYnJhbmNoIHBhZ2UtcmVuYW1pbmctdjIKCkl0IHdhcyBiZWVuIGJvb3QgdGVzdGVk
-IG9uIEFSTTY0IGFuZCBvbmx5IGJ1aWx0IGZvciB4ODYgYW5kIEFSTTMyLgpJIHdvdWxkIGJlIGhh
-cHB5IGlmIHNvbWVvbmUgY2FuIGdpdmUgYSB0cnkgb24geDg2IGFzIEkgZG9uJ3QgaGF2ZSBhIHg4
-Ngpib3ggc2V0dXAgd2l0aCBYZW4uCgpTaW5jZXJlbHkgeW91cnMsCgpbMV0gaHR0cDovL3hlbmJp
-dHMueGVuLm9yZy9naXR3ZWIvP3A9eGVuLmdpdDthPWNvbW1pdGRpZmY7aD1lNzU4ZWQxNGYzOTAz
-NDI1MTM0MDVkZDc2NmU4NzQ5MzQ1NzNlNmNiClsyXSBodHRwczovL2xrbWwub3JnL2xrbWwvMjAx
-NS83LzkvNjI4CgpDYzogQm9yaXMgT3N0cm92c2t5IDxib3Jpcy5vc3Ryb3Zza3lAb3JhY2xlLmNv
-bT4KQ2M6IERhdmlkIFZyYWJlbCA8ZGF2aWQudnJhYmVsQGNpdHJpeC5jb20+CkNjOiBEbWl0cnkg
-VG9yb2tob3YgPGRtaXRyeS50b3Jva2hvdkBnbWFpbC5jb20+CkNjOiBHcmVnIEtyb2FoLUhhcnRt
-YW4gPGdyZWdraEBsaW51eGZvdW5kYXRpb24ub3JnPgpDYzogIkguIFBldGVyIEFudmluIiA8aHBh
-QHp5dG9yLmNvbT4KQ2M6IElhbiBDYW1wYmVsbCA8aWFuLmNhbXBiZWxsQGNpdHJpeC5jb20+CkNj
-OiBJbmdvIE1vbG5hciA8bWluZ29AcmVkaGF0LmNvbT4KQ2M6ICJKYW1lcyBFLkouIEJvdHRvbWxl
-eSIgPEpCb3R0b21sZXlAb2Rpbi5jb20+CkNjOiBKZWFuLUNocmlzdG9waGUgUGxhZ25pb2wtVmls
-bGFyZCA8cGxhZ25pb2pAamNyb3NvZnQuY29tPgpDYzogSmlyaSBTbGFieSA8anNsYWJ5QHN1c2Uu
-Y29tPgpDYzogSnVlcmdlbiBHcm9zcyA8amdyb3NzQHN1c2UuY29tPgpDYzogS29ucmFkIFJ6ZXN6
-dXRlayBXaWxrIDxrb25yYWQud2lsa0BvcmFjbGUuY29tPgpDYzogbGludXgtYXBpQHZnZXIua2Vy
-bmVsLm9yZwpDYzogbGludXgtYXJtLWtlcm5lbEBsaXN0cy5pbmZyYWRlYWQub3JnCkNjOiBsaW51
-eC1mYmRldkB2Z2VyLmtlcm5lbC5vcmcKQ2M6IGxpbnV4LWlucHV0QHZnZXIua2VybmVsLm9yZwpD
-YzogbGludXhwcGMtZGV2QGxpc3RzLm96bGFicy5vcmcKQ2M6IGxpbnV4LXNjc2lAdmdlci5rZXJu
-ZWwub3JnCkNjOiBuZXRkZXZAdmdlci5rZXJuZWwub3JnCkNjOiAiUm9nZXIgUGF1IE1vbm7DqSIg
-PHJvZ2VyLnBhdUBjaXRyaXguY29tPgpDYzogUnVzc2VsbCBLaW5nIDxsaW51eEBhcm0ubGludXgu
-b3JnLnVrPgpDYzogU3RlZmFubyBTdGFiZWxsaW5pIDxzdGVmYW5vLnN0YWJlbGxpbmlAZXUuY2l0
-cml4LmNvbT4KQ2M6IFRob21hcyBHbGVpeG5lciA8dGdseEBsaW51dHJvbml4LmRlPgpDYzogVG9t
-aSBWYWxrZWluZW4gPHRvbWkudmFsa2VpbmVuQHRpLmNvbT4KQ2M6IFdlaSBMaXUgPHdlaS5saXUy
-QGNpdHJpeC5jb20+CkNjOiB4ODZAa2VybmVsLm9yZwoKSnVsaWVuIEdyYWxsICg4KToKICBhcm0v
-eGVuOiBSZW1vdmUgaGVscGVycyB3aGljaCBhcmUgUFYgc3BlY2lmaWMKICB4ZW46IE1ha2UgY2xl
-YXIgdGhhdCBzd2lvdGxiIGFuZCBiaW9tZXJnZSBhcmUgZGVhbGluZyB3aXRoIERNQSBhZGRyZXNz
-CiAgYXJtL3hlbjogaW1wbGVtZW50IGNvcnJlY3RseSBwZm5fdG9fbWZuCiAgeGVuOiBVc2UgdGhl
-IGNvcnJlY3RseSB0aGUgWGVuIG1lbW9yeSB0ZXJtaW5vbG9naWVzCiAgeGVuL3RtZW06IFVzZSBw
-YWdlX3RvX2dmbiByYXRoZXIgdGhhbiBwZm5fdG9fZ2ZuCiAgdmlkZW8veGVuLWZiZnJvbnQ6IEZ1
-cnRoZXIgcy9NRk4vR0ZOIGNsZWFuLXVwCiAgaHZjL3hlbjogRnVydGhlciBzL01GTi9HRk4gY2xl
-YW4tdXAKICB4ZW4vcHJpdmNtZDogRnVydGhlciBzL01GTi9HRk4vIGNsZWFuLXVwCgogYXJjaC9h
-cm0vaW5jbHVkZS9hc20veGVuL3BhZ2UuaCAgICAgICAgIHwgNDQgKysrKysrKysrKysrKysrKy0t
-LS0tLS0tLS0tLS0tLS0tCiBhcmNoL2FybS94ZW4vZW5saWdodGVuLmMgICAgICAgICAgICAgICAg
-fCAxOCArKysrKysrLS0tLS0tLQogYXJjaC9hcm0veGVuL21tLmMgICAgICAgICAgICAgICAgICAg
-ICAgIHwgIDQgKy0tCiBhcmNoL3g4Ni9pbmNsdWRlL2FzbS94ZW4vcGFnZS5oICAgICAgICAgfCAz
-NyArKysrKysrKysrKysrKysrKysrKystLS0tLS0KIGFyY2gveDg2L3hlbi9tbXUuYyAgICAgICAg
-ICAgICAgICAgICAgICB8IDMyICsrKysrKysrKysrKy0tLS0tLS0tLS0tLQogYXJjaC94ODYveGVu
-L3NtcC5jICAgICAgICAgICAgICAgICAgICAgIHwgIDIgKy0KIGRyaXZlcnMvYmxvY2sveGVuLWJs
-a2Zyb250LmMgICAgICAgICAgICB8ICA2ICsrLS0tCiBkcml2ZXJzL2lucHV0L21pc2MveGVuLWti
-ZGZyb250LmMgICAgICAgfCAgNCArLS0KIGRyaXZlcnMvbmV0L3hlbi1uZXRiYWNrL25ldGJhY2su
-YyAgICAgICB8ICA0ICstLQogZHJpdmVycy9uZXQveGVuLW5ldGZyb250LmMgICAgICAgICAgICAg
-IHwgIDggKysrLS0tCiBkcml2ZXJzL3Njc2kveGVuLXNjc2lmcm9udC5jICAgICAgICAgICAgfCAg
-OCArKystLS0KIGRyaXZlcnMvdHR5L2h2Yy9odmNfeGVuLmMgICAgICAgICAgICAgICB8IDE4ICsr
-KysrKy0tLS0tLS0tCiBkcml2ZXJzL3ZpZGVvL2ZiZGV2L3hlbi1mYmZyb250LmMgICAgICAgfCAy
-MCArKysrKysrLS0tLS0tLS0KIGRyaXZlcnMveGVuL2JhbGxvb24uYyAgICAgICAgICAgICAgICAg
-ICB8ICAyICstCiBkcml2ZXJzL3hlbi9iaW9tZXJnZS5jICAgICAgICAgICAgICAgICAgfCAgNiAr
-Ky0tLQogZHJpdmVycy94ZW4vZXZlbnRzL2V2ZW50c19iYXNlLmMgICAgICAgIHwgIDIgKy0KIGRy
-aXZlcnMveGVuL2V2ZW50cy9ldmVudHNfZmlmby5jICAgICAgICB8ICA0ICstLQogZHJpdmVycy94
-ZW4vZ250YWxsb2MuYyAgICAgICAgICAgICAgICAgIHwgIDMgKystCiBkcml2ZXJzL3hlbi9tYW5h
-Z2UuYyAgICAgICAgICAgICAgICAgICAgfCAgMiArLQogZHJpdmVycy94ZW4vcHJpdmNtZC5jICAg
-ICAgICAgICAgICAgICAgIHwgNDQgKysrKysrKysrKysrKysrKy0tLS0tLS0tLS0tLS0tLS0tCiBk
-cml2ZXJzL3hlbi9zd2lvdGxiLXhlbi5jICAgICAgICAgICAgICAgfCAxNiArKysrKystLS0tLS0K
-IGRyaXZlcnMveGVuL3RtZW0uYyAgICAgICAgICAgICAgICAgICAgICB8IDIxICsrKysrKy0tLS0t
-LS0tLS0KIGRyaXZlcnMveGVuL3hlbmJ1cy94ZW5idXNfY2xpZW50LmMgICAgICB8ICAyICstCiBk
-cml2ZXJzL3hlbi94ZW5idXMveGVuYnVzX2Rldl9iYWNrZW5kLmMgfCAgMiArLQogZHJpdmVycy94
-ZW4veGVuYnVzL3hlbmJ1c19wcm9iZS5jICAgICAgIHwgIDggKysrLS0tCiBkcml2ZXJzL3hlbi94
-bGF0ZV9tbXUuYyAgICAgICAgICAgICAgICAgfCAxOCArKysrKysrLS0tLS0tLQogaW5jbHVkZS91
-YXBpL3hlbi9wcml2Y21kLmggICAgICAgICAgICAgIHwgIDQgKysrCiBpbmNsdWRlL3hlbi9wYWdl
-LmggICAgICAgICAgICAgICAgICAgICAgfCAgNCArLS0KIGluY2x1ZGUveGVuL3hlbi1vcHMuaCAg
-ICAgICAgICAgICAgICAgICB8IDEwICsrKystLS0tCiAyOSBmaWxlcyBjaGFuZ2VkLCAxODMgaW5z
-ZXJ0aW9ucygrKSwgMTcwIGRlbGV0aW9ucygtKQoKLS0gCjIuMS40CgoKX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KbGludXgtYXJtLWtlcm5lbCBtYWlsaW5n
-IGxpc3QKbGludXgtYXJtLWtlcm5lbEBsaXN0cy5pbmZyYWRlYWQub3JnCmh0dHA6Ly9saXN0cy5p
-bmZyYWRlYWQub3JnL21haWxtYW4vbGlzdGluZm8vbGludXgtYXJtLWtlcm5lbAo=
+The documentation for /proc/pid/status does not mention that the value of
+VmSwap counts only swapped out anonymous private pages and not shmem. This is
+not obvious, so document this limitation.
+
+Signed-off-by: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+---
+ Documentation/filesystems/proc.txt | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
+index d411ca6..29f4011 100644
+--- a/Documentation/filesystems/proc.txt
++++ b/Documentation/filesystems/proc.txt
+@@ -237,6 +237,8 @@ Table 1-2: Contents of the status files (as of 4.1)
+  VmPTE                       size of page table entries
+  VmPMD                       size of second level page tables
+  VmSwap                      size of swap usage (the number of referred swapents)
++                             by anonymous private data (shmem swap usage is not
++                             included)
+  Threads                     number of threads
+  SigQ                        number of signals queued/max. number for queue
+  SigPnd                      bitmap of pending signals for the thread
+-- 
+2.4.6
