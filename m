@@ -1,61 +1,41 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [PATCHv3 1/1] Documentation: describe how to add a system call
-Date: Wed, 5 Aug 2015 18:21:31 +0200
-Message-ID: <20150805162131.GB16341@amd>
-References: <1438353346-67177-1-git-send-email-drysdale@google.com>
- <1438353346-67177-2-git-send-email-drysdale@google.com>
+From: Cristina Opriceana <cristina.opriceana-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] iio: Documentation: Add trigger name attribute ABI
+ documentation
+Date: Wed, 5 Aug 2015 20:09:31 +0300
+Message-ID: <998736994e24f0bc3e7864b1e6b6e0de607c8447.1438793211.git.cristina.opriceana@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1438353346-67177-2-git-send-email-drysdale@google.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: David Drysdale <drysdale@google.com>
-Cc: linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, Shuah Khan <shuahkh@osg.samsung.com>, Jonathan Corbet <corbet@lwn.net>, Eric B Munson <emunson@akamai.com>, Randy Dunlap <rdunlap@infradead.org>, Cyril Hrubis <chrubis@suse.cz>, Josh Triplett <josh@joshtriplett.org>, Andrea Arcangeli <aarcange@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Andy Lutomirski <luto@amacapital.net>, Al Viro <viro@zeniv.linux.org.uk>, Rusty Russell <rusty@rustcorp.com.au>, Peter Zijlstra <peterz@infradead.org>, Vivek Goyal <vgoyal@redhat.com>, Alexei Starovoitov <ast@plumgrid.com>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+Cc: daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi!
+This patch adds an entry in the ABI Documentation for the
+name attribute issued when a trigger is created.
 
-> Add a document describing the process of adding a new system call,
-> including the need for a flags argument for future compatibility, and
-> covering 32-bit/64-bit concerns (albeit in an x86-centric way).
-> 
-> Signed-off-by: David Drysdale <drysdale@google.com>
-> Reviewed-by: Michael Kerrisk <mtk.manpages@gmail.com>
-> Reviewed-by: Eric B Munson <emunson@akamai.com>
-> Reviewed-by: Kees Cook <keescook@chromium.org>
-> Reviewed-by: Randy Dunlap <rdunlap@infradead.org>
-> ---
->  Documentation/adding-syscalls.txt | 531 ++++++++++++++++++++++++++++++++++++++
->  1 file changed, 531 insertions(+)
->  create mode 100644 Documentation/adding-syscalls.txt
+Signed-off-by: Cristina Opriceana <cristina.opriceana-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+---
+ Documentation/ABI/testing/sysfs-bus-iio-trigger-sysfs | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-We usually align documentation to less than 80 columns, afaict.
-
-> +call.  To make sure that userspace programs can safely use flags between kernel
-> +versions, check whether the flags value holds any unknown flags, and reject the
-> +sycall (with EINVAL) if it does:
-
-syscall?
-
-> +New system call proposals, like any change to the kernel's API, should always
-> +be cc'ed to linux-api@vger.kernel.org
-
-. at and of sentence?
-
-> +System Calls Returning Elsewhere
-> +--------------------------------
-> +
-> +For most system calls, once the system call is complete the user program
-> +continues exactly where it left off -- at the next instruction, with the same
-> +stack and registers as before the system call, and with the same virtual
-> +memory space.
-
-Umm. Normally we place return value in register. And I'm not sure.. do
-syscalls preserve registers that are normally caller-clobbered in the ABI?
-
-Thanks,
-									Pavel
+diff --git a/Documentation/ABI/testing/sysfs-bus-iio-trigger-sysfs b/Documentation/ABI/testing/sysfs-bus-iio-trigger-sysfs
+index 5235e6c..85c8e4d 100644
+--- a/Documentation/ABI/testing/sysfs-bus-iio-trigger-sysfs
++++ b/Documentation/ABI/testing/sysfs-bus-iio-trigger-sysfs
+@@ -9,3 +9,12 @@ Description:
+ 		automated testing or in situations, where other trigger methods
+ 		are not applicable. For example no RTC or spare GPIOs.
+ 		X is the IIO index of the trigger.
++
++What:		/sys/bus/iio/devices/triggerX/name
++KernelVersion:	2.6.39
++Contact:	linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
++Description:
++		The name attribute holds a description string for the current
++		trigger. A device should write this name string to
++		/sys/bus/iio/devices/iio:deviceX/trigger/current_trigger
++		in order to use this trigger.
 -- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+1.9.1
