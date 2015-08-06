@@ -1,25 +1,33 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: Persistent Reservation API
-Date: Thu, 6 Aug 2015 15:45:58 +0200
-Message-ID: <20150806134558.GD1646@lst.de>
-References: <1438672271-11309-1-git-send-email-hch@lst.de> <alpine.LNX.2.00.1508041742360.15930@localhost.lm.intel.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH V6 2/6] mm: mlock: Add new mlock system call
+Date: Thu, 6 Aug 2015 16:00:33 +0200
+Message-ID: <55C36881.8050301@suse.cz>
+References: <1438184575-10537-1-git-send-email-emunson@akamai.com>
+ <1438184575-10537-3-git-send-email-emunson@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LNX.2.00.1508041742360.15930@localhost.lm.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Keith Busch <keith.busch@intel.com>
-Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@fb.com>, linux-api@vger.kernel.org, dm-devel@redhat.com, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1438184575-10537-3-git-send-email-emunson@akamai.com>
+Sender: owner-linux-mm@kvack.org
+To: Eric B Munson <emunson@akamai.com>, Andrew Morton <akpm@linux-foundation.org>
+Cc: Michal Hocko <mhocko@suse.cz>, Heiko Carstens <heiko.carstens@de.ibm.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Catalin Marinas <catalin.marinas@arm.com>, Stephen Rothwell <sfr@canb.auug.org.au>, Guenter Roeck <linux@roeck-us.net>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, adi-buildroot-devel@lists.sourceforge.net, linux-cris-kernel@axis.com, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-am33-list@redhat.com, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 04, 2015 at 06:04:04PM +0000, Keith Busch wrote:
-> On Tue, 4 Aug 2015, Christoph Hellwig wrote:
->> NVMe support currently isn't included as I don't have a multihost
->> NVMe setup to test on, but if I can find a volunteer to test it I'm
->> happy to write the code for it.
+On 07/29/2015 05:42 PM, Eric B Munson wrote:
+> With the refactored mlock code, introduce a new system call for mlock.
+> The new call will allow the user to specify what lock states are being
+> added.  mlock2 is trivial at the moment, but a follow on patch will add
+> a new mlock state making it useful.
 >
-> Looks pretty good so far. I'd be happy to give try it out with NVMe
-> subsystems.
+> Signed-off-by: Eric B Munson <emunson@akamai.com>
+> Cc: Michal Hocko <mhocko@suse.cz>
+> Cc: Vlastimil Babka <vbabka@suse.cz>
 
-Thanks, I'll prepare a version once I get a few free minutes.
+Acked-by: Vlastimil Babka <vbabka@suse.cz>
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
