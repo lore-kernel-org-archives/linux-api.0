@@ -1,52 +1,74 @@
-From: Daniel Baluta <daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] iio: Documentation: Add trigger name attribute ABI documentation
-Date: Thu, 6 Aug 2015 10:33:11 +0300
-Message-ID: <CAEnQRZAKq-Fp8YcKT2z_ADrEjSs5zoh2qBvJ8jKbCZ5S6N2F6g@mail.gmail.com>
-References: <998736994e24f0bc3e7864b1e6b6e0de607c8447.1438793211.git.cristina.opriceana@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <998736994e24f0bc3e7864b1e6b6e0de607c8447.1438793211.git.cristina.opriceana-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Cristina Opriceana <cristina.opriceana-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Daniel Baluta <daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: Ming Lei <ming.lei@canonical.com>
+Subject: [PATCH v9 5/6] block: loop: introduce ioctl command of LOOP_SET_DIRECT_IO
+Date: Thu,  6 Aug 2015 04:42:17 -0400
+Message-ID: <1438850538-15682-6-git-send-email-ming.lei@canonical.com>
+References: <1438850538-15682-1-git-send-email-ming.lei@canonical.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1438850538-15682-1-git-send-email-ming.lei@canonical.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org, Dave Kleikamp <dave.kleikamp@oracle.com>
+Cc: Zach Brown <zab@zabbo.net>, Christoph Hellwig <hch@infradead.org>, Maxim Patlasov <mpatlasov@parallels.com>, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Tejun Heo <tj@kernel.org>, Dave Chinner <david@fromorbit.com>, Ming Lei <ming.lei@canonical.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-+ linux-iio.
+If loop block is mounted via 'mount -o loop', it isn't easy
+to pass file descriptor opened as O_DIRECT, so this patch
+introduces a new command to support direct IO for this case.
 
-On Wed, Aug 5, 2015 at 8:09 PM, Cristina Opriceana
-<cristina.opriceana-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> This patch adds an entry in the ABI Documentation for the
-> name attribute issued when a trigger is created.
->
-> Signed-off-by: Cristina Opriceana <cristina.opriceana-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> ---
->  Documentation/ABI/testing/sysfs-bus-iio-trigger-sysfs | 9 +++++++++
->  1 file changed, 9 insertions(+)
->
-> diff --git a/Documentation/ABI/testing/sysfs-bus-iio-trigger-sysfs b/Documentation/ABI/testing/sysfs-bus-iio-trigger-sysfs
-> index 5235e6c..85c8e4d 100644
-> --- a/Documentation/ABI/testing/sysfs-bus-iio-trigger-sysfs
-> +++ b/Documentation/ABI/testing/sysfs-bus-iio-trigger-sysfs
-> @@ -9,3 +9,12 @@ Description:
->                 automated testing or in situations, where other trigger methods
->                 are not applicable. For example no RTC or spare GPIOs.
->                 X is the IIO index of the trigger.
-> +
-> +What:          /sys/bus/iio/devices/triggerX/name
-> +KernelVersion: 2.6.39
-> +Contact:       linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> +Description:
-> +               The name attribute holds a description string for the current
-> +               trigger. A device should write this name string to
-> +               /sys/bus/iio/devices/iio:deviceX/trigger/current_trigger
-> +               in order to use this trigger.
+Cc: linux-api@vger.kernel.org
+Signed-off-by: Ming Lei <ming.lei@canonical.com>
+---
+ drivers/block/loop.c      | 19 +++++++++++++++++++
+ include/uapi/linux/loop.h |  1 +
+ 2 files changed, 20 insertions(+)
 
-Better, "In order to associate this trigger with an IIO device one
-should write this name string to /sys/bus/...".
-Also, please use iio:deviceY instead of iio:deviceX to make it clear
-that trigger and device indexes are not
-related.
-
-thanks,
-Daniel.
+diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+index a56f973..06a737b 100644
+--- a/drivers/block/loop.c
++++ b/drivers/block/loop.c
+@@ -1214,6 +1214,20 @@ static int loop_set_capacity(struct loop_device *lo, struct block_device *bdev)
+ 	return figure_loop_size(lo, lo->lo_offset, lo->lo_sizelimit);
+ }
+ 
++static int loop_set_dio(struct loop_device *lo, unsigned long arg)
++{
++	int error = -ENXIO;
++	if (lo->lo_state != Lo_bound)
++		goto out;
++
++	__loop_update_dio(lo, !!arg);
++	if (lo->use_dio == !!arg)
++		return 0;
++	error = -EINVAL;
++ out:
++	return error;
++}
++
+ static int lo_ioctl(struct block_device *bdev, fmode_t mode,
+ 	unsigned int cmd, unsigned long arg)
+ {
+@@ -1257,6 +1271,11 @@ static int lo_ioctl(struct block_device *bdev, fmode_t mode,
+ 		if ((mode & FMODE_WRITE) || capable(CAP_SYS_ADMIN))
+ 			err = loop_set_capacity(lo, bdev);
+ 		break;
++	case LOOP_SET_DIRECT_IO:
++		err = -EPERM;
++		if ((mode & FMODE_WRITE) || capable(CAP_SYS_ADMIN))
++			err = loop_set_dio(lo, arg);
++		break;
+ 	default:
+ 		err = lo->ioctl ? lo->ioctl(lo, cmd, arg) : -EINVAL;
+ 	}
+diff --git a/include/uapi/linux/loop.h b/include/uapi/linux/loop.h
+index 949851c..c8125ec 100644
+--- a/include/uapi/linux/loop.h
++++ b/include/uapi/linux/loop.h
+@@ -87,6 +87,7 @@ struct loop_info64 {
+ #define LOOP_GET_STATUS64	0x4C05
+ #define LOOP_CHANGE_FD		0x4C06
+ #define LOOP_SET_CAPACITY	0x4C07
++#define LOOP_SET_DIRECT_IO	0x4C08
+ 
+ /* /dev/loop-control interface */
+ #define LOOP_CTL_ADD		0x4C80
+-- 
+1.9.1
