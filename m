@@ -1,66 +1,34 @@
-From: Thierry Reding <thierry.reding@gmail.com>
-Subject: [PATCH 4/4] selftests: vm: Pick up sanitized kernel headers
-Date: Fri,  7 Aug 2015 15:44:15 +0200
-Message-ID: <1438955055-587-4-git-send-email-thierry.reding@gmail.com>
-References: <1438955055-587-1-git-send-email-thierry.reding@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1438955055-587-1-git-send-email-thierry.reding@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Shuah Khan <shuahkh@osg.samsung.com>, Andrew Morton <akpm@linux-foundation.org>
-Cc: Eric B Munson <emunson@akamai.com>, Andrea Arcangeli <aarcange@redhat.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Kevin Hilman <khilman@kernel.org>
+Subject: Re: [PATCH v9 0/9] Add simple NVMEM Framework via regmap.
+Date: Fri, 07 Aug 2015 09:13:35 -0700
+Message-ID: <7hwpx7vzyo.fsf@deeprootsystems.com>
+References: <1437995567-11203-1-git-send-email-srinivas.kandagatla@linaro.org>
+Mime-Version: 1.0
+Content-Type: text/plain
+Return-path: <linux-arm-msm-owner@vger.kernel.org>
+In-Reply-To: <1437995567-11203-1-git-send-email-srinivas.kandagatla@linaro.org>
+	(Srinivas Kandagatla's message of "Mon, 27 Jul 2015 12:12:47 +0100")
+Sender: linux-arm-msm-owner@vger.kernel.org
+To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Cc: linux-arm-kernel@lists.infradead.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rob Herring <robh+dt@kernel.org>, Mark Brown <broonie@kernel.org>, s.hauer@pengutronix.de, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org, pantelis.antoniou@konsulko.com, mporter@konsulko.com, stefan.wahren@i2se.com, wxt@rock-chips.com
 List-Id: linux-api@vger.kernel.org
 
-From: Thierry Reding <treding@nvidia.com>
+Srinivas Kandagatla <srinivas.kandagatla@linaro.org> writes:
 
-Add the usr/include subdirectory of the top-level tree to the include
-path, and make sure to include headers without relative paths to make
-sure the sanitized headers get picked up. Otherwise the compiler will
-not be able to find the linux/compiler.h header included by the non-
-sanitized include/uapi/linux/userfaultfd.h.
+> This patchset adds a new simple NVMEM framework to kernel, and it is tested
+> with various drivers like "QCOM thermal sensors", "QCOM cpr driver",
+> "begal bone cape manager" and few more on the way.
+>
+> Can you please consider this as 4.3 material, AFAIK there are more than 3 drivers
+> depending on this framework which are wating since last 2 merge windows.
+>
+> Should these patches go via ARM-SOC tree or via Greg's tree?
 
-While at it, make sure to only hardcode the syscall numbers on x86 and
-PowerPC if they haven't been properly picked up from the headers.
+With Greg's ack, we can take this through the arm-soc tree (unless Greg
+wants to queue it, which is fine also.)
 
-Signed-off-by: Thierry Reding <treding@nvidia.com>
----
- tools/testing/selftests/vm/Makefile      | 2 +-
- tools/testing/selftests/vm/userfaultfd.c | 4 +++-
- 2 files changed, 4 insertions(+), 2 deletions(-)
+Can you collect the final Tested-by's and prepare a pull request?
 
-diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selftests/vm/Makefile
-index bb888c651bf2..1dacac81bb68 100644
---- a/tools/testing/selftests/vm/Makefile
-+++ b/tools/testing/selftests/vm/Makefile
-@@ -1,6 +1,6 @@
- # Makefile for vm selftests
- 
--CFLAGS = -Wall
-+CFLAGS = -Wall -I ../../../../usr/include $(EXTRA_CFLAGS)
- BINARIES = compaction_test
- BINARIES += hugepage-mmap
- BINARIES += hugepage-shm
-diff --git a/tools/testing/selftests/vm/userfaultfd.c b/tools/testing/selftests/vm/userfaultfd.c
-index 76071b14cb93..2bf1fc3f562b 100644
---- a/tools/testing/selftests/vm/userfaultfd.c
-+++ b/tools/testing/selftests/vm/userfaultfd.c
-@@ -64,8 +64,9 @@
- #include <sys/syscall.h>
- #include <sys/ioctl.h>
- #include <pthread.h>
--#include "../../../../include/uapi/linux/userfaultfd.h"
-+#include <linux/userfaultfd.h>
- 
-+#ifndef __NR_userfaultfd
- #ifdef __x86_64__
- #define __NR_userfaultfd 323
- #elif defined(__i386__)
-@@ -75,6 +76,7 @@
- #else
- #error "missing __NR_userfaultfd definition"
- #endif
-+#endif
- 
- static unsigned long nr_cpus, nr_pages, nr_pages_per_cpu, page_size;
- 
--- 
-2.4.5
+Thanks,
+
+Kevin
