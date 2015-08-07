@@ -1,7 +1,7 @@
 From: Thierry Reding <thierry.reding@gmail.com>
-Subject: [PATCH 3/4] selftests: vm: Use the right arguments for main()
-Date: Fri,  7 Aug 2015 15:44:14 +0200
-Message-ID: <1438955055-587-3-git-send-email-thierry.reding@gmail.com>
+Subject: [PATCH 4/4] selftests: vm: Pick up sanitized kernel headers
+Date: Fri,  7 Aug 2015 15:44:15 +0200
+Message-ID: <1438955055-587-4-git-send-email-thierry.reding@gmail.com>
 References: <1438955055-587-1-git-send-email-thierry.reding@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1438955055-587-1-git-send-email-thierry.reding@gmail.com>
@@ -12,31 +12,55 @@ List-Id: linux-api@vger.kernel.org
 
 From: Thierry Reding <treding@nvidia.com>
 
-The prototype for the main() function is:
+Add the usr/include subdirectory of the top-level tree to the include
+path, and make sure to include headers without relative paths to make
+sure the sanitized headers get picked up. Otherwise the compiler will
+not be able to find the linux/compiler.h header included by the non-
+sanitized include/uapi/linux/userfaultfd.h.
 
-	int main(int argc, char **argv);
-
-but the mlock2-tests test program lists the arguments in the wrong
-order. It gets away with this because the arguments are never used. Fix
-it nevertheless to keep recent versions of GCC from complaining.
+While at it, make sure to only hardcode the syscall numbers on x86 and
+PowerPC if they haven't been properly picked up from the headers.
 
 Signed-off-by: Thierry Reding <treding@nvidia.com>
 ---
- tools/testing/selftests/vm/mlock2-tests.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ tools/testing/selftests/vm/Makefile      | 2 +-
+ tools/testing/selftests/vm/userfaultfd.c | 4 +++-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/tools/testing/selftests/vm/mlock2-tests.c b/tools/testing/selftests/vm/mlock2-tests.c
-index 2949fd949973..af4bc752797d 100644
---- a/tools/testing/selftests/vm/mlock2-tests.c
-+++ b/tools/testing/selftests/vm/mlock2-tests.c
-@@ -643,7 +643,7 @@ static int test_mlockall(int (test_function)(bool call_mlock))
- 	return ret;
- }
+diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selftests/vm/Makefile
+index bb888c651bf2..1dacac81bb68 100644
+--- a/tools/testing/selftests/vm/Makefile
++++ b/tools/testing/selftests/vm/Makefile
+@@ -1,6 +1,6 @@
+ # Makefile for vm selftests
  
--int main(char **argv, int argc)
-+int main(int argc, char **argv)
- {
- 	int ret = 0;
- 	ret += test_mlock_lock();
+-CFLAGS = -Wall
++CFLAGS = -Wall -I ../../../../usr/include $(EXTRA_CFLAGS)
+ BINARIES = compaction_test
+ BINARIES += hugepage-mmap
+ BINARIES += hugepage-shm
+diff --git a/tools/testing/selftests/vm/userfaultfd.c b/tools/testing/selftests/vm/userfaultfd.c
+index 76071b14cb93..2bf1fc3f562b 100644
+--- a/tools/testing/selftests/vm/userfaultfd.c
++++ b/tools/testing/selftests/vm/userfaultfd.c
+@@ -64,8 +64,9 @@
+ #include <sys/syscall.h>
+ #include <sys/ioctl.h>
+ #include <pthread.h>
+-#include "../../../../include/uapi/linux/userfaultfd.h"
++#include <linux/userfaultfd.h>
+ 
++#ifndef __NR_userfaultfd
+ #ifdef __x86_64__
+ #define __NR_userfaultfd 323
+ #elif defined(__i386__)
+@@ -75,6 +76,7 @@
+ #else
+ #error "missing __NR_userfaultfd definition"
+ #endif
++#endif
+ 
+ static unsigned long nr_cpus, nr_pages, nr_pages_per_cpu, page_size;
+ 
 -- 
 2.4.5
