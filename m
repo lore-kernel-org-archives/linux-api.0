@@ -1,101 +1,183 @@
-From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH V6 4/6] mm: mlock: Add mlock flags to enable
- VM_LOCKONFAULT usage
-Date: Fri, 7 Aug 2015 13:50:01 +0200
-Message-ID: <55C49B69.9050805@suse.cz>
+From: Thierry Reding <thierry.reding@gmail.com>
+Subject: Re: [PATCH V6 3/6] mm: Introduce VM_LOCKONFAULT
+Date: Fri, 7 Aug 2015 14:34:45 +0200
+Message-ID: <20150807123444.GA25792@ulmo>
 References: <1438184575-10537-1-git-send-email-emunson@akamai.com>
- <1438184575-10537-5-git-send-email-emunson@akamai.com>
+ <1438184575-10537-4-git-send-email-emunson@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1438184575-10537-5-git-send-email-emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, linux-alpha-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, linux-parisc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, sparclinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xtensa-PjhNF2WwrV/0Sa2dR60CXw@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+Content-Type: multipart/mixed; boundary="===============1398851848=="
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <1438184575-10537-4-git-send-email-emunson@akamai.com>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Eric B Munson <emunson@akamai.com>, Andrew Morton <akpm@linux-foundation.org>
+Cc: Andrea Arcangeli <aarcange@redhat.com>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, "Kirill A. Shutemov" <kirill@shutemov.name>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-On 07/29/2015 05:42 PM, Eric B Munson wrote:
-> The previous patch introduced a flag that specified pages in a VMA
-> should be placed on the unevictable LRU, but they should not be made
-> present when the area is created.  This patch adds the ability to set
-> this state via the new mlock system calls.
->
-> We add MLOCK_ONFAULT for mlock2 and MCL_ONFAULT for mlockall.
-> MLOCK_ONFAULT will set the VM_LOCKONFAULT modifier for VM_LOCKED.
-> MCL_ONFAULT should be used as a modifier to the two other mlockall
-> flags.  When used with MCL_CURRENT, all current mappings will be marked
-> with VM_LOCKED | VM_LOCKONFAULT.  When used with MCL_FUTURE, the
-> mm->def_flags will be marked with VM_LOCKED | VM_LOCKONFAULT.  When used
-> with both MCL_CURRENT and MCL_FUTURE, all current mappings and
-> mm->def_flags will be marked with VM_LOCKED | VM_LOCKONFAULT.
->
-> Prior to this patch, mlockall() will unconditionally clear the
-> mm->def_flags any time it is called without MCL_FUTURE.  This behavior
-> is maintained after adding MCL_ONFAULT.  If a call to
-> mlockall(MCL_FUTURE) is followed by mlockall(MCL_CURRENT), the
-> mm->def_flags will be cleared and new VMAs will be unlocked.  This
-> remains true with or without MCL_ONFAULT in either mlockall()
-> invocation.
->
-> munlock() will unconditionally clear both vma flags.  munlockall()
-> unconditionally clears for VMA flags on all VMAs and in the
-> mm->def_flags field.
->
-> Signed-off-by: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-> Cc: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
-> Cc: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
 
-The logic seems ok, although the fact that apply_mlockall_flags() is 
-shared by both mlockall and munlockall makes it even more subtle than 
-before :)
+--===============1398851848==
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="MGYHOYXEY6WxJCY8"
+Content-Disposition: inline
 
-Anyway, just some nitpicks below.
 
-Acked-by: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+--MGYHOYXEY6WxJCY8
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
+On Wed, Jul 29, 2015 at 11:42:52AM -0400, Eric B Munson wrote:
 [...]
+> diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
+> index ca1e091..38d69fc 100644
+> --- a/fs/proc/task_mmu.c
+> +++ b/fs/proc/task_mmu.c
+> @@ -579,6 +579,7 @@ static void show_smap_vma_flags(struct seq_file *m, s=
+truct vm_area_struct *vma)
+>  #ifdef CONFIG_X86_INTEL_MPX
+>  		[ilog2(VM_MPX)]		=3D "mp",
+>  #endif
+> +		[ilog2(VM_LOCKONFAULT)]	=3D "lf",
+>  		[ilog2(VM_LOCKED)]	=3D "lo",
+>  		[ilog2(VM_IO)]		=3D "io",
+>  		[ilog2(VM_SEQ_READ)]	=3D "sr",
+> diff --git a/include/linux/mm.h b/include/linux/mm.h
+> index 2e872f9..c2f3551 100644
+> --- a/include/linux/mm.h
+> +++ b/include/linux/mm.h
+> @@ -127,6 +127,7 @@ extern unsigned int kobjsize(const void *objp);
+>  #define VM_PFNMAP	0x00000400	/* Page-ranges managed without "struct page=
+", just pure PFN */
+>  #define VM_DENYWRITE	0x00000800	/* ETXTBSY on write attempts.. */
+> =20
+> +#define VM_LOCKONFAULT	0x00001000	/* Lock the pages covered when they ar=
+e faulted in */
+>  #define VM_LOCKED	0x00002000
+>  #define VM_IO           0x00004000	/* Memory mapped I/O or similar */
+> =20
 
-> +/*
-> + * Take the MCL_* flags passed into mlockall (or 0 if called from munlockall)
-> + * and translate into the appropriate modifications to mm->def_flags and/or the
-> + * flags for all current VMAs.
-> + *
-> + * There are a couple of sublties with this.  If mlockall() is called multiple
+This clashes with another change currently in linux-next:
 
-                             ^ typo
+	81d056997385 userfaultfd: add VM_UFFD_MISSING and VM_UFFD_WP
 
-> + * times with different flags, the values do not necessarily stack.  If mlockall
-> + * is called once including the MCL_FUTURE flag and then a second time without
-> + * it, VM_LOCKED and VM_LOCKONFAULT will be cleared from mm->def_flags.
-> + */
->   static int apply_mlockall_flags(int flags)
->   {
->   	struct vm_area_struct * vma, * prev = NULL;
-> +	vm_flags_t to_add = 0;
->
-> -	if (flags & MCL_FUTURE)
-> +	current->mm->def_flags &= ~(VM_LOCKED | VM_LOCKONFAULT);
-> +	if (flags & MCL_FUTURE) {
->   		current->mm->def_flags |= VM_LOCKED;
-> -	else
-> -		current->mm->def_flags &= ~VM_LOCKED;
->
-> -	if (flags == MCL_FUTURE)
-> -		goto out;
-> +		if (flags & MCL_ONFAULT)
-> +			current->mm->def_flags |= VM_LOCKONFAULT;
-> +
-> +		/*
-> +		 * When there were only two flags, we used to early out if only
-> +		 * MCL_FUTURE was set.  Now that we have MCL_ONFAULT, we can
-> +		 * only early out if MCL_FUTURE is set, but MCL_CURRENT is not.
+Adding Andrea for visibility.
 
-Describing the relation to history of individual code lines in such 
-detail is noise imho. The stacking subtleties is already described above.
+I noticed this because I was trying to make selftests/vm/mlock2-tests
+work to see if the new mlock2 syscall would work on ARM. It didn't, so I
+had to investigate and noticed that two symbolic names resolve to the
+same value, which results in the mnemonics table (first hunk above)
+overwriting the VM_LOCKONFAULT entry with the VM_UFFD_WP entry.
 
-> +		 * This is done, even though it promotes odd behavior, to
-> +		 * maintain behavior from older kernels
-> +		 */
-> +		if (!(flags & MCL_CURRENT))
-> +			goto out;
+I've applied the following patch locally to fix this up.
+
+Andrew, I think both of those patches came in via your tree, so perhaps
+the best thing would be to squash the below (provided everybody agrees
+that it's the right fix) into Eric's patch, adding the VM_LOCKONFAULT
+flag?
+
+Thierry
+
+---- >8 ----
+=46rom a0003ebfeb15f91094d17961633cabb4e1beed21 Mon Sep 17 00:00:00 2001
+=46rom: Thierry Reding <treding@nvidia.com>
+Date: Fri, 7 Aug 2015 14:23:42 +0200
+Subject: [PATCH] mm: Fix VM_LOCKONFAULT clash with VM_UFFD_WP
+
+Currently two patches in linux-next add new VM flags and unfortunately
+two flags end up using the same value. This results for example in the
+/proc/pid/smaps file not listing the VM_LOCKONFAULT flag, which breaks
+tools/testing/selftests/vm/mlock2-tests.
+
+Signed-off-by: Thierry Reding <treding@nvidia.com>
+---
+ fs/proc/task_mmu.c | 2 +-
+ include/linux/mm.h | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
+index bdd7e48a85f0..893e4b9bb2da 100644
+--- a/fs/proc/task_mmu.c
++++ b/fs/proc/task_mmu.c
+@@ -592,13 +592,13 @@ static void show_smap_vma_flags(struct seq_file *m, s=
+truct vm_area_struct *vma)
+ #ifdef CONFIG_X86_INTEL_MPX
+ 		[ilog2(VM_MPX)]		=3D "mp",
+ #endif
+-		[ilog2(VM_LOCKONFAULT)]	=3D "lf",
+ 		[ilog2(VM_LOCKED)]	=3D "lo",
+ 		[ilog2(VM_IO)]		=3D "io",
+ 		[ilog2(VM_SEQ_READ)]	=3D "sr",
+ 		[ilog2(VM_RAND_READ)]	=3D "rr",
+ 		[ilog2(VM_DONTCOPY)]	=3D "dc",
+ 		[ilog2(VM_DONTEXPAND)]	=3D "de",
++		[ilog2(VM_LOCKONFAULT)]	=3D "lf",
+ 		[ilog2(VM_ACCOUNT)]	=3D "ac",
+ 		[ilog2(VM_NORESERVE)]	=3D "nr",
+ 		[ilog2(VM_HUGETLB)]	=3D "ht",
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 363ea2cda35f..cb4e1737d669 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -129,7 +129,6 @@ extern unsigned int kobjsize(const void *objp);
+ #define VM_DENYWRITE	0x00000800	/* ETXTBSY on write attempts.. */
+ #define VM_UFFD_WP	0x00001000	/* wrprotect pages tracking */
+=20
+-#define VM_LOCKONFAULT	0x00001000	/* Lock the pages covered when they are =
+faulted in */
+ #define VM_LOCKED	0x00002000
+ #define VM_IO           0x00004000	/* Memory mapped I/O or similar */
+=20
+@@ -139,6 +138,7 @@ extern unsigned int kobjsize(const void *objp);
+=20
+ #define VM_DONTCOPY	0x00020000      /* Do not copy this vma on fork */
+ #define VM_DONTEXPAND	0x00040000	/* Cannot expand with mremap() */
++#define VM_LOCKONFAULT	0x00080000	/* Lock the pages covered when they are =
+faulted in */
+ #define VM_ACCOUNT	0x00100000	/* Is a VM accounted object */
+ #define VM_NORESERVE	0x00200000	/* should the VM suppress accounting */
+ #define VM_HUGETLB	0x00400000	/* Huge TLB Page VM */
+--=20
+2.4.5
+
+
+--MGYHOYXEY6WxJCY8
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIcBAABCAAGBQJVxKXiAAoJEN0jrNd/PrOhvCIP/1I80WiuuIpSZ5ifYvc661N2
+JBoZerfBRNdTjA4E7EAtMO2xvaJ1xvdEoIp5kyG7uDTzkJOWflvWdrtZnK56I7RQ
+pC8Ue9Iz2mr63fX5HEdYJTZ80IV9QQ8bPiHthxgzDfl4e24lRBSTbhdT9T9wzht7
+kLGmvX7RnlIkANSG02EHe37DrZCgHhQJqiiXHj7iGTKE59U/QrY8DMHLB22EhCRW
+5kBnDYI7iNzNwwX4J3Pcct6UaFPO+DiuPqpFw+g4Rpp4Wq+x1fkXHTSRSpMzw2kR
+cx3QGba+DA/fWszHkCLBRqQd6IaQmfZv/3nnOJiXgTGCF9CAxG5UwtV0RsaFhJpe
++fv3MtccTZ4fIBvzVdTZkOjGNfAazGHgi/Ms+De9nxICnBDiq3WLB+VTE3aZucnV
+db6gUncbghoWg5VUsoEsQY435pviaV3+CMkiUdLcv6xZWRAiWaQATCIVyVQze848
+jUVvjaqYcsq5pvNU2WAkwkm+GsX7Qsj7TFUStzrj0meNq3XsrpzRftP+615RY4U6
+voMDkLGExYRGWyLb8wuHpbu/P+QVvPcwwac+BUwc3U1GuzdB4cj3HZ/EL5FYoC/a
+ydu7mjhMz2f/TYmwPujk2DD2LaoPH4Q9JFMO4vcohyjdBSVHEGaM+Zlem2OTGlx2
+EWDdDt0AkdhuKFMuMZln
+=Aeys
+-----END PGP SIGNATURE-----
+
+--MGYHOYXEY6WxJCY8--
+
+--===============1398851848==
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: inline
+
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KZHJpLWRldmVs
+IG1haWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHA6Ly9saXN0
+cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9kcmktZGV2ZWwK
+
+--===============1398851848==--
