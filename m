@@ -1,135 +1,281 @@
 From: Eric B Munson <emunson@akamai.com>
-Subject: [PATCH v7 6/6] mips: Add entry for new mlock2 syscall
-Date: Sun,  9 Aug 2015 01:22:56 -0400
-Message-ID: <1439097776-27695-7-git-send-email-emunson@akamai.com>
+Subject: [PATCH v7 3/6] mm: Introduce VM_LOCKONFAULT
+Date: Sun,  9 Aug 2015 01:22:53 -0400
+Message-ID: <1439097776-27695-4-git-send-email-emunson@akamai.com>
 References: <1439097776-27695-1-git-send-email-emunson@akamai.com>
-Return-path: <linux-arch-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1439097776-27695-1-git-send-email-emunson@akamai.com>
-Sender: linux-arch-owner@vger.kernel.org
+Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Eric B Munson <emunson@akamai.com>, Ralf Baechle <ralf@linux-mips.org>, linux-mips@linux-mips.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org
+Cc: Eric B Munson <emunson@akamai.com>, Michal Hocko <mhocko@suse.cz>, Vlastimil Babka <vbabka@suse.cz>, Jonathan Corbet <corbet@lwn.net>, "Kirill A. Shutemov" <kirill@shutemov.name>, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-A previous commit introduced the new mlock2 syscall, add entries for the
-MIPS architecture.
+The cost of faulting in all memory to be locked can be very high when
+working with large mappings.  If only portions of the mapping will be
+used this can incur a high penalty for locking.
+
+For the example of a large file, this is the usage pattern for a large
+statical language model (probably applies to other statical or graphical
+models as well).  For the security example, any application transacting
+in data that cannot be swapped out (credit card data, medical records,
+etc).
+
+This patch introduces the ability to request that pages are not
+pre-faulted, but are placed on the unevictable LRU when they are finally
+faulted in.  The VM_LOCKONFAULT flag will be used together with
+VM_LOCKED and has no effect when set without VM_LOCKED.  Setting the
+VM_LOCKONFAULT flag for a VMA will cause pages faulted into that VMA to
+be added to the unevictable LRU when they are faulted or if they are
+already present, but will not cause any missing pages to be faulted in.
+
+Exposing this new lock state means that we cannot overload the meaning
+of the FOLL_POPULATE flag any longer.  Prior to this patch it was used
+to mean that the VMA for a fault was locked.  This means we need the
+new FOLL_MLOCK flag to communicate the locked state of a VMA.
+FOLL_POPULATE will now only control if the VMA should be populated and
+in the case of VM_LOCKONFAULT, it will not be set.
 
 Signed-off-by: Eric B Munson <emunson@akamai.com>
-Acked-by: Ralf Baechle <ralf@linux-mips.org>
-Cc: Ralf Baechle <ralf@linux-mips.org>
-Cc: linux-mips@linux-mips.org
-Cc: linux-api@vger.kernel.org
-Cc: linux-arch@vger.kernel.org
-Cc: linux-mm@kvack.org
+Acked-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+Cc: Michal Hocko <mhocko@suse.cz>
+Cc: Vlastimil Babka <vbabka@suse.cz>
+Cc: Jonathan Corbet <corbet@lwn.net>
+Cc: "Kirill A. Shutemov" <kirill@shutemov.name>
 Cc: linux-kernel@vger.kernel.org
+Cc: dri-devel@lists.freedesktop.org
+Cc: linux-mm@kvack.org
+Cc: linux-api@vger.kernel.org
 ---
- arch/mips/include/uapi/asm/unistd.h | 15 +++++++++------
- arch/mips/kernel/scall32-o32.S      |  1 +
- arch/mips/kernel/scall64-64.S       |  1 +
- arch/mips/kernel/scall64-n32.S      |  1 +
- arch/mips/kernel/scall64-o32.S      |  1 +
- 5 files changed, 13 insertions(+), 6 deletions(-)
+ Documentation/filesystems/proc.txt |  1 +
+ drivers/gpu/drm/drm_vm.c           |  8 +++++++-
+ fs/proc/task_mmu.c                 |  1 +
+ include/linux/mm.h                 |  2 ++
+ kernel/fork.c                      |  2 +-
+ mm/debug.c                         |  1 +
+ mm/gup.c                           | 10 ++++++++--
+ mm/huge_memory.c                   |  2 +-
+ mm/hugetlb.c                       |  4 ++--
+ mm/mlock.c                         |  2 +-
+ mm/mmap.c                          |  2 +-
+ mm/rmap.c                          |  6 ++++--
+ 12 files changed, 30 insertions(+), 11 deletions(-)
 
-diff --git a/arch/mips/include/uapi/asm/unistd.h b/arch/mips/include/uapi/asm/unistd.h
-index c03088f..d0bdfaa 100644
---- a/arch/mips/include/uapi/asm/unistd.h
-+++ b/arch/mips/include/uapi/asm/unistd.h
-@@ -377,16 +377,17 @@
- #define __NR_memfd_create		(__NR_Linux + 354)
- #define __NR_bpf			(__NR_Linux + 355)
- #define __NR_execveat			(__NR_Linux + 356)
-+#define __NR_mlock2			(__NR_Linux + 357)
+diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
+index 6f7fafd..ed21989 100644
+--- a/Documentation/filesystems/proc.txt
++++ b/Documentation/filesystems/proc.txt
+@@ -463,6 +463,7 @@ manner. The codes are the following:
+     rr  - random read advise provided
+     dc  - do not copy area on fork
+     de  - do not expand area on remapping
++    lf  - mark area to lock pages when faulted in, do not pre-populate
+     ac  - area is accountable
+     nr  - swap space is not reserved for the area
+     ht  - area uses huge tlb pages
+diff --git a/drivers/gpu/drm/drm_vm.c b/drivers/gpu/drm/drm_vm.c
+index aab49ee..103a5f6 100644
+--- a/drivers/gpu/drm/drm_vm.c
++++ b/drivers/gpu/drm/drm_vm.c
+@@ -699,9 +699,15 @@ int drm_vma_info(struct seq_file *m, void *data)
+ 		   (void *)(unsigned long)virt_to_phys(high_memory));
  
- /*
-  * Offset of the last Linux o32 flavoured syscall
-  */
--#define __NR_Linux_syscalls		356
-+#define __NR_Linux_syscalls		357
+ 	list_for_each_entry(pt, &dev->vmalist, head) {
++		char lock_flag = '-';
++
+ 		vma = pt->vma;
+ 		if (!vma)
+ 			continue;
++		if (vma->vm_flags & VM_LOCKONFAULT)
++			lock_flag = 'f';
++		else if (vma->vm_flags & VM_LOCKED)
++			lock_flag = 'l';
+ 		seq_printf(m,
+ 			   "\n%5d 0x%pK-0x%pK %c%c%c%c%c%c 0x%08lx000",
+ 			   pt->pid,
+@@ -710,7 +716,7 @@ int drm_vma_info(struct seq_file *m, void *data)
+ 			   vma->vm_flags & VM_WRITE ? 'w' : '-',
+ 			   vma->vm_flags & VM_EXEC ? 'x' : '-',
+ 			   vma->vm_flags & VM_MAYSHARE ? 's' : 'p',
+-			   vma->vm_flags & VM_LOCKED ? 'l' : '-',
++			   lock_flag,
+ 			   vma->vm_flags & VM_IO ? 'i' : '-',
+ 			   vma->vm_pgoff);
  
- #endif /* _MIPS_SIM == _MIPS_SIM_ABI32 */
+diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
+index ca1e091..8dcc297 100644
+--- a/fs/proc/task_mmu.c
++++ b/fs/proc/task_mmu.c
+@@ -585,6 +585,7 @@ static void show_smap_vma_flags(struct seq_file *m, struct vm_area_struct *vma)
+ 		[ilog2(VM_RAND_READ)]	= "rr",
+ 		[ilog2(VM_DONTCOPY)]	= "dc",
+ 		[ilog2(VM_DONTEXPAND)]	= "de",
++		[ilog2(VM_LOCKONFAULT)]	= "lf",
+ 		[ilog2(VM_ACCOUNT)]	= "ac",
+ 		[ilog2(VM_NORESERVE)]	= "nr",
+ 		[ilog2(VM_HUGETLB)]	= "ht",
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 2e872f9..d6e1637 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -136,6 +136,7 @@ extern unsigned int kobjsize(const void *objp);
  
- #define __NR_O32_Linux			4000
--#define __NR_O32_Linux_syscalls		356
-+#define __NR_O32_Linux_syscalls		357
+ #define VM_DONTCOPY	0x00020000      /* Do not copy this vma on fork */
+ #define VM_DONTEXPAND	0x00040000	/* Cannot expand with mremap() */
++#define VM_LOCKONFAULT	0x00080000	/* Lock the pages covered when they are faulted in */
+ #define VM_ACCOUNT	0x00100000	/* Is a VM accounted object */
+ #define VM_NORESERVE	0x00200000	/* should the VM suppress accounting */
+ #define VM_HUGETLB	0x00400000	/* Huge TLB Page VM */
+@@ -2043,6 +2044,7 @@ static inline struct page *follow_page(struct vm_area_struct *vma,
+ #define FOLL_NUMA	0x200	/* force NUMA hinting page fault */
+ #define FOLL_MIGRATION	0x400	/* wait for page to replace migration entry */
+ #define FOLL_TRIED	0x800	/* a retry, previous pass started an IO */
++#define FOLL_MLOCK	0x1000	/* lock present pages */
  
- #if _MIPS_SIM == _MIPS_SIM_ABI64
+ typedef int (*pte_fn_t)(pte_t *pte, pgtable_t token, unsigned long addr,
+ 			void *data);
+diff --git a/kernel/fork.c b/kernel/fork.c
+index dbd9b8d..a949228 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -454,7 +454,7 @@ static int dup_mmap(struct mm_struct *mm, struct mm_struct *oldmm)
+ 		tmp->vm_mm = mm;
+ 		if (anon_vma_fork(tmp, mpnt))
+ 			goto fail_nomem_anon_vma_fork;
+-		tmp->vm_flags &= ~VM_LOCKED;
++		tmp->vm_flags &= ~(VM_LOCKED | VM_LOCKONFAULT);
+ 		tmp->vm_next = tmp->vm_prev = NULL;
+ 		file = tmp->vm_file;
+ 		if (file) {
+diff --git a/mm/debug.c b/mm/debug.c
+index 76089dd..25176bb 100644
+--- a/mm/debug.c
++++ b/mm/debug.c
+@@ -121,6 +121,7 @@ static const struct trace_print_flags vmaflags_names[] = {
+ 	{VM_GROWSDOWN,			"growsdown"	},
+ 	{VM_PFNMAP,			"pfnmap"	},
+ 	{VM_DENYWRITE,			"denywrite"	},
++	{VM_LOCKONFAULT,		"lockonfault"	},
+ 	{VM_LOCKED,			"locked"	},
+ 	{VM_IO,				"io"		},
+ 	{VM_SEQ_READ,			"seqread"	},
+diff --git a/mm/gup.c b/mm/gup.c
+index 6297f6b..dce6ccd 100644
+--- a/mm/gup.c
++++ b/mm/gup.c
+@@ -92,7 +92,7 @@ retry:
+ 		 */
+ 		mark_page_accessed(page);
+ 	}
+-	if ((flags & FOLL_POPULATE) && (vma->vm_flags & VM_LOCKED)) {
++	if ((flags & FOLL_MLOCK) && (vma->vm_flags & VM_LOCKED)) {
+ 		/*
+ 		 * The preliminary mapping check is mainly to avoid the
+ 		 * pointless overhead of lock_page on the ZERO_PAGE
+@@ -265,6 +265,9 @@ static int faultin_page(struct task_struct *tsk, struct vm_area_struct *vma,
+ 	unsigned int fault_flags = 0;
+ 	int ret;
  
-@@ -711,16 +712,17 @@
- #define __NR_memfd_create		(__NR_Linux + 314)
- #define __NR_bpf			(__NR_Linux + 315)
- #define __NR_execveat			(__NR_Linux + 316)
-+#define __NR_mlock2			(__NR_Linux + 317)
++	/* mlock all present pages, but do not fault in new pages */
++	if ((*flags & (FOLL_POPULATE | FOLL_MLOCK)) == FOLL_MLOCK)
++		return -ENOENT;
+ 	/* For mm_populate(), just skip the stack guard page. */
+ 	if ((*flags & FOLL_POPULATE) &&
+ 			(stack_guard_page_start(vma, address) ||
+@@ -850,7 +853,10 @@ long populate_vma_page_range(struct vm_area_struct *vma,
+ 	VM_BUG_ON_VMA(end   > vma->vm_end, vma);
+ 	VM_BUG_ON_MM(!rwsem_is_locked(&mm->mmap_sem), mm);
  
- /*
-  * Offset of the last Linux 64-bit flavoured syscall
-  */
--#define __NR_Linux_syscalls		316
-+#define __NR_Linux_syscalls		317
+-	gup_flags = FOLL_TOUCH | FOLL_POPULATE;
++	gup_flags = FOLL_TOUCH | FOLL_POPULATE | FOLL_MLOCK;
++	if (vma->vm_flags & VM_LOCKONFAULT)
++		gup_flags &= ~FOLL_POPULATE;
++
+ 	/*
+ 	 * We want to touch writable mappings with a write fault in order
+ 	 * to break COW, except for shared mappings because these don't COW
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index 097c7a4..cba783e 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -1238,7 +1238,7 @@ struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
+ 					  pmd, _pmd,  1))
+ 			update_mmu_cache_pmd(vma, addr, pmd);
+ 	}
+-	if ((flags & FOLL_POPULATE) && (vma->vm_flags & VM_LOCKED)) {
++	if ((flags & FOLL_MLOCK) && (vma->vm_flags & VM_LOCKED)) {
+ 		if (page->mapping && trylock_page(page)) {
+ 			lru_add_drain();
+ 			if (page->mapping)
+diff --git a/mm/hugetlb.c b/mm/hugetlb.c
+index a8c3087..4ed9e93 100644
+--- a/mm/hugetlb.c
++++ b/mm/hugetlb.c
+@@ -3764,8 +3764,8 @@ static unsigned long page_table_shareable(struct vm_area_struct *svma,
+ 	unsigned long s_end = sbase + PUD_SIZE;
  
- #endif /* _MIPS_SIM == _MIPS_SIM_ABI64 */
+ 	/* Allow segments to share if only one is marked locked */
+-	unsigned long vm_flags = vma->vm_flags & ~VM_LOCKED;
+-	unsigned long svm_flags = svma->vm_flags & ~VM_LOCKED;
++	unsigned long vm_flags = vma->vm_flags & ~(VM_LOCKED|VM_LOCKONFAULT);
++	unsigned long svm_flags = svma->vm_flags & ~(VM_LOCKED|VM_LOCKONFAULT);
  
- #define __NR_64_Linux			5000
--#define __NR_64_Linux_syscalls		316
-+#define __NR_64_Linux_syscalls		317
+ 	/*
+ 	 * match the virtual addresses, permission and the alignment of the
+diff --git a/mm/mlock.c b/mm/mlock.c
+index 3094f27..029a75b 100644
+--- a/mm/mlock.c
++++ b/mm/mlock.c
+@@ -422,7 +422,7 @@ static unsigned long __munlock_pagevec_fill(struct pagevec *pvec,
+ void munlock_vma_pages_range(struct vm_area_struct *vma,
+ 			     unsigned long start, unsigned long end)
+ {
+-	vma->vm_flags &= ~VM_LOCKED;
++	vma->vm_flags &= ~(VM_LOCKED | VM_LOCKONFAULT);
  
- #if _MIPS_SIM == _MIPS_SIM_NABI32
+ 	while (start < end) {
+ 		struct page *page = NULL;
+diff --git a/mm/mmap.c b/mm/mmap.c
+index aa632ad..bdbefc3 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1651,7 +1651,7 @@ out:
+ 					vma == get_gate_vma(current->mm)))
+ 			mm->locked_vm += (len >> PAGE_SHIFT);
+ 		else
+-			vma->vm_flags &= ~VM_LOCKED;
++			vma->vm_flags &= ~(VM_LOCKED | VM_LOCKONFAULT);
+ 	}
  
-@@ -1049,15 +1051,16 @@
- #define __NR_memfd_create		(__NR_Linux + 318)
- #define __NR_bpf			(__NR_Linux + 319)
- #define __NR_execveat			(__NR_Linux + 320)
-+#define __NR_mlock2			(__NR_Linux + 321)
+ 	if (file)
+diff --git a/mm/rmap.c b/mm/rmap.c
+index 171b687..14ce002 100644
+--- a/mm/rmap.c
++++ b/mm/rmap.c
+@@ -744,7 +744,8 @@ static int page_referenced_one(struct page *page, struct vm_area_struct *vma,
  
- /*
-  * Offset of the last N32 flavoured syscall
-  */
--#define __NR_Linux_syscalls		320
-+#define __NR_Linux_syscalls		321
+ 		if (vma->vm_flags & VM_LOCKED) {
+ 			spin_unlock(ptl);
+-			pra->vm_flags |= VM_LOCKED;
++			pra->vm_flags |=
++				(vma->vm_flags & (VM_LOCKED | VM_LOCKONFAULT));
+ 			return SWAP_FAIL; /* To break the loop */
+ 		}
  
- #endif /* _MIPS_SIM == _MIPS_SIM_NABI32 */
+@@ -765,7 +766,8 @@ static int page_referenced_one(struct page *page, struct vm_area_struct *vma,
  
- #define __NR_N32_Linux			6000
--#define __NR_N32_Linux_syscalls		320
-+#define __NR_N32_Linux_syscalls		321
+ 		if (vma->vm_flags & VM_LOCKED) {
+ 			pte_unmap_unlock(pte, ptl);
+-			pra->vm_flags |= VM_LOCKED;
++			pra->vm_flags |=
++				(vma->vm_flags & (VM_LOCKED | VM_LOCKONFAULT));
+ 			return SWAP_FAIL; /* To break the loop */
+ 		}
  
- #endif /* _UAPI_ASM_UNISTD_H */
-diff --git a/arch/mips/kernel/scall32-o32.S b/arch/mips/kernel/scall32-o32.S
-index 4cc1350..b0b377a 100644
---- a/arch/mips/kernel/scall32-o32.S
-+++ b/arch/mips/kernel/scall32-o32.S
-@@ -599,3 +599,4 @@ EXPORT(sys_call_table)
- 	PTR	sys_memfd_create
- 	PTR	sys_bpf				/* 4355 */
- 	PTR	sys_execveat
-+	PTR	sys_mlock2
-diff --git a/arch/mips/kernel/scall64-64.S b/arch/mips/kernel/scall64-64.S
-index ad4d4463..97aaf51 100644
---- a/arch/mips/kernel/scall64-64.S
-+++ b/arch/mips/kernel/scall64-64.S
-@@ -436,4 +436,5 @@ EXPORT(sys_call_table)
- 	PTR	sys_memfd_create
- 	PTR	sys_bpf				/* 5315 */
- 	PTR	sys_execveat
-+	PTR	sys_mlock2
- 	.size	sys_call_table,.-sys_call_table
-diff --git a/arch/mips/kernel/scall64-n32.S b/arch/mips/kernel/scall64-n32.S
-index 446cc65..e36f21e 100644
---- a/arch/mips/kernel/scall64-n32.S
-+++ b/arch/mips/kernel/scall64-n32.S
-@@ -429,4 +429,5 @@ EXPORT(sysn32_call_table)
- 	PTR	sys_memfd_create
- 	PTR	sys_bpf
- 	PTR	compat_sys_execveat		/* 6320 */
-+	PTR	sys_mlock2
- 	.size	sysn32_call_table,.-sysn32_call_table
-diff --git a/arch/mips/kernel/scall64-o32.S b/arch/mips/kernel/scall64-o32.S
-index f543ff4..7a8b2df 100644
---- a/arch/mips/kernel/scall64-o32.S
-+++ b/arch/mips/kernel/scall64-o32.S
-@@ -584,4 +584,5 @@ EXPORT(sys32_call_table)
- 	PTR	sys_memfd_create
- 	PTR	sys_bpf				/* 4355 */
- 	PTR	compat_sys_execveat
-+	PTR	sys_mlock2
- 	.size	sys32_call_table,.-sys32_call_table
 -- 
 1.9.1
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
