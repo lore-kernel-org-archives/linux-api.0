@@ -1,290 +1,78 @@
-From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 2/4] mm/compaction: enable mobile-page migration
-Date: Mon, 10 Aug 2015 16:19:00 +0900
-Message-ID: <20150810071900.GA5073@bgram>
-References: <1436776519-17337-1-git-send-email-gioh.kim@lge.com>
- <1436776519-17337-3-git-send-email-gioh.kim@lge.com>
- <20150731104309.GA22158@bbox>
+From: David Drysdale <drysdale@google.com>
+Subject: Re: [PATCHv3 1/1] Documentation: describe how to add a system call
+Date: Mon, 10 Aug 2015 08:43:21 +0100
+Message-ID: <CAHse=S_JkMZsXZxK-gWHKTxy8d+YsrO3Ehm0v27GADoV+3JHwA@mail.gmail.com>
+References: <1438353346-67177-1-git-send-email-drysdale@google.com>
+ <1438353346-67177-2-git-send-email-drysdale@google.com> <20150805162131.GB16341@amd>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150731104309.GA22158@bbox>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Gioh Kim <gioh.kim-Hm3cg6mZ9cc@public.gmane.org>
-Cc: jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, vbabka-AlSwsSmVLrQ@public.gmane.org, iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, aquini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Gioh Kim <gurugio-A7HHaXTFBl7R7s880joybQ@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150805162131.GB16341@amd>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Pavel Machek <pavel@ucw.cz>
+Cc: Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, Shuah Khan <shuahkh@osg.samsung.com>, Jonathan Corbet <corbet@lwn.net>, Eric B Munson <emunson@akamai.com>, Randy Dunlap <rdunlap@infradead.org>, Cyril Hrubis <chrubis@suse.cz>, Josh Triplett <josh@joshtriplett.org>, Andrea Arcangeli <aarcange@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Andy Lutomirski <luto@amacapital.net>, Al Viro <viro@zeniv.linux.org.uk>, Rusty Russell <rusty@rustcorp.com.au>, Peter Zijlstra <peterz@infradead.org>, Vivek Goyal <vgoyal@redhat.com>, Alexei Starovoitov <ast@plumgrid.com>, Davi
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 31, 2015 at 07:43:09PM +0900, Minchan Kim wrote:
-> Hi Gioh,
-> 
-> On Mon, Jul 13, 2015 at 05:35:17PM +0900, Gioh Kim wrote:
-> > From: Gioh Kim <gurugio-A7HHaXTFBl7R7s880joybQ@public.gmane.org>
-> > 
-> > Add framework to register callback functions and check page mobility.
-> > There are some modes for page isolation so that isolate interface
-> > has arguments of page address and isolation mode while putback
-> > interface has only page address as argument.
-> > 
-> > Signed-off-by: Gioh Kim <gioh.kim-Hm3cg6mZ9cc@public.gmane.org>
-> > Acked-by: Rafael Aquini <aquini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> > ---
-> >  fs/proc/page.c                         |  3 ++
-> >  include/linux/compaction.h             | 80 ++++++++++++++++++++++++++++++++++
-> >  include/linux/fs.h                     |  2 +
-> >  include/linux/page-flags.h             | 19 ++++++++
-> >  include/uapi/linux/kernel-page-flags.h |  1 +
-> >  5 files changed, 105 insertions(+)
-> > 
-> > diff --git a/fs/proc/page.c b/fs/proc/page.c
-> > index 7eee2d8..a4f5a00 100644
-> > --- a/fs/proc/page.c
-> > +++ b/fs/proc/page.c
-> > @@ -146,6 +146,9 @@ u64 stable_page_flags(struct page *page)
-> >  	if (PageBalloon(page))
-> >  		u |= 1 << KPF_BALLOON;
-> >  
-> > +	if (PageMobile(page))
-> > +		u |= 1 << KPF_MOBILE;
-> > +
-> 
-> Need a new page flag for non-LRU page migration?
-> I am worry that we don't have empty slot for page flag on 32-bit.
-> 
-> Aha, see SetPageMobile below. You use _mapcount.
-> It seems to be work for non-LRU pages but unfortunately, zsmalloc
-> already have used that field as own purpose so there is no room
-> for it.
+On Wed, Aug 5, 2015 at 5:21 PM, Pavel Machek <pavel@ucw.cz> wrote:
+> Hi!
+>
+>> Add a document describing the process of adding a new system call,
+>> including the need for a flags argument for future compatibility, and
+>> covering 32-bit/64-bit concerns (albeit in an x86-centric way).
+>>
+>> Signed-off-by: David Drysdale <drysdale@google.com>
+>> Reviewed-by: Michael Kerrisk <mtk.manpages@gmail.com>
+>> Reviewed-by: Eric B Munson <emunson@akamai.com>
+>> Reviewed-by: Kees Cook <keescook@chromium.org>
+>> Reviewed-by: Randy Dunlap <rdunlap@infradead.org>
+>> ---
+>>  Documentation/adding-syscalls.txt | 531 ++++++++++++++++++++++++++++++++++++++
+>>  1 file changed, 531 insertions(+)
+>>  create mode 100644 Documentation/adding-syscalls.txt
+>
+> We usually align documentation to less than 80 columns, afaict.
 
-Gioh, I just sent a patch which zsmalloc doesn't use page->mapping
-and _mapcount so I think zsmalloc could support compaction with your
-patchset. Although zsmalloc can support compaction with it, I still
-don't think it's a good that driver have to mark pages mobile via
-_mapcount.
+Ah, a few re-worded paragraphs crept over the limit.  Reflowed.
 
-I hope you can find another way.
+>> +call.  To make sure that userspace programs can safely use flags between kernel
+>> +versions, check whether the flags value holds any unknown flags, and reject the
+>> +sycall (with EINVAL) if it does:
+>
+> syscall?
 
-Thanks.
+Fixed, thanks.
 
-> 
-> 
-> >  	u |= kpf_copy_bit(k, KPF_LOCKED,	PG_locked);
-> >  
-> >  	u |= kpf_copy_bit(k, KPF_SLAB,		PG_slab);
-> > diff --git a/include/linux/compaction.h b/include/linux/compaction.h
-> > index aa8f61c..f693072 100644
-> > --- a/include/linux/compaction.h
-> > +++ b/include/linux/compaction.h
-> > @@ -1,6 +1,9 @@
-> >  #ifndef _LINUX_COMPACTION_H
-> >  #define _LINUX_COMPACTION_H
-> >  
-> > +#include <linux/page-flags.h>
-> > +#include <linux/pagemap.h>
-> > +
-> >  /* Return values for compact_zone() and try_to_compact_pages() */
-> >  /* compaction didn't start as it was deferred due to past failures */
-> >  #define COMPACT_DEFERRED	0
-> > @@ -51,6 +54,70 @@ extern void compaction_defer_reset(struct zone *zone, int order,
-> >  				bool alloc_success);
-> >  extern bool compaction_restarting(struct zone *zone, int order);
-> >  
-> > +static inline bool mobile_page(struct page *page)
-> > +{
-> > +	return page->mapping &&	(PageMobile(page) || PageBalloon(page));
-> 
-> 
-> What's the locking rule to test mobile_page?
-> Why we need such many checking?
-> 
-> Why we need PageBalloon check?
-> You are trying to make generic abstraction for non-LRU page to migrate
-> but PageBalloon check in here breaks your goal.
-> 
-> > +}
-> > +
-> > +static inline bool isolate_mobilepage(struct page *page, isolate_mode_t mode)
-> > +{
-> > +	bool ret = false;
-> > +
-> > +	/*
-> > +	 * Avoid burning cycles with pages that are yet under __free_pages(),
-> > +	 * or just got freed under us.
-> > +	 *
-> > +	 * In case we 'win' a race for a mobile page being freed under us and
-> > +	 * raise its refcount preventing __free_pages() from doing its job
-> > +	 * the put_page() at the end of this block will take care of
-> > +	 * release this page, thus avoiding a nasty leakage.
-> > +	 */
-> 
-> Good.
-> 
-> > +	if (unlikely(!get_page_unless_zero(page)))
-> > +		goto out;
-> > +
-> > +	/*
-> > +	 * As mobile pages are not isolated from LRU lists, concurrent
-> > +	 * compaction threads can race against page migration functions
-> > +	 * as well as race against the releasing a page.
-> 
-> How can it race with releasing a page?
-> We already get refcount above.
-> 
-> Do you mean page->mapping tearing race?
-> If so, zsmalloc should be chaned to hold a lock.
-> 
-> 
-> > +	 *
-> > +	 * In order to avoid having an already isolated mobile page
-> > +	 * being (wrongly) re-isolated while it is under migration,
-> > +	 * or to avoid attempting to isolate pages being released,
-> > +	 * lets be sure we have the page lock
-> > +	 * before proceeding with the mobile page isolation steps.
-> > +	 */
-> > +	if (unlikely(!trylock_page(page)))
-> > +		goto out_putpage;
-> > +
-> > +	if (!(mobile_page(page) && page->mapping->a_ops->isolatepage))
-> > +		goto out_not_isolated;
-> 
-> I cannot know how isolate_mobilepage is called by upper layer
-> because this patch doesn't include it.
-> Anyway, why we need such many checks to prove it's mobile page?
-> 
-> mobile_page() {
-> 	page->mapping && (PageMobile(page) || PageBalloon(page));
-> }
-> 
-> Additionally, added page->mapping->a_ops->isolatepage check
-> 
-> Is it possible that a non-LRU page's address space provides
-> only page->maping->migratepage without isolate/putback?
-> 
-> Couldn't we make it simple like this?
-> 
->         page->mapping && page->mapping->migratepage
-> 
-> So, couldn't we make mobile_page like this
-> 
-> PageMobile(struct page *page)
-> {
->         VM_BUG_ON_PAGE(!PageLocked(page), page);
->         VM_BUG_ON_PAGE(PageLRU(page), page);
-> 
->         return page->mapping && page->mapping->migratepage;
-> }
-> 
-> It will save _mapcount of struct page.
-> 
-> > +	ret = page->mapping->a_ops->isolatepage(page, mode);
-> > +	if (!ret)
-> > +		goto out_not_isolated;
-> > +	unlock_page(page);
-> > +	return ret;
-> > +
-> > +out_not_isolated:
-> > +	unlock_page(page);
-> > +out_putpage:
-> > +	put_page(page);
-> > +out:
-> > +	return ret;
-> > +}
-> > +
-> > +static inline void putback_mobilepage(struct page *page)
-> > +{
-> > +	/*
-> > +	 * 'lock_page()' stabilizes the page and prevents races against
-> 
-> What does it mean 'stabilize'?
-> Clear comment is always welcome rather than vague word.
-> 
-> > +	 * concurrent isolation threads attempting to re-isolate it.
-> > +	 */
-> > +	lock_page(page);
-> > +	if (page->mapping && page->mapping->a_ops->putbackpage)
-> > +		page->mapping->a_ops->putbackpage(page);
-> > +	unlock_page(page);
-> > +	/* drop the extra ref count taken for mobile page isolation */
-> > +	put_page(page);
-> > +}
-> >  #else
-> >  static inline unsigned long try_to_compact_pages(gfp_t gfp_mask,
-> >  			unsigned int order, int alloc_flags,
-> > @@ -83,6 +150,19 @@ static inline bool compaction_deferred(struct zone *zone, int order)
-> >  	return true;
-> >  }
-> >  
-> > +static inline bool mobile_page(struct page *page)
-> > +{
-> > +	return false;
-> > +}
-> > +
-> > +static inline bool isolate_mobilepage(struct page *page, isolate_mode_t mode)
-> > +{
-> > +	return false;
-> > +}
-> > +
-> > +static inline void putback_mobilepage(struct page *page)
-> > +{
-> > +}
-> >  #endif /* CONFIG_COMPACTION */
-> >  
-> >  #if defined(CONFIG_COMPACTION) && defined(CONFIG_SYSFS) && defined(CONFIG_NUMA)
-> > diff --git a/include/linux/fs.h b/include/linux/fs.h
-> > index a0653e5..2cc4b24 100644
-> > --- a/include/linux/fs.h
-> > +++ b/include/linux/fs.h
-> > @@ -396,6 +396,8 @@ struct address_space_operations {
-> >  	 */
-> >  	int (*migratepage) (struct address_space *,
-> >  			struct page *, struct page *, enum migrate_mode);
-> > +	bool (*isolatepage) (struct page *, isolate_mode_t);
-> > +	void (*putbackpage) (struct page *);
-> >  	int (*launder_page) (struct page *);
-> >  	int (*is_partially_uptodate) (struct page *, unsigned long,
-> >  					unsigned long);
-> > diff --git a/include/linux/page-flags.h b/include/linux/page-flags.h
-> > index f34e040..abef145 100644
-> > --- a/include/linux/page-flags.h
-> > +++ b/include/linux/page-flags.h
-> > @@ -582,6 +582,25 @@ static inline void __ClearPageBalloon(struct page *page)
-> >  	atomic_set(&page->_mapcount, -1);
-> >  }
-> >  
-> > +#define PAGE_MOBILE_MAPCOUNT_VALUE (-255)
-> > +
-> > +static inline int PageMobile(struct page *page)
-> > +{
-> > +	return atomic_read(&page->_mapcount) == PAGE_MOBILE_MAPCOUNT_VALUE;
-> > +}
-> > +
-> > +static inline void __SetPageMobile(struct page *page)
-> > +{
-> > +	VM_BUG_ON_PAGE(atomic_read(&page->_mapcount) != -1, page);
-> > +	atomic_set(&page->_mapcount, PAGE_MOBILE_MAPCOUNT_VALUE);
-> > +}
-> > +
-> > +static inline void __ClearPageMobile(struct page *page)
-> > +{
-> > +	VM_BUG_ON_PAGE(!PageMobile(page), page);
-> > +	atomic_set(&page->_mapcount, -1);
-> > +}
-> > +
-> >  /*
-> >   * If network-based swap is enabled, sl*b must keep track of whether pages
-> >   * were allocated from pfmemalloc reserves.
-> > diff --git a/include/uapi/linux/kernel-page-flags.h b/include/uapi/linux/kernel-page-flags.h
-> > index a6c4962..d50d9e8 100644
-> > --- a/include/uapi/linux/kernel-page-flags.h
-> > +++ b/include/uapi/linux/kernel-page-flags.h
-> > @@ -33,6 +33,7 @@
-> >  #define KPF_THP			22
-> >  #define KPF_BALLOON		23
-> >  #define KPF_ZERO_PAGE		24
-> > +#define KPF_MOBILE		25
-> >  
-> >  
-> >  #endif /* _UAPILINUX_KERNEL_PAGE_FLAGS_H */
-> > -- 
-> > 2.1.4
-> > 
+>> +New system call proposals, like any change to the kernel's API, should always
+>> +be cc'ed to linux-api@vger.kernel.org
+>
+> . at and of sentence?
+
+Fixed.
+
+>> +System Calls Returning Elsewhere
+>> +--------------------------------
+>> +
+>> +For most system calls, once the system call is complete the user program
+>> +continues exactly where it left off -- at the next instruction, with the same
+>> +stack and registers as before the system call, and with the same virtual
+>> +memory space.
+>
+> Umm. Normally we place return value in register. And I'm not sure.. do
+> syscalls preserve registers that are normally caller-clobbered in the ABI?
+
+Reworded to:
+
+For most system calls, once the system call is complete the user program
+continues exactly where it left off -- at the next instruction, with the
+stack the same and most of the registers the same as before the system call,
+and with the same virtual memory space.
+
+> Thanks,
+>                                                                         Pavel
+
+Thanks for the updates,
+David
+
+> --
+> (english) http://www.livejournal.com/~pavelmachek
+> (cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
