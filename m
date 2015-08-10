@@ -1,171 +1,290 @@
-From: Martin Sustrik <sustrik@250bpm.com>
-Subject: Re: [PATCH] eventfd: implementation of EFD_MASK flag
-Date: Mon, 10 Aug 2015 08:39:42 +0200
-Message-ID: <45138eb2cdd715f14fbd01fb5c8d3655@imap.lucina.net>
-References: <1439185906-28180-1-git-send-email-dhobsong@igel.co.jp>
- <1439185906-28180-2-git-send-email-dhobsong@igel.co.jp>
- <55C8436C.1000806@igel.co.jp>
+From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 2/4] mm/compaction: enable mobile-page migration
+Date: Mon, 10 Aug 2015 16:19:00 +0900
+Message-ID: <20150810071900.GA5073@bgram>
+References: <1436776519-17337-1-git-send-email-gioh.kim@lge.com>
+ <1436776519-17337-3-git-send-email-gioh.kim@lge.com>
+ <20150731104309.GA22158@bbox>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII;
- format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <55C8436C.1000806@igel.co.jp>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Damian Hobson-Garcia <dhobsong@igel.co.jp>
-Cc: viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150731104309.GA22158@bbox>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Gioh Kim <gioh.kim-Hm3cg6mZ9cc@public.gmane.org>
+Cc: jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, vbabka-AlSwsSmVLrQ@public.gmane.org, iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, aquini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Gioh Kim <gurugio-A7HHaXTFBl7R7s880joybQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 2015-08-10 08:23, Damian Hobson-Garcia wrote:
-> Replying to my own post, but I had the following comments/questions.
-> Martin, if you have any response to my comments I would be very happy 
-> to
-> hear them.
+On Fri, Jul 31, 2015 at 07:43:09PM +0900, Minchan Kim wrote:
+> Hi Gioh,
 > 
-> On 2015-08-10 2:51 PM, Damian Hobson-Garcia wrote:
->> From: Martin Sustrik <sustrik@250bpm.com>
->> 
-> [snip]
->> 
->> write(2):
->> 
->> User is allowed to write only buffers containing the following 
->> structure:
->> 
->> struct efd_mask {
->>   __u32 events;
->>   __u64 data;
->> };
->> 
->> The value of 'events' should be any combination of event flags as 
->> defined by
->> poll(2) function (POLLIN, POLLOUT, POLLERR, POLLHUP etc.) Specified 
->> events will
->> be signaled when polling (select, poll, epoll) on the eventfd is done 
->> later on.
->> 'data' is opaque data that are not interpreted by eventfd object.
->> 
-> I'm not fully clear on the purpose that the 'data' member serves.  Does
-> this opaque handle need to be tied together with this event
-> synchronization construct?
+> On Mon, Jul 13, 2015 at 05:35:17PM +0900, Gioh Kim wrote:
+> > From: Gioh Kim <gurugio-A7HHaXTFBl7R7s880joybQ@public.gmane.org>
+> > 
+> > Add framework to register callback functions and check page mobility.
+> > There are some modes for page isolation so that isolate interface
+> > has arguments of page address and isolation mode while putback
+> > interface has only page address as argument.
+> > 
+> > Signed-off-by: Gioh Kim <gioh.kim-Hm3cg6mZ9cc@public.gmane.org>
+> > Acked-by: Rafael Aquini <aquini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> > ---
+> >  fs/proc/page.c                         |  3 ++
+> >  include/linux/compaction.h             | 80 ++++++++++++++++++++++++++++++++++
+> >  include/linux/fs.h                     |  2 +
+> >  include/linux/page-flags.h             | 19 ++++++++
+> >  include/uapi/linux/kernel-page-flags.h |  1 +
+> >  5 files changed, 105 insertions(+)
+> > 
+> > diff --git a/fs/proc/page.c b/fs/proc/page.c
+> > index 7eee2d8..a4f5a00 100644
+> > --- a/fs/proc/page.c
+> > +++ b/fs/proc/page.c
+> > @@ -146,6 +146,9 @@ u64 stable_page_flags(struct page *page)
+> >  	if (PageBalloon(page))
+> >  		u |= 1 << KPF_BALLOON;
+> >  
+> > +	if (PageMobile(page))
+> > +		u |= 1 << KPF_MOBILE;
+> > +
+> 
+> Need a new page flag for non-LRU page migration?
+> I am worry that we don't have empty slot for page flag on 32-bit.
+> 
+> Aha, see SetPageMobile below. You use _mapcount.
+> It seems to be work for non-LRU pages but unfortunately, zsmalloc
+> already have used that field as own purpose so there is no room
+> for it.
 
-It's a convenience thing. Imagine you are implementing your own file 
-descriptor type in user space. You create an EFD_MASK socket and a 
-structure that will hold any state that you need for the socket (tx/rx 
-buffers and such).
+Gioh, I just sent a patch which zsmalloc doesn't use page->mapping
+and _mapcount so I think zsmalloc could support compaction with your
+patchset. Although zsmalloc can support compaction with it, I still
+don't think it's a good that driver have to mark pages mobile via
+_mapcount.
 
-Now you have two things to pass around. If you want to pass the fd to a 
-function, it must have two parameters (fd and pointer to the structure).
+I hope you can find another way.
 
-To fix it you can put the fd into the structure. That way there's only 
-one thing to pass around (the structure).
-
-The problem with that approach is when you have generic code that deals 
-with file descriptors. For example, a simple poller which accepts a list 
-of (fd, callback) pairs and invokes the callback when one of the fds 
-signals POLLIN. You can't send a pointer to a structure to such 
-function. All you can send is the fd, but then, when the callback is 
-invoked, fd is all you have. You have no idea where your state is.
-
-'data' member allows you to put the pointer to the state to the socket 
-itself. Thus, if you have a fd, you can always find out where the 
-associated data is by reading the mask structure from the fd.
+Thanks.
 
 > 
-> [snip]
 > 
->> @@ -55,6 +69,9 @@ __u64 eventfd_signal(struct eventfd_ctx *ctx, __u64 
->> n)
->>  {
->> +	/* This function should never be used with eventfd in the mask mode. 
->> */
->> +	BUG_ON(ctx->flags & EFD_MASK);
->> +
-> ...
->> @@ -158,6 +180,9 @@ int eventfd_ctx_remove_wait_queue(struct 
->> eventfd_ctx *ctx, wait_queue_t *wait,
->>  {
->> +	/* This function should never be used with eventfd in the mask mode. 
->> */
->> +	BUG_ON(ctx->flags & EFD_MASK);
->> +
-> ...
->> @@ -188,6 +213,9 @@ ssize_t eventfd_ctx_read(struct eventfd_ctx *ctx, 
->> int no_wait, __u64 *cnt)
->> +	/* This function should never be used with eventfd in the mask mode. 
->> */
->> +	BUG_ON(ctx->flags & EFD_MASK);
->> +
+> >  	u |= kpf_copy_bit(k, KPF_LOCKED,	PG_locked);
+> >  
+> >  	u |= kpf_copy_bit(k, KPF_SLAB,		PG_slab);
+> > diff --git a/include/linux/compaction.h b/include/linux/compaction.h
+> > index aa8f61c..f693072 100644
+> > --- a/include/linux/compaction.h
+> > +++ b/include/linux/compaction.h
+> > @@ -1,6 +1,9 @@
+> >  #ifndef _LINUX_COMPACTION_H
+> >  #define _LINUX_COMPACTION_H
+> >  
+> > +#include <linux/page-flags.h>
+> > +#include <linux/pagemap.h>
+> > +
+> >  /* Return values for compact_zone() and try_to_compact_pages() */
+> >  /* compaction didn't start as it was deferred due to past failures */
+> >  #define COMPACT_DEFERRED	0
+> > @@ -51,6 +54,70 @@ extern void compaction_defer_reset(struct zone *zone, int order,
+> >  				bool alloc_success);
+> >  extern bool compaction_restarting(struct zone *zone, int order);
+> >  
+> > +static inline bool mobile_page(struct page *page)
+> > +{
+> > +	return page->mapping &&	(PageMobile(page) || PageBalloon(page));
 > 
-> If eventfd_ctx_fileget() returns EINVAL when EFD_MASK is set, I don't
-> think that there will be a way to call these functions in the mask 
-> mode,
-> so it should be possible to get rid of the BUG_ON checks.
-
-Sure. Feel free to do so.
-
 > 
-> [snip]
->> @@ -230,6 +258,19 @@ static ssize_t eventfd_read(struct file *file, 
->> char __user *buf, size_t count,
->>  	ssize_t res;
->>  	__u64 cnt;
->> 
->> +	if (ctx->flags & EFD_MASK) {
->> +		struct efd_mask mask;
->> +
->> +		if (count < sizeof(mask))
->> +			return -EINVAL;
->> +		spin_lock_irq(&ctx->wqh.lock);
->> +		mask = ctx->mask;
->> +		spin_unlock_irq(&ctx->wqh.lock);
->> +		if (copy_to_user(buf, &mask, sizeof(mask)))
->> +			return -EFAULT;
->> +		return sizeof(mask);
->> +	}
->> +
+> What's the locking rule to test mobile_page?
+> Why we need such many checking?
 > 
-> For the other eventfd modes, reading the value will update the internal
-> state of the eventfd (either clearing or decrementing the counter).
-> Should something similar be done here? I'm thinking of a case where a
-> process is polling on this fd in a loop. Clearing the efd_mask data  on
-> read should provide an easy way for the polling process to know if it 
-> is
-> seeing new poll events.
-
-No. In this case reading the value has no effect on the state of the fd. 
-How it should work is rather:
-
-// fd is in POLLIN state
-poll(fd);
-// function exits with POLLIN but fd remains in POLLIN state
-my_recv(fd, buf, size);
-// my_recv function have found out that there's no more data to recv and 
-switched off the POLLIN flag
-poll(fd); // we block here waiting for more data to arrive from the 
-network
-
+> Why we need PageBalloon check?
+> You are trying to make generic abstraction for non-LRU page to migrate
+> but PageBalloon check in here breaks your goal.
 > 
->> @@ -292,8 +351,13 @@ static void eventfd_show_fdinfo(struct seq_file 
->> *m, struct file *f)
->>  	struct eventfd_ctx *ctx = f->private_data;
->> 
->>  	spin_lock_irq(&ctx->wqh.lock);
->> -	seq_printf(m, "eventfd-count: %16llx\n",
->> -		   (unsigned long long)ctx->count);
->> +	if (ctx->flags & EFD_MASK) {
->> +		seq_printf(m, "eventfd-mask: %x\n",
->> +				 (unsigned)ctx->mask.events);
->> +	} else {
->> +		seq_printf(m, "eventfd-count: %16llx\n",
->> +				 (unsigned long long)ctx->count);
->> +	}
->>  	spin_unlock_irq(&ctx->wqh.lock);
->>  }
-> I think that putting the EFD_MASK functionality into a different fops
-> structure might be useful for reducing the number of if statements.
-
-Sure. No objections.
-
-Thanks for re-submitting the patch!
-Martin
+> > +}
+> > +
+> > +static inline bool isolate_mobilepage(struct page *page, isolate_mode_t mode)
+> > +{
+> > +	bool ret = false;
+> > +
+> > +	/*
+> > +	 * Avoid burning cycles with pages that are yet under __free_pages(),
+> > +	 * or just got freed under us.
+> > +	 *
+> > +	 * In case we 'win' a race for a mobile page being freed under us and
+> > +	 * raise its refcount preventing __free_pages() from doing its job
+> > +	 * the put_page() at the end of this block will take care of
+> > +	 * release this page, thus avoiding a nasty leakage.
+> > +	 */
+> 
+> Good.
+> 
+> > +	if (unlikely(!get_page_unless_zero(page)))
+> > +		goto out;
+> > +
+> > +	/*
+> > +	 * As mobile pages are not isolated from LRU lists, concurrent
+> > +	 * compaction threads can race against page migration functions
+> > +	 * as well as race against the releasing a page.
+> 
+> How can it race with releasing a page?
+> We already get refcount above.
+> 
+> Do you mean page->mapping tearing race?
+> If so, zsmalloc should be chaned to hold a lock.
+> 
+> 
+> > +	 *
+> > +	 * In order to avoid having an already isolated mobile page
+> > +	 * being (wrongly) re-isolated while it is under migration,
+> > +	 * or to avoid attempting to isolate pages being released,
+> > +	 * lets be sure we have the page lock
+> > +	 * before proceeding with the mobile page isolation steps.
+> > +	 */
+> > +	if (unlikely(!trylock_page(page)))
+> > +		goto out_putpage;
+> > +
+> > +	if (!(mobile_page(page) && page->mapping->a_ops->isolatepage))
+> > +		goto out_not_isolated;
+> 
+> I cannot know how isolate_mobilepage is called by upper layer
+> because this patch doesn't include it.
+> Anyway, why we need such many checks to prove it's mobile page?
+> 
+> mobile_page() {
+> 	page->mapping && (PageMobile(page) || PageBalloon(page));
+> }
+> 
+> Additionally, added page->mapping->a_ops->isolatepage check
+> 
+> Is it possible that a non-LRU page's address space provides
+> only page->maping->migratepage without isolate/putback?
+> 
+> Couldn't we make it simple like this?
+> 
+>         page->mapping && page->mapping->migratepage
+> 
+> So, couldn't we make mobile_page like this
+> 
+> PageMobile(struct page *page)
+> {
+>         VM_BUG_ON_PAGE(!PageLocked(page), page);
+>         VM_BUG_ON_PAGE(PageLRU(page), page);
+> 
+>         return page->mapping && page->mapping->migratepage;
+> }
+> 
+> It will save _mapcount of struct page.
+> 
+> > +	ret = page->mapping->a_ops->isolatepage(page, mode);
+> > +	if (!ret)
+> > +		goto out_not_isolated;
+> > +	unlock_page(page);
+> > +	return ret;
+> > +
+> > +out_not_isolated:
+> > +	unlock_page(page);
+> > +out_putpage:
+> > +	put_page(page);
+> > +out:
+> > +	return ret;
+> > +}
+> > +
+> > +static inline void putback_mobilepage(struct page *page)
+> > +{
+> > +	/*
+> > +	 * 'lock_page()' stabilizes the page and prevents races against
+> 
+> What does it mean 'stabilize'?
+> Clear comment is always welcome rather than vague word.
+> 
+> > +	 * concurrent isolation threads attempting to re-isolate it.
+> > +	 */
+> > +	lock_page(page);
+> > +	if (page->mapping && page->mapping->a_ops->putbackpage)
+> > +		page->mapping->a_ops->putbackpage(page);
+> > +	unlock_page(page);
+> > +	/* drop the extra ref count taken for mobile page isolation */
+> > +	put_page(page);
+> > +}
+> >  #else
+> >  static inline unsigned long try_to_compact_pages(gfp_t gfp_mask,
+> >  			unsigned int order, int alloc_flags,
+> > @@ -83,6 +150,19 @@ static inline bool compaction_deferred(struct zone *zone, int order)
+> >  	return true;
+> >  }
+> >  
+> > +static inline bool mobile_page(struct page *page)
+> > +{
+> > +	return false;
+> > +}
+> > +
+> > +static inline bool isolate_mobilepage(struct page *page, isolate_mode_t mode)
+> > +{
+> > +	return false;
+> > +}
+> > +
+> > +static inline void putback_mobilepage(struct page *page)
+> > +{
+> > +}
+> >  #endif /* CONFIG_COMPACTION */
+> >  
+> >  #if defined(CONFIG_COMPACTION) && defined(CONFIG_SYSFS) && defined(CONFIG_NUMA)
+> > diff --git a/include/linux/fs.h b/include/linux/fs.h
+> > index a0653e5..2cc4b24 100644
+> > --- a/include/linux/fs.h
+> > +++ b/include/linux/fs.h
+> > @@ -396,6 +396,8 @@ struct address_space_operations {
+> >  	 */
+> >  	int (*migratepage) (struct address_space *,
+> >  			struct page *, struct page *, enum migrate_mode);
+> > +	bool (*isolatepage) (struct page *, isolate_mode_t);
+> > +	void (*putbackpage) (struct page *);
+> >  	int (*launder_page) (struct page *);
+> >  	int (*is_partially_uptodate) (struct page *, unsigned long,
+> >  					unsigned long);
+> > diff --git a/include/linux/page-flags.h b/include/linux/page-flags.h
+> > index f34e040..abef145 100644
+> > --- a/include/linux/page-flags.h
+> > +++ b/include/linux/page-flags.h
+> > @@ -582,6 +582,25 @@ static inline void __ClearPageBalloon(struct page *page)
+> >  	atomic_set(&page->_mapcount, -1);
+> >  }
+> >  
+> > +#define PAGE_MOBILE_MAPCOUNT_VALUE (-255)
+> > +
+> > +static inline int PageMobile(struct page *page)
+> > +{
+> > +	return atomic_read(&page->_mapcount) == PAGE_MOBILE_MAPCOUNT_VALUE;
+> > +}
+> > +
+> > +static inline void __SetPageMobile(struct page *page)
+> > +{
+> > +	VM_BUG_ON_PAGE(atomic_read(&page->_mapcount) != -1, page);
+> > +	atomic_set(&page->_mapcount, PAGE_MOBILE_MAPCOUNT_VALUE);
+> > +}
+> > +
+> > +static inline void __ClearPageMobile(struct page *page)
+> > +{
+> > +	VM_BUG_ON_PAGE(!PageMobile(page), page);
+> > +	atomic_set(&page->_mapcount, -1);
+> > +}
+> > +
+> >  /*
+> >   * If network-based swap is enabled, sl*b must keep track of whether pages
+> >   * were allocated from pfmemalloc reserves.
+> > diff --git a/include/uapi/linux/kernel-page-flags.h b/include/uapi/linux/kernel-page-flags.h
+> > index a6c4962..d50d9e8 100644
+> > --- a/include/uapi/linux/kernel-page-flags.h
+> > +++ b/include/uapi/linux/kernel-page-flags.h
+> > @@ -33,6 +33,7 @@
+> >  #define KPF_THP			22
+> >  #define KPF_BALLOON		23
+> >  #define KPF_ZERO_PAGE		24
+> > +#define KPF_MOBILE		25
+> >  
+> >  
+> >  #endif /* _UAPILINUX_KERNEL_PAGE_FLAGS_H */
+> > -- 
+> > 2.1.4
+> > 
