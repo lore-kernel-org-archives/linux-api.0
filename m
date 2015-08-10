@@ -1,90 +1,107 @@
-From: Stefan Wahren <stefan.wahren@i2se.com>
-Subject: Re: [PATCH v9 0/9] Add simple NVMEM Framework via regmap.
-Date: Mon, 10 Aug 2015 13:24:38 +0200 (CEST)
-Message-ID: <997560650.82109.1439205878609.JavaMail.open-xchange@oxbsltgw00.schlund.de>
-References: <1437995567-11203-1-git-send-email-srinivas.kandagatla@linaro.org> <1438693367.3793.29.camel@pengutronix.de> <20150809151916.GF14271@lunn.ch> <55C87EEF.6020609@linaro.org>
-Reply-To: Stefan Wahren <stefan.wahren@i2se.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <55C87EEF.6020609@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>, Andrew Lunn <andrew@lunn.ch>
-Cc: wxt@rock-chips.com, linux-api@vger.kernel.org, Rob Herring <robh+dt@kernel.org>, sboyd@codeaurora.org, arnd@arndb.de, linux-arm-kernel@lists.infradead.org, khilman@kernel.org, s.hauer@pengutronix.de, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-kernel@vger.kernel.org, linux-arm-msm@vger.kernel.org, mporter@konsulko.com, pantelis.antoniou@konsulko.com, devicetree@vger.kernel.org, Mark Brown <broonie@kernel.org>, maitysanchayan@gmail.com, p.zabel@pengutronix.de
+From: "Gabriel L. Somlo" <somlo@cmu.edu>
+Subject: [PATCH 0/3] SysFS driver for QEMU firmware config
+	device (fw_cfg)
+Date: Mon, 10 Aug 2015 12:31:17 -0400
+Message-ID: <cover.1439220623.git.somlo@cmu.edu>
+Return-path: <qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org>
+List-Unsubscribe: <https://lists.nongnu.org/mailman/options/qemu-devel>,
+	<mailto:qemu-devel-request@nongnu.org?subject=unsubscribe>
+List-Archive: <http://lists.nongnu.org/archive/html/qemu-devel>
+List-Post: <mailto:qemu-devel@nongnu.org>
+List-Help: <mailto:qemu-devel-request@nongnu.org?subject=help>
+List-Subscribe: <https://lists.nongnu.org/mailman/listinfo/qemu-devel>,
+	<mailto:qemu-devel-request@nongnu.org?subject=subscribe>
+Errors-To: qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org
+Sender: qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org
+To: gregkh@linuxfoundation.org, ralf@linux-mips.org, zajec5@gmail.com, paul@pwsan.com, galak@codeaurora.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: linux-efi@vger.kernel.org, rjones@redhat.com, jordan.l.justen@intel.com, x86@kernel.org, qemu-devel@nongnu.org, gleb@cloudius-systems.com, matt.fleming@intel.com, kernelnewbies@kernelnewbies.org, kraxel@redhat.com, pbonzini@redhat.com, lersek@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-Hi Srinivas,
-hi Andrew,
+From: "Gabriel Somlo" <somlo@cmu.edu>
 
-[add Sanchayan and Philipp]
+This patch set makes QEMU fw_cfg blobs available for viewing (read-only)
+via SysFS.
 
-> Srinivas Kandagatla <srinivas.kandagatla@linaro.org> hat am 10. August 2015 um
-> 12:37 geschrieben:
->
->
-> Hi Andrew,
->
-> On 09/08/15 16:19, Andrew Lunn wrote:
-> > Hi Srinivas
-> >
-> > The AT24 eeprom driver contains the comment:
-> >
-> > /*
-> > * Export the EEPROM bytes through sysfs, since that's convenient.
-> > * By default, only root should see the data (maybe passwords etc)
-> > */
-> >
-> > and as you would expect from this:
-> >
-> > # ls -l
-> > ./devices/platform/soc/soc:aips-bus@40000000/40066000.i2c/i2c-0/0-0050/eeprom
-> > -rw------- 1 root root 512 Aug 9 10:16
-> > ./devices/platform/soc/soc:aips-bus@40000000/40066000.i2c/i2c-0/0-0050/eeprom
-> >
-> > The AT25 and the MAX6875 driver are the same.
-> >
-> > However nvmem has different defaults:
-> >
-> > # ls -l
-> > ./devices/platform/soc/soc:aips-bus@40000000/40066000.i2c/i2c-0/0-0050/0-00500/nvmem
-> > -rw-r--r-- 1 root root 0 Aug 9 10:16
-> > ./devices/platform/soc/soc:aips-bus@40000000/40066000.i2c/i2c-0/0-0050/0-00500/nvmem
-> >
-> Yes, nvmem by default sets the read permission for everyone S_IRUGO.
-> Which was the most common use case.
+Several different architectures supported by QEMU are set up with a
+"firmware configuration" (fw_cfg) device, used to pass configuration
+"blobs" into the guest by the host running QEMU.
 
-i can only speak for mxs-ocotp, but root-only access is sufficient.
+Historically, these config blobs were mostly of interest to the guest
+BIOS, but since QEMU v2.4 it is possible to insert arbitrary blobs via
+the command line, which makes them potentially interesting to userspace
+(e.g. for passing early boot environment variables, etc.).
 
->
-> > Has this been considered and discussed?
-> Thanks for bringing this up, No, we did not discuss this explicitly, but
-> it should not be an issue to accommodate this. Provider still have
-> flexibility to configure such things.
+In addition to cc-ing the people and lists indicated by get-maintainer.pl,
+I've added a few extra lists suggested by Matt Fleming on the qemu-devel
+list, as well as the qemu-devel list itself.
 
-IMHO it would better the default settings of the framework would be compatible
-and same restrictive as the eeprom drivers.
+Also cc-ing kernelnewbies, as this is my very first kenel contribution,
+so please go easy on me for whatever silly n00b mistakes I might have still
+missed, in spite of trying hard to do all my homework properly... :)
 
-In case a provider needs more privileges, it should be his job.
+The series consists of three patches:
 
->
-> As a first patchset we wanted to keep the framework simple and add
-> features as we move on.
+  1/3 - probes for the qemu fw_cfg device in locations known to work on
+	the supported architectures, in decreasing order of "likelihood".
 
-That's true, but it's an ABI too. So changing default settings soon is better.
+	While it *may* be possible to detect the presence of fw_cfg via
+	acpi or dtb (on x86 and arm, respectively), there's no way I know
+	of attempting that on sun4 and ppc/mac, so I've stuck with simply
+	probing (the fw_cfg_modes[] structure and fw_cfg_io_probe() function)
+	in fw_cfg.c. I could use some advice on how else that could be
+	done more elegantly, if needed.
 
-Regards
-Stefan
+	Upon successfully detecting a present fw_cfg device, we set up
+	/sys/firmware/fw_cfg/by_select entries for each blob available
+	on the fw_cfg device.
 
->
-> Thanks,
-> srini
-> >
-> > Thanks
-> > Andrew
-> >
->
-> _______________________________________________
-> linux-arm-kernel mailing list
-> linux-arm-kernel@lists.infradead.org
-> http://lists.infradead.org/mailman/listinfo/linux-arm-kernel
+  2/3 - export kset_find_obj() (in lib/kobject.c) for use with modules,
+	which will come in handy in patch #3, below.
+
+  3/3 - add a "user friendly" way of listing fw_cfg blobs by name rather
+	than by unique selector key.
+
+	Since fw_cfg blob names are traditionally set up to look like
+	path names, it would be nice to mirror that fact when displaying
+	them under /sys/firmware/fw_cfg in a "by_name" subdirectory.
+
+	I'm using ksets to reflect subdirectories matching "dirname"
+	tokens separated by '/' within each fw_cfg blob "filename",
+	and symlinks into the "by_select" subdirectory for each "basename".
+
+	Since the fw_cfg device doesn't enforce that blob names have
+	well-behaved and non-conflicting names, it is possible (though
+	unlikely) that there will be blobs named:
+
+		"etc/foo/bar"
+	and
+		"etc/foo"
+
+	where "foo" will try to be both a subdirectory AND a symlink under
+	/sys/firmware/fw_cfg/by_name/etc/. In such an event, the latter
+	fw_cfg blob will simply be skipped from having an entry created
+	under the user-friendly "by_name" subdirectory, remaining listed
+	only as an entry under the "by_select" subdirectory.
+
+I have tested this on x86_64 and armv7hl+lpae kernels. Builds and installs
+OK as both a module and linked directly into the kernel.
+
+TIA for the feedback and advice,
+  --Gabriel
+  
+Gabriel Somlo (3):
+  firmware: introduce sysfs driver for QEMU's fw_cfg device
+  kobject: export kset_find_obj() to be used from modules
+  firmware: fw_cfg: create directory hierarchy for fw_cfg file names
+
+ Documentation/ABI/testing/sysfs-firmware-fw_cfg | 211 +++++++++
+ drivers/firmware/Kconfig                        |  10 +
+ drivers/firmware/Makefile                       |   1 +
+ drivers/firmware/fw_cfg.c                       | 542 ++++++++++++++++++++++++
+ lib/kobject.c                                   |   1 +
+ 5 files changed, 765 insertions(+)
+ create mode 100644 Documentation/ABI/testing/sysfs-firmware-fw_cfg
+ create mode 100644 drivers/firmware/fw_cfg.c
+
+-- 
+2.4.3
