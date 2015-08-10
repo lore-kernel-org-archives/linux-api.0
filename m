@@ -1,47 +1,41 @@
-From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH 1/3] firmware: introduce sysfs driver for QEMU's fw_cfg
- device
-Date: Mon, 10 Aug 2015 12:15:09 -0700
-Message-ID: <20150810191509.GA7264@kroah.com>
-References: <cover.1439220623.git.somlo@cmu.edu>
- <3b039351aba44759627fa77a0003dad685a9f21d.1439220623.git.somlo@cmu.edu>
- <20150810183054.GA18817@kroah.com>
- <20150810190222.GN31816@HEDWIG.INI.CMU.EDU>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH 1/4] selftests: vm: Fix mlock2-tests for 32-bit architectures
+Date: Mon, 10 Aug 2015 13:27:52 -0600
+Message-ID: <55C8FB38.50707@osg.samsung.com>
+References: <1438955055-587-1-git-send-email-thierry.reding@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150810190222.GN31816-h65ZQ0r4j6KKUezXOiBB2eW1CriLhL8O@public.gmane.org>
-Sender: linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
-Cc: ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paul-DWxLp4Yu+b8AvxtiuMwx3w@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jordan.l.justen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, gleb-RmZWMc9puTNJc61us3aD9laTQe2KTcn/@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, eblake-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, rjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kernelnewbies-7JyXY6prKcjpASu1u0TL5ti2O/JbrIOy@public.gmane.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1438955055-587-1-git-send-email-thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Thierry Reding <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Aug 10, 2015 at 03:02:22PM -0400, Gabriel L. Somlo wrote:
-> Mainly, qemu's fw_cfg is a read-only "device", so one wouldn't ever
-> care to try writing anything to it. /sys/firmware/... feels like a fit
-> because fw_cfg contains binary blobs originally meant to be used by
-> the bios (it's how SeaBIOS and OVMF pull smbios and acpi tables out of
-> the host and set them up in guest memory before booting the guest kernel,
-> as one of the many examples).
+On 08/07/2015 07:44 AM, Thierry Reding wrote:
+> From: Thierry Reding <treding-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>
 > 
-> The most similar example (and the existing driver I used as an example
-> during implementation) is dmi-sysfs.c, which also exposes all the
-> metadata for each smbios table as numeric (or string) read-only attributes,
-> and has a "raw" attribute which allows dumping each table in its
-> entirety. Same thing here -- I want to expose the name, size, and
-> select key for each blob, but also allow access to the "payload", i.e.
-> the blob itself.
+> According to Documentation/vm/pagemap.txt, the /proc/pid/pagemap file
+> contains one 64-bit value for each virtual page. The test code relies
+> on the size of unsigned long being 64-bit, which breaks the test when
+> run on 32-bit architectures. Use a uint64_t to store values read from
+> the file instead, so that it works irrespective of the architecture's
+> word size.
+> 
+> Signed-off-by: Thierry Reding <treding-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>
+> ---
 
-That's great, and you can have these "blobs" be an attribute for a
-struct device.  Just using a "raw" kobject as you are is hard, as you
-have seen, and messy.  Making it a "real" device makes this all much
-easier and simpler.
-
-Now if you want to keep things in /sys/firmware/ that's another issue,
-and would have to stay as a kobject.  so maybe it does need to remain,
-need to think about that...
+Looks good to me. Andrew! Would you like me to take this patch
+and the other two in this series through kselftest git?
 
 thanks,
+-- Shuah
 
-greg k-h
+
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
