@@ -1,126 +1,60 @@
 From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: [PATCH RFC 1/3] nvmem: make default user binary file root-access only
-Date: Tue, 11 Aug 2015 12:03:12 +0100
-Message-ID: <1439290992-18283-1-git-send-email-srinivas.kandagatla@linaro.org>
+Subject: [PATCH RFC 3/3] nvmem: add permission flags in nvmem_config
+Date: Tue, 11 Aug 2015 12:03:44 +0100
+Message-ID: <1439291024-18375-1-git-send-email-srinivas.kandagatla@linaro.org>
 References: <1439290931-18232-1-git-send-email-srinivas.kandagatla@linaro.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
 In-Reply-To: <1439290931-18232-1-git-send-email-srinivas.kandagatla@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
 To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Andrew Lunn <andrew@lunn.ch>, wxt@rock-chips.com, linux-api@vger.kernel.org, Rob Herring <robh+dt@kernel.org>, sboyd@codeaurora.org, arnd@arndb.de, linux-arm-kernel@lists.infradead.org, khilman@kernel.org, s.hauer@pengutronix.de, linux-kernel@vger.kernel.org, linux-arm-msm@vger.kernel.org, mporter@konsulko.com, pantelis.antoniou@konsulko.com, devicetree@vger.kernel.org, Mark Brown <broonie@kernel.org>, maitysanchayan@gmail.com, p.zabel@pengutronix.de, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Cc: Andrew Lunn <andrew@lunn.ch>, arnd@arndb.de, khilman@kernel.org, devicetree@vger.kernel.org, linux-api@vger.kernel.org, s.hauer@pengutronix.de, sboyd@codeaurora.org, linux-kernel@vger.kernel.org, maitysanchayan@gmail.com, pantelis.antoniou@konsulko.com, Rob Herring <robh+dt@kernel.org>, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>, Mark Brown <broonie@kernel.org>, p.zabel@pengutronix.de, linux-arm-msm@vger.kernel.org, mporter@konsulko.com, linux-arm-kernel@lists.infradead.org, wxt@rock-chips.com
 List-Id: linux-api@vger.kernel.org
 
-As required by many providers like at24/at25/mxs-ocotp/qfprom and may be
-other providers would want to allow root-only to read the nvmem content.
-So making the defaults to be root-only access would address the request
-and also provide flexibility to providers to specify there own permissions
-on top of the root-only using the perm flag in nvmem_config.
-Making this dynamic did cut down lot of static binary attributes in the
-code.
+This patch adds perm variable to nvmem_config structure which will allow
+providers to specify the permissions required for the sysfs binary file.
+This permission is applied on top of root-only access permissions set by
+the core.
 
 Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 ---
- drivers/nvmem/core.c | 53 ++++++++++------------------------------------------
- 1 file changed, 10 insertions(+), 43 deletions(-)
+ drivers/nvmem/core.c           | 1 +
+ include/linux/nvmem-provider.h | 1 +
+ 2 files changed, 2 insertions(+)
 
 diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
-index 35a42bb..103f6aa 100644
+index 414ed23..7481387 100644
 --- a/drivers/nvmem/core.c
 +++ b/drivers/nvmem/core.c
-@@ -31,6 +31,7 @@ struct nvmem_device {
- 	struct regmap		*regmap;
- 	struct module		*owner;
- 	struct device		dev;
-+	struct bin_attribute	bin;
- 	int			stride;
- 	int			word_size;
- 	int			ncells;
-@@ -109,52 +110,15 @@ static ssize_t bin_attr_nvmem_write(struct file *filp, struct kobject *kobj,
- }
- 
- /* default read/write permissions */
--static struct bin_attribute bin_attr_rw_nvmem = {
-+static struct bin_attribute bin_attr_template = {
- 	.attr	= {
- 		.name	= "nvmem",
--		.mode	= S_IWUSR | S_IRUGO,
-+		.mode	= S_IRUSR,
- 	},
- 	.read	= bin_attr_nvmem_read,
- 	.write	= bin_attr_nvmem_write,
- };
- 
--static struct bin_attribute *nvmem_bin_rw_attributes[] = {
--	&bin_attr_rw_nvmem,
--	NULL,
--};
--
--static const struct attribute_group nvmem_bin_rw_group = {
--	.bin_attrs	= nvmem_bin_rw_attributes,
--};
--
--static const struct attribute_group *nvmem_rw_dev_groups[] = {
--	&nvmem_bin_rw_group,
--	NULL,
--};
--
--/* read only permission */
--static struct bin_attribute bin_attr_ro_nvmem = {
--	.attr	= {
--		.name	= "nvmem",
--		.mode	= S_IRUGO,
--	},
--	.read	= bin_attr_nvmem_read,
--};
--
--static struct bin_attribute *nvmem_bin_ro_attributes[] = {
--	&bin_attr_ro_nvmem,
--	NULL,
--};
--
--static const struct attribute_group nvmem_bin_ro_group = {
--	.bin_attrs	= nvmem_bin_ro_attributes,
--};
--
--static const struct attribute_group *nvmem_ro_dev_groups[] = {
--	&nvmem_bin_ro_group,
--	NULL,
--};
--
- static void nvmem_release(struct device *dev)
- {
- 	struct nvmem_device *nvmem = to_nvmem_device(dev);
-@@ -346,10 +310,8 @@ struct nvmem_device *nvmem_register(const struct nvmem_config *config)
- 
- 	nvmem->read_only = of_property_read_bool(np, "read-only") |
+@@ -312,6 +312,7 @@ struct nvmem_device *nvmem_register(const struct nvmem_config *config)
  			   config->read_only;
--
--	nvmem->dev.groups = nvmem->read_only ? nvmem_ro_dev_groups :
--					       nvmem_rw_dev_groups;
--
-+	nvmem->bin = bin_attr_template;
-+	nvmem->bin.attr.mode = nvmem->read_only ? : (S_IRUSR | S_IWUSR);
+ 	nvmem->bin = bin_attr_template;
+ 	nvmem->bin.attr.mode = nvmem->read_only ? : (S_IRUSR | S_IWUSR);
++	nvmem->bin.attr.mode |= config->perm;
+ 	nvmem->bin.size = nvmem->size;
  	device_initialize(&nvmem->dev);
  
- 	dev_dbg(&nvmem->dev, "Registering nvmem device %s\n", config->name);
-@@ -361,6 +323,10 @@ struct nvmem_device *nvmem_register(const struct nvmem_config *config)
- 		return ERR_PTR(rval);
- 	}
+diff --git a/include/linux/nvmem-provider.h b/include/linux/nvmem-provider.h
+index 0b68caf..de9a61f 100644
+--- a/include/linux/nvmem-provider.h
++++ b/include/linux/nvmem-provider.h
+@@ -23,6 +23,7 @@ struct nvmem_config {
+ 	const struct nvmem_cell_info	*cells;
+ 	int			ncells;
+ 	bool			read_only;
++	u16			perm; /* visibility in sysfs */
+ };
  
-+	rval = device_create_bin_file(&nvmem->dev, &nvmem->bin);
-+	if (rval)
-+		dev_err(&nvmem->dev, "Failed to create nvmem binary file\n");
-+
- 	if (config->cells)
- 		nvmem_add_cells(nvmem, config);
- 
-@@ -385,6 +351,7 @@ int nvmem_unregister(struct nvmem_device *nvmem)
- 	mutex_unlock(&nvmem_mutex);
- 
- 	nvmem_device_remove_all_cells(nvmem);
-+	device_remove_bin_file(&nvmem->dev, &nvmem->bin);
- 	device_del(&nvmem->dev);
- 
- 	return 0;
+ #if IS_ENABLED(CONFIG_NVMEM)
 -- 
 1.9.1
