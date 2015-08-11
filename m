@@ -1,40 +1,35 @@
 From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: [PATCH RFC 0/3] nvmem: make sysfs binary file permissions more flexible.
-Date: Tue, 11 Aug 2015 12:02:11 +0100
-Message-ID: <1439290931-18232-1-git-send-email-srinivas.kandagatla@linaro.org>
+Subject: [PATCH RFC 2/3] nvmem: set the size for the nvmem binary file.
+Date: Tue, 11 Aug 2015 12:03:36 +0100
+Message-ID: <1439291016-18333-1-git-send-email-srinivas.kandagatla@linaro.org>
+References: <1439290931-18232-1-git-send-email-srinivas.kandagatla@linaro.org>
 Return-path: <linux-arm-msm-owner@vger.kernel.org>
+In-Reply-To: <1439290931-18232-1-git-send-email-srinivas.kandagatla@linaro.org>
 Sender: linux-arm-msm-owner@vger.kernel.org
 To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 Cc: Andrew Lunn <andrew@lunn.ch>, wxt@rock-chips.com, linux-api@vger.kernel.org, Rob Herring <robh+dt@kernel.org>, sboyd@codeaurora.org, arnd@arndb.de, linux-arm-kernel@lists.infradead.org, khilman@kernel.org, s.hauer@pengutronix.de, linux-kernel@vger.kernel.org, linux-arm-msm@vger.kernel.org, mporter@konsulko.com, pantelis.antoniou@konsulko.com, devicetree@vger.kernel.org, Mark Brown <broonie@kernel.org>, maitysanchayan@gmail.com, p.zabel@pengutronix.de, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi All, 
+This patch sets the actual size of binary file to the nvmem size.
+Previously this was not possible as the core was using the static global
+data structures for attributes.
 
-Recent discussion raised by Andrew Lunn and others regarding default permission
-set on the nvmem binary sysfs file resulted in this small fixup patchset.
+Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+---
+ drivers/nvmem/core.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-By default nvmem core sets the readonly permission to everyone (S_IRUGO), this
-is not desirable by many providers as they would not want everyone to view things
-like passwords stored in the nvmem.
-
-This patchset fixes this by making the default as root-only and then the
-providers could supply with additional permissions if required. One of
-the patch in this set also sets correct size for the binary file too,
-so that the user would not even attempt to read past the size.
-
-I have tested this on IFC6410 with qfprom.
-
-Thanks,
-srini
-
-Srinivas Kandagatla (3):
-  nvmem: make default user binary file root-access only
-  nvmem: set the size for the nvmem binary file.
-  nvmem: add permission flags in nvmem_config
-
- drivers/nvmem/core.c           | 55 +++++++++---------------------------------
- include/linux/nvmem-provider.h |  1 +
- 2 files changed, 13 insertions(+), 43 deletions(-)
-
+diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
+index 103f6aa..414ed23 100644
+--- a/drivers/nvmem/core.c
++++ b/drivers/nvmem/core.c
+@@ -312,6 +312,7 @@ struct nvmem_device *nvmem_register(const struct nvmem_config *config)
+ 			   config->read_only;
+ 	nvmem->bin = bin_attr_template;
+ 	nvmem->bin.attr.mode = nvmem->read_only ? : (S_IRUSR | S_IWUSR);
++	nvmem->bin.size = nvmem->size;
+ 	device_initialize(&nvmem->dev);
+ 
+ 	dev_dbg(&nvmem->dev, "Registering nvmem device %s\n", config->name);
 -- 
 1.9.1
