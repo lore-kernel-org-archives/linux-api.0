@@ -1,35 +1,126 @@
 From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: [PATCH RFC 2/3] nvmem: set the size for the nvmem binary file.
-Date: Tue, 11 Aug 2015 12:03:36 +0100
-Message-ID: <1439291016-18333-1-git-send-email-srinivas.kandagatla@linaro.org>
+Subject: [PATCH RFC 1/3] nvmem: make default user binary file root-access only
+Date: Tue, 11 Aug 2015 12:03:12 +0100
+Message-ID: <1439290992-18283-1-git-send-email-srinivas.kandagatla@linaro.org>
 References: <1439290931-18232-1-git-send-email-srinivas.kandagatla@linaro.org>
-Return-path: <linux-arm-msm-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1439290931-18232-1-git-send-email-srinivas.kandagatla@linaro.org>
-Sender: linux-arm-msm-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 Cc: Andrew Lunn <andrew@lunn.ch>, wxt@rock-chips.com, linux-api@vger.kernel.org, Rob Herring <robh+dt@kernel.org>, sboyd@codeaurora.org, arnd@arndb.de, linux-arm-kernel@lists.infradead.org, khilman@kernel.org, s.hauer@pengutronix.de, linux-kernel@vger.kernel.org, linux-arm-msm@vger.kernel.org, mporter@konsulko.com, pantelis.antoniou@konsulko.com, devicetree@vger.kernel.org, Mark Brown <broonie@kernel.org>, maitysanchayan@gmail.com, p.zabel@pengutronix.de, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch sets the actual size of binary file to the nvmem size.
-Previously this was not possible as the core was using the static global
-data structures for attributes.
+As required by many providers like at24/at25/mxs-ocotp/qfprom and may be
+other providers would want to allow root-only to read the nvmem content.
+So making the defaults to be root-only access would address the request
+and also provide flexibility to providers to specify there own permissions
+on top of the root-only using the perm flag in nvmem_config.
+Making this dynamic did cut down lot of static binary attributes in the
+code.
 
 Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 ---
- drivers/nvmem/core.c | 1 +
- 1 file changed, 1 insertion(+)
+ drivers/nvmem/core.c | 53 ++++++++++------------------------------------------
+ 1 file changed, 10 insertions(+), 43 deletions(-)
 
 diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
-index 103f6aa..414ed23 100644
+index 35a42bb..103f6aa 100644
 --- a/drivers/nvmem/core.c
 +++ b/drivers/nvmem/core.c
-@@ -312,6 +312,7 @@ struct nvmem_device *nvmem_register(const struct nvmem_config *config)
+@@ -31,6 +31,7 @@ struct nvmem_device {
+ 	struct regmap		*regmap;
+ 	struct module		*owner;
+ 	struct device		dev;
++	struct bin_attribute	bin;
+ 	int			stride;
+ 	int			word_size;
+ 	int			ncells;
+@@ -109,52 +110,15 @@ static ssize_t bin_attr_nvmem_write(struct file *filp, struct kobject *kobj,
+ }
+ 
+ /* default read/write permissions */
+-static struct bin_attribute bin_attr_rw_nvmem = {
++static struct bin_attribute bin_attr_template = {
+ 	.attr	= {
+ 		.name	= "nvmem",
+-		.mode	= S_IWUSR | S_IRUGO,
++		.mode	= S_IRUSR,
+ 	},
+ 	.read	= bin_attr_nvmem_read,
+ 	.write	= bin_attr_nvmem_write,
+ };
+ 
+-static struct bin_attribute *nvmem_bin_rw_attributes[] = {
+-	&bin_attr_rw_nvmem,
+-	NULL,
+-};
+-
+-static const struct attribute_group nvmem_bin_rw_group = {
+-	.bin_attrs	= nvmem_bin_rw_attributes,
+-};
+-
+-static const struct attribute_group *nvmem_rw_dev_groups[] = {
+-	&nvmem_bin_rw_group,
+-	NULL,
+-};
+-
+-/* read only permission */
+-static struct bin_attribute bin_attr_ro_nvmem = {
+-	.attr	= {
+-		.name	= "nvmem",
+-		.mode	= S_IRUGO,
+-	},
+-	.read	= bin_attr_nvmem_read,
+-};
+-
+-static struct bin_attribute *nvmem_bin_ro_attributes[] = {
+-	&bin_attr_ro_nvmem,
+-	NULL,
+-};
+-
+-static const struct attribute_group nvmem_bin_ro_group = {
+-	.bin_attrs	= nvmem_bin_ro_attributes,
+-};
+-
+-static const struct attribute_group *nvmem_ro_dev_groups[] = {
+-	&nvmem_bin_ro_group,
+-	NULL,
+-};
+-
+ static void nvmem_release(struct device *dev)
+ {
+ 	struct nvmem_device *nvmem = to_nvmem_device(dev);
+@@ -346,10 +310,8 @@ struct nvmem_device *nvmem_register(const struct nvmem_config *config)
+ 
+ 	nvmem->read_only = of_property_read_bool(np, "read-only") |
  			   config->read_only;
- 	nvmem->bin = bin_attr_template;
- 	nvmem->bin.attr.mode = nvmem->read_only ? : (S_IRUSR | S_IWUSR);
-+	nvmem->bin.size = nvmem->size;
+-
+-	nvmem->dev.groups = nvmem->read_only ? nvmem_ro_dev_groups :
+-					       nvmem_rw_dev_groups;
+-
++	nvmem->bin = bin_attr_template;
++	nvmem->bin.attr.mode = nvmem->read_only ? : (S_IRUSR | S_IWUSR);
  	device_initialize(&nvmem->dev);
  
  	dev_dbg(&nvmem->dev, "Registering nvmem device %s\n", config->name);
+@@ -361,6 +323,10 @@ struct nvmem_device *nvmem_register(const struct nvmem_config *config)
+ 		return ERR_PTR(rval);
+ 	}
+ 
++	rval = device_create_bin_file(&nvmem->dev, &nvmem->bin);
++	if (rval)
++		dev_err(&nvmem->dev, "Failed to create nvmem binary file\n");
++
+ 	if (config->cells)
+ 		nvmem_add_cells(nvmem, config);
+ 
+@@ -385,6 +351,7 @@ int nvmem_unregister(struct nvmem_device *nvmem)
+ 	mutex_unlock(&nvmem_mutex);
+ 
+ 	nvmem_device_remove_all_cells(nvmem);
++	device_remove_bin_file(&nvmem->dev, &nvmem->bin);
+ 	device_del(&nvmem->dev);
+ 
+ 	return 0;
 -- 
 1.9.1
