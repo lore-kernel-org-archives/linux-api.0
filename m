@@ -1,45 +1,52 @@
-From: Cristina Opriceana <cristina.opriceana-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 2/2] Documentation: iio-trig-sysfs: Add remove_trigger
- attribute ABI
-Date: Wed, 12 Aug 2015 14:29:41 +0300
-Message-ID: <8d4239f13743401a9adf67fc919c552c5f42537a.1439378363.git.cristina.opriceana@gmail.com>
-References: <cover.1439378363.git.cristina.opriceana@gmail.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH v7 3/6] mm: Introduce VM_LOCKONFAULT
+Date: Wed, 12 Aug 2015 13:59:09 +0200
+Message-ID: <20150812115909.GA5182@dhcp22.suse.cz>
+References: <1439097776-27695-1-git-send-email-emunson@akamai.com>
+ <1439097776-27695-4-git-send-email-emunson@akamai.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <cover.1439378363.git.cristina.opriceana-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
-Cc: daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <1439097776-27695-4-git-send-email-emunson@akamai.com>
+Sender: owner-linux-mm@kvack.org
+To: Eric B Munson <emunson@akamai.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Jonathan Corbet <corbet@lwn.net>, "Kirill A. Shutemov" <kirill@shutemov.name>, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This patch adds the documentation ABI for the remove_trigger
-attribute, provided by the iio-trig-sysfs stand-alone driver.
+On Sun 09-08-15 01:22:53, Eric B Munson wrote:
+> The cost of faulting in all memory to be locked can be very high when
+> working with large mappings.  If only portions of the mapping will be
+> used this can incur a high penalty for locking.
+> 
+> For the example of a large file, this is the usage pattern for a large
+> statical language model (probably applies to other statical or graphical
+> models as well).  For the security example, any application transacting
+> in data that cannot be swapped out (credit card data, medical records,
+> etc).
+> 
+> This patch introduces the ability to request that pages are not
+> pre-faulted, but are placed on the unevictable LRU when they are finally
+> faulted in.  The VM_LOCKONFAULT flag will be used together with
+> VM_LOCKED and has no effect when set without VM_LOCKED.
 
-Signed-off-by: Cristina Opriceana <cristina.opriceana-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
----
- Documentation/ABI/testing/sysfs-bus-iio-trigger-sysfs | 11 +++++++++++
- 1 file changed, 11 insertions(+)
+I do not like this very much to be honest. We have only few bits
+left there and it seems this is not really necessary. I thought that
+LOCKONFAULT acts as a modifier to the mlock call to tell whether to
+poppulate or not. The only place we have to persist it is
+mlockall(MCL_FUTURE) AFAICS. And this can be handled by an additional
+field in the mm_struct. This could be handled at __mm_populate level.
+So unless I am missing something this would be much more easier
+in the end we no new bit in VM flags would be necessary.
 
-diff --git a/Documentation/ABI/testing/sysfs-bus-iio-trigger-sysfs b/Documentation/ABI/testing/sysfs-bus-iio-trigger-sysfs
-index 887aa92..6de6e6b 100644
---- a/Documentation/ABI/testing/sysfs-bus-iio-trigger-sysfs
-+++ b/Documentation/ABI/testing/sysfs-bus-iio-trigger-sysfs
-@@ -20,3 +20,14 @@ Description:
- 		into the associated file, which will serve as the id of the
- 		trigger. If the trigger with the specified id is already present
- 		in the system, an invalid argument message will be returned.
-+
-+What:		/sys/bus/iio/devices/iio_sysfs_trigger/remove_trigger
-+KernelVersion:	2.6.39
-+Contact:	linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-+Description:
-+		This attribute is used to unregister and delete a previously
-+		created trigger from the list of available triggers. In order to
-+		achieve this, one should write a positive integer into the
-+		associated file, representing the id of the trigger that needs
-+		to be removed. If the trigger can't be found, an invalid
-+		argument message will be returned to the user.
+This would obviously mean that the LOCKONFAULT couldn't be exported to
+the userspace but is this really necessary?
 -- 
-1.9.1
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
