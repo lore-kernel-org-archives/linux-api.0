@@ -1,52 +1,51 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH v7 3/6] mm: Introduce VM_LOCKONFAULT
-Date: Wed, 12 Aug 2015 13:59:09 +0200
-Message-ID: <20150812115909.GA5182@dhcp22.suse.cz>
-References: <1439097776-27695-1-git-send-email-emunson@akamai.com>
- <1439097776-27695-4-git-send-email-emunson@akamai.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <1439097776-27695-4-git-send-email-emunson@akamai.com>
-Sender: owner-linux-mm@kvack.org
-To: Eric B Munson <emunson@akamai.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Jonathan Corbet <corbet@lwn.net>, "Kirill A. Shutemov" <kirill@shutemov.name>, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: [PATCH v9 0/3] Enable PPI sysfs interface for TPM 2.0
+Date: Wed, 12 Aug 2015 17:05:40 +0300
+Message-ID: <1439388347-22325-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: peterhuewe-Mmb7MZpHnFY@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun 09-08-15 01:22:53, Eric B Munson wrote:
-> The cost of faulting in all memory to be locked can be very high when
-> working with large mappings.  If only portions of the mapping will be
-> used this can incur a high penalty for locking.
-> 
-> For the example of a large file, this is the usage pattern for a large
-> statical language model (probably applies to other statical or graphical
-> models as well).  For the security example, any application transacting
-> in data that cannot be swapped out (credit card data, medical records,
-> etc).
-> 
-> This patch introduces the ability to request that pages are not
-> pre-faulted, but are placed on the unevictable LRU when they are finally
-> faulted in.  The VM_LOCKONFAULT flag will be used together with
-> VM_LOCKED and has no effect when set without VM_LOCKED.
+v9:
+* Fixed naming for __compat_only_sysfs_link_entry_to_kobj()
 
-I do not like this very much to be honest. We have only few bits
-left there and it seems this is not really necessary. I thought that
-LOCKONFAULT acts as a modifier to the mlock call to tell whether to
-poppulate or not. The only place we have to persist it is
-mlockall(MCL_FUTURE) AFAICS. And this can be handled by an additional
-field in the mm_struct. This could be handled at __mm_populate level.
-So unless I am missing something this would be much more easier
-in the end we no new bit in VM flags would be necessary.
+v8:
+* Renamed sysfs_link_entry_to_kobj() to
+  __compat_only_sysfs_link_entry_to_kobj()
 
-This would obviously mean that the LOCKONFAULT couldn't be exported to
-the userspace but is this really necessary?
+v7:
+* Fixed compile error when CONFIG_SYSFS is not enabled.
+
+v6:
+* Updated documentation.
+
+v5:
+* Removed dangling export of kernfs_remove_by_name_ns() from the sysfs
+  patch.
+
+v4:
+* Use sysfs_remove_link()
+
+v3:
+* Fixed to_tpm_chip() macro.
+* Split into two patches.
+* Renamed sysfs_link_group_to_kobj to sysfs_link_entry_to_kobj
+* Only create the "backwards compatibility" symlink for TPM 1.x devices.
+
+Jarkko Sakkinen (3):
+  sysfs: added __compat_only_sysfs_link_entry_to_kobj()
+  tpm: move the PPI attributes to character device directory.
+  tpm: update PPI documentation to address the location change.
+
+ Documentation/ABI/testing/sysfs-driver-ppi | 19 ++++++++-----
+ drivers/char/tpm/tpm-chip.c                | 24 ++++++++++------
+ drivers/char/tpm/tpm.h                     | 17 ++++--------
+ drivers/char/tpm/tpm_ppi.c                 | 34 ++++++++---------------
+ fs/sysfs/group.c                           | 44 ++++++++++++++++++++++++++++++
+ include/linux/sysfs.h                      | 11 ++++++++
+ 6 files changed, 100 insertions(+), 49 deletions(-)
+
 -- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+2.5.0
