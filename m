@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 3/5] sd: implement the Persistent Reservation API
-Date: Wed, 12 Aug 2015 08:23:22 +0200
-Message-ID: <1439360604-16192-4-git-send-email-hch@lst.de>
+Subject: [PATCH 4/5] dm: refactor ioctl handling
+Date: Wed, 12 Aug 2015 08:23:23 +0200
+Message-ID: <1439360604-16192-5-git-send-email-hch@lst.de>
 References: <1439360604-16192-1-git-send-email-hch@lst.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1439360604-16192-1-git-send-email-hch@lst.de>
@@ -10,128 +10,421 @@ To: Jens Axboe <axboe@fb.com>
 Cc: linux-scsi@vger.kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This is a mostly trivial mapping to the PERSISTENT RESERVE IN/OUT
-commands.
+This moves the call to blkdev_ioctl and the argument checking to core code,
+and only leaves a callout to find the block device to operate on it the
+targets.  This will simplifies the code and will allow us to pass through
+ioctl-like command using other methods in the next patch.
+
+Also split out a helper around calling the prepare_ioctl method that will
+be reused for persistent reservation handling.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/scsi/sd.c | 90 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 90 insertions(+)
+ drivers/md/dm-flakey.c        | 16 +++++++-------
+ drivers/md/dm-linear.c        | 14 ++++++------
+ drivers/md/dm-log-writes.c    | 13 ++++++-----
+ drivers/md/dm-mpath.c         | 32 +++++++++++----------------
+ drivers/md/dm-switch.c        | 21 ++++++++----------
+ drivers/md/dm-verity.c        | 15 ++++++-------
+ drivers/md/dm.c               | 50 ++++++++++++++++++++++++++++++++-----------
+ include/linux/device-mapper.h |  6 +++---
+ 8 files changed, 89 insertions(+), 78 deletions(-)
 
-diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
-index 160e44e..14bc2d7 100644
---- a/drivers/scsi/sd.c
-+++ b/drivers/scsi/sd.c
-@@ -51,6 +51,7 @@
- #include <linux/async.h>
- #include <linux/slab.h>
- #include <linux/pm_runtime.h>
-+#include <linux/pr.h>
- #include <asm/uaccess.h>
- #include <asm/unaligned.h>
- 
-@@ -1535,6 +1536,94 @@ static int sd_compat_ioctl(struct block_device *bdev, fmode_t mode,
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index 0448124..e314e49 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -371,20 +371,20 @@ static void flakey_status(struct dm_target *ti, status_type_t type,
+ 	}
  }
- #endif
  
-+static char sd_pr_type(enum pr_type type)
-+{
-+	switch (type) {
-+	case PR_WRITE_EXCLUSIVE:
-+		return 0x01;
-+	case PR_EXCLUSIVE_ACCESS:
-+		return 0x03;
-+	case PR_WRITE_EXCLUSIVE_REG_ONLY:
-+		return 0x05;
-+	case PR_EXCLUSIVE_ACCESS_REG_ONLY:
-+		return 0x06;
-+	case PR_WRITE_EXCLUSIVE_ALL_REGS:
-+		return 0x07;
-+	case PR_EXCLUSIVE_ACCESS_ALL_REGS:
-+		return 0x08;
-+	default:
-+		return 0;
-+	}
-+};
+-static int flakey_ioctl(struct dm_target *ti, unsigned int cmd, unsigned long arg)
++static int flakey_prepare_ioctl(struct dm_target *ti,
++		struct block_device **bdev, fmode_t *mode)
+ {
+ 	struct flakey_c *fc = ti->private;
+-	struct dm_dev *dev = fc->dev;
+-	int r = 0;
 +
-+static int sd_pr_command(struct block_device *bdev, u8 sa,
-+		u64 key, u64 sa_key, u8 type, u8 flags)
-+{
-+	struct scsi_device *sdev = scsi_disk(bdev->bd_disk)->device;
-+	struct scsi_sense_hdr sshdr;
-+	int result;
-+	u8 cmd[16] = { 0, };
-+	u8 data[24] = { 0, };
++	*bdev = fc->dev->bdev;
+ 
+ 	/*
+ 	 * Only pass ioctls through if the device sizes match exactly.
+ 	 */
+ 	if (fc->start ||
+-	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
+-		r = scsi_verify_blk_ioctl(NULL, cmd);
+-
+-	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
++	    ti->len != i_size_read((*bdev)->bd_inode) >> SECTOR_SHIFT)
++		return 1;
++	return 0;
+ }
+ 
+ static int flakey_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+@@ -418,7 +418,7 @@ static struct target_type flakey_target = {
+ 	.map    = flakey_map,
+ 	.end_io = flakey_end_io,
+ 	.status = flakey_status,
+-	.ioctl	= flakey_ioctl,
++	.prepare_ioctl = flakey_prepare_ioctl,
+ 	.merge	= flakey_merge,
+ 	.iterate_devices = flakey_iterate_devices,
+ };
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 53e848c..f81f68e 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -113,21 +113,21 @@ static void linear_status(struct dm_target *ti, status_type_t type,
+ 	}
+ }
+ 
+-static int linear_ioctl(struct dm_target *ti, unsigned int cmd,
+-			unsigned long arg)
++static int linear_prepare_ioctl(struct dm_target *ti,
++		struct block_device **bdev, fmode_t *mode)
+ {
+ 	struct linear_c *lc = (struct linear_c *) ti->private;
+ 	struct dm_dev *dev = lc->dev;
+-	int r = 0;
 +
-+	cmd[0] = PERSISTENT_RESERVE_OUT;
-+	cmd[1] = sa;
-+	cmd[2] = type;
-+	put_unaligned_be32(sizeof(data), &cmd[5]);
-+
-+	put_unaligned_be64(key, &data[0]);
-+	put_unaligned_be64(sa_key, &data[8]);
-+	data[20] = flags;
-+
-+	result = scsi_execute_req(sdev, cmd, DMA_TO_DEVICE, &data, sizeof(data),
-+			&sshdr, SD_TIMEOUT, SD_MAX_RETRIES, NULL);
-+
-+	if ((driver_byte(result) & DRIVER_SENSE) &&
-+	    (scsi_sense_valid(&sshdr))) {
-+		sdev_printk(KERN_INFO, sdev, "PR command failed: %d\n", result);
-+		scsi_print_sense_hdr(sdev, NULL, &sshdr);
-+	}
-+
-+	return result;
-+}
-+
-+static int sd_pr_register(struct block_device *bdev, u64 old_key, u64 new_key,
-+		bool ignore)
-+{
-+	return sd_pr_command(bdev, ignore ? 0x06 : 0x00, old_key, new_key, 0,
-+			     (1 << 0) /* APTPL */ |
-+			     (1 << 2) /* ALL_TG_PT */);
-+}
-+
-+static int sd_pr_reserve(struct block_device *bdev, u64 key, enum pr_type type)
-+{
-+	return sd_pr_command(bdev, 0x01, key, 0, sd_pr_type(type), 0);
-+}
-+
-+static int sd_pr_release(struct block_device *bdev, u64 key, enum pr_type type)
-+{
-+	return sd_pr_command(bdev, 0x02, key, 0, sd_pr_type(type), 0);
-+}
-+
-+static int sd_pr_preempt(struct block_device *bdev, u64 old_key, u64 new_key,
-+		enum pr_type type, bool abort)
-+{
-+	return sd_pr_command(bdev, abort ? 0x05 : 0x04, old_key, new_key,
-+			     sd_pr_type(type), 0);
-+}
-+
-+static int sd_pr_clear(struct block_device *bdev, u64 key)
-+{
-+	return sd_pr_command(bdev, 0x03, key, 0, 0, 0);
-+}
-+
-+static const struct pr_ops sd_pr_ops = {
-+	.pr_register	= sd_pr_register,
-+	.pr_reserve	= sd_pr_reserve,
-+	.pr_release	= sd_pr_release,
-+	.pr_preempt	= sd_pr_preempt,
-+	.pr_clear	= sd_pr_clear,
-+};
-+
- static const struct block_device_operations sd_fops = {
- 	.owner			= THIS_MODULE,
- 	.open			= sd_open,
-@@ -1547,6 +1636,7 @@ static const struct block_device_operations sd_fops = {
- 	.check_events		= sd_check_events,
- 	.revalidate_disk	= sd_revalidate_disk,
- 	.unlock_native_capacity	= sd_unlock_native_capacity,
-+	.pr_ops			= &sd_pr_ops,
++	*bdev = dev->bdev;
+ 
+ 	/*
+ 	 * Only pass ioctls through if the device sizes match exactly.
+ 	 */
+ 	if (lc->start ||
+ 	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
+-		r = scsi_verify_blk_ioctl(NULL, cmd);
+-
+-	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
++		return 1;
++	return 0;
+ }
+ 
+ static int linear_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+@@ -161,7 +161,7 @@ static struct target_type linear_target = {
+ 	.dtr    = linear_dtr,
+ 	.map    = linear_map,
+ 	.status = linear_status,
+-	.ioctl  = linear_ioctl,
++	.prepare_ioctl = linear_prepare_ioctl,
+ 	.merge  = linear_merge,
+ 	.iterate_devices = linear_iterate_devices,
+ };
+diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
+index e9d1748..9601d9d 100644
+--- a/drivers/md/dm-log-writes.c
++++ b/drivers/md/dm-log-writes.c
+@@ -709,20 +709,19 @@ static void log_writes_status(struct dm_target *ti, status_type_t type,
+ 	}
+ }
+ 
+-static int log_writes_ioctl(struct dm_target *ti, unsigned int cmd,
+-			    unsigned long arg)
++static int log_writes_prepare_ioctl(struct dm_target *ti,
++		struct block_device **bdev, fmode_t *mode)
+ {
+ 	struct log_writes_c *lc = ti->private;
+ 	struct dm_dev *dev = lc->dev;
+-	int r = 0;
+ 
++	*bdev = dev->bdev;
+ 	/*
+ 	 * Only pass ioctls through if the device sizes match exactly.
+ 	 */
+ 	if (ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
+-		r = scsi_verify_blk_ioctl(NULL, cmd);
+-
+-	return r ? : __blkdev_driver_ioctl(dev->bdev, dev->mode, cmd, arg);
++		return 1;
++	return 0;
+ }
+ 
+ static int log_writes_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+@@ -792,7 +791,7 @@ static struct target_type log_writes_target = {
+ 	.map    = log_writes_map,
+ 	.end_io = normal_end_io,
+ 	.status = log_writes_status,
+-	.ioctl	= log_writes_ioctl,
++	.prepare_ioctl = log_writes_prepare_ioctl,
+ 	.merge	= log_writes_merge,
+ 	.message = log_writes_message,
+ 	.iterate_devices = log_writes_iterate_devices,
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index eff7bdd..97cf835 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1548,18 +1548,14 @@ out:
+ 	return r;
+ }
+ 
+-static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
+-			   unsigned long arg)
++static int multipath_prepare_ioctl(struct dm_target *ti,
++		struct block_device **bdev, fmode_t *mode)
+ {
+ 	struct multipath *m = ti->private;
+ 	struct pgpath *pgpath;
+-	struct block_device *bdev;
+-	fmode_t mode;
+ 	unsigned long flags;
+ 	int r;
+ 
+-	bdev = NULL;
+-	mode = 0;
+ 	r = 0;
+ 
+ 	spin_lock_irqsave(&m->lock, flags);
+@@ -1570,26 +1566,17 @@ static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
+ 	pgpath = m->current_pgpath;
+ 
+ 	if (pgpath) {
+-		bdev = pgpath->path.dev->bdev;
+-		mode = pgpath->path.dev->mode;
++		*bdev = pgpath->path.dev->bdev;
++		*mode = pgpath->path.dev->mode;
+ 	}
+ 
+ 	if ((pgpath && m->queue_io) || (!pgpath && m->queue_if_no_path))
+ 		r = -ENOTCONN;
+-	else if (!bdev)
++	else if (!*bdev)
+ 		r = -EIO;
+ 
+ 	spin_unlock_irqrestore(&m->lock, flags);
+ 
+-	/*
+-	 * Only pass ioctls through if the device sizes match exactly.
+-	 */
+-	if (!bdev || ti->len != i_size_read(bdev->bd_inode) >> SECTOR_SHIFT) {
+-		int err = scsi_verify_blk_ioctl(NULL, cmd);
+-		if (err)
+-			r = err;
+-	}
+-
+ 	if (r == -ENOTCONN && !fatal_signal_pending(current)) {
+ 		spin_lock_irqsave(&m->lock, flags);
+ 		if (!m->current_pg) {
+@@ -1602,7 +1589,12 @@ static int multipath_ioctl(struct dm_target *ti, unsigned int cmd,
+ 		dm_table_run_md_queue_async(m->ti->table);
+ 	}
+ 
+-	return r ? : __blkdev_driver_ioctl(bdev, mode, cmd, arg);
++	/*
++	 * Only pass ioctls through if the device sizes match exactly.
++	 */
++	if (!r && ti->len != i_size_read((*bdev)->bd_inode) >> SECTOR_SHIFT)
++		return 1;
++	return r;
+ }
+ 
+ static int multipath_iterate_devices(struct dm_target *ti,
+@@ -1718,7 +1710,7 @@ static struct target_type multipath_target = {
+ 	.resume = multipath_resume,
+ 	.status = multipath_status,
+ 	.message = multipath_message,
+-	.ioctl  = multipath_ioctl,
++	.prepare_ioctl = multipath_prepare_ioctl,
+ 	.iterate_devices = multipath_iterate_devices,
+ 	.busy = multipath_busy,
+ };
+diff --git a/drivers/md/dm-switch.c b/drivers/md/dm-switch.c
+index 50fca46..b128575 100644
+--- a/drivers/md/dm-switch.c
++++ b/drivers/md/dm-switch.c
+@@ -511,27 +511,24 @@ static void switch_status(struct dm_target *ti, status_type_t type,
+  *
+  * Passthrough all ioctls to the path for sector 0
+  */
+-static int switch_ioctl(struct dm_target *ti, unsigned cmd,
+-			unsigned long arg)
++static int switch_prepare_ioctl(struct dm_target *ti,
++		struct block_device **bdev, fmode_t *mode)
+ {
+ 	struct switch_ctx *sctx = ti->private;
+-	struct block_device *bdev;
+-	fmode_t mode;
+ 	unsigned path_nr;
+-	int r = 0;
+ 
+ 	path_nr = switch_get_path_nr(sctx, 0);
+ 
+-	bdev = sctx->path_list[path_nr].dmdev->bdev;
+-	mode = sctx->path_list[path_nr].dmdev->mode;
++	*bdev = sctx->path_list[path_nr].dmdev->bdev;
++	*mode = sctx->path_list[path_nr].dmdev->mode;
+ 
+ 	/*
+ 	 * Only pass ioctls through if the device sizes match exactly.
+ 	 */
+-	if (ti->len + sctx->path_list[path_nr].start != i_size_read(bdev->bd_inode) >> SECTOR_SHIFT)
+-		r = scsi_verify_blk_ioctl(NULL, cmd);
+-
+-	return r ? : __blkdev_driver_ioctl(bdev, mode, cmd, arg);
++	if (ti->len + sctx->path_list[path_nr].start !=
++	    i_size_read((*bdev)->bd_inode) >> SECTOR_SHIFT)
++		return 1;
++	return 0;
+ }
+ 
+ static int switch_iterate_devices(struct dm_target *ti,
+@@ -560,7 +557,7 @@ static struct target_type switch_target = {
+ 	.map = switch_map,
+ 	.message = switch_message,
+ 	.status = switch_status,
+-	.ioctl = switch_ioctl,
++	.prepare_ioctl = switch_prepare_ioctl,
+ 	.iterate_devices = switch_iterate_devices,
  };
  
- /**
+diff --git a/drivers/md/dm-verity.c b/drivers/md/dm-verity.c
+index 4b34df8..ce1764c 100644
+--- a/drivers/md/dm-verity.c
++++ b/drivers/md/dm-verity.c
+@@ -635,18 +635,17 @@ static void verity_status(struct dm_target *ti, status_type_t type,
+ 	}
+ }
+ 
+-static int verity_ioctl(struct dm_target *ti, unsigned cmd,
+-			unsigned long arg)
++static int verity_prepare_ioctl(struct dm_target *ti,
++		struct block_device **bdev, fmode_t *mode)
+ {
+ 	struct dm_verity *v = ti->private;
+-	int r = 0;
++
++	*bdev = v->data_dev->bdev;
+ 
+ 	if (v->data_start ||
+ 	    ti->len != i_size_read(v->data_dev->bdev->bd_inode) >> SECTOR_SHIFT)
+-		r = scsi_verify_blk_ioctl(NULL, cmd);
+-
+-	return r ? : __blkdev_driver_ioctl(v->data_dev->bdev, v->data_dev->mode,
+-				     cmd, arg);
++		return 1;
++	return 0;
+ }
+ 
+ static int verity_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
+@@ -995,7 +994,7 @@ static struct target_type verity_target = {
+ 	.dtr		= verity_dtr,
+ 	.map		= verity_map,
+ 	.status		= verity_status,
+-	.ioctl		= verity_ioctl,
++	.prepare_ioctl	= verity_prepare_ioctl,
+ 	.merge		= verity_merge,
+ 	.iterate_devices = verity_iterate_devices,
+ 	.io_hints	= verity_io_hints,
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 7f367fc..49e4719 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -556,18 +556,16 @@ static int dm_blk_getgeo(struct block_device *bdev, struct hd_geometry *geo)
+ 	return dm_get_geometry(md, geo);
+ }
+ 
+-static int dm_blk_ioctl(struct block_device *bdev, fmode_t mode,
+-			unsigned int cmd, unsigned long arg)
++static int dm_get_live_table_for_ioctl(struct mapped_device *md,
++		struct dm_target **tgt, struct block_device **bdev,
++		fmode_t *mode, int *srcu_idx)
+ {
+-	struct mapped_device *md = bdev->bd_disk->private_data;
+-	int srcu_idx;
+ 	struct dm_table *map;
+-	struct dm_target *tgt;
+-	int r = -ENOTTY;
++	int r;
+ 
+ retry:
+-	map = dm_get_live_table(md, &srcu_idx);
+-
++	r = -ENOTTY;
++	map = dm_get_live_table(md, srcu_idx);
+ 	if (!map || !dm_table_get_size(map))
+ 		goto out;
+ 
+@@ -575,8 +573,9 @@ retry:
+ 	if (dm_table_get_num_targets(map) != 1)
+ 		goto out;
+ 
+-	tgt = dm_table_get_target(map, 0);
+-	if (!tgt->type->ioctl)
++	*tgt = dm_table_get_target(map, 0);
++
++	if (!(*tgt)->type->prepare_ioctl)
+ 		goto out;
+ 
+ 	if (dm_suspended_md(md)) {
+@@ -584,16 +583,41 @@ retry:
+ 		goto out;
+ 	}
+ 
+-	r = tgt->type->ioctl(tgt, cmd, arg);
++	r = (*tgt)->type->prepare_ioctl(*tgt, bdev, mode);
++	if (r < 0)
++		goto out;
+ 
+-out:
+-	dm_put_live_table(md, srcu_idx);
++	return r;
+ 
++out:
++	dm_put_live_table(md, *srcu_idx);
+ 	if (r == -ENOTCONN) {
+ 		msleep(10);
+ 		goto retry;
+ 	}
++	return r;
++}
++
++static int dm_blk_ioctl(struct block_device *bdev, fmode_t mode,
++			unsigned int cmd, unsigned long arg)
++{
++	struct mapped_device *md = bdev->bd_disk->private_data;
++	struct dm_target *tgt;
++	int srcu_idx, r;
++
++	r = dm_get_live_table_for_ioctl(md, &tgt, &bdev, &mode, &srcu_idx);
++	if (r < 0)
++		return r;
++
++	if (r > 0) {
++		r = scsi_verify_blk_ioctl(NULL, cmd);
++		if (r)
++			goto out;
++	}
+ 
++	r =  __blkdev_driver_ioctl(bdev, mode, cmd, arg);
++out:
++	dm_put_live_table(md, srcu_idx);
+ 	return r;
+ }
+ 
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 51cc1de..9f1e7e9 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -79,8 +79,8 @@ typedef void (*dm_status_fn) (struct dm_target *ti, status_type_t status_type,
+ 
+ typedef int (*dm_message_fn) (struct dm_target *ti, unsigned argc, char **argv);
+ 
+-typedef int (*dm_ioctl_fn) (struct dm_target *ti, unsigned int cmd,
+-			    unsigned long arg);
++typedef int (*dm_prepare_ioctl_fn) (struct dm_target *ti,
++			    struct block_device **bdev, fmode_t *mode);
+ 
+ typedef int (*dm_merge_fn) (struct dm_target *ti, struct bvec_merge_data *bvm,
+ 			    struct bio_vec *biovec, int max_size);
+@@ -159,7 +159,7 @@ struct target_type {
+ 	dm_resume_fn resume;
+ 	dm_status_fn status;
+ 	dm_message_fn message;
+-	dm_ioctl_fn ioctl;
++	dm_prepare_ioctl_fn prepare_ioctl;
+ 	dm_merge_fn merge;
+ 	dm_busy_fn busy;
+ 	dm_iterate_devices_fn iterate_devices;
 -- 
 1.9.1
