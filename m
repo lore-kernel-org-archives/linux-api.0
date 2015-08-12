@@ -1,311 +1,154 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 1/5] block: cleanup blkdev_ioctl
-Date: Wed, 12 Aug 2015 08:23:20 +0200
-Message-ID: <1439360604-16192-2-git-send-email-hch@lst.de>
-References: <1439360604-16192-1-git-send-email-hch@lst.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1439360604-16192-1-git-send-email-hch@lst.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@fb.com>
-Cc: linux-scsi@vger.kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH v7 2/6] mm: mlock: Add new mlock system call
+Date: Wed, 12 Aug 2015 11:45:58 +0200
+Message-ID: <20150812094558.GD14940@dhcp22.suse.cz>
+References: <1439097776-27695-1-git-send-email-emunson@akamai.com>
+ <1439097776-27695-3-git-send-email-emunson@akamai.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1439097776-27695-3-git-send-email-emunson@akamai.com>
+Sender: owner-linux-mm@kvack.org
+To: Eric B Munson <emunson@akamai.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Heiko Carstens <heiko.carstens@de.ibm.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Catalin Marinas <catalin.marinas@arm.com>, Stephen Rothwell <sfr@canb.auug.org.au>, Guenter Roeck <linux@roeck-us.net>, Andrea Arcangeli <aarcange@redhat.com>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, adi-buildroot-devel@lists.sourceforge.net, linux-cris-kernel@axis.com, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-am33-list@redhat.com, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
-Split out helpers for all non-trivial ioctls to make this function simpler,
-and also start passing around a pointer version of the argument, as that's
-what most ioctl handlers actually need.
+On Sun 09-08-15 01:22:52, Eric B Munson wrote:
+> With the refactored mlock code, introduce a new system call for mlock.
+> The new call will allow the user to specify what lock states are being
+> added.  mlock2 is trivial at the moment, but a follow on patch will add
+> a new mlock state making it useful.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- block/ioctl.c | 227 ++++++++++++++++++++++++++++++++--------------------------
- 1 file changed, 127 insertions(+), 100 deletions(-)
+Looks good to me
 
-diff --git a/block/ioctl.c b/block/ioctl.c
-index 8061eba..df62b47 100644
---- a/block/ioctl.c
-+++ b/block/ioctl.c
-@@ -193,10 +193,20 @@ int blkdev_reread_part(struct block_device *bdev)
- }
- EXPORT_SYMBOL(blkdev_reread_part);
- 
--static int blk_ioctl_discard(struct block_device *bdev, uint64_t start,
--			     uint64_t len, int secure)
-+static int blk_ioctl_discard(struct block_device *bdev, fmode_t mode,
-+		unsigned long arg, unsigned long flags)
- {
--	unsigned long flags = 0;
-+	uint64_t range[2];
-+	uint64_t start, len;
-+
-+	if (!(mode & FMODE_WRITE))
-+		return -EBADF;
-+
-+	if (copy_from_user(range, (void __user *)arg, sizeof(range)))
-+		return -EFAULT;
-+
-+	start = range[0];
-+	len = range[1];
- 
- 	if (start & 511)
- 		return -EINVAL;
-@@ -207,14 +217,24 @@ static int blk_ioctl_discard(struct block_device *bdev, uint64_t start,
- 
- 	if (start + len > (i_size_read(bdev->bd_inode) >> 9))
- 		return -EINVAL;
--	if (secure)
--		flags |= BLKDEV_DISCARD_SECURE;
- 	return blkdev_issue_discard(bdev, start, len, GFP_KERNEL, flags);
- }
- 
--static int blk_ioctl_zeroout(struct block_device *bdev, uint64_t start,
--			     uint64_t len)
-+static int blk_ioctl_zeroout(struct block_device *bdev, fmode_t mode,
-+		unsigned long arg)
- {
-+	uint64_t range[2];
-+	uint64_t start, len;
-+
-+	if (!(mode & FMODE_WRITE))
-+		return -EBADF;
-+
-+	if (copy_from_user(range, (void __user *)arg, sizeof(range)))
-+		return -EFAULT;
-+
-+	start = range[0];
-+	len = range[1];
-+
- 	if (start & 511)
- 		return -EINVAL;
- 	if (len & 511)
-@@ -295,89 +315,115 @@ static inline int is_unrecognized_ioctl(int ret)
- 		ret == -ENOIOCTLCMD;
- }
- 
--/*
-- * always keep this in sync with compat_blkdev_ioctl()
-- */
--int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
--			unsigned long arg)
-+static int blkdev_flushbuf(struct block_device *bdev, fmode_t mode,
-+		unsigned cmd, unsigned long arg)
- {
--	struct gendisk *disk = bdev->bd_disk;
--	struct backing_dev_info *bdi;
--	loff_t size;
--	int ret, n;
--	unsigned int max_sectors;
-+	int ret;
- 
--	switch(cmd) {
--	case BLKFLSBUF:
--		if (!capable(CAP_SYS_ADMIN))
--			return -EACCES;
--
--		ret = __blkdev_driver_ioctl(bdev, mode, cmd, arg);
--		if (!is_unrecognized_ioctl(ret))
--			return ret;
-+	if (!capable(CAP_SYS_ADMIN))
-+		return -EACCES;
- 
--		fsync_bdev(bdev);
--		invalidate_bdev(bdev);
--		return 0;
-+	ret = __blkdev_driver_ioctl(bdev, mode, cmd, arg);
-+	if (!is_unrecognized_ioctl(ret))
-+		return ret;
- 
--	case BLKROSET:
--		ret = __blkdev_driver_ioctl(bdev, mode, cmd, arg);
--		if (!is_unrecognized_ioctl(ret))
--			return ret;
--		if (!capable(CAP_SYS_ADMIN))
--			return -EACCES;
--		if (get_user(n, (int __user *)(arg)))
--			return -EFAULT;
--		set_device_ro(bdev, n);
--		return 0;
-+	fsync_bdev(bdev);
-+	invalidate_bdev(bdev);
-+	return 0;
-+}
- 
--	case BLKDISCARD:
--	case BLKSECDISCARD: {
--		uint64_t range[2];
-+static int blkdev_roset(struct block_device *bdev, fmode_t mode,
-+		unsigned cmd, unsigned long arg)
-+{
-+	int ret, n;
- 
--		if (!(mode & FMODE_WRITE))
--			return -EBADF;
-+	ret = __blkdev_driver_ioctl(bdev, mode, cmd, arg);
-+	if (!is_unrecognized_ioctl(ret))
-+		return ret;
-+	if (!capable(CAP_SYS_ADMIN))
-+		return -EACCES;
-+	if (get_user(n, (int __user *)arg))
-+		return -EFAULT;
-+	set_device_ro(bdev, n);
-+	return 0;
-+}
- 
--		if (copy_from_user(range, (void __user *)arg, sizeof(range)))
--			return -EFAULT;
-+static int blkdev_getgeo(struct block_device *bdev,
-+		struct hd_geometry __user *argp)
-+{
-+	struct gendisk *disk = bdev->bd_disk;
-+	struct hd_geometry geo;
-+	int ret;
- 
--		return blk_ioctl_discard(bdev, range[0], range[1],
--					 cmd == BLKSECDISCARD);
--	}
--	case BLKZEROOUT: {
--		uint64_t range[2];
-+	if (!argp)
-+		return -EINVAL;
-+	if (!disk->fops->getgeo)
-+		return -ENOTTY;
-+
-+	/*
-+	 * We need to set the startsect first, the driver may
-+	 * want to override it.
-+	 */
-+	memset(&geo, 0, sizeof(geo));
-+	geo.start = get_start_sect(bdev);
-+	ret = disk->fops->getgeo(bdev, &geo);
-+	if (ret)
-+		return ret;
-+	if (copy_to_user(argp, &geo, sizeof(geo)))
-+		return -EFAULT;
-+	return 0;
-+}
- 
--		if (!(mode & FMODE_WRITE))
--			return -EBADF;
-+/* set the logical block size */
-+static int blkdev_bszset(struct block_device *bdev, fmode_t mode,
-+		int __user *argp)
-+{
-+	int ret, n;
- 
--		if (copy_from_user(range, (void __user *)arg, sizeof(range)))
--			return -EFAULT;
-+	if (!capable(CAP_SYS_ADMIN))
-+		return -EACCES;
-+	if (!argp)
-+		return -EINVAL;
-+	if (get_user(n, argp))
-+		return -EFAULT;
- 
--		return blk_ioctl_zeroout(bdev, range[0], range[1]);
-+	if (!(mode & FMODE_EXCL)) {
-+		bdgrab(bdev);
-+		if (blkdev_get(bdev, mode | FMODE_EXCL, &bdev) < 0)
-+			return -EBUSY;
- 	}
- 
--	case HDIO_GETGEO: {
--		struct hd_geometry geo;
-+	ret = set_blocksize(bdev, n);
-+	if (!(mode & FMODE_EXCL))
-+		blkdev_put(bdev, mode | FMODE_EXCL);
-+	return ret;
-+}
- 
--		if (!arg)
--			return -EINVAL;
--		if (!disk->fops->getgeo)
--			return -ENOTTY;
--
--		/*
--		 * We need to set the startsect first, the driver may
--		 * want to override it.
--		 */
--		memset(&geo, 0, sizeof(geo));
--		geo.start = get_start_sect(bdev);
--		ret = disk->fops->getgeo(bdev, &geo);
--		if (ret)
--			return ret;
--		if (copy_to_user((struct hd_geometry __user *)arg, &geo,
--					sizeof(geo)))
--			return -EFAULT;
--		return 0;
--	}
-+/*
-+ * always keep this in sync with compat_blkdev_ioctl()
-+ */
-+int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
-+			unsigned long arg)
-+{
-+	struct backing_dev_info *bdi;
-+	void __user *argp = (void __user *)arg;
-+	loff_t size;
-+	unsigned int max_sectors;
-+
-+	switch (cmd) {
-+	case BLKFLSBUF:
-+		return blkdev_flushbuf(bdev, mode, cmd, arg);
-+	case BLKROSET:
-+		return blkdev_roset(bdev, mode, cmd, arg);
-+	case BLKDISCARD:
-+		return blk_ioctl_discard(bdev, mode, arg, 0);
-+	case BLKSECDISCARD:
-+		return blk_ioctl_discard(bdev, mode, arg,
-+				BLKDEV_DISCARD_SECURE);
-+	case BLKZEROOUT:
-+		return blk_ioctl_zeroout(bdev, mode, arg);
-+	case HDIO_GETGEO:
-+		return blkdev_getgeo(bdev, argp);
- 	case BLKRAGET:
- 	case BLKFRAGET:
- 		if (!arg)
-@@ -414,28 +460,11 @@ int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
- 		bdi->ra_pages = (arg * 512) / PAGE_CACHE_SIZE;
- 		return 0;
- 	case BLKBSZSET:
--		/* set the logical block size */
--		if (!capable(CAP_SYS_ADMIN))
--			return -EACCES;
--		if (!arg)
--			return -EINVAL;
--		if (get_user(n, (int __user *) arg))
--			return -EFAULT;
--		if (!(mode & FMODE_EXCL)) {
--			bdgrab(bdev);
--			if (blkdev_get(bdev, mode | FMODE_EXCL, &bdev) < 0)
--				return -EBUSY;
--		}
--		ret = set_blocksize(bdev, n);
--		if (!(mode & FMODE_EXCL))
--			blkdev_put(bdev, mode | FMODE_EXCL);
--		return ret;
-+		return blkdev_bszset(bdev, mode, argp);
- 	case BLKPG:
--		ret = blkpg_ioctl(bdev, (struct blkpg_ioctl_arg __user *) arg);
--		break;
-+		return blkpg_ioctl(bdev, argp);
- 	case BLKRRPART:
--		ret = blkdev_reread_part(bdev);
--		break;
-+		return blkdev_reread_part(bdev);
- 	case BLKGETSIZE:
- 		size = i_size_read(bdev->bd_inode);
- 		if ((size >> 9) > ~0UL)
-@@ -447,11 +476,9 @@ int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
- 	case BLKTRACESTOP:
- 	case BLKTRACESETUP:
- 	case BLKTRACETEARDOWN:
--		ret = blk_trace_ioctl(bdev, cmd, (char __user *) arg);
--		break;
-+		return blk_trace_ioctl(bdev, cmd, argp);
- 	default:
--		ret = __blkdev_driver_ioctl(bdev, mode, cmd, arg);
-+		return __blkdev_driver_ioctl(bdev, mode, cmd, arg);
- 	}
--	return ret;
- }
- EXPORT_SYMBOL_GPL(blkdev_ioctl);
+Acked-by: Michal Hocko <mhocko@suse.com>
+
+> Signed-off-by: Eric B Munson <emunson@akamai.com>
+> Acked-by: Vlastimil Babka <vbabka@suse.cz>
+> Cc: Michal Hocko <mhocko@suse.cz>
+> Cc: Vlastimil Babka <vbabka@suse.cz>
+> Cc: Heiko Carstens <heiko.carstens@de.ibm.com>
+> Cc: Geert Uytterhoeven <geert@linux-m68k.org>
+> Cc: Catalin Marinas <catalin.marinas@arm.com>
+> Cc: Stephen Rothwell <sfr@canb.auug.org.au>
+> Cc: Guenter Roeck <linux@roeck-us.net>
+> Cc: Andrea Arcangeli <aarcange@redhat.com>
+> Cc: linux-alpha@vger.kernel.org
+> Cc: linux-kernel@vger.kernel.org
+> Cc: linux-arm-kernel@lists.infradead.org
+> Cc: adi-buildroot-devel@lists.sourceforge.net
+> Cc: linux-cris-kernel@axis.com
+> Cc: linux-ia64@vger.kernel.org
+> Cc: linux-m68k@lists.linux-m68k.org
+> Cc: linux-am33-list@redhat.com
+> Cc: linux-parisc@vger.kernel.org
+> Cc: linuxppc-dev@lists.ozlabs.org
+> Cc: linux-s390@vger.kernel.org
+> Cc: linux-sh@vger.kernel.org
+> Cc: sparclinux@vger.kernel.org
+> Cc: linux-xtensa@linux-xtensa.org
+> Cc: linux-api@vger.kernel.org
+> Cc: linux-arch@vger.kernel.org
+> Cc: linux-mm@kvack.org
+> ---
+>  arch/x86/entry/syscalls/syscall_32.tbl | 1 +
+>  arch/x86/entry/syscalls/syscall_64.tbl | 1 +
+>  include/linux/syscalls.h               | 2 ++
+>  include/uapi/asm-generic/unistd.h      | 4 +++-
+>  kernel/sys_ni.c                        | 1 +
+>  mm/mlock.c                             | 8 ++++++++
+>  6 files changed, 16 insertions(+), 1 deletion(-)
+> 
+> diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+> index ef8187f..8e06da6 100644
+> --- a/arch/x86/entry/syscalls/syscall_32.tbl
+> +++ b/arch/x86/entry/syscalls/syscall_32.tbl
+> @@ -365,3 +365,4 @@
+>  356	i386	memfd_create		sys_memfd_create
+>  357	i386	bpf			sys_bpf
+>  358	i386	execveat		sys_execveat			stub32_execveat
+> +360	i386	mlock2			sys_mlock2
+> diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+> index 9ef32d5..67601e7 100644
+> --- a/arch/x86/entry/syscalls/syscall_64.tbl
+> +++ b/arch/x86/entry/syscalls/syscall_64.tbl
+> @@ -329,6 +329,7 @@
+>  320	common	kexec_file_load		sys_kexec_file_load
+>  321	common	bpf			sys_bpf
+>  322	64	execveat		stub_execveat
+> +324	common	mlock2			sys_mlock2
+>  
+>  #
+>  # x32-specific system call numbers start at 512 to avoid cache impact
+> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+> index b45c45b..56a3d59 100644
+> --- a/include/linux/syscalls.h
+> +++ b/include/linux/syscalls.h
+> @@ -884,4 +884,6 @@ asmlinkage long sys_execveat(int dfd, const char __user *filename,
+>  			const char __user *const __user *argv,
+>  			const char __user *const __user *envp, int flags);
+>  
+> +asmlinkage long sys_mlock2(unsigned long start, size_t len, int flags);
+> +
+>  #endif
+> diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+> index e016bd9..14a6013 100644
+> --- a/include/uapi/asm-generic/unistd.h
+> +++ b/include/uapi/asm-generic/unistd.h
+> @@ -709,9 +709,11 @@ __SYSCALL(__NR_memfd_create, sys_memfd_create)
+>  __SYSCALL(__NR_bpf, sys_bpf)
+>  #define __NR_execveat 281
+>  __SC_COMP(__NR_execveat, sys_execveat, compat_sys_execveat)
+> +#define __NR_mlock2 282
+> +__SYSCALL(__NR_mlock2, sys_mlock2)
+>  
+>  #undef __NR_syscalls
+> -#define __NR_syscalls 282
+> +#define __NR_syscalls 283
+>  
+>  /*
+>   * All syscalls below here should go away really,
+> diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+> index 7995ef5..4818b71 100644
+> --- a/kernel/sys_ni.c
+> +++ b/kernel/sys_ni.c
+> @@ -193,6 +193,7 @@ cond_syscall(sys_mlock);
+>  cond_syscall(sys_munlock);
+>  cond_syscall(sys_mlockall);
+>  cond_syscall(sys_munlockall);
+> +cond_syscall(sys_mlock2);
+>  cond_syscall(sys_mincore);
+>  cond_syscall(sys_madvise);
+>  cond_syscall(sys_mremap);
+> diff --git a/mm/mlock.c b/mm/mlock.c
+> index 5692ee5..3094f27 100644
+> --- a/mm/mlock.c
+> +++ b/mm/mlock.c
+> @@ -643,6 +643,14 @@ SYSCALL_DEFINE2(mlock, unsigned long, start, size_t, len)
+>  	return do_mlock(start, len, VM_LOCKED);
+>  }
+>  
+> +SYSCALL_DEFINE3(mlock2, unsigned long, start, size_t, len, int, flags)
+> +{
+> +	if (flags)
+> +		return -EINVAL;
+> +
+> +	return do_mlock(start, len, VM_LOCKED);
+> +}
+> +
+>  SYSCALL_DEFINE2(munlock, unsigned long, start, size_t, len)
+>  {
+>  	int ret;
+> -- 
+> 1.9.1
+
 -- 
-1.9.1
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
