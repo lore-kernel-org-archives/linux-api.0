@@ -1,79 +1,38 @@
-From: Bharata B Rao <bharata-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [Qemu-devel] [PATCH 19/23] userfaultfd: activate syscall
-Date: Wed, 12 Aug 2015 10:53:46 +0530
-Message-ID: <20150812052346.GC4587@in.ibm.com>
-References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
- <1431624680-20153-20-git-send-email-aarcange@redhat.com>
- <20150811100728.GB4587@in.ibm.com>
- <20150811134826.GI4520@redhat.com>
-Reply-To: bharata-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: Persistent Reservation API V2
+Date: Wed, 12 Aug 2015 08:23:19 +0200
+Message-ID: <1439360604-16192-1-git-send-email-hch@lst.de>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150811134826.GI4520-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zhang.zhanghailiang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Dr. David Alan Gilbert" <dgilbert-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sanidhya Kashyap <sanidhya.gatech-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, "Huangpeng (Peter)" <peter.huangpeng-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Peter Feiner <pfeiner-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+To: Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>
+Cc: linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 11, 2015 at 03:48:26PM +0200, Andrea Arcangeli wrote:
-> Hello Bharata,
-> 
-> On Tue, Aug 11, 2015 at 03:37:29PM +0530, Bharata B Rao wrote:
-> > May be it is a bit late to bring this up, but I needed the following fix
-> > to userfault21 branch of your git tree to compile on powerpc.
-> 
-> Not late, just in time. I increased the number of syscalls in earlier
-> versions, it must have gotten lost during a rejecting rebase, sorry.
-> 
-> I applied it to my tree and it can be applied to -mm and linux-next,
-> thanks!
-> 
-> The syscall for arm32 are also ready and on their way to the arm tree,
-> the testsuite worked fine there. ppc also should work fine if you
-> could confirm it'd be interesting, just beware that I got a typo in
-> the testcase:
+This series adds support for a simplified Persistent Reservation API
+to the block layer.  The intent is that both in-kernel and userspace
+consumers can use the API instead of having to hand craft SCSI or NVMe
+command through the various pass through interfaces.  It also adds
+DM support as getting reservations through dm-multipath is a major
+pain with the current scheme.
 
-The testsuite passes on powerpc.
+NVMe support currently isn't included as I don't have a multihost
+NVMe setup to test on, but Keith offered to test it and I'll have
+a patch for it shortly.
 
---------------------
-running userfaultfd
---------------------
-nr_pages: 2040, nr_pages_per_cpu: 170
-bounces: 31, mode: rnd racing ver poll, userfaults: 80 43 23 23 15 16 12 1 2 96 13 128
-bounces: 30, mode: racing ver poll, userfaults: 35 54 62 49 47 48 2 8 0 78 1 0
-bounces: 29, mode: rnd ver poll, userfaults: 114 153 70 106 78 57 143 92 114 96 1 0
-bounces: 28, mode: ver poll, userfaults: 96 81 5 45 83 19 98 28 1 145 23 2
-bounces: 27, mode: rnd racing poll, userfaults: 54 65 60 54 45 49 1 2 1 2 71 20
-bounces: 26, mode: racing poll, userfaults: 90 83 35 29 37 35 30 42 3 4 49 6
-bounces: 25, mode: rnd poll, userfaults: 52 50 178 112 51 41 23 42 18 99 59 0
-bounces: 24, mode: poll, userfaults: 136 101 83 260 84 29 16 88 1 6 160 57
-bounces: 23, mode: rnd racing ver, userfaults: 141 197 158 183 39 49 3 52 8 3 6 0
-bounces: 22, mode: racing ver, userfaults: 242 266 244 180 162 32 87 43 31 40 34 0
-bounces: 21, mode: rnd ver, userfaults: 636 158 175 24 253 104 48 8 0 0 0 0
-bounces: 20, mode: ver, userfaults: 531 204 225 117 129 107 11 143 76 31 1 0
-bounces: 19, mode: rnd racing, userfaults: 303 169 225 145 59 219 37 0 0 0 0 0
-bounces: 18, mode: racing, userfaults: 374 372 37 144 126 90 25 12 15 17 0 0
-bounces: 17, mode: rnd, userfaults: 313 412 134 108 80 99 7 56 85 0 0 0
-bounces: 16, mode:, userfaults: 431 58 87 167 120 113 98 60 14 8 48 0
-bounces: 15, mode: rnd racing ver poll, userfaults: 41 40 25 28 37 24 0 0 0 0 180 75
-bounces: 14, mode: racing ver poll, userfaults: 43 53 30 28 25 15 19 0 0 0 0 30
-bounces: 13, mode: rnd ver poll, userfaults: 136 91 114 91 92 79 114 77 75 68 1 2
-bounces: 12, mode: ver poll, userfaults: 92 120 114 76 153 75 132 157 83 81 10 1
-bounces: 11, mode: rnd racing poll, userfaults: 50 72 69 52 53 48 46 59 57 51 37 1
-bounces: 10, mode: racing poll, userfaults: 33 49 38 68 35 63 57 49 49 47 25 10
-bounces: 9, mode: rnd poll, userfaults: 167 150 67 123 39 75 1 2 9 125 1 1
-bounces: 8, mode: poll, userfaults: 147 102 20 87 5 27 118 14 104 40 21 28
-bounces: 7, mode: rnd racing ver, userfaults: 305 254 208 74 59 96 36 14 11 7 4 5
-bounces: 6, mode: racing ver, userfaults: 290 114 191 94 162 114 34 6 6 32 23 2
-bounces: 5, mode: rnd ver, userfaults: 370 381 22 273 21 106 17 55 0 0 0 0
-bounces: 4, mode: ver, userfaults: 328 279 179 191 74 86 95 15 13 10 0 0
-bounces: 3, mode: rnd racing, userfaults: 222 215 164 70 5 20 179 0 34 3 0 0
-bounces: 2, mode: racing, userfaults: 316 385 112 160 225 5 30 49 42 2 4 0
-bounces: 1, mode: rnd, userfaults: 273 139 253 176 163 71 85 2 0 0 0 0
-bounces: 0, mode:, userfaults: 165 212 633 13 24 66 24 27 15 0 10 1
-[PASS]
+The ioctl API is documented in Documentation/block/pr.txt, but to
+fully understand the concept you'll have to read up the SPC spec,
+PRs are too complicated that trying to rephrase them into different
+terminology is just going to create confusion.
 
-Regards,
-Bharata.
+Note that Mike wants to include the DM patches so through the DM
+tree, so they are only included for reference.
+
+I also have a set of simple test tools available at:
+
+	git://git.infradead.org/users/hch/pr-tests.git
+
+Changes since V1:
+  - rename DM ->ioctl to ->prepare_ioctl
+  - rename dm_get_ioctl_table to dm_get_live_table_for_ioctl
+  - merge two DM patches into one
+  - various spelling fixes
