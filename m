@@ -1,7 +1,7 @@
-From: Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+From: Krzysztof Opasiak <k.opasiak@samsung.com>
 Subject: Re: [RFC][PATCH 1/2] usb: gadget: configfs: add MTP function
-Date: Thu, 13 Aug 2015 22:23:02 +0200
-Message-ID: <55CCFCA6.9070907@samsung.com>
+Date: Thu, 13 Aug 2015 22:41:44 +0200
+Message-ID: <55CD0108.4060303@samsung.com>
 References: <1439493140-22207-1-git-send-email-amit.pundir@linaro.org>
  <1439493140-22207-2-git-send-email-amit.pundir@linaro.org>
  <55CCF156.8010302@samsung.com> <20150813195748.GB30092@kroah.com>
@@ -9,11 +9,11 @@ Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252;
 	format=flowed
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <20150813195748.GB30092-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Amit Pundir <amit.pundir-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mike Lockwood <lockwood-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Benoit Goby <benoit-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Colin Cross <ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, =?windows-1252?Q?Arve_Hj=F8nnev=E5g?= <arve-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Peter Oh <poh-dY08KVG/lbpWk0Htik3J/w@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Badhri Jagan Sridharan <Badhri-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Android Kernel Team <kernel-team-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Felipe Balbi <balbi-l0cyMroinI0@public.gmane.org>, Andrzej Pietrasiewicz <andrzej.p-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, Yegor Yefremov <yegorslists-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Philippe Reynes <tremyfr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Sumit Semwal <sumit.semwal-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-reply-to: <20150813195748.GB30092@kroah.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Amit Pundir <amit.pundir@linaro.org>, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, Mike Lockwood <lockwood@android.com>, Benoit Goby <benoit@android.com>, Colin Cross <ccross@android.com>, =?windows-1252?Q?Arve_Hj=F8nnev=E5g?= <arve@android.com>, Peter Oh <poh@broadcom.com>, Greg Hackmann <ghackmann@google.com>, Badhri Jagan Sridharan <Badhri@google.com>, Android Kernel Team <kernel-team@android.com>, Jonathan Corbet <corbet@lwn.net>, Felipe Balbi <balbi@ti.com>, Andrzej Pietrasiewicz <andrzej.p@samsung.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, Yegor Yefremov <yegorslists@googlemail.com>, Philippe Reynes <tremyfr@gmail.com>, John Stultz <john.stultz@linaro.org>, Sumit Semwal <sumit.semwal@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
 
@@ -25,13 +25,13 @@ On 08/13/2015 09:57 PM, Greg Kroah-Hartman wrote:
 >> On 08/13/2015 09:12 PM, Amit Pundir wrote:
 >>> his MTP function is based on years of work originally done in the
 >>> Android kernel tree by:
->>>      Mike Lockwood<lockwood-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
->>>      Benoit Goby<benoit-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
->>>      Colin Cross<ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
->>>      Arve Hj=F8nnev=E5g<arve-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
->>>      Peter Oh<poh-dY08KVG/lbpWk0Htik3J/w@public.gmane.org>
->>>      Greg Hackmann<ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
->>>      Badhri Jagan Sridharan<Badhri-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+>>>      Mike Lockwood<lockwood@android.com>
+>>>      Benoit Goby<benoit@android.com>
+>>>      Colin Cross<ccross@android.com>
+>>>      Arve Hj=F8nnev=E5g<arve@android.com>
+>>>      Peter Oh<poh@broadcom.com>
+>>>      Greg Hackmann<ghackmann@google.com>
+>>>      Badhri Jagan Sridharan<Badhri@google.com>
 >>> I've folded the series up to make it easier to review, and to provi=
 de
 >>> a coherent patch description.
@@ -60,24 +60,24 @@ ir
 e
 >>> blamed for any mistakes I've made condensing their patches down.
 >>>
->>> Cc: Mike Lockwood<lockwood-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
->>> Cc: Benoit Goby<benoit-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
->>> Cc: Colin Cross<ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
->>> Cc: Arve Hj=F8nnev=E5g<arve-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
->>> Cc: Peter Oh<poh-dY08KVG/lbpWk0Htik3J/w@public.gmane.org>
->>> Cc: Greg Hackmann<ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
->>> Cc: Badhri Jagan Sridharan<Badhri-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
->>> Cc: Android Kernel Team<kernel-team-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
->>> Cc: Greg Kroah-Hartman<gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
->>> Cc: Jonathan Corbet<corbet-T1hC0tSOHrs@public.gmane.org>
->>> Cc: Felipe Balbi<balbi-l0cyMroinI0@public.gmane.org>
->>> Cc: Andrzej Pietrasiewicz<andrzej.p-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
->>> Cc: Laurent Pinchart<laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
->>> Cc: Yegor Yefremov<yegorslists-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>
->>> Cc: Philippe Reynes<tremyfr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->>> Cc: John Stultz<john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
->>> Cc: Sumit Semwal<sumit.semwal-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
->>> Signed-off-by: Amit Pundir<amit.pundir-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+>>> Cc: Mike Lockwood<lockwood@android.com>
+>>> Cc: Benoit Goby<benoit@android.com>
+>>> Cc: Colin Cross<ccross@android.com>
+>>> Cc: Arve Hj=F8nnev=E5g<arve@android.com>
+>>> Cc: Peter Oh<poh@broadcom.com>
+>>> Cc: Greg Hackmann<ghackmann@google.com>
+>>> Cc: Badhri Jagan Sridharan<Badhri@google.com>
+>>> Cc: Android Kernel Team<kernel-team@android.com>
+>>> Cc: Greg Kroah-Hartman<gregkh@linuxfoundation.org>
+>>> Cc: Jonathan Corbet<corbet@lwn.net>
+>>> Cc: Felipe Balbi<balbi@ti.com>
+>>> Cc: Andrzej Pietrasiewicz<andrzej.p@samsung.com>
+>>> Cc: Laurent Pinchart<laurent.pinchart@ideasonboard.com>
+>>> Cc: Yegor Yefremov<yegorslists@googlemail.com>
+>>> Cc: Philippe Reynes<tremyfr@gmail.com>
+>>> Cc: John Stultz<john.stultz@linaro.org>
+>>> Cc: Sumit Semwal<sumit.semwal@linaro.org>
+>>> Signed-off-by: Amit Pundir<amit.pundir@linaro.org>
 >>
 >> In my humble opinion adding such function to Linux kernel doesn't ma=
 ke any
@@ -110,13 +110,29 @@ le we
 > somewhere...
 >
 
-I know for sure that ADB and SDB has been ported to use functionfs. I=20
-can even see ADB with ffs backend working on my nexus 9 with 3.10 kerne=
-l.
+I've found some interesting link[2] which may mean that Sailfish OS guy=
+s=20
+has some mtp implementation with functionfs backend:
 
-I've seen such mtp-responder implementation but that time it has not=20
-been published to open source. I don't know what is the current state..=
-=2E
+<<<<< cite
+
+- /dev/mtp
+mtp functionfs rw,relatime
+
+ >>>>> cite
+
+Started digging and got it!
+
+This looks like mtp with ffs backend:
+
+https://github.com/nemomobile/buteo-mtp
+
+Didn't tested, even didn't try to compile, no guarantee;)
+
+=46ootnotes:
+1 -=20
+http://reviewjolla.blogspot.com/2014/06/techspecs-android-on-jolla-phon=
+e.html
 
 Best regards,
 
