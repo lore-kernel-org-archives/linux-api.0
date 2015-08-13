@@ -1,102 +1,110 @@
-From: Krzysztof Opasiak <k.opasiak@samsung.com>
-Subject: Re: [RFC][PATCH 2/2] usb: gadget: configfs: notify userspace of usb
- state changes
-Date: Thu, 13 Aug 2015 21:42:17 +0200
-Message-ID: <55CCF319.1070604@samsung.com>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: Re: [RFC][PATCH 1/2] usb: gadget: configfs: add MTP function
+Date: Thu, 13 Aug 2015 12:57:48 -0700
+Message-ID: <20150813195748.GB30092@kroah.com>
 References: <1439493140-22207-1-git-send-email-amit.pundir@linaro.org>
- <1439493140-22207-3-git-send-email-amit.pundir@linaro.org>
+ <1439493140-22207-2-git-send-email-amit.pundir@linaro.org>
+ <55CCF156.8010302@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <1439493140-22207-3-git-send-email-amit.pundir@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Amit Pundir <amit.pundir@linaro.org>, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Mike Lockwood <lockwood@android.com>, Benoit Goby <benoit@android.com>, Colin Cross <ccross@android.com>, =?UTF-8?B?QXJ2ZSBIasO4bm5ldsOlZw==?= <arve@android.com>, Peter Oh <poh@broadcom.com>, Greg Hackmann <ghackmann@google.com>, Badhri Jagan Sridharan <Badhri@google.com>, Android Kernel Team <kernel-team@android.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jonathan Corbet <corbet@lwn.net>, Felipe Balbi <balbi@ti.com>, Andrzej Pietrasiewicz <andrzej.p@samsung.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, Yegor Yefremov <yegorslists@googlemail.com>, Philippe Reynes <tremyfr@gmail.com>, John Stultz <john.stultz@linaro.org>, Sumit Semwal <sumit.semwal@linaro.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <55CCF156.8010302@samsung.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Krzysztof Opasiak <k.opasiak@samsung.com>
+Cc: Amit Pundir <amit.pundir@linaro.org>, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, Mike Lockwood <lockwood@android.com>, Benoit Goby <benoit@android.com>, Colin Cross <ccross@android.com>, Arve =?iso-8859-1?B?SGr4bm5lduVn?= <arve@android.com>, Peter Oh <poh@broadcom.com>, Greg Hackmann <ghackmann@google.com>, Badhri Jagan Sridharan <Badhri@google.com>, Android Kernel Team <kernel-team@android.com>, Jonathan Corbet <corbet@lwn.net>, Felipe Balbi <balbi@ti.com>, Andrzej Pietrasiewicz <andrzej.p@samsung.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, Yegor Yefremov <yegorslists@googlemail.com>, Philippe Reynes <tremyfr@gmail.com>, John Stultz <john.stultz@linaro.org>, Sumit Semwal <sumit.semwal@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello,
-
-On 08/13/2015 09:12 PM, Amit Pundir wrote:
-> This is more of an RFC than an actual submission. There are few
-> scattered #ifdefs..#endifs here and there which still need to be
-> taken care of before going for actual submission.
->
-> Currently there is no way with the upstream ConfigFS gadget to
-> communicate state changes (connected, disconnected, configured), at
-> the gadget level. Instead such state changes are handled function by
-> function independently I presume. This is problematic, because some
-> coordination between the functions, across the state changes, may be
-> desired at the userspace level. Thus to address this issue, this
-> patch send uevents to allow userspace to be notified of these usb
-> state changes, allowing userspace to respond and configure the
-> configfs gadget appropriately.
->
-> This patch is based on an Android patchset originaly authored by
-> Badhri Jagan Sridharan<Badhri@google.com>  to send uevent notificatio=
-ns
-> to Android userpace for USB state changes. I've folded his patches
-> together and modified it enough that I don't want him to be blamed fo=
-r
-> any mistakes I've made condensing his patches down.
->
-> This patch introduces USB_CONFIGFS_UEVENT Kconfig to handle userspace
-> notifications of usb state changes, and add setup and disconnect
-> functions to intercept the setup requests from the usb_core. It also
-> creates a sysfs device class entry and a device attribute (state) to
-> read and respond to gadget's current state from userspace. As of now
-> this sysfs device class (/sys/class/android_usb) and gadget device
-> (/sys/class/android_usb/android0) with state attribute
-> (/sys/class/android_usb/android0/state) are strictly tied up to
-> facilitate Android userspace requests. But going forward we may want
-> to bring all function devices (hid, printer etc) under a unified usb
-> gadget device class e.g. /sys/class/usb_gadget/g_{func0,func1} etc..
->
-> Also I think it make sense to add this state attribute to the configf=
-s
-> usb gadget itself i.e. have something like /config/usb_gadget/g1/stat=
+On Thu, Aug 13, 2015 at 09:34:46PM +0200, Krzysztof Opasiak wrote:
+> Hello,
+>=20
+> On 08/13/2015 09:12 PM, Amit Pundir wrote:
+> >his MTP function is based on years of work originally done in the
+> >Android kernel tree by:
+> >     Mike Lockwood<lockwood@android.com>
+> >     Benoit Goby<benoit@android.com>
+> >     Colin Cross<ccross@android.com>
+> >     Arve Hj=F8nnev=E5g<arve@android.com>
+> >     Peter Oh<poh@broadcom.com>
+> >     Greg Hackmann<ghackmann@google.com>
+> >     Badhri Jagan Sridharan<Badhri@google.com>
+> >I've folded the series up to make it easier to review, and to provid=
 e
-> to read USB gadget's current state. Since it is going to be consisten=
-t
-> throughout all the functions tied up to that gadget.
->
-> Again this is just an initial RFC, thoughts and feedback would be
-> greatly appreciated.
->
-> Cc: Mike Lockwood<lockwood@android.com>
-> Cc: Benoit Goby<benoit@android.com>
-> Cc: Colin Cross<ccross@android.com>
-> Cc: Arve Hj=C3=B8nnev=C3=A5g<arve@android.com>
-> Cc: Peter Oh<poh@broadcom.com>
-> Cc: Greg Hackmann<ghackmann@google.com>
-> Cc: Badhri Jagan Sridharan<Badhri@google.com>
-> Cc: Android Kernel Team<kernel-team@android.com>
-> Cc: Greg Kroah-Hartman<gregkh@linuxfoundation.org>
-> Cc: Jonathan Corbet<corbet@lwn.net>
-> Cc: Felipe Balbi<balbi@ti.com>
-> Cc: Andrzej Pietrasiewicz<andrzej.p@samsung.com>
-> Cc: Laurent Pinchart<laurent.pinchart@ideasonboard.com>
-> Cc: Yegor Yefremov<yegorslists@googlemail.com>
-> Cc: Philippe Reynes<tremyfr@gmail.com>
-> Cc: John Stultz<john.stultz@linaro.org>
-> Cc: Sumit Semwal<sumit.semwal@linaro.org>
-> Signed-off-by: Amit Pundir<amit.pundir@linaro.org>
+> >a coherent patch description.
+> >
+> >Post Gingerbread (Android v2.3), Android dropped USB Mass Storage
+> >in favor of Media Transfer Protocal (MTP), which is widely used for
+> >transferring media files to digital music players and similar
+> >applications. This USB gadget function implements MTP functionalty.
+> >
+> >Historically this function has been a part of Android composite
+> >gadget driver. Android composite driver was Android's solution
+> >for dynamic gadget function switching prior to the ConfigFS gadget
+> >being merged. There were failed few attempts in past
+> >http://marc.info/?l=3Dlinux-usb&m=3D132451695808552  to upstream And=
+roid
+> >composite driver as well. Now this Android MTP gadget function has b=
+een
+> >re-implemented so as to be used as a generic ConfigFS function inste=
+ad.
+> >
+> >Again, many thanks to Mike, Benoit, Colin, Arve, Peter, Greg and Bad=
+hri,
+> >as they are the real authors of this work. However, I've folded thei=
+r
+> >patches together and modified it enough that I don't want them to be
+> >blamed for any mistakes I've made condensing their patches down.
+> >
+> >Cc: Mike Lockwood<lockwood@android.com>
+> >Cc: Benoit Goby<benoit@android.com>
+> >Cc: Colin Cross<ccross@android.com>
+> >Cc: Arve Hj=F8nnev=E5g<arve@android.com>
+> >Cc: Peter Oh<poh@broadcom.com>
+> >Cc: Greg Hackmann<ghackmann@google.com>
+> >Cc: Badhri Jagan Sridharan<Badhri@google.com>
+> >Cc: Android Kernel Team<kernel-team@android.com>
+> >Cc: Greg Kroah-Hartman<gregkh@linuxfoundation.org>
+> >Cc: Jonathan Corbet<corbet@lwn.net>
+> >Cc: Felipe Balbi<balbi@ti.com>
+> >Cc: Andrzej Pietrasiewicz<andrzej.p@samsung.com>
+> >Cc: Laurent Pinchart<laurent.pinchart@ideasonboard.com>
+> >Cc: Yegor Yefremov<yegorslists@googlemail.com>
+> >Cc: Philippe Reynes<tremyfr@gmail.com>
+> >Cc: John Stultz<john.stultz@linaro.org>
+> >Cc: Sumit Semwal<sumit.semwal@linaro.org>
+> >Signed-off-by: Amit Pundir<amit.pundir@linaro.org>
+>=20
+> In my humble opinion adding such function to Linux kernel doesn't mak=
+e any
+> sense. By design, MTP is a protocol which requires access to userspac=
+e
+> features esp. file system. It is very important to run MTP daemon wit=
+h
+> suitable user and LSM label and many many other issues which should b=
+e
+> handled by userspace access policy.
+>=20
+> Moreover this is not a fully functional USB function but only some in=
+terface
+> which can be used by mtp-responder (mtp-daemon - call it as you like)=
+ to
+> communicate with host. As we have FunctionFS which allows to implemen=
+t any
+> USB function in as a userspace service. As MTP nature is more related=
+ to
+> userspace I think that porting MTP daemon to use this is a right way =
+to go.
+> This should be much more reasonable than adding new function which al=
+so
+> requires daemon for proper working. So why add another interface whil=
+e we
+> can use a generic one?
 
-Generally I agree that there should be some way of notifying userspace=20
-about gadget state but I'm not sure if this is proper way to go. In my=20
-opinion gadget-bus which has been discussed some time ago on linux-usb=20
-makes much more sense than this.
+Isn't there already a userspace MTP daemon that uses the existing
+functionfs for usb gadgets?  I thought I remember seeing that
+somewhere...
 
-Maybe I will be wrong but I guess that you are adding this feature to=20
-make android mtp-responder working properly in Linux (not android).=20
-Again if we use FFS instead of adding mtp function we don't need this=20
-notification as mtp-responder can get all the required informations=20
-about gadget (function) via ep0 using functionfs events.
+thanks,
 
-Best regards,
-
---=20
-Krzysztof Opasiak
-Samsung R&D Institute Poland
-Samsung Electronics
+greg k-h
