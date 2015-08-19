@@ -1,97 +1,73 @@
-From: Eric B Munson <emunson@akamai.com>
-Subject: Re: [PATCH v7 3/6] mm: Introduce VM_LOCKONFAULT
-Date: Wed, 19 Aug 2015 17:33:45 -0400
-Message-ID: <20150819213345.GB4536@akamai.com>
-References: <1439097776-27695-1-git-send-email-emunson@akamai.com>
- <1439097776-27695-4-git-send-email-emunson@akamai.com>
- <20150812115909.GA5182@dhcp22.suse.cz>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: Next round: revised futex(2) man page for review
+Date: Thu, 20 Aug 2015 00:40:46 +0200 (CEST)
+Message-ID: <alpine.DEB.2.11.1508200031220.3873@nanos>
+References: <55B61EF3.7080302@gmail.com> <20150805222140.GA74817@vmdeb7>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="gj572EiMnwbLXET9"
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150812115909.GA5182@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Jonathan Corbet <corbet@lwn.net>, "Kirill A. Shutemov" <kirill@shutemov.name>, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150805222140.GA74817@vmdeb7>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Torvald Riegel <triegel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Anton Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, bill o gallmeister <bgallmeister-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kiszka <jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, bert hubert <bert.hubert-dxZxOz86jR8sYtaaK7K+xw@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Wed, 5 Aug 2015, Darren Hart wrote:
+> On Mon, Jul 27, 2015 at 02:07:15PM +0200, Michael Kerrisk (man-pages) wrote:
+> > .\" FIXME XXX ===== Start of adapted Hart/Guniguntala text =====
+> > .\"       The following text is drawn from the Hart/Guniguntala paper
+> > .\"       (listed in SEE ALSO), but I have reworded some pieces
+> > .\"       significantly. Please check it.
+> > 
+> >        The PI futex operations described below  differ  from  the  other
+> >        futex  operations  in  that  they impose policy on the use of the
+> >        value of the futex word:
+> > 
+> >        *  If the lock is not acquired, the futex word's value  shall  be
+> >           0.
+> > 
+> >        *  If  the  lock is acquired, the futex word's value shall be the
+> >           thread ID (TID; see gettid(2)) of the owning thread.
+> > 
+> >        *  If the lock is owned and there are threads contending for  the
+> >           lock,  then  the  FUTEX_WAITERS  bit shall be set in the futex
+> >           word's value; in other words, this value is:
+> > 
+> >               FUTEX_WAITERS | TID
+> > 
+> > 
+> >        Note that a PI futex word never just has the value FUTEX_WAITERS,
+> >        which is a permissible state for non-PI futexes.
+> 
+> The second clause is inappropriate. I don't know if that was yours or
+> mine, but non-PI futexes do not have a kernel defined value policy, so
+> ==FUTEX_WAITERS cannot be a "permissible state" as any value is
+> permissible for non-PI futexes, and none have a kernel defined state.
 
---gj572EiMnwbLXET9
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Depends. If the regular futex is configured as robust, then we have a
+kernel defined value policy as well.
 
-On Wed, 12 Aug 2015, Michal Hocko wrote:
+> > .\" FIXME I'm not quite clear on the meaning of the following sentence.
+> > .\"       Is this trying to say that while blocked in a
+> > .\"       FUTEX_WAIT_REQUEUE_PI, it could happen that another
+> > .\"       task does a FUTEX_WAKE on uaddr that simply causes
+> > .\"       a normal wake, with the result that the FUTEX_WAIT_REQUEUE_PI
+> > .\"       does not complete? What happens then to the FUTEX_WAIT_REQUEUE_PI
+> > .\"       opertion? Does it remain blocked, or does it unblock
+> > .\"       In which case, what does user space see?
+> > 
+> >               The
+> >               waiter   can  be  removed  from  the  wait  on  uaddr  via
+> >               FUTEX_WAKE without requeueing on uaddr2.
+> 
+> Userspace should see the task wake and continue executing. This would
+> effectively be a cancelation operation - which I didn't think was
+> supported. Thomas?
 
-> On Sun 09-08-15 01:22:53, Eric B Munson wrote:
-> > The cost of faulting in all memory to be locked can be very high when
-> > working with large mappings.  If only portions of the mapping will be
-> > used this can incur a high penalty for locking.
-> >=20
-> > For the example of a large file, this is the usage pattern for a large
-> > statical language model (probably applies to other statical or graphical
-> > models as well).  For the security example, any application transacting
-> > in data that cannot be swapped out (credit card data, medical records,
-> > etc).
-> >=20
-> > This patch introduces the ability to request that pages are not
-> > pre-faulted, but are placed on the unevictable LRU when they are finally
-> > faulted in.  The VM_LOCKONFAULT flag will be used together with
-> > VM_LOCKED and has no effect when set without VM_LOCKED.
->=20
-> I do not like this very much to be honest. We have only few bits
-> left there and it seems this is not really necessary. I thought that
-> LOCKONFAULT acts as a modifier to the mlock call to tell whether to
-> poppulate or not. The only place we have to persist it is
-> mlockall(MCL_FUTURE) AFAICS. And this can be handled by an additional
-> field in the mm_struct. This could be handled at __mm_populate level.
-> So unless I am missing something this would be much more easier
-> in the end we no new bit in VM flags would be necessary.
->=20
-> This would obviously mean that the LOCKONFAULT couldn't be exported to
-> the userspace but is this really necessary?
+We probably never intended to support it, but looking at the code it
+works (did not try it though). It returns to user space with
+-EWOULDBLOCK. So it basically behaves like any other spurious wakeup.
+ 
+Thanks,
 
-Sorry for the latency here, I was on vacation and am now at plumbers.
-
-I am not sure that growing the mm_struct by another flags field instead
-of using available bits in the vm_flags is the right choice.  After this
-patch, we still have 3 free bits on 32 bit architectures (2 after the
-userfaultfd set IIRC).  The group which asked for this feature here
-wants the ability to distinguish between LOCKED and LOCKONFAULT regions
-and without the VMA flag there isn't a way to do that.
-
-Do we know that these last two open flags are needed right now or is
-this speculation that they will be and that none of the other VMA flags
-can be reclaimed?
-
-
---gj572EiMnwbLXET9
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBAgAGBQJV1PY5AAoJELbVsDOpoOa9zsoP/3ahfihft1e+paDsTj5WiDeT
-StCcyumPdtkaY2lSmWziNJuddxSwuM+Epe+EUlnwSgS9H8GVd+ri4B/ULvVtE9qJ
-ilAHMTgWJScSODwYaI6n2NUn2ot2ONoQJTcdDx8YF5XiwDLeffFGe6roNIHDa+i2
-XvO3RutK3P3EbNx7Src92dYEmLlF/53ralTRBHkBQLAvVQx+bMCgL4G0Xmc938J+
-kB1IpZzZtl54zsVNNE2YUcrvQeRdLOSkevztFbOfS8bmFpN2vFIu1AjdVnKvm5Ql
-CwY84a9E3vDskCP+gY4Xy9/imrUUsp1B9lzPqbybgYcKULaxs8KFdS9BEhAaGbV2
-MmGCQ220uAaJDzWV1sw1VU8c51l7fwV6+gXnJPEVM5cMCoelewbQFnx9MF+uQ9Hx
-39z2UGBsMvsk8l8zI/bXmNaRyhnVhFo2Vle0Z0ugJBMVeOwt1otNIBN5rHIUYyBd
-7zek6EIPQm0oh6vKLbf7cqEXufl2v1fP09IFXt0oE7HoYipJV9iJ4r2flIXWoKcn
-bpxpvdvPZchZju79BWIGpmUbMIEd98GjeypByKJttD/I7+RB2WgT1nirDqsWDKtp
-1/FKjqDFP6ER9xUHIjbqgp1iYNveOmrx/r2toLoJiKX5C7zt5I4XYMQNy3j0GCPZ
-NElakxuNYzvrqmTPF+WW
-=BK2n
------END PGP SIGNATURE-----
-
---gj572EiMnwbLXET9--
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+	tglx
