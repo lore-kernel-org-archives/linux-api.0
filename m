@@ -1,106 +1,97 @@
-From: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
-Subject: Re: [PATCH v2 0/3] SysFS driver for QEMU fw_cfg device
-Date: Wed, 19 Aug 2015 16:49:15 -0400
-Message-ID: <20150819204915.GA6164@GLSMBP.INI.CMU.EDU>
-References: <cover.1439315079.git.somlo@cmu.edu>
- <1439977109-20314-1-git-send-email-ard.biesheuvel@linaro.org>
- <CAKv+Gu-BOKTHb24LnemKmvCwZn0W-NOT=avY94wkkRTx2ViW=Q@mail.gmail.com>
+From: Eric B Munson <emunson@akamai.com>
+Subject: Re: [PATCH v7 3/6] mm: Introduce VM_LOCKONFAULT
+Date: Wed, 19 Aug 2015 17:33:45 -0400
+Message-ID: <20150819213345.GB4536@akamai.com>
+References: <1439097776-27695-1-git-send-email-emunson@akamai.com>
+ <1439097776-27695-4-git-send-email-emunson@akamai.com>
+ <20150812115909.GA5182@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="gj572EiMnwbLXET9"
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <CAKv+Gu-BOKTHb24LnemKmvCwZn0W-NOT=avY94wkkRTx2ViW=Q@mail.gmail.com>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Richard W.M. Jones" <rjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jordan Justen <jordan.l.justen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, QEMU Developers <qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>, gleb-RmZWMc9puTNJc61us3aD9laTQe2KTcn/@public.gmane.org, Matt Fleming <matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, kernelnewbies-7JyXY6prKcjpASu1u0TL5ti2O/JbrIOy@public.gmane.org, Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Laszlo Ersek <lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org" <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paul-DWxLp4Yu+b8AvxtiuMwx3w@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Leif Lindholm <leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+In-Reply-To: <20150812115909.GA5182@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Jonathan Corbet <corbet@lwn.net>, "Kirill A. Shutemov" <kirill@shutemov.name>, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Ard,
 
-On Wed, Aug 19, 2015 at 11:42:02AM +0200, Ard Biesheuvel wrote:
-> (missed some cc's)
-> 
-> On 19 August 2015 at 11:38, Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
-> > From: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
-> >> Several different architectures supported by QEMU are set up with a
-> >> "firmware configuration" (fw_cfg) device, used to pass configuration
-> >> "blobs" into the guest by the host running QEMU.
-> >>
-> >> Historically, these config blobs were mostly of interest to the guest
-> >> BIOS, but since QEMU v2.4 it is possible to insert arbitrary blobs via
-> >> the command line, which makes them potentially interesting to userspace
-> >> (e.g. for passing early boot environment variables, etc.).
-> >>
-> >
-> > Does 'potentially interesting' mean you have a use case? Could you elaborate?
+--gj572EiMnwbLXET9
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-My personal one would be something like:
+On Wed, 12 Aug 2015, Michal Hocko wrote:
 
-cat > guestinfo.txt << EOT
-  KEY1="val1"
-  KEY2="val2"
-  ...
-EOT
+> On Sun 09-08-15 01:22:53, Eric B Munson wrote:
+> > The cost of faulting in all memory to be locked can be very high when
+> > working with large mappings.  If only portions of the mapping will be
+> > used this can incur a high penalty for locking.
+> >=20
+> > For the example of a large file, this is the usage pattern for a large
+> > statical language model (probably applies to other statical or graphical
+> > models as well).  For the security example, any application transacting
+> > in data that cannot be swapped out (credit card data, medical records,
+> > etc).
+> >=20
+> > This patch introduces the ability to request that pages are not
+> > pre-faulted, but are placed on the unevictable LRU when they are finally
+> > faulted in.  The VM_LOCKONFAULT flag will be used together with
+> > VM_LOCKED and has no effect when set without VM_LOCKED.
+>=20
+> I do not like this very much to be honest. We have only few bits
+> left there and it seems this is not really necessary. I thought that
+> LOCKONFAULT acts as a modifier to the mlock call to tell whether to
+> poppulate or not. The only place we have to persist it is
+> mlockall(MCL_FUTURE) AFAICS. And this can be handled by an additional
+> field in the mm_struct. This could be handled at __mm_populate level.
+> So unless I am missing something this would be much more easier
+> in the end we no new bit in VM flags would be necessary.
+>=20
+> This would obviously mean that the LOCKONFAULT couldn't be exported to
+> the userspace but is this really necessary?
 
-qemu-system-x86_64 ... -fw-cfg name="opt/guestinfo",file=./guestinfo.txt ...
+Sorry for the latency here, I was on vacation and am now at plumbers.
 
-Then, from inside the guest:
+I am not sure that growing the mm_struct by another flags field instead
+of using available bits in the vm_flags is the right choice.  After this
+patch, we still have 3 free bits on 32 bit architectures (2 after the
+userfaultfd set IIRC).  The group which asked for this feature here
+wants the ability to distinguish between LOCKED and LOCKONFAULT regions
+and without the VMA flag there isn't a way to do that.
 
-  . /sys/firmware/qemu_fw_cfg/by_name/opt/guestinfo/raw
-
-  do_something_with $KEY1 $KEY2
-  ...
-
-But I'm thinking this is only one of the many positive things one
-could do with the ability to access random host-supplied blobs from
-guest userspace :)
-
-> >>   1/3 - probes for the qemu fw_cfg device in locations known to work on
-> >>       the supported architectures, in decreasing order of "likelihood".
-> >>
-> >>       While it *may* be possible to detect the presence of fw_cfg via
-> >>       acpi or dtb (on x86 and arm, respectively), there's no way I know
-> >>       of attempting that on sun4 and ppc/mac, so I've stuck with simply
-> >>       probing (the fw_cfg_modes[] structure and fw_cfg_io_probe() function)
-> >>       in fw_cfg.c. I could use some advice on how else that could be
-> >>       done more elegantly, if needed.
-> >>
-> >
-> > Sorry, but this is really out of the question, at least on ARM, but surely on
-> > other architectures as well. You can't just go around and probe random memory
-> > addresses. Perhaps QEMU tolerates it, but on anything that resembles a real
-> > system, this will immediately blow up. Also, what happens if the QEMU memory
-> > map changes? Add more probes addresses?
-> >
-> > It is not /that/ difficult to simply wire it up to the DT and ACPI
-> > infrastructures, there are plenty of examples in the kernel tree how to
-> > accomplish that. As a bonus, it removes all the arch specific knowledge
-> > from your code, which means that if QEMU grows support for another DT or
-> > ACPI based architecture, it will just work.
-
-I was *hoping* a successful call to request_[mem_]region() will be
-enough in the way of asking for permission before probing for the
-fw_cfg registers, but I realize that might still not be polite enough :)
-
-DT on ARM is fine, and I'm certainly happy to learn how to do it (even
-though my main focus is, for now, x86). The unfortunate thing though
-is that on x86, fw_cfg is *not* AFAICT in ACPI, so I'd have to detour into
-first adding it in on the host side, before I can rewrite the guest side
-driver to look it up in there :)
-
-> > I am not sure how relevant sun4 and ppc/mac are for what you are trying to
-> > accomplish, but perhaps it would be best to focus on x86 and ARM for now
-> > and do it correctly. If the probing is actually needed, you can always add
-> > it later.
-
-I guess that's the direction things seem to be headed, although it would
-make me a bit sad to leave out sun and ppc right from the very beginning :) 
+Do we know that these last two open flags are needed right now or is
+this speculation that they will be and that none of the other VMA flags
+can be reclaimed?
 
 
-Thanks,
---Gabriel
+--gj572EiMnwbLXET9
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
 
-PS. If you have one .c file in the kernel which does any of the DT-on-arm
-boilerplate I'm supposed to immitate, I'd appreciate the shortcut :)
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
 
-PS2. Do you happen to be in Seattle right now ? :)
+iQIcBAEBAgAGBQJV1PY5AAoJELbVsDOpoOa9zsoP/3ahfihft1e+paDsTj5WiDeT
+StCcyumPdtkaY2lSmWziNJuddxSwuM+Epe+EUlnwSgS9H8GVd+ri4B/ULvVtE9qJ
+ilAHMTgWJScSODwYaI6n2NUn2ot2ONoQJTcdDx8YF5XiwDLeffFGe6roNIHDa+i2
+XvO3RutK3P3EbNx7Src92dYEmLlF/53ralTRBHkBQLAvVQx+bMCgL4G0Xmc938J+
+kB1IpZzZtl54zsVNNE2YUcrvQeRdLOSkevztFbOfS8bmFpN2vFIu1AjdVnKvm5Ql
+CwY84a9E3vDskCP+gY4Xy9/imrUUsp1B9lzPqbybgYcKULaxs8KFdS9BEhAaGbV2
+MmGCQ220uAaJDzWV1sw1VU8c51l7fwV6+gXnJPEVM5cMCoelewbQFnx9MF+uQ9Hx
+39z2UGBsMvsk8l8zI/bXmNaRyhnVhFo2Vle0Z0ugJBMVeOwt1otNIBN5rHIUYyBd
+7zek6EIPQm0oh6vKLbf7cqEXufl2v1fP09IFXt0oE7HoYipJV9iJ4r2flIXWoKcn
+bpxpvdvPZchZju79BWIGpmUbMIEd98GjeypByKJttD/I7+RB2WgT1nirDqsWDKtp
+1/FKjqDFP6ER9xUHIjbqgp1iYNveOmrx/r2toLoJiKX5C7zt5I4XYMQNy3j0GCPZ
+NElakxuNYzvrqmTPF+WW
+=BK2n
+-----END PGP SIGNATURE-----
+
+--gj572EiMnwbLXET9--
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
