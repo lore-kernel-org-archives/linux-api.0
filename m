@@ -1,38 +1,36 @@
-From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v7 3/6] mm: Introduce VM_LOCKONFAULT
-Date: Thu, 20 Aug 2015 09:56:11 +0200
-Message-ID: <20150820075611.GD4780@dhcp22.suse.cz>
-References: <1439097776-27695-1-git-send-email-emunson@akamai.com>
- <1439097776-27695-4-git-send-email-emunson@akamai.com>
- <20150812115909.GA5182@dhcp22.suse.cz>
- <20150819213345.GB4536@akamai.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: "Sean O. Stalley" <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH 0/2] PCI: Add support for PCI Enhanced Allocation "BARs"
+Date: Thu, 20 Aug 2015 09:59:05 -0700
+Message-ID: <1440089947-2839-1-git-send-email-sean.stalley@intel.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150819213345.GB4536-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed 19-08-15 17:33:45, Eric B Munson wrote:
-[...]
-> The group which asked for this feature here
-> wants the ability to distinguish between LOCKED and LOCKONFAULT regions
-> and without the VMA flag there isn't a way to do that.
+PCI Enhanced Allocation is a new method of allocating MMIO & IO
+resources for PCI devices & bridges. It can be used instead
+of the traditional PCI method of using BARs.
 
-Could you be more specific on why this is needed?
+EA entries are hardware-initialized to a fixed address.
+Unlike BARs, regions described by EA are cannot be moved.
+Because of this, only devices which are permanently connected to
+the PCI bus can use EA. A removable PCI card must not use EA.
 
-> Do we know that these last two open flags are needed right now or is
-> this speculation that they will be and that none of the other VMA flags
-> can be reclaimed?
+This patchset adds support for using EA entries instead of BARs.
 
-I do not think they are needed by anybody right now but that is not a
-reason why it should be used without a really strong justification.
-If the discoverability is really needed then fair enough but I haven't
-seen any justification for that yet.
+The Enhanced Allocation ECN is publicly available here:
+https://www.pcisig.com/specifications/conventional/ECN_Enhanced_Allocation_23_Oct_2014_Final.pdf
+
+Sean O. Stalley (2):
+  PCI: Add Enhanced Allocation register entries
+  PCI: Add parsing of Enhanced Allocation entries
+
+ drivers/pci/pci.c             | 219 ++++++++++++++++++++++++++++++++++++++++++
+ drivers/pci/pci.h             |   1 +
+ drivers/pci/probe.c           |   3 +
+ include/uapi/linux/pci_regs.h |  40 +++++++-
+ 4 files changed, 262 insertions(+), 1 deletion(-)
 
 -- 
-Michal Hocko
-SUSE Labs
+1.9.1
