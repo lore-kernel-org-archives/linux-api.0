@@ -1,83 +1,40 @@
-From: Eric B Munson <emunson@akamai.com>
-Subject: Re: [PATCH v7 3/6] mm: Introduce VM_LOCKONFAULT
-Date: Thu, 20 Aug 2015 13:03:09 -0400
-Message-ID: <20150820170309.GA11557@akamai.com>
-References: <1439097776-27695-1-git-send-email-emunson@akamai.com>
- <1439097776-27695-4-git-send-email-emunson@akamai.com>
- <20150812115909.GA5182@dhcp22.suse.cz>
- <20150819213345.GB4536@akamai.com>
- <20150820075611.GD4780@dhcp22.suse.cz>
+From: Keith Busch <keith.busch-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: Persistent Reservation API V2
+Date: Thu, 20 Aug 2015 23:56:36 +0000 (UTC)
+Message-ID: <alpine.LNX.2.00.1508202317270.15930@localhost.lm.intel.com>
+References: <1439360604-16192-1-git-send-email-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="LQksG6bCIzRHxTLp"
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150820075611.GD4780@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Jonathan Corbet <corbet@lwn.net>, "Kirill A. Shutemov" <kirill@shutemov.name>, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1439360604-16192-1-git-send-email-hch-jcswGhMUV9g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On Tue, 11 Aug 2015, Christoph Hellwig wrote:
+> This series adds support for a simplified Persistent Reservation API
+> to the block layer.  The intent is that both in-kernel and userspace
+> consumers can use the API instead of having to hand craft SCSI or NVMe
+> command through the various pass through interfaces.  It also adds
+> DM support as getting reservations through dm-multipath is a major
+> pain with the current scheme.
+>
+> NVMe support currently isn't included as I don't have a multihost
+> NVMe setup to test on, but Keith offered to test it and I'll have
+> a patch for it shortly.
 
---LQksG6bCIzRHxTLp
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Hi Christoph,
 
-On Thu, 20 Aug 2015, Michal Hocko wrote:
+I wrote an nvme implementation and it seems to work as expected with your
+pr-tests (minor modification to open an nvme target). While API appears to
+work as designed, there are a few features of NVMe that are unreachable
+with it. For example, NVMe can ignore existing keys when acquiring a
+reservation in addition to registering a new key. NVMe can also specify
+if whether or not a reservation should persist through power-loss.
 
-> On Wed 19-08-15 17:33:45, Eric B Munson wrote:
-> [...]
-> > The group which asked for this feature here
-> > wants the ability to distinguish between LOCKED and LOCKONFAULT regions
-> > and without the VMA flag there isn't a way to do that.
->=20
-> Could you be more specific on why this is needed?
-
-They want to keep metrics on the amount of memory used in a LOCKONFAULT
-region versus the address space of the region.
-
->=20
-> > Do we know that these last two open flags are needed right now or is
-> > this speculation that they will be and that none of the other VMA flags
-> > can be reclaimed?
->=20
-> I do not think they are needed by anybody right now but that is not a
-> reason why it should be used without a really strong justification.
-> If the discoverability is really needed then fair enough but I haven't
-> seen any justification for that yet.
-
-To be completely clear you believe that if the metrics collection is
-not a strong enough justification, it is better to expand the mm_struct
-by another unsigned long than to use one of these bits right?
-
-
---LQksG6bCIzRHxTLp
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBAgAGBQJV1ghMAAoJELbVsDOpoOa9h6gP/0wZmVsmQn0ULZ2icCgHa60d
-Uiij9pmZvI0gmFD0D8Erh4dtHd6xtWts+1N/h7O37ryNlLRTe1EmWuyKBPuzn3+b
-B4R39SjJNmpRgey4/s3jB6538QZWYO9lKfrbaosv1nEAoNzjmb9vRjZ+zfExGjiQ
-ILODj7ILv1OJhiKfvlZbl6dkJq719YTi5kAaWbFQ/BFTnSt2PPZUxH3oG2RrNgaS
-8R08qH5zyjreWnYVVq2N0FM2p0pAIwOkPTSe7DbNu/W9AThv6TdXeczRMoCWamTi
-m4xV+j61p6PqrGnCk1bCa2RWxbEV4gxGtNBwZVZOFDnYtWl+5HTqL99oKL3lIvCe
-adMdBRlY4Q++znx6u0aAghQ1N8EzBEFPCpOyzgyfNKMKz8mxVZGJs2p4LzJ4ETpg
-+EybJmhNufjzwHXnnD1jZM3h/elEIrdB1mcyRs2w1CYwF7Q3IckUZ1dcz7+Ze2yw
-sP4MtYfw+24MHvsokdqU8qPbZm2+iqPN1W5UCZOjKo3w5O1FAWJAwpLGiz1mR2L8
-k1MKecp4Xc9iFRnFSQ2lUpKS1aOG353wdSC9n8YCNNg5XAg/6LPuFR1A9eQHSfEg
-evtUcqZHC3aVWfTaEu6JjJQJitQmTSFWEX1jb1vL53ZTFJPwBjJOVAwDm9GVDeiu
-SKfq8OykFeQNnd6k3HQI
-=+u4S
------END PGP SIGNATURE-----
-
---LQksG6bCIzRHxTLp--
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Anyway, I don't think SCSI has these same options. Should this new IOCTL
+API accommodate the common subset to maintain its simplicity, or make
+it more expressive for all features? The more important question might
+be if there are any users requiring these features, and I honestly don't
+know that right now.
