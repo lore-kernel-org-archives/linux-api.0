@@ -1,125 +1,58 @@
-From: Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v2 0/3] SysFS driver for QEMU fw_cfg device
-Date: Thu, 20 Aug 2015 07:21:48 +0200
-Message-ID: <CAKv+Gu9wr+BUDjoz9NAkLNXxViDOM_PRoZRU8sxHog-iX=yUpQ@mail.gmail.com>
-References: <cover.1439315079.git.somlo@cmu.edu>
-	<1439977109-20314-1-git-send-email-ard.biesheuvel@linaro.org>
-	<CAKv+Gu-BOKTHb24LnemKmvCwZn0W-NOT=avY94wkkRTx2ViW=Q@mail.gmail.com>
-	<20150819204915.GA6164@GLSMBP.INI.CMU.EDU>
+From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH v7 3/6] mm: Introduce VM_LOCKONFAULT
+Date: Thu, 20 Aug 2015 09:53:50 +0200
+Message-ID: <55D5878E.5030206@suse.cz>
+References: <1439097776-27695-1-git-send-email-emunson@akamai.com>
+ <1439097776-27695-4-git-send-email-emunson@akamai.com>
+ <20150812115909.GA5182@dhcp22.suse.cz> <20150819213345.GB4536@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150819204915.GA6164-VPZ87SnTp2qKUezXOiBB2eW1CriLhL8O@public.gmane.org>
+In-Reply-To: <20150819213345.GB4536-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Richard W.M. Jones" <rjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jordan Justen <jordan.l.justen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, QEMU Developers <qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>, Gleb Natapov <gleb-RmZWMc9puTNJc61us3aD9laTQe2KTcn/@public.gmane.org>, Matt Fleming <matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, kernelnewbies-7JyXY6prKcjpASu1u0TL5ti2O/JbrIOy@public.gmane.org, Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Laszlo Ersek <lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org" <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paul-DWxLp4Yu+b8AvxtiuMwx3w@public.gmane.org, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Leif Lindholm <leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 19 August 2015 at 22:49, Gabriel L. Somlo <somlo-D+Gtc/HYRWM@public.gmane.org> wrote:
-> Hi Ard,
+On 08/19/2015 11:33 PM, Eric B Munson wrote:
+> On Wed, 12 Aug 2015, Michal Hocko wrote:
 >
-> On Wed, Aug 19, 2015 at 11:42:02AM +0200, Ard Biesheuvel wrote:
->> (missed some cc's)
+>> On Sun 09-08-15 01:22:53, Eric B Munson wrote:
 >>
->> On 19 August 2015 at 11:38, Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
->> > From: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
->> >> Several different architectures supported by QEMU are set up with a
->> >> "firmware configuration" (fw_cfg) device, used to pass configuration
->> >> "blobs" into the guest by the host running QEMU.
->> >>
->> >> Historically, these config blobs were mostly of interest to the guest
->> >> BIOS, but since QEMU v2.4 it is possible to insert arbitrary blobs via
->> >> the command line, which makes them potentially interesting to userspace
->> >> (e.g. for passing early boot environment variables, etc.).
->> >>
->> >
->> > Does 'potentially interesting' mean you have a use case? Could you elaborate?
+>> I do not like this very much to be honest. We have only few bits
+>> left there and it seems this is not really necessary. I thought that
+>> LOCKONFAULT acts as a modifier to the mlock call to tell whether to
+>> poppulate or not. The only place we have to persist it is
+>> mlockall(MCL_FUTURE) AFAICS. And this can be handled by an additional
+>> field in the mm_struct. This could be handled at __mm_populate level.
+>> So unless I am missing something this would be much more easier
+>> in the end we no new bit in VM flags would be necessary.
+>>
+>> This would obviously mean that the LOCKONFAULT couldn't be exported to
+>> the userspace but is this really necessary?
 >
-> My personal one would be something like:
+> Sorry for the latency here, I was on vacation and am now at plumbers.
 >
-> cat > guestinfo.txt << EOT
->   KEY1="val1"
->   KEY2="val2"
->   ...
-> EOT
->
-> qemu-system-x86_64 ... -fw-cfg name="opt/guestinfo",file=./guestinfo.txt ...
->
-> Then, from inside the guest:
->
->   . /sys/firmware/qemu_fw_cfg/by_name/opt/guestinfo/raw
->
->   do_something_with $KEY1 $KEY2
->   ...
->
-> But I'm thinking this is only one of the many positive things one
-> could do with the ability to access random host-supplied blobs from
-> guest userspace :)
->
+> I am not sure that growing the mm_struct by another flags field instead
+> of using available bits in the vm_flags is the right choice.
 
-'random host-supplied blobs' sounds awfully like files in a file
-system to me, and that is already supported by QEMU and works with any
-guest OS unmodified. If you are in control of the command line, surely
-you can add a -drive xxx,fat:path/to/blobs -device xxx pair that
-simply turns up as a volume.
+I was making the same objection on one of the earlier versions and since 
+you sticked with a new vm flag, I thought it doesn't matter, as we could 
+change it later if we run out of bits. But now I realize that since you 
+export this difference to userspace (and below you say that it's by 
+request), we won't be able to change it later. So it's a more difficult 
+choice.
 
->> >>   1/3 - probes for the qemu fw_cfg device in locations known to work on
->> >>       the supported architectures, in decreasing order of "likelihood".
->> >>
->> >>       While it *may* be possible to detect the presence of fw_cfg via
->> >>       acpi or dtb (on x86 and arm, respectively), there's no way I know
->> >>       of attempting that on sun4 and ppc/mac, so I've stuck with simply
->> >>       probing (the fw_cfg_modes[] structure and fw_cfg_io_probe() function)
->> >>       in fw_cfg.c. I could use some advice on how else that could be
->> >>       done more elegantly, if needed.
->> >>
->> >
->> > Sorry, but this is really out of the question, at least on ARM, but surely on
->> > other architectures as well. You can't just go around and probe random memory
->> > addresses. Perhaps QEMU tolerates it, but on anything that resembles a real
->> > system, this will immediately blow up. Also, what happens if the QEMU memory
->> > map changes? Add more probes addresses?
->> >
->> > It is not /that/ difficult to simply wire it up to the DT and ACPI
->> > infrastructures, there are plenty of examples in the kernel tree how to
->> > accomplish that. As a bonus, it removes all the arch specific knowledge
->> > from your code, which means that if QEMU grows support for another DT or
->> > ACPI based architecture, it will just work.
+> After this
+> patch, we still have 3 free bits on 32 bit architectures (2 after the
+> userfaultfd set IIRC).  The group which asked for this feature here
+> wants the ability to distinguish between LOCKED and LOCKONFAULT regions
+> and without the VMA flag there isn't a way to do that.
 >
-> I was *hoping* a successful call to request_[mem_]region() will be
-> enough in the way of asking for permission before probing for the
-> fw_cfg registers, but I realize that might still not be polite enough :)
->
+> Do we know that these last two open flags are needed right now or is
+> this speculation that they will be and that none of the other VMA flags
+> can be reclaimed?
 
-No, all request_mem_region() does is check whether the region in
-question is not occupied yet by another driver. So your probing could
-access unpopulated memory space, or MMIO space owned by a peripheral
-whose driver is not loaded. Neither are allowable, I'm afraid.
-
-> DT on ARM is fine, and I'm certainly happy to learn how to do it (even
-> though my main focus is, for now, x86). The unfortunate thing though
-> is that on x86, fw_cfg is *not* AFAICT in ACPI, so I'd have to detour into
-> first adding it in on the host side, before I can rewrite the guest side
-> driver to look it up in there :)
->
->> > I am not sure how relevant sun4 and ppc/mac are for what you are trying to
->> > accomplish, but perhaps it would be best to focus on x86 and ARM for now
->> > and do it correctly. If the probing is actually needed, you can always add
->> > it later.
->
-> I guess that's the direction things seem to be headed, although it would
-> make me a bit sad to leave out sun and ppc right from the very beginning :)
->
-
-Sorry to be blunt, but I am not convinced there is a need for this
-driver anyway.
-
-> PS. If you have one .c file in the kernel which does any of the DT-on-arm
-> boilerplate I'm supposed to immitate, I'd appreciate the shortcut :)
->
-
-Check out drivers/tty/serial/amba-pl011.c
-
-> PS2. Do you happen to be in Seattle right now ? :)
-
-Nope :-)
+I think it's the latter, we can expect that flags will be added rather 
+than removed, as removal is hard or impossible.
