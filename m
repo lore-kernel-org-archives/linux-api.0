@@ -1,223 +1,125 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: Next round: revised futex(2) man page for review
-Date: Thu, 20 Aug 2015 01:17:03 +0200 (CEST)
-Message-ID: <alpine.DEB.2.11.1508200042180.3873@nanos>
-References: <55B61EF3.7080302@gmail.com> <alpine.DEB.2.11.1507282054370.3825@nanos> <55C5A787.9010806@gmail.com>
+From: Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v2 0/3] SysFS driver for QEMU fw_cfg device
+Date: Thu, 20 Aug 2015 07:21:48 +0200
+Message-ID: <CAKv+Gu9wr+BUDjoz9NAkLNXxViDOM_PRoZRU8sxHog-iX=yUpQ@mail.gmail.com>
+References: <cover.1439315079.git.somlo@cmu.edu>
+	<1439977109-20314-1-git-send-email-ard.biesheuvel@linaro.org>
+	<CAKv+Gu-BOKTHb24LnemKmvCwZn0W-NOT=avY94wkkRTx2ViW=Q@mail.gmail.com>
+	<20150819204915.GA6164@GLSMBP.INI.CMU.EDU>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323329-185193515-1440026224=:3873"
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <55C5A787.9010806-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <20150819204915.GA6164-VPZ87SnTp2qKUezXOiBB2eW1CriLhL8O@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Torvald Riegel <triegel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Anton Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, bill o gallmeister <bgallmeister-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kiszka <jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, bert hubert <bert.hubert-dxZxOz86jR8sYtaaK7K+xw@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
+To: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Richard W.M. Jones" <rjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jordan Justen <jordan.l.justen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, QEMU Developers <qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>, Gleb Natapov <gleb-RmZWMc9puTNJc61us3aD9laTQe2KTcn/@public.gmane.org>, Matt Fleming <matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, kernelnewbies-7JyXY6prKcjpASu1u0TL5ti2O/JbrIOy@public.gmane.org, Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Laszlo Ersek <lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org" <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paul-DWxLp4Yu+b8AvxtiuMwx3w@public.gmane.org, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Leif Lindholm <leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On 19 August 2015 at 22:49, Gabriel L. Somlo <somlo-D+Gtc/HYRWM@public.gmane.org> wrote:
+> Hi Ard,
+>
+> On Wed, Aug 19, 2015 at 11:42:02AM +0200, Ard Biesheuvel wrote:
+>> (missed some cc's)
+>>
+>> On 19 August 2015 at 11:38, Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
+>> > From: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
+>> >> Several different architectures supported by QEMU are set up with a
+>> >> "firmware configuration" (fw_cfg) device, used to pass configuration
+>> >> "blobs" into the guest by the host running QEMU.
+>> >>
+>> >> Historically, these config blobs were mostly of interest to the guest
+>> >> BIOS, but since QEMU v2.4 it is possible to insert arbitrary blobs via
+>> >> the command line, which makes them potentially interesting to userspace
+>> >> (e.g. for passing early boot environment variables, etc.).
+>> >>
+>> >
+>> > Does 'potentially interesting' mean you have a use case? Could you elaborate?
+>
+> My personal one would be something like:
+>
+> cat > guestinfo.txt << EOT
+>   KEY1="val1"
+>   KEY2="val2"
+>   ...
+> EOT
+>
+> qemu-system-x86_64 ... -fw-cfg name="opt/guestinfo",file=./guestinfo.txt ...
+>
+> Then, from inside the guest:
+>
+>   . /sys/firmware/qemu_fw_cfg/by_name/opt/guestinfo/raw
+>
+>   do_something_with $KEY1 $KEY2
+>   ...
+>
+> But I'm thinking this is only one of the many positive things one
+> could do with the ability to access random host-supplied blobs from
+> guest userspace :)
+>
 
---8323329-185193515-1440026224=:3873
-Content-Type: TEXT/PLAIN; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+'random host-supplied blobs' sounds awfully like files in a file
+system to me, and that is already supported by QEMU and works with any
+guest OS unmodified. If you are in control of the command line, surely
+you can add a -drive xxx,fat:path/to/blobs -device xxx pair that
+simply turns up as a volume.
 
-On Sat, 8 Aug 2015, Michael Kerrisk (man-pages) wrote:
-> >>        FUTEX_CMP_REQUEUE (since Linux 2.6.7)
-> >>               This  operation  first  checks  whether the location uaddr
-> >>               still contains the value  val3.   If  not,  the  operation
-> >>               fails  with  the  error  EAGAIN.  Otherwise, the operation
-> >>               wakes up a maximum of val waiters that are waiting on  the
-> >>               futex  at uaddr.  If there are more than val waiters, then
-> >>               the remaining waiters are removed from the wait  queue  of
-> >>               the  source  futex at uaddr and added to the wait queue of
-> >>               the target futex at uaddr2.  The val2  argument  specifies
-> >>               an  upper limit on the number of waiters that are requeued
-> >>               to the futex at uaddr2.
-> >>
-> >> .\" FIXME(Torvald) Is the following correct?  Or is just the decision
-> >> .\" which threads to wake or requeue part of the atomic operation?
-> >>
-> >>               The load from uaddr is  an  atomic  memory  access  (i.e.,
-> >>               using atomic machine instructions of the respective archi‐
-> >>               tecture).  This load, the comparison with  val3,  and  the
-> >>               requeueing  of  any  waiters  are performed atomically and
-> >>               totally ordered with respect to other  operations  on  the
-> >>               same futex word.
-> > 
-> > It's atomic as the other atomic operations on the futex word. It's
-> > always performed with the proper lock(s) held in the kernel. That
-> > means any concurrent operation will serialize on that lock(s). User
-> > space has to make sure, that depending on the observed value no
-> > concurrent operations happen, but that's something the kernel cannot
-> > control.
-> 
-> ???
-> Sorry, I'm not clear here. Is the current text correct then? Or is some
-> change needed.
+>> >>   1/3 - probes for the qemu fw_cfg device in locations known to work on
+>> >>       the supported architectures, in decreasing order of "likelihood".
+>> >>
+>> >>       While it *may* be possible to detect the presence of fw_cfg via
+>> >>       acpi or dtb (on x86 and arm, respectively), there's no way I know
+>> >>       of attempting that on sun4 and ppc/mac, so I've stuck with simply
+>> >>       probing (the fw_cfg_modes[] structure and fw_cfg_io_probe() function)
+>> >>       in fw_cfg.c. I could use some advice on how else that could be
+>> >>       done more elegantly, if needed.
+>> >>
+>> >
+>> > Sorry, but this is really out of the question, at least on ARM, but surely on
+>> > other architectures as well. You can't just go around and probe random memory
+>> > addresses. Perhaps QEMU tolerates it, but on anything that resembles a real
+>> > system, this will immediately blow up. Also, what happens if the QEMU memory
+>> > map changes? Add more probes addresses?
+>> >
+>> > It is not /that/ difficult to simply wire it up to the DT and ACPI
+>> > infrastructures, there are plenty of examples in the kernel tree how to
+>> > accomplish that. As a bonus, it removes all the arch specific knowledge
+>> > from your code, which means that if QEMU grows support for another DT or
+>> > ACPI based architecture, it will just work.
+>
+> I was *hoping* a successful call to request_[mem_]region() will be
+> enough in the way of asking for permission before probing for the
+> fw_cfg registers, but I realize that might still not be polite enough :)
+>
 
-I think we need some change here because the meaning of atomic is
-unclear. The basic rules of futexes are:
+No, all request_mem_region() does is check whether the region in
+question is not occupied yet by another driver. So your probing could
+access unpopulated memory space, or MMIO space owned by a peripheral
+whose driver is not loaded. Neither are allowable, I'm afraid.
 
- - All modifying operations on the futex value have to be done with
-   atomic instructions, usually cmpxchg. That applies to both kernel
-   and user space.
+> DT on ARM is fine, and I'm certainly happy to learn how to do it (even
+> though my main focus is, for now, x86). The unfortunate thing though
+> is that on x86, fw_cfg is *not* AFAICT in ACPI, so I'd have to detour into
+> first adding it in on the host side, before I can rewrite the guest side
+> driver to look it up in there :)
+>
+>> > I am not sure how relevant sun4 and ppc/mac are for what you are trying to
+>> > accomplish, but perhaps it would be best to focus on x86 and ARM for now
+>> > and do it correctly. If the probing is actually needed, you can always add
+>> > it later.
+>
+> I guess that's the direction things seem to be headed, although it would
+> make me a bit sad to leave out sun and ppc right from the very beginning :)
+>
 
-   That's the atomicity at the futex value level.
+Sorry to be blunt, but I am not convinced there is a need for this
+driver anyway.
 
- - In the kernel we have to create/modify/destroy state in order to
-   provide the blocking/requeueing etc.
+> PS. If you have one .c file in the kernel which does any of the DT-on-arm
+> boilerplate I'm supposed to immitate, I'd appreciate the shortcut :)
+>
 
-   This state needs protection as well. So all operations related to
-   the kernel internal state are serialized on the hash bucket
-   locks. The hash buckets are a scalability mechanism to avoid
-   contention on a single lock protecting all kernel internal
-   state. For simplicity reasons you can just think of a global lock
-   protecting all kernel internal state.
+Check out drivers/tty/serial/amba-pl011.c
 
-   If the kernel creates/modifies state then it can be necessary to
-   either reread the futex value or modify it. That happens under the
-   locks as well.
+> PS2. Do you happen to be in Seattle right now ? :)
 
-   So in the case of requeue, we take the proper locks and perform the
-   comparison with val3 and the requeueing with the locks held.
-   
-   So that lock protection makes these operations 'atomic'. The
-   correct expression is 'serialized'.
- 
-> >> .\" FIXME We need some explanation in the following paragraph of *why*
-> >> .\"       it is important to note that "the kernel will update the
-> >> .\"       futex word's value prior
-> >>        It is important to note to returning to user space" . Can someone
-> >>        explain?   that  the  kernel  will  update the futex word's value
-> >>        prior to returning to user space.  Unlike the other futex  opera‐
-> >>        tions  described  above, the PI futex operations are designed for
-> >>        the implementation of very specific IPC mechanisms.
-> > 
-> > If there are multiple waiters on a pi futex then a wake pi operation
-> > will wake the first waiter and hand over the lock to this waiter. This
-> > includes handing over the rtmutex which represents the futex in the
-> > kernel. The strict requirement is that the futex owner and the rtmutex
-> > owner must be the same, except for the update period which is
-> > serialized by the futex internal locking. That means the kernel must
-> > update the user space value prior to returning to user space.
-
-And as noted above: It must update while holding the proper locks.
-
-> >> .\" FIXME XXX In discussing errors for FUTEX_CMP_REQUEUE_PI, Darren Hart
-> >> .\"       made the observation that "EINVAL is returned if the non-pi 
-> >> .\"       to pi or op pairing semantics are violated."
-> >> .\"       Probably there needs to be a general statement about this
-> >> .\"       requirement, probably located at about this point in the page.
-> >> .\"       Darren (or someone else), care to take a shot at this?
-> > 
-> > Well, that's hard to describe because the kernel only has a limited
-> > way of detecting such mismatches. It only can detect it when there are
-> > non PI waiters on a futex and a PI function is called or vice versa.
-> 
-> Hmmm. Okay, I filed your comments away for reference, but
-> hopefully someone can help with some actual text.
-
-I let Darren come up with something sensible :)
- 
-> >> .\" FIXME Somewhere on this page (I guess under the discussion of PI
-> >> .\"       futexes) we need a discussion of the FUTEX_OWNER_DIED bit.
-> >> .\"       Can someone propose a text?
-> > 
-> > If a futex has a rtmutex associated in the kernel, i.e. when there are
-> > blocked waiters, and the owner of the futex/rtmutex dies unexpectedly,
-> > then the kernel cleans up the rtmutex (as it holds a reference to the
-> > dying task) and hands it over to the next waiter. That requires that
-> > the user space value is updated accordingly. The kernel sets the
-> > FUTEX_OWNER_DIED in the user space value along with the TID of the new
-> > owner. User space is responsible for cleaning this up, though there
-> > are cases where the kernel does the cleanup.
-> >  
-> > The FUTEX_OWNER_DIED bit can also be set on uncontended futexes, where
-> > the kernel has no state associated. This happens via the robust futex
-> > mechanism. In that case the futex value will be set to
-> > FUTEX_OWNER_DIED. The robust futex mechanism is also available for non
-> > PI futexes.
-> 
-> ???
-> So, I added part of that text to the page, as follows:
-> 
->        If  a futex has an associated RT-mutex in the kernel (i.e., there
->        are blocked waiters) and the owner  of  the  futex/RT-mutex  dies
->        unexpectedly, then the kernel cleans up the RT-mutex and hands it
->        over to the next waiter.  This in turn requires  that  the  user-
->        space  value  is  updated  accordingly.  To indicate that this is
->        required, the kernel sets the FUTEX_OWNER_DIED bit in  the  futex
->        word  along  with  the thread ID of the new owner.  User space is
->        then responsible for cleaning this up  (though  there  are  cases
->        where the kernel does the cleanup).
-> 
-> Okay?
-> 
-> I think the last sentence still requires a little work though. What does
-> user space need to do in terms of clean up?
-
-User space has usually state as well. So the FUTEX_OWNER_DIED bit
-tells userspace that it needs to cleanup the stale state left over by
-the dead owner.
- 
-> >> .\" FIXME In the next line, what type of "priority" are we talking about?
-> >> .\"       Realtime priorities for SCHED_FIFO and SCHED_RR?
-> >> .\"       Or something else?
-> >>
-> >>               The
-> >>               enqueueing  of  the waiter is in descending priority order
-> >>               if more than one waiter exists.  
-> > 
-> > That also covers sched deadline.
-> 
-> ???
-> Thanks. If the realm is restricted purely to SCHED_OTHER (SCHED_NORMAL)
-> processes, does the nice value come into play also?
-
-No. SCHED_OTHER/NORMAL tasks are handled in FIFO order.
- 
-> So by now, I've reworked this text to be:
-> 
->        FUTEX_TRYLOCK_PI (since Linux 2.6.18)
->               This operation tries to acquire the futex at uaddr.  It is
->               invoked when a user-space atomic acquire did  not  succeed
->               because the futex word was not 0.
-> 
->               The trylock in kernel might succeed because the futex word
->               contains     stale     state     (FUTEX_WAITERS     and/or
->               FUTEX_OWNER_DIED).   This can happen when the owner of the
->               futex died.  User space cannot handle this condition in  a
->               race-free manner
-> 
-> Okay?
-> 
-> I must admit that I find "the trylock in kernel might succeed"hard
-> to understand. Could you elaborate a little?
-
-If the user space value has stale state, then the kernel can fix that
-up and acquire the futex.
- 
-> ???
-> So now I've reworded the opening text describing FUTEX_WAIT_REQUEUE_PI
-> as follows:
-> 
->        FUTEX_WAIT_REQUEUE_PI (since Linux 2.6.31)
->               Wait on  a  non-PI  futex  at  uaddr  and  potentially  be
->               requeued  (via a FUTEX_CMP_REQUEUE_PI operation in another
->               task) onto a PI futex at uaddr2.  The  wait  operation  on
->               uaddr is the same as for FUTEX_WAIT.
-> 
->               The  waiter  can be removed from the wait on uaddr without
->               requeueing on uaddr2 via a FUTEX_WAIT operation in another
-
-s/FUTEX_WAIT/FUTEX_WAKE/
-
->               task.   In  this case, the FUTEX_WAIT_REQUEUE_PI operation
->               returns with the error EWOULDBLOCK.
-> 
-> Okay?
-
-Yes.
-
-Thanks,
-
-	tglx
---8323329-185193515-1440026224=:3873--
+Nope :-)
