@@ -1,35 +1,64 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: Persistent Reservation API V2
-Date: Fri, 21 Aug 2015 08:59:54 +0200
-Message-ID: <20150821065954.GA14559@lst.de>
-References: <1439360604-16192-1-git-send-email-hch@lst.de> <alpine.LNX.2.00.1508202317270.15930@localhost.lm.intel.com>
+From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v7 3/6] mm: Introduce VM_LOCKONFAULT
+Date: Fri, 21 Aug 2015 09:25:52 +0200
+Message-ID: <20150821072552.GF23723@dhcp22.suse.cz>
+References: <1439097776-27695-1-git-send-email-emunson@akamai.com>
+ <1439097776-27695-4-git-send-email-emunson@akamai.com>
+ <20150812115909.GA5182@dhcp22.suse.cz>
+ <20150819213345.GB4536@akamai.com>
+ <20150820075611.GD4780@dhcp22.suse.cz>
+ <20150820170309.GA11557@akamai.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.LNX.2.00.1508202317270.15930@localhost.lm.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Keith Busch <keith.busch@intel.com>
-Cc: Jens Axboe <axboe@fb.com>, linux-api@vger.kernel.org, dm-devel@redhat.com, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20150820170309.GA11557-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 20, 2015 at 11:56:36PM +0000, Keith Busch wrote:
+On Thu 20-08-15 13:03:09, Eric B Munson wrote:
+> On Thu, 20 Aug 2015, Michal Hocko wrote:
+> 
+> > On Wed 19-08-15 17:33:45, Eric B Munson wrote:
+> > [...]
+> > > The group which asked for this feature here
+> > > wants the ability to distinguish between LOCKED and LOCKONFAULT regions
+> > > and without the VMA flag there isn't a way to do that.
+> > 
+> > Could you be more specific on why this is needed?
+> 
+> They want to keep metrics on the amount of memory used in a LOCKONFAULT
+> region versus the address space of the region.
 
-> NVMe can also specify
-> if whether or not a reservation should persist through power-loss.
+/proc/<pid>/smaps already exports that information AFAICS. It exports
+VMA flags including VM_LOCKED and if rss < size then this is clearly
+LOCKONFAULT because the standard mlock semantic is to populate. Would
+that be sufficient?
 
-SCSI does as well, it's the APTPL flag.  However reservations not persistent
-through a power loss are basically useless, so I decided to force them on
-in the API.  From the documentation:
+Now, it is true that LOCKONFAULT wouldn't be distinguishable from
+MAP_LOCKED which failed to populate but does that really matter? It is
+LOCKONFAULT in a way as well.
 
-"All implementations are expected to ensure the reservations survive
- a power loss"
+> > > Do we know that these last two open flags are needed right now or is
+> > > this speculation that they will be and that none of the other VMA flags
+> > > can be reclaimed?
+> > 
+> > I do not think they are needed by anybody right now but that is not a
+> > reason why it should be used without a really strong justification.
+> > If the discoverability is really needed then fair enough but I haven't
+> > seen any justification for that yet.
+> 
+> To be completely clear you believe that if the metrics collection is
+> not a strong enough justification, it is better to expand the mm_struct
+> by another unsigned long than to use one of these bits right?
 
-So I would prefer not to add it, or if we really have to as a negative flag
-to specifically opt out of the APTPL behavior.
-
-> with it. For example, NVMe can ignore existing keys when acquiring a
-> reservation in addition to registering a new key.
-
-This sounds like a sensible addition to me, and I wouldn't be surprised
-if future SPC versions will add this flag.
+A simple bool is sufficient for that. And yes I think we should go with
+per mm_struct flag rather than the additional vma flag if it has only
+the global (whole address space) scope - which would be the case if the
+LOCKONFAULT is always an mlock modifier and the persistance is needed
+only for MCL_FUTURE. Which is imho a sane semantic.
+-- 
+Michal Hocko
+SUSE Labs
