@@ -1,64 +1,403 @@
-From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v7 3/6] mm: Introduce VM_LOCKONFAULT
-Date: Fri, 21 Aug 2015 09:25:52 +0200
-Message-ID: <20150821072552.GF23723@dhcp22.suse.cz>
-References: <1439097776-27695-1-git-send-email-emunson@akamai.com>
- <1439097776-27695-4-git-send-email-emunson@akamai.com>
- <20150812115909.GA5182@dhcp22.suse.cz>
- <20150819213345.GB4536@akamai.com>
- <20150820075611.GD4780@dhcp22.suse.cz>
- <20150820170309.GA11557@akamai.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150820170309.GA11557-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH RFC] watchdog: Add watchdog device control through sysfs attributes
+Date: Fri, 21 Aug 2015 23:18:12 +0530
+Message-ID: <d9ac417a3bc1c6846f1ddfcd3cd07e5a92865c19.1440179209.git.panand@redhat.com>
+Return-path: <linux-watchdog-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-watchdog-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org
+Cc: linux-watchdog-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dzickus-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Wim Van Sebroeck <wim-IQzOog9fTRqzQB+pC5nmwQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu 20-08-15 13:03:09, Eric B Munson wrote:
-> On Thu, 20 Aug 2015, Michal Hocko wrote:
-> 
-> > On Wed 19-08-15 17:33:45, Eric B Munson wrote:
-> > [...]
-> > > The group which asked for this feature here
-> > > wants the ability to distinguish between LOCKED and LOCKONFAULT regions
-> > > and without the VMA flag there isn't a way to do that.
-> > 
-> > Could you be more specific on why this is needed?
-> 
-> They want to keep metrics on the amount of memory used in a LOCKONFAULT
-> region versus the address space of the region.
+This patch adds following attributes to watchdog device's sysfs interface.
 
-/proc/<pid>/smaps already exports that information AFAICS. It exports
-VMA flags including VM_LOCKED and if rss < size then this is clearly
-LOCKONFAULT because the standard mlock semantic is to populate. Would
-that be sufficient?
+* start - writes non zero value to start and zero to stop
+* state - reads whether device is active or not(1 for active and 0 for
+inactive)
+* identity - reads Watchdog device's identity string.
+* keepalive - writes to ping a watchdog device
+* timeout - reads current timeout and writes to program a new timeout.
+* timeleft - reads timeleft before watchdog generates a reset
+* bootstatus - reads status of the watchdog device at boot
+* status - reads watchdog device's  internal status bits
+* nowayout - reads whether nowayout feature was set or not
 
-Now, it is true that LOCKONFAULT wouldn't be distinguishable from
-MAP_LOCKED which failed to populate but does that really matter? It is
-LOCKONFAULT in a way as well.
+Testing with iTCO_wdt:
+ # cd /sys/class/watchdog/watchdog1/
+ # ls
+bootstatus  dev  device  identity  keepalive  nowayout  power  start  state
+status  subsystem  timeleft  timeout  uevent
+ # cat identity
+iTCO_wdt
+ # cat timeout
+30
+ # echo 1 > start
+ # cat timeleft
+26
+ # echo 120 > timeout
+ # cat timeleft
+116
+ # echo > keepalive
+ # cat timeleft
+118
+ # cat state
+1
+ # echo 0 > start
+ # cat state
+0
+ # cat bootstatus
+0
+ # cat nowayout
+0
+ # cat status
+cat: status: Operation not supported
 
-> > > Do we know that these last two open flags are needed right now or is
-> > > this speculation that they will be and that none of the other VMA flags
-> > > can be reclaimed?
-> > 
-> > I do not think they are needed by anybody right now but that is not a
-> > reason why it should be used without a really strong justification.
-> > If the discoverability is really needed then fair enough but I haven't
-> > seen any justification for that yet.
-> 
-> To be completely clear you believe that if the metrics collection is
-> not a strong enough justification, it is better to expand the mm_struct
-> by another unsigned long than to use one of these bits right?
+Signed-off-by: Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+---
+ Documentation/ABI/testing/sysfs-class-watchdog |  74 +++++++++
+ drivers/watchdog/watchdog_core.c               |   6 +-
+ drivers/watchdog/watchdog_core.h               |   2 +
+ drivers/watchdog/watchdog_dev.c                | 206 +++++++++++++++++++++++++
+ 4 files changed, 284 insertions(+), 4 deletions(-)
+ create mode 100644 Documentation/ABI/testing/sysfs-class-watchdog
 
-A simple bool is sufficient for that. And yes I think we should go with
-per mm_struct flag rather than the additional vma flag if it has only
-the global (whole address space) scope - which would be the case if the
-LOCKONFAULT is always an mlock modifier and the persistance is needed
-only for MCL_FUTURE. Which is imho a sane semantic.
+diff --git a/Documentation/ABI/testing/sysfs-class-watchdog b/Documentation/ABI/testing/sysfs-class-watchdog
+new file mode 100644
+index 000000000000..31e7be53edf8
+--- /dev/null
++++ b/Documentation/ABI/testing/sysfs-class-watchdog
+@@ -0,0 +1,74 @@
++What:		/sys/class/watchdog/watchdogn/bootstatus
++Date:		August 2015
++Contact:	Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
++Description:
++		It is a read only file. It contains status of the watchdog
++		device at boot. It is equivalent to WDIOC_GETBOOTSTATUS of
++		ioctl interface.
++
++What:		/sys/class/watchdog/watchdogn/identity
++Date:		August 2015
++Contact:	Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
++Description:
++		It is a read only file. It contains identity string of
++		watchdog device.
++
++What:		/sys/class/watchdog/watchdogn/keepalive
++Date:		August 2015
++Contact:	Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
++Description:
++		It is a write only file. It is written to ping a watchdog
++		device to keep it alive. It is equivalent to
++		WDIOC_KEEPALIVE of ioctl interface.
++
++What:		/sys/class/watchdog/watchdogn/nowayout
++Date:		August 2015
++Contact:	Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
++Description:
++		It is a read only file. While reading, it gives '1' if that
++		device supports nowayout feature else, it gives '0'.
++
++What:		/sys/class/watchdog/watchdogn/start
++Date:		August 2015
++Contact:	Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
++Description:
++		It is a write only file. Writing '1' will trigger that
++		watchdog device and writing '0' will stop it. These are
++		equivalent to WDIOS_ENABLECARD and WDIOS_DISABLECARD of ioctl
++		interface. If a device has nowayout programmed, then that
++		can not be stopped. Therefore, it is recommended to read
++		state file to insure that whether watchdog device was
++		stopped or not after writing '0'.
++
++What:		/sys/class/watchdog/watchdogn/state
++Date:		August 2015
++Contact:	Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
++Description:
++		It is a read only file. If it is read as '1' then a watchdog
++		device is active. If it is read as '0' then a watchdog
++		device is inactive.
++
++What:		/sys/class/watchdog/watchdogn/status
++Date:		August 2015
++Contact:	Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
++Description:
++		It is a read only file. It contains watchdog device's
++		internal status bits. It is equivalent to WDIOC_GETSTATUS
++		of ioctl interface.
++
++What:		/sys/class/watchdog/watchdogn/timeleft
++Date:		August 2015
++Contact:	Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
++Description:
++		It is a read only file. It contains value of time left for
++		reset generation. It is equivalent to WDIOC_GETTIMELEFT of
++		ioctl interface.
++
++What:		/sys/class/watchdog/watchdogn/timeout
++Date:		August 2015
++Contact:	Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
++Description:
++		It is a read/write file. It is read to know about current
++		timeout and written to program a new timeout value. These
++		are equivalent to WDIOC_SETTIMEOUT and WDIOC_GETTIMEOUT of
++		ioctl interface.
+diff --git a/drivers/watchdog/watchdog_core.c b/drivers/watchdog/watchdog_core.c
+index 1a8059455413..703ff7b23f31 100644
+--- a/drivers/watchdog/watchdog_core.c
++++ b/drivers/watchdog/watchdog_core.c
+@@ -139,7 +139,7 @@ EXPORT_SYMBOL_GPL(watchdog_init_timeout);
+ 
+ static int __watchdog_register_device(struct watchdog_device *wdd)
+ {
+-	int ret, id, devno;
++	int ret, id;
+ 
+ 	if (wdd == NULL || wdd->info == NULL || wdd->ops == NULL)
+ 		return -EINVAL;
+@@ -181,9 +181,7 @@ static int __watchdog_register_device(struct watchdog_device *wdd)
+ 		}
+ 	}
+ 
+-	devno = wdd->cdev.dev;
+-	wdd->dev = device_create(watchdog_class, wdd->parent, devno,
+-					NULL, "watchdog%d", wdd->id);
++	wdd->dev = watchdog_device_create(watchdog_class, wdd);
+ 	if (IS_ERR(wdd->dev)) {
+ 		watchdog_dev_unregister(wdd);
+ 		ida_simple_remove(&watchdog_ida, id);
+diff --git a/drivers/watchdog/watchdog_core.h b/drivers/watchdog/watchdog_core.h
+index 6c951418fca7..36abd15ffcea 100644
+--- a/drivers/watchdog/watchdog_core.h
++++ b/drivers/watchdog/watchdog_core.h
+@@ -31,6 +31,8 @@
+ /*
+  *	Functions/procedures to be called by the core
+  */
++struct device * watchdog_device_create(struct class *,
++				struct watchdog_device *);
+ extern int watchdog_dev_register(struct watchdog_device *);
+ extern int watchdog_dev_unregister(struct watchdog_device *);
+ extern int __init watchdog_dev_init(void);
+diff --git a/drivers/watchdog/watchdog_dev.c b/drivers/watchdog/watchdog_dev.c
+index 6aaefbad303e..1186b5a918e9 100644
+--- a/drivers/watchdog/watchdog_dev.c
++++ b/drivers/watchdog/watchdog_dev.c
+@@ -248,6 +248,212 @@ out_timeleft:
+ 	return err;
+ }
+ 
++static ssize_t nowayout_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++	bool nowayout = false;
++
++	mutex_lock(&wdd->lock);
++	if (test_bit(WDOG_NO_WAY_OUT, &wdd->status))
++		nowayout = true;
++	mutex_unlock(&wdd->lock);
++
++	return sprintf(buf, "%d\n", nowayout);
++}
++static DEVICE_ATTR_RO(nowayout);
++
++static ssize_t status_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++	ssize_t status;
++	unsigned int val;
++
++	status = watchdog_get_status(wdd, &val);
++	if (!status)
++		status = sprintf(buf, "%u\n", val);
++
++	return status;
++}
++static DEVICE_ATTR_RO(status);
++
++static ssize_t bootstatus_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++	ssize_t status;
++
++	mutex_lock(&wdd->lock);
++	status = sprintf(buf, "%u\n", wdd->bootstatus);
++	mutex_unlock(&wdd->lock);
++
++	return status;
++}
++static DEVICE_ATTR_RO(bootstatus);
++
++static ssize_t timeleft_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++	ssize_t status;
++	unsigned int val;
++
++	status = watchdog_get_timeleft(wdd, &val);
++
++	if (!status)
++		status = sprintf(buf, "%u\n", val);
++
++	return status;
++}
++static DEVICE_ATTR_RO(timeleft);
++
++static ssize_t timeout_store(struct device *dev,
++		struct device_attribute *attr, const char *buf, size_t size)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++	unsigned int val;
++	ssize_t status = 0;
++
++	status = kstrtouint(buf, 0, &val);
++	if (!status) {
++		status = watchdog_set_timeout(wdd, val);
++		if (status >= 0)
++			status = watchdog_ping(wdd);
++	}
++
++	if (status < 0)
++		return status;
++	else
++		return size;
++}
++
++static ssize_t timeout_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++	ssize_t status;
++
++	mutex_lock(&wdd->lock);
++	if (wdd->timeout == 0)
++		status = -EOPNOTSUPP;
++	else
++		status = sprintf(buf, "%u\n", wdd->timeout);
++	mutex_unlock(&wdd->lock);
++
++	return status;
++}
++static DEVICE_ATTR_RW(timeout);
++
++static ssize_t keepalive_store(struct device *dev,
++		struct device_attribute *attr, const char *buf, size_t size)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++	ssize_t status = 0;
++
++	mutex_lock(&wdd->lock);
++	if (!(wdd->info->options & WDIOF_KEEPALIVEPING))
++		status = -EOPNOTSUPP;
++	mutex_unlock(&wdd->lock);
++
++	if (!status)
++		status = watchdog_ping(wdd);
++
++	if (status < 0)
++		return status;
++	else
++		return size;
++}
++static DEVICE_ATTR_WO(keepalive);
++
++static ssize_t identity_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++	ssize_t status;
++
++	mutex_lock(&wdd->lock);
++	status = sprintf(buf, "%s\n", wdd->info->identity);
++	mutex_unlock(&wdd->lock);
++
++	return status;
++}
++static DEVICE_ATTR_RO(identity);
++
++static ssize_t state_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++	bool active;
++
++	mutex_lock(&wdd->lock);
++	active = watchdog_active(wdd);
++	mutex_unlock(&wdd->lock);
++
++	return sprintf(buf, "%d\n", active);
++}
++static DEVICE_ATTR_RO(state);
++
++static ssize_t start_store(struct device *dev,
++		struct device_attribute *attr, const char *buf, size_t size)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++	ssize_t status = 0;
++	unsigned int val;
++
++	status = kstrtouint(buf, 0, &val);
++	if (status)
++		return status;
++	if (val)
++		status = watchdog_start(wdd);
++	else
++		status = watchdog_stop(wdd);
++
++	if (status < 0)
++		return status;
++	else
++		return size;
++}
++static DEVICE_ATTR_WO(start);
++
++static struct attribute *wdt_attrs[] = {
++	&dev_attr_start.attr,
++	&dev_attr_state.attr,
++	&dev_attr_identity.attr,
++	&dev_attr_keepalive.attr,
++	&dev_attr_timeout.attr,
++	&dev_attr_timeleft.attr,
++	&dev_attr_bootstatus.attr,
++	&dev_attr_status.attr,
++	&dev_attr_nowayout.attr,
++	NULL,
++};
++
++static const struct attribute_group wdt_group = {
++	.attrs = wdt_attrs,
++};
++
++static const struct attribute_group *wdt_groups[] = {
++	&wdt_group,
++	NULL
++};
++
++/*
++ *	watchdog_device_create: create a struct device for a given watchdog
++ *	device
++ *	@wdc: watchdog class with which created device is associated
++ *	@wdd: watchdog device
++ *
++ *	Creates a struct device corresponding to given watchdog device and
++ *	associates a device attribute_group with it.
++ */
++struct device * watchdog_device_create(struct class *wdc,
++					struct watchdog_device *wdd)
++{
++	return device_create_with_groups(wdc, wdd->parent, wdd->cdev.dev,
++			wdd, wdt_groups, "watchdog%d", wdd->id);
++}
++
+ /*
+  *	watchdog_ioctl_op: call the watchdog drivers ioctl op if defined
+  *	@wddev: the watchdog device to do the ioctl on
 -- 
-Michal Hocko
-SUSE Labs
+2.4.3
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-watchdog" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
