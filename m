@@ -1,23 +1,47 @@
-From: Maria-Elisabeth Schaeffler <ayazdani-sRNruteh8S5hmhkoCovsdw@public.gmane.org>
-Subject: FINANCIAL GIFT
-Date: Fri, 21 Aug 2015 20:41:24 +0200
-Message-ID: <20150821184304.8F56CB3CB6__31094.0285482959$1440185230$gmane$org@mail.ricohidc.com>
-Reply-To: mariaelisabethscha-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Description: Mail message body
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Recipients <ayazdani-sRNruteh8S5hmhkoCovsdw@public.gmane.org>
+From: Yann Cantin <yann.cantin@laposte.net>
+Subject: [ebeam PATCH v2 0/2] Add a new USB eBeam input driver
+Date: Sun, 23 Aug 2015 00:06:02 +0200
+Message-ID: <1440281164-23111-1-git-send-email-yann.cantin@laposte.net>
+Return-path: <linux-input-owner@vger.kernel.org>
+Sender: linux-input-owner@vger.kernel.org
+To: linux-input@vger.kernel.org, linux-usb@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, dmitry.torokhov@gmail.com, jkosina@suse.cz, gregkh@linuxfoundation.org, oneukum@suse.com, Yann Cantin <yann.cantin@laposte.net>
 List-Id: linux-api@vger.kernel.org
 
-I intend to give to you a portion of my Wealth as a free-will financial donation to you. Respond now to partake.
+Hi,
 
-Regards
-Maria-Elisabeth Schaeffler
-Email:mariaelisabt-1ViLX0X+lBJBDgjK7y7TUQ@public.gmane.org
+New USB input driver for eBeam devices.
 
----
-This email has been checked for viruses by Avast antivirus software.
-https://www.avast.com/antivirus
+Notable stuff :
+- need userspace gui tool for calibration (ebeam.tuxfamily.org)
+- This driver breaks Luidia's proprietary application suite.
+
+Patch 1 to blacklist the devices for hid generic-usb.
+
+Patch 2 is the actual driver.
+
+Changes :
+RFC https://lkml.org/lkml/2015/7/20/634 : Use DEVICE_ATTR_RW()
+RFC https://lkml.org/lkml/2015/7/21/107 : move usb id definitions out of ebeam.c
+RFC https://lkml.org/lkml/2015/7/20/657 : Fix ABI documentation
+
+Thanks for your help.
+
+
+Yann Cantin (2):
+hid: Blacklist eBeam devices
+input: misc: New USB eBeam input driver
+
+Documentation/ABI/testing/sysfs-driver-ebeam |  53 ++
+drivers/hid/hid-core.c                       |   6 +
+drivers/hid/hid-ids.h                        |   6 +
+drivers/input/misc/Kconfig                   |  22 +
+drivers/input/misc/Makefile                  |   1 +
+drivers/input/misc/ebeam.c                   | 759 +++++++++++++++++++++++++++
+6 files changed, 847 insertions(+)
+create mode 100644 Documentation/ABI/testing/sysfs-driver-ebeam
+create mode 100644 drivers/input/misc/ebeam.c
+
+--
+2.3.8
+
