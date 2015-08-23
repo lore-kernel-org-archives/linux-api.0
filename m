@@ -1,117 +1,184 @@
-From: Finn Thain <fthain@telegraphics.com.au>
-Subject: [RFC v6 24/25] m68k/mac: Fix PRAM accessors
-Date: Sun, 23 Aug 2015 20:41:53 +1000
-Message-ID: <20150823104135.547704709@telegraphics.com.au>
-References: <20150823104129.517600532@telegraphics.com.au>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=mac68k-fix-pram-accessors
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-m68k@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, Geert Uytterhoeven <geert@linux-m68k.org>, linux-api@vger.kernel.org
+From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: [PATCH v7 24/44] [media] uapi/media.h: Fix entity namespace
+Date: Sun, 23 Aug 2015 17:17:41 -0300
+Message-ID: <5cf25be2d0508e02f6ffe469509fa12c45ddcb8d.1440359643.git.mchehab@osg.samsung.com>
+References: <cover.1440359643.git.mchehab@osg.samsung.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <cover.1440359643.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <cover.1440359643.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+References: <cover.1440359643.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Finn Thain <fthain@telegraphics.com.au>
-Acked-by: Geert Uytterhoeven <geert@linux-m68k.org>
+Now that interfaces got created, we need to fix the entity
+namespace.
 
----
+So, let's create a consistent new namespace and add backward
+compatibility macros to keep the old namespace preserved.
 
-Tested on a PowerBook 520 and Quadra 650.
+Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 
-Changes since v2:
-- Make use of the RTC_* macros from the previous patch and add a few more
-besides.
-
----
- arch/m68k/mac/misc.c     |   39 +++++++++++++++++++++++++++++++++------
- include/uapi/linux/pmu.h |    2 ++
- 2 files changed, 35 insertions(+), 6 deletions(-)
-
-Index: linux/arch/m68k/mac/misc.c
-===================================================================
---- linux.orig/arch/m68k/mac/misc.c	2015-08-23 20:41:23.000000000 +1000
-+++ linux/arch/m68k/mac/misc.c	2015-08-23 20:41:25.000000000 +1000
-@@ -119,19 +119,22 @@ static void pmu_write_time(long data)
- static unsigned char pmu_pram_read_byte(int offset)
- {
- 	struct adb_request req;
--	if (pmu_request(&req, NULL, 3, PMU_READ_NVRAM,
--			(offset >> 8) & 0xFF, offset & 0xFF) < 0)
-+
-+	if (pmu_request(&req, NULL, 3, PMU_READ_XPRAM,
-+	                offset & 0xFF, 1) < 0)
- 		return 0;
- 	while (!req.complete)
- 		pmu_poll();
--	return req.reply[3];
-+
-+	return req.reply[1];
- }
+diff --git a/drivers/media/dvb-core/dvbdev.c b/drivers/media/dvb-core/dvbdev.c
+index 5a2bd03f5dc0..acada5ba9442 100644
+--- a/drivers/media/dvb-core/dvbdev.c
++++ b/drivers/media/dvb-core/dvbdev.c
+@@ -229,17 +229,17 @@ static void dvb_create_media_entity(struct dvb_device *dvbdev,
  
- static void pmu_pram_write_byte(unsigned char data, int offset)
+ 	switch (type) {
+ 	case DVB_DEVICE_FRONTEND:
+-		dvbdev->entity->type = MEDIA_ENT_T_DEVNODE_DVB_FE;
++		dvbdev->entity->type = MEDIA_ENT_T_DVB_DEMOD;
+ 		dvbdev->pads[0].flags = MEDIA_PAD_FL_SINK;
+ 		dvbdev->pads[1].flags = MEDIA_PAD_FL_SOURCE;
+ 		break;
+ 	case DVB_DEVICE_DEMUX:
+-		dvbdev->entity->type = MEDIA_ENT_T_DEVNODE_DVB_DEMUX;
++		dvbdev->entity->type = MEDIA_ENT_T_DVB_DEMUX;
+ 		dvbdev->pads[0].flags = MEDIA_PAD_FL_SINK;
+ 		dvbdev->pads[1].flags = MEDIA_PAD_FL_SOURCE;
+ 		break;
+ 	case DVB_DEVICE_CA:
+-		dvbdev->entity->type = MEDIA_ENT_T_DEVNODE_DVB_CA;
++		dvbdev->entity->type = MEDIA_ENT_T_DVB_CA;
+ 		dvbdev->pads[0].flags = MEDIA_PAD_FL_SINK;
+ 		dvbdev->pads[1].flags = MEDIA_PAD_FL_SOURCE;
+ 		break;
+@@ -438,7 +438,7 @@ EXPORT_SYMBOL(dvb_unregister_device);
+ void dvb_create_media_graph(struct dvb_adapter *adap)
  {
- 	struct adb_request req;
--	if (pmu_request(&req, NULL, 4, PMU_WRITE_NVRAM,
--			(offset >> 8) & 0xFF, offset & 0xFF, data) < 0)
-+
-+	if (pmu_request(&req, NULL, 4, PMU_WRITE_XPRAM,
-+	                offset & 0xFF, 1, data) < 0)
- 		return;
- 	while (!req.complete)
- 		pmu_poll();
-@@ -257,6 +260,16 @@ static void via_rtc_send(__u8 data)
- #define RTC_REG_WRITE_PROTECT   13
+ 	struct media_device *mdev = adap->mdev;
+-	struct media_entity *entity, *tuner = NULL, *fe = NULL;
++	struct media_entity *entity, *tuner = NULL, *demod = NULL;
+ 	struct media_entity *demux = NULL, *dvr = NULL, *ca = NULL;
+ 	struct media_interface *intf;
  
- /*
-+ * Inside Mac has no information about two-byte RTC commands but
-+ * the MESS source code has the essentials.
-+ */
-+
-+#define RTC_REG_XPRAM           14
-+#define RTC_CMD_XPRAM_READ      (RTC_CMD_READ(RTC_REG_XPRAM) << 8)
-+#define RTC_CMD_XPRAM_WRITE     (RTC_CMD_WRITE(RTC_REG_XPRAM) << 8)
-+#define RTC_CMD_XPRAM_ARG(a)    (((a & 0xE0) << 3) | ((a & 0x1F) << 2))
-+
+@@ -450,26 +450,26 @@ void dvb_create_media_graph(struct dvb_adapter *adap)
+ 		case MEDIA_ENT_T_V4L2_SUBDEV_TUNER:
+ 			tuner = entity;
+ 			break;
+-		case MEDIA_ENT_T_DEVNODE_DVB_FE:
+-			fe = entity;
++		case MEDIA_ENT_T_DVB_DEMOD:
++			demod = entity;
+ 			break;
+-		case MEDIA_ENT_T_DEVNODE_DVB_DEMUX:
++		case MEDIA_ENT_T_DVB_DEMUX:
+ 			demux = entity;
+ 			break;
+-		case MEDIA_ENT_T_DEVNODE_DVB_DVR:
++		case MEDIA_ENT_T_DVB_TSOUT:
+ 			dvr = entity;
+ 			break;
+-		case MEDIA_ENT_T_DEVNODE_DVB_CA:
++		case MEDIA_ENT_T_DVB_CA:
+ 			ca = entity;
+ 			break;
+ 		}
+ 	}
+ 
+-	if (tuner && fe)
+-		media_create_pad_link(tuner, 0, fe, 0, 0);
++	if (tuner && demod)
++		media_create_pad_link(tuner, 0, demod, 0, 0);
+ 
+-	if (fe && demux)
+-		media_create_pad_link(fe, 1, demux, 0, MEDIA_LNK_FL_ENABLED);
++	if (demod && demux)
++		media_create_pad_link(demod, 1, demux, 0, MEDIA_LNK_FL_ENABLED);
+ 
+ 	if (demux && dvr)
+ 		media_create_pad_link(demux, 1, dvr, 0, MEDIA_LNK_FL_ENABLED);
+diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
+index 21c96cd7a6ae..7306aeaff807 100644
+--- a/include/uapi/linux/media.h
++++ b/include/uapi/linux/media.h
+@@ -42,31 +42,67 @@ struct media_device_info {
+ 
+ #define MEDIA_ENT_ID_FLAG_NEXT		(1 << 31)
+ 
 +/*
-  * Execute a VIA PRAM/RTC command. For read commands
-  * data should point to a one-byte buffer for the
-  * resulting data. For write commands it should point
-@@ -303,11 +316,25 @@ static void via_rtc_command(int command,
++ * Base numbers for entity types
++ *
++ * Please notice that the huge gap of 16 bits for each base is overkill!
++ * 8 bits is more than enough to avoid starving entity types for each
++ * subsystem.
++ *
++ * However, It is kept this way just to avoid binary breakages with the
++ * namespace provided on legacy versions of this header.
++ */
++#define MEDIA_ENT_T_DVB_BASE		0x00000000
++#define MEDIA_ENT_T_V4L2_BASE		0x00010000
++#define MEDIA_ENT_T_V4L2_SUBDEV_BASE	0x00020000
++
++/* V4L2 entities */
++#define MEDIA_ENT_T_V4L2_VIDEO		(MEDIA_ENT_T_V4L2_BASE + 1)
++	/*
++	 * Please notice that numbers between MEDIA_ENT_T_V4L2_BASE + 2 and
++	 * MEDIA_ENT_T_V4L2_BASE + 4 can't be used, as those values used
++	 * to be declared for FB, ALSA and DVB entities.
++	 * As those values were never atually used in practice, we're just
++	 * adding them as backward compatibily macros and keeping the
++	 * numberspace cleaned here. This way, we avoid breaking compilation,
++	 * in the case of having some userspace application using the old
++	 * symbols.
++	 */
++#define MEDIA_ENT_T_V4L2_VBI		(MEDIA_ENT_T_V4L2_BASE + 5)
++#define MEDIA_ENT_T_V4L2_RADIO		(MEDIA_ENT_T_V4L2_BASE + 6)
++#define MEDIA_ENT_T_V4L2_SWRADIO	(MEDIA_ENT_T_V4L2_BASE + 7)
++
++/* V4L2 Sub-device entities */
++#define MEDIA_ENT_T_V4L2_SUBDEV_SENSOR	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 1)
++#define MEDIA_ENT_T_V4L2_SUBDEV_FLASH	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 2)
++#define MEDIA_ENT_T_V4L2_SUBDEV_LENS	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 3)
++	/* A converter of analogue video to its digital representation. */
++#define MEDIA_ENT_T_V4L2_SUBDEV_DECODER	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 4)
++	/* Tuner entity is actually both V4L2 and DVB subdev */
++#define MEDIA_ENT_T_V4L2_SUBDEV_TUNER	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 5)
++
++/* DVB entities */
++#define MEDIA_ENT_T_DVB_DEMOD		(MEDIA_ENT_T_DVB_BASE + 4)
++#define MEDIA_ENT_T_DVB_DEMUX		(MEDIA_ENT_T_DVB_BASE + 5)
++#define MEDIA_ENT_T_DVB_TSOUT		(MEDIA_ENT_T_DVB_BASE + 6)
++#define MEDIA_ENT_T_DVB_CA		(MEDIA_ENT_T_DVB_BASE + 7)
++#define MEDIA_ENT_T_DVB_NET_DECAP	(MEDIA_ENT_T_DVB_BASE + 8)
++
++/* Legacy symbols used to avoid userspace compilation breakages */
+ #define MEDIA_ENT_TYPE_SHIFT		16
+ #define MEDIA_ENT_TYPE_MASK		0x00ff0000
+ #define MEDIA_ENT_SUBTYPE_MASK		0x0000ffff
  
- static unsigned char via_pram_read_byte(int offset)
- {
--	return 0;
-+	unsigned char temp;
+-#define MEDIA_ENT_T_DEVNODE		(1 << MEDIA_ENT_TYPE_SHIFT)
+-#define MEDIA_ENT_T_DEVNODE_V4L		(MEDIA_ENT_T_DEVNODE + 1)
++#define MEDIA_ENT_T_DEVNODE		MEDIA_ENT_T_V4L2_BASE
++#define MEDIA_ENT_T_V4L2_SUBDEV		MEDIA_ENT_T_V4L2_SUBDEV_BASE
 +
-+	via_rtc_command(RTC_CMD_XPRAM_READ | RTC_CMD_XPRAM_ARG(offset), &temp);
++#define MEDIA_ENT_T_DEVNODE_V4L		MEDIA_ENT_T_V4L2_VIDEO
 +
-+	return temp;
- }
+ #define MEDIA_ENT_T_DEVNODE_FB		(MEDIA_ENT_T_DEVNODE + 2)
+ #define MEDIA_ENT_T_DEVNODE_ALSA	(MEDIA_ENT_T_DEVNODE + 3)
+-#define MEDIA_ENT_T_DEVNODE_DVB_FE	(MEDIA_ENT_T_DEVNODE + 4)
+-#define MEDIA_ENT_T_DEVNODE_DVB_DEMUX	(MEDIA_ENT_T_DEVNODE + 5)
+-#define MEDIA_ENT_T_DEVNODE_DVB_DVR	(MEDIA_ENT_T_DEVNODE + 6)
+-#define MEDIA_ENT_T_DEVNODE_DVB_CA	(MEDIA_ENT_T_DEVNODE + 7)
+-#define MEDIA_ENT_T_DEVNODE_DVB_NET	(MEDIA_ENT_T_DEVNODE + 8)
++#define MEDIA_ENT_T_DEVNODE_DVB		(MEDIA_ENT_T_DEVNODE + 4)
  
- static void via_pram_write_byte(unsigned char data, int offset)
- {
-+	unsigned char temp;
-+
-+	temp = 0x55;
-+	via_rtc_command(RTC_CMD_WRITE(RTC_REG_WRITE_PROTECT), &temp);
-+
-+	temp = data;
-+	via_rtc_command(RTC_CMD_XPRAM_WRITE | RTC_CMD_XPRAM_ARG(offset), &temp);
-+
-+	temp = 0x55 | RTC_FLG_WRITE_PROTECT;
-+	via_rtc_command(RTC_CMD_WRITE(RTC_REG_WRITE_PROTECT), &temp);
- }
+-/* Legacy symbol. Use it to avoid userspace compilation breakages */
+-#define MEDIA_ENT_T_DEVNODE_DVB		MEDIA_ENT_T_DEVNODE_DVB_FE
+-
+-#define MEDIA_ENT_T_V4L2_SUBDEV		(2 << MEDIA_ENT_TYPE_SHIFT)
+-#define MEDIA_ENT_T_V4L2_SUBDEV_SENSOR	(MEDIA_ENT_T_V4L2_SUBDEV + 1)
+-#define MEDIA_ENT_T_V4L2_SUBDEV_FLASH	(MEDIA_ENT_T_V4L2_SUBDEV + 2)
+-#define MEDIA_ENT_T_V4L2_SUBDEV_LENS	(MEDIA_ENT_T_V4L2_SUBDEV + 3)
+-/* A converter of analogue video to its digital representation. */
+-#define MEDIA_ENT_T_V4L2_SUBDEV_DECODER	(MEDIA_ENT_T_V4L2_SUBDEV + 4)
+-
+-#define MEDIA_ENT_T_V4L2_SUBDEV_TUNER	(MEDIA_ENT_T_V4L2_SUBDEV + 5)
++/* Entity types */
  
- /*
-Index: linux/include/uapi/linux/pmu.h
-===================================================================
---- linux.orig/include/uapi/linux/pmu.h	2015-08-23 20:40:53.000000000 +1000
-+++ linux/include/uapi/linux/pmu.h	2015-08-23 20:41:25.000000000 +1000
-@@ -18,7 +18,9 @@
- #define PMU_POWER_CTRL		0x11	/* control power of some devices */
- #define PMU_ADB_CMD		0x20	/* send ADB packet */
- #define PMU_ADB_POLL_OFF	0x21	/* disable ADB auto-poll */
-+#define PMU_WRITE_XPRAM		0x32	/* write eXtended Parameter RAM */
- #define PMU_WRITE_NVRAM		0x33	/* write non-volatile RAM */
-+#define PMU_READ_XPRAM		0x3a	/* read eXtended Parameter RAM */
- #define PMU_READ_NVRAM		0x3b	/* read non-volatile RAM */
- #define PMU_SET_RTC		0x30	/* set real-time clock */
- #define PMU_READ_RTC		0x38	/* read real-time clock */
+ #define MEDIA_ENT_FL_DEFAULT		(1 << 0)
+ 
+-- 
+2.4.3
