@@ -1,7 +1,7 @@
 From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Subject: [PATCH v7 39/44] [media] uapi/media.h: Add MEDIA_IOC_G_TOPOLOGY ioctl
-Date: Sun, 23 Aug 2015 17:17:56 -0300
-Message-ID: <31b28b78f6a37ca7ff4554207bb05cd1a1db788c.1440359643.git.mchehab@osg.samsung.com>
+Subject: [PATCH v7 35/44] [media] media controller: get rid of entity subtype on Kernel
+Date: Sun, 23 Aug 2015 17:17:52 -0300
+Message-ID: <8958d8f7b45d41897646d63225dc53868a458eb9.1440359643.git.mchehab@osg.samsung.com>
 References: <cover.1440359643.git.mchehab@osg.samsung.com>
 Return-path: <linux-media-owner@vger.kernel.org>
 In-Reply-To: <cover.1440359643.git.mchehab@osg.samsung.com>
@@ -12,123 +12,63 @@ To: Linux Media Mailing List <linux-media@vger.kernel.org>
 Cc: Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Mauro Carvalho Chehab <mchehab@infradead.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Add a new ioctl that will report the entire topology on
-one go.
+Don't use anymore the type/subtype entity data/macros
+inside the Kernel.
 
 Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
 
 diff --git a/include/media/media-entity.h b/include/media/media-entity.h
-index 796e4a490af8..0111d9652b78 100644
+index 952867571429..796e4a490af8 100644
 --- a/include/media/media-entity.h
 +++ b/include/media/media-entity.h
-@@ -181,6 +181,8 @@ struct media_interface {
-  */
- struct media_intf_devnode {
- 	struct media_interface		intf;
-+
-+	/* Should match the fields at media_v2_intf_devnode */
- 	u32				major;
+@@ -185,16 +185,6 @@ struct media_intf_devnode {
  	u32				minor;
  };
+ 
+-static inline u32 media_entity_type(struct media_entity *entity)
+-{
+-	return entity->type & MEDIA_ENT_TYPE_MASK;
+-}
+-
+-static inline u32 media_entity_subtype(struct media_entity *entity)
+-{
+-	return entity->type & MEDIA_ENT_SUBTYPE_MASK;
+-}
+-
+ static inline u32 media_entity_id(struct media_entity *entity)
+ {
+ 	return entity->graph_obj.id;
 diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
-index ceea791dd6e9..7fcf7f477ae3 100644
+index e9e7ad268a7e..ceea791dd6e9 100644
 --- a/include/uapi/linux/media.h
 +++ b/include/uapi/linux/media.h
-@@ -238,11 +238,94 @@ struct media_links_enum {
- #define MEDIA_INTF_T_ALSA_RAWMIDI       (MEDIA_INTF_T_ALSA_BASE + 4)
- #define MEDIA_INTF_T_ALSA_HWDEP         (MEDIA_INTF_T_ALSA_BASE + 5)
+@@ -42,10 +42,8 @@ struct media_device_info {
  
--/* TBD: declare the structs needed for the new G_TOPOLOGY ioctl */
-+/*
-+ * MC next gen API definitions
-+ *
-+ * NOTE: The declarations below are close to the MC RFC for the Media
-+ *	 Controller, the next generation. Yet, there are a few adjustments
-+ *	 to do, as we want to be able to have a functional API before
-+ *	 the MC properties change. Those will be properly marked below.
-+ *	 Please also notice that I removed "num_pads", "num_links",
-+ *	 from the proposal, as a proper userspace application will likely
-+ *	 use lists for pads/links, just as we intend todo in Kernelspace.
-+ *	 The API definition should be freed from fields that are bound to
-+ *	 some specific data structure.
-+ *
-+ * FIXME: Currently, I opted to name the new types as "media_v2", as this
-+ *	  won't cause any conflict with the Kernelspace namespace, nor with
-+ *	  the previous kAPI media_*_desc namespace. This can be changed
-+ *	  latter, before the adding this API upstream.
-+ */
-+
-+
-+#define MEDIA_NEW_LNK_FL_ENABLED		MEDIA_LNK_FL_ENABLED
-+#define MEDIA_NEW_LNK_FL_IMMUTABLE		MEDIA_LNK_FL_IMMUTABLE
-+#define MEDIA_NEW_LNK_FL_DYNAMIC		MEDIA_NEW_FL_DYNAMIC
-+#define MEDIA_NEW_LNK_FL_INTERFACE_LINK		(1 << 3)
-+
-+struct media_v2_entity {
-+	__u32 id;
-+	char name[64];		/* FIXME: move to a property? (RFC says so) */
-+	__u16 reserved[14];
-+};
-+
-+/* Should match the specific fields at media_intf_devnode */
-+struct media_v2_intf_devnode {
-+	__u32 major;
-+	__u32 minor;
-+};
-+
-+struct media_v2_interface {
-+	__u32 id;
-+	__u32 intf_type;
-+	__u32 flags;
-+	__u32 reserved[9];
-+
-+	union {
-+		struct media_v2_intf_devnode devnode;
-+		__u32 raw[16];
-+	};
-+};
-+
-+struct media_v2_pad {
-+	__u32 id;
-+	__u32 entity_id;
-+	__u32 flags;
-+	__u16 reserved[9];
-+};
-+
-+struct media_v2_link {
-+    __u32 id;
-+    __u32 source_id;
-+    __u32 sink_id;
-+    __u32 flags;
-+    __u32 reserved[5];
-+};
-+
-+struct media_v2_topology {
-+	__u32 topology_version;
-+
-+	__u32 num_entities;
-+	struct media_v2_entity *entities;
-+
-+	__u32 num_interfaces;
-+	struct media_v2_interface *interfaces;
-+
-+	__u32 num_pads;
-+	struct media_v2_pad *pads;
-+
-+	__u32 num_links;
-+	struct media_v2_link *links;
-+
-+	__u32 reserved[64];
-+};
-+
-+/* ioctls */
+ #define MEDIA_ENT_ID_FLAG_NEXT		(1 << 31)
  
- #define MEDIA_IOC_DEVICE_INFO		_IOWR('|', 0x00, struct media_device_info)
- #define MEDIA_IOC_ENUM_ENTITIES		_IOWR('|', 0x01, struct media_entity_desc)
- #define MEDIA_IOC_ENUM_LINKS		_IOWR('|', 0x02, struct media_links_enum)
- #define MEDIA_IOC_SETUP_LINK		_IOWR('|', 0x03, struct media_link_desc)
-+#define MEDIA_IOC_G_TOPOLOGY		_IOWR('|', 0x04, struct media_v2_topology)
+-/* Used values for media_entity_desc::type */
+-
+ /*
+- * Initial value when an entity is created
++ * Initial value to be used when a new entity is created
+  * Drivers should change it to something useful
+  */
+ #define MEDIA_ENT_T_UNKNOWN	0x00000000
+@@ -96,6 +94,7 @@ struct media_device_info {
+ #define MEDIA_ENT_T_DVB_CA		(MEDIA_ENT_T_DVB_BASE + 7)
+ #define MEDIA_ENT_T_DVB_NET_DECAP	(MEDIA_ENT_T_DVB_BASE + 8)
  
- #endif /* __LINUX_MEDIA_H */
++#ifndef __KERNEL__
+ /* Legacy symbols used to avoid userspace compilation breakages */
+ #define MEDIA_ENT_TYPE_SHIFT		16
+ #define MEDIA_ENT_TYPE_MASK		0x00ff0000
+@@ -109,6 +108,7 @@ struct media_device_info {
+ #define MEDIA_ENT_T_DEVNODE_FB		(MEDIA_ENT_T_DEVNODE + 2)
+ #define MEDIA_ENT_T_DEVNODE_ALSA	(MEDIA_ENT_T_DEVNODE + 3)
+ #define MEDIA_ENT_T_DEVNODE_DVB		(MEDIA_ENT_T_DEVNODE + 4)
++#endif
+ 
+ /* Entity types */
+ 
 -- 
 2.4.3
