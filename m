@@ -1,92 +1,92 @@
-From: Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v2 0/3] SysFS driver for QEMU fw_cfg device
-Date: Mon, 24 Aug 2015 09:56:29 +0200
-Message-ID: <CAKv+Gu8UKoTVLM_MbZ1By4XaAHT0YgAWKVxhOYg=X9H6ei7MeA@mail.gmail.com>
-References: <cover.1439315079.git.somlo@cmu.edu>
-	<1439977109-20314-1-git-send-email-ard.biesheuvel@linaro.org>
-	<CAKv+Gu-BOKTHb24LnemKmvCwZn0W-NOT=avY94wkkRTx2ViW=Q@mail.gmail.com>
-	<20150819204915.GA6164@GLSMBP.INI.CMU.EDU>
-	<CAKv+Gu9wr+BUDjoz9NAkLNXxViDOM_PRoZRU8sxHog-iX=yUpQ@mail.gmail.com>
-	<20150821034757.GA6982@GLSMBP.INI.CMU.EDU>
+From: Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v7 3/6] mm: Introduce VM_LOCKONFAULT
+Date: Mon, 24 Aug 2015 13:17:49 +0300
+Message-ID: <CALYGNiPcruTM+2KKNZr7ebCVCPsqytSrW8rSzSmj+1Qp4OqXEw@mail.gmail.com>
+References: <1439097776-27695-1-git-send-email-emunson@akamai.com>
+	<1439097776-27695-4-git-send-email-emunson@akamai.com>
+	<20150812115909.GA5182@dhcp22.suse.cz>
+	<20150819213345.GB4536@akamai.com>
+	<20150820075611.GD4780@dhcp22.suse.cz>
+	<20150820170309.GA11557@akamai.com>
+	<20150821072552.GF23723@dhcp22.suse.cz>
+	<20150821183132.GA12835@akamai.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150821034757.GA6982-VPZ87SnTp2qKUezXOiBB2eW1CriLhL8O@public.gmane.org>
+In-Reply-To: <20150821183132.GA12835-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Richard W.M. Jones" <rjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jordan Justen <jordan.l.justen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, QEMU Developers <qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>, Gleb Natapov <gleb-RmZWMc9puTNJc61us3aD9laTQe2KTcn/@public.gmane.org>, Matt Fleming <matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, kernelnewbies-7JyXY6prKcjpASu1u0TL5ti2O/JbrIOy@public.gmane.org, Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Laszlo Ersek <lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org" <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paul-DWxLp4Yu+b8AvxtiuMwx3w@public.gmane.org, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Leif Lindholm <leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, dri-devel <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 21 August 2015 at 05:47, Gabriel L. Somlo <somlo-D+Gtc/HYRWM@public.gmane.org> wrote:
-> On Thu, Aug 20, 2015 at 07:21:48AM +0200, Ard Biesheuvel wrote:
->> On 19 August 2015 at 22:49, Gabriel L. Somlo <somlo-D+Gtc/HYRWM@public.gmane.org> wrote:
->> >> > From: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
->> >> >> Several different architectures supported by QEMU are set up with a
->> >> >> "firmware configuration" (fw_cfg) device, used to pass configuration
->> >> >> "blobs" into the guest by the host running QEMU.
->> >> >>
->> >> >> Historically, these config blobs were mostly of interest to the guest
->> >> >> BIOS, but since QEMU v2.4 it is possible to insert arbitrary blobs via
->> >> >> the command line, which makes them potentially interesting to userspace
->> >> >> (e.g. for passing early boot environment variables, etc.).
->> >> >>
->> >> >
->> >> > Does 'potentially interesting' mean you have a use case? Could you elaborate?
+On Fri, Aug 21, 2015 at 9:31 PM, Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org> wrote:
+> On Fri, 21 Aug 2015, Michal Hocko wrote:
+>
+>> On Thu 20-08-15 13:03:09, Eric B Munson wrote:
+>> > On Thu, 20 Aug 2015, Michal Hocko wrote:
 >> >
->> > My personal one would be something like:
+>> > > On Wed 19-08-15 17:33:45, Eric B Munson wrote:
+>> > > [...]
+>> > > > The group which asked for this feature here
+>> > > > wants the ability to distinguish between LOCKED and LOCKONFAULT regions
+>> > > > and without the VMA flag there isn't a way to do that.
+>> > >
+>> > > Could you be more specific on why this is needed?
 >> >
->> > cat > guestinfo.txt << EOT
->> >   KEY1="val1"
->> >   KEY2="val2"
->> >   ...
->> > EOT
->> >
->> > qemu-system-x86_64 ... -fw-cfg name="opt/guestinfo",file=./guestinfo.txt ...
->> >
->> > Then, from inside the guest:
->> >
->> >   . /sys/firmware/qemu_fw_cfg/by_name/opt/guestinfo/raw
->> >
->> >   do_something_with $KEY1 $KEY2
->> >   ...
->> >
->> > But I'm thinking this is only one of the many positive things one
->> > could do with the ability to access random host-supplied blobs from
->> > guest userspace :)
->> >
+>> > They want to keep metrics on the amount of memory used in a LOCKONFAULT
+>> > region versus the address space of the region.
 >>
->> 'random host-supplied blobs' sounds awfully like files in a file
->> system to me, and that is already supported by QEMU and works with any
->> guest OS unmodified. If you are in control of the command line, surely
->> you can add a -drive xxx,fat:path/to/blobs -device xxx pair that
->> simply turns up as a volume.
+>> /proc/<pid>/smaps already exports that information AFAICS. It exports
+>> VMA flags including VM_LOCKED and if rss < size then this is clearly
+>> LOCKONFAULT because the standard mlock semantic is to populate. Would
+>> that be sufficient?
+>>
+>> Now, it is true that LOCKONFAULT wouldn't be distinguishable from
+>> MAP_LOCKED which failed to populate but does that really matter? It is
+>> LOCKONFAULT in a way as well.
 >
-> That did come up, here's the start of original thread on the qemu mailing
-> list from a while back:
+> Does that matter to my users?  No, they do not use MAP_LOCKED at all so
+> any VMA with VM_LOCKED set and rss < size is lock on fault.  Will it
+> matter to others?  I suspect so, but these are likely to be the same
+> group of users which will be suprised to learn that MAP_LOCKED does not
+> guarantee that the entire range is faulted in on return from mmap.
 >
-> https://lists.gnu.org/archive/html/qemu-devel/2015-02/msg00371.html
+>>
+>> > > > Do we know that these last two open flags are needed right now or is
+>> > > > this speculation that they will be and that none of the other VMA flags
+>> > > > can be reclaimed?
+>> > >
+>> > > I do not think they are needed by anybody right now but that is not a
+>> > > reason why it should be used without a really strong justification.
+>> > > If the discoverability is really needed then fair enough but I haven't
+>> > > seen any justification for that yet.
+>> >
+>> > To be completely clear you believe that if the metrics collection is
+>> > not a strong enough justification, it is better to expand the mm_struct
+>> > by another unsigned long than to use one of these bits right?
+>>
+>> A simple bool is sufficient for that. And yes I think we should go with
+>> per mm_struct flag rather than the additional vma flag if it has only
+>> the global (whole address space) scope - which would be the case if the
+>> LOCKONFAULT is always an mlock modifier and the persistance is needed
+>> only for MCL_FUTURE. Which is imho a sane semantic.
 >
-> To recap, the main advantages to transfering data this way are:
+> I am in the middle of implementing lock on fault this way, but I cannot
+> see how we will hanlde mremap of a lock on fault region.  Say we have
+> the following:
 >
->         1. Asynchronous
+>     addr = mmap(len, MAP_ANONYMOUS, ...);
+>     mlock(addr, len, MLOCK_ONFAULT);
+>     ...
+>     mremap(addr, len, 2 * len, ...)
 >
->            The host can simply pass data via the qemu command line, and
->            not have to care if/when the guest is ready to accept the
->            data (i.e. has made it far enough to e.g. start a guest agent)
->
+> There is no way for mremap to know that the area being remapped was lock
+> on fault so it will be locked and prefaulted by remap.  How can we avoid
+> this without tracking per vma if it was locked with lock or lock on
+> fault?
 
-How does that not apply to a file system?
+remap can count filled ptes and prefault only completely populated areas.
 
->         2. Out-of-band
->
->            I don't have to take over a user-visible element such as a
->            disk drive. Same reason VSOCK (or VMWare VMCI for that matter)
->            exist and are NOT actual Ethernet/TCP-IP network interfaces :)
->
-
-OK that makes sense. Note that I am not the one you need to convince
-that this is a good idea, but I would still like to understand better
-why your use case requires this. Could you explain?
-
--- 
-Ard.
+There might be a problem after failed populate: remap will handle them
+as lock on fault. In this case we can fill ptes with swap-like non-present
+entries to remember that fact and count them as should-be-locked pages.
