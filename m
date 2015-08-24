@@ -1,65 +1,92 @@
-From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: [PATCH v7 13/44] [media] uapi/media.h: Declare interface types
-Date: Sun, 23 Aug 2015 17:17:30 -0300
-Message-ID: <55df3b23389e68b19354011babf0da1d26d0a91a.1440359643.git.mchehab@osg.samsung.com>
-References: <cover.1440359643.git.mchehab@osg.samsung.com>
+From: Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v2 0/3] SysFS driver for QEMU fw_cfg device
+Date: Mon, 24 Aug 2015 09:56:29 +0200
+Message-ID: <CAKv+Gu8UKoTVLM_MbZ1By4XaAHT0YgAWKVxhOYg=X9H6ei7MeA@mail.gmail.com>
+References: <cover.1439315079.git.somlo@cmu.edu>
+	<1439977109-20314-1-git-send-email-ard.biesheuvel@linaro.org>
+	<CAKv+Gu-BOKTHb24LnemKmvCwZn0W-NOT=avY94wkkRTx2ViW=Q@mail.gmail.com>
+	<20150819204915.GA6164@GLSMBP.INI.CMU.EDU>
+	<CAKv+Gu9wr+BUDjoz9NAkLNXxViDOM_PRoZRU8sxHog-iX=yUpQ@mail.gmail.com>
+	<20150821034757.GA6982@GLSMBP.INI.CMU.EDU>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cover.1440359643.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-In-Reply-To: <cover.1440359643.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-References: <cover.1440359643.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <20150821034757.GA6982-VPZ87SnTp2qKUezXOiBB2eW1CriLhL8O@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Richard W.M. Jones" <rjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jordan Justen <jordan.l.justen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, QEMU Developers <qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>, Gleb Natapov <gleb-RmZWMc9puTNJc61us3aD9laTQe2KTcn/@public.gmane.org>, Matt Fleming <matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, kernelnewbies-7JyXY6prKcjpASu1u0TL5ti2O/JbrIOy@public.gmane.org, Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Laszlo Ersek <lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org" <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paul-DWxLp4Yu+b8AvxtiuMwx3w@public.gmane.org, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Leif Lindholm <leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Declare the interface types that will be used by the new
-G_TOPOLOGY ioctl that will be defined latter on.
+On 21 August 2015 at 05:47, Gabriel L. Somlo <somlo-D+Gtc/HYRWM@public.gmane.org> wrote:
+> On Thu, Aug 20, 2015 at 07:21:48AM +0200, Ard Biesheuvel wrote:
+>> On 19 August 2015 at 22:49, Gabriel L. Somlo <somlo-D+Gtc/HYRWM@public.gmane.org> wrote:
+>> >> > From: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
+>> >> >> Several different architectures supported by QEMU are set up with a
+>> >> >> "firmware configuration" (fw_cfg) device, used to pass configuration
+>> >> >> "blobs" into the guest by the host running QEMU.
+>> >> >>
+>> >> >> Historically, these config blobs were mostly of interest to the guest
+>> >> >> BIOS, but since QEMU v2.4 it is possible to insert arbitrary blobs via
+>> >> >> the command line, which makes them potentially interesting to userspace
+>> >> >> (e.g. for passing early boot environment variables, etc.).
+>> >> >>
+>> >> >
+>> >> > Does 'potentially interesting' mean you have a use case? Could you elaborate?
+>> >
+>> > My personal one would be something like:
+>> >
+>> > cat > guestinfo.txt << EOT
+>> >   KEY1="val1"
+>> >   KEY2="val2"
+>> >   ...
+>> > EOT
+>> >
+>> > qemu-system-x86_64 ... -fw-cfg name="opt/guestinfo",file=./guestinfo.txt ...
+>> >
+>> > Then, from inside the guest:
+>> >
+>> >   . /sys/firmware/qemu_fw_cfg/by_name/opt/guestinfo/raw
+>> >
+>> >   do_something_with $KEY1 $KEY2
+>> >   ...
+>> >
+>> > But I'm thinking this is only one of the many positive things one
+>> > could do with the ability to access random host-supplied blobs from
+>> > guest userspace :)
+>> >
+>>
+>> 'random host-supplied blobs' sounds awfully like files in a file
+>> system to me, and that is already supported by QEMU and works with any
+>> guest OS unmodified. If you are in control of the command line, surely
+>> you can add a -drive xxx,fat:path/to/blobs -device xxx pair that
+>> simply turns up as a volume.
+>
+> That did come up, here's the start of original thread on the qemu mailing
+> list from a while back:
+>
+> https://lists.gnu.org/archive/html/qemu-devel/2015-02/msg00371.html
+>
+> To recap, the main advantages to transfering data this way are:
+>
+>         1. Asynchronous
+>
+>            The host can simply pass data via the qemu command line, and
+>            not have to care if/when the guest is ready to accept the
+>            data (i.e. has made it far enough to e.g. start a guest agent)
+>
 
-For now, we need those types, as they'll be used on the
-internal structs associated with the new media_interface
-graph object defined on the next patch.
+How does that not apply to a file system?
 
-Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+>         2. Out-of-band
+>
+>            I don't have to take over a user-visible element such as a
+>            disk drive. Same reason VSOCK (or VMWare VMCI for that matter)
+>            exist and are NOT actual Ethernet/TCP-IP network interfaces :)
+>
 
-diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
-index 4e816be3de39..21c96cd7a6ae 100644
---- a/include/uapi/linux/media.h
-+++ b/include/uapi/linux/media.h
-@@ -167,6 +167,35 @@ struct media_links_enum {
- 	__u32 reserved[4];
- };
- 
-+/* Interface type ranges */
-+
-+#define MEDIA_INTF_T_DVB_BASE	0x00000000
-+#define MEDIA_INTF_T_V4L_BASE	0x00000100
-+#define MEDIA_INTF_T_ALSA_BASE	0x00000200
-+
-+/* Interface types */
-+
-+#define MEDIA_INTF_T_DVB_FE    	(MEDIA_INTF_T_DVB_BASE)
-+#define MEDIA_INTF_T_DVB_DEMUX  (MEDIA_INTF_T_DVB_BASE + 1)
-+#define MEDIA_INTF_T_DVB_DVR    (MEDIA_INTF_T_DVB_BASE + 2)
-+#define MEDIA_INTF_T_DVB_CA     (MEDIA_INTF_T_DVB_BASE + 3)
-+#define MEDIA_INTF_T_DVB_NET    (MEDIA_INTF_T_DVB_BASE + 4)
-+
-+#define MEDIA_INTF_T_V4L_VIDEO  (MEDIA_INTF_T_V4L_BASE)
-+#define MEDIA_INTF_T_V4L_VBI    (MEDIA_INTF_T_V4L_BASE + 1)
-+#define MEDIA_INTF_T_V4L_RADIO  (MEDIA_INTF_T_V4L_BASE + 2)
-+#define MEDIA_INTF_T_V4L_SUBDEV (MEDIA_INTF_T_V4L_BASE + 3)
-+#define MEDIA_INTF_T_V4L_SWRADIO (MEDIA_INTF_T_V4L_BASE + 4)
-+
-+#define MEDIA_INTF_T_ALSA_PCM_CAPTURE   (MEDIA_INTF_T_ALSA_BASE)
-+#define MEDIA_INTF_T_ALSA_PCM_PLAYBACK  (MEDIA_INTF_T_ALSA_BASE + 1)
-+#define MEDIA_INTF_T_ALSA_CONTROL       (MEDIA_INTF_T_ALSA_BASE + 2)
-+#define MEDIA_INTF_T_ALSA_COMPRESS      (MEDIA_INTF_T_ALSA_BASE + 3)
-+#define MEDIA_INTF_T_ALSA_RAWMIDI       (MEDIA_INTF_T_ALSA_BASE + 4)
-+#define MEDIA_INTF_T_ALSA_HWDEP         (MEDIA_INTF_T_ALSA_BASE + 5)
-+
-+/* TBD: declare the structs needed for the new G_TOPOLOGY ioctl */
-+
- #define MEDIA_IOC_DEVICE_INFO		_IOWR('|', 0x00, struct media_device_info)
- #define MEDIA_IOC_ENUM_ENTITIES		_IOWR('|', 0x01, struct media_entity_desc)
- #define MEDIA_IOC_ENUM_LINKS		_IOWR('|', 0x02, struct media_links_enum)
+OK that makes sense. Note that I am not the one you need to convince
+that this is a good idea, but I would still like to understand better
+why your use case requires this. Could you explain?
+
 -- 
-2.4.3
+Ard.
