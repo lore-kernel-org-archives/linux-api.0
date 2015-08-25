@@ -1,120 +1,127 @@
-From: Eric B Munson <emunson@akamai.com>
-Subject: Re: [PATCH v7 3/6] mm: Introduce VM_LOCKONFAULT
-Date: Tue, 25 Aug 2015 15:03:00 -0400
-Message-ID: <20150825190300.GG17005@akamai.com>
-References: <1439097776-27695-4-git-send-email-emunson@akamai.com>
- <20150812115909.GA5182@dhcp22.suse.cz>
- <20150819213345.GB4536@akamai.com>
- <20150820075611.GD4780@dhcp22.suse.cz>
- <20150820170309.GA11557@akamai.com>
- <20150821072552.GF23723@dhcp22.suse.cz>
- <20150821183132.GA12835@akamai.com>
- <20150825134154.GB6285@dhcp22.suse.cz>
- <20150825142902.GF17005@akamai.com>
- <20150825185829.GA10222@dhcp22.suse.cz>
+From: Chris Metcalf <cmetcalf@ezchip.com>
+Subject: [PATCH v6 0/6] support "task_isolated" mode for nohz_full
+Date: Tue, 25 Aug 2015 15:55:49 -0400
+Message-ID: <1440532555-15492-1-git-send-email-cmetcalf@ezchip.com>
+References: <1438112980-9981-1-git-send-email-cmetcalf@ezchip.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="FwyhczKCDPOVeYh6"
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150825185829.GA10222@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Jonathan Corbet <corbet@lwn.net>, "Kirill A. Shutemov" <kirill@shutemov.name>, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1438112980-9981-1-git-send-email-cmetcalf@ezchip.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: Chris Metcalf <cmetcalf@ezchip.com>
 List-Id: linux-api@vger.kernel.org
 
+The cover email for the patch series is getting a little unwieldy
+so I will provide a terser summary here, and just update the
+list of changes from version to version.  Please see the previous
+versions linked by the In-Reply-To for more detailed comments
+about changes in earlier versions of the patch series.
 
---FwyhczKCDPOVeYh6
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+v6:
+  restructured to be a "task_isolation" mode not a "cpu_isolated"
+  mode (Frederic)
 
-On Tue, 25 Aug 2015, Michal Hocko wrote:
+v5:
+  rebased on kernel v4.2-rc3
+  converted to use CONFIG_CPU_ISOLATED and separate .c and .h files
+  incorporates Christoph Lameter's quiet_vmstat() call
 
-> On Tue 25-08-15 10:29:02, Eric B Munson wrote:
-> > On Tue, 25 Aug 2015, Michal Hocko wrote:
-> [...]
-> > > Considering the current behavior I do not thing it would be terrible
-> > > thing to do what Konstantin was suggesting and populate only the full
-> > > ranges in a best effort mode (it is done so anyway) and document the
-> > > behavior properly.
-> > > "
-> > >        If the memory segment specified by old_address and old_size is
-> > >        locked (using mlock(2) or similar), then this lock is maintain=
-ed
-> > >        when the segment is resized and/or relocated. As a consequence,
-> > >        the amount of memory locked by the process may change.
-> > >=20
-> > >        If the range is already fully populated and the range is
-> > >        enlarged the new range is attempted to be fully populated
-> > >        as well to preserve the full mlock semantic but there is no
-> > >        guarantee this will succeed. Partially populated (e.g. created=
- by
-> > >        mlock(MLOCK_ONFAULT)) ranges do not have the full mlock semant=
-ic
-> > >        so they are not populated on resize.
-> > > "
-> >=20
-> > You are proposing that mremap would scan the PTEs as Vlastimil has
-> > suggested?
->=20
-> As Vlastimil pointed out this would be unnecessarily too costly. But I
-> am wondering whether we should populate at all during mremap considering
-> the full mlock semantic is not guaranteed anyway. Man page mentions only
-> that the lock is maintained which will be true without population as
-> well.
->=20
-> If somebody really depends on the current (and broken) implementation we
-> can offer MREMAP_POPULATE which would do a best effort population. This
-> would be independent on the locked state and would be usable for other
-> mappings as well (the usecase would be to save page fault overhead by
-> batching them).
->=20
-> If this would be seen as an unacceptable user visible change of behavior
-> then we can go with the VMA flag but I would still prefer to not export
-> it to the userspace so that we have a way to change this in future.
+v4:
+  rebased on kernel v4.2-rc1
+  added support for detecting CPU_ISOLATED_STRICT syscalls on arm64
 
-Would you drop your objections to the VMA flag if I drop the portions of
-the patch that expose it to userspace?
+v3:
+  remove dependency on cpu_idle subsystem (Thomas Gleixner)
+  use READ_ONCE instead of ACCESS_ONCE in tick_nohz_cpu_isolated_enter
+  use seconds for console messages instead of jiffies (Thomas Gleixner)
+  updated commit description for patch 5/5
 
-The rework to not use the VMA flag is pretty sizeable and is much more
-ugly IMO.  I know that you are not wild about using bit 30 of 32 for
-this, but perhaps we can settle on not exporting it to userspace so we
-can reclaim it if we really need it in the future?  I can teach the
-folks here to check for size vs RSS of the locked mappings for stats on
-lock on fault usage so from my point of view, the proc changes are not
-necessary.
+v2:
+  rename "dataplane" to "cpu_isolated"
+  drop ksoftirqd suppression changes (believed no longer needed)
+  merge previous "QUIESCE" functionality into baseline functionality
+  explicitly track syscalls and exceptions for "STRICT" functionality
+  allow configuring a signal to be delivered for STRICT mode failures
+  move debug tracking to irq_enter(), not irq_exit()
 
-> --=20
-> Michal Hocko
-> SUSE Labs
+General summary:
 
---FwyhczKCDPOVeYh6
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
+The existing nohz_full mode does a nice job of suppressing extraneous
+kernel interrupts for cores that desire it.  However, there is a need
+for a more deterministic mode that rigorously disallows kernel
+interrupts, even at a higher cost in user/kernel transition time:
+for example, high-speed networking applications running userspace
+drivers that will drop packets if they are ever interrupted.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
+These changes attempt to provide an initial draft of such a framework;
+the changes do not add any overhead to the usual non-nohz_full mode,
+and only very small overhead to the typical nohz_full mode.  The
+kernel must be built with CONFIG_TASK_ISOLATION to take advantage of
+this new mode.  A prctl() option (PR_SET_TASK_ISOLATION) is added to
+control whether processes have requested this stricter semantics, and
+within that prctl() option we provide a number of different bits for
+more precise control.  Additionally, we add a new command-line boot
+argument to facilitate debugging where unexpected interrupts are being
+delivered from.
 
-iQIcBAEBAgAGBQJV3LvkAAoJELbVsDOpoOa9wcMP/34NMjAezJkjHohDYdGY0bb7
-njohhtenqydNnRIotHkBOi3mADsSrvI5OocTM9+/D888I34cXkB8Odo99E7YZAaF
-XxK1+NiuIPpdsINuL+LAbe9ZtmUUS2IfULHXLM/mK8hf7vimJ0IwFMI/tijHyvMz
-VnL2fm1m15pUY7oPo6CskT25XvimwI4Z5HWEX82pSnBJjC9132VOnDYgDN75npjK
-teRpNY0cTxuy/zHN2gSjznNtYB4Vb8NE1s/lVHdHKycAAyrdW6Q7X9DW4c09R8XE
-HhK0GTmPXEwHzXPkPJIQf+UQyx76e38TvZob7nFx0t4/SEQFtDJ3Dl2gs6c+0aZa
-oh6mqv5XJ1hPtHVUIK6+DU10JZuLEt02plJaGV/c/VCX+p89/Kv4TZiUWqDbeY0U
-mt56wrWjE1gRnnEUi0awxICRDI0jib0+uNsG5K+Krd5gLAtsu1PiwslKRiHnBexY
-BTVQK7dBWM78KPBWN5oCTYn1D6u8CaVrlI5ehUv3wm0FP3XDkJAB5urDIU9mVOOY
-mvTf7i9w/wxyZ12IbpSu8SkwQnEG/VoZJJJg4E1PhXc+GkfJXKQYHx307CTVdAwB
-FYKZ1fP+f5uqGNYPYcyRXbi/PgWbtomiW8o29DvvKy845A+lcT1Y1g7awPZ+DkFS
-LgQLfyYBgz/KflXMALv3
-=3Geq
------END PGP SIGNATURE-----
+Code that is conceptually similar has been in use in Tilera's
+Multicore Development Environment since 2008, known as Zero-Overhead
+Linux, and has seen wide adoption by a range of customers.  This patch
+series represents the first serious attempt to upstream that
+functionality.  Although the current state of the kernel isn't quite
+ready to run with absolutely no kernel interrupts (for example,
+workqueues on task_isolation cores still remain to be dealt with), this
+patch series provides a way to make dynamic tradeoffs between avoiding
+kernel interrupts on the one hand, and making voluntary calls in and
+out of the kernel more expensive, for tasks that want it.
 
---FwyhczKCDPOVeYh6--
+The series (based currently on v4.2-rc3) is available at:
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+  git://git.kernel.org/pub/scm/linux/kernel/git/cmetcalf/linux-tile.git dataplane
+
+Note: I have not removed the commit to disable the 1Hz timer tick
+fallback that was nack'ed by PeterZ, pending a decision on that thread
+as to what to do (https://lkml.org/lkml/2015/5/8/555); also since if
+we remove the 1Hz tick, task_isolation threads will never re-enter
+userspace since a tick will always be pending.
+
+Chris Metcalf (5):
+  task_isolation: add initial support
+  task_isolation: support PR_TASK_ISOLATION_STRICT mode
+  task_isolation: provide strict mode configurable signal
+  task_isolation: add debug boot flag
+  nohz: task_isolation: allow tick to be fully disabled
+
+Christoph Lameter (1):
+  vmstat: provide a function to quiet down the diff processing
+
+ Documentation/kernel-parameters.txt |   7 +++
+ arch/arm64/kernel/ptrace.c          |   5 ++
+ arch/tile/kernel/process.c          |   9 +++
+ arch/tile/kernel/ptrace.c           |   5 +-
+ arch/tile/mm/homecache.c            |   5 +-
+ arch/x86/kernel/ptrace.c            |   2 +
+ include/linux/context_tracking.h    |  11 +++-
+ include/linux/isolation.h           |  42 +++++++++++++
+ include/linux/sched.h               |   3 +
+ include/linux/vmstat.h              |   2 +
+ include/uapi/linux/prctl.h          |   8 +++
+ init/Kconfig                        |  20 ++++++
+ kernel/Makefile                     |   1 +
+ kernel/context_tracking.c           |  12 +++-
+ kernel/irq_work.c                   |   5 +-
+ kernel/isolation.c                  | 122 ++++++++++++++++++++++++++++++++++++
+ kernel/sched/core.c                 |  21 +++++++
+ kernel/signal.c                     |   5 ++
+ kernel/smp.c                        |   4 ++
+ kernel/softirq.c                    |   7 +++
+ kernel/sys.c                        |   8 +++
+ kernel/time/tick-sched.c            |   3 +-
+ mm/vmstat.c                         |  14 +++++
+ 23 files changed, 311 insertions(+), 10 deletions(-)
+ create mode 100644 include/linux/isolation.h
+ create mode 100644 kernel/isolation.c
+
+-- 
+2.1.2
