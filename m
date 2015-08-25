@@ -1,81 +1,66 @@
-From: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>
-Subject: Re: [PATCH v9 0/3] Enable PPI sysfs interface for TPM 2.0
-Date: Tue, 25 Aug 2015 19:20:24 +0200
-Message-ID: <E4F705A5-5445-4220-B841-E93FC6859537@gmx.de>
-References: <1439388347-22325-1-git-send-email-jarkko.sakkinen@linux.intel.com> <20150825170327.GA23185@intel.com>
+From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v7 3/6] mm: Introduce VM_LOCKONFAULT
+Date: Tue, 25 Aug 2015 20:58:29 +0200
+Message-ID: <20150825185829.GA10222@dhcp22.suse.cz>
+References: <1439097776-27695-1-git-send-email-emunson@akamai.com>
+ <1439097776-27695-4-git-send-email-emunson@akamai.com>
+ <20150812115909.GA5182@dhcp22.suse.cz>
+ <20150819213345.GB4536@akamai.com>
+ <20150820075611.GD4780@dhcp22.suse.cz>
+ <20150820170309.GA11557@akamai.com>
+ <20150821072552.GF23723@dhcp22.suse.cz>
+ <20150821183132.GA12835@akamai.com>
+ <20150825134154.GB6285@dhcp22.suse.cz>
+ <20150825142902.GF17005@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
- charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150825170327.GA23185-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150825142902.GF17005-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jarkko Sakkinen <jarkko.sakkinen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Will look at it as soon as possible - relocating to the us is quite stressful.sorry about that.
+On Tue 25-08-15 10:29:02, Eric B Munson wrote:
+> On Tue, 25 Aug 2015, Michal Hocko wrote:
+[...]
+> > Considering the current behavior I do not thing it would be terrible
+> > thing to do what Konstantin was suggesting and populate only the full
+> > ranges in a best effort mode (it is done so anyway) and document the
+> > behavior properly.
+> > "
+> >        If the memory segment specified by old_address and old_size is
+> >        locked (using mlock(2) or similar), then this lock is maintained
+> >        when the segment is resized and/or relocated. As a consequence,
+> >        the amount of memory locked by the process may change.
+> > 
+> >        If the range is already fully populated and the range is
+> >        enlarged the new range is attempted to be fully populated
+> >        as well to preserve the full mlock semantic but there is no
+> >        guarantee this will succeed. Partially populated (e.g. created by
+> >        mlock(MLOCK_ONFAULT)) ranges do not have the full mlock semantic
+> >        so they are not populated on resize.
+> > "
+> 
+> You are proposing that mremap would scan the PTEs as Vlastimil has
+> suggested?
 
- But since we are already at v9 i think it is in a good shape.
-Peter
+As Vlastimil pointed out this would be unnecessarily too costly. But I
+am wondering whether we should populate at all during mremap considering
+the full mlock semantic is not guaranteed anyway. Man page mentions only
+that the lock is maintained which will be true without population as
+well.
 
-Am 25. August 2015 19:03:27 MESZ, schrieb Jarkko Sakkinen <jarkko.sakkinen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>:
->Does this start be in the shape that there would be chance to pull this
->in at some point? To be able to enable TPM 2.0 chips from Linux is
->quite
->mandatory feature in my opinion.
->
->Thank you.
->
->/Jarkko
->
->On Wed, Aug 12, 2015 at 05:05:40PM +0300, Jarkko Sakkinen wrote:
->> v9:
->> * Fixed naming for __compat_only_sysfs_link_entry_to_kobj()
->> 
->> v8:
->> * Renamed sysfs_link_entry_to_kobj() to
->>   __compat_only_sysfs_link_entry_to_kobj()
->> 
->> v7:
->> * Fixed compile error when CONFIG_SYSFS is not enabled.
->> 
->> v6:
->> * Updated documentation.
->> 
->> v5:
->> * Removed dangling export of kernfs_remove_by_name_ns() from the
->sysfs
->>   patch.
->> 
->> v4:
->> * Use sysfs_remove_link()
->> 
->> v3:
->> * Fixed to_tpm_chip() macro.
->> * Split into two patches.
->> * Renamed sysfs_link_group_to_kobj to sysfs_link_entry_to_kobj
->> * Only create the "backwards compatibility" symlink for TPM 1.x
->devices.
->> 
->> Jarkko Sakkinen (3):
->>   sysfs: added __compat_only_sysfs_link_entry_to_kobj()
->>   tpm: move the PPI attributes to character device directory.
->>   tpm: update PPI documentation to address the location change.
->> 
->>  Documentation/ABI/testing/sysfs-driver-ppi | 19 ++++++++-----
->>  drivers/char/tpm/tpm-chip.c                | 24 ++++++++++------
->>  drivers/char/tpm/tpm.h                     | 17 ++++--------
->>  drivers/char/tpm/tpm_ppi.c                 | 34
->++++++++---------------
->>  fs/sysfs/group.c                           | 44
->++++++++++++++++++++++++++++++
->>  include/linux/sysfs.h                      | 11 ++++++++
->>  6 files changed, 100 insertions(+), 49 deletions(-)
->> 
->> -- 
->> 2.5.0
->> 
+If somebody really depends on the current (and broken) implementation we
+can offer MREMAP_POPULATE which would do a best effort population. This
+would be independent on the locked state and would be usable for other
+mappings as well (the usecase would be to save page fault overhead by
+batching them).
 
+If this would be seen as an unacceptable user visible change of behavior
+then we can go with the VMA flag but I would still prefer to not export
+it to the userspace so that we have a way to change this in future.
 -- 
-Sent from my mobile
+Michal Hocko
+SUSE Labs
