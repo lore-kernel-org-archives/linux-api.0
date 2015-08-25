@@ -1,272 +1,85 @@
-From: Chris Metcalf <cmetcalf@ezchip.com>
-Subject: [PATCH v6 3/6] task_isolation: support PR_TASK_ISOLATION_STRICT mode
-Date: Tue, 25 Aug 2015 15:55:52 -0400
-Message-ID: <1440532555-15492-4-git-send-email-cmetcalf@ezchip.com>
+From: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v6 4/6] task_isolation: provide strict mode configurable signal
+Date: Tue, 25 Aug 2015 15:55:53 -0400
+Message-ID: <1440532555-15492-5-git-send-email-cmetcalf@ezchip.com>
 References: <1440532555-15492-1-git-send-email-cmetcalf@ezchip.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1440532555-15492-1-git-send-email-cmetcalf@ezchip.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: Chris Metcalf <cmetcalf@ezchip.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1440532555-15492-1-git-send-email-cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-With task_isolation mode, the task is in principle guaranteed not to
-be interrupted by the kernel, but only if it behaves.  In particular,
-if it enters the kernel via system call, page fault, or any of a
-number of other synchronous traps, it may be unexpectedly exposed
-to long latencies.  Add a simple flag that puts the process into
-a state where any such kernel entry is fatal.
+Allow userspace to override the default SIGKILL delivered
+when a task_isolation process in STRICT mode does a syscall
+or otherwise synchronously enters the kernel.
 
-To allow the state to be entered and exited, we ignore the prctl()
-syscall so that we can clear the bit again later, and we ignore
-exit/exit_group to allow exiting the task without a pointless signal
-killing you as you try to do so.
+In addition to being able to set the signal, we now also
+pass whether or not the interruption was from a syscall in
+the si_code field of the siginfo.
 
-This change adds the syscall-detection hooks only for x86, arm64,
-and tile.
-
-The signature of context_tracking_exit() changes to report whether
-we, in fact, are exiting back to user space, so that we can track
-user exceptions properly separately from other kernel entries.
-
-Signed-off-by: Chris Metcalf <cmetcalf@ezchip.com>
+Signed-off-by: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
 ---
- arch/arm64/kernel/ptrace.c       |  5 +++++
- arch/tile/kernel/ptrace.c        |  5 ++++-
- arch/x86/kernel/ptrace.c         |  2 ++
- include/linux/context_tracking.h | 11 ++++++++---
- include/linux/isolation.h        | 16 ++++++++++++++++
- include/uapi/linux/prctl.h       |  1 +
- kernel/context_tracking.c        |  9 ++++++---
- kernel/isolation.c               | 38 ++++++++++++++++++++++++++++++++++++++
- 8 files changed, 80 insertions(+), 7 deletions(-)
+ include/uapi/linux/prctl.h |  2 ++
+ kernel/isolation.c         | 17 +++++++++++++----
+ 2 files changed, 15 insertions(+), 4 deletions(-)
 
-diff --git a/arch/arm64/kernel/ptrace.c b/arch/arm64/kernel/ptrace.c
-index d882b833dbdb..e3d83a12f3cf 100644
---- a/arch/arm64/kernel/ptrace.c
-+++ b/arch/arm64/kernel/ptrace.c
-@@ -37,6 +37,7 @@
- #include <linux/regset.h>
- #include <linux/tracehook.h>
- #include <linux/elf.h>
-+#include <linux/isolation.h>
- 
- #include <asm/compat.h>
- #include <asm/debug-monitors.h>
-@@ -1150,6 +1151,10 @@ static void tracehook_report_syscall(struct pt_regs *regs,
- 
- asmlinkage int syscall_trace_enter(struct pt_regs *regs)
- {
-+	/* Ensure we report task_isolation violations in all circumstances. */
-+	if (test_thread_flag(TIF_NOHZ) && task_isolation_strict())
-+		task_isolation_syscall(regs->syscallno);
-+
- 	/* Do the secure computing check first; failures should be fast. */
- 	if (secure_computing() == -1)
- 		return -1;
-diff --git a/arch/tile/kernel/ptrace.c b/arch/tile/kernel/ptrace.c
-index f84eed8243da..c327cb918a44 100644
---- a/arch/tile/kernel/ptrace.c
-+++ b/arch/tile/kernel/ptrace.c
-@@ -259,8 +259,11 @@ int do_syscall_trace_enter(struct pt_regs *regs)
- 	 * If TIF_NOHZ is set, we are required to call user_exit() before
- 	 * doing anything that could touch RCU.
- 	 */
--	if (work & _TIF_NOHZ)
-+	if (work & _TIF_NOHZ) {
- 		user_exit();
-+		if (task_isolation_strict())
-+			task_isolation_syscall(regs->regs[TREG_SYSCALL_NR]);
-+	}
- 
- 	if (work & _TIF_SYSCALL_TRACE) {
- 		if (tracehook_report_syscall_entry(regs))
-diff --git a/arch/x86/kernel/ptrace.c b/arch/x86/kernel/ptrace.c
-index 9be72bc3613f..2f9ce9466daf 100644
---- a/arch/x86/kernel/ptrace.c
-+++ b/arch/x86/kernel/ptrace.c
-@@ -1479,6 +1479,8 @@ unsigned long syscall_trace_enter_phase1(struct pt_regs *regs, u32 arch)
- 	if (work & _TIF_NOHZ) {
- 		user_exit();
- 		work &= ~_TIF_NOHZ;
-+		if (task_isolation_strict())
-+			task_isolation_syscall(regs->orig_ax);
- 	}
- 
- #ifdef CONFIG_SECCOMP
-diff --git a/include/linux/context_tracking.h b/include/linux/context_tracking.h
-index b96bd299966f..e0ac0228fea1 100644
---- a/include/linux/context_tracking.h
-+++ b/include/linux/context_tracking.h
-@@ -3,6 +3,7 @@
- 
- #include <linux/sched.h>
- #include <linux/vtime.h>
-+#include <linux/isolation.h>
- #include <linux/context_tracking_state.h>
- #include <asm/ptrace.h>
- 
-@@ -11,7 +12,7 @@
- extern void context_tracking_cpu_set(int cpu);
- 
- extern void context_tracking_enter(enum ctx_state state);
--extern void context_tracking_exit(enum ctx_state state);
-+extern bool context_tracking_exit(enum ctx_state state);
- extern void context_tracking_user_enter(void);
- extern void context_tracking_user_exit(void);
- 
-@@ -35,8 +36,12 @@ static inline enum ctx_state exception_enter(void)
- 		return 0;
- 
- 	prev_ctx = this_cpu_read(context_tracking.state);
--	if (prev_ctx != CONTEXT_KERNEL)
--		context_tracking_exit(prev_ctx);
-+	if (prev_ctx != CONTEXT_KERNEL) {
-+		if (context_tracking_exit(prev_ctx)) {
-+			if (task_isolation_strict())
-+				task_isolation_exception();
-+		}
-+	}
- 
- 	return prev_ctx;
- }
-diff --git a/include/linux/isolation.h b/include/linux/isolation.h
-index fd04011b1c1e..27a4469831c1 100644
---- a/include/linux/isolation.h
-+++ b/include/linux/isolation.h
-@@ -15,10 +15,26 @@ static inline bool task_isolation_enabled(void)
- }
- 
- extern void task_isolation_enter(void);
-+extern void task_isolation_syscall(int nr);
-+extern void task_isolation_exception(void);
- extern void task_isolation_wait(void);
- #else
- static inline bool task_isolation_enabled(void) { return false; }
- static inline void task_isolation_enter(void) { }
-+static inline void task_isolation_syscall(int nr) { }
-+static inline void task_isolation_exception(void) { }
- #endif
- 
-+static inline bool task_isolation_strict(void)
-+{
-+#ifdef CONFIG_TASK_ISOLATION
-+	if (tick_nohz_full_cpu(smp_processor_id()) &&
-+	    (current->task_isolation_flags &
-+	     (PR_TASK_ISOLATION_ENABLE | PR_TASK_ISOLATION_STRICT)) ==
-+	    (PR_TASK_ISOLATION_ENABLE | PR_TASK_ISOLATION_STRICT))
-+		return true;
-+#endif
-+	return false;
-+}
-+
- #endif
 diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
-index 79da784fe17a..e16e13911e8a 100644
+index e16e13911e8a..2a4ddc890e22 100644
 --- a/include/uapi/linux/prctl.h
 +++ b/include/uapi/linux/prctl.h
-@@ -194,5 +194,6 @@ struct prctl_mm_map {
- #define PR_SET_TASK_ISOLATION		47
+@@ -195,5 +195,7 @@ struct prctl_mm_map {
  #define PR_GET_TASK_ISOLATION		48
  # define PR_TASK_ISOLATION_ENABLE	(1 << 0)
-+# define PR_TASK_ISOLATION_STRICT	(1 << 1)
+ # define PR_TASK_ISOLATION_STRICT	(1 << 1)
++# define PR_TASK_ISOLATION_SET_SIG(sig)	(((sig) & 0x7f) << 8)
++# define PR_TASK_ISOLATION_GET_SIG(bits) (((bits) >> 8) & 0x7f)
  
  #endif /* _LINUX_PRCTL_H */
-diff --git a/kernel/context_tracking.c b/kernel/context_tracking.c
-index c57c99f5c4d7..17a71f7b66b8 100644
---- a/kernel/context_tracking.c
-+++ b/kernel/context_tracking.c
-@@ -147,15 +147,16 @@ NOKPROBE_SYMBOL(context_tracking_user_enter);
-  * This call supports re-entrancy. This way it can be called from any exception
-  * handler without needing to know if we came from userspace or not.
-  */
--void context_tracking_exit(enum ctx_state state)
-+bool context_tracking_exit(enum ctx_state state)
- {
- 	unsigned long flags;
-+	bool from_user = false;
- 
- 	if (!context_tracking_is_enabled())
--		return;
-+		return false;
- 
- 	if (in_interrupt())
--		return;
-+		return false;
- 
- 	local_irq_save(flags);
- 	if (!context_tracking_recursion_enter())
-@@ -169,6 +170,7 @@ void context_tracking_exit(enum ctx_state state)
- 			 */
- 			rcu_user_exit();
- 			if (state == CONTEXT_USER) {
-+				from_user = true;
- 				vtime_user_exit(current);
- 				trace_user_exit(0);
- 			}
-@@ -178,6 +180,7 @@ void context_tracking_exit(enum ctx_state state)
- 	context_tracking_recursion_exit();
- out_irq_restore:
- 	local_irq_restore(flags);
-+	return from_user;
- }
- NOKPROBE_SYMBOL(context_tracking_exit);
- EXPORT_SYMBOL_GPL(context_tracking_exit);
 diff --git a/kernel/isolation.c b/kernel/isolation.c
-index d4618cd9e23d..a89a6e9adfb4 100644
+index a89a6e9adfb4..b776aa632c8f 100644
 --- a/kernel/isolation.c
 +++ b/kernel/isolation.c
-@@ -10,6 +10,7 @@
- #include <linux/swap.h>
- #include <linux/vmstat.h>
- #include <linux/isolation.h>
-+#include <asm/unistd.h>
- #include "time/tick-sched.h"
- 
- /*
-@@ -73,3 +74,40 @@ void task_isolation_enter(void)
- 		dump_stack();
+@@ -75,11 +75,20 @@ void task_isolation_enter(void)
  	}
  }
+ 
+-static void kill_task_isolation_strict_task(void)
++static void kill_task_isolation_strict_task(int is_syscall)
+ {
++	siginfo_t info = {};
++	int sig;
 +
-+static void kill_task_isolation_strict_task(void)
-+{
-+	dump_stack();
-+	current->task_isolation_flags &= ~PR_TASK_ISOLATION_ENABLE;
-+	send_sig(SIGKILL, current, 1);
-+}
+ 	dump_stack();
+ 	current->task_isolation_flags &= ~PR_TASK_ISOLATION_ENABLE;
+-	send_sig(SIGKILL, current, 1);
 +
-+/*
-+ * This routine is called from syscall entry (with the syscall number
-+ * passed in) if the _STRICT flag is set.
-+ */
-+void task_isolation_syscall(int syscall)
-+{
-+	/* Ignore prctl() syscalls or any task exit. */
-+	switch (syscall) {
-+	case __NR_prctl:
-+	case __NR_exit:
-+	case __NR_exit_group:
-+		return;
-+	}
-+
-+	pr_warn("%s/%d: task_isolation strict mode violated by syscall %d\n",
-+		current->comm, current->pid, syscall);
-+	kill_task_isolation_strict_task();
-+}
-+
-+/*
-+ * This routine is called from any userspace exception if the _STRICT
-+ * flag is set.
-+ */
-+void task_isolation_exception(void)
-+{
-+	pr_warn("%s/%d: task_isolation strict mode violated by exception\n",
-+		current->comm, current->pid);
-+	kill_task_isolation_strict_task();
-+}
++	sig = PR_TASK_ISOLATION_GET_SIG(current->task_isolation_flags);
++	if (sig == 0)
++		sig = SIGKILL;
++	info.si_signo = sig;
++	info.si_code = is_syscall;
++	send_sig_info(sig, &info, current);
+ }
+ 
+ /*
+@@ -98,7 +107,7 @@ void task_isolation_syscall(int syscall)
+ 
+ 	pr_warn("%s/%d: task_isolation strict mode violated by syscall %d\n",
+ 		current->comm, current->pid, syscall);
+-	kill_task_isolation_strict_task();
++	kill_task_isolation_strict_task(1);
+ }
+ 
+ /*
+@@ -109,5 +118,5 @@ void task_isolation_exception(void)
+ {
+ 	pr_warn("%s/%d: task_isolation strict mode violated by exception\n",
+ 		current->comm, current->pid);
+-	kill_task_isolation_strict_task();
++	kill_task_isolation_strict_task(0);
+ }
 -- 
 2.1.2
-
