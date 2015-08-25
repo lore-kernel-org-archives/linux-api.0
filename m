@@ -1,7 +1,7 @@
-From: Eric B Munson <emunson@akamai.com>
+From: Michal Hocko <mhocko@kernel.org>
 Subject: Re: [PATCH v7 3/6] mm: Introduce VM_LOCKONFAULT
-Date: Tue, 25 Aug 2015 10:29:02 -0400
-Message-ID: <20150825142902.GF17005@akamai.com>
+Date: Tue, 25 Aug 2015 16:29:15 +0200
+Message-ID: <20150825142914.GF6285@dhcp22.suse.cz>
 References: <1439097776-27695-1-git-send-email-emunson@akamai.com>
  <1439097776-27695-4-git-send-email-emunson@akamai.com>
  <20150812115909.GA5182@dhcp22.suse.cz>
@@ -11,108 +11,57 @@ References: <1439097776-27695-1-git-send-email-emunson@akamai.com>
  <20150821072552.GF23723@dhcp22.suse.cz>
  <20150821183132.GA12835@akamai.com>
  <20150825134154.GB6285@dhcp22.suse.cz>
+ <55DC73E2.6050509@suse.cz>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="lIrNkN/7tmsD/ALM"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20150825134154.GB6285@dhcp22.suse.cz>
+In-Reply-To: <55DC73E2.6050509@suse.cz>
 Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Jonathan Corbet <corbet@lwn.net>, "Kirill A. Shutemov" <kirill@shutemov.name>, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Eric B Munson <emunson@akamai.com>, Andrew Morton <akpm@linux-foundation.org>, Jonathan Corbet <corbet@lwn.net>, "Kirill A. Shutemov" <kirill@shutemov.name>, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+On Tue 25-08-15 15:55:46, Vlastimil Babka wrote:
+> On 08/25/2015 03:41 PM, Michal Hocko wrote:
+[...]
+> >So what we have as a result is that partially populated ranges are
+> >preserved and fully populated ones work in the best effort mode the same
+> >way as they are now.
+> >
+> >Does that sound at least remotely reasonably?
+> 
+> I'll basically repeat what I said earlier:
+> 
+> - mremap scanning existing pte's to figure out the population would slow it
+> down for no good reason
 
---lIrNkN/7tmsD/ALM
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+So do we really need to populate the enlarged range? All the man page is
+saying is that the lock is maintained. Which will be still the case. It
+is true that the failure is unlikely (unless you are running in the
+memcg) but you cannot rely on the full mlock semantic so what would be a
+problem?
 
-On Tue, 25 Aug 2015, Michal Hocko wrote:
+> - it would be unreliable anyway:
+>   - example: was the area completely populated because MLOCK_ONFAULT was not
+> used or because the  process faulted it already
 
-> On Fri 21-08-15 14:31:32, Eric B Munson wrote:
-> [...]
-> > I am in the middle of implementing lock on fault this way, but I cannot
-> > see how we will hanlde mremap of a lock on fault region.  Say we have
-> > the following:
-> >=20
-> >     addr =3D mmap(len, MAP_ANONYMOUS, ...);
-> >     mlock(addr, len, MLOCK_ONFAULT);
-> >     ...
-> >     mremap(addr, len, 2 * len, ...)
-> >=20
-> > There is no way for mremap to know that the area being remapped was lock
-> > on fault so it will be locked and prefaulted by remap.  How can we avoid
-> > this without tracking per vma if it was locked with lock or lock on
-> > fault?
->=20
-> Yes mremap is a problem and it is very much similar to mmap(MAP_LOCKED).
-> It doesn't guarantee the full mlock semantic because it leaves partially
-> populated ranges behind without reporting any error.
+OK, I see this as being a problem. Especially if the buffer is increase
+2*original_len
 
-This was not my concern.  Instead, I was wondering how to keep lock on
-fault sematics with mremap if we do not have a VMA flag.  As a user, it
-would surprise me if a region I mlocked with lock on fault and then
-remapped to a larger size was fully populated and locked by the mremap
-call.
+>   - example: was the area not completely populated because MLOCK_ONFAULT was
+> used, or because mmap(MAP_LOCKED) failed to populate it fully?
 
->=20
-> Considering the current behavior I do not thing it would be terrible
-> thing to do what Konstantin was suggesting and populate only the full
-> ranges in a best effort mode (it is done so anyway) and document the
-> behavior properly.
-> "
->        If the memory segment specified by old_address and old_size is
->        locked (using mlock(2) or similar), then this lock is maintained
->        when the segment is resized and/or relocated. As a consequence,
->        the amount of memory locked by the process may change.
->=20
->        If the range is already fully populated and the range is
->        enlarged the new range is attempted to be fully populated
->        as well to preserve the full mlock semantic but there is no
->        guarantee this will succeed. Partially populated (e.g. created by
->        mlock(MLOCK_ONFAULT)) ranges do not have the full mlock semantic
->        so they are not populated on resize.
-> "
+What would be the difference? Both are ONFAULT now.
 
-You are proposing that mremap would scan the PTEs as Vlastimil has
-suggested?
+> I think the first point is a pointless regression for workloads that use
+> just plain mlock() and don't want the onfault semantics. Unless there's some
+> shortcut? Does vma have a counter of how much is populated? (I don't think
+> so?)
 
->=20
-> So what we have as a result is that partially populated ranges are
-> preserved and fully populated ones work in the best effort mode the same
-> way as they are now.
->=20
-> Does that sound at least remotely reasonably?
->=20
->=20
-> --=20
-> Michal Hocko
-> SUSE Labs
-
---lIrNkN/7tmsD/ALM
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBAgAGBQJV3HuuAAoJELbVsDOpoOa9xgUP/iDghwvjECoUNFleJc4l26sq
-+Yanrhihzid4A8zgeidyR3beWoEHodffHBFL2FzbGG3ToGrsBspvKf2aqBpDB4bM
-tfYnogH1/eH3kUAhurXz67JXDiULGAxF7JKu+lnYshHizl1pn0gWBTcrorOb+NSY
-kKICWnGJ8pC/45Ax2/6TkpOJJzPXMWr7Jj5OaNxqMX/SMgrnA8xtUHLgE+rLuUf8
-nfD9h5XEHJKhq9Z6hs7mZuF1tBPyPh5leJ0JZFW0hb+cc9VdRCgOqQijSiRCUjZP
-VUpWM73BKIkoJ8BjibhMDcYKQOWNcWtqMbPNfxctR7DAhmnEpSn902o1A1rilQtL
-VeQT5u9I0GdYbUhZHgAPyT7ZxTffJl+CPa/UYXL5HPBHzEajPR9ADgGPpTQ0xRC9
-BEmq8URldlwFfkgsNIk39vBsQLWrt8rIpZyqlY2HNUnKyvyj8U7jFfzExzn1A+Yb
-S6bU7Kftz2e0FIFmUOD6SirPX7tF5YQqBJyRPZsSMeJTcIERbejp0YLwaudfX1z8
-DlS8P44sRQHYrzN4utTqTtqfbLKXcmfNYBonKgnjVDGs+dM0gtiYy5sUUmPXjEHo
-czcXzUddR6GO3UDP2X0T3YWgX2ed471RP3Qkmd5uyibS8zessvZGzL3QER3Y3jxz
-NAro2mMA5lQjl+GfxdvO
-=ex5r
------END PGP SIGNATURE-----
-
---lIrNkN/7tmsD/ALM--
+-- 
+Michal Hocko
+SUSE Labs
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
