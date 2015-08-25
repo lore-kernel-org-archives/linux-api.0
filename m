@@ -1,163 +1,70 @@
-From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH v7 39/44] [media] uapi/media.h: Add MEDIA_IOC_G_TOPOLOGY
- ioctl
-Date: Tue, 25 Aug 2015 08:36:37 -0300
-Message-ID: <20150825083637.35e0ca77@recife.lan>
-References: <cover.1440359643.git.mchehab@osg.samsung.com>
-	<31b28b78f6a37ca7ff4554207bb05cd1a1db788c.1440359643.git.mchehab@osg.samsung.com>
-	<55DC366C.5050509@xs4all.nl>
+From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v7 3/6] mm: Introduce VM_LOCKONFAULT
+Date: Tue, 25 Aug 2015 15:41:55 +0200
+Message-ID: <20150825134154.GB6285@dhcp22.suse.cz>
+References: <1439097776-27695-1-git-send-email-emunson@akamai.com>
+ <1439097776-27695-4-git-send-email-emunson@akamai.com>
+ <20150812115909.GA5182@dhcp22.suse.cz>
+ <20150819213345.GB4536@akamai.com>
+ <20150820075611.GD4780@dhcp22.suse.cz>
+ <20150820170309.GA11557@akamai.com>
+ <20150821072552.GF23723@dhcp22.suse.cz>
+ <20150821183132.GA12835@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <55DC366C.5050509-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150821183132.GA12835-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Cc: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Em Tue, 25 Aug 2015 11:33:32 +0200
-Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org> escreveu:
+On Fri 21-08-15 14:31:32, Eric B Munson wrote:
+[...]
+> I am in the middle of implementing lock on fault this way, but I cannot
+> see how we will hanlde mremap of a lock on fault region.  Say we have
+> the following:
+> 
+>     addr = mmap(len, MAP_ANONYMOUS, ...);
+>     mlock(addr, len, MLOCK_ONFAULT);
+>     ...
+>     mremap(addr, len, 2 * len, ...)
+> 
+> There is no way for mremap to know that the area being remapped was lock
+> on fault so it will be locked and prefaulted by remap.  How can we avoid
+> this without tracking per vma if it was locked with lock or lock on
+> fault?
 
-> On 08/23/15 22:17, Mauro Carvalho Chehab wrote:
-> > Add a new ioctl that will report the entire topology on
-> > one go.
-> > 
-> > Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-> > 
-> > diff --git a/include/media/media-entity.h b/include/media/media-entity.h
-> > index 796e4a490af8..0111d9652b78 100644
-> > --- a/include/media/media-entity.h
-> > +++ b/include/media/media-entity.h
-> > @@ -181,6 +181,8 @@ struct media_interface {
-> >   */
-> >  struct media_intf_devnode {
-> >  	struct media_interface		intf;
-> > +
-> > +	/* Should match the fields at media_v2_intf_devnode */
-> >  	u32				major;
-> >  	u32				minor;
-> >  };
-> > diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
-> > index ceea791dd6e9..7fcf7f477ae3 100644
-> > --- a/include/uapi/linux/media.h
-> > +++ b/include/uapi/linux/media.h
-> > @@ -238,11 +238,94 @@ struct media_links_enum {
-> >  #define MEDIA_INTF_T_ALSA_RAWMIDI       (MEDIA_INTF_T_ALSA_BASE + 4)
-> >  #define MEDIA_INTF_T_ALSA_HWDEP         (MEDIA_INTF_T_ALSA_BASE + 5)
-> >  
-> > -/* TBD: declare the structs needed for the new G_TOPOLOGY ioctl */
-> > +/*
-> > + * MC next gen API definitions
-> > + *
-> > + * NOTE: The declarations below are close to the MC RFC for the Media
-> > + *	 Controller, the next generation. Yet, there are a few adjustments
-> > + *	 to do, as we want to be able to have a functional API before
-> > + *	 the MC properties change. Those will be properly marked below.
-> > + *	 Please also notice that I removed "num_pads", "num_links",
-> > + *	 from the proposal, as a proper userspace application will likely
-> > + *	 use lists for pads/links, just as we intend todo in Kernelspace.
-> > + *	 The API definition should be freed from fields that are bound to
-> > + *	 some specific data structure.
-> > + *
-> > + * FIXME: Currently, I opted to name the new types as "media_v2", as this
-> > + *	  won't cause any conflict with the Kernelspace namespace, nor with
-> > + *	  the previous kAPI media_*_desc namespace. This can be changed
-> > + *	  latter, before the adding this API upstream.
-> > + */
-> > +
-> > +
-> > +#define MEDIA_NEW_LNK_FL_ENABLED		MEDIA_LNK_FL_ENABLED
-> > +#define MEDIA_NEW_LNK_FL_IMMUTABLE		MEDIA_LNK_FL_IMMUTABLE
-> > +#define MEDIA_NEW_LNK_FL_DYNAMIC		MEDIA_NEW_FL_DYNAMIC
-> > +#define MEDIA_NEW_LNK_FL_INTERFACE_LINK		(1 << 3)
-> > +
-> > +struct media_v2_entity {
-> > +	__u32 id;
-> > +	char name[64];		/* FIXME: move to a property? (RFC says so) */
-> > +	__u16 reserved[14];
-> > +};
-> > +
-> > +/* Should match the specific fields at media_intf_devnode */
-> > +struct media_v2_intf_devnode {
-> > +	__u32 major;
-> > +	__u32 minor;
-> > +};
-> > +
-> > +struct media_v2_interface {
-> > +	__u32 id;
-> > +	__u32 intf_type;
-> > +	__u32 flags;
-> > +	__u32 reserved[9];
-> > +
-> > +	union {
-> > +		struct media_v2_intf_devnode devnode;
-> > +		__u32 raw[16];
-> > +	};
-> > +};
-> > +
-> > +struct media_v2_pad {
-> > +	__u32 id;
-> > +	__u32 entity_id;
-> > +	__u32 flags;
-> > +	__u16 reserved[9];
-> > +};
-> > +
-> > +struct media_v2_link {
-> > +    __u32 id;
-> > +    __u32 source_id;
-> > +    __u32 sink_id;
-> > +    __u32 flags;
-> > +    __u32 reserved[5];
-> > +};
-> > +
-> > +struct media_v2_topology {
-> > +	__u32 topology_version;
-> > +
-> > +	__u32 num_entities;
-> > +	struct media_v2_entity *entities;
-> > +
-> > +	__u32 num_interfaces;
-> > +	struct media_v2_interface *interfaces;
-> > +
-> > +	__u32 num_pads;
-> > +	struct media_v2_pad *pads;
-> > +
-> > +	__u32 num_links;
-> > +	struct media_v2_link *links;
-> > +
-> > +	__u32 reserved[64];
-> 
-> As I suggested elsewhere, replace this by:
-> 
-> 	struct {
-> 		__u32 num_reserved;
-> 		void *ptr_reserved;
-> 	} reserved_ptrs[8];
-> 
-> This will keep the number of reserved num/pointer pairs identical
-> between 32 and 64 bit architectures. Without that doing compat32
-> handling will be very difficult indeed.
-> 
-> We might want a separate __u32 reserved[] array so we're able to add
-> non-pointer fields in the future.
+Yes mremap is a problem and it is very much similar to mmap(MAP_LOCKED).
+It doesn't guarantee the full mlock semantic because it leaves partially
+populated ranges behind without reporting any error.
 
-OK.
+Considering the current behavior I do not thing it would be terrible
+thing to do what Konstantin was suggesting and populate only the full
+ranges in a best effort mode (it is done so anyway) and document the
+behavior properly.
+"
+       If the memory segment specified by old_address and old_size is
+       locked (using mlock(2) or similar), then this lock is maintained
+       when the segment is resized and/or relocated. As a consequence,
+       the amount of memory locked by the process may change.
 
-> 
-> Regards,
-> 
-> 	Hans
-> 
-> > +};
-> > +
-> > +/* ioctls */
-> >  
-> >  #define MEDIA_IOC_DEVICE_INFO		_IOWR('|', 0x00, struct media_device_info)
-> >  #define MEDIA_IOC_ENUM_ENTITIES		_IOWR('|', 0x01, struct media_entity_desc)
-> >  #define MEDIA_IOC_ENUM_LINKS		_IOWR('|', 0x02, struct media_links_enum)
-> >  #define MEDIA_IOC_SETUP_LINK		_IOWR('|', 0x03, struct media_link_desc)
-> > +#define MEDIA_IOC_G_TOPOLOGY		_IOWR('|', 0x04, struct media_v2_topology)
-> >  
-> >  #endif /* __LINUX_MEDIA_H */
-> > 
+       If the range is already fully populated and the range is
+       enlarged the new range is attempted to be fully populated
+       as well to preserve the full mlock semantic but there is no
+       guarantee this will succeed. Partially populated (e.g. created by
+       mlock(MLOCK_ONFAULT)) ranges do not have the full mlock semantic
+       so they are not populated on resize.
+"
+
+So what we have as a result is that partially populated ranges are
+preserved and fully populated ones work in the best effort mode the same
+way as they are now.
+
+Does that sound at least remotely reasonably?
+
+
+-- 
+Michal Hocko
+SUSE Labs
