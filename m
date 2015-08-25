@@ -1,234 +1,163 @@
 From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH v7 24/44] [media] uapi/media.h: Fix entity namespace
-Date: Tue, 25 Aug 2015 08:25:07 -0300
-Message-ID: <20150825082507.578ffa97@recife.lan>
+Subject: Re: [PATCH v7 39/44] [media] uapi/media.h: Add MEDIA_IOC_G_TOPOLOGY
+ ioctl
+Date: Tue, 25 Aug 2015 08:36:37 -0300
+Message-ID: <20150825083637.35e0ca77@recife.lan>
 References: <cover.1440359643.git.mchehab@osg.samsung.com>
-	<5cf25be2d0508e02f6ffe469509fa12c45ddcb8d.1440359643.git.mchehab@osg.samsung.com>
-	<55DC2E2D.4090000@xs4all.nl>
+	<31b28b78f6a37ca7ff4554207bb05cd1a1db788c.1440359643.git.mchehab@osg.samsung.com>
+	<55DC366C.5050509@xs4all.nl>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <55DC2E2D.4090000-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+In-Reply-To: <55DC366C.5050509-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Cc: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Em Tue, 25 Aug 2015 10:58:21 +0200
+Em Tue, 25 Aug 2015 11:33:32 +0200
 Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org> escreveu:
 
 > On 08/23/15 22:17, Mauro Carvalho Chehab wrote:
-> > Now that interfaces got created, we need to fix the entity
-> > namespace.
-> > 
-> > So, let's create a consistent new namespace and add backward
-> > compatibility macros to keep the old namespace preserved.
+> > Add a new ioctl that will report the entire topology on
+> > one go.
 > > 
 > > Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 > > 
-> > diff --git a/drivers/media/dvb-core/dvbdev.c b/drivers/media/dvb-core/dvbdev.c
-> > index 5a2bd03f5dc0..acada5ba9442 100644
-> > --- a/drivers/media/dvb-core/dvbdev.c
-> > +++ b/drivers/media/dvb-core/dvbdev.c
-> > @@ -229,17 +229,17 @@ static void dvb_create_media_entity(struct dvb_device *dvbdev,
-> >  
-> >  	switch (type) {
-> >  	case DVB_DEVICE_FRONTEND:
-> > -		dvbdev->entity->type = MEDIA_ENT_T_DEVNODE_DVB_FE;
-> > +		dvbdev->entity->type = MEDIA_ENT_T_DVB_DEMOD;
-> >  		dvbdev->pads[0].flags = MEDIA_PAD_FL_SINK;
-> >  		dvbdev->pads[1].flags = MEDIA_PAD_FL_SOURCE;
-> >  		break;
-> >  	case DVB_DEVICE_DEMUX:
-> > -		dvbdev->entity->type = MEDIA_ENT_T_DEVNODE_DVB_DEMUX;
-> > +		dvbdev->entity->type = MEDIA_ENT_T_DVB_DEMUX;
-> >  		dvbdev->pads[0].flags = MEDIA_PAD_FL_SINK;
-> >  		dvbdev->pads[1].flags = MEDIA_PAD_FL_SOURCE;
-> >  		break;
-> >  	case DVB_DEVICE_CA:
-> > -		dvbdev->entity->type = MEDIA_ENT_T_DEVNODE_DVB_CA;
-> > +		dvbdev->entity->type = MEDIA_ENT_T_DVB_CA;
-> >  		dvbdev->pads[0].flags = MEDIA_PAD_FL_SINK;
-> >  		dvbdev->pads[1].flags = MEDIA_PAD_FL_SOURCE;
-> >  		break;
-> > @@ -438,7 +438,7 @@ EXPORT_SYMBOL(dvb_unregister_device);
-> >  void dvb_create_media_graph(struct dvb_adapter *adap)
-> >  {
-> >  	struct media_device *mdev = adap->mdev;
-> > -	struct media_entity *entity, *tuner = NULL, *fe = NULL;
-> > +	struct media_entity *entity, *tuner = NULL, *demod = NULL;
-> >  	struct media_entity *demux = NULL, *dvr = NULL, *ca = NULL;
-> >  	struct media_interface *intf;
-> >  
-> > @@ -450,26 +450,26 @@ void dvb_create_media_graph(struct dvb_adapter *adap)
-> >  		case MEDIA_ENT_T_V4L2_SUBDEV_TUNER:
-> >  			tuner = entity;
-> >  			break;
-> > -		case MEDIA_ENT_T_DEVNODE_DVB_FE:
-> > -			fe = entity;
-> > +		case MEDIA_ENT_T_DVB_DEMOD:
-> > +			demod = entity;
-> >  			break;
-> > -		case MEDIA_ENT_T_DEVNODE_DVB_DEMUX:
-> > +		case MEDIA_ENT_T_DVB_DEMUX:
-> >  			demux = entity;
-> >  			break;
-> > -		case MEDIA_ENT_T_DEVNODE_DVB_DVR:
-> > +		case MEDIA_ENT_T_DVB_TSOUT:
-> >  			dvr = entity;
-> >  			break;
-> > -		case MEDIA_ENT_T_DEVNODE_DVB_CA:
-> > +		case MEDIA_ENT_T_DVB_CA:
-> >  			ca = entity;
-> >  			break;
-> >  		}
-> >  	}
-> >  
-> > -	if (tuner && fe)
-> > -		media_create_pad_link(tuner, 0, fe, 0, 0);
-> > +	if (tuner && demod)
-> > +		media_create_pad_link(tuner, 0, demod, 0, 0);
-> >  
-> > -	if (fe && demux)
-> > -		media_create_pad_link(fe, 1, demux, 0, MEDIA_LNK_FL_ENABLED);
-> > +	if (demod && demux)
-> > +		media_create_pad_link(demod, 1, demux, 0, MEDIA_LNK_FL_ENABLED);
-> >  
-> >  	if (demux && dvr)
-> >  		media_create_pad_link(demux, 1, dvr, 0, MEDIA_LNK_FL_ENABLED);
+> > diff --git a/include/media/media-entity.h b/include/media/media-entity.h
+> > index 796e4a490af8..0111d9652b78 100644
+> > --- a/include/media/media-entity.h
+> > +++ b/include/media/media-entity.h
+> > @@ -181,6 +181,8 @@ struct media_interface {
+> >   */
+> >  struct media_intf_devnode {
+> >  	struct media_interface		intf;
+> > +
+> > +	/* Should match the fields at media_v2_intf_devnode */
+> >  	u32				major;
+> >  	u32				minor;
+> >  };
 > > diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
-> > index 21c96cd7a6ae..7306aeaff807 100644
+> > index ceea791dd6e9..7fcf7f477ae3 100644
 > > --- a/include/uapi/linux/media.h
 > > +++ b/include/uapi/linux/media.h
-> > @@ -42,31 +42,67 @@ struct media_device_info {
+> > @@ -238,11 +238,94 @@ struct media_links_enum {
+> >  #define MEDIA_INTF_T_ALSA_RAWMIDI       (MEDIA_INTF_T_ALSA_BASE + 4)
+> >  #define MEDIA_INTF_T_ALSA_HWDEP         (MEDIA_INTF_T_ALSA_BASE + 5)
 > >  
-> >  #define MEDIA_ENT_ID_FLAG_NEXT		(1 << 31)
-> >  
+> > -/* TBD: declare the structs needed for the new G_TOPOLOGY ioctl */
 > > +/*
-> > + * Base numbers for entity types
+> > + * MC next gen API definitions
 > > + *
-> > + * Please notice that the huge gap of 16 bits for each base is overkill!
-> > + * 8 bits is more than enough to avoid starving entity types for each
-> > + * subsystem.
+> > + * NOTE: The declarations below are close to the MC RFC for the Media
+> > + *	 Controller, the next generation. Yet, there are a few adjustments
+> > + *	 to do, as we want to be able to have a functional API before
+> > + *	 the MC properties change. Those will be properly marked below.
+> > + *	 Please also notice that I removed "num_pads", "num_links",
+> > + *	 from the proposal, as a proper userspace application will likely
+> > + *	 use lists for pads/links, just as we intend todo in Kernelspace.
+> > + *	 The API definition should be freed from fields that are bound to
+> > + *	 some specific data structure.
 > > + *
-> > + * However, It is kept this way just to avoid binary breakages with the
-> > + * namespace provided on legacy versions of this header.
+> > + * FIXME: Currently, I opted to name the new types as "media_v2", as this
+> > + *	  won't cause any conflict with the Kernelspace namespace, nor with
+> > + *	  the previous kAPI media_*_desc namespace. This can be changed
+> > + *	  latter, before the adding this API upstream.
 > > + */
-> > +#define MEDIA_ENT_T_DVB_BASE		0x00000000
-> > +#define MEDIA_ENT_T_V4L2_BASE		0x00010000
-> > +#define MEDIA_ENT_T_V4L2_SUBDEV_BASE	0x00020000
 > > +
-> > +/* V4L2 entities */
-> > +#define MEDIA_ENT_T_V4L2_VIDEO		(MEDIA_ENT_T_V4L2_BASE + 1)
-> > +	/*
-> > +	 * Please notice that numbers between MEDIA_ENT_T_V4L2_BASE + 2 and
-> > +	 * MEDIA_ENT_T_V4L2_BASE + 4 can't be used, as those values used
-> > +	 * to be declared for FB, ALSA and DVB entities.
-> > +	 * As those values were never atually used in practice, we're just
-> 
-> s/atually/actually/
-> 
-> > +	 * adding them as backward compatibily macros and keeping the
-> 
-> s/compatibily/compatibility/
-> 
-> > +	 * numberspace cleaned here. This way, we avoid breaking compilation,
-> 
-> s/cleaned/clean/
-> 
-> > +	 * in the case of having some userspace application using the old
-> > +	 * symbols.
-> > +	 */
-> > +#define MEDIA_ENT_T_V4L2_VBI		(MEDIA_ENT_T_V4L2_BASE + 5)
-> > +#define MEDIA_ENT_T_V4L2_RADIO		(MEDIA_ENT_T_V4L2_BASE + 6)
-> > +#define MEDIA_ENT_T_V4L2_SWRADIO	(MEDIA_ENT_T_V4L2_BASE + 7)
-> 
-> Why are these entities? Aren't these interface types?
-
-We need both:
-
-The entity represents the data sinks (or sources), and the interface the
-control interfaces.
-
-I'm actually in doubt about MEDIA_ENT_T_V4L2_RADIO. Maybe we'll need a
-MEDIA_ENT_T_V4L2_RADIO_RDS too.
-
-Of course, MEDIA_ENT_T_V4L2_RADIO is not needed for receivers, but I
-guess it is needed for TX.
-
-> 
 > > +
-> > +/* V4L2 Sub-device entities */
-> > +#define MEDIA_ENT_T_V4L2_SUBDEV_SENSOR	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 1)
-> > +#define MEDIA_ENT_T_V4L2_SUBDEV_FLASH	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 2)
-> > +#define MEDIA_ENT_T_V4L2_SUBDEV_LENS	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 3)
-> > +	/* A converter of analogue video to its digital representation. */
-> > +#define MEDIA_ENT_T_V4L2_SUBDEV_DECODER	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 4)
-> > +	/* Tuner entity is actually both V4L2 and DVB subdev */
-> > +#define MEDIA_ENT_T_V4L2_SUBDEV_TUNER	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 5)
+> > +#define MEDIA_NEW_LNK_FL_ENABLED		MEDIA_LNK_FL_ENABLED
+> > +#define MEDIA_NEW_LNK_FL_IMMUTABLE		MEDIA_LNK_FL_IMMUTABLE
+> > +#define MEDIA_NEW_LNK_FL_DYNAMIC		MEDIA_NEW_FL_DYNAMIC
+> > +#define MEDIA_NEW_LNK_FL_INTERFACE_LINK		(1 << 3)
 > > +
-> > +/* DVB entities */
-> > +#define MEDIA_ENT_T_DVB_DEMOD		(MEDIA_ENT_T_DVB_BASE + 4)
-> > +#define MEDIA_ENT_T_DVB_DEMUX		(MEDIA_ENT_T_DVB_BASE + 5)
-> > +#define MEDIA_ENT_T_DVB_TSOUT		(MEDIA_ENT_T_DVB_BASE + 6)
-> > +#define MEDIA_ENT_T_DVB_CA		(MEDIA_ENT_T_DVB_BASE + 7)
-> > +#define MEDIA_ENT_T_DVB_NET_DECAP	(MEDIA_ENT_T_DVB_BASE + 8)
+> > +struct media_v2_entity {
+> > +	__u32 id;
+> > +	char name[64];		/* FIXME: move to a property? (RFC says so) */
+> > +	__u16 reserved[14];
+> > +};
 > > +
-> > +/* Legacy symbols used to avoid userspace compilation breakages */
-> >  #define MEDIA_ENT_TYPE_SHIFT		16
-> >  #define MEDIA_ENT_TYPE_MASK		0x00ff0000
-> >  #define MEDIA_ENT_SUBTYPE_MASK		0x0000ffff
+> > +/* Should match the specific fields at media_intf_devnode */
+> > +struct media_v2_intf_devnode {
+> > +	__u32 major;
+> > +	__u32 minor;
+> > +};
+> > +
+> > +struct media_v2_interface {
+> > +	__u32 id;
+> > +	__u32 intf_type;
+> > +	__u32 flags;
+> > +	__u32 reserved[9];
+> > +
+> > +	union {
+> > +		struct media_v2_intf_devnode devnode;
+> > +		__u32 raw[16];
+> > +	};
+> > +};
+> > +
+> > +struct media_v2_pad {
+> > +	__u32 id;
+> > +	__u32 entity_id;
+> > +	__u32 flags;
+> > +	__u16 reserved[9];
+> > +};
+> > +
+> > +struct media_v2_link {
+> > +    __u32 id;
+> > +    __u32 source_id;
+> > +    __u32 sink_id;
+> > +    __u32 flags;
+> > +    __u32 reserved[5];
+> > +};
+> > +
+> > +struct media_v2_topology {
+> > +	__u32 topology_version;
+> > +
+> > +	__u32 num_entities;
+> > +	struct media_v2_entity *entities;
+> > +
+> > +	__u32 num_interfaces;
+> > +	struct media_v2_interface *interfaces;
+> > +
+> > +	__u32 num_pads;
+> > +	struct media_v2_pad *pads;
+> > +
+> > +	__u32 num_links;
+> > +	struct media_v2_link *links;
+> > +
+> > +	__u32 reserved[64];
+> 
+> As I suggested elsewhere, replace this by:
+> 
+> 	struct {
+> 		__u32 num_reserved;
+> 		void *ptr_reserved;
+> 	} reserved_ptrs[8];
+> 
+> This will keep the number of reserved num/pointer pairs identical
+> between 32 and 64 bit architectures. Without that doing compat32
+> handling will be very difficult indeed.
+> 
+> We might want a separate __u32 reserved[] array so we're able to add
+> non-pointer fields in the future.
+
+OK.
+
+> 
+> Regards,
+> 
+> 	Hans
+> 
+> > +};
+> > +
+> > +/* ioctls */
 > >  
-> > -#define MEDIA_ENT_T_DEVNODE		(1 << MEDIA_ENT_TYPE_SHIFT)
-> > -#define MEDIA_ENT_T_DEVNODE_V4L		(MEDIA_ENT_T_DEVNODE + 1)
-> > +#define MEDIA_ENT_T_DEVNODE		MEDIA_ENT_T_V4L2_BASE
-> > +#define MEDIA_ENT_T_V4L2_SUBDEV		MEDIA_ENT_T_V4L2_SUBDEV_BASE
-> > +
-> > +#define MEDIA_ENT_T_DEVNODE_V4L		MEDIA_ENT_T_V4L2_VIDEO
-> > +
-> >  #define MEDIA_ENT_T_DEVNODE_FB		(MEDIA_ENT_T_DEVNODE + 2)
-> >  #define MEDIA_ENT_T_DEVNODE_ALSA	(MEDIA_ENT_T_DEVNODE + 3)
-> > -#define MEDIA_ENT_T_DEVNODE_DVB_FE	(MEDIA_ENT_T_DEVNODE + 4)
-> > -#define MEDIA_ENT_T_DEVNODE_DVB_DEMUX	(MEDIA_ENT_T_DEVNODE + 5)
-> > -#define MEDIA_ENT_T_DEVNODE_DVB_DVR	(MEDIA_ENT_T_DEVNODE + 6)
-> > -#define MEDIA_ENT_T_DEVNODE_DVB_CA	(MEDIA_ENT_T_DEVNODE + 7)
-> > -#define MEDIA_ENT_T_DEVNODE_DVB_NET	(MEDIA_ENT_T_DEVNODE + 8)
-> > +#define MEDIA_ENT_T_DEVNODE_DVB		(MEDIA_ENT_T_DEVNODE + 4)
+> >  #define MEDIA_IOC_DEVICE_INFO		_IOWR('|', 0x00, struct media_device_info)
+> >  #define MEDIA_IOC_ENUM_ENTITIES		_IOWR('|', 0x01, struct media_entity_desc)
+> >  #define MEDIA_IOC_ENUM_LINKS		_IOWR('|', 0x02, struct media_links_enum)
+> >  #define MEDIA_IOC_SETUP_LINK		_IOWR('|', 0x03, struct media_link_desc)
+> > +#define MEDIA_IOC_G_TOPOLOGY		_IOWR('|', 0x04, struct media_v2_topology)
 > >  
-> > -/* Legacy symbol. Use it to avoid userspace compilation breakages */
-> > -#define MEDIA_ENT_T_DEVNODE_DVB		MEDIA_ENT_T_DEVNODE_DVB_FE
-> > -
-> > -#define MEDIA_ENT_T_V4L2_SUBDEV		(2 << MEDIA_ENT_TYPE_SHIFT)
-> > -#define MEDIA_ENT_T_V4L2_SUBDEV_SENSOR	(MEDIA_ENT_T_V4L2_SUBDEV + 1)
-> > -#define MEDIA_ENT_T_V4L2_SUBDEV_FLASH	(MEDIA_ENT_T_V4L2_SUBDEV + 2)
-> > -#define MEDIA_ENT_T_V4L2_SUBDEV_LENS	(MEDIA_ENT_T_V4L2_SUBDEV + 3)
-> > -/* A converter of analogue video to its digital representation. */
-> > -#define MEDIA_ENT_T_V4L2_SUBDEV_DECODER	(MEDIA_ENT_T_V4L2_SUBDEV + 4)
-> > -
-> > -#define MEDIA_ENT_T_V4L2_SUBDEV_TUNER	(MEDIA_ENT_T_V4L2_SUBDEV + 5)
-> > +/* Entity types */
-> >  
-> >  #define MEDIA_ENT_FL_DEFAULT		(1 << 0)
-> >  
+> >  #endif /* __LINUX_MEDIA_H */
 > > 
-> 
-> Hmm, I'm postponing further review. It might become clearer after reviewing
-> more of this patch series.
-> 
-> One reason why this is a bit difficult to review is that it is not immediately
-> obvious which defines are here for backwards compat (and shouldn't be used in
-> the kernel anymore) and which defines are new.
-
-The ones under /* Legacy symbols used to avoid userspace compilation breakages */
-comment should not be used anymore.
-
-> May I suggest that either in this or in a later patch the defines that shouldn't
-> be used in the kernel should be placed under #ifndef __KERNEL__?
-
-They'll be under a #ifndef __KERNEL__, but this will happen latter at
-the patch series. We need first to remove their usage internally before
-adding the ifndef.
-
-Regards,
-Mauro
