@@ -1,70 +1,31 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH v7 3/6] mm: Introduce VM_LOCKONFAULT
-Date: Tue, 25 Aug 2015 16:29:15 +0200
-Message-ID: <20150825142914.GF6285@dhcp22.suse.cz>
-References: <1439097776-27695-1-git-send-email-emunson@akamai.com>
- <1439097776-27695-4-git-send-email-emunson@akamai.com>
- <20150812115909.GA5182@dhcp22.suse.cz>
- <20150819213345.GB4536@akamai.com>
- <20150820075611.GD4780@dhcp22.suse.cz>
- <20150820170309.GA11557@akamai.com>
- <20150821072552.GF23723@dhcp22.suse.cz>
- <20150821183132.GA12835@akamai.com>
- <20150825134154.GB6285@dhcp22.suse.cz>
- <55DC73E2.6050509@suse.cz>
+From: Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH RFC] watchdog: Add watchdog device control through sysfs
+ attributes
+Date: Tue, 25 Aug 2015 22:15:59 +0530
+Message-ID: <20150825164559.GC13340@dhcppc13.redhat.com>
+References: <d9ac417a3bc1c6846f1ddfcd3cd07e5a92865c19.1440179209.git.panand@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-watchdog-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <55DC73E2.6050509@suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Eric B Munson <emunson@akamai.com>, Andrew Morton <akpm@linux-foundation.org>, Jonathan Corbet <corbet@lwn.net>, "Kirill A. Shutemov" <kirill@shutemov.name>, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+In-Reply-To: <d9ac417a3bc1c6846f1ddfcd3cd07e5a92865c19.1440179209.git.panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-watchdog-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org
+Cc: linux-watchdog-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dzickus-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Wim Van Sebroeck <wim-IQzOog9fTRqzQB+pC5nmwQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue 25-08-15 15:55:46, Vlastimil Babka wrote:
-> On 08/25/2015 03:41 PM, Michal Hocko wrote:
-[...]
-> >So what we have as a result is that partially populated ranges are
-> >preserved and fully populated ones work in the best effort mode the same
-> >way as they are now.
-> >
-> >Does that sound at least remotely reasonably?
-> 
-> I'll basically repeat what I said earlier:
-> 
-> - mremap scanning existing pte's to figure out the population would slow it
-> down for no good reason
+Hi Guenter,
 
-So do we really need to populate the enlarged range? All the man page is
-saying is that the lock is maintained. Which will be still the case. It
-is true that the failure is unlikely (unless you are running in the
-memcg) but you cannot rely on the full mlock semantic so what would be a
-problem?
+On 21/08/2015:11:18:12 PM, Pratyush Anand wrote:
+> This patch adds following attributes to watchdog device's sysfs interface.
 
-> - it would be unreliable anyway:
->   - example: was the area completely populated because MLOCK_ONFAULT was not
-> used or because the  process faulted it already
+Please see if you can review it.
 
-OK, I see this as being a problem. Especially if the buffer is increase
-2*original_len
+Does this patch look fine to you? If yes then do I need to resend it by removing
+RFC tag.
 
->   - example: was the area not completely populated because MLOCK_ONFAULT was
-> used, or because mmap(MAP_LOCKED) failed to populate it fully?
-
-What would be the difference? Both are ONFAULT now.
-
-> I think the first point is a pointless regression for workloads that use
-> just plain mlock() and don't want the onfault semantics. Unless there's some
-> shortcut? Does vma have a counter of how much is populated? (I don't think
-> so?)
-
--- 
-Michal Hocko
-SUSE Labs
-
+~Pratyush
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-watchdog" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
