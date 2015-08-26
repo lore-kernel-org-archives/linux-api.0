@@ -1,141 +1,167 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: [PATCH 3/5] sd: implement the Persistent Reservation API
-Date: Wed, 26 Aug 2015 18:56:52 +0200
-Message-ID: <1440608214-14497-4-git-send-email-hch@lst.de>
-References: <1440608214-14497-1-git-send-email-hch@lst.de>
+From: Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Subject: Re: [PATCH 2/5] coresight-etm4x: Change the name of the
+ ctxid_val to ctxid_pid
+Date: Wed, 26 Aug 2015 13:57:21 -0400
+Message-ID: <55DDFE01.50201@codeaurora.org>
+References: <1436258518-9339-1-git-send-email-zhang.chunyan@linaro.org> <1436258518-9339-3-git-send-email-zhang.chunyan@linaro.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1440608214-14497-1-git-send-email-hch-jcswGhMUV9g@public.gmane.org>
+In-Reply-To: <1436258518-9339-3-git-send-email-zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>
-Cc: linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org
+Cc: broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, serge.broslavsky-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This is a mostly trivial mapping to the PERSISTENT RESERVE IN/OUT
-commands.
+On 07/07/2015 04:41 AM, Chunyan Zhang wrote:
+> 'ctxid_val' array was used to store the value of ETM context ID comparator
+> which actually stores the process ID to be traced, so using 'ctxid_pid' as
+> its name instead make it easier to understand.
 
-Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
----
- drivers/scsi/sd.c | 94 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 94 insertions(+)
+Previous discussion with some ARM folks has led me to believe there isn't a
+guarantee that the Context ID Register will always have a PID. Why not allow
+filtering on thread group ID, session ID, cgroup related identifiers, etc.?
 
-diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
-index 160e44e..df8e667 100644
---- a/drivers/scsi/sd.c
-+++ b/drivers/scsi/sd.c
-@@ -51,6 +51,7 @@
- #include <linux/async.h>
- #include <linux/slab.h>
- #include <linux/pm_runtime.h>
-+#include <linux/pr.h>
- #include <asm/uaccess.h>
- #include <asm/unaligned.h>
- 
-@@ -1535,6 +1536,98 @@ static int sd_compat_ioctl(struct block_device *bdev, fmode_t mode,
- }
- #endif
- 
-+static char sd_pr_type(enum pr_type type)
-+{
-+	switch (type) {
-+	case PR_WRITE_EXCLUSIVE:
-+		return 0x01;
-+	case PR_EXCLUSIVE_ACCESS:
-+		return 0x03;
-+	case PR_WRITE_EXCLUSIVE_REG_ONLY:
-+		return 0x05;
-+	case PR_EXCLUSIVE_ACCESS_REG_ONLY:
-+		return 0x06;
-+	case PR_WRITE_EXCLUSIVE_ALL_REGS:
-+		return 0x07;
-+	case PR_EXCLUSIVE_ACCESS_ALL_REGS:
-+		return 0x08;
-+	default:
-+		return 0;
-+	}
-+};
-+
-+static int sd_pr_command(struct block_device *bdev, u8 sa,
-+		u64 key, u64 sa_key, u8 type, u8 flags)
-+{
-+	struct scsi_device *sdev = scsi_disk(bdev->bd_disk)->device;
-+	struct scsi_sense_hdr sshdr;
-+	int result;
-+	u8 cmd[16] = { 0, };
-+	u8 data[24] = { 0, };
-+
-+	cmd[0] = PERSISTENT_RESERVE_OUT;
-+	cmd[1] = sa;
-+	cmd[2] = type;
-+	put_unaligned_be32(sizeof(data), &cmd[5]);
-+
-+	put_unaligned_be64(key, &data[0]);
-+	put_unaligned_be64(sa_key, &data[8]);
-+	data[20] = flags;
-+
-+	result = scsi_execute_req(sdev, cmd, DMA_TO_DEVICE, &data, sizeof(data),
-+			&sshdr, SD_TIMEOUT, SD_MAX_RETRIES, NULL);
-+
-+	if ((driver_byte(result) & DRIVER_SENSE) &&
-+	    (scsi_sense_valid(&sshdr))) {
-+		sdev_printk(KERN_INFO, sdev, "PR command failed: %d\n", result);
-+		scsi_print_sense_hdr(sdev, NULL, &sshdr);
-+	}
-+
-+	return result;
-+}
-+
-+static int sd_pr_register(struct block_device *bdev, u64 old_key, u64 new_key,
-+		u32 flags)
-+{
-+	return sd_pr_command(bdev, (flags & PR_FL_IGNORE_KEY) ? 0x06 : 0x00,
-+			old_key, new_key, 0,
-+			(1 << 0) /* APTPL */ |
-+			(1 << 2) /* ALL_TG_PT */);
-+}
-+
-+static int sd_pr_reserve(struct block_device *bdev, u64 key, enum pr_type type,
-+		u32 flags)
-+{
-+	if (flags)
-+		return -EOPNOTSUPP;
-+	return sd_pr_command(bdev, 0x01, key, 0, sd_pr_type(type), 0);
-+}
-+
-+static int sd_pr_release(struct block_device *bdev, u64 key, enum pr_type type)
-+{
-+	return sd_pr_command(bdev, 0x02, key, 0, sd_pr_type(type), 0);
-+}
-+
-+static int sd_pr_preempt(struct block_device *bdev, u64 old_key, u64 new_key,
-+		enum pr_type type, bool abort)
-+{
-+	return sd_pr_command(bdev, abort ? 0x05 : 0x04, old_key, new_key,
-+			     sd_pr_type(type), 0);
-+}
-+
-+static int sd_pr_clear(struct block_device *bdev, u64 key)
-+{
-+	return sd_pr_command(bdev, 0x03, key, 0, 0, 0);
-+}
-+
-+static const struct pr_ops sd_pr_ops = {
-+	.pr_register	= sd_pr_register,
-+	.pr_reserve	= sd_pr_reserve,
-+	.pr_release	= sd_pr_release,
-+	.pr_preempt	= sd_pr_preempt,
-+	.pr_clear	= sd_pr_clear,
-+};
-+
- static const struct block_device_operations sd_fops = {
- 	.owner			= THIS_MODULE,
- 	.open			= sd_open,
-@@ -1547,6 +1640,7 @@ static const struct block_device_operations sd_fops = {
- 	.check_events		= sd_check_events,
- 	.revalidate_disk	= sd_revalidate_disk,
- 	.unlock_native_capacity	= sd_unlock_native_capacity,
-+	.pr_ops			= &sd_pr_ops,
- };
- 
- /**
+> This patch also changes the ABI, it is normally not allowed, but
+> fortunately it is a testing ABI and very new for now. Nevertheless,
+> if you don't think it should be changed, we could always add an alias
+> for userspace.
+> 
+> Signed-off-by: Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+> Reviewed-by: Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+> ---
+>  .../ABI/testing/sysfs-bus-coresight-devices-etm4x    |  2 +-
+>  drivers/hwtracing/coresight/coresight-etm4x.c        | 20 ++++++++++----------
+>  drivers/hwtracing/coresight/coresight-etm4x.h        |  4 ++--
+>  3 files changed, 13 insertions(+), 13 deletions(-)
+> 
+> diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
+> index 2fe2e3d..2355ed8 100644
+> --- a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
+> +++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
+> @@ -249,7 +249,7 @@ KernelVersion:	4.01
+>  Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+>  Description:	(RW) Select which context ID comparator to work with.
+>  
+> -What:		/sys/bus/coresight/devices/<memory_map>.etm/ctxid_val
+> +What:		/sys/bus/coresight/devices/<memory_map>.etm/ctxid_pid
+>  Date:		April 2015
+>  KernelVersion:	4.01
+>  Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+> diff --git a/drivers/hwtracing/coresight/coresight-etm4x.c b/drivers/hwtracing/coresight/coresight-etm4x.c
+> index 1312e99..9afbda5 100644
+> --- a/drivers/hwtracing/coresight/coresight-etm4x.c
+> +++ b/drivers/hwtracing/coresight/coresight-etm4x.c
+> @@ -155,7 +155,7 @@ static void etm4_enable_hw(void *info)
+>  			       drvdata->base + TRCACATRn(i));
+>  	}
+>  	for (i = 0; i < drvdata->numcidc; i++)
+> -		writeq_relaxed(drvdata->ctxid_val[i],
+> +		writeq_relaxed(drvdata->ctxid_pid[i],
+>  			       drvdata->base + TRCCIDCVRn(i));
+>  	writel_relaxed(drvdata->ctxid_mask0, drvdata->base + TRCCIDCCTLR0);
+>  	writel_relaxed(drvdata->ctxid_mask1, drvdata->base + TRCCIDCCTLR1);
+> @@ -507,7 +507,7 @@ static ssize_t reset_store(struct device *dev,
+>  
+>  	drvdata->ctxid_idx = 0x0;
+>  	for (i = 0; i < drvdata->numcidc; i++)
+> -		drvdata->ctxid_val[i] = 0x0;
+> +		drvdata->ctxid_pid[i] = 0x0;
+>  	drvdata->ctxid_mask0 = 0x0;
+>  	drvdata->ctxid_mask1 = 0x0;
+>  
+> @@ -1815,7 +1815,7 @@ static ssize_t ctxid_idx_store(struct device *dev,
+>  }
+>  static DEVICE_ATTR_RW(ctxid_idx);
+>  
+> -static ssize_t ctxid_val_show(struct device *dev,
+> +static ssize_t ctxid_pid_show(struct device *dev,
+>  			      struct device_attribute *attr,
+>  			      char *buf)
+>  {
+> @@ -1825,12 +1825,12 @@ static ssize_t ctxid_val_show(struct device *dev,
+>  
+>  	spin_lock(&drvdata->spinlock);
+>  	idx = drvdata->ctxid_idx;
+> -	val = (unsigned long)drvdata->ctxid_val[idx];
+> +	val = (unsigned long)drvdata->ctxid_pid[idx];
+>  	spin_unlock(&drvdata->spinlock);
+>  	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
+>  }
+>  
+> -static ssize_t ctxid_val_store(struct device *dev,
+> +static ssize_t ctxid_pid_store(struct device *dev,
+>  			       struct device_attribute *attr,
+>  			       const char *buf, size_t size)
+>  {
+> @@ -1850,11 +1850,11 @@ static ssize_t ctxid_val_store(struct device *dev,
+>  
+>  	spin_lock(&drvdata->spinlock);
+>  	idx = drvdata->ctxid_idx;
+> -	drvdata->ctxid_val[idx] = (u64)val;
+> +	drvdata->ctxid_pid[idx] = (u64)val;
+>  	spin_unlock(&drvdata->spinlock);
+>  	return size;
+>  }
+> -static DEVICE_ATTR_RW(ctxid_val);
+> +static DEVICE_ATTR_RW(ctxid_pid);
+>  
+>  static ssize_t ctxid_masks_show(struct device *dev,
+>  				struct device_attribute *attr,
+> @@ -1949,7 +1949,7 @@ static ssize_t ctxid_masks_store(struct device *dev,
+>  		 */
+>  		for (j = 0; j < 8; j++) {
+>  			if (maskbyte & 1)
+> -				drvdata->ctxid_val[i] &= ~(0xFF << (j * 8));
+> +				drvdata->ctxid_pid[i] &= ~(0xFF << (j * 8));
+>  			maskbyte >>= 1;
+>  		}
+>  		/* Select the next ctxid comparator mask value */
+> @@ -2193,7 +2193,7 @@ static struct attribute *coresight_etmv4_attrs[] = {
+>  	&dev_attr_res_idx.attr,
+>  	&dev_attr_res_ctrl.attr,
+>  	&dev_attr_ctxid_idx.attr,
+> -	&dev_attr_ctxid_val.attr,
+> +	&dev_attr_ctxid_pid.attr,
+>  	&dev_attr_ctxid_masks.attr,
+>  	&dev_attr_vmid_idx.attr,
+>  	&dev_attr_vmid_val.attr,
+> @@ -2514,7 +2514,7 @@ static void etm4_init_default_data(struct etmv4_drvdata *drvdata)
+>  	}
+>  
+>  	for (i = 0; i < drvdata->numcidc; i++)
+> -		drvdata->ctxid_val[i] = 0x0;
+> +		drvdata->ctxid_pid[i] = 0x0;
+>  	drvdata->ctxid_mask0 = 0x0;
+>  	drvdata->ctxid_mask1 = 0x0;
+>  
+> diff --git a/drivers/hwtracing/coresight/coresight-etm4x.h b/drivers/hwtracing/coresight/coresight-etm4x.h
+> index e08e983..1e8fb36 100644
+> --- a/drivers/hwtracing/coresight/coresight-etm4x.h
+> +++ b/drivers/hwtracing/coresight/coresight-etm4x.h
+> @@ -265,7 +265,7 @@
+>   * @addr_type:	Current status of the comparator register.
+>   * @ctxid_idx:	Context ID index selector.
+>   * @ctxid_size:	Size of the context ID field to consider.
+> - * @ctxid_val:	Value of the context ID comparator.
+> + * @ctxid_pid:	Value of the context ID comparator.
+>   * @ctxid_mask0:Context ID comparator mask for comparator 0-3.
+>   * @ctxid_mask1:Context ID comparator mask for comparator 4-7.
+>   * @vmid_idx:	VM ID index selector.
+> @@ -352,7 +352,7 @@ struct etmv4_drvdata {
+>  	u8				addr_type[ETM_MAX_SINGLE_ADDR_CMP];
+>  	u8				ctxid_idx;
+>  	u8				ctxid_size;
+> -	u64				ctxid_val[ETMv4_MAX_CTXID_CMP];
+> +	u64				ctxid_pid[ETMv4_MAX_CTXID_CMP];
+>  	u32				ctxid_mask0;
+>  	u32				ctxid_mask1;
+>  	u8				vmid_idx;
+> 
+
+
 -- 
-1.9.1
+Qualcomm Innovation Center, Inc.
+The Qualcomm Innovation Center, Inc. is a member of the Code Aurora Forum,
+a Linux Foundation Collaborative Project
