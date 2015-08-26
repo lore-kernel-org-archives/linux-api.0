@@ -1,67 +1,46 @@
-From: Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: Next round: revised futex(2) man page for review
-Date: Tue, 25 Aug 2015 23:29:58 -0700
-Message-ID: <20150826062958.GB50910@vmdeb7>
-References: <55B61EF3.7080302@gmail.com>
- <alpine.DEB.2.11.1507282054370.3825@nanos>
- <55C5A787.9010806@gmail.com>
- <alpine.DEB.2.11.1508200042180.3873@nanos>
+From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v7 3/6] mm: Introduce VM_LOCKONFAULT
+Date: Wed, 26 Aug 2015 09:20:16 +0200
+Message-ID: <20150826072016.GD25196@dhcp22.suse.cz>
+References: <20150812115909.GA5182@dhcp22.suse.cz>
+ <20150819213345.GB4536@akamai.com>
+ <20150820075611.GD4780@dhcp22.suse.cz>
+ <20150820170309.GA11557@akamai.com>
+ <20150821072552.GF23723@dhcp22.suse.cz>
+ <20150821183132.GA12835@akamai.com>
+ <20150825134154.GB6285@dhcp22.suse.cz>
+ <20150825142902.GF17005@akamai.com>
+ <20150825185829.GA10222@dhcp22.suse.cz>
+ <20150825190300.GG17005@akamai.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.11.1508200042180.3873@nanos>
+In-Reply-To: <20150825190300.GG17005-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Torvald Riegel <triegel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Anton Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, bill o gallmeister <bgallmeister-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kiszka <jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, bert hubert <bert.hubert-dxZxOz86jR8sYtaaK7K+xw@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
+To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 20, 2015 at 01:17:03AM +0200, Thomas Gleixner wrote:
-
-...
-
-> > >> .\" FIXME XXX In discussing errors for FUTEX_CMP_REQUEUE_PI, Darren Hart
-> > >> .\"       made the observation that "EINVAL is returned if the non-pi 
-> > >> .\"       to pi or op pairing semantics are violated."
-> > >> .\"       Probably there needs to be a general statement about this
-> > >> .\"       requirement, probably located at about this point in the page.
-> > >> .\"       Darren (or someone else), care to take a shot at this?
-> > > 
-> > > Well, that's hard to describe because the kernel only has a limited
-> > > way of detecting such mismatches. It only can detect it when there are
-> > > non PI waiters on a futex and a PI function is called or vice versa.
-> > 
-> > Hmmm. Okay, I filed your comments away for reference, but
-> > hopefully someone can help with some actual text.
+On Tue 25-08-15 15:03:00, Eric B Munson wrote:
+[...]
+> Would you drop your objections to the VMA flag if I drop the portions of
+> the patch that expose it to userspace?
 > 
-> I let Darren come up with something sensible :)
+> The rework to not use the VMA flag is pretty sizeable and is much more
+> ugly IMO.  I know that you are not wild about using bit 30 of 32 for
+> this, but perhaps we can settle on not exporting it to userspace so we
+> can reclaim it if we really need it in the future?
 
-Heh, right, no pressure then...
+Yes, that would be definitely more acceptable for me. I do understand
+that you are not wild about changing mremap behavior.
 
-I responded to Michael on this recently, copied here for reference:
-
-
-FUTEX_WAIT_REQUEUE_PI can return -EINVAL if called with invalid parameters, such
-as uaddr==uaddr2, or (in the case of SHARED futexes), the associated keys match
-(meaning it's the same futex word - shared memory, inode, etc.). This can't
-happen if the stated policy of requeueing from non-pi to pi is followed as the
-same word cannot be both non-pi and pi at the same time, requiring them to be
-unique futex words.
-
-FUTEX_CMP_REQUEUE_PI will fail similarly if uaddr and uaddr2 are the same futex
-word. Also, if nr_wake != 1.
-
-But, to the point I was making above, FUTEX_CMP_REQUEUE_PI must requeue uaddr to
-the same uaddr2 specified in the previous FUTEX_WAIT_REQUEUE_PI call.
-FUTEX_WAIT_REQUEUE_PI sets up the operation, FUTEX_CMP_REQUEUE_PI completes it,
-and they must agree on uaddr and uaddr2.
-
-
-Michael, are you still looking for something more from me, or is this FIXME now
-complete?
-
-
-
+Anyway, I would really prefer if the vma flag was really used only at
+few places - when we are clearing it along with VM_LOCKED (which could
+be hidden in VM_LOCKED_CLEAR_MASK or something like that) and when we
+decide whether the populate or not (this should be __mm_populate). But
+maybe I am missing some call paths where gup is called unconditionally,
+I haven't checked that.
 -- 
-Darren Hart
-Intel Open Source Technology Center
+Michal Hocko
+SUSE Labs
