@@ -1,88 +1,67 @@
-From: Jarkko Sakkinen <jarkko.sakkinen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v9 0/3] Enable PPI sysfs interface for TPM 2.0
-Date: Wed, 26 Aug 2015 08:28:02 +0300
-Message-ID: <20150826052802.GA6101@intel.com>
-References: <1439388347-22325-1-git-send-email-jarkko.sakkinen@linux.intel.com>
- <20150825170327.GA23185@intel.com>
- <E4F705A5-5445-4220-B841-E93FC6859537@gmx.de>
+From: Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: Next round: revised futex(2) man page for review
+Date: Tue, 25 Aug 2015 23:29:58 -0700
+Message-ID: <20150826062958.GB50910@vmdeb7>
+References: <55B61EF3.7080302@gmail.com>
+ <alpine.DEB.2.11.1507282054370.3825@nanos>
+ <55C5A787.9010806@gmail.com>
+ <alpine.DEB.2.11.1508200042180.3873@nanos>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <E4F705A5-5445-4220-B841-E93FC6859537-Mmb7MZpHnFY@public.gmane.org>
+In-Reply-To: <alpine.DEB.2.11.1508200042180.3873@nanos>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>
-Cc: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Torvald Riegel <triegel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Anton Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, bill o gallmeister <bgallmeister-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kiszka <jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, bert hubert <bert.hubert-dxZxOz86jR8sYtaaK7K+xw@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 25, 2015 at 07:20:24PM +0200, Peter Huewe wrote:
-> Will look at it as soon as possible - relocating to the us is quite stressful.sorry about that.
+On Thu, Aug 20, 2015 at 01:17:03AM +0200, Thomas Gleixner wrote:
+
+...
+
+> > >> .\" FIXME XXX In discussing errors for FUTEX_CMP_REQUEUE_PI, Darren Hart
+> > >> .\"       made the observation that "EINVAL is returned if the non-pi 
+> > >> .\"       to pi or op pairing semantics are violated."
+> > >> .\"       Probably there needs to be a general statement about this
+> > >> .\"       requirement, probably located at about this point in the page.
+> > >> .\"       Darren (or someone else), care to take a shot at this?
+> > > 
+> > > Well, that's hard to describe because the kernel only has a limited
+> > > way of detecting such mismatches. It only can detect it when there are
+> > > non PI waiters on a futex and a PI function is called or vice versa.
+> > 
+> > Hmmm. Okay, I filed your comments away for reference, but
+> > hopefully someone can help with some actual text.
 > 
->  But since we are already at v9 i think it is in a good shape.
-> Peter
+> I let Darren come up with something sensible :)
 
-Alright, thanks for informing about this!
+Heh, right, no pressure then...
 
-/Jarkko
+I responded to Michael on this recently, copied here for reference:
 
 
-> Am 25. August 2015 19:03:27 MESZ, schrieb Jarkko Sakkinen <jarkko.sakkinen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>:
-> >Does this start be in the shape that there would be chance to pull this
-> >in at some point? To be able to enable TPM 2.0 chips from Linux is
-> >quite
-> >mandatory feature in my opinion.
-> >
-> >Thank you.
-> >
-> >/Jarkko
-> >
-> >On Wed, Aug 12, 2015 at 05:05:40PM +0300, Jarkko Sakkinen wrote:
-> >> v9:
-> >> * Fixed naming for __compat_only_sysfs_link_entry_to_kobj()
-> >> 
-> >> v8:
-> >> * Renamed sysfs_link_entry_to_kobj() to
-> >>   __compat_only_sysfs_link_entry_to_kobj()
-> >> 
-> >> v7:
-> >> * Fixed compile error when CONFIG_SYSFS is not enabled.
-> >> 
-> >> v6:
-> >> * Updated documentation.
-> >> 
-> >> v5:
-> >> * Removed dangling export of kernfs_remove_by_name_ns() from the
-> >sysfs
-> >>   patch.
-> >> 
-> >> v4:
-> >> * Use sysfs_remove_link()
-> >> 
-> >> v3:
-> >> * Fixed to_tpm_chip() macro.
-> >> * Split into two patches.
-> >> * Renamed sysfs_link_group_to_kobj to sysfs_link_entry_to_kobj
-> >> * Only create the "backwards compatibility" symlink for TPM 1.x
-> >devices.
-> >> 
-> >> Jarkko Sakkinen (3):
-> >>   sysfs: added __compat_only_sysfs_link_entry_to_kobj()
-> >>   tpm: move the PPI attributes to character device directory.
-> >>   tpm: update PPI documentation to address the location change.
-> >> 
-> >>  Documentation/ABI/testing/sysfs-driver-ppi | 19 ++++++++-----
-> >>  drivers/char/tpm/tpm-chip.c                | 24 ++++++++++------
-> >>  drivers/char/tpm/tpm.h                     | 17 ++++--------
-> >>  drivers/char/tpm/tpm_ppi.c                 | 34
-> >++++++++---------------
-> >>  fs/sysfs/group.c                           | 44
-> >++++++++++++++++++++++++++++++
-> >>  include/linux/sysfs.h                      | 11 ++++++++
-> >>  6 files changed, 100 insertions(+), 49 deletions(-)
-> >> 
-> >> -- 
-> >> 2.5.0
-> >> 
-> 
-> -- 
-> Sent from my mobile
+FUTEX_WAIT_REQUEUE_PI can return -EINVAL if called with invalid parameters, such
+as uaddr==uaddr2, or (in the case of SHARED futexes), the associated keys match
+(meaning it's the same futex word - shared memory, inode, etc.). This can't
+happen if the stated policy of requeueing from non-pi to pi is followed as the
+same word cannot be both non-pi and pi at the same time, requiring them to be
+unique futex words.
+
+FUTEX_CMP_REQUEUE_PI will fail similarly if uaddr and uaddr2 are the same futex
+word. Also, if nr_wake != 1.
+
+But, to the point I was making above, FUTEX_CMP_REQUEUE_PI must requeue uaddr to
+the same uaddr2 specified in the previous FUTEX_WAIT_REQUEUE_PI call.
+FUTEX_WAIT_REQUEUE_PI sets up the operation, FUTEX_CMP_REQUEUE_PI completes it,
+and they must agree on uaddr and uaddr2.
+
+
+Michael, are you still looking for something more from me, or is this FIXME now
+complete?
+
+
+
+-- 
+Darren Hart
+Intel Open Source Technology Center
