@@ -1,41 +1,62 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH v7 3/6] mm: Introduce VM_LOCKONFAULT
-Date: Wed, 26 Aug 2015 17:35:41 +0200
-Message-ID: <55DDDCCD.5000908@suse.cz>
-References: <20150812115909.GA5182@dhcp22.suse.cz>
- <20150819213345.GB4536@akamai.com> <20150820075611.GD4780@dhcp22.suse.cz>
- <20150820170309.GA11557@akamai.com> <20150821072552.GF23723@dhcp22.suse.cz>
- <20150821183132.GA12835@akamai.com> <20150825134154.GB6285@dhcp22.suse.cz>
- <20150825142902.GF17005@akamai.com> <20150825185829.GA10222@dhcp22.suse.cz>
- <20150825190300.GG17005@akamai.com> <20150826072016.GD25196@dhcp22.suse.cz>
+From: Chris Metcalf <cmetcalf@ezchip.com>
+Subject: Re: [PATCH v5 2/6] cpu_isolated: add initial support
+Date: Wed, 26 Aug 2015 11:55:14 -0400
+Message-ID: <55DDE162.1060804@ezchip.com>
+References: <1438112980-9981-1-git-send-email-cmetcalf@ezchip.com>
+ <1438112980-9981-3-git-send-email-cmetcalf@ezchip.com>
+ <20150812160020.GG21542@lerouge> <55CB8ED1.6030806@ezchip.com>
+ <20150826152651.GA11992@lerouge>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150826072016.GD25196@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>, Eric B Munson <emunson@akamai.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Jonathan Corbet <corbet@lwn.net>, "Kirill A. Shutemov" <kirill@shutemov.name>, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150826152651.GA11992@lerouge>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Frederic Weisbecker <fweisbec@gmail.com>
+Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 08/26/2015 09:20 AM, Michal Hocko wrote:
-> On Tue 25-08-15 15:03:00, Eric B Munson wrote:
-> [...]
->> Would you drop your objections to the VMA flag if I drop the portions of
->> the patch that expose it to userspace?
->>
->> The rework to not use the VMA flag is pretty sizeable and is much more
->> ugly IMO.  I know that you are not wild about using bit 30 of 32 for
->> this, but perhaps we can settle on not exporting it to userspace so we
->> can reclaim it if we really need it in the future?
+On 08/26/2015 11:26 AM, Frederic Weisbecker wrote:
+> On Wed, Aug 12, 2015 at 02:22:09PM -0400, Chris Metcalf wrote:
+>> On 08/12/2015 12:00 PM, Frederic Weisbecker wrote:
+>>>> +#ifdef CONFIG_CPU_ISOLATED
+>>>> +void cpu_isolated_wait(void)
+>>>> +{
+>>>> +	set_current_state(TASK_INTERRUPTIBLE);
+>>>> +	_cpu_idle();
+>>>> +	set_current_state(TASK_RUNNING);
+>>>> +}
+>>> I'm still uncomfortable with that. A wake up model could work?
+>> I don't know exactly what you have in mind.  The theory is that
+>> at this point we're ready to return to user space and we're just
+>> waiting for a timer tick that is guaranteed to arrive, since there
+>> is something pending for the timer.
+> Hmm, ok I'm going to discuss that in the new version. One worry is that
+> it gets racy and we sleep there for ever.
 >
-> Yes, that would be definitely more acceptable for me. I do understand
-> that you are not wild about changing mremap behavior.
+>> And, this is an arch-specific method anyway; the generic method
+>> is actually checking to see if a signal has been delivered,
+>> scheduling is needed, etc., each time around the loop, so if
+>> you're not sure your architecture will do the right thing, just
+>> don't provide a method that idles while waiting.  For tilegx I'm
+>> sure it works correctly, so I'm OK providing that method.
+> Yes but we do busy waiting on all other archs then. And since we can wait
+> for a while there, it doesn't look sane.
 
-+1
+We can wait for a while (potentially multiple ticks), which is
+certainly a long time, but that's what the user asked for.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Since we're checking signals and scheduling in the busy loop,
+we definitely won't get into some nasty unkillable state, which
+would be the real worst-case.
+
+I think the question is, could a process just get stuck there
+somehow in the normal course of events, where there is a
+future event on the tick_cpu_device, but no interrupt is
+enabled that will eventually deal with it?  This seems like it
+would be a pretty fundamental timekeeping bug, so my
+assumption here is that can't happen, but maybe...?
+
+-- 
+Chris Metcalf, EZChip Semiconductor
+http://www.ezchip.com
