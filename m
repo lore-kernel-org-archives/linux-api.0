@@ -1,67 +1,88 @@
-From: Shuah Khan <shuahkhan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v7 13/44] [media] uapi/media.h: Declare interface types
-Date: Tue, 25 Aug 2015 14:34:46 -0600
-Message-ID: <CAKocOOPMBmUKkR=Zz2yxX3e9sLr3ST-cVM0BO7qVFMLN07ktGQ@mail.gmail.com>
-References: <cover.1440359643.git.mchehab@osg.samsung.com>
-	<55df3b23389e68b19354011babf0da1d26d0a91a.1440359643.git.mchehab@osg.samsung.com>
+From: Jarkko Sakkinen <jarkko.sakkinen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v9 0/3] Enable PPI sysfs interface for TPM 2.0
+Date: Wed, 26 Aug 2015 08:28:02 +0300
+Message-ID: <20150826052802.GA6101@intel.com>
+References: <1439388347-22325-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+ <20150825170327.GA23185@intel.com>
+ <E4F705A5-5445-4220-B841-E93FC6859537@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <55df3b23389e68b19354011babf0da1d26d0a91a.1440359643.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <E4F705A5-5445-4220-B841-E93FC6859537-Mmb7MZpHnFY@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org
+To: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>
+Cc: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Aug 23, 2015 at 2:17 PM, Mauro Carvalho Chehab
-<mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
-> Declare the interface types that will be used by the new
-> G_TOPOLOGY ioctl that will be defined latter on.
->
-> For now, we need those types, as they'll be used on the
-> internal structs associated with the new media_interface
-> graph object defined on the next patch.
->
-> Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
->
-> diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
-> index 4e816be3de39..21c96cd7a6ae 100644
-> --- a/include/uapi/linux/media.h
-> +++ b/include/uapi/linux/media.h
-> @@ -167,6 +167,35 @@ struct media_links_enum {
->         __u32 reserved[4];
->  };
->
-> +/* Interface type ranges */
-> +
-> +#define MEDIA_INTF_T_DVB_BASE  0x00000000
-> +#define MEDIA_INTF_T_V4L_BASE  0x00000100
-> +#define MEDIA_INTF_T_ALSA_BASE 0x00000200
-> +
-> +/* Interface types */
-> +
-> +#define MEDIA_INTF_T_DVB_FE            (MEDIA_INTF_T_DVB_BASE)
-> +#define MEDIA_INTF_T_DVB_DEMUX  (MEDIA_INTF_T_DVB_BASE + 1)
-> +#define MEDIA_INTF_T_DVB_DVR    (MEDIA_INTF_T_DVB_BASE + 2)
-> +#define MEDIA_INTF_T_DVB_CA     (MEDIA_INTF_T_DVB_BASE + 3)
-> +#define MEDIA_INTF_T_DVB_NET    (MEDIA_INTF_T_DVB_BASE + 4)
-> +
-> +#define MEDIA_INTF_T_V4L_VIDEO  (MEDIA_INTF_T_V4L_BASE)
-> +#define MEDIA_INTF_T_V4L_VBI    (MEDIA_INTF_T_V4L_BASE + 1)
-> +#define MEDIA_INTF_T_V4L_RADIO  (MEDIA_INTF_T_V4L_BASE + 2)
-> +#define MEDIA_INTF_T_V4L_SUBDEV (MEDIA_INTF_T_V4L_BASE + 3)
-> +#define MEDIA_INTF_T_V4L_SWRADIO (MEDIA_INTF_T_V4L_BASE + 4)
-> +
-> +#define MEDIA_INTF_T_ALSA_PCM_CAPTURE   (MEDIA_INTF_T_ALSA_BASE)
-> +#define MEDIA_INTF_T_ALSA_PCM_PLAYBACK  (MEDIA_INTF_T_ALSA_BASE + 1)
-> +#define MEDIA_INTF_T_ALSA_CONTROL       (MEDIA_INTF_T_ALSA_BASE + 2)
-> +#define MEDIA_INTF_T_ALSA_COMPRESS      (MEDIA_INTF_T_ALSA_BASE + 3)
-> +#define MEDIA_INTF_T_ALSA_RAWMIDI       (MEDIA_INTF_T_ALSA_BASE + 4)
-> +#define MEDIA_INTF_T_ALSA_HWDEP         (MEDIA_INTF_T_ALSA_BASE + 5)
+On Tue, Aug 25, 2015 at 07:20:24PM +0200, Peter Huewe wrote:
+> Will look at it as soon as possible - relocating to the us is quite stressful.sorry about that.
+> 
+>  But since we are already at v9 i think it is in a good shape.
+> Peter
 
-Is it necessary to add ALSA types at this time without ALSA media
-controller work?
-Can these be added later when ALSA work is done.
+Alright, thanks for informing about this!
 
-thanks,
--- Shuah
+/Jarkko
+
+
+> Am 25. August 2015 19:03:27 MESZ, schrieb Jarkko Sakkinen <jarkko.sakkinen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>:
+> >Does this start be in the shape that there would be chance to pull this
+> >in at some point? To be able to enable TPM 2.0 chips from Linux is
+> >quite
+> >mandatory feature in my opinion.
+> >
+> >Thank you.
+> >
+> >/Jarkko
+> >
+> >On Wed, Aug 12, 2015 at 05:05:40PM +0300, Jarkko Sakkinen wrote:
+> >> v9:
+> >> * Fixed naming for __compat_only_sysfs_link_entry_to_kobj()
+> >> 
+> >> v8:
+> >> * Renamed sysfs_link_entry_to_kobj() to
+> >>   __compat_only_sysfs_link_entry_to_kobj()
+> >> 
+> >> v7:
+> >> * Fixed compile error when CONFIG_SYSFS is not enabled.
+> >> 
+> >> v6:
+> >> * Updated documentation.
+> >> 
+> >> v5:
+> >> * Removed dangling export of kernfs_remove_by_name_ns() from the
+> >sysfs
+> >>   patch.
+> >> 
+> >> v4:
+> >> * Use sysfs_remove_link()
+> >> 
+> >> v3:
+> >> * Fixed to_tpm_chip() macro.
+> >> * Split into two patches.
+> >> * Renamed sysfs_link_group_to_kobj to sysfs_link_entry_to_kobj
+> >> * Only create the "backwards compatibility" symlink for TPM 1.x
+> >devices.
+> >> 
+> >> Jarkko Sakkinen (3):
+> >>   sysfs: added __compat_only_sysfs_link_entry_to_kobj()
+> >>   tpm: move the PPI attributes to character device directory.
+> >>   tpm: update PPI documentation to address the location change.
+> >> 
+> >>  Documentation/ABI/testing/sysfs-driver-ppi | 19 ++++++++-----
+> >>  drivers/char/tpm/tpm-chip.c                | 24 ++++++++++------
+> >>  drivers/char/tpm/tpm.h                     | 17 ++++--------
+> >>  drivers/char/tpm/tpm_ppi.c                 | 34
+> >++++++++---------------
+> >>  fs/sysfs/group.c                           | 44
+> >++++++++++++++++++++++++++++++
+> >>  include/linux/sysfs.h                      | 11 ++++++++
+> >>  6 files changed, 100 insertions(+), 49 deletions(-)
+> >> 
+> >> -- 
+> >> 2.5.0
+> >> 
+> 
+> -- 
+> Sent from my mobile
