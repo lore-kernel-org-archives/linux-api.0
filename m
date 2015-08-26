@@ -1,85 +1,135 @@
-From: Will Deacon <will.deacon@arm.com>
-Subject: Re: [PATCH v6 3/6] task_isolation: support PR_TASK_ISOLATION_STRICT
- mode
-Date: Wed, 26 Aug 2015 11:36:51 +0100
-Message-ID: <20150826103651.GA30466@arm.com>
-References: <1440532555-15492-1-git-send-email-cmetcalf@ezchip.com>
- <1440532555-15492-4-git-send-email-cmetcalf@ezchip.com>
+From: James Bottomley <James.Bottomley@HansenPartnership.com>
+Subject: Re: [PATCH 1/3] hpsa: convert show method snprintf usage to
+ scnprintf
+Date: Wed, 26 Aug 2015 07:05:25 -0700
+Message-ID: <1440597925.2196.6.camel@HansenPartnership.com>
+References: <DDB9C85B850785449757F9914A034FCB4442E184@G9W0766.americas.hpqcorp.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1440532555-15492-4-git-send-email-cmetcalf@ezchip.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@ezchip.com>
-Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <Catalin.Marinas@arm.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <DDB9C85B850785449757F9914A034FCB4442E184@G9W0766.americas.hpqcorp.net>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Seymour, Shane M" <shane.seymour@hp.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, ISS StorageDev <iss_storagedev@hp.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "Greg KH <greg@kroah.com> (greg@kroah.com)" <greg@kroah.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Chris,
+On Wed, 2015-07-01 at 03:45 +0000, Seymour, Shane M wrote:
+> Changed all show method snprintf usage to scnprintf per
+> Documentation/filesystems/sysfs.txt.
+> 
+> Signed-off-by: Shane Seymour <shane.seymour@hp.com>
 
-On Tue, Aug 25, 2015 at 08:55:52PM +0100, Chris Metcalf wrote:
-> With task_isolation mode, the task is in principle guaranteed not to
-> be interrupted by the kernel, but only if it behaves.  In particular,
-> if it enters the kernel via system call, page fault, or any of a
-> number of other synchronous traps, it may be unexpectedly exposed
-> to long latencies.  Add a simple flag that puts the process into
-> a state where any such kernel entry is fatal.
-> 
-> To allow the state to be entered and exited, we ignore the prctl()
-> syscall so that we can clear the bit again later, and we ignore
-> exit/exit_group to allow exiting the task without a pointless signal
-> killing you as you try to do so.
-> 
-> This change adds the syscall-detection hooks only for x86, arm64,
-> and tile.
-> 
-> The signature of context_tracking_exit() changes to report whether
-> we, in fact, are exiting back to user space, so that we can track
-> user exceptions properly separately from other kernel entries.
-> 
-> Signed-off-by: Chris Metcalf <cmetcalf@ezchip.com>
-> ---
->  arch/arm64/kernel/ptrace.c       |  5 +++++
->  arch/tile/kernel/ptrace.c        |  5 ++++-
->  arch/x86/kernel/ptrace.c         |  2 ++
->  include/linux/context_tracking.h | 11 ++++++++---
->  include/linux/isolation.h        | 16 ++++++++++++++++
->  include/uapi/linux/prctl.h       |  1 +
->  kernel/context_tracking.c        |  9 ++++++---
->  kernel/isolation.c               | 38 ++++++++++++++++++++++++++++++++++++++
->  8 files changed, 80 insertions(+), 7 deletions(-)
-> 
-> diff --git a/arch/arm64/kernel/ptrace.c b/arch/arm64/kernel/ptrace.c
-> index d882b833dbdb..e3d83a12f3cf 100644
-> --- a/arch/arm64/kernel/ptrace.c
-> +++ b/arch/arm64/kernel/ptrace.c
-> @@ -37,6 +37,7 @@
->  #include <linux/regset.h>
->  #include <linux/tracehook.h>
->  #include <linux/elf.h>
-> +#include <linux/isolation.h>
+There's been no ack on this one.  However, there's no actual reason to
+prefer scnprintf over snprintf: the former will zero terminate, the
+latter won't if the write length is over the buffer length, but this is
+a file buffer: the routine will return as many bytes to userspace as are
+specified in the count (including zeros if they're within the count), so
+zero termination of a string in sysfs is unnecessary.
+
+James
+
+
+> Please let me know if this is not the correct way to submit
+> patches by separating them but keeping them logically
+> together.
+> --- a/drivers/scsi/hpsa.c	2015-06-25 15:52:15.633031319 -0500
+> +++ b/drivers/scsi/hpsa.c	2015-06-30 16:12:58.125990687 -0500
+> @@ -460,7 +460,7 @@ static ssize_t host_show_firmware_revisi
+>  	if (!h->hba_inquiry_data)
+>  		return 0;
+>  	fwrev = &h->hba_inquiry_data[32];
+> -	return snprintf(buf, 20, "%c%c%c%c\n",
+> +	return scnprintf(buf, 20, "%c%c%c%c\n",
+>  		fwrev[0], fwrev[1], fwrev[2], fwrev[3]);
+>  }
 >  
->  #include <asm/compat.h>
->  #include <asm/debug-monitors.h>
-> @@ -1150,6 +1151,10 @@ static void tracehook_report_syscall(struct pt_regs *regs,
+> @@ -470,7 +470,7 @@ static ssize_t host_show_commands_outsta
+>  	struct Scsi_Host *shost = class_to_shost(dev);
+>  	struct ctlr_info *h = shost_to_hba(shost);
 >  
->  asmlinkage int syscall_trace_enter(struct pt_regs *regs)
->  {
-> +	/* Ensure we report task_isolation violations in all circumstances. */
-> +	if (test_thread_flag(TIF_NOHZ) && task_isolation_strict())
+> -	return snprintf(buf, 20, "%d\n",
+> +	return scnprintf(buf, 20, "%d\n",
+>  			atomic_read(&h->commands_outstanding));
+>  }
+>  
+> @@ -481,7 +481,7 @@ static ssize_t host_show_transport_mode(
+>  	struct Scsi_Host *shost = class_to_shost(dev);
+>  
+>  	h = shost_to_hba(shost);
+> -	return snprintf(buf, 20, "%s\n",
+> +	return scnprintf(buf, 20, "%s\n",
+>  		h->transMethod & CFGTBL_Trans_Performant ?
+>  			"performant" : "simple");
+>  }
+> @@ -493,7 +493,7 @@ static ssize_t host_show_hp_ssd_smart_pa
+>  	struct Scsi_Host *shost = class_to_shost(dev);
+>  
+>  	h = shost_to_hba(shost);
+> -	return snprintf(buf, 30, "HP SSD Smart Path %s\n",
+> +	return scnprintf(buf, 30, "HP SSD Smart Path %s\n",
+>  		(h->acciopath_status == 1) ?  "enabled" : "disabled");
+>  }
+>  
+> @@ -589,7 +589,7 @@ static ssize_t host_show_resettable(stru
+>  	struct Scsi_Host *shost = class_to_shost(dev);
+>  
+>  	h = shost_to_hba(shost);
+> -	return snprintf(buf, 20, "%d\n", ctlr_is_resettable(h->board_id));
+> +	return scnprintf(buf, 20, "%d\n", ctlr_is_resettable(h->board_id));
+>  }
+>  
+>  static inline int is_logical_dev_addr_mode(unsigned char scsi3addr[])
+> @@ -631,7 +631,7 @@ static ssize_t raid_level_show(struct de
+>  	/* Is this even a logical drive? */
+>  	if (!is_logical_dev_addr_mode(hdev->scsi3addr)) {
+>  		spin_unlock_irqrestore(&h->lock, flags);
+> -		l = snprintf(buf, PAGE_SIZE, "N/A\n");
+> +		l = scnprintf(buf, PAGE_SIZE, "N/A\n");
+>  		return l;
+>  	}
+>  
+> @@ -639,7 +639,7 @@ static ssize_t raid_level_show(struct de
+>  	spin_unlock_irqrestore(&h->lock, flags);
+>  	if (rlevel > RAID_UNKNOWN)
+>  		rlevel = RAID_UNKNOWN;
+> -	l = snprintf(buf, PAGE_SIZE, "RAID %s\n", raid_label[rlevel]);
+> +	l = scnprintf(buf, PAGE_SIZE, "RAID %s\n", raid_label[rlevel]);
+>  	return l;
+>  }
+>  
+> @@ -662,7 +662,7 @@ static ssize_t lunid_show(struct device
+>  	}
+>  	memcpy(lunid, hdev->scsi3addr, sizeof(lunid));
+>  	spin_unlock_irqrestore(&h->lock, flags);
+> -	return snprintf(buf, 20, "0x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+> +	return scnprintf(buf, 20, "0x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+>  		lunid[0], lunid[1], lunid[2], lunid[3],
+>  		lunid[4], lunid[5], lunid[6], lunid[7]);
+>  }
+> @@ -686,7 +686,7 @@ static ssize_t unique_id_show(struct dev
+>  	}
+>  	memcpy(sn, hdev->device_id, sizeof(sn));
+>  	spin_unlock_irqrestore(&h->lock, flags);
+> -	return snprintf(buf, 16 * 2 + 2,
+> +	return scnprintf(buf, 16 * 2 + 2,
+>  			"%02X%02X%02X%02X%02X%02X%02X%02X"
+>  			"%02X%02X%02X%02X%02X%02X%02X%02X\n",
+>  			sn[0], sn[1], sn[2], sn[3],
+> @@ -714,7 +714,7 @@ static ssize_t host_show_hp_ssd_smart_pa
+>  	}
+>  	offload_enabled = hdev->offload_enabled;
+>  	spin_unlock_irqrestore(&h->lock, flags);
+> -	return snprintf(buf, 20, "%d\n", offload_enabled);
+> +	return scnprintf(buf, 20, "%d\n", offload_enabled);
+>  }
+>  
+>  static DEVICE_ATTR(raid_level, S_IRUGO, raid_level_show, NULL);
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
 
-This is going to force us to check TIF_NOHZ on the syscall slowpath even
-when CONFIG_TASK_ISOLATION=n.
 
-> +		task_isolation_syscall(regs->syscallno);
-> +
->  	/* Do the secure computing check first; failures should be fast. */
 
-Here we have the usual priority problems with all the subsystems that
-hook into the syscall path. If a prctl is later rewritten to a different
-syscall, do you care about catching it? Either way, the comment about
-doing secure computing "first" needs fixing.
-
-Cheers,
-
-Will
