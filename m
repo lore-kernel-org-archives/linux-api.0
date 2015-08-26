@@ -1,77 +1,82 @@
-From: Chris Metcalf <cmetcalf@ezchip.com>
-Subject: Re: [PATCH v6 3/6] task_isolation: support PR_TASK_ISOLATION_STRICT
- mode
-Date: Wed, 26 Aug 2015 11:10:34 -0400
-Message-ID: <55DDD6EA.3070307@ezchip.com>
-References: <1440532555-15492-1-git-send-email-cmetcalf@ezchip.com>
- <1440532555-15492-4-git-send-email-cmetcalf@ezchip.com>
- <20150826103651.GA30466@arm.com>
+From: Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v5 2/6] cpu_isolated: add initial support
+Date: Wed, 26 Aug 2015 17:26:52 +0200
+Message-ID: <20150826152651.GA11992@lerouge>
+References: <1438112980-9981-1-git-send-email-cmetcalf@ezchip.com>
+ <1438112980-9981-3-git-send-email-cmetcalf@ezchip.com>
+ <20150812160020.GG21542@lerouge>
+ <55CB8ED1.6030806@ezchip.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20150826103651.GA30466@arm.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Will Deacon <will.deacon@arm.com>
-Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <Catalin.Marinas@arm.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <55CB8ED1.6030806-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Cc: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 08/26/2015 06:36 AM, Will Deacon wrote:
-> Hi Chris,
->
-> On Tue, Aug 25, 2015 at 08:55:52PM +0100, Chris Metcalf wrote:
->> diff --git a/arch/arm64/kernel/ptrace.c b/arch/arm64/kernel/ptrace.c
->> index d882b833dbdb..e3d83a12f3cf 100644
->> --- a/arch/arm64/kernel/ptrace.c
->> +++ b/arch/arm64/kernel/ptrace.c
->> @@ -37,6 +37,7 @@
->>   #include <linux/regset.h>
->>   #include <linux/tracehook.h>
->>   #include <linux/elf.h>
->> +#include <linux/isolation.h>
->>   
->>   #include <asm/compat.h>
->>   #include <asm/debug-monitors.h>
->> @@ -1150,6 +1151,10 @@ static void tracehook_report_syscall(struct pt_regs *regs,
->>   
->>   asmlinkage int syscall_trace_enter(struct pt_regs *regs)
->>   {
->> +	/* Ensure we report task_isolation violations in all circumstances. */
->> +	if (test_thread_flag(TIF_NOHZ) && task_isolation_strict())
-> This is going to force us to check TIF_NOHZ on the syscall slowpath even
-> when CONFIG_TASK_ISOLATION=n.
+On Wed, Aug 12, 2015 at 02:22:09PM -0400, Chris Metcalf wrote:
+> On 08/12/2015 12:00 PM, Frederic Weisbecker wrote:
+> >>+#ifdef CONFIG_CPU_ISOLATED
+> >>+void cpu_isolated_wait(void)
+> >>+{
+> >>+	set_current_state(TASK_INTERRUPTIBLE);
+> >>+	_cpu_idle();
+> >>+	set_current_state(TASK_RUNNING);
+> >>+}
+> >I'm still uncomfortable with that. A wake up model could work?
+> 
+> I don't know exactly what you have in mind.  The theory is that
+> at this point we're ready to return to user space and we're just
+> waiting for a timer tick that is guaranteed to arrive, since there
+> is something pending for the timer.
 
-Yes, good catch.  I was thinking the "&& false" would suppress the TIF
-test but I forgot that test_bit() takes a volatile argument, so it gets
-evaluated even though the result isn't actually used.
+Hmm, ok I'm going to discuss that in the new version. One worry is that
+it gets racy and we sleep there for ever.
 
-But I don't want to just reorder the two tests, because when isolation
-is enabled, testing TIF_NOHZ first is better.  I think probably the right
-solution is just to put an #ifdef CONFIG_TASK_ISOLATION around that
-test, even though that is a little crufty.  The alternative is to provide
-a task_isolation_configured() macro that just returns true or false, and
-make it a three-part "&&" test with that new macro first, but
-that seems a little crufty as well.  Do you have a preference?
+> 
+> And, this is an arch-specific method anyway; the generic method
+> is actually checking to see if a signal has been delivered,
+> scheduling is needed, etc., each time around the loop, so if
+> you're not sure your architecture will do the right thing, just
+> don't provide a method that idles while waiting.  For tilegx I'm
+> sure it works correctly, so I'm OK providing that method.
 
->> +		task_isolation_syscall(regs->syscallno);
->> +
->>   	/* Do the secure computing check first; failures should be fast. */
-> Here we have the usual priority problems with all the subsystems that
-> hook into the syscall path. If a prctl is later rewritten to a different
-> syscall, do you care about catching it? Either way, the comment about
-> doing secure computing "first" needs fixing.
+Yes but we do busy waiting on all other archs then. And since we can wait
+for a while there, it doesn't look sane.
 
-I admit I am unclear on the utility of rewriting prctl.  My instinct is that
-we are trying to catch userspace invocations of prctl and allow them,
-and fail most everything else, so doing it pre-rewrite seems OK.
+> >>diff --git a/include/linux/sched.h b/include/linux/sched.h
+> >>index 04b5ada460b4..0bb248385d88 100644
+> >>--- a/include/linux/sched.h
+> >>+++ b/include/linux/sched.h
+> >>@@ -1776,6 +1776,9 @@ struct task_struct {
+> >>  	unsigned long	task_state_change;
+> >>  #endif
+> >>  	int pagefault_disabled;
+> >>+#ifdef CONFIG_CPU_ISOLATED
+> >>+	unsigned int	cpu_isolated_flags;
+> >>+#endif
+> >Can't we add a new flag to tsk->flags? There seem to be some values remaining.
+> 
+> Yeah, I thought of that, but it seems like a pretty scarce resource,
+> and I wasn't sure it was the right thing to do.  Also, I'm not actually
+> sure why the lowest two bits aren't apparently being used
 
-I'm not sure if it makes sense to catch it before or after the
-secure computing check, though.  On reflection maybe doing it
-afterwards makes more sense - what do you think?
+Probably they were used but got removed.
 
-Thanks!
+> looks
+> like PF_EXITING (0x4) is the first bit used.  And there are only three
+> more bits higher up in the word that are not assigned.
 
--- 
-Chris Metcalf, EZChip Semiconductor
-http://www.ezchip.com
+Which makes room for 5 :)
 
+> 
+> Also, right now we are allowing users to customize the signal delivered
+> for STRICT violation, and that signal value is stored in the
+> cpu_isolated_flags word as well, so we really don't have room in
+> tsk->flags for all of that anyway.
+
+Yeah indeed, ok lets keep it that way for now.
+
+Thanks.
