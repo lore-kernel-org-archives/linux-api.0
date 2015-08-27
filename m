@@ -1,76 +1,174 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH v3 4/4] mm, procfs: Display VmAnon, VmFile and VmShm in
- /proc/pid/status
-Date: Thu, 27 Aug 2015 09:22:43 +0200
-Message-ID: <55DEBAC3.4050500@suse.cz>
-References: <1438779685-5227-1-git-send-email-vbabka@suse.cz>
- <1438779685-5227-5-git-send-email-vbabka@suse.cz>
- <55C20DDE.1080506@yandex-team.ru>
+From: Mathieu Poirier <mathieu.poirier@linaro.org>
+Subject: Re: [PATCH 2/5] coresight-etm4x: Change the name of the ctxid_val to ctxid_pid
+Date: Thu, 27 Aug 2015 09:12:17 -0600
+Message-ID: <CANLsYkyA_C=PUDEUSbcA_Sa6Abqnxk1TP9ye6F9i0bWW_OxqiA@mail.gmail.com>
+References: <1436258518-9339-1-git-send-email-zhang.chunyan@linaro.org>
+	<1436258518-9339-3-git-send-email-zhang.chunyan@linaro.org>
+	<55DDFE01.50201@codeaurora.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <55C20DDE.1080506@yandex-team.ru>
-Sender: owner-linux-mm@kvack.org
-To: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andrew Morton <akpm@linux-foundation.org>, Jerome Marchand <jmarchan@redhat.com>
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, Hugh Dickins <hughd@google.com>, Michal Hocko <mhocko@suse.cz>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Randy Dunlap <rdunlap@infradead.org>, linux-s390@vger.kernel.org, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Linux API <linux-api@vger.kernel.org>, Minchan Kim <minchan@kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <55DDFE01.50201@codeaurora.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christopher Covington <cov@codeaurora.org>
+Cc: Chunyan Zhang <zhang.chunyan@linaro.org>, Greg KH <gregkh@linuxfoundation.org>, Mark Brown <broonie@kernel.org>, Serge Broslavsky <serge.broslavsky@linaro.org>, Lyra Zhang <zhang.lyra@gmail.com>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, linux-api@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 08/05/2015 03:21 PM, Konstantin Khlebnikov wrote:
-> On 05.08.2015 16:01, Vlastimil Babka wrote:
->> From: Jerome Marchand <jmarchan@redhat.com>
->>
->> It's currently inconvenient to retrieve MM_ANONPAGES value from status
->> and statm files and there is no way to separate MM_FILEPAGES and
->> MM_SHMEMPAGES. Add VmAnon, VmFile and VmShm lines in /proc/<pid>/status
->> to solve these issues.
->>
->> Signed-off-by: Jerome Marchand <jmarchan@redhat.com>
->> Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
->> ---
->>    Documentation/filesystems/proc.txt | 10 +++++++++-
->>    fs/proc/task_mmu.c                 | 13 +++++++++++--
->>    2 files changed, 20 insertions(+), 3 deletions(-)
->>
->> diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
->> index fcf67c7..fadd1b3 100644
->> --- a/Documentation/filesystems/proc.txt
->> +++ b/Documentation/filesystems/proc.txt
->> @@ -168,6 +168,9 @@ For example, to get the status information of a process, all you have to do is
->>      VmLck:         0 kB
->>      VmHWM:       476 kB
->>      VmRSS:       476 kB
->> +  VmAnon:      352 kB
->> +  VmFile:      120 kB
->> +  VmShm:         4 kB
->>      VmData:      156 kB
->>      VmStk:        88 kB
->>      VmExe:        68 kB
->> @@ -229,7 +232,12 @@ Table 1-2: Contents of the status files (as of 4.1)
->>     VmSize                      total program size
->>     VmLck                       locked memory size
->>     VmHWM                       peak resident set size ("high water mark")
->> - VmRSS                       size of memory portions
->> + VmRSS                       size of memory portions. It contains the three
->> +                             following parts (VmRSS = VmAnon + VmFile + VmShm)
->> + VmAnon                      size of resident anonymous memory
->> + VmFile                      size of resident file mappings
->> + VmShm                       size of resident shmem memory (includes SysV shm,
->> +                             mapping of tmpfs and shared anonymous mappings)
+On 26 August 2015 at 11:57, Christopher Covington <cov@codeaurora.org> wrote:
+> On 07/07/2015 04:41 AM, Chunyan Zhang wrote:
+>> 'ctxid_val' array was used to store the value of ETM context ID comparator
+>> which actually stores the process ID to be traced, so using 'ctxid_pid' as
+>> its name instead make it easier to understand.
 >
-> "Vm" is an acronym for Virtual Memory, but all these are not virtual.
-> They are real pages. Let's leave VmRSS as is and invent better prefix
-> for new fields: something like "Mem", "Pg", or no prefix at all.
+> Previous discussion with some ARM folks has led me to believe there isn't a
+> guarantee that the Context ID Register will always have a PID. Why not allow
+> filtering on thread group ID, session ID, cgroup related identifiers, etc.?
 
-No prefix would be IMHO confusing. Mem could work, but it's not exactly 
-consistent with the rest. I think only VmPeak and VmSize talk about 
-virtual memory. The rest of existing counters is about physical memory 
-being mapped into that virtual memory or consumed by supporting it (PTE, 
-PMD) or swapped out. I don't see any difference for the new counters 
-here, they would just stand out oddly with some new prefix IMHO.
+Coresight tracers only support contextID tracing.  The HW
+automatically does the match between the contextID comparator register
+in the tracer with the contextID register of the core.  Tracing is
+enabled if both values match (and the tracer is configured to do so).
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+>
+>> This patch also changes the ABI, it is normally not allowed, but
+>> fortunately it is a testing ABI and very new for now. Nevertheless,
+>> if you don't think it should be changed, we could always add an alias
+>> for userspace.
+>>
+>> Signed-off-by: Chunyan Zhang <zhang.chunyan@linaro.org>
+>> Reviewed-by: Mark Brown <broonie@kernel.org>
+>> ---
+>>  .../ABI/testing/sysfs-bus-coresight-devices-etm4x    |  2 +-
+>>  drivers/hwtracing/coresight/coresight-etm4x.c        | 20 ++++++++++----------
+>>  drivers/hwtracing/coresight/coresight-etm4x.h        |  4 ++--
+>>  3 files changed, 13 insertions(+), 13 deletions(-)
+>>
+>> diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
+>> index 2fe2e3d..2355ed8 100644
+>> --- a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
+>> +++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
+>> @@ -249,7 +249,7 @@ KernelVersion:    4.01
+>>  Contact:     Mathieu Poirier <mathieu.poirier@linaro.org>
+>>  Description: (RW) Select which context ID comparator to work with.
+>>
+>> -What:                /sys/bus/coresight/devices/<memory_map>.etm/ctxid_val
+>> +What:                /sys/bus/coresight/devices/<memory_map>.etm/ctxid_pid
+>>  Date:                April 2015
+>>  KernelVersion:       4.01
+>>  Contact:     Mathieu Poirier <mathieu.poirier@linaro.org>
+>> diff --git a/drivers/hwtracing/coresight/coresight-etm4x.c b/drivers/hwtracing/coresight/coresight-etm4x.c
+>> index 1312e99..9afbda5 100644
+>> --- a/drivers/hwtracing/coresight/coresight-etm4x.c
+>> +++ b/drivers/hwtracing/coresight/coresight-etm4x.c
+>> @@ -155,7 +155,7 @@ static void etm4_enable_hw(void *info)
+>>                              drvdata->base + TRCACATRn(i));
+>>       }
+>>       for (i = 0; i < drvdata->numcidc; i++)
+>> -             writeq_relaxed(drvdata->ctxid_val[i],
+>> +             writeq_relaxed(drvdata->ctxid_pid[i],
+>>                              drvdata->base + TRCCIDCVRn(i));
+>>       writel_relaxed(drvdata->ctxid_mask0, drvdata->base + TRCCIDCCTLR0);
+>>       writel_relaxed(drvdata->ctxid_mask1, drvdata->base + TRCCIDCCTLR1);
+>> @@ -507,7 +507,7 @@ static ssize_t reset_store(struct device *dev,
+>>
+>>       drvdata->ctxid_idx = 0x0;
+>>       for (i = 0; i < drvdata->numcidc; i++)
+>> -             drvdata->ctxid_val[i] = 0x0;
+>> +             drvdata->ctxid_pid[i] = 0x0;
+>>       drvdata->ctxid_mask0 = 0x0;
+>>       drvdata->ctxid_mask1 = 0x0;
+>>
+>> @@ -1815,7 +1815,7 @@ static ssize_t ctxid_idx_store(struct device *dev,
+>>  }
+>>  static DEVICE_ATTR_RW(ctxid_idx);
+>>
+>> -static ssize_t ctxid_val_show(struct device *dev,
+>> +static ssize_t ctxid_pid_show(struct device *dev,
+>>                             struct device_attribute *attr,
+>>                             char *buf)
+>>  {
+>> @@ -1825,12 +1825,12 @@ static ssize_t ctxid_val_show(struct device *dev,
+>>
+>>       spin_lock(&drvdata->spinlock);
+>>       idx = drvdata->ctxid_idx;
+>> -     val = (unsigned long)drvdata->ctxid_val[idx];
+>> +     val = (unsigned long)drvdata->ctxid_pid[idx];
+>>       spin_unlock(&drvdata->spinlock);
+>>       return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
+>>  }
+>>
+>> -static ssize_t ctxid_val_store(struct device *dev,
+>> +static ssize_t ctxid_pid_store(struct device *dev,
+>>                              struct device_attribute *attr,
+>>                              const char *buf, size_t size)
+>>  {
+>> @@ -1850,11 +1850,11 @@ static ssize_t ctxid_val_store(struct device *dev,
+>>
+>>       spin_lock(&drvdata->spinlock);
+>>       idx = drvdata->ctxid_idx;
+>> -     drvdata->ctxid_val[idx] = (u64)val;
+>> +     drvdata->ctxid_pid[idx] = (u64)val;
+>>       spin_unlock(&drvdata->spinlock);
+>>       return size;
+>>  }
+>> -static DEVICE_ATTR_RW(ctxid_val);
+>> +static DEVICE_ATTR_RW(ctxid_pid);
+>>
+>>  static ssize_t ctxid_masks_show(struct device *dev,
+>>                               struct device_attribute *attr,
+>> @@ -1949,7 +1949,7 @@ static ssize_t ctxid_masks_store(struct device *dev,
+>>                */
+>>               for (j = 0; j < 8; j++) {
+>>                       if (maskbyte & 1)
+>> -                             drvdata->ctxid_val[i] &= ~(0xFF << (j * 8));
+>> +                             drvdata->ctxid_pid[i] &= ~(0xFF << (j * 8));
+>>                       maskbyte >>= 1;
+>>               }
+>>               /* Select the next ctxid comparator mask value */
+>> @@ -2193,7 +2193,7 @@ static struct attribute *coresight_etmv4_attrs[] = {
+>>       &dev_attr_res_idx.attr,
+>>       &dev_attr_res_ctrl.attr,
+>>       &dev_attr_ctxid_idx.attr,
+>> -     &dev_attr_ctxid_val.attr,
+>> +     &dev_attr_ctxid_pid.attr,
+>>       &dev_attr_ctxid_masks.attr,
+>>       &dev_attr_vmid_idx.attr,
+>>       &dev_attr_vmid_val.attr,
+>> @@ -2514,7 +2514,7 @@ static void etm4_init_default_data(struct etmv4_drvdata *drvdata)
+>>       }
+>>
+>>       for (i = 0; i < drvdata->numcidc; i++)
+>> -             drvdata->ctxid_val[i] = 0x0;
+>> +             drvdata->ctxid_pid[i] = 0x0;
+>>       drvdata->ctxid_mask0 = 0x0;
+>>       drvdata->ctxid_mask1 = 0x0;
+>>
+>> diff --git a/drivers/hwtracing/coresight/coresight-etm4x.h b/drivers/hwtracing/coresight/coresight-etm4x.h
+>> index e08e983..1e8fb36 100644
+>> --- a/drivers/hwtracing/coresight/coresight-etm4x.h
+>> +++ b/drivers/hwtracing/coresight/coresight-etm4x.h
+>> @@ -265,7 +265,7 @@
+>>   * @addr_type:       Current status of the comparator register.
+>>   * @ctxid_idx:       Context ID index selector.
+>>   * @ctxid_size:      Size of the context ID field to consider.
+>> - * @ctxid_val:       Value of the context ID comparator.
+>> + * @ctxid_pid:       Value of the context ID comparator.
+>>   * @ctxid_mask0:Context ID comparator mask for comparator 0-3.
+>>   * @ctxid_mask1:Context ID comparator mask for comparator 4-7.
+>>   * @vmid_idx:        VM ID index selector.
+>> @@ -352,7 +352,7 @@ struct etmv4_drvdata {
+>>       u8                              addr_type[ETM_MAX_SINGLE_ADDR_CMP];
+>>       u8                              ctxid_idx;
+>>       u8                              ctxid_size;
+>> -     u64                             ctxid_val[ETMv4_MAX_CTXID_CMP];
+>> +     u64                             ctxid_pid[ETMv4_MAX_CTXID_CMP];
+>>       u32                             ctxid_mask0;
+>>       u32                             ctxid_mask1;
+>>       u8                              vmid_idx;
+>>
+>
+>
+> --
+> Qualcomm Innovation Center, Inc.
+> The Qualcomm Innovation Center, Inc. is a member of the Code Aurora Forum,
+> a Linux Foundation Collaborative Project
