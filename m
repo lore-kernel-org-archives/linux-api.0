@@ -1,7 +1,7 @@
 From: "Mrs. Linda Yong" <spam-+s3v+l7Am2mRJKlD0jw6FVpr/1R2p/CL@public.gmane.org>
-Subject: Pls provide the following details
-Date: Wed, 26 Aug 2015 16:56:42 +0200
-Message-ID: <DEXSERV1RAluo3npvqn00002951__13940.8530122184$1440617773$gmane$org@dexam.co.uk>
+Subject: Pls provide the following details  ..
+Date: Thu, 27 Aug 2015 06:11:02 +0200
+Message-ID: <DEXSERV1Os43kokTRrD0000ee09__41141.0921639346$1440648714$gmane$org@dexam.co.uk>
 Reply-To: <bencook551127-/E1597aS9LSez0ei9/+7zw@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="Windows-1251"
