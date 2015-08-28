@@ -1,29 +1,35 @@
-From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 Subject: Re: [RFC v6 03/40] vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD
  permission flags
-Date: Fri, 28 Aug 2015 23:08:00 +0200
-Message-ID: <CAHc6FU41cZWJZ=4EZmBKwfhM4HPDBG9Gxuq9DUeLt2t0Lq4B=Q@mail.gmail.com>
-References: <1438689218-6921-1-git-send-email-agruenba@redhat.com>
-	<1438689218-6921-4-git-send-email-agruenba@redhat.com>
-	<20150828204413.GB23326@fieldses.org>
+Date: Fri, 28 Aug 2015 14:36:15 -0700
+Message-ID: <CALCETrUoBnPyEGExpoDzHOCgnHh5=a1ROALmb63LLJZG+L=aQA@mail.gmail.com>
+References: <1438689218-6921-1-git-send-email-agruenba@redhat.com> <1438689218-6921-4-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150828204413.GB23326-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Cc: Andreas Gruenbacher <andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1438689218-6921-4-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Gruenbacher <andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-2015-08-28 22:44 GMT+02:00 J. Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>:
->> The MAY_DELETE_SELF permission does not override the sticky
->> directory check.  It probably should.
+On Tue, Aug 4, 2015 at 4:53 AM, Andreas Gruenbacher
+<andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> Normally, deleting a file requires write and execute access to the parent
+> directory.  With Richacls, a process with MAY_DELETE_SELF access to a file
+> may delete the file even without write access to the parent directory.
 >
-> I guess it would basically just let the file owner delegate permission
-> to delete your file to a non-owner?  Makes sense to me to allow that.
+> To support that, pass the MAY_DELETE_CHILD mask flag to inode_permission()
+> when checking for delete access inside a directory, and MAY_DELETE_SELF
+> when checking for delete access to a file itelf.
+>
+> The MAY_DELETE_SELF permission does not override the sticky directory
+> check.  It probably should.
 
-Yes, independent of whether or not the process has MAY_DELETE_CHILD
-access on the directory but not independent of the sticky directory
-check, which is a bit of a weird combination.
+Silly question from the peanut gallery: is there any such thing as
+opening an fd pointing at a file such that the "open file description"
+(i.e. the struct file) captures the right to delete the file?
 
-Andreas
+IOW do we need FMODE_DELETE_SELF?
+
+--Andy
