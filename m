@@ -1,177 +1,279 @@
-From: Eric B Munson <emunson@akamai.com>
-Subject: Re: [PATCH v8 3/6] mm: Introduce VM_LOCKONFAULT
-Date: Fri, 28 Aug 2015 15:34:54 -0400
-Message-ID: <20150828193454.GC7925@akamai.com>
-References: <1440613465-30393-1-git-send-email-emunson@akamai.com>
- <1440613465-30393-4-git-send-email-emunson@akamai.com>
- <20150828141829.GD5301@dhcp22.suse.cz>
+From: pch@ordbogen.com
+Subject: [PATCH v2 net-next 3/3] ipv4: ICMP packet inspection for L3 multipath
+Date: Fri, 28 Aug 2015 22:00:50 +0200
+Message-ID: <1440792050-2109-4-git-send-email-pch@ordbogen.com>
+References: <1440792050-2109-1-git-send-email-pch@ordbogen.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="H8ygTp4AXg6deix2"
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150828141829.GD5301@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Jonathan Corbet <corbet@lwn.net>, "Kirill A. Shutemov" <kirill@shutemov.name>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <1440792050-2109-1-git-send-email-pch@ordbogen.com>
+Sender: netdev-owner@vger.kernel.org
+To: netdev@vger.kernel.org
+Cc: "David S. Miller" <davem@davemloft.net>, Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>, James Morris <jmorris@namei.org>, Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>, Patrick McHardy <kaber@trash.net>, linux-api@vger.kernel.org, Roopa Prabhu <roopa@cumulusnetworks.com>, Scott Feldman <sfeldma@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, Thomas Graf <tgraf@suug.ch>, Jiri Benc <jbenc@redhat.com>, =?UTF-8?q?Peter=20N=C3=B8rlund?= <pch@ordbogen.com>
 List-Id: linux-api@vger.kernel.org
 
+=46rom: Peter N=C3=B8rlund <pch@ordbogen.com>
 
---H8ygTp4AXg6deix2
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+When doing L3 based multipath, ICMP packets are inspected to let them r=
+oute
+over the same path as the flow they relate to, allowing anycast
+environments to work with ECMP.
 
-On Fri, 28 Aug 2015, Michal Hocko wrote:
+Signed-off-by: Peter N=C3=B8rlund <pch@ordbogen.com>
+---
+ include/net/ip_fib.h     |  2 +-
+ include/net/route.h      | 12 ++++++-
+ net/ipv4/fib_semantics.c |  2 +-
+ net/ipv4/icmp.c          | 34 +++++++++++++++++++-
+ net/ipv4/route.c         | 82 ++++++++++++++++++++++++++++++++++++++--=
+--------
+ 5 files changed, 112 insertions(+), 20 deletions(-)
 
-> On Wed 26-08-15 14:24:22, Eric B Munson wrote:
-> > The cost of faulting in all memory to be locked can be very high when
-> > working with large mappings.  If only portions of the mapping will be
-> > used this can incur a high penalty for locking.
-> >=20
-> > For the example of a large file, this is the usage pattern for a large
-> > statical language model (probably applies to other statical or graphical
-> > models as well).  For the security example, any application transacting
-> > in data that cannot be swapped out (credit card data, medical records,
-> > etc).
-> >=20
-> > This patch introduces the ability to request that pages are not
-> > pre-faulted, but are placed on the unevictable LRU when they are finally
-> > faulted in.  The VM_LOCKONFAULT flag will be used together with
-> > VM_LOCKED and has no effect when set without VM_LOCKED.  Setting the
-> > VM_LOCKONFAULT flag for a VMA will cause pages faulted into that VMA to
-> > be added to the unevictable LRU when they are faulted or if they are
-> > already present, but will not cause any missing pages to be faulted in.
->=20
-> OK, I can live with this. Thank you for removing the part which exports
-> the flag to the userspace.
-> =20
-> > Exposing this new lock state means that we cannot overload the meaning
-> > of the FOLL_POPULATE flag any longer.  Prior to this patch it was used
-> > to mean that the VMA for a fault was locked.  This means we need the
-> > new FOLL_MLOCK flag to communicate the locked state of a VMA.
-> > FOLL_POPULATE will now only control if the VMA should be populated and
-> > in the case of VM_LOCKONFAULT, it will not be set.
->=20
-> I thinking that this part is really unnecessary. populate_vma_page_range
-> could have simply returned without calling gup for VM_LOCKONFAULT
-> vmas. You would save the pte walk and the currently mapped pages would
-> be still protected from the reclaim. The side effect would be that they
-> would litter the regular LRUs and mlock/unevictable counters wouldn't be
-> updated until those pages are encountered during the reclaim and culled
-> to unevictable list.
->=20
-> I would expect that mlock with this flag would be typically called
-> on mostly unpopulated mappings so the side effects would be barely
-> noticeable while the lack of pte walk would be really nice (especially
-> for the large mappings).
->=20
-> This would be a nice optimization and minor code reduction but I am not
-> going to insist on it. I will leave the decision to you.
-
-If I am understanding you correctly, this is how the lock on fault set
-started.  Jon Corbet pointed out that this would leave pages which were
-present when mlock2(MLOCK_ONFAULT) was called in an unlocked state, only
-locking them after they were reclaimed and then refaulted.
-
-Even if this was never the case, we scan the entire range for a call to
-mlock() and will lock the pages which are present.  Why would we pay the
-cost of getting the accounting right on the present pages for mlock, but
-not lock on fault?
-
->=20
-> > Signed-off-by: Eric B Munson <emunson@akamai.com>
-> > Cc: Michal Hocko <mhocko@suse.cz>
-> > Cc: Vlastimil Babka <vbabka@suse.cz>
-> > Cc: Jonathan Corbet <corbet@lwn.net>
-> > Cc: "Kirill A. Shutemov" <kirill@shutemov.name>
-> > Cc: linux-kernel@vger.kernel.org
-> > Cc: linux-mm@kvack.org
-> > Cc: linux-api@vger.kernel.org
->=20
-> Acked-by: Michal Hocko <mhocko@suse.com>
->=20
-> One note below:
->=20
-> > ---
-> > Changes from v7:
-> > *Drop entries in smaps and dri code to avoid exposing VM_LOCKONFAULT to
-> >  userspace.  VM_LOCKONFAULT is still exposed via mm/debug.c
-> > *Create VM_LOCKED_CLEAR_MASK to be used anywhere we want to clear all
-> >  flags relating to locked VMAs
-> >=20
-> >  include/linux/mm.h |  5 +++++
-> >  kernel/fork.c      |  2 +-
-> >  mm/debug.c         |  1 +
-> >  mm/gup.c           | 10 ++++++++--
-> >  mm/huge_memory.c   |  2 +-
-> >  mm/hugetlb.c       |  4 ++--
-> >  mm/mlock.c         |  2 +-
-> >  mm/mmap.c          |  2 +-
-> >  mm/rmap.c          |  6 ++++--
-> >  9 files changed, 24 insertions(+), 10 deletions(-)
-> [...]
-> > diff --git a/mm/rmap.c b/mm/rmap.c
-> > index 171b687..14ce002 100644
-> > --- a/mm/rmap.c
-> > +++ b/mm/rmap.c
-> > @@ -744,7 +744,8 @@ static int page_referenced_one(struct page *page, s=
-truct vm_area_struct *vma,
-> > =20
-> >  		if (vma->vm_flags & VM_LOCKED) {
-> >  			spin_unlock(ptl);
-> > -			pra->vm_flags |=3D VM_LOCKED;
-> > +			pra->vm_flags |=3D
-> > +				(vma->vm_flags & (VM_LOCKED | VM_LOCKONFAULT));
-> >  			return SWAP_FAIL; /* To break the loop */
-> >  		}
-> > =20
-> > @@ -765,7 +766,8 @@ static int page_referenced_one(struct page *page, s=
-truct vm_area_struct *vma,
-> > =20
-> >  		if (vma->vm_flags & VM_LOCKED) {
-> >  			pte_unmap_unlock(pte, ptl);
-> > -			pra->vm_flags |=3D VM_LOCKED;
-> > +			pra->vm_flags |=3D
-> > +				(vma->vm_flags & (VM_LOCKED | VM_LOCKONFAULT));
-> >  			return SWAP_FAIL; /* To break the loop */
-> >  		}
->=20
-> Why do we need to export this? Neither of the consumers care and should
-> care. VM_LOCKONFAULT should never be set without VM_LOCKED which is the
-> only thing that we should care about.
-
-I exported VM_LOCKONFAULT because this is an internal interface and I
-saw no harm in doing so.  I do not have a use case for it at the moment,
-so I would be fine dropping this hunk.
-
-
---H8ygTp4AXg6deix2
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBAgAGBQJV4LfdAAoJELbVsDOpoOa933AQALqrStAElERVKLN2zjrMhion
-m61qIlWtzvaEzZQ9Oz47cEY68JBcQElY09rEirCKyTdDNOxGvCbSPQ5SkwAnGIJe
-LNPAwdyuvD/viGUIuD6A5N+XT2yC59ofw6uWOK7DBvOBAGKo9dmGY7v0qWResCRf
-21OY7H1HQHt6fCm4HmWTr1dOOUFz2ULuS1/ZWZrNilEZOoghUt+Gy4ExNMssG44o
-NwfN1IrwmeTQdyfHjIbMIVuGcZX77gMNQ47IB+qtqr+e8fp3Q0F/JDR6o4IjqCFr
-Ty+JyS1rWLsx1ua+lSptwkLOG8yV57c3P00naiNo4TZt3owEWexeJwwCjLOMoeAi
-AFfou6X6czpjneVDtMgOdYkdnW+NAtqifjIQZVDkTg0WwGCyjfNSfHPUNj3OGZi7
-ypfdfiYq7J7q2SHYT9uqvc/ux0hSLaO4i6T2C0/8thaAH6Hz/c49SowAQsCfrFcv
-ic34RuJdczZqvFsL32tziB9u9bY3SShpsQdYWLWCaRtkmEk00PEgWbVrnun3gtAB
-8l6emJdLsC3faxqh8BwLobUu+7MxzO6J8mVJjCareDUg2pOnC2RTmP5WzrklHeAq
-B5ror+Ghf9zCGtxa+wIGPutsmokoxXDkWUoqrCQv9XSQlbpoSNsz3IPPV77mq3Qu
-nXtM3DuDMP/4bF9hdpoK
-=1dd8
------END PGP SIGNATURE-----
-
---H8ygTp4AXg6deix2--
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/include/net/ip_fib.h b/include/net/ip_fib.h
+index 21e74b5..3e5d4ed 100644
+--- a/include/net/ip_fib.h
++++ b/include/net/ip_fib.h
+@@ -328,7 +328,7 @@ struct multipath_flow4 {
+ };
+=20
+ typedef void (*multipath_flow4_func_t)(struct multipath_flow4 *flow,
+-				       void *ctx);
++				       enum rt_mp_alg_t algo, void *ctx);
+=20
+ void fib_select_multipath(struct fib_result *res,
+ 			  multipath_flow4_func_t flow_func,
+diff --git a/include/net/route.h b/include/net/route.h
+index 395d79b..ccb85fc 100644
+--- a/include/net/route.h
++++ b/include/net/route.h
+@@ -28,6 +28,7 @@
+ #include <net/inetpeer.h>
+ #include <net/flow.h>
+ #include <net/inet_sock.h>
++#include <net/ip_fib.h>
+ #include <linux/in_route.h>
+ #include <linux/rtnetlink.h>
+ #include <linux/rcupdate.h>
+@@ -110,7 +111,16 @@ struct in_device;
+ int ip_rt_init(void);
+ void rt_cache_flush(struct net *net);
+ void rt_flush_dev(struct net_device *dev);
+-struct rtable *__ip_route_output_key(struct net *, struct flowi4 *flp)=
+;
++struct rtable *__ip_route_output_key_flow(struct net *, struct flowi4 =
+*flp,
++					  multipath_flow4_func_t flow_func,
++					  void *ctx);
++
++static inline struct rtable *__ip_route_output_key(struct net *net,
++						   struct flowi4 *flp)
++{
++	return __ip_route_output_key_flow(net, flp, NULL, NULL);
++}
++
+ struct rtable *ip_route_output_flow(struct net *, struct flowi4 *flp,
+ 				    struct sock *sk);
+ struct dst_entry *ipv4_blackhole_route(struct net *net,
+diff --git a/net/ipv4/fib_semantics.c b/net/ipv4/fib_semantics.c
+index 3a80b1a..000c535 100644
+--- a/net/ipv4/fib_semantics.c
++++ b/net/ipv4/fib_semantics.c
+@@ -1536,7 +1536,7 @@ static int fib_multipath_hash(const struct fib_re=
+sult *res,
+ {
+ 	struct multipath_flow4 flow;
+=20
+-	flow_func(&flow, ctx);
++	flow_func(&flow, res->fi->fib_mp_alg, ctx);
+=20
+ 	if (res->fi->fib_mp_alg =3D=3D RT_MP_ALG_L4_HASH)
+ 		return jhash_3words(flow.saddr, flow.daddr, flow.ports, 0) >> 1;
+diff --git a/net/ipv4/icmp.c b/net/ipv4/icmp.c
+index f16488e..0e25fe4 100644
+--- a/net/ipv4/icmp.c
++++ b/net/ipv4/icmp.c
+@@ -439,6 +439,38 @@ out_unlock:
+ 	icmp_xmit_unlock(sk);
+ }
+=20
++/* Source and destination is swapped. See ip_multipath_flow_skb */
++static void icmp_multipath_flow(struct multipath_flow4 *flow,
++				enum rt_mp_alg_t algo, void *ctx)
++{
++	const struct sk_buff *skb =3D (const struct sk_buff *)ctx;
++	const struct iphdr *iph =3D ip_hdr(skb);
++
++	flow->saddr =3D iph->daddr;
++	flow->daddr =3D iph->saddr;
++	flow->ports =3D 0;
++
++	if (algo =3D=3D RT_MP_ALG_L4_HASH)
++		return;
++
++	if (unlikely(!(iph->frag_off & htons(IP_DF))))
++		return;
++
++	if (iph->protocol =3D=3D IPPROTO_TCP ||
++	    iph->protocol =3D=3D IPPROTO_UDP ||
++	    iph->protocol =3D=3D IPPROTO_SCTP) {
++		__be16 _ports[2];
++		const __be16 *ports;
++
++		ports =3D skb_header_pointer(skb, iph->ihl * 4, sizeof(_ports),
++					   &_ports);
++		if (ports) {
++			flow->sport =3D ports[1];
++			flow->dport =3D ports[0];
++		}
++	}
++}
++
+ static struct rtable *icmp_route_lookup(struct net *net,
+ 					struct flowi4 *fl4,
+ 					struct sk_buff *skb_in,
+@@ -463,7 +495,7 @@ static struct rtable *icmp_route_lookup(struct net =
+*net,
+ 	fl4->flowi4_oif =3D vrf_master_ifindex(skb_in->dev) ? : skb_in->dev->=
+ifindex;
+=20
+ 	security_skb_classify_flow(skb_in, flowi4_to_flowi(fl4));
+-	rt =3D __ip_route_output_key(net, fl4);
++	rt =3D __ip_route_output_key_flow(net, fl4, icmp_multipath_flow, skb_=
+in);
+ 	if (IS_ERR(rt))
+ 		return rt;
+=20
+diff --git a/net/ipv4/route.c b/net/ipv4/route.c
+index f50f84f..edbeb56 100644
+--- a/net/ipv4/route.c
++++ b/net/ipv4/route.c
+@@ -1646,37 +1646,82 @@ out:
+ #ifdef CONFIG_IP_ROUTE_MULTIPATH
+=20
+ /* Fill multipath flow key data based on socket buffer */
+-static void ip_multipath_flow_skb(struct multipath_flow4 *flow, void *=
+ctx)
++static void ip_multipath_flow_skb(struct multipath_flow4 *flow,
++				  enum rt_mp_alg_t algo, void *ctx)
+ {
+ 	const struct sk_buff *skb =3D (const struct sk_buff *)ctx;
+-	const struct iphdr *iph;
++	struct icmphdr _icmph;
++	struct iphdr _inner_iph;
++	const struct iphdr *outer_iph;
++	const struct icmphdr *icmph;
++	const struct iphdr *inner_iph;
++	unsigned int offset;
+=20
+-	iph =3D ip_hdr(skb);
++	outer_iph =3D ip_hdr(skb);
+=20
+-	flow->saddr =3D iph->saddr;
+-	flow->daddr =3D iph->daddr;
++	flow->saddr =3D outer_iph->saddr;
++	flow->daddr =3D outer_iph->daddr;
+ 	flow->ports =3D 0;
+=20
+-	if (unlikely(!(iph->frag_off & htons(IP_DF))))
+-		return;
++	offset =3D outer_iph->ihl * 4;
+=20
+-	if (iph->protocol =3D=3D IPPROTO_TCP ||
+-	    iph->protocol =3D=3D IPPROTO_UDP ||
+-	    iph->protocol =3D=3D IPPROTO_SCTP) {
++	if (algo =3D=3D RT_MP_ALG_L4_HASH) {
+ 		__be16 _ports[2];
+ 		const __be16 *ports;
+=20
+-		ports =3D skb_header_pointer(skb, iph->ihl * 4, sizeof(_ports),
++		if (unlikely(!(outer_iph->frag_off & htons(IP_DF))))
++			return;
++
++		if (outer_iph->protocol !=3D IPPROTO_TCP &&
++		    outer_iph->protocol !=3D IPPROTO_UDP &&
++		    outer_iph->protocol !=3D IPPROTO_SCTP) {
++			return;
++		}
++
++		ports =3D skb_header_pointer(skb, offset, sizeof(_ports),
+ 					   &_ports);
+ 		if (ports) {
+ 			flow->sport =3D ports[0];
+ 			flow->dport =3D ports[1];
+ 		}
++
++		return;
++	}
++
++	if (outer_iph->protocol !=3D IPPROTO_ICMP)
++		return;
++
++	if (unlikely((outer_iph->frag_off & htons(IP_OFFSET)) !=3D 0))
++		return;
++
++	icmph =3D skb_header_pointer(skb, offset, sizeof(_icmph), &_icmph);
++	if (!icmph)
++		return;
++
++	if (icmph->type !=3D ICMP_DEST_UNREACH &&
++	    icmph->type !=3D ICMP_SOURCE_QUENCH &&
++	    icmph->type !=3D ICMP_REDIRECT &&
++	    icmph->type !=3D ICMP_TIME_EXCEEDED &&
++	    icmph->type !=3D ICMP_PARAMETERPROB) {
++		return;
+ 	}
++
++	offset +=3D sizeof(_icmph);
++	inner_iph =3D skb_header_pointer(skb, offset, sizeof(_inner_iph),
++				       &_inner_iph);
++	if (!inner_iph)
++		return;
++
++	/* Since the ICMP payload contains a packet sent from the current
++	 * recipient, we swap source and destination addresses
++	 */
++	flow->saddr =3D inner_iph->daddr;
++	flow->daddr =3D inner_iph->saddr;
+ }
+=20
+ /* Fill multipath flow key data based on flowi4  */
+-static void ip_multipath_flow_fl4(struct multipath_flow4 *flow, void *=
+ctx)
++static void ip_multipath_flow_fl4(struct multipath_flow4 *flow,
++				  enum rt_mp_alg_t algo, void *ctx)
+ {
+ 	const struct flowi4 *fl4 =3D (const struct flowi4 *)ctx;
+=20
+@@ -2086,7 +2131,9 @@ add:
+  * Major route resolver routine.
+  */
+=20
+-struct rtable *__ip_route_output_key(struct net *net, struct flowi4 *f=
+l4)
++struct rtable *__ip_route_output_key_flow(struct net *net, struct flow=
+i4 *fl4,
++					  multipath_flow4_func_t flow_func,
++					  void *ctx)
+ {
+ 	struct net_device *dev_out =3D NULL;
+ 	__u8 tos =3D RT_FL_TOS(fl4);
+@@ -2248,9 +2295,12 @@ struct rtable *__ip_route_output_key(struct net =
+*net, struct flowi4 *fl4)
+ 	}
+=20
+ #ifdef CONFIG_IP_ROUTE_MULTIPATH
+-	if (res.fi->fib_nhs > 1 && fl4->flowi4_oif =3D=3D 0)
+-		fib_select_multipath(&res, ip_multipath_flow_fl4, fl4);
+-	else
++	if (res.fi->fib_nhs > 1 && fl4->flowi4_oif =3D=3D 0) {
++		if (flow_func)
++			fib_select_multipath(&res, flow_func, ctx);
++		else
++			fib_select_multipath(&res, ip_multipath_flow_fl4, fl4);
++	} else
+ #endif
+ 	if (!res.prefixlen &&
+ 	    res.table->tb_num_default > 1 &&
+--=20
+2.1.4
