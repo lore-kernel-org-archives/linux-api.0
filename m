@@ -1,77 +1,177 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v6 4/6] task_isolation: provide strict mode configurable signal
-Date: Fri, 28 Aug 2015 12:22:39 -0700
-Message-ID: <CALCETrXQY3PvLaZXQgN1bw5s7JP6LZSZzChRziFenAiQWA3XpQ@mail.gmail.com>
-References: <1440532555-15492-1-git-send-email-cmetcalf@ezchip.com> <1440532555-15492-5-git-send-email-cmetcalf@ezchip.com>
+From: Eric B Munson <emunson@akamai.com>
+Subject: Re: [PATCH v8 3/6] mm: Introduce VM_LOCKONFAULT
+Date: Fri, 28 Aug 2015 15:34:54 -0400
+Message-ID: <20150828193454.GC7925@akamai.com>
+References: <1440613465-30393-1-git-send-email-emunson@akamai.com>
+ <1440613465-30393-4-git-send-email-emunson@akamai.com>
+ <20150828141829.GD5301@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1440532555-15492-5-git-send-email-cmetcalf@ezchip.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@ezchip.com>
-Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="H8ygTp4AXg6deix2"
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20150828141829.GD5301@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Jonathan Corbet <corbet@lwn.net>, "Kirill A. Shutemov" <kirill@shutemov.name>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 25, 2015 at 12:55 PM, Chris Metcalf <cmetcalf@ezchip.com> wrote:
-> Allow userspace to override the default SIGKILL delivered
-> when a task_isolation process in STRICT mode does a syscall
-> or otherwise synchronously enters the kernel.
->
-> In addition to being able to set the signal, we now also
-> pass whether or not the interruption was from a syscall in
-> the si_code field of the siginfo.
->
-> Signed-off-by: Chris Metcalf <cmetcalf@ezchip.com>
-> ---
->  include/uapi/linux/prctl.h |  2 ++
->  kernel/isolation.c         | 17 +++++++++++++----
->  2 files changed, 15 insertions(+), 4 deletions(-)
->
-> diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
-> index e16e13911e8a..2a4ddc890e22 100644
-> --- a/include/uapi/linux/prctl.h
-> +++ b/include/uapi/linux/prctl.h
-> @@ -195,5 +195,7 @@ struct prctl_mm_map {
->  #define PR_GET_TASK_ISOLATION          48
->  # define PR_TASK_ISOLATION_ENABLE      (1 << 0)
->  # define PR_TASK_ISOLATION_STRICT      (1 << 1)
-> +# define PR_TASK_ISOLATION_SET_SIG(sig)        (((sig) & 0x7f) << 8)
-> +# define PR_TASK_ISOLATION_GET_SIG(bits) (((bits) >> 8) & 0x7f)
->
->  #endif /* _LINUX_PRCTL_H */
-> diff --git a/kernel/isolation.c b/kernel/isolation.c
-> index a89a6e9adfb4..b776aa632c8f 100644
-> --- a/kernel/isolation.c
-> +++ b/kernel/isolation.c
-> @@ -75,11 +75,20 @@ void task_isolation_enter(void)
->         }
->  }
->
-> -static void kill_task_isolation_strict_task(void)
-> +static void kill_task_isolation_strict_task(int is_syscall)
->  {
-> +       siginfo_t info = {};
-> +       int sig;
-> +
->         dump_stack();
->         current->task_isolation_flags &= ~PR_TASK_ISOLATION_ENABLE;
-> -       send_sig(SIGKILL, current, 1);
-> +
-> +       sig = PR_TASK_ISOLATION_GET_SIG(current->task_isolation_flags);
-> +       if (sig == 0)
-> +               sig = SIGKILL;
-> +       info.si_signo = sig;
-> +       info.si_code = is_syscall;
-> +       send_sig_info(sig, &info, current);
 
-The stuff you're doing here is sufficiently nasty that I think you
-should add something like:
+--H8ygTp4AXg6deix2
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-rcu_lockdep_assert(rcu_is_watching(), "some message here");
+On Fri, 28 Aug 2015, Michal Hocko wrote:
 
-Because as it stands this is just asking for trouble.
+> On Wed 26-08-15 14:24:22, Eric B Munson wrote:
+> > The cost of faulting in all memory to be locked can be very high when
+> > working with large mappings.  If only portions of the mapping will be
+> > used this can incur a high penalty for locking.
+> >=20
+> > For the example of a large file, this is the usage pattern for a large
+> > statical language model (probably applies to other statical or graphical
+> > models as well).  For the security example, any application transacting
+> > in data that cannot be swapped out (credit card data, medical records,
+> > etc).
+> >=20
+> > This patch introduces the ability to request that pages are not
+> > pre-faulted, but are placed on the unevictable LRU when they are finally
+> > faulted in.  The VM_LOCKONFAULT flag will be used together with
+> > VM_LOCKED and has no effect when set without VM_LOCKED.  Setting the
+> > VM_LOCKONFAULT flag for a VMA will cause pages faulted into that VMA to
+> > be added to the unevictable LRU when they are faulted or if they are
+> > already present, but will not cause any missing pages to be faulted in.
+>=20
+> OK, I can live with this. Thank you for removing the part which exports
+> the flag to the userspace.
+> =20
+> > Exposing this new lock state means that we cannot overload the meaning
+> > of the FOLL_POPULATE flag any longer.  Prior to this patch it was used
+> > to mean that the VMA for a fault was locked.  This means we need the
+> > new FOLL_MLOCK flag to communicate the locked state of a VMA.
+> > FOLL_POPULATE will now only control if the VMA should be populated and
+> > in the case of VM_LOCKONFAULT, it will not be set.
+>=20
+> I thinking that this part is really unnecessary. populate_vma_page_range
+> could have simply returned without calling gup for VM_LOCKONFAULT
+> vmas. You would save the pte walk and the currently mapped pages would
+> be still protected from the reclaim. The side effect would be that they
+> would litter the regular LRUs and mlock/unevictable counters wouldn't be
+> updated until those pages are encountered during the reclaim and culled
+> to unevictable list.
+>=20
+> I would expect that mlock with this flag would be typically called
+> on mostly unpopulated mappings so the side effects would be barely
+> noticeable while the lack of pte walk would be really nice (especially
+> for the large mappings).
+>=20
+> This would be a nice optimization and minor code reduction but I am not
+> going to insist on it. I will leave the decision to you.
 
-For the record, I am *extremely* unhappy with the state of the context
-tracking hooks.
+If I am understanding you correctly, this is how the lock on fault set
+started.  Jon Corbet pointed out that this would leave pages which were
+present when mlock2(MLOCK_ONFAULT) was called in an unlocked state, only
+locking them after they were reclaimed and then refaulted.
 
---Andy
+Even if this was never the case, we scan the entire range for a call to
+mlock() and will lock the pages which are present.  Why would we pay the
+cost of getting the accounting right on the present pages for mlock, but
+not lock on fault?
+
+>=20
+> > Signed-off-by: Eric B Munson <emunson@akamai.com>
+> > Cc: Michal Hocko <mhocko@suse.cz>
+> > Cc: Vlastimil Babka <vbabka@suse.cz>
+> > Cc: Jonathan Corbet <corbet@lwn.net>
+> > Cc: "Kirill A. Shutemov" <kirill@shutemov.name>
+> > Cc: linux-kernel@vger.kernel.org
+> > Cc: linux-mm@kvack.org
+> > Cc: linux-api@vger.kernel.org
+>=20
+> Acked-by: Michal Hocko <mhocko@suse.com>
+>=20
+> One note below:
+>=20
+> > ---
+> > Changes from v7:
+> > *Drop entries in smaps and dri code to avoid exposing VM_LOCKONFAULT to
+> >  userspace.  VM_LOCKONFAULT is still exposed via mm/debug.c
+> > *Create VM_LOCKED_CLEAR_MASK to be used anywhere we want to clear all
+> >  flags relating to locked VMAs
+> >=20
+> >  include/linux/mm.h |  5 +++++
+> >  kernel/fork.c      |  2 +-
+> >  mm/debug.c         |  1 +
+> >  mm/gup.c           | 10 ++++++++--
+> >  mm/huge_memory.c   |  2 +-
+> >  mm/hugetlb.c       |  4 ++--
+> >  mm/mlock.c         |  2 +-
+> >  mm/mmap.c          |  2 +-
+> >  mm/rmap.c          |  6 ++++--
+> >  9 files changed, 24 insertions(+), 10 deletions(-)
+> [...]
+> > diff --git a/mm/rmap.c b/mm/rmap.c
+> > index 171b687..14ce002 100644
+> > --- a/mm/rmap.c
+> > +++ b/mm/rmap.c
+> > @@ -744,7 +744,8 @@ static int page_referenced_one(struct page *page, s=
+truct vm_area_struct *vma,
+> > =20
+> >  		if (vma->vm_flags & VM_LOCKED) {
+> >  			spin_unlock(ptl);
+> > -			pra->vm_flags |=3D VM_LOCKED;
+> > +			pra->vm_flags |=3D
+> > +				(vma->vm_flags & (VM_LOCKED | VM_LOCKONFAULT));
+> >  			return SWAP_FAIL; /* To break the loop */
+> >  		}
+> > =20
+> > @@ -765,7 +766,8 @@ static int page_referenced_one(struct page *page, s=
+truct vm_area_struct *vma,
+> > =20
+> >  		if (vma->vm_flags & VM_LOCKED) {
+> >  			pte_unmap_unlock(pte, ptl);
+> > -			pra->vm_flags |=3D VM_LOCKED;
+> > +			pra->vm_flags |=3D
+> > +				(vma->vm_flags & (VM_LOCKED | VM_LOCKONFAULT));
+> >  			return SWAP_FAIL; /* To break the loop */
+> >  		}
+>=20
+> Why do we need to export this? Neither of the consumers care and should
+> care. VM_LOCKONFAULT should never be set without VM_LOCKED which is the
+> only thing that we should care about.
+
+I exported VM_LOCKONFAULT because this is an internal interface and I
+saw no harm in doing so.  I do not have a use case for it at the moment,
+so I would be fine dropping this hunk.
+
+
+--H8ygTp4AXg6deix2
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBAgAGBQJV4LfdAAoJELbVsDOpoOa933AQALqrStAElERVKLN2zjrMhion
+m61qIlWtzvaEzZQ9Oz47cEY68JBcQElY09rEirCKyTdDNOxGvCbSPQ5SkwAnGIJe
+LNPAwdyuvD/viGUIuD6A5N+XT2yC59ofw6uWOK7DBvOBAGKo9dmGY7v0qWResCRf
+21OY7H1HQHt6fCm4HmWTr1dOOUFz2ULuS1/ZWZrNilEZOoghUt+Gy4ExNMssG44o
+NwfN1IrwmeTQdyfHjIbMIVuGcZX77gMNQ47IB+qtqr+e8fp3Q0F/JDR6o4IjqCFr
+Ty+JyS1rWLsx1ua+lSptwkLOG8yV57c3P00naiNo4TZt3owEWexeJwwCjLOMoeAi
+AFfou6X6czpjneVDtMgOdYkdnW+NAtqifjIQZVDkTg0WwGCyjfNSfHPUNj3OGZi7
+ypfdfiYq7J7q2SHYT9uqvc/ux0hSLaO4i6T2C0/8thaAH6Hz/c49SowAQsCfrFcv
+ic34RuJdczZqvFsL32tziB9u9bY3SShpsQdYWLWCaRtkmEk00PEgWbVrnun3gtAB
+8l6emJdLsC3faxqh8BwLobUu+7MxzO6J8mVJjCareDUg2pOnC2RTmP5WzrklHeAq
+B5ror+Ghf9zCGtxa+wIGPutsmokoxXDkWUoqrCQv9XSQlbpoSNsz3IPPV77mq3Qu
+nXtM3DuDMP/4bF9hdpoK
+=1dd8
+-----END PGP SIGNATURE-----
+
+--H8ygTp4AXg6deix2--
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
