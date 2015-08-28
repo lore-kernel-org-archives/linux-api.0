@@ -1,40 +1,38 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH 2/9] arm: allocate sys_membarrier system call number
-Date: Thu, 27 Aug 2015 23:16:41 +0000 (UTC)
-Message-ID: <1862556294.30845.1440717401951.JavaMail.zimbra@efficios.com>
-References: <1440698215-8355-1-git-send-email-mathieu.desnoyers@efficios.com> <1440698215-8355-3-git-send-email-mathieu.desnoyers@efficios.com> <20150827225147.GG21084@n2100.arm.linux.org.uk>
+From: Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>
+Subject: Re: [RFC PATCH 4/9] mips: allocate sys_membarrier system call number
+Date: Fri, 28 Aug 2015 09:40:34 +0200
+Message-ID: <20150828074034.GA22604@linux-mips.org>
+References: <1440698215-8355-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <1440698215-8355-5-git-send-email-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150827225147.GG21084-l+eeeJia6m9vn6HldHNs0ANdhmdF6hFW@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1440698215-8355-5-git-send-email-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Russell King - ARM Linux <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
------ On Aug 27, 2015, at 6:51 PM, Russell King - ARM Linux linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org wrote:
+On Thu, Aug 27, 2015 at 01:56:50PM -0400, Mathieu Desnoyers wrote:
 
-> On Thu, Aug 27, 2015 at 01:56:48PM -0400, Mathieu Desnoyers wrote:
->> [ Untested on this architecture. To try it out: fetch linux-next/akpm,
->>   apply this patch, build/run a membarrier-enabled kernel, and do make
->>   kselftest. ]
+> [ Untested on this architecture. To try it out: fetch linux-next/akpm,
+>   apply this patch, build/run a membarrier-enabled kernel, and do make
+>   kselftest. ]
 > 
-> But note: the system call is not guaranteed to be allocated at that number
-> until I've merged the patch.  I believe that there's other system calls
-> which are pending during the next merge window.
+> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+> CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+> CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> CC: Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>
+> CC: linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org
+> ---
+>  arch/mips/include/uapi/asm/unistd.h | 15 +++++++++------
+>  arch/mips/kernel/scall32-o32.S      |  1 +
+>  arch/mips/kernel/scall64-64.S       |  1 +
+>  arch/mips/kernel/scall64-n32.S      |  1 +
+>  arch/mips/kernel/scall64-o32.S      |  1 +
+>  5 files changed, 13 insertions(+), 6 deletions(-)
 
-Sure, no problem. I mainly want to make sure the system call
-works fine on each major arch before we reach the merge window.
+Looking good assuming there is no compat syscall required.
 
-Let me know if you want me to send an updated version of this
-patch during or after the merge window.
-
-Thanks!
-
-Mathieu
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+  Ralf
