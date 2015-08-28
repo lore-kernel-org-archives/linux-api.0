@@ -1,62 +1,282 @@
-From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH v8 3/6] mm: Introduce VM_LOCKONFAULT
-Date: Fri, 28 Aug 2015 16:54:16 +0200
-Message-ID: <55E07618.9090905@suse.cz>
-References: <1440613465-30393-1-git-send-email-emunson@akamai.com>
- <1440613465-30393-4-git-send-email-emunson@akamai.com>
+From: Chris Metcalf <cmetcalf@ezchip.com>
+Subject: [PATCH v6.1 3/6] task_isolation: support PR_TASK_ISOLATION_STRICT mode
+Date: Fri, 28 Aug 2015 11:31:21 -0400
+Message-ID: <1440775881-21631-1-git-send-email-cmetcalf@ezchip.com>
+References: <20150826103651.GA30466@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1440613465-30393-4-git-send-email-emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20150826103651.GA30466@arm.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: Chris Metcalf <cmetcalf@ezchip.com>
 List-Id: linux-api@vger.kernel.org
 
-On 08/26/2015 08:24 PM, Eric B Munson wrote:
-> The cost of faulting in all memory to be locked can be very high when
-> working with large mappings.  If only portions of the mapping will be
-> used this can incur a high penalty for locking.
->
-> For the example of a large file, this is the usage pattern for a large
-> statical language model (probably applies to other statical or graphical
-> models as well).  For the security example, any application transacting
-> in data that cannot be swapped out (credit card data, medical records,
-> etc).
->
-> This patch introduces the ability to request that pages are not
-> pre-faulted, but are placed on the unevictable LRU when they are finally
-> faulted in.  The VM_LOCKONFAULT flag will be used together with
-> VM_LOCKED and has no effect when set without VM_LOCKED.  Setting the
-> VM_LOCKONFAULT flag for a VMA will cause pages faulted into that VMA to
-> be added to the unevictable LRU when they are faulted or if they are
-> already present, but will not cause any missing pages to be faulted in.
->
-> Exposing this new lock state means that we cannot overload the meaning
-> of the FOLL_POPULATE flag any longer.  Prior to this patch it was used
-> to mean that the VMA for a fault was locked.  This means we need the
-> new FOLL_MLOCK flag to communicate the locked state of a VMA.
-> FOLL_POPULATE will now only control if the VMA should be populated and
-> in the case of VM_LOCKONFAULT, it will not be set.
->
-> Signed-off-by: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-> Cc: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
-> Cc: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-> Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
-> Cc: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
-> Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
-> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+With task_isolation mode, the task is in principle guaranteed not to
+be interrupted by the kernel, but only if it behaves.  In particular,
+if it enters the kernel via system call, page fault, or any of a
+number of other synchronous traps, it may be unexpectedly exposed
+to long latencies.  Add a simple flag that puts the process into
+a state where any such kernel entry is fatal.
 
-Acked-by: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+To allow the state to be entered and exited, we ignore the prctl()
+syscall so that we can clear the bit again later, and we ignore
+exit/exit_group to allow exiting the task without a pointless signal
+killing you as you try to do so.
 
-I just wonder if the call to populate_vma_page_range from mprotect_fixup 
-is just an potentially expensive no-op for VM_LOCKONFAULT vma's? It 
-might find many cow candidates but faultin_page() won't do anything. And 
-it shouldn't find any existing pages to put on the unevictable list from 
-this context.
+This change adds the syscall-detection hooks only for x86, arm64,
+and tile.  For arm64 we use an explict #ifdef CONFIG_TASK_ISOLATION
+so we can both achieve no overhead for !TASK_ISOLATION, but also
+achieve low latency (test TIF_NOHZ first) for TASK_ISOLATION.
 
-But it's a corner case and preventing it would mean putting in another 
-VM_LOCKONFAULT check so maybe we can leave it like this.
--
+The signature of context_tracking_exit() changes to report whether
+we, in fact, are exiting back to user space, so that we can track
+user exceptions properly separately from other kernel entries.
+
+Signed-off-by: Chris Metcalf <cmetcalf@ezchip.com>
+---
+This "v6.1" is just a tweak to the existing v6 series to reflect
+Will Deacon's suggestions about the arm64 syscall entry code.
+I've updated the git tree with this updated patch in the series.
+A more disruptive change would be to capture the thread flags
+up front like x86 and tile, which allows the test itself to be
+optimized away if the task_isolation call becomes a no-op.
+
+ arch/arm64/kernel/ptrace.c       |  6 ++++++
+ arch/tile/kernel/ptrace.c        |  5 ++++-
+ arch/x86/kernel/ptrace.c         |  2 ++
+ include/linux/context_tracking.h | 11 ++++++++---
+ include/linux/isolation.h        | 16 ++++++++++++++++
+ include/uapi/linux/prctl.h       |  1 +
+ kernel/context_tracking.c        |  9 ++++++---
+ kernel/isolation.c               | 38 ++++++++++++++++++++++++++++++++++++++
+ 8 files changed, 81 insertions(+), 7 deletions(-)
+
+diff --git a/arch/arm64/kernel/ptrace.c b/arch/arm64/kernel/ptrace.c
+index d882b833dbdb..5d4284445f70 100644
+--- a/arch/arm64/kernel/ptrace.c
++++ b/arch/arm64/kernel/ptrace.c
+@@ -37,6 +37,7 @@
+ #include <linux/regset.h>
+ #include <linux/tracehook.h>
+ #include <linux/elf.h>
++#include <linux/isolation.h>
+ 
+ #include <asm/compat.h>
+ #include <asm/debug-monitors.h>
+@@ -1154,6 +1155,11 @@ asmlinkage int syscall_trace_enter(struct pt_regs *regs)
+ 	if (secure_computing() == -1)
+ 		return -1;
+ 
++#ifdef CONFIG_TASK_ISOLATION
++	if (test_thread_flag(TIF_NOHZ) && task_isolation_strict())
++		task_isolation_syscall(regs->syscallno);
++#endif
++
+ 	if (test_thread_flag(TIF_SYSCALL_TRACE))
+ 		tracehook_report_syscall(regs, PTRACE_SYSCALL_ENTER);
+ 
+diff --git a/arch/tile/kernel/ptrace.c b/arch/tile/kernel/ptrace.c
+index f84eed8243da..c327cb918a44 100644
+--- a/arch/tile/kernel/ptrace.c
++++ b/arch/tile/kernel/ptrace.c
+@@ -259,8 +259,11 @@ int do_syscall_trace_enter(struct pt_regs *regs)
+ 	 * If TIF_NOHZ is set, we are required to call user_exit() before
+ 	 * doing anything that could touch RCU.
+ 	 */
+-	if (work & _TIF_NOHZ)
++	if (work & _TIF_NOHZ) {
+ 		user_exit();
++		if (task_isolation_strict())
++			task_isolation_syscall(regs->regs[TREG_SYSCALL_NR]);
++	}
+ 
+ 	if (work & _TIF_SYSCALL_TRACE) {
+ 		if (tracehook_report_syscall_entry(regs))
+diff --git a/arch/x86/kernel/ptrace.c b/arch/x86/kernel/ptrace.c
+index 9be72bc3613f..2f9ce9466daf 100644
+--- a/arch/x86/kernel/ptrace.c
++++ b/arch/x86/kernel/ptrace.c
+@@ -1479,6 +1479,8 @@ unsigned long syscall_trace_enter_phase1(struct pt_regs *regs, u32 arch)
+ 	if (work & _TIF_NOHZ) {
+ 		user_exit();
+ 		work &= ~_TIF_NOHZ;
++		if (task_isolation_strict())
++			task_isolation_syscall(regs->orig_ax);
+ 	}
+ 
+ #ifdef CONFIG_SECCOMP
+diff --git a/include/linux/context_tracking.h b/include/linux/context_tracking.h
+index b96bd299966f..e0ac0228fea1 100644
+--- a/include/linux/context_tracking.h
++++ b/include/linux/context_tracking.h
+@@ -3,6 +3,7 @@
+ 
+ #include <linux/sched.h>
+ #include <linux/vtime.h>
++#include <linux/isolation.h>
+ #include <linux/context_tracking_state.h>
+ #include <asm/ptrace.h>
+ 
+@@ -11,7 +12,7 @@
+ extern void context_tracking_cpu_set(int cpu);
+ 
+ extern void context_tracking_enter(enum ctx_state state);
+-extern void context_tracking_exit(enum ctx_state state);
++extern bool context_tracking_exit(enum ctx_state state);
+ extern void context_tracking_user_enter(void);
+ extern void context_tracking_user_exit(void);
+ 
+@@ -35,8 +36,12 @@ static inline enum ctx_state exception_enter(void)
+ 		return 0;
+ 
+ 	prev_ctx = this_cpu_read(context_tracking.state);
+-	if (prev_ctx != CONTEXT_KERNEL)
+-		context_tracking_exit(prev_ctx);
++	if (prev_ctx != CONTEXT_KERNEL) {
++		if (context_tracking_exit(prev_ctx)) {
++			if (task_isolation_strict())
++				task_isolation_exception();
++		}
++	}
+ 
+ 	return prev_ctx;
+ }
+diff --git a/include/linux/isolation.h b/include/linux/isolation.h
+index fd04011b1c1e..27a4469831c1 100644
+--- a/include/linux/isolation.h
++++ b/include/linux/isolation.h
+@@ -15,10 +15,26 @@ static inline bool task_isolation_enabled(void)
+ }
+ 
+ extern void task_isolation_enter(void);
++extern void task_isolation_syscall(int nr);
++extern void task_isolation_exception(void);
+ extern void task_isolation_wait(void);
+ #else
+ static inline bool task_isolation_enabled(void) { return false; }
+ static inline void task_isolation_enter(void) { }
++static inline void task_isolation_syscall(int nr) { }
++static inline void task_isolation_exception(void) { }
+ #endif
+ 
++static inline bool task_isolation_strict(void)
++{
++#ifdef CONFIG_TASK_ISOLATION
++	if (tick_nohz_full_cpu(smp_processor_id()) &&
++	    (current->task_isolation_flags &
++	     (PR_TASK_ISOLATION_ENABLE | PR_TASK_ISOLATION_STRICT)) ==
++	    (PR_TASK_ISOLATION_ENABLE | PR_TASK_ISOLATION_STRICT))
++		return true;
++#endif
++	return false;
++}
++
+ #endif
+diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
+index 79da784fe17a..e16e13911e8a 100644
+--- a/include/uapi/linux/prctl.h
++++ b/include/uapi/linux/prctl.h
+@@ -194,5 +194,6 @@ struct prctl_mm_map {
+ #define PR_SET_TASK_ISOLATION		47
+ #define PR_GET_TASK_ISOLATION		48
+ # define PR_TASK_ISOLATION_ENABLE	(1 << 0)
++# define PR_TASK_ISOLATION_STRICT	(1 << 1)
+ 
+ #endif /* _LINUX_PRCTL_H */
+diff --git a/kernel/context_tracking.c b/kernel/context_tracking.c
+index c57c99f5c4d7..17a71f7b66b8 100644
+--- a/kernel/context_tracking.c
++++ b/kernel/context_tracking.c
+@@ -147,15 +147,16 @@ NOKPROBE_SYMBOL(context_tracking_user_enter);
+  * This call supports re-entrancy. This way it can be called from any exception
+  * handler without needing to know if we came from userspace or not.
+  */
+-void context_tracking_exit(enum ctx_state state)
++bool context_tracking_exit(enum ctx_state state)
+ {
+ 	unsigned long flags;
++	bool from_user = false;
+ 
+ 	if (!context_tracking_is_enabled())
+-		return;
++		return false;
+ 
+ 	if (in_interrupt())
+-		return;
++		return false;
+ 
+ 	local_irq_save(flags);
+ 	if (!context_tracking_recursion_enter())
+@@ -169,6 +170,7 @@ void context_tracking_exit(enum ctx_state state)
+ 			 */
+ 			rcu_user_exit();
+ 			if (state == CONTEXT_USER) {
++				from_user = true;
+ 				vtime_user_exit(current);
+ 				trace_user_exit(0);
+ 			}
+@@ -178,6 +180,7 @@ void context_tracking_exit(enum ctx_state state)
+ 	context_tracking_recursion_exit();
+ out_irq_restore:
+ 	local_irq_restore(flags);
++	return from_user;
+ }
+ NOKPROBE_SYMBOL(context_tracking_exit);
+ EXPORT_SYMBOL_GPL(context_tracking_exit);
+diff --git a/kernel/isolation.c b/kernel/isolation.c
+index d4618cd9e23d..a89a6e9adfb4 100644
+--- a/kernel/isolation.c
++++ b/kernel/isolation.c
+@@ -10,6 +10,7 @@
+ #include <linux/swap.h>
+ #include <linux/vmstat.h>
+ #include <linux/isolation.h>
++#include <asm/unistd.h>
+ #include "time/tick-sched.h"
+ 
+ /*
+@@ -73,3 +74,40 @@ void task_isolation_enter(void)
+ 		dump_stack();
+ 	}
+ }
++
++static void kill_task_isolation_strict_task(void)
++{
++	dump_stack();
++	current->task_isolation_flags &= ~PR_TASK_ISOLATION_ENABLE;
++	send_sig(SIGKILL, current, 1);
++}
++
++/*
++ * This routine is called from syscall entry (with the syscall number
++ * passed in) if the _STRICT flag is set.
++ */
++void task_isolation_syscall(int syscall)
++{
++	/* Ignore prctl() syscalls or any task exit. */
++	switch (syscall) {
++	case __NR_prctl:
++	case __NR_exit:
++	case __NR_exit_group:
++		return;
++	}
++
++	pr_warn("%s/%d: task_isolation strict mode violated by syscall %d\n",
++		current->comm, current->pid, syscall);
++	kill_task_isolation_strict_task();
++}
++
++/*
++ * This routine is called from any userspace exception if the _STRICT
++ * flag is set.
++ */
++void task_isolation_exception(void)
++{
++	pr_warn("%s/%d: task_isolation strict mode violated by exception\n",
++		current->comm, current->pid);
++	kill_task_isolation_strict_task();
++}
+-- 
+2.1.2
+
