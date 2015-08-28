@@ -1,281 +1,149 @@
-From: pch-chEQUL3jiZBWk0Htik3J/w@public.gmane.org
-Subject: [PATCH v2 net-next 1/3] ipv4: Lock-less per-packet multipath
-Date: Fri, 28 Aug 2015 22:00:48 +0200
-Message-ID: <1440792050-2109-2-git-send-email-pch@ordbogen.com>
-References: <1440792050-2109-1-git-send-email-pch@ordbogen.com>
+From: bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org (J. Bruce Fields)
+Subject: Re: [RFC v6 01/40] vfs: Add IS_ACL() and IS_RICHACL() tests
+Date: Fri, 28 Aug 2015 16:34:52 -0400
+Message-ID: <20150828203452.GA23326@fieldses.org>
+References: <1438689218-6921-1-git-send-email-agruenba@redhat.com>
+ <1438689218-6921-2-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1440792050-2109-1-git-send-email-pch-chEQUL3jiZBWk0Htik3J/w@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1438689218-6921-2-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Alexey Kuznetsov <kuznet-v/Mj1YrvjDBInbfyfbPRSQ@public.gmane.org>, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, Hideaki YOSHIFUJI <yoshfuji-VfPWfsRibaP+Ru+s062T9g@public.gmane.org>, Patrick McHardy <kaber-dcUjhNyLwpNeoWH0uzbU5w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Roopa Prabhu <roopa-qUQiAmfTcIp+XZJcv9eMoEEOCMrvLtNR@public.gmane.org>, Scott Feldman <sfeldma-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>, Thomas Graf <tgraf-G/eBtMaohhA@public.gmane.org>, Jiri Benc <jbenc-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?UTF-8?q?Peter=20N=C3=B8rlund?= <pch-chEQUL3jiZBWk0Htik3J/w@public.gmane.org>
+To: Andreas Gruenbacher <andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-=46rom: Peter N=C3=B8rlund <pch-chEQUL3jiZBWk0Htik3J/w@public.gmane.org>
+On Tue, Aug 04, 2015 at 01:52:59PM +0200, Andreas Gruenbacher wrote:
+> The vfs does not apply the umask for file systems that support acls. The
+> test used for this used to be called IS_POSIXACL(). Switch to a new
+> IS_ACL() test to check for either posix acls or richacls instead. Add a new
+> MS_RICHACL flag and IS_RICHACL() test for richacls alone. The IS_POSIXACL()
+> test is still needed by file systems that specifically support POSIX ACLs,
+> like nfsd.
 
-The current multipath attempted to be quasi random, but in most cases i=
-t
-behaved just like a round robin balancing. This patch refactors the
-algorithm to be exactly that and in doing so, avoids the spin lock.
+Nit: nfsd's not a filesystem.  Maybe just list the users instead.
 
-The new design paves the way for hash-based multipath, replacing the
-modulo with thresholds, minimizing disruption in case of failing paths =
-or
-route replacements.
+--b.
 
-Signed-off-by: Peter N=C3=B8rlund <pch-chEQUL3jiZBWk0Htik3J/w@public.gmane.org>
----
- include/net/ip_fib.h     |   4 +-
- net/ipv4/Kconfig         |   1 +
- net/ipv4/fib_semantics.c | 129 ++++++++++++++++++++++++++-------------=
---------
- 3 files changed, 74 insertions(+), 60 deletions(-)
-
-diff --git a/include/net/ip_fib.h b/include/net/ip_fib.h
-index a37d043..18a3c7f 100644
---- a/include/net/ip_fib.h
-+++ b/include/net/ip_fib.h
-@@ -79,7 +79,7 @@ struct fib_nh {
- 	unsigned char		nh_scope;
- #ifdef CONFIG_IP_ROUTE_MULTIPATH
- 	int			nh_weight;
--	int			nh_power;
-+	atomic_t		nh_upper_bound;
- #endif
- #ifdef CONFIG_IP_ROUTE_CLASSID
- 	__u32			nh_tclassid;
-@@ -118,7 +118,7 @@ struct fib_info {
- #define fib_advmss fib_metrics[RTAX_ADVMSS-1]
- 	int			fib_nhs;
- #ifdef CONFIG_IP_ROUTE_MULTIPATH
--	int			fib_power;
-+	int			fib_weight;
- #endif
- 	struct rcu_head		rcu;
- 	struct fib_nh		fib_nh[0];
-diff --git a/net/ipv4/Kconfig b/net/ipv4/Kconfig
-index 416dfa0..23d8b2b 100644
---- a/net/ipv4/Kconfig
-+++ b/net/ipv4/Kconfig
-@@ -81,6 +81,7 @@ config IP_MULTIPLE_TABLES
- config IP_ROUTE_MULTIPATH
- 	bool "IP: equal cost multipath"
- 	depends on IP_ADVANCED_ROUTER
-+	select BITREVERSE
- 	help
- 	  Normally, the routing tables specify a single action to be taken in
- 	  a deterministic manner for a given packet. If you say Y here
-diff --git a/net/ipv4/fib_semantics.c b/net/ipv4/fib_semantics.c
-index 1b2d011..becb63f 100644
---- a/net/ipv4/fib_semantics.c
-+++ b/net/ipv4/fib_semantics.c
-@@ -15,6 +15,7 @@
-=20
- #include <asm/uaccess.h>
- #include <linux/bitops.h>
-+#include <linux/bitrev.h>
- #include <linux/types.h>
- #include <linux/kernel.h>
- #include <linux/jiffies.h>
-@@ -58,7 +59,7 @@ static struct hlist_head fib_info_devhash[DEVINDEX_HA=
-SHSIZE];
-=20
- #ifdef CONFIG_IP_ROUTE_MULTIPATH
-=20
--static DEFINE_SPINLOCK(fib_multipath_lock);
-+static DEFINE_PER_CPU(int, fib_multipath_rr_counter);
-=20
- #define for_nexthops(fi) {						\
- 	int nhsel; const struct fib_nh *nh;				\
-@@ -468,6 +469,52 @@ static int fib_count_nexthops(struct rtnexthop *rt=
-nh, int remaining)
- 	return remaining > 0 ? 0 : nhs;
- }
-=20
-+static void fib_rebalance(struct fib_info *fi)
-+{
-+	int total;
-+	int w;
-+	struct in_device *in_dev;
-+
-+	if (fi->fib_nhs < 2)
-+		return;
-+
-+	total =3D 0;
-+	for_nexthops(fi) {
-+		if (nh->nh_flags & RTNH_F_DEAD)
-+			continue;
-+
-+		in_dev =3D __in_dev_get_rcu(nh->nh_dev);
-+
-+		if (in_dev &&
-+		    IN_DEV_IGNORE_ROUTES_WITH_LINKDOWN(in_dev) &&
-+		    nh->nh_flags & RTNH_F_LINKDOWN)
-+			continue;
-+
-+		total +=3D nh->nh_weight;
-+	} endfor_nexthops(fi);
-+
-+	w =3D 0;
-+	change_nexthops(fi) {
-+		int upper_bound;
-+
-+		in_dev =3D __in_dev_get_rcu(nexthop_nh->nh_dev);
-+
-+		if (nexthop_nh->nh_flags & RTNH_F_DEAD) {
-+			upper_bound =3D -1;
-+		} else if (in_dev &&
-+			   IN_DEV_IGNORE_ROUTES_WITH_LINKDOWN(in_dev) &&
-+			   nexthop_nh->nh_flags & RTNH_F_LINKDOWN) {
-+			upper_bound =3D -1;
-+		} else {
-+			w +=3D nexthop_nh->nh_weight;
-+			upper_bound =3D DIV_ROUND_CLOSEST(2147483648LL * w,
-+							total) - 1;
-+		}
-+
-+		atomic_set(&nexthop_nh->nh_upper_bound, upper_bound);
-+	} endfor_nexthops(fi);
-+}
-+
- static int fib_get_nhs(struct fib_info *fi, struct rtnexthop *rtnh,
- 		       int remaining, struct fib_config *cfg)
- {
-@@ -1077,8 +1124,15 @@ struct fib_info *fib_create_info(struct fib_conf=
-ig *cfg)
-=20
- 	change_nexthops(fi) {
- 		fib_info_update_nh_saddr(net, nexthop_nh);
-+#ifdef CONFIG_IP_ROUTE_MULTIPATH
-+		fi->fib_weight +=3D nexthop_nh->nh_weight;
-+#endif
- 	} endfor_nexthops(fi)
-=20
-+#ifdef CONFIG_IP_ROUTE_MULTIPATH
-+	fib_rebalance(fi);
-+#endif
-+
- link_it:
- 	ofi =3D fib_find_info(fi);
- 	if (ofi) {
-@@ -1300,12 +1354,6 @@ int fib_sync_down_dev(struct net_device *dev, un=
-signed long event)
- 					nexthop_nh->nh_flags |=3D RTNH_F_LINKDOWN;
- 					break;
- 				}
--#ifdef CONFIG_IP_ROUTE_MULTIPATH
--				spin_lock_bh(&fib_multipath_lock);
--				fi->fib_power -=3D nexthop_nh->nh_power;
--				nexthop_nh->nh_power =3D 0;
--				spin_unlock_bh(&fib_multipath_lock);
--#endif
- 				dead++;
- 			}
- #ifdef CONFIG_IP_ROUTE_MULTIPATH
-@@ -1328,6 +1376,10 @@ int fib_sync_down_dev(struct net_device *dev, un=
-signed long event)
- 			}
- 			ret++;
- 		}
-+
-+#ifdef CONFIG_IP_ROUTE_MULTIPATH
-+		fib_rebalance(fi);
-+#endif
- 	}
-=20
- 	return ret;
-@@ -1450,20 +1502,17 @@ int fib_sync_up(struct net_device *dev, unsigne=
-d int nh_flags)
- 			    !__in_dev_get_rtnl(dev))
- 				continue;
- 			alive++;
--#ifdef CONFIG_IP_ROUTE_MULTIPATH
--			spin_lock_bh(&fib_multipath_lock);
--			nexthop_nh->nh_power =3D 0;
--			nexthop_nh->nh_flags &=3D ~nh_flags;
--			spin_unlock_bh(&fib_multipath_lock);
--#else
- 			nexthop_nh->nh_flags &=3D ~nh_flags;
--#endif
- 		} endfor_nexthops(fi)
-=20
- 		if (alive > 0) {
- 			fi->fib_flags &=3D ~nh_flags;
- 			ret++;
- 		}
-+
-+#ifdef CONFIG_IP_ROUTE_MULTIPATH
-+		fib_rebalance(fi);
-+#endif
- 	}
-=20
- 	return ret;
-@@ -1478,55 +1527,19 @@ int fib_sync_up(struct net_device *dev, unsigne=
-d int nh_flags)
- void fib_select_multipath(struct fib_result *res)
- {
- 	struct fib_info *fi =3D res->fi;
--	struct in_device *in_dev;
--	int w;
--
--	spin_lock_bh(&fib_multipath_lock);
--	if (fi->fib_power <=3D 0) {
--		int power =3D 0;
--		change_nexthops(fi) {
--			in_dev =3D __in_dev_get_rcu(nexthop_nh->nh_dev);
--			if (nexthop_nh->nh_flags & RTNH_F_DEAD)
--				continue;
--			if (in_dev &&
--			    IN_DEV_IGNORE_ROUTES_WITH_LINKDOWN(in_dev) &&
--			    nexthop_nh->nh_flags & RTNH_F_LINKDOWN)
--				continue;
--			power +=3D nexthop_nh->nh_weight;
--			nexthop_nh->nh_power =3D nexthop_nh->nh_weight;
--		} endfor_nexthops(fi);
--		fi->fib_power =3D power;
--		if (power <=3D 0) {
--			spin_unlock_bh(&fib_multipath_lock);
--			/* Race condition: route has just become dead. */
--			res->nh_sel =3D 0;
--			return;
--		}
--	}
-+	int h;
-=20
-+	h =3D bitrev32(this_cpu_inc_return(fib_multipath_rr_counter)) >> 1;
-=20
--	/* w should be random number [0..fi->fib_power-1],
--	 * it is pretty bad approximation.
--	 */
--
--	w =3D jiffies % fi->fib_power;
-+	for_nexthops(fi) {
-+		if (h > atomic_read(&nh->nh_upper_bound))
-+			continue;
-=20
--	change_nexthops(fi) {
--		if (!(nexthop_nh->nh_flags & RTNH_F_DEAD) &&
--		    nexthop_nh->nh_power) {
--			w -=3D nexthop_nh->nh_power;
--			if (w <=3D 0) {
--				nexthop_nh->nh_power--;
--				fi->fib_power--;
--				res->nh_sel =3D nhsel;
--				spin_unlock_bh(&fib_multipath_lock);
--				return;
--			}
--		}
--	} endfor_nexthops(fi);
-+		res->nh_sel =3D nhsel;
-+		return;
-+	} endfor_nexthops(fi)
-=20
- 	/* Race condition: route has just become dead. */
- 	res->nh_sel =3D 0;
--	spin_unlock_bh(&fib_multipath_lock);
- }
- #endif
---=20
-2.1.4
+> 
+> Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> ---
+>  fs/Kconfig              |  3 +++
+>  fs/namei.c              |  8 ++++----
+>  include/linux/fs.h      | 12 ++++++++++++
+>  include/uapi/linux/fs.h |  3 ++-
+>  4 files changed, 21 insertions(+), 5 deletions(-)
+> 
+> diff --git a/fs/Kconfig b/fs/Kconfig
+> index 011f433..3e09c06 100644
+> --- a/fs/Kconfig
+> +++ b/fs/Kconfig
+> @@ -59,6 +59,9 @@ endif # BLOCK
+>  config FS_POSIX_ACL
+>  	def_bool n
+>  
+> +config FS_RICHACL
+> +	def_bool n
+> +
+>  config EXPORTFS
+>  	tristate
+>  
+> diff --git a/fs/namei.c b/fs/namei.c
+> index fbbcf09..8f3db24 100644
+> --- a/fs/namei.c
+> +++ b/fs/namei.c
+> @@ -2771,7 +2771,7 @@ static int atomic_open(struct nameidata *nd, struct dentry *dentry,
+>  	}
+>  
+>  	mode = op->mode;
+> -	if ((open_flag & O_CREAT) && !IS_POSIXACL(dir))
+> +	if ((open_flag & O_CREAT) && !IS_ACL(dir))
+>  		mode &= ~current_umask();
+>  
+>  	excl = (open_flag & (O_EXCL | O_CREAT)) == (O_EXCL | O_CREAT);
+> @@ -2955,7 +2955,7 @@ static int lookup_open(struct nameidata *nd, struct path *path,
+>  	/* Negative dentry, just create the file */
+>  	if (!dentry->d_inode && (op->open_flag & O_CREAT)) {
+>  		umode_t mode = op->mode;
+> -		if (!IS_POSIXACL(dir->d_inode))
+> +		if (!IS_ACL(dir->d_inode))
+>  			mode &= ~current_umask();
+>  		/*
+>  		 * This write is needed to ensure that a
+> @@ -3526,7 +3526,7 @@ retry:
+>  	if (IS_ERR(dentry))
+>  		return PTR_ERR(dentry);
+>  
+> -	if (!IS_POSIXACL(path.dentry->d_inode))
+> +	if (!IS_ACL(path.dentry->d_inode))
+>  		mode &= ~current_umask();
+>  	error = security_path_mknod(&path, dentry, mode, dev);
+>  	if (error)
+> @@ -3595,7 +3595,7 @@ retry:
+>  	if (IS_ERR(dentry))
+>  		return PTR_ERR(dentry);
+>  
+> -	if (!IS_POSIXACL(path.dentry->d_inode))
+> +	if (!IS_ACL(path.dentry->d_inode))
+>  		mode &= ~current_umask();
+>  	error = security_path_mkdir(&path, dentry, mode);
+>  	if (!error)
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index cc008c3..44e696e 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -1770,6 +1770,12 @@ struct super_operations {
+>  #define IS_IMMUTABLE(inode)	((inode)->i_flags & S_IMMUTABLE)
+>  #define IS_POSIXACL(inode)	__IS_FLG(inode, MS_POSIXACL)
+>  
+> +#ifdef CONFIG_FS_RICHACL
+> +#define IS_RICHACL(inode)	__IS_FLG(inode, MS_RICHACL)
+> +#else
+> +#define IS_RICHACL(inode)	0
+> +#endif
+> +
+>  #define IS_DEADDIR(inode)	((inode)->i_flags & S_DEAD)
+>  #define IS_NOCMTIME(inode)	((inode)->i_flags & S_NOCMTIME)
+>  #define IS_SWAPFILE(inode)	((inode)->i_flags & S_SWAPFILE)
+> @@ -1783,6 +1789,12 @@ struct super_operations {
+>  				 (inode)->i_rdev == WHITEOUT_DEV)
+>  
+>  /*
+> + * IS_ACL() tells the VFS to not apply the umask
+> + * and use check_acl for acl permission checks when defined.
+> + */
+> +#define IS_ACL(inode)		__IS_FLG(inode, MS_POSIXACL | MS_RICHACL)
+> +
+> +/*
+>   * Inode state bits.  Protected by inode->i_lock
+>   *
+>   * Three bits determine the dirty state of the inode, I_DIRTY_SYNC,
+> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+> index 9b964a5..6ac6bc9 100644
+> --- a/include/uapi/linux/fs.h
+> +++ b/include/uapi/linux/fs.h
+> @@ -81,7 +81,7 @@ struct inodes_stat_t {
+>  #define MS_VERBOSE	32768	/* War is peace. Verbosity is silence.
+>  				   MS_VERBOSE is deprecated. */
+>  #define MS_SILENT	32768
+> -#define MS_POSIXACL	(1<<16)	/* VFS does not apply the umask */
+> +#define MS_POSIXACL	(1<<16)	/* Supports POSIX ACLs */
+>  #define MS_UNBINDABLE	(1<<17)	/* change to unbindable */
+>  #define MS_PRIVATE	(1<<18)	/* change to private */
+>  #define MS_SLAVE	(1<<19)	/* change to slave */
+> @@ -91,6 +91,7 @@ struct inodes_stat_t {
+>  #define MS_I_VERSION	(1<<23) /* Update inode I_version field */
+>  #define MS_STRICTATIME	(1<<24) /* Always perform atime updates */
+>  #define MS_LAZYTIME	(1<<25) /* Update the on-disk [acm]times lazily */
+> +#define MS_RICHACL	(1<<26) /* Supports richacls */
+>  
+>  /* These sb flags are internal to the kernel */
+>  #define MS_NOSEC	(1<<28)
+> -- 
+> 2.5.0
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
