@@ -1,44 +1,82 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: Persistent Reservation API V3
-Date: Sat, 29 Aug 2015 15:52:25 +0200
-Message-ID: <20150829135225.GB13103@lst.de>
-References: <1440608214-14497-1-git-send-email-hch@lst.de> <55E10BE4.6080400@tributary.com>
+From: =?UTF-8?Q?Cl=c3=a9ment_Vuchener?= <clement.vuchener-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH 0/1] Corsair Vengeance K90 driver
+Date: Sat, 29 Aug 2015 16:03:21 +0200
+Message-ID: <55E1BBA8.9040505@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <55E10BE4.6080400@tributary.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Jeremy Linton <jlinton@tributary.com>
-Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@fb.com>, linux-scsi@vger.kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: jkosina-IBi9RG/b67k@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Aug 28, 2015 at 08:33:24PM -0500, Jeremy Linton wrote:
-> Hello,
-> 	So, looking at this, I don't see how it supports the algorithm I've been using
-> for years. For that algorithm to successfully migrate PRs across multiple paths
-> on a single machine without affecting other possible users (who may legitimately
-> have PR'ed the same device) I need PR_IN SA 1, READ RESERVATIONS to assure the
-> current node owns the reservation before attempting to preempt it on another
-> path. This can also assure that the device hasn't been reserved with a legacy
-> reservation.
+This patch implements a HID driver for the Corsair Vengeance K90 keyboa=
+rd.
 
-Do you have any code describing this in more detail?  We could add the
-read side as well if there is strong interest.
+This keyboard has a backlight, macro keys (G1 to G18) and some other=20
+special keys (macro recording, profile switching, changing the light=20
+level or disabling the super/meta/"windows logo" keys). The macro=20
+playback can be switched between hardware or software (from the driver=20
+not a key). Using the generic HID driver, the macro keys and special=20
+keys send wrong key code or no key code at all (because of the HID usag=
+e=20
+code used by the keyboard).
+The purpose of this driver is to fix the behaviour of the keys using=20
+incorrect HID usage codes and expose the other features to the user spa=
+ce.
 
-> 	So, this leads me to two more general questions. The first is why isn't the PR
-> API simply exported to filesystems as a general reserve/release so that the PR
-> happens during mount/dismount. Then DM and friends can be setup to transparently
-> migrate or share the reservation, rather than depending on userspace to handle
-> these operations...
+This is my first Linux driver and I would like to get feedback for both=
+=20
+my code and my choices for the user space interface.
 
-The API can be used by file systems, and my upcoming NFS SCSI layout
-support was the main reason to write this.
+=46or the keyboard to work in software mode, a user program needs to be=
+=20
+able to get key events. I am not sure about which key codes should be=20
+used for that. I choose the BTN_TRIGGER_HAPPY* as they seem to be used=20
+for devices with extra buttons.
 
-> 	Also, it seems to me the use of CLEAR is extremely dangerous in any environment
-> where actual arbitration or sharing of the resource is taking place.
+The other special keys does send any key codes. They are used to change=
+=20
+the hardware state and user space should not need them directly.
 
-Yes, but having it as a specific API isn't any less dangerous than
-having it issued using SG_IO.  Reservations really only make sense if
-you assume every user of a LU is actually cooperating in some way
-and not actively hostile.
+Playback mode and current profile can be read and written through simpl=
+e=20
+sysfs attributes.
+
+The backlight is managed through a LED class device.
+
+Hardware macro profiles (there are three of them) are managed thanks to=
+=20
+devices of the new k90_profile class. Data is sent through binary=20
+attributes in the same format sent to the hardware. I choose to do so t=
+o=20
+keep the driver simple. Should it use a more abstract ABI? Those=20
+attributes are write-only as is does not look like there is way to read=
+=20
+them back (the Windows driver does not do it).
+
+The macro recording is not actually done from hardware and this driver=20
+does not implement it. The recording LED has its device, but having it=20
+on or pressing the button does not record anything.
+
+Cl=C3=A9ment Vuchener (1):
+   Corsair Vengeance K90 driver
+
+  Documentation/ABI/testing/sysfs-class-k90_profile  |  55 ++
+  .../ABI/testing/sysfs-driver-hid-corsair-k90       |  15 +
+  drivers/hid/Kconfig                                |  10 +
+  drivers/hid/Makefile                               |   1 +
+  drivers/hid/hid-core.c                             |   1 +
+  drivers/hid/hid-corsair-k90.c                      | 690=20
++++++++++++++++++++++
+  drivers/hid/hid-ids.h                              |   3 +
+  7 files changed, 775 insertions(+)
+  create mode 100644 Documentation/ABI/testing/sysfs-class-k90_profile
+  create mode 100644 Documentation/ABI/testing/sysfs-driver-hid-corsair=
+-k90
+  create mode 100644 drivers/hid/hid-corsair-k90.c
+
+--=20
+2.4.3
