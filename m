@@ -1,42 +1,75 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [RFC v6 03/40] vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD
- permission flags
-Date: Fri, 28 Aug 2015 18:04:30 -0700
-Message-ID: <CALCETrWwftQ4jbrLqtnuaSA0z15c4V0qyXHL4X0q5vBochDgqg@mail.gmail.com>
-References: <1438689218-6921-1-git-send-email-agruenba@redhat.com>
- <1438689218-6921-4-git-send-email-agruenba@redhat.com> <CALCETrUoBnPyEGExpoDzHOCgnHh5=a1ROALmb63LLJZG+L=aQA@mail.gmail.com>
- <CAHpGcM+i887PJ07_CNZ38aK0DhRWgmyYbAGrDN2i1xXkH+1rUg@mail.gmail.com>
+From: Jeremy Linton <jlinton-WMdfZNuR64nqlBn2x/YWAg@public.gmane.org>
+Subject: Re: Persistent Reservation API V3
+Date: Fri, 28 Aug 2015 20:33:24 -0500
+Message-ID: <55E10BE4.6080400@tributary.com>
+References: <1440608214-14497-1-git-send-email-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHpGcM+i887PJ07_CNZ38aK0DhRWgmyYbAGrDN2i1xXkH+1rUg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andreas Gruenbacher <andreas.gruenbacher@gmail.com>
-Cc: linux-cifs@vger.kernel.org, linux-nfs@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Andreas Gruenbacher <agruenba@redhat.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1440608214-14497-1-git-send-email-hch-jcswGhMUV9g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>
+Cc: linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvme-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Aug 28, 2015 2:54 PM, "Andreas Gr=C3=BCnbacher"
-<andreas.gruenbacher@gmail.com> wrote:
->
-> 2015-08-28 23:36 GMT+02:00 Andy Lutomirski <luto@amacapital.net>:
-> > Silly question from the peanut gallery: is there any such thing as
-> > opening an fd pointing at a file such that the "open file descripti=
-on"
-> > (i.e. the struct file) captures the right to delete the file?
-> >
-> > IOW do we need FMODE_DELETE_SELF?
->
-> When would that permission be checked, what syscall would you use to
-> unlink an open file descriptor?
+Hello,
+	So, looking at this, I don't see how it supports the algorithm I've been using
+for years. For that algorithm to successfully migrate PRs across multiple paths
+on a single machine without affecting other possible users (who may legitimately
+have PR'ed the same device) I need PR_IN SA 1, READ RESERVATIONS to assure the
+current node owns the reservation before attempting to preempt it on another
+path. This can also assure that the device hasn't been reserved with a legacy
+reservation.
 
-Good point.  It's remotely plausible that there's some trick with bind
-mounts, it's likely possible to unlink a directory by fd (using
-unlinkat), and you can *link* a file (with linkat or /proc), but
-unlinkat doesn't appear to allow you to unlink a file by fd.
+	So, this leads me to two more general questions. The first is why isn't the PR
+API simply exported to filesystems as a general reserve/release so that the PR
+happens during mount/dismount. Then DM and friends can be setup to transparently
+migrate or share the reservation, rather than depending on userspace to handle
+these operations...
+	Also, it seems to me the use of CLEAR is extremely dangerous in any environment
+where actual arbitration or sharing of the resource is taking place.
 
---Andy
 
->
-> Thanks,
-> Andreas
+	thanks,
+
+On 8/26/2015 11:56 AM, Christoph Hellwig wrote:
+> This series adds support for a simplified Persistent Reservation API
+> to the block layer.  The intent is that both in-kernel and userspace
+> consumers can use the API instead of having to hand craft SCSI or NVMe
+> command through the various pass through interfaces.  It also adds
+> DM support as getting reservations through dm-multipath is a major
+> pain with the current scheme.
+> 
+> NVMe support currently isn't included as I don't have a multihost
+> NVMe setup to test on, but Keith offered to test it and I'll have
+> a patch for it shortly.
+> 
+> The ioctl API is documented in Documentation/block/pr.txt, but to
+> fully understand the concept you'll have to read up the SPC spec,
+> PRs are too complicated that trying to rephrase them into different
+> terminology is just going to create confusion.
+> 
+> Note that Mike wants to include the DM patches so through the DM
+> tree, so they are only included for reference.
+> 
+> I also have a set of simple test tools available at:
+> 
+> 	git://git.infradead.org/users/hch/pr-tests.git
+> 
+> Changes since V2:
+>   - added an ignore flag to the reserve opertion as well, and redid
+>     the ioctl API to have general flags fields
+>   - rebased on top of the latest block layer tree updates
+> Changes since V1:
+>   - rename DM ->ioctl to ->prepare_ioctl
+>   - rename dm_get_ioctl_table to dm_get_live_table_for_ioctl
+>   - merge two DM patches into one
+>   - various spelling fixes
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> .
+> 
