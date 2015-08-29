@@ -1,39 +1,42 @@
-From: =?UTF-8?Q?Andreas_Gr=C3=BCnbacher?= <andreas.gruenbacher@gmail.com>
-Subject: Re: [RFC v6 10/40] richacl: Permission check algorithm
-Date: Sat, 29 Aug 2015 00:06:22 +0200
-Message-ID: <CAHpGcMJT0kQyrvCkur0csCmRn-LwUOJcRWqAfLaqCpNd2b8UXA@mail.gmail.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [RFC v6 03/40] vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD
+ permission flags
+Date: Fri, 28 Aug 2015 18:04:30 -0700
+Message-ID: <CALCETrWwftQ4jbrLqtnuaSA0z15c4V0qyXHL4X0q5vBochDgqg@mail.gmail.com>
 References: <1438689218-6921-1-git-send-email-agruenba@redhat.com>
-	<1438689218-6921-11-git-send-email-agruenba@redhat.com>
-	<20150828214917.GC23326@fieldses.org>
+ <1438689218-6921-4-git-send-email-agruenba@redhat.com> <CALCETrUoBnPyEGExpoDzHOCgnHh5=a1ROALmb63LLJZG+L=aQA@mail.gmail.com>
+ <CAHpGcM+i887PJ07_CNZ38aK0DhRWgmyYbAGrDN2i1xXkH+1rUg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150828214917.GC23326@fieldses.org>
+In-Reply-To: <CAHpGcM+i887PJ07_CNZ38aK0DhRWgmyYbAGrDN2i1xXkH+1rUg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "J. Bruce Fields" <bfields@fieldses.org>
-Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, Linux API Mailing List <linux-api@vger.kernel.org>, linux-cifs@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>, Andreas Gruenbacher <agruenba@redhat.com>
+To: Andreas Gruenbacher <andreas.gruenbacher@gmail.com>
+Cc: linux-cifs@vger.kernel.org, linux-nfs@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Andreas Gruenbacher <agruenba@redhat.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-2015-08-28 23:49 GMT+02:00 J. Bruce Fields <bfields@fieldses.org>:
-> On Tue, Aug 04, 2015 at 01:53:08PM +0200, Andreas Gruenbacher wrote:
->> +             /*
->> +              * We don't care which class the process is in when the acl is
->> +              * not masked.
->> +              */
->> +             in_owner_or_group_class = 1;
+On Aug 28, 2015 2:54 PM, "Andreas Gr=C3=BCnbacher"
+<andreas.gruenbacher@gmail.com> wrote:
 >
-> So why bother setting it at all, then?  Oh, I see, it lets you break out
-> of the loop below earlier.  OK.
+> 2015-08-28 23:36 GMT+02:00 Andy Lutomirski <luto@amacapital.net>:
+> > Silly question from the peanut gallery: is there any such thing as
+> > opening an fd pointing at a file such that the "open file descripti=
+on"
+> > (i.e. the struct file) captures the right to delete the file?
+> >
+> > IOW do we need FMODE_DELETE_SELF?
+>
+> When would that permission be checked, what syscall would you use to
+> unlink an open file descriptor?
 
-Comment changed to:
+Good point.  It's remotely plausible that there's some trick with bind
+mounts, it's likely possible to unlink a directory by fd (using
+unlinkat), and you can *link* a file (with linkat or /proc), but
+unlinkat doesn't appear to allow you to unlink a file by fd.
 
-                /*
-                 * When the acl is not masked, there is no need to determine if
-                 * the process is in the group class and we can earlier break
-                 * out of the loop below.
-                 */
+--Andy
 
-> Patch makes sense to me, ACK.
-
-Thanks,
-Andreas
+>
+> Thanks,
+> Andreas
