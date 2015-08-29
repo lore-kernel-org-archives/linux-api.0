@@ -1,881 +1,469 @@
-From: =?UTF-8?Q?Cl=c3=a9ment_Vuchener?= <clement.vuchener-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 1/1] Corsair Vengeance K90 driver
-Date: Sat, 29 Aug 2015 16:03:52 +0200
-Message-ID: <55E1BBC8.9010303@gmail.com>
-References: <cover.1440853951.git.clement.vuchener@gmail.com>
+From: Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>
+Subject: Re: [RFC] watchdog: Add watchdog device control through sysfs
+ attributes
+Date: Sat, 29 Aug 2015 09:51:24 -0700
+Message-ID: <20150829165124.GA22494@roeck-us.net>
+References: <d9ac417a3bc1c6846f1ddfcd3cd07e5a92865c19.1440179209.git.panand@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cover.1440853951.git.clement.vuchener-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <d9ac417a3bc1c6846f1ddfcd3cd07e5a92865c19.1440179209.git.panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: jkosina-IBi9RG/b67k@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-watchdog-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dzickus-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Wim Van Sebroeck <wim-IQzOog9fTRqzQB+pC5nmwQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
----
-  Documentation/ABI/testing/sysfs-class-k90_profile  |  55 ++
-  .../ABI/testing/sysfs-driver-hid-corsair-k90       |  15 +
-  drivers/hid/Kconfig                                |  10 +
-  drivers/hid/Makefile                               |   1 +
-  drivers/hid/hid-core.c                             |   1 +
-  drivers/hid/hid-corsair-k90.c                      | 690 
-+++++++++++++++++++++
-  drivers/hid/hid-ids.h                              |   3 +
-  7 files changed, 775 insertions(+)
-  create mode 100644 Documentation/ABI/testing/sysfs-class-k90_profile
-  create mode 100644 Documentation/ABI/testing/sysfs-driver-hid-corsair-k90
-  create mode 100644 drivers/hid/hid-corsair-k90.c
+On Fri, Aug 21, 2015 at 11:18:12PM +0530, Pratyush Anand wrote:
+> This patch adds following attributes to watchdog device's sysfs interface.
+> 
+> * start - writes non zero value to start and zero to stop
 
-diff --git a/Documentation/ABI/testing/sysfs-class-k90_profile 
-b/Documentation/ABI/testing/sysfs-class-k90_profile
-new file mode 100644
-index 0000000..3275c16
---- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-class-k90_profile
-@@ -0,0 +1,55 @@
-+What:		/sys/class/k90_profile/<profile>/profile_number
-+Date:		August 2015
-+KernelVersion:	4.2
-+Contact:	Clement Vuchener <clement.vuchener-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-+Description:	Get the number of the profile.
-+
-+What:		/sys/class/k90_profile/<profile>/bindings
-+Date:		August 2015
-+KernelVersion:	4.2
-+Contact:	Clement Vuchener <clement.vuchener-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-+Description:	Write bindings to the keyboard on-board profile.
-+		The data structure is:
-+		 - number of bindings in this structure (1 byte)
-+		 - size of this data structure (2 bytes big endian)
-+		 - size of the macro data written to
-+		   /sys/class/k90_profile/<profile>/data (2 bytes big endian)
-+		 - array of bindings referencing the data from
-+		   /sys/class/k90_profile/<profile>/data, each containing:
-+		   * 0x10 for a key usage, 0x20 for a macro (1 byte)
-+		   * offset of the key usage/macro data (2 bytes big endian)
-+		   * length of the key usage/macro data (2 bytes big endian)
-+
-+What:		/sys/class/k90_profile/<profile>/keys
-+Date:		August 2015
-+KernelVersion:	4.2
-+Contact:	Clement Vuchener <clement.vuchener-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-+Description:	Write the list of the keys used by the bindings and how
-+		the macros are repeated.
-+		The data struct is:
-+		 - number of keys in this structure (1 byte)
-+		 - array of keys and repeat mode:
-+		   * key usage (G1 to G16 are 0xD0 to 0xDF, G17 and
-+		     G18 are 0xE8 and 0xE9) (1 byte)
-+		   * repeat mode (1 byte):
-+		       1: play when pressed
-+		       2: repeat while key is pressed
-+		       3: repeat until the key is pressed again
-+
-+What:		/sys/class/k90_profile/<profile>/data
-+Date:		August 2015
-+KernelVersion:	4.2
-+Contact:	Clement Vuchener <clement.vuchener-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-+Description:	Write the key usage and macros used by
-+		/sys/class/k90_profile/<profile>/bindings
-+		Macro items are:
-+		 - Key event:
-+		   * item type: 0x84 (1 byte)
-+		   * HID usage (1 byte)
-+		   * new state: 0 released, 1 pressed (1 byte)
-+		 - Delay
-+		   * item type: 0x87 (1 byte)
-+		   * delay in milliseconds (2 bytes big endian)
-+		 - Macro end
-+		   * item type: 0x86 (1 byte)
-+		   * repeat count (2 bytes big endian)
-diff --git a/Documentation/ABI/testing/sysfs-driver-hid-corsair-k90 
-b/Documentation/ABI/testing/sysfs-driver-hid-corsair-k90
-new file mode 100644
-index 0000000..16d50ae
---- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-driver-hid-corsair-k90
-@@ -0,0 +1,15 @@
-+What:		/sys/bus/drivers/k90/<dev>/macro_mode
-+Date:		August 2015
-+KernelVersion:	4.2
-+Contact:	Clement Vuchener <clement.vuchener-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-+Description:	Get/set the current playback mode. "SW" for software mode
-+		where G-keys triggers their regular key codes. "HW" for
-+		hardware playback mode where the G-keys play their macro
-+		from the on-board memory.
-+
-+
-+What:		/sys/bus/drivers/k90/<dev>/current_profile
-+Date:		August 2015
-+KernelVersion:	4.2
-+Contact:	Clement Vuchener <clement.vuchener-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-+Description:	Get/set the current selected profile. Values are from 1 to 3.
-diff --git a/drivers/hid/Kconfig b/drivers/hid/Kconfig
-index cc4c664..db6d8a5 100644
---- a/drivers/hid/Kconfig
-+++ b/drivers/hid/Kconfig
-@@ -171,6 +171,16 @@ config HID_CHICONY
-  	---help---
-  	Support for Chicony Tactical pad.
-  +config HID_CORSAIR
-+	tristate "Corsair devices"
-+	depends on HID
-+	---help---
-+	Support for Corsair devices that are not fully compliant with the
-+	HID standard.
-+
-+	Supported devices:
-+	- Vengeance K90
-+
-  config HID_PRODIKEYS
-  	tristate "Prodikeys PC-MIDI Keyboard support"
-  	depends on HID && SND
-diff --git a/drivers/hid/Makefile b/drivers/hid/Makefile
-index 2f8a41d..e94a0a5 100644
---- a/drivers/hid/Makefile
-+++ b/drivers/hid/Makefile
-@@ -29,6 +29,7 @@ obj-$(CONFIG_HID_BELKIN)	+= hid-belkin.o
-  obj-$(CONFIG_HID_BETOP_FF)	+= hid-betopff.o
-  obj-$(CONFIG_HID_CHERRY)	+= hid-cherry.o
-  obj-$(CONFIG_HID_CHICONY)	+= hid-chicony.o
-+obj-$(CONFIG_HID_CORSAIR)	+= hid-corsair-k90.o
-  obj-$(CONFIG_HID_CP2112)	+= hid-cp2112.o
-  obj-$(CONFIG_HID_CYPRESS)	+= hid-cypress.o
-  obj-$(CONFIG_HID_DRAGONRISE)	+= hid-dr.o
-diff --git a/drivers/hid/hid-core.c b/drivers/hid/hid-core.c
-index e6fce23..f0d9125 100644
---- a/drivers/hid/hid-core.c
-+++ b/drivers/hid/hid-core.c
-@@ -1807,6 +1807,7 @@ static const struct hid_device_id 
-hid_have_special_driver[] = {
-  	{ HID_USB_DEVICE(USB_VENDOR_ID_CHICONY, 
-USB_DEVICE_ID_CHICONY_WIRELESS) },
-  	{ HID_USB_DEVICE(USB_VENDOR_ID_CHICONY, 
-USB_DEVICE_ID_CHICONY_WIRELESS2) },
-  	{ HID_USB_DEVICE(USB_VENDOR_ID_CHICONY, USB_DEVICE_ID_CHICONY_AK1D) },
-+	{ HID_USB_DEVICE(USB_VENDOR_ID_CORSAIR, USB_DEVICE_ID_CORSAIR_K90) },
-  	{ HID_USB_DEVICE(USB_VENDOR_ID_CREATIVELABS, 
-USB_DEVICE_ID_PRODIKEYS_PCMIDI) },
-  	{ HID_USB_DEVICE(USB_VENDOR_ID_CYGNAL, USB_DEVICE_ID_CYGNAL_CP2112) },
-  	{ HID_USB_DEVICE(USB_VENDOR_ID_CYPRESS, 
-USB_DEVICE_ID_CYPRESS_BARCODE_1) },
-diff --git a/drivers/hid/hid-corsair-k90.c b/drivers/hid/hid-corsair-k90.c
-new file mode 100644
-index 0000000..67c1095
---- /dev/null
-+++ b/drivers/hid/hid-corsair-k90.c
-@@ -0,0 +1,690 @@
-+/*
-+ * HID driver for Corsair Vengeance K90 Keyboard
-+ * Copyright (c) 2015 Clement Vuchener
-+ */
-+
-+/*
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms of the GNU General Public License as published by 
-the Free
-+ * Software Foundation; either version 2 of the License, or (at your 
-option)
-+ * any later version.
-+ */
-+
-+#include <linux/hid.h>
-+#include <linux/module.h>
-+#include <linux/usb.h>
-+#include <linux/leds.h>
-+
-+#include "hid-ids.h"
-+
-+struct k90_led {
-+	struct led_classdev cdev;
-+	int brightness;
-+	struct work_struct work;
-+};
-+
-+struct k90_profile {
-+	struct device *dev;
-+	int profile;
-+};
-+
-+struct k90_drvdata {
-+	int current_profile;
-+	int macro_mode;
-+	int meta_locked;
-+	struct k90_led backlight;
-+	struct k90_led record_led;
-+	struct k90_profile profile[3];
-+};
-+
-+#define K90_GKEY_COUNT	18
-+
-+static int k90_usage_to_gkey(unsigned int usage)
-+{
-+	/* G1 (0xd0) to G16 (0xdf) */
-+	if (usage >= 0xd0 && usage <= 0xdf)
-+		return usage - 0xd0 + 1;
-+	/* G17 (0xe8) to G18 (0xe9) */
-+	if (usage >= 0xe8 && usage <= 0xe9)
-+		return usage - 0xe8 + 17;
-+	return 0;
-+}
-+
-+static unsigned short k90_gkey_map[K90_GKEY_COUNT] = {
-+	BTN_TRIGGER_HAPPY1,
-+	BTN_TRIGGER_HAPPY2,
-+	BTN_TRIGGER_HAPPY3,
-+	BTN_TRIGGER_HAPPY4,
-+	BTN_TRIGGER_HAPPY5,
-+	BTN_TRIGGER_HAPPY6,
-+	BTN_TRIGGER_HAPPY7,
-+	BTN_TRIGGER_HAPPY8,
-+	BTN_TRIGGER_HAPPY9,
-+	BTN_TRIGGER_HAPPY10,
-+	BTN_TRIGGER_HAPPY11,
-+	BTN_TRIGGER_HAPPY12,
-+	BTN_TRIGGER_HAPPY13,
-+	BTN_TRIGGER_HAPPY14,
-+	BTN_TRIGGER_HAPPY15,
-+	BTN_TRIGGER_HAPPY16,
-+	BTN_TRIGGER_HAPPY17,
-+	BTN_TRIGGER_HAPPY18,
-+};
-+
-+module_param_array_named(gkey_codes, k90_gkey_map, ushort, NULL, S_IRUGO);
-+
-+#define K90_USAGE_SPECIAL_MIN 0xf0
-+#define K90_USAGE_SPECIAL_MAX 0xff
-+
-+#define K90_USAGE_MACRO_RECORD_START 0xf6
-+#define K90_USAGE_MACRO_RECORD_STOP 0xf7
-+
-+#define K90_USAGE_PROFILE 0xf1
-+#define K90_USAGE_M1 0xf1
-+#define K90_USAGE_M2 0xf2
-+#define K90_USAGE_M3 0xf3
-+#define K90_USAGE_PROFILE_MAX 0xf3
-+
-+#define K90_USAGE_META_OFF 0xf4
-+#define K90_USAGE_META_ON  0xf5
-+
-+#define K90_USAGE_LIGHT 0xfa
-+#define K90_USAGE_LIGHT_OFF 0xfa
-+#define K90_USAGE_LIGHT_DIM 0xfb
-+#define K90_USAGE_LIGHT_MEDIUM 0xfc
-+#define K90_USAGE_LIGHT_BRIGHT 0xfd
-+#define K90_USAGE_LIGHT_MAX 0xfd
-+
-+/* USB control protocol */
-+
-+#define K90_REQUEST_BRIGHTNESS 49
-+#define K90_REQUEST_MACRO_MODE 2
-+#define K90_REQUEST_STATUS 4
-+#define K90_REQUEST_GET_MODE 5
-+#define K90_REQUEST_PROFILE 20
-+
-+#define K90_REQUEST_PROFILE_BINDINGS 16
-+#define K90_REQUEST_PROFILE_KEYS 22
-+#define K90_REQUEST_PROFILE_DATA 18
-+
-+#define K90_BINDINGS_MAX_LENGTH 128
-+#define K90_KEYS_MAX_LENGTH 64
-+/* K90_DATA_MAX_LENGTH may be higher but that is the maximum I tested */
-+#define K90_DATA_MAX_LENGTH 4096
-+
-+#define K90_MACRO_MODE_SW 0x0030
-+#define K90_MACRO_MODE_HW 0x0001
-+
-+#define K90_MACRO_LED_ON  0x0020
-+#define K90_MACRO_LED_OFF 0x0040
-+
-+/*
-+ * LED class devices
-+ */
-+
-+#define K90_BACKLIGHT_LED_SUFFIX ":blue:backlight"
-+#define K90_RECORD_LED_SUFFIX ":red:record"
-+
-+static enum led_brightness k90_brightness_get(struct led_classdev 
-*led_cdev)
-+{
-+	struct k90_led *led = container_of(led_cdev, struct k90_led, cdev);
-+
-+	return led->brightness;
-+}
-+
-+static void k90_brightness_set(struct led_classdev *led_cdev,
-+			       enum led_brightness brightness)
-+{
-+	struct k90_led *led = container_of(led_cdev, struct k90_led, cdev);
-+
-+	led->brightness = brightness;
-+	schedule_work(&led->work);
-+}
-+
-+static void k90_backlight_work(struct work_struct *work)
-+{
-+	int ret;
-+	struct k90_led *led = container_of(work, struct k90_led, work);
-+	struct device *dev = led->cdev.dev->parent;
-+	struct usb_interface *usbif = to_usb_interface(dev->parent);
-+	struct usb_device *usbdev = interface_to_usbdev(usbif);
-+
-+	ret = usb_control_msg(usbdev, usb_sndctrlpipe(usbdev, 0),
-+			      K90_REQUEST_BRIGHTNESS,
-+			      USB_DIR_OUT | USB_TYPE_VENDOR |
-+			      USB_RECIP_DEVICE, led->brightness, 0,
-+			      NULL, 0, USB_CTRL_SET_TIMEOUT);
-+	if (ret != 0)
-+		dev_warn(dev, "Failed to set backlight brightness (error: %d).\n",
-+			 ret);
-+}
-+
-+static void k90_record_led_work(struct work_struct *work)
-+{
-+	int ret;
-+	struct k90_led *led = container_of(work, struct k90_led, work);
-+	struct device *dev = led->cdev.dev->parent;
-+	struct usb_interface *usbif = to_usb_interface(dev->parent);
-+	struct usb_device *usbdev = interface_to_usbdev(usbif);
-+	int value;
-+
-+	if (led->brightness > 0)
-+		value = K90_MACRO_LED_ON;
-+	else
-+		value = K90_MACRO_LED_OFF;
-+
-+	ret = usb_control_msg(usbdev, usb_sndctrlpipe(usbdev, 0),
-+			      K90_REQUEST_MACRO_MODE,
-+			      USB_DIR_OUT | USB_TYPE_VENDOR |
-+			      USB_RECIP_DEVICE, value, 0, NULL, 0,
-+			      USB_CTRL_SET_TIMEOUT);
-+	if (ret != 0)
-+		dev_warn(dev, "Failed to set record LED state (error: %d).\n",
-+			 ret);
-+}
-+
-+/*
-+ * Keyboard attributes
-+ */
-+
-+static ssize_t k90_show_macro_mode(struct device *dev,
-+				   struct device_attribute *attr, char *buf)
-+{
-+	struct k90_drvdata *drvdata = dev_get_drvdata(dev);
-+
-+	return snprintf(buf, PAGE_SIZE, "%s\n",
-+			(drvdata->macro_mode ? "HW" : "SW"));
-+}
-+
-+static ssize_t k90_store_macro_mode(struct device *dev,
-+				    struct device_attribute *attr,
-+				    const char *buf, size_t count)
-+{
-+	int ret;
-+	struct usb_interface *usbif = to_usb_interface(dev->parent);
-+	struct usb_device *usbdev = interface_to_usbdev(usbif);
-+	struct k90_drvdata *drvdata = dev_get_drvdata(dev);
-+	__u16 value;
-+
-+	if (strncmp(buf, "SW", 2) == 0)
-+		value = K90_MACRO_MODE_SW;
-+	else if (strncmp(buf, "HW", 2) == 0)
-+		value = K90_MACRO_MODE_HW;
-+	else
-+		return -EINVAL;
-+
-+	ret = usb_control_msg(usbdev, usb_sndctrlpipe(usbdev, 0),
-+			      K90_REQUEST_MACRO_MODE,
-+			      USB_DIR_OUT | USB_TYPE_VENDOR |
-+			      USB_RECIP_DEVICE, value, 0, NULL, 0,
-+			      USB_CTRL_SET_TIMEOUT);
-+	if (ret != 0)
-+		return ret;
-+
-+	drvdata->macro_mode = (value == K90_MACRO_MODE_HW);
-+
-+	return count;
-+}
-+
-+static ssize_t k90_show_current_profile(struct device *dev,
-+					struct device_attribute *attr,
-+					char *buf)
-+{
-+	struct k90_drvdata *drvdata = dev_get_drvdata(dev);
-+
-+	return snprintf(buf, PAGE_SIZE, "%d\n", drvdata->current_profile);
-+}
-+
-+static ssize_t k90_store_current_profile(struct device *dev,
-+					 struct device_attribute *attr,
-+					 const char *buf, size_t count)
-+{
-+	int ret;
-+	struct usb_interface *usbif = to_usb_interface(dev->parent);
-+	struct usb_device *usbdev = interface_to_usbdev(usbif);
-+	struct k90_drvdata *drvdata = dev_get_drvdata(dev);
-+	int profile;
-+
-+	if (kstrtoint(buf, 10, &profile))
-+		return -EINVAL;
-+	if (profile < 1 || profile > 3)
-+		return -EINVAL;
-+
-+	ret = usb_control_msg(usbdev, usb_sndctrlpipe(usbdev, 0),
-+			      K90_REQUEST_PROFILE,
-+			      USB_DIR_OUT | USB_TYPE_VENDOR |
-+			      USB_RECIP_DEVICE, profile, 0, NULL, 0,
-+			      USB_CTRL_SET_TIMEOUT);
-+	if (ret != 0)
-+		return ret;
-+
-+	drvdata->current_profile = profile;
-+
-+	return count;
-+}
-+
-+static DEVICE_ATTR(macro_mode, 0644, k90_show_macro_mode, 
-k90_store_macro_mode);
-+static DEVICE_ATTR(current_profile, 0644, k90_show_current_profile,
-+		   k90_store_current_profile);
-+
-+static struct attribute *k90_attrs[] = {
-+	&dev_attr_macro_mode.attr,
-+	&dev_attr_current_profile.attr,
-+	NULL
-+};
-+
-+static const struct attribute_group k90_attr_group = {
-+	.attrs = k90_attrs,
-+};
-+
-+/*
-+ * Profile device class and attributes
-+ */
-+
-+static struct class *k90_profile_class;
-+
-+static ssize_t k90_profile_show_profile_number(struct device *dev,
-+					       struct device_attribute *attr,
-+					       char *buf)
-+{
-+	struct k90_profile *data = dev_get_drvdata(dev);
-+
-+	return snprintf(buf, PAGE_SIZE, "%d\n", data->profile);
-+}
-+
-+static ssize_t k90_profile_write_bindings(struct file *fp, struct 
-kobject *kobj,
-+					  struct bin_attribute *attr, char *buf,
-+					  loff_t off, size_t count)
-+{
-+	int ret;
-+	struct device *pdev = container_of(kobj, struct device, kobj);
-+	struct k90_profile *data = dev_get_drvdata(pdev);
-+	struct usb_interface *usbif = to_usb_interface(pdev->parent->parent);
-+	struct usb_device *usbdev = interface_to_usbdev(usbif);
-+
-+	if (count > K90_BINDINGS_MAX_LENGTH)
-+		return -EMSGSIZE;
-+
-+	ret = usb_control_msg(usbdev, usb_sndctrlpipe(usbdev, 0),
-+			      K90_REQUEST_PROFILE_BINDINGS,
-+			      USB_DIR_OUT | USB_TYPE_VENDOR |
-+			      USB_RECIP_DEVICE, 0, data->profile, buf,
-+			      count, USB_CTRL_SET_TIMEOUT);
-+	if (ret != 0)
-+		return ret;
-+
-+	return count;
-+}
-+
-+static ssize_t k90_profile_write_keys(struct file *fp, struct kobject 
-*kobj,
-+				      struct bin_attribute *attr, char *buf,
-+				      loff_t off, size_t count)
-+{
-+	int ret;
-+	struct device *pdev = container_of(kobj, struct device, kobj);
-+	struct k90_profile *data = dev_get_drvdata(pdev);
-+	struct usb_interface *usbif = to_usb_interface(pdev->parent->parent);
-+	struct usb_device *usbdev = interface_to_usbdev(usbif);
-+
-+	if (count > K90_KEYS_MAX_LENGTH)
-+		return -EMSGSIZE;
-+
-+	ret = usb_control_msg(usbdev, usb_sndctrlpipe(usbdev, 0),
-+			      K90_REQUEST_PROFILE_KEYS,
-+			      USB_DIR_OUT | USB_TYPE_VENDOR |
-+			      USB_RECIP_DEVICE, 0, data->profile, buf,
-+			      count, USB_CTRL_SET_TIMEOUT);
-+	if (ret != 0)
-+		return ret;
-+
-+	return count;
-+}
-+
-+static ssize_t k90_profile_write_data(struct file *fp, struct kobject 
-*kobj,
-+				      struct bin_attribute *attr, char *buf,
-+				      loff_t off, size_t count)
-+{
-+	int ret;
-+	struct device *pdev = container_of(kobj, struct device, kobj);
-+	struct k90_profile *data = dev_get_drvdata(pdev);
-+	struct usb_interface *usbif = to_usb_interface(pdev->parent->parent);
-+	struct usb_device *usbdev = interface_to_usbdev(usbif);
-+
-+	if (count > K90_DATA_MAX_LENGTH)
-+		return -EMSGSIZE;
-+
-+	ret = usb_control_msg(usbdev, usb_sndctrlpipe(usbdev, 0),
-+			      K90_REQUEST_PROFILE_DATA,
-+			      USB_DIR_OUT | USB_TYPE_VENDOR |
-+			      USB_RECIP_DEVICE, 0, data->profile, buf,
-+			      count, USB_CTRL_SET_TIMEOUT);
-+	if (ret != 0)
-+		return ret;
-+
-+	return count;
-+}
-+
-+static DEVICE_ATTR(profile_number, 0444, 
-k90_profile_show_profile_number, NULL);
-+static BIN_ATTR(bindings, 0200, NULL, k90_profile_write_bindings, 0);
-+static BIN_ATTR(keys, 0200, NULL, k90_profile_write_keys, 0);
-+static BIN_ATTR(data, 0200, NULL, k90_profile_write_data, 0);
-+
-+static struct attribute *k90_profile_attrs[] = {
-+	&dev_attr_profile_number.attr,
-+	NULL
-+};
-+
-+static struct bin_attribute *k90_profile_bin_attrs[] = {
-+	&bin_attr_bindings,
-+	&bin_attr_keys,
-+	&bin_attr_data,
-+	NULL
-+};
-+
-+static const struct attribute_group k90_profile_attr_group = {
-+	.attrs = k90_profile_attrs,
-+	.bin_attrs = k90_profile_bin_attrs,
-+};
-+
-+static const struct attribute_group *k90_profile_attr_groups[] = {
-+	&k90_profile_attr_group,
-+	NULL
-+};
-+
-+/*
-+ * Driver functions
-+ */
-+
-+static int k90_init_special_functions(struct hid_device *dev)
-+{
-+	int ret, i;
-+	struct usb_interface *usbif = to_usb_interface(dev->dev.parent);
-+	struct usb_device *usbdev = interface_to_usbdev(usbif);
-+	char data[8];
-+	struct k90_drvdata *drvdata =
-+	    kzalloc(sizeof(struct k90_drvdata), GFP_KERNEL);
-+	size_t name_sz;
-+	char *name;
-+	struct k90_led *led;
-+
-+	if (!drvdata) {
-+		ret = -ENOMEM;
-+		goto fail_drvdata;
-+	}
-+	hid_set_drvdata(dev, drvdata);
-+
-+	/* Get current status */
-+	ret = usb_control_msg(usbdev, usb_rcvctrlpipe(usbdev, 0),
-+			      K90_REQUEST_STATUS,
-+			      USB_DIR_IN | USB_TYPE_VENDOR |
-+			      USB_RECIP_DEVICE, 0, 0, data, 8,
-+			      USB_CTRL_SET_TIMEOUT);
-+	if (ret < 0) {
-+		hid_warn(dev, "Failed to get K90 initial state (error %d).\n",
-+			 ret);
-+		drvdata->backlight.brightness = 0;
-+		drvdata->current_profile = 1;
-+	} else {
-+		drvdata->backlight.brightness = data[4];
-+		drvdata->current_profile = data[7];
-+	}
-+	/* Get current mode */
-+	ret = usb_control_msg(usbdev, usb_rcvctrlpipe(usbdev, 0),
-+			      K90_REQUEST_GET_MODE,
-+			      USB_DIR_IN | USB_TYPE_VENDOR |
-+			      USB_RECIP_DEVICE, 0, 0, data, 2,
-+			      USB_CTRL_SET_TIMEOUT);
-+	if (ret < 0)
-+		hid_warn(dev, "Failed to get K90 initial mode (error %d).\n",
-+			 ret);
-+	else {
-+		switch (data[0]) {
-+		case K90_MACRO_MODE_HW:
-+			drvdata->macro_mode = 1;
-+			break;
-+		case K90_MACRO_MODE_SW:
-+			drvdata->macro_mode = 0;
-+			break;
-+		default:
-+			hid_warn(dev, "K90 in unknown mode: %02x.\n",
-+				 data[0]);
-+		}
-+	}
-+
-+	/* Init LED device for backlight */
-+	name_sz =
-+	    strlen(dev_name(&dev->dev)) + sizeof(K90_BACKLIGHT_LED_SUFFIX);
-+	name = devm_kzalloc(&dev->dev, name_sz, GFP_KERNEL);
-+	if (!name) {
-+		ret = -ENOMEM;
-+		goto fail_backlight;
-+	}
-+	snprintf(name, name_sz, "%s" K90_BACKLIGHT_LED_SUFFIX,
-+		 dev_name(&dev->dev));
-+	led = &drvdata->backlight;
-+	led->cdev.name = name;
-+	led->cdev.max_brightness = 3;
-+	led->cdev.brightness_set = k90_brightness_set;
-+	led->cdev.brightness_get = k90_brightness_get;
-+	INIT_WORK(&led->work, k90_backlight_work);
-+	ret = led_classdev_register(&dev->dev, &led->cdev);
-+	if (ret != 0)
-+		goto fail_backlight;
-+
-+	/* Init LED device for record LED */
-+	name_sz = strlen(dev_name(&dev->dev)) + sizeof(K90_RECORD_LED_SUFFIX);
-+	name = devm_kzalloc(&dev->dev, name_sz, GFP_KERNEL);
-+	if (!name) {
-+		ret = -ENOMEM;
-+		goto fail_record_led;
-+	}
-+	snprintf(name, name_sz, "%s" K90_RECORD_LED_SUFFIX,
-+		 dev_name(&dev->dev));
-+	led = &drvdata->record_led;
-+	led->cdev.name = name;
-+	led->cdev.max_brightness = 1;
-+	led->cdev.brightness_set = k90_brightness_set;
-+	led->cdev.brightness_get = k90_brightness_get;
-+	INIT_WORK(&led->work, k90_record_led_work);
-+	ret = led_classdev_register(&dev->dev, &led->cdev);
-+	if (ret != 0)
-+		goto fail_record_led;
-+
-+	/* Create profile devices */
-+	for (i = 0; i < 3; ++i) {
-+		drvdata->profile[i].profile = i + 1;
-+		drvdata->profile[i].dev =
-+		    device_create_with_groups(k90_profile_class, &dev->dev, 0,
-+					      &drvdata->profile[i],
-+					      k90_profile_attr_groups,
-+					      "%s:profile%d",
-+					      dev_name(&dev->dev), i + 1);
-+		if (IS_ERR(drvdata->profile[i].dev)) {
-+			ret = PTR_ERR(drvdata->profile[i].dev);
-+			for (i = i - 1; i >= 0; --i)
-+				device_unregister(drvdata->profile[i].dev);
-+			goto fail_profile;
-+		}
-+	}
-+
-+	/* Init attributes */
-+	ret = sysfs_create_group(&dev->dev.kobj, &k90_attr_group);
-+	if (ret != 0)
-+		goto fail_sysfs;
-+
-+	return 0;
-+
-+fail_sysfs:
-+	for (i = 0; i < 3; ++i)
-+		device_unregister(drvdata->profile[i].dev);
-+fail_profile:
-+	led_classdev_unregister(&drvdata->record_led.cdev);
-+	flush_work(&drvdata->record_led.work);
-+fail_record_led:
-+	led_classdev_unregister(&drvdata->backlight.cdev);
-+	flush_work(&drvdata->backlight.work);
-+fail_backlight:
-+	kfree(drvdata);
-+fail_drvdata:
-+	hid_set_drvdata(dev, NULL);
-+	return ret;
-+}
-+
-+static void k90_cleanup_special_functions(struct hid_device *dev)
-+{
-+	int i;
-+	struct k90_drvdata *drvdata = hid_get_drvdata(dev);
-+
-+	if (drvdata) {
-+		sysfs_remove_group(&dev->dev.kobj, &k90_attr_group);
-+		for (i = 0; i < 3; ++i)
-+			device_unregister(drvdata->profile[i].dev);
-+		led_classdev_unregister(&drvdata->record_led.cdev);
-+		led_classdev_unregister(&drvdata->backlight.cdev);
-+		flush_work(&drvdata->record_led.work);
-+		flush_work(&drvdata->backlight.work);
-+		kfree(drvdata);
-+	}
-+}
-+
-+static int k90_probe(struct hid_device *dev, const struct hid_device_id 
-*id)
-+{
-+	int ret;
-+	struct usb_interface *usbif = to_usb_interface(dev->dev.parent);
-+
-+	ret = hid_parse(dev);
-+	if (ret != 0) {
-+		hid_err(dev, "parse failed\n");
-+		return ret;
-+	}
-+	ret = hid_hw_start(dev, HID_CONNECT_DEFAULT);
-+	if (ret != 0) {
-+		hid_err(dev, "hw start failed\n");
-+		return ret;
-+	}
-+
-+	if (usbif->cur_altsetting->desc.bInterfaceNumber == 0) {
-+		ret = k90_init_special_functions(dev);
-+		if (ret != 0)
-+			hid_warn(dev, "Failed to initialize K90 special functions.\n");
-+	} else
-+		hid_set_drvdata(dev, NULL);
-+
-+	return 0;
-+}
-+
-+static void k90_remove(struct hid_device *dev)
-+{
-+	struct usb_interface *usbif = to_usb_interface(dev->dev.parent);
-+
-+	if (usbif->cur_altsetting->desc.bInterfaceNumber == 0)
-+		k90_cleanup_special_functions(dev);
-+
-+	hid_hw_stop(dev);
-+}
-+
-+static int k90_event(struct hid_device *dev, struct hid_field *field,
-+		     struct hid_usage *usage, __s32 value)
-+{
-+	struct k90_drvdata *drvdata = hid_get_drvdata(dev);
-+
-+	if (!drvdata)
-+		return 0;
-+
-+	switch (usage->hid & HID_USAGE) {
-+	case K90_USAGE_MACRO_RECORD_START:
-+		drvdata->record_led.brightness = 1;
-+		break;
-+	case K90_USAGE_MACRO_RECORD_STOP:
-+		drvdata->record_led.brightness = 0;
-+		break;
-+	case K90_USAGE_M1:
-+	case K90_USAGE_M2:
-+	case K90_USAGE_M3:
-+		drvdata->current_profile =
-+		    (usage->hid & HID_USAGE) - K90_USAGE_PROFILE + 1;
-+		break;
-+	case K90_USAGE_META_OFF:
-+		drvdata->meta_locked = 0;
-+		break;
-+	case K90_USAGE_META_ON:
-+		drvdata->meta_locked = 1;
-+		break;
-+	case K90_USAGE_LIGHT_OFF:
-+	case K90_USAGE_LIGHT_DIM:
-+	case K90_USAGE_LIGHT_MEDIUM:
-+	case K90_USAGE_LIGHT_BRIGHT:
-+		drvdata->backlight.brightness = (usage->hid & HID_USAGE) -
-+		    K90_USAGE_LIGHT;
-+		break;
-+	default:
-+		break;
-+	}
-+
-+	return 0;
-+}
-+
-+static int k90_input_mapping(struct hid_device *dev, struct hid_input 
-*input,
-+			     struct hid_field *field, struct hid_usage *usage,
-+			     unsigned long **bit, int *max)
-+{
-+	int gkey;
-+
-+	gkey = k90_usage_to_gkey(usage->hid & HID_USAGE);
-+	if (gkey != 0) {
-+		hid_map_usage_clear(input, usage, bit, max, EV_KEY,
-+				    k90_gkey_map[gkey - 1]);
-+		return 1;
-+	}
-+	if ((usage->hid & HID_USAGE) >= K90_USAGE_SPECIAL_MIN &&
-+	    (usage->hid & HID_USAGE) <= K90_USAGE_SPECIAL_MAX)
-+		return -1;
-+
-+	return 0;
-+}
-+
-+static const struct hid_device_id k90_devices[] = {
-+	{ HID_USB_DEVICE(USB_VENDOR_ID_CORSAIR, USB_DEVICE_ID_CORSAIR_K90) },
-+	{}
-+};
-+
-+MODULE_DEVICE_TABLE(hid, k90_devices);
-+
-+static struct hid_driver k90_driver = {
-+	.name = "k90",
-+	.id_table = k90_devices,
-+	.probe = k90_probe,
-+	.event = k90_event,
-+	.remove = k90_remove,
-+	.input_mapping = k90_input_mapping,
-+};
-+
-+static int __init k90_init(void)
-+{
-+	int ret;
-+
-+	k90_profile_class = class_create(THIS_MODULE, "k90_profile");
-+	if (IS_ERR(k90_profile_class))
-+		return PTR_ERR(k90_profile_class);
-+
-+	ret = hid_register_driver(&k90_driver);
-+	if (ret != 0) {
-+		class_destroy(k90_profile_class);
-+		return ret;
-+	}
-+
-+	return 0;
-+}
-+
-+static void k90_exit(void)
-+{
-+	hid_unregister_driver(&k90_driver);
-+	class_destroy(k90_profile_class);
-+}
-+
-+module_init(k90_init);
-+module_exit(k90_exit);
-+
-+MODULE_LICENSE("GPL");
-+MODULE_AUTHOR("Clement Vuchener");
-+MODULE_DESCRIPTION("HID driver for Corsair Vengeance K90 Keyboard");
-diff --git a/drivers/hid/hid-ids.h b/drivers/hid/hid-ids.h
-index b3b225b..f23b9ac 100644
---- a/drivers/hid/hid-ids.h
-+++ b/drivers/hid/hid-ids.h
-@@ -246,6 +246,9 @@
-  #define USB_DEVICE_ID_CODEMERCS_IOW_FIRST	0x1500
-  #define USB_DEVICE_ID_CODEMERCS_IOW_LAST	0x15ff
-  +#define USB_VENDOR_ID_CORSAIR		0x1b1c
-+#define USB_DEVICE_ID_CORSAIR_K90	0x1b02
-+
-  #define USB_VENDOR_ID_CREATIVELABS	0x041e
-  #define USB_DEVICE_ID_PRODIKEYS_PCMIDI	0x2801
-  -- 2.4.3
+I would suggest to drop this attribute, as well as 'keepalive'.
+Both will make keeping the internal state very difficult, especially
+when we add support for heartbeats triggered by the watchdog core.
+
+> * state - reads whether device is active or not(1 for active and 0 for
+> inactive)
+
+How about reporting the state as text ?
+
+> * identity - reads Watchdog device's identity string.
+> * keepalive - writes to ping a watchdog device
+> * timeout - reads current timeout and writes to program a new timeout.
+> * timeleft - reads timeleft before watchdog generates a reset
+> * bootstatus - reads status of the watchdog device at boot
+> * status - reads watchdog device's  internal status bits
+> * nowayout - reads whether nowayout feature was set or not
+> 
+> Testing with iTCO_wdt:
+>  # cd /sys/class/watchdog/watchdog1/
+>  # ls
+> bootstatus  dev  device  identity  keepalive  nowayout  power  start  state
+> status  subsystem  timeleft  timeout  uevent
+>  # cat identity
+> iTCO_wdt
+>  # cat timeout
+> 30
+>  # echo 1 > start
+>  # cat timeleft
+> 26
+>  # echo 120 > timeout
+>  # cat timeleft
+> 116
+>  # echo > keepalive
+>  # cat timeleft
+> 118
+>  # cat state
+> 1
+>  # echo 0 > start
+>  # cat state
+> 0
+>  # cat bootstatus
+> 0
+>  # cat nowayout
+> 0
+>  # cat status
+> cat: status: Operation not supported
+> 
+Unsupported attributes should not appear in the first place.
+Please use is_visible to determine if an attribute should
+be there or not.
+
+> Signed-off-by: Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> ---
+>  Documentation/ABI/testing/sysfs-class-watchdog |  74 +++++++++
+>  drivers/watchdog/watchdog_core.c               |   6 +-
+>  drivers/watchdog/watchdog_core.h               |   2 +
+>  drivers/watchdog/watchdog_dev.c                | 206 +++++++++++++++++++++++++
+>  4 files changed, 284 insertions(+), 4 deletions(-)
+>  create mode 100644 Documentation/ABI/testing/sysfs-class-watchdog
+> 
+> diff --git a/Documentation/ABI/testing/sysfs-class-watchdog b/Documentation/ABI/testing/sysfs-class-watchdog
+> new file mode 100644
+> index 000000000000..31e7be53edf8
+> --- /dev/null
+> +++ b/Documentation/ABI/testing/sysfs-class-watchdog
+> @@ -0,0 +1,74 @@
+> +What:		/sys/class/watchdog/watchdogn/bootstatus
+> +Date:		August 2015
+> +Contact:	Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+
+Who is normally listed here ? Shouldn't it be the maintainer ?
+
+> +Description:
+> +		It is a read only file. It contains status of the watchdog
+> +		device at boot. It is equivalent to WDIOC_GETBOOTSTATUS of
+> +		ioctl interface.
+> +
+> +What:		/sys/class/watchdog/watchdogn/identity
+> +Date:		August 2015
+> +Contact:	Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> +Description:
+> +		It is a read only file. It contains identity string of
+> +		watchdog device.
+> +
+> +What:		/sys/class/watchdog/watchdogn/keepalive
+> +Date:		August 2015
+> +Contact:	Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> +Description:
+> +		It is a write only file. It is written to ping a watchdog
+> +		device to keep it alive. It is equivalent to
+> +		WDIOC_KEEPALIVE of ioctl interface.
+> +
+> +What:		/sys/class/watchdog/watchdogn/nowayout
+> +Date:		August 2015
+> +Contact:	Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> +Description:
+> +		It is a read only file. While reading, it gives '1' if that
+> +		device supports nowayout feature else, it gives '0'.
+> +
+> +What:		/sys/class/watchdog/watchdogn/start
+> +Date:		August 2015
+> +Contact:	Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> +Description:
+> +		It is a write only file. Writing '1' will trigger that
+> +		watchdog device and writing '0' will stop it. These are
+> +		equivalent to WDIOS_ENABLECARD and WDIOS_DISABLECARD of ioctl
+> +		interface. If a device has nowayout programmed, then that
+> +		can not be stopped. Therefore, it is recommended to read
+> +		state file to insure that whether watchdog device was
+> +		stopped or not after writing '0'.
+> +
+> +What:		/sys/class/watchdog/watchdogn/state
+> +Date:		August 2015
+> +Contact:	Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> +Description:
+> +		It is a read only file. If it is read as '1' then a watchdog
+> +		device is active. If it is read as '0' then a watchdog
+> +		device is inactive.
+> +
+> +What:		/sys/class/watchdog/watchdogn/status
+> +Date:		August 2015
+> +Contact:	Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> +Description:
+> +		It is a read only file. It contains watchdog device's
+> +		internal status bits. It is equivalent to WDIOC_GETSTATUS
+> +		of ioctl interface.
+> +
+> +What:		/sys/class/watchdog/watchdogn/timeleft
+> +Date:		August 2015
+> +Contact:	Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> +Description:
+> +		It is a read only file. It contains value of time left for
+> +		reset generation. It is equivalent to WDIOC_GETTIMELEFT of
+> +		ioctl interface.
+> +
+> +What:		/sys/class/watchdog/watchdogn/timeout
+> +Date:		August 2015
+> +Contact:	Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> +Description:
+> +		It is a read/write file. It is read to know about current
+> +		timeout and written to program a new timeout value. These
+> +		are equivalent to WDIOC_SETTIMEOUT and WDIOC_GETTIMEOUT of
+> +		ioctl interface.
+> diff --git a/drivers/watchdog/watchdog_core.c b/drivers/watchdog/watchdog_core.c
+> index 1a8059455413..703ff7b23f31 100644
+> --- a/drivers/watchdog/watchdog_core.c
+> +++ b/drivers/watchdog/watchdog_core.c
+> @@ -139,7 +139,7 @@ EXPORT_SYMBOL_GPL(watchdog_init_timeout);
+>  
+>  static int __watchdog_register_device(struct watchdog_device *wdd)
+>  {
+> -	int ret, id, devno;
+> +	int ret, id;
+>  
+>  	if (wdd == NULL || wdd->info == NULL || wdd->ops == NULL)
+>  		return -EINVAL;
+> @@ -181,9 +181,7 @@ static int __watchdog_register_device(struct watchdog_device *wdd)
+>  		}
+>  	}
+>  
+> -	devno = wdd->cdev.dev;
+> -	wdd->dev = device_create(watchdog_class, wdd->parent, devno,
+> -					NULL, "watchdog%d", wdd->id);
+> +	wdd->dev = watchdog_device_create(watchdog_class, wdd);
+
+Can we do this in watchdog_dev_register() ?
+Seems to make more sense than adding another callback into watchdog_dev.c.
+
+>  	if (IS_ERR(wdd->dev)) {
+>  		watchdog_dev_unregister(wdd);
+>  		ida_simple_remove(&watchdog_ida, id);
+> diff --git a/drivers/watchdog/watchdog_core.h b/drivers/watchdog/watchdog_core.h
+> index 6c951418fca7..36abd15ffcea 100644
+> --- a/drivers/watchdog/watchdog_core.h
+> +++ b/drivers/watchdog/watchdog_core.h
+> @@ -31,6 +31,8 @@
+>  /*
+>   *	Functions/procedures to be called by the core
+>   */
+> +struct device * watchdog_device_create(struct class *,
+> +				struct watchdog_device *);
+>  extern int watchdog_dev_register(struct watchdog_device *);
+>  extern int watchdog_dev_unregister(struct watchdog_device *);
+>  extern int __init watchdog_dev_init(void);
+> diff --git a/drivers/watchdog/watchdog_dev.c b/drivers/watchdog/watchdog_dev.c
+> index 6aaefbad303e..1186b5a918e9 100644
+> --- a/drivers/watchdog/watchdog_dev.c
+> +++ b/drivers/watchdog/watchdog_dev.c
+> @@ -248,6 +248,212 @@ out_timeleft:
+>  	return err;
+>  }
+>  
+> +static ssize_t nowayout_show(struct device *dev,
+> +		struct device_attribute *attr, char *buf)
+> +{
+> +	struct watchdog_device *wdd = dev_get_drvdata(dev);
+> +	bool nowayout = false;
+> +
+> +	mutex_lock(&wdd->lock);
+> +	if (test_bit(WDOG_NO_WAY_OUT, &wdd->status))
+> +		nowayout = true;
+> +	mutex_unlock(&wdd->lock);
+> +
+> +	return sprintf(buf, "%d\n", nowayout);
+
+	return sprintf(buf, "%d\n", !!test_bit(WDOG_NO_WAY_OUT, &wdd->status));
+
+should do it, and the lock doesn't seem to be very helpful,
+as it doesn't make a difference when the flag is evaluated.
+
+> +}
+> +static DEVICE_ATTR_RO(nowayout);
+> +
+> +static ssize_t status_show(struct device *dev,
+> +		struct device_attribute *attr, char *buf)
+
+Please align continuation lines with '('.
+
+> +{
+> +	struct watchdog_device *wdd = dev_get_drvdata(dev);
+> +	ssize_t status;
+> +	unsigned int val;
+> +
+> +	status = watchdog_get_status(wdd, &val);
+> +	if (!status)
+> +		status = sprintf(buf, "%u\n", val);
+> +
+
+This attribute should only be visible if supported.
+
+> +	return status;
+> +}
+> +static DEVICE_ATTR_RO(status);
+> +
+> +static ssize_t bootstatus_show(struct device *dev,
+> +		struct device_attribute *attr, char *buf)
+> +{
+> +	struct watchdog_device *wdd = dev_get_drvdata(dev);
+> +	ssize_t status;
+> +
+> +	mutex_lock(&wdd->lock);
+> +	status = sprintf(buf, "%u\n", wdd->bootstatus);
+> +	mutex_unlock(&wdd->lock);
+> +
+Useless lock.
+
+> +	return status;
+> +}
+> +static DEVICE_ATTR_RO(bootstatus);
+> +
+> +static ssize_t timeleft_show(struct device *dev,
+> +		struct device_attribute *attr, char *buf)
+> +{
+> +	struct watchdog_device *wdd = dev_get_drvdata(dev);
+> +	ssize_t status;
+> +	unsigned int val;
+> +
+> +	status = watchdog_get_timeleft(wdd, &val);
+> +
+> +	if (!status)
+> +		status = sprintf(buf, "%u\n", val);
+> +
+This attribute should only be visible if supported.
+
+> +	return status;
+> +}
+> +static DEVICE_ATTR_RO(timeleft);
+> +
+> +static ssize_t timeout_store(struct device *dev,
+> +		struct device_attribute *attr, const char *buf, size_t size)
+> +{
+> +	struct watchdog_device *wdd = dev_get_drvdata(dev);
+> +	unsigned int val;
+> +	ssize_t status = 0;
+
+Unnecessary initialization.
+
+> +
+> +	status = kstrtouint(buf, 0, &val);
+> +	if (!status) {
+> +		status = watchdog_set_timeout(wdd, val);
+> +		if (status >= 0)
+> +			status = watchdog_ping(wdd);
+> +	}
+> +
+> +	if (status < 0)
+> +		return status;
+> +	else
+
+Unnecessary else.
+
+> +		return size;
+> +}
+> +
+> +static ssize_t timeout_show(struct device *dev,
+> +		struct device_attribute *attr, char *buf)
+> +{
+> +	struct watchdog_device *wdd = dev_get_drvdata(dev);
+> +	ssize_t status;
+> +
+> +	mutex_lock(&wdd->lock);
+> +	if (wdd->timeout == 0)
+> +		status = -EOPNOTSUPP;
+
+Why ?
+
+> +	else
+> +		status = sprintf(buf, "%u\n", wdd->timeout);
+> +	mutex_unlock(&wdd->lock);
+> +
+Unnecessary lock.
+
+> +	return status;
+> +}
+> +static DEVICE_ATTR_RW(timeout);
+> +
+> +static ssize_t keepalive_store(struct device *dev,
+> +		struct device_attribute *attr, const char *buf, size_t size)
+> +{
+> +	struct watchdog_device *wdd = dev_get_drvdata(dev);
+> +	ssize_t status = 0;
+> +
+> +	mutex_lock(&wdd->lock);
+> +	if (!(wdd->info->options & WDIOF_KEEPALIVEPING))
+> +		status = -EOPNOTSUPP;
+
+In that case the attribute should not be there to start with.
+
+Anyway, I would prefer if this attribute would not be there.
+Otherwise you'd at least have to check the current state to see
+if the watchdog is running in the first place, and you would have
+to define what to do if it isn't. Lots of complexity for no clear gain.
+
+> +	mutex_unlock(&wdd->lock);
+> +
+The lock is unnecessary.
+
+> +	if (!status)
+> +		status = watchdog_ping(wdd);
+> +
+> +	if (status < 0)
+> +		return status;
+> +	else
+> +		return size;
+> +}
+> +static DEVICE_ATTR_WO(keepalive);
+> +
+> +static ssize_t identity_show(struct device *dev,
+> +		struct device_attribute *attr, char *buf)
+> +{
+> +	struct watchdog_device *wdd = dev_get_drvdata(dev);
+> +	ssize_t status;
+> +
+> +	mutex_lock(&wdd->lock);
+> +	status = sprintf(buf, "%s\n", wdd->info->identity);
+> +	mutex_unlock(&wdd->lock);
+> +
+Unnecessary lock.
+
+> +	return status;
+> +}
+> +static DEVICE_ATTR_RO(identity);
+> +
+> +static ssize_t state_show(struct device *dev,
+> +		struct device_attribute *attr, char *buf)
+> +{
+> +	struct watchdog_device *wdd = dev_get_drvdata(dev);
+> +	bool active;
+> +
+> +	mutex_lock(&wdd->lock);
+> +	active = watchdog_active(wdd);
+> +	mutex_unlock(&wdd->lock);
+> +
+Unnecessary lock.
+
+> +	return sprintf(buf, "%d\n", active);
+> +}
+> +static DEVICE_ATTR_RO(state);
+> +
+> +static ssize_t start_store(struct device *dev,
+> +		struct device_attribute *attr, const char *buf, size_t size)
+> +{
+
+I would prefer not to have this attribute.
+
+> +	struct watchdog_device *wdd = dev_get_drvdata(dev);
+> +	ssize_t status = 0;
+> +	unsigned int val;
+> +
+> +	status = kstrtouint(buf, 0, &val);
+> +	if (status)
+> +		return status;
+> +	if (val)
+> +		status = watchdog_start(wdd);
+> +	else
+> +		status = watchdog_stop(wdd);
+> +
+> +	if (status < 0)
+> +		return status;
+> +	else
+> +		return size;
+> +}
+> +static DEVICE_ATTR_WO(start);
+> +
+> +static struct attribute *wdt_attrs[] = {
+> +	&dev_attr_start.attr,
+> +	&dev_attr_state.attr,
+> +	&dev_attr_identity.attr,
+> +	&dev_attr_keepalive.attr,
+> +	&dev_attr_timeout.attr,
+> +	&dev_attr_timeleft.attr,
+> +	&dev_attr_bootstatus.attr,
+> +	&dev_attr_status.attr,
+> +	&dev_attr_nowayout.attr,
+> +	NULL,
+> +};
+> +
+> +static const struct attribute_group wdt_group = {
+> +	.attrs = wdt_attrs,
+> +};
+> +
+> +static const struct attribute_group *wdt_groups[] = {
+> +	&wdt_group,
+> +	NULL
+> +};
+
+You should be able to use ATTRIBUTE_GROUPS or __ATTRIBUTE_GROUPS.
+
+> +
+> +/*
+> + *	watchdog_device_create: create a struct device for a given watchdog
+> + *	device
+> + *	@wdc: watchdog class with which created device is associated
+> + *	@wdd: watchdog device
+> + *
+> + *	Creates a struct device corresponding to given watchdog device and
+> + *	associates a device attribute_group with it.
+> + */
+> +struct device * watchdog_device_create(struct class *wdc,
+> +					struct watchdog_device *wdd)
+> +{
+> +	return device_create_with_groups(wdc, wdd->parent, wdd->cdev.dev,
+> +			wdd, wdt_groups, "watchdog%d", wdd->id);
+> +}
+> +
+>  /*
+>   *	watchdog_ioctl_op: call the watchdog drivers ioctl op if defined
+>   *	@wddev: the watchdog device to do the ioctl on
