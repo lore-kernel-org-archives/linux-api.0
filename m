@@ -1,75 +1,108 @@
-From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Subject: Re: [PATCH v8 00/55] MC next generation patches
-Date: Sun, 30 Aug 2015 11:27:53 -0300
-Message-ID: <20150830112753.65858fdd@recife.lan>
-References: <cover.1440902901.git.mchehab@osg.samsung.com>
+From: Peter =?UTF-8?B?TsO4cmx1bmQ=?= <pch@ordbogen.com>
+Subject: Re: [PATCH v2 net-next 0/3] ipv4: Hash-based multipath routing
+Date: Sun, 30 Aug 2015 23:28:29 +0200
+Message-ID: <20150830232829.7e598151@tyr>
+References: <1440792050-2109-1-git-send-email-pch@ordbogen.com>
+	<20150829.131429.360433621593751136.davem@davemloft.net>
+	<20150829223115.523553db@tyr>
+	<20150829.134628.1013990034021542524.davem@davemloft.net>
+	<CALx6S35AUXFKfazU4bbpNL90r7P8i3wSFTB_0YDDRUgKg-3vqw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-In-Reply-To: <cover.1440902901.git.mchehab@osg.samsung.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: Linux Media Mailing List <linux-media@vger.kernel.org>
-Cc: devel@driverdev.osuosl.org, Lars-Peter Clausen <lars@metafoo.de>, Sylwester Nawrocki <s.nawrocki@samsung.com>, linux-sh@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Shuah Khan <shuahkh@osg.samsung.com>, Mauro Carvalho Chehab <mchehab@infradead.org>, Hans Verkuil <hverkuil@xs4all.nl>, Javier Martinez Canillas <javier@osg.samsung.com>, linux-samsung-soc@vger.kernel.org, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, Sakari Ailus <sakari.ailus@linux.intel.com>, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <CALx6S35AUXFKfazU4bbpNL90r7P8i3wSFTB_0YDDRUgKg-3vqw@mail.gmail.com>
+Sender: netdev-owner@vger.kernel.org
+To: Tom Herbert <tom@herbertland.com>
+Cc: David Miller <davem@davemloft.net>, Linux Kernel Network Developers <netdev@vger.kernel.org>, Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>, James Morris <jmorris@namei.org>, Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>, Patrick McHardy <kaber@trash.net>, linux-api@vger.kernel.org, Roopa Prabhu <roopa@cumulusnetworks.com>, sfeldma@gmail.com, "Eric W. Biederman" <ebiederm@xmission.com>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, Thomas Graf <tgraf@suug.ch>, Jiri Benc <jbenc@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Em Sun, 30 Aug 2015 00:06:11 -0300
-Mauro Carvalho Chehab <mchehab@osg.samsung.com> escreveu:
+On Sat, 29 Aug 2015 13:59:08 -0700
+Tom Herbert <tom@herbertland.com> wrote:
 
-> That's the 8th version of the MC next generation patches.
-> 
-> Differences from version 7:
-> 
-> - Patches reworked to make the reviewers happy;
-> - Bug fixes;
-> - ALSA changes got their own separate patches;
-> - Javier patches got integrated into this series;
-> - media-entity.h structs are now properly documented;
-> - Tested on both au0828 and omap3isp.
-> 
-> Due to the complexity of this change, other platform drivers may
-> require some fixes. 
-> 
-> As the patch series sent before, this is not meant to be sent
-> upstream yet. Its goal is to merge it for Kernel 4.4, in order to
-> give people enough time to review and fix pending issues.
+> On Sat, Aug 29, 2015 at 1:46 PM, David Miller <davem@davemloft.net>
+> wrote:
+> > From: Peter N=C3=B8rlund <pch@ordbogen.com>
+> > Date: Sat, 29 Aug 2015 22:31:15 +0200
+> >
+> >> On Sat, 29 Aug 2015 13:14:29 -0700 (PDT)
+> >> David Miller <davem@davemloft.net> wrote:
+> >>
+> >>> From: pch@ordbogen.com
+> >>> Date: Fri, 28 Aug 2015 22:00:47 +0200
+> >>>
+> >>> > When the routing cache was removed in 3.6, the IPv4 multipath
+> >>> > algorithm changed from more or less being destination-based int=
+o
+> >>> > being quasi-random per-packet scheduling. This increases the
+> >>> > risk of out-of-order packets and makes it impossible to use
+> >>> > multipath together with anycast services.
+> >>>
+> >>> Don't even try to be fancy.
+> >>>
+> >>> Simply kill the round-robin stuff off completely, and make hash
+> >>> based routing the one and only mode, no special configuration
+> >>> stuff necessary.
+> >>
+> >> I like the sound of that! Just to be clear - are you telling me to
+> >> stick with L3 and skip the L4 part?
+> >
+> > For now it seems best to just do L3 and make ipv4 and ipv6 behave
+> > the same.
+>=20
+> This might be simpler if we just go directly to L4 which should be
+> better load balancing and what most switches are doing anyway. The
+> hash comes from:
+>=20
+> 1) If a lookup includes an skb, we just need to call skb_get_hash.
+> 2) If we have a socket and sk->sk_txhash is nonzero then use that.
+> 3) Else compute a hash frome flowi. We don't have the exact functions
+> for this, but they can be easily derived from __skb_get_hash_flowi4
+> and __skb_get_hash_flowi6 (i.e. create general get_hash_flowi4 and
+> get_hash_flowi6 and then call these from skb functions and multipath
+> lookup).
 
-As on the previous series, the patches are available on my experimental
-tree:
-	http://git.linuxtv.org/cgit.cgi/mchehab/experimental.git/log/?h=mc_next_gen
+It would definitely be simpler, and it would be nice to just fetch the
+hash directly from the NIC - and for link aggregation it would probably
+be fine. But with L4, we always need to consider fragmented packets,
+which might cause some packets of a flow to be routed differently - and
+with ECMP, the ramifications of suddenly choosing another path for a
+flow are worse than for link aggregation. The latency through the
+different paths may differ enough to cause out-or-order packets and bad
+TCP performance as a consequence. Both Cisco and Juniper routers
+defaults to L3 for ECMP - exactly for that reason, I believe. RFC 2991
+also points out that ports probably shouldn't be used as part of the
+flow key with ECMP.
 
-There's one additional patch there that removes the backlinks from G_TOPOLOGY
-ioctl. I'll be posting it in separate at the ML.
+With anycast it is even worse. Depending on how anycast is used,
+changing path may destroy a TCP connection. And without special
+treatment of ICMP, ICMP packets may hit another anycast node, causing
+PMTU to fail. Cloudflare recognized this and solved it by letting a
+user space daemon (pmtud) route ICMP packets through all paths, ensurin=
+g
+that the anycast node receives the ICMP. But a more efficient solution
+is to handle the issue within the kernel.
 
-I also added a new branch:
-	http://git.linuxtv.org/cgit.cgi/mchehab/experimental.git/log/?h=mc_next_gen_test
+It might be possible to do L4 on flows using PMTU, and while it
+is possible to extract addresses and ports from the ICMP payload, you
+can't rely the DF-bit in the ICMP payload, since it comes from the
+opposite flow (Flow A->B use PMTU while B->A doesn't). I guess you
+can technically reduce the number of possible paths to two, though.
 
-Based on the first one. It contains a hack for au0828 that exposes the tuner
-also via subdev devnode, and reduces the number of output pads of the DVB
-demux to just 5, as the default is too high to produce a .dot file that
-would be useful. Of course, this patch should never leave my experimental
-tree ;) 
-
-There are a few other from Javier there meant to allow testing the omap3isp
-on my Beaglebone (that doesn't have any sensor on it) and on his omap3
-devices.
-
-I added support at the mc_nextgen_test tool to produce Graphviz .dot
-files. It is still experimental, but it is good enough to already produce
-some useful graphs. The newest version is at:
-
-	http://git.linuxtv.org/cgit.cgi/mchehab/experimental-v4l-utils.git/log/?h=mc-next-gen
-
-I added some graphs produced by it at:
-	https://mchehab.fedorapeople.org/mc-next-gen/
+I obviously prefer the default to be L3 with ICMP handling, since I
+specifically plan to use ECMP together with anycast (albeit anycasted
+load balancers which synchronizes states, although delayed), but I also
+recognizes that anycast is a special case. Question is, it is so much a
+special case that it belongs outside the vanilla kernel?
 
 Regards,
-Mauro
+ Peter N=C3=B8rlund
+
+>=20
+> Tom
+>=20
+> > --
+> > To unsubscribe from this list: send the line "unsubscribe netdev" i=
+n
+> > the body of a message to majordomo@vger.kernel.org
+> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
