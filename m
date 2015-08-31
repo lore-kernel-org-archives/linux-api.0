@@ -1,219 +1,91 @@
-From: Hans Verkuil <hverkuil@xs4all.nl>
-Subject: Re: [PATCH v8 28/55] [media] uapi/media.h: Fix entity namespace
-Date: Mon, 31 Aug 2015 13:17:08 +0200
-Message-ID: <55E437B4.2030106@xs4all.nl>
-References: <cover.1440902901.git.mchehab@osg.samsung.com> <df9a272928de3326c7139210a1c957d35197d86e.1440902901.git.mchehab@osg.samsung.com>
+From: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+Subject: Re: [PATCH v8 38/55] [media] v4l2-subdev: use MEDIA_ENT_T_UNKNOWN
+ for new subdevs
+Date: Mon, 31 Aug 2015 13:43:16 +0200
+Message-ID: <55E43DD4.1010303@xs4all.nl>
+References: <cover.1440902901.git.mchehab@osg.samsung.com> <662a3bb2bfb02f820f4dafa0033af2cf16d273c5.1440902901.git.mchehab@osg.samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-media-owner@vger.kernel.org>
-In-Reply-To: <df9a272928de3326c7139210a1c957d35197d86e.1440902901.git.mchehab@osg.samsung.com>
-Sender: linux-media-owner@vger.kernel.org
-To: Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Linux Media Mailing List <linux-media@vger.kernel.org>
-Cc: Mauro Carvalho Chehab <mchehab@infradead.org>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, Sakari Ailus <sakari.ailus@linux.intel.com>, Hans Verkuil <hans.verkuil@cisco.com>, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <662a3bb2bfb02f820f4dafa0033af2cf16d273c5.1440902901.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, Sylwester Nawrocki <s.nawrocki-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Prabhakar Lad <prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>, Markus Elfring <elfring-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 On 08/30/2015 05:06 AM, Mauro Carvalho Chehab wrote:
-> Now that interfaces got created, we need to fix the entity
-> namespace.
+> Instead of abusing MEDIA_ENT_T_V4L2_SUBDEV, initialize
+> new subdev entities as MEDIA_ENT_T_UNKNOWN.
 > 
-> So, let's create a consistent new namespace and add backward
-> compatibility macros to keep the old namespace preserved.
+> Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+
+Acked-by: Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>
+
 > 
-> Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-> 
-> diff --git a/drivers/media/dvb-core/dvbdev.c b/drivers/media/dvb-core/dvbdev.c
-> index 14d32cdcdd47..88013d1a2c39 100644
-> --- a/drivers/media/dvb-core/dvbdev.c
-> +++ b/drivers/media/dvb-core/dvbdev.c
-> @@ -230,17 +230,17 @@ static void dvb_create_media_entity(struct dvb_device *dvbdev,
->  
->  	switch (type) {
->  	case DVB_DEVICE_FRONTEND:
-> -		dvbdev->entity->type = MEDIA_ENT_T_DEVNODE_DVB_FE;
-> +		dvbdev->entity->type = MEDIA_ENT_T_DVB_DEMOD;
->  		dvbdev->pads[0].flags = MEDIA_PAD_FL_SINK;
->  		dvbdev->pads[1].flags = MEDIA_PAD_FL_SOURCE;
->  		break;
->  	case DVB_DEVICE_DEMUX:
-> -		dvbdev->entity->type = MEDIA_ENT_T_DEVNODE_DVB_DEMUX;
-> +		dvbdev->entity->type = MEDIA_ENT_T_DVB_DEMUX;
->  		dvbdev->pads[0].flags = MEDIA_PAD_FL_SINK;
->  		dvbdev->pads[1].flags = MEDIA_PAD_FL_SOURCE;
->  		break;
->  	case DVB_DEVICE_CA:
-> -		dvbdev->entity->type = MEDIA_ENT_T_DEVNODE_DVB_CA;
-> +		dvbdev->entity->type = MEDIA_ENT_T_DVB_CA;
->  		dvbdev->pads[0].flags = MEDIA_PAD_FL_SINK;
->  		dvbdev->pads[1].flags = MEDIA_PAD_FL_SOURCE;
->  		break;
-> @@ -439,7 +439,7 @@ EXPORT_SYMBOL(dvb_unregister_device);
->  void dvb_create_media_graph(struct dvb_adapter *adap)
+> diff --git a/drivers/media/media-device.c b/drivers/media/media-device.c
+> index 659507bce63f..134fe7510195 100644
+> --- a/drivers/media/media-device.c
+> +++ b/drivers/media/media-device.c
+> @@ -435,6 +435,12 @@ int __must_check media_device_register_entity(struct media_device *mdev,
 >  {
->  	struct media_device *mdev = adap->mdev;
-> -	struct media_entity *entity, *tuner = NULL, *fe = NULL;
-> +	struct media_entity *entity, *tuner = NULL, *demod = NULL;
->  	struct media_entity *demux = NULL, *dvr = NULL, *ca = NULL;
->  	struct media_interface *intf;
+>  	int i;
 >  
-> @@ -451,26 +451,26 @@ void dvb_create_media_graph(struct dvb_adapter *adap)
->  		case MEDIA_ENT_T_V4L2_SUBDEV_TUNER:
->  			tuner = entity;
->  			break;
-> -		case MEDIA_ENT_T_DEVNODE_DVB_FE:
-> -			fe = entity;
-> +		case MEDIA_ENT_T_DVB_DEMOD:
-> +			demod = entity;
->  			break;
-> -		case MEDIA_ENT_T_DEVNODE_DVB_DEMUX:
-> +		case MEDIA_ENT_T_DVB_DEMUX:
->  			demux = entity;
->  			break;
-> -		case MEDIA_ENT_T_DEVNODE_DVB_DVR:
-> +		case MEDIA_ENT_T_DVB_TSOUT:
->  			dvr = entity;
->  			break;
-> -		case MEDIA_ENT_T_DEVNODE_DVB_CA:
-> +		case MEDIA_ENT_T_DVB_CA:
->  			ca = entity;
->  			break;
->  		}
->  	}
->  
-> -	if (tuner && fe)
-> -		media_create_pad_link(tuner, 0, fe, 0, 0);
-> +	if (tuner && demod)
-> +		media_create_pad_link(tuner, 0, demod, 0, 0);
->  
-> -	if (fe && demux)
-> -		media_create_pad_link(fe, 1, demux, 0, MEDIA_LNK_FL_ENABLED);
-> +	if (demod && demux)
-> +		media_create_pad_link(demod, 1, demux, 0, MEDIA_LNK_FL_ENABLED);
->  
->  	if (demux && dvr)
->  		media_create_pad_link(demux, 1, dvr, 0, MEDIA_LNK_FL_ENABLED);
+> +	if (entity->type == MEDIA_ENT_T_V4L2_SUBDEV_UNKNOWN ||
+> +	    entity->type == MEDIA_ENT_T_UNKNOWN)
+> +		dev_warn(mdev->dev,
+> +			 "Entity type for entity %s was not initialized!\n",
+> +			 entity->name);
+> +
+>  	/* Warn if we apparently re-register an entity */
+>  	WARN_ON(entity->graph_obj.mdev != NULL);
+>  	entity->graph_obj.mdev = mdev;
+> diff --git a/drivers/media/v4l2-core/v4l2-subdev.c b/drivers/media/v4l2-core/v4l2-subdev.c
+> index 60da43772de9..b3bcc8253182 100644
+> --- a/drivers/media/v4l2-core/v4l2-subdev.c
+> +++ b/drivers/media/v4l2-core/v4l2-subdev.c
+> @@ -584,7 +584,7 @@ void v4l2_subdev_init(struct v4l2_subdev *sd, const struct v4l2_subdev_ops *ops)
+>  	sd->host_priv = NULL;
+>  #if defined(CONFIG_MEDIA_CONTROLLER)
+>  	sd->entity.name = sd->name;
+> -	sd->entity.type = MEDIA_ENT_T_V4L2_SUBDEV;
+> +	sd->entity.type = MEDIA_ENT_T_V4L2_SUBDEV_UNKNOWN;
+>  #endif
+>  }
+>  EXPORT_SYMBOL(v4l2_subdev_init);
 > diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
-> index aca828709bad..3bbda409353f 100644
+> index 3bbda409353f..44b84aae8b02 100644
 > --- a/include/uapi/linux/media.h
 > +++ b/include/uapi/linux/media.h
-> @@ -42,31 +42,71 @@ struct media_device_info {
+> @@ -42,6 +42,14 @@ struct media_device_info {
 >  
 >  #define MEDIA_ENT_ID_FLAG_NEXT		(1 << 31)
 >  
-> +/*
-> + * Base numbers for entity types
-> + *
-> + * Please notice that the huge gap of 16 bits for each base is overkill!
-> + * 8 bits is more than enough to avoid starving entity types for each
-> + * subsystem.
-> + *
-> + * However, It is kept this way just to avoid binary breakages with the
-> + * namespace provided on legacy versions of this header.
-> + */
-> +#define MEDIA_ENT_T_DVB_BASE		0x00000001
-
-I would change this to 0x00000000, see follow-up comment later for why.
-
-> +#define MEDIA_ENT_T_V4L2_BASE		0x00010000
-> +#define MEDIA_ENT_T_V4L2_SUBDEV_BASE	0x00020000
+> +/* Used values for media_entity_desc::type */
 > +
 > +/*
-> + * V4L2 entities - Those are used for DMA (mmap/DMABUF) and
-> + *	read()/write() data I/O associated with the V4L2 devnodes.
+> + * Initial value when an entity is created
+> + * Drivers should change it to something useful
 > + */
-> +#define MEDIA_ENT_T_V4L2_VIDEO		(MEDIA_ENT_T_V4L2_BASE + 1)
+> +#define MEDIA_ENT_T_UNKNOWN	0x00000000
+> +
+>  /*
+>   * Base numbers for entity types
+>   *
+> @@ -77,6 +85,15 @@ struct media_device_info {
+>  #define MEDIA_ENT_T_V4L2_SWRADIO	(MEDIA_ENT_T_V4L2_BASE + 7)
+>  
+>  /* V4L2 Sub-device entities */
+> +
 > +	/*
-> +	 * Please notice that numbers between MEDIA_ENT_T_V4L2_BASE + 2 and
-> +	 * MEDIA_ENT_T_V4L2_BASE + 4 can't be used, as those values used
-> +	 * to be declared for FB, ALSA and DVB entities.
-> +	 * As those values were never actually used in practice, we're just
-> +	 * adding them as backward compatibility macros and keeping the
-> +	 * numberspace clean here. This way, we avoid breaking compilation,
-> +	 * in the case of having some userspace application using the old
-> +	 * symbols.
+> +	 * Subdevs are initialized with MEDIA_ENT_T_V4L2_SUBDEV_UNKNOWN,
+> +	 * in order to preserve backward compatibility.
+> +	 * Drivers should change to the proper subdev type before
+> +	 * registering the entity.
 > +	 */
-> +#define MEDIA_ENT_T_V4L2_VBI		(MEDIA_ENT_T_V4L2_BASE + 5)
-> +	/* for TX radio, as RX is done via either ALSA or wire */
-> +#define MEDIA_ENT_T_V4L2_RADIO		(MEDIA_ENT_T_V4L2_BASE + 6)
-
-But TX is also done via either ALSA or wire. This shouldn't be needed.
-
-> +#define MEDIA_ENT_T_V4L2_SWRADIO	(MEDIA_ENT_T_V4L2_BASE + 7)
-
-How about MEDIA_ENT_T_DVB_IO_* and MEDIA_ENT_T_V4L2_IO_* to indicate that
-this entity deals with data I/O?
-
-Or, perhaps even better, MEDIA_ENT_T_IO_DVB_ and MEDIA_ENT_T_IO_V4L2_.
-
-Entities should do something, and just saying 'V4L2_VIDEO' doesn't really convey
-that meaning. It is also very easy to confuse with INTF_T_V4L_* types. BTW, we
-should decide whether V4L2 or V4L is used here (interfaces now use V4L, entities
-V4L2). Since entities already use V4L2, I think the interface defines should
-use V4L2 as well.
-
+> +#define MEDIA_ENT_T_V4L2_SUBDEV_UNKNOWN	MEDIA_ENT_T_V4L2_SUBDEV_BASE
 > +
-> +/* V4L2 Sub-device entities */
-> +#define MEDIA_ENT_T_V4L2_SUBDEV_SENSOR	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 1)
-> +#define MEDIA_ENT_T_V4L2_SUBDEV_FLASH	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 2)
-> +#define MEDIA_ENT_T_V4L2_SUBDEV_LENS	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 3)
-> +	/* A converter of analogue video to its digital representation. */
-> +#define MEDIA_ENT_T_V4L2_SUBDEV_DECODER	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 4)
-> +	/* Tuner entity is actually both V4L2 and DVB subdev */
-> +#define MEDIA_ENT_T_V4L2_SUBDEV_TUNER	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 5)
-> +
-> +/* DVB entities */
-> +#define MEDIA_ENT_T_DVB_DEMOD		(MEDIA_ENT_T_DVB_BASE)
-
-After changing DVB_BASE to 0, change this to DVB_BASE + 1, and adjust the other DVB
-entity types accordingly.
-
-This keeps the base defines consistent (i.e. the lower 16 bits are always 0).
-
-It surprised me when reading this patch, so I'm probably not the only one.
-
-Regards,
-
-	Hans
-
-> +#define MEDIA_ENT_T_DVB_DEMUX		(MEDIA_ENT_T_DVB_BASE + 1)
-> +#define MEDIA_ENT_T_DVB_TSOUT		(MEDIA_ENT_T_DVB_BASE + 2)
-> +#define MEDIA_ENT_T_DVB_CA		(MEDIA_ENT_T_DVB_BASE + 3)
-> +#define MEDIA_ENT_T_DVB_NET_DECAP	(MEDIA_ENT_T_DVB_BASE + 4)
-> +
-> +/* Legacy symbols used to avoid userspace compilation breakages */
->  #define MEDIA_ENT_TYPE_SHIFT		16
->  #define MEDIA_ENT_TYPE_MASK		0x00ff0000
->  #define MEDIA_ENT_SUBTYPE_MASK		0x0000ffff
->  
-> -#define MEDIA_ENT_T_DEVNODE		(1 << MEDIA_ENT_TYPE_SHIFT)
-> -#define MEDIA_ENT_T_DEVNODE_V4L		(MEDIA_ENT_T_DEVNODE + 1)
-> +#define MEDIA_ENT_T_DEVNODE		MEDIA_ENT_T_V4L2_BASE
-> +#define MEDIA_ENT_T_V4L2_SUBDEV		MEDIA_ENT_T_V4L2_SUBDEV_BASE
-> +
-> +#define MEDIA_ENT_T_DEVNODE_V4L		MEDIA_ENT_T_V4L2_VIDEO
-> +
->  #define MEDIA_ENT_T_DEVNODE_FB		(MEDIA_ENT_T_DEVNODE + 2)
->  #define MEDIA_ENT_T_DEVNODE_ALSA	(MEDIA_ENT_T_DEVNODE + 3)
-> -#define MEDIA_ENT_T_DEVNODE_DVB_FE	(MEDIA_ENT_T_DEVNODE + 4)
-> -#define MEDIA_ENT_T_DEVNODE_DVB_DEMUX	(MEDIA_ENT_T_DEVNODE + 5)
-> -#define MEDIA_ENT_T_DEVNODE_DVB_DVR	(MEDIA_ENT_T_DEVNODE + 6)
-> -#define MEDIA_ENT_T_DEVNODE_DVB_CA	(MEDIA_ENT_T_DEVNODE + 7)
-> -#define MEDIA_ENT_T_DEVNODE_DVB_NET	(MEDIA_ENT_T_DEVNODE + 8)
-> +#define MEDIA_ENT_T_DEVNODE_DVB		(MEDIA_ENT_T_DEVNODE + 4)
->  
-> -/* Legacy symbol. Use it to avoid userspace compilation breakages */
-> -#define MEDIA_ENT_T_DEVNODE_DVB		MEDIA_ENT_T_DEVNODE_DVB_FE
-> -
-> -#define MEDIA_ENT_T_V4L2_SUBDEV		(2 << MEDIA_ENT_TYPE_SHIFT)
-> -#define MEDIA_ENT_T_V4L2_SUBDEV_SENSOR	(MEDIA_ENT_T_V4L2_SUBDEV + 1)
-> -#define MEDIA_ENT_T_V4L2_SUBDEV_FLASH	(MEDIA_ENT_T_V4L2_SUBDEV + 2)
-> -#define MEDIA_ENT_T_V4L2_SUBDEV_LENS	(MEDIA_ENT_T_V4L2_SUBDEV + 3)
-> -/* A converter of analogue video to its digital representation. */
-> -#define MEDIA_ENT_T_V4L2_SUBDEV_DECODER	(MEDIA_ENT_T_V4L2_SUBDEV + 4)
-> -
-> -#define MEDIA_ENT_T_V4L2_SUBDEV_TUNER	(MEDIA_ENT_T_V4L2_SUBDEV + 5)
-> +/* Entity types */
->  
->  #define MEDIA_ENT_FL_DEFAULT		(1 << 0)
->  
+>  #define MEDIA_ENT_T_V4L2_SUBDEV_SENSOR	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 1)
+>  #define MEDIA_ENT_T_V4L2_SUBDEV_FLASH	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 2)
+>  #define MEDIA_ENT_T_V4L2_SUBDEV_LENS	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 3)
 > 
