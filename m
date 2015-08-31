@@ -1,56 +1,58 @@
-From: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Subject: Re: [RFC v6 10/40] richacl: Permission check algorithm
-Date: Mon, 31 Aug 2015 11:23:04 -0400
-Message-ID: <20150831152304.GE17812@fieldses.org>
-References: <1438689218-6921-1-git-send-email-agruenba@redhat.com>
- <1438689218-6921-11-git-send-email-agruenba@redhat.com>
- <20150828214917.GC23326@fieldses.org>
- <CAHpGcMJT0kQyrvCkur0csCmRn-LwUOJcRWqAfLaqCpNd2b8UXA@mail.gmail.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH 1/9] powerpc: allocate sys_membarrier system call
+ number
+Date: Mon, 31 Aug 2015 15:32:54 +0000 (UTC)
+Message-ID: <131898944.32688.1441035174419.JavaMail.zimbra@efficios.com>
+References: <1440698215-8355-1-git-send-email-mathieu.desnoyers@efficios.com> <1440698215-8355-2-git-send-email-mathieu.desnoyers@efficios.com> <1441004045.5735.8.camel@ellerman.id.au>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAHpGcMJT0kQyrvCkur0csCmRn-LwUOJcRWqAfLaqCpNd2b8UXA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas =?utf-8?Q?Gr=C3=BCnbacher?= <andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1441004045.5735.8.camel@ellerman.id.au>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michael Ellerman <mpe@ellerman.id.au>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-api <linux-api@vger.kernel.org>, linux-kernel@vger.kernel.org, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Aug 29, 2015 at 12:06:22AM +0200, Andreas Gr=C3=BCnbacher wrote=
-:
-> 2015-08-28 23:49 GMT+02:00 J. Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>:
-> > On Tue, Aug 04, 2015 at 01:53:08PM +0200, Andreas Gruenbacher wrote=
-:
-> >> +             /*
-> >> +              * We don't care which class the process is in when =
-the acl is
-> >> +              * not masked.
-> >> +              */
-> >> +             in_owner_or_group_class =3D 1;
-> >
-> > So why bother setting it at all, then?  Oh, I see, it lets you brea=
-k out
-> > of the loop below earlier.  OK.
->=20
-> Comment changed to:
->=20
->                 /*
->                  * When the acl is not masked, there is no need to de=
-termine if
->                  * the process is in the group class and we can earli=
-er break
->                  * out of the loop below.
->                  */
+----- On Aug 31, 2015, at 2:54 AM, Michael Ellerman mpe@ellerman.id.au wrote:
 
-makes sense, just replace "earlier break out" by "break out earlier".
+> On Thu, 2015-08-27 at 13:56 -0400, Mathieu Desnoyers wrote:
+>> Allow it to be used from SPU, since it should not have unwanted
+>> side-effects.
+>> 
+>> [ Untested on this architecture. To try it out: fetch linux-next/akpm,
+>>   apply this patch, build/run a membarrier-enabled kernel, and do make
+>>   kselftest. ]
+>> 
+>> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+>> CC: Andrew Morton <akpm@linux-foundation.org>
+>> CC: linux-api@vger.kernel.org
+>> CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+>> CC: Paul Mackerras <paulus@samba.org>
+>> CC: Michael Ellerman <mpe@ellerman.id.au>
+>> CC: linuxppc-dev@lists.ozlabs.org
+> 
+> Thanks.
+> 
+> I get:
+> 
+> $ ./membarrier_test
+> membarrier MEMBARRIER_CMD_QUERY syscall available.
+> membarrier: MEMBARRIER_CMD_SHARED success.
+> membarrier: tests done!
+> 
+> Which looks good.
+> 
+> Assuming the membarrier support hits 4.3, I'll take this via my tree for 4.3
+> also.
 
->=20
-> > Patch makes sense to me, ACK.
->=20
-> Thanks,
-> Andreas
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Great! I'll take care of your comments about self-tests,
+
+Thanks,
+
+Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
