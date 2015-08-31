@@ -1,47 +1,173 @@
-From: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Subject: Re: [PATCH v8 40/55] [media] media.h: don't use legacy entity macros
- at Kernel
-Date: Mon, 31 Aug 2015 13:44:21 +0200
-Message-ID: <55E43E15.6060302@xs4all.nl>
-References: <cover.1440902901.git.mchehab@osg.samsung.com> <720b750e2738f8c70535b01c9c3a3dddf044db69.1440902901.git.mchehab@osg.samsung.com>
+From: Hans Verkuil <hverkuil@xs4all.nl>
+Subject: Re: [PATCH v8 44/55] [media] uapi/media.h: Add MEDIA_IOC_G_TOPOLOGY
+ ioctl
+Date: Mon, 31 Aug 2015 14:00:42 +0200
+Message-ID: <55E441EA.4020206@xs4all.nl>
+References: <cover.1440902901.git.mchehab@osg.samsung.com> <ed72ef83c937fe6f665001eb9d6a54f25f253391.1440902901.git.mchehab@osg.samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <720b750e2738f8c70535b01c9c3a3dddf044db69.1440902901.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-media-owner@vger.kernel.org>
+In-Reply-To: <ed72ef83c937fe6f665001eb9d6a54f25f253391.1440902901.git.mchehab@osg.samsung.com>
+Sender: linux-media-owner@vger.kernel.org
+To: Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Linux Media Mailing List <linux-media@vger.kernel.org>
+Cc: Mauro Carvalho Chehab <mchehab@infradead.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 On 08/30/2015 05:06 AM, Mauro Carvalho Chehab wrote:
-> Put the legacy MEDIA_ENT_* macros under a #ifndef __KERNEL__,
-> in order to be sure that none of those old symbols are used
-> inside the Kernel.
+> Add a new ioctl that will report the entire topology on
+> one go.
 > 
-> Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-
-Acked-by: Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>
-
+> Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
 > 
+> diff --git a/include/media/media-entity.h b/include/media/media-entity.h
+> index 756e1960fd7f..358a0c6b1f86 100644
+> --- a/include/media/media-entity.h
+> +++ b/include/media/media-entity.h
+> @@ -181,6 +181,8 @@ struct media_interface {
+>   */
+>  struct media_intf_devnode {
+>  	struct media_interface		intf;
+> +
+> +	/* Should match the fields at media_v2_intf_devnode */
+>  	u32				major;
+>  	u32				minor;
+>  };
 > diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
-> index cd486fc25f1e..4186891e5e81 100644
+> index 4186891e5e81..fa0b68e670b0 100644
 > --- a/include/uapi/linux/media.h
 > +++ b/include/uapi/linux/media.h
-> @@ -107,6 +107,7 @@ struct media_device_info {
->  #define MEDIA_ENT_T_DVB_CA		(MEDIA_ENT_T_DVB_BASE + 3)
->  #define MEDIA_ENT_T_DVB_NET_DECAP	(MEDIA_ENT_T_DVB_BASE + 4)
+> @@ -251,11 +251,94 @@ struct media_links_enum {
+>  #define MEDIA_INTF_T_ALSA_RAWMIDI       (MEDIA_INTF_T_ALSA_BASE + 4)
+>  #define MEDIA_INTF_T_ALSA_HWDEP         (MEDIA_INTF_T_ALSA_BASE + 5)
 >  
-> +#ifndef __KERNEL__
->  /* Legacy symbols used to avoid userspace compilation breakages */
->  #define MEDIA_ENT_TYPE_SHIFT		16
->  #define MEDIA_ENT_TYPE_MASK		0x00ff0000
-> @@ -120,6 +121,7 @@ struct media_device_info {
->  #define MEDIA_ENT_T_DEVNODE_FB		(MEDIA_ENT_T_DEVNODE + 2)
->  #define MEDIA_ENT_T_DEVNODE_ALSA	(MEDIA_ENT_T_DEVNODE + 3)
->  #define MEDIA_ENT_T_DEVNODE_DVB		(MEDIA_ENT_T_DEVNODE + 4)
-> +#endif
+> -/* TBD: declare the structs needed for the new G_TOPOLOGY ioctl */
+> +/*
+> + * MC next gen API definitions
+> + *
+> + * NOTE: The declarations below are close to the MC RFC for the Media
+> + *	 Controller, the next generation. Yet, there are a few adjustments
+> + *	 to do, as we want to be able to have a functional API before
+> + *	 the MC properties change. Those will be properly marked below.
+> + *	 Please also notice that I removed "num_pads", "num_links",
+> + *	 from the proposal, as a proper userspace application will likely
+> + *	 use lists for pads/links, just as we intend todo in Kernelspace.
+
+s/todo/to do/
+
+> + *	 The API definition should be freed from fields that are bound to
+> + *	 some specific data structure.
+> + *
+> + * FIXME: Currently, I opted to name the new types as "media_v2", as this
+> + *	  won't cause any conflict with the Kernelspace namespace, nor with
+> + *	  the previous kAPI media_*_desc namespace. This can be changed
+> + *	  latter, before the adding this API upstream.
+
+s/latter/later/ :-)
+
+I think this comment belongs to the commit log and not in this header.
+
+> + */
+> +
+> +
+> +#define MEDIA_NEW_LNK_FL_ENABLED		MEDIA_LNK_FL_ENABLED
+> +#define MEDIA_NEW_LNK_FL_IMMUTABLE		MEDIA_LNK_FL_IMMUTABLE
+> +#define MEDIA_NEW_LNK_FL_DYNAMIC		MEDIA_NEW_FL_DYNAMIC
+> +#define MEDIA_NEW_LNK_FL_INTERFACE_LINK		(1 << 3)
+
+Shouldn't this be MEDIA_V2_ instead of MEDIA_NEW_?
+
+Do we need the INTERFACE_LINK flag? You can deduce it by checking the
+ID type.
+
+I don't have a clear preference one way or another, just wondering about the
+reason for adding it.
+
+> +
+> +struct media_v2_entity {
+> +	__u32 id;
+> +	char name[64];		/* FIXME: move to a property? (RFC says so) */
+> +	__u16 reserved[14];
+> +};
+> +
+> +/* Should match the specific fields at media_intf_devnode */
+> +struct media_v2_intf_devnode {
+> +	__u32 major;
+> +	__u32 minor;
+> +};
+> +
+> +struct media_v2_interface {
+> +	__u32 id;
+> +	__u32 intf_type;
+> +	__u32 flags;
+> +	__u32 reserved[9];
+> +
+> +	union {
+> +		struct media_v2_intf_devnode devnode;
+> +		__u32 raw[16];
+> +	};
+> +};
+> +
+> +struct media_v2_pad {
+> +	__u32 id;
+> +	__u32 entity_id;
+> +	__u32 flags;
+> +	__u16 reserved[9];
+> +};
+> +
+> +struct media_v2_link {
+> +    __u32 id;
+> +    __u32 source_id;
+> +    __u32 sink_id;
+
+Like in media_link I would use a union here as well to be able to refer to
+source/sink_id and entity/interface_id.
+
+> +    __u32 flags;
+> +    __u32 reserved[5];
+> +};
+> +
+> +struct media_v2_topology {
+> +	__u32 topology_version;
+> +
+> +	__u32 num_entities;
+> +	struct media_v2_entity *entities;
+> +
+> +	__u32 num_interfaces;
+> +	struct media_v2_interface *interfaces;
+> +
+> +	__u32 num_pads;
+> +	struct media_v2_pad *pads;
+> +
+> +	__u32 num_links;
+> +	struct media_v2_link *links;
+> +
+> +	__u32 reserved[64];
+
+As mentioned before: use this instead to prevent horrible 32/64 bit arch
+compat code:
+
+	struct {
+		__u32 reserved_num;
+		void *reserved_ptr;
+	} reserved_types[16];
+	__u32 reserved[8];
+
+Sizes for these arrays are TBD.
+
+> +};
+> +
+> +/* ioctls */
 >  
->  /* Entity types */
+>  #define MEDIA_IOC_DEVICE_INFO		_IOWR('|', 0x00, struct media_device_info)
+>  #define MEDIA_IOC_ENUM_ENTITIES		_IOWR('|', 0x01, struct media_entity_desc)
+>  #define MEDIA_IOC_ENUM_LINKS		_IOWR('|', 0x02, struct media_links_enum)
+>  #define MEDIA_IOC_SETUP_LINK		_IOWR('|', 0x03, struct media_link_desc)
+> +#define MEDIA_IOC_G_TOPOLOGY		_IOWR('|', 0x04, struct media_v2_topology)
 >  
+>  #endif /* __LINUX_MEDIA_H */
 > 
+
+Regards,
+
+	Hans
