@@ -1,83 +1,109 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH 2/3] selftests: add membarrier syscall test
-Date: Tue, 1 Sep 2015 11:32:27 -0700
-Message-ID: <CALCETrWpSErLUES1Wgs5+Ov8F0c-ohUwkSHFMRMZPhx-E4o2cQ@mail.gmail.com>
-References: <1436561912-24365-1-git-send-email-mathieu.desnoyers@efficios.com>
- <1436561912-24365-3-git-send-email-mathieu.desnoyers@efficios.com>
- <1441004040.5735.7.camel@ellerman.id.au> <1071313434.33305.1441127478843.JavaMail.zimbra@efficios.com>
+From: bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org (J. Bruce Fields)
+Subject: Re: [RFC v6 09/40] richacl: Update the file masks in chmod()
+Date: Tue, 1 Sep 2015 17:38:16 -0400
+Message-ID: <20150901213816.GH10468@fieldses.org>
+References: <1438689218-6921-1-git-send-email-agruenba@redhat.com>
+ <1438689218-6921-10-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1071313434.33305.1441127478843.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1438689218-6921-10-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Andreas Gruenbacher <andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Sep 1, 2015 at 10:11 AM, Mathieu Desnoyers
-<mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
-> ----- On Aug 31, 2015, at 2:54 AM, Michael Ellerman mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org wrote:
->
->> On Fri, 2015-07-10 at 16:58 -0400, Mathieu Desnoyers wrote:
->>> From: Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->>>
->>> This patch adds a self test for the membarrier system call.
->>>
->>> CC: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
->>
->> Sorry I only just saw this due to some over zealous filtering on my end.
->>
->>
->>> diff --git a/tools/testing/selftests/membarrier/Makefile
->>> b/tools/testing/selftests/membarrier/Makefile
->>> new file mode 100644
->>> index 0000000..877a503
->>> --- /dev/null
->>> +++ b/tools/testing/selftests/membarrier/Makefile
->>> @@ -0,0 +1,11 @@
->>> +CFLAGS += -g -I../../../../usr/include/
->>> +
->>> +all:
->>> +    $(CC) $(CFLAGS) membarrier_test.c -o membarrier_test
->>>
->>> +TEST_PROGS := membarrier_test
->>
->> You don't need to specify the rule, the implict one will do exactly the same,
->> so you can just do:
->>
->> TEST_PROGS := membarrier_test
->>
->> all: $(TEST_PROGS)
->>
->>> diff --git a/tools/testing/selftests/membarrier/membarrier_test.c
->>> b/tools/testing/selftests/membarrier/membarrier_test.c
->>> new file mode 100644
->>> index 0000000..3c9f217
->>> --- /dev/null
->>> +++ b/tools/testing/selftests/membarrier/membarrier_test.c
->>> @@ -0,0 +1,71 @@
->>> +#define _GNU_SOURCE
->>> +#define __EXPORTED_HEADERS__
->>
->> Why are you exporting that?
->>
->> I suspect to try and get around the "Attempt to use kernel headers from user
->> space" warning.
->>
->> But you're correctly building against the installed headers, not the kernel
->> headers, so you don't need to do that.
->
-> Just to make sure I understand: should we expect that
-> everyone will issue "make headers_install" on their system
-> before doing a make kselftest ?
->
-> I see that a few selftests (e.g. memfd) are adding the
-> source tree include paths to the compiler include paths,
-> which I guess is to ensure that the kselftest will
-> work even if the system headers are not up to date.
+On Tue, Aug 04, 2015 at 01:53:07PM +0200, Andreas Gruenbacher wrote:
+> Doing a chmod() sets the file mode, which includes the file permission
+> bits.  When a file has a richacl, the permissions that the richacl
+> grants need to be limited to what the new file permission bits allow.
+> 
+> This is done by setting the file masks in the richacl to what the file
+> permission bits map to.  The richacl access check algorithm takes the
+> file masks into account, which ensures that the richacl cannot grant too
+> many permissions.
+> 
+> It is possible to explicitly add permissions to the file masks which go
+> beyond what the file permission bits can grant (like the
+> RICHACE_WRITE_ACL permission).  The POSIX.1 standard calls this an
+> alternate file access control mechanism.  A subsequent chmod() would
+> ensure that those permissions are disabled again.
+> 
+> Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> ---
+>  fs/richacl_base.c       | 40 ++++++++++++++++++++++++++++++++++++++++
+>  include/linux/richacl.h |  1 +
+>  2 files changed, 41 insertions(+)
+> 
+> diff --git a/fs/richacl_base.c b/fs/richacl_base.c
+> index 8426600..fd81158 100644
+> --- a/fs/richacl_base.c
+> +++ b/fs/richacl_base.c
+> @@ -338,3 +338,43 @@ restart:
+>  	acl->a_flags &= ~(RICHACL_WRITE_THROUGH | RICHACL_MASKED);
+>  }
+>  EXPORT_SYMBOL_GPL(richacl_compute_max_masks);
+> +
+> +/**
+> + * richacl_chmod  -  update the file masks to reflect the new mode
+> + * @mode:	new file permission bits including the file type
+> + *
+> + * Return a copy of @acl where the file masks have been replaced by the file
+> + * masks corresponding to the file permission bits in @mode, or returns @acl
+> + * itself if the file masks are already up to date.  Takes over a reference
+> + * to @acl.
+> + */
+> +struct richacl *
+> +richacl_chmod(struct richacl *acl, mode_t mode)
+> +{
+> +	unsigned int x = S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
+> +	unsigned int owner_mask, group_mask, other_mask;
+> +	struct richacl *clone;
+> +
+> +	owner_mask = richacl_mode_to_mask(mode >> 6) & ~x;
+> +	group_mask = richacl_mode_to_mask(mode >> 3) & ~x;
+> +	other_mask = richacl_mode_to_mask(mode)      & ~x;
+> +
+> +	if (acl->a_owner_mask == owner_mask &&
+> +	    acl->a_group_mask == group_mask &&
+> +	    acl->a_other_mask == other_mask &&
+> +	    (acl->a_flags & RICHACL_MASKED))
 
-It would be really nice if there were a clean way for selftests to
-include the kernel headers.  Perhaps make should build the exportable
-headers somewhere as a dependency of kselftests.
+Do you need to require WRITE_THROUGH here too?
 
---Andy
+--b.
+
+> +		return acl;
+> +
+> +	clone = richacl_clone(acl, GFP_KERNEL);
+> +	richacl_put(acl);
+> +	if (!clone)
+> +		return ERR_PTR(-ENOMEM);
+> +
+> +	clone->a_flags |= (RICHACL_WRITE_THROUGH | RICHACL_MASKED);
+> +	clone->a_owner_mask = owner_mask;
+> +	clone->a_group_mask = group_mask;
+> +	clone->a_other_mask = other_mask;
+> +
+> +	return clone;
+> +}
+> +EXPORT_SYMBOL_GPL(richacl_chmod);
+> diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+> index 3d719db..8df6d93 100644
+> --- a/include/linux/richacl.h
+> +++ b/include/linux/richacl.h
+> @@ -304,5 +304,6 @@ extern int richacl_masks_to_mode(const struct richacl *);
+>  extern unsigned int richacl_mode_to_mask(mode_t);
+>  extern unsigned int richacl_want_to_mask(unsigned int);
+>  extern void richacl_compute_max_masks(struct richacl *, kuid_t);
+> +extern struct richacl *richacl_chmod(struct richacl *, mode_t);
+>  
+>  #endif /* __RICHACL_H */
+> -- 
+> 2.5.0
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
