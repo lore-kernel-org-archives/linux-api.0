@@ -1,103 +1,93 @@
-From: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
-Subject: Re: [PATCH v2 0/3] SysFS driver for QEMU fw_cfg device
-Date: Tue, 1 Sep 2015 12:11:44 -0400
-Message-ID: <20150901161144.GB13375@HEDWIG.INI.CMU.EDU>
-References: <cover.1439315079.git.somlo@cmu.edu>
- <1439977109-20314-1-git-send-email-ard.biesheuvel@linaro.org>
- <CAKv+Gu-BOKTHb24LnemKmvCwZn0W-NOT=avY94wkkRTx2ViW=Q@mail.gmail.com>
- <20150819204915.GA6164@GLSMBP.INI.CMU.EDU>
- <55DE0227.8090905@codeaurora.org>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [PATCH 2/3] selftests: add membarrier syscall test
+Date: Tue, 1 Sep 2015 17:11:18 +0000 (UTC)
+Message-ID: <1071313434.33305.1441127478843.JavaMail.zimbra@efficios.com>
+References: <1436561912-24365-1-git-send-email-mathieu.desnoyers@efficios.com> <1436561912-24365-3-git-send-email-mathieu.desnoyers@efficios.com> <1441004040.5735.7.camel@ellerman.id.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <55DE0227.8090905-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+In-Reply-To: <1441004040.5735.7.camel-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
-Cc: Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Richard W.M. Jones" <rjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jordan Justen <jordan.l.justen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, QEMU Developers <qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>, gleb-RmZWMc9puTNJc61us3aD9laTQe2KTcn/@public.gmane.org, Matt Fleming <matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, kernelnewbies-7JyXY6prKcjpASu1u0TL5ti2O/JbrIOy@public.gmane.org, Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Laszlo Ersek <lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org" <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paul-DWxLp4Yu+b8AvxtiuMwx3w@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Leif Lindholm <leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Christopher,
+----- On Aug 31, 2015, at 2:54 AM, Michael Ellerman mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org wrote:
 
-On Wed, Aug 26, 2015 at 02:15:03PM -0400, Christopher Covington wrote:
-> On 08/19/2015 04:49 PM, Gabriel L. Somlo wrote:
-> > On Wed, Aug 19, 2015 at 11:42:02AM +0200, Ard Biesheuvel wrote:
-> >> On 19 August 2015 at 11:38, Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
-> >>> From: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
-> >>>> Several different architectures supported by QEMU are set up with a
-> >>>> "firmware configuration" (fw_cfg) device, used to pass configuration
-> >>>> "blobs" into the guest by the host running QEMU.
-> >>>>
-> >>>> Historically, these config blobs were mostly of interest to the guest
-> >>>> BIOS, but since QEMU v2.4 it is possible to insert arbitrary blobs via
-> >>>> the command line, which makes them potentially interesting to userspace
-> >>>> (e.g. for passing early boot environment variables, etc.).
-> >>>>
-> >>>
-> >>> Does 'potentially interesting' mean you have a use case? Could you elaborate?
-> > 
-> > My personal one would be something like:
-> > 
-> > cat > guestinfo.txt << EOT
-> >   KEY1="val1"
-> >   KEY2="val2"
-> >   ...
-> > EOT
-> > 
-> > qemu-system-x86_64 ... -fw-cfg name="opt/guestinfo",file=./guestinfo.txt ...
-> > 
-> > Then, from inside the guest:
-> > 
-> >   . /sys/firmware/qemu_fw_cfg/by_name/opt/guestinfo/raw
-> > 
-> >   do_something_with $KEY1 $KEY2
-> >   ...
-> > 
-> > But I'm thinking this is only one of the many positive things one
-> > could do with the ability to access random host-supplied blobs from
-> > guest userspace :)
+> On Fri, 2015-07-10 at 16:58 -0400, Mathieu Desnoyers wrote:
+>> From: Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>> 
+>> This patch adds a self test for the membarrier system call.
+>> 
+>> CC: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 > 
-> I do this with kernel parameters:
+> Sorry I only just saw this due to some over zealous filtering on my end.
 > 
-> host:
-> qemu-system-aarch64 -append="KEY1=val1 KEY2=val2"
 > 
-> guest:
-> KEY1=`sed -nr s/.*KEY1=([^ ]+).*/\1/ /proc/cmdline`
-> KEY2=`sed -nr s/.*KEY2=([^ ]+).*/\1/ /proc/cmdline`
+>> diff --git a/tools/testing/selftests/membarrier/Makefile
+>> b/tools/testing/selftests/membarrier/Makefile
+>> new file mode 100644
+>> index 0000000..877a503
+>> --- /dev/null
+>> +++ b/tools/testing/selftests/membarrier/Makefile
+>> @@ -0,0 +1,11 @@
+>> +CFLAGS += -g -I../../../../usr/include/
+>> +
+>> +all:
+>> +	$(CC) $(CFLAGS) membarrier_test.c -o membarrier_test
+>>
+>> +TEST_PROGS := membarrier_test
 > 
-> do_something_with $KEY1 $KEY2
+> You don't need to specify the rule, the implict one will do exactly the same,
+> so you can just do:
 > 
-> In practice it's just script=hostfile, where hostfile is available to the
-> guest via a 9P passthrough filesystem mount.
+> TEST_PROGS := membarrier_test
 > 
-> While quite architecture specific, I've also previously used an
-> "angel-cmdline" tool for similar purposes. Peter's recent semihosting patches
-> support such a tool for AArch64. (On AArch32 upstream QEMU disallows
-> semihosting from userspace.)
+> all: $(TEST_PROGS)
 > 
-> Before I had 9P on all the simulators I regularly ran, I used a semihosting
-> based "angel-load" tool.
+>> diff --git a/tools/testing/selftests/membarrier/membarrier_test.c
+>> b/tools/testing/selftests/membarrier/membarrier_test.c
+>> new file mode 100644
+>> index 0000000..3c9f217
+>> --- /dev/null
+>> +++ b/tools/testing/selftests/membarrier/membarrier_test.c
+>> @@ -0,0 +1,71 @@
+>> +#define _GNU_SOURCE
+>> +#define __EXPORTED_HEADERS__
+> 
+> Why are you exporting that?
+> 
+> I suspect to try and get around the "Attempt to use kernel headers from user
+> space" warning.
+> 
+> But you're correctly building against the installed headers, not the kernel
+> headers, so you don't need to do that.
 
-Someone (maybe it was you) did suggest this during an early thread on
-the QEMU dev list. I had considered this, then thought about
-piggybacking on smbios (e.g. the type 40 "additional information"
-table), but then realized "wait, smbios is currently being inserted
-into the guest via fw_cfg, so maybe direct fw_cfg blob transfer *is*
-the most asynchronous and out-of-band way I can do this... :)
+Just to make sure I understand: should we expect that
+everyone will issue "make headers_install" on their system
+before doing a make kselftest ?
 
-True, writing a fw_cfg driver is still Linux-specific (leaves out
-Windows, which is something I still care about), but dumping a fw_cfg
-blob using 'cat' or 'cp' on linux has a certain appeal :)
-
-Yeah, the immediate use case I have personally can be worked around
-with kernel command line args, in a slightly less out-of-band, but
-still quite serviceable way. I'm thinking a fw_cfg driver is just a
-flexible way to make other use cases possible in a (IMHO) neat and
-clean way...
-
-Plus, it got me to learn about kobjects, now studying DTs on ARM, so
-it's fun ;)
+I see that a few selftests (e.g. memfd) are adding the
+source tree include paths to the compiler include paths,
+which I guess is to ensure that the kselftest will
+work even if the system headers are not up to date.
 
 Thanks,
---Gabriel
+
+Mathieu
+
+> 
+>> +
+>> +#include <linux/membarrier.h>
+>> +#include <asm-generic/unistd.h>
+> 
+> This should just be <unistd.h>
+> 
+> 
+> cheers
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
