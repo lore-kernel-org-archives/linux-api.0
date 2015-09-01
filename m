@@ -1,109 +1,86 @@
-From: bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org (J. Bruce Fields)
-Subject: Re: [RFC v6 09/40] richacl: Update the file masks in chmod()
-Date: Tue, 1 Sep 2015 17:38:16 -0400
-Message-ID: <20150901213816.GH10468@fieldses.org>
-References: <1438689218-6921-1-git-send-email-agruenba@redhat.com>
- <1438689218-6921-10-git-send-email-agruenba@redhat.com>
+From: Yinghai Lu <yinghai@kernel.org>
+Subject: Re: [PATCH 2/2] PCI: Add support for Enhanced Allocation devices
+Date: Tue, 1 Sep 2015 16:14:08 -0700
+Message-ID: <CAE9FiQUQacSJXPqv9GQJ4AF0TN7uxcBiAYHVbHwvFhEfWgWKHg@mail.gmail.com>
+References: <1440089947-2839-1-git-send-email-sean.stalley@intel.com>
+	<1440089947-2839-3-git-send-email-sean.stalley@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1438689218-6921-10-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Gruenbacher <andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-pci-owner@vger.kernel.org>
+In-Reply-To: <1440089947-2839-3-git-send-email-sean.stalley@intel.com>
+Sender: linux-pci-owner@vger.kernel.org
+To: "Sean O. Stalley" <sean.stalley@intel.com>
+Cc: Bjorn Helgaas <bhelgaas@google.com>, Rajat Jain <rajatxjain@gmail.com>, "Michael S. Tsirkin" <mst@redhat.com>, =?UTF-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5@gmail.com>, "gong.chen@linux.intel.com" <gong.chen@linux.intel.com>, "linux-pci@vger.kernel.org" <linux-pci@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 04, 2015 at 01:53:07PM +0200, Andreas Gruenbacher wrote:
-> Doing a chmod() sets the file mode, which includes the file permission
-> bits.  When a file has a richacl, the permissions that the richacl
-> grants need to be limited to what the new file permission bits allow.
-> 
-> This is done by setting the file masks in the richacl to what the file
-> permission bits map to.  The richacl access check algorithm takes the
-> file masks into account, which ensures that the richacl cannot grant too
-> many permissions.
-> 
-> It is possible to explicitly add permissions to the file masks which go
-> beyond what the file permission bits can grant (like the
-> RICHACE_WRITE_ACL permission).  The POSIX.1 standard calls this an
-> alternate file access control mechanism.  A subsequent chmod() would
-> ensure that those permissions are disabled again.
-> 
-> Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+On Thu, Aug 20, 2015 at 9:59 AM, Sean O. Stalley <sean.stalley@intel.com> wrote:
+> Add support for devices using Enhanced Allocation entries instead of BARs.
+> This patch allows the kernel to parse the EA Extended Capability structure
+> in PCI configspace and claim the BAR-equivalent resources.
+>
+> Signed-off-by: Sean O. Stalley <sean.stalley@intel.com>
 > ---
->  fs/richacl_base.c       | 40 ++++++++++++++++++++++++++++++++++++++++
->  include/linux/richacl.h |  1 +
->  2 files changed, 41 insertions(+)
-> 
-> diff --git a/fs/richacl_base.c b/fs/richacl_base.c
-> index 8426600..fd81158 100644
-> --- a/fs/richacl_base.c
-> +++ b/fs/richacl_base.c
-> @@ -338,3 +338,43 @@ restart:
->  	acl->a_flags &= ~(RICHACL_WRITE_THROUGH | RICHACL_MASKED);
->  }
->  EXPORT_SYMBOL_GPL(richacl_compute_max_masks);
+>  drivers/pci/pci.c   | 219 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  drivers/pci/pci.h   |   1 +
+>  drivers/pci/probe.c |   3 +
+>  3 files changed, 223 insertions(+)
+>
+> diff --git a/drivers/pci/pci.c b/drivers/pci/pci.c
+> index 0008c95..c8217a8 100644
+> --- a/drivers/pci/pci.c
+> +++ b/drivers/pci/pci.c
+...
 > +
-> +/**
-> + * richacl_chmod  -  update the file masks to reflect the new mode
-> + * @mode:	new file permission bits including the file type
-> + *
-> + * Return a copy of @acl where the file masks have been replaced by the file
-> + * masks corresponding to the file permission bits in @mode, or returns @acl
-> + * itself if the file masks are already up to date.  Takes over a reference
-> + * to @acl.
-> + */
-> +struct richacl *
-> +richacl_chmod(struct richacl *acl, mode_t mode)
+> +/* Read an Enhanced Allocation (EA) entry */
+> +static int pci_ea_read(struct pci_dev *dev, int offset)
 > +{
-> +	unsigned int x = S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
-> +	unsigned int owner_mask, group_mask, other_mask;
-> +	struct richacl *clone;
+...
+> +       res->name = pci_name(dev);
+> +       res->start = start;
+> +       res->end = end;
+> +       res->flags = flags;
 > +
-> +	owner_mask = richacl_mode_to_mask(mode >> 6) & ~x;
-> +	group_mask = richacl_mode_to_mask(mode >> 3) & ~x;
-> +	other_mask = richacl_mode_to_mask(mode)      & ~x;
+> +       pci_ea_claim_resource(dev, res);
 > +
-> +	if (acl->a_owner_mask == owner_mask &&
-> +	    acl->a_group_mask == group_mask &&
-> +	    acl->a_other_mask == other_mask &&
-> +	    (acl->a_flags & RICHACL_MASKED))
-
-Do you need to require WRITE_THROUGH here too?
-
---b.
-
-> +		return acl;
-> +
-> +	clone = richacl_clone(acl, GFP_KERNEL);
-> +	richacl_put(acl);
-> +	if (!clone)
-> +		return ERR_PTR(-ENOMEM);
-> +
-> +	clone->a_flags |= (RICHACL_WRITE_THROUGH | RICHACL_MASKED);
-> +	clone->a_owner_mask = owner_mask;
-> +	clone->a_group_mask = group_mask;
-> +	clone->a_other_mask = other_mask;
-> +
-> +	return clone;
+> +out:
+> +       return offset + ent_size;
 > +}
-> +EXPORT_SYMBOL_GPL(richacl_chmod);
-> diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-> index 3d719db..8df6d93 100644
-> --- a/include/linux/richacl.h
-> +++ b/include/linux/richacl.h
-> @@ -304,5 +304,6 @@ extern int richacl_masks_to_mode(const struct richacl *);
->  extern unsigned int richacl_mode_to_mask(mode_t);
->  extern unsigned int richacl_want_to_mask(unsigned int);
->  extern void richacl_compute_max_masks(struct richacl *, kuid_t);
-> +extern struct richacl *richacl_chmod(struct richacl *, mode_t);
->  
->  #endif /* __RICHACL_H */
-> -- 
-> 2.5.0
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> +
+> +/* Enhanced Allocation Initalization */
+> +void pci_ea_init(struct pci_dev *dev)
+> +{
+...
+> +
+> +       for (i = 0; i < num_ent; ++i) {
+> +               /* parse each EA entry */
+> +               dev_dbg(&dev->dev, "%s: parsing entry %i...\n", __func__, i);
+> +               offset = pci_ea_read(dev, offset);
+> +       }
+> +}
+> +
+>  static void pci_add_saved_cap(struct pci_dev *pci_dev,
+>         struct pci_cap_saved_state *new_cap)
+>  {
+
+> diff --git a/drivers/pci/probe.c b/drivers/pci/probe.c
+> index cefd636..4cadf35 100644
+> --- a/drivers/pci/probe.c
+> +++ b/drivers/pci/probe.c
+> @@ -1522,6 +1522,9 @@ static struct pci_dev *pci_scan_device(struct pci_bus *bus, int devfn)
+>
+>  static void pci_init_capabilities(struct pci_dev *dev)
+>  {
+> +       /* Enhanced Allocation */
+> +       pci_ea_init(dev);
+> +
+>         /* MSI/MSI-X list */
+>         pci_msi_init_pci_dev(dev);
+>
+
+Should not call pci_ea_claim_resource() that early.
+
+For x86 and other arches, we call
+pcibios_resource_survey/pcibios_allocate_bus_resouce/pcibios_allocate_resources
+quite late.
+
+Yinghai
