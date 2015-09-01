@@ -1,57 +1,41 @@
-From: "Mr. Lassine Diawara" <nicolemabenoi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Confidential Business Negotiation!!
-Date: Mon, 31 Aug 2015 14:54:39 -0700
-Message-ID: <CADQ41dx-9hFhbxTKngVRGiqppQNx=w8O9B_wkxqVEj4JArHRdQ@mail.gmail.com>
-Reply-To: lassinediawa3-zJpx2rpV7r/QT0dZR+AlfA@public.gmane.org
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: [RFC PATCH 1/9] powerpc: allocate sys_membarrier system call
+ number
+Date: Tue, 01 Sep 2015 11:00:43 +1000
+Message-ID: <1441069243.26730.3.camel@ellerman.id.au>
+References: <1440698215-8355-1-git-send-email-mathieu.desnoyers@efficios.com>
+	 <1440698215-8355-2-git-send-email-mathieu.desnoyers@efficios.com>
+	 <1441004045.5735.8.camel@ellerman.id.au>
+	 <131898944.32688.1441035174419.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <131898944.32688.1441035174419.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
---=20
-Greetings from Dr. Lassine Diawara.
+On Mon, 2015-08-31 at 15:32 +0000, Mathieu Desnoyers wrote:
+> ----- On Aug 31, 2015, at 2:54 AM, Michael Ellerman mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org wrote:
+> 
+> > On Thu, 2015-08-27 at 13:56 -0400, Mathieu Desnoyers wrote:
+> >> Allow it to be used from SPU, since it should not have unwanted
+> >> side-effects.
 
-Assalamu Alaikum,
+> > $ ./membarrier_test
+> > membarrier MEMBARRIER_CMD_QUERY syscall available.
+> > membarrier: MEMBARRIER_CMD_SHARED success.
+> > membarrier: tests done!
+> > 
+> > Which looks good.
+> > 
+> > Assuming the membarrier support hits 4.3, I'll take this via my tree for 4.3
+> > also.
+> 
+> Great! I'll take care of your comments about self-tests,
 
-             Permit me to inform you of my desire of going into
-business relationship with you, I know this message will sounds very
-strange to you, but I have no choice than to risk my life to choose a
-stranger like you I have never seen before. We leave in a global
-world today, and with the help of internet technology one can easily
-communicate with one  another all around the world without knowing him
-or she in person, what matters will be  the trust and the
-Information=E2=80=99s you got about the person. In this case we can und=
-erstand
-our self and work like one family.
+Thanks. None of them are critical so we can always fix them later.
 
-My Name is Dr. Lassine Diawara, the senior Auditor In charge of
-=46oreign Remittance Unit, Bank of Africa (BOA). I'm from Ouagadougou,
-Burkina Faso, West Africa. My reason for contacting you is to transfer
-an abandoned $15.5M to your account.
-
-The owner of this fund died since 2003 with his Next Of Kin. I want to
-present you to the bank as the Next of Kin/beneficiary of this fund.
-
-=46urther details of the transaction shall be forwarded to you as soon
-as I receive your return mail indicating your interest.
-
-I will like you to provide immediately the below information's, to
-enable me use it and get you next of kin application form from my
-bank.
-
-1. Full Name:......................
-2.Full Address:...................
-3.Telephone Number:...............
-4.Country:........................
-5.Occupation:.....................
-6.Age:............................
-7.Sex:............................
-
-As soon as you reply, I will let you know the next steps and
-proceduresand more details to follow in order to finalize this
-transaction immediately.
-
-Yours Sincerely,
-Dr Lassine
+cheers
