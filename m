@@ -1,44 +1,29 @@
-From: "Sean O. Stalley" <sean.stalley@intel.com>
-Subject: Re: [PATCH 2/2] PCI: Add support for Enhanced Allocation devices
-Date: Wed, 2 Sep 2015 13:01:27 -0700
-Message-ID: <20150902200127.GA3347@sean.stalley.intel.com>
-References: <1440089947-2839-1-git-send-email-sean.stalley@intel.com>
- <1440089947-2839-3-git-send-email-sean.stalley@intel.com>
- <CAE9FiQUQacSJXPqv9GQJ4AF0TN7uxcBiAYHVbHwvFhEfWgWKHg@mail.gmail.com>
- <20150902174612.GA2700@sean.stalley.intel.com>
- <CAErSpo4qZ9AXskyo86gXG1cb3AqCn-HB05nj7qT9wovZdLt2Tg@mail.gmail.com>
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC v6 02/40] vfs: Add MAY_CREATE_FILE and MAY_CREATE_DIR
+ permission flags
+Date: Wed, 2 Sep 2015 22:23:03 +0200
+Message-ID: <CAHc6FU4L3e=OuH8_22zBgC45x0z77HDq9PqrgQ02hy3+vVYhRw@mail.gmail.com>
+References: <1438689218-6921-1-git-send-email-agruenba@redhat.com>
+	<1438689218-6921-3-git-send-email-agruenba@redhat.com>
+	<20150902185300.GA3319@fieldses.org>
+	<CAHc6FU62LQ8xnEbjsBprnud36AURg_ggifFoHOVM51-9vRJeDg@mail.gmail.com>
+	<20150902192008.GB3319@fieldses.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-pci-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAErSpo4qZ9AXskyo86gXG1cb3AqCn-HB05nj7qT9wovZdLt2Tg@mail.gmail.com>
-Sender: linux-pci-owner@vger.kernel.org
-To: Bjorn Helgaas <bhelgaas@google.com>
-Cc: Yinghai Lu <yinghai@kernel.org>, Rajat Jain <rajatxjain@gmail.com>, "Michael S. Tsirkin" <mst@redhat.com>, =?utf-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5@gmail.com>, "gong.chen@linux.intel.com" <gong.chen@linux.intel.com>, "linux-pci@vger.kernel.org" <linux-pci@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150902192008.GB3319-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Cc: Andreas Gruenbacher <andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 02, 2015 at 02:25:50PM -0500, Bjorn Helgaas wrote:
-> On Wed, Sep 2, 2015 at 12:46 PM, Sean O. Stalley <sean.stalley@intel.com> wrote:
-> 
-> > Would it be better to modify pci_claim_resource() to support EA instead of adding pci_ea_claim_resource()?
-> > That way, EA entries would be claimed at the same time as traditional BARs.
-> 
-> Yes, I think so.
+2015-09-02 21:20 GMT+02:00 J. Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>:
+> Got it.  And maybe it should be obvious, but it might be worth a
+> sentence in the changelog if it's not already explained elsewhere.--b.
 
-Ok, I'll make it work this way in the next patchset.
+Let me try adding a comment. Also I'll fix the next commit which adds
+MAY_DELETE_SELF here: MAY_DELETE_SELF shouldn't go together with
+MAY_WRITE.
 
-> Why wouldn't pci_claim_resource() work as-is for EA?  I see that
-> pci_ea_get_parent_resource() defaults to iomem_resource or
-> ioport_resource if we don't find a parent, but I don't understand why
-> that's necessary.
-
-EA resources may (or may not) be in the parent's range[1].
-If the parent doesn't describe this range, we want to default to the top-level resource.
-Other than that case, I think pci_claim_resource would work as-is.
-
--Sean
-
-[1] From the EA ECN:
-For a bridge function that is permitted to implement EA based on the rules above, it is
-permitted, but not required, for the bridge function to use EA mechanisms to indicate
-resource ranges that are located behind the bridge Function (see Section 6.9.1.2).
+Thanks,
+Andreas
