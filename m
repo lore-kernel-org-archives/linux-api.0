@@ -1,56 +1,98 @@
-From: Palmer Dabbelt <palmer@dabbelt.com>
-Subject: [PATCH] Remove #ifdef CONFIG_64BIT from all asm-generic/fcntl.h
-Date: Tue,  1 Sep 2015 17:10:10 -0700
-Message-ID: <1441152610-22566-1-git-send-email-palmer@dabbelt.com>
-Return-path: <linux-arch-owner@vger.kernel.org>
-Sender: linux-arch-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: linux-arch@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Palmer Dabbelt <palmer.dabbelt@eecs.berkeley.edu>
+From: "Sean O. Stalley" <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 2/2] PCI: Add support for Enhanced Allocation devices
+Date: Wed, 2 Sep 2015 10:46:12 -0700
+Message-ID: <20150902174612.GA2700@sean.stalley.intel.com>
+References: <1440089947-2839-1-git-send-email-sean.stalley@intel.com>
+ <1440089947-2839-3-git-send-email-sean.stalley@intel.com>
+ <CAE9FiQUQacSJXPqv9GQJ4AF0TN7uxcBiAYHVbHwvFhEfWgWKHg@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAE9FiQUQacSJXPqv9GQJ4AF0TN7uxcBiAYHVbHwvFhEfWgWKHg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Yinghai Lu <yinghai-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Rajat Jain <rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?utf-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org" <gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Palmer Dabbelt <palmer.dabbelt@eecs.berkeley.edu>
+Thanks for taking a look Yinghai.
 
-When working on the RISC-V port I noticed that F_SETLK64 was being
-defined on our 64-bit platform, despite our port being so new that
-we've only ever had the 64-bit file ops.  Since there's not compat
-layer for these, this causes fcntl to bail out.
+On Tue, Sep 01, 2015 at 04:14:08PM -0700, Yinghai Lu wrote:
+> On Thu, Aug 20, 2015 at 9:59 AM, Sean O. Stalley <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+> > Add support for devices using Enhanced Allocation entries instead of BARs.
+> > This patch allows the kernel to parse the EA Extended Capability structure
+> > in PCI configspace and claim the BAR-equivalent resources.
+> >
+> > Signed-off-by: Sean O. Stalley <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > ---
+> >  drivers/pci/pci.c   | 219 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+> >  drivers/pci/pci.h   |   1 +
+> >  drivers/pci/probe.c |   3 +
+> >  3 files changed, 223 insertions(+)
+> >
+> > diff --git a/drivers/pci/pci.c b/drivers/pci/pci.c
+> > index 0008c95..c8217a8 100644
+> > --- a/drivers/pci/pci.c
+> > +++ b/drivers/pci/pci.c
+> ...
+> > +
+> > +/* Read an Enhanced Allocation (EA) entry */
+> > +static int pci_ea_read(struct pci_dev *dev, int offset)
+> > +{
+> ...
+> > +       res->name = pci_name(dev);
+> > +       res->start = start;
+> > +       res->end = end;
+> > +       res->flags = flags;
+> > +
+> > +       pci_ea_claim_resource(dev, res);
+> > +
+> > +out:
+> > +       return offset + ent_size;
+> > +}
+> > +
+> > +/* Enhanced Allocation Initalization */
+> > +void pci_ea_init(struct pci_dev *dev)
+> > +{
+> ...
+> > +
+> > +       for (i = 0; i < num_ent; ++i) {
+> > +               /* parse each EA entry */
+> > +               dev_dbg(&dev->dev, "%s: parsing entry %i...\n", __func__, i);
+> > +               offset = pci_ea_read(dev, offset);
+> > +       }
+> > +}
+> > +
+> >  static void pci_add_saved_cap(struct pci_dev *pci_dev,
+> >         struct pci_cap_saved_state *new_cap)
+> >  {
+> 
+> > diff --git a/drivers/pci/probe.c b/drivers/pci/probe.c
+> > index cefd636..4cadf35 100644
+> > --- a/drivers/pci/probe.c
+> > +++ b/drivers/pci/probe.c
+> > @@ -1522,6 +1522,9 @@ static struct pci_dev *pci_scan_device(struct pci_bus *bus, int devfn)
+> >
+> >  static void pci_init_capabilities(struct pci_dev *dev)
+> >  {
+> > +       /* Enhanced Allocation */
+> > +       pci_ea_init(dev);
+> > +
+> >         /* MSI/MSI-X list */
+> >         pci_msi_init_pci_dev(dev);
+> >
+> 
+> Should not call pci_ea_claim_resource() that early.
 
-It turns out that one of the ways in with F_SETLK64 was being defined
-(there's some more in glibc, but that's a whole different story... :))
-is the result of CONFIG_64BIT showing up in this user-visible header.
-<asm-generic/bitsperlong.h> confirms this isn't sane, so I replaced it
-with a __BITS_PER_LONG check.
+Out of curiosity, why shouldn't resources be claimed that early?
+EA resources are fixed by hardware. They are always there & will never move.
 
-I went ahead and grep'd for any more of these (with
-headers_install_all), and this was the only one I found.
+> 
+> For x86 and other arches, we call
+> pcibios_resource_survey/pcibios_allocate_bus_resouce/pcibios_allocate_resources
+> quite late.
 
-Signed-off-by: Palmer Dabbelt <palmer.dabbelt@eecs.berkeley.edu>
-Reviewed-by: Andrew Waterman <waterman@eecs.berkeley.edu>
-Reviewed-by: Albert Ou <aou@eecs.berkeley.edu>
----
- include/uapi/asm-generic/fcntl.h | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+Would it be better to modify pci_claim_resource() to support EA instead of adding pci_ea_claim_resource()?
+That way, EA entries would be claimed at the same time as traditional BARs.
 
-diff --git a/include/uapi/asm-generic/fcntl.h b/include/uapi/asm-generic/fcntl.h
-index e063effe0cc1..14a5c8237d84 100644
---- a/include/uapi/asm-generic/fcntl.h
-+++ b/include/uapi/asm-generic/fcntl.h
-@@ -1,6 +1,7 @@
- #ifndef _ASM_GENERIC_FCNTL_H
- #define _ASM_GENERIC_FCNTL_H
- 
-+#include <asm/bitsperlong.h>
- #include <linux/types.h>
- 
- /*
-@@ -115,7 +116,7 @@
- #define F_GETSIG	11	/* for sockets. */
- #endif
- 
--#ifndef CONFIG_64BIT
-+#if (__BITS_PER_LONG == 32)
- #ifndef F_GETLK64
- #define F_GETLK64	12	/*  using 'struct flock64' */
- #define F_SETLK64	13
--- 
-2.4.6
+-Sean
