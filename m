@@ -1,43 +1,50 @@
-From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC v6 02/40] vfs: Add MAY_CREATE_FILE and MAY_CREATE_DIR
- permission flags
-Date: Wed, 2 Sep 2015 21:06:32 +0200
-Message-ID: <CAHc6FU62LQ8xnEbjsBprnud36AURg_ggifFoHOVM51-9vRJeDg@mail.gmail.com>
-References: <1438689218-6921-1-git-send-email-agruenba@redhat.com>
-	<1438689218-6921-3-git-send-email-agruenba@redhat.com>
-	<20150902185300.GA3319@fieldses.org>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: Re: [PATCH 10/98] via_drm.h: hide struct via_file_private in userspace
+Date: Wed, 2 Sep 2015 22:17:51 +0300
+Message-ID: <20150902191751.GY9187@lakka.kapsi.fi>
+References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
+ <1433000370-19509-11-git-send-email-mikko.rapeli@iki.fi>
+ <CACvgo52HDRuaQ+1qXg6O9ikhwNFSRCgopv6aAbujywOG+msmYQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150902185300.GA3319-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Cc: Andreas Gruenbacher <andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+Content-Disposition: inline
+In-Reply-To: <CACvgo52HDRuaQ+1qXg6O9ikhwNFSRCgopv6aAbujywOG+msmYQ@mail.gmail.com>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Emil Velikov <emil.l.velikov@gmail.com>
+Cc: linux-api@vger.kernel.org, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel@vger.kernel.org>, ML dri-devel <dri-devel@lists.freedesktop.org>
 List-Id: linux-api@vger.kernel.org
 
-2015-09-02 20:53 GMT+02:00 J. Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>:
->> @@ -453,7 +453,8 @@ static int sb_permission(struct super_block *sb, struct inode *inode, int mask)
->>   * this, letting us set arbitrary permissions for filesystem access without
->>   * changing the "normal" UIDs which are used for other things.
->>   *
->> - * When checking for MAY_APPEND, MAY_WRITE must also be set in @mask.
->> + * When checking for MAY_APPEND, MAY_CREATE_FILE, MAY_CREATE_DIR,
->> + * MAY_WRITE must also be set in @mask.
->
-> Why?
-
-So that file systems that don't support MAY_APPEND can ignore the flag
-and will then automatically check for MAY_WRITE instead.
-
-> (Also: written as a simple list like that, it's a ambiguous how to
-> parse that comment: I think you mean that MAY_WRITE must be set whenever
-> MAY_APPEND, MAY_CREATE_FILE, or MAY_CREATE_DIR are set.)
-
-Yes, that's better.
-
-Thanks,
-Andreas
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+T24gV2VkLCBKdW4gMDMsIDIwMTUgYXQgMDU6NTA6MjJQTSArMDEwMCwgRW1pbCBWZWxpa292IHdy
+b3RlOgo+IEhpIE1pa2tvLAo+IAo+IE9uIDMwIE1heSAyMDE1IGF0IDE2OjM4LCBNaWtrbyBSYXBl
+bGkgPG1pa2tvLnJhcGVsaUBpa2kuZmk+IHdyb3RlOgo+ID4gRml4ZXMgY29tcGlsZXIgZXJyb3Ig
+c2luY2UgbGlzdF9oZWFkIGlzIG5vdCBleHBvcnRlZCB0byB1c2Vyc3BhY2UgaGVhZGVycy4KPiA+
+Cj4gPiBTaWduZWQtb2ZmLWJ5OiBNaWtrbyBSYXBlbGkgPG1pa2tvLnJhcGVsaUBpa2kuZmk+Cj4g
+PiAtLS0KPiA+ICBpbmNsdWRlL3VhcGkvZHJtL3ZpYV9kcm0uaCB8IDIgKysKPiA+ICAxIGZpbGUg
+Y2hhbmdlZCwgMiBpbnNlcnRpb25zKCspCj4gPgo+ID4gZGlmZiAtLWdpdCBhL2luY2x1ZGUvdWFw
+aS9kcm0vdmlhX2RybS5oIGIvaW5jbHVkZS91YXBpL2RybS92aWFfZHJtLmgKPiA+IGluZGV4IDc5
+MTUzMWUuLjM0Y2U2NTggMTAwNjQ0Cj4gPiAtLS0gYS9pbmNsdWRlL3VhcGkvZHJtL3ZpYV9kcm0u
+aAo+ID4gKysrIGIvaW5jbHVkZS91YXBpL2RybS92aWFfZHJtLmgKPiA+IEBAIC0yNzIsOCArMjcy
+LDEwIEBAIHR5cGVkZWYgc3RydWN0IGRybV92aWFfZG1hYmxpdCB7Cj4gPiAgICAgICAgIGRybV92
+aWFfYmxpdHN5bmNfdCBzeW5jOwo+ID4gIH0gZHJtX3ZpYV9kbWFibGl0X3Q7Cj4gPgo+ID4gKyNp
+ZmRlZiBfX0tFUk5FTF9fCj4gPiAgc3RydWN0IHZpYV9maWxlX3ByaXZhdGUgewo+ID4gICAgICAg
+ICBzdHJ1Y3QgbGlzdF9oZWFkIG9ial9saXN0Owo+ID4gIH07Cj4gPiArI2VuZGlmCj4gPgo+IFdl
+IG1pZ2h0IHdhbnQgdG8gZm9sbG93IHRoZSBleGFtcGxlIG9mIG90aGVyIGRyaXZlcnMgKGk5MTUp
+IGFuZCBtb3ZlCj4gaXQgdG8gZHJpdmVycy9ncHUvZHJtL3ZpYV9kcnYuaCwgVGhlcmUgYXJlIHR3
+byB1c2VycyBvZiB0aGlzIHN0cnVjdAo+ICh2aWFfZHJ2LmMgYW5kIHZpYV9tbS5jKSwgYW5kIGVh
+Y2ggb25lIGV4cGxpY2l0bHkgaW5jbHVkZXMgdGhlIGhlYWRlci4KPiBIb3cgZG9lcyB0aGF0IHNv
+dW5kID8KPiAKPiBTYW1lIHN1Z2dlc3Rpb24gZ29lcyBmb3IgdGhlIGVxdWl2YWxlbnQgc2lzIHBh
+dGNoLgoKVGhhbmtzLCBtb3ZlZCBib3RoIG9mIHRoZSBmaWxlX3ByaXZhdGUgZGVmaW5pdGlvbnMg
+dG8gdGhlIGRyaXZlciBoZWFkZXJzLgoKLU1pa2tvCl9fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fCmRyaS1kZXZlbCBtYWlsaW5nIGxpc3QKZHJpLWRldmVsQGxp
+c3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4v
+bGlzdGluZm8vZHJpLWRldmVsCg==
