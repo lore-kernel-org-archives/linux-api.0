@@ -1,50 +1,27 @@
-From: "J. Bruce Fields" <bfields@fieldses.org>
-Subject: Re: [RFC v6 02/40] vfs: Add MAY_CREATE_FILE and MAY_CREATE_DIR
- permission flags
-Date: Wed, 2 Sep 2015 15:20:08 -0400
-Message-ID: <20150902192008.GB3319@fieldses.org>
-References: <1438689218-6921-1-git-send-email-agruenba@redhat.com>
- <1438689218-6921-3-git-send-email-agruenba@redhat.com>
- <20150902185300.GA3319@fieldses.org>
- <CAHc6FU62LQ8xnEbjsBprnud36AURg_ggifFoHOVM51-9vRJeDg@mail.gmail.com>
+From: Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 2/2] PCI: Add support for Enhanced Allocation devices
+Date: Wed, 2 Sep 2015 14:25:50 -0500
+Message-ID: <CAErSpo4qZ9AXskyo86gXG1cb3AqCn-HB05nj7qT9wovZdLt2Tg@mail.gmail.com>
+References: <1440089947-2839-1-git-send-email-sean.stalley@intel.com>
+ <1440089947-2839-3-git-send-email-sean.stalley@intel.com> <CAE9FiQUQacSJXPqv9GQJ4AF0TN7uxcBiAYHVbHwvFhEfWgWKHg@mail.gmail.com>
+ <20150902174612.GA2700@sean.stalley.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHc6FU62LQ8xnEbjsBprnud36AURg_ggifFoHOVM51-9vRJeDg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andreas Gruenbacher <agruenba@redhat.com>
-Cc: Andreas Gruenbacher <andreas.gruenbacher@gmail.com>, linux-kernel@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org, linux-cifs@vger.kernel.org, linux-security-module@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150902174612.GA2700-KQ5zpJUXklQTH34CoL1+91DQ4js95KgL@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Sean O. Stalley" <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Yinghai Lu <yinghai-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Rajat Jain <rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?UTF-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org" <gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 02, 2015 at 09:06:32PM +0200, Andreas Gruenbacher wrote:
-> 2015-09-02 20:53 GMT+02:00 J. Bruce Fields <bfields@fieldses.org>:
-> >> @@ -453,7 +453,8 @@ static int sb_permission(struct super_block *sb, struct inode *inode, int mask)
-> >>   * this, letting us set arbitrary permissions for filesystem access without
-> >>   * changing the "normal" UIDs which are used for other things.
-> >>   *
-> >> - * When checking for MAY_APPEND, MAY_WRITE must also be set in @mask.
-> >> + * When checking for MAY_APPEND, MAY_CREATE_FILE, MAY_CREATE_DIR,
-> >> + * MAY_WRITE must also be set in @mask.
-> >
-> > Why?
-> 
-> So that file systems that don't support MAY_APPEND can ignore the flag
-> and will then automatically check for MAY_WRITE instead.
+On Wed, Sep 2, 2015 at 12:46 PM, Sean O. Stalley <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
 
-Got it.  And maybe it should be obvious, but it might be worth a
-sentence in the changelog if it's not already explained elsewhere.--b.
+> Would it be better to modify pci_claim_resource() to support EA instead of adding pci_ea_claim_resource()?
+> That way, EA entries would be claimed at the same time as traditional BARs.
 
-> 
-> > (Also: written as a simple list like that, it's a ambiguous how to
-> > parse that comment: I think you mean that MAY_WRITE must be set whenever
-> > MAY_APPEND, MAY_CREATE_FILE, or MAY_CREATE_DIR are set.)
-> 
-> Yes, that's better.
-> 
-> Thanks,
-> Andreas
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Yes, I think so.
+
+Why wouldn't pci_claim_resource() work as-is for EA?  I see that
+pci_ea_get_parent_resource() defaults to iomem_resource or
+ioport_resource if we don't find a parent, but I don't understand why
+that's necessary.
