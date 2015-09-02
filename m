@@ -1,86 +1,106 @@
-From: Yinghai Lu <yinghai@kernel.org>
-Subject: Re: [PATCH 2/2] PCI: Add support for Enhanced Allocation devices
-Date: Tue, 1 Sep 2015 16:14:08 -0700
-Message-ID: <CAE9FiQUQacSJXPqv9GQJ4AF0TN7uxcBiAYHVbHwvFhEfWgWKHg@mail.gmail.com>
-References: <1440089947-2839-1-git-send-email-sean.stalley@intel.com>
-	<1440089947-2839-3-git-send-email-sean.stalley@intel.com>
+From: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v4 3/4] of: overlay: add per overlay sysfs attributes
+Date: Tue, 1 Sep 2015 21:35:18 -0500
+Message-ID: <CAL_JsqK0oqqj6D-GOj0H32krUtGMg=-dK+c_uzqYt-wD7sY8qw@mail.gmail.com>
+References: <1434137896-13806-1-git-send-email-pantelis.antoniou@konsulko.com> <1434137896-13806-4-git-send-email-pantelis.antoniou@konsulko.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-pci-owner@vger.kernel.org>
-In-Reply-To: <1440089947-2839-3-git-send-email-sean.stalley@intel.com>
-Sender: linux-pci-owner@vger.kernel.org
-To: "Sean O. Stalley" <sean.stalley@intel.com>
-Cc: Bjorn Helgaas <bhelgaas@google.com>, Rajat Jain <rajatxjain@gmail.com>, "Michael S. Tsirkin" <mst@redhat.com>, =?UTF-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5@gmail.com>, "gong.chen@linux.intel.com" <gong.chen@linux.intel.com>, "linux-pci@vger.kernel.org" <linux-pci@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1434137896-13806-4-git-send-email-pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Cc: Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pantelis Antoniou <panto-wVdstyuyKrO8r51toPun2/C9HSW9iNxf@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 20, 2015 at 9:59 AM, Sean O. Stalley <sean.stalley@intel.com> wrote:
-> Add support for devices using Enhanced Allocation entries instead of BARs.
-> This patch allows the kernel to parse the EA Extended Capability structure
-> in PCI configspace and claim the BAR-equivalent resources.
+On Fri, Jun 12, 2015 at 2:38 PM, Pantelis Antoniou
+<pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
+> The two default overlay attributes are:
 >
-> Signed-off-by: Sean O. Stalley <sean.stalley@intel.com>
+> * A targets sysfs attribute listing the targets of the installed
+> overlay. The targets list the path on the kernel's device tree
+> where each overlay fragment is applied to
+>
+> * A per overlay can_remove sysfs attribute that reports whether
+> the overlay can be removed or not due to another overlapping overlay.
+
+What will a user do with this information? Can this just be debugfs?
+Don't we already have the targets in the overlay itself? If we are
+going to provide some overlay info, shouldn't we provide all of it
+(i.e. the FDT). For example, what do we do on a kexec?
+
+Rob
+
+> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
 > ---
->  drivers/pci/pci.c   | 219 ++++++++++++++++++++++++++++++++++++++++++++++++++++
->  drivers/pci/pci.h   |   1 +
->  drivers/pci/probe.c |   3 +
->  3 files changed, 223 insertions(+)
+>  drivers/of/overlay.c | 53 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 53 insertions(+)
 >
-> diff --git a/drivers/pci/pci.c b/drivers/pci/pci.c
-> index 0008c95..c8217a8 100644
-> --- a/drivers/pci/pci.c
-> +++ b/drivers/pci/pci.c
-...
-> +
-> +/* Read an Enhanced Allocation (EA) entry */
-> +static int pci_ea_read(struct pci_dev *dev, int offset)
+> diff --git a/drivers/of/overlay.c b/drivers/of/overlay.c
+> index 37ec858..747568f 100644
+> --- a/drivers/of/overlay.c
+> +++ b/drivers/of/overlay.c
+> @@ -373,8 +373,61 @@ static const struct attribute *overlay_global_attrs[] = {
+>         NULL
+>  };
+>
+> +static ssize_t can_remove_show(struct kobject *kobj,
+> +               struct kobj_attribute *attr, char *buf)
 > +{
-...
-> +       res->name = pci_name(dev);
-> +       res->start = start;
-> +       res->end = end;
-> +       res->flags = flags;
+> +       struct of_overlay *ov = kobj_to_overlay(kobj);
 > +
-> +       pci_ea_claim_resource(dev, res);
-> +
-> +out:
-> +       return offset + ent_size;
+> +       return snprintf(buf, PAGE_SIZE, "%d\n", overlay_removal_is_ok(ov));
 > +}
 > +
-> +/* Enhanced Allocation Initalization */
-> +void pci_ea_init(struct pci_dev *dev)
+> +static ssize_t targets_show(struct kobject *kobj,
+> +               struct kobj_attribute *attr, char *buf)
 > +{
-...
+> +       struct of_overlay *ov = kobj_to_overlay(kobj);
+> +       struct of_overlay_info *ovinfo;
+> +       char *s, *e;
+> +       ssize_t ret;
+> +       int i, len;
 > +
-> +       for (i = 0; i < num_ent; ++i) {
-> +               /* parse each EA entry */
-> +               dev_dbg(&dev->dev, "%s: parsing entry %i...\n", __func__, i);
-> +               offset = pci_ea_read(dev, offset);
+> +       s = buf;
+> +       e = buf + PAGE_SIZE;
+> +
+> +       mutex_lock(&of_mutex);
+> +
+> +       /* targets */
+> +       for (i = 0; i < ov->count; i++) {
+> +               ovinfo = &ov->ovinfo_tab[i];
+> +
+> +               len = snprintf(s, e - s, "%s\n",
+> +                               of_node_full_name(ovinfo->target));
+> +               if (len == 0) {
+> +                       ret = -ENOSPC;
+> +                       goto err;
+> +               }
+> +               s += len;
 > +       }
+> +
+> +       /* the buffer is zero terminated */
+> +       ret = s - buf;
+> +err:
+> +       mutex_unlock(&of_mutex);
+> +       return ret;
 > +}
 > +
->  static void pci_add_saved_cap(struct pci_dev *pci_dev,
->         struct pci_cap_saved_state *new_cap)
->  {
-
-> diff --git a/drivers/pci/probe.c b/drivers/pci/probe.c
-> index cefd636..4cadf35 100644
-> --- a/drivers/pci/probe.c
-> +++ b/drivers/pci/probe.c
-> @@ -1522,6 +1522,9 @@ static struct pci_dev *pci_scan_device(struct pci_bus *bus, int devfn)
->
->  static void pci_init_capabilities(struct pci_dev *dev)
->  {
-> +       /* Enhanced Allocation */
-> +       pci_ea_init(dev);
+> +static struct kobj_attribute can_remove_attr = __ATTR_RO(can_remove);
+> +static struct kobj_attribute targets_attr = __ATTR_RO(targets);
 > +
->         /* MSI/MSI-X list */
->         pci_msi_init_pci_dev(dev);
+> +static struct attribute *overlay_attrs[] = {
+> +       &can_remove_attr.attr,
+> +       &targets_attr.attr,
+> +       NULL
+> +};
+> +
+>  static struct kobj_type of_overlay_ktype = {
+>         .release = of_overlay_release,
+> +       .sysfs_ops = &kobj_sysfs_ops,   /* default kobj sysfs ops */
+> +       .default_attrs = overlay_attrs,
+>  };
 >
-
-Should not call pci_ea_claim_resource() that early.
-
-For x86 and other arches, we call
-pcibios_resource_survey/pcibios_allocate_bus_resouce/pcibios_allocate_resources
-quite late.
-
-Yinghai
+>  static struct kset *ov_kset;
+> --
+> 1.7.12
+>
