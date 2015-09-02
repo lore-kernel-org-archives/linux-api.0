@@ -1,78 +1,56 @@
-From: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
-Subject: Re: [PATCH v6 3/6] task_isolation: support PR_TASK_ISOLATION_STRICT
- mode
-Date: Wed, 2 Sep 2015 11:13:47 +0100
-Message-ID: <20150902101347.GF25720@arm.com>
-References: <1440532555-15492-1-git-send-email-cmetcalf@ezchip.com>
- <1440532555-15492-4-git-send-email-cmetcalf@ezchip.com>
- <20150826103651.GA30466@arm.com>
- <55DDD6EA.3070307@ezchip.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <55DDD6EA.3070307-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
-Cc: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <Catalin.Marinas-5wv7dgnIgG8@public.gmane.org>, "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: Palmer Dabbelt <palmer@dabbelt.com>
+Subject: [PATCH] Remove #ifdef CONFIG_64BIT from all asm-generic/fcntl.h
+Date: Tue,  1 Sep 2015 17:10:10 -0700
+Message-ID: <1441152610-22566-1-git-send-email-palmer@dabbelt.com>
+Return-path: <linux-arch-owner@vger.kernel.org>
+Sender: linux-arch-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: linux-arch@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Palmer Dabbelt <palmer.dabbelt@eecs.berkeley.edu>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Aug 26, 2015 at 04:10:34PM +0100, Chris Metcalf wrote:
-> On 08/26/2015 06:36 AM, Will Deacon wrote:
-> > On Tue, Aug 25, 2015 at 08:55:52PM +0100, Chris Metcalf wrote:
-> >> diff --git a/arch/arm64/kernel/ptrace.c b/arch/arm64/kernel/ptrace.c
-> >> index d882b833dbdb..e3d83a12f3cf 100644
-> >> --- a/arch/arm64/kernel/ptrace.c
-> >> +++ b/arch/arm64/kernel/ptrace.c
-> >> @@ -37,6 +37,7 @@
-> >>   #include <linux/regset.h>
-> >>   #include <linux/tracehook.h>
-> >>   #include <linux/elf.h>
-> >> +#include <linux/isolation.h>
-> >>   
-> >>   #include <asm/compat.h>
-> >>   #include <asm/debug-monitors.h>
-> >> @@ -1150,6 +1151,10 @@ static void tracehook_report_syscall(struct pt_regs *regs,
-> >>   
-> >>   asmlinkage int syscall_trace_enter(struct pt_regs *regs)
-> >>   {
-> >> +	/* Ensure we report task_isolation violations in all circumstances. */
-> >> +	if (test_thread_flag(TIF_NOHZ) && task_isolation_strict())
-> > This is going to force us to check TIF_NOHZ on the syscall slowpath even
-> > when CONFIG_TASK_ISOLATION=n.
-> 
-> Yes, good catch.  I was thinking the "&& false" would suppress the TIF
-> test but I forgot that test_bit() takes a volatile argument, so it gets
-> evaluated even though the result isn't actually used.
-> 
-> But I don't want to just reorder the two tests, because when isolation
-> is enabled, testing TIF_NOHZ first is better.  I think probably the right
-> solution is just to put an #ifdef CONFIG_TASK_ISOLATION around that
-> test, even though that is a little crufty.  The alternative is to provide
-> a task_isolation_configured() macro that just returns true or false, and
-> make it a three-part "&&" test with that new macro first, but
-> that seems a little crufty as well.  Do you have a preference?
+From: Palmer Dabbelt <palmer.dabbelt@eecs.berkeley.edu>
 
-Maybe use IS_ENABLED(CONFIG_TASK_ISOLATION) ?
+When working on the RISC-V port I noticed that F_SETLK64 was being
+defined on our 64-bit platform, despite our port being so new that
+we've only ever had the 64-bit file ops.  Since there's not compat
+layer for these, this causes fcntl to bail out.
 
-> >> +		task_isolation_syscall(regs->syscallno);
-> >> +
-> >>   	/* Do the secure computing check first; failures should be fast. */
-> > Here we have the usual priority problems with all the subsystems that
-> > hook into the syscall path. If a prctl is later rewritten to a different
-> > syscall, do you care about catching it? Either way, the comment about
-> > doing secure computing "first" needs fixing.
-> 
-> I admit I am unclear on the utility of rewriting prctl.  My instinct is that
-> we are trying to catch userspace invocations of prctl and allow them,
-> and fail most everything else, so doing it pre-rewrite seems OK.
-> 
-> I'm not sure if it makes sense to catch it before or after the
-> secure computing check, though.  On reflection maybe doing it
-> afterwards makes more sense - what do you think?
+It turns out that one of the ways in with F_SETLK64 was being defined
+(there's some more in glibc, but that's a whole different story... :))
+is the result of CONFIG_64BIT showing up in this user-visible header.
+<asm-generic/bitsperlong.h> confirms this isn't sane, so I replaced it
+with a __BITS_PER_LONG check.
 
-I don't have a strong preference (I really hate all these hooks we have
-on the syscall entry/exit path), but we do need to make sure that the
-behaviour is consistent across architectures.
+I went ahead and grep'd for any more of these (with
+headers_install_all), and this was the only one I found.
 
-Will
+Signed-off-by: Palmer Dabbelt <palmer.dabbelt@eecs.berkeley.edu>
+Reviewed-by: Andrew Waterman <waterman@eecs.berkeley.edu>
+Reviewed-by: Albert Ou <aou@eecs.berkeley.edu>
+---
+ include/uapi/asm-generic/fcntl.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/include/uapi/asm-generic/fcntl.h b/include/uapi/asm-generic/fcntl.h
+index e063effe0cc1..14a5c8237d84 100644
+--- a/include/uapi/asm-generic/fcntl.h
++++ b/include/uapi/asm-generic/fcntl.h
+@@ -1,6 +1,7 @@
+ #ifndef _ASM_GENERIC_FCNTL_H
+ #define _ASM_GENERIC_FCNTL_H
+ 
++#include <asm/bitsperlong.h>
+ #include <linux/types.h>
+ 
+ /*
+@@ -115,7 +116,7 @@
+ #define F_GETSIG	11	/* for sockets. */
+ #endif
+ 
+-#ifndef CONFIG_64BIT
++#if (__BITS_PER_LONG == 32)
+ #ifndef F_GETLK64
+ #define F_GETLK64	12	/*  using 'struct flock64' */
+ #define F_SETLK64	13
+-- 
+2.4.6
