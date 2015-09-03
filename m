@@ -1,65 +1,67 @@
-From: Michael Ellerman <mpe@ellerman.id.au>
-Subject: Re: [PATCH 2/3] selftests: add membarrier syscall test
-Date: Thu, 03 Sep 2015 19:33:59 +1000
-Message-ID: <1441272839.26379.2.camel@ellerman.id.au>
-References: <1436561912-24365-1-git-send-email-mathieu.desnoyers@efficios.com>
-	 <1436561912-24365-3-git-send-email-mathieu.desnoyers@efficios.com>
-	 <1441004040.5735.7.camel@ellerman.id.au>
-	 <1071313434.33305.1441127478843.JavaMail.zimbra@efficios.com>
-	 <CALCETrWpSErLUES1Wgs5+Ov8F0c-ohUwkSHFMRMZPhx-E4o2cQ@mail.gmail.com>
+From: "Helge Deller" <deller-Mmb7MZpHnFY@public.gmane.org>
+Subject: Re: [RFC PATCH 9/9] parisc: allocate sys_membarrier system call
+ number
+Date: Thu, 3 Sep 2015 14:26:10 +0200
+Message-ID: <trinity-920d5daa-933d-4e50-bd13-713e544e93c4-1441283170751@3capp-gmx-bs04>
+References: <1440698215-8355-1-git-send-email-mathieu.desnoyers@efficios.com>,
+ <1440698215-8355-10-git-send-email-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrWpSErLUES1Wgs5+Ov8F0c-ohUwkSHFMRMZPhx-E4o2cQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Pranith Kumar <bobby.prani@gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1440698215-8355-10-git-send-email-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "James E.J. Bottomley" <jejb-6jwH94ZQLHl74goWV3ctuw@public.gmane.org>, linux-parisc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2015-09-01 at 11:32 -0700, Andy Lutomirski wrote:
-> On Tue, Sep 1, 2015 at 10:11 AM, Mathieu Desnoyers
-> <mathieu.desnoyers@efficios.com> wrote:
-> > Just to make sure I understand: should we expect that
-> > everyone will issue "make headers_install" on their system
-> > before doing a make kselftest ?
-> >
-> > I see that a few selftests (e.g. memfd) are adding the
-> > source tree include paths to the compiler include paths,
-> > which I guess is to ensure that the kselftest will
-> > work even if the system headers are not up to date.
+Hi Mathieu,
+
+> [ Untested on this architecture. To try it out: fetch linux-next/akpm,
+>   apply this patch, build/run a membarrier-enabled kernel, and do make
+>   kselftest. ]
 > 
-> It would be really nice if there were a clean way for selftests to
-> include the kernel headers.  
+> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+> CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+> CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> CC: "James E.J. Bottomley" <jejb-6jwH94ZQLHl74goWV3ctuw@public.gmane.org>
+> CC: Helge Deller <deller-Mmb7MZpHnFY@public.gmane.org>
+> CC: linux-parisc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> ---
+>  arch/parisc/include/uapi/asm/unistd.h | 3 ++-
+>  arch/parisc/kernel/syscall_table.S    | 1 +
+>  2 files changed, 3 insertions(+), 1 deletion(-)
+> 
+> diff --git a/arch/parisc/include/uapi/asm/unistd.h b/arch/parisc/include/uapi/asm/unistd.h
+> index 2e639d7..dadcada 100644
+> --- a/arch/parisc/include/uapi/asm/unistd.h
+> +++ b/arch/parisc/include/uapi/asm/unistd.h
+> @@ -358,8 +358,9 @@
+>  #define __NR_memfd_create	(__NR_Linux + 340)
+>  #define __NR_bpf		(__NR_Linux + 341)
+>  #define __NR_execveat		(__NR_Linux + 342)
+> +#define __NR_membarrier		(__NR_Linux + 343)
+>  
+> -#define __NR_Linux_syscalls	(__NR_execveat + 1)
+> +#define __NR_Linux_syscalls	(__NR_membarrier + 1)
+>  
+>  
+>  #define __IGNORE_select		/* newselect */
+> diff --git a/arch/parisc/kernel/syscall_table.S b/arch/parisc/kernel/syscall_table.S
+> index 8eefb12..2faa43b 100644
+> --- a/arch/parisc/kernel/syscall_table.S
+> +++ b/arch/parisc/kernel/syscall_table.S
+> @@ -438,6 +438,7 @@
+>  	ENTRY_SAME(memfd_create)	/* 340 */
+>  	ENTRY_SAME(bpf)
+>  	ENTRY_COMP(execveat)
+> +	ENTRY_COMP(membarrier)
 
-What's wrong with make headers_install?
+This needs to be ENTRY_SAME(membarrier), since you don't have/need a compat_membarrier() function.
 
-Or do you mean when writing the tests? That we could fix by adding the
-../../../../usr/include path to CFLAGS in lib.mk. And fixing all the tests that
-overwrite CFLAGS to append to CFLAGS.
+After changing to ENTRY_SAME() I did run the kselftest on parisc: 
+deller@ls3xx> ./membarrier_test 
+membarrier MEMBARRIER_CMD_QUERY syscall available.
+membarrier: MEMBARRIER_CMD_SHARED success.
+membarrier: tests done!
 
-> Perhaps make should build the exportable headers somewhere as a dependency of
-> kselftests.
-
-Yeah the top-level kselftest target could do that I think.
-
-Folks who don't want the headers installed can just run the selftests Makefile
-directly.
-
-Does this work for you?
-
-diff --git a/Makefile b/Makefile
-index c361593..c8841d3 100644
---- a/Makefile
-+++ b/Makefile
-@@ -1080,7 +1080,7 @@ headers_check: headers_install
- # Kernel selftest
- 
- PHONY += kselftest
--kselftest:
-+kselftest: headers_install
-        $(Q)$(MAKE) -C tools/testing/selftests run_tests
- 
- # ---------------------------------------------------------------------------
-
-cheers
+Helge
