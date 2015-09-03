@@ -1,73 +1,93 @@
 From: David Herrmann <dh.herrmann@gmail.com>
-Subject: [PATCH 0/3] Introduce inotify_update_watch(2)
-Date: Thu,  3 Sep 2015 17:10:24 +0200
-Message-ID: <1441293027-3363-1-git-send-email-dh.herrmann@gmail.com>
+Subject: [PATCH 1/3] inotify: move wd lookup out of update_existing_watch()
+Date: Thu,  3 Sep 2015 17:10:25 +0200
+Message-ID: <1441293027-3363-2-git-send-email-dh.herrmann@gmail.com>
+References: <1441293027-3363-1-git-send-email-dh.herrmann@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1441293027-3363-1-git-send-email-dh.herrmann@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
 Cc: John McCutchan <john@johnmccutchan.com>, Robert Love <rlove@rlove.org>, Eric Paris <eparis@parisplace.org>, Andrew Morton <akpm@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Shuah Khan <shuahkh@osg.samsung.com>, David Herrmann <dh.herrmann@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi
+Currently, inotify_update_existing_watch() first looks up the requested
+wd before modifying it. This makes the function unsuitable for cases
+where we already know the wd. Change the behavior to directly accept wd
+as input and make the only caller do the lookup themself.
 
-The current inotify API suffers from a nasty race-condition if you try to
-update watch descriptors (where the update _changes_ flags, not only adds new
-flags). The problem is, that an explicit update of a watch-descriptor might
-result in updating an unrelated, existing watch descriptor that just happens to
-be moved at the file-system path we do the inotify update on. inotify lacks a
-way to operate on explicit watch-descriptors, but always required the caller to
-provide a file-system path. This is inherently racy, as the real objects that
-are modified are tied to *inodes*, not paths.
+Signed-off-by: David Herrmann <dh.herrmann@gmail.com>
+---
+ fs/notify/inotify/inotify_user.c | 32 ++++++++++++--------------------
+ 1 file changed, 12 insertions(+), 20 deletions(-)
 
-Imagine the case where an application monitors two independent files A
-and B with two independent watch descriptors. If you now want to *change*
-the watch-mask of A, you have to use inotify_add_watch(fd, "A", new_mask).
-However, this might race with a file-system operation that links B over A,
-thus this call to inotify_add_watch() will affect the watch-descriptor of
-B. However, this is usually not what the caller wants, as the watch-masks
-of A and B can be disjoint, and as such an unwanted update of B might
-cause event loss. Hence, a call like inotify_update_watch() is needed,
-which explicitly takes the watch-descriptor to modify. In this case, it
-would still only update the watch-descriptor of A, even though the path
-to A changed.
-
-The underlying issue here is the automatism of inotify_add_watch(), which
-does not allow the caller to distinguish an update operation from an ADD
-operation. This race could be solved with a simple IN_EXCL (or IN_CREATE)
-flag, which would cause inotify_add_watch() to *never* update existing
-watch-descriptors, but fail with EEXIST instead. However, this still
-prevents the caller from *updating* the flags of an explicitly passed
-watch-descriptor. Furthermore, the fact that inotify objects identify
-*INODES*, but the API takes *PATHS* calls for races. Therefore, we really
-need an explicit update operation to allow user-space to modify watch
-descriptors without having to re-create them and thus invalidating their
-cache.
-
-This series implements inotify_update_watch() to extend the inotify API
-with a way to explicity modify watch-descriptors, instead of going via
-the file-system path-API of inotify_add_watch().
-
-Thanks
-David
-
-David Herrmann (3):
-  inotify: move wd lookup out of update_existing_watch()
-  inotify: add inotify_update_watch() syscall
-  kselftest/inotify: add inotify_update_watch(2) test-cases
-
- arch/x86/entry/syscalls/syscall_32.tbl         |   1 +
- arch/x86/entry/syscalls/syscall_64.tbl         |   1 +
- fs/notify/inotify/inotify_user.c               |  69 +++++++++++-----
- include/linux/syscalls.h                       |   1 +
- kernel/sys_ni.c                                |   1 +
- tools/testing/selftests/Makefile               |   1 +
- tools/testing/selftests/inotify/.gitignore     |   2 +
- tools/testing/selftests/inotify/Makefile       |  14 ++++
- tools/testing/selftests/inotify/test_inotify.c | 105 +++++++++++++++++++++++++
- 9 files changed, 175 insertions(+), 20 deletions(-)
- create mode 100644 tools/testing/selftests/inotify/.gitignore
- create mode 100644 tools/testing/selftests/inotify/Makefile
- create mode 100644 tools/testing/selftests/inotify/test_inotify.c
-
+diff --git a/fs/notify/inotify/inotify_user.c b/fs/notify/inotify/inotify_user.c
+index 5b1e2a4..5a39ae8 100644
+--- a/fs/notify/inotify/inotify_user.c
++++ b/fs/notify/inotify/inotify_user.c
+@@ -513,23 +513,16 @@ static void inotify_free_mark(struct fsnotify_mark *fsn_mark)
+ 	kmem_cache_free(inotify_inode_mark_cachep, i_mark);
+ }
+ 
+-static int inotify_update_existing_watch(struct fsnotify_group *group,
+-					 struct inode *inode,
++static int inotify_update_existing_watch(struct fsnotify_mark *fsn_mark,
+ 					 u32 arg)
+ {
+-	struct fsnotify_mark *fsn_mark;
++	struct inode *inode = fsn_mark->inode;
+ 	struct inotify_inode_mark *i_mark;
+ 	__u32 old_mask, new_mask;
+ 	__u32 mask;
+ 	int add = (arg & IN_MASK_ADD);
+-	int ret;
+ 
+ 	mask = inotify_arg_to_mask(arg);
+-
+-	fsn_mark = fsnotify_find_inode_mark(group, inode);
+-	if (!fsn_mark)
+-		return -ENOENT;
+-
+ 	i_mark = container_of(fsn_mark, struct inotify_inode_mark, fsn_mark);
+ 
+ 	spin_lock(&fsn_mark->lock);
+@@ -555,13 +548,7 @@ static int inotify_update_existing_watch(struct fsnotify_group *group,
+ 
+ 	}
+ 
+-	/* return the wd */
+-	ret = i_mark->wd;
+-
+-	/* match the get from fsnotify_find_mark() */
+-	fsnotify_put_mark(fsn_mark);
+-
+-	return ret;
++	return i_mark->wd;
+ }
+ 
+ static int inotify_new_watch(struct fsnotify_group *group,
+@@ -616,14 +603,19 @@ out_err:
+ 
+ static int inotify_update_watch(struct fsnotify_group *group, struct inode *inode, u32 arg)
+ {
++	struct fsnotify_mark *fsn_mark;
+ 	int ret = 0;
+ 
+ 	mutex_lock(&group->mark_mutex);
+-	/* try to update and existing watch with the new arg */
+-	ret = inotify_update_existing_watch(group, inode, arg);
+-	/* no mark present, try to add a new one */
+-	if (ret == -ENOENT)
++	fsn_mark = fsnotify_find_inode_mark(group, inode);
++	if (fsn_mark) {
++		/* update an existing watch with the new arg */
++		ret = inotify_update_existing_watch(fsn_mark, arg);
++		fsnotify_put_mark(fsn_mark);
++	} else {
++		/* no mark present, try to add a new one */
+ 		ret = inotify_new_watch(group, inode, arg);
++	}
+ 	mutex_unlock(&group->mark_mutex);
+ 
+ 	return ret;
 -- 
 2.5.1
