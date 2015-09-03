@@ -1,66 +1,65 @@
-From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+From: Michael Ellerman <mpe@ellerman.id.au>
 Subject: Re: [PATCH 2/3] selftests: add membarrier syscall test
-Date: Thu, 03 Sep 2015 19:24:48 +1000
-Message-ID: <1441272288.26379.1.camel@ellerman.id.au>
+Date: Thu, 03 Sep 2015 19:33:59 +1000
+Message-ID: <1441272839.26379.2.camel@ellerman.id.au>
 References: <1436561912-24365-1-git-send-email-mathieu.desnoyers@efficios.com>
 	 <1436561912-24365-3-git-send-email-mathieu.desnoyers@efficios.com>
 	 <1441004040.5735.7.camel@ellerman.id.au>
 	 <1071313434.33305.1441127478843.JavaMail.zimbra@efficios.com>
+	 <CALCETrWpSErLUES1Wgs5+Ov8F0c-ohUwkSHFMRMZPhx-E4o2cQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1071313434.33305.1441127478843.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CALCETrWpSErLUES1Wgs5+Ov8F0c-ohUwkSHFMRMZPhx-E4o2cQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Pranith Kumar <bobby.prani@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2015-09-01 at 17:11 +0000, Mathieu Desnoyers wrote:
-> ----- On Aug 31, 2015, at 2:54 AM, Michael Ellerman mpe-Gsx/Oe8HsFi6NASR9rTEaw@public.gmane.org=
-u wrote:
-> > On Fri, 2015-07-10 at 16:58 -0400, Mathieu Desnoyers wrote:
-> >> diff --git a/tools/testing/selftests/membarrier/membarrier_test.c
-> >> b/tools/testing/selftests/membarrier/membarrier_test.c
-> >> new file mode 100644
-> >> index 0000000..3c9f217
-> >> --- /dev/null
-> >> +++ b/tools/testing/selftests/membarrier/membarrier_test.c
-> >> @@ -0,0 +1,71 @@
-> >> +#define _GNU_SOURCE
-> >> +#define __EXPORTED_HEADERS__
-> >=20
-> > Why are you exporting that?
-> >=20
-> > I suspect to try and get around the "Attempt to use kernel headers =
-from user
-> > space" warning.
-> >=20
-> > But you're correctly building against the installed headers, not th=
-e kernel
-> > headers, so you don't need to do that.
->=20
-> Just to make sure I understand: should we expect that
-> everyone will issue "make headers_install" on their system
-> before doing a make kselftest ?
+On Tue, 2015-09-01 at 11:32 -0700, Andy Lutomirski wrote:
+> On Tue, Sep 1, 2015 at 10:11 AM, Mathieu Desnoyers
+> <mathieu.desnoyers@efficios.com> wrote:
+> > Just to make sure I understand: should we expect that
+> > everyone will issue "make headers_install" on their system
+> > before doing a make kselftest ?
+> >
+> > I see that a few selftests (e.g. memfd) are adding the
+> > source tree include paths to the compiler include paths,
+> > which I guess is to ensure that the kselftest will
+> > work even if the system headers are not up to date.
+> 
+> It would be really nice if there were a clean way for selftests to
+> include the kernel headers.  
 
-Usually yes, but not always.
+What's wrong with make headers_install?
 
-They might be deliberately building the selftests against their install=
-ed
-headers. That's their choice.
+Or do you mean when writing the tests? That we could fix by adding the
+../../../../usr/include path to CFLAGS in lib.mk. And fixing all the tests that
+overwrite CFLAGS to append to CFLAGS.
 
-In a case like this the test will fail to build, which is fine IMHO.
+> Perhaps make should build the exportable headers somewhere as a dependency of
+> kselftests.
 
-> I see that a few selftests (e.g. memfd) are adding the
-> source tree include paths to the compiler include paths,
-> which I guess is to ensure that the kselftest will
-> work even if the system headers are not up to date.
+Yeah the top-level kselftest target could do that I think.
 
-Yeah they should be fixed to not do that. The unexported kernel headers=
- are not
-designed to be used from userspace. It works sometimes on some arches,
-depending on the exact headers that get included etc. But it's wrong=E2=
-=84=A2.
+Folks who don't want the headers installed can just run the selftests Makefile
+directly.
+
+Does this work for you?
+
+diff --git a/Makefile b/Makefile
+index c361593..c8841d3 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1080,7 +1080,7 @@ headers_check: headers_install
+ # Kernel selftest
+ 
+ PHONY += kselftest
+-kselftest:
++kselftest: headers_install
+        $(Q)$(MAKE) -C tools/testing/selftests run_tests
+ 
+ # ---------------------------------------------------------------------------
 
 cheers
