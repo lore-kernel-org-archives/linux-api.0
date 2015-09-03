@@ -1,188 +1,180 @@
-From: David Herrmann <dh.herrmann@gmail.com>
-Subject: [PATCH 2/3] inotify: add inotify_update_watch() syscall
-Date: Thu,  3 Sep 2015 17:10:26 +0200
-Message-ID: <1441293027-3363-3-git-send-email-dh.herrmann@gmail.com>
+From: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH 3/3] kselftest/inotify: add inotify_update_watch(2) test-cases
+Date: Thu,  3 Sep 2015 17:10:27 +0200
+Message-ID: <1441293027-3363-4-git-send-email-dh.herrmann@gmail.com>
 References: <1441293027-3363-1-git-send-email-dh.herrmann@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1441293027-3363-1-git-send-email-dh.herrmann@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: John McCutchan <john@johnmccutchan.com>, Robert Love <rlove@rlove.org>, Eric Paris <eparis@parisplace.org>, Andrew Morton <akpm@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Shuah Khan <shuahkh@osg.samsung.com>, David Herrmann <dh.herrmann@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1441293027-3363-1-git-send-email-dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: John McCutchan <john-jueV0HHMeujJJrXXpGQQMAC/G2K4zDHf@public.gmane.org>, Robert Love <rlove-L7G0xEPcOZbYtjvyW6yDsg@public.gmane.org>, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-The current inotify API only provides a single function to add *and*
-modify watch descriptors. There is no way to perform either operation
-explicitly, but the kernel always automatically chooses what to do. If
-the watch-descriptor exists, it is updated, otherwise a new descriptor is
-allocated. This has quite nasty side-effects:
+This adds inotify/ to the kselftests suite. It currently only includes a
+test for the new inotify_update_watch(2) call, to make sure it actually
+behaves like it should.
 
-Imagine the case where an application monitors two independent files A
-and B with two independent watch descriptors. If you now want to *change*
-the watch-mask of A, you have to use inotify_add_watch(fd, "A", new_mask).
-However, this might race with a file-system operation that links B over A,
-thus this call to inotify_add_watch() will affect the watch-descriptor of
-B. However, this is usually not what the caller wants, as the watch-masks
-of A and B can be disjoint, and as such an unwanted update of B might
-cause event loss. Hence, a call like inotify_update_watch() is needed,
-which explicitly takes the watch-descriptor to modify. In this case, it
-would still only update the watch-descriptor of A, even though the path
-to A changed.
-
-The underlying issue here is the automatism of inotify_add_watch(), which
-does not allow the caller to distinguish an update operation from an ADD
-operation. This race could be solved with a simple IN_EXCL (or IN_CREATE)
-flag, which would cause inotify_add_watch() to *never* update existing
-watch-descriptors, but fail with EEXIST instead. However, this still
-prevents the caller from *updating* the flags of an explicitly passed
-watch-descriptor. Furthermore, the fact that inotify objects identify
-*INODES*, but the API takes *PATHS* calls for races. Therefore, we really
-need an explicit update operation to allow user-space to modify watch
-descriptors without having to re-create them and thus invalidating their
-cache.
-
-This patch implements inotify_update_watch() to extend the inotify API
-with a way to explicity modify watch-descriptors, instead of going via
-the file-system path-API of inotify_add_watch().
-
-SYNOPSIS
-    #include <sys/inotify.h>
-
-    int inotify_update_watch(int fd, __u32 wd, __u32 mask);
-
-DESCRIPTION
-    inotify_update_watch() modifies an existing inotify watch descriptor,
-    specified by 'wd', which was previously added via
-    inotify_add_watch(2).  It updates the mask of events to be monitored
-    via this watch descriptor according to the event mask specified by
-    'mask'. If IN_MASK_ADD is passed, 'mask' is added to the existing set
-    of flags on this watch descriptor, otherwise the existing mask is
-    replaced by the new mask. See inotify(7) for a description of the
-    further bits allowed in 'mask'.
-
-    Flags that modify the file lookup behavior of inotify_add_watch(2)
-    (IN_ONLYDIR, IN_DONT_FOLLOW) cannot be passed to
-    inotify_update_watch(). They will be rejected with EINVAL.
-
-RETURN VALUE
-    On success, 0 is returned.  On error, -1 is returned, and errno is
-    set appropriately.
-
-ERRORS
-    EBADF       'fd' is not a valid file descriptor.
-
-    EINVAL      'fd' is not an inotify file descriptor; or 'mask' contains
-                invalid or unsupported flags.
-
-    ENXIO       'wd' is not a valid watch descriptor on this inotify
-                instance.
-
-CONFORMING TO
-    This system call is Linux-specific.
-
-SEE ALSO
-    inotify(7), inotify_init(2), inotify_add_watch(2), inotify_rm_watch(2)
-
-Signed-off-by: David Herrmann <dh.herrmann@gmail.com>
+Signed-off-by: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 ---
- arch/x86/entry/syscalls/syscall_32.tbl |  1 +
- arch/x86/entry/syscalls/syscall_64.tbl |  1 +
- fs/notify/inotify/inotify_user.c       | 37 ++++++++++++++++++++++++++++++++++
- include/linux/syscalls.h               |  1 +
- kernel/sys_ni.c                        |  1 +
- 5 files changed, 41 insertions(+)
+ tools/testing/selftests/Makefile               |   1 +
+ tools/testing/selftests/inotify/.gitignore     |   2 +
+ tools/testing/selftests/inotify/Makefile       |  14 ++++
+ tools/testing/selftests/inotify/test_inotify.c | 105 +++++++++++++++++++++++++
+ 4 files changed, 122 insertions(+)
+ create mode 100644 tools/testing/selftests/inotify/.gitignore
+ create mode 100644 tools/testing/selftests/inotify/Makefile
+ create mode 100644 tools/testing/selftests/inotify/test_inotify.c
 
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index ef8187f..598b6cc 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -365,3 +365,4 @@
- 356	i386	memfd_create		sys_memfd_create
- 357	i386	bpf			sys_bpf
- 358	i386	execveat		sys_execveat			stub32_execveat
-+359	i386	inotify_update_watch	sys_inotify_update_watch
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 9ef32d5..883a02e 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -329,6 +329,7 @@
- 320	common	kexec_file_load		sys_kexec_file_load
- 321	common	bpf			sys_bpf
- 322	64	execveat		stub_execveat
-+323	common	inotify_update_watch	sys_inotify_update_watch
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/fs/notify/inotify/inotify_user.c b/fs/notify/inotify/inotify_user.c
-index 5a39ae8..1df7312 100644
---- a/fs/notify/inotify/inotify_user.c
-+++ b/fs/notify/inotify/inotify_user.c
-@@ -733,6 +733,43 @@ fput_and_out:
- 	return ret;
- }
- 
-+SYSCALL_DEFINE3(inotify_update_watch, int, fd, __s32, wd, __u32, mask)
+diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+index 24ae9e8..9e9b9cf 100644
+--- a/tools/testing/selftests/Makefile
++++ b/tools/testing/selftests/Makefile
+@@ -5,6 +5,7 @@ TARGETS += exec
+ TARGETS += firmware
+ TARGETS += ftrace
+ TARGETS += futex
++TARGETS += inotify
+ TARGETS += kcmp
+ TARGETS += memfd
+ TARGETS += memory-hotplug
+diff --git a/tools/testing/selftests/inotify/.gitignore b/tools/testing/selftests/inotify/.gitignore
+new file mode 100644
+index 0000000..ab7299d
+--- /dev/null
++++ b/tools/testing/selftests/inotify/.gitignore
+@@ -0,0 +1,2 @@
++test_inotify
++test_file
+diff --git a/tools/testing/selftests/inotify/Makefile b/tools/testing/selftests/inotify/Makefile
+new file mode 100644
+index 0000000..c205abb
+--- /dev/null
++++ b/tools/testing/selftests/inotify/Makefile
+@@ -0,0 +1,14 @@
++CC = $(CROSS_COMPILE)gcc
++CFLAGS += -I../../../../include/uapi/
++CFLAGS += -I../../../../include/
++CFLAGS += -I../../../../usr/include/
++
++all:
++	$(CC) $(CFLAGS) test_inotify.c -o test_inotify
++
++TEST_PROGS := test_inotify
++
++include ../lib.mk
++
++clean:
++	$(RM) test_inotify test_file
+diff --git a/tools/testing/selftests/inotify/test_inotify.c b/tools/testing/selftests/inotify/test_inotify.c
+new file mode 100644
+index 0000000..094420a
+--- /dev/null
++++ b/tools/testing/selftests/inotify/test_inotify.c
+@@ -0,0 +1,105 @@
++/*
++ * inotify tests
++ */
++
++#define _GNU_SOURCE
++#define __EXPORTED_HEADERS__
++
++#include <assert.h>
++#include <errno.h>
++#include <fcntl.h>
++#include <inttypes.h>
++#include <limits.h>
++#include <linux/unistd.h>
++#include <signal.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/inotify.h>
++#include <sys/syscall.h>
++#include <unistd.h>
++
++#define TEST_FILE "./test_file"
++
++static int sys_inotify_update_watch(int fd, uint32_t wd, uint32_t mask)
 +{
-+	struct inotify_inode_mark *mark;
-+	struct fsnotify_group *group;
-+	struct fd f;
-+	int ret = 0;
-+
-+	/* disallow unknown flags and flags specific to inode lookup */
-+	if (unlikely(mask & (IN_DONT_FOLLOW |
-+			     IN_ONLYDIR |
-+			     ~ALL_INOTIFY_BITS)))
-+		return -EINVAL;
-+
-+	f = fdget(fd);
-+	if (unlikely(!f.file))
-+		return -EBADF;
-+	if (unlikely(f.file->f_op != &inotify_fops)) {
-+		ret = -EINVAL;
-+		goto exit;
-+	}
-+
-+	group = f.file->private_data;
-+	mark = inotify_idr_find(group, wd);
-+	if (unlikely(!mark)) {
-+		ret = -ENXIO;
-+		goto exit;
-+	}
-+
-+	mutex_lock(&group->mark_mutex);
-+	inotify_update_existing_watch(&mark->fsn_mark, mask);
-+	mutex_unlock(&group->mark_mutex);
-+
-+exit:
-+	fdput(f);
-+	return ret;
++	return syscall(__NR_inotify_update_watch, fd, wd, mask);
 +}
 +
- SYSCALL_DEFINE2(inotify_rm_watch, int, fd, __s32, wd)
- {
- 	struct fsnotify_group *group;
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index b45c45b..40701b0 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -744,6 +744,7 @@ asmlinkage long sys_inotify_init(void);
- asmlinkage long sys_inotify_init1(int flags);
- asmlinkage long sys_inotify_add_watch(int fd, const char __user *path,
- 					u32 mask);
-+asmlinkage long sys_inotify_update_watch(int fd, __s32 wd, __u32 mask);
- asmlinkage long sys_inotify_rm_watch(int fd, __s32 wd);
- 
- asmlinkage long sys_spu_run(int fd, __u32 __user *unpc,
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index 7995ef5..b556a33d 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -114,6 +114,7 @@ cond_syscall(compat_sys_socketcall);
- cond_syscall(sys_inotify_init);
- cond_syscall(sys_inotify_init1);
- cond_syscall(sys_inotify_add_watch);
-+cond_syscall(sys_inotify_update_watch);
- cond_syscall(sys_inotify_rm_watch);
- cond_syscall(sys_migrate_pages);
- cond_syscall(sys_move_pages);
++static int read_inotify(int fd, struct inotify_event **out)
++{
++	union {
++		struct inotify_event event;
++		char buffer[sizeof(struct inotify_event) + NAME_MAX + 1];
++	} buf;
++	int r;
++
++	r = read(fd, &buf, sizeof(buf));
++	if (r < 0)
++		return r;
++
++	assert(r >= sizeof(struct inotify_event) && r <= sizeof(buf));
++	*out = &buf.event;
++	return r;
++}
++
++/* test inotify_update_watch(2) */
++static void test_update(void)
++{
++	struct inotify_event *event;
++	int ifd, wd, fd, r;
++
++	ifd = inotify_init1(IN_CLOEXEC | IN_NONBLOCK);
++	assert(ifd >= 0);
++
++	unlink(TEST_FILE);
++
++	/* try adding watch on non-existant file */
++	wd = inotify_add_watch(ifd, TEST_FILE, IN_IGNORED);
++	assert(wd < 0 && errno == ENOENT);
++
++	/* create file */
++	fd = open(TEST_FILE, O_CREAT | O_CLOEXEC | O_EXCL, S_IRUSR);
++	assert(fd >= 0);
++
++	/* add watch descriptor without IN_CLOSE */
++	wd = inotify_add_watch(ifd, TEST_FILE, IN_IGNORED);
++	assert(wd > 0);
++
++	/* close file */
++	close(fd);
++
++	/* should not have gotten any event */
++	r = read_inotify(ifd, &event);
++	assert(r < 0 && errno == EAGAIN);
++
++	/* reopen file */
++	fd = open(TEST_FILE, O_CLOEXEC | O_EXCL);
++	assert(fd >= 0);
++
++	/* invalid flags must result in EINVAL */
++	r = sys_inotify_update_watch(ifd, wd, -1);
++	assert(r < 0 && errno == EINVAL);
++
++	/* update watch descriptor with IN_CLOSE */
++	r = sys_inotify_update_watch(ifd, wd, IN_MASK_ADD | IN_CLOSE);
++	assert(r >= 0);
++
++	/* close file */
++	close(fd);
++
++	/* now we should have seen the event */
++	r = read_inotify(ifd, &event);
++	assert(r >= 0);
++	assert(event->wd == wd);
++	assert(event->mask & IN_CLOSE);
++
++	unlink(TEST_FILE);
++	close(ifd);
++}
++
++int main(int argc, char **argv)
++{
++	test_update();
++	return 0;
++}
 -- 
 2.5.1
