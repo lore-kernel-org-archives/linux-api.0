@@ -1,217 +1,115 @@
-From: "Sean O. Stalley" <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 2/2] PCI: Add support for Enhanced Allocation devices
-Date: Thu, 3 Sep 2015 11:23:04 -0700
-Message-ID: <20150903182303.GA3116@sean.stalley.intel.com>
-References: <1440089947-2839-1-git-send-email-sean.stalley@intel.com>
- <1440089947-2839-3-git-send-email-sean.stalley@intel.com>
- <CAE9FiQUQacSJXPqv9GQJ4AF0TN7uxcBiAYHVbHwvFhEfWgWKHg@mail.gmail.com>
- <20150902174612.GA2700@sean.stalley.intel.com>
- <CAErSpo4qZ9AXskyo86gXG1cb3AqCn-HB05nj7qT9wovZdLt2Tg@mail.gmail.com>
- <20150902200127.GA3347@sean.stalley.intel.com>
- <20150902212159.GC829@google.com>
- <20150903002938.GA6334@sean.stalley.intel.com>
- <20150903144654.GF829@google.com>
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: [PATCH 2/3] selftests: add membarrier syscall test
+Date: Fri, 04 Sep 2015 13:36:49 +1000
+Message-ID: <1441337809.13721.1.camel@ellerman.id.au>
+References: <1436561912-24365-1-git-send-email-mathieu.desnoyers@efficios.com>
+	 <1436561912-24365-3-git-send-email-mathieu.desnoyers@efficios.com>
+	 <1441004040.5735.7.camel@ellerman.id.au>
+	 <1071313434.33305.1441127478843.JavaMail.zimbra@efficios.com>
+	 <CALCETrWpSErLUES1Wgs5+Ov8F0c-ohUwkSHFMRMZPhx-E4o2cQ@mail.gmail.com>
+	 <1441272839.26379.2.camel@ellerman.id.au>
+	 <1734164155.35899.1441295233847.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150903144654.GF829-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <1734164155.35899.1441295233847.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Yinghai Lu <yinghai-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Rajat Jain <rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?utf-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org" <gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 03, 2015 at 09:46:54AM -0500, Bjorn Helgaas wrote:
-> On Wed, Sep 02, 2015 at 05:29:38PM -0700, Sean O. Stalley wrote:
-> > On Wed, Sep 02, 2015 at 04:21:59PM -0500, Bjorn Helgaas wrote:
-> > > On Wed, Sep 02, 2015 at 01:01:27PM -0700, Sean O. Stalley wrote:
-> > > > On Wed, Sep 02, 2015 at 02:25:50PM -0500, Bjorn Helgaas wrote:
-> > > > > On Wed, Sep 2, 2015 at 12:46 PM, Sean O. Stalley <sean.stalle=
-y@intel.com> wrote:
-> > > > >=20
-> > > > > > Would it be better to modify pci_claim_resource() to suppor=
-t EA instead of adding pci_ea_claim_resource()?
-> > > > > > That way, EA entries would be claimed at the same time as t=
-raditional BARs.
-> > > > >=20
-> > > > > Yes, I think so.
-> > > >=20
-> > > > Ok, I'll make it work this way in the next patchset.
-> > > >=20
-> > > > > Why wouldn't pci_claim_resource() work as-is for EA?  I see t=
-hat
-> > > > > pci_ea_get_parent_resource() defaults to iomem_resource or
-> > > > > ioport_resource if we don't find a parent, but I don't unders=
-tand why
-> > > > > that's necessary.
-> > > >=20
-> > > > EA resources may (or may not) be in the parent's range[1].
-> > > > If the parent doesn't describe this range, we want to default t=
-o the top-level resource.
-> > > > Other than that case, I think pci_claim_resource would work as-=
-is.
-> > > >=20
-> > > > -Sean
-> > > >=20
-> > > > [1] From the EA ECN:
-> > > > For a bridge function that is permitted to implement EA based o=
-n the rules above, it is
-> > > > permitted, but not required, for the bridge function to use EA =
-mechanisms to indicate
-> > > > resource ranges that are located behind the bridge Function (se=
-e Section 6.9.1.2).
-> > >=20
-> > > [BTW, in EA ECN 23_Oct_2014_Final, this text is in sec 6.9, not 6=
-=2E9.1.2]
-> > >=20
-> > > I agree that it implies EA resources need not be in the parent's =
-*EA*
-> > > range.  But I would read it as saying "a bridge can use either th=
-e
-> > > usual window registers or EA to indicate resources forwarded
-> > > downstream."
-> > >=20
-> > > What happens in the following case?
-> > >=20
-> > > =C2=A0 00:00.0: PCI bridge to [bus 01]
-> > > =C2=A0 00:00.0: =C2=A0 bridge window [mem 0x80000000-0x8fffffff]
-> > > =C2=A0 01:00.0: EA 0: [mem 0x90000000-0x9000ffff]
-> > >
-> > > The 00:00.0 bridge knows nothing about EA. =C2=A0The 01:00.0 EA d=
-evice has
-> > > a fixed region at 0x90000000. =C2=A0The ECN says:
-> > >=20
-> > >   System firmware/software must comprehend that such bridge funct=
-ions
-> > >   [those that are permitted to implement EA] are not required to
-> > >   indicate inclusively all resources behind the bridge, and as a
-> > >   result system firmware/software must make a complete search of =
-all
-> > >   functions behind the bridge to comprehend the resources used by
-> > >   those functions.
-> >=20
-> > The intention of this line was to indicate that EA regions are not =
-required
-> > to be inside of the Base+Limit window.
->=20
-> It would be a lot nicer if the terminology here built on terminology
-> used in the original specs.  The P2P Bridge spec defines rules for
-> when a bridge forwards transactions between its primary and secondary
-> interfaces using Command register Enable bits and Base and Limit
-> registers.  It doesn't say anything about "indicating resources behin=
-d
-> the bridge."
+On Thu, 2015-09-03 at 15:47 +0000, Mathieu Desnoyers wrote:
+> ----- On Sep 3, 2015, at 5:33 AM, Michael Ellerman mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org wrote:
+> 
+> > On Tue, 2015-09-01 at 11:32 -0700, Andy Lutomirski wrote:
+> >> On Tue, Sep 1, 2015 at 10:11 AM, Mathieu Desnoyers
+> >> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
+> >> > Just to make sure I understand: should we expect that
+> >> > everyone will issue "make headers_install" on their system
+> >> > before doing a make kselftest ?
+> >> >
+> >> > I see that a few selftests (e.g. memfd) are adding the
+> >> > source tree include paths to the compiler include paths,
+> >> > which I guess is to ensure that the kselftest will
+> >> > work even if the system headers are not up to date.
+> >> 
+> >> It would be really nice if there were a clean way for selftests to
+> >> include the kernel headers.
+> > 
+> > What's wrong with make headers_install?
+> > 
+> > Or do you mean when writing the tests? That we could fix by adding the
+> > ../../../../usr/include path to CFLAGS in lib.mk. And fixing all the tests that
+> > overwrite CFLAGS to append to CFLAGS.
+> > 
+> >> Perhaps make should build the exportable headers somewhere as a dependency of
+> >> kselftests.
+> > 
+> > Yeah the top-level kselftest target could do that I think.
+> > 
+> > Folks who don't want the headers installed can just run the selftests Makefile
+> > directly.
+> > 
+> > Does this work for you?
+> > 
+> > diff --git a/Makefile b/Makefile
+> > index c361593..c8841d3 100644
+> > --- a/Makefile
+> > +++ b/Makefile
+> > @@ -1080,7 +1080,7 @@ headers_check: headers_install
+> > # Kernel selftest
+> > 
+> > PHONY += kselftest
+> > -kselftest:
+> > +kselftest: headers_install
+> >        $(Q)$(MAKE) -C tools/testing/selftests run_tests
+> 
+> My personal experience is that make headers_install does not necessarily play
+> well with the distribution header file hierarchy, which requires some tweaks
+> to be done by the users (e.g. asm vs x86_64-linux-gnu).
 
-Thanks for the feedback. I will forward it on the spec-writer.
+OK, I've never had issues. What exactly are you doing and how is it going wrong?
 
-> > If an EA device is connected below a bridge, that bridge must be aw=
-are of EA.
-> > It is assumed that the bridge is aware of the fixed EA regions belo=
-w it,
-> > so system software doesn't need to program the window to include th=
-em.
->=20
-> Is the requirement that every bridge upstream of an EA device must be
-> aware of EA in the ECN somewhere?  What does it even mean for a bridg=
-e
-> to be "aware of EA"?  That it has an EA Capability?
+> Also, headers_install typically expects a INSTALL_HDR_PATH. 
 
-Sorry, poor choice of words on my part. Yes, it must be an EA bridge.
+You can specify it, but the default is just usr/, ie. in the kernel directory,
+that is what I was proposing. (Actually it's $(objtree)/usr).
 
-Also, I should point out that this patchset doesn't add support for EA =
-bridges.
-It only adds support for EA endpoints that are using an EA entries inst=
-ead of BARs.
+> It would be interesting if we could install the kernel headers into a
+> specific location that is then re-used by kselftest, so using it without too
+> much manual configuration does not require to overwrite the distribution
+> header files to run tests.
 
-> The EA ECN doesn't change anything in the P2P bridge spec, so a bridg=
-e
-> that forwards EA regions not described by its Base/Limit registers
-> sounds like it would be non-conforming.
+I think we can do that now, ie:
 
-Your right, It it seems like there would need to be a change to the P2P=
- spec.
-I'll investigate...
+  $ ls /usr/include/linux/membarrier.h
+  ls: cannot access /usr/include/linux/membarrier.h: No such file or directory
 
-> The EA ECN *does* say (end of sec 6.9) that Memory and I/O Space
-> enables still work, so I assume that if we clear those bits, a bridge
-> will not forward EA regions, and an endpoint will not respond to EA
-> regions.
+  $ cd linux-next
+  $ make mrproper
+  $ make headers_install
+  ...
+  $ ls usr/include/linux/membarrier.h
+  usr/include/linux/membarrier.h
+  $ make -C tools/testing/selftests TARGETS=membarrier
+  make: Entering directory '/home/michael/work/topics/selftests/linux-next/tools/testing/selftests'
+  for TARGET in membarrier; do \
+  	make -C $TARGET; \
+  done;
+  make[1]: Entering directory '/home/michael/work/topics/selftests/linux-next/tools/testing/selftests/membarrier'
+  gcc -g -I../../../../usr/include/ membarrier_test.c -o membarrier_test
+  make[1]: Leaving directory '/home/michael/work/topics/selftests/linux-next/tools/testing/selftests/membarrier'
+  make: Leaving directory '/home/michael/work/topics/selftests/linux-next/tools/testing/selftests'
 
-Yes, they still work.=20
+  $ ./tools/testing/selftests/membarrier/membarrier_test
+  membarrier MEMBARRIER_CMD_QUERY failed. Function not implemented.
+  $
 
-> AFAIK, config transaction forwarding is controlled only by the
-> Secondary and Subordinate Bus Number registers.  So I assume there's
-> no way to disable bridge forwarding of an EA Bus number range.
 
-That is how I read it as well.
+So that seems to be working for me. Are you doing some different work flow, or
+am I just missing something?
 
-> > This is part of the reason why EA devices must be permanently conne=
-cted
-> > (to make sure it doesn't end up behind an old bridge).
-> > Re-reading the spec, I can see that this requirement isn't explicit=
-ly stated.
-> >=20
-> > > A bridge was never required to indicate, e.g., via its window
-> > > registers, anything about the resources behind it.  Software alwa=
-ys
-> > > had to search behind the bridge and look at all the downstream BA=
-Rs.
-> > > What's new here is that software now has to look for downstream E=
-A
-> > > entries in addition to BARs, and the EA entries are at fixed
-> > > addresses.
-> > >=20
-> > > My question is what the implication is for address routing perfor=
-med
-> > > by the bridge.  The EA ECN doesn't mention any changes there, so =
-I
-> > > assume it is software's responsibility to reprogram the 00:00.0 m=
-em
-> > > window so it includes [mem 0x90000000-0x9000ffff].
-> >=20
-> > The Base+Limit window is not required to include EA regions.
-> > 	In the example shown in in Figure 6-1, the bridge above Bus N [...=
-]
-> > 	is permitted to not indicate the resources used by the two functio=
-ns
-> > 	in =E2=80=9CSi component C=E2=80=9D
-> >=20
-> > Before, all the BAR regions would be inside the window range.
-> > The Base+Limit "indicated" the Range of all the BARs behind the bri=
-dge.
-> > Once the window was set, system software could avoid an address col=
-lision
-> > with every device on the bus by avoiding the window.
-> >=20
-> > BAR-equivalent EA regions aren't required to be inside the Base+Lim=
-it window,
-> > which is why System firmware/software must search all the functions=
- behind a bus
-> > to avoid address collisions.
-> >=20
-> > > If software does have to reprogram that window, the normal
-> > > pci_claim_resource() should work.  If it doesn't have to reprogra=
-m the
-> > > window, and there's some magical way for 01:00.0 to work even tho=
-ugh
-> > > we don't route address space to it, I suspect we'll need signific=
-antly
-> > > more changes than just pci_ea_claim_resource(), because then 00:0=
-0.0
-> > > is really not a PCI bridge any more.
->=20
-> Assuming the Memory Enable bit of an EA bridge affects the EA regions=
-,
-> I think EA resources of devices behind the bridge should appear as
-> children of the bridge, not of iomem_resource.  I guess that means th=
-e
-> bridge should claim the EA regions it forwards.
->=20
-> Bjorn
+I guess it probably doesn't work if you're using O=.. ?
 
-Those bits should affect the EA regions.
-I'll make the EA resources children of the bridge in the next patchset.
-
-Thanks for reviewing,
-Sean
+cheers
