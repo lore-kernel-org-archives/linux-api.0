@@ -1,278 +1,286 @@
-From: Petr Mladek <pmladek@suse.com>
-Subject: Re: [RFC PATCH 10/14] ring_buffer: Fix more races when terminating
- the producer in the benchmark
-Date: Fri, 4 Sep 2015 11:38:56 +0200
-Message-ID: <20150904093856.GI22739@pathway.suse.cz>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [RFC PATCH 09/14] ring_buffer: Initialize completions
+ statically in the benchmark
+Date: Fri, 4 Sep 2015 09:15:33 -0400
+Message-ID: <20150904091533.77752d3e@gandalf.local.home>
 References: <1438094371-8326-1-git-send-email-pmladek@suse.com>
- <1438094371-8326-11-git-send-email-pmladek@suse.com>
- <20150803143323.426ea2fc@gandalf.local.home>
+	<1438094371-8326-10-git-send-email-pmladek@suse.com>
+	<20150803143109.0b13925b@gandalf.local.home>
+	<20150904093126.GH22739@pathway.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150803143323.426ea2fc@gandalf.local.home>
+In-Reply-To: <20150904093126.GH22739@pathway.suse.cz>
 Sender: owner-linux-mm@kvack.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Petr Mladek <pmladek@suse.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E.
+ McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon 2015-08-03 14:33:23, Steven Rostedt wrote:
-> On Tue, 28 Jul 2015 16:39:27 +0200
-> Petr Mladek <pmladek@suse.com> wrote:
+On Fri, 4 Sep 2015 11:31:26 +0200
+Petr Mladek <pmladek@suse.com> wrote:
+
+> 1st scenario:
+> -------------
 > 
-> > @@ -384,7 +389,7 @@ static int ring_buffer_consumer_thread(void *arg)
-> >  
-> >  static int ring_buffer_producer_thread(void *arg)
-> >  {
-> > -	while (!kthread_should_stop() && !kill_test) {
-> > +	while (!break_test()) {
-> >  		ring_buffer_reset(buffer);
-> >  
-> >  		if (consumer) {
-> > @@ -393,11 +398,15 @@ static int ring_buffer_producer_thread(void *arg)
-> >  		}
-> >  
-> >  		ring_buffer_producer();
-> > -		if (kill_test)
-> > +		if (break_test())
-> >  			goto out_kill;
-> >  
-> >  		trace_printk("Sleeping for 10 secs\n");
-> >  		set_current_state(TASK_INTERRUPTIBLE);
-> > +		if (break_test()) {
-> > +			__set_current_state(TASK_RUNNING);
+> CPU0					CPU1
 > 
-> Move the setting of the current state to after the out_kill label.
+> ring_buffer_producer_thread()
+>   wake_up_process(consumer);
+>   wait_for_completion(&read_start);
+> 
+> 					ring_buffer_consumer_thread()
+> 					  complete(&read_start);
+> 
+>   ring_buffer_producer()
+>     # producing data in
+>     # the do-while cycle
+> 
+> 					  ring_buffer_consumer();
+> 					    # reading data
+> 					    # got error
 
-Please, find below the updated version of this patch.
+So you're saying the error condition can cause this race? OK, I'll
+admit that. Although, I don't think it's that big of a bug because the
+error condition will also trigger a WARN_ON() and it means the ring
+buffer code is broken, which also means the kernel is broken. Things
+that go wrong after that is just tough luck.
 
-I also reverted some changes in the consumer code. It never stays
-in a loop for too long and it must stay in ring_buffer_producer()
-until "reader_finish" variable is set.
+But I'm not saying we couldn't fix it either.
+
+> 					    # set kill_test = 1;
+> 					    set_current_state(
+> 						TASK_INTERRUPTIBLE);
+> 					    if (reader_finish)  # false
+> 					    schedule();
+> 
+>     # producer still in the middle of
+>     # do-while cycle
+>     if (consumer && !(cnt % wakeup_interval))
+>       wake_up_process(consumer);
+> 
+> 					    # spurious wakeup
+> 					    while (!reader_finish &&
+> 						   !kill_test)
+> 					    # leaving because
+> 					    # kill_test == 1
+> 					    reader_finish = 0;
+> 					    complete(&read_done);
+> 
+> 1st BANG: We might access uninitialized "read_done" if this is the
+> 	  the first round.
+> 
+>     # producer finally leaving
+>     # the do-while cycle because kill_test == 1;
+> 
+>     if (consumer) {
+>       reader_finish = 1;
+>       wake_up_process(consumer);
+>       wait_for_completion(&read_done);
+> 
+> 2nd BANG: This will never complete because consumer already did
+> 	  the completion.
+> 
+> 2nd scenario:
+> -------------
+> 
+> CPU0					CPU1
+> 
+> ring_buffer_producer_thread()
+>   wake_up_process(consumer);
+>   wait_for_completion(&read_start);
+> 
+> 					ring_buffer_consumer_thread()
+> 					  complete(&read_start);
+> 
+>   ring_buffer_producer()
+>     # CPU3 removes the module	  <--- difference from
+>     # and stops producer          <--- the 1st scenario
+>     if (kthread_should_stop())
+>       kill_test = 1;
+> 
+> 					  ring_buffer_consumer();
+> 					    while (!reader_finish &&
+> 						   !kill_test)
+> 					    # kill_test == 1 => we never go
+> 					    # into the top level while()
+> 					    reader_finish = 0;
+> 					    complete(&read_done);
+> 
+>     # producer still in the middle of
+>     # do-while cycle
+>     if (consumer && !(cnt % wakeup_interval))
+>       wake_up_process(consumer);
+> 
+> 					    # spurious wakeup
+> 					    while (!reader_finish &&
+> 						   !kill_test)
+> 					    # leaving because kill_test == 1
+> 					    reader_finish = 0;
+> 					    complete(&read_done);
+> 
+> BANG: We are in the same "bang" situations as in the 1st scenario.
+
+This scenario I believe is a true bug, because it can happen on a
+kernel that is not broken.
+
+> 
+> Root of the problem:
+> --------------------
+> 
+> ring_buffer_consumer() must complete "read_done" only when "reader_finish"
+> variable is set. It must not be skipped because of other conditions.
+
+"It must not be skipped due to other conditions."
+
+> 
+> Note that we still must keep the check for "reader_finish" in a loop
+> because there might be the spurious wakeup as described in the
+
+"might be spurious wakeups"
+
+> above scenarios..
+> 
+> Solution:
+> ----------
+> 
+> The top level cycle in ring_buffer_consumer() will finish only when
+> "reader_finish" is set. The data will be read in "while-do" cycle
+> so that they are not read after an error (kill_test == 1) and
+> the spurious wake up.
+
+"or a spurious wake up"
+
+> 
+> In addition, "reader_finish" is manipulated by the producer thread.
+> Therefore we add READ_ONCE() to make sure that the fresh value is
+> read in each cycle. Also we add the corresponding barrier
+> to synchronize the sleep check.
+> 
+> Next we set back TASK_RUNNING state for the situation when we
+> did not sleep.
+
+"Next we set the state back to TASK_RUNNING for the situation where we
+did not sleep"
+
+> 
+> Just from paranoid reasons, we initialize both completions statically.
+> It should be more safe if there is other race that we do not know of.
+
+"This is safer, in case there are other races that we are unaware of."
 
 
->From 7f5b1a5b8cf8248245897b55ffc51a6d74c8e15b Mon Sep 17 00:00:00 2001
-From: Petr Mladek <pmladek@suse.com>
-Date: Fri, 19 Jun 2015 14:38:36 +0200
-Subject: [PATCH 2/2] ring_buffer: Fix more races when terminating the producer
- in the benchmark
+> 
+> As a side effect we could remove the memory barrier from
+> ring_buffer_producer_thread(). IMHO, this was the reason of
 
-The commit b44754d8262d3aab8 ("ring_buffer: Allow to exit the ring
-buffer benchmark immediately") added a hack into ring_buffer_producer()
-that set @kill_test when kthread_should_stop() returned true. It improved
-the situation a lot. It stopped the kthread in most cases because
-the producer spent most of the time in the patched while cycle.
+"the reason for"
 
-But there are still few possible races when kthread_should_stop()
-is set outside of the cycle. Then we do not set @kill_test and
-some other checks pass.
+> the barrier. ring_buffer_reset() uses spin locks that should
+> provide the needed memory barrier for using the buffer.
+> 
+> Signed-off-by: Petr Mladek <pmladek@suse.com>
+> ---
+>  kernel/trace/ring_buffer_benchmark.c | 31 ++++++++++++++++++++++---------
+>  1 file changed, 22 insertions(+), 9 deletions(-)
+> 
+> diff --git a/kernel/trace/ring_buffer_benchmark.c b/kernel/trace/ring_buffer_benchmark.c
+> index a1503a027ee2..045e0a24c2a0 100644
+> --- a/kernel/trace/ring_buffer_benchmark.c
+> +++ b/kernel/trace/ring_buffer_benchmark.c
+> @@ -24,8 +24,8 @@ struct rb_page {
+>  static int wakeup_interval = 100;
+>  
+>  static int reader_finish;
+> -static struct completion read_start;
+> -static struct completion read_done;
+> +static DECLARE_COMPLETION(read_start);
+> +static DECLARE_COMPLETION(read_done);
+>  
+>  static struct ring_buffer *buffer;
+>  static struct task_struct *producer;
+> @@ -178,10 +178,14 @@ static void ring_buffer_consumer(void)
+>  	read_events ^= 1;
+>  
+>  	read = 0;
+> -	while (!reader_finish && !kill_test) {
+> -		int found;
+> +	/*
+> +	 * Always wait until we are asked to finish and the producer
+> +	 * is ready to wait for the completion.
 
-This patch adds a better fix. It renames @test_kill/TEST_KILL() into
-a better descriptive @test_error/TEST_ERROR(). Also it introduces
-break_test() function that checks for both @test_error and
-kthread_should_stop().
+"Continue running until the producer specifically asks to stop and is
+ready for the completion."
 
-The new function is used in the producer when the check for @test_error
-is not enough. It is not used in the consumer because its state
-is manipulated by the producer via the "reader_finish" variable.
+> +	 */
+> +	while (!READ_ONCE(reader_finish)) {
+> +		int found = 1;
+>  
+> -		do {
+> +		while (found && !kill_test) {
+>  			int cpu;
+>  
+>  			found = 0;
+> @@ -195,17 +199,29 @@ static void ring_buffer_consumer(void)
+>  
+>  				if (kill_test)
+>  					break;
+> +
+>  				if (stat == EVENT_FOUND)
+>  					found = 1;
+> +
+>  			}
+> -		} while (found && !kill_test);
+> +		}
+>  
+> +		/*
+> +		 * Sleep a bit. Producer with wake up us when some more data
+> +		 * are available or when we should finish reading.
 
-Also we add a missing check into ring_buffer_producer_thread()
-between setting TASK_INTERRUPTIBLE and calling schedule_timeout().
-Otherwise, we might miss a wakeup from kthread_stop().
+"Wait till the producer wakes us up when there is more data available or
+when the producer wants us to finish reading"
 
-Signed-off-by: Petr Mladek <pmladek@suse.com>
----
- kernel/trace/ring_buffer_benchmark.c | 54 +++++++++++++++++++-----------------
- 1 file changed, 29 insertions(+), 25 deletions(-)
+> +		 */
+>  		set_current_state(TASK_INTERRUPTIBLE);
+> +		/*
+> +		 * Make sure that we read the updated finish variable
+> +		 * before producer tries to wakeup us.
+> +		 */
+> +		smp_rmb();
 
-diff --git a/kernel/trace/ring_buffer_benchmark.c b/kernel/trace/ring_buffer_benchmark.c
-index 045e0a24c2a0..d1bfe4399e96 100644
---- a/kernel/trace/ring_buffer_benchmark.c
-+++ b/kernel/trace/ring_buffer_benchmark.c
-@@ -60,12 +60,12 @@ MODULE_PARM_DESC(consumer_fifo, "fifo prio for consumer");
- 
- static int read_events;
- 
--static int kill_test;
-+static int test_error;
- 
--#define KILL_TEST()				\
-+#define TEST_ERROR()				\
- 	do {					\
--		if (!kill_test) {		\
--			kill_test = 1;		\
-+		if (!test_error) {		\
-+			test_error = 1;		\
- 			WARN_ON(1);		\
- 		}				\
- 	} while (0)
-@@ -75,6 +75,11 @@ enum event_status {
- 	EVENT_DROPPED,
- };
- 
-+static bool break_test(void)
-+{
-+	return test_error || kthread_should_stop();
-+}
-+
- static enum event_status read_event(int cpu)
- {
- 	struct ring_buffer_event *event;
-@@ -87,7 +92,7 @@ static enum event_status read_event(int cpu)
- 
- 	entry = ring_buffer_event_data(event);
- 	if (*entry != cpu) {
--		KILL_TEST();
-+		TEST_ERROR();
- 		return EVENT_DROPPED;
- 	}
- 
-@@ -115,10 +120,10 @@ static enum event_status read_page(int cpu)
- 		rpage = bpage;
- 		/* The commit may have missed event flags set, clear them */
- 		commit = local_read(&rpage->commit) & 0xfffff;
--		for (i = 0; i < commit && !kill_test; i += inc) {
-+		for (i = 0; i < commit && !test_error ; i += inc) {
- 
- 			if (i >= (PAGE_SIZE - offsetof(struct rb_page, data))) {
--				KILL_TEST();
-+				TEST_ERROR();
- 				break;
- 			}
- 
-@@ -128,7 +133,7 @@ static enum event_status read_page(int cpu)
- 			case RINGBUF_TYPE_PADDING:
- 				/* failed writes may be discarded events */
- 				if (!event->time_delta)
--					KILL_TEST();
-+					TEST_ERROR();
- 				inc = event->array[0] + 4;
- 				break;
- 			case RINGBUF_TYPE_TIME_EXTEND:
-@@ -137,12 +142,12 @@ static enum event_status read_page(int cpu)
- 			case 0:
- 				entry = ring_buffer_event_data(event);
- 				if (*entry != cpu) {
--					KILL_TEST();
-+					TEST_ERROR();
- 					break;
- 				}
- 				read++;
- 				if (!event->array[0]) {
--					KILL_TEST();
-+					TEST_ERROR();
- 					break;
- 				}
- 				inc = event->array[0] + 4;
-@@ -150,17 +155,17 @@ static enum event_status read_page(int cpu)
- 			default:
- 				entry = ring_buffer_event_data(event);
- 				if (*entry != cpu) {
--					KILL_TEST();
-+					TEST_ERROR();
- 					break;
- 				}
- 				read++;
- 				inc = ((event->type_len + 1) * 4);
- 			}
--			if (kill_test)
-+			if (test_error)
- 				break;
- 
- 			if (inc <= 0) {
--				KILL_TEST();
-+				TEST_ERROR();
- 				break;
- 			}
- 		}
-@@ -185,7 +190,7 @@ static void ring_buffer_consumer(void)
- 	while (!READ_ONCE(reader_finish)) {
- 		int found = 1;
- 
--		while (found && !kill_test) {
-+		while (found && !test_error) {
- 			int cpu;
- 
- 			found = 0;
-@@ -197,7 +202,7 @@ static void ring_buffer_consumer(void)
- 				else
- 					stat = read_page(cpu);
- 
--				if (kill_test)
-+				if (test_error)
- 					break;
- 
- 				if (stat == EVENT_FOUND)
-@@ -279,10 +284,7 @@ static void ring_buffer_producer(void)
- 		if (cnt % wakeup_interval)
- 			cond_resched();
- #endif
--		if (kthread_should_stop())
--			kill_test = 1;
--
--	} while (ktime_before(end_time, timeout) && !kill_test);
-+	} while (ktime_before(end_time, timeout) && !break_test());
- 	trace_printk("End ring buffer hammer\n");
- 
- 	if (consumer) {
-@@ -303,7 +305,7 @@ static void ring_buffer_producer(void)
- 	entries = ring_buffer_entries(buffer);
- 	overruns = ring_buffer_overruns(buffer);
- 
--	if (kill_test && !kthread_should_stop())
-+	if (test_error)
- 		trace_printk("ERROR!\n");
- 
- 	if (!disable_reader) {
-@@ -384,15 +386,14 @@ static void wait_to_die(void)
- 
- static int ring_buffer_consumer_thread(void *arg)
- {
--	while (!kthread_should_stop() && !kill_test) {
-+	while (!break_test()) {
- 		complete(&read_start);
- 
- 		ring_buffer_consumer();
- 
- 		set_current_state(TASK_INTERRUPTIBLE);
--		if (kthread_should_stop() || kill_test)
-+		if (break_test())
- 			break;
--
- 		schedule();
- 	}
- 	__set_current_state(TASK_RUNNING);
-@@ -405,7 +406,7 @@ static int ring_buffer_consumer_thread(void *arg)
- 
- static int ring_buffer_producer_thread(void *arg)
- {
--	while (!kthread_should_stop() && !kill_test) {
-+	while (!break_test()) {
- 		ring_buffer_reset(buffer);
- 
- 		if (consumer) {
-@@ -414,15 +415,18 @@ static int ring_buffer_producer_thread(void *arg)
- 		}
- 
- 		ring_buffer_producer();
--		if (kill_test)
-+		if (break_test())
- 			goto out_kill;
- 
- 		trace_printk("Sleeping for 10 secs\n");
- 		set_current_state(TASK_INTERRUPTIBLE);
-+		if (break_test())
-+			goto out_kill;
- 		schedule_timeout(HZ * SLEEP_TIME);
- 	}
- 
- out_kill:
-+	__set_current_state(TASK_RUNNING);
- 	if (!kthread_should_stop())
- 		wait_to_die();
- 
--- 
-1.8.5.6
+The above is unneeded. Look at the definition of set_current_state().
+
+>  		if (reader_finish)
+>  			break;
+>  
+>  		schedule();
+>  	}
+> +	__set_current_state(TASK_RUNNING);
+>  	reader_finish = 0;
+>  	complete(&read_done);
+>  }
+> @@ -389,13 +405,10 @@ static int ring_buffer_consumer_thread(void *arg)
+>  
+>  static int ring_buffer_producer_thread(void *arg)
+>  {
+> -	init_completion(&read_start);
+> -
+>  	while (!kthread_should_stop() && !kill_test) {
+>  		ring_buffer_reset(buffer);
+>  
+>  		if (consumer) {
+> -			smp_wmb();
+>  			wake_up_process(consumer);
+>  			wait_for_completion(&read_start);
+>  		}
+
+Please make the above changes and submit the patch again as a separate
+patch.
+
+Thanks!
+
+-- Steve
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
