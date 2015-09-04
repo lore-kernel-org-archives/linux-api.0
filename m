@@ -1,289 +1,206 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC PATCH 09/14] ring_buffer: Initialize completions
- statically in the benchmark
-Date: Fri, 4 Sep 2015 09:15:33 -0400
-Message-ID: <20150904091533.77752d3e@gandalf.local.home>
-References: <1438094371-8326-1-git-send-email-pmladek@suse.com>
-	<1438094371-8326-10-git-send-email-pmladek@suse.com>
-	<20150803143109.0b13925b@gandalf.local.home>
-	<20150904093126.GH22739@pathway.suse.cz>
+From: Jiri Kosina <jikos@kernel.org>
+Subject: Re: [PATCH 1/1] Corsair Vengeance K90 driver
+Date: Fri, 4 Sep 2015 15:27:02 +0200 (CEST)
+Message-ID: <alpine.LNX.2.00.1509041518580.30132@pobox.suse.cz>
+References: <cover.1440853951.git.clement.vuchener@gmail.com> <55E1BBC8.9010303@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150904093126.GH22739@pathway.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E.
- McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=ISO-8859-15
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <55E1BBC8.9010303@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: =?ISO-8859-15?Q?Cl=E9ment_Vuchener?= <clement.vuchener@gmail.com>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-input@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 4 Sep 2015 11:31:26 +0200
-Petr Mladek <pmladek@suse.com> wrote:
-
-> 1st scenario:
-> -------------
-> 
-> CPU0					CPU1
-> 
-> ring_buffer_producer_thread()
->   wake_up_process(consumer);
->   wait_for_completion(&read_start);
-> 
-> 					ring_buffer_consumer_thread()
-> 					  complete(&read_start);
-> 
->   ring_buffer_producer()
->     # producing data in
->     # the do-while cycle
-> 
-> 					  ring_buffer_consumer();
-> 					    # reading data
-> 					    # got error
-
-So you're saying the error condition can cause this race? OK, I'll
-admit that. Although, I don't think it's that big of a bug because the
-error condition will also trigger a WARN_ON() and it means the ring
-buffer code is broken, which also means the kernel is broken. Things
-that go wrong after that is just tough luck.
-
-But I'm not saying we couldn't fix it either.
-
-> 					    # set kill_test = 1;
-> 					    set_current_state(
-> 						TASK_INTERRUPTIBLE);
-> 					    if (reader_finish)  # false
-> 					    schedule();
-> 
->     # producer still in the middle of
->     # do-while cycle
->     if (consumer && !(cnt % wakeup_interval))
->       wake_up_process(consumer);
-> 
-> 					    # spurious wakeup
-> 					    while (!reader_finish &&
-> 						   !kill_test)
-> 					    # leaving because
-> 					    # kill_test == 1
-> 					    reader_finish = 0;
-> 					    complete(&read_done);
-> 
-> 1st BANG: We might access uninitialized "read_done" if this is the
-> 	  the first round.
-> 
->     # producer finally leaving
->     # the do-while cycle because kill_test == 1;
-> 
->     if (consumer) {
->       reader_finish = 1;
->       wake_up_process(consumer);
->       wait_for_completion(&read_done);
-> 
-> 2nd BANG: This will never complete because consumer already did
-> 	  the completion.
-> 
-> 2nd scenario:
-> -------------
-> 
-> CPU0					CPU1
-> 
-> ring_buffer_producer_thread()
->   wake_up_process(consumer);
->   wait_for_completion(&read_start);
-> 
-> 					ring_buffer_consumer_thread()
-> 					  complete(&read_start);
-> 
->   ring_buffer_producer()
->     # CPU3 removes the module	  <--- difference from
->     # and stops producer          <--- the 1st scenario
->     if (kthread_should_stop())
->       kill_test = 1;
-> 
-> 					  ring_buffer_consumer();
-> 					    while (!reader_finish &&
-> 						   !kill_test)
-> 					    # kill_test == 1 => we never go
-> 					    # into the top level while()
-> 					    reader_finish = 0;
-> 					    complete(&read_done);
-> 
->     # producer still in the middle of
->     # do-while cycle
->     if (consumer && !(cnt % wakeup_interval))
->       wake_up_process(consumer);
-> 
-> 					    # spurious wakeup
-> 					    while (!reader_finish &&
-> 						   !kill_test)
-> 					    # leaving because kill_test == 1
-> 					    reader_finish = 0;
-> 					    complete(&read_done);
-> 
-> BANG: We are in the same "bang" situations as in the 1st scenario.
-
-This scenario I believe is a true bug, because it can happen on a
-kernel that is not broken.
-
-> 
-> Root of the problem:
-> --------------------
-> 
-> ring_buffer_consumer() must complete "read_done" only when "reader_finish"
-> variable is set. It must not be skipped because of other conditions.
-
-"It must not be skipped due to other conditions."
-
-> 
-> Note that we still must keep the check for "reader_finish" in a loop
-> because there might be the spurious wakeup as described in the
-
-"might be spurious wakeups"
-
-> above scenarios..
-> 
-> Solution:
-> ----------
-> 
-> The top level cycle in ring_buffer_consumer() will finish only when
-> "reader_finish" is set. The data will be read in "while-do" cycle
-> so that they are not read after an error (kill_test == 1) and
-> the spurious wake up.
-
-"or a spurious wake up"
-
-> 
-> In addition, "reader_finish" is manipulated by the producer thread.
-> Therefore we add READ_ONCE() to make sure that the fresh value is
-> read in each cycle. Also we add the corresponding barrier
-> to synchronize the sleep check.
-> 
-> Next we set back TASK_RUNNING state for the situation when we
-> did not sleep.
-
-"Next we set the state back to TASK_RUNNING for the situation where we
-did not sleep"
-
-> 
-> Just from paranoid reasons, we initialize both completions statically.
-> It should be more safe if there is other race that we do not know of.
-
-"This is safer, in case there are other races that we are unaware of."
+On Sat, 29 Aug 2015, Cl=E9ment Vuchener wrote:
 
 
-> 
-> As a side effect we could remove the memory barrier from
-> ring_buffer_producer_thread(). IMHO, this was the reason of
+This is missing changelog and Signed-off-by: line. I know that you have=
+=20
+provided that in your cover letter, but cover letter never make it to t=
+he=20
+actual GIT commits.
 
-"the reason for"
+So please fix that and resend the patch, thanks.
 
-> the barrier. ring_buffer_reset() uses spin locks that should
-> provide the needed memory barrier for using the buffer.
-> 
-> Signed-off-by: Petr Mladek <pmladek@suse.com>
 > ---
->  kernel/trace/ring_buffer_benchmark.c | 31 ++++++++++++++++++++++---------
->  1 file changed, 22 insertions(+), 9 deletions(-)
-> 
-> diff --git a/kernel/trace/ring_buffer_benchmark.c b/kernel/trace/ring_buffer_benchmark.c
-> index a1503a027ee2..045e0a24c2a0 100644
-> --- a/kernel/trace/ring_buffer_benchmark.c
-> +++ b/kernel/trace/ring_buffer_benchmark.c
-> @@ -24,8 +24,8 @@ struct rb_page {
->  static int wakeup_interval = 100;
->  
->  static int reader_finish;
-> -static struct completion read_start;
-> -static struct completion read_done;
-> +static DECLARE_COMPLETION(read_start);
-> +static DECLARE_COMPLETION(read_done);
->  
->  static struct ring_buffer *buffer;
->  static struct task_struct *producer;
-> @@ -178,10 +178,14 @@ static void ring_buffer_consumer(void)
->  	read_events ^= 1;
->  
->  	read = 0;
-> -	while (!reader_finish && !kill_test) {
-> -		int found;
-> +	/*
-> +	 * Always wait until we are asked to finish and the producer
-> +	 * is ready to wait for the completion.
-
-"Continue running until the producer specifically asks to stop and is
-ready for the completion."
-
-> +	 */
-> +	while (!READ_ONCE(reader_finish)) {
-> +		int found = 1;
->  
-> -		do {
-> +		while (found && !kill_test) {
->  			int cpu;
->  
->  			found = 0;
-> @@ -195,17 +199,29 @@ static void ring_buffer_consumer(void)
->  
->  				if (kill_test)
->  					break;
+>  Documentation/ABI/testing/sysfs-class-k90_profile  |  55 ++
+>  .../ABI/testing/sysfs-driver-hid-corsair-k90       |  15 +
+>  drivers/hid/Kconfig                                |  10 +
+>  drivers/hid/Makefile                               |   1 +
+>  drivers/hid/hid-core.c                             |   1 +
+>  drivers/hid/hid-corsair-k90.c                      | 690
+> +++++++++++++++++++++
+>  drivers/hid/hid-ids.h                              |   3 +
+>  7 files changed, 775 insertions(+)
+>  create mode 100644 Documentation/ABI/testing/sysfs-class-k90_profile
+>  create mode 100644 Documentation/ABI/testing/sysfs-driver-hid-corsai=
+r-k90
+>  create mode 100644 drivers/hid/hid-corsair-k90.c
+>=20
+> diff --git a/Documentation/ABI/testing/sysfs-class-k90_profile
+> b/Documentation/ABI/testing/sysfs-class-k90_profile
+> new file mode 100644
+> index 0000000..3275c16
+> --- /dev/null
+> +++ b/Documentation/ABI/testing/sysfs-class-k90_profile
+> @@ -0,0 +1,55 @@
+> +What:		/sys/class/k90_profile/<profile>/profile_number
+> +Date:		August 2015
+> +KernelVersion:	4.2
+> +Contact:	Clement Vuchener <clement.vuchener@gmail.com>
+> +Description:	Get the number of the profile.
 > +
->  				if (stat == EVENT_FOUND)
->  					found = 1;
+> +What:		/sys/class/k90_profile/<profile>/bindings
+> +Date:		August 2015
+> +KernelVersion:	4.2
+> +Contact:	Clement Vuchener <clement.vuchener@gmail.com>
+> +Description:	Write bindings to the keyboard on-board profile.
+> +		The data structure is:
+> +		 - number of bindings in this structure (1 byte)
+> +		 - size of this data structure (2 bytes big endian)
+> +		 - size of the macro data written to
+> +		   /sys/class/k90_profile/<profile>/data (2 bytes big endian)
+> +		 - array of bindings referencing the data from
+> +		   /sys/class/k90_profile/<profile>/data, each containing:
+> +		   * 0x10 for a key usage, 0x20 for a macro (1 byte)
+> +		   * offset of the key usage/macro data (2 bytes big endian)
+> +		   * length of the key usage/macro data (2 bytes big endian)
 > +
->  			}
-> -		} while (found && !kill_test);
+
+This looks like violation of one-value-per-attribute rule for sysfs ABI=
+=2E=20
+Could you please think about it once again with this aspect on mind?
+
+[ ... snip ... ]
+> diff --git a/drivers/hid/hid-core.c b/drivers/hid/hid-core.c
+> index e6fce23..f0d9125 100644
+> --- a/drivers/hid/hid-core.c
+> +++ b/drivers/hid/hid-core.c
+> @@ -1807,6 +1807,7 @@ static const struct hid_device_id
+> hid_have_special_driver[] =3D {
+>  	{ HID_USB_DEVICE(USB_VENDOR_ID_CHICONY,
+> USB_DEVICE_ID_CHICONY_WIRELESS) },
+>  	{ HID_USB_DEVICE(USB_VENDOR_ID_CHICONY,
+> USB_DEVICE_ID_CHICONY_WIRELESS2) },
+>  	{ HID_USB_DEVICE(USB_VENDOR_ID_CHICONY, USB_DEVICE_ID_CHICONY_AK1D)=
+ },
+> +	{ HID_USB_DEVICE(USB_VENDOR_ID_CORSAIR, USB_DEVICE_ID_CORSAIR_K90) =
+},
+>  	{ HID_USB_DEVICE(USB_VENDOR_ID_CREATIVELABS,
+> USB_DEVICE_ID_PRODIKEYS_PCMIDI) },
+>  	{ HID_USB_DEVICE(USB_VENDOR_ID_CYGNAL, USB_DEVICE_ID_CYGNAL_CP2112)=
+ },
+>  	{ HID_USB_DEVICE(USB_VENDOR_ID_CYPRESS,
+> USB_DEVICE_ID_CYPRESS_BARCODE_1) },
+
+Your mail client is corrupting long lines, making tha patch application=
+=20
+impossible. Please fix that for your following submissions.
+
+> diff --git a/drivers/hid/hid-corsair-k90.c b/drivers/hid/hid-corsair-=
+k90.c
+> new file mode 100644
+> index 0000000..67c1095
+> --- /dev/null
+> +++ b/drivers/hid/hid-corsair-k90.c
+> @@ -0,0 +1,690 @@
+> +/*
+> + * HID driver for Corsair Vengeance K90 Keyboard
+
+Usually we try to be a little bit more generic, and name the driver=20
+according to the vendor (and fold all the vedor-specific stuff into the=
+=20
+one driver).
+
+So my suggestion would be to name the driver hid-corsair, keeping the=20
+possibility for adding more devices later open.
+
+[ ... snip ... ]
+> +static int k90_init_special_functions(struct hid_device *dev)
+> +{
+> +	int ret, i;
+> +	struct usb_interface *usbif =3D to_usb_interface(dev->dev.parent);
+> +	struct usb_device *usbdev =3D interface_to_usbdev(usbif);
+> +	char data[8];
+> +	struct k90_drvdata *drvdata =3D
+> +	    kzalloc(sizeof(struct k90_drvdata), GFP_KERNEL);
+> +	size_t name_sz;
+> +	char *name;
+> +	struct k90_led *led;
+> +
+> +	if (!drvdata) {
+> +		ret =3D -ENOMEM;
+> +		goto fail_drvdata;
+> +	}
+> +	hid_set_drvdata(dev, drvdata);
+> +
+> +	/* Get current status */
+> +	ret =3D usb_control_msg(usbdev, usb_rcvctrlpipe(usbdev, 0),
+> +			      K90_REQUEST_STATUS,
+> +			      USB_DIR_IN | USB_TYPE_VENDOR |
+> +			      USB_RECIP_DEVICE, 0, 0, data, 8,
+> +			      USB_CTRL_SET_TIMEOUT);
+
+So you apparently also depend on USB ...
+
+> +	if (ret < 0) {
+> +		hid_warn(dev, "Failed to get K90 initial state (error %d).\n",
+> +			 ret);
+> +		drvdata->backlight.brightness =3D 0;
+> +		drvdata->current_profile =3D 1;
+> +	} else {
+> +		drvdata->backlight.brightness =3D data[4];
+> +		drvdata->current_profile =3D data[7];
+> +	}
+> +	/* Get current mode */
+> +	ret =3D usb_control_msg(usbdev, usb_rcvctrlpipe(usbdev, 0),
+> +			      K90_REQUEST_GET_MODE,
+> +			      USB_DIR_IN | USB_TYPE_VENDOR |
+> +			      USB_RECIP_DEVICE, 0, 0, data, 2,
+> +			      USB_CTRL_SET_TIMEOUT);
+> +	if (ret < 0)
+> +		hid_warn(dev, "Failed to get K90 initial mode (error %d).\n",
+> +			 ret);
+> +	else {
+> +		switch (data[0]) {
+> +		case K90_MACRO_MODE_HW:
+> +			drvdata->macro_mode =3D 1;
+> +			break;
+> +		case K90_MACRO_MODE_SW:
+> +			drvdata->macro_mode =3D 0;
+> +			break;
+> +		default:
+> +			hid_warn(dev, "K90 in unknown mode: %02x.\n",
+> +				 data[0]);
 > +		}
->  
-> +		/*
-> +		 * Sleep a bit. Producer with wake up us when some more data
-> +		 * are available or when we should finish reading.
+> +	}
+> +
+> +	/* Init LED device for backlight */
+> +	name_sz =3D
+> +	    strlen(dev_name(&dev->dev)) + sizeof(K90_BACKLIGHT_LED_SUFFIX);
+> +	name =3D devm_kzalloc(&dev->dev, name_sz, GFP_KERNEL);
+> +	if (!name) {
+> +		ret =3D -ENOMEM;
+> +		goto fail_backlight;
+> +	}
+> +	snprintf(name, name_sz, "%s" K90_BACKLIGHT_LED_SUFFIX,
+> +		 dev_name(&dev->dev));
+> +	led =3D &drvdata->backlight;
+> +	led->cdev.name =3D name;
+> +	led->cdev.max_brightness =3D 3;
+> +	led->cdev.brightness_set =3D k90_brightness_set;
+> +	led->cdev.brightness_get =3D k90_brightness_get;
+> +	INIT_WORK(&led->work, k90_backlight_work);
+> +	ret =3D led_classdev_register(&dev->dev, &led->cdev);
 
-"Wait till the producer wakes us up when there is more data available or
-when the producer wants us to finish reading"
+=2E.. and also on LED subsystem, but this dependency is not expressed i=
+n=20
+Kconfig.
 
-> +		 */
->  		set_current_state(TASK_INTERRUPTIBLE);
-> +		/*
-> +		 * Make sure that we read the updated finish variable
-> +		 * before producer tries to wakeup us.
-> +		 */
-> +		smp_rmb();
+Thanks,
 
-The above is unneeded. Look at the definition of set_current_state().
-
->  		if (reader_finish)
->  			break;
->  
->  		schedule();
->  	}
-> +	__set_current_state(TASK_RUNNING);
->  	reader_finish = 0;
->  	complete(&read_done);
->  }
-> @@ -389,13 +405,10 @@ static int ring_buffer_consumer_thread(void *arg)
->  
->  static int ring_buffer_producer_thread(void *arg)
->  {
-> -	init_completion(&read_start);
-> -
->  	while (!kthread_should_stop() && !kill_test) {
->  		ring_buffer_reset(buffer);
->  
->  		if (consumer) {
-> -			smp_wmb();
->  			wake_up_process(consumer);
->  			wait_for_completion(&read_start);
->  		}
-
-Please make the above changes and submit the patch again as a separate
-patch.
-
-Thanks!
-
--- Steve
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+--=20
+Jiri Kosina
+SUSE Labs
