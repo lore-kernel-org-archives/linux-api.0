@@ -1,7 +1,7 @@
 From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [RFC v7 01/41] vfs: Add IS_ACL() and IS_RICHACL() tests
-Date: Sat,  5 Sep 2015 12:26:56 +0200
-Message-ID: <1441448856-13478-2-git-send-email-agruenba@redhat.com>
+Subject: [RFC v7 03/41] vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD permission flags
+Date: Sat,  5 Sep 2015 12:26:58 +0200
+Message-ID: <1441448856-13478-4-git-send-email-agruenba@redhat.com>
 References: <1441448856-13478-1-git-send-email-agruenba@redhat.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1441448856-13478-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
@@ -9,125 +9,80 @@ Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-The vfs does not apply the umask for file systems that support acls. The
-test used for this used to be called IS_POSIXACL(). Switch to a new
-IS_ACL() test to check for either posix acls or richacls instead. Add a new
-MS_RICHACL flag and IS_RICHACL() test for richacls alone. The IS_POSIXACL()
-test is still needed by nfsd.
+Normally, deleting a file requires MAY_WRITE access to the parent
+directory.  With richacls, a file may be deleted with MAY_DELETE_CHILD access
+to the parent directory or with MAY_DELETE_SELF access to the file.
+
+To support that, pass the MAY_DELETE_CHILD mask flag to inode_permission()
+when checking for delete access inside a directory, and MAY_DELETE_SELF
+when checking for delete access to a file itelf.
+
+The MAY_DELETE_SELF permission does not override the sticky directory
+check.  It probably should.
 
 Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Reviewed-by: J. Bruce Fields <bfields-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- fs/Kconfig              |  3 +++
- fs/namei.c              |  8 ++++----
- include/linux/fs.h      | 12 ++++++++++++
- include/uapi/linux/fs.h |  3 ++-
- 4 files changed, 21 insertions(+), 5 deletions(-)
+ fs/namei.c         | 19 +++++++++++++------
+ include/linux/fs.h |  2 ++
+ 2 files changed, 15 insertions(+), 6 deletions(-)
 
-diff --git a/fs/Kconfig b/fs/Kconfig
-index 011f433..3e09c06 100644
---- a/fs/Kconfig
-+++ b/fs/Kconfig
-@@ -59,6 +59,9 @@ endif # BLOCK
- config FS_POSIX_ACL
- 	def_bool n
- 
-+config FS_RICHACL
-+	def_bool n
-+
- config EXPORTFS
- 	tristate
- 
 diff --git a/fs/namei.c b/fs/namei.c
-index 1c2105e..480d2e8 100644
+index 428b4a6..d7bd134 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
-@@ -2771,7 +2771,7 @@ static int atomic_open(struct nameidata *nd, struct dentry *dentry,
- 	}
+@@ -453,9 +453,9 @@ static int sb_permission(struct super_block *sb, struct inode *inode, int mask)
+  * this, letting us set arbitrary permissions for filesystem access without
+  * changing the "normal" UIDs which are used for other things.
+  *
+- * MAY_WRITE must be set in @mask whenever MAY_APPEND, MAY_CREATE_FILE, or
+- * MAY_CREATE_DIR are set.  That way, file systems that don't support these
+- * permissions will check for MAY_WRITE instead.
++ * MAY_WRITE must be set in @mask whenever MAY_APPEND, MAY_CREATE_FILE,
++ * MAY_CREATE_DIR, or MAY_DELETE_CHILD are set.  That way, file systems that
++ * don't support these permissions will check for MAY_WRITE instead.
+  */
+ int inode_permission(struct inode *inode, int mask)
+ {
+@@ -2528,7 +2528,7 @@ static int may_delete(struct inode *dir, struct dentry *victim,
+ 		      bool isdir, bool replace)
+ {
+ 	struct inode *inode = d_backing_inode(victim);
+-	int error, mask = MAY_WRITE | MAY_EXEC;
++	int error, mask = MAY_EXEC;
  
- 	mode = op->mode;
--	if ((open_flag & O_CREAT) && !IS_POSIXACL(dir))
-+	if ((open_flag & O_CREAT) && !IS_ACL(dir))
- 		mode &= ~current_umask();
+ 	if (d_is_negative(victim))
+ 		return -ENOENT;
+@@ -2538,8 +2538,15 @@ static int may_delete(struct inode *dir, struct dentry *victim,
+ 	audit_inode_child(dir, victim, AUDIT_TYPE_CHILD_DELETE);
  
- 	excl = (open_flag & (O_EXCL | O_CREAT)) == (O_EXCL | O_CREAT);
-@@ -2955,7 +2955,7 @@ static int lookup_open(struct nameidata *nd, struct path *path,
- 	/* Negative dentry, just create the file */
- 	if (!dentry->d_inode && (op->open_flag & O_CREAT)) {
- 		umode_t mode = op->mode;
--		if (!IS_POSIXACL(dir->d_inode))
-+		if (!IS_ACL(dir->d_inode))
- 			mode &= ~current_umask();
- 		/*
- 		 * This write is needed to ensure that a
-@@ -3526,7 +3526,7 @@ retry:
- 	if (IS_ERR(dentry))
- 		return PTR_ERR(dentry);
- 
--	if (!IS_POSIXACL(path.dentry->d_inode))
-+	if (!IS_ACL(path.dentry->d_inode))
- 		mode &= ~current_umask();
- 	error = security_path_mknod(&path, dentry, mode, dev);
+ 	if (replace)
+-		mask |= isdir ? MAY_CREATE_DIR : MAY_CREATE_FILE;
+-	error = inode_permission(dir, mask);
++		mask |= MAY_WRITE | (isdir ? MAY_CREATE_DIR : MAY_CREATE_FILE);
++	error = inode_permission(dir, mask | MAY_WRITE | MAY_DELETE_CHILD);
++	if (error && IS_RICHACL(inode)) {
++		/* Deleting is also permitted with MAY_EXEC on the directory
++		 * and MAY_DELETE_SELF on the inode.  */
++		if (!inode_permission(inode, MAY_DELETE_SELF) &&
++		    !inode_permission(dir, mask))
++			error = 0;
++	}
  	if (error)
-@@ -3595,7 +3595,7 @@ retry:
- 	if (IS_ERR(dentry))
- 		return PTR_ERR(dentry);
- 
--	if (!IS_POSIXACL(path.dentry->d_inode))
-+	if (!IS_ACL(path.dentry->d_inode))
- 		mode &= ~current_umask();
- 	error = security_path_mkdir(&path, dentry, mode);
- 	if (!error)
+ 		return error;
+ 	if (IS_APPEND(dir))
 diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 84b783f..f98ebc1 100644
+index e4d701c..8e130e1 100644
 --- a/include/linux/fs.h
 +++ b/include/linux/fs.h
-@@ -1771,6 +1771,12 @@ struct super_operations {
- #define IS_IMMUTABLE(inode)	((inode)->i_flags & S_IMMUTABLE)
- #define IS_POSIXACL(inode)	__IS_FLG(inode, MS_POSIXACL)
- 
-+#ifdef CONFIG_FS_RICHACL
-+#define IS_RICHACL(inode)	__IS_FLG(inode, MS_RICHACL)
-+#else
-+#define IS_RICHACL(inode)	0
-+#endif
-+
- #define IS_DEADDIR(inode)	((inode)->i_flags & S_DEAD)
- #define IS_NOCMTIME(inode)	((inode)->i_flags & S_NOCMTIME)
- #define IS_SWAPFILE(inode)	((inode)->i_flags & S_SWAPFILE)
-@@ -1784,6 +1790,12 @@ struct super_operations {
- 				 (inode)->i_rdev == WHITEOUT_DEV)
+@@ -84,6 +84,8 @@ typedef void (dax_iodone_t)(struct buffer_head *bh_map, int uptodate);
+ #define MAY_NOT_BLOCK		0x00000080
+ #define MAY_CREATE_FILE		0x00000100
+ #define MAY_CREATE_DIR		0x00000200
++#define MAY_DELETE_CHILD	0x00000400
++#define MAY_DELETE_SELF		0x00000800
  
  /*
-+ * IS_ACL() tells the VFS to not apply the umask
-+ * and use check_acl for acl permission checks when defined.
-+ */
-+#define IS_ACL(inode)		__IS_FLG(inode, MS_POSIXACL | MS_RICHACL)
-+
-+/*
-  * Inode state bits.  Protected by inode->i_lock
-  *
-  * Three bits determine the dirty state of the inode, I_DIRTY_SYNC,
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index 9b964a5..6ac6bc9 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -81,7 +81,7 @@ struct inodes_stat_t {
- #define MS_VERBOSE	32768	/* War is peace. Verbosity is silence.
- 				   MS_VERBOSE is deprecated. */
- #define MS_SILENT	32768
--#define MS_POSIXACL	(1<<16)	/* VFS does not apply the umask */
-+#define MS_POSIXACL	(1<<16)	/* Supports POSIX ACLs */
- #define MS_UNBINDABLE	(1<<17)	/* change to unbindable */
- #define MS_PRIVATE	(1<<18)	/* change to private */
- #define MS_SLAVE	(1<<19)	/* change to slave */
-@@ -91,6 +91,7 @@ struct inodes_stat_t {
- #define MS_I_VERSION	(1<<23) /* Update inode I_version field */
- #define MS_STRICTATIME	(1<<24) /* Always perform atime updates */
- #define MS_LAZYTIME	(1<<25) /* Update the on-disk [acm]times lazily */
-+#define MS_RICHACL	(1<<26) /* Supports richacls */
- 
- /* These sb flags are internal to the kernel */
- #define MS_NOSEC	(1<<28)
+  * flags in file.f_mode.  Note that FMODE_READ and FMODE_WRITE must correspond
 -- 
 2.4.3
