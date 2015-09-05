@@ -1,138 +1,281 @@
 From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [RFC v7 19/41] ext4: Add richacl feature flag
-Date: Sat,  5 Sep 2015 12:27:14 +0200
-Message-ID: <1441448856-13478-20-git-send-email-agruenba@redhat.com>
+Subject: [RFC v7 11/41] vfs: Cache base_acl objects in inodes
+Date: Sat,  5 Sep 2015 12:27:06 +0200
+Message-ID: <1441448856-13478-12-git-send-email-agruenba@redhat.com>
 References: <1441448856-13478-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1441448856-13478-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: "Aneesh Kumar K.V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: "Aneesh Kumar K.V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-
-This feature flag selects richacl instead of posix acl support on the
-file system. In addition, the "acl" mount option is needed for enabling
-either of the two kinds of acls.
+POSIX ACLs and richacls are both objects allocated by kmalloc() with a
+reference count which are freed by kfree_rcu().  An inode can either
+cache an access and a default POSIX ACL, or a richacl (richacls do not
+have default acls).  To allow an inode to cache either of the two kinds
+of acls, introduce a new base_acl type and convert i_acl and
+i_default_acl to that type. In most cases, the vfs then doesn't have to
+care which kind of acl an inode caches (if any).
 
 Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- fs/ext4/ext4.h  |  6 ++++--
- fs/ext4/super.c | 42 +++++++++++++++++++++++++++++++++---------
- 2 files changed, 37 insertions(+), 11 deletions(-)
+ drivers/staging/lustre/lustre/llite/llite_lib.c |  2 +-
+ fs/f2fs/acl.c                                   |  4 ++--
+ fs/inode.c                                      |  4 ++--
+ fs/jffs2/acl.c                                  |  6 ++++--
+ fs/posix_acl.c                                  | 18 +++++++++---------
+ include/linux/fs.h                              | 25 ++++++++++++++++++++++---
+ include/linux/posix_acl.h                       | 12 ++++--------
+ include/linux/richacl.h                         |  2 +-
+ 8 files changed, 45 insertions(+), 28 deletions(-)
 
-diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-index f5e9f04..e69c8ea 100644
---- a/fs/ext4/ext4.h
-+++ b/fs/ext4/ext4.h
-@@ -991,7 +991,7 @@ struct ext4_inode_info {
- #define EXT4_MOUNT_UPDATE_JOURNAL	0x01000	/* Update the journal format */
- #define EXT4_MOUNT_NO_UID32		0x02000  /* Disable 32-bit UIDs */
- #define EXT4_MOUNT_XATTR_USER		0x04000	/* Extended user attributes */
--#define EXT4_MOUNT_POSIX_ACL		0x08000	/* POSIX Access Control Lists */
-+#define EXT4_MOUNT_ACL			0x08000	/* Access Control Lists */
- #define EXT4_MOUNT_NO_AUTO_DA_ALLOC	0x10000	/* No auto delalloc mapping */
- #define EXT4_MOUNT_BARRIER		0x20000 /* Use block barriers */
- #define EXT4_MOUNT_QUOTA		0x80000 /* Some quota option set */
-@@ -1582,6 +1582,7 @@ static inline int ext4_encrypted_inode(struct inode *inode)
- #define EXT4_FEATURE_INCOMPAT_LARGEDIR		0x4000 /* >2GB or 3-lvl htree */
- #define EXT4_FEATURE_INCOMPAT_INLINE_DATA	0x8000 /* data in inode */
- #define EXT4_FEATURE_INCOMPAT_ENCRYPT		0x10000
-+#define EXT4_FEATURE_INCOMPAT_RICHACL		0x20000
- 
- #define EXT2_FEATURE_COMPAT_SUPP	EXT4_FEATURE_COMPAT_EXT_ATTR
- #define EXT2_FEATURE_INCOMPAT_SUPP	(EXT4_FEATURE_INCOMPAT_FILETYPE| \
-@@ -1607,7 +1608,8 @@ static inline int ext4_encrypted_inode(struct inode *inode)
- 					 EXT4_FEATURE_INCOMPAT_FLEX_BG| \
- 					 EXT4_FEATURE_INCOMPAT_MMP | \
- 					 EXT4_FEATURE_INCOMPAT_INLINE_DATA | \
--					 EXT4_FEATURE_INCOMPAT_ENCRYPT)
-+					 EXT4_FEATURE_INCOMPAT_ENCRYPT | \
-+					 EXT4_FEATURE_INCOMPAT_RICHACL)
- #define EXT4_FEATURE_RO_COMPAT_SUPP	(EXT4_FEATURE_RO_COMPAT_SPARSE_SUPER| \
- 					 EXT4_FEATURE_RO_COMPAT_LARGE_FILE| \
- 					 EXT4_FEATURE_RO_COMPAT_GDT_CSUM| \
-diff --git a/fs/ext4/super.c b/fs/ext4/super.c
-index 58987b5..05d6537 100644
---- a/fs/ext4/super.c
-+++ b/fs/ext4/super.c
-@@ -1257,6 +1257,28 @@ static ext4_fsblk_t get_sb_block(void **data)
- 	return sb_block;
+diff --git a/drivers/staging/lustre/lustre/llite/llite_lib.c b/drivers/staging/lustre/lustre/llite/llite_lib.c
+index 2513988..e198f63 100644
+--- a/drivers/staging/lustre/lustre/llite/llite_lib.c
++++ b/drivers/staging/lustre/lustre/llite/llite_lib.c
+@@ -1130,7 +1130,7 @@ void ll_clear_inode(struct inode *inode)
+ 	}
+ #ifdef CONFIG_FS_POSIX_ACL
+ 	else if (lli->lli_posix_acl) {
+-		LASSERT(atomic_read(&lli->lli_posix_acl->a_refcount) == 1);
++		LASSERT(atomic_read(&lli->lli_posix_acl->a_base.ba_refcount) == 1);
+ 		LASSERT(lli->lli_remote_perms == NULL);
+ 		posix_acl_release(lli->lli_posix_acl);
+ 		lli->lli_posix_acl = NULL;
+diff --git a/fs/f2fs/acl.c b/fs/f2fs/acl.c
+index c8f25f7..a4207de 100644
+--- a/fs/f2fs/acl.c
++++ b/fs/f2fs/acl.c
+@@ -270,7 +270,7 @@ static struct posix_acl *f2fs_acl_clone(const struct posix_acl *acl,
+ 				sizeof(struct posix_acl_entry);
+ 		clone = kmemdup(acl, size, flags);
+ 		if (clone)
+-			atomic_set(&clone->a_refcount, 1);
++			atomic_set(&clone->a_base.ba_refcount, 1);
+ 	}
+ 	return clone;
  }
+@@ -282,7 +282,7 @@ static int f2fs_acl_create_masq(struct posix_acl *acl, umode_t *mode_p)
+ 	umode_t mode = *mode_p;
+ 	int not_equiv = 0;
  
-+static int enable_acl(struct super_block *sb)
-+{
-+	sb->s_flags &= ~(MS_POSIXACL | MS_RICHACL);
-+	if (test_opt(sb, ACL)) {
-+		if (EXT4_HAS_INCOMPAT_FEATURE(sb,
-+					      EXT4_FEATURE_INCOMPAT_RICHACL)) {
-+#ifdef CONFIG_EXT4_FS_RICHACL
-+			sb->s_flags |= MS_RICHACL;
-+#else
-+			return -EOPNOTSUPP;
-+#endif
-+		} else {
-+#ifdef CONFIG_EXT4_FS_POSIX_ACL
-+			sb->s_flags |= MS_POSIXACL;
-+#else
-+			return -EOPNOTSUPP;
-+#endif
-+		}
-+	}
-+	return 0;
-+}
-+
- #define DEFAULT_JOURNAL_IOPRIO (IOPRIO_PRIO_VALUE(IOPRIO_CLASS_BE, 3))
- static char deprecated_msg[] = "Mount option \"%s\" will be removed by %s\n"
- 	"Contact linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org if you think we should keep it.\n";
-@@ -1403,9 +1425,9 @@ static const struct mount_opts {
- 	 MOPT_NO_EXT2 | MOPT_DATAJ},
- 	{Opt_user_xattr, EXT4_MOUNT_XATTR_USER, MOPT_SET},
- 	{Opt_nouser_xattr, EXT4_MOUNT_XATTR_USER, MOPT_CLEAR},
--#ifdef CONFIG_EXT4_FS_POSIX_ACL
--	{Opt_acl, EXT4_MOUNT_POSIX_ACL, MOPT_SET},
--	{Opt_noacl, EXT4_MOUNT_POSIX_ACL, MOPT_CLEAR},
-+#if defined(CONFIG_EXT4_FS_POSIX_ACL) || defined(CONFIG_EXT4_FS_RICHACL)
-+	{Opt_acl, EXT4_MOUNT_ACL, MOPT_SET},
-+	{Opt_noacl, EXT4_MOUNT_ACL, MOPT_CLEAR},
- #else
- 	{Opt_acl, 0, MOPT_NOSUPPORT},
- 	{Opt_noacl, 0, MOPT_NOSUPPORT},
-@@ -3563,8 +3585,8 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
- 		set_opt(sb, NO_UID32);
- 	/* xattr user namespace & acls are now defaulted on */
- 	set_opt(sb, XATTR_USER);
--#ifdef CONFIG_EXT4_FS_POSIX_ACL
--	set_opt(sb, POSIX_ACL);
-+#if defined(CONFIG_EXT4_FS_POSIX_ACL) || defined(CONFIG_EXT4_FS_RICHACL)
-+	set_opt(sb, ACL);
+-	/* assert(atomic_read(acl->a_refcount) == 1); */
++	/* assert(atomic_read(acl->a_base.ba_refcount) == 1); */
+ 
+ 	FOREACH_ACL_ENTRY(pa, acl, pe) {
+ 		switch(pa->e_tag) {
+diff --git a/fs/inode.c b/fs/inode.c
+index d30640f..00b442d 100644
+--- a/fs/inode.c
++++ b/fs/inode.c
+@@ -235,9 +235,9 @@ void __destroy_inode(struct inode *inode)
+ 
+ #ifdef CONFIG_FS_POSIX_ACL
+ 	if (inode->i_acl && inode->i_acl != ACL_NOT_CACHED)
+-		posix_acl_release(inode->i_acl);
++		put_base_acl(inode->i_acl);
+ 	if (inode->i_default_acl && inode->i_default_acl != ACL_NOT_CACHED)
+-		posix_acl_release(inode->i_default_acl);
++		put_base_acl(inode->i_default_acl);
  #endif
- 	/* don't forget to enable journal_csum when metadata_csum is enabled. */
- 	if (ext4_has_metadata_csum(sb))
-@@ -3645,8 +3667,9 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
- 			clear_opt(sb, DELALLOC);
+ 	this_cpu_dec(nr_inodes);
+ }
+diff --git a/fs/jffs2/acl.c b/fs/jffs2/acl.c
+index 2f7a3c0..04a5836 100644
+--- a/fs/jffs2/acl.c
++++ b/fs/jffs2/acl.c
+@@ -294,13 +294,15 @@ int jffs2_init_acl_post(struct inode *inode)
+ 	int rc;
+ 
+ 	if (inode->i_default_acl) {
+-		rc = __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_DEFAULT, inode->i_default_acl);
++		rc = __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_DEFAULT,
++				     *acl_by_type(inode, ACL_TYPE_DEFAULT));
+ 		if (rc)
+ 			return rc;
  	}
  
--	sb->s_flags = (sb->s_flags & ~MS_POSIXACL) |
--		(test_opt(sb, POSIX_ACL) ? MS_POSIXACL : 0);
-+	err = enable_acl(sb);
-+	if (err)
-+		goto failed_mount;
+ 	if (inode->i_acl) {
+-		rc = __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_ACCESS, inode->i_acl);
++		rc = __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_ACCESS,
++				     *acl_by_type(inode, ACL_TYPE_ACCESS));
+ 		if (rc)
+ 			return rc;
+ 	}
+diff --git a/fs/posix_acl.c b/fs/posix_acl.c
+index 4fb17de..b3b2265 100644
+--- a/fs/posix_acl.c
++++ b/fs/posix_acl.c
+@@ -25,9 +25,9 @@ struct posix_acl **acl_by_type(struct inode *inode, int type)
+ {
+ 	switch (type) {
+ 	case ACL_TYPE_ACCESS:
+-		return &inode->i_acl;
++		return (struct posix_acl **)&inode->i_acl;
+ 	case ACL_TYPE_DEFAULT:
+-		return &inode->i_default_acl;
++		return (struct posix_acl **)&inode->i_default_acl;
+ 	default:
+ 		BUG();
+ 	}
+@@ -83,16 +83,16 @@ EXPORT_SYMBOL(forget_cached_acl);
  
- 	if (le32_to_cpu(es->s_rev_level) == EXT4_GOOD_OLD_REV &&
- 	    (EXT4_HAS_COMPAT_FEATURE(sb, ~0U) ||
-@@ -4960,8 +4983,9 @@ static int ext4_remount(struct super_block *sb, int *flags, char *data)
- 	if (sbi->s_mount_flags & EXT4_MF_FS_ABORTED)
- 		ext4_abort(sb, "Abort forced by user");
+ void forget_all_cached_acls(struct inode *inode)
+ {
+-	struct posix_acl *old_access, *old_default;
++	struct base_acl *old_access, *old_default;
+ 	spin_lock(&inode->i_lock);
+ 	old_access = inode->i_acl;
+ 	old_default = inode->i_default_acl;
+ 	inode->i_acl = inode->i_default_acl = ACL_NOT_CACHED;
+ 	spin_unlock(&inode->i_lock);
+ 	if (old_access != ACL_NOT_CACHED)
+-		posix_acl_release(old_access);
++		put_base_acl(old_access);
+ 	if (old_default != ACL_NOT_CACHED)
+-		posix_acl_release(old_default);
++		put_base_acl(old_default);
+ }
+ EXPORT_SYMBOL(forget_all_cached_acls);
  
--	sb->s_flags = (sb->s_flags & ~MS_POSIXACL) |
--		(test_opt(sb, POSIX_ACL) ? MS_POSIXACL : 0);
-+	err = enable_acl(sb);
-+	if (err)
-+		goto restore_opts;
+@@ -129,7 +129,7 @@ EXPORT_SYMBOL(get_acl);
+ void
+ posix_acl_init(struct posix_acl *acl, int count)
+ {
+-	atomic_set(&acl->a_refcount, 1);
++	atomic_set(&acl->a_base.ba_refcount, 1);
+ 	acl->a_count = count;
+ }
+ EXPORT_SYMBOL(posix_acl_init);
+@@ -162,7 +162,7 @@ posix_acl_clone(const struct posix_acl *acl, gfp_t flags)
+ 		           sizeof(struct posix_acl_entry);
+ 		clone = kmemdup(acl, size, flags);
+ 		if (clone)
+-			atomic_set(&clone->a_refcount, 1);
++			atomic_set(&clone->a_base.ba_refcount, 1);
+ 	}
+ 	return clone;
+ }
+@@ -384,7 +384,7 @@ static int posix_acl_create_masq(struct posix_acl *acl, umode_t *mode_p)
+ 	umode_t mode = *mode_p;
+ 	int not_equiv = 0;
  
- 	es = sbi->s_es;
+-	/* assert(atomic_read(acl->a_refcount) == 1); */
++	/* assert(atomic_read(acl->a_base.ba_refcount) == 1); */
+ 
+ 	FOREACH_ACL_ENTRY(pa, acl, pe) {
+                 switch(pa->e_tag) {
+@@ -439,7 +439,7 @@ static int __posix_acl_chmod_masq(struct posix_acl *acl, umode_t mode)
+ 	struct posix_acl_entry *group_obj = NULL, *mask_obj = NULL;
+ 	struct posix_acl_entry *pa, *pe;
+ 
+-	/* assert(atomic_read(acl->a_refcount) == 1); */
++	/* assert(atomic_read(acl->a_base.ba_refcount) == 1); */
+ 
+ 	FOREACH_ACL_ENTRY(pa, acl, pe) {
+ 		switch(pa->e_tag) {
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index add0a02..04dddfa 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -576,6 +576,12 @@ static inline void mapping_allow_writable(struct address_space *mapping)
+ #define i_size_ordered_init(inode) do { } while (0)
+ #endif
+ 
++struct base_acl {
++	union {
++		atomic_t ba_refcount;
++		struct rcu_head ba_rcu;
++	};
++};
+ struct posix_acl;
+ #define ACL_NOT_CACHED ((void *)(-1))
+ 
+@@ -595,9 +601,9 @@ struct inode {
+ 	kgid_t			i_gid;
+ 	unsigned int		i_flags;
+ 
+-#ifdef CONFIG_FS_POSIX_ACL
+-	struct posix_acl	*i_acl;
+-	struct posix_acl	*i_default_acl;
++#if defined(CONFIG_FS_POSIX_ACL)
++	struct base_acl *i_acl;
++	struct base_acl *i_default_acl;
+ #endif
+ 
+ 	const struct inode_operations	*i_op;
+@@ -3060,4 +3066,17 @@ static inline bool dir_relax(struct inode *inode)
+ 	return !IS_DEADDIR(inode);
+ }
+ 
++static inline struct base_acl *get_base_acl(struct base_acl *acl)
++{
++	if (acl)
++		atomic_inc(&acl->ba_refcount);
++	return acl;
++}
++
++static inline void put_base_acl(struct base_acl *acl)
++{
++	if (acl && atomic_dec_and_test(&acl->ba_refcount))
++		kfree_rcu(acl, ba_rcu);
++}
++
+ #endif /* _LINUX_FS_H */
+diff --git a/include/linux/posix_acl.h b/include/linux/posix_acl.h
+index 3e96a6a..2c46441 100644
+--- a/include/linux/posix_acl.h
++++ b/include/linux/posix_acl.h
+@@ -43,10 +43,7 @@ struct posix_acl_entry {
+ };
+ 
+ struct posix_acl {
+-	union {
+-		atomic_t		a_refcount;
+-		struct rcu_head		a_rcu;
+-	};
++	struct base_acl		a_base;
+ 	unsigned int		a_count;
+ 	struct posix_acl_entry	a_entries[0];
+ };
+@@ -61,8 +58,7 @@ struct posix_acl {
+ static inline struct posix_acl *
+ posix_acl_dup(struct posix_acl *acl)
+ {
+-	if (acl)
+-		atomic_inc(&acl->a_refcount);
++	get_base_acl(&acl->a_base);
+ 	return acl;
+ }
+ 
+@@ -72,8 +68,8 @@ posix_acl_dup(struct posix_acl *acl)
+ static inline void
+ posix_acl_release(struct posix_acl *acl)
+ {
+-	if (acl && atomic_dec_and_test(&acl->a_refcount))
+-		kfree_rcu(acl, a_rcu);
++	BUILD_BUG_ON(offsetof(struct posix_acl, a_base) != 0);
++	put_base_acl(&acl->a_base);
+ }
+ 
+ 
+diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+index 9768eeb..61836f1 100644
+--- a/include/linux/richacl.h
++++ b/include/linux/richacl.h
+@@ -176,7 +176,7 @@ static inline struct richacl *
+ richacl_get(struct richacl *acl)
+ {
+ 	if (acl)
+-		atomic_inc(&acl->a_refcount);
++		atomic_inc(&acl->a_base.ba_refcount);
+ 	return acl;
+ }
  
 -- 
 2.4.3
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
