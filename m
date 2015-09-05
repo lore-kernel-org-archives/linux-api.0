@@ -1,1073 +1,418 @@
-From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [RFC v7 29/41] nfsd: Use richacls as internal acl representation
-Date: Sat,  5 Sep 2015 12:27:24 +0200
-Message-ID: <1441448856-13478-30-git-send-email-agruenba@redhat.com>
+From: Andreas Gruenbacher <agruenba@redhat.com>
+Subject: [RFC v7 16/41] richacl: xattr mapping functions
+Date: Sat,  5 Sep 2015 12:27:11 +0200
+Message-ID: <1441448856-13478-17-git-send-email-agruenba@redhat.com>
 References: <1441448856-13478-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1441448856-13478-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1441448856-13478-1-git-send-email-agruenba@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org, linux-cifs@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-When converting from NFSv4 ACLs to POSIX ACLs, nfsd so far was using
-struct nfs4_acl as its internal representation. This representation is a
-subset of richacls, so get rid of struct nfs4_acl. Richacls even have a
-more compact in-memory representation, so a few more ACL entries can
-easily be supported.
+Map between "system.richacl" xattrs and the in-kernel representation.
 
-Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 ---
- fs/Kconfig              |   6 +
- fs/nfs_common/Makefile  |   1 +
- fs/nfs_common/nfs4acl.c |  44 ++++++
- fs/nfsd/Kconfig         |   1 +
- fs/nfsd/acl.h           |  24 ++--
- fs/nfsd/nfs4acl.c       | 367 ++++++++++++++++++++++--------------------------
- fs/nfsd/nfs4proc.c      |  15 +-
- fs/nfsd/nfs4xdr.c       |  64 +++------
- fs/nfsd/xdr4.h          |   6 +-
- include/linux/nfs4.h    |  23 ---
- include/linux/nfs4acl.h |   7 +
- 11 files changed, 273 insertions(+), 285 deletions(-)
- create mode 100644 fs/nfs_common/nfs4acl.c
- create mode 100644 include/linux/nfs4acl.h
+ fs/Makefile                   |   2 +-
+ fs/richacl_xattr.c            | 220 ++++++++++++++++++++++++++++++++++++++++++
+ fs/xattr.c                    |  34 +++++--
+ include/linux/richacl_xattr.h |  62 ++++++++++++
+ include/uapi/linux/xattr.h    |   2 +
+ 5 files changed, 313 insertions(+), 7 deletions(-)
+ create mode 100644 fs/richacl_xattr.c
+ create mode 100644 include/linux/richacl_xattr.h
 
-diff --git a/fs/Kconfig b/fs/Kconfig
-index 3e09c06..dd3f2d6 100644
---- a/fs/Kconfig
-+++ b/fs/Kconfig
-@@ -268,6 +268,12 @@ config NFS_COMMON
- 	depends on NFSD || NFS_FS || LOCKD
- 	default y
+diff --git a/fs/Makefile b/fs/Makefile
+index 1305047..baf385a 100644
+--- a/fs/Makefile
++++ b/fs/Makefile
+@@ -48,7 +48,7 @@ obj-$(CONFIG_SYSCTL)		+= drop_caches.o
  
-+config NFS_RICHACL
-+	bool
-+	depends on NFSD_V4 || NFS_V4
-+	select FS_RICHACL
-+	default y
-+
- source "net/sunrpc/Kconfig"
- source "fs/ceph/Kconfig"
- source "fs/cifs/Kconfig"
-diff --git a/fs/nfs_common/Makefile b/fs/nfs_common/Makefile
-index d153ca3..e055139 100644
---- a/fs/nfs_common/Makefile
-+++ b/fs/nfs_common/Makefile
-@@ -4,5 +4,6 @@
+ obj-$(CONFIG_FHANDLE)		+= fhandle.o
+ obj-$(CONFIG_FS_RICHACL)	+= richacl.o
+-richacl-y			:= richacl_base.o richacl_inode.o
++richacl-y			:= richacl_base.o richacl_inode.o richacl_xattr.o
  
- obj-$(CONFIG_NFS_ACL_SUPPORT) += nfs_acl.o
- nfs_acl-objs := nfsacl.o
-+obj-$(CONFIG_NFS_RICHACL) += nfs4acl.o
+ obj-y				+= quota/
  
- obj-$(CONFIG_GRACE_PERIOD) += grace.o
-diff --git a/fs/nfs_common/nfs4acl.c b/fs/nfs_common/nfs4acl.c
+diff --git a/fs/richacl_xattr.c b/fs/richacl_xattr.c
 new file mode 100644
-index 0000000..02df064
+index 0000000..cd9979d
 --- /dev/null
-+++ b/fs/nfs_common/nfs4acl.c
-@@ -0,0 +1,44 @@
++++ b/fs/richacl_xattr.c
+@@ -0,0 +1,220 @@
++/*
++ * Copyright (C) 2006, 2010  Novell, Inc.
++ * Copyright (C) 2015  Red Hat, Inc.
++ * Written by Andreas Gruenbacher <agruen@kernel.org>
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License as published by the
++ * Free Software Foundation; either version 2, or (at your option) any
++ * later version.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ */
++
++#include <linux/sched.h>
 +#include <linux/fs.h>
-+#include <linux/richacl.h>
-+#include <linux/nfs4acl.h>
++#include <linux/slab.h>
++#include <linux/module.h>
++#include <linux/richacl_xattr.h>
 +
-+static struct special_id {
-+	char *who;
-+	int   len;
-+} special_who_map[] = {
-+	[RICHACE_OWNER_SPECIAL_ID] = {
-+		.who = "OWNER@",
-+		.len = sizeof("OWNER@") - 1 },
-+	[RICHACE_GROUP_SPECIAL_ID] = {
-+		.who = "GROUP@",
-+		.len = sizeof("GROUP@") - 1 },
-+	[RICHACE_EVERYONE_SPECIAL_ID] = {
-+		.who = "EVERYONE@",
-+		.len = sizeof("EVERYONE@") - 1 }
-+};
++MODULE_LICENSE("GPL");
 +
-+int nfs4acl_who_to_special_id(const char *who, u32 len)
++/**
++ * richacl_from_xattr  -  convert a richacl xattr into the in-memory representation
++ */
++struct richacl *
++richacl_from_xattr(struct user_namespace *user_ns,
++		   const void *value, size_t size)
 +{
-+	int n;
++	const struct richacl_xattr *xattr_acl = value;
++	const struct richace_xattr *xattr_ace = (void *)(xattr_acl + 1);
++	struct richacl *acl;
++	struct richace *ace;
++	int count;
 +
-+	for (n = 0; n < ARRAY_SIZE(special_who_map); n++) {
-+		if (len == special_who_map[n].len &&
-+		    !memcmp(who, special_who_map[n].who, len))
-+			return n;
++	if (size < sizeof(*xattr_acl) ||
++	    xattr_acl->a_version != RICHACL_XATTR_VERSION ||
++	    (xattr_acl->a_flags & ~RICHACL_VALID_FLAGS))
++		return ERR_PTR(-EINVAL);
++	size -= sizeof(*xattr_acl);
++	count = le16_to_cpu(xattr_acl->a_count);
++	if (count > RICHACL_XATTR_MAX_COUNT)
++		return ERR_PTR(-EINVAL);
++	if (size != count * sizeof(*xattr_ace))
++		return ERR_PTR(-EINVAL);
++
++	acl = richacl_alloc(count, GFP_NOFS);
++	if (!acl)
++		return ERR_PTR(-ENOMEM);
++
++	acl->a_flags = xattr_acl->a_flags;
++	acl->a_owner_mask = le32_to_cpu(xattr_acl->a_owner_mask);
++	if (acl->a_owner_mask & ~RICHACE_VALID_MASK)
++		goto fail_einval;
++	acl->a_group_mask = le32_to_cpu(xattr_acl->a_group_mask);
++	if (acl->a_group_mask & ~RICHACE_VALID_MASK)
++		goto fail_einval;
++	acl->a_other_mask = le32_to_cpu(xattr_acl->a_other_mask);
++	if (acl->a_other_mask & ~RICHACE_VALID_MASK)
++		goto fail_einval;
++
++	richacl_for_each_entry(ace, acl) {
++		ace->e_type  = le16_to_cpu(xattr_ace->e_type);
++		ace->e_flags = le16_to_cpu(xattr_ace->e_flags);
++		ace->e_mask  = le32_to_cpu(xattr_ace->e_mask);
++
++		if (ace->e_flags & ~RICHACE_VALID_FLAGS)
++			goto fail_einval;
++		if (ace->e_flags & RICHACE_SPECIAL_WHO) {
++			ace->e_id.special = le32_to_cpu(xattr_ace->e_id);
++			if (ace->e_id.special > RICHACE_EVERYONE_SPECIAL_ID)
++				goto fail_einval;
++		} else if (ace->e_flags & RICHACE_IDENTIFIER_GROUP) {
++			u32 id = le32_to_cpu(xattr_ace->e_id);
++
++			ace->e_id.gid = make_kgid(user_ns, id);
++			if (!gid_valid(ace->e_id.gid))
++				goto fail_einval;
++		} else {
++			u32 id = le32_to_cpu(xattr_ace->e_id);
++
++			ace->e_id.uid = make_kuid(user_ns, id);
++			if (!uid_valid(ace->e_id.uid))
++				goto fail_einval;
++		}
++		if (ace->e_type > RICHACE_ACCESS_DENIED_ACE_TYPE ||
++		    (ace->e_mask & ~RICHACE_VALID_MASK))
++			goto fail_einval;
++
++		xattr_ace++;
 +	}
-+	return -1;
-+}
-+EXPORT_SYMBOL(nfs4acl_who_to_special_id);
 +
-+bool nfs4acl_special_id_to_who(unsigned int special_who,
-+			       const char **who, unsigned int *len)
++	return acl;
++
++fail_einval:
++	richacl_put(acl);
++	return ERR_PTR(-EINVAL);
++}
++EXPORT_SYMBOL_GPL(richacl_from_xattr);
++
++/**
++ * richacl_xattr_size  -  compute the size of the xattr representation of @acl
++ */
++size_t
++richacl_xattr_size(const struct richacl *acl)
 +{
-+	struct special_id *special = &special_who_map[special_who];
++	size_t size = sizeof(struct richacl_xattr);
 +
-+	if (special_who > ARRAY_SIZE(special_who_map) || !special->len)
-+		return false;
-+	*who = special->who;
-+	*len = special->len;
-+	return true;
++	size += sizeof(struct richace_xattr) * acl->a_count;
++	return size;
 +}
-+EXPORT_SYMBOL(nfs4acl_special_id_to_who);
-diff --git a/fs/nfsd/Kconfig b/fs/nfsd/Kconfig
-index a0b77fc..811379a 100644
---- a/fs/nfsd/Kconfig
-+++ b/fs/nfsd/Kconfig
-@@ -70,6 +70,7 @@ config NFSD_V4
- 	depends on NFSD && PROC_FS
- 	select NFSD_V3
- 	select FS_POSIX_ACL
-+	select FS_RICHACL
- 	select SUNRPC_GSS
- 	select CRYPTO
- 	select GRACE_PERIOD
-diff --git a/fs/nfsd/acl.h b/fs/nfsd/acl.h
-index 4cd7c69..1c5deb5 100644
---- a/fs/nfsd/acl.h
-+++ b/fs/nfsd/acl.h
-@@ -35,25 +35,27 @@
- #ifndef LINUX_NFS4_ACL_H
- #define LINUX_NFS4_ACL_H
++EXPORT_SYMBOL_GPL(richacl_xattr_size);
++
++/**
++ * richacl_to_xattr  -  convert @acl into its xattr representation
++ * @acl:	the richacl to convert
++ * @buffer:	buffer for the result
++ * @size:	size of @buffer
++ */
++int
++richacl_to_xattr(struct user_namespace *user_ns,
++		 const struct richacl *acl, void *buffer, size_t size)
++{
++	struct richacl_xattr *xattr_acl = buffer;
++	struct richace_xattr *xattr_ace;
++	const struct richace *ace;
++	size_t real_size;
++
++	real_size = richacl_xattr_size(acl);
++	if (!buffer)
++		return real_size;
++	if (real_size > size)
++		return -ERANGE;
++
++	xattr_acl->a_version = RICHACL_XATTR_VERSION;
++	xattr_acl->a_flags = acl->a_flags;
++	xattr_acl->a_count = cpu_to_le16(acl->a_count);
++
++	xattr_acl->a_owner_mask = cpu_to_le32(acl->a_owner_mask);
++	xattr_acl->a_group_mask = cpu_to_le32(acl->a_group_mask);
++	xattr_acl->a_other_mask = cpu_to_le32(acl->a_other_mask);
++
++	xattr_ace = (void *)(xattr_acl + 1);
++	richacl_for_each_entry(ace, acl) {
++		xattr_ace->e_type = cpu_to_le16(ace->e_type);
++		xattr_ace->e_flags = cpu_to_le16(ace->e_flags);
++		xattr_ace->e_mask = cpu_to_le32(ace->e_mask);
++		if (ace->e_flags & RICHACE_SPECIAL_WHO)
++			xattr_ace->e_id = cpu_to_le32(ace->e_id.special);
++		else if (ace->e_flags & RICHACE_IDENTIFIER_GROUP)
++			xattr_ace->e_id =
++				cpu_to_le32(from_kgid(user_ns, ace->e_id.gid));
++		else
++			xattr_ace->e_id =
++				cpu_to_le32(from_kuid(user_ns, ace->e_id.uid));
++		xattr_ace++;
++	}
++	return real_size;
++}
++EXPORT_SYMBOL_GPL(richacl_to_xattr);
++
++/*
++ * Fix up the uids and gids in richacl extended attributes in place.
++ */
++static void richacl_fix_xattr_userns(
++	struct user_namespace *to, struct user_namespace *from,
++	void *value, size_t size)
++{
++	struct richacl_xattr *xattr_acl = value;
++	struct richace_xattr *xattr_ace =
++		(struct richace_xattr *)(xattr_acl + 1);
++	unsigned int count;
++
++	if (!value)
++		return;
++	if (size < sizeof(*xattr_acl))
++		return;
++	if (xattr_acl->a_version != cpu_to_le32(RICHACL_XATTR_VERSION))
++		return;
++	size -= sizeof(*xattr_acl);
++	if (size % sizeof(*xattr_ace))
++		return;
++	count = size / sizeof(*xattr_ace);
++	for (; count; count--, xattr_ace++) {
++		if (xattr_ace->e_flags & cpu_to_le16(RICHACE_SPECIAL_WHO))
++			continue;
++		if (xattr_ace->e_flags &
++		    cpu_to_le16(RICHACE_IDENTIFIER_GROUP)) {
++			u32 id = le32_to_cpu(xattr_ace->e_id);
++			kgid_t gid = make_kgid(from, id);
++
++			xattr_ace->e_id = cpu_to_le32(from_kgid(to, gid));
++		} else {
++			u32 id = le32_to_cpu(xattr_ace->e_id);
++			kuid_t uid = make_kuid(from, id);
++
++			xattr_ace->e_id = cpu_to_le32(from_kuid(to, uid));
++		}
++	}
++}
++
++void richacl_fix_xattr_from_user(void *value, size_t size)
++{
++	struct user_namespace *user_ns = current_user_ns();
++
++	if (user_ns == &init_user_ns)
++		return;
++	richacl_fix_xattr_userns(&init_user_ns, user_ns, value, size);
++}
++
++void richacl_fix_xattr_to_user(void *value, size_t size)
++{
++	struct user_namespace *user_ns = current_user_ns();
++
++	if (user_ns == &init_user_ns)
++		return;
++	richacl_fix_xattr_userns(user_ns, &init_user_ns, value, size);
++}
+diff --git a/fs/xattr.c b/fs/xattr.c
+index 072fee1..f2313c6 100644
+--- a/fs/xattr.c
++++ b/fs/xattr.c
+@@ -21,6 +21,7 @@
+ #include <linux/audit.h>
+ #include <linux/vmalloc.h>
+ #include <linux/posix_acl_xattr.h>
++#include <linux/richacl_xattr.h>
  
--struct nfs4_acl;
-+struct richacl;
-+struct richace;
- struct svc_fh;
- struct svc_rqst;
+ #include <asm/uaccess.h>
+ 
+@@ -314,6 +315,18 @@ out:
+ }
+ EXPORT_SYMBOL_GPL(vfs_removexattr);
+ 
++static void
++fix_xattr_from_user(const char *kname, void *kvalue, size_t size)
++{
++	if (strncmp(kname, XATTR_SYSTEM_PREFIX, XATTR_SYSTEM_PREFIX_LEN))
++		return;
++	kname += XATTR_SYSTEM_PREFIX_LEN;
++	if (!strcmp(kname, XATTR_POSIX_ACL_ACCESS) ||
++	    !strcmp(kname, XATTR_POSIX_ACL_DEFAULT))
++		posix_acl_fix_xattr_from_user(kvalue, size);
++	else if (!strcmp(kname, XATTR_RICHACL))
++		richacl_fix_xattr_from_user(kvalue, size);
++}
  
  /*
-  * Maximum ACL we'll accept from a client; chosen (somewhat
-  * arbitrarily) so that kmalloc'ing the ACL shouldn't require a
-- * high-order allocation.  This allows 204 ACEs on x86_64:
-+ * high-order allocation.  This allows 339 ACEs on x86_64:
+  * Extended attribute SET operations
+@@ -350,9 +363,7 @@ setxattr(struct dentry *d, const char __user *name, const void __user *value,
+ 			error = -EFAULT;
+ 			goto out;
+ 		}
+-		if ((strcmp(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
+-		    (strcmp(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
+-			posix_acl_fix_xattr_from_user(kvalue, size);
++		fix_xattr_from_user(kname, kvalue, size);
+ 	}
+ 
+ 	error = vfs_setxattr(d, kname, kvalue, size, flags);
+@@ -419,6 +430,19 @@ SYSCALL_DEFINE5(fsetxattr, int, fd, const char __user *, name,
+ 	return error;
+ }
+ 
++static void
++fix_xattr_to_user(const char *kname, void *kvalue, size_t size)
++{
++	if (strncmp(kname, XATTR_SYSTEM_PREFIX, XATTR_SYSTEM_PREFIX_LEN))
++		return;
++	kname += XATTR_SYSTEM_PREFIX_LEN;
++	if (!strcmp(kname, XATTR_POSIX_ACL_ACCESS) ||
++	    !strcmp(kname, XATTR_POSIX_ACL_DEFAULT))
++		posix_acl_fix_xattr_to_user(kvalue, size);
++	else if (!strcmp(kname, XATTR_RICHACL))
++		richacl_fix_xattr_to_user(kvalue, size);
++}
++
+ /*
+  * Extended attribute GET operations
   */
--#define NFS4_ACL_MAX ((PAGE_SIZE - sizeof(struct nfs4_acl)) \
--			/ sizeof(struct nfs4_ace))
-+#define NFSD4_ACL_MAX ((PAGE_SIZE - sizeof(struct richacl)) \
-+			/ sizeof(struct richace))
- 
--int nfs4_acl_bytes(int entries);
--int nfs4_acl_get_whotype(char *, u32);
--__be32 nfs4_acl_write_who(struct xdr_stream *xdr, int who);
-+__be32 nfsd4_decode_ace_who(struct richace *ace, struct svc_rqst *rqstp,
-+			    char *who, u32 len);
-+__be32 nfsd4_encode_ace_who(struct xdr_stream *xdr, struct svc_rqst *rqstp,
-+			    struct richace *ace);
- 
--int nfsd4_get_nfs4_acl(struct svc_rqst *rqstp, struct dentry *dentry,
--		struct nfs4_acl **acl);
--__be32 nfsd4_set_nfs4_acl(struct svc_rqst *rqstp, struct svc_fh *fhp,
--		struct nfs4_acl *acl);
-+int nfsd4_get_acl(struct svc_rqst *rqstp, struct dentry *dentry,
-+		  struct richacl **acl);
-+__be32 nfsd4_set_acl(struct svc_rqst *rqstp, struct svc_fh *fhp,
-+		     struct richacl *acl);
- 
- #endif /* LINUX_NFS4_ACL_H */
-diff --git a/fs/nfsd/nfs4acl.c b/fs/nfsd/nfs4acl.c
-index eb5accf..582f772 100644
---- a/fs/nfsd/nfs4acl.c
-+++ b/fs/nfsd/nfs4acl.c
-@@ -36,45 +36,48 @@
- 
- #include <linux/slab.h>
- #include <linux/nfs_fs.h>
-+#include <linux/richacl_compat.h>
-+#include <linux/nfs4acl.h>
- #include "nfsfh.h"
- #include "nfsd.h"
-+#include "idmap.h"
- #include "acl.h"
- #include "vfs.h"
- 
--#define NFS4_ACL_TYPE_DEFAULT	0x01
--#define NFS4_ACL_DIR		0x02
--#define NFS4_ACL_OWNER		0x04
-+#define FLAG_DEFAULT_ACL	0x01
-+#define FLAG_DIRECTORY		0x02
-+#define FLAG_OWNER		0x04
- 
- /* mode bit translations: */
--#define NFS4_READ_MODE (NFS4_ACE_READ_DATA)
--#define NFS4_WRITE_MODE (NFS4_ACE_WRITE_DATA | NFS4_ACE_APPEND_DATA)
--#define NFS4_EXECUTE_MODE NFS4_ACE_EXECUTE
--#define NFS4_ANYONE_MODE (NFS4_ACE_READ_ATTRIBUTES | NFS4_ACE_READ_ACL | NFS4_ACE_SYNCHRONIZE)
--#define NFS4_OWNER_MODE (NFS4_ACE_WRITE_ATTRIBUTES | NFS4_ACE_WRITE_ACL)
-+#define RICHACE_READ_MODE (RICHACE_READ_DATA)
-+#define RICHACE_WRITE_MODE (RICHACE_WRITE_DATA | RICHACE_APPEND_DATA)
-+#define RICHACE_EXECUTE_MODE RICHACE_EXECUTE
-+#define RICHACE_ANYONE_MODE (RICHACE_READ_ATTRIBUTES | RICHACE_READ_ACL | RICHACE_SYNCHRONIZE)
-+#define RICHACE_OWNER_MODE (RICHACE_WRITE_ATTRIBUTES | RICHACE_WRITE_ACL)
- 
- /* flags used to simulate posix default ACLs */
--#define NFS4_INHERITANCE_FLAGS (NFS4_ACE_FILE_INHERIT_ACE \
--		| NFS4_ACE_DIRECTORY_INHERIT_ACE)
--
--#define NFS4_SUPPORTED_FLAGS (NFS4_INHERITANCE_FLAGS \
--		| NFS4_ACE_INHERIT_ONLY_ACE \
--		| NFS4_ACE_IDENTIFIER_GROUP)
-+#define RICHACE_SUPPORTED_FLAGS (		\
-+	RICHACE_FILE_INHERIT_ACE |		\
-+	RICHACE_DIRECTORY_INHERIT_ACE |		\
-+	RICHACE_INHERIT_ONLY_ACE |		\
-+	RICHACE_IDENTIFIER_GROUP |		\
-+	RICHACE_SPECIAL_WHO)
- 
- static u32
- mask_from_posix(unsigned short perm, unsigned int flags)
- {
--	int mask = NFS4_ANYONE_MODE;
-+	int mask = RICHACE_ANYONE_MODE;
- 
--	if (flags & NFS4_ACL_OWNER)
--		mask |= NFS4_OWNER_MODE;
-+	if (flags & FLAG_OWNER)
-+		mask |= RICHACE_OWNER_MODE;
- 	if (perm & ACL_READ)
--		mask |= NFS4_READ_MODE;
-+		mask |= RICHACE_READ_MODE;
- 	if (perm & ACL_WRITE)
--		mask |= NFS4_WRITE_MODE;
--	if ((perm & ACL_WRITE) && (flags & NFS4_ACL_DIR))
--		mask |= NFS4_ACE_DELETE_CHILD;
-+		mask |= RICHACE_WRITE_MODE;
-+	if ((perm & ACL_WRITE) && (flags & FLAG_DIRECTORY))
-+		mask |= RICHACE_DELETE_CHILD;
- 	if (perm & ACL_EXECUTE)
--		mask |= NFS4_EXECUTE_MODE;
-+		mask |= RICHACE_EXECUTE_MODE;
- 	return mask;
- }
- 
-@@ -84,13 +87,13 @@ deny_mask_from_posix(unsigned short perm, u32 flags)
- 	u32 mask = 0;
- 
- 	if (perm & ACL_READ)
--		mask |= NFS4_READ_MODE;
-+		mask |= RICHACE_READ_MODE;
- 	if (perm & ACL_WRITE)
--		mask |= NFS4_WRITE_MODE;
--	if ((perm & ACL_WRITE) && (flags & NFS4_ACL_DIR))
--		mask |= NFS4_ACE_DELETE_CHILD;
-+		mask |= RICHACE_WRITE_MODE;
-+	if ((perm & ACL_WRITE) && (flags & FLAG_DIRECTORY))
-+		mask |= RICHACE_DELETE_CHILD;
- 	if (perm & ACL_EXECUTE)
--		mask |= NFS4_EXECUTE_MODE;
-+		mask |= RICHACE_EXECUTE_MODE;
- 	return mask;
- }
- 
-@@ -106,32 +109,33 @@ deny_mask_from_posix(unsigned short perm, u32 flags)
- static void
- low_mode_from_nfs4(u32 perm, unsigned short *mode, unsigned int flags)
- {
--	u32 write_mode = NFS4_WRITE_MODE;
-+	u32 write_mode = RICHACE_WRITE_MODE;
- 
--	if (flags & NFS4_ACL_DIR)
--		write_mode |= NFS4_ACE_DELETE_CHILD;
-+	if (flags & FLAG_DIRECTORY)
-+		write_mode |= RICHACE_DELETE_CHILD;
- 	*mode = 0;
--	if ((perm & NFS4_READ_MODE) == NFS4_READ_MODE)
-+	if ((perm & RICHACE_READ_MODE) == RICHACE_READ_MODE)
- 		*mode |= ACL_READ;
- 	if ((perm & write_mode) == write_mode)
- 		*mode |= ACL_WRITE;
--	if ((perm & NFS4_EXECUTE_MODE) == NFS4_EXECUTE_MODE)
-+	if ((perm & RICHACE_EXECUTE_MODE) == RICHACE_EXECUTE_MODE)
- 		*mode |= ACL_EXECUTE;
- }
- 
--static short ace2type(struct nfs4_ace *);
--static void _posix_to_nfsv4_one(struct posix_acl *, struct nfs4_acl *,
-+static short ace2type(struct richace *);
-+static void _posix_to_richacl_one(struct posix_acl *, struct richacl_alloc *,
- 				unsigned int);
- 
- int
--nfsd4_get_nfs4_acl(struct svc_rqst *rqstp, struct dentry *dentry,
--		struct nfs4_acl **acl)
-+nfsd4_get_acl(struct svc_rqst *rqstp, struct dentry *dentry,
-+	      struct richacl **acl)
- {
- 	struct inode *inode = d_inode(dentry);
- 	int error = 0;
- 	struct posix_acl *pacl = NULL, *dpacl = NULL;
-+	struct richacl_alloc alloc;
- 	unsigned int flags = 0;
--	int size = 0;
-+	int count;
- 
- 	pacl = get_acl(inode, ACL_TYPE_ACCESS);
- 	if (!pacl)
-@@ -141,10 +145,10 @@ nfsd4_get_nfs4_acl(struct svc_rqst *rqstp, struct dentry *dentry,
- 		return PTR_ERR(pacl);
- 
- 	/* allocate for worst case: one (deny, allow) pair each: */
--	size += 2 * pacl->a_count;
-+	count = 2 * pacl->a_count;
- 
- 	if (S_ISDIR(inode->i_mode)) {
--		flags = NFS4_ACL_DIR;
-+		flags = FLAG_DIRECTORY;
- 		dpacl = get_acl(inode, ACL_TYPE_DEFAULT);
- 		if (IS_ERR(dpacl)) {
- 			error = PTR_ERR(dpacl);
-@@ -152,20 +156,20 @@ nfsd4_get_nfs4_acl(struct svc_rqst *rqstp, struct dentry *dentry,
- 		}
- 
- 		if (dpacl)
--			size += 2 * dpacl->a_count;
-+			count += 2 * dpacl->a_count;
- 	}
- 
--	*acl = kmalloc(nfs4_acl_bytes(size), GFP_KERNEL);
--	if (*acl == NULL) {
-+	if (!richacl_prepare(&alloc, count)) {
- 		error = -ENOMEM;
- 		goto out;
- 	}
--	(*acl)->naces = 0;
- 
--	_posix_to_nfsv4_one(pacl, *acl, flags & ~NFS4_ACL_TYPE_DEFAULT);
-+	_posix_to_richacl_one(pacl, &alloc, flags);
- 
- 	if (dpacl)
--		_posix_to_nfsv4_one(dpacl, *acl, flags | NFS4_ACL_TYPE_DEFAULT);
-+		_posix_to_richacl_one(dpacl, &alloc, flags | FLAG_DEFAULT_ACL);
-+
-+	*acl = alloc.acl;
- 
- out:
- 	posix_acl_release(dpacl);
-@@ -228,21 +232,22 @@ summarize_posix_acl(struct posix_acl *acl, struct posix_acl_summary *pas)
- 
- /* We assume the acl has been verified with posix_acl_valid. */
- static void
--_posix_to_nfsv4_one(struct posix_acl *pacl, struct nfs4_acl *acl,
--						unsigned int flags)
-+_posix_to_richacl_one(struct posix_acl *pacl, struct richacl_alloc *alloc,
-+		unsigned int flags)
- {
- 	struct posix_acl_entry *pa, *group_owner_entry;
--	struct nfs4_ace *ace;
-+	struct richace *ace;
- 	struct posix_acl_summary pas;
- 	unsigned short deny;
--	int eflag = ((flags & NFS4_ACL_TYPE_DEFAULT) ?
--		NFS4_INHERITANCE_FLAGS | NFS4_ACE_INHERIT_ONLY_ACE : 0);
-+	int e_flags = ((flags & FLAG_DEFAULT_ACL) ?
-+		       (RICHACE_FILE_INHERIT_ACE |
-+		        RICHACE_DIRECTORY_INHERIT_ACE |
-+		        RICHACE_INHERIT_ONLY_ACE) : 0);
- 
- 	BUG_ON(pacl->a_count < 3);
- 	summarize_posix_acl(pacl, &pas);
- 
- 	pa = pacl->a_entries;
--	ace = acl->aces + acl->naces;
- 
- 	/* We could deny everything not granted by the owner: */
- 	deny = ~pas.owner;
-@@ -252,42 +257,35 @@ _posix_to_nfsv4_one(struct posix_acl *pacl, struct nfs4_acl *acl,
- 	 */
- 	deny &= pas.users | pas.group | pas.groups | pas.other;
- 	if (deny) {
--		ace->type = NFS4_ACE_ACCESS_DENIED_ACE_TYPE;
--		ace->flag = eflag;
--		ace->access_mask = deny_mask_from_posix(deny, flags);
--		ace->whotype = NFS4_ACL_WHO_OWNER;
--		ace++;
--		acl->naces++;
-+		ace = richacl_append_entry(alloc);
-+		ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
-+		ace->e_flags = e_flags | RICHACE_SPECIAL_WHO;
-+		ace->e_mask = deny_mask_from_posix(deny, flags);
-+		ace->e_id.special = RICHACE_OWNER_SPECIAL_ID;
- 	}
- 
--	ace->type = NFS4_ACE_ACCESS_ALLOWED_ACE_TYPE;
--	ace->flag = eflag;
--	ace->access_mask = mask_from_posix(pa->e_perm, flags | NFS4_ACL_OWNER);
--	ace->whotype = NFS4_ACL_WHO_OWNER;
--	ace++;
--	acl->naces++;
-+	ace = richacl_append_entry(alloc);
-+	ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
-+	ace->e_flags = e_flags | RICHACE_SPECIAL_WHO;
-+	ace->e_mask = mask_from_posix(pa->e_perm, flags | FLAG_OWNER);
-+	ace->e_id.special = RICHACE_OWNER_SPECIAL_ID;
- 	pa++;
- 
- 	while (pa->e_tag == ACL_USER) {
- 		deny = ~(pa->e_perm & pas.mask);
- 		deny &= pas.groups | pas.group | pas.other;
- 		if (deny) {
--			ace->type = NFS4_ACE_ACCESS_DENIED_ACE_TYPE;
--			ace->flag = eflag;
--			ace->access_mask = deny_mask_from_posix(deny, flags);
--			ace->whotype = NFS4_ACL_WHO_NAMED;
--			ace->who_uid = pa->e_uid;
--			ace++;
--			acl->naces++;
-+			ace = richacl_append_entry(alloc);
-+			ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
-+			ace->e_flags = e_flags;
-+			ace->e_mask = deny_mask_from_posix(deny, flags);
-+			ace->e_id.uid = pa->e_uid;
- 		}
--		ace->type = NFS4_ACE_ACCESS_ALLOWED_ACE_TYPE;
--		ace->flag = eflag;
--		ace->access_mask = mask_from_posix(pa->e_perm & pas.mask,
--						   flags);
--		ace->whotype = NFS4_ACL_WHO_NAMED;
--		ace->who_uid = pa->e_uid;
--		ace++;
--		acl->naces++;
-+		ace = richacl_append_entry(alloc);
-+		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
-+		ace->e_flags = e_flags;
-+		ace->e_mask = mask_from_posix(pa->e_perm & pas.mask, flags);
-+		ace->e_id.uid = pa->e_uid;
- 		pa++;
- 	}
- 
-@@ -298,23 +296,19 @@ _posix_to_nfsv4_one(struct posix_acl *pacl, struct nfs4_acl *acl,
- 
- 	group_owner_entry = pa;
- 
--	ace->type = NFS4_ACE_ACCESS_ALLOWED_ACE_TYPE;
--	ace->flag = eflag;
--	ace->access_mask = mask_from_posix(pas.group, flags);
--	ace->whotype = NFS4_ACL_WHO_GROUP;
--	ace++;
--	acl->naces++;
-+	ace = richacl_append_entry(alloc);
-+	ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
-+	ace->e_flags = e_flags | RICHACE_SPECIAL_WHO;
-+	ace->e_mask = mask_from_posix(pas.group, flags);
-+	ace->e_id.special = RICHACE_GROUP_SPECIAL_ID;
- 	pa++;
- 
- 	while (pa->e_tag == ACL_GROUP) {
--		ace->type = NFS4_ACE_ACCESS_ALLOWED_ACE_TYPE;
--		ace->flag = eflag | NFS4_ACE_IDENTIFIER_GROUP;
--		ace->access_mask = mask_from_posix(pa->e_perm & pas.mask,
--						   flags);
--		ace->whotype = NFS4_ACL_WHO_NAMED;
--		ace->who_gid = pa->e_gid;
--		ace++;
--		acl->naces++;
-+		ace = richacl_append_entry(alloc);
-+		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
-+		ace->e_flags = e_flags | RICHACE_IDENTIFIER_GROUP;
-+		ace->e_mask = mask_from_posix(pa->e_perm & pas.mask, flags);
-+		ace->e_id.gid = pa->e_gid;
- 		pa++;
- 	}
- 
-@@ -324,12 +318,11 @@ _posix_to_nfsv4_one(struct posix_acl *pacl, struct nfs4_acl *acl,
- 
- 	deny = ~pas.group & pas.other;
- 	if (deny) {
--		ace->type = NFS4_ACE_ACCESS_DENIED_ACE_TYPE;
--		ace->flag = eflag;
--		ace->access_mask = deny_mask_from_posix(deny, flags);
--		ace->whotype = NFS4_ACL_WHO_GROUP;
--		ace++;
--		acl->naces++;
-+		ace = richacl_append_entry(alloc);
-+		ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
-+		ace->e_flags = e_flags | RICHACE_SPECIAL_WHO;
-+		ace->e_mask = deny_mask_from_posix(deny, flags);
-+		ace->e_id.special = RICHACE_GROUP_SPECIAL_ID;
- 	}
- 	pa++;
- 
-@@ -337,24 +330,22 @@ _posix_to_nfsv4_one(struct posix_acl *pacl, struct nfs4_acl *acl,
- 		deny = ~(pa->e_perm & pas.mask);
- 		deny &= pas.other;
- 		if (deny) {
--			ace->type = NFS4_ACE_ACCESS_DENIED_ACE_TYPE;
--			ace->flag = eflag | NFS4_ACE_IDENTIFIER_GROUP;
--			ace->access_mask = deny_mask_from_posix(deny, flags);
--			ace->whotype = NFS4_ACL_WHO_NAMED;
--			ace->who_gid = pa->e_gid;
--			ace++;
--			acl->naces++;
-+			ace = richacl_append_entry(alloc);
-+			ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
-+			ace->e_flags = e_flags | RICHACE_IDENTIFIER_GROUP;
-+			ace->e_mask = deny_mask_from_posix(deny, flags);
-+			ace->e_id.gid = pa->e_gid;
- 		}
- 		pa++;
- 	}
- 
- 	if (pa->e_tag == ACL_MASK)
- 		pa++;
--	ace->type = NFS4_ACE_ACCESS_ALLOWED_ACE_TYPE;
--	ace->flag = eflag;
--	ace->access_mask = mask_from_posix(pa->e_perm, flags);
--	ace->whotype = NFS4_ACL_WHO_EVERYONE;
--	acl->naces++;
-+	ace = richacl_append_entry(alloc);
-+	ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
-+	ace->e_flags = e_flags | RICHACE_SPECIAL_WHO;
-+	ace->e_mask = mask_from_posix(pa->e_perm, flags);
-+	ace->e_id.special = RICHACE_EVERYONE_SPECIAL_ID;
- }
- 
- static bool
-@@ -498,7 +489,7 @@ posix_state_to_acl(struct posix_acl_state *state, unsigned int flags)
- 	 * and effective cases: when there are no inheritable ACEs,
- 	 * calls ->set_acl with a NULL ACL structure.
- 	 */
--	if (state->empty && (flags & NFS4_ACL_TYPE_DEFAULT))
-+	if (state->empty && (flags & FLAG_DEFAULT_ACL))
- 		return NULL;
- 
- 	/*
-@@ -617,24 +608,24 @@ static void allow_bits_array(struct posix_ace_state_array *a, u32 mask)
- }
- 
- static void process_one_v4_ace(struct posix_acl_state *state,
--				struct nfs4_ace *ace)
-+				struct richace *ace)
- {
--	u32 mask = ace->access_mask;
-+	u32 mask = ace->e_mask;
- 	int i;
- 
- 	state->empty = 0;
- 
- 	switch (ace2type(ace)) {
- 	case ACL_USER_OBJ:
--		if (ace->type == NFS4_ACE_ACCESS_ALLOWED_ACE_TYPE) {
-+		if (ace->e_type == RICHACE_ACCESS_ALLOWED_ACE_TYPE) {
- 			allow_bits(&state->owner, mask);
- 		} else {
- 			deny_bits(&state->owner, mask);
- 		}
- 		break;
- 	case ACL_USER:
--		i = find_uid(state, ace->who_uid);
--		if (ace->type == NFS4_ACE_ACCESS_ALLOWED_ACE_TYPE) {
-+		i = find_uid(state, ace->e_id.uid);
-+		if (ace->e_type == RICHACE_ACCESS_ALLOWED_ACE_TYPE) {
- 			allow_bits(&state->users->aces[i].perms, mask);
- 		} else {
- 			deny_bits(&state->users->aces[i].perms, mask);
-@@ -643,7 +634,7 @@ static void process_one_v4_ace(struct posix_acl_state *state,
- 		}
- 		break;
- 	case ACL_GROUP_OBJ:
--		if (ace->type == NFS4_ACE_ACCESS_ALLOWED_ACE_TYPE) {
-+		if (ace->e_type == RICHACE_ACCESS_ALLOWED_ACE_TYPE) {
- 			allow_bits(&state->group, mask);
- 		} else {
- 			deny_bits(&state->group, mask);
-@@ -655,8 +646,8 @@ static void process_one_v4_ace(struct posix_acl_state *state,
- 		}
- 		break;
- 	case ACL_GROUP:
--		i = find_gid(state, ace->who_gid);
--		if (ace->type == NFS4_ACE_ACCESS_ALLOWED_ACE_TYPE) {
-+		i = find_gid(state, ace->e_id.gid);
-+		if (ace->e_type == RICHACE_ACCESS_ALLOWED_ACE_TYPE) {
- 			allow_bits(&state->groups->aces[i].perms, mask);
- 		} else {
- 			deny_bits(&state->groups->aces[i].perms, mask);
-@@ -669,7 +660,7 @@ static void process_one_v4_ace(struct posix_acl_state *state,
- 		}
- 		break;
- 	case ACL_OTHER:
--		if (ace->type == NFS4_ACE_ACCESS_ALLOWED_ACE_TYPE) {
-+		if (ace->e_type == RICHACE_ACCESS_ALLOWED_ACE_TYPE) {
- 			allow_bits(&state->owner, mask);
- 			allow_bits(&state->group, mask);
- 			allow_bits(&state->other, mask);
-@@ -687,32 +678,33 @@ static void process_one_v4_ace(struct posix_acl_state *state,
- 	}
- }
- 
--static int nfs4_acl_nfsv4_to_posix(struct nfs4_acl *acl,
-+static int nfs4_richacl_to_posix(struct richacl *acl,
- 		struct posix_acl **pacl, struct posix_acl **dpacl,
- 		unsigned int flags)
- {
- 	struct posix_acl_state effective_acl_state, default_acl_state;
--	struct nfs4_ace *ace;
-+	struct richace *ace;
- 	int ret;
- 
--	ret = init_state(&effective_acl_state, acl->naces);
-+	ret = init_state(&effective_acl_state, acl->a_count);
- 	if (ret)
- 		return ret;
--	ret = init_state(&default_acl_state, acl->naces);
-+	ret = init_state(&default_acl_state, acl->a_count);
- 	if (ret)
- 		goto out_estate;
- 	ret = -EINVAL;
--	for (ace = acl->aces; ace < acl->aces + acl->naces; ace++) {
--		if (ace->type != NFS4_ACE_ACCESS_ALLOWED_ACE_TYPE &&
--		    ace->type != NFS4_ACE_ACCESS_DENIED_ACE_TYPE)
-+	richacl_for_each_entry(ace, acl) {
-+		if (ace->e_type != RICHACE_ACCESS_ALLOWED_ACE_TYPE &&
-+		    ace->e_type != RICHACE_ACCESS_DENIED_ACE_TYPE)
- 			goto out_dstate;
--		if (ace->flag & ~NFS4_SUPPORTED_FLAGS)
-+		if (ace->e_flags & ~RICHACE_SUPPORTED_FLAGS)
- 			goto out_dstate;
--		if ((ace->flag & NFS4_INHERITANCE_FLAGS) == 0) {
-+		if ((ace->e_flags & (RICHACE_FILE_INHERIT_ACE |
-+				     RICHACE_DIRECTORY_INHERIT_ACE)) == 0) {
- 			process_one_v4_ace(&effective_acl_state, ace);
- 			continue;
- 		}
--		if (!(flags & NFS4_ACL_DIR))
-+		if (!(flags & FLAG_DIRECTORY))
- 			goto out_dstate;
- 		/*
- 		 * Note that when only one of FILE_INHERIT or DIRECTORY_INHERIT
-@@ -721,7 +713,7 @@ static int nfs4_acl_nfsv4_to_posix(struct nfs4_acl *acl,
- 		 */
- 		process_one_v4_ace(&default_acl_state, ace);
- 
--		if (!(ace->flag & NFS4_ACE_INHERIT_ONLY_ACE))
-+		if (!(ace->e_flags & RICHACE_INHERIT_ONLY_ACE))
- 			process_one_v4_ace(&effective_acl_state, ace);
- 	}
- 	*pacl = posix_state_to_acl(&effective_acl_state, flags);
-@@ -731,7 +723,7 @@ static int nfs4_acl_nfsv4_to_posix(struct nfs4_acl *acl,
- 		goto out_dstate;
- 	}
- 	*dpacl = posix_state_to_acl(&default_acl_state,
--						flags | NFS4_ACL_TYPE_DEFAULT);
-+						flags | FLAG_DEFAULT_ACL);
- 	if (IS_ERR(*dpacl)) {
- 		ret = PTR_ERR(*dpacl);
- 		*dpacl = NULL;
-@@ -750,8 +742,7 @@ out_estate:
- }
- 
- __be32
--nfsd4_set_nfs4_acl(struct svc_rqst *rqstp, struct svc_fh *fhp,
--		struct nfs4_acl *acl)
-+nfsd4_set_acl(struct svc_rqst *rqstp, struct svc_fh *fhp, struct richacl *acl)
- {
- 	__be32 error;
- 	int host_error;
-@@ -772,9 +763,9 @@ nfsd4_set_nfs4_acl(struct svc_rqst *rqstp, struct svc_fh *fhp,
- 		return nfserr_attrnotsupp;
- 
- 	if (S_ISDIR(inode->i_mode))
--		flags = NFS4_ACL_DIR;
-+		flags = FLAG_DIRECTORY;
- 
--	host_error = nfs4_acl_nfsv4_to_posix(acl, &pacl, &dpacl, flags);
-+	host_error = nfs4_richacl_to_posix(acl, &pacl, &dpacl, flags);
- 	if (host_error == -EINVAL)
- 		return nfserr_attrnotsupp;
- 	if (host_error < 0)
-@@ -801,82 +792,62 @@ out_nfserr:
- 
- 
- static short
--ace2type(struct nfs4_ace *ace)
-+ace2type(struct richace *ace)
- {
--	switch (ace->whotype) {
--		case NFS4_ACL_WHO_NAMED:
--			return (ace->flag & NFS4_ACE_IDENTIFIER_GROUP ?
--					ACL_GROUP : ACL_USER);
--		case NFS4_ACL_WHO_OWNER:
-+	if (ace->e_flags & RICHACE_SPECIAL_WHO) {
-+		switch (ace->e_id.special) {
-+		case RICHACE_OWNER_SPECIAL_ID:
- 			return ACL_USER_OBJ;
--		case NFS4_ACL_WHO_GROUP:
-+		case RICHACE_GROUP_SPECIAL_ID:
- 			return ACL_GROUP_OBJ;
--		case NFS4_ACL_WHO_EVERYONE:
-+		case RICHACE_EVERYONE_SPECIAL_ID:
- 			return ACL_OTHER;
-+		default:
-+			BUG();
-+		}
- 	}
--	BUG();
--	return -1;
--}
--
--/*
-- * return the size of the struct nfs4_acl required to represent an acl
-- * with @entries entries.
-- */
--int nfs4_acl_bytes(int entries)
--{
--	return sizeof(struct nfs4_acl) + entries * sizeof(struct nfs4_ace);
-+	return ace->e_flags & RICHACE_IDENTIFIER_GROUP ? ACL_GROUP : ACL_USER;
- }
- 
--static struct {
--	char *string;
--	int   stringlen;
--	int type;
--} s2t_map[] = {
--	{
--		.string    = "OWNER@",
--		.stringlen = sizeof("OWNER@") - 1,
--		.type      = NFS4_ACL_WHO_OWNER,
--	},
--	{
--		.string    = "GROUP@",
--		.stringlen = sizeof("GROUP@") - 1,
--		.type      = NFS4_ACL_WHO_GROUP,
--	},
--	{
--		.string    = "EVERYONE@",
--		.stringlen = sizeof("EVERYONE@") - 1,
--		.type      = NFS4_ACL_WHO_EVERYONE,
--	},
--};
--
--int
--nfs4_acl_get_whotype(char *p, u32 len)
-+__be32 nfsd4_decode_ace_who(struct richace *ace, struct svc_rqst *rqstp,
-+			    char *who, u32 len)
- {
--	int i;
--
--	for (i = 0; i < ARRAY_SIZE(s2t_map); i++) {
--		if (s2t_map[i].stringlen == len &&
--				0 == memcmp(s2t_map[i].string, p, len))
--			return s2t_map[i].type;
-+	int special_id;
-+
-+	special_id = nfs4acl_who_to_special_id(who, len);
-+	if (special_id >= 0) {
-+		ace->e_flags |= RICHACE_SPECIAL_WHO;
-+		ace->e_flags &= ~RICHACE_IDENTIFIER_GROUP;
-+		ace->e_id.special = special_id;
-+		return nfs_ok;
- 	}
--	return NFS4_ACL_WHO_NAMED;
-+	if (ace->e_flags & RICHACE_IDENTIFIER_GROUP)
-+		return nfsd_map_name_to_gid(rqstp, who, len, &ace->e_id.gid);
-+	else
-+		return nfsd_map_name_to_uid(rqstp, who, len, &ace->e_id.uid);
- }
- 
--__be32 nfs4_acl_write_who(struct xdr_stream *xdr, int who)
-+__be32 nfsd4_encode_ace_who(struct xdr_stream *xdr, struct svc_rqst *rqstp,
-+			    struct richace *ace)
- {
--	__be32 *p;
--	int i;
--
--	for (i = 0; i < ARRAY_SIZE(s2t_map); i++) {
--		if (s2t_map[i].type != who)
--			continue;
--		p = xdr_reserve_space(xdr, s2t_map[i].stringlen + 4);
-+	if (ace->e_flags & RICHACE_SPECIAL_WHO) {
-+		unsigned int special_id = ace->e_id.special;
-+		const char *who;
-+		unsigned int len;
-+		__be32 *p;
-+
-+		if (!nfs4acl_special_id_to_who(special_id, &who, &len)) {
-+			WARN_ON_ONCE(1);
-+			return nfserr_serverfault;
-+		}
-+		p = xdr_reserve_space(xdr, len + 4);
- 		if (!p)
- 			return nfserr_resource;
--		p = xdr_encode_opaque(p, s2t_map[i].string,
--					s2t_map[i].stringlen);
-+		p = xdr_encode_opaque(p, who, len);
- 		return 0;
- 	}
--	WARN_ON_ONCE(1);
--	return nfserr_serverfault;
-+	if (ace->e_flags & RICHACE_IDENTIFIER_GROUP)
-+		return nfsd4_encode_group(xdr, rqstp, ace->e_id.gid);
-+	else
-+		return nfsd4_encode_user(xdr, rqstp, ace->e_id.uid);
- }
-diff --git a/fs/nfsd/nfs4proc.c b/fs/nfsd/nfs4proc.c
-index 90cfda7..8c2cb16 100644
---- a/fs/nfsd/nfs4proc.c
-+++ b/fs/nfsd/nfs4proc.c
-@@ -159,12 +159,12 @@ is_create_with_attrs(struct nfsd4_open *open)
-  * in the returned attr bitmap.
-  */
- static void
--do_set_nfs4_acl(struct svc_rqst *rqstp, struct svc_fh *fhp,
--		struct nfs4_acl *acl, u32 *bmval)
-+do_set_acl(struct svc_rqst *rqstp, struct svc_fh *fhp, struct richacl *acl,
-+	   u32 *bmval)
- {
- 	__be32 status;
- 
--	status = nfsd4_set_nfs4_acl(rqstp, fhp, acl);
-+	status = nfsd4_set_acl(rqstp, fhp, acl);
- 	if (status)
- 		/*
- 		 * We should probably fail the whole open at this point,
-@@ -299,7 +299,7 @@ do_open_lookup(struct svc_rqst *rqstp, struct nfsd4_compound_state *cstate, stru
- 		goto out;
- 
- 	if (is_create_with_attrs(open) && open->op_acl != NULL)
--		do_set_nfs4_acl(rqstp, *resfh, open->op_acl, open->op_bmval);
-+		do_set_acl(rqstp, *resfh, open->op_acl, open->op_bmval);
- 
- 	nfsd4_set_open_owner_reply_cache(cstate, open, *resfh);
- 	accmode = NFSD_MAY_NOP;
-@@ -674,8 +674,7 @@ nfsd4_create(struct svc_rqst *rqstp, struct nfsd4_compound_state *cstate,
- 		nfsd4_security_inode_setsecctx(&resfh, &create->cr_label, create->cr_bmval);
- 
- 	if (create->cr_acl != NULL)
--		do_set_nfs4_acl(rqstp, &resfh, create->cr_acl,
--				create->cr_bmval);
-+		do_set_acl(rqstp, &resfh, create->cr_acl, create->cr_bmval);
- 
- 	fh_unlock(&cstate->current_fh);
- 	set_change_info(&create->cr_cinfo, &cstate->current_fh);
-@@ -940,8 +939,8 @@ nfsd4_setattr(struct svc_rqst *rqstp, struct nfsd4_compound_state *cstate,
- 		goto out;
- 
- 	if (setattr->sa_acl != NULL)
--		status = nfsd4_set_nfs4_acl(rqstp, &cstate->current_fh,
--					    setattr->sa_acl);
-+		status = nfsd4_set_acl(rqstp, &cstate->current_fh,
-+				       setattr->sa_acl);
- 	if (status)
- 		goto out;
- 	if (setattr->sa_label.len)
-diff --git a/fs/nfsd/nfs4xdr.c b/fs/nfsd/nfs4xdr.c
-index 0768251..465f82a 100644
---- a/fs/nfsd/nfs4xdr.c
-+++ b/fs/nfsd/nfs4xdr.c
-@@ -303,7 +303,7 @@ nfsd4_decode_bitmap(struct nfsd4_compoundargs *argp, u32 *bmval)
- 
- static __be32
- nfsd4_decode_fattr(struct nfsd4_compoundargs *argp, u32 *bmval,
--		   struct iattr *iattr, struct nfs4_acl **acl,
-+		   struct iattr *iattr, struct richacl **acl,
- 		   struct xdr_netobj *label)
- {
- 	int expected_len, len = 0;
-@@ -326,38 +326,31 @@ nfsd4_decode_fattr(struct nfsd4_compoundargs *argp, u32 *bmval,
- 	}
- 	if (bmval[0] & FATTR4_WORD0_ACL) {
- 		u32 nace;
--		struct nfs4_ace *ace;
-+		struct richace *ace;
- 
- 		READ_BUF(4); len += 4;
- 		nace = be32_to_cpup(p++);
- 
--		if (nace > NFS4_ACL_MAX)
-+		if (nace > NFSD4_ACL_MAX)
- 			return nfserr_fbig;
- 
--		*acl = svcxdr_tmpalloc(argp, nfs4_acl_bytes(nace));
-+		*acl = svcxdr_alloc_richacl(argp, nace);
- 		if (*acl == NULL)
- 			return nfserr_jukebox;
- 
--		(*acl)->naces = nace;
--		for (ace = (*acl)->aces; ace < (*acl)->aces + nace; ace++) {
-+		richacl_for_each_entry(ace, *acl) {
- 			READ_BUF(16); len += 16;
--			ace->type = be32_to_cpup(p++);
--			ace->flag = be32_to_cpup(p++);
--			ace->access_mask = be32_to_cpup(p++);
-+			ace->e_type = be32_to_cpup(p++);
-+			ace->e_flags = be32_to_cpup(p++);
-+			ace->e_mask = be32_to_cpup(p++);
-+			if (ace->e_flags & RICHACE_SPECIAL_WHO)
-+				return nfserr_inval;
- 			dummy32 = be32_to_cpup(p++);
- 			READ_BUF(dummy32);
- 			len += XDR_QUADLEN(dummy32) << 2;
- 			READMEM(buf, dummy32);
--			ace->whotype = nfs4_acl_get_whotype(buf, dummy32);
--			status = nfs_ok;
--			if (ace->whotype != NFS4_ACL_WHO_NAMED)
--				;
--			else if (ace->flag & NFS4_ACE_IDENTIFIER_GROUP)
--				status = nfsd_map_name_to_gid(argp->rqstp,
--						buf, dummy32, &ace->who_gid);
--			else
--				status = nfsd_map_name_to_uid(argp->rqstp,
--						buf, dummy32, &ace->who_uid);
-+			status = nfsd4_decode_ace_who(ace, argp->rqstp,
-+						      buf, dummy32);
- 			if (status)
- 				return status;
- 		}
-@@ -2147,18 +2140,6 @@ static u32 nfs4_file_type(umode_t mode)
- 	};
- }
- 
--static inline __be32
--nfsd4_encode_aclname(struct xdr_stream *xdr, struct svc_rqst *rqstp,
--		     struct nfs4_ace *ace)
--{
--	if (ace->whotype != NFS4_ACL_WHO_NAMED)
--		return nfs4_acl_write_who(xdr, ace->whotype);
--	else if (ace->flag & NFS4_ACE_IDENTIFIER_GROUP)
--		return nfsd4_encode_group(xdr, rqstp, ace->who_gid);
--	else
--		return nfsd4_encode_user(xdr, rqstp, ace->who_uid);
--}
--
- #define WORD0_ABSENT_FS_ATTRS (FATTR4_WORD0_FS_LOCATIONS | FATTR4_WORD0_FSID | \
- 			      FATTR4_WORD0_RDATTR_ERROR)
- #define WORD1_ABSENT_FS_ATTRS FATTR4_WORD1_MOUNTED_ON_FILEID
-@@ -2249,7 +2230,7 @@ nfsd4_encode_fattr(struct xdr_stream *xdr, struct svc_fh *fhp,
- 	u32 rdattr_err = 0;
- 	__be32 status;
- 	int err;
--	struct nfs4_acl *acl = NULL;
-+	struct richacl *acl = NULL;
- 	void *context = NULL;
- 	int contextlen;
- 	bool contextsupport = false;
-@@ -2295,7 +2276,7 @@ nfsd4_encode_fattr(struct xdr_stream *xdr, struct svc_fh *fhp,
- 		fhp = tempfh;
- 	}
- 	if (bmval0 & FATTR4_WORD0_ACL) {
--		err = nfsd4_get_nfs4_acl(rqstp, dentry, &acl);
-+		err = nfsd4_get_acl(rqstp, dentry, &acl);
- 		if (err == -EOPNOTSUPP)
- 			bmval0 &= ~FATTR4_WORD0_ACL;
- 		else if (err == -EINVAL) {
-@@ -2469,7 +2450,7 @@ nfsd4_encode_fattr(struct xdr_stream *xdr, struct svc_fh *fhp,
- 		*p++ = cpu_to_be32(rdattr_err);
- 	}
- 	if (bmval0 & FATTR4_WORD0_ACL) {
--		struct nfs4_ace *ace;
-+		struct richace *ace;
- 
- 		if (acl == NULL) {
- 			p = xdr_reserve_space(xdr, 4);
-@@ -2482,17 +2463,16 @@ nfsd4_encode_fattr(struct xdr_stream *xdr, struct svc_fh *fhp,
- 		p = xdr_reserve_space(xdr, 4);
- 		if (!p)
- 			goto out_resource;
--		*p++ = cpu_to_be32(acl->naces);
-+		*p++ = cpu_to_be32(acl->a_count);
- 
--		for (ace = acl->aces; ace < acl->aces + acl->naces; ace++) {
-+		richacl_for_each_entry(ace, acl) {
- 			p = xdr_reserve_space(xdr, 4*3);
- 			if (!p)
- 				goto out_resource;
--			*p++ = cpu_to_be32(ace->type);
--			*p++ = cpu_to_be32(ace->flag);
--			*p++ = cpu_to_be32(ace->access_mask &
--							NFS4_ACE_MASK_ALL);
--			status = nfsd4_encode_aclname(xdr, rqstp, ace);
-+			*p++ = cpu_to_be32(ace->e_type);
-+			*p++ = cpu_to_be32(ace->e_flags & ~RICHACE_SPECIAL_WHO);
-+			*p++ = cpu_to_be32(ace->e_mask & NFS4_ACE_MASK_ALL);
-+			status = nfsd4_encode_ace_who(xdr, rqstp, ace);
- 			if (status)
- 				goto out;
- 		}
-@@ -2755,7 +2735,7 @@ out:
- 	if (context)
- 		security_release_secctx(context, contextlen);
- #endif /* CONFIG_NFSD_V4_SECURITY_LABEL */
--	kfree(acl);
-+	richacl_put(acl);
- 	if (tempfh) {
- 		fh_put(tempfh);
- 		kfree(tempfh);
-diff --git a/fs/nfsd/xdr4.h b/fs/nfsd/xdr4.h
-index b698585..c311066 100644
---- a/fs/nfsd/xdr4.h
-+++ b/fs/nfsd/xdr4.h
-@@ -118,7 +118,7 @@ struct nfsd4_create {
- 	u32		cr_bmval[3];        /* request */
- 	struct iattr	cr_iattr;           /* request */
- 	struct nfsd4_change_info  cr_cinfo; /* response */
--	struct nfs4_acl *cr_acl;
-+	struct richacl *cr_acl;
- 	struct xdr_netobj cr_label;
- };
- #define cr_datalen	u.link.datalen
-@@ -248,7 +248,7 @@ struct nfsd4_open {
- 	struct nfs4_file *op_file;          /* used during processing */
- 	struct nfs4_ol_stateid *op_stp;	    /* used during processing */
- 	struct nfs4_clnt_odstate *op_odstate; /* used during processing */
--	struct nfs4_acl *op_acl;
-+	struct richacl *op_acl;
- 	struct xdr_netobj op_label;
- };
- 
-@@ -332,7 +332,7 @@ struct nfsd4_setattr {
- 	stateid_t	sa_stateid;         /* request */
- 	u32		sa_bmval[3];        /* request */
- 	struct iattr	sa_iattr;           /* request */
--	struct nfs4_acl *sa_acl;
-+	struct richacl *sa_acl;
- 	struct xdr_netobj sa_label;
- };
- 
-diff --git a/include/linux/nfs4.h b/include/linux/nfs4.h
-index b8e72aa..992ddc4 100644
---- a/include/linux/nfs4.h
-+++ b/include/linux/nfs4.h
-@@ -16,29 +16,6 @@
- #include <linux/uidgid.h>
- #include <uapi/linux/nfs4.h>
- 
--enum nfs4_acl_whotype {
--	NFS4_ACL_WHO_NAMED = 0,
--	NFS4_ACL_WHO_OWNER,
--	NFS4_ACL_WHO_GROUP,
--	NFS4_ACL_WHO_EVERYONE,
--};
--
--struct nfs4_ace {
--	uint32_t	type;
--	uint32_t	flag;
--	uint32_t	access_mask;
--	int		whotype;
--	union {
--		kuid_t	who_uid;
--		kgid_t	who_gid;
--	};
--};
--
--struct nfs4_acl {
--	uint32_t	naces;
--	struct nfs4_ace	aces[0];
--};
--
- #define NFS4_MAXLABELLEN	2048
- 
- struct nfs4_label {
-diff --git a/include/linux/nfs4acl.h b/include/linux/nfs4acl.h
+@@ -451,9 +475,7 @@ getxattr(struct dentry *d, const char __user *name, void __user *value,
+ 
+ 	error = vfs_getxattr(d, kname, kvalue, size);
+ 	if (error > 0) {
+-		if ((strcmp(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
+-		    (strcmp(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
+-			posix_acl_fix_xattr_to_user(kvalue, size);
++		fix_xattr_to_user(kname, kvalue, size);
+ 		if (size && copy_to_user(value, kvalue, error))
+ 			error = -EFAULT;
+ 	} else if (error == -ERANGE && size >= XATTR_SIZE_MAX) {
+diff --git a/include/linux/richacl_xattr.h b/include/linux/richacl_xattr.h
 new file mode 100644
-index 0000000..db9f9a6
+index 0000000..f84cc21
 --- /dev/null
-+++ b/include/linux/nfs4acl.h
-@@ -0,0 +1,7 @@
-+#ifndef __LINUX_NFS4ACL_H
-+#define __LINUX_NFS4ACL_H
++++ b/include/linux/richacl_xattr.h
+@@ -0,0 +1,62 @@
++/*
++ * Copyright (C) 2006, 2010  Novell, Inc.
++ * Copyright (C) 2015  Red Hat, Inc.
++ * Written by Andreas Gruenbacher <agruen@kernel.org>
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License as published by the
++ * Free Software Foundation; either version 2, or (at your option) any
++ * later version.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ */
 +
-+int nfs4acl_who_to_special_id(const char *, u32);
-+bool nfs4acl_special_id_to_who(unsigned int, const char **, unsigned int *);
++#ifndef __RICHACL_XATTR_H
++#define __RICHACL_XATTR_H
 +
++#include <linux/richacl.h>
++
++struct richace_xattr {
++	__le16		e_type;
++	__le16		e_flags;
++	__le32		e_mask;
++	__le32		e_id;
++};
++
++struct richacl_xattr {
++	unsigned char	a_version;
++	unsigned char	a_flags;
++	__le16		a_count;
++	__le32		a_owner_mask;
++	__le32		a_group_mask;
++	__le32		a_other_mask;
++};
++
++#define RICHACL_XATTR_VERSION	0
++#define RICHACL_XATTR_MAX_COUNT \
++	((XATTR_SIZE_MAX - sizeof(struct richacl_xattr)) / \
++	 sizeof(struct richace_xattr))
++
++extern struct richacl *richacl_from_xattr(struct user_namespace *, const void *,
++					  size_t);
++extern size_t richacl_xattr_size(const struct richacl *);
++extern int richacl_to_xattr(struct user_namespace *, const struct richacl *,
++			    void *, size_t);
++
++#ifdef CONFIG_FS_RICHACL
++extern void richacl_fix_xattr_from_user(void *, size_t);
++extern void richacl_fix_xattr_to_user(void *, size_t);
++#else
++static inline void richacl_fix_xattr_from_user(void *value, size_t size)
++{
++}
++
++static inline void richacl_fix_xattr_to_user(void *value, size_t size)
++{
++}
 +#endif
++
++#endif /* __RICHACL_XATTR_H */
+diff --git a/include/uapi/linux/xattr.h b/include/uapi/linux/xattr.h
+index 1590c49..1996903 100644
+--- a/include/uapi/linux/xattr.h
++++ b/include/uapi/linux/xattr.h
+@@ -73,5 +73,7 @@
+ #define XATTR_POSIX_ACL_DEFAULT  "posix_acl_default"
+ #define XATTR_NAME_POSIX_ACL_DEFAULT XATTR_SYSTEM_PREFIX XATTR_POSIX_ACL_DEFAULT
+ 
++#define XATTR_RICHACL "richacl"
++#define XATTR_NAME_RICHACL XATTR_SYSTEM_PREFIX XATTR_RICHACL
+ 
+ #endif /* _UAPI_LINUX_XATTR_H */
 -- 
 2.4.3
