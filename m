@@ -1,93 +1,140 @@
 From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [RFC v7 09/41] richacl: Update the file masks in chmod()
-Date: Sat,  5 Sep 2015 12:27:04 +0200
-Message-ID: <1441448856-13478-10-git-send-email-agruenba@redhat.com>
+Subject: [RFC v7 27/41] richacl: Create richacl from mode values
+Date: Sat,  5 Sep 2015 12:27:22 +0200
+Message-ID: <1441448856-13478-28-git-send-email-agruenba@redhat.com>
 References: <1441448856-13478-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1441448856-13478-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Doing a chmod() sets the file mode, which includes the file permission
-bits.  When a file has a richacl, the permissions that the richacl
-grants need to be limited to what the new file permission bits allow.
+A file can have "no acl" in the sense that only the file mode permission
+bits determine access.  In that case, the getxattr system call fails with
+errno == ENODATA (No such attribute).
 
-This is done by setting the file masks in the richacl to what the file
-permission bits map to.  The richacl access check algorithm takes the
-file masks into account, which ensures that the richacl cannot grant too
-many permissions.
-
-It is possible to explicitly add permissions to the file masks which go
-beyond what the file permission bits can grant (like the
-RICHACE_WRITE_ACL permission).  The POSIX.1 standard calls this an
-alternate file access control mechanism.  A subsequent chmod() would
-ensure that those permissions are disabled again.
+Over the NFSv4 protocol, a file always has an acl, and we convert the file
+mode permission bits into an equivalent acl with richacl_from_mode.  Such
+"trivial" acls can be converted back to a file mode with
+richacl_equiv_mode.
 
 Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- fs/richacl_base.c       | 40 ++++++++++++++++++++++++++++++++++++++++
+ fs/richacl_compat.c     | 88 +++++++++++++++++++++++++++++++++++++++++++++++++
  include/linux/richacl.h |  1 +
- 2 files changed, 41 insertions(+)
+ 2 files changed, 89 insertions(+)
 
-diff --git a/fs/richacl_base.c b/fs/richacl_base.c
-index fc544f7..6c69234 100644
---- a/fs/richacl_base.c
-+++ b/fs/richacl_base.c
-@@ -339,3 +339,43 @@ restart:
- 	acl->a_flags &= ~(RICHACL_WRITE_THROUGH | RICHACL_MASKED);
+diff --git a/fs/richacl_compat.c b/fs/richacl_compat.c
+index 9681efe..632409f 100644
+--- a/fs/richacl_compat.c
++++ b/fs/richacl_compat.c
+@@ -840,3 +840,91 @@ richacl_apply_masks(struct richacl **acl, kuid_t owner)
+ 	return 0;
  }
- EXPORT_SYMBOL_GPL(richacl_compute_max_masks);
+ EXPORT_SYMBOL_GPL(richacl_apply_masks);
 +
 +/**
-+ * richacl_chmod  -  update the file masks to reflect the new mode
-+ * @mode:	new file permission bits including the file type
++ * richacl_from_mode  -  create an acl which corresponds to @mode
 + *
-+ * Return a copy of @acl where the file masks have been replaced by the file
-+ * masks corresponding to the file permission bits in @mode, or returns @acl
-+ * itself if the file masks are already up to date.  Takes over a reference
-+ * to @acl.
++ * The resulting acl doesn't have the RICHACL_MASKED flag set.
++ *
++ * @mode:	file mode including the file type
 + */
 +struct richacl *
-+richacl_chmod(struct richacl *acl, mode_t mode)
++richacl_from_mode(mode_t mode)
 +{
-+	unsigned int x = S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
-+	unsigned int owner_mask, group_mask, other_mask;
-+	struct richacl *clone;
++	unsigned int owner_mask = richacl_mode_to_mask(mode >> 6);
++	unsigned int group_mask = richacl_mode_to_mask(mode >> 3);
++	unsigned int other_mask = richacl_mode_to_mask(mode);
++	unsigned int denied;
++	unsigned int entries = 0;
++	struct richacl *acl;
++	struct richace *ace;
 +
-+	owner_mask = richacl_mode_to_mask(mode >> 6) & ~x;
-+	group_mask = richacl_mode_to_mask(mode >> 3) & ~x;
-+	other_mask = richacl_mode_to_mask(mode)      & ~x;
++	/* RICHACE_DELETE_CHILD is meaningless for non-directories. */
++	if (!S_ISDIR(mode)) {
++		owner_mask &= ~RICHACE_DELETE_CHILD;
++		group_mask &= ~RICHACE_DELETE_CHILD;
++		other_mask &= ~RICHACE_DELETE_CHILD;
++	}
 +
-+	if (acl->a_owner_mask == owner_mask &&
-+	    acl->a_group_mask == group_mask &&
-+	    acl->a_other_mask == other_mask &&
-+	    (acl->a_flags & (RICHACL_WRITE_THROUGH | RICHACL_MASKED)))
-+		return acl;
++	denied = ~owner_mask & (group_mask | other_mask);
++	if (denied)
++		entries++;  /* owner@ deny entry needed */
++	if (owner_mask & ~(group_mask & other_mask))
++		entries++;  /* owner@ allow entry needed */
++	denied = ~group_mask & other_mask;
++	if (denied)
++		entries++;  /* group@ deny entry needed */
++	if (group_mask & ~other_mask)
++		entries++;  /* group@ allow entry needed */
++	if (other_mask)
++		entries++;  /* everyone@ allow entry needed */
 +
-+	clone = richacl_clone(acl, GFP_KERNEL);
-+	richacl_put(acl);
-+	if (!clone)
-+		return ERR_PTR(-ENOMEM);
++	acl = richacl_alloc(entries, GFP_KERNEL);
++	if (!acl)
++		return NULL;
++	acl->a_owner_mask = owner_mask;
++	acl->a_group_mask = group_mask;
++	acl->a_other_mask = other_mask;
++	ace = acl->a_entries;
 +
-+	clone->a_flags |= (RICHACL_WRITE_THROUGH | RICHACL_MASKED);
-+	clone->a_owner_mask = owner_mask;
-+	clone->a_group_mask = group_mask;
-+	clone->a_other_mask = other_mask;
++	denied = ~owner_mask & (group_mask | other_mask);
++	if (denied) {
++		ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
++		ace->e_flags = RICHACE_SPECIAL_WHO;
++		ace->e_mask = denied;
++		ace->e_id.special = RICHACE_OWNER_SPECIAL_ID;
++		ace++;
++	}
++	if (owner_mask & ~(group_mask & other_mask)) {
++		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
++		ace->e_flags = RICHACE_SPECIAL_WHO;
++		ace->e_mask = owner_mask;
++		ace->e_id.special = RICHACE_OWNER_SPECIAL_ID;
++		ace++;
++	}
++	denied = ~group_mask & other_mask;
++	if (denied) {
++		ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
++		ace->e_flags = RICHACE_SPECIAL_WHO;
++		ace->e_mask = denied;
++		ace->e_id.special = RICHACE_GROUP_SPECIAL_ID;
++		ace++;
++	}
++	if (group_mask & ~other_mask) {
++		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
++		ace->e_flags = RICHACE_SPECIAL_WHO;
++		ace->e_mask = group_mask;
++		ace->e_id.special = RICHACE_GROUP_SPECIAL_ID;
++		ace++;
++	}
++	if (other_mask) {
++		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
++		ace->e_flags = RICHACE_SPECIAL_WHO;
++		ace->e_mask = other_mask;
++		ace->e_id.special = RICHACE_EVERYONE_SPECIAL_ID;
++		ace++;
++	}
 +
-+	return clone;
++	return acl;
 +}
-+EXPORT_SYMBOL_GPL(richacl_chmod);
++EXPORT_SYMBOL_GPL(richacl_from_mode);
 diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-index e81144a..e00f313 100644
+index a945f3c..f48c04e 100644
 --- a/include/linux/richacl.h
 +++ b/include/linux/richacl.h
-@@ -298,5 +298,6 @@ extern int richacl_masks_to_mode(const struct richacl *);
- extern unsigned int richacl_mode_to_mask(mode_t);
- extern unsigned int richacl_want_to_mask(unsigned int);
- extern void richacl_compute_max_masks(struct richacl *);
-+extern struct richacl *richacl_chmod(struct richacl *, mode_t);
+@@ -334,5 +334,6 @@ extern struct richacl *richacl_create(struct inode *, struct inode *);
+ 
+ /* richacl_compat.c */
+ extern int richacl_apply_masks(struct richacl **, kuid_t);
++extern struct richacl *richacl_from_mode(mode_t);
  
  #endif /* __RICHACL_H */
 -- 
 2.4.3
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
