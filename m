@@ -1,256 +1,219 @@
-From: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
-Subject: Re: [PATCH v1 9/8] copy_file_range.2: New page documenting copy_file_range()
-Date: Fri, 4 Sep 2015 16:31:17 -0600
-Message-ID: <95674806-645C-410C-8A4B-A46F03AFFE20@dilger.ca>
-References: <1441397823-1203-1-git-send-email-Anna.Schumaker@Netapp.com> <1441397823-1203-10-git-send-email-Anna.Schumaker@Netapp.com> <20150904213856.GC10391@birch.djwong.org>
-Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2104\))
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150904213856.GC10391-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 5/6] seccomp: add a way to attach a filter via eBPF fd
+Date: Sat, 05 Sep 2015 09:13:02 +0200
+Message-ID: <55EA95FE.7000006@gmail.com>
+References: <1441382664-17437-1-git-send-email-tycho.andersen@canonical.com>	<1441382664-17437-6-git-send-email-tycho.andersen@canonical.com> <CAGXu5jKke44txdYqEgPRrkn8SyWGjJuHxT2qMdq2ztp_16mQyw@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAGXu5jKke44txdYqEgPRrkn8SyWGjJuHxT2qMdq2ztp_16mQyw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sep 4, 2015, at 3:38 PM, Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
-> 
-> On Fri, Sep 04, 2015 at 04:17:03PM -0400, Anna Schumaker wrote:
->> copy_file_range() is a new system call for copying ranges of data
->> completely in the kernel.  This gives filesystems an opportunity to
->> implement some kind of "copy acceleration", such as reflinks or
->> server-side-copy (in the case of NFS).
->> 
->> Signed-off-by: Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+On 09/04/2015 10:41 PM, Kees Cook wrote:
+> On Fri, Sep 4, 2015 at 9:04 AM, Tycho Andersen
+> <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
+>> This is the final bit needed to support seccomp filters created via the bpf
+>> syscall.
+
+Hmm. Thanks Kees, for CCinf linux-api@. That really should have been done at
+the outset.
+
+Tycho, where's the man-pages patch describing this new kernel-userspace
+API feature? :-)
+
+>> One concern with this patch is exactly what the interface should look like
+>> for users, since seccomp()'s second argument is a pointer, we could ask
+>> people to pass a pointer to the fd, but implies we might write to it which
+>> seems impolite. Right now we cast the pointer (and force the user to cast
+>> it), which generates ugly warnings. I'm not sure what the right answer is
+>> here.
+>>
+>> Signed-off-by: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+>> CC: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+>> CC: Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+>> CC: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>> CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+>> CC: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+>> CC: Serge E. Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+>> CC: Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+>> CC: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
 >> ---
->> man2/copy_file_range.2 | 168 +++++++++++++++++++++++++++++++++++++++++++++++++
->> 1 file changed, 168 insertions(+)
->> create mode 100644 man2/copy_file_range.2
->> 
->> diff --git a/man2/copy_file_range.2 b/man2/copy_file_range.2
->> new file mode 100644
->> index 0000000..4a4cb73
->> --- /dev/null
->> +++ b/man2/copy_file_range.2
->> @@ -0,0 +1,168 @@
->> +.\"This manpage is Copyright (C) 2015 Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
->> +.TH COPY 2 2015-8-31 "Linux" "Linux Programmer's Manual"
->> +.SH NAME
->> +copy_file_range \- Copy a range of data from one file to another
->> +.SH SYNOPSIS
->> +.nf
->> +.B #include <linux/copy.h>
->> +.B #include <sys/syscall.h>
->> +.B #include <unistd.h>
+>>  include/linux/seccomp.h      |  3 +-
+>>  include/uapi/linux/seccomp.h |  1 +
+>>  kernel/seccomp.c             | 70 ++++++++++++++++++++++++++++++++++++--------
+>>  3 files changed, 61 insertions(+), 13 deletions(-)
+>>
+>> diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
+>> index d1a86ed..a725dd5 100644
+>> --- a/include/linux/seccomp.h
+>> +++ b/include/linux/seccomp.h
+>> @@ -3,7 +3,8 @@
+>>
+>>  #include <uapi/linux/seccomp.h>
+>>
+>> -#define SECCOMP_FILTER_FLAG_MASK       (SECCOMP_FILTER_FLAG_TSYNC)
+>> +#define SECCOMP_FILTER_FLAG_MASK       (\
+>> +       SECCOMP_FILTER_FLAG_TSYNC | SECCOMP_FILTER_FLAG_EBPF)
+>>
+>>  #ifdef CONFIG_SECCOMP
+>>
+>> diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
+>> index 0f238a4..c29a423 100644
+>> --- a/include/uapi/linux/seccomp.h
+>> +++ b/include/uapi/linux/seccomp.h
+>> @@ -16,6 +16,7 @@
+>>
+>>  /* Valid flags for SECCOMP_SET_MODE_FILTER */
+>>  #define SECCOMP_FILTER_FLAG_TSYNC      1
+>> +#define SECCOMP_FILTER_FLAG_EBPF       (1 << 1)
+>>
+>>  /*
+>>   * All BPF programs must return a 32-bit value.
+>> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+>> index a2c5b32..9c6bea6 100644
+>> --- a/kernel/seccomp.c
+>> +++ b/kernel/seccomp.c
+>> @@ -355,17 +355,6 @@ static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
+>>
+>>         BUG_ON(INT_MAX / fprog->len < sizeof(struct sock_filter));
+>>
+>> -       /*
+>> -        * Installing a seccomp filter requires that the task has
+>> -        * CAP_SYS_ADMIN in its namespace or be running with no_new_privs.
+>> -        * This avoids scenarios where unprivileged tasks can affect the
+>> -        * behavior of privileged children.
+>> -        */
+>> -       if (!task_no_new_privs(current) &&
+>> -           security_capable_noaudit(current_cred(), current_user_ns(),
+>> -                                    CAP_SYS_ADMIN) != 0)
+>> -               return ERR_PTR(-EACCES);
+>> -
+>>         /* Allocate a new seccomp_filter */
+>>         sfilter = kzalloc(sizeof(*sfilter), GFP_KERNEL | __GFP_NOWARN);
+>>         if (!sfilter)
+>> @@ -509,6 +498,48 @@ static void seccomp_send_sigsys(int syscall, int reason)
+>>         info.si_syscall = syscall;
+>>         force_sig_info(SIGSYS, &info, current);
+>>  }
 >> +
->> +.BI "ssize_t syscall(__NR_copy_file_range, int " fd_in ", loff_t * " off_in ",
->> +.BI "                int " fd_out ", loff_t * " off_out ", size_t " len ",
->> +.BI "                unsigned int " flags );
->> +.fi
->> +.SH DESCRIPTION
->> +The
->> +.BR copy_file_range ()
->> +system call performs an in-kernel copy between two file descriptors
->> +without all that tedious mucking about in userspace.
-> 
-> ;)
-> 
->> +It copies up to
->> +.I len
->> +bytes of data from file descriptor
->> +.I fd_in
->> +to file descriptor
->> +.I fd_out
->> +at
->> +.IR off_out .
->> +The file descriptors must not refer to the same file.
-> 
-> Why?  btrfs (and XFS) reflink can handle the case of a file sharing blocks
-> with itself.
-> 
->> +
->> +The following semantics apply for
->> +.IR fd_in ,
->> +and similar statements apply to
->> +.IR off_out :
->> +.IP * 3
->> +If
->> +.I off_in
->> +is NULL, then bytes are read from
->> +.I fd_in
->> +starting from the current file offset and the current
->> +file offset is adjusted appropriately.
->> +.IP *
->> +If
->> +.I off_in
->> +is not NULL, then
->> +.I off_in
->> +must point to a buffer that specifies the starting
->> +offset where bytes from
->> +.I fd_in
->> +will be read.  The current file offset of
->> +.I fd_in
->> +is not changed, but
->> +.I off_in
->> +is adjusted appropriately.
->> +.PP
->> +The default behavior of
->> +.BR copy_file_range ()
->> +is filesystem specific, and might result in creating a
->> +copy-on-write reflink.
->> +In the event that a given filesystem does not implement
->> +any form of copy acceleration, the kernel will perform
->> +a deep copy of the requested range by reading bytes from
-> 
-> I wonder if it's wise to allow deep copies -- what happens if
-> len == 1T? Will this syscall just block for a really long time?
-
-It should be interruptible, and return the length of the number of
-bytes copied so far, just like read() and write().  That allows
-the caller to continue where it left off, or abort and delete the
-target file, or whatever it wants to do.
-
-Cheers, Andreas
-
->> +.I fd_in
->> +and writing them to
->> +.IR fd_out .
-> 
-> "...if COPY_REFLINK is not set in flags."
-> 
->> +
->> +Currently, Linux only supports the following flag:
->> +.TP 1.9i
->> +.B COPY_REFLINK
->> +Only perform the copy if the filesystem can do it as a reflink.
->> +Do not fall back on performing a deep copy.
->> +.SH RETURN VALUE
->> +Upon successful completion,
->> +.BR copy_file_range ()
->> +will return the number of bytes copied between files.
->> +This could be less than the length originally requested.
->> +
->> +On error,
->> +.BR copy_file_range ()
->> +returns \-1 and
->> +.I errno
->> +is set to indicate the error.
->> +.SH ERRORS
->> +.TP
->> +.B EBADF
->> +One or more file descriptors are not valid,
->> +or do not have proper read-write mode.
-> 
-> "or fd_out is not opened for writing"?
-> 
->> +.TP
->> +.B EINVAL
->> +Requested range extends beyond the end of the file;
->> +.I flags
->> +argument is set to an invalid value.
->> +.TP
->> +.B EOPNOTSUPP
->> +.B COPY_REFLINK
->> +was specified in
->> +.IR flags ,
->> +but the target filesystem does not support reflinks.
->> +.TP
->> +.B EXDEV
->> +Target filesystem doesn't support cross-filesystem copies.
->> +.SH VERSIONS
-> 
-> Perhaps this ought to list a few more errors (EIO, ENOSPC, ENOSYS, EPERM...)
-> that can be returned?  (I was looking at the fallocate manpage.)
-> 
-> --D
-> 
->> +The
->> +.BR copy_file_range ()
->> +system call first appeared in Linux 4.3.
->> +.SH CONFORMING TO
->> +The
->> +.BR copy_file_range ()
->> +system call is a nonstandard Linux extension.
->> +.SH EXAMPLE
->> +.nf
->> +
->> +#define _GNU_SOURCE
->> +#include <fcntl.h>
->> +#include <linux/copy.h>
->> +#include <stdio.h>
->> +#include <stdlib.h>
->> +#include <sys/stat.h>
->> +#include <sys/syscall.h>
->> +#include <unistd.h>
->> +
->> +
->> +int main(int argc, char **argv)
+>> +#ifdef CONFIG_BPF_SYSCALL
+>> +static struct seccomp_filter *seccomp_prepare_ebpf(const char __user *filter)
 >> +{
->> +    int fd_in, fd_out;
->> +    struct stat stat;
->> +    loff_t len, ret;
+>> +       /* XXX: this cast generates a warning. should we make people pass in
+>> +        * &fd, or is there some nicer way of doing this?
+>> +        */
+>> +       u32 fd = (u32) filter;
+> 
+> I think this is probably the right way to do it, modulo getting the
+> warning fixed. Let me invoke the great linux-api subscribers to get
+> some more opinions.
+
+Sigh. It's sad, but the using a cast does seem the simplest option.
+But, how about another idea...
+
+> tl;dr: adding SECCOMP_FILTER_FLAG_EBPF to the flags changes the
+> pointer argument into an fd argument. Is this sane, should it be a
+> pointer to an fd, or should it not be a flag at all, creating a new
+> seccomp command instead (SECCOMP_MODE_FILTER_EBPF)?
+
+What about
+
+    seccomp(SECCOMP_MODE_FILTER_EBPF, flags, structp)
+
+Where structp is a pointer to something like
+
+struct seccomp_ebpf {
+    int size;      /* Size of this whole struct */
+    int fd;
+}
+
+'size' allows for future expansion of the struct (in case we want to 
+expand it later), and placing 'fd' inside a struct avoids unpleasant
+implication that would be made by passing a pointer to an fd as the
+third argument.
+
+Cheers,
+
+Michael
+
+
+> -Kees
+> 
+>> +       struct seccomp_filter *ret;
+>> +       struct bpf_prog *prog;
 >> +
->> +    if (argc != 3) {
->> +        fprintf(stderr, "Usage: %s <pathname> <pathname>\n", argv[0]);
->> +        exit(EXIT_FAILURE);
->> +    }
+>> +       prog = bpf_prog_get(fd);
+>> +       if (IS_ERR(prog))
+>> +               return (struct seccomp_filter *) prog;
 >> +
->> +    fd_in = open(argv[1], O_RDONLY);
->> +    if (fd_in == -1) {
->> +        perror("open (argv[1])");
->> +        exit(EXIT_FAILURE);
->> +    }
+>> +       if (prog->type != BPF_PROG_TYPE_SECCOMP) {
+>> +               bpf_prog_put(prog);
+>> +               return ERR_PTR(-EINVAL);
+>> +       }
 >> +
->> +    if (fstat(fd_in, &stat) == -1) {
->> +        perror("fstat");
->> +        exit(EXIT_FAILURE);
->> +    }
->> +    len = stat.st_size;
+>> +       ret = kzalloc(sizeof(*ret), GFP_KERNEL | __GFP_NOWARN);
+>> +       if (!ret) {
+>> +               bpf_prog_put(prog);
+>> +               return ERR_PTR(-ENOMEM);
+>> +       }
 >> +
->> +    fd_out = open(argv[2], O_WRONLY | O_CREAT, 0644);
->> +    if (fd_out == -1) {
->> +        perror("open (argv[2])");
->> +        exit(EXIT_FAILURE);
->> +    }
+>> +       ret->prog = prog;
+>> +       atomic_set(&ret->usage, 1);
 >> +
->> +    do {
->> +        ret = syscall(__NR_copy_file_range, fd_in, NULL,
->> +                      fd_out, NULL, len, 0);
->> +        if (ret == -1) {
->> +            perror("copy_file_range");
->> +            exit(EXIT_FAILURE);
->> +        }
+>> +       /* Intentionally don't bpf_prog_put() here, because the underlying prog
+>> +        * is refcounted too and we're holding a reference from the struct
+>> +        * seccomp_filter object.
+>> +        */
 >> +
->> +        len -= ret;
->> +    } while (len > 0);
->> +
->> +    close(fd_in);
->> +    close(fd_out);
->> +    exit(EXIT_SUCCESS);
+>> +       return ret;
 >> +}
->> +.fi
->> +.SH SEE ALSO
->> +.BR splice (2)
->> -- 
->> 2.5.1
->> 
+>> +#else
+>> +static struct seccomp_filter *seccomp_prepare_ebpf(const char __user *filter)
+>> +{
+>> +       return ERR_PTR(-EINVAL);
+>> +}
+>> +#endif
+>>  #endif /* CONFIG_SECCOMP_FILTER */
+>>
+>>  /*
+>> @@ -775,8 +806,23 @@ static long seccomp_set_mode_filter(unsigned int flags,
+>>         if (flags & ~SECCOMP_FILTER_FLAG_MASK)
+>>                 return -EINVAL;
+>>
+>> +       /*
+>> +        * Installing a seccomp filter requires that the task has
+>> +        * CAP_SYS_ADMIN in its namespace or be running with no_new_privs.
+>> +        * This avoids scenarios where unprivileged tasks can affect the
+>> +        * behavior of privileged children.
+>> +        */
+>> +       if (!task_no_new_privs(current) &&
+>> +           security_capable_noaudit(current_cred(), current_user_ns(),
+>> +                                    CAP_SYS_ADMIN) != 0)
+>> +               return -EACCES;
+>> +
+>>         /* Prepare the new filter before holding any locks. */
+>> -       prepared = seccomp_prepare_user_filter(filter);
+>> +       if (flags & SECCOMP_FILTER_FLAG_EBPF)
+>> +               prepared = seccomp_prepare_ebpf(filter);
+>> +       else
+>> +               prepared = seccomp_prepare_user_filter(filter);
+>> +
+>>         if (IS_ERR(prepared))
+>>                 return PTR_ERR(prepared);
+>>
 >> --
->> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
->> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>> 2.1.4
+>>
+> 
+> 
+> 
 
 
-Cheers, Andreas
-
-
-
-
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
