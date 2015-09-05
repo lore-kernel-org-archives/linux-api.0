@@ -1,155 +1,108 @@
 From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [RFC v7 26/41] richacl: Apply the file masks to a richacl
-Date: Sat,  5 Sep 2015 12:27:21 +0200
-Message-ID: <1441448856-13478-27-git-send-email-agruenba@redhat.com>
+Subject: [RFC v7 28/41] nfsd: Keep list of acls to dispose of in compoundargs
+Date: Sat,  5 Sep 2015 12:27:23 +0200
+Message-ID: <1441448856-13478-29-git-send-email-agruenba@redhat.com>
 References: <1441448856-13478-1-git-send-email-agruenba@redhat.com>
 Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1441448856-13478-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Andreas Gruenbacher <agruen-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Put all the pieces of the acl transformation puzzle together for
-computing a richacl which has the file masks "applied" so that the
-standard nfsv4 access check algorithm can be used on the richacl.
+We will decode acls in requests into richacls.  Even if unlikely, there
+can be more than one acl in a single request; those richacls need to be
+richacl_put() at the end of the request instead of kfree()d, so keep a
+list of acls in compoundargs for that.
 
-Signed-off-by: Andreas Gruenbacher <agruen-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- fs/richacl_compat.c     | 110 ++++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/richacl.h |   3 ++
- 2 files changed, 113 insertions(+)
+ fs/nfsd/nfs4xdr.c | 27 +++++++++++++++++++++++++++
+ fs/nfsd/xdr4.h    |  6 ++++++
+ 2 files changed, 33 insertions(+)
 
-diff --git a/fs/richacl_compat.c b/fs/richacl_compat.c
-index 412844c..9681efe 100644
---- a/fs/richacl_compat.c
-+++ b/fs/richacl_compat.c
-@@ -730,3 +730,113 @@ richacl_isolate_group_class(struct richacl_alloc *alloc)
- 	}
- 	return 0;
- }
-+
-+/**
-+ * __richacl_apply_masks  -  apply the file masks to all aces
-+ * @alloc:	acl and number of allocated entries
-+ *
-+ * Apply the owner mask to owner@ aces, the other mask to
-+ * everyone@ aces, and the group mask to all other aces.
-+ *
-+ * The previous transformations have brought the acl into a
-+ * form in which applying the masks will not lead to the
-+ * accidental loss of permissions anymore.
-+ */
-+static int
-+__richacl_apply_masks(struct richacl_alloc *alloc, kuid_t owner)
-+{
-+	struct richace *ace;
-+
-+	richacl_for_each_entry(ace, alloc->acl) {
-+		unsigned int mask;
-+
-+		if (richace_is_inherit_only(ace) || !richace_is_allow(ace))
-+			continue;
-+		if (richace_is_owner(ace) ||
-+		    (richace_is_unix_user(ace) && uid_eq(owner, ace->e_id.uid)))
-+			mask = alloc->acl->a_owner_mask;
-+		else if (richace_is_everyone(ace))
-+			mask = alloc->acl->a_other_mask;
-+		else
-+			mask = alloc->acl->a_group_mask;
-+		if (richace_change_mask(alloc, &ace, ace->e_mask & mask))
-+			return -1;
-+	}
-+	return 0;
-+}
-+
-+/**
-+ * richacl_apply_masks  -  apply the masks to the acl
-+ *
-+ * Transform @acl so that the standard NFSv4 permission check algorithm (which
-+ * is not aware of file masks) will compute the same access decisions as the
-+ * richacl permission check algorithm (which looks at the acl and the file
-+ * masks).
-+ *
-+ * This algorithm is split into several steps:
-+ *
-+ *   - Move everyone@ aces to the end of the acl.  This simplifies the other
-+ *     transformations, and allows the everyone@ allow ace at the end of the
-+ *     acl to eventually allow permissions to the other class only.
-+ *
-+ *   - Propagate everyone@ permissions up the acl.  This transformation makes
-+ *     sure that the owner and group class aces won't lose any permissions when
-+ *     we apply the other mask to the everyone@ allow ace at the end of the acl.
-+ *
-+ *   - Apply the file masks to all aces.
-+ *
-+ *   - Make sure the owner is granted the owner mask permissions.
-+ *
-+ *   - Make sure everyone is granted the other mask permissions.
-+ *
-+ *   - Make sure that the owner is not granted any permissions beyond the owner
-+ *     mask from group class aces or from everyone@.
-+ *
-+ *   - Make sure that the group class is not granted any permissions from
-+ *     everyone@.
-+ *
-+ * The algorithm is exact except for richacls which cannot be represented as an
-+ * acl alone: for example, given this acl:
-+ *
-+ *    group@:rw::allow
-+ *
-+ * when file masks corresponding to mode 0600 are applied, the owner would only
-+ * get rw access if he is a member of the owning group.  This algorithm would
-+ * produce an empty acl in this case.  We fix this case by modifying
-+ * richacl_permission() so that the group mask is always applied to group class
-+ * aces.  With this fix, the owner would not have any access (beyond the
-+ * implicit permissions always granted to owners).
-+ *
-+ * NOTE: Depending on the acl and file masks, this algorithm can increase the
-+ * number of aces by almost a factor of three in the worst case. This may make
-+ * the acl too large for some purposes.
-+ */
-+int
-+richacl_apply_masks(struct richacl **acl, kuid_t owner)
-+{
-+	if ((*acl)->a_flags & RICHACL_MASKED) {
-+		struct richacl_alloc alloc = {
-+			.acl = richacl_clone(*acl, GFP_KERNEL),
-+			.count = (*acl)->a_count,
-+		};
-+		if (!alloc.acl)
-+			return -ENOMEM;
-+
-+		if (richacl_move_everyone_aces_down(&alloc) ||
-+		    richacl_propagate_everyone(&alloc) ||
-+		    __richacl_apply_masks(&alloc, owner) ||
-+		    richacl_set_owner_permissions(&alloc) ||
-+		    richacl_set_other_permissions(&alloc) ||
-+		    richacl_isolate_owner_class(&alloc) ||
-+		    richacl_isolate_group_class(&alloc)) {
-+			richacl_put(alloc.acl);
-+			return -ENOMEM;
-+		}
-+
-+		alloc.acl->a_flags &= ~(RICHACL_WRITE_THROUGH | RICHACL_MASKED);
-+		richacl_put(*acl);
-+		*acl = alloc.acl;
-+	}
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(richacl_apply_masks);
-diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-index 832b06c..a945f3c 100644
---- a/include/linux/richacl.h
-+++ b/include/linux/richacl.h
-@@ -332,4 +332,7 @@ extern struct richacl *richacl_inherit(const struct richacl *, int);
- extern int richacl_permission(struct inode *, const struct richacl *, int);
- extern struct richacl *richacl_create(struct inode *, struct inode *);
+diff --git a/fs/nfsd/nfs4xdr.c b/fs/nfsd/nfs4xdr.c
+index 75e0563..0768251 100644
+--- a/fs/nfsd/nfs4xdr.c
++++ b/fs/nfsd/nfs4xdr.c
+@@ -40,6 +40,7 @@
+ #include <linux/utsname.h>
+ #include <linux/pagemap.h>
+ #include <linux/sunrpc/svcauth_gss.h>
++#include <linux/richacl.h>
  
-+/* richacl_compat.c */
-+extern int richacl_apply_masks(struct richacl **, kuid_t);
+ #include "idmap.h"
+ #include "acl.h"
+@@ -196,6 +197,24 @@ svcxdr_tmpalloc(struct nfsd4_compoundargs *argp, u32 len)
+ 	return tb->buf;
+ }
+ 
++static struct richacl *
++svcxdr_alloc_richacl(struct nfsd4_compoundargs *argp, u32 nace)
++{
++	struct svcxdr_richacl *acls;
 +
- #endif /* __RICHACL_H */
++	acls = kmalloc(sizeof(*acls), GFP_KERNEL);
++	if (!acls)
++		return NULL;
++	acls->acl = richacl_alloc(nace, GFP_KERNEL);
++	if (!acls->acl) {
++		kfree(acls);
++		return NULL;
++	}
++	acls->next = argp->acls;
++	argp->acls = acls;
++	return acls->acl;
++}
++
+ /*
+  * For xdr strings that need to be passed to other kernel api's
+  * as null-terminated strings.
+@@ -4395,6 +4414,13 @@ int nfsd4_release_compoundargs(void *rq, __be32 *p, void *resp)
+ 		args->to_free = tb->next;
+ 		kfree(tb);
+ 	}
++	while (args->acls) {
++		struct svcxdr_richacl *acls = args->acls;
++
++		args->acls = acls->next;
++		richacl_put(acls->acl);
++		kfree(acls);
++	}
+ 	return 1;
+ }
+ 
+@@ -4413,6 +4439,7 @@ nfs4svc_decode_compoundargs(struct svc_rqst *rqstp, __be32 *p, struct nfsd4_comp
+ 	args->pagelen = rqstp->rq_arg.page_len;
+ 	args->tmpp = NULL;
+ 	args->to_free = NULL;
++	args->acls = NULL;
+ 	args->ops = args->iops;
+ 	args->rqstp = rqstp;
+ 
+diff --git a/fs/nfsd/xdr4.h b/fs/nfsd/xdr4.h
+index 9f99100..b698585 100644
+--- a/fs/nfsd/xdr4.h
++++ b/fs/nfsd/xdr4.h
+@@ -570,6 +570,11 @@ struct svcxdr_tmpbuf {
+ 	char buf[];
+ };
+ 
++struct svcxdr_richacl {
++	struct svcxdr_richacl *next;
++	struct richacl *acl;
++};
++
+ struct nfsd4_compoundargs {
+ 	/* scratch variables for XDR decode */
+ 	__be32 *			p;
+@@ -579,6 +584,7 @@ struct nfsd4_compoundargs {
+ 	__be32				tmp[8];
+ 	__be32 *			tmpp;
+ 	struct svcxdr_tmpbuf		*to_free;
++	struct svcxdr_richacl		*acls;
+ 
+ 	struct svc_rqst			*rqstp;
+ 
 -- 
 2.4.3
 
