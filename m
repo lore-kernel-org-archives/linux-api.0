@@ -1,83 +1,76 @@
-From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [RFC v7 37/41] nfs: Fix GETATTR bitmap verification
-Date: Sat,  5 Sep 2015 12:27:32 +0200
-Message-ID: <1441448856-13478-38-git-send-email-agruenba@redhat.com>
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [RFC v7 36/41] sunrpc: Add xdr_init_encode_pages
+Date: Sat,  5 Sep 2015 12:27:31 +0200
+Message-ID: <1441448856-13478-37-git-send-email-agruenba@redhat.com>
 References: <1441448856-13478-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1441448856-13478-1-git-send-email-agruenba@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org, linux-cifs@vger.kernel.org, linux-security-module@vger.kernel.org
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1441448856-13478-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-When decoding GETATTR replies, the client checks the attribute bitmap
-for which attributes the server has sent.  It misses bits at the word
-boundaries, though; fix that.
+Initialize xdr_stream and xdr_buf from a pages array, for encoding into
+the pages.
 
-Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- fs/nfs/nfs4xdr.c | 23 +++++++++++++++++++++++
- 1 file changed, 23 insertions(+)
+ include/linux/sunrpc/xdr.h |  2 ++
+ net/sunrpc/xdr.c           | 25 +++++++++++++++++++++++++
+ 2 files changed, 27 insertions(+)
 
-diff --git a/fs/nfs/nfs4xdr.c b/fs/nfs/nfs4xdr.c
-index 558cd65d..67197b8 100644
---- a/fs/nfs/nfs4xdr.c
-+++ b/fs/nfs/nfs4xdr.c
-@@ -4346,6 +4346,11 @@ static int decode_statfs(struct xdr_stream *xdr, struct nfs_fsstat *fsstat)
- 		goto xdr_error;
- 	if ((status = decode_attr_files_total(xdr, bitmap, &fsstat->tfiles)) != 0)
- 		goto xdr_error;
-+
-+	status = -EIO;
-+	if (unlikely(bitmap[0]))
-+		goto xdr_error;
-+
- 	if ((status = decode_attr_space_avail(xdr, bitmap, &fsstat->abytes)) != 0)
- 		goto xdr_error;
- 	if ((status = decode_attr_space_free(xdr, bitmap, &fsstat->fbytes)) != 0)
-@@ -4545,6 +4550,10 @@ static int decode_getfattr_attrs(struct xdr_stream *xdr, uint32_t *bitmap,
- 		goto xdr_error;
- 	fattr->valid |= status;
+diff --git a/include/linux/sunrpc/xdr.h b/include/linux/sunrpc/xdr.h
+index 70c6b92..2c99cff 100644
+--- a/include/linux/sunrpc/xdr.h
++++ b/include/linux/sunrpc/xdr.h
+@@ -214,6 +214,8 @@ typedef void	(*kxdreproc_t)(void *rqstp, struct xdr_stream *xdr, void *obj);
+ typedef int	(*kxdrdproc_t)(void *rqstp, struct xdr_stream *xdr, void *obj);
  
-+	status = -EIO;
-+	if (unlikely(bitmap[0]))
-+		goto xdr_error;
-+
- 	status = decode_attr_mode(xdr, bitmap, &fmode);
- 	if (status < 0)
- 		goto xdr_error;
-@@ -4598,6 +4607,10 @@ static int decode_getfattr_attrs(struct xdr_stream *xdr, uint32_t *bitmap,
- 		goto xdr_error;
- 	fattr->valid |= status;
+ extern void xdr_init_encode(struct xdr_stream *xdr, struct xdr_buf *buf, __be32 *p);
++extern void xdr_init_encode_pages(struct xdr_stream *xdr, struct xdr_buf *buf,
++				  struct page **pages, unsigned int len);
+ extern __be32 *xdr_reserve_space(struct xdr_stream *xdr, size_t nbytes);
+ extern void xdr_commit_encode(struct xdr_stream *xdr);
+ extern void xdr_truncate_encode(struct xdr_stream *xdr, size_t len);
+diff --git a/net/sunrpc/xdr.c b/net/sunrpc/xdr.c
+index 63c1c36..f97b96b 100644
+--- a/net/sunrpc/xdr.c
++++ b/net/sunrpc/xdr.c
+@@ -483,6 +483,31 @@ void xdr_init_encode(struct xdr_stream *xdr, struct xdr_buf *buf, __be32 *p)
+ EXPORT_SYMBOL_GPL(xdr_init_encode);
  
-+	status = -EIO;
-+	if (unlikely(bitmap[1]))
-+		goto xdr_error;
+ /**
++ * xdr_init_encode_pages - Initialize struct xdr_stream for encoding into pages
++ * @xdr: pointer to xdr_stream struct
++ * @buf: pointer to XDR buffer in which to encode data
++ * @pages: pages array in which to encode
++ * @len: maximum length of @buf
++ *
++ * Initialize @xdr and @buf for encoding into the @pages array.  If a
++ * page in @pages is NULL, it will be allocated on demand.
++ */
++void xdr_init_encode_pages(struct xdr_stream *xdr, struct xdr_buf *buf,
++			   struct page **pages, unsigned int len)
++{
++	memset(buf, 0, sizeof(*buf));
++	buf->pages = pages;
++	buf->page_len = len;
++	buf->buflen = len;
 +
- 	status = decode_attr_mdsthreshold(xdr, bitmap, fattr->mdsthreshold);
- 	if (status < 0)
- 		goto xdr_error;
-@@ -4760,12 +4773,22 @@ static int decode_fsinfo(struct xdr_stream *xdr, struct nfs_fsinfo *fsinfo)
- 	if ((status = decode_attr_maxwrite(xdr, bitmap, &fsinfo->wtmax)) != 0)
- 		goto xdr_error;
- 	fsinfo->wtpref = fsinfo->wtmax;
++	memset(xdr, 0, sizeof(*xdr));
++	xdr->buf = buf;
++	xdr->iov = buf->head;
++	xdr->page_ptr = pages - 1;
++}
++EXPORT_SYMBOL_GPL(xdr_init_encode_pages);
 +
-+	status = -EIO;
-+	if (unlikely(bitmap[0]))
-+		goto xdr_error;
-+
- 	status = decode_attr_time_delta(xdr, bitmap, &fsinfo->time_delta);
- 	if (status != 0)
- 		goto xdr_error;
- 	status = decode_attr_pnfstype(xdr, bitmap, &fsinfo->layouttype);
- 	if (status != 0)
- 		goto xdr_error;
-+
-+	status = -EIO;
-+	if (unlikely(bitmap[1]))
-+		goto xdr_error;
-+
- 	status = decode_attr_layout_blksize(xdr, bitmap, &fsinfo->blksize);
- 	if (status)
- 		goto xdr_error;
++/**
+  * xdr_commit_encode - Ensure all data is written to buffer
+  * @xdr: pointer to xdr_stream
+  *
 -- 
 2.4.3
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
