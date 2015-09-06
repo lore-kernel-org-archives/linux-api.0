@@ -1,95 +1,64 @@
-From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH] vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD permission flags
-Date: Sun,  6 Sep 2015 10:14:06 +0200
-Message-ID: <1441527246-18189-1-git-send-email-agruenba@redhat.com>
-References: <1441448856-13478-4-git-send-email-agruenba@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1441448856-13478-4-git-send-email-agruenba@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org, linux-cifs@vger.kernel.org, linux-security-module@vger.kernel.org
+From: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+Subject: [PATCH] selftests/userfaultfd: Fix compiler warnings on 32-bit
+Date: Sun,  6 Sep 2015 12:10:16 +0200
+Message-ID: <1441534216-24558-1-git-send-email-geert@linux-m68k.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-[This replaces v7 of this patch; MAY_DELETE_SELF now properly overrides the
-sticky check.]
+On 32-bit:
 
-Normally, deleting a file requires MAY_WRITE access to the parent
-directory.  With richacls, a file may be deleted with MAY_DELETE_CHILD access
-to the parent directory or with MAY_DELETE_SELF access to the file.
+    userfaultfd.c: In function 'locking_thread':
+    userfaultfd.c:152: warning: left shift count >= width of type
+    userfaultfd.c: In function 'uffd_poll_thread':
+    userfaultfd.c:295: warning: cast to pointer from integer of different size
+    userfaultfd.c: In function 'uffd_read_thread':
+    userfaultfd.c:332: warning: cast to pointer from integer of different size
 
-To support that, pass the MAY_DELETE_CHILD mask flag to inode_permission()
-when checking for delete access inside a directory, and MAY_DELETE_SELF
-when checking for delete access to a file itelf.
+Fix the shift warning by splitting the shift in two parts, and the
+integer/pointer warnigns by adding intermediate casts to "unsigned
+long".
 
-The MAY_DELETE_SELF permission overrides the sticky directory check.
-
-Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+Signed-off-by: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
 ---
- fs/namei.c         | 21 ++++++++++++---------
- include/linux/fs.h |  2 ++
- 2 files changed, 14 insertions(+), 9 deletions(-)
+ tools/testing/selftests/vm/userfaultfd.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
 
-diff --git a/fs/namei.c b/fs/namei.c
-index 428b4a6..1a3f0d8 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -453,9 +453,9 @@ static int sb_permission(struct super_block *sb, struct inode *inode, int mask)
-  * this, letting us set arbitrary permissions for filesystem access without
-  * changing the "normal" UIDs which are used for other things.
-  *
-- * MAY_WRITE must be set in @mask whenever MAY_APPEND, MAY_CREATE_FILE, or
-- * MAY_CREATE_DIR are set.  That way, file systems that don't support these
-- * permissions will check for MAY_WRITE instead.
-+ * MAY_WRITE must be set in @mask whenever MAY_APPEND, MAY_CREATE_FILE,
-+ * MAY_CREATE_DIR, or MAY_DELETE_CHILD are set.  That way, file systems that
-+ * don't support these permissions will check for MAY_WRITE instead.
-  */
- int inode_permission(struct inode *inode, int mask)
- {
-@@ -2528,7 +2528,7 @@ static int may_delete(struct inode *dir, struct dentry *victim,
- 		      bool isdir, bool replace)
- {
- 	struct inode *inode = d_backing_inode(victim);
--	int error, mask = MAY_WRITE | MAY_EXEC;
-+	int error, mask = MAY_EXEC;
- 
- 	if (d_is_negative(victim))
- 		return -ENOENT;
-@@ -2538,15 +2538,18 @@ static int may_delete(struct inode *dir, struct dentry *victim,
- 	audit_inode_child(dir, victim, AUDIT_TYPE_CHILD_DELETE);
- 
- 	if (replace)
--		mask |= isdir ? MAY_CREATE_DIR : MAY_CREATE_FILE;
--	error = inode_permission(dir, mask);
-+		mask |= MAY_WRITE | (isdir ? MAY_CREATE_DIR : MAY_CREATE_FILE);
-+	error = inode_permission(dir, mask | MAY_WRITE | MAY_DELETE_CHILD);
-+	if (!error && check_sticky(dir, inode))
-+		error = -EPERM;
-+	if (error && IS_RICHACL(inode) &&
-+	    inode_permission(inode, MAY_DELETE_SELF) == 0)
-+		error = 0;
- 	if (error)
- 		return error;
- 	if (IS_APPEND(dir))
- 		return -EPERM;
--
--	if (check_sticky(dir, inode) || IS_APPEND(inode) ||
--	    IS_IMMUTABLE(inode) || IS_SWAPFILE(inode))
-+	if (IS_APPEND(inode) || IS_IMMUTABLE(inode) || IS_SWAPFILE(inode))
- 		return -EPERM;
- 	if (isdir) {
- 		if (!d_is_dir(victim))
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index b2f1b1b..99c95d1 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -84,6 +84,8 @@ typedef void (dax_iodone_t)(struct buffer_head *bh_map, int uptodate);
- #define MAY_NOT_BLOCK		0x00000080
- #define MAY_CREATE_FILE		0x00000100
- #define MAY_CREATE_DIR		0x00000200
-+#define MAY_DELETE_CHILD	0x00000400
-+#define MAY_DELETE_SELF		0x00000800
- 
- /*
-  * flags in file.f_mode.  Note that FMODE_READ and FMODE_WRITE must correspond
+diff --git a/tools/testing/selftests/vm/userfaultfd.c b/tools/testing/selftests/vm/userfaultfd.c
+index 0c0b8395335261b9..b619f672131ea787 100644
+--- a/tools/testing/selftests/vm/userfaultfd.c
++++ b/tools/testing/selftests/vm/userfaultfd.c
+@@ -147,7 +147,8 @@ static void *locking_thread(void *arg)
+ 			if (sizeof(page_nr) > sizeof(rand_nr)) {
+ 				if (random_r(&rand, &rand_nr))
+ 					fprintf(stderr, "random_r 2 error\n"), exit(1);
+-				page_nr |= ((unsigned long) rand_nr) << 32;
++				page_nr |= (((unsigned long) rand_nr) << 16) <<
++					   16;
+ 			}
+ 		} else
+ 			page_nr += 1;
+@@ -290,7 +291,8 @@ static void *uffd_poll_thread(void *arg)
+ 				msg.event), exit(1);
+ 		if (msg.arg.pagefault.flags & UFFD_PAGEFAULT_FLAG_WRITE)
+ 			fprintf(stderr, "unexpected write fault\n"), exit(1);
+-		offset = (char *)msg.arg.pagefault.address - area_dst;
++		offset = (char *)(unsigned long)msg.arg.pagefault.address -
++			 area_dst;
+ 		offset &= ~(page_size-1);
+ 		if (copy_page(offset))
+ 			userfaults++;
+@@ -327,7 +329,8 @@ static void *uffd_read_thread(void *arg)
+ 		if (bounces & BOUNCE_VERIFY &&
+ 		    msg.arg.pagefault.flags & UFFD_PAGEFAULT_FLAG_WRITE)
+ 			fprintf(stderr, "unexpected write fault\n"), exit(1);
+-		offset = (char *)msg.arg.pagefault.address - area_dst;
++		offset = (char *)(unsigned long)msg.arg.pagefault.address -
++			 area_dst;
+ 		offset &= ~(page_size-1);
+ 		if (copy_page(offset))
+ 			(*this_cpu_userfaults)++;
 -- 
-2.4.3
+1.9.1
