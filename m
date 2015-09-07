@@ -1,53 +1,69 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH v2 4/9] parisc: allocate sys_membarrier system call number
-Date: Mon,  7 Sep 2015 12:15:51 -0400
-Message-ID: <1441642556-30972-5-git-send-email-mathieu.desnoyers@efficios.com>
+Subject: [PATCH v2 3/9] sparc/sparc64: allocate sys_membarrier system call number
+Date: Mon,  7 Sep 2015 12:15:50 -0400
+Message-ID: <1441642556-30972-4-git-send-email-mathieu.desnoyers@efficios.com>
 References: <1441642556-30972-1-git-send-email-mathieu.desnoyers@efficios.com>
-Return-path: <linux-parisc-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1441642556-30972-1-git-send-email-mathieu.desnoyers@efficios.com>
-Sender: linux-parisc-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, "James E.J. Bottomley" <jejb@parisc-linux.org>, linux-parisc@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, sparclinux@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Tested-by: Helge Deller <deller@gmx.de>
+Acked-by: "David S. Miller" <davem@davemloft.net>
 CC: Andrew Morton <akpm@linux-foundation.org>
 CC: linux-api@vger.kernel.org
-CC: "James E.J. Bottomley" <jejb@parisc-linux.org>
-CC: linux-parisc@vger.kernel.org
+CC: sparclinux@vger.kernel.org
 ---
- arch/parisc/include/uapi/asm/unistd.h | 3 ++-
- arch/parisc/kernel/syscall_table.S    | 1 +
- 2 files changed, 3 insertions(+), 1 deletion(-)
+ arch/sparc/include/uapi/asm/unistd.h | 3 ++-
+ arch/sparc/kernel/systbls_32.S       | 2 +-
+ arch/sparc/kernel/systbls_64.S       | 4 ++--
+ 3 files changed, 5 insertions(+), 4 deletions(-)
 
-diff --git a/arch/parisc/include/uapi/asm/unistd.h b/arch/parisc/include/uapi/asm/unistd.h
-index 2e639d7..dadcada 100644
---- a/arch/parisc/include/uapi/asm/unistd.h
-+++ b/arch/parisc/include/uapi/asm/unistd.h
-@@ -358,8 +358,9 @@
- #define __NR_memfd_create	(__NR_Linux + 340)
- #define __NR_bpf		(__NR_Linux + 341)
- #define __NR_execveat		(__NR_Linux + 342)
-+#define __NR_membarrier		(__NR_Linux + 343)
+diff --git a/arch/sparc/include/uapi/asm/unistd.h b/arch/sparc/include/uapi/asm/unistd.h
+index 6f35f4d..efe9479 100644
+--- a/arch/sparc/include/uapi/asm/unistd.h
++++ b/arch/sparc/include/uapi/asm/unistd.h
+@@ -416,8 +416,9 @@
+ #define __NR_memfd_create	348
+ #define __NR_bpf		349
+ #define __NR_execveat		350
++#define __NR_membarrier		351
  
--#define __NR_Linux_syscalls	(__NR_execveat + 1)
-+#define __NR_Linux_syscalls	(__NR_membarrier + 1)
+-#define NR_syscalls		351
++#define NR_syscalls		352
  
+ /* Bitmask values returned from kern_features system call.  */
+ #define KERN_FEATURE_MIXED_MODE_STACK	0x00000001
+diff --git a/arch/sparc/kernel/systbls_32.S b/arch/sparc/kernel/systbls_32.S
+index e31a905..cc23b62 100644
+--- a/arch/sparc/kernel/systbls_32.S
++++ b/arch/sparc/kernel/systbls_32.S
+@@ -87,4 +87,4 @@ sys_call_table:
+ /*335*/	.long sys_syncfs, sys_sendmmsg, sys_setns, sys_process_vm_readv, sys_process_vm_writev
+ /*340*/	.long sys_ni_syscall, sys_kcmp, sys_finit_module, sys_sched_setattr, sys_sched_getattr
+ /*345*/	.long sys_renameat2, sys_seccomp, sys_getrandom, sys_memfd_create, sys_bpf
+-/*350*/	.long sys_execveat
++/*350*/	.long sys_execveat, sys_membarrier
+diff --git a/arch/sparc/kernel/systbls_64.S b/arch/sparc/kernel/systbls_64.S
+index d72f76a..f229468 100644
+--- a/arch/sparc/kernel/systbls_64.S
++++ b/arch/sparc/kernel/systbls_64.S
+@@ -88,7 +88,7 @@ sys_call_table32:
+ 	.word sys_syncfs, compat_sys_sendmmsg, sys_setns, compat_sys_process_vm_readv, compat_sys_process_vm_writev
+ /*340*/	.word sys_kern_features, sys_kcmp, sys_finit_module, sys_sched_setattr, sys_sched_getattr
+ 	.word sys32_renameat2, sys_seccomp, sys_getrandom, sys_memfd_create, sys_bpf
+-/*350*/	.word sys32_execveat
++/*350*/	.word sys32_execveat, sys_membarrier
  
- #define __IGNORE_select		/* newselect */
-diff --git a/arch/parisc/kernel/syscall_table.S b/arch/parisc/kernel/syscall_table.S
-index 8eefb12..4e77991 100644
---- a/arch/parisc/kernel/syscall_table.S
-+++ b/arch/parisc/kernel/syscall_table.S
-@@ -438,6 +438,7 @@
- 	ENTRY_SAME(memfd_create)	/* 340 */
- 	ENTRY_SAME(bpf)
- 	ENTRY_COMP(execveat)
-+	ENTRY_SAME(membarrier)
+ #endif /* CONFIG_COMPAT */
  
- 
- .ifne (. - 90b) - (__NR_Linux_syscalls * (91b - 90b))
+@@ -168,4 +168,4 @@ sys_call_table:
+ 	.word sys_syncfs, sys_sendmmsg, sys_setns, sys_process_vm_readv, sys_process_vm_writev
+ /*340*/	.word sys_kern_features, sys_kcmp, sys_finit_module, sys_sched_setattr, sys_sched_getattr
+ 	.word sys_renameat2, sys_seccomp, sys_getrandom, sys_memfd_create, sys_bpf
+-/*350*/	.word sys64_execveat
++/*350*/	.word sys64_execveat, sys_membarrier
 -- 
 1.9.1
-
