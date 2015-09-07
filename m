@@ -1,59 +1,67 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH v2 1/9] [picked] powerpc: allocate sys_membarrier system call
- number
-Date: Mon,  7 Sep 2015 12:15:48 -0400
-Message-ID: <1441642556-30972-2-git-send-email-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH v2 5/9] alpha: allocate sys_membarrier system call number
+Date: Mon,  7 Sep 2015 12:15:52 -0400
+Message-ID: <1441642556-30972-6-git-send-email-mathieu.desnoyers@efficios.com>
 References: <1441642556-30972-1-git-send-email-mathieu.desnoyers@efficios.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1441642556-30972-1-git-send-email-mathieu.desnoyers@efficios.com>
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Paul Mackerras <paulus@samba.org>, linuxppc-dev@lists.ozlabs.org
+Cc: linux-kernel@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, linux-alpha@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-QWxsb3cgaXQgdG8gYmUgdXNlZCBmcm9tIFNQVSwgc2luY2UgaXQgc2hvdWxkIG5vdCBoYXZlIHVu
-d2FudGVkCnNpZGUtZWZmZWN0cy4KClsgUGlja2VkLWJ5OiBNaWNoYWVsIEVsbGVybWFuIDxtcGVA
-ZWxsZXJtYW4uaWQuYXU+IF0KClNpZ25lZC1vZmYtYnk6IE1hdGhpZXUgRGVzbm95ZXJzIDxtYXRo
-aWV1LmRlc25veWVyc0BlZmZpY2lvcy5jb20+CkNDOiBBbmRyZXcgTW9ydG9uIDxha3BtQGxpbnV4
-LWZvdW5kYXRpb24ub3JnPgpDQzogbGludXgtYXBpQHZnZXIua2VybmVsLm9yZwpDQzogQmVuamFt
-aW4gSGVycmVuc2NobWlkdCA8YmVuaEBrZXJuZWwuY3Jhc2hpbmcub3JnPgpDQzogUGF1bCBNYWNr
-ZXJyYXMgPHBhdWx1c0BzYW1iYS5vcmc+CkNDOiBNaWNoYWVsIEVsbGVybWFuIDxtcGVAZWxsZXJt
-YW4uaWQuYXU+CkNDOiBsaW51eHBwYy1kZXZAbGlzdHMub3psYWJzLm9yZwotLS0KIGFyY2gvcG93
-ZXJwYy9pbmNsdWRlL2FzbS9zeXN0YmwuaCAgICAgIHwgMSArCiBhcmNoL3Bvd2VycGMvaW5jbHVk
-ZS9hc20vdW5pc3RkLmggICAgICB8IDIgKy0KIGFyY2gvcG93ZXJwYy9pbmNsdWRlL3VhcGkvYXNt
-L3VuaXN0ZC5oIHwgMSArCiAzIGZpbGVzIGNoYW5nZWQsIDMgaW5zZXJ0aW9ucygrKSwgMSBkZWxl
-dGlvbigtKQoKZGlmZiAtLWdpdCBhL2FyY2gvcG93ZXJwYy9pbmNsdWRlL2FzbS9zeXN0YmwuaCBi
-L2FyY2gvcG93ZXJwYy9pbmNsdWRlL2FzbS9zeXN0YmwuaAppbmRleCA0ZDY1NDk5Li4xMjZkMGM0
-IDEwMDY0NAotLS0gYS9hcmNoL3Bvd2VycGMvaW5jbHVkZS9hc20vc3lzdGJsLmgKKysrIGIvYXJj
-aC9wb3dlcnBjL2luY2x1ZGUvYXNtL3N5c3RibC5oCkBAIC0zNjksMyArMzY5LDQgQEAgU1lTQ0FM
-TF9TUFUoYnBmKQogQ09NUEFUX1NZUyhleGVjdmVhdCkKIFBQQzY0T05MWShzd2l0Y2hfZW5kaWFu
-KQogU1lTQ0FMTF9TUFUodXNlcmZhdWx0ZmQpCitTWVNDQUxMX1NQVShtZW1iYXJyaWVyKQpkaWZm
-IC0tZ2l0IGEvYXJjaC9wb3dlcnBjL2luY2x1ZGUvYXNtL3VuaXN0ZC5oIGIvYXJjaC9wb3dlcnBj
-L2luY2x1ZGUvYXNtL3VuaXN0ZC5oCmluZGV4IDRhMDU1YjYuLjEzNDExYmUgMTAwNjQ0Ci0tLSBh
-L2FyY2gvcG93ZXJwYy9pbmNsdWRlL2FzbS91bmlzdGQuaAorKysgYi9hcmNoL3Bvd2VycGMvaW5j
-bHVkZS9hc20vdW5pc3RkLmgKQEAgLTEyLDcgKzEyLDcgQEAKICNpbmNsdWRlIDx1YXBpL2FzbS91
-bmlzdGQuaD4KIAogCi0jZGVmaW5lIF9fTlJfc3lzY2FsbHMJCTM2NQorI2RlZmluZSBfX05SX3N5
-c2NhbGxzCQkzNjYKIAogI2RlZmluZSBfX05SX19leGl0IF9fTlJfZXhpdAogI2RlZmluZSBOUl9z
-eXNjYWxscwlfX05SX3N5c2NhbGxzCmRpZmYgLS1naXQgYS9hcmNoL3Bvd2VycGMvaW5jbHVkZS91
-YXBpL2FzbS91bmlzdGQuaCBiL2FyY2gvcG93ZXJwYy9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5o
-CmluZGV4IDZhZDU4ZDQuLjYzMzc3MzggMTAwNjQ0Ci0tLSBhL2FyY2gvcG93ZXJwYy9pbmNsdWRl
-L3VhcGkvYXNtL3VuaXN0ZC5oCisrKyBiL2FyY2gvcG93ZXJwYy9pbmNsdWRlL3VhcGkvYXNtL3Vu
-aXN0ZC5oCkBAIC0zODcsNSArMzg3LDYgQEAKICNkZWZpbmUgX19OUl9leGVjdmVhdAkJMzYyCiAj
-ZGVmaW5lIF9fTlJfc3dpdGNoX2VuZGlhbgkzNjMKICNkZWZpbmUgX19OUl91c2VyZmF1bHRmZAkz
-NjQKKyNkZWZpbmUgX19OUl9tZW1iYXJyaWVyCQkzNjUKIAogI2VuZGlmIC8qIF9VQVBJX0FTTV9Q
-T1dFUlBDX1VOSVNURF9IXyAqLwotLSAKMS45LjEKCl9fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fCkxpbnV4cHBjLWRldiBtYWlsaW5nIGxpc3QKTGludXhwcGMt
-ZGV2QGxpc3RzLm96bGFicy5vcmcKaHR0cHM6Ly9saXN0cy5vemxhYnMub3JnL2xpc3RpbmZvL2xp
-bnV4cHBjLWRldg==
+[ Untested on this architecture. To try it out: fetch linux-next/akpm,
+  apply this patch, build/run a membarrier-enabled kernel, and do make
+  kselftest. ]
+
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: linux-api@vger.kernel.org
+CC: Richard Henderson <rth@twiddle.net>
+CC: Ivan Kokshaysky <ink@jurassic.park.msu.ru>
+CC: Matt Turner <mattst88@gmail.com>
+CC: linux-alpha@vger.kernel.org
+---
+ arch/alpha/include/asm/unistd.h      | 2 +-
+ arch/alpha/include/uapi/asm/unistd.h | 1 +
+ arch/alpha/kernel/systbls.S          | 1 +
+ 3 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/arch/alpha/include/asm/unistd.h b/arch/alpha/include/asm/unistd.h
+index a56e608..07aa4ca 100644
+--- a/arch/alpha/include/asm/unistd.h
++++ b/arch/alpha/include/asm/unistd.h
+@@ -3,7 +3,7 @@
+ 
+ #include <uapi/asm/unistd.h>
+ 
+-#define NR_SYSCALLS			514
++#define NR_SYSCALLS			515
+ 
+ #define __ARCH_WANT_OLD_READDIR
+ #define __ARCH_WANT_STAT64
+diff --git a/arch/alpha/include/uapi/asm/unistd.h b/arch/alpha/include/uapi/asm/unistd.h
+index aa33bf5..7725619 100644
+--- a/arch/alpha/include/uapi/asm/unistd.h
++++ b/arch/alpha/include/uapi/asm/unistd.h
+@@ -475,5 +475,6 @@
+ #define __NR_getrandom			511
+ #define __NR_memfd_create		512
+ #define __NR_execveat			513
++#define __NR_membarrier			514
+ 
+ #endif /* _UAPI_ALPHA_UNISTD_H */
+diff --git a/arch/alpha/kernel/systbls.S b/arch/alpha/kernel/systbls.S
+index 9b62e3f..1ea64f4 100644
+--- a/arch/alpha/kernel/systbls.S
++++ b/arch/alpha/kernel/systbls.S
+@@ -532,6 +532,7 @@ sys_call_table:
+ 	.quad sys_getrandom
+ 	.quad sys_memfd_create
+ 	.quad sys_execveat
++	.quad sys_membarrier
+ 
+ 	.size sys_call_table, . - sys_call_table
+ 	.type sys_call_table, @object
+-- 
+1.9.1
