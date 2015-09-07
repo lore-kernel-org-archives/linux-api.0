@@ -1,67 +1,53 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH v2 5/9] alpha: allocate sys_membarrier system call number
-Date: Mon,  7 Sep 2015 12:15:52 -0400
-Message-ID: <1441642556-30972-6-git-send-email-mathieu.desnoyers@efficios.com>
+Subject: [PATCH v2 4/9] parisc: allocate sys_membarrier system call number
+Date: Mon,  7 Sep 2015 12:15:51 -0400
+Message-ID: <1441642556-30972-5-git-send-email-mathieu.desnoyers@efficios.com>
 References: <1441642556-30972-1-git-send-email-mathieu.desnoyers@efficios.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-parisc-owner@vger.kernel.org>
 In-Reply-To: <1441642556-30972-1-git-send-email-mathieu.desnoyers@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-parisc-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, linux-alpha@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, "James E.J. Bottomley" <jejb@parisc-linux.org>, linux-parisc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-[ Untested on this architecture. To try it out: fetch linux-next/akpm,
-  apply this patch, build/run a membarrier-enabled kernel, and do make
-  kselftest. ]
-
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Tested-by: Helge Deller <deller@gmx.de>
 CC: Andrew Morton <akpm@linux-foundation.org>
 CC: linux-api@vger.kernel.org
-CC: Richard Henderson <rth@twiddle.net>
-CC: Ivan Kokshaysky <ink@jurassic.park.msu.ru>
-CC: Matt Turner <mattst88@gmail.com>
-CC: linux-alpha@vger.kernel.org
+CC: "James E.J. Bottomley" <jejb@parisc-linux.org>
+CC: linux-parisc@vger.kernel.org
 ---
- arch/alpha/include/asm/unistd.h      | 2 +-
- arch/alpha/include/uapi/asm/unistd.h | 1 +
- arch/alpha/kernel/systbls.S          | 1 +
- 3 files changed, 3 insertions(+), 1 deletion(-)
+ arch/parisc/include/uapi/asm/unistd.h | 3 ++-
+ arch/parisc/kernel/syscall_table.S    | 1 +
+ 2 files changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/arch/alpha/include/asm/unistd.h b/arch/alpha/include/asm/unistd.h
-index a56e608..07aa4ca 100644
---- a/arch/alpha/include/asm/unistd.h
-+++ b/arch/alpha/include/asm/unistd.h
-@@ -3,7 +3,7 @@
+diff --git a/arch/parisc/include/uapi/asm/unistd.h b/arch/parisc/include/uapi/asm/unistd.h
+index 2e639d7..dadcada 100644
+--- a/arch/parisc/include/uapi/asm/unistd.h
++++ b/arch/parisc/include/uapi/asm/unistd.h
+@@ -358,8 +358,9 @@
+ #define __NR_memfd_create	(__NR_Linux + 340)
+ #define __NR_bpf		(__NR_Linux + 341)
+ #define __NR_execveat		(__NR_Linux + 342)
++#define __NR_membarrier		(__NR_Linux + 343)
  
- #include <uapi/asm/unistd.h>
+-#define __NR_Linux_syscalls	(__NR_execveat + 1)
++#define __NR_Linux_syscalls	(__NR_membarrier + 1)
  
--#define NR_SYSCALLS			514
-+#define NR_SYSCALLS			515
  
- #define __ARCH_WANT_OLD_READDIR
- #define __ARCH_WANT_STAT64
-diff --git a/arch/alpha/include/uapi/asm/unistd.h b/arch/alpha/include/uapi/asm/unistd.h
-index aa33bf5..7725619 100644
---- a/arch/alpha/include/uapi/asm/unistd.h
-+++ b/arch/alpha/include/uapi/asm/unistd.h
-@@ -475,5 +475,6 @@
- #define __NR_getrandom			511
- #define __NR_memfd_create		512
- #define __NR_execveat			513
-+#define __NR_membarrier			514
+ #define __IGNORE_select		/* newselect */
+diff --git a/arch/parisc/kernel/syscall_table.S b/arch/parisc/kernel/syscall_table.S
+index 8eefb12..4e77991 100644
+--- a/arch/parisc/kernel/syscall_table.S
++++ b/arch/parisc/kernel/syscall_table.S
+@@ -438,6 +438,7 @@
+ 	ENTRY_SAME(memfd_create)	/* 340 */
+ 	ENTRY_SAME(bpf)
+ 	ENTRY_COMP(execveat)
++	ENTRY_SAME(membarrier)
  
- #endif /* _UAPI_ALPHA_UNISTD_H */
-diff --git a/arch/alpha/kernel/systbls.S b/arch/alpha/kernel/systbls.S
-index 9b62e3f..1ea64f4 100644
---- a/arch/alpha/kernel/systbls.S
-+++ b/arch/alpha/kernel/systbls.S
-@@ -532,6 +532,7 @@ sys_call_table:
- 	.quad sys_getrandom
- 	.quad sys_memfd_create
- 	.quad sys_execveat
-+	.quad sys_membarrier
  
- 	.size sys_call_table, . - sys_call_table
- 	.type sys_call_table, @object
+ .ifne (. - 90b) - (__NR_Linux_syscalls * (91b - 90b))
 -- 
 1.9.1
+
