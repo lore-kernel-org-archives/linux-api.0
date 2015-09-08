@@ -1,191 +1,56 @@
-From: Hiraku Toyooka <hiraku.toyooka.gu@hitachi.com>
-Subject: [PATCH 1/2] selftests/pstore: add pstore test script for pre-reboot
-Date: Tue, 08 Sep 2015 20:06:17 +0900
-Message-ID: <20150908110617.9783.4635.stgit@arietta>
-References: <20150908110615.9783.69477.stgit@arietta>
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Subject: Re: [Qemu-devel] [PATCH 19/23] userfaultfd: activate syscall
+Date: Tue, 8 Sep 2015 13:28:26 +0100
+Message-ID: <20150908122826.GJ2246@work-vm>
+References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
+ <1431624680-20153-20-git-send-email-aarcange@redhat.com>
+ <20150811100728.GB4587@in.ibm.com>
+ <20150811134826.GI4520@redhat.com>
+ <20150812052346.GC4587@in.ibm.com>
+ <1441692486.14597.17.camel@ellerman.id.au>
+ <20150908063948.GB678@in.ibm.com>
+ <1441696463.4689.1.camel@ellerman.id.au>
+ <1441708821.13127.0.camel@ellerman.id.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150908110615.9783.69477.stgit@arietta>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Tony Luck <tony.luck@intel.com>, Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, Anton Vorontsov <anton@enomsg.org>, Shuah Khan <shuahkh@osg.samsung.com>, Mark Salyzyn <salyzyn@android.com>, Colin Cross <ccross@android.com>, Seiji Aguchi <seiji.aguchi@hds.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <kvm-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1441708821.13127.0.camel@ellerman.id.au>
+Sender: kvm-owner@vger.kernel.org
+To: Michael Ellerman <mpe@ellerman.id.au>
+Cc: bharata@linux.vnet.ibm.com, kvm@vger.kernel.org, qemu-devel@nongnu.org, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, linux-mm@kvack.org, Andrea Arcangeli <aarcange@redhat.com>, zhang.zhanghailiang@huawei.com, Pavel Emelyanov <xemul@parallels.com>, Hugh Dickins <hughd@google.com>, Mel Gorman <mgorman@suse.de>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>, Andres Lagar-Cavilla <andreslc@google.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Dave Hansen <dave.hansen@intel.com>, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-kernel@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Johannes Weiner <hannes@cmpxchg.org>, Paolo Bonzini <pbonzini@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Feiner <pfeiner@google.com>
 List-Id: linux-api@vger.kernel.org
 
-The pstore_tests script includes test cases which check pstore's
-behavior before crash (and reboot).
+* Michael Ellerman (mpe@ellerman.id.au) wrote:
+> On Tue, 2015-09-08 at 17:14 +1000, Michael Ellerman wrote:
+> > On Tue, 2015-09-08 at 12:09 +0530, Bharata B Rao wrote:
+> > > On Tue, Sep 08, 2015 at 04:08:06PM +1000, Michael Ellerman wrote:
+> > > > Hmm, not for me. See below.
+> > > > 
+> > > > What setup were you testing on Bharata?
+> > > 
+> > > I was on commit a94572f5799dd of userfault21 branch in Andrea's tree
+> > > git://git.kernel.org/pub/scm/linux/kernel/git/andrea/aa.git
+> > > 
+> > > #uname -a
+> > > Linux 4.1.0-rc8+ #1 SMP Tue Aug 11 11:33:50 IST 2015 ppc64le ppc64le ppc64le GNU/Linux
+> > > 
+> > > In fact I had successfully done postcopy migration of sPAPR guest with
+> > > this setup.
+> > 
+> > OK, do you mind testing mainline with the same setup to see if the selftest
+> > passes.
+> 
+> Ah, I just tried it on big endian and it works. So it seems to not work on
+> little endian for some reason, /probably/ a test case bug?
 
-The test cases are currently following.
+Hmm; I think we're missing a test-case fix that Andrea made me for a bug I hit on Power
+I hit a couple of weeks back.  I think that would have been on le.
 
-- Check pstore backend is registered
-- Check pstore console is registered
-- Check /dev/pmsg0 exists
-- Write string to /dev/pmsg0
+Dave
 
-Example usage is following.
-
-make: Entering directory '/home/root/selftests/pstore'
-=== Pstore unit tests (pstore_tests)===
-Checking pstore backend is registered ... ok
-Checking pstore console is registered ... ok
-Checking /dev/pmsg0 exists ... ok
-Writing TEST_STRING to /dev/pmsg0 ... ok
-selftests: pstore_tests [PASS]
-=== Pstore unit tests (pstore_post_reboot_tests)===
-Checking pstore backend is registered ... ok
-pstore_crash_test has not been executed yet. we skip further tests.
-selftests: pstore_post_reboot_tests [PASS]
-make: Leaving directory '/home/root/selftests/pstore'
-
-We can also see test logs later.
-
-Signed-off-by: Hiraku Toyooka <hiraku.toyooka.gu@hitachi.com>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>
-Cc: Tony Luck <tony.luck@intel.com>
-Cc: Anton Vorontsov <anton@enomsg.org>
-Cc: Colin Cross <ccross@android.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Mark Salyzyn <salyzyn@android.com>
-Cc: Seiji Aguchi <seiji.aguchi@hds.com>
-Cc: linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org
----
- tools/testing/selftests/Makefile            |    1 +
- tools/testing/selftests/pstore/Makefile     |   12 +++++++
- tools/testing/selftests/pstore/common_tests |   45 +++++++++++++++++++++++++++
- tools/testing/selftests/pstore/pstore_tests |   42 +++++++++++++++++++++++++
- 4 files changed, 100 insertions(+)
- create mode 100644 tools/testing/selftests/pstore/Makefile
- create mode 100755 tools/testing/selftests/pstore/common_tests
- create mode 100755 tools/testing/selftests/pstore/pstore_tests
-
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index 24ae9e8..b58c72e 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -12,6 +12,7 @@ TARGETS += mount
- TARGETS += mqueue
- TARGETS += net
- TARGETS += powerpc
-+TARGETS += pstore
- TARGETS += ptrace
- TARGETS += seccomp
- TARGETS += size
-diff --git a/tools/testing/selftests/pstore/Makefile b/tools/testing/selftests/pstore/Makefile
-new file mode 100644
-index 0000000..40b887d
---- /dev/null
-+++ b/tools/testing/selftests/pstore/Makefile
-@@ -0,0 +1,12 @@
-+# Makefile for pstore selftests.
-+# Expects pstore backend is registered.
-+
-+all:
-+
-+TEST_PROGS := pstore_tests
-+TEST_FILES := common_tests
-+
-+include ../lib.mk
-+
-+clean:
-+	rm -rf logs/*
-diff --git a/tools/testing/selftests/pstore/common_tests b/tools/testing/selftests/pstore/common_tests
-new file mode 100755
-index 0000000..98611c5
---- /dev/null
-+++ b/tools/testing/selftests/pstore/common_tests
-@@ -0,0 +1,45 @@
-+#!/bin/sh
-+
-+# common_tests - Shell script commonly used by pstore test scripts
-+#
-+# Copyright (C) Hitachi Ltd., 2015
-+#  Written by Hiraku Toyooka <hiraku.toyooka.gu@hitachi.com>
-+#
-+# Released under the terms of the GPL v2.
-+
-+# Utilities
-+errexit() { # message
-+  echo "Error: $1" 1>&2
-+  exit 1
-+}
-+
-+absdir() { # file_path
-+  (cd `dirname $1`; pwd)
-+}
-+
-+# Parameters
-+TOP_DIR=`absdir $0`
-+LOG_DIR=$TOP_DIR/logs/`date +%Y%m%d-%H%M%S`/
-+TEST_STRING="Testing pstore"
-+
-+# Preparing logs
-+LOG_FILE=$LOG_DIR/`basename $0`.log
-+mkdir -p $LOG_DIR || errexit "Failed to make a log directory: $LOG_DIR"
-+date > $LOG_FILE
-+prlog() { # messages
-+  /bin/echo "$@" | tee -a $LOG_FILE
-+}
-+prlog "=== Pstore unit tests (`basename $0`)==="
-+
-+# Starting tests
-+rc=0
-+
-+prlog -n "Checking pstore backend is registered ... "
-+be_msg=`dmesg | grep "pstore: Registered [a-zA-Z0-9]\+ as persistent store backend$"`
-+if [ $? -eq 0 ]; then
-+    backend=`echo ${be_msg} | sed -e 's/^.*Registered\ \([a-zA-z0-9-]\+\)\ as.*$/\1/g'`
-+    prlog "ok"
-+else
-+    prlog "FAIL"
-+    exit 1
-+fi
-diff --git a/tools/testing/selftests/pstore/pstore_tests b/tools/testing/selftests/pstore/pstore_tests
-new file mode 100755
-index 0000000..cbf613c
---- /dev/null
-+++ b/tools/testing/selftests/pstore/pstore_tests
-@@ -0,0 +1,42 @@
-+#!/bin/sh
-+
-+# pstore_tests - Check pstore's behavior before crash/reboot
-+#
-+# Copyright (C) Hitachi Ltd., 2015
-+#  Written by Hiraku Toyooka <hiraku.toyooka.gu@hitachi.com>
-+#
-+# Released under the terms of the GPL v2.
-+
-+. ./common_tests
-+
-+prlog -n "Checking pstore console is registered ... "
-+dmesg | grep -q "console \[pstore"
-+if [ $? -eq 0 ]; then
-+    prlog "ok"
-+else
-+    prlog "FAIL"
-+fi
-+
-+prlog -n "Checking /dev/pmsg0 exists ... "
-+if [ -e "/dev/pmsg0" ]; then
-+    prlog "ok"
-+else
-+    prlog "FAIL"
-+    rc=1
-+fi
-+
-+prlog -n "Writing TEST_STRING to /dev/pmsg0 ... "
-+if [ -e "/dev/pmsg0" ]; then
-+    echo "${TEST_STRING}" > /dev/pmsg0
-+    if [ $? -eq 0 ]; then
-+	prlog "ok"
-+    else
-+	prlog "FAIL"
-+	rc=1
-+    fi
-+else
-+    prlog "FAIL"
-+    rc=1
-+fi
-+
-+exit $rc
+> cheers
+> 
+> 
+--
+Dr. David Alan Gilbert / dgilbert@redhat.com / Manchester, UK
