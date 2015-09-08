@@ -1,48 +1,73 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH v1 0/8] VFS: In-kernel copy system call
-Date: Tue, 8 Sep 2015 12:10:41 -0700
-Message-ID: <CALCETrXxRB-LXVb+=nkwfj0zEjWuXXTctkSAc9Oec0fgyOQ5Yg@mail.gmail.com>
-References: <1441397823-1203-1-git-send-email-Anna.Schumaker@Netapp.com>
- <55EEFCEE.5090000@draigBrady.com> <55EF279B.3020101@Netapp.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: [PATCH v2] Cleanup: membarrier selftest
+Date: Tue,  8 Sep 2015 15:21:59 -0400
+Message-ID: <1441740119-24233-1-git-send-email-mathieu.desnoyers@efficios.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <55EF279B.3020101-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
-Cc: =?UTF-8?Q?P=C3=A1draig_Brady?= <P@draigbrady.com>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux btrfs Developers List <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Zach Brown <zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Sep 8, 2015 at 11:23 AM, Anna Schumaker
-<Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org> wrote:
-> On 09/08/2015 11:21 AM, P=C3=A1draig Brady wrote:
->> I see copy_file_range() is a reflink() on BTRFS?
->> That's a bit surprising, as it avoids the copy completely.
->> cp(1) for example considered doing a BTRFS clone by default,
->> but didn't due to expectations that users actually wanted
->> the data duplicated on disk for resilience reasons,
->> and for performance reasons so that write latencies were
->> restricted to the copy operation, rather than being
->> introduced at usage time as the dest file is CoW'd.
->>
->> If reflink() is a possibility for copy_file_range()
->> then could it be done optionally with a flag?
->
-> The idea is that filesystems get to choose how to handle copies in th=
-e default case.  BTRFS could do a reflink, but NFS could do a server si=
-de copy instead.  I can change the default behavior to only do a data c=
-opy (unless the reflink flag is specified) instead, if that is desirabl=
-e.
->
-> What does everybody think?
+As per Michael Ellerman's comments, we don't need to specify the rule
+in the Makefile, the implicit one will do the same. Also, the
+"__EXPORTED_HEADERS__" include is not needed, because we build the
+test against the installed kernel headers, not the kernel headers.
+Include <unistd.h> rather than the rather specific
+<asm-generic/unistd.h> (the former header is located in a standard
+location and includes the latter).
 
-I think the best you could do is to have a hint asking politely for
-the data to be deep-copied.  After all, some filesystems reserve the
-right to transparently deduplicate.
+My own cleanups: re-use "$(TEST_PROGS)" in the clean target rather than
+spelling the executable twice. Include <syscall.h> rather than
+<sys/syscall.h> (the former header is located in a standard location
+and includes the latter).
 
-Also, on a true COW filesystem (e.g. btrfs sometimes), there may be no
-advantage to deep copying unless you actually want two copies for
-locality reasons.
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+CC: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+CC: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+--
+Changes since v1:
+- Add Changelog.
+---
+ tools/testing/selftests/membarrier/Makefile          | 7 +++----
+ tools/testing/selftests/membarrier/membarrier_test.c | 5 +----
+ 2 files changed, 4 insertions(+), 8 deletions(-)
 
---Andy
+diff --git a/tools/testing/selftests/membarrier/Makefile b/tools/testing/selftests/membarrier/Makefile
+index 877a503..a1a9708 100644
+--- a/tools/testing/selftests/membarrier/Makefile
++++ b/tools/testing/selftests/membarrier/Makefile
+@@ -1,11 +1,10 @@
+ CFLAGS += -g -I../../../../usr/include/
+ 
+-all:
+-	$(CC) $(CFLAGS) membarrier_test.c -o membarrier_test
+-
+ TEST_PROGS := membarrier_test
+ 
++all: $(TEST_PROGS)
++
+ include ../lib.mk
+ 
+ clean:
+-	$(RM) membarrier_test
++	$(RM) $(TEST_PROGS)
+diff --git a/tools/testing/selftests/membarrier/membarrier_test.c b/tools/testing/selftests/membarrier/membarrier_test.c
+index dde3125..535f0fe 100644
+--- a/tools/testing/selftests/membarrier/membarrier_test.c
++++ b/tools/testing/selftests/membarrier/membarrier_test.c
+@@ -1,9 +1,6 @@
+ #define _GNU_SOURCE
+-#define __EXPORTED_HEADERS__
+-
+ #include <linux/membarrier.h>
+-#include <asm-generic/unistd.h>
+-#include <sys/syscall.h>
++#include <syscall.h>
+ #include <stdio.h>
+ #include <errno.h>
+ #include <string.h>
+-- 
+1.9.1
