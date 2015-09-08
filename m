@@ -1,57 +1,107 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH] Cleanup: membarrier selftest
-Date: Tue,  8 Sep 2015 10:05:43 -0400
-Message-ID: <1441721143-11251-1-git-send-email-mathieu.desnoyers@efficios.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Subject: Re: [Qemu-devel] [PATCH 19/23] userfaultfd: activate syscall
+Date: Tue, 8 Sep 2015 15:13:56 +0100
+Message-ID: <20150908141356.GM2246@work-vm>
+References: <1431624680-20153-20-git-send-email-aarcange@redhat.com>
+ <20150811100728.GB4587@in.ibm.com>
+ <20150811134826.GI4520@redhat.com>
+ <20150812052346.GC4587@in.ibm.com>
+ <1441692486.14597.17.camel@ellerman.id.au>
+ <20150908063948.GB678@in.ibm.com>
+ <20150908085946.GC2246@work-vm>
+ <20150908095915.GC678@in.ibm.com>
+ <20150908124652.GK2246@work-vm>
+ <20150908133647.GA17433@in.ibm.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20150908133647.GA17433@in.ibm.com>
+Sender: owner-linux-mm@kvack.org
+To: Bharata B Rao <bharata@linux.vnet.ibm.com>
+Cc: Michael Ellerman <mpe@ellerman.id.au>, Andrea Arcangeli <aarcange@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-api@vger.kernel.org, zhang.zhanghailiang@huawei.com, Pavel Emelyanov <xemul@parallels.com>, Johannes Weiner <hannes@cmpxchg.org>, Hugh Dickins <hughd@google.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, Dave Hansen <dave.hansen@intel.com>, Andres Lagar-Cavilla <andreslc@google.com>, Mel Gorman <mgorman@suse.de>, Paolo Bonzini <pbonzini@redhat.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>, Andy Lutomirski <luto@amacapital.net>, Linus Torvalds <torvalds@linux-foundation.org>Peter Feiner <p>
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-CC: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-CC: Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-CC: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
----
- tools/testing/selftests/membarrier/Makefile          | 7 +++----
- tools/testing/selftests/membarrier/membarrier_test.c | 5 +----
- 2 files changed, 4 insertions(+), 8 deletions(-)
+* Bharata B Rao (bharata@linux.vnet.ibm.com) wrote:
+> On Tue, Sep 08, 2015 at 01:46:52PM +0100, Dr. David Alan Gilbert wrote:
+> > * Bharata B Rao (bharata@linux.vnet.ibm.com) wrote:
+> > > On Tue, Sep 08, 2015 at 09:59:47AM +0100, Dr. David Alan Gilbert wrote:
+> > > > * Bharata B Rao (bharata@linux.vnet.ibm.com) wrote:
+> > > > > In fact I had successfully done postcopy migration of sPAPR guest with
+> > > > > this setup.
+> > > > 
+> > > > Interesting - I'd not got that far myself on power; I was hitting a problem
+> > > > loading htab ( htab_load() bad index 2113929216 (14848+0 entries) in htab stream (htab_shift=25) )
+> > > > 
+> > > > Did you have to make any changes to the qemu code to get that happy?
+> > > 
+> > > I should have mentioned that I tried only QEMU driven migration within
+> > > the same host using wp3-postcopy branch of your tree. I don't see the
+> > > above issue.
+> > > 
+> > > (qemu) info migrate
+> > > capabilities: xbzrle: off rdma-pin-all: off auto-converge: off zero-blocks: off compress: off x-postcopy-ram: on 
+> > > Migration status: completed
+> > > total time: 39432 milliseconds
+> > > downtime: 162 milliseconds
+> > > setup: 14 milliseconds
+> > > transferred ram: 1297209 kbytes
+> > > throughput: 270.72 mbps
+> > > remaining ram: 0 kbytes
+> > > total ram: 4194560 kbytes
+> > > duplicate: 734015 pages
+> > > skipped: 0 pages
+> > > normal: 318469 pages
+> > > normal bytes: 1273876 kbytes
+> > > dirty sync count: 4
+> > > 
+> > > I will try migration between different hosts soon and check.
+> > 
+> > I hit that on the same host; are you sure you've switched into postcopy mode;
+> > i.e. issued a migrate_start_postcopy before the end of migration?
+> 
+> Sorry I was following your discussion with Li in this thread
+> 
+> https://www.marc.info/?l=qemu-devel&m=143035620026744&w=4
+> 
+> and it wasn't obvious to me that anything apart from turning on the
+> x-postcopy-ram capability was required :(
 
-diff --git a/tools/testing/selftests/membarrier/Makefile b/tools/testing/selftests/membarrier/Makefile
-index 877a503..a1a9708 100644
---- a/tools/testing/selftests/membarrier/Makefile
-+++ b/tools/testing/selftests/membarrier/Makefile
-@@ -1,11 +1,10 @@
- CFLAGS += -g -I../../../../usr/include/
- 
--all:
--	$(CC) $(CFLAGS) membarrier_test.c -o membarrier_test
--
- TEST_PROGS := membarrier_test
- 
-+all: $(TEST_PROGS)
-+
- include ../lib.mk
- 
- clean:
--	$(RM) membarrier_test
-+	$(RM) $(TEST_PROGS)
-diff --git a/tools/testing/selftests/membarrier/membarrier_test.c b/tools/testing/selftests/membarrier/membarrier_test.c
-index dde3125..535f0fe 100644
---- a/tools/testing/selftests/membarrier/membarrier_test.c
-+++ b/tools/testing/selftests/membarrier/membarrier_test.c
-@@ -1,9 +1,6 @@
- #define _GNU_SOURCE
--#define __EXPORTED_HEADERS__
--
- #include <linux/membarrier.h>
--#include <asm-generic/unistd.h>
--#include <sys/syscall.h>
-+#include <syscall.h>
- #include <stdio.h>
- #include <errno.h>
- #include <string.h>
--- 
-1.9.1
+OK.
+
+> So I do see the problem now.
+> 
+> At the source
+> -------------
+> Error reading data from KVM HTAB fd: Bad file descriptor
+> Segmentation fault
+> 
+> At the target
+> -------------
+> htab_load() bad index 2113929216 (14336+0 entries) in htab stream (htab_shift=25)
+> qemu-system-ppc64: error while loading state section id 56(spapr/htab)
+> qemu-system-ppc64: postcopy_ram_listen_thread: loadvm failed: -22
+> qemu-system-ppc64: VQ 0 size 0x100 Guest index 0x0 inconsistent with Host index 0x1f: delta 0xffe1
+> qemu-system-ppc64: error while loading state for instance 0x0 of device 'pci@800000020000000:00.0/virtio-net'
+> *** Error in `./ppc64-softmmu/qemu-system-ppc64': corrupted double-linked list: 0x00000100241234a0 ***
+> ======= Backtrace: =========
+> /lib64/power8/libc.so.6Segmentation fault
+
+Good - my current world has got rid of the segfaults/corruption in the cleanup on power - but those
+are only after it stumbled over the htab problem.
+
+I don't know the innards of power/htab, so if you've got any pointers on what upset it
+I'd be happy for some pointers.
+
+(We should probably trim the cc - since I don't think this is userfault related).
+
+Dave
+
+--
+Dr. David Alan Gilbert / dgilbert@redhat.com / Manchester, UK
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
