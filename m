@@ -1,24 +1,25 @@
-From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
 Subject: Re: [Qemu-devel] [PATCH 19/23] userfaultfd: activate syscall
-Date: Tue, 08 Sep 2015 17:14:23 +1000
-Message-ID: <1441696463.4689.1.camel@ellerman.id.au>
+Date: Tue, 8 Sep 2015 09:59:47 +0100
+Message-ID: <20150908085946.GC2246@work-vm>
 References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
-	 <1431624680-20153-20-git-send-email-aarcange@redhat.com>
-	 <20150811100728.GB4587@in.ibm.com> <20150811134826.GI4520@redhat.com>
-	 <20150812052346.GC4587@in.ibm.com>
-	 <1441692486.14597.17.camel@ellerman.id.au>
-	 <20150908063948.GB678@in.ibm.com>
+ <1431624680-20153-20-git-send-email-aarcange@redhat.com>
+ <20150811100728.GB4587@in.ibm.com>
+ <20150811134826.GI4520@redhat.com>
+ <20150812052346.GC4587@in.ibm.com>
+ <1441692486.14597.17.camel@ellerman.id.au>
+ <20150908063948.GB678@in.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150908063948.GB678-xthvdsQ13ZrQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: bharata-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org
-Cc: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zhang.zhanghailiang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Dr. David Alan Gilbert" <dgilbert-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sanidhya Kashyap <sanidhya.gatech-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, "Huangpeng (Peter)" <peter.huangpeng-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Peter Feiner <pfeiner-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <kvm-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150908063948.GB678@in.ibm.com>
+Sender: kvm-owner@vger.kernel.org
+To: Bharata B Rao <bharata@linux.vnet.ibm.com>
+Cc: Michael Ellerman <mpe@ellerman.id.au>, Andrea Arcangeli <aarcange@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-api@vger.kernel.org, zhang.zhanghailiang@huawei.com, Pavel Emelyanov <xemul@parallels.com>, Johannes Weiner <hannes@cmpxchg.org>, Hugh Dickins <hughd@google.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, Dave Hansen <dave.hansen@intel.com>, Andres Lagar-Cavilla <andreslc@google.com>, Mel Gorman <mgorman@suse.de>, Paolo Bonzini <pbonzini@redhat.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>, Andy Lutomirski <luto@amacapital.net>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Feiner <pfeiner@google.com>, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2015-09-08 at 12:09 +0530, Bharata B Rao wrote:
+* Bharata B Rao (bharata@linux.vnet.ibm.com) wrote:
 > On Tue, Sep 08, 2015 at 04:08:06PM +1000, Michael Ellerman wrote:
 > > On Wed, 2015-08-12 at 10:53 +0530, Bharata B Rao wrote:
 > > > On Tue, Aug 11, 2015 at 03:48:26PM +0200, Andrea Arcangeli wrote:
@@ -92,7 +93,28 @@ On Tue, 2015-09-08 at 12:09 +0530, Bharata B Rao wrote:
 > In fact I had successfully done postcopy migration of sPAPR guest with
 > this setup.
 
-OK, do you mind testing mainline with the same setup to see if the selftest
-passes.
+Interesting - I'd not got that far myself on power; I was hitting a problem
+loading htab ( htab_load() bad index 2113929216 (14848+0 entries) in htab stream (htab_shift=25) )
 
-cheers
+Did you have to make any changes to the qemu code to get that happy?
+
+Dave
+
+> > 
+> > Mine is:
+> > 
+> > $ uname -a
+> > Linux lebuntu 4.2.0-09705-g3a166acc1432 #2 SMP Tue Sep 8 15:18:00 AEST 2015 ppc64le ppc64le ppc64le GNU/Linux
+> > 
+> > Which is 7d9071a09502 plus a couple of powerpc patches.
+> > 
+> > $ zgrep USERFAULTFD /proc/config.gz
+> > CONFIG_USERFAULTFD=y
+> > 
+> > $ sudo ./userfaultfd 128 32
+> > nr_pages: 2048, nr_pages_per_cpu: 128
+> > bounces: 31, mode: rnd racing ver poll, error mutex 2 2
+> > error mutex 2 10
+> 
+--
+Dr. David Alan Gilbert / dgilbert@redhat.com / Manchester, UK
