@@ -1,43 +1,26 @@
-From: Michael Ellerman <mpe@ellerman.id.au>
-Subject: Re: [Qemu-devel] [PATCH 19/23] userfaultfd: activate syscall
-Date: Tue, 08 Sep 2015 20:40:21 +1000
-Message-ID: <1441708821.13127.0.camel@ellerman.id.au>
-References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
-	 <1431624680-20153-20-git-send-email-aarcange@redhat.com>
-	 <20150811100728.GB4587@in.ibm.com> <20150811134826.GI4520@redhat.com>
-	 <20150812052346.GC4587@in.ibm.com>
-	 <1441692486.14597.17.camel@ellerman.id.au>
-	 <20150908063948.GB678@in.ibm.com> <1441696463.4689.1.camel@ellerman.id.au>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: netlink.h:NLMSG_OK change to avoid GCC warnings
+Date: Tue, 8 Sep 2015 12:44:20 +0200
+Message-ID: <CAKgNAkjbQ8L-UTaGe1BF-pM+au+666qrFNe3RiGo8AzVao0Bvg@mail.gmail.com>
+References: <alpine.LRH.2.02.1509080046520.4754@redclaw.mimosa.com>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1441696463.4689.1.camel@ellerman.id.au>
-Sender: linux-kernel-owner@vger.kernel.org
-To: bharata@linux.vnet.ibm.com
-Cc: kvm@vger.kernel.org, qemu-devel@nongnu.org, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, linux-mm@kvack.org, Andrea Arcangeli <aarcange@redhat.com>, zhang.zhanghailiang@huawei.com, Pavel Emelyanov <xemul@parallels.com>, Hugh Dickins <hughd@google.com>, Mel Gorman <mgorman@suse.de>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Andres Lagar-Cavilla <andreslc@google.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Dave Hansen <dave.hansen@intel.com>, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-kernel@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Johannes Weiner <hannes@cmpxchg.org>, Paolo Bonzini <pbonzini@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Feiner <pfeiner@google.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <alpine.LRH.2.02.1509080046520.4754-zb/h1I55lmemYXyjjU2hqtBPR1lH4CV8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "D. Hugh Redelmeier" <hugh-pmF8o41NoarQT0dZR+AlfA@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2015-09-08 at 17:14 +1000, Michael Ellerman wrote:
-> On Tue, 2015-09-08 at 12:09 +0530, Bharata B Rao wrote:
-> > On Tue, Sep 08, 2015 at 04:08:06PM +1000, Michael Ellerman wrote:
-> > > Hmm, not for me. See below.
-> > > 
-> > > What setup were you testing on Bharata?
-> > 
-> > I was on commit a94572f5799dd of userfault21 branch in Andrea's tree
-> > git://git.kernel.org/pub/scm/linux/kernel/git/andrea/aa.git
-> > 
-> > #uname -a
-> > Linux 4.1.0-rc8+ #1 SMP Tue Aug 11 11:33:50 IST 2015 ppc64le ppc64le ppc64le GNU/Linux
-> > 
-> > In fact I had successfully done postcopy migration of sPAPR guest with
-> > this setup.
-> 
-> OK, do you mind testing mainline with the same setup to see if the selftest
-> passes.
+Hugh,
 
-Ah, I just tried it on big endian and it works. So it seems to not work on
-little endian for some reason, /probably/ a test case bug?
+On 8 September 2015 at 07:30, D. Hugh Redelmeier <hugh-pmF8o41NoarQT0dZR+AlfA@public.gmane.org> wrote:
+> [If this is the wrong way or place to submit this patch, please set me
+> straight.]
 
-cheers
+Not really the right list for this, Try netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+
+Cheers,
+
+Michael
