@@ -1,7 +1,7 @@
 From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
 Subject: Re: [Qemu-devel] [PATCH 19/23] userfaultfd: activate syscall
-Date: Tue, 8 Sep 2015 13:28:26 +0100
-Message-ID: <20150908122826.GJ2246@work-vm>
+Date: Tue, 8 Sep 2015 13:46:52 +0100
+Message-ID: <20150908124652.GK2246@work-vm>
 References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
  <1431624680-20153-20-git-send-email-aarcange@redhat.com>
  <20150811100728.GB4587@in.ibm.com>
@@ -9,48 +9,62 @@ References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
  <20150812052346.GC4587@in.ibm.com>
  <1441692486.14597.17.camel@ellerman.id.au>
  <20150908063948.GB678@in.ibm.com>
- <1441696463.4689.1.camel@ellerman.id.au>
- <1441708821.13127.0.camel@ellerman.id.au>
+ <20150908085946.GC2246@work-vm>
+ <20150908095915.GC678@in.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <kvm-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1441708821.13127.0.camel@ellerman.id.au>
-Sender: kvm-owner@vger.kernel.org
-To: Michael Ellerman <mpe@ellerman.id.au>
-Cc: bharata@linux.vnet.ibm.com, kvm@vger.kernel.org, qemu-devel@nongnu.org, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, linux-mm@kvack.org, Andrea Arcangeli <aarcange@redhat.com>, zhang.zhanghailiang@huawei.com, Pavel Emelyanov <xemul@parallels.com>, Hugh Dickins <hughd@google.com>, Mel Gorman <mgorman@suse.de>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>, Andres Lagar-Cavilla <andreslc@google.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Dave Hansen <dave.hansen@intel.com>, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-kernel@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Johannes Weiner <hannes@cmpxchg.org>, Paolo Bonzini <pbonzini@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Feiner <pfeiner@google.com>
+In-Reply-To: <20150908095915.GC678@in.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Bharata B Rao <bharata@linux.vnet.ibm.com>
+Cc: Michael Ellerman <mpe@ellerman.id.au>, Andrea Arcangeli <aarcange@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-api@vger.kernel.org, zhang.zhanghailiang@huawei.com, Pavel Emelyanov <xemul@parallels.com>, Johannes Weiner <hannes@cmpxchg.org>, Hugh Dickins <hughd@google.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, Dave Hansen <dave.hansen@intel.com>, Andres Lagar-Cavilla <andreslc@google.com>, Mel Gorman <mgorman@suse.de>, Paolo Bonzini <pbonzini@redhat.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>, Andy Lutomirski <luto@amacapital.net>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Feiner <pfeiner@google.com>, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
-* Michael Ellerman (mpe@ellerman.id.au) wrote:
-> On Tue, 2015-09-08 at 17:14 +1000, Michael Ellerman wrote:
-> > On Tue, 2015-09-08 at 12:09 +0530, Bharata B Rao wrote:
-> > > On Tue, Sep 08, 2015 at 04:08:06PM +1000, Michael Ellerman wrote:
-> > > > Hmm, not for me. See below.
-> > > > 
-> > > > What setup were you testing on Bharata?
-> > > 
-> > > I was on commit a94572f5799dd of userfault21 branch in Andrea's tree
-> > > git://git.kernel.org/pub/scm/linux/kernel/git/andrea/aa.git
-> > > 
-> > > #uname -a
-> > > Linux 4.1.0-rc8+ #1 SMP Tue Aug 11 11:33:50 IST 2015 ppc64le ppc64le ppc64le GNU/Linux
-> > > 
+* Bharata B Rao (bharata@linux.vnet.ibm.com) wrote:
+> On Tue, Sep 08, 2015 at 09:59:47AM +0100, Dr. David Alan Gilbert wrote:
+> > * Bharata B Rao (bharata@linux.vnet.ibm.com) wrote:
 > > > In fact I had successfully done postcopy migration of sPAPR guest with
 > > > this setup.
 > > 
-> > OK, do you mind testing mainline with the same setup to see if the selftest
-> > passes.
+> > Interesting - I'd not got that far myself on power; I was hitting a problem
+> > loading htab ( htab_load() bad index 2113929216 (14848+0 entries) in htab stream (htab_shift=25) )
+> > 
+> > Did you have to make any changes to the qemu code to get that happy?
 > 
-> Ah, I just tried it on big endian and it works. So it seems to not work on
-> little endian for some reason, /probably/ a test case bug?
+> I should have mentioned that I tried only QEMU driven migration within
+> the same host using wp3-postcopy branch of your tree. I don't see the
+> above issue.
+> 
+> (qemu) info migrate
+> capabilities: xbzrle: off rdma-pin-all: off auto-converge: off zero-blocks: off compress: off x-postcopy-ram: on 
+> Migration status: completed
+> total time: 39432 milliseconds
+> downtime: 162 milliseconds
+> setup: 14 milliseconds
+> transferred ram: 1297209 kbytes
+> throughput: 270.72 mbps
+> remaining ram: 0 kbytes
+> total ram: 4194560 kbytes
+> duplicate: 734015 pages
+> skipped: 0 pages
+> normal: 318469 pages
+> normal bytes: 1273876 kbytes
+> dirty sync count: 4
+> 
+> I will try migration between different hosts soon and check.
 
-Hmm; I think we're missing a test-case fix that Andrea made me for a bug I hit on Power
-I hit a couple of weeks back.  I think that would have been on le.
+I hit that on the same host; are you sure you've switched into postcopy mode;
+i.e. issued a migrate_start_postcopy before the end of migration?
+
+(My current world I have working on x86-64 and I've also tested reasonably well
+on aarch64, and get to that htab problem on Power).
 
 Dave
 
-> cheers
 > 
+> Regards,
+> Bharata.
 > 
 --
 Dr. David Alan Gilbert / dgilbert@redhat.com / Manchester, UK
