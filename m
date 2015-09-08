@@ -1,55 +1,74 @@
-From: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v1 0/8] VFS: In-kernel copy system call
-Date: Tue, 8 Sep 2015 16:49:15 -0400
-Message-ID: <55EF49CB.3030405@Netapp.com>
-References: <1441397823-1203-1-git-send-email-Anna.Schumaker@Netapp.com>
- <4B41043F-5D85-42D6-8F20-2DCC45930EF4@dilger.ca>
- <20150905083342.GG22011@ZenIV.linux.org.uk> <55EEF9D3.6050505@Netapp.com>
- <20150908204517.GC30681@birch.djwong.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150908204517.GC30681-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: [PATCH v3] Cleanup: membarrier selftest
+Date: Tue,  8 Sep 2015 16:58:10 -0400
+Message-ID: <1441745890-25852-1-git-send-email-mathieu.desnoyers@efficios.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 09/08/2015 04:45 PM, Darrick J. Wong wrote:
-> On Tue, Sep 08, 2015 at 11:08:03AM -0400, Anna Schumaker wrote:
->> On 09/05/2015 04:33 AM, Al Viro wrote:
->>> On Fri, Sep 04, 2015 at 04:25:27PM -0600, Andreas Dilger wrote:
->>>
->>>> This is a bit of a surprising result, since in my testing in the
->>>> past, copy_{to/from}_user() is a major consumer of CPU time (50%
->>>> of a CPU core at 1GB/s).  What backing filesystem did you test on?
->>>
->>> While we are at it, was cp(1) using read(2)/write(2) loop or was it using
->>> something else (sendfile(2), for example)?
->>
->> cp uses a read / write loop, and has some heuristics for guessing an optimum buffer size.
-> 
-> ..but afaict cp doesn't fsync at the end, which means it's possible that
-> the destination file's blocks are still delalloc and nothing's been flushed
-> to disk yet.  What happens if you time (cp /tmp/a /tmp/b ; sync) ?
+We don't need to specify an explicit rule in the Makefile, the implicit
+one will do the same. The "__EXPORTED_HEADERS__" define is not needed,
+because we build the test against the installed kernel headers, not the
+in-tree kernel headers. Re-use "$(TEST_PROGS)" in the clean target
+rather than spelling the executable name twice. Include <unistd.h>
+rather than the rather specific <asm-generic/unistd.h>. Include
+<syscall.h> rather than <sys/syscall.h>. In both cases, the former
+header is located in a standard location and includes the latter.
 
-That's already how I was using cp :).  The example program in my man page also doesn't fsync at the end, so the extra sync at the end is needed for both.
-
-Anna
-
-> 
-> 2048M / 1.667s = ~1200MB/s.
-> 
-> --D
-> 
->>
->> Anna
->>
->>>
->>
-
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+CC: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+CC: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Changes since v2:
+- Refine Changelog, removing references to comments, taking care
+  of comments from Shuah Khan.
+Changes since v1:
+- Add Changelog.
+Changes since RFC:
+- Take care of comments from Michael Ellerman.
+---
+ tools/testing/selftests/membarrier/Makefile          | 7 +++----
+ tools/testing/selftests/membarrier/membarrier_test.c | 5 +----
+ 2 files changed, 4 insertions(+), 8 deletions(-)
+
+diff --git a/tools/testing/selftests/membarrier/Makefile b/tools/testing/selftests/membarrier/Makefile
+index 877a503..a1a9708 100644
+--- a/tools/testing/selftests/membarrier/Makefile
++++ b/tools/testing/selftests/membarrier/Makefile
+@@ -1,11 +1,10 @@
+ CFLAGS += -g -I../../../../usr/include/
+ 
+-all:
+-	$(CC) $(CFLAGS) membarrier_test.c -o membarrier_test
+-
+ TEST_PROGS := membarrier_test
+ 
++all: $(TEST_PROGS)
++
+ include ../lib.mk
+ 
+ clean:
+-	$(RM) membarrier_test
++	$(RM) $(TEST_PROGS)
+diff --git a/tools/testing/selftests/membarrier/membarrier_test.c b/tools/testing/selftests/membarrier/membarrier_test.c
+index dde3125..535f0fe 100644
+--- a/tools/testing/selftests/membarrier/membarrier_test.c
++++ b/tools/testing/selftests/membarrier/membarrier_test.c
+@@ -1,9 +1,6 @@
+ #define _GNU_SOURCE
+-#define __EXPORTED_HEADERS__
+-
+ #include <linux/membarrier.h>
+-#include <asm-generic/unistd.h>
+-#include <sys/syscall.h>
++#include <syscall.h>
+ #include <stdio.h>
+ #include <errno.h>
+ #include <string.h>
+-- 
+1.9.1
