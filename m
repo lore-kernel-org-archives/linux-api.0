@@ -1,141 +1,152 @@
-From: Eric B Munson <emunson@akamai.com>
-Subject: [PATCH v9 6/6] mips: Add entry for new mlock2 syscall
-Date: Tue,  8 Sep 2015 09:59:02 -0400
-Message-ID: <1441720742-7803-7-git-send-email-emunson@akamai.com>
-References: <1441720742-7803-1-git-send-email-emunson@akamai.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1441720742-7803-1-git-send-email-emunson@akamai.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Eric B Munson <emunson@akamai.com>, Ralf Baechle <ralf@linux-mips.org>, linux-mips@linux-mips.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [PATCH 2/3] selftests: add membarrier syscall test
+Date: Tue, 8 Sep 2015 14:02:39 +0000 (UTC)
+Message-ID: <739224239.39653.1441720959779.JavaMail.zimbra@efficios.com>
+References: <1436561912-24365-1-git-send-email-mathieu.desnoyers@efficios.com> <1071313434.33305.1441127478843.JavaMail.zimbra@efficios.com> <CALCETrWpSErLUES1Wgs5+Ov8F0c-ohUwkSHFMRMZPhx-E4o2cQ@mail.gmail.com> <1441272839.26379.2.camel@ellerman.id.au> <1734164155.35899.1441295233847.JavaMail.zimbra@efficios.com> <1441337809.13721.1.camel@ellerman.id.au> <2098747118.39146.1441641706942.JavaMail.zimbra@efficios.com> <1441685994.14597.7.camel@ellerman.id.au>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1441685994.14597.7.camel-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jonathan Rajotte <jonathan.rajotte-julien-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-A previous commit introduced the new mlock2 syscall, add entries for the
-MIPS architecture.
+----- On Sep 8, 2015, at 12:19 AM, Michael Ellerman mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org wrote:
 
-Signed-off-by: Eric B Munson <emunson@akamai.com>
-Acked-by: Ralf Baechle <ralf@linux-mips.org>
-Cc: Ralf Baechle <ralf@linux-mips.org>
-Cc: linux-mips@linux-mips.org
-Cc: linux-api@vger.kernel.org
-Cc: linux-arch@vger.kernel.org
-Cc: linux-mm@kvack.org
-Cc: linux-kernel@vger.kernel.org
----
- arch/mips/include/uapi/asm/unistd.h | 15 +++++++++------
- arch/mips/kernel/scall32-o32.S      |  1 +
- arch/mips/kernel/scall64-64.S       |  1 +
- arch/mips/kernel/scall64-n32.S      |  1 +
- arch/mips/kernel/scall64-o32.S      |  1 +
- 5 files changed, 13 insertions(+), 6 deletions(-)
+> On Mon, 2015-09-07 at 16:01 +0000, Mathieu Desnoyers wrote:
+>> ----- On Sep 3, 2015, at 11:36 PM, Michael Ellerman mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org wrote:
+>> > On Thu, 2015-09-03 at 15:47 +0000, Mathieu Desnoyers wrote:
+>> >> 
+>> >> My personal experience is that make headers_install does not necessarily play
+>> >> well with the distribution header file hierarchy, which requires some tweaks
+>> >> to be done by the users (e.g. asm vs x86_64-linux-gnu).
+>> > 
+>> > OK, I've never had issues. What exactly are you doing and how is it going wrong?
+>> 
+>> After some investigation, I noticed the following:
+>> 
+>> 1) I first ran make headers_install as root, which installed the
+>> headers within my build tree. I later tried it again as user, and
+>> it failed due to permission issues (my bad). This is where I tried
+>> to install it into my system rather than under my build directory,
+>> which caused a mess.
+> 
+> Yeah OK that's a good point about root.
+> 
+> I tend to build as a regular user and then copy the installed tests to another
+> machine where I run them as root.
+> 
+>> 2) Since make kselftest should be run as root (according to make
+>> help),
+> 
+> Well some of the tests only work when run as root. IMHO we should support
+> running as many tests as possible as non-root, but some of them obviously
+> require root.
+> 
+> So you can run them as non-root, but to get maximum coverage you need to run
+> them as root.
 
-diff --git a/arch/mips/include/uapi/asm/unistd.h b/arch/mips/include/uapi/asm/unistd.h
-index c03088f..d0bdfaa 100644
---- a/arch/mips/include/uapi/asm/unistd.h
-+++ b/arch/mips/include/uapi/asm/unistd.h
-@@ -377,16 +377,17 @@
- #define __NR_memfd_create		(__NR_Linux + 354)
- #define __NR_bpf			(__NR_Linux + 355)
- #define __NR_execveat			(__NR_Linux + 356)
-+#define __NR_mlock2			(__NR_Linux + 357)
- 
- /*
-  * Offset of the last Linux o32 flavoured syscall
-  */
--#define __NR_Linux_syscalls		356
-+#define __NR_Linux_syscalls		357
- 
- #endif /* _MIPS_SIM == _MIPS_SIM_ABI32 */
- 
- #define __NR_O32_Linux			4000
--#define __NR_O32_Linux_syscalls		356
-+#define __NR_O32_Linux_syscalls		357
- 
- #if _MIPS_SIM == _MIPS_SIM_ABI64
- 
-@@ -711,16 +712,17 @@
- #define __NR_memfd_create		(__NR_Linux + 314)
- #define __NR_bpf			(__NR_Linux + 315)
- #define __NR_execveat			(__NR_Linux + 316)
-+#define __NR_mlock2			(__NR_Linux + 317)
- 
- /*
-  * Offset of the last Linux 64-bit flavoured syscall
-  */
--#define __NR_Linux_syscalls		316
-+#define __NR_Linux_syscalls		317
- 
- #endif /* _MIPS_SIM == _MIPS_SIM_ABI64 */
- 
- #define __NR_64_Linux			5000
--#define __NR_64_Linux_syscalls		316
-+#define __NR_64_Linux_syscalls		317
- 
- #if _MIPS_SIM == _MIPS_SIM_NABI32
- 
-@@ -1049,15 +1051,16 @@
- #define __NR_memfd_create		(__NR_Linux + 318)
- #define __NR_bpf			(__NR_Linux + 319)
- #define __NR_execveat			(__NR_Linux + 320)
-+#define __NR_mlock2			(__NR_Linux + 321)
- 
- /*
-  * Offset of the last N32 flavoured syscall
-  */
--#define __NR_Linux_syscalls		320
-+#define __NR_Linux_syscalls		321
- 
- #endif /* _MIPS_SIM == _MIPS_SIM_NABI32 */
- 
- #define __NR_N32_Linux			6000
--#define __NR_N32_Linux_syscalls		320
-+#define __NR_N32_Linux_syscalls		321
- 
- #endif /* _UAPI_ASM_UNISTD_H */
-diff --git a/arch/mips/kernel/scall32-o32.S b/arch/mips/kernel/scall32-o32.S
-index 4cc1350..b0b377a 100644
---- a/arch/mips/kernel/scall32-o32.S
-+++ b/arch/mips/kernel/scall32-o32.S
-@@ -599,3 +599,4 @@ EXPORT(sys_call_table)
- 	PTR	sys_memfd_create
- 	PTR	sys_bpf				/* 4355 */
- 	PTR	sys_execveat
-+	PTR	sys_mlock2
-diff --git a/arch/mips/kernel/scall64-64.S b/arch/mips/kernel/scall64-64.S
-index a6f6b76..f12eb03 100644
---- a/arch/mips/kernel/scall64-64.S
-+++ b/arch/mips/kernel/scall64-64.S
-@@ -436,4 +436,5 @@ EXPORT(sys_call_table)
- 	PTR	sys_memfd_create
- 	PTR	sys_bpf				/* 5315 */
- 	PTR	sys_execveat
-+	PTR	sys_mlock2
- 	.size	sys_call_table,.-sys_call_table
-diff --git a/arch/mips/kernel/scall64-n32.S b/arch/mips/kernel/scall64-n32.S
-index 4b20106..ecdd65a 100644
---- a/arch/mips/kernel/scall64-n32.S
-+++ b/arch/mips/kernel/scall64-n32.S
-@@ -429,4 +429,5 @@ EXPORT(sysn32_call_table)
- 	PTR	sys_memfd_create
- 	PTR	sys_bpf
- 	PTR	compat_sys_execveat		/* 6320 */
-+	PTR	sys_mlock2
- 	.size	sysn32_call_table,.-sysn32_call_table
-diff --git a/arch/mips/kernel/scall64-o32.S b/arch/mips/kernel/scall64-o32.S
-index f543ff4..7a8b2df 100644
---- a/arch/mips/kernel/scall64-o32.S
-+++ b/arch/mips/kernel/scall64-o32.S
-@@ -584,4 +584,5 @@ EXPORT(sys32_call_table)
- 	PTR	sys_memfd_create
- 	PTR	sys_bpf				/* 4355 */
- 	PTR	compat_sys_execveat
-+	PTR	sys_mlock2
- 	.size	sys32_call_table,.-sys32_call_table
+Works for me. We do something similar in lttng-tools. We use "tap"
+(https://testanything.org/) for tests, and explicitly skip all tests that
+require root if we detect that we don't run as root. I notice that many
+selftests format their own output. The nice part about standardizing on
+something like tap is that it simplifies automated parsing of the test
+output.
+
+> 
+>> this means that all the output files generated by the build
+>> are owned by root. It leads to permissions issues when trying to
+>> rebuild the tests as user afterward. Perhaps we could introduce a
+>> distinction between make kselftest_build and make kselftest_run ?
+>> The former could be executed as user, and the latter as root.
+> 
+> Right. Personally I don't use the kselftest target at all, I just cd down to
+> tools/testing/selftests and run make there.
+> 
+> If it was up to me the kselftest target would go away, because it's only caused
+> us trouble so far.
+> 
+> But given it's there we should try to make it work as well as possible. So yeah
+> splitting it into build and run would make sense, that way you could do:
+> 
+> $ make headers_install
+> $ make kselftest_build
+> $ sudo make kselftest_run
+> 
+> And that would hopefully do the right thing.
+> 
+> Would that improve the workflow for you?
+
+Yes. Although I'm wondering why the kernel should be different from many
+other projects out there. Why not simply:
+
+- Add a kselftest_build dependency to the kernel build, so tests are always built,
+  and warnings that arise from modifying anything related to installed headers
+  will trigger for everyone,
+- Add a dependency on headers_install into the obj tree to kselftest_build,
+- Optionally add a "make check" alias to "make kselftest".
+
+This way, running the tests becomes as simple as:
+
+make
+sudo make check
+
+Documentation is key here: make sure to update Documentation/kselftest.txt to
+document where the self-tests are looking for their system headers (not system,
+but within usr/ in the obj tree). This is the missing documentation bit that
+confused me the most.
+
+> 
+>> > So that seems to be working for me. Are you doing some different work flow, or
+>> > am I just missing something?
+>> 
+>> When doing make headers_install, it indeed installs
+>> membarrier.h where we expect it under the build output
+>> dir:
+>> 
+>> $ ls usr/include/linux/membarrier.h
+>> usr/include/linux/membarrier.h
+>> 
+>> However, if I issue
+>> 
+>> $ make -C tools/testing/selftests TARGETS=membarrier
+>> make: Entering directory `/home/efficios/git/linux-next/tools/testing/selftests'
+>> for TARGET in membarrier; do \
+>> 		make -C $TARGET; \
+>> 	done;
+>> make[1]: Entering directory
+>> `/home/efficios/git/linux-next/tools/testing/selftests/membarrier'
+>> gcc     membarrier_test.c   -o membarrier_test
+>> membarrier_test.c:2:30: fatal error: linux/membarrier.h: No such file or
+>> directory
+>>  #include <linux/membarrier.h>
+>> 
+>> This is after applying the modifications you requested
+>> (see patch attached). Perhaps I did something wrong ?
+> 
+> Yeah sorry, you still need the -I line:
+> 
+> CFLAGS += -I../../../../usr/include/
+> 
+> 
+> We /should/ add that to lib.mk so it's inherited by everyone, but we haven't
+> yet.
+
+Yep, this would be a good start.
+
+> 
+> So I think if you put that back the instructions I gave you will work?
+
+Yes, it does, thanks!
+
+Mathieu
+
+> 
+> cheers
+
 -- 
-1.9.1
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
