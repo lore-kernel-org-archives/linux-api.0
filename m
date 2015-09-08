@@ -1,31 +1,115 @@
-From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC PATCH 10/14] ring_buffer: Fix more races when terminating
-	the producer in the benchmark
-Date: Mon, 7 Sep 2015 19:49:14 +0200
-Message-ID: <20150907174914.GA2148@redhat.com>
-References: <1438094371-8326-1-git-send-email-pmladek@suse.com> <1438094371-8326-11-git-send-email-pmladek@suse.com> <20150803143323.426ea2fc@gandalf.local.home> <20150904093856.GI22739@pathway.suse.cz>
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: [PATCH 2/3] selftests: add membarrier syscall test
+Date: Tue, 08 Sep 2015 14:19:54 +1000
+Message-ID: <1441685994.14597.7.camel@ellerman.id.au>
+References: <1436561912-24365-1-git-send-email-mathieu.desnoyers@efficios.com>
+	 <1436561912-24365-3-git-send-email-mathieu.desnoyers@efficios.com>
+	 <1441004040.5735.7.camel@ellerman.id.au>
+	 <1071313434.33305.1441127478843.JavaMail.zimbra@efficios.com>
+	 <CALCETrWpSErLUES1Wgs5+Ov8F0c-ohUwkSHFMRMZPhx-E4o2cQ@mail.gmail.com>
+	 <1441272839.26379.2.camel@ellerman.id.au>
+	 <1734164155.35899.1441295233847.JavaMail.zimbra@efficios.com>
+	 <1441337809.13721.1.camel@ellerman.id.au>
+	 <2098747118.39146.1441641706942.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150904093856.GI22739-KsEp0d+Q8qECVLCxKZUutA@public.gmane.org>
+In-Reply-To: <2098747118.39146.1441641706942.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Sorry, I didn't read these emails, and I never looked at this code...
-Can't understand what are you talking about but a minor nit anyway ;)
+On Mon, 2015-09-07 at 16:01 +0000, Mathieu Desnoyers wrote:
+> ----- On Sep 3, 2015, at 11:36 PM, Michael Ellerman mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org wrote:
+> > On Thu, 2015-09-03 at 15:47 +0000, Mathieu Desnoyers wrote:
+> >> 
+> >> My personal experience is that make headers_install does not necessarily play
+> >> well with the distribution header file hierarchy, which requires some tweaks
+> >> to be done by the users (e.g. asm vs x86_64-linux-gnu).
+> > 
+> > OK, I've never had issues. What exactly are you doing and how is it going wrong?
+> 
+> After some investigation, I noticed the following:
+> 
+> 1) I first ran make headers_install as root, which installed the
+> headers within my build tree. I later tried it again as user, and
+> it failed due to permission issues (my bad). This is where I tried
+> to install it into my system rather than under my build directory,
+> which caused a mess.
 
-On 09/04, Petr Mladek wrote:
->
-> +	__set_current_state(TASK_RUNNING);
->  	if (!kthread_should_stop())
->  		wait_to_die();
+Yeah OK that's a good point about root.
 
-I bet this wait_to_die() can die, consumer/producer can simply exit.
+I tend to build as a regular user and then copy the installed tests to another
+machine where I run them as root.
 
-Just you need get_task_struct() after kthread_create(), and put_task_struct()
-after kthread_stop().
+> 2) Since make kselftest should be run as root (according to make
+> help), 
 
-Oleg.
+Well some of the tests only work when run as root. IMHO we should support
+running as many tests as possible as non-root, but some of them obviously
+require root.
+
+So you can run them as non-root, but to get maximum coverage you need to run
+them as root.
+
+> this means that all the output files generated by the build
+> are owned by root. It leads to permissions issues when trying to
+> rebuild the tests as user afterward. Perhaps we could introduce a
+> distinction between make kselftest_build and make kselftest_run ?
+> The former could be executed as user, and the latter as root.
+
+Right. Personally I don't use the kselftest target at all, I just cd down to
+tools/testing/selftests and run make there.
+
+If it was up to me the kselftest target would go away, because it's only caused
+us trouble so far.
+
+But given it's there we should try to make it work as well as possible. So yeah
+splitting it into build and run would make sense, that way you could do:
+
+$ make headers_install
+$ make kselftest_build
+$ sudo make kselftest_run
+
+And that would hopefully do the right thing.
+
+Would that improve the workflow for you?
+
+> > So that seems to be working for me. Are you doing some different work flow, or
+> > am I just missing something?
+> 
+> When doing make headers_install, it indeed installs
+> membarrier.h where we expect it under the build output
+> dir:
+> 
+> $ ls usr/include/linux/membarrier.h 
+> usr/include/linux/membarrier.h
+> 
+> However, if I issue 
+> 
+> $ make -C tools/testing/selftests TARGETS=membarrier
+> make: Entering directory `/home/efficios/git/linux-next/tools/testing/selftests'
+> for TARGET in membarrier; do \
+> 		make -C $TARGET; \
+> 	done;
+> make[1]: Entering directory `/home/efficios/git/linux-next/tools/testing/selftests/membarrier'
+> gcc     membarrier_test.c   -o membarrier_test
+> membarrier_test.c:2:30: fatal error: linux/membarrier.h: No such file or directory
+>  #include <linux/membarrier.h>
+> 
+> This is after applying the modifications you requested
+> (see patch attached). Perhaps I did something wrong ?
+
+Yeah sorry, you still need the -I line:
+
+CFLAGS += -I../../../../usr/include/
+
+
+We /should/ add that to lib.mk so it's inherited by everyone, but we haven't
+yet.
+
+So I think if you put that back the instructions I gave you will work?
+
+cheers
