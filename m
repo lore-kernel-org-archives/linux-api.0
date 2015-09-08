@@ -1,107 +1,186 @@
-From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
-Subject: Re: [Qemu-devel] [PATCH 19/23] userfaultfd: activate syscall
-Date: Tue, 8 Sep 2015 15:13:56 +0100
-Message-ID: <20150908141356.GM2246@work-vm>
-References: <1431624680-20153-20-git-send-email-aarcange@redhat.com>
- <20150811100728.GB4587@in.ibm.com>
- <20150811134826.GI4520@redhat.com>
- <20150812052346.GC4587@in.ibm.com>
- <1441692486.14597.17.camel@ellerman.id.au>
- <20150908063948.GB678@in.ibm.com>
- <20150908085946.GC2246@work-vm>
- <20150908095915.GC678@in.ibm.com>
- <20150908124652.GK2246@work-vm>
- <20150908133647.GA17433@in.ibm.com>
+From: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v1 8/8] vfs: Fall back on splice if no copy function
+ defined
+Date: Tue, 8 Sep 2015 10:57:13 -0400
+Message-ID: <55EEF749.6050605@Netapp.com>
+References: <1441397823-1203-1-git-send-email-Anna.Schumaker@Netapp.com>
+ <1441397823-1203-9-git-send-email-Anna.Schumaker@Netapp.com>
+ <20150904210813.GA30681@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150908133647.GA17433@in.ibm.com>
-Sender: owner-linux-mm@kvack.org
-To: Bharata B Rao <bharata@linux.vnet.ibm.com>
-Cc: Michael Ellerman <mpe@ellerman.id.au>, Andrea Arcangeli <aarcange@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-api@vger.kernel.org, zhang.zhanghailiang@huawei.com, Pavel Emelyanov <xemul@parallels.com>, Johannes Weiner <hannes@cmpxchg.org>, Hugh Dickins <hughd@google.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, Dave Hansen <dave.hansen@intel.com>, Andres Lagar-Cavilla <andreslc@google.com>, Mel Gorman <mgorman@suse.de>, Paolo Bonzini <pbonzini@redhat.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>, Andy Lutomirski <luto@amacapital.net>, Linus Torvalds <torvalds@linux-foundation.org>Peter Feiner <p>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150904210813.GA30681-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-* Bharata B Rao (bharata@linux.vnet.ibm.com) wrote:
-> On Tue, Sep 08, 2015 at 01:46:52PM +0100, Dr. David Alan Gilbert wrote:
-> > * Bharata B Rao (bharata@linux.vnet.ibm.com) wrote:
-> > > On Tue, Sep 08, 2015 at 09:59:47AM +0100, Dr. David Alan Gilbert wrote:
-> > > > * Bharata B Rao (bharata@linux.vnet.ibm.com) wrote:
-> > > > > In fact I had successfully done postcopy migration of sPAPR guest with
-> > > > > this setup.
-> > > > 
-> > > > Interesting - I'd not got that far myself on power; I was hitting a problem
-> > > > loading htab ( htab_load() bad index 2113929216 (14848+0 entries) in htab stream (htab_shift=25) )
-> > > > 
-> > > > Did you have to make any changes to the qemu code to get that happy?
-> > > 
-> > > I should have mentioned that I tried only QEMU driven migration within
-> > > the same host using wp3-postcopy branch of your tree. I don't see the
-> > > above issue.
-> > > 
-> > > (qemu) info migrate
-> > > capabilities: xbzrle: off rdma-pin-all: off auto-converge: off zero-blocks: off compress: off x-postcopy-ram: on 
-> > > Migration status: completed
-> > > total time: 39432 milliseconds
-> > > downtime: 162 milliseconds
-> > > setup: 14 milliseconds
-> > > transferred ram: 1297209 kbytes
-> > > throughput: 270.72 mbps
-> > > remaining ram: 0 kbytes
-> > > total ram: 4194560 kbytes
-> > > duplicate: 734015 pages
-> > > skipped: 0 pages
-> > > normal: 318469 pages
-> > > normal bytes: 1273876 kbytes
-> > > dirty sync count: 4
-> > > 
-> > > I will try migration between different hosts soon and check.
-> > 
-> > I hit that on the same host; are you sure you've switched into postcopy mode;
-> > i.e. issued a migrate_start_postcopy before the end of migration?
+On 09/04/2015 05:08 PM, Darrick J. Wong wrote:
+> On Fri, Sep 04, 2015 at 04:17:02PM -0400, Anna Schumaker wrote:
+>> The NFS server will need a fallback for filesystems that don't have any
+>> kind of copy acceleration yet, and it should be generally useful to have
+>> an in-kernel copy to avoid lots of switches between kernel and
+>> user space.  Users who only want a reflink can pass the COPY_REFLINK
+>> flag to disable the fallback.
+>>
+>> Signed-off-by: Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+>> ---
+>>  fs/read_write.c           | 16 ++++++++++++----
+>>  include/linux/copy.h      |  6 ++++++
+>>  include/uapi/linux/Kbuild |  1 +
+>>  include/uapi/linux/copy.h |  6 ++++++
+>>  4 files changed, 25 insertions(+), 4 deletions(-)
+>>  create mode 100644 include/linux/copy.h
+>>  create mode 100644 include/uapi/linux/copy.h
+>>
+>> diff --git a/fs/read_write.c b/fs/read_write.c
+>> index 9dafb7f..bd7e7e2 100644
+>> --- a/fs/read_write.c
+>> +++ b/fs/read_write.c
+>> @@ -7,6 +7,7 @@
+>>  #include <linux/slab.h> 
+>>  #include <linux/stat.h>
+>>  #include <linux/fcntl.h>
+>> +#include <linux/copy.h>
+>>  #include <linux/file.h>
+>>  #include <linux/uio.h>
+>>  #include <linux/fsnotify.h>
+>> @@ -1342,7 +1343,7 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
+>>  	struct inode *inode_out;
+>>  	ssize_t ret;
+>>  
+>> -	if (flags)
+>> +	if (!((flags == 0) || (flags == COPY_REFLINK)))
 > 
-> Sorry I was following your discussion with Li in this thread
+> I think it's a good idea for the copy_file_range flags to have the name of
+> the syscall in them at the beginning, both to try to avoid namespace collisions
+> and also to make it clear where the flag comes from.  So, could we prefix the
+> values with "COPY_FILE_RANGE_" instead of just "COPY_"?
+
+Sure, that makes sense!
+
 > 
-> https://www.marc.info/?l=qemu-devel&m=143035620026744&w=4
+> Also... I'm confused by what the structure of check implies about 'flags' --
+> are each of 'flags's values supposed to be mutually exclusive, or is it a
+> straight bitset like flags arguments tend to be?
+
+I was expecting this to be a bitset, but that's not the easiest to communicate when there is (currently) only one flag.  I'll take a look at other functions to see how I should be validating this!
+
+Thanks for the comments,
+Anna
+
 > 
-> and it wasn't obvious to me that anything apart from turning on the
-> x-postcopy-ram capability was required :(
-
-OK.
-
-> So I do see the problem now.
+> Say we want to add dedupe and ponies as potential behavioral variants.  Then
+> we'd end up with something like:
 > 
-> At the source
-> -------------
-> Error reading data from KVM HTAB fd: Bad file descriptor
-> Segmentation fault
+> /* raw flags */
+> #define	COPY_FILE_RANGE_SHARE_BLOCKS	(1)
+> #define COPY_FILE_RANGE_CHECK_SAME	(2)
+> #define COPY_FILE_RANGE_PONIES		(4)
 > 
-> At the target
-> -------------
-> htab_load() bad index 2113929216 (14336+0 entries) in htab stream (htab_shift=25)
-> qemu-system-ppc64: error while loading state section id 56(spapr/htab)
-> qemu-system-ppc64: postcopy_ram_listen_thread: loadvm failed: -22
-> qemu-system-ppc64: VQ 0 size 0x100 Guest index 0x0 inconsistent with Host index 0x1f: delta 0xffe1
-> qemu-system-ppc64: error while loading state for instance 0x0 of device 'pci@800000020000000:00.0/virtio-net'
-> *** Error in `./ppc64-softmmu/qemu-system-ppc64': corrupted double-linked list: 0x00000100241234a0 ***
-> ======= Backtrace: =========
-> /lib64/power8/libc.so.6Segmentation fault
-
-Good - my current world has got rid of the segfaults/corruption in the cleanup on power - but those
-are only after it stumbled over the htab problem.
-
-I don't know the innards of power/htab, so if you've got any pointers on what upset it
-I'd be happy for some pointers.
-
-(We should probably trim the cc - since I don't think this is userfault related).
-
-Dave
-
---
-Dr. David Alan Gilbert / dgilbert@redhat.com / Manchester, UK
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> /* syntactic sugar */
+> #define COPY_FILE_RANGE_DEDUPE		(COPY_FILE_RANGE_SHARE_BLOCKS | \
+> 					 COPY_FILE_RANGE_CHECK_SAME)
+> #define COPY_FILE_RANGE_ALL		(COPY_FILE_RANGE_SHARE_BLOCKS | \
+> 					 COPY_FILE_RANGE_CHECK_SAME | \
+> 					 COPY_FILE_RANGE_PONIES)
+> 
+> and in copy_file_range():
+> 
+> if (flags & ~COPY_FILE_RANGE_ALL)
+> 	return -EINVAL;
+> if ((flags & COPY_FILE_RANGE_CHECK_SAME) && 
+>     !(flags & COPY_FILE_RANGE_SHARE_BLOCKS))
+> 	return -EINVAL;	/* or is it return 0? */
+> 
+> if (flags & COPY_FILE_RANGE_PONIES)
+> 	panic();
+> if (flags & COPY_FILE_RANGE_CHECK_SAME)
+> 	check_same_contents(...);
+> err = vfs_copy_range(...);
+> if (err < 0 && !(flags & COPY_FILE_RANGE_SHARE_BLOCKS))
+> 	err = splice(...);
+> 
+> One hard part is figuring out just what actions we want userland to be able to
+> ask for.  I can think of three: "share blocks via remapping" (i.e.  reflink),
+> "share blocks via remapping but only if they're identical" (i.e. dedupe), and
+> "classic copy via pagecache".  I lean towards giving each variant its own bit
+> and only allowing through the cases that make sense, rather than giving each
+> valid combination its own unique number, but maybe I misinterpreted the intent
+> behind the code.
+> 
+> (I guess there could also be 'do it with hardware assist' but that's digging
+> myself a pretty deep hole.)
+> 
+> --D
+> 
+>>  		return -EINVAL;
+>>  
+>>  	/* copy_file_range allows full ssize_t len, ignoring MAX_RW_COUNT  */
+>> @@ -1355,7 +1356,7 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
+>>  	if (!(file_in->f_mode & FMODE_READ) ||
+>>  	    !(file_out->f_mode & FMODE_WRITE) ||
+>>  	    (file_out->f_flags & O_APPEND) ||
+>> -	    !file_out->f_op || !file_out->f_op->copy_file_range)
+>> +	    !file_in->f_op)
+>>  		return -EBADF;
+>>  
+>>  	inode_in = file_inode(file_in);
+>> @@ -1377,8 +1378,15 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
+>>  	if (ret)
+>>  		return ret;
+>>  
+>> -	ret = file_out->f_op->copy_file_range(file_in, pos_in, file_out, pos_out,
+>> -					      len, flags);
+>> +	ret = -EOPNOTSUPP;
+>> +	if (file_out->f_op->copy_file_range)
+>> +		ret = file_out->f_op->copy_file_range(file_in, pos_in, file_out,
+>> +						      pos_out, len, flags);
+>> +	if ((ret < 0) && !(flags & COPY_REFLINK)) {
+>> +		file_start_write(file_out);
+>> +		ret = do_splice_direct(file_in, &pos_in, file_out, &pos_out, len, 0);
+>> +		file_end_write(file_out);
+>> +	}
+>>  	if (ret > 0) {
+>>  		fsnotify_access(file_in);
+>>  		add_rchar(current, ret);
+>> diff --git a/include/linux/copy.h b/include/linux/copy.h
+>> new file mode 100644
+>> index 0000000..fd54543
+>> --- /dev/null
+>> +++ b/include/linux/copy.h
+>> @@ -0,0 +1,6 @@
+>> +#ifndef _LINUX_COPY_H
+>> +#define _LINUX_COPY_H
+>> +
+>> +#include <uapi/linux/copy.h>
+>> +
+>> +#endif /* _LINUX_COPY_H */
+>> diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
+>> index 1ff9942..b6109f3 100644
+>> --- a/include/uapi/linux/Kbuild
+>> +++ b/include/uapi/linux/Kbuild
+>> @@ -90,6 +90,7 @@ header-y += coda_psdev.h
+>>  header-y += coff.h
+>>  header-y += connector.h
+>>  header-y += const.h
+>> +header-y += copy.h
+>>  header-y += cramfs_fs.h
+>>  header-y += cuda.h
+>>  header-y += cyclades.h
+>> diff --git a/include/uapi/linux/copy.h b/include/uapi/linux/copy.h
+>> new file mode 100644
+>> index 0000000..68f3d65
+>> --- /dev/null
+>> +++ b/include/uapi/linux/copy.h
+>> @@ -0,0 +1,6 @@
+>> +#ifndef _UAPI_LINUX_COPY_H
+>> +#define _UAPI_LINUX_COPY_H
+>> +
+>> +#define COPY_REFLINK	1	/* only perform a reflink */
+>> +
+>> +#endif /* _UAPI_LINUX_COPY_H */
+>> -- 
+>> 2.5.1
+>>
