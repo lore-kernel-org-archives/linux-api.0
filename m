@@ -1,54 +1,52 @@
-From: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: Re: [PATCH 5/6] seccomp: add a way to attach a filter via eBPF fd
-Date: Wed, 9 Sep 2015 09:55:43 -0600
-Message-ID: <20150909155543.GB26679@smitten>
-References: <1441382664-17437-1-git-send-email-tycho.andersen@canonical.com>
- <1441382664-17437-6-git-send-email-tycho.andersen@canonical.com>
- <CAGXu5jKke44txdYqEgPRrkn8SyWGjJuHxT2qMdq2ztp_16mQyw@mail.gmail.com>
- <55EA95FE.7000006@gmail.com>
- <20150908134044.GV26679@smitten>
- <CAGXu5jKS0yX92XXhL6ZkqMrxkqFpPyyBd7wbsvEEx4rqZ0VG6g@mail.gmail.com>
- <20150909144724.GZ26679@smitten>
- <20150909151402.GA3429@Alexeis-MBP-2.westell.com>
+From: Anna Schumaker <Anna.Schumaker@netapp.com>
+Subject: Re: [PATCH v1 4/8] btrfs: Add mountpoint checking during
+ btrfs_copy_file_range
+Date: Wed, 9 Sep 2015 11:56:12 -0400
+Message-ID: <55F0569C.5030904@Netapp.com>
+References: <1441397823-1203-1-git-send-email-Anna.Schumaker@Netapp.com>
+ <1441397823-1203-5-git-send-email-Anna.Schumaker@Netapp.com>
+ <20150909091838.GE8891@twin.jikos.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150909151402.GA3429-2RGepAHry04KGsCuBW9QBvb0xQGhdpdCAL8bYrjMMd8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <20150909091838.GE8891@twin.jikos.cz>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: dsterba@suse.cz, linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, darrick.wong@oracle.com, mtk.manpages@gmail.com, andros@netapp.com, hch@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 09, 2015 at 08:14:04AM -0700, Alexei Starovoitov wrote:
-> On Wed, Sep 09, 2015 at 08:47:24AM -0600, Tycho Andersen wrote:
-> > On Tue, Sep 08, 2015 at 05:07:03PM -0700, Kees Cook wrote:
-> > >
-> > > Yeah, bpf's union looks good. Let's add a "command" flag, though:
-> > > 
-> > > seccomp(SECCOMP_MODE_FILTER_EBPF, int cmd, union, size);
-> > > 
-> > > And this cmd could be ADD_FD or something?
-> > > 
-> > > How's that look?
-> > 
-> > I think we can drop the size (using the same strategy as bpf() and
-> > checking for zeroes at the end), and keep the same signature for
-> > seccomp(); so:
-> > 
-> > seccomp(SECCOMP_MODE_FILTER_EBPF, SECCOMP_ADD_BPF_FD, &union)
-> > 
-> > Yes, I'll use this in the next version.
+On 09/09/2015 05:18 AM, David Sterba wrote:
+> On Fri, Sep 04, 2015 at 04:16:58PM -0400, Anna Schumaker wrote:
+>> We need to verify that both the source and the destination files are
+>> part of the same filesystem, otherwise we can't create a reflink.
+>>
+>> Signed-off-by: Anna Schumaker <Anna.Schumaker@Netapp.com>
+>> ---
+>>  fs/btrfs/ioctl.c | 4 ++++
+>>  1 file changed, 4 insertions(+)
+>>
+>> diff --git a/fs/btrfs/ioctl.c b/fs/btrfs/ioctl.c
+>> index 62ae286..9c0c955 100644
+>> --- a/fs/btrfs/ioctl.c
+>> +++ b/fs/btrfs/ioctl.c
+>> @@ -3856,6 +3856,10 @@ ssize_t btrfs_copy_file_range(struct file *file_in, loff_t pos_in,
+>>  {
+>>  	ssize_t ret;
+>>  
+>> +	if (inode_in->i_sb != inode_out->i_sb ||
+>> +	    file_in->f_path.mnt != file_out->f_path.mnt)
+>> +		return -EXDEV;
 > 
-> actually bpf() has size as the last argument:
-> SYSCALL_DEFINE3(bpf, int, cmd, union bpf_attr __user *, uattr, unsigned int, size)
-> perf_event_open() doesn't and size is embedded as one of the fields.
-> Both approaches are equivally powerfull from extensitiblity
-> point of view. My preference was to keep size as an explicit
-> argument.
+> The same check exists in btrfs_clone_files (added in the previous
+> patch), what's the reason to add it here again?
 
-Yep, sorry that was poorly written. I meant keeping the size as a
-member of the struct as Michael originally suggested, mostly to avoid
-having to change the signature of seccomp().
+To be really, really sure that it's not a cross-device copy?  :)
 
-Tycho
+In reality, it was an oversight and I'll drop the patch.  Thanks for letting me know!
+
+Anna
+
+> 
+>> +
+>>  	ret = btrfs_clone_files(file_out, file_in, pos_in, len, pos_out);
+
