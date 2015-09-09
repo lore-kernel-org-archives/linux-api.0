@@ -1,282 +1,62 @@
-From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v1 0/8] VFS: In-kernel copy system call
-Date: Wed, 9 Sep 2015 14:16:36 -0700
-Message-ID: <20150909211636.GB10399@birch.djwong.org>
-References: <1441397823-1203-1-git-send-email-Anna.Schumaker@Netapp.com>
- <55EEFCEE.5090000@draigBrady.com>
- <55EF279B.3020101@Netapp.com>
- <CALCETrXxRB-LXVb+=nkwfj0zEjWuXXTctkSAc9Oec0fgyOQ5Yg@mail.gmail.com>
- <55EF3EFD.3080302@draigBrady.com>
- <20150908212907.GD30681@birch.djwong.org>
- <CALCETrWAotvN+MBsxq4QLQBr_WAyydqMnipcaTM88rM8sSx43w@mail.gmail.com>
- <20150908223959.GE30681@birch.djwong.org>
- <55F07FD8.4020507@Netapp.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH] selftests/seccomp: build on aarch64, document ABI
+Date: Wed, 09 Sep 2015 23:20:18 +0200
+Message-ID: <480615028.m9oKCRv0Vd@wuerfel>
+References: <20150909193025.GA29244@www.outflux.net> <19228212.s6UOoYJca9@wuerfel> <CAGXu5jJw8hAVPKvut51D1jojsCEGEweWNu2TyWrgUfQ9hqsw3Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <55F07FD8.4020507-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, =?iso-8859-1?Q?P=E1draig?= Brady <P@draigbrady.com>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux btrfs Developers List <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Zach Brown <zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Coreutils <coreutils-mXXj517/zsQ@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAGXu5jJw8hAVPKvut51D1jojsCEGEweWNu2TyWrgUfQ9hqsw3Q@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, Will Drewry <wad@chromium.org>, Linux API <linux-api@vger.kernel.org>, Shuah Khan <shuahkh@osg.samsung.com>, Andy Lutomirski <luto@amacapital.net>, Bamvor Zhang Jian <bamvor.zhangjian@linaro.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 09, 2015 at 02:52:08PM -0400, Anna Schumaker wrote:
-> On 09/08/2015 06:39 PM, Darrick J. Wong wrote:
-> > On Tue, Sep 08, 2015 at 02:45:39PM -0700, Andy Lutomirski wrote:
-> >> On Tue, Sep 8, 2015 at 2:29 PM, Darrick J. Wong <darrick.wong@orac=
-le.com> wrote:
-> >>> On Tue, Sep 08, 2015 at 09:03:09PM +0100, P=E1draig Brady wrote:
-> >>>> On 08/09/15 20:10, Andy Lutomirski wrote:
-> >>>>> On Tue, Sep 8, 2015 at 11:23 AM, Anna Schumaker
-> >>>>> <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org> wrote:
-> >>>>>> On 09/08/2015 11:21 AM, P=E1draig Brady wrote:
-> >>>>>>> I see copy_file_range() is a reflink() on BTRFS?
-> >>>>>>> That's a bit surprising, as it avoids the copy completely.
-> >>>>>>> cp(1) for example considered doing a BTRFS clone by default,
-> >>>>>>> but didn't due to expectations that users actually wanted
-> >>>>>>> the data duplicated on disk for resilience reasons,
-> >>>>>>> and for performance reasons so that write latencies were
-> >>>>>>> restricted to the copy operation, rather than being
-> >>>>>>> introduced at usage time as the dest file is CoW'd.
-> >>>>>>>
-> >>>>>>> If reflink() is a possibility for copy_file_range()
-> >>>>>>> then could it be done optionally with a flag?
-> >>>>>>
-> >>>>>> The idea is that filesystems get to choose how to handle copie=
-s in the
-> >>>>>> default case.  BTRFS could do a reflink, but NFS could do a se=
-rver side
-> >>>
-> >>> Eww, different default behaviors depending on the filesystem. :)
-> >>>
-> >>>>>> copy instead.  I can change the default behavior to only do a =
-data copy
-> >>>>>> (unless the reflink flag is specified) instead, if that is des=
-irable.
-> >>>>>>
-> >>>>>> What does everybody think?
-> >>>>>
-> >>>>> I think the best you could do is to have a hint asking politely=
- for
-> >>>>> the data to be deep-copied.  After all, some filesystems reserv=
-e the
-> >>>>> right to transparently deduplicate.
-> >>>>>
-> >>>>> Also, on a true COW filesystem (e.g. btrfs sometimes), there ma=
-y be no
-> >>>>> advantage to deep copying unless you actually want two copies f=
-or
-> >>>>> locality reasons.
-> >>>>
-> >>>> Agreed. The relink and server side copy are separate things.
-> >>>> There's no advantage to not doing a server side copy,
-> >>>> but as mentioned there may be advantages to doing deep copies on=
- BTRFS
-> >>>> (another reason not previous mentioned in this thread, would be
-> >>>> to avoid ENOSPC errors at some time in the future).
-> >>>>
-> >>>> So having control over the deep copy seems useful.
-> >>>> It's debatable whether ALLOW_REFLINK should be on/off by default
-> >>>> for copy_file_range().  I'd be inclined to have such a setting o=
-ff by default,
-> >>>> but cp(1) at least will work with whatever is chosen.
-> >>>
-> >>> So far it looks like people are interested in at least these "mak=
-e data appear
-> >>> in this other place" filesystem operations:
-> >>>
-> >>> 1. reflink
-> >>> 2. reflink, but only if the contents are the same (dedupe)
-> >>
-> >> What I meant by this was: if you ask for "regular copy", you may e=
-nd
-> >> up with a reflink anyway.  Anyway, how can you reflink a range and
-> >> have the contents *not* be the same?
-> >=20
-> > reflink forcibly remaps fd_dest's range to fd_src's range.  If they=
- didn't
-> > match before, they will afterwards.
-> >=20
-> > dedupe remaps fd_dest's range to fd_src's range only if they match,=
- of course.
-> >=20
-> > Perhaps I should have said "...if the contents are the same before =
-the call"?
-> >=20
-> >>
-> >>> 3. regular copy
-> >>> 4. regular copy, but make the hardware do it for us
-> >>> 5. regular copy, but require a second copy on the media (no-dedup=
-e)
-> >>
-> >> If this comes from me, I have no desire to ever use this as a flag=
-=2E
-> >=20
-> > I meant (5) as a "disable auto-dedupe for this operation" flag, not=
- as
-> > a "reallocate all the shared blocks now" op...
-> >=20
-> >> If someone wants to use chattr or some new operation to say "make =
-this
-> >> range of this file belong just to me for purpose of optimizing fut=
-ure
-> >> writes", then sure, go for it, with the understanding that there a=
-re
-> >> plenty of filesystems for which that doesn't even make sense.
-> >=20
-> > "Unshare these blocks" sounds more like something fallocate could d=
-o.
-> >=20
-> > So far in my XFS reflink playground, it seems that using the defrag=
- tool to
-> > un-cow a file makes most sense.  AFAICT the XFS and ext4 defraggers=
- copy a
-> > fragmented file's data to a second file and use a 'swap extents' op=
-eration,
-> > after which the donor file is unlinked.
-> >=20
-> > Hey, if this syscall turns into a more generic "do something involv=
-ing two
-> > (fd:off:len) (fd:off:len) tuples" call, I guess we could throw in "=
-swap
-> > extents" as a 7th operation, to refactor the ioctls.  <smirk>
-> >=20
-> >>
-> >>> 6. regular copy, but don't CoW (eatmyothercopies) (joke)
-> >>>
-> >>> (Please add whatever ops I missed.)
-> >>>
-> >>> I think I can see a case for letting (4) fall back to (3) since (=
-4) is an
-> >>> optimization of (3).
-> >>>
-> >>> However, I particularly don't like the idea of (1) falling back t=
-o (3-5).
-> >>> Either the kernel can satisfy a request or it can't, but let's no=
-t just
-> >>> assume that we should transmogrify one type of request into anoth=
-er.  Userspace
-> >>> should decide if a reflink failure should turn into one of the co=
-py variants,
-> >>> depending on whether the user wants to spread allocation costs ov=
-er rewrites or
-> >>> pay it all up front.  Also, if we allow reflink to fall back to c=
-opy, how do
-> >>> programs find out what actually took place?  Or do we simply not =
-allow them to
-> >>> find out?
-> >>>
-> >>> Also, programs that expect reflink either to finish or fail quick=
-ly might be
-> >>> surprised if it's possible for reflink to take a longer time than=
- usual and
-> >>> with the side effect that a deep(er) copy was made.
-> >>>
-> >>> I guess if someone asks for both (1) and (3) we can do the fallba=
-ck in the
-> >>> kernel, like how we handle it right now.
-> >>>
-> >>
-> >> I think we should focus on what the actual legit use cases might b=
-e.
-> >> Certainly we want to support a mode that's "reflink or fail".  We
-> >> could have these flags:
-> >>
-> >> COPY_FILE_RANGE_ALLOW_REFLINK
-> >> COPY_FILE_RANGE_ALLOW_COPY
-> >>
-> >> Setting neither gets -EINVAL.  Setting both works as is.  Setting =
-just
-> >> ALLOW_REFLINK will fail if a reflink can't be supported.  Setting =
-just
-> >> ALLOW_COPY will make a best-effort attempt not to reflink but
-> >> expressly permits reflinking in cases where either (a) plain old
-> >> write(2) might also result in a reflink or (b) there is no advanta=
-ge
-> >> to not reflinking.
-> >=20
-> > I don't agree with having a 'copy' flag that can reflink when we al=
-so have a
-> > 'reflink' flag.  I guess I just don't like having a flag with diffe=
-rent
-> > meanings depending on context.
-> >=20
-> > Users should be able to get the default behavior by passing '0' for=
- flags, so
-> > provide FORBID_REFLINK and FORBID_COPY flags to turn off those beha=
-viors, with
-> > an admonishment that one should only use them if they have a gooooo=
-d reason.
-> > Passing neither gets you reflink-xor-copy, which is what I think we=
- both want
-> > in the general case.
->=20
-> I agree here that 0 for flags should do something useful, and I wante=
-d to
-> double check if reflink-xor-copy is a good default behavior.
+On Wednesday 09 September 2015 13:52:39 Kees Cook wrote:
+> On Wed, Sep 9, 2015 at 1:08 PM, Arnd Bergmann <arnd@arndb.de> wrote:
+> > On Wednesday 09 September 2015 12:30:27 Kees Cook wrote:
 
-Ok.
+> > If this is intentional, it at least needs a comment to explain the
+> > situation, and be extended to all other architectures that do not have
+> > a poll() system call.
+> >
+> > The arm32 version of sys_poll should be available as 168 in both native
+> > and compat mode.
+> 
+> Does ppoll still get interrupted like poll to require a restart_syscall call?
 
-> >=20
-> > FORBID_REFLINK =3D 1
-> > FORBID_COPY =3D 2
->=20
-> I don't like the idea of using flags to forbid behavior.  I think it =
-would be
-> more straightforward to have flags like REFLINK_ONLY or COPY_ONLY so =
-users
-> can tell us what they want, instead of what they don't want.
+Yes, the only difference between the two is the optional signal mask
+argument in ppoll.
 
-Seems fine to me.
+> Regardless, the primary problem is this (emphasis added):
+> 
+> >> +        * - native ARM does _not_ expose true syscall.
+> >> +        * - compat ARM on ARM64 _does_ expose true syscall.
+> 
+> When you ptrace or seccomp an arm32 binary under and arm32 kernel,
+> restart_syscall is invisible. When you ptrace or seccomp an arm32
+> binary under and arm64 kernel, suddenly it's visible. This means, for
+> example, seccomp filters will break under an arm64 kernel.
 
-> While I'm thinking about flags, COPY_FILE_RANGE_REFLINK_ONLY would be=
- a bit
-> of a mouthful.  Does anybody have suggestions for ways that I could m=
-ake this
-> shorter?
+Ok, I see.
 
-CFR_REFLINK_ONLY?
+> (And apologies if I'm not remembering pieces of this correctly, I
+> don't have access to arm64 hardware at the moment, which is why I'm
+> reaching out for some help on this... I'm trying to close out this old
+> thread: https://lkml.org/lkml/2015/1/20/778 )
 
---D
+FWIW, it should not be too hard to get an image that runs in
+qemu-system-arm64.
 
->=20
-> Thanks,
-> Anna
->=20
-> > CHECK_SAME =3D 4
-> > HW_COPY =3D 8
-> >=20
-> > DEDUPE =3D (FORBID_COPY | CHECK_SAME)
-> >=20
-> > What do you say to that?
-> >=20
-> >> An example of (b) would be a filesystem backed by deduped
-> >> thinly-provisioned storage that can't do anything about ENOSPC bec=
-ause
-> >> it doesn't control it in the first place.
-> >>
-> >> Another option would be to split up the copy case into "I expect t=
-o
-> >> overwrite a lot of the target file soon, so (c) try to commit spac=
-e
-> >> for that or (d) try to make it time-efficient".  Of course, (d) is
-> >> irrelevant on filesystems with no random access (nvdimms, for
-> >> example).
-> >>
-> >> I guess the tl;dr is that I'm highly skeptical of any use for
-> >> disallowing reflinking other than forcibly committing space in cas=
-es
-> >> where committing space actually means something.
-> >=20
-> > That's more or less where I was going too. :)
-> >=20
-> > --D
-> >=20
->=20
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" =
-in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I suppose the same problem exists on all restartable system calls
+(e.g. nanosleep, select, recvmsg, clock_nanosleep, ...)?
+
+I also believe there are various architectures that cannot see the
+original system call number for a restarted syscall, in particular
+when the syscall number argument is in the same register as the
+return code of the syscall and gets overwritten on the way out of 
+the kernel. Is this the problem you are seeing? If so, we should
+find a solution that works on all such architectures.
+
+	Arnd
