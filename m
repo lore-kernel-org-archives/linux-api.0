@@ -1,72 +1,292 @@
-From: Chris Mason <clm-b10kYP2dOMg@public.gmane.org>
-Subject: Re: [PATCH v1 0/8] VFS: In-kernel copy system call
-Date: Wed, 9 Sep 2015 16:42:09 -0400
-Message-ID: <20150909204209.GF9511@ret.masoncoding.com>
-References: <55EEFCEE.5090000@draigBrady.com>
- <55EF279B.3020101@Netapp.com>
- <CALCETrXxRB-LXVb+=nkwfj0zEjWuXXTctkSAc9Oec0fgyOQ5Yg@mail.gmail.com>
- <55EF3EFD.3080302@draigBrady.com>
- <20150908212907.GD30681@birch.djwong.org>
- <CALCETrWAotvN+MBsxq4QLQBr_WAyydqMnipcaTM88rM8sSx43w@mail.gmail.com>
- <20150908223959.GE30681@birch.djwong.org>
- <CALCETrVsWBdqvAgwxHcG=gbcWRNPG2ZziWUg1g=siKDrDu7S2Q@mail.gmail.com>
- <20150909200921.GD9511@ret.masoncoding.com>
- <CALCETrXPcxHWGwqhtkGStVabWDOsRbBy+VzrN+XxVZA_F9O0qA@mail.gmail.com>
+From: Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC PATCH v4 1/3] vfio: platform: add device properties
+ skeleton and user API
+Date: Wed, 09 Sep 2015 14:48:12 -0600
+Message-ID: <1441831692.20355.540.camel@redhat.com>
+References: <1441790231-22920-1-git-send-email-b.reynal@virtualopensystems.com>
+	 <1441790231-22920-2-git-send-email-b.reynal@virtualopensystems.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrXPcxHWGwqhtkGStVabWDOsRbBy+VzrN+XxVZA_F9O0qA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, =?iso-8859-1?Q?P=E1draig?= Brady <P@draigbrady.com>, Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux btrfs Developers List <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Zach Brown <zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Coreutils <coreutils-mXXj517/zsQ@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1441790231-22920-2-git-send-email-b.reynal-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Baptiste Reynal <b.reynal-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+Cc: kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tech-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:VFIO PLATFORM DRIVER" <kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 09, 2015 at 01:37:44PM -0700, Andy Lutomirski wrote:
-> On Wed, Sep 9, 2015 at 1:09 PM, Chris Mason <clm-b10kYP2dOMg@public.gmane.org> wrote:
-> > On Tue, Sep 08, 2015 at 04:08:43PM -0700, Andy Lutomirski wrote:
-> >> On Tue, Sep 8, 2015 at 3:39 PM, Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
-> >> > On Tue, Sep 08, 2015 at 02:45:39PM -0700, Andy Lutomirski wrote:
-> >> >> What I meant by this was: if you ask for "regular copy", you may end
-> >> >> up with a reflink anyway.  Anyway, how can you reflink a range and
-> >> >> have the contents *not* be the same?
-> >> >
-> >> > reflink forcibly remaps fd_dest's range to fd_src's range.  If they didn't
-> >> > match before, they will afterwards.
-> >> >
-> >> > dedupe remaps fd_dest's range to fd_src's range only if they match, of course.
-> >> >
-> >> > Perhaps I should have said "...if the contents are the same before the call"?
-> >> >
-> >>
-> >> Oh, I see.
-> >>
-> >> Can we have a clean way to figure out whether two file ranges are the
-> >> same in a way that allows false negatives?  I.e. return 1 if the
-> >> ranges are reflinks of each other and 0 if not?  Pretty please?  I've
-> >> implemented that in the past on btrfs by syncing the ranges and then
-> >> comparing FIEMAP output, but that's hideous.
-> >
-> > I'd almost rather have a separate call, maybe unshare_file_range()?
-> >
-> > Is that the end goal to the sharing check?
+On Wed, 2015-09-09 at 11:17 +0200, Baptiste Reynal wrote:
+> From: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
 > 
-> My use case was archival.  I can reflink data between a working copy
-> and some archived copy and then I can very efficiently tell if the
-> working copy has been changed by checking if the reflink is still
-> linked.
+> This patch introduces an API that allows to return device properties (OF
+> or ACPI) of a device bound to the vfio-platform/vfio-amba driver and the
+> skeleton of the implementation for VFIO_PLATFORM. Information about any
+> device node bound by VFIO_PLATFORM should be queried via the introduced
+> ioctl VFIO_DEVICE_GET_DEV_PROPERTY.
 > 
-> It would be even better if I could enumerate which parts of one file
-> match which parts of another file.
+> The user needs to know the name and the data type of the property he is
+> accessing.
+> 
+> Signed-off-by: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+> Signed-off-by: Baptiste Reynal <b.reynal-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+> 
+> ---
+> v3 -> v4:
+>  - added flags placeholder in vfio_dev_properties
+>  - ioctl returns -E2BIG if the buffer is too small
+>  - details VFIO_DEVICE_GET_DEV_PROPERTY documentation
+> ---
+>  drivers/vfio/platform/Makefile                |  3 +-
+>  drivers/vfio/platform/properties.c            | 77 +++++++++++++++++++++++++++
+>  drivers/vfio/platform/vfio_platform_common.c  | 35 ++++++++++++
+>  drivers/vfio/platform/vfio_platform_private.h |  7 +++
+>  include/uapi/linux/vfio.h                     | 31 +++++++++++
+>  5 files changed, 152 insertions(+), 1 deletion(-)
+>  create mode 100644 drivers/vfio/platform/properties.c
+> 
+> diff --git a/drivers/vfio/platform/Makefile b/drivers/vfio/platform/Makefile
+> index 9ce8afe..37cf5ed 100644
+> --- a/drivers/vfio/platform/Makefile
+> +++ b/drivers/vfio/platform/Makefile
+> @@ -1,5 +1,6 @@
+>  
+> -vfio-platform-y := vfio_platform.o vfio_platform_common.o vfio_platform_irq.o
+> +vfio-platform-y := vfio_platform.o vfio_platform_common.o vfio_platform_irq.o \
+> +		   properties.o
+>  
+>  obj-$(CONFIG_VFIO_PLATFORM) += vfio-platform.o
+>  obj-$(CONFIG_VFIO_PLATFORM) += reset/
+> diff --git a/drivers/vfio/platform/properties.c b/drivers/vfio/platform/properties.c
+> new file mode 100644
+> index 0000000..98754c2
+> --- /dev/null
+> +++ b/drivers/vfio/platform/properties.c
+> @@ -0,0 +1,77 @@
+> +/*
+> + * Copyright (C) 2015 - Virtual Open Systems
+> + * Authors: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+> + *          Baptiste Reynal <b.reynal-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+> + *
+> + * This program is free software; you can redistribute it and/or modify
+> + * it under the terms of the GNU General Public License, version 2, as
+> + * published by the Free Software Foundation.
+> + *
+> + * This program is distributed in the hope that it will be useful,
+> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + * GNU General Public License for more details.
+> + */
+> +
+> +#include <linux/slab.h>
+> +#include <linux/vfio.h>
+> +#include <linux/property.h>
+> +#include "vfio_platform_private.h"
+> +
+> +static int dev_property_get_strings(struct device *dev, uint32_t *flags,
+> +				    char *name, unsigned *lenp,
+> +				    void __user *datap, unsigned long datasz)
+> +{
+> +	return -EINVAL;
+> +}
+> +
+> +static int dev_property_get_uint(struct device *dev, uint32_t *flags,
+> +				 char *name, uint32_t type, unsigned *lenp,
+> +				 void __user *datap, unsigned long datasz)
+> +{
+> +	return -EINVAL;
+> +}
+> +
+> +int vfio_platform_dev_properties(struct device *dev, uint32_t *flags,
+> +				 uint32_t type, unsigned *lenp,
+> +				 void __user *datap, unsigned long datasz)
+> +{
+> +	char *name;
+> +	long namesz;
+> +	int ret;
+> +
+> +	namesz = strnlen_user(datap, datasz);
+> +	if (!namesz)
+> +		return -EFAULT;
+> +	if (namesz > datasz)
+> +		return -EINVAL;
+> +
+> +	name = kzalloc(namesz, GFP_KERNEL);
 
-Oh ok, we can do that pretty quickly with the btrfs searching ioctl
-(just walk the items, really fast), but that's root only.
+What prevents the user from passing an arbitrarily large string here?
 
-For a real interface maybe a btrfs specific ioctl to compare file
-ranges.
+> +	if (!name)
+> +		return -ENOMEM;
+> +	if (strncpy_from_user(name, datap, namesz) <= 0) {
+> +		kfree(name);
+> +		return -EFAULT;
+> +	}
+> +
+> +	switch (type) {
+> +	case VFIO_DEV_PROPERTY_TYPE_STRINGS:
+> +		ret = dev_property_get_strings(dev, flags, name, lenp,
+> +				datap, datasz);
+> +		break;
+> +
+> +	case VFIO_DEV_PROPERTY_TYPE_U64:
+> +	case VFIO_DEV_PROPERTY_TYPE_U32:
+> +	case VFIO_DEV_PROPERTY_TYPE_U16:
+> +	case VFIO_DEV_PROPERTY_TYPE_U8:
+> +		ret = dev_property_get_uint(dev, flags, name, type, lenp,
+> +					    datap, datasz);
+> +		break;
+> +
+> +	default:
+> +		ret = -EINVAL;
+> +	}
+> +
+> +	kfree(name);
+> +	return ret;
+> +}
+> diff --git a/drivers/vfio/platform/vfio_platform_common.c b/drivers/vfio/platform/vfio_platform_common.c
+> index e43efb5..44ba22c 100644
+> --- a/drivers/vfio/platform/vfio_platform_common.c
+> +++ b/drivers/vfio/platform/vfio_platform_common.c
+> @@ -20,6 +20,7 @@
+>  #include <linux/types.h>
+>  #include <linux/uaccess.h>
+>  #include <linux/vfio.h>
+> +#include <linux/property.h>
+>  
+>  #include "vfio_platform_private.h"
+>  
+> @@ -302,6 +303,34 @@ static long vfio_platform_ioctl(void *device_data,
+>  			return vdev->reset(vdev);
+>  		else
+>  			return -EINVAL;
+> +	} else if (cmd == VFIO_DEVICE_GET_DEV_PROPERTY) {
+> +		struct vfio_dev_property info;
+> +		void __user *datap;
+> +		unsigned long datasz;
+> +		int ret;
+> +
+> +		if (!vdev->dev)
+> +			return -EINVAL;
+> +
+> +		minsz = offsetofend(struct vfio_dev_property, length);
+> +
+> +		if (copy_from_user(&info, (void __user *)arg, minsz))
+> +			return -EFAULT;
+> +
+> +		if (info.argsz < minsz)
+> +			return -EINVAL;
+> +
+> +		datap = (void __user *) arg + minsz;
+> +		datasz = info.argsz - minsz;
+> +
+> +		ret = vfio_platform_dev_properties(vdev->dev, &info.flags,
 
--chris
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Why the address of flags, I don't see anyone modifying it and there's
+nothing defined in the ioctl description for flags being modified on
+return.  In fact, there are no flags defined yet, it's just a
+future-proofing mechanism of the ioctl, so why propagate it at all right
+now?
+
+> +				info.type, &info.length, datap, datasz);
+> +
+> +		if (copy_to_user((void __user *)arg, &info, minsz))
+> +			ret = -EFAULT;
+> +
+> +		return ret;
+> +
+>  	}
+>  
+>  	return -ENOTTY;
+> @@ -553,6 +582,12 @@ int vfio_platform_probe_common(struct vfio_platform_device *vdev,
+>  
+>  	vfio_platform_get_reset(vdev, dev);
+>  
+> +	/* add device properties flag */
+> +	if (device_property_present(dev, "name")) {
+> +		vdev->dev = dev;
+
+It seems precarious to leave ->dev dangling in the else case.  This is a
+future bug waiting to happen.
+
+> +		vdev->flags |= VFIO_DEVICE_FLAGS_DEV_PROPERTIES;
+> +	}
+> +
+>  	mutex_init(&vdev->igate);
+>  
+>  	return 0;
+> diff --git a/drivers/vfio/platform/vfio_platform_private.h b/drivers/vfio/platform/vfio_platform_private.h
+> index 1c9b3d5..c75b089 100644
+> --- a/drivers/vfio/platform/vfio_platform_private.h
+> +++ b/drivers/vfio/platform/vfio_platform_private.h
+> @@ -56,6 +56,7 @@ struct vfio_platform_device {
+>  	u32				num_irqs;
+>  	int				refcnt;
+>  	struct mutex			igate;
+> +	struct device			*dev;
+>  
+>  	/*
+>  	 * These fields should be filled by the bus specific binder
+> @@ -89,4 +90,10 @@ extern int vfio_platform_set_irqs_ioctl(struct vfio_platform_device *vdev,
+>  					unsigned start, unsigned count,
+>  					void *data);
+>  
+> +/* device properties support in properties.c */
+> +extern int vfio_platform_dev_properties(struct device *dev, uint32_t *flags,
+> +					uint32_t type, unsigned *lenp,
+> +					void __user *datap,
+> +					unsigned long datasz);
+> +
+>  #endif /* VFIO_PLATFORM_PRIVATE_H */
+> diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
+> index 9fd7b5d..a1a0eaa 100644
+> --- a/include/uapi/linux/vfio.h
+> +++ b/include/uapi/linux/vfio.h
+> @@ -164,12 +164,43 @@ struct vfio_device_info {
+>  #define VFIO_DEVICE_FLAGS_PCI	(1 << 1)	/* vfio-pci device */
+>  #define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2)	/* vfio-platform device */
+>  #define VFIO_DEVICE_FLAGS_AMBA  (1 << 3)	/* vfio-amba device */
+> +#define VFIO_DEVICE_FLAGS_DEV_PROPERTIES (1 << 4) /* Device properties */
+>  	__u32	num_regions;	/* Max region index + 1 */
+>  	__u32	num_irqs;	/* Max IRQ index + 1 */
+>  };
+>  #define VFIO_DEVICE_GET_INFO		_IO(VFIO_TYPE, VFIO_BASE + 7)
+>  
+>  /**
+> + * VFIO_DEVICE_GET_DEV_PROPERTY - _IOR(VFIO_TYPE, VFIO_BASE + 17,
+> + *						struct vfio_devtree_info)
+> + *
+> + * Retrieve a device property, e.g. from a HW description (device tree or ACPI)
+> + * if available.
+> + * Caller will initialize data[] with a single string with the requested
+> + * devicetree property name, and type depending on whether an array of strings
+> + * or an array of u32 values is expected. On success, data[] will be filled
+> + * with the requested information, either as an array of u32, or with a list
+> + * of strings separated by the NULL terminating character.
+> + * Return: 0 on success, -errno on failure.
+> + * Errors:
+> + *   E2BIG: the property is too big to fit in the data[] buffer (the required
+> + *          size is then written into the length field).
+
+I don't know which is more correct, but the
+VFIO_DEVICE_GET_PCI_HOT_RESET_INFO uses ENOSPC when the buffer size is
+too small.  If there's no compelling reason to be different, let's use
+it here too.
+
+> + */
+> +struct vfio_dev_property {
+> +	__u32	argsz;
+> +	__u32	flags;	/* Placeholder for future extension */
+> +	__u32	type;
+> +#define VFIO_DEV_PROPERTY_TYPE_STRINGS	0
+> +#define VFIO_DEV_PROPERTY_TYPE_U8	1
+> +#define VFIO_DEV_PROPERTY_TYPE_U16	2
+> +#define VFIO_DEV_PROPERTY_TYPE_U32	3
+> +#define VFIO_DEV_PROPERTY_TYPE_U64	4
+> +	__u32	length;	/* Size of data[] */
+> +	__u8	data[];
+> +};
+> +#define VFIO_DEVICE_GET_DEV_PROPERTY	_IO(VFIO_TYPE, VFIO_BASE + 17)
+> +
+> +/**
+>   * VFIO_DEVICE_GET_REGION_INFO - _IOWR(VFIO_TYPE, VFIO_BASE + 8,
+>   *				       struct vfio_region_info)
+>   *
