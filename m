@@ -1,292 +1,79 @@
-From: Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC PATCH v4 1/3] vfio: platform: add device properties
- skeleton and user API
-Date: Wed, 09 Sep 2015 14:48:12 -0600
-Message-ID: <1441831692.20355.540.camel@redhat.com>
-References: <1441790231-22920-1-git-send-email-b.reynal@virtualopensystems.com>
-	 <1441790231-22920-2-git-send-email-b.reynal@virtualopensystems.com>
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: Re: [PATCH] selftests/seccomp: build on aarch64, document ABI
+Date: Wed, 9 Sep 2015 13:52:39 -0700
+Message-ID: <CAGXu5jJw8hAVPKvut51D1jojsCEGEweWNu2TyWrgUfQ9hqsw3Q@mail.gmail.com>
+References: <20150909193025.GA29244@www.outflux.net>
+	<19228212.s6UOoYJca9@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1441790231-22920-2-git-send-email-b.reynal-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+In-Reply-To: <19228212.s6UOoYJca9@wuerfel>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Baptiste Reynal <b.reynal-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-Cc: kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tech-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:VFIO PLATFORM DRIVER" <kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Bamvor Zhang Jian <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2015-09-09 at 11:17 +0200, Baptiste Reynal wrote:
-> From: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-> 
-> This patch introduces an API that allows to return device properties (OF
-> or ACPI) of a device bound to the vfio-platform/vfio-amba driver and the
-> skeleton of the implementation for VFIO_PLATFORM. Information about any
-> device node bound by VFIO_PLATFORM should be queried via the introduced
-> ioctl VFIO_DEVICE_GET_DEV_PROPERTY.
-> 
-> The user needs to know the name and the data type of the property he is
-> accessing.
-> 
-> Signed-off-by: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-> Signed-off-by: Baptiste Reynal <b.reynal-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-> 
-> ---
-> v3 -> v4:
->  - added flags placeholder in vfio_dev_properties
->  - ioctl returns -E2BIG if the buffer is too small
->  - details VFIO_DEVICE_GET_DEV_PROPERTY documentation
-> ---
->  drivers/vfio/platform/Makefile                |  3 +-
->  drivers/vfio/platform/properties.c            | 77 +++++++++++++++++++++++++++
->  drivers/vfio/platform/vfio_platform_common.c  | 35 ++++++++++++
->  drivers/vfio/platform/vfio_platform_private.h |  7 +++
->  include/uapi/linux/vfio.h                     | 31 +++++++++++
->  5 files changed, 152 insertions(+), 1 deletion(-)
->  create mode 100644 drivers/vfio/platform/properties.c
-> 
-> diff --git a/drivers/vfio/platform/Makefile b/drivers/vfio/platform/Makefile
-> index 9ce8afe..37cf5ed 100644
-> --- a/drivers/vfio/platform/Makefile
-> +++ b/drivers/vfio/platform/Makefile
-> @@ -1,5 +1,6 @@
->  
-> -vfio-platform-y := vfio_platform.o vfio_platform_common.o vfio_platform_irq.o
-> +vfio-platform-y := vfio_platform.o vfio_platform_common.o vfio_platform_irq.o \
-> +		   properties.o
->  
->  obj-$(CONFIG_VFIO_PLATFORM) += vfio-platform.o
->  obj-$(CONFIG_VFIO_PLATFORM) += reset/
-> diff --git a/drivers/vfio/platform/properties.c b/drivers/vfio/platform/properties.c
-> new file mode 100644
-> index 0000000..98754c2
-> --- /dev/null
-> +++ b/drivers/vfio/platform/properties.c
-> @@ -0,0 +1,77 @@
-> +/*
-> + * Copyright (C) 2015 - Virtual Open Systems
-> + * Authors: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-> + *          Baptiste Reynal <b.reynal-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
-> + *
-> + * This program is free software; you can redistribute it and/or modify
-> + * it under the terms of the GNU General Public License, version 2, as
-> + * published by the Free Software Foundation.
-> + *
-> + * This program is distributed in the hope that it will be useful,
-> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + * GNU General Public License for more details.
-> + */
-> +
-> +#include <linux/slab.h>
-> +#include <linux/vfio.h>
-> +#include <linux/property.h>
-> +#include "vfio_platform_private.h"
-> +
-> +static int dev_property_get_strings(struct device *dev, uint32_t *flags,
-> +				    char *name, unsigned *lenp,
-> +				    void __user *datap, unsigned long datasz)
-> +{
-> +	return -EINVAL;
-> +}
-> +
-> +static int dev_property_get_uint(struct device *dev, uint32_t *flags,
-> +				 char *name, uint32_t type, unsigned *lenp,
-> +				 void __user *datap, unsigned long datasz)
-> +{
-> +	return -EINVAL;
-> +}
-> +
-> +int vfio_platform_dev_properties(struct device *dev, uint32_t *flags,
-> +				 uint32_t type, unsigned *lenp,
-> +				 void __user *datap, unsigned long datasz)
-> +{
-> +	char *name;
-> +	long namesz;
-> +	int ret;
-> +
-> +	namesz = strnlen_user(datap, datasz);
-> +	if (!namesz)
-> +		return -EFAULT;
-> +	if (namesz > datasz)
-> +		return -EINVAL;
-> +
-> +	name = kzalloc(namesz, GFP_KERNEL);
+On Wed, Sep 9, 2015 at 1:08 PM, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org> wrote:
+> On Wednesday 09 September 2015 12:30:27 Kees Cook wrote:
+>> The syscall ABI is inconsistent on aarch64 compat, so at least we should
+>> document it in the seccomp_bpf tests.
+>>
+>> Signed-off-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+>
+> Can you explain in what way the ABI is inconsistent here?
+>
+>> ---
+>> Can someone with access to native aarch64 double-check this for me? I
+>> think we need to change these tests to pass if it's expected, but the
+>> compat behavior seems bad. It means compat code will break under an
+>> aarch64 kernel, when dealing with syscalls, like through seccomp.
+>> ---
+>>  tools/testing/selftests/seccomp/seccomp_bpf.c | 15 +++++++++++++--
+>>  1 file changed, 13 insertions(+), 2 deletions(-)
+>>
+>> diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c b/tools/testing/selftests/seccomp/seccomp_bpf.c
+>> index 770f47adf295..866ff42e000d 100644
+>> --- a/tools/testing/selftests/seccomp/seccomp_bpf.c
+>> +++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
+>> @@ -33,6 +33,10 @@
+>>  #include <unistd.h>
+>>  #include <sys/syscall.h>
+>>
+>> +#if defined(__aarch64__) && !defined(__NR_poll)
+>> +# define __NR_poll 0x49
+>> +#endif
+>
+> I don't understand this: 0x49 is __NR_ppoll on arm64 and all architectures
+> that use asm-generic/unistd.h, not __NR_poll, which is no longer used there.
 
-What prevents the user from passing an arbitrarily large string here?
+Ah-ha, okay, that explains part of my struggle. :)
 
-> +	if (!name)
-> +		return -ENOMEM;
-> +	if (strncpy_from_user(name, datap, namesz) <= 0) {
-> +		kfree(name);
-> +		return -EFAULT;
-> +	}
-> +
-> +	switch (type) {
-> +	case VFIO_DEV_PROPERTY_TYPE_STRINGS:
-> +		ret = dev_property_get_strings(dev, flags, name, lenp,
-> +				datap, datasz);
-> +		break;
-> +
-> +	case VFIO_DEV_PROPERTY_TYPE_U64:
-> +	case VFIO_DEV_PROPERTY_TYPE_U32:
-> +	case VFIO_DEV_PROPERTY_TYPE_U16:
-> +	case VFIO_DEV_PROPERTY_TYPE_U8:
-> +		ret = dev_property_get_uint(dev, flags, name, type, lenp,
-> +					    datap, datasz);
-> +		break;
-> +
-> +	default:
-> +		ret = -EINVAL;
-> +	}
-> +
-> +	kfree(name);
-> +	return ret;
-> +}
-> diff --git a/drivers/vfio/platform/vfio_platform_common.c b/drivers/vfio/platform/vfio_platform_common.c
-> index e43efb5..44ba22c 100644
-> --- a/drivers/vfio/platform/vfio_platform_common.c
-> +++ b/drivers/vfio/platform/vfio_platform_common.c
-> @@ -20,6 +20,7 @@
->  #include <linux/types.h>
->  #include <linux/uaccess.h>
->  #include <linux/vfio.h>
-> +#include <linux/property.h>
->  
->  #include "vfio_platform_private.h"
->  
-> @@ -302,6 +303,34 @@ static long vfio_platform_ioctl(void *device_data,
->  			return vdev->reset(vdev);
->  		else
->  			return -EINVAL;
-> +	} else if (cmd == VFIO_DEVICE_GET_DEV_PROPERTY) {
-> +		struct vfio_dev_property info;
-> +		void __user *datap;
-> +		unsigned long datasz;
-> +		int ret;
-> +
-> +		if (!vdev->dev)
-> +			return -EINVAL;
-> +
-> +		minsz = offsetofend(struct vfio_dev_property, length);
-> +
-> +		if (copy_from_user(&info, (void __user *)arg, minsz))
-> +			return -EFAULT;
-> +
-> +		if (info.argsz < minsz)
-> +			return -EINVAL;
-> +
-> +		datap = (void __user *) arg + minsz;
-> +		datasz = info.argsz - minsz;
-> +
-> +		ret = vfio_platform_dev_properties(vdev->dev, &info.flags,
+> If this is intentional, it at least needs a comment to explain the
+> situation, and be extended to all other architectures that do not have
+> a poll() system call.
+>
+> The arm32 version of sys_poll should be available as 168 in both native
+> and compat mode.
 
-Why the address of flags, I don't see anyone modifying it and there's
-nothing defined in the ioctl description for flags being modified on
-return.  In fact, there are no flags defined yet, it's just a
-future-proofing mechanism of the ioctl, so why propagate it at all right
-now?
+Does ppoll still get interrupted like poll to require a restart_syscall call?
 
-> +				info.type, &info.length, datap, datasz);
-> +
-> +		if (copy_to_user((void __user *)arg, &info, minsz))
-> +			ret = -EFAULT;
-> +
-> +		return ret;
-> +
->  	}
->  
->  	return -ENOTTY;
-> @@ -553,6 +582,12 @@ int vfio_platform_probe_common(struct vfio_platform_device *vdev,
->  
->  	vfio_platform_get_reset(vdev, dev);
->  
-> +	/* add device properties flag */
-> +	if (device_property_present(dev, "name")) {
-> +		vdev->dev = dev;
+Regardless, the primary problem is this (emphasis added):
 
-It seems precarious to leave ->dev dangling in the else case.  This is a
-future bug waiting to happen.
+>> +        * - native ARM does _not_ expose true syscall.
+>> +        * - compat ARM on ARM64 _does_ expose true syscall.
 
-> +		vdev->flags |= VFIO_DEVICE_FLAGS_DEV_PROPERTIES;
-> +	}
-> +
->  	mutex_init(&vdev->igate);
->  
->  	return 0;
-> diff --git a/drivers/vfio/platform/vfio_platform_private.h b/drivers/vfio/platform/vfio_platform_private.h
-> index 1c9b3d5..c75b089 100644
-> --- a/drivers/vfio/platform/vfio_platform_private.h
-> +++ b/drivers/vfio/platform/vfio_platform_private.h
-> @@ -56,6 +56,7 @@ struct vfio_platform_device {
->  	u32				num_irqs;
->  	int				refcnt;
->  	struct mutex			igate;
-> +	struct device			*dev;
->  
->  	/*
->  	 * These fields should be filled by the bus specific binder
-> @@ -89,4 +90,10 @@ extern int vfio_platform_set_irqs_ioctl(struct vfio_platform_device *vdev,
->  					unsigned start, unsigned count,
->  					void *data);
->  
-> +/* device properties support in properties.c */
-> +extern int vfio_platform_dev_properties(struct device *dev, uint32_t *flags,
-> +					uint32_t type, unsigned *lenp,
-> +					void __user *datap,
-> +					unsigned long datasz);
-> +
->  #endif /* VFIO_PLATFORM_PRIVATE_H */
-> diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
-> index 9fd7b5d..a1a0eaa 100644
-> --- a/include/uapi/linux/vfio.h
-> +++ b/include/uapi/linux/vfio.h
-> @@ -164,12 +164,43 @@ struct vfio_device_info {
->  #define VFIO_DEVICE_FLAGS_PCI	(1 << 1)	/* vfio-pci device */
->  #define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2)	/* vfio-platform device */
->  #define VFIO_DEVICE_FLAGS_AMBA  (1 << 3)	/* vfio-amba device */
-> +#define VFIO_DEVICE_FLAGS_DEV_PROPERTIES (1 << 4) /* Device properties */
->  	__u32	num_regions;	/* Max region index + 1 */
->  	__u32	num_irqs;	/* Max IRQ index + 1 */
->  };
->  #define VFIO_DEVICE_GET_INFO		_IO(VFIO_TYPE, VFIO_BASE + 7)
->  
->  /**
-> + * VFIO_DEVICE_GET_DEV_PROPERTY - _IOR(VFIO_TYPE, VFIO_BASE + 17,
-> + *						struct vfio_devtree_info)
-> + *
-> + * Retrieve a device property, e.g. from a HW description (device tree or ACPI)
-> + * if available.
-> + * Caller will initialize data[] with a single string with the requested
-> + * devicetree property name, and type depending on whether an array of strings
-> + * or an array of u32 values is expected. On success, data[] will be filled
-> + * with the requested information, either as an array of u32, or with a list
-> + * of strings separated by the NULL terminating character.
-> + * Return: 0 on success, -errno on failure.
-> + * Errors:
-> + *   E2BIG: the property is too big to fit in the data[] buffer (the required
-> + *          size is then written into the length field).
+When you ptrace or seccomp an arm32 binary under and arm32 kernel,
+restart_syscall is invisible. When you ptrace or seccomp an arm32
+binary under and arm64 kernel, suddenly it's visible. This means, for
+example, seccomp filters will break under an arm64 kernel.
 
-I don't know which is more correct, but the
-VFIO_DEVICE_GET_PCI_HOT_RESET_INFO uses ENOSPC when the buffer size is
-too small.  If there's no compelling reason to be different, let's use
-it here too.
+(And apologies if I'm not remembering pieces of this correctly, I
+don't have access to arm64 hardware at the moment, which is why I'm
+reaching out for some help on this... I'm trying to close out this old
+thread: https://lkml.org/lkml/2015/1/20/778 )
 
-> + */
-> +struct vfio_dev_property {
-> +	__u32	argsz;
-> +	__u32	flags;	/* Placeholder for future extension */
-> +	__u32	type;
-> +#define VFIO_DEV_PROPERTY_TYPE_STRINGS	0
-> +#define VFIO_DEV_PROPERTY_TYPE_U8	1
-> +#define VFIO_DEV_PROPERTY_TYPE_U16	2
-> +#define VFIO_DEV_PROPERTY_TYPE_U32	3
-> +#define VFIO_DEV_PROPERTY_TYPE_U64	4
-> +	__u32	length;	/* Size of data[] */
-> +	__u8	data[];
-> +};
-> +#define VFIO_DEVICE_GET_DEV_PROPERTY	_IO(VFIO_TYPE, VFIO_BASE + 17)
-> +
-> +/**
->   * VFIO_DEVICE_GET_REGION_INFO - _IOWR(VFIO_TYPE, VFIO_BASE + 8,
->   *				       struct vfio_region_info)
->   *
+-Kees
+
+-- 
+Kees Cook
+Chrome OS Security
