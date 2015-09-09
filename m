@@ -1,104 +1,251 @@
 From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH 0/2] selftests/pstore: add pstore test script
-Date: Tue, 8 Sep 2015 16:42:07 -0700
-Message-ID: <CAGXu5jKMUrqOo4gUPLvWg3mLxYjqYE-8wUx_FJmTR_JxDuwGWQ@mail.gmail.com>
-References: <20150908110615.9783.69477.stgit@arietta>
+Subject: Re: [PATCH 5/6] seccomp: add a way to attach a filter via eBPF fd
+Date: Tue, 8 Sep 2015 17:07:03 -0700
+Message-ID: <CAGXu5jKS0yX92XXhL6ZkqMrxkqFpPyyBd7wbsvEEx4rqZ0VG6g@mail.gmail.com>
+References: <1441382664-17437-1-git-send-email-tycho.andersen@canonical.com>
+	<1441382664-17437-6-git-send-email-tycho.andersen@canonical.com>
+	<CAGXu5jKke44txdYqEgPRrkn8SyWGjJuHxT2qMdq2ztp_16mQyw@mail.gmail.com>
+	<55EA95FE.7000006@gmail.com>
+	<20150908134044.GV26679@smitten>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150908110615.9783.69477.stgit@arietta>
+In-Reply-To: <20150908134044.GV26679@smitten>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Hiraku Toyooka <hiraku.toyooka.gu-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Anton Vorontsov <anton-9xeibp6oKSgdnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Mark Salyzyn <salyzyn-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Colin Cross <ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Seiji Aguchi <seiji.aguchi-7rDLJAbr9SE@public.gmane.org>
+To: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Sep 8, 2015 at 4:06 AM, Hiraku Toyooka
-<hiraku.toyooka.gu-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org> wrote:
-> These scripts include test cases which check pstore behavior. This
-> is useful to avoid regressions of pstore.
+On Tue, Sep 8, 2015 at 6:40 AM, Tycho Andersen
+<tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
+> On Sat, Sep 05, 2015 at 09:13:02AM +0200, Michael Kerrisk (man-pages) wrote:
+>> On 09/04/2015 10:41 PM, Kees Cook wrote:
+>> > On Fri, Sep 4, 2015 at 9:04 AM, Tycho Andersen
+>> > <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
+>> >> This is the final bit needed to support seccomp filters created via the bpf
+>> >> syscall.
+>>
+>> Hmm. Thanks Kees, for CCinf linux-api@. That really should have been done at
+>> the outset.
 >
-> Pstore is used across kernel crash, so these test cases are split
-> into three parts.
+> Apologies, I'll cc the list on future versions.
 >
->  - pstore_tests: check pstore behavior before crash
->  - pstore_post_reboot_tests: check pstore behavior after crash and reboot
->  - pstore_crash_test: cause kernel crash and reboot
+>> Tycho, where's the man-pages patch describing this new kernel-userspace
+>> API feature? :-)
 >
-> The pstore_test and the pstore_post_reboot_tests are the actual scripts
-> for testing pstore and are executed in usual selftest's "run_test" target.
-> On the other hand, the pstore_crash_test is to cause kernel panic and reboot,
-> so it is executed in new "run_pstore_crash" target which is specified ad-hoc
-> by users. In addition, there is a "common_tests" script which includes
-> utilities and test cases used commonly in these scripts.
+> Once we get the API finalized I'm happy to write it.
 >
-> When the pstore_crash_test is executed, it creates a file as a reboot flag.
-> The pstore_post_reboot_tests detects whether the file exists or not. If the
-> file doesn't exists, the test cases are skipped.
+>> >> One concern with this patch is exactly what the interface should look like
+>> >> for users, since seccomp()'s second argument is a pointer, we could ask
+>> >> people to pass a pointer to the fd, but implies we might write to it which
+>> >> seems impolite. Right now we cast the pointer (and force the user to cast
+>> >> it), which generates ugly warnings. I'm not sure what the right answer is
+>> >> here.
+>> >>
+>> >> Signed-off-by: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+>> >> CC: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+>> >> CC: Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+>> >> CC: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>> >> CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+>> >> CC: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+>> >> CC: Serge E. Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+>> >> CC: Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+>> >> CC: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
+>> >> ---
+>> >>  include/linux/seccomp.h      |  3 +-
+>> >>  include/uapi/linux/seccomp.h |  1 +
+>> >>  kernel/seccomp.c             | 70 ++++++++++++++++++++++++++++++++++++--------
+>> >>  3 files changed, 61 insertions(+), 13 deletions(-)
+>> >>
+>> >> diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
+>> >> index d1a86ed..a725dd5 100644
+>> >> --- a/include/linux/seccomp.h
+>> >> +++ b/include/linux/seccomp.h
+>> >> @@ -3,7 +3,8 @@
+>> >>
+>> >>  #include <uapi/linux/seccomp.h>
+>> >>
+>> >> -#define SECCOMP_FILTER_FLAG_MASK       (SECCOMP_FILTER_FLAG_TSYNC)
+>> >> +#define SECCOMP_FILTER_FLAG_MASK       (\
+>> >> +       SECCOMP_FILTER_FLAG_TSYNC | SECCOMP_FILTER_FLAG_EBPF)
+>> >>
+>> >>  #ifdef CONFIG_SECCOMP
+>> >>
+>> >> diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
+>> >> index 0f238a4..c29a423 100644
+>> >> --- a/include/uapi/linux/seccomp.h
+>> >> +++ b/include/uapi/linux/seccomp.h
+>> >> @@ -16,6 +16,7 @@
+>> >>
+>> >>  /* Valid flags for SECCOMP_SET_MODE_FILTER */
+>> >>  #define SECCOMP_FILTER_FLAG_TSYNC      1
+>> >> +#define SECCOMP_FILTER_FLAG_EBPF       (1 << 1)
+>> >>
+>> >>  /*
+>> >>   * All BPF programs must return a 32-bit value.
+>> >> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+>> >> index a2c5b32..9c6bea6 100644
+>> >> --- a/kernel/seccomp.c
+>> >> +++ b/kernel/seccomp.c
+>> >> @@ -355,17 +355,6 @@ static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
+>> >>
+>> >>         BUG_ON(INT_MAX / fprog->len < sizeof(struct sock_filter));
+>> >>
+>> >> -       /*
+>> >> -        * Installing a seccomp filter requires that the task has
+>> >> -        * CAP_SYS_ADMIN in its namespace or be running with no_new_privs.
+>> >> -        * This avoids scenarios where unprivileged tasks can affect the
+>> >> -        * behavior of privileged children.
+>> >> -        */
+>> >> -       if (!task_no_new_privs(current) &&
+>> >> -           security_capable_noaudit(current_cred(), current_user_ns(),
+>> >> -                                    CAP_SYS_ADMIN) != 0)
+>> >> -               return ERR_PTR(-EACCES);
+>> >> -
+>> >>         /* Allocate a new seccomp_filter */
+>> >>         sfilter = kzalloc(sizeof(*sfilter), GFP_KERNEL | __GFP_NOWARN);
+>> >>         if (!sfilter)
+>> >> @@ -509,6 +498,48 @@ static void seccomp_send_sigsys(int syscall, int reason)
+>> >>         info.si_syscall = syscall;
+>> >>         force_sig_info(SIGSYS, &info, current);
+>> >>  }
+>> >> +
+>> >> +#ifdef CONFIG_BPF_SYSCALL
+>> >> +static struct seccomp_filter *seccomp_prepare_ebpf(const char __user *filter)
+>> >> +{
+>> >> +       /* XXX: this cast generates a warning. should we make people pass in
+>> >> +        * &fd, or is there some nicer way of doing this?
+>> >> +        */
+>> >> +       u32 fd = (u32) filter;
+>> >
+>> > I think this is probably the right way to do it, modulo getting the
+>> > warning fixed. Let me invoke the great linux-api subscribers to get
+>> > some more opinions.
+>>
+>> Sigh. It's sad, but the using a cast does seem the simplest option.
+>> But, how about another idea...
+>>
+>> > tl;dr: adding SECCOMP_FILTER_FLAG_EBPF to the flags changes the
+>> > pointer argument into an fd argument. Is this sane, should it be a
+>> > pointer to an fd, or should it not be a flag at all, creating a new
+>> > seccomp command instead (SECCOMP_MODE_FILTER_EBPF)?
+>>
+>> What about
+>>
+>>     seccomp(SECCOMP_MODE_FILTER_EBPF, flags, structp)
+>>
+>> Where structp is a pointer to something like
+>>
+>> struct seccomp_ebpf {
+>>     int size;      /* Size of this whole struct */
+>>     int fd;
+>> }
+>>
+>> 'size' allows for future expansion of the struct (in case we want to
+>> expand it later), and placing 'fd' inside a struct avoids unpleasant
+>> implication that would be made by passing a pointer to an fd as the
+>> third argument.
 >
-> These scripts expect that one pstore backend is registered before the
-> scripts are executed.
-> Assumed use case is following.
->
-> # cd linux/tools/testing/selftests
-> # make run_tests -C pstore
-> make: Entering directory '/home/root/selftests/pstore'
-> === Pstore unit tests (pstore_tests)===
-> Checking pstore backend is registered ... ok
-> Checking pstore console is registered ... ok
-> Checking /dev/pmsg0 exists ... ok
-> Writing TEST_STRING to /dev/pmsg0 ... ok
-> selftests: pstore_tests [PASS]
-> === Pstore unit tests (pstore_post_reboot_tests)===
-> Checking pstore backend is registered ... ok
-> pstore_crash_test has not been executed yet. we skip further tests.
-> selftests: pstore_post_reboot_tests [PASS]
-> make: Leaving directory '/home/root/selftests/pstore'
-> # make run_pstore_crash
-> ...
-> (kernel crash and reboot)
-> ...
-> # make run_tests -C pstore
-> make: Entering directory '/home/root/selftests/pstore'
-> === Pstore unit tests (pstore_tests)===
-> Checking pstore backend is registered ... ok
-> Checking pstore console is registered ... ok
-> Checking /dev/pmsg0 exists ... ok
-> Writing TEST_STRING to /dev/pmsg0 ... ok
-> selftests: pstore_tests [PASS]
-> === Pstore unit tests (pstore_post_reboot_tests)===
-> Checking pstore backend is registered ... ok
-> Mounting pstore filesystem ... ok
-> Checking dmesg files exist in pstore filesystem ... ok
->         dmesg-ramoops-0
->         dmesg-ramoops-1
-> Checking console files exist in pstore filesystem ... ok
->         console-ramoops-0
-> Checking pmsg files exist in pstore filesystem ... ok
->         pmsg-ramoops-0
-> Checking dmesg files contains oops end marker
->         dmesg-ramoops-0 ... ok
->         dmesg-ramoops-1 ... ok
-> Checking console file contains oops end marker ... ok
-> Checking pmsg file contains TEST_STRING ... ok
-> Removing all files in pstore filesystem
->         console-ramoops-0 ... ok
->         dmesg-ramoops-0 ... ok
->         dmesg-ramoops-1 ... ok
->         pmsg-ramoops-0 ... ok
-> selftests: pstore_post_reboot_tests [PASS]
-> make: Leaving directory '/home/root/selftests/pstore'
->
->
-> We can also see test logs later.
->
-> # cat pstore/logs/20150903-111158/pstore_tests.log
-> ...
+> I like this; although perhaps something like bpf() has, with the
+> unions inside the struct so that we don't have to declare another
+> struct if we add another seccomp command. Kees?
 
-Thanks for working on this! Pstore does need some selftests, so this
-is greatly appreciated. :) I sent some improvement ideas in separate
-emails.
+Yeah, bpf's union looks good. Let's add a "command" flag, though:
+
+seccomp(SECCOMP_MODE_FILTER_EBPF, int cmd, union, size);
+
+And this cmd could be ADD_FD or something?
+
+How's that look?
 
 -Kees
+
+>
+> Tycho
+>
+>> Cheers,
+>>
+>> Michael
+>>
+>>
+>> > -Kees
+>> >
+>> >> +       struct seccomp_filter *ret;
+>> >> +       struct bpf_prog *prog;
+>> >> +
+>> >> +       prog = bpf_prog_get(fd);
+>> >> +       if (IS_ERR(prog))
+>> >> +               return (struct seccomp_filter *) prog;
+>> >> +
+>> >> +       if (prog->type != BPF_PROG_TYPE_SECCOMP) {
+>> >> +               bpf_prog_put(prog);
+>> >> +               return ERR_PTR(-EINVAL);
+>> >> +       }
+>> >> +
+>> >> +       ret = kzalloc(sizeof(*ret), GFP_KERNEL | __GFP_NOWARN);
+>> >> +       if (!ret) {
+>> >> +               bpf_prog_put(prog);
+>> >> +               return ERR_PTR(-ENOMEM);
+>> >> +       }
+>> >> +
+>> >> +       ret->prog = prog;
+>> >> +       atomic_set(&ret->usage, 1);
+>> >> +
+>> >> +       /* Intentionally don't bpf_prog_put() here, because the underlying prog
+>> >> +        * is refcounted too and we're holding a reference from the struct
+>> >> +        * seccomp_filter object.
+>> >> +        */
+>> >> +
+>> >> +       return ret;
+>> >> +}
+>> >> +#else
+>> >> +static struct seccomp_filter *seccomp_prepare_ebpf(const char __user *filter)
+>> >> +{
+>> >> +       return ERR_PTR(-EINVAL);
+>> >> +}
+>> >> +#endif
+>> >>  #endif /* CONFIG_SECCOMP_FILTER */
+>> >>
+>> >>  /*
+>> >> @@ -775,8 +806,23 @@ static long seccomp_set_mode_filter(unsigned int flags,
+>> >>         if (flags & ~SECCOMP_FILTER_FLAG_MASK)
+>> >>                 return -EINVAL;
+>> >>
+>> >> +       /*
+>> >> +        * Installing a seccomp filter requires that the task has
+>> >> +        * CAP_SYS_ADMIN in its namespace or be running with no_new_privs.
+>> >> +        * This avoids scenarios where unprivileged tasks can affect the
+>> >> +        * behavior of privileged children.
+>> >> +        */
+>> >> +       if (!task_no_new_privs(current) &&
+>> >> +           security_capable_noaudit(current_cred(), current_user_ns(),
+>> >> +                                    CAP_SYS_ADMIN) != 0)
+>> >> +               return -EACCES;
+>> >> +
+>> >>         /* Prepare the new filter before holding any locks. */
+>> >> -       prepared = seccomp_prepare_user_filter(filter);
+>> >> +       if (flags & SECCOMP_FILTER_FLAG_EBPF)
+>> >> +               prepared = seccomp_prepare_ebpf(filter);
+>> >> +       else
+>> >> +               prepared = seccomp_prepare_user_filter(filter);
+>> >> +
+>> >>         if (IS_ERR(prepared))
+>> >>                 return PTR_ERR(prepared);
+>> >>
+>> >> --
+>> >> 2.1.4
+>> >>
+>> >
+>> >
+>> >
+>>
+>>
+>> --
+>> Michael Kerrisk
+>> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+>> Linux/UNIX System Programming Training: http://man7.org/training/
+
+
 
 -- 
 Kees Cook
