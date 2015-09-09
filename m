@@ -1,39 +1,62 @@
-From: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: Re: [PATCH 5/6] seccomp: add a way to attach a filter via eBPF fd
-Date: Wed, 9 Sep 2015 08:47:24 -0600
-Message-ID: <20150909144724.GZ26679@smitten>
-References: <1441382664-17437-1-git-send-email-tycho.andersen@canonical.com>
- <1441382664-17437-6-git-send-email-tycho.andersen@canonical.com>
- <CAGXu5jKke44txdYqEgPRrkn8SyWGjJuHxT2qMdq2ztp_16mQyw@mail.gmail.com>
- <55EA95FE.7000006@gmail.com>
- <20150908134044.GV26679@smitten>
- <CAGXu5jKS0yX92XXhL6ZkqMrxkqFpPyyBd7wbsvEEx4rqZ0VG6g@mail.gmail.com>
+From: =?iso-8859-1?Q?Cl=E9ment?= Vuchener <clement.vuchener-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2 0/1] Corsair Vengeance K90 driver
+Date: Wed, 9 Sep 2015 17:03:46 +0200
+Message-ID: <20150909150346.GA7191@untxi.home>
+References: <cover.1441641275.git.clement.vuchener@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAGXu5jKS0yX92XXhL6ZkqMrxkqFpPyyBd7wbsvEEx4rqZ0VG6g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <cover.1441641275.git.clement.vuchener-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Sep 08, 2015 at 05:07:03PM -0700, Kees Cook wrote:
->
-> Yeah, bpf's union looks good. Let's add a "command" flag, though:
-> 
-> seccomp(SECCOMP_MODE_FILTER_EBPF, int cmd, union, size);
-> 
-> And this cmd could be ADD_FD or something?
-> 
-> How's that look?
-
-I think we can drop the size (using the same strategy as bpf() and
-checking for zeroes at the end), and keep the same signature for
-seccomp(); so:
-
-seccomp(SECCOMP_MODE_FILTER_EBPF, SECCOMP_ADD_BPF_FD, &union)
-
-Yes, I'll use this in the next version.
-
-Tycho
+On Mon, Sep 07, 2015 at 05:58:36PM +0200, Cl=E9ment Vuchener wrote:
+> I removed the k90_profile class completely. I cannot write a good eno=
+ugh ABI with what I know of the keyboard so I am leaving that part out =
+of the kernel. If I change my mind in the future, it will be done in an=
+other patch.
+>=20
+> I also fixed a bug I had when unregistering the led device. Work was =
+being scheduled after the led device was unregistered.
+>=20
+> On the name change, I kept a lot of K90 references. As far as I know,=
+ the only similar keyboard is the K60 that shares the same firmware but=
+ does not have all the special keys and backlight, and for which the hi=
+d-generic driver should be enough. The more recent RGB keyboard series =
+uses a different protocol from what I have seen from the unofficial use=
+rspace driver (CKB from MSC).
+Actually, I may have been wrong, other keyboard may share at least the =
+incorrect HID usage code part. I will investigate more and send a new p=
+atch. I am still interested in comments on this one, especially on the =
+choice of key codes for the programmable keys.
+>=20
+> changes in v2:
+>  - Removed the k90_profile class and devices
+>  - Renamed driver for a more generic name ("corsair" driver in hid-co=
+rsair.c)
+>  - Fixed led devices clean up (hang when unplugging and led state res=
+et)
+>  - Added dependency on USB and LEDS_CLASS in Kconfig
+>=20
+> Cl=E9ment Vuchener (1):
+>   Add Corsair Vengeance K90 driver
+>=20
+>  Documentation/ABI/testing/sysfs-driver-hid-corsair |  15 +
+>  drivers/hid/Kconfig                                |  10 +
+>  drivers/hid/Makefile                               |   1 +
+>  drivers/hid/hid-core.c                             |   1 +
+>  drivers/hid/hid-corsair.c                          | 555 +++++++++++=
+++++++++++
+>  drivers/hid/hid-ids.h                              |   3 +
+>  6 files changed, 585 insertions(+)
+>  create mode 100644 Documentation/ABI/testing/sysfs-driver-hid-corsai=
+r
+>  create mode 100644 drivers/hid/hid-corsair.c
+>=20
+> --=20
+> 2.4.3
+>=20
