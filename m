@@ -1,214 +1,45 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [PATCH v1 0/8] VFS: In-kernel copy system call
-Date: Tue, 8 Sep 2015 18:19:33 -0700
-Message-ID: <20150909011933.GF30681@birch.djwong.org>
-References: <1441397823-1203-1-git-send-email-Anna.Schumaker@Netapp.com>
- <55EEFCEE.5090000@draigBrady.com>
- <55EF279B.3020101@Netapp.com>
- <CALCETrXxRB-LXVb+=nkwfj0zEjWuXXTctkSAc9Oec0fgyOQ5Yg@mail.gmail.com>
- <55EF3EFD.3080302@draigBrady.com>
- <20150908212907.GD30681@birch.djwong.org>
- <CALCETrWAotvN+MBsxq4QLQBr_WAyydqMnipcaTM88rM8sSx43w@mail.gmail.com>
- <20150908223959.GE30681@birch.djwong.org>
- <CALCETrVsWBdqvAgwxHcG=gbcWRNPG2ZziWUg1g=siKDrDu7S2Q@mail.gmail.com>
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: [PATCH v3] Cleanup: membarrier selftest
+Date: Wed, 09 Sep 2015 18:36:44 +1000
+Message-ID: <1441787804.4703.2.camel@ellerman.id.au>
+References: <1441745890-25852-1-git-send-email-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrVsWBdqvAgwxHcG=gbcWRNPG2ZziWUg1g=siKDrDu7S2Q@mail.gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: =?iso-8859-1?Q?P=E1draig?= Brady <P@draigbrady.com>, Anna Schumaker <Anna.Schumaker@netapp.com>, linux-nfs@vger.kernel.org, Linux btrfs Developers List <linux-btrfs@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Zach Brown <zab@zabbo.net>, Al Viro <viro@zeniv.linux.org.uk>, Chris Mason <clm@fb.com>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, andros@netapp.com, Christoph Hellwig <hch@infradead.org>, Coreutils <coreutils@gnu.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1441745890-25852-1-git-send-email-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Sep 08, 2015 at 04:08:43PM -0700, Andy Lutomirski wrote:
-> On Tue, Sep 8, 2015 at 3:39 PM, Darrick J. Wong <darrick.wong@oracle.=
-com> wrote:
-> > On Tue, Sep 08, 2015 at 02:45:39PM -0700, Andy Lutomirski wrote:
-> >> On Tue, Sep 8, 2015 at 2:29 PM, Darrick J. Wong <darrick.wong@orac=
-le.com> wrote:
-> >> > On Tue, Sep 08, 2015 at 09:03:09PM +0100, P=E1draig Brady wrote:
-> >> >> On 08/09/15 20:10, Andy Lutomirski wrote:
-> >> >> > On Tue, Sep 8, 2015 at 11:23 AM, Anna Schumaker
-> >> >> > <Anna.Schumaker@netapp.com> wrote:
-> >> >> >> On 09/08/2015 11:21 AM, P=E1draig Brady wrote:
-> >> >> >>> I see copy_file_range() is a reflink() on BTRFS?
-> >> >> >>> That's a bit surprising, as it avoids the copy completely.
-> >> >> >>> cp(1) for example considered doing a BTRFS clone by default=
-,
-> >> >> >>> but didn't due to expectations that users actually wanted
-> >> >> >>> the data duplicated on disk for resilience reasons,
-> >> >> >>> and for performance reasons so that write latencies were
-> >> >> >>> restricted to the copy operation, rather than being
-> >> >> >>> introduced at usage time as the dest file is CoW'd.
-> >> >> >>>
-> >> >> >>> If reflink() is a possibility for copy_file_range()
-> >> >> >>> then could it be done optionally with a flag?
-> >> >> >>
-> >> >> >> The idea is that filesystems get to choose how to handle cop=
-ies in the
-> >> >> >> default case.  BTRFS could do a reflink, but NFS could do a =
-server side
-> >> >
-> >> > Eww, different default behaviors depending on the filesystem. :)
-> >> >
-> >> >> >> copy instead.  I can change the default behavior to only do =
-a data copy
-> >> >> >> (unless the reflink flag is specified) instead, if that is d=
-esirable.
-> >> >> >>
-> >> >> >> What does everybody think?
-> >> >> >
-> >> >> > I think the best you could do is to have a hint asking polite=
-ly for
-> >> >> > the data to be deep-copied.  After all, some filesystems rese=
-rve the
-> >> >> > right to transparently deduplicate.
-> >> >> >
-> >> >> > Also, on a true COW filesystem (e.g. btrfs sometimes), there =
-may be no
-> >> >> > advantage to deep copying unless you actually want two copies=
- for
-> >> >> > locality reasons.
-> >> >>
-> >> >> Agreed. The relink and server side copy are separate things.
-> >> >> There's no advantage to not doing a server side copy,
-> >> >> but as mentioned there may be advantages to doing deep copies o=
-n BTRFS
-> >> >> (another reason not previous mentioned in this thread, would be
-> >> >> to avoid ENOSPC errors at some time in the future).
-> >> >>
-> >> >> So having control over the deep copy seems useful.
-> >> >> It's debatable whether ALLOW_REFLINK should be on/off by defaul=
-t
-> >> >> for copy_file_range().  I'd be inclined to have such a setting =
-off by default,
-> >> >> but cp(1) at least will work with whatever is chosen.
-> >> >
-> >> > So far it looks like people are interested in at least these "ma=
-ke data appear
-> >> > in this other place" filesystem operations:
-> >> >
-> >> > 1. reflink
-> >> > 2. reflink, but only if the contents are the same (dedupe)
-> >>
-> >> What I meant by this was: if you ask for "regular copy", you may e=
-nd
-> >> up with a reflink anyway.  Anyway, how can you reflink a range and
-> >> have the contents *not* be the same?
-> >
-> > reflink forcibly remaps fd_dest's range to fd_src's range.  If they=
- didn't
-> > match before, they will afterwards.
-> >
-> > dedupe remaps fd_dest's range to fd_src's range only if they match,=
- of course.
-> >
-> > Perhaps I should have said "...if the contents are the same before =
-the call"?
-> >
->=20
-> Oh, I see.
->=20
-> Can we have a clean way to figure out whether two file ranges are the
-> same in a way that allows false negatives?  I.e. return 1 if the
-> ranges are reflinks of each other and 0 if not?  Pretty please?  I've
-> implemented that in the past on btrfs by syncing the ranges and then
-> comparing FIEMAP output, but that's hideous.
+On Tue, 2015-09-08 at 16:58 -0400, Mathieu Desnoyers wrote:
+> We don't need to specify an explicit rule in the Makefile, the implicit
+> one will do the same. The "__EXPORTED_HEADERS__" define is not needed,
+> because we build the test against the installed kernel headers, not the
+> in-tree kernel headers. Re-use "$(TEST_PROGS)" in the clean target
+> rather than spelling the executable name twice. Include <unistd.h>
+> rather than the rather specific <asm-generic/unistd.h>. Include
+> <syscall.h> rather than <sys/syscall.h>. In both cases, the former
+> header is located in a standard location and includes the latter.
+> 
+> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+> CC: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+> CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+> CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> CC: Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> CC: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+> --
+> Changes since v2:
+> - Refine Changelog, removing references to comments, taking care
+>   of comments from Shuah Khan.
+> Changes since v1:
+> - Add Changelog.
+> Changes since RFC:
+> - Take care of comments from Michael Ellerman.
 
-Another mode for this call... :)
+Looks great, thanks.
 
-> >>
-> >> > 3. regular copy
-> >> > 4. regular copy, but make the hardware do it for us
-> >> > 5. regular copy, but require a second copy on the media (no-dedu=
-pe)
-> >>
-> >> If this comes from me, I have no desire to ever use this as a flag=
-=2E
-> >
-> > I meant (5) as a "disable auto-dedupe for this operation" flag, not=
- as
-> > a "reallocate all the shared blocks now" op...
->=20
-> Hmm, interesting.  What effect does it have on systems that do
-> deferred auto-dedupe?
+Acked-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 
-If it's a userspace deferred auto-dedupe, then hopefully the program
-coordinates with the dedupe program.
-
-Otherwise, it's only effective with a dedupe that runs in the write-pat=
-h.
-
-> >>
-> >> I think we should focus on what the actual legit use cases might b=
-e.
-> >> Certainly we want to support a mode that's "reflink or fail".  We
-> >> could have these flags:
-> >>
-> >> COPY_FILE_RANGE_ALLOW_REFLINK
-> >> COPY_FILE_RANGE_ALLOW_COPY
-> >>
-> >> Setting neither gets -EINVAL.  Setting both works as is.  Setting =
-just
-> >> ALLOW_REFLINK will fail if a reflink can't be supported.  Setting =
-just
-> >> ALLOW_COPY will make a best-effort attempt not to reflink but
-> >> expressly permits reflinking in cases where either (a) plain old
-> >> write(2) might also result in a reflink or (b) there is no advanta=
-ge
-> >> to not reflinking.
-> >
-> > I don't agree with having a 'copy' flag that can reflink when we al=
-so have a
-> > 'reflink' flag.  I guess I just don't like having a flag with diffe=
-rent
-> > meanings depending on context.
-> >
-> > Users should be able to get the default behavior by passing '0' for=
- flags, so
-> > provide FORBID_REFLINK and FORBID_COPY flags to turn off those beha=
-viors, with
-> > an admonishment that one should only use them if they have a gooooo=
-d reason.
-> > Passing neither gets you reflink-xor-copy, which is what I think we=
- both want
-> > in the general case.
-> >
-> > FORBID_REFLINK =3D 1
-> > FORBID_COPY =3D 2
-> > CHECK_SAME =3D 4
-> > HW_COPY =3D 8
-> >
-> > DEDUPE =3D (FORBID_COPY | CHECK_SAME)
-> >
-> > What do you say to that?
->=20
-> What does HW_COPY mean?
-
-It /probably/ means that the FS tells the storage device to copy the bl=
-ock
-rather than streaming it through the page cache.  Your autodedupe thinp=
- device,
-for example, would "copy" block X to Y by mapping both X and Y to the s=
-ame
-piece of media.
-
-(Effectively the same thing as FS reflink/dedupe, but in the storage de=
-v.)
-
->=20
-> If we have enough weird combinations, maybe having a mode instead of
-> flags makes sense.
-
-Let's hope not. :)
-
---D
->=20
-> --Andy
---
-To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
-" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+cheers
