@@ -1,55 +1,51 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH] selftests/seccomp: build on aarch64, document ABI
-Date: Wed, 09 Sep 2015 22:08:17 +0200
-Message-ID: <19228212.s6UOoYJca9@wuerfel>
-References: <20150909193025.GA29244@www.outflux.net>
+From: Chris Mason <clm@fb.com>
+Subject: Re: [PATCH v1 0/8] VFS: In-kernel copy system call
+Date: Wed, 9 Sep 2015 16:09:21 -0400
+Message-ID: <20150909200921.GD9511@ret.masoncoding.com>
+References: <1441397823-1203-1-git-send-email-Anna.Schumaker@Netapp.com>
+ <55EEFCEE.5090000@draigBrady.com>
+ <55EF279B.3020101@Netapp.com>
+ <CALCETrXxRB-LXVb+=nkwfj0zEjWuXXTctkSAc9Oec0fgyOQ5Yg@mail.gmail.com>
+ <55EF3EFD.3080302@draigBrady.com>
+ <20150908212907.GD30681@birch.djwong.org>
+ <CALCETrWAotvN+MBsxq4QLQBr_WAyydqMnipcaTM88rM8sSx43w@mail.gmail.com>
+ <20150908223959.GE30681@birch.djwong.org>
+ <CALCETrVsWBdqvAgwxHcG=gbcWRNPG2ZziWUg1g=siKDrDu7S2Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150909193025.GA29244-0X9Bc/hWBUTk6RaD4rd5nQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Bamvor Zhang Jian <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrVsWBdqvAgwxHcG=gbcWRNPG2ZziWUg1g=siKDrDu7S2Q@mail.gmail.com>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: "Darrick J. Wong" <darrick.wong@oracle.com>, =?iso-8859-1?Q?P=E1draig?= Brady <P@draigbrady.com>, Anna Schumaker <Anna.Schumaker@netapp.com>, linux-nfs@vger.kernel.org, Linux btrfs Developers List <linux-btrfs@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Zach Brown <zab@zabbo.net>, Al Viro <viro@zeniv.linux.org.uk>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, andros@netapp.com, Christoph Hellwig <hch@infradead.org>, Coreutils <coreutils@gnu.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wednesday 09 September 2015 12:30:27 Kees Cook wrote:
-> The syscall ABI is inconsistent on aarch64 compat, so at least we should
-> document it in the seccomp_bpf tests.
+On Tue, Sep 08, 2015 at 04:08:43PM -0700, Andy Lutomirski wrote:
+> On Tue, Sep 8, 2015 at 3:39 PM, Darrick J. Wong <darrick.wong@oracle.com> wrote:
+> > On Tue, Sep 08, 2015 at 02:45:39PM -0700, Andy Lutomirski wrote:
+> >> What I meant by this was: if you ask for "regular copy", you may end
+> >> up with a reflink anyway.  Anyway, how can you reflink a range and
+> >> have the contents *not* be the same?
+> >
+> > reflink forcibly remaps fd_dest's range to fd_src's range.  If they didn't
+> > match before, they will afterwards.
+> >
+> > dedupe remaps fd_dest's range to fd_src's range only if they match, of course.
+> >
+> > Perhaps I should have said "...if the contents are the same before the call"?
+> >
 > 
-> Signed-off-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-
-Can you explain in what way the ABI is inconsistent here?
-
-> ---
-> Can someone with access to native aarch64 double-check this for me? I
-> think we need to change these tests to pass if it's expected, but the
-> compat behavior seems bad. It means compat code will break under an
-> aarch64 kernel, when dealing with syscalls, like through seccomp.
-> ---
->  tools/testing/selftests/seccomp/seccomp_bpf.c | 15 +++++++++++++--
->  1 file changed, 13 insertions(+), 2 deletions(-)
+> Oh, I see.
 > 
-> diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c b/tools/testing/selftests/seccomp/seccomp_bpf.c
-> index 770f47adf295..866ff42e000d 100644
-> --- a/tools/testing/selftests/seccomp/seccomp_bpf.c
-> +++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
-> @@ -33,6 +33,10 @@
->  #include <unistd.h>
->  #include <sys/syscall.h>
->  
-> +#if defined(__aarch64__) && !defined(__NR_poll)
-> +# define __NR_poll 0x49
-> +#endif
+> Can we have a clean way to figure out whether two file ranges are the
+> same in a way that allows false negatives?  I.e. return 1 if the
+> ranges are reflinks of each other and 0 if not?  Pretty please?  I've
+> implemented that in the past on btrfs by syncing the ranges and then
+> comparing FIEMAP output, but that's hideous.
 
-I don't understand this: 0x49 is __NR_ppoll on arm64 and all architectures
-that use asm-generic/unistd.h, not __NR_poll, which is no longer used there.
+I'd almost rather have a separate call, maybe unshare_file_range()?
 
-If this is intentional, it at least needs a comment to explain the
-situation, and be extended to all other architectures that do not have
-a poll() system call.
+Is that the end goal to the sharing check?
 
-The arm32 version of sys_poll should be available as 168 in both native
-and compat mode.
-
-	Arnd
+-chris
