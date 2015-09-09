@@ -1,62 +1,85 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH] selftests/seccomp: build on aarch64, document ABI
-Date: Wed, 09 Sep 2015 23:20:18 +0200
-Message-ID: <480615028.m9oKCRv0Vd@wuerfel>
-References: <20150909193025.GA29244@www.outflux.net> <19228212.s6UOoYJca9@wuerfel> <CAGXu5jJw8hAVPKvut51D1jojsCEGEweWNu2TyWrgUfQ9hqsw3Q@mail.gmail.com>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v1 0/8] VFS: In-kernel copy system call
+Date: Wed, 9 Sep 2015 14:42:10 -0700
+Message-ID: <20150909214210.GC10399@birch.djwong.org>
+References: <CALCETrXxRB-LXVb+=nkwfj0zEjWuXXTctkSAc9Oec0fgyOQ5Yg@mail.gmail.com>
+ <55EF3EFD.3080302@draigBrady.com>
+ <20150908212907.GD30681@birch.djwong.org>
+ <CALCETrWAotvN+MBsxq4QLQBr_WAyydqMnipcaTM88rM8sSx43w@mail.gmail.com>
+ <20150908223959.GE30681@birch.djwong.org>
+ <CALCETrVsWBdqvAgwxHcG=gbcWRNPG2ZziWUg1g=siKDrDu7S2Q@mail.gmail.com>
+ <20150909200921.GD9511@ret.masoncoding.com>
+ <CAHQdGtTSZ1beMMF4DJv=OuA1j2ww0xzJj3+9HMRAf3UpCCLaZg@mail.gmail.com>
+ <20150909203805.GE9511@ret.masoncoding.com>
+ <55F0997E.1040105@Netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAGXu5jJw8hAVPKvut51D1jojsCEGEweWNu2TyWrgUfQ9hqsw3Q@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, Will Drewry <wad@chromium.org>, Linux API <linux-api@vger.kernel.org>, Shuah Khan <shuahkh@osg.samsung.com>, Andy Lutomirski <luto@amacapital.net>, Bamvor Zhang Jian <bamvor.zhangjian@linaro.org>, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <55F0997E.1040105-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Cc: Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, =?iso-8859-1?Q?P=E1draig?= Brady <P@draigbrady.com>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux btrfs Developers List <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Zach Brown <zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, William Andros Adamson <andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Coreutils <coreutils-mXXj517/zsQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wednesday 09 September 2015 13:52:39 Kees Cook wrote:
-> On Wed, Sep 9, 2015 at 1:08 PM, Arnd Bergmann <arnd@arndb.de> wrote:
-> > On Wednesday 09 September 2015 12:30:27 Kees Cook wrote:
+On Wed, Sep 09, 2015 at 04:41:34PM -0400, Anna Schumaker wrote:
+> On 09/09/2015 04:38 PM, Chris Mason wrote:
+> > On Wed, Sep 09, 2015 at 04:26:58PM -0400, Trond Myklebust wrote:
+> >> On Wed, Sep 9, 2015 at 4:09 PM, Chris Mason <clm-b10kYP2dOMg@public.gmane.org> wrote:
+> >>> On Tue, Sep 08, 2015 at 04:08:43PM -0700, Andy Lutomirski wrote:
+> >>>> On Tue, Sep 8, 2015 at 3:39 PM, Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
+> >>>>> On Tue, Sep 08, 2015 at 02:45:39PM -0700, Andy Lutomirski wrote:
+> >>>>>> What I meant by this was: if you ask for "regular copy", you may end
+> >>>>>> up with a reflink anyway.  Anyway, how can you reflink a range and
+> >>>>>> have the contents *not* be the same?
+> >>>>>
+> >>>>> reflink forcibly remaps fd_dest's range to fd_src's range.  If they didn't
+> >>>>> match before, they will afterwards.
+> >>>>>
+> >>>>> dedupe remaps fd_dest's range to fd_src's range only if they match, of course.
+> >>>>>
+> >>>>> Perhaps I should have said "...if the contents are the same before the call"?
+> >>>>>
+> >>>>
+> >>>> Oh, I see.
+> >>>>
+> >>>> Can we have a clean way to figure out whether two file ranges are the
+> >>>> same in a way that allows false negatives?  I.e. return 1 if the
+> >>>> ranges are reflinks of each other and 0 if not?  Pretty please?  I've
+> >>>> implemented that in the past on btrfs by syncing the ranges and then
+> >>>> comparing FIEMAP output, but that's hideous.
+> >>>
+> >>> I'd almost rather have a separate call, maybe unshare_file_range()?
+> >>>
+> >>
+> >> Doesn't it make more sense to put that functionality in fallocate()?
 
-> > If this is intentional, it at least needs a comment to explain the
-> > situation, and be extended to all other architectures that do not have
-> > a poll() system call.
-> >
-> > The arm32 version of sys_poll should be available as 168 in both native
-> > and compat mode.
+[slightly off-topic]
+
+How about FALLOC_FL_UNSHARE_RANGE?  I've been looking for a place to land
+an unshare op that isn't chattr +C, and fallocate seems like a better fit
+anyway.
+
+--D
+
+> > 
+> > That works too, I'm just hoping to keep the copy_file_range stuff
+> > simple.
 > 
-> Does ppoll still get interrupted like poll to require a restart_syscall call?
-
-Yes, the only difference between the two is the optional signal mask
-argument in ppoll.
-
-> Regardless, the primary problem is this (emphasis added):
+> I agree with keeping copy_file_range() simple, especially for the initial
+> merge.  Extra stuff can always be added in later :)
 > 
-> >> +        * - native ARM does _not_ expose true syscall.
-> >> +        * - compat ARM on ARM64 _does_ expose true syscall.
+> Anna
 > 
-> When you ptrace or seccomp an arm32 binary under and arm32 kernel,
-> restart_syscall is invisible. When you ptrace or seccomp an arm32
-> binary under and arm64 kernel, suddenly it's visible. This means, for
-> example, seccomp filters will break under an arm64 kernel.
-
-Ok, I see.
-
-> (And apologies if I'm not remembering pieces of this correctly, I
-> don't have access to arm64 hardware at the moment, which is why I'm
-> reaching out for some help on this... I'm trying to close out this old
-> thread: https://lkml.org/lkml/2015/1/20/778 )
-
-FWIW, it should not be too hard to get an image that runs in
-qemu-system-arm64.
-
-I suppose the same problem exists on all restartable system calls
-(e.g. nanosleep, select, recvmsg, clock_nanosleep, ...)?
-
-I also believe there are various architectures that cannot see the
-original system call number for a restarted syscall, in particular
-when the syscall number argument is in the same register as the
-return code of the syscall and gets overwritten on the way out of 
-the kernel. Is this the problem you are seeing? If so, we should
-find a solution that works on all such architectures.
-
-	Arnd
+> > 
+> > -chris
+> > 
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
