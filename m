@@ -1,252 +1,349 @@
 From: Anna Schumaker <Anna.Schumaker@netapp.com>
-Subject: Re: [PATCH v1 0/8] VFS: In-kernel copy system call
-Date: Wed, 9 Sep 2015 14:52:08 -0400
-Message-ID: <55F07FD8.4020507@Netapp.com>
+Subject: Re: [PATCH v1 9/8] copy_file_range.2: New page documenting
+ copy_file_range()
+Date: Wed, 9 Sep 2015 15:25:36 -0400
+Message-ID: <55F087B0.4090008@Netapp.com>
 References: <1441397823-1203-1-git-send-email-Anna.Schumaker@Netapp.com>
- <55EEFCEE.5090000@draigBrady.com> <55EF279B.3020101@Netapp.com>
- <CALCETrXxRB-LXVb+=nkwfj0zEjWuXXTctkSAc9Oec0fgyOQ5Yg@mail.gmail.com>
- <55EF3EFD.3080302@draigBrady.com> <20150908212907.GD30681@birch.djwong.org>
- <CALCETrWAotvN+MBsxq4QLQBr_WAyydqMnipcaTM88rM8sSx43w@mail.gmail.com>
- <20150908223959.GE30681@birch.djwong.org>
+ <1441397823-1203-10-git-send-email-Anna.Schumaker@Netapp.com>
+ <20150904213856.GC10391@birch.djwong.org> <55EEF8E3.8030501@Netapp.com>
+ <20150908203918.GB30681@birch.djwong.org> <55F01A26.7070706@gmail.com>
+ <20150909171757.GE10391@birch.djwong.org> <55F06CEC.5040208@Netapp.com>
+ <20150909181244.GH30681@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20150908223959.GE30681@birch.djwong.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>, Andy Lutomirski <luto@amacapital.net>
-Cc: =?UTF-8?Q?P=c3=a1draig_Brady?= <P@draigbrady.com>, linux-nfs@vger.kernel.org, Linux btrfs Developers List <linux-btrfs@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Zach Brown <zab@zabbo.net>, Al Viro <viro@zeniv.linux.org.uk>, Chris Mason <clm@fb.com>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, andros@netapp.com, Christoph Hellwig <hch@infradead.org>, Coreutils <coreutils@gnu.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <20150909181244.GH30681@birch.djwong.org>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, mtk.manpages@gmail.com, andros@netapp.com, hch@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On 09/08/2015 06:39 PM, Darrick J. Wong wrote:
-> On Tue, Sep 08, 2015 at 02:45:39PM -0700, Andy Lutomirski wrote:
->> On Tue, Sep 8, 2015 at 2:29 PM, Darrick J. Wong <darrick.wong@oracle=
-=2Ecom> wrote:
->>> On Tue, Sep 08, 2015 at 09:03:09PM +0100, P=C3=A1draig Brady wrote:
->>>> On 08/09/15 20:10, Andy Lutomirski wrote:
->>>>> On Tue, Sep 8, 2015 at 11:23 AM, Anna Schumaker
->>>>> <Anna.Schumaker@netapp.com> wrote:
->>>>>> On 09/08/2015 11:21 AM, P=C3=A1draig Brady wrote:
->>>>>>> I see copy_file_range() is a reflink() on BTRFS?
->>>>>>> That's a bit surprising, as it avoids the copy completely.
->>>>>>> cp(1) for example considered doing a BTRFS clone by default,
->>>>>>> but didn't due to expectations that users actually wanted
->>>>>>> the data duplicated on disk for resilience reasons,
->>>>>>> and for performance reasons so that write latencies were
->>>>>>> restricted to the copy operation, rather than being
->>>>>>> introduced at usage time as the dest file is CoW'd.
+On 09/09/2015 02:12 PM, Darrick J. Wong wrote:
+> On Wed, Sep 09, 2015 at 01:31:24PM -0400, Anna Schumaker wrote:
+>> On 09/09/2015 01:17 PM, Darrick J. Wong wrote:
+>>> On Wed, Sep 09, 2015 at 07:38:14AM -0400, Austin S Hemmelgarn wrote:
+>>>> On 2015-09-08 16:39, Darrick J. Wong wrote:
+>>>>> On Tue, Sep 08, 2015 at 11:04:03AM -0400, Anna Schumaker wrote:
+>>>>>> On 09/04/2015 05:38 PM, Darrick J. Wong wrote:
+>>>>>>> On Fri, Sep 04, 2015 at 04:17:03PM -0400, Anna Schumaker wrote:
+>>>>>>>> copy_file_range() is a new system call for copying ranges of data
+>>>>>>>> completely in the kernel.  This gives filesystems an opportunity to
+>>>>>>>> implement some kind of "copy acceleration", such as reflinks or
+>>>>>>>> server-side-copy (in the case of NFS).
+>>>>>>>>
+>>>>>>>> Signed-off-by: Anna Schumaker <Anna.Schumaker@Netapp.com>
+>>>>>>>> ---
+>>>>>>>>  man2/copy_file_range.2 | 168 +++++++++++++++++++++++++++++++++++++++++++++++++
+>>>>>>>>  1 file changed, 168 insertions(+)
+>>>>>>>>  create mode 100644 man2/copy_file_range.2
+>>>>>>>>
+>>>>>>>> diff --git a/man2/copy_file_range.2 b/man2/copy_file_range.2
+>>>>>>>> new file mode 100644
+>>>>>>>> index 0000000..4a4cb73
+>>>>>>>> --- /dev/null
+>>>>>>>> +++ b/man2/copy_file_range.2
+>>>>>>>> @@ -0,0 +1,168 @@
+>>>>>>>> +.\"This manpage is Copyright (C) 2015 Anna Schumaker <Anna.Schumaker@Netapp.com>
+>>>>>>>> +.TH COPY 2 2015-8-31 "Linux" "Linux Programmer's Manual"
+>>>>>>>> +.SH NAME
+>>>>>>>> +copy_file_range \- Copy a range of data from one file to another
+>>>>>>>> +.SH SYNOPSIS
+>>>>>>>> +.nf
+>>>>>>>> +.B #include <linux/copy.h>
+>>>>>>>> +.B #include <sys/syscall.h>
+>>>>>>>> +.B #include <unistd.h>
+>>>>>>>> +
+>>>>>>>> +.BI "ssize_t syscall(__NR_copy_file_range, int " fd_in ", loff_t * " off_in ",
+>>>>>>>> +.BI "                int " fd_out ", loff_t * " off_out ", size_t " len ",
+>>>>>>>> +.BI "                unsigned int " flags );
+>>>>>>>> +.fi
+>>>>>>>> +.SH DESCRIPTION
+>>>>>>>> +The
+>>>>>>>> +.BR copy_file_range ()
+>>>>>>>> +system call performs an in-kernel copy between two file descriptors
+>>>>>>>> +without all that tedious mucking about in userspace.
 >>>>>>>
->>>>>>> If reflink() is a possibility for copy_file_range()
->>>>>>> then could it be done optionally with a flag?
+>>>>>>> ;)
+>>>>>>>
+>>>>>>>> +It copies up to
+>>>>>>>> +.I len
+>>>>>>>> +bytes of data from file descriptor
+>>>>>>>> +.I fd_in
+>>>>>>>> +to file descriptor
+>>>>>>>> +.I fd_out
+>>>>>>>> +at
+>>>>>>>> +.IR off_out .
+>>>>>>>> +The file descriptors must not refer to the same file.
+>>>>>>>
+>>>>>>> Why?  btrfs (and XFS) reflink can handle the case of a file sharing blocks
+>>>>>>> with itself.
 >>>>>>
->>>>>> The idea is that filesystems get to choose how to handle copies =
-in the
->>>>>> default case.  BTRFS could do a reflink, but NFS could do a serv=
-er side
->>>
->>> Eww, different default behaviors depending on the filesystem. :)
->>>
->>>>>> copy instead.  I can change the default behavior to only do a da=
-ta copy
->>>>>> (unless the reflink flag is specified) instead, if that is desir=
-able.
+>>>>>> I've never really thought about it... Zach had that in his initial
+>>>>>> submission, so mentioned it in the man page.  Should I remove that bit?
+>>>>>
+>>>>> Yes, please!
+>>>>>
+>>>>> I could be wrong, but I think btrfs only started supporting files that share
+>>>>> blocks with themselves relatively recently(?)
+>>>>>
+>>>>> I'm not sure why zab added this; was hoping he'd speak up. ;)
+>>>>>
 >>>>>>
->>>>>> What does everybody think?
+>>>>>>>
+>>>>>>>> +
+>>>>>>>> +The following semantics apply for
+>>>>>>>> +.IR fd_in ,
+>>>>>>>> +and similar statements apply to
+>>>>>>>> +.IR off_out :
+>>>>>>>> +.IP * 3
+>>>>>>>> +If
+>>>>>>>> +.I off_in
+>>>>>>>> +is NULL, then bytes are read from
+>>>>>>>> +.I fd_in
+>>>>>>>> +starting from the current file offset and the current
+>>>>>>>> +file offset is adjusted appropriately.
+>>>>>>>> +.IP *
+>>>>>>>> +If
+>>>>>>>> +.I off_in
+>>>>>>>> +is not NULL, then
+>>>>>>>> +.I off_in
+>>>>>>>> +must point to a buffer that specifies the starting
+>>>>>>>> +offset where bytes from
+>>>>>>>> +.I fd_in
+>>>>>>>> +will be read.  The current file offset of
+>>>>>>>> +.I fd_in
+>>>>>>>> +is not changed, but
+>>>>>>>> +.I off_in
+>>>>>>>> +is adjusted appropriately.
+>>>>>>>> +.PP
+>>>>>>>> +The default behavior of
+>>>>>>>> +.BR copy_file_range ()
+>>>>>>>> +is filesystem specific, and might result in creating a
+>>>>>>>> +copy-on-write reflink.
+>>>>>>>> +In the event that a given filesystem does not implement
+>>>>>>>> +any form of copy acceleration, the kernel will perform
+>>>>>>>> +a deep copy of the requested range by reading bytes from
+>>>>>>>
+>>>>>>> I wonder if it's wise to allow deep copies -- what happens if len == 1T?
+>>>>>>> Will this syscall just block for a really long time?
+>>>>>>
+>>>>>> We use rw_verify_area(), (similar to read and write) so we won't allow a
+>>>>>> value of len that long.  I can mention this in an updated version of this man
+>>>>>> page!
 >>>>>
->>>>> I think the best you could do is to have a hint asking politely f=
-or
->>>>> the data to be deep-copied.  After all, some filesystems reserve =
-the
->>>>> right to transparently deduplicate.
+>>>>> Ok.  I guess MAX_RW_COUNT limits us to about 4G at once, which for a splice
+>>>
+>>> Heh, INT_MAX, so 2GB at once.
+>>>
+>>>>> copy is probably reasonable.
 >>>>>
->>>>> Also, on a true COW filesystem (e.g. btrfs sometimes), there may =
-be no
->>>>> advantage to deep copying unless you actually want two copies for
->>>>> locality reasons.
+>>>>> The reason why I asked about len == 1T specifically is that I can (with
+>>>>> somewhat long delays) reflink about 260 million extents at a time on XFS,
+>>>>> which is about 1TB.  Given that locks get held for the duration, it's probably
+>>>>> not a bad thing to limit userspace to 4G at a time.
 >>>>
->>>> Agreed. The relink and server side copy are separate things.
->>>> There's no advantage to not doing a server side copy,
->>>> but as mentioned there may be advantages to doing deep copies on B=
-TRFS
->>>> (another reason not previous mentioned in this thread, would be
->>>> to avoid ENOSPC errors at some time in the future).
->>>>
->>>> So having control over the deep copy seems useful.
->>>> It's debatable whether ALLOW_REFLINK should be on/off by default
->>>> for copy_file_range().  I'd be inclined to have such a setting off=
- by default,
->>>> but cp(1) at least will work with whatever is chosen.
+>>>> I'd personally love to see that be tunable by a sysctl (kind of like
+>>>> how you can control the maximum number of AIO requests in flight),
+>>>> and for that matter we might want to be able to limit the number of
+>>>> in-progress copies going on.
 >>>
->>> So far it looks like people are interested in at least these "make =
-data appear
->>> in this other place" filesystem operations:
+>>> Now that I think about it, btrfs' reflink ioctl doesn't seem to have any
+>>> particular limit on how much you can reflink in a single call.  XFS doesn't
+>>> have a limit either.  Given that reflink should create a tiny amount of IO
+>>> compared to the number of bytes being manipulated, should we allow a higher
+>>> limit when ssize_t is large enough?
 >>>
->>> 1. reflink
->>> 2. reflink, but only if the contents are the same (dedupe)
+>>> Copy-through-the-pagecache should stick to MAX_RW_COUNT.
 >>
->> What I meant by this was: if you ask for "regular copy", you may end
->> up with a reflink anyway.  Anyway, how can you reflink a range and
->> have the contents *not* be the same?
->=20
-> reflink forcibly remaps fd_dest's range to fd_src's range.  If they d=
-idn't
-> match before, they will afterwards.
->=20
-> dedupe remaps fd_dest's range to fd_src's range only if they match, o=
-f course.
->=20
-> Perhaps I should have said "...if the contents are the same before th=
-e call"?
->=20
->>
->>> 3. regular copy
->>> 4. regular copy, but make the hardware do it for us
->>> 5. regular copy, but require a second copy on the media (no-dedupe)
->>
->> If this comes from me, I have no desire to ever use this as a flag.
->=20
-> I meant (5) as a "disable auto-dedupe for this operation" flag, not a=
-s
-> a "reallocate all the shared blocks now" op...
->=20
->> If someone wants to use chattr or some new operation to say "make th=
-is
->> range of this file belong just to me for purpose of optimizing futur=
-e
->> writes", then sure, go for it, with the understanding that there are
->> plenty of filesystems for which that doesn't even make sense.
->=20
-> "Unshare these blocks" sounds more like something fallocate could do.
->=20
-> So far in my XFS reflink playground, it seems that using the defrag t=
-ool to
-> un-cow a file makes most sense.  AFAICT the XFS and ext4 defraggers c=
-opy a
-> fragmented file's data to a second file and use a 'swap extents' oper=
-ation,
-> after which the donor file is unlinked.
->=20
-> Hey, if this syscall turns into a more generic "do something involvin=
-g two
-> (fd:off:len) (fd:off:len) tuples" call, I guess we could throw in "sw=
-ap
-> extents" as a 7th operation, to refactor the ioctls.  <smirk>
->=20
->>
->>> 6. regular copy, but don't CoW (eatmyothercopies) (joke)
->>>
->>> (Please add whatever ops I missed.)
->>>
->>> I think I can see a case for letting (4) fall back to (3) since (4)=
- is an
->>> optimization of (3).
->>>
->>> However, I particularly don't like the idea of (1) falling back to =
-(3-5).
->>> Either the kernel can satisfy a request or it can't, but let's not =
-just
->>> assume that we should transmogrify one type of request into another=
-=2E  Userspace
->>> should decide if a reflink failure should turn into one of the copy=
- variants,
->>> depending on whether the user wants to spread allocation costs over=
- rewrites or
->>> pay it all up front.  Also, if we allow reflink to fall back to cop=
-y, how do
->>> programs find out what actually took place?  Or do we simply not al=
-low them to
->>> find out?
->>>
->>> Also, programs that expect reflink either to finish or fail quickly=
- might be
->>> surprised if it's possible for reflink to take a longer time than u=
-sual and
->>> with the side effect that a deep(er) copy was made.
->>>
->>> I guess if someone asks for both (1) and (3) we can do the fallback=
- in the
->>> kernel, like how we handle it right now.
->>>
->>
->> I think we should focus on what the actual legit use cases might be.
->> Certainly we want to support a mode that's "reflink or fail".  We
->> could have these flags:
->>
->> COPY_FILE_RANGE_ALLOW_REFLINK
->> COPY_FILE_RANGE_ALLOW_COPY
->>
->> Setting neither gets -EINVAL.  Setting both works as is.  Setting ju=
-st
->> ALLOW_REFLINK will fail if a reflink can't be supported.  Setting ju=
-st
->> ALLOW_COPY will make a best-effort attempt not to reflink but
->> expressly permits reflinking in cases where either (a) plain old
->> write(2) might also result in a reflink or (b) there is no advantage
->> to not reflinking.
->=20
-> I don't agree with having a 'copy' flag that can reflink when we also=
- have a
-> 'reflink' flag.  I guess I just don't like having a flag with differe=
-nt
-> meanings depending on context.
->=20
-> Users should be able to get the default behavior by passing '0' for f=
-lags, so
-> provide FORBID_REFLINK and FORBID_COPY flags to turn off those behavi=
-ors, with
-> an admonishment that one should only use them if they have a goooood =
-reason.
-> Passing neither gets you reflink-xor-copy, which is what I think we b=
-oth want
-> in the general case.
+>> Should I keep rejecting pagecache copies if len > MAX_RW_COUNT?  Or would it
+>> be okay to change the value of len to MAX_RW_COUNT in this case?
+> 
+> OH.  Heh.
+> 
+> rw_verify_area returns either an error code or a len that's been clamped to
+> MAX_RW_COUNT.  However, the syscall code only checks for errors, and otherwise
+> ignores the clamp.  So I guess the length has never been clamped.
+> 
+> Since the syscall returns ssize_t, I think it's fine to keep around the return
+> value from rw_verify_area and use it to clamp len if we have to fall back on
+> pagecache copy.  Otherwise we'll let each FS' copy routine decide its maximum.
 
-I agree here that 0 for flags should do something useful, and I wanted =
-to double check if reflink-xor-copy is a good default behavior.
+Okay.  I'll use the return value to clamp the copy length, but move this code so that it's only for pagecache copies.  Thanks!
 
->=20
-> FORBID_REFLINK =3D 1
-> FORBID_COPY =3D 2
-
-I don't like the idea of using flags to forbid behavior.  I think it wo=
-uld be more straightforward to have flags like REFLINK_ONLY or COPY_ONL=
-Y so users can tell us what they want, instead of what they don't want.
-
-While I'm thinking about flags, COPY_FILE_RANGE_REFLINK_ONLY would be a=
- bit of a mouthful.  Does anybody have suggestions for ways that I coul=
-d make this shorter?
-
-Thanks,
 Anna
 
-> CHECK_SAME =3D 4
-> HW_COPY =3D 8
->=20
-> DEDUPE =3D (FORBID_COPY | CHECK_SAME)
->=20
-> What do you say to that?
->=20
->> An example of (b) would be a filesystem backed by deduped
->> thinly-provisioned storage that can't do anything about ENOSPC becau=
-se
->> it doesn't control it in the first place.
->>
->> Another option would be to split up the copy case into "I expect to
->> overwrite a lot of the target file soon, so (c) try to commit space
->> for that or (d) try to make it time-efficient".  Of course, (d) is
->> irrelevant on filesystems with no random access (nvdimms, for
->> example).
->>
->> I guess the tl;dr is that I'm highly skeptical of any use for
->> disallowing reflinking other than forcibly committing space in cases
->> where committing space actually means something.
->=20
-> That's more or less where I was going too. :)
->=20
+> 
 > --D
->=20
+> 
+>>
+>> Anna
+>>
+>>>
+>>> I noticed that btrfs won't dedupe more than 16M per call.  Any thoughts?
+>>>
+>>> --D
+>>>
+>>>>>
+>>>>> (But hey, it's fun to stress-test once in a while. :))
+>>>>>
+>>>>> --D
+>>>>>
+>>>>>>
+>>>>>>
+>>>>>>>
+>>>>>>>> +.I fd_in
+>>>>>>>> +and writing them to
+>>>>>>>> +.IR fd_out .
+>>>>>>>
+>>>>>>> "...if COPY_REFLINK is not set in flags."
+>>>>>>
+>>>>>> Sure.
+>>>>>>
+>>>>>>>
+>>>>>>>> +
+>>>>>>>> +Currently, Linux only supports the following flag:
+>>>>>>>> +.TP 1.9i
+>>>>>>>> +.B COPY_REFLINK
+>>>>>>>> +Only perform the copy if the filesystem can do it as a reflink.
+>>>>>>>> +Do not fall back on performing a deep copy.
+>>>>>>>> +.SH RETURN VALUE
+>>>>>>>> +Upon successful completion,
+>>>>>>>> +.BR copy_file_range ()
+>>>>>>>> +will return the number of bytes copied between files.
+>>>>>>>> +This could be less than the length originally requested.
+>>>>>>>> +
+>>>>>>>> +On error,
+>>>>>>>> +.BR copy_file_range ()
+>>>>>>>> +returns \-1 and
+>>>>>>>> +.I errno
+>>>>>>>> +is set to indicate the error.
+>>>>>>>> +.SH ERRORS
+>>>>>>>> +.TP
+>>>>>>>> +.B EBADF
+>>>>>>>> +One or more file descriptors are not valid,
+>>>>>>>> +or do not have proper read-write mode.
+>>>>>>>
+>>>>>>> "or fd_out is not opened for writing"?
+>>>>>>
+>>>>>> I'll add that.
+>>>>>>
+>>>>>>>
+>>>>>>>> +.TP
+>>>>>>>> +.B EINVAL
+>>>>>>>> +Requested range extends beyond the end of the file;
+>>>>>>>> +.I flags
+>>>>>>>> +argument is set to an invalid value.
+>>>>>>>> +.TP
+>>>>>>>> +.B EOPNOTSUPP
+>>>>>>>> +.B COPY_REFLINK
+>>>>>>>> +was specified in
+>>>>>>>> +.IR flags ,
+>>>>>>>> +but the target filesystem does not support reflinks.
+>>>>>>>> +.TP
+>>>>>>>> +.B EXDEV
+>>>>>>>> +Target filesystem doesn't support cross-filesystem copies.
+>>>>>>>> +.SH VERSIONS
+>>>>>>>
+>>>>>>> Perhaps this ought to list a few more errors (EIO, ENOSPC, ENOSYS, EPERM...)
+>>>>>>> that can be returned?  (I was looking at the fallocate manpage.)
+>>>>>>
+>>>>>> Okay.  I'll poke around for what else could be returned!
+>>>>>>
+>>>>>> Thanks,
+>>>>>> Anna
+>>>>>>
+>>>>>>>
+>>>>>>> --D
+>>>>>>>
+>>>>>>>> +The
+>>>>>>>> +.BR copy_file_range ()
+>>>>>>>> +system call first appeared in Linux 4.3.
+>>>>>>>> +.SH CONFORMING TO
+>>>>>>>> +The
+>>>>>>>> +.BR copy_file_range ()
+>>>>>>>> +system call is a nonstandard Linux extension.
+>>>>>>>> +.SH EXAMPLE
+>>>>>>>> +.nf
+>>>>>>>> +
+>>>>>>>> +#define _GNU_SOURCE
+>>>>>>>> +#include <fcntl.h>
+>>>>>>>> +#include <linux/copy.h>
+>>>>>>>> +#include <stdio.h>
+>>>>>>>> +#include <stdlib.h>
+>>>>>>>> +#include <sys/stat.h>
+>>>>>>>> +#include <sys/syscall.h>
+>>>>>>>> +#include <unistd.h>
+>>>>>>>> +
+>>>>>>>> +
+>>>>>>>> +int main(int argc, char **argv)
+>>>>>>>> +{
+>>>>>>>> +    int fd_in, fd_out;
+>>>>>>>> +    struct stat stat;
+>>>>>>>> +    loff_t len, ret;
+>>>>>>>> +
+>>>>>>>> +    if (argc != 3) {
+>>>>>>>> +        fprintf(stderr, "Usage: %s <pathname> <pathname>\n", argv[0]);
+>>>>>>>> +        exit(EXIT_FAILURE);
+>>>>>>>> +    }
+>>>>>>>> +
+>>>>>>>> +    fd_in = open(argv[1], O_RDONLY);
+>>>>>>>> +    if (fd_in == -1) {
+>>>>>>>> +        perror("open (argv[1])");
+>>>>>>>> +        exit(EXIT_FAILURE);
+>>>>>>>> +    }
+>>>>>>>> +
+>>>>>>>> +    if (fstat(fd_in, &stat) == -1) {
+>>>>>>>> +        perror("fstat");
+>>>>>>>> +        exit(EXIT_FAILURE);
+>>>>>>>> +    }
+>>>>>>>> +    len = stat.st_size;
+>>>>>>>> +
+>>>>>>>> +    fd_out = open(argv[2], O_WRONLY | O_CREAT, 0644);
+>>>>>>>> +    if (fd_out == -1) {
+>>>>>>>> +        perror("open (argv[2])");
+>>>>>>>> +        exit(EXIT_FAILURE);
+>>>>>>>> +    }
+>>>>>>>> +
+>>>>>>>> +    do {
+>>>>>>>> +        ret = syscall(__NR_copy_file_range, fd_in, NULL,
+>>>>>>>> +                      fd_out, NULL, len, 0);
+>>>>>>>> +        if (ret == -1) {
+>>>>>>>> +            perror("copy_file_range");
+>>>>>>>> +            exit(EXIT_FAILURE);
+>>>>>>>> +        }
+>>>>>>>> +
+>>>>>>>> +        len -= ret;
+>>>>>>>> +    } while (len > 0);
+>>>>>>>> +
+>>>>>>>> +    close(fd_in);
+>>>>>>>> +    close(fd_out);
+>>>>>>>> +    exit(EXIT_SUCCESS);
+>>>>>>>> +}
+>>>>>>>> +.fi
+>>>>>>>> +.SH SEE ALSO
+>>>>>>>> +.BR splice (2)
+>>>>>>>> --
+>>>>>>>> 2.5.1
+>>>>>>>>
+>>>>>>>> --
+>>>>>>>> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
+>>>>>>>> the body of a message to majordomo@vger.kernel.org
+>>>>>>>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>>>>>>
+>>>>> --
+>>>>> To unsubscribe from this list: send the line "unsubscribe linux-btrfs" in
+>>>>> the body of a message to majordomo@vger.kernel.org
+>>>>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>>>>>
+>>>>
+>>>>
+>>>
+>>>
+>>> --
+>>> To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+>>> the body of a message to majordomo@vger.kernel.org
+>>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>>>
+>>
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
-" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
