@@ -1,64 +1,37 @@
 From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: Re: [Xen-devel] [PATCH 95/98] HACK: fix include/uapi/xen/privcmd.h
+Subject: Re: [PATCH 96/98] HACK include/uapi/linux/coda_psdev.h: fix
  compilation in userspace
-Date: Thu, 10 Sep 2015 22:46:03 +0300
-Message-ID: <20150910194603.GB6104@lakka.kapsi.fi>
+Date: Thu, 10 Sep 2015 22:48:30 +0300
+Message-ID: <20150910194830.GC6104@lakka.kapsi.fi>
 References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
- <1433000370-19509-96-git-send-email-mikko.rapeli@iki.fi>
- <5569F9C9.8000607@citrix.com>
+ <1433000370-19509-97-git-send-email-mikko.rapeli@iki.fi>
+ <20150531111913.GA23377@cs.cmu.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <5569F9C9.8000607-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20150531111913.GA23377-ETDLCGt7PQU3uPMLIKxrzw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Cooper <andrew.cooper3-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Juergen Gross <jgross-IBi9RG/b67k@public.gmane.org>, Alexander Yarygin <yarygin-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Arnaldo Carvalho de Melo <acme-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christian Borntraeger <borntraeger-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Vrabel <david.vrabel-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Cornelia Huck <cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Boris Ostrovsky <boris.ostrovsky-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, May 30, 2015 at 06:56:25PM +0100, Andrew Cooper wrote:
-> On 30/05/15 16:39, Mikko Rapeli wrote:
-> > privcmd.h depends on xen/interface/xen.h which is now exported to u=
-serspace.
-> > xen/interface/xen.h then depends on asm/xen/interface.h which is no=
-w
-> > exported to userspace together with its dependencies asm/xen/interf=
-ace_32.h,
-> > asm/xen/interface_64.h and asm/pvclock-abi.h on x86 architecture.
-> >
-> > Then all of these headers were fixed to use __u8 etc from linux/typ=
-es.h
-> > instead of custom types.
-> >
-> > Then define uint64_t and uint32_t if needed.
-> >
-> > After all these changes these header files now compile in userspace=
- too
-> > on x86.
-> >
-> > HACK since I have no idea if this is correct way to fix this.
-> >
-> > Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
->=20
-> Historical reasons expect xen/interface/xen.h to be a verbatim copy o=
-f
-> the master version kept in the Xen repository.
->=20
-> The only things privcmd.h need from interface/xen.h are domid_t
-> (uint16_t), and xen_pfn_t (unsigned long, or uint64_t in arm32 iirc),
-> while the majority of the rest absolutely shouldn't be in Linux=E2=80=
-=99s uapi.
->=20
-> It would probably be best to provide just these two types and nuke th=
-e
-> "#include <xen/interface/xen.h>".  Any user of privcmd needs to inclu=
-de
-> the Xen interface themselves anyway, and will have a different copy
-> which includes the toolstack half of the interface (missing from the
-> kernel copy) which is the useful set of definitions for driving the
-> privcmd ioctl()s.
+On Sun, May 31, 2015 at 07:19:13AM -0400, Jan Harkes wrote:
+> On Sat, May 30, 2015 at 05:39:28PM +0200, Mikko Rapeli wrote:
+> > Include linux/coda.h for caddr_t and use unsigned short type directly.
+> > Userspace headers do not have list_head and wait_queue_head_t so just
+> > ifdef them away which is a HACK. Any ideas how to fix this properly?
+> 
+> I grepped the Coda userspace sources and it doesn't look like this
+> particular struct is used there anyway, it is only used by the kernel
+> module to track which requests are waiting to be read by the Coda
+> userspace application and after that which requests are waiting for a
+> response.
+> 
+> I guess a proper fix would be to move this struct to a non-uapi header,
+> or maybe even to the (probably) only C file in the kernel where it is
+> used.
 
-Thanks! Doing this in the next series of the patches.
+Thanks! I'm moving upc_req definition to kernel side linux/coda_psdev.h
+in the next version of the patches.
 
 -Mikko
