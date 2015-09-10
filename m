@@ -1,33 +1,29 @@
-From: Javier Martinez Canillas <javier-0uQlZySMnqxg9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH v8 13/55] [media] uapi/media.h: Declare interface types
- for V4L2 and DVB
-Date: Thu, 10 Sep 2015 16:19:39 +0200
-Message-ID: <CABxcv=m-3Ex-LtSZ36pAenpnrGXYF13FVf17r3_cJycpgkpNZA@mail.gmail.com>
-References: <cover.1440902901.git.mchehab@osg.samsung.com>
-	<4bf60081a6756f559407052aa92e343456697a08.1440902901.git.mchehab@osg.samsung.com>
+From: Javier Martinez Canillas <javier@dowhile0.org>
+Subject: Re: [PATCH v8 15/55] [media] uapi/media.h: Declare interface types
+ for ALSA
+Date: Thu, 10 Sep 2015 16:23:38 +0200
+Message-ID: <CABxcv=mO4aMEraiQoY5jq3t4Opf6aq8O4DE2ioqC5R+KoXRDSg@mail.gmail.com>
+References: <cd69226f7f42baafbc4a3db5f8a8c387fba879dd.1440902901.git.mchehab@osg.samsung.com>
+	<ec40936d7349f390dd8b73b90fa0e0708de596a9.1441540862.git.mchehab@osg.samsung.com>
+	<ab80a0838a2a82207de3b60d164877e90e3074e2.1441540862.git.mchehab@osg.samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <4bf60081a6756f559407052aa92e343456697a08.1440902901.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-media-owner@vger.kernel.org>
+In-Reply-To: <ab80a0838a2a82207de3b60d164877e90e3074e2.1441540862.git.mchehab@osg.samsung.com>
+Sender: linux-media-owner@vger.kernel.org
+To: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+Cc: Linux Media Mailing List <linux-media@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Aug 30, 2015 at 5:06 AM, Mauro Carvalho Chehab
-<mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
-> Declare the interface types that will be used by the new
-> G_TOPOLOGY ioctl that will be defined latter on.
+On Sun, Sep 6, 2015 at 2:02 PM, Mauro Carvalho Chehab
+<mchehab@osg.samsung.com> wrote:
+> Declare the interface types to be used on alsa for the new
+> G_TOPOLOGY ioctl.
 >
-> For now, we need those types, as they'll be used on the
-> internal structs associated with the new media_interface
-> graph object defined on the next patch.
->
-> Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-> Acked-by: Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
 >
 
-Reviewed-by: Javier Martinez Canillas <javier-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Reviewed-by: Javier Martinez Canillas <javier@osg.samsung.com>
 
 Best regards,
 Javier
