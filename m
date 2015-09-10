@@ -1,59 +1,33 @@
-From: Emil Velikov <emil.l.velikov@gmail.com>
-Subject: Re: [PATCH 3/5] update virtio gpu driver: add 3d/virgl support
-Date: Thu, 10 Sep 2015 13:15:25 +0100
-Message-ID: <CACvgo51MOc_ZbjxEikz7DWMAAwNPsZYF0J+=Ejg41wy8MFG33A@mail.gmail.com>
-References: <1441798946-26233-1-git-send-email-kraxel@redhat.com>
- <1441798946-26233-4-git-send-email-kraxel@redhat.com>
- <CACvgo51Y7j0ka46Rfq2eBvXzP4q8Jc6x4j-JrYHDLkH6_xOh7w@mail.gmail.com>
- <CAPM=9txn4yGwQg+ZdL5Z9ZtFzSnw3QfUtAWT5mSXgB_JL00pYA@mail.gmail.com>
+From: Javier Martinez Canillas <javier-0uQlZySMnqxg9hUCZPvPmw@public.gmane.org>
+Subject: Re: [PATCH v8 13/55] [media] uapi/media.h: Declare interface types
+ for V4L2 and DVB
+Date: Thu, 10 Sep 2015 16:19:39 +0200
+Message-ID: <CABxcv=m-3Ex-LtSZ36pAenpnrGXYF13FVf17r3_cJycpgkpNZA@mail.gmail.com>
+References: <cover.1440902901.git.mchehab@osg.samsung.com>
+	<4bf60081a6756f559407052aa92e343456697a08.1440902901.git.mchehab@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <CAPM=9txn4yGwQg+ZdL5Z9ZtFzSnw3QfUtAWT5mSXgB_JL00pYA@mail.gmail.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Dave Airlie <airlied@gmail.com>
-Cc: "Michael S. Tsirkin" <mst@redhat.com>, "open list:ABI/API" <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, ML dri-devel <dri-devel@lists.freedesktop.org>, "open list:VIRTIO GPU DRIVER" <virtualization@lists.linux-foundation.org>, Dave Airlie <airlied@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <4bf60081a6756f559407052aa92e343456697a08.1440902901.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-T24gMTAgU2VwdGVtYmVyIDIwMTUgYXQgMTE6MzIsIERhdmUgQWlybGllIDxhaXJsaWVkQGdtYWls
-LmNvbT4gd3JvdGU6Cj4+ID4gLS0tIC9kZXYvbnVsbAo+PiA+ICsrKyBiL2luY2x1ZGUvdWFwaS9k
-cm0vdmlydGdwdV9kcm0uaAo+PiA+IEBAIC0wLDAgKzEsMTYzIEBACj4+Cj4+ID4gKwo+PiA+ICtz
-dHJ1Y3QgZHJtX3ZpcnRncHVfM2RfYm94IHsKPj4gPiArICAgICAgIHVpbnQzMl90IHgsIHksIHo7
-Cj4+ID4gKyAgICAgICB1aW50MzJfdCB3LCBoLCBkOwo+PiA+ICt9Owo+PiA+ICsKPj4gVGhlcmUg
-d2FzIGEgc2ltaWxhciBjYXNlIChtdWx0aXBsZSB2YXJpYWJsZXMgZGVjbGFyZWQgb24gYSBzaW5n
-bGUKPj4gbGluZSkgaW4gZHJtIGNvcmUgdGhhdCBjYXVzZWQgY29uZnVzaW9uIGFuZCB3ZSBicm9r
-ZSB0aGUgMzJiaXQgY29tcGF0Lgo+PiBJIHRob3VnaHQgSSBtZW50aW9uIGl0IC0gbm90IGFkdm9j
-YXRpbmcgZm9yL2FnYWluc3QgdGhlIGFib3ZlIGRlY2xhcmF0aW9uLgo+Cj4KPiBwcm9iYWJseSBz
-aG91bGQgcHV0IHNvbWUgbmV3bGluZXMgYWxyaWdodCwKPgo+Pgo+Cj4+ID4gK3N0cnVjdCBkcm1f
-dmlydGdwdV8zZF90cmFuc2Zlcl90b19ob3N0IHsKPj4gPiArICAgICAgIHVpbnQzMl90IGJvX2hh
-bmRsZTsKPj4gPiArICAgICAgIHN0cnVjdCBkcm1fdmlydGdwdV8zZF9ib3ggYm94Owo+PiA+ICsg
-ICAgICAgdWludDMyX3QgbGV2ZWw7Cj4+ID4gKyAgICAgICB1aW50MzJfdCBvZmZzZXQ7Cj4+ID4g
-K307Cj4+ID4gKwo+PiA+ICtzdHJ1Y3QgZHJtX3ZpcnRncHVfM2RfdHJhbnNmZXJfZnJvbV9ob3N0
-IHsKPj4gPiArICAgICAgIHVpbnQzMl90IGJvX2hhbmRsZTsKPj4gPiArICAgICAgIHN0cnVjdCBk
-cm1fdmlydGdwdV8zZF9ib3ggYm94Owo+PiA+ICsgICAgICAgdWludDMyX3QgbGV2ZWw7Cj4+ID4g
-KyAgICAgICB1aW50MzJfdCBvZmZzZXQ7Cj4+ID4gK307Cj4+ID4gKwo+PiBBZmFpY3MgdGhlc2Ug
-c2VlbXMgdG8gYmUgdXNlZCBieSB0aGUgaW9jdGxzLiBJZiBzbyB0aGUgY3VycmVudAo+PiBkZWNs
-YXJhdGlvbnMgYXJlIG5vdCAzMmJpdCBjb21wYXQgc2FmZS4gVGhpbmdzIHdpbGwgYWxzbyBnbyBi
-YWRseSBpZgo+PiB5b3UgY29uc2lkZXIgZXhwYW5kaW5nIHN0cnVjdCBkcm1fdmlydGdwdV8zZF9i
-b3ggaW4gdGhlIGRpc3RhbnQKPj4gZnV0dXJlLiBBIHUzMiBwYWQgYWZ0ZXIgYm9faGFuZGxlIGFu
-ZCBhICdwb2ludGVyJyB0byBzdHJ1Y3QKPgo+IEknbSBjdXJpb3VzIHdoYXQgeW91IHRoaW5rIHdl
-IGNhbiBhZGQgdG8gYSAzZCBib3guCj4KTm9uZSBmcm9tIHRoZSB0b3Agb2YgbXkgaGVhZCBJJ20g
-YWZyYWlkLiBCdXQgSSdtIHdvbmRlcmluZyBpZiBvbmUKY2Fubm90IGtlZXAgdGhpbmdzIGZsZXhp
-YmxlIGNvbnNpZGVyaW5nIHRoZSBjb3N0L2Rvd25zaWRlIG9mIHRoZQphcHByb2FjaCBpcyBtaW5p
-bWFsLgoKPiBTbyB0aGlzIG9uZSBpcyBmaW5lLCBubyBuZWVkIHRvIGFsaWduIGl0IGVpdGhlciBJ
-IGRvbid0IHRoaW5rLCB0aG91Z2ggSQo+IHNob3VsZCBjb25maXJtIHRoYXQuCj4KPiBNYXliZSBm
-b3Igc2FmZXR5IHdlIGNhbiBwdWxsIHRoZSBvdGhlciB1aW50MzJfdCBhYm92ZSB0aGUgYm94Lgo+
-CnBhaG9sZSBkaWQgY29tcGxhaW4gb24gbXkgc3lzdGVtLCBidXQgcGxlYXNlIGRvIC0gd2FzIGxv
-dyBvbiBjYWZmZWluZQpzbyBJIGNvdWxkIGhhdmUgYm90Y2hlZCBzb21ldGhpbmcuCgpSZWdhcmRz
-CkVtaWwKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KZHJp
-LWRldmVsIG1haWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHA6
-Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9kcmktZGV2ZWwK
+On Sun, Aug 30, 2015 at 5:06 AM, Mauro Carvalho Chehab
+<mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+> Declare the interface types that will be used by the new
+> G_TOPOLOGY ioctl that will be defined latter on.
+>
+> For now, we need those types, as they'll be used on the
+> internal structs associated with the new media_interface
+> graph object defined on the next patch.
+>
+> Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+> Acked-by: Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>
+>
+
+Reviewed-by: Javier Martinez Canillas <javier-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+
+Best regards,
+Javier
