@@ -1,57 +1,64 @@
-From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v1 9/8] copy_file_range.2: New page documenting
- copy_file_range()
-Date: Thu, 10 Sep 2015 09:43:45 -0700
-Message-ID: <20150910164345.GF10391@birch.djwong.org>
-References: <1441397823-1203-1-git-send-email-Anna.Schumaker@Netapp.com>
- <1441397823-1203-10-git-send-email-Anna.Schumaker@Netapp.com>
- <20150904213856.GC10391@birch.djwong.org>
- <55EEF8E3.8030501@Netapp.com>
- <20150908203918.GB30681@birch.djwong.org>
- <55F01A26.7070706@gmail.com>
- <20150909171757.GE10391@birch.djwong.org>
- <20150910154251.GM8891@twin.jikos.cz>
+From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Subject: Re: [Xen-devel] [PATCH 95/98] HACK: fix include/uapi/xen/privcmd.h
+ compilation in userspace
+Date: Thu, 10 Sep 2015 22:46:03 +0300
+Message-ID: <20150910194603.GB6104@lakka.kapsi.fi>
+References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
+ <1433000370-19509-96-git-send-email-mikko.rapeli@iki.fi>
+ <5569F9C9.8000607@citrix.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150910154251.GM8891-1ReQVI26iDCaZKY3DrU6dA@public.gmane.org>
+In-Reply-To: <5569F9C9.8000607-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: dsterba-AlSwsSmVLrQ@public.gmane.org, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
+To: Andrew Cooper <andrew.cooper3-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Juergen Gross <jgross-IBi9RG/b67k@public.gmane.org>, Alexander Yarygin <yarygin-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Arnaldo Carvalho de Melo <acme-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christian Borntraeger <borntraeger-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Vrabel <david.vrabel-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Cornelia Huck <cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Boris Ostrovsky <boris.ostrovsky-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 10, 2015 at 05:42:51PM +0200, David Sterba wrote:
-> On Wed, Sep 09, 2015 at 10:17:57AM -0700, Darrick J. Wong wrote:
-> > I noticed that btrfs won't dedupe more than 16M per call.  Any thoughts?
-> 
-> btrfs_ioctl_file_extent_same:
-> 
-> 3138         /*
-> 3139          * Limit the total length we will dedupe for each operation.
-> 3140          * This is intended to bound the total time spent in this
-> 3141          * ioctl to something sane.
-> 3142          */
-> 3143         if (len > BTRFS_MAX_DEDUPE_LEN)
-> 3144                 len = BTRFS_MAX_DEDUPE_LEN;
-> 
-> The deduplication compares the source and destination blocks and does
-> not use the checksum based approach (btrfs_cmp_data()). The 16M limit is
-> artifical, I don't have an estimate whether the value is ok or not. The
-> longer dedupe chunk the lower the chance to find more matching extents,
-> so the practially used chunk sizes are in range of hundreds of
-> kilobytes. But this obviously depends on data and many-megabyte-sized
-> chunks could fit some usecases easily.
+On Sat, May 30, 2015 at 06:56:25PM +0100, Andrew Cooper wrote:
+> On 30/05/15 16:39, Mikko Rapeli wrote:
+> > privcmd.h depends on xen/interface/xen.h which is now exported to u=
+serspace.
+> > xen/interface/xen.h then depends on asm/xen/interface.h which is no=
+w
+> > exported to userspace together with its dependencies asm/xen/interf=
+ace_32.h,
+> > asm/xen/interface_64.h and asm/pvclock-abi.h on x86 architecture.
+> >
+> > Then all of these headers were fixed to use __u8 etc from linux/typ=
+es.h
+> > instead of custom types.
+> >
+> > Then define uint64_t and uint32_t if needed.
+> >
+> > After all these changes these header files now compile in userspace=
+ too
+> > on x86.
+> >
+> > HACK since I have no idea if this is correct way to fix this.
+> >
+> > Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+>=20
+> Historical reasons expect xen/interface/xen.h to be a verbatim copy o=
+f
+> the master version kept in the Xen repository.
+>=20
+> The only things privcmd.h need from interface/xen.h are domid_t
+> (uint16_t), and xen_pfn_t (unsigned long, or uint64_t in arm32 iirc),
+> while the majority of the rest absolutely shouldn't be in Linux=E2=80=
+=99s uapi.
+>=20
+> It would probably be best to provide just these two types and nuke th=
+e
+> "#include <xen/interface/xen.h>".  Any user of privcmd needs to inclu=
+de
+> the Xen interface themselves anyway, and will have a different copy
+> which includes the toolstack half of the interface (missing from the
+> kernel copy) which is the useful set of definitions for driving the
+> privcmd ioctl()s.
 
-I guessed that 16M was a 'reasonable default maximum' since the semantics seem
-to be "link these two ranges together if all block contents match", not "I
-think these ranges match, link together any blocks which actually /do/ match".
-Personally, I doubt that it'll often be the case that a dedupe tool finds >16M
-chunks to dedupe *and* for whatever reason can't just call iteratively.
+Thanks! Doing this in the next series of the patches.
 
-Internally it could do some fadvise-like magic to avoid polluting the page
-cache with the compares, but I agree that not letting the call take forever
-is a good thing.
-
-Oh well.  It /could/ be a per-fs tunable if anyone yells loudly.
-
---D
+-Mikko
