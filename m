@@ -1,63 +1,26 @@
 From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v2 4/5] seccomp: add a way to access filters via bpf fds
-Date: Fri, 11 Sep 2015 09:20:55 -0700
-Message-ID: <CALCETrUD0JAAwThT8tTQ50q-+ZOKjLCxUW3=VDG8=dmLYDtW3w@mail.gmail.com>
-References: <1441930862-14347-1-git-send-email-tycho.andersen@canonical.com> <1441930862-14347-5-git-send-email-tycho.andersen@canonical.com>
+Subject: Re: [PATCH man-pages v2] capabilities.7, prctl.2: Document ambient capabilities
+Date: Fri, 11 Sep 2015 09:23:21 -0700
+Message-ID: <CALCETrWaJOGDPdkqtSX7=FW8YAs48eaVJJkuGjZSxoQLd2-k8g@mail.gmail.com>
+References: <f85ae308af4946436e82aaa9dd71bcd4b39bd196.1431672156.git.luto@kernel.org>
+ <CAKgNAkhtGSh0ZjfDOzeHUt4zthdtGiEj1WurwYtFc4cTVLOn1g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1441930862-14347-5-git-send-email-tycho.andersen@canonical.com>
+In-Reply-To: <CAKgNAkhtGSh0ZjfDOzeHUt4zthdtGiEj1WurwYtFc4cTVLOn1g@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Tycho Andersen <tycho.andersen@canonical.com>
-Cc: Pavel Emelyanov <xemul@parallels.com>, Kees Cook <keescook@chromium.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Oleg Nesterov <oleg@redhat.com>, "David S. Miller" <davem@davemloft.net>, Alexei Starovoitov <ast@kernel.org>, Will Drewry <wad@chromium.org>, Network Development <netdev@vger.kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Linux API <linux-api@vger.kernel.org>
+To: Michael Kerrisk-manpages <mtk.manpages@gmail.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Serge Hallyn <serge.hallyn@ubuntu.com>, Andrew Morton <akpm@linuxfoundation.org>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>
 List-Id: linux-api@vger.kernel.org
 
-On Sep 10, 2015 5:22 PM, "Tycho Andersen" <tycho.andersen@canonical.com> wrote:
+On Fri, Sep 11, 2015 at 1:28 AM, Michael Kerrisk (man-pages)
+<mtk.manpages@gmail.com> wrote:
+> Hi Andy,
 >
-> This patch adds a way for a process that is "real root" to access the
-> seccomp filters of another process. The process first does a
-> PTRACE_SECCOMP_GET_FILTER_FD to get an fd with that process' seccomp filter
-> attached, and then iterates on this with PTRACE_SECCOMP_NEXT_FILTER using
-> bpf(BPF_PROG_DUMP) to dump the actual program at each step.
->
+> Not that this has hit mainline, would you be willing to refresh this
+> man-pages patch?
 
-> +
-> +       fd = bpf_new_fd(filter->prog, O_RDONLY);
-> +       if (fd > 0)
-> +               atomic_inc(&filter->prog->aux->refcnt);
-
-Why isn't this folded into bpf_new_fd?
-
-> +
-> +       return fd;
-> +}
-> +
-> +long seccomp_next_filter(struct task_struct *child, u32 fd)
-> +{
-> +       struct seccomp_filter *cur;
-> +       struct bpf_prog *prog;
-> +       long ret = -ESRCH;
-> +
-> +       if (!capable(CAP_SYS_ADMIN))
-> +               return -EACCES;
-> +
-> +       if (child->seccomp.mode != SECCOMP_MODE_FILTER)
-> +               return -EINVAL;
-> +
-> +       prog = bpf_prog_get(fd);
-> +       if (IS_ERR(prog)) {
-> +               ret = PTR_ERR(prog);
-> +               goto out;
-> +       }
-> +
-> +       for (cur = child->seccomp.filter; cur; cur = cur->prev) {
-> +               if (cur->prog == prog) {
-> +                       if (!cur->prev)
-> +                               ret = -ENOENT;
-> +                       else
-> +                               ret = bpf_prog_set(fd, cur->prev->prog);
-
-This lets you take an fd pointing to one prog and point it elsewhere.
-I'm not sure that's a good idea.
+Absolutely.  I'll try to get to it over the next week or so.  I need
+to refresh my util-linux patch, too.
 
 --Andy
