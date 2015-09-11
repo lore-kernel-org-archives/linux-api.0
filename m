@@ -1,190 +1,75 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 01/23] userfaultfd: linux/Documentation/vm/userfaultfd.txt
-Date: Fri, 11 Sep 2015 10:47:15 +0200
-Message-ID: <55F29513.4030503@gmail.com>
-References: <1431624680-20153-1-git-send-email-aarcange@redhat.com> <1431624680-20153-2-git-send-email-aarcange@redhat.com>
+From: Daniel Borkmann <daniel@iogearbox.net>
+Subject: Re: [PATCH v2 4/5] seccomp: add a way to access filters via bpf fds
+Date: Fri, 11 Sep 2015 13:47:38 +0200
+Message-ID: <55F2BF5A.8010006@iogearbox.net>
+References: <1441930862-14347-1-git-send-email-tycho.andersen@canonical.com> <1441930862-14347-5-git-send-email-tycho.andersen@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1431624680-20153-2-git-send-email-aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Sanidhya Kashyap <sanidhya.gatech-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, zhang.zhanghailiang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Feiner <pfeiner-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Dr. David Alan Gilbert" <dgilbert-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, "Huangpeng (Peter)" <peter.huangpeng-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1441930862-14347-5-git-send-email-tycho.andersen@canonical.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tycho Andersen <tycho.andersen@canonical.com>, Kees Cook <keescook@chromium.org>, Alexei Starovoitov <ast@kernel.org>
+Cc: "David S. Miller" <davem@davemloft.net>, Will Drewry <wad@chromium.org>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 05/14/2015 07:30 PM, Andrea Arcangeli wrote:
-> Add documentation.
+On 09/11/2015 02:21 AM, Tycho Andersen wrote:
+> This patch adds a way for a process that is "real root" to access the
+> seccomp filters of another process. The process first does a
+> PTRACE_SECCOMP_GET_FILTER_FD to get an fd with that process' seccomp filter
+> attached, and then iterates on this with PTRACE_SECCOMP_NEXT_FILTER using
+> bpf(BPF_PROG_DUMP) to dump the actual program at each step.
+>
+> Signed-off-by: Tycho Andersen <tycho.andersen@canonical.com>
+> CC: Kees Cook <keescook@chromium.org>
+> CC: Will Drewry <wad@chromium.org>
+> CC: Oleg Nesterov <oleg@redhat.com>
+> CC: Andy Lutomirski <luto@amacapital.net>
+> CC: Pavel Emelyanov <xemul@parallels.com>
+> CC: Serge E. Hallyn <serge.hallyn@ubuntu.com>
+> CC: Alexei Starovoitov <ast@kernel.org>
+> CC: Daniel Borkmann <daniel@iogearbox.net>
+[...]
+> diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
+> index 58ae9f4..ac3ed1c 100644
+> --- a/kernel/bpf/syscall.c
+> +++ b/kernel/bpf/syscall.c
+> @@ -506,6 +506,30 @@ struct bpf_prog *bpf_prog_get(u32 ufd)
+>   }
+>   EXPORT_SYMBOL_GPL(bpf_prog_get);
+>
+> +int bpf_prog_set(u32 ufd, struct bpf_prog *new)
+> +{
+> +	struct fd f;
+> +	struct bpf_prog *prog;
+> +
+> +	f = fdget(ufd);
+> +
+> +	prog = get_prog(f);
+> +	if (!IS_ERR(prog) && prog)
+> +		bpf_prog_put(prog);
+> +
+> +	atomic_inc(&new->aux->refcnt);
+> +	f.file->private_data = new;
+> +	fdput(f);
+> +	return 0;
 
-Hi Andrea,
+So in case get_prog() fails, and for example f.file is infact NULL,
+you assign the bpf prog then to ERR_PTR(-EBADF)'s private_data? :(
 
-I do not recall... Did you write a man page also for this new system call?
+> +}
+> +EXPORT_SYMBOL_GPL(bpf_prog_set);
+> +
+> +int bpf_new_fd(struct bpf_prog *prog, int flags)
+> +{
+> +	return anon_inode_getfd("bpf-prog", &bpf_prog_fops, prog, flags);
+> +}
+> +EXPORT_SYMBOL_GPL(bpf_new_fd);
 
-Thanks,
+Any reason why these two need to be exported for modules? Which
+modules are using them?
 
-Michael
+I think modules should probably not mess with this.
 
-
-> Signed-off-by: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> ---
->  Documentation/vm/userfaultfd.txt | 140 +++++++++++++++++++++++++++++++++++++++
->  1 file changed, 140 insertions(+)
->  create mode 100644 Documentation/vm/userfaultfd.txt
-> 
-> diff --git a/Documentation/vm/userfaultfd.txt b/Documentation/vm/userfaultfd.txt
-> new file mode 100644
-> index 0000000..c2f5145
-> --- /dev/null
-> +++ b/Documentation/vm/userfaultfd.txt
-> @@ -0,0 +1,140 @@
-> += Userfaultfd =
-> +
-> +== Objective ==
-> +
-> +Userfaults allow the implementation of on-demand paging from userland
-> +and more generally they allow userland to take control various memory
-> +page faults, something otherwise only the kernel code could do.
-> +
-> +For example userfaults allows a proper and more optimal implementation
-> +of the PROT_NONE+SIGSEGV trick.
-> +
-> +== Design ==
-> +
-> +Userfaults are delivered and resolved through the userfaultfd syscall.
-> +
-> +The userfaultfd (aside from registering and unregistering virtual
-> +memory ranges) provides two primary functionalities:
-> +
-> +1) read/POLLIN protocol to notify a userland thread of the faults
-> +   happening
-> +
-> +2) various UFFDIO_* ioctls that can manage the virtual memory regions
-> +   registered in the userfaultfd that allows userland to efficiently
-> +   resolve the userfaults it receives via 1) or to manage the virtual
-> +   memory in the background
-> +
-> +The real advantage of userfaults if compared to regular virtual memory
-> +management of mremap/mprotect is that the userfaults in all their
-> +operations never involve heavyweight structures like vmas (in fact the
-> +userfaultfd runtime load never takes the mmap_sem for writing).
-> +
-> +Vmas are not suitable for page- (or hugepage) granular fault tracking
-> +when dealing with virtual address spaces that could span
-> +Terabytes. Too many vmas would be needed for that.
-> +
-> +The userfaultfd once opened by invoking the syscall, can also be
-> +passed using unix domain sockets to a manager process, so the same
-> +manager process could handle the userfaults of a multitude of
-> +different processes without them being aware about what is going on
-> +(well of course unless they later try to use the userfaultfd
-> +themselves on the same region the manager is already tracking, which
-> +is a corner case that would currently return -EBUSY).
-> +
-> +== API ==
-> +
-> +When first opened the userfaultfd must be enabled invoking the
-> +UFFDIO_API ioctl specifying a uffdio_api.api value set to UFFD_API (or
-> +a later API version) which will specify the read/POLLIN protocol
-> +userland intends to speak on the UFFD. The UFFDIO_API ioctl if
-> +successful (i.e. if the requested uffdio_api.api is spoken also by the
-> +running kernel), will return into uffdio_api.features and
-> +uffdio_api.ioctls two 64bit bitmasks of respectively the activated
-> +feature of the read(2) protocol and the generic ioctl available.
-> +
-> +Once the userfaultfd has been enabled the UFFDIO_REGISTER ioctl should
-> +be invoked (if present in the returned uffdio_api.ioctls bitmask) to
-> +register a memory range in the userfaultfd by setting the
-> +uffdio_register structure accordingly. The uffdio_register.mode
-> +bitmask will specify to the kernel which kind of faults to track for
-> +the range (UFFDIO_REGISTER_MODE_MISSING would track missing
-> +pages). The UFFDIO_REGISTER ioctl will return the
-> +uffdio_register.ioctls bitmask of ioctls that are suitable to resolve
-> +userfaults on the range registered. Not all ioctls will necessarily be
-> +supported for all memory types depending on the underlying virtual
-> +memory backend (anonymous memory vs tmpfs vs real filebacked
-> +mappings).
-> +
-> +Userland can use the uffdio_register.ioctls to manage the virtual
-> +address space in the background (to add or potentially also remove
-> +memory from the userfaultfd registered range). This means a userfault
-> +could be triggering just before userland maps in the background the
-> +user-faulted page.
-> +
-> +The primary ioctl to resolve userfaults is UFFDIO_COPY. That
-> +atomically copies a page into the userfault registered range and wakes
-> +up the blocked userfaults (unless uffdio_copy.mode &
-> +UFFDIO_COPY_MODE_DONTWAKE is set). Other ioctl works similarly to
-> +UFFDIO_COPY.
-> +
-> +== QEMU/KVM ==
-> +
-> +QEMU/KVM is using the userfaultfd syscall to implement postcopy live
-> +migration. Postcopy live migration is one form of memory
-> +externalization consisting of a virtual machine running with part or
-> +all of its memory residing on a different node in the cloud. The
-> +userfaultfd abstraction is generic enough that not a single line of
-> +KVM kernel code had to be modified in order to add postcopy live
-> +migration to QEMU.
-> +
-> +Guest async page faults, FOLL_NOWAIT and all other GUP features work
-> +just fine in combination with userfaults. Userfaults trigger async
-> +page faults in the guest scheduler so those guest processes that
-> +aren't waiting for userfaults (i.e. network bound) can keep running in
-> +the guest vcpus.
-> +
-> +It is generally beneficial to run one pass of precopy live migration
-> +just before starting postcopy live migration, in order to avoid
-> +generating userfaults for readonly guest regions.
-> +
-> +The implementation of postcopy live migration currently uses one
-> +single bidirectional socket but in the future two different sockets
-> +will be used (to reduce the latency of the userfaults to the minimum
-> +possible without having to decrease /proc/sys/net/ipv4/tcp_wmem).
-> +
-> +The QEMU in the source node writes all pages that it knows are missing
-> +in the destination node, into the socket, and the migration thread of
-> +the QEMU running in the destination node runs UFFDIO_COPY|ZEROPAGE
-> +ioctls on the userfaultfd in order to map the received pages into the
-> +guest (UFFDIO_ZEROCOPY is used if the source page was a zero page).
-> +
-> +A different postcopy thread in the destination node listens with
-> +poll() to the userfaultfd in parallel. When a POLLIN event is
-> +generated after a userfault triggers, the postcopy thread read() from
-> +the userfaultfd and receives the fault address (or -EAGAIN in case the
-> +userfault was already resolved and waken by a UFFDIO_COPY|ZEROPAGE run
-> +by the parallel QEMU migration thread).
-> +
-> +After the QEMU postcopy thread (running in the destination node) gets
-> +the userfault address it writes the information about the missing page
-> +into the socket. The QEMU source node receives the information and
-> +roughly "seeks" to that page address and continues sending all
-> +remaining missing pages from that new page offset. Soon after that
-> +(just the time to flush the tcp_wmem queue through the network) the
-> +migration thread in the QEMU running in the destination node will
-> +receive the page that triggered the userfault and it'll map it as
-> +usual with the UFFDIO_COPY|ZEROPAGE (without actually knowing if it
-> +was spontaneously sent by the source or if it was an urgent page
-> +requested through an userfault).
-> +
-> +By the time the userfaults start, the QEMU in the destination node
-> +doesn't need to keep any per-page state bitmap relative to the live
-> +migration around and a single per-page bitmap has to be maintained in
-> +the QEMU running in the source node to know which pages are still
-> +missing in the destination node. The bitmap in the source node is
-> +checked to find which missing pages to send in round robin and we seek
-> +over it when receiving incoming userfaults. After sending each page of
-> +course the bitmap is updated accordingly. It's also useful to avoid
-> +sending the same page twice (in case the userfault is read by the
-> +postcopy thread just before UFFDIO_COPY|ZEROPAGE runs in the migration
-> +thread).
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+If you already name it generic, it would also be good if bpf_new_fd()
+is used in case of maps that call anon_inode_getfd(), too.
