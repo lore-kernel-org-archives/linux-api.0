@@ -1,18 +1,20 @@
 From: Anna Schumaker <Anna.Schumaker@netapp.com>
-Subject: [PATCH v2 4/9] vfs: Copy should check len after file open mode
-Date: Fri, 11 Sep 2015 16:30:17 -0400
-Message-ID: <1442003423-6884-5-git-send-email-Anna.Schumaker@Netapp.com>
+Subject: [PATCH v2 6/9] vfs: Copy should use file_out rather than file_in
+Date: Fri, 11 Sep 2015 16:30:19 -0400
+Message-ID: <1442003423-6884-7-git-send-email-Anna.Schumaker@Netapp.com>
 References: <1442003423-6884-1-git-send-email-Anna.Schumaker@Netapp.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-btrfs-owner@vger.kernel.org>
 In-Reply-To: <1442003423-6884-1-git-send-email-Anna.Schumaker@Netapp.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Sender: linux-btrfs-owner@vger.kernel.org
 To: linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, darrick.wong@oracle.com, mtk.manpages@gmail.com, andros@netapp.com, hch@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-I don't think it makes sense to report that a copy succeeded if the
-files aren't open properly.
+The way to think about this is that the destination filesystem reads the
+data from the source file and processes it accordingly.  This is
+especially important to avoid an infinate loop when doing a "server to
+server" copy on NFS.
 
 Signed-off-by: Anna Schumaker <Anna.Schumaker@Netapp.com>
 ---
@@ -20,29 +22,29 @@ Signed-off-by: Anna Schumaker <Anna.Schumaker@Netapp.com>
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/fs/read_write.c b/fs/read_write.c
-index 82c4933..38cc251 100644
+index d32549b..ac32388 100644
 --- a/fs/read_write.c
 +++ b/fs/read_write.c
-@@ -1345,9 +1345,6 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
- 	if (flags)
- 		return -EINVAL;
+@@ -1355,7 +1355,7 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
+ 	if (!(file_in->f_mode & FMODE_READ) ||
+ 	    !(file_out->f_mode & FMODE_WRITE) ||
+ 	    (file_out->f_flags & O_APPEND) ||
+-	    !file_in->f_op || !file_in->f_op->copy_file_range)
++	    !file_out->f_op || !file_out->f_op->copy_file_range)
+ 		return -EBADF;
  
--	if (len == 0)
--		return 0;
--
- 	/* copy_file_range allows full ssize_t len, ignoring MAX_RW_COUNT  */
- 	ret = rw_verify_area(READ, file_in, &pos_in, len);
- 	if (ret >= 0)
-@@ -1378,6 +1375,9 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
- 	if (inode_in == inode_out)
- 		return -EINVAL;
- 
-+	if (len == 0)
-+		return 0;
-+
- 	ret = mnt_want_write_file(file_out);
+ 	inode_in = file_inode(file_in);
+@@ -1378,8 +1378,8 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
  	if (ret)
  		return ret;
+ 
+-	ret = file_in->f_op->copy_file_range(file_in, pos_in, file_out, pos_out,
+-					     len, flags);
++	ret = file_out->f_op->copy_file_range(file_in, pos_in, file_out, pos_out,
++					      len, flags);
+ 	if (ret > 0) {
+ 		fsnotify_access(file_in);
+ 		add_rchar(current, ret);
 -- 
 2.5.1
 
