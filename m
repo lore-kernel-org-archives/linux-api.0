@@ -1,61 +1,68 @@
-From: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: Re: [PATCH v2 3/5] ebpf: add a way to dump an eBPF program
-Date: Fri, 11 Sep 2015 08:59:16 -0600
-Message-ID: <20150911145916.GK27574@smitten>
-References: <1441930862-14347-1-git-send-email-tycho.andersen@canonical.com>
- <1441930862-14347-4-git-send-email-tycho.andersen@canonical.com>
- <20150911022940.GA4903@Alexeis-MacBook-Pro-2.local>
+From: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+Subject: Re: [PATCH 06/18] [media] media.h: create connector entities for
+ hybrid TV devices
+Date: Fri, 11 Sep 2015 17:19:13 +0200
+Message-ID: <55F2F0F1.2070804@xs4all.nl>
+References: <cover.1441559233.git.mchehab@osg.samsung.com> <9af2bbe9e63004f843e8478bc3d31cd03ea75d64.1441559233.git.mchehab@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150911022940.GA4903-2RGepAHry06MXrjNfwE7T/6muRTtt8+awzqs5ZKRSiY@public.gmane.org>
+In-Reply-To: <9af2bbe9e63004f843e8478bc3d31cd03ea75d64.1441559233.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 10, 2015 at 07:29:42PM -0700, Alexei Starovoitov wrote:
-> On Thu, Sep 10, 2015 at 06:21:00PM -0600, Tycho Andersen wrote:
-> > +static int bpf_prog_dump(union bpf_attr *attr, union bpf_attr __user *uattr)
-> > +{
-> > +	int ufd = attr->prog_fd;
-> > +	struct fd f = fdget(ufd);
-> > +	struct bpf_prog *prog;
-> > +	int ret = -EINVAL;
-> > +
-> > +	prog = get_prog(f);
-> > +	if (IS_ERR(prog))
-> > +		return PTR_ERR(prog);
-> > +
-> > +	/* For now, let's refuse to dump anything that isn't a seccomp program.
-> > +	 * Other program types have support for maps, which our current dump
-> > +	 * code doesn't support.
-> > +	 */
-> > +	if (prog->type != BPF_PROG_TYPE_SECCOMP)
-> > +		goto out;
-> > +
-> > +	ret = -EFAULT;
-> > +	if (put_user(prog->len, &uattr->dump_insn_cnt))
-> > +		goto out;
-> > +
-> > +	if (put_user((u8) prog->gpl_compatible, &uattr->gpl_compatible))
-> > +		goto out;
-> > +
-> > +	if (attr->dump_insns) {
-> > +		u32 len = prog->len * sizeof(struct bpf_insn);
-> > +
-> > +		if (copy_to_user(u64_to_ptr(attr->dump_insns),
-> > +				 prog->insns, len) != 0)
-> > +			goto out;
-> > +	}
-> > +
-> > +	ret = 0;
-> > +out:
-> > +	return ret;
+On 09/06/2015 07:30 PM, Mauro Carvalho Chehab wrote:
+> Add entities to represent the connectors that exists inside a
+> hybrid TV device.
 > 
-> fdput() is missing in all error paths.
+> Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+> 
+> diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
+> index b17f6763aff4..69433405aec2 100644
+> --- a/include/uapi/linux/media.h
+> +++ b/include/uapi/linux/media.h
+> @@ -61,6 +61,7 @@ struct media_device_info {
+>  #define MEDIA_ENT_T_DVB_BASE		0x00000000
+>  #define MEDIA_ENT_T_V4L2_BASE		0x00010000
+>  #define MEDIA_ENT_T_V4L2_SUBDEV_BASE	0x00020000
+> +#define MEDIA_ENT_T_CONNECTOR_BASE	0x00030000
+>  
+>  /*
+>   * V4L2 entities - Those are used for DMA (mmap/DMABUF) and
+> @@ -105,6 +106,13 @@ struct media_device_info {
+>  #define MEDIA_ENT_T_DVB_CA		(MEDIA_ENT_T_DVB_BASE + 4)
+>  #define MEDIA_ENT_T_DVB_NET_DECAP	(MEDIA_ENT_T_DVB_BASE + 5)
+>  
+> +/* Connectors */
+> +#define MEDIA_ENT_T_CONN_RF		(MEDIA_ENT_T_CONNECTOR_BASE)
 
-So it is, thanks!
+Please start at BASE + 1.
 
-Tycho
+With that change:
+
+Acked-by: Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>
+
+> +#define MEDIA_ENT_T_CONN_SVIDEO		(MEDIA_ENT_T_CONNECTOR_BASE + 1)
+> +#define MEDIA_ENT_T_CONN_COMPOSITE	(MEDIA_ENT_T_CONNECTOR_BASE + 2)
+> +	/* For internal test signal generators and other debug connectors */
+> +#define MEDIA_ENT_T_CONN_TEST		(MEDIA_ENT_T_CONNECTOR_BASE + 3)
+> +
+>  #ifndef __KERNEL__
+>  /* Legacy symbols used to avoid userspace compilation breakages */
+>  #define MEDIA_ENT_TYPE_SHIFT		16
+> @@ -121,9 +129,9 @@ struct media_device_info {
+>  #define MEDIA_ENT_T_DEVNODE_DVB		(MEDIA_ENT_T_DEVNODE + 4)
+>  #endif
+>  
+> -/* Entity types */
+> -
+> +/* Entity flags */
+>  #define MEDIA_ENT_FL_DEFAULT		(1 << 0)
+> +#define MEDIA_ENT_FL_CONNECTOR		(1 << 1)
+>  
+>  struct media_entity_desc {
+>  	__u32 id;
+> 
