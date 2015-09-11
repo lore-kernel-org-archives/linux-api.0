@@ -1,67 +1,74 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: v2 of seccomp filter c/r patches
-Date: Fri, 11 Sep 2015 09:30:52 -0700
-Message-ID: <CALCETrVYtv1=g-xPjQ-LiX+5GK3xtB6a2hYbat0TuU-Bd4QA6Q@mail.gmail.com>
+From: Tycho Andersen <tycho.andersen@canonical.com>
+Subject: Re: [PATCH v2 4/5] seccomp: add a way to access filters via bpf fds
+Date: Fri, 11 Sep 2015 10:44:44 -0600
+Message-ID: <20150911164444.GQ27574@smitten>
 References: <1441930862-14347-1-git-send-email-tycho.andersen@canonical.com>
+ <1441930862-14347-5-git-send-email-tycho.andersen@canonical.com>
+ <CALCETrUD0JAAwThT8tTQ50q-+ZOKjLCxUW3=VDG8=dmLYDtW3w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1441930862-14347-1-git-send-email-tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Cc: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrUD0JAAwThT8tTQ50q-+ZOKjLCxUW3=VDG8=dmLYDtW3w@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Pavel Emelyanov <xemul@parallels.com>, Kees Cook <keescook@chromium.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Oleg Nesterov <oleg@redhat.com>, "David S. Miller" <davem@davemloft.net>, Alexei Starovoitov <ast@kernel.org>, Will Drewry <wad@chromium.org>, Network Development <netdev@vger.kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sep 10, 2015 5:22 PM, "Tycho Andersen" <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
->
-> Hi all,
->
-> Here is v2 of the seccomp filter c/r set. The patch notes have individual
-> changes from the last series, but there are two points not noted:
->
-> * The series still does not allow us to correctly restore state for programs
->   that will use SECCOMP_FILTER_FLAG_TSYNC in the future. Given that we want to
->   keep seccomp_filter's identity, I think something along the lines of another
->   seccomp command like SECCOMP_INHERIT_PARENT is needed (although I'm not sure
->   if this can even be done yet). In addition, we'll need a kcmp command for
->   figuring out if filters are the same, although this too needs to compare
->   seccomp_filter objects, so it's a little screwy. Any thoughts on how to do
->   this nicely are welcome.
+On Fri, Sep 11, 2015 at 09:20:55AM -0700, Andy Lutomirski wrote:
+> On Sep 10, 2015 5:22 PM, "Tycho Andersen" <tycho.andersen@canonical.com> wrote:
+> >
+> > This patch adds a way for a process that is "real root" to access the
+> > seccomp filters of another process. The process first does a
+> > PTRACE_SECCOMP_GET_FILTER_FD to get an fd with that process' seccomp filter
+> > attached, and then iterates on this with PTRACE_SECCOMP_NEXT_FILTER using
+> > bpf(BPF_PROG_DUMP) to dump the actual program at each step.
+> >
+> 
+> > +
+> > +       fd = bpf_new_fd(filter->prog, O_RDONLY);
+> > +       if (fd > 0)
+> > +               atomic_inc(&filter->prog->aux->refcnt);
+> 
+> Why isn't this folded into bpf_new_fd?
 
-Let's add a concept of a seccompfd.
+No reason it can't be as far as I can see. I'll make the change for
+the next version.
 
-For background of what I want to add: I want to be able to create a
-seccomp monitor.  A seccomp monitor will be, logically, a pair of a
-struct file that represents the monitor and a seccomp_filter that is
-controlled by the monitor.  Depending on flags, whoever holds the
-monitor fd could change the active filter, intercept syscalls, and
-issue syscalls on behalf of a process that is trapped in an
-intercepted syscall.
+> > +
+> > +       return fd;
+> > +}
+> > +
+> > +long seccomp_next_filter(struct task_struct *child, u32 fd)
+> > +{
+> > +       struct seccomp_filter *cur;
+> > +       struct bpf_prog *prog;
+> > +       long ret = -ESRCH;
+> > +
+> > +       if (!capable(CAP_SYS_ADMIN))
+> > +               return -EACCES;
+> > +
+> > +       if (child->seccomp.mode != SECCOMP_MODE_FILTER)
+> > +               return -EINVAL;
+> > +
+> > +       prog = bpf_prog_get(fd);
+> > +       if (IS_ERR(prog)) {
+> > +               ret = PTR_ERR(prog);
+> > +               goto out;
+> > +       }
+> > +
+> > +       for (cur = child->seccomp.filter; cur; cur = cur->prev) {
+> > +               if (cur->prog == prog) {
+> > +                       if (!cur->prev)
+> > +                               ret = -ENOENT;
+> > +                       else
+> > +                               ret = bpf_prog_set(fd, cur->prev->prog);
+> 
+> This lets you take an fd pointing to one prog and point it elsewhere.
+> I'm not sure that's a good idea.
 
-Seccomp filters would nest properly.
+That's how the interface was designed (calling ptrace(NEXT_FILTER, fd) and
+then doing bpf(DUMP, fd)). I suppose we could have NEXT_FILTER return
+a new fd instead if that seems better to you.
 
-The interface would probably be (extremely pseudocoded):
-
-monitor_fd, filter_fd = seccomp(CREATE_MONITOR, flags, ...);
-
-Then, later:
-
-seccomp(ATTACH_TO_FILTER, filter_fd);  /* now filtered */
-
-read(monitor_fd, buf, size); /* returns an intercepted syscall */
-write(monitor_fd, buf, size); /* issues a syscall or releases the
-trapped task */
-
-This can't be implemented on x86 without either going insane or
-finishing the massive set of pending cleanups to the x86 entry code.
-I favor the latter.
-
-We could, however, add part of it right now: we could have a way to
-create a filterfd, we could add kcmp support for it, and we could add
-the ATTACH_TO_FILTER thing.  I think that would solve your problem.
-
-One major open question: does a filter_fd know what its parent is and,
-if so, will it just refuse to attach if the caller's parent is wrong?
-Or will a filter_fd attach anywhere.
-
---Andy
+Tycho
