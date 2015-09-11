@@ -1,45 +1,43 @@
-From: Anna Schumaker <Anna.Schumaker@netapp.com>
-Subject: [PATCH v2 9/9] btrfs: btrfs_copy_file_range() only supports reflinks
-Date: Fri, 11 Sep 2015 16:30:22 -0400
-Message-ID: <1442003423-6884-10-git-send-email-Anna.Schumaker@Netapp.com>
+From: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v2 5/9] vfs: Copy shouldn't forbid ranges inside the same file
+Date: Fri, 11 Sep 2015 16:30:18 -0400
+Message-ID: <1442003423-6884-6-git-send-email-Anna.Schumaker@Netapp.com>
 References: <1442003423-6884-1-git-send-email-Anna.Schumaker@Netapp.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1442003423-6884-1-git-send-email-Anna.Schumaker@Netapp.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, darrick.wong@oracle.com, mtk.manpages@gmail.com, andros@netapp.com, hch@infradead.org
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1442003423-6884-1-git-send-email-Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Reject copies that don't have the COPY_FR_REFLINK flag set.
+This is perfectly valid for BTRFS and XFS, so let's leave this up to
+filesystems to check.
 
-Signed-off-by: Anna Schumaker <Anna.Schumaker@Netapp.com>
+Signed-off-by: Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
 ---
- fs/btrfs/ioctl.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ fs/read_write.c | 4 ----
+ 1 file changed, 4 deletions(-)
 
-diff --git a/fs/btrfs/ioctl.c b/fs/btrfs/ioctl.c
-index 4311554..2e14b91 100644
---- a/fs/btrfs/ioctl.c
-+++ b/fs/btrfs/ioctl.c
-@@ -44,6 +44,7 @@
- #include <linux/uuid.h>
- #include <linux/btrfs.h>
- #include <linux/uaccess.h>
-+#include <linux/copy.h>
- #include "ctree.h"
- #include "disk-io.h"
- #include "transaction.h"
-@@ -3848,6 +3849,9 @@ ssize_t btrfs_copy_file_range(struct file *file_in, loff_t pos_in,
- {
- 	ssize_t ret;
+diff --git a/fs/read_write.c b/fs/read_write.c
+index 38cc251..d32549b 100644
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -1371,10 +1371,6 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
+ 	    file_in->f_path.mnt != file_out->f_path.mnt)
+ 		return -EXDEV;
  
-+	if (!(flags & COPY_FR_REFLINK))
-+		return -EOPNOTSUPP;
-+
- 	ret = btrfs_clone_files(file_out, file_in, pos_in, len, pos_out);
- 	if (ret == 0)
- 		ret = len;
+-	/* forbid ranges in the same file */
+-	if (inode_in == inode_out)
+-		return -EINVAL;
+-
+ 	if (len == 0)
+ 		return 0;
+ 
 -- 
 2.5.1
 
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
