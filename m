@@ -1,100 +1,110 @@
-From: Daniel Borkmann <daniel@iogearbox.net>
-Subject: Re: [PATCH v2 2/5] seccomp: make underlying bpf ref counted as well
-Date: Fri, 11 Sep 2015 20:28:19 +0200
-Message-ID: <55F31D43.5080001@iogearbox.net>
-References: <1441930862-14347-1-git-send-email-tycho.andersen@canonical.com> <1441930862-14347-3-git-send-email-tycho.andersen@canonical.com> <55F2D0EC.9090004@iogearbox.net> <20150911144400.GI27574@smitten> <55F2FB6F.7050708@iogearbox.net> <20150911173311.GB7244@smitten>
+From: bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org (J. Bruce Fields)
+Subject: Re: [PATCH] vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD permission
+ flags
+Date: Fri, 11 Sep 2015 16:30:16 -0400
+Message-ID: <20150911203016.GD11677@fieldses.org>
+References: <1441448856-13478-4-git-send-email-agruenba@redhat.com>
+ <1441527246-18189-1-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20150911173311.GB7244@smitten>
-Sender: netdev-owner@vger.kernel.org
-To: Tycho Andersen <tycho.andersen@canonical.com>
-Cc: Kees Cook <keescook@chromium.org>, Alexei Starovoitov <ast@kernel.org>, "David S. Miller" <davem@davemloft.net>, Will Drewry <wad@chromium.org>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1441527246-18189-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 09/11/2015 07:33 PM, Tycho Andersen wrote:
-> On Fri, Sep 11, 2015 at 06:03:59PM +0200, Daniel Borkmann wrote:
->> On 09/11/2015 04:44 PM, Tycho Andersen wrote:
->>> On Fri, Sep 11, 2015 at 03:02:36PM +0200, Daniel Borkmann wrote:
->>>> On 09/11/2015 02:20 AM, Tycho Andersen wrote:
->>>>> In the next patch, we're going to add a way to access the underlying
->>>>> filters via bpf fds. This means that we need to ref-count both the
->>>>> struct seccomp_filter objects and the struct bpf_prog objects separately,
->>>>> in case a process dies but a filter is still referred to by another
->>>>> process.
->>>>>
->>>>> Additionally, we mark classic converted seccomp filters as seccomp eBPF
->>>>> programs, since they are a subset of what is supported in seccomp eBPF.
->>>>>
->>>>> Signed-off-by: Tycho Andersen <tycho.andersen@canonical.com>
->>>>> CC: Kees Cook <keescook@chromium.org>
->>>>> CC: Will Drewry <wad@chromium.org>
->>>>> CC: Oleg Nesterov <oleg@redhat.com>
->>>>> CC: Andy Lutomirski <luto@amacapital.net>
->>>>> CC: Pavel Emelyanov <xemul@parallels.com>
->>>>> CC: Serge E. Hallyn <serge.hallyn@ubuntu.com>
->>>>> CC: Alexei Starovoitov <ast@kernel.org>
->>>>> CC: Daniel Borkmann <daniel@iogearbox.net>
->>>>> ---
->>>>>   kernel/seccomp.c | 4 +++-
->>>>>   1 file changed, 3 insertions(+), 1 deletion(-)
->>>>>
->>>>> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
->>>>> index 245df6b..afaeddf 100644
->>>>> --- a/kernel/seccomp.c
->>>>> +++ b/kernel/seccomp.c
->>>>> @@ -378,6 +378,8 @@ static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
->>>>>   	}
->>>>>
->>>>>   	atomic_set(&sfilter->usage, 1);
->>>>> +	atomic_set(&sfilter->prog->aux->refcnt, 1);
->>>>> +	sfilter->prog->type = BPF_PROG_TYPE_SECCOMP;
->>>>
->>>> So, if you do this, then this breaks the assumption of eBPF JITs
->>>> that, currently, all classic converted BPF programs always have a
->>>> prog->type of BPF_PROG_TYPE_UNSPEC (see: bpf_prog_was_classic()).
->>>>
->>>> Currently, JITs make use of this information to determine whether
->>>> A and X mappings for such programs should or should not be cleared
->>>> in the prologue (s390 currently).
->>>>
->>>> In the seccomp_prepare_filter() stage, we're already past that, so
->>>> it will not cause an issue, but we certainly would need to be very
->>>> careful in future, if bpf_prog_was_classic() is then used at a later
->>>> stage when we already have a generated bpf_prog somewhere, as then
->>>> this assumption will break.
->>>
->>> The only reason we need to do this is to allow BPF_DUMP_PROG to work,
->>> since we were restricting it to only allow dumping of seccomp
->>> programs, since those don't have maps. Instead, perhaps we could allow
->>> dumping of BPF_PROG_TYPE_SECCOMP and BPF_PROG_TYPE_UNSPEC?
->>
->> There are possibilities that BPF_PROG_TYPE_UNSPEC is calling helpers
->> already today, at least in networking case, not seccomp. So, since
->> you want to export [classic -> eBPF] only for seccomp, put fds on them
->> and dump these via bpf(2), you could allow that (with a big comment
->> stating why it's safe), but mid-term we really need to sanitize all
->> this stuff properly as this is needed for other types, too.
->
-> Sorry, just to be clear, you're suggesting that the patch is ok modulo
-> a comment describing the jit issues?
+On Sun, Sep 06, 2015 at 10:14:06AM +0200, Andreas Gruenbacher wrote:
+> [This replaces v7 of this patch; MAY_DELETE_SELF now properly overrides the
+> sticky check.]
+> 
+> Normally, deleting a file requires MAY_WRITE access to the parent
+> directory.  With richacls, a file may be deleted with MAY_DELETE_CHILD access
+> to the parent directory or with MAY_DELETE_SELF access to the file.
+> 
+> To support that, pass the MAY_DELETE_CHILD mask flag to inode_permission()
+> when checking for delete access inside a directory, and MAY_DELETE_SELF
+> when checking for delete access to a file itelf.
+> 
+> The MAY_DELETE_SELF permission overrides the sticky directory check.
+> 
 
-I think due to the given insns restrictions on classic seccomp, this
-could work for "most cases" (see below) for the time being until pointer
-sanitation is resolved and that seccomp-only restriction from the dump
-could be removed, BUT there's one more stone in the road which you still
-need to take care of with this whole 'giving classic seccomp-BPF -> eBPF
-transforms an fd, dumping and restoring that via bpf(2)' approach:
+Reviewed-by: J. Bruce Fields <bfields-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 
-If you have JIT enabled on ARM32, and add a classic seccomp-BPF filter,
-and dump that via your bpf(2) interface based on the current patches, what
-you'll get is not eBPF opcodes but classic (!) BPF opcodes as ARM32 classic
-JIT supports compilation of seccomp, since commit 24e737c1ebac ("ARM: net:
-add JIT support for loads from struct seccomp_data.").
-
-So in that case, bpf_prepare_filter() will not call into bpf_migrate_filter()
-as there's simply no need for it, because the classic code could already
-be JITed there. I guess other archs where JIT support for eBPF in not yet
-within near sight might sooner or later support this insn for their classic
-JITs, too ...
+> Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> ---
+>  fs/namei.c         | 21 ++++++++++++---------
+>  include/linux/fs.h |  2 ++
+>  2 files changed, 14 insertions(+), 9 deletions(-)
+> 
+> diff --git a/fs/namei.c b/fs/namei.c
+> index 428b4a6..1a3f0d8 100644
+> --- a/fs/namei.c
+> +++ b/fs/namei.c
+> @@ -453,9 +453,9 @@ static int sb_permission(struct super_block *sb, struct inode *inode, int mask)
+>   * this, letting us set arbitrary permissions for filesystem access without
+>   * changing the "normal" UIDs which are used for other things.
+>   *
+> - * MAY_WRITE must be set in @mask whenever MAY_APPEND, MAY_CREATE_FILE, or
+> - * MAY_CREATE_DIR are set.  That way, file systems that don't support these
+> - * permissions will check for MAY_WRITE instead.
+> + * MAY_WRITE must be set in @mask whenever MAY_APPEND, MAY_CREATE_FILE,
+> + * MAY_CREATE_DIR, or MAY_DELETE_CHILD are set.  That way, file systems that
+> + * don't support these permissions will check for MAY_WRITE instead.
+>   */
+>  int inode_permission(struct inode *inode, int mask)
+>  {
+> @@ -2528,7 +2528,7 @@ static int may_delete(struct inode *dir, struct dentry *victim,
+>  		      bool isdir, bool replace)
+>  {
+>  	struct inode *inode = d_backing_inode(victim);
+> -	int error, mask = MAY_WRITE | MAY_EXEC;
+> +	int error, mask = MAY_EXEC;
+>  
+>  	if (d_is_negative(victim))
+>  		return -ENOENT;
+> @@ -2538,15 +2538,18 @@ static int may_delete(struct inode *dir, struct dentry *victim,
+>  	audit_inode_child(dir, victim, AUDIT_TYPE_CHILD_DELETE);
+>  
+>  	if (replace)
+> -		mask |= isdir ? MAY_CREATE_DIR : MAY_CREATE_FILE;
+> -	error = inode_permission(dir, mask);
+> +		mask |= MAY_WRITE | (isdir ? MAY_CREATE_DIR : MAY_CREATE_FILE);
+> +	error = inode_permission(dir, mask | MAY_WRITE | MAY_DELETE_CHILD);
+> +	if (!error && check_sticky(dir, inode))
+> +		error = -EPERM;
+> +	if (error && IS_RICHACL(inode) &&
+> +	    inode_permission(inode, MAY_DELETE_SELF) == 0)
+> +		error = 0;
+>  	if (error)
+>  		return error;
+>  	if (IS_APPEND(dir))
+>  		return -EPERM;
+> -
+> -	if (check_sticky(dir, inode) || IS_APPEND(inode) ||
+> -	    IS_IMMUTABLE(inode) || IS_SWAPFILE(inode))
+> +	if (IS_APPEND(inode) || IS_IMMUTABLE(inode) || IS_SWAPFILE(inode))
+>  		return -EPERM;
+>  	if (isdir) {
+>  		if (!d_is_dir(victim))
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index b2f1b1b..99c95d1 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -84,6 +84,8 @@ typedef void (dax_iodone_t)(struct buffer_head *bh_map, int uptodate);
+>  #define MAY_NOT_BLOCK		0x00000080
+>  #define MAY_CREATE_FILE		0x00000100
+>  #define MAY_CREATE_DIR		0x00000200
+> +#define MAY_DELETE_CHILD	0x00000400
+> +#define MAY_DELETE_SELF		0x00000800
+>  
+>  /*
+>   * flags in file.f_mode.  Note that FMODE_READ and FMODE_WRITE must correspond
+> -- 
+> 2.4.3
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
