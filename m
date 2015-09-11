@@ -1,192 +1,94 @@
 From: Anna Schumaker <Anna.Schumaker@netapp.com>
-Subject: [PATCH v2 3/9] btrfs: add .copy_file_range file operation
-Date: Fri, 11 Sep 2015 16:30:16 -0400
-Message-ID: <1442003423-6884-4-git-send-email-Anna.Schumaker@Netapp.com>
-References: <1442003423-6884-1-git-send-email-Anna.Schumaker@Netapp.com>
+Subject: [PATCH v2 0/9] VFS: In-kernel copy system call
+Date: Fri, 11 Sep 2015 16:30:13 -0400
+Message-ID: <1442003423-6884-1-git-send-email-Anna.Schumaker@Netapp.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <1442003423-6884-1-git-send-email-Anna.Schumaker@Netapp.com>
 Sender: linux-btrfs-owner@vger.kernel.org
 To: linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, darrick.wong@oracle.com, mtk.manpages@gmail.com, andros@netapp.com, hch@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-From: Zach Brown <zab@redhat.com>
+Copy system calls came up during Plumbers a couple of weeks ago, because
+several filesystems (including NFS and XFS) are currently working on copy
+acceleration implementations.  We haven't heard from Zach Brown in a while,
+so I volunteered to push his patches upstream so individual filesystems
+don't need to keep writing their own ioctls.
 
-This rearranges the existing COPY_RANGE ioctl implementation so that the
-.copy_file_range file operation can call the core loop that copies file
-data extent items.
+Changes in v2:
+- Update against the most recent Linus kernel
+  - Fix conflicts due to new system calls
+- Remove requirement that inode_in == inode_out
+- Drop patch to add mountpoint checking to btrfs
+  - btrfs already did this check
+- Rename COPY_REFLINK -> COPY_FR_REFLINK
+- Add COPY_FR_COPY flag
+- Expand flags == 0 to (COPY_FR_COPY | COPY_FR_REFLINK)
+- Remove checking for invalid flags
+- Create a new function for handling pagecache copies
+- Move rw_verify_area() checks into the new pagecache-copy function
+  - Use the return value from rw_verify_area() to set amount of data to copy
+- Update man page
 
-The extent copying loop is lifted up into its own function.  It retains
-the core btrfs error checks that should be shared.
+I tested the COPY_FR_COPY flag by using /dev/urandom to generate files of
+varying sizes and copying them.  I compared the output from `time` against
+that of `cp` to see if there is any noticable difference.  I think there
+have been some libvirt changes since my first set of trials, because this
+time around cpu usage was down significantly.  This time around, VFS copy
+was slightly faster than /usr/bin/cp in all cases.  Values in the tables
+below are averages across multiple trials.
 
-Signed-off-by: Zach Brown <zab@redhat.com>
-Signed-off-by: Anna Schumaker <Anna.Schumaker@Netapp.com>
-Reviewed-by: Josef Bacik <jbacik@fb.com>
-Reviewed-by: David Sterba <dsterba@suse.com>
----
- fs/btrfs/ctree.h |  3 ++
- fs/btrfs/file.c  |  1 +
- fs/btrfs/ioctl.c | 91 ++++++++++++++++++++++++++++++++------------------------
- 3 files changed, 56 insertions(+), 39 deletions(-)
 
-diff --git a/fs/btrfs/ctree.h b/fs/btrfs/ctree.h
-index 938efe3..5d06a4f 100644
---- a/fs/btrfs/ctree.h
-+++ b/fs/btrfs/ctree.h
-@@ -3996,6 +3996,9 @@ int btrfs_dirty_pages(struct btrfs_root *root, struct inode *inode,
- 		      loff_t pos, size_t write_bytes,
- 		      struct extent_state **cached);
- int btrfs_fdatawrite_range(struct inode *inode, loff_t start, loff_t end);
-+ssize_t btrfs_copy_file_range(struct file *file_in, loff_t pos_in,
-+			      struct file *file_out, loff_t pos_out,
-+			      size_t len, int flags);
- 
- /* tree-defrag.c */
- int btrfs_defrag_leaves(struct btrfs_trans_handle *trans,
-diff --git a/fs/btrfs/file.c b/fs/btrfs/file.c
-index b823fac..b05449c 100644
---- a/fs/btrfs/file.c
-+++ b/fs/btrfs/file.c
-@@ -2816,6 +2816,7 @@ const struct file_operations btrfs_file_operations = {
- #ifdef CONFIG_COMPAT
- 	.compat_ioctl	= btrfs_ioctl,
- #endif
-+	.copy_file_range = btrfs_copy_file_range,
- };
- 
- void btrfs_auto_defrag_exit(void)
-diff --git a/fs/btrfs/ioctl.c b/fs/btrfs/ioctl.c
-index 0adf542..4311554 100644
---- a/fs/btrfs/ioctl.c
-+++ b/fs/btrfs/ioctl.c
-@@ -3727,17 +3727,16 @@ out:
- 	return ret;
- }
- 
--static noinline long btrfs_ioctl_clone(struct file *file, unsigned long srcfd,
--				       u64 off, u64 olen, u64 destoff)
-+static noinline int btrfs_clone_files(struct file *file, struct file *file_src,
-+					u64 off, u64 olen, u64 destoff)
- {
- 	struct inode *inode = file_inode(file);
-+	struct inode *src = file_inode(file_src);
- 	struct btrfs_root *root = BTRFS_I(inode)->root;
--	struct fd src_file;
--	struct inode *src;
- 	int ret;
- 	u64 len = olen;
- 	u64 bs = root->fs_info->sb->s_blocksize;
--	int same_inode = 0;
-+	int same_inode = src == inode;
- 
- 	/*
- 	 * TODO:
-@@ -3750,49 +3749,20 @@ static noinline long btrfs_ioctl_clone(struct file *file, unsigned long srcfd,
- 	 *   be either compressed or non-compressed.
- 	 */
- 
--	/* the destination must be opened for writing */
--	if (!(file->f_mode & FMODE_WRITE) || (file->f_flags & O_APPEND))
--		return -EINVAL;
--
- 	if (btrfs_root_readonly(root))
- 		return -EROFS;
- 
--	ret = mnt_want_write_file(file);
--	if (ret)
--		return ret;
--
--	src_file = fdget(srcfd);
--	if (!src_file.file) {
--		ret = -EBADF;
--		goto out_drop_write;
--	}
--
--	ret = -EXDEV;
--	if (src_file.file->f_path.mnt != file->f_path.mnt)
--		goto out_fput;
--
--	src = file_inode(src_file.file);
--
--	ret = -EINVAL;
--	if (src == inode)
--		same_inode = 1;
--
--	/* the src must be open for reading */
--	if (!(src_file.file->f_mode & FMODE_READ))
--		goto out_fput;
-+	if (file_src->f_path.mnt != file->f_path.mnt ||
-+	    src->i_sb != inode->i_sb)
-+		return -EXDEV;
- 
- 	/* don't make the dst file partly checksummed */
- 	if ((BTRFS_I(src)->flags & BTRFS_INODE_NODATASUM) !=
- 	    (BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM))
--		goto out_fput;
-+		return -EINVAL;
- 
--	ret = -EISDIR;
- 	if (S_ISDIR(src->i_mode) || S_ISDIR(inode->i_mode))
--		goto out_fput;
--
--	ret = -EXDEV;
--	if (src->i_sb != inode->i_sb)
--		goto out_fput;
-+		return -EISDIR;
- 
- 	if (!same_inode) {
- 		btrfs_double_inode_lock(src, inode);
-@@ -3869,6 +3839,49 @@ out_unlock:
- 		btrfs_double_inode_unlock(src, inode);
- 	else
- 		mutex_unlock(&src->i_mutex);
-+	return ret;
-+}
-+
-+ssize_t btrfs_copy_file_range(struct file *file_in, loff_t pos_in,
-+			      struct file *file_out, loff_t pos_out,
-+			      size_t len, int flags)
-+{
-+	ssize_t ret;
-+
-+	ret = btrfs_clone_files(file_out, file_in, pos_in, len, pos_out);
-+	if (ret == 0)
-+		ret = len;
-+	return ret;
-+}
-+
-+static noinline long btrfs_ioctl_clone(struct file *file, unsigned long srcfd,
-+				       u64 off, u64 olen, u64 destoff)
-+{
-+	struct fd src_file;
-+	int ret;
-+
-+	/* the destination must be opened for writing */
-+	if (!(file->f_mode & FMODE_WRITE) || (file->f_flags & O_APPEND))
-+		return -EINVAL;
-+
-+	ret = mnt_want_write_file(file);
-+	if (ret)
-+		return ret;
-+
-+	src_file = fdget(srcfd);
-+	if (!src_file.file) {
-+		ret = -EBADF;
-+		goto out_drop_write;
-+	}
-+
-+	/* the src must be open for reading */
-+	if (!(src_file.file->f_mode & FMODE_READ)) {
-+		ret = -EINVAL;
-+		goto out_fput;
-+	}
-+
-+	ret = btrfs_clone_files(file, src_file.file, off, olen, destoff);
-+
- out_fput:
- 	fdput(src_file);
- out_drop_write:
+ /usr/bin/cp |   512  |  1024  |  1536  |  2048  |  2560  |  3072  |  5120
+-------------|--------|--------|--------|--------|--------|--------|--------
+        user |  0.00s |  0.01s |  0.01s |  0.01s |  0.01s |  0.01s |  0.02s
+      system |  0.68s |  0.48s |  0.74s |  0.99s |  1.25s |  1.50s |  2.51s
+         cpu |    34% |    14% |    14% |    15% |    14% |    14% |    15%
+       total |  1.993 |  3.314 |  4.994 |  6.599 |  8.627 | 10.079 | 16.852
+
+
+    VFS copy |   512  |  1024  |  1536  |  2048  |  2560  |  3072  |  5120
+-------------|--------|--------|--------|--------|--------|--------|--------
+        user |  0.00s |  0.00s |  0.00s |  0.00s |  0.00s |  0.00s |  0.00s
+      system |  0.65s |  0.46s |  0.70s |  0.93s |  1.18s |  1.41s |  2.37s
+         cpu |    35% |    14% |    15% |    14% |    14% |    14% |    14%
+       total |  1.870 |  3.084 |  4.613 |  6.206 |  7.884 |  9.372 | 15.904
+
+
+Questions?  Comments?  Thoughts?
+
+Anna
+
+
+Anna Schumaker (6):
+  vfs: Copy should check len after file open mode
+  vfs: Copy shouldn't forbid ranges inside the same file
+  vfs: Copy should use file_out rather than file_in
+  vfs: Remove copy_file_range mountpoint checks
+  vfs: copy_file_range() can do a pagecache copy with splice
+  btrfs: btrfs_copy_file_range() only supports reflinks
+
+Zach Brown (3):
+  vfs: add copy_file_range syscall and vfs helper
+  x86: add sys_copy_file_range to syscall tables
+  btrfs: add .copy_file_range file operation
+
+ arch/x86/entry/syscalls/syscall_32.tbl |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl |   1 +
+ fs/btrfs/ctree.h                       |   3 +
+ fs/btrfs/file.c                        |   1 +
+ fs/btrfs/ioctl.c                       |  95 ++++++++++++++----------
+ fs/read_write.c                        | 132 +++++++++++++++++++++++++++++++++
+ include/linux/copy.h                   |   6 ++
+ include/linux/fs.h                     |   3 +
+ include/uapi/asm-generic/unistd.h      |   4 +-
+ include/uapi/linux/Kbuild              |   1 +
+ include/uapi/linux/copy.h              |   7 ++
+ kernel/sys_ni.c                        |   1 +
+ 12 files changed, 215 insertions(+), 40 deletions(-)
+ create mode 100644 include/linux/copy.h
+ create mode 100644 include/uapi/linux/copy.h
+
 -- 
 2.5.1
 
