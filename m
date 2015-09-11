@@ -1,279 +1,317 @@
 From: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: Re: [PATCH v2 4/5] seccomp: add a way to access filters via bpf fds
-Date: Fri, 11 Sep 2015 08:31:04 -0600
-Message-ID: <20150911143104.GG27574@smitten>
+Subject: Re: [PATCH v2 5/5] seccomp: add a way to attach a filter via eBPF fd
+Date: Fri, 11 Sep 2015 08:40:17 -0600
+Message-ID: <20150911144017.GH27574@smitten>
 References: <1441930862-14347-1-git-send-email-tycho.andersen@canonical.com>
- <1441930862-14347-5-git-send-email-tycho.andersen@canonical.com>
- <CAKgNAki99ZFgLPE5mWWjj1nvdNyke1w0ttqmiG+Uk0rVfqutZw@mail.gmail.com>
+ <1441930862-14347-6-git-send-email-tycho.andersen@canonical.com>
+ <55F2CB27.7030804@iogearbox.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAKgNAki99ZFgLPE5mWWjj1nvdNyke1w0ttqmiG+Uk0rVfqutZw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <55F2CB27.7030804-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
+Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Michael,
-
-On Fri, Sep 11, 2015 at 02:08:50PM +0200, Michael Kerrisk (man-pages) wrote:
-> HI Tycho
+On Fri, Sep 11, 2015 at 02:37:59PM +0200, Daniel Borkmann wrote:
+> On 09/11/2015 02:21 AM, Tycho Andersen wrote:
+> >This is the final bit needed to support seccomp filters created via the bpf
+> >syscall. The patch adds a new seccomp operation SECCOMP_MODE_FILTER_EBPF,
+> >which takes exactly one command (presumably to be expanded upon later when
+> >seccomp EBPFs support more interesting things) and an argument struct
+> >similar to that of bpf(), although the size is explicit in the struct to
+> >avoid changing the signature of seccomp().
+> >
+> >v2: Don't abuse seccomp's third argument; use a separate command and a
+> >     pointer to a structure instead.
 > 
-> On 11 September 2015 at 02:21, Tycho Andersen
-> <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
-> > This patch adds a way for a process that is "real root" to access the
-> > seccomp filters of another process. The process first does a
-> > PTRACE_SECCOMP_GET_FILTER_FD to get an fd with that process' seccomp filter
-> > attached, and then iterates on this with PTRACE_SECCOMP_NEXT_FILTER using
-> > bpf(BPF_PROG_DUMP) to dump the actual program at each step.
+> Comments below ...
 > 
-> Do you have a man- page patch for this change?
+> >Signed-off-by: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+> >CC: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+> >CC: Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+> >CC: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> >CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+> >CC: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+> >CC: Serge E. Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+> >CC: Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+> >CC: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
+> >---
+> >  include/uapi/linux/seccomp.h |  16 +++++
+> >  kernel/seccomp.c             | 135 ++++++++++++++++++++++++++++++++++++++-----
+> >  2 files changed, 138 insertions(+), 13 deletions(-)
+> >
+> >diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
+> >index 0f238a4..a8694e2 100644
+> >--- a/include/uapi/linux/seccomp.h
+> >+++ b/include/uapi/linux/seccomp.h
+> >@@ -13,10 +13,14 @@
+> >  /* Valid operations for seccomp syscall. */
+> >  #define SECCOMP_SET_MODE_STRICT	0
+> >  #define SECCOMP_SET_MODE_FILTER	1
+> >+#define SECCOMP_MODE_FILTER_EBPF	2
+> 
+> Should this be SECCOMP_SET_MODE_FILTER_EBPF or just SECCOMP_SET_MODE_EBPF?
 
-Not yet (r.e. all the man page reqs), I can draft them asap, though.
-Hopefully the API is mostly stable at this point :).
+I just stole the name Kees gave it in the previous thread, but I think
+that perhaps there are other plans for manipulating seccomp ebpfs (?).
+The command is SECCOMP_EBPF_ADD_FD, so it seems like we could add a
+command like SECCOMP_EBPF_SOMETHING in the future.
 
-Thanks,
+> >  /* Valid flags for SECCOMP_SET_MODE_FILTER */
+> >  #define SECCOMP_FILTER_FLAG_TSYNC	1
+> >
+> >+/* Valid cmds for SECCOMP_MODE_FILTER_EBPF */
+> >+#define SECCOMP_EBPF_ADD_FD	0
+> >+
+> >  /*
+> >   * All BPF programs must return a 32-bit value.
+> >   * The bottom 16-bits are for optional return data.
+> >@@ -51,4 +55,16 @@ struct seccomp_data {
+> >  	__u64 args[6];
+> >  };
+> >
+> >+struct seccomp_ebpf {
+> >+	unsigned int size;
+> >+
+> >+	union {
+> >+		/* SECCOMP_EBPF_ADD_FD */
+> >+		struct {
+> >+			unsigned int	add_flags;
+> >+			__u32		add_fd;
+> >+		};
+> >+	};
+> >+};
+> >+
+> >  #endif /* _UAPI_LINUX_SECCOMP_H */
+> >diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+> >index 1856f69..e78175a 100644
+> >--- a/kernel/seccomp.c
+> >+++ b/kernel/seccomp.c
+> >@@ -65,6 +65,9 @@ struct seccomp_filter {
+> >  /* Limit any path through the tree to 256KB worth of instructions. */
+> >  #define MAX_INSNS_PER_PATH ((1 << 18) / sizeof(struct sock_filter))
+> >
+> >+static long seccomp_install_filter(unsigned int flags,
+> >+				   struct seccomp_filter *prepared);
+> >+
+> >  /*
+> >   * Endianness is explicitly ignored and left for BPF program authors to manage
+> >   * as per the specific architecture.
+> >@@ -356,17 +359,6 @@ static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
+> >
+> >  	BUG_ON(INT_MAX / fprog->len < sizeof(struct sock_filter));
+> >
+> >-	/*
+> >-	 * Installing a seccomp filter requires that the task has
+> >-	 * CAP_SYS_ADMIN in its namespace or be running with no_new_privs.
+> >-	 * This avoids scenarios where unprivileged tasks can affect the
+> >-	 * behavior of privileged children.
+> >-	 */
+> >-	if (!task_no_new_privs(current) &&
+> >-	    security_capable_noaudit(current_cred(), current_user_ns(),
+> >-				     CAP_SYS_ADMIN) != 0)
+> >-		return ERR_PTR(-EACCES);
+> >-
+> >  	/* Allocate a new seccomp_filter */
+> >  	sfilter = kzalloc(sizeof(*sfilter), GFP_KERNEL | __GFP_NOWARN);
+> >  	if (!sfilter)
+> >@@ -510,8 +502,105 @@ static void seccomp_send_sigsys(int syscall, int reason)
+> >  	info.si_syscall = syscall;
+> >  	force_sig_info(SIGSYS, &info, current);
+> >  }
+> >+
+> >  #endif	/* CONFIG_SECCOMP_FILTER */
+> >
+> >+#if defined(CONFIG_BPF_SYSCALL) && defined(CONFIG_SECCOMP_FILTER)
+> >+static struct seccomp_filter *seccomp_prepare_ebpf(int fd)
+> >+{
+> >+	struct seccomp_filter *ret;
+> >+	struct bpf_prog *prog;
+> >+
+> >+	prog = bpf_prog_get(fd);
+> >+	if (IS_ERR(prog))
+> >+		return (struct seccomp_filter *) prog;
+> 
+> ERR_CAST()
+> 
+> >+
+> >+	if (prog->type != BPF_PROG_TYPE_SECCOMP) {
+> >+		bpf_prog_put(prog);
+> >+		return ERR_PTR(-EINVAL);
+> >+	}
+> >+
+> >+	ret = kzalloc(sizeof(*ret), GFP_KERNEL | __GFP_NOWARN);
+> >+	if (!ret) {
+> >+		bpf_prog_put(prog);
+> >+		return ERR_PTR(-ENOMEM);
+> >+	}
+> >+
+> >+	ret->prog = prog;
+> >+	atomic_set(&ret->usage, 1);
+> >+
+> >+	/* Intentionally don't bpf_prog_put() here, because the underlying prog
+> >+	 * is refcounted too and we're holding a reference from the struct
+> >+	 * seccomp_filter object.
+> >+	 */
+> >+	return ret;
+> >+}
+> >+
+> >+static long seccomp_ebpf_add_fd(struct seccomp_ebpf *ebpf)
+> >+{
+> >+	struct seccomp_filter *prepared;
+> >+
+> >+	prepared = seccomp_prepare_ebpf(ebpf->add_fd);
+> >+	if (IS_ERR(prepared))
+> >+		return PTR_ERR(prepared);
+> >+
+> >+	return seccomp_install_filter(ebpf->add_flags, prepared);
+> >+}
+> >+
+> >+static long seccomp_mode_filter_ebpf(unsigned int cmd, const char __user *uargs)
+> >+{
+> >+	const struct seccomp_ebpf __user *uebpf;
+> >+	struct seccomp_ebpf ebpf;
+> >+	unsigned int size;
+> >+	long ret = -EFAULT;
+> >+
+> >+	uebpf = (const struct seccomp_ebpf __user *) uargs;
+> >+
+> >+	if (get_user(size, &uebpf->size) != 0)
+> >+		return -EFAULT;
+> >+
+> >+	/* If we're handed a bigger struct than we know of,
+> >+	 * ensure all the unknown bits are 0 - i.e. new
+> >+	 * user-space does not rely on any kernel feature
+> >+	 * extensions we dont know about yet.
+> >+	 */
+> >+	if (size > sizeof(ebpf)) {
+> >+		unsigned char __user *addr;
+> >+		unsigned char __user *end;
+> >+		unsigned char val;
+> >+
+> >+		addr = (void __user *)uebpf + sizeof(ebpf);
+> >+		end  = (void __user *)uebpf + size;
+> >+
+> >+		for (; addr < end; addr++) {
+> >+			int err = get_user(val, addr);
+> >+
+> >+			if (err)
+> >+				return err;
+> >+			if (val)
+> >+				return -E2BIG;
+> >+		}
+> >+		size = sizeof(ebpf);
+> >+	}
+> >+
+> >+	if (copy_from_user(&ebpf, uebpf, size) != 0)
+> >+		return -EFAULT;
+> 
+> Not sure it's worth adding all this bpf(2)-alike interface complexity into
+> this, but fair enough, I guess there are some very good reasons and bigger
+> additions coming then ...
+
+I'm not sure what bigger additions are coming, although it seems Andy
+might have something. I think this is just an attempt to future proof
+things.
+
+> >+	switch (cmd) {
+> >+	case SECCOMP_EBPF_ADD_FD:
+> >+		ret = seccomp_ebpf_add_fd(&ebpf);
+> >+		break;
+> >+	}
+> >+
+> >+	return ret;
+> >+}
+> >+#else
+> >+static long seccomp_mode_filter_ebpf(unsigned int cmd, const char __user *uargs)
+> >+{
+> >+	return -EINVAL;
+> >+}
+> >+#endif
+> >+
+> >  /*
+> >   * Secure computing mode 1 allows only read/write/exit/sigreturn.
+> >   * To be fully secure this must be combined with rlimit
+> >@@ -760,9 +849,7 @@ out:
+> >  static long seccomp_set_mode_filter(unsigned int flags,
+> >  				    const char __user *filter)
+> >  {
+> >-	const unsigned long seccomp_mode = SECCOMP_MODE_FILTER;
+> >  	struct seccomp_filter *prepared = NULL;
+> >-	long ret = -EINVAL;
+> >
+> >  	/* Validate flags. */
+> >  	if (flags & ~SECCOMP_FILTER_FLAG_MASK)
+> >@@ -773,6 +860,26 @@ static long seccomp_set_mode_filter(unsigned int flags,
+> >  	if (IS_ERR(prepared))
+> >  		return PTR_ERR(prepared);
+> >
+> >+	return seccomp_install_filter(flags, prepared);
+> 
+> I (truly) hope, I'm overseeing something ;) ...
+> 
+> ... but why doing all the (classic) seccomp-BPF preparation work (which is rather
+> a lot) up to this point, where you have it ready, only to *then* find out we don't
+> have the actual permissions ?!
+
+Yes, this seems dumb. I was trying to avoid having the check in two
+places, but that's probably what's necessary.
+
+> Plus, when seccomp_install_filter() fails with -EACCES, who is releasing all the
+> allocated foo resp. dropping taken program refs !?
+
+Yes, seccomp_install_filter is /supposed/ to free things if the
+install fails, although it doesn't in the permissions case because
+of the copy paste error, doh.
+
+> I see the same in seccomp_ebpf_add_fd().
+
+Same as above, seccomp_install_filter is supposed to call
+seccomp_filter_free in case of an error, but it doesn't.
+
+Thanks for the look. I'll make the changes for the next set.
 
 Tycho
 
-> Cheers,
+> So, an unprivileged child could increase the parent's bpf_prog's reference count
+> w/o having the actual permissions to do so, and thus controlling it to the point
+> where the next bpf_prog_put() would unintentionally release it?
 > 
-> Michael
+> (So yeah, I'm hoping I misread something ... ;))
 > 
-> > Signed-off-by: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-> > CC: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-> > CC: Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-> > CC: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> > CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-> > CC: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-> > CC: Serge E. Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-> > CC: Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> > CC: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
-> > ---
-> >  include/linux/bpf.h         | 12 ++++++++++
-> >  include/linux/seccomp.h     | 14 +++++++++++
-> >  include/uapi/linux/ptrace.h |  3 +++
-> >  kernel/bpf/syscall.c        | 26 ++++++++++++++++++++-
-> >  kernel/ptrace.c             |  7 ++++++
-> >  kernel/seccomp.c            | 57 +++++++++++++++++++++++++++++++++++++++++++++
-> >  6 files changed, 118 insertions(+), 1 deletion(-)
+> >+}
+> >+
+> >+static long seccomp_install_filter(unsigned int flags,
+> >+				   struct seccomp_filter *prepared)
+> >+{
+> >+	const unsigned long seccomp_mode = SECCOMP_MODE_FILTER;
+> >+	long ret = -EINVAL;
+> >+
+> >+	/*
+> >+	 * Installing a seccomp filter requires that the task has
+> >+	 * CAP_SYS_ADMIN in its namespace or be running with no_new_privs.
+> >+	 * This avoids scenarios where unprivileged tasks can affect the
+> >+	 * behavior of privileged children.
+> >+	 */
+> >+	if (!task_no_new_privs(current) &&
+> >+	    security_capable_noaudit(current_cred(), current_user_ns(),
+> >+				     CAP_SYS_ADMIN) != 0)
+> >+		return -EACCES;
+> >+
+> >  	/*
+> >  	 * Make sure we cannot change seccomp or nnp state via TSYNC
+> >  	 * while another thread is in the middle of calling exec.
+> >@@ -875,6 +982,8 @@ static long do_seccomp(unsigned int op, unsigned int flags,
+> >  		return seccomp_set_mode_strict();
+> >  	case SECCOMP_SET_MODE_FILTER:
+> >  		return seccomp_set_mode_filter(flags, uargs);
+> >+	case SECCOMP_MODE_FILTER_EBPF:
+> >+		return seccomp_mode_filter_ebpf(flags, uargs);
+> >  	default:
+> >  		return -EINVAL;
+> >  	}
 > >
-> > diff --git a/include/linux/bpf.h b/include/linux/bpf.h
-> > index f57d7fe..bfd9cab 100644
-> > --- a/include/linux/bpf.h
-> > +++ b/include/linux/bpf.h
-> > @@ -162,6 +162,8 @@ void bpf_register_prog_type(struct bpf_prog_type_list *tl);
-> >  void bpf_register_map_type(struct bpf_map_type_list *tl);
-> >
-> >  struct bpf_prog *bpf_prog_get(u32 ufd);
-> > +int bpf_prog_set(u32 ufd, struct bpf_prog *new);
-> > +int bpf_new_fd(struct bpf_prog *prog, int flags);
-> >  void bpf_prog_put(struct bpf_prog *prog);
-> >  void bpf_prog_put_rcu(struct bpf_prog *prog);
-> >
-> > @@ -180,6 +182,16 @@ static inline struct bpf_prog *bpf_prog_get(u32 ufd)
-> >         return ERR_PTR(-EOPNOTSUPP);
-> >  }
-> >
-> > +static inline int bpf_prog_set(u32 ufd, struct bpf_prog *new)
-> > +{
-> > +       return -EINVAL;
-> > +}
-> > +
-> > +static inline int bpf_new_fd(struct bpf_prog *prog, int flags)
-> > +{
-> > +       return -EINVAL;
-> > +}
-> > +
-> >  static inline void bpf_prog_put(struct bpf_prog *prog)
-> >  {
-> >  }
-> > diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
-> > index a19ddac..41b083c 100644
-> > --- a/include/linux/seccomp.h
-> > +++ b/include/linux/seccomp.h
-> > @@ -95,4 +95,18 @@ static inline void get_seccomp_filter(struct task_struct *tsk)
-> >         return;
-> >  }
-> >  #endif /* CONFIG_SECCOMP_FILTER */
-> > +
-> > +#if defined(CONFIG_SECCOMP_FILTER) && defined(CONFIG_CHECKPOINT_RESTORE)
-> > +extern long seccomp_get_filter_fd(struct task_struct *child);
-> > +extern long seccomp_next_filter(struct task_struct *child, u32 fd);
-> > +#else
-> > +static inline long seccomp_get_filter_fd(struct task_struct *child)
-> > +{
-> > +       return -EINVAL;
-> > +}
-> > +static inline long seccomp_next_filter(struct task_struct *child, u32 fd)
-> > +{
-> > +       return -EINVAL;
-> > +}
-> > +#endif /* CONFIG_SECCOMP_FILTER && CONFIG_CHECKPOINT_RESTORE */
-> >  #endif /* _LINUX_SECCOMP_H */
-> > diff --git a/include/uapi/linux/ptrace.h b/include/uapi/linux/ptrace.h
-> > index cf1019e..041c3c3 100644
-> > --- a/include/uapi/linux/ptrace.h
-> > +++ b/include/uapi/linux/ptrace.h
-> > @@ -23,6 +23,9 @@
-> >
-> >  #define PTRACE_SYSCALL           24
-> >
-> > +#define PTRACE_SECCOMP_GET_FILTER_FD   40
-> > +#define PTRACE_SECCOMP_NEXT_FILTER     41
-> > +
-> >  /* 0x4200-0x4300 are reserved for architecture-independent additions.  */
-> >  #define PTRACE_SETOPTIONS      0x4200
-> >  #define PTRACE_GETEVENTMSG     0x4201
-> > diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
-> > index 58ae9f4..ac3ed1c 100644
-> > --- a/kernel/bpf/syscall.c
-> > +++ b/kernel/bpf/syscall.c
-> > @@ -506,6 +506,30 @@ struct bpf_prog *bpf_prog_get(u32 ufd)
-> >  }
-> >  EXPORT_SYMBOL_GPL(bpf_prog_get);
-> >
-> > +int bpf_prog_set(u32 ufd, struct bpf_prog *new)
-> > +{
-> > +       struct fd f;
-> > +       struct bpf_prog *prog;
-> > +
-> > +       f = fdget(ufd);
-> > +
-> > +       prog = get_prog(f);
-> > +       if (!IS_ERR(prog) && prog)
-> > +               bpf_prog_put(prog);
-> > +
-> > +       atomic_inc(&new->aux->refcnt);
-> > +       f.file->private_data = new;
-> > +       fdput(f);
-> > +       return 0;
-> > +}
-> > +EXPORT_SYMBOL_GPL(bpf_prog_set);
-> > +
-> > +int bpf_new_fd(struct bpf_prog *prog, int flags)
-> > +{
-> > +       return anon_inode_getfd("bpf-prog", &bpf_prog_fops, prog, flags);
-> > +}
-> > +EXPORT_SYMBOL_GPL(bpf_new_fd);
-> > +
-> >  /* last field in 'union bpf_attr' used by this command */
-> >  #define        BPF_PROG_LOAD_LAST_FIELD kern_version
-> >
-> > @@ -572,7 +596,7 @@ static int bpf_prog_load(union bpf_attr *attr)
-> >         if (err < 0)
-> >                 goto free_used_maps;
-> >
-> > -       err = anon_inode_getfd("bpf-prog", &bpf_prog_fops, prog, O_RDWR | O_CLOEXEC);
-> > +       err = bpf_new_fd(prog, O_RDWR | O_CLOEXEC);
-> >         if (err < 0)
-> >                 /* failed to allocate fd */
-> >                 goto free_used_maps;
-> > diff --git a/kernel/ptrace.c b/kernel/ptrace.c
-> > index c8e0e05..a151c35 100644
-> > --- a/kernel/ptrace.c
-> > +++ b/kernel/ptrace.c
-> > @@ -1003,6 +1003,13 @@ int ptrace_request(struct task_struct *child, long request,
-> >                 break;
-> >         }
-> >  #endif
-> > +
-> > +       case PTRACE_SECCOMP_GET_FILTER_FD:
-> > +               return seccomp_get_filter_fd(child);
-> > +
-> > +       case PTRACE_SECCOMP_NEXT_FILTER:
-> > +               return seccomp_next_filter(child, data);
-> > +
-> >         default:
-> >                 break;
-> >         }
-> > diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-> > index afaeddf..1856f69 100644
-> > --- a/kernel/seccomp.c
-> > +++ b/kernel/seccomp.c
-> > @@ -26,6 +26,8 @@
-> >  #endif
-> >
-> >  #ifdef CONFIG_SECCOMP_FILTER
-> > +#include <linux/bpf.h>
-> > +#include <uapi/linux/bpf.h>
-> >  #include <linux/filter.h>
-> >  #include <linux/pid.h>
-> >  #include <linux/ptrace.h>
-> > @@ -807,6 +809,61 @@ static inline long seccomp_set_mode_filter(unsigned int flags,
-> >  }
-> >  #endif
-> >
-> > +#if defined(CONFIG_SECCOMP_FILTER) && defined(CONFIG_CHECKPOINT_RESTORE)
-> > +long seccomp_get_filter_fd(struct task_struct *child)
-> > +{
-> > +       long fd;
-> > +       struct seccomp_filter *filter;
-> > +
-> > +       if (!capable(CAP_SYS_ADMIN))
-> > +               return -EACCES;
-> > +
-> > +       if (child->seccomp.mode != SECCOMP_MODE_FILTER)
-> > +               return -EINVAL;
-> > +
-> > +       filter = child->seccomp.filter;
-> > +
-> > +       fd = bpf_new_fd(filter->prog, O_RDONLY);
-> > +       if (fd > 0)
-> > +               atomic_inc(&filter->prog->aux->refcnt);
-> > +
-> > +       return fd;
-> > +}
-> > +
-> > +long seccomp_next_filter(struct task_struct *child, u32 fd)
-> > +{
-> > +       struct seccomp_filter *cur;
-> > +       struct bpf_prog *prog;
-> > +       long ret = -ESRCH;
-> > +
-> > +       if (!capable(CAP_SYS_ADMIN))
-> > +               return -EACCES;
-> > +
-> > +       if (child->seccomp.mode != SECCOMP_MODE_FILTER)
-> > +               return -EINVAL;
-> > +
-> > +       prog = bpf_prog_get(fd);
-> > +       if (IS_ERR(prog)) {
-> > +               ret = PTR_ERR(prog);
-> > +               goto out;
-> > +       }
-> > +
-> > +       for (cur = child->seccomp.filter; cur; cur = cur->prev) {
-> > +               if (cur->prog == prog) {
-> > +                       if (!cur->prev)
-> > +                               ret = -ENOENT;
-> > +                       else
-> > +                               ret = bpf_prog_set(fd, cur->prev->prog);
-> > +                       break;
-> > +               }
-> > +       }
-> > +
-> > +out:
-> > +       bpf_prog_put(prog);
-> > +       return ret;
-> > +}
-> > +#endif
-> > +
-> >  /* Common entry point for both prctl and syscall. */
-> >  static long do_seccomp(unsigned int op, unsigned int flags,
-> >                        const char __user *uargs)
-> > --
-> > 2.1.4
-> >
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
 > 
-> 
-> 
-> -- 
-> Michael Kerrisk
-> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-> Linux/UNIX System Programming Training: http://man7.org/training/
