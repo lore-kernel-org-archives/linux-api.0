@@ -1,60 +1,49 @@
-From: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
-Subject: Re: [PATCH v2 3/5] ebpf: add a way to dump an eBPF program
-Date: Fri, 11 Sep 2015 15:39:14 +0200
-Message-ID: <55F2D982.8010406@iogearbox.net>
-References: <1441930862-14347-1-git-send-email-tycho.andersen@canonical.com> <1441930862-14347-4-git-send-email-tycho.andersen@canonical.com>
+From: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+Subject: Re: [PATCH v8 44/55] [media] uapi/media.h: Add MEDIA_IOC_G_TOPOLOGY
+ ioctl
+Date: Fri, 11 Sep 2015 15:58:48 +0200
+Message-ID: <55F2DE18.3020201@xs4all.nl>
+References: <ec40936d7349f390dd8b73b90fa0e0708de596a9.1441540862.git.mchehab@osg.samsung.com> <297afcfe4c9c5ebc074f92d1badd34b94e8b28f9.1441540862.git.mchehab@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1441930862-14347-4-git-send-email-tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+In-Reply-To: <297afcfe4c9c5ebc074f92d1badd34b94e8b28f9.1441540862.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 09/11/2015 02:21 AM, Tycho Andersen wrote:
-> This commit adds a way to dump eBPF programs. The initial implementation
-> doesn't support maps, and therefore only allows dumping seccomp ebpf
-> programs which themselves don't currently support maps.
->
-> v2: don't export a prog_id for the filter
->
-> Signed-off-by: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-> CC: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-> CC: Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-> CC: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-> CC: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-> CC: Serge E. Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-> CC: Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> CC: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
-[...]
-> diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
-> index dc9b464..58ae9f4 100644
-> --- a/kernel/bpf/syscall.c
-> +++ b/kernel/bpf/syscall.c
-> @@ -586,6 +586,44 @@ free_prog:
->   	return err;
->   }
->
-> +static int bpf_prog_dump(union bpf_attr *attr, union bpf_attr __user *uattr)
-> +{
-> +	int ufd = attr->prog_fd;
-> +	struct fd f = fdget(ufd);
-> +	struct bpf_prog *prog;
-> +	int ret = -EINVAL;
-> +
-> +	prog = get_prog(f);
-> +	if (IS_ERR(prog))
-> +		return PTR_ERR(prog);
-> +
-> +	/* For now, let's refuse to dump anything that isn't a seccomp program.
-> +	 * Other program types have support for maps, which our current dump
-> +	 * code doesn't support.
-> +	 */
-> +	if (prog->type != BPF_PROG_TYPE_SECCOMP)
-> +		goto out;
+On 09/06/2015 02:03 PM, Mauro Carvalho Chehab wrote:
+> Add a new ioctl that will report the entire topology on
+> one go.
+> 
+> Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 
-Yep, also when you start adding helper calls (next to map objects) you'd
-need to undo kernel pointers that the verifier sets here.
+Acked-by: Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>
+
+I do have one suggestion: media_v2_interface, media_v2_pad and media_v2_link all
+have a 'flags' field, but it is not clear from the code in the header which flag
+#defines are used for which struct. Perhaps a few comments would help with that.
+
+> diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
+> index a1bd7afba110..b17f6763aff4 100644
+> --- a/include/uapi/linux/media.h
+> +++ b/include/uapi/linux/media.h
+
+<snip>
+
+> +
+> +struct media_v2_pad {
+> +	__u32 id;
+> +	__u32 entity_id;
+> +	__u32 flags;
+> +	__u16 reserved[9];
+
+Strange odd number here for no clear reason. Perhaps use 8 or 10 instead?
+
+Anyway, you have my Ack.
+
+Regards,
+
+	Hans
