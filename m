@@ -1,179 +1,242 @@
-From: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v2 8/9] vfs: copy_file_range() can do a pagecache copy with splice
-Date: Fri, 11 Sep 2015 16:30:21 -0400
-Message-ID: <1442003423-6884-9-git-send-email-Anna.Schumaker@Netapp.com>
+From: Anna Schumaker <Anna.Schumaker@netapp.com>
+Subject: [PATCH v2 1/9] vfs: add copy_file_range syscall and vfs helper
+Date: Fri, 11 Sep 2015 16:30:14 -0400
+Message-ID: <1442003423-6884-2-git-send-email-Anna.Schumaker@Netapp.com>
 References: <1442003423-6884-1-git-send-email-Anna.Schumaker@Netapp.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1442003423-6884-1-git-send-email-Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <1442003423-6884-1-git-send-email-Anna.Schumaker@Netapp.com>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, darrick.wong@oracle.com, mtk.manpages@gmail.com, andros@netapp.com, hch@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-The NFS server will need some kind offallback for filesystems that don't
-have any kind of copy acceleration, and it should be generally useful to
-have an in-kernel copy to avoid lots of switches between kernel and user
-space.
+From: Zach Brown <zab@redhat.com>
 
-I make this configurable by adding two new flags.  Users who only want a
-reflink can pass COPY_FR_REFLINK, and users who want a full data copy can
-pass COPY_FR_COPY.  The default (flags=0) means to first attempt a
-reflink, but use the pagecache if that fails.
+Add a copy_file_range() system call for offloading copies between
+regular files.
 
-I moved the rw_verify_area() calls into the fallback code since some
-filesystems can handle reflinking a large range.
+This gives an interface to underlying layers of the storage stack which
+can copy without reading and writing all the data.  There are a few
+candidates that should support copy offloading in the nearer term:
 
-Signed-off-by: Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+- btrfs shares extent references with its clone ioctl
+- NFS has patches to add a COPY command which copies on the server
+- SCSI has a family of XCOPY commands which copy in the device
+
+This system call avoids the complexity of also accelerating the creation
+of the destination file by operating on an existing destination file
+descriptor, not a path.
+
+Currently the high level vfs entry point limits copy offloading to files
+on the same mount and super (and not in the same file).  This can be
+relaxed if we get implementations which can copy between file systems
+safely.
+
+Signed-off-by: Zach Brown <zab@redhat.com>
+[Anna Schumaker:  Change -EINVAL to -EBADF during file verification]
+Signed-off-by: Anna Schumaker <Anna.Schumaker@Netapp.com>
 ---
-v2:
-- Rename COPY_REFLINK -> COPY_FR_REFLINK
-- Introduce COPY_FR_COPY flag
-- Flags == 0 is really COPY_FR_COPY|COPY_FR_REFLINK
-- Drop check for invalid flags
-- Move call to do_splice_direct() into a new function
-- Move rw_verify_area() checks into the new fallback function
----
- fs/read_write.c           | 56 ++++++++++++++++++++++++++++-------------------
- include/linux/copy.h      |  6 +++++
- include/uapi/linux/Kbuild |  1 +
- include/uapi/linux/copy.h |  7 ++++++
- 4 files changed, 48 insertions(+), 22 deletions(-)
- create mode 100644 include/linux/copy.h
- create mode 100644 include/uapi/linux/copy.h
+ fs/read_write.c                   | 129 ++++++++++++++++++++++++++++++++++++++
+ include/linux/fs.h                |   3 +
+ include/uapi/asm-generic/unistd.h |   4 +-
+ kernel/sys_ni.c                   |   1 +
+ 4 files changed, 136 insertions(+), 1 deletion(-)
 
 diff --git a/fs/read_write.c b/fs/read_write.c
-index 363bd3e..ba24884 100644
+index 819ef3f..82c4933 100644
 --- a/fs/read_write.c
 +++ b/fs/read_write.c
-@@ -7,6 +7,7 @@
- #include <linux/slab.h> 
- #include <linux/stat.h>
- #include <linux/fcntl.h>
-+#include <linux/copy.h>
- #include <linux/file.h>
- #include <linux/uio.h>
- #include <linux/fsnotify.h>
-@@ -1329,6 +1330,29 @@ COMPAT_SYSCALL_DEFINE4(sendfile64, int, out_fd, int, in_fd,
+@@ -16,6 +16,7 @@
+ #include <linux/pagemap.h>
+ #include <linux/splice.h>
+ #include <linux/compat.h>
++#include <linux/mount.h>
+ #include "internal.h"
+ 
+ #include <asm/uaccess.h>
+@@ -1327,3 +1328,131 @@ COMPAT_SYSCALL_DEFINE4(sendfile64, int, out_fd, int, in_fd,
+ 	return do_sendfile(out_fd, in_fd, NULL, count, 0);
  }
  #endif
- 
-+static ssize_t vfs_copy_file_pagecache(struct file *file_in, loff_t pos_in,
-+				       struct file *file_out, loff_t pos_out,
-+				       size_t len)
++
++/*
++ * copy_file_range() differs from regular file read and write in that it
++ * specifically allows return partial success.  When it does so is up to
++ * the copy_file_range method.
++ */
++ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
++			    struct file *file_out, loff_t pos_out,
++			    size_t len, int flags)
 +{
++	struct inode *inode_in;
++	struct inode *inode_out;
 +	ssize_t ret;
 +
++	if (flags)
++		return -EINVAL;
++
++	if (len == 0)
++		return 0;
++
++	/* copy_file_range allows full ssize_t len, ignoring MAX_RW_COUNT  */
 +	ret = rw_verify_area(READ, file_in, &pos_in, len);
-+	if (ret >= 0) {
-+		len = ret;
++	if (ret >= 0)
 +		ret = rw_verify_area(WRITE, file_out, &pos_out, len);
-+		if (ret >= 0)
-+			len = ret;
-+	}
 +	if (ret < 0)
 +		return ret;
 +
-+	file_start_write(file_out);
-+	ret = do_splice_direct(file_in, &pos_in, file_out, &pos_out, len, 0);
-+	file_end_write(file_out);
++	if (!(file_in->f_mode & FMODE_READ) ||
++	    !(file_out->f_mode & FMODE_WRITE) ||
++	    (file_out->f_flags & O_APPEND) ||
++	    !file_in->f_op || !file_in->f_op->copy_file_range)
++		return -EBADF;
++
++	inode_in = file_inode(file_in);
++	inode_out = file_inode(file_out);
++
++	/* make sure offsets don't wrap and the input is inside i_size */
++	if (pos_in + len < pos_in || pos_out + len < pos_out ||
++	    pos_in + len > i_size_read(inode_in))
++		return -EINVAL;
++
++	/* this could be relaxed once a method supports cross-fs copies */
++	if (inode_in->i_sb != inode_out->i_sb ||
++	    file_in->f_path.mnt != file_out->f_path.mnt)
++		return -EXDEV;
++
++	/* forbid ranges in the same file */
++	if (inode_in == inode_out)
++		return -EINVAL;
++
++	ret = mnt_want_write_file(file_out);
++	if (ret)
++		return ret;
++
++	ret = file_in->f_op->copy_file_range(file_in, pos_in, file_out, pos_out,
++					     len, flags);
++	if (ret > 0) {
++		fsnotify_access(file_in);
++		add_rchar(current, ret);
++		fsnotify_modify(file_out);
++		add_wchar(current, ret);
++	}
++	inc_syscr(current);
++	inc_syscw(current);
++
++	mnt_drop_write_file(file_out);
 +
 +	return ret;
 +}
++EXPORT_SYMBOL(vfs_copy_file_range);
 +
++SYSCALL_DEFINE6(copy_file_range, int, fd_in, loff_t __user *, off_in,
++		int, fd_out, loff_t __user *, off_out,
++		size_t, len, unsigned int, flags)
++{
++	loff_t pos_in;
++	loff_t pos_out;
++	struct fd f_in;
++	struct fd f_out;
++	ssize_t ret;
++
++	f_in = fdget(fd_in);
++	f_out = fdget(fd_out);
++	if (!f_in.file || !f_out.file) {
++		ret = -EBADF;
++		goto out;
++	}
++
++	ret = -EFAULT;
++	if (off_in) {
++		if (copy_from_user(&pos_in, off_in, sizeof(loff_t)))
++			goto out;
++	} else {
++		pos_in = f_in.file->f_pos;
++	}
++
++	if (off_out) {
++		if (copy_from_user(&pos_out, off_out, sizeof(loff_t)))
++			goto out;
++	} else {
++		pos_out = f_out.file->f_pos;
++	}
++
++	ret = vfs_copy_file_range(f_in.file, pos_in, f_out.file, pos_out, len,
++				  flags);
++	if (ret > 0) {
++		pos_in += ret;
++		pos_out += ret;
++
++		if (off_in) {
++			if (copy_to_user(off_in, &pos_in, sizeof(loff_t)))
++				ret = -EFAULT;
++		} else {
++			f_in.file->f_pos = pos_in;
++		}
++
++		if (off_out) {
++			if (copy_to_user(off_out, &pos_out, sizeof(loff_t)))
++				ret = -EFAULT;
++		} else {
++			f_out.file->f_pos = pos_out;
++		}
++	}
++out:
++	fdput(f_in);
++	fdput(f_out);
++	return ret;
++}
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 72d8a84..4c70582 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -1642,6 +1642,7 @@ struct file_operations {
+ #ifndef CONFIG_MMU
+ 	unsigned (*mmap_capabilities)(struct file *);
+ #endif
++	ssize_t (*copy_file_range)(struct file *, loff_t, struct file *, loff_t, size_t, int);
+ };
+ 
+ struct inode_operations {
+@@ -1695,6 +1696,8 @@ extern ssize_t vfs_readv(struct file *, const struct iovec __user *,
+ 		unsigned long, loff_t *);
+ extern ssize_t vfs_writev(struct file *, const struct iovec __user *,
+ 		unsigned long, loff_t *);
++extern ssize_t vfs_copy_file_range(struct file *, loff_t , struct file *,
++				   loff_t, size_t, int);
+ 
+ struct super_operations {
+    	struct inode *(*alloc_inode)(struct super_block *sb);
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index e016bd9..2b60f0c 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -709,9 +709,11 @@ __SYSCALL(__NR_memfd_create, sys_memfd_create)
+ __SYSCALL(__NR_bpf, sys_bpf)
+ #define __NR_execveat 281
+ __SC_COMP(__NR_execveat, sys_execveat, compat_sys_execveat)
++#define __NR_copy_file_range 282
++__SYSCALL(__NR_copy_file_range, sys_copy_file_range)
+ 
+ #undef __NR_syscalls
+-#define __NR_syscalls 282
++#define __NR_syscalls 283
+ 
  /*
-  * copy_file_range() differs from regular file read and write in that it
-  * specifically allows return partial success.  When it does so is up to
-@@ -1338,34 +1362,17 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
- 			    struct file *file_out, loff_t pos_out,
- 			    size_t len, int flags)
- {
--	struct inode *inode_in;
--	struct inode *inode_out;
- 	ssize_t ret;
+  * All syscalls below here should go away really,
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index 03c3875..7f53519 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -174,6 +174,7 @@ cond_syscall(sys_setfsuid);
+ cond_syscall(sys_setfsgid);
+ cond_syscall(sys_capget);
+ cond_syscall(sys_capset);
++cond_syscall(sys_copy_file_range);
  
--	if (flags)
--		return -EINVAL;
--
--	/* copy_file_range allows full ssize_t len, ignoring MAX_RW_COUNT  */
--	ret = rw_verify_area(READ, file_in, &pos_in, len);
--	if (ret >= 0)
--		ret = rw_verify_area(WRITE, file_out, &pos_out, len);
--	if (ret < 0)
--		return ret;
-+	if (flags == 0)
-+		flags = COPY_FR_COPY | COPY_FR_REFLINK;
- 
- 	if (!(file_in->f_mode & FMODE_READ) ||
- 	    !(file_out->f_mode & FMODE_WRITE) ||
- 	    (file_out->f_flags & O_APPEND) ||
--	    !file_out->f_op || !file_out->f_op->copy_file_range)
-+	    !file_in->f_op)
- 		return -EBADF;
- 
--	inode_in = file_inode(file_in);
--	inode_out = file_inode(file_out);
--
--	/* make sure offsets don't wrap and the input is inside i_size */
--	if (pos_in + len < pos_in || pos_out + len < pos_out ||
--	    pos_in + len > i_size_read(inode_in))
--		return -EINVAL;
--
- 	if (len == 0)
- 		return 0;
- 
-@@ -1373,8 +1380,13 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
- 	if (ret)
- 		return ret;
- 
--	ret = file_out->f_op->copy_file_range(file_in, pos_in, file_out, pos_out,
--					      len, flags);
-+	ret = -EOPNOTSUPP;
-+	if (file_out->f_op->copy_file_range)
-+		ret = file_out->f_op->copy_file_range(file_in, pos_in, file_out,
-+						      pos_out, len, flags);
-+	if ((ret < 0) && (flags & COPY_FR_COPY))
-+		ret = vfs_copy_file_pagecache(file_in, pos_in, file_out,
-+					      pos_out, len);
- 	if (ret > 0) {
- 		fsnotify_access(file_in);
- 		add_rchar(current, ret);
-diff --git a/include/linux/copy.h b/include/linux/copy.h
-new file mode 100644
-index 0000000..fd54543
---- /dev/null
-+++ b/include/linux/copy.h
-@@ -0,0 +1,6 @@
-+#ifndef _LINUX_COPY_H
-+#define _LINUX_COPY_H
-+
-+#include <uapi/linux/copy.h>
-+
-+#endif /* _LINUX_COPY_H */
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index 70ff1d9..d46830a 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -90,6 +90,7 @@ header-y += coda_psdev.h
- header-y += coff.h
- header-y += connector.h
- header-y += const.h
-+header-y += copy.h
- header-y += cramfs_fs.h
- header-y += cuda.h
- header-y += cyclades.h
-diff --git a/include/uapi/linux/copy.h b/include/uapi/linux/copy.h
-new file mode 100644
-index 0000000..2da59a8
---- /dev/null
-+++ b/include/uapi/linux/copy.h
-@@ -0,0 +1,7 @@
-+#ifndef _UAPI_LINUX_COPY_H
-+#define _UAPI_LINUX_COPY_H
-+
-+#define COPY_FR_COPY		(1 << 0)  /* Only do a pagecache copy.  */
-+#define COPY_FR_REFLINK		(1 << 1)  /* Only make a reflink.       */
-+
-+#endif /* _UAPI_LINUX_COPY_H */
+ /* arch-specific weak syscall entries */
+ cond_syscall(sys_pciconfig_read);
 -- 
 2.5.1
+
