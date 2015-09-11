@@ -1,75 +1,190 @@
-From: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
-Subject: Re: [PATCH v2 2/5] seccomp: make underlying bpf ref counted as well
-Date: Fri, 11 Sep 2015 15:02:36 +0200
-Message-ID: <55F2D0EC.9090004@iogearbox.net>
-References: <1441930862-14347-1-git-send-email-tycho.andersen@canonical.com> <1441930862-14347-3-git-send-email-tycho.andersen@canonical.com>
+From: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+Subject: Re: [PATCH v8 28/55] [media] uapi/media.h: Fix entity namespace
+Date: Fri, 11 Sep 2015 15:06:09 +0200
+Message-ID: <55F2D1C1.8060704@xs4all.nl>
+References: <ec40936d7349f390dd8b73b90fa0e0708de596a9.1441540862.git.mchehab@osg.samsung.com> <9b372bed2898c86f41c6fe7b7e4e13670701feaf.1441540862.git.mchehab@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1441930862-14347-3-git-send-email-tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+In-Reply-To: <9b372bed2898c86f41c6fe7b7e4e13670701feaf.1441540862.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 09/11/2015 02:20 AM, Tycho Andersen wrote:
-> In the next patch, we're going to add a way to access the underlying
-> filters via bpf fds. This means that we need to ref-count both the
-> struct seccomp_filter objects and the struct bpf_prog objects separately,
-> in case a process dies but a filter is still referred to by another
-> process.
->
-> Additionally, we mark classic converted seccomp filters as seccomp eBPF
-> programs, since they are a subset of what is supported in seccomp eBPF.
->
-> Signed-off-by: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-> CC: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-> CC: Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-> CC: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-> CC: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-> CC: Serge E. Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-> CC: Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> CC: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
-> ---
->   kernel/seccomp.c | 4 +++-
->   1 file changed, 3 insertions(+), 1 deletion(-)
->
-> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-> index 245df6b..afaeddf 100644
-> --- a/kernel/seccomp.c
-> +++ b/kernel/seccomp.c
-> @@ -378,6 +378,8 @@ static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
->   	}
->
->   	atomic_set(&sfilter->usage, 1);
-> +	atomic_set(&sfilter->prog->aux->refcnt, 1);
-> +	sfilter->prog->type = BPF_PROG_TYPE_SECCOMP;
+On 09/06/2015 02:02 PM, Mauro Carvalho Chehab wrote:
+> Now that interfaces got created, we need to fix the entity
+> namespace.
+> 
+> So, let's create a consistent new namespace and add backward
+> compatibility macros to keep the old namespace preserved.
+> 
+> Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 
-So, if you do this, then this breaks the assumption of eBPF JITs
-that, currently, all classic converted BPF programs always have a
-prog->type of BPF_PROG_TYPE_UNSPEC (see: bpf_prog_was_classic()).
+Acked-by: Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>
 
-Currently, JITs make use of this information to determine whether
-A and X mappings for such programs should or should not be cleared
-in the prologue (s390 currently).
-
-In the seccomp_prepare_filter() stage, we're already past that, so
-it will not cause an issue, but we certainly would need to be very
-careful in future, if bpf_prog_was_classic() is then used at a later
-stage when we already have a generated bpf_prog somewhere, as then
-this assumption will break.
-
->   	return sfilter;
->   }
-> @@ -470,7 +472,7 @@ void get_seccomp_filter(struct task_struct *tsk)
->   static inline void seccomp_filter_free(struct seccomp_filter *filter)
->   {
->   	if (filter) {
-> -		bpf_prog_free(filter->prog);
-> +		bpf_prog_put(filter->prog);
->   		kfree(filter);
->   	}
->   }
->
+> 
+> diff --git a/drivers/media/dvb-core/dvbdev.c b/drivers/media/dvb-core/dvbdev.c
+> index ada0738d26f2..dadcf1655070 100644
+> --- a/drivers/media/dvb-core/dvbdev.c
+> +++ b/drivers/media/dvb-core/dvbdev.c
+> @@ -230,17 +230,17 @@ static void dvb_create_media_entity(struct dvb_device *dvbdev,
+>  
+>  	switch (type) {
+>  	case DVB_DEVICE_FRONTEND:
+> -		dvbdev->entity->type = MEDIA_ENT_T_DEVNODE_DVB_FE;
+> +		dvbdev->entity->type = MEDIA_ENT_T_DVB_DEMOD;
+>  		dvbdev->pads[0].flags = MEDIA_PAD_FL_SINK;
+>  		dvbdev->pads[1].flags = MEDIA_PAD_FL_SOURCE;
+>  		break;
+>  	case DVB_DEVICE_DEMUX:
+> -		dvbdev->entity->type = MEDIA_ENT_T_DEVNODE_DVB_DEMUX;
+> +		dvbdev->entity->type = MEDIA_ENT_T_DVB_DEMUX;
+>  		dvbdev->pads[0].flags = MEDIA_PAD_FL_SINK;
+>  		dvbdev->pads[1].flags = MEDIA_PAD_FL_SOURCE;
+>  		break;
+>  	case DVB_DEVICE_CA:
+> -		dvbdev->entity->type = MEDIA_ENT_T_DEVNODE_DVB_CA;
+> +		dvbdev->entity->type = MEDIA_ENT_T_DVB_CA;
+>  		dvbdev->pads[0].flags = MEDIA_PAD_FL_SINK;
+>  		dvbdev->pads[1].flags = MEDIA_PAD_FL_SOURCE;
+>  		break;
+> @@ -439,7 +439,7 @@ EXPORT_SYMBOL(dvb_unregister_device);
+>  void dvb_create_media_graph(struct dvb_adapter *adap)
+>  {
+>  	struct media_device *mdev = adap->mdev;
+> -	struct media_entity *entity, *tuner = NULL, *fe = NULL;
+> +	struct media_entity *entity, *tuner = NULL, *demod = NULL;
+>  	struct media_entity *demux = NULL, *dvr = NULL, *ca = NULL;
+>  	struct media_interface *intf;
+>  
+> @@ -451,26 +451,26 @@ void dvb_create_media_graph(struct dvb_adapter *adap)
+>  		case MEDIA_ENT_T_V4L2_SUBDEV_TUNER:
+>  			tuner = entity;
+>  			break;
+> -		case MEDIA_ENT_T_DEVNODE_DVB_FE:
+> -			fe = entity;
+> +		case MEDIA_ENT_T_DVB_DEMOD:
+> +			demod = entity;
+>  			break;
+> -		case MEDIA_ENT_T_DEVNODE_DVB_DEMUX:
+> +		case MEDIA_ENT_T_DVB_DEMUX:
+>  			demux = entity;
+>  			break;
+> -		case MEDIA_ENT_T_DEVNODE_DVB_DVR:
+> +		case MEDIA_ENT_T_DVB_TSOUT:
+>  			dvr = entity;
+>  			break;
+> -		case MEDIA_ENT_T_DEVNODE_DVB_CA:
+> +		case MEDIA_ENT_T_DVB_CA:
+>  			ca = entity;
+>  			break;
+>  		}
+>  	}
+>  
+> -	if (tuner && fe)
+> -		media_create_pad_link(tuner, 0, fe, 0, 0);
+> +	if (tuner && demod)
+> +		media_create_pad_link(tuner, 0, demod, 0, 0);
+>  
+> -	if (fe && demux)
+> -		media_create_pad_link(fe, 1, demux, 0, MEDIA_LNK_FL_ENABLED);
+> +	if (demod && demux)
+> +		media_create_pad_link(demod, 1, demux, 0, MEDIA_LNK_FL_ENABLED);
+>  
+>  	if (demux && dvr)
+>  		media_create_pad_link(demux, 1, dvr, 0, MEDIA_LNK_FL_ENABLED);
+> diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
+> index aca828709bad..f8725b881a1d 100644
+> --- a/include/uapi/linux/media.h
+> +++ b/include/uapi/linux/media.h
+> @@ -42,31 +42,69 @@ struct media_device_info {
+>  
+>  #define MEDIA_ENT_ID_FLAG_NEXT		(1 << 31)
+>  
+> +/*
+> + * Base numbers for entity types
+> + *
+> + * Please notice that the huge gap of 16 bits for each base is overkill!
+> + * 8 bits is more than enough to avoid starving entity types for each
+> + * subsystem.
+> + *
+> + * However, It is kept this way just to avoid binary breakages with the
+> + * namespace provided on legacy versions of this header.
+> + */
+> +#define MEDIA_ENT_T_DVB_BASE		0x00000000
+> +#define MEDIA_ENT_T_V4L2_BASE		0x00010000
+> +#define MEDIA_ENT_T_V4L2_SUBDEV_BASE	0x00020000
+> +
+> +/*
+> + * V4L2 entities - Those are used for DMA (mmap/DMABUF) and
+> + *	read()/write() data I/O associated with the V4L2 devnodes.
+> + */
+> +#define MEDIA_ENT_T_V4L2_VIDEO		(MEDIA_ENT_T_V4L2_BASE + 1)
+> +	/*
+> +	 * Please notice that numbers between MEDIA_ENT_T_V4L2_BASE + 2 and
+> +	 * MEDIA_ENT_T_V4L2_BASE + 4 can't be used, as those values used
+> +	 * to be declared for FB, ALSA and DVB entities.
+> +	 * As those values were never actually used in practice, we're just
+> +	 * adding them as backward compatibility macros and keeping the
+> +	 * numberspace clean here. This way, we avoid breaking compilation,
+> +	 * in the case of having some userspace application using the old
+> +	 * symbols.
+> +	 */
+> +#define MEDIA_ENT_T_V4L2_VBI		(MEDIA_ENT_T_V4L2_BASE + 5)
+> +#define MEDIA_ENT_T_V4L2_SWRADIO	(MEDIA_ENT_T_V4L2_BASE + 6)
+> +
+> +/* V4L2 Sub-device entities */
+> +#define MEDIA_ENT_T_V4L2_SUBDEV_SENSOR	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 1)
+> +#define MEDIA_ENT_T_V4L2_SUBDEV_FLASH	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 2)
+> +#define MEDIA_ENT_T_V4L2_SUBDEV_LENS	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 3)
+> +	/* A converter of analogue video to its digital representation. */
+> +#define MEDIA_ENT_T_V4L2_SUBDEV_DECODER	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 4)
+> +	/* Tuner entity is actually both V4L2 and DVB subdev */
+> +#define MEDIA_ENT_T_V4L2_SUBDEV_TUNER	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 5)
+> +
+> +/* DVB entities */
+> +#define MEDIA_ENT_T_DVB_DEMOD		(MEDIA_ENT_T_DVB_BASE + 1)
+> +#define MEDIA_ENT_T_DVB_DEMUX		(MEDIA_ENT_T_DVB_BASE + 2)
+> +#define MEDIA_ENT_T_DVB_TSOUT		(MEDIA_ENT_T_DVB_BASE + 3)
+> +#define MEDIA_ENT_T_DVB_CA		(MEDIA_ENT_T_DVB_BASE + 4)
+> +#define MEDIA_ENT_T_DVB_NET_DECAP	(MEDIA_ENT_T_DVB_BASE + 5)
+> +
+> +/* Legacy symbols used to avoid userspace compilation breakages */
+>  #define MEDIA_ENT_TYPE_SHIFT		16
+>  #define MEDIA_ENT_TYPE_MASK		0x00ff0000
+>  #define MEDIA_ENT_SUBTYPE_MASK		0x0000ffff
+>  
+> -#define MEDIA_ENT_T_DEVNODE		(1 << MEDIA_ENT_TYPE_SHIFT)
+> -#define MEDIA_ENT_T_DEVNODE_V4L		(MEDIA_ENT_T_DEVNODE + 1)
+> +#define MEDIA_ENT_T_DEVNODE		MEDIA_ENT_T_V4L2_BASE
+> +#define MEDIA_ENT_T_V4L2_SUBDEV		MEDIA_ENT_T_V4L2_SUBDEV_BASE
+> +
+> +#define MEDIA_ENT_T_DEVNODE_V4L		MEDIA_ENT_T_V4L2_VIDEO
+> +
+>  #define MEDIA_ENT_T_DEVNODE_FB		(MEDIA_ENT_T_DEVNODE + 2)
+>  #define MEDIA_ENT_T_DEVNODE_ALSA	(MEDIA_ENT_T_DEVNODE + 3)
+> -#define MEDIA_ENT_T_DEVNODE_DVB_FE	(MEDIA_ENT_T_DEVNODE + 4)
+> -#define MEDIA_ENT_T_DEVNODE_DVB_DEMUX	(MEDIA_ENT_T_DEVNODE + 5)
+> -#define MEDIA_ENT_T_DEVNODE_DVB_DVR	(MEDIA_ENT_T_DEVNODE + 6)
+> -#define MEDIA_ENT_T_DEVNODE_DVB_CA	(MEDIA_ENT_T_DEVNODE + 7)
+> -#define MEDIA_ENT_T_DEVNODE_DVB_NET	(MEDIA_ENT_T_DEVNODE + 8)
+> +#define MEDIA_ENT_T_DEVNODE_DVB		(MEDIA_ENT_T_DEVNODE + 4)
+>  
+> -/* Legacy symbol. Use it to avoid userspace compilation breakages */
+> -#define MEDIA_ENT_T_DEVNODE_DVB		MEDIA_ENT_T_DEVNODE_DVB_FE
+> -
+> -#define MEDIA_ENT_T_V4L2_SUBDEV		(2 << MEDIA_ENT_TYPE_SHIFT)
+> -#define MEDIA_ENT_T_V4L2_SUBDEV_SENSOR	(MEDIA_ENT_T_V4L2_SUBDEV + 1)
+> -#define MEDIA_ENT_T_V4L2_SUBDEV_FLASH	(MEDIA_ENT_T_V4L2_SUBDEV + 2)
+> -#define MEDIA_ENT_T_V4L2_SUBDEV_LENS	(MEDIA_ENT_T_V4L2_SUBDEV + 3)
+> -/* A converter of analogue video to its digital representation. */
+> -#define MEDIA_ENT_T_V4L2_SUBDEV_DECODER	(MEDIA_ENT_T_V4L2_SUBDEV + 4)
+> -
+> -#define MEDIA_ENT_T_V4L2_SUBDEV_TUNER	(MEDIA_ENT_T_V4L2_SUBDEV + 5)
+> +/* Entity types */
+>  
+>  #define MEDIA_ENT_FL_DEFAULT		(1 << 0)
+>  
+> 
