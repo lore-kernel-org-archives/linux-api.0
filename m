@@ -1,338 +1,283 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH v2 10/9] copy_file_range.2: New page documenting copy_file_range()
-Date: Sun, 13 Sep 2015 09:50:18 +0200
-Message-ID: <55F52ABA.9070908@gmail.com>
-References: <1442003423-6884-1-git-send-email-Anna.Schumaker@Netapp.com> <1442003423-6884-11-git-send-email-Anna.Schumaker@Netapp.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1442003423-6884-11-git-send-email-Anna.Schumaker@Netapp.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Anna Schumaker <Anna.Schumaker@netapp.com>, linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, darrick.wong@oracle.com, andros@netapp.com, hch@infradead.org
-Cc: mtk.manpages@gmail.com
+From: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [v15 1/4] ext4: adds project ID support
+Date: Sun, 13 Sep 2015 21:20:30 +0900
+Message-ID: <1442146833-13652-2-git-send-email-lixi@ddn.com>
+References: <1442146833-13652-1-git-send-email-lixi@ddn.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1442146833-13652-1-git-send-email-lixi-LfVdkaOWEx8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Anna,
+This patch adds a new internal field of ext4 inode to save project
+identifier. Also a new flag EXT4_INODE_PROJINHERIT is added for
+inheriting project ID from parent directory.
 
-On 09/11/2015 10:30 PM, Anna Schumaker wrote:
-> copy_file_range() is a new system call for copying ranges of data
-> completely in the kernel.  This gives filesystems an opportunity to
-> implement some kind of "copy acceleration", such as reflinks or
-> server-side-copy (in the case of NFS).
-> 
-> Signed-off-by: Anna Schumaker <Anna.Schumaker@Netapp.com>
+Signed-off-by: Li Xi <lixi-LfVdkaOWEx8@public.gmane.org>
+Reviewed-by: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
+Reviewed-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+---
+ fs/ext4/ext4.h          |   21 +++++++++++++++++----
+ fs/ext4/ialloc.c        |    7 +++++++
+ fs/ext4/inode.c         |   28 ++++++++++++++++++++++++++++
+ fs/ext4/namei.c         |   19 +++++++++++++++++++
+ fs/ext4/super.c         |    1 +
+ include/uapi/linux/fs.h |    1 +
+ 6 files changed, 73 insertions(+), 4 deletions(-)
 
-Thanks for writing such a nice first draft man page! I have a few
-comments below. Would you be willing to revise and resubmit?
-
-> ---
->  man2/copy_file_range.2 | 188 +++++++++++++++++++++++++++++++++++++++++++++++++
->  1 file changed, 188 insertions(+)
->  create mode 100644 man2/copy_file_range.2
-> 
-> diff --git a/man2/copy_file_range.2 b/man2/copy_file_range.2
-> new file mode 100644
-> index 0000000..84912b5
-> --- /dev/null
-> +++ b/man2/copy_file_range.2
-> @@ -0,0 +1,188 @@
-> +.\"This manpage is Copyright (C) 2015 Anna Schumaker <Anna.Schumaker@Netapp.com>
-
-We need a license for this page. Please see
-https://www.kernel.org/doc/man-pages/licenses.html
-
-> +.TH COPY 2 2015-8-31 "Linux" "Linux Programmer's Manual"
-
-Make the month 2 digits (leading 0).
-
-> +.SH NAME
-> +copy_file_range \- Copy a range of data from one file to another
-> +.SH SYNOPSIS
-> +.nf
-> +.B #include <linux/copy.h>
-> +.B #include <sys/syscall.h>
-> +.B #include <unistd.h>
-> +
-> +.BI "ssize_t syscall(__NR_copy_file_range, int " fd_in ", loff_t * " off_in ",
-> +.BI "                int " fd_out ", loff_t * " off_out ", size_t " len ",
-> +.BI "                unsigned int " flags );
-
-Remove spaces following "*" in the lines above. (man-pages convention for code)
-
-I know that the copy_file_range() (obviously) doesn't yet have a wrapper
-in glibc, but in the man pages we document all system calls as though there
-is a wrapper. See, for example, gettid(2), for an axample of how this is done
-(a note in the SYNOPSIS and then some further details in NOTES).
-
-> +.fi
-> +.SH DESCRIPTION
-> +The
-> +.BR copy_file_range ()
-> +system call performs an in-kernel copy between two file descriptors
-> +without all that tedious mucking about in userspace.
-
-I'd write that last piece as:
-
-"without the cost of (a loop) transferring data from the kernel to a 
-user-space buffer and then back to the kernel again.
-
-> +It copies up to
-> +.I len
-> +bytes of data from file descriptor
-> +.I fd_in
-> +to file descriptor
-> +.IR fd_out ,
-> +overwriting any data that exists within the requested range.
-
-s/.$/ of the target file./
-
-> +
-> +The following semantics apply for
-> +.IR off_in ,
-> +and similar statements apply to
-> +.IR off_out :
-> +.IP * 3
-> +If
-> +.I off_in
-> +is NULL, then bytes are read from
-> +.I fd_in
-> +starting from the current file offset and the current
-> +file offset is adjusted appropriately.
-> +.IP *
-> +If
-> +.I off_in
-> +is not NULL, then
-> +.I off_in
-> +must point to a buffer that specifies the starting
-> +offset where bytes from
-> +.I fd_in
-> +will be read.  The current file offset of
-> +.I fd_in
-> +is not changed, but
-> +.I off_in
-> +is adjusted appropriately.
-> +.PP
-> +
-> +The
-> +.I flags
-> +argument is a bit mask composed by OR-ing together zero
-> +or more of the following flags:
-> +.TP 1.9i
-> +.B COPY_FR_COPY
-> +Copy all the file data in the requested range.
-> +Some filesystems, like NFS, might be able to accelerate this copy
-> +to avoid unnecessary data transfers.
-> +.TP
-> +.B COPY_FR_REFLINK
-> +Create a lightweight "reflink", where data is not copied until
-> +one of the files is modified.
-> +.PP
-> +The default behavior
-> +.RI ( flags
-> +== 0) is to try creating a reflink,
-> +and if reflinking fails
-> +.BR copy_file_range ()
-> +will fall back on performing a full data copy.
-
-s/back on/back to/
-
-> +This is equivalent to setting
-> +.I flags
-> +equal to
-> +.RB ( COPY_FR_COPY | COPY_FR_REFLINK ).
-
-So, from an API deign perspective, the interoperation of these two
-flags appears odd. Bit flags are commonly (not always) orthogonal.
-I think here it could be pointed out a little more explicitly that
-these two flags are not orthogonal. In particular, perhaps after the
-last sentence, you could add another sentence:
-
-[[
-(This contrasts with specifying
-.I flags
-as just
-.BR COPY_FR_REFLINK ,
-which causes the call to create a reflink,
-and fail if that is not possible,
-rather than falling back to a full data copy.)
-]]
-
-Furthermore, I even wonder if explicitly specifying flags as
-COPY_FR_COPY | COPY_FR_REFLINK should just generate an EINVAL
-error. 0 already gives us the behavior described above,
-and allowing the combination COPY_FR_COPY | COPY_FR_REFLINK
-perhaps just contributes to misleading the user that these
-flags are orthogonal, when in reality they are not. What do
-you think?
-
-What are the semantics with respect to signals, especially if data 
-copying a very large file range? This info should be included in the 
-man page, probably under NOTES.
-
-> +.SH RETURN VALUE
-> +Upon successful completion,
-> +.BR copy_file_range ()
-> +will return the number of bytes copied between files.
-> +This could be less than the length originally requested.
-> +
-> +On error,
-> +.BR copy_file_range ()
-> +returns \-1 and
-> +.I errno
-> +is set to indicate the error.
-> +.SH ERRORS
-> +.TP
-> +.B EBADF
-> +One or more file descriptors are not valid,
-> +or do not have proper read-write mode;
-
-I think that last line can go. I mean, isn't this point (again)
-covered in the next few lines?
-
-> +.I fd_in
-> +is not open for reading; or
-> +.I fd_out
-> +is not open for writing.
-> +.TP
-> +.B EINVAL
-> +Requested range extends beyond the end of the file; or the
-
-s/file/source file/  (right?)
-
-> +.I flags
-> +argument is set to an invalid value.
-> +.TP
-> +.B EIO
-> +A low level I/O error occurred while copying.
-> +.TP
-> +.B ENOMEM
-> +Out of memory.
-> +.TP
-> +.B ENOSPC
-> +There is not enough space to complete the copy.
-
-Space where? On the filesystem?
-=> s/space/space on the target filesystem/
-
-> +.TP
-> +.B EOPNOTSUPP
-> +.B COPY_REFLINK
-> +was specified in
-> +.IR flags ,
-> +but the target filesystem does not support reflinks.
-> +.TP
-> +.B EXDEV
-> +Target filesystem doesn't support cross-filesystem copies.
-
-I'm curious. What are some examples of filesystems that produce this
-error?
-
-> +.SH VERSIONS
-> +The
-> +.BR copy_file_range ()
-> +system call first appeared in Linux 4.4.
-> +.SH CONFORMING TO
-> +The
-> +.BR copy_file_range ()
-> +system call is a nonstandard Linux extension.
-> +.SH EXAMPLE
-> +.nf
-> +
-> +#define _GNU_SOURCE
-> +#include <fcntl.h>
-> +#include <linux/copy.h>
-> +#include <stdio.h>
-> +#include <stdlib.h>
-> +#include <sys/stat.h>
-> +#include <sys/syscall.h>
-> +#include <unistd.h>
-> +
-> +
-> +int main(int argc, char **argv)
-> +{
-> +    int fd_in, fd_out;
-> +    struct stat stat;
-> +    loff_t len, ret;
-> +
-> +    if (argc != 3) {
-> +        fprintf(stderr, "Usage: %s <source> <destination>\\n", argv[0]);
-> +        exit(EXIT_FAILURE);
-> +    }
-> +
-> +    fd_in = open(argv[1], O_RDONLY);
-> +    if (fd_in == -1) {
-
-Please replace all "-" in code by "\-". (This is a groff
-detail.)
-
-> +        perror("open (argv[1])");
-> +        exit(EXIT_FAILURE);
-> +    }
-> +
-> +    if (fstat(fd_in, &stat) == -1) {
-> +        perror("fstat");
-> +        exit(EXIT_FAILURE);
-> +    }
-> +    len = stat.st_size;
-> +
-> +    fd_out = creat(argv[2], 0644);
-
-These days, I think we should discourage the use of creat(). Maybe 
-better to use open() instead here?
-
-> +    if (fd_out == -1) {
-> +        perror("creat (argv[2])");
-> +        exit(EXIT_FAILURE);
-> +    }
-> +
-> +    do {
-> +        ret = syscall(__NR_copy_file_range, fd_in, NULL,
-> +                      fd_out, NULL, len, 0);
-
-I'd rather see this as:
-
-int
-copy_file_range(int fd_in, loff_t *off_in,
-                int fd_out, loff_t *off_out, size_t len,
-                unsigned int flags)
-{
-    return(syscall(__NR_copy_file_range, fd_in, fd_out, off_out, len, flags);
-}
-
-...
-
-    copy_file_range(fd_in, fd_out, off_out, len, flags);
-
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index fd1f28b..96d6e4c 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -374,16 +374,18 @@ struct flex_groups {
+ #define EXT4_EA_INODE_FL	        0x00200000 /* Inode used for large EA */
+ #define EXT4_EOFBLOCKS_FL		0x00400000 /* Blocks allocated beyond EOF */
+ #define EXT4_INLINE_DATA_FL		0x10000000 /* Inode has inline data. */
++#define EXT4_PROJINHERIT_FL		0x20000000 /* Create with parents projid */
+ #define EXT4_RESERVED_FL		0x80000000 /* reserved for ext4 lib */
  
-> +        if (ret == -1) {
-> +            perror("copy_file_range");
-> +            exit(EXIT_FAILURE);
-> +        }
-> +
-> +        len -= ret;
-> +    } while (len > 0);
-> +
-> +    close(fd_in);
-> +    close(fd_out);
-> +    exit(EXIT_SUCCESS);
-> +}
-> +.fi
-> +.SH SEE ALSO
-> +.BR splice (2)
-> 
-
-In the next iteration of this patch, could you include a change to
-splice(2) so that copy_file_range(2) is added under SEE ALSO in
-that page. Also, are there any other pages that we should like
-to/from? (sendfile(2)?)
-
-Thanks,
-
-Michael
-
-
+-#define EXT4_FL_USER_VISIBLE		0x004BDFFF /* User visible flags */
+-#define EXT4_FL_USER_MODIFIABLE		0x004380FF /* User modifiable flags */
++#define EXT4_FL_USER_VISIBLE		0x304BDFFF /* User visible flags */
++#define EXT4_FL_USER_MODIFIABLE		0x204380FF /* User modifiable flags */
+ 
+ /* Flags that should be inherited by new inodes from their parent. */
+ #define EXT4_FL_INHERITED (EXT4_SECRM_FL | EXT4_UNRM_FL | EXT4_COMPR_FL |\
+ 			   EXT4_SYNC_FL | EXT4_NODUMP_FL | EXT4_NOATIME_FL |\
+ 			   EXT4_NOCOMPR_FL | EXT4_JOURNAL_DATA_FL |\
+-			   EXT4_NOTAIL_FL | EXT4_DIRSYNC_FL)
++			   EXT4_NOTAIL_FL | EXT4_DIRSYNC_FL |\
++			   EXT4_PROJINHERIT_FL)
+ 
+ /* Flags that are appropriate for regular files (all but dir-specific ones). */
+ #define EXT4_REG_FLMASK (~(EXT4_DIRSYNC_FL | EXT4_TOPDIR_FL))
+@@ -431,6 +433,7 @@ enum {
+ 	EXT4_INODE_EA_INODE	= 21,	/* Inode used for large EA */
+ 	EXT4_INODE_EOFBLOCKS	= 22,	/* Blocks allocated beyond EOF */
+ 	EXT4_INODE_INLINE_DATA	= 28,	/* Data in inode. */
++	EXT4_INODE_PROJINHERIT	= 29,	/* Create with parents projid */
+ 	EXT4_INODE_RESERVED	= 31,	/* reserved for ext4 lib */
+ };
+ 
+@@ -692,6 +695,7 @@ struct ext4_inode {
+ 	__le32  i_crtime;       /* File Creation time */
+ 	__le32  i_crtime_extra; /* extra FileCreationtime (nsec << 2 | epoch) */
+ 	__le32  i_version_hi;	/* high 32 bits for 64-bit version */
++	__le32  i_projid;	/* Project ID */
+ };
+ 
+ struct move_extent {
+@@ -952,6 +956,7 @@ struct ext4_inode_info {
+ 	/* Encryption params */
+ 	struct ext4_crypt_info *i_crypt_info;
+ #endif
++	kprojid_t i_projid;
+ };
+ 
+ /*
+@@ -1566,6 +1571,7 @@ static inline int ext4_encrypted_inode(struct inode *inode)
+  */
+ #define EXT4_FEATURE_RO_COMPAT_METADATA_CSUM	0x0400
+ #define EXT4_FEATURE_RO_COMPAT_READONLY		0x1000
++#define EXT4_FEATURE_RO_COMPAT_PROJECT		0x2000
+ 
+ #define EXT4_FEATURE_INCOMPAT_COMPRESSION	0x0001
+ #define EXT4_FEATURE_INCOMPAT_FILETYPE		0x0002
+@@ -1617,7 +1623,8 @@ static inline int ext4_encrypted_inode(struct inode *inode)
+ 					 EXT4_FEATURE_RO_COMPAT_HUGE_FILE |\
+ 					 EXT4_FEATURE_RO_COMPAT_BIGALLOC |\
+ 					 EXT4_FEATURE_RO_COMPAT_METADATA_CSUM|\
+-					 EXT4_FEATURE_RO_COMPAT_QUOTA)
++					 EXT4_FEATURE_RO_COMPAT_QUOTA |\
++					 EXT4_FEATURE_RO_COMPAT_PROJECT)
+ 
+ /*
+  * Default values for user and/or group using reserved blocks
+@@ -1625,6 +1632,11 @@ static inline int ext4_encrypted_inode(struct inode *inode)
+ #define	EXT4_DEF_RESUID		0
+ #define	EXT4_DEF_RESGID		0
+ 
++/*
++ * Default project ID
++ */
++#define	EXT4_DEF_PROJID		0
++
+ #define EXT4_DEF_INODE_READAHEAD_BLKS	32
+ 
+ /*
+@@ -2317,6 +2329,7 @@ extern int ext4_zero_partial_blocks(handle_t *handle, struct inode *inode,
+ 			     loff_t lstart, loff_t lend);
+ extern int ext4_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf);
+ extern qsize_t *ext4_get_reserved_space(struct inode *inode);
++extern int ext4_get_projid(struct inode *inode, kprojid_t *projid);
+ extern void ext4_da_update_reserve_space(struct inode *inode,
+ 					int used, int quota_claim);
+ 
+diff --git a/fs/ext4/ialloc.c b/fs/ext4/ialloc.c
+index 619bfc1..692b50f 100644
+--- a/fs/ext4/ialloc.c
++++ b/fs/ext4/ialloc.c
+@@ -769,6 +769,13 @@ struct inode *__ext4_new_inode(handle_t *handle, struct inode *dir,
+ 		inode->i_gid = dir->i_gid;
+ 	} else
+ 		inode_init_owner(inode, dir, mode);
++
++	if (EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_PROJECT) &&
++	    ext4_test_inode_flag(dir, EXT4_INODE_PROJINHERIT))
++		ei->i_projid = EXT4_I(dir)->i_projid;
++	else
++		ei->i_projid = make_kprojid(&init_user_ns, EXT4_DEF_PROJID);
++
+ 	err = dquot_initialize(inode);
+ 	if (err)
+ 		goto out;
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 612fbcf..5836a3d 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -4035,6 +4035,14 @@ static inline void ext4_iget_extra_inode(struct inode *inode,
+ 		EXT4_I(inode)->i_inline_off = 0;
+ }
+ 
++int ext4_get_projid(struct inode *inode, kprojid_t *projid)
++{
++	if (!EXT4_HAS_RO_COMPAT_FEATURE(inode->i_sb, EXT4_FEATURE_RO_COMPAT_PROJECT))
++		return -EOPNOTSUPP;
++	*projid = EXT4_I(inode)->i_projid;
++	return 0;
++}
++
+ struct inode *ext4_iget(struct super_block *sb, unsigned long ino)
+ {
+ 	struct ext4_iloc iloc;
+@@ -4046,6 +4054,7 @@ struct inode *ext4_iget(struct super_block *sb, unsigned long ino)
+ 	int block;
+ 	uid_t i_uid;
+ 	gid_t i_gid;
++	projid_t i_projid;
+ 
+ 	inode = iget_locked(sb, ino);
+ 	if (!inode)
+@@ -4095,12 +4104,20 @@ struct inode *ext4_iget(struct super_block *sb, unsigned long ino)
+ 	inode->i_mode = le16_to_cpu(raw_inode->i_mode);
+ 	i_uid = (uid_t)le16_to_cpu(raw_inode->i_uid_low);
+ 	i_gid = (gid_t)le16_to_cpu(raw_inode->i_gid_low);
++	if (EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_PROJECT) &&
++	    EXT4_INODE_SIZE(sb) > EXT4_GOOD_OLD_INODE_SIZE &&
++	    EXT4_FITS_IN_INODE(raw_inode, ei, i_projid))
++		i_projid = (projid_t)le32_to_cpu(raw_inode->i_projid);
++	else
++		i_projid = EXT4_DEF_PROJID;
++
+ 	if (!(test_opt(inode->i_sb, NO_UID32))) {
+ 		i_uid |= le16_to_cpu(raw_inode->i_uid_high) << 16;
+ 		i_gid |= le16_to_cpu(raw_inode->i_gid_high) << 16;
+ 	}
+ 	i_uid_write(inode, i_uid);
+ 	i_gid_write(inode, i_gid);
++	ei->i_projid = make_kprojid(&init_user_ns, i_projid);
+ 	set_nlink(inode, le16_to_cpu(raw_inode->i_links_count));
+ 
+ 	ext4_clear_state_flags(ei);	/* Only relevant on 32-bit archs */
+@@ -4398,6 +4415,7 @@ static int ext4_do_update_inode(handle_t *handle,
+ 	int need_datasync = 0, set_large_file = 0;
+ 	uid_t i_uid;
+ 	gid_t i_gid;
++	projid_t i_projid;
+ 
+ 	spin_lock(&ei->i_raw_lock);
+ 
+@@ -4410,6 +4428,7 @@ static int ext4_do_update_inode(handle_t *handle,
+ 	raw_inode->i_mode = cpu_to_le16(inode->i_mode);
+ 	i_uid = i_uid_read(inode);
+ 	i_gid = i_gid_read(inode);
++	i_projid = from_kprojid(&init_user_ns, ei->i_projid);
+ 	if (!(test_opt(inode->i_sb, NO_UID32))) {
+ 		raw_inode->i_uid_low = cpu_to_le16(low_16_bits(i_uid));
+ 		raw_inode->i_gid_low = cpu_to_le16(low_16_bits(i_gid));
+@@ -4488,6 +4507,15 @@ static int ext4_do_update_inode(handle_t *handle,
+ 				cpu_to_le16(ei->i_extra_isize);
+ 		}
+ 	}
++
++	BUG_ON(!EXT4_HAS_RO_COMPAT_FEATURE(inode->i_sb,
++			EXT4_FEATURE_RO_COMPAT_PROJECT) &&
++	       i_projid != EXT4_DEF_PROJID);
++
++	if (EXT4_INODE_SIZE(inode->i_sb) > EXT4_GOOD_OLD_INODE_SIZE &&
++	    EXT4_FITS_IN_INODE(raw_inode, ei, i_projid))
++		raw_inode->i_projid = cpu_to_le32(i_projid);
++
+ 	ext4_inode_csum_set(inode, raw_inode, ei);
+ 	spin_unlock(&ei->i_raw_lock);
+ 	if (inode->i_sb->s_flags & MS_LAZYTIME)
+diff --git a/fs/ext4/namei.c b/fs/ext4/namei.c
+index 9f61e76..61694ad 100644
+--- a/fs/ext4/namei.c
++++ b/fs/ext4/namei.c
+@@ -3215,6 +3215,12 @@ static int ext4_link(struct dentry *old_dentry,
+ 	if (ext4_encrypted_inode(dir) &&
+ 	    !ext4_is_child_context_consistent_with_parent(dir, inode))
+ 		return -EPERM;
++
++       if ((ext4_test_inode_flag(dir, EXT4_INODE_PROJINHERIT)) &&
++	   (!projid_eq(EXT4_I(dir)->i_projid,
++		       EXT4_I(old_dentry->d_inode)->i_projid)))
++		return -EXDEV;
++
+ 	err = dquot_initialize(dir);
+ 	if (err)
+ 		return err;
+@@ -3496,6 +3502,11 @@ static int ext4_rename(struct inode *old_dir, struct dentry *old_dentry,
+ 	int credits;
+ 	u8 old_file_type;
+ 
++	if ((ext4_test_inode_flag(new_dir, EXT4_INODE_PROJINHERIT)) &&
++	    (!projid_eq(EXT4_I(new_dir)->i_projid,
++			EXT4_I(old_dentry->d_inode)->i_projid)))
++		return -EXDEV;
++
+ 	retval = dquot_initialize(old.dir);
+ 	if (retval)
+ 		return retval;
+@@ -3705,6 +3716,14 @@ static int ext4_cross_rename(struct inode *old_dir, struct dentry *old_dentry,
+ 							   new.inode)))
+ 		return -EPERM;
+ 
++	if ((ext4_test_inode_flag(new_dir, EXT4_INODE_PROJINHERIT) &&
++	     !projid_eq(EXT4_I(new_dir)->i_projid,
++			EXT4_I(old_dentry->d_inode)->i_projid)) ||
++	    (ext4_test_inode_flag(old_dir, EXT4_INODE_PROJINHERIT) &&
++	     !projid_eq(EXT4_I(old_dir)->i_projid,
++			EXT4_I(new_dentry->d_inode)->i_projid)))
++		return -EXDEV;
++
+ 	retval = dquot_initialize(old.dir);
+ 	if (retval)
+ 		return retval;
+diff --git a/fs/ext4/super.c b/fs/ext4/super.c
+index a63c7b0..d07445e 100644
+--- a/fs/ext4/super.c
++++ b/fs/ext4/super.c
+@@ -1097,6 +1097,7 @@ static const struct dquot_operations ext4_quota_operations = {
+ 	.write_info	= ext4_write_info,
+ 	.alloc_dquot	= dquot_alloc,
+ 	.destroy_dquot	= dquot_destroy,
++	.get_projid	= ext4_get_projid,
+ };
+ 
+ static const struct quotactl_ops ext4_qctl_operations = {
+diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+index 9b964a5..f15d980 100644
+--- a/include/uapi/linux/fs.h
++++ b/include/uapi/linux/fs.h
+@@ -197,6 +197,7 @@ struct inodes_stat_t {
+ #define FS_EXTENT_FL			0x00080000 /* Extents */
+ #define FS_DIRECTIO_FL			0x00100000 /* Use direct i/o */
+ #define FS_NOCOW_FL			0x00800000 /* Do not cow file */
++#define FS_PROJINHERIT_FL		0x20000000 /* Create with parents projid */
+ #define FS_RESERVED_FL			0x80000000 /* reserved for ext2 lib */
+ 
+ #define FS_FL_USER_VISIBLE		0x0003DFFF /* User visible flags */
 -- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+1.7.1
