@@ -1,77 +1,56 @@
-From: Zhang Zhen <zhenzhang.zhang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH] seltests/zram: fix syntax error
-Date: Mon, 14 Sep 2015 12:13:27 +0800
-Message-ID: <55F64967.3090508@huawei.com>
-References: <1442203768-35696-1-git-send-email-zhenzhang.zhang@huawei.com>
+From: Tycho Andersen <tycho.andersen@canonical.com>
+Subject: Re: [PATCH v2 2/5] seccomp: make underlying bpf ref counted as well
+Date: Mon, 14 Sep 2015 10:00:30 -0600
+Message-ID: <20150914160030.GC31864@smitten>
+References: <1441930862-14347-1-git-send-email-tycho.andersen@canonical.com>
+ <1441930862-14347-3-git-send-email-tycho.andersen@canonical.com>
+ <55F2D0EC.9090004@iogearbox.net>
+ <20150911144400.GI27574@smitten>
+ <55F2FB6F.7050708@iogearbox.net>
+ <20150911173311.GB7244@smitten>
+ <55F31D43.5080001@iogearbox.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1442203768-35696-1-git-send-email-zhenzhang.zhang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, naresh.kamboju-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, alexey.kodanev-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <55F31D43.5080001@iogearbox.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Daniel Borkmann <daniel@iogearbox.net>
+Cc: Kees Cook <keescook@chromium.org>, Alexei Starovoitov <ast@kernel.org>, "David S. Miller" <davem@davemloft.net>, Will Drewry <wad@chromium.org>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Not all shells define a variable UID. This is a bash and zsh feature only.
-In other shells, the UID variable is not defined, so here test command
-expands to [ != 0 ] which is a syntax error.
+Hi Daniel,
 
-Without this patch:
-root@HGH1000007090:/opt/work/linux/tools/testing/selftests/zram# sh zram.sh
-zram.sh: 8: [: !=: unexpected operator
-zram.sh : No zram.ko module or /dev/zram0 device file not found
-zram.sh : CONFIG_ZRAM is not set
+On Fri, Sep 11, 2015 at 08:28:19PM +0200, Daniel Borkmann wrote:
+> I think due to the given insns restrictions on classic seccomp, this
+> could work for "most cases" (see below) for the time being until pointer
+> sanitation is resolved and that seccomp-only restriction from the dump
+> could be removed,
 
-With this patch:
-root@HGH1000007090:/opt/work/linux/tools/testing/selftests/zram# sh ./zram.sh
-zram.sh : No zram.ko module or /dev/zram0 device file not found
-zram.sh : CONFIG_ZRAM is not set
+Ok, thanks.
 
-Signed-off-by: Zhang Zhen <zhenzhang.zhang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
----
- tools/testing/selftests/zram/zram.sh     | 10 +---------
- tools/testing/selftests/zram/zram_lib.sh |  3 ++-
- 2 files changed, 3 insertions(+), 10 deletions(-)
+> BUT there's one more stone in the road which you still
+> need to take care of with this whole 'giving classic seccomp-BPF -> eBPF
+> transforms an fd, dumping and restoring that via bpf(2)' approach:
+> 
+> If you have JIT enabled on ARM32, and add a classic seccomp-BPF filter,
+> and dump that via your bpf(2) interface based on the current patches, what
+> you'll get is not eBPF opcodes but classic (!) BPF opcodes as ARM32 classic
+> JIT supports compilation of seccomp, since commit 24e737c1ebac ("ARM: net:
+> add JIT support for loads from struct seccomp_data.").
+> 
+> So in that case, bpf_prepare_filter() will not call into bpf_migrate_filter()
+> as there's simply no need for it, because the classic code could already
+> be JITed there. I guess other archs where JIT support for eBPF in not yet
+> within near sight might sooner or later support this insn for their classic
+> JITs, too ...
 
-diff --git a/tools/testing/selftests/zram/zram.sh b/tools/testing/selftests/zram/zram.sh
-index 20de9a7..683a292 100755
---- a/tools/testing/selftests/zram/zram.sh
-+++ b/tools/testing/selftests/zram/zram.sh
-@@ -1,15 +1,7 @@
- #!/bin/bash
- TCID="zram.sh"
+Thanks for pointing this out.
 
--check_prereqs()
--{
--	local msg="skip all tests:"
--
--	if [ $UID != 0 ]; then
--		echo $msg must be run as root >&2
--		exit 0
--	fi
--}
-+. ./zram_lib.sh
+What if we legislate that the output of bpf(BPF_PROG_DUMP, ...) is
+always eBPF? As near as I can tell there is no way to determine if a
+struct bpf_prog is classic or eBPF, so we'd need to add a bit to
+indicate whether or not the prog has been converted so that
+BPF_PROG_DUMP knows when to convert it.
 
- run_zram () {
- echo "--------------------"
-diff --git a/tools/testing/selftests/zram/zram_lib.sh b/tools/testing/selftests/zram/zram_lib.sh
-index 424e68e..f561a17 100755
---- a/tools/testing/selftests/zram/zram_lib.sh
-+++ b/tools/testing/selftests/zram/zram_lib.sh
-@@ -23,8 +23,9 @@ trap INT
- check_prereqs()
- {
- 	local msg="skip all tests:"
-+	local uid=$(id -u)
-
--	if [ $UID != 0 ]; then
-+	if [ $uid -ne 0 ]; then
- 		echo $msg must be run as root >&2
- 		exit 0
- 	fi
--- 
-1.9.1
-
-
-.
+Tycho
