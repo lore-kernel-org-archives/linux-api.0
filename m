@@ -1,71 +1,54 @@
 From: Palmer Dabbelt <palmer@dabbelt.com>
-Subject: [PATCH 11/13] Always define MAX_RAW_MINORS as 65535 in userspace
-Date: Mon, 14 Sep 2015 15:50:45 -0700
-Message-ID: <1442271047-4908-12-git-send-email-palmer@dabbelt.com>
+Subject: [PATCH 01/13] Remove #ifdef CONFIG_64BIT from all asm-generic/fcntl.h
+Date: Mon, 14 Sep 2015 15:50:35 -0700
+Message-ID: <1442271047-4908-2-git-send-email-palmer__27299.94755141$1442271107$gmane$org@dabbelt.com>
 References: <1441832902-28993-1-git-send-email-palmer@dabbelt.com>
  <1442271047-4908-1-git-send-email-palmer@dabbelt.com>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1442271047-4908-1-git-send-email-palmer@dabbelt.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: arnd@arndb.de, dhowells@redhat.com
 Cc: viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, kexec@lists.infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-xtensa@linux-xtensa.org, mathieu.desnoyers@efficios.com, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, a.p.zijlstra@chello.nl, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org, Palmer Dabbelt <palmer@dabbelt.com>
 List-Id: linux-api@vger.kernel.org
 
-While I don't think this was ever meant to be exposed to userspace, if
-anyone is using it then this will at least provide a correct (if
-unlikely) definition.
+When working on the RISC-V port I noticed that F_SETLK64 was being
+defined on our 64-bit platform, despite our port being so new that
+we've only ever had the 64-bit file ops.  Since there's not compat
+layer for these, this causes fcntl to bail out.
 
-MAX_RAW_MINORS used to be used in the kernel, where it's been replaced
-with CONFIG_MAX_RAW_MINORS.
-
-Note that there's a checkpatch.pl warning about a split config string
-here, but I've left that alone.
+It turns out that one of the ways in with F_SETLK64 was being defined
+(there's some more in glibc, but that's a whole different story... :))
+is the result of CONFIG_64BIT showing up in this user-visible header.
+<asm-generic/bitsperlong.h> confirms this isn't sane, so I replaced it
+with a __BITS_PER_LONG check.
 
 Signed-off-by: Palmer Dabbelt <palmer@dabbelt.com>
 Reviewed-by: Andrew Waterman <waterman@eecs.berkeley.edu>
 Reviewed-by: Albert Ou <aou@eecs.berkeley.edu>
 ---
- drivers/char/raw.c       | 7 ++++---
- include/uapi/linux/raw.h | 2 +-
- 2 files changed, 5 insertions(+), 4 deletions(-)
+ include/uapi/asm-generic/fcntl.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/char/raw.c b/drivers/char/raw.c
-index 60316fbaf295..362d7a6511b9 100644
---- a/drivers/char/raw.c
-+++ b/drivers/char/raw.c
-@@ -36,7 +36,7 @@ static struct raw_device_data *raw_devices;
- static DEFINE_MUTEX(raw_mutex);
- static const struct file_operations raw_ctl_fops; /* forward declaration */
+diff --git a/include/uapi/asm-generic/fcntl.h b/include/uapi/asm-generic/fcntl.h
+index e063effe0cc1..14a5c8237d84 100644
+--- a/include/uapi/asm-generic/fcntl.h
++++ b/include/uapi/asm-generic/fcntl.h
+@@ -1,6 +1,7 @@
+ #ifndef _ASM_GENERIC_FCNTL_H
+ #define _ASM_GENERIC_FCNTL_H
  
--static int max_raw_minors = MAX_RAW_MINORS;
-+static int max_raw_minors = CONFIG_MAX_RAW_MINORS;
++#include <asm/bitsperlong.h>
+ #include <linux/types.h>
  
- module_param(max_raw_minors, int, 0);
- MODULE_PARM_DESC(max_raw_minors, "Maximum number of raw devices (1-65536)");
-@@ -317,8 +317,9 @@ static int __init raw_init(void)
+ /*
+@@ -115,7 +116,7 @@
+ #define F_GETSIG	11	/* for sockets. */
+ #endif
  
- 	if (max_raw_minors < 1 || max_raw_minors > 65536) {
- 		printk(KERN_WARNING "raw: invalid max_raw_minors (must be"
--			" between 1 and 65536), using %d\n", MAX_RAW_MINORS);
--		max_raw_minors = MAX_RAW_MINORS;
-+			" between 1 and 65536), using %d\n",
-+		       CONFIG_MAX_RAW_MINORS);
-+		max_raw_minors = CONFIG_MAX_RAW_MINORS;
- 	}
- 
- 	raw_devices = vzalloc(sizeof(struct raw_device_data) * max_raw_minors);
-diff --git a/include/uapi/linux/raw.h b/include/uapi/linux/raw.h
-index 62d543e70603..f0390b3e8530 100644
---- a/include/uapi/linux/raw.h
-+++ b/include/uapi/linux/raw.h
-@@ -13,6 +13,6 @@ struct raw_config_request
- 	__u64	block_minor;
- };
- 
--#define MAX_RAW_MINORS CONFIG_MAX_RAW_DEVS
-+#define MAX_RAW_MINORS 65535
- 
- #endif /* __LINUX_RAW_H */
+-#ifndef CONFIG_64BIT
++#if (__BITS_PER_LONG == 32)
+ #ifndef F_GETLK64
+ #define F_GETLK64	12	/*  using 'struct flock64' */
+ #define F_SETLK64	13
 -- 
 2.4.6
-
