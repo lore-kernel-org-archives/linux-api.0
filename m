@@ -1,53 +1,68 @@
-From: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH 12/13] Remove AT_VECTOR_SIZE_ARCH on x86
-Date: Mon, 14 Sep 2015 15:50:46 -0700
-Message-ID: <1442271047-4908-13-git-send-email-palmer__27460.7835141525$1442271196$gmane$org@dabbelt.com>
+From: Palmer Dabbelt <palmer@dabbelt.com>
+Subject: [PATCH 13/13] Re-enable and clean up "check_config()" in headers_check.pl
+Date: Mon, 14 Sep 2015 15:50:47 -0700
+Message-ID: <1442271047-4908-14-git-send-email-palmer__1044.60514053262$1442271201$gmane$org@dabbelt.com>
 References: <1441832902-28993-1-git-send-email-palmer@dabbelt.com>
  <1442271047-4908-1-git-send-email-palmer@dabbelt.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1442271047-4908-1-git-send-email-palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: arnd-r2nGTMty4D4@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org, aishchuk-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, bhe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, 3chas3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org, dave-gkUM19QKKo4@public.gmane.org, dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org, jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xtensa-PjhNF2WwrV/0Sa2dR60CXw@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, tomi.valkeinen-l0cyMroinI0@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1442271047-4908-1-git-send-email-palmer@dabbelt.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: arnd@arndb.de, dhowells@redhat.com
+Cc: viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, kexec@lists.infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-xtensa@linux-xtensa.org, mathieu.desnoyers@efficios.com, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, a.p.zijlstra@chello.nl, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org, Palmer Dabbelt <palmer@dabbelt.com>
 List-Id: linux-api@vger.kernel.org
 
-It looks like there aren't actually users of this macro anywhere:
+I recently got bit by a CONFIG_ in userspace bug.  This has apparently
+happened before, but the check got disabled for triggering too much.
+In order to reduce false positives, I added some hueristics to avoid
+detecting comments.
 
- * The kernel doesn't use it on x86 because we don't suppor ELF FDPIC.
+Since these tests all pass, I've now re-enabled them.
 
- * The only Google results point to LMKL patches, both the one that
-   wrote this (from 2010) and my patch to hide it behind __KERNEL__.
-
- * I grep'd through all the source tarballs on my machine, and the
-   only packages that matched were the kernel and crui (which copied a
-   PPC kernel header).
-
-Since I'm not sure how to actually provide the right answer (if I
-understand correctly, CONFIG_IA32_EMULATION is not __i386__), the only
-thing I can think of to do is to just remove the definition.
-
-Signed-off-by: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
-Reviewed-by: Andrew Waterman <waterman-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
-Reviewed-by: Albert Ou <aou-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
+Signed-off-by: Palmer Dabbelt <palmer@dabbelt.com>
+Reviewed-by: Andrew Waterman <waterman@eecs.berkeley.edu>
+Reviewed-by: Albert Ou <aou@eecs.berkeley.edu>
 ---
- arch/x86/include/uapi/asm/auxvec.h | 7 -------
- 1 file changed, 7 deletions(-)
+ scripts/headers_check.pl | 19 +++++++++++++++++--
+ 1 file changed, 17 insertions(+), 2 deletions(-)
 
-diff --git a/arch/x86/include/uapi/asm/auxvec.h b/arch/x86/include/uapi/asm/auxvec.h
-index 77203ac352de..1316b4c35425 100644
---- a/arch/x86/include/uapi/asm/auxvec.h
-+++ b/arch/x86/include/uapi/asm/auxvec.h
-@@ -9,11 +9,4 @@
- #endif
- #define AT_SYSINFO_EHDR		33
+diff --git a/scripts/headers_check.pl b/scripts/headers_check.pl
+index 62320f93e903..dd413ad9c850 100755
+--- a/scripts/headers_check.pl
++++ b/scripts/headers_check.pl
+@@ -40,7 +40,7 @@ foreach my $file (@files) {
+ 		&check_asm_types();
+ 		&check_sizetypes();
+ 		&check_declarations();
+-		# Dropped for now. Too much noise &check_config();
++		&check_config();
+ 	}
+ 	close $fh;
+ }
+@@ -76,9 +76,24 @@ sub check_declarations
+ 	}
+ }
  
--/* entries in ARCH_DLINFO: */
--#if defined(CONFIG_IA32_EMULATION) || !defined(CONFIG_X86_64)
--# define AT_VECTOR_SIZE_ARCH 2
--#else /* else it's non-compat x86-64 */
--# define AT_VECTOR_SIZE_ARCH 1
--#endif
--
- #endif /* _ASM_X86_AUXVEC_H */
++my $check_config_in_multiline_comment = 0;
+ sub check_config
+ {
+-	if ($line =~ m/[^a-zA-Z0-9_]+CONFIG_([a-zA-Z0-9_]+)[^a-zA-Z0-9_]/) {
++	my $nocomments = $line;
++	$nocomments =~ s/\/\*.*\*\///; # Remove ANSI-style comments (/* to */)
++	$nocomments =~ s/\/\/.*//;     # Remove C99-style comments (// to EOL)
++
++	# Check to see if we're within a multiline comment, and if so
++	# just remove the whole line.  I tried matching on '^ * ', but
++	# there's one header that doesn't prepend multi-line comments
++	# with * so that won't work.
++	if ($nocomments =~ m/\/\*/) { $check_config_in_multiline_comment = 1; }
++	if ($nocomments =~ m/\*\//) { $check_config_in_multiline_comment = 0; }
++	if ($check_config_in_multiline_comment == 1) { $nocomments = "" }
++
++	# Check to see if there is something that looks like CONFIG_
++	# inside a userspace-accessible header file and if so, print that out.
++	if ($nocomments =~ m/[^a-zA-Z0-9_]+CONFIG_([a-zA-Z0-9_]+)[^a-zA-Z0-9_]/) {
+ 		printf STDERR "$filename:$lineno: leaks CONFIG_$1 to userspace where it is not valid\n";
+ 	}
+ }
 -- 
 2.4.6
