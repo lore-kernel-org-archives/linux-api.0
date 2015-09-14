@@ -1,7 +1,7 @@
 From: Palmer Dabbelt <palmer@dabbelt.com>
-Subject: [PATCH 09/13] Move bp_type_idx to kernel/event/hw_breakpoint.c
-Date: Mon, 14 Sep 2015 15:50:43 -0700
-Message-ID: <1442271047-4908-10-git-send-email-palmer__31321.6491173536$1442271176$gmane$org@dabbelt.com>
+Subject: [PATCH 13/13] Re-enable and clean up "check_config()" in headers_check.pl
+Date: Mon, 14 Sep 2015 15:50:47 -0700
+Message-ID: <1442271047-4908-14-git-send-email-palmer@dabbelt.com>
 References: <1441832902-28993-1-git-send-email-palmer@dabbelt.com>
  <1442271047-4908-1-git-send-email-palmer@dabbelt.com>
 Return-path: <linux-arch-owner@vger.kernel.org>
@@ -11,59 +11,58 @@ To: arnd@arndb.de, dhowells@redhat.com
 Cc: viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, kexec@lists.infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-xtensa@linux-xtensa.org, mathieu.desnoyers@efficios.com, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, a.p.zijlstra@chello.nl, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org, Palmer Dabbelt <palmer@dabbelt.com>
 List-Id: linux-api@vger.kernel.org
 
-This has a "#ifdef CONFIG_*" that used to be exposed to userspace.
+I recently got bit by a CONFIG_ in userspace bug.  This has apparently
+happened before, but the check got disabled for triggering too much.
+In order to reduce false positives, I added some hueristics to avoid
+detecting comments.
 
-The names in here are so generic that I don't think it's a good idea
-to expose them to userspace (or even the rest of the kernel).  Since
-there's only one kernel user, it's been moved to that file.
+Since these tests all pass, I've now re-enabled them.
 
 Signed-off-by: Palmer Dabbelt <palmer@dabbelt.com>
 Reviewed-by: Andrew Waterman <waterman@eecs.berkeley.edu>
 Reviewed-by: Albert Ou <aou@eecs.berkeley.edu>
 ---
- include/uapi/linux/hw_breakpoint.h | 10 ----------
- kernel/events/hw_breakpoint.c      | 10 ++++++++++
- 2 files changed, 10 insertions(+), 10 deletions(-)
+ scripts/headers_check.pl | 19 +++++++++++++++++--
+ 1 file changed, 17 insertions(+), 2 deletions(-)
 
-diff --git a/include/uapi/linux/hw_breakpoint.h b/include/uapi/linux/hw_breakpoint.h
-index b04000a2296a..7a6a5a7f9511 100644
---- a/include/uapi/linux/hw_breakpoint.h
-+++ b/include/uapi/linux/hw_breakpoint.h
-@@ -17,14 +17,4 @@ enum {
- 	HW_BREAKPOINT_INVALID   = HW_BREAKPOINT_RW | HW_BREAKPOINT_X,
- };
+diff --git a/scripts/headers_check.pl b/scripts/headers_check.pl
+index 62320f93e903..dd413ad9c850 100755
+--- a/scripts/headers_check.pl
++++ b/scripts/headers_check.pl
+@@ -40,7 +40,7 @@ foreach my $file (@files) {
+ 		&check_asm_types();
+ 		&check_sizetypes();
+ 		&check_declarations();
+-		# Dropped for now. Too much noise &check_config();
++		&check_config();
+ 	}
+ 	close $fh;
+ }
+@@ -76,9 +76,24 @@ sub check_declarations
+ 	}
+ }
  
--enum bp_type_idx {
--	TYPE_INST 	= 0,
--#ifdef CONFIG_HAVE_MIXED_BREAKPOINTS_REGS
--	TYPE_DATA	= 0,
--#else
--	TYPE_DATA	= 1,
--#endif
--	TYPE_MAX
--};
--
- #endif /* _UAPI_LINUX_HW_BREAKPOINT_H */
-diff --git a/kernel/events/hw_breakpoint.c b/kernel/events/hw_breakpoint.c
-index 92ce5f4ccc26..5ad117e0f55b 100644
---- a/kernel/events/hw_breakpoint.c
-+++ b/kernel/events/hw_breakpoint.c
-@@ -58,6 +58,16 @@ struct bp_cpuinfo {
- 	unsigned int	flexible; /* XXX: placeholder, see fetch_this_slot() */
- };
- 
-+enum bp_type_idx {
-+	TYPE_INST	= 0,
-+#if defined(CONFIG_HAVE_MIXED_BREAKPOINTS_REGS)
-+	TYPE_DATA	= 0,
-+#else
-+	TYPE_DATA	= 1,
-+#endif
-+	TYPE_MAX
-+};
++my $check_config_in_multiline_comment = 0;
+ sub check_config
+ {
+-	if ($line =~ m/[^a-zA-Z0-9_]+CONFIG_([a-zA-Z0-9_]+)[^a-zA-Z0-9_]/) {
++	my $nocomments = $line;
++	$nocomments =~ s/\/\*.*\*\///; # Remove ANSI-style comments (/* to */)
++	$nocomments =~ s/\/\/.*//;     # Remove C99-style comments (// to EOL)
 +
- static DEFINE_PER_CPU(struct bp_cpuinfo, bp_cpuinfo[TYPE_MAX]);
- static int nr_slots[TYPE_MAX];
- 
++	# Check to see if we're within a multiline comment, and if so
++	# just remove the whole line.  I tried matching on '^ * ', but
++	# there's one header that doesn't prepend multi-line comments
++	# with * so that won't work.
++	if ($nocomments =~ m/\/\*/) { $check_config_in_multiline_comment = 1; }
++	if ($nocomments =~ m/\*\//) { $check_config_in_multiline_comment = 0; }
++	if ($check_config_in_multiline_comment == 1) { $nocomments = "" }
++
++	# Check to see if there is something that looks like CONFIG_
++	# inside a userspace-accessible header file and if so, print that out.
++	if ($nocomments =~ m/[^a-zA-Z0-9_]+CONFIG_([a-zA-Z0-9_]+)[^a-zA-Z0-9_]/) {
+ 		printf STDERR "$filename:$lineno: leaks CONFIG_$1 to userspace where it is not valid\n";
+ 	}
+ }
 -- 
 2.4.6
