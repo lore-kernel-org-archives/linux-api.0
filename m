@@ -1,54 +1,74 @@
-From: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH 01/13] Remove #ifdef CONFIG_64BIT from all asm-generic/fcntl.h
-Date: Mon, 14 Sep 2015 15:50:35 -0700
-Message-ID: <1442271047-4908-2-git-send-email-palmer__46937.3035630726$1442271091$gmane$org@dabbelt.com>
+From: Palmer Dabbelt <palmer@dabbelt.com>
+Subject: [PATCH v3] Remove #ifdef CONFIG_* from	all userspace headers
+Date: Mon, 14 Sep 2015 15:50:34 -0700
+Message-ID: <1442271047-4908-1-git-send-email-palmer@dabbelt.com>
 References: <1441832902-28993-1-git-send-email-palmer@dabbelt.com>
- <1442271047-4908-1-git-send-email-palmer@dabbelt.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1442271047-4908-1-git-send-email-palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: arnd-r2nGTMty4D4@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org, aishchuk-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, bhe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, 3chas3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org, dave-gkUM19QKKo4@public.gmane.org, dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org, jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xtensa-PjhNF2WwrV/0Sa2dR60CXw@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, tomi.valkeinen-l0cyMroinI0@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <1441832902-28993-1-git-send-email-palmer@dabbelt.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: arnd@arndb.de, dhowells@redhat.com
+Cc: viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, kexec@lists.infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-xtensa@linux-xtensa.org, mathieu.desnoyers@efficios.com, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, a.p.zijlstra@chello.nl, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-When working on the RISC-V port I noticed that F_SETLK64 was being
-defined on our 64-bit platform, despite our port being so new that
-we've only ever had the 64-bit file ops.  Since there's not compat
-layer for these, this causes fcntl to bail out.
+This patch set used to be called "[PATCH] Remove #ifdef CONFIG_64BIT
+from all asm-generic/fcntl.h".
 
-It turns out that one of the ways in with F_SETLK64 was being defined
-(there's some more in glibc, but that's a whole different story... :))
-is the result of CONFIG_64BIT showing up in this user-visible header.
-<asm-generic/bitsperlong.h> confirms this isn't sane, so I replaced it
-with a __BITS_PER_LONG check.
+This is version 3 of the patch set.  I think things are kind of
+cleaning up, but there's still some questions I have:
 
-Signed-off-by: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
-Reviewed-by: Andrew Waterman <waterman-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
-Reviewed-by: Albert Ou <aou-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
----
- include/uapi/asm-generic/fcntl.h | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ * #4 might be dangerous, but I think this is the best way to do it
+   because otherwise arch maintainers will have to #define this to
+   something.  Since Xtensa already had exactly the same bug as the
+   asm-generic header did, I think it'd be best to avoid those if
+   possible.
 
-diff --git a/include/uapi/asm-generic/fcntl.h b/include/uapi/asm-generic/fcntl.h
-index e063effe0cc1..14a5c8237d84 100644
---- a/include/uapi/asm-generic/fcntl.h
-+++ b/include/uapi/asm-generic/fcntl.h
-@@ -1,6 +1,7 @@
- #ifndef _ASM_GENERIC_FCNTL_H
- #define _ASM_GENERIC_FCNTL_H
- 
-+#include <asm/bitsperlong.h>
- #include <linux/types.h>
- 
- /*
-@@ -115,7 +116,7 @@
- #define F_GETSIG	11	/* for sockets. */
- #endif
- 
--#ifndef CONFIG_64BIT
-+#if (__BITS_PER_LONG == 32)
- #ifndef F_GETLK64
- #define F_GETLK64	12	/*  using 'struct flock64' */
- #define F_SETLK64	13
--- 
-2.4.6
+   I'm OK changing this to define the value to 0 by default (though
+   thinking now, I think it'd be better to not define it by default),
+   since most kernels aren't going to have MAP_UNINITIALIZED do
+   anything anyway.
+
+ * #5 is big and I don't really understand what's going on, so it's
+   probably broken somewhere.
+
+Also, there's some checkpatch warnings that I purposely haven't fixed:
+
+ * In #5, there's a checkpatch.pl complaint about same-line struct
+   braces.  I've left that in to match the rest of the file, but I can
+   also fix all of them if that would be better.
+
+ * In #10, there's a checkpatch.pl complaint about a split printk
+   format string, but that was there before and I don't see a way to
+   make it a lot cleaner, so I'm leaving it alone.
+
+ * In #13, there's two checkpatch.pl complains.  One is about block
+   comments that is bogus, and one is about long lines but there's
+   more of those so I think it's OK.
+
+Thanks to everyone who looked at v2!
+
+
+
+
+Changes since v2 (<1441832902-28993-1-git-send-email-palmer@dabbelt.com>)
+
+* Patch set renamed.
+
+* #2 is rewritten to use sys_ni.c instead of an #ifdef
+
+* #3, #6, #8, #9, #10, and #11 no longer use "#ifdef __KERNEL__" but
+   have instead moved the offending lines to the correct, kernel-only
+   files.
+
+* #4 has been rewritten to always define MAP_UNINITIALIZED to
+   non-zero, rather than defining it to zero when in userspace.
+
+* #5 got a whole lot longer -- rather than just always hiding these
+   fields from userspace, there is now a second "struct
+   elf_fdpic_prstatus" structure.  This should allow userspace to
+   parse core dumps correctly.
+
+* Rebased onto 9c488de24f7264f08d341024bffdd637b4d04c96.
+
+Changes since v1 (<1441152610-22566-1-git-send-email-palmer@dabbelt.com>)
+
+* All patches but #1 were added.
