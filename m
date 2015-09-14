@@ -1,7 +1,7 @@
 From: Palmer Dabbelt <palmer@dabbelt.com>
-Subject: [PATCH 11/13] Always define MAX_RAW_MINORS as 65535 in userspace
-Date: Mon, 14 Sep 2015 15:50:45 -0700
-Message-ID: <1442271047-4908-12-git-send-email-palmer__10877.5549954318$1442271162$gmane$org@dabbelt.com>
+Subject: [PATCH 10/13] Move USE_WCACHING to drivers/block/pktcdvd.c
+Date: Mon, 14 Sep 2015 15:50:44 -0700
+Message-ID: <1442271047-4908-11-git-send-email-palmer__12721.4690707207$1442271166$gmane$org@dabbelt.com>
 References: <1441832902-28993-1-git-send-email-palmer@dabbelt.com>
  <1442271047-4908-1-git-send-email-palmer@dabbelt.com>
 Return-path: <linux-arch-owner@vger.kernel.org>
@@ -11,60 +11,62 @@ To: arnd@arndb.de, dhowells@redhat.com
 Cc: viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, kexec@lists.infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-xtensa@linux-xtensa.org, mathieu.desnoyers@efficios.com, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, a.p.zijlstra@chello.nl, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org, Palmer Dabbelt <palmer@dabbelt.com>
 List-Id: linux-api@vger.kernel.org
 
-While I don't think this was ever meant to be exposed to userspace, if
-anyone is using it then this will at least provide a correct (if
-unlikely) definition.
-
-MAX_RAW_MINORS used to be used in the kernel, where it's been replaced
-with CONFIG_MAX_RAW_MINORS.
-
-Note that there's a checkpatch.pl warning about a split config string
-here, but I've left that alone.
+I don't think this was ever intended to be exposed to userspace, but
+it did require an "#ifdef CONFIG_*".  Since the name is kind of
+generic and was only used in one place, I've moved the definition to
+the one user.
 
 Signed-off-by: Palmer Dabbelt <palmer@dabbelt.com>
 Reviewed-by: Andrew Waterman <waterman@eecs.berkeley.edu>
 Reviewed-by: Albert Ou <aou@eecs.berkeley.edu>
 ---
- drivers/char/raw.c       | 7 ++++---
- include/uapi/linux/raw.h | 2 +-
- 2 files changed, 5 insertions(+), 4 deletions(-)
+ drivers/block/pktcdvd.c      | 11 +++++++++++
+ include/uapi/linux/pktcdvd.h | 11 -----------
+ 2 files changed, 11 insertions(+), 11 deletions(-)
 
-diff --git a/drivers/char/raw.c b/drivers/char/raw.c
-index 60316fbaf295..362d7a6511b9 100644
---- a/drivers/char/raw.c
-+++ b/drivers/char/raw.c
-@@ -36,7 +36,7 @@ static struct raw_device_data *raw_devices;
- static DEFINE_MUTEX(raw_mutex);
- static const struct file_operations raw_ctl_fops; /* forward declaration */
+diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
+index 7be2375db7f2..18d2d05f5ac9 100644
+--- a/drivers/block/pktcdvd.c
++++ b/drivers/block/pktcdvd.c
+@@ -90,6 +90,17 @@ do {									\
  
--static int max_raw_minors = MAX_RAW_MINORS;
-+static int max_raw_minors = CONFIG_MAX_RAW_MINORS;
+ #define MAX_SPEED 0xffff
  
- module_param(max_raw_minors, int, 0);
- MODULE_PARM_DESC(max_raw_minors, "Maximum number of raw devices (1-65536)");
-@@ -317,8 +317,9 @@ static int __init raw_init(void)
++/*
++ * use drive write caching -- we need deferred error handling to be
++ * able to successfully recover with this option (drive will return good
++ * status as soon as the cdb is validated).
++ */
++#if defined(CONFIG_CDROM_PKTCDVD_WCACHE)
++#define USE_WCACHING		1
++#else
++#define USE_WCACHING		0
++#endif
++
+ static DEFINE_MUTEX(pktcdvd_mutex);
+ static struct pktcdvd_device *pkt_devs[MAX_WRITERS];
+ static struct proc_dir_entry *pkt_proc;
+diff --git a/include/uapi/linux/pktcdvd.h b/include/uapi/linux/pktcdvd.h
+index 2640b9d4e243..05c2bee70d6c 100644
+--- a/include/uapi/linux/pktcdvd.h
++++ b/include/uapi/linux/pktcdvd.h
+@@ -29,17 +29,6 @@
+ #define PACKET_WAIT_TIME	(HZ * 5 / 1000)
  
- 	if (max_raw_minors < 1 || max_raw_minors > 65536) {
- 		printk(KERN_WARNING "raw: invalid max_raw_minors (must be"
--			" between 1 and 65536), using %d\n", MAX_RAW_MINORS);
--		max_raw_minors = MAX_RAW_MINORS;
-+			" between 1 and 65536), using %d\n",
-+		       CONFIG_MAX_RAW_MINORS);
-+		max_raw_minors = CONFIG_MAX_RAW_MINORS;
- 	}
+ /*
+- * use drive write caching -- we need deferred error handling to be
+- * able to successfully recover with this option (drive will return good
+- * status as soon as the cdb is validated).
+- */
+-#if defined(CONFIG_CDROM_PKTCDVD_WCACHE)
+-#define USE_WCACHING		1
+-#else
+-#define USE_WCACHING		0
+-#endif
+-
+-/*
+  * No user-servicable parts beyond this point ->
+  */
  
- 	raw_devices = vzalloc(sizeof(struct raw_device_data) * max_raw_minors);
-diff --git a/include/uapi/linux/raw.h b/include/uapi/linux/raw.h
-index 62d543e70603..f0390b3e8530 100644
---- a/include/uapi/linux/raw.h
-+++ b/include/uapi/linux/raw.h
-@@ -13,6 +13,6 @@ struct raw_config_request
- 	__u64	block_minor;
- };
- 
--#define MAX_RAW_MINORS CONFIG_MAX_RAW_DEVS
-+#define MAX_RAW_MINORS 65535
- 
- #endif /* __LINUX_RAW_H */
 -- 
 2.4.6
