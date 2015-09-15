@@ -1,92 +1,117 @@
-From: Serge Hallyn <serge.hallyn@ubuntu.com>
-Subject: Re: [PATCH RFC] pidns: introduce syscall getvpid
-Date: Tue, 15 Sep 2015 17:41:43 +0000
-Message-ID: <20150915174143.GE4699@ubuntumail>
-References: <20150915120924.14818.49490.stgit@buzz>
- <87h9mvg3kw.fsf@x220.int.ebiederm.org>
- <55F832D2.1070605@yandex-team.ru>
- <20150915151729.GA144242@dakara>
+From: Andreas Oberritter <obi@saftware.de>
+Subject: Re: [PATCH 1/7] [media] dvb: use ktime_t for internal
+	timeout
+Date: Tue, 15 Sep 2015 19:55:35 +0200
+Message-ID: <55F85B97.8000700@saftware.de>
+References: <1442332148-488079-1-git-send-email-arnd@arndb.de>
+ <1442332148-488079-2-git-send-email-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150915151729.GA144242@dakara>
-Sender: linux-kernel-owner@vger.kernel.org
-To: =?iso-8859-1?Q?St=E9phane?= Graber <stgraber@ubuntu.com>
-Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, Oleg Nesterov <oleg@redhat.com>, linux-kernel@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+In-Reply-To: <1442332148-488079-2-git-send-email-arnd@arndb.de>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+To: Arnd Bergmann <arnd@arndb.de>, linux-media@vger.kernel.org
+Cc: y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-samsung-soc@vger.kernel.org, linux-kernel@vger.kernel.org, Mauro Carvalho Chehab <mchehab@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-Quoting St=E9phane Graber (stgraber@ubuntu.com):
-> On Tue, Sep 15, 2015 at 06:01:38PM +0300, Konstantin Khlebnikov wrote=
-:
-> > On 15.09.2015 17:27, Eric W. Biederman wrote:
-> > >Konstantin Khlebnikov <khlebnikov@yandex-team.ru> writes:
-> > >
-> > >>pid_t getvpid(pid_t pid, pid_t source, pid_t target);
-> > >>
-> > >>This syscall converts pid from one pid-ns into pid in another pid=
--ns:
-> > >>it takes @pid in namespace of @source task (zero for current) and
-> > >>returns related pid in namespace of @target task (zero for curren=
-t too).
-> > >>If pid is unreachable from target pid-ns then it returns zero.
-> > >
-> > >This interface as presented is inherently racy.  It would be bette=
-r
-> > >if source and target were file descriptors referring to the namesp=
-aces
-> > >you wish to translate between.
-> >=20
-> > Yep, it's racy. As well as any operation with non-child pids.
-> > With file descriptors for source/target result will be racy anyway.
-> >=20
-> > >
-> > >>Such conversion is required for interaction between processes fro=
-m
-> > >>different pid-namespaces. For example when system service talks w=
-ith
-> > >>client from isolated container via socket about task in container=
-:
-> > >
-> > >Sockets are already supported.  At least the metadata of sockets i=
-s.
-> > >
-> > >Maybe we need this but I am not convinced of it's utility.
-> > >
-> > >What are you trying to do that motivates this?
-> >=20
-> > I'm working on hierarchical container management system which
-> > allows to create and control nested sub-containers from containers
-> > ( https://github.com/yandex/porto ). Main server works in host and
-> > have to interact with all levels of nested namespaces. This syscall
-> > makes some operations much easier: server must remember only pid in
-> > host pid namespace and convert it into right vpid on demand.
->=20
-> Note that as Eric said earlier, sending a PID inside a ucred through =
-a
-> unix socket will have the pid translated.
->=20
-> So while your solution certainly should be faster, you can already ac=
-hieve
-> what you want today by doing:
->=20
-> =3D=3D Translate PID in container to PID in host
->  - open a socket
->  - setns to container's pidns
->  - send ucred from that container containing the requested container =
-PID
->  - host sees the host PID
->=20
-> =3D=3D Translate PID on host to PID in container
->  - open a socket
->  - setns to container's pidns
->  - send ucred from the host containing the request host PID
->    (send will fail if the host PID isn't part of that container)
->  - container sees the container PID
-
-In addition, since commit e4bc332451 : /proc/PID/status: show all sets =
-of pid according to ns
-we now also have 'NSpid' etc in /proc/$$/status.
-
--serge
+SGVsbG8gQXJuZCwKCk9uIDE1LjA5LjIwMTUgMTc6NDksIEFybmQgQmVyZ21hbm4gd3JvdGU6Cj4g
+VGhlIGR2YiBkZW11eGVyIGNvZGUgdXNlcyBhICdzdHJ1Y3QgdGltZXNwZWMnIHRvIHBhc3MgYSB0
+aW1lb3V0Cj4gYXMgYWJzb2x1dGUgdGltZS4gVGhpcyB3aWxsIGNhdXNlIHByb2JsZW1zIG9uIDMy
+LWJpdCBhcmNoaXRlY3R1cmVzCj4gaW4gMjAzOCB3aGVuIHRpbWVfdCBvdmVyZmxvd3MsIGFuZCBp
+dCBpcyByYWN5IHdpdGggYSBjb25jdXJyZW50Cj4gc2V0dGltZW9mZGF5KCkgY2FsbC4KPiAKPiBU
+aGlzIHBhdGNoIGNoYW5nZXMgdGhlIGNvZGUgdG8gdXNlIGt0aW1lX2dldCgpIGluc3RlYWQsIHVz
+aW5nCj4gdGhlIG1vbm90b25pYyB0aW1lIGJhc2UgdG8gYXZvaWQgYm90aCB0aGUgcmFjZSBhbmQg
+dGhlIG92ZXJmbG93Lgo+IAo+IFNpZ25lZC1vZmYtYnk6IEFybmQgQmVyZ21hbm4gPGFybmRAYXJu
+ZGIuZGU+Cj4gLS0tCj4gIGRyaXZlcnMvbWVkaWEvZHZiLWNvcmUvZGVtdXguaCAgICAgfCAgMiAr
+LQo+ICBkcml2ZXJzL21lZGlhL2R2Yi1jb3JlL2RteGRldi5jICAgIHwgIDIgKy0KPiAgZHJpdmVy
+cy9tZWRpYS9kdmItY29yZS9kdmJfZGVtdXguYyB8IDE3ICsrKysrKy0tLS0tLS0tLS0tCj4gIGRy
+aXZlcnMvbWVkaWEvZHZiLWNvcmUvZHZiX2RlbXV4LmggfCAgNCArKy0tCj4gIGRyaXZlcnMvbWVk
+aWEvZHZiLWNvcmUvZHZiX25ldC5jICAgfCAgMiArLQo+ICA1IGZpbGVzIGNoYW5nZWQsIDExIGlu
+c2VydGlvbnMoKyksIDE2IGRlbGV0aW9ucygtKQo+IAo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21l
+ZGlhL2R2Yi1jb3JlL2RlbXV4LmggYi9kcml2ZXJzL21lZGlhL2R2Yi1jb3JlL2RlbXV4LmgKPiBp
+bmRleCA4MzMxOTFiY2Q4MTAuLmQ4ZTJiMTIxM2JlZiAxMDA2NDQKPiAtLS0gYS9kcml2ZXJzL21l
+ZGlhL2R2Yi1jb3JlL2RlbXV4LmgKPiArKysgYi9kcml2ZXJzL21lZGlhL2R2Yi1jb3JlL2RlbXV4
+LmgKPiBAQCAtOTIsNyArOTIsNyBAQCBzdHJ1Y3QgZG14X3RzX2ZlZWQgewo+ICAJCSAgICBpbnQg
+dHlwZSwKPiAgCQkgICAgZW51bSBkbXhfdHNfcGVzIHBlc190eXBlLAo+ICAJCSAgICBzaXplX3Qg
+Y2lyY3VsYXJfYnVmZmVyX3NpemUsCj4gLQkJICAgIHN0cnVjdCB0aW1lc3BlYyB0aW1lb3V0KTsK
+PiArCQkgICAga3RpbWVfdCB0aW1lb3V0KTsKPiAgCWludCAoKnN0YXJ0X2ZpbHRlcmluZykgKHN0
+cnVjdCBkbXhfdHNfZmVlZCogZmVlZCk7Cj4gIAlpbnQgKCpzdG9wX2ZpbHRlcmluZykgKHN0cnVj
+dCBkbXhfdHNfZmVlZCogZmVlZCk7Cj4gIH07Cj4gZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWVkaWEv
+ZHZiLWNvcmUvZG14ZGV2LmMgYi9kcml2ZXJzL21lZGlhL2R2Yi1jb3JlL2RteGRldi5jCj4gaW5k
+ZXggZDBlM2Y5ZDg1ZjM0Li4wZDIwYjM3OWVlZWMgMTAwNjQ0Cj4gLS0tIGEvZHJpdmVycy9tZWRp
+YS9kdmItY29yZS9kbXhkZXYuYwo+ICsrKyBiL2RyaXZlcnMvbWVkaWEvZHZiLWNvcmUvZG14ZGV2
+LmMKPiBAQCAtNTU4LDcgKzU1OCw3IEBAIHN0YXRpYyBpbnQgZHZiX2RteGRldl9zdGFydF9mZWVk
+KHN0cnVjdCBkbXhkZXYgKmRteGRldiwKPiAgCQkJCSBzdHJ1Y3QgZG14ZGV2X2ZpbHRlciAqZmls
+dGVyLAo+ICAJCQkJIHN0cnVjdCBkbXhkZXZfZmVlZCAqZmVlZCkKPiAgewo+IC0Jc3RydWN0IHRp
+bWVzcGVjIHRpbWVvdXQgPSB7IDAgfTsKPiArCWt0aW1lX3QgdGltZW91dCA9IGt0aW1lX3NldCgw
+LCAwKTsKPiAgCXN0cnVjdCBkbXhfcGVzX2ZpbHRlcl9wYXJhbXMgKnBhcmEgPSAmZmlsdGVyLT5w
+YXJhbXMucGVzOwo+ICAJZG14X291dHB1dF90IG90eXBlOwo+ICAJaW50IHJldDsKPiBkaWZmIC0t
+Z2l0IGEvZHJpdmVycy9tZWRpYS9kdmItY29yZS9kdmJfZGVtdXguYyBiL2RyaXZlcnMvbWVkaWEv
+ZHZiLWNvcmUvZHZiX2RlbXV4LmMKPiBpbmRleCA2YzdmZjBjZGNkMzIuLmQ4M2RkMGViNTc1NyAx
+MDA2NDQKPiAtLS0gYS9kcml2ZXJzL21lZGlhL2R2Yi1jb3JlL2R2Yl9kZW11eC5jCj4gKysrIGIv
+ZHJpdmVycy9tZWRpYS9kdmItY29yZS9kdmJfZGVtdXguYwo+IEBAIC0zOTksMjggKzM5OSwyMyBA
+QCBzdGF0aWMgdm9pZCBkdmJfZG14X3N3ZmlsdGVyX3BhY2tldChzdHJ1Y3QgZHZiX2RlbXV4ICpk
+ZW11eCwgY29uc3QgdTggKmJ1ZikKPiAgCWludCBkdnJfZG9uZSA9IDA7Cj4gIAo+ICAJaWYgKGR2
+Yl9kZW11eF9zcGVlZGNoZWNrKSB7Cj4gLQkJc3RydWN0IHRpbWVzcGVjIGN1cl90aW1lLCBkZWx0
+YV90aW1lOwo+ICsJCWt0aW1lX3QgY3VyX3RpbWU7Cj4gIAkJdTY0IHNwZWVkX2J5dGVzLCBzcGVl
+ZF90aW1lZGVsdGE7Cj4gIAo+ICAJCWRlbXV4LT5zcGVlZF9wa3RzX2NudCsrOwo+ICAKPiAgCQkv
+KiBzaG93IHNwZWVkIGV2ZXJ5IFNQRUVEX1BLVFNfSU5URVJWQUwgcGFja2V0cyAqLwo+ICAJCWlm
+ICghKGRlbXV4LT5zcGVlZF9wa3RzX2NudCAlIFNQRUVEX1BLVFNfSU5URVJWQUwpKSB7Cj4gLQkJ
+CWN1cl90aW1lID0gY3VycmVudF9rZXJuZWxfdGltZSgpOwo+ICsJCQljdXJfdGltZSA9IGt0aW1l
+X2dldCgpOwo+ICAKPiAtCQkJaWYgKGRlbXV4LT5zcGVlZF9sYXN0X3RpbWUudHZfc2VjICE9IDAg
+JiYKPiAtCQkJCQlkZW11eC0+c3BlZWRfbGFzdF90aW1lLnR2X25zZWMgIT0gMCkgewo+IC0JCQkJ
+ZGVsdGFfdGltZSA9IHRpbWVzcGVjX3N1YihjdXJfdGltZSwKPiAtCQkJCQkJZGVtdXgtPnNwZWVk
+X2xhc3RfdGltZSk7Cj4gKwkJCWlmIChrdGltZV90b19ucyhkZW11eC0+c3BlZWRfbGFzdF90aW1l
+KSA9PSAwKSB7CgppZiBrdGltZV90b19ucyBkb2VzIHdoYXQgSSB0aGluayBpdCBkb2VzLCB0aGVu
+IHlvdSBzaG91bGQgaW52ZXJ0IHRoZSBsb2dpYy4KClJlZ2FyZHMsCkFuZHJlYXMKCj4gIAkJCQlz
+cGVlZF9ieXRlcyA9ICh1NjQpZGVtdXgtPnNwZWVkX3BrdHNfY250Cj4gIAkJCQkJKiAxODggKiA4
+Owo+ICAJCQkJLyogY29udmVydCB0byAxMDI0IGJhc2lzICovCj4gIAkJCQlzcGVlZF9ieXRlcyA9
+IDEwMDAgKiBkaXY2NF91NjQoc3BlZWRfYnl0ZXMsCj4gIAkJCQkJCTEwMjQpOwo+IC0JCQkJc3Bl
+ZWRfdGltZWRlbHRhID0KPiAtCQkJCQkodTY0KXRpbWVzcGVjX3RvX25zKCZkZWx0YV90aW1lKTsK
+PiAtCQkJCXNwZWVkX3RpbWVkZWx0YSA9IGRpdjY0X3U2NChzcGVlZF90aW1lZGVsdGEsCj4gLQkJ
+CQkJCTEwMDAwMDApOyAvKiBuc2VjIC0+IHVzZWMgKi8KPiArCQkJCXNwZWVkX3RpbWVkZWx0YSA9
+IGt0aW1lX21zX2RlbHRhKGN1cl90aW1lLAo+ICsJCQkJCQkJZGVtdXgtPnNwZWVkX2xhc3RfdGlt
+ZSk7Cj4gIAkJCQlwcmludGsoS0VSTl9JTkZPICJUUyBzcGVlZCAlbGx1IEtiaXRzL3NlYyBcbiIs
+Cj4gIAkJCQkJCWRpdjY0X3U2NChzcGVlZF9ieXRlcywKPiAgCQkJCQkJCXNwZWVkX3RpbWVkZWx0
+YSkpOwo+IEBAIC02NjcsNyArNjYyLDcgQEAgb3V0Ogo+ICAKPiAgc3RhdGljIGludCBkbXhfdHNf
+ZmVlZF9zZXQoc3RydWN0IGRteF90c19mZWVkICp0c19mZWVkLCB1MTYgcGlkLCBpbnQgdHNfdHlw
+ZSwKPiAgCQkJICAgZW51bSBkbXhfdHNfcGVzIHBlc190eXBlLAo+IC0JCQkgICBzaXplX3QgY2ly
+Y3VsYXJfYnVmZmVyX3NpemUsIHN0cnVjdCB0aW1lc3BlYyB0aW1lb3V0KQo+ICsJCQkgICBzaXpl
+X3QgY2lyY3VsYXJfYnVmZmVyX3NpemUsIGt0aW1lX3QgdGltZW91dCkKPiAgewo+ICAJc3RydWN0
+IGR2Yl9kZW11eF9mZWVkICpmZWVkID0gKHN0cnVjdCBkdmJfZGVtdXhfZmVlZCAqKXRzX2ZlZWQ7
+Cj4gIAlzdHJ1Y3QgZHZiX2RlbXV4ICpkZW11eCA9IGZlZWQtPmRlbXV4Owo+IGRpZmYgLS1naXQg
+YS9kcml2ZXJzL21lZGlhL2R2Yi1jb3JlL2R2Yl9kZW11eC5oIGIvZHJpdmVycy9tZWRpYS9kdmIt
+Y29yZS9kdmJfZGVtdXguaAo+IGluZGV4IGFlN2ZjMzNjMzIzMS4uNWVkM2NhYjRhZDI4IDEwMDY0
+NAo+IC0tLSBhL2RyaXZlcnMvbWVkaWEvZHZiLWNvcmUvZHZiX2RlbXV4LmgKPiArKysgYi9kcml2
+ZXJzL21lZGlhL2R2Yi1jb3JlL2R2Yl9kZW11eC5oCj4gQEAgLTgzLDcgKzgzLDcgQEAgc3RydWN0
+IGR2Yl9kZW11eF9mZWVkIHsKPiAgCXU4ICpidWZmZXI7Cj4gIAlpbnQgYnVmZmVyX3NpemU7Cj4g
+IAo+IC0Jc3RydWN0IHRpbWVzcGVjIHRpbWVvdXQ7Cj4gKwlrdGltZV90IHRpbWVvdXQ7Cj4gIAlz
+dHJ1Y3QgZHZiX2RlbXV4X2ZpbHRlciAqZmlsdGVyOwo+ICAKPiAgCWludCB0c190eXBlOwo+IEBA
+IC0xMzQsNyArMTM0LDcgQEAgc3RydWN0IGR2Yl9kZW11eCB7Cj4gIAo+ICAJdWludDhfdCAqY250
+X3N0b3JhZ2U7IC8qIGZvciBUUyBjb250aW51aXR5IGNoZWNrICovCj4gIAo+IC0Jc3RydWN0IHRp
+bWVzcGVjIHNwZWVkX2xhc3RfdGltZTsgLyogZm9yIFRTIHNwZWVkIGNoZWNrICovCj4gKwlrdGlt
+ZV90IHNwZWVkX2xhc3RfdGltZTsgLyogZm9yIFRTIHNwZWVkIGNoZWNrICovCj4gIAl1aW50MzJf
+dCBzcGVlZF9wa3RzX2NudDsgLyogZm9yIFRTIHNwZWVkIGNoZWNrICovCj4gIH07Cj4gIAo+IGRp
+ZmYgLS1naXQgYS9kcml2ZXJzL21lZGlhL2R2Yi1jb3JlL2R2Yl9uZXQuYyBiL2RyaXZlcnMvbWVk
+aWEvZHZiLWNvcmUvZHZiX25ldC5jCj4gaW5kZXggYjgxZTAyNmVkYWIzLi5kZjNiYTE1YzAwN2Ug
+MTAwNjQ0Cj4gLS0tIGEvZHJpdmVycy9tZWRpYS9kdmItY29yZS9kdmJfbmV0LmMKPiArKysgYi9k
+cml2ZXJzL21lZGlhL2R2Yi1jb3JlL2R2Yl9uZXQuYwo+IEBAIC05OTgsNyArOTk4LDcgQEAgc3Rh
+dGljIGludCBkdmJfbmV0X2ZlZWRfc3RhcnQoc3RydWN0IG5ldF9kZXZpY2UgKmRldikKPiAgCQlu
+ZXRkZXZfZGJnKGRldiwgInN0YXJ0IGZpbHRlcmluZ1xuIik7Cj4gIAkJcHJpdi0+c2VjZmVlZC0+
+c3RhcnRfZmlsdGVyaW5nKHByaXYtPnNlY2ZlZWQpOwo+ICAJfSBlbHNlIGlmIChwcml2LT5mZWVk
+dHlwZSA9PSBEVkJfTkVUX0ZFRURUWVBFX1VMRSkgewo+IC0JCXN0cnVjdCB0aW1lc3BlYyB0aW1l
+b3V0ID0geyAwLCAxMDAwMDAwMCB9OyAvLyAxMCBtc2VjCj4gKwkJa3RpbWVfdCB0aW1lb3V0ID0g
+bnNfdG9fa3RpbWUoMTAgKiBOU0VDX1BFUl9NU0VDKTsKPiAgCj4gIAkJLyogd2UgaGF2ZSBwYXls
+b2FkcyBlbmNhcHN1bGF0ZWQgaW4gVFMgKi8KPiAgCQluZXRkZXZfZGJnKGRldiwgImFsbG9jIHRz
+ZmVlZFxuIik7Cj4gCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fXwpZMjAzOCBtYWlsaW5nIGxpc3QKWTIwMzhAbGlzdHMubGluYXJvLm9yZwpodHRwczovL2xp
+c3RzLmxpbmFyby5vcmcvbWFpbG1hbi9saXN0aW5mby95MjAzOAo=
