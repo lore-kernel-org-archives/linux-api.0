@@ -1,11 +1,11 @@
 From: Palmer Dabbelt <palmer@dabbelt.com>
 Subject: Re: [PATCH 04/13] Always expose MAP_UNINITIALIZED to userspace
 Date: Mon, 14 Sep 2015 17:52:24 -0700 (PDT)
-Message-ID: <55f76bc8.2108450a.97c6e.129a__14936.612887732$1442278392$gmane$org@mx.google.com>
+Message-ID: <55f76bc8.2108450a.97c6e.129a__22512.2110372924$1442278395$gmane$org@mx.google.com>
 References: <20150915002358.GA12618@node.dhcp.inet.fi>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
 In-Reply-To: <20150915002358.GA12618@node.dhcp.inet.fi>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Sender: linux-arch-owner@vger.kernel.org
 To: kirill@shutemov.name, arnd@arndb.de
 Cc: dhowells@redhat.com, viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, kexec@lists.infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-xtensa@linux-xtensa.org, mathieu.desnoyers@efficios.com, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, a.p.zijlstra@chello.nl, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
