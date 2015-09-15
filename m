@@ -1,93 +1,87 @@
-From: Tycho Andersen <tycho.andersen@canonical.com>
-Subject: Re: v2 of seccomp filter c/r patches
-Date: Tue, 15 Sep 2015 10:07:38 -0600
-Message-ID: <20150915160738.GJ31864@smitten>
-References: <1441930862-14347-1-git-send-email-tycho.andersen@canonical.com>
- <CALCETrVYtv1=g-xPjQ-LiX+5GK3xtB6a2hYbat0TuU-Bd4QA6Q@mail.gmail.com>
- <CALCETrWxLMSgdsdT9gTL80LSovONmCcTYjzqrHqF-WdJ4BN1Uw@mail.gmail.com>
- <20150911172806.GA7244@smitten>
- <CALCETrWH0vLZwkOV6JCnC-pLaHe0dboXs5-ETkXFCR9X-aq7qw@mail.gmail.com>
+From: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+Subject: Re: [PATCH 6/7] [RFC] [media]: v4l2: introduce v4l2_timeval
+Date: Tue, 15 Sep 2015 18:27:19 +0200
+Message-ID: <55F846E7.2040006@xs4all.nl>
+References: <1442332148-488079-1-git-send-email-arnd@arndb.de> <1442332148-488079-7-git-send-email-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrWH0vLZwkOV6JCnC-pLaHe0dboXs5-ETkXFCR9X-aq7qw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Kees Cook <keescook@chromium.org>, Pavel Emelyanov <xemul@parallels.com>, Network Development <netdev@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, "David S. Miller" <davem@davemloft.net>, Oleg Nesterov <oleg@redhat.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Linux API <linux-api@vger.kernel.org>, Will Drewry <wad@chromium.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Daniel Borkmann <daniel@iogearbox.net>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1442332148-488079-7-git-send-email-arnd-r2nGTMty4D4@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Andy,
+On 09/15/2015 05:49 PM, Arnd Bergmann wrote:
+> The v4l2 API uses a 'struct timeval' to communicate time stamps to user
+> space. This is broken on 32-bit architectures as soon as we have a C library
+> that defines time_t as 64 bit, which then changes the structure layout of
+> struct v4l2_buffer.
+> 
+> Fortunately, almost all v4l2 drivers use monotonic timestamps and call
+> v4l2_get_timestamp(), which means they don't also have a y2038 problem.
+> This means we can keep using the existing binary layout of the structure
+> and do not need to worry about defining a new kernel interface for
+> userland with 64-bit time_t.
+> 
+> A possible downside of this approach is that it breaks any user space
+> that tries to assign the timeval structure returned from the kernel
+> to another timeval, or to pass a pointer to it into a function that
+> expects a timeval. Those will cause a build-time warning or error
+> that can be fixed up in a backwards compatible way.
+> 
+> The alternative to this patch is to leave the structure using
+> 'struct timeval', but then we have to rework the kernel to let
+> it handle both 32-bit and 64-bit time_t for 32-bit user space
+> processes.
 
-On Mon, Sep 14, 2015 at 10:52:46AM -0700, Andy Lutomirski wrote:
->
-> I'm not sure I entirely like this solution...
+Cool. Only this morning I was thinking about what would be needed in v4l2
+to be y2038 safe, and here it is!
 
-Ok. Since we also aren't going to do all the eBPF stuff now, how about
-something that looks like this:
+> diff --git a/include/uapi/linux/videodev2.h b/include/uapi/linux/videodev2.h
+> index 3228fbebcd63..b02cf054fbb8 100644
+> --- a/include/uapi/linux/videodev2.h
+> +++ b/include/uapi/linux/videodev2.h
+> @@ -803,6 +803,12 @@ struct v4l2_plane {
+>  	__u32			reserved[11];
+>  };
+>  
+> +/* used for monotonic times, therefore y2038 safe */
+> +struct v4l2_timeval {
+> +	long tv_sec;
+> +	long tv_usec;
+> +};
+> +
+>  /**
+>   * struct v4l2_buffer - video buffer info
+>   * @index:	id number of the buffer
+> @@ -839,7 +845,7 @@ struct v4l2_buffer {
+>  	__u32			bytesused;
+>  	__u32			flags;
+>  	__u32			field;
+> -	struct timeval		timestamp;
+> +	struct v4l2_timeval	timestamp;
+>  	struct v4l2_timecode	timecode;
+>  	__u32			sequence;
+>  
+> 
 
-struct seccomp_layer {
-  unsigned int size;
-  unsigned int type; /* SECCOMP_BPF_CLASSIC or SECCOMP_EBPF or ... */
-  bool inherited;
-  union {
-    unsigned int insn_cnt;
-    struct bpf_insn *insns;
-  };
-};
+I suspect that quite a few apps use assign the timestamp to another timeval
+struct. A quick grep in v4l-utils (which we maintain) shows at least two of
+those assignments. Ditto for xawtv3.
 
-with a ptrace command:
+So I don't think v4l2_timeval is an option as it would break userspace too badly.
 
-ptrace(PTRACE_SECCOMP_DUMP_LAYER, pid, i, &layer);
+An alternative to supporting a 64-bit timeval for 32-bit userspace is to make a
+new y2038-aware struct and a new set of ioctls and use this opportunity to clean
+up and extend the v4l2_buffer struct.
 
-If we save a pointer to the current seccomp filter on fork (if there
-is one), then I think the inherited flag is just,
+So any 32-bit app that needs to be y2038 compliant would just use the new
+struct and ioctls.
 
-inherited = is_ancestor(child->seccomp.filter, child->seccomp.inherited_filter)
+But this is something to discuss among the v4l2 developers.
 
-In order to restore this (so it can be checkpointed again), we need a
-command that looks like:
+Regards,
 
-seccomp(SECCOMP_INHERIT_FILTER);
-
-which sets the current and inherited filter to that of the parent
-process. (Optionally we could have seccomp(SECCOMP_INHERIT_FILTER, i)
-to inherit the ith filter from the parent, but we can coordinate this
-via userpace so it's not strictly necessary.) So the whole c/r process
-looks something like:
-
---- dump ---
-
-for (i = 0; true; i++) {
-  ret = ptrace(PTRACE_SECCOMP_DUMP_FILTER, pid, i, &layer);
-  if (ret == -ESRCH)
-    break;
-  if (ret < 0)
-    /* real error */
-
-  /* save the filter if it's not inherited, if it is, mark the filter
-   * to be inherited from ppid; note that this index is walking up the
-   * tree following filter->prev, and the index we want to reason
-   * about on restore is walking down, so we should reverse the whole
-   * array.
-   */
-}
-
---- restore ---
-
-if (have_inherited_filters) {
-  wait_for_ppid_seccomp_restore(n_inherited);
-  seccomp(SECCOMP_INHERIT_FILTER);
-  signal_done_inheriting();
-}
-
-for (i = 0; i < n_filters; i++) {
-  seccomp(SECCOMP_SET_MODE_FILTER, ...);
-  if (child_inherited_filter(i))
-    signal_children_filter(i);
-}
-
-I played around with an implementation of SECCOMP_INHERIT_FILTER last
-night and I think I have one that might work. Thoughts?
-
-Tycho
+	Hans
