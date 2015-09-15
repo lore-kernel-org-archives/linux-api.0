@@ -1,90 +1,216 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 7/7] [RFC] [media] introduce v4l2_timespec type for
-	timestamps
-Date: Tue, 15 Sep 2015 17:49:08 +0200
-Message-ID: <1442332148-488079-8-git-send-email-arnd@arndb.de>
-References: <1442332148-488079-1-git-send-email-arnd@arndb.de>
+From: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v2 8/9] vfs: copy_file_range() can do a pagecache copy
+ with splice
+Date: Tue, 15 Sep 2015 11:58:04 -0400
+Message-ID: <55F8400C.3000402@Netapp.com>
+References: <1442003423-6884-1-git-send-email-Anna.Schumaker@Netapp.com>
+ <1442003423-6884-9-git-send-email-Anna.Schumaker@Netapp.com>
+ <20150915033217.GG10391@birch.djwong.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <1442332148-488079-1-git-send-email-arnd@arndb.de>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: linux-media@vger.kernel.org
-Cc: linux-samsung-soc@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150915033217.GG10391-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-VGhlIHY0bDIgZXZlbnQgcXVldWUgdXNlcyBhICdzdHJ1Y3QgdGltZXNwZWMnIHRvIHBhc3MgbW9u
-b3RvbmljCnRpbWVzdGFtcHMuIFRoaXMgaXMgbm90IGEgcHJvYmxlbSBieSBpdHNlbGYsIGJ1dCBp
-dCBicmVha3Mgd2hlbiB1c2VyCnNwYWNlIHJlZGVmaW5lcyB0aW1lc3BlYyB0byB1c2UgJ2xvbmcg
-bG9uZycgb24gMzItYml0IHN5c3RlbXMuCgpUbyBhdm9pZCB0aGF0IHByb2JsZW0sIHdlIGRlZmlu
-ZSBvdXIgb3duIHJlcGxhY2VtZW50IGZvciB0aW1lc3BlYyBoZXJlLAp1c2luZyAnbG9uZycgdHZf
-c2VjIGFuZCB0dl9uc2VjIG1lbWJlcnMuIFRoaXMgbWVhbnMgbm8gY2hhbmdlIHRvIHRoZQpleGlz
-dGluZyBBUEksIGJ1dCBsZXRzIHVzIGtlZXAgdXNpbmcgaXQgd2l0aCBhIHkyMDM4IGNvbXBhdGli
-bGUgbGliYy4KCkFzIGEgc2lkZS1lZmZlY3QsIHRoaXMgY2hhbmdlcyB0aGUgQVBJIGZvciB4MzIg
-cHJvZ3JhbXMgdG8gYmUgdGhlIHNhbWUKYXMgbmF0aXZlIDMyLWJpdCwgdXNpbmcgYSAzMi1iaXQg
-dHZfc2VjL3R2X25zZWMgdmFsdWUsIGJ1dCBib3RoIG9sZCBhbmQKbmV3IGtlcm5lbHMgYWxyZWFk
-eSBzdXBwb3J0IGJvdGggZm9ybWF0cyBmb3Igb24gdGhlIGJpbmFyeSBsZXZlbCBmb3IKY29tcGF0
-IGFuZCB4MzIuCgpBbHRlcm5hdGl2ZWx5LCB3ZSBjb3VsZCBsZWF2ZSB0aGUgaGVhZGVyIGZpbGUg
-dG8gZGVmaW5lIHRoZSBpbnRlcmZhY2UKYmFzZWQgb24gJ3N0cnVjdCB0aW1lc3BlYycsIGFuZCBp
-bXBsZW1lbnQgYm90aCBpb2N0bHMgZm9yIG5hdGl2ZQpwcm9jZXNzZXMuIEkgcGlja2VkIHRoZSBh
-cHByb2FjaCBpbiB0aGlzIGNhc2UgYmVjYXVzZSBpdCBtYXRjaGVzIHdoYXQKd2UgZG8gZm9yIHY0
-bDJfdGltZXZhbCBpbiB0aGUgcmVzcGVjdGl2ZSBwYXRjaCwgYnV0IGJvdGggd291bGQgd29yawpl
-cXVhbGx5IHdlbGwgaGVyZS4KClNpZ25lZC1vZmYtYnk6IEFybmQgQmVyZ21hbm4gPGFybmRAYXJu
-ZGIuZGU+Ci0tLQogZHJpdmVycy9tZWRpYS92NGwyLWNvcmUvdjRsMi1ldmVudC5jIHwgMjAgKysr
-KysrKysrKysrKy0tLS0tLS0KIGluY2x1ZGUvdWFwaS9saW51eC92aWRlb2RldjIuaCAgICAgICB8
-ICA4ICsrKysrKystCiAyIGZpbGVzIGNoYW5nZWQsIDIwIGluc2VydGlvbnMoKyksIDggZGVsZXRp
-b25zKC0pCgpkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZWRpYS92NGwyLWNvcmUvdjRsMi1ldmVudC5j
-IGIvZHJpdmVycy9tZWRpYS92NGwyLWNvcmUvdjRsMi1ldmVudC5jCmluZGV4IDhkMzE3MWM2YmVl
-OC4uMmEyNmFkNTkxZjU5IDEwMDY0NAotLS0gYS9kcml2ZXJzL21lZGlhL3Y0bDItY29yZS92NGwy
-LWV2ZW50LmMKKysrIGIvZHJpdmVycy9tZWRpYS92NGwyLWNvcmUvdjRsMi1ldmVudC5jCkBAIC0x
-MDgsNyArMTA4LDcgQEAgc3RhdGljIHN0cnVjdCB2NGwyX3N1YnNjcmliZWRfZXZlbnQgKnY0bDJf
-ZXZlbnRfc3Vic2NyaWJlZCgKIH0KIAogc3RhdGljIHZvaWQgX192NGwyX2V2ZW50X3F1ZXVlX2Zo
-KHN0cnVjdCB2NGwyX2ZoICpmaCwgY29uc3Qgc3RydWN0IHY0bDJfZXZlbnQgKmV2LAotCQljb25z
-dCBzdHJ1Y3QgdGltZXNwZWMgKnRzKQorCQljb25zdCBzdHJ1Y3QgdjRsMl90aW1lc3BlYyAqdHMp
-CiB7CiAJc3RydWN0IHY0bDJfc3Vic2NyaWJlZF9ldmVudCAqc2V2OwogCXN0cnVjdCB2NGwyX2tl
-dmVudCAqa2V2OwpAQCAtMTcwLDE3ICsxNzAsMjAgQEAgdm9pZCB2NGwyX2V2ZW50X3F1ZXVlKHN0
-cnVjdCB2aWRlb19kZXZpY2UgKnZkZXYsIGNvbnN0IHN0cnVjdCB2NGwyX2V2ZW50ICpldikKIHsK
-IAlzdHJ1Y3QgdjRsMl9maCAqZmg7CiAJdW5zaWduZWQgbG9uZyBmbGFnczsKLQlzdHJ1Y3QgdGlt
-ZXNwZWMgdGltZXN0YW1wOworCXN0cnVjdCB0aW1lc3BlYzY0IHRpbWVzdGFtcDsKKwlzdHJ1Y3Qg
-djRsMl90aW1lc3BlYyB2dHM7CiAKIAlpZiAodmRldiA9PSBOVUxMKQogCQlyZXR1cm47CiAKLQlr
-dGltZV9nZXRfdHMoJnRpbWVzdGFtcCk7CisJa3RpbWVfZ2V0X3RzNjQoJnRpbWVzdGFtcCk7CisJ
-dnRzLnR2X3NlYyA9IHRpbWVzdGFtcC50dl9zZWM7CisJdnRzLnR2X25zZWMgPSB0aW1lc3RhbXAu
-dHZfbnNlYzsKIAogCXNwaW5fbG9ja19pcnFzYXZlKCZ2ZGV2LT5maF9sb2NrLCBmbGFncyk7CiAK
-IAlsaXN0X2Zvcl9lYWNoX2VudHJ5KGZoLCAmdmRldi0+ZmhfbGlzdCwgbGlzdCkKLQkJX192NGwy
-X2V2ZW50X3F1ZXVlX2ZoKGZoLCBldiwgJnRpbWVzdGFtcCk7CisJCV9fdjRsMl9ldmVudF9xdWV1
-ZV9maChmaCwgZXYsICZ2dHMpOwogCiAJc3Bpbl91bmxvY2tfaXJxcmVzdG9yZSgmdmRldi0+Zmhf
-bG9jaywgZmxhZ3MpOwogfQpAQCAtMTg5LDEyICsxOTIsMTUgQEAgRVhQT1JUX1NZTUJPTF9HUEwo
-djRsMl9ldmVudF9xdWV1ZSk7CiB2b2lkIHY0bDJfZXZlbnRfcXVldWVfZmgoc3RydWN0IHY0bDJf
-ZmggKmZoLCBjb25zdCBzdHJ1Y3QgdjRsMl9ldmVudCAqZXYpCiB7CiAJdW5zaWduZWQgbG9uZyBm
-bGFnczsKLQlzdHJ1Y3QgdGltZXNwZWMgdGltZXN0YW1wOworCXN0cnVjdCB0aW1lc3BlYzY0IHRp
-bWVzdGFtcDsKKwlzdHJ1Y3QgdjRsMl90aW1lc3BlYyB2dHM7CiAKLQlrdGltZV9nZXRfdHMoJnRp
-bWVzdGFtcCk7CisJa3RpbWVfZ2V0X3RzNjQoJnRpbWVzdGFtcCk7CisJdnRzLnR2X3NlYyA9IHRp
-bWVzdGFtcC50dl9zZWM7CisJdnRzLnR2X25zZWMgPSB0aW1lc3RhbXAudHZfbnNlYzsKIAogCXNw
-aW5fbG9ja19pcnFzYXZlKCZmaC0+dmRldi0+ZmhfbG9jaywgZmxhZ3MpOwotCV9fdjRsMl9ldmVu
-dF9xdWV1ZV9maChmaCwgZXYsICZ0aW1lc3RhbXApOworCV9fdjRsMl9ldmVudF9xdWV1ZV9maChm
-aCwgZXYsICZ2dHMpOwogCXNwaW5fdW5sb2NrX2lycXJlc3RvcmUoJmZoLT52ZGV2LT5maF9sb2Nr
-LCBmbGFncyk7CiB9CiBFWFBPUlRfU1lNQk9MX0dQTCh2NGwyX2V2ZW50X3F1ZXVlX2ZoKTsKZGlm
-ZiAtLWdpdCBhL2luY2x1ZGUvdWFwaS9saW51eC92aWRlb2RldjIuaCBiL2luY2x1ZGUvdWFwaS9s
-aW51eC92aWRlb2RldjIuaAppbmRleCBiMDJjZjA1NGZiYjguLmJjNjU5YmU4NzI2MCAxMDA2NDQK
-LS0tIGEvaW5jbHVkZS91YXBpL2xpbnV4L3ZpZGVvZGV2Mi5oCisrKyBiL2luY2x1ZGUvdWFwaS9s
-aW51eC92aWRlb2RldjIuaApAQCAtODA5LDYgKzgwOSwxMiBAQCBzdHJ1Y3QgdjRsMl90aW1ldmFs
-IHsKIAlsb25nIHR2X3VzZWM7CiB9OwogCisvKiB1c2VkIGZvciBtb25vdG9uaWMgdGltZXMsIHRo
-ZXJlZm9yZSB5MjAzOCBzYWZlICovCitzdHJ1Y3QgdjRsMl90aW1lc3BlYyB7CisJbG9uZyB0dl9z
-ZWM7CisJbG9uZyB0dl9uc2VjOworfTsKKwogLyoqCiAgKiBzdHJ1Y3QgdjRsMl9idWZmZXIgLSB2
-aWRlbyBidWZmZXIgaW5mbwogICogQGluZGV4OglpZCBudW1iZXIgb2YgdGhlIGJ1ZmZlcgpAQCAt
-MjA4OCw3ICsyMDk0LDcgQEAgc3RydWN0IHY0bDJfZXZlbnQgewogCX0gdTsKIAlfX3UzMgkJCQlw
-ZW5kaW5nOwogCV9fdTMyCQkJCXNlcXVlbmNlOwotCXN0cnVjdCB0aW1lc3BlYwkJCXRpbWVzdGFt
-cDsKKwlzdHJ1Y3QgdjRsMl90aW1lc3BlYwkJdGltZXN0YW1wOwogCV9fdTMyCQkJCWlkOwogCV9f
-dTMyCQkJCXJlc2VydmVkWzhdOwogfTsKLS0gCjIuMS4wLnJjMgoKX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX18KWTIwMzggbWFpbGluZyBsaXN0ClkyMDM4QGxp
-c3RzLmxpbmFyby5vcmcKaHR0cHM6Ly9saXN0cy5saW5hcm8ub3JnL21haWxtYW4vbGlzdGluZm8v
-eTIwMzgK
+On 09/14/2015 11:32 PM, Darrick J. Wong wrote:
+> On Fri, Sep 11, 2015 at 04:30:21PM -0400, Anna Schumaker wrote:
+>> The NFS server will need some kind offallback for filesystems that don't
+>> have any kind of copy acceleration, and it should be generally useful to
+>> have an in-kernel copy to avoid lots of switches between kernel and user
+>> space.
+>>
+>> I make this configurable by adding two new flags.  Users who only want a
+>> reflink can pass COPY_FR_REFLINK, and users who want a full data copy can
+>> pass COPY_FR_COPY.  The default (flags=0) means to first attempt a
+>> reflink, but use the pagecache if that fails.
+>>
+>> I moved the rw_verify_area() calls into the fallback code since some
+>> filesystems can handle reflinking a large range.
+>>
+>> Signed-off-by: Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+>> ---
+>> v2:
+>> - Rename COPY_REFLINK -> COPY_FR_REFLINK
+>> - Introduce COPY_FR_COPY flag
+>> - Flags == 0 is really COPY_FR_COPY|COPY_FR_REFLINK
+>> - Drop check for invalid flags
+>> - Move call to do_splice_direct() into a new function
+>> - Move rw_verify_area() checks into the new fallback function
+>> ---
+>>  fs/read_write.c           | 56 ++++++++++++++++++++++++++++-------------------
+>>  include/linux/copy.h      |  6 +++++
+>>  include/uapi/linux/Kbuild |  1 +
+>>  include/uapi/linux/copy.h |  7 ++++++
+>>  4 files changed, 48 insertions(+), 22 deletions(-)
+>>  create mode 100644 include/linux/copy.h
+>>  create mode 100644 include/uapi/linux/copy.h
+>>
+>> diff --git a/fs/read_write.c b/fs/read_write.c
+>> index 363bd3e..ba24884 100644
+>> --- a/fs/read_write.c
+>> +++ b/fs/read_write.c
+>> @@ -7,6 +7,7 @@
+>>  #include <linux/slab.h> 
+>>  #include <linux/stat.h>
+>>  #include <linux/fcntl.h>
+>> +#include <linux/copy.h>
+>>  #include <linux/file.h>
+>>  #include <linux/uio.h>
+>>  #include <linux/fsnotify.h>
+>> @@ -1329,6 +1330,29 @@ COMPAT_SYSCALL_DEFINE4(sendfile64, int, out_fd, int, in_fd,
+>>  }
+>>  #endif
+>>  
+>> +static ssize_t vfs_copy_file_pagecache(struct file *file_in, loff_t pos_in,
+>> +				       struct file *file_out, loff_t pos_out,
+>> +				       size_t len)
+>> +{
+>> +	ssize_t ret;
+>> +
+>> +	ret = rw_verify_area(READ, file_in, &pos_in, len);
+>> +	if (ret >= 0) {
+>> +		len = ret;
+>> +		ret = rw_verify_area(WRITE, file_out, &pos_out, len);
+>> +		if (ret >= 0)
+>> +			len = ret;
+>> +	}
+>> +	if (ret < 0)
+>> +		return ret;
+>> +
+>> +	file_start_write(file_out);
+>> +	ret = do_splice_direct(file_in, &pos_in, file_out, &pos_out, len, 0);
+>> +	file_end_write(file_out);
+>> +
+>> +	return ret;
+>> +}
+>> +
+>>  /*
+>>   * copy_file_range() differs from regular file read and write in that it
+>>   * specifically allows return partial success.  When it does so is up to
+>> @@ -1338,34 +1362,17 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
+>>  			    struct file *file_out, loff_t pos_out,
+>>  			    size_t len, int flags)
+>>  {
+>> -	struct inode *inode_in;
+>> -	struct inode *inode_out;
+>>  	ssize_t ret;
+>>  
+>> -	if (flags)
+>> -		return -EINVAL;
+>> -
+>> -	/* copy_file_range allows full ssize_t len, ignoring MAX_RW_COUNT  */
+>> -	ret = rw_verify_area(READ, file_in, &pos_in, len);
+>> -	if (ret >= 0)
+>> -		ret = rw_verify_area(WRITE, file_out, &pos_out, len);
+>> -	if (ret < 0)
+>> -		return ret;
+>> +	if (flags == 0)
+>> +		flags = COPY_FR_COPY | COPY_FR_REFLINK;
+> 
+> This function must return -EINVAL if any of the undefined flags bits are
+> set.
+
+Sure, I'll add that.
+
+> 
+>>  
+>>  	if (!(file_in->f_mode & FMODE_READ) ||
+>>  	    !(file_out->f_mode & FMODE_WRITE) ||
+>>  	    (file_out->f_flags & O_APPEND) ||
+>> -	    !file_out->f_op || !file_out->f_op->copy_file_range)
+>> +	    !file_in->f_op)
+>>  		return -EBADF;
+>>  
+>> -	inode_in = file_inode(file_in);
+>> -	inode_out = file_inode(file_out);
+>> -
+>> -	/* make sure offsets don't wrap and the input is inside i_size */
+>> -	if (pos_in + len < pos_in || pos_out + len < pos_out ||
+>> -	    pos_in + len > i_size_read(inode_in))
+>> -		return -EINVAL;
+>> -
+>>  	if (len == 0)
+>>  		return 0;
+>>  
+>> @@ -1373,8 +1380,13 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
+>>  	if (ret)
+>>  		return ret;
+>>  
+>> -	ret = file_out->f_op->copy_file_range(file_in, pos_in, file_out, pos_out,
+>> -					      len, flags);
+>> +	ret = -EOPNOTSUPP;
+>> +	if (file_out->f_op->copy_file_range)
+>> +		ret = file_out->f_op->copy_file_range(file_in, pos_in, file_out,
+>> +						      pos_out, len, flags);
+>> +	if ((ret < 0) && (flags & COPY_FR_COPY))
+>> +		ret = vfs_copy_file_pagecache(file_in, pos_in, file_out,
+>> +					      pos_out, len);
+>>  	if (ret > 0) {
+>>  		fsnotify_access(file_in);
+>>  		add_rchar(current, ret);
+>> diff --git a/include/linux/copy.h b/include/linux/copy.h
+>> new file mode 100644
+>> index 0000000..fd54543
+>> --- /dev/null
+>> +++ b/include/linux/copy.h
+>> @@ -0,0 +1,6 @@
+>> +#ifndef _LINUX_COPY_H
+>> +#define _LINUX_COPY_H
+>> +
+>> +#include <uapi/linux/copy.h>
+>> +
+>> +#endif /* _LINUX_COPY_H */
+>> diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
+>> index 70ff1d9..d46830a 100644
+>> --- a/include/uapi/linux/Kbuild
+>> +++ b/include/uapi/linux/Kbuild
+>> @@ -90,6 +90,7 @@ header-y += coda_psdev.h
+>>  header-y += coff.h
+>>  header-y += connector.h
+>>  header-y += const.h
+>> +header-y += copy.h
+>>  header-y += cramfs_fs.h
+>>  header-y += cuda.h
+>>  header-y += cyclades.h
+>> diff --git a/include/uapi/linux/copy.h b/include/uapi/linux/copy.h
+>> new file mode 100644
+>> index 0000000..2da59a8
+>> --- /dev/null
+>> +++ b/include/uapi/linux/copy.h
+>> @@ -0,0 +1,7 @@
+>> +#ifndef _UAPI_LINUX_COPY_H
+>> +#define _UAPI_LINUX_COPY_H
+>> +
+>> +#define COPY_FR_COPY		(1 << 0)  /* Only do a pagecache copy.  */
+>> +#define COPY_FR_REFLINK		(1 << 1)  /* Only make a reflink.       */
+> 
+> Could I have a COPY_FR_DEDUPE flag too, please?
+> 
+> (I don't mind adding it myself when I get around to hooking up XFS, but I
+> was hoping to get it in during the first round).
+
+I guess I can, but only iff everybody has agreed on using copy for dedupes instead of somethink like fallocate.
+
+Anna
+
+> 
+> --D
+> 
+>> +
+>> +#endif /* _UAPI_LINUX_COPY_H */
+>> -- 
+>> 2.5.1
+>>
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
+>> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
