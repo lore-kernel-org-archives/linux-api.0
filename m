@@ -1,90 +1,100 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH 09/13] Move bp_type_idx to kernel/event/hw_breakpoint.c
-Date: Tue, 15 Sep 2015 21:39:10 +0200
-Message-ID: <20150915193910.GH16853@twins.programming.kicks-ass.net>
-References: <20150915080607.GW16853@twins.programming.kicks-ass.net>
- <55f8660b.84bd440a.620d1.ffffe1cb@mx.google.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: v2 of seccomp filter c/r patches
+Date: Tue, 15 Sep 2015 13:01:23 -0700
+Message-ID: <CALCETrVED+pUDzSEurgrjjqMZpvO2vxG-uAf3ZJHHAYCbqS6YQ@mail.gmail.com>
+References: <1441930862-14347-1-git-send-email-tycho.andersen@canonical.com>
+ <CALCETrVYtv1=g-xPjQ-LiX+5GK3xtB6a2hYbat0TuU-Bd4QA6Q@mail.gmail.com>
+ <CALCETrWxLMSgdsdT9gTL80LSovONmCcTYjzqrHqF-WdJ4BN1Uw@mail.gmail.com>
+ <20150911172806.GA7244@smitten> <CALCETrWH0vLZwkOV6JCnC-pLaHe0dboXs5-ETkXFCR9X-aq7qw@mail.gmail.com>
+ <20150915160738.GJ31864@smitten> <CALCETrVxhNvmEdMq0XRy1YZ+oJLDwcmE1y6prs7FGGhsS-Y5gg@mail.gmail.com>
+ <20150915182626.GK31864@smitten>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-arch-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <55f8660b.84bd440a.620d1.ffffe1cb@mx.google.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Palmer Dabbelt <palmer@dabbelt.com>
-Cc: arnd@arndb.de, dhowells@redhat.com, viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, kexec@lists.infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-xtensa@linux-xtensa.org, mathieu.desnoyers@efficios.com, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org, fweisbec@gmail.com
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150915182626.GK31864@smitten>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Sep 15, 2015 at 11:40:11AM -0700, Palmer Dabbelt wrote:
-> On Tue, 15 Sep 2015 01:06:07 PDT (-0700), peterz@infradead.org wrote:
-> > On Mon, Sep 14, 2015 at 03:50:43PM -0700, Palmer Dabbelt wrote:
-> >> This has a "#ifdef CONFIG_*" that used to be exposed to userspace.
-> >>
-> >> The names in here are so generic that I don't think it's a good idea
-> >> to expose them to userspace (or even the rest of the kernel).  Since
-> >> there's only one kernel user, it's been moved to that file.
-> >>
-> >> Signed-off-by: Palmer Dabbelt <palmer@dabbelt.com>
-> >> Reviewed-by: Andrew Waterman <waterman@eecs.berkeley.edu>
-> >> Reviewed-by: Albert Ou <aou@eecs.berkeley.edu>
-> >> ---
-> >>  include/uapi/linux/hw_breakpoint.h | 10 ----------
-> >>  kernel/events/hw_breakpoint.c      | 10 ++++++++++
-> >>  2 files changed, 10 insertions(+), 10 deletions(-)
-> >>
-> >> diff --git a/include/uapi/linux/hw_breakpoint.h b/include/uapi/linux/hw_breakpoint.h
-> >> index b04000a2296a..7a6a5a7f9511 100644
-> >> --- a/include/uapi/linux/hw_breakpoint.h
-> >> +++ b/include/uapi/linux/hw_breakpoint.h
-> >> @@ -17,14 +17,4 @@ enum {
-> >>  	HW_BREAKPOINT_INVALID   = HW_BREAKPOINT_RW | HW_BREAKPOINT_X,
-> >>  };
-> >>
-> >> -enum bp_type_idx {
-> >> -	TYPE_INST 	= 0,
-> >> -#ifdef CONFIG_HAVE_MIXED_BREAKPOINTS_REGS
-> >> -	TYPE_DATA	= 0,
-> >> -#else
-> >> -	TYPE_DATA	= 1,
-> >> -#endif
-> >> -	TYPE_MAX
-> >> -};
-> >
-> > This is rather unfortunate; you are correct that the naming is too
-> > generic (and I tend to agree), but I think these values are required by
-> > userspace to fill out:
-> >
-> >   perf_event_attr::bp_type
-> >
-> > So removing them will break things.
-> >
-> > Frederic?
-> 
-> perf_event_open(2) says
-> 
->        bp_type (since Linux 2.6.33)
->               This chooses the breakpoint type.  It is one of:
-> 
->               HW_BREAKPOINT_EMPTY
->                      No breakpoint.
-> 
->               HW_BREAKPOINT_R
->                      Count when we read the memory location.
-> 
->               HW_BREAKPOINT_W
->                      Count when we write the memory location.
-> 
->               HW_BREAKPOINT_RW
->                      Count when we read or write the memory location.
-> 
->               HW_BREAKPOINT_X
->                      Count when we execute code at the memory location.
-> 
->               The values can be combined via a bitwise or, but the combination
->               of HW_BREAKPOINT_R or HW_BREAKPOINT_W  with  HW_BREAKPOINT_X  is
->               not allowed.
-> 
-> so I think removing this enum from userspace is OK.  Did I miss
-> something?
+On Tue, Sep 15, 2015 at 11:26 AM, Tycho Andersen
+<tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
+> Hi Andy,
+>
+> On Tue, Sep 15, 2015 at 11:13:51AM -0700, Andy Lutomirski wrote:
+>> On Tue, Sep 15, 2015 at 9:07 AM, Tycho Andersen
+>> <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
+>> > Hi Andy,
+>> >
+>> > On Mon, Sep 14, 2015 at 10:52:46AM -0700, Andy Lutomirski wrote:
+>> >>
+>> >> I'm not sure I entirely like this solution...
+>> >
+>> > Ok. Since we also aren't going to do all the eBPF stuff now, how about
+>> > something that looks like this:
+>> >
+>> > struct seccomp_layer {
+>> >   unsigned int size;
+>> >   unsigned int type; /* SECCOMP_BPF_CLASSIC or SECCOMP_EBPF or ... */
+>> >   bool inherited;
+>> >   union {
+>> >     unsigned int insn_cnt;
+>> >     struct bpf_insn *insns;
+>> >   };
+>> > };
+>> >
+>> > with a ptrace command:
+>> >
+>> > ptrace(PTRACE_SECCOMP_DUMP_LAYER, pid, i, &layer);
+>> >
+>> > If we save a pointer to the current seccomp filter on fork (if there
+>> > is one), then I think the inherited flag is just,
+>> >
+>> > inherited = is_ancestor(child->seccomp.filter, child->seccomp.inherited_filter)
+>> >
+>>
+>> I'm lost.  What is the inherited flag for?
+>
+> We need some way to expose the seccomp hierarchy, specifically which
+> filters are inherited, so that we can correctly restore the filter
+> tree for tasks that may use TSYNC in the future. You've mentioned that
+> you don't like kcmp, so this is an alternative to that.
+>
 
-Nah, could've just been me not being awake. Unless Frederic says
-otherwise I'll chalk it up to not having drank enough morning juice.
+My only objection to kcmp is that IMO it's a suboptimal interface and
+could be better.  I have no problem with the general principle of
+asking to compare two objects.
+
+The thing I really don't have a good handle on is whether the seccomp
+filter hierarchy should look more like A:
+
+struct seccomp_filter {
+    ...;
+    struct seccomp_filter *prev;
+};
+
+with the seccomp_filter being the user-visible object
+
+Or B:
+
+struct seccomp_layer {
+   ...;  /* BPF program, etc. */
+}
+
+struct seccomp_filter {
+   struct seccomp_layer *layer;
+   struct seccomp_filter *prev;
+};  /* or equivalent */
+
+with seccomp_layer being the user-visible object.
+
+A is simpler to implement in a memory-efficient way, but it's less
+flexible.  I haven't come up with a compelling use case for B where A
+doesn't work, with the caveat that, if an fd points to a
+seccomp_filter in model A, you can't attach it unless your current
+state matches its "prev" state (or an ancestor thereof), which might
+be a little bit awkward.
+
+Am I making more sense now?
+
+--Andy
