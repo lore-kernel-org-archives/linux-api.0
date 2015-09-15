@@ -1,132 +1,100 @@
-From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Subject: [PATCH RFC] pidns: introduce syscall getvpid
-Date: Tue, 15 Sep 2015 15:09:24 +0300
-Message-ID: <20150915120924.14818.49490.stgit@buzz>
+From: Josh Triplett <josh@joshtriplett.org>
+Subject: Re: [PATCH 04/13] Always expose MAP_UNINITIALIZED to userspace
+Date: Tue, 15 Sep 2015 07:07:42 -0700
+Message-ID: <20150915140742.GA11938@x>
+References: <1441832902-28993-1-git-send-email-palmer@dabbelt.com>
+ <1442271047-4908-1-git-send-email-palmer@dabbelt.com>
+ <1442271047-4908-5-git-send-email-palmer@dabbelt.com>
+ <20150915002358.GA12618@node.dhcp.inet.fi>
+ <20150915051919.GB4091@x>
+ <20150915094200.GA15444@node.dhcp.inet.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150915094200.GA15444@node.dhcp.inet.fi>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org
-Cc: Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>
+To: "Kirill A. Shutemov" <kirill@shutemov.name>
+Cc: Palmer Dabbelt <palmer@dabbelt.com>, arnd@arndb.de, dhowells@redhat.com, viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, kexec@lists.infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-xtensa@linux-xtensa.org, mathieu.desnoyers@efficios.com, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, a.p.zijlstra@chello.nl, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-pid_t getvpid(pid_t pid, pid_t source, pid_t target);
+On Tue, Sep 15, 2015 at 12:42:00PM +0300, Kirill A. Shutemov wrote:
+> On Mon, Sep 14, 2015 at 10:19:19PM -0700, Josh Triplett wrote:
+> > On Tue, Sep 15, 2015 at 03:23:58AM +0300, Kirill A. Shutemov wrote:
+> > > On Mon, Sep 14, 2015 at 03:50:38PM -0700, Palmer Dabbelt wrote:
+> > > > This used to be hidden behind CONFIG_MMAP_ALLOW_UNINITIALIZED, so
+> > > > userspace wouldn't actually ever see it be non-zero.  While I could
+> > > > have kept hiding it, the man pages seem to indicate that
+> > > > MAP_UNINITIALIZED should be visible:
+> > > > 
+> > > >   mmap(2)
+> > > >   MAP_UNINITIALIZED (since Linux 2.6.33)
+> > > >     Don't clear anonymous pages.  This flag is intended to improve
+> > > >     performance on embedded devices.  This flag is honored only if the
+> > > >     kernel was configured with the CONFIG_MMAP_ALLOW_UNINITIALIZED
+> > > >     option.  Because of the security implications, that option is
+> > > >     normally enabled only on embedded devices (i.e., devices where one
+> > > >     has complete control of the contents of user memory).
+> > > > 
+> > > > and since the only time it shows up in my /usr/include is in this
+> > > > header I believe this should have been visible to userspace (as
+> > > > non-zero, which wouldn't do anything when or'd into the flags) all
+> > > > along.
+> > > 
+> > > Are you sure about "wouldn't do anything"?
+> > > Suspiciously, 0x4000000 is also (1 << MAP_HUGE_SHIFT). I'm not sure if any
+> > > architecture has order-1 huge pages, but still looks like we have conflict
+> > > here.
+> > > 
+> > > I think it's harmful to expose non-zero MAP_UNINITIALIZED to system which
+> > > potentially can handle multiple users. Or non-trivial user space in
+> > > general.
+> > 
+> > The flag should always exist.
+> 
+> Sure. And 0 is perfectly fine value for the flag. Like with MAP_FILE.
 
-This syscall converts pid from one pid-ns into pid in another pid-ns:
-it takes @pid in namespace of @source task (zero for current) and
-returns related pid in namespace of @target task (zero for current too).
-If pid is unreachable from target pid-ns then it returns zero.
+Rephrasing: the flag should always exist with the correct value.
+Whether the kernel handles it or not, the kernel *headers* shouldn't
+change to match the kernel, not least of which because they don't
+necessarily match the running kernel.  Just like we define the
+prototypes for syscalls that the running kernel may return ENOSYS for.
 
-Such conversion is required for interaction between processes from
-different pid-namespaces. For example when system service talks with
-client from isolated container via socket about task in container:
+> > If it was defined to conflict with
+> > something else, that's a serious ABI problem.  But the flag
+> > should always exist, even if the kernel ends up ignoring it.
+> > 
+> > > Should we leave it at least under '#ifndef CONFIG_MMU'? I don't think it's
+> > > possible to have single ABI for MMU and MMU-less systems anyway. And we
+> > > can avoid conflict with MAP_HUGE_SHIFT this way.
+> > 
+> > No; even if you have an MMU (which is useful for things like fork()), a
+> > system without user separation (for instance, without CONFIG_MULTIUSER)
+> > can reasonably use MAP_UNINITIALIZED.
+> 
+> Can? Yes. Reasonably? I don't think so.
 
-getvpid(pid, client_pid, 0)  -> pid in our pid namespace
-getvpid(pid, 0, client_pid)  -> pid in client pid namespace
+Not all systems care.  Otherwise you should be complaining more bitterly
+about options like CONFIG_MMU=n, which (*gasp*) allow access to *arbitrary
+memory*.
 
-Also service can get pid of init task and match it with container:
+> > > P.S. MAP_UNINITIALIZED itself looks very broken to me. I probably need dig
+> > > mailing list on why it was allowed.
+> > 
+> > That's what the config option *and* explicit flag are for; there are
+> > more than enough warnings about the implications.
+> 
+> I think it's misdesigned. It doesn't require explicid opt-in from a
+> process who owned the page allocated in MAP_UNINITIALIZED mapping before.
+> 
+> #define MAP_LEAK_ME_SOME_DATA MAP_UNINITIALIZED
 
-getvpid(1, client_pid, 0)    -> pid of init task for client_pid
+Hence why it has a config option.
 
-Seems like gdb and strace could use this too for converting pids of
-newly forked tasks (IIRR they get pid from %rax) into pid from
-correct namespace for further interaction.
+The userspace option exists primarily because otherwise userspace might
+get surprised by receiving a non-zeroed page.  On a system with the
+config option turned on, processes have access to arbitrary freed
+memory, as long as they say they can handle not having their memory
+pre-zeroed.
 
-As a bonus syscall getvpid can compare pid namespaces and
-test isolation without mounted procfs:
-
-getvpid(1, 0, pid) == 0      -> pid in our sub-pid-namespace
-getvpid(1, 0, pid) == 1      -> pid in our pid-namespace
-getvpid(1, pid1, pid2) == 0  -> pid1 isolated from pid2
-getvpid(1, pid1, pid2) == 1  -> tasks are in one pid-namespace
-getvpid(1, pid1, pid2) > 1   -> pid1 is in sub-pidns of pid2
-
-Signed-off-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
----
- arch/x86/entry/syscalls/syscall_32.tbl |    1 +
- arch/x86/entry/syscalls/syscall_64.tbl |    1 +
- include/linux/syscalls.h               |    1 +
- kernel/pid.c                           |   36 ++++++++++++++++++++++++++++++++
- 4 files changed, 39 insertions(+)
-
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 7663c455b9f6..dadb55d42fc9 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -382,3 +382,4 @@
- 373	i386	shutdown		sys_shutdown
- 374	i386	userfaultfd		sys_userfaultfd
- 375	i386	membarrier		sys_membarrier
-+376	i386	getvpid			sys_getvpid
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 278842fdf1f6..0338f2eb3b7c 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -331,6 +331,7 @@
- 322	64	execveat		stub_execveat
- 323	common	userfaultfd		sys_userfaultfd
- 324	common	membarrier		sys_membarrier
-+325	common	getvpid			sys_getvpid
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index a460e2ef2843..3405c30999e3 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -222,6 +222,7 @@ asmlinkage long sys_nanosleep(struct timespec __user *rqtp, struct timespec __us
- asmlinkage long sys_alarm(unsigned int seconds);
- asmlinkage long sys_getpid(void);
- asmlinkage long sys_getppid(void);
-+asmlinkage long sys_getvpid(pid_t pid, pid_t source, pid_t target);
- asmlinkage long sys_getuid(void);
- asmlinkage long sys_geteuid(void);
- asmlinkage long sys_getgid(void);
-diff --git a/kernel/pid.c b/kernel/pid.c
-index ca368793808e..caa676ff7364 100644
---- a/kernel/pid.c
-+++ b/kernel/pid.c
-@@ -567,6 +567,42 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
- 	return pid;
- }
- 
-+/**
-+ * sys_getvpid - convert pid from one pid-namespace into pid from another
-+ *
-+ * @pid    - pid of requested task
-+ * @source - pid of task in source pid-namespace, zero for current
-+ * @target - pid of task in target pid-namespace, zero for current
-+ *
-+ * Returns pid from target pid-ns or zero if pid is unreachable.
-+ * Returns -ESRCH if some of pids are not found.
-+ */
-+SYSCALL_DEFINE3(getvpid, pid_t, pid, pid_t, source, pid_t, target)
-+{
-+#ifdef CONFIG_PID_NS
-+	struct pid_namespace *current_ns = task_active_pid_ns(current);
-+	struct pid_namespace *source_ns = current_ns, *target_ns = current_ns;
-+	struct pid *task_pid;
-+	pid_t result = -ESRCH;
-+
-+	rcu_read_lock();
-+	if (source)
-+		source_ns = ns_of_pid(find_pid_ns(source, current_ns));
-+	if (target)
-+		target_ns = ns_of_pid(find_pid_ns(target, current_ns));
-+	if (source_ns && target_ns) {
-+		task_pid = find_pid_ns(pid, source_ns);
-+		if (task_pid)
-+			result = pid_nr_ns(task_pid, target_ns);
-+	}
-+	rcu_read_unlock();
-+
-+	return result;
-+#else
-+	return pid;
-+#endif /* CONFIG_PID_NS */
-+}
-+
- /*
-  * The pid hash table is scaled according to the amount of memory in the
-  * machine.  From a minimum of 16 slots up to 4096 slots at one gigabyte or
+- Josh Triplett
