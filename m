@@ -1,82 +1,90 @@
-From: Palmer Dabbelt <palmer@dabbelt.com>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [PATCH 09/13] Move bp_type_idx to kernel/event/hw_breakpoint.c
-Date: Tue, 15 Sep 2015 11:40:11 -0700 (PDT)
-Message-ID: <55f8660b.84bd440a.620d1.ffffe1cb@mx.google.com>
+Date: Tue, 15 Sep 2015 21:39:10 +0200
+Message-ID: <20150915193910.GH16853@twins.programming.kicks-ass.net>
 References: <20150915080607.GW16853@twins.programming.kicks-ass.net>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20150915080607.GW16853@twins.programming.kicks-ass.net>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: peterz@infradead.org
+ <55f8660b.84bd440a.620d1.ffffe1cb@mx.google.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-arch-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <55f8660b.84bd440a.620d1.ffffe1cb@mx.google.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Palmer Dabbelt <palmer@dabbelt.com>
 Cc: arnd@arndb.de, dhowells@redhat.com, viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, kexec@lists.infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-xtensa@linux-xtensa.org, mathieu.desnoyers@efficios.com, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org, fweisbec@gmail.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 15 Sep 2015 01:06:07 PDT (-0700), peterz@infradead.org wrote:
-> On Mon, Sep 14, 2015 at 03:50:43PM -0700, Palmer Dabbelt wrote:
->> This has a "#ifdef CONFIG_*" that used to be exposed to userspace.
->>
->> The names in here are so generic that I don't think it's a good idea
->> to expose them to userspace (or even the rest of the kernel).  Since
->> there's only one kernel user, it's been moved to that file.
->>
->> Signed-off-by: Palmer Dabbelt <palmer@dabbelt.com>
->> Reviewed-by: Andrew Waterman <waterman@eecs.berkeley.edu>
->> Reviewed-by: Albert Ou <aou@eecs.berkeley.edu>
->> ---
->>  include/uapi/linux/hw_breakpoint.h | 10 ----------
->>  kernel/events/hw_breakpoint.c      | 10 ++++++++++
->>  2 files changed, 10 insertions(+), 10 deletions(-)
->>
->> diff --git a/include/uapi/linux/hw_breakpoint.h b/include/uapi/linux/hw_breakpoint.h
->> index b04000a2296a..7a6a5a7f9511 100644
->> --- a/include/uapi/linux/hw_breakpoint.h
->> +++ b/include/uapi/linux/hw_breakpoint.h
->> @@ -17,14 +17,4 @@ enum {
->>  	HW_BREAKPOINT_INVALID   = HW_BREAKPOINT_RW | HW_BREAKPOINT_X,
->>  };
->>
->> -enum bp_type_idx {
->> -	TYPE_INST 	= 0,
->> -#ifdef CONFIG_HAVE_MIXED_BREAKPOINTS_REGS
->> -	TYPE_DATA	= 0,
->> -#else
->> -	TYPE_DATA	= 1,
->> -#endif
->> -	TYPE_MAX
->> -};
->
-> This is rather unfortunate; you are correct that the naming is too
-> generic (and I tend to agree), but I think these values are required by
-> userspace to fill out:
->
->   perf_event_attr::bp_type
->
-> So removing them will break things.
->
-> Frederic?
+On Tue, Sep 15, 2015 at 11:40:11AM -0700, Palmer Dabbelt wrote:
+> On Tue, 15 Sep 2015 01:06:07 PDT (-0700), peterz@infradead.org wrote:
+> > On Mon, Sep 14, 2015 at 03:50:43PM -0700, Palmer Dabbelt wrote:
+> >> This has a "#ifdef CONFIG_*" that used to be exposed to userspace.
+> >>
+> >> The names in here are so generic that I don't think it's a good idea
+> >> to expose them to userspace (or even the rest of the kernel).  Since
+> >> there's only one kernel user, it's been moved to that file.
+> >>
+> >> Signed-off-by: Palmer Dabbelt <palmer@dabbelt.com>
+> >> Reviewed-by: Andrew Waterman <waterman@eecs.berkeley.edu>
+> >> Reviewed-by: Albert Ou <aou@eecs.berkeley.edu>
+> >> ---
+> >>  include/uapi/linux/hw_breakpoint.h | 10 ----------
+> >>  kernel/events/hw_breakpoint.c      | 10 ++++++++++
+> >>  2 files changed, 10 insertions(+), 10 deletions(-)
+> >>
+> >> diff --git a/include/uapi/linux/hw_breakpoint.h b/include/uapi/linux/hw_breakpoint.h
+> >> index b04000a2296a..7a6a5a7f9511 100644
+> >> --- a/include/uapi/linux/hw_breakpoint.h
+> >> +++ b/include/uapi/linux/hw_breakpoint.h
+> >> @@ -17,14 +17,4 @@ enum {
+> >>  	HW_BREAKPOINT_INVALID   = HW_BREAKPOINT_RW | HW_BREAKPOINT_X,
+> >>  };
+> >>
+> >> -enum bp_type_idx {
+> >> -	TYPE_INST 	= 0,
+> >> -#ifdef CONFIG_HAVE_MIXED_BREAKPOINTS_REGS
+> >> -	TYPE_DATA	= 0,
+> >> -#else
+> >> -	TYPE_DATA	= 1,
+> >> -#endif
+> >> -	TYPE_MAX
+> >> -};
+> >
+> > This is rather unfortunate; you are correct that the naming is too
+> > generic (and I tend to agree), but I think these values are required by
+> > userspace to fill out:
+> >
+> >   perf_event_attr::bp_type
+> >
+> > So removing them will break things.
+> >
+> > Frederic?
+> 
+> perf_event_open(2) says
+> 
+>        bp_type (since Linux 2.6.33)
+>               This chooses the breakpoint type.  It is one of:
+> 
+>               HW_BREAKPOINT_EMPTY
+>                      No breakpoint.
+> 
+>               HW_BREAKPOINT_R
+>                      Count when we read the memory location.
+> 
+>               HW_BREAKPOINT_W
+>                      Count when we write the memory location.
+> 
+>               HW_BREAKPOINT_RW
+>                      Count when we read or write the memory location.
+> 
+>               HW_BREAKPOINT_X
+>                      Count when we execute code at the memory location.
+> 
+>               The values can be combined via a bitwise or, but the combination
+>               of HW_BREAKPOINT_R or HW_BREAKPOINT_W  with  HW_BREAKPOINT_X  is
+>               not allowed.
+> 
+> so I think removing this enum from userspace is OK.  Did I miss
+> something?
 
-perf_event_open(2) says
-
-       bp_type (since Linux 2.6.33)
-              This chooses the breakpoint type.  It is one of:
-
-              HW_BREAKPOINT_EMPTY
-                     No breakpoint.
-
-              HW_BREAKPOINT_R
-                     Count when we read the memory location.
-
-              HW_BREAKPOINT_W
-                     Count when we write the memory location.
-
-              HW_BREAKPOINT_RW
-                     Count when we read or write the memory location.
-
-              HW_BREAKPOINT_X
-                     Count when we execute code at the memory location.
-
-              The values can be combined via a bitwise or, but the combination
-              of HW_BREAKPOINT_R or HW_BREAKPOINT_W  with  HW_BREAKPOINT_X  is
-              not allowed.
-
-so I think removing this enum from userspace is OK.  Did I miss
-something?
+Nah, could've just been me not being awake. Unless Frederic says
+otherwise I'll chalk it up to not having drank enough morning juice.
