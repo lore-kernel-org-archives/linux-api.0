@@ -1,56 +1,116 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH 09/13] Move bp_type_idx to kernel/event/hw_breakpoint.c
-Date: Tue, 15 Sep 2015 23:15:29 +0200
-Message-ID: <2023922.x7a6gQp0x7@wuerfel>
-References: <1441832902-28993-1-git-send-email-palmer@dabbelt.com> <1442271047-4908-10-git-send-email-palmer@dabbelt.com> <20150915080607.GW16853@twins.programming.kicks-ass.net>
+From: Tycho Andersen <tycho.andersen@canonical.com>
+Subject: Re: v2 of seccomp filter c/r patches
+Date: Tue, 15 Sep 2015 15:38:17 -0600
+Message-ID: <20150915213817.GN31864@smitten>
+References: <1441930862-14347-1-git-send-email-tycho.andersen@canonical.com>
+ <CALCETrVYtv1=g-xPjQ-LiX+5GK3xtB6a2hYbat0TuU-Bd4QA6Q@mail.gmail.com>
+ <CALCETrWxLMSgdsdT9gTL80LSovONmCcTYjzqrHqF-WdJ4BN1Uw@mail.gmail.com>
+ <20150911172806.GA7244@smitten>
+ <CALCETrWH0vLZwkOV6JCnC-pLaHe0dboXs5-ETkXFCR9X-aq7qw@mail.gmail.com>
+ <20150915160738.GJ31864@smitten>
+ <CALCETrVxhNvmEdMq0XRy1YZ+oJLDwcmE1y6prs7FGGhsS-Y5gg@mail.gmail.com>
+ <20150915182626.GK31864@smitten>
+ <CALCETrVED+pUDzSEurgrjjqMZpvO2vxG-uAf3ZJHHAYCbqS6YQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20150915080607.GW16853@twins.programming.kicks-ass.net>
-Sender: linux-arch-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>, mathieu.desnoyers@efficios.com
-Cc: Palmer Dabbelt <palmer@dabbelt.com>, dhowells@redhat.com, viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, kexec@lists.infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org, Frederic Weisbecker <fweisbec@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <netdev-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrVED+pUDzSEurgrjjqMZpvO2vxG-uAf3ZJHHAYCbqS6YQ@mail.gmail.com>
+Sender: netdev-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Kees Cook <keescook@chromium.org>, Pavel Emelyanov <xemul@parallels.com>, Network Development <netdev@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, "David S. Miller" <davem@davemloft.net>, Oleg Nesterov <oleg@redhat.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Linux API <linux-api@vger.kernel.org>, Will Drewry <wad@chromium.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Daniel Borkmann <daniel@iogearbox.net>
 List-Id: linux-api@vger.kernel.org
 
-On Tuesday 15 September 2015 10:06:07 Peter Zijlstra wrote:
-> > diff --git a/include/uapi/linux/hw_breakpoint.h b/include/uapi/linux/hw_breakpoint.h
-> > index b04000a2296a..7a6a5a7f9511 100644
-> > --- a/include/uapi/linux/hw_breakpoint.h
-> > +++ b/include/uapi/linux/hw_breakpoint.h
-> > @@ -17,14 +17,4 @@ enum {
-> >       HW_BREAKPOINT_INVALID   = HW_BREAKPOINT_RW | HW_BREAKPOINT_X,
-> >  };
-> >  
-> > -enum bp_type_idx {
-> > -     TYPE_INST       = 0,
-> > -#ifdef CONFIG_HAVE_MIXED_BREAKPOINTS_REGS
-> > -     TYPE_DATA       = 0,
-> > -#else
-> > -     TYPE_DATA       = 1,
-> > -#endif
-> > -     TYPE_MAX
-> > -};
+Hi Andy,
+
+On Tue, Sep 15, 2015 at 01:01:23PM -0700, Andy Lutomirski wrote:
+> On Tue, Sep 15, 2015 at 11:26 AM, Tycho Andersen
+> <tycho.andersen@canonical.com> wrote:
+> > Hi Andy,
+> >
+> > On Tue, Sep 15, 2015 at 11:13:51AM -0700, Andy Lutomirski wrote:
+> >> On Tue, Sep 15, 2015 at 9:07 AM, Tycho Andersen
+> >> <tycho.andersen@canonical.com> wrote:
+> >> > Hi Andy,
+> >> >
+> >> > On Mon, Sep 14, 2015 at 10:52:46AM -0700, Andy Lutomirski wrote:
+> >> >>
+> >> >> I'm not sure I entirely like this solution...
+> >> >
+> >> > Ok. Since we also aren't going to do all the eBPF stuff now, how about
+> >> > something that looks like this:
+> >> >
+> >> > struct seccomp_layer {
+> >> >   unsigned int size;
+> >> >   unsigned int type; /* SECCOMP_BPF_CLASSIC or SECCOMP_EBPF or ... */
+> >> >   bool inherited;
+> >> >   union {
+> >> >     unsigned int insn_cnt;
+> >> >     struct bpf_insn *insns;
+> >> >   };
+> >> > };
+> >> >
+> >> > with a ptrace command:
+> >> >
+> >> > ptrace(PTRACE_SECCOMP_DUMP_LAYER, pid, i, &layer);
+> >> >
+> >> > If we save a pointer to the current seccomp filter on fork (if there
+> >> > is one), then I think the inherited flag is just,
+> >> >
+> >> > inherited = is_ancestor(child->seccomp.filter, child->seccomp.inherited_filter)
+> >> >
+> >>
+> >> I'm lost.  What is the inherited flag for?
+> >
+> > We need some way to expose the seccomp hierarchy, specifically which
+> > filters are inherited, so that we can correctly restore the filter
+> > tree for tasks that may use TSYNC in the future. You've mentioned that
+> > you don't like kcmp, so this is an alternative to that.
+> >
 > 
-> This is rather unfortunate; you are correct that the naming is too
-> generic (and I tend to agree), but I think these values are required by
-> userspace to fill out:
+> My only objection to kcmp is that IMO it's a suboptimal interface and
+> could be better.  I have no problem with the general principle of
+> asking to compare two objects.
+
+Ok, in that case I think we can get rid of all the inherited stuff,
+and use kcmp to figure it out.
+
+> The thing I really don't have a good handle on is whether the seccomp
+> filter hierarchy should look more like A:
 > 
->   perf_event_attr::bp_type
+> struct seccomp_filter {
+>     ...;
+>     struct seccomp_filter *prev;
+> };
 > 
-> So removing them will break things.
+> with the seccomp_filter being the user-visible object
 > 
-> Frederic?
+> Or B:
+> 
+> struct seccomp_layer {
+>    ...;  /* BPF program, etc. */
+> }
+> 
+> struct seccomp_filter {
+>    struct seccomp_layer *layer;
+>    struct seccomp_filter *prev;
+> };  /* or equivalent */
+> 
+> with seccomp_layer being the user-visible object.
+> 
+> A is simpler to implement in a memory-efficient way, but it's less
+> flexible.  I haven't come up with a compelling use case for B where A
+> doesn't work, with the caveat that, if an fd points to a
+> seccomp_filter in model A, you can't attach it unless your current
+> state matches its "prev" state (or an ancestor thereof), which might
+> be a little bit awkward.
 
-If user space actually relies on the definition from this header file,
-then it will use the wrong one on x86 and get 'TYPE_DATA = 1', while the
-kernel uses 'TYPE_DATA = 0'.
+Perhaps, although I don't think it would be an issue for c/r.
 
-That seems unlikely to work, so I suspect it gets a different definition.
-If it uses this definition and it does work, we can probably use
+> Am I making more sense now?
 
-#if defined(__KERNEL__) && defined(CONFIG_HAVE_MIXED_BREAKPOINTS_REGS)
+Yes, thanks for the clarifications. I guess personally I'd probably
+choose option A. If this (using kcmp and one of A/B) sounds good to
+you, I'll start working on a set to do c/r that way.
 
-but that requires a comment explaining exactly why that works.
-
-	Arnd
+Tycho
