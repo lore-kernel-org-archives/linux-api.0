@@ -1,108 +1,56 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 1/7] [media] dvb: use ktime_t for internal timeout
-Date: Tue, 15 Sep 2015 17:49:02 +0200
-Message-ID: <1442332148-488079-2-git-send-email-arnd@arndb.de>
+Subject: [PATCH 4/7] [media] exynos4-is: use monotonic timestamps as advertized
+Date: Tue, 15 Sep 2015 17:49:05 +0200
+Message-ID: <1442332148-488079-5-git-send-email-arnd@arndb.de>
 References: <1442332148-488079-1-git-send-email-arnd@arndb.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1442332148-488079-1-git-send-email-arnd@arndb.de>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-media@vger.kernel.org
-Cc: linux-samsung-soc@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, y2038@lists.linaro.org, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, linux-api@vger.kernel.org, linux-samsung-soc@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-VGhlIGR2YiBkZW11eGVyIGNvZGUgdXNlcyBhICdzdHJ1Y3QgdGltZXNwZWMnIHRvIHBhc3MgYSB0
-aW1lb3V0CmFzIGFic29sdXRlIHRpbWUuIFRoaXMgd2lsbCBjYXVzZSBwcm9ibGVtcyBvbiAzMi1i
-aXQgYXJjaGl0ZWN0dXJlcwppbiAyMDM4IHdoZW4gdGltZV90IG92ZXJmbG93cywgYW5kIGl0IGlz
-IHJhY3kgd2l0aCBhIGNvbmN1cnJlbnQKc2V0dGltZW9mZGF5KCkgY2FsbC4KClRoaXMgcGF0Y2gg
-Y2hhbmdlcyB0aGUgY29kZSB0byB1c2Uga3RpbWVfZ2V0KCkgaW5zdGVhZCwgdXNpbmcKdGhlIG1v
-bm90b25pYyB0aW1lIGJhc2UgdG8gYXZvaWQgYm90aCB0aGUgcmFjZSBhbmQgdGhlIG92ZXJmbG93
-LgoKU2lnbmVkLW9mZi1ieTogQXJuZCBCZXJnbWFubiA8YXJuZEBhcm5kYi5kZT4KLS0tCiBkcml2
-ZXJzL21lZGlhL2R2Yi1jb3JlL2RlbXV4LmggICAgIHwgIDIgKy0KIGRyaXZlcnMvbWVkaWEvZHZi
-LWNvcmUvZG14ZGV2LmMgICAgfCAgMiArLQogZHJpdmVycy9tZWRpYS9kdmItY29yZS9kdmJfZGVt
-dXguYyB8IDE3ICsrKysrKy0tLS0tLS0tLS0tCiBkcml2ZXJzL21lZGlhL2R2Yi1jb3JlL2R2Yl9k
-ZW11eC5oIHwgIDQgKystLQogZHJpdmVycy9tZWRpYS9kdmItY29yZS9kdmJfbmV0LmMgICB8ICAy
-ICstCiA1IGZpbGVzIGNoYW5nZWQsIDExIGluc2VydGlvbnMoKyksIDE2IGRlbGV0aW9ucygtKQoK
-ZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWVkaWEvZHZiLWNvcmUvZGVtdXguaCBiL2RyaXZlcnMvbWVk
-aWEvZHZiLWNvcmUvZGVtdXguaAppbmRleCA4MzMxOTFiY2Q4MTAuLmQ4ZTJiMTIxM2JlZiAxMDA2
-NDQKLS0tIGEvZHJpdmVycy9tZWRpYS9kdmItY29yZS9kZW11eC5oCisrKyBiL2RyaXZlcnMvbWVk
-aWEvZHZiLWNvcmUvZGVtdXguaApAQCAtOTIsNyArOTIsNyBAQCBzdHJ1Y3QgZG14X3RzX2ZlZWQg
-ewogCQkgICAgaW50IHR5cGUsCiAJCSAgICBlbnVtIGRteF90c19wZXMgcGVzX3R5cGUsCiAJCSAg
-ICBzaXplX3QgY2lyY3VsYXJfYnVmZmVyX3NpemUsCi0JCSAgICBzdHJ1Y3QgdGltZXNwZWMgdGlt
-ZW91dCk7CisJCSAgICBrdGltZV90IHRpbWVvdXQpOwogCWludCAoKnN0YXJ0X2ZpbHRlcmluZykg
-KHN0cnVjdCBkbXhfdHNfZmVlZCogZmVlZCk7CiAJaW50ICgqc3RvcF9maWx0ZXJpbmcpIChzdHJ1
-Y3QgZG14X3RzX2ZlZWQqIGZlZWQpOwogfTsKZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWVkaWEvZHZi
-LWNvcmUvZG14ZGV2LmMgYi9kcml2ZXJzL21lZGlhL2R2Yi1jb3JlL2RteGRldi5jCmluZGV4IGQw
-ZTNmOWQ4NWYzNC4uMGQyMGIzNzllZWVjIDEwMDY0NAotLS0gYS9kcml2ZXJzL21lZGlhL2R2Yi1j
-b3JlL2RteGRldi5jCisrKyBiL2RyaXZlcnMvbWVkaWEvZHZiLWNvcmUvZG14ZGV2LmMKQEAgLTU1
-OCw3ICs1NTgsNyBAQCBzdGF0aWMgaW50IGR2Yl9kbXhkZXZfc3RhcnRfZmVlZChzdHJ1Y3QgZG14
-ZGV2ICpkbXhkZXYsCiAJCQkJIHN0cnVjdCBkbXhkZXZfZmlsdGVyICpmaWx0ZXIsCiAJCQkJIHN0
-cnVjdCBkbXhkZXZfZmVlZCAqZmVlZCkKIHsKLQlzdHJ1Y3QgdGltZXNwZWMgdGltZW91dCA9IHsg
-MCB9OworCWt0aW1lX3QgdGltZW91dCA9IGt0aW1lX3NldCgwLCAwKTsKIAlzdHJ1Y3QgZG14X3Bl
-c19maWx0ZXJfcGFyYW1zICpwYXJhID0gJmZpbHRlci0+cGFyYW1zLnBlczsKIAlkbXhfb3V0cHV0
-X3Qgb3R5cGU7CiAJaW50IHJldDsKZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWVkaWEvZHZiLWNvcmUv
-ZHZiX2RlbXV4LmMgYi9kcml2ZXJzL21lZGlhL2R2Yi1jb3JlL2R2Yl9kZW11eC5jCmluZGV4IDZj
-N2ZmMGNkY2QzMi4uZDgzZGQwZWI1NzU3IDEwMDY0NAotLS0gYS9kcml2ZXJzL21lZGlhL2R2Yi1j
-b3JlL2R2Yl9kZW11eC5jCisrKyBiL2RyaXZlcnMvbWVkaWEvZHZiLWNvcmUvZHZiX2RlbXV4LmMK
-QEAgLTM5OSwyOCArMzk5LDIzIEBAIHN0YXRpYyB2b2lkIGR2Yl9kbXhfc3dmaWx0ZXJfcGFja2V0
-KHN0cnVjdCBkdmJfZGVtdXggKmRlbXV4LCBjb25zdCB1OCAqYnVmKQogCWludCBkdnJfZG9uZSA9
-IDA7CiAKIAlpZiAoZHZiX2RlbXV4X3NwZWVkY2hlY2spIHsKLQkJc3RydWN0IHRpbWVzcGVjIGN1
-cl90aW1lLCBkZWx0YV90aW1lOworCQlrdGltZV90IGN1cl90aW1lOwogCQl1NjQgc3BlZWRfYnl0
-ZXMsIHNwZWVkX3RpbWVkZWx0YTsKIAogCQlkZW11eC0+c3BlZWRfcGt0c19jbnQrKzsKIAogCQkv
-KiBzaG93IHNwZWVkIGV2ZXJ5IFNQRUVEX1BLVFNfSU5URVJWQUwgcGFja2V0cyAqLwogCQlpZiAo
-IShkZW11eC0+c3BlZWRfcGt0c19jbnQgJSBTUEVFRF9QS1RTX0lOVEVSVkFMKSkgewotCQkJY3Vy
-X3RpbWUgPSBjdXJyZW50X2tlcm5lbF90aW1lKCk7CisJCQljdXJfdGltZSA9IGt0aW1lX2dldCgp
-OwogCi0JCQlpZiAoZGVtdXgtPnNwZWVkX2xhc3RfdGltZS50dl9zZWMgIT0gMCAmJgotCQkJCQlk
-ZW11eC0+c3BlZWRfbGFzdF90aW1lLnR2X25zZWMgIT0gMCkgewotCQkJCWRlbHRhX3RpbWUgPSB0
-aW1lc3BlY19zdWIoY3VyX3RpbWUsCi0JCQkJCQlkZW11eC0+c3BlZWRfbGFzdF90aW1lKTsKKwkJ
-CWlmIChrdGltZV90b19ucyhkZW11eC0+c3BlZWRfbGFzdF90aW1lKSA9PSAwKSB7CiAJCQkJc3Bl
-ZWRfYnl0ZXMgPSAodTY0KWRlbXV4LT5zcGVlZF9wa3RzX2NudAogCQkJCQkqIDE4OCAqIDg7CiAJ
-CQkJLyogY29udmVydCB0byAxMDI0IGJhc2lzICovCiAJCQkJc3BlZWRfYnl0ZXMgPSAxMDAwICog
-ZGl2NjRfdTY0KHNwZWVkX2J5dGVzLAogCQkJCQkJMTAyNCk7Ci0JCQkJc3BlZWRfdGltZWRlbHRh
-ID0KLQkJCQkJKHU2NCl0aW1lc3BlY190b19ucygmZGVsdGFfdGltZSk7Ci0JCQkJc3BlZWRfdGlt
-ZWRlbHRhID0gZGl2NjRfdTY0KHNwZWVkX3RpbWVkZWx0YSwKLQkJCQkJCTEwMDAwMDApOyAvKiBu
-c2VjIC0+IHVzZWMgKi8KKwkJCQlzcGVlZF90aW1lZGVsdGEgPSBrdGltZV9tc19kZWx0YShjdXJf
-dGltZSwKKwkJCQkJCQlkZW11eC0+c3BlZWRfbGFzdF90aW1lKTsKIAkJCQlwcmludGsoS0VSTl9J
-TkZPICJUUyBzcGVlZCAlbGx1IEtiaXRzL3NlYyBcbiIsCiAJCQkJCQlkaXY2NF91NjQoc3BlZWRf
-Ynl0ZXMsCiAJCQkJCQkJc3BlZWRfdGltZWRlbHRhKSk7CkBAIC02NjcsNyArNjYyLDcgQEAgb3V0
-OgogCiBzdGF0aWMgaW50IGRteF90c19mZWVkX3NldChzdHJ1Y3QgZG14X3RzX2ZlZWQgKnRzX2Zl
-ZWQsIHUxNiBwaWQsIGludCB0c190eXBlLAogCQkJICAgZW51bSBkbXhfdHNfcGVzIHBlc190eXBl
-LAotCQkJICAgc2l6ZV90IGNpcmN1bGFyX2J1ZmZlcl9zaXplLCBzdHJ1Y3QgdGltZXNwZWMgdGlt
-ZW91dCkKKwkJCSAgIHNpemVfdCBjaXJjdWxhcl9idWZmZXJfc2l6ZSwga3RpbWVfdCB0aW1lb3V0
-KQogewogCXN0cnVjdCBkdmJfZGVtdXhfZmVlZCAqZmVlZCA9IChzdHJ1Y3QgZHZiX2RlbXV4X2Zl
-ZWQgKil0c19mZWVkOwogCXN0cnVjdCBkdmJfZGVtdXggKmRlbXV4ID0gZmVlZC0+ZGVtdXg7CmRp
-ZmYgLS1naXQgYS9kcml2ZXJzL21lZGlhL2R2Yi1jb3JlL2R2Yl9kZW11eC5oIGIvZHJpdmVycy9t
-ZWRpYS9kdmItY29yZS9kdmJfZGVtdXguaAppbmRleCBhZTdmYzMzYzMyMzEuLjVlZDNjYWI0YWQy
-OCAxMDA2NDQKLS0tIGEvZHJpdmVycy9tZWRpYS9kdmItY29yZS9kdmJfZGVtdXguaAorKysgYi9k
-cml2ZXJzL21lZGlhL2R2Yi1jb3JlL2R2Yl9kZW11eC5oCkBAIC04Myw3ICs4Myw3IEBAIHN0cnVj
-dCBkdmJfZGVtdXhfZmVlZCB7CiAJdTggKmJ1ZmZlcjsKIAlpbnQgYnVmZmVyX3NpemU7CiAKLQlz
-dHJ1Y3QgdGltZXNwZWMgdGltZW91dDsKKwlrdGltZV90IHRpbWVvdXQ7CiAJc3RydWN0IGR2Yl9k
-ZW11eF9maWx0ZXIgKmZpbHRlcjsKIAogCWludCB0c190eXBlOwpAQCAtMTM0LDcgKzEzNCw3IEBA
-IHN0cnVjdCBkdmJfZGVtdXggewogCiAJdWludDhfdCAqY250X3N0b3JhZ2U7IC8qIGZvciBUUyBj
-b250aW51aXR5IGNoZWNrICovCiAKLQlzdHJ1Y3QgdGltZXNwZWMgc3BlZWRfbGFzdF90aW1lOyAv
-KiBmb3IgVFMgc3BlZWQgY2hlY2sgKi8KKwlrdGltZV90IHNwZWVkX2xhc3RfdGltZTsgLyogZm9y
-IFRTIHNwZWVkIGNoZWNrICovCiAJdWludDMyX3Qgc3BlZWRfcGt0c19jbnQ7IC8qIGZvciBUUyBz
-cGVlZCBjaGVjayAqLwogfTsKIApkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZWRpYS9kdmItY29yZS9k
-dmJfbmV0LmMgYi9kcml2ZXJzL21lZGlhL2R2Yi1jb3JlL2R2Yl9uZXQuYwppbmRleCBiODFlMDI2
-ZWRhYjMuLmRmM2JhMTVjMDA3ZSAxMDA2NDQKLS0tIGEvZHJpdmVycy9tZWRpYS9kdmItY29yZS9k
-dmJfbmV0LmMKKysrIGIvZHJpdmVycy9tZWRpYS9kdmItY29yZS9kdmJfbmV0LmMKQEAgLTk5OCw3
-ICs5OTgsNyBAQCBzdGF0aWMgaW50IGR2Yl9uZXRfZmVlZF9zdGFydChzdHJ1Y3QgbmV0X2Rldmlj
-ZSAqZGV2KQogCQluZXRkZXZfZGJnKGRldiwgInN0YXJ0IGZpbHRlcmluZ1xuIik7CiAJCXByaXYt
-PnNlY2ZlZWQtPnN0YXJ0X2ZpbHRlcmluZyhwcml2LT5zZWNmZWVkKTsKIAl9IGVsc2UgaWYgKHBy
-aXYtPmZlZWR0eXBlID09IERWQl9ORVRfRkVFRFRZUEVfVUxFKSB7Ci0JCXN0cnVjdCB0aW1lc3Bl
-YyB0aW1lb3V0ID0geyAwLCAxMDAwMDAwMCB9OyAvLyAxMCBtc2VjCisJCWt0aW1lX3QgdGltZW91
-dCA9IG5zX3RvX2t0aW1lKDEwICogTlNFQ19QRVJfTVNFQyk7CiAKIAkJLyogd2UgaGF2ZSBwYXls
-b2FkcyBlbmNhcHN1bGF0ZWQgaW4gVFMgKi8KIAkJbmV0ZGV2X2RiZyhkZXYsICJhbGxvYyB0c2Zl
-ZWRcbiIpOwotLSAKMi4xLjAucmMyCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fXwpZMjAzOCBtYWlsaW5nIGxpc3QKWTIwMzhAbGlzdHMubGluYXJvLm9yZwpo
-dHRwczovL2xpc3RzLmxpbmFyby5vcmcvbWFpbG1hbi9saXN0aW5mby95MjAzOAo=
+The exynos4 fimc capture driver claims to use monotonic
+timestamps but calls ktime_get_real_ts(). This is both
+an incorrect API use, and a bad idea because of the y2038
+problem and the fact that the wall clock time is not reliable
+for timestamps across suspend or settimeofday().
+
+This changes the driver to use the normal v4l2_get_timestamp()
+function like all other drivers.
+
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ drivers/media/platform/exynos4-is/fimc-capture.c | 8 +-------
+ 1 file changed, 1 insertion(+), 7 deletions(-)
+
+diff --git a/drivers/media/platform/exynos4-is/fimc-capture.c b/drivers/media/platform/exynos4-is/fimc-capture.c
+index cfebf292e15a..776ea6d78d03 100644
+--- a/drivers/media/platform/exynos4-is/fimc-capture.c
++++ b/drivers/media/platform/exynos4-is/fimc-capture.c
+@@ -183,8 +183,6 @@ void fimc_capture_irq_handler(struct fimc_dev *fimc, int deq_buf)
+ 	struct v4l2_subdev *csis = p->subdevs[IDX_CSIS];
+ 	struct fimc_frame *f = &cap->ctx->d_frame;
+ 	struct fimc_vid_buffer *v_buf;
+-	struct timeval *tv;
+-	struct timespec ts;
+ 
+ 	if (test_and_clear_bit(ST_CAPT_SHUT, &fimc->state)) {
+ 		wake_up(&fimc->irq_queue);
+@@ -193,13 +191,9 @@ void fimc_capture_irq_handler(struct fimc_dev *fimc, int deq_buf)
+ 
+ 	if (!list_empty(&cap->active_buf_q) &&
+ 	    test_bit(ST_CAPT_RUN, &fimc->state) && deq_buf) {
+-		ktime_get_real_ts(&ts);
+-
+ 		v_buf = fimc_active_queue_pop(cap);
+ 
+-		tv = &v_buf->vb.v4l2_buf.timestamp;
+-		tv->tv_sec = ts.tv_sec;
+-		tv->tv_usec = ts.tv_nsec / NSEC_PER_USEC;
++		v4l2_get_timestamp(&v_buf->vb.v4l2_buf.timestamp);
+ 		v_buf->vb.v4l2_buf.sequence = cap->frame_count++;
+ 
+ 		vb2_buffer_done(&v_buf->vb, VB2_BUF_STATE_DONE);
+-- 
+2.1.0.rc2
