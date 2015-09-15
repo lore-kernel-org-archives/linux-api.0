@@ -1,78 +1,48 @@
-From: Palmer Dabbelt <palmer@dabbelt.com>
-Subject: Re: [PATCH 04/13] Always expose MAP_UNINITIALIZED to userspace
-Date: Mon, 14 Sep 2015 17:52:24 -0700 (PDT)
-Message-ID: <55f76bc8.2108450a.97c6e.129a__22512.2110372924$1442278395$gmane$org@mx.google.com>
-References: <20150915002358.GA12618@node.dhcp.inet.fi>
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20150915002358.GA12618@node.dhcp.inet.fi>
-Sender: linux-arch-owner@vger.kernel.org
-To: kirill@shutemov.name, arnd@arndb.de
-Cc: dhowells@redhat.com, viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, kexec@lists.infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-xtensa@linux-xtensa.org, mathieu.desnoyers@efficios.com, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, a.p.zijlstra@chello.nl, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org
+From: Hiraku Toyooka <hiraku.toyooka.gu-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH 1/2] selftests/pstore: add pstore test script for pre-reboot
+Date: Tue, 15 Sep 2015 11:30:40 +0900
+Message-ID: <55F782D0.6000501@hitachi.com>
+References: <20150908110615.9783.69477.stgit@arietta> <20150908110617.9783.4635.stgit@arietta> <55EF6DC5.2080207@android.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <55EF6DC5.2080207-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mark Salyzyn <salyzyn-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Anton Vorontsov <anton-9xeibp6oKSgdnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Colin Cross <ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, seiji.aguchi.tr-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 14 Sep 2015 17:23:58 PDT (-0700), kirill@shutemov.name wrote:
-> On Mon, Sep 14, 2015 at 03:50:38PM -0700, Palmer Dabbelt wrote:
->> This used to be hidden behind CONFIG_MMAP_ALLOW_UNINITIALIZED, so
->> userspace wouldn't actually ever see it be non-zero.  While I could
->> have kept hiding it, the man pages seem to indicate that
->> MAP_UNINITIALIZED should be visible:
->>
->>   mmap(2)
->>   MAP_UNINITIALIZED (since Linux 2.6.33)
->>     Don't clear anonymous pages.  This flag is intended to improve
->>     performance on embedded devices.  This flag is honored only if the
->>     kernel was configured with the CONFIG_MMAP_ALLOW_UNINITIALIZED
->>     option.  Because of the security implications, that option is
->>     normally enabled only on embedded devices (i.e., devices where one
->>     has complete control of the contents of user memory).
->>
->> and since the only time it shows up in my /usr/include is in this
->> header I believe this should have been visible to userspace (as
->> non-zero, which wouldn't do anything when or'd into the flags) all
->> along.
->
-> Are you sure about "wouldn't do anything"?
+Hello Mark,
 
-That was bad writing for me.  I'd originally written something like "I
-believe this should have been visible to userspace all along", but
-then added the ()'s.  I meant to say:
+Thank you for your advise.
 
- * I think MAP_UNINITIALIZED should have been non-zero in userspace.
- * MAP_UNINITAILIZED was zero in userspace.
- * A zero MAP_UNINITIALIZED does nothing when OR'd in.
+ >> +prlog -n "Checking pmsg file contains TEST_STRING ... "
+ > Mark this as 'wish to have'
 
-> Suspiciously, 0x4000000 is also (1 << MAP_HUGE_SHIFT). I'm not sure if any
-> architecture has order-1 huge pages, but still looks like we have conflict
-> here.
->
-> I think it's harmful to expose non-zero MAP_UNINITIALIZED to system which
-> potentially can handle multiple users. Or non-trivial user space in
-> general.
+OK. I'll change it to "Checking pmsg file wishes to have TEST_STRING
+... ". Should I change other messages in the same way?
 
-This doesn't have MAP_UNINITIALIZED do anything by default, it just
-defines the flag the same way on all systems.  I was under the
-impression that this just happened if I set MAP_UNINITIALIZED.
-Looking at MAP_HUGE_SHIFT it mmap.c, that's definitely why my mmap()
-test case ignored the set MAP_UNINITIALIZED on my PC.
+ > Can TEST_STRING be given an unique value each run, so that on the the
+ > reboot-comparison run it can be found to be an unique match?
 
-I'm going to make this
+Yes. I'll append /proc/sys/kernel/random/uuid content to TEST_STRING.
+I'll also change log directory name from date to the uuid.
 
- #ifndef MAP_UNINITAILIZED
- #define MAP_UNINITAILIZED 0
- #endif
+ > Also confirm that any previous content (which may be binary) is not
+ > present after reboot, and that totally new content is present.
 
-and then leave Xtensa's port alone.  This is what Arnd suggested
-originally, sorry for the extra work!
+OK.
+As for pmsg, they are possible by checking if the /sys/fs/pstore/pmsg
+content perfectly matches the TEST_STRING which was written to /dev/pmsg
+before reboot. (The TEST_STRING can be left to a regular file before
+reboot as well as reboot_flag.) Is it OK?
 
-> Should we leave it at least under '#ifndef CONFIG_MMU'? I don't think it's
-> possible to have single ABI for MMU and MMU-less systems anyway. And we
-> can avoid conflict with MAP_HUGE_SHIFT this way.
+Best regards,
+Hiraku Toyooka
 
-The whole goal here was to eliminate "#ifndef CONFIG_*" from the
-user-visible headers.  This all started because I got bit by a very
-similar-looking bug (see patch #1), so I'd prefer not to go down that
-route.
 
-> P.S. MAP_UNINITIALIZED itself looks very broken to me. I probably need dig
-> mailing list on why it was allowed.
-> But that's other topic.
+-- 
+Hiraku Toyooka
+Systems Productivity Research Dept. / Linux Technology Center
+Center for Technology Innovation - Systems Engineering, Hitachi Ltd.
