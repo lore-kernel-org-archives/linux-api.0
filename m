@@ -1,84 +1,91 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+From: Hans Verkuil <hverkuil@xs4all.nl>
 Subject: Re: [PATCH 6/7] [RFC] [media]: v4l2: introduce v4l2_timeval
-Date: Wed, 16 Sep 2015 09:56:21 +0200
-Message-ID: <7758607.pJFdek7ljg@wuerfel>
-References: <1442332148-488079-1-git-send-email-arnd@arndb.de> <2432018.5rA5LXfiBo@wuerfel> <55F91162.8030002@xs4all.nl>
+Date: Wed, 16 Sep 2015 10:12:00 +0200
+Message-ID: <55F92450.8010802@xs4all.nl>
+References: <1442332148-488079-1-git-send-email-arnd@arndb.de>
+ <2432018.5rA5LXfiBo@wuerfel> <55F91162.8030002@xs4all.nl>
+ <7758607.pJFdek7ljg@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <55F91162.8030002-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Cc: linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+In-Reply-To: <7758607.pJFdek7ljg@wuerfel>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: linux-samsung-soc@vger.kernel.org, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-media@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wednesday 16 September 2015 08:51:14 Hans Verkuil wrote:
-
-> > a) Similar to my first attempt, define a new struct v4l2_timeval, but
-> >    only use it when building with a y2038-aware libc, so we don't break
-> >    existing environments:
-> > 
-> > 	/* some compile-time conditional that we first need to agree on with libc */
-> > 	#if __BITS_PER_TIME_T > __BITS_PER_LONG
-> > 	struct v4l2_timeval { long tv_sec; long tv_usec; }
-> > 	#else
-> > 	#define v4l2_timeval timeval
-> > 	#endif
-> > 
-> >    This means that any user space that currently assumes the timestamp
-> >    member to be a 'struct timeval' has to be changed to access the members
-> >    individually, or get a build error.
-> >    The __BITS_PER_TIME_T trick has to be used in a couple of other subsystems
-> >    too, as some of them have no other way to identify an interface
-> 
-> I don't like this as this means some applications will compile on 64 bit or
-> with a non-y2038-aware libc, but fail on a 32-bit with y2038-aware libc. This
-> will be confusing and it may take a long time before the application developer
-> discovers this.
-
-Right.
-
-> > b) Keep the header file unchanged, but deal with both formats of v4l2_buffer
-> >    in the kernel. Fortunately, all ioctls that pass a v4l2_buffer have
-> >    properly defined command codes, and it does not get passed using a
-> >    read/write style interface. This means we move the v4l2_buffer32
-> >    handling from v4l2-compat-ioctl32.c to v4l2-ioctl.c and add an in-kernel
-> >    v4l2_buffer64 that matches the 64-bit variant of v4l2_buffer.
-> >    This way, user space can use either definition of time_t, and the
-> >    kernel will just handle them natively.
-> >    This is going to be the most common way to handle y2038 compatibility
-> >    in device drivers, and it has the additional advantage of simplifying
-> >    the compat path.
-> 
-> This would work.
-
-Ok. So the only downside I can think of for this is that it uses a slightly
-less efficient format with additional padding in it. The kernel side will
-be a little ugly as I'm trying to avoid defining a generic timeval64
-structure (the generic syscalls should not need one), but I'll try to
-implement it first to see how it ends up.
-
-> > c) As you describe above, introduce a new v4l2_buffer replacement with
-> >    a different layout that does not reference timeval. For this case, I
-> >    would recommend using a single 64-bit nanosecond timestamp that can
-> >    be generated using ktime_get_ns().
-> >    However, to avoid ambiguity with the user space definition of struct
-> >    timeval, we still have to hide the existing 'struct v4l2_buffer' from
-> >    y2038-aware user space by enclosing it in '#if __BITS_PER_TIME_T > 
-> >    __BITS_PER_LONG' or similar.
-> 
-> Right, and if we do that we still have the problem I describe under a). So we
-> would need to implement b) regardless.
-> 
-> In other words, choosing c) doesn't depend on y2038 and it should be decided
-> on its own merits.
-> 
-> I've proposed this as a topic to the media workshop we'll have during the Linux
-> Kernel Summit.
-
-Thanks, good idea. I'll be at the kernel summit, but don't plan to attend
-the media workshop otherwise. If you let me know about the schedule, I can
-come to this session (or ping me on IRC or hangout when it starts).
-
-	Arnd
+T24gMDkvMTYvMjAxNSAwOTo1NiBBTSwgQXJuZCBCZXJnbWFubiB3cm90ZToKPiBPbiBXZWRuZXNk
+YXkgMTYgU2VwdGVtYmVyIDIwMTUgMDg6NTE6MTQgSGFucyBWZXJrdWlsIHdyb3RlOgo+IAo+Pj4g
+YSkgU2ltaWxhciB0byBteSBmaXJzdCBhdHRlbXB0LCBkZWZpbmUgYSBuZXcgc3RydWN0IHY0bDJf
+dGltZXZhbCwgYnV0Cj4+PiAgICBvbmx5IHVzZSBpdCB3aGVuIGJ1aWxkaW5nIHdpdGggYSB5MjAz
+OC1hd2FyZSBsaWJjLCBzbyB3ZSBkb24ndCBicmVhawo+Pj4gICAgZXhpc3RpbmcgZW52aXJvbm1l
+bnRzOgo+Pj4KPj4+IAkvKiBzb21lIGNvbXBpbGUtdGltZSBjb25kaXRpb25hbCB0aGF0IHdlIGZp
+cnN0IG5lZWQgdG8gYWdyZWUgb24gd2l0aCBsaWJjICovCj4+PiAJI2lmIF9fQklUU19QRVJfVElN
+RV9UID4gX19CSVRTX1BFUl9MT05HCj4+PiAJc3RydWN0IHY0bDJfdGltZXZhbCB7IGxvbmcgdHZf
+c2VjOyBsb25nIHR2X3VzZWM7IH0KPj4+IAkjZWxzZQo+Pj4gCSNkZWZpbmUgdjRsMl90aW1ldmFs
+IHRpbWV2YWwKPj4+IAkjZW5kaWYKPj4+Cj4+PiAgICBUaGlzIG1lYW5zIHRoYXQgYW55IHVzZXIg
+c3BhY2UgdGhhdCBjdXJyZW50bHkgYXNzdW1lcyB0aGUgdGltZXN0YW1wCj4+PiAgICBtZW1iZXIg
+dG8gYmUgYSAnc3RydWN0IHRpbWV2YWwnIGhhcyB0byBiZSBjaGFuZ2VkIHRvIGFjY2VzcyB0aGUg
+bWVtYmVycwo+Pj4gICAgaW5kaXZpZHVhbGx5LCBvciBnZXQgYSBidWlsZCBlcnJvci4KPj4+ICAg
+IFRoZSBfX0JJVFNfUEVSX1RJTUVfVCB0cmljayBoYXMgdG8gYmUgdXNlZCBpbiBhIGNvdXBsZSBv
+ZiBvdGhlciBzdWJzeXN0ZW1zCj4+PiAgICB0b28sIGFzIHNvbWUgb2YgdGhlbSBoYXZlIG5vIG90
+aGVyIHdheSB0byBpZGVudGlmeSBhbiBpbnRlcmZhY2UKPj4KPj4gSSBkb24ndCBsaWtlIHRoaXMg
+YXMgdGhpcyBtZWFucyBzb21lIGFwcGxpY2F0aW9ucyB3aWxsIGNvbXBpbGUgb24gNjQgYml0IG9y
+Cj4+IHdpdGggYSBub24teTIwMzgtYXdhcmUgbGliYywgYnV0IGZhaWwgb24gYSAzMi1iaXQgd2l0
+aCB5MjAzOC1hd2FyZSBsaWJjLiBUaGlzCj4+IHdpbGwgYmUgY29uZnVzaW5nIGFuZCBpdCBtYXkg
+dGFrZSBhIGxvbmcgdGltZSBiZWZvcmUgdGhlIGFwcGxpY2F0aW9uIGRldmVsb3Blcgo+PiBkaXNj
+b3ZlcnMgdGhpcy4KPiAKPiBSaWdodC4KPiAKPj4+IGIpIEtlZXAgdGhlIGhlYWRlciBmaWxlIHVu
+Y2hhbmdlZCwgYnV0IGRlYWwgd2l0aCBib3RoIGZvcm1hdHMgb2YgdjRsMl9idWZmZXIKPj4+ICAg
+IGluIHRoZSBrZXJuZWwuIEZvcnR1bmF0ZWx5LCBhbGwgaW9jdGxzIHRoYXQgcGFzcyBhIHY0bDJf
+YnVmZmVyIGhhdmUKPj4+ICAgIHByb3Blcmx5IGRlZmluZWQgY29tbWFuZCBjb2RlcywgYW5kIGl0
+IGRvZXMgbm90IGdldCBwYXNzZWQgdXNpbmcgYQo+Pj4gICAgcmVhZC93cml0ZSBzdHlsZSBpbnRl
+cmZhY2UuIFRoaXMgbWVhbnMgd2UgbW92ZSB0aGUgdjRsMl9idWZmZXIzMgo+Pj4gICAgaGFuZGxp
+bmcgZnJvbSB2NGwyLWNvbXBhdC1pb2N0bDMyLmMgdG8gdjRsMi1pb2N0bC5jIGFuZCBhZGQgYW4g
+aW4ta2VybmVsCj4+PiAgICB2NGwyX2J1ZmZlcjY0IHRoYXQgbWF0Y2hlcyB0aGUgNjQtYml0IHZh
+cmlhbnQgb2YgdjRsMl9idWZmZXIuCj4+PiAgICBUaGlzIHdheSwgdXNlciBzcGFjZSBjYW4gdXNl
+IGVpdGhlciBkZWZpbml0aW9uIG9mIHRpbWVfdCwgYW5kIHRoZQo+Pj4gICAga2VybmVsIHdpbGwg
+anVzdCBoYW5kbGUgdGhlbSBuYXRpdmVseS4KPj4+ICAgIFRoaXMgaXMgZ29pbmcgdG8gYmUgdGhl
+IG1vc3QgY29tbW9uIHdheSB0byBoYW5kbGUgeTIwMzggY29tcGF0aWJpbGl0eQo+Pj4gICAgaW4g
+ZGV2aWNlIGRyaXZlcnMsIGFuZCBpdCBoYXMgdGhlIGFkZGl0aW9uYWwgYWR2YW50YWdlIG9mIHNp
+bXBsaWZ5aW5nCj4+PiAgICB0aGUgY29tcGF0IHBhdGguCj4+Cj4+IFRoaXMgd291bGQgd29yay4K
+PiAKPiBPay4gU28gdGhlIG9ubHkgZG93bnNpZGUgSSBjYW4gdGhpbmsgb2YgZm9yIHRoaXMgaXMg
+dGhhdCBpdCB1c2VzIGEgc2xpZ2h0bHkKPiBsZXNzIGVmZmljaWVudCBmb3JtYXQgd2l0aCBhZGRp
+dGlvbmFsIHBhZGRpbmcgaW4gaXQuIFRoZSBrZXJuZWwgc2lkZSB3aWxsCj4gYmUgYSBsaXR0bGUg
+dWdseSBhcyBJJ20gdHJ5aW5nIHRvIGF2b2lkIGRlZmluaW5nIGEgZ2VuZXJpYyB0aW1ldmFsNjQK
+PiBzdHJ1Y3R1cmUgKHRoZSBnZW5lcmljIHN5c2NhbGxzIHNob3VsZCBub3QgbmVlZCBvbmUpLCBi
+dXQgSSdsbCB0cnkgdG8KPiBpbXBsZW1lbnQgaXQgZmlyc3QgdG8gc2VlIGhvdyBpdCBlbmRzIHVw
+Lgo+IAo+Pj4gYykgQXMgeW91IGRlc2NyaWJlIGFib3ZlLCBpbnRyb2R1Y2UgYSBuZXcgdjRsMl9i
+dWZmZXIgcmVwbGFjZW1lbnQgd2l0aAo+Pj4gICAgYSBkaWZmZXJlbnQgbGF5b3V0IHRoYXQgZG9l
+cyBub3QgcmVmZXJlbmNlIHRpbWV2YWwuIEZvciB0aGlzIGNhc2UsIEkKPj4+ICAgIHdvdWxkIHJl
+Y29tbWVuZCB1c2luZyBhIHNpbmdsZSA2NC1iaXQgbmFub3NlY29uZCB0aW1lc3RhbXAgdGhhdCBj
+YW4KPj4+ICAgIGJlIGdlbmVyYXRlZCB1c2luZyBrdGltZV9nZXRfbnMoKS4KPj4+ICAgIEhvd2V2
+ZXIsIHRvIGF2b2lkIGFtYmlndWl0eSB3aXRoIHRoZSB1c2VyIHNwYWNlIGRlZmluaXRpb24gb2Yg
+c3RydWN0Cj4+PiAgICB0aW1ldmFsLCB3ZSBzdGlsbCBoYXZlIHRvIGhpZGUgdGhlIGV4aXN0aW5n
+ICdzdHJ1Y3QgdjRsMl9idWZmZXInIGZyb20KPj4+ICAgIHkyMDM4LWF3YXJlIHVzZXIgc3BhY2Ug
+YnkgZW5jbG9zaW5nIGl0IGluICcjaWYgX19CSVRTX1BFUl9USU1FX1QgPiAKPj4+ICAgIF9fQklU
+U19QRVJfTE9ORycgb3Igc2ltaWxhci4KPj4KPj4gUmlnaHQsIGFuZCBpZiB3ZSBkbyB0aGF0IHdl
+IHN0aWxsIGhhdmUgdGhlIHByb2JsZW0gSSBkZXNjcmliZSB1bmRlciBhKS4gU28gd2UKPj4gd291
+bGQgbmVlZCB0byBpbXBsZW1lbnQgYikgcmVnYXJkbGVzcy4KPj4KPj4gSW4gb3RoZXIgd29yZHMs
+IGNob29zaW5nIGMpIGRvZXNuJ3QgZGVwZW5kIG9uIHkyMDM4IGFuZCBpdCBzaG91bGQgYmUgZGVj
+aWRlZAo+PiBvbiBpdHMgb3duIG1lcml0cy4KPj4KPj4gSSd2ZSBwcm9wb3NlZCB0aGlzIGFzIGEg
+dG9waWMgdG8gdGhlIG1lZGlhIHdvcmtzaG9wIHdlJ2xsIGhhdmUgZHVyaW5nIHRoZSBMaW51eAo+
+PiBLZXJuZWwgU3VtbWl0Lgo+IAo+IFRoYW5rcywgZ29vZCBpZGVhLiBJJ2xsIGJlIGF0IHRoZSBr
+ZXJuZWwgc3VtbWl0LCBidXQgZG9uJ3QgcGxhbiB0byBhdHRlbmQKPiB0aGUgbWVkaWEgd29ya3No
+b3Agb3RoZXJ3aXNlLiBJZiB5b3UgbGV0IG1lIGtub3cgYWJvdXQgdGhlIHNjaGVkdWxlLCBJIGNh
+bgo+IGNvbWUgdG8gdGhpcyBzZXNzaW9uIChvciBwaW5nIG1lIG9uIElSQyBvciBoYW5nb3V0IHdo
+ZW4gaXQgc3RhcnRzKS4KCkFyZSB5b3UgYWxzbyBhdHRlbmRpbmcgdGhlIEVMQ0UgaW4gRHVibGlu
+PyBXZSBjb3VsZCBoYXZlIGEgcXVpY2sgdGFsayB0aGVyZS4KSSB0aGluayB0aGUgZGlzY3Vzc2lv
+biB3aGV0aGVyIHRvIHN3aXRjaCB0byBhIG5ldyB2NGwyX2J1ZmZlciBzdHJ1Y3QgaXNuJ3QgcmVh
+bGx5CmRlcGVuZGVudCBvbiBhbnl0aGluZyB5MjAzOC4KClJlZ2FyZHMsCgoJSGFucwpfX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpZMjAzOCBtYWlsaW5nIGxp
+c3QKWTIwMzhAbGlzdHMubGluYXJvLm9yZwpodHRwczovL2xpc3RzLmxpbmFyby5vcmcvbWFpbG1h
+bi9saXN0aW5mby95MjAzOAo=
