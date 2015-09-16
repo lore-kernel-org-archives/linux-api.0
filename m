@@ -1,158 +1,369 @@
-From: Hans Verkuil <hverkuil@xs4all.nl>
-Subject: Re: [PATCH 6/7] [RFC] [media]: v4l2: introduce v4l2_timeval
-Date: Wed, 16 Sep 2015 08:51:14 +0200
-Message-ID: <55F91162.8030002@xs4all.nl>
-References: <1442332148-488079-1-git-send-email-arnd@arndb.de> <1442332148-488079-7-git-send-email-arnd@arndb.de> <55F846E7.2040006@xs4all.nl> <2432018.5rA5LXfiBo@wuerfel>
+From: Martin Sustrik <sustrik@250bpm.com>
+Subject: Re: [PATCH v2 1/1] eventfd: implementation of EFD_MASK flag
+Date: Wed, 16 Sep 2015 08:51:45 +0200
+Message-ID: <70093385dc00b108e16862c8b8b1c13c@imap.lucina.net>
+References: <1442384836-13045-1-git-send-email-dhobsong@igel.co.jp>
+ <1442384836-13045-2-git-send-email-dhobsong@igel.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=US-ASCII;
+ format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-media-owner@vger.kernel.org>
-In-Reply-To: <2432018.5rA5LXfiBo@wuerfel>
-Sender: linux-media-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: linux-media@vger.kernel.org, linux-kernel@vger.kernel.org, y2038@lists.linaro.org, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, linux-api@vger.kernel.org, linux-samsung-soc@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1442384836-13045-2-git-send-email-dhobsong@igel.co.jp>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Damian Hobson-Garcia <dhobsong@igel.co.jp>
+Cc: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, David.Laight@aculab.com
 List-Id: linux-api@vger.kernel.org
 
-On 09/15/2015 10:26 PM, Arnd Bergmann wrote:
-> On Tuesday 15 September 2015 18:27:19 Hans Verkuil wrote:
->> On 09/15/2015 05:49 PM, Arnd Bergmann wrote:
->>> The v4l2 API uses a 'struct timeval' to communicate time stamps to user
->>> space. This is broken on 32-bit architectures as soon as we have a C library
->>> that defines time_t as 64 bit, which then changes the structure layout of
->>> struct v4l2_buffer.
->>>
->>> Fortunately, almost all v4l2 drivers use monotonic timestamps and call
->>> v4l2_get_timestamp(), which means they don't also have a y2038 problem.
->>> This means we can keep using the existing binary layout of the structure
->>> and do not need to worry about defining a new kernel interface for
->>> userland with 64-bit time_t.
->>>
->>> A possible downside of this approach is that it breaks any user space
->>> that tries to assign the timeval structure returned from the kernel
->>> to another timeval, or to pass a pointer to it into a function that
->>> expects a timeval. Those will cause a build-time warning or error
->>> that can be fixed up in a backwards compatible way.
->>>
->>> The alternative to this patch is to leave the structure using
->>> 'struct timeval', but then we have to rework the kernel to let
->>> it handle both 32-bit and 64-bit time_t for 32-bit user space
->>> processes.
->>
->> Cool. Only this morning I was thinking about what would be needed in v4l2
->> to be y2038 safe, and here it is!
+On 2015-09-16 08:27, Damian Hobson-Garcia wrote:
+> From: Martin Sustrik <sustrik@250bpm.com>
 > 
-> Nice!
+> When implementing network protocols in user space, one has to implement
+> fake file descriptors to represent the sockets for the protocol.
 > 
-> fwiw, I also have a list of drivers at
-> https://docs.google.com/spreadsheets/d/1HCYwHXxs48TsTb6IGUduNjQnmfRvMPzCN6T_0YiQwis/edit?usp=sharing
-> which lists all known files that still need changing, in case you are
-> wondering what else needs to be done, though it currently only covers
-> things that nobody so far has started working on, and I have a couple
-> patches on my disk that need polishing (I pushed out the v4l2 portion
-> of that as a start)
+> Polling on such fake file descriptors is a problem (poll/select/epoll
+> accept only true file descriptors) and forces protocol implementers to 
+> use
+> various workarounds resulting in complex, non-standard and convoluted 
+> APIs.
+> 
+> More generally, ability to create full-blown file descriptors for
+> userspace-to-userspace signalling is missing. While eventfd(2) goes 
+> half
+> the way towards this goal it has follwoing shorcomings:
+> 
+> I.  There's no way to signal POLLPRI, POLLHUP etc.
+> II. There's no way to signal arbitrary combination of POLL* flags. Most
+>     notably, simultaneous !POLLIN and !POLLOUT, which is a perfectly 
+> valid
+>     combination for a network protocol (rx buffer is empty and tx 
+> buffer is
+>     full), cannot be signaled using eventfd.
+> 
+> This patch implements new EFD_MASK flag which solves the above 
+> problems.
+> 
+> Additionally, to provide a way to associate user-space state with 
+> eventfd
+> object, it allows to attach user-space data to the file descriptor.
 
-I just *thought* about it, I never said I would do it! :-)
+The above paragraph is a leftover from the past. The functionality no 
+longer exist.
 
 > 
->>> @@ -839,7 +845,7 @@ struct v4l2_buffer {
->>>  	__u32			bytesused;
->>>  	__u32			flags;
->>>  	__u32			field;
->>> -	struct timeval		timestamp;
->>> +	struct v4l2_timeval	timestamp;
->>>  	struct v4l2_timecode	timecode;
->>>  	__u32			sequence;
->>>  
->>>
->>
->> I suspect that quite a few apps use assign the timestamp to another timeval
->> struct. A quick grep in v4l-utils (which we maintain) shows at least two of
->> those assignments. Ditto for xawtv3.
+> The semantics of EFD_MASK are as follows:
 > 
-> Ok, that is very helpful information, thanks for finding that!
+> eventfd(2):
 > 
->> So I don't think v4l2_timeval is an option as it would break userspace too badly.
+> If eventfd is created with EFD_MASK flag set, it is initialised in such 
+> a
+> way as to signal no events on the file descriptor when it is polled on.
+> The 'initval' argument is ignored.
 > 
-> Agreed, we definitely don't want to break building user space with
-> existing environments, i.e. 64-bit architectures, or 32-bit architectures
-> with 32-bit time_t.
+> write(2):
 > 
->> An alternative to supporting a 64-bit timeval for 32-bit userspace is to make a
->> new y2038-aware struct and a new set of ioctls and use this opportunity to clean
->> up and extend the v4l2_buffer struct.
->>
->> So any 32-bit app that needs to be y2038 compliant would just use the new
->> struct and ioctls.
->>
->> But this is something to discuss among the v4l2 developers.
+> User is allowed to write only buffers containing the following 
+> structure:
 > 
-> Ok. We generally to require as few source level changes to user space
-> as possible for the conversion, and we want to make sure that when
-> using a 32-bit libc with 64-bit time_t, we don't accidentally get
-> broken interfaces (i.e. we should get a compile error whenever we
-> can't get it right automatically).
-> 
-> One aspect that makes v4l2_buffer special is that the binary format
-> is already clean for y2038 (once patch 4/7 "exynos4-is: use monotonic
-> timestamps as advertized" gets merged), and we only need to worry about
-> what happens when user space disagrees about the size of timeval.
-> 
-> Let me describe the options that I can think of here:
-> 
-> a) Similar to my first attempt, define a new struct v4l2_timeval, but
->    only use it when building with a y2038-aware libc, so we don't break
->    existing environments:
-> 
-> 	/* some compile-time conditional that we first need to agree on with libc */
-> 	#if __BITS_PER_TIME_T > __BITS_PER_LONG
-> 	struct v4l2_timeval { long tv_sec; long tv_usec; }
-> 	#else
-> 	#define v4l2_timeval timeval
-> 	#endif
-> 
->    This means that any user space that currently assumes the timestamp
->    member to be a 'struct timeval' has to be changed to access the members
->    individually, or get a build error.
->    The __BITS_PER_TIME_T trick has to be used in a couple of other subsystems
->    too, as some of them have no other way to identify an interface
+> struct efd_mask {
+>   uint32_t events;
+> };
 
-I don't like this as this means some applications will compile on 64 bit or
-with a non-y2038-aware libc, but fail on a 32-bit with y2038-aware libc. This
-will be confusing and it may take a long time before the application developer
-discovers this.
+Is it worth having a struct here? Why not just uint32_t?
 
-> b) Keep the header file unchanged, but deal with both formats of v4l2_buffer
->    in the kernel. Fortunately, all ioctls that pass a v4l2_buffer have
->    properly defined command codes, and it does not get passed using a
->    read/write style interface. This means we move the v4l2_buffer32
->    handling from v4l2-compat-ioctl32.c to v4l2-ioctl.c and add an in-kernel
->    v4l2_buffer64 that matches the 64-bit variant of v4l2_buffer.
->    This way, user space can use either definition of time_t, and the
->    kernel will just handle them natively.
->    This is going to be the most common way to handle y2038 compatibility
->    in device drivers, and it has the additional advantage of simplifying
->    the compat path.
+Martin
 
-This would work.
-
-> c) As you describe above, introduce a new v4l2_buffer replacement with
->    a different layout that does not reference timeval. For this case, I
->    would recommend using a single 64-bit nanosecond timestamp that can
->    be generated using ktime_get_ns().
->    However, to avoid ambiguity with the user space definition of struct
->    timeval, we still have to hide the existing 'struct v4l2_buffer' from
->    y2038-aware user space by enclosing it in '#if __BITS_PER_TIME_T > 
->    __BITS_PER_LONG' or similar.
-
-Right, and if we do that we still have the problem I describe under a). So we
-would need to implement b) regardless.
-
-In other words, choosing c) doesn't depend on y2038 and it should be decided
-on its own merits.
-
-I've proposed this as a topic to the media workshop we'll have during the Linux
-Kernel Summit.
-
-Regards,
-
-	Hans
+> 
+> The value of 'events' should be any combination of event flags as 
+> defined
+> by poll(2) function (POLLIN, POLLOUT, POLLERR, POLLHUP etc.) Specified
+> events will be signaled when polling (select, poll, epoll) on the 
+> eventfd
+> is done later on.
+> 
+> read(2):
+> 
+> read is not supported and will fail with EINVAL.
+> 
+> select(2), poll(2) and similar:
+> 
+> When polling on the eventfd marked by EFD_MASK flag, all the events
+> specified in last written 'events' field shall be signaled.
+> 
+> Signed-off-by: Martin Sustrik <sustrik@250bpm.com>
+> 
+> [dhobsong@igel.co.jp: Rebased, and resubmitted for Linux 4.3]
+> Signed-off-by: Damian Hobson-Garcia <dhobsong@igel.co.jp>
+> ---
+>  fs/eventfd.c                 | 102 
+> ++++++++++++++++++++++++++++++++++++++-----
+>  include/linux/eventfd.h      |  16 +------
+>  include/uapi/linux/eventfd.h |  39 +++++++++++++++++
+>  3 files changed, 132 insertions(+), 25 deletions(-)
+>  create mode 100644 include/uapi/linux/eventfd.h
+> 
+> diff --git a/fs/eventfd.c b/fs/eventfd.c
+> index 8d0c0df..1a6a066 100644
+> --- a/fs/eventfd.c
+> +++ b/fs/eventfd.c
+> @@ -2,6 +2,7 @@
+>   *  fs/eventfd.c
+>   *
+>   *  Copyright (C) 2007  Davide Libenzi <davidel@xmailserver.org>
+> + *  Copyright (C) 2013  Martin Sustrik <sustrik@250bpm.com>
+>   *
+>   */
+> 
+> @@ -22,18 +23,31 @@
+>  #include <linux/proc_fs.h>
+>  #include <linux/seq_file.h>
+> 
+> +#define EFD_SHARED_FCNTL_FLAGS (O_CLOEXEC | O_NONBLOCK)
+> +#define EFD_FLAGS_SET (EFD_SHARED_FCNTL_FLAGS | EFD_SEMAPHORE | 
+> EFD_MASK)
+> +#define EFD_MASK_VALID_EVENTS (POLLIN | POLLPRI | POLLOUT | POLLERR | 
+> POLLHUP)
+> +
+>  struct eventfd_ctx {
+>  	struct kref kref;
+>  	wait_queue_head_t wqh;
+> -	/*
+> -	 * Every time that a write(2) is performed on an eventfd, the
+> -	 * value of the __u64 being written is added to "count" and a
+> -	 * wakeup is performed on "wqh". A read(2) will return the "count"
+> -	 * value to userspace, and will reset "count" to zero. The kernel
+> -	 * side eventfd_signal() also, adds to the "count" counter and
+> -	 * issue a wakeup.
+> -	 */
+> -	__u64 count;
+> +	union {
+> +		/*
+> +		 * Every time that a write(2) is performed on an eventfd, the
+> +		 * value of the __u64 being written is added to "count" and a
+> +		 * wakeup is performed on "wqh". A read(2) will return the
+> +		 * "count" value to userspace, and will reset "count" to zero.
+> +		 * The kernel side eventfd_signal() also, adds to the "count"
+> +		 * counter and issue a wakeup.
+> +		 */
+> +		__u64 count;
+> +
+> +		/*
+> +		 * When using eventfd in EFD_MASK mode this stracture stores the
+> +		 * current events to be signaled on the eventfd (events member)
+> +		 * along with opaque user-defined data (data member).
+> +		 */
+> +		struct efd_mask mask;
+> +	};
+>  	unsigned int flags;
+>  };
+> 
+> @@ -134,6 +148,14 @@ static unsigned int eventfd_poll(struct file
+> *file, poll_table *wait)
+>  	return events;
+>  }
+> 
+> +static unsigned int eventfd_mask_poll(struct file *file, poll_table 
+> *wait)
+> +{
+> +	struct eventfd_ctx *ctx = file->private_data;
+> +
+> +	poll_wait(file, &ctx->wqh, wait);
+> +	return ctx->mask.events;
+> +}
+> +
+>  static void eventfd_ctx_do_read(struct eventfd_ctx *ctx, __u64 *cnt)
+>  {
+>  	*cnt = (ctx->flags & EFD_SEMAPHORE) ? 1 : ctx->count;
+> @@ -239,6 +261,14 @@ static ssize_t eventfd_read(struct file *file,
+> char __user *buf, size_t count,
+>  	return put_user(cnt, (__u64 __user *) buf) ? -EFAULT : sizeof(cnt);
+>  }
+> 
+> +static ssize_t eventfd_mask_read(struct file *file, char __user *buf,
+> +			    size_t count,
+> +			    loff_t *ppos)
+> +{
+> +	return -EINVAL;
+> +}
+> +
+> +
+>  static ssize_t eventfd_write(struct file *file, const char __user
+> *buf, size_t count,
+>  			     loff_t *ppos)
+>  {
+> @@ -286,6 +316,28 @@ static ssize_t eventfd_write(struct file *file,
+> const char __user *buf, size_t c
+>  	return res;
+>  }
+> 
+> +static ssize_t eventfd_mask_write(struct file *file, const char __user 
+> *buf,
+> +			     size_t count,
+> +			     loff_t *ppos)
+> +{
+> +	struct eventfd_ctx *ctx = file->private_data;
+> +	struct efd_mask mask;
+> +
+> +	if (count < sizeof(mask))
+> +		return -EINVAL;
+> +	if (copy_from_user(&mask, buf, sizeof(mask)))
+> +		return -EFAULT;
+> +	if (mask.events & ~EFD_MASK_VALID_EVENTS)
+> +		return -EINVAL;
+> +	spin_lock_irq(&ctx->wqh.lock);
+> +	memcpy(&ctx->mask, &mask, sizeof(ctx->mask));
+> +	if (waitqueue_active(&ctx->wqh))
+> +		wake_up_locked_poll(&ctx->wqh,
+> +			(unsigned long)ctx->mask.events);
+> +	spin_unlock_irq(&ctx->wqh.lock);
+> +	return sizeof(ctx->mask);
+> +}
+> +
+>  #ifdef CONFIG_PROC_FS
+>  static void eventfd_show_fdinfo(struct seq_file *m, struct file *f)
+>  {
+> @@ -296,6 +348,16 @@ static void eventfd_show_fdinfo(struct seq_file
+> *m, struct file *f)
+>  		   (unsigned long long)ctx->count);
+>  	spin_unlock_irq(&ctx->wqh.lock);
+>  }
+> +
+> +static void eventfd_mask_show_fdinfo(struct seq_file *m, struct file 
+> *f)
+> +{
+> +	struct eventfd_ctx *ctx = f->private_data;
+> +
+> +	spin_lock_irq(&ctx->wqh.lock);
+> +	seq_printf(m, "eventfd-mask: %x\n",
+> +		(unsigned)ctx->mask.events);
+> +	spin_unlock_irq(&ctx->wqh.lock);
+> +}
+>  #endif
+> 
+>  static const struct file_operations eventfd_fops = {
+> @@ -309,6 +371,17 @@ static const struct file_operations eventfd_fops = 
+> {
+>  	.llseek		= noop_llseek,
+>  };
+> 
+> +static const struct file_operations eventfd_mask_fops = {
+> +#ifdef CONFIG_PROC_FS
+> +	.show_fdinfo	= eventfd_mask_show_fdinfo,
+> +#endif
+> +	.release	= eventfd_release,
+> +	.poll		= eventfd_mask_poll,
+> +	.read		= eventfd_mask_read,
+> +	.write		= eventfd_mask_write,
+> +	.llseek		= noop_llseek,
+> +};
+> +
+>  /**
+>   * eventfd_fget - Acquire a reference of an eventfd file descriptor.
+>   * @fd: [in] Eventfd file descriptor.
+> @@ -392,6 +465,7 @@ struct file *eventfd_file_create(unsigned int
+> count, int flags)
+>  {
+>  	struct file *file;
+>  	struct eventfd_ctx *ctx;
+> +	const struct file_operations *fops;
+> 
+>  	/* Check the EFD_* constants for consistency.  */
+>  	BUILD_BUG_ON(EFD_CLOEXEC != O_CLOEXEC);
+> @@ -406,10 +480,16 @@ struct file *eventfd_file_create(unsigned int
+> count, int flags)
+> 
+>  	kref_init(&ctx->kref);
+>  	init_waitqueue_head(&ctx->wqh);
+> -	ctx->count = count;
+> +	if (flags & EFD_MASK) {
+> +		memset(&ctx->mask, 0, sizeof(ctx->mask));
+> +		fops = &eventfd_mask_fops;
+> +	} else {
+> +		ctx->count = count;
+> +		fops = &eventfd_fops;
+> +	}
+>  	ctx->flags = flags;
+> 
+> -	file = anon_inode_getfile("[eventfd]", &eventfd_fops, ctx,
+> +	file = anon_inode_getfile("[eventfd]", fops, ctx,
+>  				  O_RDWR | (flags & EFD_SHARED_FCNTL_FLAGS));
+>  	if (IS_ERR(file))
+>  		eventfd_free_ctx(ctx);
+> diff --git a/include/linux/eventfd.h b/include/linux/eventfd.h
+> index ff0b981..87de343 100644
+> --- a/include/linux/eventfd.h
+> +++ b/include/linux/eventfd.h
+> @@ -8,23 +8,11 @@
+>  #ifndef _LINUX_EVENTFD_H
+>  #define _LINUX_EVENTFD_H
+> 
+> +#include <uapi/linux/eventfd.h>
+> +
+>  #include <linux/fcntl.h>
+>  #include <linux/wait.h>
+> 
+> -/*
+> - * CAREFUL: Check include/uapi/asm-generic/fcntl.h when defining
+> - * new flags, since they might collide with O_* ones. We want
+> - * to re-use O_* flags that couldn't possibly have a meaning
+> - * from eventfd, in order to leave a free define-space for
+> - * shared O_* flags.
+> - */
+> -#define EFD_SEMAPHORE (1 << 0)
+> -#define EFD_CLOEXEC O_CLOEXEC
+> -#define EFD_NONBLOCK O_NONBLOCK
+> -
+> -#define EFD_SHARED_FCNTL_FLAGS (O_CLOEXEC | O_NONBLOCK)
+> -#define EFD_FLAGS_SET (EFD_SHARED_FCNTL_FLAGS | EFD_SEMAPHORE)
+> -
+>  struct file;
+> 
+>  #ifdef CONFIG_EVENTFD
+> diff --git a/include/uapi/linux/eventfd.h 
+> b/include/uapi/linux/eventfd.h
+> new file mode 100644
+> index 0000000..98ec034
+> --- /dev/null
+> +++ b/include/uapi/linux/eventfd.h
+> @@ -0,0 +1,39 @@
+> +/*
+> + *  Copyright (C) 2013 Martin Sustrik <sustrik@250bpm.com>
+> + *
+> + *  This program is free software; you can redistribute it and/or 
+> modify
+> + *  it under the terms of the GNU General Public License as published 
+> by
+> + *  the Free Software Foundation; either version 2 of the License, or
+> + *  (at your option) any later version.
+> + */
+> +
+> +#ifndef _UAPI_LINUX_EVENTFD_H
+> +#define _UAPI_LINUX_EVENTFD_H
+> +
+> +/* For O_CLOEXEC */
+> +#include <linux/fcntl.h>
+> +#include <linux/types.h>
+> +
+> +/*
+> + * CAREFUL: Check include/asm-generic/fcntl.h when defining
+> + * new flags, since they might collide with O_* ones. We want
+> + * to re-use O_* flags that couldn't possibly have a meaning
+> + * from eventfd, in order to leave a free define-space for
+> + * shared O_* flags.
+> + */
+> +
+> +/* Provide semaphore-like semantics for reads from the eventfd. */
+> +#define EFD_SEMAPHORE (1 << 0)
+> +/* Provide event mask semantics for the eventfd. */
+> +#define EFD_MASK (1 << 1)
+> +/*  Set the close-on-exec (FD_CLOEXEC) flag on the eventfd. */
+> +#define EFD_CLOEXEC O_CLOEXEC
+> +/*  Create the eventfd in non-blocking mode. */
+> +#define EFD_NONBLOCK O_NONBLOCK
+> +
+> +/* Structure to read/write to eventfd in EFD_MASK mode. */
+> +struct efd_mask {
+> +	__u32 events;
+> +};
+> +
+> +#endif /* _UAPI_LINUX_EVENTFD_H */
