@@ -1,91 +1,29 @@
-From: Hans Verkuil <hverkuil@xs4all.nl>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
 Subject: Re: [PATCH 6/7] [RFC] [media]: v4l2: introduce v4l2_timeval
-Date: Wed, 16 Sep 2015 10:12:00 +0200
-Message-ID: <55F92450.8010802@xs4all.nl>
-References: <1442332148-488079-1-git-send-email-arnd@arndb.de>
- <2432018.5rA5LXfiBo@wuerfel> <55F91162.8030002@xs4all.nl>
- <7758607.pJFdek7ljg@wuerfel>
+Date: Wed, 16 Sep 2015 10:40:26 +0200
+Message-ID: <3059739.5oJNmvzYWC@wuerfel>
+References: <1442332148-488079-1-git-send-email-arnd@arndb.de> <7758607.pJFdek7ljg@wuerfel> <55F92450.8010802@xs4all.nl>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <7758607.pJFdek7ljg@wuerfel>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: linux-samsung-soc@vger.kernel.org, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-media@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <55F92450.8010802-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+Cc: linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-T24gMDkvMTYvMjAxNSAwOTo1NiBBTSwgQXJuZCBCZXJnbWFubiB3cm90ZToKPiBPbiBXZWRuZXNk
-YXkgMTYgU2VwdGVtYmVyIDIwMTUgMDg6NTE6MTQgSGFucyBWZXJrdWlsIHdyb3RlOgo+IAo+Pj4g
-YSkgU2ltaWxhciB0byBteSBmaXJzdCBhdHRlbXB0LCBkZWZpbmUgYSBuZXcgc3RydWN0IHY0bDJf
-dGltZXZhbCwgYnV0Cj4+PiAgICBvbmx5IHVzZSBpdCB3aGVuIGJ1aWxkaW5nIHdpdGggYSB5MjAz
-OC1hd2FyZSBsaWJjLCBzbyB3ZSBkb24ndCBicmVhawo+Pj4gICAgZXhpc3RpbmcgZW52aXJvbm1l
-bnRzOgo+Pj4KPj4+IAkvKiBzb21lIGNvbXBpbGUtdGltZSBjb25kaXRpb25hbCB0aGF0IHdlIGZp
-cnN0IG5lZWQgdG8gYWdyZWUgb24gd2l0aCBsaWJjICovCj4+PiAJI2lmIF9fQklUU19QRVJfVElN
-RV9UID4gX19CSVRTX1BFUl9MT05HCj4+PiAJc3RydWN0IHY0bDJfdGltZXZhbCB7IGxvbmcgdHZf
-c2VjOyBsb25nIHR2X3VzZWM7IH0KPj4+IAkjZWxzZQo+Pj4gCSNkZWZpbmUgdjRsMl90aW1ldmFs
-IHRpbWV2YWwKPj4+IAkjZW5kaWYKPj4+Cj4+PiAgICBUaGlzIG1lYW5zIHRoYXQgYW55IHVzZXIg
-c3BhY2UgdGhhdCBjdXJyZW50bHkgYXNzdW1lcyB0aGUgdGltZXN0YW1wCj4+PiAgICBtZW1iZXIg
-dG8gYmUgYSAnc3RydWN0IHRpbWV2YWwnIGhhcyB0byBiZSBjaGFuZ2VkIHRvIGFjY2VzcyB0aGUg
-bWVtYmVycwo+Pj4gICAgaW5kaXZpZHVhbGx5LCBvciBnZXQgYSBidWlsZCBlcnJvci4KPj4+ICAg
-IFRoZSBfX0JJVFNfUEVSX1RJTUVfVCB0cmljayBoYXMgdG8gYmUgdXNlZCBpbiBhIGNvdXBsZSBv
-ZiBvdGhlciBzdWJzeXN0ZW1zCj4+PiAgICB0b28sIGFzIHNvbWUgb2YgdGhlbSBoYXZlIG5vIG90
-aGVyIHdheSB0byBpZGVudGlmeSBhbiBpbnRlcmZhY2UKPj4KPj4gSSBkb24ndCBsaWtlIHRoaXMg
-YXMgdGhpcyBtZWFucyBzb21lIGFwcGxpY2F0aW9ucyB3aWxsIGNvbXBpbGUgb24gNjQgYml0IG9y
-Cj4+IHdpdGggYSBub24teTIwMzgtYXdhcmUgbGliYywgYnV0IGZhaWwgb24gYSAzMi1iaXQgd2l0
-aCB5MjAzOC1hd2FyZSBsaWJjLiBUaGlzCj4+IHdpbGwgYmUgY29uZnVzaW5nIGFuZCBpdCBtYXkg
-dGFrZSBhIGxvbmcgdGltZSBiZWZvcmUgdGhlIGFwcGxpY2F0aW9uIGRldmVsb3Blcgo+PiBkaXNj
-b3ZlcnMgdGhpcy4KPiAKPiBSaWdodC4KPiAKPj4+IGIpIEtlZXAgdGhlIGhlYWRlciBmaWxlIHVu
-Y2hhbmdlZCwgYnV0IGRlYWwgd2l0aCBib3RoIGZvcm1hdHMgb2YgdjRsMl9idWZmZXIKPj4+ICAg
-IGluIHRoZSBrZXJuZWwuIEZvcnR1bmF0ZWx5LCBhbGwgaW9jdGxzIHRoYXQgcGFzcyBhIHY0bDJf
-YnVmZmVyIGhhdmUKPj4+ICAgIHByb3Blcmx5IGRlZmluZWQgY29tbWFuZCBjb2RlcywgYW5kIGl0
-IGRvZXMgbm90IGdldCBwYXNzZWQgdXNpbmcgYQo+Pj4gICAgcmVhZC93cml0ZSBzdHlsZSBpbnRl
-cmZhY2UuIFRoaXMgbWVhbnMgd2UgbW92ZSB0aGUgdjRsMl9idWZmZXIzMgo+Pj4gICAgaGFuZGxp
-bmcgZnJvbSB2NGwyLWNvbXBhdC1pb2N0bDMyLmMgdG8gdjRsMi1pb2N0bC5jIGFuZCBhZGQgYW4g
-aW4ta2VybmVsCj4+PiAgICB2NGwyX2J1ZmZlcjY0IHRoYXQgbWF0Y2hlcyB0aGUgNjQtYml0IHZh
-cmlhbnQgb2YgdjRsMl9idWZmZXIuCj4+PiAgICBUaGlzIHdheSwgdXNlciBzcGFjZSBjYW4gdXNl
-IGVpdGhlciBkZWZpbml0aW9uIG9mIHRpbWVfdCwgYW5kIHRoZQo+Pj4gICAga2VybmVsIHdpbGwg
-anVzdCBoYW5kbGUgdGhlbSBuYXRpdmVseS4KPj4+ICAgIFRoaXMgaXMgZ29pbmcgdG8gYmUgdGhl
-IG1vc3QgY29tbW9uIHdheSB0byBoYW5kbGUgeTIwMzggY29tcGF0aWJpbGl0eQo+Pj4gICAgaW4g
-ZGV2aWNlIGRyaXZlcnMsIGFuZCBpdCBoYXMgdGhlIGFkZGl0aW9uYWwgYWR2YW50YWdlIG9mIHNp
-bXBsaWZ5aW5nCj4+PiAgICB0aGUgY29tcGF0IHBhdGguCj4+Cj4+IFRoaXMgd291bGQgd29yay4K
-PiAKPiBPay4gU28gdGhlIG9ubHkgZG93bnNpZGUgSSBjYW4gdGhpbmsgb2YgZm9yIHRoaXMgaXMg
-dGhhdCBpdCB1c2VzIGEgc2xpZ2h0bHkKPiBsZXNzIGVmZmljaWVudCBmb3JtYXQgd2l0aCBhZGRp
-dGlvbmFsIHBhZGRpbmcgaW4gaXQuIFRoZSBrZXJuZWwgc2lkZSB3aWxsCj4gYmUgYSBsaXR0bGUg
-dWdseSBhcyBJJ20gdHJ5aW5nIHRvIGF2b2lkIGRlZmluaW5nIGEgZ2VuZXJpYyB0aW1ldmFsNjQK
-PiBzdHJ1Y3R1cmUgKHRoZSBnZW5lcmljIHN5c2NhbGxzIHNob3VsZCBub3QgbmVlZCBvbmUpLCBi
-dXQgSSdsbCB0cnkgdG8KPiBpbXBsZW1lbnQgaXQgZmlyc3QgdG8gc2VlIGhvdyBpdCBlbmRzIHVw
-Lgo+IAo+Pj4gYykgQXMgeW91IGRlc2NyaWJlIGFib3ZlLCBpbnRyb2R1Y2UgYSBuZXcgdjRsMl9i
-dWZmZXIgcmVwbGFjZW1lbnQgd2l0aAo+Pj4gICAgYSBkaWZmZXJlbnQgbGF5b3V0IHRoYXQgZG9l
-cyBub3QgcmVmZXJlbmNlIHRpbWV2YWwuIEZvciB0aGlzIGNhc2UsIEkKPj4+ICAgIHdvdWxkIHJl
-Y29tbWVuZCB1c2luZyBhIHNpbmdsZSA2NC1iaXQgbmFub3NlY29uZCB0aW1lc3RhbXAgdGhhdCBj
-YW4KPj4+ICAgIGJlIGdlbmVyYXRlZCB1c2luZyBrdGltZV9nZXRfbnMoKS4KPj4+ICAgIEhvd2V2
-ZXIsIHRvIGF2b2lkIGFtYmlndWl0eSB3aXRoIHRoZSB1c2VyIHNwYWNlIGRlZmluaXRpb24gb2Yg
-c3RydWN0Cj4+PiAgICB0aW1ldmFsLCB3ZSBzdGlsbCBoYXZlIHRvIGhpZGUgdGhlIGV4aXN0aW5n
-ICdzdHJ1Y3QgdjRsMl9idWZmZXInIGZyb20KPj4+ICAgIHkyMDM4LWF3YXJlIHVzZXIgc3BhY2Ug
-YnkgZW5jbG9zaW5nIGl0IGluICcjaWYgX19CSVRTX1BFUl9USU1FX1QgPiAKPj4+ICAgIF9fQklU
-U19QRVJfTE9ORycgb3Igc2ltaWxhci4KPj4KPj4gUmlnaHQsIGFuZCBpZiB3ZSBkbyB0aGF0IHdl
-IHN0aWxsIGhhdmUgdGhlIHByb2JsZW0gSSBkZXNjcmliZSB1bmRlciBhKS4gU28gd2UKPj4gd291
-bGQgbmVlZCB0byBpbXBsZW1lbnQgYikgcmVnYXJkbGVzcy4KPj4KPj4gSW4gb3RoZXIgd29yZHMs
-IGNob29zaW5nIGMpIGRvZXNuJ3QgZGVwZW5kIG9uIHkyMDM4IGFuZCBpdCBzaG91bGQgYmUgZGVj
-aWRlZAo+PiBvbiBpdHMgb3duIG1lcml0cy4KPj4KPj4gSSd2ZSBwcm9wb3NlZCB0aGlzIGFzIGEg
-dG9waWMgdG8gdGhlIG1lZGlhIHdvcmtzaG9wIHdlJ2xsIGhhdmUgZHVyaW5nIHRoZSBMaW51eAo+
-PiBLZXJuZWwgU3VtbWl0Lgo+IAo+IFRoYW5rcywgZ29vZCBpZGVhLiBJJ2xsIGJlIGF0IHRoZSBr
-ZXJuZWwgc3VtbWl0LCBidXQgZG9uJ3QgcGxhbiB0byBhdHRlbmQKPiB0aGUgbWVkaWEgd29ya3No
-b3Agb3RoZXJ3aXNlLiBJZiB5b3UgbGV0IG1lIGtub3cgYWJvdXQgdGhlIHNjaGVkdWxlLCBJIGNh
-bgo+IGNvbWUgdG8gdGhpcyBzZXNzaW9uIChvciBwaW5nIG1lIG9uIElSQyBvciBoYW5nb3V0IHdo
-ZW4gaXQgc3RhcnRzKS4KCkFyZSB5b3UgYWxzbyBhdHRlbmRpbmcgdGhlIEVMQ0UgaW4gRHVibGlu
-PyBXZSBjb3VsZCBoYXZlIGEgcXVpY2sgdGFsayB0aGVyZS4KSSB0aGluayB0aGUgZGlzY3Vzc2lv
-biB3aGV0aGVyIHRvIHN3aXRjaCB0byBhIG5ldyB2NGwyX2J1ZmZlciBzdHJ1Y3QgaXNuJ3QgcmVh
-bGx5CmRlcGVuZGVudCBvbiBhbnl0aGluZyB5MjAzOC4KClJlZ2FyZHMsCgoJSGFucwpfX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpZMjAzOCBtYWlsaW5nIGxp
-c3QKWTIwMzhAbGlzdHMubGluYXJvLm9yZwpodHRwczovL2xpc3RzLmxpbmFyby5vcmcvbWFpbG1h
-bi9saXN0aW5mby95MjAzOAo=
+On Wednesday 16 September 2015 10:12:00 Hans Verkuil wrote:
+> 
+> Are you also attending the ELCE in Dublin? We could have a quick talk there.
+> I think the discussion whether to switch to a new v4l2_buffer struct isn't really
+> dependent on anything y2038.
+
+No, unfortunately I won't be there.
+
+Concerning a v4l2_buffer, I agree we should treat that as a completely independent
+topic. The problem at hand for y2038 is only about we expect to happen when someone
+compiles source code that uses the existing v4l2_buffer (and v4l2_event) with a
+y2038-aware libc.
+
+	Arnd
