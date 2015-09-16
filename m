@@ -1,20 +1,20 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH v2 8/9] ia64: allocate sys_membarrier system call
- number
-Date: Wed, 16 Sep 2015 15:19:12 +0000 (UTC)
-Message-ID: <1791895548.9335.1442416752623.JavaMail.zimbra@efficios.com>
-References: <1441642556-30972-1-git-send-email-mathieu.desnoyers@efficios.com> <1441642556-30972-9-git-send-email-mathieu.desnoyers@efficios.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH v2 9/9] s390/s390x: allocate sys_membarrier system
+ call number
+Date: Wed, 16 Sep 2015 15:20:05 +0000 (UTC)
+Message-ID: <1822824828.9340.1442416805361.JavaMail.zimbra@efficios.com>
+References: <1441642556-30972-1-git-send-email-mathieu.desnoyers@efficios.com> <1441642556-30972-10-git-send-email-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1441642556-30972-9-git-send-email-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Fenghua Yu <fenghua.yu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-ia64-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1441642556-30972-10-git-send-email-mathieu.desnoyers@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: schwidefsky <schwidefsky@de.ibm.com>, heiko carstens <heiko.carstens@de.ibm.com>, linux-s390@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Sep 7, 2015, at 12:15 PM, Mathieu Desnoyers mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org wrote:
+----- On Sep 7, 2015, at 12:15 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
 
 > [ Untested on this architecture. To try it out: fetch linux-next/akpm,
 >  apply this patch, build/run a membarrier-enabled kernel, and do make
@@ -23,62 +23,48 @@ List-Id: linux-api@vger.kernel.org
 Hi,
 
 sys_membarrier has been merged into Linux 4.3-rc1. It can therefore
-be tested on top of Linus' master.
+be tested on top of Linus' master by applying this patch.
 
 Thanks,
 
 Mathieu
 
 > 
-> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-> CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-> CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> CC: Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> CC: Fenghua Yu <fenghua.yu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> CC: linux-ia64-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+> CC: Andrew Morton <akpm@linux-foundation.org>
+> CC: linux-api@vger.kernel.org
+> CC: Martin Schwidefsky <schwidefsky@de.ibm.com>
+> CC: Heiko Carstens <heiko.carstens@de.ibm.com>
+> CC: linux-s390@vger.kernel.org
 > ---
-> arch/ia64/include/asm/unistd.h      | 2 +-
-> arch/ia64/include/uapi/asm/unistd.h | 1 +
-> arch/ia64/kernel/entry.S            | 1 +
-> 3 files changed, 3 insertions(+), 1 deletion(-)
+> arch/s390/include/uapi/asm/unistd.h | 3 ++-
+> arch/s390/kernel/syscalls.S         | 1 +
+> 2 files changed, 3 insertions(+), 1 deletion(-)
 > 
-> diff --git a/arch/ia64/include/asm/unistd.h b/arch/ia64/include/asm/unistd.h
-> index 95c39b9..1d54e17 100644
-> --- a/arch/ia64/include/asm/unistd.h
-> +++ b/arch/ia64/include/asm/unistd.h
-> @@ -11,7 +11,7 @@
-> 
-> 
-> 
-> -#define NR_syscalls			319 /* length of syscall table */
-> +#define NR_syscalls			320 /* length of syscall table */
+> diff --git a/arch/s390/include/uapi/asm/unistd.h
+> b/arch/s390/include/uapi/asm/unistd.h
+> index 59d2bb4..2f1de70 100644
+> --- a/arch/s390/include/uapi/asm/unistd.h
+> +++ b/arch/s390/include/uapi/asm/unistd.h
+> @@ -290,7 +290,8 @@
+> #define __NR_s390_pci_mmio_write	352
+> #define __NR_s390_pci_mmio_read		353
+> #define __NR_execveat		354
+> -#define NR_syscalls 355
+> +#define __NR_membarrier		355
+> +#define NR_syscalls 356
 > 
 > /*
->  * The following defines stop scripts/checksyscalls.sh from complaining about
-> diff --git a/arch/ia64/include/uapi/asm/unistd.h
-> b/arch/ia64/include/uapi/asm/unistd.h
-> index 4610795..b7aae55 100644
-> --- a/arch/ia64/include/uapi/asm/unistd.h
-> +++ b/arch/ia64/include/uapi/asm/unistd.h
-> @@ -332,5 +332,6 @@
-> #define __NR_memfd_create		1340
-> #define __NR_bpf			1341
-> #define __NR_execveat			1342
-> +#define __NR_membarrier			1343
-> 
-> #endif /* _UAPI_ASM_IA64_UNISTD_H */
-> diff --git a/arch/ia64/kernel/entry.S b/arch/ia64/kernel/entry.S
-> index ae0de7b..1ce01f9 100644
-> --- a/arch/ia64/kernel/entry.S
-> +++ b/arch/ia64/kernel/entry.S
-> @@ -1768,5 +1768,6 @@ sys_call_table:
-> 	data8 sys_memfd_create			// 1340
-> 	data8 sys_bpf
-> 	data8 sys_execveat
-> +	data8 sys_membarrier
-> 
-> 	.org sys_call_table + 8*NR_syscalls	// guard against failures to increase
-> 	NR_syscalls
+>  * There are some system calls that are not present on 64 bit, some
+> diff --git a/arch/s390/kernel/syscalls.S b/arch/s390/kernel/syscalls.S
+> index f3f4a13..914c098 100644
+> --- a/arch/s390/kernel/syscalls.S
+> +++ b/arch/s390/kernel/syscalls.S
+> @@ -363,3 +363,4 @@ SYSCALL(sys_bpf,compat_sys_bpf)
+> SYSCALL(sys_s390_pci_mmio_write,compat_sys_s390_pci_mmio_write)
+> SYSCALL(sys_s390_pci_mmio_read,compat_sys_s390_pci_mmio_read)
+> SYSCALL(sys_execveat,compat_sys_execveat)
+> +SYSCALL(sys_membarrier,sys_membarrier)
 > --
 > 1.9.1
 
