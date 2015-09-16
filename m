@@ -1,55 +1,121 @@
-From: =?utf-8?B?6Zi/5Y+j6Kqg5Y+4IC8gQUdVQ0hJ77yMU0VJSkk=?=
-	<seiji.aguchi.tr@hitachi.com>
-Subject: RE: [PATCH 2/2] selftests/pstore: add pstore test scripts going
- with reboot
-Date: Wed, 16 Sep 2015 12:11:09 +0000
-Message-ID: <753241EEF6DFAB4CAF20F32F515C4E358B347A@GSjpTK1DCembx02.service.hitachi.net>
-References: <20150908110615.9783.69477.stgit@arietta>
-	<20150908110620.9783.33823.stgit@arietta>
- <CAGXu5j+Ha0t-acFc+morgUiDRCHGdx8QHySX29PYpnj4QFiJhA@mail.gmail.com>
- <55F78563.50006@hitachi.com>
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH RFC] pidns: introduce syscall getvpid
+Date: Wed, 16 Sep 2015 09:39:39 -0500
+Message-ID: <20150916143939.GA32226@mail.hallyn.com>
+References: <20150915120924.14818.49490.stgit@buzz>
+ <87h9mvg3kw.fsf@x220.int.ebiederm.org>
+ <55F832D2.1070605@yandex-team.ru>
+ <20150915151729.GA144242@dakara>
+ <20150915174143.GE4699@ubuntumail>
+ <55F91C3D.1040209@yandex-team.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <55F78563.50006@hitachi.com>
-Content-Language: ja-JP
-Sender: linux-kernel-owner@vger.kernel.org
-To: =?utf-8?B?6LGK5bKh5ouTIC8gVG95b29rYe+8jEhpcmFrdQ==?= <hiraku.toyooka.gu@hitachi.com>, Kees Cook <keescook@chromium.org>
-Cc: LKML <linux-kernel@vger.kernel.org>, Tony Luck <tony.luck@intel.com>, Linux API <linux-api@vger.kernel.org>, Anton Vorontsov <anton@enomsg.org>, Shuah Khan <shuahkh@osg.samsung.com>, Mark Salyzyn <salyzyn@android.com>, Colin Cross <ccross@android.com>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <55F91C3D.1040209-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
+Cc: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, =?iso-8859-1?Q?St=E9phane?= Graber <stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-DQo+K3BybG9nICJDYXVzaW5nIGtlcm5lbCBjcmFzaCAuLi4iDQo+Kw0KPisjIGVuYWJsZSBhbGwg
-ZnVuY3Rpb25zIHRyaWdnZXJlZCBieSBzeXNycQ0KPitlY2hvIDEgPiAvcHJvYy9zeXMva2VybmVs
-L3N5c3JxDQo+KyMgc2V0dGluZyB0byByZWJvb3QgaW4gMyBzZWNvbmRzIGFmdGVyIHBhbmljDQo+
-K2VjaG8gMyA+IC9wcm9jL3N5cy9rZXJuZWwvcGFuaWMNCj4rIyBzZXR0aW5nIHRvIGNhdXNlIHBh
-bmljIHdoZW4gb29wcyBvY2N1cnMNCj4rZWNobyAxID4gL3Byb2Mvc3lzL2tlcm5lbC9wYW5pY19v
-bl9vb3BzDQo+Kw0KPisjIGNyZWF0ZSBhIGZpbGUgYXMgcmVib290IGZsYWcNCj4rdG91Y2ggJFJF
-Qk9PVF9GSUxFDQo+K3N5bmMNCj4rDQo+KyMgY2F1c2UgY3Jhc2gNCj4rZWNobyBjID4gL3Byb2Mv
-c3lzcnEtdHJpZ2dlcg0KDQpEbyB5b3UgbmVlZCB0byBzdG9wIGtkdW1wIHNlcnZpY2UgYmVmb3Jl
-IHRoZSBzeXNycT8NCk9yLCBkb2VzIGl0IGNvdmVyIG9vcHMgYW5kIGtkdW1wIGNhc2U/DQoNClNl
-aWppDQoNCj4gLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCj4gRnJvbTog6LGK5bKh5ouTIC8g
-VG95b29rYe+8jEhpcmFrdQ0KPiBTZW50OiBUdWVzZGF5LCBTZXB0ZW1iZXIgMTUsIDIwMTUgMTE6
-NDIgQU0NCj4gVG86IEtlZXMgQ29vaw0KPiBDYzogTEtNTDsgVG9ueSBMdWNrOyBMaW51eCBBUEk7
-IEFudG9uIFZvcm9udHNvdjsgU2h1YWggS2hhbjsgTWFyayBTYWx5enluOyBDb2xpbiBDcm9zczsg
-6Zi/5Y+j6Kqg5Y+4IC8gQUdVQ0hJ77yMU0VJSkkNCj4gU3ViamVjdDogUmU6IFtQQVRDSCAyLzJd
-IHNlbGZ0ZXN0cy9wc3RvcmU6IGFkZCBwc3RvcmUgdGVzdCBzY3JpcHRzIGdvaW5nIHdpdGggcmVi
-b290DQo+IA0KPiBIZWxsbyBLZWVzLA0KPiANCj4gID4+ICtydW5fY3Jhc2g6DQo+ICA+PiArICAg
-ICAgIEBzaCBwc3RvcmVfY3Jhc2hfdGVzdCB8fCBlY2hvICJwc3RvcmVfY3Jhc2hfdGVzdDogW0ZB
-SUxdIg0KPiAgPg0KPiAgPiBUaGlzIGlzIHByb2JhYmx5IGJldHRlciB3cml0dGVuIHRvIGV4aXQg
-MSBvbiBmYWlsdXJlLCBvdGhlcndpc2UgaXQNCj4gID4ganVzdCBfc2F5c18gaXQgZmFpbHMuIChU
-aG91Z2ggbG90cyBvZiBzZWxmdGVzdHMgaW4gdGhlIHRyZWUgYWxyZWFkeQ0KPiAgPiBoYXZlIHRo
-aXMgcHJvYmxlbSwgaXQncyBiZXN0IHRvIGF2b2lkIHRoZSBwYXR0ZXJuIGZvciBuZXcgc3R1ZmYu
-KQ0KPiAgPiBNYXliZSBzb21ldGhpbmcgbGlrZToNCj4gID4NCj4gID4gICAgICBAc2ggcHN0b3Jl
-X2NyYXNoX3Rlc3QgfHwgeyBlY2hvICJwc3RvcmVfY3Jhc2hfdGVzdDogW0ZBSUxdIjsNCj4gZXhp
-dCAxOyB9DQo+IA0KPiBPSy4gSSdsbCBhZGQgdGhlICJleGl0IDEiLg0KPiANCj4gID4+ICtwcmxv
-ZyAtbiAiQ2hlY2tpbmcgZG1lc2cgZmlsZXMgZXhpc3QgaW4gcHN0b3JlIGZpbGVzeXN0ZW0gLi4u
-ICINCj4gID4+ICtpZiBbIC1lIGRtZXNnLSR7YmFja2VuZH0tMCBdOyB0aGVuDQo+ICA+PiArICAg
-IHBybG9nICJvayINCj4gID4+ICsgICAgZm9yIGYgaW4gYGxzIGRtZXNnLSR7YmFja2VuZH0tKmA7
-IGRvDQo+ICA+PiArICAgICAgIHBybG9nIC1lICJcdCR7Zn0iDQo+ICA+PiArICAgIGRvbmUNCj4g
-ID4+ICtlbHNlDQo+ICA+PiArICAgIHBybG9nICJGQUlMIg0KPiAgPj4gKyAgICByYz0xDQo+ICA+
-PiArZmkNCj4gID4NCj4gID4gVGhpcyB0ZXN0IHBhdHRlcm4gaXMgcmVwZWF0ZWQgYSBsb3QuIE1h
-eWJlIGJldHRlciB0byBjcmVhdGUgYSBoZWxwZXINCj4gID4gZnVuY3Rpb24gaW5zdGVhZD8gSXQg
-Y291bGQgbWFrZSB0aGUgdGVzdHMgbXVjaCBtb3JlIHJlYWRhYmxlLg0KPiANCj4gWWVzLCBJIHNo
-b3VsZCBtYWtlIGEgaGVscGVyIGZ1bmN0aW9uIGluIHYyLg0KPiANCj4gQmVzdCByZWdhcmRzLA0K
-PiBIaXJha3UgVG95b29rYQ0K
+On Wed, Sep 16, 2015 at 10:37:33AM +0300, Konstantin Khlebnikov wrote:
+> On 15.09.2015 20:41, Serge Hallyn wrote:
+> >Quoting St=E9phane Graber (stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org):
+> >>On Tue, Sep 15, 2015 at 06:01:38PM +0300, Konstantin Khlebnikov wro=
+te:
+> >>>On 15.09.2015 17:27, Eric W. Biederman wrote:
+> >>>>Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org> writes:
+> >>>>
+> >>>>>pid_t getvpid(pid_t pid, pid_t source, pid_t target);
+> >>>>>
+> >>>>>This syscall converts pid from one pid-ns into pid in another pi=
+d-ns:
+> >>>>>it takes @pid in namespace of @source task (zero for current) an=
+d
+> >>>>>returns related pid in namespace of @target task (zero for curre=
+nt too).
+> >>>>>If pid is unreachable from target pid-ns then it returns zero.
+> >>>>
+> >>>>This interface as presented is inherently racy.  It would be bett=
+er
+> >>>>if source and target were file descriptors referring to the names=
+paces
+> >>>>you wish to translate between.
+> >>>
+> >>>Yep, it's racy. As well as any operation with non-child pids.
+> >>>With file descriptors for source/target result will be racy anyway=
+=2E
+> >>>
+> >>>>
+> >>>>>Such conversion is required for interaction between processes fr=
+om
+> >>>>>different pid-namespaces. For example when system service talks =
+with
+> >>>>>client from isolated container via socket about task in containe=
+r:
+> >>>>
+> >>>>Sockets are already supported.  At least the metadata of sockets =
+is.
+> >>>>
+> >>>>Maybe we need this but I am not convinced of it's utility.
+> >>>>
+> >>>>What are you trying to do that motivates this?
+> >>>
+> >>>I'm working on hierarchical container management system which
+> >>>allows to create and control nested sub-containers from containers
+> >>>( https://github.com/yandex/porto ). Main server works in host and
+> >>>have to interact with all levels of nested namespaces. This syscal=
+l
+> >>>makes some operations much easier: server must remember only pid i=
+n
+> >>>host pid namespace and convert it into right vpid on demand.
+> >>
+> >>Note that as Eric said earlier, sending a PID inside a ucred throug=
+h a
+> >>unix socket will have the pid translated.
+> >>
+> >>So while your solution certainly should be faster, you can already =
+achieve
+> >>what you want today by doing:
+> >>
+> >>=3D=3D Translate PID in container to PID in host
+> >>  - open a socket
+> >>  - setns to container's pidns
+> >>  - send ucred from that container containing the requested contain=
+er PID
+> >>  - host sees the host PID
+> >>
+> >>=3D=3D Translate PID on host to PID in container
+> >>  - open a socket
+> >>  - setns to container's pidns
+> >>  - send ucred from the host containing the request host PID
+> >>    (send will fail if the host PID isn't part of that container)
+> >>  - container sees the container PID
+> >
+> >In addition, since commit e4bc332451 : /proc/PID/status: show all se=
+ts of pid according to ns
+> >we now also have 'NSpid' etc in /proc/$$/status.
+> >
+>=20
+> As I see this works perfectly only for converting host pid into virtu=
+al.
+>=20
+> Backward conversion is troublesome: we have to scan all pids in host
+> procfs and somehow filter tasks from container and its sub-pid-ns.
+> Or I am missing something trivial?
+
+Ah, no that doesn't help with this.
+
+What St=E9phane describes is what I've done in several projects.
+Getting it right is however actually quite tricky.  I'm not
+convinced it's at the level of "since you can do (sweep hands)
+all this, we don't need a simple syscall to do it."
+
+So I'd encourage you to resend using namespace inode fds for
+source and target as Eric suggested.  We still may decide that
+the syscall isn't needed, but it's a trivial change to your
+patch and removes that race.  And I'm not convinced it's not
+needed.
+
+-serge
