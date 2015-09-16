@@ -1,29 +1,30 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH 6/7] [RFC] [media]: v4l2: introduce v4l2_timeval
-Date: Wed, 16 Sep 2015 10:40:26 +0200
-Message-ID: <3059739.5oJNmvzYWC@wuerfel>
-References: <1442332148-488079-1-git-send-email-arnd@arndb.de> <7758607.pJFdek7ljg@wuerfel> <55F92450.8010802@xs4all.nl>
+From: Sylwester Nawrocki <s.nawrocki-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH 4/7] [media] exynos4-is: use monotonic timestamps as
+ advertized
+Date: Wed, 16 Sep 2015 10:55:40 +0200
+Message-ID: <55F92E8C.3020701@samsung.com>
+References: <1442332148-488079-1-git-send-email-arnd@arndb.de>
+ <1442332148-488079-5-git-send-email-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <55F92450.8010802-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+In-reply-to: <1442332148-488079-5-git-send-email-arnd-r2nGTMty4D4@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Cc: linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wednesday 16 September 2015 10:12:00 Hans Verkuil wrote:
+On 15/09/15 17:49, Arnd Bergmann wrote:
+> The exynos4 fimc capture driver claims to use monotonic
+> timestamps but calls ktime_get_real_ts(). This is both
+> an incorrect API use, and a bad idea because of the y2038
+> problem and the fact that the wall clock time is not reliable
+> for timestamps across suspend or settimeofday().
 > 
-> Are you also attending the ELCE in Dublin? We could have a quick talk there.
-> I think the discussion whether to switch to a new v4l2_buffer struct isn't really
-> dependent on anything y2038.
+> This changes the driver to use the normal v4l2_get_timestamp()
+> function like all other drivers.
+> 
+> Signed-off-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
 
-No, unfortunately I won't be there.
-
-Concerning a v4l2_buffer, I agree we should treat that as a completely independent
-topic. The problem at hand for y2038 is only about we expect to happen when someone
-compiles source code that uses the existing v4l2_buffer (and v4l2_event) with a
-y2038-aware libc.
-
-	Arnd
+Acked-by: Sylwester Nawrocki <s.nawrocki-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
