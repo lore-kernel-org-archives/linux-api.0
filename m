@@ -1,174 +1,605 @@
-From: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v5 3/4] of: overlay: add per overlay sysfs attributes
-Date: Wed, 16 Sep 2015 22:08:08 +0300
-Message-ID: <78DBB3F7-A3E8-431F-B8E2-AE54D24F9D00@konsulko.com>
-References: <1442419751-4846-1-git-send-email-pantelis.antoniou@konsulko.com> <1442419751-4846-4-git-send-email-pantelis.antoniou@konsulko.com> <CAL_Jsq+N43c-A175QC0L9jpEP9ZptugDLChMEJgs76=1NEP3Mw@mail.gmail.com>
-Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2104\))
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAL_Jsq+N43c-A175QC0L9jpEP9ZptugDLChMEJgs76=1NEP3Mw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Frank Rowand <frowand.list-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: David Herrmann <dh.herrmann@gmail.com>
+Subject: Re: [PATCH v4] Input: Add userio module
+Date: Wed, 16 Sep 2015 21:38:16 +0200
+Message-ID: <CANq1E4RyD9PPbVgcVUA1b--BjNMjbtA929=gHOdy+MSaePvDBg@mail.gmail.com>
+References: <1437672800-10062-1-git-send-email-cpaul@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1437672800-10062-1-git-send-email-cpaul@redhat.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Stephen Chandler Paul <cpaul@redhat.com>
+Cc: Dmitry Torokhov <dmitry.torokhov@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Greg KH <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, Joe Perches <joe@perches.com>, Jiri Slaby <jslaby@suse.com>, Vishnu Patekar <vishnupatekar0510@gmail.com>, Sebastian Ott <sebott@linux.vnet.ibm.com>, linux-doc@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, "open list:HID CORE LAYER" <linux-input@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Hans de Goede <hdegoede@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Rob,
+Hi
 
-> On Sep 16, 2015, at 19:45 , Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote=
-:
->=20
-> On Wed, Sep 16, 2015 at 11:09 AM, Pantelis Antoniou
-> <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
->> The two default overlay attributes are:
->>=20
->> * A targets sysfs attribute listing the targets of the installed
->> overlay. The targets list the path on the kernel's device tree
->> where each overlay fragment is applied to
->>=20
->> * A per overlay can_remove sysfs attribute that reports whether
->> the overlay can be removed or not due to another overlapping overlay=
-=2E
->>=20
->> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
->> ---
->=20
-> How about an answer to my v4 questions?
->=20
+On Thu, Jul 23, 2015 at 7:33 PM, Stephen Chandler Paul <cpaul@redhat.com> wrote:
+> Debugging input devices, specifically laptop touchpads, can be tricky
+> without having the physical device handy. Here we try to remedy that
+> with userio. This module allows an application to connect to a character
+> device provided by the kernel, and emulate any serio device. In
+> combination with userspace programs that can record PS/2 devices and
+> replay them through the /dev/userio device, this allows developers to
+> debug driver issues on the PS/2 level with devices simply by requesting
+> a recording from the user experiencing the issue without having to have
+> the physical hardware in front of them.
+>
+> Signed-off-by: Stephen Chandler Paul <cpaul@redhat.com>
+> Reviewed-by: Benjamin Tissoires <benjamin.tissoires@gmail.com>
+>
+> ---
+>                                     Changes
+> * Use one lock, not two
+> * Don't use devm_kzalloc()
+> * Add lock/unlock operations in userio_char_write()
+> * Handle mutex locking and head/tail checking the same way we do in evdev, wait
+>   until there's data available, attempt to grab the mutex but give up if the
+>   data's been taken by another thread and try again until we get the data
+> * Don't clear userio->serio->port_data, serio_port_unregister() does this for us
+> * Put userio->head == userio->tail test inside mutex lock
+> * Add comment making note of the fact that we don't have to free serio
+>
+>  Documentation/input/userio.txt |  70 +++++++++++
+>  MAINTAINERS                    |   6 +
+>  drivers/input/serio/Kconfig    |  11 ++
+>  drivers/input/serio/Makefile   |   1 +
+>  drivers/input/serio/userio.c   | 274 +++++++++++++++++++++++++++++++++++++++++
+>  include/uapi/linux/userio.h    |  42 +++++++
+>  6 files changed, 404 insertions(+)
+>  create mode 100644 Documentation/input/userio.txt
+>  create mode 100644 drivers/input/serio/userio.c
+>  create mode 100644 include/uapi/linux/userio.h
+>
+> diff --git a/Documentation/input/userio.txt b/Documentation/input/userio.txt
+> new file mode 100644
+> index 0000000..0880c0f
+> --- /dev/null
+> +++ b/Documentation/input/userio.txt
+> @@ -0,0 +1,70 @@
+> +                             The userio Protocol
+> +            (c) 2015 Stephen Chandler Paul <thatslyude@gmail.com>
+> +                             Sponsored by Red Hat
+> +--------------------------------------------------------------------------------
+> +
+> +1. Introduction
+> +~~~~~~~~~~~~~~~
+> +  This module is intended to try to make the lives of input driver developers
+> +easier by allowing them to test various serio devices (mainly the various
+> +touchpads found on laptops) without having to have the physical device in front
+> +of them. userio accomplishes this by allowing any privileged userspace program
+> +to directly interact with the kernel's serio driver and control a virtual serio
+> +port from there.
+> +
+> +2. Usage overview
+> +~~~~~~~~~~~~~~~~~
+> +  In order to interact with the userio kernel module, one simply opens the
+> +/dev/userio character device in their applications. Commands are sent to the
+> +kernel module by writing to the device, and any data received from the serio
+> +driver is read as-is from the /dev/userio device. All of the structures and
+> +macros you need to interact with the device are defined in <linux/userio.h> and
+> +<linux/serio.h>.
+> +
+> +3. Command Structure
+> +~~~~~~~~~~~~~~~~~~~~
+> +  The struct used for sending commands to /dev/userio is as follows:
+> +
+> +       struct userio_cmd {
+> +               __u8 type;
+> +               __u8 data;
+> +       };
+> +
+> +  "type" describes the type of command that is being sent. This can be any one
+> +of the USERIO_CMD macros defined in <linux/userio.h>. "data" is the argument
+> +that goes along with the command. In the event that the command doesn't have an
+> +argument, this field can be left untouched and will be ignored by the kernel.
+> +Each command should be sent by writing the struct directly to the character
+> +device. In the event that the command you send is invalid, an error will be
+> +returned by the character device and a more descriptive error will be printed
+> +to the kernel log. Only one command can be sent at a time, any additional data
+> +written to the character device after the initial command will be ignored.
+> +  To close the virtual serio port, just close /dev/userio.
+> +
+> +4. Commands
+> +~~~~~~~~~~~
+> +
+> +4.1 USERIO_CMD_REGISTER
+> +~~~~~~~~~~~~~~~~~~~~~~~
+> +  Registers the port with the serio driver and begins transmitting data back and
+> +forth. Registration can only be performed once a port type is set with
+> +USERIO_CMD_SET_PORT_TYPE. Has no argument.
+> +
+> +4.2 USERIO_CMD_SET_PORT_TYPE
+> +~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+> +  Sets the type of port we're emulating, where "data" is the port type being
+> +set. Can be any of the macros from <linux/serio.h>. For example: SERIO_8042
+> +would set the port type to be a normal PS/2 port.
+> +
+> +4.3 USERIO_CMD_SEND_INTERRUPT
+> +~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+> +  Sends an interrupt through the virtual serio port to the serio driver, where
+> +"data" is the interrupt data being sent.
+> +
+> +5. Userspace tools
+> +~~~~~~~~~~~~~~~~~~
+> +  The userio userspace tools are able to record PS/2 devices using some of the
+> +debugging information from i8042, and play back the devices on /dev/userio. The
+> +latest version of these tools can be found at:
+> +
+> +       https://github.com/Lyude/ps2emu
+> diff --git a/MAINTAINERS b/MAINTAINERS
+> index a226416..68a0977 100644
+> --- a/MAINTAINERS
+> +++ b/MAINTAINERS
+> @@ -10877,6 +10877,12 @@ S:     Maintained
+>  F:     drivers/media/v4l2-core/videobuf2-*
+>  F:     include/media/videobuf2-*
+>
+> +VIRTUAL PS/2 DEVICE DRIVER
 
-Q. "What will a user do with this information? Can this just be debugfs=
-?
-Don't we already have the targets in the overlay itself? If we are
-going to provide some overlay info, shouldn't we provide all of it
-(i.e. the FDT). For example, what do we do on a kexec?=E2=80=9D
+Forgot to update this? Should say SERIO, right?
 
-A. The user can easily tell whether an overlay is removable using the c=
-an_remove
-attribute. This can be used by higher layer to inform users whether it=E2=
-=80=99s safe to
-remove an overlay or not (perhaps light up a BUSY led)
+> +M:     Stephen Chandler Paul <thatslyude@gmail.com>
+> +S:     Maintained
+> +F:     drivers/input/serio/ps2emu.c
+> +F:     include/uapi/linux/ps2emu.h
+> +
+>  VIRTIO CONSOLE DRIVER
+>  M:     Amit Shah <amit.shah@redhat.com>
+>  L:     virtualization@lists.linux-foundation.org
+> diff --git a/drivers/input/serio/Kconfig b/drivers/input/serio/Kconfig
+> index 200841b..22b8b58 100644
+> --- a/drivers/input/serio/Kconfig
+> +++ b/drivers/input/serio/Kconfig
+> @@ -292,4 +292,15 @@ config SERIO_SUN4I_PS2
+>           To compile this driver as a module, choose M here: the
+>           module will be called sun4i-ps2.
+>
+> +config USERIO
+> +       tristate "Virtual serio device support"
+> +       help
+> +         Say Y here if you want to emulate serio devices using the userio
+> +         kernel module.
+> +
+> +         To compile this driver as a module, choose M here: the module will be
+> +         called userio.
+> +
+> +         If you are unsure, say N.
+> +
+>  endif
+> diff --git a/drivers/input/serio/Makefile b/drivers/input/serio/Makefile
+> index c600089..2374ef9 100644
+> --- a/drivers/input/serio/Makefile
+> +++ b/drivers/input/serio/Makefile
+> @@ -30,3 +30,4 @@ obj-$(CONFIG_SERIO_APBPS2)    += apbps2.o
+>  obj-$(CONFIG_SERIO_OLPC_APSP)  += olpc_apsp.o
+>  obj-$(CONFIG_HYPERV_KEYBOARD)  += hyperv-keyboard.o
+>  obj-$(CONFIG_SERIO_SUN4I_PS2)  += sun4i-ps2.o
+> +obj-$(CONFIG_USERIO)           += userio.o
+> diff --git a/drivers/input/serio/userio.c b/drivers/input/serio/userio.c
+> new file mode 100644
+> index 0000000..043fbbf
+> --- /dev/null
+> +++ b/drivers/input/serio/userio.c
+> @@ -0,0 +1,274 @@
+> +/*
+> + * userio kernel serio device emulation module
+> + * Copyright (C) 2015 Red Hat
+> + * Copyright (C) 2015 Stephen Chandler Paul <thatslyude@gmail.com>
+> + *
+> + * This program is free software; you can redistribute it and/or modify it
+> + * under the terms of the GNU Lesser General Public License as published by the
+> + * Free Software Foundation; either version 2 of the License, or (at your
+> + * option) any later version.
+> + *
+> + * This program is distributed in the hope that it will be useful, but WITHOUT
+> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+> + * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+> + * details.
+> + */
+> +#include <linux/circ_buf.h>
+> +#include <linux/mutex.h>
+> +#include <linux/module.h>
+> +#include <linux/init.h>
+> +#include <linux/kernel.h>
+> +#include <linux/serio.h>
+> +#include <linux/slab.h>
+> +#include <linux/fs.h>
+> +#include <linux/miscdevice.h>
+> +#include <linux/sched.h>
+> +#include <linux/poll.h>
+> +#include <uapi/linux/userio.h>
+> +
+> +#define USERIO_NAME "userio"
+> +#define USERIO_BUFSIZE 16
+> +
+> +static const struct file_operations userio_fops;
 
-The targets attribute can let the user figure out what devices (as evid=
-ent by the
-nodes they point to) are affected by the overlay. This was actually use=
-d by me
-to figure out the TI LCDC DRM driver use of overlays by looking at the =
-targets
-pointing there.
+This forward declaration is not needed.
 
-Debugfs is a bad fit since these are per-overlay attributes that a user=
--space application
-can use to present some kind of meaningful information to the user.
+> +static struct miscdevice userio_misc;
+> +
+> +struct userio_device {
+> +       struct serio *serio;
+> +       struct mutex lock;
+> +
+> +       bool running;
+> +
+> +       u8 head;
+> +       u8 tail;
+> +
+> +       unsigned char buf[USERIO_BUFSIZE];
+> +
+> +       wait_queue_head_t waitq;
+> +};
+> +
+> +/**
+> + * userio_device_write - Write data from serio to a userio device in userspace
+> + * @id: The serio port for the userio device
+> + * @val: The data to write to the device
+> + */
+> +static int userio_device_write(struct serio *id, unsigned char val)
+> +{
+> +       struct userio_device *userio = id->port_data;
+> +
+> +       if (!userio)
+> +               return -1;
 
-Providing the FDT of the overlay is only possible when the overlay orig=
-in is indeed a
-DT blob, which is not always the case. The overlay API only uses unflat=
-tened trees.
-The DT blob can be provided only by the caller, which has access to the=
- blob.
-To hang the FDT blob to overlay kobj we need to extend the overlay API =
-to=20
-return the kobj of the overlay (which I intent to do in the near future=
-).
+How can that happen? Can't you drop that condition?
 
-Kexec is really tricky. I purposefully didn=E2=80=99t try to address it=
- since in the
-previous discussion with Grant we couldn=E2=80=99t get to an agreed def=
-ault. It seems it is
-a per-platform/per-policy decision, and we lack the users to tell us wh=
-ich is the most
-prominent.
-We have two ways to handle it: a) Leave the kernel tree as it is, flatt=
-en it and
-kexec with it. That would remove the overlays but the state of the the =
-devices would persist.
-b) Remove the overlays in the proper sequence and kexec with the clean =
-kernel tree. That
-would necessitate the re-application of the overlays to get to the same=
- device tree state.
+> +
+> +       mutex_lock(&userio->lock);
+> +
+> +       userio->buf[userio->head] = val;
+> +       userio->head = (userio->head + 1) % USERIO_BUFSIZE;
+> +
+> +       if (userio->head == userio->tail)
+> +               dev_warn(userio_misc.this_device,
+> +                        "Buffer overflowed, userio client isn't keeping up");
+> +
+> +       mutex_unlock(&userio->lock);
+> +
+> +       wake_up_interruptible(&userio->waitq);
+> +
+> +       return 0;
+> +}
+> +
+> +static int userio_char_open(struct inode *inode, struct file *file)
+> +{
+> +       struct userio_device *userio;
+> +
+> +       userio = kzalloc(sizeof(struct userio_device), GFP_KERNEL);
+> +       if (!userio)
+> +               return -ENOMEM;
+> +
+> +       mutex_init(&userio->lock);
+> +       init_waitqueue_head(&userio->waitq);
+> +
+> +       userio->serio = kzalloc(sizeof(struct serio), GFP_KERNEL);
+> +       if (!userio->serio) {
+> +               kfree(userio);
+> +               return -ENOMEM;
+> +       }
+> +
+> +       userio->serio->write = userio_device_write;
+> +       userio->serio->port_data = userio;
+> +
+> +       file->private_data = userio;
+> +
+> +       return 0;
+> +}
+> +
+> +static int userio_char_release(struct inode *inode, struct file *file)
+> +{
+> +       struct userio_device *userio = file->private_data;
+> +
+> +       if (userio->serio) {
+
+This condition is always true, so you can drop it.
+
+> +               /* Don't free the serio port here, serio_unregister_port() does
+> +                * this for us */
+> +               if (userio->running)
+> +                       serio_unregister_port(userio->serio);
+> +               else
+> +                       kfree(userio->serio);
+> +       }
+> +
+> +       kfree(userio);
+> +
+> +       return 0;
+> +}
+> +
+> +static ssize_t userio_char_read(struct file *file, char __user *buffer,
+> +                               size_t count, loff_t *ppos)
+> +{
+> +       struct userio_device *userio = file->private_data;
+> +       int ret;
+> +       size_t nonwrap_len, copylen;
+> +
+> +       if (!count)
+> +               return 0;
+> +
+> +       /*
+> +        * By the time we get here, the data that was waiting might have been
+> +        * taken by another thread. Grab the mutex and check if there's still
+> +        * any data waiting, otherwise repeat repeat this process until we have
+
+"repeat repeat" -> "repeat"
+
+> +        * data (unless the file descriptor is non-blocking of course)
+> +        */
+> +       for (;;) {
+> +               ret = mutex_lock_interruptible(&userio->lock);
+> +               if (ret)
+> +                       return ret;
+> +
+> +               if (userio->head != userio->tail)
+> +                       break;
+> +
+> +               mutex_unlock(&userio->lock);
+> +
+> +               if (file->f_flags & O_NONBLOCK)
+> +                       return -EAGAIN;
+> +
+> +               ret = wait_event_interruptible(userio->waitq,
+> +                                              userio->head != userio->tail);
+> +               if (ret)
+> +                       return ret;
+> +       }
+> +
+> +       nonwrap_len = CIRC_CNT_TO_END(userio->head, userio->tail,
+> +                                     USERIO_BUFSIZE);
+> +       copylen = min(nonwrap_len, count);
+> +
+> +       if (copy_to_user(buffer, &userio->buf[userio->tail], copylen)) {
+> +               mutex_unlock(&userio->lock);
+> +               return -EFAULT;
+> +       }
+> +
+> +       userio->tail = (userio->tail + copylen) % USERIO_BUFSIZE;
+> +
+> +       mutex_unlock(&userio->lock);
+> +
+> +       return copylen;
+> +}
+> +
+> +static ssize_t userio_char_write(struct file *file, const char __user *buffer,
+> +                                size_t count, loff_t *ppos)
+> +{
+> +       struct userio_device *userio = file->private_data;
+> +       struct userio_cmd cmd;
+> +       int ret;
+> +
+> +       if (count < sizeof(cmd))
+> +               return -EINVAL;
+> +
+> +       if (copy_from_user(&cmd, buffer, sizeof(cmd)))
+> +               return -EFAULT;
+> +
+> +       ret = mutex_lock_interruptible(&userio->lock);
+> +       if (ret)
+> +               return ret;
+> +
+> +       ret = -EINVAL;
+
+I'd avoid declaring error-codes before checking a condition. Sure,
+it's less code, but quite hard to read when figuring out what codes
+are generated by each error-path.
+
+Regardless of this, please also try to find more descriptive error
+codes. EINVAL is fine for paths that never change, but really annoying
+for everything else. This is especially the case for fallbacks, but
+see below.
+
+> +
+> +       switch (cmd.type) {
+> +       case USERIO_CMD_REGISTER:
+> +               if (!userio->serio->id.type) {
+> +                       dev_warn(userio_misc.this_device,
+> +                                "No port type given on /dev/userio\n");
+> +
+
+    ret = -EINVAL;
+
+> +                       goto out;
+> +               }
+> +               if (userio->running) {
+> +                       dev_warn(userio_misc.this_device,
+> +                                "Begin command sent, but we're already running\n");
+> +
+
+How about:
+    ret = -EBUSY;
+
+> +                       goto out;
+> +               }
+> +
+> +               userio->running = true;
+> +               serio_register_port(userio->serio);
+> +               break;
+> +
+> +       case USERIO_CMD_SET_PORT_TYPE:
+> +               if (userio->running) {
+> +                       dev_warn(userio_misc.this_device,
+> +                                "Can't change port type on an already running userio instance\n");
+> +
+
+    ret = -EBUSY;
+
+> +                       goto out;
+> +               }
+> +
+> +               userio->serio->id.type = cmd.data;
+> +               break;
+> +
+> +       case USERIO_CMD_SEND_INTERRUPT:
+> +               if (!userio->running) {
+> +                       dev_warn(userio_misc.this_device,
+> +                                "The device must be registered before sending interrupts\n");
+> +
+
+How about:
+    ret = -ENODEV;
+
+> +                       goto out;
+> +               }
+> +
+> +               serio_interrupt(userio->serio, cmd.data, 0);
+> +               break;
+> +
+> +       default:
+
+Please use a proper error-code here, as you might check for it once
+you add new commands. Common codes here are ENOTTY (grossly misnamed,
+but historically picked) or EOPNOTSUPP.
+
+> +               goto out;
+> +       }
+> +
+> +       ret = sizeof(cmd);
+
+Your handler silently ignores any trailing bytes, which is kinda
+weird, but I guess it's fine.
+
+> +
+> +out:
+> +       mutex_unlock(&userio->lock);
+> +       return ret;
+> +}
+> +
+> +static unsigned int userio_char_poll(struct file *file, poll_table *wait)
+> +{
+> +       struct userio_device *userio = file->private_data;
+> +
+> +       poll_wait(file, &userio->waitq, wait);
+> +
+> +       if (userio->head != userio->tail)
+> +               return POLLIN | POLLRDNORM;
+> +
+> +       return 0;
+> +}
+> +
+> +static const struct file_operations userio_fops = {
+> +       .owner          = THIS_MODULE,
+> +       .open           = userio_char_open,
+> +       .release        = userio_char_release,
+> +       .read           = userio_char_read,
+> +       .write          = userio_char_write,
+> +       .poll           = userio_char_poll,
+> +       .llseek         = no_llseek,
+> +};
+> +
+> +static struct miscdevice userio_misc = {
+> +       .fops   = &userio_fops,
+> +       .minor  = MISC_DYNAMIC_MINOR,
+
+Please allocate this statically, otherwise on-demand loading will not
+work. That is, add a new entry named USERIO_MINOR to
+linux/miscdevice.h and set it here. Then you also need to add these
+lines below:
+
+        MODULE_ALIAS_MISCDEV(USERIO_MINOR);
+        MODULE_ALIAS("devname:" USERIO_NAME);
+
+For background information, have a look at:
+
+    commit 19872d20c890073c5207d9e02bb8f14d451a11eb
+    Author: David Herrmann <dh.herrmann@gmail.com>
+    Date:   Mon Sep 9 18:33:54 2013 +0200
+
+        HID: uhid: allocate static minor
+
+> +       .name   = USERIO_NAME,
+> +};
+> +
+> +MODULE_AUTHOR("Stephen Chandler Paul <thatslyude@gmail.com>");
+> +MODULE_DESCRIPTION("userio");
+
+This is not really a module description ;) How about:
+
+MODULE_DESCRIPTION("Virtual Serio Device Support");
+
+> +MODULE_LICENSE("GPL");
+> +
+> +module_driver(userio_misc, misc_register, misc_deregister);
+> diff --git a/include/uapi/linux/userio.h b/include/uapi/linux/userio.h
+> new file mode 100644
+> index 0000000..da0a3d6
+> --- /dev/null
+> +++ b/include/uapi/linux/userio.h
+> @@ -0,0 +1,42 @@
+> +/*
+> + * userio.h
+
+Try to avoid mentioning filenames. This just gets out of date when
+moved, etc. and doesn't add much value. Just replace it with a module
+description "userio: virtual serio device support".
+
+> + * Copyright (C) 2015 Red Hat
+> + * Copyright (C) 2015 Lyude (Stephen Chandler Paul) <cpaul@redhat.com>
+> + *
+> + * This program is free software; you can redistribute it and/or modify it
+> + * under the terms of the GNU Lesser General Public License as published by the
+> + * Free Software Foundation; either version 2 of the License, or (at your
+> + * option) any later version.
+> + *
+> + * This program is distributed in the hope that it will be useful, but WITHOUT
+> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+> + * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+> + * details.
+> + *
+> + * This is the public header used for user-space communication with the userio
+> + * driver. __attribute__((__packed__)) is used  for all structs to keep ABI
+> + * compatibility between all architectures.
+> + */
+> +
+> +#ifndef _USERIO_H
+> +#define _USERIO_H
+> +
+> +#include <linux/types.h>
+> +
+> +#define USERIO_CMD_REGISTER            0
+> +#define USERIO_CMD_SET_PORT_TYPE       1
+> +#define USERIO_CMD_SEND_INTERRUPT      2
+
+Why not an enum?
+
+> +
+> +/*
+> + * userio Commands
+> + * All commands sent to /dev/userio are encoded using this structure. The type
+> + * field should contain a USERIO_CMD* value that indicates what kind of command
+> + * is being sent to userio. The data field should contain the accompanying
+> + * argument for the command, if there is one.
+> + */
+> +struct userio_cmd {
+> +       __u8 type;
+> +       __u8 data;
+> +} __attribute__((__packed__));
+
+What's your plan on allowing future extensions with bigger payloads?
+Do you intend to follow the uhid-style and just subclass the
+structures like:
+
+struct userio_cmd_foobar {
+        struct userio_cmd base;
+        __u8 foobar[128];
+} __attribute__((__packed__));
 
 
-> Rob
->=20
 
-Regards
+Looks good to me!
 
-=E2=80=94 Pantelis
+Thanks
+David
 
->> drivers/of/overlay.c | 53 ++++++++++++++++++++++++++++++++++++++++++=
-++++++++++
->> 1 file changed, 53 insertions(+)
->>=20
->> diff --git a/drivers/of/overlay.c b/drivers/of/overlay.c
->> index 62cfb99..cff3c05 100644
->> --- a/drivers/of/overlay.c
->> +++ b/drivers/of/overlay.c
->> @@ -373,8 +373,61 @@ static const struct attribute *overlay_global_a=
-ttrs[] =3D {
->>        NULL
->> };
->>=20
->> +static ssize_t can_remove_show(struct kobject *kobj,
->> +               struct kobj_attribute *attr, char *buf)
->> +{
->> +       struct of_overlay *ov =3D kobj_to_overlay(kobj);
->> +
->> +       return snprintf(buf, PAGE_SIZE, "%d\n", overlay_removal_is_o=
-k(ov));
->> +}
->> +
->> +static ssize_t targets_show(struct kobject *kobj,
->> +               struct kobj_attribute *attr, char *buf)
->> +{
->> +       struct of_overlay *ov =3D kobj_to_overlay(kobj);
->> +       struct of_overlay_info *ovinfo;
->> +       char *s, *e;
->> +       ssize_t ret;
->> +       int i, len;
->> +
->> +       s =3D buf;
->> +       e =3D buf + PAGE_SIZE;
->> +
->> +       mutex_lock(&of_mutex);
->> +
->> +       /* targets */
->> +       for (i =3D 0; i < ov->count; i++) {
->> +               ovinfo =3D &ov->ovinfo_tab[i];
->> +
->> +               len =3D snprintf(s, e - s, "%s\n",
->> +                               of_node_full_name(ovinfo->target));
->> +               if (len =3D=3D 0) {
->> +                       ret =3D -ENOSPC;
->> +                       goto err;
->> +               }
->> +               s +=3D len;
->> +       }
->> +
->> +       /* the buffer is zero terminated */
->> +       ret =3D s - buf;
->> +err:
->> +       mutex_unlock(&of_mutex);
->> +       return ret;
->> +}
->> +
->> +static struct kobj_attribute can_remove_attr =3D __ATTR_RO(can_remo=
-ve);
->> +static struct kobj_attribute targets_attr =3D __ATTR_RO(targets);
->> +
->> +static struct attribute *overlay_attrs[] =3D {
->> +       &can_remove_attr.attr,
->> +       &targets_attr.attr,
->> +       NULL
->> +};
->> +
->> static struct kobj_type of_overlay_ktype =3D {
->>        .release =3D of_overlay_release,
->> +       .sysfs_ops =3D &kobj_sysfs_ops,   /* default kobj sysfs ops =
-*/
->> +       .default_attrs =3D overlay_attrs,
->> };
->>=20
->> static struct kset *ov_kset;
->> --
->> 1.7.12
->>=20
+> +
+> +#endif /* !_USERIO_H */
+> --
+> 2.4.3
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-input" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
