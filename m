@@ -1,50 +1,104 @@
-From: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
-Subject: Re: [RFC PATCH v2 7/9] arm64: allocate sys_membarrier system call
- number
-Date: Wed, 16 Sep 2015 17:39:45 +0100
-Message-ID: <20150916163945.GQ28771@arm.com>
-References: <1441642556-30972-1-git-send-email-mathieu.desnoyers@efficios.com>
- <1441642556-30972-8-git-send-email-mathieu.desnoyers@efficios.com>
- <4692929.9334.1442416719904.JavaMail.zimbra@efficios.com>
- <20150916163527.GO28771@arm.com>
- <2075941251.9404.1442421484155.JavaMail.zimbra@efficios.com>
+From: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v5 3/4] of: overlay: add per overlay sysfs attributes
+Date: Wed, 16 Sep 2015 11:45:04 -0500
+Message-ID: <CAL_Jsq+N43c-A175QC0L9jpEP9ZptugDLChMEJgs76=1NEP3Mw@mail.gmail.com>
+References: <1442419751-4846-1-git-send-email-pantelis.antoniou@konsulko.com> <1442419751-4846-4-git-send-email-pantelis.antoniou@konsulko.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <2075941251.9404.1442421484155.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+In-Reply-To: <1442419751-4846-4-git-send-email-pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Catalin Marinas <Catalin.Marinas-5wv7dgnIgG8@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Cc: Frank Rowand <frowand.list-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pantelis Antoniou <panto-wVdstyuyKrO8r51toPun2/C9HSW9iNxf@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 16, 2015 at 05:38:04PM +0100, Mathieu Desnoyers wrote:
-> ----- On Sep 16, 2015, at 12:35 PM, Will Deacon will.deacon-5wv7dgnIgG8@public.gmane.org wrote:
-> 
-> > Hi Mathieu,
-> > 
-> > On Wed, Sep 16, 2015 at 04:18:39PM +0100, Mathieu Desnoyers wrote:
-> >> ----- On Sep 7, 2015, at 12:15 PM, Mathieu Desnoyers
-> >> mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org wrote:
-> >> 
-> >> > arm64 sys_membarrier number is already wired for arm64 through
-> >> > asm-generic/unistd.h, but needs to be allocated separately for
-> >> > the 32-bit compability layer of arm64.
-> >> > 
-> >> > [ Untested on this architecture. To try it out: fetch linux-next/akpm,
-> >> >  apply this patch, build/run a membarrier-enabled kernel, and do make
-> >> >  kselftest. ]
-> >> 
-> >> sys_membarrier has been merged into Linux 4.3-rc1. sys_membarrier can therefore
-> >> be tested on top of Linus' master.
-> > 
-> > Just to say that I'm happy to merge this once arch/arm/ also has the
-> > syscall wired up. It'd be a bit weird to have the support in the arm64
-> > compat layer but not the arch/arm/ native kernel!
-> 
-> Sounds good! We're currently testing sys_membarrier on a wandboard. We'll
-> provide feedback by replying to the ARM patch thread soon.
+On Wed, Sep 16, 2015 at 11:09 AM, Pantelis Antoniou
+<pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
+> The two default overlay attributes are:
+>
+> * A targets sysfs attribute listing the targets of the installed
+> overlay. The targets list the path on the kernel's device tree
+> where each overlay fragment is applied to
+>
+> * A per overlay can_remove sysfs attribute that reports whether
+> the overlay can be removed or not due to another overlapping overlay.
+>
+> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+> ---
 
-Ok. I was about to kick the selftest on my Juno board (arm64).
+How about an answer to my v4 questions?
 
-Will
+Rob
+
+>  drivers/of/overlay.c | 53 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 53 insertions(+)
+>
+> diff --git a/drivers/of/overlay.c b/drivers/of/overlay.c
+> index 62cfb99..cff3c05 100644
+> --- a/drivers/of/overlay.c
+> +++ b/drivers/of/overlay.c
+> @@ -373,8 +373,61 @@ static const struct attribute *overlay_global_attrs[] = {
+>         NULL
+>  };
+>
+> +static ssize_t can_remove_show(struct kobject *kobj,
+> +               struct kobj_attribute *attr, char *buf)
+> +{
+> +       struct of_overlay *ov = kobj_to_overlay(kobj);
+> +
+> +       return snprintf(buf, PAGE_SIZE, "%d\n", overlay_removal_is_ok(ov));
+> +}
+> +
+> +static ssize_t targets_show(struct kobject *kobj,
+> +               struct kobj_attribute *attr, char *buf)
+> +{
+> +       struct of_overlay *ov = kobj_to_overlay(kobj);
+> +       struct of_overlay_info *ovinfo;
+> +       char *s, *e;
+> +       ssize_t ret;
+> +       int i, len;
+> +
+> +       s = buf;
+> +       e = buf + PAGE_SIZE;
+> +
+> +       mutex_lock(&of_mutex);
+> +
+> +       /* targets */
+> +       for (i = 0; i < ov->count; i++) {
+> +               ovinfo = &ov->ovinfo_tab[i];
+> +
+> +               len = snprintf(s, e - s, "%s\n",
+> +                               of_node_full_name(ovinfo->target));
+> +               if (len == 0) {
+> +                       ret = -ENOSPC;
+> +                       goto err;
+> +               }
+> +               s += len;
+> +       }
+> +
+> +       /* the buffer is zero terminated */
+> +       ret = s - buf;
+> +err:
+> +       mutex_unlock(&of_mutex);
+> +       return ret;
+> +}
+> +
+> +static struct kobj_attribute can_remove_attr = __ATTR_RO(can_remove);
+> +static struct kobj_attribute targets_attr = __ATTR_RO(targets);
+> +
+> +static struct attribute *overlay_attrs[] = {
+> +       &can_remove_attr.attr,
+> +       &targets_attr.attr,
+> +       NULL
+> +};
+> +
+>  static struct kobj_type of_overlay_ktype = {
+>         .release = of_overlay_release,
+> +       .sysfs_ops = &kobj_sysfs_ops,   /* default kobj sysfs ops */
+> +       .default_attrs = overlay_attrs,
+>  };
+>
+>  static struct kset *ov_kset;
+> --
+> 1.7.12
+>
