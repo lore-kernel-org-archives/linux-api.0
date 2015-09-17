@@ -1,133 +1,539 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v2 9/9] [media] omap3isp: support 64-bit version of
-	omap3isp_stat_data
-Date: Thu, 17 Sep 2015 23:19:40 +0200
-Message-ID: <1442524780-781677-10-git-send-email-arnd@arndb.de>
-References: <1442524780-781677-1-git-send-email-arnd@arndb.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <1442524780-781677-1-git-send-email-arnd@arndb.de>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: linux-media@vger.kernel.org
-Cc: linux-samsung-soc@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Hans Verkuil <hverkuil@xs4all.nl>
+From: cpaul@redhat.com
+Subject: [PATCH v5] Input: Add userio module
+Date: Thu, 17 Sep 2015 19:00:10 -0400
+Message-ID: <1442530810-28519-1-git-send-email-cpaul@redhat.com>
+Return-path: <linux-doc-owner@vger.kernel.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: David Herrmann <dh.herrmann@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, "open list:HID CORE LAYER" <linux-input@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Cc: Dmitry Torokhov <dmitry.torokhov@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Greg KH <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, Joe Perches <joe@perches.com>, Jiri Slaby <jslaby@suse.com>, Vishnu Patekar <vishnupatekar0510@gmail.com>, Sebastian Ott <sebott@linux.vnet.ibm.com>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Hans de Goede <hdegoede@redhat.com>, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-QyBsaWJyYXJpZXMgd2l0aCA2NC1iaXQgdGltZV90IHVzZSBhbiBpbmNvbXBhdGlibGUgZm9ybWF0
-IGZvcgpzdHJ1Y3Qgb21hcDNpc3Bfc3RhdF9kYXRhLiBUaGlzIGNoYW5nZXMgdGhlIGtlcm5lbCBj
-b2RlIHRvCnN1cHBvcnQgZWl0aGVyIHZlcnNpb24sIGJ5IG1vdmluZyBvdmVyIHRoZSBub3JtYWwg
-aGFuZGxpbmcKdG8gdGhlIDY0LWJpdCB2YXJpYW50LCBhbmQgYWRkaW5nIGNvbXBhdGlibGl0eSBj
-b2RlIHRvIGhhbmRsZQp0aGUgb2xkIGJpbmFyeSBmb3JtYXQgd2l0aCB0aGUgZXhpc3RpbmcgaW9j
-dGwgY29tbWFuZCBjb2RlLgoKRm9ydHVuYXRlbHksIHRoZSBjb21tYW5kIGNvZGUgaW5jbHVkZXMg
-dGhlIHNpemUgb2YgdGhlIHN0cnVjdHVyZSwKc28gdGhlIGRpZmZlcmVuY2UgZ2V0cyBoYW5kbGVk
-IGF1dG9tYXRpY2FsbHkuCgpTaWduZWQtb2ZmLWJ5OiBBcm5kIEJlcmdtYW5uIDxhcm5kQGFybmRi
-LmRlPgotLS0KIGRyaXZlcnMvbWVkaWEvcGxhdGZvcm0vb21hcDNpc3AvaXNwaDNhX2Fld2IuYyB8
-ICAyICsrCiBkcml2ZXJzL21lZGlhL3BsYXRmb3JtL29tYXAzaXNwL2lzcGgzYV9hZi5jICAgfCAg
-MiArKwogZHJpdmVycy9tZWRpYS9wbGF0Zm9ybS9vbWFwM2lzcC9pc3BoaXN0LmMgICAgIHwgIDIg
-KysKIGRyaXZlcnMvbWVkaWEvcGxhdGZvcm0vb21hcDNpc3AvaXNwc3RhdC5jICAgICB8IDE4ICsr
-KysrKysrKysrKysrKystLQogZHJpdmVycy9tZWRpYS9wbGF0Zm9ybS9vbWFwM2lzcC9pc3BzdGF0
-LmggICAgIHwgIDIgKysKIGluY2x1ZGUvdWFwaS9saW51eC9vbWFwM2lzcC5oICAgICAgICAgICAg
-ICAgICB8IDE5ICsrKysrKysrKysrKysrKysrKysKIDYgZmlsZXMgY2hhbmdlZCwgNDMgaW5zZXJ0
-aW9ucygrKSwgMiBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9kcml2ZXJzL21lZGlhL3BsYXRm
-b3JtL29tYXAzaXNwL2lzcGgzYV9hZXdiLmMgYi9kcml2ZXJzL21lZGlhL3BsYXRmb3JtL29tYXAz
-aXNwL2lzcGgzYV9hZXdiLmMKaW5kZXggY2NhZjkyZjM5MjM2Li4yZDU2NzcyNTYwOGYgMTAwNjQ0
-Ci0tLSBhL2RyaXZlcnMvbWVkaWEvcGxhdGZvcm0vb21hcDNpc3AvaXNwaDNhX2Fld2IuYworKysg
-Yi9kcml2ZXJzL21lZGlhL3BsYXRmb3JtL29tYXAzaXNwL2lzcGgzYV9hZXdiLmMKQEAgLTI1MCw2
-ICsyNTAsOCBAQCBzdGF0aWMgbG9uZyBoM2FfYWV3Yl9pb2N0bChzdHJ1Y3QgdjRsMl9zdWJkZXYg
-KnNkLCB1bnNpZ25lZCBpbnQgY21kLCB2b2lkICphcmcpCiAJCXJldHVybiBvbWFwM2lzcF9zdGF0
-X2NvbmZpZyhzdGF0LCBhcmcpOwogCWNhc2UgVklESU9DX09NQVAzSVNQX1NUQVRfUkVROgogCQly
-ZXR1cm4gb21hcDNpc3Bfc3RhdF9yZXF1ZXN0X3N0YXRpc3RpY3Moc3RhdCwgYXJnKTsKKwljYXNl
-IFZJRElPQ19PTUFQM0lTUF9TVEFUX1JFUV9USU1FMzI6CisJCXJldHVybiBvbWFwM2lzcF9zdGF0
-X3JlcXVlc3Rfc3RhdGlzdGljc190aW1lMzIoc3RhdCwgYXJnKTsKIAljYXNlIFZJRElPQ19PTUFQ
-M0lTUF9TVEFUX0VOOiB7CiAJCXVuc2lnbmVkIGxvbmcgKmVuID0gYXJnOwogCQlyZXR1cm4gb21h
-cDNpc3Bfc3RhdF9lbmFibGUoc3RhdCwgISEqZW4pOwpkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZWRp
-YS9wbGF0Zm9ybS9vbWFwM2lzcC9pc3BoM2FfYWYuYyBiL2RyaXZlcnMvbWVkaWEvcGxhdGZvcm0v
-b21hcDNpc3AvaXNwaDNhX2FmLmMKaW5kZXggOTI5MzdmN2VlY2VmLi4yYWMwMjM3MTMxOGIgMTAw
-NjQ0Ci0tLSBhL2RyaXZlcnMvbWVkaWEvcGxhdGZvcm0vb21hcDNpc3AvaXNwaDNhX2FmLmMKKysr
-IGIvZHJpdmVycy9tZWRpYS9wbGF0Zm9ybS9vbWFwM2lzcC9pc3BoM2FfYWYuYwpAQCAtMzE0LDYg
-KzMxNCw4IEBAIHN0YXRpYyBsb25nIGgzYV9hZl9pb2N0bChzdHJ1Y3QgdjRsMl9zdWJkZXYgKnNk
-LCB1bnNpZ25lZCBpbnQgY21kLCB2b2lkICphcmcpCiAJCXJldHVybiBvbWFwM2lzcF9zdGF0X2Nv
-bmZpZyhzdGF0LCBhcmcpOwogCWNhc2UgVklESU9DX09NQVAzSVNQX1NUQVRfUkVROgogCQlyZXR1
-cm4gb21hcDNpc3Bfc3RhdF9yZXF1ZXN0X3N0YXRpc3RpY3Moc3RhdCwgYXJnKTsKKwljYXNlIFZJ
-RElPQ19PTUFQM0lTUF9TVEFUX1JFUV9USU1FMzI6CisJCXJldHVybiBvbWFwM2lzcF9zdGF0X3Jl
-cXVlc3Rfc3RhdGlzdGljc190aW1lMzIoc3RhdCwgYXJnKTsKIAljYXNlIFZJRElPQ19PTUFQM0lT
-UF9TVEFUX0VOOiB7CiAJCWludCAqZW4gPSBhcmc7CiAJCXJldHVybiBvbWFwM2lzcF9zdGF0X2Vu
-YWJsZShzdGF0LCAhISplbik7CmRpZmYgLS1naXQgYS9kcml2ZXJzL21lZGlhL3BsYXRmb3JtL29t
-YXAzaXNwL2lzcGhpc3QuYyBiL2RyaXZlcnMvbWVkaWEvcGxhdGZvcm0vb21hcDNpc3AvaXNwaGlz
-dC5jCmluZGV4IDcxMzhiMDQzYTRhYS4uNjY5Yjk3YjA3OWVlIDEwMDY0NAotLS0gYS9kcml2ZXJz
-L21lZGlhL3BsYXRmb3JtL29tYXAzaXNwL2lzcGhpc3QuYworKysgYi9kcml2ZXJzL21lZGlhL3Bs
-YXRmb3JtL29tYXAzaXNwL2lzcGhpc3QuYwpAQCAtNDM2LDYgKzQzNiw4IEBAIHN0YXRpYyBsb25n
-IGhpc3RfaW9jdGwoc3RydWN0IHY0bDJfc3ViZGV2ICpzZCwgdW5zaWduZWQgaW50IGNtZCwgdm9p
-ZCAqYXJnKQogCQlyZXR1cm4gb21hcDNpc3Bfc3RhdF9jb25maWcoc3RhdCwgYXJnKTsKIAljYXNl
-IFZJRElPQ19PTUFQM0lTUF9TVEFUX1JFUToKIAkJcmV0dXJuIG9tYXAzaXNwX3N0YXRfcmVxdWVz
-dF9zdGF0aXN0aWNzKHN0YXQsIGFyZyk7CisJY2FzZSBWSURJT0NfT01BUDNJU1BfU1RBVF9SRVFf
-VElNRTMyOgorCQlyZXR1cm4gb21hcDNpc3Bfc3RhdF9yZXF1ZXN0X3N0YXRpc3RpY3NfdGltZTMy
-KHN0YXQsIGFyZyk7CiAJY2FzZSBWSURJT0NfT01BUDNJU1BfU1RBVF9FTjogewogCQlpbnQgKmVu
-ID0gYXJnOwogCQlyZXR1cm4gb21hcDNpc3Bfc3RhdF9lbmFibGUoc3RhdCwgISEqZW4pOwpkaWZm
-IC0tZ2l0IGEvZHJpdmVycy9tZWRpYS9wbGF0Zm9ybS9vbWFwM2lzcC9pc3BzdGF0LmMgYi9kcml2
-ZXJzL21lZGlhL3BsYXRmb3JtL29tYXAzaXNwL2lzcHN0YXQuYwppbmRleCBmYTk2ZTMzMGM1NjMu
-LjNkNzAzMzI0MjJiNSAxMDA2NDQKLS0tIGEvZHJpdmVycy9tZWRpYS9wbGF0Zm9ybS9vbWFwM2lz
-cC9pc3BzdGF0LmMKKysrIGIvZHJpdmVycy9tZWRpYS9wbGF0Zm9ybS9vbWFwM2lzcC9pc3BzdGF0
-LmMKQEAgLTQ5Niw4ICs0OTYsNyBAQCBpbnQgb21hcDNpc3Bfc3RhdF9yZXF1ZXN0X3N0YXRpc3Rp
-Y3Moc3RydWN0IGlzcHN0YXQgKnN0YXQsCiAJCXJldHVybiBQVFJfRVJSKGJ1Zik7CiAJfQogCi0J
-ZGF0YS0+dHMudHZfc2VjID0gYnVmLT50cy50dl9zZWM7Ci0JZGF0YS0+dHMudHZfdXNlYyA9IGJ1
-Zi0+dHMudHZfdXNlYzsKKwlkYXRhLT50cyA9IGJ1Zi0+dHM7CiAJZGF0YS0+Y29uZmlnX2NvdW50
-ZXIgPSBidWYtPmNvbmZpZ19jb3VudGVyOwogCWRhdGEtPmZyYW1lX251bWJlciA9IGJ1Zi0+ZnJh
-bWVfbnVtYmVyOwogCWRhdGEtPmJ1Zl9zaXplID0gYnVmLT5idWZfc2l6ZTsKQEAgLTUwOSw2ICs1
-MDgsMjEgQEAgaW50IG9tYXAzaXNwX3N0YXRfcmVxdWVzdF9zdGF0aXN0aWNzKHN0cnVjdCBpc3Bz
-dGF0ICpzdGF0LAogCXJldHVybiAwOwogfQogCitpbnQgb21hcDNpc3Bfc3RhdF9yZXF1ZXN0X3N0
-YXRpc3RpY3NfdGltZTMyKHN0cnVjdCBpc3BzdGF0ICpzdGF0LAorCQkJCQlzdHJ1Y3Qgb21hcDNp
-c3Bfc3RhdF9kYXRhX3RpbWUzMiAqZGF0YSkKK3sKKwlzdHJ1Y3Qgb21hcDNpc3Bfc3RhdF9kYXRh
-IGRhdGE2NDsKKwlpbnQgcmV0OworCisJcmV0ID0gb21hcDNpc3Bfc3RhdF9yZXF1ZXN0X3N0YXRp
-c3RpY3Moc3RhdCwgJmRhdGE2NCk7CisKKwlkYXRhLT50cy50dl9zZWMgPSBkYXRhNjQudHMudHZf
-c2VjOworCWRhdGEtPnRzLnR2X3VzZWMgPSBkYXRhNjQudHMudHZfdXNlYzsKKwltZW1jcHkoJmRh
-dGEtPmJ1ZiwgJmRhdGE2NC5idWYsIHNpemVvZigqZGF0YSkgLSBzaXplb2YoZGF0YS0+dHMpKTsK
-KworCXJldHVybiByZXQ7Cit9CisKIC8qCiAgKiBvbWFwM2lzcF9zdGF0X2NvbmZpZyAtIFJlY2Vp
-dmVzIG5ldyBzdGF0aXN0aWMgZW5naW5lIGNvbmZpZ3VyYXRpb24uCiAgKiBAbmV3X2NvbmY6IFBv
-aW50ZXIgdG8gY29uZmlnIHN0cnVjdHVyZS4KZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWVkaWEvcGxh
-dGZvcm0vb21hcDNpc3AvaXNwc3RhdC5oIGIvZHJpdmVycy9tZWRpYS9wbGF0Zm9ybS9vbWFwM2lz
-cC9pc3BzdGF0LmgKaW5kZXggN2I0ZjEzNjU2N2EzLi5iMTllYTZjOGY3MzMgMTAwNjQ0Ci0tLSBh
-L2RyaXZlcnMvbWVkaWEvcGxhdGZvcm0vb21hcDNpc3AvaXNwc3RhdC5oCisrKyBiL2RyaXZlcnMv
-bWVkaWEvcGxhdGZvcm0vb21hcDNpc3AvaXNwc3RhdC5oCkBAIC0xMzAsNiArMTMwLDggQEAgc3Ry
-dWN0IGlzcHN0YXRfZ2VuZXJpY19jb25maWcgewogaW50IG9tYXAzaXNwX3N0YXRfY29uZmlnKHN0
-cnVjdCBpc3BzdGF0ICpzdGF0LCB2b2lkICpuZXdfY29uZik7CiBpbnQgb21hcDNpc3Bfc3RhdF9y
-ZXF1ZXN0X3N0YXRpc3RpY3Moc3RydWN0IGlzcHN0YXQgKnN0YXQsCiAJCQkJICAgICBzdHJ1Y3Qg
-b21hcDNpc3Bfc3RhdF9kYXRhICpkYXRhKTsKK2ludCBvbWFwM2lzcF9zdGF0X3JlcXVlc3Rfc3Rh
-dGlzdGljc190aW1lMzIoc3RydWN0IGlzcHN0YXQgKnN0YXQsCisJCQkJICAgICBzdHJ1Y3Qgb21h
-cDNpc3Bfc3RhdF9kYXRhX3RpbWUzMiAqZGF0YSk7CiBpbnQgb21hcDNpc3Bfc3RhdF9pbml0KHN0
-cnVjdCBpc3BzdGF0ICpzdGF0LCBjb25zdCBjaGFyICpuYW1lLAogCQkgICAgICAgY29uc3Qgc3Ry
-dWN0IHY0bDJfc3ViZGV2X29wcyAqc2Rfb3BzKTsKIHZvaWQgb21hcDNpc3Bfc3RhdF9jbGVhbnVw
-KHN0cnVjdCBpc3BzdGF0ICpzdGF0KTsKZGlmZiAtLWdpdCBhL2luY2x1ZGUvdWFwaS9saW51eC9v
-bWFwM2lzcC5oIGIvaW5jbHVkZS91YXBpL2xpbnV4L29tYXAzaXNwLmgKaW5kZXggYzA5MGNmOTI0
-OWJiLi40YmZmNjZhZWZjYTUgMTAwNjQ0Ci0tLSBhL2luY2x1ZGUvdWFwaS9saW51eC9vbWFwM2lz
-cC5oCisrKyBiL2luY2x1ZGUvdWFwaS9saW51eC9vbWFwM2lzcC5oCkBAIC01NCw2ICs1NCw4IEBA
-CiAJX0lPV1IoJ1YnLCBCQVNFX1ZJRElPQ19QUklWQVRFICsgNSwgc3RydWN0IG9tYXAzaXNwX2gz
-YV9hZl9jb25maWcpCiAjZGVmaW5lIFZJRElPQ19PTUFQM0lTUF9TVEFUX1JFUSBcCiAJX0lPV1Io
-J1YnLCBCQVNFX1ZJRElPQ19QUklWQVRFICsgNiwgc3RydWN0IG9tYXAzaXNwX3N0YXRfZGF0YSkK
-KyNkZWZpbmUgVklESU9DX09NQVAzSVNQX1NUQVRfUkVRX1RJTUUzMiBcCisJX0lPV1IoJ1YnLCBC
-QVNFX1ZJRElPQ19QUklWQVRFICsgNiwgc3RydWN0IG9tYXAzaXNwX3N0YXRfZGF0YV90aW1lMzIp
-CiAjZGVmaW5lIFZJRElPQ19PTUFQM0lTUF9TVEFUX0VOIFwKIAlfSU9XUignVicsIEJBU0VfVklE
-SU9DX1BSSVZBVEUgKyA3LCB1bnNpZ25lZCBsb25nKQogCkBAIC0xNjQsNyArMTY2LDExIEBAIHN0
-cnVjdCBvbWFwM2lzcF9oM2FfYWV3Yl9jb25maWcgewogICogQGNvbmZpZ19jb3VudGVyOiBOdW1i
-ZXIgb2YgdGhlIGNvbmZpZ3VyYXRpb24gYXNzb2NpYXRlZCB3aXRoIHRoZSBkYXRhLgogICovCiBz
-dHJ1Y3Qgb21hcDNpc3Bfc3RhdF9kYXRhIHsKKyNpZmRlZiBfX0tFUk5FTF9fCisJc3RydWN0IHY0
-bDJfdGltZXZhbCB0czsKKyNlbHNlCiAJc3RydWN0IHRpbWV2YWwgdHM7CisjZW5kaWYKIAl2b2lk
-IF9fdXNlciAqYnVmOwogCV9fdTMyIGJ1Zl9zaXplOwogCV9fdTE2IGZyYW1lX251bWJlcjsKQEAg
-LTE3Miw2ICsxNzgsMTkgQEAgc3RydWN0IG9tYXAzaXNwX3N0YXRfZGF0YSB7CiAJX191MTYgY29u
-ZmlnX2NvdW50ZXI7CiB9OwogCisjaWZkZWYgX19LRVJORUxfXworc3RydWN0IG9tYXAzaXNwX3N0
-YXRfZGF0YV90aW1lMzIgeworCXN0cnVjdCB7CisJCV9fczMyCXR2X3NlYzsKKwkJX19zMzIJdHZf
-dXNlYzsKKwl9IHRzOworCV9fdTMyIGJ1ZjsKKwlfX3UzMiBidWZfc2l6ZTsKKwlfX3UxNiBmcmFt
-ZV9udW1iZXI7CisJX191MTYgY3VyX2ZyYW1lOworCV9fdTE2IGNvbmZpZ19jb3VudGVyOworfTsK
-KyNlbmRpZgogCiAvKiBIaXN0b2dyYW0gcmVsYXRlZCBzdHJ1Y3RzICovCiAKLS0gCjIuMS4wLnJj
-MgoKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KWTIwMzgg
-bWFpbGluZyBsaXN0ClkyMDM4QGxpc3RzLmxpbmFyby5vcmcKaHR0cHM6Ly9saXN0cy5saW5hcm8u
-b3JnL21haWxtYW4vbGlzdGluZm8veTIwMzgK
+From: Stephen Chandler Paul <cpaul@redhat.com>
+
+Debugging input devices, specifically laptop touchpads, can be tricky
+without having the physical device handy. Here we try to remedy that
+with userio. This module allows an application to connect to a character
+device provided by the kernel, and emulate any serio device. In
+combination with userspace programs that can record PS/2 devices and
+replay them through the /dev/userio device, this allows developers to
+debug driver issues on the PS/2 level with devices simply by requesting
+a recording from the user experiencing the issue without having to have
+the physical hardware in front of them.
+
+Signed-off-by: Stephen Chandler Paul <cpaul@redhat.com>
+---
+				    Changes
+
+* Correct "VIRTUAL PS/2 DEVICE" to "VIRTUAL SERIO DEVICE" in MAINTAINERS
+* Remove uneccessary forward declaration in userio
+* s/repeat repeat/repeat/
+* Drop userio->serio checks, this struct is allocated right when we register
+  the serio port so we don't need to worry about this ever being NULL
+* Allocate a static minor and use that
+* Add MODULE_ALIAS_MISCDEV() and MODULOE_ALIAS() lines to the module
+* Improve the module description
+* Change description for userio.h to "userio: virtual serio device support"
+* Fix double space in comments in userio.h
+* Change userio command types to enumerators
+
+				   Responses
+* Re: if (!userio) in userio_device_write(): it happens if we close the file
+  descriptor while the input driver is trying to talk to the device, since we
+  can't immediately bring down the driver. Removing the condition breaks the
+  driver
+* Re: ignoring trailing bytes: The main reason for that is if we need to add
+  something else to the struct in the future. I doubt this will ever be done,
+  but I figured I might as well let that behavior go since it can't harm
+  anyone.
+* Re: ignoring larger payloads + adding larger payloads: As of right now there
+  really isn't one. serio_send() only allows you to send a single character at
+  a time, and we can add the ability to have flags using this same packet
+  format. I don't think userio is ever going to get much more complex then
+  this, since I don't think serio is going to be changing very much in the
+  future. This being said, if some unlikely circumstances happen and it does
+  happen  to change in such a way we need to extend the payload, we're
+  currently ignoring the rest of the payload so we could safely add additional
+  data onto the end of the struct.
+
+ Documentation/input/userio.txt |  70 +++++++++++
+ MAINTAINERS                    |   6 +
+ drivers/input/serio/Kconfig    |  11 ++
+ drivers/input/serio/Makefile   |   1 +
+ drivers/input/serio/userio.c   | 277 +++++++++++++++++++++++++++++++++++++++++
+ include/linux/miscdevice.h     |   1 +
+ include/uapi/linux/userio.h    |  44 +++++++
+ 7 files changed, 410 insertions(+)
+ create mode 100644 Documentation/input/userio.txt
+ create mode 100644 drivers/input/serio/userio.c
+ create mode 100644 include/uapi/linux/userio.h
+
+diff --git a/Documentation/input/userio.txt b/Documentation/input/userio.txt
+new file mode 100644
+index 0000000..0880c0f
+--- /dev/null
++++ b/Documentation/input/userio.txt
+@@ -0,0 +1,70 @@
++			      The userio Protocol
++	     (c) 2015 Stephen Chandler Paul <thatslyude@gmail.com>
++			      Sponsored by Red Hat
++--------------------------------------------------------------------------------
++
++1. Introduction
++~~~~~~~~~~~~~~~
++  This module is intended to try to make the lives of input driver developers
++easier by allowing them to test various serio devices (mainly the various
++touchpads found on laptops) without having to have the physical device in front
++of them. userio accomplishes this by allowing any privileged userspace program
++to directly interact with the kernel's serio driver and control a virtual serio
++port from there.
++
++2. Usage overview
++~~~~~~~~~~~~~~~~~
++  In order to interact with the userio kernel module, one simply opens the
++/dev/userio character device in their applications. Commands are sent to the
++kernel module by writing to the device, and any data received from the serio
++driver is read as-is from the /dev/userio device. All of the structures and
++macros you need to interact with the device are defined in <linux/userio.h> and
++<linux/serio.h>.
++
++3. Command Structure
++~~~~~~~~~~~~~~~~~~~~
++  The struct used for sending commands to /dev/userio is as follows:
++
++	struct userio_cmd {
++		__u8 type;
++		__u8 data;
++	};
++
++  "type" describes the type of command that is being sent. This can be any one
++of the USERIO_CMD macros defined in <linux/userio.h>. "data" is the argument
++that goes along with the command. In the event that the command doesn't have an
++argument, this field can be left untouched and will be ignored by the kernel.
++Each command should be sent by writing the struct directly to the character
++device. In the event that the command you send is invalid, an error will be
++returned by the character device and a more descriptive error will be printed
++to the kernel log. Only one command can be sent at a time, any additional data
++written to the character device after the initial command will be ignored.
++  To close the virtual serio port, just close /dev/userio.
++
++4. Commands
++~~~~~~~~~~~
++
++4.1 USERIO_CMD_REGISTER
++~~~~~~~~~~~~~~~~~~~~~~~
++  Registers the port with the serio driver and begins transmitting data back and
++forth. Registration can only be performed once a port type is set with
++USERIO_CMD_SET_PORT_TYPE. Has no argument.
++
++4.2 USERIO_CMD_SET_PORT_TYPE
++~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++  Sets the type of port we're emulating, where "data" is the port type being
++set. Can be any of the macros from <linux/serio.h>. For example: SERIO_8042
++would set the port type to be a normal PS/2 port.
++
++4.3 USERIO_CMD_SEND_INTERRUPT
++~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++  Sends an interrupt through the virtual serio port to the serio driver, where
++"data" is the interrupt data being sent.
++
++5. Userspace tools
++~~~~~~~~~~~~~~~~~~
++  The userio userspace tools are able to record PS/2 devices using some of the
++debugging information from i8042, and play back the devices on /dev/userio. The
++latest version of these tools can be found at:
++
++	https://github.com/Lyude/ps2emu
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 7ba7ab7..0a0fe08 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -11086,6 +11086,12 @@ S:	Maintained
+ F:	drivers/media/v4l2-core/videobuf2-*
+ F:	include/media/videobuf2-*
+ 
++VIRTUAL SERIO DEVICE DRIVER
++M:	Stephen Chandler Paul <thatslyude@gmail.com>
++S:	Maintained
++F:	drivers/input/serio/ps2emu.c
++F:	include/uapi/linux/ps2emu.h
++
+ VIRTIO CONSOLE DRIVER
+ M:	Amit Shah <amit.shah@redhat.com>
+ L:	virtualization@lists.linux-foundation.org
+diff --git a/drivers/input/serio/Kconfig b/drivers/input/serio/Kconfig
+index 200841b..22b8b58 100644
+--- a/drivers/input/serio/Kconfig
++++ b/drivers/input/serio/Kconfig
+@@ -292,4 +292,15 @@ config SERIO_SUN4I_PS2
+ 	  To compile this driver as a module, choose M here: the
+ 	  module will be called sun4i-ps2.
+ 
++config USERIO
++	tristate "Virtual serio device support"
++	help
++	  Say Y here if you want to emulate serio devices using the userio
++	  kernel module.
++
++	  To compile this driver as a module, choose M here: the module will be
++	  called userio.
++
++	  If you are unsure, say N.
++
+ endif
+diff --git a/drivers/input/serio/Makefile b/drivers/input/serio/Makefile
+index c600089..2374ef9 100644
+--- a/drivers/input/serio/Makefile
++++ b/drivers/input/serio/Makefile
+@@ -30,3 +30,4 @@ obj-$(CONFIG_SERIO_APBPS2)	+= apbps2.o
+ obj-$(CONFIG_SERIO_OLPC_APSP)	+= olpc_apsp.o
+ obj-$(CONFIG_HYPERV_KEYBOARD)	+= hyperv-keyboard.o
+ obj-$(CONFIG_SERIO_SUN4I_PS2)	+= sun4i-ps2.o
++obj-$(CONFIG_USERIO)		+= userio.o
+diff --git a/drivers/input/serio/userio.c b/drivers/input/serio/userio.c
+new file mode 100644
+index 0000000..f32cb3b
+--- /dev/null
++++ b/drivers/input/serio/userio.c
+@@ -0,0 +1,277 @@
++/*
++ * userio kernel serio device emulation module
++ * Copyright (C) 2015 Red Hat
++ * Copyright (C) 2015 Stephen Chandler Paul <thatslyude@gmail.com>
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU Lesser General Public License as published by the
++ * Free Software Foundation; either version 2 of the License, or (at your
++ * option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
++ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
++ * details.
++ */
++#include <linux/circ_buf.h>
++#include <linux/mutex.h>
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/kernel.h>
++#include <linux/serio.h>
++#include <linux/slab.h>
++#include <linux/fs.h>
++#include <linux/miscdevice.h>
++#include <linux/sched.h>
++#include <linux/poll.h>
++#include <uapi/linux/userio.h>
++
++#define USERIO_NAME "userio"
++#define USERIO_BUFSIZE 16
++
++static struct miscdevice userio_misc;
++
++struct userio_device {
++	struct serio *serio;
++	struct mutex lock;
++
++	bool running;
++
++	u8 head;
++	u8 tail;
++
++	unsigned char buf[USERIO_BUFSIZE];
++
++	wait_queue_head_t waitq;
++};
++
++/**
++ * userio_device_write - Write data from serio to a userio device in userspace
++ * @id: The serio port for the userio device
++ * @val: The data to write to the device
++ */
++static int userio_device_write(struct serio *id, unsigned char val)
++{
++	struct userio_device *userio = id->port_data;
++
++	if (!userio)
++		return -1;
++
++	mutex_lock(&userio->lock);
++
++	userio->buf[userio->head] = val;
++	userio->head = (userio->head + 1) % USERIO_BUFSIZE;
++
++	if (userio->head == userio->tail)
++		dev_warn(userio_misc.this_device,
++			 "Buffer overflowed, userio client isn't keeping up");
++
++	mutex_unlock(&userio->lock);
++
++	wake_up_interruptible(&userio->waitq);
++
++	return 0;
++}
++
++static int userio_char_open(struct inode *inode, struct file *file)
++{
++	struct userio_device *userio;
++
++	userio = kzalloc(sizeof(struct userio_device), GFP_KERNEL);
++	if (!userio)
++		return -ENOMEM;
++
++	mutex_init(&userio->lock);
++	init_waitqueue_head(&userio->waitq);
++
++	userio->serio = kzalloc(sizeof(struct serio), GFP_KERNEL);
++	if (!userio->serio) {
++		kfree(userio);
++		return -ENOMEM;
++	}
++
++	userio->serio->write = userio_device_write;
++	userio->serio->port_data = userio;
++
++	file->private_data = userio;
++
++	return 0;
++}
++
++static int userio_char_release(struct inode *inode, struct file *file)
++{
++	struct userio_device *userio = file->private_data;
++
++	/* Don't free the serio port here, serio_unregister_port() does
++	 * this for us */
++	if (userio->running)
++		serio_unregister_port(userio->serio);
++	else
++		kfree(userio->serio);
++
++	kfree(userio);
++
++	return 0;
++}
++
++static ssize_t userio_char_read(struct file *file, char __user *buffer,
++				size_t count, loff_t *ppos)
++{
++	struct userio_device *userio = file->private_data;
++	int ret;
++	size_t nonwrap_len, copylen;
++
++	if (!count)
++		return 0;
++
++	/*
++	 * By the time we get here, the data that was waiting might have been
++	 * taken by another thread. Grab the mutex and check if there's still
++	 * any data waiting, otherwise repeat repeat this process until we have
++	 * data (unless the file descriptor is non-blocking of course)
++	 */
++	for (;;) {
++		ret = mutex_lock_interruptible(&userio->lock);
++		if (ret)
++			return ret;
++
++		if (userio->head != userio->tail)
++			break;
++
++		mutex_unlock(&userio->lock);
++
++		if (file->f_flags & O_NONBLOCK)
++			return -EAGAIN;
++
++		ret = wait_event_interruptible(userio->waitq,
++					       userio->head != userio->tail);
++		if (ret)
++			return ret;
++	}
++
++	nonwrap_len = CIRC_CNT_TO_END(userio->head, userio->tail,
++				      USERIO_BUFSIZE);
++	copylen = min(nonwrap_len, count);
++
++	if (copy_to_user(buffer, &userio->buf[userio->tail], copylen)) {
++		mutex_unlock(&userio->lock);
++		return -EFAULT;
++	}
++
++	userio->tail = (userio->tail + copylen) % USERIO_BUFSIZE;
++
++	mutex_unlock(&userio->lock);
++
++	return copylen;
++}
++
++static ssize_t userio_char_write(struct file *file, const char __user *buffer,
++				 size_t count, loff_t *ppos)
++{
++	struct userio_device *userio = file->private_data;
++	struct userio_cmd cmd;
++	int ret;
++
++	if (count < sizeof(cmd))
++		return -EINVAL;
++
++	if (copy_from_user(&cmd, buffer, sizeof(cmd)))
++		return -EFAULT;
++
++	ret = mutex_lock_interruptible(&userio->lock);
++	if (ret)
++		return ret;
++
++	switch (cmd.type) {
++	case USERIO_CMD_REGISTER:
++		if (!userio->serio->id.type) {
++			dev_warn(userio_misc.this_device,
++				 "No port type given on /dev/userio\n");
++
++			ret = -EINVAL;
++			goto out;
++		}
++		if (userio->running) {
++			dev_warn(userio_misc.this_device,
++				 "Begin command sent, but we're already running\n");
++
++			ret = -EBUSY;
++			goto out;
++		}
++
++		userio->running = true;
++		serio_register_port(userio->serio);
++		break;
++
++	case USERIO_CMD_SET_PORT_TYPE:
++		if (userio->running) {
++			dev_warn(userio_misc.this_device,
++				 "Can't change port type on an already running userio instance\n");
++
++			ret = -EBUSY;
++			goto out;
++		}
++
++		userio->serio->id.type = cmd.data;
++		break;
++
++	case USERIO_CMD_SEND_INTERRUPT:
++		if (!userio->running) {
++			dev_warn(userio_misc.this_device,
++				 "The device must be registered before sending interrupts\n");
++
++			ret = -ENODEV;
++			goto out;
++		}
++
++		serio_interrupt(userio->serio, cmd.data, 0);
++		break;
++
++	default:
++		ret = -EOPNOTSUPP;
++		goto out;
++	}
++
++	ret = sizeof(cmd);
++
++out:
++	mutex_unlock(&userio->lock);
++	return ret;
++}
++
++static unsigned int userio_char_poll(struct file *file, poll_table *wait)
++{
++	struct userio_device *userio = file->private_data;
++
++	poll_wait(file, &userio->waitq, wait);
++
++	if (userio->head != userio->tail)
++		return POLLIN | POLLRDNORM;
++
++	return 0;
++}
++
++static const struct file_operations userio_fops = {
++	.owner		= THIS_MODULE,
++	.open		= userio_char_open,
++	.release	= userio_char_release,
++	.read		= userio_char_read,
++	.write		= userio_char_write,
++	.poll		= userio_char_poll,
++	.llseek		= no_llseek,
++};
++
++static struct miscdevice userio_misc = {
++	.fops	= &userio_fops,
++	.minor	= USERIO_MINOR,
++	.name	= USERIO_NAME,
++};
++
++MODULE_ALIAS_MISCDEV(USERIO_MINOR);
++MODULE_ALIAS("devname:" USERIO_NAME);
++
++MODULE_AUTHOR("Stephen Chandler Paul <thatslyude@gmail.com>");
++MODULE_DESCRIPTION("Virtual Serio Device Support");
++MODULE_LICENSE("GPL");
++
++module_driver(userio_misc, misc_register, misc_deregister);
+diff --git a/include/linux/miscdevice.h b/include/linux/miscdevice.h
+index 81f6e42..5430374 100644
+--- a/include/linux/miscdevice.h
++++ b/include/linux/miscdevice.h
+@@ -49,6 +49,7 @@
+ #define LOOP_CTRL_MINOR		237
+ #define VHOST_NET_MINOR		238
+ #define UHID_MINOR		239
++#define USERIO_MINOR		240
+ #define MISC_DYNAMIC_MINOR	255
+ 
+ struct device;
+diff --git a/include/uapi/linux/userio.h b/include/uapi/linux/userio.h
+new file mode 100644
+index 0000000..37935b6
+--- /dev/null
++++ b/include/uapi/linux/userio.h
+@@ -0,0 +1,44 @@
++/*
++ * userio: virtual serio device support
++ * Copyright (C) 2015 Red Hat
++ * Copyright (C) 2015 Lyude (Stephen Chandler Paul) <cpaul@redhat.com>
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU Lesser General Public License as published by the
++ * Free Software Foundation; either version 2 of the License, or (at your
++ * option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
++ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
++ * details.
++ *
++ * This is the public header used for user-space communication with the userio
++ * driver. __attribute__((__packed__)) is used for all structs to keep ABI
++ * compatibility between all architectures.
++ */
++
++#ifndef _USERIO_H
++#define _USERIO_H
++
++#include <linux/types.h>
++
++enum userio_cmd_type {
++	USERIO_CMD_REGISTER = 0,
++	USERIO_CMD_SET_PORT_TYPE = 1,
++	USERIO_CMD_SEND_INTERRUPT = 2
++};
++
++/*
++ * userio Commands
++ * All commands sent to /dev/userio are encoded using this structure. The type
++ * field should contain a USERIO_CMD* value that indicates what kind of command
++ * is being sent to userio. The data field should contain the accompanying
++ * argument for the command, if there is one.
++ */
++struct userio_cmd {
++	enum userio_cmd_type type;
++	__u8 data;
++} __attribute__((__packed__));
++
++#endif /* !_USERIO_H */
+-- 
+2.4.3
+
