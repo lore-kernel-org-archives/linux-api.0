@@ -1,28 +1,99 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 09/13] Move bp_type_idx to kernel/event/hw_breakpoint.c
-Date: Thu, 17 Sep 2015 11:28:20 +0100
-Message-ID: <16775.1442485700@warthog.procyon.org.uk>
-References: <2023922.x7a6gQp0x7@wuerfel> <1441832902-28993-1-git-send-email-palmer@dabbelt.com> <1442271047-4908-10-git-send-email-palmer@dabbelt.com> <20150915080607.GW16853@twins.programming.kicks-ass.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2023922.x7a6gQp0x7@wuerfel>
-Content-ID: <16774.1442485700.1@warthog.procyon.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: dhowells@redhat.com, Peter Zijlstra <peterz@infradead.org>, mathieu.desnoyers@efficios.com, Palmer Dabbelt <palmer@dabbelt.com>, viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, kexec@lists.infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org, Frederi
+From: Peter Senna Tschudin <peter.senna-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] tools-powerpc: Return false instead of -1
+Date: Thu, 17 Sep 2015 13:03:21 +0200
+Message-ID: <1442487801-22661-1-git-send-email-peter.senna@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, sam.bobroff-8fk3Idey6ehBDgjK7y7TUQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Peter Senna Tschudin <peter.senna-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Arnd Bergmann <arnd@arndb.de> wrote:
+Returning a negative value for a boolean function seem to have the
+undesired effect of returning true. require_paranoia_below() is a
+boolean function, but the variable used to store the return value is an
+integer, receiving -1 or 0. This patch convert rc to bool, replace -1
+by false, and 0 by true.
 
-> That seems unlikely to work, so I suspect it gets a different definition.
-> If it uses this definition and it does work, we can probably use
-> 
-> #if defined(__KERNEL__) && defined(CONFIG_HAVE_MIXED_BREAKPOINTS_REGS)
-> 
-> but that requires a comment explaining exactly why that works.
+This issue was found by the following Coccinelle semantic patch:
+<smpl>
+@@
+identifier f, ret;
+constant C;
+typedef bool;
+@@
+bool f (...){
+<+...
+ret = -C;
+...
+* return ret;
+...+>
+}
+</smpl>
 
-Are you suggesting wrapping the entire construct in this within the UAPI
-header?
+Signed-off-by: Peter Senna Tschudin <peter.senna-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+---
+I could not compile this specific file, but I did some testing on toy examples:
 
-David
+t.c:
+_Bool main(void)
+{
+        return -1;
+}
+
+$ powerpc64-linux-gnu-gcc -O2 -S -fomit-frame-pointer t.c
+
+t.s:
+...
+.L.main:
+        li 3,1
+        blr
+
+However if the function type is int instead of bool, it behaves as
+expected:
+
+t2.c:
+int main(void)
+{
+        return -1;
+}
+
+$ powerpc64-linux-gnu-gcc -O2 -S -fomit-frame-pointer t2.c
+
+t2.s:
+...
+.L.main:
+        li 3,-1
+        blr
+
+So another solution would be to change the function type to int.
+
+ tools/testing/selftests/powerpc/pmu/lib.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/tools/testing/selftests/powerpc/pmu/lib.c b/tools/testing/selftests/powerpc/pmu/lib.c
+index a07104c..2f17110 100644
+--- a/tools/testing/selftests/powerpc/pmu/lib.c
++++ b/tools/testing/selftests/powerpc/pmu/lib.c
+@@ -219,9 +219,9 @@ bool require_paranoia_below(int level)
+ 	unsigned long current;
+ 	char *end, buf[16];
+ 	FILE *f;
+-	int rc;
++	bool rc;
+ 
+-	rc = -1;
++	rc = false;
+ 
+ 	f = fopen(PARANOID_PATH, "r");
+ 	if (!f) {
+@@ -244,7 +244,7 @@ bool require_paranoia_below(int level)
+ 	if (current >= level)
+ 		goto out;
+ 
+-	rc = 0;
++	rc = true;
+ out_close:
+ 	fclose(f);
+ out:
+-- 
+2.1.0
