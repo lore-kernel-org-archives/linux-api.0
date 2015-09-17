@@ -1,7 +1,7 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v2 3/9] [media] dvb: don't use 'time_t' in event ioctl
-Date: Thu, 17 Sep 2015 23:19:34 +0200
-Message-ID: <1442524780-781677-4-git-send-email-arnd@arndb.de>
+Subject: [PATCH v2 4/9] [media] exynos4-is: use monotonic timestamps as advertized
+Date: Thu, 17 Sep 2015 23:19:35 +0200
+Message-ID: <1442524780-781677-5-git-send-email-arnd@arndb.de>
 References: <1442524780-781677-1-git-send-email-arnd@arndb.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1442524780-781677-1-git-send-email-arnd@arndb.de>
@@ -10,40 +10,47 @@ To: linux-media@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org, y2038@lists.linaro.org, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, linux-api@vger.kernel.org, linux-samsung-soc@vger.kernel.org, Hans Verkuil <hverkuil@xs4all.nl>, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-'struct video_event' is used for the VIDEO_GET_EVENT ioctl, implemented
-by drivers/media/pci/ivtv/ivtv-ioctl.c and
-drivers/media/pci/ttpci/av7110_av.c. The structure contains a 'time_t',
-which will be redefined in the future to be 64-bit wide, causing an
-incompatible ABI change for this ioctl.
+The exynos4 fimc capture driver claims to use monotonic
+timestamps but calls ktime_get_real_ts(). This is both
+an incorrect API use, and a bad idea because of the y2038
+problem and the fact that the wall clock time is not reliable
+for timestamps across suspend or settimeofday().
 
-As it turns out, neither of the drivers currently sets the timestamp
-field, and it is presumably useless anyway because of the limited
-resolutions (no sub-second times). This means we can simply change
-the structure definition to use a 'long' instead of 'time_t' and
-remain compatible with all existing user space binaries when time_t
-gets changed.
-
-If anybody ever starts using this field, they have to make sure not
-to use 1970 based seconds in there, as those overflow in 2038.
+This changes the driver to use the normal v4l2_get_timestamp()
+function like all other drivers.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- include/uapi/linux/dvb/video.h | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ drivers/media/platform/exynos4-is/fimc-capture.c | 8 +-------
+ 1 file changed, 1 insertion(+), 7 deletions(-)
 
-diff --git a/include/uapi/linux/dvb/video.h b/include/uapi/linux/dvb/video.h
-index d3d14a59d2d5..6c7f9298d7c2 100644
---- a/include/uapi/linux/dvb/video.h
-+++ b/include/uapi/linux/dvb/video.h
-@@ -135,7 +135,8 @@ struct video_event {
- #define VIDEO_EVENT_FRAME_RATE_CHANGED	2
- #define VIDEO_EVENT_DECODER_STOPPED 	3
- #define VIDEO_EVENT_VSYNC 		4
--	__kernel_time_t timestamp;
-+	/* unused, make sure to use atomic time for y2038 if it ever gets used */
-+	long timestamp;
- 	union {
- 		video_size_t size;
- 		unsigned int frame_rate;	/* in frames per 1000sec */
+diff --git a/drivers/media/platform/exynos4-is/fimc-capture.c b/drivers/media/platform/exynos4-is/fimc-capture.c
+index cfebf292e15a..776ea6d78d03 100644
+--- a/drivers/media/platform/exynos4-is/fimc-capture.c
++++ b/drivers/media/platform/exynos4-is/fimc-capture.c
+@@ -183,8 +183,6 @@ void fimc_capture_irq_handler(struct fimc_dev *fimc, int deq_buf)
+ 	struct v4l2_subdev *csis = p->subdevs[IDX_CSIS];
+ 	struct fimc_frame *f = &cap->ctx->d_frame;
+ 	struct fimc_vid_buffer *v_buf;
+-	struct timeval *tv;
+-	struct timespec ts;
+ 
+ 	if (test_and_clear_bit(ST_CAPT_SHUT, &fimc->state)) {
+ 		wake_up(&fimc->irq_queue);
+@@ -193,13 +191,9 @@ void fimc_capture_irq_handler(struct fimc_dev *fimc, int deq_buf)
+ 
+ 	if (!list_empty(&cap->active_buf_q) &&
+ 	    test_bit(ST_CAPT_RUN, &fimc->state) && deq_buf) {
+-		ktime_get_real_ts(&ts);
+-
+ 		v_buf = fimc_active_queue_pop(cap);
+ 
+-		tv = &v_buf->vb.v4l2_buf.timestamp;
+-		tv->tv_sec = ts.tv_sec;
+-		tv->tv_usec = ts.tv_nsec / NSEC_PER_USEC;
++		v4l2_get_timestamp(&v_buf->vb.v4l2_buf.timestamp);
+ 		v_buf->vb.v4l2_buf.sequence = cap->frame_count++;
+ 
+ 		vb2_buffer_done(&v_buf->vb, VB2_BUF_STATE_DONE);
 -- 
 2.1.0.rc2
