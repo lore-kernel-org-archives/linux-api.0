@@ -1,99 +1,41 @@
-From: Peter Senna Tschudin <peter.senna-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH] tools-powerpc: Return false instead of -1
-Date: Thu, 17 Sep 2015 13:03:21 +0200
-Message-ID: <1442487801-22661-1-git-send-email-peter.senna@gmail.com>
+From: Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC PATCH v2 9/9] s390/s390x: allocate sys_membarrier system
+ call number
+Date: Thu, 17 Sep 2015 13:39:30 +0200
+Message-ID: <20150917133930.06c3b26b@mschwide>
+References: <1441642556-30972-1-git-send-email-mathieu.desnoyers@efficios.com>
+	<1441642556-30972-10-git-send-email-mathieu.desnoyers@efficios.com>
+	<1822824828.9340.1442416805361.JavaMail.zimbra@efficios.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1822824828.9340.1442416805361.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, sam.bobroff-8fk3Idey6ehBDgjK7y7TUQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Peter Senna Tschudin <peter.senna-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: heiko carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Returning a negative value for a boolean function seem to have the
-undesired effect of returning true. require_paranoia_below() is a
-boolean function, but the variable used to store the return value is an
-integer, receiving -1 or 0. This patch convert rc to bool, replace -1
-by false, and 0 by true.
+On Wed, 16 Sep 2015 15:20:05 +0000 (UTC)
+Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
 
-This issue was found by the following Coccinelle semantic patch:
-<smpl>
-@@
-identifier f, ret;
-constant C;
-typedef bool;
-@@
-bool f (...){
-<+...
-ret = -C;
-...
-* return ret;
-...+>
-}
-</smpl>
+> ----- On Sep 7, 2015, at 12:15 PM, Mathieu Desnoyers mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org wrote:
+> 
+> > [ Untested on this architecture. To try it out: fetch linux-next/akpm,
+> >  apply this patch, build/run a membarrier-enabled kernel, and do make
+> >  kselftest. ]
+> 
+> Hi,
+> 
+> sys_membarrier has been merged into Linux 4.3-rc1. It can therefore
+> be tested on top of Linus' master by applying this patch.
 
-Signed-off-by: Peter Senna Tschudin <peter.senna-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
----
-I could not compile this specific file, but I did some testing on toy examples:
+Successfully tested with todays Linus' master, membarrier_test has passed.
+Patch applied to linux-s390 but with a different system call number.
+#355 is already taken by sys_userfaultfd, the new one for membarrier is #356.
 
-t.c:
-_Bool main(void)
-{
-        return -1;
-}
-
-$ powerpc64-linux-gnu-gcc -O2 -S -fomit-frame-pointer t.c
-
-t.s:
-...
-.L.main:
-        li 3,1
-        blr
-
-However if the function type is int instead of bool, it behaves as
-expected:
-
-t2.c:
-int main(void)
-{
-        return -1;
-}
-
-$ powerpc64-linux-gnu-gcc -O2 -S -fomit-frame-pointer t2.c
-
-t2.s:
-...
-.L.main:
-        li 3,-1
-        blr
-
-So another solution would be to change the function type to int.
-
- tools/testing/selftests/powerpc/pmu/lib.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
-
-diff --git a/tools/testing/selftests/powerpc/pmu/lib.c b/tools/testing/selftests/powerpc/pmu/lib.c
-index a07104c..2f17110 100644
---- a/tools/testing/selftests/powerpc/pmu/lib.c
-+++ b/tools/testing/selftests/powerpc/pmu/lib.c
-@@ -219,9 +219,9 @@ bool require_paranoia_below(int level)
- 	unsigned long current;
- 	char *end, buf[16];
- 	FILE *f;
--	int rc;
-+	bool rc;
- 
--	rc = -1;
-+	rc = false;
- 
- 	f = fopen(PARANOID_PATH, "r");
- 	if (!f) {
-@@ -244,7 +244,7 @@ bool require_paranoia_below(int level)
- 	if (current >= level)
- 		goto out;
- 
--	rc = 0;
-+	rc = true;
- out_close:
- 	fclose(f);
- out:
 -- 
-2.1.0
+blue skies,
+   Martin.
+
+"Reality continues to ruin my life." - Calvin.
