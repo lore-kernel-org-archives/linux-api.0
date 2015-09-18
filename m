@@ -1,65 +1,49 @@
-From: Hans Verkuil <hverkuil@xs4all.nl>
+From: Arnd Bergmann <arnd@arndb.de>
 Subject: Re: [PATCH v2 7/9] [media] v4l2: introduce v4l2_timeval
-Date: Fri, 18 Sep 2015 11:52:28 +0200
-Message-ID: <55FBDEDC.8040204@xs4all.nl>
-References: <1442524780-781677-1-git-send-email-arnd@arndb.de>
- <8200227.6XAMdOOJfW@wuerfel> <55FBD90C.3020301@xs4all.nl>
- <9019880.VVdOR6WRt1@wuerfel>
+Date: Fri, 18 Sep 2015 12:08:25 +0200
+Message-ID: <4764782.hLp7DObtr0@wuerfel>
+References: <1442524780-781677-1-git-send-email-arnd@arndb.de> <9019880.VVdOR6WRt1@wuerfel> <55FBDEDC.8040204@xs4all.nl>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <9019880.VVdOR6WRt1@wuerfel>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: linux-samsung-soc@vger.kernel.org, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-media@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <55FBDEDC.8040204@xs4all.nl>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Hans Verkuil <hverkuil@xs4all.nl>
+Cc: linux-media@vger.kernel.org, linux-kernel@vger.kernel.org, y2038@lists.linaro.org, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, linux-api@vger.kernel.org, linux-samsung-soc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-T24gMDkvMTgvMTUgMTE6NDMsIEFybmQgQmVyZ21hbm4gd3JvdGU6Cj4gT24gRnJpZGF5IDE4IFNl
-cHRlbWJlciAyMDE1IDExOjI3OjQwIEhhbnMgVmVya3VpbCB3cm90ZToKPj4gQWgsIE9LLiBHb3Qg
-aXQuCj4+Cj4+IEkgdGhpbmsgdGhpcyBpcyBkZXBlbmRlbnQgb24gdGhlIHVwY29taW5nIG1lZGlh
-IHdvcmtzaG9wIG5leHQgbW9udGguIElmIHdlCj4+IGRlY2lkZSB0byByZWRlc2lnbiB2NGwyX2J1
-ZmZlciBhbnl3YXksIHRoZW4gd2UgY2FuIGF2b2lkIHRpbWV2YWwgY29tcGxldGVseS4KPj4gQW5k
-IHRoZSBvbmx5IHBsYWNlIHdoZXJlIHdlIHdvdWxkIG5lZWQgdG8gY29udmVydCBpdCBpbiB0aGUg
-Y29tcGF0IGNvZGUKPj4gaGlkZGVuIGluIHRoZSB2NGwyIGNvcmUgKGxpa2VseSB2NGwyLWlvY3Rs
-LmMpLgo+IAo+IEFoLCBJIHRoaW5rIEkgdW5kZXJzdG9vZCB0aGUgaWRlYSBub3csIEkgbWlzc2Vk
-IHRoYXQgZWFybGllciB3aGVuIHlvdSBtZW50aW9uCj4gdGhlIGlkZWEuCj4gCj4gU28gd2hhdCB5
-b3UgYXJlIHNheWluZyBoZXJlIGlzIHRoYXQgeW91IGNvdWxkIGNvbWUgdXAgd2l0aCBhIG5ldyB1
-bmFtYmlndW91cwo+ICh1c2luZyBvbmx5IF9fdTMyIGFuZCBfX3U2NCB0eXBlcyBhbmQgbm8gcG9p
-bnRlcnMpIGZvcm1hdCB0aGF0IGdldHMgZXhwb3NlZAo+IHRvIGEgbmV3IHNldCBvZiBpb2N0bHMs
-IGFuZCB0aGVuIGNoYW5nZSB0aGUgaGFuZGxpbmcgb2YgdGhlIGV4aXN0aW5nIHRocmVlCj4gZm9y
-bWF0cyAobmF0aXZlIDY0LWJpdCwgdHJhZGl0aW9uYWwgMzItYml0LCBhbmQgMzItYml0IHdpdGgg
-NjQtYml0IHRpbWVfdCkKPiBzbyB0aGV5IGdldCBjb252ZXJ0ZWQgaW50byB0aGUgbmV3IGZvcm1h
-dCBieSB0aGUgY29tbW9uIGlvY3RsIGhhbmRsaW5nIGNvZGU/CgpSaWdodC4gRHJpdmVycyBvbmx5
-IHNlZSB0aGUgbmV3IHN0cnVjdCwgYW5kIG9ubHkgdjRsMi1pb2N0bC5jIChhbmQgcG9zc2libGUK
-djRsMi1jb21wYXQtaW9jdGwzMi5jKSBzZWUgdGhlIG9sZCBvbmVzLgoKQlRXLCBJIHdpbGwgcHJv
-YmFibHkgcGljayB1cCBwYXRjaGVzIDQgYW5kIDYgZm9yIDQuNC4gVGhhdCBzaG91bGQgaGVscCBh
-IGJpdC4KClJlZ2FyZHMsCgoJSGFucwoKPj4gSSBhbSBub3QgcmVhbGx5IGtlZW4gb24gaGF2aW5n
-IHY0bDJfdGltZXZhbCBpbiBhbGwgdGhlc2UgZHJpdmVycy4gSSB3b3VsZAo+PiBoYXZlIHRvIGNo
-ZWNrIHRoZW0gYW55d2F5IHNpbmNlIEkgc3VzcGVjdCB0aGF0IGluIHNldmVyYWwgZHJpdmVycyB0
-aGUgbG9jYWwKPj4gdGltZXZhbCB2YXJpYWJsZSBjYW4gYmUgYXZvaWRlZCBieSByZXdyaXRpbmcg
-dGhhdCBwYXJ0IG9mIHRoZSBkcml2ZXIuCj4gCj4gSSd2ZSB0cmllZCB0byBkbyB0aGF0IGZvciBh
-bGwgdGhlIGRyaXZlcnMgd2hlcmUgSSBjb3VsZCBmaW5kIGFuIGVhc3kgc29sdXRpb24KPiBpbiBw
-YXRjaCA2LzksIGJ1dCBJJ20gc3VyZSB5b3UgY2FuIGRvIGl0IGZvciBhIGNvdXBsZSBtb3JlLgo+
-IAo+IFdlIGNvdWxkIGFsc28gZG8gYSBsaWdodHdlaWdodCByZWRlc2lnbiBhbmQgdXNlICd0aW1l
-c3BlYzY0JyBpbnRlcm5hbGx5Cj4gaW4gYWxsIHRoZSBkcml2ZXJzIGFuZCB0aGVuIGNvbnZlcnQg
-dGhhdCB0byAndGltZXZhbCcgb3IgdGhlIDY0LWJpdAo+IGZvcm1hdCBvZiB0aGF0IGluIHRoZSBp
-b2N0bCBoYW5kbGVyLiBUaGlzIGlzIGFsc28gc29tZXRoaW5nIEkgdHJpZWQgYXQKPiBzb21lIHBv
-aW50IGJ1dCB0aGVuIGZvdW5kIGl0IGEgYml0IG1vcmUgaW50dWl0aXZlIHRvIGxlYXZlIHRoZSBu
-b3JtYWwgaW9jdGwKPiBwYXRoIGFsb25lIGFuZCBoYXZlIGFuIGV4cGxpY2l0IHR5cGUuCj4gCj4+
-IFBlcnNvbmFsbHkgSSBhbSBpbiBmYXZvciBvZiBhIHJlZGVzaWduZWQgdjRsMl9idWZmZXI6IGl0
-J3MgYXdrd2FyZCB0byB1c2UKPj4gd2l0aCBtdWx0aXBsYW5hciBmb3JtYXRzLCB0aGVyZSBpcyBj
-cnVmdCBpbiB0aGVyZSB0aGF0IGNhbiBiZSByZW1vdmVkICh0aW1lY29kZSksCj4+IGFuZCB0aGVy
-ZSBpcyBsaXR0bGUgc3BhY2UgZm9yIGFkZGl0aW9ucyAoSFctc3BlY2lmaWMgdGltZWNvZGVzLCBt
-b3JlIGJ1ZmZlcgo+PiBtZXRhIGRhdGEsIGV0YykuCj4+Cj4+IFdlJ2xsIHNlZS4KPiAKPiBPay4K
-PiAKPiAJQXJuZAo+IApfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fXwpZMjAzOCBtYWlsaW5nIGxpc3QKWTIwMzhAbGlzdHMubGluYXJvLm9yZwpodHRwczovL2xp
-c3RzLmxpbmFyby5vcmcvbWFpbG1hbi9saXN0aW5mby95MjAzOAo=
+On Friday 18 September 2015 11:52:28 Hans Verkuil wrote:
+> On 09/18/15 11:43, Arnd Bergmann wrote:
+> > On Friday 18 September 2015 11:27:40 Hans Verkuil wrote:
+> >> Ah, OK. Got it.
+> >>
+> >> I think this is dependent on the upcoming media workshop next month. If we
+> >> decide to redesign v4l2_buffer anyway, then we can avoid timeval completely.
+> >> And the only place where we would need to convert it in the compat code
+> >> hidden in the v4l2 core (likely v4l2-ioctl.c).
+> > 
+> > Ah, I think I understood the idea now, I missed that earlier when you mention
+> > the idea.
+> > 
+> > So what you are saying here is that you could come up with a new unambiguous
+> > (using only __u32 and __u64 types and no pointers) format that gets exposed
+> > to a new set of ioctls, and then change the handling of the existing three
+> > formats (native 64-bit, traditional 32-bit, and 32-bit with 64-bit time_t)
+> > so they get converted into the new format by the common ioctl handling code?
+> 
+> Right. Drivers only see the new struct, and only v4l2-ioctl.c (and possible
+> v4l2-compat-ioctl32.c) see the old ones.
+> 
+> BTW, I will probably pick up patches 4 and 6 for 4.4. That should help a bit.
+
+Ok, thanks!
+
+I guess it's up to Mauro to pick up the first three patches?
+
+As I don't see anything more to do for me here until you've had the
+discussion about the new format, I'll move on to another subsystem now.
+I have around 70 patches waiting to be submitted, plus the system call
+series.
+
+	Arnd
