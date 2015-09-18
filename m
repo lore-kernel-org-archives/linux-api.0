@@ -1,16 +1,16 @@
 From: bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org (J. Bruce Fields)
 Subject: Re: [RFC v7 22/41] richacl: Propagate everyone@ permissions to other
  aces
-Date: Fri, 18 Sep 2015 17:36:11 -0400
-Message-ID: <20150918213611.GC22671@fieldses.org>
+Date: Fri, 18 Sep 2015 17:56:11 -0400
+Message-ID: <20150918215611.GD22671@fieldses.org>
 References: <1441448856-13478-1-git-send-email-agruenba@redhat.com>
  <1441448856-13478-23-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
 In-Reply-To: <1441448856-13478-23-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Gruenbacher <agruen-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
@@ -104,14 +104,7 @@ On Sat, Sep 05, 2015 at 12:27:17PM +0200, Andreas Gruenbacher wrote:
 > +	 */
 > +	if (!richace_is_owner(who) &&
 > +	    richace_is_everyone(ace) && richace_is_allow(ace) &&
-
-That richace_is_allow(ace) check is redundant at this point, isn't it?
-
 > +	    !(allow & ~(ace->e_mask & acl->a_other_mask)))
-
-Uh, I wish C had a subset-of operator, that construct took me longer to
-work out than I should admit.
-
 > +		allow = 0;
 > +
 > +	if (allow) {
@@ -123,11 +116,6 @@ work out than I should admit.
 > +
 > +			richace_copy(&who_copy, who);
 > +			ace = acl->a_entries + acl->a_count - 1;
-
-Isn't ace already set to the last ace?
-
---b.
-
 > +			if (richacl_insert_entry(alloc, &ace))
 > +				return -1;
 > +			richace_copy(ace, &who_copy);
@@ -190,6 +178,9 @@ Isn't ace already set to the last ace?
 > +	 * If the owner mask contains permissions which are not in the group
 > +	 * mask, the group mask contains permissions which are not in the other
 > +	 * mask, or the owner class contains permissions which are not in the
+
+s/owner class/owner mask?
+
 > +	 * other mask, we may need to propagate permissions up from the
 > +	 * everyone@ allow ace.  The third condition is implied by the first
 > +	 * two.
@@ -197,6 +188,22 @@ Isn't ace already set to the last ace?
 > +	if (!((acl->a_owner_mask & ~acl->a_group_mask) ||
 > +	      (acl->a_group_mask & ~acl->a_other_mask)))
 > +		return 0;
+
+The code looks right, but I don't understand the preceding comment.
+
+For example, 
+
+	owner mask: rw
+	group mask:  wx
+	other mask: rw
+
+satisfies the first two conditions, but not the third.
+
+Also, I don't understand why the first condition would imply that we
+might need to propagate permissions.
+
+--b.
+
 > +	if (!acl->a_count)
 > +		return 0;
 > +	ace = acl->a_entries + acl->a_count - 1;
@@ -255,7 +262,3 @@ Isn't ace already set to the last ace?
 > To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
 > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 > More majordomo info at  http://vger.kernel.org/majordomo-info.html
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
