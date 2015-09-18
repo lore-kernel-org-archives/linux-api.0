@@ -1,58 +1,73 @@
-From: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Subject: Re: [PATCH v2 7/9] [media] v4l2: introduce v4l2_timeval
-Date: Fri, 18 Sep 2015 12:22:47 +0200
-Message-ID: <55FBE5F7.3030609@xs4all.nl>
-References: <1442524780-781677-1-git-send-email-arnd@arndb.de> <9019880.VVdOR6WRt1@wuerfel> <55FBDEDC.8040204@xs4all.nl> <4764782.hLp7DObtr0@wuerfel>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: [GIT PULL] Kselftest fixes for 4.3-rc2
+Date: Fri, 18 Sep 2015 08:41:10 -0600
+Message-ID: <55FC2286.7010809@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <4764782.hLp7DObtr0@wuerfel>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Shuah Khan <shuahkh@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-On 09/18/15 12:08, Arnd Bergmann wrote:
-> On Friday 18 September 2015 11:52:28 Hans Verkuil wrote:
->> On 09/18/15 11:43, Arnd Bergmann wrote:
->>> On Friday 18 September 2015 11:27:40 Hans Verkuil wrote:
->>>> Ah, OK. Got it.
->>>>
->>>> I think this is dependent on the upcoming media workshop next month. If we
->>>> decide to redesign v4l2_buffer anyway, then we can avoid timeval completely.
->>>> And the only place where we would need to convert it in the compat code
->>>> hidden in the v4l2 core (likely v4l2-ioctl.c).
->>>
->>> Ah, I think I understood the idea now, I missed that earlier when you mention
->>> the idea.
->>>
->>> So what you are saying here is that you could come up with a new unambiguous
->>> (using only __u32 and __u64 types and no pointers) format that gets exposed
->>> to a new set of ioctls, and then change the handling of the existing three
->>> formats (native 64-bit, traditional 32-bit, and 32-bit with 64-bit time_t)
->>> so they get converted into the new format by the common ioctl handling code?
->>
->> Right. Drivers only see the new struct, and only v4l2-ioctl.c (and possible
->> v4l2-compat-ioctl32.c) see the old ones.
->>
->> BTW, I will probably pick up patches 4 and 6 for 4.4. That should help a bit.
-> 
-> Ok, thanks!
-> 
-> I guess it's up to Mauro to pick up the first three patches?
+Hi Linus,
 
-Yes.
+Please pull the following fixes for 4.3-rc2. This update contains 7
+fixes for problems ranging from build failures to incorrect error
+reporting.
 
-> As I don't see anything more to do for me here until you've had the
-> discussion about the new format, I'll move on to another subsystem now.
-> I have around 70 patches waiting to be submitted, plus the system call
-> series.
+thanks,
+-- Shuah
 
-Agreed.
+The following changes since commit 6ff33f3902c3b1c5d0db6b1e2c70b6d76fba357f:
 
-Thanks again for working on this!
+  Linux 4.3-rc1 (2015-09-12 16:35:56 -0700)
 
-Regards,
+are available in the git repository at:
 
-	Hans
+  git://git.kernel.org/pub/scm/linux/kernel/git/shuah/linux-kselftest
+tags/linux-kselftest-4.3-rc2
+
+for you to fetch changes up to ae7858180510d6fd0dfaf66d209bc6103db1678f:
+
+  selftests: exec: revert to default emit rule (2015-09-14 16:45:05 -0600)
+
+----------------------------------------------------------------
+linux-kselftest-4.3-rc2-fixes
+
+This update contains 7 fixes for problems ranging from
+build failurs to incorrect error reporting.
+
+----------------------------------------------------------------
+Bamvor Jian Zhang (5):
+      selftests: rename jump label to static_keys
+      selftests: mqueue: allow extra cflags
+      selftests: mqueue: simplify the Makefile
+      selftests: change install command to rsync
+      selftests: exec: revert to default emit rule
+
+Kees Cook (1):
+      selftests/seccomp: add support for s390
+
+Zhang Zhen (1):
+      seltests/zram: fix syntax error
+
+ tools/testing/selftests/Makefile               |  2 +-
+ tools/testing/selftests/exec/Makefile          |  4 +--
+ tools/testing/selftests/ftrace/Makefile        |  2 +-
+ tools/testing/selftests/lib.mk                 | 11 +++-----
+ tools/testing/selftests/mqueue/Makefile        | 10 +++----
+ tools/testing/selftests/seccomp/seccomp_bpf.c  | 37
++++++++++++++++++++++++++-
+ tools/testing/selftests/seccomp/test_harness.h |  7 ++---
+ tools/testing/selftests/zram/zram.sh           | 10 +------
+ tools/testing/selftests/zram/zram_lib.sh       |  3 ++-
+ 9 files changed, 52 insertions(+), 34 deletions(-)
+
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh@osg.samsung.com | (970) 217-8978
