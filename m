@@ -1,539 +1,187 @@
-From: cpaul@redhat.com
-Subject: [PATCH v5] Input: Add userio module
-Date: Thu, 17 Sep 2015 19:00:10 -0400
-Message-ID: <1442530810-28519-1-git-send-email-cpaul@redhat.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
-Sender: linux-doc-owner@vger.kernel.org
-To: David Herrmann <dh.herrmann@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, "open list:HID CORE LAYER" <linux-input@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
-Cc: Dmitry Torokhov <dmitry.torokhov@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Greg KH <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, Joe Perches <joe@perches.com>, Jiri Slaby <jslaby@suse.com>, Vishnu Patekar <vishnupatekar0510@gmail.com>, Sebastian Ott <sebott@linux.vnet.ibm.com>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Hans de Goede <hdegoede@redhat.com>, linux-doc@vger.kernel.org
+From: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Subject: Re: [RFC v7 13/41] richacl: Check if an acl is equivalent to a file
+ mode
+Date: Thu, 17 Sep 2015 20:56:07 -0400
+Message-ID: <20150918005607.GB16699@fieldses.org>
+References: <1441448856-13478-1-git-send-email-agruenba@redhat.com>
+ <1441448856-13478-14-git-send-email-agruenba@redhat.com>
+ <20150917182219.GB13825@fieldses.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150917182219.GB13825-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Stephen Chandler Paul <cpaul@redhat.com>
+On Thu, Sep 17, 2015 at 02:22:19PM -0400, bfields wrote:
+> On Sat, Sep 05, 2015 at 12:27:08PM +0200, Andreas Gruenbacher wrote:
+> > ACLs are considered equivalent to file modes if they only consist of
+> > owner@, group@, and everyone@ entries, the owner@ permissions do not
+> > depend on whether the owner is a member in the owning group, and no
+> > inheritance flags are set.  This test is used to avoid storing richacls
+> > if the acl can be computed from the file permission bits.
+> 
+> We're assuming here that it's OK for us to silently rearrange an ACL as
+> long as the result is still equivalent (in the sense that the permission
+> algorithm would always produce the same result).
+> 
+> I guess that's OK by me, but it might violate user expectations in some
+> simple common cases, so may be worth mentioning in documentation
+> someplace if we don't already.
 
-Debugging input devices, specifically laptop touchpads, can be tricky
-without having the physical device handy. Here we try to remedy that
-with userio. This module allows an application to connect to a character
-device provided by the kernel, and emulate any serio device. In
-combination with userspace programs that can record PS/2 devices and
-replay them through the /dev/userio device, this allows developers to
-debug driver issues on the PS/2 level with devices simply by requesting
-a recording from the user experiencing the issue without having to have
-the physical hardware in front of them.
+Also your notion of mode-equivalence here is interesting, it's actually
+a strict subset of the ACLs that produce the same permission results as
+a mode.  (For example, everyone:rwx,bfields:rwx is equivalent to 0777
+but won't be considered mode-equivalent by this algorithm.)
 
-Signed-off-by: Stephen Chandler Paul <cpaul@redhat.com>
----
-				    Changes
+I think the choices you've made probably make the most sense, they just
+wouldn't have been obvious to me.  Anyway, so, OK by me:
 
-* Correct "VIRTUAL PS/2 DEVICE" to "VIRTUAL SERIO DEVICE" in MAINTAINERS
-* Remove uneccessary forward declaration in userio
-* s/repeat repeat/repeat/
-* Drop userio->serio checks, this struct is allocated right when we register
-  the serio port so we don't need to worry about this ever being NULL
-* Allocate a static minor and use that
-* Add MODULE_ALIAS_MISCDEV() and MODULOE_ALIAS() lines to the module
-* Improve the module description
-* Change description for userio.h to "userio: virtual serio device support"
-* Fix double space in comments in userio.h
-* Change userio command types to enumerators
+	Reviewed-by: J. Bruce Fields <bfields-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 
-				   Responses
-* Re: if (!userio) in userio_device_write(): it happens if we close the file
-  descriptor while the input driver is trying to talk to the device, since we
-  can't immediately bring down the driver. Removing the condition breaks the
-  driver
-* Re: ignoring trailing bytes: The main reason for that is if we need to add
-  something else to the struct in the future. I doubt this will ever be done,
-  but I figured I might as well let that behavior go since it can't harm
-  anyone.
-* Re: ignoring larger payloads + adding larger payloads: As of right now there
-  really isn't one. serio_send() only allows you to send a single character at
-  a time, and we can add the ability to have flags using this same packet
-  format. I don't think userio is ever going to get much more complex then
-  this, since I don't think serio is going to be changing very much in the
-  future. This being said, if some unlikely circumstances happen and it does
-  happen  to change in such a way we need to extend the payload, we're
-  currently ignoring the rest of the payload so we could safely add additional
-  data onto the end of the struct.
+--b.
 
- Documentation/input/userio.txt |  70 +++++++++++
- MAINTAINERS                    |   6 +
- drivers/input/serio/Kconfig    |  11 ++
- drivers/input/serio/Makefile   |   1 +
- drivers/input/serio/userio.c   | 277 +++++++++++++++++++++++++++++++++++++++++
- include/linux/miscdevice.h     |   1 +
- include/uapi/linux/userio.h    |  44 +++++++
- 7 files changed, 410 insertions(+)
- create mode 100644 Documentation/input/userio.txt
- create mode 100644 drivers/input/serio/userio.c
- create mode 100644 include/uapi/linux/userio.h
-
-diff --git a/Documentation/input/userio.txt b/Documentation/input/userio.txt
-new file mode 100644
-index 0000000..0880c0f
---- /dev/null
-+++ b/Documentation/input/userio.txt
-@@ -0,0 +1,70 @@
-+			      The userio Protocol
-+	     (c) 2015 Stephen Chandler Paul <thatslyude@gmail.com>
-+			      Sponsored by Red Hat
-+--------------------------------------------------------------------------------
-+
-+1. Introduction
-+~~~~~~~~~~~~~~~
-+  This module is intended to try to make the lives of input driver developers
-+easier by allowing them to test various serio devices (mainly the various
-+touchpads found on laptops) without having to have the physical device in front
-+of them. userio accomplishes this by allowing any privileged userspace program
-+to directly interact with the kernel's serio driver and control a virtual serio
-+port from there.
-+
-+2. Usage overview
-+~~~~~~~~~~~~~~~~~
-+  In order to interact with the userio kernel module, one simply opens the
-+/dev/userio character device in their applications. Commands are sent to the
-+kernel module by writing to the device, and any data received from the serio
-+driver is read as-is from the /dev/userio device. All of the structures and
-+macros you need to interact with the device are defined in <linux/userio.h> and
-+<linux/serio.h>.
-+
-+3. Command Structure
-+~~~~~~~~~~~~~~~~~~~~
-+  The struct used for sending commands to /dev/userio is as follows:
-+
-+	struct userio_cmd {
-+		__u8 type;
-+		__u8 data;
-+	};
-+
-+  "type" describes the type of command that is being sent. This can be any one
-+of the USERIO_CMD macros defined in <linux/userio.h>. "data" is the argument
-+that goes along with the command. In the event that the command doesn't have an
-+argument, this field can be left untouched and will be ignored by the kernel.
-+Each command should be sent by writing the struct directly to the character
-+device. In the event that the command you send is invalid, an error will be
-+returned by the character device and a more descriptive error will be printed
-+to the kernel log. Only one command can be sent at a time, any additional data
-+written to the character device after the initial command will be ignored.
-+  To close the virtual serio port, just close /dev/userio.
-+
-+4. Commands
-+~~~~~~~~~~~
-+
-+4.1 USERIO_CMD_REGISTER
-+~~~~~~~~~~~~~~~~~~~~~~~
-+  Registers the port with the serio driver and begins transmitting data back and
-+forth. Registration can only be performed once a port type is set with
-+USERIO_CMD_SET_PORT_TYPE. Has no argument.
-+
-+4.2 USERIO_CMD_SET_PORT_TYPE
-+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-+  Sets the type of port we're emulating, where "data" is the port type being
-+set. Can be any of the macros from <linux/serio.h>. For example: SERIO_8042
-+would set the port type to be a normal PS/2 port.
-+
-+4.3 USERIO_CMD_SEND_INTERRUPT
-+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-+  Sends an interrupt through the virtual serio port to the serio driver, where
-+"data" is the interrupt data being sent.
-+
-+5. Userspace tools
-+~~~~~~~~~~~~~~~~~~
-+  The userio userspace tools are able to record PS/2 devices using some of the
-+debugging information from i8042, and play back the devices on /dev/userio. The
-+latest version of these tools can be found at:
-+
-+	https://github.com/Lyude/ps2emu
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 7ba7ab7..0a0fe08 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -11086,6 +11086,12 @@ S:	Maintained
- F:	drivers/media/v4l2-core/videobuf2-*
- F:	include/media/videobuf2-*
- 
-+VIRTUAL SERIO DEVICE DRIVER
-+M:	Stephen Chandler Paul <thatslyude@gmail.com>
-+S:	Maintained
-+F:	drivers/input/serio/ps2emu.c
-+F:	include/uapi/linux/ps2emu.h
-+
- VIRTIO CONSOLE DRIVER
- M:	Amit Shah <amit.shah@redhat.com>
- L:	virtualization@lists.linux-foundation.org
-diff --git a/drivers/input/serio/Kconfig b/drivers/input/serio/Kconfig
-index 200841b..22b8b58 100644
---- a/drivers/input/serio/Kconfig
-+++ b/drivers/input/serio/Kconfig
-@@ -292,4 +292,15 @@ config SERIO_SUN4I_PS2
- 	  To compile this driver as a module, choose M here: the
- 	  module will be called sun4i-ps2.
- 
-+config USERIO
-+	tristate "Virtual serio device support"
-+	help
-+	  Say Y here if you want to emulate serio devices using the userio
-+	  kernel module.
-+
-+	  To compile this driver as a module, choose M here: the module will be
-+	  called userio.
-+
-+	  If you are unsure, say N.
-+
- endif
-diff --git a/drivers/input/serio/Makefile b/drivers/input/serio/Makefile
-index c600089..2374ef9 100644
---- a/drivers/input/serio/Makefile
-+++ b/drivers/input/serio/Makefile
-@@ -30,3 +30,4 @@ obj-$(CONFIG_SERIO_APBPS2)	+= apbps2.o
- obj-$(CONFIG_SERIO_OLPC_APSP)	+= olpc_apsp.o
- obj-$(CONFIG_HYPERV_KEYBOARD)	+= hyperv-keyboard.o
- obj-$(CONFIG_SERIO_SUN4I_PS2)	+= sun4i-ps2.o
-+obj-$(CONFIG_USERIO)		+= userio.o
-diff --git a/drivers/input/serio/userio.c b/drivers/input/serio/userio.c
-new file mode 100644
-index 0000000..f32cb3b
---- /dev/null
-+++ b/drivers/input/serio/userio.c
-@@ -0,0 +1,277 @@
-+/*
-+ * userio kernel serio device emulation module
-+ * Copyright (C) 2015 Red Hat
-+ * Copyright (C) 2015 Stephen Chandler Paul <thatslyude@gmail.com>
-+ *
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms of the GNU Lesser General Public License as published by the
-+ * Free Software Foundation; either version 2 of the License, or (at your
-+ * option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful, but WITHOUT
-+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
-+ * details.
-+ */
-+#include <linux/circ_buf.h>
-+#include <linux/mutex.h>
-+#include <linux/module.h>
-+#include <linux/init.h>
-+#include <linux/kernel.h>
-+#include <linux/serio.h>
-+#include <linux/slab.h>
-+#include <linux/fs.h>
-+#include <linux/miscdevice.h>
-+#include <linux/sched.h>
-+#include <linux/poll.h>
-+#include <uapi/linux/userio.h>
-+
-+#define USERIO_NAME "userio"
-+#define USERIO_BUFSIZE 16
-+
-+static struct miscdevice userio_misc;
-+
-+struct userio_device {
-+	struct serio *serio;
-+	struct mutex lock;
-+
-+	bool running;
-+
-+	u8 head;
-+	u8 tail;
-+
-+	unsigned char buf[USERIO_BUFSIZE];
-+
-+	wait_queue_head_t waitq;
-+};
-+
-+/**
-+ * userio_device_write - Write data from serio to a userio device in userspace
-+ * @id: The serio port for the userio device
-+ * @val: The data to write to the device
-+ */
-+static int userio_device_write(struct serio *id, unsigned char val)
-+{
-+	struct userio_device *userio = id->port_data;
-+
-+	if (!userio)
-+		return -1;
-+
-+	mutex_lock(&userio->lock);
-+
-+	userio->buf[userio->head] = val;
-+	userio->head = (userio->head + 1) % USERIO_BUFSIZE;
-+
-+	if (userio->head == userio->tail)
-+		dev_warn(userio_misc.this_device,
-+			 "Buffer overflowed, userio client isn't keeping up");
-+
-+	mutex_unlock(&userio->lock);
-+
-+	wake_up_interruptible(&userio->waitq);
-+
-+	return 0;
-+}
-+
-+static int userio_char_open(struct inode *inode, struct file *file)
-+{
-+	struct userio_device *userio;
-+
-+	userio = kzalloc(sizeof(struct userio_device), GFP_KERNEL);
-+	if (!userio)
-+		return -ENOMEM;
-+
-+	mutex_init(&userio->lock);
-+	init_waitqueue_head(&userio->waitq);
-+
-+	userio->serio = kzalloc(sizeof(struct serio), GFP_KERNEL);
-+	if (!userio->serio) {
-+		kfree(userio);
-+		return -ENOMEM;
-+	}
-+
-+	userio->serio->write = userio_device_write;
-+	userio->serio->port_data = userio;
-+
-+	file->private_data = userio;
-+
-+	return 0;
-+}
-+
-+static int userio_char_release(struct inode *inode, struct file *file)
-+{
-+	struct userio_device *userio = file->private_data;
-+
-+	/* Don't free the serio port here, serio_unregister_port() does
-+	 * this for us */
-+	if (userio->running)
-+		serio_unregister_port(userio->serio);
-+	else
-+		kfree(userio->serio);
-+
-+	kfree(userio);
-+
-+	return 0;
-+}
-+
-+static ssize_t userio_char_read(struct file *file, char __user *buffer,
-+				size_t count, loff_t *ppos)
-+{
-+	struct userio_device *userio = file->private_data;
-+	int ret;
-+	size_t nonwrap_len, copylen;
-+
-+	if (!count)
-+		return 0;
-+
-+	/*
-+	 * By the time we get here, the data that was waiting might have been
-+	 * taken by another thread. Grab the mutex and check if there's still
-+	 * any data waiting, otherwise repeat repeat this process until we have
-+	 * data (unless the file descriptor is non-blocking of course)
-+	 */
-+	for (;;) {
-+		ret = mutex_lock_interruptible(&userio->lock);
-+		if (ret)
-+			return ret;
-+
-+		if (userio->head != userio->tail)
-+			break;
-+
-+		mutex_unlock(&userio->lock);
-+
-+		if (file->f_flags & O_NONBLOCK)
-+			return -EAGAIN;
-+
-+		ret = wait_event_interruptible(userio->waitq,
-+					       userio->head != userio->tail);
-+		if (ret)
-+			return ret;
-+	}
-+
-+	nonwrap_len = CIRC_CNT_TO_END(userio->head, userio->tail,
-+				      USERIO_BUFSIZE);
-+	copylen = min(nonwrap_len, count);
-+
-+	if (copy_to_user(buffer, &userio->buf[userio->tail], copylen)) {
-+		mutex_unlock(&userio->lock);
-+		return -EFAULT;
-+	}
-+
-+	userio->tail = (userio->tail + copylen) % USERIO_BUFSIZE;
-+
-+	mutex_unlock(&userio->lock);
-+
-+	return copylen;
-+}
-+
-+static ssize_t userio_char_write(struct file *file, const char __user *buffer,
-+				 size_t count, loff_t *ppos)
-+{
-+	struct userio_device *userio = file->private_data;
-+	struct userio_cmd cmd;
-+	int ret;
-+
-+	if (count < sizeof(cmd))
-+		return -EINVAL;
-+
-+	if (copy_from_user(&cmd, buffer, sizeof(cmd)))
-+		return -EFAULT;
-+
-+	ret = mutex_lock_interruptible(&userio->lock);
-+	if (ret)
-+		return ret;
-+
-+	switch (cmd.type) {
-+	case USERIO_CMD_REGISTER:
-+		if (!userio->serio->id.type) {
-+			dev_warn(userio_misc.this_device,
-+				 "No port type given on /dev/userio\n");
-+
-+			ret = -EINVAL;
-+			goto out;
-+		}
-+		if (userio->running) {
-+			dev_warn(userio_misc.this_device,
-+				 "Begin command sent, but we're already running\n");
-+
-+			ret = -EBUSY;
-+			goto out;
-+		}
-+
-+		userio->running = true;
-+		serio_register_port(userio->serio);
-+		break;
-+
-+	case USERIO_CMD_SET_PORT_TYPE:
-+		if (userio->running) {
-+			dev_warn(userio_misc.this_device,
-+				 "Can't change port type on an already running userio instance\n");
-+
-+			ret = -EBUSY;
-+			goto out;
-+		}
-+
-+		userio->serio->id.type = cmd.data;
-+		break;
-+
-+	case USERIO_CMD_SEND_INTERRUPT:
-+		if (!userio->running) {
-+			dev_warn(userio_misc.this_device,
-+				 "The device must be registered before sending interrupts\n");
-+
-+			ret = -ENODEV;
-+			goto out;
-+		}
-+
-+		serio_interrupt(userio->serio, cmd.data, 0);
-+		break;
-+
-+	default:
-+		ret = -EOPNOTSUPP;
-+		goto out;
-+	}
-+
-+	ret = sizeof(cmd);
-+
-+out:
-+	mutex_unlock(&userio->lock);
-+	return ret;
-+}
-+
-+static unsigned int userio_char_poll(struct file *file, poll_table *wait)
-+{
-+	struct userio_device *userio = file->private_data;
-+
-+	poll_wait(file, &userio->waitq, wait);
-+
-+	if (userio->head != userio->tail)
-+		return POLLIN | POLLRDNORM;
-+
-+	return 0;
-+}
-+
-+static const struct file_operations userio_fops = {
-+	.owner		= THIS_MODULE,
-+	.open		= userio_char_open,
-+	.release	= userio_char_release,
-+	.read		= userio_char_read,
-+	.write		= userio_char_write,
-+	.poll		= userio_char_poll,
-+	.llseek		= no_llseek,
-+};
-+
-+static struct miscdevice userio_misc = {
-+	.fops	= &userio_fops,
-+	.minor	= USERIO_MINOR,
-+	.name	= USERIO_NAME,
-+};
-+
-+MODULE_ALIAS_MISCDEV(USERIO_MINOR);
-+MODULE_ALIAS("devname:" USERIO_NAME);
-+
-+MODULE_AUTHOR("Stephen Chandler Paul <thatslyude@gmail.com>");
-+MODULE_DESCRIPTION("Virtual Serio Device Support");
-+MODULE_LICENSE("GPL");
-+
-+module_driver(userio_misc, misc_register, misc_deregister);
-diff --git a/include/linux/miscdevice.h b/include/linux/miscdevice.h
-index 81f6e42..5430374 100644
---- a/include/linux/miscdevice.h
-+++ b/include/linux/miscdevice.h
-@@ -49,6 +49,7 @@
- #define LOOP_CTRL_MINOR		237
- #define VHOST_NET_MINOR		238
- #define UHID_MINOR		239
-+#define USERIO_MINOR		240
- #define MISC_DYNAMIC_MINOR	255
- 
- struct device;
-diff --git a/include/uapi/linux/userio.h b/include/uapi/linux/userio.h
-new file mode 100644
-index 0000000..37935b6
---- /dev/null
-+++ b/include/uapi/linux/userio.h
-@@ -0,0 +1,44 @@
-+/*
-+ * userio: virtual serio device support
-+ * Copyright (C) 2015 Red Hat
-+ * Copyright (C) 2015 Lyude (Stephen Chandler Paul) <cpaul@redhat.com>
-+ *
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms of the GNU Lesser General Public License as published by the
-+ * Free Software Foundation; either version 2 of the License, or (at your
-+ * option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful, but WITHOUT
-+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
-+ * details.
-+ *
-+ * This is the public header used for user-space communication with the userio
-+ * driver. __attribute__((__packed__)) is used for all structs to keep ABI
-+ * compatibility between all architectures.
-+ */
-+
-+#ifndef _USERIO_H
-+#define _USERIO_H
-+
-+#include <linux/types.h>
-+
-+enum userio_cmd_type {
-+	USERIO_CMD_REGISTER = 0,
-+	USERIO_CMD_SET_PORT_TYPE = 1,
-+	USERIO_CMD_SEND_INTERRUPT = 2
-+};
-+
-+/*
-+ * userio Commands
-+ * All commands sent to /dev/userio are encoded using this structure. The type
-+ * field should contain a USERIO_CMD* value that indicates what kind of command
-+ * is being sent to userio. The data field should contain the accompanying
-+ * argument for the command, if there is one.
-+ */
-+struct userio_cmd {
-+	enum userio_cmd_type type;
-+	__u8 data;
-+} __attribute__((__packed__));
-+
-+#endif /* !_USERIO_H */
--- 
-2.4.3
-
+> 
+> --b.
+> 
+> > 
+> > Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> > ---
+> >  fs/richacl_base.c       | 104 ++++++++++++++++++++++++++++++++++++++++++++++++
+> >  include/linux/richacl.h |   1 +
+> >  2 files changed, 105 insertions(+)
+> > 
+> > diff --git a/fs/richacl_base.c b/fs/richacl_base.c
+> > index 3163152..106e988 100644
+> > --- a/fs/richacl_base.c
+> > +++ b/fs/richacl_base.c
+> > @@ -379,3 +379,107 @@ richacl_chmod(struct richacl *acl, mode_t mode)
+> >  	return clone;
+> >  }
+> >  EXPORT_SYMBOL_GPL(richacl_chmod);
+> > +
+> > +/**
+> > + * richacl_equiv_mode  -  compute the mode equivalent of @acl
+> > + *
+> > + * An acl is considered equivalent to a file mode if it only consists of
+> > + * owner@, group@, and everyone@ entries and the owner@ permissions do not
+> > + * depend on whether the owner is a member in the owning group.
+> > + */
+> > +int
+> > +richacl_equiv_mode(const struct richacl *acl, mode_t *mode_p)
+> > +{
+> > +	mode_t mode = *mode_p;
+> > +
+> > +	/*
+> > +	 * The RICHACE_DELETE_CHILD flag is meaningless for non-directories, so
+> > +	 * we ignore it.
+> > +	 */
+> > +	unsigned int x = S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
+> > +	struct {
+> > +		unsigned int allowed;
+> > +		unsigned int defined;  /* allowed or denied */
+> > +	} owner = {
+> > +		.defined = RICHACE_POSIX_ALWAYS_ALLOWED |
+> > +			   RICHACE_POSIX_OWNER_ALLOWED  | x,
+> > +	}, group = {
+> > +		.defined = RICHACE_POSIX_ALWAYS_ALLOWED | x,
+> > +	}, everyone = {
+> > +		.defined = RICHACE_POSIX_ALWAYS_ALLOWED | x,
+> > +	};
+> > +	const struct richace *ace;
+> > +
+> > +	if (acl->a_flags & ~(RICHACL_WRITE_THROUGH | RICHACL_MASKED))
+> > +		return -1;
+> > +
+> > +	richacl_for_each_entry(ace, acl) {
+> > +		if (ace->e_flags & ~RICHACE_SPECIAL_WHO)
+> > +			return -1;
+> > +
+> > +		if (richace_is_owner(ace) || richace_is_everyone(ace)) {
+> > +			x = ace->e_mask & ~owner.defined;
+> > +			if (richace_is_allow(ace)) {
+> > +				unsigned int group_denied =
+> > +					group.defined & ~group.allowed;
+> > +
+> > +				if (x & group_denied)
+> > +					return -1;
+> > +				owner.allowed |= x;
+> > +			} else /* if (richace_is_deny(ace)) */ {
+> > +				if (x & group.allowed)
+> > +					return -1;
+> > +			}
+> > +			owner.defined |= x;
+> > +
+> > +			if (richace_is_everyone(ace)) {
+> > +				x = ace->e_mask;
+> > +				if (richace_is_allow(ace)) {
+> > +					group.allowed |=
+> > +						x & ~group.defined;
+> > +					everyone.allowed |=
+> > +						x & ~everyone.defined;
+> > +				}
+> > +				group.defined |= x;
+> > +				everyone.defined |= x;
+> > +			}
+> > +		} else if (richace_is_group(ace)) {
+> > +			x = ace->e_mask & ~group.defined;
+> > +			if (richace_is_allow(ace))
+> > +				group.allowed |= x;
+> > +			group.defined |= x;
+> > +		} else
+> > +			return -1;
+> > +	}
+> > +
+> > +	if (group.allowed & ~owner.defined)
+> > +		return -1;
+> > +
+> > +	if (acl->a_flags & RICHACL_MASKED) {
+> > +		if (acl->a_flags & RICHACL_WRITE_THROUGH) {
+> > +			owner.allowed = acl->a_owner_mask;
+> > +			everyone.allowed = acl->a_other_mask;
+> > +		} else {
+> > +			owner.allowed &= acl->a_owner_mask;
+> > +			everyone.allowed &= acl->a_other_mask;
+> > +		}
+> > +		group.allowed &= acl->a_group_mask;
+> > +	}
+> > +
+> > +	mode = (mode & ~S_IRWXUGO) |
+> > +	       (richacl_mask_to_mode(owner.allowed) << 6) |
+> > +	       (richacl_mask_to_mode(group.allowed) << 3) |
+> > +		richacl_mask_to_mode(everyone.allowed);
+> > +
+> > +	/* Mask flags we can ignore */
+> > +	x = S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
+> > +
+> > +	if (((richacl_mode_to_mask(mode >> 6) ^ owner.allowed)    & ~x) ||
+> > +	    ((richacl_mode_to_mask(mode >> 3) ^ group.allowed)    & ~x) ||
+> > +	    ((richacl_mode_to_mask(mode)      ^ everyone.allowed) & ~x))
+> > +		return -1;
+> > +
+> > +	*mode_p = mode;
+> > +	return 0;
+> > +}
+> > +EXPORT_SYMBOL_GPL(richacl_equiv_mode);
+> > diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+> > index d4a576c..6535ce5 100644
+> > --- a/include/linux/richacl.h
+> > +++ b/include/linux/richacl.h
+> > @@ -304,6 +304,7 @@ extern unsigned int richacl_mode_to_mask(mode_t);
+> >  extern unsigned int richacl_want_to_mask(unsigned int);
+> >  extern void richacl_compute_max_masks(struct richacl *);
+> >  extern struct richacl *richacl_chmod(struct richacl *, mode_t);
+> > +extern int richacl_equiv_mode(const struct richacl *, mode_t *);
+> >  
+> >  /* richacl_inode.c */
+> >  extern int richacl_permission(struct inode *, const struct richacl *, int);
+> > -- 
+> > 2.4.3
+> > 
+> > --
+> > To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+> > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
