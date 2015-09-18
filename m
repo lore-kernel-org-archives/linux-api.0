@@ -1,245 +1,226 @@
-From: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH] coresight: etm3x: breaking down sysFS status interface
-Date: Fri, 18 Sep 2015 08:49:22 -0600
-Message-ID: <1442587762-1880-1-git-send-email-mathieu.poirier@linaro.org>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
-Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org (J. Bruce Fields)
+Subject: Re: [RFC v7 14/41] richacl: Create-time inheritance
+Date: Fri, 18 Sep 2015 13:58:40 -0400
+Message-ID: <20150918175840.GA21506@fieldses.org>
+References: <1441448856-13478-1-git-send-email-agruenba@redhat.com>
+ <1441448856-13478-15-git-send-email-agruenba@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1441448856-13478-15-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-SysFS rules stipulate that only one value can be conveyed per
-file.  As such splitting the "status" interface in individual files.
+On Sat, Sep 05, 2015 at 12:27:09PM +0200, Andreas Gruenbacher wrote:
+> When a new file is created, it can inherit an acl from its parent
+> directory; this is similar to how default acls work in POSIX (draft)
+> ACLs.
+> 
+> As with POSIX ACLs, if a file inherits an acl from its parent directory,
+> the intersection between the create mode and the permissions granted by
+> the inherited acl determines the file masks and file permission bits,
+> and the umask is ignored.
+> 
+> Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> ---
+>  fs/richacl_base.c       | 69 +++++++++++++++++++++++++++++++++++++++++++++++++
+>  fs/richacl_inode.c      | 65 ++++++++++++++++++++++++++++++++++++++++++++++
+>  include/linux/richacl.h |  2 ++
+>  3 files changed, 136 insertions(+)
+> 
+> diff --git a/fs/richacl_base.c b/fs/richacl_base.c
+> index 106e988..fda407d 100644
+> --- a/fs/richacl_base.c
+> +++ b/fs/richacl_base.c
+> @@ -483,3 +483,72 @@ richacl_equiv_mode(const struct richacl *acl, mode_t *mode_p)
+>  	return 0;
+>  }
+>  EXPORT_SYMBOL_GPL(richacl_equiv_mode);
+> +
+> +/**
+> + * richacl_inherit  -  compute the inherited acl of a new file
+> + * @dir_acl:	acl of the containing directory
+> + * @isdir:	inherit by a directory or non-directory?
+> + *
+> + * A directory can have acl entries which files and/or directories created
+> + * inside the directory will inherit.  This function computes the acl for such
+> + * a new file.  If there is no inheritable acl, it will return %NULL.
+> + */
+> +struct richacl *
+> +richacl_inherit(const struct richacl *dir_acl, int isdir)
+> +{
+> +	const struct richace *dir_ace;
+> +	struct richacl *acl = NULL;
+> +	struct richace *ace;
+> +	int count = 0;
+> +
+> +	if (isdir) {
+> +		richacl_for_each_entry(dir_ace, dir_acl) {
+> +			if (!richace_is_inheritable(dir_ace))
+> +				continue;
+> +			count++;
+> +		}
+> +		if (!count)
+> +			return NULL;
+> +		acl = richacl_alloc(count, GFP_KERNEL);
+> +		if (!acl)
+> +			return ERR_PTR(-ENOMEM);
+> +		ace = acl->a_entries;
+> +		richacl_for_each_entry(dir_ace, dir_acl) {
+> +			if (!richace_is_inheritable(dir_ace))
+> +				continue;
+> +			richace_copy(ace, dir_ace);
+> +			if (dir_ace->e_flags & RICHACE_NO_PROPAGATE_INHERIT_ACE)
+> +				ace->e_flags &= ~RICHACE_INHERITANCE_FLAGS;
+> +			else if ((dir_ace->e_flags & RICHACE_FILE_INHERIT_ACE) &&
+> +				 !(dir_ace->e_flags & RICHACE_DIRECTORY_INHERIT_ACE))
 
-This is also be useful for user space application - that way they can
-probe each file individually rather than having to parse a list of entries.
+The FILE_INHERIT_ACE check there is redundant since we already know
+dir_ace is inheritable.
 
-Signed-off-by: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
----
- .../ABI/testing/sysfs-bus-coresight-devices-etm3x  |  77 ++++++++++++++--
- drivers/hwtracing/coresight/coresight-etm3x.c      | 100 +++++++++++----------
- 2 files changed, 121 insertions(+), 56 deletions(-)
+(So, OK, it isn't wrong to check it again but let's not make this
+condition any more complicated than necessary.)
 
-diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm3x b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm3x
-index d72ca1736ba4..67e3557bc4bf 100644
---- a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm3x
-+++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm3x
-@@ -8,13 +8,6 @@ Description:	(RW) Enable/disable tracing on this specific trace entiry.
- 		of coresight components linking the source to the sink is
- 		configured and managed automatically by the coresight framework.
- 
--What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/status
--Date:		November 2014
--KernelVersion:	3.19
--Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
--Description:	(R) List various control and status registers.  The specific
--		layout and content is driver specific.
--
- What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/addr_idx
- Date:		November 2014
- KernelVersion:	3.19
-@@ -251,3 +244,73 @@ Date:		November 2014
- KernelVersion:	3.19
- Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
- Description: 	(RW) Define the event that controls the trigger.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/mgmt/etmccr
-+Date:		September 2015
-+KernelVersion:	4.4
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description: 	(RO) Print the content of the ETM Configuration Code register
-+		(0x004).  The value is read directly from the HW.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/mgmt/etmccer
-+Date:		September 2015
-+KernelVersion:	4.4
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description: 	(RO) Print the content of the ETM Configuration Code Extension
-+		register (0x1e8).  The value is read directly from the HW.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/mgmt/etmscr
-+Date:		September 2015
-+KernelVersion:	4.4
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description: 	(RO) Print the content of the ETM System Configuration
-+		register (0x014).  The value is read directly from the HW.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/mgmt/etmidr
-+Date:		September 2015
-+KernelVersion:	4.4
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description: 	(RO) Print the content of the ETM ID register (0x1e4).  The
-+		value is read directly from the HW.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/mgmt/etmcr
-+Date:		September 2015
-+KernelVersion:	4.4
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description: 	(RO) Print the content of the ETM Main Control register (0x000).
-+		The value is read directly from the HW.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/mgmt/etmtraceidr
-+Date:		September 2015
-+KernelVersion:	4.4
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description: 	(RO) Print the content of the ETM Trace ID register (0x200).
-+		The value is read directly from the HW.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/mgmt/etmteevr
-+Date:		September 2015
-+KernelVersion:	4.4
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description: 	(RO) Print the content of the ETM Trace Enable Event register
-+		(0x020). The value is read directly from the HW.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/mgmt/etmtsscr
-+Date:		September 2015
-+KernelVersion:	4.4
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description: 	(RO) Print the content of the ETM Trace Start/Stop Conrol
-+		register (0x018). The value is read directly from the HW.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/mgmt/etmtecr1
-+Date:		September 2015
-+KernelVersion:	4.4
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description: 	(RO) Print the content of the ETM Enable Conrol #1
-+		register (0x024). The value is read directly from the HW.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/mgmt/etmtecr2
-+Date:		September 2015
-+KernelVersion:	4.4
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description: 	(RO) Print the content of the ETM Enable Conrol #2
-+		register (0x01c). The value is read directly from the HW.
-diff --git a/drivers/hwtracing/coresight/coresight-etm3x.c b/drivers/hwtracing/coresight/coresight-etm3x.c
-index 4797f56e7f13..87374b3388ad 100644
---- a/drivers/hwtracing/coresight/coresight-etm3x.c
-+++ b/drivers/hwtracing/coresight/coresight-etm3x.c
-@@ -313,14 +313,6 @@ static void etm_enable_hw(void *info)
- 	dev_dbg(drvdata->dev, "cpu: %d enable smp call done\n", drvdata->cpu);
- }
- 
--static int etm_trace_id_simple(struct etm_drvdata *drvdata)
--{
--	if (!drvdata->enable)
--		return drvdata->traceid;
--
--	return (etm_readl(drvdata, ETMTRACEIDR) & ETM_TRACEID_MASK);
--}
--
- static int etm_trace_id(struct coresight_device *csdev)
- {
- 	struct etm_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
-@@ -1506,45 +1498,6 @@ static ssize_t timestamp_event_store(struct device *dev,
- }
- static DEVICE_ATTR_RW(timestamp_event);
- 
--static ssize_t status_show(struct device *dev,
--			   struct device_attribute *attr, char *buf)
--{
--	int ret;
--	unsigned long flags;
--	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
--
--	pm_runtime_get_sync(drvdata->dev);
--	spin_lock_irqsave(&drvdata->spinlock, flags);
--
--	CS_UNLOCK(drvdata->base);
--	ret = sprintf(buf,
--		      "ETMCCR: 0x%08x\n"
--		      "ETMCCER: 0x%08x\n"
--		      "ETMSCR: 0x%08x\n"
--		      "ETMIDR: 0x%08x\n"
--		      "ETMCR: 0x%08x\n"
--		      "ETMTRACEIDR: 0x%08x\n"
--		      "Enable event: 0x%08x\n"
--		      "Enable start/stop: 0x%08x\n"
--		      "Enable control: CR1 0x%08x CR2 0x%08x\n"
--		      "CPU affinity: %d\n",
--		      drvdata->etmccr, drvdata->etmccer,
--		      etm_readl(drvdata, ETMSCR), etm_readl(drvdata, ETMIDR),
--		      etm_readl(drvdata, ETMCR), etm_trace_id_simple(drvdata),
--		      etm_readl(drvdata, ETMTEEVR),
--		      etm_readl(drvdata, ETMTSSCR),
--		      etm_readl(drvdata, ETMTECR1),
--		      etm_readl(drvdata, ETMTECR2),
--		      drvdata->cpu);
--	CS_LOCK(drvdata->base);
--
--	spin_unlock_irqrestore(&drvdata->spinlock, flags);
--	pm_runtime_put(drvdata->dev);
--
--	return ret;
--}
--static DEVICE_ATTR_RO(status);
--
- static ssize_t cpu_show(struct device *dev,
- 			struct device_attribute *attr, char *buf)
- {
-@@ -1631,12 +1584,61 @@ static struct attribute *coresight_etm_attrs[] = {
- 	&dev_attr_ctxid_mask.attr,
- 	&dev_attr_sync_freq.attr,
- 	&dev_attr_timestamp_event.attr,
--	&dev_attr_status.attr,
- 	&dev_attr_traceid.attr,
- 	&dev_attr_cpu.attr,
- 	NULL,
- };
--ATTRIBUTE_GROUPS(coresight_etm);
-+
-+#define coresight_simple_func(name, offset)                             \
-+static ssize_t name##_show(struct device *_dev,                         \
-+			   struct device_attribute *attr, char *buf)    \
-+{                                                                       \
-+	struct etm_drvdata *drvdata = dev_get_drvdata(_dev->parent);    \
-+	return scnprintf(buf, PAGE_SIZE, "0x%x\n",                      \
-+			 readl_relaxed(drvdata->base + offset));        \
-+}                                                                       \
-+DEVICE_ATTR_RO(name)
-+
-+coresight_simple_func(etmccr, ETMCCR);
-+coresight_simple_func(etmccer, ETMCCER);
-+coresight_simple_func(etmscr, ETMSCR);
-+coresight_simple_func(etmidr, ETMIDR);
-+coresight_simple_func(etmcr, ETMCR);
-+coresight_simple_func(etmtraceidr, ETMTRACEIDR);
-+coresight_simple_func(etmteevr, ETMTEEVR);
-+coresight_simple_func(etmtssvr, ETMTSSCR);
-+coresight_simple_func(etmtecr1, ETMTECR1);
-+coresight_simple_func(etmtecr2, ETMTECR2);
-+
-+static struct attribute *coresight_etm_mgmt_attrs[] = {
-+	&dev_attr_etmccr.attr,
-+	&dev_attr_etmccer.attr,
-+	&dev_attr_etmscr.attr,
-+	&dev_attr_etmidr.attr,
-+	&dev_attr_etmcr.attr,
-+	&dev_attr_etmtraceidr.attr,
-+	&dev_attr_etmteevr.attr,
-+	&dev_attr_etmtssvr.attr,
-+	&dev_attr_etmtecr1.attr,
-+	&dev_attr_etmtecr2.attr,
-+	NULL,
-+};
-+
-+static const struct attribute_group coresight_etm_group = {
-+	.attrs = coresight_etm_attrs,
-+};
-+
-+
-+static const struct attribute_group coresight_etm_mgmt_group = {
-+	.attrs = coresight_etm_mgmt_attrs,
-+	.name = "mgmt",
-+};
-+
-+static const struct attribute_group *coresight_etm_groups[] = {
-+	&coresight_etm_group,
-+	&coresight_etm_mgmt_group,
-+	NULL,
-+};
- 
- static int etm_cpu_callback(struct notifier_block *nfb, unsigned long action,
- 			    void *hcpu)
--- 
-1.9.1
+> +				ace->e_flags |= RICHACE_INHERIT_ONLY_ACE;
+> +			ace++;
+> +		}
+> +	} else {
+> +		richacl_for_each_entry(dir_ace, dir_acl) {
+> +			if (!(dir_ace->e_flags & RICHACE_FILE_INHERIT_ACE))
+> +				continue;
+> +			count++;
+> +		}
+> +		if (!count)
+> +			return NULL;
+> +		acl = richacl_alloc(count, GFP_KERNEL);
+> +		if (!acl)
+> +			return ERR_PTR(-ENOMEM);
+> +		ace = acl->a_entries;
+> +		richacl_for_each_entry(dir_ace, dir_acl) {
+> +			if (!(dir_ace->e_flags & RICHACE_FILE_INHERIT_ACE))
+> +				continue;
+> +			richace_copy(ace, dir_ace);
+> +			ace->e_flags &= ~RICHACE_INHERITANCE_FLAGS;
+> +			/*
+> +			 * RICHACE_DELETE_CHILD is meaningless for
+> +			 * non-directories, so clear it.
+> +			 */
+> +			ace->e_mask &= ~RICHACE_DELETE_CHILD;
+> +			ace++;
+> +		}
+> +	}
+> +
+> +	return acl;
+> +}
+> diff --git a/fs/richacl_inode.c b/fs/richacl_inode.c
+> index dc2a69f..f3f1f84 100644
+> --- a/fs/richacl_inode.c
+> +++ b/fs/richacl_inode.c
+> @@ -220,3 +220,68 @@ out:
+>  	return denied ? -EACCES : 0;
+>  }
+>  EXPORT_SYMBOL_GPL(richacl_permission);
+> +
+> +/**
+> + * richacl_inherit_inode  -  compute inherited acl and file mode
+> + * @dir_acl:	acl of the containing directory
+> + * @inode:	inode of the new file (create mode in i_mode)
+> + *
+> + * The file permission bits in inode->i_mode must be set to the create mode by
+> + * the caller.
+> + *
+> + * If there is an inheritable acl, the maximum permissions that the acl grants
+> + * will be computed and permissions not granted by the acl will be removed from
+> + * inode->i_mode.  If there is no inheritable acl, the umask will be applied
+> + * instead.
+> + */
+> +static struct richacl *
+> +richacl_inherit_inode(const struct richacl *dir_acl, struct inode *inode)
+> +{
+> +	struct richacl *acl;
+> +	mode_t mask;
+> +
+> +	acl = richacl_inherit(dir_acl, S_ISDIR(inode->i_mode));
+> +	if (acl) {
+> +		mask = inode->i_mode;
+> +		if (richacl_equiv_mode(acl, &mask) == 0) {
+> +			richacl_put(acl);
+> +			acl = NULL;
+
+Why is it correct to ignore entirely the inherited acl in this case?
+
+Oh, I see, I'm forgetting that richacl_equiv_mode is setting the mask,
+which will get applied at the end of this function.  In my defense,
+maybe it's easy to overlook a side effect in an if condition.... But I
+don't have a better idea.  OK.
+
+So, nits aside:
+
+	Reviewed-by: J. Bruce Fields <bfields-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+
+--b.
+
+> +		} else {
+> +			richacl_compute_max_masks(acl);
+> +			/*
+> +			 * Ensure that the acl will not grant any permissions
+> +			 * beyond the create mode.
+> +			 */
+> +			acl->a_flags |= RICHACL_MASKED;
+> +			acl->a_owner_mask &=
+> +				richacl_mode_to_mask(inode->i_mode >> 6);
+> +			acl->a_group_mask &=
+> +				richacl_mode_to_mask(inode->i_mode >> 3);
+> +			acl->a_other_mask &=
+> +				richacl_mode_to_mask(inode->i_mode);
+> +			mask = ~S_IRWXUGO | richacl_masks_to_mode(acl);
+> +		}
+> +	} else
+> +		mask = ~current_umask();
+> +
+> +	inode->i_mode &= mask;
+> +	return acl;
+> +}
+> +
+> +struct richacl *richacl_create(struct inode *inode, struct inode *dir)
+> +{
+> +	struct richacl *dir_acl, *acl = NULL;
+> +
+> +	if (S_ISLNK(inode->i_mode))
+> +		return NULL;
+> +	dir_acl = get_richacl(dir);
+> +	if (dir_acl) {
+> +		if (IS_ERR(dir_acl))
+> +			return dir_acl;
+> +		acl = richacl_inherit_inode(dir_acl, inode);
+> +		richacl_put(dir_acl);
+> +	} else
+> +		inode->i_mode &= ~current_umask();
+> +	return acl;
+> +}
+> +EXPORT_SYMBOL_GPL(richacl_create);
+> diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+> index 6535ce5..9bf95c2 100644
+> --- a/include/linux/richacl.h
+> +++ b/include/linux/richacl.h
+> @@ -305,8 +305,10 @@ extern unsigned int richacl_want_to_mask(unsigned int);
+>  extern void richacl_compute_max_masks(struct richacl *);
+>  extern struct richacl *richacl_chmod(struct richacl *, mode_t);
+>  extern int richacl_equiv_mode(const struct richacl *, mode_t *);
+> +extern struct richacl *richacl_inherit(const struct richacl *, int);
+>  
+>  /* richacl_inode.c */
+>  extern int richacl_permission(struct inode *, const struct richacl *, int);
+> +extern struct richacl *richacl_create(struct inode *, struct inode *);
+>  
+>  #endif /* __RICHACL_H */
+> -- 
+> 2.4.3
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
