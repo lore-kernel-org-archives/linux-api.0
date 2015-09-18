@@ -1,130 +1,94 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v2 8/9] [media] handle 64-bit time_t in v4l2_buffer
-Date: Fri, 18 Sep 2015 11:26:43 +0200
-Message-ID: <2032750.MT8vj0PRkR@wuerfel>
-References: <1442524780-781677-1-git-send-email-arnd@arndb.de> <1442524780-781677-9-git-send-email-arnd@arndb.de> <55FBBAD5.4010002@xs4all.nl>
+From: Hans Verkuil <hverkuil@xs4all.nl>
+Subject: Re: [PATCH v2 7/9] [media] v4l2: introduce v4l2_timeval
+Date: Fri, 18 Sep 2015 11:27:40 +0200
+Message-ID: <55FBD90C.3020301@xs4all.nl>
+References: <1442524780-781677-1-git-send-email-arnd@arndb.de> <1442524780-781677-8-git-send-email-arnd@arndb.de> <55FBC5B2.10808@xs4all.nl> <8200227.6XAMdOOJfW@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <55FBBAD5.4010002@xs4all.nl>
+In-Reply-To: <8200227.6XAMdOOJfW@wuerfel>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Hans Verkuil <hverkuil@xs4all.nl>
+To: Arnd Bergmann <arnd@arndb.de>
 Cc: linux-media@vger.kernel.org, linux-kernel@vger.kernel.org, y2038@lists.linaro.org, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, linux-api@vger.kernel.org, linux-samsung-soc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Friday 18 September 2015 09:18:45 Hans Verkuil wrote:
-> Hi Arnd,
+On 09/18/15 11:09, Arnd Bergmann wrote:
+> On Friday 18 September 2015 10:05:06 Hans Verkuil wrote:
+>> On 09/17/15 23:19, Arnd Bergmann wrote:
+>>> The v4l2 API uses a 'struct timeval' to communicate time stamps to user
+>>> space. This is broken on 32-bit architectures as soon as we have a C library
+>>> that defines time_t as 64 bit, which then changes the structure layout of
+>>> struct v4l2_buffer.
+>>>
+>>> Since existing user space source code relies on the type to be 'struct
+>>> timeva' and we want to preserve compile-time compatibility when moving
+>>
+>> s/timeva/timeval/
 > 
-> Thanks once again for working on this! Unfortunately, this approach won't
-> work, see my comments below.
+> Fixed
 > 
-> BTW, I would expect to see compile errors when compiling for 32 bit. Did
-> you try that?
-
-I only tested on 32-bit, both ARM and x86, but had a longer set of patches
-applied below.
-
-> > +static void v4l_put_buffer_time32(struct v4l2_buffer_time32 *to,
-> > +				  const struct v4l2_buffer *from)
-> > +{
-> > +	to->index		= from->index;
-> > +	to->type		= from->type;
-> > +	to->bytesused		= from->bytesused;
-> > +	to->flags		= from->flags;
-> > +	to->field		= from->field;
-> > +	to->timestamp.tv_sec	= from->timestamp.tv_sec;
-> > +	to->timestamp.tv_usec	= from->timestamp.tv_usec;
-> > +	to->timecode		= from->timecode;
-> > +	to->sequence		= from->sequence;
-> > +	to->memory		= from->memory;
-> > +	to->m.offset		= from->m.offset;
-> > +	to->length		= from->length;
-> > +	to->reserved2		= from->reserved2;
-> > +	to->reserved		= from->reserved;
-> > +}
+>>> to a new libc, we cannot make user-visible changes to the header file.
+>>>
+>>> In this patch, we change the type of the timestamp to 'struct v4l2_timeval'
+>>
+>> Don't we need a kernel-wide timeval64? Rather than adding a v4l2-specific
+>> struct?
 > 
-> Is there a reason why you didn't use memcpy like you did for VIDIOC_DQEVENT (path 5/9)?
-> I would prefer that over these explicit assignments.
-
-No strong reason. I went back and forth a bit on the m.offset field that
-is part of a union: In a previous version, I planned to move all the
-compat handling here, and doing the conversion one field at a time would
-make it easier to share the code between 32-bit and 64-bit kernels
-handling old 32-bit user space. This version doesn't do that, so I can
-use the memcpy approach instead.
-
-> >  static int v4l_g_parm(const struct v4l2_ioctl_ops *ops,
-> >  				struct file *file, void *fh, void *arg)
-> >  {
-> > @@ -2408,12 +2524,21 @@ static struct v4l2_ioctl_info v4l2_ioctls[] = {
-> >  	IOCTL_INFO_FNC(VIDIOC_S_FMT, v4l_s_fmt, v4l_print_format, INFO_FL_PRIO),
-> >  	IOCTL_INFO_FNC(VIDIOC_REQBUFS, v4l_reqbufs, v4l_print_requestbuffers, INFO_FL_PRIO | INFO_FL_QUEUE),
-> >  	IOCTL_INFO_FNC(VIDIOC_QUERYBUF, v4l_querybuf, v4l_print_buffer, INFO_FL_QUEUE | INFO_FL_CLEAR(v4l2_buffer, length)),
-> > +#ifndef CONFIG_64BIT
-> > +	IOCTL_INFO_FNC(VIDIOC_QUERYBUF_TIME32, v4l_querybuf_time32, v4l_print_buffer_time32, INFO_FL_QUEUE | INFO_FL_CLEAR(v4l2_buffer, length)),
-> > +#endif
+> I still hope to avoid doing that. All in-kernel users should be changed to
+> use timespec64 or ktime_t, which are always more efficient and accurate.
 > 
-> This doesn't work. These IOCTL macros use the ioctl nr as the index in the array. Since
-> VIDIOC_QUERYBUF and VIDIOC_QUERYBUF_TIME32 have the same index, this will fail.
-
-Ah, I see. No idea why that did not cause a compile-time error. I got some
-errors for duplicate 'case' values when the structures are the same size
-(that's why we need the '#ifdef CONFIG_64BIT' in some places) but not here.
-
-> I think (not 100% certain, there may be better suggestions) that the conversion is best
-> done in video_usercopy(): just before func() is called have a switch for the TIME32
-> variants, convert to the regular variant, call func() and convert back.
-
-Does the handler have access to the _IOC_SIZE() value that was passed? If
-it does, we could add a conditional inside of v4l_querybuf().
-I did not see an easy way to do that though.
-
-> My only concern here is that an additional v4l2_buffer struct (68 bytes) is needed on the
-> stack. I don't see any way around that, though.
-
-Agreed.
-
-> > +struct v4l2_buffer_time32 {
-> > +	__u32			index;
-> > +	__u32			type;
-> > +	__u32			bytesused;
-> > +	__u32			flags;
-> > +	__u32			field;
-> > +	struct {
-> > +		__s32		tv_sec;
-> > +		__s32		tv_usec;
-> > +	}			timestamp;
-> > +	struct v4l2_timecode	timecode;
-> > +	__u32			sequence;
-> > +
-> > +	/* memory location */
-> > +	__u32			memory;
-> > +	union {
-> > +		__u32           offset;
-> > +		unsigned long   userptr;
-> > +		struct v4l2_plane *planes;
-> > +		__s32		fd;
-> > +	} m;
-> > +	__u32			length;
-> > +	__u32			reserved2;
-> > +	__u32			reserved;
-> > +};
+> For the system call interface, all timeval APIs are deprecated and have
+> replacements using timespec64 (e.g. clock_gettime() replaces gettimeofday).
 > 
-> Should this be part of a public API at all? Userspace will never use this struct
-> or the TIME32 ioctls in the source code, right? This would be more appropriate for
-> v4l2-ioctl.h.
+> Only a handful of ioctls pass timeval, and so far my impression is that
+> we are better off handling each one separately. The total amount of code
+> we need to add this way should be less than if we have to duplicate all
+> common code functions that today operate on timeval and can eventually
+> get removed.
 
-Yes, makes sense. I think for the other structures I just enclosed them
-inside #ifdef __KERNEL__ so they get stripped at 'make headers_install'
-time, but I forgot to do that here.
+Ah, OK. Got it.
 
-My intention was to keep the structure close to the other one, so any
-changes to them would be more likely to make it into both versions.
+I think this is dependent on the upcoming media workshop next month. If we
+decide to redesign v4l2_buffer anyway, then we can avoid timeval completely.
+And the only place where we would need to convert it in the compat code
+hidden in the v4l2 core (likely v4l2-ioctl.c).
 
-Let me know if you prefer to have an #ifdef added here, or if I should
-move all three structures to v4l2-ioctl.h.
+I am not really keen on having v4l2_timeval in all these drivers. I would
+have to check them anyway since I suspect that in several drivers the local
+timeval variable can be avoided by rewriting that part of the driver.
 
-Thanks a lot for the review!
+Personally I am in favor of a redesigned v4l2_buffer: it's awkward to use
+with multiplanar formats, there is cruft in there that can be removed (timecode),
+and there is little space for additions (HW-specific timecodes, more buffer
+meta data, etc).
 
-	Arnd
+We'll see.
+
+Regards,
+
+	Hans
+
+> 
+>>> diff --git a/drivers/media/platform/vim2m.c b/drivers/media/platform/vim2m.c
+>>> index 295fde5fdb75..df5daac6d099 100644
+>>> --- a/drivers/media/platform/vim2m.c
+>>> +++ b/drivers/media/platform/vim2m.c
+>>> @@ -235,7 +235,7 @@ static int device_process(struct vim2m_ctx *ctx,
+>>>  	in_vb->v4l2_buf.sequence = q_data->sequence++;
+>>>  	memcpy(&out_vb->v4l2_buf.timestamp,
+>>>  			&in_vb->v4l2_buf.timestamp,
+>>> -			sizeof(struct timeval));
+>>> +			sizeof(struct v4l2_timeval));
+>>>  	if (in_vb->v4l2_buf.flags & V4L2_BUF_FLAG_TIMECODE)
+>>>  		memcpy(&out_vb->v4l2_buf.timecode, &in_vb->v4l2_buf.timecode,
+>>>  			sizeof(struct v4l2_timecode));
+>>
+>> See https://patchwork.linuxtv.org/patch/31405/
+>>
+>> I'll merge that one for 4.4 very soon.
+> 
+> Ok.
+> 
+> 	Arnd
+> 
