@@ -1,94 +1,59 @@
-From: Hans Verkuil <hverkuil@xs4all.nl>
+From: Arnd Bergmann <arnd@arndb.de>
 Subject: Re: [PATCH v2 7/9] [media] v4l2: introduce v4l2_timeval
-Date: Fri, 18 Sep 2015 11:27:40 +0200
-Message-ID: <55FBD90C.3020301@xs4all.nl>
-References: <1442524780-781677-1-git-send-email-arnd@arndb.de> <1442524780-781677-8-git-send-email-arnd@arndb.de> <55FBC5B2.10808@xs4all.nl> <8200227.6XAMdOOJfW@wuerfel>
+Date: Fri, 18 Sep 2015 11:43:24 +0200
+Message-ID: <9019880.VVdOR6WRt1@wuerfel>
+References: <1442524780-781677-1-git-send-email-arnd@arndb.de>
+ <8200227.6XAMdOOJfW@wuerfel> <55FBD90C.3020301@xs4all.nl>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <8200227.6XAMdOOJfW@wuerfel>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: linux-media@vger.kernel.org, linux-kernel@vger.kernel.org, y2038@lists.linaro.org, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, linux-api@vger.kernel.org, linux-samsung-soc@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+In-Reply-To: <55FBD90C.3020301@xs4all.nl>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+To: Hans Verkuil <hverkuil@xs4all.nl>
+Cc: linux-samsung-soc@vger.kernel.org, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-media@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 09/18/15 11:09, Arnd Bergmann wrote:
-> On Friday 18 September 2015 10:05:06 Hans Verkuil wrote:
->> On 09/17/15 23:19, Arnd Bergmann wrote:
->>> The v4l2 API uses a 'struct timeval' to communicate time stamps to user
->>> space. This is broken on 32-bit architectures as soon as we have a C library
->>> that defines time_t as 64 bit, which then changes the structure layout of
->>> struct v4l2_buffer.
->>>
->>> Since existing user space source code relies on the type to be 'struct
->>> timeva' and we want to preserve compile-time compatibility when moving
->>
->> s/timeva/timeval/
-> 
-> Fixed
-> 
->>> to a new libc, we cannot make user-visible changes to the header file.
->>>
->>> In this patch, we change the type of the timestamp to 'struct v4l2_timeval'
->>
->> Don't we need a kernel-wide timeval64? Rather than adding a v4l2-specific
->> struct?
-> 
-> I still hope to avoid doing that. All in-kernel users should be changed to
-> use timespec64 or ktime_t, which are always more efficient and accurate.
-> 
-> For the system call interface, all timeval APIs are deprecated and have
-> replacements using timespec64 (e.g. clock_gettime() replaces gettimeofday).
-> 
-> Only a handful of ioctls pass timeval, and so far my impression is that
-> we are better off handling each one separately. The total amount of code
-> we need to add this way should be less than if we have to duplicate all
-> common code functions that today operate on timeval and can eventually
-> get removed.
-
-Ah, OK. Got it.
-
-I think this is dependent on the upcoming media workshop next month. If we
-decide to redesign v4l2_buffer anyway, then we can avoid timeval completely.
-And the only place where we would need to convert it in the compat code
-hidden in the v4l2 core (likely v4l2-ioctl.c).
-
-I am not really keen on having v4l2_timeval in all these drivers. I would
-have to check them anyway since I suspect that in several drivers the local
-timeval variable can be avoided by rewriting that part of the driver.
-
-Personally I am in favor of a redesigned v4l2_buffer: it's awkward to use
-with multiplanar formats, there is cruft in there that can be removed (timecode),
-and there is little space for additions (HW-specific timecodes, more buffer
-meta data, etc).
-
-We'll see.
-
-Regards,
-
-	Hans
-
-> 
->>> diff --git a/drivers/media/platform/vim2m.c b/drivers/media/platform/vim2m.c
->>> index 295fde5fdb75..df5daac6d099 100644
->>> --- a/drivers/media/platform/vim2m.c
->>> +++ b/drivers/media/platform/vim2m.c
->>> @@ -235,7 +235,7 @@ static int device_process(struct vim2m_ctx *ctx,
->>>  	in_vb->v4l2_buf.sequence = q_data->sequence++;
->>>  	memcpy(&out_vb->v4l2_buf.timestamp,
->>>  			&in_vb->v4l2_buf.timestamp,
->>> -			sizeof(struct timeval));
->>> +			sizeof(struct v4l2_timeval));
->>>  	if (in_vb->v4l2_buf.flags & V4L2_BUF_FLAG_TIMECODE)
->>>  		memcpy(&out_vb->v4l2_buf.timecode, &in_vb->v4l2_buf.timecode,
->>>  			sizeof(struct v4l2_timecode));
->>
->> See https://patchwork.linuxtv.org/patch/31405/
->>
->> I'll merge that one for 4.4 very soon.
-> 
-> Ok.
-> 
-> 	Arnd
-> 
+T24gRnJpZGF5IDE4IFNlcHRlbWJlciAyMDE1IDExOjI3OjQwIEhhbnMgVmVya3VpbCB3cm90ZToK
+PiBBaCwgT0suIEdvdCBpdC4KPiAKPiBJIHRoaW5rIHRoaXMgaXMgZGVwZW5kZW50IG9uIHRoZSB1
+cGNvbWluZyBtZWRpYSB3b3Jrc2hvcCBuZXh0IG1vbnRoLiBJZiB3ZQo+IGRlY2lkZSB0byByZWRl
+c2lnbiB2NGwyX2J1ZmZlciBhbnl3YXksIHRoZW4gd2UgY2FuIGF2b2lkIHRpbWV2YWwgY29tcGxl
+dGVseS4KPiBBbmQgdGhlIG9ubHkgcGxhY2Ugd2hlcmUgd2Ugd291bGQgbmVlZCB0byBjb252ZXJ0
+IGl0IGluIHRoZSBjb21wYXQgY29kZQo+IGhpZGRlbiBpbiB0aGUgdjRsMiBjb3JlIChsaWtlbHkg
+djRsMi1pb2N0bC5jKS4KCkFoLCBJIHRoaW5rIEkgdW5kZXJzdG9vZCB0aGUgaWRlYSBub3csIEkg
+bWlzc2VkIHRoYXQgZWFybGllciB3aGVuIHlvdSBtZW50aW9uCnRoZSBpZGVhLgoKU28gd2hhdCB5
+b3UgYXJlIHNheWluZyBoZXJlIGlzIHRoYXQgeW91IGNvdWxkIGNvbWUgdXAgd2l0aCBhIG5ldyB1
+bmFtYmlndW91cwoodXNpbmcgb25seSBfX3UzMiBhbmQgX191NjQgdHlwZXMgYW5kIG5vIHBvaW50
+ZXJzKSBmb3JtYXQgdGhhdCBnZXRzIGV4cG9zZWQKdG8gYSBuZXcgc2V0IG9mIGlvY3RscywgYW5k
+IHRoZW4gY2hhbmdlIHRoZSBoYW5kbGluZyBvZiB0aGUgZXhpc3RpbmcgdGhyZWUKZm9ybWF0cyAo
+bmF0aXZlIDY0LWJpdCwgdHJhZGl0aW9uYWwgMzItYml0LCBhbmQgMzItYml0IHdpdGggNjQtYml0
+IHRpbWVfdCkKc28gdGhleSBnZXQgY29udmVydGVkIGludG8gdGhlIG5ldyBmb3JtYXQgYnkgdGhl
+IGNvbW1vbiBpb2N0bCBoYW5kbGluZyBjb2RlPwoKPiBJIGFtIG5vdCByZWFsbHkga2VlbiBvbiBo
+YXZpbmcgdjRsMl90aW1ldmFsIGluIGFsbCB0aGVzZSBkcml2ZXJzLiBJIHdvdWxkCj4gaGF2ZSB0
+byBjaGVjayB0aGVtIGFueXdheSBzaW5jZSBJIHN1c3BlY3QgdGhhdCBpbiBzZXZlcmFsIGRyaXZl
+cnMgdGhlIGxvY2FsCj4gdGltZXZhbCB2YXJpYWJsZSBjYW4gYmUgYXZvaWRlZCBieSByZXdyaXRp
+bmcgdGhhdCBwYXJ0IG9mIHRoZSBkcml2ZXIuCgpJJ3ZlIHRyaWVkIHRvIGRvIHRoYXQgZm9yIGFs
+bCB0aGUgZHJpdmVycyB3aGVyZSBJIGNvdWxkIGZpbmQgYW4gZWFzeSBzb2x1dGlvbgppbiBwYXRj
+aCA2LzksIGJ1dCBJJ20gc3VyZSB5b3UgY2FuIGRvIGl0IGZvciBhIGNvdXBsZSBtb3JlLgoKV2Ug
+Y291bGQgYWxzbyBkbyBhIGxpZ2h0d2VpZ2h0IHJlZGVzaWduIGFuZCB1c2UgJ3RpbWVzcGVjNjQn
+IGludGVybmFsbHkKaW4gYWxsIHRoZSBkcml2ZXJzIGFuZCB0aGVuIGNvbnZlcnQgdGhhdCB0byAn
+dGltZXZhbCcgb3IgdGhlIDY0LWJpdApmb3JtYXQgb2YgdGhhdCBpbiB0aGUgaW9jdGwgaGFuZGxl
+ci4gVGhpcyBpcyBhbHNvIHNvbWV0aGluZyBJIHRyaWVkIGF0CnNvbWUgcG9pbnQgYnV0IHRoZW4g
+Zm91bmQgaXQgYSBiaXQgbW9yZSBpbnR1aXRpdmUgdG8gbGVhdmUgdGhlIG5vcm1hbCBpb2N0bApw
+YXRoIGFsb25lIGFuZCBoYXZlIGFuIGV4cGxpY2l0IHR5cGUuCgo+IFBlcnNvbmFsbHkgSSBhbSBp
+biBmYXZvciBvZiBhIHJlZGVzaWduZWQgdjRsMl9idWZmZXI6IGl0J3MgYXdrd2FyZCB0byB1c2UK
+PiB3aXRoIG11bHRpcGxhbmFyIGZvcm1hdHMsIHRoZXJlIGlzIGNydWZ0IGluIHRoZXJlIHRoYXQg
+Y2FuIGJlIHJlbW92ZWQgKHRpbWVjb2RlKSwKPiBhbmQgdGhlcmUgaXMgbGl0dGxlIHNwYWNlIGZv
+ciBhZGRpdGlvbnMgKEhXLXNwZWNpZmljIHRpbWVjb2RlcywgbW9yZSBidWZmZXIKPiBtZXRhIGRh
+dGEsIGV0YykuCj4gCj4gV2UnbGwgc2VlLgoKT2suCgoJQXJuZApfX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fXwpZMjAzOCBtYWlsaW5nIGxpc3QKWTIwMzhAbGlz
+dHMubGluYXJvLm9yZwpodHRwczovL2xpc3RzLmxpbmFyby5vcmcvbWFpbG1hbi9saXN0aW5mby95
+MjAzOAo=
