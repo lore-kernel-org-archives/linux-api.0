@@ -1,267 +1,365 @@
-From: Hans Verkuil <hverkuil@xs4all.nl>
-Subject: Re: [PATCH v2 8/9] [media] handle 64-bit time_t in
-	v4l2_buffer
-Date: Fri, 18 Sep 2015 09:18:45 +0200
-Message-ID: <55FBBAD5.4010002@xs4all.nl>
-References: <1442524780-781677-1-git-send-email-arnd@arndb.de>
- <1442524780-781677-9-git-send-email-arnd@arndb.de>
+From: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+Subject: Re: [PATCH v2 7/9] [media] v4l2: introduce v4l2_timeval
+Date: Fri, 18 Sep 2015 10:05:06 +0200
+Message-ID: <55FBC5B2.10808@xs4all.nl>
+References: <1442524780-781677-1-git-send-email-arnd@arndb.de> <1442524780-781677-8-git-send-email-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <1442524780-781677-9-git-send-email-arnd@arndb.de>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: Arnd Bergmann <arnd@arndb.de>, linux-media@vger.kernel.org
-Cc: y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-samsung-soc@vger.kernel.org, linux-kernel@vger.kernel.org, Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1442524780-781677-8-git-send-email-arnd-r2nGTMty4D4@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-SGkgQXJuZCwKClRoYW5rcyBvbmNlIGFnYWluIGZvciB3b3JraW5nIG9uIHRoaXMhIFVuZm9ydHVu
-YXRlbHksIHRoaXMgYXBwcm9hY2ggd29uJ3QKd29yaywgc2VlIG15IGNvbW1lbnRzIGJlbG93LgoK
-QlRXLCBJIHdvdWxkIGV4cGVjdCB0byBzZWUgY29tcGlsZSBlcnJvcnMgd2hlbiBjb21waWxpbmcg
-Zm9yIDMyIGJpdC4gRGlkCnlvdSB0cnkgdGhhdD8KCk9uIDA5LzE3LzIwMTUgMTE6MTkgUE0sIEFy
-bmQgQmVyZ21hbm4gd3JvdGU6Cj4gVGhpcyBpcyB0aGUgZmluYWwgY2hhbmdlIHRvIGVuYWJsZSB1
-c2VyIHNwYWNlIHdpdGggNjQtYml0IHRpbWVfdAo+IGluIHRoZSBjb3JlIHY0bDIgY29kZS4KPiAK
-PiBGb3VyIGlvY3RscyBhcmUgYWZmZWN0ZWQgaGVyZTogVklESU9DX1FVRVJZQlVGLCBWSURJT0Nf
-UUJVRiwKPiBWSURJT0NfRFFCVUYsIGFuZCBWSURJT0NfUFJFUEFSRV9CVUYuIEFsbCBvZiB0aGVt
-IHBhc3MgYQo+IHN0cnVjdCB2NGwyX2J1ZmZlciwgd2hpY2ggY2FuIGVpdGhlciBjb250YWluIGEg
-MzItYml0IHRpbWVfdAo+IG9yIGEgNjQtYml0IHRpbWUgb24gMzItYml0IGFyY2hpdGVjdHVyZXMu
-Cj4gCj4gSW4gdGhpcyBwYXRjaCwgd2UgcmVkZWZpbmUgdGhlIGluLWtlcm5lbCB2ZXJzaW9uIG9m
-IHRoaXMgc3RydWN0dXJlCj4gdG8gdXNlIHRoZSA2NC1iaXQgX19zNjQgdHlwZSB0aHJvdWdoIHRo
-ZSB1c2Ugb2YgdjRsMl90aW1ldmFsLgo+IFRoaXMgbWVhbnMgdGhlIG5vcm1hbCBpb2N0bCBoYW5k
-bGluZyBub3cgYXNzdW1lcyA2NC1iaXQgdGltZV90Cj4gYW5kIHNvIHdlIGhhdmUgdG8gYWRkIHN1
-cHBvcnQgZm9yIDMyLWJpdCB0aW1lX3QgaW4gbmV3IGhhbmRsZXJzLgo+IAo+IFRoaXMgaXMgc29t
-ZXdoYXQgc2ltaWxhciB0byB0aGUgMzItYml0IGNvbXBhdCBoYW5kbGluZyBvbiA2NC1iaXQKPiBh
-cmNoaXRlY3R1cmVzLCBidXQgdGhvc2UgYWxzbyBoYXZlIHRvIG1vZGlmeSBvdGhlciBmaWVsZHMg
-b2YKPiB0aGUgc3RydWN0dXJlLiBGb3Igbm93LCBJIGxlYXZlIHRoYXQgY29tcGF0IGNvZGUgYWxv
-bmUsIGFzIGl0Cj4gaGFuZGxlcyB0aGUgbm9ybWFsIGNhc2UgKDMyLWJpdCBjb21wYXRfdGltZV90
-KSBjb3JyZWN0bHksIHRoaXMKPiBoYXMgdG8gYmUgZG9uZSBhcyBhIGZvbGxvdy11cC4KPiAKPiBT
-aWduZWQtb2ZmLWJ5OiBBcm5kIEJlcmdtYW5uIDxhcm5kQGFybmRiLmRlPgo+IC0tLQo+ICBkcml2
-ZXJzL21lZGlhL3Y0bDItY29yZS92NGwyLWlvY3RsLmMgfCAxNzQgKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysrKysrLS0KPiAgaW5jbHVkZS91YXBpL2xpbnV4L3ZpZGVvZGV2Mi5oICAgICAg
-IHwgIDM0ICsrKysrKy0KPiAgMiBmaWxlcyBjaGFuZ2VkLCAxOTkgaW5zZXJ0aW9ucygrKSwgOSBk
-ZWxldGlvbnMoLSkKPiAKPiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZWRpYS92NGwyLWNvcmUvdjRs
-Mi1pb2N0bC5jIGIvZHJpdmVycy9tZWRpYS92NGwyLWNvcmUvdjRsMi1pb2N0bC5jCj4gaW5kZXgg
-N2FhYjE4ZGQyY2E1Li4xMzc0NzVjMjhlOGYgMTAwNjQ0Cj4gLS0tIGEvZHJpdmVycy9tZWRpYS92
-NGwyLWNvcmUvdjRsMi1pb2N0bC5jCj4gKysrIGIvZHJpdmVycy9tZWRpYS92NGwyLWNvcmUvdjRs
-Mi1pb2N0bC5jCj4gQEAgLTQzOCwxNSArNDM4LDE0IEBAIHN0YXRpYyB2b2lkIHY0bF9wcmludF9i
-dWZmZXIoY29uc3Qgdm9pZCAqYXJnLCBib29sIHdyaXRlX29ubHkpCj4gIAljb25zdCBzdHJ1Y3Qg
-djRsMl90aW1lY29kZSAqdGMgPSAmcC0+dGltZWNvZGU7Cj4gIAljb25zdCBzdHJ1Y3QgdjRsMl9w
-bGFuZSAqcGxhbmU7Cj4gIAlpbnQgaTsKPiArCS8qIHkyMDM4IHNhZmUgYmVjYXVzZSBvZiBtb25v
-dG9uaWMgdGltZSAqLwo+ICsJdW5zaWduZWQgaW50IHNlY29uZHMgPSBwLT50aW1lc3RhbXAudHZf
-c2VjOwo+ICAKPiAtCXByX2NvbnQoIiUwMmxkOiUwMmQ6JTAyZC4lMDhsZCBpbmRleD0lZCwgdHlw
-ZT0lcywgIgo+ICsJcHJfY29udCgiJTAyZDolMDJkOiUwMmQuJTA4bGQgaW5kZXg9JWQsIHR5cGU9
-JXMsICIKPiAgCQkiZmxhZ3M9MHglMDh4LCBmaWVsZD0lcywgc2VxdWVuY2U9JWQsIG1lbW9yeT0l
-cyIsCj4gLQkJCXAtPnRpbWVzdGFtcC50dl9zZWMgLyAzNjAwLAo+IC0JCQkoaW50KShwLT50aW1l
-c3RhbXAudHZfc2VjIC8gNjApICUgNjAsCj4gLQkJCShpbnQpKHAtPnRpbWVzdGFtcC50dl9zZWMg
-JSA2MCksCj4gLQkJCShsb25nKXAtPnRpbWVzdGFtcC50dl91c2VjLAo+IC0JCQlwLT5pbmRleCwK
-PiAtCQkJcHJ0X25hbWVzKHAtPnR5cGUsIHY0bDJfdHlwZV9uYW1lcyksCj4gKwkJCXNlY29uZHMg
-LyAzNjAwLCAoc2Vjb25kcyAvIDYwKSAlIDYwLAo+ICsJCQlzZWNvbmRzICUgNjAsIChsb25nKXAt
-PnRpbWVzdGFtcC50dl91c2VjLAo+ICsJCQlwLT5pbmRleCwgcHJ0X25hbWVzKHAtPnR5cGUsIHY0
-bDJfdHlwZV9uYW1lcyksCj4gIAkJCXAtPmZsYWdzLCBwcnRfbmFtZXMocC0+ZmllbGQsIHY0bDJf
-ZmllbGRfbmFtZXMpLAo+ICAJCQlwLT5zZXF1ZW5jZSwgcHJ0X25hbWVzKHAtPm1lbW9yeSwgdjRs
-Ml9tZW1vcnlfbmFtZXMpKTsKPiAgCj4gQEAgLTE4NDYsNiArMTg0NSwxMjMgQEAgc3RhdGljIGlu
-dCB2NGxfcHJlcGFyZV9idWYoY29uc3Qgc3RydWN0IHY0bDJfaW9jdGxfb3BzICpvcHMsCj4gIAly
-ZXR1cm4gcmV0ID8gcmV0IDogb3BzLT52aWRpb2NfcHJlcGFyZV9idWYoZmlsZSwgZmgsIGIpOwo+
-ICB9Cj4gIAo+ICsjaWZuZGVmIENPTkZJR182NEJJVAo+ICtzdGF0aWMgdm9pZCB2NGxfZ2V0X2J1
-ZmZlcl90aW1lMzIoc3RydWN0IHY0bDJfYnVmZmVyICp0bywKPiArCQkJCSAgY29uc3Qgc3RydWN0
-IHY0bDJfYnVmZmVyX3RpbWUzMiAqZnJvbSkKPiArewo+ICsJdG8tPmluZGV4CQk9IGZyb20tPmlu
-ZGV4Owo+ICsJdG8tPnR5cGUJCT0gZnJvbS0+dHlwZTsKPiArCXRvLT5ieXRlc3VzZWQJCT0gZnJv
-bS0+Ynl0ZXN1c2VkOwo+ICsJdG8tPmZsYWdzCQk9IGZyb20tPmZsYWdzOwo+ICsJdG8tPmZpZWxk
-CQk9IGZyb20tPmZpZWxkOwo+ICsJdG8tPnRpbWVzdGFtcC50dl9zZWMJPSBmcm9tLT50aW1lc3Rh
-bXAudHZfc2VjOwo+ICsJdG8tPnRpbWVzdGFtcC50dl91c2VjCT0gZnJvbS0+dGltZXN0YW1wLnR2
-X3VzZWM7Cj4gKwl0by0+dGltZWNvZGUJCT0gZnJvbS0+dGltZWNvZGU7Cj4gKwl0by0+c2VxdWVu
-Y2UJCT0gZnJvbS0+c2VxdWVuY2U7Cj4gKwl0by0+bWVtb3J5CQk9IGZyb20tPm1lbW9yeTsKPiAr
-CXRvLT5tLm9mZnNldAkJPSBmcm9tLT5tLm9mZnNldDsKPiArCXRvLT5sZW5ndGgJCT0gZnJvbS0+
-bGVuZ3RoOwo+ICsJdG8tPnJlc2VydmVkMgkJPSBmcm9tLT5yZXNlcnZlZDI7Cj4gKwl0by0+cmVz
-ZXJ2ZWQJCT0gZnJvbS0+cmVzZXJ2ZWQ7Cj4gK30KPiArCj4gK3N0YXRpYyB2b2lkIHY0bF9wdXRf
-YnVmZmVyX3RpbWUzMihzdHJ1Y3QgdjRsMl9idWZmZXJfdGltZTMyICp0bywKPiArCQkJCSAgY29u
-c3Qgc3RydWN0IHY0bDJfYnVmZmVyICpmcm9tKQo+ICt7Cj4gKwl0by0+aW5kZXgJCT0gZnJvbS0+
-aW5kZXg7Cj4gKwl0by0+dHlwZQkJPSBmcm9tLT50eXBlOwo+ICsJdG8tPmJ5dGVzdXNlZAkJPSBm
-cm9tLT5ieXRlc3VzZWQ7Cj4gKwl0by0+ZmxhZ3MJCT0gZnJvbS0+ZmxhZ3M7Cj4gKwl0by0+Zmll
-bGQJCT0gZnJvbS0+ZmllbGQ7Cj4gKwl0by0+dGltZXN0YW1wLnR2X3NlYwk9IGZyb20tPnRpbWVz
-dGFtcC50dl9zZWM7Cj4gKwl0by0+dGltZXN0YW1wLnR2X3VzZWMJPSBmcm9tLT50aW1lc3RhbXAu
-dHZfdXNlYzsKPiArCXRvLT50aW1lY29kZQkJPSBmcm9tLT50aW1lY29kZTsKPiArCXRvLT5zZXF1
-ZW5jZQkJPSBmcm9tLT5zZXF1ZW5jZTsKPiArCXRvLT5tZW1vcnkJCT0gZnJvbS0+bWVtb3J5Owo+
-ICsJdG8tPm0ub2Zmc2V0CQk9IGZyb20tPm0ub2Zmc2V0Owo+ICsJdG8tPmxlbmd0aAkJPSBmcm9t
-LT5sZW5ndGg7Cj4gKwl0by0+cmVzZXJ2ZWQyCQk9IGZyb20tPnJlc2VydmVkMjsKPiArCXRvLT5y
-ZXNlcnZlZAkJPSBmcm9tLT5yZXNlcnZlZDsKPiArfQoKSXMgdGhlcmUgYSByZWFzb24gd2h5IHlv
-dSBkaWRuJ3QgdXNlIG1lbWNweSBsaWtlIHlvdSBkaWQgZm9yIFZJRElPQ19EUUVWRU5UIChwYXRo
-IDUvOSk/Ckkgd291bGQgcHJlZmVyIHRoYXQgb3ZlciB0aGVzZSBleHBsaWNpdCBhc3NpZ25tZW50
-cy4KCj4gKwo+ICtzdGF0aWMgaW50IHY0bF9xdWVyeWJ1Zl90aW1lMzIoY29uc3Qgc3RydWN0IHY0
-bDJfaW9jdGxfb3BzICpvcHMsCj4gKwkJCQlzdHJ1Y3QgZmlsZSAqZmlsZSwgdm9pZCAqZmgsIHZv
-aWQgKmFyZykKPiArewo+ICsJc3RydWN0IHY0bDJfYnVmZmVyIGJ1ZmZlcjsKPiArCWludCByZXQ7
-Cj4gKwo+ICsJdjRsX2dldF9idWZmZXJfdGltZTMyKCZidWZmZXIsIGFyZyk7Cj4gKwlyZXQgPSB2
-NGxfcXVlcnlidWYob3BzLCBmaWxlLCBmaCwgJmJ1ZmZlcik7Cj4gKwl2NGxfcHV0X2J1ZmZlcl90
-aW1lMzIoYXJnLCAmYnVmZmVyKTsKPiArCj4gKwlyZXR1cm4gcmV0Owo+ICt9Cj4gKwo+ICtzdGF0
-aWMgaW50IHY0bF9xYnVmX3RpbWUzMihjb25zdCBzdHJ1Y3QgdjRsMl9pb2N0bF9vcHMgKm9wcywK
-PiArCQkJCXN0cnVjdCBmaWxlICpmaWxlLCB2b2lkICpmaCwgdm9pZCAqYXJnKQo+ICt7Cj4gKwlz
-dHJ1Y3QgdjRsMl9idWZmZXIgYnVmZmVyOwo+ICsJaW50IHJldDsKPiArCj4gKwl2NGxfZ2V0X2J1
-ZmZlcl90aW1lMzIoJmJ1ZmZlciwgYXJnKTsKPiArCXJldCA9IHY0bF9xYnVmKG9wcywgZmlsZSwg
-ZmgsICZidWZmZXIpOwo+ICsJdjRsX3B1dF9idWZmZXJfdGltZTMyKGFyZywgJmJ1ZmZlcik7Cj4g
-Kwo+ICsJcmV0dXJuIHJldDsKPiArfQo+ICsKPiArc3RhdGljIGludCB2NGxfZHFidWZfdGltZTMy
-KGNvbnN0IHN0cnVjdCB2NGwyX2lvY3RsX29wcyAqb3BzLAo+ICsJCQkJc3RydWN0IGZpbGUgKmZp
-bGUsIHZvaWQgKmZoLCB2b2lkICphcmcpCj4gK3sKPiArCXN0cnVjdCB2NGwyX2J1ZmZlciBidWZm
-ZXI7Cj4gKwlpbnQgcmV0Owo+ICsKPiArCXY0bF9nZXRfYnVmZmVyX3RpbWUzMigmYnVmZmVyLCBh
-cmcpOwo+ICsJcmV0ID0gdjRsX2RxYnVmKG9wcywgZmlsZSwgZmgsICZidWZmZXIpOwo+ICsJdjRs
-X3B1dF9idWZmZXJfdGltZTMyKGFyZywgJmJ1ZmZlcik7Cj4gKwo+ICsJcmV0dXJuIHJldDsKPiAr
-fQo+ICsKPiArc3RhdGljIGludCB2NGxfcHJlcGFyZV9idWZfdGltZTMyKGNvbnN0IHN0cnVjdCB2
-NGwyX2lvY3RsX29wcyAqb3BzLAo+ICsJCQkJc3RydWN0IGZpbGUgKmZpbGUsIHZvaWQgKmZoLCB2
-b2lkICphcmcpCj4gK3sKPiArCXN0cnVjdCB2NGwyX2J1ZmZlciBidWZmZXI7Cj4gKwlpbnQgcmV0
-Owo+ICsKPiArCXY0bF9nZXRfYnVmZmVyX3RpbWUzMigmYnVmZmVyLCBhcmcpOwo+ICsJcmV0ID0g
-djRsX3ByZXBhcmVfYnVmKG9wcywgZmlsZSwgZmgsICZidWZmZXIpOwo+ICsKPiArCXJldHVybiBy
-ZXQ7Cj4gK30KPiArCj4gK3N0YXRpYyB2b2lkIHY0bF9wcmludF9idWZmZXJfdGltZTMyKGNvbnN0
-IHZvaWQgKmFyZywgYm9vbCB3cml0ZV9vbmx5KQo+ICt7Cj4gKwlzdHJ1Y3QgdjRsMl9idWZmZXIg
-YnVmZmVyOwo+ICsKPiArCXY0bF9nZXRfYnVmZmVyX3RpbWUzMigmYnVmZmVyLCBhcmcpOwo+ICsJ
-djRsX3ByaW50X2J1ZmZlcigmYnVmZmVyLCB3cml0ZV9vbmx5KTsKPiArfQo+ICsKPiArI2lmZGVm
-IENPTkZJR19UUkFDRVBPSU5UUwo+ICtzdGF0aWMgdm9pZCB0cmFjZV92NGwyX2RxYnVmX3RpbWUz
-MihpbnQgbWlub3IsIGNvbnN0IHN0cnVjdCB2NGwyX2J1ZmZlcl90aW1lMzIgKmFyZykKPiArewo+
-ICsJc3RydWN0IHY0bDJfYnVmZmVyIGJ1ZmZlcjsKPiArCj4gKwl2NGxfZ2V0X2J1ZmZlcl90aW1l
-MzIoJmJ1ZmZlciwgYXJnKTsKPiArCXRyYWNlX3Y0bDJfZHFidWYobWlub3IsICZidWZmZXIpOwo+
-ICt9Cj4gKwo+ICtzdGF0aWMgdm9pZCB0cmFjZV92NGwyX3FidWZfdGltZTMyKGludCBtaW5vciwg
-Y29uc3Qgc3RydWN0IHY0bDJfYnVmZmVyX3RpbWUzMiAqYXJnKQo+ICt7Cj4gKwlzdHJ1Y3QgdjRs
-Ml9idWZmZXIgYnVmZmVyOwo+ICsKPiArCXY0bF9nZXRfYnVmZmVyX3RpbWUzMigmYnVmZmVyLCBh
-cmcpOwo+ICsJdHJhY2VfdjRsMl9xYnVmKG1pbm9yLCAmYnVmZmVyKTsKPiArfQo+ICsjZW5kaWYK
-PiArI2VuZGlmCj4gKwo+ICBzdGF0aWMgaW50IHY0bF9nX3Bhcm0oY29uc3Qgc3RydWN0IHY0bDJf
-aW9jdGxfb3BzICpvcHMsCj4gIAkJCQlzdHJ1Y3QgZmlsZSAqZmlsZSwgdm9pZCAqZmgsIHZvaWQg
-KmFyZykKPiAgewo+IEBAIC0yNDA4LDEyICsyNTI0LDIxIEBAIHN0YXRpYyBzdHJ1Y3QgdjRsMl9p
-b2N0bF9pbmZvIHY0bDJfaW9jdGxzW10gPSB7Cj4gIAlJT0NUTF9JTkZPX0ZOQyhWSURJT0NfU19G
-TVQsIHY0bF9zX2ZtdCwgdjRsX3ByaW50X2Zvcm1hdCwgSU5GT19GTF9QUklPKSwKPiAgCUlPQ1RM
-X0lORk9fRk5DKFZJRElPQ19SRVFCVUZTLCB2NGxfcmVxYnVmcywgdjRsX3ByaW50X3JlcXVlc3Ri
-dWZmZXJzLCBJTkZPX0ZMX1BSSU8gfCBJTkZPX0ZMX1FVRVVFKSwKPiAgCUlPQ1RMX0lORk9fRk5D
-KFZJRElPQ19RVUVSWUJVRiwgdjRsX3F1ZXJ5YnVmLCB2NGxfcHJpbnRfYnVmZmVyLCBJTkZPX0ZM
-X1FVRVVFIHwgSU5GT19GTF9DTEVBUih2NGwyX2J1ZmZlciwgbGVuZ3RoKSksCj4gKyNpZm5kZWYg
-Q09ORklHXzY0QklUCj4gKwlJT0NUTF9JTkZPX0ZOQyhWSURJT0NfUVVFUllCVUZfVElNRTMyLCB2
-NGxfcXVlcnlidWZfdGltZTMyLCB2NGxfcHJpbnRfYnVmZmVyX3RpbWUzMiwgSU5GT19GTF9RVUVV
-RSB8IElORk9fRkxfQ0xFQVIodjRsMl9idWZmZXIsIGxlbmd0aCkpLAo+ICsjZW5kaWYKClRoaXMg
-ZG9lc24ndCB3b3JrLiBUaGVzZSBJT0NUTCBtYWNyb3MgdXNlIHRoZSBpb2N0bCBuciBhcyB0aGUg
-aW5kZXggaW4gdGhlIGFycmF5LiBTaW5jZQpWSURJT0NfUVVFUllCVUYgYW5kIFZJRElPQ19RVUVS
-WUJVRl9USU1FMzIgaGF2ZSB0aGUgc2FtZSBpbmRleCwgdGhpcyB3aWxsIGZhaWwuCgpJIHRoaW5r
-IChub3QgMTAwJSBjZXJ0YWluLCB0aGVyZSBtYXkgYmUgYmV0dGVyIHN1Z2dlc3Rpb25zKSB0aGF0
-IHRoZSBjb252ZXJzaW9uIGlzIGJlc3QKZG9uZSBpbiB2aWRlb191c2VyY29weSgpOiBqdXN0IGJl
-Zm9yZSBmdW5jKCkgaXMgY2FsbGVkIGhhdmUgYSBzd2l0Y2ggZm9yIHRoZSBUSU1FMzIKdmFyaWFu
-dHMsIGNvbnZlcnQgdG8gdGhlIHJlZ3VsYXIgdmFyaWFudCwgY2FsbCBmdW5jKCkgYW5kIGNvbnZl
-cnQgYmFjay4KCk15IG9ubHkgY29uY2VybiBoZXJlIGlzIHRoYXQgYW4gYWRkaXRpb25hbCB2NGwy
-X2J1ZmZlciBzdHJ1Y3QgKDY4IGJ5dGVzKSBpcyBuZWVkZWQgb24gdGhlCnN0YWNrLiBJIGRvbid0
-IHNlZSBhbnkgd2F5IGFyb3VuZCB0aGF0LCB0aG91Z2guCgo+ICAJSU9DVExfSU5GT19TVEQoVklE
-SU9DX0dfRkJVRiwgdmlkaW9jX2dfZmJ1ZiwgdjRsX3ByaW50X2ZyYW1lYnVmZmVyLCAwKSwKPiAg
-CUlPQ1RMX0lORk9fU1REKFZJRElPQ19TX0ZCVUYsIHZpZGlvY19zX2ZidWYsIHY0bF9wcmludF9m
-cmFtZWJ1ZmZlciwgSU5GT19GTF9QUklPKSwKPiAgCUlPQ1RMX0lORk9fRk5DKFZJRElPQ19PVkVS
-TEFZLCB2NGxfb3ZlcmxheSwgdjRsX3ByaW50X3UzMiwgSU5GT19GTF9QUklPKSwKPiAgCUlPQ1RM
-X0lORk9fRk5DKFZJRElPQ19RQlVGLCB2NGxfcWJ1ZiwgdjRsX3ByaW50X2J1ZmZlciwgSU5GT19G
-TF9RVUVVRSksCj4gKyNpZm5kZWYgQ09ORklHXzY0QklUCj4gKwlJT0NUTF9JTkZPX0ZOQyhWSURJ
-T0NfUUJVRl9USU1FMzIsIHY0bF9xYnVmX3RpbWUzMiwgdjRsX3ByaW50X2J1ZmZlcl90aW1lMzIs
-IElORk9fRkxfUVVFVUUpLAo+ICsjZW5kaWYKPiAgCUlPQ1RMX0lORk9fU1REKFZJRElPQ19FWFBC
-VUYsIHZpZGlvY19leHBidWYsIHY0bF9wcmludF9leHBvcnRidWZmZXIsIElORk9fRkxfUVVFVUUg
-fCBJTkZPX0ZMX0NMRUFSKHY0bDJfZXhwb3J0YnVmZmVyLCBmbGFncykpLAo+ICAJSU9DVExfSU5G
-T19GTkMoVklESU9DX0RRQlVGLCB2NGxfZHFidWYsIHY0bF9wcmludF9idWZmZXIsIElORk9fRkxf
-UVVFVUUpLAo+ICsjaWZuZGVmIENPTkZJR182NEJJVAo+ICsJSU9DVExfSU5GT19GTkMoVklESU9D
-X0RRQlVGX1RJTUUzMiwgdjRsX2RxYnVmX3RpbWUzMiwgdjRsX3ByaW50X2J1ZmZlcl90aW1lMzIs
-IElORk9fRkxfUVVFVUUpLAo+ICsjZW5kaWYKPiAgCUlPQ1RMX0lORk9fRk5DKFZJRElPQ19TVFJF
-QU1PTiwgdjRsX3N0cmVhbW9uLCB2NGxfcHJpbnRfYnVmdHlwZSwgSU5GT19GTF9QUklPIHwgSU5G
-T19GTF9RVUVVRSksCj4gIAlJT0NUTF9JTkZPX0ZOQyhWSURJT0NfU1RSRUFNT0ZGLCB2NGxfc3Ry
-ZWFtb2ZmLCB2NGxfcHJpbnRfYnVmdHlwZSwgSU5GT19GTF9QUklPIHwgSU5GT19GTF9RVUVVRSks
-Cj4gIAlJT0NUTF9JTkZPX0ZOQyhWSURJT0NfR19QQVJNLCB2NGxfZ19wYXJtLCB2NGxfcHJpbnRf
-c3RyZWFtcGFybSwgSU5GT19GTF9DTEVBUih2NGwyX3N0cmVhbXBhcm0sIHR5cGUpKSwKPiBAQCAt
-MjQ3OSw2ICsyNjA0LDkgQEAgc3RhdGljIHN0cnVjdCB2NGwyX2lvY3RsX2luZm8gdjRsMl9pb2N0
-bHNbXSA9IHsKPiAgCUlPQ1RMX0lORk9fRk5DKFZJRElPQ19VTlNVQlNDUklCRV9FVkVOVCwgdjRs
-X3Vuc3Vic2NyaWJlX2V2ZW50LCB2NGxfcHJpbnRfZXZlbnRfc3Vic2NyaXB0aW9uLCAwKSwKPiAg
-CUlPQ1RMX0lORk9fRk5DKFZJRElPQ19DUkVBVEVfQlVGUywgdjRsX2NyZWF0ZV9idWZzLCB2NGxf
-cHJpbnRfY3JlYXRlX2J1ZmZlcnMsIElORk9fRkxfUFJJTyB8IElORk9fRkxfUVVFVUUpLAo+ICAJ
-SU9DVExfSU5GT19GTkMoVklESU9DX1BSRVBBUkVfQlVGLCB2NGxfcHJlcGFyZV9idWYsIHY0bF9w
-cmludF9idWZmZXIsIElORk9fRkxfUVVFVUUpLAo+ICsjaWZuZGVmIENPTkZJR182NEJJVAo+ICsJ
-SU9DVExfSU5GT19GTkMoVklESU9DX1BSRVBBUkVfQlVGX1RJTUUzMiwgdjRsX3ByZXBhcmVfYnVm
-X3RpbWUzMiwgdjRsX3ByaW50X2J1ZmZlcl90aW1lMzIsIElORk9fRkxfUVVFVUUpLAo+ICsjZW5k
-aWYKPiAgCUlPQ1RMX0lORk9fU1REKFZJRElPQ19FTlVNX0RWX1RJTUlOR1MsIHZpZGlvY19lbnVt
-X2R2X3RpbWluZ3MsIHY0bF9wcmludF9lbnVtX2R2X3RpbWluZ3MsIDApLAo+ICAJSU9DVExfSU5G
-T19TVEQoVklESU9DX1FVRVJZX0RWX1RJTUlOR1MsIHZpZGlvY19xdWVyeV9kdl90aW1pbmdzLCB2
-NGxfcHJpbnRfZHZfdGltaW5ncywgMCksCj4gIAlJT0NUTF9JTkZPX1NURChWSURJT0NfRFZfVElN
-SU5HU19DQVAsIHZpZGlvY19kdl90aW1pbmdzX2NhcCwgdjRsX3ByaW50X2R2X3RpbWluZ3NfY2Fw
-LCBJTkZPX0ZMX0NMRUFSKHY0bDJfZHZfdGltaW5nc19jYXAsIHR5cGUpKSwKPiBAQCAtMjYwOCw2
-ICsyNzM2LDEyIEBAIGRvbmU6Cj4gIAkJICAgIChjbWQgPT0gVklESU9DX1FCVUYgfHwgY21kID09
-IFZJRElPQ19EUUJVRikpCj4gIAkJCXJldHVybiByZXQ7Cj4gIAo+ICsjaWZuZGVmIENPTkZJR182
-NEJJVAo+ICsJCWlmICghKGRldl9kZWJ1ZyAmIFY0TDJfREVWX0RFQlVHX1NUUkVBTUlORykgJiYK
-PiArCQkgICAgKGNtZCA9PSBWSURJT0NfUUJVRl9USU1FMzIgfHwgY21kID09IFZJRElPQ19EUUJV
-Rl9USU1FMzIpKQo+ICsJCQlyZXR1cm4gcmV0Owo+ICsjZW5kaWYKPiArCj4gIAkJdjRsX3ByaW50
-a19pb2N0bCh2aWRlb19kZXZpY2Vfbm9kZV9uYW1lKHZmZCksIGNtZCk7Cj4gIAkJaWYgKHJldCA8
-IDApCj4gIAkJCXByX2NvbnQoIjogZXJyb3IgJWxkIiwgcmV0KTsKPiBAQCAtMjYzMCw2ICsyNzY0
-LDI2IEBAIHN0YXRpYyBpbnQgY2hlY2tfYXJyYXlfYXJncyh1bnNpZ25lZCBpbnQgY21kLCB2b2lk
-ICpwYXJnLCBzaXplX3QgKmFycmF5X3NpemUsCj4gIAlpbnQgcmV0ID0gMDsKPiAgCj4gIAlzd2l0
-Y2ggKGNtZCkgewo+ICsjaWZuZGVmIENPTkZJR182NEJJVAo+ICsJY2FzZSBWSURJT0NfUFJFUEFS
-RV9CVUZfVElNRTMyOgo+ICsJY2FzZSBWSURJT0NfUVVFUllCVUZfVElNRTMyOgo+ICsJY2FzZSBW
-SURJT0NfUUJVRl9USU1FMzI6Cj4gKwljYXNlIFZJRElPQ19EUUJVRl9USU1FMzI6IHsKPiArCQlz
-dHJ1Y3QgdjRsMl9idWZmZXJfdGltZTMyICpidWYgPSBwYXJnOwo+ICsKPiArCQlpZiAoVjRMMl9U
-WVBFX0lTX01VTFRJUExBTkFSKGJ1Zi0+dHlwZSkgJiYgYnVmLT5sZW5ndGggPiAwKSB7Cj4gKwkJ
-CWlmIChidWYtPmxlbmd0aCA+IFZJREVPX01BWF9QTEFORVMpIHsKPiArCQkJCXJldCA9IC1FSU5W
-QUw7Cj4gKwkJCQlicmVhazsKPiArCQkJfQo+ICsJCQkqdXNlcl9wdHIgPSAodm9pZCBfX3VzZXIg
-KilidWYtPm0ucGxhbmVzOwo+ICsJCQkqa2VybmVsX3B0ciA9ICh2b2lkICoqKSZidWYtPm0ucGxh
-bmVzOwo+ICsJCQkqYXJyYXlfc2l6ZSA9IHNpemVvZihzdHJ1Y3QgdjRsMl9wbGFuZSkgKiBidWYt
-Pmxlbmd0aDsKPiArCQkJcmV0ID0gMTsKPiArCQl9Cj4gKwkJYnJlYWs7Cj4gKwl9Cj4gKyNlbmRp
-Zgo+ICAJY2FzZSBWSURJT0NfUFJFUEFSRV9CVUY6Cj4gIAljYXNlIFZJRElPQ19RVUVSWUJVRjoK
-PiAgCWNhc2UgVklESU9DX1FCVUY6Cj4gQEAgLTI3NzQsNiArMjkyOCwxMiBAQCB2aWRlb191c2Vy
-Y29weShzdHJ1Y3QgZmlsZSAqZmlsZSwgdW5zaWduZWQgaW50IGNtZCwgdW5zaWduZWQgbG9uZyBh
-cmcsCj4gIAkJCXRyYWNlX3Y0bDJfZHFidWYodmlkZW9fZGV2ZGF0YShmaWxlKS0+bWlub3IsIHBh
-cmcpOwo+ICAJCWVsc2UgaWYgKGNtZCA9PSBWSURJT0NfUUJVRikKPiAgCQkJdHJhY2VfdjRsMl9x
-YnVmKHZpZGVvX2RldmRhdGEoZmlsZSktPm1pbm9yLCBwYXJnKTsKPiArI2lmbmRlZiBDT05GSUdf
-NjRCSVQKPiArCQllbHNlIGlmIChjbWQgPT0gVklESU9DX0RRQlVGX1RJTUUzMikKPiArCQkJdHJh
-Y2VfdjRsMl9kcWJ1Zl90aW1lMzIodmlkZW9fZGV2ZGF0YShmaWxlKS0+bWlub3IsIHBhcmcpOwo+
-ICsJCWVsc2UgaWYgKGNtZCA9PSBWSURJT0NfUUJVRl9USU1FMzIpCj4gKwkJCXRyYWNlX3Y0bDJf
-cWJ1Zl90aW1lMzIodmlkZW9fZGV2ZGF0YShmaWxlKS0+bWlub3IsIHBhcmcpOwo+ICsjZW5kaWYK
-PiAgCX0KPiAgCj4gIAlpZiAoaGFzX2FycmF5X2FyZ3MpIHsKPiBkaWZmIC0tZ2l0IGEvaW5jbHVk
-ZS91YXBpL2xpbnV4L3ZpZGVvZGV2Mi5oIGIvaW5jbHVkZS91YXBpL2xpbnV4L3ZpZGVvZGV2Mi5o
-Cj4gaW5kZXggNDUwYjMyNDliYTMwLi4wZDM2ODhhOTdhYjggMTAwNjQ0Cj4gLS0tIGEvaW5jbHVk
-ZS91YXBpL2xpbnV4L3ZpZGVvZGV2Mi5oCj4gKysrIGIvaW5jbHVkZS91YXBpL2xpbnV4L3ZpZGVv
-ZGV2Mi5oCj4gQEAgLTgxMSw4ICs4MTEsOCBAQCBzdHJ1Y3QgdjRsMl9wbGFuZSB7Cj4gICAqIHRp
-bWVfdCwgc28gd2UgaGF2ZSB0byBjb252ZXJ0IGl0IHdoZW4gYWNjZXNzaW5nIHVzZXIgZGF0YS4K
-PiAgICovCj4gIHN0cnVjdCB2NGwyX3RpbWV2YWwgewo+IC0JbG9uZyB0dl9zZWM7Cj4gLQlsb25n
-IHR2X3VzZWM7Cj4gKwlfX3M2NCB0dl9zZWM7Cj4gKwlfX3M2NCB0dl91c2VjOwo+ICB9Owo+ICAj
-ZW5kaWYKPiAgCj4gQEAgLTg3Myw2ICs4NzMsMzIgQEAgc3RydWN0IHY0bDJfYnVmZmVyIHsKPiAg
-CV9fdTMyCQkJcmVzZXJ2ZWQ7Cj4gIH07Cj4gIAo+ICtzdHJ1Y3QgdjRsMl9idWZmZXJfdGltZTMy
-IHsKPiArCV9fdTMyCQkJaW5kZXg7Cj4gKwlfX3UzMgkJCXR5cGU7Cj4gKwlfX3UzMgkJCWJ5dGVz
-dXNlZDsKPiArCV9fdTMyCQkJZmxhZ3M7Cj4gKwlfX3UzMgkJCWZpZWxkOwo+ICsJc3RydWN0IHsK
-PiArCQlfX3MzMgkJdHZfc2VjOwo+ICsJCV9fczMyCQl0dl91c2VjOwo+ICsJfQkJCXRpbWVzdGFt
-cDsKPiArCXN0cnVjdCB2NGwyX3RpbWVjb2RlCXRpbWVjb2RlOwo+ICsJX191MzIJCQlzZXF1ZW5j
-ZTsKPiArCj4gKwkvKiBtZW1vcnkgbG9jYXRpb24gKi8KPiArCV9fdTMyCQkJbWVtb3J5Owo+ICsJ
-dW5pb24gewo+ICsJCV9fdTMyICAgICAgICAgICBvZmZzZXQ7Cj4gKwkJdW5zaWduZWQgbG9uZyAg
-IHVzZXJwdHI7Cj4gKwkJc3RydWN0IHY0bDJfcGxhbmUgKnBsYW5lczsKPiArCQlfX3MzMgkJZmQ7
-Cj4gKwl9IG07Cj4gKwlfX3UzMgkJCWxlbmd0aDsKPiArCV9fdTMyCQkJcmVzZXJ2ZWQyOwo+ICsJ
-X191MzIJCQlyZXNlcnZlZDsKPiArfTsKClNob3VsZCB0aGlzIGJlIHBhcnQgb2YgYSBwdWJsaWMg
-QVBJIGF0IGFsbD8gVXNlcnNwYWNlIHdpbGwgbmV2ZXIgdXNlIHRoaXMgc3RydWN0Cm9yIHRoZSBU
-SU1FMzIgaW9jdGxzIGluIHRoZSBzb3VyY2UgY29kZSwgcmlnaHQ/IFRoaXMgd291bGQgYmUgbW9y
-ZSBhcHByb3ByaWF0ZSBmb3IKdjRsMi1pb2N0bC5oLgoKPiArCj4gIC8qICBGbGFncyBmb3IgJ2Zs
-YWdzJyBmaWVsZCAqLwo+ICAvKiBCdWZmZXIgaXMgbWFwcGVkIChmbGFnKSAqLwo+ICAjZGVmaW5l
-IFY0TDJfQlVGX0ZMQUdfTUFQUEVECQkJMHgwMDAwMDAwMQo+IEBAIC0yMjE2LDEyICsyMjQyLDE1
-IEBAIHN0cnVjdCB2NGwyX2NyZWF0ZV9idWZmZXJzIHsKPiAgI2RlZmluZSBWSURJT0NfU19GTVQJ
-CV9JT1dSKCdWJywgIDUsIHN0cnVjdCB2NGwyX2Zvcm1hdCkKPiAgI2RlZmluZSBWSURJT0NfUkVR
-QlVGUwkJX0lPV1IoJ1YnLCAgOCwgc3RydWN0IHY0bDJfcmVxdWVzdGJ1ZmZlcnMpCj4gICNkZWZp
-bmUgVklESU9DX1FVRVJZQlVGCQlfSU9XUignVicsICA5LCBzdHJ1Y3QgdjRsMl9idWZmZXIpCj4g
-KyNkZWZpbmUgVklESU9DX1FVRVJZQlVGX1RJTUUzMglfSU9XUignVicsICA5LCBzdHJ1Y3QgdjRs
-Ml9idWZmZXJfdGltZTMyKQo+ICAjZGVmaW5lIFZJRElPQ19HX0ZCVUYJCSBfSU9SKCdWJywgMTAs
-IHN0cnVjdCB2NGwyX2ZyYW1lYnVmZmVyKQo+ICAjZGVmaW5lIFZJRElPQ19TX0ZCVUYJCSBfSU9X
-KCdWJywgMTEsIHN0cnVjdCB2NGwyX2ZyYW1lYnVmZmVyKQo+ICAjZGVmaW5lIFZJRElPQ19PVkVS
-TEFZCQkgX0lPVygnVicsIDE0LCBpbnQpCj4gICNkZWZpbmUgVklESU9DX1FCVUYJCV9JT1dSKCdW
-JywgMTUsIHN0cnVjdCB2NGwyX2J1ZmZlcikKPiArI2RlZmluZSBWSURJT0NfUUJVRl9USU1FMzIJ
-X0lPV1IoJ1YnLCAxNSwgc3RydWN0IHY0bDJfYnVmZmVyX3RpbWUzMikKPiAgI2RlZmluZSBWSURJ
-T0NfRVhQQlVGCQlfSU9XUignVicsIDE2LCBzdHJ1Y3QgdjRsMl9leHBvcnRidWZmZXIpCj4gICNk
-ZWZpbmUgVklESU9DX0RRQlVGCQlfSU9XUignVicsIDE3LCBzdHJ1Y3QgdjRsMl9idWZmZXIpCj4g
-KyNkZWZpbmUgVklESU9DX0RRQlVGX1RJTUUzMglfSU9XUignVicsIDE3LCBzdHJ1Y3QgdjRsMl9i
-dWZmZXJfdGltZTMyKQo+ICAjZGVmaW5lIFZJRElPQ19TVFJFQU1PTgkJIF9JT1coJ1YnLCAxOCwg
-aW50KQo+ICAjZGVmaW5lIFZJRElPQ19TVFJFQU1PRkYJIF9JT1coJ1YnLCAxOSwgaW50KQo+ICAj
-ZGVmaW5lIFZJRElPQ19HX1BBUk0JCV9JT1dSKCdWJywgMjEsIHN0cnVjdCB2NGwyX3N0cmVhbXBh
-cm0pCj4gQEAgLTIyOTIsNiArMjMyMSw3IEBAIHN0cnVjdCB2NGwyX2NyZWF0ZV9idWZmZXJzIHsK
-PiAgICAgdmVyc2lvbnMgKi8KPiAgI2RlZmluZSBWSURJT0NfQ1JFQVRFX0JVRlMJX0lPV1IoJ1Yn
-LCA5Miwgc3RydWN0IHY0bDJfY3JlYXRlX2J1ZmZlcnMpCj4gICNkZWZpbmUgVklESU9DX1BSRVBB
-UkVfQlVGCV9JT1dSKCdWJywgOTMsIHN0cnVjdCB2NGwyX2J1ZmZlcikKPiArI2RlZmluZSBWSURJ
-T0NfUFJFUEFSRV9CVUZfVElNRTMyIF9JT1dSKCdWJywgOTMsIHN0cnVjdCB2NGwyX2J1ZmZlcl90
-aW1lMzIpCj4gIAo+ICAvKiBFeHBlcmltZW50YWwgc2VsZWN0aW9uIEFQSSAqLwo+ICAjZGVmaW5l
-IFZJRElPQ19HX1NFTEVDVElPTglfSU9XUignVicsIDk0LCBzdHJ1Y3QgdjRsMl9zZWxlY3Rpb24p
-Cj4gCgpSZWdhcmRzLAoKCUhhbnMKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX18KWTIwMzggbWFpbGluZyBsaXN0ClkyMDM4QGxpc3RzLmxpbmFyby5vcmcKaHR0
-cHM6Ly9saXN0cy5saW5hcm8ub3JnL21haWxtYW4vbGlzdGluZm8veTIwMzgK
+On 09/17/15 23:19, Arnd Bergmann wrote:
+> The v4l2 API uses a 'struct timeval' to communicate time stamps to user
+> space. This is broken on 32-bit architectures as soon as we have a C library
+> that defines time_t as 64 bit, which then changes the structure layout of
+> struct v4l2_buffer.
+> 
+> Since existing user space source code relies on the type to be 'struct
+> timeva' and we want to preserve compile-time compatibility when moving
+
+s/timeva/timeval/
+
+> to a new libc, we cannot make user-visible changes to the header file.
+> 
+> In this patch, we change the type of the timestamp to 'struct v4l2_timeval'
+
+Don't we need a kernel-wide timeval64? Rather than adding a v4l2-specific
+struct?
+
+> as a preparation for a follow-up that adds API compatiblity for both
+> 32-bit and 64-bit time_t. This patch should have no impact on generated
+> code in either user space or kernel.
+> 
+> Signed-off-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+> ---
+>  drivers/media/pci/bt8xx/bttv-driver.c      |  2 +-
+>  drivers/media/pci/meye/meye.h              |  2 +-
+>  drivers/media/pci/zoran/zoran.h            |  2 +-
+>  drivers/media/platform/coda/coda.h         |  2 +-
+>  drivers/media/platform/omap/omap_vout.c    |  4 ++--
+>  drivers/media/platform/omap3isp/ispstat.c  |  3 ++-
+>  drivers/media/platform/omap3isp/ispstat.h  |  2 +-
+>  drivers/media/platform/vim2m.c             |  2 +-
+>  drivers/media/platform/vivid/vivid-ctrls.c |  2 +-
+>  drivers/media/usb/cpia2/cpia2.h            |  2 +-
+>  drivers/media/usb/cpia2/cpia2_v4l.c        |  2 +-
+>  drivers/media/usb/gspca/gspca.c            |  2 +-
+>  drivers/media/usb/usbvision/usbvision.h    |  2 +-
+>  drivers/media/v4l2-core/v4l2-common.c      |  6 +++---
+>  include/media/v4l2-common.h                |  2 +-
+>  include/media/videobuf-core.h              |  2 +-
+>  include/trace/events/v4l2.h                | 12 ++++++++++--
+>  include/uapi/linux/videodev2.h             | 17 +++++++++++++++++
+>  18 files changed, 47 insertions(+), 21 deletions(-)
+> 
+> diff --git a/drivers/media/pci/bt8xx/bttv-driver.c b/drivers/media/pci/bt8xx/bttv-driver.c
+> index 15a4ebc2844d..b0ed8d799c14 100644
+> --- a/drivers/media/pci/bt8xx/bttv-driver.c
+> +++ b/drivers/media/pci/bt8xx/bttv-driver.c
+> @@ -3585,7 +3585,7 @@ static void
+>  bttv_irq_wakeup_video(struct bttv *btv, struct bttv_buffer_set *wakeup,
+>  		      struct bttv_buffer_set *curr, unsigned int state)
+>  {
+> -	struct timeval ts;
+> +	struct v4l2_timeval ts;
+>  
+>  	v4l2_get_timestamp(&ts);
+>  
+> diff --git a/drivers/media/pci/meye/meye.h b/drivers/media/pci/meye/meye.h
+> index 751be5e533c7..a06aa5ba9abc 100644
+> --- a/drivers/media/pci/meye/meye.h
+> +++ b/drivers/media/pci/meye/meye.h
+> @@ -281,7 +281,7 @@
+>  struct meye_grab_buffer {
+>  	int state;			/* state of buffer */
+>  	unsigned long size;		/* size of jpg frame */
+> -	struct timeval timestamp;	/* timestamp */
+> +	struct v4l2_timeval timestamp;	/* timestamp */
+>  	unsigned long sequence;		/* sequence number */
+>  };
+>  
+> diff --git a/drivers/media/pci/zoran/zoran.h b/drivers/media/pci/zoran/zoran.h
+> index 4e7db8939c2b..9a9f782cede9 100644
+> --- a/drivers/media/pci/zoran/zoran.h
+> +++ b/drivers/media/pci/zoran/zoran.h
+> @@ -39,7 +39,7 @@ struct zoran_sync {
+>  	unsigned long frame;	/* number of buffer that has been free'd */
+>  	unsigned long length;	/* number of code bytes in buffer (capture only) */
+>  	unsigned long seq;	/* frame sequence number */
+> -	struct timeval timestamp;	/* timestamp */
+> +	struct v4l2_timeval timestamp;	/* timestamp */
+>  };
+>  
+>  
+> diff --git a/drivers/media/platform/coda/coda.h b/drivers/media/platform/coda/coda.h
+> index 59b2af9c7749..fa1e15a757cd 100644
+> --- a/drivers/media/platform/coda/coda.h
+> +++ b/drivers/media/platform/coda/coda.h
+> @@ -138,7 +138,7 @@ struct coda_buffer_meta {
+>  	struct list_head	list;
+>  	u32			sequence;
+>  	struct v4l2_timecode	timecode;
+> -	struct timeval		timestamp;
+> +	struct v4l2_timeval	timestamp;
+>  	u32			start;
+>  	u32			end;
+>  };
+> diff --git a/drivers/media/platform/omap/omap_vout.c b/drivers/media/platform/omap/omap_vout.c
+> index 70c28d19ea04..974a238a86fe 100644
+> --- a/drivers/media/platform/omap/omap_vout.c
+> +++ b/drivers/media/platform/omap/omap_vout.c
+> @@ -513,7 +513,7 @@ static int omapvid_apply_changes(struct omap_vout_device *vout)
+>  }
+>  
+>  static int omapvid_handle_interlace_display(struct omap_vout_device *vout,
+> -		unsigned int irqstatus, struct timeval timevalue)
+> +		unsigned int irqstatus, struct v4l2_timeval timevalue)
+>  {
+>  	u32 fid;
+>  
+> @@ -557,7 +557,7 @@ static void omap_vout_isr(void *arg, unsigned int irqstatus)
+>  	int ret, fid, mgr_id;
+>  	u32 addr, irq;
+>  	struct omap_overlay *ovl;
+> -	struct timeval timevalue;
+> +	struct v4l2_timeval timevalue;
+>  	struct omapvideo_info *ovid;
+>  	struct omap_dss_device *cur_display;
+>  	struct omap_vout_device *vout = (struct omap_vout_device *)arg;
+> diff --git a/drivers/media/platform/omap3isp/ispstat.c b/drivers/media/platform/omap3isp/ispstat.c
+> index 94d4c295d3d0..fa96e330c563 100644
+> --- a/drivers/media/platform/omap3isp/ispstat.c
+> +++ b/drivers/media/platform/omap3isp/ispstat.c
+> @@ -496,7 +496,8 @@ int omap3isp_stat_request_statistics(struct ispstat *stat,
+>  		return PTR_ERR(buf);
+>  	}
+>  
+> -	data->ts = buf->ts;
+> +	data->ts.tv_sec = buf->ts.tv_sec;
+> +	data->ts.tv_usec = buf->ts.tv_usec;
+>  	data->config_counter = buf->config_counter;
+>  	data->frame_number = buf->frame_number;
+>  	data->buf_size = buf->buf_size;
+> diff --git a/drivers/media/platform/omap3isp/ispstat.h b/drivers/media/platform/omap3isp/ispstat.h
+> index 6d9b0244f320..7b4f136567a3 100644
+> --- a/drivers/media/platform/omap3isp/ispstat.h
+> +++ b/drivers/media/platform/omap3isp/ispstat.h
+> @@ -39,7 +39,7 @@ struct ispstat_buffer {
+>  	struct sg_table sgt;
+>  	void *virt_addr;
+>  	dma_addr_t dma_addr;
+> -	struct timeval ts;
+> +	struct v4l2_timeval ts;
+>  	u32 buf_size;
+>  	u32 frame_number;
+>  	u16 config_counter;
+> diff --git a/drivers/media/platform/vim2m.c b/drivers/media/platform/vim2m.c
+> index 295fde5fdb75..df5daac6d099 100644
+> --- a/drivers/media/platform/vim2m.c
+> +++ b/drivers/media/platform/vim2m.c
+> @@ -235,7 +235,7 @@ static int device_process(struct vim2m_ctx *ctx,
+>  	in_vb->v4l2_buf.sequence = q_data->sequence++;
+>  	memcpy(&out_vb->v4l2_buf.timestamp,
+>  			&in_vb->v4l2_buf.timestamp,
+> -			sizeof(struct timeval));
+> +			sizeof(struct v4l2_timeval));
+>  	if (in_vb->v4l2_buf.flags & V4L2_BUF_FLAG_TIMECODE)
+>  		memcpy(&out_vb->v4l2_buf.timecode, &in_vb->v4l2_buf.timecode,
+>  			sizeof(struct v4l2_timecode));
+
+See https://patchwork.linuxtv.org/patch/31405/
+
+I'll merge that one for 4.4 very soon.
+
+> diff --git a/drivers/media/platform/vivid/vivid-ctrls.c b/drivers/media/platform/vivid/vivid-ctrls.c
+> index 339c8b7e53c8..065f3d6c2409 100644
+> --- a/drivers/media/platform/vivid/vivid-ctrls.c
+> +++ b/drivers/media/platform/vivid/vivid-ctrls.c
+> @@ -935,7 +935,7 @@ static const struct v4l2_ctrl_config vivid_ctrl_has_scaler_out = {
+>  static int vivid_streaming_s_ctrl(struct v4l2_ctrl *ctrl)
+>  {
+>  	struct vivid_dev *dev = container_of(ctrl->handler, struct vivid_dev, ctrl_hdl_streaming);
+> -	struct timeval tv;
+> +	struct v4l2_timeval tv;
+>  
+>  	switch (ctrl->id) {
+>  	case VIVID_CID_DQBUF_ERROR:
+> diff --git a/drivers/media/usb/cpia2/cpia2.h b/drivers/media/usb/cpia2/cpia2.h
+> index cdef677d57ec..3e7c523784e7 100644
+> --- a/drivers/media/usb/cpia2/cpia2.h
+> +++ b/drivers/media/usb/cpia2/cpia2.h
+> @@ -354,7 +354,7 @@ struct cpia2_sbuf {
+>  };
+>  
+>  struct framebuf {
+> -	struct timeval timestamp;
+> +	struct v4l2_timeval timestamp;
+>  	unsigned long seq;
+>  	int num;
+>  	int length;
+> diff --git a/drivers/media/usb/cpia2/cpia2_v4l.c b/drivers/media/usb/cpia2/cpia2_v4l.c
+> index 9caea8344547..ce50d7ef4da7 100644
+> --- a/drivers/media/usb/cpia2/cpia2_v4l.c
+> +++ b/drivers/media/usb/cpia2/cpia2_v4l.c
+> @@ -892,7 +892,7 @@ static int find_earliest_filled_buffer(struct camera_data *cam)
+>  				found = i;
+>  			} else {
+>  				/* find which buffer is earlier */
+> -				struct timeval *tv1, *tv2;
+> +				struct v4l2_timeval *tv1, *tv2;
+>  				tv1 = &cam->buffers[i].timestamp;
+>  				tv2 = &cam->buffers[found].timestamp;
+>  				if(tv1->tv_sec < tv2->tv_sec ||
+> diff --git a/drivers/media/usb/gspca/gspca.c b/drivers/media/usb/gspca/gspca.c
+> index af5cd8213e8b..c977937da9c4 100644
+> --- a/drivers/media/usb/gspca/gspca.c
+> +++ b/drivers/media/usb/gspca/gspca.c
+> @@ -1898,7 +1898,7 @@ static ssize_t dev_read(struct file *file, char __user *data,
+>  	struct gspca_dev *gspca_dev = video_drvdata(file);
+>  	struct gspca_frame *frame;
+>  	struct v4l2_buffer v4l2_buf;
+> -	struct timeval timestamp;
+> +	struct v4l2_timeval timestamp;
+>  	int n, ret, ret2;
+>  
+>  	PDEBUG(D_FRAM, "read (%zd)", count);
+> diff --git a/drivers/media/usb/usbvision/usbvision.h b/drivers/media/usb/usbvision/usbvision.h
+> index 4f2e4fde38f2..512de31613df 100644
+> --- a/drivers/media/usb/usbvision/usbvision.h
+> +++ b/drivers/media/usb/usbvision/usbvision.h
+> @@ -320,7 +320,7 @@ struct usbvision_frame {
+>  	long bytes_read;				/* amount of scanlength that has been read from data */
+>  	struct usbvision_v4l2_format_st v4l2_format;	/* format the user needs*/
+>  	int v4l2_linesize;				/* bytes for one videoline*/
+> -	struct timeval timestamp;
+> +	struct v4l2_timeval timestamp;
+>  	int sequence;					/* How many video frames we send to user */
+>  };
+>  
+> diff --git a/drivers/media/v4l2-core/v4l2-common.c b/drivers/media/v4l2-core/v4l2-common.c
+> index 5b808500e7e7..589fab615f21 100644
+> --- a/drivers/media/v4l2-core/v4l2-common.c
+> +++ b/drivers/media/v4l2-core/v4l2-common.c
+> @@ -396,11 +396,11 @@ const struct v4l2_frmsize_discrete *v4l2_find_nearest_format(
+>  }
+>  EXPORT_SYMBOL_GPL(v4l2_find_nearest_format);
+>  
+> -void v4l2_get_timestamp(struct timeval *tv)
+> +void v4l2_get_timestamp(struct v4l2_timeval *tv)
+>  {
+> -	struct timespec ts;
+> +	struct timespec64 ts;
+>  
+> -	ktime_get_ts(&ts);
+> +	ktime_get_ts64(&ts);
+>  	tv->tv_sec = ts.tv_sec;
+>  	tv->tv_usec = ts.tv_nsec / NSEC_PER_USEC;
+>  }
+> diff --git a/include/media/v4l2-common.h b/include/media/v4l2-common.h
+> index 1cc0c5ba16b3..6e77d889c3f8 100644
+> --- a/include/media/v4l2-common.h
+> +++ b/include/media/v4l2-common.h
+> @@ -187,6 +187,6 @@ const struct v4l2_frmsize_discrete *v4l2_find_nearest_format(
+>  		const struct v4l2_discrete_probe *probe,
+>  		s32 width, s32 height);
+>  
+> -void v4l2_get_timestamp(struct timeval *tv);
+> +void v4l2_get_timestamp(struct v4l2_timeval *tv);
+>  
+>  #endif /* V4L2_COMMON_H_ */
+> diff --git a/include/media/videobuf-core.h b/include/media/videobuf-core.h
+> index d760aa73ebbb..6381338a9588 100644
+> --- a/include/media/videobuf-core.h
+> +++ b/include/media/videobuf-core.h
+> @@ -80,7 +80,7 @@ struct videobuf_buffer {
+>  	struct list_head        queue;
+>  	wait_queue_head_t       done;
+>  	unsigned int            field_count;
+> -	struct timeval          ts;
+> +	struct v4l2_timeval     ts;
+>  
+>  	/* Memory type */
+>  	enum v4l2_memory        memory;
+> diff --git a/include/trace/events/v4l2.h b/include/trace/events/v4l2.h
+> index dbf017bfddd9..a88be48dc473 100644
+> --- a/include/trace/events/v4l2.h
+> +++ b/include/trace/events/v4l2.h
+> @@ -6,6 +6,14 @@
+>  
+>  #include <linux/tracepoint.h>
+>  
+> +#ifndef v4l2_timeval_to_ns
+> +#define v4l2_timeval_to_ns v4l2_timeval_to_ns
+> +static inline u64 v4l2_timeval_to_ns(struct v4l2_timeval *tv)
+> +{
+> +	return (u64)tv->tv_sec * NSEC_PER_SEC + tv->tv_usec * NSEC_PER_USEC;
+> +}
+> +#endif
+> +
+>  /* Enums require being exported to userspace, for user tool parsing */
+>  #undef EM
+>  #undef EMe
+> @@ -126,7 +134,7 @@ DECLARE_EVENT_CLASS(v4l2_event_class,
+>  		__entry->bytesused = buf->bytesused;
+>  		__entry->flags = buf->flags;
+>  		__entry->field = buf->field;
+> -		__entry->timestamp = timeval_to_ns(&buf->timestamp);
+> +		__entry->timestamp = v4l2_timeval_to_ns(&buf->timestamp);
+>  		__entry->timecode_type = buf->timecode.type;
+>  		__entry->timecode_flags = buf->timecode.flags;
+>  		__entry->timecode_frames = buf->timecode.frames;
+> @@ -211,7 +219,7 @@ DECLARE_EVENT_CLASS(vb2_event_class,
+>  		__entry->bytesused = vb->v4l2_planes[0].bytesused;
+>  		__entry->flags = vb->v4l2_buf.flags;
+>  		__entry->field = vb->v4l2_buf.field;
+> -		__entry->timestamp = timeval_to_ns(&vb->v4l2_buf.timestamp);
+> +		__entry->timestamp = v4l2_timeval_to_ns(&vb->v4l2_buf.timestamp);
+>  		__entry->timecode_type = vb->v4l2_buf.timecode.type;
+>  		__entry->timecode_flags = vb->v4l2_buf.timecode.flags;
+>  		__entry->timecode_frames = vb->v4l2_buf.timecode.frames;
+> diff --git a/include/uapi/linux/videodev2.h b/include/uapi/linux/videodev2.h
+> index 3e2c497c31fd..450b3249ba30 100644
+> --- a/include/uapi/linux/videodev2.h
+> +++ b/include/uapi/linux/videodev2.h
+> @@ -803,6 +803,19 @@ struct v4l2_plane {
+>  	__u32			reserved[11];
+>  };
+>  
+> +#ifdef __KERNEL__
+> +/*
+> + * This is used for the in-kernel version of v4l2_buffer, as we are
+> + * migrating away from using time_t based structures in the kernel.
+> + * User space might see this defined either using 32-bit or 64-bit
+> + * time_t, so we have to convert it when accessing user data.
+> + */
+> +struct v4l2_timeval {
+> +	long tv_sec;
+> +	long tv_usec;
+> +};
+> +#endif
+> +
+>  /**
+>   * struct v4l2_buffer - video buffer info
+>   * @index:	id number of the buffer
+> @@ -839,7 +852,11 @@ struct v4l2_buffer {
+>  	__u32			bytesused;
+>  	__u32			flags;
+>  	__u32			field;
+> +#ifdef __KERNEL__
+> +	struct v4l2_timeval	timestamp;
+> +#else
+>  	struct timeval		timestamp;
+> +#endif
+>  	struct v4l2_timecode	timecode;
+>  	__u32			sequence;
+>  
+> 
+
+Regards,
+
+	Hans
