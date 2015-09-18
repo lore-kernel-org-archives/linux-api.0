@@ -1,150 +1,65 @@
 From: Hans Verkuil <hverkuil@xs4all.nl>
-Subject: Re: [PATCH v2 8/9] [media] handle 64-bit time_t in v4l2_buffer
-Date: Fri, 18 Sep 2015 11:49:50 +0200
-Message-ID: <55FBDE3E.4070608@xs4all.nl>
-References: <1442524780-781677-1-git-send-email-arnd@arndb.de> <1442524780-781677-9-git-send-email-arnd@arndb.de> <55FBBAD5.4010002@xs4all.nl> <2032750.MT8vj0PRkR@wuerfel>
+Subject: Re: [PATCH v2 7/9] [media] v4l2: introduce v4l2_timeval
+Date: Fri, 18 Sep 2015 11:52:28 +0200
+Message-ID: <55FBDEDC.8040204@xs4all.nl>
+References: <1442524780-781677-1-git-send-email-arnd@arndb.de>
+ <8200227.6XAMdOOJfW@wuerfel> <55FBD90C.3020301@xs4all.nl>
+ <9019880.VVdOR6WRt1@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-media-owner@vger.kernel.org>
-In-Reply-To: <2032750.MT8vj0PRkR@wuerfel>
-Sender: linux-media-owner@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+In-Reply-To: <9019880.VVdOR6WRt1@wuerfel>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
 To: Arnd Bergmann <arnd@arndb.de>
-Cc: linux-media@vger.kernel.org, linux-kernel@vger.kernel.org, y2038@lists.linaro.org, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, linux-api@vger.kernel.org, linux-samsung-soc@vger.kernel.org
+Cc: linux-samsung-soc@vger.kernel.org, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-media@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 09/18/15 11:26, Arnd Bergmann wrote:
-> On Friday 18 September 2015 09:18:45 Hans Verkuil wrote:
->> Hi Arnd,
->>
->> Thanks once again for working on this! Unfortunately, this approach won't
->> work, see my comments below.
->>
->> BTW, I would expect to see compile errors when compiling for 32 bit. Did
->> you try that?
-> 
-> I only tested on 32-bit, both ARM and x86, but had a longer set of patches
-> applied below.
-> 
->>> +static void v4l_put_buffer_time32(struct v4l2_buffer_time32 *to,
->>> +				  const struct v4l2_buffer *from)
->>> +{
->>> +	to->index		= from->index;
->>> +	to->type		= from->type;
->>> +	to->bytesused		= from->bytesused;
->>> +	to->flags		= from->flags;
->>> +	to->field		= from->field;
->>> +	to->timestamp.tv_sec	= from->timestamp.tv_sec;
->>> +	to->timestamp.tv_usec	= from->timestamp.tv_usec;
->>> +	to->timecode		= from->timecode;
->>> +	to->sequence		= from->sequence;
->>> +	to->memory		= from->memory;
->>> +	to->m.offset		= from->m.offset;
->>> +	to->length		= from->length;
->>> +	to->reserved2		= from->reserved2;
->>> +	to->reserved		= from->reserved;
->>> +}
->>
->> Is there a reason why you didn't use memcpy like you did for VIDIOC_DQEVENT (path 5/9)?
->> I would prefer that over these explicit assignments.
-> 
-> No strong reason. I went back and forth a bit on the m.offset field that
-> is part of a union: In a previous version, I planned to move all the
-> compat handling here, and doing the conversion one field at a time would
-> make it easier to share the code between 32-bit and 64-bit kernels
-> handling old 32-bit user space. This version doesn't do that, so I can
-> use the memcpy approach instead.
-> 
->>>  static int v4l_g_parm(const struct v4l2_ioctl_ops *ops,
->>>  				struct file *file, void *fh, void *arg)
->>>  {
->>> @@ -2408,12 +2524,21 @@ static struct v4l2_ioctl_info v4l2_ioctls[] = {
->>>  	IOCTL_INFO_FNC(VIDIOC_S_FMT, v4l_s_fmt, v4l_print_format, INFO_FL_PRIO),
->>>  	IOCTL_INFO_FNC(VIDIOC_REQBUFS, v4l_reqbufs, v4l_print_requestbuffers, INFO_FL_PRIO | INFO_FL_QUEUE),
->>>  	IOCTL_INFO_FNC(VIDIOC_QUERYBUF, v4l_querybuf, v4l_print_buffer, INFO_FL_QUEUE | INFO_FL_CLEAR(v4l2_buffer, length)),
->>> +#ifndef CONFIG_64BIT
->>> +	IOCTL_INFO_FNC(VIDIOC_QUERYBUF_TIME32, v4l_querybuf_time32, v4l_print_buffer_time32, INFO_FL_QUEUE | INFO_FL_CLEAR(v4l2_buffer, length)),
->>> +#endif
->>
->> This doesn't work. These IOCTL macros use the ioctl nr as the index in the array. Since
->> VIDIOC_QUERYBUF and VIDIOC_QUERYBUF_TIME32 have the same index, this will fail.
-> 
-> Ah, I see. No idea why that did not cause a compile-time error. I got some
-> errors for duplicate 'case' values when the structures are the same size
-> (that's why we need the '#ifdef CONFIG_64BIT' in some places) but not here.
-> 
->> I think (not 100% certain, there may be better suggestions) that the conversion is best
->> done in video_usercopy(): just before func() is called have a switch for the TIME32
->> variants, convert to the regular variant, call func() and convert back.
-> 
-> Does the handler have access to the _IOC_SIZE() value that was passed? If
-> it does, we could add a conditional inside of v4l_querybuf().
-> I did not see an easy way to do that though.
-
-No, the v4l_ handlers don't have access to that. But I think it is much easier to
-do the conversion at the first opportunity (video_usercopy), so no other code
-needs to be modified. Easier to review and maintain that way.
-
->> My only concern here is that an additional v4l2_buffer struct (68 bytes) is needed on the
->> stack. I don't see any way around that, though.
-> 
-> Agreed.
-> 
->>> +struct v4l2_buffer_time32 {
->>> +	__u32			index;
->>> +	__u32			type;
->>> +	__u32			bytesused;
->>> +	__u32			flags;
->>> +	__u32			field;
->>> +	struct {
->>> +		__s32		tv_sec;
->>> +		__s32		tv_usec;
->>> +	}			timestamp;
->>> +	struct v4l2_timecode	timecode;
->>> +	__u32			sequence;
->>> +
->>> +	/* memory location */
->>> +	__u32			memory;
->>> +	union {
->>> +		__u32           offset;
->>> +		unsigned long   userptr;
->>> +		struct v4l2_plane *planes;
->>> +		__s32		fd;
->>> +	} m;
->>> +	__u32			length;
->>> +	__u32			reserved2;
->>> +	__u32			reserved;
->>> +};
->>
->> Should this be part of a public API at all? Userspace will never use this struct
->> or the TIME32 ioctls in the source code, right? This would be more appropriate for
->> v4l2-ioctl.h.
-> 
-> Yes, makes sense. I think for the other structures I just enclosed them
-> inside #ifdef __KERNEL__ so they get stripped at 'make headers_install'
-> time, but I forgot to do that here.
-> 
-> My intention was to keep the structure close to the other one, so any
-> changes to them would be more likely to make it into both versions.
-> 
-> Let me know if you prefer to have an #ifdef added here, or if I should
-> move all three structures to v4l2-ioctl.h.
-
-*If* the conversion takes place only in v4l2-ioctl.c, then it makes sense
-have these structs + ioctls moved to v4l2-ioctl.h.
-
-I noticed that v4l2-compat-ioctl32.c wasn't changed. Is that right? I have
-unfortunately no time to double-check that, but it surprised me.
-
-Regards,
-
-	Hans
-
-> Thanks a lot for the review!
-> 
-> 	Arnd
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-media" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
+T24gMDkvMTgvMTUgMTE6NDMsIEFybmQgQmVyZ21hbm4gd3JvdGU6Cj4gT24gRnJpZGF5IDE4IFNl
+cHRlbWJlciAyMDE1IDExOjI3OjQwIEhhbnMgVmVya3VpbCB3cm90ZToKPj4gQWgsIE9LLiBHb3Qg
+aXQuCj4+Cj4+IEkgdGhpbmsgdGhpcyBpcyBkZXBlbmRlbnQgb24gdGhlIHVwY29taW5nIG1lZGlh
+IHdvcmtzaG9wIG5leHQgbW9udGguIElmIHdlCj4+IGRlY2lkZSB0byByZWRlc2lnbiB2NGwyX2J1
+ZmZlciBhbnl3YXksIHRoZW4gd2UgY2FuIGF2b2lkIHRpbWV2YWwgY29tcGxldGVseS4KPj4gQW5k
+IHRoZSBvbmx5IHBsYWNlIHdoZXJlIHdlIHdvdWxkIG5lZWQgdG8gY29udmVydCBpdCBpbiB0aGUg
+Y29tcGF0IGNvZGUKPj4gaGlkZGVuIGluIHRoZSB2NGwyIGNvcmUgKGxpa2VseSB2NGwyLWlvY3Rs
+LmMpLgo+IAo+IEFoLCBJIHRoaW5rIEkgdW5kZXJzdG9vZCB0aGUgaWRlYSBub3csIEkgbWlzc2Vk
+IHRoYXQgZWFybGllciB3aGVuIHlvdSBtZW50aW9uCj4gdGhlIGlkZWEuCj4gCj4gU28gd2hhdCB5
+b3UgYXJlIHNheWluZyBoZXJlIGlzIHRoYXQgeW91IGNvdWxkIGNvbWUgdXAgd2l0aCBhIG5ldyB1
+bmFtYmlndW91cwo+ICh1c2luZyBvbmx5IF9fdTMyIGFuZCBfX3U2NCB0eXBlcyBhbmQgbm8gcG9p
+bnRlcnMpIGZvcm1hdCB0aGF0IGdldHMgZXhwb3NlZAo+IHRvIGEgbmV3IHNldCBvZiBpb2N0bHMs
+IGFuZCB0aGVuIGNoYW5nZSB0aGUgaGFuZGxpbmcgb2YgdGhlIGV4aXN0aW5nIHRocmVlCj4gZm9y
+bWF0cyAobmF0aXZlIDY0LWJpdCwgdHJhZGl0aW9uYWwgMzItYml0LCBhbmQgMzItYml0IHdpdGgg
+NjQtYml0IHRpbWVfdCkKPiBzbyB0aGV5IGdldCBjb252ZXJ0ZWQgaW50byB0aGUgbmV3IGZvcm1h
+dCBieSB0aGUgY29tbW9uIGlvY3RsIGhhbmRsaW5nIGNvZGU/CgpSaWdodC4gRHJpdmVycyBvbmx5
+IHNlZSB0aGUgbmV3IHN0cnVjdCwgYW5kIG9ubHkgdjRsMi1pb2N0bC5jIChhbmQgcG9zc2libGUK
+djRsMi1jb21wYXQtaW9jdGwzMi5jKSBzZWUgdGhlIG9sZCBvbmVzLgoKQlRXLCBJIHdpbGwgcHJv
+YmFibHkgcGljayB1cCBwYXRjaGVzIDQgYW5kIDYgZm9yIDQuNC4gVGhhdCBzaG91bGQgaGVscCBh
+IGJpdC4KClJlZ2FyZHMsCgoJSGFucwoKPj4gSSBhbSBub3QgcmVhbGx5IGtlZW4gb24gaGF2aW5n
+IHY0bDJfdGltZXZhbCBpbiBhbGwgdGhlc2UgZHJpdmVycy4gSSB3b3VsZAo+PiBoYXZlIHRvIGNo
+ZWNrIHRoZW0gYW55d2F5IHNpbmNlIEkgc3VzcGVjdCB0aGF0IGluIHNldmVyYWwgZHJpdmVycyB0
+aGUgbG9jYWwKPj4gdGltZXZhbCB2YXJpYWJsZSBjYW4gYmUgYXZvaWRlZCBieSByZXdyaXRpbmcg
+dGhhdCBwYXJ0IG9mIHRoZSBkcml2ZXIuCj4gCj4gSSd2ZSB0cmllZCB0byBkbyB0aGF0IGZvciBh
+bGwgdGhlIGRyaXZlcnMgd2hlcmUgSSBjb3VsZCBmaW5kIGFuIGVhc3kgc29sdXRpb24KPiBpbiBw
+YXRjaCA2LzksIGJ1dCBJJ20gc3VyZSB5b3UgY2FuIGRvIGl0IGZvciBhIGNvdXBsZSBtb3JlLgo+
+IAo+IFdlIGNvdWxkIGFsc28gZG8gYSBsaWdodHdlaWdodCByZWRlc2lnbiBhbmQgdXNlICd0aW1l
+c3BlYzY0JyBpbnRlcm5hbGx5Cj4gaW4gYWxsIHRoZSBkcml2ZXJzIGFuZCB0aGVuIGNvbnZlcnQg
+dGhhdCB0byAndGltZXZhbCcgb3IgdGhlIDY0LWJpdAo+IGZvcm1hdCBvZiB0aGF0IGluIHRoZSBp
+b2N0bCBoYW5kbGVyLiBUaGlzIGlzIGFsc28gc29tZXRoaW5nIEkgdHJpZWQgYXQKPiBzb21lIHBv
+aW50IGJ1dCB0aGVuIGZvdW5kIGl0IGEgYml0IG1vcmUgaW50dWl0aXZlIHRvIGxlYXZlIHRoZSBu
+b3JtYWwgaW9jdGwKPiBwYXRoIGFsb25lIGFuZCBoYXZlIGFuIGV4cGxpY2l0IHR5cGUuCj4gCj4+
+IFBlcnNvbmFsbHkgSSBhbSBpbiBmYXZvciBvZiBhIHJlZGVzaWduZWQgdjRsMl9idWZmZXI6IGl0
+J3MgYXdrd2FyZCB0byB1c2UKPj4gd2l0aCBtdWx0aXBsYW5hciBmb3JtYXRzLCB0aGVyZSBpcyBj
+cnVmdCBpbiB0aGVyZSB0aGF0IGNhbiBiZSByZW1vdmVkICh0aW1lY29kZSksCj4+IGFuZCB0aGVy
+ZSBpcyBsaXR0bGUgc3BhY2UgZm9yIGFkZGl0aW9ucyAoSFctc3BlY2lmaWMgdGltZWNvZGVzLCBt
+b3JlIGJ1ZmZlcgo+PiBtZXRhIGRhdGEsIGV0YykuCj4+Cj4+IFdlJ2xsIHNlZS4KPiAKPiBPay4K
+PiAKPiAJQXJuZAo+IApfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fXwpZMjAzOCBtYWlsaW5nIGxpc3QKWTIwMzhAbGlzdHMubGluYXJvLm9yZwpodHRwczovL2xp
+c3RzLmxpbmFyby5vcmcvbWFpbG1hbi9saXN0aW5mby95MjAzOAo=
