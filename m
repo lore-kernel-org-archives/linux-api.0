@@ -1,64 +1,100 @@
-From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC v7 14/41] richacl: Create-time inheritance
-Date: Mon, 21 Sep 2015 22:37:25 +0200
-Message-ID: <CAHc6FU4kK5fj6Xgyb1vPsnsQ079EpTfkxYC6XAiT1vEQvikBrw@mail.gmail.com>
+From: bfields@fieldses.org (J. Bruce Fields)
+Subject: Re: [RFC v7 23/41] richacl: Set the owner permissions to the owner
+ mask
+Date: Mon, 21 Sep 2015 17:00:41 -0400
+Message-ID: <20150921210041.GB12968@fieldses.org>
 References: <1441448856-13478-1-git-send-email-agruenba@redhat.com>
-	<1441448856-13478-15-git-send-email-agruenba@redhat.com>
-	<20150918175840.GA21506@fieldses.org>
+ <1441448856-13478-24-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150918175840.GA21506-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1441448856-13478-24-git-send-email-agruenba@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andreas Gruenbacher <agruenba@redhat.com>
+Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org, linux-cifs@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-2015-09-18 19:58 GMT+02:00 J. Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>:
-> On Sat, Sep 05, 2015 at 12:27:09PM +0200, Andreas Gruenbacher wrote:
->> +                     if (dir_ace->e_flags & RICHACE_NO_PROPAGATE_INHERIT_ACE)
->> +                             ace->e_flags &= ~RICHACE_INHERITANCE_FLAGS;
->> +                     else if ((dir_ace->e_flags & RICHACE_FILE_INHERIT_ACE) &&
->> +                              !(dir_ace->e_flags & RICHACE_DIRECTORY_INHERIT_ACE))
->
-> The FILE_INHERIT_ACE check there is redundant since we already know
-> dir_ace is inheritable.
->
-> (So, OK, it isn't wrong to check it again but let's not make this
-> condition any more complicated than necessary.)
+On Sat, Sep 05, 2015 at 12:27:18PM +0200, Andreas Gruenbacher wrote:
+> Change the acl so that owner@ is granted the permissions set in the
+> owner mask.
+> 
+> Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+> ---
+>  fs/richacl_compat.c | 46 ++++++++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 46 insertions(+)
+> 
+> diff --git a/fs/richacl_compat.c b/fs/richacl_compat.c
+> index 9b76fc0..14a1b4b 100644
+> --- a/fs/richacl_compat.c
+> +++ b/fs/richacl_compat.c
+> @@ -413,3 +413,49 @@ richacl_propagate_everyone(struct richacl_alloc *alloc)
+>  	}
+>  	return 0;
+>  }
+> +
+> +/**
+> + * richacl_set_owner_permissions  -  set the owner permissions to the owner mask
+> + *
+> + * Change the acl so that owner@ is granted the permissions set in the owner
+> + * mask.  This leaves at most one efective owner@ allow entry at the beginning
+> + * of the acl.
 
-Indeed, we can turn it into:
+Perhaps also worth nothing here that it's a no-op in the !MASKED or
+!WRITE_THROUGH cases and that this does not change the permissions that
+the ACL grants.  (The latter wasn't obvious to me at first....  But
+this only modifies OWNER@ aces, and in the MASKED & WRITE_THROUGH case
+modification of OWNER@ aces doesn't affect permissions.)
 
-        if (dir_ace->e_flags & RICHACE_NO_PROPAGATE_INHERIT_ACE)
-                ace->e_flags &= ~RICHACE_INHERITANCE_FLAGS;
-        else if (!(dir_ace->e_flags & RICHACE_DIRECTORY_INHERIT_ACE))
-                ace->e_flags |= RICHACE_INHERIT_ONLY_ACE;
+Anyway, code looks right to me:
 
->> +static struct richacl *
->> +richacl_inherit_inode(const struct richacl *dir_acl, struct inode *inode)
->> +{
->> +     struct richacl *acl;
->> +     mode_t mask;
->> +
->> +     acl = richacl_inherit(dir_acl, S_ISDIR(inode->i_mode));
->> +     if (acl) {
->> +             mask = inode->i_mode;
->> +             if (richacl_equiv_mode(acl, &mask) == 0) {
->> +                     richacl_put(acl);
->> +                     acl = NULL;
->
-> Why is it correct to ignore entirely the inherited acl in this case?
->
-> Oh, I see, I'm forgetting that richacl_equiv_mode is setting the mask,
-> which will get applied at the end of this function.  In my defense,
-> maybe it's easy to overlook a side effect in an if condition.... But I
-> don't have a better idea.  OK.
+	Reviewed-by: J. Bruce Fields <bfields@redhat.com>
 
-Yes. I'll leave that as it is.
+--b.
 
-> So, nits aside:
->
->         Reviewed-by: J. Bruce Fields <bfields-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-
-Thanks,
-Andreas
+> + */
+> +static int
+> +richacl_set_owner_permissions(struct richacl_alloc *alloc)
+> +{
+> +	unsigned int x = RICHACE_POSIX_ALWAYS_ALLOWED;
+> +	unsigned int owner_mask = alloc->acl->a_owner_mask & ~x;
+> +	unsigned int denied = 0;
+> +	struct richace *ace;
+> +
+> +	if (!((alloc->acl->a_flags & RICHACL_WRITE_THROUGH) &&
+> +	      (alloc->acl->a_flags & RICHACL_MASKED)))
+> +		return 0;
+> +
+> +	richacl_for_each_entry(ace, alloc->acl) {
+> +		if (richace_is_owner(ace)) {
+> +			if (richace_is_allow(ace) && !(owner_mask & denied)) {
+> +				richace_change_mask(alloc, &ace, owner_mask);
+> +				owner_mask = 0;
+> +			} else
+> +				richace_change_mask(alloc, &ace, 0);
+> +		} else {
+> +			if (richace_is_deny(ace))
+> +				denied |= ace->e_mask;
+> +		}
+> +	}
+> +
+> +	if (owner_mask & (denied |
+> +			  ~alloc->acl->a_other_mask |
+> +			  ~alloc->acl->a_group_mask)) {
+> +		ace = alloc->acl->a_entries;
+> +		if (richacl_insert_entry(alloc, &ace))
+> +			return -1;
+> +		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
+> +		ace->e_flags = RICHACE_SPECIAL_WHO;
+> +		ace->e_mask = owner_mask;
+> +		ace->e_id.special = RICHACE_OWNER_SPECIAL_ID;
+> +	}
+> +	return 0;
+> +}
+> -- 
+> 2.4.3
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
