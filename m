@@ -1,171 +1,173 @@
 From: Petr Mladek <pmladek@suse.com>
-Subject: [RFC v2 18/18] kthread: Better support freezable kthread workers
-Date: Mon, 21 Sep 2015 15:03:59 +0200
-Message-ID: <1442840639-6963-19-git-send-email-pmladek@suse.com>
+Subject: [RFC v2 15/18] rcu: Clean up timeouts for forcing the quiescent state
+Date: Mon, 21 Sep 2015 15:03:56 +0200
+Message-ID: <1442840639-6963-16-git-send-email-pmladek@suse.com>
 References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1442840639-6963-1-git-send-email-pmladek@suse.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
 Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch allows to make kthread worker freezable via a new @flags
-parameter. It will allow to avoid an init work in some kthreads.
+This patch does some code refactoring that will help us to split the rcu
+kthread into more kthread works. It fixes rather theoretical and innocent
+race. Otherwise, the changes should not be visible to the user.
 
-It currently does not affect the function of kthread_worker_fn()
-but it might help to do some optimization or fixes eventually.
+First, it moves the code that limits the maximal timeout into separate
+functions, see normalize_jiffies*().
 
-I currently do not know about any other use for the @flags
-parameter but I believe that we will want more flags
-in the future.
+The commit 88d6df612cc3c99f5 ("rcu: Prevent spurious-wakeup DoS attack
+on rcu_gp_kthread()") suggests that a spurious wakeup is possible.
+In this case, the thread continue waiting and
+wait_event_interruptible_timeout() should be called with the remaining
+timeout. It is newly computed in the new variable "timeout".
 
-Finally, I hope that it will not cause confusion with @flags member
-in struct kthread. Well, I guess that we will want to rework the
-basic kthreads implementation once all kthreads are converted into
-kthread workers or workqueues. It is possible that we will merge
-the two structures.
+wait_event_interruptible_timeout() returns "1" when the condition is true
+after the timeout elapsed. This might happen when there is a race between
+fulfilling the condition and the wakeup. Therefore, it is cleaner to
+update "rsp->jiffies_force_qs" when QS is forced and do not rely on
+the "ret" value.
+
+Finally, this the patch moves cond_resched_rcu_qs() to a single place.
+It changes the order of the check for the pending signal. But there never
+should be a pending signal. If there was we would have bigger problems
+because wait_event() would never sleep again until someone flushed
+the signal.
 
 Signed-off-by: Petr Mladek <pmladek@suse.com>
 ---
- include/linux/kthread.h              | 14 ++++++++++----
- kernel/kthread.c                     |  9 ++++++++-
- kernel/rcu/tree.c                    |  2 +-
- kernel/trace/ring_buffer_benchmark.c |  4 ++--
- mm/huge_memory.c                     |  4 ++--
- 5 files changed, 23 insertions(+), 10 deletions(-)
+ kernel/rcu/tree.c | 77 ++++++++++++++++++++++++++++++++++++++-----------------
+ 1 file changed, 53 insertions(+), 24 deletions(-)
 
-diff --git a/include/linux/kthread.h b/include/linux/kthread.h
-index 2110a55bd769..5f27013edd29 100644
---- a/include/linux/kthread.h
-+++ b/include/linux/kthread.h
-@@ -65,7 +65,12 @@ struct kthread_work;
- typedef void (*kthread_work_func_t)(struct kthread_work *work);
- void delayed_kthread_work_timer_fn(unsigned long __data);
- 
-+enum {
-+	KTW_FREEZABLE		= 1 << 2,	/* freeze during suspend */
-+};
-+
- struct kthread_worker {
-+	unsigned int		flags;
- 	spinlock_t		lock;
- 	struct list_head	work_list;
- 	struct task_struct	*task;
-@@ -164,12 +169,13 @@ extern void __init_kthread_worker(struct kthread_worker *worker,
- 
- int kthread_worker_fn(void *worker_ptr);
- 
--__printf(2, 3)
-+__printf(3, 4)
- struct kthread_worker *
--create_kthread_worker_on_node(int node, const char namefmt[], ...);
-+create_kthread_worker_on_node(unsigned int flags, int node,
-+			      const char namefmt[], ...);
- 
--#define create_kthread_worker(namefmt, arg...)				\
--	create_kthread_worker_on_node(-1, namefmt, ##arg)
-+#define create_kthread_worker(flags, namefmt, arg...)			\
-+	create_kthread_worker_on_node(flags, -1, namefmt, ##arg)
- 
- bool queue_kthread_work(struct kthread_worker *worker,
- 			struct kthread_work *work);
-diff --git a/kernel/kthread.c b/kernel/kthread.c
-index 27bf242064d1..3d726acb3103 100644
---- a/kernel/kthread.c
-+++ b/kernel/kthread.c
-@@ -552,6 +552,7 @@ void __init_kthread_worker(struct kthread_worker *worker,
- 				const char *name,
- 				struct lock_class_key *key)
- {
-+	worker->flags = 0;
- 	spin_lock_init(&worker->lock);
- 	lockdep_set_class_and_name(&worker->lock, key, name);
- 	INIT_LIST_HEAD(&worker->work_list);
-@@ -585,6 +586,10 @@ int kthread_worker_fn(void *worker_ptr)
- 	 */
- 	WARN_ON(worker->task && worker->task != current);
- 	worker->task = current;
-+
-+	if (worker->flags & KTW_FREEZABLE)
-+		set_freezable();
-+
- repeat:
- 	set_current_state(TASK_INTERRUPTIBLE);	/* mb paired w/ kthread_stop */
- 
-@@ -631,7 +636,8 @@ EXPORT_SYMBOL_GPL(kthread_worker_fn);
-  * when the worker was SIGKILLed.
-  */
- struct kthread_worker *
--create_kthread_worker_on_node(int node, const char namefmt[], ...)
-+create_kthread_worker_on_node(unsigned int flags, int node,
-+			      const char namefmt[], ...)
- {
- 	struct kthread_worker *worker;
- 	struct task_struct *task;
-@@ -651,6 +657,7 @@ create_kthread_worker_on_node(int node, const char namefmt[], ...)
- 	if (IS_ERR(task))
- 		goto fail_task;
- 
-+	worker->flags = flags;
- 	worker->task = task;
- 	wake_up_process(task);
- 
 diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
-index e115c3aee65d..211a473e295b 100644
+index 5a3e70a21df8..286e300794f0 100644
 --- a/kernel/rcu/tree.c
 +++ b/kernel/rcu/tree.c
-@@ -4154,7 +4154,7 @@ static int __init rcu_spawn_gp_kthread(void)
- 		init_kthread_work(&rsp->gp_start_work, rcu_gp_start_func);
- 		init_delayed_kthread_work(&rsp->gp_handle_qs_work,
- 					  rcu_gp_handle_qs_func);
--		w = create_kthread_worker("%s", rsp->name);
-+		w = create_kthread_worker(0, "%s", rsp->name);
- 		BUG_ON(IS_ERR(w));
- 		rnp = rcu_get_root(rsp);
- 		raw_spin_lock_irqsave(&rnp->lock, flags);
-diff --git a/kernel/trace/ring_buffer_benchmark.c b/kernel/trace/ring_buffer_benchmark.c
-index 3f27ff6debd3..1613c40f636b 100644
---- a/kernel/trace/ring_buffer_benchmark.c
-+++ b/kernel/trace/ring_buffer_benchmark.c
-@@ -416,14 +416,14 @@ static int __init ring_buffer_benchmark_init(void)
- 		return -ENOMEM;
- 
- 	if (!disable_reader) {
--		rb_consumer_worker = create_kthread_worker("rb_consumer");
-+		rb_consumer_worker = create_kthread_worker(0, "rb_consumer");
- 		if (IS_ERR(rb_consumer_worker)) {
- 			ret = PTR_ERR(rb_consumer_worker);
- 			goto out_fail;
- 		}
- 	}
- 
--	rb_producer_worker = create_kthread_worker("rb_producer");
-+		rb_producer_worker = create_kthread_worker(0, "rb_producer");
- 	if (IS_ERR(rb_producer_worker)) {
- 		ret = PTR_ERR(rb_producer_worker);
- 		goto out_kill;
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index d5030fe7b687..8651c822c3cd 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -165,7 +165,8 @@ static int start_stop_khugepaged(void)
- 		if (khugepaged_worker)
- 			goto out;
- 
--		khugepaged_worker = create_kthread_worker("khugepaged");
-+		khugepaged_worker =
-+			create_kthread_worker(KTW_FREEZABLE, "khugepaged");
- 
- 		if (unlikely(IS_ERR(khugepaged_worker))) {
- 			pr_err("khugepaged: failed to create kthread worker\n");
-@@ -2878,7 +2879,6 @@ breakouterloop_mmap_sem:
- 
- static void khugepaged_init_func(struct kthread_work *dummy)
- {
--	set_freezable();
- 	set_user_nice(current, MAX_NICE);
+@@ -2035,13 +2035,45 @@ static void rcu_gp_cleanup(struct rcu_state *rsp)
  }
  
+ /*
++ * Normalize, update, and return the first timeout.
++ */
++static unsigned long normalize_jiffies_till_first_fqs(void)
++{
++	unsigned long j = jiffies_till_first_fqs;
++
++	if (unlikely(j > HZ)) {
++		j = HZ;
++		jiffies_till_first_fqs = HZ;
++	}
++
++	return j;
++}
++
++/*
++ * Normalize, update, and return the next timeout.
++ */
++static unsigned long normalize_jiffies_till_next_fqs(void)
++{
++	unsigned long j = jiffies_till_next_fqs;
++
++	if (unlikely(j > HZ)) {
++		j = HZ;
++		jiffies_till_next_fqs = HZ;
++	} else if (unlikely(j < 1)) {
++		j = 1;
++		jiffies_till_next_fqs = 1;
++	}
++
++	return j;
++}
++
++/*
+  * Body of kthread that handles grace periods.
+  */
+ static int __noreturn rcu_gp_kthread(void *arg)
+ {
+ 	int gf;
+-	unsigned long j;
+-	int ret;
++	unsigned long timeout, j;
+ 	struct rcu_state *rsp = arg;
+ 	struct rcu_node *rnp = rcu_get_root(rsp);
+ 
+@@ -2071,22 +2103,18 @@ static int __noreturn rcu_gp_kthread(void *arg)
+ 
+ 		/* Handle quiescent-state forcing. */
+ 		rsp->first_gp_fqs = true;
+-		j = jiffies_till_first_fqs;
+-		if (j > HZ) {
+-			j = HZ;
+-			jiffies_till_first_fqs = HZ;
+-		}
+-		ret = 0;
++		timeout = normalize_jiffies_till_first_fqs();
++		rsp->jiffies_force_qs = jiffies + timeout;
+ 		for (;;) {
+-			if (!ret)
+-				rsp->jiffies_force_qs = jiffies + j;
+ 			trace_rcu_grace_period(rsp->name,
+ 					       READ_ONCE(rsp->gpnum),
+ 					       TPS("fqswait"));
+ 			rsp->gp_state = RCU_GP_WAIT_FQS;
+-			ret = wait_event_interruptible_timeout(rsp->gp_wq,
+-					rcu_gp_fqs_check_wake(rsp, &gf), j);
++			wait_event_interruptible_timeout(rsp->gp_wq,
++					rcu_gp_fqs_check_wake(rsp, &gf),
++					timeout);
+ 			rsp->gp_state = RCU_GP_DOING_FQS;
++try_again:
+ 			/* Locking provides needed memory barriers. */
+ 			/* If grace period done, leave loop. */
+ 			if (!READ_ONCE(rnp->qsmask) &&
+@@ -2099,28 +2127,29 @@ static int __noreturn rcu_gp_kthread(void *arg)
+ 						       READ_ONCE(rsp->gpnum),
+ 						       TPS("fqsstart"));
+ 				rcu_gp_fqs(rsp);
++				timeout = normalize_jiffies_till_next_fqs();
++				rsp->jiffies_force_qs = jiffies + timeout;
+ 				trace_rcu_grace_period(rsp->name,
+ 						       READ_ONCE(rsp->gpnum),
+ 						       TPS("fqsend"));
+-				cond_resched_rcu_qs();
+-				WRITE_ONCE(rsp->gp_activity, jiffies);
+ 			} else {
+ 				/* Deal with stray signal. */
+-				cond_resched_rcu_qs();
+-				WRITE_ONCE(rsp->gp_activity, jiffies);
+ 				WARN_ON(signal_pending(current));
+ 				trace_rcu_grace_period(rsp->name,
+ 						       READ_ONCE(rsp->gpnum),
+ 						       TPS("fqswaitsig"));
+ 			}
+-			j = jiffies_till_next_fqs;
+-			if (j > HZ) {
+-				j = HZ;
+-				jiffies_till_next_fqs = HZ;
+-			} else if (j < 1) {
+-				j = 1;
+-				jiffies_till_next_fqs = 1;
+-			}
++			cond_resched_rcu_qs();
++			WRITE_ONCE(rsp->gp_activity, jiffies);
++			/*
++			 * Count the remaining timeout when it was a spurious
++			 * wakeup. Well, it is useful also when we have slept
++			 * in the cond_resched().
++			 */
++			j = jiffies;
++			if (ULONG_CMP_GE(j, rsp->jiffies_force_qs))
++				goto try_again;
++			timeout = rsp->jiffies_force_qs - j;
+ 		}
+ 
+ 		/* Handle grace-period end. */
 -- 
 1.8.5.6
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
