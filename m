@@ -1,234 +1,171 @@
 From: Petr Mladek <pmladek@suse.com>
-Subject: [RFC v2 11/18] ring_buffer: Fix more races when terminating the producer in the benchmark
-Date: Mon, 21 Sep 2015 15:03:52 +0200
-Message-ID: <1442840639-6963-12-git-send-email-pmladek@suse.com>
+Subject: [RFC v2 18/18] kthread: Better support freezable kthread workers
+Date: Mon, 21 Sep 2015 15:03:59 +0200
+Message-ID: <1442840639-6963-19-git-send-email-pmladek@suse.com>
 References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1442840639-6963-1-git-send-email-pmladek@suse.com>
-Sender: owner-linux-mm@kvack.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
 Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-The commit b44754d8262d3aab8 ("ring_buffer: Allow to exit the ring
-buffer benchmark immediately") added a hack into ring_buffer_producer()
-that set @kill_test when kthread_should_stop() returned true. It improved
-the situation a lot. It stopped the kthread in most cases because
-the producer spent most of the time in the patched while cycle.
+This patch allows to make kthread worker freezable via a new @flags
+parameter. It will allow to avoid an init work in some kthreads.
 
-But there are still few possible races when kthread_should_stop()
-is set outside of the cycle. Then we do not set @kill_test and
-some other checks pass.
+It currently does not affect the function of kthread_worker_fn()
+but it might help to do some optimization or fixes eventually.
 
-This patch adds a better fix. It renames @test_kill/TEST_KILL() into
-a better descriptive @test_error/TEST_ERROR(). Also it introduces
-break_test() function that checks for both @test_error and
-kthread_should_stop().
+I currently do not know about any other use for the @flags
+parameter but I believe that we will want more flags
+in the future.
 
-The new function is used in the producer when the check for @test_error
-is not enough. It is not used in the consumer because its state
-is manipulated by the producer via the "reader_finish" variable.
-
-Also we add a missing check into ring_buffer_producer_thread()
-between setting TASK_INTERRUPTIBLE and calling schedule_timeout().
-Otherwise, we might miss a wakeup from kthread_stop().
+Finally, I hope that it will not cause confusion with @flags member
+in struct kthread. Well, I guess that we will want to rework the
+basic kthreads implementation once all kthreads are converted into
+kthread workers or workqueues. It is possible that we will merge
+the two structures.
 
 Signed-off-by: Petr Mladek <pmladek@suse.com>
 ---
- kernel/trace/ring_buffer_benchmark.c | 54 +++++++++++++++++++-----------------
- 1 file changed, 29 insertions(+), 25 deletions(-)
+ include/linux/kthread.h              | 14 ++++++++++----
+ kernel/kthread.c                     |  9 ++++++++-
+ kernel/rcu/tree.c                    |  2 +-
+ kernel/trace/ring_buffer_benchmark.c |  4 ++--
+ mm/huge_memory.c                     |  4 ++--
+ 5 files changed, 23 insertions(+), 10 deletions(-)
 
+diff --git a/include/linux/kthread.h b/include/linux/kthread.h
+index 2110a55bd769..5f27013edd29 100644
+--- a/include/linux/kthread.h
++++ b/include/linux/kthread.h
+@@ -65,7 +65,12 @@ struct kthread_work;
+ typedef void (*kthread_work_func_t)(struct kthread_work *work);
+ void delayed_kthread_work_timer_fn(unsigned long __data);
+ 
++enum {
++	KTW_FREEZABLE		= 1 << 2,	/* freeze during suspend */
++};
++
+ struct kthread_worker {
++	unsigned int		flags;
+ 	spinlock_t		lock;
+ 	struct list_head	work_list;
+ 	struct task_struct	*task;
+@@ -164,12 +169,13 @@ extern void __init_kthread_worker(struct kthread_worker *worker,
+ 
+ int kthread_worker_fn(void *worker_ptr);
+ 
+-__printf(2, 3)
++__printf(3, 4)
+ struct kthread_worker *
+-create_kthread_worker_on_node(int node, const char namefmt[], ...);
++create_kthread_worker_on_node(unsigned int flags, int node,
++			      const char namefmt[], ...);
+ 
+-#define create_kthread_worker(namefmt, arg...)				\
+-	create_kthread_worker_on_node(-1, namefmt, ##arg)
++#define create_kthread_worker(flags, namefmt, arg...)			\
++	create_kthread_worker_on_node(flags, -1, namefmt, ##arg)
+ 
+ bool queue_kthread_work(struct kthread_worker *worker,
+ 			struct kthread_work *work);
+diff --git a/kernel/kthread.c b/kernel/kthread.c
+index 27bf242064d1..3d726acb3103 100644
+--- a/kernel/kthread.c
++++ b/kernel/kthread.c
+@@ -552,6 +552,7 @@ void __init_kthread_worker(struct kthread_worker *worker,
+ 				const char *name,
+ 				struct lock_class_key *key)
+ {
++	worker->flags = 0;
+ 	spin_lock_init(&worker->lock);
+ 	lockdep_set_class_and_name(&worker->lock, key, name);
+ 	INIT_LIST_HEAD(&worker->work_list);
+@@ -585,6 +586,10 @@ int kthread_worker_fn(void *worker_ptr)
+ 	 */
+ 	WARN_ON(worker->task && worker->task != current);
+ 	worker->task = current;
++
++	if (worker->flags & KTW_FREEZABLE)
++		set_freezable();
++
+ repeat:
+ 	set_current_state(TASK_INTERRUPTIBLE);	/* mb paired w/ kthread_stop */
+ 
+@@ -631,7 +636,8 @@ EXPORT_SYMBOL_GPL(kthread_worker_fn);
+  * when the worker was SIGKILLed.
+  */
+ struct kthread_worker *
+-create_kthread_worker_on_node(int node, const char namefmt[], ...)
++create_kthread_worker_on_node(unsigned int flags, int node,
++			      const char namefmt[], ...)
+ {
+ 	struct kthread_worker *worker;
+ 	struct task_struct *task;
+@@ -651,6 +657,7 @@ create_kthread_worker_on_node(int node, const char namefmt[], ...)
+ 	if (IS_ERR(task))
+ 		goto fail_task;
+ 
++	worker->flags = flags;
+ 	worker->task = task;
+ 	wake_up_process(task);
+ 
+diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
+index e115c3aee65d..211a473e295b 100644
+--- a/kernel/rcu/tree.c
++++ b/kernel/rcu/tree.c
+@@ -4154,7 +4154,7 @@ static int __init rcu_spawn_gp_kthread(void)
+ 		init_kthread_work(&rsp->gp_start_work, rcu_gp_start_func);
+ 		init_delayed_kthread_work(&rsp->gp_handle_qs_work,
+ 					  rcu_gp_handle_qs_func);
+-		w = create_kthread_worker("%s", rsp->name);
++		w = create_kthread_worker(0, "%s", rsp->name);
+ 		BUG_ON(IS_ERR(w));
+ 		rnp = rcu_get_root(rsp);
+ 		raw_spin_lock_irqsave(&rnp->lock, flags);
 diff --git a/kernel/trace/ring_buffer_benchmark.c b/kernel/trace/ring_buffer_benchmark.c
-index 9ea7949366b3..9e00fd178226 100644
+index 3f27ff6debd3..1613c40f636b 100644
 --- a/kernel/trace/ring_buffer_benchmark.c
 +++ b/kernel/trace/ring_buffer_benchmark.c
-@@ -60,12 +60,12 @@ MODULE_PARM_DESC(consumer_fifo, "fifo prio for consumer");
- 
- static int read_events;
- 
--static int kill_test;
-+static int test_error;
- 
--#define KILL_TEST()				\
-+#define TEST_ERROR()				\
- 	do {					\
--		if (!kill_test) {		\
--			kill_test = 1;		\
-+		if (!test_error) {		\
-+			test_error = 1;		\
- 			WARN_ON(1);		\
- 		}				\
- 	} while (0)
-@@ -75,6 +75,11 @@ enum event_status {
- 	EVENT_DROPPED,
- };
- 
-+static bool break_test(void)
-+{
-+	return test_error || kthread_should_stop();
-+}
-+
- static enum event_status read_event(int cpu)
- {
- 	struct ring_buffer_event *event;
-@@ -87,7 +92,7 @@ static enum event_status read_event(int cpu)
- 
- 	entry = ring_buffer_event_data(event);
- 	if (*entry != cpu) {
--		KILL_TEST();
-+		TEST_ERROR();
- 		return EVENT_DROPPED;
- 	}
- 
-@@ -115,10 +120,10 @@ static enum event_status read_page(int cpu)
- 		rpage = bpage;
- 		/* The commit may have missed event flags set, clear them */
- 		commit = local_read(&rpage->commit) & 0xfffff;
--		for (i = 0; i < commit && !kill_test; i += inc) {
-+		for (i = 0; i < commit && !test_error ; i += inc) {
- 
- 			if (i >= (PAGE_SIZE - offsetof(struct rb_page, data))) {
--				KILL_TEST();
-+				TEST_ERROR();
- 				break;
- 			}
- 
-@@ -128,7 +133,7 @@ static enum event_status read_page(int cpu)
- 			case RINGBUF_TYPE_PADDING:
- 				/* failed writes may be discarded events */
- 				if (!event->time_delta)
--					KILL_TEST();
-+					TEST_ERROR();
- 				inc = event->array[0] + 4;
- 				break;
- 			case RINGBUF_TYPE_TIME_EXTEND:
-@@ -137,12 +142,12 @@ static enum event_status read_page(int cpu)
- 			case 0:
- 				entry = ring_buffer_event_data(event);
- 				if (*entry != cpu) {
--					KILL_TEST();
-+					TEST_ERROR();
- 					break;
- 				}
- 				read++;
- 				if (!event->array[0]) {
--					KILL_TEST();
-+					TEST_ERROR();
- 					break;
- 				}
- 				inc = event->array[0] + 4;
-@@ -150,17 +155,17 @@ static enum event_status read_page(int cpu)
- 			default:
- 				entry = ring_buffer_event_data(event);
- 				if (*entry != cpu) {
--					KILL_TEST();
-+					TEST_ERROR();
- 					break;
- 				}
- 				read++;
- 				inc = ((event->type_len + 1) * 4);
- 			}
--			if (kill_test)
-+			if (test_error)
- 				break;
- 
- 			if (inc <= 0) {
--				KILL_TEST();
-+				TEST_ERROR();
- 				break;
- 			}
- 		}
-@@ -185,7 +190,7 @@ static void ring_buffer_consumer(void)
- 	while (!READ_ONCE(reader_finish)) {
- 		int found = 1;
- 
--		while (found && !kill_test) {
-+		while (found && !test_error) {
- 			int cpu;
- 
- 			found = 0;
-@@ -197,7 +202,7 @@ static void ring_buffer_consumer(void)
- 				else
- 					stat = read_page(cpu);
- 
--				if (kill_test)
-+				if (test_error)
- 					break;
- 
- 				if (stat == EVENT_FOUND)
-@@ -273,10 +278,7 @@ static void ring_buffer_producer(void)
- 		if (cnt % wakeup_interval)
- 			cond_resched();
- #endif
--		if (kthread_should_stop())
--			kill_test = 1;
--
--	} while (ktime_before(end_time, timeout) && !kill_test);
-+	} while (ktime_before(end_time, timeout) && !break_test());
- 	trace_printk("End ring buffer hammer\n");
- 
- 	if (consumer) {
-@@ -297,7 +299,7 @@ static void ring_buffer_producer(void)
- 	entries = ring_buffer_entries(buffer);
- 	overruns = ring_buffer_overruns(buffer);
- 
--	if (kill_test && !kthread_should_stop())
-+	if (test_error)
- 		trace_printk("ERROR!\n");
+@@ -416,14 +416,14 @@ static int __init ring_buffer_benchmark_init(void)
+ 		return -ENOMEM;
  
  	if (!disable_reader) {
-@@ -378,15 +380,14 @@ static void wait_to_die(void)
- 
- static int ring_buffer_consumer_thread(void *arg)
- {
--	while (!kthread_should_stop() && !kill_test) {
-+	while (!break_test()) {
- 		complete(&read_start);
- 
- 		ring_buffer_consumer();
- 
- 		set_current_state(TASK_INTERRUPTIBLE);
--		if (kthread_should_stop() || kill_test)
-+		if (break_test())
- 			break;
--
- 		schedule();
- 	}
- 	__set_current_state(TASK_RUNNING);
-@@ -399,7 +400,7 @@ static int ring_buffer_consumer_thread(void *arg)
- 
- static int ring_buffer_producer_thread(void *arg)
- {
--	while (!kthread_should_stop() && !kill_test) {
-+	while (!break_test()) {
- 		ring_buffer_reset(buffer);
- 
- 		if (consumer) {
-@@ -408,15 +409,18 @@ static int ring_buffer_producer_thread(void *arg)
+-		rb_consumer_worker = create_kthread_worker("rb_consumer");
++		rb_consumer_worker = create_kthread_worker(0, "rb_consumer");
+ 		if (IS_ERR(rb_consumer_worker)) {
+ 			ret = PTR_ERR(rb_consumer_worker);
+ 			goto out_fail;
  		}
- 
- 		ring_buffer_producer();
--		if (kill_test)
-+		if (break_test())
- 			goto out_kill;
- 
- 		trace_printk("Sleeping for 10 secs\n");
- 		set_current_state(TASK_INTERRUPTIBLE);
-+		if (break_test())
-+			goto out_kill;
- 		schedule_timeout(HZ * SLEEP_TIME);
  	}
  
- out_kill:
-+	__set_current_state(TASK_RUNNING);
- 	if (!kthread_should_stop())
- 		wait_to_die();
+-	rb_producer_worker = create_kthread_worker("rb_producer");
++		rb_producer_worker = create_kthread_worker(0, "rb_producer");
+ 	if (IS_ERR(rb_producer_worker)) {
+ 		ret = PTR_ERR(rb_producer_worker);
+ 		goto out_kill;
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index d5030fe7b687..8651c822c3cd 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -165,7 +165,8 @@ static int start_stop_khugepaged(void)
+ 		if (khugepaged_worker)
+ 			goto out;
+ 
+-		khugepaged_worker = create_kthread_worker("khugepaged");
++		khugepaged_worker =
++			create_kthread_worker(KTW_FREEZABLE, "khugepaged");
+ 
+ 		if (unlikely(IS_ERR(khugepaged_worker))) {
+ 			pr_err("khugepaged: failed to create kthread worker\n");
+@@ -2878,7 +2879,6 @@ breakouterloop_mmap_sem:
+ 
+ static void khugepaged_init_func(struct kthread_work *dummy)
+ {
+-	set_freezable();
+ 	set_user_nice(current, MAX_NICE);
+ }
  
 -- 
 1.8.5.6
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
