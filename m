@@ -1,100 +1,130 @@
-From: Petr Mladek <pmladek@suse.com>
-Subject: [RFC v2 16/18] rcu: Check actual RCU_GP_FLAG_FQS when handling quiescent state
-Date: Mon, 21 Sep 2015 15:03:57 +0200
-Message-ID: <1442840639-6963-17-git-send-email-pmladek@suse.com>
-References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1442840639-6963-1-git-send-email-pmladek@suse.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>
+From: Andrzej Hajda <a.hajda@samsung.com>
+Subject: [PATCH 00/38] Fixes related to incorrect usage of
+	unsigned types
+Date: Mon, 21 Sep 2015 15:33:32 +0200
+Message-ID: <1442842450-29769-1-git-send-email-a.hajda@samsung.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/intel-gfx>
+List-Post: <mailto:intel-gfx@lists.freedesktop.org>
+List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: intel-gfx-bounces@lists.freedesktop.org
+Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
+To: linux-kernel@vger.kernel.org
+Cc: linux-mips@linux-mips.org, linux-sh@vger.kernel.org, Will Deacon <will.deacon@arm.com>, dri-devel@lists.freedesktop.org, linux-clk@vger.kernel.org, Marek Szyprowski <m.szyprowski@samsung.com>, Jianwei Wang <jianwei.wang.chn@gmail.com>, Pravin Shelar <pshelar@nicira.com>, linux-cachefs@redhat.com, Alan Stern <stern@rowland.harvard.edu>, Jiri Slaby <jslaby@suse.com>, Arend van Spriel <arend@broadcom.com>, Oleg Drokin <oleg.drokin@intel.com>, Matt Mackall <mpm@selenic.com>, Thomas Gleixner <tglx@linutronix.de>, linux-omap@vger.kernel.org, Karsten Keil <isdn@linux-pingi.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-usb@vger.kernel.org, linux-wireless@vger.kernel.org, Ralf Baechle <ralf@linux-mips.org>, linux-crypto@vger.kernel.org, Alex Deucher <alexander.deucher@amd.com>, Andrew Morton <akpm@linux-foundation.org>, Ivan Mikhaylov <ivan@ru.ibm.com>, Mark
 List-Id: linux-api@vger.kernel.org
 
-This change will help a lot if we want to split RCU kthreads into
-few kthread works.
-
-The variable "qf" was added by the commit 88d6df612cc3c99f56 ("rcu: Prevent
-spurious-wakeup DoS attack on rcu_gp_kthread()"). IMHO, the primary fix
-is the "ret" handling.
-
-If I read the code correctly, RCU_GP_FLAG_FQS should not get lost
-at this stage. rsp->gp_flags are written in these functions:
-
-  + rcu_gp_init()
-  + rcu_gp_cleanup()
-    + Both are safe. They are called from other part of the kthread
-      that can't get accessed when "gf" is used.
-
-  + rcu_gp_fqs()
-    + Safe. It is the function that we call when the flag is set.
-
-  + rcu_report_qs_rsp()
-  + force_quiescent_state()
-    + Both should be safe. They set RCU_GP_FLAG_FQS and therefore they
-      could not cause loss of rcu_gp_fqs() call.
-
-  + rcu_start_gp_advanced()
-    + This should be safe. It is called only when the last grace period
-      was completed and we are opening a new one. Therefore it should
-      not happen when "gf" is set and tested because the grace period
-      is closed by the kthread.
-
-Signed-off-by: Petr Mladek <pmladek@suse.com>
----
- kernel/rcu/tree.c | 10 ++++------
- 1 file changed, 4 insertions(+), 6 deletions(-)
-
-diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
-index 286e300794f0..08d1d3e63b9b 100644
---- a/kernel/rcu/tree.c
-+++ b/kernel/rcu/tree.c
-@@ -1908,13 +1908,12 @@ static int rcu_gp_init(struct rcu_state *rsp)
-  * Helper function for wait_event_interruptible_timeout() wakeup
-  * at force-quiescent-state time.
-  */
--static bool rcu_gp_fqs_check_wake(struct rcu_state *rsp, int *gfp)
-+static bool rcu_gp_fqs_check_wake(struct rcu_state *rsp)
- {
- 	struct rcu_node *rnp = rcu_get_root(rsp);
- 
- 	/* Someone like call_rcu() requested a force-quiescent-state scan. */
--	*gfp = READ_ONCE(rsp->gp_flags);
--	if (*gfp & RCU_GP_FLAG_FQS)
-+	if (READ_ONCE(rsp->gp_flags) & RCU_GP_FLAG_FQS)
- 		return true;
- 
- 	/* The current grace period has completed. */
-@@ -2072,7 +2071,6 @@ static unsigned long normalize_jiffies_till_next_fqs(void)
-  */
- static int __noreturn rcu_gp_kthread(void *arg)
- {
--	int gf;
- 	unsigned long timeout, j;
- 	struct rcu_state *rsp = arg;
- 	struct rcu_node *rnp = rcu_get_root(rsp);
-@@ -2111,7 +2109,7 @@ static int __noreturn rcu_gp_kthread(void *arg)
- 					       TPS("fqswait"));
- 			rsp->gp_state = RCU_GP_WAIT_FQS;
- 			wait_event_interruptible_timeout(rsp->gp_wq,
--					rcu_gp_fqs_check_wake(rsp, &gf),
-+					rcu_gp_fqs_check_wake(rsp),
- 					timeout);
- 			rsp->gp_state = RCU_GP_DOING_FQS;
- try_again:
-@@ -2122,7 +2120,7 @@ try_again:
- 				break;
- 			/* If time for quiescent-state forcing, do it. */
- 			if (ULONG_CMP_GE(jiffies, rsp->jiffies_force_qs) ||
--			    (gf & RCU_GP_FLAG_FQS)) {
-+			    (READ_ONCE(rsp->gp_flags) & RCU_GP_FLAG_FQS)) {
- 				trace_rcu_grace_period(rsp->name,
- 						       READ_ONCE(rsp->gpnum),
- 						       TPS("fqsstart"));
--- 
-1.8.5.6
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+SGksCgpUaGlzIGlzIHNldCBvZiBpbmRlcGVuZGVudCBwYXRjaGVzLiBUaGUgb25seSBjb25uZWN0
+aW9uIGJldHdlZW4KdGhlbSBpcyB0aGF0IHRoZXkgdHJ5IHRvIGFkZHJlc3MgcHJvYmxlbXMgc3Bv
+dHRlZCBieSBwcm9wb3NlZApjb2NjaW5lbGxlIHNlbWFudGljIHBhdGNoIHVuc2lnbmVkX2xlc3Nl
+cl90aGFuX3plcm8uY29jY2lbMV0uCgpTZW1hbnRpYyBwYXRjaCBmaW5kcyBjb21wYXJpc29ucyBv
+ZiB0eXBlczoKICAgIHVuc2lnbmVkIDwgMAogICAgdW5zaWduZWQgPj0gMApUaGUgZm9ybWVyIGlz
+IGFsd2F5cyBmYWxzZSwgdGhlIGxhdHRlciBpcyBhbHdheXMgdHJ1ZS4KU3VjaCBjb21wYXJpc29u
+cyBhcmUgdXNlbGVzcywgc28gdGhlb3JldGljYWxseSB0aGV5IGNvdWxkIGJlCnNhZmVseSByZW1v
+dmVkLCBidXQgdGhlaXIgcHJlc2VuY2UgcXVpdGUgb2Z0ZW4gaW5kaWNhdGVzIGJ1Z3MuCgpUaGlz
+IHBhdGNoc2V0IGNvbnRhaW5zIG1haW5seSByZWFsIGJ1ZyBmaXhlcyhwYXRjaGVzIDAxLTI1KSwK
+dXN1YWxseSB0eXBlIGZpeGVzLgoKUGF0Y2hlcyAyNi0zNyByZW1vdmVzIHVubmVjZXNzYXJ5IGNo
+ZWNrcy4gU2VtYW50aWMgcGF0Y2ggZm91bmQKbXVjaCBtb3JlIHN1Y2ggcGxhY2VzIChtb3JlIHRo
+YW4gODApLCBidXQgc2luY2UgZXZlcnkgY2FzZSBuZWVkcwpzb21lIGFuYWx5c2lzIEkgaGF2ZSBk
+ZWNpZGVkIHRvIGxlYXZlIHRoZW0gZm9yIGFudG9oZXIgcGF0Y2hzZXQuCgpUaGUgbGFzdCBwYXRj
+aCBzaG91bGQgYmUgcHJvYmFibHkgcmVwbGFjZWQgd2l0aCBzb21ldGhpbmcgYmV0dGVyLApJIGd1
+ZXNzIGl0IHNob3VsZCBiZSB0cmVhdGVkIHJhdGhlciBhcyBidWcgcmVwb3J0LgoKVGhlIHBhdGNo
+ZXMgYXJlIGJhc2VkIG9uIGxpbnV4LW5leHQgKDIwMTUwOTE4KS4KClBhdGNoZXMgd2VyZSBvbmx5
+IGNvbXBpbGUgdGVzdGVkLCBzbyBwbGVhc2UgbG9vayBhdCB0aGVtIGNhcmVmdWxseS4KCkkgaGF2
+ZSBzZW50IGFsbCBwYXRjaGVzIHRvIGxpbnV4LWtlcm5lbCBtYWlsaW5nIGxpc3QuIEluZGl2aWR1
+YWwKcGF0Y2hlcyArIGNvdmVyIGxldHRlciB3ZW50IGFsc28gdG8gYXByb3ByaWF0ZSBhZGRyZXNz
+ZXMsCmFjY29yZGluZyB0byBnZXRfbWFpbnRhaW5lcnMucGwgc2NyaXB0LgoKT25lIG1vcmUgdGhp
+bmcuIFRvIGZ1bGxmaWxsIGRpZmZlcmVudCBtYWludGFuZXIvc3Vic3lzdGVtIHJlcXVpcmVtZW50
+cwpJIGhhdmUgZGVjaWRlZCB0byBwcmVmaXggcGF0Y2ggc3ViamVjdHMgd2l0aCBwcmVmaXhlcyBw
+cmVzZW50IGluCmxhc3QgMTAgY29tbWl0cyBmb3IgYWZmZWN0ZWQgZmlsZXMuIEkgYW0gbm90IHN1
+cmUgaWYgdGhpcyBpcyB0aGUKYmVzdCBzb2x1dGlvbiwgaWYgdGhlcmUgYXJlIGFueSBiZXR0ZXIg
+c29sdXRpb25zIHBsZWFzZSBsZXQgbWUga25vdyA6KQoKWzFdOiBodHRwOi8vcGVybWFsaW5rLmdt
+YW5lLm9yZy9nbWFuZS5saW51eC5rZXJuZWwvMjAzODU3NgoKUmVnYXJkcwpBbmRyemVqCgoKQW5k
+cnplaiBIYWpkYSAoMzgpOgogIGFybS1jY2k6IGZpeCBoYW5kbGluZyBjcHVtYXNrX2FueV9idXQg
+cmV0dXJuIHZhbHVlCiAgYnVzOiBhcm0tY2NuOiBmaXggaGFuZGxpbmcgY3B1bWFza19hbnlfYnV0
+IHJldHVybiB2YWx1ZQogIGRybS9pOTE1OiBmaXggaGFuZGxpbmcgZ2VuOF9lbWl0X2ZsdXNoX2Nv
+aGVyZW50bDNfd2EgcmVzdWx0CiAgSUIvZWhjYTogZml4IGhhbmRsaW5nIGlkcl9hbGxvYyByZXN1
+bHQKICBzdGFnaW5nOiBsdXN0cmU6IGZpeCBoYW5kbGluZyBsdXN0cmVfcG9zaXhfYWNsX3hhdHRy
+X2ZpbHRlciByZXN1bHQKICB0dHk6IHNlcmlhbDogbHBjMzJ4eF9oczogZml4IGhhbmRsaW5nIHBs
+YXRmb3JtX2dldF9pcnEgcmVzdWx0CiAgdXNiOiBob3N0OiBlaGNpLW1zbTogZml4IGhhbmRsaW5n
+IHBsYXRmb3JtX2dldF9pcnEgcmVzdWx0CiAgb3BlbnZzd2l0Y2g6IGZpeCBoYW5kbGluZyByZXN1
+bHQgb2YgaXB2Nl9za2lwX2V4dGhkcgogIHNlbGZ0ZXN0cy90aW1lcnM6IGZpeCB3cml0ZSByZXR1
+cm4gdmFsdWUgaGFuZGxuZwogIGh3cm5nOiBmaXggaGFuZGxpbmcgcGxhdGZvcm1fZ2V0X2lycQog
+IEhTSTogb21hcF9zc2k6IGZpeCBoYW5kbGluZyBpZGFfc2ltcGxlX2dldCByZXN1bHQKICBIU0k6
+IG9tYXBfc3NpX3BvcnQ6IGZpeCBoYW5kbGluZyBvZl9nZXRfbmFtZWRfZ3BpbyByZXN1bHQKICBB
+Uk06IHNobW9iaWxlOiBhcG11OiBjb3JyZWN0IHR5cGUgb2YgQ1BVIGlkCiAgY2xrOiB2dDg1MDA6
+IGZpeCBzaWduIG9mIHBvc3NpYmxlIFBMTCB2YWx1ZXMKICBkcm0vbGF5ZXJzY2FwZTogZml4IGhh
+bmRsaW5nIGZzbF9kY3VfZHJtX3BsYW5lX2luZGV4IHJlc3VsdAogIGdwdTogaXB1LXYzOiBmaXgg
+ZGl2X3JhdGlvIHR5cGUKICBpc2RuOiBoaXNheDogZml4IGZyYW1lIGNhbGN1bGF0aW9uCiAgbmV0
+L2libS9lbWFjOiBmaXggdHlwZSBvZiBwaHlfbW9kZQogIG5ldDogc3RtbWFjOiBmaXggdHlwZSBv
+ZiBlbnRyeSB2YXJpYWJsZQogIG5ldDogYnJjbTgwMjExOiBmaXggcmFuZ2UgY2hlY2sKICBtd2lm
+aWV4OiBmaXggY29tcGFyaXNvbiBleHByZXNzaW9uCiAgb3Jpbm9jbzogZml4IGNoZWNraW5nIGZv
+ciBkZWZhdWx0IHZhbHVlCiAgcm5kaXNfd2xhbjogZml4IGNoZWNraW5nIGZvciBkZWZhdWx0IHZh
+bHVlCiAgcnRjOiBvcGFsOiBmaXggdHlwZSBvZiB0b2tlbgogIHN0YWdpbmc6IG1lZGlhOiBkYXZp
+bmNpX3ZwZmU6IGZpeCBpcGlwZV9tb2RlIHR5cGUKICBzdGFnaW5nOiBsdXN0cmU6IHJlbW92ZSBp
+bnZhbGlkIGNoZWNrCiAgdXNibmV0OiByZW1vdmUgaW52YWxpZCBjaGVjawogIHZpZGVvL29tYXA6
+IHJlbW92ZSBpbnZhbGlkIGNoZWNrCiAgSW5wdXQ6IHRvdWNoc2NyZWVuOiBhdG1lbDogcmVtb3Zl
+IGludmFsaWQgY2hlY2sKICBsZWRzOiBmbGFzaDogcmVtb3ZlIGludmFsaWQgY2hlY2sKICBsZWRz
+OiB0Y2E2NTA3OiByZW1vdmUgaW52YWxpZCBjaGVjawogIGZzL2NhY2hlZmlsZXM6IHJlbW92ZSBp
+bnZhbGlkIGNoZWNrcwogIG1tL21lbWJsb2NrLmM6IHJlbW92ZSBpbnZhbGlkIGNoZWNrCiAgcGVy
+ZjogcmVtb3ZlIGludmFsaWQgY2hlY2sKICBwdHJhY2U6IHJlbW92ZSBpbnZhbGlkIGNoZWNrCiAg
+TUlQUzogcmVtb3ZlIGludmFsaWQgY2hlY2sKICB6bGliX2RlZmxhdGUvZGVmdHJlZTogY2hhbmdl
+IGFsd2F5cyB0cnVlIGNvbmRpdGlvbiB0byAxCiAgZHJtL3JhZGVvbjogc2ltcGxpZnkgYm9vdCBs
+ZXZlbCBjYWxjdWxhdGlvbgoKIGFyY2gvYXJtL21hY2gtc2htb2JpbGUvcGxhdHNtcC1hcG11LmMg
+ICAgICAgICAgICAgICB8ICAyICstCiBhcmNoL21pcHMvbW0vc2MtbWlwcy5jICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgfCAgNCArKy0tCiBhcmNoL3NoL2tlcm5lbC9wdHJhY2VfMzIuYyAg
+ICAgICAgICAgICAgICAgICAgICAgICAgfCAgMyArLS0KIGFyY2gvc2gva2VybmVsL3B0cmFjZV82
+NC5jICAgICAgICAgICAgICAgICAgICAgICAgICB8ICA0ICsrLS0KIGRyaXZlcnMvYnVzL2FybS1j
+Y2kuYyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICAyICstCiBkcml2ZXJzL2J1cy9h
+cm0tY2NuLmMgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgMiArLQogZHJpdmVycy9j
+aGFyL2h3X3JhbmRvbS94Z2VuZS1ybmcuYyAgICAgICAgICAgICAgICAgIHwgIDcgKysrKy0tLQog
+ZHJpdmVycy9jbGsvY2xrLXZ0ODUwMC5jICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgIDYg
+KysrLS0tCiBkcml2ZXJzL2dwdS9kcm0vYW1kL2FtZGdwdS9rdl9kcG0uYyAgICAgICAgICAgICAg
+ICAgfCAxMSArLS0tLS0tLS0tLQogZHJpdmVycy9ncHUvZHJtL2ZzbC1kY3UvZnNsX2RjdV9kcm1f
+cGxhbmUuYyAgICAgICAgIHwgIDMgKystCiBkcml2ZXJzL2dwdS9kcm0vaTkxNS9pbnRlbF9scmMu
+YyAgICAgICAgICAgICAgICAgICAgfCAgNyArKysrLS0tCiBkcml2ZXJzL2dwdS9kcm0vcmFkZW9u
+L2t2X2RwbS5jICAgICAgICAgICAgICAgICAgICAgfCAxMSArLS0tLS0tLS0tLQogZHJpdmVycy9n
+cHUvaXB1LXYzL2lwdS1jc2kuYyAgICAgICAgICAgICAgICAgICAgICAgIHwgIDIgKy0KIGRyaXZl
+cnMvaHNpL2NvbnRyb2xsZXJzL29tYXBfc3NpLmMgICAgICAgICAgICAgICAgICB8ICA3ICsrKy0t
+LS0KIGRyaXZlcnMvaHNpL2NvbnRyb2xsZXJzL29tYXBfc3NpX3BvcnQuYyAgICAgICAgICAgICB8
+ICA4ICsrKystLS0tCiBkcml2ZXJzL2lucHV0L3RvdWNoc2NyZWVuL2F0bWVsX214dF90cy5jICAg
+ICAgICAgICAgfCAgMiArLQogZHJpdmVycy9pc2RuL2hpc2F4L2hmYzRzOHNfbDEuYyAgICAgICAg
+ICAgICAgICAgICAgIHwgMTAgKysrKystLS0tLQogZHJpdmVycy9sZWRzL2xlZC1jbGFzcy1mbGFz
+aC5jICAgICAgICAgICAgICAgICAgICAgIHwgIDIgKy0KIGRyaXZlcnMvbGVkcy9sZWRzLXRjYTY1
+MDcuYyAgICAgICAgICAgICAgICAgICAgICAgICB8ICAyICstCiBkcml2ZXJzL25ldC9ldGhlcm5l
+dC9pYm0vZW1hYy9jb3JlLmggICAgICAgICAgICAgICAgfCAgMiArLQogZHJpdmVycy9uZXQvZXRo
+ZXJuZXQvc3RtaWNyby9zdG1tYWMvc3RtbWFjX21haW4uYyAgIHwgIDIgKy0KIGRyaXZlcnMvbmV0
+L3VzYi9sYW43OHh4LmMgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICA1IC0tLS0tCiBkcml2
+ZXJzL25ldC91c2Ivc21zYzc1eHguYyAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgNSAtLS0t
+LQogZHJpdmVycy9uZXQvdXNiL3Ntc2M5NXh4LmMgICAgICAgICAgICAgICAgICAgICAgICAgIHwg
+IDUgLS0tLS0KIGRyaXZlcnMvbmV0L3dpcmVsZXNzL2JyY204MDIxMS9icmNtc21hYy9tYWluLmMg
+ICAgICB8ICAyICstCiBkcml2ZXJzL25ldC93aXJlbGVzcy9td2lmaWV4LzExbl9yeHJlb3JkZXIu
+YyAgICAgICAgfCAgNCArKy0tCiBkcml2ZXJzL25ldC93aXJlbGVzcy9vcmlub2NvL2NmZy5jICAg
+ICAgICAgICAgICAgICAgfCAgNiArKystLS0KIGRyaXZlcnMvbmV0L3dpcmVsZXNzL3JuZGlzX3ds
+YW4uYyAgICAgICAgICAgICAgICAgICB8ICAyICstCiBkcml2ZXJzL3J0Yy9ydGMtb3BhbC5jICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgNCArKy0tCiBkcml2ZXJzL3N0YWdpbmcvbHVz
+dHJlL2x1c3RyZS9sbGl0ZS94YXR0ci5jICAgICAgICAgfCAgNyArKysrLS0tCiBkcml2ZXJzL3N0
+YWdpbmcvbHVzdHJlL2x1c3RyZS9vc2MvbHByb2Nfb3NjLmMgICAgICAgfCAgMyAtLS0KIGRyaXZl
+cnMvc3RhZ2luZy9tZWRpYS9kYXZpbmNpX3ZwZmUvZG0zNjVfaXBpcGVfaHcuYyB8ICAyICstCiBk
+cml2ZXJzL3N0YWdpbmcvcmRtYS9laGNhL2VoY2FfY3EuYyAgICAgICAgICAgICAgICAgfCAxMyAr
+KysrKysrLS0tLS0tCiBkcml2ZXJzL3R0eS9zZXJpYWwvbHBjMzJ4eF9ocy5jICAgICAgICAgICAg
+ICAgICAgICAgfCAgNyArKysrLS0tCiBkcml2ZXJzL3VzYi9ob3N0L2VoY2ktbXNtLmMgICAgICAg
+ICAgICAgICAgICAgICAgICAgfCAgNiArKystLS0KIGRyaXZlcnMvdmlkZW8vZmJkZXYvb21hcC9v
+bWFwZmJfbWFpbi5jICAgICAgICAgICAgICB8ICA1IC0tLS0tCiBmcy9jYWNoZWZpbGVzL2JpbmQu
+YyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgOSArKystLS0tLS0KIGZzL2NhY2hl
+ZmlsZXMvZGFlbW9uLmMgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICA2ICsrKy0tLQog
+bGliL3psaWJfZGVmbGF0ZS9kZWZ0cmVlLmMgICAgICAgICAgICAgICAgICAgICAgICAgIHwgIDIg
+Ky0KIG1tL21lbWJsb2NrLmMgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB8
+ICAyICstCiBuZXQvb3BlbnZzd2l0Y2gvY29ubnRyYWNrLmMgICAgICAgICAgICAgICAgICAgICAg
+ICAgfCAgMiArLQogdG9vbHMvdGVzdGluZy9zZWxmdGVzdHMvdGltZXJzL2Nsb2Nrc291cmNlLXN3
+aXRjaC5jIHwgIDIgKy0KIDQyIGZpbGVzIGNoYW5nZWQsIDc5IGluc2VydGlvbnMoKyksIDExOSBk
+ZWxldGlvbnMoLSkKCi0tIAoxLjkuMQoKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX18KSW50ZWwtZ2Z4IG1haWxpbmcgbGlzdApJbnRlbC1nZnhAbGlzdHMuZnJl
+ZWRlc2t0b3Aub3JnCmh0dHA6Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5m
+by9pbnRlbC1nZngK
