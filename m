@@ -1,156 +1,227 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Subject: Re: Re: [PATCH RFC] pidns: introduce syscall getvpid
-Date: Mon, 21 Sep 2015 09:22:22 -0500
-Message-ID: <20150921142222.GA24005@mail.hallyn.com>
-References: <20150915120924.14818.49490.stgit@buzz>
-	<87h9mvg3kw.fsf@x220.int.ebiederm.org>
-	<55F832D2.1070605@yandex-team.ru> <20150915151729.GA144242@dakara>
-	<20150915174143.GE4699@ubuntumail>
-	<55F91C3D.1040209@yandex-team.ru>
-	<20150916143939.GA32226@mail.hallyn.com>
-	<87twquzag1.fsf@x220.int.ebiederm.org>
-	<20150916163123.GA1039@mail.hallyn.com>
-	<55FF7043.5020701@cn.fujitsu.com>
+From: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Subject: Re: [RFC v7 13/41] richacl: Check if an acl is equivalent to a file
+ mode
+Date: Mon, 21 Sep 2015 10:38:17 -0400
+Message-ID: <20150921143817.GA11256@fieldses.org>
+References: <1441448856-13478-1-git-send-email-agruenba@redhat.com>
+ <1441448856-13478-14-git-send-email-agruenba@redhat.com>
+ <20150917182219.GB13825@fieldses.org>
+ <20150918005607.GB16699@fieldses.org>
+ <56000D2B.6000705@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <55FF7043.5020701-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Chen Fan <chen.fan.fnst-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
-Cc: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+In-Reply-To: <56000D2B.6000705-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 21, 2015 at 10:49:39AM +0800, Chen Fan wrote:
-> =
-
-> On 09/17/2015 12:31 AM, Serge E. Hallyn wrote:
-> >On Wed, Sep 16, 2015 at 09:49:02AM -0500, Eric W. Biederman wrote:
-> >>"Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> writes:
+On Mon, Sep 21, 2015 at 09:59:07AM -0400, Austin S Hemmelgarn wrote:
+> On 2015-09-17 20:56, J. Bruce Fields wrote:
+> >On Thu, Sep 17, 2015 at 02:22:19PM -0400, bfields wrote:
+> >>On Sat, Sep 05, 2015 at 12:27:08PM +0200, Andreas Gruenbacher wrote:
+> >>>ACLs are considered equivalent to file modes if they only consist of
+> >>>owner@, group@, and everyone@ entries, the owner@ permissions do not
+> >>>depend on whether the owner is a member in the owning group, and no
+> >>>inheritance flags are set.  This test is used to avoid storing richacls
+> >>>if the acl can be computed from the file permission bits.
 > >>
-> >>>On Wed, Sep 16, 2015 at 10:37:33AM +0300, Konstantin Khlebnikov wrote:
-> >>>>On 15.09.2015 20:41, Serge Hallyn wrote:
-> >>>>>Quoting St=E9phane Graber (stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org):
-> >>>>>>On Tue, Sep 15, 2015 at 06:01:38PM +0300, Konstantin Khlebnikov wro=
-te:
-> >>>>>>>On 15.09.2015 17:27, Eric W. Biederman wrote:
-> >>>>>>>>Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org> writes:
-> >>>>>>>>
-> >>>>>>>>>pid_t getvpid(pid_t pid, pid_t source, pid_t target);
-> >>>>>>>>>
-> >>>>>>>>>This syscall converts pid from one pid-ns into pid in another pi=
-d-ns:
-> >>>>>>>>>it takes @pid in namespace of @source task (zero for current) and
-> >>>>>>>>>returns related pid in namespace of @target task (zero for curre=
-nt too).
-> >>>>>>>>>If pid is unreachable from target pid-ns then it returns zero.
-> >>>>>>>>This interface as presented is inherently racy.  It would be bett=
-er
-> >>>>>>>>if source and target were file descriptors referring to the names=
-paces
-> >>>>>>>>you wish to translate between.
-> >>>>>>>Yep, it's racy. As well as any operation with non-child pids.
-> >>>>>>>With file descriptors for source/target result will be racy anyway.
-> >>>>>>>
-> >>>>>>>>>Such conversion is required for interaction between processes fr=
-om
-> >>>>>>>>>different pid-namespaces. For example when system service talks =
-with
-> >>>>>>>>>client from isolated container via socket about task in containe=
-r:
-> >>>>>>>>Sockets are already supported.  At least the metadata of sockets =
-is.
-> >>>>>>>>
-> >>>>>>>>Maybe we need this but I am not convinced of it's utility.
-> >>>>>>>>
-> >>>>>>>>What are you trying to do that motivates this?
-> >>>>>>>I'm working on hierarchical container management system which
-> >>>>>>>allows to create and control nested sub-containers from containers
-> >>>>>>>( https://github.com/yandex/porto ). Main server works in host and
-> >>>>>>>have to interact with all levels of nested namespaces. This syscall
-> >>>>>>>makes some operations much easier: server must remember only pid in
-> >>>>>>>host pid namespace and convert it into right vpid on demand.
-> >>>>>>Note that as Eric said earlier, sending a PID inside a ucred throug=
-h a
-> >>>>>>unix socket will have the pid translated.
-> >>>>>>
-> >>>>>>So while your solution certainly should be faster, you can already =
-achieve
-> >>>>>>what you want today by doing:
-> >>>>>>
-> >>>>>>=3D=3D Translate PID in container to PID in host
-> >>>>>>  - open a socket
-> >>>>>>  - setns to container's pidns
-> >>>>>>  - send ucred from that container containing the requested contain=
-er PID
-> >>>>>>  - host sees the host PID
-> >>>>>>
-> >>>>>>=3D=3D Translate PID on host to PID in container
-> >>>>>>  - open a socket
-> >>>>>>  - setns to container's pidns
-> >>>>>>  - send ucred from the host containing the request host PID
-> >>>>>>    (send will fail if the host PID isn't part of that container)
-> >>>>>>  - container sees the container PID
-> >>>>>In addition, since commit e4bc332451 : /proc/PID/status: show all se=
-ts of pid according to ns
-> >>>>>we now also have 'NSpid' etc in /proc/$$/status.
-> >>>>>
-> >>>>As I see this works perfectly only for converting host pid into virtu=
-al.
-> >>>>
-> >>>>Backward conversion is troublesome: we have to scan all pids in host
-> >>>>procfs and somehow filter tasks from container and its sub-pid-ns.
-> >>>>Or I am missing something trivial?
-> >>>Ah, no that doesn't help with this.
-> >>>
-> >>>What St=E9phane describes is what I've done in several projects.
-> >>>Getting it right is however actually quite tricky.  I'm not
-> >>>convinced it's at the level of "since you can do (sweep hands)
-> >>>all this, we don't need a simple syscall to do it."
-> >>>
-> >>>So I'd encourage you to resend using namespace inode fds for
-> >>>source and target as Eric suggested.  We still may decide that
-> >>>the syscall isn't needed, but it's a trivial change to your
-> >>>patch and removes that race.  And I'm not convinced it's not
-> >>>needed.
-> >>At this point my primary concern is that a pattern that would need to be
-> >>convering to and from pids quickly is potentially fundamentally racy to
-> >>the point of broken.
-> >The cgmanager GetTasks and GetTasksRecursive, and reading of the
-> >lxcfs cgroup /tasks files, require converting every pid from the
-> >cgmanager's namespace to the reading task's namespace.
+> >>We're assuming here that it's OK for us to silently rearrange an ACL as
+> >>long as the result is still equivalent (in the sense that the permission
+> >>algorithm would always produce the same result).
+> >>
+> >>I guess that's OK by me, but it might violate user expectations in some
+> >>simple common cases, so may be worth mentioning in documentation
+> >>someplace if we don't already.
 > >
-> >>Especially with unix domain sockets passing and converting pids in a way
-> >>that covers the common case.
+> >Also your notion of mode-equivalence here is interesting, it's actually
+> >a strict subset of the ACLs that produce the same permission results as
+> >a mode.  (For example, everyone:rwx,bfields:rwx is equivalent to 0777
+> >but won't be considered mode-equivalent by this algorithm.)
+> Although it could also be equivalent to 0707, or (if bfields is the
+> group name also) 0077, or even (if bfields isn't the group or owner
+> of the file) 0007.
+
+I disagree.  I think you've misread my example ACL (may be my sloppy
+notation, sorry) or misunderstood the ACL evalutation algorithm.
+
+> Mode equivalence get's even trickier when you
+> throw in permissions just beyond rwx (for example, by Windows
+> standards, the usage of the execute bit on directories is weird
+> (they have a separate permission in their ACE's for directory
+> listing), or by VMS standards, write permission on a directory
+> doesn't mean that you can delete things in it (VMS actually had a
+> separate bit for the delete permission, and even had separate
+> permissions for system access)).
+
+I believe these patches handle all of those details correctly; if you
+see anything to the contrary, please do speak up.
+
+Note that Windows also has a DELETE bit, though it is ORed with the
+directory permission not ANDed (so it is sufficient for the directory to
+allow MAY_DELETE_CHILD *or* for the file to allow DELETE).
+
+(But I believe you're correct that VMS required both permissions, if
+e.g. http://www.djesys.com/vms/freevms/mentor/vms_prot.html is correct).
+
+--b.
+
+> >
+> >I think the choices you've made probably make the most sense, they just
+> >wouldn't have been obvious to me.  Anyway, so, OK by me:
+> >
+> >	Reviewed-by: J. Bruce Fields <bfields-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> >
+> >--b.
+> >
 > >>
-> >>I am clearly missing some nuance of this use case.
-> >lxcfs and cgmanager are imo proof that we *can* do without the new
-> >syscall.  However, the git history will show that there are some
-> >complications, and the system load when a few systemds are starting
-> >will show that it does take a performance toll on the host at some
-> >point.  Still as I say it's doable.  The syscall implementation was
-> >very simple, though.
-> =
-
-> Yes, previous email discussed about the implementation of syscall or proc=
-fs:
-> http://www.gossamer-threads.com/lists/linux/kernel/1971723?search_string=
-=3Dchen%20hanxiao;#1971723
-> =
-
-> but it seems complicated implemented by procfs, the original discussion a=
-t:
-> http://www.gossamer-threads.com/lists/linux/kernel/2076440?search_string=
-=3Dchen%20hanxiao;#2076440
-
-So please implement it, as Eric suggested, using the ns inode fds
-instead of racy pid_t hints for namespaces.
+> >>--b.
+> >>
+> >>>
+> >>>Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> >>>---
+> >>>  fs/richacl_base.c       | 104 ++++++++++++++++++++++++++++++++++++++++++++++++
+> >>>  include/linux/richacl.h |   1 +
+> >>>  2 files changed, 105 insertions(+)
+> >>>
+> >>>diff --git a/fs/richacl_base.c b/fs/richacl_base.c
+> >>>index 3163152..106e988 100644
+> >>>--- a/fs/richacl_base.c
+> >>>+++ b/fs/richacl_base.c
+> >>>@@ -379,3 +379,107 @@ richacl_chmod(struct richacl *acl, mode_t mode)
+> >>>  	return clone;
+> >>>  }
+> >>>  EXPORT_SYMBOL_GPL(richacl_chmod);
+> >>>+
+> >>>+/**
+> >>>+ * richacl_equiv_mode  -  compute the mode equivalent of @acl
+> >>>+ *
+> >>>+ * An acl is considered equivalent to a file mode if it only consists of
+> >>>+ * owner@, group@, and everyone@ entries and the owner@ permissions do not
+> >>>+ * depend on whether the owner is a member in the owning group.
+> >>>+ */
+> >>>+int
+> >>>+richacl_equiv_mode(const struct richacl *acl, mode_t *mode_p)
+> >>>+{
+> >>>+	mode_t mode = *mode_p;
+> >>>+
+> >>>+	/*
+> >>>+	 * The RICHACE_DELETE_CHILD flag is meaningless for non-directories, so
+> >>>+	 * we ignore it.
+> >>>+	 */
+> >>>+	unsigned int x = S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
+> >>>+	struct {
+> >>>+		unsigned int allowed;
+> >>>+		unsigned int defined;  /* allowed or denied */
+> >>>+	} owner = {
+> >>>+		.defined = RICHACE_POSIX_ALWAYS_ALLOWED |
+> >>>+			   RICHACE_POSIX_OWNER_ALLOWED  | x,
+> >>>+	}, group = {
+> >>>+		.defined = RICHACE_POSIX_ALWAYS_ALLOWED | x,
+> >>>+	}, everyone = {
+> >>>+		.defined = RICHACE_POSIX_ALWAYS_ALLOWED | x,
+> >>>+	};
+> >>>+	const struct richace *ace;
+> >>>+
+> >>>+	if (acl->a_flags & ~(RICHACL_WRITE_THROUGH | RICHACL_MASKED))
+> >>>+		return -1;
+> >>>+
+> >>>+	richacl_for_each_entry(ace, acl) {
+> >>>+		if (ace->e_flags & ~RICHACE_SPECIAL_WHO)
+> >>>+			return -1;
+> >>>+
+> >>>+		if (richace_is_owner(ace) || richace_is_everyone(ace)) {
+> >>>+			x = ace->e_mask & ~owner.defined;
+> >>>+			if (richace_is_allow(ace)) {
+> >>>+				unsigned int group_denied =
+> >>>+					group.defined & ~group.allowed;
+> >>>+
+> >>>+				if (x & group_denied)
+> >>>+					return -1;
+> >>>+				owner.allowed |= x;
+> >>>+			} else /* if (richace_is_deny(ace)) */ {
+> >>>+				if (x & group.allowed)
+> >>>+					return -1;
+> >>>+			}
+> >>>+			owner.defined |= x;
+> >>>+
+> >>>+			if (richace_is_everyone(ace)) {
+> >>>+				x = ace->e_mask;
+> >>>+				if (richace_is_allow(ace)) {
+> >>>+					group.allowed |=
+> >>>+						x & ~group.defined;
+> >>>+					everyone.allowed |=
+> >>>+						x & ~everyone.defined;
+> >>>+				}
+> >>>+				group.defined |= x;
+> >>>+				everyone.defined |= x;
+> >>>+			}
+> >>>+		} else if (richace_is_group(ace)) {
+> >>>+			x = ace->e_mask & ~group.defined;
+> >>>+			if (richace_is_allow(ace))
+> >>>+				group.allowed |= x;
+> >>>+			group.defined |= x;
+> >>>+		} else
+> >>>+			return -1;
+> >>>+	}
+> >>>+
+> >>>+	if (group.allowed & ~owner.defined)
+> >>>+		return -1;
+> >>>+
+> >>>+	if (acl->a_flags & RICHACL_MASKED) {
+> >>>+		if (acl->a_flags & RICHACL_WRITE_THROUGH) {
+> >>>+			owner.allowed = acl->a_owner_mask;
+> >>>+			everyone.allowed = acl->a_other_mask;
+> >>>+		} else {
+> >>>+			owner.allowed &= acl->a_owner_mask;
+> >>>+			everyone.allowed &= acl->a_other_mask;
+> >>>+		}
+> >>>+		group.allowed &= acl->a_group_mask;
+> >>>+	}
+> >>>+
+> >>>+	mode = (mode & ~S_IRWXUGO) |
+> >>>+	       (richacl_mask_to_mode(owner.allowed) << 6) |
+> >>>+	       (richacl_mask_to_mode(group.allowed) << 3) |
+> >>>+		richacl_mask_to_mode(everyone.allowed);
+> >>>+
+> >>>+	/* Mask flags we can ignore */
+> >>>+	x = S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
+> >>>+
+> >>>+	if (((richacl_mode_to_mask(mode >> 6) ^ owner.allowed)    & ~x) ||
+> >>>+	    ((richacl_mode_to_mask(mode >> 3) ^ group.allowed)    & ~x) ||
+> >>>+	    ((richacl_mode_to_mask(mode)      ^ everyone.allowed) & ~x))
+> >>>+		return -1;
+> >>>+
+> >>>+	*mode_p = mode;
+> >>>+	return 0;
+> >>>+}
+> >>>+EXPORT_SYMBOL_GPL(richacl_equiv_mode);
+> >>>diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+> >>>index d4a576c..6535ce5 100644
+> >>>--- a/include/linux/richacl.h
+> >>>+++ b/include/linux/richacl.h
+> >>>@@ -304,6 +304,7 @@ extern unsigned int richacl_mode_to_mask(mode_t);
+> >>>  extern unsigned int richacl_want_to_mask(unsigned int);
+> >>>  extern void richacl_compute_max_masks(struct richacl *);
+> >>>  extern struct richacl *richacl_chmod(struct richacl *, mode_t);
+> >>>+extern int richacl_equiv_mode(const struct richacl *, mode_t *);
+> >>>
+> >>>  /* richacl_inode.c */
+> >>>  extern int richacl_permission(struct inode *, const struct richacl *, int);
+> >>>--
+> >>>2.4.3
+> >>>
+> >>>--
+> >>>To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+> >>>the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> >>>More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> >--
+> >To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> >the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> >More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> >Please read the FAQ at  http://www.tux.org/lkml/
+> >
+> 
+> 
