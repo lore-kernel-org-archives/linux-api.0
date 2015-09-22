@@ -1,112 +1,191 @@
-From: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Subject: Re: [RFC v7 21/41] richacl: Move everyone@ aces down the acl
-Date: Mon, 21 Sep 2015 21:52:13 -0400
-Message-ID: <20150922015213.GB15960@fieldses.org>
-References: <1441448856-13478-1-git-send-email-agruenba@redhat.com>
- <1441448856-13478-22-git-send-email-agruenba@redhat.com>
- <20150918193524.GA22671@fieldses.org>
- <CAHc6FU5m8KKSsEg18UhRSnVdsAzoFSD9pdLRv1DdDA==ZCQmdw@mail.gmail.com>
+From: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
+Subject: Re: [PATCH RFC] pidns: introduce syscall getvpid
+Date: Tue, 22 Sep 2015 10:42:56 +0300
+Message-ID: <56010680.7000301@yandex-team.ru>
+References: <20150915120924.14818.49490.stgit@buzz>
+	<87h9mvg3kw.fsf@x220.int.ebiederm.org>
+	<55F832D2.1070605@yandex-team.ru>
+	<20150915151729.GA144242@dakara> <20150915174143.GE4699@ubuntumail>
+	<55F91C3D.1040209@yandex-team.ru>
+	<20150916143939.GA32226@mail.hallyn.com>
+	<87twquzag1.fsf@x220.int.ebiederm.org>
+	<20150916163123.GA1039@mail.hallyn.com>
+	<55FF7043.5020701@cn.fujitsu.com>
+	<20150921142222.GA24005@mail.hallyn.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAHc6FU5m8KKSsEg18UhRSnVdsAzoFSD9pdLRv1DdDA==ZCQmdw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Gruenbacher <agruen-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset="windows-1252"; Format="flowed"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <20150921142222.GA24005-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Chen Fan <chen.fan.fnst-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 21, 2015 at 11:43:16PM +0200, Andreas Gruenbacher wrote:
-> 2015-09-18 21:35 GMT+02:00 J. Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>:
-> > On Sat, Sep 05, 2015 at 12:27:16PM +0200, Andreas Gruenbacher wrote:
-> >> The POSIX standard puts processes which are not the owner or a member in
-> >> the owning group or which match any ace other then everyone@ on the
-> >> other file class.  We only know if a process is in the other class after
-> >> processing the entire acl.
-> >>
-> >> Move all everyone@ aces in the acl down in the acl so that at most a
-> >> single everyone@ allow ace remains at the end.  Permissions which are
-> >> not explicitly allowed are implicitly denied, so an everyone@ deny ace
-> >> is unneeded.
-> >>
-> >> The everyone@ aces can be moved down the acl without changing the
-> >> permissions that the acl grants.  This transformation simplifies the
-> >> following algorithms, and eventually allows us to turn the final
-> >> everyone@ allow ace into an entry for the other class.
-> >>
-> >> Signed-off-by: Andreas Gruenbacher <agruen-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> >> ---
-> >>  fs/richacl_compat.c | 65 +++++++++++++++++++++++++++++++++++++++++++++++++++++
-> >>  1 file changed, 65 insertions(+)
-> >>
-> >> diff --git a/fs/richacl_compat.c b/fs/richacl_compat.c
-> >> index 341e429..4f0acf5 100644
-> >> --- a/fs/richacl_compat.c
-> >> +++ b/fs/richacl_compat.c
-> >> @@ -153,3 +153,68 @@ richace_change_mask(struct richacl_alloc *alloc, struct richace **ace,
-> >>       }
-> >>       return 0;
-> >>  }
-> >> +
-> >> +/**
-> >> + * richacl_move_everyone_aces_down  -  move everyone@ aces to the end of the acl
-> >> + * @alloc:   acl and number of allocated entries
-> >> + *
-> >> + * Move all everyone aces to the end of the acl so that only a single everyone@
-> >> + * allow ace remains at the end, and update the mask fields of all aces on the
-> >> + * way.  The last ace of the resulting acl will be an everyone@ allow ace only
-> >> + * if @acl grants any permissions to @everyone.  No @everyone deny aces will
-> >> + * remain.
-> >> + *
-> >> + * This transformation does not alter the permissions that the acl grants.
-> >> + * Having at most one everyone@ allow ace at the end of the acl helps us in the
-> >> + * following algorithms.
-> >> + */
-> >> +static int
-> >> +richacl_move_everyone_aces_down(struct richacl_alloc *alloc)
-> >> +{
-> >> +     struct richace *ace;
-> >> +     unsigned int allowed = 0, denied = 0;
-> >> +
-> >> +     richacl_for_each_entry(ace, alloc->acl) {
-> >> +             if (richace_is_inherit_only(ace))
-> >> +                     continue;
-> >> +             if (richace_is_everyone(ace)) {
-> >> +                     if (richace_is_allow(ace))
-> >> +                             allowed |= (ace->e_mask & ~denied);
-> >> +                     else if (richace_is_deny(ace))
-> >> +                             denied |= (ace->e_mask & ~allowed);
-> >> +                     else
-> >> +                             continue;
-> >> +                     if (richace_change_mask(alloc, &ace, 0))
-> >> +                             return -1;
-> >> +             } else {
-> >> +                     if (richace_is_allow(ace)) {
-> >> +                             if (richace_change_mask(alloc, &ace, allowed |
-> >> +                                             (ace->e_mask & ~denied)))
-> >> +                                     return -1;
-> >> +                     } else if (richace_is_deny(ace)) {
-> >> +                             if (richace_change_mask(alloc, &ace, denied |
-> >> +                                             (ace->e_mask & ~allowed)))
-> >> +                                     return -1;
-> >> +                     }
-> >> +             }
-> >> +     }
-> >> +     if (allowed & ~RICHACE_POSIX_ALWAYS_ALLOWED) {
-> >> +             struct richace *last_ace = ace - 1;
-> >> +
-> >> +             if (alloc->acl->a_entries &&
-> >> +                 richace_is_everyone(last_ace) &&
-> >> +                 richace_is_allow(last_ace) &&
-> >> +                 richace_is_inherit_only(last_ace) &&
-> >> +                 last_ace->e_mask == allowed)
-> >> +                     last_ace->e_flags &= ~RICHACE_INHERIT_ONLY_ACE;
-> >
-> > That's a funny special case!  Is it even worth it, or could we just live
-> > with an extra uninheritable EVERYONE ace in this case?
-> 
-> Inheritable everyone@ allow entries at the end of the ACL are not
-> uncommon. This special case prevents the algorithm from splitting such
-> entries into inherit-only and non-inheritable parts.
+On 21.09.2015 17:22, Serge E. Hallyn wrote:
+> On Mon, Sep 21, 2015 at 10:49:39AM +0800, Chen Fan wrote:
+>>
+>> On 09/17/2015 12:31 AM, Serge E. Hallyn wrote:
+>>> On Wed, Sep 16, 2015 at 09:49:02AM -0500, Eric W. Biederman wrote:
+>>>> "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> writes:
+>>>>
+>>>>> On Wed, Sep 16, 2015 at 10:37:33AM +0300, Konstantin Khlebnikov wrote:
+>>>>>> On 15.09.2015 20:41, Serge Hallyn wrote:
+>>>>>>> Quoting St=E9phane Graber (stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org):
+>>>>>>>> On Tue, Sep 15, 2015 at 06:01:38PM +0300, Konstantin Khlebnikov wr=
+ote:
+>>>>>>>>> On 15.09.2015 17:27, Eric W. Biederman wrote:
+>>>>>>>>>> Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org> writes:
+>>>>>>>>>>
+>>>>>>>>>>> pid_t getvpid(pid_t pid, pid_t source, pid_t target);
+>>>>>>>>>>>
+>>>>>>>>>>> This syscall converts pid from one pid-ns into pid in another p=
+id-ns:
+>>>>>>>>>>> it takes @pid in namespace of @source task (zero for current) a=
+nd
+>>>>>>>>>>> returns related pid in namespace of @target task (zero for curr=
+ent too).
+>>>>>>>>>>> If pid is unreachable from target pid-ns then it returns zero.
+>>>>>>>>>> This interface as presented is inherently racy.  It would be bet=
+ter
+>>>>>>>>>> if source and target were file descriptors referring to the name=
+spaces
+>>>>>>>>>> you wish to translate between.
+>>>>>>>>> Yep, it's racy. As well as any operation with non-child pids.
+>>>>>>>>> With file descriptors for source/target result will be racy anywa=
+y.
+>>>>>>>>>
+>>>>>>>>>>> Such conversion is required for interaction between processes f=
+rom
+>>>>>>>>>>> different pid-namespaces. For example when system service talks=
+ with
+>>>>>>>>>>> client from isolated container via socket about task in contain=
+er:
+>>>>>>>>>> Sockets are already supported.  At least the metadata of sockets=
+ is.
+>>>>>>>>>>
+>>>>>>>>>> Maybe we need this but I am not convinced of it's utility.
+>>>>>>>>>>
+>>>>>>>>>> What are you trying to do that motivates this?
+>>>>>>>>> I'm working on hierarchical container management system which
+>>>>>>>>> allows to create and control nested sub-containers from containers
+>>>>>>>>> ( https://github.com/yandex/porto ). Main server works in host and
+>>>>>>>>> have to interact with all levels of nested namespaces. This sysca=
+ll
+>>>>>>>>> makes some operations much easier: server must remember only pid =
+in
+>>>>>>>>> host pid namespace and convert it into right vpid on demand.
+>>>>>>>> Note that as Eric said earlier, sending a PID inside a ucred throu=
+gh a
+>>>>>>>> unix socket will have the pid translated.
+>>>>>>>>
+>>>>>>>> So while your solution certainly should be faster, you can already=
+ achieve
+>>>>>>>> what you want today by doing:
+>>>>>>>>
+>>>>>>>> =3D=3D Translate PID in container to PID in host
+>>>>>>>>   - open a socket
+>>>>>>>>   - setns to container's pidns
+>>>>>>>>   - send ucred from that container containing the requested contai=
+ner PID
+>>>>>>>>   - host sees the host PID
+>>>>>>>>
+>>>>>>>> =3D=3D Translate PID on host to PID in container
+>>>>>>>>   - open a socket
+>>>>>>>>   - setns to container's pidns
+>>>>>>>>   - send ucred from the host containing the request host PID
+>>>>>>>>     (send will fail if the host PID isn't part of that container)
+>>>>>>>>   - container sees the container PID
+>>>>>>> In addition, since commit e4bc332451 : /proc/PID/status: show all s=
+ets of pid according to ns
+>>>>>>> we now also have 'NSpid' etc in /proc/$$/status.
+>>>>>>>
+>>>>>> As I see this works perfectly only for converting host pid into virt=
+ual.
+>>>>>>
+>>>>>> Backward conversion is troublesome: we have to scan all pids in host
+>>>>>> procfs and somehow filter tasks from container and its sub-pid-ns.
+>>>>>> Or I am missing something trivial?
+>>>>> Ah, no that doesn't help with this.
+>>>>>
+>>>>> What St=E9phane describes is what I've done in several projects.
+>>>>> Getting it right is however actually quite tricky.  I'm not
+>>>>> convinced it's at the level of "since you can do (sweep hands)
+>>>>> all this, we don't need a simple syscall to do it."
+>>>>>
+>>>>> So I'd encourage you to resend using namespace inode fds for
+>>>>> source and target as Eric suggested.  We still may decide that
+>>>>> the syscall isn't needed, but it's a trivial change to your
+>>>>> patch and removes that race.  And I'm not convinced it's not
+>>>>> needed.
+>>>> At this point my primary concern is that a pattern that would need to =
+be
+>>>> convering to and from pids quickly is potentially fundamentally racy to
+>>>> the point of broken.
+>>> The cgmanager GetTasks and GetTasksRecursive, and reading of the
+>>> lxcfs cgroup /tasks files, require converting every pid from the
+>>> cgmanager's namespace to the reading task's namespace.
+>>>
+>>>> Especially with unix domain sockets passing and converting pids in a w=
+ay
+>>>> that covers the common case.
+>>>>
+>>>> I am clearly missing some nuance of this use case.
+>>> lxcfs and cgmanager are imo proof that we *can* do without the new
+>>> syscall.  However, the git history will show that there are some
+>>> complications, and the system load when a few systemds are starting
+>>> will show that it does take a performance toll on the host at some
+>>> point.  Still as I say it's doable.  The syscall implementation was
+>>> very simple, though.
+>>
+>> Yes, previous email discussed about the implementation of syscall or pro=
+cfs:
+>> http://www.gossamer-threads.com/lists/linux/kernel/1971723?search_string=
+=3Dchen%20hanxiao;#1971723
+>>
+>> but it seems complicated implemented by procfs, the original discussion =
+at:
+>> http://www.gossamer-threads.com/lists/linux/kernel/2076440?search_string=
+=3Dchen%20hanxiao;#2076440
+>
+> So please implement it, as Eric suggested, using the ns inode fds
+> instead of racy pid_t hints for namespaces.
+>
 
-OK.--b.
+I don't want to loose simple way to use it.
+Sometimes caller cannot prevent races (task its child or
+locked with with ptrace) or it don't care about them.
+
+What about this design:
+
+pid_t getvpid(pid_t pid, pid_t source, pid_t target)
+
+pid > 0 - get vpid of task
+pid =3D 0 - current pid (=3D just for symmetry =3D)
+pid < 0 - get vpid of parent task (ppid of -pid)
+           [ that's really useful for poking isolated pidns ]
+source/target > 0 - pid of source/target task
+source/target =3D 0 - use current as source/target
+source/target < 0 - use pidns fd (1-arg) as source/target
+
+or the same but without =3D0 sugar:
+
+pid > 0 - get vpid of task
+pid < 0 - get vpid of parent task (ppid of -arg)
+source/target > 0  - pid of source/target task
+source/target <=3D 0 - use pidns fd (-arg) as source/target
+
+libc caches current pid, extra getpid shouldn't be a problem.
+
+
+-- =
+
+Konstantin
