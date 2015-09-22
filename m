@@ -1,39 +1,37 @@
 From: Andre Przywara <andre.przywara-5wv7dgnIgG8@public.gmane.org>
-Subject: [PATCH 1/2] userfaultfd: remove kernel header include from uapi header
-Date: Tue, 22 Sep 2015 11:45:55 +0100
-Message-ID: <1442918756-17892-2-git-send-email-andre.przywara@arm.com>
-References: <1442918756-17892-1-git-send-email-andre.przywara@arm.com>
+Subject: [PATCH] generic syscalls: wire up userfaultfd syscall
+Date: Tue, 22 Sep 2015 11:52:19 +0100
+Message-ID: <1442919139-18027-1-git-send-email-andre.przywara@arm.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1442918756-17892-1-git-send-email-andre.przywara-5wv7dgnIgG8@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, catalin.marinas-5wv7dgnIgG8@public.gmane.org, will.deacon-5wv7dgnIgG8@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-As include/uapi/linux/userfaultfd.h is a user visible header file,
-it should not include kernel-exclusive header files.
-So trying to build the userfaultfd test program from the selftests
-directory fails, since it contains a reference to linux/compiler.h.
-As it turns out, that header is not really needed there, so we can
-simply remove it to fix that issue.
+Enable the new userfaultfd syscall in the generic syscall table.
+Briefly tested on arm64 with the selftest from the tools directory.
 
 Signed-off-by: Andre Przywara <andre.przywara-5wv7dgnIgG8@public.gmane.org>
 ---
- include/uapi/linux/userfaultfd.h | 2 --
- 1 file changed, 2 deletions(-)
+ include/uapi/asm-generic/unistd.h | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/include/uapi/linux/userfaultfd.h b/include/uapi/linux/userfaultfd.h
-index df0e09b..9057d7a 100644
---- a/include/uapi/linux/userfaultfd.h
-+++ b/include/uapi/linux/userfaultfd.h
-@@ -11,8 +11,6 @@
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index 8da542a..82c91bc 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -711,9 +711,11 @@ __SYSCALL(__NR_bpf, sys_bpf)
+ __SC_COMP(__NR_execveat, sys_execveat, compat_sys_execveat)
+ #define __NR_membarrier 282
+ __SYSCALL(__NR_membarrier, sys_membarrier)
++#define __NR_userfaultfd 283
++__SYSCALL(__NR_userfaultfd, sys_userfaultfd)
  
- #include <linux/types.h>
+ #undef __NR_syscalls
+-#define __NR_syscalls 283
++#define __NR_syscalls 284
  
--#include <linux/compiler.h>
--
- #define UFFD_API ((__u64)0xAA)
  /*
-  * After implementing the respective features it will become:
+  * All syscalls below here should go away really,
 -- 
 2.5.1
