@@ -1,191 +1,60 @@
-From: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-Subject: Re: [PATCH RFC] pidns: introduce syscall getvpid
-Date: Tue, 22 Sep 2015 10:42:56 +0300
-Message-ID: <56010680.7000301@yandex-team.ru>
-References: <20150915120924.14818.49490.stgit@buzz>
-	<87h9mvg3kw.fsf@x220.int.ebiederm.org>
-	<55F832D2.1070605@yandex-team.ru>
-	<20150915151729.GA144242@dakara> <20150915174143.GE4699@ubuntumail>
-	<55F91C3D.1040209@yandex-team.ru>
-	<20150916143939.GA32226@mail.hallyn.com>
-	<87twquzag1.fsf@x220.int.ebiederm.org>
-	<20150916163123.GA1039@mail.hallyn.com>
-	<55FF7043.5020701@cn.fujitsu.com>
-	<20150921142222.GA24005@mail.hallyn.com>
+From: Andrzej Hajda <a.hajda@samsung.com>
+Subject: Re: [PATCH 00/38] Fixes related to incorrect usage of
+	unsigned types
+Date: Tue, 22 Sep 2015 11:13:29 +0200
+Message-ID: <56011BB9.5030004@samsung.com>
+References: <1442842450-29769-1-git-send-email-a.hajda@samsung.com>
+ <17571.1442842945@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20150921142222.GA24005-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Chen Fan <chen.fan.fnst-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+In-reply-to: <17571.1442842945@warthog.procyon.org.uk>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/intel-gfx>
+List-Post: <mailto:intel-gfx@lists.freedesktop.org>
+List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: intel-gfx-bounces@lists.freedesktop.org
+Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
+To: David Howells <dhowells@redhat.com>
+Cc: linux-mips@linux-mips.org, linux-fbdev@vger.kernel.org, linux-sh@vger.kernel.org, brcm80211-dev-list@broadcom.com, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, linux-clk@vger.kernel.org, linux-leds@vger.kernel.org, Marek Szyprowski <m.szyprowski@samsung.com>, devel@driverdev.osuosl.org, linux-rdma@vger.kernel.org, linux-cachefs@redhat.com, linux-serial@vger.kernel.org, linux-input@vger.kernel.org, linux-media@vger.kernel.org, dev@openvswitch.org, rtc-linux@googlegroups.com, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, intel-gfx@lists.freedesktop.org, linux-omap@vger.kernel.org, linux-arm-kernel@lists.infradead.org, Andrzej Hajda <a.hajda@samsung.com>, linux-api@vger.kernel.org, linux-usb@vger.kernel.org, linux-wireless@vger.kernel.org, linux-kernel@vger.kernel.org, linux-crypto@vger.kernel.org, netdev@vger.kernel.org, lustre-devel@lists.lustre.org
 List-Id: linux-api@vger.kernel.org
 
-On 21.09.2015 17:22, Serge E. Hallyn wrote:
-> On Mon, Sep 21, 2015 at 10:49:39AM +0800, Chen Fan wrote:
->>
->> On 09/17/2015 12:31 AM, Serge E. Hallyn wrote:
->>> On Wed, Sep 16, 2015 at 09:49:02AM -0500, Eric W. Biederman wrote:
->>>> "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> writes:
->>>>
->>>>> On Wed, Sep 16, 2015 at 10:37:33AM +0300, Konstantin Khlebnikov wrote:
->>>>>> On 15.09.2015 20:41, Serge Hallyn wrote:
->>>>>>> Quoting St=E9phane Graber (stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org):
->>>>>>>> On Tue, Sep 15, 2015 at 06:01:38PM +0300, Konstantin Khlebnikov wr=
-ote:
->>>>>>>>> On 15.09.2015 17:27, Eric W. Biederman wrote:
->>>>>>>>>> Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org> writes:
->>>>>>>>>>
->>>>>>>>>>> pid_t getvpid(pid_t pid, pid_t source, pid_t target);
->>>>>>>>>>>
->>>>>>>>>>> This syscall converts pid from one pid-ns into pid in another p=
-id-ns:
->>>>>>>>>>> it takes @pid in namespace of @source task (zero for current) a=
-nd
->>>>>>>>>>> returns related pid in namespace of @target task (zero for curr=
-ent too).
->>>>>>>>>>> If pid is unreachable from target pid-ns then it returns zero.
->>>>>>>>>> This interface as presented is inherently racy.  It would be bet=
-ter
->>>>>>>>>> if source and target were file descriptors referring to the name=
-spaces
->>>>>>>>>> you wish to translate between.
->>>>>>>>> Yep, it's racy. As well as any operation with non-child pids.
->>>>>>>>> With file descriptors for source/target result will be racy anywa=
-y.
->>>>>>>>>
->>>>>>>>>>> Such conversion is required for interaction between processes f=
-rom
->>>>>>>>>>> different pid-namespaces. For example when system service talks=
- with
->>>>>>>>>>> client from isolated container via socket about task in contain=
-er:
->>>>>>>>>> Sockets are already supported.  At least the metadata of sockets=
- is.
->>>>>>>>>>
->>>>>>>>>> Maybe we need this but I am not convinced of it's utility.
->>>>>>>>>>
->>>>>>>>>> What are you trying to do that motivates this?
->>>>>>>>> I'm working on hierarchical container management system which
->>>>>>>>> allows to create and control nested sub-containers from containers
->>>>>>>>> ( https://github.com/yandex/porto ). Main server works in host and
->>>>>>>>> have to interact with all levels of nested namespaces. This sysca=
-ll
->>>>>>>>> makes some operations much easier: server must remember only pid =
-in
->>>>>>>>> host pid namespace and convert it into right vpid on demand.
->>>>>>>> Note that as Eric said earlier, sending a PID inside a ucred throu=
-gh a
->>>>>>>> unix socket will have the pid translated.
->>>>>>>>
->>>>>>>> So while your solution certainly should be faster, you can already=
- achieve
->>>>>>>> what you want today by doing:
->>>>>>>>
->>>>>>>> =3D=3D Translate PID in container to PID in host
->>>>>>>>   - open a socket
->>>>>>>>   - setns to container's pidns
->>>>>>>>   - send ucred from that container containing the requested contai=
-ner PID
->>>>>>>>   - host sees the host PID
->>>>>>>>
->>>>>>>> =3D=3D Translate PID on host to PID in container
->>>>>>>>   - open a socket
->>>>>>>>   - setns to container's pidns
->>>>>>>>   - send ucred from the host containing the request host PID
->>>>>>>>     (send will fail if the host PID isn't part of that container)
->>>>>>>>   - container sees the container PID
->>>>>>> In addition, since commit e4bc332451 : /proc/PID/status: show all s=
-ets of pid according to ns
->>>>>>> we now also have 'NSpid' etc in /proc/$$/status.
->>>>>>>
->>>>>> As I see this works perfectly only for converting host pid into virt=
-ual.
->>>>>>
->>>>>> Backward conversion is troublesome: we have to scan all pids in host
->>>>>> procfs and somehow filter tasks from container and its sub-pid-ns.
->>>>>> Or I am missing something trivial?
->>>>> Ah, no that doesn't help with this.
->>>>>
->>>>> What St=E9phane describes is what I've done in several projects.
->>>>> Getting it right is however actually quite tricky.  I'm not
->>>>> convinced it's at the level of "since you can do (sweep hands)
->>>>> all this, we don't need a simple syscall to do it."
->>>>>
->>>>> So I'd encourage you to resend using namespace inode fds for
->>>>> source and target as Eric suggested.  We still may decide that
->>>>> the syscall isn't needed, but it's a trivial change to your
->>>>> patch and removes that race.  And I'm not convinced it's not
->>>>> needed.
->>>> At this point my primary concern is that a pattern that would need to =
-be
->>>> convering to and from pids quickly is potentially fundamentally racy to
->>>> the point of broken.
->>> The cgmanager GetTasks and GetTasksRecursive, and reading of the
->>> lxcfs cgroup /tasks files, require converting every pid from the
->>> cgmanager's namespace to the reading task's namespace.
->>>
->>>> Especially with unix domain sockets passing and converting pids in a w=
-ay
->>>> that covers the common case.
->>>>
->>>> I am clearly missing some nuance of this use case.
->>> lxcfs and cgmanager are imo proof that we *can* do without the new
->>> syscall.  However, the git history will show that there are some
->>> complications, and the system load when a few systemds are starting
->>> will show that it does take a performance toll on the host at some
->>> point.  Still as I say it's doable.  The syscall implementation was
->>> very simple, though.
->>
->> Yes, previous email discussed about the implementation of syscall or pro=
-cfs:
->> http://www.gossamer-threads.com/lists/linux/kernel/1971723?search_string=
-=3Dchen%20hanxiao;#1971723
->>
->> but it seems complicated implemented by procfs, the original discussion =
-at:
->> http://www.gossamer-threads.com/lists/linux/kernel/2076440?search_string=
-=3Dchen%20hanxiao;#2076440
->
-> So please implement it, as Eric suggested, using the ns inode fds
-> instead of racy pid_t hints for namespaces.
->
-
-I don't want to loose simple way to use it.
-Sometimes caller cannot prevent races (task its child or
-locked with with ptrace) or it don't care about them.
-
-What about this design:
-
-pid_t getvpid(pid_t pid, pid_t source, pid_t target)
-
-pid > 0 - get vpid of task
-pid =3D 0 - current pid (=3D just for symmetry =3D)
-pid < 0 - get vpid of parent task (ppid of -pid)
-           [ that's really useful for poking isolated pidns ]
-source/target > 0 - pid of source/target task
-source/target =3D 0 - use current as source/target
-source/target < 0 - use pidns fd (1-arg) as source/target
-
-or the same but without =3D0 sugar:
-
-pid > 0 - get vpid of task
-pid < 0 - get vpid of parent task (ppid of -arg)
-source/target > 0  - pid of source/target task
-source/target <=3D 0 - use pidns fd (-arg) as source/target
-
-libc caches current pid, extra getpid shouldn't be a problem.
-
-
--- =
-
-Konstantin
+T24gMDkvMjEvMjAxNSAwMzo0MiBQTSwgRGF2aWQgSG93ZWxscyB3cm90ZToKPiBBbmRyemVqIEhh
+amRhIDxhLmhhamRhLVN6ZTNPM1VVMjJKQkRnaks3eTdUVVFAcHVibGljLmdtYW5lLm9yZz4gd3Jv
+dGU6Cj4gCj4+IFNlbWFudGljIHBhdGNoIGZpbmRzIGNvbXBhcmlzb25zIG9mIHR5cGVzOgo+PiAg
+ICAgdW5zaWduZWQgPCAwCj4+ICAgICB1bnNpZ25lZCA+PSAwCj4+IFRoZSBmb3JtZXIgaXMgYWx3
+YXlzIGZhbHNlLCB0aGUgbGF0dGVyIGlzIGFsd2F5cyB0cnVlLgo+PiBTdWNoIGNvbXBhcmlzb25z
+IGFyZSB1c2VsZXNzLCBzbyB0aGVvcmV0aWNhbGx5IHRoZXkgY291bGQgYmUKPj4gc2FmZWx5IHJl
+bW92ZWQsIGJ1dCB0aGVpciBwcmVzZW5jZSBxdWl0ZSBvZnRlbiBpbmRpY2F0ZXMgYnVncy4KPiAK
+PiBPciBzb21lb25lIGhhcyBsZWZ0IHRoZW0gaW4gYmVjYXVzZSB0aGV5IGRvbid0IG1hdHRlciBh
+bmQgdGhlcmUncyB0aGUKPiBwb3NzaWJpbGl0eSB0aGF0IHRoZSB0eXBlIGJlaW5nIHRlc3RlZCBt
+aWdodCBiZSBvciBiZWNvbWUgc2lnbmVkIHVuZGVyIHNvbWUKPiBjaXJjdW1zdGFuY2VzLiAgSWYg
+dGhlIGNvbXBhcmlzb24gaXMgdXNlbGVzcywgSSdkIGV4cGVjdCB0aGUgY29tcGlsZXIgdG8ganVz
+dAo+IGRpc2NhcmQgaXQgLSBmb3Igc3VjaCBjYXNlcyB5b3VyIHBhdGNoIGlzIHBvaW50bGVzcy4K
+PiAKPiBJZiBJIGhhdmUsIGZvciBleGFtcGxlOgo+IAo+IAl1bnNpZ25lZCB4Owo+IAo+IAlpZiAo
+eCA9PSAwIHx8IHggPiAyNykKPiAJCWdpdmVfYV9yYW5nZV9lcnJvcigpOwo+IAo+IEkgd2lsbCB3
+cml0ZSB0aGlzIGFzOgo+IAo+IAl1bnNpZ25lZCB4Owo+IAo+IAlpZiAoeCA8PSAwIHx8IHggPiAy
+NykKPiAJCWdpdmVfYV9yYW5nZV9lcnJvcigpOwo+IAo+IGJlY2F1c2UgaXQgdGhhdCBnaXZlcyBh
+IHdheSB0byBoYW5kbGUgeCBiZWluZyBjaGFuZ2VkIHRvIHNpZ25lZCBhdCBzb21lIHBvaW50Cj4g
+aW4gdGhlIGZ1dHVyZSBmb3Igbm8gY29zdC4gIEluIHdoaWNoIGNhc2UsIHlvdXIgY2hhbmdpbmcg
+dGhlIDw9IHRvIGFuID09Cj4gImJlY2F1c2UgdGhlIDwgcGFydCBvZiB0aGUgY2FzZSBpcyB1c2Vs
+ZXNzIiBpcyBhcmd1YWJseSB3cm9uZy4KClRoaXMgaXMgd2h5IEkgaGF2ZSBub3QgY2hlY2tlZCBm
+b3Igc3VjaCBjYXNlcyAtIEkgaGF2ZSBza2lwcGVkIGNoZWNrcyBvZiB0eXBlCgl1bnNpZ25lZCA8
+PSAwCmV4YWN0bHkgZm9yIHRoZSByZWFzb25zIGFib3ZlLgoKSG93ZXZlciBJIGhhdmUgbGVmdCB0
+d28gb3RoZXIgY2hlY2tzIGFzIHRoZXkgc2VlbXMgdG8gbWUgbW9yZSBzdXNwaWNpb3VzIC0gdGhl
+eQphcmUgYWx3YXlzIHRydWUgb3IgZmFsc2UuIEJ1dCBhcyBEbWl0cnkgYW5kIEFuZHJldyBwb2lu
+dGVkIG91dCBMaW51cyBoYXZlIHF1aXRlCnN0cm9uZyBvcGluaW9uIGFnYWluc3QgcmVtb3Zpbmcg
+cmFuZ2UgY2hlY2tzIGluIHN1Y2ggY2FzZXMgYXMgaGUgZmluZHMgaXQKY2xlYXJlci4gSSB0aGlu
+ayBpdCBhcHBsaWVzIHRvIHBhdGNoZXMgMjktMzYuIEkgYW0gbm90IHN1cmUgYWJvdXQgcGF0Y2hl
+cyAyNi0yOCwzNy4KClJlZ2FyZHMKQW5kcnplagoKPiAKPiBEYXZpZAo+IC0tCj4gVG8gdW5zdWJz
+Y3JpYmUgZnJvbSB0aGlzIGxpc3Q6IHNlbmQgdGhlIGxpbmUgInVuc3Vic2NyaWJlIGxpbnV4LXdp
+cmVsZXNzIiBpbgo+IHRoZSBib2R5IG9mIGEgbWVzc2FnZSB0byBtYWpvcmRvbW8tdTc5dXdYTDI5
+VFk3Nloyck01bUhYQUBwdWJsaWMuZ21hbmUub3JnCj4gTW9yZSBtYWpvcmRvbW8gaW5mbyBhdCAg
+aHR0cDovL3ZnZXIua2VybmVsLm9yZy9tYWpvcmRvbW8taW5mby5odG1sCj4gCgpfX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpJbnRlbC1nZnggbWFpbGluZyBs
+aXN0CkludGVsLWdmeEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cDovL2xpc3RzLmZyZWVkZXNr
+dG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2ludGVsLWdmeAo=
