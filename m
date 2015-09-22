@@ -1,53 +1,52 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [RFC v2 09/18] mm/huge_page: Convert khugepaged() into kthread
- worker API
-Date: Tue, 22 Sep 2015 16:26:04 -0400
-Message-ID: <20150922202604.GG17659@mtj.duckdns.org>
-References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
- <1442840639-6963-10-git-send-email-pmladek@suse.com>
+From: =?UTF-8?Q?P=c3=a1draig_Brady?= <P@draigBrady.com>
+Subject: Re: [PATCH v2 10/9] copy_file_range.2: New page documenting
+ copy_file_range()
+Date: Tue, 22 Sep 2015 21:30:03 +0100
+Message-ID: <5601BA4B.9060709@draigBrady.com>
+References: <1442003423-6884-1-git-send-email-Anna.Schumaker@Netapp.com>
+ <1442003423-6884-11-git-send-email-Anna.Schumaker@Netapp.com>
+ <55F52ABA.9070908@gmail.com> <20150914183223.GA28469@birch.djwong.org>
+ <5601B5C7.7030704@Netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <1442840639-6963-10-git-send-email-pmladek@suse.com>
-Sender: owner-linux-mm@kvack.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <5601B5C7.7030704@Netapp.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Anna Schumaker <Anna.Schumaker@netapp.com>, "Darrick J. Wong" <darrick.wong@oracle.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, andros@netapp.com, hch@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+On 22/09/15 21:10, Anna Schumaker wrote:
+> On 09/14/2015 02:32 PM, Darrick J. Wong wrote:
+>> On Sun, Sep 13, 2015 at 09:50:18AM +0200, Michael Kerrisk (man-pages=
+) wrote:
+>>> Hi Anna,
 
-On Mon, Sep 21, 2015 at 03:03:50PM +0200, Petr Mladek wrote:
-> +static int khugepaged_has_work(void)
-> +{
-> +	return !list_empty(&khugepaged_scan.mm_head) &&
-> +		khugepaged_enabled();
-> +}
+>>> Furthermore, I even wonder if explicitly specifying flags as
+>>> COPY_FR_COPY | COPY_FR_REFLINK should just generate an EINVAL
+>>> error. 0 already gives us the behavior described above,
+>>> and allowing the combination COPY_FR_COPY | COPY_FR_REFLINK
+>>> perhaps just contributes to misleading the user that these
+>>> flags are orthogonal, when in reality they are not. What do
+>>> you think?
+>>
+>> Personally, I think it's a little weird that one turns on reflink wi=
+th a flag;
+>> turns on regular copy with a different flag; and turns on both by no=
+t
+>> specifying either flag. :)
+>=20
+> Is there a better behavior for flags=3D0?  I was thinking this would =
+be what people want when they don't care how the copy happens in the ke=
+rnel.
 
-Hmmm... no biggie but this is a bit bothering.
+As a user, I'm fine with this default and the interface in general.
 
-> @@ -425,7 +447,10 @@ static ssize_t scan_sleep_millisecs_store(struct kobject *kobj,
->  		return -EINVAL;
->  
->  	khugepaged_scan_sleep_millisecs = msecs;
-> -	wake_up_interruptible(&khugepaged_wait);
-> +	if (khugepaged_has_work())
-> +		mod_delayed_kthread_work(khugepaged_worker,
-> +					 &khugepaged_do_scan_work,
-> +					 0);
-
-What's wrong with just doing the following?
-
-	if (khugepaged_enabled())
-		mod_delayed_kthread_work(...);
-
-Thanks.
-
--- 
-tejun
-
+thanks,
+P=C3=A1draig.
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
+" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
