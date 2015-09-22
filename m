@@ -1,77 +1,49 @@
-From: Gerd Hoffmann <kraxel@redhat.com>
-Subject: Re: [PATCH v2 4/6] virtio-gpu: add 3d/virgl support
-Date: Tue, 22 Sep 2015 17:18:18 +0200
-Message-ID: <1442935098.13084.31.camel@redhat.com>
-References: <1442828417-6165-1-git-send-email-kraxel@redhat.com>
- <1442828417-6165-5-git-send-email-kraxel@redhat.com>
- <20150921130110-mutt-send-email-mst@redhat.com>
+From: Will Deacon <will.deacon@arm.com>
+Subject: Re: [PATCH] generic syscalls: wire up userfaultfd syscall
+Date: Tue, 22 Sep 2015 16:52:52 +0100
+Message-ID: <20150922155251.GJ7356@arm.com>
+References: <1442919139-18027-1-git-send-email-andre.przywara@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <20150921130110-mutt-send-email-mst@redhat.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: "Michael S. Tsirkin" <mst@redhat.com>
-Cc: "open list:ABI/API" <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, "open list:VIRTIO GPU DRIVER" <dri-devel@lists.freedesktop.org>, "open list:VIRTIO GPU DRIVER" <virtualization@lists.linux-foundation.org>, Dave Airlie <airlied@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1442919139-18027-1-git-send-email-andre.przywara@arm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andre Przywara <andre.przywara@arm.com>
+Cc: Arnd Bergmann <arnd@arndb.de>, "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, Catalin Marinas <Catalin.Marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-ICBIaSwKCj4gPiAgc3RhdGljIHVuc2lnbmVkIGludCBmZWF0dXJlc1tdID0gewo+ID4gKyNpZmRl
-ZiBfX0xJVFRMRV9FTkRJQU4KPiA+ICsJVklSVElPX0dQVV9GRUFUVVJFX1ZJUkdMLAo+ID4gKyNl
-bmRpZgo+ID4gIH07Cj4gCj4gV2h5IGlzIHZpcmdsIExFIHNwZWNpZmljPyBKdXN0IGN1cmlvdXMu
-CgpnYWxsaXVtIGNvbW1hbmQgc3RyZWFtIGlzIG5hdGl2ZSBlbmRpYW4sIGFuZCB3ZSBvbmx5IHN1
-cHBvcnQgbGl0dGxlCmVuZGlhbiBndWVzdHMgb24gbGl0dGxlIGVuZGlhbiBob3N0cyBmb3IgdGhh
-dCByZWFzb24uCgpTdXBwb3J0aW5nIGJpZ2VuZGlhbiBndWVzdHMgb24gYmlnZW5kaWFuIGhvc3Rz
-IHNob3VsZCBiZSBwb3NzaWJsZSB0b28KKHdpdGggYSBWSVJHbF9CRSBmZWF0dXJlIGZsYWcpLCBi
-dXQgd2l0aCBldmVuIHRoZSBwb3dlcnBjIHdvcmxkIG1vdmluZwp0byBsaXR0bGUgZW5kaWFuIEkg
-c2VlIGxpdHRsZSByZWFzb24gdG8gYWN0dWFsbHkgYm90aGVyLgoKVG8gYmUgY2xlYXI6IHRoaXMg
-YWZmZWN0cyAzZCBhY2NlbGVyYXRpb24gb25seSwgMmQgbW9kZSB3b3JrcyBmaW5lIG9uCmV2ZXJ5
-IGhvc3QvZ3Vlc3QgZW5kaWFuIGNvbWJpbmF0aW9uLgoKPiA+ICsjaWZkZWYgX19MSVRUTEVfRU5E
-SUFOCj4gPiArCWlmICh2aXJ0aW9faGFzX2ZlYXR1cmUodmdkZXYtPnZkZXYsIFZJUlRJT19HUFVf
-RkVBVFVSRV9WSVJHTCkpCj4gPiArCQl2Z2Rldi0+aGFzX3ZpcmdsXzNkID0gdHJ1ZTsKPiA+ICsj
-ZW5kaWYKPiAKPiBZb3UgbWlnaHQgYmUgYWJsZSB0byBnZXQgYnkgd2l0aG91dCB0aGlzIGlmZGVm
-IGFzCj4gVklSVElPX0dQVV9GRUFUVVJFX1ZJUkdMIHdvbid0IGJlIHNldCB3aXRob3V0IGl0LgoK
-WWVzLCByaWdodCwgdGhpcyAjaWZkZWYgY2FuIGdvIGF3YXkuCgo+ID4gK2ludCB2aXJ0aW9fZ3B1
-X2NtZF9nZXRfY2Fwc2V0X2luZm8oc3RydWN0IHZpcnRpb19ncHVfZGV2aWNlICp2Z2RldiwgaW50
-IGlkeCkKPiA+ICt7Cj4gPiArCXN0cnVjdCB2aXJ0aW9fZ3B1X2dldF9jYXBzZXRfaW5mbyAqY21k
-X3A7Cj4gPiArCXN0cnVjdCB2aXJ0aW9fZ3B1X3ZidWZmZXIgKnZidWY7Cj4gPiArCXZvaWQgKnJl
-c3BfYnVmOwo+ID4gKwo+ID4gKwlyZXNwX2J1ZiA9IGt6YWxsb2Moc2l6ZW9mKHN0cnVjdCB2aXJ0
-aW9fZ3B1X3Jlc3BfY2Fwc2V0X2luZm8pLAo+ID4gKwkJCSAgIEdGUF9LRVJORUwpOwo+ID4gKwlp
-ZiAoIXJlc3BfYnVmKQo+ID4gKwkJcmV0dXJuIC1FTk9NRU07Cj4gPiArCj4gPiArCWNtZF9wID0g
-dmlydGlvX2dwdV9hbGxvY19jbWRfcmVzcAo+ID4gKwkJKHZnZGV2LCAmdmlydGlvX2dwdV9jbWRf
-Z2V0X2NhcHNldF9pbmZvX2NiLCAmdmJ1ZiwKPiA+ICsJCSBzaXplb2YoKmNtZF9wKSwgc2l6ZW9m
-KHN0cnVjdCB2aXJ0aW9fZ3B1X3Jlc3BfY2Fwc2V0X2luZm8pLAo+ID4gKwkJIHJlc3BfYnVmKTsK
-PiA+ICsJbWVtc2V0KGNtZF9wLCAwLCBzaXplb2YoKmNtZF9wKSk7Cj4gPiArCj4gPiArCWNtZF9w
-LT5oZHIudHlwZSA9IGNwdV90b19sZTMyKFZJUlRJT19HUFVfQ01EX0dFVF9DQVBTRVRfSU5GTyk7
-Cj4gPiArCWNtZF9wLT5jYXBzZXRfaW5kZXggPSBjcHVfdG9fbGUzMihpZHgpOwo+ID4gKwl2aXJ0
-aW9fZ3B1X3F1ZXVlX2N0cmxfYnVmZmVyKHZnZGV2LCB2YnVmKTsKPiA+ICsJcmV0dXJuIDA7Cj4g
-PiArfQo+ID4gKwo+IAo+IEkgbm90ZSB0aGF0IGFsbCBjYWxsZXJzIGlnbm9yZSB0aGUgcmVjdXJu
-IGNvZGUgZnJvbQo+IHZpcnRpb19ncHVfcXVldWVfY3RybF9idWZmZXIuCj4gCj4gSXMgdGhlcmUg
-YSByZWFzb24gaXQgY2FuJ3QgZmFpbD8KCkl0IGNhbiBvbmx5IGZhaWwgd2hlbiB2Z2Rldi0+dnFz
-X3JlYWR5IGlzIGZhbHNlLiAgV2hpY2ggY2FuIG9ubHkgaGFwcGVuCndoZW4gd2UgYXJlIGFib3V0
-IHRvIHVubG9hZCB0aGUgZHJpdmVyLiAgSW4gdGhhdCBjYXNlIHdlIHByb2JhYmx5IGRvbid0Cndv
-cnJ5IG11Y2ggYWJvdXQgdGhlIGZhaWx1cmUgLi4uCgo+IFNob3VsZG4ndCBpdCBiZSBtYWRlIHZv
-aWQgdGhlbj8KCkkgZ3Vlc3Mgd2Ugc2hvdWxkIC4uLgoKPiA+ICsJY21kX3AtPmhkci50eXBlID0g
-Y3B1X3RvX2xlMzIoVklSVElPX0dQVV9DTURfQ1RYX0NSRUFURSk7Cj4gPiArCWNtZF9wLT5oZHIu
-Y3R4X2lkID0gY3B1X3RvX2xlMzIoaWQpOwo+ID4gKwljbWRfcC0+bmxlbiA9IGNwdV90b19sZTMy
-KG5sZW4pOwo+ID4gKwlzdHJuY3B5KGNtZF9wLT5kZWJ1Z19uYW1lLCBuYW1lLCA2Myk7Cj4gPiAr
-CWNtZF9wLT5kZWJ1Z19uYW1lWzYzXSA9IDA7Cj4gCj4gc2l6ZW9mIChjbWRfcC0+ZGVidWdfbmFt
-ZSkgLSAxIHdpbGwgYmUgYSBidXQgcHJldHRpZXIuCgpBZ3JlZS4KCj4gPiBkaWZmIC0tZ2l0IGEv
-aW5jbHVkZS91YXBpL2xpbnV4L3ZpcnRpb19ncHUuaCBiL2luY2x1ZGUvdWFwaS9saW51eC92aXJ0
-aW9fZ3B1LmgKPiA+IGluZGV4IDQ3OGJlNTIuLjdmNGY5Y2UgMTAwNjQ0Cj4gPiAtLS0gYS9pbmNs
-dWRlL3VhcGkvbGludXgvdmlydGlvX2dwdS5oCj4gPiArKysgYi9pbmNsdWRlL3VhcGkvbGludXgv
-dmlydGlvX2dwdS5oCj4gPiBAQCAtNDAsNiArNDAsOCBAQAo+ID4gIAo+ID4gICNpbmNsdWRlIDxs
-aW51eC90eXBlcy5oPgo+ID4gIAo+ID4gKyNkZWZpbmUgVklSVElPX0dQVV9GRUFUVVJFX1ZJUkdM
-IDAKPiA+ICsKPiAKPiBJJ2QgcHJlZmVyIGl0IG5hbWVkIFZJUlRJT19HUFVfRl9WSVJHTCBmb3Ig
-Y29uc2lzdGVuY3kgd2l0aCBvdGhlcgo+IGRldmljZXMuCgpNYWtlcyBzZW5zZSwgSSdsbCBjaGFu
-Z2UgaXQuCgp0aGFua3MsCiAgR2VyZAoKCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fCmRyaS1kZXZlbCBtYWlsaW5nIGxpc3QKZHJpLWRldmVsQGxpc3RzLmZy
-ZWVkZXNrdG9wLm9yZwpodHRwOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4vbGlzdGlu
-Zm8vZHJpLWRldmVsCg==
+On Tue, Sep 22, 2015 at 11:52:19AM +0100, Andre Przywara wrote:
+> Enable the new userfaultfd syscall in the generic syscall table.
+> Briefly tested on arm64 with the selftest from the tools directory.
+
+Can you update the selftest too, please? Last time I looked at that it had
+typo for the powerpc check and looked pretty unloved...
+
+Will
+
+> Signed-off-by: Andre Przywara <andre.przywara@arm.com>
+> ---
+>  include/uapi/asm-generic/unistd.h | 4 +++-
+>  1 file changed, 3 insertions(+), 1 deletion(-)
+> 
+> diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+> index 8da542a..82c91bc 100644
+> --- a/include/uapi/asm-generic/unistd.h
+> +++ b/include/uapi/asm-generic/unistd.h
+> @@ -711,9 +711,11 @@ __SYSCALL(__NR_bpf, sys_bpf)
+>  __SC_COMP(__NR_execveat, sys_execveat, compat_sys_execveat)
+>  #define __NR_membarrier 282
+>  __SYSCALL(__NR_membarrier, sys_membarrier)
+> +#define __NR_userfaultfd 283
+> +__SYSCALL(__NR_userfaultfd, sys_userfaultfd)
+>  
+>  #undef __NR_syscalls
+> -#define __NR_syscalls 283
+> +#define __NR_syscalls 284
+>  
+>  /*
+>   * All syscalls below here should go away really,
+> -- 
+> 2.5.1
+> 
