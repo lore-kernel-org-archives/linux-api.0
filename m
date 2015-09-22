@@ -1,64 +1,365 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [RFC v2 07/18] kthread: Allow to cancel kthread work
-Date: Tue, 22 Sep 2015 15:35:13 -0400
-Message-ID: <20150922193513.GE17659@mtj.duckdns.org>
-References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
- <1442840639-6963-8-git-send-email-pmladek@suse.com>
+From: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v2 10/9] copy_file_range.2: New page documenting
+ copy_file_range()
+Date: Tue, 22 Sep 2015 16:10:47 -0400
+Message-ID: <5601B5C7.7030704@Netapp.com>
+References: <1442003423-6884-1-git-send-email-Anna.Schumaker@Netapp.com>
+ <1442003423-6884-11-git-send-email-Anna.Schumaker@Netapp.com>
+ <55F52ABA.9070908@gmail.com> <20150914183223.GA28469@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1442840639-6963-8-git-send-email-pmladek-IBi9RG/b67k@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150914183223.GA28469-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 21, 2015 at 03:03:48PM +0200, Petr Mladek wrote:
->  /**
-> + * try_to_grab_pending_kthread_work - steal kthread work item from worklist,
-> + *	and disable irq
-> + * @work: work item to steal
-> + * @is_dwork: @work is a delayed_work
-> + * @flags: place to store irq state
-> + *
-> + * Try to grab PENDING bit of @work.  This function can handle @work in any
-> + * stable state - idle, on timer or on worklist.
-> + *
-> + * Return:
-> + *  1		if @work was pending and we successfully stole PENDING
-> + *  0		if @work was idle and we claimed PENDING
-> + *  -EAGAIN	if PENDING couldn't be grabbed at the moment, safe to busy-retry
-> + *  -ENOENT	if someone else is canceling @work, this state may persist
-> + *		for arbitrarily long
-> + *
-> + * Note:
-> + * On >= 0 return, the caller owns @work's PENDING bit.  To avoid getting
-> + * interrupted while holding PENDING and @work off queue, irq must be
-> + * disabled on return.  This, combined with delayed_work->timer being
-> + * irqsafe, ensures that we return -EAGAIN for finite short period of time.
-> + *
-> + * On successful return, >= 0, irq is disabled and the caller is
-> + * responsible for releasing it using local_irq_restore(*@flags).
-> + *
-> + * This function is safe to call from any context including IRQ handler.
-> + */
+On 09/14/2015 02:32 PM, Darrick J. Wong wrote:
+> On Sun, Sep 13, 2015 at 09:50:18AM +0200, Michael Kerrisk (man-pages) wrote:
+>> Hi Anna,
+>>
+>> On 09/11/2015 10:30 PM, Anna Schumaker wrote:
+>>> copy_file_range() is a new system call for copying ranges of data
+>>> completely in the kernel.  This gives filesystems an opportunity to
+>>> implement some kind of "copy acceleration", such as reflinks or
+>>> server-side-copy (in the case of NFS).
+>>>
+>>> Signed-off-by: Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+>>
+>> Thanks for writing such a nice first draft man page! I have a few
+>> comments below. Would you be willing to revise and resubmit?
+>>
+>>> ---
+>>>  man2/copy_file_range.2 | 188 +++++++++++++++++++++++++++++++++++++++++++++++++
+>>>  1 file changed, 188 insertions(+)
+>>>  create mode 100644 man2/copy_file_range.2
+>>>
+>>> diff --git a/man2/copy_file_range.2 b/man2/copy_file_range.2
+>>> new file mode 100644
+>>> index 0000000..84912b5
+>>> --- /dev/null
+>>> +++ b/man2/copy_file_range.2
+>>> @@ -0,0 +1,188 @@
+>>> +.\"This manpage is Copyright (C) 2015 Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+>>
+>> We need a license for this page. Please see
+>> https://www.kernel.org/doc/man-pages/licenses.html
+>>
+>>> +.TH COPY 2 2015-8-31 "Linux" "Linux Programmer's Manual"
+>>
+>> Make the month 2 digits (leading 0).
+>>
+>>> +.SH NAME
+>>> +copy_file_range \- Copy a range of data from one file to another
+>>> +.SH SYNOPSIS
+>>> +.nf
+>>> +.B #include <linux/copy.h>
+>>> +.B #include <sys/syscall.h>
+>>> +.B #include <unistd.h>
+>>> +
+>>> +.BI "ssize_t syscall(__NR_copy_file_range, int " fd_in ", loff_t * " off_in ",
+>>> +.BI "                int " fd_out ", loff_t * " off_out ", size_t " len ",
+>>> +.BI "                unsigned int " flags );
+>>
+>> Remove spaces following "*" in the lines above. (man-pages convention for code)
+>>
+>> I know that the copy_file_range() (obviously) doesn't yet have a wrapper
+>> in glibc, but in the man pages we document all system calls as though there
+>> is a wrapper. See, for example, gettid(2), for an axample of how this is done
+>> (a note in the SYNOPSIS and then some further details in NOTES).
+>>
+>>> +.fi
+>>> +.SH DESCRIPTION
+>>> +The
+>>> +.BR copy_file_range ()
+>>> +system call performs an in-kernel copy between two file descriptors
+>>> +without all that tedious mucking about in userspace.
+>>
+>> I'd write that last piece as:
+>>
+>> "without the cost of (a loop) transferring data from the kernel to a 
+>> user-space buffer and then back to the kernel again.
+>>
+>>> +It copies up to
+>>> +.I len
+>>> +bytes of data from file descriptor
+>>> +.I fd_in
+>>> +to file descriptor
+>>> +.IR fd_out ,
+>>> +overwriting any data that exists within the requested range.
+>>
+>> s/.$/ of the target file./
+>>
+>>> +
+>>> +The following semantics apply for
+>>> +.IR off_in ,
+>>> +and similar statements apply to
+>>> +.IR off_out :
+>>> +.IP * 3
+>>> +If
+>>> +.I off_in
+>>> +is NULL, then bytes are read from
+>>> +.I fd_in
+>>> +starting from the current file offset and the current
+>>> +file offset is adjusted appropriately.
+>>> +.IP *
+>>> +If
+>>> +.I off_in
+>>> +is not NULL, then
+>>> +.I off_in
+>>> +must point to a buffer that specifies the starting
+>>> +offset where bytes from
+>>> +.I fd_in
+>>> +will be read.  The current file offset of
+>>> +.I fd_in
+>>> +is not changed, but
+>>> +.I off_in
+>>> +is adjusted appropriately.
+>>> +.PP
+>>> +
+>>> +The
+>>> +.I flags
+>>> +argument is a bit mask composed by OR-ing together zero
+>>> +or more of the following flags:
+>>> +.TP 1.9i
+>>> +.B COPY_FR_COPY
+>>> +Copy all the file data in the requested range.
+>>> +Some filesystems, like NFS, might be able to accelerate this copy
+>>> +to avoid unnecessary data transfers.
+>>> +.TP
+>>> +.B COPY_FR_REFLINK
+>>> +Create a lightweight "reflink", where data is not copied until
+>>> +one of the files is modified.
+>>> +.PP
+>>> +The default behavior
+>>> +.RI ( flags
+>>> +== 0) is to try creating a reflink,
+>>> +and if reflinking fails
+>>> +.BR copy_file_range ()
+>>> +will fall back on performing a full data copy.
+>>
+>> s/back on/back to/
+>>
+>>> +This is equivalent to setting
+>>> +.I flags
+>>> +equal to
+>>> +.RB ( COPY_FR_COPY | COPY_FR_REFLINK ).
+>>
+>> So, from an API deign perspective, the interoperation of these two
+>> flags appears odd. Bit flags are commonly (not always) orthogonal.
+>> I think here it could be pointed out a little more explicitly that
+>> these two flags are not orthogonal. In particular, perhaps after the
+>> last sentence, you could add another sentence:
+>>
+>> [[
+>> (This contrasts with specifying
+>> .I flags
+>> as just
+>> .BR COPY_FR_REFLINK ,
+>> which causes the call to create a reflink,
+>> and fail if that is not possible,
+>> rather than falling back to a full data copy.)
+>> ]]
+>>
+>> Furthermore, I even wonder if explicitly specifying flags as
+>> COPY_FR_COPY | COPY_FR_REFLINK should just generate an EINVAL
+>> error. 0 already gives us the behavior described above,
+>> and allowing the combination COPY_FR_COPY | COPY_FR_REFLINK
+>> perhaps just contributes to misleading the user that these
+>> flags are orthogonal, when in reality they are not. What do
+>> you think?
+> 
+> Personally, I think it's a little weird that one turns on reflink with a flag;
+> turns on regular copy with a different flag; and turns on both by not
+> specifying either flag. :)
 
-Ugh... I think this is way too much for kthread_worker.  Workqueue is
-as complex as it is partly for historical reasons and partly because
-it's used so widely and heavily.  kthread_worker is always guaranteed
-to have a single worker and in most cases maybe several work items.
-There's no reason to bring this level of complexity onto it.
-Providing simliar semantics is fine but it should be possible to do
-this in a lot simpler way if the requirements on space and concurrency
-is this much lower.
+Is there a better behavior for flags=0?  I was thinking this would be what people want when they don't care how the copy happens in the kernel.
 
-e.g. always embed timer_list in a work item and use per-worker
-spinlock to synchronize access to both the work item and timer and use
-per-work-item mutex to synchronize multiple cancelers.  Let's please
-keep it simple.
+Anna
 
-Thanks.
+> 
+>> What are the semantics with respect to signals, especially if data 
+>> copying a very large file range? This info should be included in the 
+>> man page, probably under NOTES.
+>>
+>>> +.SH RETURN VALUE
+>>> +Upon successful completion,
+>>> +.BR copy_file_range ()
+>>> +will return the number of bytes copied between files.
+>>> +This could be less than the length originally requested.
+>>> +
+>>> +On error,
+>>> +.BR copy_file_range ()
+>>> +returns \-1 and
+>>> +.I errno
+>>> +is set to indicate the error.
+>>> +.SH ERRORS
+>>> +.TP
+>>> +.B EBADF
+>>> +One or more file descriptors are not valid,
+>>> +or do not have proper read-write mode;
+>>
+>> I think that last line can go. I mean, isn't this point (again)
+>> covered in the next few lines?
+> 
+> Or change the ';' to a ':'?
+> 
+>>> +.I fd_in
+>>> +is not open for reading; or
+>>> +.I fd_out
+>>> +is not open for writing.
+>>> +.TP
+>>> +.B EINVAL
+>>> +Requested range extends beyond the end of the file; or the
+>>
+>> s/file/source file/  (right?)
+>>
+>>> +.I flags
+>>> +argument is set to an invalid value.
+>>> +.TP
+>>> +.B EIO
+>>> +A low level I/O error occurred while copying.
+>>> +.TP
+>>> +.B ENOMEM
+>>> +Out of memory.
+>>> +.TP
+>>> +.B ENOSPC
+>>> +There is not enough space to complete the copy.
+>>
+>> Space where? On the filesystem?
+>> => s/space/space on the target filesystem/
+>>
+>>> +.TP
+>>> +.B EOPNOTSUPP
+>>> +.B COPY_REFLINK
+>>> +was specified in
+>>> +.IR flags ,
+>>> +but the target filesystem does not support reflinks.
+>>> +.TP
+>>> +.B EXDEV
+>>> +Target filesystem doesn't support cross-filesystem copies.
+>>
+>> I'm curious. What are some examples of filesystems that produce this
+>> error?
+> 
+> btrfs and xfs (and probably most local filesystems) don't support cross-fs
+> copies.
+> 
+> --D
+> 
+>>
+>>> +.SH VERSIONS
+>>> +The
+>>> +.BR copy_file_range ()
+>>> +system call first appeared in Linux 4.4.
+>>> +.SH CONFORMING TO
+>>> +The
+>>> +.BR copy_file_range ()
+>>> +system call is a nonstandard Linux extension.
+>>> +.SH EXAMPLE
+>>> +.nf
+>>> +
+>>> +#define _GNU_SOURCE
+>>> +#include <fcntl.h>
+>>> +#include <linux/copy.h>
+>>> +#include <stdio.h>
+>>> +#include <stdlib.h>
+>>> +#include <sys/stat.h>
+>>> +#include <sys/syscall.h>
+>>> +#include <unistd.h>
+>>> +
+>>> +
+>>> +int main(int argc, char **argv)
+>>> +{
+>>> +    int fd_in, fd_out;
+>>> +    struct stat stat;
+>>> +    loff_t len, ret;
+>>> +
+>>> +    if (argc != 3) {
+>>> +        fprintf(stderr, "Usage: %s <source> <destination>\\n", argv[0]);
+>>> +        exit(EXIT_FAILURE);
+>>> +    }
+>>> +
+>>> +    fd_in = open(argv[1], O_RDONLY);
+>>> +    if (fd_in == -1) {
+>>
+>> Please replace all "-" in code by "\-". (This is a groff
+>> detail.)
+>>
+>>> +        perror("open (argv[1])");
+>>> +        exit(EXIT_FAILURE);
+>>> +    }
+>>> +
+>>> +    if (fstat(fd_in, &stat) == -1) {
+>>> +        perror("fstat");
+>>> +        exit(EXIT_FAILURE);
+>>> +    }
+>>> +    len = stat.st_size;
+>>> +
+>>> +    fd_out = creat(argv[2], 0644);
+>>
+>> These days, I think we should discourage the use of creat(). Maybe 
+>> better to use open() instead here?
+>>
+>>> +    if (fd_out == -1) {
+>>> +        perror("creat (argv[2])");
+>>> +        exit(EXIT_FAILURE);
+>>> +    }
+>>> +
+>>> +    do {
+>>> +        ret = syscall(__NR_copy_file_range, fd_in, NULL,
+>>> +                      fd_out, NULL, len, 0);
+>>
+>> I'd rather see this as:
+>>
+>> int
+>> copy_file_range(int fd_in, loff_t *off_in,
+>>                 int fd_out, loff_t *off_out, size_t len,
+>>                 unsigned int flags)
+>> {
+>>     return(syscall(__NR_copy_file_range, fd_in, fd_out, off_out, len, flags);
+>> }
+>>
+>> ...
+>>
+>>     copy_file_range(fd_in, fd_out, off_out, len, flags);
+>>
+>>  
+>>> +        if (ret == -1) {
+>>> +            perror("copy_file_range");
+>>> +            exit(EXIT_FAILURE);
+>>> +        }
+>>> +
+>>> +        len -= ret;
+>>> +    } while (len > 0);
+>>> +
+>>> +    close(fd_in);
+>>> +    close(fd_out);
+>>> +    exit(EXIT_SUCCESS);
+>>> +}
+>>> +.fi
+>>> +.SH SEE ALSO
+>>> +.BR splice (2)
+>>>
+>>
+>> In the next iteration of this patch, could you include a change to
+>> splice(2) so that copy_file_range(2) is added under SEE ALSO in
+>> that page. Also, are there any other pages that we should like
+>> to/from? (sendfile(2)?)
+>>
+>> Thanks,
+>>
+>> Michael
+>>
+>>
+>> -- 
+>> Michael Kerrisk
+>> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+>> Linux/UNIX System Programming Training: http://man7.org/training/
 
--- 
-tejun
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
