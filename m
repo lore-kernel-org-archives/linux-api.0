@@ -1,7 +1,7 @@
 From: bfields@fieldses.org (J. Bruce Fields)
 Subject: Re: [RFC v7 25/41] richacl: Isolate the owner and group classes
-Date: Tue, 22 Sep 2015 15:02:24 -0400
-Message-ID: <20150922190224.GA19127@fieldses.org>
+Date: Tue, 22 Sep 2015 15:02:58 -0400
+Message-ID: <20150922190258.GB19127@fieldses.org>
 References: <1441448856-13478-1-git-send-email-agruenba@redhat.com>
  <1441448856-13478-26-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
@@ -13,6 +13,12 @@ Sender: linux-kernel-owner@vger.kernel.org
 To: Andreas Gruenbacher <agruenba@redhat.com>
 Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org, linux-cifs@vger.kernel.org, linux-security-module@vger.kernel.org, Andreas Gruenbacher <agruen@kernel.org>
 List-Id: linux-api@vger.kernel.org
+
+Oh, and my only comments were nits, this looks good to me:
+
+	Reviewed-by: J. Bruce Fields <bfields@redhat.com>
+
+--b.
 
 On Sat, Sep 05, 2015 at 12:27:20PM +0200, Andreas Gruenbacher wrote:
 > When applying the file masks to an acl, we need to ensure that no
@@ -167,10 +173,6 @@ On Sat, Sep 05, 2015 at 12:27:20PM +0200, Andreas Gruenbacher wrote:
 > +	int n;
 > +	/*
 > +	 * Compute the permissions already denied to @who.
-
-I'm not sure, but may be worth commenting on the lack of everyone denies
-here as you do in a couple places below.
-
 > +	 */
 > +	richacl_for_each_entry(ace, acl) {
 > +		if (richace_is_inherit_only(ace))
@@ -218,9 +220,6 @@ here as you do in a couple places below.
 > +		ace->e_flags &= ~RICHACE_INHERITANCE_FLAGS;
 > +		ace->e_mask = deny;
 > +	}
-
-As in the owner case, I think a goto would simplify the logic a little.
-
 > +	return 0;
 > +}
 > +
@@ -285,11 +284,6 @@ As in the owner case, I think a goto would simplify the logic a little.
 > +		/*
 > +		 * Start from the entry before the trailing everyone@ allow
 > +		 * entry.  We will not hit everyone@ entries in the loop.
-
-May as well skip the check below, in that case?
-
---b.
-
 > +		 */
 > +		for (n = alloc->acl->a_count - 2; n != -1; n--) {
 > +			ace = alloc->acl->a_entries + n;
