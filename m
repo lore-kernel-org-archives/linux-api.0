@@ -1,109 +1,39 @@
-From: Andre Przywara <andre.przywara@arm.com>
-Subject: Re: [PATCH 2/2] selftests/userfaultfd: improve syscall number
- definition
-Date: Tue, 22 Sep 2015 18:15:12 +0100
-Message-ID: <56018CA0.8050600@arm.com>
-References: <1442918756-17892-1-git-send-email-andre.przywara@arm.com>
- <1442918756-17892-3-git-send-email-andre.przywara@arm.com>
- <56015C59.5010300@osg.samsung.com> <20150922140625.GH25412@redhat.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [RFC v2 02/18] kthread: Add create_kthread_worker*()
+Date: Tue, 22 Sep 2015 14:20:49 -0400
+Message-ID: <20150922182049.GA17659@mtj.duckdns.org>
+References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
+ <1442840639-6963-3-git-send-email-pmladek@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150922140625.GH25412@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrea Arcangeli <aarcange@redhat.com>, Shuah Khan <shuahkh@osg.samsung.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Pavel Emelyanov <xemul@parallels.com>, Will Deacon <Will.Deacon@arm.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1442840639-6963-3-git-send-email-pmladek@suse.com>
+Sender: owner-linux-mm@kvack.org
+To: Petr Mladek <pmladek@suse.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Shuah, Andrea,
+Hello, Petr.
 
-On 22/09/15 15:06, Andrea Arcangeli wrote:
-> On Tue, Sep 22, 2015 at 07:49:13AM -0600, Shuah Khan wrote:
->> On 09/22/2015 04:45 AM, Andre Przywara wrote:
->>> At the moment the userfaultfd test program only supports x86 and an
->>> architecture called "powewrpc" ;-)
->>> Fix that typo and add the syscall numbers for other architectures as
->>> well.
->>> Also as in an ideal world a syscall number should come from the system
->>> header file <asm/unistd.h>, include that header and guard the explicit
->>> syscall number section below to avoid redefinitions.
->>>
->>> Signed-off-by: Andre Przywara <andre.przywara@arm.com>
->>> ---
->>>  tools/testing/selftests/vm/userfaultfd.c | 13 ++++++++++++-
->>>  1 file changed, 12 insertions(+), 1 deletion(-)
->>>
->>> diff --git a/tools/testing/selftests/vm/userfaultfd.c b/tools/testing/selftests/vm/userfaultfd.c
->>> index 2c7cca6..63be27f 100644
->>> --- a/tools/testing/selftests/vm/userfaultfd.c
->>> +++ b/tools/testing/selftests/vm/userfaultfd.c
->>> @@ -65,16 +65,27 @@
->>>  #include <sys/ioctl.h>
->>>  #include <pthread.h>
->>>  #include "../../../../include/uapi/linux/userfaultfd.h"
->>> +#include <asm/unistd.h>
->>>  
->>> +/* ideally the above user header provides that number, but ... */
->>> +#ifndef __NR_userfaultfd
->>>  #ifdef __x86_64__
->>>  #define __NR_userfaultfd 323
->>>  #elif defined(__i386__)
->>>  #define __NR_userfaultfd 374
->>> -#elif defined(__powewrpc__)
->>> +#elif defined(__powerpc__)
->>>  #define __NR_userfaultfd 364
->>> +#elif defined(__ia64__)
->>> +#define __NR_userfaultfd 1343
->>> +#elif defined(__arm__)
->>> +#define __NR_userfaultfd 388
->>> +#elif defined(__aarch64__)
->>> +/* this is from the generic syscall table, used also on other architectures */
->>> +#define __NR_userfaultfd 283
->>>  #else
->>>  #error "missing __NR_userfaultfd definition"
->>>  #endif
->>> +#endif /* !__NR_userfaultfd */
->>>  
->>>  static unsigned long nr_cpus, nr_pages, nr_pages_per_cpu, page_size;
->>>  
->>>
->>
->> This is not okay. User-space shouldn't be (re)defining/duplicating
->> syscall numbers. I can't take this patch.
+On Mon, Sep 21, 2015 at 03:03:43PM +0200, Petr Mladek wrote:
+> It enforces using kthread_worker_fn() for the main thread. But I doubt
+> that there are any plans to create any alternative. In fact, I think
+> that we do not want any alternative main thread because it would be
+> hard to support consistency with the rest of the kthread worker API.
 
-While I agree that this isn't the right approach from a userland point
-of view, I wonder how this is supposed to work for the next few months?
-Is everybody required to overwrite their distribution-provided kernel
-headers just for compiling this test program?
+The original intention was allowing users to use a wrapper function
+which sets up kthread attributes and then calls kthread_worker_fn().
+That can be done by a work item too but is more cumbersome.  Just
+wanted to note that.  Will keep reading on.
 
-> -mm has already been updated to do exactly that. Syscall numbers end
-> up hardcoded into userland binaries/libs somewhere, so it's not a
-> bugfix but certainly it's a nice cleanup to remove the whole #ifdef block.
-> 
-> Andre, could you see if linux-next (which includes -mm) works for you
-> by just running "cd tools/testing/selftests/vm/ && make"? If there's
-> any further change required could you diff it against linux-next?
+Thanks.
 
-This doesn't compile now for me, because it looks into
-/usr/include/asm/unistd.h, which I keep to the distribution copy of it.
-Also linux/userfaultfd.h is missing, because it's brand new.
+-- 
+tejun
 
-If that tool lives in the kernel repo, it should be able to either use
-the uapi headers directly or hardcode the syscall numbers - strictly
-it's not a sane userland program anymore, but for that kind of tools I
-deem it's totally acceptable. I think this is one rationale for keeping
-it inside the linux.git repo.
-
-Obviously you were facing the same problem in the beginning (looking at
-the original code), so I was just extending the original solution to
-cover more architectures and prepare for the time when those symbols
-start to appear in distributions.
-
-I guess the right solution would be to hack the Makefile to set the
-include path to the kernel's copy of include/uapi, though I am not sure
-this works cleanly for different architectures and separate build
-directories. I will give this a try ...
-
-Cheers,
-Andre.
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
