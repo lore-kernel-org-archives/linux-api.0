@@ -1,255 +1,255 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [v15 1/4] ext4: adds project ID support
-Date: Wed, 23 Sep 2015 20:17:42 +0200
-Message-ID: <20150923181742.GD16334@quack.suse.cz>
-References: <1442146833-13652-1-git-send-email-lixi@ddn.com>
- <1442146833-13652-2-git-send-email-lixi@ddn.com>
- <87io71titt.fsf@openvz.org>
+From: David Woodhouse <dwmw2@infradead.org>
+Subject: [PATCH v2] Fix AF_PACKET ABI breakage in 4.2
+Date: Wed, 23 Sep 2015 19:45:08 +0100
+Message-ID: <1443033908.74600.21.camel@infradead.org>
+References: <1443019470.74600.6.camel@infradead.org>
+	 <20150923.110926.1369752430685358746.davem@davemloft.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <87io71titt.fsf@openvz.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Dmitry Monakhov <dmonakhov@openvz.org>
-Cc: Li Xi <pkuelelixi@gmail.com>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger@dilger.ca, jack@suse.cz, viro@zeniv.linux.org.uk, hch@infradead.org
+Content-Type: multipart/signed; micalg="sha-1"; protocol="application/x-pkcs7-signature";
+	boundary="=-SdJev/AcFENEZ6GQhmPS"
+Return-path: <kvm-owner@vger.kernel.org>
+In-Reply-To: <20150923.110926.1369752430685358746.davem@davemloft.net>
+Sender: kvm-owner@vger.kernel.org
+To: David Miller <davem@davemloft.net>
+Cc: netdev@vger.kernel.org, gkurz@linux.vnet.ibm.com, rusty@rustcorp.com.au, mst@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, kvm@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed 23-09-15 15:34:54, Dmitry Monakhov wrote:
-> > @@ -692,6 +695,7 @@ struct ext4_inode {
-> >  	__le32  i_crtime;       /* File Creation time */
-> >  	__le32  i_crtime_extra; /* extra FileCreationtime (nsec << 2 | epoch) */
-> >  	__le32  i_version_hi;	/* high 32 bits for 64-bit version */
-> > +	__le32  i_projid;	/* Project ID */
-> So you are about to extend dist_inode structure(not xattr). I do understand that
-> his is ridiculous question for 15'th version of the patch, but still.
-> Personally I think that his is good idea, but can not find a
-> confirmation from Theodore and Jan that they are agree with that.
-> Guys please ACK that statement explicitly,so later we can  refer on this mail as decision made.
 
-Yes, I agree with this.
+--=-SdJev/AcFENEZ6GQhmPS
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-								Honza
+Commit 7d82410950aa ("virtio: add explicit big-endian support to memory
+accessors") accidentally changed the virtio_net header used by
+AF_PACKET with PACKET_VNET_HDR from host-endian to big-endian.
 
-> >  };
-> >  
-> >  struct move_extent {
-> > @@ -952,6 +956,7 @@ struct ext4_inode_info {
-> >  	/* Encryption params */
-> >  	struct ext4_crypt_info *i_crypt_info;
-> >  #endif
-> > +	kprojid_t i_projid;
-> >  };
-> >  
-> >  /*
-> > @@ -1566,6 +1571,7 @@ static inline int ext4_encrypted_inode(struct inode *inode)
-> >   */
-> >  #define EXT4_FEATURE_RO_COMPAT_METADATA_CSUM	0x0400
-> >  #define EXT4_FEATURE_RO_COMPAT_READONLY		0x1000
-> > +#define EXT4_FEATURE_RO_COMPAT_PROJECT		0x2000
-> >  
-> >  #define EXT4_FEATURE_INCOMPAT_COMPRESSION	0x0001
-> >  #define EXT4_FEATURE_INCOMPAT_FILETYPE		0x0002
-> > @@ -1617,7 +1623,8 @@ static inline int ext4_encrypted_inode(struct inode *inode)
-> >  					 EXT4_FEATURE_RO_COMPAT_HUGE_FILE |\
-> >  					 EXT4_FEATURE_RO_COMPAT_BIGALLOC |\
-> >  					 EXT4_FEATURE_RO_COMPAT_METADATA_CSUM|\
-> > -					 EXT4_FEATURE_RO_COMPAT_QUOTA)
-> > +					 EXT4_FEATURE_RO_COMPAT_QUOTA |\
-> > +					 EXT4_FEATURE_RO_COMPAT_PROJECT)
-> >  
-> >  /*
-> >   * Default values for user and/or group using reserved blocks
-> > @@ -1625,6 +1632,11 @@ static inline int ext4_encrypted_inode(struct inode *inode)
-> >  #define	EXT4_DEF_RESUID		0
-> >  #define	EXT4_DEF_RESGID		0
-> >  
-> > +/*
-> > + * Default project ID
-> > + */
-> > +#define	EXT4_DEF_PROJID		0
-> > +
-> >  #define EXT4_DEF_INODE_READAHEAD_BLKS	32
-> >  
-> >  /*
-> > @@ -2317,6 +2329,7 @@ extern int ext4_zero_partial_blocks(handle_t *handle, struct inode *inode,
-> >  			     loff_t lstart, loff_t lend);
-> >  extern int ext4_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf);
-> >  extern qsize_t *ext4_get_reserved_space(struct inode *inode);
-> > +extern int ext4_get_projid(struct inode *inode, kprojid_t *projid);
-> >  extern void ext4_da_update_reserve_space(struct inode *inode,
-> >  					int used, int quota_claim);
-> >  
-> > diff --git a/fs/ext4/ialloc.c b/fs/ext4/ialloc.c
-> > index 619bfc1..692b50f 100644
-> > --- a/fs/ext4/ialloc.c
-> > +++ b/fs/ext4/ialloc.c
-> > @@ -769,6 +769,13 @@ struct inode *__ext4_new_inode(handle_t *handle, struct inode *dir,
-> >  		inode->i_gid = dir->i_gid;
-> >  	} else
-> >  		inode_init_owner(inode, dir, mode);
-> > +
-> > +	if (EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_PROJECT) &&
-> > +	    ext4_test_inode_flag(dir, EXT4_INODE_PROJINHERIT))
-> > +		ei->i_projid = EXT4_I(dir)->i_projid;
-> > +	else
-> > +		ei->i_projid = make_kprojid(&init_user_ns, EXT4_DEF_PROJID);
-> > +
-> >  	err = dquot_initialize(inode);
-> >  	if (err)
-> >  		goto out;
-> > diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-> > index 612fbcf..5836a3d 100644
-> > --- a/fs/ext4/inode.c
-> > +++ b/fs/ext4/inode.c
-> > @@ -4035,6 +4035,14 @@ static inline void ext4_iget_extra_inode(struct inode *inode,
-> >  		EXT4_I(inode)->i_inline_off = 0;
-> >  }
-> >  
-> > +int ext4_get_projid(struct inode *inode, kprojid_t *projid)
-> > +{
-> > +	if (!EXT4_HAS_RO_COMPAT_FEATURE(inode->i_sb, EXT4_FEATURE_RO_COMPAT_PROJECT))
-> > +		return -EOPNOTSUPP;
-> > +	*projid = EXT4_I(inode)->i_projid;
-> > +	return 0;
-> > +}
-> > +
-> >  struct inode *ext4_iget(struct super_block *sb, unsigned long ino)
-> >  {
-> >  	struct ext4_iloc iloc;
-> > @@ -4046,6 +4054,7 @@ struct inode *ext4_iget(struct super_block *sb, unsigned long ino)
-> >  	int block;
-> >  	uid_t i_uid;
-> >  	gid_t i_gid;
-> > +	projid_t i_projid;
-> >  
-> >  	inode = iget_locked(sb, ino);
-> >  	if (!inode)
-> > @@ -4095,12 +4104,20 @@ struct inode *ext4_iget(struct super_block *sb, unsigned long ino)
-> >  	inode->i_mode = le16_to_cpu(raw_inode->i_mode);
-> >  	i_uid = (uid_t)le16_to_cpu(raw_inode->i_uid_low);
-> >  	i_gid = (gid_t)le16_to_cpu(raw_inode->i_gid_low);
-> > +	if (EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_PROJECT) &&
-> > +	    EXT4_INODE_SIZE(sb) > EXT4_GOOD_OLD_INODE_SIZE &&
-> > +	    EXT4_FITS_IN_INODE(raw_inode, ei, i_projid))
-> > +		i_projid = (projid_t)le32_to_cpu(raw_inode->i_projid);
-> > +	else
-> > +		i_projid = EXT4_DEF_PROJID;
-> > +
-> >  	if (!(test_opt(inode->i_sb, NO_UID32))) {
-> >  		i_uid |= le16_to_cpu(raw_inode->i_uid_high) << 16;
-> >  		i_gid |= le16_to_cpu(raw_inode->i_gid_high) << 16;
-> >  	}
-> >  	i_uid_write(inode, i_uid);
-> >  	i_gid_write(inode, i_gid);
-> > +	ei->i_projid = make_kprojid(&init_user_ns, i_projid);
-> >  	set_nlink(inode, le16_to_cpu(raw_inode->i_links_count));
-> >  
-> >  	ext4_clear_state_flags(ei);	/* Only relevant on 32-bit archs */
-> > @@ -4398,6 +4415,7 @@ static int ext4_do_update_inode(handle_t *handle,
-> >  	int need_datasync = 0, set_large_file = 0;
-> >  	uid_t i_uid;
-> >  	gid_t i_gid;
-> > +	projid_t i_projid;
-> >  
-> >  	spin_lock(&ei->i_raw_lock);
-> >  
-> > @@ -4410,6 +4428,7 @@ static int ext4_do_update_inode(handle_t *handle,
-> >  	raw_inode->i_mode = cpu_to_le16(inode->i_mode);
-> >  	i_uid = i_uid_read(inode);
-> >  	i_gid = i_gid_read(inode);
-> > +	i_projid = from_kprojid(&init_user_ns, ei->i_projid);
-> >  	if (!(test_opt(inode->i_sb, NO_UID32))) {
-> >  		raw_inode->i_uid_low = cpu_to_le16(low_16_bits(i_uid));
-> >  		raw_inode->i_gid_low = cpu_to_le16(low_16_bits(i_gid));
-> > @@ -4488,6 +4507,15 @@ static int ext4_do_update_inode(handle_t *handle,
-> >  				cpu_to_le16(ei->i_extra_isize);
-> >  		}
-> >  	}
-> > +
-> > +	BUG_ON(!EXT4_HAS_RO_COMPAT_FEATURE(inode->i_sb,
-> > +			EXT4_FEATURE_RO_COMPAT_PROJECT) &&
-> > +	       i_projid != EXT4_DEF_PROJID);
-> > +
-> > +	if (EXT4_INODE_SIZE(inode->i_sb) > EXT4_GOOD_OLD_INODE_SIZE &&
-> > +	    EXT4_FITS_IN_INODE(raw_inode, ei, i_projid))
-> > +		raw_inode->i_projid = cpu_to_le32(i_projid);
-> > +
-> >  	ext4_inode_csum_set(inode, raw_inode, ei);
-> >  	spin_unlock(&ei->i_raw_lock);
-> >  	if (inode->i_sb->s_flags & MS_LAZYTIME)
-> > diff --git a/fs/ext4/namei.c b/fs/ext4/namei.c
-> > index 9f61e76..61694ad 100644
-> > --- a/fs/ext4/namei.c
-> > +++ b/fs/ext4/namei.c
-> > @@ -3215,6 +3215,12 @@ static int ext4_link(struct dentry *old_dentry,
-> >  	if (ext4_encrypted_inode(dir) &&
-> >  	    !ext4_is_child_context_consistent_with_parent(dir, inode))
-> >  		return -EPERM;
-> > +
-> > +       if ((ext4_test_inode_flag(dir, EXT4_INODE_PROJINHERIT)) &&
-> > +	   (!projid_eq(EXT4_I(dir)->i_projid,
-> > +		       EXT4_I(old_dentry->d_inode)->i_projid)))
-> > +		return -EXDEV;
-> > +
-> >  	err = dquot_initialize(dir);
-> >  	if (err)
-> >  		return err;
-> > @@ -3496,6 +3502,11 @@ static int ext4_rename(struct inode *old_dir, struct dentry *old_dentry,
-> >  	int credits;
-> >  	u8 old_file_type;
-> >  
-> > +	if ((ext4_test_inode_flag(new_dir, EXT4_INODE_PROJINHERIT)) &&
-> > +	    (!projid_eq(EXT4_I(new_dir)->i_projid,
-> > +			EXT4_I(old_dentry->d_inode)->i_projid)))
-> > +		return -EXDEV;
-> > +
-> >  	retval = dquot_initialize(old.dir);
-> >  	if (retval)
-> >  		return retval;
-> > @@ -3705,6 +3716,14 @@ static int ext4_cross_rename(struct inode *old_dir, struct dentry *old_dentry,
-> >  							   new.inode)))
-> >  		return -EPERM;
-> >  
-> > +	if ((ext4_test_inode_flag(new_dir, EXT4_INODE_PROJINHERIT) &&
-> > +	     !projid_eq(EXT4_I(new_dir)->i_projid,
-> > +			EXT4_I(old_dentry->d_inode)->i_projid)) ||
-> > +	    (ext4_test_inode_flag(old_dir, EXT4_INODE_PROJINHERIT) &&
-> > +	     !projid_eq(EXT4_I(old_dir)->i_projid,
-> > +			EXT4_I(new_dentry->d_inode)->i_projid)))
-> > +		return -EXDEV;
-> > +
-> >  	retval = dquot_initialize(old.dir);
-> >  	if (retval)
-> >  		return retval;
-> > diff --git a/fs/ext4/super.c b/fs/ext4/super.c
-> > index a63c7b0..d07445e 100644
-> > --- a/fs/ext4/super.c
-> > +++ b/fs/ext4/super.c
-> > @@ -1097,6 +1097,7 @@ static const struct dquot_operations ext4_quota_operations = {
-> >  	.write_info	= ext4_write_info,
-> >  	.alloc_dquot	= dquot_alloc,
-> >  	.destroy_dquot	= dquot_destroy,
-> > +	.get_projid	= ext4_get_projid,
-> >  };
-> >  
-> >  static const struct quotactl_ops ext4_qctl_operations = {
-> > diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-> > index 9b964a5..f15d980 100644
-> > --- a/include/uapi/linux/fs.h
-> > +++ b/include/uapi/linux/fs.h
-> > @@ -197,6 +197,7 @@ struct inodes_stat_t {
-> >  #define FS_EXTENT_FL			0x00080000 /* Extents */
-> >  #define FS_DIRECTIO_FL			0x00100000 /* Use direct i/o */
-> >  #define FS_NOCOW_FL			0x00800000 /* Do not cow file */
-> > +#define FS_PROJINHERIT_FL		0x20000000 /* Create with parents projid */
-> >  #define FS_RESERVED_FL			0x80000000 /* reserved for ext2 lib */
-> >  
-> >  #define FS_FL_USER_VISIBLE		0x0003DFFF /* User visible flags */
-> > -- 
-> > 1.7.1
+Since virtio_legacy_is_little_endian() is a very long identifier,
+define a VIO_LE macro and use that throughout the code instead of the
+hard-coded 'false' for little-endian.
+
+This restores the ABI to match 4.1 and earlier kernels, and makes my
+test program work again.
+
+Signed-off-by: David Woodhouse <David.Woodhouse@intel.com>
+---
+On Wed, 2015-09-23 at 11:09 -0700, David Miller wrote:
+> > +#define VIO_LE virtio_legacy_is_little_endian()
+>=20
+> When you define a shorthand macro, the defines to a function call,
+> make the macro have parenthesis too.
+
+In which case I suppose it also wants to be lower-case. Although
+"function call" is a bit strong since it's effectively just a constant.
+I'm still wondering if it'd be nicer just to use (__force u16) instead.
+
+diff --git a/net/packet/af_packet.c b/net/packet/af_packet.c
+index 7b8e39a..aa4b15c 100644
+--- a/net/packet/af_packet.c
++++ b/net/packet/af_packet.c
+@@ -230,6 +230,8 @@ struct packet_skb_cb {
+ 	} sa;
+ };
+=20
++#define vio_le() virtio_legacy_is_little_endian()
++
+ #define PACKET_SKB_CB(__skb)	((struct packet_skb_cb *)((__skb)->cb))
+=20
+ #define GET_PBDQC_FROM_RB(x)	((struct tpacket_kbdq_core *)(&(x)->prb_bdqc)=
+)
+@@ -2680,15 +2682,15 @@ static int packet_snd(struct socket *sock, struct m=
+sghdr *msg, size_t len)
+ 			goto out_unlock;
+=20
+ 		if ((vnet_hdr.flags & VIRTIO_NET_HDR_F_NEEDS_CSUM) &&
+-		    (__virtio16_to_cpu(false, vnet_hdr.csum_start) +
+-		     __virtio16_to_cpu(false, vnet_hdr.csum_offset) + 2 >
+-		      __virtio16_to_cpu(false, vnet_hdr.hdr_len)))
+-			vnet_hdr.hdr_len =3D __cpu_to_virtio16(false,
+-				 __virtio16_to_cpu(false, vnet_hdr.csum_start) +
+-				__virtio16_to_cpu(false, vnet_hdr.csum_offset) + 2);
++		    (__virtio16_to_cpu(vio_le(), vnet_hdr.csum_start) +
++		     __virtio16_to_cpu(vio_le(), vnet_hdr.csum_offset) + 2 >
++		      __virtio16_to_cpu(vio_le(), vnet_hdr.hdr_len)))
++			vnet_hdr.hdr_len =3D __cpu_to_virtio16(vio_le(),
++				 __virtio16_to_cpu(vio_le(), vnet_hdr.csum_start) +
++				__virtio16_to_cpu(vio_le(), vnet_hdr.csum_offset) + 2);
+=20
+ 		err =3D -EINVAL;
+-		if (__virtio16_to_cpu(false, vnet_hdr.hdr_len) > len)
++		if (__virtio16_to_cpu(vio_le(), vnet_hdr.hdr_len) > len)
+ 			goto out_unlock;
+=20
+ 		if (vnet_hdr.gso_type !=3D VIRTIO_NET_HDR_GSO_NONE) {
+@@ -2731,7 +2733,7 @@ static int packet_snd(struct socket *sock, struct msg=
+hdr *msg, size_t len)
+ 	hlen =3D LL_RESERVED_SPACE(dev);
+ 	tlen =3D dev->needed_tailroom;
+ 	skb =3D packet_alloc_skb(sk, hlen + tlen, hlen, len,
+-			       __virtio16_to_cpu(false, vnet_hdr.hdr_len),
++			       __virtio16_to_cpu(vio_le(), vnet_hdr.hdr_len),
+ 			       msg->msg_flags & MSG_DONTWAIT, &err);
+ 	if (skb =3D=3D NULL)
+ 		goto out_unlock;
+@@ -2778,8 +2780,8 @@ static int packet_snd(struct socket *sock, struct msg=
+hdr *msg, size_t len)
+=20
+ 	if (po->has_vnet_hdr) {
+ 		if (vnet_hdr.flags & VIRTIO_NET_HDR_F_NEEDS_CSUM) {
+-			u16 s =3D __virtio16_to_cpu(false, vnet_hdr.csum_start);
+-			u16 o =3D __virtio16_to_cpu(false, vnet_hdr.csum_offset);
++			u16 s =3D __virtio16_to_cpu(vio_le(), vnet_hdr.csum_start);
++			u16 o =3D __virtio16_to_cpu(vio_le(), vnet_hdr.csum_offset);
+ 			if (!skb_partial_csum_set(skb, s, o)) {
+ 				err =3D -EINVAL;
+ 				goto out_free;
+@@ -2787,7 +2789,7 @@ static int packet_snd(struct socket *sock, struct msg=
+hdr *msg, size_t len)
+ 		}
+=20
+ 		skb_shinfo(skb)->gso_size =3D
+-			__virtio16_to_cpu(false, vnet_hdr.gso_size);
++			__virtio16_to_cpu(vio_le(), vnet_hdr.gso_size);
+ 		skb_shinfo(skb)->gso_type =3D gso_type;
+=20
+ 		/* Header must be checked, and gso_segs computed. */
+@@ -3161,9 +3163,9 @@ static int packet_recvmsg(struct socket *sock, struct=
+ msghdr *msg, size_t len,
+=20
+ 			/* This is a hint as to how much should be linear. */
+ 			vnet_hdr.hdr_len =3D
+-				__cpu_to_virtio16(false, skb_headlen(skb));
++				__cpu_to_virtio16(vio_le(), skb_headlen(skb));
+ 			vnet_hdr.gso_size =3D
+-				__cpu_to_virtio16(false, sinfo->gso_size);
++				__cpu_to_virtio16(vio_le(), sinfo->gso_size);
+ 			if (sinfo->gso_type & SKB_GSO_TCPV4)
+ 				vnet_hdr.gso_type =3D VIRTIO_NET_HDR_GSO_TCPV4;
+ 			else if (sinfo->gso_type & SKB_GSO_TCPV6)
+@@ -3181,9 +3183,9 @@ static int packet_recvmsg(struct socket *sock, struct=
+ msghdr *msg, size_t len,
+=20
+ 		if (skb->ip_summed =3D=3D CHECKSUM_PARTIAL) {
+ 			vnet_hdr.flags =3D VIRTIO_NET_HDR_F_NEEDS_CSUM;
+-			vnet_hdr.csum_start =3D __cpu_to_virtio16(false,
++			vnet_hdr.csum_start =3D __cpu_to_virtio16(vio_le(),
+ 					  skb_checksum_start_offset(skb));
+-			vnet_hdr.csum_offset =3D __cpu_to_virtio16(false,
++			vnet_hdr.csum_offset =3D __cpu_to_virtio16(vio_le(),
+ 							 skb->csum_offset);
+ 		} else if (skb->ip_summed =3D=3D CHECKSUM_UNNECESSARY) {
+ 			vnet_hdr.flags =3D VIRTIO_NET_HDR_F_DATA_VALID;
+
+--=20
+David Woodhouse                            Open Source Technology Centre
+David.Woodhouse@intel.com                              Intel Corporation
 
 
--- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
+--=-SdJev/AcFENEZ6GQhmPS
+Content-Type: application/x-pkcs7-signature; name="smime.p7s"
+Content-Disposition: attachment; filename="smime.p7s"
+Content-Transfer-Encoding: base64
+
+MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIISjjCCBicw
+ggUPoAMCAQICAw3vNzANBgkqhkiG9w0BAQUFADCBjDELMAkGA1UEBhMCSUwxFjAUBgNVBAoTDVN0
+YXJ0Q29tIEx0ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRlIFNpZ25pbmcx
+ODA2BgNVBAMTL1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUgQ2xpZW50IENB
+MB4XDTE1MDUwNTA5NDM0MVoXDTE2MDUwNTA5NTMzNlowQjEcMBoGA1UEAwwTZHdtdzJAaW5mcmFk
+ZWFkLm9yZzEiMCAGCSqGSIb3DQEJARYTZHdtdzJAaW5mcmFkZWFkLm9yZzCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBAMkbm9kPbx1j/X4RVyf/pPKSYwelcco69TvnQQbKM8m8xkWjXJI1
+jpJ1jMaGUZGFToINMSZi7lZawUozudWbXSKy1SikENSTJHffsdRAIlsp+hR8vWvjsKUry6sEdqPG
+doa5RY7+N4WRusWZDYW/RRWE6i9EL9qV86CVPYqw22UBOUw4/j/HVGCV6TSB8yE5iEwhk/hUuzRr
+FZm1MJMR7mCS7BCR8Lr5jFY61lWpBiXNXIxLZCvDc26KR5L5tYX43iUVO3fzES1GRVoYnxxk2tmz
+fcsZG5vK+Trc9L8OZJfkYrEHH3+Iw41MQ0w/djVtYr1+HYldx0QmYXAtnhIj+UMCAwEAAaOCAtkw
+ggLVMAkGA1UdEwQCMAAwCwYDVR0PBAQDAgSwMB0GA1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcD
+BDAdBgNVHQ4EFgQUszC96C3w5/2+d+atSr0IpT26YI4wHwYDVR0jBBgwFoAUU3Ltkpzg2ssBXHx+
+ljVO8tS4UYIwHgYDVR0RBBcwFYETZHdtdzJAaW5mcmFkZWFkLm9yZzCCAUwGA1UdIASCAUMwggE/
+MIIBOwYLKwYBBAGBtTcBAgMwggEqMC4GCCsGAQUFBwIBFiJodHRwOi8vd3d3LnN0YXJ0c3NsLmNv
+bS9wb2xpY3kucGRmMIH3BggrBgEFBQcCAjCB6jAnFiBTdGFydENvbSBDZXJ0aWZpY2F0aW9uIEF1
+dGhvcml0eTADAgEBGoG+VGhpcyBjZXJ0aWZpY2F0ZSB3YXMgaXNzdWVkIGFjY29yZGluZyB0byB0
+aGUgQ2xhc3MgMSBWYWxpZGF0aW9uIHJlcXVpcmVtZW50cyBvZiB0aGUgU3RhcnRDb20gQ0EgcG9s
+aWN5LCByZWxpYW5jZSBvbmx5IGZvciB0aGUgaW50ZW5kZWQgcHVycG9zZSBpbiBjb21wbGlhbmNl
+IG9mIHRoZSByZWx5aW5nIHBhcnR5IG9ibGlnYXRpb25zLjA2BgNVHR8ELzAtMCugKaAnhiVodHRw
+Oi8vY3JsLnN0YXJ0c3NsLmNvbS9jcnR1MS1jcmwuY3JsMIGOBggrBgEFBQcBAQSBgTB/MDkGCCsG
+AQUFBzABhi1odHRwOi8vb2NzcC5zdGFydHNzbC5jb20vc3ViL2NsYXNzMS9jbGllbnQvY2EwQgYI
+KwYBBQUHMAKGNmh0dHA6Ly9haWEuc3RhcnRzc2wuY29tL2NlcnRzL3N1Yi5jbGFzczEuY2xpZW50
+LmNhLmNydDAjBgNVHRIEHDAahhhodHRwOi8vd3d3LnN0YXJ0c3NsLmNvbS8wDQYJKoZIhvcNAQEF
+BQADggEBAHMQmxHHodpS85X8HRyxhvfkys7r+taCNOaNU9cxQu/cZ/6k5nS2qGNMzZ6jb7ueY/V7
+7p+4DW/9ZWODDTf4Fz00mh5SSVc20Bz7t+hhxwHd62PZgENh5i76Qq2tw48U8AsYo5damHby1epf
+neZafLpUkLLO7AGBJIiRVTevdvyXQ0qnixOmKMWyvrhSNGuVIKVdeqLP+102Dwf+dpFyw+j1hz28
+jEEKpHa+NR1b2kXuSPi/rMGhexwlJOh4tK8KQ6Ryr0rIN//NSbOgbyYZrzc/ZUWX9V5OA84ChFb2
+vkFl0OcYrttp/rhDBLITwffPxSZeoBh9H7zYzkbCXKL3BUIwggYnMIIFD6ADAgECAgMN7zcwDQYJ
+KoZIhvcNAQEFBQAwgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQKEw1TdGFydENvbSBMdGQuMSswKQYD
+VQQLEyJTZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWduaW5nMTgwNgYDVQQDEy9TdGFydENv
+bSBDbGFzcyAxIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVudCBDQTAeFw0xNTA1MDUwOTQzNDFa
+Fw0xNjA1MDUwOTUzMzZaMEIxHDAaBgNVBAMME2R3bXcyQGluZnJhZGVhZC5vcmcxIjAgBgkqhkiG
+9w0BCQEWE2R3bXcyQGluZnJhZGVhZC5vcmcwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIB
+AQDJG5vZD28dY/1+EVcn/6TykmMHpXHKOvU750EGyjPJvMZFo1ySNY6SdYzGhlGRhU6CDTEmYu5W
+WsFKM7nVm10istUopBDUkyR337HUQCJbKfoUfL1r47ClK8urBHajxnaGuUWO/jeFkbrFmQ2Fv0UV
+hOovRC/alfOglT2KsNtlATlMOP4/x1Rglek0gfMhOYhMIZP4VLs0axWZtTCTEe5gkuwQkfC6+YxW
+OtZVqQYlzVyMS2Qrw3NuikeS+bWF+N4lFTt38xEtRkVaGJ8cZNrZs33LGRubyvk63PS/DmSX5GKx
+Bx9/iMONTENMP3Y1bWK9fh2JXcdEJmFwLZ4SI/lDAgMBAAGjggLZMIIC1TAJBgNVHRMEAjAAMAsG
+A1UdDwQEAwIEsDAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwQwHQYDVR0OBBYEFLMwvegt
+8Of9vnfmrUq9CKU9umCOMB8GA1UdIwQYMBaAFFNy7ZKc4NrLAVx8fpY1TvLUuFGCMB4GA1UdEQQX
+MBWBE2R3bXcyQGluZnJhZGVhZC5vcmcwggFMBgNVHSAEggFDMIIBPzCCATsGCysGAQQBgbU3AQID
+MIIBKjAuBggrBgEFBQcCARYiaHR0cDovL3d3dy5zdGFydHNzbC5jb20vcG9saWN5LnBkZjCB9wYI
+KwYBBQUHAgIwgeowJxYgU3RhcnRDb20gQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwAwIBARqBvlRo
+aXMgY2VydGlmaWNhdGUgd2FzIGlzc3VlZCBhY2NvcmRpbmcgdG8gdGhlIENsYXNzIDEgVmFsaWRh
+dGlvbiByZXF1aXJlbWVudHMgb2YgdGhlIFN0YXJ0Q29tIENBIHBvbGljeSwgcmVsaWFuY2Ugb25s
+eSBmb3IgdGhlIGludGVuZGVkIHB1cnBvc2UgaW4gY29tcGxpYW5jZSBvZiB0aGUgcmVseWluZyBw
+YXJ0eSBvYmxpZ2F0aW9ucy4wNgYDVR0fBC8wLTAroCmgJ4YlaHR0cDovL2NybC5zdGFydHNzbC5j
+b20vY3J0dTEtY3JsLmNybDCBjgYIKwYBBQUHAQEEgYEwfzA5BggrBgEFBQcwAYYtaHR0cDovL29j
+c3Auc3RhcnRzc2wuY29tL3N1Yi9jbGFzczEvY2xpZW50L2NhMEIGCCsGAQUFBzAChjZodHRwOi8v
+YWlhLnN0YXJ0c3NsLmNvbS9jZXJ0cy9zdWIuY2xhc3MxLmNsaWVudC5jYS5jcnQwIwYDVR0SBBww
+GoYYaHR0cDovL3d3dy5zdGFydHNzbC5jb20vMA0GCSqGSIb3DQEBBQUAA4IBAQBzEJsRx6HaUvOV
+/B0csYb35MrO6/rWgjTmjVPXMULv3Gf+pOZ0tqhjTM2eo2+7nmP1e+6fuA1v/WVjgw03+Bc9NJoe
+UklXNtAc+7foYccB3etj2YBDYeYu+kKtrcOPFPALGKOXWph28tXqX53mWny6VJCyzuwBgSSIkVU3
+r3b8l0NKp4sTpijFsr64UjRrlSClXXqiz/tdNg8H/naRcsPo9Yc9vIxBCqR2vjUdW9pF7kj4v6zB
+oXscJSToeLSvCkOkcq9KyDf/zUmzoG8mGa83P2VFl/VeTgPOAoRW9r5BZdDnGK7baf64QwSyE8H3
+z8UmXqAYfR+82M5Gwlyi9wVCMIIGNDCCBBygAwIBAgIBHjANBgkqhkiG9w0BAQUFADB9MQswCQYD
+VQQGEwJJTDEWMBQGA1UEChMNU3RhcnRDb20gTHRkLjErMCkGA1UECxMiU2VjdXJlIERpZ2l0YWwg
+Q2VydGlmaWNhdGUgU2lnbmluZzEpMCcGA1UEAxMgU3RhcnRDb20gQ2VydGlmaWNhdGlvbiBBdXRo
+b3JpdHkwHhcNMDcxMDI0MjEwMTU1WhcNMTcxMDI0MjEwMTU1WjCBjDELMAkGA1UEBhMCSUwxFjAU
+BgNVBAoTDVN0YXJ0Q29tIEx0ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRl
+IFNpZ25pbmcxODA2BgNVBAMTL1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUg
+Q2xpZW50IENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxwmDzM4t2BqxKaQuE6uW
+vooyg4ymiEGWVUet1G8SD+rqvyNH4QrvnEIaFHxOhESip7vMz39ScLpNLbL1QpOlPW/tFIzNHS3q
+d2XRNYG5Sv9RcGE+T4qbLtsjjJbi6sL7Ls/f/X9ftTyhxvxWkf8KW37iKrueKsxw2HqolH7GM6FX
+5UfNAwAu4ZifkpmZzU1slBhyWwaQPEPPZRsWoTb7q8hmgv6Nv3Hg9rmA1/VPBIOQ6SKRkHXG0Hhm
+q1dOFoAFI411+a/9nWm5rcVjGcIWZ2v/43Yksq60jExipA4l5uv9/+Hm33mbgmCszdj/Dthf13tg
+Av2O83hLJ0exTqfrlwIDAQABo4IBrTCCAakwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC
+AQYwHQYDVR0OBBYEFFNy7ZKc4NrLAVx8fpY1TvLUuFGCMB8GA1UdIwQYMBaAFE4L7xqkQFulF2mH
+MMo0aEPQQa7yMGYGCCsGAQUFBwEBBFowWDAnBggrBgEFBQcwAYYbaHR0cDovL29jc3Auc3RhcnRz
+c2wuY29tL2NhMC0GCCsGAQUFBzAChiFodHRwOi8vd3d3LnN0YXJ0c3NsLmNvbS9zZnNjYS5jcnQw
+WwYDVR0fBFQwUjAnoCWgI4YhaHR0cDovL3d3dy5zdGFydHNzbC5jb20vc2ZzY2EuY3JsMCegJaAj
+hiFodHRwOi8vY3JsLnN0YXJ0c3NsLmNvbS9zZnNjYS5jcmwwgYAGA1UdIAR5MHcwdQYLKwYBBAGB
+tTcBAgEwZjAuBggrBgEFBQcCARYiaHR0cDovL3d3dy5zdGFydHNzbC5jb20vcG9saWN5LnBkZjA0
+BggrBgEFBQcCARYoaHR0cDovL3d3dy5zdGFydHNzbC5jb20vaW50ZXJtZWRpYXRlLnBkZjANBgkq
+hkiG9w0BAQUFAAOCAgEACoMIfXirLAZcuGOMXq4cuSN3TaFx2H2GvD5VSy/6rV55BYHbWNaPeQn3
+oBSU8KgQZn/Kck1JxbLpAxVCNtsxeW1R87ifhsYZ0qjdrA9anrW2MAWCtosmAOT4OxK9QPoSjCMx
+M3HbkZCDJgnlE8jMopH21BbyAYr7b5EfGRQJNtgWcvqSXwKHnTutR08+Kkn0KAkXCzeQNLeA5LlY
+UzFyM7kPAp8pIRMQ+seHunmyG642S2+y/qHEdMuGIwpfz3eDF1PdctL04qYK/zu+Qg1Bw0RwgigV
+Zs/0c5HP2/e9DBHh7eSwtzYlk4AUr6yxLlcwSjOfOmKEQ/Q8tzh0IFiNu9IPuTGAPBn4CPxD0+Ru
+8T2wg8/s43R/PT3kd1OEqOJUl7q+h+r6fpvU0Fzxd2tC8Ga6fDEPme+1Nbi+03pVjuZQKbGwKJ66
+gEn06WqaxVZC+J8hh/jR0k9mST1iAZPNYulcNJ8tKmVtjYsv0L1TSm2+NwON58tO+pIVzu3DWwSE
+XSf+qkDavQam+QtEOZxLBXI++aMUEapSn+k3Lxm48ZCYfAWLb/Xj7F5JQMbZvCexglAbYR0kIHqW
+5DnsYSdMD/IplJMojx0NBrxJ3fN9dvX2Y6BIXRsF1du4qESm4/3CKuyUV7p9DW3mPlHTGLvYxnyK
+Qy7VFBkoLINszBrOUeIxggNvMIIDawIBATCBlDCBjDELMAkGA1UEBhMCSUwxFjAUBgNVBAoTDVN0
+YXJ0Q29tIEx0ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRlIFNpZ25pbmcx
+ODA2BgNVBAMTL1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUgQ2xpZW50IENB
+AgMN7zcwCQYFKw4DAhoFAKCCAa8wGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0B
+CQUxDxcNMTUwOTIzMTg0NTA4WjAjBgkqhkiG9w0BCQQxFgQUuAu6v3NdwTYMzW4D1BqW9qTQ0mYw
+gaUGCSsGAQQBgjcQBDGBlzCBlDCBjDELMAkGA1UEBhMCSUwxFjAUBgNVBAoTDVN0YXJ0Q29tIEx0
+ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRlIFNpZ25pbmcxODA2BgNVBAMT
+L1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUgQ2xpZW50IENBAgMN7zcwgacG
+CyqGSIb3DQEJEAILMYGXoIGUMIGMMQswCQYDVQQGEwJJTDEWMBQGA1UEChMNU3RhcnRDb20gTHRk
+LjErMCkGA1UECxMiU2VjdXJlIERpZ2l0YWwgQ2VydGlmaWNhdGUgU2lnbmluZzE4MDYGA1UEAxMv
+U3RhcnRDb20gQ2xhc3MgMSBQcmltYXJ5IEludGVybWVkaWF0ZSBDbGllbnQgQ0ECAw3vNzANBgkq
+hkiG9w0BAQEFAASCAQCj1WWvxdtU8WHOdzaMpzxZe4XwI86P1x6hhCsSi8OgLy2t44bNK4rmtILk
+doxwQpmfS7uYdMoboVPY/jzOEj91zxYt22yTj655qfzw33658a+YYUk+XfjocKfmKh7230odeJ74
+izg0y5KjYwvxGWhMT9yQoCeFaG8QGuIWrKm4y9G6uCKXMSFAJd25Zl6spwaF5Z2BgI94FaY+zN8V
+ipyskXnU2t3Pc4lV5NA7QUX+LgwiTw3QLJ3cye+Yh1rC44l45iKGw01NJWs18ZhOZNm24g22OgGG
+5gOtBBYAABPiZlUlQCFYmdlbkBJgS+6tWwtq2y2afL9/zZqR8BOzrKKnAAAAAAAA
+
+
+--=-SdJev/AcFENEZ6GQhmPS--
+
