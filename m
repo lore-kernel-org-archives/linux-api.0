@@ -1,66 +1,49 @@
-From: Petr Mladek <pmladek@suse.com>
-Subject: Re: [RFC v2 09/18] mm/huge_page: Convert khugepaged() into kthread
- worker API
-Date: Wed, 23 Sep 2015 11:50:06 +0200
-Message-ID: <20150923095006.GB12406@pathway.suse.cz>
-References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
- <1442840639-6963-10-git-send-email-pmladek@suse.com>
- <20150922202604.GG17659@mtj.duckdns.org>
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: [PATCH 2/2] selftests/userfaultfd: improve syscall number
+ definition
+Date: Wed, 23 Sep 2015 19:55:09 +1000
+Message-ID: <1443002109.9279.1.camel@ellerman.id.au>
+References: <1442918756-17892-1-git-send-email-andre.przywara@arm.com>
+	 <1442918756-17892-3-git-send-email-andre.przywara@arm.com>
+	 <56015C59.5010300@osg.samsung.com> <20150922140625.GH25412@redhat.com>
+	 <56018CA0.8050600@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150922202604.GG17659@mtj.duckdns.org>
-Sender: owner-linux-mm@kvack.org
-To: Tejun Heo <tj@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <56018CA0.8050600-5wv7dgnIgG8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andre Przywara <andre.przywara-5wv7dgnIgG8@public.gmane.org>
+Cc: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Will Deacon <Will.Deacon-5wv7dgnIgG8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue 2015-09-22 16:26:04, Tejun Heo wrote:
-> Hello,
+On Tue, 2015-09-22 at 18:15 +0100, Andre Przywara wrote:
+> On 22/09/15 15:06, Andrea Arcangeli wrote:
+> > Andre, could you see if linux-next (which includes -mm) works for you
+> > by just running "cd tools/testing/selftests/vm/ && make"? If there's
+> > any further change required could you diff it against linux-next?
 > 
-> On Mon, Sep 21, 2015 at 03:03:50PM +0200, Petr Mladek wrote:
-> > +static int khugepaged_has_work(void)
-> > +{
-> > +	return !list_empty(&khugepaged_scan.mm_head) &&
-> > +		khugepaged_enabled();
-> > +}
-> 
-> Hmmm... no biggie but this is a bit bothering.
+> This doesn't compile now for me, because it looks into
+> /usr/include/asm/unistd.h, which I keep to the distribution copy of it.
+> Also linux/userfaultfd.h is missing, because it's brand new.
+...
+> I guess the right solution would be to hack the Makefile to set the
+> include path to the kernel's copy of include/uapi, though I am not sure
+> this works cleanly for different architectures and separate build
+> directories. I will give this a try ...
 
-This function has been there even before and is used on more locations.
-I have just moved the definition.
+Not that's not the right solution.
 
-> > @@ -425,7 +447,10 @@ static ssize_t scan_sleep_millisecs_store(struct kobject *kobj,
-> >  		return -EINVAL;
-> >  
-> >  	khugepaged_scan_sleep_millisecs = msecs;
-> > -	wake_up_interruptible(&khugepaged_wait);
-> > +	if (khugepaged_has_work())
-> > +		mod_delayed_kthread_work(khugepaged_worker,
-> > +					 &khugepaged_do_scan_work,
-> > +					 0);
-> 
-> What's wrong with just doing the following?
-> 
-> 	if (khugepaged_enabled())
-> 		mod_delayed_kthread_work(...);
+The right solution is to export the kernel headers, the Makefile will pick them
+up (at least in linux-next):
 
-It was just an optimization. It does not make sense to queue the work
-if there is nothing to do.
+  $ cd linux
+  $ make headers_install
+  $ ls usr/include/
+  asm/  asm-generic/  drm/  linux/  misc/  mtd/  rdma/  scsi/  sound/  uapi/  video/  xen/
+  $ make -C tools/testing/selftests TARGETS=vm
+  ...
+  $ ls tools/testing/selftests/vm/userfaultfd
+  tools/testing/selftests/vm/userfaultfd*
 
-Note that the timeout between the scans is there to throttle the work.
-If all pages are scanned, the work stops re-queuing until
-__khugepaged_enter() adds new job.
-
-Thanks a lot for review. I am going to update the patchset according
-to the other comments.
-
-Best Regards,
-Petr
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+cheers
