@@ -1,168 +1,155 @@
-From: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Subject: Re: [RFC v7 25/41] richacl: Isolate the owner and group classes
-Date: Wed, 23 Sep 2015 09:15:32 -0400
-Message-ID: <20150923131532.GB10464@fieldses.org>
-References: <1441448856-13478-1-git-send-email-agruenba@redhat.com>
- <1441448856-13478-26-git-send-email-agruenba@redhat.com>
- <20150922160637.GC15838@fieldses.org>
- <CAHc6FU6gnPK5vdJynv0ze=mNju6V_1WuR99oXWC4Fdh2GFMVgA@mail.gmail.com>
+From: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [v15 0/4] ext4: add project quota support
+Date: Wed, 23 Sep 2015 21:17:55 +0800
+Message-ID: <CAPTn0cBB7h89R7NB+zg+J+TVvKXut_Usixs==S=AWs-v7kZExg@mail.gmail.com>
+References: <1442146833-13652-1-git-send-email-lixi@ddn.com>
+	<20150923123119.GA13946@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAHc6FU6gnPK5vdJynv0ze=mNju6V_1WuR99oXWC4Fdh2GFMVgA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20150923123119.GA13946-+0h/O2h83AeN3ZZ/Hiejyg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Gruenbacher <agruen-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org" <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org" <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Dmitry Monakhov <dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 23, 2015 at 03:11:45PM +0200, Andreas Gruenbacher wrote:
-> 2015-09-22 18:06 GMT+02:00 J. Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>:
-> > On Sat, Sep 05, 2015 at 12:27:20PM +0200, Andreas Gruenbacher wrote:
-> >> When applying the file masks to an acl, we need to ensure that no
-> >> process gets more permissions than allowed by its file mask.
-> >>
-> >> This may require inserting an owner@ deny ace to ensure this if the
-> >> owner mask contains fewer permissions than the group or other mask.  For
-> >> example, when applying mode 0466 to the following acl:
-> >>
-> >>    everyone@:rw::allow
-> >>
-> >> A deny ace needs to be inserted so that the owner won't get elevated
-> >> write access:
-> >>
-> >>    owner@:w::deny
-> >>    everyone@:rw::allow
-> >>
-> >> Likewise, we may need to insert group class deny aces if the group mask
-> >> contains fewer permissions than the other mask.  For example, when
-> >> applying mode 0646 to the following acl:
-> >>
-> >>    owner@:rw::allow
-> >>    everyone@:rw::allow
-> >>
-> >> A deny ace needs to be inserted so that the owning group won't get
-> >> elevated write access:
-> >>
-> >>    owner@:rw::allow
-> >>    group@:w::deny
-> >>    everyone@:rw::allow
-> >>
-> >> Signed-off-by: Andreas Gruenbacher <agruen-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> >> ---
-> >>  fs/richacl_compat.c | 236 ++++++++++++++++++++++++++++++++++++++++++++++++++++
-> >>  1 file changed, 236 insertions(+)
-> >>
-> >> diff --git a/fs/richacl_compat.c b/fs/richacl_compat.c
-> >> index 30bdc95..412844c 100644
-> >> --- a/fs/richacl_compat.c
-> >> +++ b/fs/richacl_compat.c
-> >> @@ -494,3 +494,239 @@ richacl_set_other_permissions(struct richacl_alloc *alloc)
-> >>               richace_change_mask(alloc, &ace, other_mask);
-> >>       return 0;
-> >>  }
-> >> +
-> >> +/**
-> >> + * richacl_max_allowed  -  maximum permissions that anybody is allowed
-> >> + */
-> >> +static unsigned int
-> >> +richacl_max_allowed(struct richacl *acl)
-> >> +{
-> >> +     struct richace *ace;
-> >> +     unsigned int allowed = 0;
-> >> +
-> >> +     richacl_for_each_entry_reverse(ace, acl) {
-> >> +             if (richace_is_inherit_only(ace))
-> >> +                     continue;
-> >> +             if (richace_is_allow(ace))
-> >> +                     allowed |= ace->e_mask;
-> >> +             else if (richace_is_deny(ace)) {
-> >> +                     if (richace_is_everyone(ace))
-> >> +                             allowed &= ~ace->e_mask;
-> >> +             }
-> >> +     }
-> >> +     return allowed;
-> >> +}
-> >> +
-> >> +/**
-> >> + * richacl_isolate_owner_class  -  limit the owner class to the owner file mask
-> >> + * @alloc:   acl and number of allocated entries
-> >> + *
-> >> + * POSIX requires that after a chmod, the owner class is granted no more
-> >> + * permissions than the owner file permission bits.  For richacls, this
-> >> + * means that the owner class must not be granted any permissions that the
-> >> + * owner mask does not include.
-> >> + *
-> >> + * When we apply file masks to an acl which grant more permissions to the group
-> >> + * or other class than to the owner class, we may end up in a situation where
-> >> + * the owner is granted additional permissions from other aces.  For example,
-> >> + * given this acl:
-> >> + *
-> >> + *    everyone:rwx::allow
-> >> + *
-> >> + * when file masks corresponding to mode 0466 are applied, after
-> >> + * richacl_propagate_everyone() and __richacl_apply_masks(), we end up with:
-> >> + *
-> >> + *    owner@:r::allow
-> >> + *    everyone@:rw::allow
-> >
-> > Are you sure?  I didn't think richacl_apply_masks actually creates an
-> > owner@ entry in this case.  Which is OK, just delete the owner@ ace from
-> > here and the following example and it still makes sense, I think.
-> 
-> Hmm, the example can be fixed by applying more 0406 here instead of 0466.
-> 
-> > (But: thanks in general for the examples in these comments, they're
-> > extremely helpful.)
-> 
-> Yes, I think without them, the code cannot be reviewed properly.
-> 
-> > I'd find it simpler to follow without the  a_entries + a_count condition,
-> > maybe something like this (untested):
-> >
-> > [...]
-> 
-> Great, let me further simplify this to:
+Hi Jan Kara,
 
-Works for me!  (And feel free to add a Reviewed-by:.)
+Sorry, I forgot to mention that we run the xfstests for both XFS and
+Ext4 with and without these patches. And still, some (but not too
+many) of the tests fails, but the failed tests are the same no matter
+the patches are applied or not. And we didn't see any project quota
+related tests fails.
 
---b.
+Regards,
+Li Xi
 
-> 
-> static int
-> richacl_isolate_owner_class(struct richacl_alloc *alloc)
-> {
->         struct richacl *acl = alloc->acl;
->         unsigned int deny = richacl_max_allowed(acl) & ~acl->a_owner_mask;
-> 
->         if (deny) {
->                 struct richace *ace;
-> 
->                 /*
->                  * Figure out if we can update an existig OWNER@ DENY entry.
->                  */
->                 richacl_for_each_entry(ace, acl) {
->                         if (richace_is_inherit_only(ace))
->                                 continue;
->                         if (richace_is_allow(ace))
->                                 break;
->                         if (richace_is_owner(ace)) {
->                                 return richace_change_mask(alloc, &ace,
->                                                            ace->e_mask | deny);
->                         }
->                 }
-> 
->                 /* Insert an owner@ deny entry at the front. */
->                 ace = acl->a_entries;
->                 if (richacl_insert_entry(alloc, &ace))
->                         return -1;
->                 ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
->                 ace->e_flags = RICHACE_SPECIAL_WHO;
->                 ace->e_mask = deny;
->                 ace->e_id.special = RICHACE_OWNER_SPECIAL_ID;
->         }
->         return 0;
-> }
-> 
-> Thanks,
-> Andreas
+On Wed, Sep 23, 2015 at 8:31 PM, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
+> On Sun 13-09-15 21:20:29, Li Xi wrote:
+>> The following patches propose an implementation of project quota
+>> support for ext4. A project is an aggregate of unrelated inodes
+>> which might scatter in different directories. Inodes that belong
+>> to the same project possess an identical identification i.e.
+>> 'project ID', just like every inode has its user/group
+>> identification. The following patches add project quota as
+>> supplement to the former uer/group quota types.
+>
+> With the last version of the patches, there was only one outstanding issue
+> and that was whether xfstests for XFS pass correctly (especially the
+> project quota related ones). Have you been able to verify this?
+>
+>                                                                 Honza
+>
+>>
+>> The semantics of ext4 project quota is consistent with XFS. Each
+>> directory can have EXT4_INODE_PROJINHERIT flag set. When the
+>> EXT4_INODE_PROJINHERIT flag of a parent directory is not set, a
+>> newly created inode under that directory will have a default project
+>> ID (i.e. 0). And its EXT4_INODE_PROJINHERIT flag is not set either.
+>> When this flag is set on a directory, following rules will be kept:
+>>
+>> 1) The newly created inode under that directory will inherit both
+>> the EXT4_INODE_PROJINHERIT flag and the project ID from its parent
+>> directory.
+>>
+>> 2) Hard-linking a inode with different project ID into that directory
+>> will fail with errno EXDEV.
+>>
+>> 3) Renaming a inode with different project ID into that directory
+>> will fail with errno EXDEV. However, 'mv' command will detect this
+>> failure and copy the renamed inode to a new inode in the directory.
+>> Thus, this new inode will inherit both the project ID and
+>> EXT4_INODE_PROJINHERIT flag.
+>>
+>> 4) If the project quota of that ID is being enforced, statfs() on
+>> that directory will take the quotas as another upper limits along
+>> with the capacity of the file system, i.e. the total block/inode
+>> number will be the minimum of the quota limits and file system
+>> capacity.
+>>
+>> Changelog:
+>> * v15 <- v14:
+>>  - Rebase to newest master branch of git repository (b0a1ea51b).
+>> * v14 <- v13:
+>>  - Cleanup ioctl of setting project ID;
+>>  - Do not check project quota inode number specially;
+>>  - Check isize when extract project ID from disk;
+>>  - Rebase to latest kernel (4.0.0)
+>> * v13 <- v12:
+>>  - Update inode size check of project ID.
+>> * v12 <- v11:
+>>  - Relax the permission check when setting project ID.
+>> * v11 <- v10:
+>>  - Remove project quota mount option;
+>>  - Fix permission check when setting project ID.
+>> * v10 <- v9:
+>>  - Remove non-journaled project quota interface;
+>>  - Only allow admin to read project quota info;
+>>  - Cleanup FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR interface.
+>> * v9 <- v8:
+>>  - Remove non-journaled project quota;
+>>  - Rebase to newest dev branch of ext4 repository (3.19.0-rc3).
+>> * v8 <- v7:
+>>  - Rebase to newest dev branch of ext4 repository (3.18.0_rc3).
+>> * v7 <- v6:
+>>  - Map ext4 inode flags to xflags of struct fsxattr;
+>>  - Add patch to cleanup ext4 inode flag definitions.
+>> * v6 <- v5:
+>>  - Add project ID check for cross rename;
+>>  - Remove patch of EXT4_IOC_GETPROJECT/EXT4_IOC_SETPROJECT ioctl
+>> * v5 <- v4:
+>>  - Check project feature when set/get project ID;
+>>  - Do not check project feature for project quota;
+>>  - Add support of FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR.
+>> * v4 <- v3:
+>>  - Do not check project feature when set/get project ID;
+>>  - Use EXT4_MAXQUOTAS instead of MAXQUOTAS in ext4 patches;
+>>  - Remove unnecessary change of fs/quota/dquot.c;
+>>  - Remove CONFIG_QUOTA_PROJECT.
+>> * v3 <- v2:
+>>  - Add EXT4_INODE_PROJINHERIT semantics.
+>> * v2 <- v1:
+>>  - Add ioctl interface for setting/getting project;
+>>  - Add EXT4_FEATURE_RO_COMPAT_PROJECT;
+>>  - Add get_projid() method in struct dquot_operations;
+>>  - Add error check of ext4_inode_projid_set/get().
+>>
+>> v14: http://article.gmane.org/gmane.linux.kernel.api/10345
+>> v13: http://www.spinics.net/lists/linux-fsdevel/msg85205.html
+>> v12: http://www.spinics.net/lists/linux-fsdevel/msg84905.html
+>> v11: http://www.spinics.net/lists/linux-ext4/msg47450.html
+>> v10: http://www.spinics.net/lists/linux-ext4/msg47413.html
+>> v9: http://www.spinics.net/lists/linux-ext4/msg47326.html
+>> v8: http://www.spinics.net/lists/linux-ext4/msg46545.html
+>> v7: http://www.spinics.net/lists/linux-fsdevel/msg80404.html
+>> v6: http://www.spinics.net/lists/linux-fsdevel/msg80022.html
+>> v5: http://www.spinics.net/lists/linux-api/msg04840.html
+>> v4: http://lwn.net/Articles/612972/
+>> v3: http://www.spinics.net/lists/linux-ext4/msg45184.html
+>> v2: http://www.spinics.net/lists/linux-ext4/msg44695.html
+>> v1: http://article.gmane.org/gmane.comp.file-systems.ext4/45153
+>>
+>> Any comments or feedbacks are appreciated.
+>>
+>> Regards,
+>>                                          - Li Xi
+>>
+>> Li Xi (4):
+>>   ext4: adds project ID support
+>>   ext4: adds project quota support
+>>   ext4: adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR interface support
+>>   ext4: cleanup inode flag definitions
+>>
+>>  fs/ext4/ext4.h          |   85 +++++++----
+>>  fs/ext4/ialloc.c        |    7 +
+>>  fs/ext4/inode.c         |   28 ++++
+>>  fs/ext4/ioctl.c         |  367 ++++++++++++++++++++++++++++++++++++-----------
+>>  fs/ext4/namei.c         |   19 +++
+>>  fs/ext4/super.c         |   57 +++++++-
+>>  fs/xfs/libxfs/xfs_fs.h  |   47 +++----
+>>  include/uapi/linux/fs.h |   33 +++++
+>>  8 files changed, 490 insertions(+), 153 deletions(-)
+>>
+> --
+> Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
+> SUSE Labs, CR
