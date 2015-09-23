@@ -1,244 +1,528 @@
-From: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: [PATCH] Fix AF_PACKET ABI breakage in 4.2
-Date: Wed, 23 Sep 2015 15:44:30 +0100
-Message-ID: <1443019470.74600.6.camel@infradead.org>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="sha-1"; protocol="application/x-pkcs7-signature";
-	boundary="=-jVfJPurAS0sReFcFRVdt"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Greg Kurz <gkurz-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+From: cpaul@redhat.com
+Subject: [PATCH v6 1/1] Input: Add userio module
+Date: Wed, 23 Sep 2015 13:49:49 -0400
+Message-ID: <1443030589-27574-1-git-send-email-cpaul@redhat.com>
+References: <CANq1E4R32AsEryyUfUr69jSeJJXRPwfxvY9uuvH7UOqG9Z__Lg@mail.gmail.com>
+Return-path: <linux-input-owner@vger.kernel.org>
+In-Reply-To: <CANq1E4R32AsEryyUfUr69jSeJJXRPwfxvY9uuvH7UOqG9Z__Lg@mail.gmail.com>
+Sender: linux-input-owner@vger.kernel.org
+To: David Herrmann <dh.herrmann@gmail.com>, Dmitry Torokhov <dmitry.torokhov@gmail.com>
+Cc: linux-kernel <linux-kernel@vger.kernel.org>, linux-input@vger.kernel.org, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Greg KH <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, Joe Perches <joe@perches.com>, Jiri Slaby <jslaby@suse.com>, Vishnu Patekar <vishnupatekar0510@gmail.com>, Sebastian Ott <sebott@linux.vnet.ibm.com>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Hans de Goede <hdegoede@redhat.com>, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+From: Stephen Chandler Paul <cpaul@redhat.com>
 
---=-jVfJPurAS0sReFcFRVdt
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Debugging input devices, specifically laptop touchpads, can be tricky
+without having the physical device handy. Here we try to remedy that
+with userio. This module allows an application to connect to a character
+device provided by the kernel, and emulate any serio device. In
+combination with userspace programs that can record PS/2 devices and
+replay them through the /dev/userio device, this allows developers to
+debug driver issues on the PS/2 level with devices simply by requesting
+a recording from the user experiencing the issue without having to have
+the physical hardware in front of them.
 
-Commit 7d82410950aa ("virtio: add explicit big-endian support to memory
-accessors") accidentally changed the virtio_net header used by
-AF_PACKET with PACKET_VNET_HDR from host-endian to big-endian.
-
-Since virtio_legacy_is_little_endian() is a very long identifier,
-define a VIO_LE macro and use that throughout the code instead of the
-hard-coded 'false' for little-endian.
-
-This restores the ABI to match 4.1 and earlier kernels, and makes my
-test program work again.
-
-Signed-off-by: David Woodhouse <David.Woodhouse-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Stephen Chandler Paul <cpaul@redhat.com>
 ---
-Or perhaps we should just use (__force u16) and (__force __virtio16)
-since that's all we really want anyway?
+				    Changes
+* Change type in userio.h struct to __u8
+* Add a spin lock that is used in addition to the mutex, no more completion struct
+* Fix "repeat repeat" typo again (not sure how this got here?)
+* Use USERIO_BUFSIZE for size of buf array in userio_char_read()
+* Rename buffer in userio_char_read() to user_buffer (having both buffer and
+  buf could be confusing)
 
-diff --git a/net/packet/af_packet.c b/net/packet/af_packet.c
-index 7b8e39a..d646623 100644
---- a/net/packet/af_packet.c
-+++ b/net/packet/af_packet.c
-@@ -230,6 +230,8 @@ struct packet_skb_cb {
- 	} sa;
- };
-=20
-+#define VIO_LE virtio_legacy_is_little_endian()
+ Documentation/input/userio.txt |  70 ++++++++++
+ MAINTAINERS                    |   6 +
+ drivers/input/serio/Kconfig    |  11 ++
+ drivers/input/serio/Makefile   |   1 +
+ drivers/input/serio/userio.c   | 289 +++++++++++++++++++++++++++++++++++++++++
+ include/linux/miscdevice.h     |   1 +
+ include/uapi/linux/userio.h    |  44 +++++++
+ 7 files changed, 422 insertions(+)
+ create mode 100644 Documentation/input/userio.txt
+ create mode 100644 drivers/input/serio/userio.c
+ create mode 100644 include/uapi/linux/userio.h
+
+diff --git a/Documentation/input/userio.txt b/Documentation/input/userio.txt
+new file mode 100644
+index 0000000..0880c0f
+--- /dev/null
++++ b/Documentation/input/userio.txt
+@@ -0,0 +1,70 @@
++			      The userio Protocol
++	     (c) 2015 Stephen Chandler Paul <thatslyude@gmail.com>
++			      Sponsored by Red Hat
++--------------------------------------------------------------------------------
 +
- #define PACKET_SKB_CB(__skb)	((struct packet_skb_cb *)((__skb)->cb))
-=20
- #define GET_PBDQC_FROM_RB(x)	((struct tpacket_kbdq_core *)(&(x)->prb_bdqc)=
-)
-@@ -2680,15 +2682,15 @@ static int packet_snd(struct socket *sock, struct m=
-sghdr *msg, size_t len)
- 			goto out_unlock;
-=20
- 		if ((vnet_hdr.flags & VIRTIO_NET_HDR_F_NEEDS_CSUM) &&
--		    (__virtio16_to_cpu(false, vnet_hdr.csum_start) +
--		     __virtio16_to_cpu(false, vnet_hdr.csum_offset) + 2 >
--		      __virtio16_to_cpu(false, vnet_hdr.hdr_len)))
--			vnet_hdr.hdr_len =3D __cpu_to_virtio16(false,
--				 __virtio16_to_cpu(false, vnet_hdr.csum_start) +
--				__virtio16_to_cpu(false, vnet_hdr.csum_offset) + 2);
-+		    (__virtio16_to_cpu(VIO_LE, vnet_hdr.csum_start) +
-+		     __virtio16_to_cpu(VIO_LE, vnet_hdr.csum_offset) + 2 >
-+		      __virtio16_to_cpu(VIO_LE, vnet_hdr.hdr_len)))
-+			vnet_hdr.hdr_len =3D __cpu_to_virtio16(VIO_LE,
-+				 __virtio16_to_cpu(VIO_LE, vnet_hdr.csum_start) +
-+				__virtio16_to_cpu(VIO_LE, vnet_hdr.csum_offset) + 2);
-=20
- 		err =3D -EINVAL;
--		if (__virtio16_to_cpu(false, vnet_hdr.hdr_len) > len)
-+		if (__virtio16_to_cpu(VIO_LE, vnet_hdr.hdr_len) > len)
- 			goto out_unlock;
-=20
- 		if (vnet_hdr.gso_type !=3D VIRTIO_NET_HDR_GSO_NONE) {
-@@ -2731,7 +2733,7 @@ static int packet_snd(struct socket *sock, struct msg=
-hdr *msg, size_t len)
- 	hlen =3D LL_RESERVED_SPACE(dev);
- 	tlen =3D dev->needed_tailroom;
- 	skb =3D packet_alloc_skb(sk, hlen + tlen, hlen, len,
--			       __virtio16_to_cpu(false, vnet_hdr.hdr_len),
-+			       __virtio16_to_cpu(VIO_LE, vnet_hdr.hdr_len),
- 			       msg->msg_flags & MSG_DONTWAIT, &err);
- 	if (skb =3D=3D NULL)
- 		goto out_unlock;
-@@ -2778,8 +2780,8 @@ static int packet_snd(struct socket *sock, struct msg=
-hdr *msg, size_t len)
-=20
- 	if (po->has_vnet_hdr) {
- 		if (vnet_hdr.flags & VIRTIO_NET_HDR_F_NEEDS_CSUM) {
--			u16 s =3D __virtio16_to_cpu(false, vnet_hdr.csum_start);
--			u16 o =3D __virtio16_to_cpu(false, vnet_hdr.csum_offset);
-+			u16 s =3D __virtio16_to_cpu(VIO_LE, vnet_hdr.csum_start);
-+			u16 o =3D __virtio16_to_cpu(VIO_LE, vnet_hdr.csum_offset);
- 			if (!skb_partial_csum_set(skb, s, o)) {
- 				err =3D -EINVAL;
- 				goto out_free;
-@@ -2787,7 +2789,7 @@ static int packet_snd(struct socket *sock, struct msg=
-hdr *msg, size_t len)
- 		}
-=20
- 		skb_shinfo(skb)->gso_size =3D
--			__virtio16_to_cpu(false, vnet_hdr.gso_size);
-+			__virtio16_to_cpu(VIO_LE, vnet_hdr.gso_size);
- 		skb_shinfo(skb)->gso_type =3D gso_type;
-=20
- 		/* Header must be checked, and gso_segs computed. */
-@@ -3161,9 +3163,9 @@ static int packet_recvmsg(struct socket *sock, struct=
- msghdr *msg, size_t len,
-=20
- 			/* This is a hint as to how much should be linear. */
- 			vnet_hdr.hdr_len =3D
--				__cpu_to_virtio16(false, skb_headlen(skb));
-+				__cpu_to_virtio16(VIO_LE, skb_headlen(skb));
- 			vnet_hdr.gso_size =3D
--				__cpu_to_virtio16(false, sinfo->gso_size);
-+				__cpu_to_virtio16(VIO_LE, sinfo->gso_size);
- 			if (sinfo->gso_type & SKB_GSO_TCPV4)
- 				vnet_hdr.gso_type =3D VIRTIO_NET_HDR_GSO_TCPV4;
- 			else if (sinfo->gso_type & SKB_GSO_TCPV6)
-@@ -3181,9 +3183,9 @@ static int packet_recvmsg(struct socket *sock, struct=
- msghdr *msg, size_t len,
-=20
- 		if (skb->ip_summed =3D=3D CHECKSUM_PARTIAL) {
- 			vnet_hdr.flags =3D VIRTIO_NET_HDR_F_NEEDS_CSUM;
--			vnet_hdr.csum_start =3D __cpu_to_virtio16(false,
-+			vnet_hdr.csum_start =3D __cpu_to_virtio16(VIO_LE,
- 					  skb_checksum_start_offset(skb));
--			vnet_hdr.csum_offset =3D __cpu_to_virtio16(false,
-+			vnet_hdr.csum_offset =3D __cpu_to_virtio16(VIO_LE,
- 							 skb->csum_offset);
- 		} else if (skb->ip_summed =3D=3D CHECKSUM_UNNECESSARY) {
- 			vnet_hdr.flags =3D VIRTIO_NET_HDR_F_DATA_VALID;
++1. Introduction
++~~~~~~~~~~~~~~~
++  This module is intended to try to make the lives of input driver developers
++easier by allowing them to test various serio devices (mainly the various
++touchpads found on laptops) without having to have the physical device in front
++of them. userio accomplishes this by allowing any privileged userspace program
++to directly interact with the kernel's serio driver and control a virtual serio
++port from there.
++
++2. Usage overview
++~~~~~~~~~~~~~~~~~
++  In order to interact with the userio kernel module, one simply opens the
++/dev/userio character device in their applications. Commands are sent to the
++kernel module by writing to the device, and any data received from the serio
++driver is read as-is from the /dev/userio device. All of the structures and
++macros you need to interact with the device are defined in <linux/userio.h> and
++<linux/serio.h>.
++
++3. Command Structure
++~~~~~~~~~~~~~~~~~~~~
++  The struct used for sending commands to /dev/userio is as follows:
++
++	struct userio_cmd {
++		__u8 type;
++		__u8 data;
++	};
++
++  "type" describes the type of command that is being sent. This can be any one
++of the USERIO_CMD macros defined in <linux/userio.h>. "data" is the argument
++that goes along with the command. In the event that the command doesn't have an
++argument, this field can be left untouched and will be ignored by the kernel.
++Each command should be sent by writing the struct directly to the character
++device. In the event that the command you send is invalid, an error will be
++returned by the character device and a more descriptive error will be printed
++to the kernel log. Only one command can be sent at a time, any additional data
++written to the character device after the initial command will be ignored.
++  To close the virtual serio port, just close /dev/userio.
++
++4. Commands
++~~~~~~~~~~~
++
++4.1 USERIO_CMD_REGISTER
++~~~~~~~~~~~~~~~~~~~~~~~
++  Registers the port with the serio driver and begins transmitting data back and
++forth. Registration can only be performed once a port type is set with
++USERIO_CMD_SET_PORT_TYPE. Has no argument.
++
++4.2 USERIO_CMD_SET_PORT_TYPE
++~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++  Sets the type of port we're emulating, where "data" is the port type being
++set. Can be any of the macros from <linux/serio.h>. For example: SERIO_8042
++would set the port type to be a normal PS/2 port.
++
++4.3 USERIO_CMD_SEND_INTERRUPT
++~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++  Sends an interrupt through the virtual serio port to the serio driver, where
++"data" is the interrupt data being sent.
++
++5. Userspace tools
++~~~~~~~~~~~~~~~~~~
++  The userio userspace tools are able to record PS/2 devices using some of the
++debugging information from i8042, and play back the devices on /dev/userio. The
++latest version of these tools can be found at:
++
++	https://github.com/Lyude/ps2emu
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 274f854..44740de 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -11086,6 +11086,12 @@ S:	Maintained
+ F:	drivers/media/v4l2-core/videobuf2-*
+ F:	include/media/videobuf2-*
+ 
++VIRTUAL SERIO DEVICE DRIVER
++M:	Stephen Chandler Paul <thatslyude@gmail.com>
++S:	Maintained
++F:	drivers/input/serio/ps2emu.c
++F:	include/uapi/linux/ps2emu.h
++
+ VIRTIO CONSOLE DRIVER
+ M:	Amit Shah <amit.shah@redhat.com>
+ L:	virtualization@lists.linux-foundation.org
+diff --git a/drivers/input/serio/Kconfig b/drivers/input/serio/Kconfig
+index 200841b..22b8b58 100644
+--- a/drivers/input/serio/Kconfig
++++ b/drivers/input/serio/Kconfig
+@@ -292,4 +292,15 @@ config SERIO_SUN4I_PS2
+ 	  To compile this driver as a module, choose M here: the
+ 	  module will be called sun4i-ps2.
+ 
++config USERIO
++	tristate "Virtual serio device support"
++	help
++	  Say Y here if you want to emulate serio devices using the userio
++	  kernel module.
++
++	  To compile this driver as a module, choose M here: the module will be
++	  called userio.
++
++	  If you are unsure, say N.
++
+ endif
+diff --git a/drivers/input/serio/Makefile b/drivers/input/serio/Makefile
+index c600089..2374ef9 100644
+--- a/drivers/input/serio/Makefile
++++ b/drivers/input/serio/Makefile
+@@ -30,3 +30,4 @@ obj-$(CONFIG_SERIO_APBPS2)	+= apbps2.o
+ obj-$(CONFIG_SERIO_OLPC_APSP)	+= olpc_apsp.o
+ obj-$(CONFIG_HYPERV_KEYBOARD)	+= hyperv-keyboard.o
+ obj-$(CONFIG_SERIO_SUN4I_PS2)	+= sun4i-ps2.o
++obj-$(CONFIG_USERIO)		+= userio.o
+diff --git a/drivers/input/serio/userio.c b/drivers/input/serio/userio.c
+new file mode 100644
+index 0000000..f0e1bd4
+--- /dev/null
++++ b/drivers/input/serio/userio.c
+@@ -0,0 +1,289 @@
++/*
++ * userio kernel serio device emulation module
++ * Copyright (C) 2015 Red Hat
++ * Copyright (C) 2015 Stephen Chandler Paul <thatslyude@gmail.com>
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU Lesser General Public License as published by the
++ * Free Software Foundation; either version 2 of the License, or (at your
++ * option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
++ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
++ * details.
++ */
++#include <linux/circ_buf.h>
++#include <linux/mutex.h>
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/kernel.h>
++#include <linux/serio.h>
++#include <linux/slab.h>
++#include <linux/fs.h>
++#include <linux/miscdevice.h>
++#include <linux/sched.h>
++#include <linux/poll.h>
++#include <uapi/linux/userio.h>
++
++#define USERIO_NAME "userio"
++#define USERIO_BUFSIZE 16
++
++static struct miscdevice userio_misc;
++
++struct userio_device {
++	struct serio *serio;
++	struct mutex lock;
++
++	bool running;
++
++	u8 head;
++	u8 tail;
++
++	spinlock_t buf_lock;
++	unsigned char buf[USERIO_BUFSIZE];
++
++	wait_queue_head_t waitq;
++};
++
++/**
++ * userio_device_write - Write data from serio to a userio device in userspace
++ * @id: The serio port for the userio device
++ * @val: The data to write to the device
++ */
++static int userio_device_write(struct serio *id, unsigned char val)
++{
++	struct userio_device *userio = id->port_data;
++	unsigned long flags;
++
++	if (!userio)
++		return -1;
++
++	spin_lock_irqsave(&userio->buf_lock, flags);
++
++	userio->buf[userio->head] = val;
++	userio->head = (userio->head + 1) % USERIO_BUFSIZE;
++
++	if (userio->head == userio->tail)
++		dev_warn(userio_misc.this_device,
++			 "Buffer overflowed, userio client isn't keeping up");
++
++	spin_unlock_irqrestore(&userio->buf_lock, flags);
++
++	wake_up_interruptible(&userio->waitq);
++
++	return 0;
++}
++
++static int userio_char_open(struct inode *inode, struct file *file)
++{
++	struct userio_device *userio;
++
++	userio = kzalloc(sizeof(struct userio_device), GFP_KERNEL);
++	if (!userio)
++		return -ENOMEM;
++
++	mutex_init(&userio->lock);
++	spin_lock_init(&userio->buf_lock);
++	init_waitqueue_head(&userio->waitq);
++
++	userio->serio = kzalloc(sizeof(struct serio), GFP_KERNEL);
++	if (!userio->serio) {
++		kfree(userio);
++		return -ENOMEM;
++	}
++
++	userio->serio->write = userio_device_write;
++	userio->serio->port_data = userio;
++
++	file->private_data = userio;
++
++	return 0;
++}
++
++static int userio_char_release(struct inode *inode, struct file *file)
++{
++	struct userio_device *userio = file->private_data;
++
++	/* Don't free the serio port here, serio_unregister_port() does
++	 * this for us */
++	if (userio->running)
++		serio_unregister_port(userio->serio);
++	else
++		kfree(userio->serio);
++
++	kfree(userio);
++
++	return 0;
++}
++
++static ssize_t userio_char_read(struct file *file, char __user *user_buffer,
++				size_t count, loff_t *ppos)
++{
++	struct userio_device *userio = file->private_data;
++	int ret;
++	size_t nonwrap_len, copylen;
++	unsigned char buf[USERIO_BUFSIZE];
++	unsigned long flags;
++
++	if (!count)
++		return 0;
++
++	ret = mutex_lock_interruptible(&userio->lock);
++	if (ret)
++		return ret;
++
++	/*
++	 * By the time we get here, the data that was waiting might have been
++	 * taken by another thread. Grab the mutex and check if there's still
++	 * any data waiting, otherwise repeat this process until we have data
++	 * (unless the file descriptor is non-blocking of course)
++	 */
++	for (;;) {
++		spin_lock_irqsave(&userio->buf_lock, flags);
++
++		if (userio->head != userio->tail)
++			break;
++
++		spin_unlock_irqrestore(&userio->buf_lock, flags);
++
++		if (file->f_flags & O_NONBLOCK) {
++			ret = -EAGAIN;
++			goto out;
++		}
++
++		ret = wait_event_interruptible(userio->waitq,
++					       userio->head != userio->tail);
++		if (ret)
++			goto out;
++	}
++
++	nonwrap_len = CIRC_CNT_TO_END(userio->head, userio->tail,
++				      USERIO_BUFSIZE);
++	copylen = min(nonwrap_len, count);
++	memcpy(&buf, &userio->buf[userio->tail], copylen);
++
++	userio->tail = (userio->tail + copylen) % USERIO_BUFSIZE;
++
++	spin_unlock_irqrestore(&userio->buf_lock, flags);
++
++	if (copy_to_user(user_buffer, &buf, copylen))
++		ret = -EFAULT;
++	else
++		ret = copylen;
++
++out:
++	mutex_unlock(&userio->lock);
++	return ret;
++}
++
++static ssize_t userio_char_write(struct file *file, const char __user *buffer,
++				 size_t count, loff_t *ppos)
++{
++	struct userio_device *userio = file->private_data;
++	struct userio_cmd cmd;
++	int ret;
++
++	if (count < sizeof(cmd))
++		return -EINVAL;
++
++	if (copy_from_user(&cmd, buffer, sizeof(cmd)))
++		return -EFAULT;
++
++	ret = mutex_lock_interruptible(&userio->lock);
++	if (ret)
++		return ret;
++
++	switch (cmd.type) {
++	case USERIO_CMD_REGISTER:
++		if (!userio->serio->id.type) {
++			dev_warn(userio_misc.this_device,
++				 "No port type given on /dev/userio\n");
++
++			ret = -EINVAL;
++			goto out;
++		}
++		if (userio->running) {
++			dev_warn(userio_misc.this_device,
++				 "Begin command sent, but we're already running\n");
++
++			ret = -EBUSY;
++			goto out;
++		}
++
++		userio->running = true;
++		serio_register_port(userio->serio);
++		break;
++
++	case USERIO_CMD_SET_PORT_TYPE:
++		if (userio->running) {
++			dev_warn(userio_misc.this_device,
++				 "Can't change port type on an already running userio instance\n");
++
++			ret = -EBUSY;
++			goto out;
++		}
++
++		userio->serio->id.type = cmd.data;
++		break;
++
++	case USERIO_CMD_SEND_INTERRUPT:
++		if (!userio->running) {
++			dev_warn(userio_misc.this_device,
++				 "The device must be registered before sending interrupts\n");
++
++			ret = -ENODEV;
++			goto out;
++		}
++
++		serio_interrupt(userio->serio, cmd.data, 0);
++		break;
++
++	default:
++		ret = -EOPNOTSUPP;
++		goto out;
++	}
++
++	ret = sizeof(cmd);
++
++out:
++	mutex_unlock(&userio->lock);
++	return ret;
++}
++
++static unsigned int userio_char_poll(struct file *file, poll_table *wait)
++{
++	struct userio_device *userio = file->private_data;
++
++	poll_wait(file, &userio->waitq, wait);
++
++	if (userio->head != userio->tail)
++		return POLLIN | POLLRDNORM;
++
++	return 0;
++}
++
++static const struct file_operations userio_fops = {
++	.owner		= THIS_MODULE,
++	.open		= userio_char_open,
++	.release	= userio_char_release,
++	.read		= userio_char_read,
++	.write		= userio_char_write,
++	.poll		= userio_char_poll,
++	.llseek		= no_llseek,
++};
++
++static struct miscdevice userio_misc = {
++	.fops	= &userio_fops,
++	.minor	= USERIO_MINOR,
++	.name	= USERIO_NAME,
++};
++
++MODULE_ALIAS_MISCDEV(USERIO_MINOR);
++MODULE_ALIAS("devname:" USERIO_NAME);
++
++MODULE_AUTHOR("Stephen Chandler Paul <thatslyude@gmail.com>");
++MODULE_DESCRIPTION("Virtual Serio Device Support");
++MODULE_LICENSE("GPL");
++
++module_driver(userio_misc, misc_register, misc_deregister);
+diff --git a/include/linux/miscdevice.h b/include/linux/miscdevice.h
+index 81f6e42..5430374 100644
+--- a/include/linux/miscdevice.h
++++ b/include/linux/miscdevice.h
+@@ -49,6 +49,7 @@
+ #define LOOP_CTRL_MINOR		237
+ #define VHOST_NET_MINOR		238
+ #define UHID_MINOR		239
++#define USERIO_MINOR		240
+ #define MISC_DYNAMIC_MINOR	255
+ 
+ struct device;
+diff --git a/include/uapi/linux/userio.h b/include/uapi/linux/userio.h
+new file mode 100644
+index 0000000..37d147f
+--- /dev/null
++++ b/include/uapi/linux/userio.h
+@@ -0,0 +1,44 @@
++/*
++ * userio: virtual serio device support
++ * Copyright (C) 2015 Red Hat
++ * Copyright (C) 2015 Lyude (Stephen Chandler Paul) <cpaul@redhat.com>
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU Lesser General Public License as published by the
++ * Free Software Foundation; either version 2 of the License, or (at your
++ * option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
++ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
++ * details.
++ *
++ * This is the public header used for user-space communication with the userio
++ * driver. __attribute__((__packed__)) is used for all structs to keep ABI
++ * compatibility between all architectures.
++ */
++
++#ifndef _USERIO_H
++#define _USERIO_H
++
++#include <linux/types.h>
++
++enum userio_cmd_type {
++	USERIO_CMD_REGISTER = 0,
++	USERIO_CMD_SET_PORT_TYPE = 1,
++	USERIO_CMD_SEND_INTERRUPT = 2
++};
++
++/*
++ * userio Commands
++ * All commands sent to /dev/userio are encoded using this structure. The type
++ * field should contain a USERIO_CMD* value that indicates what kind of command
++ * is being sent to userio. The data field should contain the accompanying
++ * argument for the command, if there is one.
++ */
++struct userio_cmd {
++	__u8 type;
++	__u8 data;
++} __attribute__((__packed__));
++
++#endif /* !_USERIO_H */
+-- 
+2.4.3
 
---=20
-David Woodhouse                            Open Source Technology Centre
-David.Woodhouse-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org                              Intel Corporation
-
-
---=-jVfJPurAS0sReFcFRVdt
-Content-Type: application/x-pkcs7-signature; name="smime.p7s"
-Content-Disposition: attachment; filename="smime.p7s"
-Content-Transfer-Encoding: base64
-
-MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIISjjCCBicw
-ggUPoAMCAQICAw3vNzANBgkqhkiG9w0BAQUFADCBjDELMAkGA1UEBhMCSUwxFjAUBgNVBAoTDVN0
-YXJ0Q29tIEx0ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRlIFNpZ25pbmcx
-ODA2BgNVBAMTL1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUgQ2xpZW50IENB
-MB4XDTE1MDUwNTA5NDM0MVoXDTE2MDUwNTA5NTMzNlowQjEcMBoGA1UEAwwTZHdtdzJAaW5mcmFk
-ZWFkLm9yZzEiMCAGCSqGSIb3DQEJARYTZHdtdzJAaW5mcmFkZWFkLm9yZzCCASIwDQYJKoZIhvcN
-AQEBBQADggEPADCCAQoCggEBAMkbm9kPbx1j/X4RVyf/pPKSYwelcco69TvnQQbKM8m8xkWjXJI1
-jpJ1jMaGUZGFToINMSZi7lZawUozudWbXSKy1SikENSTJHffsdRAIlsp+hR8vWvjsKUry6sEdqPG
-doa5RY7+N4WRusWZDYW/RRWE6i9EL9qV86CVPYqw22UBOUw4/j/HVGCV6TSB8yE5iEwhk/hUuzRr
-FZm1MJMR7mCS7BCR8Lr5jFY61lWpBiXNXIxLZCvDc26KR5L5tYX43iUVO3fzES1GRVoYnxxk2tmz
-fcsZG5vK+Trc9L8OZJfkYrEHH3+Iw41MQ0w/djVtYr1+HYldx0QmYXAtnhIj+UMCAwEAAaOCAtkw
-ggLVMAkGA1UdEwQCMAAwCwYDVR0PBAQDAgSwMB0GA1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcD
-BDAdBgNVHQ4EFgQUszC96C3w5/2+d+atSr0IpT26YI4wHwYDVR0jBBgwFoAUU3Ltkpzg2ssBXHx+
-ljVO8tS4UYIwHgYDVR0RBBcwFYETZHdtdzJAaW5mcmFkZWFkLm9yZzCCAUwGA1UdIASCAUMwggE/
-MIIBOwYLKwYBBAGBtTcBAgMwggEqMC4GCCsGAQUFBwIBFiJodHRwOi8vd3d3LnN0YXJ0c3NsLmNv
-bS9wb2xpY3kucGRmMIH3BggrBgEFBQcCAjCB6jAnFiBTdGFydENvbSBDZXJ0aWZpY2F0aW9uIEF1
-dGhvcml0eTADAgEBGoG+VGhpcyBjZXJ0aWZpY2F0ZSB3YXMgaXNzdWVkIGFjY29yZGluZyB0byB0
-aGUgQ2xhc3MgMSBWYWxpZGF0aW9uIHJlcXVpcmVtZW50cyBvZiB0aGUgU3RhcnRDb20gQ0EgcG9s
-aWN5LCByZWxpYW5jZSBvbmx5IGZvciB0aGUgaW50ZW5kZWQgcHVycG9zZSBpbiBjb21wbGlhbmNl
-IG9mIHRoZSByZWx5aW5nIHBhcnR5IG9ibGlnYXRpb25zLjA2BgNVHR8ELzAtMCugKaAnhiVodHRw
-Oi8vY3JsLnN0YXJ0c3NsLmNvbS9jcnR1MS1jcmwuY3JsMIGOBggrBgEFBQcBAQSBgTB/MDkGCCsG
-AQUFBzABhi1odHRwOi8vb2NzcC5zdGFydHNzbC5jb20vc3ViL2NsYXNzMS9jbGllbnQvY2EwQgYI
-KwYBBQUHMAKGNmh0dHA6Ly9haWEuc3RhcnRzc2wuY29tL2NlcnRzL3N1Yi5jbGFzczEuY2xpZW50
-LmNhLmNydDAjBgNVHRIEHDAahhhodHRwOi8vd3d3LnN0YXJ0c3NsLmNvbS8wDQYJKoZIhvcNAQEF
-BQADggEBAHMQmxHHodpS85X8HRyxhvfkys7r+taCNOaNU9cxQu/cZ/6k5nS2qGNMzZ6jb7ueY/V7
-7p+4DW/9ZWODDTf4Fz00mh5SSVc20Bz7t+hhxwHd62PZgENh5i76Qq2tw48U8AsYo5damHby1epf
-neZafLpUkLLO7AGBJIiRVTevdvyXQ0qnixOmKMWyvrhSNGuVIKVdeqLP+102Dwf+dpFyw+j1hz28
-jEEKpHa+NR1b2kXuSPi/rMGhexwlJOh4tK8KQ6Ryr0rIN//NSbOgbyYZrzc/ZUWX9V5OA84ChFb2
-vkFl0OcYrttp/rhDBLITwffPxSZeoBh9H7zYzkbCXKL3BUIwggYnMIIFD6ADAgECAgMN7zcwDQYJ
-KoZIhvcNAQEFBQAwgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQKEw1TdGFydENvbSBMdGQuMSswKQYD
-VQQLEyJTZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWduaW5nMTgwNgYDVQQDEy9TdGFydENv
-bSBDbGFzcyAxIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVudCBDQTAeFw0xNTA1MDUwOTQzNDFa
-Fw0xNjA1MDUwOTUzMzZaMEIxHDAaBgNVBAMME2R3bXcyQGluZnJhZGVhZC5vcmcxIjAgBgkqhkiG
-9w0BCQEWE2R3bXcyQGluZnJhZGVhZC5vcmcwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIB
-AQDJG5vZD28dY/1+EVcn/6TykmMHpXHKOvU750EGyjPJvMZFo1ySNY6SdYzGhlGRhU6CDTEmYu5W
-WsFKM7nVm10istUopBDUkyR337HUQCJbKfoUfL1r47ClK8urBHajxnaGuUWO/jeFkbrFmQ2Fv0UV
-hOovRC/alfOglT2KsNtlATlMOP4/x1Rglek0gfMhOYhMIZP4VLs0axWZtTCTEe5gkuwQkfC6+YxW
-OtZVqQYlzVyMS2Qrw3NuikeS+bWF+N4lFTt38xEtRkVaGJ8cZNrZs33LGRubyvk63PS/DmSX5GKx
-Bx9/iMONTENMP3Y1bWK9fh2JXcdEJmFwLZ4SI/lDAgMBAAGjggLZMIIC1TAJBgNVHRMEAjAAMAsG
-A1UdDwQEAwIEsDAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwQwHQYDVR0OBBYEFLMwvegt
-8Of9vnfmrUq9CKU9umCOMB8GA1UdIwQYMBaAFFNy7ZKc4NrLAVx8fpY1TvLUuFGCMB4GA1UdEQQX
-MBWBE2R3bXcyQGluZnJhZGVhZC5vcmcwggFMBgNVHSAEggFDMIIBPzCCATsGCysGAQQBgbU3AQID
-MIIBKjAuBggrBgEFBQcCARYiaHR0cDovL3d3dy5zdGFydHNzbC5jb20vcG9saWN5LnBkZjCB9wYI
-KwYBBQUHAgIwgeowJxYgU3RhcnRDb20gQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwAwIBARqBvlRo
-aXMgY2VydGlmaWNhdGUgd2FzIGlzc3VlZCBhY2NvcmRpbmcgdG8gdGhlIENsYXNzIDEgVmFsaWRh
-dGlvbiByZXF1aXJlbWVudHMgb2YgdGhlIFN0YXJ0Q29tIENBIHBvbGljeSwgcmVsaWFuY2Ugb25s
-eSBmb3IgdGhlIGludGVuZGVkIHB1cnBvc2UgaW4gY29tcGxpYW5jZSBvZiB0aGUgcmVseWluZyBw
-YXJ0eSBvYmxpZ2F0aW9ucy4wNgYDVR0fBC8wLTAroCmgJ4YlaHR0cDovL2NybC5zdGFydHNzbC5j
-b20vY3J0dTEtY3JsLmNybDCBjgYIKwYBBQUHAQEEgYEwfzA5BggrBgEFBQcwAYYtaHR0cDovL29j
-c3Auc3RhcnRzc2wuY29tL3N1Yi9jbGFzczEvY2xpZW50L2NhMEIGCCsGAQUFBzAChjZodHRwOi8v
-YWlhLnN0YXJ0c3NsLmNvbS9jZXJ0cy9zdWIuY2xhc3MxLmNsaWVudC5jYS5jcnQwIwYDVR0SBBww
-GoYYaHR0cDovL3d3dy5zdGFydHNzbC5jb20vMA0GCSqGSIb3DQEBBQUAA4IBAQBzEJsRx6HaUvOV
-/B0csYb35MrO6/rWgjTmjVPXMULv3Gf+pOZ0tqhjTM2eo2+7nmP1e+6fuA1v/WVjgw03+Bc9NJoe
-UklXNtAc+7foYccB3etj2YBDYeYu+kKtrcOPFPALGKOXWph28tXqX53mWny6VJCyzuwBgSSIkVU3
-r3b8l0NKp4sTpijFsr64UjRrlSClXXqiz/tdNg8H/naRcsPo9Yc9vIxBCqR2vjUdW9pF7kj4v6zB
-oXscJSToeLSvCkOkcq9KyDf/zUmzoG8mGa83P2VFl/VeTgPOAoRW9r5BZdDnGK7baf64QwSyE8H3
-z8UmXqAYfR+82M5Gwlyi9wVCMIIGNDCCBBygAwIBAgIBHjANBgkqhkiG9w0BAQUFADB9MQswCQYD
-VQQGEwJJTDEWMBQGA1UEChMNU3RhcnRDb20gTHRkLjErMCkGA1UECxMiU2VjdXJlIERpZ2l0YWwg
-Q2VydGlmaWNhdGUgU2lnbmluZzEpMCcGA1UEAxMgU3RhcnRDb20gQ2VydGlmaWNhdGlvbiBBdXRo
-b3JpdHkwHhcNMDcxMDI0MjEwMTU1WhcNMTcxMDI0MjEwMTU1WjCBjDELMAkGA1UEBhMCSUwxFjAU
-BgNVBAoTDVN0YXJ0Q29tIEx0ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRl
-IFNpZ25pbmcxODA2BgNVBAMTL1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUg
-Q2xpZW50IENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxwmDzM4t2BqxKaQuE6uW
-vooyg4ymiEGWVUet1G8SD+rqvyNH4QrvnEIaFHxOhESip7vMz39ScLpNLbL1QpOlPW/tFIzNHS3q
-d2XRNYG5Sv9RcGE+T4qbLtsjjJbi6sL7Ls/f/X9ftTyhxvxWkf8KW37iKrueKsxw2HqolH7GM6FX
-5UfNAwAu4ZifkpmZzU1slBhyWwaQPEPPZRsWoTb7q8hmgv6Nv3Hg9rmA1/VPBIOQ6SKRkHXG0Hhm
-q1dOFoAFI411+a/9nWm5rcVjGcIWZ2v/43Yksq60jExipA4l5uv9/+Hm33mbgmCszdj/Dthf13tg
-Av2O83hLJ0exTqfrlwIDAQABo4IBrTCCAakwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC
-AQYwHQYDVR0OBBYEFFNy7ZKc4NrLAVx8fpY1TvLUuFGCMB8GA1UdIwQYMBaAFE4L7xqkQFulF2mH
-MMo0aEPQQa7yMGYGCCsGAQUFBwEBBFowWDAnBggrBgEFBQcwAYYbaHR0cDovL29jc3Auc3RhcnRz
-c2wuY29tL2NhMC0GCCsGAQUFBzAChiFodHRwOi8vd3d3LnN0YXJ0c3NsLmNvbS9zZnNjYS5jcnQw
-WwYDVR0fBFQwUjAnoCWgI4YhaHR0cDovL3d3dy5zdGFydHNzbC5jb20vc2ZzY2EuY3JsMCegJaAj
-hiFodHRwOi8vY3JsLnN0YXJ0c3NsLmNvbS9zZnNjYS5jcmwwgYAGA1UdIAR5MHcwdQYLKwYBBAGB
-tTcBAgEwZjAuBggrBgEFBQcCARYiaHR0cDovL3d3dy5zdGFydHNzbC5jb20vcG9saWN5LnBkZjA0
-BggrBgEFBQcCARYoaHR0cDovL3d3dy5zdGFydHNzbC5jb20vaW50ZXJtZWRpYXRlLnBkZjANBgkq
-hkiG9w0BAQUFAAOCAgEACoMIfXirLAZcuGOMXq4cuSN3TaFx2H2GvD5VSy/6rV55BYHbWNaPeQn3
-oBSU8KgQZn/Kck1JxbLpAxVCNtsxeW1R87ifhsYZ0qjdrA9anrW2MAWCtosmAOT4OxK9QPoSjCMx
-M3HbkZCDJgnlE8jMopH21BbyAYr7b5EfGRQJNtgWcvqSXwKHnTutR08+Kkn0KAkXCzeQNLeA5LlY
-UzFyM7kPAp8pIRMQ+seHunmyG642S2+y/qHEdMuGIwpfz3eDF1PdctL04qYK/zu+Qg1Bw0RwgigV
-Zs/0c5HP2/e9DBHh7eSwtzYlk4AUr6yxLlcwSjOfOmKEQ/Q8tzh0IFiNu9IPuTGAPBn4CPxD0+Ru
-8T2wg8/s43R/PT3kd1OEqOJUl7q+h+r6fpvU0Fzxd2tC8Ga6fDEPme+1Nbi+03pVjuZQKbGwKJ66
-gEn06WqaxVZC+J8hh/jR0k9mST1iAZPNYulcNJ8tKmVtjYsv0L1TSm2+NwON58tO+pIVzu3DWwSE
-XSf+qkDavQam+QtEOZxLBXI++aMUEapSn+k3Lxm48ZCYfAWLb/Xj7F5JQMbZvCexglAbYR0kIHqW
-5DnsYSdMD/IplJMojx0NBrxJ3fN9dvX2Y6BIXRsF1du4qESm4/3CKuyUV7p9DW3mPlHTGLvYxnyK
-Qy7VFBkoLINszBrOUeIxggNvMIIDawIBATCBlDCBjDELMAkGA1UEBhMCSUwxFjAUBgNVBAoTDVN0
-YXJ0Q29tIEx0ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRlIFNpZ25pbmcx
-ODA2BgNVBAMTL1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUgQ2xpZW50IENB
-AgMN7zcwCQYFKw4DAhoFAKCCAa8wGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0B
-CQUxDxcNMTUwOTIzMTQ0NDMwWjAjBgkqhkiG9w0BCQQxFgQU5rOQGR0Mz7gQoSEJ0M8uGMbqZvww
-gaUGCSsGAQQBgjcQBDGBlzCBlDCBjDELMAkGA1UEBhMCSUwxFjAUBgNVBAoTDVN0YXJ0Q29tIEx0
-ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRlIFNpZ25pbmcxODA2BgNVBAMT
-L1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUgQ2xpZW50IENBAgMN7zcwgacG
-CyqGSIb3DQEJEAILMYGXoIGUMIGMMQswCQYDVQQGEwJJTDEWMBQGA1UEChMNU3RhcnRDb20gTHRk
-LjErMCkGA1UECxMiU2VjdXJlIERpZ2l0YWwgQ2VydGlmaWNhdGUgU2lnbmluZzE4MDYGA1UEAxMv
-U3RhcnRDb20gQ2xhc3MgMSBQcmltYXJ5IEludGVybWVkaWF0ZSBDbGllbnQgQ0ECAw3vNzANBgkq
-hkiG9w0BAQEFAASCAQApVuHD15QgYitNoXXJNj7hmtxKrvG3co8QJn0gChctSTKyGbyTVAc7tNV5
-722I+stfkfI5TPES7my8+diUwMVo9fVHAUQ5G7wnGYeTt3+i+Kainy0vFLyWWrIYSWEMSHCrAJn1
-TegaQK9opDvrJ95FPoBdu52JqoZHay+nTF7bprpq6weYCPLRFSrUvnTMh+EFCSr/YpeIJBjJd+72
-wRcH9P0Jy0KOPWJdGDaKvUll0lyMzPua1FtsBiaA94ZMMbo+aIgGWRvIEk8Ip5KrglNes+kXVNz9
-gsHItd7WSi/noZiTKujhTfvm8OoBGGMhttuArZJQ4iRPmub59e/y8pT5AAAAAAAA
-
-
---=-jVfJPurAS0sReFcFRVdt--
