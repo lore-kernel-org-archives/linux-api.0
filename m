@@ -1,49 +1,143 @@
-From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Subject: Re: [PATCH 2/2] selftests/userfaultfd: improve syscall number
- definition
-Date: Wed, 23 Sep 2015 19:55:09 +1000
-Message-ID: <1443002109.9279.1.camel@ellerman.id.au>
-References: <1442918756-17892-1-git-send-email-andre.przywara@arm.com>
-	 <1442918756-17892-3-git-send-email-andre.przywara@arm.com>
-	 <56015C59.5010300@osg.samsung.com> <20150922140625.GH25412@redhat.com>
-	 <56018CA0.8050600@arm.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [v15 0/4] ext4: add project quota support
+Date: Wed, 23 Sep 2015 14:31:19 +0200
+Message-ID: <20150923123119.GA13946@quack.suse.cz>
+References: <1442146833-13652-1-git-send-email-lixi@ddn.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <56018CA0.8050600-5wv7dgnIgG8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andre Przywara <andre.przywara-5wv7dgnIgG8@public.gmane.org>
-Cc: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Will Deacon <Will.Deacon-5wv7dgnIgG8@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1442146833-13652-1-git-send-email-lixi@ddn.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Li Xi <pkuelelixi@gmail.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger@dilger.ca, jack@suse.cz, viro@zeniv.linux.org.uk, hch@infradead.org, dmonakhov@openvz.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2015-09-22 at 18:15 +0100, Andre Przywara wrote:
-> On 22/09/15 15:06, Andrea Arcangeli wrote:
-> > Andre, could you see if linux-next (which includes -mm) works for you
-> > by just running "cd tools/testing/selftests/vm/ && make"? If there's
-> > any further change required could you diff it against linux-next?
+On Sun 13-09-15 21:20:29, Li Xi wrote:
+> The following patches propose an implementation of project quota
+> support for ext4. A project is an aggregate of unrelated inodes
+> which might scatter in different directories. Inodes that belong
+> to the same project possess an identical identification i.e.
+> 'project ID', just like every inode has its user/group
+> identification. The following patches add project quota as
+> supplement to the former uer/group quota types.
+
+With the last version of the patches, there was only one outstanding issue
+and that was whether xfstests for XFS pass correctly (especially the
+project quota related ones). Have you been able to verify this?
+
+								Honza
+
 > 
-> This doesn't compile now for me, because it looks into
-> /usr/include/asm/unistd.h, which I keep to the distribution copy of it.
-> Also linux/userfaultfd.h is missing, because it's brand new.
-...
-> I guess the right solution would be to hack the Makefile to set the
-> include path to the kernel's copy of include/uapi, though I am not sure
-> this works cleanly for different architectures and separate build
-> directories. I will give this a try ...
-
-Not that's not the right solution.
-
-The right solution is to export the kernel headers, the Makefile will pick them
-up (at least in linux-next):
-
-  $ cd linux
-  $ make headers_install
-  $ ls usr/include/
-  asm/  asm-generic/  drm/  linux/  misc/  mtd/  rdma/  scsi/  sound/  uapi/  video/  xen/
-  $ make -C tools/testing/selftests TARGETS=vm
-  ...
-  $ ls tools/testing/selftests/vm/userfaultfd
-  tools/testing/selftests/vm/userfaultfd*
-
-cheers
+> The semantics of ext4 project quota is consistent with XFS. Each
+> directory can have EXT4_INODE_PROJINHERIT flag set. When the
+> EXT4_INODE_PROJINHERIT flag of a parent directory is not set, a
+> newly created inode under that directory will have a default project
+> ID (i.e. 0). And its EXT4_INODE_PROJINHERIT flag is not set either.
+> When this flag is set on a directory, following rules will be kept:
+> 
+> 1) The newly created inode under that directory will inherit both
+> the EXT4_INODE_PROJINHERIT flag and the project ID from its parent
+> directory.
+> 
+> 2) Hard-linking a inode with different project ID into that directory
+> will fail with errno EXDEV.
+> 
+> 3) Renaming a inode with different project ID into that directory
+> will fail with errno EXDEV. However, 'mv' command will detect this
+> failure and copy the renamed inode to a new inode in the directory.
+> Thus, this new inode will inherit both the project ID and
+> EXT4_INODE_PROJINHERIT flag.
+> 
+> 4) If the project quota of that ID is being enforced, statfs() on
+> that directory will take the quotas as another upper limits along
+> with the capacity of the file system, i.e. the total block/inode
+> number will be the minimum of the quota limits and file system
+> capacity.
+> 
+> Changelog:
+> * v15 <- v14:
+>  - Rebase to newest master branch of git repository (b0a1ea51b).
+> * v14 <- v13:
+>  - Cleanup ioctl of setting project ID;
+>  - Do not check project quota inode number specially;
+>  - Check isize when extract project ID from disk;
+>  - Rebase to latest kernel (4.0.0)
+> * v13 <- v12:
+>  - Update inode size check of project ID.
+> * v12 <- v11:
+>  - Relax the permission check when setting project ID.
+> * v11 <- v10:
+>  - Remove project quota mount option;
+>  - Fix permission check when setting project ID.
+> * v10 <- v9:
+>  - Remove non-journaled project quota interface;
+>  - Only allow admin to read project quota info;
+>  - Cleanup FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR interface.
+> * v9 <- v8:
+>  - Remove non-journaled project quota;
+>  - Rebase to newest dev branch of ext4 repository (3.19.0-rc3).
+> * v8 <- v7:
+>  - Rebase to newest dev branch of ext4 repository (3.18.0_rc3).
+> * v7 <- v6:
+>  - Map ext4 inode flags to xflags of struct fsxattr;
+>  - Add patch to cleanup ext4 inode flag definitions.
+> * v6 <- v5:
+>  - Add project ID check for cross rename;
+>  - Remove patch of EXT4_IOC_GETPROJECT/EXT4_IOC_SETPROJECT ioctl
+> * v5 <- v4:
+>  - Check project feature when set/get project ID;
+>  - Do not check project feature for project quota;
+>  - Add support of FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR.
+> * v4 <- v3:
+>  - Do not check project feature when set/get project ID;
+>  - Use EXT4_MAXQUOTAS instead of MAXQUOTAS in ext4 patches;
+>  - Remove unnecessary change of fs/quota/dquot.c;
+>  - Remove CONFIG_QUOTA_PROJECT.
+> * v3 <- v2:
+>  - Add EXT4_INODE_PROJINHERIT semantics.
+> * v2 <- v1:
+>  - Add ioctl interface for setting/getting project;
+>  - Add EXT4_FEATURE_RO_COMPAT_PROJECT;
+>  - Add get_projid() method in struct dquot_operations;
+>  - Add error check of ext4_inode_projid_set/get().
+> 
+> v14: http://article.gmane.org/gmane.linux.kernel.api/10345
+> v13: http://www.spinics.net/lists/linux-fsdevel/msg85205.html
+> v12: http://www.spinics.net/lists/linux-fsdevel/msg84905.html
+> v11: http://www.spinics.net/lists/linux-ext4/msg47450.html
+> v10: http://www.spinics.net/lists/linux-ext4/msg47413.html
+> v9: http://www.spinics.net/lists/linux-ext4/msg47326.html
+> v8: http://www.spinics.net/lists/linux-ext4/msg46545.html
+> v7: http://www.spinics.net/lists/linux-fsdevel/msg80404.html
+> v6: http://www.spinics.net/lists/linux-fsdevel/msg80022.html
+> v5: http://www.spinics.net/lists/linux-api/msg04840.html
+> v4: http://lwn.net/Articles/612972/
+> v3: http://www.spinics.net/lists/linux-ext4/msg45184.html
+> v2: http://www.spinics.net/lists/linux-ext4/msg44695.html
+> v1: http://article.gmane.org/gmane.comp.file-systems.ext4/45153
+> 
+> Any comments or feedbacks are appreciated.
+> 
+> Regards,
+>                                          - Li Xi
+> 
+> Li Xi (4):
+>   ext4: adds project ID support
+>   ext4: adds project quota support
+>   ext4: adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR interface support
+>   ext4: cleanup inode flag definitions
+> 
+>  fs/ext4/ext4.h          |   85 +++++++----
+>  fs/ext4/ialloc.c        |    7 +
+>  fs/ext4/inode.c         |   28 ++++
+>  fs/ext4/ioctl.c         |  367 ++++++++++++++++++++++++++++++++++++-----------
+>  fs/ext4/namei.c         |   19 +++
+>  fs/ext4/super.c         |   57 +++++++-
+>  fs/xfs/libxfs/xfs_fs.h  |   47 +++----
+>  include/uapi/linux/fs.h |   33 +++++
+>  8 files changed, 490 insertions(+), 153 deletions(-)
+> 
+-- 
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
