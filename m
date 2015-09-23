@@ -1,16 +1,16 @@
-From: cpaul@redhat.com
-Subject: [PATCH v6 1/1] Input: Add userio module
-Date: Wed, 23 Sep 2015 13:49:49 -0400
-Message-ID: <1443030589-27574-1-git-send-email-cpaul@redhat.com>
-References: <CANq1E4R32AsEryyUfUr69jSeJJXRPwfxvY9uuvH7UOqG9Z__Lg@mail.gmail.com>
-Return-path: <linux-input-owner@vger.kernel.org>
-In-Reply-To: <CANq1E4R32AsEryyUfUr69jSeJJXRPwfxvY9uuvH7UOqG9Z__Lg@mail.gmail.com>
-Sender: linux-input-owner@vger.kernel.org
-To: David Herrmann <dh.herrmann@gmail.com>, Dmitry Torokhov <dmitry.torokhov@gmail.com>
-Cc: linux-kernel <linux-kernel@vger.kernel.org>, linux-input@vger.kernel.org, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Greg KH <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, Joe Perches <joe@perches.com>, Jiri Slaby <jslaby@suse.com>, Vishnu Patekar <vishnupatekar0510@gmail.com>, Sebastian Ott <sebott@linux.vnet.ibm.com>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Hans de Goede <hdegoede@redhat.com>, linux-doc@vger.kernel.org
+From: cpaul-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Subject: [PATCH v6.1 1/1] Input: Add userio module
+Date: Wed, 23 Sep 2015 13:54:59 -0400
+Message-ID: <1443030899-28737-1-git-send-email-cpaul@redhat.com>
+References: <1443030589-27574-1-git-send-email-cpaul@redhat.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1443030589-27574-1-git-send-email-cpaul-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Jiri Slaby <jslaby-IBi9RG/b67k@public.gmane.org>, Vishnu Patekar <vishnupatekar0510-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Sebastian Ott <sebott-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Benjamin Tissoires <benjamin.tissoires-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hans de Goede <hdegoede-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Stephen Chandler Paul <cpaul@redhat.com>
+From: Stephen Chandler Paul <cpaul-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 
 Debugging input devices, specifically laptop touchpads, can be tricky
 without having the physical device handy. Here we try to remedy that
@@ -22,16 +22,8 @@ debug driver issues on the PS/2 level with devices simply by requesting
 a recording from the user experiencing the issue without having to have
 the physical hardware in front of them.
 
-Signed-off-by: Stephen Chandler Paul <cpaul@redhat.com>
+Signed-off-by: Stephen Chandler Paul <cpaul-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
-				    Changes
-* Change type in userio.h struct to __u8
-* Add a spin lock that is used in addition to the mutex, no more completion struct
-* Fix "repeat repeat" typo again (not sure how this got here?)
-* Use USERIO_BUFSIZE for size of buf array in userio_char_read()
-* Rename buffer in userio_char_read() to user_buffer (having both buffer and
-  buf could be confusing)
-
  Documentation/input/userio.txt |  70 ++++++++++
  MAINTAINERS                    |   6 +
  drivers/input/serio/Kconfig    |  11 ++
@@ -44,6 +36,10 @@ Signed-off-by: Stephen Chandler Paul <cpaul@redhat.com>
  create mode 100644 drivers/input/serio/userio.c
  create mode 100644 include/uapi/linux/userio.h
 
+				    Changes
+* Fixed the files listed in MAINTAINERS, surprised no one (myself included)
+  noticed this earlier.
+
 diff --git a/Documentation/input/userio.txt b/Documentation/input/userio.txt
 new file mode 100644
 index 0000000..0880c0f
@@ -51,7 +47,7 @@ index 0000000..0880c0f
 +++ b/Documentation/input/userio.txt
 @@ -0,0 +1,70 @@
 +			      The userio Protocol
-+	     (c) 2015 Stephen Chandler Paul <thatslyude@gmail.com>
++	     (c) 2015 Stephen Chandler Paul <thatslyude-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 +			      Sponsored by Red Hat
 +--------------------------------------------------------------------------------
 +
@@ -121,7 +117,7 @@ index 0000000..0880c0f
 +
 +	https://github.com/Lyude/ps2emu
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 274f854..44740de 100644
+index 274f854..7613654 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
 @@ -11086,6 +11086,12 @@ S:	Maintained
@@ -129,14 +125,14 @@ index 274f854..44740de 100644
  F:	include/media/videobuf2-*
  
 +VIRTUAL SERIO DEVICE DRIVER
-+M:	Stephen Chandler Paul <thatslyude@gmail.com>
++M:	Stephen Chandler Paul <thatslyude-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 +S:	Maintained
-+F:	drivers/input/serio/ps2emu.c
-+F:	include/uapi/linux/ps2emu.h
++F:	drivers/input/serio/userio.c
++F:	include/uapi/linux/userio.h
 +
  VIRTIO CONSOLE DRIVER
- M:	Amit Shah <amit.shah@redhat.com>
- L:	virtualization@lists.linux-foundation.org
+ M:	Amit Shah <amit.shah-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+ L:	virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 diff --git a/drivers/input/serio/Kconfig b/drivers/input/serio/Kconfig
 index 200841b..22b8b58 100644
 --- a/drivers/input/serio/Kconfig
@@ -175,7 +171,7 @@ index 0000000..f0e1bd4
 +/*
 + * userio kernel serio device emulation module
 + * Copyright (C) 2015 Red Hat
-+ * Copyright (C) 2015 Stephen Chandler Paul <thatslyude@gmail.com>
++ * Copyright (C) 2015 Stephen Chandler Paul <thatslyude-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 + *
 + * This program is free software; you can redistribute it and/or modify it
 + * under the terms of the GNU Lesser General Public License as published by the
@@ -456,7 +452,7 @@ index 0000000..f0e1bd4
 +MODULE_ALIAS_MISCDEV(USERIO_MINOR);
 +MODULE_ALIAS("devname:" USERIO_NAME);
 +
-+MODULE_AUTHOR("Stephen Chandler Paul <thatslyude@gmail.com>");
++MODULE_AUTHOR("Stephen Chandler Paul <thatslyude-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>");
 +MODULE_DESCRIPTION("Virtual Serio Device Support");
 +MODULE_LICENSE("GPL");
 +
@@ -482,7 +478,7 @@ index 0000000..37d147f
 +/*
 + * userio: virtual serio device support
 + * Copyright (C) 2015 Red Hat
-+ * Copyright (C) 2015 Lyude (Stephen Chandler Paul) <cpaul@redhat.com>
++ * Copyright (C) 2015 Lyude (Stephen Chandler Paul) <cpaul-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 + *
 + * This program is free software; you can redistribute it and/or modify it
 + * under the terms of the GNU Lesser General Public License as published by the
@@ -525,4 +521,3 @@ index 0000000..37d147f
 +#endif /* !_USERIO_H */
 -- 
 2.4.3
-
