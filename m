@@ -1,43 +1,102 @@
-From: Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: [RFC 0/3] kdbus: extend selftests
-Date: Thu, 24 Sep 2015 14:07:33 +0200
-Message-ID: <1443096456-1527-1-git-send-email-p.osmialowsk@samsung.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, David Herrmann <dh.herrmann-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+From: Paul Osmialowski <p.osmialowsk@samsung.com>
+Subject: [RFC 1/3] kdbus: TEST_CREATE_CONN now does no depend on TEST_CREATE_BUS
+Date: Thu, 24 Sep 2015 14:07:34 +0200
+Message-ID: <1443096456-1527-2-git-send-email-p.osmialowsk@samsung.com>
+References: <1443096456-1527-1-git-send-email-p.osmialowsk@samsung.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-reply-to: <1443096456-1527-1-git-send-email-p.osmialowsk@samsung.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Mack <daniel@zonque.org>, David Herrmann <dh.herrmann@googlemail.com>, Djalal Harouni <tixxdz@opendz.org>, Shuah Khan <shuahkh@osg.samsung.com>, Paul Moore <pmoore@redhat.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Paul Osmialowski <p.osmialowsk@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-This serie extends kdbus selftests with following new features:
+Without this patch, it is impossible to specify test case able to
+connect to a bus already created (e.g. by 'test-daemon' test case), you can
+only specify:
 
-- ability to specify TEST_CREATE_CONN without TEST_CREATE_BUS
-- the 'test-send' test case (by Karol Lewandowski)
-- ability to run kdbus test by executable binary name
+1) TEST_CREATE_BUS which creates new bus, or
+2) TEST_CREATE_CONN OR'ed with TEST_CREATE_BUS which creates new bus and
+creates connection to it.
 
-Paul Osmialowski (3):
-  kdbus: TEST_CREATE_CONN now does no depend on TEST_CREATE_BUS
-  kdbus: selftests extended
-  kdbus: Ability to run kdbus test by executable binary name
+This patch adds the missing ability to specify TEST_CREATE_CONN alone.
 
- tools/testing/selftests/kdbus/Makefile           |  1 +
- tools/testing/selftests/kdbus/kdbus-test.c       | 37 ++++++++++-
- tools/testing/selftests/kdbus/kdbus-test.h       |  1 +
- tools/testing/selftests/kdbus/kdbus-util.c       | 38 +++++++----
- tools/testing/selftests/kdbus/kdbus-util.h       |  2 +-
- tools/testing/selftests/kdbus/test-activator.c   | 20 +++---
- tools/testing/selftests/kdbus/test-chat.c        |  6 +-
- tools/testing/selftests/kdbus/test-connection.c  |  8 ++-
- tools/testing/selftests/kdbus/test-fd.c          |  2 +-
- tools/testing/selftests/kdbus/test-message.c     | 69 ++++++++++++--------
- tools/testing/selftests/kdbus/test-metadata-ns.c | 10 +--
- tools/testing/selftests/kdbus/test-monitor.c     |  9 +--
- tools/testing/selftests/kdbus/test-policy-ns.c   |  8 +--
- tools/testing/selftests/kdbus/test-policy-priv.c | 48 ++++++++------
- tools/testing/selftests/kdbus/test-send.c        | 82 ++++++++++++++++++++++++
- tools/testing/selftests/kdbus/test-sync.c        |  2 +-
- tools/testing/selftests/kdbus/test-timeout.c     |  2 +-
- 17 files changed, 253 insertions(+), 92 deletions(-)
- create mode 100644 tools/testing/selftests/kdbus/test-send.c
+It will be used by a new test case (will be added by separate commit) which
+is supposed to connect to already started test-daemon case.
 
+Signed-off-by: Paul Osmialowski <p.osmialowsk@samsung.com>
+---
+ tools/testing/selftests/kdbus/kdbus-test.c | 21 +++++++++++++++++++++
+ tools/testing/selftests/kdbus/kdbus-util.c | 18 +++++++++++-------
+ 2 files changed, 32 insertions(+), 7 deletions(-)
+
+diff --git a/tools/testing/selftests/kdbus/kdbus-test.c b/tools/testing/selftests/kdbus/kdbus-test.c
+index db57381..bde4283 100644
+--- a/tools/testing/selftests/kdbus/kdbus-test.c
++++ b/tools/testing/selftests/kdbus/kdbus-test.c
+@@ -314,6 +314,27 @@ static int test_prepare_env(const struct kdbus_test *t,
+ 	}
+ 
+ 	if (t->flags & TEST_CREATE_CONN) {
++		if (!env->buspath) {
++			char *s = NULL;
++			char *n = NULL;
++			int ret;
++
++			if (!args->busname) {
++				n = unique_name("test-bus");
++				ASSERT_RETURN(n);
++			}
++
++			ret = kdbus_create_bus(-1,
++					       args->busname ?: n,
++					       0,
++					       &s);
++			free(n);
++			ASSERT_RETURN(ret == 0);
++
++			asprintf(&env->buspath, "%s/%s/bus", args->root, s);
++			free(s);
++		}
++		ASSERT_RETURN(env->buspath);
+ 		env->conn = kdbus_hello(env->buspath, 0, NULL, 0);
+ 		ASSERT_RETURN(env->conn);
+ 	}
+diff --git a/tools/testing/selftests/kdbus/kdbus-util.c b/tools/testing/selftests/kdbus/kdbus-util.c
+index 82fa89b..5129487 100644
+--- a/tools/testing/selftests/kdbus/kdbus-util.c
++++ b/tools/testing/selftests/kdbus/kdbus-util.c
+@@ -140,7 +140,7 @@ int kdbus_create_bus(int control_fd, const char *name,
+ 			char str[64];
+ 		} name;
+ 	} bus_make;
+-	int ret;
++	int ret = 0;
+ 
+ 	memset(&bus_make, 0, sizeof(bus_make));
+ 	bus_make.bp.size = sizeof(bus_make.bp);
+@@ -165,13 +165,17 @@ int kdbus_create_bus(int control_fd, const char *name,
+ 			     bus_make.attach.size +
+ 			     bus_make.name.size;
+ 
+-	kdbus_printf("Creating bus with name >%s< on control fd %d ...\n",
+-		     name, control_fd);
++	if (control_fd != -1) {
++		kdbus_printf(
++			"Creating bus with name >%s< on control fd %d ...\n",
++			name, control_fd);
+ 
+-	ret = kdbus_cmd_bus_make(control_fd, &bus_make.cmd);
+-	if (ret < 0) {
+-		kdbus_printf("--- error when making bus: %d (%m)\n", ret);
+-		return ret;
++		ret = kdbus_cmd_bus_make(control_fd, &bus_make.cmd);
++		if (ret < 0) {
++			kdbus_printf("--- error when making bus: %d (%m)\n",
++				     ret);
++			return ret;
++		}
+ 	}
+ 
+ 	if (ret == 0 && path)
 -- 
 1.9.1
