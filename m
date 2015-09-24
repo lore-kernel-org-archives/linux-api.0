@@ -1,47 +1,71 @@
-From: Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: [RFC 3/3] kdbus: Ability to run kdbus test by executable binary name
-Date: Thu, 24 Sep 2015 14:07:36 +0200
-Message-ID: <1443096456-1527-4-git-send-email-p.osmialowsk@samsung.com>
-References: <1443096456-1527-1-git-send-email-p.osmialowsk@samsung.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <1443096456-1527-1-git-send-email-p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, David Herrmann <dh.herrmann-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+From: Frederic Weisbecker <fweisbec@gmail.com>
+Subject: Re: [PATCH 09/13] Move bp_type_idx to kernel/event/hw_breakpoint.c
+Date: Thu, 24 Sep 2015 14:15:25 +0200
+Message-ID: <20150924121524.GA6050@lerouge>
+References: <1441832902-28993-1-git-send-email-palmer@dabbelt.com>
+ <1442271047-4908-10-git-send-email-palmer@dabbelt.com>
+ <20150915080607.GW16853@twins.programming.kicks-ass.net>
+ <2023922.x7a6gQp0x7@wuerfel>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <2023922.x7a6gQp0x7@wuerfel>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Peter Zijlstra <peterz@infradead.org>, mathieu.desnoyers@efficios.com, Palmer Dabbelt <palmer@dabbelt.com>, dhowells@redhat.com, viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, kexec@lists.infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-With this applied, you can make a symlink (or copy) of kdbus-test
-executable binary and name it according to given test name.
+On Tue, Sep 15, 2015 at 11:15:29PM +0200, Arnd Bergmann wrote:
+> On Tuesday 15 September 2015 10:06:07 Peter Zijlstra wrote:
+> > > diff --git a/include/uapi/linux/hw_breakpoint.h b/include/uapi/linux/hw_breakpoint.h
+> > > index b04000a2296a..7a6a5a7f9511 100644
+> > > --- a/include/uapi/linux/hw_breakpoint.h
+> > > +++ b/include/uapi/linux/hw_breakpoint.h
+> > > @@ -17,14 +17,4 @@ enum {
+> > >       HW_BREAKPOINT_INVALID   = HW_BREAKPOINT_RW | HW_BREAKPOINT_X,
+> > >  };
+> > >  
+> > > -enum bp_type_idx {
+> > > -     TYPE_INST       = 0,
+> > > -#ifdef CONFIG_HAVE_MIXED_BREAKPOINTS_REGS
+> > > -     TYPE_DATA       = 0,
+> > > -#else
+> > > -     TYPE_DATA       = 1,
+> > > -#endif
+> > > -     TYPE_MAX
+> > > -};
+> > 
+> > This is rather unfortunate; you are correct that the naming is too
+> > generic (and I tend to agree), but I think these values are required by
+> > userspace to fill out:
+> > 
+> >   perf_event_attr::bp_type
+> > 
+> > So removing them will break things.
+> > 
+> > Frederic?
+> 
+> If user space actually relies on the definition from this header file,
+> then it will use the wrong one on x86 and get 'TYPE_DATA = 1', while the
+> kernel uses 'TYPE_DATA = 0'.
+> 
+> That seems unlikely to work, so I suspect it gets a different definition.
+> If it uses this definition and it does work, we can probably use
+> 
+> #if defined(__KERNEL__) && defined(CONFIG_HAVE_MIXED_BREAKPOINTS_REGS)
+> 
+> but that requires a comment explaining exactly why that works.
 
-Useful for testing features introduced by previous patches.
+I think this TYPE_DATA/TYPE_INST can be safely removed from uapi. This is only
+about internal kernel code. Userspace only relies on HW_BREAKPOINT_[R/W/X]
+to tell about the nature of the breakpoint.
 
-Signed-off-by: Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
----
- tools/testing/selftests/kdbus/kdbus-test.c | 5 +++++
- 1 file changed, 5 insertions(+)
+If userspace ever relies on it, which I have no idea why, it even needs to define
+CONFIG_HAVE_MIXED_BREAKPOINTS_REGS. No really there shouldn't be any user of that outside
+the kernel.
 
-diff --git a/tools/testing/selftests/kdbus/kdbus-test.c b/tools/testing/selftests/kdbus/kdbus-test.c
-index 37f05bb..473cb1b 100644
---- a/tools/testing/selftests/kdbus/kdbus-test.c
-+++ b/tools/testing/selftests/kdbus/kdbus-test.c
-@@ -834,6 +834,7 @@ int main(int argc, char *argv[])
- 		ARG_UIDMAP,
- 		ARG_GIDMAP,
- 	};
-+	char *exec = basename(argv[0]);
- 
- 	kdbus_args = malloc(sizeof(*kdbus_args));
- 	if (!kdbus_args) {
-@@ -863,6 +864,10 @@ int main(int argc, char *argv[])
- 
- 	srand(time(NULL));
- 
-+	if (strcmp(exec, "kdbus-test") != 0) {
-+		kdbus_args->test = exec;
-+	}
-+
- 	while ((t = getopt_long(argc, argv, "hxfm:r:t:b:w:a", options, NULL)) >= 0) {
- 		switch (t) {
- 		case 'x':
--- 
-1.9.1
+Thanks.
+
+> 
+> 	Arnd
