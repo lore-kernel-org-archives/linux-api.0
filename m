@@ -1,165 +1,71 @@
-From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH RFC v2] pidns: introduce syscall getvpid
-Date: Thu, 24 Sep 2015 16:56:47 +0200
-Message-ID: <20150924145647.GA24151@redhat.com>
-References: <20150924135332.27813.21640.stgit@buzz>
+From: "J. Bruce Fields" <bfields@fieldses.org>
+Subject: Re: [RFC v7 26/41] richacl: Apply the file masks to a richacl
+Date: Thu, 24 Sep 2015 11:28:51 -0400
+Message-ID: <20150924152851.GC3823@fieldses.org>
+References: <1441448856-13478-1-git-send-email-agruenba@redhat.com>
+ <1441448856-13478-27-git-send-email-agruenba@redhat.com>
+ <20150922191108.GC19127@fieldses.org>
+ <20150923191832.GA29577@fieldses.org>
+ <CAHc6FU4YkLJUAQEfH7CG8sAzXYbGzg_ibyT7m26Fc1p26v1=VQ@mail.gmail.com>
+ <20150923203357.GC30521@fieldses.org>
+ <CAHc6FU4Jh=-K5=DBERP3-vv8Sak4XGjVJgJ85mTeyPiApUhz+g@mail.gmail.com>
+ <20150923210531.GC29349@fieldses.org>
+ <CAHc6FU7W-oLTOqBxmzAOY5mM37-J6NcnXrhm2SnoDXqHBJbhRQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150924135332.27813.21640.stgit@buzz>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Chen Fan <chen.fan.fnst-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+In-Reply-To: <CAHc6FU7W-oLTOqBxmzAOY5mM37-J6NcnXrhm2SnoDXqHBJbhRQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andreas Gruenbacher <agruenba@redhat.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org, linux-cifs@vger.kernel.org, linux-security-module@vger.kernel.org, Andreas Gruenbacher <agruen@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 09/24, Konstantin Khlebnikov wrote:
->
-> +SYSCALL_DEFINE3(getvpid, pid_t, pid, int, source, int, target)
-> +{
-> +	struct file *source_file = NULL, *target_file = NULL;
-> +	struct pid_namespace *source_ns, *target_ns;
-> +	struct pid *struct_pid;
-> +	struct ns_common *ns;
-> +	pid_t result;
-> +
-> +	if (source >= 0) {
-> +		source_file = proc_ns_fget(source);
-> +		result = PTR_ERR(source_file);
-> +		if (IS_ERR(source_file))
-> +			goto out;
-> +		ns = get_proc_ns(file_inode(source_file));
-> +		result = -EINVAL;
-> +		if (ns->ops->type != CLONE_NEWPID)
-> +			goto out;
-> +		source_ns = container_of(ns, struct pid_namespace, ns);
-> +	} else
-> +		source_ns = task_active_pid_ns(current);
-> +
-> +	if (target >= 0) {
-> +		target_file = proc_ns_fget(target);
-> +		result = PTR_ERR(target_file);
-> +		if (IS_ERR(target_file))
-> +			goto out;
-> +		ns = get_proc_ns(file_inode(target_file));
-> +		result = -EINVAL;
-> +		if (ns->ops->type != CLONE_NEWPID)
-> +			goto out;
-> +		target_ns = container_of(ns, struct pid_namespace, ns);
-> +	} else
-> +		target_ns = task_active_pid_ns(current);
-> +
+On Thu, Sep 24, 2015 at 12:14:40AM +0200, Andreas Gruenbacher wrote:
+> 2015-09-23 23:05 GMT+02:00 J. Bruce Fields <bfields@fieldses.org>:
+> > On Wed, Sep 23, 2015 at 10:40:18PM +0200, Andreas Gruenbacher wrote:
+> >> 2015-09-23 22:33 GMT+02:00 J. Bruce Fields <bfields@fieldses.org>:
+> >> > The same could be said if there's a group-i-belong-to:rwx::allow entry,
+> >> > do we make that exception too?
+> >>
+> >> We cannot because that would be incorrect for all other group members.
+> >
+> > OK.  So people have to learn how the group mask works anyway, and now
+> > they have to learn a special exception to that rule.
+> >
+> > I don't like having this exception.  Or making the richacl->v4acl
+> > translation dependent on the owner.
+> >
+> > But I admit it's surprising to that an 0700 mask with
+> > "bfields:rwx::allow" ACL denies access to a bfields-owned file.
+> 
+> I fully understand your point. This kind of acl is one of the the
+> first things people will try, and nobody is going to accept when
+> access is denied in this case though.
+> 
+> Things are made worse by the fact that Windows has the concept of
+> owner@ or group@ entries for inheritable permissions but not for
+> effective ones; it will always produce and expect "bfields:rwx::allow"
+> type entries instead of "owner@:rwx::allow" type entries. I'm not sure
+> if Samba could bridge that gap.
 
-Hmm. Eric, Konstantin, how about (uncompiled/untested) patch below
-in a preparation? The code above doesn't look very readable.
+I guess Samba's only choice on reading an ACL will be to split OWNER@
+ACEs into inheritable and effective parts and then replace the "who" on
+the latter by the current owner.
 
-In fact I think another helper
 
-	#define proc_ns_xxx(file, type)				\
-		container_of(get_proc_ns(file_inode(file)),	\
-				struct type, ns)
+On writing do you think it should try to translate ACEs for users
+matching the current owner to OWNER@ ACEs, or are you assuming it should
+leave those untouched?
 
-makes sense too.
+Sambas needs here seem most likely to be the determining factor, so I
+just want to make sure I understand.
 
-Oleg.
----
+--b.
 
-diff --git a/fs/nsfs.c b/fs/nsfs.c
-index 99521e7..0877dd6 100644
---- a/fs/nsfs.c
-+++ b/fs/nsfs.c
-@@ -118,9 +118,10 @@ int ns_get_name(char *buf, size_t size, struct task_struct *task,
- 	return res;
- }
- 
--struct file *proc_ns_fget(int fd)
-+struct file *proc_ns_fget(int fd, int nstype)
- {
- 	struct file *file;
-+	struct ns_common *ns;
- 
- 	file = fget(fd);
- 	if (!file)
-@@ -129,6 +130,10 @@ struct file *proc_ns_fget(int fd)
- 	if (file->f_op != &ns_file_operations)
- 		goto out_invalid;
- 
-+	ns = get_proc_ns(file_inode(file));
-+	if (nstype && (ns->ops->type != nstype))
-+		goto out_invalid;
-+
- 	return file;
- 
- out_invalid:
-diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
-index 42dfc61..84c9770 100644
---- a/include/linux/proc_ns.h
-+++ b/include/linux/proc_ns.h
-@@ -65,7 +65,7 @@ static inline int ns_alloc_inum(struct ns_common *ns)
- 
- #define ns_free_inum(ns) proc_free_inum((ns)->inum)
- 
--extern struct file *proc_ns_fget(int fd);
-+extern struct file *proc_ns_fget(int fd, int nstype);
- #define get_proc_ns(inode) ((struct ns_common *)(inode)->i_private)
- extern void *ns_get_path(struct path *path, struct task_struct *task,
- 			const struct proc_ns_operations *ns_ops);
-diff --git a/kernel/nsproxy.c b/kernel/nsproxy.c
-index 49746c8..fee18ba 100644
---- a/kernel/nsproxy.c
-+++ b/kernel/nsproxy.c
-@@ -226,21 +226,17 @@ SYSCALL_DEFINE2(setns, int, fd, int, nstype)
- 	struct ns_common *ns;
- 	int err;
- 
--	file = proc_ns_fget(fd);
-+	file = proc_ns_fget(fd, nstype);
- 	if (IS_ERR(file))
- 		return PTR_ERR(file);
- 
--	err = -EINVAL;
--	ns = get_proc_ns(file_inode(file));
--	if (nstype && (ns->ops->type != nstype))
--		goto out;
--
- 	new_nsproxy = create_new_namespaces(0, tsk, current_user_ns(), tsk->fs);
- 	if (IS_ERR(new_nsproxy)) {
- 		err = PTR_ERR(new_nsproxy);
- 		goto out;
- 	}
- 
-+	ns = get_proc_ns(file_inode(file));
- 	err = ns->ops->install(new_nsproxy, ns);
- 	if (err) {
- 		free_nsproxy(new_nsproxy);
-diff --git a/net/core/net_namespace.c b/net/core/net_namespace.c
-index 572af00..9dfbe68 100644
---- a/net/core/net_namespace.c
-+++ b/net/core/net_namespace.c
-@@ -424,15 +424,12 @@ struct net *get_net_ns_by_fd(int fd)
- 	struct ns_common *ns;
- 	struct net *net;
- 
--	file = proc_ns_fget(fd);
-+	file = proc_ns_fget(fd, CLONE_NEWNET);
- 	if (IS_ERR(file))
- 		return ERR_CAST(file);
- 
- 	ns = get_proc_ns(file_inode(file));
--	if (ns->ops == &netns_operations)
--		net = get_net(container_of(ns, struct net, ns));
--	else
--		net = ERR_PTR(-EINVAL);
-+	net = get_net(container_of(ns, struct net, ns));
- 
- 	fput(file);
- 	return net;
+> The fact that we cannot handle entries for groups the owner is in in a
+> similar way is not a big deal; it's not surprising that changing the
+> group file mode permission bits affects group entries.
+> 
+> Thanks,
+> Andreas
