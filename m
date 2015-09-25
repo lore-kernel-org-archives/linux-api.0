@@ -1,7 +1,7 @@
 From: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-Subject: [PATCH v7 13/15] power: bq24257: Add various device-specific sysfs properties
-Date: Fri, 25 Sep 2015 10:54:18 -0500
-Message-ID: <1443196460-26156-14-git-send-email-dannenberg@ti.com>
+Subject: [PATCH v7 09/15] power: bq24257: Add SW-based approach for Power Good determination
+Date: Fri, 25 Sep 2015 10:54:14 -0500
+Message-ID: <1443196460-26156-10-git-send-email-dannenberg@ti.com>
 References: <1443196460-26156-1-git-send-email-dannenberg@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -12,92 +12,95 @@ To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Erem
 Cc: Ramakrishna Pallala <ramakrishna.pallala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds support for enabling/disabling optional device specific
-features through sysfs properties at runtime.
-
-* High-impedance mode enable/disable
-* Sysoff enable/disable
-
-Refer to the respective device datasheets for more information:
-
-http://www.ti.com/product/bq24250
-http://www.ti.com/product/bq24251
-http://www.ti.com/product/bq24257
+A software-based approach for determining the charger's input voltage
+"Power Good" state is introduced for devices like the bq24250 which
+don't have a dedicated hardware pin for that purpose. This SW-based
+approach is also used for other devices (with dedicated PG pin) as a
+fall back solution if that pin is not configured to be used through
+"pg-gpios".
 
 Signed-off-by: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
 ---
- drivers/power/bq24257_charger.c | 53 +++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 53 insertions(+)
+ drivers/power/bq24257_charger.c | 49 ++++++++++++++++++++++++++++++++---------
+ 1 file changed, 39 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/power/bq24257_charger.c b/drivers/power/bq24257_charger.c
-index 73fcf89..19a0962 100644
+index 7bbff80..5800697 100644
 --- a/drivers/power/bq24257_charger.c
 +++ b/drivers/power/bq24257_charger.c
-@@ -791,12 +791,65 @@ static ssize_t bq24257_show_in_dpm_voltage(struct device *dev,
- 			 bq24257_vindpm_map[bq->init_data.vindpm]);
+@@ -359,7 +359,26 @@ static int bq24257_get_chip_state(struct bq24257_device *bq,
+ 
+ 	state->fault = ret;
+ 
+-	state->power_good = !gpiod_get_value_cansleep(bq->pg);
++	if (bq->pg)
++		state->power_good = !gpiod_get_value_cansleep(bq->pg);
++	else
++		/*
++		 * If we have a chip without a dedicated power-good GPIO or
++		 * some other explicit bit that would provide this information
++		 * assume the power is good if there is no supply related
++		 * fault - and not good otherwise. There is a possibility for
++		 * other errors to mask that power in fact is not good but this
++		 * is probably the best we can do here.
++		 */
++		switch (state->fault) {
++		case FAULT_INPUT_OVP:
++		case FAULT_INPUT_UVLO:
++		case FAULT_INPUT_LDO_LOW:
++			state->power_good = false;
++			break;
++		default:
++			state->power_good = true;
++		}
+ 
+ 	return 0;
+ }
+@@ -651,15 +670,18 @@ static int bq24257_power_supply_init(struct bq24257_device *bq)
+ 	return PTR_ERR_OR_ZERO(bq->charger);
  }
  
-+static ssize_t bq24257_sysfs_show_enable(struct device *dev,
-+					 struct device_attribute *attr,
-+					 char *buf)
-+{
-+	struct power_supply *psy = dev_get_drvdata(dev);
-+	struct bq24257_device *bq = power_supply_get_drvdata(psy);
-+	int ret;
+-static int bq24257_pg_gpio_probe(struct bq24257_device *bq)
++static void bq24257_pg_gpio_probe(struct bq24257_device *bq)
+ {
+-	bq->pg = devm_gpiod_get_index(bq->dev, BQ24257_PG_GPIO, 0, GPIOD_IN);
++	bq->pg = devm_gpiod_get_optional(bq->dev, BQ24257_PG_GPIO, GPIOD_IN);
 +
-+	if (strcmp(attr->attr.name, "high_impedance_enable") == 0)
-+		ret = bq24257_field_read(bq, F_HZ_MODE);
-+	else if (strcmp(attr->attr.name, "sysoff_enable") == 0)
-+		ret = bq24257_field_read(bq, F_SYSOFF);
-+	else
-+		return -EINVAL;
-+
-+	if (ret < 0)
-+		return ret;
-+
-+	return scnprintf(buf, PAGE_SIZE, "%d\n", ret);
-+}
-+
-+static ssize_t bq24257_sysfs_set_enable(struct device *dev,
-+					struct device_attribute *attr,
-+					const char *buf,
-+					size_t count)
-+{
-+	struct power_supply *psy = dev_get_drvdata(dev);
-+	struct bq24257_device *bq = power_supply_get_drvdata(psy);
-+	long val;
-+	int ret;
-+
-+	if (kstrtol(buf, 10, &val) < 0)
-+		return -EINVAL;
-+
-+	if (strcmp(attr->attr.name, "high_impedance_enable") == 0)
-+		ret = bq24257_field_write(bq, F_HZ_MODE, (bool)val);
-+	else if (strcmp(attr->attr.name, "sysoff_enable") == 0)
-+		ret = bq24257_field_write(bq, F_SYSOFF, (bool)val);
-+	else
-+		return -EINVAL;
-+
-+	if (ret < 0)
-+		return ret;
-+
-+	return count;
-+}
-+
- static DEVICE_ATTR(ovp_voltage, S_IRUGO, bq24257_show_ovp_voltage, NULL);
- static DEVICE_ATTR(in_dpm_voltage, S_IRUGO, bq24257_show_in_dpm_voltage, NULL);
-+static DEVICE_ATTR(high_impedance_enable, S_IWUSR | S_IRUGO,
-+		   bq24257_sysfs_show_enable, bq24257_sysfs_set_enable);
-+static DEVICE_ATTR(sysoff_enable, S_IWUSR | S_IRUGO,
-+		   bq24257_sysfs_show_enable, bq24257_sysfs_set_enable);
+ 	if (IS_ERR(bq->pg)) {
+-		dev_err(bq->dev, "could not probe PG pin\n");
+-		return PTR_ERR(bq->pg);
++		dev_err(bq->dev, "error probing PG pin\n");
++		bq->pg = NULL;
++		return;
+ 	}
  
- static struct attribute *bq24257_charger_attr[] = {
- 	&dev_attr_ovp_voltage.attr,
- 	&dev_attr_in_dpm_voltage.attr,
-+	&dev_attr_high_impedance_enable.attr,
-+	&dev_attr_sysoff_enable.attr,
- 	NULL,
- };
+-	return 0;
++	if (bq->pg)
++		dev_dbg(bq->dev, "probed PG pin = %d\n", desc_to_gpio(bq->pg));
+ }
  
+ static int bq24257_fw_probe(struct bq24257_device *bq)
+@@ -789,10 +811,17 @@ static int bq24257_probe(struct i2c_client *client,
+ 		INIT_DELAYED_WORK(&bq->iilimit_setup_work,
+ 				  bq24257_iilimit_setup_work);
+ 
+-	/* we can only check Power Good status by probing the PG pin */
+-	ret = bq24257_pg_gpio_probe(bq);
+-	if (ret < 0)
+-		return ret;
++	/*
++	 * The BQ24250 doesn't have a dedicated Power Good (PG) pin so let's
++	 * not probe for it and instead use a SW-based approach to determine
++	 * the PG state. We also use a SW-based approach for all other devices
++	 * if the PG pin is either not defined or can't be probed.
++	 */
++	if (bq->chip != BQ24250)
++		bq24257_pg_gpio_probe(bq);
++
++	if (!bq->pg)
++		dev_info(bq->dev, "using SW-based power-good detection\n");
+ 
+ 	/* reset all registers to defaults */
+ 	ret = bq24257_field_write(bq, F_RESET, 1);
 -- 
 1.9.1
