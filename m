@@ -1,7 +1,7 @@
 From: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-Subject: [PATCH v7 14/15] power: bq24257: Add platform data based initialization
-Date: Fri, 25 Sep 2015 10:54:19 -0500
-Message-ID: <1443196460-26156-15-git-send-email-dannenberg@ti.com>
+Subject: [PATCH v7 11/15] power: bq24257: Add input DPM voltage threshold setting support
+Date: Fri, 25 Sep 2015 10:54:16 -0500
+Message-ID: <1443196460-26156-12-git-send-email-dannenberg@ti.com>
 References: <1443196460-26156-1-git-send-email-dannenberg@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -12,128 +12,109 @@ To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Erem
 Cc: Ramakrishna Pallala <ramakrishna.pallala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-The patch adds a way to setup and initialize the device through the use
-of platform data with configuration options equivalent to when using
-device firmware (DT or ACPI) for systems where this is not available.
+A new optional device property called "ti,in-dpm-voltage" is introduced
+to allow configuring the input voltage threshold for the devices'
+dynamic power path management (DPM) feature. In short, it can be used to
+prevent the input voltage from dropping below a certain value as current
+is drawn to charge the battery or supply the system.
 
 Signed-off-by: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
 ---
- drivers/power/bq24257_charger.c       | 39 +++++++++++++++++++++++++++++++++--
- include/linux/power/bq24257_charger.h | 25 ++++++++++++++++++++++
- 2 files changed, 62 insertions(+), 2 deletions(-)
- create mode 100644 include/linux/power/bq24257_charger.h
+ drivers/power/bq24257_charger.c | 43 +++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 43 insertions(+)
 
 diff --git a/drivers/power/bq24257_charger.c b/drivers/power/bq24257_charger.c
-index 19a0962..3b1a3b6 100644
+index fd4d2da..2a76009 100644
 --- a/drivers/power/bq24257_charger.c
 +++ b/drivers/power/bq24257_charger.c
-@@ -27,10 +27,13 @@
- #include <linux/gpio/consumer.h>
- #include <linux/interrupt.h>
- #include <linux/delay.h>
-+#include <linux/gpio.h>
+@@ -79,6 +79,7 @@ struct bq24257_init_data {
+ 	u8 iterm;	/* termination current */
+ 	u8 iilimit;	/* input current limit */
+ 	u8 vovp;	/* over voltage protection voltage */
++	u8 vindpm;	/* VDMP input threshold voltage */
+ };
  
- #include <linux/acpi.h>
- #include <linux/of.h>
+ struct bq24257_state {
+@@ -208,6 +209,13 @@ static const u32 bq24257_vovp_map[] = {
  
-+#include <linux/power/bq24257_charger.h>
-+
- #define BQ24257_REG_1			0x00
- #define BQ24257_REG_2			0x01
- #define BQ24257_REG_3			0x02
-@@ -885,6 +888,36 @@ static void bq24257_pg_gpio_probe(struct bq24257_device *bq)
- 		dev_dbg(bq->dev, "probed PG pin = %d\n", desc_to_gpio(bq->pg));
- }
+ #define BQ24257_VOVP_MAP_SIZE		ARRAY_SIZE(bq24257_vovp_map)
  
-+static void bq24257_pdata_probe(struct bq24257_device *bq,
-+				struct bq24257_platform_data *pdata)
-+{
-+	bq->init_data.ichg = bq24257_find_idx(pdata->ichg,
-+					      bq24257_ichg_map,
-+					      BQ24257_ICHG_MAP_SIZE);
-+
-+	bq->init_data.vbat = bq24257_find_idx(pdata->vbat,
-+					      bq24257_vbat_map,
-+					      BQ24257_VBAT_MAP_SIZE);
-+
-+	bq->init_data.iterm = bq24257_find_idx(pdata->iterm,
-+					       bq24257_iterm_map,
-+					       BQ24257_ITERM_MAP_SIZE);
-+
-+	bq->init_data.iilimit = bq24257_find_idx(pdata->iilimit,
-+						 bq24257_iilimit_map,
-+						 BQ24257_IILIMIT_MAP_SIZE);
-+
-+	bq->init_data.vovp = bq24257_find_idx(pdata->vovp,
-+					      bq24257_vovp_map,
-+					      BQ24257_VOVP_MAP_SIZE);
-+
-+	bq->init_data.vindpm = bq24257_find_idx(pdata->vindpm,
-+						bq24257_vindpm_map,
-+						BQ24257_VINDPM_MAP_SIZE);
-+
-+	bq->iilimit_autoset_enable = pdata->iilimit_autoset_enable;
-+}
-+
- static int bq24257_fw_probe(struct bq24257_device *bq)
- {
- 	int ret;
-@@ -960,6 +993,7 @@ static int bq24257_probe(struct i2c_client *client,
- 	struct i2c_adapter *adapter = to_i2c_adapter(client->dev.parent);
- 	struct device *dev = &client->dev;
- 	const struct acpi_device_id *acpi_id;
-+	struct bq24257_platform_data *pdata = client->dev.platform_data;
- 	struct bq24257_device *bq;
- 	int ret;
- 	int i;
-@@ -1009,14 +1043,15 @@ static int bq24257_probe(struct i2c_client *client,
- 
- 	i2c_set_clientdata(client, bq);
- 
--	if (!dev->platform_data) {
-+	if (!pdata) {
- 		ret = bq24257_fw_probe(bq);
- 		if (ret < 0) {
- 			dev_err(dev, "Cannot read device properties.\n");
- 			return ret;
- 		}
- 	} else {
--		return -ENODEV;
-+		dev_dbg(dev, "init using platform data\n");
-+		bq24257_pdata_probe(bq, pdata);
- 	}
- 
- 	/*
-diff --git a/include/linux/power/bq24257_charger.h b/include/linux/power/bq24257_charger.h
-new file mode 100644
-index 0000000..c131c5d
---- /dev/null
-+++ b/include/linux/power/bq24257_charger.h
-@@ -0,0 +1,25 @@
-+/*
-+ * Platform data for the TI bq24257 battery charger driver.
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License version 2 as
-+ * published by the Free Software Foundation.
-+ */
-+
-+#ifndef _BQ24257_CHARGER_H_
-+#define _BQ24257_CHARGER_H_
-+
-+#include <asm/types.h>
-+#include <linux/types.h>
-+
-+struct bq24257_platform_data {
-+	u32 ichg;				       /* charge current (uA) */
-+	u32 vbat;				   /* regulation voltage (uV) */
-+	u32 iterm;				  /* termination current (uA) */
-+	u32 iilimit;				  /* input current limit (uA) */
-+	u32 vovp;		      /* over voltage protection voltage (uV) */
-+	u32 vindpm;			 /* VDMP input threshold voltage (uV) */
-+	bool iilimit_autoset_enable;	/* auto-detect of input current limit */
++static const u32 bq24257_vindpm_map[] = {
++	4200000, 4280000, 4360000, 4440000, 4520000, 4600000, 4680000,
++	4760000
 +};
 +
-+#endif /* _BQ24257_CHARGER_H_ */
++#define BQ24257_VINDPM_MAP_SIZE		ARRAY_SIZE(bq24257_vindpm_map)
++
+ static int bq24257_field_read(struct bq24257_device *bq,
+ 			      enum bq24257_fields field_id)
+ {
+@@ -434,6 +442,17 @@ enum bq24257_vovp {
+ 	VOVP_10500
+ };
+ 
++enum bq24257_vindpm {
++	VINDPM_4200,
++	VINDPM_4280,
++	VINDPM_4360,
++	VINDPM_4440,
++	VINDPM_4520,
++	VINDPM_4600,
++	VINDPM_4680,
++	VINDPM_4760
++};
++
+ enum bq24257_port_type {
+ 	PORT_TYPE_DCP,		/* Dedicated Charging Port */
+ 	PORT_TYPE_CDP,		/* Charging Downstream Port */
+@@ -607,6 +626,7 @@ static int bq24257_hw_init(struct bq24257_device *bq)
+ 		{F_VBAT, bq->init_data.vbat},
+ 		{F_ITERM, bq->init_data.iterm},
+ 		{F_VOVP, bq->init_data.vovp},
++		{F_VINDPM, bq->init_data.vindpm},
+ 	};
+ 
+ 	/*
+@@ -687,10 +707,23 @@ static ssize_t bq24257_show_ovp_voltage(struct device *dev,
+ 			 bq24257_vovp_map[bq->init_data.vovp]);
+ }
+ 
++static ssize_t bq24257_show_in_dpm_voltage(struct device *dev,
++					   struct device_attribute *attr,
++					   char *buf)
++{
++	struct power_supply *psy = dev_get_drvdata(dev);
++	struct bq24257_device *bq = power_supply_get_drvdata(psy);
++
++	return scnprintf(buf, PAGE_SIZE, "%u\n",
++			 bq24257_vindpm_map[bq->init_data.vindpm]);
++}
++
+ static DEVICE_ATTR(ovp_voltage, S_IRUGO, bq24257_show_ovp_voltage, NULL);
++static DEVICE_ATTR(in_dpm_voltage, S_IRUGO, bq24257_show_in_dpm_voltage, NULL);
+ 
+ static struct attribute *bq24257_charger_attr[] = {
+ 	&dev_attr_ovp_voltage.attr,
++	&dev_attr_in_dpm_voltage.attr,
+ 	NULL,
+ };
+ 
+@@ -782,6 +815,16 @@ static int bq24257_fw_probe(struct bq24257_device *bq)
+ 						      bq24257_vovp_map,
+ 						      BQ24257_VOVP_MAP_SIZE);
+ 
++	ret = device_property_read_u32(bq->dev, "ti,in-dpm-voltage",
++				       &property);
++	if (ret < 0)
++		bq->init_data.vindpm = VINDPM_4360;
++	else
++		bq->init_data.vindpm =
++				bq24257_find_idx(property,
++						 bq24257_vindpm_map,
++						 BQ24257_VINDPM_MAP_SIZE);
++
+ 	return 0;
+ }
+ 
 -- 
 1.9.1
