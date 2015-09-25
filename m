@@ -1,95 +1,207 @@
-From: Andreas Dannenberg <dannenberg@ti.com>
-Subject: [PATCH v6 14/14] Documentation: power: bq24257: Document exported sysfs entries
-Date: Thu, 24 Sep 2015 22:26:58 -0500
-Message-ID: <1443151618-29742-15-git-send-email-dannenberg@ti.com>
-References: <1443151618-29742-1-git-send-email-dannenberg@ti.com>
+From: Chen Fan <chen.fan.fnst-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+Subject: Re: [PATCH RFC v2] pidns: introduce syscall getvpid
+Date: Fri, 25 Sep 2015 16:36:40 +0800
+Message-ID: <56050798.7010503@cn.fujitsu.com>
+References: <20150924135332.27813.21640.stgit@buzz>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-pm-owner@vger.kernel.org>
-In-Reply-To: <1443151618-29742-1-git-send-email-dannenberg@ti.com>
-Sender: linux-pm-owner@vger.kernel.org
-To: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, Laurentiu Palcu <laurentiu.palcu@intel.com>, Krzysztof Kozlowski <k.kozlowski@samsung.com>
-Cc: Ramakrishna Pallala <ramakrishna.pallala@intel.com>, linux-pm@vger.kernel.org, devicetree@vger.kernel.org, linux-api@vger.kernel.org, Andreas Dannenberg <dannenberg@ti.com>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <20150924135332.27813.21640.stgit@buzz>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Document the settings exported by bq24257 charger driver through sysfs
-entries:
-- ovp_voltage
-- in_dpm_voltage
-- high_impedance_enable
-- sysoff_enable
 
-Signed-off-by: Andreas Dannenberg <dannenberg@ti.com>
----
- Documentation/ABI/testing/sysfs-class-power | 58 +++++++++++++++++++++++++++++
- 1 file changed, 58 insertions(+)
+On 09/24/2015 09:53 PM, Konstantin Khlebnikov wrote:
+> pid_t getvpid(pid_t pid, int source, int target);
+>
+> This syscall converts pid from source pid-namespace into pid in target
+> pid-namespace. Namespaces are defined by file descriptors pointing to
+> namespace entries in proc (/proc/[pid]/ns/pid). If source / target is
+> negative then current pid namespace is used.
+>
+> If pid is negative then getvpid() returns pid of parent task for -pid.
+>
+> If pid is unreachable from target namespace then syscall returns zero.
+>
+> Errors:
+> ESRCH    task not found
+> EBADF    closed file descriptor
+> EINVAL   not pid-namespace file descriptor
+>
+> Examples:
+> getvpid(pid, ns, -1)      -> pid in our pid namespace
+> getvpid(pid, -1, ns)      -> pid in container
+> getvpid(1, ns1, ns2) > 0  -> ns1 inside ns2
+> getvpid(1, ns1, ns2) == 0 -> ns1 outside ns2
+> getvpid(1, ns, -1)        -> init task of pid-namespace
+> getvpid(-1, ns, -1)       -> task in parent pid-namespace
+> getvpid(-pid, -1, -1)     -> get ppid by pid
+>
+> Signed-off-by: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
+>
+> ---
+>
+> v2:
+> * use namespace-fd as second/third argument
+> * add -pid for getting parent pid
+> * move code into kernel/sys.c next to getppid
+> * drop ifdef CONFIG_PID_NS
+> * add generic syscall
+> ---
+>   arch/x86/entry/syscalls/syscall_32.tbl |    1 +
+>   arch/x86/entry/syscalls/syscall_64.tbl |    1 +
+>   include/linux/syscalls.h               |    1 +
+>   include/uapi/asm-generic/unistd.h      |    4 ++
+>   kernel/sys.c                           |   63 ++++++++++++++++++++++++++++++++
+>   5 files changed, 69 insertions(+), 1 deletion(-)
+>
+> diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+> index 7663c455b9f6..dadb55d42fc9 100644
+> --- a/arch/x86/entry/syscalls/syscall_32.tbl
+> +++ b/arch/x86/entry/syscalls/syscall_32.tbl
+> @@ -382,3 +382,4 @@
+>   373	i386	shutdown		sys_shutdown
+>   374	i386	userfaultfd		sys_userfaultfd
+>   375	i386	membarrier		sys_membarrier
+> +376	i386	getvpid			sys_getvpid
+> diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+> index 278842fdf1f6..0338f2eb3b7c 100644
+> --- a/arch/x86/entry/syscalls/syscall_64.tbl
+> +++ b/arch/x86/entry/syscalls/syscall_64.tbl
+> @@ -331,6 +331,7 @@
+>   322	64	execveat		stub_execveat
+>   323	common	userfaultfd		sys_userfaultfd
+>   324	common	membarrier		sys_membarrier
+> +325	common	getvpid			sys_getvpid
+>   
+>   #
+>   # x32-specific system call numbers start at 512 to avoid cache impact
+> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+> index a460e2ef2843..01ac603c8b5c 100644
+> --- a/include/linux/syscalls.h
+> +++ b/include/linux/syscalls.h
+> @@ -222,6 +222,7 @@ asmlinkage long sys_nanosleep(struct timespec __user *rqtp, struct timespec __us
+>   asmlinkage long sys_alarm(unsigned int seconds);
+>   asmlinkage long sys_getpid(void);
+>   asmlinkage long sys_getppid(void);
+> +asmlinkage long sys_getvpid(pid_t pid, int source, int target);
+>   asmlinkage long sys_getuid(void);
+>   asmlinkage long sys_geteuid(void);
+>   asmlinkage long sys_getgid(void);
+> diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+> index 8da542a2874d..163df44b23cf 100644
+> --- a/include/uapi/asm-generic/unistd.h
+> +++ b/include/uapi/asm-generic/unistd.h
+> @@ -711,9 +711,11 @@ __SYSCALL(__NR_bpf, sys_bpf)
+>   __SC_COMP(__NR_execveat, sys_execveat, compat_sys_execveat)
+>   #define __NR_membarrier 282
+>   __SYSCALL(__NR_membarrier, sys_membarrier)
+> +#define __NR_getvpid 283
+> +__SYSCALL(__NR_getvpid, sys_getvpid)
+>   
+>   #undef __NR_syscalls
+> -#define __NR_syscalls 283
+> +#define __NR_syscalls 284
+>   
+>   /*
+>    * All syscalls below here should go away really,
+> diff --git a/kernel/sys.c b/kernel/sys.c
+> index fa2f2f671a5c..fbfe938dd9d7 100644
+> --- a/kernel/sys.c
+> +++ b/kernel/sys.c
+> @@ -46,6 +46,7 @@
+>   #include <linux/syscalls.h>
+>   #include <linux/kprobes.h>
+>   #include <linux/user_namespace.h>
+> +#include <linux/proc_ns.h>
+>   #include <linux/binfmts.h>
+>   
+>   #include <linux/sched.h>
+> @@ -855,6 +856,68 @@ SYSCALL_DEFINE0(getppid)
+>   	return pid;
+>   }
+>   
+> +SYSCALL_DEFINE3(getvpid, pid_t, pid, int, source, int, target)
+> +{
+> +	struct file *source_file = NULL, *target_file = NULL;
+> +	struct pid_namespace *source_ns, *target_ns;
+> +	struct pid *struct_pid;
+> +	struct ns_common *ns;
+> +	pid_t result;
+> +
+> +	if (source >= 0) {
+> +		source_file = proc_ns_fget(source);
+> +		result = PTR_ERR(source_file);
+> +		if (IS_ERR(source_file))
+> +			goto out;
+> +		ns = get_proc_ns(file_inode(source_file));
+> +		result = -EINVAL;
+> +		if (ns->ops->type != CLONE_NEWPID)
+> +			goto out;
+> +		source_ns = container_of(ns, struct pid_namespace, ns);
+> +	} else
+> +		source_ns = task_active_pid_ns(current);
+> +
+> +	if (target >= 0) {
+> +		target_file = proc_ns_fget(target);
+> +		result = PTR_ERR(target_file);
+> +		if (IS_ERR(target_file))
+> +			goto out;
+> +		ns = get_proc_ns(file_inode(target_file));
+> +		result = -EINVAL;
+> +		if (ns->ops->type != CLONE_NEWPID)
+> +			goto out;
+> +		target_ns = container_of(ns, struct pid_namespace, ns);
+> +	} else
+> +		target_ns = task_active_pid_ns(current);
+> +
+the source ns and target ns translation looks the same, why not extract
+a new method to do the job.
 
-diff --git a/Documentation/ABI/testing/sysfs-class-power b/Documentation/ABI/testing/sysfs-class-power
-index 369d2a2..fd6cb79 100644
---- a/Documentation/ABI/testing/sysfs-class-power
-+++ b/Documentation/ABI/testing/sysfs-class-power
-@@ -74,3 +74,61 @@ Description:
- 
- 		Valid values:
- 		- 0 - 70 (minutes), step by 10 (rounded down)
-+
-+What:		/sys/class/power_supply/bq24257-charger/ovp_voltage
-+Date:		September 2015
-+KernelVersion: 4.3.0
-+Contact:	Andreas Dannenberg <dannenberg@ti.com>
-+Description:
-+		This entry configures the overvoltage protection feature of bq24257-
-+		type charger devices. This feature protects the device and other
-+		components against damage from overvoltage on the input supply. See
-+		device datasheet for details.
-+
-+		Valid values:
-+		- 6000000, 6500000, 7000000, 8000000, 9000000, 9500000, 10000000,
-+		  10500000 (all uV)
-+
-+What:		/sys/class/power_supply/bq24257-charger/in_dpm_voltage
-+Date:		September 2015
-+KernelVersion: 4.3.0
-+Contact:	Andreas Dannenberg <dannenberg@ti.com>
-+Description:
-+		This entry configures the input dynamic power path management voltage of
-+		bq24257-type charger devices. Once the supply drops to the configured
-+		voltage, the input current limit is reduced down to prevent the further
-+		drop of the supply. When the IC enters this mode, the charge current is
-+		lower than the set. See device datasheet for details.
-+
-+		Valid values:
-+		- 4200000, 4280000, 4360000, 4440000, 4520000, 4600000, 4680000,
-+		  4760000 (all uV)
-+
-+What:		/sys/class/power_supply/bq24257-charger/high_impedance_enable
-+Date:		September 2015
-+KernelVersion: 4.3.0
-+Contact:	Andreas Dannenberg <dannenberg@ti.com>
-+Description:
-+		This entry allows enabling the high-impedance mode of bq24257-type
-+		charger devices. If enabled, it places the charger IC into low power
-+		standby mode with the switch mode controller disabled. When disabled,
-+		the charger operates normally. See device datasheet for details.
-+
-+		Valid values:
-+		- 1: enabled
-+		- 0: disabled
-+
-+What:		/sys/class/power_supply/bq24257-charger/sysoff_enable
-+Date:		September 2015
-+KernelVersion: 4.3.0
-+Contact:	Andreas Dannenberg <dannenberg@ti.com>
-+Description:
-+		This entry allows enabling the sysoff mode of bq24257-type charger
-+		devices. If enabled and the input is removed, the internal battery FET
-+		is turned off in order to reduce the leakage from the BAT pin to less
-+		than 1uA. Note that on some devices/systems this disconnects the battery
-+		from the system. See device datasheet for details.
-+
-+		Valid values:
-+		- 1: enabled
-+		- 0: disabled
--- 
-1.9.1
-
+Thanks,
+Chen
+> +	rcu_read_lock();
+> +	struct_pid = find_pid_ns(abs(pid), source_ns);
+> +
+> +	if (struct_pid && pid < 0) {
+> +		struct task_struct *task;
+> +
+> +		task = pid_task(struct_pid, PIDTYPE_PID);
+> +		if (task)
+> +			task = rcu_dereference(task->real_parent);
+> +		struct_pid = task ? task_pid(task) : NULL;
+> +	}
+> +
+> +	if (struct_pid)
+> +		result = pid_nr_ns(struct_pid, target_ns);
+> +	else
+> +		result = -ESRCH;
+> +	rcu_read_unlock();
+> +
+> +out:
+> +	if (!IS_ERR_OR_NULL(target_file))
+> +		fput(target_file);
+> +
+> +	if (!IS_ERR_OR_NULL(source_file))
+> +		fput(source_file);
+> +
+> +	return result;
+> +}
+> +
+>   SYSCALL_DEFINE0(getuid)
+>   {
+>   	/* Only we change this so SMP safe */
+>
+> .
+>
