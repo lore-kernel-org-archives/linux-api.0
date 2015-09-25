@@ -1,7 +1,7 @@
 From: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-Subject: [PATCH v7 09/15] power: bq24257: Add SW-based approach for Power Good determination
-Date: Fri, 25 Sep 2015 10:54:14 -0500
-Message-ID: <1443196460-26156-10-git-send-email-dannenberg@ti.com>
+Subject: [PATCH v7 12/15] power: bq24257: Allow input current limit sysfs access
+Date: Fri, 25 Sep 2015 10:54:17 -0500
+Message-ID: <1443196460-26156-13-git-send-email-dannenberg@ti.com>
 References: <1443196460-26156-1-git-send-email-dannenberg@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -12,95 +12,151 @@ To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Erem
 Cc: Ramakrishna Pallala <ramakrishna.pallala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-A software-based approach for determining the charger's input voltage
-"Power Good" state is introduced for devices like the bq24250 which
-don't have a dedicated hardware pin for that purpose. This SW-based
-approach is also used for other devices (with dedicated PG pin) as a
-fall back solution if that pin is not configured to be used through
-"pg-gpios".
+This patch allows reading and writing of the input current limit through
+the power supply's input_current_limit sysfs property. This allows
+userspace to see what charger was detected (if the D+/D- USB signal-
+based charger type detection is enabled) and to re-configure the maximum
+current drawn from the external supply at runtime based on system-level
+knowledge or user input. Note that upon charger disconnection and
+re-connection the limit configured through firmware becomes active again
+(or the D+/D- USB signal-based charger detection will be run again).
 
 Signed-off-by: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
 ---
- drivers/power/bq24257_charger.c | 49 ++++++++++++++++++++++++++++++++---------
- 1 file changed, 39 insertions(+), 10 deletions(-)
+ drivers/power/bq24257_charger.c | 85 ++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 79 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/power/bq24257_charger.c b/drivers/power/bq24257_charger.c
-index 7bbff80..5800697 100644
+index 2a76009..73fcf89 100644
 --- a/drivers/power/bq24257_charger.c
 +++ b/drivers/power/bq24257_charger.c
-@@ -359,7 +359,26 @@ static int bq24257_get_chip_state(struct bq24257_device *bq,
+@@ -267,6 +267,47 @@ enum bq24257_fault {
+ 	FAULT_INPUT_LDO_LOW,
+ };
  
- 	state->fault = ret;
++static int bq24257_get_input_current_limit(struct bq24257_device *bq,
++					   union power_supply_propval *val)
++{
++	int ret;
++
++	ret = bq24257_field_read(bq, F_IILIMIT);
++	if (ret < 0)
++		return ret;
++
++	/*
++	 * The "External ILIM" and "Production & Test" modes are not exposed
++	 * through this driver and not being covered by the lookup table.
++	 * Should such a mode have become active let's return an error rather
++	 * than exceeding the bounds of the lookup table and returning
++	 * garbage.
++	 */
++	if (ret >= BQ24257_IILIMIT_MAP_SIZE)
++		return -ENODATA;
++
++	val->intval = bq24257_iilimit_map[ret];
++
++	return 0;
++}
++
++static int bq24257_set_input_current_limit(struct bq24257_device *bq,
++					const union power_supply_propval *val)
++{
++	/*
++	 * Address the case where the user manually sets an input current limit
++	 * while the charger auto-detection mechanism is is active. In this
++	 * case we want to abort and go straight to the user-specified value.
++	 */
++	if (bq->iilimit_autoset_enable)
++		cancel_delayed_work_sync(&bq->iilimit_setup_work);
++
++	return bq24257_field_write(bq, F_IILIMIT,
++				   bq24257_find_idx(val->intval,
++						    bq24257_iilimit_map,
++						    BQ24257_IILIMIT_MAP_SIZE));
++}
++
+ static int bq24257_power_supply_get_property(struct power_supply *psy,
+ 					     enum power_supply_property psp,
+ 					     union power_supply_propval *val)
+@@ -351,6 +392,9 @@ static int bq24257_power_supply_get_property(struct power_supply *psy,
+ 		val->intval = bq24257_iterm_map[bq->init_data.iterm];
+ 		break;
  
--	state->power_good = !gpiod_get_value_cansleep(bq->pg);
-+	if (bq->pg)
-+		state->power_good = !gpiod_get_value_cansleep(bq->pg);
-+	else
-+		/*
-+		 * If we have a chip without a dedicated power-good GPIO or
-+		 * some other explicit bit that would provide this information
-+		 * assume the power is good if there is no supply related
-+		 * fault - and not good otherwise. There is a possibility for
-+		 * other errors to mask that power in fact is not good but this
-+		 * is probably the best we can do here.
-+		 */
-+		switch (state->fault) {
-+		case FAULT_INPUT_OVP:
-+		case FAULT_INPUT_UVLO:
-+		case FAULT_INPUT_LDO_LOW:
-+			state->power_good = false;
-+			break;
-+		default:
-+			state->power_good = true;
-+		}
- 
++	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
++		return bq24257_get_input_current_limit(bq, val);
++
+ 	default:
+ 		return -EINVAL;
+ 	}
+@@ -358,6 +402,31 @@ static int bq24257_power_supply_get_property(struct power_supply *psy,
  	return 0;
  }
-@@ -651,15 +670,18 @@ static int bq24257_power_supply_init(struct bq24257_device *bq)
- 	return PTR_ERR_OR_ZERO(bq->charger);
- }
  
--static int bq24257_pg_gpio_probe(struct bq24257_device *bq)
-+static void bq24257_pg_gpio_probe(struct bq24257_device *bq)
++static int bq24257_power_supply_set_property(struct power_supply *psy,
++					enum power_supply_property prop,
++					const union power_supply_propval *val)
++{
++	struct bq24257_device *bq = power_supply_get_drvdata(psy);
++
++	switch (prop) {
++	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
++		return bq24257_set_input_current_limit(bq, val);
++	default:
++		return -EINVAL;
++	}
++}
++
++static int bq24257_power_supply_property_is_writeable(struct power_supply *psy,
++					enum power_supply_property psp)
++{
++	switch (psp) {
++	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
++		return true;
++	default:
++		return false;
++	}
++}
++
+ static int bq24257_get_chip_state(struct bq24257_device *bq,
+ 				  struct bq24257_state *state)
  {
--	bq->pg = devm_gpiod_get_index(bq->dev, BQ24257_PG_GPIO, 0, GPIOD_IN);
-+	bq->pg = devm_gpiod_get_optional(bq->dev, BQ24257_PG_GPIO, GPIOD_IN);
-+
- 	if (IS_ERR(bq->pg)) {
--		dev_err(bq->dev, "could not probe PG pin\n");
--		return PTR_ERR(bq->pg);
-+		dev_err(bq->dev, "error probing PG pin\n");
-+		bq->pg = NULL;
-+		return;
- 	}
+@@ -559,13 +628,14 @@ static void bq24257_handle_state_change(struct bq24257_device *bq,
+ 			ret = bq24257_field_write(bq, F_DPDM_EN, 1);
+ 			if (ret < 0)
+ 				goto error;
+-
+-			/* reset input current limit */
+-			ret = bq24257_field_write(bq, F_IILIMIT,
+-						  bq->init_data.iilimit);
+-			if (ret < 0)
+-				goto error;
+ 		}
++		/*
++		 * When power is removed always return to the default input
++		 * current limit as configured during probe.
++		 */
++		ret = bq24257_field_write(bq, F_IILIMIT, bq->init_data.iilimit);
++		if (ret < 0)
++			goto error;
+ 	} else if (!old_state.power_good) {
+ 		dev_dbg(bq->dev, "Power inserted\n");
  
--	return 0;
-+	if (bq->pg)
-+		dev_dbg(bq->dev, "probed PG pin = %d\n", desc_to_gpio(bq->pg));
- }
+@@ -682,6 +752,7 @@ static enum power_supply_property bq24257_power_supply_props[] = {
+ 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE,
+ 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX,
+ 	POWER_SUPPLY_PROP_CHARGE_TERM_CURRENT,
++	POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT,
+ };
  
- static int bq24257_fw_probe(struct bq24257_device *bq)
-@@ -789,10 +811,17 @@ static int bq24257_probe(struct i2c_client *client,
- 		INIT_DELAYED_WORK(&bq->iilimit_setup_work,
- 				  bq24257_iilimit_setup_work);
+ static char *bq24257_charger_supplied_to[] = {
+@@ -694,6 +765,8 @@ static const struct power_supply_desc bq24257_power_supply_desc = {
+ 	.properties = bq24257_power_supply_props,
+ 	.num_properties = ARRAY_SIZE(bq24257_power_supply_props),
+ 	.get_property = bq24257_power_supply_get_property,
++	.set_property = bq24257_power_supply_set_property,
++	.property_is_writeable = bq24257_power_supply_property_is_writeable,
+ };
  
--	/* we can only check Power Good status by probing the PG pin */
--	ret = bq24257_pg_gpio_probe(bq);
--	if (ret < 0)
--		return ret;
-+	/*
-+	 * The BQ24250 doesn't have a dedicated Power Good (PG) pin so let's
-+	 * not probe for it and instead use a SW-based approach to determine
-+	 * the PG state. We also use a SW-based approach for all other devices
-+	 * if the PG pin is either not defined or can't be probed.
-+	 */
-+	if (bq->chip != BQ24250)
-+		bq24257_pg_gpio_probe(bq);
-+
-+	if (!bq->pg)
-+		dev_info(bq->dev, "using SW-based power-good detection\n");
- 
- 	/* reset all registers to defaults */
- 	ret = bq24257_field_write(bq, F_RESET, 1);
+ static ssize_t bq24257_show_ovp_voltage(struct device *dev,
 -- 
 1.9.1
