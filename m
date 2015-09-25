@@ -1,98 +1,105 @@
 From: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-Subject: [PATCH v7 01/15] dt: power: bq24257-charger: Cover additional devices
-Date: Fri, 25 Sep 2015 10:54:06 -0500
-Message-ID: <1443196460-26156-2-git-send-email-dannenberg@ti.com>
+Subject: [PATCH v7 03/15] power: bq24257: Streamline input current limit setup
+Date: Fri, 25 Sep 2015 10:54:08 -0500
+Message-ID: <1443196460-26156-4-git-send-email-dannenberg@ti.com>
 References: <1443196460-26156-1-git-send-email-dannenberg@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1443196460-26156-1-git-send-email-dannenberg-l0cyMroinI0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Laurentiu Palcu <laurentiu.palcu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 Cc: Ramakrishna Pallala <ramakrishna.pallala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Extend the bq24257 charger's device tree documentation to cover the
-bq24250 and bq24251 devices as well feature additions.
+The maximum amount of input current the charger should draw is dependent
+on the power supply and should only be (re-)configured when the power
+supply gets connected and disconnected. However the driver was also
+lowering the bq24257's input current limit setting to 500mA when the
+battery was removed and restored the previous setting according to the
+power supply capabilities when the battery was reconnected although
+these events are not impacting the amount of power that can be drawn
+from the supply. Furthermore, a re-configuration of the input current
+limit to 500mA when the battery gets disconnected is actually dangerous
+if the limit was set higher previously and the system draws more than
+500mA in which case the system voltage would be reduced in order to
+maintain 500mA which could result in the system getting too low of a
+supply to maintain operation. Last but not least the mechanism itself
+used for battery re-connection detection did not work in corner cases
+such as when the device's input current loop becomes active and the
+bq24257 device clears its battery fault error resulting in incorrectly
+reporting that the battery got reconnected.
+
+This patches removes the impact the battery removal/insertion has on the
+input current limit configured for the bq24257 and simplifies the
+associated handler routine.
 
 Signed-off-by: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
 ---
- .../devicetree/bindings/power/bq24257.txt          | 53 ++++++++++++++++++++--
- 1 file changed, 48 insertions(+), 5 deletions(-)
+ drivers/power/bq24257_charger.c | 29 +++++++++++------------------
+ 1 file changed, 11 insertions(+), 18 deletions(-)
 
-diff --git a/Documentation/devicetree/bindings/power/bq24257.txt b/Documentation/devicetree/bindings/power/bq24257.txt
-index 5c9d394..6c376ef 100644
---- a/Documentation/devicetree/bindings/power/bq24257.txt
-+++ b/Documentation/devicetree/bindings/power/bq24257.txt
-@@ -1,21 +1,64 @@
--Binding for TI bq24257 Li-Ion Charger
-+Binding for TI bq24250/bq24251/bq24257 Li-Ion Charger
+diff --git a/drivers/power/bq24257_charger.c b/drivers/power/bq24257_charger.c
+index 69b53d0..d2d077c 100644
+--- a/drivers/power/bq24257_charger.c
++++ b/drivers/power/bq24257_charger.c
+@@ -448,14 +448,13 @@ static void bq24257_handle_state_change(struct bq24257_device *bq,
+ {
+ 	int ret;
+ 	struct bq24257_state old_state;
+-	bool reset_iilimit = false;
+-	bool config_iilimit = false;
  
- Required properties:
- - compatible: Should contain one of the following:
-+ * "ti,bq24250"
-+ * "ti,bq24251"
-  * "ti,bq24257"
--- reg:			   integer, i2c address of the device.
-+- reg: integer, i2c address of the device.
-+- interrupt-parent: Should be the phandle for the interrupt controller. Use in
-+    conjunction with "interrupts".
-+- interrupts: Interrupt mapping for GPIO IRQ (configure for both edges). Use in
-+    conjunction with "interrupt-parent".
- - ti,battery-regulation-voltage: integer, maximum charging voltage in uV.
--- ti,charge-current:	   integer, maximum charging current in uA.
--- ti,termination-current:  integer, charge will be terminated when current in
--			   constant-voltage phase drops below this value (in uA).
-+- ti,charge-current: integer, maximum charging current in uA.
-+- ti,termination-current: integer, charge will be terminated when current in
-+    constant-voltage phase drops below this value (in uA).
-+
-+Optional properties:
-+- pg-gpios: GPIO used for connecting the bq2425x device PG (Power Good) pin.
-+    This pin is not available on all devices however it should be used if
-+    possible as this is the recommended way to obtain the charger's input PG
-+    state. If this pin is not specified a software-based approach for PG
-+    detection is used.
-+- ti,current-limit: The maximum current to be drawn from the charger's input
-+    (in uA). If this property is not specified a USB D+/D- signal based charger
-+    type detection is used (if available) and the input limit current is set
-+    accordingly. If the D+/D- based detection is not available on a given device
-+    a default of 500,000 is used (=500mA).
-+- ti,ovp-voltage: Configures the over voltage protection voltage (in uV). If
-+    not specified a default of 6,5000,000 (=6.5V) is used.
-+- ti,in-dpm-voltage: Configures the threshold input voltage for the dynamic
-+    power path management (in uV). If not specified a default of 4,360,000
-+    (=4.36V) is used.
+ 	mutex_lock(&bq->lock);
+ 	old_state = bq->state;
+ 	mutex_unlock(&bq->lock);
  
- Example:
+-	if (!new_state->power_good) {			     /* power removed */
++	if (!new_state->power_good) {
++		dev_dbg(bq->dev, "Power removed\n");
+ 		cancel_delayed_work_sync(&bq->iilimit_setup_work);
  
- bq24257 {
- 	compatible = "ti,bq24257";
- 	reg = <0x6a>;
-+	interrupt-parent = <&gpio1>;
-+	interrupts = <16 IRQ_TYPE_EDGE_BOTH>;
-+
-+	pg-gpios = <&gpio1 28 GPIO_ACTIVE_HIGH>;
+ 		/* activate D+/D- port detection algorithm */
+@@ -463,26 +462,20 @@ static void bq24257_handle_state_change(struct bq24257_device *bq,
+ 		if (ret < 0)
+ 			goto error;
  
- 	ti,battery-regulation-voltage = <4200000>;
- 	ti,charge-current = <1000000>;
- 	ti,termination-current = <50000>;
- };
+-		reset_iilimit = true;
+-	} else if (!old_state.power_good) {		    /* power inserted */
+-		config_iilimit = true;
+-	} else if (new_state->fault == FAULT_NO_BAT) {	   /* battery removed */
+-		cancel_delayed_work_sync(&bq->iilimit_setup_work);
+-
+-		reset_iilimit = true;
+-	} else if (old_state.fault == FAULT_NO_BAT) {    /* battery connected */
+-		config_iilimit = true;
+-	} else if (new_state->fault == FAULT_TIMER) { /* safety timer expired */
+-		dev_err(bq->dev, "Safety timer expired! Battery dead?\n");
+-	}
+-
+-	if (reset_iilimit) {
++		/* reset input current limit */
+ 		ret = bq24257_field_write(bq, F_IILIMIT, IILIMIT_500);
+ 		if (ret < 0)
+ 			goto error;
+-	} else if (config_iilimit) {
++	} else if (!old_state.power_good) {
++		dev_dbg(bq->dev, "Power inserted\n");
 +
-+Example:
-+
-+bq24250 {
-+	compatible = "ti,bq24250";
-+	reg = <0x6a>;
-+	interrupt-parent = <&gpio1>;
-+	interrupts = <16 IRQ_TYPE_EDGE_BOTH>;
-+
-+	ti,battery-regulation-voltage = <4200000>;
-+	ti,charge-current = <500000>;
-+	ti,termination-current = <50000>;
-+	ti,current-limit = <900000>;
-+	ti,ovp-voltage = <9500000>;
-+	ti,in-dpm-voltage = <4440000>;
-+};
++		/* configure input current limit */
+ 		schedule_delayed_work(&bq->iilimit_setup_work,
+ 				      msecs_to_jiffies(BQ24257_ILIM_SET_DELAY));
++	} else if (new_state->fault == FAULT_NO_BAT) {
++		dev_warn(bq->dev, "Battery removed\n");
++	} else if (new_state->fault == FAULT_TIMER) {
++		dev_err(bq->dev, "Safety timer expired! Battery dead?\n");
+ 	}
+ 
+ 	return;
 -- 
 1.9.1
+
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
