@@ -1,7 +1,7 @@
 From: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-Subject: [PATCH v7 12/15] power: bq24257: Allow input current limit sysfs access
-Date: Fri, 25 Sep 2015 10:54:17 -0500
-Message-ID: <1443196460-26156-13-git-send-email-dannenberg@ti.com>
+Subject: [PATCH v7 01/15] dt: power: bq24257-charger: Cover additional devices
+Date: Fri, 25 Sep 2015 10:54:06 -0500
+Message-ID: <1443196460-26156-2-git-send-email-dannenberg@ti.com>
 References: <1443196460-26156-1-git-send-email-dannenberg@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -12,151 +12,87 @@ To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Erem
 Cc: Ramakrishna Pallala <ramakrishna.pallala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch allows reading and writing of the input current limit through
-the power supply's input_current_limit sysfs property. This allows
-userspace to see what charger was detected (if the D+/D- USB signal-
-based charger type detection is enabled) and to re-configure the maximum
-current drawn from the external supply at runtime based on system-level
-knowledge or user input. Note that upon charger disconnection and
-re-connection the limit configured through firmware becomes active again
-(or the D+/D- USB signal-based charger detection will be run again).
+Extend the bq24257 charger's device tree documentation to cover the
+bq24250 and bq24251 devices as well feature additions.
 
 Signed-off-by: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
 ---
- drivers/power/bq24257_charger.c | 85 ++++++++++++++++++++++++++++++++++++++---
- 1 file changed, 79 insertions(+), 6 deletions(-)
+ .../devicetree/bindings/power/bq24257.txt          | 53 ++++++++++++++++++++--
+ 1 file changed, 48 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/power/bq24257_charger.c b/drivers/power/bq24257_charger.c
-index 2a76009..73fcf89 100644
---- a/drivers/power/bq24257_charger.c
-+++ b/drivers/power/bq24257_charger.c
-@@ -267,6 +267,47 @@ enum bq24257_fault {
- 	FAULT_INPUT_LDO_LOW,
+diff --git a/Documentation/devicetree/bindings/power/bq24257.txt b/Documentation/devicetree/bindings/power/bq24257.txt
+index 5c9d394..6c376ef 100644
+--- a/Documentation/devicetree/bindings/power/bq24257.txt
++++ b/Documentation/devicetree/bindings/power/bq24257.txt
+@@ -1,21 +1,64 @@
+-Binding for TI bq24257 Li-Ion Charger
++Binding for TI bq24250/bq24251/bq24257 Li-Ion Charger
+ 
+ Required properties:
+ - compatible: Should contain one of the following:
++ * "ti,bq24250"
++ * "ti,bq24251"
+  * "ti,bq24257"
+-- reg:			   integer, i2c address of the device.
++- reg: integer, i2c address of the device.
++- interrupt-parent: Should be the phandle for the interrupt controller. Use in
++    conjunction with "interrupts".
++- interrupts: Interrupt mapping for GPIO IRQ (configure for both edges). Use in
++    conjunction with "interrupt-parent".
+ - ti,battery-regulation-voltage: integer, maximum charging voltage in uV.
+-- ti,charge-current:	   integer, maximum charging current in uA.
+-- ti,termination-current:  integer, charge will be terminated when current in
+-			   constant-voltage phase drops below this value (in uA).
++- ti,charge-current: integer, maximum charging current in uA.
++- ti,termination-current: integer, charge will be terminated when current in
++    constant-voltage phase drops below this value (in uA).
++
++Optional properties:
++- pg-gpios: GPIO used for connecting the bq2425x device PG (Power Good) pin.
++    This pin is not available on all devices however it should be used if
++    possible as this is the recommended way to obtain the charger's input PG
++    state. If this pin is not specified a software-based approach for PG
++    detection is used.
++- ti,current-limit: The maximum current to be drawn from the charger's input
++    (in uA). If this property is not specified a USB D+/D- signal based charger
++    type detection is used (if available) and the input limit current is set
++    accordingly. If the D+/D- based detection is not available on a given device
++    a default of 500,000 is used (=500mA).
++- ti,ovp-voltage: Configures the over voltage protection voltage (in uV). If
++    not specified a default of 6,5000,000 (=6.5V) is used.
++- ti,in-dpm-voltage: Configures the threshold input voltage for the dynamic
++    power path management (in uV). If not specified a default of 4,360,000
++    (=4.36V) is used.
+ 
+ Example:
+ 
+ bq24257 {
+ 	compatible = "ti,bq24257";
+ 	reg = <0x6a>;
++	interrupt-parent = <&gpio1>;
++	interrupts = <16 IRQ_TYPE_EDGE_BOTH>;
++
++	pg-gpios = <&gpio1 28 GPIO_ACTIVE_HIGH>;
+ 
+ 	ti,battery-regulation-voltage = <4200000>;
+ 	ti,charge-current = <1000000>;
+ 	ti,termination-current = <50000>;
  };
- 
-+static int bq24257_get_input_current_limit(struct bq24257_device *bq,
-+					   union power_supply_propval *val)
-+{
-+	int ret;
 +
-+	ret = bq24257_field_read(bq, F_IILIMIT);
-+	if (ret < 0)
-+		return ret;
++Example:
 +
-+	/*
-+	 * The "External ILIM" and "Production & Test" modes are not exposed
-+	 * through this driver and not being covered by the lookup table.
-+	 * Should such a mode have become active let's return an error rather
-+	 * than exceeding the bounds of the lookup table and returning
-+	 * garbage.
-+	 */
-+	if (ret >= BQ24257_IILIMIT_MAP_SIZE)
-+		return -ENODATA;
++bq24250 {
++	compatible = "ti,bq24250";
++	reg = <0x6a>;
++	interrupt-parent = <&gpio1>;
++	interrupts = <16 IRQ_TYPE_EDGE_BOTH>;
 +
-+	val->intval = bq24257_iilimit_map[ret];
-+
-+	return 0;
-+}
-+
-+static int bq24257_set_input_current_limit(struct bq24257_device *bq,
-+					const union power_supply_propval *val)
-+{
-+	/*
-+	 * Address the case where the user manually sets an input current limit
-+	 * while the charger auto-detection mechanism is is active. In this
-+	 * case we want to abort and go straight to the user-specified value.
-+	 */
-+	if (bq->iilimit_autoset_enable)
-+		cancel_delayed_work_sync(&bq->iilimit_setup_work);
-+
-+	return bq24257_field_write(bq, F_IILIMIT,
-+				   bq24257_find_idx(val->intval,
-+						    bq24257_iilimit_map,
-+						    BQ24257_IILIMIT_MAP_SIZE));
-+}
-+
- static int bq24257_power_supply_get_property(struct power_supply *psy,
- 					     enum power_supply_property psp,
- 					     union power_supply_propval *val)
-@@ -351,6 +392,9 @@ static int bq24257_power_supply_get_property(struct power_supply *psy,
- 		val->intval = bq24257_iterm_map[bq->init_data.iterm];
- 		break;
- 
-+	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
-+		return bq24257_get_input_current_limit(bq, val);
-+
- 	default:
- 		return -EINVAL;
- 	}
-@@ -358,6 +402,31 @@ static int bq24257_power_supply_get_property(struct power_supply *psy,
- 	return 0;
- }
- 
-+static int bq24257_power_supply_set_property(struct power_supply *psy,
-+					enum power_supply_property prop,
-+					const union power_supply_propval *val)
-+{
-+	struct bq24257_device *bq = power_supply_get_drvdata(psy);
-+
-+	switch (prop) {
-+	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
-+		return bq24257_set_input_current_limit(bq, val);
-+	default:
-+		return -EINVAL;
-+	}
-+}
-+
-+static int bq24257_power_supply_property_is_writeable(struct power_supply *psy,
-+					enum power_supply_property psp)
-+{
-+	switch (psp) {
-+	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
-+		return true;
-+	default:
-+		return false;
-+	}
-+}
-+
- static int bq24257_get_chip_state(struct bq24257_device *bq,
- 				  struct bq24257_state *state)
- {
-@@ -559,13 +628,14 @@ static void bq24257_handle_state_change(struct bq24257_device *bq,
- 			ret = bq24257_field_write(bq, F_DPDM_EN, 1);
- 			if (ret < 0)
- 				goto error;
--
--			/* reset input current limit */
--			ret = bq24257_field_write(bq, F_IILIMIT,
--						  bq->init_data.iilimit);
--			if (ret < 0)
--				goto error;
- 		}
-+		/*
-+		 * When power is removed always return to the default input
-+		 * current limit as configured during probe.
-+		 */
-+		ret = bq24257_field_write(bq, F_IILIMIT, bq->init_data.iilimit);
-+		if (ret < 0)
-+			goto error;
- 	} else if (!old_state.power_good) {
- 		dev_dbg(bq->dev, "Power inserted\n");
- 
-@@ -682,6 +752,7 @@ static enum power_supply_property bq24257_power_supply_props[] = {
- 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE,
- 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX,
- 	POWER_SUPPLY_PROP_CHARGE_TERM_CURRENT,
-+	POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT,
- };
- 
- static char *bq24257_charger_supplied_to[] = {
-@@ -694,6 +765,8 @@ static const struct power_supply_desc bq24257_power_supply_desc = {
- 	.properties = bq24257_power_supply_props,
- 	.num_properties = ARRAY_SIZE(bq24257_power_supply_props),
- 	.get_property = bq24257_power_supply_get_property,
-+	.set_property = bq24257_power_supply_set_property,
-+	.property_is_writeable = bq24257_power_supply_property_is_writeable,
- };
- 
- static ssize_t bq24257_show_ovp_voltage(struct device *dev,
++	ti,battery-regulation-voltage = <4200000>;
++	ti,charge-current = <500000>;
++	ti,termination-current = <50000>;
++	ti,current-limit = <900000>;
++	ti,ovp-voltage = <9500000>;
++	ti,in-dpm-voltage = <4440000>;
++};
 -- 
 1.9.1
