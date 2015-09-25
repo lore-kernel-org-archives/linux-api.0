@@ -1,105 +1,185 @@
-From: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-Subject: [PATCH v7 03/15] power: bq24257: Streamline input current limit setup
-Date: Fri, 25 Sep 2015 10:54:08 -0500
-Message-ID: <1443196460-26156-4-git-send-email-dannenberg@ti.com>
-References: <1443196460-26156-1-git-send-email-dannenberg@ti.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1443196460-26156-1-git-send-email-dannenberg-l0cyMroinI0@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Laurentiu Palcu <laurentiu.palcu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Cc: Ramakrishna Pallala <ramakrishna.pallala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] richacl: Possible other write-through fix
+Date: Fri, 25 Sep 2015 18:21:13 +0200
+Message-ID: <1443198073-2344-1-git-send-email-agruenba@redhat.com>
+References: <20150924183310.GE3823@fieldses.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150924183310.GE3823-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-The maximum amount of input current the charger should draw is dependent
-on the power supply and should only be (re-)configured when the power
-supply gets connected and disconnected. However the driver was also
-lowering the bq24257's input current limit setting to 500mA when the
-battery was removed and restored the previous setting according to the
-power supply capabilities when the battery was reconnected although
-these events are not impacting the amount of power that can be drawn
-from the supply. Furthermore, a re-configuration of the input current
-limit to 500mA when the battery gets disconnected is actually dangerous
-if the limit was set higher previously and the system draws more than
-500mA in which case the system voltage would be reduced in order to
-maintain 500mA which could result in the system getting too low of a
-supply to maintain operation. Last but not least the mechanism itself
-used for battery re-connection detection did not work in corner cases
-such as when the device's input current loop becomes active and the
-bq24257 device clears its battery fault error resulting in incorrectly
-reporting that the battery got reconnected.
+2015-09-24 20:33 GMT+02:00 J. Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>:
+> On Sat, Sep 05, 2015 at 12:27:21PM +0200, Andreas Gruenbacher wrote:
+>> +int
+>> +richacl_apply_masks(struct richacl **acl, kuid_t owner)
+>> +{
+>> +     if ((*acl)->a_flags & RICHACL_MASKED) {
+>> +             struct richacl_alloc alloc = {
+>> +                     .acl = richacl_clone(*acl, GFP_KERNEL),
+>> +                     .count = (*acl)->a_count,
+>> +             };
+>> +             if (!alloc.acl)
+>> +                     return -ENOMEM;
+>> +
+>> +             if (richacl_move_everyone_aces_down(&alloc) ||
+>> +                 richacl_propagate_everyone(&alloc) ||
+>> +                 __richacl_apply_masks(&alloc, owner) ||
+>> +                 richacl_set_owner_permissions(&alloc) ||
+>> +                 richacl_set_other_permissions(&alloc) ||
+>
+> Hm, I'm a little unsure about this step: it seems like the one step that
+> can actually change the permissions (making them more permissive, in
+> this case), whereas the others are neutral.
+>
+> The following two steps should fix that, but I'm not sure they do.
+>
+> E.g. if I have an ACL like
+>
+>         mask 0777, WRITE_THROUGH
+>         GROUP@:r--::allow
+>
+> I think it should result in
+>
+>         OWNER@:   rwx::allow
+>         GROUP@:   -wx::deny
+>         GROUP@:   r--::allow
+>         EVERYONE@:rwx::allow
+>
+> But does the GROUP@ deny actually get in there?  It looks to me like the
+> denies inserted by richacl_isolate_group_class only take into account
+> the group mask, not the actual permissions granted to any group class
+> user.
+>
+> I may be mising something.
 
-This patches removes the impact the battery removal/insertion has on the
-input current limit configured for the bq24257 and simplifies the
-associated handler routine.
+Thanks for the test case and analysis. The group@ deny ace that should be
+inserted here actually doesn't get inserted. I'm attaching a fix.
 
-Signed-off-by: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
 ---
- drivers/power/bq24257_charger.c | 29 +++++++++++------------------
- 1 file changed, 11 insertions(+), 18 deletions(-)
 
-diff --git a/drivers/power/bq24257_charger.c b/drivers/power/bq24257_charger.c
-index 69b53d0..d2d077c 100644
---- a/drivers/power/bq24257_charger.c
-+++ b/drivers/power/bq24257_charger.c
-@@ -448,14 +448,13 @@ static void bq24257_handle_state_change(struct bq24257_device *bq,
+By the way, all those scenarios can easily be tries out using the test
+suite in the user-space richacl package, even without a richacl enabled
+kernel. In this case, without the fix, we get:
+
+  $ make tests/richacl-apply-masks
+  $ tests/richacl-apply-masks -m 777 group@:r::allow
+  group@:r::allow
+  everyone@:rwpx::allow
+
+With the fix, we are now getting:
+
+  $ tests/richacl-apply-masks -m 777 group@:r::allow
+  owner@:rwpx::allow
+  group@:r::allow
+  group@:wpx::deny
+  everyone@:rwpx::allow
+
+Thanks,
+Andreas
+
+diff --git a/fs/richacl_compat.c b/fs/richacl_compat.c
+index 726d796..bc0bcfe 100644
+--- a/fs/richacl_compat.c
++++ b/fs/richacl_compat.c
+@@ -463,23 +463,28 @@ richacl_set_owner_permissions(struct richacl_alloc *alloc)
+ 
+ /**
+  * richacl_set_other_permissions  -  set the other permissions to the other mask
++ * @alloc:	acl and number of allocated entries
++ * @added:	permissions added for everyone@
+  *
+  * Change the acl so that everyone@ is granted the permissions set in the other
+  * mask.  This leaves at most one efective everyone@ allow entry at the end of
+- * the acl.
++ * the acl.  If everyone@ end up being granted additional permissions, these
++ * permissions are returned in @added.
+  */
+ static int
+-richacl_set_other_permissions(struct richacl_alloc *alloc)
++richacl_set_other_permissions(struct richacl_alloc *alloc, unsigned int *added)
  {
- 	int ret;
- 	struct bq24257_state old_state;
--	bool reset_iilimit = false;
--	bool config_iilimit = false;
+ 	struct richacl *acl = alloc->acl;
+ 	unsigned int x = RICHACE_POSIX_ALWAYS_ALLOWED;
+ 	unsigned int other_mask = acl->a_other_mask & ~x;
+-	struct richace *ace = acl->a_entries + acl->a_count - 1;
++	struct richace *ace;
  
- 	mutex_lock(&bq->lock);
- 	old_state = bq->state;
- 	mutex_unlock(&bq->lock);
+ 	if (!(other_mask &&
+ 	      (acl->a_flags & RICHACL_WRITE_THROUGH)))
+ 		return 0;
  
--	if (!new_state->power_good) {			     /* power removed */
-+	if (!new_state->power_good) {
-+		dev_dbg(bq->dev, "Power removed\n");
- 		cancel_delayed_work_sync(&bq->iilimit_setup_work);
++	*added = other_mask;
++	ace = acl->a_entries + acl->a_count - 1;
+ 	if (acl->a_count == 0 ||
+ 	    !richace_is_everyone(ace) ||
+ 	    richace_is_inherit_only(ace)) {
+@@ -490,8 +495,10 @@ richacl_set_other_permissions(struct richacl_alloc *alloc)
+ 		ace->e_flags = RICHACE_SPECIAL_WHO;
+ 		ace->e_mask = other_mask;
+ 		ace->e_id.special = RICHACE_EVERYONE_SPECIAL_ID;
+-	} else
++	} else {
++		*added &= ~ace->e_mask;
+ 		richace_change_mask(alloc, &ace, other_mask);
++	}
+ 	return 0;
+ }
  
- 		/* activate D+/D- port detection algorithm */
-@@ -463,26 +462,20 @@ static void bq24257_handle_state_change(struct bq24257_device *bq,
- 		if (ret < 0)
- 			goto error;
+@@ -645,6 +652,7 @@ __richacl_isolate_who(struct richacl_alloc *alloc, struct richace *who,
+ /**
+  * richacl_isolate_group_class  -  limit the group class to the group file mask
+  * @alloc:	acl and number of allocated entries
++ * @deny:	additional permissions to deny
+  *
+  * POSIX requires that after a chmod, the group class is granted no more
+  * permissions than the group file permission bits.  For richacls, this
+@@ -679,21 +687,20 @@ __richacl_isolate_who(struct richacl_alloc *alloc, struct richace *who,
+  *    everyone@:rw::allow
+  */
+ static int
+-richacl_isolate_group_class(struct richacl_alloc *alloc)
++richacl_isolate_group_class(struct richacl_alloc *alloc, unsigned int deny)
+ {
+ 	struct richace who = {
+ 		.e_flags = RICHACE_SPECIAL_WHO,
+ 		.e_id.special = RICHACE_GROUP_SPECIAL_ID,
+ 	};
+ 	struct richace *ace;
+-	unsigned int deny;
  
--		reset_iilimit = true;
--	} else if (!old_state.power_good) {		    /* power inserted */
--		config_iilimit = true;
--	} else if (new_state->fault == FAULT_NO_BAT) {	   /* battery removed */
--		cancel_delayed_work_sync(&bq->iilimit_setup_work);
--
--		reset_iilimit = true;
--	} else if (old_state.fault == FAULT_NO_BAT) {    /* battery connected */
--		config_iilimit = true;
--	} else if (new_state->fault == FAULT_TIMER) { /* safety timer expired */
--		dev_err(bq->dev, "Safety timer expired! Battery dead?\n");
--	}
--
--	if (reset_iilimit) {
-+		/* reset input current limit */
- 		ret = bq24257_field_write(bq, F_IILIMIT, IILIMIT_500);
- 		if (ret < 0)
- 			goto error;
--	} else if (config_iilimit) {
-+	} else if (!old_state.power_good) {
-+		dev_dbg(bq->dev, "Power inserted\n");
+ 	if (!alloc->acl->a_count)
+ 		return 0;
+ 	ace = alloc->acl->a_entries + alloc->acl->a_count - 1;
+ 	if (richace_is_inherit_only(ace) || !richace_is_everyone(ace))
+ 		return 0;
+-	deny = ace->e_mask & ~alloc->acl->a_group_mask;
++	deny |= ace->e_mask & ~alloc->acl->a_group_mask;
+ 
+ 	if (deny) {
+ 		unsigned int n;
+@@ -806,16 +813,17 @@ richacl_apply_masks(struct richacl **acl, kuid_t owner)
+ 			.acl = richacl_clone(*acl, GFP_KERNEL),
+ 			.count = (*acl)->a_count,
+ 		};
++		unsigned int added = 0;
 +
-+		/* configure input current limit */
- 		schedule_delayed_work(&bq->iilimit_setup_work,
- 				      msecs_to_jiffies(BQ24257_ILIM_SET_DELAY));
-+	} else if (new_state->fault == FAULT_NO_BAT) {
-+		dev_warn(bq->dev, "Battery removed\n");
-+	} else if (new_state->fault == FAULT_TIMER) {
-+		dev_err(bq->dev, "Safety timer expired! Battery dead?\n");
- 	}
- 
- 	return;
+ 		if (!alloc.acl)
+ 			return -ENOMEM;
+-
+ 		if (richacl_move_everyone_aces_down(&alloc) ||
+ 		    richacl_propagate_everyone(&alloc) ||
+ 		    __richacl_apply_masks(&alloc, owner) ||
++		    richacl_set_other_permissions(&alloc, &added) ||
++		    richacl_isolate_group_class(&alloc, added) ||
+ 		    richacl_set_owner_permissions(&alloc) ||
+-		    richacl_set_other_permissions(&alloc) ||
+-		    richacl_isolate_owner_class(&alloc) ||
+-		    richacl_isolate_group_class(&alloc)) {
++		    richacl_isolate_owner_class(&alloc)) {
+ 			richacl_put(alloc.acl);
+ 			return -ENOMEM;
+ 		}
 -- 
-1.9.1
-
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+2.4.3
