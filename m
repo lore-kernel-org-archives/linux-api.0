@@ -1,7 +1,7 @@
 From: Andreas Dannenberg <dannenberg@ti.com>
-Subject: [PATCH v7 06/15] power: bq24257: Add basic support for bq24250/bq24251
-Date: Fri, 25 Sep 2015 10:54:11 -0500
-Message-ID: <1443196460-26156-7-git-send-email-dannenberg@ti.com>
+Subject: [PATCH v7 15/15] Documentation: power: bq24257: Document exported sysfs entries
+Date: Fri, 25 Sep 2015 10:54:20 -0500
+Message-ID: <1443196460-26156-16-git-send-email-dannenberg@ti.com>
 References: <1443196460-26156-1-git-send-email-dannenberg@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -12,173 +12,84 @@ To: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmai
 Cc: Ramakrishna Pallala <ramakrishna.pallala@intel.com>, linux-pm@vger.kernel.org, devicetree@vger.kernel.org, linux-api@vger.kernel.org, Andreas Dannenberg <dannenberg@ti.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds basic support for bq24250 and bq24251 which are very
-similar to the bq24257 the driver was originally written for. Basic
-support means the ability to select a device through Kconfig, DT and
-ACPI, an instance variable allowing to check which chip is active, and
-the reporting back of the selected device through the model_name power
-supply sysfs property.
-
-This patch by itself is not sufficient to actually use those two added
-devices in a real-world setting due to some feature differences which
-are addressed by other patches in this series.
+Document the settings exported by bq24257 charger driver through sysfs
+entries:
+- ovp_voltage
+- in_dpm_voltage
+- high_impedance_enable
+- sysoff_enable
 
 Signed-off-by: Andreas Dannenberg <dannenberg@ti.com>
 ---
- drivers/power/Kconfig           |  5 ++--
- drivers/power/bq24257_charger.c | 52 ++++++++++++++++++++++++++++++++++++++---
- 2 files changed, 52 insertions(+), 5 deletions(-)
+ Documentation/ABI/testing/sysfs-class-power | 58 +++++++++++++++++++++++++++++
+ 1 file changed, 58 insertions(+)
 
-diff --git a/drivers/power/Kconfig b/drivers/power/Kconfig
-index eeb5776..9e68853 100644
---- a/drivers/power/Kconfig
-+++ b/drivers/power/Kconfig
-@@ -409,12 +409,13 @@ config CHARGER_BQ24190
- 	  Say Y to enable support for the TI BQ24190 battery charger.
+diff --git a/Documentation/ABI/testing/sysfs-class-power b/Documentation/ABI/testing/sysfs-class-power
+index 369d2a2..d96b5fc 100644
+--- a/Documentation/ABI/testing/sysfs-class-power
++++ b/Documentation/ABI/testing/sysfs-class-power
+@@ -74,3 +74,61 @@ Description:
  
- config CHARGER_BQ24257
--	tristate "TI BQ24257 battery charger driver"
-+	tristate "TI BQ24250/24251/24257 battery charger driver"
- 	depends on I2C
- 	depends on GPIOLIB || COMPILE_TEST
- 	depends on REGMAP_I2C
- 	help
--	  Say Y to enable support for the TI BQ24257 battery charger.
-+	  Say Y to enable support for the TI BQ24250, BQ24251, and BQ24257 battery
-+	  chargers.
- 
- config CHARGER_BQ24735
- 	tristate "TI BQ24735 battery charger support"
-diff --git a/drivers/power/bq24257_charger.c b/drivers/power/bq24257_charger.c
-index 060f754..b0c8533 100644
---- a/drivers/power/bq24257_charger.c
-+++ b/drivers/power/bq24257_charger.c
-@@ -13,6 +13,10 @@
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-+ * Datasheets:
-+ * http://www.ti.com/product/bq24250
-+ * http://www.ti.com/product/bq24251
-+ * http://www.ti.com/product/bq24257
-  */
- 
- #include <linux/module.h>
-@@ -40,6 +44,22 @@
- 
- #define BQ24257_ILIM_SET_DELAY		1000	/* msec */
- 
-+/*
-+ * When adding support for new devices make sure that enum bq2425x_chip and
-+ * bq2425x_chip_name[] always stay in sync!
-+ */
-+enum bq2425x_chip {
-+	BQ24250,
-+	BQ24251,
-+	BQ24257,
-+};
+ 		Valid values:
+ 		- 0 - 70 (minutes), step by 10 (rounded down)
 +
-+static const char *const bq2425x_chip_name[] = {
-+	"bq24250",
-+	"bq24251",
-+	"bq24257",
-+};
++What:		/sys/class/power_supply/bq24257-charger/ovp_voltage
++Date:		September 2015
++KernelVersion: 4.3.0
++Contact:	Andreas Dannenberg <dannenberg@ti.com>
++Description:
++		This entry configures the overvoltage protection feature of bq24257-
++		type charger devices. This feature protects the device and other
++		components against damage from overvoltage on the input supply. See
++		device datasheet for details.
 +
- enum bq24257_fields {
- 	F_WD_FAULT, F_WD_EN, F_STAT, F_FAULT,			    /* REG 1 */
- 	F_RESET, F_IILIMIT, F_EN_STAT, F_EN_TERM, F_CE, F_HZ_MODE,  /* REG 2 */
-@@ -70,6 +90,8 @@ struct bq24257_device {
- 	struct device *dev;
- 	struct power_supply *charger;
- 
-+	enum bq2425x_chip chip;
++		Valid values:
++		- 6000000, 6500000, 7000000, 8000000, 9000000, 9500000, 10000000,
++		  10500000 (all uV)
 +
- 	struct regmap *rmap;
- 	struct regmap_field *rmap_fields[F_MAX_FIELDS];
- 
-@@ -248,6 +270,10 @@ static int bq24257_power_supply_get_property(struct power_supply *psy,
- 		val->strval = BQ24257_MANUFACTURER;
- 		break;
- 
-+	case POWER_SUPPLY_PROP_MODEL_NAME:
-+		val->strval = bq2425x_chip_name[bq->chip];
-+		break;
++What:		/sys/class/power_supply/bq24257-charger/in_dpm_voltage
++Date:		September 2015
++KernelVersion: 4.3.0
++Contact:	Andreas Dannenberg <dannenberg@ti.com>
++Description:
++		This entry configures the input dynamic power path management voltage of
++		bq24257-type charger devices. Once the supply drops to the configured
++		voltage, the input current limit is reduced down to prevent the further
++		drop of the supply. When the IC enters this mode, the charge current is
++		lower than the set value. See device datasheet for details.
 +
- 	case POWER_SUPPLY_PROP_ONLINE:
- 		val->intval = state.power_good;
- 		break;
-@@ -561,6 +587,7 @@ static int bq24257_hw_init(struct bq24257_device *bq)
- 
- static enum power_supply_property bq24257_power_supply_props[] = {
- 	POWER_SUPPLY_PROP_MANUFACTURER,
-+	POWER_SUPPLY_PROP_MODEL_NAME,
- 	POWER_SUPPLY_PROP_STATUS,
- 	POWER_SUPPLY_PROP_ONLINE,
- 	POWER_SUPPLY_PROP_HEALTH,
-@@ -644,6 +671,7 @@ static int bq24257_probe(struct i2c_client *client,
- {
- 	struct i2c_adapter *adapter = to_i2c_adapter(client->dev.parent);
- 	struct device *dev = &client->dev;
-+	const struct acpi_device_id *acpi_id;
- 	struct bq24257_device *bq;
- 	int ret;
- 	int i;
-@@ -660,6 +688,18 @@ static int bq24257_probe(struct i2c_client *client,
- 	bq->client = client;
- 	bq->dev = dev;
- 
-+	if (ACPI_HANDLE(dev)) {
-+		acpi_id = acpi_match_device(dev->driver->acpi_match_table,
-+					    &client->dev);
-+		if (!acpi_id) {
-+			dev_err(dev, "Failed to match ACPI device\n");
-+			return -ENODEV;
-+		}
-+		bq->chip = (enum bq2425x_chip)acpi_id->driver_data;
-+	} else {
-+		bq->chip = (enum bq2425x_chip)id->driver_data;
-+	}
++		Valid values:
++		- 4200000, 4280000, 4360000, 4440000, 4520000, 4600000, 4680000,
++		  4760000 (all uV)
 +
- 	mutex_init(&bq->lock);
- 
- 	bq->rmap = devm_regmap_init_i2c(client, &bq24257_regmap_config);
-@@ -722,7 +762,7 @@ static int bq24257_probe(struct i2c_client *client,
- 					bq24257_irq_handler_thread,
- 					IRQF_TRIGGER_FALLING |
- 					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
--					"bq24257", bq);
-+					bq2425x_chip_name[bq->chip], bq);
- 	if (ret) {
- 		dev_err(dev, "Failed to request IRQ #%d\n", client->irq);
- 		return ret;
-@@ -793,19 +833,25 @@ static const struct dev_pm_ops bq24257_pm = {
- };
- 
- static const struct i2c_device_id bq24257_i2c_ids[] = {
--	{ "bq24257", 0 },
-+	{ "bq24250", BQ24250 },
-+	{ "bq24251", BQ24251 },
-+	{ "bq24257", BQ24257 },
- 	{},
- };
- MODULE_DEVICE_TABLE(i2c, bq24257_i2c_ids);
- 
- static const struct of_device_id bq24257_of_match[] = {
-+	{ .compatible = "ti,bq24250", },
-+	{ .compatible = "ti,bq24251", },
- 	{ .compatible = "ti,bq24257", },
- 	{ },
- };
- MODULE_DEVICE_TABLE(of, bq24257_of_match);
- 
- static const struct acpi_device_id bq24257_acpi_match[] = {
--	{"BQ242570", 0},
-+	{ "BQ242500", BQ24250 },
-+	{ "BQ242510", BQ24251 },
-+	{ "BQ242570", BQ24257 },
- 	{},
- };
- MODULE_DEVICE_TABLE(acpi, bq24257_acpi_match);
++What:		/sys/class/power_supply/bq24257-charger/high_impedance_enable
++Date:		September 2015
++KernelVersion: 4.3.0
++Contact:	Andreas Dannenberg <dannenberg@ti.com>
++Description:
++		This entry allows enabling the high-impedance mode of bq24257-type
++		charger devices. If enabled, it places the charger IC into low power
++		standby mode with the switch mode controller disabled. When disabled,
++		the charger operates normally. See device datasheet for details.
++
++		Valid values:
++		- 1: enabled
++		- 0: disabled
++
++What:		/sys/class/power_supply/bq24257-charger/sysoff_enable
++Date:		September 2015
++KernelVersion: 4.3.0
++Contact:	Andreas Dannenberg <dannenberg@ti.com>
++Description:
++		This entry allows enabling the sysoff mode of bq24257-type charger
++		devices. If enabled and the input is removed, the internal battery FET
++		is turned off in order to reduce the leakage from the BAT pin to less
++		than 1uA. Note that on some devices/systems this disconnects the battery
++		from the system. See device datasheet for details.
++
++		Valid values:
++		- 1: enabled
++		- 0: disabled
 -- 
 1.9.1
 
