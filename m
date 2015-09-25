@@ -1,98 +1,90 @@
-From: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-Subject: [PATCH v6 01/14] dt: power: bq24257-charger: Cover additional devices
-Date: Thu, 24 Sep 2015 22:26:45 -0500
-Message-ID: <1443151618-29742-2-git-send-email-dannenberg@ti.com>
+From: Andreas Dannenberg <dannenberg@ti.com>
+Subject: [PATCH v6 02/14] power: bq24257: Remove IRQ config through stat-gpios
+Date: Thu, 24 Sep 2015 22:26:46 -0500
+Message-ID: <1443151618-29742-3-git-send-email-dannenberg@ti.com>
 References: <1443151618-29742-1-git-send-email-dannenberg@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1443151618-29742-1-git-send-email-dannenberg-l0cyMroinI0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Laurentiu Palcu <laurentiu.palcu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Cc: Ramakrishna Pallala <ramakrishna.pallala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
+Return-path: <linux-pm-owner@vger.kernel.org>
+In-Reply-To: <1443151618-29742-1-git-send-email-dannenberg@ti.com>
+Sender: linux-pm-owner@vger.kernel.org
+To: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, Laurentiu Palcu <laurentiu.palcu@intel.com>, Krzysztof Kozlowski <k.kozlowski@samsung.com>
+Cc: Ramakrishna Pallala <ramakrishna.pallala@intel.com>, linux-pm@vger.kernel.org, devicetree@vger.kernel.org, linux-api@vger.kernel.org, Andreas Dannenberg <dannenberg@ti.com>
 List-Id: linux-api@vger.kernel.org
 
-Extend the bq24257 charger's device tree documentation to cover the
-bq24250 and bq24251 devices as well feature additions.
+At the time the driver was written GpioInt resources in ACPI were not
+passed to the driver in client->irq, as opposed to DT enumeration. To
+accommodate this use case, a "stat-gpios" property was introduced to
+allow configuring the IRQ.
 
-Signed-off-by: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
+However this issue with ACPI was fixed in commit "845c877 i2c / ACPI:
+Assign IRQ for devices that have GpioInt automatically" and makes this
+workaround no longer necessary, hence we can remove the support for the
+"stat-gpios" property and the associated code from the bq24257 driver.
+
+Signed-off-by: Andreas Dannenberg <dannenberg@ti.com>
 ---
- .../devicetree/bindings/power/bq24257.txt          | 53 ++++++++++++++++++++--
- 1 file changed, 48 insertions(+), 5 deletions(-)
+ drivers/power/bq24257_charger.c | 28 ++++------------------------
+ 1 file changed, 4 insertions(+), 24 deletions(-)
 
-diff --git a/Documentation/devicetree/bindings/power/bq24257.txt b/Documentation/devicetree/bindings/power/bq24257.txt
-index 5c9d394..6c376ef 100644
---- a/Documentation/devicetree/bindings/power/bq24257.txt
-+++ b/Documentation/devicetree/bindings/power/bq24257.txt
-@@ -1,21 +1,64 @@
--Binding for TI bq24257 Li-Ion Charger
-+Binding for TI bq24250/bq24251/bq24257 Li-Ion Charger
+diff --git a/drivers/power/bq24257_charger.c b/drivers/power/bq24257_charger.c
+index 5859bc7..69b53d0 100644
+--- a/drivers/power/bq24257_charger.c
++++ b/drivers/power/bq24257_charger.c
+@@ -36,7 +36,6 @@
+ #define BQ24257_REG_7			0x06
  
- Required properties:
- - compatible: Should contain one of the following:
-+ * "ti,bq24250"
-+ * "ti,bq24251"
-  * "ti,bq24257"
--- reg:			   integer, i2c address of the device.
-+- reg: integer, i2c address of the device.
-+- interrupt-parent: Should be the phandle for the interrupt controller. Use in
-+    conjunction with "interrupts".
-+- interrupts: Interrupt mapping for GPIO IRQ (configure for both edges). Use in
-+    conjunction with "interrupt-parent".
- - ti,battery-regulation-voltage: integer, maximum charging voltage in uV.
--- ti,charge-current:	   integer, maximum charging current in uA.
--- ti,termination-current:  integer, charge will be terminated when current in
--			   constant-voltage phase drops below this value (in uA).
-+- ti,charge-current: integer, maximum charging current in uA.
-+- ti,termination-current: integer, charge will be terminated when current in
-+    constant-voltage phase drops below this value (in uA).
-+
-+Optional properties:
-+- pg-gpios: GPIO used for connecting the bq2425x device PG (Power Good) pin.
-+    This pin is not available on all devices however it should be used if
-+    possible as this is the recommended way to obtain the charger's input PG
-+    state. If this pin is not specified a software-based approach for PG
-+    detection is used.
-+- ti,current-limit: The maximum current to be drawn from the charger's input
-+    (in uA). If this property is not specified a USB D+/D- signal based charger
-+    type detection is used (if available) and the input limit current is set
-+    accordingly. If the D+/D- based detection is not available on a given device
-+    a default of 500,000 is used (=500mA).
-+- ti,ovp-voltage: Configures the over voltage protection voltage (in uV). If
-+    not specified a default of 6,5000,000 (=6.5V) is used.
-+- ti,in-dpm-voltage: Configures the threshold input voltage for the dynamic
-+    power path management (in uV). If not specified a default of 4,360,000
-+    (=4.36V) is used.
+ #define BQ24257_MANUFACTURER		"Texas Instruments"
+-#define BQ24257_STAT_IRQ		"stat"
+ #define BQ24257_PG_GPIO			"pg"
  
- Example:
+ #define BQ24257_ILIM_SET_DELAY		1000	/* msec */
+@@ -606,19 +605,6 @@ static int bq24257_power_supply_init(struct bq24257_device *bq)
+ 	return 0;
+ }
  
- bq24257 {
- 	compatible = "ti,bq24257";
- 	reg = <0x6a>;
-+	interrupt-parent = <&gpio1>;
-+	interrupts = <16 IRQ_TYPE_EDGE_BOTH>;
-+
-+	pg-gpios = <&gpio1 28 GPIO_ACTIVE_HIGH>;
+-static int bq24257_irq_probe(struct bq24257_device *bq)
+-{
+-	struct gpio_desc *stat_irq;
+-
+-	stat_irq = devm_gpiod_get_index(bq->dev, BQ24257_STAT_IRQ, 0, GPIOD_IN);
+-	if (IS_ERR(stat_irq)) {
+-		dev_err(bq->dev, "could not probe stat_irq pin\n");
+-		return PTR_ERR(stat_irq);
+-	}
+-
+-	return gpiod_to_irq(stat_irq);
+-}
+-
+ static int bq24257_pg_gpio_probe(struct bq24257_device *bq)
+ {
+ 	bq->pg = devm_gpiod_get_index(bq->dev, BQ24257_PG_GPIO, 0, GPIOD_IN);
+@@ -740,21 +726,15 @@ static int bq24257_probe(struct i2c_client *client,
+ 		return ret;
+ 	}
  
- 	ti,battery-regulation-voltage = <4200000>;
- 	ti,charge-current = <1000000>;
- 	ti,termination-current = <50000>;
- };
-+
-+Example:
-+
-+bq24250 {
-+	compatible = "ti,bq24250";
-+	reg = <0x6a>;
-+	interrupt-parent = <&gpio1>;
-+	interrupts = <16 IRQ_TYPE_EDGE_BOTH>;
-+
-+	ti,battery-regulation-voltage = <4200000>;
-+	ti,charge-current = <500000>;
-+	ti,termination-current = <50000>;
-+	ti,current-limit = <900000>;
-+	ti,ovp-voltage = <9500000>;
-+	ti,in-dpm-voltage = <4440000>;
-+};
+-	if (client->irq <= 0)
+-		client->irq = bq24257_irq_probe(bq);
+-
+-	if (client->irq < 0) {
+-		dev_err(dev, "no irq resource found\n");
+-		return client->irq;
+-	}
+-
+ 	ret = devm_request_threaded_irq(dev, client->irq, NULL,
+ 					bq24257_irq_handler_thread,
+ 					IRQF_TRIGGER_FALLING |
+ 					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
+-					BQ24257_STAT_IRQ, bq);
+-	if (ret)
++					"bq24257", bq);
++	if (ret) {
++		dev_err(dev, "Failed to request IRQ #%d\n", client->irq);
+ 		return ret;
++	}
+ 
+ 	ret = bq24257_power_supply_init(bq);
+ 	if (ret < 0)
 -- 
 1.9.1
+
