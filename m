@@ -1,7 +1,7 @@
 From: Andreas Dannenberg <dannenberg@ti.com>
-Subject: [PATCH v6 05/14] power: bq24257: Add bit definition for temp sense enable
-Date: Thu, 24 Sep 2015 22:26:49 -0500
-Message-ID: <1443151618-29742-6-git-send-email-dannenberg@ti.com>
+Subject: [PATCH v6 14/14] Documentation: power: bq24257: Document exported sysfs entries
+Date: Thu, 24 Sep 2015 22:26:58 -0500
+Message-ID: <1443151618-29742-15-git-send-email-dannenberg@ti.com>
 References: <1443151618-29742-1-git-send-email-dannenberg@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -12,35 +12,84 @@ To: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmai
 Cc: Ramakrishna Pallala <ramakrishna.pallala@intel.com>, linux-pm@vger.kernel.org, devicetree@vger.kernel.org, linux-api@vger.kernel.org, Andreas Dannenberg <dannenberg@ti.com>
 List-Id: linux-api@vger.kernel.org
 
-Adding a missing bit definition for the sake of consistency device model
-vs. bit field representation. No change in functionality.
+Document the settings exported by bq24257 charger driver through sysfs
+entries:
+- ovp_voltage
+- in_dpm_voltage
+- high_impedance_enable
+- sysoff_enable
 
 Signed-off-by: Andreas Dannenberg <dannenberg@ti.com>
 ---
- drivers/power/bq24257_charger.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ Documentation/ABI/testing/sysfs-class-power | 58 +++++++++++++++++++++++++++++
+ 1 file changed, 58 insertions(+)
 
-diff --git a/drivers/power/bq24257_charger.c b/drivers/power/bq24257_charger.c
-index 77c895f..ac471cd 100644
---- a/drivers/power/bq24257_charger.c
-+++ b/drivers/power/bq24257_charger.c
-@@ -66,7 +66,7 @@ enum bq24257_fields {
- 	F_VBAT, F_USB_DET,					    /* REG 3 */
- 	F_ICHG, F_ITERM,					    /* REG 4 */
- 	F_LOOP_STATUS, F_LOW_CHG, F_DPDM_EN, F_CE_STATUS, F_VINDPM, /* REG 5 */
--	F_X2_TMR_EN, F_TMR, F_SYSOFF, F_TS_STAT,		    /* REG 6 */
-+	F_X2_TMR_EN, F_TMR, F_SYSOFF, F_TS_EN, F_TS_STAT,	    /* REG 6 */
- 	F_VOVP, F_CLR_VDP, F_FORCE_BATDET, F_FORCE_PTM,		    /* REG 7 */
+diff --git a/Documentation/ABI/testing/sysfs-class-power b/Documentation/ABI/testing/sysfs-class-power
+index 369d2a2..fd6cb79 100644
+--- a/Documentation/ABI/testing/sysfs-class-power
++++ b/Documentation/ABI/testing/sysfs-class-power
+@@ -74,3 +74,61 @@ Description:
  
- 	F_MAX_FIELDS
-@@ -156,6 +156,7 @@ static const struct reg_field bq24257_reg_fields[] = {
- 	[F_X2_TMR_EN]		= REG_FIELD(BQ24257_REG_6, 7, 7),
- 	[F_TMR]			= REG_FIELD(BQ24257_REG_6, 5, 6),
- 	[F_SYSOFF]		= REG_FIELD(BQ24257_REG_6, 4, 4),
-+	[F_TS_EN]		= REG_FIELD(BQ24257_REG_6, 3, 3),
- 	[F_TS_STAT]		= REG_FIELD(BQ24257_REG_6, 0, 2),
- 	/* REG 7 */
- 	[F_VOVP]		= REG_FIELD(BQ24257_REG_7, 5, 7),
+ 		Valid values:
+ 		- 0 - 70 (minutes), step by 10 (rounded down)
++
++What:		/sys/class/power_supply/bq24257-charger/ovp_voltage
++Date:		September 2015
++KernelVersion: 4.3.0
++Contact:	Andreas Dannenberg <dannenberg@ti.com>
++Description:
++		This entry configures the overvoltage protection feature of bq24257-
++		type charger devices. This feature protects the device and other
++		components against damage from overvoltage on the input supply. See
++		device datasheet for details.
++
++		Valid values:
++		- 6000000, 6500000, 7000000, 8000000, 9000000, 9500000, 10000000,
++		  10500000 (all uV)
++
++What:		/sys/class/power_supply/bq24257-charger/in_dpm_voltage
++Date:		September 2015
++KernelVersion: 4.3.0
++Contact:	Andreas Dannenberg <dannenberg@ti.com>
++Description:
++		This entry configures the input dynamic power path management voltage of
++		bq24257-type charger devices. Once the supply drops to the configured
++		voltage, the input current limit is reduced down to prevent the further
++		drop of the supply. When the IC enters this mode, the charge current is
++		lower than the set. See device datasheet for details.
++
++		Valid values:
++		- 4200000, 4280000, 4360000, 4440000, 4520000, 4600000, 4680000,
++		  4760000 (all uV)
++
++What:		/sys/class/power_supply/bq24257-charger/high_impedance_enable
++Date:		September 2015
++KernelVersion: 4.3.0
++Contact:	Andreas Dannenberg <dannenberg@ti.com>
++Description:
++		This entry allows enabling the high-impedance mode of bq24257-type
++		charger devices. If enabled, it places the charger IC into low power
++		standby mode with the switch mode controller disabled. When disabled,
++		the charger operates normally. See device datasheet for details.
++
++		Valid values:
++		- 1: enabled
++		- 0: disabled
++
++What:		/sys/class/power_supply/bq24257-charger/sysoff_enable
++Date:		September 2015
++KernelVersion: 4.3.0
++Contact:	Andreas Dannenberg <dannenberg@ti.com>
++Description:
++		This entry allows enabling the sysoff mode of bq24257-type charger
++		devices. If enabled and the input is removed, the internal battery FET
++		is turned off in order to reduce the leakage from the BAT pin to less
++		than 1uA. Note that on some devices/systems this disconnects the battery
++		from the system. See device datasheet for details.
++
++		Valid values:
++		- 1: enabled
++		- 0: disabled
 -- 
 1.9.1
 
