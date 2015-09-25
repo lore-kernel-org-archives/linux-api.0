@@ -1,165 +1,97 @@
-From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH 1/1] ns: introduce proc_get_ns_by_fd()
-Date: Fri, 25 Sep 2015 19:57:14 +0200
-Message-ID: <20150925175714.GB12504@redhat.com>
-References: <20150925135246.27620.97496.stgit@buzz>
-	<20150925175654.GA12504@redhat.com>
+From: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Subject: Re: [PATCH] richacl: Possible other write-through fix
+Date: Fri, 25 Sep 2015 14:36:40 -0400
+Message-ID: <20150925183640.GC14850@fieldses.org>
+References: <1441448856-13478-1-git-send-email-agruenba@redhat.com>
+ <1441448856-13478-27-git-send-email-agruenba@redhat.com>
+ <20150924183310.GE3823@fieldses.org>
+ <1443199559-4870-1-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150925175654.GA12504-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-Cc: Roman Gushchin <klamm-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Chen Fan <chen.fan.fnst-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+In-Reply-To: <1443199559-4870-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Introduce proc_get_ns_by_fd() so that get_net_ns_by_fd() becomes
-one-liner. It will have another CLONE_NEWPID user soon.
+On Fri, Sep 25, 2015 at 06:45:59PM +0200, Andreas Gruenbacher wrote:
+> 2015-09-24 20:33 GMT+02:00 J. Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>:
+> > On Sat, Sep 05, 2015 at 12:27:21PM +0200, Andreas Gruenbacher wrote:
+> >> +int
+> >> +richacl_apply_masks(struct richacl **acl, kuid_t owner)
+> >> +{
+> >> +     if ((*acl)->a_flags & RICHACL_MASKED) {
+> >> +             struct richacl_alloc alloc = {
+> >> +                     .acl = richacl_clone(*acl, GFP_KERNEL),
+> >> +                     .count = (*acl)->a_count,
+> >> +             };
+> >> +             if (!alloc.acl)
+> >> +                     return -ENOMEM;
+> >> +
+> >> +             if (richacl_move_everyone_aces_down(&alloc) ||
+> >> +                 richacl_propagate_everyone(&alloc) ||
+> >> +                 __richacl_apply_masks(&alloc, owner) ||
+> >> +                 richacl_set_owner_permissions(&alloc) ||
+> >> +                 richacl_set_other_permissions(&alloc) ||
+> >
+> > Hm, I'm a little unsure about this step: it seems like the one step that
+> > can actually change the permissions (making them more permissive, in
+> > this case), whereas the others are neutral.
+> >
+> > The following two steps should fix that, but I'm not sure they do.
+> >
+> > E.g. if I have an ACL like
+> >
+> >         mask 0777, WRITE_THROUGH
+> >         GROUP@:r--::allow
+> >
+> > I think it should result in
+> >
+> >         OWNER@:   rwx::allow
+> >         GROUP@:   -wx::deny
+> >         GROUP@:   r--::allow
+> >         EVERYONE@:rwx::allow
+> >
+> > But does the GROUP@ deny actually get in there?  It looks to me like the
+> > denies inserted by richacl_isolate_group_class only take into account
+> > the group mask, not the actual permissions granted to any group class
+> > user.
+> >
+> > I may be mising something.
+> 
+> Thanks for the test case and analysis. The group@ deny ace that should be
+> inserted here actually doesn't get inserted. I'm attaching a fix.
 
-TODO: proc_get_ns_by_fd() can share some code with proc_ns_fget().
+This looks correct with the fix, thanks!
 
-Signed-off-by: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
----
- fs/nsfs.c                |   24 ++++++++++++++++++++++++
- include/linux/proc_ns.h  |    3 +++
- kernel/pid_namespace.c   |    6 ++++++
- net/core/net_namespace.c |   23 +++++++----------------
- 4 files changed, 40 insertions(+), 16 deletions(-)
+One nit:
 
-diff --git a/fs/nsfs.c b/fs/nsfs.c
-index 99521e7..72474ca 100644
---- a/fs/nsfs.c
-+++ b/fs/nsfs.c
-@@ -136,6 +136,30 @@ out_invalid:
- 	return ERR_PTR(-EINVAL);
- }
- 
-+void *proc_get_ns_by_fd(int fd, int type)
-+{
-+	struct fd f;
-+	struct ns_common *ns;
-+	void *ret;
-+
-+	f = fdget(fd);
-+	if (!f.file)
-+		return ERR_PTR(-EBADF);
-+
-+	ret = ERR_PTR(-EINVAL);
-+	if (f.file->f_op != &ns_file_operations)
-+		goto put;
-+
-+	ns = get_proc_ns(file_inode(f.file));
-+	if (ns->ops->type != type || !ns->ops->get_type)
-+		goto put;
-+
-+	ret = ns->ops->get_type(ns);
-+put:
-+	fdput(f);
-+	return ret;
-+}
-+
- static const struct super_operations nsfs_ops = {
- 	.statfs = simple_statfs,
- 	.evict_inode = nsfs_evict,
-diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
-index 42dfc61..d956f89 100644
---- a/include/linux/proc_ns.h
-+++ b/include/linux/proc_ns.h
-@@ -16,6 +16,7 @@ struct proc_ns_operations {
- 	struct ns_common *(*get)(struct task_struct *task);
- 	void (*put)(struct ns_common *ns);
- 	int (*install)(struct nsproxy *nsproxy, struct ns_common *ns);
-+	void *(*get_type)(struct ns_common *ns);
- };
- 
- extern const struct proc_ns_operations netns_operations;
-@@ -66,6 +67,8 @@ static inline int ns_alloc_inum(struct ns_common *ns)
- #define ns_free_inum(ns) proc_free_inum((ns)->inum)
- 
- extern struct file *proc_ns_fget(int fd);
-+extern void *proc_get_ns_by_fd(int fd, int type);
-+
- #define get_proc_ns(inode) ((struct ns_common *)(inode)->i_private)
- extern void *ns_get_path(struct path *path, struct task_struct *task,
- 			const struct proc_ns_operations *ns_ops);
-diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
-index a65ba13..0c87393 100644
---- a/kernel/pid_namespace.c
-+++ b/kernel/pid_namespace.c
-@@ -388,12 +388,18 @@ static int pidns_install(struct nsproxy *nsproxy, struct ns_common *ns)
- 	return 0;
- }
- 
-+static void *pidns_get_type(struct ns_common *ns)
-+{
-+	return get_pid_ns(to_pid_ns(ns));
-+}
-+
- const struct proc_ns_operations pidns_operations = {
- 	.name		= "pid",
- 	.type		= CLONE_NEWPID,
- 	.get		= pidns_get,
- 	.put		= pidns_put,
- 	.install	= pidns_install,
-+	.get_type	= pidns_get_type,
- };
- 
- static __init int pid_namespaces_init(void)
-diff --git a/net/core/net_namespace.c b/net/core/net_namespace.c
-index 572af00..6465dc0 100644
---- a/net/core/net_namespace.c
-+++ b/net/core/net_namespace.c
-@@ -420,22 +420,7 @@ EXPORT_SYMBOL_GPL(__put_net);
- 
- struct net *get_net_ns_by_fd(int fd)
- {
--	struct file *file;
--	struct ns_common *ns;
--	struct net *net;
--
--	file = proc_ns_fget(fd);
--	if (IS_ERR(file))
--		return ERR_CAST(file);
--
--	ns = get_proc_ns(file_inode(file));
--	if (ns->ops == &netns_operations)
--		net = get_net(container_of(ns, struct net, ns));
--	else
--		net = ERR_PTR(-EINVAL);
--
--	fput(file);
--	return net;
-+	return proc_get_ns_by_fd(fd, CLONE_NEWNET);
- }
- 
- #else
-@@ -955,11 +940,17 @@ static int netns_install(struct nsproxy *nsproxy, struct ns_common *ns)
- 	return 0;
- }
- 
-+static void *netns_get_type(struct ns_common *ns)
-+{
-+	return get_net(to_net_ns(ns));
-+}
-+
- const struct proc_ns_operations netns_operations = {
- 	.name		= "net",
- 	.type		= CLONE_NEWNET,
- 	.get		= netns_get,
- 	.put		= netns_put,
- 	.install	= netns_install,
-+	.get_type	= netns_get_type,
- };
- #endif
--- 
-1.5.5.1
+>  		if (richacl_move_everyone_aces_down(&alloc) ||
+>  		    richacl_propagate_everyone(&alloc) ||
+>  		    __richacl_apply_masks(&alloc, owner) ||
+> +		    richacl_set_other_permissions(&alloc, &added) ||
+
+It's still the case that this step lacks the property shared by the
+other step, that it leaves permissions unchanged.  Instead it increases
+permissions, then the following step fixes the problem.  That
+complicates review slightly.
+
+But I'm not sure that matters much.
+
+Reviewed-by: J. Bruce Fields <bfields-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+
+--b.
+
+> +		    richacl_isolate_group_class(&alloc, added) ||
+>  		    richacl_set_owner_permissions(&alloc) ||
+> -		    richacl_set_other_permissions(&alloc) ||
+> -		    richacl_isolate_owner_class(&alloc) ||
+> -		    richacl_isolate_group_class(&alloc)) {
+> +		    richacl_isolate_owner_class(&alloc)) {
+>  			richacl_put(alloc.acl);
+>  			return -ENOMEM;
+>  		}
+> -- 
+> 2.4.3
