@@ -1,31 +1,49 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v3 8/9] vfs: copy_file_range() can do a pagecache copy
- with splice
-Date: Fri, 25 Sep 2015 17:14:59 -0700
-Message-ID: <CALCETrWLAwNVqAiTMOmaktVY0cQkM0bX2vztXzEHm3EFYDg6zA@mail.gmail.com>
-References: <1443214096-12769-1-git-send-email-Anna.Schumaker@Netapp.com> <1443214096-12769-9-git-send-email-Anna.Schumaker@Netapp.com>
+From: Elias Vanderstuyft <elias.vds@gmail.com>
+Subject: Re: [PATCH] Input: input.h: Fix EVIOCSFF macro inconsistency by using _IOW()
+Date: Sat, 26 Sep 2015 11:45:50 +0200
+Message-ID: <CADbOyBRnZznY-GStZAD_ZKv_Boakfr2wUR2ezX8vZHULpOHLPQ@mail.gmail.com>
+References: <1442510796-3062-1-git-send-email-elias.vds@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <1443214096-12769-9-git-send-email-Anna.Schumaker@Netapp.com>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Anna Schumaker <Anna.Schumaker@netapp.com>
-Cc: linux-nfs@vger.kernel.org, Linux btrfs Developers List <linux-btrfs@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Zach Brown <zab@zabbo.net>, Al Viro <viro@zeniv.linux.org.uk>, Chris Mason <clm@fb.com>, "Darrick J. Wong" <darrick.wong@oracle.com>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, andros@netapp.com, Christoph Hellwig <hch@infradead.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1442510796-3062-1-git-send-email-elias.vds@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dmitry Torokhov <dmitry.torokhov@gmail.com>
+Cc: "open list:HID CORE LAYER" <linux-input@vger.kernel.org>, linux-api@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Elias Vanderstuyft <elias.vds@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 25, 2015 at 1:48 PM, Anna Schumaker
-<Anna.Schumaker@netapp.com> wrote:
-> The NFS server will need some kind offallback for filesystems that don't
-> have any kind of copy acceleration, and it should be generally useful to
-> have an in-kernel copy to avoid lots of switches between kernel and user
-> space.
+On Thu, Sep 17, 2015 at 7:26 PM, Elias Vanderstuyft <elias.vds@gmail.com> wrote:
+> Just like the EVIOCSABS(abs) macro, use the more compact
+> _IOW(..., type) instead of _IOC(_IOC_WRITE, ..., sizeof(type))
+> for the EVIOCSFF macro.
 >
-> I make this configurable by adding two new flags.  Users who only want a
-> reflink can pass COPY_FR_REFLINK, and users who want a full data copy can
-> pass COPY_FR_COPY.  The default (flags=0) means to first attempt a
-> reflink, but use the pagecache if that fails.
+> Signed-off-by: Elias Vanderstuyft <elias.vds@gmail.com>
+> ---
+>  include/uapi/linux/input.h | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/include/uapi/linux/input.h b/include/uapi/linux/input.h
+> index 731417c..63915a7 100644
+> --- a/include/uapi/linux/input.h
+> +++ b/include/uapi/linux/input.h
+> @@ -147,7 +147,7 @@ struct input_keymap_entry {
+>  #define EVIOCGABS(abs)         _IOR('E', 0x40 + (abs), struct input_absinfo)   /* get abs value/limits */
+>  #define EVIOCSABS(abs)         _IOW('E', 0xc0 + (abs), struct input_absinfo)   /* set abs value/limits */
+>
+> -#define EVIOCSFF               _IOC(_IOC_WRITE, 'E', 0x80, sizeof(struct ff_effect))   /* send a force effect to a force feedback device */
+> +#define EVIOCSFF               _IOW('E', 0x80, struct ff_effect)       /* send a force effect to a force feedback device */
+>  #define EVIOCRMFF              _IOW('E', 0x81, int)                    /* Erase a force effect */
+>  #define EVIOCGEFFECTS          _IOR('E', 0x84, int)                    /* Report number of effects playable at the same time */
+>
+> --
+> 1.9.3
 >
 
-Can you clarify how the subject line fits in?  I'm a bit lost.
+Hi Dmitry,
 
---Andy
+Is there anything that prevents this patch to be applied?
+About a year ago, we discussed this by message:
+https://www.marc.info/?l=linux-input&m=141020112415578&w=1
+
+Thanks,
+Elias
