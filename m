@@ -1,7 +1,7 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v8 07/41] richacl: Permission mapping functions
-Date: Mon, 28 Sep 2015 00:08:58 +0200
-Message-ID: <1443391772-10171-8-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v8 02/41] vfs: Add MAY_CREATE_FILE and MAY_CREATE_DIR permission flags
+Date: Mon, 28 Sep 2015 00:08:53 +0200
+Message-ID: <1443391772-10171-3-git-send-email-agruenba@redhat.com>
 References: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
@@ -9,207 +9,188 @@ Sender: linux-kernel-owner@vger.kernel.org
 To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-We need to map from POSIX permissions to NFSv4 permissions when a
-chmod() is done, from NFSv4 permissions to POSIX permissions when an acl
-is set (which implicitly sets the file permission bits), and from the
-MAY_READ/MAY_WRITE/MAY_EXEC/MAY_APPEND flags to NFSv4 permissions when
-doing an access check in a richacl.
+Richacls distinguish between creating non-directories and directories. To
+support that, add an isdir parameter to may_create(). When checking
+inode_permission() for create permission, pass in an additional
+MAY_CREATE_FILE or MAY_CREATE_DIR mask flag.
+
+To allow checking for delete *and* create access when replacing an existing
+file via vfs_rename(), add a replace parameter to may_delete().
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 Reviewed-by: J. Bruce Fields <bfields@redhat.com>
 ---
- fs/richacl_base.c       | 117 ++++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/richacl.h |  47 ++++++++++++++++++-
- 2 files changed, 163 insertions(+), 1 deletion(-)
+ fs/namei.c         | 43 +++++++++++++++++++++++++------------------
+ include/linux/fs.h |  2 ++
+ 2 files changed, 27 insertions(+), 18 deletions(-)
 
-diff --git a/fs/richacl_base.c b/fs/richacl_base.c
-index 6d9a073..063dbe4 100644
---- a/fs/richacl_base.c
-+++ b/fs/richacl_base.c
-@@ -65,3 +65,120 @@ richace_copy(struct richace *to, const struct richace *from)
- {
- 	memcpy(to, from, sizeof(struct richace));
- }
-+
-+/*
-+ * richacl_mask_to_mode  -  compute the file permission bits from mask
-+ * @mask:	%RICHACE_* permission mask
-+ *
-+ * Compute the file permission bits corresponding to a particular set of
-+ * richacl permissions.
-+ *
-+ * See richacl_masks_to_mode().
-+ */
-+static int
-+richacl_mask_to_mode(unsigned int mask)
-+{
-+	int mode = 0;
-+
-+	if (mask & RICHACE_POSIX_MODE_READ)
-+		mode |= S_IROTH;
-+	if (mask & RICHACE_POSIX_MODE_WRITE)
-+		mode |= S_IWOTH;
-+	if (mask & RICHACE_POSIX_MODE_EXEC)
-+		mode |= S_IXOTH;
-+
-+	return mode;
-+}
-+
-+/**
-+ * richacl_masks_to_mode  -  compute file permission bits from file masks
-+ *
-+ * When setting a richacl, we set the file permission bits to indicate maximum
-+ * permissions: for example, we set the Write permission when a mask contains
-+ * RICHACE_APPEND_DATA even if it does not also contain RICHACE_WRITE_DATA.
-+ *
-+ * Permissions which are not in RICHACE_POSIX_MODE_READ,
-+ * RICHACE_POSIX_MODE_WRITE, or RICHACE_POSIX_MODE_EXEC cannot be represented
-+ * in the file permission bits.  Such permissions can still be effective, but
-+ * not for new files or after a chmod(); they must be explicitly enabled in the
-+ * richacl.
-+ */
-+int
-+richacl_masks_to_mode(const struct richacl *acl)
-+{
-+	return richacl_mask_to_mode(acl->a_owner_mask) << 6 |
-+	       richacl_mask_to_mode(acl->a_group_mask) << 3 |
-+	       richacl_mask_to_mode(acl->a_other_mask);
-+}
-+EXPORT_SYMBOL_GPL(richacl_masks_to_mode);
-+
-+/**
-+ * richacl_mode_to_mask  - compute a file mask from the lowest three mode bits
-+ *
-+ * When the file permission bits of a file are set with chmod(), this specifies
-+ * the maximum permissions that processes will get.  All permissions beyond
-+ * that will be removed from the file masks, and become ineffective.
-+ */
-+unsigned int
-+richacl_mode_to_mask(mode_t mode)
-+{
-+	unsigned int mask = 0;
-+
-+	if (mode & S_IROTH)
-+		mask |= RICHACE_POSIX_MODE_READ;
-+	if (mode & S_IWOTH)
-+		mask |= RICHACE_POSIX_MODE_WRITE;
-+	if (mode & S_IXOTH)
-+		mask |= RICHACE_POSIX_MODE_EXEC;
-+
-+	return mask;
-+}
-+
-+/**
-+ * richacl_want_to_mask  - convert the iop->permission want argument to a mask
-+ * @want:	@want argument of the permission inode operation
-+ *
-+ * When checking for append, @want is (MAY_WRITE | MAY_APPEND).
-+ *
-+ * Richacls use the iop->may_create and iop->may_delete hooks which are used
-+ * for checking if creating and deleting files is allowed.  These hooks do not
-+ * use richacl_want_to_mask(), so we do not have to deal with mapping MAY_WRITE
-+ * to RICHACE_ADD_FILE, RICHACE_ADD_SUBDIRECTORY, and RICHACE_DELETE_CHILD
-+ * here.
-+ */
-+unsigned int
-+richacl_want_to_mask(unsigned int want)
-+{
-+	unsigned int mask = 0;
-+
-+	if (want & MAY_READ)
-+		mask |= RICHACE_READ_DATA;
-+	if (want & MAY_DELETE_SELF)
-+		mask |= RICHACE_DELETE;
-+	if (want & MAY_TAKE_OWNERSHIP)
-+		mask |= RICHACE_WRITE_OWNER;
-+	if (want & MAY_CHMOD)
-+		mask |= RICHACE_WRITE_ACL;
-+	if (want & MAY_SET_TIMES)
-+		mask |= RICHACE_WRITE_ATTRIBUTES;
-+	if (want & MAY_EXEC)
-+		mask |= RICHACE_EXECUTE;
-+	/*
-+	 * differentiate MAY_WRITE from these request
-+	 */
-+	if (want & (MAY_APPEND |
-+		    MAY_CREATE_FILE | MAY_CREATE_DIR |
-+		    MAY_DELETE_CHILD)) {
-+		if (want & MAY_APPEND)
-+			mask |= RICHACE_APPEND_DATA;
-+		if (want & MAY_CREATE_FILE)
-+			mask |= RICHACE_ADD_FILE;
-+		if (want & MAY_CREATE_DIR)
-+			mask |= RICHACE_ADD_SUBDIRECTORY;
-+		if (want & MAY_DELETE_CHILD)
-+			mask |= RICHACE_DELETE_CHILD;
-+	} else if (want & MAY_WRITE)
-+		mask |= RICHACE_WRITE_DATA;
-+	return mask;
-+}
-+EXPORT_SYMBOL_GPL(richacl_want_to_mask);
-diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-index bfa94bb..9c8f298 100644
---- a/include/linux/richacl.h
-+++ b/include/linux/richacl.h
-@@ -126,6 +126,49 @@ struct richacl {
- 	RICHACE_WRITE_OWNER |					\
- 	RICHACE_SYNCHRONIZE)
- 
-+/*
-+ * The POSIX permissions are supersets of the following NFSv4 permissions:
-+ *
-+ *  - MAY_READ maps to READ_DATA or LIST_DIRECTORY, depending on the type
-+ *    of the file system object.
-+ *
-+ *  - MAY_WRITE maps to WRITE_DATA or RICHACE_APPEND_DATA for files, and to
-+ *    ADD_FILE, RICHACE_ADD_SUBDIRECTORY, or RICHACE_DELETE_CHILD for directories.
-+ *
-+ *  - MAY_EXECUTE maps to RICHACE_EXECUTE.
-+ *
-+ *  (Some of these NFSv4 permissions have the same bit values.)
-+ */
-+#define RICHACE_POSIX_MODE_READ (			\
-+		RICHACE_READ_DATA |		\
-+		RICHACE_LIST_DIRECTORY)
-+#define RICHACE_POSIX_MODE_WRITE (			\
-+		RICHACE_WRITE_DATA |		\
-+		RICHACE_ADD_FILE |			\
-+		RICHACE_APPEND_DATA |		\
-+		RICHACE_ADD_SUBDIRECTORY |		\
-+		RICHACE_DELETE_CHILD)
-+#define RICHACE_POSIX_MODE_EXEC RICHACE_EXECUTE
-+#define RICHACE_POSIX_MODE_ALL (			\
-+		RICHACE_POSIX_MODE_READ |		\
-+		RICHACE_POSIX_MODE_WRITE |		\
-+		RICHACE_POSIX_MODE_EXEC)
-+/*
-+ * These permissions are always allowed
-+ * no matter what the acl says.
-+ */
-+#define RICHACE_POSIX_ALWAYS_ALLOWED (	\
-+		RICHACE_SYNCHRONIZE |	\
-+		RICHACE_READ_ATTRIBUTES |	\
-+		RICHACE_READ_ACL)
-+/*
-+ * The owner is implicitly granted
-+ * these permissions under POSIX.
-+ */
-+#define RICHACE_POSIX_OWNER_ALLOWED (		\
-+		RICHACE_WRITE_ATTRIBUTES |		\
-+		RICHACE_WRITE_OWNER |		\
-+		RICHACE_WRITE_ACL)
- /**
-  * richacl_get  -  grab another reference to a richacl handle
+diff --git a/fs/namei.c b/fs/namei.c
+index 48c2752..7c0f310 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -453,7 +453,9 @@ static int sb_permission(struct super_block *sb, struct inode *inode, int mask)
+  * this, letting us set arbitrary permissions for filesystem access without
+  * changing the "normal" UIDs which are used for other things.
+  *
+- * When checking for MAY_APPEND, MAY_WRITE must also be set in @mask.
++ * MAY_WRITE must be set in @mask whenever MAY_APPEND, MAY_CREATE_FILE, or
++ * MAY_CREATE_DIR are set.  That way, file systems that don't support these
++ * permissions will check for MAY_WRITE instead.
   */
-@@ -251,6 +294,8 @@ richace_is_same_identifier(const struct richace *a, const struct richace *b)
- extern struct richacl *richacl_alloc(int, gfp_t);
- extern struct richacl *richacl_clone(const struct richacl *, gfp_t);
- extern void richace_copy(struct richace *, const struct richace *);
--
-+extern int richacl_masks_to_mode(const struct richacl *);
-+extern unsigned int richacl_mode_to_mask(mode_t);
-+extern unsigned int richacl_want_to_mask(unsigned int);
+ int inode_permission(struct inode *inode, int mask)
+ {
+@@ -2545,10 +2547,11 @@ EXPORT_SYMBOL(__check_sticky);
+  * 10. We don't allow removal of NFS sillyrenamed files; it's handled by
+  *     nfs_async_unlink().
+  */
+-static int may_delete(struct inode *dir, struct dentry *victim, bool isdir)
++static int may_delete(struct inode *dir, struct dentry *victim,
++		      bool isdir, bool replace)
+ {
+ 	struct inode *inode = d_backing_inode(victim);
+-	int error;
++	int error, mask = MAY_WRITE | MAY_EXEC;
  
- #endif /* __RICHACL_H */
+ 	if (d_is_negative(victim))
+ 		return -ENOENT;
+@@ -2557,7 +2560,9 @@ static int may_delete(struct inode *dir, struct dentry *victim, bool isdir)
+ 	BUG_ON(victim->d_parent->d_inode != dir);
+ 	audit_inode_child(dir, victim, AUDIT_TYPE_CHILD_DELETE);
+ 
+-	error = inode_permission(dir, MAY_WRITE | MAY_EXEC);
++	if (replace)
++		mask |= isdir ? MAY_CREATE_DIR : MAY_CREATE_FILE;
++	error = inode_permission(dir, mask);
+ 	if (error)
+ 		return error;
+ 	if (IS_APPEND(dir))
+@@ -2588,14 +2593,16 @@ static int may_delete(struct inode *dir, struct dentry *victim, bool isdir)
+  *  3. We should have write and exec permissions on dir
+  *  4. We can't do it if dir is immutable (done in permission())
+  */
+-static inline int may_create(struct inode *dir, struct dentry *child)
++static inline int may_create(struct inode *dir, struct dentry *child, bool isdir)
+ {
++	int mask = isdir ? MAY_CREATE_DIR : MAY_CREATE_FILE;
++
+ 	audit_inode_child(dir, child, AUDIT_TYPE_CHILD_CREATE);
+ 	if (child->d_inode)
+ 		return -EEXIST;
+ 	if (IS_DEADDIR(dir))
+ 		return -ENOENT;
+-	return inode_permission(dir, MAY_WRITE | MAY_EXEC);
++	return inode_permission(dir, MAY_WRITE | MAY_EXEC | mask);
+ }
+ 
+ /*
+@@ -2645,7 +2652,7 @@ EXPORT_SYMBOL(unlock_rename);
+ int vfs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
+ 		bool want_excl)
+ {
+-	int error = may_create(dir, dentry);
++	int error = may_create(dir, dentry, false);
+ 	if (error)
+ 		return error;
+ 
+@@ -3490,7 +3497,7 @@ EXPORT_SYMBOL(user_path_create);
+ 
+ int vfs_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, dev_t dev)
+ {
+-	int error = may_create(dir, dentry);
++	int error = may_create(dir, dentry, false);
+ 
+ 	if (error)
+ 		return error;
+@@ -3582,7 +3589,7 @@ SYSCALL_DEFINE3(mknod, const char __user *, filename, umode_t, mode, unsigned, d
+ 
+ int vfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
+ {
+-	int error = may_create(dir, dentry);
++	int error = may_create(dir, dentry, true);
+ 	unsigned max_links = dir->i_sb->s_max_links;
+ 
+ 	if (error)
+@@ -3663,7 +3670,7 @@ EXPORT_SYMBOL(dentry_unhash);
+ 
+ int vfs_rmdir(struct inode *dir, struct dentry *dentry)
+ {
+-	int error = may_delete(dir, dentry, 1);
++	int error = may_delete(dir, dentry, true, false);
+ 
+ 	if (error)
+ 		return error;
+@@ -3785,7 +3792,7 @@ SYSCALL_DEFINE1(rmdir, const char __user *, pathname)
+ int vfs_unlink(struct inode *dir, struct dentry *dentry, struct inode **delegated_inode)
+ {
+ 	struct inode *target = dentry->d_inode;
+-	int error = may_delete(dir, dentry, 0);
++	int error = may_delete(dir, dentry, false, false);
+ 
+ 	if (error)
+ 		return error;
+@@ -3919,7 +3926,7 @@ SYSCALL_DEFINE1(unlink, const char __user *, pathname)
+ 
+ int vfs_symlink(struct inode *dir, struct dentry *dentry, const char *oldname)
+ {
+-	int error = may_create(dir, dentry);
++	int error = may_create(dir, dentry, false);
+ 
+ 	if (error)
+ 		return error;
+@@ -4002,7 +4009,7 @@ int vfs_link(struct dentry *old_dentry, struct inode *dir, struct dentry *new_de
+ 	if (!inode)
+ 		return -ENOENT;
+ 
+-	error = may_create(dir, new_dentry);
++	error = may_create(dir, new_dentry, false);
+ 	if (error)
+ 		return error;
+ 
+@@ -4190,19 +4197,19 @@ int vfs_rename(struct inode *old_dir, struct dentry *old_dentry,
+ 	if (source == target)
+ 		return 0;
+ 
+-	error = may_delete(old_dir, old_dentry, is_dir);
++	error = may_delete(old_dir, old_dentry, is_dir, false);
+ 	if (error)
+ 		return error;
+ 
+ 	if (!target) {
+-		error = may_create(new_dir, new_dentry);
++		error = may_create(new_dir, new_dentry, is_dir);
+ 	} else {
+ 		new_is_dir = d_is_dir(new_dentry);
+ 
+ 		if (!(flags & RENAME_EXCHANGE))
+-			error = may_delete(new_dir, new_dentry, is_dir);
++			error = may_delete(new_dir, new_dentry, is_dir, true);
+ 		else
+-			error = may_delete(new_dir, new_dentry, new_is_dir);
++			error = may_delete(new_dir, new_dentry, new_is_dir, true);
+ 	}
+ 	if (error)
+ 		return error;
+@@ -4465,7 +4472,7 @@ SYSCALL_DEFINE2(rename, const char __user *, oldname, const char __user *, newna
+ 
+ int vfs_whiteout(struct inode *dir, struct dentry *dentry)
+ {
+-	int error = may_create(dir, dentry);
++	int error = may_create(dir, dentry, false);
+ 	if (error)
+ 		return error;
+ 
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 4efa435..d6e2330 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -82,6 +82,8 @@ typedef void (dax_iodone_t)(struct buffer_head *bh_map, int uptodate);
+ #define MAY_CHDIR		0x00000040
+ /* called from RCU mode, don't block */
+ #define MAY_NOT_BLOCK		0x00000080
++#define MAY_CREATE_FILE		0x00000100
++#define MAY_CREATE_DIR		0x00000200
+ 
+ /*
+  * flags in file.f_mode.  Note that FMODE_READ and FMODE_WRITE must correspond
 -- 
 2.4.3
