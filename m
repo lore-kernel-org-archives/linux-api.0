@@ -1,7 +1,7 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v8 08/41] richacl: Compute maximum file masks from an acl
-Date: Mon, 28 Sep 2015 00:08:59 +0200
-Message-ID: <1443391772-10171-9-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v8 12/41] vfs: Cache richacl in struct inode
+Date: Mon, 28 Sep 2015 00:09:03 +0200
+Message-ID: <1443391772-10171-13-git-send-email-agruenba@redhat.com>
 References: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
@@ -9,200 +9,247 @@ Sender: linux-kernel-owner@vger.kernel.org
 To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Compute upper bound owner, group, and other file masks with as few
-permissions as possible without denying any permissions that the NFSv4
-acl in a richacl grants.
-
-This algorithm is used when a file inherits an acl at create time and
-when an acl is set via a mechanism that does not provide file masks
-(such as setting an acl via nfsd).  When user-space sets an acl via
-setxattr, the extended attribute already includes the file masks.
-
-Setting an acl also sets the file mode permission bits: they are
-determined by the file masks; see richacl_masks_to_mode().
+Cache richacls in struct inode so that this doesn't have to be done
+individually in each filesystem.  This is similar to POSIX ACLs.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
-Reviewed-by: J. Bruce Fields <bfields@redhat.com>
 ---
- fs/richacl_base.c       | 157 ++++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/richacl.h |   1 +
- 2 files changed, 158 insertions(+)
+ fs/inode.c              | 11 ++++++--
+ fs/posix_acl.c          |  2 +-
+ fs/richacl_base.c       |  4 +--
+ fs/richacl_inode.c      | 75 +++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/fs.h      |  6 +++-
+ include/linux/richacl.h | 15 ++++++----
+ 6 files changed, 101 insertions(+), 12 deletions(-)
 
+diff --git a/fs/inode.c b/fs/inode.c
+index 2a387f4..8462ddb 100644
+--- a/fs/inode.c
++++ b/fs/inode.c
+@@ -174,8 +174,11 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
+ 	inode->i_private = NULL;
+ 	inode->i_mapping = mapping;
+ 	INIT_HLIST_HEAD(&inode->i_dentry);	/* buggered by rcu freeing */
+-#ifdef CONFIG_FS_POSIX_ACL
+-	inode->i_acl = inode->i_default_acl = ACL_NOT_CACHED;
++#if defined(CONFIG_FS_POSIX_ACL) || defined(CONFIG_FS_RICHACL)
++	inode->i_acl = ACL_NOT_CACHED;
++# if defined(CONFIG_FS_POSIX_ACL)
++	inode->i_default_acl = ACL_NOT_CACHED;
++# endif
+ #endif
+ 
+ #ifdef CONFIG_FSNOTIFY
+@@ -231,11 +234,13 @@ void __destroy_inode(struct inode *inode)
+ 		atomic_long_dec(&inode->i_sb->s_remove_count);
+ 	}
+ 
+-#ifdef CONFIG_FS_POSIX_ACL
++#if defined(CONFIG_FS_POSIX_ACL) || defined(CONFIG_FS_RICHACL)
+ 	if (inode->i_acl && inode->i_acl != ACL_NOT_CACHED)
+ 		put_base_acl(inode->i_acl);
++# if defined(CONFIG_FS_POSIX_ACL)
+ 	if (inode->i_default_acl && inode->i_default_acl != ACL_NOT_CACHED)
+ 		put_base_acl(inode->i_default_acl);
++# endif
+ #endif
+ 	this_cpu_dec(nr_inodes);
+ }
+diff --git a/fs/posix_acl.c b/fs/posix_acl.c
+index b3b2265..1d766a5 100644
+--- a/fs/posix_acl.c
++++ b/fs/posix_acl.c
+@@ -38,7 +38,7 @@ struct posix_acl *get_cached_acl(struct inode *inode, int type)
+ {
+ 	struct posix_acl **p = acl_by_type(inode, type);
+ 	struct posix_acl *acl = ACCESS_ONCE(*p);
+-	if (acl) {
++	if (acl && IS_POSIXACL(inode)) {
+ 		spin_lock(&inode->i_lock);
+ 		acl = *p;
+ 		if (acl != ACL_NOT_CACHED)
 diff --git a/fs/richacl_base.c b/fs/richacl_base.c
-index 063dbe4..fc544f7 100644
+index 6c69234..3163152 100644
 --- a/fs/richacl_base.c
 +++ b/fs/richacl_base.c
-@@ -182,3 +182,160 @@ richacl_want_to_mask(unsigned int want)
- 	return mask;
+@@ -33,7 +33,7 @@ richacl_alloc(int count, gfp_t gfp)
+ 	struct richacl *acl = kzalloc(size, gfp);
+ 
+ 	if (acl) {
+-		atomic_set(&acl->a_refcount, 1);
++		atomic_set(&acl->a_base.ba_refcount, 1);
+ 		acl->a_count = count;
+ 	}
+ 	return acl;
+@@ -52,7 +52,7 @@ richacl_clone(const struct richacl *acl, gfp_t gfp)
+ 
+ 	if (dup) {
+ 		memcpy(dup, acl, size);
+-		atomic_set(&dup->a_refcount, 1);
++		atomic_set(&dup->a_base.ba_refcount, 1);
+ 	}
+ 	return dup;
  }
- EXPORT_SYMBOL_GPL(richacl_want_to_mask);
-+
-+/*
-+ * Note: functions like richacl_allowed_to_who(), richacl_group_class_allowed(),
-+ * and richacl_compute_max_masks() iterate through the entire acl in reverse
-+ * order as an optimization.
-+ *
-+ * In the standard algorithm, aces are considered in forward order.  When a
-+ * process matches an ace, the permissions in the ace are either allowed or
-+ * denied depending on the ace type.  Once a permission has been allowed or
-+ * denied, it is no longer considered in further aces.
-+ *
-+ * By iterating through the acl in reverse order, we can compute the same
-+ * result without having to keep track of which permissions have been allowed
-+ * and denied already.
-+ */
-+
-+/**
-+ * richacl_allowed_to_who  -  permissions allowed to a specific who value
-+ *
-+ * Compute the maximum mask values allowed to a specific who value, taking
-+ * everyone@ aces into account.
-+ */
-+static unsigned int richacl_allowed_to_who(struct richacl *acl,
-+					   struct richace *who)
+diff --git a/fs/richacl_inode.c b/fs/richacl_inode.c
+index 54e899d..dcf8fb1 100644
+--- a/fs/richacl_inode.c
++++ b/fs/richacl_inode.c
+@@ -20,6 +20,81 @@
+ #include <linux/slab.h>
+ #include <linux/richacl.h>
+ 
++struct richacl *get_cached_richacl(struct inode *inode)
 +{
-+	struct richace *ace;
-+	unsigned int allowed = 0;
++	struct richacl *acl;
 +
-+	richacl_for_each_entry_reverse(ace, acl) {
-+		if (richace_is_inherit_only(ace))
-+			continue;
-+		if (richace_is_same_identifier(ace, who) ||
-+		    richace_is_everyone(ace)) {
-+			if (richace_is_allow(ace))
-+				allowed |= ace->e_mask;
-+			else if (richace_is_deny(ace))
-+				allowed &= ~ace->e_mask;
-+		}
++	acl = (struct richacl *)ACCESS_ONCE(inode->i_acl);
++	if (acl && IS_RICHACL(inode)) {
++		spin_lock(&inode->i_lock);
++		acl = (struct richacl *)inode->i_acl;
++		if (acl != ACL_NOT_CACHED)
++			acl = richacl_get(acl);
++		spin_unlock(&inode->i_lock);
 +	}
-+	return allowed;
++	return acl;
 +}
++EXPORT_SYMBOL_GPL(get_cached_richacl);
 +
-+/**
-+ * richacl_group_class_allowed  -  maximum permissions of the group class
-+ *
-+ * Compute the maximum mask values allowed to a process in the group class
-+ * (i.e., a process which is not the owner but is in the owning group or
-+ * matches a user or group acl entry).  This includes permissions granted or
-+ * denied by everyone@ aces.
-+ *
-+ * See richacl_compute_max_masks().
-+ */
-+static unsigned int richacl_group_class_allowed(struct richacl *acl)
++struct richacl *get_cached_richacl_rcu(struct inode *inode)
 +{
-+	struct richace *ace;
-+	unsigned int everyone_allowed = 0, group_class_allowed = 0;
-+	int had_group_ace = 0;
-+
-+	richacl_for_each_entry_reverse(ace, acl) {
-+		if (richace_is_inherit_only(ace) ||
-+		    richace_is_owner(ace))
-+			continue;
-+
-+		if (richace_is_everyone(ace)) {
-+			if (richace_is_allow(ace))
-+				everyone_allowed |= ace->e_mask;
-+			else if (richace_is_deny(ace))
-+				everyone_allowed &= ~ace->e_mask;
-+		} else {
-+			group_class_allowed |=
-+				richacl_allowed_to_who(acl, ace);
-+
-+			if (richace_is_group(ace))
-+				had_group_ace = 1;
-+		}
-+	}
-+	/*
-+	 * If the acl doesn't contain any group@ aces, richacl_allowed_to_who()
-+	 * wasn't called for the owning group.  We could make that call now, but
-+	 * we already know the result (everyone_allowed).
-+	 */
-+	if (!had_group_ace)
-+		group_class_allowed |= everyone_allowed;
-+	return group_class_allowed;
++	return (struct richacl *)rcu_dereference(inode->i_acl);
 +}
++EXPORT_SYMBOL_GPL(get_cached_richacl_rcu);
 +
-+/**
-+ * richacl_compute_max_masks  -  compute upper bound masks
-+ *
-+ * Computes upper bound owner, group, and other masks so that none of the
-+ * permissions allowed by the acl are disabled.
-+ *
-+ * We don't make assumptions about who the owner is so that the owner can
-+ * change with no effect on the file masks or file mode permission bits; this
-+ * means that we must assume that all entries can match the owner.
-+ */
-+void richacl_compute_max_masks(struct richacl *acl)
++void set_cached_richacl(struct inode *inode, struct richacl *acl)
 +{
-+	unsigned int gmask = ~0;
-+	struct richace *ace;
++	struct base_acl *old = NULL;
++
++	spin_lock(&inode->i_lock);
++	old = inode->i_acl;
++	rcu_assign_pointer(inode->i_acl, &richacl_get(acl)->a_base);
++	spin_unlock(&inode->i_lock);
++	if (old != ACL_NOT_CACHED)
++		put_base_acl(old);
++}
++EXPORT_SYMBOL_GPL(set_cached_richacl);
++
++void forget_cached_richacl(struct inode *inode)
++{
++	struct base_acl *old = NULL;
++
++	spin_lock(&inode->i_lock);
++	old = inode->i_acl;
++	inode->i_acl = ACL_NOT_CACHED;
++	spin_unlock(&inode->i_lock);
++	if (old != ACL_NOT_CACHED)
++		put_base_acl(old);
++}
++EXPORT_SYMBOL_GPL(forget_cached_richacl);
++
++struct richacl *get_richacl(struct inode *inode)
++{
++	struct richacl *acl;
++
++	acl = get_cached_richacl(inode);
++	if (acl != ACL_NOT_CACHED)
++		return acl;
++
++	if (!IS_RICHACL(inode))
++		return NULL;
 +
 +	/*
-+	 * @gmask contains all permissions which the group class is ever
-+	 * allowed.  We use it to avoid adding permissions to the group mask
-+	 * from everyone@ allow aces which the group class is always denied
-+	 * through other aces.  For example, the following acl would otherwise
-+	 * result in a group mask of rw:
++	 * A filesystem can force a ACL callback by just never filling the
++	 * ACL cache. But normally you'd fill the cache either at inode
++	 * instantiation time, or on the first ->get_richacl call.
 +	 *
-+	 *	group@:w::deny
-+	 *	everyone@:rw::allow
-+	 *
-+	 * Avoid computing @gmask for acls which do not include any group class
-+	 * deny aces: in such acls, the group class is never denied any
-+	 * permissions from everyone@ allow aces, and the group class cannot
-+	 * have fewer permissions than the other class.
++	 * If the filesystem doesn't have a get_richacl() function at all,
++	 * we'll just create the negative cache entry.
 +	 */
-+
-+restart:
-+	acl->a_owner_mask = 0;
-+	acl->a_group_mask = 0;
-+	acl->a_other_mask = 0;
-+
-+	richacl_for_each_entry_reverse(ace, acl) {
-+		if (richace_is_inherit_only(ace))
-+			continue;
-+
-+		if (richace_is_owner(ace)) {
-+			if (richace_is_allow(ace))
-+				acl->a_owner_mask |= ace->e_mask;
-+			else if (richace_is_deny(ace))
-+				acl->a_owner_mask &= ~ace->e_mask;
-+		} else if (richace_is_everyone(ace)) {
-+			if (richace_is_allow(ace)) {
-+				acl->a_owner_mask |= ace->e_mask;
-+				acl->a_group_mask |= ace->e_mask & gmask;
-+				acl->a_other_mask |= ace->e_mask;
-+			} else if (richace_is_deny(ace)) {
-+				acl->a_owner_mask &= ~ace->e_mask;
-+				acl->a_group_mask &= ~ace->e_mask;
-+				acl->a_other_mask &= ~ace->e_mask;
-+			}
-+		} else {
-+			if (richace_is_allow(ace)) {
-+				acl->a_owner_mask |= ace->e_mask & gmask;
-+				acl->a_group_mask |= ace->e_mask & gmask;
-+			} else if (richace_is_deny(ace) && gmask == ~0) {
-+				gmask = richacl_group_class_allowed(acl);
-+				if (likely(gmask != ~0))
-+					/* should always be true */
-+					goto restart;
-+			}
-+		}
++	if (!inode->i_op->get_richacl) {
++		set_cached_richacl(inode, NULL);
++		return NULL;
 +	}
-+
-+	acl->a_flags &= ~(RICHACL_WRITE_THROUGH | RICHACL_MASKED);
++	return inode->i_op->get_richacl(inode);
 +}
-+EXPORT_SYMBOL_GPL(richacl_compute_max_masks);
++EXPORT_SYMBOL_GPL(get_richacl);
++
+ /**
+  * richacl_permission  -  richacl permission check algorithm
+  * @inode:	inode to check
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 3c22c92..45ff805 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -583,6 +583,7 @@ struct base_acl {
+ 	};
+ };
+ struct posix_acl;
++struct richacl;
+ #define ACL_NOT_CACHED ((void *)(-1))
+ 
+ #define IOP_FASTPERM	0x0001
+@@ -601,9 +602,11 @@ struct inode {
+ 	kgid_t			i_gid;
+ 	unsigned int		i_flags;
+ 
+-#if defined(CONFIG_FS_POSIX_ACL)
++#if defined(CONFIG_FS_POSIX_ACL) || defined(CONFIG_FS_RICHACL)
+ 	struct base_acl		*i_acl;
++# if defined(CONFIG_FS_POSIX_ACL)
+ 	struct base_acl		*i_default_acl;
++# endif
+ #endif
+ 
+ 	const struct inode_operations	*i_op;
+@@ -1662,6 +1665,7 @@ struct inode_operations {
+ 	const char * (*follow_link) (struct dentry *, void **);
+ 	int (*permission) (struct inode *, int);
+ 	struct posix_acl * (*get_acl)(struct inode *, int);
++	struct richacl * (*get_richacl)(struct inode *);
+ 
+ 	int (*readlink) (struct dentry *, char __user *,int);
+ 	void (*put_link) (struct inode *, void *);
 diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-index 9c8f298..e81144a 100644
+index 61836f1..d4a576c 100644
 --- a/include/linux/richacl.h
 +++ b/include/linux/richacl.h
-@@ -297,5 +297,6 @@ extern void richace_copy(struct richace *, const struct richace *);
- extern int richacl_masks_to_mode(const struct richacl *);
- extern unsigned int richacl_mode_to_mask(mode_t);
- extern unsigned int richacl_want_to_mask(unsigned int);
-+extern void richacl_compute_max_masks(struct richacl *);
+@@ -33,7 +33,7 @@ struct richace {
+ };
  
- #endif /* __RICHACL_H */
+ struct richacl {
+-	atomic_t	a_refcount;
++	struct base_acl	a_base;
+ 	unsigned int	a_owner_mask;
+ 	unsigned int	a_group_mask;
+ 	unsigned int	a_other_mask;
+@@ -175,8 +175,7 @@ struct richacl {
+ static inline struct richacl *
+ richacl_get(struct richacl *acl)
+ {
+-	if (acl)
+-		atomic_inc(&acl->a_base.ba_refcount);
++	get_base_acl(&acl->a_base);
+ 	return acl;
+ }
+ 
+@@ -186,10 +185,16 @@ richacl_get(struct richacl *acl)
+ static inline void
+ richacl_put(struct richacl *acl)
+ {
+-	if (acl && atomic_dec_and_test(&acl->a_refcount))
+-		kfree(acl);
++	BUILD_BUG_ON(offsetof(struct richacl, a_base) != 0);
++	put_base_acl(&acl->a_base);
+ }
+ 
++extern struct richacl *get_cached_richacl(struct inode *);
++extern struct richacl *get_cached_richacl_rcu(struct inode *);
++extern void set_cached_richacl(struct inode *, struct richacl *);
++extern void forget_cached_richacl(struct inode *);
++extern struct richacl *get_richacl(struct inode *);
++
+ /**
+  * richace_is_owner  -  check if @ace is an OWNER@ entry
+  */
 -- 
 2.4.3
