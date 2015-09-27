@@ -1,7 +1,7 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v8 40/41] nfs: Add support for the v4.1 dacl attribute
-Date: Mon, 28 Sep 2015 00:09:31 +0200
-Message-ID: <1443391772-10171-41-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v8 34/41] ext4: Don't allow unmapped identifiers in richacls
+Date: Mon, 28 Sep 2015 00:09:25 +0200
+Message-ID: <1443391772-10171-35-git-send-email-agruenba@redhat.com>
 References: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
@@ -9,139 +9,32 @@ Sender: linux-kernel-owner@vger.kernel.org
 To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The dacl attribute includes Automatic Inheritance flags not supported by
-the acl attribute.  it is only supported in NFS version 4.1 and higher.
-On systems where NFS version 4.0 is still the default, an additional
-mount option is needed:
-
-    mount -t nfs4 -o vers=4.1 [...]
+Don't allow acls which contain unmapped identifiers: they are meaningful
+for remote file systems only.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 ---
- fs/nfs/nfs4proc.c       |  2 +-
- fs/nfs/nfs4xdr.c        | 55 ++++++++++++++++++++++++++++++++++++++++++-------
- include/linux/nfs_xdr.h |  2 +-
- 3 files changed, 50 insertions(+), 9 deletions(-)
+ fs/ext4/richacl.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/fs/nfs/nfs4proc.c b/fs/nfs/nfs4proc.c
-index 3888c70..3cd2402 100644
---- a/fs/nfs/nfs4proc.c
-+++ b/fs/nfs/nfs4proc.c
-@@ -4545,7 +4545,7 @@ static struct richacl *__nfs4_get_acl_uncached(struct inode *inode)
- 	struct nfs_server *server = NFS_SERVER(inode);
- 	struct page *pages[DIV_ROUND_UP(NFS4ACL_SIZE_MAX, PAGE_SIZE)] = {};
- 	struct nfs_getaclargs args = {
--		.fh = NFS_FH(inode),
-+		.inode = inode,
- 		.acl_pages = pages,
- 		.acl_len = ARRAY_SIZE(pages) * PAGE_SIZE,
- 	};
-diff --git a/fs/nfs/nfs4xdr.c b/fs/nfs/nfs4xdr.c
-index f2507d7..d855c6b 100644
---- a/fs/nfs/nfs4xdr.c
-+++ b/fs/nfs/nfs4xdr.c
-@@ -1661,9 +1661,16 @@ encode_setacl(struct xdr_stream *xdr, struct nfs_setaclargs *arg, struct compoun
- 	encode_nfs4_stateid(xdr, &zero_stateid);
+diff --git a/fs/ext4/richacl.c b/fs/ext4/richacl.c
+index 6758def..ca6e0cb 100644
+--- a/fs/ext4/richacl.c
++++ b/fs/ext4/richacl.c
+@@ -68,8 +68,13 @@ ext4_set_richacl(handle_t *handle, struct inode *inode, struct richacl *acl)
+ 	int retval;
  
- 	/* Encode attribute bitmap. */
--	p = reserve_space(xdr, 2*4);
--	*p++ = cpu_to_be32(1);
--	*p = cpu_to_be32(FATTR4_WORD0_ACL);
-+	if (arg->server->attr_bitmask[1] & FATTR4_WORD1_DACL) {
-+		p = reserve_space(xdr, 3*4);
-+		*p++ = cpu_to_be32(2);
-+		*p++ = 0;
-+		*p = cpu_to_be32(FATTR4_WORD1_DACL);
-+	} else {
-+		p = reserve_space(xdr, 2*4);
-+		*p++ = cpu_to_be32(1);
-+		*p = cpu_to_be32(FATTR4_WORD0_ACL);
-+	}
+ 	if (acl) {
+-		mode_t mode = inode->i_mode;
++		mode_t mode;
  
- 	attrlen_offset = xdr->buf->len;
- 	xdr_reserve_space(xdr, 4);  /* to be backfilled later */
-@@ -2498,9 +2505,12 @@ static void nfs4_xdr_enc_getacl(struct rpc_rqst *req, struct xdr_stream *xdr,
- 
- 	encode_compound_hdr(xdr, req, &hdr);
- 	encode_sequence(xdr, &args->seq_args, &hdr);
--	encode_putfh(xdr, args->fh, &hdr);
-+	encode_putfh(xdr, NFS_FH(args->inode), &hdr);
- 	replen = hdr.replen + op_decode_hdr_maxsz + 1;
--	encode_getattr_two(xdr, FATTR4_WORD0_ACL, FATTR4_WORD1_MODE, &hdr);
-+	if (NFS_SERVER(args->inode)->attr_bitmask[1] & FATTR4_WORD1_DACL)
-+		encode_getattr_two(xdr, 0, FATTR4_WORD1_MODE | FATTR4_WORD1_DACL, &hdr);
-+	else
-+		encode_getattr_two(xdr, FATTR4_WORD0_ACL, FATTR4_WORD1_MODE, &hdr);
- 
- 	xdr_inline_pages(&req->rq_rcv_buf, replen << 2,
- 		args->acl_pages, 0, args->acl_len);
-@@ -5408,14 +5418,28 @@ static int decode_getacl(struct xdr_stream *xdr, struct rpc_rqst *req,
- 
- 	if (unlikely(bitmap[0] & (FATTR4_WORD0_ACL - 1U)))
- 		return -EIO;
--	if (likely(bitmap[0] & FATTR4_WORD0_ACL)) {
++		/* Don't allow acls with unmapped identifiers. */
++		if (richacl_has_unmapped_identifiers(acl))
++			return -EINVAL;
 +
-+	if (bitmap[0] & FATTR4_WORD0_ACL) {
-+		struct richace *ace;
-+
-+		if (bitmap[1] & FATTR4_WORD1_DACL)
-+			return -EIO;
-+
- 		acl = decode_acl_entries(xdr, res->server);
- 		status = PTR_ERR(acl);
- 		if (IS_ERR(acl))
- 			goto out;
-+
-+		status = -EIO;
-+		richacl_for_each_entry(ace, acl) {
-+			if (ace->e_flags & RICHACE_INHERITED_ACE)
-+				goto out;
-+		}
- 		bitmap[0] &= ~FATTR4_WORD0_ACL;
--	} else
-+	} else if (!(bitmap[1] & FATTR4_WORD1_DACL)) {
- 		status = -EOPNOTSUPP;
-+		goto out;
-+	}
- 
- 	status = -EIO;
- 	if (unlikely(bitmap[0]))
-@@ -5424,6 +5448,23 @@ static int decode_getacl(struct xdr_stream *xdr, struct rpc_rqst *req,
- 	status = decode_attr_mode(xdr, bitmap, &res->mode);
- 	if (status < 0)
- 		goto out;
-+	if (bitmap[1] & FATTR4_WORD1_DACL) {
-+		unsigned int flags;
-+		__be32 *p;
-+
-+		p = xdr_inline_decode(xdr, 4);
-+		status = -EIO;
-+		if (unlikely(!p))
-+			goto out;
-+		flags = be32_to_cpup(p);
-+
-+		acl = decode_acl_entries(xdr, res->server);
-+		status = PTR_ERR(acl);
-+		if (IS_ERR(acl))
-+			goto out;
-+		acl->a_flags = flags;
-+		bitmap[1] &= ~FATTR4_WORD1_DACL;
-+	}
- 	status = 0;
- 
- out:
-diff --git a/include/linux/nfs_xdr.h b/include/linux/nfs_xdr.h
-index 337c341..9c2a078 100644
---- a/include/linux/nfs_xdr.h
-+++ b/include/linux/nfs_xdr.h
-@@ -695,7 +695,7 @@ struct nfs_setaclres {
- 
- struct nfs_getaclargs {
- 	struct nfs4_sequence_args 	seq_args;
--	struct nfs_fh *			fh;
-+	struct inode *			inode;
- 	size_t				acl_len;
- 	struct page **			acl_pages;
- };
++		mode = inode->i_mode;
+ 		if (richacl_equiv_mode(acl, &mode) == 0) {
+ 			inode->i_mode = mode;
+ 			ext4_mark_inode_dirty(handle, inode);
 -- 
 2.4.3
