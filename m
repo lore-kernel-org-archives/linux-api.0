@@ -1,179 +1,273 @@
 From: Chris Metcalf <cmetcalf@ezchip.com>
-Subject: [PATCH v7 00/11] support "task_isolated" mode for nohz_full
-Date: Mon, 28 Sep 2015 11:17:15 -0400
-Message-ID: <1443453446-7827-1-git-send-email-cmetcalf@ezchip.com>
-References: <1440532555-15492-1-git-send-email-cmetcalf@ezchip.com>
+Subject: [PATCH v7 02/11] task_isolation: add initial support
+Date: Mon, 28 Sep 2015 11:17:17 -0400
+Message-ID: <1443453446-7827-3-git-send-email-cmetcalf@ezchip.com>
+References: <1443453446-7827-1-git-send-email-cmetcalf@ezchip.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1440532555-15492-1-git-send-email-cmetcalf@ezchip.com>
+In-Reply-To: <1443453446-7827-1-git-send-email-cmetcalf@ezchip.com>
 Sender: linux-doc-owner@vger.kernel.org
 To: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 Cc: Chris Metcalf <cmetcalf@ezchip.com>
 List-Id: linux-api@vger.kernel.org
 
-The cover email for the patch series is getting a little unwieldy
-so I will provide a terser summary here, and just update the
-list of changes from version to version.  Please see the previous
-versions linked by the In-Reply-To for more detailed comments
-about changes in earlier versions of the patch series.
+The existing nohz_full mode is designed as a "soft" isolation mode
+that makes tradeoffs to minimize userspace interruptions while
+still attempting to avoid overheads in the kernel entry/exit path,
+to provide 100% kernel semantics, etc.
 
-v7:
-  The main change in this version is a change in where we call
-  task_isolation_enter().  The arm64 code only invokes the
-  context_tracking code right at kernel entry, and right at kernel
-  exit, and the exit point is too late for task isolation; one of my
-  test cases, when run on arm64, showed that a signal delivered while
-  task isolation is waiting for the timer interrupt to quiesce was not
-  properly handled before returning to userspace.  The tilegx code
-  properly handled that case because it ran user_exit() in the
-  work-pending loop.  But since arm64 calls user_exit() later, it was
-  too late to go back and handle the signal.  I decided to make the
-  task isolation work explicit in the "work" loop done on return to
-  userspace, and although I could have done this by hacking up the
-  arm64 assembly code for this purpose, I decided to follow the x86
-  approach and use the prepare_exit_to_usermode() model where
-  architectures handles work looping in C code.  I added that support
-  to arm64 and tile as a pre-requisite change, then modified the loop
-  in C to call task isolation appropriately.  This both makes the
-  slowpath return-to-user code more maintainable for arm64 and tile
-  going forward, and also avoids some of the subtlety where the
-  context tracking code was being asked to invoke task isolation at
-  user_enter() time.
+However, some applications require a "hard" commitment from the
+kernel to avoid interruptions, in particular userspace device
+driver style applications, such as high-speed networking code.
 
-  As a result of this change, I have moved all the
-  architecture-specific changes to individual patches: two patches to
-  switch arm64 and tile to the prepare_exit_to_usermode() loop, and
-  three patches (one each for x86, arm64, and tile) to add the
-  necessary call to task_isolation(), plus changes to check at syscall
-  entry for strict mode.
+This change introduces a framework to allow applications
+to elect to have the "hard" semantics as needed, specifying
+prctl(PR_SET_TASK_ISOLATION, PR_TASK_ISOLATION_ENABLE) to do so.
+Subsequent commits will add additional flags and additional
+semantics.
 
-  In addition, since arm64 doesn't use exception_enter(), I added an
-  explicit call to task_isolation_exception() in do_mem_abort() so
-  that page faults would be properly flagged in strict mode.
+The kernel must be built with the new TASK_ISOLATION Kconfig flag
+to enable this mode, and the kernel booted with an appropriate
+nohz_full=CPULIST boot argument.  The "task_isolation" state is then
+indicated by setting a new task struct field, task_isolation_flag,
+to the value passed by prctl().  When the _ENABLE bit is set for a
+task, and it is returning to userspace on a nohz_full core, it calls
+the new task_isolation_enter() routine to take additional actions
+to help the task avoid being interrupted in the future.
 
-  I also added an RCU_LOCKDEP_WARN() at Andy Lutomirski's suggestion.
+Initially, there are only three actions taken.  First, the
+task calls lru_add_drain() to prevent being interrupted by a
+subsequent lru_add_drain_all() call on another core.  Then, it calls
+quiet_vmstat() to quieten the vmstat worker to avoid a follow-on
+interrupt.  Finally, the code checks for pending timer interrupts
+and quiesces until they are no longer pending.  As a result, sys
+calls (and page faults, etc.) can be inordinately slow.  However,
+this quiescing guarantees that no unexpected interrupts will occur,
+even if the application intentionally calls into the kernel.
 
-  And, the patch series is rebased to v4.3-rc1.
+The task_isolation_enter() routine must be called just before the
+hard return to userspace, so it is appropriately placed in the
+prepare_exit_to_usermode() routine for an individual architecture
+or some comparable location.  Separate patches that follow
+provide these changes for x86, arm64, and tile.
 
-v6:
-  restructured to be a "task_isolation" mode not a "cpu_isolated"
-  mode (Frederic)
-
-v5:
-  rebased on kernel v4.2-rc3
-  converted to use CONFIG_CPU_ISOLATED and separate .c and .h files
-  incorporates Christoph Lameter's quiet_vmstat() call
-
-v4:
-  rebased on kernel v4.2-rc1
-  added support for detecting CPU_ISOLATED_STRICT syscalls on arm64
-
-v3:
-  remove dependency on cpu_idle subsystem (Thomas Gleixner)
-  use READ_ONCE instead of ACCESS_ONCE in tick_nohz_cpu_isolated_enter
-  use seconds for console messages instead of jiffies (Thomas Gleixner)
-  updated commit description for patch 5/5
-
-v2:
-  rename "dataplane" to "cpu_isolated"
-  drop ksoftirqd suppression changes (believed no longer needed)
-  merge previous "QUIESCE" functionality into baseline functionality
-  explicitly track syscalls and exceptions for "STRICT" functionality
-  allow configuring a signal to be delivered for STRICT mode failures
-  move debug tracking to irq_enter(), not irq_exit()
-
-General summary:
-
-The existing nohz_full mode does a nice job of suppressing extraneous
-kernel interrupts for cores that desire it.  However, there is a need
-for a more deterministic mode that rigorously disallows kernel
-interrupts, even at a higher cost in user/kernel transition time:
-for example, high-speed networking applications running userspace
-drivers that will drop packets if they are ever interrupted.
-
-These changes attempt to provide an initial draft of such a framework;
-the changes do not add any overhead to the usual non-nohz_full mode,
-and only very small overhead to the typical nohz_full mode.  The
-kernel must be built with CONFIG_TASK_ISOLATION to take advantage of
-this new mode.  A prctl() option (PR_SET_TASK_ISOLATION) is added to
-control whether processes have requested this stricter semantics, and
-within that prctl() option we provide a number of different bits for
-more precise control.  Additionally, we add a new command-line boot
-argument to facilitate debugging where unexpected interrupts are being
-delivered from.
-
-Code that is conceptually similar has been in use in Tilera's
-Multicore Development Environment since 2008, known as Zero-Overhead
-Linux, and has seen wide adoption by a range of customers.  This patch
-series represents the first serious attempt to upstream that
-functionality.  Although the current state of the kernel isn't quite
-ready to run with absolutely no kernel interrupts (for example,
-workqueues on task_isolation cores still remain to be dealt with), this
-patch series provides a way to make dynamic tradeoffs between avoiding
-kernel interrupts on the one hand, and making voluntary calls in and
-out of the kernel more expensive, for tasks that want it.
-
-The series (based currently on v4.3-rc1) is available at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/cmetcalf/linux-tile.git dataplane
-
-Note: I have not removed the commit to disable the 1Hz timer tick
-fallback that was nack'ed by PeterZ, pending a decision on that thread
-as to what to do (https://lkml.org/lkml/2015/5/8/555); also since if
-we remove the 1Hz tick, task_isolation threads will never re-enter
-userspace since a tick will always be pending.
-
-Chris Metcalf (10):
-  task_isolation: add initial support
-  task_isolation: support PR_TASK_ISOLATION_STRICT mode
-  task_isolation: provide strict mode configurable signal
-  task_isolation: add debug boot flag
-  nohz: task_isolation: allow tick to be fully disabled
-  arch/x86: enable task isolation functionality
-  arch/arm64: adopt prepare_exit_to_usermode() model from x86
-  arch/arm64: enable task isolation functionality
-  arch/tile: adopt prepare_exit_to_usermode() model from x86
-  arch/tile: enable task isolation functionality
-
-Christoph Lameter (1):
-  vmstat: provide a function to quiet down the diff processing
-
- Documentation/kernel-parameters.txt  |   7 ++
- arch/arm64/include/asm/thread_info.h |  18 +++--
- arch/arm64/kernel/entry.S            |   6 +-
- arch/arm64/kernel/ptrace.c           |  10 ++-
- arch/arm64/kernel/signal.c           |  36 +++++++---
- arch/arm64/mm/fault.c                |   8 +++
- arch/tile/include/asm/processor.h    |   2 +-
- arch/tile/include/asm/thread_info.h  |   8 ++-
- arch/tile/kernel/intvec_32.S         |  46 ++++---------
- arch/tile/kernel/intvec_64.S         |  49 +++++---------
- arch/tile/kernel/process.c           |  92 ++++++++++++++-----------
- arch/tile/kernel/ptrace.c            |   3 +
- arch/tile/mm/homecache.c             |   5 +-
- arch/x86/entry/common.c              |  45 ++++++++++---
- include/linux/context_tracking.h     |  11 ++-
- include/linux/isolation.h            |  42 ++++++++++++
- include/linux/sched.h                |   3 +
- include/linux/vmstat.h               |   2 +
- include/uapi/linux/prctl.h           |   8 +++
- init/Kconfig                         |  20 ++++++
- kernel/Makefile                      |   1 +
- kernel/context_tracking.c            |   9 ++-
- kernel/irq_work.c                    |   5 +-
- kernel/isolation.c                   | 127 +++++++++++++++++++++++++++++++++++
- kernel/sched/core.c                  |  21 ++++++
- kernel/signal.c                      |   5 ++
- kernel/smp.c                         |   4 ++
- kernel/softirq.c                     |   7 ++
- kernel/sys.c                         |   8 +++
- kernel/time/tick-sched.c             |   3 +-
- mm/vmstat.c                          |  14 ++++
- 31 files changed, 477 insertions(+), 148 deletions(-)
+Signed-off-by: Chris Metcalf <cmetcalf@ezchip.com>
+---
+ include/linux/isolation.h  | 24 +++++++++++++++
+ include/linux/sched.h      |  3 ++
+ include/uapi/linux/prctl.h |  5 +++
+ init/Kconfig               | 20 ++++++++++++
+ kernel/Makefile            |  1 +
+ kernel/isolation.c         | 77 ++++++++++++++++++++++++++++++++++++++++++++++
+ kernel/sys.c               |  8 +++++
+ 7 files changed, 138 insertions(+)
  create mode 100644 include/linux/isolation.h
  create mode 100644 kernel/isolation.c
 
+diff --git a/include/linux/isolation.h b/include/linux/isolation.h
+new file mode 100644
+index 000000000000..fd04011b1c1e
+--- /dev/null
++++ b/include/linux/isolation.h
+@@ -0,0 +1,24 @@
++/*
++ * Task isolation related global functions
++ */
++#ifndef _LINUX_ISOLATION_H
++#define _LINUX_ISOLATION_H
++
++#include <linux/tick.h>
++#include <linux/prctl.h>
++
++#ifdef CONFIG_TASK_ISOLATION
++static inline bool task_isolation_enabled(void)
++{
++	return tick_nohz_full_cpu(smp_processor_id()) &&
++		(current->task_isolation_flags & PR_TASK_ISOLATION_ENABLE);
++}
++
++extern void task_isolation_enter(void);
++extern void task_isolation_wait(void);
++#else
++static inline bool task_isolation_enabled(void) { return false; }
++static inline void task_isolation_enter(void) { }
++#endif
++
++#endif
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index a4ab9daa387c..bd2dc26948a6 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1800,6 +1800,9 @@ struct task_struct {
+ 	unsigned long	task_state_change;
+ #endif
+ 	int pagefault_disabled;
++#ifdef CONFIG_TASK_ISOLATION
++	unsigned int	task_isolation_flags;
++#endif
+ /* CPU-specific state of this task */
+ 	struct thread_struct thread;
+ /*
+diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
+index a8d0759a9e40..67224df4b559 100644
+--- a/include/uapi/linux/prctl.h
++++ b/include/uapi/linux/prctl.h
+@@ -197,4 +197,9 @@ struct prctl_mm_map {
+ # define PR_CAP_AMBIENT_LOWER		3
+ # define PR_CAP_AMBIENT_CLEAR_ALL	4
+ 
++/* Enable/disable or query task_isolation mode for NO_HZ_FULL kernels. */
++#define PR_SET_TASK_ISOLATION		48
++#define PR_GET_TASK_ISOLATION		49
++# define PR_TASK_ISOLATION_ENABLE	(1 << 0)
++
+ #endif /* _LINUX_PRCTL_H */
+diff --git a/init/Kconfig b/init/Kconfig
+index c24b6f767bf0..4ff7f052059a 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -787,6 +787,26 @@ config RCU_EXPEDITE_BOOT
+ 
+ endmenu # "RCU Subsystem"
+ 
++config TASK_ISOLATION
++	bool "Provide hard CPU isolation from the kernel on demand"
++	depends on NO_HZ_FULL
++	help
++	 Allow userspace processes to place themselves on nohz_full
++	 cores and run prctl(PR_SET_TASK_ISOLATION) to "isolate"
++	 themselves from the kernel.  On return to userspace,
++	 isolated tasks will first arrange that no future kernel
++	 activity will interrupt the task while the task is running
++	 in userspace.  This "hard" isolation from the kernel is
++	 required for userspace tasks that are running hard real-time
++	 tasks in userspace, such as a 10 Gbit network driver in userspace.
++
++	 Without this option, but with NO_HZ_FULL enabled, the kernel
++	 will make a best-faith, "soft" effort to shield a single userspace
++	 process from interrupts, but makes no guarantees.
++
++	 You should say "N" unless you are intending to run a
++	 high-performance userspace driver or similar task.
++
+ config BUILD_BIN2C
+ 	bool
+ 	default n
+diff --git a/kernel/Makefile b/kernel/Makefile
+index 53abf008ecb3..693a2ba35679 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -103,6 +103,7 @@ obj-$(CONFIG_TORTURE_TEST) += torture.o
+ obj-$(CONFIG_MEMBARRIER) += membarrier.o
+ 
+ obj-$(CONFIG_HAS_IOMEM) += memremap.o
++obj-$(CONFIG_TASK_ISOLATION) += isolation.o
+ 
+ $(obj)/configs.o: $(obj)/config_data.h
+ 
+diff --git a/kernel/isolation.c b/kernel/isolation.c
+new file mode 100644
+index 000000000000..6ace866c69f6
+--- /dev/null
++++ b/kernel/isolation.c
+@@ -0,0 +1,77 @@
++/*
++ *  linux/kernel/isolation.c
++ *
++ *  Implementation for task isolation.
++ *
++ *  Distributed under GPLv2.
++ */
++
++#include <linux/mm.h>
++#include <linux/swap.h>
++#include <linux/vmstat.h>
++#include <linux/isolation.h>
++#include "time/tick-sched.h"
++
++/*
++ * Rather than continuously polling for the next_event in the
++ * tick_cpu_device, architectures can provide a method to save power
++ * by sleeping until an interrupt arrives.
++ *
++ * Note that it must be guaranteed for a particular architecture
++ * that if next_event is not KTIME_MAX, then a timer interrupt will
++ * occur, otherwise the sleep may never awaken.
++ */
++void __weak task_isolation_wait(void)
++{
++	cpu_relax();
++}
++
++/*
++ * We normally return immediately to userspace.
++ *
++ * In task_isolation mode we wait until no more interrupts are
++ * pending.  Otherwise we nap with interrupts enabled and wait for the
++ * next interrupt to fire, then loop back and retry.
++ *
++ * Note that if you schedule two task_isolation processes on the same
++ * core, neither will ever leave the kernel, and one will have to be
++ * killed manually.  Otherwise in situations where another process is
++ * in the runqueue on this cpu, this task will just wait for that
++ * other task to go idle before returning to user space.
++ */
++void task_isolation_enter(void)
++{
++	struct clock_event_device *dev =
++		__this_cpu_read(tick_cpu_device.evtdev);
++	struct task_struct *task = current;
++	unsigned long start = jiffies;
++	bool warned = false;
++
++	if (WARN_ON(irqs_disabled()))
++		local_irq_enable();
++
++	/* Drain the pagevecs to avoid unnecessary IPI flushes later. */
++	lru_add_drain();
++
++	/* Quieten the vmstat worker so it won't interrupt us. */
++	quiet_vmstat();
++
++	while (READ_ONCE(dev->next_event.tv64) != KTIME_MAX) {
++		if (!warned && (jiffies - start) >= (5 * HZ)) {
++			pr_warn("%s/%d: cpu %d: task_isolation task blocked for %ld seconds\n",
++				task->comm, task->pid, smp_processor_id(),
++				(jiffies - start) / HZ);
++			warned = true;
++		}
++		cond_resched();
++		if (test_thread_flag(TIF_SIGPENDING))
++			break;
++		task_isolation_wait();
++	}
++	if (warned) {
++		pr_warn("%s/%d: cpu %d: task_isolation task unblocked after %ld seconds\n",
++			task->comm, task->pid, smp_processor_id(),
++			(jiffies - start) / HZ);
++		dump_stack();
++	}
++}
+diff --git a/kernel/sys.c b/kernel/sys.c
+index fa2f2f671a5c..a2c6eb1d4ad9 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -2266,6 +2266,14 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 	case PR_GET_FP_MODE:
+ 		error = GET_FP_MODE(me);
+ 		break;
++#ifdef CONFIG_TASK_ISOLATION
++	case PR_SET_TASK_ISOLATION:
++		me->task_isolation_flags = arg2;
++		break;
++	case PR_GET_TASK_ISOLATION:
++		error = me->task_isolation_flags;
++		break;
++#endif
+ 	default:
+ 		error = -EINVAL;
+ 		break;
 -- 
 2.1.2
 
