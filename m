@@ -1,95 +1,221 @@
-From: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v7 09/15] power: bq24257: Add SW-based approach for Power
- Good determination
-Date: Mon, 28 Sep 2015 18:02:41 +0200
-Message-ID: <20150928160241.GA3660@earth>
-References: <1443196460-26156-1-git-send-email-dannenberg@ti.com>
- <1443196460-26156-10-git-send-email-dannenberg@ti.com>
- <20150927202025.GA2051@earth>
- <20150928120412.GA12676@borg>
+From: "J. Bruce Fields" <bfields@fieldses.org>
+Subject: Re: [PATCH v8 10/41] richacl: Permission check algorithm
+Date: Mon, 28 Sep 2015 12:08:55 -0400
+Message-ID: <20150928160855.GD1358@fieldses.org>
+References: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
+ <1443391772-10171-11-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="opJtzjQTFsWo+cga"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150928120412.GA12676@borg>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-Cc: Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Laurentiu Palcu <laurentiu.palcu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Ramakrishna Pallala <ramakrishna.pallala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <1443391772-10171-11-git-send-email-agruenba@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andreas Gruenbacher <agruenba@redhat.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+On Mon, Sep 28, 2015 at 12:09:01AM +0200, Andreas Gruenbacher wrote:
+> A richacl roughly grants a requested access if the NFSv4 acl in the
+> richacl grants the requested permissions according to the NFSv4
+> permission check algorithm and the file mask that applies to the process
+> includes the requested permissions.
+> 
+> Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+> Reviewed-by: "J. Bruce Fields" <bfields@fieldses.org>
+> ---
+>  fs/Makefile             |   2 +-
+>  fs/richacl_inode.c      | 148 ++++++++++++++++++++++++++++++++++++++++++++++++
+>  include/linux/richacl.h |   3 +
+>  3 files changed, 152 insertions(+), 1 deletion(-)
+>  create mode 100644 fs/richacl_inode.c
+> 
+> diff --git a/fs/Makefile b/fs/Makefile
+> index fe3e9dd..ec665fd 100644
+> --- a/fs/Makefile
+> +++ b/fs/Makefile
+> @@ -49,7 +49,7 @@ obj-$(CONFIG_SYSCTL)		+= drop_caches.o
+>  
+>  obj-$(CONFIG_FHANDLE)		+= fhandle.o
+>  obj-$(CONFIG_FS_RICHACL)	+= richacl.o
+> -richacl-y			:= richacl_base.o
+> +richacl-y			:= richacl_base.o richacl_inode.o
+>  
+>  obj-y				+= quota/
+>  
+> diff --git a/fs/richacl_inode.c b/fs/richacl_inode.c
+> new file mode 100644
+> index 0000000..54e899d
+> --- /dev/null
+> +++ b/fs/richacl_inode.c
+> @@ -0,0 +1,148 @@
+> +/*
+> + * Copyright (C) 2010  Novell, Inc.
+> + * Copyright (C) 2015  Red Hat, Inc.
+> + * Written by Andreas Gruenbacher <agruen@kernel.org>
+> + *
+> + * This program is free software; you can redistribute it and/or modify it
+> + * under the terms of the GNU General Public License as published by the
+> + * Free Software Foundation; either version 2, or (at your option) any
+> + * later version.
+> + *
+> + * This program is distributed in the hope that it will be useful, but
+> + * WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+> + * General Public License for more details.
+> + */
+> +
+> +#include <linux/sched.h>
+> +#include <linux/module.h>
+> +#include <linux/fs.h>
+> +#include <linux/slab.h>
+> +#include <linux/richacl.h>
+> +
+> +/**
+> + * richacl_permission  -  richacl permission check algorithm
+> + * @inode:	inode to check
+> + * @acl:	rich acl of the inode
+> + * @want:	requested access (MAY_* flags)
+> + *
+> + * Checks if the current process is granted @mask flags in @acl.
+> + */
+> +int
+> +richacl_permission(struct inode *inode, const struct richacl *acl,
+> +		   int want)
+> +{
+> +	const struct richace *ace;
+> +	unsigned int mask = richacl_want_to_mask(want);
+> +	unsigned int requested = mask, denied = 0;
+> +	int in_owning_group = in_group_p(inode->i_gid);
+> +	int in_owner_or_group_class = in_owning_group;
+> +
+> +	/*
+> +	 * A process is
+> +	 *   - in the owner file class if it owns the file,
+> +	 *   - in the group file class if it is in the file's owning group or
+> +	 *     it matches any of the user or group entries, and
+> +	 *   - in the other file class otherwise.
+> +	 * The file class is only relevant for determining which file mask to
+> +	 * apply, which only happens for masked acls.
+> +	 */
+> +	if (acl->a_flags & RICHACL_MASKED) {
+> +		if ((acl->a_flags & RICHACL_WRITE_THROUGH) &&
+> +		    uid_eq(current_fsuid(), inode->i_uid)) {
+> +			denied = requested & ~acl->a_owner_mask;
+> +			goto out;
+> +		}
+> +	} else {
+> +		/*
+> +		 * When the acl is not masked, there is no need to determine if
+> +		 * the process is in the group class and we can break out
+> +		 * earlier of the loop below.
+> +		 */
+> +		in_owner_or_group_class = 1;
+> +	}
+> +
+> +	/*
+> +	 * Check if the acl grants the requested access and determine which
+> +	 * file class the process is in.
+> +	 */
+> +	richacl_for_each_entry(ace, acl) {
+> +		unsigned int ace_mask = ace->e_mask;
+> +
+> +		if (richace_is_inherit_only(ace))
+> +			continue;
+> +		if (richace_is_owner(ace)) {
+> +			if (!uid_eq(current_fsuid(), inode->i_uid))
+> +				continue;
+> +			goto entry_matches_owner;
+> +		} else if (richace_is_group(ace)) {
+> +			if (!in_owning_group)
+> +				continue;
+> +		} else if (richace_is_unix_user(ace)) {
+> +			if (!uid_eq(current_fsuid(), ace->e_id.uid))
+> +				continue;
+> +			goto entry_matches_owner;
+> +		} else if (richace_is_unix_group(ace)) {
+> +			if (!in_group_p(ace->e_id.gid))
+> +				continue;
+> +		} else
+> +			goto entry_matches_everyone;
+> +
+> +		/*
+> +		 * Apply the group file mask to entries other than owner@ and
+> +		 * everyone@ or user entries matching the owner.
 
---opJtzjQTFsWo+cga
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+The above also skips the following group_mask application on any unix
+group.  But that's OK, since a non-owner matching a unix group will be
+placed into the group class, so the RICHACL_MASKED clause after the loop
+below will apply the group mask.  That logic is a little subtle, but OK.
 
-Hi,
+--b.
 
-On Mon, Sep 28, 2015 at 07:04:12AM -0500, Andreas Dannenberg wrote:
-> On Sun, Sep 27, 2015 at 10:20:26PM +0200, Sebastian Reichel wrote:
-> > On Fri, Sep 25, 2015 at 10:54:14AM -0500, Andreas Dannenberg wrote:
-> > > @@ -651,15 +670,18 @@ static int bq24257_power_supply_init(struct bq2=
-4257_device *bq)
-> > >  	return PTR_ERR_OR_ZERO(bq->charger);
-> > >  }
-> > > =20
-> > > -static int bq24257_pg_gpio_probe(struct bq24257_device *bq)
-> > > +static void bq24257_pg_gpio_probe(struct bq24257_device *bq)
-> > >  {
-> > > -	bq->pg =3D devm_gpiod_get_index(bq->dev, BQ24257_PG_GPIO, 0, GPIOD_=
-IN);
-> > > +	bq->pg =3D devm_gpiod_get_optional(bq->dev, BQ24257_PG_GPIO, GPIOD_=
-IN);
-> > > +
-> > >  	if (IS_ERR(bq->pg)) {
-> > > -		dev_err(bq->dev, "could not probe PG pin\n");
-> > > -		return PTR_ERR(bq->pg);
-> > > +		dev_err(bq->dev, "error probing PG pin\n");
-> > > +		bq->pg =3D NULL;
-> > > +		return;
-> > >  	}
-> >=20
-> > You should handle -EPROBE_DEFER here.
->=20
-> Hi Sebastian. From having a quick look at the Kernel tree it seems like
-> this error shouldn't get exposed to the user (which it doesn't since it
-> would get zeroe'd out) and the error itself suggests that I should
-> "retry" which none of the things I looked at in the Kernel through "git
-> grep" seemed to do. So before making any assumptions I wanted to see if
-> I'm missing something or you could give me any pointers how to proceed.
-
-If you return -EPROBE_DEFER from your driver's probe function, the
-driver probe will fail. In opposit to other error codes it will be
-marked for retry at a later point, though. You will get
-EPROBE_DEFER, if you try to access a GPIO from a not-yet initialized
-GPIO controller (e.g. if you load the charger driver before the
-gpio driver).
-
-Correct handling is simple: Just forward it, making sure, that all
-non-devm probed resources are correctly free'd.
-
--- Sebastian
-
---opJtzjQTFsWo+cga
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBCgAGBQJWCWSeAAoJENju1/PIO/qa/4UP/2f2L1oagbaEL9taSdzarAlA
-jYPaYQbSezevnLTVH2hsVWvyLYi31Vd7/QaiP+rcSFD6B7K0bNg78iM0k5IOb+5Q
-OeSXvwxngUvlyLtxxFuXIWtJSJmJynSfu3tDLwBt0Mao8zy9qtw5XAChzLqTQXie
-K7ZoHBFBtOi9NE8uNIRUdIvs+yljBXGRXy4z5KmoIOZap6ewSWRob4s4j1cLX/Pa
-gSFHfLUvQW/dzUo7IKbSiFoy4dktrS+l9P4lDEuPiUm6YGMb1zAXDX7ABKqekVYL
-PWhjxcf9lef7suJu0SzhOhXlAD5TojOTzz1BQiQYZA4wihmTMK+g9vjHt+9FhWz2
-PicrMFYeUoqDSWC7T2pcZYoQqCk/nC60p6Em5rNvCOUHGWOVZlPG9piC99opTETt
-+iZpKIk/zDYReBHhi0o06UJRoy3JhmVkctS5RyMkxbcsNwxF7O4N+eIrEw/0j+qc
-Wlg6y91TW6dnHmKMdvUTxXdaR1/v7FP8BqNx73u1qCmZUXN2GlPkUEAF0pymqGwg
-ynDC170yKXNjw/okLBGNM+JIaH1xqW/S2vCQ4X2L5YQkmjm9IYf0iG+IJdzrWrlb
-KSsusuE3+S3SeI24vbT6v/FtrXPEJiKZgaCvOq9fF/CsNej2P2DI+adzIYD4ufJc
-Q+J0qUn3n+paOsXQZ6+v
-=SF88
------END PGP SIGNATURE-----
-
---opJtzjQTFsWo+cga--
+> This ensures
+> +		 * that we grant the same permissions as the acl computed by
+> +		 * richacl_apply_masks().
+> +		 *
+> +		 * Without this restriction, the following richacl would grant
+> +		 * rw access to processes which are both the owner and in the
+> +		 * owning group, but not to other users in the owning group,
+> +		 * which could not be represented without masks:
+> +		 *
+> +		 *  owner:rw::mask
+> +		 *  group@:rw::allow
+> +		 */
+> +		if ((acl->a_flags & RICHACL_MASKED) && richace_is_allow(ace))
+> +			ace_mask &= acl->a_group_mask;
+> +
+> +entry_matches_owner:
+> +		/* The process is in the owner or group file class. */
+> +		in_owner_or_group_class = 1;
+> +
+> +entry_matches_everyone:
+> +		/* Check which mask flags the ACE allows or denies. */
+> +		if (richace_is_deny(ace))
+> +			denied |= ace_mask & mask;
+> +		mask &= ~ace_mask;
+> +
+> +		/*
+> +		 * Keep going until we know which file class
+> +		 * the process is in.
+> +		 */
+> +		if (!mask && in_owner_or_group_class)
+> +			break;
+> +	}
+> +	denied |= mask;
+> +
+> +	if (acl->a_flags & RICHACL_MASKED) {
+> +		/*
+> +		 * The file class a process is in determines which file mask
+> +		 * applies.  Check if that file mask also grants the requested
+> +		 * access.
+> +		 */
+> +		if (uid_eq(current_fsuid(), inode->i_uid))
+> +			denied |= requested & ~acl->a_owner_mask;
+> +		else if (in_owner_or_group_class)
+> +			denied |= requested & ~acl->a_group_mask;
+> +		else {
+> +			if (acl->a_flags & RICHACL_WRITE_THROUGH)
+> +				denied = requested & ~acl->a_other_mask;
+> +			else
+> +				denied |= requested & ~acl->a_other_mask;
+> +		}
+> +	}
+> +
+> +out:
+> +	return denied ? -EACCES : 0;
+> +}
+> +EXPORT_SYMBOL_GPL(richacl_permission);
+> diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+> index e00f313..9768eeb 100644
+> --- a/include/linux/richacl.h
+> +++ b/include/linux/richacl.h
+> @@ -300,4 +300,7 @@ extern unsigned int richacl_want_to_mask(unsigned int);
+>  extern void richacl_compute_max_masks(struct richacl *);
+>  extern struct richacl *richacl_chmod(struct richacl *, mode_t);
+>  
+> +/* richacl_inode.c */
+> +extern int richacl_permission(struct inode *, const struct richacl *, int);
+> +
+>  #endif /* __RICHACL_H */
+> -- 
+> 2.4.3
