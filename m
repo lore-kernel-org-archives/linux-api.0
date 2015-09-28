@@ -1,121 +1,185 @@
-From: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-Subject: [PATCH v8 10/14] power: bq24257: Add input DPM voltage threshold setting support
-Date: Mon, 28 Sep 2015 17:33:58 -0500
-Message-ID: <1443479642-23712-11-git-send-email-dannenberg@ti.com>
+From: Andreas Dannenberg <dannenberg@ti.com>
+Subject: [PATCH v8 05/14] power: bq24257: Add basic support for bq24250/bq24251
+Date: Mon, 28 Sep 2015 17:33:53 -0500
+Message-ID: <1443479642-23712-6-git-send-email-dannenberg@ti.com>
 References: <1443479642-23712-1-git-send-email-dannenberg@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1443479642-23712-1-git-send-email-dannenberg-l0cyMroinI0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Laurentiu Palcu <laurentiu.palcu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Cc: Ramakrishna Pallala <ramakrishna.pallala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
+Return-path: <linux-pm-owner@vger.kernel.org>
+In-Reply-To: <1443479642-23712-1-git-send-email-dannenberg@ti.com>
+Sender: linux-pm-owner@vger.kernel.org
+To: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, Laurentiu Palcu <laurentiu.palcu@intel.com>, Krzysztof Kozlowski <k.kozlowski@samsung.com>
+Cc: Ramakrishna Pallala <ramakrishna.pallala@intel.com>, linux-pm@vger.kernel.org, devicetree@vger.kernel.org, linux-api@vger.kernel.org, Andreas Dannenberg <dannenberg@ti.com>
 List-Id: linux-api@vger.kernel.org
 
-A new optional device property called "ti,in-dpm-voltage" is introduced
-to allow configuring the input voltage threshold for the devices'
-dynamic power path management (DPM) feature. In short, it can be used to
-prevent the input voltage from dropping below a certain value as current
-is drawn to charge the battery or supply the system.
+This patch adds basic support for bq24250 and bq24251 which are very
+similar to the bq24257 the driver was originally written for. Basic
+support means the ability to select a device through Kconfig, DT and
+ACPI, an instance variable allowing to check which chip is active, and
+the reporting back of the selected device through the model_name power
+supply sysfs property.
 
-Signed-off-by: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-Reviewed-by: Laurentiu Palcu <laurentiu.palcu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+This patch by itself is not sufficient to actually use those two added
+devices in a real-world setting due to some feature differences which
+are addressed by other patches in this series.
+
+Signed-off-by: Andreas Dannenberg <dannenberg@ti.com>
+Reviewed-by: Krzysztof Kozlowski <k.kozlowski@samsung.com>
 ---
- drivers/power/bq24257_charger.c | 43 +++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 43 insertions(+)
+ drivers/power/Kconfig           |  5 ++--
+ drivers/power/bq24257_charger.c | 52 ++++++++++++++++++++++++++++++++++++++---
+ 2 files changed, 52 insertions(+), 5 deletions(-)
 
+diff --git a/drivers/power/Kconfig b/drivers/power/Kconfig
+index eeb5776..9e68853 100644
+--- a/drivers/power/Kconfig
++++ b/drivers/power/Kconfig
+@@ -409,12 +409,13 @@ config CHARGER_BQ24190
+ 	  Say Y to enable support for the TI BQ24190 battery charger.
+ 
+ config CHARGER_BQ24257
+-	tristate "TI BQ24257 battery charger driver"
++	tristate "TI BQ24250/24251/24257 battery charger driver"
+ 	depends on I2C
+ 	depends on GPIOLIB || COMPILE_TEST
+ 	depends on REGMAP_I2C
+ 	help
+-	  Say Y to enable support for the TI BQ24257 battery charger.
++	  Say Y to enable support for the TI BQ24250, BQ24251, and BQ24257 battery
++	  chargers.
+ 
+ config CHARGER_BQ24735
+ 	tristate "TI BQ24735 battery charger support"
 diff --git a/drivers/power/bq24257_charger.c b/drivers/power/bq24257_charger.c
-index b617c3a..ebb22f3 100644
+index 060f754..b0c8533 100644
 --- a/drivers/power/bq24257_charger.c
 +++ b/drivers/power/bq24257_charger.c
-@@ -79,6 +79,7 @@ struct bq24257_init_data {
- 	u8 iterm;	/* termination current */
- 	u8 iilimit;	/* input current limit */
- 	u8 vovp;	/* over voltage protection voltage */
-+	u8 vindpm;	/* VDMP input threshold voltage */
- };
+@@ -13,6 +13,10 @@
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
++ * Datasheets:
++ * http://www.ti.com/product/bq24250
++ * http://www.ti.com/product/bq24251
++ * http://www.ti.com/product/bq24257
+  */
  
- struct bq24257_state {
-@@ -208,6 +209,13 @@ static const u32 bq24257_vovp_map[] = {
+ #include <linux/module.h>
+@@ -40,6 +44,22 @@
  
- #define BQ24257_VOVP_MAP_SIZE		ARRAY_SIZE(bq24257_vovp_map)
+ #define BQ24257_ILIM_SET_DELAY		1000	/* msec */
  
-+static const u32 bq24257_vindpm_map[] = {
-+	4200000, 4280000, 4360000, 4440000, 4520000, 4600000, 4680000,
-+	4760000
++/*
++ * When adding support for new devices make sure that enum bq2425x_chip and
++ * bq2425x_chip_name[] always stay in sync!
++ */
++enum bq2425x_chip {
++	BQ24250,
++	BQ24251,
++	BQ24257,
 +};
 +
-+#define BQ24257_VINDPM_MAP_SIZE		ARRAY_SIZE(bq24257_vindpm_map)
++static const char *const bq2425x_chip_name[] = {
++	"bq24250",
++	"bq24251",
++	"bq24257",
++};
 +
- static int bq24257_field_read(struct bq24257_device *bq,
- 			      enum bq24257_fields field_id)
+ enum bq24257_fields {
+ 	F_WD_FAULT, F_WD_EN, F_STAT, F_FAULT,			    /* REG 1 */
+ 	F_RESET, F_IILIMIT, F_EN_STAT, F_EN_TERM, F_CE, F_HZ_MODE,  /* REG 2 */
+@@ -70,6 +90,8 @@ struct bq24257_device {
+ 	struct device *dev;
+ 	struct power_supply *charger;
+ 
++	enum bq2425x_chip chip;
++
+ 	struct regmap *rmap;
+ 	struct regmap_field *rmap_fields[F_MAX_FIELDS];
+ 
+@@ -248,6 +270,10 @@ static int bq24257_power_supply_get_property(struct power_supply *psy,
+ 		val->strval = BQ24257_MANUFACTURER;
+ 		break;
+ 
++	case POWER_SUPPLY_PROP_MODEL_NAME:
++		val->strval = bq2425x_chip_name[bq->chip];
++		break;
++
+ 	case POWER_SUPPLY_PROP_ONLINE:
+ 		val->intval = state.power_good;
+ 		break;
+@@ -561,6 +587,7 @@ static int bq24257_hw_init(struct bq24257_device *bq)
+ 
+ static enum power_supply_property bq24257_power_supply_props[] = {
+ 	POWER_SUPPLY_PROP_MANUFACTURER,
++	POWER_SUPPLY_PROP_MODEL_NAME,
+ 	POWER_SUPPLY_PROP_STATUS,
+ 	POWER_SUPPLY_PROP_ONLINE,
+ 	POWER_SUPPLY_PROP_HEALTH,
+@@ -644,6 +671,7 @@ static int bq24257_probe(struct i2c_client *client,
  {
-@@ -434,6 +442,17 @@ enum bq24257_vovp {
- 	VOVP_10500
+ 	struct i2c_adapter *adapter = to_i2c_adapter(client->dev.parent);
+ 	struct device *dev = &client->dev;
++	const struct acpi_device_id *acpi_id;
+ 	struct bq24257_device *bq;
+ 	int ret;
+ 	int i;
+@@ -660,6 +688,18 @@ static int bq24257_probe(struct i2c_client *client,
+ 	bq->client = client;
+ 	bq->dev = dev;
+ 
++	if (ACPI_HANDLE(dev)) {
++		acpi_id = acpi_match_device(dev->driver->acpi_match_table,
++					    &client->dev);
++		if (!acpi_id) {
++			dev_err(dev, "Failed to match ACPI device\n");
++			return -ENODEV;
++		}
++		bq->chip = (enum bq2425x_chip)acpi_id->driver_data;
++	} else {
++		bq->chip = (enum bq2425x_chip)id->driver_data;
++	}
++
+ 	mutex_init(&bq->lock);
+ 
+ 	bq->rmap = devm_regmap_init_i2c(client, &bq24257_regmap_config);
+@@ -722,7 +762,7 @@ static int bq24257_probe(struct i2c_client *client,
+ 					bq24257_irq_handler_thread,
+ 					IRQF_TRIGGER_FALLING |
+ 					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
+-					"bq24257", bq);
++					bq2425x_chip_name[bq->chip], bq);
+ 	if (ret) {
+ 		dev_err(dev, "Failed to request IRQ #%d\n", client->irq);
+ 		return ret;
+@@ -793,19 +833,25 @@ static const struct dev_pm_ops bq24257_pm = {
  };
  
-+enum bq24257_vindpm {
-+	VINDPM_4200,
-+	VINDPM_4280,
-+	VINDPM_4360,
-+	VINDPM_4440,
-+	VINDPM_4520,
-+	VINDPM_4600,
-+	VINDPM_4680,
-+	VINDPM_4760
-+};
-+
- enum bq24257_port_type {
- 	PORT_TYPE_DCP,		/* Dedicated Charging Port */
- 	PORT_TYPE_CDP,		/* Charging Downstream Port */
-@@ -607,6 +626,7 @@ static int bq24257_hw_init(struct bq24257_device *bq)
- 		{F_VBAT, bq->init_data.vbat},
- 		{F_ITERM, bq->init_data.iterm},
- 		{F_VOVP, bq->init_data.vovp},
-+		{F_VINDPM, bq->init_data.vindpm},
- 	};
- 
- 	/*
-@@ -687,10 +707,23 @@ static ssize_t bq24257_show_ovp_voltage(struct device *dev,
- 			 bq24257_vovp_map[bq->init_data.vovp]);
- }
- 
-+static ssize_t bq24257_show_in_dpm_voltage(struct device *dev,
-+					   struct device_attribute *attr,
-+					   char *buf)
-+{
-+	struct power_supply *psy = dev_get_drvdata(dev);
-+	struct bq24257_device *bq = power_supply_get_drvdata(psy);
-+
-+	return scnprintf(buf, PAGE_SIZE, "%u\n",
-+			 bq24257_vindpm_map[bq->init_data.vindpm]);
-+}
-+
- static DEVICE_ATTR(ovp_voltage, S_IRUGO, bq24257_show_ovp_voltage, NULL);
-+static DEVICE_ATTR(in_dpm_voltage, S_IRUGO, bq24257_show_in_dpm_voltage, NULL);
- 
- static struct attribute *bq24257_charger_attr[] = {
- 	&dev_attr_ovp_voltage.attr,
-+	&dev_attr_in_dpm_voltage.attr,
- 	NULL,
+ static const struct i2c_device_id bq24257_i2c_ids[] = {
+-	{ "bq24257", 0 },
++	{ "bq24250", BQ24250 },
++	{ "bq24251", BQ24251 },
++	{ "bq24257", BQ24257 },
+ 	{},
  };
+ MODULE_DEVICE_TABLE(i2c, bq24257_i2c_ids);
  
-@@ -785,6 +818,16 @@ static int bq24257_fw_probe(struct bq24257_device *bq)
- 						      bq24257_vovp_map,
- 						      BQ24257_VOVP_MAP_SIZE);
+ static const struct of_device_id bq24257_of_match[] = {
++	{ .compatible = "ti,bq24250", },
++	{ .compatible = "ti,bq24251", },
+ 	{ .compatible = "ti,bq24257", },
+ 	{ },
+ };
+ MODULE_DEVICE_TABLE(of, bq24257_of_match);
  
-+	ret = device_property_read_u32(bq->dev, "ti,in-dpm-voltage",
-+				       &property);
-+	if (ret < 0)
-+		bq->init_data.vindpm = VINDPM_4360;
-+	else
-+		bq->init_data.vindpm =
-+				bq24257_find_idx(property,
-+						 bq24257_vindpm_map,
-+						 BQ24257_VINDPM_MAP_SIZE);
-+
- 	return 0;
- }
- 
+ static const struct acpi_device_id bq24257_acpi_match[] = {
+-	{"BQ242570", 0},
++	{ "BQ242500", BQ24250 },
++	{ "BQ242510", BQ24251 },
++	{ "BQ242570", BQ24257 },
+ 	{},
+ };
+ MODULE_DEVICE_TABLE(acpi, bq24257_acpi_match);
 -- 
 1.9.1
+
