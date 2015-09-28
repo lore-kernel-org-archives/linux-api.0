@@ -1,107 +1,157 @@
 From: Dave Hansen <dave@sr71.net>
-Subject: [PATCH 21/25] mm: implement new mprotect_key() system call
-Date: Mon, 28 Sep 2015 12:18:26 -0700
-Message-ID: <20150928191826.F1CD5256@viggo.jf.intel.com>
+Subject: [PATCH 20/25] mm, multi-arch: pass a protection key in to calc_vm_flag_bits()
+Date: Mon, 28 Sep 2015 12:18:25 -0700
+Message-ID: <20150928191825.4E183654@viggo.jf.intel.com>
 References: <20150928191817.035A64E2@viggo.jf.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20150928191817.035A64E2@viggo.jf.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: dave@sr71.net
-Cc: borntraeger@de.ibm.com, x86@kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, dave.hansen@linux.intel.com, linux-api@vger.kernel.org
+Cc: borntraeger@de.ibm.com, x86@kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, dave.hansen@linux.intel.com, linux-api@vger.kernel.org, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 
 From: Dave Hansen <dave.hansen@linux.intel.com>
 
-mprotect_key() is just like mprotect, except it also takes a
-protection key as an argument.  On systems that do not support
-protection keys, it still works, but requires that key=0.
-Otherwise it does exactly what mprotect does.
-
-I expect it to get used like this, if you want to guarantee that
-any mapping you create can *never* be accessed without the right
-protection keys set up.
-
-	pkey_deny_access(11); // random pkey
-	int real_prot = PROT_READ|PROT_WRITE;
-	ptr = mmap(NULL, PAGE_SIZE, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-	ret = mprotect_key(ptr, PAGE_SIZE, real_prot, 11);
-
-This way, there is *no* window where the mapping is accessible
-since it was always either PROT_NONE or had a protection key set.
-
-We settled on 'unsigned long' for the type of the key here.  We
-only need 4 bits on x86 today, but I figured that other
-architectures might need some more space.
+This plumbs a protection key through calc_vm_flag_bits().
+We could of done this in calc_vm_prot_bits(), but I did not
+feel super strongly which way to go.  It was pretty arbitrary
+which one to use.
 
 Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
 Cc: linux-api@vger.kernel.org
+Cc: linux-arch@vger.kernel.org
 ---
 
- b/mm/Kconfig    |    7 +++++++
- b/mm/mprotect.c |   20 +++++++++++++++++---
- 2 files changed, 24 insertions(+), 3 deletions(-)
+ b/arch/powerpc/include/asm/mman.h  |    5 +++--
+ b/drivers/char/agp/frontend.c      |    2 +-
+ b/drivers/staging/android/ashmem.c |    9 +++++----
+ b/include/linux/mman.h             |    6 +++---
+ b/mm/mmap.c                        |    2 +-
+ b/mm/mprotect.c                    |    2 +-
+ b/mm/nommu.c                       |    2 +-
+ 7 files changed, 15 insertions(+), 13 deletions(-)
 
-diff -puN mm/Kconfig~pkeys-85-mprotect_pkey mm/Kconfig
---- a/mm/Kconfig~pkeys-85-mprotect_pkey	2015-09-28 11:39:50.527391162 -0700
-+++ b/mm/Kconfig	2015-09-28 11:39:50.532391390 -0700
-@@ -683,3 +683,10 @@ config FRAME_VECTOR
+diff -puN arch/powerpc/include/asm/mman.h~pkeys-84-calc_vm_prot_bits arch/powerpc/include/asm/mman.h
+--- a/arch/powerpc/include/asm/mman.h~pkeys-84-calc_vm_prot_bits	2015-09-28 11:39:49.962365460 -0700
++++ b/arch/powerpc/include/asm/mman.h	2015-09-28 11:39:49.976366097 -0700
+@@ -18,11 +18,12 @@
+  * This file is included by linux/mman.h, so we can't use cacl_vm_prot_bits()
+  * here.  How important is the optimization?
+  */
+-static inline unsigned long arch_calc_vm_prot_bits(unsigned long prot)
++static inline unsigned long arch_calc_vm_prot_bits(unsigned long prot,
++		unsigned long pkey)
+ {
+ 	return (prot & PROT_SAO) ? VM_SAO : 0;
+ }
+-#define arch_calc_vm_prot_bits(prot) arch_calc_vm_prot_bits(prot)
++#define arch_calc_vm_prot_bits(prot, pkey) arch_calc_vm_prot_bits(prot, pkey)
  
- config ARCH_USES_HIGH_VMA_FLAGS
- 	bool
-+
-+config NR_PROTECTION_KEYS
-+	int
-+	# Everything supports a _single_ key, so allow folks to
-+	# at least call APIs that take keys, but require that the
-+	# key be 0.
-+	default 1
-diff -puN mm/mprotect.c~pkeys-85-mprotect_pkey mm/mprotect.c
---- a/mm/mprotect.c~pkeys-85-mprotect_pkey	2015-09-28 11:39:50.529391253 -0700
-+++ b/mm/mprotect.c	2015-09-28 11:39:50.532391390 -0700
-@@ -344,8 +344,8 @@ fail:
- 	return error;
+ static inline pgprot_t arch_vm_get_page_prot(unsigned long vm_flags)
+ {
+diff -puN drivers/char/agp/frontend.c~pkeys-84-calc_vm_prot_bits drivers/char/agp/frontend.c
+--- a/drivers/char/agp/frontend.c~pkeys-84-calc_vm_prot_bits	2015-09-28 11:39:49.964365551 -0700
++++ b/drivers/char/agp/frontend.c	2015-09-28 11:39:49.977366142 -0700
+@@ -156,7 +156,7 @@ static pgprot_t agp_convert_mmap_flags(i
+ {
+ 	unsigned long prot_bits;
+ 
+-	prot_bits = calc_vm_prot_bits(prot) | VM_SHARED;
++	prot_bits = calc_vm_prot_bits(prot, 0) | VM_SHARED;
+ 	return vm_get_page_prot(prot_bits);
  }
  
--SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
--		unsigned long, prot)
-+static int do_mprotect_key(unsigned long start, size_t len,
-+		unsigned long prot, unsigned long key)
- {
- 	unsigned long vm_flags, nstart, end, tmp, reqprot;
- 	struct vm_area_struct *vma, *prev;
-@@ -365,6 +365,8 @@ SYSCALL_DEFINE3(mprotect, unsigned long,
- 		return -ENOMEM;
- 	if (!arch_validate_prot(prot))
- 		return -EINVAL;
-+	if (key >= CONFIG_NR_PROTECTION_KEYS)
-+		return -EINVAL;
+diff -puN drivers/staging/android/ashmem.c~pkeys-84-calc_vm_prot_bits drivers/staging/android/ashmem.c
+--- a/drivers/staging/android/ashmem.c~pkeys-84-calc_vm_prot_bits	2015-09-28 11:39:49.966365642 -0700
++++ b/drivers/staging/android/ashmem.c	2015-09-28 11:39:49.977366142 -0700
+@@ -351,7 +351,8 @@ out:
+ 	return ret;
+ }
  
- 	reqprot = prot;
- 	/*
-@@ -373,7 +375,7 @@ SYSCALL_DEFINE3(mprotect, unsigned long,
+-static inline vm_flags_t calc_vm_may_flags(unsigned long prot)
++static inline vm_flags_t calc_vm_may_flags(unsigned long prot,
++		unsigned long pkey)
+ {
+ 	return _calc_vm_trans(prot, PROT_READ,  VM_MAYREAD) |
+ 	       _calc_vm_trans(prot, PROT_WRITE, VM_MAYWRITE) |
+@@ -372,12 +373,12 @@ static int ashmem_mmap(struct file *file
+ 	}
+ 
+ 	/* requested protection bits must match our allowed protection mask */
+-	if (unlikely((vma->vm_flags & ~calc_vm_prot_bits(asma->prot_mask)) &
+-		     calc_vm_prot_bits(PROT_MASK))) {
++	if (unlikely((vma->vm_flags & ~calc_vm_prot_bits(asma->prot_mask, 0)) &
++		     calc_vm_prot_bits(PROT_MASK, 0))) {
+ 		ret = -EPERM;
+ 		goto out;
+ 	}
+-	vma->vm_flags &= ~calc_vm_may_flags(~asma->prot_mask);
++	vma->vm_flags &= ~calc_vm_may_flags(~asma->prot_mask, 0);
+ 
+ 	if (!asma->file) {
+ 		char *name = ASHMEM_NAME_DEF;
+diff -puN include/linux/mman.h~pkeys-84-calc_vm_prot_bits include/linux/mman.h
+--- a/include/linux/mman.h~pkeys-84-calc_vm_prot_bits	2015-09-28 11:39:49.967365688 -0700
++++ b/include/linux/mman.h	2015-09-28 11:39:49.977366142 -0700
+@@ -35,7 +35,7 @@ static inline void vm_unacct_memory(long
+  */
+ 
+ #ifndef arch_calc_vm_prot_bits
+-#define arch_calc_vm_prot_bits(prot) 0
++#define arch_calc_vm_prot_bits(prot, pkey) 0
+ #endif
+ 
+ #ifndef arch_vm_get_page_prot
+@@ -70,12 +70,12 @@ static inline int arch_validate_prot(uns
+  * Combine the mmap "prot" argument into "vm_flags" used internally.
+  */
+ static inline unsigned long
+-calc_vm_prot_bits(unsigned long prot)
++calc_vm_prot_bits(unsigned long prot, unsigned long pkey)
+ {
+ 	return _calc_vm_trans(prot, PROT_READ,  VM_READ ) |
+ 	       _calc_vm_trans(prot, PROT_WRITE, VM_WRITE) |
+ 	       _calc_vm_trans(prot, PROT_EXEC,  VM_EXEC) |
+-	       arch_calc_vm_prot_bits(prot);
++	       arch_calc_vm_prot_bits(prot, pkey);
+ }
+ 
+ /*
+diff -puN mm/mmap.c~pkeys-84-calc_vm_prot_bits mm/mmap.c
+--- a/mm/mmap.c~pkeys-84-calc_vm_prot_bits	2015-09-28 11:39:49.969365779 -0700
++++ b/mm/mmap.c	2015-09-28 11:39:49.978366188 -0700
+@@ -1311,7 +1311,7 @@ unsigned long do_mmap(struct file *file,
+ 	 * to. we assume access permissions have been handled by the open
+ 	 * of the memory object, so we don't do any here.
+ 	 */
+-	vm_flags |= calc_vm_prot_bits(prot) | calc_vm_flag_bits(flags) |
++	vm_flags |= calc_vm_prot_bits(prot, 0) | calc_vm_flag_bits(flags) |
+ 			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
+ 
+ 	if (flags & MAP_LOCKED)
+diff -puN mm/mprotect.c~pkeys-84-calc_vm_prot_bits mm/mprotect.c
+--- a/mm/mprotect.c~pkeys-84-calc_vm_prot_bits	2015-09-28 11:39:49.971365870 -0700
++++ b/mm/mprotect.c	2015-09-28 11:39:49.979366234 -0700
+@@ -373,7 +373,7 @@ SYSCALL_DEFINE3(mprotect, unsigned long,
  	if ((prot & PROT_READ) && (current->personality & READ_IMPLIES_EXEC))
  		prot |= PROT_EXEC;
  
--	vm_flags = calc_vm_prot_bits(prot, 0);
-+	vm_flags = calc_vm_prot_bits(prot, key);
+-	vm_flags = calc_vm_prot_bits(prot);
++	vm_flags = calc_vm_prot_bits(prot, 0);
  
  	down_write(&current->mm->mmap_sem);
  
-@@ -443,3 +445,15 @@ out:
- 	up_write(&current->mm->mmap_sem);
- 	return error;
- }
-+
-+SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
-+		unsigned long, prot)
-+{
-+	return do_mprotect_key(start, len, prot, 0);
-+}
-+
-+SYSCALL_DEFINE4(mprotect_key, unsigned long, start, size_t, len,
-+		unsigned long, prot, unsigned long, key)
-+{
-+	return do_mprotect_key(start, len, prot, key);
-+}
+diff -puN mm/nommu.c~pkeys-84-calc_vm_prot_bits mm/nommu.c
+--- a/mm/nommu.c~pkeys-84-calc_vm_prot_bits	2015-09-28 11:39:49.973365961 -0700
++++ b/mm/nommu.c	2015-09-28 11:39:49.980366279 -0700
+@@ -1084,7 +1084,7 @@ static unsigned long determine_vm_flags(
+ {
+ 	unsigned long vm_flags;
+ 
+-	vm_flags = calc_vm_prot_bits(prot) | calc_vm_flag_bits(flags);
++	vm_flags = calc_vm_prot_bits(prot, 0) | calc_vm_flag_bits(flags);
+ 	/* vm_flags |= mm->def_flags; */
+ 
+ 	if (!(capabilities & NOMMU_MAP_DIRECT)) {
 _
