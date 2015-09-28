@@ -1,54 +1,63 @@
-From: Andreas Dannenberg <dannenberg@ti.com>
-Subject: Re: [PATCH v7 09/15] power: bq24257: Add SW-based approach for Power
- Good determination
-Date: Mon, 28 Sep 2015 07:04:12 -0500
-Message-ID: <20150928120412.GA12676@borg>
+From: Krzysztof Kozlowski <k.kozlowski@samsung.com>
+Subject: Re: [PATCH v7 00/15] power: bq24257: Add support for bq24250/bq24251
+Date: Mon, 28 Sep 2015 21:14:33 +0900
+Message-ID: <56092F29.8060106@samsung.com>
 References: <1443196460-26156-1-git-send-email-dannenberg@ti.com>
- <1443196460-26156-10-git-send-email-dannenberg@ti.com>
- <20150927202025.GA2051@earth>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=iso-8859-2
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-pm-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150927202025.GA2051@earth>
+In-Reply-To: <1443196460-26156-1-git-send-email-dannenberg@ti.com>
 Sender: linux-pm-owner@vger.kernel.org
-To: Sebastian Reichel <sre@kernel.org>
-Cc: Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, Laurentiu Palcu <laurentiu.palcu@intel.com>, Krzysztof Kozlowski <k.kozlowski@samsung.com>, Ramakrishna Pallala <ramakrishna.pallala@intel.com>, linux-pm@vger.kernel.org, devicetree@vger.kernel.org, linux-api@vger.kernel.org
+To: Andreas Dannenberg <dannenberg@ti.com>, Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, Laurentiu Palcu <laurentiu.palcu@intel.com>
+Cc: Ramakrishna Pallala <ramakrishna.pallala@intel.com>, linux-pm@vger.kernel.org, devicetree@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Sep 27, 2015 at 10:20:26PM +0200, Sebastian Reichel wrote:
-> Hi,
+W dniu 26.09.2015 o 00:54, Andreas Dannenberg pisze:
+> This patch series extends the driver to also support bq24250/bq24251.
 > 
-> On Fri, Sep 25, 2015 at 10:54:14AM -0500, Andreas Dannenberg wrote:
-> > @@ -651,15 +670,18 @@ static int bq24257_power_supply_init(struct bq24257_device *bq)
-> >  	return PTR_ERR_OR_ZERO(bq->charger);
-> >  }
-> >  
-> > -static int bq24257_pg_gpio_probe(struct bq24257_device *bq)
-> > +static void bq24257_pg_gpio_probe(struct bq24257_device *bq)
-> >  {
-> > -	bq->pg = devm_gpiod_get_index(bq->dev, BQ24257_PG_GPIO, 0, GPIOD_IN);
-> > +	bq->pg = devm_gpiod_get_optional(bq->dev, BQ24257_PG_GPIO, GPIOD_IN);
-> > +
-> >  	if (IS_ERR(bq->pg)) {
-> > -		dev_err(bq->dev, "could not probe PG pin\n");
-> > -		return PTR_ERR(bq->pg);
-> > +		dev_err(bq->dev, "error probing PG pin\n");
-> > +		bq->pg = NULL;
-> > +		return;
-> >  	}
+> The bq24250/251/257 devices have a very similar feature set and are
+> virtually identical from a control register point of view so it made
+> sense to extend the existing driver rather than submitting a new driver.
+> In addition to the new device support the driver is also extended to
+> allow access to some device features previously hidden. Basic and
+> potentially dangerous charger config parameters affecting the actual
+> charging of the Li-Ion battery are only configurable through firmware
+> rather than sysfs properties. However some newly introduced properties
+> are exposed through sysfs properties as access to them may be desired
+> from userspace. For example, it is now possible to manually configure
+> the maximum current drawn from the input source to accommodate different
+> chargers (0.5A, 1.5A, 2.0A and so on) based on system knowledge a
+> userspace application may have rather than rely on the auto-detection
+> mechanism that may not work in all possible scenarios.
 > 
-> You should handle -EPROBE_DEFER here.
+> Note that most patches have dependencies on other patches in the series.
+> 
+> v7:
+> - Fixed an issue that would have impacted running bisect on the series
+>   and double checked the entire series builds one by one by running
+>   a git rebase -i --exec="make ..." ... on the Kernel tree
+> - Minor simplification of a return from a function
+> 
+> v6:
+> - Removed the ability to configure the IRQ through "stat-gpios"
+> - Allow re-configuring the input_current_limit via sysfs also when
+>   charger auto-detection is enabled
+> - Use gpiod interface for initialization as a platform device (nice
+>   GPIO setup simplification)
+> - Document all newly introduced sysfs nodes
+> - Streamlined/fixed/simplified charger state handling as it relates
+>   to battery removal/insertion and the associated handling of the
+>   input current limit setting
+> - Minor simplifications/cleanup
+> - Rebased onto git://git.kernel.org/pub/scm/linux/kernel/git/sre/linux-
+>   power-supply.git (branch "next") and completely retested
 
-Hi Sebastian. From having a quick look at the Kernel tree it seems like
-this error shouldn't get exposed to the user (which it doesn't since it
-would get zeroe'd out) and the error itself suggests that I should
-"retry" which none of the things I looked at in the Kernel through "git
-grep" seemed to do. So before making any assumptions I wanted to see if
-I'm missing something or you could give me any pointers how to proceed.
+It would be useful if you would mark which patches have changed. I
+reviewed already the first patch but you did not add my reviewed-by tag.
+I suppose something changed... but I can't find the exact reason for
+missing review.
 
-Thanks,
+Best regards,
+Krzysztof
 
---
-Andreas Dannenberg
-Texas Instruments Inc
