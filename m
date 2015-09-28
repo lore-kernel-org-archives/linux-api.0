@@ -1,65 +1,80 @@
-From: "J. Bruce Fields" <bfields@fieldses.org>
-Subject: Re: [PATCH v8 00/41] Richacls
-Date: Mon, 28 Sep 2015 13:46:48 -0400
-Message-ID: <20150928174648.GA3190@fieldses.org>
-References: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
- <20150928163543.GF1358@fieldses.org>
- <CAHpGcM++=D1yrkVmZsKwdQCQj4yPdwGGNbmF-Bma7Yo_+kpNQQ@mail.gmail.com>
+From: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v7 14/15] power: bq24257: Add platform data based
+ initialization
+Date: Mon, 28 Sep 2015 19:58:12 +0200
+Message-ID: <20150928175811.GG3660@earth>
+References: <1443196460-26156-1-git-send-email-dannenberg@ti.com>
+ <1443196460-26156-15-git-send-email-dannenberg@ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="I3tAPq1Rm2pUxvsp"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAHpGcM++=D1yrkVmZsKwdQCQj4yPdwGGNbmF-Bma7Yo_+kpNQQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andreas =?utf-8?Q?Gr=C3=BCnbacher?= <andreas.gruenbacher@gmail.com>
-Cc: Andreas Gruenbacher <agruenba@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, linux-ext4@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, Linux API Mailing List <linux-api@vger.kernel.org>
+In-Reply-To: <1443196460-26156-15-git-send-email-dannenberg-l0cyMroinI0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
+Cc: Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Laurentiu Palcu <laurentiu.palcu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Ramakrishna Pallala <ramakrishna.pallala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 28, 2015 at 07:10:06PM +0200, Andreas Gr=C3=BCnbacher wrote=
-:
-> 2015-09-28 18:35 GMT+02:00 J. Bruce Fields <bfields@fieldses.org>:
-> > On Mon, Sep 28, 2015 at 12:08:51AM +0200, Andreas Gruenbacher wrote=
-:
-> >> Open issues in nfs:
-> >>
-> >> * When a user or group name cannot be mapped, nfs's idmapper alway=
-s maps it
-> >>   to nobody. That's good enough for mapping the file owner and own=
-ing
-> >>   group, but not for identifiers in acls. For now, to get the nfs =
-richacl
-> >>   support somewhat working, I'm explicitly checking if mapping has=
- resulted
-> >>   in uid/gid 99 in the kernel.
-> >>
-> >> * When the nfs server replies with NFS4ERR_BADNAME for any user or=
- group
-> >>   name lookup, the client will stop sending numeric uids and gids =
-to the
-> >>   server even when the lookup wasn't numeric.  From then on, the c=
-lient
-> >>   will translate uids and gids that have no mapping to the string =
-"nobody",
-> >>   and the server will reject them.  This problem is not specific t=
-o acls.
-> >
-> > Do you have fixes in mind for these two issues?
+
+--I3tAPq1Rm2pUxvsp
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+Hi,
+
+On Fri, Sep 25, 2015 at 10:54:19AM -0500, Andreas Dannenberg wrote:
+> The patch adds a way to setup and initialize the device through the use
+> of platform data with configuration options equivalent to when using
+> device firmware (DT or ACPI) for systems where this is not available.
+
+Which board is this btw? Looks like most arm board code is going
+away in the next few kernel releases, so I wonder if this patch
+will just increase maintainence without any proper user.
+
+> Signed-off-by: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
+> ---
+>  drivers/power/bq24257_charger.c       | 39 +++++++++++++++++++++++++++++=
+++++--
+>  include/linux/power/bq24257_charger.h | 25 ++++++++++++++++++++++
+>  2 files changed, 62 insertions(+), 2 deletions(-)
+>  create mode 100644 include/linux/power/bq24257_charger.h
 >=20
-> I'm not sure how to best fix the idmapper problem, with backwards
-> compatibility and all.
+> diff --git a/drivers/power/bq24257_charger.c b/drivers/power/bq24257_char=
+ger.c
+> index 19a0962..3b1a3b6 100644
+> --- a/drivers/power/bq24257_charger.c
+> +++ b/drivers/power/bq24257_charger.c
+> @@ -27,10 +27,13 @@
+>  #include <linux/gpio/consumer.h>
+>  #include <linux/interrupt.h>
+>  #include <linux/delay.h>
+> +#include <linux/gpio.h>
 
-I haven't looked at the current nfsidmap interface....  So it's
-completely lacking any way to communicate failure?
+You can drop this include. It's not needed with gpiod_*().
 
-> The second problem shouldn't be too hard to fix.
+-- Sebastian
 
-Is it enough to turn off the failover in the case there's no possibilit=
-y
-it could have been caused by a numeric id?
+--I3tAPq1Rm2pUxvsp
+Content-Type: application/pgp-signature; name="signature.asc"
 
-If any user can set ACLs with arbitrary strings as names, then we'd be
-giving any user unprivileged user the ability to turn off numeric
-idmapping, so I think we need to fix that.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
 
---b.
+iQIcBAEBCgAGBQJWCX+wAAoJENju1/PIO/qaiToQAJ+Zi2x4A6pECjdfQbVA7Pfu
+SAgyuV8ELRSs4C+xFgrc6UOadLyJyknM09cDDyhnEy4dIUK626jiE6AxSH3OQZPM
+wJT4nYF/q7IjiO5BWIb3lcVOqppXTtW9e/lisMmDvNTmQuXaRGSAXZULcSctHzXG
+4YU33vNofKOH7FmJc3Q5JzCGzX3AWanputgqmrDhDUNi+EYxRxv6PE9DN59T0eX4
+SiP/eUlGUzCy3SBjoiB9hBj6ziz/cU41R8yF36nrpO+pZpSfCEJ+bTme/GTitH/4
+bLWkrBD9vqekfidtukJohzGH5Z6bt6nfn55wTPjTKkzHwVWsfDNZDCP6GZ9GbL3j
+RmInaRH5GZaVISQhBbaukYdsAK9W4QkGgtqWytPJEW72lBZRhwAyJ3QWpvURAVcA
+YebN+XBmqd/Cjio0sdlxYMBPQteYwJmji56JfTIqZX3IP4xcBYhESYbQIY9yJO++
+kwyZpxVzMhBrABjQ855diBzFaNm3pqDhnBAJL18F4MweZZV3XPlcbAqLAA10OXGN
+NIYXi1Tw67Zk1D6805r+4AqEOdf+/OG49IAxrE1641lEEU19RV55DNXnhQp21W8b
+FuyjRLCFgtPVPO/cJaxuWdoIWCOnVIcnFGyVp3MPaYsH9zVZNUlonRXCvqZSpUu9
+PTPrnta1wDw6vlxrdJwj
+=nqN4
+-----END PGP SIGNATURE-----
+
+--I3tAPq1Rm2pUxvsp--
