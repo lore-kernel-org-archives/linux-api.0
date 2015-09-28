@@ -1,145 +1,72 @@
-From: Yuan Sun <sunyuan3-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] kselftest: replace $(RM) with rm -f command
-Date: Mon, 28 Sep 2015 15:26:54 +0800
-Message-ID: <5608EBBE.6090800@huawei.com>
-References: <20150925154415.GC38748@vmdeb7> <1443406217-137773-1-git-send-email-long.wanglong@huawei.com>
+From: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
+Subject: Re: [PATCH 0/1] ns: introduce proc_get_ns_by_fd()
+Date: Mon, 28 Sep 2015 11:21:07 +0300
+Message-ID: <5608F873.6050305@yandex-team.ru>
+References: <20150925135246.27620.97496.stgit@buzz>
+ <20150925175654.GA12504@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1443406217-137773-1-git-send-email-long.wanglong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20150925175654.GA12504-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Wang Long <long.wanglong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org
-Cc: keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tyler.baker-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, andrej.skvortzov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, sjayaram-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org, treding-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, naresh.kamboju-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, alexey.kodanev-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, wanglong-m92B/FuLcaEcWVvVuXF20w@public.gmane.org, peifeiyue-hv44wF8Li93QT0dZR+AlfA@public.gmane.org
+To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Roman Gushchin <klamm-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Chen Fan <chen.fan.fnst-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, =?UTF-8?Q?St=c3=a9phane_Graber?= <stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-See the in-line comment.
-On 2015/9/28 10:10, Wang Long wrote:
-> Some test's Makefile using "$(RM)" while the other's
-> using "rm -f". It is better to use one of them in all
-> tests.
+On 25.09.2015 20:56, Oleg Nesterov wrote:
+> On 09/25, Konstantin Khlebnikov wrote:
+>>
+>> +struct ns_common *proc_ns_fdget(int fd, int nstype, struct fd *fd_ref)
+>>   {
+>> -	struct file *file;
+>> +	struct ns_common *ns;
+>> +	struct fd f;
+>>
+>> -	file = fget(fd);
+>> -	if (!file)
+>> +	f = fdget(fd);
+>> +	if (!f.file)
+>>   		return ERR_PTR(-EBADF);
+>>
+>> -	if (file->f_op != &ns_file_operations)
+>> +	if (f.file->f_op != &ns_file_operations)
+>> +		goto out_invalid;
+>> +
+>> +	ns = get_proc_ns(file_inode(f.file));
+>> +	if (nstype && (ns->ops->type != nstype))
+>>   		goto out_invalid;
+>>
+>> -	return file;
+>> +	*fd_ref = f;
+>> +	return ns;
+>>
+>>   out_invalid:
+>> -	fput(file);
+>> +	fdput(f);
+>>   	return ERR_PTR(-EINVAL);
+>>   }
 >
-> "rm -f" is better, because it is less magic, and everyone
-> konws what is does.
+> Well yes, fdget() makes sense but this is minor.
 >
-> Signed-off-by: Wang Long <long.wanglong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-> ---
->   tools/testing/selftests/capabilities/Makefile | 2 +-
->   tools/testing/selftests/kcmp/Makefile         | 2 +-
->   tools/testing/selftests/membarrier/Makefile   | 2 +-
->   tools/testing/selftests/memfd/Makefile        | 2 +-
->   tools/testing/selftests/net/Makefile          | 2 +-
->   tools/testing/selftests/seccomp/Makefile      | 2 +-
->   tools/testing/selftests/size/Makefile         | 2 +-
->   tools/testing/selftests/vm/Makefile           | 2 +-
->   tools/testing/selftests/x86/Makefile          | 2 +-
->   tools/testing/selftests/zram/Makefile         | 2 +-
->   10 files changed, 10 insertions(+), 10 deletions(-)
+> Honestly, I do not really like the new helper... I understand this
+> is subjective, so I won't insist. But how about 1/1? We do not need
+> fd/file at all. With this patch your sys_getvpid() can just use
+> proc_get_ns_by_fd(fd, CLONE_NEWPID) and put_pid_ns().
+
+Hmm. My version has 0 or 2 atomic ops per get-put sequence.
+Your version: 2 or 4 atomic ops. Plus even in worst case pinning by
+struct fd theoretically scales better because it touches refcount at
+struct file: there're might be many of them for one namespace.
+
 >
-> diff --git a/tools/testing/selftests/capabilities/Makefile b/tools/testing/selftests/capabilities/Makefile
-> index 8c8f0c1..dcc1972 100644
-> --- a/tools/testing/selftests/capabilities/Makefile
-> +++ b/tools/testing/selftests/capabilities/Makefile
-> @@ -12,7 +12,7 @@ CFLAGS := -O2 -g -std=gnu99 -Wall -lcap-ng
->   all: $(TARGETS)
->   
->   clean:
-> -	$(RM) $(TARGETS)
-> +	rm -f $(TARGETS)
->   
->   $(TARGETS): %: %.c
->   	$(CC) -o $@ $(CFLAGS) $(EXTRA_CFLAGS) $^ -lrt -ldl
-> diff --git a/tools/testing/selftests/kcmp/Makefile b/tools/testing/selftests/kcmp/Makefile
-> index 2ae7450..2deaee0 100644
-> --- a/tools/testing/selftests/kcmp/Makefile
-> +++ b/tools/testing/selftests/kcmp/Makefile
-> @@ -7,4 +7,4 @@ TEST_PROGS := kcmp_test
->   include ../lib.mk
->   
->   clean:
-> -	$(RM) kcmp_test kcmp-test-file
-> +	rn -f kcmp_test kcmp-test-file
-It should be rm, not rn.
-> diff --git a/tools/testing/selftests/membarrier/Makefile b/tools/testing/selftests/membarrier/Makefile
-> index a1a9708..f23fc58 100644
-> --- a/tools/testing/selftests/membarrier/Makefile
-> +++ b/tools/testing/selftests/membarrier/Makefile
-> @@ -7,4 +7,4 @@ all: $(TEST_PROGS)
->   include ../lib.mk
->   
->   clean:
-> -	$(RM) $(TEST_PROGS)
-> +	rm -f $(TEST_PROGS)
-> diff --git a/tools/testing/selftests/memfd/Makefile b/tools/testing/selftests/memfd/Makefile
-> index 3e7eb79..068fa93 100644
-> --- a/tools/testing/selftests/memfd/Makefile
-> +++ b/tools/testing/selftests/memfd/Makefile
-> @@ -19,4 +19,4 @@ run_fuse: build_fuse
->   	@./run_fuse_test.sh || echo "fuse_test: [FAIL]"
->   
->   clean:
-> -	$(RM) memfd_test fuse_test
-> +	rm -f memfd_test fuse_test
-> diff --git a/tools/testing/selftests/net/Makefile b/tools/testing/selftests/net/Makefile
-> index fac4782..ec7eaa4 100644
-> --- a/tools/testing/selftests/net/Makefile
-> +++ b/tools/testing/selftests/net/Makefile
-> @@ -16,4 +16,4 @@ TEST_FILES := $(NET_PROGS)
->   include ../lib.mk
->   
->   clean:
-> -	$(RM) $(NET_PROGS)
-> +	rm -f $(NET_PROGS)
-> diff --git a/tools/testing/selftests/seccomp/Makefile b/tools/testing/selftests/seccomp/Makefile
-> index 8401e87..c16072a 100644
-> --- a/tools/testing/selftests/seccomp/Makefile
-> +++ b/tools/testing/selftests/seccomp/Makefile
-> @@ -7,4 +7,4 @@ all: $(TEST_PROGS)
->   include ../lib.mk
->   
->   clean:
-> -	$(RM) $(TEST_PROGS)
-> +	rm -f $(TEST_PROGS)
-> diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
-> index bbd0b53..cefe914 100644
-> --- a/tools/testing/selftests/size/Makefile
-> +++ b/tools/testing/selftests/size/Makefile
-> @@ -8,4 +8,4 @@ TEST_PROGS := get_size
->   include ../lib.mk
->   
->   clean:
-> -	$(RM) get_size
-> +	rm -f get_size
-> diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selftests/vm/Makefile
-> index 3c53cac..26663c7 100644
-> --- a/tools/testing/selftests/vm/Makefile
-> +++ b/tools/testing/selftests/vm/Makefile
-> @@ -24,4 +24,4 @@ TEST_FILES := $(BINARIES)
->   include ../lib.mk
->   
->   clean:
-> -	$(RM) $(BINARIES)
-> +	rm -f $(BINARIES)
-> diff --git a/tools/testing/selftests/x86/Makefile b/tools/testing/selftests/x86/Makefile
-> index 29089b2..48b2406 100644
-> --- a/tools/testing/selftests/x86/Makefile
-> +++ b/tools/testing/selftests/x86/Makefile
-> @@ -32,7 +32,7 @@ all_32: $(BINARIES_32)
->   all_64: $(BINARIES_64)
->   
->   clean:
-> -	$(RM) $(BINARIES_32) $(BINARIES_64)
-> +	rm -f $(BINARIES_32) $(BINARIES_64)
->   
->   $(TARGETS_C_32BIT_ALL:%=%_32): %_32: %.c
->   	$(CC) -m32 -o $@ $(CFLAGS) $(EXTRA_CFLAGS) $^ -lrt -ldl
-> diff --git a/tools/testing/selftests/zram/Makefile b/tools/testing/selftests/zram/Makefile
-> index 29d8034..e1591c8 100644
-> --- a/tools/testing/selftests/zram/Makefile
-> +++ b/tools/testing/selftests/zram/Makefile
-> @@ -6,4 +6,4 @@ TEST_FILES := zram01.sh zram02.sh zram_lib.sh
->   include ../lib.mk
->   
->   clean:
-> -	$(RM) err.log
-> +	rm -f err.log
+> Eric, what do you think?
+>
+> See also "TODO" in the changelog.
+>
+> Oleg.
+>
+
+
+-- 
+Konstantin
