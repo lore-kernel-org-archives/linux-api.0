@@ -1,135 +1,99 @@
-From: Andreas Dannenberg <dannenberg@ti.com>
-Subject: [PATCH v8 13/14] power: bq24257: Add platform data based initialization
-Date: Mon, 28 Sep 2015 17:34:01 -0500
-Message-ID: <1443479642-23712-14-git-send-email-dannenberg@ti.com>
-References: <1443479642-23712-1-git-send-email-dannenberg@ti.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH v7 03/11] task_isolation: support PR_TASK_ISOLATION_STRICT mode
+Date: Mon, 28 Sep 2015 15:38:28 -0700
+Message-ID: <CALCETrV7npkg4MPi6Z6Wd_mYh1OrsKnGjB1RWGTAWOnaL+gARQ@mail.gmail.com>
+References: <1443453446-7827-1-git-send-email-cmetcalf@ezchip.com>
+ <1443453446-7827-4-git-send-email-cmetcalf@ezchip.com> <CALCETrU7bheOSeuE8RxATBiyzQ=sPAC4jbXsqvZHgu8-5FY0zg@mail.gmail.com>
+ <5609B713.5020709@ezchip.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-pm-owner@vger.kernel.org>
-In-Reply-To: <1443479642-23712-1-git-send-email-dannenberg@ti.com>
-Sender: linux-pm-owner@vger.kernel.org
-To: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, Laurentiu Palcu <laurentiu.palcu@intel.com>, Krzysztof Kozlowski <k.kozlowski@samsung.com>
-Cc: Ramakrishna Pallala <ramakrishna.pallala@intel.com>, linux-pm@vger.kernel.org, devicetree@vger.kernel.org, linux-api@vger.kernel.org, Andreas Dannenberg <dannenberg@ti.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <5609B713.5020709@ezchip.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Chris Metcalf <cmetcalf@ezchip.com>
+Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-The patch adds a way to setup and initialize the device through the use
-of platform data with configuration options equivalent to when using
-device firmware (DT or ACPI) for systems where this is not available.
+On Mon, Sep 28, 2015 at 2:54 PM, Chris Metcalf <cmetcalf@ezchip.com> wrote:
+> On 09/28/2015 04:51 PM, Andy Lutomirski wrote:
+>>
+>> On Mon, Sep 28, 2015 at 11:17 AM, Chris Metcalf <cmetcalf@ezchip.com>
+>>> @@ -35,8 +36,12 @@ static inline enum ctx_state exception_enter(void)
+>>>                  return 0;
+>>>
+>>>          prev_ctx = this_cpu_read(context_tracking.state);
+>>> -       if (prev_ctx != CONTEXT_KERNEL)
+>>> -               context_tracking_exit(prev_ctx);
+>>> +       if (prev_ctx != CONTEXT_KERNEL) {
+>>> +               if (context_tracking_exit(prev_ctx)) {
+>>> +                       if (task_isolation_strict())
+>>> +                               task_isolation_exception();
+>>> +               }
+>>> +       }
+>>>
+>>>          return prev_ctx;
+>>>   }
+>>
+>> x86 does not promise to call this function.  In fact, x86 is rather
+>> likely to stop ever calling this function in the reasonably near
+>> future.
+>
+>
+> Yes, in which case we'd have to do it the same way we are doing
+> it for arm64 (see patch 09/11), by calling task_isolation_exception()
+> explicitly from within the relevant exception handlers.  If we start
+> doing that, it's probably worth wrapping up the logic into a single
+> inline function to keep the added code short and sweet.
+>
+> If in fact this might happen in the short term, it might be a good
+> idea to hook the individual exception handlers in x86 now, and not
+> hook the exception_enter() mechanism at all.
 
-Signed-off-by: Andreas Dannenberg <dannenberg@ti.com>
----
- drivers/power/bq24257_charger.c       | 38 +++++++++++++++++++++++++++++++++--
- include/linux/power/bq24257_charger.h | 25 +++++++++++++++++++++++
- 2 files changed, 61 insertions(+), 2 deletions(-)
- create mode 100644 include/linux/power/bq24257_charger.h
+It's already like that in Linus' tree.
 
-diff --git a/drivers/power/bq24257_charger.c b/drivers/power/bq24257_charger.c
-index 1fea2c7..c59c22b 100644
---- a/drivers/power/bq24257_charger.c
-+++ b/drivers/power/bq24257_charger.c
-@@ -31,6 +31,8 @@
- #include <linux/acpi.h>
- #include <linux/of.h>
- 
-+#include <linux/power/bq24257_charger.h>
-+
- #define BQ24257_REG_1			0x00
- #define BQ24257_REG_2			0x01
- #define BQ24257_REG_3			0x02
-@@ -888,6 +890,36 @@ static void bq24257_pg_gpio_probe(struct bq24257_device *bq)
- 		dev_dbg(bq->dev, "probed PG pin = %d\n", desc_to_gpio(bq->pg));
- }
- 
-+static void bq24257_pdata_probe(struct bq24257_device *bq,
-+				struct bq24257_platform_data *pdata)
-+{
-+	bq->init_data.ichg = bq24257_find_idx(pdata->ichg,
-+					      bq24257_ichg_map,
-+					      BQ24257_ICHG_MAP_SIZE);
-+
-+	bq->init_data.vbat = bq24257_find_idx(pdata->vbat,
-+					      bq24257_vbat_map,
-+					      BQ24257_VBAT_MAP_SIZE);
-+
-+	bq->init_data.iterm = bq24257_find_idx(pdata->iterm,
-+					       bq24257_iterm_map,
-+					       BQ24257_ITERM_MAP_SIZE);
-+
-+	bq->init_data.iilimit = bq24257_find_idx(pdata->iilimit,
-+						 bq24257_iilimit_map,
-+						 BQ24257_IILIMIT_MAP_SIZE);
-+
-+	bq->init_data.vovp = bq24257_find_idx(pdata->vovp,
-+					      bq24257_vovp_map,
-+					      BQ24257_VOVP_MAP_SIZE);
-+
-+	bq->init_data.vindpm = bq24257_find_idx(pdata->vindpm,
-+						bq24257_vindpm_map,
-+						BQ24257_VINDPM_MAP_SIZE);
-+
-+	bq->iilimit_autoset_enable = pdata->iilimit_autoset_enable;
-+}
-+
- static int bq24257_fw_probe(struct bq24257_device *bq)
- {
- 	int ret;
-@@ -963,6 +995,7 @@ static int bq24257_probe(struct i2c_client *client,
- 	struct i2c_adapter *adapter = to_i2c_adapter(client->dev.parent);
- 	struct device *dev = &client->dev;
- 	const struct acpi_device_id *acpi_id;
-+	struct bq24257_platform_data *pdata = client->dev.platform_data;
- 	struct bq24257_device *bq;
- 	int ret;
- 	int i;
-@@ -1012,14 +1045,15 @@ static int bq24257_probe(struct i2c_client *client,
- 
- 	i2c_set_clientdata(client, bq);
- 
--	if (!dev->platform_data) {
-+	if (!pdata) {
- 		ret = bq24257_fw_probe(bq);
- 		if (ret < 0) {
- 			dev_err(dev, "Cannot read device properties.\n");
- 			return ret;
- 		}
- 	} else {
--		return -ENODEV;
-+		dev_dbg(dev, "init using platform data\n");
-+		bq24257_pdata_probe(bq, pdata);
- 	}
- 
- 	/*
-diff --git a/include/linux/power/bq24257_charger.h b/include/linux/power/bq24257_charger.h
-new file mode 100644
-index 0000000..c131c5d
---- /dev/null
-+++ b/include/linux/power/bq24257_charger.h
-@@ -0,0 +1,25 @@
-+/*
-+ * Platform data for the TI bq24257 battery charger driver.
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License version 2 as
-+ * published by the Free Software Foundation.
-+ */
-+
-+#ifndef _BQ24257_CHARGER_H_
-+#define _BQ24257_CHARGER_H_
-+
-+#include <asm/types.h>
-+#include <linux/types.h>
-+
-+struct bq24257_platform_data {
-+	u32 ichg;				       /* charge current (uA) */
-+	u32 vbat;				   /* regulation voltage (uV) */
-+	u32 iterm;				  /* termination current (uA) */
-+	u32 iilimit;				  /* input current limit (uA) */
-+	u32 vovp;		      /* over voltage protection voltage (uV) */
-+	u32 vindpm;			 /* VDMP input threshold voltage (uV) */
-+	bool iilimit_autoset_enable;	/* auto-detect of input current limit */
-+};
-+
-+#endif /* _BQ24257_CHARGER_H_ */
--- 
-1.9.1
+FWIW, most of those exception handlers send signals, so it might pay
+to do it in notify_die or die instead.
 
+>
+>>> --- a/kernel/context_tracking.c
+>>> +++ b/kernel/context_tracking.c
+>>> @@ -144,15 +144,16 @@ NOKPROBE_SYMBOL(context_tracking_user_enter);
+>>>    * This call supports re-entrancy. This way it can be called from any
+>>> exception
+>>>    * handler without needing to know if we came from userspace or not.
+>>>    */
+>>> -void context_tracking_exit(enum ctx_state state)
+>>> +bool context_tracking_exit(enum ctx_state state)
+>>
+>> This needs clear documentation of what the return value means.
+>
+>
+> Added:
+>
+>  * Return: if called with state == CONTEXT_USER, the function returns
+>  * true if we were in fact previously in user mode.
+
+This should note that it only returns true if context tracking is on.
+
+>>> +void task_isolation_exception(void)
+>>> +{
+>>> +       pr_warn("%s/%d: task_isolation strict mode violated by
+>>> exception\n",
+>>> +               current->comm, current->pid);
+>>> +       kill_task_isolation_strict_task();
+>>> +}
+>>
+>> Should this say what exception?
+>
+>
+> I could modify it to take a string argument (and then use it for
+> the arm64 case at least).  For the exception_enter() caller, we actually
+> don't have the information available to pass down, and it would
+> be hard to get it.
+
+For x86, the relevant info might be the actual hw error number
+(error_code, which makes it into die) or the signal.  If we send a
+death signal, then reporting the error number the usual way might make
+sense.
+
+--Andy
