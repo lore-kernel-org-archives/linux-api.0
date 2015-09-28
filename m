@@ -1,330 +1,67 @@
-From: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH v8 00/41] Richacls
-Date: Mon, 28 Sep 2015 12:35:43 -0400
-Message-ID: <20150928163543.GF1358@fieldses.org>
-References: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
+From: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v7 02/15] power: bq24257: Remove IRQ config through
+ stat-gpios
+Date: Mon, 28 Sep 2015 18:38:26 +0200
+Message-ID: <20150928163825.GD3660@earth>
+References: <1443196460-26156-1-git-send-email-dannenberg@ti.com>
+ <1443196460-26156-3-git-send-email-dannenberg@ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="1sNVjLsmu1MXqwQ/"
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1443391772-10171-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <1443196460-26156-3-git-send-email-dannenberg-l0cyMroinI0@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
+Cc: Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Laurentiu Palcu <laurentiu.palcu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Ramakrishna Pallala <ramakrishna.pallala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 28, 2015 at 12:08:51AM +0200, Andreas Gruenbacher wrote:
-> here's another update of the richacl patch queue.  At this stage, I would
-> like to ask for final feedback so that the core and ext4 code (patches
-> 1-19) can be merged in the 4.4 merge window.  The nfsd and nfs code should
-> then go through the respective maintainer trees.
 
-I've been over the core richacl and nfsd parts very carefully, and they
-definitely look ready to me.
+--1sNVjLsmu1MXqwQ/
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> Changes since the last posting (https://lwn.net/Articles/656704/):
-> 
-> * The MAY_DELETE_SELF permission now also overrides the sticky
->    directory checks.
-> 
-> * Fix the permission check algorithm to apply the owner mask instead
->   of the group mask to user entries matching the current owner. That way,
->   the owner will retain the permissions in those entries when creating
->   objects with create mode 0700 and similar. (A chmod to mode 0700 already
->   creates an owner@:rwpx::allow ace, which was hiding this bug.)
-> 
-> * Fix richacl_apply_masks to properly insert deny aces when raising the
->   permissions of the other class. The bug could be triggered by
->   chmod'ing a group@:r::allow acl to mode 0077, for example.
-> 
-> * Various cleanups and improvements to comments.
-> 
-> 
-> The complete patch queue is available here:
-> 
->   git://git.kernel.org/pub/scm/linux/kernel/git/agruen/linux-richacl.git \
->           richacl-2015-09-28
-> 
-> 
-> The richacl user-space utilitites and test suite are available here:
-> 
->   https://github.com/andreas-gruenbacher/richacl/
-> 
-> 
-> Open issues in nfs:
-> 
-> * When a user or group name cannot be mapped, nfs's idmapper always maps it
->   to nobody. That's good enough for mapping the file owner and owning
->   group, but not for identifiers in acls. For now, to get the nfs richacl
->   support somewhat working, I'm explicitly checking if mapping has resulted
->   in uid/gid 99 in the kernel.
->
-> * When the nfs server replies with NFS4ERR_BADNAME for any user or group
->   name lookup, the client will stop sending numeric uids and gids to the
->   server even when the lookup wasn't numeric.  From then on, the client
->   will translate uids and gids that have no mapping to the string "nobody",
->   and the server will reject them.  This problem is not specific to acls.
+Hi,
 
-Do you have fixes in mind for these two issues?
+On Fri, Sep 25, 2015 at 10:54:07AM -0500, Andreas Dannenberg wrote:
+> At the time the driver was written GpioInt resources in ACPI were not
+> passed to the driver in client->irq, as opposed to DT enumeration. To
+> accommodate this use case, a "stat-gpios" property was introduced to
+> allow configuring the IRQ.
+>=20
+> However this issue with ACPI was fixed in commit "845c877 i2c / ACPI:
+> Assign IRQ for devices that have GpioInt automatically" and makes this
+> workaround no longer necessary, hence we can remove the support for the
+> "stat-gpios" property and the associated code from the bq24257 driver.
 
---b.
+Thanks, queued.
 
+-- Sebastian
 
-> 
-> Thanks,
-> Andreas
-> 
-> Andreas Gruenbacher (39):
->   vfs: Add IS_ACL() and IS_RICHACL() tests
->   vfs: Add MAY_CREATE_FILE and MAY_CREATE_DIR permission flags
->   vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD permission flags
->   vfs: Make the inode passed to inode_change_ok non-const
->   vfs: Add permission flags for setting file attributes
->   richacl: In-memory representation and helper functions
->   richacl: Permission mapping functions
->   richacl: Compute maximum file masks from an acl
->   richacl: Update the file masks in chmod()
->   richacl: Permission check algorithm
->   vfs: Cache base_acl objects in inodes
->   vfs: Cache richacl in struct inode
->   richacl: Check if an acl is equivalent to a file mode
->   richacl: Create-time inheritance
->   richacl: Automatic Inheritance
->   richacl: xattr mapping functions
->   vfs: Add richacl permission checking
->   richacl: acl editing helper functions
->   richacl: Move everyone@ aces down the acl
->   richacl: Propagate everyone@ permissions to other aces
->   richacl: Set the owner permissions to the owner mask
->   richacl: Set the other permissions to the other mask
->   richacl: Isolate the owner and group classes
->   richacl: Apply the file masks to a richacl
->   richacl: Create richacl from mode values
->   nfsd: Keep list of acls to dispose of in compoundargs
->   nfsd: Use richacls as internal acl representation
->   nfsd: Add richacl support
->   nfsd: Add support for the v4.1 dacl attribute
->   nfsd: Add support for the MAY_CREATE_{FILE,DIR} permissions
->   richacl: Add support for unmapped identifiers
->   ext4: Don't allow unmapped identifiers in richacls
->   sunrpc: Allow to demand-allocate pages to encode into
->   sunrpc: Add xdr_init_encode_pages
->   nfs: Fix GETATTR bitmap verification
->   nfs: Remove unused xdr page offsets in getacl/setacl arguments
->   nfs: Add richacl support
->   nfs: Add support for the v4.1 dacl attribute
->   richacl: uapi header split
-> 
-> Aneesh Kumar K.V (2):
->   ext4: Add richacl support
->   ext4: Add richacl feature flag
-> 
->  drivers/staging/lustre/lustre/llite/llite_lib.c |   2 +-
->  fs/Kconfig                                      |   9 +
->  fs/Makefile                                     |   3 +
->  fs/attr.c                                       |  81 ++-
->  fs/ext4/Kconfig                                 |  15 +
->  fs/ext4/Makefile                                |   1 +
->  fs/ext4/acl.c                                   |   6 +-
->  fs/ext4/acl.h                                   |  12 +-
->  fs/ext4/ext4.h                                  |   6 +-
->  fs/ext4/file.c                                  |   6 +-
->  fs/ext4/ialloc.c                                |   7 +-
->  fs/ext4/inode.c                                 |  10 +-
->  fs/ext4/namei.c                                 |  11 +-
->  fs/ext4/richacl.c                               | 218 ++++++
->  fs/ext4/richacl.h                               |  47 ++
->  fs/ext4/super.c                                 |  42 +-
->  fs/ext4/xattr.c                                 |   6 +
->  fs/ext4/xattr.h                                 |   1 +
->  fs/f2fs/acl.c                                   |   4 +-
->  fs/inode.c                                      |  15 +-
->  fs/jffs2/acl.c                                  |   6 +-
->  fs/namei.c                                      | 111 ++-
->  fs/nfs/inode.c                                  |   3 -
->  fs/nfs/nfs4proc.c                               | 701 +++++++++++++-----
->  fs/nfs/nfs4xdr.c                                | 257 ++++++-
->  fs/nfs/super.c                                  |   4 +-
->  fs/nfs_common/Makefile                          |   1 +
->  fs/nfs_common/nfs4acl.c                         |  44 ++
->  fs/nfsd/Kconfig                                 |   1 +
->  fs/nfsd/acl.h                                   |  23 +-
->  fs/nfsd/nfs4acl.c                               | 482 +++++++------
->  fs/nfsd/nfs4proc.c                              |  25 +-
->  fs/nfsd/nfs4xdr.c                               | 268 ++++---
->  fs/nfsd/nfsd.h                                  |   6 +-
->  fs/nfsd/nfsfh.c                                 |   8 +-
->  fs/nfsd/vfs.c                                   |  28 +-
->  fs/nfsd/vfs.h                                   |  17 +-
->  fs/nfsd/xdr4.h                                  |  12 +-
->  fs/posix_acl.c                                  |  26 +-
->  fs/richacl_base.c                               | 682 ++++++++++++++++++
->  fs/richacl_compat.c                             | 915 ++++++++++++++++++++++++
->  fs/richacl_inode.c                              | 297 ++++++++
->  fs/richacl_xattr.c                              | 267 +++++++
->  fs/xattr.c                                      |  34 +-
->  include/linux/fs.h                              |  50 +-
->  include/linux/nfs4.h                            |  24 +-
->  include/linux/nfs4acl.h                         |   7 +
->  include/linux/nfs_fs.h                          |   1 -
->  include/linux/nfs_fs_sb.h                       |   2 +
->  include/linux/nfs_xdr.h                         |  13 +-
->  include/linux/posix_acl.h                       |  12 +-
->  include/linux/richacl.h                         | 275 +++++++
->  include/linux/richacl_compat.h                  |  40 ++
->  include/linux/richacl_xattr.h                   |  47 ++
->  include/linux/sunrpc/xdr.h                      |   2 +
->  include/uapi/linux/Kbuild                       |   2 +
->  include/uapi/linux/fs.h                         |   3 +-
->  include/uapi/linux/nfs4.h                       |   3 +-
->  include/uapi/linux/richacl.h                    | 111 +++
->  include/uapi/linux/richacl_xattr.h              |  43 ++
->  include/uapi/linux/xattr.h                      |   2 +
->  net/sunrpc/xdr.c                                |  34 +
->  62 files changed, 4659 insertions(+), 732 deletions(-)
->  create mode 100644 fs/ext4/richacl.c
->  create mode 100644 fs/ext4/richacl.h
->  create mode 100644 fs/nfs_common/nfs4acl.c
->  create mode 100644 fs/richacl_base.c
->  create mode 100644 fs/richacl_compat.c
->  create mode 100644 fs/richacl_inode.c
->  create mode 100644 fs/richacl_xattr.c
->  create mode 100644 include/linux/nfs4acl.h
->  create mode 100644 include/linux/richacl.h
->  create mode 100644 include/linux/richacl_compat.h
->  create mode 100644 include/linux/richacl_xattr.h
->  create mode 100644 include/uapi/linux/richacl.h
->  create mode 100644 include/uapi/linux/richacl_xattr.h
-> 
-> -- 
-> 2.4.3
-> 
-> 
-> Andreas Gruenbacher (39):
->   vfs: Add IS_ACL() and IS_RICHACL() tests
->   vfs: Add MAY_CREATE_FILE and MAY_CREATE_DIR permission flags
->   vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD permission flags
->   vfs: Make the inode passed to inode_change_ok non-const
->   vfs: Add permission flags for setting file attributes
->   richacl: In-memory representation and helper functions
->   richacl: Permission mapping functions
->   richacl: Compute maximum file masks from an acl
->   richacl: Update the file masks in chmod()
->   richacl: Permission check algorithm
->   vfs: Cache base_acl objects in inodes
->   vfs: Cache richacl in struct inode
->   richacl: Check if an acl is equivalent to a file mode
->   richacl: Create-time inheritance
->   richacl: Automatic Inheritance
->   richacl: xattr mapping functions
->   vfs: Add richacl permission checking
->   richacl: acl editing helper functions
->   richacl: Move everyone@ aces down the acl
->   richacl: Propagate everyone@ permissions to other aces
->   richacl: Set the owner permissions to the owner mask
->   richacl: Set the other permissions to the other mask
->   richacl: Isolate the owner and group classes
->   richacl: Apply the file masks to a richacl
->   richacl: Create richacl from mode values
->   nfsd: Keep list of acls to dispose of in compoundargs
->   nfsd: Use richacls as internal acl representation
->   nfsd: Add richacl support
->   nfsd: Add support for the v4.1 dacl attribute
->   nfsd: Add support for the MAY_CREATE_{FILE,DIR} permissions
->   richacl: Add support for unmapped identifiers
->   ext4: Don't allow unmapped identifiers in richacls
->   sunrpc: Allow to demand-allocate pages to encode into
->   sunrpc: Add xdr_init_encode_pages
->   nfs: Fix GETATTR bitmap verification
->   nfs: Remove unused xdr page offsets in getacl/setacl arguments
->   nfs: Add richacl support
->   nfs: Add support for the v4.1 dacl attribute
->   richacl: uapi header split
-> 
-> Aneesh Kumar K.V (2):
->   ext4: Add richacl support
->   ext4: Add richacl feature flag
-> 
->  drivers/staging/lustre/lustre/llite/llite_lib.c |   2 +-
->  fs/Kconfig                                      |   9 +
->  fs/Makefile                                     |   3 +
->  fs/attr.c                                       |  81 ++-
->  fs/ext4/Kconfig                                 |  15 +
->  fs/ext4/Makefile                                |   1 +
->  fs/ext4/acl.c                                   |   6 +-
->  fs/ext4/acl.h                                   |  12 +-
->  fs/ext4/ext4.h                                  |   6 +-
->  fs/ext4/file.c                                  |   6 +-
->  fs/ext4/ialloc.c                                |   7 +-
->  fs/ext4/inode.c                                 |  10 +-
->  fs/ext4/namei.c                                 |  11 +-
->  fs/ext4/richacl.c                               | 218 ++++++
->  fs/ext4/richacl.h                               |  47 ++
->  fs/ext4/super.c                                 |  42 +-
->  fs/ext4/xattr.c                                 |   6 +
->  fs/ext4/xattr.h                                 |   1 +
->  fs/f2fs/acl.c                                   |   4 +-
->  fs/inode.c                                      |  15 +-
->  fs/jffs2/acl.c                                  |   6 +-
->  fs/namei.c                                      | 111 ++-
->  fs/nfs/inode.c                                  |   3 -
->  fs/nfs/nfs4proc.c                               | 701 +++++++++++++-----
->  fs/nfs/nfs4xdr.c                                | 257 ++++++-
->  fs/nfs/super.c                                  |   4 +-
->  fs/nfs_common/Makefile                          |   1 +
->  fs/nfs_common/nfs4acl.c                         |  44 ++
->  fs/nfsd/Kconfig                                 |   1 +
->  fs/nfsd/acl.h                                   |  23 +-
->  fs/nfsd/nfs4acl.c                               | 482 +++++++------
->  fs/nfsd/nfs4proc.c                              |  25 +-
->  fs/nfsd/nfs4xdr.c                               | 268 ++++---
->  fs/nfsd/nfsd.h                                  |   6 +-
->  fs/nfsd/nfsfh.c                                 |   8 +-
->  fs/nfsd/vfs.c                                   |  28 +-
->  fs/nfsd/vfs.h                                   |  17 +-
->  fs/nfsd/xdr4.h                                  |  12 +-
->  fs/posix_acl.c                                  |  26 +-
->  fs/richacl_base.c                               | 682 ++++++++++++++++++
->  fs/richacl_compat.c                             | 915 ++++++++++++++++++++++++
->  fs/richacl_inode.c                              | 297 ++++++++
->  fs/richacl_xattr.c                              | 267 +++++++
->  fs/xattr.c                                      |  34 +-
->  include/linux/fs.h                              |  50 +-
->  include/linux/nfs4.h                            |  24 +-
->  include/linux/nfs4acl.h                         |   7 +
->  include/linux/nfs_fs.h                          |   1 -
->  include/linux/nfs_fs_sb.h                       |   2 +
->  include/linux/nfs_xdr.h                         |  13 +-
->  include/linux/posix_acl.h                       |  12 +-
->  include/linux/richacl.h                         | 275 +++++++
->  include/linux/richacl_compat.h                  |  40 ++
->  include/linux/richacl_xattr.h                   |  47 ++
->  include/linux/sunrpc/xdr.h                      |   2 +
->  include/uapi/linux/Kbuild                       |   2 +
->  include/uapi/linux/fs.h                         |   3 +-
->  include/uapi/linux/nfs4.h                       |   3 +-
->  include/uapi/linux/richacl.h                    | 111 +++
->  include/uapi/linux/richacl_xattr.h              |  43 ++
->  include/uapi/linux/xattr.h                      |   2 +
->  net/sunrpc/xdr.c                                |  34 +
->  62 files changed, 4659 insertions(+), 732 deletions(-)
->  create mode 100644 fs/ext4/richacl.c
->  create mode 100644 fs/ext4/richacl.h
->  create mode 100644 fs/nfs_common/nfs4acl.c
->  create mode 100644 fs/richacl_base.c
->  create mode 100644 fs/richacl_compat.c
->  create mode 100644 fs/richacl_inode.c
->  create mode 100644 fs/richacl_xattr.c
->  create mode 100644 include/linux/nfs4acl.h
->  create mode 100644 include/linux/richacl.h
->  create mode 100644 include/linux/richacl_compat.h
->  create mode 100644 include/linux/richacl_xattr.h
->  create mode 100644 include/uapi/linux/richacl.h
->  create mode 100644 include/uapi/linux/richacl_xattr.h
-> 
-> -- 
-> 2.4.3
+--1sNVjLsmu1MXqwQ/
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBCgAGBQJWCW0BAAoJENju1/PIO/qaUOsP/AslesqcRf3DIzhbbZik7xR2
+1j6fMTnWqkVOT+tGk5gFF+DhWJwXKmfibPG04yNNojuMZ1FXjY9CVsqrIl5ncUWP
+cvjDRde1wRwibtnxhMjIDw14B3gxk3wVGEHRELCSTFiMpISsKL83PbqqdIKMJpKW
+me0p0BpS0u1xq4DGRsnw7XFE5TB+DRj/Is9SPt9ErjWIxHKxQEAsSWalk+oX3c4v
+ZSf/oLnoj/iuXLMOindPuhYKS6HWadoJjxKfJV6/cxvPw9nLeVLTJk1NJ1itlo9E
+N6rCj6wTNcMdacD05kEJGIzJoShdpUxgcfXwqOXJXPGGocmJPpRUaFlF3QPeb9ii
+pLI8qz/5ljIGeSh7tG29ziyqm6IWPNINzupWgjL4ljKuYR5Bqpiw2iVInCt6dMAy
+ImCpWZLc2OYOw/aGaORthe+DHRPsp7lGbppEmwYNkjvysvDxxjbKm+HahxDr/2kA
+490K3EeYpQVXzKFHHRJpqWUwcYaxi8VWlbpjCSaaSt4s/GPh6iL/Rr0xBdBXDkco
+D+jW+Gm+FA/ox+ct0nQME4inHXvynFOEu8vencRUfE1LrXMaVLhTRvDven6BfePr
+ttUMGqzpGfsC9iVnZJ2I4sVy/1lUMs9ZBVR9dAS2GGtvGPX099Pcds9CPAA0ch9G
+QNKe5csieX/OaTkx4GLB
+=RlQL
+-----END PGP SIGNATURE-----
+
+--1sNVjLsmu1MXqwQ/--
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
