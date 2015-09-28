@@ -1,63 +1,107 @@
-From: Krzysztof Kozlowski <k.kozlowski@samsung.com>
-Subject: Re: [PATCH v7 00/15] power: bq24257: Add support for bq24250/bq24251
-Date: Mon, 28 Sep 2015 21:14:33 +0900
-Message-ID: <56092F29.8060106@samsung.com>
+From: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH v7 01/15] dt: power: bq24257-charger: Cover additional
+ devices
+Date: Mon, 28 Sep 2015 21:16:22 +0900
+Message-ID: <56092F96.4000502@samsung.com>
 References: <1443196460-26156-1-git-send-email-dannenberg@ti.com>
+ <1443196460-26156-2-git-send-email-dannenberg@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-2
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-pm-owner@vger.kernel.org>
-In-Reply-To: <1443196460-26156-1-git-send-email-dannenberg@ti.com>
-Sender: linux-pm-owner@vger.kernel.org
-To: Andreas Dannenberg <dannenberg@ti.com>, Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, Laurentiu Palcu <laurentiu.palcu@intel.com>
-Cc: Ramakrishna Pallala <ramakrishna.pallala@intel.com>, linux-pm@vger.kernel.org, devicetree@vger.kernel.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1443196460-26156-2-git-send-email-dannenberg-l0cyMroinI0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>, Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Laurentiu Palcu <laurentiu.palcu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Ramakrishna Pallala <ramakrishna.pallala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 W dniu 26.09.2015 o 00:54, Andreas Dannenberg pisze:
-> This patch series extends the driver to also support bq24250/bq24251.
+> Extend the bq24257 charger's device tree documentation to cover the
+> bq24250 and bq24251 devices as well feature additions.
 > 
-> The bq24250/251/257 devices have a very similar feature set and are
-> virtually identical from a control register point of view so it made
-> sense to extend the existing driver rather than submitting a new driver.
-> In addition to the new device support the driver is also extended to
-> allow access to some device features previously hidden. Basic and
-> potentially dangerous charger config parameters affecting the actual
-> charging of the Li-Ion battery are only configurable through firmware
-> rather than sysfs properties. However some newly introduced properties
-> are exposed through sysfs properties as access to them may be desired
-> from userspace. For example, it is now possible to manually configure
-> the maximum current drawn from the input source to accommodate different
-> chargers (0.5A, 1.5A, 2.0A and so on) based on system knowledge a
-> userspace application may have rather than rely on the auto-detection
-> mechanism that may not work in all possible scenarios.
+> Signed-off-by: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
+> ---
+>  .../devicetree/bindings/power/bq24257.txt          | 53 ++++++++++++++++++++--
+>  1 file changed, 48 insertions(+), 5 deletions(-)
 > 
-> Note that most patches have dependencies on other patches in the series.
-> 
-> v7:
-> - Fixed an issue that would have impacted running bisect on the series
->   and double checked the entire series builds one by one by running
->   a git rebase -i --exec="make ..." ... on the Kernel tree
-> - Minor simplification of a return from a function
-> 
-> v6:
-> - Removed the ability to configure the IRQ through "stat-gpios"
-> - Allow re-configuring the input_current_limit via sysfs also when
->   charger auto-detection is enabled
-> - Use gpiod interface for initialization as a platform device (nice
->   GPIO setup simplification)
-> - Document all newly introduced sysfs nodes
-> - Streamlined/fixed/simplified charger state handling as it relates
->   to battery removal/insertion and the associated handling of the
->   input current limit setting
-> - Minor simplifications/cleanup
-> - Rebased onto git://git.kernel.org/pub/scm/linux/kernel/git/sre/linux-
->   power-supply.git (branch "next") and completely retested
+> diff --git a/Documentation/devicetree/bindings/power/bq24257.txt b/Documentation/devicetree/bindings/power/bq24257.txt
+> index 5c9d394..6c376ef 100644
+> --- a/Documentation/devicetree/bindings/power/bq24257.txt
+> +++ b/Documentation/devicetree/bindings/power/bq24257.txt
+> @@ -1,21 +1,64 @@
+> -Binding for TI bq24257 Li-Ion Charger
+> +Binding for TI bq24250/bq24251/bq24257 Li-Ion Charger
+>  
+>  Required properties:
+>  - compatible: Should contain one of the following:
+> + * "ti,bq24250"
+> + * "ti,bq24251"
+>   * "ti,bq24257"
+> -- reg:			   integer, i2c address of the device.
+> +- reg: integer, i2c address of the device.
+> +- interrupt-parent: Should be the phandle for the interrupt controller. Use in
+> +    conjunction with "interrupts".
+> +- interrupts: Interrupt mapping for GPIO IRQ (configure for both edges). Use in
+> +    conjunction with "interrupt-parent".
+>  - ti,battery-regulation-voltage: integer, maximum charging voltage in uV.
+> -- ti,charge-current:	   integer, maximum charging current in uA.
+> -- ti,termination-current:  integer, charge will be terminated when current in
+> -			   constant-voltage phase drops below this value (in uA).
+> +- ti,charge-current: integer, maximum charging current in uA.
+> +- ti,termination-current: integer, charge will be terminated when current in
+> +    constant-voltage phase drops below this value (in uA).
+> +
+> +Optional properties:
+> +- pg-gpios: GPIO used for connecting the bq2425x device PG (Power Good) pin.
+> +    This pin is not available on all devices however it should be used if
+> +    possible as this is the recommended way to obtain the charger's input PG
+> +    state. If this pin is not specified a software-based approach for PG
+> +    detection is used.
+> +- ti,current-limit: The maximum current to be drawn from the charger's input
+> +    (in uA). If this property is not specified a USB D+/D- signal based charger
+> +    type detection is used (if available) and the input limit current is set
+> +    accordingly. If the D+/D- based detection is not available on a given device
+> +    a default of 500,000 is used (=500mA).
+> +- ti,ovp-voltage: Configures the over voltage protection voltage (in uV). If
+> +    not specified a default of 6,5000,000 (=6.5V) is used.
+> +- ti,in-dpm-voltage: Configures the threshold input voltage for the dynamic
+> +    power path management (in uV). If not specified a default of 4,360,000
+> +    (=4.36V) is used.
+>  
+>  Example:
+>  
+>  bq24257 {
+>  	compatible = "ti,bq24257";
+>  	reg = <0x6a>;
+> +	interrupt-parent = <&gpio1>;
+> +	interrupts = <16 IRQ_TYPE_EDGE_BOTH>;
+> +
+> +	pg-gpios = <&gpio1 28 GPIO_ACTIVE_HIGH>;
+>  
+>  	ti,battery-regulation-voltage = <4200000>;
+>  	ti,charge-current = <1000000>;
+>  	ti,termination-current = <50000>;
+>  };
+> +
+> +Example:
+> +
+> +bq24250 {
+> +	compatible = "ti,bq24250";
+> +	reg = <0x6a>;
+> +	interrupt-parent = <&gpio1>;
+> +	interrupts = <16 IRQ_TYPE_EDGE_BOTH>;
+> +
+> +	ti,battery-regulation-voltage = <4200000>;
+> +	ti,charge-current = <500000>;
+> +	ti,termination-current = <50000>;
+> +	ti,current-limit = <900000>;
+> +	ti,ovp-voltage = <9500000>;
+> +	ti,in-dpm-voltage = <4440000>;
+> +};
 
-It would be useful if you would mark which patches have changed. I
-reviewed already the first patch but you did not add my reviewed-by tag.
-I suppose something changed... but I can't find the exact reason for
-missing review.
+Once again:
+
+Reviewed-by: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 
 Best regards,
 Krzysztof
-
