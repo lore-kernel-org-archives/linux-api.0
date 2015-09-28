@@ -1,108 +1,107 @@
 From: Dave Hansen <dave@sr71.net>
-Subject: [PATCH 00/25] x86: Memory Protection Keys
-Date: Mon, 28 Sep 2015 12:18:17 -0700
-Message-ID: <20150928191817.035A64E2@viggo.jf.intel.com>
-Return-path: <owner-linux-mm@kvack.org>
-Sender: owner-linux-mm@kvack.org
+Subject: [PATCH 21/25] mm: implement new mprotect_key() system call
+Date: Mon, 28 Sep 2015 12:18:26 -0700
+Message-ID: <20150928191826.F1CD5256@viggo.jf.intel.com>
+References: <20150928191817.035A64E2@viggo.jf.intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150928191817.035A64E2@viggo.jf.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: dave@sr71.net
-Cc: borntraeger@de.ibm.com, x86@kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org
+Cc: borntraeger@de.ibm.com, x86@kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, dave.hansen@linux.intel.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-I have addressed all known issues and review comments.  I believe
-they are ready to be pulled in to the x86 tree.  Note that this
-is also the first time anyone has seen the new 'selftests' code.
-If there are issues limited to it, I'd prefer to fix those up
-separately post-merge.
 
-Changes from RFCv2 (Thanks Ingo and Thomas for most of these):
+From: Dave Hansen <dave.hansen@linux.intel.com>
 
- * few minor compile warnings
- * changed 'nopku' interaction with cpuid bits.  Now, we do not
-   clear the PKU cpuid bit, we just skip enabling it.
- * changed __pkru_allows_write() to also check access disable bit
- * removed the unused write_pkru()
- * made si_pkey a u64 and added some patch description details.
-   Also made it share space in siginfo with MPX and clarified
-   comments.
- * give some real text for the Processor Trace xsave state
- * made vma_pkey() less ugly (and much more optimized actually)
- * added SEGV_PKUERR to copy_siginfo_to_user()
- * remove page table walk when filling in si_pkey, added some
-   big fat comments about it being inherently racy.
- * added self test code
+mprotect_key() is just like mprotect, except it also takes a
+protection key as an argument.  On systems that do not support
+protection keys, it still works, but requires that key=0.
+Otherwise it does exactly what mprotect does.
 
-MM reviewers, if you are going to look at one thing, please look
-at patch 14 which adds a bunch of additional vma/pte permission
-checks.
+I expect it to get used like this, if you want to guarantee that
+any mapping you create can *never* be accessed without the right
+protection keys set up.
 
-This code contains a new system call: mprotect_key(),  This needs
-the usual amount of rigor around new interfaces.  Review there
-would be much appreciated.
+	pkey_deny_access(11); // random pkey
+	int real_prot = PROT_READ|PROT_WRITE;
+	ptr = mmap(NULL, PAGE_SIZE, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+	ret = mprotect_key(ptr, PAGE_SIZE, real_prot, 11);
 
-This code is not runnable to anyone outside of Intel unless they
-have some special hardware or a fancy simulator.  If you are
-interested in running this for real, please get in touch with me.
-Hardware is available to a very small but nonzero number of
-people.
+This way, there is *no* window where the mapping is accessible
+since it was always either PROT_NONE or had a protection key set.
 
-This set is also available here (with the new syscall):
+We settled on 'unsigned long' for the type of the key here.  We
+only need 4 bits on x86 today, but I figured that other
+architectures might need some more space.
 
-	git://git.kernel.org/pub/scm/linux/kernel/git/daveh/x86-pkeys.git pkeys-v006
-
-=== diffstat ===
-
-(note that over half of this is kselftests)
-
- Documentation/kernel-parameters.txt           |    3 
- Documentation/x86/protection-keys.txt         |   54 +
- arch/powerpc/include/asm/mman.h               |    5 
- arch/powerpc/include/asm/mmu_context.h        |   11 
- arch/s390/include/asm/mmu_context.h           |   11 
- arch/unicore32/include/asm/mmu_context.h      |   11 
- arch/x86/Kconfig                              |   15 
- arch/x86/entry/syscalls/syscall_32.tbl        |    1 
- arch/x86/entry/syscalls/syscall_64.tbl        |    1 
- arch/x86/include/asm/cpufeature.h             |   54 +
- arch/x86/include/asm/disabled-features.h      |   12 
- arch/x86/include/asm/fpu/types.h              |   16 
- arch/x86/include/asm/fpu/xstate.h             |    4 
- arch/x86/include/asm/mmu_context.h            |   71 ++
- arch/x86/include/asm/pgtable.h                |   45 +
- arch/x86/include/asm/pgtable_types.h          |   34 -
- arch/x86/include/asm/required-features.h      |    4 
- arch/x86/include/asm/special_insns.h          |   32 +
- arch/x86/include/uapi/asm/mman.h              |   23 
- arch/x86/include/uapi/asm/processor-flags.h   |    2 
- arch/x86/kernel/cpu/common.c                  |   42 +
- arch/x86/kernel/fpu/xstate.c                  |    7 
- arch/x86/kernel/process_64.c                  |    2 
- arch/x86/kernel/setup.c                       |    9 
- arch/x86/mm/fault.c                           |  143 +++-
- arch/x86/mm/gup.c                             |   37 -
- drivers/char/agp/frontend.c                   |    2 
- drivers/staging/android/ashmem.c              |    9 
- fs/proc/task_mmu.c                            |    5 
- include/asm-generic/mm_hooks.h                |   11 
- include/linux/mm.h                            |   13 
- include/linux/mman.h                          |    6 
- include/uapi/asm-generic/siginfo.h            |   17 
- kernel/signal.c                               |    4 
- mm/Kconfig                                    |   11 
- mm/gup.c                                      |   28 
- mm/memory.c                                   |    4 
- mm/mmap.c                                     |    2 
- mm/mprotect.c                                 |   20 
- mm/nommu.c                                    |    2 
- tools/testing/selftests/x86/Makefile          |    3 
- tools/testing/selftests/x86/pkey-helpers.h    |  182 +++++
- tools/testing/selftests/x86/protection_keys.c |  828 ++++++++++++++++++++++++++
- 43 files changed, 1705 insertions(+), 91 deletions(-)
-
+Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
 Cc: linux-api@vger.kernel.org
-Cc: linux-arch@vger.kernel.org
+---
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+ b/mm/Kconfig    |    7 +++++++
+ b/mm/mprotect.c |   20 +++++++++++++++++---
+ 2 files changed, 24 insertions(+), 3 deletions(-)
+
+diff -puN mm/Kconfig~pkeys-85-mprotect_pkey mm/Kconfig
+--- a/mm/Kconfig~pkeys-85-mprotect_pkey	2015-09-28 11:39:50.527391162 -0700
++++ b/mm/Kconfig	2015-09-28 11:39:50.532391390 -0700
+@@ -683,3 +683,10 @@ config FRAME_VECTOR
+ 
+ config ARCH_USES_HIGH_VMA_FLAGS
+ 	bool
++
++config NR_PROTECTION_KEYS
++	int
++	# Everything supports a _single_ key, so allow folks to
++	# at least call APIs that take keys, but require that the
++	# key be 0.
++	default 1
+diff -puN mm/mprotect.c~pkeys-85-mprotect_pkey mm/mprotect.c
+--- a/mm/mprotect.c~pkeys-85-mprotect_pkey	2015-09-28 11:39:50.529391253 -0700
++++ b/mm/mprotect.c	2015-09-28 11:39:50.532391390 -0700
+@@ -344,8 +344,8 @@ fail:
+ 	return error;
+ }
+ 
+-SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
+-		unsigned long, prot)
++static int do_mprotect_key(unsigned long start, size_t len,
++		unsigned long prot, unsigned long key)
+ {
+ 	unsigned long vm_flags, nstart, end, tmp, reqprot;
+ 	struct vm_area_struct *vma, *prev;
+@@ -365,6 +365,8 @@ SYSCALL_DEFINE3(mprotect, unsigned long,
+ 		return -ENOMEM;
+ 	if (!arch_validate_prot(prot))
+ 		return -EINVAL;
++	if (key >= CONFIG_NR_PROTECTION_KEYS)
++		return -EINVAL;
+ 
+ 	reqprot = prot;
+ 	/*
+@@ -373,7 +375,7 @@ SYSCALL_DEFINE3(mprotect, unsigned long,
+ 	if ((prot & PROT_READ) && (current->personality & READ_IMPLIES_EXEC))
+ 		prot |= PROT_EXEC;
+ 
+-	vm_flags = calc_vm_prot_bits(prot, 0);
++	vm_flags = calc_vm_prot_bits(prot, key);
+ 
+ 	down_write(&current->mm->mmap_sem);
+ 
+@@ -443,3 +445,15 @@ out:
+ 	up_write(&current->mm->mmap_sem);
+ 	return error;
+ }
++
++SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
++		unsigned long, prot)
++{
++	return do_mprotect_key(start, len, prot, 0);
++}
++
++SYSCALL_DEFINE4(mprotect_key, unsigned long, start, size_t, len,
++		unsigned long, prot, unsigned long, key)
++{
++	return do_mprotect_key(start, len, prot, key);
++}
+_
