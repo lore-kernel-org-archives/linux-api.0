@@ -1,110 +1,71 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [RFC v2 07/18] kthread: Allow to cancel kthread work
-Date: Mon, 28 Sep 2015 13:03:14 -0400
-Message-ID: <20150928170314.GF2589@mtj.duckdns.org>
-References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
- <1442840639-6963-8-git-send-email-pmladek@suse.com>
- <20150922193513.GE17659@mtj.duckdns.org>
- <20150925112617.GA3122@pathway.suse.cz>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH RFC v3 2/2] pidns: introduce syscall getvpid
+Date: Mon, 28 Sep 2015 11:57:39 -0500
+Message-ID: <87d1x25vng.fsf@x220.int.ebiederm.org>
+References: <20150925135246.27620.97496.stgit@buzz>
+	<20150925135247.27620.37109.stgit@buzz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150925112617.GA3122@pathway.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <20150925135247.27620.37109.stgit@buzz> (Konstantin Khlebnikov's
+	message of "Fri, 25 Sep 2015 16:52:47 +0300")
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
+Cc: Roman Gushchin <klamm-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Chen Fan <chen.fan.fnst-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello, Petr.
+Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org> writes:
 
-On Fri, Sep 25, 2015 at 01:26:17PM +0200, Petr Mladek wrote:
-> 1) PENDING state plus -EAGAIN/busy loop cycle
-> ---------------------------------------------
-> 
-> IMHO, we want to use the timer because it is an elegant solution.
-> Then we must release the lock when the timer is running. The lock
-> must be taken by the timer->function(). And there is a small window
-> when the timer is not longer pending but timer->function is not running:
-> 
-> CPU0                            CPU1
-> 
-> run_timer_softirq()
->   __run_timers()
->     detach_expired_timer()
->       detach_timer()
-> 	#clear_pending
-> 
-> 				try_to_grab_pending_kthread_work()
-> 				  del_timer()
-> 				    # fails because not pending
-> 
-> 				  test_and_set_bit(KTHREAD_WORK_PENDING_BIT)
-> 				    # fails because already set
-> 
-> 				  if (!list_empty(&work->node))
-> 				    # fails because still not queued
-> 
-> 			!!! problematic window !!!
-> 
->     call_timer_fn()
->      queue_kthraed_work()
+> If pid is negative then getvpid() returns pid of parent task for -pid.
 
-Let's say each work item has a state variable which is protected by a
-lock and the state can be one of IDLE, PENDING, CANCELING.  Let's also
-assume that all cancelers synchronize with each other via mutex, so we
-only have to worry about a single canceler.  Wouldn't something like
-the following work while being a lot simpler?
+Now that I am noticing this.  I don't think I have seen any discussion
+about justifying a syscall getting another processes parent pid.  My
+apologies if I just missed it.
 
-Delayed queueing and execution.
+Why do we want the the parent pid?  We can we usefully do with it?
+Is proc really that bad of an interface?
 
-1. Lock and check whether state is IDLE.  If not, nothing to do.
+Fetching a parent pid feels like a separate logical operation
+from pid translation.  Which makes me a bit uneasy about this
+part of the conversation.
 
-2. Set state to PENDING and schedule the timer and unlock.
+> Examples:
+> getvpid(pid, ns, -1)      - get pid in our pid namespace
+> getvpid(pid, -1, ns)      - get pid in container
+> getvpid(pid, -1, ns) > 0  - is pid is reachable from container?
+> getvpid(1, ns1, ns2) > 0  - is ns1 inside ns2?
+> getvpid(1, ns1, ns2) == 0 - is ns1 outside ns2?
+> getvpid(1, ns, -1)        - get init task of pid-namespace
+> getvpid(-1, ns, -1)       - get reaper of init task in parent pid-namespace
+> getvpid(-pid, -1, -1)     - get ppid by pid
 
-3. On expiration, timer_fn grabs the lock and see whether state is
-   still PENDING.  If so, schedule the work item for execution;
-   otherwise, nothing to do.
+As I step back and pay attention to this case I am half wondering if
+perhaps what would be most useful is a file descriptor that refers
+to a pid and an updated set of system calls that takes pid file
+descriptors instead of pids.
 
-4. After dequeueing from execution queue with lock held, the worker is
-   marked as executing the work item and state is reset to IDLE.
+Something like:
 
-Canceling
+    getpidfd(int pidnsfd, pid_t pid);
+    
+    waitfd(int pidfd, int *status, int options, struct rusage *rusage);
+    
+    killfd(int pidfd, int sig);
+    
+    clonefd(...);
+    
+And perhaps:
+    pid_nr_ns(int pidnsfd, int pidfd);
 
-1. Lock, dequeue and set the state to CANCELING.
+    parentfd(int pidfd);
 
-2. Unlock and perform del_timer_sync().
-
-3. Flush the work item.
-
-4. Lock and reset the state to IDLE and unlock.
-
-
-> 2) CANCEL state plus custom waitqueue
-> -------------------------------------
-> 
-> cancel_kthread_work_sync() has to wait for the running work. It might take
-> quite some time. Therefore we could not block others by a spinlock.
-> Also others could not wait for the spin lock in a busy wait.
-
-Hmmm?  Cancelers can synchronize amongst them using a mutex and the
-actual work item wait can use flushing.
-
-> IMHO, the proposed and rather complex solutions are needed in both cases.
-> 
-> Or did I miss a possible trick, please?
-
-I probably have missed something in the above and it is not completley
-correct but I do think it can be way simpler than how workqueue does
-it.
-
-Thanks.
-
--- 
-tejun
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Eric
