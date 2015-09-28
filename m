@@ -1,216 +1,105 @@
-From: Chris Metcalf <cmetcalf@ezchip.com>
-Subject: [PATCH v7 03/11] task_isolation: support PR_TASK_ISOLATION_STRICT mode
-Date: Mon, 28 Sep 2015 11:17:18 -0400
-Message-ID: <1443453446-7827-4-git-send-email-cmetcalf@ezchip.com>
-References: <1443453446-7827-1-git-send-email-cmetcalf@ezchip.com>
+From: "J. Bruce Fields" <bfields@fieldses.org>
+Subject: Re: [PATCH v8 09/41] richacl: Update the file masks in chmod()
+Date: Mon, 28 Sep 2015 11:28:06 -0400
+Message-ID: <20150928152806.GC1358@fieldses.org>
+References: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
+ <1443391772-10171-10-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1443453446-7827-1-git-send-email-cmetcalf@ezchip.com>
+Content-Disposition: inline
+In-Reply-To: <1443391772-10171-10-git-send-email-agruenba@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: Chris Metcalf <cmetcalf@ezchip.com>
+To: Andreas Gruenbacher <agruenba@redhat.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-With task_isolation mode, the task is in principle guaranteed not to
-be interrupted by the kernel, but only if it behaves.  In particular,
-if it enters the kernel via system call, page fault, or any of a
-number of other synchronous traps, it may be unexpectedly exposed
-to long latencies.  Add a simple flag that puts the process into
-a state where any such kernel entry is fatal; this is defined as
-happening immediately after the SECCOMP test.
+On Mon, Sep 28, 2015 at 12:09:00AM +0200, Andreas Gruenbacher wrote:
+> Doing a chmod() sets the file mode, which includes the file permission
+> bits.  When a file has a richacl, the permissions that the richacl
+> grants need to be limited to what the new file permission bits allow.
+> 
+> This is done by setting the file masks in the richacl to what the file
+> permission bits map to.  The richacl access check algorithm takes the
+> file masks into account, which ensures that the richacl cannot grant too
+> many permissions.
+> 
+> It is possible to explicitly add permissions to the file masks which go
+> beyond what the file permission bits can grant (like the
+> RICHACE_WRITE_ACL permission).  The POSIX.1 standard calls this an
+> alternate file access control mechanism.  A subsequent chmod() would
+> ensure that those permissions are disabled again.
+> 
+> Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+> Reviewed-by: J. Bruce Fields <bfields@redhat.com>
+> ---
+>  fs/richacl_base.c       | 40 ++++++++++++++++++++++++++++++++++++++++
+>  include/linux/richacl.h |  1 +
+>  2 files changed, 41 insertions(+)
+> 
+> diff --git a/fs/richacl_base.c b/fs/richacl_base.c
+> index fc544f7..6c69234 100644
+> --- a/fs/richacl_base.c
+> +++ b/fs/richacl_base.c
+> @@ -339,3 +339,43 @@ restart:
+>  	acl->a_flags &= ~(RICHACL_WRITE_THROUGH | RICHACL_MASKED);
+>  }
+>  EXPORT_SYMBOL_GPL(richacl_compute_max_masks);
+> +
+> +/**
+> + * richacl_chmod  -  update the file masks to reflect the new mode
+> + * @mode:	new file permission bits including the file type
+> + *
+> + * Return a copy of @acl where the file masks have been replaced by the file
+> + * masks corresponding to the file permission bits in @mode, or returns @acl
+> + * itself if the file masks are already up to date.  Takes over a reference
+> + * to @acl.
+> + */
+> +struct richacl *
+> +richacl_chmod(struct richacl *acl, mode_t mode)
+> +{
+> +	unsigned int x = S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
+> +	unsigned int owner_mask, group_mask, other_mask;
+> +	struct richacl *clone;
+> +
+> +	owner_mask = richacl_mode_to_mask(mode >> 6) & ~x;
+> +	group_mask = richacl_mode_to_mask(mode >> 3) & ~x;
+> +	other_mask = richacl_mode_to_mask(mode)      & ~x;
+> +
+> +	if (acl->a_owner_mask == owner_mask &&
+> +	    acl->a_group_mask == group_mask &&
+> +	    acl->a_other_mask == other_mask &&
+> +	    (acl->a_flags & (RICHACL_WRITE_THROUGH | RICHACL_MASKED)))
 
-To allow the state to be entered and exited, we ignore the prctl()
-syscall so that we can clear the bit again later, and we ignore
-exit/exit_group to allow exiting the task without a pointless signal
-killing you as you try to do so.
+I think you meant to require both of those bits to be set.
 
-The signature of context_tracking_exit() changes to report whether
-we, in fact, are exiting back to user space, so that we can track
-user exceptions properly separately from other kernel entries.
+--b.
 
-Signed-off-by: Chris Metcalf <cmetcalf@ezchip.com>
----
- include/linux/context_tracking.h | 11 ++++++++---
- include/linux/isolation.h        | 16 ++++++++++++++++
- include/uapi/linux/prctl.h       |  1 +
- kernel/context_tracking.c        |  9 ++++++---
- kernel/isolation.c               | 41 ++++++++++++++++++++++++++++++++++++++++
- 5 files changed, 72 insertions(+), 6 deletions(-)
-
-diff --git a/include/linux/context_tracking.h b/include/linux/context_tracking.h
-index 008fc67d0d96..a840374f5d29 100644
---- a/include/linux/context_tracking.h
-+++ b/include/linux/context_tracking.h
-@@ -3,6 +3,7 @@
- 
- #include <linux/sched.h>
- #include <linux/vtime.h>
-+#include <linux/isolation.h>
- #include <linux/context_tracking_state.h>
- #include <asm/ptrace.h>
- 
-@@ -11,7 +12,7 @@
- extern void context_tracking_cpu_set(int cpu);
- 
- extern void context_tracking_enter(enum ctx_state state);
--extern void context_tracking_exit(enum ctx_state state);
-+extern bool context_tracking_exit(enum ctx_state state);
- extern void context_tracking_user_enter(void);
- extern void context_tracking_user_exit(void);
- 
-@@ -35,8 +36,12 @@ static inline enum ctx_state exception_enter(void)
- 		return 0;
- 
- 	prev_ctx = this_cpu_read(context_tracking.state);
--	if (prev_ctx != CONTEXT_KERNEL)
--		context_tracking_exit(prev_ctx);
-+	if (prev_ctx != CONTEXT_KERNEL) {
-+		if (context_tracking_exit(prev_ctx)) {
-+			if (task_isolation_strict())
-+				task_isolation_exception();
-+		}
-+	}
- 
- 	return prev_ctx;
- }
-diff --git a/include/linux/isolation.h b/include/linux/isolation.h
-index fd04011b1c1e..27a4469831c1 100644
---- a/include/linux/isolation.h
-+++ b/include/linux/isolation.h
-@@ -15,10 +15,26 @@ static inline bool task_isolation_enabled(void)
- }
- 
- extern void task_isolation_enter(void);
-+extern void task_isolation_syscall(int nr);
-+extern void task_isolation_exception(void);
- extern void task_isolation_wait(void);
- #else
- static inline bool task_isolation_enabled(void) { return false; }
- static inline void task_isolation_enter(void) { }
-+static inline void task_isolation_syscall(int nr) { }
-+static inline void task_isolation_exception(void) { }
- #endif
- 
-+static inline bool task_isolation_strict(void)
-+{
-+#ifdef CONFIG_TASK_ISOLATION
-+	if (tick_nohz_full_cpu(smp_processor_id()) &&
-+	    (current->task_isolation_flags &
-+	     (PR_TASK_ISOLATION_ENABLE | PR_TASK_ISOLATION_STRICT)) ==
-+	    (PR_TASK_ISOLATION_ENABLE | PR_TASK_ISOLATION_STRICT))
-+		return true;
-+#endif
-+	return false;
-+}
-+
- #endif
-diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
-index 67224df4b559..2b8038b0d1e1 100644
---- a/include/uapi/linux/prctl.h
-+++ b/include/uapi/linux/prctl.h
-@@ -201,5 +201,6 @@ struct prctl_mm_map {
- #define PR_SET_TASK_ISOLATION		48
- #define PR_GET_TASK_ISOLATION		49
- # define PR_TASK_ISOLATION_ENABLE	(1 << 0)
-+# define PR_TASK_ISOLATION_STRICT	(1 << 1)
- 
- #endif /* _LINUX_PRCTL_H */
-diff --git a/kernel/context_tracking.c b/kernel/context_tracking.c
-index 0a495ab35bc7..ffca3c3fe64a 100644
---- a/kernel/context_tracking.c
-+++ b/kernel/context_tracking.c
-@@ -144,15 +144,16 @@ NOKPROBE_SYMBOL(context_tracking_user_enter);
-  * This call supports re-entrancy. This way it can be called from any exception
-  * handler without needing to know if we came from userspace or not.
-  */
--void context_tracking_exit(enum ctx_state state)
-+bool context_tracking_exit(enum ctx_state state)
- {
- 	unsigned long flags;
-+	bool from_user = false;
- 
- 	if (!context_tracking_is_enabled())
--		return;
-+		return false;
- 
- 	if (in_interrupt())
--		return;
-+		return false;
- 
- 	local_irq_save(flags);
- 	if (!context_tracking_recursion_enter())
-@@ -166,6 +167,7 @@ void context_tracking_exit(enum ctx_state state)
- 			 */
- 			rcu_user_exit();
- 			if (state == CONTEXT_USER) {
-+				from_user = true;
- 				vtime_user_exit(current);
- 				trace_user_exit(0);
- 			}
-@@ -175,6 +177,7 @@ void context_tracking_exit(enum ctx_state state)
- 	context_tracking_recursion_exit();
- out_irq_restore:
- 	local_irq_restore(flags);
-+	return from_user;
- }
- NOKPROBE_SYMBOL(context_tracking_exit);
- EXPORT_SYMBOL_GPL(context_tracking_exit);
-diff --git a/kernel/isolation.c b/kernel/isolation.c
-index 6ace866c69f6..3779ba670472 100644
---- a/kernel/isolation.c
-+++ b/kernel/isolation.c
-@@ -10,6 +10,7 @@
- #include <linux/swap.h>
- #include <linux/vmstat.h>
- #include <linux/isolation.h>
-+#include <asm/unistd.h>
- #include "time/tick-sched.h"
- 
- /*
-@@ -75,3 +76,43 @@ void task_isolation_enter(void)
- 		dump_stack();
- 	}
- }
-+
-+static void kill_task_isolation_strict_task(void)
-+{
-+	/* RCU should have been enabled prior to this point. */
-+	RCU_LOCKDEP_WARN(!rcu_is_watching(), "kernel entry without RCU");
-+
-+	dump_stack();
-+	current->task_isolation_flags &= ~PR_TASK_ISOLATION_ENABLE;
-+	send_sig(SIGKILL, current, 1);
-+}
-+
-+/*
-+ * This routine is called from syscall entry (with the syscall number
-+ * passed in) if the _STRICT flag is set.
-+ */
-+void task_isolation_syscall(int syscall)
-+{
-+	/* Ignore prctl() syscalls or any task exit. */
-+	switch (syscall) {
-+	case __NR_prctl:
-+	case __NR_exit:
-+	case __NR_exit_group:
-+		return;
-+	}
-+
-+	pr_warn("%s/%d: task_isolation strict mode violated by syscall %d\n",
-+		current->comm, current->pid, syscall);
-+	kill_task_isolation_strict_task();
-+}
-+
-+/*
-+ * This routine is called from any userspace exception if the _STRICT
-+ * flag is set.
-+ */
-+void task_isolation_exception(void)
-+{
-+	pr_warn("%s/%d: task_isolation strict mode violated by exception\n",
-+		current->comm, current->pid);
-+	kill_task_isolation_strict_task();
-+}
--- 
-2.1.2
+> +		return acl;
+> +
+> +	clone = richacl_clone(acl, GFP_KERNEL);
+> +	richacl_put(acl);
+> +	if (!clone)
+> +		return ERR_PTR(-ENOMEM);
+> +
+> +	clone->a_flags |= (RICHACL_WRITE_THROUGH | RICHACL_MASKED);
+> +	clone->a_owner_mask = owner_mask;
+> +	clone->a_group_mask = group_mask;
+> +	clone->a_other_mask = other_mask;
+> +
+> +	return clone;
+> +}
+> +EXPORT_SYMBOL_GPL(richacl_chmod);
+> diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+> index e81144a..e00f313 100644
+> --- a/include/linux/richacl.h
+> +++ b/include/linux/richacl.h
+> @@ -298,5 +298,6 @@ extern int richacl_masks_to_mode(const struct richacl *);
+>  extern unsigned int richacl_mode_to_mask(mode_t);
+>  extern unsigned int richacl_want_to_mask(unsigned int);
+>  extern void richacl_compute_max_masks(struct richacl *);
+> +extern struct richacl *richacl_chmod(struct richacl *, mode_t);
+>  
+>  #endif /* __RICHACL_H */
+> -- 
+> 2.4.3
