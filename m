@@ -1,214 +1,330 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH RFC v3 2/2] pidns: introduce syscall getvpid
-Date: Mon, 28 Sep 2015 11:22:21 -0500
-Message-ID: <87a8s6a4zm.fsf@x220.int.ebiederm.org>
-References: <20150925135246.27620.97496.stgit@buzz>
-	<20150925135247.27620.37109.stgit@buzz>
+From: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Subject: Re: [PATCH v8 00/41] Richacls
+Date: Mon, 28 Sep 2015 12:35:43 -0400
+Message-ID: <20150928163543.GF1358@fieldses.org>
+References: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20150925135247.27620.37109.stgit@buzz> (Konstantin Khlebnikov's
-	message of "Fri, 25 Sep 2015 16:52:47 +0300")
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-Cc: Roman Gushchin <klamm-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Chen Fan <chen.fan.fnst-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1443391772-10171-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org> writes:
+On Mon, Sep 28, 2015 at 12:08:51AM +0200, Andreas Gruenbacher wrote:
+> here's another update of the richacl patch queue.  At this stage, I would
+> like to ask for final feedback so that the core and ext4 code (patches
+> 1-19) can be merged in the 4.4 merge window.  The nfsd and nfs code should
+> then go through the respective maintainer trees.
 
-> pid_t getvpid(pid_t pid, int source, int target);
->
-> This syscall converts pid from source pid-namespace into pid visible
-> in target pid-namespace. If pid is unreachable from target namespace
-> then getvpid() returns zero.
+I've been over the core richacl and nfsd parts very carefully, and they
+definitely look ready to me.
 
-Two minor things.
+> Changes since the last posting (https://lwn.net/Articles/656704/):
+> 
+> * The MAY_DELETE_SELF permission now also overrides the sticky
+>    directory checks.
+> 
+> * Fix the permission check algorithm to apply the owner mask instead
+>   of the group mask to user entries matching the current owner. That way,
+>   the owner will retain the permissions in those entries when creating
+>   objects with create mode 0700 and similar. (A chmod to mode 0700 already
+>   creates an owner@:rwpx::allow ace, which was hiding this bug.)
+> 
+> * Fix richacl_apply_masks to properly insert deny aces when raising the
+>   permissions of the other class. The bug could be triggered by
+>   chmod'ing a group@:r::allow acl to mode 0077, for example.
+> 
+> * Various cleanups and improvements to comments.
+> 
+> 
+> The complete patch queue is available here:
+> 
+>   git://git.kernel.org/pub/scm/linux/kernel/git/agruen/linux-richacl.git \
+>           richacl-2015-09-28
+> 
+> 
+> The richacl user-space utilitites and test suite are available here:
+> 
+>   https://github.com/andreas-gruenbacher/richacl/
+> 
+> 
+> Open issues in nfs:
+> 
+> * When a user or group name cannot be mapped, nfs's idmapper always maps it
+>   to nobody. That's good enough for mapping the file owner and owning
+>   group, but not for identifiers in acls. For now, to get the nfs richacl
+>   support somewhat working, I'm explicitly checking if mapping has resulted
+>   in uid/gid 99 in the kernel.
+>
+> * When the nfs server replies with NFS4ERR_BADNAME for any user or group
+>   name lookup, the client will stop sending numeric uids and gids to the
+>   server even when the lookup wasn't numeric.  From then on, the client
+>   will translate uids and gids that have no mapping to the string "nobody",
+>   and the server will reject them.  This problem is not specific to acls.
 
-Can we please call this translate_pid? getvpid does not really cover
-what this syscall does.
+Do you have fixes in mind for these two issues?
 
-Can you please split wiring up into a separate patch?  You goofed it
-up this round and it just adds noise in reviewing the core syscall.
+--b.
 
-> Namespaces are defined by file descriptors pointing to entries in
-> proc (/proc/[pid]/ns/pid). If argument is negative then current pid
-> namespace is used.
->
-> If pid is negative then getvpid() returns pid of parent task for -pid.
->
-> Possible error codes:
-> ESRCH    - task not found
-> EBADF    - closed file descriptor
-> EINVAL   - not pid-namespace file descriptor
->
-> Such conversion is required for interaction between processes from
-> different pid-namespaces. For example system service at host system
-> who provide access to restricted set of privileged operations for
-> clients from containers have to convert pids back and forward.
->
-> Recent kernels expose virtual pids in /proc/[pid]/status:NSpid, but
-> this interface works only in one way and even that is non-trivial.
->
-> Other option is passing pids with credentials via unix socket, but
-> this solution requires a lot of preparation and CAP_SYS_ADMIN for
-> sending arbitrary pids.
->
-> This syscall works in both directions, it's fast and simple.
->
-> Examples:
-> getvpid(pid, ns, -1)      - get pid in our pid namespace
-> getvpid(pid, -1, ns)      - get pid in container
-> getvpid(pid, -1, ns) > 0  - is pid is reachable from container?
-> getvpid(1, ns1, ns2) > 0  - is ns1 inside ns2?
-> getvpid(1, ns1, ns2) == 0 - is ns1 outside ns2?
-> getvpid(1, ns, -1)        - get init task of pid-namespace
-> getvpid(-1, ns, -1)       - get reaper of init task in parent pid-namespace
-> getvpid(-pid, -1, -1)     - get ppid by pid
->
-> Signed-off-by: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
->
-> --
->
-> v1: https://lkml.org/lkml/2015/9/15/411
-> v2: https://lkml.org/lkml/2015/9/24/278
-> v3:
->  * use proc_ns_fdget()
->  * update description
->  * rebase to next-20150925
->  * fix conflict with mlock2
-> ---
->  arch/x86/entry/syscalls/syscall_32.tbl |    1 +
->  arch/x86/entry/syscalls/syscall_64.tbl |    1 +
->  include/linux/syscalls.h               |    1 +
->  include/uapi/asm-generic/unistd.h      |    4 ++-
->  kernel/sys.c                           |   51 ++++++++++++++++++++++++++++++++
->  5 files changed, 57 insertions(+), 1 deletion(-)
->
-> diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-> index 143ef9f37932..c36c2c65d204 100644
-> --- a/arch/x86/entry/syscalls/syscall_32.tbl
-> +++ b/arch/x86/entry/syscalls/syscall_32.tbl
-> @@ -383,3 +383,4 @@
->  374	i386	userfaultfd		sys_userfaultfd
->  375	i386	membarrier		sys_membarrier
->  376	i386	mlock2			sys_mlock2
-> +377	i386	getvpid			sys_getvpid
-> diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-> index 314a90bfc09c..90bbbc7fdbe0 100644
-> --- a/arch/x86/entry/syscalls/syscall_64.tbl
-> +++ b/arch/x86/entry/syscalls/syscall_64.tbl
-> @@ -332,6 +332,7 @@
->  323	common	userfaultfd		sys_userfaultfd
->  324	common	membarrier		sys_membarrier
->  325	common	mlock2			sys_mlock2
-> +326	common	getvpid			sys_getvpid
->  
->  #
->  # x32-specific system call numbers start at 512 to avoid cache impact
-> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-> index a156b82dd14c..dbb5638260b5 100644
-> --- a/include/linux/syscalls.h
-> +++ b/include/linux/syscalls.h
-> @@ -222,6 +222,7 @@ asmlinkage long sys_nanosleep(struct timespec __user *rqtp, struct timespec __us
->  asmlinkage long sys_alarm(unsigned int seconds);
->  asmlinkage long sys_getpid(void);
->  asmlinkage long sys_getppid(void);
-> +asmlinkage long sys_getvpid(pid_t pid, int source, int target);
->  asmlinkage long sys_getuid(void);
->  asmlinkage long sys_geteuid(void);
->  asmlinkage long sys_getgid(void);
-> diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-> index 1324b0292ec2..2c1123130f90 100644
-> --- a/include/uapi/asm-generic/unistd.h
-> +++ b/include/uapi/asm-generic/unistd.h
-> @@ -715,9 +715,11 @@ __SYSCALL(__NR_userfaultfd, sys_userfaultfd)
->  __SYSCALL(__NR_membarrier, sys_membarrier)
->  #define __NR_mlock2 284
->  __SYSCALL(__NR_mlock2, sys_mlock2)
-> +#define __NR_mlock2 285
-> +__SYSCALL(__NR_getvpid, sys_getvpid)
->  
->  #undef __NR_syscalls
-> -#define __NR_syscalls 285
-> +#define __NR_syscalls 286
->  
->  /*
->   * All syscalls below here should go away really,
-> diff --git a/kernel/sys.c b/kernel/sys.c
-> index fa2f2f671a5c..1e28a36b84fa 100644
-> --- a/kernel/sys.c
-> +++ b/kernel/sys.c
-> @@ -46,6 +46,7 @@
->  #include <linux/syscalls.h>
->  #include <linux/kprobes.h>
->  #include <linux/user_namespace.h>
-> +#include <linux/proc_ns.h>
->  #include <linux/binfmts.h>
->  
->  #include <linux/sched.h>
-> @@ -855,6 +856,56 @@ SYSCALL_DEFINE0(getppid)
->  	return pid;
->  }
->  
-> +SYSCALL_DEFINE3(getvpid, pid_t, pid, int, source, int, target)
-> +{
-> +	struct pid_namespace *source_ns, *target_ns;
-> +	struct fd source_fd = {}, target_fd = {};
-> +	struct pid *struct_pid;
-> +	struct ns_common *ns;
-> +	pid_t result;
-> +
-> +	if (source >= 0) {
-> +		ns = proc_ns_fdget(source, CLONE_NEWPID, &source_fd);
-> +		result = PTR_ERR(ns);
-> +		if (IS_ERR(ns))
-> +			goto out;
-> +		source_ns = container_of(ns, struct pid_namespace, ns);
-> +	} else
-> +		source_ns = task_active_pid_ns(current);
-> +
-> +	if (target >= 0) {
-> +		ns = proc_ns_fdget(target, CLONE_NEWPID, &target_fd);
-> +		result = PTR_ERR(ns);
-> +		if (IS_ERR(ns))
-> +			goto out;
-> +		target_ns = container_of(ns, struct pid_namespace, ns);
-> +	} else
-> +		target_ns = task_active_pid_ns(current);
-> +
-> +	rcu_read_lock();
-> +	struct_pid = find_pid_ns(abs(pid), source_ns);
-> +
-> +	if (struct_pid && pid < 0) {
-> +		struct task_struct *task;
-> +
-> +		task = pid_task(struct_pid, PIDTYPE_PID);
-> +		if (task)
-> +			task = rcu_dereference(task->real_parent);
-> +		struct_pid = task ? task_pid(task) : NULL;
-> +	}
-> +
-> +	if (struct_pid)
-> +		result = pid_nr_ns(struct_pid, target_ns);
-> +	else
-> +		result = -ESRCH;
-> +	rcu_read_unlock();
-> +
-> +out:
-> +	fdput(target_fd);
-> +	fdput(source_fd);
-> +	return result;
-> +}
-> +
->  SYSCALL_DEFINE0(getuid)
->  {
->  	/* Only we change this so SMP safe */
+
+> 
+> Thanks,
+> Andreas
+> 
+> Andreas Gruenbacher (39):
+>   vfs: Add IS_ACL() and IS_RICHACL() tests
+>   vfs: Add MAY_CREATE_FILE and MAY_CREATE_DIR permission flags
+>   vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD permission flags
+>   vfs: Make the inode passed to inode_change_ok non-const
+>   vfs: Add permission flags for setting file attributes
+>   richacl: In-memory representation and helper functions
+>   richacl: Permission mapping functions
+>   richacl: Compute maximum file masks from an acl
+>   richacl: Update the file masks in chmod()
+>   richacl: Permission check algorithm
+>   vfs: Cache base_acl objects in inodes
+>   vfs: Cache richacl in struct inode
+>   richacl: Check if an acl is equivalent to a file mode
+>   richacl: Create-time inheritance
+>   richacl: Automatic Inheritance
+>   richacl: xattr mapping functions
+>   vfs: Add richacl permission checking
+>   richacl: acl editing helper functions
+>   richacl: Move everyone@ aces down the acl
+>   richacl: Propagate everyone@ permissions to other aces
+>   richacl: Set the owner permissions to the owner mask
+>   richacl: Set the other permissions to the other mask
+>   richacl: Isolate the owner and group classes
+>   richacl: Apply the file masks to a richacl
+>   richacl: Create richacl from mode values
+>   nfsd: Keep list of acls to dispose of in compoundargs
+>   nfsd: Use richacls as internal acl representation
+>   nfsd: Add richacl support
+>   nfsd: Add support for the v4.1 dacl attribute
+>   nfsd: Add support for the MAY_CREATE_{FILE,DIR} permissions
+>   richacl: Add support for unmapped identifiers
+>   ext4: Don't allow unmapped identifiers in richacls
+>   sunrpc: Allow to demand-allocate pages to encode into
+>   sunrpc: Add xdr_init_encode_pages
+>   nfs: Fix GETATTR bitmap verification
+>   nfs: Remove unused xdr page offsets in getacl/setacl arguments
+>   nfs: Add richacl support
+>   nfs: Add support for the v4.1 dacl attribute
+>   richacl: uapi header split
+> 
+> Aneesh Kumar K.V (2):
+>   ext4: Add richacl support
+>   ext4: Add richacl feature flag
+> 
+>  drivers/staging/lustre/lustre/llite/llite_lib.c |   2 +-
+>  fs/Kconfig                                      |   9 +
+>  fs/Makefile                                     |   3 +
+>  fs/attr.c                                       |  81 ++-
+>  fs/ext4/Kconfig                                 |  15 +
+>  fs/ext4/Makefile                                |   1 +
+>  fs/ext4/acl.c                                   |   6 +-
+>  fs/ext4/acl.h                                   |  12 +-
+>  fs/ext4/ext4.h                                  |   6 +-
+>  fs/ext4/file.c                                  |   6 +-
+>  fs/ext4/ialloc.c                                |   7 +-
+>  fs/ext4/inode.c                                 |  10 +-
+>  fs/ext4/namei.c                                 |  11 +-
+>  fs/ext4/richacl.c                               | 218 ++++++
+>  fs/ext4/richacl.h                               |  47 ++
+>  fs/ext4/super.c                                 |  42 +-
+>  fs/ext4/xattr.c                                 |   6 +
+>  fs/ext4/xattr.h                                 |   1 +
+>  fs/f2fs/acl.c                                   |   4 +-
+>  fs/inode.c                                      |  15 +-
+>  fs/jffs2/acl.c                                  |   6 +-
+>  fs/namei.c                                      | 111 ++-
+>  fs/nfs/inode.c                                  |   3 -
+>  fs/nfs/nfs4proc.c                               | 701 +++++++++++++-----
+>  fs/nfs/nfs4xdr.c                                | 257 ++++++-
+>  fs/nfs/super.c                                  |   4 +-
+>  fs/nfs_common/Makefile                          |   1 +
+>  fs/nfs_common/nfs4acl.c                         |  44 ++
+>  fs/nfsd/Kconfig                                 |   1 +
+>  fs/nfsd/acl.h                                   |  23 +-
+>  fs/nfsd/nfs4acl.c                               | 482 +++++++------
+>  fs/nfsd/nfs4proc.c                              |  25 +-
+>  fs/nfsd/nfs4xdr.c                               | 268 ++++---
+>  fs/nfsd/nfsd.h                                  |   6 +-
+>  fs/nfsd/nfsfh.c                                 |   8 +-
+>  fs/nfsd/vfs.c                                   |  28 +-
+>  fs/nfsd/vfs.h                                   |  17 +-
+>  fs/nfsd/xdr4.h                                  |  12 +-
+>  fs/posix_acl.c                                  |  26 +-
+>  fs/richacl_base.c                               | 682 ++++++++++++++++++
+>  fs/richacl_compat.c                             | 915 ++++++++++++++++++++++++
+>  fs/richacl_inode.c                              | 297 ++++++++
+>  fs/richacl_xattr.c                              | 267 +++++++
+>  fs/xattr.c                                      |  34 +-
+>  include/linux/fs.h                              |  50 +-
+>  include/linux/nfs4.h                            |  24 +-
+>  include/linux/nfs4acl.h                         |   7 +
+>  include/linux/nfs_fs.h                          |   1 -
+>  include/linux/nfs_fs_sb.h                       |   2 +
+>  include/linux/nfs_xdr.h                         |  13 +-
+>  include/linux/posix_acl.h                       |  12 +-
+>  include/linux/richacl.h                         | 275 +++++++
+>  include/linux/richacl_compat.h                  |  40 ++
+>  include/linux/richacl_xattr.h                   |  47 ++
+>  include/linux/sunrpc/xdr.h                      |   2 +
+>  include/uapi/linux/Kbuild                       |   2 +
+>  include/uapi/linux/fs.h                         |   3 +-
+>  include/uapi/linux/nfs4.h                       |   3 +-
+>  include/uapi/linux/richacl.h                    | 111 +++
+>  include/uapi/linux/richacl_xattr.h              |  43 ++
+>  include/uapi/linux/xattr.h                      |   2 +
+>  net/sunrpc/xdr.c                                |  34 +
+>  62 files changed, 4659 insertions(+), 732 deletions(-)
+>  create mode 100644 fs/ext4/richacl.c
+>  create mode 100644 fs/ext4/richacl.h
+>  create mode 100644 fs/nfs_common/nfs4acl.c
+>  create mode 100644 fs/richacl_base.c
+>  create mode 100644 fs/richacl_compat.c
+>  create mode 100644 fs/richacl_inode.c
+>  create mode 100644 fs/richacl_xattr.c
+>  create mode 100644 include/linux/nfs4acl.h
+>  create mode 100644 include/linux/richacl.h
+>  create mode 100644 include/linux/richacl_compat.h
+>  create mode 100644 include/linux/richacl_xattr.h
+>  create mode 100644 include/uapi/linux/richacl.h
+>  create mode 100644 include/uapi/linux/richacl_xattr.h
+> 
+> -- 
+> 2.4.3
+> 
+> 
+> Andreas Gruenbacher (39):
+>   vfs: Add IS_ACL() and IS_RICHACL() tests
+>   vfs: Add MAY_CREATE_FILE and MAY_CREATE_DIR permission flags
+>   vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD permission flags
+>   vfs: Make the inode passed to inode_change_ok non-const
+>   vfs: Add permission flags for setting file attributes
+>   richacl: In-memory representation and helper functions
+>   richacl: Permission mapping functions
+>   richacl: Compute maximum file masks from an acl
+>   richacl: Update the file masks in chmod()
+>   richacl: Permission check algorithm
+>   vfs: Cache base_acl objects in inodes
+>   vfs: Cache richacl in struct inode
+>   richacl: Check if an acl is equivalent to a file mode
+>   richacl: Create-time inheritance
+>   richacl: Automatic Inheritance
+>   richacl: xattr mapping functions
+>   vfs: Add richacl permission checking
+>   richacl: acl editing helper functions
+>   richacl: Move everyone@ aces down the acl
+>   richacl: Propagate everyone@ permissions to other aces
+>   richacl: Set the owner permissions to the owner mask
+>   richacl: Set the other permissions to the other mask
+>   richacl: Isolate the owner and group classes
+>   richacl: Apply the file masks to a richacl
+>   richacl: Create richacl from mode values
+>   nfsd: Keep list of acls to dispose of in compoundargs
+>   nfsd: Use richacls as internal acl representation
+>   nfsd: Add richacl support
+>   nfsd: Add support for the v4.1 dacl attribute
+>   nfsd: Add support for the MAY_CREATE_{FILE,DIR} permissions
+>   richacl: Add support for unmapped identifiers
+>   ext4: Don't allow unmapped identifiers in richacls
+>   sunrpc: Allow to demand-allocate pages to encode into
+>   sunrpc: Add xdr_init_encode_pages
+>   nfs: Fix GETATTR bitmap verification
+>   nfs: Remove unused xdr page offsets in getacl/setacl arguments
+>   nfs: Add richacl support
+>   nfs: Add support for the v4.1 dacl attribute
+>   richacl: uapi header split
+> 
+> Aneesh Kumar K.V (2):
+>   ext4: Add richacl support
+>   ext4: Add richacl feature flag
+> 
+>  drivers/staging/lustre/lustre/llite/llite_lib.c |   2 +-
+>  fs/Kconfig                                      |   9 +
+>  fs/Makefile                                     |   3 +
+>  fs/attr.c                                       |  81 ++-
+>  fs/ext4/Kconfig                                 |  15 +
+>  fs/ext4/Makefile                                |   1 +
+>  fs/ext4/acl.c                                   |   6 +-
+>  fs/ext4/acl.h                                   |  12 +-
+>  fs/ext4/ext4.h                                  |   6 +-
+>  fs/ext4/file.c                                  |   6 +-
+>  fs/ext4/ialloc.c                                |   7 +-
+>  fs/ext4/inode.c                                 |  10 +-
+>  fs/ext4/namei.c                                 |  11 +-
+>  fs/ext4/richacl.c                               | 218 ++++++
+>  fs/ext4/richacl.h                               |  47 ++
+>  fs/ext4/super.c                                 |  42 +-
+>  fs/ext4/xattr.c                                 |   6 +
+>  fs/ext4/xattr.h                                 |   1 +
+>  fs/f2fs/acl.c                                   |   4 +-
+>  fs/inode.c                                      |  15 +-
+>  fs/jffs2/acl.c                                  |   6 +-
+>  fs/namei.c                                      | 111 ++-
+>  fs/nfs/inode.c                                  |   3 -
+>  fs/nfs/nfs4proc.c                               | 701 +++++++++++++-----
+>  fs/nfs/nfs4xdr.c                                | 257 ++++++-
+>  fs/nfs/super.c                                  |   4 +-
+>  fs/nfs_common/Makefile                          |   1 +
+>  fs/nfs_common/nfs4acl.c                         |  44 ++
+>  fs/nfsd/Kconfig                                 |   1 +
+>  fs/nfsd/acl.h                                   |  23 +-
+>  fs/nfsd/nfs4acl.c                               | 482 +++++++------
+>  fs/nfsd/nfs4proc.c                              |  25 +-
+>  fs/nfsd/nfs4xdr.c                               | 268 ++++---
+>  fs/nfsd/nfsd.h                                  |   6 +-
+>  fs/nfsd/nfsfh.c                                 |   8 +-
+>  fs/nfsd/vfs.c                                   |  28 +-
+>  fs/nfsd/vfs.h                                   |  17 +-
+>  fs/nfsd/xdr4.h                                  |  12 +-
+>  fs/posix_acl.c                                  |  26 +-
+>  fs/richacl_base.c                               | 682 ++++++++++++++++++
+>  fs/richacl_compat.c                             | 915 ++++++++++++++++++++++++
+>  fs/richacl_inode.c                              | 297 ++++++++
+>  fs/richacl_xattr.c                              | 267 +++++++
+>  fs/xattr.c                                      |  34 +-
+>  include/linux/fs.h                              |  50 +-
+>  include/linux/nfs4.h                            |  24 +-
+>  include/linux/nfs4acl.h                         |   7 +
+>  include/linux/nfs_fs.h                          |   1 -
+>  include/linux/nfs_fs_sb.h                       |   2 +
+>  include/linux/nfs_xdr.h                         |  13 +-
+>  include/linux/posix_acl.h                       |  12 +-
+>  include/linux/richacl.h                         | 275 +++++++
+>  include/linux/richacl_compat.h                  |  40 ++
+>  include/linux/richacl_xattr.h                   |  47 ++
+>  include/linux/sunrpc/xdr.h                      |   2 +
+>  include/uapi/linux/Kbuild                       |   2 +
+>  include/uapi/linux/fs.h                         |   3 +-
+>  include/uapi/linux/nfs4.h                       |   3 +-
+>  include/uapi/linux/richacl.h                    | 111 +++
+>  include/uapi/linux/richacl_xattr.h              |  43 ++
+>  include/uapi/linux/xattr.h                      |   2 +
+>  net/sunrpc/xdr.c                                |  34 +
+>  62 files changed, 4659 insertions(+), 732 deletions(-)
+>  create mode 100644 fs/ext4/richacl.c
+>  create mode 100644 fs/ext4/richacl.h
+>  create mode 100644 fs/nfs_common/nfs4acl.c
+>  create mode 100644 fs/richacl_base.c
+>  create mode 100644 fs/richacl_compat.c
+>  create mode 100644 fs/richacl_inode.c
+>  create mode 100644 fs/richacl_xattr.c
+>  create mode 100644 include/linux/nfs4acl.h
+>  create mode 100644 include/linux/richacl.h
+>  create mode 100644 include/linux/richacl_compat.h
+>  create mode 100644 include/linux/richacl_xattr.h
+>  create mode 100644 include/uapi/linux/richacl.h
+>  create mode 100644 include/uapi/linux/richacl_xattr.h
+> 
+> -- 
+> 2.4.3
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
