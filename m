@@ -1,307 +1,102 @@
-From: Anna Schumaker <Anna.Schumaker@netapp.com>
-Subject: Re: [PATCH v3 10/9] copy_file_range.2: New page documenting
- copy_file_range()
-Date: Mon, 28 Sep 2015 16:42:50 -0400
-Message-ID: <5609A64A.90304@Netapp.com>
-References: <1443214096-12769-1-git-send-email-Anna.Schumaker@Netapp.com>
- <1443214096-12769-11-git-send-email-Anna.Schumaker@Netapp.com>
- <20150928184034.GC850@birch.djwong.org>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH v7 03/11] task_isolation: support PR_TASK_ISOLATION_STRICT mode
+Date: Mon, 28 Sep 2015 16:51:49 -0400
+Message-ID: <CALCETrU7bheOSeuE8RxATBiyzQ=sPAC4jbXsqvZHgu8-5FY0zg@mail.gmail.com>
+References: <1443453446-7827-1-git-send-email-cmetcalf@ezchip.com> <1443453446-7827-4-git-send-email-cmetcalf@ezchip.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <20150928184034.GC850@birch.djwong.org>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, mtk.manpages@gmail.com, andros@netapp.com, hch@infradead.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1443453446-7827-4-git-send-email-cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Cc: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 09/28/2015 02:40 PM, Darrick J. Wong wrote:
-> On Fri, Sep 25, 2015 at 04:48:16PM -0400, Anna Schumaker wrote:
->> copy_file_range() is a new system call for copying ranges of data
->> completely in the kernel.  This gives filesystems an opportunity to
->> implement some kind of "copy acceleration", such as reflinks or
->> server-side-copy (in the case of NFS).
->>
->> Signed-off-by: Anna Schumaker <Anna.Schumaker@Netapp.com>
->> ---
->> v3:
->> - Added license information
->> - Updated splice(2)
->> - Various other edits after mailing list discussion
->> ---
->>  man2/copy_file_range.2 | 211 +++++++++++++++++++++++++++++++++++++++++++++++++
->>  man2/splice.2          |   1 +
->>  2 files changed, 212 insertions(+)
->>  create mode 100644 man2/copy_file_range.2
->>
->> diff --git a/man2/copy_file_range.2 b/man2/copy_file_range.2
->> new file mode 100644
->> index 0000000..6d66d4a
->> --- /dev/null
->> +++ b/man2/copy_file_range.2
->> @@ -0,0 +1,211 @@
->> +.\"This manpage is Copyright (C) 2015 Anna Schumaker <Anna.Schumaker@Netapp.com>
->> +.\"
->> +.\" %%%LICENSE_START(VERBATIM)
->> +.\" Permission is granted to make and distribute verbatim copies of this
->> +.\" manual provided the copyright notice and this permission notice are
->> +.\" preserved on all copies.
->> +.\"
->> +.\" Permission is granted to copy and distribute modified versions of
->> +.\" this manual under the conditions for verbatim copying, provided that
->> +.\" the entire resulting derived work is distributed under the terms of
->> +.\" a permission notice identical to this one.
->> +.\"
->> +.\" Since the Linux kernel and libraries are constantly changing, this
->> +.\" manual page may be incorrect or out-of-date.  The author(s) assume.
->> +.\" no responsibility for errors or omissions, or for damages resulting.
->> +.\" from the use of the information contained herein.  The author(s) may.
->> +.\" not have taken the same level of care in the production of this.
->> +.\" manual, which is licensed free of charge, as they might when working.
->> +.\" professionally.
->> +.\"
->> +.\" Formatted or processed versions of this manual, if unaccompanied by
->> +.\" the source, must acknowledge the copyright and authors of this work.
->> +.\" %%%LICENSE_END
->> +.\"
->> +.TH COPY 2 2015-08-31 "Linux" "Linux Programmer's Manual"
->> +.SH NAME
->> +copy_file_range \- Copy a range of data from one file to another
->> +.SH SYNOPSIS
->> +.nf
->> +.B #include <linux/copy.h>
->> +.B #include <sys/syscall.h>
->> +.B #include <unistd.h>
->> +
->> +.BI "ssize_t copy_file_range(int " fd_in ", loff_t *" off_in ", int " fd_out ",
->> +.BI "                        loff_t *" off_out ", size_t " len \
->> +", unsigned int " flags );
->> +.fi
->> +.SH DESCRIPTION
->> +The
->> +.BR copy_file_range ()
->> +system call performs an in-kernel copy between two file descriptors
->> +without the additional cost of transferring data from the kernel to userspace
->> +and then back into the kernel.
->> +It copies up to
->> +.I len
->> +bytes of data from file descriptor
->> +.I fd_in
->> +to file descriptor
->> +.IR fd_out ,
->> +overwriting any data that exists within the requested range of the target file.
->> +
->> +The following semantics apply for
->> +.IR off_in ,
->> +and similar statements apply to
->> +.IR off_out :
->> +.IP * 3
->> +If
->> +.I off_in
->> +is NULL, then bytes are read from
->> +.I fd_in
->> +starting from the current file offset, and the offset is
->> +adjusted by the number of bytes copied.
->> +.IP *
->> +If
->> +.I off_in
->> +is not NULL, then
->> +.I off_in
->> +must point to a buffer that specifies the starting
->> +offset where bytes from
->> +.I fd_in
->> +will be read.  The current file offset of
->> +.I fd_in
->> +is not changed, but
->> +.I off_in
->> +is adjusted appropriately.
->> +.PP
->> +
->> +The
->> +.I flags
->> +argument can have one of the following flags set:
->> +.TP 1.9i
->> +.B COPY_FR_COPY
->> +Copy all the file data in the requested range.
->> +Some filesystems might be able to accelerate this copy
->> +to avoid unnecessary data transfers.
->> +.TP
->> +.B COPY_FR_REFLINK
->> +Create a lightweight "reflink", where data is not copied until
->> +one of the files is modified.
-> 
-> .TP
-> .B COPY_FR_DEDUPE
-> Create a lightweight "reflink" with the same operational behavior as
-> COPY_FR_REFLINK, but only perform the reflink if the contents of both files'
-> byte ranges are identical.  This flag cannot be specified with COPY_FR_COPY or
-> COPY_FR_REFLINK.  If the ranges do not match, EILSEQ will be returned.
-> 
->> +.PP
->> +The default behavior
->> +.RI ( flags
->> +== 0) is to try creating a reflink,
->> +and if reflinking fails
->> +.BR copy_file_range ()
->> +will fall back to performing a full data copy.
->> +.SH RETURN VALUE
->> +Upon successful completion,
->> +.BR copy_file_range ()
->> +will return the number of bytes copied between files.
->> +This could be less than the length originally requested.
->> +
->> +On error,
->> +.BR copy_file_range ()
->> +returns \-1 and
->> +.I errno
->> +is set to indicate the error.
->> +.SH ERRORS
->> +.TP
->> +.B EBADF
->> +One or more file descriptors are not valid; or
->> +.I fd_in
->> +is not open for reading; or
->> +.I fd_out
->> +is not open for writing.
->> +.TP
->> +.B EINVAL
->> +Requested range extends beyond the end of the source file; or the
->> +.I flags
->> +argument is set to an invalid value.
-> 
-> .TP
-> .B EILSEQ
-> The contents of both files' byte ranges did not match.
-> 
->> +.TP
->> +.B EIO
->> +A low level I/O error occurred while copying.
->> +.TP
->> +.B ENOMEM
->> +Out of memory.
->> +.TP
->> +.B ENOSPC
->> +There is not enough space on the target filesystem to complete the copy.
->> +.TP
->> +.B EOPNOTSUPP
->> +.B COPY_REFLINK
-> 
-> .B COPY_FR_REFLINK
-> or
-> .B COPY_FR_DEDUPE
-> 
->> +was specified in
->> +.IR flags ,
->> +but the target filesystem does not support reflinks.
-> 
-> "does not support the given operation."
-> 
-> Otherwise you can add,
-> Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
+On Mon, Sep 28, 2015 at 11:17 AM, Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org> wrote:
+> With task_isolation mode, the task is in principle guaranteed not to
+> be interrupted by the kernel, but only if it behaves.  In particular,
+> if it enters the kernel via system call, page fault, or any of a
+> number of other synchronous traps, it may be unexpectedly exposed
+> to long latencies.  Add a simple flag that puts the process into
+> a state where any such kernel entry is fatal; this is defined as
+> happening immediately after the SECCOMP test.
 
-Thanks, Darrick!
+Why after seccomp?  Seccomp is still an entry, and the code would be
+considerably simpler if it were before seccomp.
 
-I've added in your suggestions (and also renamed COPY_FR_DEDUPE -> COPY_FR_DEDUP). I'll send out a v4 tomorrow morning, once I see if any other comments trickle in.
+> @@ -35,8 +36,12 @@ static inline enum ctx_state exception_enter(void)
+>                 return 0;
+>
+>         prev_ctx = this_cpu_read(context_tracking.state);
+> -       if (prev_ctx != CONTEXT_KERNEL)
+> -               context_tracking_exit(prev_ctx);
+> +       if (prev_ctx != CONTEXT_KERNEL) {
+> +               if (context_tracking_exit(prev_ctx)) {
+> +                       if (task_isolation_strict())
+> +                               task_isolation_exception();
+> +               }
+> +       }
+>
+>         return prev_ctx;
+>  }
 
-Anna
+x86 does not promise to call this function.  In fact, x86 is rather
+likely to stop ever calling this function in the reasonably near
+future.
 
-> 
-> --D
-> 
->> +.TP
->> +.B EXDEV
->> +Target filesystem doesn't support cross-filesystem copies.
->> +.SH VERSIONS
->> +The
->> +.BR copy_file_range ()
->> +system call first appeared in Linux 4.4.
->> +.SH CONFORMING TO
->> +The
->> +.BR copy_file_range ()
->> +system call is a nonstandard Linux extension.
->> +.SH EXAMPLE
->> +.nf
->> +#define _GNU_SOURCE
->> +#include <fcntl.h>
->> +#include <linux/copy.h>
->> +#include <stdio.h>
->> +#include <stdlib.h>
->> +#include <sys/stat.h>
->> +#include <sys/syscall.h>
->> +#include <unistd.h>
->> +
->> +loff_t copy_file_range(int fd_in, loff_t *off_in, int fd_out,
->> +                       loff_t *off_out, size_t len, unsigned int flags)
->> +{
->> +    return syscall(__NR_copy_file_range, fd_in, off_in, fd_out,
->> +                   off_out, len, flags);
->> +}
->> +
->> +int main(int argc, char **argv)
->> +{
->> +    int fd_in, fd_out;
->> +    struct stat stat;
->> +    loff_t len, ret;
->> +    char buf[2];
->> +
->> +    if (argc != 3) {
->> +        fprintf(stderr, "Usage: %s <source> <destination>\\n", argv[0]);
->> +        exit(EXIT_FAILURE);
->> +    }
->> +
->> +    fd_in = open(argv[1], O_RDONLY);
->> +    if (fd_in == \-1) {
->> +        perror("open (argv[1])");
->> +        exit(EXIT_FAILURE);
->> +    }
->> +
->> +    if (fstat(fd_in, &stat) == \-1) {
->> +        perror("fstat");
->> +        exit(EXIT_FAILURE);
->> +    }
->> +    len = stat.st_size;
->> +
->> +    fd_out = open(argv[2], O_CREAT|O_WRONLY|O_TRUNC, 0644);
->> +    if (fd_out == \-1) {
->> +        perror("open (argv[2])");
->> +        exit(EXIT_FAILURE);
->> +    }
->> +
->> +    do {
->> +        ret = copy_file_range(fd_in, NULL, fd_out, NULL, len, COPY_FR_COPY);
->> +        if (ret == \-1) {
->> +            perror("copy_file_range");
->> +            exit(EXIT_FAILURE);
->> +        }
->> +
->> +        len \-= ret;
->> +    } while (len > 0);
->> +
->> +    close(fd_in);
->> +    close(fd_out);
->> +    exit(EXIT_SUCCESS);
->> +}
->> +.fi
->> +.SH SEE ALSO
->> +.BR splice (2)
->> diff --git a/man2/splice.2 b/man2/splice.2
->> index b9b4f42..5c162e0 100644
->> --- a/man2/splice.2
->> +++ b/man2/splice.2
->> @@ -238,6 +238,7 @@ only pointers are copied, not the pages of the buffer.
->>  See
->>  .BR tee (2).
->>  .SH SEE ALSO
->> +.BR copy_file_range (2),
->>  .BR sendfile (2),
->>  .BR tee (2),
->>  .BR vmsplice (2)
->> -- 
->> 2.5.3
->>
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-api" in
->> the body of a message to majordomo@vger.kernel.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> --- a/kernel/context_tracking.c
+> +++ b/kernel/context_tracking.c
+> @@ -144,15 +144,16 @@ NOKPROBE_SYMBOL(context_tracking_user_enter);
+>   * This call supports re-entrancy. This way it can be called from any exception
+>   * handler without needing to know if we came from userspace or not.
+>   */
+> -void context_tracking_exit(enum ctx_state state)
+> +bool context_tracking_exit(enum ctx_state state)
 
+This needs clear documentation of what the return value means.
+
+> +static void kill_task_isolation_strict_task(void)
+> +{
+> +       /* RCU should have been enabled prior to this point. */
+> +       RCU_LOCKDEP_WARN(!rcu_is_watching(), "kernel entry without RCU");
+> +
+> +       dump_stack();
+> +       current->task_isolation_flags &= ~PR_TASK_ISOLATION_ENABLE;
+> +       send_sig(SIGKILL, current, 1);
+> +}
+
+Wasn't this supposed to be configurable?  Or is that something that
+happens later on in the series?
+
+> +
+> +/*
+> + * This routine is called from syscall entry (with the syscall number
+> + * passed in) if the _STRICT flag is set.
+> + */
+> +void task_isolation_syscall(int syscall)
+> +{
+> +       /* Ignore prctl() syscalls or any task exit. */
+> +       switch (syscall) {
+> +       case __NR_prctl:
+> +       case __NR_exit:
+> +       case __NR_exit_group:
+> +               return;
+> +       }
+> +
+> +       pr_warn("%s/%d: task_isolation strict mode violated by syscall %d\n",
+> +               current->comm, current->pid, syscall);
+> +       kill_task_isolation_strict_task();
+> +}
+
+Ick.  I guess it works, but this is still quite ugly IMO.
+
+> +void task_isolation_exception(void)
+> +{
+> +       pr_warn("%s/%d: task_isolation strict mode violated by exception\n",
+> +               current->comm, current->pid);
+> +       kill_task_isolation_strict_task();
+> +}
+
+Should this say what exception?
+
+--Andy
