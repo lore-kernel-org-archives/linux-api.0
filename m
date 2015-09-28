@@ -1,7 +1,7 @@
 From: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-Subject: [PATCH v8 12/14] power: bq24257: Add various device-specific sysfs properties
-Date: Mon, 28 Sep 2015 17:34:00 -0500
-Message-ID: <1443479642-23712-13-git-send-email-dannenberg@ti.com>
+Subject: [PATCH v8 14/14] Documentation: power: bq24257: Document exported sysfs entries
+Date: Mon, 28 Sep 2015 17:34:02 -0500
+Message-ID: <1443479642-23712-15-git-send-email-dannenberg@ti.com>
 References: <1443479642-23712-1-git-send-email-dannenberg@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -12,92 +12,83 @@ To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Erem
 Cc: Ramakrishna Pallala <ramakrishna.pallala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds support for enabling/disabling optional device specific
-features through sysfs properties at runtime.
-
-* High-impedance mode enable/disable
-* Sysoff enable/disable
-
-Refer to the respective device datasheets for more information:
-
-http://www.ti.com/product/bq24250
-http://www.ti.com/product/bq24251
-http://www.ti.com/product/bq24257
+Document the settings exported by bq24257 charger driver through sysfs
+entries:
+- ovp_voltage
+- in_dpm_voltage
+- high_impedance_enable
+- sysoff_enable
 
 Signed-off-by: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
 ---
- drivers/power/bq24257_charger.c | 53 +++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 53 insertions(+)
+ Documentation/ABI/testing/sysfs-class-power | 58 +++++++++++++++++++++++++++++
+ 1 file changed, 58 insertions(+)
 
-diff --git a/drivers/power/bq24257_charger.c b/drivers/power/bq24257_charger.c
-index db719bf..1fea2c7 100644
---- a/drivers/power/bq24257_charger.c
-+++ b/drivers/power/bq24257_charger.c
-@@ -791,12 +791,65 @@ static ssize_t bq24257_show_in_dpm_voltage(struct device *dev,
- 			 bq24257_vindpm_map[bq->init_data.vindpm]);
- }
+diff --git a/Documentation/ABI/testing/sysfs-class-power b/Documentation/ABI/testing/sysfs-class-power
+index 369d2a2..d96b5fc 100644
+--- a/Documentation/ABI/testing/sysfs-class-power
++++ b/Documentation/ABI/testing/sysfs-class-power
+@@ -74,3 +74,61 @@ Description:
  
-+static ssize_t bq24257_sysfs_show_enable(struct device *dev,
-+					 struct device_attribute *attr,
-+					 char *buf)
-+{
-+	struct power_supply *psy = dev_get_drvdata(dev);
-+	struct bq24257_device *bq = power_supply_get_drvdata(psy);
-+	int ret;
+ 		Valid values:
+ 		- 0 - 70 (minutes), step by 10 (rounded down)
 +
-+	if (strcmp(attr->attr.name, "high_impedance_enable") == 0)
-+		ret = bq24257_field_read(bq, F_HZ_MODE);
-+	else if (strcmp(attr->attr.name, "sysoff_enable") == 0)
-+		ret = bq24257_field_read(bq, F_SYSOFF);
-+	else
-+		return -EINVAL;
++What:		/sys/class/power_supply/bq24257-charger/ovp_voltage
++Date:		September 2015
++KernelVersion: 4.3.0
++Contact:	Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
++Description:
++		This entry configures the overvoltage protection feature of bq24257-
++		type charger devices. This feature protects the device and other
++		components against damage from overvoltage on the input supply. See
++		device datasheet for details.
 +
-+	if (ret < 0)
-+		return ret;
++		Valid values:
++		- 6000000, 6500000, 7000000, 8000000, 9000000, 9500000, 10000000,
++		  10500000 (all uV)
 +
-+	return scnprintf(buf, PAGE_SIZE, "%d\n", ret);
-+}
++What:		/sys/class/power_supply/bq24257-charger/in_dpm_voltage
++Date:		September 2015
++KernelVersion: 4.3.0
++Contact:	Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
++Description:
++		This entry configures the input dynamic power path management voltage of
++		bq24257-type charger devices. Once the supply drops to the configured
++		voltage, the input current limit is reduced down to prevent the further
++		drop of the supply. When the IC enters this mode, the charge current is
++		lower than the set value. See device datasheet for details.
 +
-+static ssize_t bq24257_sysfs_set_enable(struct device *dev,
-+					struct device_attribute *attr,
-+					const char *buf,
-+					size_t count)
-+{
-+	struct power_supply *psy = dev_get_drvdata(dev);
-+	struct bq24257_device *bq = power_supply_get_drvdata(psy);
-+	long val;
-+	int ret;
++		Valid values:
++		- 4200000, 4280000, 4360000, 4440000, 4520000, 4600000, 4680000,
++		  4760000 (all uV)
 +
-+	if (kstrtol(buf, 10, &val) < 0)
-+		return -EINVAL;
++What:		/sys/class/power_supply/bq24257-charger/high_impedance_enable
++Date:		September 2015
++KernelVersion: 4.3.0
++Contact:	Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
++Description:
++		This entry allows enabling the high-impedance mode of bq24257-type
++		charger devices. If enabled, it places the charger IC into low power
++		standby mode with the switch mode controller disabled. When disabled,
++		the charger operates normally. See device datasheet for details.
 +
-+	if (strcmp(attr->attr.name, "high_impedance_enable") == 0)
-+		ret = bq24257_field_write(bq, F_HZ_MODE, (bool)val);
-+	else if (strcmp(attr->attr.name, "sysoff_enable") == 0)
-+		ret = bq24257_field_write(bq, F_SYSOFF, (bool)val);
-+	else
-+		return -EINVAL;
++		Valid values:
++		- 1: enabled
++		- 0: disabled
 +
-+	if (ret < 0)
-+		return ret;
++What:		/sys/class/power_supply/bq24257-charger/sysoff_enable
++Date:		September 2015
++KernelVersion: 4.3.0
++Contact:	Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
++Description:
++		This entry allows enabling the sysoff mode of bq24257-type charger
++		devices. If enabled and the input is removed, the internal battery FET
++		is turned off in order to reduce the leakage from the BAT pin to less
++		than 1uA. Note that on some devices/systems this disconnects the battery
++		from the system. See device datasheet for details.
 +
-+	return count;
-+}
-+
- static DEVICE_ATTR(ovp_voltage, S_IRUGO, bq24257_show_ovp_voltage, NULL);
- static DEVICE_ATTR(in_dpm_voltage, S_IRUGO, bq24257_show_in_dpm_voltage, NULL);
-+static DEVICE_ATTR(high_impedance_enable, S_IWUSR | S_IRUGO,
-+		   bq24257_sysfs_show_enable, bq24257_sysfs_set_enable);
-+static DEVICE_ATTR(sysoff_enable, S_IWUSR | S_IRUGO,
-+		   bq24257_sysfs_show_enable, bq24257_sysfs_set_enable);
- 
- static struct attribute *bq24257_charger_attr[] = {
- 	&dev_attr_ovp_voltage.attr,
- 	&dev_attr_in_dpm_voltage.attr,
-+	&dev_attr_high_impedance_enable.attr,
-+	&dev_attr_sysoff_enable.attr,
- 	NULL,
- };
- 
++		Valid values:
++		- 1: enabled
++		- 0: disabled
 -- 
 1.9.1
