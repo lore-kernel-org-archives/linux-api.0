@@ -1,72 +1,214 @@
-From: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v7 00/15] power: bq24257: Add support for bq24250/bq24251
-Date: Mon, 28 Sep 2015 20:19:01 +0200
-Message-ID: <20150928181900.GI3660@earth>
-References: <1443196460-26156-1-git-send-email-dannenberg@ti.com>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v3 8/9] vfs: copy_file_range() can do a pagecache copy
+ with splice
+Date: Mon, 28 Sep 2015 11:31:52 -0700
+Message-ID: <20150928183152.GB850@birch.djwong.org>
+References: <1443214096-12769-1-git-send-email-Anna.Schumaker@Netapp.com>
+ <1443214096-12769-9-git-send-email-Anna.Schumaker@Netapp.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="0NB0lE7sNnW8+0qW"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1443196460-26156-1-git-send-email-dannenberg-l0cyMroinI0@public.gmane.org>
+In-Reply-To: <1443214096-12769-9-git-send-email-Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-Cc: Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Laurentiu Palcu <laurentiu.palcu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Ramakrishna Pallala <ramakrishna.pallala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Cc: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On Fri, Sep 25, 2015 at 04:48:14PM -0400, Anna Schumaker wrote:
+> The NFS server will need some kind offallback for filesystems that don't
 
---0NB0lE7sNnW8+0qW
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+"some kind of fallback"
 
-Hi,
+> have any kind of copy acceleration, and it should be generally useful to
+> have an in-kernel copy to avoid lots of switches between kernel and user
+> space.
+> 
+> I make this configurable by adding two new flags.  Users who only want a
+> reflink can pass COPY_FR_REFLINK, and users who want a full data copy can
+> pass COPY_FR_COPY.  The default (flags=0) means to first attempt a
+> reflink, but use the pagecache if that fails.
 
-On Fri, Sep 25, 2015 at 10:54:05AM -0500, Andreas Dannenberg wrote:
-> This patch series extends the driver to also support bq24250/bq24251.
->=20
-> The bq24250/251/257 devices have a very similar feature set and are
-> virtually identical from a control register point of view so it made
-> sense to extend the existing driver rather than submitting a new driver.
-> In addition to the new device support the driver is also extended to
-> allow access to some device features previously hidden. Basic and
-> potentially dangerous charger config parameters affecting the actual
-> charging of the Li-Ion battery are only configurable through firmware
-> rather than sysfs properties. However some newly introduced properties
-> are exposed through sysfs properties as access to them may be desired
-> from userspace. For example, it is now possible to manually configure
-> the maximum current drawn from the input source to accommodate different
-> chargers (0.5A, 1.5A, 2.0A and so on) based on system knowledge a
-> userspace application may have rather than rely on the auto-detection
-> mechanism that may not work in all possible scenarios.
->=20
-> Note that most patches have dependencies on other patches in the series.
+"The COPY_FR_DEDUPE flag makes a reflink, but only if the contents of both
+file ranges are identical."
 
-I reviewed all patches, those without comments look fine to me. I
-did not queue them because of the mentioned dependencies on previous
-patches, which got comments from me.
+> I moved the rw_verify_area() calls into the fallback code since some
+> filesystems can handle reflinking a large range.
+> 
+> Signed-off-by: Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+> ---
+> v3:
+> - Check that both filesystems have the same filesystem type
+> - Add COPY_FR_DEDUPE flag for Darrick
+> - Check that at most one flag is set at a time
+> ---
+>  fs/read_write.c           | 61 +++++++++++++++++++++++++++++++----------------
+>  include/linux/copy.h      |  6 +++++
+>  include/uapi/linux/Kbuild |  1 +
+>  include/uapi/linux/copy.h |  8 +++++++
+>  4 files changed, 56 insertions(+), 20 deletions(-)
+>  create mode 100644 include/linux/copy.h
+>  create mode 100644 include/uapi/linux/copy.h
+> 
+> diff --git a/fs/read_write.c b/fs/read_write.c
+> index ee9fa37..a0fd9dc 100644
+> --- a/fs/read_write.c
+> +++ b/fs/read_write.c
+> @@ -7,6 +7,7 @@
+>  #include <linux/slab.h> 
+>  #include <linux/stat.h>
+>  #include <linux/fcntl.h>
+> +#include <linux/copy.h>
+>  #include <linux/file.h>
+>  #include <linux/uio.h>
+>  #include <linux/fsnotify.h>
+> @@ -1329,6 +1330,29 @@ COMPAT_SYSCALL_DEFINE4(sendfile64, int, out_fd, int, in_fd,
+>  }
+>  #endif
+>  
+> +static ssize_t vfs_copy_file_pagecache(struct file *file_in, loff_t pos_in,
+> +				       struct file *file_out, loff_t pos_out,
+> +				       size_t len)
+> +{
+> +	ssize_t ret;
+> +
+> +	ret = rw_verify_area(READ, file_in, &pos_in, len);
+> +	if (ret >= 0) {
+> +		len = ret;
+> +		ret = rw_verify_area(WRITE, file_out, &pos_out, len);
+> +		if (ret >= 0)
+> +			len = ret;
+> +	}
+> +	if (ret < 0)
+> +		return ret;
+> +
+> +	file_start_write(file_out);
+> +	ret = do_splice_direct(file_in, &pos_in, file_out, &pos_out, len, 0);
+> +	file_end_write(file_out);
+> +
+> +	return ret;
+> +}
+> +
+>  /*
+>   * copy_file_range() differs from regular file read and write in that it
+>   * specifically allows return partial success.  When it does so is up to
+> @@ -1338,34 +1362,26 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
+>  			    struct file *file_out, loff_t pos_out,
+>  			    size_t len, unsigned int flags)
+>  {
+> -	struct inode *inode_in;
+> -	struct inode *inode_out;
+>  	ssize_t ret;
+>  
+> -	if (flags)
+> +	/* Flags should only be used exclusively. */
+> +	if ((flags & COPY_FR_COPY) && (flags & ~COPY_FR_COPY))
+>  		return -EINVAL;
+> +	if ((flags & COPY_FR_REFLINK) && (flags & ~COPY_FR_REFLINK))
+> +		return -EINVAL;
+> +	if (flags & COPY_FR_DEDUPE)
+> +		return -EOPNOTSUPP;
 
--- Sebastian
+Since dedupe can't be combined with copy or reflink either, we might as well
+say:
 
---0NB0lE7sNnW8+0qW
-Content-Type: application/pgp-signature; name="signature.asc"
+if ((flags & COPY_FR_DEDUPE) && (flags & ~COPY_FR_DEDUPE))
+	return -EINVAL;
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
+and let the per-fs copy_file_range()s dispatch appropriately.
 
-iQIcBAEBCgAGBQJWCYSUAAoJENju1/PIO/qaFr8QAIYBwZWy8k7crKyzO0pkCp1W
-WONYDAId8qJX563M3f/UJE8Kf91tfTLI6iKkA8A7anlQQojIlilr670oedXdEN71
-I/GKVZMnig9bgWGrq2boeH/0Sg6CA2W9Df5REaGGFLN93UkFgCxBQkgvvy2HgKnO
-l162pvXtfvaOIgBXAna0WYqsuJMeCe6EQnQyJOmZJgn+cSv7r9rLAUogF7mdwbMD
-5/l5cqossuckl/VjJei3SqAB2igjModu4bLB/1xFNwDaSNKyeulNpMa5HgPehaZh
-b8Sz7hseTALPEZ59EMwlfS7AaZW+D47YftHuMgFpzO9iJxaP5H/vqTBR6hgrvfnC
-O7x6n7ApElL2/IHdQGIrw14YKz8nTMusBX0DPxo68gUACXXAU0c505OFYQOkjnf2
-R/iJ+LhUZIlq9I99+Tijw60RlbXsDJ1VuuxWSSNAnQxpqiSlSAat61BMLSJFfdiQ
-ZCPpuOhy4Ub8ZQsNA1W/rHd8CT3/ibmmw1jbCP+0yfSXw6COX5QuJxIO5HxTrlsg
-YbLlZVqOEzk7xmfL1C39u7040uqAuh87JrEAG0aLJwvjUVMfbvyUoOqndM/RRbCG
-JTRfn/GBvbN84tSvgdICO981o+bSGymnV/ajqRfxGGuKUmazWfg9c5OGFuypR6ZG
-J9ItvQfRSsac+ByRCDXp
-=BOxz
------END PGP SIGNATURE-----
+Otherwise, you can add:
+Reviewed-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 
---0NB0lE7sNnW8+0qW--
+--D
+
+>  
+> -	/* copy_file_range allows full ssize_t len, ignoring MAX_RW_COUNT  */
+> -	ret = rw_verify_area(READ, file_in, &pos_in, len);
+> -	if (ret >= 0)
+> -		ret = rw_verify_area(WRITE, file_out, &pos_out, len);
+> -	if (ret < 0)
+> -		return ret;
+> +	/* Default behavior is to try both. */
+> +	if (flags == 0)
+> +		flags = COPY_FR_COPY | COPY_FR_REFLINK;
+>  
+>  	if (!(file_in->f_mode & FMODE_READ) ||
+>  	    !(file_out->f_mode & FMODE_WRITE) ||
+>  	    (file_out->f_flags & O_APPEND) ||
+> -	    !file_out->f_op || !file_out->f_op->copy_file_range)
+> +	    !file_out->f_op)
+>  		return -EBADF;
+>  
+> -	inode_in = file_inode(file_in);
+> -	inode_out = file_inode(file_out);
+> -
+> -	/* make sure offsets don't wrap and the input is inside i_size */
+> -	if (pos_in + len < pos_in || pos_out + len < pos_out ||
+> -	    pos_in + len > i_size_read(inode_in))
+> -		return -EINVAL;
+> -
+>  	if (len == 0)
+>  		return 0;
+>  
+> @@ -1373,8 +1389,13 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
+>  	if (ret)
+>  		return ret;
+>  
+> -	ret = file_out->f_op->copy_file_range(file_in, pos_in, file_out, pos_out,
+> -					      len, flags);
+> +	ret = -EOPNOTSUPP;
+> +	if (file_out->f_op->copy_file_range && (file_in->f_op == file_out->f_op))
+> +		ret = file_out->f_op->copy_file_range(file_in, pos_in, file_out,
+> +						      pos_out, len, flags);
+> +	if ((ret < 0) && (flags & COPY_FR_COPY))
+> +		ret = vfs_copy_file_pagecache(file_in, pos_in, file_out,
+> +					      pos_out, len);
+>  	if (ret > 0) {
+>  		fsnotify_access(file_in);
+>  		add_rchar(current, ret);
+> diff --git a/include/linux/copy.h b/include/linux/copy.h
+> new file mode 100644
+> index 0000000..fd54543
+> --- /dev/null
+> +++ b/include/linux/copy.h
+> @@ -0,0 +1,6 @@
+> +#ifndef _LINUX_COPY_H
+> +#define _LINUX_COPY_H
+> +
+> +#include <uapi/linux/copy.h>
+> +
+> +#endif /* _LINUX_COPY_H */
+> diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
+> index f7b2db4..faafd67 100644
+> --- a/include/uapi/linux/Kbuild
+> +++ b/include/uapi/linux/Kbuild
+> @@ -90,6 +90,7 @@ header-y += coda_psdev.h
+>  header-y += coff.h
+>  header-y += connector.h
+>  header-y += const.h
+> +header-y += copy.h
+>  header-y += cramfs_fs.h
+>  header-y += cuda.h
+>  header-y += cyclades.h
+> diff --git a/include/uapi/linux/copy.h b/include/uapi/linux/copy.h
+> new file mode 100644
+> index 0000000..6225838
+> --- /dev/null
+> +++ b/include/uapi/linux/copy.h
+> @@ -0,0 +1,8 @@
+> +#ifndef _UAPI_LINUX_COPY_H
+> +#define _UAPI_LINUX_COPY_H
+> +
+> +#define COPY_FR_COPY		(1 << 0)  /* Only do a pagecache copy.  */
+> +#define COPY_FR_REFLINK		(1 << 1)  /* Only make a reflink.       */
+> +#define COPY_FR_DEDUPE		(1 << 2)  /* Deduplicate file data.     */
+> +
+> +#endif /* _UAPI_LINUX_COPY_H */
+> -- 
+> 2.5.3
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
