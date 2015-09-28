@@ -1,99 +1,47 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v7 03/11] task_isolation: support PR_TASK_ISOLATION_STRICT mode
-Date: Mon, 28 Sep 2015 15:38:28 -0700
-Message-ID: <CALCETrV7npkg4MPi6Z6Wd_mYh1OrsKnGjB1RWGTAWOnaL+gARQ@mail.gmail.com>
-References: <1443453446-7827-1-git-send-email-cmetcalf@ezchip.com>
- <1443453446-7827-4-git-send-email-cmetcalf@ezchip.com> <CALCETrU7bheOSeuE8RxATBiyzQ=sPAC4jbXsqvZHgu8-5FY0zg@mail.gmail.com>
- <5609B713.5020709@ezchip.com>
+From: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
+Subject: Re: [PATCH v7 14/15] power: bq24257: Add platform data based
+ initialization
+Date: Mon, 28 Sep 2015 17:50:55 -0500
+Message-ID: <20150928225054.GA8797@beast>
+References: <1443196460-26156-1-git-send-email-dannenberg@ti.com>
+ <1443196460-26156-15-git-send-email-dannenberg@ti.com>
+ <20150928175811.GG3660@earth>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <5609B713.5020709@ezchip.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@ezchip.com>
-Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150928175811.GG3660@earth>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Laurentiu Palcu <laurentiu.palcu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Ramakrishna Pallala <ramakrishna.pallala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 28, 2015 at 2:54 PM, Chris Metcalf <cmetcalf@ezchip.com> wrote:
-> On 09/28/2015 04:51 PM, Andy Lutomirski wrote:
->>
->> On Mon, Sep 28, 2015 at 11:17 AM, Chris Metcalf <cmetcalf@ezchip.com>
->>> @@ -35,8 +36,12 @@ static inline enum ctx_state exception_enter(void)
->>>                  return 0;
->>>
->>>          prev_ctx = this_cpu_read(context_tracking.state);
->>> -       if (prev_ctx != CONTEXT_KERNEL)
->>> -               context_tracking_exit(prev_ctx);
->>> +       if (prev_ctx != CONTEXT_KERNEL) {
->>> +               if (context_tracking_exit(prev_ctx)) {
->>> +                       if (task_isolation_strict())
->>> +                               task_isolation_exception();
->>> +               }
->>> +       }
->>>
->>>          return prev_ctx;
->>>   }
->>
->> x86 does not promise to call this function.  In fact, x86 is rather
->> likely to stop ever calling this function in the reasonably near
->> future.
->
->
-> Yes, in which case we'd have to do it the same way we are doing
-> it for arm64 (see patch 09/11), by calling task_isolation_exception()
-> explicitly from within the relevant exception handlers.  If we start
-> doing that, it's probably worth wrapping up the logic into a single
-> inline function to keep the added code short and sweet.
->
-> If in fact this might happen in the short term, it might be a good
-> idea to hook the individual exception handlers in x86 now, and not
-> hook the exception_enter() mechanism at all.
+On Mon, Sep 28, 2015 at 07:58:12PM +0200, Sebastian Reichel wrote:
+> Hi,
+> 
+> On Fri, Sep 25, 2015 at 10:54:19AM -0500, Andreas Dannenberg wrote:
+> > The patch adds a way to setup and initialize the device through the use
+> > of platform data with configuration options equivalent to when using
+> > device firmware (DT or ACPI) for systems where this is not available.
+> 
+> Which board is this btw? Looks like most arm board code is going
+> away in the next few kernel releases, so I wonder if this patch
+> will just increase maintainence without any proper user.
 
-It's already like that in Linus' tree.
+There is no particular board I'm targeting this for however platform
+data support has been tested with a board file that I created for one of
+the TI devices (don't worry I won't try to upstream that one :)
 
-FWIW, most of those exception handlers send signals, so it might pay
-to do it in notify_die or die instead.
+>From a silicon vendor POV I want to make sure to make it easy to use
+these devices for the largest audience possible hence the added pdata
+support as there are still archs out there that don't support DT/ACPI.
 
->
->>> --- a/kernel/context_tracking.c
->>> +++ b/kernel/context_tracking.c
->>> @@ -144,15 +144,16 @@ NOKPROBE_SYMBOL(context_tracking_user_enter);
->>>    * This call supports re-entrancy. This way it can be called from any
->>> exception
->>>    * handler without needing to know if we came from userspace or not.
->>>    */
->>> -void context_tracking_exit(enum ctx_state state)
->>> +bool context_tracking_exit(enum ctx_state state)
->>
->> This needs clear documentation of what the return value means.
->
->
-> Added:
->
->  * Return: if called with state == CONTEXT_USER, the function returns
->  * true if we were in fact previously in user mode.
+With the changes based on your suggestion to use the gpiod interface
+also for pdata this patch has become almost trivial and so should be the
+effort removing this support should it ever become necessary.
 
-This should note that it only returns true if context tracking is on.
+Regards,
 
->>> +void task_isolation_exception(void)
->>> +{
->>> +       pr_warn("%s/%d: task_isolation strict mode violated by
->>> exception\n",
->>> +               current->comm, current->pid);
->>> +       kill_task_isolation_strict_task();
->>> +}
->>
->> Should this say what exception?
->
->
-> I could modify it to take a string argument (and then use it for
-> the arm64 case at least).  For the exception_enter() caller, we actually
-> don't have the information available to pass down, and it would
-> be hard to get it.
-
-For x86, the relevant info might be the actual hw error number
-(error_code, which makes it into die) or the signal.  If we send a
-death signal, then reporting the error number the usual way might make
-sense.
-
---Andy
+--
+Andreas Dannenberg
+Texas Instruments Inc
