@@ -1,100 +1,139 @@
-From: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-Subject: [PATCH v8 02/14] power: bq24257: Streamline input current limit setup
-Date: Mon, 28 Sep 2015 17:33:50 -0500
-Message-ID: <1443479642-23712-3-git-send-email-dannenberg@ti.com>
-References: <1443479642-23712-1-git-send-email-dannenberg@ti.com>
+From: Andreas Dannenberg <dannenberg@ti.com>
+Subject: [PATCH v8 00/14] power: bq24257: Add support for bq24250/bq24251
+Date: Mon, 28 Sep 2015 17:33:48 -0500
+Message-ID: <1443479642-23712-1-git-send-email-dannenberg@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1443479642-23712-1-git-send-email-dannenberg-l0cyMroinI0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Laurentiu Palcu <laurentiu.palcu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Cc: Ramakrishna Pallala <ramakrishna.pallala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
+Return-path: <linux-pm-owner@vger.kernel.org>
+Sender: linux-pm-owner@vger.kernel.org
+To: Sebastian Reichel <sre@kernel.org>, Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, Laurentiu Palcu <laurentiu.palcu@intel.com>, Krzysztof Kozlowski <k.kozlowski@samsung.com>
+Cc: Ramakrishna Pallala <ramakrishna.pallala@intel.com>, linux-pm@vger.kernel.org, devicetree@vger.kernel.org, linux-api@vger.kernel.org, Andreas Dannenberg <dannenberg@ti.com>
 List-Id: linux-api@vger.kernel.org
 
-The maximum amount of input current the charger should draw is dependent
-on the power supply and should only be (re-)configured when the power
-supply gets connected and disconnected. However the driver was also
-lowering the bq24257's input current limit setting to 500mA when the
-battery was removed and restored the previous setting according to the
-power supply capabilities when the battery was reconnected although
-these events are not impacting the amount of power that can be drawn
-from the supply. Furthermore, a re-configuration of the input current
-limit to 500mA when the battery gets disconnected is actually dangerous
-if the limit was set higher previously and the system draws more than
-500mA in which case the system voltage would be reduced in order to
-maintain 500mA which could result in the system getting too low of a
-supply to maintain operation. Last but not least the mechanism itself
-used for battery re-connection detection did not work in corner cases
-such as when the device's input current loop becomes active and the
-bq24257 device clears its battery fault error resulting in incorrectly
-reporting that the battery got reconnected.
+This patch series extends the driver to also support bq24250/bq24251.
 
-This patches removes the impact the battery removal/insertion has on the
-input current limit configured for the bq24257 and simplifies the
-associated handler routine.
+The bq24250/251/257 devices have a very similar feature set and are
+virtually identical from a control register point of view so it made
+sense to extend the existing driver rather than submitting a new driver.
+In addition to the new device support the driver is also extended to
+allow access to some device features previously hidden. Basic and
+potentially dangerous charger config parameters affecting the actual
+charging of the Li-Ion battery are only configurable through firmware
+rather than sysfs properties. However some newly introduced properties
+are exposed through sysfs properties as access to them may be desired
+from userspace. For example, it is now possible to manually configure
+the maximum current drawn from the input source to accommodate different
+chargers (0.5A, 1.5A, 2.0A and so on) based on system knowledge a
+userspace application may have rather than rely on the auto-detection
+mechanism that may not work in all possible scenarios.
 
-Signed-off-by: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
----
- drivers/power/bq24257_charger.c | 29 +++++++++++------------------
- 1 file changed, 11 insertions(+), 18 deletions(-)
+Note that most patches have dependencies on other patches in the series.
 
-diff --git a/drivers/power/bq24257_charger.c b/drivers/power/bq24257_charger.c
-index 69b53d0..d2d077c 100644
---- a/drivers/power/bq24257_charger.c
-+++ b/drivers/power/bq24257_charger.c
-@@ -448,14 +448,13 @@ static void bq24257_handle_state_change(struct bq24257_device *bq,
- {
- 	int ret;
- 	struct bq24257_state old_state;
--	bool reset_iilimit = false;
--	bool config_iilimit = false;
- 
- 	mutex_lock(&bq->lock);
- 	old_state = bq->state;
- 	mutex_unlock(&bq->lock);
- 
--	if (!new_state->power_good) {			     /* power removed */
-+	if (!new_state->power_good) {
-+		dev_dbg(bq->dev, "Power removed\n");
- 		cancel_delayed_work_sync(&bq->iilimit_setup_work);
- 
- 		/* activate D+/D- port detection algorithm */
-@@ -463,26 +462,20 @@ static void bq24257_handle_state_change(struct bq24257_device *bq,
- 		if (ret < 0)
- 			goto error;
- 
--		reset_iilimit = true;
--	} else if (!old_state.power_good) {		    /* power inserted */
--		config_iilimit = true;
--	} else if (new_state->fault == FAULT_NO_BAT) {	   /* battery removed */
--		cancel_delayed_work_sync(&bq->iilimit_setup_work);
--
--		reset_iilimit = true;
--	} else if (old_state.fault == FAULT_NO_BAT) {    /* battery connected */
--		config_iilimit = true;
--	} else if (new_state->fault == FAULT_TIMER) { /* safety timer expired */
--		dev_err(bq->dev, "Safety timer expired! Battery dead?\n");
--	}
--
--	if (reset_iilimit) {
-+		/* reset input current limit */
- 		ret = bq24257_field_write(bq, F_IILIMIT, IILIMIT_500);
- 		if (ret < 0)
- 			goto error;
--	} else if (config_iilimit) {
-+	} else if (!old_state.power_good) {
-+		dev_dbg(bq->dev, "Power inserted\n");
-+
-+		/* configure input current limit */
- 		schedule_delayed_work(&bq->iilimit_setup_work,
- 				      msecs_to_jiffies(BQ24257_ILIM_SET_DELAY));
-+	} else if (new_state->fault == FAULT_NO_BAT) {
-+		dev_warn(bq->dev, "Battery removed\n");
-+	} else if (new_state->fault == FAULT_TIMER) {
-+		dev_err(bq->dev, "Safety timer expired! Battery dead?\n");
- 	}
- 
- 	return;
+v8:
+- Rebased onto Sebastian's "next" tree and dropped the "power: bq24257:
+  Remove IRQ config through stat-gpios" patch from the series as it's
+  already present
+- Reworded ti,current-limit DT doc description
+- Removed linux/gpio.h include from the platform data patch
+- Successfully re-tested the patch that implements the use of the
+  managed power supply register functions regarding possible side
+  effects and updated the patch's comment for better clarity. Also
+  updated the description of that patch to explain the "why".
+- Added handling of -EPROBE_DEFER during GPIO pin probe. This error now
+  leads to an abort of the driver probe and the Kernel will re-try to
+  probe the driver later (successfully tested).
+- Added some of the previous Reviewed-by's from Laurentiu and Krzysztof
+  (only if there were trivial changes stemming from the discussions or
+  no changes at all)
+
+v7:
+- Fixed an issue that would have impacted running bisect on the series
+  and double checked the entire series builds one by one by running
+  a git rebase -i --exec="make ..." ... on the Kernel tree
+- Minor simplification of a return from a function
+
+v6:
+- Removed the ability to configure the IRQ through "stat-gpios"
+- Allow re-configuring the input_current_limit via sysfs also when
+  charger auto-detection is enabled
+- Use gpiod interface for initialization as a platform device (nice
+  GPIO setup simplification)
+- Document all newly introduced sysfs nodes
+- Streamlined/fixed/simplified charger state handling as it relates
+  to battery removal/insertion and the associated handling of the
+  input current limit setting
+- Minor simplifications/cleanup
+- Rebased onto git://git.kernel.org/pub/scm/linux/kernel/git/sre/linux-
+  power-supply.git (branch "next") and completely retested
+
+v5:
+- Added patch to use the managed version of power supply register which
+  also fixes a code flow issue that was introduced
+- Minor fixes / consistency cleanup (Krzysztof's feedback)
+
+v4:
+- Removed configurability of the safety timer multiplier through DT
+
+v3:
+- Dropped the driver/symbol rename patch from v2 due to anticipated
+  issues with upcoming bq2425x family additions
+- Reverted additional mutex coverage for I2C access due to regmap
+  built-in mutex protection being sufficient
+- Removed support for trickle charging due to being a rare/uncommon
+  use case
+- Fixed most checkpatch.pl --strict alignment issues (except where
+  the line length would exceed 80 chars)
+- Fixed an issue with how the return value of gpio_to_desc() was
+  handled
+- Fixed an issue with the definition of bq24257_of_match[]
+- Reordered the patch series to put the DT doc changes to the
+  beginning
+
+v2:
+- Aligned DT bindings better with existing "ti,*" charger bindings
+- Dropped patch that improperly reported a missing battery as a dead
+  battery
+- Fixed (hopefully, that is -- still waiting for my test platform)
+  issue with how the private ACPI driver_data used to identify which
+  bq2425x device to use
+- Removed boolean DT/ACPI properties mostly by replacing them with more
+  intelligent handling in the driver
+- Rework/clarification of DT bindings doc
+- Renamed/refactored filenames/symbols from bq24257 to bq2425x to
+  better reflect that multiple devices are covered. Despite initial
+  hesitation I feel this is a good opportunity for some clean-up as
+  the driver is still very new in the Kernel so the change should be
+  low risk. This also addresses one of Andrew Davis' feedback items.
+  Plus, it makes for a nice alignment with the existing bq2415x_charger
+  driver.
+
+v1:
+- Initial submission
+
+Andreas Dannenberg (14):
+  dt: power: bq24257-charger: Cover additional devices
+  power: bq24257: Streamline input current limit setup
+  power: bq24257: Use managed power supply register
+  power: bq24257: Simplify bq24257_power_supply_init()
+  power: bq24257: Add basic support for bq24250/bq24251
+  power: bq24257: Add bit definition for temp sense enable
+  power: bq24257: Allow manual setting of input current limit
+  power: bq24257: Add SW-based approach for Power Good determination
+  power: bq24257: Add over voltage protection setting support
+  power: bq24257: Add input DPM voltage threshold setting support
+  power: bq24257: Allow input current limit sysfs access
+  power: bq24257: Add various device-specific sysfs properties
+  power: bq24257: Add platform data based initialization
+  Documentation: power: bq24257: Document exported sysfs entries
+
+ Documentation/ABI/testing/sysfs-class-power        |  58 +++
+ .../devicetree/bindings/power/bq24257.txt          |  53 ++-
+ drivers/power/Kconfig                              |   5 +-
+ drivers/power/bq24257_charger.c                    | 506 ++++++++++++++++++---
+ include/linux/power/bq24257_charger.h              |  25 +
+ 5 files changed, 583 insertions(+), 64 deletions(-)
+ create mode 100644 include/linux/power/bq24257_charger.h
+
 -- 
 1.9.1
+
