@@ -1,93 +1,383 @@
-From: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v7 04/15] power: bq24257: Use managed power supply
- register
-Date: Mon, 28 Sep 2015 19:22:25 +0200
-Message-ID: <20150928172222.GF3660@earth>
-References: <1443196460-26156-1-git-send-email-dannenberg@ti.com>
- <1443196460-26156-5-git-send-email-dannenberg@ti.com>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: [PATCH v2 10/9] copy_file_range.2: New page documenting
+ copy_file_range()
+Date: Mon, 28 Sep 2015 10:23:29 -0700
+Message-ID: <20150928172329.GA850@birch.djwong.org>
+References: <1442003423-6884-1-git-send-email-Anna.Schumaker@Netapp.com>
+ <1442003423-6884-11-git-send-email-Anna.Schumaker@Netapp.com>
+ <55F52ABA.9070908@gmail.com>
+ <20150914183223.GA28469@birch.djwong.org>
+ <5601B5C7.7030704@Netapp.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="oPmsXEqKQNHCSXW7"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-btrfs-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1443196460-26156-5-git-send-email-dannenberg-l0cyMroinI0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-Cc: Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Laurentiu Palcu <laurentiu.palcu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Ramakrishna Pallala <ramakrishna.pallala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <5601B5C7.7030704@Netapp.com>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Anna Schumaker <Anna.Schumaker@netapp.com>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, andros@netapp.com, hch@infradead.org
 List-Id: linux-api@vger.kernel.org
 
+On Tue, Sep 22, 2015 at 04:10:47PM -0400, Anna Schumaker wrote:
+> On 09/14/2015 02:32 PM, Darrick J. Wong wrote:
+> > On Sun, Sep 13, 2015 at 09:50:18AM +0200, Michael Kerrisk (man-pages) wrote:
+> >> Hi Anna,
+> >>
+> >> On 09/11/2015 10:30 PM, Anna Schumaker wrote:
+> >>> copy_file_range() is a new system call for copying ranges of data
+> >>> completely in the kernel.  This gives filesystems an opportunity to
+> >>> implement some kind of "copy acceleration", such as reflinks or
+> >>> server-side-copy (in the case of NFS).
+> >>>
+> >>> Signed-off-by: Anna Schumaker <Anna.Schumaker@Netapp.com>
+> >>
+> >> Thanks for writing such a nice first draft man page! I have a few
+> >> comments below. Would you be willing to revise and resubmit?
+> >>
+> >>> ---
+> >>>  man2/copy_file_range.2 | 188 +++++++++++++++++++++++++++++++++++++++++++++++++
+> >>>  1 file changed, 188 insertions(+)
+> >>>  create mode 100644 man2/copy_file_range.2
+> >>>
+> >>> diff --git a/man2/copy_file_range.2 b/man2/copy_file_range.2
+> >>> new file mode 100644
+> >>> index 0000000..84912b5
+> >>> --- /dev/null
+> >>> +++ b/man2/copy_file_range.2
+> >>> @@ -0,0 +1,188 @@
+> >>> +.\"This manpage is Copyright (C) 2015 Anna Schumaker <Anna.Schumaker@Netapp.com>
+> >>
+> >> We need a license for this page. Please see
+> >> https://www.kernel.org/doc/man-pages/licenses.html
+> >>
+> >>> +.TH COPY 2 2015-8-31 "Linux" "Linux Programmer's Manual"
+> >>
+> >> Make the month 2 digits (leading 0).
+> >>
+> >>> +.SH NAME
+> >>> +copy_file_range \- Copy a range of data from one file to another
+> >>> +.SH SYNOPSIS
+> >>> +.nf
+> >>> +.B #include <linux/copy.h>
+> >>> +.B #include <sys/syscall.h>
+> >>> +.B #include <unistd.h>
+> >>> +
+> >>> +.BI "ssize_t syscall(__NR_copy_file_range, int " fd_in ", loff_t * " off_in ",
+> >>> +.BI "                int " fd_out ", loff_t * " off_out ", size_t " len ",
+> >>> +.BI "                unsigned int " flags );
+> >>
+> >> Remove spaces following "*" in the lines above. (man-pages convention for code)
+> >>
+> >> I know that the copy_file_range() (obviously) doesn't yet have a wrapper
+> >> in glibc, but in the man pages we document all system calls as though there
+> >> is a wrapper. See, for example, gettid(2), for an axample of how this is done
+> >> (a note in the SYNOPSIS and then some further details in NOTES).
+> >>
+> >>> +.fi
+> >>> +.SH DESCRIPTION
+> >>> +The
+> >>> +.BR copy_file_range ()
+> >>> +system call performs an in-kernel copy between two file descriptors
+> >>> +without all that tedious mucking about in userspace.
+> >>
+> >> I'd write that last piece as:
+> >>
+> >> "without the cost of (a loop) transferring data from the kernel to a 
+> >> user-space buffer and then back to the kernel again.
+> >>
+> >>> +It copies up to
+> >>> +.I len
+> >>> +bytes of data from file descriptor
+> >>> +.I fd_in
+> >>> +to file descriptor
+> >>> +.IR fd_out ,
+> >>> +overwriting any data that exists within the requested range.
+> >>
+> >> s/.$/ of the target file./
+> >>
+> >>> +
+> >>> +The following semantics apply for
+> >>> +.IR off_in ,
+> >>> +and similar statements apply to
+> >>> +.IR off_out :
+> >>> +.IP * 3
+> >>> +If
+> >>> +.I off_in
+> >>> +is NULL, then bytes are read from
+> >>> +.I fd_in
+> >>> +starting from the current file offset and the current
+> >>> +file offset is adjusted appropriately.
+> >>> +.IP *
+> >>> +If
+> >>> +.I off_in
+> >>> +is not NULL, then
+> >>> +.I off_in
+> >>> +must point to a buffer that specifies the starting
+> >>> +offset where bytes from
+> >>> +.I fd_in
+> >>> +will be read.  The current file offset of
+> >>> +.I fd_in
+> >>> +is not changed, but
+> >>> +.I off_in
+> >>> +is adjusted appropriately.
+> >>> +.PP
+> >>> +
+> >>> +The
+> >>> +.I flags
+> >>> +argument is a bit mask composed by OR-ing together zero
+> >>> +or more of the following flags:
+> >>> +.TP 1.9i
+> >>> +.B COPY_FR_COPY
+> >>> +Copy all the file data in the requested range.
+> >>> +Some filesystems, like NFS, might be able to accelerate this copy
+> >>> +to avoid unnecessary data transfers.
+> >>> +.TP
+> >>> +.B COPY_FR_REFLINK
+> >>> +Create a lightweight "reflink", where data is not copied until
+> >>> +one of the files is modified.
+> >>> +.PP
+> >>> +The default behavior
+> >>> +.RI ( flags
+> >>> +== 0) is to try creating a reflink,
+> >>> +and if reflinking fails
+> >>> +.BR copy_file_range ()
+> >>> +will fall back on performing a full data copy.
+> >>
+> >> s/back on/back to/
+> >>
+> >>> +This is equivalent to setting
+> >>> +.I flags
+> >>> +equal to
+> >>> +.RB ( COPY_FR_COPY | COPY_FR_REFLINK ).
+> >>
+> >> So, from an API deign perspective, the interoperation of these two
+> >> flags appears odd. Bit flags are commonly (not always) orthogonal.
+> >> I think here it could be pointed out a little more explicitly that
+> >> these two flags are not orthogonal. In particular, perhaps after the
+> >> last sentence, you could add another sentence:
+> >>
+> >> [[
+> >> (This contrasts with specifying
+> >> .I flags
+> >> as just
+> >> .BR COPY_FR_REFLINK ,
+> >> which causes the call to create a reflink,
+> >> and fail if that is not possible,
+> >> rather than falling back to a full data copy.)
+> >> ]]
+> >>
+> >> Furthermore, I even wonder if explicitly specifying flags as
+> >> COPY_FR_COPY | COPY_FR_REFLINK should just generate an EINVAL
+> >> error. 0 already gives us the behavior described above,
+> >> and allowing the combination COPY_FR_COPY | COPY_FR_REFLINK
+> >> perhaps just contributes to misleading the user that these
+> >> flags are orthogonal, when in reality they are not. What do
+> >> you think?
+> > 
+> > Personally, I think it's a little weird that one turns on reflink with a flag;
+> > turns on regular copy with a different flag; and turns on both by not
+> > specifying either flag. :)
+> 
+> Is there a better behavior for flags=0?  I was thinking this would be what
+> people want when they don't care how the copy happens in the kernel.
 
---oPmsXEqKQNHCSXW7
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+[sorry, was out on vacation for a week]
 
-Hi,
+Probably not.  I guess you could "#define COPY_FR_CHEFS_SURPRISE 0" so at least
+it'd be obvious in userland source code that the last argument is flags
+and not just some number that happens to be zero.  (I don't like when I have
+to look up the manpage to remember which arguments are numbers and which are
+flags.)
 
-On Fri, Sep 25, 2015 at 10:54:09AM -0500, Andreas Dannenberg wrote:
-> Use the devm_* managed version of the function to register the power
-> supply and remove the associated unregister function.
->=20
-> Signed-off-by: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-> ---
->  drivers/power/bq24257_charger.c | 8 ++++----
->  1 file changed, 4 insertions(+), 4 deletions(-)
->=20
-> diff --git a/drivers/power/bq24257_charger.c b/drivers/power/bq24257_char=
-ger.c
-> index d2d077c..6757b41 100644
-> --- a/drivers/power/bq24257_charger.c
-> +++ b/drivers/power/bq24257_charger.c
-> @@ -590,8 +590,10 @@ static int bq24257_power_supply_init(struct bq24257_=
-device *bq)
->  	psy_cfg.supplied_to =3D bq24257_charger_supplied_to;
->  	psy_cfg.num_supplicants =3D ARRAY_SIZE(bq24257_charger_supplied_to);
-> =20
-> -	bq->charger =3D power_supply_register(bq->dev, &bq24257_power_supply_de=
-sc,
-> -					    &psy_cfg);
-> +	bq->charger =3D devm_power_supply_register(bq->dev,
-> +						 &bq24257_power_supply_desc,
-> +						 &psy_cfg);
-> +
->  	if (IS_ERR(bq->charger))
->  		return PTR_ERR(bq->charger);
-> =20
-> @@ -742,8 +744,6 @@ static int bq24257_remove(struct i2c_client *client)
-> =20
->  	cancel_delayed_work_sync(&bq->iilimit_setup_work);
-> =20
-> -	power_supply_unregister(bq->charger);
-> -
->  	bq24257_field_write(bq, F_RESET, 1); /* reset to defaults */
+(OTOH I concede that we do have a precedent of flags == 0 meaning 'use sane
+defaults'.)
 
+--D
 
-This effectively reordering bq24257_field_write() before
-power_supply_unregister(), so you may want to loose a few words in
-the patch description, that this is a known/unproblematic
-side-effect.
-
--- Sebastian
-
---oPmsXEqKQNHCSXW7
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBCgAGBQJWCXdLAAoJENju1/PIO/qaTZMP/2ZO6ptxsioCUYb/lYJDZGOr
-6KnmXt2NoWvpI2IUYQ2zbdQ7OI5NIWDbEM4BgMqXQNL9hVDtxJLQa4YYGgPQ4o5G
-sLDfiMQeeo4JyeT/C5cec/14NRm3K/n1GYSctuhWiyvV2q7YW37dFTYi/Art9uJ9
-KcUfkQye6jmiynME5PTEbbA3HIDs5qE6LPTFOD3tqigBL9xlVrg1ovzWyxRTzF4A
-Xd27vhk9eI5rU3or+LpUjt6tVw7sot+3btf8DtnP5R8VCrF8rWCd2tr/ypBjqtbb
-sEoJZGWP4KA4P6G9M3zaESSI8xVVGRFKSGKZk7hqXTGAT48j1tF1SeWdrq4B1Ntk
-7jB5SZ/MXflWYHIytDeDXjgQk2+6+uZinjZPkiaXNw7htqbPGzk5IT9aIvl8xGnl
-v0/9VHfAOphzMv+QrEsyETb/aeN90F2d6JwTaWASoWNIZ01Ik3/IFgNpaerFpTmp
-bXY06rUGyOEC4C9/3F1Q5datfQbpMT4diyk7rahK2vL5kofy67i1o7h35QktBkMo
-NPzPr5XJJpmbmU2AIMVuEJWLCGjWZcj9seiZYWpvximeq8aC7BcdMt848kZjqOkY
-I6JOUQW2EdFwZ/2BHE7xPDbxb3xwDRP16zrJOEP+kKAi4d0LPX4MuI6A0F3zwFtk
-UZaDlg7H5+0c+vklfWNd
-=Sf3L
------END PGP SIGNATURE-----
-
---oPmsXEqKQNHCSXW7--
+> 
+> Anna
+> 
+> > 
+> >> What are the semantics with respect to signals, especially if data 
+> >> copying a very large file range? This info should be included in the 
+> >> man page, probably under NOTES.
+> >>
+> >>> +.SH RETURN VALUE
+> >>> +Upon successful completion,
+> >>> +.BR copy_file_range ()
+> >>> +will return the number of bytes copied between files.
+> >>> +This could be less than the length originally requested.
+> >>> +
+> >>> +On error,
+> >>> +.BR copy_file_range ()
+> >>> +returns \-1 and
+> >>> +.I errno
+> >>> +is set to indicate the error.
+> >>> +.SH ERRORS
+> >>> +.TP
+> >>> +.B EBADF
+> >>> +One or more file descriptors are not valid,
+> >>> +or do not have proper read-write mode;
+> >>
+> >> I think that last line can go. I mean, isn't this point (again)
+> >> covered in the next few lines?
+> > 
+> > Or change the ';' to a ':'?
+> > 
+> >>> +.I fd_in
+> >>> +is not open for reading; or
+> >>> +.I fd_out
+> >>> +is not open for writing.
+> >>> +.TP
+> >>> +.B EINVAL
+> >>> +Requested range extends beyond the end of the file; or the
+> >>
+> >> s/file/source file/  (right?)
+> >>
+> >>> +.I flags
+> >>> +argument is set to an invalid value.
+> >>> +.TP
+> >>> +.B EIO
+> >>> +A low level I/O error occurred while copying.
+> >>> +.TP
+> >>> +.B ENOMEM
+> >>> +Out of memory.
+> >>> +.TP
+> >>> +.B ENOSPC
+> >>> +There is not enough space to complete the copy.
+> >>
+> >> Space where? On the filesystem?
+> >> => s/space/space on the target filesystem/
+> >>
+> >>> +.TP
+> >>> +.B EOPNOTSUPP
+> >>> +.B COPY_REFLINK
+> >>> +was specified in
+> >>> +.IR flags ,
+> >>> +but the target filesystem does not support reflinks.
+> >>> +.TP
+> >>> +.B EXDEV
+> >>> +Target filesystem doesn't support cross-filesystem copies.
+> >>
+> >> I'm curious. What are some examples of filesystems that produce this
+> >> error?
+> > 
+> > btrfs and xfs (and probably most local filesystems) don't support cross-fs
+> > copies.
+> > 
+> > --D
+> > 
+> >>
+> >>> +.SH VERSIONS
+> >>> +The
+> >>> +.BR copy_file_range ()
+> >>> +system call first appeared in Linux 4.4.
+> >>> +.SH CONFORMING TO
+> >>> +The
+> >>> +.BR copy_file_range ()
+> >>> +system call is a nonstandard Linux extension.
+> >>> +.SH EXAMPLE
+> >>> +.nf
+> >>> +
+> >>> +#define _GNU_SOURCE
+> >>> +#include <fcntl.h>
+> >>> +#include <linux/copy.h>
+> >>> +#include <stdio.h>
+> >>> +#include <stdlib.h>
+> >>> +#include <sys/stat.h>
+> >>> +#include <sys/syscall.h>
+> >>> +#include <unistd.h>
+> >>> +
+> >>> +
+> >>> +int main(int argc, char **argv)
+> >>> +{
+> >>> +    int fd_in, fd_out;
+> >>> +    struct stat stat;
+> >>> +    loff_t len, ret;
+> >>> +
+> >>> +    if (argc != 3) {
+> >>> +        fprintf(stderr, "Usage: %s <source> <destination>\\n", argv[0]);
+> >>> +        exit(EXIT_FAILURE);
+> >>> +    }
+> >>> +
+> >>> +    fd_in = open(argv[1], O_RDONLY);
+> >>> +    if (fd_in == -1) {
+> >>
+> >> Please replace all "-" in code by "\-". (This is a groff
+> >> detail.)
+> >>
+> >>> +        perror("open (argv[1])");
+> >>> +        exit(EXIT_FAILURE);
+> >>> +    }
+> >>> +
+> >>> +    if (fstat(fd_in, &stat) == -1) {
+> >>> +        perror("fstat");
+> >>> +        exit(EXIT_FAILURE);
+> >>> +    }
+> >>> +    len = stat.st_size;
+> >>> +
+> >>> +    fd_out = creat(argv[2], 0644);
+> >>
+> >> These days, I think we should discourage the use of creat(). Maybe 
+> >> better to use open() instead here?
+> >>
+> >>> +    if (fd_out == -1) {
+> >>> +        perror("creat (argv[2])");
+> >>> +        exit(EXIT_FAILURE);
+> >>> +    }
+> >>> +
+> >>> +    do {
+> >>> +        ret = syscall(__NR_copy_file_range, fd_in, NULL,
+> >>> +                      fd_out, NULL, len, 0);
+> >>
+> >> I'd rather see this as:
+> >>
+> >> int
+> >> copy_file_range(int fd_in, loff_t *off_in,
+> >>                 int fd_out, loff_t *off_out, size_t len,
+> >>                 unsigned int flags)
+> >> {
+> >>     return(syscall(__NR_copy_file_range, fd_in, fd_out, off_out, len, flags);
+> >> }
+> >>
+> >> ...
+> >>
+> >>     copy_file_range(fd_in, fd_out, off_out, len, flags);
+> >>
+> >>  
+> >>> +        if (ret == -1) {
+> >>> +            perror("copy_file_range");
+> >>> +            exit(EXIT_FAILURE);
+> >>> +        }
+> >>> +
+> >>> +        len -= ret;
+> >>> +    } while (len > 0);
+> >>> +
+> >>> +    close(fd_in);
+> >>> +    close(fd_out);
+> >>> +    exit(EXIT_SUCCESS);
+> >>> +}
+> >>> +.fi
+> >>> +.SH SEE ALSO
+> >>> +.BR splice (2)
+> >>>
+> >>
+> >> In the next iteration of this patch, could you include a change to
+> >> splice(2) so that copy_file_range(2) is added under SEE ALSO in
+> >> that page. Also, are there any other pages that we should like
+> >> to/from? (sendfile(2)?)
+> >>
+> >> Thanks,
+> >>
+> >> Michael
+> >>
+> >>
+> >> -- 
+> >> Michael Kerrisk
+> >> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+> >> Linux/UNIX System Programming Training: http://man7.org/training/
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
