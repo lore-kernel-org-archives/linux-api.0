@@ -1,72 +1,54 @@
-From: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-Subject: Re: [PATCH 0/1] ns: introduce proc_get_ns_by_fd()
-Date: Mon, 28 Sep 2015 11:21:07 +0300
-Message-ID: <5608F873.6050305@yandex-team.ru>
-References: <20150925135246.27620.97496.stgit@buzz>
- <20150925175654.GA12504@redhat.com>
+From: Andreas Dannenberg <dannenberg@ti.com>
+Subject: Re: [PATCH v7 09/15] power: bq24257: Add SW-based approach for Power
+ Good determination
+Date: Mon, 28 Sep 2015 07:04:12 -0500
+Message-ID: <20150928120412.GA12676@borg>
+References: <1443196460-26156-1-git-send-email-dannenberg@ti.com>
+ <1443196460-26156-10-git-send-email-dannenberg@ti.com>
+ <20150927202025.GA2051@earth>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150925175654.GA12504-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Roman Gushchin <klamm-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Chen Fan <chen.fan.fnst-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, =?UTF-8?Q?St=c3=a9phane_Graber?= <stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Return-path: <linux-pm-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150927202025.GA2051@earth>
+Sender: linux-pm-owner@vger.kernel.org
+To: Sebastian Reichel <sre@kernel.org>
+Cc: Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, Laurentiu Palcu <laurentiu.palcu@intel.com>, Krzysztof Kozlowski <k.kozlowski@samsung.com>, Ramakrishna Pallala <ramakrishna.pallala@intel.com>, linux-pm@vger.kernel.org, devicetree@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 25.09.2015 20:56, Oleg Nesterov wrote:
-> On 09/25, Konstantin Khlebnikov wrote:
->>
->> +struct ns_common *proc_ns_fdget(int fd, int nstype, struct fd *fd_ref)
->>   {
->> -	struct file *file;
->> +	struct ns_common *ns;
->> +	struct fd f;
->>
->> -	file = fget(fd);
->> -	if (!file)
->> +	f = fdget(fd);
->> +	if (!f.file)
->>   		return ERR_PTR(-EBADF);
->>
->> -	if (file->f_op != &ns_file_operations)
->> +	if (f.file->f_op != &ns_file_operations)
->> +		goto out_invalid;
->> +
->> +	ns = get_proc_ns(file_inode(f.file));
->> +	if (nstype && (ns->ops->type != nstype))
->>   		goto out_invalid;
->>
->> -	return file;
->> +	*fd_ref = f;
->> +	return ns;
->>
->>   out_invalid:
->> -	fput(file);
->> +	fdput(f);
->>   	return ERR_PTR(-EINVAL);
->>   }
->
-> Well yes, fdget() makes sense but this is minor.
->
-> Honestly, I do not really like the new helper... I understand this
-> is subjective, so I won't insist. But how about 1/1? We do not need
-> fd/file at all. With this patch your sys_getvpid() can just use
-> proc_get_ns_by_fd(fd, CLONE_NEWPID) and put_pid_ns().
+On Sun, Sep 27, 2015 at 10:20:26PM +0200, Sebastian Reichel wrote:
+> Hi,
+> 
+> On Fri, Sep 25, 2015 at 10:54:14AM -0500, Andreas Dannenberg wrote:
+> > @@ -651,15 +670,18 @@ static int bq24257_power_supply_init(struct bq24257_device *bq)
+> >  	return PTR_ERR_OR_ZERO(bq->charger);
+> >  }
+> >  
+> > -static int bq24257_pg_gpio_probe(struct bq24257_device *bq)
+> > +static void bq24257_pg_gpio_probe(struct bq24257_device *bq)
+> >  {
+> > -	bq->pg = devm_gpiod_get_index(bq->dev, BQ24257_PG_GPIO, 0, GPIOD_IN);
+> > +	bq->pg = devm_gpiod_get_optional(bq->dev, BQ24257_PG_GPIO, GPIOD_IN);
+> > +
+> >  	if (IS_ERR(bq->pg)) {
+> > -		dev_err(bq->dev, "could not probe PG pin\n");
+> > -		return PTR_ERR(bq->pg);
+> > +		dev_err(bq->dev, "error probing PG pin\n");
+> > +		bq->pg = NULL;
+> > +		return;
+> >  	}
+> 
+> You should handle -EPROBE_DEFER here.
 
-Hmm. My version has 0 or 2 atomic ops per get-put sequence.
-Your version: 2 or 4 atomic ops. Plus even in worst case pinning by
-struct fd theoretically scales better because it touches refcount at
-struct file: there're might be many of them for one namespace.
+Hi Sebastian. From having a quick look at the Kernel tree it seems like
+this error shouldn't get exposed to the user (which it doesn't since it
+would get zeroe'd out) and the error itself suggests that I should
+"retry" which none of the things I looked at in the Kernel through "git
+grep" seemed to do. So before making any assumptions I wanted to see if
+I'm missing something or you could give me any pointers how to proceed.
 
->
-> Eric, what do you think?
->
-> See also "TODO" in the changelog.
->
-> Oleg.
->
+Thanks,
 
-
--- 
-Konstantin
+--
+Andreas Dannenberg
+Texas Instruments Inc
