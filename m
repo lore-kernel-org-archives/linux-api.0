@@ -1,49 +1,88 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH v2] capabilities.7, prctl.2: Document ambient capabilities
-Date: Tue, 29 Sep 2015 10:49:57 -0700
-Message-ID: <CALCETrUODXGLEwdKmmNSbaQ7avUDDNnwSt55oNw9gJxK94Ufmg@mail.gmail.com>
-References: <5552a36c5511348a90806f9661a9382c2d362603.1443488521.git.luto@kernel.org>
- <CAGXu5jJw9dDOQRwLCGXhTjii6tZkLC2C+O3MV8tBoh3OV9mFNQ@mail.gmail.com>
+From: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v7 03/11] task_isolation: support PR_TASK_ISOLATION_STRICT
+ mode
+Date: Tue, 29 Sep 2015 13:57:09 -0400
+Message-ID: <560AD0F5.6080000@ezchip.com>
+References: <1443453446-7827-1-git-send-email-cmetcalf@ezchip.com>
+ <1443453446-7827-4-git-send-email-cmetcalf@ezchip.com>
+ <CALCETrU7bheOSeuE8RxATBiyzQ=sPAC4jbXsqvZHgu8-5FY0zg@mail.gmail.com>
+ <5609B713.5020709@ezchip.com>
+ <CALCETrV7npkg4MPi6Z6Wd_mYh1OrsKnGjB1RWGTAWOnaL+gARQ@mail.gmail.com>
+ <560ACBD9.90909@ezchip.com>
+ <CALCETrUp+8UG5dKLdybcmhhfzcyUP8h-RJHcG0Bo7Up=Rx6DVA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAGXu5jJw9dDOQRwLCGXhTjii6tZkLC2C+O3MV8tBoh3OV9mFNQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <CALCETrUp+8UG5dKLdybcmhhfzcyUP8h-RJHcG0Bo7Up=Rx6DVA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Sep 29, 2015 at 10:47 AM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
-> On Mon, Sep 28, 2015 at 6:03 PM, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
->> Signed-off-by: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
->> ---
->>  man2/prctl.2        | 12 ++++++++++++
->>  man7/capabilities.7 | 40 ++++++++++++++++++++++++++++++++++------
->>  2 files changed, 46 insertions(+), 6 deletions(-)
->>
->> diff --git a/man2/prctl.2 b/man2/prctl.2
->> index e743a6305969..5bcec391c110 100644
->> --- a/man2/prctl.2
->> +++ b/man2/prctl.2
->> @@ -954,6 +954,18 @@ had been called.
->>  For further information on Intel MPX, see the kernel source file
->>  .IR Documentation/x86/intel_mpx.txt .
->>  .\"
->> +.TP
->> +.BR PR_CAP_AMBIENT " (since Linux 4.2)"
->> +Reads or changes the ambient capability set.  If arg2 is PR_CAP_AMBIENT_RAISE,
->> +then the capability specified in arg3 is added to the ambient set.  This will
->> +fail, returning EPERM, if the capability is not already both permitted and
->> +inheritable or if the SECBIT_NO_CAP_AMBIENT_RAISE securebit is set.  If arg2
->> +is PR_CAP_AMBIENT_LOWER, then the capability specified in arg3 is removed
->> +from the ambient set.  If arg2 is PR_CAP_AMBIENT_IS_SET, then
->> +.BR prctl (2)
->> +will return 1 if the capability in arg3 is in the ambient set and 0 if not.
->> +If arg2 is PR_CAP_AMBIENT_CLEAR_ALL, then all capabilities will
->> +be removed from the ambient set.
+On 09/29/2015 01:46 PM, Andy Lutomirski wrote:
+> On Tue, Sep 29, 2015 at 10:35 AM, Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org> wrote:
+>> Well, the most interesting category is things that don't actually
+>> trigger a signal (e.g. minor page fault) since those are things that
+>> cause significant issues with task isolation processes
+>> (kernel-induced jitter) but aren't otherwise user-visible,
+>> much like an undiscovered syscall in a third-party library
+>> can cause unexpected jitter.
+> Would it make sense to exempt the exceptions that result in signals?
+> After all, those are detectable even without your patches.  Going
+> through all of the exception types:
 >
-> In the case of CLEAR_ALL, is arg3 "don't care", or must it be set to 0?
+> divide_error, overflow, invalid_op, coprocessor_segment_overrun,
+> invalid_TSS, segment_not_present, stack_segment, alignment_check:
+> these all send signals anyway.
+>
+> double_fault is fatal.
+>
+> bounds: MPX faults can be silently fixed up, and those will need
+> notification.  (Or user code should know not to do that, since it
+> requires an explicit opt in, and user code can flip it back off to get
+> the signals.)
+>
+> general_protection: always signals except in vm86 mode.
+>
+> int3: silently fixed if uprobes are in use, but I don't think
+> isolation cares about that.  Otherwise signals.
+>
+> debug: The perf hw_breakpoint can result in silent fixups, but those
+> require explicit opt-in from the admin.  Otherwise, unless there's a
+> bug or a debugger, the user will get a signal.  (As a practical
+> matter, the only interesting case is the undocumented ICEBP
+> instruction.)
+>
+> math_error, simd_coprocessor_error: Sends a signal.
+>
+> spurious_interrupt_bug: Irrelevant on any modern CPU AFAIK.  We should
+> just WARN if this hits.
+>
+> device_not_available: If you're using isolation without an FPU, you
+> have bigger problems.
+>
+> page_fault: Needs notification.
+>
+> NMI, MCE: arguably these should *not* notify or at least not fatally.
+>
+> So maybe a better approach would be to explicitly notify for the
+> relevant entries: IRQs, non-signalling page faults, and non-signalling
+> MPX fixups.  Other arches would have their own lists, but they're
+> probably also short except for emulated instructions.
 
-Must be zero.
+IRQs should get notified via the task_isolation_debug boot flag;
+the intent is that they should never get delivered to nohz_full
+cores anyway, so we produce a console backtrace if the boot
+flag is enabled.  This isn't tied to having a task running with
+TASK_ISOLATION enabled, since it just shouldn't ever happen.
 
---Andy
+Thanks for reviewing the possible exception sources on x86,
+which I'm less familiar with than tile.  Non-signalling page faults
+and MPX fixups sounds exactly right - and I didn't know about
+MPX before your email (other than the userspace side of
+the notion of bounds registers), so thanks for the pointer.
+
+-- 
+Chris Metcalf, EZChip Semiconductor
+http://www.ezchip.com
