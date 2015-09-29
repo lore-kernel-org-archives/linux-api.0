@@ -1,109 +1,54 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH 0/1] ns: introduce proc_get_ns_by_fd()
-Date: Tue, 29 Sep 2015 12:30:39 -0500
-Message-ID: <874mid16bk.fsf@x220.int.ebiederm.org>
-References: <20150925135246.27620.97496.stgit@buzz>
-	<20150925175654.GA12504@redhat.com>
-	<871tdi8pqj.fsf@x220.int.ebiederm.org>
-	<20150929164315.GA16734@redhat.com>
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: Re: [PATCH] kselftest: replace $(RM) with rm -f command
+Date: Tue, 29 Sep 2015 10:45:33 -0700
+Message-ID: <CAGXu5jKqiKcTAp5GdL02O2hxA7mEqyhGKyEqEJ1afFXyLtCVvw@mail.gmail.com>
+References: <20150925154415.GC38748@vmdeb7>
+	<1443406217-137773-1-git-send-email-long.wanglong@huawei.com>
+	<1201012824.5792.1443410213729.JavaMail.zimbra@efficios.com>
+	<1443520665.11041.1.camel@ellerman.id.au>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150929164315.GA16734-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> (Oleg Nesterov's message of
-	"Tue, 29 Sep 2015 18:43:15 +0200")
+In-Reply-To: <1443520665.11041.1.camel-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Roman Gushchin <klamm-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Chen Fan <chen.fan.fnst-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, =?utf-8?Q?St=C3=A9phane?= Graber <stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Wang Long <long.wanglong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, bobby prani <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, tyler baker <tyler.baker-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Tim Bird <tim.bird-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, andrej skvortzov <andrej.skvortzov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, sjayaram-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org, treding-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, naresh kamboju <naresh.kamboju-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, alexey kodanev <alexey.kodanev-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, wanglong-m92B/FuLcaEcWVvVuXF20w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
-
-> On 09/28, Eric W. Biederman wrote:
+On Tue, Sep 29, 2015 at 2:57 AM, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org> wrote:
+> On Mon, 2015-09-28 at 03:16 +0000, Mathieu Desnoyers wrote:
+>> ----- On Sep 27, 2015, at 10:10 PM, Wang Long long.wanglong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org wrote:
 >>
->> Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
+>> > Some test's Makefile using "$(RM)" while the other's
+>> > using "rm -f". It is better to use one of them in all
+>> > tests.
 >>
->> > Honestly, I do not really like the new helper... I understand this
->> > is subjective, so I won't insist. But how about 1/1? We do not need
->> > fd/file at all. With this patch your sys_getvpid() can just use
->> > proc_get_ns_by_fd(fd, CLONE_NEWPID) and put_pid_ns().
->> >
->> > Eric, what do you think?
+>> I agree that this disparity appears to be unwanted. We
+>> should settle on one or the other.
 >>
->> At some level I don't care this is not exposed to userspace.
+>> > "rm -f" is better, because it is less magic, and everyone
+>> > konws what is does.
+>>
+>> "$(RM)" is clearly defined as a Makefile implicit variable
+>> which defaults to "rm -f".
+>> Ref. https://www.gnu.org/software/make/manual/html_node/Implicit-Variables.html
 >
-> I agree, this is minor. But you know, the kernel is already complicated
-> too much, we should try to simplify/cleanup everything we can ;)
+> Sure, but you had to look it up didn't you :) - I did.
 >
->> Of the existing uses several of them sleep, which unfortunately means we
->> can not use rcu locking for everything.  The network namespace ones wind
->> up taking a reference to struct net because the have the legacy pid case
->> to deal with. Which makes we can not use fdget for all callers either.
+>> Leaving it as a variable is more flexible because then the
+>> default behavior can be overridden if need be, which is
+>> not the case of a hardcoded "rm -f".
 >
-> And that is why 1/1 adds proc_get_ns_by_fd/get_type which can also be used
-> by the network namespace.
+> But I don't think anyone actually wants to do that. Do they?
 >
->> For this translate_pid rcu locking is sufficient, rcu locking is easy
->> and doing any more than rcu locking just seems silly.  So let me
->> respectfully suggest.
->>
->> struct ns_common *ns_by_fd_rcu(int fd, int type)
->> {
->> 	struct files_struct *files = current->files;
->> 	struct file *file;
->> 	struct ns_common *ns;
->> 	void *ret;
->>
->> 	file = fcheck_files(files, fd);
->>         if (!file)
->> 		return ERR_PTR(-EBADF);
->>
->> 	if (file->f_mode & FMODE_PATH)
->> 		return ERR_PTR(-EINVAL);
->>
->> 	if (file->f_op != &ns_file_operations)
->>         	return ERR_PTR(-EINVAL);
->>
->> 	ns = get_proc_ns(file_inode(file));
->> 	if (ns->ops->type != type)
->> 		return ERR_PTR(-EINVAL);
->>
->> 	return ns;
->> }
->
-> OK, I won't insist, this too looks better to me than proc_ns_fdget(&fd_ref).
->
-> And in any case fcheck_files() makes more sense than fdget(), somehow I did
-> not think about this when I sent 1/1.
->
-> Hmm. and after the quick look at cleanup_net() I can't understand whether
-> get_net_ns_by_fd() can use ns_by_fd_rcu() + maybe_get_net(to_net_ns()) or
-> not... Can it?
+> Anyway I don't really care either way, so I'm happy for you to do a patch that
+> uses $(RM). Or maybe Wang Long will be happy to respin his patch to use $(RM).
 
-Some of those places need a reference that allows them to sleep, and the
-code is shared with the legacy pid case so with an addition of get_net
-we can use ns_by_fd_rcu().   There are cases like setns that could
-use ns_by_fd_rcu() with code reording.
+Yes, please. $(RM) is preferred, as that is the existing standard and
+gives us flexibility.
 
-We can implement get_net_ns_by_fd as:
-struct net *get_net_ns_by_fd(int fd)
-{
-        struct net *net;
+-Kees
 
-	rcu_read_lock();
-	net = net_ns_by_fd_rcu(fd);
-        if (!IS_ERR(net))
-        	get_net(net);
-        rcu_read_unlock();
-
-	return net;
-}
-
-Which means we can achieve code sharing with the pure rcu version
-as a base.
-
-If the networking code did not have the legacy pid case to handle I
-would want to do something with struct fd, as the file descriptor
-already keeps the struct net reference alive and struct fd allows
-for sleeping.
-
-Eric
+-- 
+Kees Cook
+Chrome OS Security
