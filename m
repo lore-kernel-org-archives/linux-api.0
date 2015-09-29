@@ -1,74 +1,79 @@
-From: Robert Bragg <robert@sixbynine.org>
-Subject: [RFC 6/6] drm/i915: add oa_event_min_timer_exponent
-	sysctl
-Date: Tue, 29 Sep 2015 15:39:09 +0100
-Message-ID: <1443537549-6905-7-git-send-email-robert@sixbynine.org>
-References: <1443537549-6905-1-git-send-email-robert@sixbynine.org>
+From: =?UTF-8?Q?Andreas_Gr=C3=BCnbacher?= <andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v8 00/41] Richacls
+Date: Tue, 29 Sep 2015 16:54:37 +0200
+Message-ID: <CAHpGcMKfNewTJOL0ono8kCDoU8YZvxGfuLe3XP6VCGKuZL3mnA@mail.gmail.com>
+References: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
+	<20150928163543.GF1358@fieldses.org>
+	<CAHpGcM++=D1yrkVmZsKwdQCQj4yPdwGGNbmF-Bma7Yo_+kpNQQ@mail.gmail.com>
+	<20150928174648.GA3190@fieldses.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <intel-gfx-bounces@lists.freedesktop.org>
-In-Reply-To: <1443537549-6905-1-git-send-email-robert@sixbynine.org>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/intel-gfx>
-List-Post: <mailto:intel-gfx@lists.freedesktop.org>
-List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: intel-gfx-bounces@lists.freedesktop.org
-Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
-To: intel-gfx@lists.freedesktop.org
-Cc: Mark Rutland <mark.rutland@arm.com>, Matt Fleming <matt.fleming@intel.com>, David Airlie <airlied@linux.ie>, dri-devel@lists.freedesktop.org, linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Sourab Gupta <sourab.gupta@intel.com>, linux-api@vger.kernel.org, Zheng Yan <zheng.z.yan@intel.com>, Daniel Vetter <daniel.vetter@intel.com>, Ingo Molnar <mingo@kernel.org>, Alexander Shishkin <alexander.shishkin@linux.intel.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150928174648.GA3190-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Cc: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-VGhlIG1pbmltYWwgc2FtcGxpbmcgcGVyaW9kIGlzIG5vdyBjb25maWd1cmFibGUgdmlhIGEKZGV2
-Lmk5MTUub2FfZXZlbnRfbWluX3RpbWVyX2V4cG9uZW50IHN5c2N0bCBwYXJhbWV0ZXIuCgpGb2xs
-b3dpbmcgdGhlIHByZWNlZGVudCBzZXQgYnkgcGVyZiwgdGhlIGRlZmF1bHQgaXMgdGhlIG1pbmlt
-dW0gdGhhdAp3b24ndCAob24gaXRzIG93bikgZXhjZWVkIHRoZSBkZWZhdWx0IGtlcm5lbC5wZXJm
-X2V2ZW50X21heF9zYW1wbGVfcmF0ZQpkZWZhdWx0IG9mIDEwMDAwMCBzYW1wbGVzL3MuCgpTaWdu
-ZWQtb2ZmLWJ5OiBSb2JlcnQgQnJhZ2cgPHJvYmVydEBzaXhieW5pbmUub3JnPgotLS0KIGRyaXZl
-cnMvZ3B1L2RybS9pOTE1L2k5MTVfcGVyZi5jIHwgMzcgKysrKysrKysrKysrKysrKysrKysrKysr
-KysrKy0tLS0tLS0tLQogMSBmaWxlIGNoYW5nZWQsIDI4IGluc2VydGlvbnMoKyksIDkgZGVsZXRp
-b25zKC0pCgpkaWZmIC0tZ2l0IGEvZHJpdmVycy9ncHUvZHJtL2k5MTUvaTkxNV9wZXJmLmMgYi9k
-cml2ZXJzL2dwdS9kcm0vaTkxNS9pOTE1X3BlcmYuYwppbmRleCBhYjgyODU3Li41ZWY3ZDkyIDEw
-MDY0NAotLS0gYS9kcml2ZXJzL2dwdS9kcm0vaTkxNS9pOTE1X3BlcmYuYworKysgYi9kcml2ZXJz
-L2dwdS9kcm0vaTkxNS9pOTE1X3BlcmYuYwpAQCAtNDIsNiArNDIsMjMgQEAgc3RhdGljIHUzMiBp
-OTE1X3BlcmZfZXZlbnRfcGFyYW5vaWQgPSB0cnVlOwogCiAjZGVmaW5lIE9BX0VYUE9ORU5UX01B
-WCAweDNmCiAKKy8qIGZvciBzeXNjdGwgcHJvY19kb2ludHZlY19taW5tYXggb2YgaTkxNV9vYV9l
-dmVudF9taW5fdGltZXJfZXhwb25lbnQgKi8KK3N0YXRpYyBpbnQgemVybzsKK3N0YXRpYyBpbnQg
-b2FfZXhwb25lbnRfbWF4ID0gT0FfRVhQT05FTlRfTUFYOworCisvKiBUaGVvcmV0aWNhbGx5IHdl
-IGNhbiBwcm9ncmFtIHRoZSBPQSB1bml0IHRvIHNhbXBsZSBldmVyeSAxNjBucyBidXQgZG9uJ3QK
-KyAqIGFsbG93IHRoYXQgYnkgZGVmYXVsdCB1bmxlc3Mgcm9vdC4uLgorICoKKyAqIFRoZSBwZXJp
-b2QgaXMgZGVyaXZlZCBmcm9tIHRoZSBleHBvbmVudCBhczoKKyAqCisgKiAgIHBlcmlvZCA9IDgw
-bnMgKiAyXihleHBvbmVudCArIDEpCisgKgorICogUmVmZXJyaW5nIHRvIHBlcmYncyBrZXJuZWwu
-cGVyZl9ldmVudF9tYXhfc2FtcGxlX3JhdGUgZm9yIGEgcHJlY2VkZW50CisgKiAoMTAwMDAwIGJ5
-IGRlZmF1bHQpOyB3aXRoIGFuIE9BIGV4cG9uZW50IG9mIDYgd2UgZ2V0IGEgcGVyaW9kIG9mIDEw
-LjI0MAorICogbWljcm9zZWNvbmRzIC0ganVzdCB1bmRlciAxMDAwMDBIegorICovCitzdGF0aWMg
-dTMyIGk5MTVfb2FfZXZlbnRfbWluX3RpbWVyX2V4cG9uZW50ID0gNjsKKwogc3RhdGljIHN0cnVj
-dCBpOTE1X29hX2Zvcm1hdCBoc3dfb2FfZm9ybWF0c1tJOTE1X09BX0ZPUk1BVF9NQVhdID0gewog
-CVtJOTE1X09BX0ZPUk1BVF9BMTNdCSAgICA9IHsgMCwgNjQgfSwKIAlbSTkxNV9PQV9GT1JNQVRf
-QTI5XQkgICAgPSB7IDEsIDEyOCB9LApAQCAtNjc0LDE1ICs2OTEsOCBAQCBzdGF0aWMgaW50IGk5
-MTVfb2FfZXZlbnRfaW5pdChzdHJ1Y3QgaTkxNV9wZXJmX2V2ZW50ICpldmVudCwKIAkJaWYgKHBl
-cmlvZF9leHBvbmVudCA+IE9BX0VYUE9ORU5UX01BWCkKIAkJCXJldHVybiAtRUlOVkFMOwogCi0J
-CS8qIFRoZW9yZXRpY2FsbHkgd2UgY2FuIHByb2dyYW0gdGhlIE9BIHVuaXQgdG8gc2FtcGxlIGV2
-ZXJ5Ci0JCSAqIDE2MG5zIGJ1dCBkb24ndCBhbGxvdyB0aGF0IGJ5IGRlZmF1bHQgdW5sZXNzIHJv
-b3QuLi4KLQkJICoKLQkJICogUmVmZXJyaW5nIHRvIHBlcmYncyBrZXJuZWwucGVyZl9ldmVudF9t
-YXhfc2FtcGxlX3JhdGUgZm9yCi0JCSAqIGEgcHJlY2VkZW50ICgxMDAwMDAgYnkgZGVmYXVsdCk7
-IHdpdGggYW4gT0EgZXhwb25lbnQgb2YKLQkJICogNiB3ZSBnZXQgYSBwZXJpb2Qgb2YgMTAuMjQw
-IG1pY3Jvc2Vjb25kcyAtanVzdCB1bmRlcgotCQkgKiAxMDAwMDBIegotCQkgKi8KLQkJaWYgKHBl
-cmlvZF9leHBvbmVudCA8IDYgJiYgIWNhcGFibGUoQ0FQX1NZU19BRE1JTikpIHsKKwkJaWYgKHBl
-cmlvZF9leHBvbmVudCA8IGk5MTVfb2FfZXZlbnRfbWluX3RpbWVyX2V4cG9uZW50ICYmCisJCSAg
-ICAhY2FwYWJsZShDQVBfU1lTX0FETUlOKSkgewogCQkJRFJNX0VSUk9SKCJTYW1wbGluZyBwZXJp
-b2QgdG9vIGhpZ2ggd2l0aG91dCByb290IHByaXZpbGVnZXNcbiIpOwogCQkJcmV0dXJuIC1FQUND
-RVM7CiAJCX0KQEAgLTExMTMsNiArMTEyMywxNSBAQCBzdGF0aWMgc3RydWN0IGN0bF90YWJsZSBv
-YV90YWJsZVtdID0gewogCSAubW9kZSA9IDA2NDQsCiAJIC5wcm9jX2hhbmRsZXIgPSBwcm9jX2Rv
-aW50dmVjLAogCSB9LAorCXsKKwkgLnByb2NuYW1lID0gIm9hX2V2ZW50X21pbl90aW1lcl9leHBv
-bmVudCIsCisJIC5kYXRhID0gJmk5MTVfb2FfZXZlbnRfbWluX3RpbWVyX2V4cG9uZW50LAorCSAu
-bWF4bGVuID0gc2l6ZW9mKGk5MTVfb2FfZXZlbnRfbWluX3RpbWVyX2V4cG9uZW50KSwKKwkgLm1v
-ZGUgPSAwNjQ0LAorCSAucHJvY19oYW5kbGVyID0gcHJvY19kb2ludHZlY19taW5tYXgsCisJIC5l
-eHRyYTEgPSAmemVybywKKwkgLmV4dHJhMiA9ICZvYV9leHBvbmVudF9tYXgsCisJIH0sCiAJe30K
-IH07CiAKLS0gCjIuNS4yCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fXwpJbnRlbC1nZnggbWFpbGluZyBsaXN0CkludGVsLWdmeEBsaXN0cy5mcmVlZGVza3Rv
-cC5vcmcKaHR0cDovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2ludGVs
-LWdmeAo=
+2015-09-28 19:46 GMT+02:00 J. Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>:
+> On Mon, Sep 28, 2015 at 07:10:06PM +0200, Andreas Gr=C3=BCnbacher wro=
+te:
+>> 2015-09-28 18:35 GMT+02:00 J. Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>:
+>> > On Mon, Sep 28, 2015 at 12:08:51AM +0200, Andreas Gruenbacher wrot=
+e:
+>> >> Open issues in nfs:
+>> >>
+>> >> * When a user or group name cannot be mapped, nfs's idmapper alwa=
+ys maps it
+>> >>   to nobody. That's good enough for mapping the file owner and ow=
+ning
+>> >>   group, but not for identifiers in acls. For now, to get the nfs=
+ richacl
+>> >>   support somewhat working, I'm explicitly checking if mapping ha=
+s resulted
+>> >>   in uid/gid 99 in the kernel.
+>> >>
+>> >> * When the nfs server replies with NFS4ERR_BADNAME for any user o=
+r group
+>> >>   name lookup, the client will stop sending numeric uids and gids=
+ to the
+>> >>   server even when the lookup wasn't numeric.  From then on, the =
+client
+>> >>   will translate uids and gids that have no mapping to the string=
+ "nobody",
+>> >>   and the server will reject them.  This problem is not specific =
+to acls.
+>> >
+>> > Do you have fixes in mind for these two issues?
+>>
+>> I'm not sure how to best fix the idmapper problem, with backwards
+>> compatibility and all.
+>
+> I haven't looked at the current nfsidmap interface....  So it's
+> completely lacking any way to communicate failure?
+
+Yes, when a user doesn't exist, idmapper maps that to the nobody
+uid/gid. That's the failure mode of stat. In the acl case, we do want
+to map user and group names to their respective ids where possible (so
+that the acl makes sense in the local system context), but we do want
+to preserve the original user and group names when there is no such
+mapping instead of mapping to the nobody uid/gid.
+
+>> The second problem shouldn't be too hard to fix.
+>
+> Is it enough to turn off the failover in the case there's no possibil=
+ity
+> it could have been caused by a numeric id?
+
+Yes, I believe that would be enough.
+
+> If any user can set ACLs with arbitrary strings as names, then we'd b=
+e
+> giving any user unprivileged user the ability to turn off numeric
+> idmapping, so I think we need to fix that.
+
+The bug can be triggered by unprivileged users with nfs4_setfacl.
+
+Thanks,
+Andreas
