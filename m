@@ -1,51 +1,94 @@
-From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v9 0/3] Enable PPI sysfs interface for TPM 2.0
-Date: Tue, 29 Sep 2015 10:36:30 +0300
-Message-ID: <1443512197-5477-1-git-send-email-jarkko.sakkinen@linux.intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: peterhuewe-Mmb7MZpHnFY@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vivien Didelot <vivien.didelot-4ysUXcep3aM1wj+D4I0NRVaTQe2KTcn/@public.gmane.org>
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: [PATCH v9 3/3] tpm: update PPI documentation to address the location change.
+Date: Tue, 29 Sep 2015 10:36:33 +0300
+Message-ID: <1443512197-5477-4-git-send-email-jarkko.sakkinen@linux.intel.com>
+References: <1443512197-5477-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1443512197-5477-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: tpmdd-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org
+Cc: peterhuewe@gmx.de, gregkh@linuxfoundation.org, jgunthorpe@obsidianresearch.com, akpm@linux-foundation.org, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-v9:
-* Fixed naming for __compat_only_sysfs_link_entry_to_kobj()
+Updated Documentation/ABI/testing/sysfs-driver-ppi in order to explain
+where PPI attributes are located and how backwards compatiblity is
+addressed.
 
-v8:
-* Renamed sysfs_link_entry_to_kobj() to
-  __compat_only_sysfs_link_entry_to_kobj()
+Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+---
+ Documentation/ABI/testing/sysfs-driver-ppi | 19 ++++++++++++-------
+ 1 file changed, 12 insertions(+), 7 deletions(-)
 
-v7:
-* Fixed compile error when CONFIG_SYSFS is not enabled.
-
-v6:
-* Updated documentation.
-
-v5:
-* Removed dangling export of kernfs_remove_by_name_ns() from the sysfs
-  patch.
-
-v4:
-* Use sysfs_remove_link()
-
-v3:
-* Fixed to_tpm_chip() macro.
-* Split into two patches.
-* Renamed sysfs_link_group_to_kobj to sysfs_link_entry_to_kobj
-* Only create the "backwards compatibility" symlink for TPM 1.x devices.
-
-Jarkko Sakkinen (3):
-  sysfs: added __compat_only_sysfs_link_entry_to_kobj()
-  tpm: move the PPI attributes to character device directory.
-  tpm: update PPI documentation to address the location change.
-
- Documentation/ABI/testing/sysfs-driver-ppi | 19 ++++++++-----
- drivers/char/tpm/tpm-chip.c                | 24 ++++++++++------
- drivers/char/tpm/tpm.h                     | 17 ++++--------
- drivers/char/tpm/tpm_ppi.c                 | 34 ++++++++---------------
- fs/sysfs/group.c                           | 44 ++++++++++++++++++++++++++++++
- include/linux/sysfs.h                      | 11 ++++++++
- 6 files changed, 100 insertions(+), 49 deletions(-)
-
+diff --git a/Documentation/ABI/testing/sysfs-driver-ppi b/Documentation/ABI/testing/sysfs-driver-ppi
+index 7d1435b..9921ef2 100644
+--- a/Documentation/ABI/testing/sysfs-driver-ppi
++++ b/Documentation/ABI/testing/sysfs-driver-ppi
+@@ -1,4 +1,4 @@
+-What:		/sys/devices/pnp0/<bus-num>/ppi/
++What:		/sys/class/tpm/tpmX/ppi/
+ Date:		August 2012
+ Kernel Version:	3.6
+ Contact:	xiaoyan.zhang@intel.com
+@@ -8,9 +8,14 @@ Description:
+ 		folder makes sense. The folder path can be got by command
+ 		'find /sys/ -name 'pcrs''. For the detail information of PPI,
+ 		please refer to the PPI specification from
++
+ 		http://www.trustedcomputinggroup.org/
+ 
+-What:		/sys/devices/pnp0/<bus-num>/ppi/version
++		In Linux 4.2 ppi was moved to the character device directory.
++		A symlink from tpmX/device/ppi to tpmX/ppi to provide backwards
++		compatibility.
++
++What:		/sys/class/tpm/tpmX/ppi/version
+ Date:		August 2012
+ Contact:	xiaoyan.zhang@intel.com
+ Description:
+@@ -18,7 +23,7 @@ Description:
+ 		platform.
+ 		This file is readonly.
+ 
+-What:		/sys/devices/pnp0/<bus-num>/ppi/request
++What:		/sys/class/tpm/tpmX/ppi/request
+ Date:		August 2012
+ Contact:	xiaoyan.zhang@intel.com
+ Description:
+@@ -28,7 +33,7 @@ Description:
+ 		integer value range from 1 to 160, and 0 means no request.
+ 		This file can be read and written.
+ 
+-What:		/sys/devices/pnp0/00:<bus-num>/ppi/response
++What:		/sys/class/tpm/tpmX/ppi/response
+ Date:		August 2012
+ Contact:	xiaoyan.zhang@intel.com
+ Description:
+@@ -37,7 +42,7 @@ Description:
+ 		: <response description>".
+ 		This file is readonly.
+ 
+-What:		/sys/devices/pnp0/<bus-num>/ppi/transition_action
++What:		/sys/class/tpm/tpmX/ppi/transition_action
+ Date:		August 2012
+ Contact:	xiaoyan.zhang@intel.com
+ Description:
+@@ -47,7 +52,7 @@ Description:
+ 		description>".
+ 		This file is readonly.
+ 
+-What:		/sys/devices/pnp0/<bus-num>/ppi/tcg_operations
++What:		/sys/class/tpm/tpmX/ppi/tcg_operations
+ Date:		August 2012
+ Contact:	xiaoyan.zhang@intel.com
+ Description:
+@@ -58,7 +63,7 @@ Description:
+ 		This attribute is only supported by PPI version 1.2+.
+ 		This file is readonly.
+ 
+-What:		/sys/devices/pnp0/<bus-num>/ppi/vs_operations
++What:		/sys/class/tpm/tpmX/ppi/vs_operations
+ Date:		August 2012
+ Contact:	xiaoyan.zhang@intel.com
+ Description:
 -- 
 2.5.0
