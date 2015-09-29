@@ -1,7 +1,7 @@
 From: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v4 5/9] vfs: Copy shouldn't forbid ranges inside the same file
-Date: Tue, 29 Sep 2015 14:05:08 -0400
-Message-ID: <1443549913-8091-6-git-send-email-Anna.Schumaker@Netapp.com>
+Subject: [PATCH v4 6/9] vfs: Copy should use file_out rather than file_in
+Date: Tue, 29 Sep 2015 14:05:09 -0400
+Message-ID: <1443549913-8091-7-git-send-email-Anna.Schumaker@Netapp.com>
 References: <1443549913-8091-1-git-send-email-Anna.Schumaker@Netapp.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -11,31 +11,40 @@ Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This is perfectly valid for BTRFS and XFS, so let's leave this up to
-filesystems to check.
+The way to think about this is that the destination filesystem reads the
+data from the source file and processes it accordingly.  This is
+especially important to avoid an infinate loop when doing a "server to
+server" copy on NFS.
 
 Signed-off-by: Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
-Reviewed-by: David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>
-Reviewed-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 ---
- fs/read_write.c | 4 ----
- 1 file changed, 4 deletions(-)
+ fs/read_write.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/fs/read_write.c b/fs/read_write.c
-index f3d6c48..8e7cb33 100644
+index 8e7cb33..6f74f1f 100644
 --- a/fs/read_write.c
 +++ b/fs/read_write.c
-@@ -1371,10 +1371,6 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
- 	    file_in->f_path.mnt != file_out->f_path.mnt)
- 		return -EXDEV;
+@@ -1355,7 +1355,7 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
+ 	if (!(file_in->f_mode & FMODE_READ) ||
+ 	    !(file_out->f_mode & FMODE_WRITE) ||
+ 	    (file_out->f_flags & O_APPEND) ||
+-	    !file_in->f_op || !file_in->f_op->copy_file_range)
++	    !file_out->f_op || !file_out->f_op->copy_file_range)
+ 		return -EBADF;
  
--	/* forbid ranges in the same file */
--	if (inode_in == inode_out)
--		return -EINVAL;
--
- 	if (len == 0)
- 		return 0;
+ 	inode_in = file_inode(file_in);
+@@ -1378,8 +1378,8 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
+ 	if (ret)
+ 		return ret;
  
+-	ret = file_in->f_op->copy_file_range(file_in, pos_in, file_out, pos_out,
+-					     len, flags);
++	ret = file_out->f_op->copy_file_range(file_in, pos_in, file_out, pos_out,
++					      len, flags);
+ 	if (ret > 0) {
+ 		fsnotify_access(file_in);
+ 		add_rchar(current, ret);
 -- 
 2.5.3
 
