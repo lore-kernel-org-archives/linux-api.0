@@ -1,56 +1,61 @@
-From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Subject: Re: [PATCH 21/25] mm: implement new mprotect_key() system call
-Date: Tue, 29 Sep 2015 16:39:43 +1000
-Message-ID: <1443508783.29119.2.camel@ellerman.id.au>
-References: <20150928191817.035A64E2@viggo.jf.intel.com>
-	 <20150928191826.F1CD5256@viggo.jf.intel.com>
+From: Hiraku Toyooka <hiraku.toyooka.gu-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH 1/2] selftests/pstore: add pstore test script for pre-reboot
+Date: Tue, 29 Sep 2015 16:18:48 +0900
+Message-ID: <560A3B58.9060403@hitachi.com>
+References: <20150908110615.9783.69477.stgit@arietta> <20150908110617.9783.4635.stgit@arietta> <55EF6DC5.2080207@android.com> <55F782D0.6000501@hitachi.com> <560070D0.90709@android.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="utf-8"; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150928191826.F1CD5256-LXbPSdftPKxrdx17CPfAsdBPR1lH4CV8@public.gmane.org>
+In-Reply-To: <560070D0.90709-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
-Cc: borntraeger-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mark Salyzyn <salyzyn-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Anton Vorontsov <anton-9xeibp6oKSgdnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Colin Cross <ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, seiji.aguchi.tr-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2015-09-28 at 12:18 -0700, Dave Hansen wrote:
-> From: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> 
-> mprotect_key() is just like mprotect, except it also takes a
-> protection key as an argument.  On systems that do not support
-> protection keys, it still works, but requires that key=0.
+Hello,
 
-I'm not sure how userspace is going to use the key=0 feature? ie. userspace
-will still have to detect that keys are not supported and use key 0 everywhere.
-At that point it could just as well skip the mprotect_key() syscalls entirely
-couldn't it?
+I'm sorry for my late reply.
 
-> I expect it to get used like this, if you want to guarantee that
-> any mapping you create can *never* be accessed without the right
-> protection keys set up.
-> 
-> 	pkey_deny_access(11); // random pkey
-> 	int real_prot = PROT_READ|PROT_WRITE;
-> 	ptr = mmap(NULL, PAGE_SIZE, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-> 	ret = mprotect_key(ptr, PAGE_SIZE, real_prot, 11);
-> 
-> This way, there is *no* window where the mapping is accessible
-> since it was always either PROT_NONE or had a protection key set.
-> 
-> We settled on 'unsigned long' for the type of the key here.  We
-> only need 4 bits on x86 today, but I figured that other
-> architectures might need some more space.
+Mark Salyzyn wrote:
+> Perfectly match is an issue, since something else might be using pmsg.
+> For instance, one of the applications that uses this interface
+> packetizes the messages so they can be picked out from other sources
+> that do not comply with the header (count, magic number etc). In this
+> case, should that daemon be active, your content would be ignores, but
+> your content would also be buried, but can be needled out with grep.
+>
+> What you should do is grep for your string pattern within some
+> acceptable regex, and one should be found and no other, and it should
+> match perfectly. This would prevent another daemon's content from
+> disrupting your test and causing a false negative.
 
-If the existing mprotect() syscall had a flags argument you could have just
-used that. So is it worth just adding mprotect2() now and using it for this? ie:
+OK. I think that the following method suit your intention.
+By splitting unique test string into TEST_STRING_PATTERN part and UUID
+part, we can check both the non-existence of previous content and the
+unique match on reboot-comparison run.
+I'll include this in v2.
 
-int mprotect2(unsigned long start, size_t len, unsigned long prot, unsigned long flags) ..
+# before crash
+TEST_STRING_PATTERN="Testing pstore: uuid="
+UUID=`cat /proc/sys/kernel/random/uuid`
+echo "$TEST_STRING_PATTERN""$UUID" > /dev/pmsg0
+echo "$UUID" > uuid
 
-And then you define bit zero of flags to say you're passing a pkey, and it's in
-bits 1-63?
+# after crash
+prlog -n "Checking pmsg file properly keeps the content written before 
+crash ... "
+nr_matched=`grep -c "$TEST_STRING_PATTERN" pmsg-${backend}-0`
+if [ $nr_matched -eq 1 ]; then
+     grep -q "$TEST_STRING_PATTERN"`cat uuid` pmsg-${backend}-0
+     if [ $? -eq 0 ]; then
+         prlog "ok"
+     else
+         prlog "FAIL"
+else
+     prlog "FAIL"
+fi
 
-That way if other arches need to do something different you at least have the
-flags available?
 
-cheers
+Best regards,
+Hiraku Toyooka
