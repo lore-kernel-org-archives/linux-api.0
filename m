@@ -1,109 +1,56 @@
-From: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v8 14/14] Documentation: power: bq24257: Document exported
- sysfs entries
-Date: Tue, 29 Sep 2015 15:22:29 +0900
-Message-ID: <560A2E25.70004@samsung.com>
-References: <1443479642-23712-1-git-send-email-dannenberg@ti.com>
- <1443479642-23712-15-git-send-email-dannenberg@ti.com>
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: [PATCH 21/25] mm: implement new mprotect_key() system call
+Date: Tue, 29 Sep 2015 16:39:43 +1000
+Message-ID: <1443508783.29119.2.camel@ellerman.id.au>
+References: <20150928191817.035A64E2@viggo.jf.intel.com>
+	 <20150928191826.F1CD5256@viggo.jf.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-2
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1443479642-23712-15-git-send-email-dannenberg-l0cyMroinI0@public.gmane.org>
+In-Reply-To: <20150928191826.F1CD5256-LXbPSdftPKxrdx17CPfAsdBPR1lH4CV8@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>, Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Eremin-Solenikov <dbaryshkov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Laurentiu Palcu <laurentiu.palcu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Ramakrishna Pallala <ramakrishna.pallala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
+Cc: borntraeger-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-W dniu 29.09.2015 o 07:34, Andreas Dannenberg pisze:
-> Document the settings exported by bq24257 charger driver through sysfs
-> entries:
-> - ovp_voltage
-> - in_dpm_voltage
-> - high_impedance_enable
-> - sysoff_enable
+On Mon, 2015-09-28 at 12:18 -0700, Dave Hansen wrote:
+> From: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 > 
-> Signed-off-by: Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-> ---
->  Documentation/ABI/testing/sysfs-class-power | 58 +++++++++++++++++++++++++++++
->  1 file changed, 58 insertions(+)
+> mprotect_key() is just like mprotect, except it also takes a
+> protection key as an argument.  On systems that do not support
+> protection keys, it still works, but requires that key=0.
+
+I'm not sure how userspace is going to use the key=0 feature? ie. userspace
+will still have to detect that keys are not supported and use key 0 everywhere.
+At that point it could just as well skip the mprotect_key() syscalls entirely
+couldn't it?
+
+> I expect it to get used like this, if you want to guarantee that
+> any mapping you create can *never* be accessed without the right
+> protection keys set up.
 > 
-> diff --git a/Documentation/ABI/testing/sysfs-class-power b/Documentation/ABI/testing/sysfs-class-power
-> index 369d2a2..d96b5fc 100644
-> --- a/Documentation/ABI/testing/sysfs-class-power
-> +++ b/Documentation/ABI/testing/sysfs-class-power
-> @@ -74,3 +74,61 @@ Description:
->  
->  		Valid values:
->  		- 0 - 70 (minutes), step by 10 (rounded down)
-> +
-> +What:		/sys/class/power_supply/bq24257-charger/ovp_voltage
-> +Date:		September 2015
-> +KernelVersion: 4.3.0
-
-Date: October 2015 (yes, the future)
-Kernel 4.4. We are already at 4.3 cycle so it won't go into 4.3.
-
-Rest looks good:
-
-Reviewed-by: Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-
-Best regards,
-Krzysztof
-
-
-> +Contact:	Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-> +Description:
-> +		This entry configures the overvoltage protection feature of bq24257-
-> +		type charger devices. This feature protects the device and other
-> +		components against damage from overvoltage on the input supply. See
-> +		device datasheet for details.
-> +
-> +		Valid values:
-> +		- 6000000, 6500000, 7000000, 8000000, 9000000, 9500000, 10000000,
-> +		  10500000 (all uV)
-> +
-> +What:		/sys/class/power_supply/bq24257-charger/in_dpm_voltage
-> +Date:		September 2015
-> +KernelVersion: 4.3.0
-> +Contact:	Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-> +Description:
-> +		This entry configures the input dynamic power path management voltage of
-> +		bq24257-type charger devices. Once the supply drops to the configured
-> +		voltage, the input current limit is reduced down to prevent the further
-> +		drop of the supply. When the IC enters this mode, the charge current is
-> +		lower than the set value. See device datasheet for details.
-> +
-> +		Valid values:
-> +		- 4200000, 4280000, 4360000, 4440000, 4520000, 4600000, 4680000,
-> +		  4760000 (all uV)
-> +
-> +What:		/sys/class/power_supply/bq24257-charger/high_impedance_enable
-> +Date:		September 2015
-> +KernelVersion: 4.3.0
-> +Contact:	Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-> +Description:
-> +		This entry allows enabling the high-impedance mode of bq24257-type
-> +		charger devices. If enabled, it places the charger IC into low power
-> +		standby mode with the switch mode controller disabled. When disabled,
-> +		the charger operates normally. See device datasheet for details.
-> +
-> +		Valid values:
-> +		- 1: enabled
-> +		- 0: disabled
-> +
-> +What:		/sys/class/power_supply/bq24257-charger/sysoff_enable
-> +Date:		September 2015
-> +KernelVersion: 4.3.0
-> +Contact:	Andreas Dannenberg <dannenberg-l0cyMroinI0@public.gmane.org>
-> +Description:
-> +		This entry allows enabling the sysoff mode of bq24257-type charger
-> +		devices. If enabled and the input is removed, the internal battery FET
-> +		is turned off in order to reduce the leakage from the BAT pin to less
-> +		than 1uA. Note that on some devices/systems this disconnects the battery
-> +		from the system. See device datasheet for details.
-> +
-> +		Valid values:
-> +		- 1: enabled
-> +		- 0: disabled
+> 	pkey_deny_access(11); // random pkey
+> 	int real_prot = PROT_READ|PROT_WRITE;
+> 	ptr = mmap(NULL, PAGE_SIZE, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+> 	ret = mprotect_key(ptr, PAGE_SIZE, real_prot, 11);
 > 
+> This way, there is *no* window where the mapping is accessible
+> since it was always either PROT_NONE or had a protection key set.
+> 
+> We settled on 'unsigned long' for the type of the key here.  We
+> only need 4 bits on x86 today, but I figured that other
+> architectures might need some more space.
+
+If the existing mprotect() syscall had a flags argument you could have just
+used that. So is it worth just adding mprotect2() now and using it for this? ie:
+
+int mprotect2(unsigned long start, size_t len, unsigned long prot, unsigned long flags) ..
+
+And then you define bit zero of flags to say you're passing a pkey, and it's in
+bits 1-63?
+
+That way if other arches need to do something different you at least have the
+flags available?
+
+cheers
