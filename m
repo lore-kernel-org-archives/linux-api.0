@@ -1,54 +1,48 @@
 From: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v4 6/9] vfs: Copy should use file_out rather than file_in
-Date: Tue, 29 Sep 2015 14:05:09 -0400
-Message-ID: <1443549913-8091-7-git-send-email-Anna.Schumaker@Netapp.com>
+Subject: [PATCH v4 2/9] x86: add sys_copy_file_range to syscall tables
+Date: Tue, 29 Sep 2015 14:05:05 -0400
+Message-ID: <1443549913-8091-3-git-send-email-Anna.Schumaker@Netapp.com>
 References: <1443549913-8091-1-git-send-email-Anna.Schumaker@Netapp.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1443549913-8091-1-git-send-email-Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-The way to think about this is that the destination filesystem reads the
-data from the source file and processes it accordingly.  This is
-especially important to avoid an infinate loop when doing a "server to
-server" copy on NFS.
+From: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 
+Add sys_copy_file_range to the x86 syscall tables.
+
+Signed-off-by: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+[Anna Schumaker: Update syscall number in syscall_32.tbl]
 Signed-off-by: Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
 ---
- fs/read_write.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ arch/x86/entry/syscalls/syscall_32.tbl | 1 +
+ arch/x86/entry/syscalls/syscall_64.tbl | 1 +
+ 2 files changed, 2 insertions(+)
 
-diff --git a/fs/read_write.c b/fs/read_write.c
-index 8e7cb33..6f74f1f 100644
---- a/fs/read_write.c
-+++ b/fs/read_write.c
-@@ -1355,7 +1355,7 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
- 	if (!(file_in->f_mode & FMODE_READ) ||
- 	    !(file_out->f_mode & FMODE_WRITE) ||
- 	    (file_out->f_flags & O_APPEND) ||
--	    !file_in->f_op || !file_in->f_op->copy_file_range)
-+	    !file_out->f_op || !file_out->f_op->copy_file_range)
- 		return -EBADF;
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 7663c45..0531270 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -382,3 +382,4 @@
+ 373	i386	shutdown		sys_shutdown
+ 374	i386	userfaultfd		sys_userfaultfd
+ 375	i386	membarrier		sys_membarrier
++376	i386	copy_file_range		sys_copy_file_range
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index 278842f..03a9396 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -331,6 +331,7 @@
+ 322	64	execveat		stub_execveat
+ 323	common	userfaultfd		sys_userfaultfd
+ 324	common	membarrier		sys_membarrier
++325	common	copy_file_range		sys_copy_file_range
  
- 	inode_in = file_inode(file_in);
-@@ -1378,8 +1378,8 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
- 	if (ret)
- 		return ret;
- 
--	ret = file_in->f_op->copy_file_range(file_in, pos_in, file_out, pos_out,
--					     len, flags);
-+	ret = file_out->f_op->copy_file_range(file_in, pos_in, file_out, pos_out,
-+					      len, flags);
- 	if (ret > 0) {
- 		fsnotify_access(file_in);
- 		add_rchar(current, ret);
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
 -- 
 2.5.3
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
