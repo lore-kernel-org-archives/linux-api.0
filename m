@@ -1,109 +1,74 @@
-From: Robert Bragg <robert-St23OQVBDYPNLxjTenLetw@public.gmane.org>
-Subject: [RFC 5/6] drm/i915: Add dev.i915.perf_event_paranoid sysctl option
-Date: Tue, 29 Sep 2015 15:39:08 +0100
-Message-ID: <1443537549-6905-6-git-send-email-robert@sixbynine.org>
+From: Robert Bragg <robert@sixbynine.org>
+Subject: [RFC 6/6] drm/i915: add oa_event_min_timer_exponent
+	sysctl
+Date: Tue, 29 Sep 2015 15:39:09 +0100
+Message-ID: <1443537549-6905-7-git-send-email-robert@sixbynine.org>
 References: <1443537549-6905-1-git-send-email-robert@sixbynine.org>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1443537549-6905-1-git-send-email-robert-St23OQVBDYPNLxjTenLetw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org
-Cc: Daniel Vetter <daniel.vetter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Chris Wilson <chris-Y6uKTt2uX1cEflXRtASbqLVCufUGDwFn@public.gmane.org>, Sourab Gupta <sourab.gupta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Zhenyu Wang <zhenyuw-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jani Nikula <jani.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kan Liang <kan.liang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Alexander Shishkin <alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Zheng Yan <zheng.z.yan-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Matt Fleming <matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+In-Reply-To: <1443537549-6905-1-git-send-email-robert@sixbynine.org>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/intel-gfx>
+List-Post: <mailto:intel-gfx@lists.freedesktop.org>
+List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: intel-gfx-bounces@lists.freedesktop.org
+Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
+To: intel-gfx@lists.freedesktop.org
+Cc: Mark Rutland <mark.rutland@arm.com>, Matt Fleming <matt.fleming@intel.com>, David Airlie <airlied@linux.ie>, dri-devel@lists.freedesktop.org, linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Sourab Gupta <sourab.gupta@intel.com>, linux-api@vger.kernel.org, Zheng Yan <zheng.z.yan@intel.com>, Daniel Vetter <daniel.vetter@intel.com>, Ingo Molnar <mingo@kernel.org>, Alexander Shishkin <alexander.shishkin@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Consistent with the kernel.perf_event_paranoid sysctl option that can
-allow non-root users to access system wide cpu metrics, this can
-optionally allow non-root users to access system wide OA counter metrics
-from Gen graphics hardware.
-
-Signed-off-by: Robert Bragg <robert-St23OQVBDYPNLxjTenLetw@public.gmane.org>
----
- drivers/gpu/drm/i915/i915_perf.c | 46 +++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 45 insertions(+), 1 deletion(-)
-
-diff --git a/drivers/gpu/drm/i915/i915_perf.c b/drivers/gpu/drm/i915/i915_perf.c
-index bc1c4d1..ab82857 100644
---- a/drivers/gpu/drm/i915/i915_perf.c
-+++ b/drivers/gpu/drm/i915/i915_perf.c
-@@ -38,6 +38,8 @@
- #define POLL_FREQUENCY 200
- #define POLL_PERIOD max_t(u64, 10000, NSEC_PER_SEC / POLL_FREQUENCY)
- 
-+static u32 i915_perf_event_paranoid = true;
-+
- #define OA_EXPONENT_MAX 0x3f
- 
- static struct i915_oa_format hsw_oa_formats[I915_OA_FORMAT_MAX] = {
-@@ -1016,7 +1018,13 @@ int i915_perf_open_ioctl_locked(struct drm_device *dev, void *data,
- 		}
- 	}
- 
--	if (!specific_ctx && !capable(CAP_SYS_ADMIN)) {
-+	/* Similar to perf's kernel.perf_paranoid_cpu sysctl option
-+	 * we check a dev.i915.perf_event_paranoid sysctl option
-+	 * to determine if it's ok to access system wide OA counters
-+	 * without CAP_SYS_ADMIN privileges.
-+	 */
-+	if (!specific_ctx &&
-+	    i915_perf_event_paranoid && !capable(CAP_SYS_ADMIN)) {
- 		DRM_ERROR("Insufficient privileges to open perf event\n");
- 		ret = -EACCES;
- 		goto err_ctx;
-@@ -1096,6 +1104,38 @@ int i915_perf_open_ioctl(struct drm_device *dev, void *data,
- 	return ret;
- }
- 
-+
-+static struct ctl_table oa_table[] = {
-+	{
-+	 .procname = "perf_event_paranoid",
-+	 .data = &i915_perf_event_paranoid,
-+	 .maxlen = sizeof(i915_perf_event_paranoid),
-+	 .mode = 0644,
-+	 .proc_handler = proc_dointvec,
-+	 },
-+	{}
-+};
-+
-+static struct ctl_table i915_root[] = {
-+	{
-+	 .procname = "i915",
-+	 .maxlen = 0,
-+	 .mode = 0555,
-+	 .child = oa_table,
-+	 },
-+	{}
-+};
-+
-+static struct ctl_table dev_root[] = {
-+	{
-+	 .procname = "dev",
-+	 .maxlen = 0,
-+	 .mode = 0555,
-+	 .child = i915_root,
-+	 },
-+	{}
-+};
-+
- void i915_perf_init(struct drm_device *dev)
- {
- 	struct drm_i915_private *dev_priv = to_i915(dev);
-@@ -1103,6 +1143,8 @@ void i915_perf_init(struct drm_device *dev)
- 	if (!IS_HASWELL(dev))
- 		return;
- 
-+	dev_priv->perf.sysctl_header = register_sysctl_table(dev_root);
-+
- 	hrtimer_init(&dev_priv->perf.oa.poll_check_timer,
- 		     CLOCK_MONOTONIC, HRTIMER_MODE_REL);
- 	dev_priv->perf.oa.poll_check_timer.function = poll_check_timer_cb;
-@@ -1132,6 +1174,8 @@ void i915_perf_fini(struct drm_device *dev)
- 	if (!dev_priv->perf.initialized)
- 		return;
- 
-+	unregister_sysctl_table(dev_priv->perf.sysctl_header);
-+
- 	dev_priv->perf.oa.ops.init_oa_buffer = NULL;
- 
- 	dev_priv->perf.initialized = false;
--- 
-2.5.2
+VGhlIG1pbmltYWwgc2FtcGxpbmcgcGVyaW9kIGlzIG5vdyBjb25maWd1cmFibGUgdmlhIGEKZGV2
+Lmk5MTUub2FfZXZlbnRfbWluX3RpbWVyX2V4cG9uZW50IHN5c2N0bCBwYXJhbWV0ZXIuCgpGb2xs
+b3dpbmcgdGhlIHByZWNlZGVudCBzZXQgYnkgcGVyZiwgdGhlIGRlZmF1bHQgaXMgdGhlIG1pbmlt
+dW0gdGhhdAp3b24ndCAob24gaXRzIG93bikgZXhjZWVkIHRoZSBkZWZhdWx0IGtlcm5lbC5wZXJm
+X2V2ZW50X21heF9zYW1wbGVfcmF0ZQpkZWZhdWx0IG9mIDEwMDAwMCBzYW1wbGVzL3MuCgpTaWdu
+ZWQtb2ZmLWJ5OiBSb2JlcnQgQnJhZ2cgPHJvYmVydEBzaXhieW5pbmUub3JnPgotLS0KIGRyaXZl
+cnMvZ3B1L2RybS9pOTE1L2k5MTVfcGVyZi5jIHwgMzcgKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKy0tLS0tLS0tLQogMSBmaWxlIGNoYW5nZWQsIDI4IGluc2VydGlvbnMoKyksIDkgZGVsZXRp
+b25zKC0pCgpkaWZmIC0tZ2l0IGEvZHJpdmVycy9ncHUvZHJtL2k5MTUvaTkxNV9wZXJmLmMgYi9k
+cml2ZXJzL2dwdS9kcm0vaTkxNS9pOTE1X3BlcmYuYwppbmRleCBhYjgyODU3Li41ZWY3ZDkyIDEw
+MDY0NAotLS0gYS9kcml2ZXJzL2dwdS9kcm0vaTkxNS9pOTE1X3BlcmYuYworKysgYi9kcml2ZXJz
+L2dwdS9kcm0vaTkxNS9pOTE1X3BlcmYuYwpAQCAtNDIsNiArNDIsMjMgQEAgc3RhdGljIHUzMiBp
+OTE1X3BlcmZfZXZlbnRfcGFyYW5vaWQgPSB0cnVlOwogCiAjZGVmaW5lIE9BX0VYUE9ORU5UX01B
+WCAweDNmCiAKKy8qIGZvciBzeXNjdGwgcHJvY19kb2ludHZlY19taW5tYXggb2YgaTkxNV9vYV9l
+dmVudF9taW5fdGltZXJfZXhwb25lbnQgKi8KK3N0YXRpYyBpbnQgemVybzsKK3N0YXRpYyBpbnQg
+b2FfZXhwb25lbnRfbWF4ID0gT0FfRVhQT05FTlRfTUFYOworCisvKiBUaGVvcmV0aWNhbGx5IHdl
+IGNhbiBwcm9ncmFtIHRoZSBPQSB1bml0IHRvIHNhbXBsZSBldmVyeSAxNjBucyBidXQgZG9uJ3QK
+KyAqIGFsbG93IHRoYXQgYnkgZGVmYXVsdCB1bmxlc3Mgcm9vdC4uLgorICoKKyAqIFRoZSBwZXJp
+b2QgaXMgZGVyaXZlZCBmcm9tIHRoZSBleHBvbmVudCBhczoKKyAqCisgKiAgIHBlcmlvZCA9IDgw
+bnMgKiAyXihleHBvbmVudCArIDEpCisgKgorICogUmVmZXJyaW5nIHRvIHBlcmYncyBrZXJuZWwu
+cGVyZl9ldmVudF9tYXhfc2FtcGxlX3JhdGUgZm9yIGEgcHJlY2VkZW50CisgKiAoMTAwMDAwIGJ5
+IGRlZmF1bHQpOyB3aXRoIGFuIE9BIGV4cG9uZW50IG9mIDYgd2UgZ2V0IGEgcGVyaW9kIG9mIDEw
+LjI0MAorICogbWljcm9zZWNvbmRzIC0ganVzdCB1bmRlciAxMDAwMDBIegorICovCitzdGF0aWMg
+dTMyIGk5MTVfb2FfZXZlbnRfbWluX3RpbWVyX2V4cG9uZW50ID0gNjsKKwogc3RhdGljIHN0cnVj
+dCBpOTE1X29hX2Zvcm1hdCBoc3dfb2FfZm9ybWF0c1tJOTE1X09BX0ZPUk1BVF9NQVhdID0gewog
+CVtJOTE1X09BX0ZPUk1BVF9BMTNdCSAgICA9IHsgMCwgNjQgfSwKIAlbSTkxNV9PQV9GT1JNQVRf
+QTI5XQkgICAgPSB7IDEsIDEyOCB9LApAQCAtNjc0LDE1ICs2OTEsOCBAQCBzdGF0aWMgaW50IGk5
+MTVfb2FfZXZlbnRfaW5pdChzdHJ1Y3QgaTkxNV9wZXJmX2V2ZW50ICpldmVudCwKIAkJaWYgKHBl
+cmlvZF9leHBvbmVudCA+IE9BX0VYUE9ORU5UX01BWCkKIAkJCXJldHVybiAtRUlOVkFMOwogCi0J
+CS8qIFRoZW9yZXRpY2FsbHkgd2UgY2FuIHByb2dyYW0gdGhlIE9BIHVuaXQgdG8gc2FtcGxlIGV2
+ZXJ5Ci0JCSAqIDE2MG5zIGJ1dCBkb24ndCBhbGxvdyB0aGF0IGJ5IGRlZmF1bHQgdW5sZXNzIHJv
+b3QuLi4KLQkJICoKLQkJICogUmVmZXJyaW5nIHRvIHBlcmYncyBrZXJuZWwucGVyZl9ldmVudF9t
+YXhfc2FtcGxlX3JhdGUgZm9yCi0JCSAqIGEgcHJlY2VkZW50ICgxMDAwMDAgYnkgZGVmYXVsdCk7
+IHdpdGggYW4gT0EgZXhwb25lbnQgb2YKLQkJICogNiB3ZSBnZXQgYSBwZXJpb2Qgb2YgMTAuMjQw
+IG1pY3Jvc2Vjb25kcyAtanVzdCB1bmRlcgotCQkgKiAxMDAwMDBIegotCQkgKi8KLQkJaWYgKHBl
+cmlvZF9leHBvbmVudCA8IDYgJiYgIWNhcGFibGUoQ0FQX1NZU19BRE1JTikpIHsKKwkJaWYgKHBl
+cmlvZF9leHBvbmVudCA8IGk5MTVfb2FfZXZlbnRfbWluX3RpbWVyX2V4cG9uZW50ICYmCisJCSAg
+ICAhY2FwYWJsZShDQVBfU1lTX0FETUlOKSkgewogCQkJRFJNX0VSUk9SKCJTYW1wbGluZyBwZXJp
+b2QgdG9vIGhpZ2ggd2l0aG91dCByb290IHByaXZpbGVnZXNcbiIpOwogCQkJcmV0dXJuIC1FQUND
+RVM7CiAJCX0KQEAgLTExMTMsNiArMTEyMywxNSBAQCBzdGF0aWMgc3RydWN0IGN0bF90YWJsZSBv
+YV90YWJsZVtdID0gewogCSAubW9kZSA9IDA2NDQsCiAJIC5wcm9jX2hhbmRsZXIgPSBwcm9jX2Rv
+aW50dmVjLAogCSB9LAorCXsKKwkgLnByb2NuYW1lID0gIm9hX2V2ZW50X21pbl90aW1lcl9leHBv
+bmVudCIsCisJIC5kYXRhID0gJmk5MTVfb2FfZXZlbnRfbWluX3RpbWVyX2V4cG9uZW50LAorCSAu
+bWF4bGVuID0gc2l6ZW9mKGk5MTVfb2FfZXZlbnRfbWluX3RpbWVyX2V4cG9uZW50KSwKKwkgLm1v
+ZGUgPSAwNjQ0LAorCSAucHJvY19oYW5kbGVyID0gcHJvY19kb2ludHZlY19taW5tYXgsCisJIC5l
+eHRyYTEgPSAmemVybywKKwkgLmV4dHJhMiA9ICZvYV9leHBvbmVudF9tYXgsCisJIH0sCiAJe30K
+IH07CiAKLS0gCjIuNS4yCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fXwpJbnRlbC1nZnggbWFpbGluZyBsaXN0CkludGVsLWdmeEBsaXN0cy5mcmVlZGVza3Rv
+cC5vcmcKaHR0cDovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2ludGVs
+LWdmeAo=
