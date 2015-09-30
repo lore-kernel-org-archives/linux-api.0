@@ -1,153 +1,47 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [RFC v2 00/18] kthread: Use kthread worker API more widely
-Date: Tue, 29 Sep 2015 22:08:33 -0700
-Message-ID: <20150930050833.GA4412@linux.vnet.ibm.com>
-References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Chris Wilson <chris-Y6uKTt2uX1cEflXRtASbqLVCufUGDwFn@public.gmane.org>
+Subject: Re: [RFC 0/6] Non perf based Gen Graphics OA unit driver
+Date: Wed, 30 Sep 2015 09:30:27 +0100
+Message-ID: <20150930083027.GF9929@nuc-i3427.alporthouse.com>
+References: <1443537549-6905-1-git-send-email-robert@sixbynine.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1442840639-6963-1-git-send-email-pmladek@suse.com>
-Sender: owner-linux-mm@kvack.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <1443537549-6905-1-git-send-email-robert-St23OQVBDYPNLxjTenLetw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Robert Bragg <robert-St23OQVBDYPNLxjTenLetw@public.gmane.org>
+Cc: intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Daniel Vetter <daniel.vetter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Sourab Gupta <sourab.gupta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Zhenyu Wang <zhenyuw-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jani Nikula <jani.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kan Liang <kan.liang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Alexander Shishkin <alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Zheng Yan <zheng.z.yan-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Matt Fleming <matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 21, 2015 at 03:03:41PM +0200, Petr Mladek wrote:
-> My intention is to make it easier to manipulate kthreads. This RFC tries
-> to use the kthread worker API. It is based on comments from the
-> first attempt. See https://lkml.org/lkml/2015/7/28/648 and
-> the list of changes below.
-> 
-> 1st..8th patches: improve the existing kthread worker API
-> 
-> 9th, 12th, 17th patches: convert three kthreads into the new API,
->      namely: khugepaged, ring buffer benchmark, RCU gp kthreads[*]
-> 
-> 10th, 11th patches: fix potential problems in the ring buffer
->       benchmark; also sent separately
-> 
-> 13th patch: small fix for RCU kthread; also sent separately;
->      being tested by Paul
-> 
-> 14th..16th patches: preparation steps for the RCU threads
->      conversion; they are needed _only_ if we split GP start
->      and QS handling into separate works[*]
-> 
-> 18th patch: does a possible improvement of the kthread worker API;
->      it adds an extra parameter to the create*() functions, so I
->      rather put it into this draft
->      
-> 
-> [*] IMPORTANT: I tried to split RCU GP start and GS state handling
->     into separate works this time. But there is a problem with
->     a race in rcu_gp_kthread_worker_poke(). It might queue
->     the wrong work. It can be detected and fixed by the work
->     itself but it is a bit ugly. Alternative solution is to
->     do both operations in one work. But then we sleep too much
->     in the work which is ugly as well. Any idea is appreciated.
+On Tue, Sep 29, 2015 at 03:39:03PM +0100, Robert Bragg wrote:
+> Updating Mesa and GPU Top to experiment with this was straightforward
+> given the similarity to the perf interface.  The main difference is that
+> it only supports forwarding metrics via read()s instead of an mmaped
+> circular buffer. As mentioned above, I think that suits this well, and
+> requires no additional copying of data. I think the userspace code has
+> ended up being a little simpler too.
 
-I think that the kernel is trying really hard to tell you that splitting
-up the RCU grace-period kthreads in this manner is not such a good idea.
+Did you try updating the existing perf based overlay?
 
-So what are we really trying to accomplish here?  I am guessing something
-like the following:
+> Overall the driver currently isn't much more code than with perf (~200
+> lines).
+> 
+> Personally my gut feeling a.t.m, is that we should aim to move forward
+> independent from perf.
+> 
+> I'd really appreciate some feedback from others on this though.
+> 
+> Daniel and Chris; although I think it made sense at the outset to try
+> and use perf, in light of the above would you be open to a non-perf
+> based driver for the OA unit?
 
-1.	Get each grace-period kthread to a known safe state within a
-	short time of having requested a safe state.  If I recall
-	correctly, the point of this is to allow no-downtime kernel
-	patches to the functions executed by the grace-period kthreads.
+No. I strongly dislike that they will be multiple incompatibile perf
+interfaces and strongly like the coupling with other profiling that
+comes with perf - i.e. we very much want to simultaneously sample CPU
+and GPU workloads along with other devices, that information is much
+more useful to me for the purposes of scheduling work and maximising
+concurrency than optimising shaders.
+-Chris
 
-2.	At the same time, if someone suddenly needs a grace period
-	at some point in this process, the grace period kthreads are
-	going to have to wake back up and handle the grace period.
-	Or do you have some tricky way to guarantee that no one is
-	going to need a grace period beyond the time you freeze
-	the grace-period kthreads?
-
-3.	The boost kthreads should not be a big problem because failing
-	to boost simply lets the grace period run longer.
-
-4.	The callback-offload kthreads are likely to be a big problem,
-	because in systems configured with them, they need to be running
-	to invoke the callbacks, and if the callbacks are not invoked,
-	the grace period might just as well have failed to end.
-
-5.	The per-CPU kthreads are in the same boat as the callback-offload
-	kthreads.  One approach is to offline all the CPUs but one, and
-	that will park all but the last per-CPU kthread.  But handling
-	that last per-CPU kthread would likely be "good clean fun"...
-
-6.	Other requirements?
-
-One approach would be to simply say that the top-level rcu_gp_kthread()
-function cannot be patched, and arrange for the grace-period kthreads
-to park at some point within this function.  Or is there some requirement
-that I am missing?
-
-							Thanx, Paul
-
-> Changes against v1:
-> 
-> + remove wrappers to manipulate the scheduling policy and priority
-> 
-> + remove questionable wakeup_and_destroy_kthread_worker() variant
-> 
-> + do not check for chained work when draining the queue
-> 
-> + allocate struct kthread worker in create_kthread_work() and
->   use more simple checks for running worker
-> 
-> + add support for delayed kthread works and use them instead
->   of waiting inside the works
-> 
-> + rework the "unrelated" fixes for the ring buffer benchmark
->   as discussed in the 1st RFC; also sent separately
-> 
-> + convert also the consumer in the ring buffer benchmark
-> 
-> 
-> I have tested this patch set against the stable Linus tree
-> for 4.3-rc2.
-> 
-> Petr Mladek (18):
->   kthread: Allow to call __kthread_create_on_node() with va_list args
->   kthread: Add create_kthread_worker*()
->   kthread: Add drain_kthread_worker()
->   kthread: Add destroy_kthread_worker()
->   kthread: Add pending flag to kthread work
->   kthread: Initial support for delayed kthread work
->   kthread: Allow to cancel kthread work
->   kthread: Allow to modify delayed kthread work
->   mm/huge_page: Convert khugepaged() into kthread worker API
->   ring_buffer: Do no not complete benchmark reader too early
->   ring_buffer: Fix more races when terminating the producer in the
->     benchmark
->   ring_buffer: Convert benchmark kthreads into kthread worker API
->   rcu: Finish folding ->fqs_state into ->gp_state
->   rcu: Store first_gp_fqs into struct rcu_state
->   rcu: Clean up timeouts for forcing the quiescent state
->   rcu: Check actual RCU_GP_FLAG_FQS when handling quiescent state
->   rcu: Convert RCU gp kthreads into kthread worker API
->   kthread: Better support freezable kthread workers
-> 
->  include/linux/kthread.h              |  67 +++++
->  kernel/kthread.c                     | 544 ++++++++++++++++++++++++++++++++---
->  kernel/rcu/tree.c                    | 407 ++++++++++++++++----------
->  kernel/rcu/tree.h                    |  24 +-
->  kernel/rcu/tree_plugin.h             |  16 +-
->  kernel/rcu/tree_trace.c              |   2 +-
->  kernel/trace/ring_buffer_benchmark.c | 194 ++++++-------
->  mm/huge_memory.c                     | 116 ++++----
->  8 files changed, 1017 insertions(+), 353 deletions(-)
-> 
-> -- 
-> 1.8.5.6
-> 
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+Chris Wilson, Intel Open Source Technology Centre
