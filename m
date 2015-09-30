@@ -1,106 +1,236 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 12/12] [RFC] can: avoid using timeval for uapi
-Date: Wed, 30 Sep 2015 13:26:42 +0200
-Message-ID: <1443612402-3000775-13-git-send-email-arnd@arndb.de>
-References: <1443612402-3000775-1-git-send-email-arnd@arndb.de>
+From: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v4 3/9] btrfs: add .copy_file_range file operation
+Date: Wed, 30 Sep 2015 08:55:55 -0400
+Message-ID: <560BDBDB.3060108@Netapp.com>
+References: <1443549913-8091-1-git-send-email-Anna.Schumaker@Netapp.com>
+ <1443549913-8091-4-git-send-email-Anna.Schumaker@Netapp.com>
+ <00cc01d0fb2f$079ae210$16d0a630$@cn.fujitsu.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <1443612402-3000775-1-git-send-email-arnd@arndb.de>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: netdev@vger.kernel.org
-Cc: Arnd Bergmann <arnd@arndb.de>, y2038@lists.linaro.org, Oliver Hartkopp <socketcan@hartkopp.net>, linux-kernel@vger.kernel.org, linux-can@vger.kernel.org, Marc Kleine-Budde <mkl@pengutronix.de>, linux-api@vger.kernel.org, "David S. Miller" <davem@davemloft.net>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <00cc01d0fb2f$079ae210$16d0a630$@cn.fujitsu.com>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Zhao Lei <zhaolei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, 'Anna Schumaker' <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-VGhlIGNhbiBzdWJzeXN0ZW0gY29tbXVuaWNhdGVzIHdpdGggdXNlciBzcGFjZSB1c2luZyBhIGJj
-bV9tc2dfaGVhZApoZWFkZXIsIHdoaWNoIGNvbnRhaW5zIHR3byB0aW1lc3RhbXBzLiBUaGlzIGlz
-IHByb2JsZW1hdGljIGZvcgptdWx0aXBsZSByZWFzb25zOgoKYSkgVGhlIHN0cnVjdHVyZSBsYXlv
-dXQgaXMgY3VycmVudGx5IGluY29tcGF0aWJsZSBiZXR3ZWVuIDY0LWJpdAogICB1c2VyIHNwYWNl
-IGFuZCAzMi1iaXQgdXNlciBzcGFjZSwgYW5kIGNhbm5vdCB3b3JrIGluIGNvbXBhdAogICBtb2Rl
-IChvdGhlciB0aGFuIHgzMikuCgpiKSBUaGUgdGltZXZhbCBzdHJ1Y3R1cmUgbGF5b3V0IHdpbGwg
-Y2hhbmdlIGluIDMyLWJpdCB1c2VyCiAgIHNwYWNlIHdoZW4gd2UgZml4IHRoZSB5MjAzOCBvdmVy
-ZmxvdyBwcm9ibGVtIGJ5IHJlZGVmaW5pbmcKICAgdGltZV90IHRvIDY0LWJpdCwgbWFraW5nIG5l
-dyAzMi1iaXQgdXNlciBzcGFjZSBpbmNvbXBhdGlibGUKICAgd2l0aCB0aGUgY3VycmVudCBrZXJu
-ZWwgaW50ZXJmYWNlLgogICBDYXJzIGxhc3QgYSBsb25nIHRpbWUgYW5kIG9mdGVuIHVzZSBvbGQg
-a2VybmVscywgc28gdGhlIGFjdHVhbAogICB1c2VycyBvZiB0aGlzIGNvZGUgYXJlIHRoZSBtb3N0
-IGxpa2VseSBvbmVzIHRvIG1pZ3JhdGUgdG8geTIwMzgKICAgc2FmZSB1c2VyIHNwYWNlLgoKVGhp
-cyB0cmllcyB0byB3b3JrIGFyb3VuZCBwYXJ0IG9mIHRoZSBwcm9ibGVtIGJ5IGNoYW5naW5nIHRo
-ZQpwdWJsaWNseSB2aXNpYmxlIHVzZXIgaW50ZXJmYWNlIGluIHRoZSBoZWFkZXIsIGJ1dCBub3Qg
-dGhlIGJpbmFyeQppbnRlcmZhY2UuIEZvcnR1bmF0ZWx5LCB0aGUgdmFsdWVzIHBhc3NlZCBhcm91
-bmQgaW4gdGhlIHN0cnVjdHVyZQphcmUgcmVsYXRpdmUgdGltZXMgYW5kIGRvIG5vdCBhY3R1YWxs
-eSBzdWZmZXIgZnJvbSB0aGUgeTIwMzgKb3ZlcmZsb3csIHNvIDMyLWJpdCBpcyBlbm91Z2ggaGVy
-ZS4KCldlIHJlcGxhY2UgdGhlIHVzZSBvZiAnc3RydWN0IHRpbWV2YWwnIHdpdGggYSBuZXdseSBk
-ZWZpbmVkCidzdHJ1Y3QgYmNtX3RpbWV2YWwnIHRoYXQgdXNlcyB0aGUgZXhhY3Qgc2FtZSBiaW5h
-cnkgbGF5b3V0CmFzIGJlZm9yZSBhbmQgdGhhdCBzdGlsbCBzdWZmZXJzIGZyb20gcHJvYmxlbSBh
-KSBidXQgbm90IHByb2JsZW0KYikuCgpUaGUgZG93bnNpZGUgb2YgdGhpcyBhcHByb2FjaCBpcyB0
-aGF0IGFueSB1c2VyIHNwYWNlIHByb2dyYW0KdGhhdCBjdXJyZW50bHkgYXNzaWducyBhIHRpbWV2
-YWwgc3RydWN0dXJlIHRvIHRoZXNlIG1lbWJlcnMKcmF0aGVyIHRoYW4gd3JpdGluZyB0aGUgdHZf
-c2VjL3R2X3VzZWMgcG9ydGlvbnMgaW5kaXZpZHVhbGx5CndpbGwgc3VmZmVyIGEgY29tcGlsZS10
-aW1lIGVycm9yIHdoZW4gYnVpbHQgd2l0aCBhbiB1cGRhdGVkCmtlcm5lbCBoZWFkZXIuIEZpeGlu
-ZyB0aGlzIGVycm9yIG1ha2VzIGl0IHdvcmsgZmluZSB3aXRoIG9sZAphbmQgbmV3IGhlYWRlcnMg
-dGhvdWdoLgoKV2UgY291bGQgYWRkcmVzcyBwcm9ibGVtIGEpIGJ5IHVzaW5nICdfX3UzMicgb3Ig
-J2ludCcgbWVtYmVycwpyYXRoZXIgdGhhbiAnbG9uZycsIGJ1dCB0aGF0IHdvdWxkIGhhdmUgYSBt
-b3JlIHNpZ25pZmljYW50CmRvd25zaWRlIGluIGFsc28gYnJlYWtpbmcgc3VwcG9ydCBmb3IgYWxs
-IGV4aXN0aW5nIDY0LWJpdCB1c2VyCmJpbmFyaWVzIHRoYXQgbWlnaHQgYmUgdXNpbmcgdGhpcyBp
-bnRlcmZhY2UsIHdoaWNoIGlzIGxpa2VseQpub3QgYWNjZXB0YWJsZS4KClNpZ25lZC1vZmYtYnk6
-IEFybmQgQmVyZ21hbm4gPGFybmRAYXJuZGIuZGU+CkNjOiBPbGl2ZXIgSGFydGtvcHAgPHNvY2tl
-dGNhbkBoYXJ0a29wcC5uZXQ+CkNjOiBNYXJjIEtsZWluZS1CdWRkZSA8bWtsQHBlbmd1dHJvbml4
-LmRlPgpDYzogbGludXgtY2FuQHZnZXIua2VybmVsLm9yZwpDYzogbGludXgtYXBpQHZnZXIua2Vy
-bmVsLm9yZwotLS0KIGluY2x1ZGUvdWFwaS9saW51eC9jYW4vYmNtLmggfCAgNyArKysrKystCiBu
-ZXQvY2FuL2JjbS5jICAgICAgICAgICAgICAgIHwgMTUgKysrKysrKysrKy0tLS0tCiAyIGZpbGVz
-IGNoYW5nZWQsIDE2IGluc2VydGlvbnMoKyksIDYgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEv
-aW5jbHVkZS91YXBpL2xpbnV4L2Nhbi9iY20uaCBiL2luY2x1ZGUvdWFwaS9saW51eC9jYW4vYmNt
-LmgKaW5kZXggODlkZGI5ZGM5YmRmLi43YTI5MWRjMWZmMTUgMTAwNjQ0Ci0tLSBhL2luY2x1ZGUv
-dWFwaS9saW51eC9jYW4vYmNtLmgKKysrIGIvaW5jbHVkZS91YXBpL2xpbnV4L2Nhbi9iY20uaApA
-QCAtNDcsNiArNDcsMTEgQEAKICNpbmNsdWRlIDxsaW51eC90eXBlcy5oPgogI2luY2x1ZGUgPGxp
-bnV4L2Nhbi5oPgogCitzdHJ1Y3QgYmNtX3RpbWV2YWwgeworCWxvbmcgdHZfc2VjOworCWxvbmcg
-dHZfdXNlYzsKK307CisKIC8qKgogICogc3RydWN0IGJjbV9tc2dfaGVhZCAtIGhlYWQgb2YgbWVz
-c2FnZXMgdG8vZnJvbSB0aGUgYnJvYWRjYXN0IG1hbmFnZXIKICAqIEBvcGNvZGU6ICAgIG9wY29k
-ZSwgc2VlIGVudW0gYmVsb3cuCkBAIC02Miw3ICs2Nyw3IEBAIHN0cnVjdCBiY21fbXNnX2hlYWQg
-ewogCV9fdTMyIG9wY29kZTsKIAlfX3UzMiBmbGFnczsKIAlfX3UzMiBjb3VudDsKLQlzdHJ1Y3Qg
-dGltZXZhbCBpdmFsMSwgaXZhbDI7CisJc3RydWN0IGJjbV90aW1ldmFsIGl2YWwxLCBpdmFsMjsK
-IAljYW5pZF90IGNhbl9pZDsKIAlfX3UzMiBuZnJhbWVzOwogCXN0cnVjdCBjYW5fZnJhbWUgZnJh
-bWVzWzBdOwpkaWZmIC0tZ2l0IGEvbmV0L2Nhbi9iY20uYyBiL25ldC9jYW4vYmNtLmMKaW5kZXgg
-YTFiYTY4NzVjMmEyLi42ODYzMzEwZDY5NzMgMTAwNjQ0Ci0tLSBhL25ldC9jYW4vYmNtLmMKKysr
-IGIvbmV0L2Nhbi9iY20uYwpAQCAtOTYsNyArOTYsNyBAQCBzdHJ1Y3QgYmNtX29wIHsKIAljYW5p
-ZF90IGNhbl9pZDsKIAl1MzIgZmxhZ3M7CiAJdW5zaWduZWQgbG9uZyBmcmFtZXNfYWJzLCBmcmFt
-ZXNfZmlsdGVyZWQ7Ci0Jc3RydWN0IHRpbWV2YWwgaXZhbDEsIGl2YWwyOworCXN0cnVjdCBiY21f
-dGltZXZhbCBpdmFsMSwgaXZhbDI7CiAJc3RydWN0IGhydGltZXIgdGltZXIsIHRocnRpbWVyOwog
-CXN0cnVjdCB0YXNrbGV0X3N0cnVjdCB0c2tsZXQsIHRocnRza2xldDsKIAlrdGltZV90IHJ4X3N0
-YW1wLCBrdF9pdmFsMSwga3RfaXZhbDIsIGt0X2xhc3Rtc2c7CkBAIC0xMzEsNiArMTMxLDExIEBA
-IHN0YXRpYyBpbmxpbmUgc3RydWN0IGJjbV9zb2NrICpiY21fc2soY29uc3Qgc3RydWN0IHNvY2sg
-KnNrKQogCXJldHVybiAoc3RydWN0IGJjbV9zb2NrICopc2s7CiB9CiAKK3N0YXRpYyBpbmxpbmUg
-a3RpbWVfdCBiY21fdGltZXZhbF90b19rdGltZShzdHJ1Y3QgYmNtX3RpbWV2YWwgdHYpCit7CisJ
-cmV0dXJuIGt0aW1lX3NldCh0di50dl9zZWMsIHR2LnR2X3VzZWMgKiBOU0VDX1BFUl9VU0VDKTsK
-K30KKwogI2RlZmluZSBDRlNJWiBzaXplb2Yoc3RydWN0IGNhbl9mcmFtZSkKICNkZWZpbmUgT1BT
-SVogc2l6ZW9mKHN0cnVjdCBiY21fb3ApCiAjZGVmaW5lIE1IU0laIHNpemVvZihzdHJ1Y3QgYmNt
-X21zZ19oZWFkKQpAQCAtOTUzLDggKzk1OCw4IEBAIHN0YXRpYyBpbnQgYmNtX3R4X3NldHVwKHN0
-cnVjdCBiY21fbXNnX2hlYWQgKm1zZ19oZWFkLCBzdHJ1Y3QgbXNnaGRyICptc2csCiAJCW9wLT5j
-b3VudCA9IG1zZ19oZWFkLT5jb3VudDsKIAkJb3AtPml2YWwxID0gbXNnX2hlYWQtPml2YWwxOwog
-CQlvcC0+aXZhbDIgPSBtc2dfaGVhZC0+aXZhbDI7Ci0JCW9wLT5rdF9pdmFsMSA9IHRpbWV2YWxf
-dG9fa3RpbWUobXNnX2hlYWQtPml2YWwxKTsKLQkJb3AtPmt0X2l2YWwyID0gdGltZXZhbF90b19r
-dGltZShtc2dfaGVhZC0+aXZhbDIpOworCQlvcC0+a3RfaXZhbDEgPSBiY21fdGltZXZhbF90b19r
-dGltZShtc2dfaGVhZC0+aXZhbDEpOworCQlvcC0+a3RfaXZhbDIgPSBiY21fdGltZXZhbF90b19r
-dGltZShtc2dfaGVhZC0+aXZhbDIpOwogCiAJCS8qIGRpc2FibGUgYW4gYWN0aXZlIHRpbWVyIGR1
-ZSB0byB6ZXJvIHZhbHVlcz8gKi8KIAkJaWYgKCFvcC0+a3RfaXZhbDEudHY2NCAmJiAhb3AtPmt0
-X2l2YWwyLnR2NjQpCkBAIC0xMTM0LDggKzExMzksOCBAQCBzdGF0aWMgaW50IGJjbV9yeF9zZXR1
-cChzdHJ1Y3QgYmNtX21zZ19oZWFkICptc2dfaGVhZCwgc3RydWN0IG1zZ2hkciAqbXNnLAogCQkJ
-Lyogc2V0IHRpbWVyIHZhbHVlICovCiAJCQlvcC0+aXZhbDEgPSBtc2dfaGVhZC0+aXZhbDE7CiAJ
-CQlvcC0+aXZhbDIgPSBtc2dfaGVhZC0+aXZhbDI7Ci0JCQlvcC0+a3RfaXZhbDEgPSB0aW1ldmFs
-X3RvX2t0aW1lKG1zZ19oZWFkLT5pdmFsMSk7Ci0JCQlvcC0+a3RfaXZhbDIgPSB0aW1ldmFsX3Rv
-X2t0aW1lKG1zZ19oZWFkLT5pdmFsMik7CisJCQlvcC0+a3RfaXZhbDEgPSBiY21fdGltZXZhbF90
-b19rdGltZShtc2dfaGVhZC0+aXZhbDEpOworCQkJb3AtPmt0X2l2YWwyID0gYmNtX3RpbWV2YWxf
-dG9fa3RpbWUobXNnX2hlYWQtPml2YWwyKTsKIAogCQkJLyogZGlzYWJsZSBhbiBhY3RpdmUgdGlt
-ZXIgZHVlIHRvIHplcm8gdmFsdWU/ICovCiAJCQlpZiAoIW9wLT5rdF9pdmFsMS50djY0KQotLSAK
-Mi4xLjAucmMyCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-XwpZMjAzOCBtYWlsaW5nIGxpc3QKWTIwMzhAbGlzdHMubGluYXJvLm9yZwpodHRwczovL2xpc3Rz
-LmxpbmFyby5vcmcvbWFpbG1hbi9saXN0aW5mby95MjAzOAo=
+On 09/29/2015 11:20 PM, Zhao Lei wrote:
+> Hi, Anna Schumaker
+> 
+>> -----Original Message-----
+>> From: linux-btrfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>> [mailto:linux-btrfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org] On Behalf Of Anna Schumaker
+>> Sent: Wednesday, September 30, 2015 2:05 AM
+>> To: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org;
+>> linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org;
+>> viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org; clm-b10kYP2dOMg@public.gmane.org; darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org;
+>> mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org; andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org; hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
+>> Subject: [PATCH v4 3/9] btrfs: add .copy_file_range file operation
+>>
+>> From: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>>
+>> This rearranges the existing COPY_RANGE ioctl implementation so that
+>> the .copy_file_range file operation can call the core loop that copies file data
+>> extent items.
+>>
+>> The extent copying loop is lifted up into its own function.  It retains the core
+>> btrfs error checks that should be shared.
+>>
+>> Signed-off-by: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>> Signed-off-by: Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+>> Reviewed-by: Josef Bacik <jbacik-b10kYP2dOMg@public.gmane.org>
+>> Reviewed-by: David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>
+>> ---
+>>  fs/btrfs/ctree.h |  3 ++
+>>  fs/btrfs/file.c  |  1 +
+>>  fs/btrfs/ioctl.c | 91 ++++++++++++++++++++++++++++++++------------------------
+>>  3 files changed, 56 insertions(+), 39 deletions(-)
+>>
+>> diff --git a/fs/btrfs/ctree.h b/fs/btrfs/ctree.h index 938efe3..5d06a4f 100644
+>> --- a/fs/btrfs/ctree.h
+>> +++ b/fs/btrfs/ctree.h
+>> @@ -3996,6 +3996,9 @@ int btrfs_dirty_pages(struct btrfs_root *root, struct
+>> inode *inode,
+>>  		      loff_t pos, size_t write_bytes,
+>>  		      struct extent_state **cached);
+>>  int btrfs_fdatawrite_range(struct inode *inode, loff_t start, loff_t end);
+>> +ssize_t btrfs_copy_file_range(struct file *file_in, loff_t pos_in,
+>> +			      struct file *file_out, loff_t pos_out,
+>> +			      size_t len, int flags);
+>>
+> 
+> It is different with declaration:
+> ssize_t (*copy_file_range)(struct file *, loff_t, struct file *, loff_t, size_t, unsigned int);
+> 
+> (flags changed from unsigned int to int)
+> 
+>>  /* tree-defrag.c */
+>>  int btrfs_defrag_leaves(struct btrfs_trans_handle *trans, diff --git
+>> a/fs/btrfs/file.c b/fs/btrfs/file.c index b823fac..b05449c 100644
+>> --- a/fs/btrfs/file.c
+>> +++ b/fs/btrfs/file.c
+>> @@ -2816,6 +2816,7 @@ const struct file_operations btrfs_file_operations =
+>> {  #ifdef CONFIG_COMPAT
+>>  	.compat_ioctl	= btrfs_ioctl,
+>>  #endif
+>> +	.copy_file_range = btrfs_copy_file_range,
+> 
+> And cause compiler warning at this line:
+> fs/btrfs/file.c:2819: warning: initialization from incompatible pointer type   
+> 
+> Small problem, but better to fix.
+
+Thanks!  I must have missed it when I switched flags to unsigned int.
+
+Anna
+
+> 
+> Thanks
+> Zhaolei
+> 
+>>  };
+>>
+>>  void btrfs_auto_defrag_exit(void)
+>> diff --git a/fs/btrfs/ioctl.c b/fs/btrfs/ioctl.c index 0adf542..4311554 100644
+>> --- a/fs/btrfs/ioctl.c
+>> +++ b/fs/btrfs/ioctl.c
+>> @@ -3727,17 +3727,16 @@ out:
+>>  	return ret;
+>>  }
+>>
+>> -static noinline long btrfs_ioctl_clone(struct file *file, unsigned long srcfd,
+>> -				       u64 off, u64 olen, u64 destoff)
+>> +static noinline int btrfs_clone_files(struct file *file, struct file *file_src,
+>> +					u64 off, u64 olen, u64 destoff)
+>>  {
+>>  	struct inode *inode = file_inode(file);
+>> +	struct inode *src = file_inode(file_src);
+>>  	struct btrfs_root *root = BTRFS_I(inode)->root;
+>> -	struct fd src_file;
+>> -	struct inode *src;
+>>  	int ret;
+>>  	u64 len = olen;
+>>  	u64 bs = root->fs_info->sb->s_blocksize;
+>> -	int same_inode = 0;
+>> +	int same_inode = src == inode;
+>>
+>>  	/*
+>>  	 * TODO:
+>> @@ -3750,49 +3749,20 @@ static noinline long btrfs_ioctl_clone(struct file
+>> *file, unsigned long srcfd,
+>>  	 *   be either compressed or non-compressed.
+>>  	 */
+>>
+>> -	/* the destination must be opened for writing */
+>> -	if (!(file->f_mode & FMODE_WRITE) || (file->f_flags & O_APPEND))
+>> -		return -EINVAL;
+>> -
+>>  	if (btrfs_root_readonly(root))
+>>  		return -EROFS;
+>>
+>> -	ret = mnt_want_write_file(file);
+>> -	if (ret)
+>> -		return ret;
+>> -
+>> -	src_file = fdget(srcfd);
+>> -	if (!src_file.file) {
+>> -		ret = -EBADF;
+>> -		goto out_drop_write;
+>> -	}
+>> -
+>> -	ret = -EXDEV;
+>> -	if (src_file.file->f_path.mnt != file->f_path.mnt)
+>> -		goto out_fput;
+>> -
+>> -	src = file_inode(src_file.file);
+>> -
+>> -	ret = -EINVAL;
+>> -	if (src == inode)
+>> -		same_inode = 1;
+>> -
+>> -	/* the src must be open for reading */
+>> -	if (!(src_file.file->f_mode & FMODE_READ))
+>> -		goto out_fput;
+>> +	if (file_src->f_path.mnt != file->f_path.mnt ||
+>> +	    src->i_sb != inode->i_sb)
+>> +		return -EXDEV;
+>>
+>>  	/* don't make the dst file partly checksummed */
+>>  	if ((BTRFS_I(src)->flags & BTRFS_INODE_NODATASUM) !=
+>>  	    (BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM))
+>> -		goto out_fput;
+>> +		return -EINVAL;
+>>
+>> -	ret = -EISDIR;
+>>  	if (S_ISDIR(src->i_mode) || S_ISDIR(inode->i_mode))
+>> -		goto out_fput;
+>> -
+>> -	ret = -EXDEV;
+>> -	if (src->i_sb != inode->i_sb)
+>> -		goto out_fput;
+>> +		return -EISDIR;
+>>
+>>  	if (!same_inode) {
+>>  		btrfs_double_inode_lock(src, inode);
+>> @@ -3869,6 +3839,49 @@ out_unlock:
+>>  		btrfs_double_inode_unlock(src, inode);
+>>  	else
+>>  		mutex_unlock(&src->i_mutex);
+>> +	return ret;
+>> +}
+>> +
+>> +ssize_t btrfs_copy_file_range(struct file *file_in, loff_t pos_in,
+>> +			      struct file *file_out, loff_t pos_out,
+>> +			      size_t len, int flags)
+>> +{
+>> +	ssize_t ret;
+>> +
+>> +	ret = btrfs_clone_files(file_out, file_in, pos_in, len, pos_out);
+>> +	if (ret == 0)
+>> +		ret = len;
+>> +	return ret;
+>> +}
+>> +
+>> +static noinline long btrfs_ioctl_clone(struct file *file, unsigned long srcfd,
+>> +				       u64 off, u64 olen, u64 destoff) {
+>> +	struct fd src_file;
+>> +	int ret;
+>> +
+>> +	/* the destination must be opened for writing */
+>> +	if (!(file->f_mode & FMODE_WRITE) || (file->f_flags & O_APPEND))
+>> +		return -EINVAL;
+>> +
+>> +	ret = mnt_want_write_file(file);
+>> +	if (ret)
+>> +		return ret;
+>> +
+>> +	src_file = fdget(srcfd);
+>> +	if (!src_file.file) {
+>> +		ret = -EBADF;
+>> +		goto out_drop_write;
+>> +	}
+>> +
+>> +	/* the src must be open for reading */
+>> +	if (!(src_file.file->f_mode & FMODE_READ)) {
+>> +		ret = -EINVAL;
+>> +		goto out_fput;
+>> +	}
+>> +
+>> +	ret = btrfs_clone_files(file, src_file.file, off, olen, destoff);
+>> +
+>>  out_fput:
+>>  	fdput(src_file);
+>>  out_drop_write:
+>> --
+>> 2.5.3
+>>
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-btrfs" in the body
+>> of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org More majordomo info at
+>> http://vger.kernel.org/majordomo-info.html
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
