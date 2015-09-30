@@ -1,48 +1,138 @@
-From: David Daney <ddaney@caviumnetworks.com>
-Subject: Re: [PATCH v3 2/2] PCI: Add support for Enhanced Allocation devices
-Date: Tue, 29 Sep 2015 16:53:20 -0700
-Message-ID: <560B2470.9080100@caviumnetworks.com>
-References: <1443485439-12081-1-git-send-email-ddaney.cavm@gmail.com> <1443485439-12081-3-git-send-email-ddaney.cavm@gmail.com> <20150929192737.GA2517@sean.stalley.intel.com> <560AF3D7.80908@gmail.com> <20150929224727.GB2517@sean.stalley.intel.com>
+From: Chen Fan <chen.fan.fnst-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+Subject: Re: [PATCH 0/1] ns: introduce proc_get_ns_by_fd()
+Date: Wed, 30 Sep 2015 10:54:01 +0800
+Message-ID: <560B4EC9.9060801@cn.fujitsu.com>
+References: <20150925135246.27620.97496.stgit@buzz>	<20150925175654.GA12504@redhat.com> <871tdi8pqj.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"; format=flowed
+Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-pci-owner@vger.kernel.org>
-In-Reply-To: <20150929224727.GB2517@sean.stalley.intel.com>
-Sender: linux-pci-owner@vger.kernel.org
-To: "Sean O. Stalley" <sean.stalley@intel.com>
-Cc: David Daney <ddaney.cavm@gmail.com>, linux-kernel@vger.kernel.org, linux-pci@vger.kernel.org, Bjorn Helgaas <bhelgaas@google.com>, "Michael S. Tsirkin" <mst@redhat.com>, =?UTF-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5@gmail.com>, linux-api@vger.kernel.org, yinghai@kernel.org, rajatxjain@gmail.com, gong.chen@linux.intel.com, David Daney <david.daney@cavium.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <871tdi8pqj.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Roman Gushchin <klamm-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, =?windows-1252?Q?St=E9phane_Graber?= <stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 09/29/2015 03:47 PM, Sean O. Stalley wrote:
-[...]
->>>> diff --git a/drivers/pci/pci.c b/drivers/pci/pci.c
->>>> index 6a9a111..7c60b16 100644
->>>> --- a/drivers/pci/pci.c
->>>> +++ b/drivers/pci/pci.c
->>>> @@ -2148,6 +2148,284 @@ void pci_pm_init(struct pci_dev *dev)
->>>>   	}
->>>>   }
->>>>
->>>> +static unsigned long pci_ea_set_flags(struct pci_dev *dev, u8 prop)
->>>> +{
->>>> +	unsigned long flags = IORESOURCE_PCI_FIXED | IORESOURCE_SIZEALIGN;
->>>
->>> Why did you add the IORESOURCE_SIZEALIGN flag? EA allows for unaligned resources.
->>
->> pci_bus_assign_resources() fails causing the devices to be unusable
->> if resource_alignment() returns zero.  The easiest fix for this was
->> to specify IORESOURCE_SIZEALIGN.
->>
->> An alternative would be to change the code in setup-bus.c so that
->> for IORESOURCE_PCI_FIXED resources, it didn't barf.
->
-> I would do this alternative, but with a IORESOURCE_PCI_EA flag.
->
 
-I don't think we need IORESOURCE_PCI_EA.  If a resource is tagged as 
-IORESOURCE_PCI_FIXED that means that it cannot be changed, we shouldn't 
-care why it is fixed (due to an EA capability for example).  We just 
-need to gracefully handle IORESOURCE_PCI_FIXED in the places where 
-things currently go wrong.
+On 09/29/2015 12:37 AM, Eric W. Biederman wrote:
+> Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
+>
+>> On 09/25, Konstantin Khlebnikov wrote:
+>>> +struct ns_common *proc_ns_fdget(int fd, int nstype, struct fd *fd_ref)
+>>>   {
+>>> -	struct file *file;
+>>> +	struct ns_common *ns;
+>>> +	struct fd f;
+>>>   
+>>> -	file = fget(fd);
+>>> -	if (!file)
+>>> +	f = fdget(fd);
+>>> +	if (!f.file)
+>>>   		return ERR_PTR(-EBADF);
+>>>   
+>>> -	if (file->f_op != &ns_file_operations)
+>>> +	if (f.file->f_op != &ns_file_operations)
+>>> +		goto out_invalid;
+>>> +
+>>> +	ns = get_proc_ns(file_inode(f.file));
+>>> +	if (nstype && (ns->ops->type != nstype))
+>>>   		goto out_invalid;
+>>>   
+>>> -	return file;
+>>> +	*fd_ref = f;
+>>> +	return ns;
+>>>   
+>>>   out_invalid:
+>>> -	fput(file);
+>>> +	fdput(f);
+>>>   	return ERR_PTR(-EINVAL);
+>>>   }
+>> Well yes, fdget() makes sense but this is minor.
+>>
+>> Honestly, I do not really like the new helper... I understand this
+>> is subjective, so I won't insist. But how about 1/1? We do not need
+>> fd/file at all. With this patch your sys_getvpid() can just use
+>> proc_get_ns_by_fd(fd, CLONE_NEWPID) and put_pid_ns().
+>>
+>> Eric, what do you think?
+> At some level I don't care this is not exposed to userspace.
+>
+> However since we are going several rounds with this.
+>
+> Of the existing uses several of them sleep, which unfortunately means we
+> can not use rcu locking for everything.  The network namespace ones wind
+> up taking a reference to struct net because the have the legacy pid case
+> to deal with.  Which makes we can not use fdget for all callers either.
+>
+> For this translate_pid rcu locking is sufficient, rcu locking is easy
+> and doing any more than rcu locking just seems silly.  So let me
+> respectfully suggest.
+>
+> struct ns_common *ns_by_fd_rcu(int fd, int type)
+> {
+> 	struct files_struct *files = current->files;
+> 	struct file *file;
+> 	struct ns_common *ns;
+> 	void *ret;
+pointer files seems no more useful. we can
+use fcheck(fd) instead.
 
-David Daney
+Thanks,
+
+>
+> 	file = fcheck_files(files, fd);
+>          if (!file)
+> 		return ERR_PTR(-EBADF);
+>
+> 	if (file->f_mode & FMODE_PATH)
+> 		return ERR_PTR(-EINVAL);
+>
+> 	if (file->f_op != &ns_file_operations)
+>          	return ERR_PTR(-EINVAL);
+>
+> 	ns = get_proc_ns(file_inode(file));
+> 	if (ns->ops->type != type)
+> 		return ERR_PTR(-EINVAL);
+>
+> 	return ns;
+> }
+>
+> struct pid_namespace *pidns_by_fd_rcu(int fd)
+> {
+> 	struct ns_common *ns = ns_by_fd_rcu(fd, CLONE_NEWPID);
+>          if (IS_ERR(ns))
+> 		return ERR_CAST(ns);
+> 	return container_of(ns, struct pid_namespace, ns);
+> }
+>
+> SYSCALL_DEFINE3(translate_pid, pid_t, pid_nr, int, sourcefd, int, targetfd)
+> {
+> 	struct pid_namespace *source, *target;
+> 	struct pid *pid;
+> 	pid_t result;
+>
+> 	rcu_read_lock();
+>
+> 	if (sourcefd >= 0)
+>          	source = pidns_by_fd_rcu(sourcefd);
+> 	else
+> 		source = task_active_pid_ns(current);
+>
+> 	if (targetfd >= 0)
+>          	target = pidns_by_fd_rcu(targetfd);
+> 	else
+> 		target = task_active_pid_ns(current);
+>
+> 	pid = find_pid_ns(pid_nr, source);
+>          result = pid_nr_ns(pid, target);
+>          if (result == 0)
+> 		result = -ESRCH;
+>
+> 	rcu_read_unlock();
+>
+> 	return result;
+> }
+>
+> Eric
+> .
+>
