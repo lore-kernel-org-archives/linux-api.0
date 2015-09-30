@@ -1,64 +1,55 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH v3 4/5] kcmp: add KCMP_FILE_PRIVATE_DATA
-Date: Wed, 30 Sep 2015 11:56:25 -0700
-Message-ID: <CALCETrWx_yCF7o6ZnbeoDqw-Fxa3GzARX30SZWeg40FMGqR25Q@mail.gmail.com>
-References: <1443636820-17083-1-git-send-email-tycho.andersen@canonical.com>
- <1443636820-17083-5-git-send-email-tycho.andersen@canonical.com>
- <CALCETrUosV+ND1BC-qH3xZMaLwnex50SvMhaSa3FQ19oy1MBVg@mail.gmail.com>
- <20150930184129.GB23065@smitten> <CALCETrWjLGLAnf5_tCZohKYtTDi5Jo=bk_BkchTgXi8Bzz9YDA@mail.gmail.com>
- <20150930185504.GC23065@smitten>
+From: Jiri Kosina <jikos@kernel.org>
+Subject: Re: [RESEND PATCH v3 1/1] Add Corsair Vengeance K90 driver
+Date: Wed, 30 Sep 2015 21:33:36 +0200 (CEST)
+Message-ID: <alpine.LNX.2.00.1509302121020.30132@pobox.suse.cz>
+References: <cover.1443618411.git.clement.vuchener@gmail.com> <537ca04defeedd034ee27c5fe58a56bccca08e02.1443618411.git.clement.vuchener@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150930185504.GC23065@smitten>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: TEXT/PLAIN; charset=ISO-8859-15
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-input-owner@vger.kernel.org>
+In-Reply-To: <537ca04defeedd034ee27c5fe58a56bccca08e02.1443618411.git.clement.vuchener@gmail.com>
+Sender: linux-input-owner@vger.kernel.org
+To: =?ISO-8859-15?Q?Cl=E9ment_Vuchener?= <clement.vuchener@gmail.com>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-input@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 30, 2015 at 11:55 AM, Tycho Andersen
-<tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
-> On Wed, Sep 30, 2015 at 11:47:05AM -0700, Andy Lutomirski wrote:
->> On Wed, Sep 30, 2015 at 11:41 AM, Tycho Andersen
->> <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
->> > On Wed, Sep 30, 2015 at 11:25:41AM -0700, Andy Lutomirski wrote:
->> >> On Wed, Sep 30, 2015 at 11:13 AM, Tycho Andersen
->> >> <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
->> >> > This command allows comparing the underling private data of two fds. This
->> >> > is useful e.g. to find out if a seccomp filter is inherited, since struct
->> >> > seccomp_filter are unique across tasks and are the private_data seccomp
->> >> > fds.
->> >>
->> >> This is very implementation-specific and may have nasty ABI
->> >> consequences far outside seccomp.  Let's do something specific to
->> >> seccomp and/or eBPF.
->> >
->> > We could change the name to a less generic KCMP_SECCOMP_FD or
->> > something, but without some sort of GUID on each struct
->> > seccomp_filter, the implementation would be effectively the same as it
->> > is today. Is that enough, or do we need a GUID?
->> >
->>
->> I don't care about the GUID.  I think we should name it
->> KCMP_SECCOMP_FD and make it only work on seccomp fds.
->
-> Ok, I can do that.
->
->> Alternatively, we could figure out why KCMP_FILE doesn't do the trick
->> and consider fixing it.  IMO it's really too bad that struct file is
->> so heavyweight that we can't really just embed one in all kinds of
->> structures.
->
-> The problem is that KCMP_FILE compares the file objects themselves,
-> instead of the underlying data. If I ask for a seccomp fd for filter 0
-> twice, I'll have two different file objects and they won't be equal. I
-> suppose we could add some special logic inside KCMP_FILE to compare
-> the underlying data in special cases (seccomp, ebpf, others?), but it
-> seems cleaner to have a separate command as you described above.
->
+On Wed, 30 Sep 2015, Cl=E9ment Vuchener wrote:
 
-What I meant was that maybe we could get the two requests to actually
-produce the same struct file.  But that could get very messy
-memory-wise.
+> This patch implements a HID driver for the Corsair Vengeance K90 keyb=
+oard.
+>=20
+> It fixes the behaviour of the keys using incorrect HID usage codes an=
+d=20
+> exposes the macro playback mode and current profile to the user space=
+=20
+> through sysfs attributes. It also adds two LED class devices controll=
+ing=20
+> the "record" LED and the backlight.
+>=20
+> Signed-off-by: Cl=E9ment Vuchener <clement.vuchener@gmail.com>
+[ ... snip ... ]
+> +struct k90_led {
+> +	struct led_classdev cdev;
+> +	int brightness;
+> +	struct work_struct work;
+> +	int removed;
 
---Andy
+This could be made bool.
+
+Also the patch subject doesn't really follow the usual format we're usi=
+ng=20
+in hid.git.
+
+Otherwise I like the code, thanks a lot for working on the driver. I ha=
+ve=20
+fixed the nits above and it's now queued in hid.git#for-4.4/corsair.
+
+--=20
+Jiri Kosina
+SUSE Labs
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-input" =
+in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
