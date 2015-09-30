@@ -1,44 +1,35 @@
-From: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: Re: [PATCH v3 2/5] seccomp: add the concept of a seccomp filter FD
-Date: Wed, 30 Sep 2015 12:36:32 -0600
-Message-ID: <20150930183632.GA23065@smitten>
+From: Tycho Andersen <tycho.andersen@canonical.com>
+Subject: Re: [PATCH v3 4/5] kcmp: add KCMP_FILE_PRIVATE_DATA
+Date: Wed, 30 Sep 2015 12:41:29 -0600
+Message-ID: <20150930184129.GB23065@smitten>
 References: <1443636820-17083-1-git-send-email-tycho.andersen@canonical.com>
- <1443636820-17083-3-git-send-email-tycho.andersen@canonical.com>
- <CALCETrXkG6QCx9ptyN+VWrjgoTvwZAOfa-pWhS4iCZ=fpm6YnQ@mail.gmail.com>
+ <1443636820-17083-5-git-send-email-tycho.andersen@canonical.com>
+ <CALCETrUosV+ND1BC-qH3xZMaLwnex50SvMhaSa3FQ19oy1MBVg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CALCETrXkG6QCx9ptyN+VWrjgoTvwZAOfa-pWhS4iCZ=fpm6YnQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrUosV+ND1BC-qH3xZMaLwnex50SvMhaSa3FQ19oy1MBVg@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Kees Cook <keescook@chromium.org>, Alexei Starovoitov <ast@kernel.org>, Will Drewry <wad@chromium.org>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Daniel Borkmann <daniel@iogearbox.net>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 30, 2015 at 11:27:34AM -0700, Andy Lutomirski wrote:
+On Wed, Sep 30, 2015 at 11:25:41AM -0700, Andy Lutomirski wrote:
 > On Wed, Sep 30, 2015 at 11:13 AM, Tycho Andersen
-> <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
-> > This patch introduces the concept of a seccomp fd, with a similar interface
-> > and usage to ebpf fds. Initially, one is allowed to create, install, and
-> > dump these fds. Any manipulation of seccomp fds requires users to be root
-> > in their own user namespace, matching the checks done for
-> > SECCOMP_SET_MODE_FILTER.
-> >
-> > Installing a filterfd has some gotchas, though. Andy mentioned previously
-> > that we should restrict installation to filter fds whose parent is already
-> > in the filter tree. This doesn't quite work in the case of created seccomp
-> > fds, since once you install a filter fd, you can't install any other filter
-> > fd since it has no parent and there is no way to "pre-chain" filters before
-> > installing them.
+> <tycho.andersen@canonical.com> wrote:
+> > This command allows comparing the underling private data of two fds. This
+> > is useful e.g. to find out if a seccomp filter is inherited, since struct
+> > seccomp_filter are unique across tasks and are the private_data seccomp
+> > fds.
 > 
-> ISTM, if we like the seccomp fd approach, we should have them be
-> created with a parent already set.  IOW the default should be that
-> their parent is the creator's seccomp fd and, if needed, creators
-> could specify a different parent.
+> This is very implementation-specific and may have nasty ABI
+> consequences far outside seccomp.  Let's do something specific to
+> seccomp and/or eBPF.
 
-Allowing people doing SECCOMP_FD_NEW to specify a parent fd would
-work. Then we can disallow installing a seccomp fd if its parent is
-not the current filter, and get rid of the whole mess with prev
-locking and all that.
+We could change the name to a less generic KCMP_SECCOMP_FD or
+something, but without some sort of GUID on each struct
+seccomp_filter, the implementation would be effectively the same as it
+is today. Is that enough, or do we need a GUID?
 
 Tycho
