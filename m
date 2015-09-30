@@ -1,50 +1,26 @@
-From: Anna Schumaker <Anna.Schumaker@netapp.com>
-Subject: [PATCH v5 6/9] vfs: Copy should use file_out rather than file_in
-Date: Wed, 30 Sep 2015 13:26:50 -0400
-Message-ID: <1443634014-3026-7-git-send-email-Anna.Schumaker@Netapp.com>
-References: <1443634014-3026-1-git-send-email-Anna.Schumaker@Netapp.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1443634014-3026-1-git-send-email-Anna.Schumaker@Netapp.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, darrick.wong@oracle.com, mtk.manpages@gmail.com, andros@netapp.com, hch@infradead.org
+From: Tycho Andersen <tycho.andersen@canonical.com>
+Subject: checkpoint/restore of seccomp filters v3
+Date: Wed, 30 Sep 2015 12:13:35 -0600
+Message-ID: <1443636820-17083-1-git-send-email-tycho.andersen@canonical.com>
+Return-path: <netdev-owner@vger.kernel.org>
+Sender: netdev-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>, Alexei Starovoitov <ast@kernel.org>
+Cc: Will Drewry <wad@chromium.org>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Daniel Borkmann <daniel@iogearbox.net>, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The way to think about this is that the destination filesystem reads the
-data from the source file and processes it accordingly.  This is
-especially important to avoid an infinate loop when doing a "server to
-server" copy on NFS.
+Hi all,
 
-Signed-off-by: Anna Schumaker <Anna.Schumaker@Netapp.com>
----
- fs/read_write.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+Here's a re-worked set for c/r of seccomp filters which keeps around the
+original bpf program passed to the kernel instead of trying to dump the
+ebpf version. There are various comments/questions in the individual patch
+notes.
 
-diff --git a/fs/read_write.c b/fs/read_write.c
-index 8e7cb33..6f74f1f 100644
---- a/fs/read_write.c
-+++ b/fs/read_write.c
-@@ -1355,7 +1355,7 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
- 	if (!(file_in->f_mode & FMODE_READ) ||
- 	    !(file_out->f_mode & FMODE_WRITE) ||
- 	    (file_out->f_flags & O_APPEND) ||
--	    !file_in->f_op || !file_in->f_op->copy_file_range)
-+	    !file_out->f_op || !file_out->f_op->copy_file_range)
- 		return -EBADF;
- 
- 	inode_in = file_inode(file_in);
-@@ -1378,8 +1378,8 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
- 	if (ret)
- 		return ret;
- 
--	ret = file_in->f_op->copy_file_range(file_in, pos_in, file_out, pos_out,
--					     len, flags);
-+	ret = file_out->f_op->copy_file_range(file_in, pos_in, file_out, pos_out,
-+					      len, flags);
- 	if (ret > 0) {
- 		fsnotify_access(file_in);
- 		add_rchar(current, ret);
--- 
-2.6.0
+I'm not sure this needs to go via net-next any more, as the impact in net/
+is fairly minimal, and it seems more seccomp heavy. As such, this set is
+based on seccomp/tip.
 
+Thoughts welcome,
+
+Tycho
+
+P.S. Man page patches to come once we agree on the API :)
