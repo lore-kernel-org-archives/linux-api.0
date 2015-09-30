@@ -1,138 +1,228 @@
-From: Chen Fan <chen.fan.fnst-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
-Subject: Re: [PATCH 0/1] ns: introduce proc_get_ns_by_fd()
-Date: Wed, 30 Sep 2015 10:54:01 +0800
-Message-ID: <560B4EC9.9060801@cn.fujitsu.com>
-References: <20150925135246.27620.97496.stgit@buzz>	<20150925175654.GA12504@redhat.com> <871tdi8pqj.fsf@x220.int.ebiederm.org>
+From: Zhao Lei <zhaolei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+Subject: RE: [PATCH v4 3/9] btrfs: add .copy_file_range file operation
+Date: Wed, 30 Sep 2015 11:20:59 +0800
+Message-ID: <00cc01d0fb2f$079ae210$16d0a630$@cn.fujitsu.com>
+References: <1443549913-8091-1-git-send-email-Anna.Schumaker@Netapp.com> <1443549913-8091-4-git-send-email-Anna.Schumaker@Netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <871tdi8pqj.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Roman Gushchin <klamm-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, =?windows-1252?Q?St=E9phane_Graber?= <stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1443549913-8091-4-git-send-email-Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+Content-Language: zh-cn
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: 'Anna Schumaker' <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+Hi, Anna Schumaker
 
-On 09/29/2015 12:37 AM, Eric W. Biederman wrote:
-> Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
->
->> On 09/25, Konstantin Khlebnikov wrote:
->>> +struct ns_common *proc_ns_fdget(int fd, int nstype, struct fd *fd_ref)
->>>   {
->>> -	struct file *file;
->>> +	struct ns_common *ns;
->>> +	struct fd f;
->>>   
->>> -	file = fget(fd);
->>> -	if (!file)
->>> +	f = fdget(fd);
->>> +	if (!f.file)
->>>   		return ERR_PTR(-EBADF);
->>>   
->>> -	if (file->f_op != &ns_file_operations)
->>> +	if (f.file->f_op != &ns_file_operations)
->>> +		goto out_invalid;
->>> +
->>> +	ns = get_proc_ns(file_inode(f.file));
->>> +	if (nstype && (ns->ops->type != nstype))
->>>   		goto out_invalid;
->>>   
->>> -	return file;
->>> +	*fd_ref = f;
->>> +	return ns;
->>>   
->>>   out_invalid:
->>> -	fput(file);
->>> +	fdput(f);
->>>   	return ERR_PTR(-EINVAL);
->>>   }
->> Well yes, fdget() makes sense but this is minor.
->>
->> Honestly, I do not really like the new helper... I understand this
->> is subjective, so I won't insist. But how about 1/1? We do not need
->> fd/file at all. With this patch your sys_getvpid() can just use
->> proc_get_ns_by_fd(fd, CLONE_NEWPID) and put_pid_ns().
->>
->> Eric, what do you think?
-> At some level I don't care this is not exposed to userspace.
->
-> However since we are going several rounds with this.
->
-> Of the existing uses several of them sleep, which unfortunately means we
-> can not use rcu locking for everything.  The network namespace ones wind
-> up taking a reference to struct net because the have the legacy pid case
-> to deal with.  Which makes we can not use fdget for all callers either.
->
-> For this translate_pid rcu locking is sufficient, rcu locking is easy
-> and doing any more than rcu locking just seems silly.  So let me
-> respectfully suggest.
->
-> struct ns_common *ns_by_fd_rcu(int fd, int type)
-> {
-> 	struct files_struct *files = current->files;
-> 	struct file *file;
-> 	struct ns_common *ns;
-> 	void *ret;
-pointer files seems no more useful. we can
-use fcheck(fd) instead.
+> -----Original Message-----
+> From: linux-btrfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> [mailto:linux-btrfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org] On Behalf Of Anna Schumaker
+> Sent: Wednesday, September 30, 2015 2:05 AM
+> To: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org;
+> linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org;
+> viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org; clm-b10kYP2dOMg@public.gmane.org; darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org;
+> mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org; andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org; hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
+> Subject: [PATCH v4 3/9] btrfs: add .copy_file_range file operation
+> 
+> From: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> 
+> This rearranges the existing COPY_RANGE ioctl implementation so that
+> the .copy_file_range file operation can call the core loop that copies file data
+> extent items.
+> 
+> The extent copying loop is lifted up into its own function.  It retains the core
+> btrfs error checks that should be shared.
+> 
+> Signed-off-by: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Signed-off-by: Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+> Reviewed-by: Josef Bacik <jbacik-b10kYP2dOMg@public.gmane.org>
+> Reviewed-by: David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>
+> ---
+>  fs/btrfs/ctree.h |  3 ++
+>  fs/btrfs/file.c  |  1 +
+>  fs/btrfs/ioctl.c | 91 ++++++++++++++++++++++++++++++++------------------------
+>  3 files changed, 56 insertions(+), 39 deletions(-)
+> 
+> diff --git a/fs/btrfs/ctree.h b/fs/btrfs/ctree.h index 938efe3..5d06a4f 100644
+> --- a/fs/btrfs/ctree.h
+> +++ b/fs/btrfs/ctree.h
+> @@ -3996,6 +3996,9 @@ int btrfs_dirty_pages(struct btrfs_root *root, struct
+> inode *inode,
+>  		      loff_t pos, size_t write_bytes,
+>  		      struct extent_state **cached);
+>  int btrfs_fdatawrite_range(struct inode *inode, loff_t start, loff_t end);
+> +ssize_t btrfs_copy_file_range(struct file *file_in, loff_t pos_in,
+> +			      struct file *file_out, loff_t pos_out,
+> +			      size_t len, int flags);
+> 
 
-Thanks,
+It is different with declaration:
+ssize_t (*copy_file_range)(struct file *, loff_t, struct file *, loff_t, size_t, unsigned int);
 
->
-> 	file = fcheck_files(files, fd);
->          if (!file)
-> 		return ERR_PTR(-EBADF);
->
-> 	if (file->f_mode & FMODE_PATH)
-> 		return ERR_PTR(-EINVAL);
->
-> 	if (file->f_op != &ns_file_operations)
->          	return ERR_PTR(-EINVAL);
->
-> 	ns = get_proc_ns(file_inode(file));
-> 	if (ns->ops->type != type)
-> 		return ERR_PTR(-EINVAL);
->
-> 	return ns;
-> }
->
-> struct pid_namespace *pidns_by_fd_rcu(int fd)
-> {
-> 	struct ns_common *ns = ns_by_fd_rcu(fd, CLONE_NEWPID);
->          if (IS_ERR(ns))
-> 		return ERR_CAST(ns);
-> 	return container_of(ns, struct pid_namespace, ns);
-> }
->
-> SYSCALL_DEFINE3(translate_pid, pid_t, pid_nr, int, sourcefd, int, targetfd)
-> {
-> 	struct pid_namespace *source, *target;
-> 	struct pid *pid;
-> 	pid_t result;
->
-> 	rcu_read_lock();
->
-> 	if (sourcefd >= 0)
->          	source = pidns_by_fd_rcu(sourcefd);
-> 	else
-> 		source = task_active_pid_ns(current);
->
-> 	if (targetfd >= 0)
->          	target = pidns_by_fd_rcu(targetfd);
-> 	else
-> 		target = task_active_pid_ns(current);
->
-> 	pid = find_pid_ns(pid_nr, source);
->          result = pid_nr_ns(pid, target);
->          if (result == 0)
-> 		result = -ESRCH;
->
-> 	rcu_read_unlock();
->
-> 	return result;
-> }
->
-> Eric
-> .
->
+(flags changed from unsigned int to int)
+
+>  /* tree-defrag.c */
+>  int btrfs_defrag_leaves(struct btrfs_trans_handle *trans, diff --git
+> a/fs/btrfs/file.c b/fs/btrfs/file.c index b823fac..b05449c 100644
+> --- a/fs/btrfs/file.c
+> +++ b/fs/btrfs/file.c
+> @@ -2816,6 +2816,7 @@ const struct file_operations btrfs_file_operations =
+> {  #ifdef CONFIG_COMPAT
+>  	.compat_ioctl	= btrfs_ioctl,
+>  #endif
+> +	.copy_file_range = btrfs_copy_file_range,
+
+And cause compiler warning at this line:
+fs/btrfs/file.c:2819: warning: initialization from incompatible pointer type   
+
+Small problem, but better to fix.
+
+Thanks
+Zhaolei
+
+>  };
+> 
+>  void btrfs_auto_defrag_exit(void)
+> diff --git a/fs/btrfs/ioctl.c b/fs/btrfs/ioctl.c index 0adf542..4311554 100644
+> --- a/fs/btrfs/ioctl.c
+> +++ b/fs/btrfs/ioctl.c
+> @@ -3727,17 +3727,16 @@ out:
+>  	return ret;
+>  }
+> 
+> -static noinline long btrfs_ioctl_clone(struct file *file, unsigned long srcfd,
+> -				       u64 off, u64 olen, u64 destoff)
+> +static noinline int btrfs_clone_files(struct file *file, struct file *file_src,
+> +					u64 off, u64 olen, u64 destoff)
+>  {
+>  	struct inode *inode = file_inode(file);
+> +	struct inode *src = file_inode(file_src);
+>  	struct btrfs_root *root = BTRFS_I(inode)->root;
+> -	struct fd src_file;
+> -	struct inode *src;
+>  	int ret;
+>  	u64 len = olen;
+>  	u64 bs = root->fs_info->sb->s_blocksize;
+> -	int same_inode = 0;
+> +	int same_inode = src == inode;
+> 
+>  	/*
+>  	 * TODO:
+> @@ -3750,49 +3749,20 @@ static noinline long btrfs_ioctl_clone(struct file
+> *file, unsigned long srcfd,
+>  	 *   be either compressed or non-compressed.
+>  	 */
+> 
+> -	/* the destination must be opened for writing */
+> -	if (!(file->f_mode & FMODE_WRITE) || (file->f_flags & O_APPEND))
+> -		return -EINVAL;
+> -
+>  	if (btrfs_root_readonly(root))
+>  		return -EROFS;
+> 
+> -	ret = mnt_want_write_file(file);
+> -	if (ret)
+> -		return ret;
+> -
+> -	src_file = fdget(srcfd);
+> -	if (!src_file.file) {
+> -		ret = -EBADF;
+> -		goto out_drop_write;
+> -	}
+> -
+> -	ret = -EXDEV;
+> -	if (src_file.file->f_path.mnt != file->f_path.mnt)
+> -		goto out_fput;
+> -
+> -	src = file_inode(src_file.file);
+> -
+> -	ret = -EINVAL;
+> -	if (src == inode)
+> -		same_inode = 1;
+> -
+> -	/* the src must be open for reading */
+> -	if (!(src_file.file->f_mode & FMODE_READ))
+> -		goto out_fput;
+> +	if (file_src->f_path.mnt != file->f_path.mnt ||
+> +	    src->i_sb != inode->i_sb)
+> +		return -EXDEV;
+> 
+>  	/* don't make the dst file partly checksummed */
+>  	if ((BTRFS_I(src)->flags & BTRFS_INODE_NODATASUM) !=
+>  	    (BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM))
+> -		goto out_fput;
+> +		return -EINVAL;
+> 
+> -	ret = -EISDIR;
+>  	if (S_ISDIR(src->i_mode) || S_ISDIR(inode->i_mode))
+> -		goto out_fput;
+> -
+> -	ret = -EXDEV;
+> -	if (src->i_sb != inode->i_sb)
+> -		goto out_fput;
+> +		return -EISDIR;
+> 
+>  	if (!same_inode) {
+>  		btrfs_double_inode_lock(src, inode);
+> @@ -3869,6 +3839,49 @@ out_unlock:
+>  		btrfs_double_inode_unlock(src, inode);
+>  	else
+>  		mutex_unlock(&src->i_mutex);
+> +	return ret;
+> +}
+> +
+> +ssize_t btrfs_copy_file_range(struct file *file_in, loff_t pos_in,
+> +			      struct file *file_out, loff_t pos_out,
+> +			      size_t len, int flags)
+> +{
+> +	ssize_t ret;
+> +
+> +	ret = btrfs_clone_files(file_out, file_in, pos_in, len, pos_out);
+> +	if (ret == 0)
+> +		ret = len;
+> +	return ret;
+> +}
+> +
+> +static noinline long btrfs_ioctl_clone(struct file *file, unsigned long srcfd,
+> +				       u64 off, u64 olen, u64 destoff) {
+> +	struct fd src_file;
+> +	int ret;
+> +
+> +	/* the destination must be opened for writing */
+> +	if (!(file->f_mode & FMODE_WRITE) || (file->f_flags & O_APPEND))
+> +		return -EINVAL;
+> +
+> +	ret = mnt_want_write_file(file);
+> +	if (ret)
+> +		return ret;
+> +
+> +	src_file = fdget(srcfd);
+> +	if (!src_file.file) {
+> +		ret = -EBADF;
+> +		goto out_drop_write;
+> +	}
+> +
+> +	/* the src must be open for reading */
+> +	if (!(src_file.file->f_mode & FMODE_READ)) {
+> +		ret = -EINVAL;
+> +		goto out_fput;
+> +	}
+> +
+> +	ret = btrfs_clone_files(file, src_file.file, off, olen, destoff);
+> +
+>  out_fput:
+>  	fdput(src_file);
+>  out_drop_write:
+> --
+> 2.5.3
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-btrfs" in the body
+> of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org More majordomo info at
+> http://vger.kernel.org/majordomo-info.html
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
