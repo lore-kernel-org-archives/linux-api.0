@@ -1,93 +1,62 @@
-From: Tycho Andersen <tycho.andersen@canonical.com>
-Subject: Re: [PATCH v3 4/5] kcmp: add KCMP_FILE_PRIVATE_DATA
-Date: Wed, 30 Sep 2015 16:10:45 -0600
-Message-ID: <20150930221045.GE23065@smitten>
-References: <1443636820-17083-1-git-send-email-tycho.andersen@canonical.com>
- <1443636820-17083-5-git-send-email-tycho.andersen@canonical.com>
- <CALCETrUosV+ND1BC-qH3xZMaLwnex50SvMhaSa3FQ19oy1MBVg@mail.gmail.com>
- <20150930184129.GB23065@smitten>
- <CALCETrWjLGLAnf5_tCZohKYtTDi5Jo=bk_BkchTgXi8Bzz9YDA@mail.gmail.com>
- <20150930185504.GC23065@smitten>
- <CALCETrWx_yCF7o6ZnbeoDqw-Fxa3GzARX30SZWeg40FMGqR25Q@mail.gmail.com>
- <20150930213909.GD23065@smitten>
- <CALCETrW9-bpUd+quFF7fBjbBLS84VDT4dmBS=-cVe6+9S-DenA@mail.gmail.com>
+From: "Sean O. Stalley" <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v3 2/2] PCI: Add support for Enhanced Allocation devices
+Date: Wed, 30 Sep 2015 15:50:11 -0700
+Message-ID: <20150930225011.GA4244@sean.stalley.intel.com>
+References: <1443485439-12081-1-git-send-email-ddaney.cavm@gmail.com>
+ <1443485439-12081-3-git-send-email-ddaney.cavm@gmail.com>
+ <20150929192737.GA2517@sean.stalley.intel.com>
+ <560AF3D7.80908@gmail.com>
+ <20150929224727.GB2517@sean.stalley.intel.com>
+ <560B2470.9080100@caviumnetworks.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CALCETrW9-bpUd+quFF7fBjbBLS84VDT4dmBS=-cVe6+9S-DenA@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Kees Cook <keescook@chromium.org>, Alexei Starovoitov <ast@kernel.org>, Will Drewry <wad@chromium.org>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Daniel Borkmann <daniel@iogearbox.net>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+In-Reply-To: <560B2470.9080100-M3mlKVOIwJVv6pq1l3V1OdBPR1lH4CV8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Daney <ddaney-M3mlKVOIwJVv6pq1l3V1OdBPR1lH4CV8@public.gmane.org>
+Cc: David Daney <ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?utf-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, yinghai-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 30, 2015 at 02:48:47PM -0700, Andy Lutomirski wrote:
-> On Wed, Sep 30, 2015 at 2:39 PM, Tycho Andersen
-> <tycho.andersen@canonical.com> wrote:
-> > On Wed, Sep 30, 2015 at 11:56:25AM -0700, Andy Lutomirski wrote:
-> >> On Wed, Sep 30, 2015 at 11:55 AM, Tycho Andersen
-> >> <tycho.andersen@canonical.com> wrote:
-> >> > On Wed, Sep 30, 2015 at 11:47:05AM -0700, Andy Lutomirski wrote:
-> >> >> On Wed, Sep 30, 2015 at 11:41 AM, Tycho Andersen
-> >> >> <tycho.andersen@canonical.com> wrote:
-> >> >> > On Wed, Sep 30, 2015 at 11:25:41AM -0700, Andy Lutomirski wrote:
-> >> >> >> On Wed, Sep 30, 2015 at 11:13 AM, Tycho Andersen
-> >> >> >> <tycho.andersen@canonical.com> wrote:
-> >> >> >> > This command allows comparing the underling private data of two fds. This
-> >> >> >> > is useful e.g. to find out if a seccomp filter is inherited, since struct
-> >> >> >> > seccomp_filter are unique across tasks and are the private_data seccomp
-> >> >> >> > fds.
-> >> >> >>
-> >> >> >> This is very implementation-specific and may have nasty ABI
-> >> >> >> consequences far outside seccomp.  Let's do something specific to
-> >> >> >> seccomp and/or eBPF.
-> >> >> >
-> >> >> > We could change the name to a less generic KCMP_SECCOMP_FD or
-> >> >> > something, but without some sort of GUID on each struct
-> >> >> > seccomp_filter, the implementation would be effectively the same as it
-> >> >> > is today. Is that enough, or do we need a GUID?
-> >> >> >
-> >> >>
-> >> >> I don't care about the GUID.  I think we should name it
-> >> >> KCMP_SECCOMP_FD and make it only work on seccomp fds.
-> >> >
-> >> > Ok, I can do that.
-> >> >
-> >> >> Alternatively, we could figure out why KCMP_FILE doesn't do the trick
-> >> >> and consider fixing it.  IMO it's really too bad that struct file is
-> >> >> so heavyweight that we can't really just embed one in all kinds of
-> >> >> structures.
-> >> >
-> >> > The problem is that KCMP_FILE compares the file objects themselves,
-> >> > instead of the underlying data. If I ask for a seccomp fd for filter 0
-> >> > twice, I'll have two different file objects and they won't be equal. I
-> >> > suppose we could add some special logic inside KCMP_FILE to compare
-> >> > the underlying data in special cases (seccomp, ebpf, others?), but it
-> >> > seems cleaner to have a separate command as you described above.
-> >> >
+On Tue, Sep 29, 2015 at 04:53:20PM -0700, David Daney wrote:
+> On 09/29/2015 03:47 PM, Sean O. Stalley wrote:
+> [...]
+> >>>>diff --git a/drivers/pci/pci.c b/drivers/pci/pci.c
+> >>>>index 6a9a111..7c60b16 100644
+> >>>>--- a/drivers/pci/pci.c
+> >>>>+++ b/drivers/pci/pci.c
+> >>>>@@ -2148,6 +2148,284 @@ void pci_pm_init(struct pci_dev *dev)
+> >>>>  	}
+> >>>>  }
+> >>>>
+> >>>>+static unsigned long pci_ea_set_flags(struct pci_dev *dev, u8 prop)
+> >>>>+{
+> >>>>+	unsigned long flags = IORESOURCE_PCI_FIXED | IORESOURCE_SIZEALIGN;
+> >>>
+> >>>Why did you add the IORESOURCE_SIZEALIGN flag? EA allows for unaligned resources.
 > >>
-> >> What I meant was that maybe we could get the two requests to actually
-> >> produce the same struct file.  But that could get very messy
-> >> memory-wise.
+> >>pci_bus_assign_resources() fails causing the devices to be unusable
+> >>if resource_alignment() returns zero.  The easiest fix for this was
+> >>to specify IORESOURCE_SIZEALIGN.
+> >>
+> >>An alternative would be to change the code in setup-bus.c so that
+> >>for IORESOURCE_PCI_FIXED resources, it didn't barf.
 > >
-> > I see. The attached patch seems to work with KCMP_FILE and doesn't
-> > look too bad if you don't mind the circular references. What do you
-> > think?
+> >I would do this alternative, but with a IORESOURCE_PCI_EA flag.
 > >
 > 
-> Could be reasonable.  I'm not that well versed on what fd_release
-> does.  Are we guaranteed that it's called when the last fd goes away
-> even if the struct file is pinned by the struct seccomp filter but is
-> otherwise unreferenced?
-
-I think so; my understanding is that the vfs doesn't know anything
-about the seccomp_filter reference, so when the last fd referring to
-the struct file is closed that's when release is called.
-
-> Kees?
+> I don't think we need IORESOURCE_PCI_EA.  If a resource is tagged as
+> IORESOURCE_PCI_FIXED that means that it cannot be changed, we
+> shouldn't care why it is fixed (due to an EA capability for
+> example).  We just need to gracefully handle IORESOURCE_PCI_FIXED in
+> the places where things currently go wrong.
 > 
-> How many of you will be at KS?
+> David Daney
+> 
 
-I will not.
+I agree that we need to make sure fixed things stay fixed,
+regardless of if they are fixed by EA or something else.
 
-Tycho
+The question is: do we want to allow all fixed resources to be non-aligned, or just EA?
+
+-Sean
