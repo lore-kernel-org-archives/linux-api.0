@@ -1,292 +1,105 @@
-From: Baptiste Reynal <b.reynal@virtualopensystems.com>
-Subject: [RFC PATCH v5 1/3] vfio: platform: add device properties skeleton and
- user API
-Date: Wed, 30 Sep 2015 11:09:05 +0200
-Message-ID: <1443604149-3242-1-git-send-email-b.reynal@virtualopensystems.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: [PATCH 00/12] net: assorted y2038 changes
+Date: Wed, 30 Sep 2015 13:26:30 +0200
+Message-ID: <1443612402-3000775-1-git-send-email-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
-List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
-List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
-List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
-List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
-List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
-Errors-To: kvmarm-bounces@lists.cs.columbia.edu
-Sender: kvmarm-bounces@lists.cs.columbia.edu
-To: kvmarm@lists.cs.columbia.edu, iommu@lists.linux-foundation.org, alex.williamson@redhat.com, christoffer.dall@linaro.org, eric.auger@linaro.org
-Cc: "open list:ABI/API" <linux-api@vger.kernel.org>, tech@virtualopensystems.com, open list <linux-kernel@vger.kernel.org>, "open list:VFIO PLATFORM DRIVER" <kvm@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+To: netdev@vger.kernel.org
+Cc: Arnd Bergmann <arnd@arndb.de>, y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-atm-general@lists.sourceforge.net, linux-wireless@vger.kernel.org, linux-kernel@vger.kernel.org, linux-can@vger.kernel.org, linux-sctp@vger.kernel.org, coreteam@netfilter.org, intel-wired-lan@lists.osuosl.org, netfilter-devel@vger.kernel.org, "David S. Miller" <davem@davemloft.net>
 List-Id: linux-api@vger.kernel.org
 
-From: Antonios Motakis <a.motakis@virtualopensystems.com>
-
-This patch introduces an API that allows to return device properties (OF
-or ACPI) of a device bound to the vfio-platform/vfio-amba driver and the
-skeleton of the implementation for VFIO_PLATFORM. Information about any
-device node bound by VFIO_PLATFORM should be queried via the introduced
-ioctl VFIO_DEVICE_GET_DEV_PROPERTY.
-
-The user needs to know the name and the data type of the property he is
-accessing.
-
-Signed-off-by: Antonios Motakis <a.motakis@virtualopensystems.com>
-Signed-off-by: Baptiste Reynal <b.reynal@virtualopensystems.com>
-
----
-v4 -> v5:
- - add a limit size to namesz (128)
- - remove flags propagation
- - replace E2BIG with ENOSPC when the buffer size is too small
- - remove useless affectation
-
-v3 -> v4:
- - added flags placeholder in vfio_dev_properties
- - ioctl returns -E2BIG if the buffer is too small
- - details VFIO_DEVICE_GET_DEV_PROPERTY documentation
----
- drivers/vfio/platform/Makefile                |  3 +-
- drivers/vfio/platform/properties.c            | 77 +++++++++++++++++++++++++++
- drivers/vfio/platform/vfio_platform_common.c  | 34 ++++++++++++
- drivers/vfio/platform/vfio_platform_private.h |  9 ++++
- include/uapi/linux/vfio.h                     | 31 +++++++++++
- 5 files changed, 153 insertions(+), 1 deletion(-)
- create mode 100644 drivers/vfio/platform/properties.c
-
-diff --git a/drivers/vfio/platform/Makefile b/drivers/vfio/platform/Makefile
-index 9ce8afe..37cf5ed 100644
---- a/drivers/vfio/platform/Makefile
-+++ b/drivers/vfio/platform/Makefile
-@@ -1,5 +1,6 @@
- 
--vfio-platform-y := vfio_platform.o vfio_platform_common.o vfio_platform_irq.o
-+vfio-platform-y := vfio_platform.o vfio_platform_common.o vfio_platform_irq.o \
-+		   properties.o
- 
- obj-$(CONFIG_VFIO_PLATFORM) += vfio-platform.o
- obj-$(CONFIG_VFIO_PLATFORM) += reset/
-diff --git a/drivers/vfio/platform/properties.c b/drivers/vfio/platform/properties.c
-new file mode 100644
-index 0000000..48c90c5
---- /dev/null
-+++ b/drivers/vfio/platform/properties.c
-@@ -0,0 +1,77 @@
-+/*
-+ * Copyright (C) 2015 - Virtual Open Systems
-+ * Authors: Antonios Motakis <a.motakis@virtualopensystems.com>
-+ *          Baptiste Reynal <b.reynal@virtualopensystems.com>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License, version 2, as
-+ * published by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ */
-+
-+#include <linux/slab.h>
-+#include <linux/vfio.h>
-+#include <linux/property.h>
-+#include "vfio_platform_private.h"
-+
-+static int dev_property_get_strings(struct device *dev,
-+				    char *name, unsigned *lenp,
-+				    void __user *datap, unsigned long datasz)
-+{
-+	return -EINVAL;
-+}
-+
-+static int dev_property_get_uint(struct device *dev,
-+				 char *name, uint32_t type, unsigned *lenp,
-+				 void __user *datap, unsigned long datasz)
-+{
-+	return -EINVAL;
-+}
-+
-+int vfio_platform_dev_properties(struct device *dev,
-+				 uint32_t type, unsigned *lenp,
-+				 void __user *datap, unsigned long datasz)
-+{
-+	char *name;
-+	long namesz;
-+	int ret;
-+
-+	namesz = strnlen_user(datap, datasz);
-+	if (!namesz)
-+		return -EFAULT;
-+	if (namesz > datasz || namesz > VFIO_PLATFORM_NAMESZ_LIMIT)
-+		return -EINVAL;
-+
-+	name = kzalloc(namesz, GFP_KERNEL);
-+	if (!name)
-+		return -ENOMEM;
-+	if (strncpy_from_user(name, datap, namesz) <= 0) {
-+		kfree(name);
-+		return -EFAULT;
-+	}
-+
-+	switch (type) {
-+	case VFIO_DEV_PROPERTY_TYPE_STRINGS:
-+		ret = dev_property_get_strings(dev, name, lenp,
-+				datap, datasz);
-+		break;
-+
-+	case VFIO_DEV_PROPERTY_TYPE_U64:
-+	case VFIO_DEV_PROPERTY_TYPE_U32:
-+	case VFIO_DEV_PROPERTY_TYPE_U16:
-+	case VFIO_DEV_PROPERTY_TYPE_U8:
-+		ret = dev_property_get_uint(dev, name, type, lenp,
-+					    datap, datasz);
-+		break;
-+
-+	default:
-+		ret = -EINVAL;
-+	}
-+
-+	kfree(name);
-+	return ret;
-+}
-diff --git a/drivers/vfio/platform/vfio_platform_common.c b/drivers/vfio/platform/vfio_platform_common.c
-index e43efb5..cb1bbb4 100644
---- a/drivers/vfio/platform/vfio_platform_common.c
-+++ b/drivers/vfio/platform/vfio_platform_common.c
-@@ -20,6 +20,7 @@
- #include <linux/types.h>
- #include <linux/uaccess.h>
- #include <linux/vfio.h>
-+#include <linux/property.h>
- 
- #include "vfio_platform_private.h"
- 
-@@ -302,6 +303,34 @@ static long vfio_platform_ioctl(void *device_data,
- 			return vdev->reset(vdev);
- 		else
- 			return -EINVAL;
-+	} else if (cmd == VFIO_DEVICE_GET_DEV_PROPERTY) {
-+		struct vfio_dev_property info;
-+		void __user *datap;
-+		unsigned long datasz;
-+		int ret;
-+
-+		if (!vdev->dev)
-+			return -EINVAL;
-+
-+		minsz = offsetofend(struct vfio_dev_property, length);
-+
-+		if (copy_from_user(&info, (void __user *)arg, minsz))
-+			return -EFAULT;
-+
-+		if (info.argsz < minsz)
-+			return -EINVAL;
-+
-+		datap = (void __user *) arg + minsz;
-+		datasz = info.argsz - minsz;
-+
-+		ret = vfio_platform_dev_properties(vdev->dev,
-+				info.type, &info.length, datap, datasz);
-+
-+		if (copy_to_user((void __user *)arg, &info, minsz))
-+			ret = -EFAULT;
-+
-+		return ret;
-+
- 	}
- 
- 	return -ENOTTY;
-@@ -553,6 +582,11 @@ int vfio_platform_probe_common(struct vfio_platform_device *vdev,
- 
- 	vfio_platform_get_reset(vdev, dev);
- 
-+	/* add device properties flag */
-+	if (device_property_present(dev, "name")) {
-+		vdev->flags |= VFIO_DEVICE_FLAGS_DEV_PROPERTIES;
-+	}
-+
- 	mutex_init(&vdev->igate);
- 
- 	return 0;
-diff --git a/drivers/vfio/platform/vfio_platform_private.h b/drivers/vfio/platform/vfio_platform_private.h
-index 1c9b3d5..55a9d32 100644
---- a/drivers/vfio/platform/vfio_platform_private.h
-+++ b/drivers/vfio/platform/vfio_platform_private.h
-@@ -21,6 +21,8 @@
- #define VFIO_PLATFORM_OFFSET_SHIFT   40
- #define VFIO_PLATFORM_OFFSET_MASK (((u64)(1) << VFIO_PLATFORM_OFFSET_SHIFT) - 1)
- 
-+#define VFIO_PLATFORM_NAMESZ_LIMIT 128
-+
- #define VFIO_PLATFORM_OFFSET_TO_INDEX(off)	\
- 	(off >> VFIO_PLATFORM_OFFSET_SHIFT)
- 
-@@ -56,6 +58,7 @@ struct vfio_platform_device {
- 	u32				num_irqs;
- 	int				refcnt;
- 	struct mutex			igate;
-+	struct device			*dev;
- 
- 	/*
- 	 * These fields should be filled by the bus specific binder
-@@ -89,4 +92,10 @@ extern int vfio_platform_set_irqs_ioctl(struct vfio_platform_device *vdev,
- 					unsigned start, unsigned count,
- 					void *data);
- 
-+/* device properties support in properties.c */
-+extern int vfio_platform_dev_properties(struct device *dev,
-+					uint32_t type, unsigned *lenp,
-+					void __user *datap,
-+					unsigned long datasz);
-+
- #endif /* VFIO_PLATFORM_PRIVATE_H */
-diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
-index 9fd7b5d..111cb0c 100644
---- a/include/uapi/linux/vfio.h
-+++ b/include/uapi/linux/vfio.h
-@@ -164,12 +164,43 @@ struct vfio_device_info {
- #define VFIO_DEVICE_FLAGS_PCI	(1 << 1)	/* vfio-pci device */
- #define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2)	/* vfio-platform device */
- #define VFIO_DEVICE_FLAGS_AMBA  (1 << 3)	/* vfio-amba device */
-+#define VFIO_DEVICE_FLAGS_DEV_PROPERTIES (1 << 4) /* Device properties */
- 	__u32	num_regions;	/* Max region index + 1 */
- 	__u32	num_irqs;	/* Max IRQ index + 1 */
- };
- #define VFIO_DEVICE_GET_INFO		_IO(VFIO_TYPE, VFIO_BASE + 7)
- 
- /**
-+ * VFIO_DEVICE_GET_DEV_PROPERTY - _IOR(VFIO_TYPE, VFIO_BASE + 17,
-+ *						struct vfio_devtree_info)
-+ *
-+ * Retrieve a device property, e.g. from a HW description (device tree or ACPI)
-+ * if available.
-+ * Caller will initialize data[] with a single string with the requested
-+ * devicetree property name, and type depending on whether an array of strings
-+ * or an array of u32 values is expected. On success, data[] will be filled
-+ * with the requested information, either as an array of u32, or with a list
-+ * of strings separated by the NULL terminating character.
-+ * Return: 0 on success, -errno on failure.
-+ * Errors:
-+ *   ENOSPC: the property is too big to fit in the data[] buffer (the required
-+ *          size is then written into the length field).
-+ */
-+struct vfio_dev_property {
-+	__u32	argsz;
-+	__u32	flags;	/* Placeholder for future extension */
-+	__u32	type;
-+#define VFIO_DEV_PROPERTY_TYPE_STRINGS	0
-+#define VFIO_DEV_PROPERTY_TYPE_U8	1
-+#define VFIO_DEV_PROPERTY_TYPE_U16	2
-+#define VFIO_DEV_PROPERTY_TYPE_U32	3
-+#define VFIO_DEV_PROPERTY_TYPE_U64	4
-+	__u32	length;	/* Size of data[] */
-+	__u8	data[];
-+};
-+#define VFIO_DEVICE_GET_DEV_PROPERTY	_IO(VFIO_TYPE, VFIO_BASE + 17)
-+
-+/**
-  * VFIO_DEVICE_GET_REGION_INFO - _IOWR(VFIO_TYPE, VFIO_BASE + 8,
-  *				       struct vfio_region_info)
-  *
--- 
-2.6.0
+SGkgZXZlcnlvbmUsCgpUaGlzIGlzIGEgc2V0IG9mIGNoYW5nZXMgZm9yIG5ldHdvcmsgZHJpdmVy
+cyBhbmQgY29yZSBjb2RlIHRvCmdldCByaWQgb2YgdGhlIHVzZSBvZiB0aW1lX3QgYW5kIGRlcml2
+ZWQgZGF0YSBzdHJ1Y3R1cmVzLgoKSSBoYXZlIGEgbG9uZ2VyIHNldCBvZiBwYXRjaGVzIHRoYXQg
+ZW5hYmxlcyBtZSB0byBidWlsZCBrZXJuZWxzCndpdGggdGhlIHRpbWVfdCBkZWZpbml0aW9uIHJl
+bW92ZWQgY29tcGxldGVseSBhcyBhIGhlbHAgdG8gZmluZAp5MjAzOCBvdmVyZmxvdyBpc3N1ZXMu
+IFRoaXMgaXMgdGhlIHN1YnNldCBmb3IgbmV0d29ya2luZyB0aGF0CmNvbnRhaW5zIGFsbCBjb2Rl
+IHRoYXQgaGFzIGEgcmVhc29uYWJsZSB3YXkgb2YgZml4aW5nIGF0IHRoZQptb21lbnQgYW5kIHRo
+YXQgaXMgZWl0aGVyIGNvbW1vbmx5IHVzZWQgKGluIG9uZSBvZiB0aGUgZGVmY29uZmlncykKb3Ig
+dGhhdCBibG9ja3MgYnVpbGRpbmcgYSB3aG9sZSBzdWJzeXN0ZW0uCgpNb3N0IG9mIHRoZSBwYXRj
+aGVzIGluIHRoaXMgc2VyaWVzIHNob3VsZCBiZSBub25jb250cm92ZXJzaWFsLApidXQgdGhlIGxh
+c3QgdHdvIHRoYXQgSSBtYXJrZWQgW1JGQ10gYXJlIGEgYml0IHRyaWNreSBhbmQKbmVlZCBpbnB1
+dCBmcm9tIHBlb3BsZSB0aGF0IGFyZSBtb3JlIGZhbWlsaWFyIHdpdGggdGhlIGNvZGUgdGhhbgpJ
+IGFtLiBBbGwgMTIgcGF0Y2hlcyBhcmUgaW5kZXBlbmRlbnQgb2Ygb25lIGFub3RoZXIgYW5kIGNh
+bgpiZSBhcHBsaWVkIGluIGFueSBvcmRlciwgc28gZmVlbCBmcmVlIHRvIHBpY2sgYWxsIHRoYXQg
+bG9vawpnb29kLgoKUGF0Y2hlcyB0aGF0IGFyZSBub3QgaW5jbHVkZWQgaGVyZSBhcmU6CgogLSBk
+aXNhYmxpbmcgbGVzcyBjb21tb24gZGV2aWNlIGRyaXZlcnMgdGhhdCBJIGRvbid0IGhhdmUgYSBm
+aXgKICAgZm9yIHlldCwgdGhpcyBpbmNsdWRlcwoJZHJpdmVycy9uZXQvZXRoZXJuZXQvYnJvY2Fk
+ZS9ibmEvYmZhX2lvYy5jCglkcml2ZXJzL25ldC9ldGhlcm5ldC9xbG9naWMvbmV0eGVuL25ldHhl
+bl9uaWNfaHcuYwoJZHJpdmVycy9uZXQvZXRoZXJuZXQvdGlsZS90aWxlZ3guYwoJZHJpdmVycy9u
+ZXQvaGFtcmFkaW8vYmF5Y29tX3Nlcl9mZHguYwoJZHJpdmVycy9uZXQvd2lyZWxlc3MvYXRoL2F0
+aDEway9jb3JlLmgKCWRyaXZlcnMvbmV0L3dpcmVsZXNzL2F0aC9hdGg5ay8KCWRyaXZlcnMvbmV0
+L3dpcmVsZXNzL2F0aC9hdGg5ay8KCWRyaXZlcnMvbmV0L3dpcmVsZXNzL2F0bWVsLmMKCWRyaXZl
+cnMvbmV0L3dpcmVsZXNzL3ByaXNtNTQvaXNsXzM4eHguYwoJZHJpdmVycy9uZXQvd2lyZWxlc3Mv
+cnQyeDAwL3J0MngwMGRlYnVnLmMKCWRyaXZlcnMvbmV0L3dpcmVsZXNzL3J0bHdpZmkvCglkcml2
+ZXJzL25ldC93aXJlbGVzcy90aS93bGNvcmUvCglkcml2ZXJzL3N0YWdpbmcvb3p3cGFuLwoJbmV0
+L2F0bS9tcG9hX2NhY2hlcy5jCgluZXQvYXRtL21wb2FfcHJvYy5jCgluZXQvZGNjcC9wcm9iZS5j
+CgluZXQvaXB2NC90Y3BfcHJvYmUuYwoJbmV0L25ldGZpbHRlci9uZm5ldGxpbmtfcXVldWVfY29y
+ZS5jCgluZXQvbmV0ZmlsdGVyL25mbmV0bGlua19xdWV1ZV9jb3JlLmMKCW5ldC9uZXRmaWx0ZXIv
+eHRfdGltZS5jCgluZXQvb3BlbnZzd2l0Y2gvZmxvdy5jCgluZXQvc2N0cC9wcm9iZS5jCgluZXQv
+c3VucnBjL2F1dGhfZ3NzLwoJbmV0L3N1bnJwYy9zdmNhdXRoX3VuaXguYwoJbmV0L3Ztd192c29j
+ay9hZl92c29jay5jCiAgIFdlJ2xsIGdldCB0aGVyZSBldmVudHVhbGx5LCBvciB3ZSBhbiBhZGQg
+YSBkZXBlbmRlbmN5IHRvIGVuc3VyZQogICB0aGV5IGFyZSBub3QgYnVpbHQgb24gMzItYml0IGtl
+cm5lbHMgdGhhdCBuZWVkIHRvIHN1cnZpdmUKICAgYmV5b25kIDIwMzguIE1vc3Qgb2YgdGhlc2Ug
+c2hvdWxkIGJlIHJlYWxseSBlYXN5IHRvIGZpeC4KCiAtIHJlY3ZtbXNnL3NlbmRtbXNnIHN5c3Rl
+bSBjYWxsczogcGF0Y2hlcyBoYXZlIGJlZW4gc2VudCBvdXQKICAgYXMgcGFydCBvZiB0aGUgc3lz
+Y2FsbCBzZXJpZXMsIG5lZWQgYSBsaXR0bGUgbW9yZSB3b3JrIGFuZAogICByZXZpZXcKCiAtIFNJ
+T0NHU1RBTVAvU0lPQ0dTVEFNUE5TLyBpb2N0bCBjYWxsczogdHJpY2t5LCBuZWVkIHRvIGRpc2N1
+c3MKICAgd2l0aCBzb21lIGZvbGtzIGF0IGtlcm5lbCBzdW1taXQKCiAtIFNPX1JDVlRJTUVPL1NP
+X1NORFRJTUVPL1NPX1RJTUVTVEFNUC9TT19USU1FU1RBTVBOUyBzb2NrZXQKICAgb3B0OiBzaW1p
+bGFyIGFuZCByZWxhdGVkIHRvIHRoZSBpb2N0bAoKIC0gbW1hcHBlZCBwYWNrZXQgc29ja2V0OiBu
+ZWVkIHRvIGNyZWF0ZSB2NCBvZiB0aGUgQVBJLCBub250cml2aWFsCgogLSBwa3RnZW46IHNlbmRz
+IDMyLWJpdCB0aW1lc3RhbXBzIG92ZXIgbmV0d29yaywgbmVlZCB0byBmaW5kIG91dAogICBpZiB1
+c2luZyB1bnNpZ25lZCBzdGFtcHMgaXMgZ29vZCBlbm91Z2gKCiAtIGFmX3J4cGM6IHNpbWlsYXIg
+dG8gcGt0Z2VuLCB1c2VzIDMyLWJpdCB0aW1lcyBmb3IgZGVhZGxpbmVzCgogLSBwcHAgaW9jdGw6
+IHBhdGNoIGlzIGJlaW5nIHdvcmtlZCBvbiwgbm9udHJpdmlhbCBidXQgZG9hYmxlCgoJQXJuZAoK
+QXJuZCBCZXJnbWFubiAoMTIpOgogIG5ldDogZmVjOiBhdm9pZCB0aW1lc3BlYyB1c2UKICBuZXQ6
+IHN0bW1hYzogYXZvaWQgdXNpbmcgdGltZXNwZWMKICBuZXQ6IGlnYjogYXZvaWQgdXNpbmcgdGlt
+ZXNwZWMKICBtd2lmaWV4OiB1c2Uga3RpbWVfZ2V0X3JlYWwgZm9yIHRpbWVzdGFtcGluZwogIG13
+aWZpZXg6IGF2b2lkIGdldHRpbWVvZmRheSBpbiBiYV90aHJlc2hvbGQgc2V0dGluZwogIG1hYzgw
+MjExOiB1c2Uga3RpbWVfZ2V0X3NlY29uZHMKICBhdG06IGhpZGUgJ3N0cnVjdCB6YXRtX3RfaGlz
+dCcKICBuZm5ldGxpbms6IHVzZSB5MjAzOCBzYWZlIHRpbWVzdGFtcAogIGlwdjY6IHVzZSBrdGlt
+ZV90IGZvciBpbnRlcm5hbCB0aW1lc3RhbXBzCiAgbmV0OiBzY3RwOiBhdm9pZCBpbmNvcnJlY3Qg
+dGltZV90IHVzZQogIFtSRkNdIGlwdjQ6IGF2b2lkIHRpbWVzcGVjIGluIHRpbWVzdGFtcCBjb21w
+dXRhdGlvbgogIFtSRkNdIGNhbjogYXZvaWQgdXNpbmcgdGltZXZhbCBmb3IgdWFwaQoKIGRyaXZl
+cnMvbmV0L2V0aGVybmV0L2ZyZWVzY2FsZS9mZWNfcHRwLmMgICAgICAgICAgfCAgNiArKy0tCiBk
+cml2ZXJzL25ldC9ldGhlcm5ldC9pbnRlbC9pZ2IvaWdiLmggICAgICAgICAgICAgIHwgIDQgKy0t
+CiBkcml2ZXJzL25ldC9ldGhlcm5ldC9pbnRlbC9pZ2IvaWdiX21haW4uYyAgICAgICAgIHwgMTUg
+KysrKystLS0tLQogZHJpdmVycy9uZXQvZXRoZXJuZXQvaW50ZWwvaWdiL2lnYl9wdHAuYyAgICAg
+ICAgICB8ICA4ICsrKy0tLQogZHJpdmVycy9uZXQvZXRoZXJuZXQvc3RtaWNyby9zdG1tYWMvc3Rt
+bWFjX21haW4uYyB8ICA4ICsrKystLQogZHJpdmVycy9uZXQvd2lyZWxlc3MvbXdpZmlleC8xMW5f
+YWdnci5jICAgICAgICAgICB8ICA0ICstLQogZHJpdmVycy9uZXQvd2lyZWxlc3MvbXdpZmlleC93
+bW0uYyAgICAgICAgICAgICAgICB8IDE1ICsrKy0tLS0tLS0KIGluY2x1ZGUvbGludXgvdGltZWtl
+ZXBpbmcuaCAgICAgICAgICAgICAgICAgICAgICAgfCAgMiArKwogaW5jbHVkZS91YXBpL2xpbnV4
+L2F0bV96YXRtLmggICAgICAgICAgICAgICAgICAgICB8ICAzICstCiBpbmNsdWRlL3VhcGkvbGlu
+dXgvY2FuL2JjbS5oICAgICAgICAgICAgICAgICAgICAgIHwgIDcgKysrKy0KIGtlcm5lbC90aW1l
+L3RpbWVrZWVwaW5nLmMgICAgICAgICAgICAgICAgICAgICAgICAgfCAzNCArKysrKysrKysrKysr
+KysrKysrKysrKwogbmV0L2Nhbi9iY20uYyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICB8IDE1ICsrKysrKy0tLS0KIG5ldC9pcHY0L2ljbXAuYyAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgfCAgOCArKy0tLS0KIG5ldC9pcHY0L2lwX29wdGlvbnMuYyAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgfCAgOSArKy0tLS0KIG5ldC9pcHY2L21pcDYuYyAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAxNiArKysrKy0tLS0tLQogbmV0L21hYzgwMjEx
+L3N0YV9pbmZvLmMgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICA4ICsrLS0tLQogbmV0L25l
+dGZpbHRlci9uZm5ldGxpbmtfbG9nLmMgICAgICAgICAgICAgICAgICAgICB8ICA2ICsrLS0KIG5l
+dC9zY3RwL3NtX21ha2VfY2h1bmsuYyAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgMiArLQog
+bmV0L3NjdHAvc21fc3RhdGVmdW5zLmMgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICAyICst
+CiAxOSBmaWxlcyBjaGFuZ2VkLCA5OSBpbnNlcnRpb25zKCspLCA3MyBkZWxldGlvbnMoLSkKCkNj
+OiBjb3JldGVhbUBuZXRmaWx0ZXIub3JnCkNjOiBpbnRlbC13aXJlZC1sYW5AbGlzdHMub3N1b3Ns
+Lm9yZwpDYzogbGludXgtYXBpQHZnZXIua2VybmVsLm9yZwpDYzogbGludXgtYXRtLWdlbmVyYWxA
+bGlzdHMuc291cmNlZm9yZ2UubmV0CkNjOiBsaW51eC1jYW5Admdlci5rZXJuZWwub3JnCkNjOiBs
+aW51eC1zY3RwQHZnZXIua2VybmVsLm9yZwpDYzogbGludXgtd2lyZWxlc3NAdmdlci5rZXJuZWwu
+b3JnCkNjOiBuZXRmaWx0ZXItZGV2ZWxAdmdlci5rZXJuZWwub3JnCgoKLS0gCjIuMS4wLnJjMgoK
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KWTIwMzggbWFp
+bGluZyBsaXN0ClkyMDM4QGxpc3RzLmxpbmFyby5vcmcKaHR0cHM6Ly9saXN0cy5saW5hcm8ub3Jn
+L21haWxtYW4vbGlzdGluZm8veTIwMzgK
