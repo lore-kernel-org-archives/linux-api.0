@@ -1,228 +1,85 @@
-From: Zhao Lei <zhaolei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
-Subject: RE: [PATCH v4 3/9] btrfs: add .copy_file_range file operation
-Date: Wed, 30 Sep 2015 11:20:59 +0800
-Message-ID: <00cc01d0fb2f$079ae210$16d0a630$@cn.fujitsu.com>
-References: <1443549913-8091-1-git-send-email-Anna.Schumaker@Netapp.com> <1443549913-8091-4-git-send-email-Anna.Schumaker@Netapp.com>
+From: Zhenyu Wang <zhenyuw@linux.intel.com>
+Subject: Re: [RFC 0/6] Non perf based Gen Graphics OA unit driver
+Date: Wed, 30 Sep 2015 11:23:19 +0800
+Message-ID: <20150930032319.GA23231@zhen-hp.sh.intel.com>
+References: <1443537549-6905-1-git-send-email-robert@sixbynine.org>
+Reply-To: Zhenyu Wang <zhenyuw@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1443549913-8091-4-git-send-email-Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
-Content-Language: zh-cn
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: 'Anna Schumaker' <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
+Content-Type: multipart/mixed; boundary="===============1318593094=="
+Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+In-Reply-To: <1443537549-6905-1-git-send-email-robert@sixbynine.org>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/intel-gfx>
+List-Post: <mailto:intel-gfx@lists.freedesktop.org>
+List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: intel-gfx-bounces@lists.freedesktop.org
+Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
+To: Robert Bragg <robert@sixbynine.org>
+Cc: Mark Rutland <mark.rutland@arm.com>, Matt Fleming <matt.fleming@intel.com>, dri-devel@lists.freedesktop.org, David Airlie <airlied@linux.ie>, intel-gfx@lists.freedesktop.org, linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Sourab Gupta <sourab.gupta@intel.com>, linux-api@vger.kernel.org, Zheng Yan <zheng.z.yan@intel.com>, Daniel Vetter <daniel.vetter@intel.com>, Ingo Molnar <mingo@kernel.org>, Alexander Shishkin <alexander.shishkin@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi, Anna Schumaker
 
-> -----Original Message-----
-> From: linux-btrfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> [mailto:linux-btrfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org] On Behalf Of Anna Schumaker
-> Sent: Wednesday, September 30, 2015 2:05 AM
-> To: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org;
-> linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org;
-> viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org; clm-b10kYP2dOMg@public.gmane.org; darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org;
-> mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org; andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org; hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
-> Subject: [PATCH v4 3/9] btrfs: add .copy_file_range file operation
-> 
-> From: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> 
-> This rearranges the existing COPY_RANGE ioctl implementation so that
-> the .copy_file_range file operation can call the core loop that copies file data
-> extent items.
-> 
-> The extent copying loop is lifted up into its own function.  It retains the core
-> btrfs error checks that should be shared.
-> 
-> Signed-off-by: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Signed-off-by: Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
-> Reviewed-by: Josef Bacik <jbacik-b10kYP2dOMg@public.gmane.org>
-> Reviewed-by: David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>
-> ---
->  fs/btrfs/ctree.h |  3 ++
->  fs/btrfs/file.c  |  1 +
->  fs/btrfs/ioctl.c | 91 ++++++++++++++++++++++++++++++++------------------------
->  3 files changed, 56 insertions(+), 39 deletions(-)
-> 
-> diff --git a/fs/btrfs/ctree.h b/fs/btrfs/ctree.h index 938efe3..5d06a4f 100644
-> --- a/fs/btrfs/ctree.h
-> +++ b/fs/btrfs/ctree.h
-> @@ -3996,6 +3996,9 @@ int btrfs_dirty_pages(struct btrfs_root *root, struct
-> inode *inode,
->  		      loff_t pos, size_t write_bytes,
->  		      struct extent_state **cached);
->  int btrfs_fdatawrite_range(struct inode *inode, loff_t start, loff_t end);
-> +ssize_t btrfs_copy_file_range(struct file *file_in, loff_t pos_in,
-> +			      struct file *file_out, loff_t pos_out,
-> +			      size_t len, int flags);
-> 
+--===============1318593094==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="0F1p//8PRICkK4MW"
+Content-Disposition: inline
 
-It is different with declaration:
-ssize_t (*copy_file_range)(struct file *, loff_t, struct file *, loff_t, size_t, unsigned int);
 
-(flags changed from unsigned int to int)
+--0F1p//8PRICkK4MW
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
->  /* tree-defrag.c */
->  int btrfs_defrag_leaves(struct btrfs_trans_handle *trans, diff --git
-> a/fs/btrfs/file.c b/fs/btrfs/file.c index b823fac..b05449c 100644
-> --- a/fs/btrfs/file.c
-> +++ b/fs/btrfs/file.c
-> @@ -2816,6 +2816,7 @@ const struct file_operations btrfs_file_operations =
-> {  #ifdef CONFIG_COMPAT
->  	.compat_ioctl	= btrfs_ioctl,
->  #endif
-> +	.copy_file_range = btrfs_copy_file_range,
+On 2015.09.29 15:39:03 +0100, Robert Bragg wrote:
+>=20
+> - Logistically it might be more practical to contain this to the
+>   graphics stack.
+>=20
+>     It seems fair to consider that if we can't see a very compelling
+>     benefit to building on perf, then containing this work to
+>     drivers/gpu/drm/i915 may simplify the review process as well as
+>     future maintenance and development.
+>=20
 
-And cause compiler warning at this line:
-fs/btrfs/file.c:2819: warning: initialization from incompatible pointer type   
+I think even we all initially like to go with perf but it appears later
+that we might need to stick this more close with i915 driver. Also think
+about to enable global profiling for all graphics clients, extending or
+enabling it within i915 specific interface seems more feasible instead of
+trying to create another PMU driver like previous implementation attempt
+to suit the need for different gfx perf data definition.
 
-Small problem, but better to fix.
+Robert, thanks for send and elaborate on this.
 
-Thanks
-Zhaolei
+--=20
+Open Source Technology Center, Intel ltd.
 
->  };
-> 
->  void btrfs_auto_defrag_exit(void)
-> diff --git a/fs/btrfs/ioctl.c b/fs/btrfs/ioctl.c index 0adf542..4311554 100644
-> --- a/fs/btrfs/ioctl.c
-> +++ b/fs/btrfs/ioctl.c
-> @@ -3727,17 +3727,16 @@ out:
->  	return ret;
->  }
-> 
-> -static noinline long btrfs_ioctl_clone(struct file *file, unsigned long srcfd,
-> -				       u64 off, u64 olen, u64 destoff)
-> +static noinline int btrfs_clone_files(struct file *file, struct file *file_src,
-> +					u64 off, u64 olen, u64 destoff)
->  {
->  	struct inode *inode = file_inode(file);
-> +	struct inode *src = file_inode(file_src);
->  	struct btrfs_root *root = BTRFS_I(inode)->root;
-> -	struct fd src_file;
-> -	struct inode *src;
->  	int ret;
->  	u64 len = olen;
->  	u64 bs = root->fs_info->sb->s_blocksize;
-> -	int same_inode = 0;
-> +	int same_inode = src == inode;
-> 
->  	/*
->  	 * TODO:
-> @@ -3750,49 +3749,20 @@ static noinline long btrfs_ioctl_clone(struct file
-> *file, unsigned long srcfd,
->  	 *   be either compressed or non-compressed.
->  	 */
-> 
-> -	/* the destination must be opened for writing */
-> -	if (!(file->f_mode & FMODE_WRITE) || (file->f_flags & O_APPEND))
-> -		return -EINVAL;
-> -
->  	if (btrfs_root_readonly(root))
->  		return -EROFS;
-> 
-> -	ret = mnt_want_write_file(file);
-> -	if (ret)
-> -		return ret;
-> -
-> -	src_file = fdget(srcfd);
-> -	if (!src_file.file) {
-> -		ret = -EBADF;
-> -		goto out_drop_write;
-> -	}
-> -
-> -	ret = -EXDEV;
-> -	if (src_file.file->f_path.mnt != file->f_path.mnt)
-> -		goto out_fput;
-> -
-> -	src = file_inode(src_file.file);
-> -
-> -	ret = -EINVAL;
-> -	if (src == inode)
-> -		same_inode = 1;
-> -
-> -	/* the src must be open for reading */
-> -	if (!(src_file.file->f_mode & FMODE_READ))
-> -		goto out_fput;
-> +	if (file_src->f_path.mnt != file->f_path.mnt ||
-> +	    src->i_sb != inode->i_sb)
-> +		return -EXDEV;
-> 
->  	/* don't make the dst file partly checksummed */
->  	if ((BTRFS_I(src)->flags & BTRFS_INODE_NODATASUM) !=
->  	    (BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM))
-> -		goto out_fput;
-> +		return -EINVAL;
-> 
-> -	ret = -EISDIR;
->  	if (S_ISDIR(src->i_mode) || S_ISDIR(inode->i_mode))
-> -		goto out_fput;
-> -
-> -	ret = -EXDEV;
-> -	if (src->i_sb != inode->i_sb)
-> -		goto out_fput;
-> +		return -EISDIR;
-> 
->  	if (!same_inode) {
->  		btrfs_double_inode_lock(src, inode);
-> @@ -3869,6 +3839,49 @@ out_unlock:
->  		btrfs_double_inode_unlock(src, inode);
->  	else
->  		mutex_unlock(&src->i_mutex);
-> +	return ret;
-> +}
-> +
-> +ssize_t btrfs_copy_file_range(struct file *file_in, loff_t pos_in,
-> +			      struct file *file_out, loff_t pos_out,
-> +			      size_t len, int flags)
-> +{
-> +	ssize_t ret;
-> +
-> +	ret = btrfs_clone_files(file_out, file_in, pos_in, len, pos_out);
-> +	if (ret == 0)
-> +		ret = len;
-> +	return ret;
-> +}
-> +
-> +static noinline long btrfs_ioctl_clone(struct file *file, unsigned long srcfd,
-> +				       u64 off, u64 olen, u64 destoff) {
-> +	struct fd src_file;
-> +	int ret;
-> +
-> +	/* the destination must be opened for writing */
-> +	if (!(file->f_mode & FMODE_WRITE) || (file->f_flags & O_APPEND))
-> +		return -EINVAL;
-> +
-> +	ret = mnt_want_write_file(file);
-> +	if (ret)
-> +		return ret;
-> +
-> +	src_file = fdget(srcfd);
-> +	if (!src_file.file) {
-> +		ret = -EBADF;
-> +		goto out_drop_write;
-> +	}
-> +
-> +	/* the src must be open for reading */
-> +	if (!(src_file.file->f_mode & FMODE_READ)) {
-> +		ret = -EINVAL;
-> +		goto out_fput;
-> +	}
-> +
-> +	ret = btrfs_clone_files(file, src_file.file, off, olen, destoff);
-> +
->  out_fput:
->  	fdput(src_file);
->  out_drop_write:
-> --
-> 2.5.3
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-btrfs" in the body
-> of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org More majordomo info at
-> http://vger.kernel.org/majordomo-info.html
+$gpg --keyserver wwwkeys.pgp.net --recv-keys 4D781827
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--0F1p//8PRICkK4MW
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iEYEARECAAYFAlYLVacACgkQsQQaM014GCfeegCgiZvWmkYbW+CCTo0DL1jl78uW
+jBcAn1R7zkSWAQI55zHGJO7nEmI2AcXL
+=1/PW
+-----END PGP SIGNATURE-----
+
+--0F1p//8PRICkK4MW--
+
+--===============1318593094==
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: inline
+
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KSW50ZWwtZ2Z4
+IG1haWxpbmcgbGlzdApJbnRlbC1nZnhAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHA6Ly9saXN0
+cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9pbnRlbC1nZngK
+
+--===============1318593094==--
