@@ -1,96 +1,88 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [RFC v2 17/18] rcu: Convert RCU gp kthreads into kthread worker
- API
-Date: Thu, 1 Oct 2015 09:33:46 -0700
-Message-ID: <20151001163346.GF4043@linux.vnet.ibm.com>
-References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
- <1442840639-6963-18-git-send-email-pmladek@suse.com>
- <20150928171437.GB5182@linux.vnet.ibm.com>
- <20151001154300.GD9603@pathway.suse.cz>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Subject: Re: [PATCH v3 4/5] kcmp: add KCMP_FILE_PRIVATE_DATA
+Date: Thu, 1 Oct 2015 10:45:51 -0600
+Message-ID: <20151001164551.GF23065@smitten>
+References: <1443636820-17083-1-git-send-email-tycho.andersen@canonical.com>
+ <1443636820-17083-5-git-send-email-tycho.andersen@canonical.com>
+ <CALCETrUosV+ND1BC-qH3xZMaLwnex50SvMhaSa3FQ19oy1MBVg@mail.gmail.com>
+ <20150930184129.GB23065@smitten>
+ <CALCETrWjLGLAnf5_tCZohKYtTDi5Jo=bk_BkchTgXi8Bzz9YDA@mail.gmail.com>
+ <20150930185504.GC23065@smitten>
+ <CALCETrWx_yCF7o6ZnbeoDqw-Fxa3GzARX30SZWeg40FMGqR25Q@mail.gmail.com>
+ <20150930213909.GD23065@smitten>
+ <CALCETrW9-bpUd+quFF7fBjbBLS84VDT4dmBS=-cVe6+9S-DenA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20151001154300.GD9603@pathway.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <CALCETrW9-bpUd+quFF7fBjbBLS84VDT4dmBS=-cVe6+9S-DenA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 01, 2015 at 05:43:00PM +0200, Petr Mladek wrote:
-> On Mon 2015-09-28 10:14:37, Paul E. McKenney wrote:
-> > On Mon, Sep 21, 2015 at 03:03:58PM +0200, Petr Mladek wrote:
-> > > Kthreads are currently implemented as an infinite loop. Each
-> > > has its own variant of checks for terminating, freezing,
-> > > awakening. In many cases it is unclear to say in which state
-> > > it is and sometimes it is done a wrong way.
-> > > 
-> > > The plan is to convert kthreads into kthread_worker or workqueues
-> > > API. It allows to split the functionality into separate operations.
-> > > It helps to make a better structure. Also it defines a clean state
-> > > where no locks are taken, IRQs blocked, the kthread might sleep
-> > > or even be safely migrated.
-> > > 
-> > > The kthread worker API is useful when we want to have a dedicated
-> > > single kthread for the work. It helps to make sure that it is
-> > > available when needed. Also it allows a better control, e.g.
-> > > define a scheduling priority.
-> > > 
-> > > This patch converts RCU gp threads into the kthread worker API.
-> > > They modify the scheduling, have their own logic to bind the process.
-> > > They provide functions that are critical for the system to work
-> > > and thus deserve a dedicated kthread.
-> > > 
-> > > This patch tries to split start of the grace period and the quiescent
-> > > state handling into separate works. The motivation is to avoid
-> > > wait_events inside the work. Instead it queues the works when
-> > > appropriate which is more typical for this API.
-> > > 
-> > > On one hand, it should reduce spurious wakeups where the condition
-> > > in the wait_event failed and the kthread went to sleep again.
-> > > 
-> > > On the other hand, there is a small race window when the other
-> > > work might get queued. We could detect and fix this situation
-> > > at the beginning of the work but it is a bit ugly.
-> > > 
-> > > The patch renames the functions kthread_wake() to kthread_worker_poke()
-> > > that sounds more appropriate.
-> > > 
-> > > Otherwise, the logic should stay the same. I did a lot of torturing
-> > > and I did not see any problem with the current patch. But of course,
-> > > it would deserve much more testing and reviewing before applying.
-> > 
-> > Suppose I later need to add helper kthreads to parallelize grace-period
-> > initialization.  How would I implement that in a freeze-friendly way?
+On Wed, Sep 30, 2015 at 02:48:47PM -0700, Andy Lutomirski wrote:
+> On Wed, Sep 30, 2015 at 2:39 PM, Tycho Andersen
+> <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
+> > On Wed, Sep 30, 2015 at 11:56:25AM -0700, Andy Lutomirski wrote:
+> >> On Wed, Sep 30, 2015 at 11:55 AM, Tycho Andersen
+> >> <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
+> >> > On Wed, Sep 30, 2015 at 11:47:05AM -0700, Andy Lutomirski wrote:
+> >> >> On Wed, Sep 30, 2015 at 11:41 AM, Tycho Andersen
+> >> >> <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
+> >> >> > On Wed, Sep 30, 2015 at 11:25:41AM -0700, Andy Lutomirski wrote:
+> >> >> >> On Wed, Sep 30, 2015 at 11:13 AM, Tycho Andersen
+> >> >> >> <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
+> >> >> >> > This command allows comparing the underling private data of two fds. This
+> >> >> >> > is useful e.g. to find out if a seccomp filter is inherited, since struct
+> >> >> >> > seccomp_filter are unique across tasks and are the private_data seccomp
+> >> >> >> > fds.
+> >> >> >>
+> >> >> >> This is very implementation-specific and may have nasty ABI
+> >> >> >> consequences far outside seccomp.  Let's do something specific to
+> >> >> >> seccomp and/or eBPF.
+> >> >> >
+> >> >> > We could change the name to a less generic KCMP_SECCOMP_FD or
+> >> >> > something, but without some sort of GUID on each struct
+> >> >> > seccomp_filter, the implementation would be effectively the same as it
+> >> >> > is today. Is that enough, or do we need a GUID?
+> >> >> >
+> >> >>
+> >> >> I don't care about the GUID.  I think we should name it
+> >> >> KCMP_SECCOMP_FD and make it only work on seccomp fds.
+> >> >
+> >> > Ok, I can do that.
+> >> >
+> >> >> Alternatively, we could figure out why KCMP_FILE doesn't do the trick
+> >> >> and consider fixing it.  IMO it's really too bad that struct file is
+> >> >> so heavyweight that we can't really just embed one in all kinds of
+> >> >> structures.
+> >> >
+> >> > The problem is that KCMP_FILE compares the file objects themselves,
+> >> > instead of the underlying data. If I ask for a seccomp fd for filter 0
+> >> > twice, I'll have two different file objects and they won't be equal. I
+> >> > suppose we could add some special logic inside KCMP_FILE to compare
+> >> > the underlying data in special cases (seccomp, ebpf, others?), but it
+> >> > seems cleaner to have a separate command as you described above.
+> >> >
+> >>
+> >> What I meant was that maybe we could get the two requests to actually
+> >> produce the same struct file.  But that could get very messy
+> >> memory-wise.
+> >
+> > I see. The attached patch seems to work with KCMP_FILE and doesn't
+> > look too bad if you don't mind the circular references. What do you
+> > think?
+> >
 > 
-> I have been convinced that there only few kthreads that really need
-> freezing. See the discussion around my first attempt at
-> https://lkml.org/lkml/2015/6/13/190
-> 
-> In fact, RCU is a good example of kthreads that should not get
-> frozen because they are needed even later when the system
-> is suspended.
-> 
-> If I understand it correctly, they will do the job until most devices
-> and all non-boot CPUs are disabled. Then the task doing the suspend
-> will get scheduled. It will write the image and stop the machine.
-> RCU should not be needed by this very last step.
-> 
-> By other words. RCU should not be much concerned about freezing.
-> 
-> If you are concerned about adding more kthreads, it should be
-> possible to just add more workers if we agree on using the
-> kthreads worker API.
+> Could be reasonable.  I'm not that well versed on what fd_release
+> does.  Are we guaranteed that it's called when the last fd goes away
+> even if the struct file is pinned by the struct seccomp filter but is
+> otherwise unreferenced?
 
-OK, I will bite.  If RCU should not be much concerned about freezing,
-why can't it retain its current simpler implementation using the current
-kthread APIs?
+After thinking about the patch a bit more, I think it's not safe.
+There is a race where the last referenced is closed at the same time
+someone else asks for the strcut file via ptrace(). I thought the lock
+would fix this, but it doesn't. I'll see if I can find another way.
 
-							Thanx, Paul
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Tycho
