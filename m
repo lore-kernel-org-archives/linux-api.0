@@ -1,136 +1,170 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [RFC v2 00/18] kthread: Use kthread worker API more widely
-Date: Thu, 1 Oct 2015 10:00:53 -0700
-Message-ID: <20151001170053.GH4043@linux.vnet.ibm.com>
-References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
- <20150930050833.GA4412@linux.vnet.ibm.com>
- <20151001155943.GE9603@pathway.suse.cz>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Chris Metcalf <cmetcalf@ezchip.com>
+Subject: Re: [PATCH v7 02/11] task_isolation: add initial support
+Date: Thu, 1 Oct 2015 13:02:29 -0400
+Message-ID: <560D6725.9000609@ezchip.com>
+References: <1443453446-7827-1-git-send-email-cmetcalf@ezchip.com>
+ <1443453446-7827-3-git-send-email-cmetcalf@ezchip.com>
+ <20151001121414.GB3432@lerouge> <alpine.DEB.2.11.1510011416160.4500@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20151001155943.GE9603@pathway.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.11.1510011416160.4500@nanos>
+Sender: linux-doc-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>, Frederic Weisbecker <fweisbec@gmail.com>
+Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 01, 2015 at 05:59:43PM +0200, Petr Mladek wrote:
-> On Tue 2015-09-29 22:08:33, Paul E. McKenney wrote:
-> > On Mon, Sep 21, 2015 at 03:03:41PM +0200, Petr Mladek wrote:
-> > > My intention is to make it easier to manipulate kthreads. This RFC tries
-> > > to use the kthread worker API. It is based on comments from the
-> > > first attempt. See https://lkml.org/lkml/2015/7/28/648 and
-> > > the list of changes below.
-> > > 
-> > > 1st..8th patches: improve the existing kthread worker API
-> > > 
-> > > 9th, 12th, 17th patches: convert three kthreads into the new API,
-> > >      namely: khugepaged, ring buffer benchmark, RCU gp kthreads[*]
-> > > 
-> > > 10th, 11th patches: fix potential problems in the ring buffer
-> > >       benchmark; also sent separately
-> > > 
-> > > 13th patch: small fix for RCU kthread; also sent separately;
-> > >      being tested by Paul
-> > > 
-> > > 14th..16th patches: preparation steps for the RCU threads
-> > >      conversion; they are needed _only_ if we split GP start
-> > >      and QS handling into separate works[*]
-> > > 
-> > > 18th patch: does a possible improvement of the kthread worker API;
-> > >      it adds an extra parameter to the create*() functions, so I
-> > >      rather put it into this draft
-> > >      
-> > > 
-> > > [*] IMPORTANT: I tried to split RCU GP start and GS state handling
-> > >     into separate works this time. But there is a problem with
-> > >     a race in rcu_gp_kthread_worker_poke(). It might queue
-> > >     the wrong work. It can be detected and fixed by the work
-> > >     itself but it is a bit ugly. Alternative solution is to
-> > >     do both operations in one work. But then we sleep too much
-> > >     in the work which is ugly as well. Any idea is appreciated.
-> > 
-> > I think that the kernel is trying really hard to tell you that splitting
-> > up the RCU grace-period kthreads in this manner is not such a good idea.
-> 
-> Yup, I guess that it would be better to stay with the approach taken
-> in the previous RFC. I mean to start the grace period and handle
-> the quiescent state in a single work. See
-> https://lkml.org/lkml/2015/7/28/650  It basically keeps the
-> functionality. The only difference is that we regularly leave
-> the RCU-specific function, so it will be possible to patch it.
-> 
-> The RCU kthreads are very special because they basically ignore
-> freezer and they never stop. They do not show well the advantage
-> of any new API. I tried to convert them primary because they were
-> so sensitive. I thought that it was good for testing limits
-> of the API.
+On 10/01/2015 08:18 AM, Thomas Gleixner wrote:
+> On Thu, 1 Oct 2015, Frederic Weisbecker wrote:
+>> On Mon, Sep 28, 2015 at 11:17:17AM -0400, Chris Metcalf wrote:
+>>> +
+>>> +	while (READ_ONCE(dev->next_event.tv64) != KTIME_MAX) {
+>> You should add a function in tick-sched.c to get the next tick. This
+>> is supposed to be a private field.
+> Just to make it clear. Neither the above nor a similar check in
+> tick-sched.c is going to happen.
+>
+> This busy waiting is just horrible. Get your act together and solve
+> the problems at the root and do not inflict your quick and dirty
+> 'solutions' on us.
 
-OK, I am all for stress-testing new APIs.  But I don't yet see a reason
-to push this RCU kthread stress-test of your new API upstream.  ;-)
+Thomas,
 
-And yes, trying to freeze the RCU grace-period kthreads mid-way through
-a grace period does not appear to me to be a strategy to win.  I suggest
-trying that at the end of a grace period.  Even then, halting grace
-periods at pretty much any time risks hanging the system.
+You've raised a couple of different concerns and I want to
+make sure I try to address them individually.
 
-> > So what are we really trying to accomplish here?  I am guessing something
-> > like the following:
-> > 
-> > 1.	Get each grace-period kthread to a known safe state within a
-> > 	short time of having requested a safe state.  If I recall
-> > 	correctly, the point of this is to allow no-downtime kernel
-> > 	patches to the functions executed by the grace-period kthreads.
-> > 
-> > 2.	At the same time, if someone suddenly needs a grace period
-> > 	at some point in this process, the grace period kthreads are
-> > 	going to have to wake back up and handle the grace period.
-> > 	Or do you have some tricky way to guarantee that no one is
-> > 	going to need a grace period beyond the time you freeze
-> > 	the grace-period kthreads?
-> > 
-> > 3.	The boost kthreads should not be a big problem because failing
-> > 	to boost simply lets the grace period run longer.
-> > 
-> > 4.	The callback-offload kthreads are likely to be a big problem,
-> > 	because in systems configured with them, they need to be running
-> > 	to invoke the callbacks, and if the callbacks are not invoked,
-> > 	the grace period might just as well have failed to end.
-> > 
-> > 5.	The per-CPU kthreads are in the same boat as the callback-offload
-> > 	kthreads.  One approach is to offline all the CPUs but one, and
-> > 	that will park all but the last per-CPU kthread.  But handling
-> > 	that last per-CPU kthread would likely be "good clean fun"...
-> > 
-> > 6.	Other requirements?
-> > 
-> > One approach would be to simply say that the top-level rcu_gp_kthread()
-> > function cannot be patched, and arrange for the grace-period kthreads
-> > to park at some point within this function.  Or is there some requirement
-> > that I am missing?
-> 
-> I am a bit confused by the above paragraphs because they mix patching,
-> stopping, and parking. Note that we do not need to stop any process
-> when live patching.
-> 
-> I hope that it is more clear after my response in the other mail about
-> freezing. Or maybe, I am missing something.
-> 
-> Anyway, thanks a lot for looking at the patches and feedback.
+But first I want to address the question of the basic semantics
+of the patch series.  I wrote up a description of why it's useful
+in my email yesterday:
 
-If the point of these patches was simply to test your API, and if you are
-not looking to get them upstream, we are OK.  If you want them upstream,
-you need to explain to me why the patches help something.  And also how
-the patches avoid breaking things.  I am currently coming up empty-handed
-on both counts:  I don't understand how these patches help, and I don't
-see how they can possibly be safe.
+https://lkml.kernel.org/r/560C4CF4.9090601@ezchip.com
 
-							Thanx, Paul
+I haven't directly heard from you as to whether you buy the
+basic premise of "hard isolation" in terms of protecting tasks
+from all kernel interrupts while they execute in userspace.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+I will add here that we've heard from multiple customers that
+the equivalent Tilera functionality (Zero-Overhead Linux) was
+the thing that brought them to buy our hardware rather than a
+competitor's.  It's allowed them to write code that runs under
+a full-featured Linux environment rather than doing the thing
+that they otherwise would have been required to do, which is
+to target a minimal bare-metal environment.  So as a feature,
+if we can gain consensus on an implementation of it, I think it
+will be an important step for that class of users, and potential
+users, of Linux.
+
+So I first want to address what is effectively the API concern that
+you raised, namely that you're concerned that there is a wait
+loop in the implementation.
+
+The nice thing here is that there is in fact no requirement in
+the API/ABI that we have a wait loop in the kernel at all.  Let's
+say hypothetically that in the future we come up with a way to
+guarantee, perhaps in some constrained kind of way, that you
+can enter and exit the kernel and are guaranteed no further
+timer interrupts, and we are so confident of this property that
+we don't have to test for it programmatically on kernel exit.
+(In fact, we would likely still use the task_isolation_debug boot
+flag to generate a console warning if it ever did happen, but
+whatever.)  At this point we could simply remove the timer
+interrupt test loop in task_isolation_wait(); the applications would
+be none the wiser, and the kernel would be that much cleaner.
+
+However, today, and I think for the future, I see that loop as an
+important backstop for whatever timer-elimination coding happens.
+In general, the hard task-isolation requirement is something that
+is of particular interest only to a subset of the kernel community.
+As the kernel grows, adds features, re-implements functionality,
+etc., it seems entirely likely that odd bits of deferred functionality
+might be added in the same way that RCU, workqueues, etc., have
+done in the past.  Or, applications might exercise unusual corners
+of the kernel's semantics and come across an existing mechanism
+that ends up enabling kernel ticks (maybe only one or two) before
+returning to userspace.  The proposed busy-loop just prevents
+that from damaging the application.  I'm skeptical that we can
+prevent all such possible changes today and in the future, and I
+think the loop is a simple way of arranging to avoid breaking applications
+with interrupts, that only triggers for applications that have
+requested it, on cores that have been configured to support it.
+
+One additional insight that argues in favor of a busy-waiting solution
+is that a task that requests task isolation is almost certainly alone
+on the core.  If multiple tasks are in fact runnable on that core,
+we have already abandoned the ability to use proper task isolation
+since we will want to use timer ticks to run the scheduler for
+pre-emption.  So we only busy wait when, in fact, no other useful
+work is likely to get done on that core anyway.
+
+The other questions you raise have to do with the mechanism for
+ensuring that we wait until no timer interrupts are scheduled.
+
+First is the question of how we detect that case.
+
+As I said yesterday, the original approach I chose for the Tilera
+implementation was one where we simply wait until the timer interrupt
+is masked (as is done via the set_state_shutdown, set_state_oneshot,
+and tick_resume callbacks in the tile clock_event_device).  When
+unmasked, the timer down-counter just counts down to zero,
+fires the interrupt, resets to its start value, and counts down again
+until it fires again.  So we use masking of the interrupt to turn off
+the timer tick.  Once we have done so, we are guaranteed no
+further timer interrupts can occur.  I'm less familiar with the timer
+subsystems of other architectures, but there are clearly per-platform
+ways to make the same kinds of checks.  If this seems like a better
+approach, I'm happy to work to add the necessary checks on
+tile, arm64, and x86, though I'd certainly benefit from some
+guidance on the timer implementation on the latter two platforms.
+
+One reason this might be necessary is if there is support on some
+platforms for multiple timer interrupts any of which can fire, not just
+a single timer driven by the clock_event_device.  I'm not sure whether
+this is ever in fact a problem, but if it is, that would seem like it would
+almost certainly require per-architecture code to determine whether
+all the relevant timers were quiesced.
+
+However, I'm not sure whether you don't like the fact of checking
+the next_event in tick_cpu_device per se, or if it's the busy-waiting
+we do when it indicates a pending timer that bothers you.  If you could
+help clarify this piece, that would be good.
+
+The last question is what to do when we detect that there is a timer
+interrupt scheduled.  The current code spins, testing for resched
+or signal events, and bails out back to the work-pending loop when
+that happens.  As an extension, one can add support for spinning in
+a lower-power state, as I did for tile, but this isn't required and frankly
+isn't that important, since we don't anticipate spending much time in
+the busy-loop state anyway.
+
+The suggestion proposed by Frederic and echoed by you is a wake-wait
+scheme.  I'm curious to hear a more fully fleshed-out suggestion.
+Clearly, we can test for pending timer interrupts and put the task to
+sleep (pretty late in the return-to-userspace process, but maybe that's
+OK).  The question is, how and when do we wake the task?  We could
+add a hook to the platform timer shutdown code that would also wake
+any process that was waiting for the no-timer case; that process would
+then end up getting scheduled sometime later, and hopefully when it
+came time for it to try exiting to userspace again, the timer would still
+be shutdown.
+
+This could be problematic if the scheduler code or some other part of
+the kernel sets up the timer again before scheduling the waiting task
+back in.  Arguably we can work to avoid this if it's really a problem.
+And, there is the question of how to handle multiple timer interrupt
+sources, since they would all have to quiesce before we would want to
+wake the waiting process, but the "multiple timers" isn't handled by
+the current code either, and it seems not to be a problem, so perhaps
+that's OK.  Lastly, of course, is the question of what the kernel would
+end up doing while waiting: and the answer is almost certainly that it
+would sit in the cpu idle loop, waiting for the pending timer to fire and
+wake the waiting task.  I'm not convinced that the extra complexity here
+is worth the gain.
+
+But I am open and willing to being convinced that I am wrong, and to
+implement different approaches.  Let me know!
+
+-- 
+Chris Metcalf, EZChip Semiconductor
+http://www.ezchip.com
+
