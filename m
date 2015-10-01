@@ -1,45 +1,108 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH] uapi: remove i2o header in uapi
-Date: Thu, 01 Oct 2015 22:42:10 +0200
-Message-ID: <3240889.KGmTvmSXsC@wuerfel>
-References: <201510012318.Evg0jdR9%fengguang.wu@intel.com>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: [PATCH v7 02/11] task_isolation: add initial support
+Date: Thu, 1 Oct 2015 23:20:55 +0200 (CEST)
+Message-ID: <alpine.DEB.2.11.1510012224190.4500@nanos>
+References: <1443453446-7827-1-git-send-email-cmetcalf@ezchip.com> <1443453446-7827-3-git-send-email-cmetcalf@ezchip.com> <20151001121414.GB3432@lerouge> <alpine.DEB.2.11.1510011416160.4500@nanos> <560D6725.9000609@ezchip.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <201510012318.Evg0jdR9%fengguang.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <560D6725.9000609-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>, kbuild-all-JC7UmRfGjtg@public.gmane.org, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+To: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Cc: Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thursday 01 October 2015 23:56:54 kbuild test robot wrote:
-> Hi Gabriel,
+On Thu, 1 Oct 2015, Chris Metcalf wrote:
+> But first I want to address the question of the basic semantics
+> of the patch series.  I wrote up a description of why it's useful
+> in my email yesterday:
 > 
-> [auto build test results on v4.3-rc3 -- if it's inappropriate base, please ignore]
+> https://lkml.kernel.org/r/560C4CF4.9090601-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org
 > 
-> config: x86_64-acpi-redef (attached as .config)
-> reproduce:
->         git checkout e8edc215dd1ecc5508a7dbcd62d3f2fed6be299c
->         # save the attached .config to linux build tree
->         make ARCH=x86_64 
-> 
-> All error/warnings (new ones prefixed by >>):
-> 
->    In file included from drivers/scsi/dpti.h:56:0,
->                     from drivers/scsi/dpt_i2o.c:71:
-> >> drivers/scsi/dpt/dpti_i2o.h:22:27: fatal error: linux/i2o-dev.h: No such file or directory
->    compilation terminated.
-> 
-> vim +22 drivers/scsi/dpt/dpti_i2o.h
+> I haven't directly heard from you as to whether you buy the
+> basic premise of "hard isolation" in terms of protecting tasks
+> from all kernel interrupts while they execute in userspace.
 
-I tried to find out why this driver is still there when the subsystem is gone.
-According to information from https://bugzilla.kernel.org/show_bug.cgi?id=4940,
-this is an alternative driver for the same hardware (the bug was about loading
-both drivers simultaneously).
+Just for the record. The first serious initiative to solve that
+problem started here in my own company when I guided Frederic through
+the endavour of figuring out what needs to be done to achieve
+that. That was the assignement of his master thesis, which I gave him.
 
-The proper fix should be to move the header file into drivers/scsi/dpt/ and
-remove everything that this driver does not use, at least the ioctl interface,
-but possibly all of the file.
+So I'm very well aware why this is needed and what needs to be done.
 
-	Arnd
+I started this, because I got tired of half baken attempts to solve
+the problem, which were even worse than what you are trying to do now.
+
+> So I first want to address what is effectively the API concern that
+> you raised, namely that you're concerned that there is a wait
+> loop in the implementation.
+
+That wait loop is just a place holder for the underlying more serious
+concern I have with this whole approach. And I raised that concern
+several times in the past and I'm happy to do so again.
+
+The people working on this, especially you, are just dead set to
+achieve a certain functionality by jamming half baken mechanisms into
+the kernel and especially into the low level entry/exit code. And
+that's something which really annoys me, simply because you refuse to
+tackle the problems which have been identified as need to be solved 5+
+years ago when Frederic did his thesis.
+
+Remote accounting:
+==================
+
+It's not an easy problem, but it's not rocket science either. It's
+just quite some work.
+
+I know that you just give a shit about it because your use case
+does not care. But it's an essential part of the problem space. You
+just work around it, by shutting down the tick completely and rely
+on the fact that it does not explode in your face today.
+
+If we accept your hackery, then who is going to fix it, when it
+explodes in half a year from now?
+
+Tick shut down:
+===============
+
+I still have to understand why the tick is needed at all.
+
+There is exactly one reason why the tick must run if a cpu is in
+full isolation mode:
+
+  More than one SCHED_OTHER task is runnable on that cpu.
+
+There is no other reason, period.
+
+If there are requirements today to switch on the tick when a task
+running in full isolation mode enters the kernel, then they need to be
+fixed first.
+
+And again you don't care, because for your particular use case it's
+good enough to slap a busy wait loop into every archs low level exit
+code and be done with it.
+
+>From your mail excusing that approach:
+
+> The nice thing here is that there is in fact no requirement in
+> the API/ABI that we have a wait loop in the kernel at all.  Let's
+> say hypothetically that in the future we come up with a way to
+> guarantee, perhaps in some constrained kind of way, that you
+> can enter and exit the kernel and are guaranteed no further
+> timer interrupts, ....
+
+"Let's say hypothetically" tells it all. You are not even trying to
+find a proper solution. You just try to get your particular interest
+solved.
+
+That's exactly the attitude which drives me nuts and that's the point
+where I say no.
+
+You can do all of that in an out of tree patch set as many other hard
+to solve features have done for years. Yes, it's an annoying catchup
+game, but it forces you to think harder, refactor code and do a lot of
+extra work to finally get it merged.
+
+Thanks,
+
+	tglx
