@@ -1,60 +1,136 @@
-From: Andreas Dannenberg <dannenberg@ti.com>
-Subject: Re: [PATCH v8 00/14] power: bq24257: Add support for bq24250/bq24251
-Date: Thu, 1 Oct 2015 11:53:48 -0500
-Message-ID: <20151001165348.GA31342@beast>
-References: <1443479642-23712-1-git-send-email-dannenberg@ti.com>
- <20151001025847.GA12283@earth>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [RFC v2 00/18] kthread: Use kthread worker API more widely
+Date: Thu, 1 Oct 2015 10:00:53 -0700
+Message-ID: <20151001170053.GH4043@linux.vnet.ibm.com>
+References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
+ <20150930050833.GA4412@linux.vnet.ibm.com>
+ <20151001155943.GE9603@pathway.suse.cz>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-pm-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20151001025847.GA12283@earth>
-Sender: linux-pm-owner@vger.kernel.org
-To: Sebastian Reichel <sre@kernel.org>
-Cc: Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>, David Woodhouse <dwmw2@infradead.org>, Laurentiu Palcu <laurentiu.palcu@intel.com>, Krzysztof Kozlowski <k.kozlowski@samsung.com>, Ramakrishna Pallala <ramakrishna.pallala@intel.com>, linux-pm@vger.kernel.org, devicetree@vger.kernel.org, linux-api@vger.kernel.org
+In-Reply-To: <20151001155943.GE9603@pathway.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Petr Mladek <pmladek@suse.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 01, 2015 at 04:58:47AM +0200, Sebastian Reichel wrote:
-> Hi,
-> 
-> On Mon, Sep 28, 2015 at 05:33:48PM -0500, Andreas Dannenberg wrote:
-> > This patch series extends the driver to also support bq24250/bq24251.
+On Thu, Oct 01, 2015 at 05:59:43PM +0200, Petr Mladek wrote:
+> On Tue 2015-09-29 22:08:33, Paul E. McKenney wrote:
+> > On Mon, Sep 21, 2015 at 03:03:41PM +0200, Petr Mladek wrote:
+> > > My intention is to make it easier to manipulate kthreads. This RFC tries
+> > > to use the kthread worker API. It is based on comments from the
+> > > first attempt. See https://lkml.org/lkml/2015/7/28/648 and
+> > > the list of changes below.
+> > > 
+> > > 1st..8th patches: improve the existing kthread worker API
+> > > 
+> > > 9th, 12th, 17th patches: convert three kthreads into the new API,
+> > >      namely: khugepaged, ring buffer benchmark, RCU gp kthreads[*]
+> > > 
+> > > 10th, 11th patches: fix potential problems in the ring buffer
+> > >       benchmark; also sent separately
+> > > 
+> > > 13th patch: small fix for RCU kthread; also sent separately;
+> > >      being tested by Paul
+> > > 
+> > > 14th..16th patches: preparation steps for the RCU threads
+> > >      conversion; they are needed _only_ if we split GP start
+> > >      and QS handling into separate works[*]
+> > > 
+> > > 18th patch: does a possible improvement of the kthread worker API;
+> > >      it adds an extra parameter to the create*() functions, so I
+> > >      rather put it into this draft
+> > >      
+> > > 
+> > > [*] IMPORTANT: I tried to split RCU GP start and GS state handling
+> > >     into separate works this time. But there is a problem with
+> > >     a race in rcu_gp_kthread_worker_poke(). It might queue
+> > >     the wrong work. It can be detected and fixed by the work
+> > >     itself but it is a bit ugly. Alternative solution is to
+> > >     do both operations in one work. But then we sleep too much
+> > >     in the work which is ugly as well. Any idea is appreciated.
 > > 
-> > The bq24250/251/257 devices have a very similar feature set and are
-> > virtually identical from a control register point of view so it made
-> > sense to extend the existing driver rather than submitting a new driver.
-> > In addition to the new device support the driver is also extended to
-> > allow access to some device features previously hidden. Basic and
-> > potentially dangerous charger config parameters affecting the actual
-> > charging of the Li-Ion battery are only configurable through firmware
-> > rather than sysfs properties. However some newly introduced properties
-> > are exposed through sysfs properties as access to them may be desired
-> > from userspace. For example, it is now possible to manually configure
-> > the maximum current drawn from the input source to accommodate different
-> > chargers (0.5A, 1.5A, 2.0A and so on) based on system knowledge a
-> > userspace application may have rather than rely on the auto-detection
-> > mechanism that may not work in all possible scenarios.
+> > I think that the kernel is trying really hard to tell you that splitting
+> > up the RCU grace-period kthreads in this manner is not such a good idea.
 > 
-> Thanks, I queued all remaining patches except for
-
-Sebastian, I just pulled your tree and re-ran some of my tests. Looks
-like everything is still working as it should. Thanks again for your
-help reviewing. Same goes for Krzysztof and Laurentiu -- thanks for
-your time and feedback too.
-
-> >   power: bq24257: Add platform data based initialization
+> Yup, I guess that it would be better to stay with the approach taken
+> in the previous RFC. I mean to start the grace period and handle
+> the quiescent state in a single work. See
+> https://lkml.org/lkml/2015/7/28/650  It basically keeps the
+> functionality. The only difference is that we regularly leave
+> the RCU-specific function, so it will be possible to patch it.
 > 
-> I'm still not convinced, that it should be added without any
-> consumer in the mainline kernel.
+> The RCU kthreads are very special because they basically ignore
+> freezer and they never stop. They do not show well the advantage
+> of any new API. I tried to convert them primary because they were
+> so sensitive. I thought that it was good for testing limits
+> of the API.
 
-Well I tried to make my case (giving access to the largest audience
-possible). If you don't want to include it that's fine. I guess it can
-always get added if a specific need arises... For future reference here
-is the link to the latest version of that patch:
+OK, I am all for stress-testing new APIs.  But I don't yet see a reason
+to push this RCU kthread stress-test of your new API upstream.  ;-)
 
-http://marc.info/?l=linux-pm&m=144347973708093&w=2
+And yes, trying to freeze the RCU grace-period kthreads mid-way through
+a grace period does not appear to me to be a strategy to win.  I suggest
+trying that at the end of a grace period.  Even then, halting grace
+periods at pretty much any time risks hanging the system.
+
+> > So what are we really trying to accomplish here?  I am guessing something
+> > like the following:
+> > 
+> > 1.	Get each grace-period kthread to a known safe state within a
+> > 	short time of having requested a safe state.  If I recall
+> > 	correctly, the point of this is to allow no-downtime kernel
+> > 	patches to the functions executed by the grace-period kthreads.
+> > 
+> > 2.	At the same time, if someone suddenly needs a grace period
+> > 	at some point in this process, the grace period kthreads are
+> > 	going to have to wake back up and handle the grace period.
+> > 	Or do you have some tricky way to guarantee that no one is
+> > 	going to need a grace period beyond the time you freeze
+> > 	the grace-period kthreads?
+> > 
+> > 3.	The boost kthreads should not be a big problem because failing
+> > 	to boost simply lets the grace period run longer.
+> > 
+> > 4.	The callback-offload kthreads are likely to be a big problem,
+> > 	because in systems configured with them, they need to be running
+> > 	to invoke the callbacks, and if the callbacks are not invoked,
+> > 	the grace period might just as well have failed to end.
+> > 
+> > 5.	The per-CPU kthreads are in the same boat as the callback-offload
+> > 	kthreads.  One approach is to offline all the CPUs but one, and
+> > 	that will park all but the last per-CPU kthread.  But handling
+> > 	that last per-CPU kthread would likely be "good clean fun"...
+> > 
+> > 6.	Other requirements?
+> > 
+> > One approach would be to simply say that the top-level rcu_gp_kthread()
+> > function cannot be patched, and arrange for the grace-period kthreads
+> > to park at some point within this function.  Or is there some requirement
+> > that I am missing?
+> 
+> I am a bit confused by the above paragraphs because they mix patching,
+> stopping, and parking. Note that we do not need to stop any process
+> when live patching.
+> 
+> I hope that it is more clear after my response in the other mail about
+> freezing. Or maybe, I am missing something.
+> 
+> Anyway, thanks a lot for looking at the patches and feedback.
+
+If the point of these patches was simply to test your API, and if you are
+not looking to get them upstream, we are OK.  If you want them upstream,
+you need to explain to me why the patches help something.  And also how
+the patches avoid breaking things.  I am currently coming up empty-handed
+on both counts:  I don't understand how these patches help, and I don't
+see how they can possibly be safe.
+
+							Thanx, Paul
 
 --
-Andreas Dannenberg
-Texas Instruments Inc
-
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
