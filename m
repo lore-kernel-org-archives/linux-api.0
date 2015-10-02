@@ -1,77 +1,56 @@
 From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH v4 2/4] mm, proc: account for shmem swap in
- /proc/pid/smaps
-Date: Fri, 2 Oct 2015 15:37:02 -0700
-Message-ID: <20151002153702.7bdc4c0483cd9b2ee9e0fba3@linux-foundation.org>
+Subject: Re: [PATCH v4 4/4] mm, procfs: Display VmAnon, VmFile and VmShm in
+ /proc/pid/status
+Date: Fri, 2 Oct 2015 15:37:57 -0700
+Message-ID: <20151002153757.dcbf81604107580ef3ff6e65@linux-foundation.org>
 References: <1443792951-13944-1-git-send-email-vbabka@suse.cz>
-	<1443792951-13944-3-git-send-email-vbabka@suse.cz>
+	<1443792951-13944-5-git-send-email-vbabka@suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1443792951-13944-3-git-send-email-vbabka@suse.cz>
+In-Reply-To: <1443792951-13944-5-git-send-email-vbabka@suse.cz>
 Sender: owner-linux-mm@kvack.org
 To: Vlastimil Babka <vbabka@suse.cz>
 Cc: linux-mm@kvack.org, Jerome Marchand <jmarchan@redhat.com>, Hugh Dickins <hughd@google.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, Michal Hocko <mhocko@suse.cz>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Randy Dunlap <rdunlap@infradead.org>, linux-s390@vger.kernel.org, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Linux API <linux-api@vger.kernel.org>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
 List-Id: linux-api@vger.kernel.org
 
-On Fri,  2 Oct 2015 15:35:49 +0200 Vlastimil Babka <vbabka@suse.cz> wrote:
+On Fri,  2 Oct 2015 15:35:51 +0200 Vlastimil Babka <vbabka@suse.cz> wrote:
 
-> Currently, /proc/pid/smaps will always show "Swap: 0 kB" for shmem-backed
-> mappings, even if the mapped portion does contain pages that were swapped out.
-> This is because unlike private anonymous mappings, shmem does not change pte
-> to swap entry, but pte_none when swapping the page out. In the smaps page
-> walk, such page thus looks like it was never faulted in.
+> From: Jerome Marchand <jmarchan@redhat.com>
 > 
-> This patch changes smaps_pte_entry() to determine the swap status for such
-> pte_none entries for shmem mappings, similarly to how mincore_page() does it.
-> Swapped out pages are thus accounted for.
-> 
-> The accounting is arguably still not as precise as for private anonymous
-> mappings, since now we will count also pages that the process in question never
-> accessed, but only another process populated them and then let them become
-> swapped out. I believe it is still less confusing and subtle than not showing
-> any swap usage by shmem mappings at all. Also, swapped out pages only becomee a
-> performance issue for future accesses, and we cannot predict those for neither
-> kind of mapping.
-> 
-> ...
->
-> --- a/include/linux/shmem_fs.h
-> +++ b/include/linux/shmem_fs.h
-> @@ -60,6 +60,12 @@ extern struct page *shmem_read_mapping_page_gfp(struct address_space *mapping,
->  extern void shmem_truncate_range(struct inode *inode, loff_t start, loff_t end);
->  extern int shmem_unuse(swp_entry_t entry, struct page *page);
->  
-> +#ifdef CONFIG_SWAP
-> +extern unsigned long shmem_swap_usage(struct inode *inode);
-> +extern unsigned long shmem_partial_swap_usage(struct address_space *mapping,
-> +						pgoff_t start, pgoff_t end);
-> +#endif
+> It's currently inconvenient to retrieve MM_ANONPAGES value from status
+> and statm files and there is no way to separate MM_FILEPAGES and
+> MM_SHMEMPAGES. Add RssAnon, RssFile and RssShm lines in /proc/<pid>/status
+> to solve these issues.
 
-CONFIG_SWAP is wrong, isn't it?  It should be CONFIG_SHMEM if anything.
+This changelog is also head-spinning.
 
-I'd just do
+Why is it talking about MM_ANONPAGES and MM_FILEPAGES in the context of
+procfs files?  Those terms are kernel-internal stuff and are
+meaningless to end users.
 
---- a/include/linux/shmem_fs.h~mm-proc-account-for-shmem-swap-in-proc-pid-smaps-fix
-+++ a/include/linux/shmem_fs.h
-@@ -60,11 +60,9 @@ extern struct page *shmem_read_mapping_p
- extern void shmem_truncate_range(struct inode *inode, loff_t start, loff_t end);
- extern int shmem_unuse(swp_entry_t entry, struct page *page);
- 
--#ifdef CONFIG_SWAP
- extern unsigned long shmem_swap_usage(struct inode *inode);
- extern unsigned long shmem_partial_swap_usage(struct address_space *mapping,
- 						pgoff_t start, pgoff_t end);
--#endif
- 
- static inline struct page *shmem_read_mapping_page(
- 				struct address_space *mapping, pgoff_t index)
+So can we please start over with the changelogs?
+
+- What is wrong with the current user interface?
+
+- What changes are we proposing making?
+
+- What new fields are added to the UI?  What is their meaning to users?
+
+- Are any existing UI fields altered?  If so how and why and what
+  impact will that have?
+
+Extra points will be awarded for example procfs output.
+
+This is the important stuff!  Once this is all clearly described,
+understood and reviewed, then we can get into the
+kernel-internal-microdetails like MM_ANONPAGES.
 
 
-We don't need the ifdefs around declarations and they're a pain to
-maintain and they'd add a *ton* of clutter if we even tried to do this
-for real.
+(And "What is wrong with the current user interface?" is important. 
+What value does this patchset provide to end users?  Why does anyone
+even want these changes?)
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
