@@ -1,125 +1,251 @@
-From: David Daney <ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v4 3/5] PCI: Handle IORESOURCE_PCI_FIXED when sizing and assigning resources.
-Date: Fri,  2 Oct 2015 15:37:54 -0700
-Message-ID: <1443825476-26880-4-git-send-email-ddaney.cavm@gmail.com>
+From: David Daney <ddaney.cavm@gmail.com>
+Subject: [PATCH v4 2/5] PCI: Add support for Enhanced Allocation devices
+Date: Fri,  2 Oct 2015 15:37:53 -0700
+Message-ID: <1443825476-26880-3-git-send-email-ddaney.cavm@gmail.com>
 References: <1443825476-26880-1-git-send-email-ddaney.cavm@gmail.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1443825476-26880-1-git-send-email-ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?UTF-8?q?Rafa=C5=82=20Mi=C5=82ecki?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Sean O. Stalley" <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, yinghai-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org
-Cc: David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1443825476-26880-1-git-send-email-ddaney.cavm@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, linux-pci@vger.kernel.org, Bjorn Helgaas <bhelgaas@google.com>, "Michael S. Tsirkin" <mst@redhat.com>, =?UTF-8?q?Rafa=C5=82=20Mi=C5=82ecki?= <zajec5@gmail.com>, linux-api@vger.kernel.org, "Sean O. Stalley" <sean.stalley@intel.com>, yinghai@kernel.org, rajatxjain@gmail.com, gong.chen@linux.intel.com
+Cc: David Daney <david.daney@cavium.com>
 List-Id: linux-api@vger.kernel.org
 
-From: David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
+From: "Sean O. Stalley" <sean.stalley@intel.com>
 
-The new Enhanced Allocation (EA) capability support creates resources
-with the IORESOURCE_PCI_FIXED set.  This creates a couple of problems:
+Add support for devices using Enhanced Allocation entries instead of BARs.
+This patch allows the kernel to parse the EA Extended Capability structure
+in PCI configspace and claim the BAR-equivalent resources.
 
-1) Since these resources cannot be relocated or resized, their
-   alignment is not really defined, and it is therefore not specified.
-   This causes a problem in pbus_size_mem() where resources with
-   unspecified alignment are disabled.
-
-2) During resource assignment in pci_bus_assign_resources(),
-   IORESOURCE_PCI_FIXED resources are not given a parent.  This, in
-   turn, causes pci_enable_resources() to fail with a "not claimed"
-   error.
-
-So, in pbus_size_mem() skip IORESOURCE_PCI_FIXED resources, instead of
-disabling them.
-
-In __pci_bus_assign_resources(), for IORESOURCE_PCI_FIXED resources,
-try to request the resource from a parent bus.
-
-Signed-off-by: David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Sean O. Stalley <sean.stalley@intel.com>
+[david.daney@cavium.com: Add more support/checking for Entry Properties,
+allow EA behind bridges, rewrite some error messages.]
+Signed-off-by: David Daney <david.daney@cavium.com>
 ---
- drivers/pci/setup-bus.c | 60 ++++++++++++++++++++++++++++++++++++++++++++++---
- 1 file changed, 57 insertions(+), 3 deletions(-)
+ drivers/pci/pci.c   | 184 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ drivers/pci/pci.h   |   1 +
+ drivers/pci/probe.c |   3 +
+ 3 files changed, 188 insertions(+)
 
-diff --git a/drivers/pci/setup-bus.c b/drivers/pci/setup-bus.c
-index 508cc56..8f9ed9b 100644
---- a/drivers/pci/setup-bus.c
-+++ b/drivers/pci/setup-bus.c
-@@ -1037,9 +1037,10 @@ static int pbus_size_mem(struct pci_bus *bus, unsigned long mask,
- 			struct resource *r = &dev->resource[i];
- 			resource_size_t r_size;
- 
--			if (r->parent || ((r->flags & mask) != type &&
--					  (r->flags & mask) != type2 &&
--					  (r->flags & mask) != type3))
-+			if (r->parent || (r->flags | IORESOURCE_PCI_FIXED) ||
-+			    ((r->flags & mask) != type &&
-+			     (r->flags & mask) != type2 &&
-+			     (r->flags & mask) != type3))
- 				continue;
- 			r_size = resource_size(r);
- #ifdef CONFIG_PCI_IOV
-@@ -1340,6 +1341,57 @@ void pci_bus_size_bridges(struct pci_bus *bus)
+diff --git a/drivers/pci/pci.c b/drivers/pci/pci.c
+index 6a9a111..54a0a98 100644
+--- a/drivers/pci/pci.c
++++ b/drivers/pci/pci.c
+@@ -2148,6 +2148,190 @@ void pci_pm_init(struct pci_dev *dev)
+ 	}
  }
- EXPORT_SYMBOL(pci_bus_size_bridges);
  
-+static void assign_fixed_resource_on_bus(struct pci_bus *b, struct resource *r)
++static unsigned long pci_ea_set_flags(struct pci_dev *dev, u8 prop)
 +{
-+	int i;
-+	struct resource *parent_r;
-+	unsigned long mask = IORESOURCE_IO | IORESOURCE_MEM |
-+		IORESOURCE_PREFETCH;
++	unsigned long flags = IORESOURCE_PCI_FIXED;
 +
-+	pci_bus_for_each_resource(b, parent_r, i) {
-+		if (!parent_r)
-+			continue;
-+
-+		if ((r->flags & mask) == (parent_r->flags & mask) &&
-+		    resource_contains(parent_r, r))
-+			request_resource(parent_r, r);
++	switch (prop) {
++	case PCI_EA_P_MEM:
++	case PCI_EA_P_VIRT_MEM:
++	case PCI_EA_P_BRIDGE_MEM:
++		flags |= IORESOURCE_MEM;
++		break;
++	case PCI_EA_P_MEM_PREFETCH:
++	case PCI_EA_P_VIRT_MEM_PREFETCH:
++	case PCI_EA_P_BRIDGE_MEM_PREFETCH:
++		flags |= IORESOURCE_MEM | IORESOURCE_PREFETCH;
++		break;
++	case PCI_EA_P_IO:
++	case PCI_EA_P_BRIDGE_IO:
++		flags |= IORESOURCE_IO;
++		break;
++	default:
++		return 0;
 +	}
++
++	return flags;
 +}
 +
-+/*
-+ * Try to assign any resources marked as IORESOURCE_PCI_FIXED, as they
-+ * are skipped by pbus_assign_resources_sorted().
-+ */
-+static void pdev_assign_fixed_resources(struct pci_dev *dev)
++static struct resource *pci_ea_get_resource(struct pci_dev *dev, u8 bei, u8 prop)
 +{
-+	int i;
-+
-+	for (i = 0; i <  PCI_NUM_RESOURCES; i++) {
-+		struct pci_bus *b;
-+		struct resource *r = &dev->resource[i];
-+
-+		if (r->parent || !(r->flags & IORESOURCE_PCI_FIXED) ||
-+		    !(r->flags & (IORESOURCE_IO | IORESOURCE_MEM)))
-+			continue;
-+
-+		b = dev->bus;
-+		while (b && !r->parent) {
-+			assign_fixed_resource_on_bus(b, r);
-+			b = b->parent;
-+		}
-+		if (!r->parent) {
-+			/*
-+			 * If that didn't work, try to fallback to the
-+			 * ultimate parent.
-+			 */
-+			if (r->flags &  IORESOURCE_IO)
-+				request_resource(&ioport_resource, r);
-+			else
-+				request_resource(&iomem_resource, r);
-+		}
-+	}
++	if (bei <= PCI_EA_BEI_BAR5 && prop <= PCI_EA_P_IO)
++		return &dev->resource[bei];
++	else if (bei == PCI_EA_BEI_ROM)
++		return &dev->resource[PCI_ROM_RESOURCE];
++	else
++		return NULL;
 +}
 +
- void __pci_bus_assign_resources(const struct pci_bus *bus,
- 				struct list_head *realloc_head,
- 				struct list_head *fail_head)
-@@ -1350,6 +1402,8 @@ void __pci_bus_assign_resources(const struct pci_bus *bus,
- 	pbus_assign_resources_sorted(bus, realloc_head, fail_head);
- 
- 	list_for_each_entry(dev, &bus->devices, bus_list) {
-+		pdev_assign_fixed_resources(dev);
++/* Read an Enhanced Allocation (EA) entry */
++static int pci_ea_read(struct pci_dev *dev, int offset)
++{
++	struct resource *res;
++	int ent_offset = offset;
++	int ent_size;
++	resource_size_t start;
++	resource_size_t end;
++	unsigned long flags;
++	u32 dw0;
++	u32 base;
++	u32 max_offset;
++	u8 prop;
++	bool support_64 = (sizeof(resource_size_t) >= 8);
 +
- 		b = dev->subordinate;
- 		if (!b)
- 			continue;
++	pci_read_config_dword(dev, ent_offset, &dw0);
++	ent_offset += 4;
++
++	/* Entry size field indicates DWORDs after 1st */
++	ent_size = ((dw0 & PCI_EA_ES) + 1) << 2;
++
++	if (!(dw0 & PCI_EA_ENABLE)) /* Entry not enabled */
++		goto out;
++
++	prop = PCI_EA_PP(dw0);
++	/*
++	 * If the Property is in the reserved range, try the Secondary
++	 * Property instead.
++	 */
++	if (prop > PCI_EA_P_BRIDGE_IO && prop < PCI_EA_P_MEM_RESERVED)
++		prop = PCI_EA_SP(dw0);
++	if (prop > PCI_EA_P_BRIDGE_IO)
++		goto out;
++
++	res = pci_ea_get_resource(dev, PCI_EA_BEI(dw0), prop);
++	if (!res) {
++		dev_err(&dev->dev, "Unsupported EA entry BEI: %u\n",
++			PCI_EA_BEI(dw0));
++		goto out;
++	}
++
++	flags = pci_ea_set_flags(dev, prop);
++	if (!flags) {
++		dev_err(&dev->dev, "Unsupported EA properties: %u\n", prop);
++		goto out;
++	}
++
++	/* Read Base */
++	pci_read_config_dword(dev, ent_offset, &base);
++	start = (base & PCI_EA_FIELD_MASK);
++	ent_offset += 4;
++
++	/* Read MaxOffset */
++	pci_read_config_dword(dev, ent_offset, &max_offset);
++	ent_offset += 4;
++
++	/* Read Base MSBs (if 64-bit entry) */
++	if (base & PCI_EA_IS_64) {
++		u32 base_upper;
++
++		pci_read_config_dword(dev, ent_offset, &base_upper);
++		ent_offset += 4;
++
++		flags |= IORESOURCE_MEM_64;
++
++		/* entry starts above 32-bit boundary, can't use */
++		if (!support_64 && base_upper)
++			goto out;
++
++		if (support_64)
++			start |= ((u64)base_upper << 32);
++	}
++
++	dev_dbg(&dev->dev,
++		"EA (%u,%u) start = %pa\n", PCI_EA_BEI(dw0), prop, &start);
++
++	end = start + (max_offset | 0x03);
++
++	/* Read MaxOffset MSBs (if 64-bit entry) */
++	if (max_offset & PCI_EA_IS_64) {
++		u32 max_offset_upper;
++
++		pci_read_config_dword(dev, ent_offset, &max_offset_upper);
++		ent_offset += 4;
++
++		flags |= IORESOURCE_MEM_64;
++
++		/* entry too big, can't use */
++		if (!support_64 && max_offset_upper)
++			goto out;
++
++		if (support_64)
++			end += ((u64)max_offset_upper << 32);
++	}
++
++	dev_dbg(&dev->dev,
++		"EA (%u,%u) end = %pa\n", PCI_EA_BEI(dw0), prop, &end);
++
++	if (end < start) {
++		dev_err(&dev->dev, "EA Entry crosses address boundary\n");
++		goto out;
++	}
++
++	if (ent_size != ent_offset - offset) {
++		dev_err(&dev->dev,
++			"EA Entry Size (%d) does not match length read (%d)\n",
++			ent_size, ent_offset - offset);
++		goto out;
++	}
++
++	res->name = pci_name(dev);
++	res->start = start;
++	res->end = end;
++	res->flags = flags;
++
++out:
++	return offset + ent_size;
++}
++
++/* Enhanced Allocation Initalization */
++void pci_ea_init(struct pci_dev *dev)
++{
++	int ea;
++	u8 num_ent;
++	int offset;
++	int i;
++
++	/* find PCI EA capability in list */
++	ea = pci_find_capability(dev, PCI_CAP_ID_EA);
++	if (!ea)
++		return;
++
++	/* determine the number of entries */
++	pci_bus_read_config_byte(dev->bus, dev->devfn, ea + PCI_EA_NUM_ENT,
++					&num_ent);
++	num_ent &= PCI_EA_NUM_ENT_MASK;
++
++	offset = ea + PCI_EA_FIRST_ENT;
++
++	/* Skip DWORD 2 for type 1 functions */
++	if (dev->hdr_type == PCI_HEADER_TYPE_BRIDGE)
++		offset += 4;
++
++	/* parse each EA entry */
++	for (i = 0; i < num_ent; ++i)
++		offset = pci_ea_read(dev, offset);
++}
++
+ static void pci_add_saved_cap(struct pci_dev *pci_dev,
+ 	struct pci_cap_saved_state *new_cap)
+ {
+diff --git a/drivers/pci/pci.h b/drivers/pci/pci.h
+index 24ba9dc..a160733 100644
+--- a/drivers/pci/pci.h
++++ b/drivers/pci/pci.h
+@@ -78,6 +78,7 @@ bool pci_dev_keep_suspended(struct pci_dev *dev);
+ void pci_config_pm_runtime_get(struct pci_dev *dev);
+ void pci_config_pm_runtime_put(struct pci_dev *dev);
+ void pci_pm_init(struct pci_dev *dev);
++void pci_ea_init(struct pci_dev *dev);
+ void pci_allocate_cap_save_buffers(struct pci_dev *dev);
+ void pci_free_cap_save_buffers(struct pci_dev *dev);
+ 
+diff --git a/drivers/pci/probe.c b/drivers/pci/probe.c
+index 0b2be17..4293eec 100644
+--- a/drivers/pci/probe.c
++++ b/drivers/pci/probe.c
+@@ -1598,6 +1598,9 @@ static struct pci_dev *pci_scan_device(struct pci_bus *bus, int devfn)
+ 
+ static void pci_init_capabilities(struct pci_dev *dev)
+ {
++	/* Enhanced Allocation */
++	pci_ea_init(dev);
++
+ 	/* MSI/MSI-X list */
+ 	pci_msi_init_pci_dev(dev);
+ 
 -- 
 1.9.1
