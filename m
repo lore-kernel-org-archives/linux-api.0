@@ -1,38 +1,29 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [RFC v2 07/18] kthread: Allow to cancel kthread work
-Date: Fri, 2 Oct 2015 15:24:53 -0400
-Message-ID: <20151002192453.GA7564@mtj.duckdns.org>
-References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
- <1442840639-6963-8-git-send-email-pmladek@suse.com>
- <20150922193513.GE17659@mtj.duckdns.org>
- <20150925112617.GA3122@pathway.suse.cz>
- <20150928170314.GF2589@mtj.duckdns.org>
- <20151002154336.GC3122@pathway.suse.cz>
+From: Mark Salyzyn <salyzyn-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH v2 1/2] selftests/pstore: add pstore test script for
+ pre-reboot
+Date: Fri, 2 Oct 2015 12:39:07 -0700
+Message-ID: <560EDD5B.5090901@android.com>
+References: <20151002114637.20957.61769.stgit@arietta>
+ <20151002114639.20957.61229.stgit@arietta>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20151002154336.GC3122-KsEp0d+Q8qECVLCxKZUutA@public.gmane.org>
+In-Reply-To: <20151002114639.20957.61229.stgit@arietta>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Hiraku Toyooka <hiraku.toyooka.gu-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Anton Vorontsov <anton-9xeibp6oKSgdnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Colin Cross <ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Seiji Aguchi <seiji.aguchi.tr-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello,
-
-On Fri, Oct 02, 2015 at 05:43:36PM +0200, Petr Mladek wrote:
-> IMHO, we need both locks. The worker manipulates more works and
-> need its own lock. We need work-specific lock because the work
-> might be assigned to different workers and we need to be sure
-> that the operations are really serialized, e.g. queuing.
-
-I don't think we need per-work lock.  Do we have such usage in kernel
-at all?  If you're worried, let the first queueing record the worker
-and trigger warning if someone tries to queue it anywhere else.  This
-doesn't need to be full-on general like workqueue.  Let's make
-reasonable trade-offs where possible.
-
-Thanks.
-
--- 
-tejun
+On 10/02/2015 04:46 AM, Hiraku Toyooka wrote:
+> The pstore_tests script includes test cases which check pstore's
+> behavior before crash (and reboot).
+>
+> The test cases are currently following.
+>
+> - Check pstore backend is registered
+> - Check pstore console is registered
+> - Check /dev/pmsg0 exists
+> - Write unique string to /dev/pmsg0
+>
++1
