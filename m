@@ -1,81 +1,125 @@
-From: David Daney <ddaney.cavm@gmail.com>
-Subject: [PATCH v4 0/5] PCI: Add support for PCI Enhanced Allocation "BARs"
-Date: Fri,  2 Oct 2015 15:37:51 -0700
-Message-ID: <1443825476-26880-1-git-send-email-ddaney.cavm@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-pci@vger.kernel.org, Bjorn Helgaas <bhelgaas@google.com>, "Michael S. Tsirkin" <mst@redhat.com>, =?UTF-8?q?Rafa=C5=82=20Mi=C5=82ecki?= <zajec5@gmail.com>, linux-api@vger.kernel.org, "Sean O. Stalley" <sean.stalley@intel.com>, yinghai@kernel.org, rajatxjain@gmail.com, gong.chen@linux.intel.com
-Cc: David Daney <david.daney@cavium.com>
+From: David Daney <ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v4 3/5] PCI: Handle IORESOURCE_PCI_FIXED when sizing and assigning resources.
+Date: Fri,  2 Oct 2015 15:37:54 -0700
+Message-ID: <1443825476-26880-4-git-send-email-ddaney.cavm@gmail.com>
+References: <1443825476-26880-1-git-send-email-ddaney.cavm@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1443825476-26880-1-git-send-email-ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?UTF-8?q?Rafa=C5=82=20Mi=C5=82ecki?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Sean O. Stalley" <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, yinghai-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org
+Cc: David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: David Daney <david.daney@cavium.com>
+From: David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
 
-The original patches are from Sean O. Stalley. I made a few tweaks,
-but feel that it is substancially Sean's work, so I am keeping the
-patch set version numbering scheme going.
+The new Enhanced Allocation (EA) capability support creates resources
+with the IORESOURCE_PCI_FIXED set.  This creates a couple of problems:
 
-Tested on Cavium ThunderX system with 4 Root Complexes containing 50
-devices/bridges provisioned with EA.
+1) Since these resources cannot be relocated or resized, their
+   alignment is not really defined, and it is therefore not specified.
+   This causes a problem in pbus_size_mem() where resources with
+   unspecified alignment are disabled.
 
-Here is Sean's description of the patches:
+2) During resource assignment in pci_bus_assign_resources(),
+   IORESOURCE_PCI_FIXED resources are not given a parent.  This, in
+   turn, causes pci_enable_resources() to fail with a "not claimed"
+   error.
 
-PCI Enhanced Allocation is a new method of allocating MMIO & IO
-resources for PCI devices & bridges. It can be used instead
-of the traditional PCI method of using BARs.
+So, in pbus_size_mem() skip IORESOURCE_PCI_FIXED resources, instead of
+disabling them.
 
-EA entries are hardware-initialized to a fixed address.
-Unlike BARs, regions described by EA are cannot be moved.
-Because of this, only devices which are permanently connected to
-the PCI bus can use EA. A removable PCI card must not use EA.
+In __pci_bus_assign_resources(), for IORESOURCE_PCI_FIXED resources,
+try to request the resource from a parent bus.
 
-This patchset adds support for using EA entries instead of BARs
-on Root Complex Integrated Endpoints.
+Signed-off-by: David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
+---
+ drivers/pci/setup-bus.c | 60 ++++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 57 insertions(+), 3 deletions(-)
 
-The Enhanced Allocation ECN is publicly available here:
-https://www.pcisig.com/specifications/conventional/ECN_Enhanced_Allocation_23_Oct_2014_Final.pdf
-
-
-Changes from V1:
-	- Use generic PCI resource claim functions (instead of EA-specific functions)
-	- Only add support for RCiEPs (instead of all devices).
-	- Removed some debugging messages leftover from early testing.
-
-Changes from V2 (By David Daney):
-	- Add ea_cap to struct pci_device, to aid in finding the EA capability.
-	- Factored EA entity decoding into a separate function.
-	- Add functions to find EA entities by BEI or Property.
-	- Add handling of EA provisioned bridges.
-	- Add handling of EA SRIOV BARs.
-	- Try to assign proper resource parent so that SRIOV device creation can occur.
-
-Changes from V3 (By David Daney):
-	- Discarded V3 changes and started over fresh based on Sean's V2.
-	- Add more support/checking for Entry Properties.
-	- Allow EA behind bridges.
-	- Rewrite some error messages.
-	- Add patch 3/5 to prevent resizing, and better handle
-          assigning, of fixed EA resources.
-	- Add patch 4/5 to handle EA provisioned SRIOV devices.
-	- Add patch 5/5 to handle EA provisioned bridges.
-
-David Daney (3):
-  PCI: Handle IORESOURCE_PCI_FIXED when sizing and assigning resources.
-  PCI: Handle Enhanced Allocation (EA) capability for SRIOV devices.
-  PCI: Handle Enhanced Allocation (EA) capability for bridges
-
-Sean O. Stalley (2):
-  PCI: Add Enhanced Allocation register entries
-  PCI: Add support for Enhanced Allocation devices
-
- drivers/pci/bus.c             |   7 ++
- drivers/pci/iov.c             |  11 ++-
- drivers/pci/pci.c             | 202 ++++++++++++++++++++++++++++++++++++++++++
- drivers/pci/pci.h             |   1 +
- drivers/pci/probe.c           |  34 ++++++-
- drivers/pci/setup-bus.c       |  63 ++++++++++++-
- include/linux/pci.h           |   1 +
- include/uapi/linux/pci_regs.h |  44 ++++++++-
- 8 files changed, 355 insertions(+), 8 deletions(-)
-
+diff --git a/drivers/pci/setup-bus.c b/drivers/pci/setup-bus.c
+index 508cc56..8f9ed9b 100644
+--- a/drivers/pci/setup-bus.c
++++ b/drivers/pci/setup-bus.c
+@@ -1037,9 +1037,10 @@ static int pbus_size_mem(struct pci_bus *bus, unsigned long mask,
+ 			struct resource *r = &dev->resource[i];
+ 			resource_size_t r_size;
+ 
+-			if (r->parent || ((r->flags & mask) != type &&
+-					  (r->flags & mask) != type2 &&
+-					  (r->flags & mask) != type3))
++			if (r->parent || (r->flags | IORESOURCE_PCI_FIXED) ||
++			    ((r->flags & mask) != type &&
++			     (r->flags & mask) != type2 &&
++			     (r->flags & mask) != type3))
+ 				continue;
+ 			r_size = resource_size(r);
+ #ifdef CONFIG_PCI_IOV
+@@ -1340,6 +1341,57 @@ void pci_bus_size_bridges(struct pci_bus *bus)
+ }
+ EXPORT_SYMBOL(pci_bus_size_bridges);
+ 
++static void assign_fixed_resource_on_bus(struct pci_bus *b, struct resource *r)
++{
++	int i;
++	struct resource *parent_r;
++	unsigned long mask = IORESOURCE_IO | IORESOURCE_MEM |
++		IORESOURCE_PREFETCH;
++
++	pci_bus_for_each_resource(b, parent_r, i) {
++		if (!parent_r)
++			continue;
++
++		if ((r->flags & mask) == (parent_r->flags & mask) &&
++		    resource_contains(parent_r, r))
++			request_resource(parent_r, r);
++	}
++}
++
++/*
++ * Try to assign any resources marked as IORESOURCE_PCI_FIXED, as they
++ * are skipped by pbus_assign_resources_sorted().
++ */
++static void pdev_assign_fixed_resources(struct pci_dev *dev)
++{
++	int i;
++
++	for (i = 0; i <  PCI_NUM_RESOURCES; i++) {
++		struct pci_bus *b;
++		struct resource *r = &dev->resource[i];
++
++		if (r->parent || !(r->flags & IORESOURCE_PCI_FIXED) ||
++		    !(r->flags & (IORESOURCE_IO | IORESOURCE_MEM)))
++			continue;
++
++		b = dev->bus;
++		while (b && !r->parent) {
++			assign_fixed_resource_on_bus(b, r);
++			b = b->parent;
++		}
++		if (!r->parent) {
++			/*
++			 * If that didn't work, try to fallback to the
++			 * ultimate parent.
++			 */
++			if (r->flags &  IORESOURCE_IO)
++				request_resource(&ioport_resource, r);
++			else
++				request_resource(&iomem_resource, r);
++		}
++	}
++}
++
+ void __pci_bus_assign_resources(const struct pci_bus *bus,
+ 				struct list_head *realloc_head,
+ 				struct list_head *fail_head)
+@@ -1350,6 +1402,8 @@ void __pci_bus_assign_resources(const struct pci_bus *bus,
+ 	pbus_assign_resources_sorted(bus, realloc_head, fail_head);
+ 
+ 	list_for_each_entry(dev, &bus->devices, bus_list) {
++		pdev_assign_fixed_resources(dev);
++
+ 		b = dev->subordinate;
+ 		if (!b)
+ 			continue;
 -- 
 1.9.1
