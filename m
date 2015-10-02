@@ -1,251 +1,87 @@
 From: David Daney <ddaney.cavm@gmail.com>
-Subject: [PATCH v4 2/5] PCI: Add support for Enhanced Allocation devices
-Date: Fri,  2 Oct 2015 15:37:53 -0700
-Message-ID: <1443825476-26880-3-git-send-email-ddaney.cavm@gmail.com>
+Subject: [PATCH v4 1/5] PCI: Add Enhanced Allocation register entries
+Date: Fri,  2 Oct 2015 15:37:52 -0700
+Message-ID: <1443825476-26880-2-git-send-email-ddaney.cavm@gmail.com>
 References: <1443825476-26880-1-git-send-email-ddaney.cavm@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1443825476-26880-1-git-send-email-ddaney.cavm@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, linux-pci@vger.kernel.org, Bjorn Helgaas <bhelgaas@google.com>, "Michael S. Tsirkin" <mst@redhat.com>, =?UTF-8?q?Rafa=C5=82=20Mi=C5=82ecki?= <zajec5@gmail.com>, linux-api@vger.kernel.org, "Sean O. Stalley" <sean.stalley@intel.com>, yinghai@kernel.org, rajatxjain@gmail.com, gong.chen@linux.intel.com
-Cc: David Daney <david.daney@cavium.com>
+Cc: "Signed-off-by: David Daney" <david.daney@cavium.com>
 List-Id: linux-api@vger.kernel.org
 
 From: "Sean O. Stalley" <sean.stalley@intel.com>
 
-Add support for devices using Enhanced Allocation entries instead of BARs.
-This patch allows the kernel to parse the EA Extended Capability structure
-in PCI configspace and claim the BAR-equivalent resources.
+Add registers defined in PCI-SIG's Enhanced allocation ECN.
 
 Signed-off-by: Sean O. Stalley <sean.stalley@intel.com>
-[david.daney@cavium.com: Add more support/checking for Entry Properties,
-allow EA behind bridges, rewrite some error messages.]
-Signed-off-by: David Daney <david.daney@cavium.com>
+[david.daney@cavium.com: Added more definitions for PCI_EA_BEI_*]
+Signed-off-by: Signed-off-by: David Daney <david.daney@cavium.com>
 ---
- drivers/pci/pci.c   | 184 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- drivers/pci/pci.h   |   1 +
- drivers/pci/probe.c |   3 +
- 3 files changed, 188 insertions(+)
+ include/uapi/linux/pci_regs.h | 44 ++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 43 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/pci/pci.c b/drivers/pci/pci.c
-index 6a9a111..54a0a98 100644
---- a/drivers/pci/pci.c
-+++ b/drivers/pci/pci.c
-@@ -2148,6 +2148,190 @@ void pci_pm_init(struct pci_dev *dev)
- 	}
- }
+diff --git a/include/uapi/linux/pci_regs.h b/include/uapi/linux/pci_regs.h
+index 413417f..352e418 100644
+--- a/include/uapi/linux/pci_regs.h
++++ b/include/uapi/linux/pci_regs.h
+@@ -216,7 +216,8 @@
+ #define  PCI_CAP_ID_MSIX	0x11	/* MSI-X */
+ #define  PCI_CAP_ID_SATA	0x12	/* SATA Data/Index Conf. */
+ #define  PCI_CAP_ID_AF		0x13	/* PCI Advanced Features */
+-#define  PCI_CAP_ID_MAX		PCI_CAP_ID_AF
++#define  PCI_CAP_ID_EA		0x14	/* PCI Enhanced Allocation */
++#define  PCI_CAP_ID_MAX		PCI_CAP_ID_EA
+ #define PCI_CAP_LIST_NEXT	1	/* Next capability in the list */
+ #define PCI_CAP_FLAGS		2	/* Capability defined flags (16 bits) */
+ #define PCI_CAP_SIZEOF		4
+@@ -353,6 +354,47 @@
+ #define  PCI_AF_STATUS_TP	0x01
+ #define PCI_CAP_AF_SIZEOF	6	/* size of AF registers */
  
-+static unsigned long pci_ea_set_flags(struct pci_dev *dev, u8 prop)
-+{
-+	unsigned long flags = IORESOURCE_PCI_FIXED;
++/* PCI Enhanced Allocation registers */
 +
-+	switch (prop) {
-+	case PCI_EA_P_MEM:
-+	case PCI_EA_P_VIRT_MEM:
-+	case PCI_EA_P_BRIDGE_MEM:
-+		flags |= IORESOURCE_MEM;
-+		break;
-+	case PCI_EA_P_MEM_PREFETCH:
-+	case PCI_EA_P_VIRT_MEM_PREFETCH:
-+	case PCI_EA_P_BRIDGE_MEM_PREFETCH:
-+		flags |= IORESOURCE_MEM | IORESOURCE_PREFETCH;
-+		break;
-+	case PCI_EA_P_IO:
-+	case PCI_EA_P_BRIDGE_IO:
-+		flags |= IORESOURCE_IO;
-+		break;
-+	default:
-+		return 0;
-+	}
++#define PCI_EA_NUM_ENT		2	/* Number of Capability Entries */
++#define PCI_EA_NUM_ENT_MASK	0x3f	/* Num Entries Mask */
++#define PCI_EA_FIRST_ENT	4	/* First EA Entry in List */
++#define PCI_EA_FIRST_ENT_BRIDGE	8	/* First EA Entry for Bridges */
++#define PCI_EA_ES		0x7	/* Entry Size */
++#define PCI_EA_BEI(x)	(((x) >> 4) & 0xf) /* BAR Equivalent Indicator */
++/* 0-5 map to BARs 0-5 respectively */
++#define  PCI_EA_BEI_BAR0	0
++#define  PCI_EA_BEI_BAR5	5
++#define  PCI_EA_BEI_BRIDGE	6	/* Resource behind bridge */
++#define  PCI_EA_BEI_ENI		7	/* Equivalent Not Indicated */
++#define  PCI_EA_BEI_ROM		8	/* Expansion ROM */
++/* 9-14 map to VF BARs 0-5 respectively */
++#define  PCI_EA_BEI_VF_BAR0	9
++#define  PCI_EA_BEI_VF_BAR5	14
++#define  PCI_EA_BEI_RESERVED	15	/* Reserved - Treat like ENI */
 +
-+	return flags;
-+}
++#define PCI_EA_PP(x)	(((x) >>  8) & 0xff)	/* Primary Properties */
++#define PCI_EA_SP(x)	(((x) >> 16) & 0xff)	/* Secondary Properties */
++#define  PCI_EA_P_MEM			0x00	/* Non-Prefetch Memory */
++#define  PCI_EA_P_MEM_PREFETCH		0x01	/* Prefetchable Memory */
++#define  PCI_EA_P_IO			0x02	/* I/O Space */
++#define  PCI_EA_P_VIRT_MEM_PREFETCH	0x03	/* VF Prefetchable Memory */
++#define  PCI_EA_P_VIRT_MEM		0x04	/* VF Non-Prefetch Memory */
++#define  PCI_EA_P_BRIDGE_MEM		0x05	/* Bridge Non-Prefetch Memory */
++#define  PCI_EA_P_BRIDGE_MEM_PREFETCH	0x06	/* Bridge Prefetchable Memory */
++#define  PCI_EA_P_BRIDGE_IO		0x07	/* Bridge I/O Space */
++/* 0x08-0xfc reserved */
++#define  PCI_EA_P_MEM_RESERVED		0xfd	/* Reserved Memory */
++#define  PCI_EA_P_IO_RESERVED		0xfe	/* Reserved I/O Space */
++#define  PCI_EA_P_UNAVAILABLE		0xff	/* Entry Unavailable */
++#define PCI_EA_WRITEABLE	BIT(30) /* Writable, 1 = RW, 0 = HwInit */
++#define PCI_EA_ENABLE		BIT(31) /* Enable for this entry */
++#define PCI_EA_BASE		4	/* Base Address Offset */
++#define PCI_EA_MAX_OFFSET	8	/* MaxOffset (resource length) */
++/* bit 0 is reserved */
++#define PCI_EA_IS_64		BIT(1)	/* 64-bit field flag */
++#define PCI_EA_FIELD_MASK	0xfffffffc	/* For Base & Max Offset */
 +
-+static struct resource *pci_ea_get_resource(struct pci_dev *dev, u8 bei, u8 prop)
-+{
-+	if (bei <= PCI_EA_BEI_BAR5 && prop <= PCI_EA_P_IO)
-+		return &dev->resource[bei];
-+	else if (bei == PCI_EA_BEI_ROM)
-+		return &dev->resource[PCI_ROM_RESOURCE];
-+	else
-+		return NULL;
-+}
-+
-+/* Read an Enhanced Allocation (EA) entry */
-+static int pci_ea_read(struct pci_dev *dev, int offset)
-+{
-+	struct resource *res;
-+	int ent_offset = offset;
-+	int ent_size;
-+	resource_size_t start;
-+	resource_size_t end;
-+	unsigned long flags;
-+	u32 dw0;
-+	u32 base;
-+	u32 max_offset;
-+	u8 prop;
-+	bool support_64 = (sizeof(resource_size_t) >= 8);
-+
-+	pci_read_config_dword(dev, ent_offset, &dw0);
-+	ent_offset += 4;
-+
-+	/* Entry size field indicates DWORDs after 1st */
-+	ent_size = ((dw0 & PCI_EA_ES) + 1) << 2;
-+
-+	if (!(dw0 & PCI_EA_ENABLE)) /* Entry not enabled */
-+		goto out;
-+
-+	prop = PCI_EA_PP(dw0);
-+	/*
-+	 * If the Property is in the reserved range, try the Secondary
-+	 * Property instead.
-+	 */
-+	if (prop > PCI_EA_P_BRIDGE_IO && prop < PCI_EA_P_MEM_RESERVED)
-+		prop = PCI_EA_SP(dw0);
-+	if (prop > PCI_EA_P_BRIDGE_IO)
-+		goto out;
-+
-+	res = pci_ea_get_resource(dev, PCI_EA_BEI(dw0), prop);
-+	if (!res) {
-+		dev_err(&dev->dev, "Unsupported EA entry BEI: %u\n",
-+			PCI_EA_BEI(dw0));
-+		goto out;
-+	}
-+
-+	flags = pci_ea_set_flags(dev, prop);
-+	if (!flags) {
-+		dev_err(&dev->dev, "Unsupported EA properties: %u\n", prop);
-+		goto out;
-+	}
-+
-+	/* Read Base */
-+	pci_read_config_dword(dev, ent_offset, &base);
-+	start = (base & PCI_EA_FIELD_MASK);
-+	ent_offset += 4;
-+
-+	/* Read MaxOffset */
-+	pci_read_config_dword(dev, ent_offset, &max_offset);
-+	ent_offset += 4;
-+
-+	/* Read Base MSBs (if 64-bit entry) */
-+	if (base & PCI_EA_IS_64) {
-+		u32 base_upper;
-+
-+		pci_read_config_dword(dev, ent_offset, &base_upper);
-+		ent_offset += 4;
-+
-+		flags |= IORESOURCE_MEM_64;
-+
-+		/* entry starts above 32-bit boundary, can't use */
-+		if (!support_64 && base_upper)
-+			goto out;
-+
-+		if (support_64)
-+			start |= ((u64)base_upper << 32);
-+	}
-+
-+	dev_dbg(&dev->dev,
-+		"EA (%u,%u) start = %pa\n", PCI_EA_BEI(dw0), prop, &start);
-+
-+	end = start + (max_offset | 0x03);
-+
-+	/* Read MaxOffset MSBs (if 64-bit entry) */
-+	if (max_offset & PCI_EA_IS_64) {
-+		u32 max_offset_upper;
-+
-+		pci_read_config_dword(dev, ent_offset, &max_offset_upper);
-+		ent_offset += 4;
-+
-+		flags |= IORESOURCE_MEM_64;
-+
-+		/* entry too big, can't use */
-+		if (!support_64 && max_offset_upper)
-+			goto out;
-+
-+		if (support_64)
-+			end += ((u64)max_offset_upper << 32);
-+	}
-+
-+	dev_dbg(&dev->dev,
-+		"EA (%u,%u) end = %pa\n", PCI_EA_BEI(dw0), prop, &end);
-+
-+	if (end < start) {
-+		dev_err(&dev->dev, "EA Entry crosses address boundary\n");
-+		goto out;
-+	}
-+
-+	if (ent_size != ent_offset - offset) {
-+		dev_err(&dev->dev,
-+			"EA Entry Size (%d) does not match length read (%d)\n",
-+			ent_size, ent_offset - offset);
-+		goto out;
-+	}
-+
-+	res->name = pci_name(dev);
-+	res->start = start;
-+	res->end = end;
-+	res->flags = flags;
-+
-+out:
-+	return offset + ent_size;
-+}
-+
-+/* Enhanced Allocation Initalization */
-+void pci_ea_init(struct pci_dev *dev)
-+{
-+	int ea;
-+	u8 num_ent;
-+	int offset;
-+	int i;
-+
-+	/* find PCI EA capability in list */
-+	ea = pci_find_capability(dev, PCI_CAP_ID_EA);
-+	if (!ea)
-+		return;
-+
-+	/* determine the number of entries */
-+	pci_bus_read_config_byte(dev->bus, dev->devfn, ea + PCI_EA_NUM_ENT,
-+					&num_ent);
-+	num_ent &= PCI_EA_NUM_ENT_MASK;
-+
-+	offset = ea + PCI_EA_FIRST_ENT;
-+
-+	/* Skip DWORD 2 for type 1 functions */
-+	if (dev->hdr_type == PCI_HEADER_TYPE_BRIDGE)
-+		offset += 4;
-+
-+	/* parse each EA entry */
-+	for (i = 0; i < num_ent; ++i)
-+		offset = pci_ea_read(dev, offset);
-+}
-+
- static void pci_add_saved_cap(struct pci_dev *pci_dev,
- 	struct pci_cap_saved_state *new_cap)
- {
-diff --git a/drivers/pci/pci.h b/drivers/pci/pci.h
-index 24ba9dc..a160733 100644
---- a/drivers/pci/pci.h
-+++ b/drivers/pci/pci.h
-@@ -78,6 +78,7 @@ bool pci_dev_keep_suspended(struct pci_dev *dev);
- void pci_config_pm_runtime_get(struct pci_dev *dev);
- void pci_config_pm_runtime_put(struct pci_dev *dev);
- void pci_pm_init(struct pci_dev *dev);
-+void pci_ea_init(struct pci_dev *dev);
- void pci_allocate_cap_save_buffers(struct pci_dev *dev);
- void pci_free_cap_save_buffers(struct pci_dev *dev);
+ /* PCI-X registers (Type 0 (non-bridge) devices) */
  
-diff --git a/drivers/pci/probe.c b/drivers/pci/probe.c
-index 0b2be17..4293eec 100644
---- a/drivers/pci/probe.c
-+++ b/drivers/pci/probe.c
-@@ -1598,6 +1598,9 @@ static struct pci_dev *pci_scan_device(struct pci_bus *bus, int devfn)
- 
- static void pci_init_capabilities(struct pci_dev *dev)
- {
-+	/* Enhanced Allocation */
-+	pci_ea_init(dev);
-+
- 	/* MSI/MSI-X list */
- 	pci_msi_init_pci_dev(dev);
- 
+ #define PCI_X_CMD		2	/* Modes & Features */
 -- 
 1.9.1
