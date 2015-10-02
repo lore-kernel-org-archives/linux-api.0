@@ -1,55 +1,49 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: v5 of seccomp filter c/r patches
-Date: Fri, 2 Oct 2015 16:00:45 -0700
-Message-ID: <CAGXu5jJHJrG7ia43Va=ft6CS4-2Yd4nVmPV-K1ge_5+TOPA96g@mail.gmail.com>
-References: <1443803243-25912-1-git-send-email-tycho.andersen@canonical.com>
-	<CAGXu5jJJoM3NdwSmigWy8trTBATsvkGUDmbZ02QOyU=1tD0Y-w@mail.gmail.com>
-	<20151002224443.GN23065@smitten>
-	<560F0BED.2070304@iogearbox.net>
+From: Yinghai Lu <yinghai@kernel.org>
+Subject: Re: [PATCH v4 3/5] PCI: Handle IORESOURCE_PCI_FIXED when sizing and
+ assigning resources.
+Date: Fri, 2 Oct 2015 16:14:08 -0700
+Message-ID: <CAE9FiQWnE3ucbjPKuXm5qhTGx7bYOBqnNoSNOMaJa_tEf3Z4=Q@mail.gmail.com>
+References: <1443825476-26880-1-git-send-email-ddaney.cavm@gmail.com>
+	<1443825476-26880-4-git-send-email-ddaney.cavm@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <560F0BED.2070304@iogearbox.net>
+In-Reply-To: <1443825476-26880-4-git-send-email-ddaney.cavm@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Borkmann <daniel@iogearbox.net>
-Cc: Tycho Andersen <tycho.andersen@canonical.com>, Alexei Starovoitov <ast@kernel.org>, Will Drewry <wad@chromium.org>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, LKML <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: David Daney <ddaney.cavm@gmail.com>
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "linux-pci@vger.kernel.org" <linux-pci@vger.kernel.org>, Bjorn Helgaas <bhelgaas@google.com>, "Michael S. Tsirkin" <mst@redhat.com>, =?UTF-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5@gmail.com>, linux-api@vger.kernel.org, "Sean O. Stalley" <sean.stalley@intel.com>, Rajat Jain <rajatxjain@gmail.com>, "gong.chen@linux.intel.com" <gong.chen@linux.intel.com>, David Daney <david.daney@cavium.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 2, 2015 at 3:57 PM, Daniel Borkmann <daniel@iogearbox.net> wrote:
-> On 10/03/2015 12:44 AM, Tycho Andersen wrote:
->>
->> On Fri, Oct 02, 2015 at 02:10:24PM -0700, Kees Cook wrote:
+On Fri, Oct 2, 2015 at 3:37 PM, David Daney <ddaney.cavm@gmail.com> wrote:
+> From: David Daney <david.daney@cavium.com>
 >
-> ...
->>
->> Ok, how about,
->>
->> struct sock_filter insns[BPF_MAXINSNS];
->> insn_cnt = ptrace(PTRACE_SECCOMP_GET_FILTER, pid, insns, i);
+> The new Enhanced Allocation (EA) capability support creates resources
+> with the IORESOURCE_PCI_FIXED set.  This creates a couple of problems:
 >
+> 1) Since these resources cannot be relocated or resized, their
+>    alignment is not really defined, and it is therefore not specified.
+>    This causes a problem in pbus_size_mem() where resources with
+>    unspecified alignment are disabled.
 >
-> Would also be good that when the storage buffer (insns) is NULL,
-> it just returns you the number of sock_filter insns (or 0 when
-> nothing attached).
+> 2) During resource assignment in pci_bus_assign_resources(),
+>    IORESOURCE_PCI_FIXED resources are not given a parent.  This, in
+>    turn, causes pci_enable_resources() to fail with a "not claimed"
+>    error.
 >
-> That would be consistent with classic socket filters (see
-> sk_get_filter()), and user space could allocate a specific
-> size instead of always passing in max insns.
+> So, in pbus_size_mem() skip IORESOURCE_PCI_FIXED resources, instead of
+> disabling them.
+>
+> In __pci_bus_assign_resources(), for IORESOURCE_PCI_FIXED resources,
+> try to request the resource from a parent bus.
 
-Yes please. :)
+Can you check if
 
->> when asking for the ith filter? It returns either the number of
->> instructions, -EINVAL if something was wrong (i, pid,
->> CONFIG_CHECKPOINT_RESTORE isn't enabled). While it would always
->> succeed now, if/when the underlying filter was not created from a bpf
->> classic filter, we can return -EMEDIUMTYPE? (Suggestions welcome, I
->> picked this mostly based on what sounds nice.)
+https://patchwork.kernel.org/patch/7304971/
+[v6,05/53] PCI: Don't release fixed resource for realloc
 
-We can bikeshed the non-classic case when we need it, but I think
-EINVAL is "not under seccomp", and ENOENT is "no such index".
+https://patchwork.kernel.org/patch/7304371/
+[v6,06/53] PCI: Claim fixed resource during remove/rescan path
 
--Kees
+address the the problem that you met?
 
--- 
-Kees Cook
-Chrome OS Security
+        Yinghai
