@@ -1,296 +1,358 @@
-From: Petr Mladek <pmladek@suse.com>
-Subject: Re: [RFC v2 07/18] kthread: Allow to cancel kthread work
-Date: Fri, 2 Oct 2015 17:43:36 +0200
-Message-ID: <20151002154336.GC3122@pathway.suse.cz>
-References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
- <1442840639-6963-8-git-send-email-pmladek@suse.com>
- <20150922193513.GE17659@mtj.duckdns.org>
- <20150925112617.GA3122@pathway.suse.cz>
- <20150928170314.GF2589@mtj.duckdns.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150928170314.GF2589@mtj.duckdns.org>
-Sender: owner-linux-mm@kvack.org
-To: Tejun Heo <tj@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Tycho Andersen <tycho.andersen@canonical.com>
+Subject: [PATCH v5 1/3] seccomp: add the concept of a seccomp filter FD
+Date: Fri,  2 Oct 2015 10:27:21 -0600
+Message-ID: <1443803243-25912-2-git-send-email-tycho.andersen@canonical.com>
+References: <1443803243-25912-1-git-send-email-tycho.andersen@canonical.com>
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <1443803243-25912-1-git-send-email-tycho.andersen@canonical.com>
+Sender: netdev-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: Alexei Starovoitov <ast@kernel.org>, Will Drewry <wad@chromium.org>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Daniel Borkmann <daniel@iogearbox.net>, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, Tycho Andersen <tycho.andersen@canonical.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon 2015-09-28 13:03:14, Tejun Heo wrote:
-> Hello, Petr.
-> 
-> On Fri, Sep 25, 2015 at 01:26:17PM +0200, Petr Mladek wrote:
-> > 1) PENDING state plus -EAGAIN/busy loop cycle
-> > ---------------------------------------------
-> > 
-> > IMHO, we want to use the timer because it is an elegant solution.
-> > Then we must release the lock when the timer is running. The lock
-> > must be taken by the timer->function(). And there is a small window
-> > when the timer is not longer pending but timer->function is not running:
-> > 
-> > CPU0                            CPU1
-> > 
-> > run_timer_softirq()
-> >   __run_timers()
-> >     detach_expired_timer()
-> >       detach_timer()
-> > 	#clear_pending
-> > 
-> > 				try_to_grab_pending_kthread_work()
-> > 				  del_timer()
-> > 				    # fails because not pending
-> > 
-> > 				  test_and_set_bit(KTHREAD_WORK_PENDING_BIT)
-> > 				    # fails because already set
-> > 
-> > 				  if (!list_empty(&work->node))
-> > 				    # fails because still not queued
-> > 
-> > 			!!! problematic window !!!
-> > 
-> >     call_timer_fn()
-> >      queue_kthraed_work()
-> 
-> Let's say each work item has a state variable which is protected by a
-> lock and the state can be one of IDLE, PENDING, CANCELING.  Let's also
-> assume that all cancelers synchronize with each other via mutex, so we
-> only have to worry about a single canceler.  Wouldn't something like
-> the following work while being a lot simpler?
-> 
-> Delayed queueing and execution.
-> 
-> 1. Lock and check whether state is IDLE.  If not, nothing to do.
-> 
-> 2. Set state to PENDING and schedule the timer and unlock.
-> 
-> 3. On expiration, timer_fn grabs the lock and see whether state is
->    still PENDING.  If so, schedule the work item for execution;
->    otherwise, nothing to do.
-> 
-> 4. After dequeueing from execution queue with lock held, the worker is
->    marked as executing the work item and state is reset to IDLE.
-> 
-> Canceling
-> 
-> 1. Lock, dequeue and set the state to CANCELING.
-> 
-> 2. Unlock and perform del_timer_sync().
-> 
-> 3. Flush the work item.
-> 
-> 4. Lock and reset the state to IDLE and unlock.
-> 
-> 
-> > 2) CANCEL state plus custom waitqueue
-> > -------------------------------------
-> > 
-> > cancel_kthread_work_sync() has to wait for the running work. It might take
-> > quite some time. Therefore we could not block others by a spinlock.
-> > Also others could not wait for the spin lock in a busy wait.
-> 
-> Hmmm?  Cancelers can synchronize amongst them using a mutex and the
-> actual work item wait can use flushing.
-> 
-> > IMHO, the proposed and rather complex solutions are needed in both cases.
-> > 
-> > Or did I miss a possible trick, please?
-> 
-> I probably have missed something in the above and it is not completley
-> correct but I do think it can be way simpler than how workqueue does
-> it.
+This patch introduces the concept of a seccomp fd, with a similar interface
+and usage to ebpf fds. Initially, one is allowed to create, install, and
+dump these fds. Any manipulation of seccomp fds requires users to be root
+in their own user namespace, matching the checks done for
+SECCOMP_SET_MODE_FILTER.
 
-I have played with this idea and it opens a can of worms with locking
-problems and it looks even more complicated.
+v2: Force users to specify the parent (as another fd) during fd creation,
+    and don't allow them to install filters when a previously installed
+    filter is not the parent of the to be installed filter. This avoids
+    "re-parenting" scenarios, which can be racy or perhaps insecure.
 
-Let me show this on a snippet of code:
+Signed-off-by: Tycho Andersen <tycho.andersen@canonical.com>
+CC: Kees Cook <keescook@chromium.org>
+CC: Will Drewry <wad@chromium.org>
+CC: Oleg Nesterov <oleg@redhat.com>
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Pavel Emelyanov <xemul@parallels.com>
+CC: Serge E. Hallyn <serge.hallyn@ubuntu.com>
+CC: Alexei Starovoitov <ast@kernel.org>
+CC: Daniel Borkmann <daniel@iogearbox.net>
+---
+ include/linux/seccomp.h      |   5 ++
+ include/uapi/linux/seccomp.h |  27 ++++++
+ kernel/seccomp.c             | 203 ++++++++++++++++++++++++++++++++++++++++++-
+ 3 files changed, 232 insertions(+), 3 deletions(-)
 
-struct kthread_worker {
-	spinlock_t		lock;
-	struct list_head	work_list;
-	struct kthread_work	*current_work;
-};
-
-enum {
-	KTHREAD_WORK_IDLE,
-	KTHREAD_WORK_PENDING,
-	KTHREAD_WORK_CANCELING,
-};
-
-struct kthread_work {
-	unsigned int		flags;
-	spinlock_t		lock;
-	struct list_head	node;
-	kthread_work_func_t	func;
-	struct kthread_worker	*worker;
-};
-
-
-/* the main kthread worker cycle */
-int kthread_worker_fn(void *worker_ptr)
-{
-	struct kthread_worker *worker = worker_ptr;
-	struct kthread_work *work;
-
-repeat:
-
-	work = NULL;
-	spin_lock_irq(&worker->lock);
-	if (!list_empty(&worker->work_list)) {
-		work = list_first_entry(&worker->work_list,
-					struct kthread_work, node);
-		spin_lock(&work->lock);
-		list_del_init(&work->node);
-		work->flags = KTHREAD_WORK_IDLE;
-		spin_unlock(&work->lock);
-	}
-	worker->current_work = work;
-	spin_unlock_irq(&worker->lock);
-
-	if (work) {
-		__set_current_state(TASK_RUNNING);
-		work->func(work);
-	} else if (!freezing(current))
-		schedule();
-
-	goto repeat;
-}
-EXPORT_SYMBOL_GPL(kthread_worker_fn);
-
-
-static void __queue_kthread_work(struct kthread_worker *worker,
-			  struct kthread_work *work)
-{
-	list_add_tail(&work->node, pos);
-	work->worker = worker;
-}
-
-
-bool queue_kthread_work(struct kthread_worker *worker,
-			struct kthread_work *work)
-{
-	bool ret = false;
-	unsigned long flags;
-
-	/*
-	 * Lock worker first to avoid ABBA deadlock.
-	 * What if the work is already queued to another worker?
-	 */
-	spin_lock_irqsave(&worker->lock, flags);
-	spin_lock(&work->lock);
-
-	if (work->flags != KTHREAD_WORK_IDLE)
-		goto unlock_out;
-
-	__queue_kthread_work(worker, work);
-	ret = true;
-
-unlock_out:
-	spin_unlock(&work->lock);
-	spin_unlock_irqrestore(&worker->lock, flags);
-out:
-	return ret;
-}
-
-bool cancel_kthread_work_sync(struct kthread_work *work)
-{
-	struct kthread_worker *worker;
-	bool flush = true;
-	unsigned long flags;
-
-again:
-	worker = ACCESS_ONCE(work->worker);
-
-	if (worker)
-		spin_lock_irqsave(&worker->lock, flags);
-	else
-		local_irq_save(flags);
-
-	spin_lock(&work->lock);
-
-	if (worker && worker != work->worker) {
-		spin_unlock(&work->lock);
-		spin_unlock_irqrestore(&worker->lock, flags);
-		goto again;
-	}
-
-	switch (work->flags) {
-	case KTHREAD_WORK_PENDING:
-		list_del_init(&work->node);
-	case KTHREAD_WORK_IDLE:
-		work->flags = KTHREAD_WORK_CANCELING;
-		break;
-	case KTHREAD_WORK_CANCELING:
-		/*
-		 * Some other work is canceling. Let's wait in a
-		 * custom waitqueue until the work is flushed.
-		 */
-		prepare_to_wait_exclusive(&cancel_waitq, &cwait.wait,
-						  TASK_UNINTERRUPTIBLE);
-		flush = false;
-		break;
-	}
-
-	spin_unlock(&work->lock);
-	if (worker)
-		spin_unlock_irqrestore(&worker->lock, flags);
-	else
-		local_irq_restore(flags);
-
-	if (flush) {
-		kthread_work_flush(work);
-		/*
-		 * We are the cancel leader. Nobody else could manipulate the
-		 * work.
-		 */
-		work->flags = KTHREAD_WORK_IDLE;
-		/*
-		 * Paired with prepare_to_wait() above so that either
-		 * waitqueue_active() is visible here or CANCELING bit is
-		 * visible there.
-		 */
-		smp_mb();
-		if (waitqueue_active(&cancel_waitq))
-			__wake_up(&cancel_waitq, TASK_NORMAL, 1, work);
-	} elseif (READ_ONCE(work->flags) == KTHREAD_WORK_CANCELING) {
-	       schedule();
-	}
-}
-
-
-IMHO, we need both locks. The worker manipulates more works and
-need its own lock. We need work-specific lock because the work
-might be assigned to different workers and we need to be sure
-that the operations are really serialized, e.g. queuing.
-
-Now, worker_fn() needs to get the first work from the the worker list
-and then manipulate the work => it needs to get the worker->lock
-and then work->lock.
-
-It means that most other functions would need to take both locks
-in this order to avoid ABBA deadlock. This causes quite some
-complications, e.g. in cancel_work().
-
-There might be even more problems if we try to queue the same work
-into more workers and we start mixing the locks from different
-workers.
-
-I do not know. It is possible that you prefer this solution than
-the atomic bit operations. Also it is possible that there exists
-a trick that might make it easier.
-
-I would personally prefer to use the tricks from the workqueues.
-They are proven to work and they make the code faster. I think
-that we might need to queue the work in a sensitive fast path.
-
-IMHO, the code already is much easier than the workqueues because
-there are no pools of kthreads behind each worker.
-
-Best Regards,
-Petr
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
+index f426503..4253579 100644
+--- a/include/linux/seccomp.h
++++ b/include/linux/seccomp.h
+@@ -85,6 +85,7 @@ static inline int seccomp_mode(struct seccomp *s)
+ #ifdef CONFIG_SECCOMP_FILTER
+ extern void put_seccomp_filter(struct task_struct *tsk);
+ extern void get_seccomp_filter(struct task_struct *tsk);
++extern struct seccomp_filter *seccomp_filter_from_file(struct file *f);
+ #else  /* CONFIG_SECCOMP_FILTER */
+ static inline void put_seccomp_filter(struct task_struct *tsk)
+ {
+@@ -94,5 +95,9 @@ static inline void get_seccomp_filter(struct task_struct *tsk)
+ {
+ 	return;
+ }
++static inline struct seccomp_filter *seccomp_filter_from_file(struct file *f)
++{
++	return ERR_PTR(-EINVAL);
++}
+ #endif /* CONFIG_SECCOMP_FILTER */
+ #endif /* _LINUX_SECCOMP_H */
+diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
+index 0f238a4..e9f3660 100644
+--- a/include/uapi/linux/seccomp.h
++++ b/include/uapi/linux/seccomp.h
+@@ -13,10 +13,16 @@
+ /* Valid operations for seccomp syscall. */
+ #define SECCOMP_SET_MODE_STRICT	0
+ #define SECCOMP_SET_MODE_FILTER	1
++#define SECCOMP_FILTER_FD		2
+ 
+ /* Valid flags for SECCOMP_SET_MODE_FILTER */
+ #define SECCOMP_FILTER_FLAG_TSYNC	1
+ 
++/* Valid commands for SECCOMP_FILTER_FD */
++#define SECCOMP_FD_NEW		0
++#define SECCOMP_FD_INSTALL	1
++#define SECCOMP_FD_DUMP	2
++
+ /*
+  * All BPF programs must return a 32-bit value.
+  * The bottom 16-bits are for optional return data.
+@@ -51,4 +57,25 @@ struct seccomp_data {
+ 	__u64 args[6];
+ };
+ 
++struct seccomp_fd {
++	__u32			size;
++
++	union {
++		/* SECCOMP_FD_NEW */
++		struct {
++			struct sock_fprog __user	*new_prog;
++			int				new_parent;
++		};
++
++		/* SECCOMP_FD_INSTALL */
++		int	install_fd;
++
++		/* SECCOMP_FD_DUMP */
++		struct {
++			int				dump_fd;
++			struct sock_filter __user	*insns;
++		};
++	};
++};
++
+ #endif /* _UAPI_LINUX_SECCOMP_H */
+diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+index 06858a7..ea3337d 100644
+--- a/kernel/seccomp.c
++++ b/kernel/seccomp.c
+@@ -26,6 +26,8 @@
+ #endif
+ 
+ #ifdef CONFIG_SECCOMP_FILTER
++#include <linux/anon_inodes.h>
++#include <linux/file.h>
+ #include <linux/filter.h>
+ #include <linux/pid.h>
+ #include <linux/ptrace.h>
+@@ -474,10 +476,8 @@ static inline void seccomp_filter_free(struct seccomp_filter *filter)
+ 	}
+ }
+ 
+-/* put_seccomp_filter - decrements the ref count of tsk->seccomp.filter */
+-void put_seccomp_filter(struct task_struct *tsk)
++static void seccomp_filter_decref(struct seccomp_filter *orig)
+ {
+-	struct seccomp_filter *orig = tsk->seccomp.filter;
+ 	/* Clean up single-reference branches iteratively. */
+ 	while (orig && atomic_dec_and_test(&orig->usage)) {
+ 		struct seccomp_filter *freeme = orig;
+@@ -486,6 +486,12 @@ void put_seccomp_filter(struct task_struct *tsk)
+ 	}
+ }
+ 
++/* put_seccomp_filter - decrements the ref count of tsk->seccomp.filter */
++void put_seccomp_filter(struct task_struct *tsk)
++{
++	seccomp_filter_decref(tsk->seccomp.filter);
++}
++
+ /**
+  * seccomp_send_sigsys - signals the task to allow in-process syscall emulation
+  * @syscall: syscall number to send to userland
+@@ -804,12 +810,201 @@ out_free:
+ 	seccomp_filter_free(prepared);
+ 	return ret;
+ }
++
++int seccomp_fd_release(struct inode *ino, struct file *f)
++{
++	seccomp_filter_decref(f->private_data);
++	return 0;
++}
++
++static const struct file_operations seccomp_fops = {
++	.release = seccomp_fd_release,
++};
++
++struct seccomp_filter *seccomp_filter_from_file(struct file *f)
++{
++	struct seccomp_filter *filter;
++
++	if (!f)
++		return ERR_PTR(-EBADF);
++
++	if (f->f_op != &seccomp_fops)
++		return ERR_PTR(-EINVAL);
++
++	filter = f->private_data;
++
++	return filter;
++}
++
++static long seccomp_fd_new(struct seccomp_fd *seccomp_fd)
++{
++	struct seccomp_filter *filter, *parent = NULL;
++	long fd = -1;
++	char __user *prog = (char __user *) seccomp_fd->new_prog;
++
++	if (seccomp_fd->new_parent >= 0) {
++		struct fd f;
++
++		f = fdget(seccomp_fd->new_parent);
++		parent = seccomp_filter_from_file(f.file);
++		if (IS_ERR(parent)) {
++			fdput(f);
++			return PTR_ERR(parent);
++		}
++
++		atomic_inc(&parent->usage);
++		fdput(f);
++	}
++
++	filter = seccomp_prepare_user_filter(prog);
++	if (IS_ERR(filter)) {
++		fd = PTR_ERR(filter);
++		goto out;
++	}
++
++	filter->prev = parent;
++
++	fd = anon_inode_getfd("seccomp", &seccomp_fops, filter,
++			      O_RDONLY | O_CLOEXEC);
++out:
++	/* decref iteravely frees parent, so we don't need to do so */
++	if (fd < 0)
++		seccomp_filter_decref(filter);
++
++	return fd;
++}
++
++static long seccomp_fd_install(struct seccomp_fd *seccomp_fd)
++{
++	struct fd f;
++	struct seccomp_filter *filter;
++	int ret = -EINVAL;
++
++	f = fdget(seccomp_fd->install_fd);
++	filter = seccomp_filter_from_file(f.file);
++	if (IS_ERR(filter)) {
++		fdput(f);
++		return PTR_ERR(filter);
++	}
++	atomic_inc(&filter->usage);
++	fdput(f);
++
++	spin_lock_irq(&current->sighand->siglock);
++	if (!seccomp_may_assign_mode(SECCOMP_MODE_FILTER))
++		goto out_sigunlock;
++
++	if (current->seccomp.mode == SECCOMP_MODE_FILTER &&
++	    current->seccomp.filter != filter->prev)
++		goto out_sigunlock;
++
++	ret = seccomp_attach_filter(0, filter);
++	/* This may be the first filter installed, so let's set mode */
++	if (ret >= 0)
++		seccomp_assign_mode(current, SECCOMP_MODE_FILTER);
++
++out_sigunlock:
++	spin_unlock_irq(&current->sighand->siglock);
++
++	/* If the filter failed to install, let's decref it */
++	if (ret < 0)
++		seccomp_filter_decref(filter);
++	return ret;
++}
++
++static long seccomp_fd_dump(struct seccomp_fd *seccomp_fd)
++{
++	struct fd f;
++	int len;
++	struct sock_fprog_kern *orig;
++	struct seccomp_filter *filter;
++
++	f = fdget(seccomp_fd->dump_fd);
++	filter = seccomp_filter_from_file(f.file);
++	if (IS_ERR(filter)) {
++		fdput(f);
++		return PTR_ERR(filter);
++	}
++
++	orig = filter->prog->orig_prog;
++	len = bpf_classic_proglen(orig);
++
++	/* Allow asking how long the filter is by passing a null buffer. */
++	if (seccomp_fd->insns &&
++	    copy_to_user(seccomp_fd->insns, orig->filter, len))
++		len = -EFAULT;
++
++	fdput(f);
++	return len;
++}
++
++static long seccomp_filter_fd(unsigned int cmd,
++			      const char __user *ulayer)
++{
++	long ret;
++	u32 size;
++	struct seccomp_fd seccomp_fd;
++	struct seccomp_fd __user *useccomp_fd =
++		(struct seccomp_fd __user *) ulayer;
++
++	/* As above, we restrict access to seccomp fds to processes who are
++	 * root in their own user ns.
++	 */
++	if (!task_no_new_privs(current) &&
++	    security_capable_noaudit(current_cred(), current_user_ns(),
++				     CAP_SYS_ADMIN) != 0)
++		return -EACCES;
++
++	if (get_user(size, &useccomp_fd->size))
++		return -EFAULT;
++
++	if (size > sizeof(seccomp_fd)) {
++		unsigned char __user *addr;
++		unsigned char __user *end;
++		unsigned char val;
++
++		addr = (void __user *)useccomp_fd + sizeof(seccomp_fd);
++		end  = (void __user *)useccomp_fd + size;
++
++		for (; addr < end; addr++) {
++			if (get_user(val, addr))
++				return -EFAULT;
++			if (val)
++				return -E2BIG;
++		}
++		size = sizeof(seccomp_fd);
++	}
++
++	if (copy_from_user(&seccomp_fd, useccomp_fd, size))
++		return -EFAULT;
++
++	switch (cmd) {
++	case SECCOMP_FD_NEW:
++		ret = seccomp_fd_new(&seccomp_fd);
++		break;
++	case SECCOMP_FD_INSTALL:
++		ret = seccomp_fd_install(&seccomp_fd);
++		break;
++	case SECCOMP_FD_DUMP:
++		ret = seccomp_fd_dump(&seccomp_fd);
++		break;
++	default:
++		ret = -EINVAL;
++	}
++
++	return ret;
++}
+ #else
+ static inline long seccomp_set_mode_filter(unsigned int flags,
+ 					   const char __user *filter)
+ {
+ 	return -EINVAL;
+ }
++
++static inline long seccomp_filter_fd(unsigned int flags,
++				     const char __user *filter)
++{
++	return -EINVAL;
++}
+ #endif
+ 
+ /* Common entry point for both prctl and syscall. */
+@@ -823,6 +1018,8 @@ static long do_seccomp(unsigned int op, unsigned int flags,
+ 		return seccomp_set_mode_strict();
+ 	case SECCOMP_SET_MODE_FILTER:
+ 		return seccomp_set_mode_filter(flags, uargs);
++	case SECCOMP_FILTER_FD:
++		return seccomp_filter_fd(flags, uargs);
+ 	default:
+ 		return -EINVAL;
+ 	}
+-- 
+2.5.0
