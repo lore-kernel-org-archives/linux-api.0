@@ -1,137 +1,118 @@
-From: Petr Mladek <pmladek@suse.com>
-Subject: Re: [RFC v2 00/18] kthread: Use kthread worker API more widely
-Date: Fri, 2 Oct 2015 14:00:14 +0200
-Message-ID: <20151002120014.GG9603@pathway.suse.cz>
-References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
- <20150930050833.GA4412@linux.vnet.ibm.com>
- <20151001155943.GE9603@pathway.suse.cz>
- <20151001170053.GH4043@linux.vnet.ibm.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: [PATCH v4 0/4] enhance shmem process and swap accounting
+Date: Fri,  2 Oct 2015 15:35:47 +0200
+Message-ID: <1443792951-13944-1-git-send-email-vbabka@suse.cz>
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20151001170053.GH4043@linux.vnet.ibm.com>
 Sender: owner-linux-mm@kvack.org
-To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: linux-mm@kvack.org, Jerome Marchand <jmarchan@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Hugh Dickins <hughd@google.com>
+Cc: linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, Michal Hocko <mhocko@suse.cz>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Randy Dunlap <rdunlap@infradead.org>, linux-s390@vger.kernel.org, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Linux API <linux-api@vger.kernel.org>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-On Thu 2015-10-01 10:00:53, Paul E. McKenney wrote:
-> On Thu, Oct 01, 2015 at 05:59:43PM +0200, Petr Mladek wrote:
-> > On Tue 2015-09-29 22:08:33, Paul E. McKenney wrote:
-> > > On Mon, Sep 21, 2015 at 03:03:41PM +0200, Petr Mladek wrote:
-> > > > My intention is to make it easier to manipulate kthreads. This RFC tries
-> > > > to use the kthread worker API. It is based on comments from the
-> > > > first attempt. See https://lkml.org/lkml/2015/7/28/648 and
-> > > > the list of changes below.
-> > > > 
-> If the point of these patches was simply to test your API, and if you are
-> not looking to get them upstream, we are OK.
+Hugh, you commented on the earlier patches from Jerome, can you take a look
+please so we can have this merged? Especially at the changes to shmem.c
+in Patch 2 and if they are indeed safe without extra locking. Thanks!
 
-I would like to eventually transform all kthreads into an API that
-will better define the kthread workflow. It need not be this one,
-though. I am still looking for a good API that will be acceptable[*]
+Changes since v3:
+o Rebase on next-20151002
+o Apply (feedb)acks from Michal Hocko and Konstantin Khlebnikov (Thanks!)
+  - drop CONFIG_SHMEM ifdefs, as it was the 2nd suggestion already
+  - add comments about not taking i_mutex in patch 2
+o Rename VmAnon/VmFile/VmShm to RssAnon/RssFile... to make it hopefully more
+  obvious that it's a breakdown of VmRSS. Naming things sucks.
 
-One of the reason that I played with RCU, khugepaged, and ring buffer
-kthreads is that they are maintained by core developers. I hope that
-it will help to get better consensus.
+Changes since v2:
+o Rebase on next-20150805.
+o This means that /proc/pid/maps has the proportional swap share (SwapPss:)
+  field as per https://lkml.org/lkml/2015/6/15/274
+  It's not clear what to do with shmem here so it's 0 for now.
+  - swapped out shmem doesn't have swap entries, so we would have to look at who
+    else has the shmem object (partially) mapped
+  - to be more precise we should also check if his range actually includes 
+    the offset in question, which could get rather involved
+  - or is there some easy way I don't see?
+o Konstantin suggested for patch 3/4 that I drop the CONFIG_SHMEM #ifdefs
+  I didn't see the point in going against tinyfication when the work is
+  already done, but I can do that if more people think it's better and it
+  would block the series.
 
+Changes since v1:
+o In Patch 2, rely on SHMEM_I(inode)->swapped if possible, and fallback to
+  radix tree iterator on partially mapped shmem objects, i.e. decouple shmem
+  swap usage determination from the page walk, for performance reasons.
+  Thanks to Jerome and Konstantin for the tips.
+  The downside is that mm/shmem.c had to be touched.
 
-> If you want them upstream, you need to explain to me why the patches
-> help something.
+This series is based on Jerome Marchand's [1] so let me quote the first
+paragraph from there:
 
-As I said, RCU kthreads do not show a big win because they ignore
-freezer, are not parked, never stop, do not handle signals. But the
-change will allow to live patch them because they leave the main
-function on a safe place.
+There are several shortcomings with the accounting of shared memory
+(sysV shm, shared anonymous mapping, mapping to a tmpfs file). The
+values in /proc/<pid>/status and statm don't allow to distinguish
+between shmem memory and a shared mapping to a regular file, even
+though theirs implication on memory usage are quite different: at
+reclaim, file mapping can be dropped or write back on disk while shmem
+needs a place in swap. As for shmem pages that are swapped-out or in
+swap cache, they aren't accounted at all.
 
-The ring buffer benchmark is much better example. It reduced
-the main function of the consumer kthread to two lines.
-It removed some error prone code that modified task state,
-called scheduler, handled kthread_should_stop. IMHO, the workflow
-is better and more safe now.
+The original motivation for myself is that a customer found (IMHO rightfully)
+confusing that e.g. top output for process swap usage is unreliable with
+respect to swapped out shmem pages, which are not accounted for.
 
-I am going to prepare and send more examples where the change makes
-the workflow easier.
+The fundamental difference between private anonymous and shmem pages is that
+the latter has PTE's converted to pte_none, and not swapents. As such, they are
+not accounted to the number of swapents visible e.g. in /proc/pid/status VmSwap
+row. It might be theoretically possible to use swapents when swapping out shmem
+(without extra cost, as one has to change all mappers anyway), and on swap in
+only convert the swapent for the faulting process, leaving swapents in other
+processes until they also fault (so again no extra cost). But I don't know how
+many assumptions this would break, and it would be too disruptive change for a
+relatively small benefit.
 
+Instead, my approach is to document the limitation of VmSwap, and provide means
+to determine the swap usage for shmem areas for those who are interested and
+willing to pay the price, using /proc/pid/smaps. Because outside of ipcs, I
+don't think it's possible to currently to determine the usage at all.  The
+previous patchset [1] did introduce new shmem-specific fields into smaps
+output, and functions to determine the values. I take a simpler approach,
+noting that smaps output already has a "Swap: X kB" line, where currently X ==
+0 always for shmem areas. I think we can just consider this a bug and provide
+the proper value by consulting the radix tree, as e.g. mincore_page() does. In the
+patch changelog I explain why this is also not perfect (and cannot be without
+swapents), but still arguably much better than showing a 0.
 
-> And also how the patches avoid breaking things.
+The last two patches are adapted from Jerome's patchset and provide a VmRSS
+breakdown to VmAnon, VmFile and VmShm in /proc/pid/status. Hugh noted that
+this is a welcome addition, and I agree that it might help e.g. debugging
+process memory usage at albeit non-zero, but still rather low cost of extra
+per-mm counter and some page flag checks. I updated these patches to 4.0-rc1,
+made them respect !CONFIG_SHMEM so that tiny systems don't pay the cost, and
+optimized the page flag checking somewhat.
 
-I do my best to keep the original functionality. If we decide to use
-the kthread worker API, my first attempt is much more safe, see
-https://lkml.org/lkml/2015/7/28/650. It basically replaces the
-top level for cycle with one self-queuing work. There are some more
-instructions to go back to the cycle but they define a common
-safe point that will be maintained on a single location for
-all kthread workers.
+[1] http://lwn.net/Articles/611966/
 
+Jerome Marchand (2):
+  mm, shmem: Add shmem resident memory accounting
+  mm, procfs: Display VmAnon, VmFile and VmShm in /proc/pid/status
 
-[*] I have played with two APIs yet. They define a safe point
-for freezing, parking, stopping, signal handling, live patching.
-Also some non-trivial logic of the main cycle is maintained
-on a single location.
+Vlastimil Babka (2):
+  mm, documentation: clarify /proc/pid/status VmSwap limitations
+  mm, proc: account for shmem swap in /proc/pid/smaps
 
-Here are some details:
+ Documentation/filesystems/proc.txt | 18 +++++++++--
+ arch/s390/mm/pgtable.c             |  5 +--
+ fs/proc/task_mmu.c                 | 65 ++++++++++++++++++++++++++++++++++++--
+ include/linux/mm.h                 | 18 ++++++++++-
+ include/linux/mm_types.h           |  7 ++--
+ include/linux/shmem_fs.h           |  6 ++++
+ kernel/events/uprobes.c            |  2 +-
+ mm/memory.c                        | 30 ++++++------------
+ mm/oom_kill.c                      |  5 +--
+ mm/rmap.c                          | 12 ++-----
+ mm/shmem.c                         | 61 +++++++++++++++++++++++++++++++++++
+ 11 files changed, 183 insertions(+), 46 deletions(-)
 
-1. iterant API
---------------
-
-  It allows to define three callbacks that are called the following
-  way:
-
-     init();
-     while (!stop)
-	func();
-     destroy();
-
-  See also https://lkml.org/lkml/2015/6/5/556.
-
-  Advantages:
-    + simple and clear workflow
-    + simple use
-    + simple conversion from the current kthreads API
-
-  Disadvantages:
-    + problematic solution of sleeping between events
-    + completely new API
-
-
-2. kthread worker API
----------------------
-
-  It is similar to workqueues. The difference is that the works
-  have a dedicated kthread, so we could better control the resources,
-  e.g. priority, scheduling policy, ...
-
-  Advantages:
-    + already in use
-    + design proven to work (workqueues)
-    + nature way to wait for work in the common code (worker)
-      using event driven works and delayed works
-    + easy to convert to/from workqueues API
-
-  Disadvantages:
-    + more code needed to define, initialize, and queue works
-    + more complicated conversion from the current API
-      if we want to make it a clean way (event driven)
-    + might need more synchronization in some cases[**]
-
-  Questionable:
-    + event driven vs. procedural programming style
-    + allows more grained split of the functionality into
-      separate units (works) that might be queued
-      as needed
-
-
-[**] wake_up() is nope for empty waitqueue. But queuing a work
-     into non-existing worker might cause a crash. Well, this is
-     usually already synchronized.
-
-
-Any thoughts or preferences are highly appreciated.
-
-Best Regards,
-Petr
+-- 
+2.5.2
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
