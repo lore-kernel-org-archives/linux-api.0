@@ -1,64 +1,73 @@
-From: David Daney <ddaney.cavm@gmail.com>
-Subject: [PATCH v4 4/5] PCI: Handle Enhanced Allocation (EA) capability for SRIOV devices.
-Date: Fri,  2 Oct 2015 15:37:55 -0700
-Message-ID: <1443825476-26880-5-git-send-email-ddaney.cavm@gmail.com>
-References: <1443825476-26880-1-git-send-email-ddaney.cavm@gmail.com>
+From: Tycho Andersen <tycho.andersen@canonical.com>
+Subject: Re: v5 of seccomp filter c/r patches
+Date: Fri, 2 Oct 2015 16:44:43 -0600
+Message-ID: <20151002224443.GN23065@smitten>
+References: <1443803243-25912-1-git-send-email-tycho.andersen@canonical.com>
+ <CAGXu5jJJoM3NdwSmigWy8trTBATsvkGUDmbZ02QOyU=1tD0Y-w@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1443825476-26880-1-git-send-email-ddaney.cavm@gmail.com>
+Content-Disposition: inline
+In-Reply-To: <CAGXu5jJJoM3NdwSmigWy8trTBATsvkGUDmbZ02QOyU=1tD0Y-w@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-pci@vger.kernel.org, Bjorn Helgaas <bhelgaas@google.com>, "Michael S. Tsirkin" <mst@redhat.com>, =?UTF-8?q?Rafa=C5=82=20Mi=C5=82ecki?= <zajec5@gmail.com>, linux-api@vger.kernel.org, "Sean O. Stalley" <sean.stalley@intel.com>, yinghai@kernel.org, rajatxjain@gmail.com, gong.chen@linux.intel.com
-Cc: David Daney <david.daney@cavium.com>
+To: Kees Cook <keescook@chromium.org>
+Cc: Alexei Starovoitov <ast@kernel.org>, Will Drewry <wad@chromium.org>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Daniel Borkmann <daniel@iogearbox.net>, LKML <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-From: David Daney <david.daney@cavium.com>
+On Fri, Oct 02, 2015 at 02:10:24PM -0700, Kees Cook wrote:
+> On Fri, Oct 2, 2015 at 9:27 AM, Tycho Andersen
+> <tycho.andersen@canonical.com> wrote:
+> > Hi all,
+> >
+> > Here's v5 of the seccomp filter c/r set. The individual patch notes have
+> > changes, but two highlights are:
+> >
+> > * This series is now based on http://patchwork.ozlabs.org/patch/525492/ and
+> >   will need to be built with that patch applied. This gets rid of two incorrect
+> >   patches in the previous series and is a nicer API.
+> >
+> > * I couldn't figure out a nice way to have SECCOMP_GET_FILTER_FD return the
+> >   same struct file across calls, so we still need a kcmp command. I've narrowed
+> >   the scope of the one being added to only compare seccomp fds.
+> >
+> > Thoughts welcome,
+> 
+> Hi, sorry I've been slow/busy. I'm finally reading through these threads.
+> 
+> Happy bit:
+> - avoiding eBPF and just saving the original filters makes things much easier.
+> 
+> Sad bit:
+> - inventing a new interface for seccompfds feels like massive overkill to me.
+> 
+> While Andy has big dreams, we're not presently doing seccompfd
+> monitoring, etc. There's no driving user for that kind of interface,
+> and accepting the maintenance burden of it only for CRIU seems unwise.
+> 
+> So, I'll go back to what I originally proposed at LSS (which it looks
+> like we're half way there now):
+> 
+> - save the original filter (done!)
+> - extract filters through a single special-purpose interface (looks
+> like ptrace is the way to go: root-only, stopped process, etc)
+> - compare filter content and issue TSYNCs to merge detected sibling
+> threads, since merging things that weren't merged before creates no
+> problems.
+> 
+> This means the parenting logic is heuristic, but it's entirely in
+> userspace, so the complexity burden doesn't live in seccomp which we,
+> by design, want to keep as simple as possible.
 
-SRIOV BARs can be specified via EA entries.  Extend the EA parser to
-extract the SRIOV BAR resources, and modify sriov_init() to use
-resources previously obtained via EA.
+Ok, how about,
 
-Signed-off-by: David Daney <david.daney@cavium.com>
----
- drivers/pci/iov.c | 11 +++++++++--
- drivers/pci/pci.c |  5 +++++
- 2 files changed, 14 insertions(+), 2 deletions(-)
+struct sock_filter insns[BPF_MAXINSNS];
+insn_cnt = ptrace(PTRACE_SECCOMP_GET_FILTER, pid, insns, i);
 
-diff --git a/drivers/pci/iov.c b/drivers/pci/iov.c
-index ee0ebff..c789e68 100644
---- a/drivers/pci/iov.c
-+++ b/drivers/pci/iov.c
-@@ -436,8 +436,15 @@ found:
- 	nres = 0;
- 	for (i = 0; i < PCI_SRIOV_NUM_BARS; i++) {
- 		res = &dev->resource[i + PCI_IOV_RESOURCES];
--		bar64 = __pci_read_base(dev, pci_bar_unknown, res,
--					pos + PCI_SRIOV_BAR + i * 4);
-+		/*
-+		 * If it is already FIXED, don't change it, something
-+		 * (perhaps EA or header fixups) wants it this way.
-+		 */
-+		if (res->flags & IORESOURCE_PCI_FIXED)
-+			bar64 = (res->flags & IORESOURCE_MEM_64) ? 1 : 0;
-+		else
-+			bar64 = __pci_read_base(dev, pci_bar_unknown, res,
-+						pos + PCI_SRIOV_BAR + i * 4);
- 		if (!res->flags)
- 			continue;
- 		if (resource_size(res) & (PAGE_SIZE - 1)) {
-diff --git a/drivers/pci/pci.c b/drivers/pci/pci.c
-index 54a0a98..6750edf 100644
---- a/drivers/pci/pci.c
-+++ b/drivers/pci/pci.c
-@@ -2178,6 +2178,11 @@ static struct resource *pci_ea_get_resource(struct pci_dev *dev, u8 bei, u8 prop
- {
- 	if (bei <= PCI_EA_BEI_BAR5 && prop <= PCI_EA_P_IO)
- 		return &dev->resource[bei];
-+#ifdef CONFIG_PCI_IOV
-+	else if (bei >= PCI_EA_BEI_VF_BAR0 && bei <= PCI_EA_BEI_VF_BAR5 &&
-+		 (prop == PCI_EA_P_VIRT_MEM || prop == PCI_EA_P_VIRT_MEM_PREFETCH))
-+		return &dev->resource[PCI_IOV_RESOURCES + bei - PCI_EA_BEI_VF_BAR0];
-+#endif
- 	else if (bei == PCI_EA_BEI_ROM)
- 		return &dev->resource[PCI_ROM_RESOURCE];
- 	else
--- 
-1.9.1
+when asking for the ith filter? It returns either the number of
+instructions, -EINVAL if something was wrong (i, pid,
+CONFIG_CHECKPOINT_RESTORE isn't enabled). While it would always
+succeed now, if/when the underlying filter was not created from a bpf
+classic filter, we can return -EMEDIUMTYPE? (Suggestions welcome, I
+picked this mostly based on what sounds nice.)
+
+Tycho
