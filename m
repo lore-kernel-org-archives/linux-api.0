@@ -1,31 +1,62 @@
-From: Mark Salyzyn <salyzyn@android.com>
-Subject: Re: [PATCH v2 2/2] selftests/pstore: add pstore test scripts going
- with reboot
-Date: Fri, 2 Oct 2015 12:39:39 -0700
-Message-ID: <560EDD7B.1000406@android.com>
-References: <20151002114637.20957.61769.stgit@arietta>
- <20151002114641.20957.60082.stgit@arietta>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: v5 of seccomp filter c/r patches
+Date: Fri, 2 Oct 2015 14:10:24 -0700
+Message-ID: <CAGXu5jJJoM3NdwSmigWy8trTBATsvkGUDmbZ02QOyU=1tD0Y-w@mail.gmail.com>
+References: <1443803243-25912-1-git-send-email-tycho.andersen@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151002114641.20957.60082.stgit@arietta>
+In-Reply-To: <1443803243-25912-1-git-send-email-tycho.andersen@canonical.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Hiraku Toyooka <hiraku.toyooka.gu@hitachi.com>, linux-kernel@vger.kernel.org
-Cc: Tony Luck <tony.luck@intel.com>, Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, Anton Vorontsov <anton@enomsg.org>, Shuah Khan <shuahkh@osg.samsung.com>, Colin Cross <ccross@android.com>, Seiji Aguchi <seiji.aguchi.tr@hitachi.com>
+To: Tycho Andersen <tycho.andersen@canonical.com>
+Cc: Alexei Starovoitov <ast@kernel.org>, Will Drewry <wad@chromium.org>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Daniel Borkmann <daniel@iogearbox.net>, LKML <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 10/02/2015 04:46 AM, Hiraku Toyooka wrote:
-> To test pstore in earnest, we have to cause kernel crash and check
-> pstore filesystem after reboot.
+On Fri, Oct 2, 2015 at 9:27 AM, Tycho Andersen
+<tycho.andersen@canonical.com> wrote:
+> Hi all,
 >
-> We add two scripts:
->   - pstore_crash_test
->       This script causes kernel crash and reboot. It is executed by
->       'make run_pstore_crash' in selftests. It can also be used with kdump.
->   - pstore_post_reboot_tests
->       This script includes test cases which check pstore's behavior after
->       crash and reboot. It is executed together with pstore_tests by
->       'make run_tests [-C pstore]' in selftests.
+> Here's v5 of the seccomp filter c/r set. The individual patch notes have
+> changes, but two highlights are:
 >
-+1
+> * This series is now based on http://patchwork.ozlabs.org/patch/525492/ and
+>   will need to be built with that patch applied. This gets rid of two incorrect
+>   patches in the previous series and is a nicer API.
+>
+> * I couldn't figure out a nice way to have SECCOMP_GET_FILTER_FD return the
+>   same struct file across calls, so we still need a kcmp command. I've narrowed
+>   the scope of the one being added to only compare seccomp fds.
+>
+> Thoughts welcome,
+
+Hi, sorry I've been slow/busy. I'm finally reading through these threads.
+
+Happy bit:
+- avoiding eBPF and just saving the original filters makes things much easier.
+
+Sad bit:
+- inventing a new interface for seccompfds feels like massive overkill to me.
+
+While Andy has big dreams, we're not presently doing seccompfd
+monitoring, etc. There's no driving user for that kind of interface,
+and accepting the maintenance burden of it only for CRIU seems unwise.
+
+So, I'll go back to what I originally proposed at LSS (which it looks
+like we're half way there now):
+
+- save the original filter (done!)
+- extract filters through a single special-purpose interface (looks
+like ptrace is the way to go: root-only, stopped process, etc)
+- compare filter content and issue TSYNCs to merge detected sibling
+threads, since merging things that weren't merged before creates no
+problems.
+
+This means the parenting logic is heuristic, but it's entirely in
+userspace, so the complexity burden doesn't live in seccomp which we,
+by design, want to keep as simple as possible.
+
+-Kees
+
+-- 
+Kees Cook
+Chrome OS Security
