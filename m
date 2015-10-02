@@ -1,145 +1,85 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [RFC v2 00/18] kthread: Use kthread worker API more widely
-Date: Fri, 2 Oct 2015 06:59:18 -0700
-Message-ID: <20151002135918.GN4043@linux.vnet.ibm.com>
-References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
- <20150930050833.GA4412@linux.vnet.ibm.com>
- <20151001155943.GE9603@pathway.suse.cz>
- <20151001170053.GH4043@linux.vnet.ibm.com>
- <20151002120014.GG9603@pathway.suse.cz>
-Reply-To: paulmck@linux.vnet.ibm.com
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20151002120014.GG9603@pathway.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Peter Jones <pjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH] Add support for EDD4 fields and types.
+Date: Fri,  2 Oct 2015 10:34:27 -0400
+Message-ID: <1443796467-13475-1-git-send-email-pjones@redhat.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matt Domsch <Matt_Domsch-8PEkshWhKlo@public.gmane.org>, Peter Jones <pjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 02, 2015 at 02:00:14PM +0200, Petr Mladek wrote:
-> On Thu 2015-10-01 10:00:53, Paul E. McKenney wrote:
-> > On Thu, Oct 01, 2015 at 05:59:43PM +0200, Petr Mladek wrote:
-> > > On Tue 2015-09-29 22:08:33, Paul E. McKenney wrote:
-> > > > On Mon, Sep 21, 2015 at 03:03:41PM +0200, Petr Mladek wrote:
-> > > > > My intention is to make it easier to manipulate kthreads. This RFC tries
-> > > > > to use the kthread worker API. It is based on comments from the
-> > > > > first attempt. See https://lkml.org/lkml/2015/7/28/648 and
-> > > > > the list of changes below.
-> > > > > 
-> > If the point of these patches was simply to test your API, and if you are
-> > not looking to get them upstream, we are OK.
-> 
-> I would like to eventually transform all kthreads into an API that
-> will better define the kthread workflow. It need not be this one,
-> though. I am still looking for a good API that will be acceptable[*]
-> 
-> One of the reason that I played with RCU, khugepaged, and ring buffer
-> kthreads is that they are maintained by core developers. I hope that
-> it will help to get better consensus.
-> 
-> 
-> > If you want them upstream, you need to explain to me why the patches
-> > help something.
-> 
-> As I said, RCU kthreads do not show a big win because they ignore
-> freezer, are not parked, never stop, do not handle signals. But the
-> change will allow to live patch them because they leave the main
-> function on a safe place.
-> 
-> The ring buffer benchmark is much better example. It reduced
-> the main function of the consumer kthread to two lines.
-> It removed some error prone code that modified task state,
-> called scheduler, handled kthread_should_stop. IMHO, the workflow
-> is better and more safe now.
-> 
-> I am going to prepare and send more examples where the change makes
-> the workflow easier.
-> 
-> 
-> > And also how the patches avoid breaking things.
-> 
-> I do my best to keep the original functionality. If we decide to use
-> the kthread worker API, my first attempt is much more safe, see
-> https://lkml.org/lkml/2015/7/28/650. It basically replaces the
-> top level for cycle with one self-queuing work. There are some more
-> instructions to go back to the cycle but they define a common
-> safe point that will be maintained on a single location for
-> all kthread workers.
-> 
-> 
-> [*] I have played with two APIs yet. They define a safe point
-> for freezing, parking, stopping, signal handling, live patching.
-> Also some non-trivial logic of the main cycle is maintained
-> on a single location.
-> 
-> Here are some details:
-> 
-> 1. iterant API
-> --------------
-> 
->   It allows to define three callbacks that are called the following
->   way:
-> 
->      init();
->      while (!stop)
-> 	func();
->      destroy();
-> 
->   See also https://lkml.org/lkml/2015/6/5/556.
-> 
->   Advantages:
->     + simple and clear workflow
->     + simple use
->     + simple conversion from the current kthreads API
-> 
->   Disadvantages:
->     + problematic solution of sleeping between events
->     + completely new API
-> 
-> 
-> 2. kthread worker API
-> ---------------------
-> 
->   It is similar to workqueues. The difference is that the works
->   have a dedicated kthread, so we could better control the resources,
->   e.g. priority, scheduling policy, ...
-> 
->   Advantages:
->     + already in use
->     + design proven to work (workqueues)
->     + nature way to wait for work in the common code (worker)
->       using event driven works and delayed works
->     + easy to convert to/from workqueues API
-> 
->   Disadvantages:
->     + more code needed to define, initialize, and queue works
->     + more complicated conversion from the current API
->       if we want to make it a clean way (event driven)
->     + might need more synchronization in some cases[**]
-> 
->   Questionable:
->     + event driven vs. procedural programming style
->     + allows more grained split of the functionality into
->       separate units (works) that might be queued
->       as needed
-> 
-> 
-> [**] wake_up() is nope for empty waitqueue. But queuing a work
->      into non-existing worker might cause a crash. Well, this is
->      usually already synchronized.
-> 
-> 
-> Any thoughts or preferences are highly appreciated.
+Back in 2010, t13 EDD version 4 added a couple of storage types, some
+host bridge types (that are pretty much all represented identically),
+and a couple of fields on existing storage types.
 
-For the RCU grace-period kthreads, I am not seeing the advantage of
-either API over the current approach.
+This change makes the driver expose those to userland.
 
-							Thanx, Paul
+Signed-off-by: Peter Jones <pjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+---
+ drivers/firmware/edd.c   | 15 ++++++++++-----
+ include/uapi/linux/edd.h |  6 +++++-
+ 2 files changed, 15 insertions(+), 6 deletions(-)
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/drivers/firmware/edd.c b/drivers/firmware/edd.c
+index e229576..5092b92 100644
+--- a/drivers/firmware/edd.c
++++ b/drivers/firmware/edd.c
+@@ -152,15 +152,15 @@ edd_show_host_bus(struct edd_device *edev, char *buf)
+ 			     info->params.interface_path.isa.base_address);
+ 	} else if (!strncmp(info->params.host_bus_type, "PCIX", 4) ||
+ 		   !strncmp(info->params.host_bus_type, "PCI", 3) ||
+-		   !strncmp(info->params.host_bus_type, "XPRS", 4)) {
++		   !strncmp(info->params.host_bus_type, "XPRS", 4) ||
++		   !strncmp(info->params.host_bus_type, "HTPT", 4)) {
+ 		p += scnprintf(p, left,
+ 			     "\t%02x:%02x.%d  channel: %u\n",
+ 			     info->params.interface_path.pci.bus,
+ 			     info->params.interface_path.pci.slot,
+ 			     info->params.interface_path.pci.function,
+ 			     info->params.interface_path.pci.channel);
+-	} else if (!strncmp(info->params.host_bus_type, "IBND", 4) ||
+-		   !strncmp(info->params.host_bus_type, "HTPT", 4)) {
++	} else if (!strncmp(info->params.host_bus_type, "IBND", 4)) {
+ 		p += scnprintf(p, left,
+ 			     "\tTBD: %llx\n",
+ 			     info->params.interface_path.ibnd.reserved);
+@@ -220,8 +220,13 @@ edd_show_interface(struct edd_device *edev, char *buf)
+ 		p += scnprintf(p, left, "\tidentity_tag: %x\n",
+ 			     info->params.device_path.raid.array_number);
+ 	} else if (!strncmp(info->params.interface_type, "SATA", 4)) {
+-		p += scnprintf(p, left, "\tdevice: %u\n",
+-			     info->params.device_path.sata.device);
++		p += scnprintf(p, left, "\tdevice: %u pmp: %u\n",
++			     info->params.device_path.sata.device,
++			     info->params.device_path.sata.pmp);
++	} else if (!strncmp(info->params.interface_type, "SAS", 4)) {
++		p += scnprintf(p, left, "\taddress: %llx lun: %llx\n",
++			       info->params.device_path.sas.address,
++			       info->params.device_path.sas.lun);
+ 	} else {
+ 		p += scnprintf(p, left, "\tunknown: %llx %llx\n",
+ 			     info->params.device_path.unknown.reserved1,
+diff --git a/include/uapi/linux/edd.h b/include/uapi/linux/edd.h
+index 89240a0..aff4573 100644
+--- a/include/uapi/linux/edd.h
++++ b/include/uapi/linux/edd.h
+@@ -155,12 +155,16 @@ struct edd_device_params {
+ 		} __attribute__ ((packed)) raid;
+ 		struct {
+ 			__u8 device;
+-			__u8 reserved1;
++			__u8 pmp;
+ 			__u16 reserved2;
+ 			__u32 reserved3;
+ 			__u64 reserved4;
+ 		} __attribute__ ((packed)) sata;
+ 		struct {
++			__u64 address;
++			__u64 lun;
++		} __attribute__ ((packed)) sas;
++		struct {
+ 			__u64 reserved1;
+ 			__u64 reserved2;
+ 		} __attribute__ ((packed)) unknown;
+-- 
+2.5.0
