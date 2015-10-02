@@ -1,109 +1,142 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: [PATCH v4 4/4] mm, procfs: Display VmAnon, VmFile and VmShm in /proc/pid/status
-Date: Fri,  2 Oct 2015 15:35:51 +0200
-Message-ID: <1443792951-13944-5-git-send-email-vbabka@suse.cz>
-References: <1443792951-13944-1-git-send-email-vbabka@suse.cz>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [RFC v2 00/18] kthread: Use kthread worker API more widely
+Date: Fri, 2 Oct 2015 06:59:18 -0700
+Message-ID: <20151002135918.GN4043@linux.vnet.ibm.com>
+References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
+ <20150930050833.GA4412@linux.vnet.ibm.com>
+ <20151001155943.GE9603@pathway.suse.cz>
+ <20151001170053.GH4043@linux.vnet.ibm.com>
+ <20151002120014.GG9603@pathway.suse.cz>
+Reply-To: paulmck@linux.vnet.ibm.com
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1443792951-13944-1-git-send-email-vbabka@suse.cz>
+Content-Disposition: inline
+In-Reply-To: <20151002120014.GG9603@pathway.suse.cz>
 Sender: owner-linux-mm@kvack.org
-To: linux-mm@kvack.org, Jerome Marchand <jmarchan@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Hugh Dickins <hughd@google.com>
-Cc: linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, Michal Hocko <mhocko@suse.cz>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Randy Dunlap <rdunlap@infradead.org>, linux-s390@vger.kernel.org, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Linux API <linux-api@vger.kernel.org>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Vlastimil Babka <vbabka@suse.cz>
+To: Petr Mladek <pmladek@suse.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Jerome Marchand <jmarchan@redhat.com>
+On Fri, Oct 02, 2015 at 02:00:14PM +0200, Petr Mladek wrote:
+> On Thu 2015-10-01 10:00:53, Paul E. McKenney wrote:
+> > On Thu, Oct 01, 2015 at 05:59:43PM +0200, Petr Mladek wrote:
+> > > On Tue 2015-09-29 22:08:33, Paul E. McKenney wrote:
+> > > > On Mon, Sep 21, 2015 at 03:03:41PM +0200, Petr Mladek wrote:
+> > > > > My intention is to make it easier to manipulate kthreads. This RFC tries
+> > > > > to use the kthread worker API. It is based on comments from the
+> > > > > first attempt. See https://lkml.org/lkml/2015/7/28/648 and
+> > > > > the list of changes below.
+> > > > > 
+> > If the point of these patches was simply to test your API, and if you are
+> > not looking to get them upstream, we are OK.
+> 
+> I would like to eventually transform all kthreads into an API that
+> will better define the kthread workflow. It need not be this one,
+> though. I am still looking for a good API that will be acceptable[*]
+> 
+> One of the reason that I played with RCU, khugepaged, and ring buffer
+> kthreads is that they are maintained by core developers. I hope that
+> it will help to get better consensus.
+> 
+> 
+> > If you want them upstream, you need to explain to me why the patches
+> > help something.
+> 
+> As I said, RCU kthreads do not show a big win because they ignore
+> freezer, are not parked, never stop, do not handle signals. But the
+> change will allow to live patch them because they leave the main
+> function on a safe place.
+> 
+> The ring buffer benchmark is much better example. It reduced
+> the main function of the consumer kthread to two lines.
+> It removed some error prone code that modified task state,
+> called scheduler, handled kthread_should_stop. IMHO, the workflow
+> is better and more safe now.
+> 
+> I am going to prepare and send more examples where the change makes
+> the workflow easier.
+> 
+> 
+> > And also how the patches avoid breaking things.
+> 
+> I do my best to keep the original functionality. If we decide to use
+> the kthread worker API, my first attempt is much more safe, see
+> https://lkml.org/lkml/2015/7/28/650. It basically replaces the
+> top level for cycle with one self-queuing work. There are some more
+> instructions to go back to the cycle but they define a common
+> safe point that will be maintained on a single location for
+> all kthread workers.
+> 
+> 
+> [*] I have played with two APIs yet. They define a safe point
+> for freezing, parking, stopping, signal handling, live patching.
+> Also some non-trivial logic of the main cycle is maintained
+> on a single location.
+> 
+> Here are some details:
+> 
+> 1. iterant API
+> --------------
+> 
+>   It allows to define three callbacks that are called the following
+>   way:
+> 
+>      init();
+>      while (!stop)
+> 	func();
+>      destroy();
+> 
+>   See also https://lkml.org/lkml/2015/6/5/556.
+> 
+>   Advantages:
+>     + simple and clear workflow
+>     + simple use
+>     + simple conversion from the current kthreads API
+> 
+>   Disadvantages:
+>     + problematic solution of sleeping between events
+>     + completely new API
+> 
+> 
+> 2. kthread worker API
+> ---------------------
+> 
+>   It is similar to workqueues. The difference is that the works
+>   have a dedicated kthread, so we could better control the resources,
+>   e.g. priority, scheduling policy, ...
+> 
+>   Advantages:
+>     + already in use
+>     + design proven to work (workqueues)
+>     + nature way to wait for work in the common code (worker)
+>       using event driven works and delayed works
+>     + easy to convert to/from workqueues API
+> 
+>   Disadvantages:
+>     + more code needed to define, initialize, and queue works
+>     + more complicated conversion from the current API
+>       if we want to make it a clean way (event driven)
+>     + might need more synchronization in some cases[**]
+> 
+>   Questionable:
+>     + event driven vs. procedural programming style
+>     + allows more grained split of the functionality into
+>       separate units (works) that might be queued
+>       as needed
+> 
+> 
+> [**] wake_up() is nope for empty waitqueue. But queuing a work
+>      into non-existing worker might cause a crash. Well, this is
+>      usually already synchronized.
+> 
+> 
+> Any thoughts or preferences are highly appreciated.
 
-It's currently inconvenient to retrieve MM_ANONPAGES value from status
-and statm files and there is no way to separate MM_FILEPAGES and
-MM_SHMEMPAGES. Add RssAnon, RssFile and RssShm lines in /proc/<pid>/status
-to solve these issues.
+For the RCU grace-period kthreads, I am not seeing the advantage of
+either API over the current approach.
 
-Signed-off-by: Jerome Marchand <jmarchan@redhat.com>
-Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
-Acked-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Acked-by: Michal Hocko <mhocko@suse.com>
----
- Documentation/filesystems/proc.txt | 10 +++++++++-
- fs/proc/task_mmu.c                 | 14 ++++++++++++--
- 2 files changed, 21 insertions(+), 3 deletions(-)
-
-diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
-index 82d3657..c887a42 100644
---- a/Documentation/filesystems/proc.txt
-+++ b/Documentation/filesystems/proc.txt
-@@ -169,6 +169,9 @@ For example, to get the status information of a process, all you have to do is
-   VmLck:         0 kB
-   VmHWM:       476 kB
-   VmRSS:       476 kB
-+  RssAnon      352 kB
-+  RssFile:     120 kB
-+  RssShm:        4 kB
-   VmData:      156 kB
-   VmStk:        88 kB
-   VmExe:        68 kB
-@@ -231,7 +234,12 @@ Table 1-2: Contents of the status files (as of 4.1)
-  VmSize                      total program size
-  VmLck                       locked memory size
-  VmHWM                       peak resident set size ("high water mark")
-- VmRSS                       size of memory portions
-+ VmRSS                       size of memory portions. It contains the three
-+                             following parts (VmRSS = RssAnon + RssFile + RssShm)
-+ RssAnon                     size of resident anonymous memory
-+ RssFile                     size of resident file mappings
-+ RssShm                      size of resident shmem memory (includes SysV shm,
-+                             mapping of tmpfs and shared anonymous mappings)
-  VmData                      size of data, stack, and text segments
-  VmStk                       size of data, stack, and text segments
-  VmExe                       size of text segment
-diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-index 9b9708e..7332afd 100644
---- a/fs/proc/task_mmu.c
-+++ b/fs/proc/task_mmu.c
-@@ -23,9 +23,13 @@
- 
- void task_mem(struct seq_file *m, struct mm_struct *mm)
- {
--	unsigned long data, text, lib, swap, ptes, pmds;
-+	unsigned long data, text, lib, swap, ptes, pmds, anon, file, shmem;
- 	unsigned long hiwater_vm, total_vm, hiwater_rss, total_rss;
- 
-+	anon = get_mm_counter(mm, MM_ANONPAGES);
-+	file = get_mm_counter(mm, MM_FILEPAGES);
-+	shmem = get_mm_counter(mm, MM_SHMEMPAGES);
-+
- 	/*
- 	 * Note: to minimize their overhead, mm maintains hiwater_vm and
- 	 * hiwater_rss only when about to *lower* total_vm or rss.  Any
-@@ -36,7 +40,7 @@ void task_mem(struct seq_file *m, struct mm_struct *mm)
- 	hiwater_vm = total_vm = mm->total_vm;
- 	if (hiwater_vm < mm->hiwater_vm)
- 		hiwater_vm = mm->hiwater_vm;
--	hiwater_rss = total_rss = get_mm_rss(mm);
-+	hiwater_rss = total_rss = anon + file + shmem;
- 	if (hiwater_rss < mm->hiwater_rss)
- 		hiwater_rss = mm->hiwater_rss;
- 
-@@ -53,6 +57,9 @@ void task_mem(struct seq_file *m, struct mm_struct *mm)
- 		"VmPin:\t%8lu kB\n"
- 		"VmHWM:\t%8lu kB\n"
- 		"VmRSS:\t%8lu kB\n"
-+		"RssAnon:\t%8lu kB\n"
-+		"RssFile:\t%8lu kB\n"
-+		"RssShm:\t%8lu kB\n"
- 		"VmData:\t%8lu kB\n"
- 		"VmStk:\t%8lu kB\n"
- 		"VmExe:\t%8lu kB\n"
-@@ -66,6 +73,9 @@ void task_mem(struct seq_file *m, struct mm_struct *mm)
- 		mm->pinned_vm << (PAGE_SHIFT-10),
- 		hiwater_rss << (PAGE_SHIFT-10),
- 		total_rss << (PAGE_SHIFT-10),
-+		anon << (PAGE_SHIFT-10),
-+		file << (PAGE_SHIFT-10),
-+		shmem << (PAGE_SHIFT-10),
- 		data << (PAGE_SHIFT-10),
- 		mm->stack_vm << (PAGE_SHIFT-10), text, lib,
- 		ptes >> 10,
--- 
-2.5.2
+							Thanx, Paul
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
