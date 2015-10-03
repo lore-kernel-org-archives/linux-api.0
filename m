@@ -1,48 +1,57 @@
-From: Yinghai Lu <yinghai@kernel.org>
-Subject: Re: [PATCH v4 3/5] PCI: Handle IORESOURCE_PCI_FIXED when sizing and
- assigning resources.
-Date: Fri, 2 Oct 2015 20:00:20 -0700
-Message-ID: <CAE9FiQVr9E4w80ZSeTgKKwbGQ=NQiReSRnfoGF3D3+3NXj-G3Q@mail.gmail.com>
+From: Yinghai Lu <yinghai-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v4 0/5] PCI: Add support for PCI Enhanced Allocation "BARs"
+Date: Fri, 2 Oct 2015 20:16:48 -0700
+Message-ID: <CAE9FiQXT0ux42gQ+DhpVv2K=BR4jC++LmNdCSLiK4Wy0BhL=HQ@mail.gmail.com>
 References: <1443825476-26880-1-git-send-email-ddaney.cavm@gmail.com>
-	<1443825476-26880-4-git-send-email-ddaney.cavm@gmail.com>
-	<CAE9FiQWnE3ucbjPKuXm5qhTGx7bYOBqnNoSNOMaJa_tEf3Z4=Q@mail.gmail.com>
-	<560F158C.4040303@caviumnetworks.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-pci-owner@vger.kernel.org>
-In-Reply-To: <560F158C.4040303@caviumnetworks.com>
-Sender: linux-pci-owner@vger.kernel.org
-To: David Daney <ddaney@caviumnetworks.com>
-Cc: David Daney <ddaney.cavm@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "linux-pci@vger.kernel.org" <linux-pci@vger.kernel.org>, Bjorn Helgaas <bhelgaas@google.com>, "Michael S. Tsirkin" <mst@redhat.com>, =?UTF-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5@gmail.com>, linux-api@vger.kernel.org, "Sean O. Stalley" <sean.stalley@intel.com>, Rajat Jain <rajatxjain@gmail.com>, "gong.chen@linux.intel.com" <gong.chen@linux.intel.com>, David Daney <david.daney@cavium.com>
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1443825476-26880-1-git-send-email-ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Daney <ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Sean O. Stalley" <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?UTF-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rajat Jain <rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org" <gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 2, 2015 at 4:38 PM, David Daney <ddaney@caviumnetworks.com> wrote:
-> On 10/02/2015 04:14 PM, Yinghai Lu wrote:
->>
->> https://patchwork.kernel.org/patch/7304371/
->> [v6,06/53] PCI: Claim fixed resource during remove/rescan path
+On Fri, Oct 2, 2015 at 3:37 PM, David Daney <ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wro=
+te:
+> From: David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
 >
+> PCI Enhanced Allocation is a new method of allocating MMIO & IO
+> resources for PCI devices & bridges. It can be used instead
+> of the traditional PCI method of using BARs.
 >
-> This one is interesting, but I don't think it will work.
+> EA entries are hardware-initialized to a fixed address.
+> Unlike BARs, regions described by EA are cannot be moved.
+> Because of this, only devices which are permanently connected to
+> the PCI bus can use EA. A removable PCI card must not use EA.
 >
-> pci_claim_resource() calls pci_find_parent_resource(), which will fail in
-> important use cases.
->
-> It is perfectly legal for a bridge provisioned by EA to not specify any
-> resources.  In this case we must walk up the bus tree until we find
-> something that contains the device resource, and can thus be a parent.
->
-> That is a big part of what my patch is doing.
+> The Enhanced Allocation ECN is publicly available here:
+> https://www.pcisig.com/specifications/conventional/ECN_Enhanced_Alloc=
+ation_23_Oct_2014_Final.pdf
 
-looks we need another resource flags for EA in addition to
-FIXED as it could out side of bridge MMIO range.
+Looks like the EA will support more than just fixed address later.
 
->
-> As for the merits of assigning fixed resources from the FINAL fixup, rather
-> than in __pci_bus_assign_resources(), I am unsure.
+"Enhanced Allocation is an optional Conventional PCI Capability that
+may be implemented by
+=46unctions to indicate fixed (non reprogrammable) I/O and memory range=
+s
+assigned to the
+=46unction, as well as supporting new resource =E2=80=9Ctype=E2=80=9D d=
+efinitions and
+future extensibility to also
+support reprogrammable allocations."
 
-usually __pci_bus_assign_resources() is used for unassigned one. so
-I don't want it mixed with request resource there.
+so I would prefer to think more to make frame configurable to leave
+space for that.
+
+Bjorn,
+
+I wonder if we need to revive the add-on resource support patchset
+that i suggested couple years ago,
+so we can extend it to support EA features.
+
+URL: https://lkml.org/lkml/2012/3/19/86
 
 Thanks
 
