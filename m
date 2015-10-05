@@ -1,108 +1,36 @@
-From: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
-Subject: [PATCH] timerfd: expose uapi header
-Date: Mon,  5 Oct 2015 16:53:39 +0200
-Message-ID: <1444056829-9118-1-git-send-email-gabriel@lse.epita.fr>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, stephen hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>, Masahiro Yamada <yamada.m-NAum8xwdG0+S7A1Ibl2khg@public.gmane.org>, Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH] timerfd: expose uapi header
+Date: Mon, 05 Oct 2015 16:57:21 +0200
+Message-ID: <5414742.dPp9ExW9xv@wuerfel>
+References: <1444056829-9118-1-git-send-email-gabriel@lse.epita.fr>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1444056829-9118-1-git-send-email-gabriel@lse.epita.fr>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Gabriel Laskar <gabriel@lse.epita.fr>
+Cc: Thomas Gleixner <tglx@linutronix.de>, "David S. Miller" <davem@davemloft.net>, Hans Verkuil <hans.verkuil@cisco.com>, "Michael S. Tsirkin" <mst@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, stephen hemminger <stephen@networkplumber.org>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, Masahiro Yamada <yamada.m@jp.panasonic.com>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-this patch expose the timerfd apis to the userland. It is already in
-glibc header sys/timerfd.h but not synchronised, and missing the ioctl
-number definition.
+On Monday 05 October 2015 16:53:39 Gabriel Laskar wrote:
+> this patch expose the timerfd apis to the userland. It is already in
+> glibc header sys/timerfd.h but not synchronised, and missing the ioctl
+> number definition.
+> 
+> Signed-off-by: Gabriel Laskar <gabriel@lse.epita.fr>
+> 
 
-Signed-off-by: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
----
- include/linux/timerfd.h      | 20 +-------------------
- include/uapi/linux/Kbuild    |  1 +
- include/uapi/linux/timerfd.h | 31 +++++++++++++++++++++++++++++++
- 3 files changed, 33 insertions(+), 19 deletions(-)
- create mode 100644 include/uapi/linux/timerfd.h
+What happens if you include both sys/timerfd.h and linux/timerfd.h then? 
 
-diff --git a/include/linux/timerfd.h b/include/linux/timerfd.h
-index bd36ce4..bab0b1a 100644
---- a/include/linux/timerfd.h
-+++ b/include/linux/timerfd.h
-@@ -8,23 +8,7 @@
- #ifndef _LINUX_TIMERFD_H
- #define _LINUX_TIMERFD_H
- 
--/* For O_CLOEXEC and O_NONBLOCK */
--#include <linux/fcntl.h>
--
--/* For _IO helpers */
--#include <linux/ioctl.h>
--
--/*
-- * CAREFUL: Check include/asm-generic/fcntl.h when defining
-- * new flags, since they might collide with O_* ones. We want
-- * to re-use O_* flags that couldn't possibly have a meaning
-- * from eventfd, in order to leave a free define-space for
-- * shared O_* flags.
-- */
--#define TFD_TIMER_ABSTIME (1 << 0)
--#define TFD_TIMER_CANCEL_ON_SET (1 << 1)
--#define TFD_CLOEXEC O_CLOEXEC
--#define TFD_NONBLOCK O_NONBLOCK
-+#include <uapi/linux/timerfd.h>
- 
- #define TFD_SHARED_FCNTL_FLAGS (TFD_CLOEXEC | TFD_NONBLOCK)
- /* Flags for timerfd_create.  */
-@@ -32,6 +16,4 @@
- /* Flags for timerfd_settime.  */
- #define TFD_SETTIME_FLAGS (TFD_TIMER_ABSTIME | TFD_TIMER_CANCEL_ON_SET)
- 
--#define TFD_IOC_SET_TICKS	_IOW('T', 0, u64)
--
- #endif /* _LINUX_TIMERFD_H */
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index f7b2db4..874ac3f 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -395,6 +395,7 @@ header-y += tcp_metrics.h
- header-y += telephony.h
- header-y += termios.h
- header-y += thermal.h
-+header-y += tiemrfd.h
- header-y += time.h
- header-y += times.h
- header-y += timex.h
-diff --git a/include/uapi/linux/timerfd.h b/include/uapi/linux/timerfd.h
-new file mode 100644
-index 0000000..69a2f92
---- /dev/null
-+++ b/include/uapi/linux/timerfd.h
-@@ -0,0 +1,31 @@
-+/*
-+ *  include/uapi/linux/timerfd.h
-+ *
-+ *  Copyright (C) 2007  Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>
-+ *
-+ */
-+
-+#ifndef _UAPI_LINUX_TIMERFD_H
-+#define _UAPI_LINUX_TIMERFD_H
-+
-+/* For O_CLOEXEC and O_NONBLOCK */
-+#include <linux/fcntl.h>
-+
-+/* For _IO helpers */
-+#include <linux/ioctl.h>
-+
-+/*
-+ * CAREFUL: Check include/asm-generic/fcntl.h when defining
-+ * new flags, since they might collide with O_* ones. We want
-+ * to re-use O_* flags that couldn't possibly have a meaning
-+ * from eventfd, in order to leave a free define-space for
-+ * shared O_* flags.
-+ */
-+#define TFD_TIMER_ABSTIME (1 << 0)
-+#define TFD_TIMER_CANCEL_ON_SET (1 << 1)
-+#define TFD_CLOEXEC O_CLOEXEC
-+#define TFD_NONBLOCK O_NONBLOCK
-+
-+#define TFD_IOC_SET_TICKS	_IOW('T', 0, u64)
-+
-+#endif /* _UAPI_LINUX_TIMERFD_H */
--- 
-2.6.0
+> header-y += telephony.h
+> header-y += termios.h
+> header-y += thermal.h
+>+header-y += tiemrfd.h
+> header-y += time.h
+> header-y += times.h
+> header-y += timex.h
+
+s/tiemrfd/timerfd/
+
+	Arnd
