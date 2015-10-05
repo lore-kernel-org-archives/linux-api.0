@@ -1,61 +1,56 @@
-From: "Sean O. Stalley" <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+From: "Sean O. Stalley" <sean.stalley@intel.com>
 Subject: Re: [PATCH v4 3/5] PCI: Handle IORESOURCE_PCI_FIXED when sizing and
  assigning resources.
-Date: Mon, 5 Oct 2015 15:23:51 -0700
-Message-ID: <20151005222351.GA4821@sean.stalley.intel.com>
+Date: Mon, 5 Oct 2015 15:44:12 -0700
+Message-ID: <20151005224412.GB4821@sean.stalley.intel.com>
 References: <1443825476-26880-1-git-send-email-ddaney.cavm@gmail.com>
  <1443825476-26880-4-git-send-email-ddaney.cavm@gmail.com>
+ <CAE9FiQWnE3ucbjPKuXm5qhTGx7bYOBqnNoSNOMaJa_tEf3Z4=Q@mail.gmail.com>
+ <560F158C.4040303@caviumnetworks.com>
+ <CAE9FiQVr9E4w80ZSeTgKKwbGQ=NQiReSRnfoGF3D3+3NXj-G3Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-pci-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1443825476-26880-4-git-send-email-ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Daney <ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?utf-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, yinghai-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <CAE9FiQVr9E4w80ZSeTgKKwbGQ=NQiReSRnfoGF3D3+3NXj-G3Q@mail.gmail.com>
+Sender: linux-pci-owner@vger.kernel.org
+To: Yinghai Lu <yinghai@kernel.org>
+Cc: David Daney <ddaney@caviumnetworks.com>, David Daney <ddaney.cavm@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "linux-pci@vger.kernel.org" <linux-pci@vger.kernel.org>, Bjorn Helgaas <bhelgaas@google.com>, "Michael S. Tsirkin" <mst@redhat.com>, =?utf-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5@gmail.com>, linux-api@vger.kernel.org, Rajat Jain <rajatxjain@gmail.com>, "gong.chen@linux.intel.com" <gong.chen@linux.intel.com>, David Daney <david.daney@cavium.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 02, 2015 at 03:37:54PM -0700, David Daney wrote:
+On Fri, Oct 02, 2015 at 08:00:20PM -0700, Yinghai Lu wrote:
+> On Fri, Oct 2, 2015 at 4:38 PM, David Daney <ddaney@caviumnetworks.com> wrote:
+> > On 10/02/2015 04:14 PM, Yinghai Lu wrote:
+> >>
+> >> https://patchwork.kernel.org/patch/7304371/
+> >> [v6,06/53] PCI: Claim fixed resource during remove/rescan path
+> >
+> >
+> > This one is interesting, but I don't think it will work.
+> >
+> > pci_claim_resource() calls pci_find_parent_resource(), which will fail in
+> > important use cases.
+> >
+> > It is perfectly legal for a bridge provisioned by EA to not specify any
+> > resources.  In this case we must walk up the bus tree until we find
+> > something that contains the device resource, and can thus be a parent.
+> >
+> > That is a big part of what my patch is doing.
+> 
+> looks we need another resource flags for EA in addition to
+> FIXED as it could out side of bridge MMIO range.
 
-...
+I think I get what you are saying, but let me check.
 
-> +/*
-> + * Try to assign any resources marked as IORESOURCE_PCI_FIXED, as they
-> + * are skipped by pbus_assign_resources_sorted().
-> + */
-> +static void pdev_assign_fixed_resources(struct pci_dev *dev)
-> +{
-> +	int i;
-> +
-> +	for (i = 0; i <  PCI_NUM_RESOURCES; i++) {
-> +		struct pci_bus *b;
-> +		struct resource *r = &dev->resource[i];
-> +
-> +		if (r->parent || !(r->flags & IORESOURCE_PCI_FIXED) ||
-> +		    !(r->flags & (IORESOURCE_IO | IORESOURCE_MEM)))
-> +			continue;
-> +
-> +		b = dev->bus;
-> +		while (b && !r->parent) {
-> +			assign_fixed_resource_on_bus(b, r);
-> +			b = b->parent;
-> +		}
-> +		if (!r->parent) {
-> +			/*
-> +			 * If that didn't work, try to fallback to the
-> +			 * ultimate parent.
-> +			 */
-> +			if (r->flags &  IORESOURCE_IO)
-> +				request_resource(&ioport_resource, r);
-> +			else
-> +				request_resource(&iomem_resource, r);
-> +		}
+If a bridge gets reconfigured, it needs to be able to tell if this resource is EA or not.
+If it is a fixed EA resource, it doesn't need to include it in its MMIO range.
+If it is fixed for some other reason,
+	we should make sure the bridges MMIO range includes the fixed region.
 
-I don't think this check is necessary.
-assign_fixed_resource_on_bus() should find these resources when it reaches the top bus.
-(since since the root bus contains these resources).
+You are suggesting that we should add a flag for EA, so if a bridge tries to move,
+the bridge knows weather or not the resource is EA,
+and therefore if it needs to worry about the resource when setting it's range?
 
-> +	}
-> +}
+Is that what you are trying to say?
 
 -Sean
