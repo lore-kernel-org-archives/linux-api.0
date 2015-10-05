@@ -1,102 +1,72 @@
-From: David Daney <ddaney@caviumnetworks.com>
-Subject: Re: [PATCH v4 5/5] PCI: Handle Enhanced Allocation (EA) capability
- for bridges
-Date: Mon, 5 Oct 2015 16:01:45 -0700
-Message-ID: <56130159.6000909@caviumnetworks.com>
+From: "Sean O. Stalley" <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v4 0/5] PCI: Add support for PCI Enhanced Allocation
+ "BARs"
+Date: Mon, 5 Oct 2015 16:05:05 -0700
+Message-ID: <20151005230505.GD4821@sean.stalley.intel.com>
 References: <1443825476-26880-1-git-send-email-ddaney.cavm@gmail.com>
- <1443825476-26880-6-git-send-email-ddaney.cavm@gmail.com>
- <20151005225405.GC4821@sean.stalley.intel.com>
+ <CAE9FiQXT0ux42gQ+DhpVv2K=BR4jC++LmNdCSLiK4Wy0BhL=HQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151005225405.GC4821@sean.stalley.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Sean O. Stalley" <sean.stalley@intel.com>, David Daney <ddaney.cavm@gmail.com>
-Cc: linux-kernel@vger.kernel.org, linux-pci@vger.kernel.org, Bjorn Helgaas <bhelgaas@google.com>, "Michael S. Tsirkin" <mst@redhat.com>, =?UTF-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5@gmail.com>, linux-api@vger.kernel.org, yinghai@kernel.org, rajatxjain@gmail.com, gong.chen@linux.intel.com, David Daney <david.daney@cavium.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAE9FiQXT0ux42gQ+DhpVv2K=BR4jC++LmNdCSLiK4Wy0BhL=HQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Yinghai Lu <yinghai-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: David Daney <ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?utf-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rajat Jain <rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org" <gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 10/05/2015 03:54 PM, Sean O. Stalley wrote:
-> On Fri, Oct 02, 2015 at 03:37:56PM -0700, David Daney wrote:
->> From: David Daney <david.daney@cavium.com>
->>
->> PCI bridges may have their properties be specified via EA entries.
->>
->> Extend the EA parser to extract the bridge resources, and modify
->> pci_read_bridge_{io,mmio,mmio_pref}() to use resources previously
->> obtained via EA.
->>
->> Save the offset to the EA capability in struct pci_dev, and use it to
->> easily find the EA bridge subordinate and secondary bus numbers.
->>
->> When assigning the bridge resources a couple of changes are required
->> so that the EA obtained IORESOURCE_PCI_FIXED are not resized, and
->> correctly linked into the resource tree.
->>
->> 1) In pbus_size_mem() do not attempt to resize the bridge resources if
->>     they are marked as IORESOURCE_PCI_FIXED.
->>
->> 2) In pci_bus_alloc_from_region()for IORESOURCE_PCI_FIXED resources, just
->>     try to request the resource as is, without attempting to resize it.
->>
->> Signed-off-by: David Daney <david.daney@cavium.com>
->> ---
->>   drivers/pci/bus.c       |  7 +++++++
->>   drivers/pci/pci.c       | 13 +++++++++++++
->>   drivers/pci/probe.c     | 31 +++++++++++++++++++++++++++++--
->>   drivers/pci/setup-bus.c |  3 +++
->>   include/linux/pci.h     |  1 +
->>   5 files changed, 53 insertions(+), 2 deletions(-)
->> @@ -801,8 +813,23 @@ int pci_scan_bridge(struct pci_bus *bus, struct pci_dev *dev, int max, int pass)
->>
->>   	pci_read_config_dword(dev, PCI_PRIMARY_BUS, &buses);
->>   	primary = buses & 0xFF;
->> -	secondary = (buses >> 8) & 0xFF;
->> -	subordinate = (buses >> 16) & 0xFF;
->> +	if (dev->ea_cap) {
->> +		u32 dw1;
->> +
->> +		pci_read_config_dword(dev, dev->ea_cap + 4, &dw1);
->> +		if (dw1 & 0xFF)
->> +			secondary = dw1 & 0xFF;
->> +		else
->> +			secondary = (buses >> 8) & 0xFF;
->> +
->> +		if ((dw1 >> 8) & 0xFF)
->> +			subordinate = (dw1 >> 8) & 0xFF;
->> +		else
->> +			subordinate = (buses >> 16) & 0xFF;
->> +	} else {
->> +		secondary = (buses >> 8) & 0xFF;
->> +		subordinate = (buses >> 16) & 0xFF;
->> +	}
->
-> We can refactor this to make it cleaner/more compact. from V3 review:
->
->
-> 	secondary = (buses >> 8) & 0xFF;
-> 	subordinate = (buses >> 16) & 0xFF;
-> 	if (dev->ea_cap) {
-> 		u32 sdw;
-> 		
-> 		pci_read_config_dword(dev, dev->ea_cap + 4, &sdw);
-> 		
-> 		if (sdw & 0xFF)
-> 			secondary = sdw & 0xFF;
-> 		
-> 		sdw >>= 8;
-> 		if (sdw & 0xFF)
-> 			subordinate = sdw & 0xFF;
-> 	}
->
+On Fri, Oct 02, 2015 at 08:16:48PM -0700, Yinghai Lu wrote:
+> On Fri, Oct 2, 2015 at 3:37 PM, David Daney <ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> w=
+rote:
+> > From: David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
+> >
+> > PCI Enhanced Allocation is a new method of allocating MMIO & IO
+> > resources for PCI devices & bridges. It can be used instead
+> > of the traditional PCI method of using BARs.
+> >
+> > EA entries are hardware-initialized to a fixed address.
+> > Unlike BARs, regions described by EA are cannot be moved.
+> > Because of this, only devices which are permanently connected to
+> > the PCI bus can use EA. A removable PCI card must not use EA.
+> >
+> > The Enhanced Allocation ECN is publicly available here:
+> > https://www.pcisig.com/specifications/conventional/ECN_Enhanced_All=
+ocation_23_Oct_2014_Final.pdf
+>=20
+> Looks like the EA will support more than just fixed address later.
+>=20
+> "Enhanced Allocation is an optional Conventional PCI Capability that
+> may be implemented by
+> Functions to indicate fixed (non reprogrammable) I/O and memory range=
+s
+> assigned to the
+> Function, as well as supporting new resource =E2=80=9Ctype=E2=80=9D d=
+efinitions and
+> future extensibility to also
+> support reprogrammable allocations."
+>=20
+> so I would prefer to think more to make frame configurable to leave
+> space for that.
+>=20
+> Bjorn,
+>=20
+> I wonder if we need to revive the add-on resource support patchset
+> that i suggested couple years ago,
+> so we can extend it to support EA features.
+>=20
+> URL: https://lkml.org/lkml/2012/3/19/86
+>=20
+> Thanks
+>=20
+> Yinghai
 
-Yes, that is cleaner.  I think I didn't read the comments on v3 closely 
-enough.  I will switch to doing it this way.
+This might be useful for fixed resources as well.
 
-Thanks,
-David Daney
+=46or some BEI values, EA allows for an arbitrary number of EA entries.
+=46or PF & VF resource ranges, it allows 2 ranges.
+(one below the 4GB boundry, and one above).
+I don't think the current pci_dev struct can handle that many resources=
+=2E
 
-
->
-> -Sean
->
+-Sean
