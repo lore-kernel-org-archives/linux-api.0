@@ -1,59 +1,235 @@
-From: Manjeet Pawar <manjeet.p-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH] ARM64:Fix MINSIGSTKSZ and SIGSTKSZ
-Date: Mon, 05 Oct 2015 15:26:09 +0530
-Message-ID: <1444038969-14112-1-git-send-email-manjeet.p@samsung.com>
+From: Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [PATCH v3 0/4] SysFS driver for QEMU fw_cfg device
+Date: Mon, 5 Oct 2015 11:00:36 +0100
+Message-ID: <20151005100035.GA19064@leverpostej>
+References: <1443914889-9619-1-git-send-email-somlo@cmu.edu>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1443914889-9619-1-git-send-email-somlo-D+Gtc/HYRWM@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: arnd-r2nGTMty4D4@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: pankaj.m-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, Manjeet Pawar <manjeet.p-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Akhilesh Kumar <akhilesh.k-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Rohit Thapliyal <r.thapliyal-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+To: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
+Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, paul-DWxLp4Yu+b8AvxtiuMwx3w@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, will.deacon-5wv7dgnIgG8@public.gmane.org, agross-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hanjun.guo-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, catalin.marinas-5wv7dgnIgG8@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernelnewbies-7JyXY6prKcjpASu1u0TL5ti2O/JbrIOy@public.gmane.org, matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jordan.l.justen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-MINSIGSTKSZ and SIGSTKSZ for ARM64 are not correctly set in latest kernel.
-This patch fixes this issue.
+On Sat, Oct 03, 2015 at 07:28:05PM -0400, Gabriel L. Somlo wrote:
+> From: "Gabriel Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
+> 
+> Allow access to QEMU firmware blobs, passed into the guest VM via
+> the fw_cfg device, through SysFS entries. Blob meta-data (e.g. name,
+> size, and fw_cfg key), as well as the raw binary blob data may be
+> accessed.
+> 
+> The SysFS access location is /sys/firmware/qemu_fw_cfg/... and was
+> selected based on overall similarity to the type of information
+> exposed under /sys/firmware/dmi/entries/...
 
-This issue is reported in LTP (testcase: sigaltstack02.c).
-Testcase failed when sigaltstack() called with stack size "MINSIGSTKSZ - 1"
-Since in Glibc-2.22, MINSIGSTKSZ is set to 5120 but in kernel
-it is set to 2048 so testcase gets failed.
+What is the intended use of these?
 
-Testcase Output:
-sigaltstack02 1  TPASS  :  stgaltstack() fails, Invalid Flag value,errno:22
-sigaltstack02 2  TFAIL  :  sigaltstack() returned 0, expected -1,errno:12
+Some of the keys in the example look like they'd come from other sources
+(e.g. the *-tables entries), while others look like kernel/bootloader
+configuration options (e.g. etc/boot-fail-wait, bootorder) -- I'm
+concerned about redundancy here.
 
-Reported Issue in Glibc Bugzilla:
-https://sourceware.org/bugzilla/show_bug.cgi?id=16850
+> NEW (since v2): Using ACPI to detect the presence and details of the
+> fw_cfg virtual hardware device.
+> 
+>     Device Tree has been suggested by Ard as a comment on v2 of this
+>     patch, but after some deliberation I decided to go with ACPI,
+>     since it's supported on both x86 and some (uefi-enabled) versions
+>     of aarch64. I really don't see how I'd reasonably use *both* DT (on
+>     ARM) *and* ACPI (on x86), and after all I'm mostly concerned with
+>     x86, but originally wanted to maximize portability (which is where
+>     the register probing in earlier versions came from).
 
-Bugfix in Glibc-2.22:
-https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blob;f=sysdeps/unix/
-sysv/linux/aarch64/bits/sigstack.h;h=8f2fb76e3e81734ef8a9cf9ae40daf4705
-f31c35;hb=b763f6ae859ecea70a5dacb8ad45c71d5f667e2e
+There are defintitely going to be arm64 VMs that don't use ACPI, so we
+may need DT support depending on what the intended use is.
 
-Signed-off-by: Akhilesh Kumar <akhilesh.k-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Signed-off-by: Manjeet Pawar <manjeet.p-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Signed-off-by: Rohit Thapliyal <r.thapliyal-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
----
- include/uapi/asm-generic/signal.h |    9 +++++++--
- 1 files changed, 7 insertions(+), 2 deletions(-)
+I'm not sure I follow what the difficulty with supporting DT in addition
+to ACPI is? It looks like all you need is a compatible string and a reg
+entry.
 
-diff --git a/include/uapi/asm-generic/signal.h b/include/uapi/asm-generic/signal.h
-index 9df61f1..2ffbe38 100644
---- a/include/uapi/asm-generic/signal.h
-+++ b/include/uapi/asm-generic/signal.h
-@@ -80,8 +80,13 @@
-  *	SA_RESTORER	0x04000000
-  */
- 
--#define MINSIGSTKSZ	2048
--#define SIGSTKSZ	8192
-+#ifdef CONFIG_ARM64
-+#define MINSIGSTKSZ 5120
-+#define SIGSTKSZ    16384
-+#else
-+#define MINSIGSTKSZ 2048
-+#define SIGSTKSZ    8192
-+#endif
- 
- #ifndef __ASSEMBLY__
- typedef struct {
--- 
-1.7.1
+Thanks,
+Mark.
+
+>     A patch set generating an ACPI device node for qemu's fw_cfg is
+>     currently under review on the qemu-devel list:
+> 
+>     http://lists.nongnu.org/archive/html/qemu-devel/2015-09/msg06946.html
+>     (sorry, gmane appears down at the moment...)
+> 
+> In consequence:
+> 
+> 	- Patch 1/4 is mostly the same as in v2;
+> 	- Patch 2/4 switches device initialization from register
+> 	  probing to using ACPI; this is a separate patch only to
+> 	  illustrate the transition from probing to ACPI, and I'm
+> 	  assuming it will end up squashed on top of patch 1/4 in
+> 	  the final version.
+> 
+> 	- Patches 3/4 and 4/4 add a "human-readable" directory
+> 	  hierarchy built from tokenizing fw_cfg blob names into
+> 	  '/'-separated components, with symlinks to each 'by_key'
+> 	  blob folder (same as in earlier versions). At Greg's
+> 	  suggestion I tried to build this folder hierarchy and
+> 	  leaf symlinks using udev rules, but so far I haven't been
+> 	  successful in figuring that out. If udev turns out to 
+> 	  be applicable after all, these two patches can be dropped
+> 	  from this series.
+> 
+> In other words, patches 1 and 2 give us the following "by_key" listing
+> of blobs contained in the qemu fw_cfg device (example pulled from a PC
+> qemu guest running Fedora 22), with the value of each "name" attribute
+> shown on the right:
+> 
+> $ tree /sys/firmware/qemu_fw_cfg/
+> /sys/firmware/qemu_fw_cfg/
+> |-- by_key
+> |   |-- 32
+> |   |   |-- key
+> |   |   |-- name			("etc/boot-fail-wait")
+> |   |   |-- raw
+> |   |   `-- size
+> |   |-- 33
+> |   |   |-- key
+> |   |   |-- name			("etc/smbios/smbios-tables")
+> |   |   |-- raw
+> |   |   `-- size
+> |   |-- 34
+> |   |   |-- key
+> |   |   |-- name			("etc/smbios/smbios-anchor")
+> |   |   |-- raw
+> |   |   `-- size
+> |   |-- 35
+> |   |   |-- key
+> |   |   |-- name			("etc/e820")
+> |   |   |-- raw
+> |   |   `-- size
+> |   |-- 36
+> |   |   |-- key
+> |   |   |-- name			("genroms/kvmvapic.bin")
+> |   |   |-- raw
+> |   |   `-- size
+> |   |-- 37
+> |   |   |-- key
+> |   |   |-- name			("etc/system-states")
+> |   |   |-- raw
+> |   |   `-- size
+> |   |-- 38
+> |   |   |-- key
+> |   |   |-- name			("etc/acpi/tables")
+> |   |   |-- raw
+> |   |   `-- size
+> |   |-- 39
+> |   |   |-- key
+> |   |   |-- name			("etc/table-loader")
+> |   |   |-- raw
+> |   |   `-- size
+> |   |-- 40
+> |   |   |-- key
+> |   |   |-- name			("etc/tpm/log")
+> |   |   |-- raw
+> |   |   `-- size
+> |   |-- 41
+> |   |   |-- key
+> |   |   |-- name			("etc/acpi/rsdp")
+> |   |   |-- raw
+> |   |   `-- size
+> |   `-- 42
+> |       |-- key
+> |       |-- name			("bootorder")
+> |       |-- raw
+> |       `-- size
+> |
+> ...
+> 
+> Additionally, patches 3 and 4 (mostly 4) give us the following
+> "user friendly" directory hierarchy as a complement to the above,
+> based on tokenizing each blob name into symlink-tipped (sub)directories:
+> 
+> ...
+> |-- by_name
+> |   |-- bootorder -> ../by_key/42
+> |   |-- etc
+> |   |   |-- acpi
+> |   |   |   |-- rsdp -> ../../../by_key/41
+> |   |   |   `-- tables -> ../../../by_key/38
+> |   |   |-- boot-fail-wait -> ../../by_key/32
+> |   |   |-- e820 -> ../../by_key/35
+> |   |   |-- smbios
+> |   |   |   |-- smbios-anchor -> ../../../by_key/34
+> |   |   |   `-- smbios-tables -> ../../../by_key/33
+> |   |   |-- system-states -> ../../by_key/37
+> |   |   |-- table-loader -> ../../by_key/39
+> |   |   `-- tpm
+> |   |       `-- log -> ../../../by_key/40
+> |   `-- genroms
+> |       `-- kvmvapic.bin -> ../../by_key/36
+> `-- rev
+> 
+> The trick is to figure out how to replace patches 3 and 4 with a
+> udev rule that would read the contents of each "name" attribute,
+> and build the "by_name" hierarchy and symlinks in userspace.
+> 
+> I tried:
+> 
+> $ udevadm info -a -p /sys/firmware/qemu_fw_cfg/by_key/33
+> 
+>   looking at device '/firmware/qemu_fw_cfg/by_key/33':
+>     KERNEL=="33"
+>     SUBSYSTEM==""
+>     DRIVER==""
+>     ATTR{key}=="33"
+>     ATTR{name}=="etc/smbios/smbios-tables"
+>     ATTR{size}=="388"
+> 
+>   looking at parent device '/firmware/qemu_fw_cfg/by_key':
+>     KERNELS=="by_key"
+>     SUBSYSTEMS==""
+>     DRIVERS==""
+> 
+>   looking at parent device '/firmware/qemu_fw_cfg':
+>     KERNELS=="qemu_fw_cfg"
+>     SUBSYSTEMS==""
+>     DRIVERS==""
+>     ATTRS{rev}=="1"
+> 
+> Then I tried creating a file, /usr/lib/udev/rules.d/99-qemu-fw-cfg.rules
+> containing the following line:
+> 
+> KERNELS=="qemu_fw_cfg", ATTRS{rev}=="1", SYMLINK="%p/%s{name}"
+> 
+> but NOTHING happens when I insert/remove qemu_fw_cfg.ko.  I also tried:
+> 
+> KERNELS=="qemu_fw_cfg", ATTRS{rev}=="1", PROGRAM="/foo %k"
+> 
+> where "/foo" basically did "echo $* > /tmp/bar", but no /tmp/bar file ever
+> showed up as a consequence of inserting/removing the qemu_fw_cfg.ko module.
+> 
+> At this point, I need help figuring out whether udev is really what would
+> get the second, user-friendly, "by_name" /sysfs directory tree created,
+> and how I'd go about that...
+> 
+> Thanks much,
+>   --Gabriel
+> 
+> Gabriel Somlo (4):
+>   firmware: introduce sysfs driver for QEMU's fw_cfg device
+>   firmware: use acpi to detect QEMU fw_cfg device for sysfs fw_cfg
+>     driver
+>   kobject: export kset_find_obj() for module use
+>   firmware: create directory hierarchy for sysfs fw_cfg entries
+> 
+>  .../ABI/testing/sysfs-firmware-qemu_fw_cfg         | 213 ++++++++
+>  drivers/firmware/Kconfig                           |  10 +
+>  drivers/firmware/Makefile                          |   1 +
+>  drivers/firmware/qemu_fw_cfg.c                     | 575 +++++++++++++++++++++
+>  lib/kobject.c                                      |   1 +
+>  5 files changed, 800 insertions(+)
+>  create mode 100644 Documentation/ABI/testing/sysfs-firmware-qemu_fw_cfg
+>  create mode 100644 drivers/firmware/qemu_fw_cfg.c
+> 
+> -- 
+> 2.4.3
+> 
