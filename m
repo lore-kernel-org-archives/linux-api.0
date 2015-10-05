@@ -1,7 +1,7 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v9 13/43] richacl: Update the file masks in chmod()
-Date: Mon,  5 Oct 2015 21:36:40 +0200
-Message-ID: <1444073830-21854-14-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v9 15/43] richacl: Create-time inheritance
+Date: Mon,  5 Oct 2015 21:36:42 +0200
+Message-ID: <1444073830-21854-16-git-send-email-agruenba@redhat.com>
 References: <1444073830-21854-1-git-send-email-agruenba@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1444073830-21854-1-git-send-email-agruenba@redhat.com>
@@ -9,129 +9,195 @@ Sender: linux-kernel-owner@vger.kernel.org
 To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Doing a chmod() sets the file mode, which includes the file permission
-bits.  When a file has a richacl, the permissions that the richacl
-grants need to be limited to what the new file permission bits allow.
+When a new file is created, it can inherit an acl from its parent
+directory; this is similar to how default acls work in POSIX (draft)
+ACLs.
 
-This is done by setting the file masks in the richacl to what the file
-permission bits map to.  The richacl access check algorithm takes the
-file masks into account, which ensures that the richacl cannot grant too
-many permissions.
-
-It is possible to explicitly add permissions to the file masks which go
-beyond what the file permission bits can grant (like the
-RICHACE_WRITE_ACL permission).  The POSIX.1 standard calls this an
-alternate file access control mechanism.  A subsequent chmod() would
-ensure that those permissions are disabled again.
+As with POSIX ACLs, if a file inherits an acl from its parent directory,
+the intersection between the create mode and the permissions granted by
+the inherited acl determines the file masks and file permission bits,
+and the umask is ignored.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 Reviewed-by: J. Bruce Fields <bfields@redhat.com>
 ---
- fs/richacl_base.c       | 41 +++++++++++++++++++++++++++++++++++++++++
- fs/richacl_inode.c      | 30 ++++++++++++++++++++++++++++++
+ fs/richacl_base.c       | 68 +++++++++++++++++++++++++++++++++++++++++++++
+ fs/richacl_inode.c      | 74 +++++++++++++++++++++++++++++++++++++++++++++++++
  include/linux/richacl.h |  2 ++
- 3 files changed, 73 insertions(+)
+ 3 files changed, 144 insertions(+)
 
 diff --git a/fs/richacl_base.c b/fs/richacl_base.c
-index 0585295..d4480e5 100644
+index 8832ba6..a1c675c 100644
 --- a/fs/richacl_base.c
 +++ b/fs/richacl_base.c
-@@ -339,3 +339,44 @@ restart:
- 	acl->a_flags &= ~(RICHACL_WRITE_THROUGH | RICHACL_MASKED);
+@@ -484,3 +484,71 @@ richacl_equiv_mode(const struct richacl *acl, mode_t *mode_p)
+ 	return 0;
  }
- EXPORT_SYMBOL_GPL(richacl_compute_max_masks);
+ EXPORT_SYMBOL_GPL(richacl_equiv_mode);
 +
 +/**
-+ * __richacl_chmod  -  update the file masks to reflect the new mode
-+ * @mode:	new file permission bits including the file type
++ * richacl_inherit  -  compute the inherited acl of a new file
++ * @dir_acl:	acl of the containing directory
++ * @isdir:	inherit by a directory or non-directory?
 + *
-+ * Return a copy of @acl where the file masks have been replaced by the file
-+ * masks corresponding to the file permission bits in @mode, or returns @acl
-+ * itself if the file masks are already up to date.  Takes over a reference
-+ * to @acl.
++ * A directory can have acl entries which files and/or directories created
++ * inside the directory will inherit.  This function computes the acl for such
++ * a new file.  If there is no inheritable acl, it will return %NULL.
 + */
 +struct richacl *
-+__richacl_chmod(struct richacl *acl, mode_t mode)
++richacl_inherit(const struct richacl *dir_acl, int isdir)
 +{
-+	unsigned int x = S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
-+	unsigned int owner_mask, group_mask, other_mask;
-+	struct richacl *clone;
++	const struct richace *dir_ace;
++	struct richacl *acl = NULL;
++	struct richace *ace;
++	int count = 0;
 +
-+	owner_mask = richacl_mode_to_mask(mode >> 6) & ~x;
-+	group_mask = richacl_mode_to_mask(mode >> 3) & ~x;
-+	other_mask = richacl_mode_to_mask(mode)      & ~x;
++	if (isdir) {
++		richacl_for_each_entry(dir_ace, dir_acl) {
++			if (!richace_is_inheritable(dir_ace))
++				continue;
++			count++;
++		}
++		if (!count)
++			return NULL;
++		acl = richacl_alloc(count, GFP_KERNEL);
++		if (!acl)
++			return ERR_PTR(-ENOMEM);
++		ace = acl->a_entries;
++		richacl_for_each_entry(dir_ace, dir_acl) {
++			if (!richace_is_inheritable(dir_ace))
++				continue;
++			richace_copy(ace, dir_ace);
++			if (dir_ace->e_flags & RICHACE_NO_PROPAGATE_INHERIT_ACE)
++				ace->e_flags &= ~RICHACE_INHERITANCE_FLAGS;
++			else if (!(dir_ace->e_flags & RICHACE_DIRECTORY_INHERIT_ACE))
++				ace->e_flags |= RICHACE_INHERIT_ONLY_ACE;
++			ace++;
++		}
++	} else {
++		richacl_for_each_entry(dir_ace, dir_acl) {
++			if (!(dir_ace->e_flags & RICHACE_FILE_INHERIT_ACE))
++				continue;
++			count++;
++		}
++		if (!count)
++			return NULL;
++		acl = richacl_alloc(count, GFP_KERNEL);
++		if (!acl)
++			return ERR_PTR(-ENOMEM);
++		ace = acl->a_entries;
++		richacl_for_each_entry(dir_ace, dir_acl) {
++			if (!(dir_ace->e_flags & RICHACE_FILE_INHERIT_ACE))
++				continue;
++			richace_copy(ace, dir_ace);
++			ace->e_flags &= ~RICHACE_INHERITANCE_FLAGS;
++			/*
++			 * RICHACE_DELETE_CHILD is meaningless for
++			 * non-directories, so clear it.
++			 */
++			ace->e_mask &= ~RICHACE_DELETE_CHILD;
++			ace++;
++		}
++	}
 +
-+	if (acl->a_owner_mask == owner_mask &&
-+	    acl->a_group_mask == group_mask &&
-+	    acl->a_other_mask == other_mask &&
-+	    (acl->a_flags & RICHACL_MASKED) &&
-+	    (acl->a_flags & RICHACL_WRITE_THROUGH))
-+		return acl;
-+
-+	clone = richacl_clone(acl, GFP_KERNEL);
-+	richacl_put(acl);
-+	if (!clone)
-+		return ERR_PTR(-ENOMEM);
-+
-+	clone->a_flags |= (RICHACL_WRITE_THROUGH | RICHACL_MASKED);
-+	clone->a_owner_mask = owner_mask;
-+	clone->a_group_mask = group_mask;
-+	clone->a_other_mask = other_mask;
-+
-+	return clone;
++	return acl;
 +}
-+EXPORT_SYMBOL_GPL(__richacl_chmod);
 diff --git a/fs/richacl_inode.c b/fs/richacl_inode.c
-index c0458db..e3cf9dd 100644
+index e3cf9dd..d58307a 100644
 --- a/fs/richacl_inode.c
 +++ b/fs/richacl_inode.c
-@@ -222,3 +222,33 @@ out:
- 	return denied ? -EACCES : 0;
+@@ -252,3 +252,77 @@ richacl_chmod(struct inode *inode, mode_t mode)
+ 	return retval;
  }
- EXPORT_SYMBOL_GPL(richacl_permission);
+ EXPORT_SYMBOL(richacl_chmod);
 +
-+/**
-+ * richacl_chmod  -  filesystem chmod helper
-+ * @inode:	inode whose file permission bits to change
-+ * @mode:	new file permission bits including the file type
++/*
++ * richacl_inherit_inode  -  compute inherited acl and file mode
++ * @dir_acl:	acl of the containing directory
++ * @inode:	inode of the new file (create mode in i_mode)
 + *
-+ * Helper for filesystems to use to perform a chmod on the richacl of an inode.
++ * The file permission bits in inode->i_mode must be set to the create mode by
++ * the caller.
++ *
++ * If there is an inheritable acl, the maximum permissions that the acl grants
++ * will be computed and permissions not granted by the acl will be removed from
++ * inode->i_mode.  If there is no inheritable acl, the umask will be applied
++ * instead.
 + */
-+int
-+richacl_chmod(struct inode *inode, mode_t mode)
++static struct richacl *
++richacl_inherit_inode(const struct richacl *dir_acl, struct inode *inode)
 +{
 +	struct richacl *acl;
-+	int retval;
++	mode_t mask;
 +
-+	if (S_ISLNK(mode))
-+		return -EOPNOTSUPP;
-+	if (!inode->i_op->set_richacl)
-+		return -EOPNOTSUPP;
-+	acl = get_richacl(inode);
-+	if (IS_ERR_OR_NULL(acl))
-+		return PTR_ERR(acl);
-+	acl = __richacl_chmod(acl, mode);
-+	if (IS_ERR(acl))
-+		return PTR_ERR(acl);
-+	retval = inode->i_op->set_richacl(inode, acl);
-+	richacl_put(acl);
++	acl = richacl_inherit(dir_acl, S_ISDIR(inode->i_mode));
++	if (acl) {
++		mask = inode->i_mode;
++		if (richacl_equiv_mode(acl, &mask) == 0) {
++			richacl_put(acl);
++			acl = NULL;
++		} else {
++			richacl_compute_max_masks(acl);
++			/*
++			 * Ensure that the acl will not grant any permissions
++			 * beyond the create mode.
++			 */
++			acl->a_flags |= RICHACL_MASKED;
++			acl->a_owner_mask &=
++				richacl_mode_to_mask(inode->i_mode >> 6);
++			acl->a_group_mask &=
++				richacl_mode_to_mask(inode->i_mode >> 3);
++			acl->a_other_mask &=
++				richacl_mode_to_mask(inode->i_mode);
++			mask = ~S_IRWXUGO | richacl_masks_to_mode(acl);
++		}
++	} else
++		mask = ~current_umask();
 +
-+	return retval;
++	inode->i_mode &= mask;
++	return acl;
 +}
-+EXPORT_SYMBOL(richacl_chmod);
++
++/**
++ * richacl_create  -  filesystem create helper
++ * @inode:	inode being created
++ * @dir:	containing directory
++ *
++ * Compute the inherited acl for a new inode.  If there is no acl to inherit,
++ * apply the umask.  Use when creating a new inode on a richacl enabled file
++ * system.
++ */
++struct richacl *richacl_create(struct inode *inode, struct inode *dir)
++{
++	struct richacl *dir_acl, *acl = NULL;
++
++	if (S_ISLNK(inode->i_mode))
++		return NULL;
++	dir_acl = get_richacl(dir);
++	if (dir_acl) {
++		if (IS_ERR(dir_acl))
++			return dir_acl;
++		acl = richacl_inherit_inode(dir_acl, inode);
++		richacl_put(dir_acl);
++	} else
++		inode->i_mode &= ~current_umask();
++	return acl;
++}
++EXPORT_SYMBOL_GPL(richacl_create);
 diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-index 9fe0b63..51e8314 100644
+index c715f82..36a4e0a 100644
 --- a/include/linux/richacl.h
 +++ b/include/linux/richacl.h
-@@ -303,8 +303,10 @@ extern int richacl_masks_to_mode(const struct richacl *);
- extern unsigned int richacl_mode_to_mask(mode_t);
- extern unsigned int richacl_want_to_mask(unsigned int);
+@@ -305,9 +305,11 @@ extern unsigned int richacl_want_to_mask(unsigned int);
  extern void richacl_compute_max_masks(struct richacl *);
-+extern struct richacl *__richacl_chmod(struct richacl *, mode_t);
+ extern struct richacl *__richacl_chmod(struct richacl *, mode_t);
+ extern int richacl_equiv_mode(const struct richacl *, mode_t *);
++extern struct richacl *richacl_inherit(const struct richacl *, int);
  
  /* richacl_inode.c */
  extern int richacl_permission(struct inode *, const struct richacl *, int);
-+extern int richacl_chmod(struct inode *, mode_t);
+ extern int richacl_chmod(struct inode *, mode_t);
++extern struct richacl *richacl_create(struct inode *, struct inode *);
  
  #endif /* __RICHACL_H */
 -- 
