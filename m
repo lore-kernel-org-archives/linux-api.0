@@ -1,35 +1,25 @@
-From: Gabriel Laskar <gabriel@lse.epita.fr>
-Subject: [PATCH 1/3] mce: change asm/ioctls.h for linux/ioctl.h
-Date: Mon,  5 Oct 2015 16:50:09 +0200
-Message-ID: <1444056611-7513-2-git-send-email-gabriel@lse.epita.fr>
-References: <1444056611-7513-1-git-send-email-gabriel@lse.epita.fr>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1444056611-7513-1-git-send-email-gabriel@lse.epita.fr>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, "maintainer:X86 ARCHITECTURE 32-BIT AND 64-BIT" <x86@kernel.org>, Gabriel Laskar <gabriel@lse.epita.fr>, Borislav Petkov <bp@suse.de>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Subject: Re: [PATCH 2/3] msm: remove unused header
+Date: Mon, 05 Oct 2015 16:53:34 +0200
+Message-ID: <35604818.sVGYbdf0th@wuerfel>
+References: <1444056611-7513-1-git-send-email-gabriel@lse.epita.fr> <1444056611-7513-3-git-send-email-gabriel@lse.epita.fr>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1444056611-7513-3-git-send-email-gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Gabriel Laskar <gabriel@lse.epita.fr>
----
+On Monday 05 October 2015 16:50:10 Gabriel Laskar wrote:
+> Signed-off-by: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+> ---
+>  include/linux/msm_mdp.h | 79 -------------------------------------------------
+>  1 file changed, 79 deletions(-)
+>  delete mode 100644 include/linux/msm_mdp.h
 
-asm/ioctls.h contains definition for termios, not just the _IO* macros
+Good catch!
 
- arch/x86/include/uapi/asm/mce.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/arch/x86/include/uapi/asm/mce.h b/arch/x86/include/uapi/asm/mce.h
-index 76880ed..03429da 100644
---- a/arch/x86/include/uapi/asm/mce.h
-+++ b/arch/x86/include/uapi/asm/mce.h
-@@ -2,7 +2,7 @@
- #define _UAPI_ASM_X86_MCE_H
- 
- #include <linux/types.h>
--#include <asm/ioctls.h>
-+#include <linux/ioctl.h>
- 
- /* Fields are zero when not available */
- struct mce {
--- 
-2.6.0
+Acked-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
