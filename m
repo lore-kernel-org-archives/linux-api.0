@@ -1,235 +1,27 @@
-From: Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>
-Subject: Re: [PATCH v3 0/4] SysFS driver for QEMU fw_cfg device
-Date: Mon, 5 Oct 2015 11:00:36 +0100
-Message-ID: <20151005100035.GA19064@leverpostej>
-References: <1443914889-9619-1-git-send-email-somlo@cmu.edu>
+From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Subject: Re: [PATCH 00/12] net: assorted y2038 changes
+Date: Mon, 05 Oct 2015 03:17:04 -0700 (PDT)
+Message-ID: <20151005.031704.767722033063704258.davem@davemloft.net>
+References: <1443612402-3000775-1-git-send-email-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1443914889-9619-1-git-send-email-somlo-D+Gtc/HYRWM@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
-Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, paul-DWxLp4Yu+b8AvxtiuMwx3w@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, will.deacon-5wv7dgnIgG8@public.gmane.org, agross-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hanjun.guo-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, catalin.marinas-5wv7dgnIgG8@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernelnewbies-7JyXY6prKcjpASu1u0TL5ti2O/JbrIOy@public.gmane.org, matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jordan.l.justen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-wireless-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1443612402-3000775-1-git-send-email-arnd-r2nGTMty4D4@public.gmane.org>
+Sender: linux-wireless-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: arnd-r2nGTMty4D4@public.gmane.org
+Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, coreteam-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, intel-wired-lan-qjLDD68F18P21nG7glBr7A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-atm-general-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-can-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-sctp-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-wireless-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Oct 03, 2015 at 07:28:05PM -0400, Gabriel L. Somlo wrote:
-> From: "Gabriel Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
-> 
-> Allow access to QEMU firmware blobs, passed into the guest VM via
-> the fw_cfg device, through SysFS entries. Blob meta-data (e.g. name,
-> size, and fw_cfg key), as well as the raw binary blob data may be
-> accessed.
-> 
-> The SysFS access location is /sys/firmware/qemu_fw_cfg/... and was
-> selected based on overall similarity to the type of information
-> exposed under /sys/firmware/dmi/entries/...
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Date: Wed, 30 Sep 2015 13:26:30 +0200
 
-What is the intended use of these?
+> This is a set of changes for network drivers and core code to
+> get rid of the use of time_t and derived data structures.
 
-Some of the keys in the example look like they'd come from other sources
-(e.g. the *-tables entries), while others look like kernel/bootloader
-configuration options (e.g. etc/boot-fail-wait, bootorder) -- I'm
-concerned about redundancy here.
-
-> NEW (since v2): Using ACPI to detect the presence and details of the
-> fw_cfg virtual hardware device.
-> 
->     Device Tree has been suggested by Ard as a comment on v2 of this
->     patch, but after some deliberation I decided to go with ACPI,
->     since it's supported on both x86 and some (uefi-enabled) versions
->     of aarch64. I really don't see how I'd reasonably use *both* DT (on
->     ARM) *and* ACPI (on x86), and after all I'm mostly concerned with
->     x86, but originally wanted to maximize portability (which is where
->     the register probing in earlier versions came from).
-
-There are defintitely going to be arm64 VMs that don't use ACPI, so we
-may need DT support depending on what the intended use is.
-
-I'm not sure I follow what the difficulty with supporting DT in addition
-to ACPI is? It looks like all you need is a compatible string and a reg
-entry.
-
-Thanks,
-Mark.
-
->     A patch set generating an ACPI device node for qemu's fw_cfg is
->     currently under review on the qemu-devel list:
-> 
->     http://lists.nongnu.org/archive/html/qemu-devel/2015-09/msg06946.html
->     (sorry, gmane appears down at the moment...)
-> 
-> In consequence:
-> 
-> 	- Patch 1/4 is mostly the same as in v2;
-> 	- Patch 2/4 switches device initialization from register
-> 	  probing to using ACPI; this is a separate patch only to
-> 	  illustrate the transition from probing to ACPI, and I'm
-> 	  assuming it will end up squashed on top of patch 1/4 in
-> 	  the final version.
-> 
-> 	- Patches 3/4 and 4/4 add a "human-readable" directory
-> 	  hierarchy built from tokenizing fw_cfg blob names into
-> 	  '/'-separated components, with symlinks to each 'by_key'
-> 	  blob folder (same as in earlier versions). At Greg's
-> 	  suggestion I tried to build this folder hierarchy and
-> 	  leaf symlinks using udev rules, but so far I haven't been
-> 	  successful in figuring that out. If udev turns out to 
-> 	  be applicable after all, these two patches can be dropped
-> 	  from this series.
-> 
-> In other words, patches 1 and 2 give us the following "by_key" listing
-> of blobs contained in the qemu fw_cfg device (example pulled from a PC
-> qemu guest running Fedora 22), with the value of each "name" attribute
-> shown on the right:
-> 
-> $ tree /sys/firmware/qemu_fw_cfg/
-> /sys/firmware/qemu_fw_cfg/
-> |-- by_key
-> |   |-- 32
-> |   |   |-- key
-> |   |   |-- name			("etc/boot-fail-wait")
-> |   |   |-- raw
-> |   |   `-- size
-> |   |-- 33
-> |   |   |-- key
-> |   |   |-- name			("etc/smbios/smbios-tables")
-> |   |   |-- raw
-> |   |   `-- size
-> |   |-- 34
-> |   |   |-- key
-> |   |   |-- name			("etc/smbios/smbios-anchor")
-> |   |   |-- raw
-> |   |   `-- size
-> |   |-- 35
-> |   |   |-- key
-> |   |   |-- name			("etc/e820")
-> |   |   |-- raw
-> |   |   `-- size
-> |   |-- 36
-> |   |   |-- key
-> |   |   |-- name			("genroms/kvmvapic.bin")
-> |   |   |-- raw
-> |   |   `-- size
-> |   |-- 37
-> |   |   |-- key
-> |   |   |-- name			("etc/system-states")
-> |   |   |-- raw
-> |   |   `-- size
-> |   |-- 38
-> |   |   |-- key
-> |   |   |-- name			("etc/acpi/tables")
-> |   |   |-- raw
-> |   |   `-- size
-> |   |-- 39
-> |   |   |-- key
-> |   |   |-- name			("etc/table-loader")
-> |   |   |-- raw
-> |   |   `-- size
-> |   |-- 40
-> |   |   |-- key
-> |   |   |-- name			("etc/tpm/log")
-> |   |   |-- raw
-> |   |   `-- size
-> |   |-- 41
-> |   |   |-- key
-> |   |   |-- name			("etc/acpi/rsdp")
-> |   |   |-- raw
-> |   |   `-- size
-> |   `-- 42
-> |       |-- key
-> |       |-- name			("bootorder")
-> |       |-- raw
-> |       `-- size
-> |
-> ...
-> 
-> Additionally, patches 3 and 4 (mostly 4) give us the following
-> "user friendly" directory hierarchy as a complement to the above,
-> based on tokenizing each blob name into symlink-tipped (sub)directories:
-> 
-> ...
-> |-- by_name
-> |   |-- bootorder -> ../by_key/42
-> |   |-- etc
-> |   |   |-- acpi
-> |   |   |   |-- rsdp -> ../../../by_key/41
-> |   |   |   `-- tables -> ../../../by_key/38
-> |   |   |-- boot-fail-wait -> ../../by_key/32
-> |   |   |-- e820 -> ../../by_key/35
-> |   |   |-- smbios
-> |   |   |   |-- smbios-anchor -> ../../../by_key/34
-> |   |   |   `-- smbios-tables -> ../../../by_key/33
-> |   |   |-- system-states -> ../../by_key/37
-> |   |   |-- table-loader -> ../../by_key/39
-> |   |   `-- tpm
-> |   |       `-- log -> ../../../by_key/40
-> |   `-- genroms
-> |       `-- kvmvapic.bin -> ../../by_key/36
-> `-- rev
-> 
-> The trick is to figure out how to replace patches 3 and 4 with a
-> udev rule that would read the contents of each "name" attribute,
-> and build the "by_name" hierarchy and symlinks in userspace.
-> 
-> I tried:
-> 
-> $ udevadm info -a -p /sys/firmware/qemu_fw_cfg/by_key/33
-> 
->   looking at device '/firmware/qemu_fw_cfg/by_key/33':
->     KERNEL=="33"
->     SUBSYSTEM==""
->     DRIVER==""
->     ATTR{key}=="33"
->     ATTR{name}=="etc/smbios/smbios-tables"
->     ATTR{size}=="388"
-> 
->   looking at parent device '/firmware/qemu_fw_cfg/by_key':
->     KERNELS=="by_key"
->     SUBSYSTEMS==""
->     DRIVERS==""
-> 
->   looking at parent device '/firmware/qemu_fw_cfg':
->     KERNELS=="qemu_fw_cfg"
->     SUBSYSTEMS==""
->     DRIVERS==""
->     ATTRS{rev}=="1"
-> 
-> Then I tried creating a file, /usr/lib/udev/rules.d/99-qemu-fw-cfg.rules
-> containing the following line:
-> 
-> KERNELS=="qemu_fw_cfg", ATTRS{rev}=="1", SYMLINK="%p/%s{name}"
-> 
-> but NOTHING happens when I insert/remove qemu_fw_cfg.ko.  I also tried:
-> 
-> KERNELS=="qemu_fw_cfg", ATTRS{rev}=="1", PROGRAM="/foo %k"
-> 
-> where "/foo" basically did "echo $* > /tmp/bar", but no /tmp/bar file ever
-> showed up as a consequence of inserting/removing the qemu_fw_cfg.ko module.
-> 
-> At this point, I need help figuring out whether udev is really what would
-> get the second, user-friendly, "by_name" /sysfs directory tree created,
-> and how I'd go about that...
-> 
-> Thanks much,
->   --Gabriel
-> 
-> Gabriel Somlo (4):
->   firmware: introduce sysfs driver for QEMU's fw_cfg device
->   firmware: use acpi to detect QEMU fw_cfg device for sysfs fw_cfg
->     driver
->   kobject: export kset_find_obj() for module use
->   firmware: create directory hierarchy for sysfs fw_cfg entries
-> 
->  .../ABI/testing/sysfs-firmware-qemu_fw_cfg         | 213 ++++++++
->  drivers/firmware/Kconfig                           |  10 +
->  drivers/firmware/Makefile                          |   1 +
->  drivers/firmware/qemu_fw_cfg.c                     | 575 +++++++++++++++++++++
->  lib/kobject.c                                      |   1 +
->  5 files changed, 800 insertions(+)
->  create mode 100644 Documentation/ABI/testing/sysfs-firmware-qemu_fw_cfg
->  create mode 100644 drivers/firmware/qemu_fw_cfg.c
-> 
-> -- 
-> 2.4.3
-> 
+Applied patches #1-#10 to net-next, using the updated v2 version of
+the zatm change.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-wireless" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
