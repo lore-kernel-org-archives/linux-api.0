@@ -1,67 +1,32 @@
-From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Subject: Re: [RFC v2 07/18] kthread: Allow to cancel kthread work
-Date: Mon, 5 Oct 2015 13:09:24 +0200
-Message-ID: <20151005110924.GL9603@pathway.suse.cz>
-References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
- <1442840639-6963-8-git-send-email-pmladek@suse.com>
- <20150922193513.GE17659@mtj.duckdns.org>
- <20150925112617.GA3122@pathway.suse.cz>
- <20150928170314.GF2589@mtj.duckdns.org>
- <20151002154336.GC3122@pathway.suse.cz>
- <20151002192453.GA7564@mtj.duckdns.org>
- <20151005100758.GK9603@pathway.suse.cz>
+From: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v3 0/4] SysFS driver for QEMU fw_cfg device
+Date: Mon, 5 Oct 2015 13:48:52 +0200
+Message-ID: <561263A4.2020304@redhat.com>
+References: <1443914889-9619-1-git-send-email-somlo@cmu.edu>
+ <20151005100035.GA19064@leverpostej>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20151005100758.GK9603-KsEp0d+Q8qECVLCxKZUutA@public.gmane.org>
+In-Reply-To: <20151005100035.GA19064@leverpostej>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
+Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, paul-DWxLp4Yu+b8AvxtiuMwx3w@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, will.deacon-5wv7dgnIgG8@public.gmane.org, agross-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hanjun.guo-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, catalin.marinas-5wv7dgnIgG8@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernelnewbies-7JyXY6prKcjpASu1u0TL5ti2O/JbrIOy@public.gmane.org, matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jordan.l.justen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon 2015-10-05 12:07:58, Petr Mladek wrote:
-> On Fri 2015-10-02 15:24:53, Tejun Heo wrote:
-> > Hello,
-> > 
-> > On Fri, Oct 02, 2015 at 05:43:36PM +0200, Petr Mladek wrote:
-> > > IMHO, we need both locks. The worker manipulates more works and
-> > > need its own lock. We need work-specific lock because the work
-> > > might be assigned to different workers and we need to be sure
-> > > that the operations are really serialized, e.g. queuing.
-> > 
-> > I don't think we need per-work lock.  Do we have such usage in kernel
-> > at all?  If you're worried, let the first queueing record the worker
-> > and trigger warning if someone tries to queue it anywhere else.  This
-> > doesn't need to be full-on general like workqueue.  Let's make
-> > reasonable trade-offs where possible.
-> 
-> I actually thought about this simplification as well. But then I am
-> in doubts about the API. It would make sense to assign the worker
-> when the work is being initialized and avoid the duplicate information
-> when the work is being queued:
-> 
-> 	init_kthread_work(work, fn, worker);
-> 	queue_work(work);
-> 
-> Or would you prefer to keep the API similar to workqueues even when
-> it makes less sense here?
-> 
-> 
-> In each case, we need a way to switch the worker if the old one
-> is destroyed and a new one is started later. We would need
-> something like:
-> 
-> 	reset_work(work, worker)
-> or
-> 	reinit_work(work, fn, worker)
 
-I was too fast. We could set "work->worker = NULL" when the work
-finishes and it is not pending. It means that it will be connected
-to the particular worker only when used. Then we could keep the
-workqueues-like API and do not need reset_work().
 
-I am going to play with this. I feel that it might work.
+On 05/10/2015 12:00, Mark Rutland wrote:
+> Some of the keys in the example look like they'd come from other sources
+> (e.g. the *-tables entries), while others look like kernel/bootloader
+> configuration options (e.g. etc/boot-fail-wait, bootorder) -- I'm
+> concerned about redundancy here.
 
-Best Regards,
-Petr
+The redundancy is because the firmware and the bootloader actually
+_consume_ these fw_cfg strings to produce the others (the ACPI tables,
+the kernel configuration options).
+
+On the other hand, hiding some strings just because they ought to have
+been consumed already makes little sense.
+
+Paolo
