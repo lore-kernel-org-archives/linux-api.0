@@ -1,131 +1,195 @@
-From: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+From: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Subject: Re: [PATCH] timerfd: expose uapi header
-Date: Mon, 05 Oct 2015 16:57:53 +0200
-Message-ID: <1444057073.3188.34.camel@opteya.com>
+Date: Mon, 5 Oct 2015 23:02:59 +0800
+Message-ID: <201510052343.QGQbZkMc%fengguang.wu@intel.com>
 References: <1444056829-9118-1-git-send-email-gabriel@lse.epita.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: multipart/mixed; boundary="huq684BweRXVnRxX"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
 In-Reply-To: <1444056829-9118-1-git-send-email-gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
-Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, stephen hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>, Masahiro Yamada <yamada.m-NAum8xwdG0+S7A1Ibl2khg@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: kbuild-all-JC7UmRfGjtg@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, stephen hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>, Masahiro Yamada <yamada.m-NAum8xwdG0+S7A1Ibl2khg@public.gmane.org>, Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
 
-Le lundi 05 octobre 2015 =C3=A0 16:53 +0200, Gabriel Laskar a =C3=A9cri=
-t :
-> this patch expose the timerfd apis to the userland. It is already in
-> glibc header sys/timerfd.h but not synchronised, and missing the
-> ioctl
-> number definition.
->=20
-> Signed-off-by: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
-> ---
->  include/linux/timerfd.h      | 20 +-------------------
->  include/uapi/linux/Kbuild    |  1 +
->  include/uapi/linux/timerfd.h | 31 +++++++++++++++++++++++++++++++
->  3 files changed, 33 insertions(+), 19 deletions(-)
->  create mode 100644 include/uapi/linux/timerfd.h
->=20
-> diff --git a/include/linux/timerfd.h b/include/linux/timerfd.h
-> index bd36ce4..bab0b1a 100644
-> --- a/include/linux/timerfd.h
-> +++ b/include/linux/timerfd.h
-> @@ -8,23 +8,7 @@
->  #ifndef _LINUX_TIMERFD_H
->  #define _LINUX_TIMERFD_H
-> =20
-> -/* For O_CLOEXEC and O_NONBLOCK */
-> -#include <linux/fcntl.h>
-> -
-> -/* For _IO helpers */
-> -#include <linux/ioctl.h>
-> -
-> -/*
-> - * CAREFUL: Check include/asm-generic/fcntl.h when defining
-> - * new flags, since they might collide with O_* ones. We want
-> - * to re-use O_* flags that couldn't possibly have a meaning
-> - * from eventfd, in order to leave a free define-space for
-> - * shared O_* flags.
-> - */
-> -#define TFD_TIMER_ABSTIME (1 << 0)
-> -#define TFD_TIMER_CANCEL_ON_SET (1 << 1)
-> -#define TFD_CLOEXEC O_CLOEXEC
-> -#define TFD_NONBLOCK O_NONBLOCK
-> +#include <uapi/linux/timerfd.h>
-> =20
->  #define TFD_SHARED_FCNTL_FLAGS (TFD_CLOEXEC | TFD_NONBLOCK)
->  /* Flags for timerfd_create.  */
-> @@ -32,6 +16,4 @@
->  /* Flags for timerfd_settime.  */
->  #define TFD_SETTIME_FLAGS (TFD_TIMER_ABSTIME |
-> TFD_TIMER_CANCEL_ON_SET)
-> =20
-> -#define TFD_IOC_SET_TICKS	_IOW('T', 0, u64)
-> -
->  #endif /* _LINUX_TIMERFD_H */
-> diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-> index f7b2db4..874ac3f 100644
-> --- a/include/uapi/linux/Kbuild
-> +++ b/include/uapi/linux/Kbuild
-> @@ -395,6 +395,7 @@ header-y +=3D tcp_metrics.h
->  header-y +=3D telephony.h
->  header-y +=3D termios.h
->  header-y +=3D thermal.h
-> +header-y +=3D tiemrfd.h
+--huq684BweRXVnRxX
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Typo here ...
+Hi Gabriel,
 
-That should have been caught with make headers_install
+[auto build test ERROR on v4.3-rc4 -- if it's inappropriate base, please ignore]
 
->  header-y +=3D time.h
->  header-y +=3D times.h
->  header-y +=3D timex.h
-> diff --git a/include/uapi/linux/timerfd.h
-> b/include/uapi/linux/timerfd.h
-> new file mode 100644
-> index 0000000..69a2f92
-> --- /dev/null
-> +++ b/include/uapi/linux/timerfd.h
-> @@ -0,0 +1,31 @@
-> +/*
-> + *  include/uapi/linux/timerfd.h
-> + *
-> + *  Copyright (C) 2007  Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>
-> + *
-> + */
-> +
-> +#ifndef _UAPI_LINUX_TIMERFD_H
-> +#define _UAPI_LINUX_TIMERFD_H
-> +
-> +/* For O_CLOEXEC and O_NONBLOCK */
-> +#include <linux/fcntl.h>
-> +
-> +/* For _IO helpers */
-> +#include <linux/ioctl.h>
-> +
-> +/*
-> + * CAREFUL: Check include/asm-generic/fcntl.h when defining
-> + * new flags, since they might collide with O_* ones. We want
-> + * to re-use O_* flags that couldn't possibly have a meaning
-> + * from eventfd, in order to leave a free define-space for
-> + * shared O_* flags.
-> + */
-> +#define TFD_TIMER_ABSTIME (1 << 0)
-> +#define TFD_TIMER_CANCEL_ON_SET (1 << 1)
-> +#define TFD_CLOEXEC O_CLOEXEC
-> +#define TFD_NONBLOCK O_NONBLOCK
-> +
-> +#define TFD_IOC_SET_TICKS	_IOW('T', 0, u64)
-> +
-> +#endif /* _UAPI_LINUX_TIMERFD_H */
+config: x86_64-allnoconfig (attached as .config)
+reproduce:
+        # save the attached .config to linux build tree
+        make ARCH=x86_64 
 
+All errors (new ones prefixed by >>):
 
-Regards.
+>> scripts/Makefile.headersinst:55: *** Missing UAPI file include/uapi/linux/tiemrfd.h.  Stop.
+--
+>> scripts/Makefile.headersinst:55: *** Missing UAPI file include/uapi/linux/tiemrfd.h.  Stop.
+   make[2]: *** [linux] Error 2
+   make[2]: Target '__headersinst' not remade because of errors.
+   make[1]: *** [headers_install] Error 2
+   make: *** [sub-make] Error 2
 
---=20
-Yann Droneaud
-OPTEYA
+vim +55 scripts/Makefile.headersinst
+
+d8ecc5cd Sam Ravnborg    2011-04-27  39  
+10b63956 David Howells   2012-10-02  40  srcdir        := $(srctree)/$(obj)
+10b63956 David Howells   2012-10-02  41  gendir        := $(objtree)/$(gen)
+10b63956 David Howells   2012-10-02  42  
+10b63956 David Howells   2012-10-02  43  oldsrcdir     := $(srctree)/$(subst /uapi,,$(obj))
+10b63956 David Howells   2012-10-02  44  
+7712401a Sam Ravnborg    2008-06-15  45  # all headers files for this dir
+d8ecc5cd Sam Ravnborg    2011-04-27  46  header-y      := $(filter-out $(generic-y), $(header-y))
+40f1d4c2 David Howells   2012-10-02  47  all-files     := $(header-y) $(genhdr-y) $(wrapper-files)
+10b63956 David Howells   2012-10-02  48  output-files  := $(addprefix $(installdir)/, $(all-files))
+10b63956 David Howells   2012-10-02  49  
+c0ff68f1 Nicolas Dichtel 2013-04-29  50  input-files1  := $(foreach hdr, $(header-y), \
+c4619bc6 Sam Ravnborg    2013-03-04  51  		   $(if $(wildcard $(srcdir)/$(hdr)), \
+c0ff68f1 Nicolas Dichtel 2013-04-29  52  			$(wildcard $(srcdir)/$(hdr))) \
+c0ff68f1 Nicolas Dichtel 2013-04-29  53  		   )
+c0ff68f1 Nicolas Dichtel 2013-04-29  54  input-files1-name := $(notdir $(input-files1))
+c0ff68f1 Nicolas Dichtel 2013-04-29 @55  input-files2  := $(foreach hdr, $(header-y), \
+c0ff68f1 Nicolas Dichtel 2013-04-29  56  		   $(if  $(wildcard $(srcdir)/$(hdr)),, \
+c4619bc6 Sam Ravnborg    2013-03-04  57  			$(if $(wildcard $(oldsrcdir)/$(hdr)), \
+10b63956 David Howells   2012-10-02  58  				$(wildcard $(oldsrcdir)/$(hdr)), \
+c4619bc6 Sam Ravnborg    2013-03-04  59  				$(error Missing UAPI file $(srcdir)/$(hdr))) \
+c0ff68f1 Nicolas Dichtel 2013-04-29  60  		   ))
+c0ff68f1 Nicolas Dichtel 2013-04-29  61  input-files2-name := $(notdir $(input-files2))
+c0ff68f1 Nicolas Dichtel 2013-04-29  62  input-files3  := $(foreach hdr, $(genhdr-y), \
+c4619bc6 Sam Ravnborg    2013-03-04  63  		   $(if	$(wildcard $(gendir)/$(hdr)), \
+
+:::::: The code at line 55 was first introduced by commit
+:::::: c0ff68f1611d6855a06d672989ad5cfea160a4eb kbuild: fix make headers_install when path is too long
+
+:::::: TO: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
+:::::: CC: Michal Marek <mmarek-AlSwsSmVLrQ@public.gmane.org>
+
+---
+0-DAY kernel test infrastructure                Open Source Technology Center
+https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
+
+--huq684BweRXVnRxX
+Content-Type: application/octet-stream
+Content-Disposition: attachment; filename=".config.gz"
+Content-Transfer-Encoding: base64
+
+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
+
+--huq684BweRXVnRxX--
