@@ -1,28 +1,105 @@
-From: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
-Subject: [PATCH 0/3] Small changes in headers
-Date: Mon,  5 Oct 2015 16:50:08 +0200
-Message-ID: <1444056611-7513-1-git-send-email-gabriel@lse.epita.fr>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+From: Gabriel Laskar <gabriel@lse.epita.fr>
+Subject: [PATCH 2/3] msm: remove unused header
+Date: Mon,  5 Oct 2015 16:50:10 +0200
+Message-ID: <1444056611-7513-3-git-send-email-gabriel@lse.epita.fr>
+References: <1444056611-7513-1-git-send-email-gabriel@lse.epita.fr>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1444056611-7513-1-git-send-email-gabriel@lse.epita.fr>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Gabriel Laskar <gabriel@lse.epita.fr>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 List-Id: linux-api@vger.kernel.org
 
-Here is some changes for ioctls numbers declared outside of uapi, or not used
-at all.
-
-
-Gabriel Laskar (3):
-  mce: change asm/ioctls.h for linux/ioctl.h
-  msm: remove unused header
-  falloc: expose ioctl numbers into uapi
-
- arch/x86/include/uapi/asm/mce.h |  2 +-
- include/linux/falloc.h          | 18 ----------
- include/linux/msm_mdp.h         | 79 -----------------------------------------
- include/uapi/linux/falloc.h     | 18 ++++++++++
- 4 files changed, 19 insertions(+), 98 deletions(-)
+Signed-off-by: Gabriel Laskar <gabriel@lse.epita.fr>
+---
+ include/linux/msm_mdp.h | 79 -------------------------------------------------
+ 1 file changed, 79 deletions(-)
  delete mode 100644 include/linux/msm_mdp.h
 
+diff --git a/include/linux/msm_mdp.h b/include/linux/msm_mdp.h
+deleted file mode 100644
+index fe722c1..0000000
+--- a/include/linux/msm_mdp.h
++++ /dev/null
+@@ -1,79 +0,0 @@
+-/* include/linux/msm_mdp.h
+- *
+- * Copyright (C) 2007 Google Incorporated
+- *
+- * This software is licensed under the terms of the GNU General Public
+- * License version 2, as published by the Free Software Foundation, and
+- * may be copied, distributed, and modified under those terms.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU General Public License for more details.
+- */
+-#ifndef _MSM_MDP_H_
+-#define _MSM_MDP_H_
+-
+-#include <linux/types.h>
+-
+-#define MSMFB_IOCTL_MAGIC 'm'
+-#define MSMFB_GRP_DISP          _IOW(MSMFB_IOCTL_MAGIC, 1, unsigned int)
+-#define MSMFB_BLIT              _IOW(MSMFB_IOCTL_MAGIC, 2, unsigned int)
+-
+-enum {
+-	MDP_RGB_565,		/* RGB 565 planar */
+-	MDP_XRGB_8888,		/* RGB 888 padded */
+-	MDP_Y_CBCR_H2V2,	/* Y and CbCr, pseudo planar w/ Cb is in MSB */
+-	MDP_ARGB_8888,		/* ARGB 888 */
+-	MDP_RGB_888,		/* RGB 888 planar */
+-	MDP_Y_CRCB_H2V2,	/* Y and CrCb, pseudo planar w/ Cr is in MSB */
+-	MDP_YCRYCB_H2V1,	/* YCrYCb interleave */
+-	MDP_Y_CRCB_H2V1,	/* Y and CrCb, pseduo planar w/ Cr is in MSB */
+-	MDP_Y_CBCR_H2V1,	/* Y and CrCb, pseduo planar w/ Cr is in MSB */
+-	MDP_RGBA_8888,		/* ARGB 888 */
+-	MDP_BGRA_8888,		/* ABGR 888 */
+-	MDP_RGBX_8888,		/* RGBX 888 */
+-	MDP_IMGTYPE_LIMIT	/* Non valid image type after this enum */
+-};
+-
+-enum {
+-	PMEM_IMG,
+-	FB_IMG,
+-};
+-
+-/* flag values */
+-#define MDP_ROT_NOP	0
+-#define MDP_FLIP_LR	0x1
+-#define MDP_FLIP_UD	0x2
+-#define MDP_ROT_90	0x4
+-#define MDP_ROT_180	(MDP_FLIP_UD|MDP_FLIP_LR)
+-#define MDP_ROT_270	(MDP_ROT_90|MDP_FLIP_UD|MDP_FLIP_LR)
+-#define MDP_DITHER	0x8
+-#define MDP_BLUR	0x10
+-
+-#define MDP_TRANSP_NOP	0xffffffff
+-#define MDP_ALPHA_NOP	0xff
+-
+-struct mdp_rect {
+-	u32 x, y, w, h;
+-};
+-
+-struct mdp_img {
+-	u32 width, height, format, offset;
+-	int memory_id;		/* the file descriptor */
+-};
+-
+-struct mdp_blit_req {
+-	struct mdp_img src;
+-	struct mdp_img dst;
+-	struct mdp_rect src_rect;
+-	struct mdp_rect dst_rect;
+-	u32 alpha, transp_mask, flags;
+-};
+-
+-struct mdp_blit_req_list {
+-	u32 count;
+-	struct mdp_blit_req req[];
+-};
+-
+-#endif /* _MSM_MDP_H_ */
 -- 
 2.6.0
