@@ -1,81 +1,52 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: Re: [PATCH net-next 1/2] bpf: enable non-root eBPF programs
-Date: Mon, 5 Oct 2015 14:32:29 -0700
-Message-ID: <5612EC6D.6080301@plumgrid.com>
-References: <1444078101-29060-1-git-send-email-ast@plumgrid.com>
- <1444078101-29060-2-git-send-email-ast@plumgrid.com>
- <CAGXu5j+s+3Z6=WKKNGouNijNKcrq5o_n9-BD85Nabd-_GtL+ag@mail.gmail.com>
- <5612E7C4.1010306@plumgrid.com>
- <CALCETrXUqYmwRhiFLnzWDrnVX5NdpoAnSggy8pxhzRPP86i5XA@mail.gmail.com>
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v8 00/41] Richacls
+Date: Tue, 6 Oct 2015 00:01:19 +0200
+Message-ID: <CAHc6FU5=nPVRRO+0MycYMMmp66hg7YvY4kMGy-D4JfgD3_FkLQ@mail.gmail.com>
+References: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
+	<20151004062313.GA20212@infradead.org>
+	<CAHc6FU53mXg1k0KCNkWEjxyuC8iAUgWh-A76qX=C3Yth+qEyuQ@mail.gmail.com>
+	<20151005211711.GB23350@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrXUqYmwRhiFLnzWDrnVX5NdpoAnSggy8pxhzRPP86i5XA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Kees Cook <keescook@chromium.org>, "David S. Miller" <davem@davemloft.net>, Ingo Molnar <mingo@kernel.org>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Eric Dumazet <edumazet@google.com>, Daniel Borkmann <daniel@iogearbox.net>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20151005211711.GB23350@dastard>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 10/5/15 2:16 PM, Andy Lutomirski wrote:
-> On Mon, Oct 5, 2015 at 2:12 PM, Alexei Starovoitov <ast@plumgrid.com> wrote:
->> On 10/5/15 2:00 PM, Kees Cook wrote:
->>>
->>> On Mon, Oct 5, 2015 at 1:48 PM, Alexei Starovoitov<ast@plumgrid.com>
->>> wrote:
->>>>
->>>>> In order to let unprivileged users load and execute eBPF programs
->>>>> teach verifier to prevent pointer leaks.
->>>>> Verifier will prevent
->>>>> - any arithmetic on pointers
->>>>>    (except R10+Imm which is used to compute stack addresses)
->>>>> - comparison of pointers
->>>>> - passing pointers to helper functions
->>>>> - indirectly passing pointers in stack to helper functions
->>>>> - returning pointer from bpf program
->>>>> - storing pointers into ctx or maps
->>>
->>> Does the arithmetic restriction include using a pointer as an index to
->>> a maps-based tail call? I'm still worried about pointer-based
->>> side-effects.
+On Mon, Oct 5, 2015 at 11:17 PM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
+> On Mon, Oct 05, 2015 at 08:45:40PM +0200, Andreas Gruenbacher wrote:
+>> On Sun, Oct 4, 2015 at 8:23 AM, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+>> > After that the wire up should be so trivial that you can wire up btrfs,
+>> > xfs and f2fs as well, which is important to make the feature mergeable.
 >>
->>
->> the array maps that hold FDs (BPF_MAP_TYPE_PROG_ARRAY and
->> BPF_MAP_TYPE_PERF_EVENT_ARRAY) don't have lookup/update accessors
->> from the program side, so programs cannot see or manipulate
->> those pointers.
->> For the former only bpf_tail_call() is allowed that takes integer
->> index and jumps to it. And the latter map accessed with
->> bpf_perf_event_read() that also takes index only (this helper
->> is not available to socket filters anyway).
->> Also bpf_tail_call() can only jump to the program of the same type.
->> So I'm quite certain it's safe.
+>> Why would the patch queue become more mergeable by having support for
+>> more filesystems in it? The filesystem specific code really isn't all
+>> that interesting.
 >
-> At some point there will be an unprivileged way to create a map,
-> though, and we don't want to let pointers get poked into the map.
+> The hardest part for the filesystem support is the on-disk feature
+> flag that needs to be set. The kernel part of that is easy, but it's
+> an on-disk format change and so there's also all the userspace side
+> for mkfs, fsck, debug tools, etc, that also need to be able to parse
+> and understand it. So while the xattr code can be made much more
+> generic, there's a bunch of filesystem specific code that needs to
+> go into multiple different repositories and userspace packages for
+> this.
 
-yes. exactly. With these two patches non-root can create a map
-against memlock user limit and have a program store bytes into it
-(like data from network packet), but it cannot store pointers into it.
-That's covered by test "unpriv: write pointer into map elem value"
-I've added new tests for all cases that can 'leak pointer':
-  unpriv: return pointer OK
-  unpriv: add const to pointer OK
-  unpriv: add pointer to pointer OK
-  unpriv: neg pointer OK
-  unpriv: cmp pointer with const OK
-  unpriv: cmp pointer with pointer OK
-  unpriv: pass pointer to printk OK
-  unpriv: pass pointer to helper function OK
-  unpriv: indirectly pass pointer on stack to helper function OK
-  unpriv: mangle pointer on stack 1 OK
-  unpriv: mangle pointer on stack 2 OK
-  unpriv: read pointer from stack in small chunks OK
-  unpriv: write pointer into ctx OK
-  unpriv: write pointer into map elem value OK
-  unpriv: partial copy of pointer OK
+Yes.
 
-the most interesting one is 'indirectly pass pointer'.
-It checks the case where user stores a pointer into a stack
-and then uses that stack region either as a key for lookup or
-as part of format string for printk.
+> Andreas, I also can't remember if any xfstests have been written for
+> these ACLs? That would certainly help make sure all these
+> filesystems have equivalent behaviour...
+
+There's a reasonable amount of tests in the richacl user-space package
+which are shell based, with a few small C helpers. We could move those
+into xfstests eventually; now seems a bit early to me.
+
+Thanks,
+Andreas
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
