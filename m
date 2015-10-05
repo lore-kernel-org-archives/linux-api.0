@@ -1,76 +1,52 @@
-From: Mark Rutland <mark.rutland@arm.com>
+From: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
 Subject: Re: [PATCH v3 0/4] SysFS driver for QEMU fw_cfg device
-Date: Mon, 5 Oct 2015 14:05:17 +0100
-Message-ID: <20151005130516.GM19064@leverpostej>
+Date: Mon, 5 Oct 2015 09:13:22 -0400
+Message-ID: <20151005131322.GH1977@HEDWIG.INI.CMU.EDU>
 References: <1443914889-9619-1-git-send-email-somlo@cmu.edu>
  <20151005100035.GA19064@leverpostej>
  <20151005124042.GF1977@HEDWIG.INI.CMU.EDU>
+ <CAFEAcA9qVSsmPW_s3wRSBykGYWU-2PS2ZNCagnoe0FGCg8mqzQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20151005124042.GF1977@HEDWIG.INI.CMU.EDU>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Gabriel L. Somlo" <somlo@cmu.edu>
-Cc: gregkh@linuxfoundation.org, paul@pwsan.com, galak@codeaurora.org, will.deacon@arm.com, agross@codeaurora.org, zajec5@gmail.com, hanjun.guo@linaro.org, catalin.marinas@arm.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, kernelnewbies@kernelnewbies.org, matt.fleming@intel.com, lersek@redhat.com, jordan.l.justen@intel.com, mst@redhat.com, peter.maydell@linaro.org, leif.lindholm@linaro.org, ard.biesheuvel@linaro.org, pbonzini@redhat.com, kraxel@redhat.com, qemu-devel@nongnu.org
+In-Reply-To: <CAFEAcA9qVSsmPW_s3wRSBykGYWU-2PS2ZNCagnoe0FGCg8mqzQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Maydell <peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, paul-DWxLp4Yu+b8AvxtiuMwx3w@public.gmane.org, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, agross-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Hanjun Guo <hanjun.guo-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml - Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kernelnewbies-7JyXY6prKcjpASu1u0TL5ti2O/JbrIOy@public.gmane.org, Matt Fleming <matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Laszlo Ersek <lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jordan Justen <jordan.l.justen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Leif Lindholm <leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, QEMU Developers <qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-> > I'm not sure I follow what the difficulty with supporting DT in addition
-> > to ACPI is? It looks like all you need is a compatible string and a reg
-> > entry.
+On Mon, Oct 05, 2015 at 01:50:47PM +0100, Peter Maydell wrote:
+> On 5 October 2015 at 13:40, Gabriel L. Somlo <somlo-D+Gtc/HYRWM@public.gmane.org> wrote:
+> > In addition, Michael's comment earlier in the thread suggests that
+> > even my current acpi version isn't sufficiently "orthodox" w.r.t.
+> > ACPI, and I should be providing the hardware access routine as
+> > an ACPI/AML routine, to avoid race conditions with the rest of ACPI,
+> > and for encapsulation. I.e. it's even rude to use the fw_cfg node's
+> > ACPI _CRS method (the part where I'd be treating it like a DT stand-in
+> > only to query fw_cfg's hardware specifics).
 > 
-> Bearing in mind that I have almost no experience with arm:
-> 
-> I started out by probing all possible port-io and mmio locations where
-> fw_cfg registers might have been found, from a "classic" module_init
-> method.
-> 
-> Arm has DT, which as far as I understand will answer the following two
-> questions: 1. Do I have fw_cfg ? 2. If yes, what address range does it use ?
-> So that I could continue using a classic module_init, but won't need
-> to probe for the device.
-> 
-> PC (my primary architecture, the one I actually care about) does not
-> have DT. If I want to share the same code, I can't probe, so if I try
-> DT and don't find fw_cfg there (or somehow DT is no-op-ed out because
-> I'm on a PC guest), I could somehow look it up in ACPI the same way
-> (i.e., use ACPI as sort of a stand-in for DT).
+> If you want to try to support "firmware might also be reading
+> fw_cfg at the same time as the kernel" this is a (painful)
+> problem regardless of how the kernel figures out whether a
+> fw_cfg device is present. I had assumed that one of the design
+> assumptions of this series was that firmware would only
+> read the fw_cfg before booting the guest kernel and never touch
+> it afterwards. If it might touch it later then letting the
+> guest kernel also mess with fw_cfg seems like a really bad idea.
 
-I'd imagine that it's simple to have something in your probe path like:
+I don't know of any case where firmware and kernel might race each
+other to access fw_cfg.
 
-if (pdev->dev.of_node)
-	parse_dt(pdev);
-else
-	parse_acpi(pdev);
+The issue AFAICT is whether it's safe (future-proof) to rely on
+parsing _CRS for the fw_cfg i/o access information, or whether
+such logic could be rendered obsolete by potential future updates
+to fw_cfg's _CRS. If I "outsource" the fw_cfg_dump_blob_by_key()
+functionality entirely to an ACPI method, my kernel driver won't
+have to worry about keeping up with said future updates.
 
-> But all ACPI-enabled drivers I could find use dedicated macros (i.e.
-> no more classic module_init() and module_exit(), but rather
-> module_acpi_driver() with .add and .remove methods on an acpi_driver
-> object, etc.) Not sure how I'd glue DT back into something like that.
-
-You don't have to use those macros, and can simply use the classic
-module_{init,exit} functions, calling the requisite acpi driver
-registration functions at module {init,exit} time.
-
-> In addition, Michael's comment earlier in the thread suggests that
-> even my current acpi version isn't sufficiently "orthodox" w.r.t.
-> ACPI, and I should be providing the hardware access routine as
-> an ACPI/AML routine, to avoid race conditions with the rest of ACPI,
-> and for encapsulation. I.e. it's even rude to use the fw_cfg node's
-> ACPI _CRS method (the part where I'd be treating it like a DT stand-in
-> only to query fw_cfg's hardware specifics).
-
-As Peter stated, this sounds very much like it rules out sharing the
-interface with FW generally (and is certainly scary).
-
-> So far, all the information I've been able to pull together points
-> away from a dual DT + ACPI all-in-one solution for fw_cfg. If you know
-> of an example where that's done in an acceptable way, please let
-> me know so I can use it for inspiration...
-
-I'm not immediately aware, but I would imagine you could search for
-files that had both an of_match_table and a acpi_bus_register_driver
-call.
+On the down-side, that means the kernel driver will be ACPI or
+nothing (but I'm OK with that, at my curent level of understanding :)
 
 Thanks,
-Mark.
+--Gabriel
