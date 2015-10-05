@@ -1,7 +1,7 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v9 32/43] nfsd: Add richacl support
-Date: Mon,  5 Oct 2015 21:36:59 +0200
-Message-ID: <1444073830-21854-33-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v9 29/43] richacl: Create richacl from mode values
+Date: Mon,  5 Oct 2015 21:36:56 +0200
+Message-ID: <1444073830-21854-30-git-send-email-agruenba@redhat.com>
 References: <1444073830-21854-1-git-send-email-agruenba@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1444073830-21854-1-git-send-email-agruenba@redhat.com>
@@ -9,330 +9,128 @@ Sender: linux-kernel-owner@vger.kernel.org
 To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On file systems with richacls enabled, get and set richacls directly
-instead of converting from / to posix acls.
+A file can have "no acl" in the sense that only the file mode permission
+bits determine access.  In that case, the getxattr system call fails with
+errno == ENODATA (No such attribute).
+
+Over the NFSv4 protocol, a file always has an acl, and we convert the file
+mode permission bits into an equivalent acl with richacl_from_mode.  Such
+"trivial" acls can be converted back to a file mode with
+richacl_equiv_mode.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
-Acked-by: J. Bruce Fields <bfields@redhat.com>
+Reviewed-by: J. Bruce Fields <bfields@redhat.com>
 ---
- fs/nfsd/acl.h      |   3 +-
- fs/nfsd/nfs4acl.c  | 124 ++++++++++++++++++++++++++++++++++++++---------------
- fs/nfsd/nfs4proc.c |   2 +-
- fs/nfsd/nfs4xdr.c  |  34 +++++++++++----
- 4 files changed, 117 insertions(+), 46 deletions(-)
+ fs/richacl_compat.c     | 88 +++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/richacl.h |  1 +
+ 2 files changed, 89 insertions(+)
 
-diff --git a/fs/nfsd/acl.h b/fs/nfsd/acl.h
-index 1c5deb5..d73c664 100644
---- a/fs/nfsd/acl.h
-+++ b/fs/nfsd/acl.h
-@@ -53,8 +53,7 @@ __be32 nfsd4_decode_ace_who(struct richace *ace, struct svc_rqst *rqstp,
- __be32 nfsd4_encode_ace_who(struct xdr_stream *xdr, struct svc_rqst *rqstp,
- 			    struct richace *ace);
- 
--int nfsd4_get_acl(struct svc_rqst *rqstp, struct dentry *dentry,
--		  struct richacl **acl);
-+struct richacl *nfsd4_get_acl(struct svc_rqst *rqstp, struct dentry *dentry);
- __be32 nfsd4_set_acl(struct svc_rqst *rqstp, struct svc_fh *fhp,
- 		     struct richacl *acl);
- 
-diff --git a/fs/nfsd/nfs4acl.c b/fs/nfsd/nfs4acl.c
-index 6d3bb72..f017a76 100644
---- a/fs/nfsd/nfs4acl.c
-+++ b/fs/nfsd/nfs4acl.c
-@@ -40,6 +40,8 @@
- #include <linux/nfs_fs.h>
- #include <linux/richacl_compat.h>
- #include <linux/nfs4acl.h>
-+#include <linux/xattr.h>
-+#include <linux/richacl_xattr.h>
- 
- #include "nfsfh.h"
- #include "nfsd.h"
-@@ -129,32 +131,28 @@ static short ace2type(struct richace *);
- static void _posix_to_richacl_one(struct posix_acl *, struct richacl_alloc *,
- 				unsigned int);
- 
--int
--nfsd4_get_acl(struct svc_rqst *rqstp, struct dentry *dentry,
--	      struct richacl **acl)
-+static struct richacl *
-+nfsd4_get_posix_acl(struct svc_rqst *rqstp, struct dentry *dentry)
- {
- 	struct inode *inode = d_inode(dentry);
--	int error = 0;
- 	struct posix_acl *pacl = NULL, *dpacl = NULL;
- 	struct richacl_alloc alloc;
- 	unsigned int flags = 0;
- 	int count;
- 
- 	pacl = get_acl(inode, ACL_TYPE_ACCESS);
--	if (!pacl)
--		pacl = posix_acl_from_mode(inode->i_mode, GFP_KERNEL);
--
--	if (IS_ERR(pacl))
--		return PTR_ERR(pacl);
-+	if (IS_ERR_OR_NULL(pacl))
-+		return (void *)pacl;
- 
--	/* allocate for worst case: one (deny, allow) pair each: */
-+	/* Allocate for worst case: one (deny, allow) pair each.  The resulting
-+	   acl will be released shortly and won't be cached. */
- 	count = 2 * pacl->a_count;
- 
- 	if (S_ISDIR(inode->i_mode)) {
- 		flags = FLAG_DIRECTORY;
- 		dpacl = get_acl(inode, ACL_TYPE_DEFAULT);
- 		if (IS_ERR(dpacl)) {
--			error = PTR_ERR(dpacl);
-+			alloc.acl = (void *)dpacl;
- 			goto rel_pacl;
- 		}
- 
-@@ -163,7 +161,7 @@ nfsd4_get_acl(struct svc_rqst *rqstp, struct dentry *dentry,
- 	}
- 
- 	if (!richacl_prepare(&alloc, count)) {
--		error = -ENOMEM;
-+		alloc.acl = ERR_PTR(-ENOMEM);
- 		goto out;
- 	}
- 
-@@ -172,13 +170,37 @@ nfsd4_get_acl(struct svc_rqst *rqstp, struct dentry *dentry,
- 	if (dpacl)
- 		_posix_to_richacl_one(dpacl, &alloc, flags | FLAG_DEFAULT_ACL);
- 
--	*acl = alloc.acl;
--
- out:
- 	posix_acl_release(dpacl);
- rel_pacl:
- 	posix_acl_release(pacl);
--	return error;
-+	return alloc.acl;
-+}
+diff --git a/fs/richacl_compat.c b/fs/richacl_compat.c
+index c99274f..df807c0 100644
+--- a/fs/richacl_compat.c
++++ b/fs/richacl_compat.c
+@@ -827,3 +827,91 @@ richacl_apply_masks(struct richacl **acl, kuid_t owner)
+ 	return 0;
+ }
+ EXPORT_SYMBOL_GPL(richacl_apply_masks);
 +
++/**
++ * richacl_from_mode  -  create an acl which corresponds to @mode
++ *
++ * The resulting acl doesn't have the RICHACL_MASKED flag set.
++ *
++ * @mode:	file mode including the file type
++ */
 +struct richacl *
-+nfsd4_get_acl(struct svc_rqst *rqstp, struct dentry *dentry)
++richacl_from_mode(mode_t mode)
 +{
-+	struct inode *inode = d_inode(dentry);
++	unsigned int owner_mask = richacl_mode_to_mask(mode >> 6);
++	unsigned int group_mask = richacl_mode_to_mask(mode >> 3);
++	unsigned int other_mask = richacl_mode_to_mask(mode);
++	unsigned int denied;
++	unsigned int entries = 0;
 +	struct richacl *acl;
-+	int error;
++	struct richace *ace;
 +
-+	if (IS_RICHACL(inode))
-+		acl = get_richacl(inode);
-+	else
-+		acl = nfsd4_get_posix_acl(rqstp, dentry);
-+	if (IS_ERR(acl))
-+		return acl;
-+	else if (acl == NULL) {
-+		acl = richacl_from_mode(inode->i_mode);
-+		if (acl == NULL)
-+			acl = ERR_PTR(-ENOMEM);
++	/* RICHACE_DELETE_CHILD is meaningless for non-directories. */
++	if (!S_ISDIR(mode)) {
++		owner_mask &= ~RICHACE_DELETE_CHILD;
++		group_mask &= ~RICHACE_DELETE_CHILD;
++		other_mask &= ~RICHACE_DELETE_CHILD;
 +	}
-+	error = richacl_apply_masks(&acl, inode->i_uid);
-+	if (error) {
-+		richacl_put(acl);
-+		acl = ERR_PTR(error);
++
++	denied = ~owner_mask & (group_mask | other_mask);
++	if (denied)
++		entries++;  /* owner@ deny entry needed */
++	if (owner_mask & ~(group_mask & other_mask))
++		entries++;  /* owner@ allow entry needed */
++	denied = ~group_mask & other_mask;
++	if (denied)
++		entries++;  /* group@ deny entry needed */
++	if (group_mask & ~other_mask)
++		entries++;  /* group@ allow entry needed */
++	if (other_mask)
++		entries++;  /* everyone@ allow entry needed */
++
++	acl = richacl_alloc(entries, GFP_KERNEL);
++	if (!acl)
++		return NULL;
++	acl->a_owner_mask = owner_mask;
++	acl->a_group_mask = group_mask;
++	acl->a_other_mask = other_mask;
++	ace = acl->a_entries;
++
++	denied = ~owner_mask & (group_mask | other_mask);
++	if (denied) {
++		ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
++		ace->e_flags = RICHACE_SPECIAL_WHO;
++		ace->e_mask = denied;
++		ace->e_id.special = RICHACE_OWNER_SPECIAL_ID;
++		ace++;
 +	}
++	if (owner_mask & ~(group_mask & other_mask)) {
++		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
++		ace->e_flags = RICHACE_SPECIAL_WHO;
++		ace->e_mask = owner_mask;
++		ace->e_id.special = RICHACE_OWNER_SPECIAL_ID;
++		ace++;
++	}
++	denied = ~group_mask & other_mask;
++	if (denied) {
++		ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
++		ace->e_flags = RICHACE_SPECIAL_WHO;
++		ace->e_mask = denied;
++		ace->e_id.special = RICHACE_GROUP_SPECIAL_ID;
++		ace++;
++	}
++	if (group_mask & ~other_mask) {
++		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
++		ace->e_flags = RICHACE_SPECIAL_WHO;
++		ace->e_mask = group_mask;
++		ace->e_id.special = RICHACE_GROUP_SPECIAL_ID;
++		ace++;
++	}
++	if (other_mask) {
++		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
++		ace->e_flags = RICHACE_SPECIAL_WHO;
++		ace->e_mask = other_mask;
++		ace->e_id.special = RICHACE_EVERYONE_SPECIAL_ID;
++		ace++;
++	}
++
 +	return acl;
- }
- 
- struct posix_acl_summary {
-@@ -744,56 +766,88 @@ out_estate:
- 	return ret;
- }
- 
--__be32
--nfsd4_set_acl(struct svc_rqst *rqstp, struct svc_fh *fhp, struct richacl *acl)
-+static int
-+nfsd4_set_posix_acl(struct svc_rqst *rqstp, struct dentry *dentry,
-+		    struct richacl *acl)
- {
--	__be32 error;
- 	int host_error;
--	struct dentry *dentry;
--	struct inode *inode;
-+	struct inode *inode = d_inode(dentry);
- 	struct posix_acl *pacl = NULL, *dpacl = NULL;
- 	unsigned int flags = 0;
- 
--	/* Get inode */
--	error = fh_verify(rqstp, fhp, 0, NFSD_MAY_SATTR);
--	if (error)
--		return error;
--
--	dentry = fhp->fh_dentry;
--	inode = d_inode(dentry);
--
- 	if (!inode->i_op->set_acl || !IS_POSIXACL(inode))
--		return nfserr_attrnotsupp;
-+		return -EOPNOTSUPP;
- 
- 	if (S_ISDIR(inode->i_mode))
- 		flags = FLAG_DIRECTORY;
- 
- 	host_error = nfs4_richacl_to_posix(acl, &pacl, &dpacl, flags);
- 	if (host_error == -EINVAL)
--		return nfserr_attrnotsupp;
-+		return -EOPNOTSUPP;
- 	if (host_error < 0)
--		goto out_nfserr;
-+		return host_error;
- 
- 	host_error = inode->i_op->set_acl(inode, pacl, ACL_TYPE_ACCESS);
- 	if (host_error < 0)
- 		goto out_release;
- 
--	if (S_ISDIR(inode->i_mode)) {
-+	if (S_ISDIR(inode->i_mode))
- 		host_error = inode->i_op->set_acl(inode, dpacl,
- 						  ACL_TYPE_DEFAULT);
--	}
- 
- out_release:
- 	posix_acl_release(pacl);
- 	posix_acl_release(dpacl);
--out_nfserr:
-+	return host_error;
 +}
-+
-+static int
-+nfsd4_set_richacl(struct svc_rqst *rqstp, struct dentry *dentry,
-+		  struct richacl *acl)
-+{
-+	int host_error;
-+	struct inode *inode = d_inode(dentry);
-+	size_t size = richacl_xattr_size(acl);
-+	char *buffer;
-+
-+	if (!inode->i_op->setxattr || !IS_RICHACL(inode))
-+		return -EOPNOTSUPP;
-+
-+	richacl_compute_max_masks(acl);
-+
-+	buffer = kmalloc(size, GFP_KERNEL);
-+	if (!buffer)
-+		return -ENOMEM;
-+	richacl_to_xattr(&init_user_ns, acl, buffer, size);
-+	host_error = inode->i_op->setxattr(dentry, XATTR_NAME_RICHACL,
-+					   buffer, size, 0);
-+	kfree(buffer);
-+	return host_error;
-+}
-+
-+__be32
-+nfsd4_set_acl(struct svc_rqst *rqstp, struct svc_fh *fhp, struct richacl *acl)
-+{
-+	struct dentry *dentry;
-+	int host_error;
-+	__be32 error;
-+
-+	error = fh_verify(rqstp, fhp, 0, NFSD_MAY_SATTR);
-+	if (error)
-+		return error;
-+	dentry = fhp->fh_dentry;
-+
-+	if (IS_RICHACL(d_inode(dentry)))
-+		host_error = nfsd4_set_richacl(rqstp, dentry, acl);
-+	else
-+		host_error = nfsd4_set_posix_acl(rqstp, dentry, acl);
-+
- 	if (host_error == -EOPNOTSUPP)
- 		return nfserr_attrnotsupp;
- 	else
- 		return nfserrno(host_error);
- }
++EXPORT_SYMBOL_GPL(richacl_from_mode);
+diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+index 5a696be..a3013df 100644
+--- a/include/linux/richacl.h
++++ b/include/linux/richacl.h
+@@ -335,5 +335,6 @@ extern struct richacl *richacl_create(struct inode *, struct inode *);
  
--
- static short
- ace2type(struct richace *ace)
- {
-diff --git a/fs/nfsd/nfs4proc.c b/fs/nfsd/nfs4proc.c
-index 2430235..1bcfda2 100644
---- a/fs/nfsd/nfs4proc.c
-+++ b/fs/nfsd/nfs4proc.c
-@@ -110,7 +110,7 @@ check_attr_support(struct svc_rqst *rqstp, struct nfsd4_compound_state *cstate,
- 	 * in current environment or not.
- 	 */
- 	if (bmval[0] & FATTR4_WORD0_ACL) {
--		if (!IS_POSIXACL(d_inode(dentry)))
-+		if (!IS_ACL(d_inode(dentry)))
- 			return nfserr_attrnotsupp;
- 	}
+ /* richacl_compat.c */
+ extern int richacl_apply_masks(struct richacl **, kuid_t);
++extern struct richacl *richacl_from_mode(mode_t);
  
-diff --git a/fs/nfsd/nfs4xdr.c b/fs/nfsd/nfs4xdr.c
-index 8603f40..682a7d8 100644
---- a/fs/nfsd/nfs4xdr.c
-+++ b/fs/nfsd/nfs4xdr.c
-@@ -340,11 +340,24 @@ nfsd4_decode_fattr(struct nfsd4_compoundargs *argp, u32 *bmval,
- 
- 		richacl_for_each_entry(ace, *acl) {
- 			READ_BUF(16); len += 16;
--			ace->e_type = be32_to_cpup(p++);
--			ace->e_flags = be32_to_cpup(p++);
--			ace->e_mask = be32_to_cpup(p++);
--			if (ace->e_flags & RICHACE_SPECIAL_WHO)
-+
-+			dummy32 = be32_to_cpup(p++);
-+			if (dummy32 > RICHACE_ACCESS_DENIED_ACE_TYPE)
-+				return nfserr_inval;
-+			ace->e_type = dummy32;
-+
-+			dummy32 = be32_to_cpup(p++);
-+			if (dummy32 & (~RICHACE_VALID_FLAGS |
-+				       RICHACE_INHERITED_ACE |
-+				       RICHACE_SPECIAL_WHO))
- 				return nfserr_inval;
-+			ace->e_flags = dummy32;
-+
-+			dummy32 = be32_to_cpup(p++);
-+			if (dummy32 & ~NFS4_ACE_MASK_ALL)
-+				return nfserr_inval;
-+			ace->e_mask = dummy32;
-+
- 			dummy32 = be32_to_cpup(p++);
- 			READ_BUF(dummy32);
- 			len += XDR_QUADLEN(dummy32) << 2;
-@@ -2330,7 +2343,11 @@ nfsd4_encode_fattr(struct xdr_stream *xdr, struct svc_fh *fhp,
- 		fhp = tempfh;
- 	}
- 	if (bmval0 & FATTR4_WORD0_ACL) {
--		err = nfsd4_get_acl(rqstp, dentry, &acl);
-+		acl = nfsd4_get_acl(rqstp, dentry);
-+		if (IS_ERR(acl)) {
-+			err = PTR_ERR(acl);
-+			acl = NULL;
-+		}
- 		if (err == -EOPNOTSUPP)
- 			bmval0 &= ~FATTR4_WORD0_ACL;
- 		else if (err == -EINVAL) {
-@@ -2370,7 +2387,7 @@ nfsd4_encode_fattr(struct xdr_stream *xdr, struct svc_fh *fhp,
- 		u32 word1 = nfsd_suppattrs1(minorversion);
- 		u32 word2 = nfsd_suppattrs2(minorversion);
- 
--		if (!IS_POSIXACL(dentry->d_inode))
-+		if (!IS_ACL(d_inode(dentry)))
- 			word0 &= ~FATTR4_WORD0_ACL;
- 		if (!contextsupport)
- 			word2 &= ~FATTR4_WORD2_SECURITY_LABEL;
-@@ -2505,7 +2522,8 @@ nfsd4_encode_fattr(struct xdr_stream *xdr, struct svc_fh *fhp,
- 			if (!p)
- 				goto out_resource;
- 			*p++ = cpu_to_be32(ace->e_type);
--			*p++ = cpu_to_be32(ace->e_flags & ~RICHACE_SPECIAL_WHO);
-+			*p++ = cpu_to_be32(ace->e_flags &
-+				~(RICHACE_SPECIAL_WHO | RICHACE_INHERITED_ACE));
- 			*p++ = cpu_to_be32(ace->e_mask & NFS4_ACE_MASK_ALL);
- 			status = nfsd4_encode_ace_who(xdr, rqstp, ace);
- 			if (status)
-@@ -2517,7 +2535,7 @@ out_acl:
- 		p = xdr_reserve_space(xdr, 4);
- 		if (!p)
- 			goto out_resource;
--		*p++ = cpu_to_be32(IS_POSIXACL(dentry->d_inode) ?
-+		*p++ = cpu_to_be32(IS_ACL(d_inode(dentry)) ?
- 			ACL4_SUPPORT_ALLOW_ACL|ACL4_SUPPORT_DENY_ACL : 0);
- 	}
- 	if (bmval0 & FATTR4_WORD0_CANSETTIME) {
+ #endif /* __RICHACL_H */
 -- 
 2.5.0
