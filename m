@@ -1,85 +1,45 @@
 From: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] timerfd: expose uapi header
-Date: Mon, 5 Oct 2015 23:02:59 +0800
-Message-ID: <201510052343.QGQbZkMc%fengguang.wu@intel.com>
-References: <1444056829-9118-1-git-send-email-gabriel@lse.epita.fr>
+Subject: Re: [PATCH 3/3] falloc: expose ioctl numbers into uapi
+Date: Mon, 5 Oct 2015 23:06:57 +0800
+Message-ID: <201510052312.rYgHwXyb%fengguang.wu@intel.com>
+References: <1444056611-7513-4-git-send-email-gabriel@lse.epita.fr>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="huq684BweRXVnRxX"
+Content-Type: multipart/mixed; boundary="M9NhX3UHpAaciwkO"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1444056829-9118-1-git-send-email-gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+In-Reply-To: <1444056611-7513-4-git-send-email-gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: kbuild-all-JC7UmRfGjtg@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, stephen hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>, Masahiro Yamada <yamada.m-NAum8xwdG0+S7A1Ibl2khg@public.gmane.org>, Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: kbuild-all-JC7UmRfGjtg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Chinner <dchinner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ashish Sangwan <a.sangwan-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>, Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
---huq684BweRXVnRxX
+--M9NhX3UHpAaciwkO
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 
 Hi Gabriel,
 
-[auto build test ERROR on v4.3-rc4 -- if it's inappropriate base, please ignore]
+[auto build test WARNING on v4.3-rc4 -- if it's inappropriate base, please ignore]
 
 config: x86_64-allnoconfig (attached as .config)
 reproduce:
         # save the attached .config to linux build tree
         make ARCH=x86_64 
 
-All errors (new ones prefixed by >>):
+All warnings (new ones prefixed by >>):
 
->> scripts/Makefile.headersinst:55: *** Missing UAPI file include/uapi/linux/tiemrfd.h.  Stop.
---
->> scripts/Makefile.headersinst:55: *** Missing UAPI file include/uapi/linux/tiemrfd.h.  Stop.
-   make[2]: *** [linux] Error 2
-   make[2]: Target '__headersinst' not remade because of errors.
-   make[1]: *** [headers_install] Error 2
-   make: *** [sub-make] Error 2
-
-vim +55 scripts/Makefile.headersinst
-
-d8ecc5cd Sam Ravnborg    2011-04-27  39  
-10b63956 David Howells   2012-10-02  40  srcdir        := $(srctree)/$(obj)
-10b63956 David Howells   2012-10-02  41  gendir        := $(objtree)/$(gen)
-10b63956 David Howells   2012-10-02  42  
-10b63956 David Howells   2012-10-02  43  oldsrcdir     := $(srctree)/$(subst /uapi,,$(obj))
-10b63956 David Howells   2012-10-02  44  
-7712401a Sam Ravnborg    2008-06-15  45  # all headers files for this dir
-d8ecc5cd Sam Ravnborg    2011-04-27  46  header-y      := $(filter-out $(generic-y), $(header-y))
-40f1d4c2 David Howells   2012-10-02  47  all-files     := $(header-y) $(genhdr-y) $(wrapper-files)
-10b63956 David Howells   2012-10-02  48  output-files  := $(addprefix $(installdir)/, $(all-files))
-10b63956 David Howells   2012-10-02  49  
-c0ff68f1 Nicolas Dichtel 2013-04-29  50  input-files1  := $(foreach hdr, $(header-y), \
-c4619bc6 Sam Ravnborg    2013-03-04  51  		   $(if $(wildcard $(srcdir)/$(hdr)), \
-c0ff68f1 Nicolas Dichtel 2013-04-29  52  			$(wildcard $(srcdir)/$(hdr))) \
-c0ff68f1 Nicolas Dichtel 2013-04-29  53  		   )
-c0ff68f1 Nicolas Dichtel 2013-04-29  54  input-files1-name := $(notdir $(input-files1))
-c0ff68f1 Nicolas Dichtel 2013-04-29 @55  input-files2  := $(foreach hdr, $(header-y), \
-c0ff68f1 Nicolas Dichtel 2013-04-29  56  		   $(if  $(wildcard $(srcdir)/$(hdr)),, \
-c4619bc6 Sam Ravnborg    2013-03-04  57  			$(if $(wildcard $(oldsrcdir)/$(hdr)), \
-10b63956 David Howells   2012-10-02  58  				$(wildcard $(oldsrcdir)/$(hdr)), \
-c4619bc6 Sam Ravnborg    2013-03-04  59  				$(error Missing UAPI file $(srcdir)/$(hdr))) \
-c0ff68f1 Nicolas Dichtel 2013-04-29  60  		   ))
-c0ff68f1 Nicolas Dichtel 2013-04-29  61  input-files2-name := $(notdir $(input-files2))
-c0ff68f1 Nicolas Dichtel 2013-04-29  62  input-files3  := $(foreach hdr, $(genhdr-y), \
-c4619bc6 Sam Ravnborg    2013-03-04  63  		   $(if	$(wildcard $(gendir)/$(hdr)), \
-
-:::::: The code at line 55 was first introduced by commit
-:::::: c0ff68f1611d6855a06d672989ad5cfea160a4eb kbuild: fix make headers_install when path is too long
-
-:::::: TO: Nicolas Dichtel <nicolas.dichtel-pdR9zngts4EAvxtiuMwx3w@public.gmane.org>
-:::::: CC: Michal Marek <mmarek-AlSwsSmVLrQ@public.gmane.org>
+>> ./usr/include/linux/falloc.h:67: found __[us]{8,16,32,64} type without #include <linux/types.h>
 
 ---
 0-DAY kernel test infrastructure                Open Source Technology Center
 https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
 
---huq684BweRXVnRxX
+--M9NhX3UHpAaciwkO
 Content-Type: application/octet-stream
 Content-Disposition: attachment; filename=".config.gz"
 Content-Transfer-Encoding: base64
 
-H4sICHyQElYAAy5jb25maWcAjDzbcuM2su/5CtbkPCRVZ262MzupU36ASFBERBIMAeriF5Yi
+H4sICH2QElYAAy5jb25maWcAjDzbcuM2su/5CtbkPCRVZ262MzupU36ASFBERBIMAeriF5Yi
 0zOq2JJXl+zM359ugBRvDc1u1e6O0Q0QaPS9G/r5p589dj7tX9an7Wb9/Pzd+1LtqsP6VD16
 T9vn6v+8QHqp1B4PhH4HyPF2d/72/tvnT+WnO+/u3e27D28PmztvVh121bPn73dP2y9nmL/d
 7376+SdfpqGYAupE6PvvzZ9LM7v3d/uHSJXOC18LmZYB92XA8xYoC50VugxlnjB9/6Z6fvp0
@@ -192,4 +152,4 @@ o0YL4V9guPkW09mCqsmu/nEZHBD3uRVh5aeV7tHZqHRZIA8TOvnkOi0wqRr+QsHNozeUcyDK
 onr/Z0GP8HrckKZGHcVpPGBccxYIl/Axn75o5QGxWhjKmIvgOaTDTrincw58c+5VeMO2LZm5
 vDGYrdR6wPll5qwVpT5AR6npQJQQtqYQ+Vh8AWANJH3CUwAA
 
---huq684BweRXVnRxX--
+--M9NhX3UHpAaciwkO--
