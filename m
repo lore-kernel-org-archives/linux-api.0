@@ -1,69 +1,48 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH 0/3] sys_membarrier (x86, generic)
-Date: Tue, 6 Oct 2015 02:17:36 +0000 (UTC)
-Message-ID: <1840779213.18838.1444097856879.JavaMail.zimbra@efficios.com>
-References: <1436561912-24365-1-git-send-email-mathieu.desnoyers@efficios.com> <87vbaknbp8.fsf@rustcorp.com.au>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH v4 1/4] mm, documentation: clarify /proc/pid/status VmSwap
+ limitations
+Date: Tue, 6 Oct 2015 09:05:23 +0200
+Message-ID: <561372B3.60504@suse.cz>
+References: <1443792951-13944-1-git-send-email-vbabka@suse.cz>
+ <1443792951-13944-2-git-send-email-vbabka@suse.cz>
+ <alpine.LSU.2.11.1510041756330.15067@eggly.anvils>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87vbaknbp8.fsf-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rusty Russell <rusty-mnsaURCQ41sdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <alpine.LSU.2.11.1510041756330.15067@eggly.anvils>
+Sender: owner-linux-mm@kvack.org
+To: Hugh Dickins <hughd@google.com>
+Cc: linux-mm@kvack.org, Jerome Marchand <jmarchan@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, Michal Hocko <mhocko@suse.cz>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Randy Dunlap <rdunlap@infradead.org>, linux-s390@vger.kernel.org, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Linux API <linux-api@vger.kernel.org>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
 List-Id: linux-api@vger.kernel.org
 
------ On Oct 5, 2015, at 7:21 PM, Rusty Russell rusty-mnsaURCQ41sdnm+yROfE0A@public.gmane.org wrote:
+On 10/05/2015 03:05 AM, Hugh Dickins wrote:
+> On Fri, 2 Oct 2015, Vlastimil Babka wrote:
+>> --- a/Documentation/filesystems/proc.txt
+>> +++ b/Documentation/filesystems/proc.txt
+>> @@ -239,6 +239,8 @@ Table 1-2: Contents of the status files (as of 4.1)
+>>    VmPTE                       size of page table entries
+>>    VmPMD                       size of second level page tables
+>>    VmSwap                      size of swap usage (the number of referred swapents)
+>> +                             by anonymous private data (shmem swap usage is not
+>> +                             included)
+>
+> I have difficulty in reading "size of swap usage (the number of referred
+> swapents) by anonymous private data (shmem swap usage is not included)".
+>
+> Luckily, VmSwap never was "the number of referred swapents", it's in kB.
+> So I suggest                    amount of swap used by anonymous private data
+>                                  (shmem swap usage is not included)
 
-> Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> writes:
->> Hi Andrew,
->>
->> Here is a repost of sys_membarrier, rebased on top of Linus commit
->> c4b5fd3fb2058b650447372472ad24e2a989f9f6 without any change since the
->> last v19 post other that proceeding to further testing. When merging
->> with other system calls, system call number conflicts should be quite
->> straightforward to handle, there is nothing special there.
-> 
-> Hi Mathieu,
-> 
->        Great to see this go in!  One small note: it talks about
-> threads, but membarrier as currently implemented would cover any shared
-> memory.  If you plan to optimize in future, that might not be the case:
-> we'd want an address argument for those cases?
+Good point, thanks!
 
-Hi Rusty,
+> for which you can assume Acked-by: Hugh Dickins <hughd@google.com>
+>
+> Hugh
+>
 
-Indeed, the current membarrier implementation only supports
-the MEMBARRIER_CMD_SHARED flag, which works even with shared
-memory across processes. If we ever want to optimize that for
-single-process, multi-threaded cases, we would have to add
-a new flag (e.g. MEMBARRIER_CMD_PRIVATE). This is quite
-similar to what already exists in the futex system call.
-
-I'm not sure I fully understand where the address argument
-you are describing would be useful. So far, I see two
-main use-cases: we either interact with memory that is
-local to a single process, or with memory shared across
-processes.
-
-We could indeed think about sending a membarrier to all
-processes using a specific shared memory area (hence the
-possible need for an address argument). This could eventually
-be supported by adding a specific flag for this (e.g.
-MEMBARRIER_CMD_SHM), which would indicate that an extra
-parameter is provided (an address).
-
-Thoughts ?
-
-Thanks for the feedback!
-
-Mathieu
-
-> 
-> Cheers,
-> Rusty.
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
