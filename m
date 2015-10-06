@@ -1,36 +1,106 @@
-From: Stefan Hajnoczi <stefanha@gmail.com>
-Subject: Re: [Qemu-devel] [PATCH v3 1/4] firmware: introduce sysfs driver for
- QEMU's fw_cfg device
-Date: Tue, 6 Oct 2015 09:40:42 +0100
-Message-ID: <20151006084042.GC19089@stefanha-thinkpad>
-References: <1443914889-9619-1-git-send-email-somlo@cmu.edu>
- <1443914889-9619-2-git-send-email-somlo@cmu.edu>
+From: Marc Kleine-Budde <mkl@pengutronix.de>
+Subject: Re: [PATCH 12/12] [RFC] can: avoid using timeval for uapi
+Date: Tue, 6 Oct 2015 11:05:32 +0200
+Message-ID: <56138EDC.8080501@pengutronix.de>
+References: <1443612402-3000775-1-git-send-email-arnd@arndb.de>
+ <1443612402-3000775-13-git-send-email-arnd@arndb.de>
+ <5612C69C.7020803@hartkopp.net> <7548522.iLToS4O3HD@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1443914889-9619-2-git-send-email-somlo@cmu.edu>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Gabriel L. Somlo" <somlo@cmu.edu>
-Cc: gregkh@linuxfoundation.org, paul@pwsan.com, galak@codeaurora.org, will.deacon@arm.com, agross@codeaurora.org, mark.rutland@arm.com, zajec5@gmail.com, hanjun.guo@linaro.org, catalin.marinas@arm.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, peter.maydell@linaro.org, matt.fleming@intel.com, mst@redhat.com, jordan.l.justen@intel.com, kernelnewbies@kernelnewbies.org, qemu-devel@nongnu.org, leif.lindholm@linaro.org, ard.biesheuvel@linaro.org, kraxel@redhat.com, pbonzini@redhat.com, lersek@redhat.com
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="dT3ARBDVtrIOv6XH9JCL5S2JmBsMlXwCJ"
+Return-path: <linux-can-owner@vger.kernel.org>
+In-Reply-To: <7548522.iLToS4O3HD@wuerfel>
+Sender: linux-can-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>, Oliver Hartkopp <socketcan@hartkopp.net>
+Cc: netdev@vger.kernel.org, y2038@lists.linaro.org, linux-kernel@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, linux-can@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Oct 03, 2015 at 07:28:06PM -0400, Gabriel L. Somlo wrote:
-> +/* read chunk of given fw_cfg blob (caller responsible for sanity-check) */
-> +static inline void fw_cfg_read_blob(u16 key,
-> +				    void *buf, loff_t pos, size_t count)
-> +{
-> +	mutex_lock(&fw_cfg_dev_lock);
-> +	iowrite16(fw_cfg_sel_endianness(key), fw_cfg_reg_ctrl);
-> +	while (pos-- > 0)
-> +		ioread8(fw_cfg_reg_data);
-> +	ioread8_rep(fw_cfg_reg_data, buf, count);
-> +	mutex_unlock(&fw_cfg_dev_lock);
-> +}
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--dT3ARBDVtrIOv6XH9JCL5S2JmBsMlXwCJ
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-Have you had a chance to play with Marc Mari's fw_cfg DMA interface
-patches?  They should make this operation much faster.
+On 10/06/2015 10:32 AM, Arnd Bergmann wrote:
+> On Monday 05 October 2015 20:51:08 Oliver Hartkopp wrote:
+>>
+>> I double checked some (more) BCM applications I have access to.
+>>
+>> E.g. https://github.com/linux-can/can-tests
+>>
+>> When you do a 'git grep ival1' there you get something like
+>>
+>> tst-bcm-cycle.c:        msg.msg_head.ival1.tv_sec =3D 1;
+>> tst-bcm-cycle.c:        msg.msg_head.ival1.tv_usec =3D 0;
+>> tst-bcm-cycle.c:        msg.msg_head.ival1.tv_sec =3D 0;
+>> tst-bcm-cycle.c:        msg.msg_head.ival1.tv_usec =3D 0;
+>> tst-bcm-dump.c: msg.msg_head.ival1.tv_sec       =3D timeout / 1000000;=
 
-https://www.mail-archive.com/qemu-devel@nongnu.org/msg325541.html
+>> tst-bcm-dump.c: msg.msg_head.ival1.tv_usec      =3D timeout % 1000000;=
 
-Stefan
+>> (..)
+>>
+>> So the usual way to assign values to ival1 and ival2 is NOT to assign =
+an
+>> existing struct timeval but to directly assign its tv_[u]sec elements.=
+
+>=20
+> Ok, very good.
+>=20
+>> I applied your bcm.h changes to my local can-tests tree and it compile=
+s
+>> without any problems - as expected. I don't see any serious drawback w=
+ith your
+>> idea. I wonder whether developers would ever notice this change ...
+>>
+>>> We could address problem a) by using '__u32' or 'int' members
+>>> rather than 'long', but that would have a more significant
+>>> downside in also breaking support for all existing 64-bit user
+>>> binaries that might be using this interface, which is likely
+>>> not acceptable.
+>>
+>> Indeed.
+>>
+>>> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+>>> Cc: Oliver Hartkopp <socketcan@hartkopp.net>
+>>
+>> Thanks for your good suggestion to make the BCM API y2038 proof!
+>>
+>> Acked-by: Oliver Hartkopp <socketcan@hartkopp.net>
+>=20
+> Thanks.
+>=20
+> What is the normal path for CAN patches? Should I resend with your
+> Ack and without the RFC for Marc to pick it up?
+
+You can add my:
+
+Acked-by: Marc Kleine-Budde <mkl@pengutronix.de>
+
+add upstream the 2038 fixes as a block.
+
+Marc
+--=20
+Pengutronix e.K.                  | Marc Kleine-Budde           |
+Industrial Linux Solutions        | Phone: +49-231-2826-924     |
+Vertretung West/Dortmund          | Fax:   +49-5121-206917-5555 |
+Amtsgericht Hildesheim, HRA 2686  | http://www.pengutronix.de   |
+
+
+--dT3ARBDVtrIOv6XH9JCL5S2JmBsMlXwCJ
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEcBAEBCgAGBQJWE47cAAoJEP5prqPJtc/HW8wH/1IU8lkWlJLAROnEZ+QzBEdK
+DoKx9NPYnyNueTCYdFpMmsVg183Zr2RN2z4vn4YjCSbqgEzHPka1reP6MamvksGV
+aQ6n7d0XNtvfCTXIqnpZgYrT3xCQWOmOxN7KcYzIHSQsPFYUg9brPTfmxdpky9+4
+TTHzhHlIFtm+YGKbdDKJFOprnlDnvyrMZm9tvCzLnELRU1ywlLb8EJmHHRGZWoHT
+/hJvB4ORhKWI22piByPMWFoNyH18CD3UWv0ZI2f0HE4vwcQ2YnlPebZxUfTF2lL2
+X3b9FwyKPsotLrOxWP9zoexVwJ2AgDjKt19fjWFS/CphPR6jLmv2zzJOFFr/oZw=
+=I4y3
+-----END PGP SIGNATURE-----
+
+--dT3ARBDVtrIOv6XH9JCL5S2JmBsMlXwCJ--
