@@ -1,48 +1,53 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH v2 0/2] selftests/pstore: add pstore test script
-Date: Tue, 6 Oct 2015 11:59:09 -0600
-Message-ID: <56140BED.7040507@osg.samsung.com>
-References: <20151002114637.20957.61769.stgit@arietta>
+From: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
+Subject: Re: [PATCH net-next 1/2] bpf: enable non-root eBPF programs
+Date: Tue, 06 Oct 2015 20:03:55 +0200
+Message-ID: <56140D0B.2040504@iogearbox.net>
+References: <1444078101-29060-1-git-send-email-ast@plumgrid.com> <1444078101-29060-2-git-send-email-ast@plumgrid.com> <5612F639.2050305@iogearbox.net> <56131B1F.80002@plumgrid.com> <20151006071347.GB14093@gmail.com> <561380BB.4040506@iogearbox.net> <20151006082048.GA18287@gmail.com> <561388D1.30406@iogearbox.net> <561409EC.5050005@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151002114637.20957.61769.stgit@arietta>
+In-Reply-To: <561409EC.5050005-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Hiraku Toyooka <hiraku.toyooka.gu-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Anton Vorontsov <anton-9xeibp6oKSgdnm+yROfE0A@public.gmane.org>, Mark Salyzyn <salyzyn-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Colin Cross <ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Seiji Aguchi <seiji.aguchi.tr-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 10/02/2015 05:46 AM, Hiraku Toyooka wrote:
-> These scripts include test cases which check pstore behavior. This
-> is useful to avoid regressions of pstore.
-> 
-> Changes since v1:
->  * Exit with 1 in pstore/Makefile when pstore_crash_test failed.
->  * Create helper functions to make the tests much more readable.
->  * Use /sys/module/pstore/parameters/backend to check pstore backend is
->    registered.
->  * Show content of /sys/module/.../backend and /proc/cmdline for debug
->  * Give UUID to each execution of test script.
->  * Write unique test string with UUID into pmsg.
->  * Check only one test string pattern appears in pmsg after crash.
->  * Check UUID written to pmsg matches across crash.
->  * Don't touch panic_on_oops because it is not necessary for reboot on crash
-> 
-> (v1: http://www.kernelhub.org/?msg=831044&p=2)
-> 
-> I also confirmed that these scripts work fine with kdump reboot with
-> kernel boot parameter 'crash_kexec_post_notifiers'.
+On 10/06/2015 07:50 PM, Alexei Starovoitov wrote:
+> On 10/6/15 1:39 AM, Daniel Borkmann wrote:
+>>>> [...] Also classic BPF would then need to test for it, since a socket
+>>>> filter
+>>>> doesn't really know whether native eBPF is loaded there or a
+>>>> classic-to-eBPF
+>>>> transformed one, and classic never makes use of this. Anyway, it
+>>>> could be done
+>>>> by adding a bit flag cb_access:1 to the bpf_prog, set it during eBPF
+>>>> verification phase, and test it inside sk_filter() if I see it
+>>>> correctly.
+>>>
+>>> That could also be done in an unlikely() branch, to keep the cost to
+>>> the non-eBPF
+>>> case near zero.
+>>
+>> Yes, agreed. For the time being, the majority of users are coming from the
+>> classic BPF side anyway and the unlikely() could still be changed later on
+>> if it should not be the case anymore. The flag and bpf_func would share the
+>> same cacheline as well.
+>
+> was also thinking that we can do it only in paths that actually
+> have multiple protocol layers, since today bpf is mainly used with
+> tcpdump(raw_socket) and new af_packet fanout both have cb cleared
+> on RX, because it just came out of alloc_skb and no layers were called,
+> and on TX we can clear 20 bytes in dev_queue_xmit_nit().
+> af_unix/netlink also have clean skb. Need to analyze tun and sctp...
+> but it feels overly fragile to save a branch in sk_filter,
+> so planning to go with
+> if(unlikely(prog->cb_access)) memset in sk_filter().
 
-Thanks. Applied to linux-kselftest next for 4.4
+I was also thinking that for dev_queue_xmit_nit(), since we do the skb_clone()
+there, to have a clone version (w/o affecting performance of the current one)
+that instead of copying cb[] over, it would just do a memset(). But that would
+just be limited to AF_PACKET, and doesn't catch all sk_filter() users.
 
-thanks,
--- Shuah
-
-
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+Thanks,
+Daniel
