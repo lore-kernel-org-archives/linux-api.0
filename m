@@ -1,44 +1,88 @@
-From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v8 00/41] Richacls
-Date: Tue, 6 Oct 2015 15:12:36 +0200
-Message-ID: <CAHc6FU5aZJDC3N1iGyVeHfbqMyquM93ONJvUR-t0a9+AjmtAXQ@mail.gmail.com>
-References: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
-	<20151004062313.GA20212@infradead.org>
-	<CAHc6FU53mXg1k0KCNkWEjxyuC8iAUgWh-A76qX=C3Yth+qEyuQ@mail.gmail.com>
-	<5612C85C.2060407@gmail.com>
-	<20151006094935.GA14144@infradead.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+From: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+Subject: [PATCH v2 3/3] falloc: expose ioctl numbers into uapi
+Date: Tue,  6 Oct 2015 16:27:37 +0200
+Message-ID: <1444141657-14898-4-git-send-email-gabriel@lse.epita.fr>
+References: <1444141657-14898-1-git-send-email-gabriel@lse.epita.fr>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151006094935.GA14144-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+In-Reply-To: <1444141657-14898-1-git-send-email-gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dave Chinner <dchinner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ashish Sangwan <a.sangwan-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 6, 2015 at 11:49 AM, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
-> On Mon, Oct 05, 2015 at 02:58:36PM -0400, Austin S Hemmelgarn wrote:
->> I think the point is that a new VFS feature that is easy to integrate in
->> multiple filesystems should have support for those filesystems.  A decade
->> ago, just having ext* support would probably have been fine, but these days,
->> XFS, BTRFS, and F2FS are used just as much (if not more) on production
->> systems as ext4, and having support for them right from the start would
->> significantly help with adoption of richacls.
->
-> That's one reason.  The other is that actually wiring it up for more
-> than a single consumer shows its actually reasonable generic.
+Signed-off-by: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+---
 
-The filesystem interface now is the same as for POSIX ACLs, used by a
-dozen or so filesystems already.
+v2: missed the include of <linux/types.h>
 
->  I don't want to end up with a situration like Posix ACLs again where
-> different file systems using different on disk formats again.
+ include/linux/falloc.h      | 18 ------------------
+ include/uapi/linux/falloc.h | 20 ++++++++++++++++++++
+ 2 files changed, 20 insertions(+), 18 deletions(-)
 
-Any file system could choose a different on-disk format than the one
-that ext4 currently uses, but I don't see a reason why any should.
-Apart from uid / gid mappings that is the same as the user-space xattr
-format. Network file systems like NFSv4 and CIFS with their predefined
-over-the-wire formats obviously are another story.
-
-Thanks,
-Andreas
+diff --git a/include/linux/falloc.h b/include/linux/falloc.h
+index 9961110..eb651e9 100644
+--- a/include/linux/falloc.h
++++ b/include/linux/falloc.h
+@@ -3,24 +3,6 @@
+ 
+ #include <uapi/linux/falloc.h>
+ 
+-
+-/*
+- * Space reservation ioctls and argument structure
+- * are designed to be compatible with the legacy XFS ioctls.
+- */
+-struct space_resv {
+-	__s16		l_type;
+-	__s16		l_whence;
+-	__s64		l_start;
+-	__s64		l_len;		/* len == 0 means until end of file */
+-	__s32		l_sysid;
+-	__u32		l_pid;
+-	__s32		l_pad[4];	/* reserved area */
+-};
+-
+-#define FS_IOC_RESVSP		_IOW('X', 40, struct space_resv)
+-#define FS_IOC_RESVSP64		_IOW('X', 42, struct space_resv)
+-
+ #define	FALLOC_FL_SUPPORTED_MASK	(FALLOC_FL_KEEP_SIZE |		\
+ 					 FALLOC_FL_PUNCH_HOLE |		\
+ 					 FALLOC_FL_COLLAPSE_RANGE |	\
+diff --git a/include/uapi/linux/falloc.h b/include/uapi/linux/falloc.h
+index 3e445a7..28abee4 100644
+--- a/include/uapi/linux/falloc.h
++++ b/include/uapi/linux/falloc.h
+@@ -1,6 +1,8 @@
+ #ifndef _UAPI_FALLOC_H_
+ #define _UAPI_FALLOC_H_
+ 
++#include <linux/types.h>
++
+ #define FALLOC_FL_KEEP_SIZE	0x01 /* default is extend size */
+ #define FALLOC_FL_PUNCH_HOLE	0x02 /* de-allocates range */
+ #define FALLOC_FL_NO_HIDE_STALE	0x04 /* reserved codepoint */
+@@ -58,4 +60,22 @@
+  */
+ #define FALLOC_FL_INSERT_RANGE		0x20
+ 
++
++/*
++ * Space reservation ioctls and argument structure
++ * are designed to be compatible with the legacy XFS ioctls.
++ */
++struct space_resv {
++	__s16		l_type;
++	__s16		l_whence;
++	__s64		l_start;
++	__s64		l_len;		/* len == 0 means until end of file */
++	__s32		l_sysid;
++	__u32		l_pid;
++	__s32		l_pad[4];	/* reserved area */
++};
++
++#define FS_IOC_RESVSP		_IOW('X', 40, struct space_resv)
++#define FS_IOC_RESVSP64		_IOW('X', 42, struct space_resv)
++
+ #endif /* _UAPI_FALLOC_H_ */
+-- 
+2.6.0
