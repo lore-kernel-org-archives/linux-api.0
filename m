@@ -1,38 +1,30 @@
-From: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
-Subject: Re: [PATCH v2] falloc: expose ioctl numbers into uapi
-Date: Tue, 6 Oct 2015 14:38:13 +0200
-Message-ID: <20151006143813.1bb1ed8f@lse.epita.fr>
-References: <1444056611-7513-3-git-send-email-gabriel@lse.epita.fr>
-	<1444070673-15836-1-git-send-email-gabriel@lse.epita.fr>
-	<11363149.diTrmkXsfH@wuerfel>
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v9 00/43] Richacls
+Date: Tue, 6 Oct 2015 14:40:01 +0200
+Message-ID: <CAHc6FU79km84DAg+-EHkwyBf3Wq-e5AhBYQ1eXdS8mDpmPR0ow@mail.gmail.com>
+References: <1444073830-21854-1-git-send-email-agruenba@redhat.com>
+	<20151006090746.GA27791@xo-6d-61-c0.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <11363149.diTrmkXsfH@wuerfel>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: Dave Chinner <dchinner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ashish Sangwan <a.sangwan-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20151006090746.GA27791-5NIqAleC692hcjWhqY66xCZi+YwRKgec@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 06 Oct 2015 10:40:04 +0200
-Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org> wrote:
+On Tue, Oct 6, 2015 at 11:07 AM, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org> wrote:
+> Should there be file in Documentation/ explaining how this works?
 
-> On Monday 05 October 2015 20:44:30 Gabriel Laskar wrote:
-> > Signed-off-by: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
-> > 
-> 
-> Did you see my 'Acked-by' reply? When you a reply like that,
-> you should normally add that tag below your 'Signed-off-by'
-> so it doesn't get lost.
-> 
-> Other than that, I think you should write a changelog text above
-> about how you discovered it and why it should be done like this.
+There are plenty of comments in the code and in the patch descriptions
+that describe how the code works. The user-space package has manual
+pages that describe how to use richacls; this information would not be
+accessible to users when put in Documentation/. Also, some background
+information is available on http://www.bestbits.at/richacl/.
 
-I am sorry, my answer was misplaced (wrong reply-to), I will resend a
-new version of all the patchset with complete changelog. I am just
-waiting for a ack/nack on the mce one.
-
-
--- 
-Gabriel Laskar
+Thanks,
+Andreas
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
