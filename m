@@ -1,28 +1,38 @@
-From: =?UTF-8?Q?Andreas_Gr=C3=BCnbacher?= <andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v8 00/41] Richacls
-Date: Tue, 6 Oct 2015 14:24:09 +0200
-Message-ID: <CAHpGcMJXi6FJ6NFZ-+6-JvjywAHu7f0Dat=_Tv3HSZhMN4sLig@mail.gmail.com>
-References: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
-	<20151004062313.GA20212@infradead.org>
-	<alpine.LRH.2.20.1510062047220.2329@namei.org>
+From: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+Subject: Re: [PATCH v2] falloc: expose ioctl numbers into uapi
+Date: Tue, 6 Oct 2015 14:38:13 +0200
+Message-ID: <20151006143813.1bb1ed8f@lse.epita.fr>
+References: <1444056611-7513-3-git-send-email-gabriel@lse.epita.fr>
+	<1444070673-15836-1-git-send-email-gabriel@lse.epita.fr>
+	<11363149.diTrmkXsfH@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.LRH.2.20.1510062047220.2329-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <11363149.diTrmkXsfH@wuerfel>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: Dave Chinner <dchinner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ashish Sangwan <a.sangwan-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-2015-10-06 11:49 GMT+02:00 James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>:
-> Where is the rationale for them?
->
-> This url doesn't work: http://acl.bestbits.at/richacl/
+On Tue, 06 Oct 2015 10:40:04 +0200
+Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org> wrote:
 
-That URL also properly redirects to http://www.bestbits.at/richacl/
-now. There is some information on that website, in the manual pages in
-the richacl user-space package, an in the patch descriptions and
-comments.
+> On Monday 05 October 2015 20:44:30 Gabriel Laskar wrote:
+> > Signed-off-by: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+> > 
+> 
+> Did you see my 'Acked-by' reply? When you a reply like that,
+> you should normally add that tag below your 'Signed-off-by'
+> so it doesn't get lost.
+> 
+> Other than that, I think you should write a changelog text above
+> about how you discovered it and why it should be done like this.
 
-Thanks,
-Andreas
+I am sorry, my answer was misplaced (wrong reply-to), I will resend a
+new version of all the patchset with complete changelog. I am just
+waiting for a ack/nack on the mce one.
+
+
+-- 
+Gabriel Laskar
