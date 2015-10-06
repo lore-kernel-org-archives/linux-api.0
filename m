@@ -1,41 +1,35 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
+From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
 Subject: Re: [PATCH net-next 1/2] bpf: enable non-root eBPF programs
-Date: Mon, 5 Oct 2015 17:28:04 -0700
-Message-ID: <56131594.6080801@plumgrid.com>
+Date: Mon, 5 Oct 2015 17:51:43 -0700
+Message-ID: <56131B1F.80002@plumgrid.com>
 References: <1444078101-29060-1-git-send-email-ast@plumgrid.com>
  <1444078101-29060-2-git-send-email-ast@plumgrid.com>
- <CAGXu5j+s+3Z6=WKKNGouNijNKcrq5o_n9-BD85Nabd-_GtL+ag@mail.gmail.com>
- <5612E7C4.1010306@plumgrid.com>
- <CAGXu5jKTDzMXXYJdWdP=b4fABu_b5ifjv88RVMgBkiR=_JUAog@mail.gmail.com>
+ <5612F639.2050305@iogearbox.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAGXu5jKTDzMXXYJdWdP=b4fABu_b5ifjv88RVMgBkiR=_JUAog@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: "David S. Miller" <davem@davemloft.net>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@kernel.org>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Eric Dumazet <edumazet@google.com>, Daniel Borkmann <daniel@iogearbox.net>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5612F639.2050305-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 10/5/15 3:02 PM, Kees Cook wrote:
->> the array maps that hold FDs (BPF_MAP_TYPE_PROG_ARRAY and
->> >BPF_MAP_TYPE_PERF_EVENT_ARRAY) don't have lookup/update accessors
->> >from the program side, so programs cannot see or manipulate
->> >those pointers.
->> >For the former only bpf_tail_call() is allowed that takes integer
->> >index and jumps to it. And the latter map accessed with
-> Okay, so I can't take a pointer, put it on the stack, take it back any
-> part of it as an integer and use it for a tail call?
+On 10/5/15 3:14 PM, Daniel Borkmann wrote:
+> One scenario that comes to mind ... what happens when there are kernel
+> pointers stored in skb->cb[] (either from the current layer or an old
+> one from a different layer that the skb went through previously, but
+> which did not get overwritten)?
+>
+> Socket filters could read a portion of skb->cb[] also when unprived and
+> leak that out through maps. I think the verifier doesn't catch that,
+> right?
 
-not quite.
-you can store a pointer to stack and read it as 8 byte load back into
-another register, but reading <8 byte of it will be rejected.
-That's the test:
-unpriv: read pointer from stack in small chunks
-we obviously want to avoid hiding pointer in integers.
-After reading it back from stack as a pointer you cannnot use
-this register to pass as index into bpf_tail_call().
-That's the test:
-unpriv: pass pointer to helper function
-
-please keep shooting everything that comes to mind.
+grrr. indeed. previous layer before sk_filter() can leave junk in there.
+Would need to disable cb[0-5] for unpriv, but that will make tail_call
+much harder to use, since cb[0-5] is a way to pass arguments from
+one prog to another and clearing them is not an option, since it's
+too expensive. Like samples/bpf/sockex3_kern.c usage of cb[0]
+won't work anymore. I guess that's the price of unpriv.
+Will fix this, add few tail_call specific tests and respin.
+Please keep poking.
