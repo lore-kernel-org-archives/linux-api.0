@@ -1,72 +1,41 @@
-From: "Sean O. Stalley" <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v4 0/5] PCI: Add support for PCI Enhanced Allocation
- "BARs"
-Date: Mon, 5 Oct 2015 16:05:05 -0700
-Message-ID: <20151005230505.GD4821@sean.stalley.intel.com>
-References: <1443825476-26880-1-git-send-email-ddaney.cavm@gmail.com>
- <CAE9FiQXT0ux42gQ+DhpVv2K=BR4jC++LmNdCSLiK4Wy0BhL=HQ@mail.gmail.com>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: Re: [PATCH net-next 1/2] bpf: enable non-root eBPF programs
+Date: Mon, 5 Oct 2015 17:28:04 -0700
+Message-ID: <56131594.6080801@plumgrid.com>
+References: <1444078101-29060-1-git-send-email-ast@plumgrid.com>
+ <1444078101-29060-2-git-send-email-ast@plumgrid.com>
+ <CAGXu5j+s+3Z6=WKKNGouNijNKcrq5o_n9-BD85Nabd-_GtL+ag@mail.gmail.com>
+ <5612E7C4.1010306@plumgrid.com>
+ <CAGXu5jKTDzMXXYJdWdP=b4fABu_b5ifjv88RVMgBkiR=_JUAog@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAE9FiQXT0ux42gQ+DhpVv2K=BR4jC++LmNdCSLiK4Wy0BhL=HQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Yinghai Lu <yinghai-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: David Daney <ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?utf-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rajat Jain <rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org" <gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAGXu5jKTDzMXXYJdWdP=b4fABu_b5ifjv88RVMgBkiR=_JUAog@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: "David S. Miller" <davem@davemloft.net>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@kernel.org>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Eric Dumazet <edumazet@google.com>, Daniel Borkmann <daniel@iogearbox.net>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 02, 2015 at 08:16:48PM -0700, Yinghai Lu wrote:
-> On Fri, Oct 2, 2015 at 3:37 PM, David Daney <ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> w=
-rote:
-> > From: David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
-> >
-> > PCI Enhanced Allocation is a new method of allocating MMIO & IO
-> > resources for PCI devices & bridges. It can be used instead
-> > of the traditional PCI method of using BARs.
-> >
-> > EA entries are hardware-initialized to a fixed address.
-> > Unlike BARs, regions described by EA are cannot be moved.
-> > Because of this, only devices which are permanently connected to
-> > the PCI bus can use EA. A removable PCI card must not use EA.
-> >
-> > The Enhanced Allocation ECN is publicly available here:
-> > https://www.pcisig.com/specifications/conventional/ECN_Enhanced_All=
-ocation_23_Oct_2014_Final.pdf
->=20
-> Looks like the EA will support more than just fixed address later.
->=20
-> "Enhanced Allocation is an optional Conventional PCI Capability that
-> may be implemented by
-> Functions to indicate fixed (non reprogrammable) I/O and memory range=
-s
-> assigned to the
-> Function, as well as supporting new resource =E2=80=9Ctype=E2=80=9D d=
-efinitions and
-> future extensibility to also
-> support reprogrammable allocations."
->=20
-> so I would prefer to think more to make frame configurable to leave
-> space for that.
->=20
-> Bjorn,
->=20
-> I wonder if we need to revive the add-on resource support patchset
-> that i suggested couple years ago,
-> so we can extend it to support EA features.
->=20
-> URL: https://lkml.org/lkml/2012/3/19/86
->=20
-> Thanks
->=20
-> Yinghai
+On 10/5/15 3:02 PM, Kees Cook wrote:
+>> the array maps that hold FDs (BPF_MAP_TYPE_PROG_ARRAY and
+>> >BPF_MAP_TYPE_PERF_EVENT_ARRAY) don't have lookup/update accessors
+>> >from the program side, so programs cannot see or manipulate
+>> >those pointers.
+>> >For the former only bpf_tail_call() is allowed that takes integer
+>> >index and jumps to it. And the latter map accessed with
+> Okay, so I can't take a pointer, put it on the stack, take it back any
+> part of it as an integer and use it for a tail call?
 
-This might be useful for fixed resources as well.
+not quite.
+you can store a pointer to stack and read it as 8 byte load back into
+another register, but reading <8 byte of it will be rejected.
+That's the test:
+unpriv: read pointer from stack in small chunks
+we obviously want to avoid hiding pointer in integers.
+After reading it back from stack as a pointer you cannnot use
+this register to pass as index into bpf_tail_call().
+That's the test:
+unpriv: pass pointer to helper function
 
-=46or some BEI values, EA allows for an arbitrary number of EA entries.
-=46or PF & VF resource ranges, it allows 2 ranges.
-(one below the 4GB boundry, and one above).
-I don't think the current pci_dev struct can handle that many resources=
-=2E
-
--Sean
+please keep shooting everything that comes to mind.
