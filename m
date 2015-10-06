@@ -1,39 +1,30 @@
-From: James Morris <jmorris@namei.org>
+From: Christoph Hellwig <hch@infradead.org>
 Subject: Re: [PATCH v8 00/41] Richacls
-Date: Tue, 6 Oct 2015 20:49:04 +1100 (AEDT)
-Message-ID: <alpine.LRH.2.20.1510062047220.2329@namei.org>
-References: <1443391772-10171-1-git-send-email-agruenba@redhat.com> <20151004062313.GA20212@infradead.org>
+Date: Tue, 6 Oct 2015 02:49:35 -0700
+Message-ID: <20151006094935.GA14144@infradead.org>
+References: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
+ <20151004062313.GA20212@infradead.org>
+ <CAHc6FU53mXg1k0KCNkWEjxyuC8iAUgWh-A76qX=C3Yth+qEyuQ@mail.gmail.com>
+ <5612C85C.2060407@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151004062313.GA20212@infradead.org>
+Content-Disposition: inline
+In-Reply-To: <5612C85C.2060407@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Andreas Gruenbacher <agruenba@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
+To: Austin S Hemmelgarn <ahferroin7@gmail.com>
+Cc: Andreas Gruenbacher <agruenba@redhat.com>, Christoph Hellwig <hch@infradead.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, linux-ext4@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, 3 Oct 2015, Christoph Hellwig wrote:
+On Mon, Oct 05, 2015 at 02:58:36PM -0400, Austin S Hemmelgarn wrote:
+> I think the point is that a new VFS feature that is easy to integrate in
+> multiple filesystems should have support for those filesystems.  A decade
+> ago, just having ext* support would probably have been fine, but these days,
+> XFS, BTRFS, and F2FS are used just as much (if not more) on production
+> systems as ext4, and having support for them right from the start would
+> significantly help with adoption of richacls.
 
-> On Mon, Sep 28, 2015 at 12:08:51AM +0200, Andreas Gruenbacher wrote:
-> > Hello,
-> > 
-> > here's another update of the richacl patch queue.  At this stage, I would
-> > like to ask for final feedback so that the core and ext4 code (patches
-> > 1-19) can be merged in the 4.4 merge window.  The nfsd and nfs code should
-> > then go through the respective maintainer trees.
-> 
-> Now way in this form even if everyone agrees we should have these
-> bastard ACLs.  I certainly disagree.
-> 
-
-Where is the rationale for them?
-
-This url doesn't work: http://acl.bestbits.at/richacl/
-
-
-
-
-
--- 
-James Morris
-<jmorris@namei.org>
+That's one reason.  The other is that actually wiring it up for more
+than a single consumer shows its actually reasonable generic.  I don't
+want to end up with a situration like Posix ACLs again where different
+file systems using different on disk formats again.
