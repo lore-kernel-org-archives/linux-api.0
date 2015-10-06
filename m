@@ -1,30 +1,28 @@
-From: Christoph Hellwig <hch@infradead.org>
+From: =?UTF-8?Q?Andreas_Gr=C3=BCnbacher?= <andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: [PATCH v8 00/41] Richacls
-Date: Tue, 6 Oct 2015 02:49:35 -0700
-Message-ID: <20151006094935.GA14144@infradead.org>
+Date: Tue, 6 Oct 2015 14:24:09 +0200
+Message-ID: <CAHpGcMJXi6FJ6NFZ-+6-JvjywAHu7f0Dat=_Tv3HSZhMN4sLig@mail.gmail.com>
 References: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
- <20151004062313.GA20212@infradead.org>
- <CAHc6FU53mXg1k0KCNkWEjxyuC8iAUgWh-A76qX=C3Yth+qEyuQ@mail.gmail.com>
- <5612C85C.2060407@gmail.com>
+	<20151004062313.GA20212@infradead.org>
+	<alpine.LRH.2.20.1510062047220.2329@namei.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5612C85C.2060407@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Austin S Hemmelgarn <ahferroin7@gmail.com>
-Cc: Andreas Gruenbacher <agruenba@redhat.com>, Christoph Hellwig <hch@infradead.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, linux-ext4@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <alpine.LRH.2.20.1510062047220.2329-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 05, 2015 at 02:58:36PM -0400, Austin S Hemmelgarn wrote:
-> I think the point is that a new VFS feature that is easy to integrate in
-> multiple filesystems should have support for those filesystems.  A decade
-> ago, just having ext* support would probably have been fine, but these days,
-> XFS, BTRFS, and F2FS are used just as much (if not more) on production
-> systems as ext4, and having support for them right from the start would
-> significantly help with adoption of richacls.
+2015-10-06 11:49 GMT+02:00 James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>:
+> Where is the rationale for them?
+>
+> This url doesn't work: http://acl.bestbits.at/richacl/
 
-That's one reason.  The other is that actually wiring it up for more
-than a single consumer shows its actually reasonable generic.  I don't
-want to end up with a situration like Posix ACLs again where different
-file systems using different on disk formats again.
+That URL also properly redirects to http://www.bestbits.at/richacl/
+now. There is some information on that website, in the manual pages in
+the richacl user-space package, an in the patch descriptions and
+comments.
+
+Thanks,
+Andreas
