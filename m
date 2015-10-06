@@ -1,74 +1,61 @@
-From: Arnd Bergmann <arnd@arndb.de>
+From: Marc Kleine-Budde <mkl-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>
 Subject: Re: [PATCH 12/12] [RFC] can: avoid using timeval for uapi
-Date: Tue, 06 Oct 2015 11:18:08 +0200
-Message-ID: <6130832.516TFPqmA3@wuerfel>
-References: <1443612402-3000775-1-git-send-email-arnd@arndb.de> <7548522.iLToS4O3HD@wuerfel> <56138EDC.8080501@pengutronix.de>
+Date: Tue, 6 Oct 2015 11:37:01 +0200
+Message-ID: <5613963D.9000800@pengutronix.de>
+References: <1443612402-3000775-1-git-send-email-arnd@arndb.de>
+ <7548522.iLToS4O3HD@wuerfel> <56138EDC.8080501@pengutronix.de>
+ <6130832.516TFPqmA3@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <56138EDC.8080501@pengutronix.de>
-Sender: netdev-owner@vger.kernel.org
-To: Marc Kleine-Budde <mkl@pengutronix.de>
-Cc: Oliver Hartkopp <socketcan@hartkopp.net>, netdev@vger.kernel.org, y2038@lists.linaro.org, linux-kernel@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, linux-can@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="IM5srnSLincitssfHWFxwh8p6sa94CoMV"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <6130832.516TFPqmA3@wuerfel>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: Oliver Hartkopp <socketcan-fJ+pQTUTwRTk1uMJSBkQmQ@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, linux-can-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tuesday 06 October 2015 11:05:32 Marc Kleine-Budde wrote:
-> On 10/06/2015 10:32 AM, Arnd Bergmann wrote:
-> > On Monday 05 October 2015 20:51:08 Oliver Hartkopp wrote:
-> >>
-> >> I double checked some (more) BCM applications I have access to.
-> >>
-> >> E.g. https://github.com/linux-can/can-tests
-> >>
-> >> When you do a 'git grep ival1' there you get something like
-> >>
-> >> tst-bcm-cycle.c:        msg.msg_head.ival1.tv_sec = 1;
-> >> tst-bcm-cycle.c:        msg.msg_head.ival1.tv_usec = 0;
-> >> tst-bcm-cycle.c:        msg.msg_head.ival1.tv_sec = 0;
-> >> tst-bcm-cycle.c:        msg.msg_head.ival1.tv_usec = 0;
-> >> tst-bcm-dump.c: msg.msg_head.ival1.tv_sec       = timeout / 1000000;
-> >> tst-bcm-dump.c: msg.msg_head.ival1.tv_usec      = timeout % 1000000;
-> >> (..)
-> >>
-> >> So the usual way to assign values to ival1 and ival2 is NOT to assign an
-> >> existing struct timeval but to directly assign its tv_[u]sec elements.
-> > 
-> > Ok, very good.
-> > 
-> >> I applied your bcm.h changes to my local can-tests tree and it compiles
-> >> without any problems - as expected. I don't see any serious drawback with your
-> >> idea. I wonder whether developers would ever notice this change ...
-> >>
-> >>> We could address problem a) by using '__u32' or 'int' members
-> >>> rather than 'long', but that would have a more significant
-> >>> downside in also breaking support for all existing 64-bit user
-> >>> binaries that might be using this interface, which is likely
-> >>> not acceptable.
-> >>
-> >> Indeed.
-> >>
-> >>> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-> >>> Cc: Oliver Hartkopp <socketcan@hartkopp.net>
-> >>
-> >> Thanks for your good suggestion to make the BCM API y2038 proof!
-> >>
-> >> Acked-by: Oliver Hartkopp <socketcan@hartkopp.net>
-> > 
-> > Thanks.
-> > 
-> > What is the normal path for CAN patches? Should I resend with your
-> > Ack and without the RFC for Marc to pick it up?
-> 
-> You can add my:
-> 
-> Acked-by: Marc Kleine-Budde <mkl@pengutronix.de>
-> 
-> add upstream the 2038 fixes as a block.
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--IM5srnSLincitssfHWFxwh8p6sa94CoMV
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-Davem already picked up the first 10 of the series. If you don't
-mind, I'd prefer if you could take this one into your tree so I
-have it off my list.
-I have 200 other patches in various states and more getting added.
+On 10/06/2015 11:18 AM, Arnd Bergmann wrote:
+>> Acked-by: Marc Kleine-Budde <mkl-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>
+>>
+>> add upstream the 2038 fixes as a block.
+>=20
+> Davem already picked up the first 10 of the series. If you don't
+> mind, I'd prefer if you could take this one into your tree so I
+> have it off my list.
+> I have 200 other patches in various states and more getting added.
 
-	Arnd
+Ok. Consider it done.
+
+Marc
+
+--=20
+Pengutronix e.K.                  | Marc Kleine-Budde           |
+Industrial Linux Solutions        | Phone: +49-231-2826-924     |
+Vertretung West/Dortmund          | Fax:   +49-5121-206917-5555 |
+Amtsgericht Hildesheim, HRA 2686  | http://www.pengutronix.de   |
+
+
+--IM5srnSLincitssfHWFxwh8p6sa94CoMV
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEcBAEBCgAGBQJWE5Y9AAoJEP5prqPJtc/HDycH/1tYIXegpWLYJKZhmlWG7gZg
+LSzMH5XvIRU20bWbEkcuY1oq60+49W5C5gbKb47oCRAYDOj0kY0IIuXtceAad7SZ
+d2cVzX5GUkDTIkKroTaSeIOda9y+0uklbVNBleUpq9ZZMD++wTRZ2MATFW3Y24un
+tO5xQHpe6Zg/rmmk0wy3jfbh3Eqllbe8BdFj761sezLh5L16taa5W0X8J+I3uAPA
+oJIEItM+nMrQeAcx1cX6B8wGuf0/WmUQ78i5gfqknMZboHLNalhOtRQY1HsMKfKb
+zIdY7qMxT3oTrFhUlpMlU/NlgoZMcye/Jj6LoAztxHM24JtwkSztJ3s0UD3p9bI=
+=vjai
+-----END PGP SIGNATURE-----
+
+--IM5srnSLincitssfHWFxwh8p6sa94CoMV--
