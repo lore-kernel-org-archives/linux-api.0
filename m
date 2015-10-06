@@ -1,98 +1,65 @@
-From: David Daney <ddaney.cavm@gmail.com>
-Subject: Re: [PATCH v4 0/5] PCI: Add support for PCI Enhanced Allocation "BARs"
-Date: Mon, 05 Oct 2015 18:17:20 -0700
-Message-ID: <56132120.3060900@gmail.com>
-References: <1443825476-26880-1-git-send-email-ddaney.cavm@gmail.com> <CAE9FiQXT0ux42gQ+DhpVv2K=BR4jC++LmNdCSLiK4Wy0BhL=HQ@mail.gmail.com> <20151005230505.GD4821@sean.stalley.intel.com>
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Subject: Re: [PATCH v8 00/41] Richacls
+Date: Tue, 6 Oct 2015 12:20:20 +1100
+Message-ID: <20151006012020.GD23350@dastard>
+References: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
+ <20151004062313.GA20212@infradead.org>
+ <CAHc6FU53mXg1k0KCNkWEjxyuC8iAUgWh-A76qX=C3Yth+qEyuQ@mail.gmail.com>
+ <20151005211711.GB23350@dastard>
+ <CAHc6FU5=nPVRRO+0MycYMMmp66hg7YvY4kMGy-D4JfgD3_FkLQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-pci-owner@vger.kernel.org>
-In-Reply-To: <20151005230505.GD4821@sean.stalley.intel.com>
-Sender: linux-pci-owner@vger.kernel.org
-To: "Sean O. Stalley" <sean.stalley@intel.com>
-Cc: Yinghai Lu <yinghai@kernel.org>, Bjorn Helgaas <bhelgaas@google.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "linux-pci@vger.kernel.org" <linux-pci@vger.kernel.org>, "Michael S. Tsirkin" <mst@redhat.com>, =?UTF-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5@gmail.com>, linux-api@vger.kernel.org, Rajat Jain <rajatxjain@gmail.com>, "gong.chen@linux.intel.com" <gong.chen@linux.intel.com>, David Daney <david.daney@cavium.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAHc6FU5=nPVRRO+0MycYMMmp66hg7YvY4kMGy-D4JfgD3_FkLQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 10/05/2015 04:05 PM, Sean O. Stalley wrote:
-> On Fri, Oct 02, 2015 at 08:16:48PM -0700, Yinghai Lu wrote:
->> On Fri, Oct 2, 2015 at 3:37 PM, David Daney <ddaney.cavm@gmail.com> =
-wrote:
->>> From: David Daney <david.daney@cavium.com>
->>>
->>> PCI Enhanced Allocation is a new method of allocating MMIO & IO
->>> resources for PCI devices & bridges. It can be used instead
->>> of the traditional PCI method of using BARs.
->>>
->>> EA entries are hardware-initialized to a fixed address.
->>> Unlike BARs, regions described by EA are cannot be moved.
->>> Because of this, only devices which are permanently connected to
->>> the PCI bus can use EA. A removable PCI card must not use EA.
->>>
->>> The Enhanced Allocation ECN is publicly available here:
->>> https://www.pcisig.com/specifications/conventional/ECN_Enhanced_All=
-ocation_23_Oct_2014_Final.pdf
->>
->> Looks like the EA will support more than just fixed address later.
->>
->> "Enhanced Allocation is an optional Conventional PCI Capability that
->> may be implemented by
->> Functions to indicate fixed (non reprogrammable) I/O and memory rang=
-es
->> assigned to the
->> Function, as well as supporting new resource =E2=80=9Ctype=E2=80=9D =
-definitions and
->> future extensibility to also
->> support reprogrammable allocations."
->>
->> so I would prefer to think more to make frame configurable to leave
->> space for that.
->>
->> Bjorn,
->>
->> I wonder if we need to revive the add-on resource support patchset
->> that i suggested couple years ago,
->> so we can extend it to support EA features.
->>
->> URL: https://lkml.org/lkml/2012/3/19/86
->>
->> Thanks
->>
->> Yinghai
->
-> This might be useful for fixed resources as well.
->
-> For some BEI values, EA allows for an arbitrary number of EA entries.
+On Tue, Oct 06, 2015 at 12:01:19AM +0200, Andreas Gruenbacher wrote:
+> On Mon, Oct 5, 2015 at 11:17 PM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
+> > On Mon, Oct 05, 2015 at 08:45:40PM +0200, Andreas Gruenbacher wrote:
+> >> On Sun, Oct 4, 2015 at 8:23 AM, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+> >> > After that the wire up should be so trivial that you can wire up btrfs,
+> >> > xfs and f2fs as well, which is important to make the feature mergeable.
+> >>
+> >> Why would the patch queue become more mergeable by having support for
+> >> more filesystems in it? The filesystem specific code really isn't all
+> >> that interesting.
+> >
+> > The hardest part for the filesystem support is the on-disk feature
+> > flag that needs to be set. The kernel part of that is easy, but it's
+> > an on-disk format change and so there's also all the userspace side
+> > for mkfs, fsck, debug tools, etc, that also need to be able to parse
+> > and understand it. So while the xattr code can be made much more
+> > generic, there's a bunch of filesystem specific code that needs to
+> > go into multiple different repositories and userspace packages for
+> > this.
+> 
+> Yes.
+> 
+> > Andreas, I also can't remember if any xfstests have been written for
+> > these ACLs? That would certainly help make sure all these
+> > filesystems have equivalent behaviour...
+> 
+> There's a reasonable amount of tests in the richacl user-space package
+> which are shell based, with a few small C helpers. We could move those
+> into xfstests eventually; now seems a bit early to me.
 
-I think this is true only for BEI =3D 6 which is for type-1 config spac=
-e=20
-only (i.e. for bridges)
+Well, all the fs developers that will do the userspace work are
+already running xfstests. If you want us to be able to test the
+richACL code as we add all the fs specific flags to the userspace
+code, then we need the tests in xfstests at the same time the
+infrastructure appears in the kernel...
 
-I am thinking about splitting out the bridge part of the patch set, as=20
-my systems work fine without explicitly assigning bridge resources via=20
-EA.  That would allow us to more forward with the patches that are less=
-=20
-controversial, and spend more time hashing out the proper approach to=20
-take with bridges.
+Cheers,
 
-> For PF & VF resource ranges, it allows 2 ranges.
-
-I don't really understand what you are saying here.  My reading of the=20
-spec. is that BEI[0..5] are PF BARs and each may have any of the=20
-properties that are allowed for normal BARs (io, memory-nonprefetchable=
-,=20
-memory-prefetchable).  BEI[9..14] are VF BARs, and likewise may have an=
-y=20
-of the properties that are alloed for normal VF bars=20
-(memory-nonprefetchable, memory-prefetchable)
-
-I guess in theory EA allows you to allocate 6 64-bit BARs, where you=20
-would be limited to only 3 64-bit normal BARs
-
-
-> (one below the 4GB boundry, and one above).
-> I don't think the current pci_dev struct can handle that many resourc=
-es.
->
-> -Sean
->
+Dave.
+-- 
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
