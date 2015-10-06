@@ -1,53 +1,74 @@
-From: Daniel Borkmann <daniel@iogearbox.net>
+From: Ingo Molnar <mingo@kernel.org>
 Subject: Re: [PATCH net-next 1/2] bpf: enable non-root eBPF programs
-Date: Tue, 06 Oct 2015 10:05:15 +0200
-Message-ID: <561380BB.4040506@iogearbox.net>
-References: <1444078101-29060-1-git-send-email-ast@plumgrid.com> <1444078101-29060-2-git-send-email-ast@plumgrid.com> <5612F639.2050305@iogearbox.net> <56131B1F.80002@plumgrid.com> <20151006071347.GB14093@gmail.com>
+Date: Tue, 6 Oct 2015 10:20:48 +0200
+Message-ID: <20151006082048.GA18287@gmail.com>
+References: <1444078101-29060-1-git-send-email-ast@plumgrid.com>
+ <1444078101-29060-2-git-send-email-ast@plumgrid.com>
+ <5612F639.2050305@iogearbox.net>
+ <56131B1F.80002@plumgrid.com>
+ <20151006071347.GB14093@gmail.com>
+ <561380BB.4040506@iogearbox.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20151006071347.GB14093@gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: Ingo Molnar <mingo@kernel.org>, Alexei Starovoitov <ast@plumgrid.com>
-Cc: "David S. Miller" <davem@davemloft.net>, Andy Lutomirski <luto@amacapital.net>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Eric Dumazet <edumazet@google.com>, Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <561380BB.4040506@iogearbox.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Daniel Borkmann <daniel@iogearbox.net>
+Cc: Alexei Starovoitov <ast@plumgrid.com>, "David S. Miller" <davem@davemloft.net>, Andy Lutomirski <luto@amacapital.net>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Eric Dumazet <edumazet@google.com>, Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 10/06/2015 09:13 AM, Ingo Molnar wrote:
->
-> * Alexei Starovoitov <ast@plumgrid.com> wrote:
->
->> On 10/5/15 3:14 PM, Daniel Borkmann wrote:
->>> One scenario that comes to mind ... what happens when there are kernel
->>> pointers stored in skb->cb[] (either from the current layer or an old
->>> one from a different layer that the skb went through previously, but
->>> which did not get overwritten)?
->>>
->>> Socket filters could read a portion of skb->cb[] also when unprived and
->>> leak that out through maps. I think the verifier doesn't catch that,
->>> right?
->>
->> grrr. indeed. previous layer before sk_filter() can leave junk in there.
->
-> Could this be solved by activating zeroing/sanitizing of this data if there's an
-> active BPF function around that can access that socket?
 
-I think this check could only be done in sk_filter() for testing these
-conditions (unprivileged user + access to cb area), so it would need to
-happen from outside a native eBPF program. :/ Also classic BPF would
-then need to test for it, since a socket filter doesn't really know
-whether native eBPF is loaded there or a classic-to-eBPF transformed one,
-and classic never makes use of this. Anyway, it could be done by adding
-a bit flag cb_access:1 to the bpf_prog, set it during eBPF verification
-phase, and test it inside sk_filter() if I see it correctly.
+* Daniel Borkmann <daniel@iogearbox.net> wrote:
 
-The reason is that this sanitizing must only be done in the 'top-level'
-program that is run from sk_filter() _directly_, because a user at any
-time could decide to put an already loaded eBPF fd into a tail call map.
-And cb[] is then used to pass args/state around between two programs,
-thus it cannot be unconditionally cleared from within the program. The
-association to a socket filter (SO_ATTACH_BPF) happens at a later time
-after a native eBPF program has already been loaded via bpf(2).
+> On 10/06/2015 09:13 AM, Ingo Molnar wrote:
+> >
+> >* Alexei Starovoitov <ast@plumgrid.com> wrote:
+> >
+> >>On 10/5/15 3:14 PM, Daniel Borkmann wrote:
+> >>>One scenario that comes to mind ... what happens when there are kernel
+> >>>pointers stored in skb->cb[] (either from the current layer or an old
+> >>>one from a different layer that the skb went through previously, but
+> >>>which did not get overwritten)?
+> >>>
+> >>>Socket filters could read a portion of skb->cb[] also when unprived and
+> >>>leak that out through maps. I think the verifier doesn't catch that,
+> >>>right?
+> >>
+> >>grrr. indeed. previous layer before sk_filter() can leave junk in there.
+> >
+> >Could this be solved by activating zeroing/sanitizing of this data if there's an
+> >active BPF function around that can access that socket?
+> 
+> I think this check could only be done in sk_filter() for testing these
+> conditions (unprivileged user + access to cb area), so it would need to
+> happen from outside a native eBPF program. :/
+
+Yes, the kernel (with code running outside of any eBPF program) would guarantee 
+that those data fields are zeroed/sanitized, if there's an eBPF program that is 
+attached to that socket.
+
+> [...] Also classic BPF would then need to test for it, since a socket filter 
+> doesn't really know whether native eBPF is loaded there or a classic-to-eBPF 
+> transformed one, and classic never makes use of this. Anyway, it could be done 
+> by adding a bit flag cb_access:1 to the bpf_prog, set it during eBPF 
+> verification phase, and test it inside sk_filter() if I see it correctly.
+
+That could also be done in an unlikely() branch, to keep the cost to the non-eBPF 
+case near zero.
+
+> The reason is that this sanitizing must only be done in the 'top-level' program 
+> that is run from sk_filter() _directly_, because a user at any time could decide 
+> to put an already loaded eBPF fd into a tail call map. And cb[] is then used to 
+> pass args/state around between two programs, thus it cannot be unconditionally 
+> cleared from within the program. The association to a socket filter 
+> (SO_ATTACH_BPF) happens at a later time after a native eBPF program has already 
+> been loaded via bpf(2).
+
+So zeroing tends to be very cheap and it could also be beneficial to performance 
+in terms of bringing the cacheline into the CPU cache. But I really don't know the 
+filter code so I'm just handwaving.
 
 Thanks,
-Daniel
+
+	Ingo
