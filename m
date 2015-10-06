@@ -1,71 +1,84 @@
-From: David Daney <ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v4 3/5] PCI: Handle IORESOURCE_PCI_FIXED when sizing and
- assigning resources.
-Date: Tue, 06 Oct 2015 13:58:43 -0700
-Message-ID: <56143603.9090708@gmail.com>
-References: <1443825476-26880-1-git-send-email-ddaney.cavm@gmail.com> <1443825476-26880-4-git-send-email-ddaney.cavm@gmail.com> <20151005222351.GA4821@sean.stalley.intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151005222351.GA4821-KQ5zpJUXklQTH34CoL1+91DQ4js95KgL@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Sean O. Stalley" <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?UTF-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, yinghai-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
+From: David Daney <ddaney.cavm@gmail.com>
+Subject: [PATCH v5 0/4] PCI: Add support for PCI Enhanced Allocation "BARs"
+Date: Tue,  6 Oct 2015 16:50:34 -0700
+Message-ID: <1444175438-7443-1-git-send-email-ddaney.cavm@gmail.com>
+Return-path: <linux-pci-owner@vger.kernel.org>
+Sender: linux-pci-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, linux-pci@vger.kernel.org, Bjorn Helgaas <bhelgaas@google.com>, "Michael S. Tsirkin" <mst@redhat.com>, =?UTF-8?q?Rafa=C5=82=20Mi=C5=82ecki?= <zajec5@gmail.com>, linux-api@vger.kernel.org, "Sean O. Stalley" <sean.stalley@intel.com>, yinghai@kernel.org, rajatxjain@gmail.com, gong.chen@linux.intel.com
+Cc: David Daney <david.daney@cavium.com>
 List-Id: linux-api@vger.kernel.org
 
-On 10/05/2015 03:23 PM, Sean O. Stalley wrote:
-> On Fri, Oct 02, 2015 at 03:37:54PM -0700, David Daney wrote:
->
-> ...
->
->> +/*
->> + * Try to assign any resources marked as IORESOURCE_PCI_FIXED, as they
->> + * are skipped by pbus_assign_resources_sorted().
->> + */
->> +static void pdev_assign_fixed_resources(struct pci_dev *dev)
->> +{
->> +	int i;
->> +
->> +	for (i = 0; i <  PCI_NUM_RESOURCES; i++) {
->> +		struct pci_bus *b;
->> +		struct resource *r = &dev->resource[i];
->> +
->> +		if (r->parent || !(r->flags & IORESOURCE_PCI_FIXED) ||
->> +		    !(r->flags & (IORESOURCE_IO | IORESOURCE_MEM)))
->> +			continue;
->> +
->> +		b = dev->bus;
->> +		while (b && !r->parent) {
->> +			assign_fixed_resource_on_bus(b, r);
->> +			b = b->parent;
->> +		}
->> +		if (!r->parent) {
->> +			/*
->> +			 * If that didn't work, try to fallback to the
->> +			 * ultimate parent.
->> +			 */
->> +			if (r->flags &  IORESOURCE_IO)
->> +				request_resource(&ioport_resource, r);
->> +			else
->> +				request_resource(&iomem_resource, r);
->> +		}
->
-> I don't think this check is necessary.
-> assign_fixed_resource_on_bus() should find these resources when it reaches the top bus.
-> (since since the root bus contains these resources).
+From: David Daney <david.daney@cavium.com>
 
-You are correct.  It does work fine without that last fallback bit.  I 
-will remove that, and re-send the patches.
+The original patches are from Sean O. Stalley. I made a few tweaks,
+but feel that it is substancially Sean's work, so I am keeping the
+patch set version numbering scheme going.
 
-Thanks,
-David Daney
+Tested on Cavium ThunderX system with 4 Root Complexes containing 50
+devices/bridges provisioned with EA.
+
+Here is Sean's description of the patches:
+
+PCI Enhanced Allocation is a new method of allocating MMIO & IO
+resources for PCI devices & bridges. It can be used instead
+of the traditional PCI method of using BARs.
+
+EA entries are hardware-initialized to a fixed address.
+Unlike BARs, regions described by EA are cannot be moved.
+Because of this, only devices which are permanently connected to
+the PCI bus can use EA. A removable PCI card must not use EA.
+
+This patchset adds support for using EA entries instead of BARs
+on Root Complex Integrated Endpoints.
+
+The Enhanced Allocation ECN is publicly available here:
+https://www.pcisig.com/specifications/conventional/ECN_Enhanced_Allocation_23_Oct_2014_Final.pdf
 
 
+Changes from V1:
+	- Use generic PCI resource claim functions (instead of EA-specific functions)
+	- Only add support for RCiEPs (instead of all devices).
+	- Removed some debugging messages leftover from early testing.
 
->
->> +	}
->> +}
->
-> -Sean
->
+Changes from V2 (By David Daney):
+	- Add ea_cap to struct pci_device, to aid in finding the EA capability.
+	- Factored EA entity decoding into a separate function.
+	- Add functions to find EA entities by BEI or Property.
+	- Add handling of EA provisioned bridges.
+	- Add handling of EA SRIOV BARs.
+	- Try to assign proper resource parent so that SRIOV device creation can occur.
+
+Changes from V3 (By David Daney):
+	- Discarded V3 changes and started over fresh based on Sean's V2.
+	- Add more support/checking for Entry Properties.
+	- Allow EA behind bridges.
+	- Rewrite some error messages.
+	- Add patch 3/5 to prevent resizing, and better handle
+          assigning, of fixed EA resources.
+	- Add patch 4/5 to handle EA provisioned SRIOV devices.
+	- Add patch 5/5 to handle EA provisioned bridges.
+
+Changes from V4 (By David Daney):
+	- Drop patch 5/5 to handle EA provisioned bridges.
+	- Drop cases for bridge resources in 2/5.
+	- Drop unnecessary fallback resource parent handling in 3/5
+	- Small code formatting improvements.
+
+David Daney (2):
+  PCI: Handle IORESOURCE_PCI_FIXED when sizing and assigning resources.
+  PCI: Handle Enhanced Allocation (EA) capability for SRIOV devices.
+
+Sean O. Stalley (2):
+  PCI: Add Enhanced Allocation register entries
+  PCI: Add support for Enhanced Allocation devices
+
+ drivers/pci/iov.c             |  11 ++-
+ drivers/pci/pci.c             | 189 ++++++++++++++++++++++++++++++++++++++++++
+ drivers/pci/pci.h             |   1 +
+ drivers/pci/probe.c           |   3 +
+ drivers/pci/setup-bus.c       |  50 ++++++++++-
+ include/uapi/linux/pci_regs.h |  44 +++++++++-
+ 6 files changed, 292 insertions(+), 6 deletions(-)
+
+-- 
+1.9.1
