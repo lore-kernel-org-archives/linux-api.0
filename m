@@ -1,35 +1,48 @@
-From: Eric Dumazet <eric.dumazet@gmail.com>
-Subject: Re: [PATCH net-next 1/2] bpf: enable non-root eBPF programs
-Date: Tue, 06 Oct 2015 10:56:00 -0700
-Message-ID: <1444154160.9555.5.camel@edumazet-glaptop2.roam.corp.google.com>
-References: <1444078101-29060-1-git-send-email-ast@plumgrid.com>
-	 <1444078101-29060-2-git-send-email-ast@plumgrid.com>
-	 <5612F639.2050305@iogearbox.net> <56131B1F.80002@plumgrid.com>
-	 <20151006071347.GB14093@gmail.com> <561380BB.4040506@iogearbox.net>
-	 <20151006082048.GA18287@gmail.com> <561388D1.30406@iogearbox.net>
-	 <561409EC.5050005@plumgrid.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH v2 0/2] selftests/pstore: add pstore test script
+Date: Tue, 6 Oct 2015 11:59:09 -0600
+Message-ID: <56140BED.7040507@osg.samsung.com>
+References: <20151002114637.20957.61769.stgit@arietta>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <561409EC.5050005@plumgrid.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@plumgrid.com>
-Cc: Daniel Borkmann <daniel@iogearbox.net>, Ingo Molnar <mingo@kernel.org>, "David S. Miller" <davem@davemloft.net>, Andy Lutomirski <luto@amacapital.net>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Eric Dumazet <edumazet@google.com>, Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20151002114637.20957.61769.stgit@arietta>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Hiraku Toyooka <hiraku.toyooka.gu-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Anton Vorontsov <anton-9xeibp6oKSgdnm+yROfE0A@public.gmane.org>, Mark Salyzyn <salyzyn-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Colin Cross <ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Seiji Aguchi <seiji.aguchi.tr-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2015-10-06 at 10:50 -0700, Alexei Starovoitov wrote:
-
-> was also thinking that we can do it only in paths that actually
-> have multiple protocol layers, since today bpf is mainly used with
-> tcpdump(raw_socket) and new af_packet fanout both have cb cleared
-> on RX, because it just came out of alloc_skb and no layers were called,
-> and on TX we can clear 20 bytes in dev_queue_xmit_nit().
-> af_unix/netlink also have clean skb. Need to analyze tun and sctp...
-> but it feels overly fragile to save a branch in sk_filter,
-> so planning to go with
-> if(unlikely(prog->cb_access)) memset in sk_filter().
+On 10/02/2015 05:46 AM, Hiraku Toyooka wrote:
+> These scripts include test cases which check pstore behavior. This
+> is useful to avoid regressions of pstore.
 > 
+> Changes since v1:
+>  * Exit with 1 in pstore/Makefile when pstore_crash_test failed.
+>  * Create helper functions to make the tests much more readable.
+>  * Use /sys/module/pstore/parameters/backend to check pstore backend is
+>    registered.
+>  * Show content of /sys/module/.../backend and /proc/cmdline for debug
+>  * Give UUID to each execution of test script.
+>  * Write unique test string with UUID into pmsg.
+>  * Check only one test string pattern appears in pmsg after crash.
+>  * Check UUID written to pmsg matches across crash.
+>  * Don't touch panic_on_oops because it is not necessary for reboot on crash
+> 
+> (v1: http://www.kernelhub.org/?msg=831044&p=2)
+> 
+> I also confirmed that these scripts work fine with kdump reboot with
+> kernel boot parameter 'crash_kexec_post_notifiers'.
 
-This will break TCP use of sk_filter().
-skb->cb[] contains useful data in TCP layer.
+Thanks. Applied to linux-kselftest next for 4.4
+
+thanks,
+-- Shuah
+
+
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
