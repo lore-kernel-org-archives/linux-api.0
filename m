@@ -1,30 +1,32 @@
-From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v9 00/43] Richacls
-Date: Tue, 6 Oct 2015 14:40:01 +0200
-Message-ID: <CAHc6FU79km84DAg+-EHkwyBf3Wq-e5AhBYQ1eXdS8mDpmPR0ow@mail.gmail.com>
-References: <1444073830-21854-1-git-send-email-agruenba@redhat.com>
-	<20151006090746.GA27791@xo-6d-61-c0.localdomain>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Subject: Re: [PATCH 1/3] mce: change asm/ioctls.h for linux/ioctl.h
+Date: Tue, 06 Oct 2015 14:41:09 +0200
+Message-ID: <6517027.uJ4tlVnjPB@wuerfel>
+References: <1444056611-7513-1-git-send-email-gabriel@lse.epita.fr> <1444056611-7513-2-git-send-email-gabriel@lse.epita.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151006090746.GA27791-5NIqAleC692hcjWhqY66xCZi+YwRKgec@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1444056611-7513-2-git-send-email-gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, "maintainer:X86 ARCHITECTURE (32-BIT AND 64-BIT)" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 6, 2015 at 11:07 AM, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org> wrote:
-> Should there be file in Documentation/ explaining how this works?
+On Monday 05 October 2015 16:50:09 Gabriel Laskar wrote:
+> Signed-off-by: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+> ---
+> 
+> asm/ioctls.h contains definition for termios, not just the _IO* macros
+> 
+> 
 
-There are plenty of comments in the code and in the patch descriptions
-that describe how the code works. The user-space package has manual
-pages that describe how to use richacls; this information would not be
-accessible to users when put in Documentation/. Also, some background
-information is available on http://www.bestbits.at/richacl/.
+The patch looks reasonable, but the description you have below the ---
+should be the actual changelog that is missing.
 
-Thanks,
-Andreas
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Also, please show how you found this, did it trigger some checking tool,
+or did you find it through manual inspection?
+
+With that fixed,
+
+Acked-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
