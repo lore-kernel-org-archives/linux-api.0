@@ -1,67 +1,62 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [RFC v2 07/18] kthread: Allow to cancel kthread work
-Date: Wed, 7 Oct 2015 07:24:46 -0700
-Message-ID: <20151007142446.GA2012@mtj.duckdns.org>
-References: <1442840639-6963-1-git-send-email-pmladek@suse.com>
- <1442840639-6963-8-git-send-email-pmladek@suse.com>
- <20150922193513.GE17659@mtj.duckdns.org>
- <20150925112617.GA3122@pathway.suse.cz>
- <20150928170314.GF2589@mtj.duckdns.org>
- <20151002154336.GC3122@pathway.suse.cz>
- <20151002192453.GA7564@mtj.duckdns.org>
- <20151005100758.GK9603@pathway.suse.cz>
- <20151005110924.GL9603@pathway.suse.cz>
- <20151007092130.GD3122@pathway.suse.cz>
+From: Steve French <smfrench-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v8 00/41] Richacls
+Date: Wed, 7 Oct 2015 10:15:19 -0500
+Message-ID: <CAH2r5mt18-CQLCMz0RHnK_sXW5oOFpf2kMVeWJRvrD3Vw2MWLw@mail.gmail.com>
+References: <1443391772-10171-1-git-send-email-agruenba@redhat.com>
+ <20151004062313.GA20212@infradead.org> <CAHc6FU53mXg1k0KCNkWEjxyuC8iAUgWh-A76qX=C3Yth+qEyuQ@mail.gmail.com>
+ <5612C85C.2060407@gmail.com> <20151006094935.GA14144@infradead.org>
+ <CAHc6FU5aZJDC3N1iGyVeHfbqMyquM93ONJvUR-t0a9+AjmtAXQ@mail.gmail.com>
+ <CF738526-0807-4CE5-A52B-413164D41AA9@dilger.ca> <20151007075053.GA8660@infradead.org>
+ <CAHc6FU7TM5LDu_vVvDc3WPuzQN2mkGGp2AvCY+=qN0GvWuC=Ew@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20151007092130.GD3122@pathway.suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAHc6FU7TM5LDu_vVvDc3WPuzQN2mkGGp2AvCY+=qN0GvWuC=Ew-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, samba-technical <samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello, Petr.
+On Wed, Oct 7, 2015 at 8:38 AM, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> On Wed, Oct 7, 2015 at 9:50 AM, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+>> On Tue, Oct 06, 2015 at 02:26:09PM -0600, Andreas Dilger wrote:
+>>> And any disk filesystems that have their own non-POSIX ACLs, such as HFS, NTFS, ZFS would presumably also need to map the in-kernel Richacl format to their on-disk format.
+>>
+>> No, we did this mistake with Posix ACLs, and we're not going to repeat
+>> it here.  Filesystems with their own slightly different ACLs must not
+>> reuse the interface.
+>
+> Well, things may not be quite as clearly delineated. We currently have
+> code in nfsd for mapping between NFSv4 ACLs on the wire and POSIX ACLs
+> on local file systems. This mapping is problematic because of the
+> semantic differences between NFSv4 ACLs and POSIX ACLs (different sets
+> of permissions, access and default acl vs. inheritance flags,
+> different permission check algorithm). I wish we could have avoided
+> that.
+>
+> Richacls are designed to support NFSv4 ACLs on top of POSIX systems.
+> This means that they should obviously be supported by the NFSv4 server
+> and client (see the patches) and by the common local filesystems.
+>
+> ACLs on NTFS and ZFS mostly fit into the same model. The big remaining
+> difference there is how users and groups are identified: NTFS used
+> SIDs (https://en.wikipedia.org/wiki/Security_Identifier); ZFS could be
+> said to use a hybrid UID / GID / SID model. Exposing those ACLs as
+> richacls would make sense if we can find a clean way of handling this
+> aspect.
 
-On Wed, Oct 07, 2015 at 11:21:30AM +0200, Petr Mladek wrote:
-> Now, let's have one work: W, two workers: A, B, and try to queue
-> the same work to the two workers at the same time:
-
-It's a debug WARN condition to catch silly mistakes.  It can have
-minor race conditions.
-
-...
-> Second, we still need the busy waiting for the pending timer callback.
-
-Isn't that del_timer_sync()?
-
-> Yes, we could set some flag so that the call back does not queue
-> the work. But cancel_kthread_work_sync() still has to wait.
-> It could not return if there is still some pending operation
-> with the struct kthread_work. Otherwise, it never could
-> be freed a safe way.
-> 
-> Also note that we still need the WORK_PENDING flag. Otherwise, we
-> would not be able to detect the race when timer is removed but
-> the callback has not run yet.
-
-Yeah, just use a state field as I wrote before.
-
-> Let me to repeat that using per-work and per-worker lock is not an
-> option either. We would need some crazy hacks to avoid ABBA deadlocks.
-> 
-> 
-> All in all, I would prefer to keep the original approach that is
-> heavily inspired by the workqueues. I think that it is actually
-> an advantage to reuse some working concept that reinventing wheels.
-
-At each turn, you come up with non-issues and declare that it needs to
-be full workqueue-like implementation but the issues you're raising
-seem all rather irrelevant.  Can you please try to take a step back
-and put some distance from the implementation details of workqueue?
-
-Thanks.
+Samba (e.g. winbind service) has mapping libraries for mapping SIDs to
+UIDs (CIFS ACLs already have the same issue of SID to UID mapping
+which we handle with upcalls) and Samba has various pluggable ways to
+handle UID mapping and is easily extensible.  Similarly NFSv4 ACLs,
+although closely related to CIFS/NTFS ACLs have to be map usernames to
+uids.
 
 -- 
-tejun
+Thanks,
+
+Steve
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
