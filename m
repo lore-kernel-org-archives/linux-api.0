@@ -1,1010 +1,532 @@
-From: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC 2/3] kdbus: selftests extended
-Date: Thu, 8 Oct 2015 13:04:24 +0200
-Message-ID: <CANq1E4QZe=6i+LhN8F=k2b_+Nrg-_CjokR+XzG5KcyO6Cv6edw@mail.gmail.com>
-References: <1443096456-1527-1-git-send-email-p.osmialowsk@samsung.com>
-	<1443096456-1527-3-git-send-email-p.osmialowsk@samsung.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1443096456-1527-3-git-send-email-p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, David Herrmann <dh.herrmann-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+From: Yaniv Gardi <ygardi@codeaurora.org>
+Subject: [PATCH v3] scsi: ufs: add ioctl interface for query request
+Date: Thu,  8 Oct 2015 14:09:24 +0300
+Message-ID: <1444302569-30740-1-git-send-email-ygardi@codeaurora.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: James.Bottomley@HansenPartnership.com
+Cc: linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-arm-msm@vger.kernel.org, santoshsy@gmail.com, linux-scsi-owner@vger.kernel.org, subhashj@codeaurora.org, ygardi@codeaurora.org, gbroner@codeaurora.org, draviv@codeaurora.org, Noa Rubens <noag@codeaurora.org>, Raviv Shvili <rshvili@codeaurora.org>, Vinayak Holikatti <vinholikatti@gmail.com>, "James E.J. Bottomley" <JBottomley@odin.com>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi
+This patch exposes the ioctl interface for UFS driver via SCSI device
+ioctl interface. As of now UFS driver would provide the ioctl for query
+interface to connected UFS device.
 
-On Thu, Sep 24, 2015 at 2:07 PM, Paul Osmialowski
-<p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org> wrote:
-> The 'test-send' test case should connect to an already running test-daemon
-> which creates a bus with known name.
->
-> The main goal of this test case is to verify that messages as well as
-> file descriptors (opened with different open modes) can be transferred
-> properly.
->
-> In order to achieve its goals, this test case opens three files
-> (/tmp/kdbus-test-send.rd, /tmp/kdbus-test-send.wr,
-> /tmp/kdbus-test-send.rdwr) with three different open modes (O_RDONLY,
-> O_WRONLY, O_RDWR). If any of these files exists it is used 'as is',
-> otherwise it is created with some default content. Then this test tries
-> to send simple message followed by three messages each one of them
-> containing an array of opened file descriptors (single element array in the
-> first message, two element array in the second, three element array in the
-> third).
->
-> The ability to send array of file descriptors required changes in almost
-> all of the test case files.
->
-> Signed-off-by: Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-> Signed-off-by: Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-> ---
->  tools/testing/selftests/kdbus/Makefile           |  1 +
->  tools/testing/selftests/kdbus/kdbus-test.c       | 11 +++-
->  tools/testing/selftests/kdbus/kdbus-test.h       |  1 +
->  tools/testing/selftests/kdbus/kdbus-util.c       | 20 ++++--
->  tools/testing/selftests/kdbus/kdbus-util.h       |  2 +-
->  tools/testing/selftests/kdbus/test-activator.c   | 20 +++---
->  tools/testing/selftests/kdbus/test-chat.c        |  6 +-
->  tools/testing/selftests/kdbus/test-connection.c  |  8 ++-
->  tools/testing/selftests/kdbus/test-fd.c          |  2 +-
->  tools/testing/selftests/kdbus/test-message.c     | 69 ++++++++++++--------
->  tools/testing/selftests/kdbus/test-metadata-ns.c | 10 +--
->  tools/testing/selftests/kdbus/test-monitor.c     |  9 +--
->  tools/testing/selftests/kdbus/test-policy-ns.c   |  8 +--
->  tools/testing/selftests/kdbus/test-policy-priv.c | 48 ++++++++------
->  tools/testing/selftests/kdbus/test-send.c        | 82 ++++++++++++++++++++++++
->  tools/testing/selftests/kdbus/test-sync.c        |  2 +-
->  tools/testing/selftests/kdbus/test-timeout.c     |  2 +-
->  17 files changed, 216 insertions(+), 85 deletions(-)
->  create mode 100644 tools/testing/selftests/kdbus/test-send.c
->
-> diff --git a/tools/testing/selftests/kdbus/Makefile b/tools/testing/selftests/kdbus/Makefile
-> index 8f36cb5..f400756 100644
-> --- a/tools/testing/selftests/kdbus/Makefile
-> +++ b/tools/testing/selftests/kdbus/Makefile
-> @@ -27,6 +27,7 @@ OBJS= \
->         test-policy.o           \
->         test-policy-ns.o        \
->         test-policy-priv.o      \
-> +       test-send.o             \
->         test-sync.o             \
->         test-timeout.o
->
-> diff --git a/tools/testing/selftests/kdbus/kdbus-test.c b/tools/testing/selftests/kdbus/kdbus-test.c
-> index bde4283..37f05bb 100644
-> --- a/tools/testing/selftests/kdbus/kdbus-test.c
-> +++ b/tools/testing/selftests/kdbus/kdbus-test.c
-> @@ -25,6 +25,7 @@
->  enum {
->         TEST_CREATE_BUS         = 1 << 0,
->         TEST_CREATE_CONN        = 1 << 1,
-> +       TEST_CREATE_CAN_FAIL    = 1 << 2,
->  };
->
->  struct kdbus_test {
-> @@ -154,6 +155,12 @@ static const struct kdbus_test tests[] = {
->                 .flags  = TEST_CREATE_BUS,
->         },
->         {
-> +               .name   = "send",
-> +               .desc   = "send",
-> +               .func   = kdbus_test_send,
-> +               .flags  = TEST_CREATE_CONN | TEST_CREATE_CAN_FAIL,
-> +       },
-> +       {
->                 .name   = "sync-byebye",
->                 .desc   = "synchronous replies vs. BYEBYE",
->                 .func   = kdbus_test_sync_byebye,
-> @@ -307,7 +314,7 @@ static int test_prepare_env(const struct kdbus_test *t,
->                                        args->busname ?: n,
->                                        _KDBUS_ATTACH_ALL, &s);
->                 free(n);
-> -               ASSERT_RETURN(ret == 0);
-> +               ASSERT_RETURN((ret == 0) || (t->flags & TEST_CREATE_CAN_FAIL));
->
->                 asprintf(&env->buspath, "%s/%s/bus", args->root, s);
->                 free(s);
-> @@ -336,7 +343,7 @@ static int test_prepare_env(const struct kdbus_test *t,
->                 }
->                 ASSERT_RETURN(env->buspath);
->                 env->conn = kdbus_hello(env->buspath, 0, NULL, 0);
-> -               ASSERT_RETURN(env->conn);
-> +               ASSERT_RETURN(env->conn || (t->flags & TEST_CREATE_CAN_FAIL));
->         }
->
->         env->root = args->root;
-> diff --git a/tools/testing/selftests/kdbus/kdbus-test.h b/tools/testing/selftests/kdbus/kdbus-test.h
-> index ee937f9..041fa40 100644
-> --- a/tools/testing/selftests/kdbus/kdbus-test.h
-> +++ b/tools/testing/selftests/kdbus/kdbus-test.h
-> @@ -76,6 +76,7 @@ int kdbus_test_name_takeover(struct kdbus_test_env *env);
->  int kdbus_test_policy(struct kdbus_test_env *env);
->  int kdbus_test_policy_ns(struct kdbus_test_env *env);
->  int kdbus_test_policy_priv(struct kdbus_test_env *env);
-> +int kdbus_test_send(struct kdbus_test_env *env);
->  int kdbus_test_sync_byebye(struct kdbus_test_env *env);
->  int kdbus_test_sync_reply(struct kdbus_test_env *env);
->  int kdbus_test_timeout(struct kdbus_test_env *env);
-> diff --git a/tools/testing/selftests/kdbus/kdbus-util.c b/tools/testing/selftests/kdbus/kdbus-util.c
-> index 5129487..34d7d35 100644
-> --- a/tools/testing/selftests/kdbus/kdbus-util.c
-> +++ b/tools/testing/selftests/kdbus/kdbus-util.c
-> @@ -448,7 +448,9 @@ static int __kdbus_msg_send(const struct kdbus_conn *conn,
->                             int64_t priority,
->                             uint64_t dst_id,
->                             uint64_t cmd_flags,
-> -                           int cancel_fd)
-> +                           int cancel_fd,
-> +                           int fds_count,
-> +                           int fds[])
->  {
->         struct kdbus_cmd_send *cmd = NULL;
->         struct kdbus_msg *msg = NULL;
-> @@ -461,6 +463,7 @@ static int __kdbus_msg_send(const struct kdbus_conn *conn,
->         int ret;
->
->         size = sizeof(*msg) + 3 * KDBUS_ITEM_SIZE(sizeof(struct kdbus_vec));
-> +       size += fds_count > 0 ? KDBUS_ITEM_SIZE(sizeof(int) * fds_count) : 0;
->
->         if (dst_id == KDBUS_DST_ID_BROADCAST)
->                 size += KDBUS_ITEM_SIZE(sizeof(struct kdbus_bloom_filter)) + 64;
-> @@ -558,6 +561,13 @@ static int __kdbus_msg_send(const struct kdbus_conn *conn,
->         }
->         item = KDBUS_ITEM_NEXT(item);
->
-> +       if (fds_count > 0) {
-> +               item->type = KDBUS_ITEM_FDS;
-> +               item->size = KDBUS_ITEM_HEADER_SIZE + sizeof(int) * fds_count;
-> +               memcpy(&item->fds, fds, sizeof(int) * fds_count);
-> +               item = KDBUS_ITEM_NEXT(item);
-> +       }
-> +
->         size = sizeof(*cmd);
->         if (cancel_fd != -1)
->                 size += KDBUS_ITEM_SIZE(sizeof(cancel_fd));
-> @@ -582,6 +592,7 @@ static int __kdbus_msg_send(const struct kdbus_conn *conn,
->                 item = KDBUS_ITEM_NEXT(item);
->         }
->
-> +
->         ret = kdbus_cmd_send(conn->fd, cmd);
->         if (ret < 0) {
->                 kdbus_printf("error sending message: %d (%m)\n", ret);
-> @@ -614,10 +625,10 @@ out:
->
->  int kdbus_msg_send(const struct kdbus_conn *conn, const char *name,
->                    uint64_t cookie, uint64_t flags, uint64_t timeout,
-> -                  int64_t priority, uint64_t dst_id)
-> +                  int64_t priority, uint64_t dst_id, int fds_count, int fds[])
->  {
->         return __kdbus_msg_send(conn, name, cookie, flags, timeout, priority,
-> -                               dst_id, 0, -1);
-> +                               dst_id, 0, -1, fds_count, fds);
->  }
->
->  int kdbus_msg_send_sync(const struct kdbus_conn *conn, const char *name,
-> @@ -625,7 +636,8 @@ int kdbus_msg_send_sync(const struct kdbus_conn *conn, const char *name,
->                         int64_t priority, uint64_t dst_id, int cancel_fd)
->  {
->         return __kdbus_msg_send(conn, name, cookie, flags, timeout, priority,
-> -                               dst_id, KDBUS_SEND_SYNC_REPLY, cancel_fd);
-> +                               dst_id, KDBUS_SEND_SYNC_REPLY, cancel_fd,
-> +                               0, NULL);
->  }
->
->  int kdbus_msg_send_reply(const struct kdbus_conn *conn,
-> diff --git a/tools/testing/selftests/kdbus/kdbus-util.h b/tools/testing/selftests/kdbus/kdbus-util.h
-> index e1e18b9..b84a3e7 100644
-> --- a/tools/testing/selftests/kdbus/kdbus-util.h
-> +++ b/tools/testing/selftests/kdbus/kdbus-util.h
-> @@ -171,7 +171,7 @@ int kdbus_create_bus(int control_fd, const char *name,
->                      uint64_t owner_meta, char **path);
->  int kdbus_msg_send(const struct kdbus_conn *conn, const char *name,
->                    uint64_t cookie, uint64_t flags, uint64_t timeout,
-> -                  int64_t priority, uint64_t dst_id);
-> +                  int64_t priority, uint64_t dst_id, int fds_count, int fds[]);
->  int kdbus_msg_send_sync(const struct kdbus_conn *conn, const char *name,
->                         uint64_t cookie, uint64_t flags, uint64_t timeout,
->                         int64_t priority, uint64_t dst_id, int cancel_fd);
-> diff --git a/tools/testing/selftests/kdbus/test-activator.c b/tools/testing/selftests/kdbus/test-activator.c
-> index 3d1b763..c70fafe 100644
-> --- a/tools/testing/selftests/kdbus/test-activator.c
-> +++ b/tools/testing/selftests/kdbus/test-activator.c
-> @@ -84,13 +84,13 @@ static int kdbus_priv_activator(struct kdbus_test_env *env)
->         ret = RUN_UNPRIVILEGED_CONN(unpriv, env->buspath, ({
->                 /* Try to talk using the ID */
->                 ret = kdbus_msg_send(unpriv, NULL, 0xdeadbeef, 0, 0,
-> -                                    0, activator->id);
-> +                                    0, activator->id, 0, NULL);
->                 ASSERT_EXIT(ret == -ENXIO);
->
->                 /* Try to talk to the name */
->                 ret = kdbus_msg_send(unpriv, "foo.priv.activator",
->                                      0xdeadbeef, 0, 0, 0,
-> -                                    KDBUS_DST_ID_NAME);
-> +                                    KDBUS_DST_ID_NAME, 0, NULL);
->                 ASSERT_EXIT(ret == -EPERM);
->         }));
->         ASSERT_RETURN(ret >= 0);
-> @@ -110,7 +110,7 @@ static int kdbus_priv_activator(struct kdbus_test_env *env)
->
->         cookie++;
->         ret = kdbus_msg_send(service, "foo.priv.activator", cookie,
-> -                            0, 0, 0, KDBUS_DST_ID_NAME);
-> +                            0, 0, 0, KDBUS_DST_ID_NAME, 0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         ret = kdbus_starter_poll(activator);
-> @@ -141,7 +141,7 @@ static int kdbus_priv_activator(struct kdbus_test_env *env)
->                 /* Try to talk to the name */
->                 ret = kdbus_msg_send(unpriv, "foo.priv.activator",
->                                      cookie, 0, 0, 0,
-> -                                    KDBUS_DST_ID_NAME);
-> +                                    KDBUS_DST_ID_NAME, 0, NULL);
->                 ASSERT_EXIT(ret == -EPERM);
->         }));
->         ASSERT_RETURN(ret >= 0);
-> @@ -155,7 +155,7 @@ static int kdbus_priv_activator(struct kdbus_test_env *env)
->
->         cookie++;
->         ret = kdbus_msg_send(client, "foo.priv.activator", cookie,
-> -                            0, 0, 0, KDBUS_DST_ID_NAME);
-> +                            0, 0, 0, KDBUS_DST_ID_NAME, 0, NULL);
->         ASSERT_RETURN(ret == 0);
->         ret = kdbus_msg_recv_poll(service, 100, &msg, NULL);
->         ASSERT_RETURN(ret == 0 && msg->cookie == cookie);
-> @@ -170,7 +170,8 @@ static int kdbus_priv_activator(struct kdbus_test_env *env)
->                 /* Try to talk to the name */
->                 ret = kdbus_msg_send(unpriv, "foo.priv.activator",
->                                      cookie, 0, 0, 0,
-> -                                    KDBUS_DST_ID_NAME);
-> +                                    KDBUS_DST_ID_NAME,
-> +                                    0, NULL);
->                 ASSERT_EXIT(ret == -EPERM);
->         }));
->         ASSERT_RETURN(ret >= 0);
-> @@ -181,7 +182,7 @@ static int kdbus_priv_activator(struct kdbus_test_env *env)
->         /* Same user is able to TALK */
->         cookie++;
->         ret = kdbus_msg_send(client, "foo.priv.activator", cookie,
-> -                            0, 0, 0, KDBUS_DST_ID_NAME);
-> +                            0, 0, 0, KDBUS_DST_ID_NAME, 0, NULL);
->         ASSERT_RETURN(ret == 0);
->         ret = kdbus_msg_recv_poll(service, 100, &msg, NULL);
->         ASSERT_RETURN(ret == 0 && msg->cookie == cookie);
-> @@ -207,7 +208,8 @@ static int kdbus_priv_activator(struct kdbus_test_env *env)
->                 /* Try to talk to the name */
->                 ret = kdbus_msg_send(unpriv, "foo.priv.activator",
->                                      cookie, 0, 0, 0,
-> -                                    KDBUS_DST_ID_NAME);
-> +                                    KDBUS_DST_ID_NAME,
-> +                                    0, NULL);
->                 ASSERT_EXIT(ret == 0);
->         }));
->         ASSERT_RETURN(ret >= 0);
-> @@ -258,7 +260,7 @@ int kdbus_test_activator(struct kdbus_test_env *env)
->         ASSERT_RETURN(ret == 0);
->
->         ret = kdbus_msg_send(env->conn, "foo.test.activator", 0xdeafbeef,
-> -                            0, 0, 0, KDBUS_DST_ID_NAME);
-> +                            0, 0, 0, KDBUS_DST_ID_NAME, 0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         fds[0].fd = activator->fd;
-> diff --git a/tools/testing/selftests/kdbus/test-chat.c b/tools/testing/selftests/kdbus/test-chat.c
-> index 41e5b53..5bdefb3 100644
-> --- a/tools/testing/selftests/kdbus/test-chat.c
-> +++ b/tools/testing/selftests/kdbus/test-chat.c
-> @@ -66,7 +66,7 @@ int kdbus_test_chat(struct kdbus_test_env *env)
->
->         cookie = 0;
->         ret = kdbus_msg_send(conn_b, NULL, 0xc0000000 | cookie, 0, 0, 0,
-> -                            KDBUS_DST_ID_BROADCAST);
-> +                            KDBUS_DST_ID_BROADCAST, 0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         fds[0].fd = conn_a->fd;
-> @@ -93,7 +93,7 @@ int kdbus_test_chat(struct kdbus_test_env *env)
->                         ASSERT_RETURN(ret == 0);
->                         ret = kdbus_msg_send(conn_a, NULL,
->                                              0xc0000000 | cookie++,
-> -                                            0, 0, 0, conn_b->id);
-> +                                            0, 0, 0, conn_b->id, 0, NULL);
->                         ASSERT_RETURN(ret == 0);
->                 }
->
-> @@ -102,7 +102,7 @@ int kdbus_test_chat(struct kdbus_test_env *env)
->                         ASSERT_RETURN(ret == 0);
->                         ret = kdbus_msg_send(conn_b, NULL,
->                                              0xc0000000 | cookie++,
-> -                                            0, 0, 0, conn_a->id);
-> +                                            0, 0, 0, conn_a->id, 0, NULL);
->                         ASSERT_RETURN(ret == 0);
->                 }
->
-> diff --git a/tools/testing/selftests/kdbus/test-connection.c b/tools/testing/selftests/kdbus/test-connection.c
-> index 4688ce8..77892af 100644
-> --- a/tools/testing/selftests/kdbus/test-connection.c
-> +++ b/tools/testing/selftests/kdbus/test-connection.c
-> @@ -118,7 +118,7 @@ int kdbus_test_byebye(struct kdbus_test_env *env)
->
->         /* send over 1st connection */
->         ret = kdbus_msg_send(env->conn, NULL, 0, 0, 0, 0,
-> -                            KDBUS_DST_ID_BROADCAST);
-> +                            KDBUS_DST_ID_BROADCAST, 0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         /* say byebye on the 2nd, which must fail */
-> @@ -504,7 +504,8 @@ int kdbus_test_conn_update(struct kdbus_test_env *env)
->         conn = kdbus_hello(env->buspath, 0, NULL, 0);
->         ASSERT_RETURN(conn);
->
-> -       ret = kdbus_msg_send(env->conn, NULL, 0x12345678, 0, 0, 0, conn->id);
-> +       ret = kdbus_msg_send(env->conn, NULL, 0x12345678, 0, 0, 0, conn->id,
-> +                            0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         ret = kdbus_msg_recv(conn, &msg, NULL);
-> @@ -527,7 +528,8 @@ int kdbus_test_conn_update(struct kdbus_test_env *env)
->                                              ~KDBUS_ATTACH_TIMESTAMP);
->         ASSERT_RETURN(ret == 0);
->
-> -       ret = kdbus_msg_send(env->conn, NULL, 0x12345678, 0, 0, 0, conn->id);
-> +       ret = kdbus_msg_send(env->conn, NULL, 0x12345678, 0, 0, 0, conn->id,
-> +                            0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         ret = kdbus_msg_recv(conn, &msg, NULL);
-> diff --git a/tools/testing/selftests/kdbus/test-fd.c b/tools/testing/selftests/kdbus/test-fd.c
-> index 2ae0f5a..bfd8980 100644
-> --- a/tools/testing/selftests/kdbus/test-fd.c
-> +++ b/tools/testing/selftests/kdbus/test-fd.c
-> @@ -466,7 +466,7 @@ static int kdbus_test_no_fds(struct kdbus_test_env *env,
->          */
->         cookie++;
->         ret = kdbus_msg_send(conn_src, NULL, cookie, 0, 0, 0,
-> -                            conn_dst->id);
-> +                            conn_dst->id, 0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         ret = waitpid(pid, &status, 0);
-> diff --git a/tools/testing/selftests/kdbus/test-message.c b/tools/testing/selftests/kdbus/test-message.c
-> index 563dc85..85d75a6 100644
-> --- a/tools/testing/selftests/kdbus/test-message.c
-> +++ b/tools/testing/selftests/kdbus/test-message.c
-> @@ -51,7 +51,7 @@ int kdbus_test_message_basic(struct kdbus_test_env *env)
->
->         /* send over 1st connection */
->         ret = kdbus_msg_send(sender, NULL, cookie, 0, 0, 0,
-> -                            KDBUS_DST_ID_BROADCAST);
-> +                            KDBUS_DST_ID_BROADCAST, 0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         /* Make sure that we do get our own broadcasts */
-> @@ -70,7 +70,7 @@ int kdbus_test_message_basic(struct kdbus_test_env *env)
->
->         /* Msgs that expect a reply must have timeout and cookie */
->         ret = kdbus_msg_send(sender, NULL, 0, KDBUS_MSG_EXPECT_REPLY,
-> -                            0, 0, conn->id);
-> +                            0, 0, conn->id, 0, NULL);
->         ASSERT_RETURN(ret == -EINVAL);
->
->         /* Faked replies with a valid reply cookie are rejected */
-> @@ -126,23 +126,36 @@ int kdbus_test_message_prio(struct kdbus_test_env *env)
->  {
->         struct kdbus_conn *a, *b;
->         uint64_t cookie = 0;
-> +       int ret;
->
->         a = kdbus_hello(env->buspath, 0, NULL, 0);
->         b = kdbus_hello(env->buspath, 0, NULL, 0);
->         ASSERT_RETURN(a && b);
->
-> -       ASSERT_RETURN(kdbus_msg_send(b, NULL, ++cookie, 0, 0,   25, a->id) == 0);
-> -       ASSERT_RETURN(kdbus_msg_send(b, NULL, ++cookie, 0, 0, -600, a->id) == 0);
-> -       ASSERT_RETURN(kdbus_msg_send(b, NULL, ++cookie, 0, 0,   10, a->id) == 0);
-> -       ASSERT_RETURN(kdbus_msg_send(b, NULL, ++cookie, 0, 0,  -35, a->id) == 0);
-> -       ASSERT_RETURN(kdbus_msg_send(b, NULL, ++cookie, 0, 0, -100, a->id) == 0);
-> -       ASSERT_RETURN(kdbus_msg_send(b, NULL, ++cookie, 0, 0,   20, a->id) == 0);
-> -       ASSERT_RETURN(kdbus_msg_send(b, NULL, ++cookie, 0, 0,  -15, a->id) == 0);
-> -       ASSERT_RETURN(kdbus_msg_send(b, NULL, ++cookie, 0, 0, -800, a->id) == 0);
-> -       ASSERT_RETURN(kdbus_msg_send(b, NULL, ++cookie, 0, 0, -150, a->id) == 0);
-> -       ASSERT_RETURN(kdbus_msg_send(b, NULL, ++cookie, 0, 0,   10, a->id) == 0);
-> -       ASSERT_RETURN(kdbus_msg_send(b, NULL, ++cookie, 0, 0, -800, a->id) == 0);
-> -       ASSERT_RETURN(kdbus_msg_send(b, NULL, ++cookie, 0, 0,  -10, a->id) == 0);
-> +       ret = kdbus_msg_send(b, NULL, ++cookie, 0, 0,   25, a->id, 0, NULL);
-> +       ASSERT_RETURN(ret == 0);
-> +       ret = kdbus_msg_send(b, NULL, ++cookie, 0, 0, -600, a->id, 0, NULL);
-> +       ASSERT_RETURN(ret == 0);
-> +       ret = kdbus_msg_send(b, NULL, ++cookie, 0, 0,   10, a->id, 0, NULL);
-> +       ASSERT_RETURN(ret == 0);
-> +       ret = kdbus_msg_send(b, NULL, ++cookie, 0, 0,  -35, a->id, 0, NULL);
-> +       ASSERT_RETURN(ret == 0);
-> +       ret = kdbus_msg_send(b, NULL, ++cookie, 0, 0, -100, a->id, 0, NULL);
-> +       ASSERT_RETURN(ret == 0);
-> +       ret = kdbus_msg_send(b, NULL, ++cookie, 0, 0,   20, a->id, 0, NULL);
-> +       ASSERT_RETURN(ret == 0);
-> +       ret = kdbus_msg_send(b, NULL, ++cookie, 0, 0,  -15, a->id, 0, NULL);
-> +       ASSERT_RETURN(ret == 0);
-> +       ret = kdbus_msg_send(b, NULL, ++cookie, 0, 0, -800, a->id, 0, NULL);
-> +       ASSERT_RETURN(ret == 0);
-> +       ret = kdbus_msg_send(b, NULL, ++cookie, 0, 0, -150, a->id, 0, NULL);
-> +       ASSERT_RETURN(ret == 0);
-> +       ret = kdbus_msg_send(b, NULL, ++cookie, 0, 0,   10, a->id, 0, NULL);
-> +       ASSERT_RETURN(ret == 0);
-> +       ret = kdbus_msg_send(b, NULL, ++cookie, 0, 0, -800, a->id, 0, NULL);
-> +       ASSERT_RETURN(ret == 0);
-> +       ret = kdbus_msg_send(b, NULL, ++cookie, 0, 0,  -10, a->id, 0, NULL);
-> +       ASSERT_RETURN(ret == 0);
->
->         ASSERT_RETURN(msg_recv_prio(a, -200, -800) == 0);
->         ASSERT_RETURN(msg_recv_prio(a, -100, -800) == 0);
-> @@ -198,7 +211,8 @@ static int kdbus_test_notify_kernel_quota(struct kdbus_test_env *env)
->          * Now the reader queue is full with kernel notfications,
->          * but as a user we still have room to push our messages.
->          */
-> -       ret = kdbus_msg_send(conn, NULL, 0xdeadbeef, 0, 0, 0, reader->id);
-> +       ret = kdbus_msg_send(conn, NULL, 0xdeadbeef, 0, 0, 0, reader->id,
-> +                            0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         /* More ID kernel notifications that will be lost */
-> @@ -318,7 +332,8 @@ static int kdbus_test_activator_quota(struct kdbus_test_env *env)
->         for (i = 0; i < KDBUS_CONN_MAX_MSGS; i++) {
->                 ret = kdbus_msg_send(sender, "foo.test.activator",
->                                      cookie++, 0, 0, 0,
-> -                                    KDBUS_DST_ID_NAME);
-> +                                    KDBUS_DST_ID_NAME,
-> +                                    0, NULL);
->                 if (ret < 0)
->                         break;
->                 activator_msgs_count++;
-> @@ -331,17 +346,18 @@ static int kdbus_test_activator_quota(struct kdbus_test_env *env)
->         /* Good, activator queue is full now */
->
->         /* ENXIO on direct send (activators can never be addressed by ID) */
-> -       ret = kdbus_msg_send(conn, NULL, cookie++, 0, 0, 0, activator->id);
-> +       ret = kdbus_msg_send(conn, NULL, cookie++, 0, 0, 0, activator->id,
-> +                            0, NULL);
->         ASSERT_RETURN(ret == -ENXIO);
->
->         /* can't queue more */
->         ret = kdbus_msg_send(conn, "foo.test.activator", cookie++,
-> -                            0, 0, 0, KDBUS_DST_ID_NAME);
-> +                            0, 0, 0, KDBUS_DST_ID_NAME, 0, NULL);
->         ASSERT_RETURN(ret == -ENOBUFS);
->
->         /* no match installed, so the broadcast will not inc dropped_msgs */
->         ret = kdbus_msg_send(sender, NULL, cookie++, 0, 0, 0,
-> -                            KDBUS_DST_ID_BROADCAST);
-> +                            KDBUS_DST_ID_BROADCAST, 0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         /* Check activator queue */
-> @@ -360,7 +376,7 @@ static int kdbus_test_activator_quota(struct kdbus_test_env *env)
->         /* Consume the connection pool memory */
->         for (i = 0; i < KDBUS_CONN_MAX_MSGS; i++) {
->                 ret = kdbus_msg_send(sender, NULL,
-> -                                    cookie++, 0, 0, 0, conn->id);
-> +                                    cookie++, 0, 0, 0, conn->id, 0, NULL);
->                 if (ret < 0)
->                         break;
->         }
-> @@ -427,7 +443,7 @@ static int kdbus_test_activator_quota(struct kdbus_test_env *env)
->
->         /* This one is lost but it is not accounted */
->         ret = kdbus_msg_send(sender, NULL,
-> -                            cookie++, 0, 0, 0, conn->id);
-> +                            cookie++, 0, 0, 0, conn->id, 0, NULL);
->         ASSERT_RETURN(ret == -ENOBUFS);
->
->         /* Acquire the name again */
-> @@ -480,7 +496,8 @@ static int kdbus_test_expected_reply_quota(struct kdbus_test_env *env)
->                         ret = kdbus_msg_send(conn, NULL, cookie++,
->                                              KDBUS_MSG_EXPECT_REPLY,
->                                              100000000ULL, 0,
-> -                                            connections[i]->id);
-> +                                            connections[i]->id,
-> +                                            0, NULL);
->                         if (ret < 0)
->                                 break;
->
-> @@ -500,7 +517,7 @@ static int kdbus_test_expected_reply_quota(struct kdbus_test_env *env)
->          * no further requests are allowed
->          */
->         ret = kdbus_msg_send(conn, NULL, cookie++, KDBUS_MSG_EXPECT_REPLY,
-> -                            1000000000ULL, 0, connections[8]->id);
-> +                            1000000000ULL, 0, connections[8]->id, 0, NULL);
->         ASSERT_RETURN(ret == -EMLINK);
->
->         for (i = 0; i < 9; i++)
-> @@ -578,7 +595,7 @@ int kdbus_test_pool_quota(struct kdbus_test_env *env)
->         ASSERT_RETURN(ret == -ENOBUFS);
->
->         /* We still can pass small messages */
-> -       ret = kdbus_msg_send(b, NULL, cookie++, 0, 0, 0, c->id);
-> +       ret = kdbus_msg_send(b, NULL, cookie++, 0, 0, 0, c->id, 0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         for (i = size; i < (POOL_SIZE / 2 / 3); i += size) {
-> @@ -633,7 +650,7 @@ int kdbus_test_message_quota(struct kdbus_test_env *env)
->         ret = kdbus_fill_conn_queue(b, a->id, KDBUS_CONN_MAX_MSGS);
->         ASSERT_RETURN(ret == KDBUS_CONN_MAX_MSGS);
->
-> -       ret = kdbus_msg_send(b, NULL, ++cookie, 0, 0, 0, a->id);
-> +       ret = kdbus_msg_send(b, NULL, ++cookie, 0, 0, 0, a->id, 0, NULL);
->         ASSERT_RETURN(ret == -ENOBUFS);
->
->         for (i = 0; i < KDBUS_CONN_MAX_MSGS; ++i) {
-> @@ -647,7 +664,7 @@ int kdbus_test_message_quota(struct kdbus_test_env *env)
->         ret = kdbus_fill_conn_queue(b, a->id, KDBUS_CONN_MAX_MSGS + 1);
->         ASSERT_RETURN(ret == KDBUS_CONN_MAX_MSGS);
->
-> -       ret = kdbus_msg_send(b, NULL, ++cookie, 0, 0, 0, a->id);
-> +       ret = kdbus_msg_send(b, NULL, ++cookie, 0, 0, 0, a->id, 0, NULL);
->         ASSERT_RETURN(ret == -ENOBUFS);
->
->         kdbus_conn_free(a);
-> diff --git a/tools/testing/selftests/kdbus/test-metadata-ns.c b/tools/testing/selftests/kdbus/test-metadata-ns.c
-> index 1f6edc0..28fc960 100644
-> --- a/tools/testing/selftests/kdbus/test-metadata-ns.c
-> +++ b/tools/testing/selftests/kdbus/test-metadata-ns.c
-> @@ -115,7 +115,7 @@ static int __kdbus_clone_userns_test(const char *bus,
->          */
->
->         ret = kdbus_msg_send(unpriv_conn, NULL, cookie, 0, 0,
-> -                            0, conn->id);
-> +                            0, conn->id, 0, NULL);
->         ASSERT_EXIT(ret == 0);
->
->         /*
-> @@ -151,7 +151,7 @@ static int __kdbus_clone_userns_test(const char *bus,
->
->                 cookie++;
->                 ret = kdbus_msg_send(userns_conn, NULL, cookie,
-> -                                    0, 0, 0, conn->id);
-> +                                    0, 0, 0, conn->id, 0, NULL);
->                 ASSERT_EXIT(ret == 0);
->
->                 /* Parent did send */
-> @@ -391,7 +391,7 @@ static int kdbus_clone_userns_test(const char *bus,
->          * Sending to unprivileged connections a unicast
->          */
->         ret = kdbus_msg_send(conn, NULL, 0xdeadbeef, 0, 0,
-> -                            0, unpriv_conn_id);
-> +                            0, unpriv_conn_id, 0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         /* signal to child that is in its userns */
-> @@ -403,14 +403,14 @@ static int kdbus_clone_userns_test(const char *bus,
->          * connections a unicast
->          */
->         ret = kdbus_msg_send(conn, NULL, 0xdeadbeef, 0, 0,
-> -                            0, userns_conn_id);
-> +                            0, userns_conn_id, 0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         /*
->          * Sending to unprivileged connections a broadcast
->          */
->         ret = kdbus_msg_send(conn, NULL, 0xdeadbeef, 0, 0,
-> -                            0, KDBUS_DST_ID_BROADCAST);
-> +                            0, KDBUS_DST_ID_BROADCAST, 0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->
-> diff --git a/tools/testing/selftests/kdbus/test-monitor.c b/tools/testing/selftests/kdbus/test-monitor.c
-> index e00d738..ae87d87 100644
-> --- a/tools/testing/selftests/kdbus/test-monitor.c
-> +++ b/tools/testing/selftests/kdbus/test-monitor.c
-> @@ -56,7 +56,8 @@ int kdbus_test_monitor(struct kdbus_test_env *env)
->         ret = kdbus_name_acquire(monitor, "foo.bar.baz", NULL);
->         ASSERT_RETURN(ret == -EOPNOTSUPP);
->
-> -       ret = kdbus_msg_send(env->conn, NULL, cookie, 0, 0,  0, conn->id);
-> +       ret = kdbus_msg_send(env->conn, NULL, cookie, 0, 0,  0, conn->id,
-> +                            0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         /* the recipient should have gotten the message */
-> @@ -80,7 +81,7 @@ int kdbus_test_monitor(struct kdbus_test_env *env)
->
->         cookie++;
->         ret = kdbus_msg_send(env->conn, NULL, cookie, 0, 0, 0,
-> -                            KDBUS_DST_ID_BROADCAST);
-> +                            KDBUS_DST_ID_BROADCAST, 0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         /* The monitor should get the message. */
-> @@ -103,7 +104,7 @@ int kdbus_test_monitor(struct kdbus_test_env *env)
->
->         cookie++;
->         ret = kdbus_msg_send(env->conn, NULL, cookie, 0, 0, 0,
-> -                            KDBUS_DST_ID_BROADCAST);
-> +                            KDBUS_DST_ID_BROADCAST, 0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         ret = kdbus_msg_recv_poll(monitor, 100, &msg, &offset);
-> @@ -128,7 +129,7 @@ int kdbus_test_monitor(struct kdbus_test_env *env)
->
->         cookie++;
->         ret = kdbus_msg_send(env->conn, NULL, cookie, 0, 0, 0,
-> -                            KDBUS_DST_ID_BROADCAST);
-> +                            KDBUS_DST_ID_BROADCAST, 0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         ret = kdbus_msg_recv_poll(monitor, 100, &msg, &offset);
-> diff --git a/tools/testing/selftests/kdbus/test-policy-ns.c b/tools/testing/selftests/kdbus/test-policy-ns.c
-> index 3437012..2d70ee4 100644
-> --- a/tools/testing/selftests/kdbus/test-policy-ns.c
-> +++ b/tools/testing/selftests/kdbus/test-policy-ns.c
-> @@ -180,7 +180,7 @@ static int kdbus_recv_in_threads(const char *bus, const char *name,
->                         break;
->
->                 ret = kdbus_msg_send(conn_db[i], name, cookie++,
-> -                                    0, 0, 0, dst_id);
-> +                                    0, 0, 0, dst_id, 0, NULL);
->                 if (ret < 0) {
->                         /*
->                          * Receivers are not reading their messages,
-> @@ -295,7 +295,7 @@ static int kdbus_fork_test_by_id(const char *bus,
->                  * EXIT_FAILURE.
->                  */
->                 ret = kdbus_msg_send(conn_src, NULL, cookie,
-> -                                    0, 0, 0, conn_db[0]->id);
-> +                                    0, 0, 0, conn_db[0]->id, 0, NULL);
->                 ASSERT_EXIT(ret == child_status);
->
->                 ret = kdbus_msg_recv_poll(conn_src, 100, NULL, NULL);
-> @@ -331,7 +331,7 @@ static int kdbus_fork_test_by_id(const char *bus,
->         }
->
->         ret = kdbus_msg_send(conn_db[0], NULL, ++cookie,
-> -                            0, 0, 0, msg->src_id);
-> +                            0, 0, 0, msg->src_id, 0, NULL);
->         /*
->          * parent_status is checked against send operations,
->          * on failures always return TEST_ERR.
-> @@ -454,7 +454,7 @@ static int __kdbus_clone_userns_test(const char *bus,
->                 ASSERT_EXIT(ret == 0);
->
->                 ret = kdbus_msg_send(conn_src, name, 0xabcd1234,
-> -                                    0, 0, 0, KDBUS_DST_ID_NAME);
-> +                                    0, 0, 0, KDBUS_DST_ID_NAME, 0, NULL);
->                 kdbus_conn_free(conn_src);
->
->                 _exit(ret == expected_status ? EXIT_SUCCESS : EXIT_FAILURE);
-> diff --git a/tools/testing/selftests/kdbus/test-policy-priv.c b/tools/testing/selftests/kdbus/test-policy-priv.c
-> index 0208638..02e97d9 100644
-> --- a/tools/testing/selftests/kdbus/test-policy-priv.c
-> +++ b/tools/testing/selftests/kdbus/test-policy-priv.c
-> @@ -29,7 +29,7 @@ static int test_policy_priv_by_id(const char *bus,
->         ret = RUN_UNPRIVILEGED_CONN(unpriv, bus, ({
->                 ret = kdbus_msg_send(unpriv, NULL,
->                                      expected_cookie, 0, 0, 0,
-> -                                    conn_dst->id);
-> +                                    conn_dst->id, 0, NULL);
->                 ASSERT_EXIT(ret == child_status);
->         }));
->         ASSERT_RETURN(ret >= 0);
-> @@ -92,7 +92,8 @@ static int test_policy_priv_by_broadcast(const char *bus,
->
->                 /* Use expected_cookie since 'msg' might be NULL */
->                 ret = kdbus_msg_send(child, NULL, expected_cookie + 1,
-> -                                    0, 0, 0, KDBUS_DST_ID_BROADCAST);
-> +                                    0, 0, 0, KDBUS_DST_ID_BROADCAST,
-> +                                    0, NULL);
->                 ASSERT_EXIT(ret == 0);
->
->                 kdbus_msg_free(msg);
-> @@ -107,7 +108,8 @@ static int test_policy_priv_by_broadcast(const char *bus,
->
->                         ret = kdbus_msg_send(child_2, NULL,
->                                              expected_cookie, 0, 0, 0,
-> -                                            KDBUS_DST_ID_BROADCAST);
-> +                                            KDBUS_DST_ID_BROADCAST,
-> +                                            0, NULL);
->                         ASSERT_RETURN(ret == 0);
->
->                         /* drop own broadcast */
-> @@ -148,7 +150,8 @@ static int test_policy_priv_by_broadcast(const char *bus,
->
->                                 ret = kdbus_msg_send(child_2, NULL,
->                                                 expected_cookie, 0, 0, 0,
-> -                                               KDBUS_DST_ID_BROADCAST);
-> +                                               KDBUS_DST_ID_BROADCAST,
-> +                                               0, NULL);
->                                 ASSERT_EXIT(ret == 0);
->
->                                 /* drop own broadcast */
-> @@ -230,7 +233,8 @@ static int test_priv_before_policy_upload(struct kdbus_test_env *env)
->                 ret = kdbus_msg_send(unpriv, NULL, 0xdeadbeef,
->                                      KDBUS_MSG_EXPECT_REPLY,
->                                      5000000000ULL, 0,
-> -                                    KDBUS_DST_ID_BROADCAST);
-> +                                    KDBUS_DST_ID_BROADCAST,
-> +                                    0, NULL);
->                 ASSERT_EXIT(ret == -ENOTUNIQ);
->         }));
->         ASSERT_RETURN(ret == 0);
-> @@ -412,7 +416,7 @@ static int test_broadcast_after_policy_upload(struct kdbus_test_env *env)
->
->         ++expected_cookie;
->         ret = kdbus_msg_send(owner_a, NULL, expected_cookie, 0,
-> -                            0, 0, KDBUS_DST_ID_BROADCAST);
-> +                            0, 0, KDBUS_DST_ID_BROADCAST, 0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         ret = kdbus_msg_recv_poll(owner_a, 100, &msg, NULL);
-> @@ -515,7 +519,8 @@ static int test_broadcast_after_policy_upload(struct kdbus_test_env *env)
->                 ret = kdbus_msg_send(unpriv_owner, NULL,
->                                      expected_cookie,
->                                      0, 0, 0,
-> -                                    KDBUS_DST_ID_BROADCAST);
-> +                                    KDBUS_DST_ID_BROADCAST,
-> +                                    0, NULL);
->                 ASSERT_EXIT(ret == 0);
->
->                 /*
-> @@ -625,7 +630,7 @@ static int test_broadcast_after_policy_upload(struct kdbus_test_env *env)
->                                          NULL);
->                 ASSERT_EXIT(ret >= 0);
->                 ret = kdbus_msg_send(unpriv, NULL, expected_cookie,
-> -                                    0, 0, 0, KDBUS_DST_ID_BROADCAST);
-> +                                    0, 0, 0, KDBUS_DST_ID_BROADCAST, 0, NULL);
->                 ASSERT_EXIT(ret == 0);
->         }));
->         ASSERT_RETURN(ret == 0);
-> @@ -657,7 +662,7 @@ static int test_broadcast_after_policy_upload(struct kdbus_test_env *env)
->                                          NULL);
->                 ASSERT_EXIT(ret >= 0);
->                 ret = kdbus_msg_send(unpriv, NULL, expected_cookie,
-> -                                    0, 0, 0, KDBUS_DST_ID_BROADCAST);
-> +                                    0, 0, 0, KDBUS_DST_ID_BROADCAST, 0, NULL);
->                 ASSERT_EXIT(ret == 0);
->         }));
->         ASSERT_RETURN(ret == 0);
-> @@ -969,7 +974,8 @@ static int test_policy_priv(struct kdbus_test_env *env)
->         conn = kdbus_hello(env->buspath, 0, NULL, 0);
->         ASSERT_RETURN(conn);
->
-> -       ret = kdbus_msg_send(conn, "com.example.b", 0xdeadbeef, 0, 0, 0, 0);
-> +       ret = kdbus_msg_send(conn, "com.example.b", 0xdeadbeef, 0, 0, 0, 0,
-> +                            0, NULL);
->         ASSERT_EXIT(ret >= 0);
->
->         ret = kdbus_msg_recv_poll(conn_b, 300, NULL, NULL);
-> @@ -983,7 +989,7 @@ static int test_policy_priv(struct kdbus_test_env *env)
->
->         ret = RUN_UNPRIVILEGED_CONN(unpriv, env->buspath, ({
->                 ret = kdbus_msg_send(unpriv, "com.example.b", 0xdeadbeef, 0, 0,
-> -                                    0, 0);
-> +                                    0, 0, 0, NULL);
->                 ASSERT_EXIT(ret == -EPERM);
->         }));
->         ASSERT_RETURN(ret >= 0);
-> @@ -1012,7 +1018,7 @@ static int test_policy_priv(struct kdbus_test_env *env)
->                 ASSERT_EXIT(ret >= 0);
->
->                 ret = kdbus_msg_send(unpriv, "com.example.c", 0xdeadbeef, 0, 0,
-> -                                    0, 0);
-> +                                    0, 0, 0, NULL);
->                 ASSERT_EXIT(ret >= 0);
->                 ret = kdbus_msg_recv_poll(owner, 100, NULL, NULL);
->                 ASSERT_EXIT(ret >= 0);
-> @@ -1037,7 +1043,7 @@ static int test_policy_priv(struct kdbus_test_env *env)
->
->         ret = RUN_UNPRIVILEGED_CONN(unpriv, env->buspath, ({
->                 ret = kdbus_msg_send(unpriv, "com.example.b", 0xdeadbeef, 0, 0,
-> -                                    0, 0);
-> +                                    0, 0, 0, NULL);
->                 ASSERT_EXIT(ret >= 0);
->         }));
->         ASSERT_RETURN(ret >= 0);
-> @@ -1061,7 +1067,7 @@ static int test_policy_priv(struct kdbus_test_env *env)
->
->         ret = RUN_UNPRIVILEGED_CONN(unpriv, env->buspath, ({
->                 ret = kdbus_msg_send(unpriv, "com.example.b", 0xdeadbeef, 0, 0,
-> -                                    0, 0);
-> +                                    0, 0, 0, NULL);
->                 ASSERT_EXIT(ret >= 0);
->         }));
->         ASSERT_RETURN(ret >= 0);
-> @@ -1085,7 +1091,7 @@ static int test_policy_priv(struct kdbus_test_env *env)
->
->         ret = RUN_UNPRIVILEGED_CONN(unpriv, env->buspath, ({
->                 ret = kdbus_msg_send(unpriv, "com.example.b", 0xdeadbeef, 0, 0,
-> -                                    0, 0);
-> +                                    0, 0, 0, NULL);
->                 ASSERT_EXIT(ret >= 0);
->         }));
->         ASSERT_RETURN(ret >= 0);
-> @@ -1132,7 +1138,7 @@ static int test_policy_priv(struct kdbus_test_env *env)
->
->         ret = RUN_UNPRIVILEGED_CONN(unpriv, env->buspath, ({
->                 ret = kdbus_msg_send(unpriv, "com.example.b", 0xdeadbeef, 0, 0,
-> -                                    0, 0);
-> +                                    0, 0, 0, NULL);
->                 ASSERT_EXIT(ret == -EPERM);
->         }));
->         ASSERT_RETURN(ret >= 0);
-> @@ -1153,7 +1159,7 @@ static int test_policy_priv(struct kdbus_test_env *env)
->
->         ret = RUN_UNPRIVILEGED_CONN(unpriv, env->buspath, ({
->                 ret = kdbus_msg_send(unpriv, "com.example.b", 0xdeadbeef, 0, 0,
-> -                                    0, 0);
-> +                                    0, 0, 0, NULL);
->                 ASSERT_EXIT(ret >= 0);
->         }));
->         ASSERT_RETURN(ret >= 0);
-> @@ -1177,7 +1183,7 @@ static int test_policy_priv(struct kdbus_test_env *env)
->
->         ret = RUN_UNPRIVILEGED_CONN(unpriv, env->buspath, ({
->                 ret = kdbus_msg_send(unpriv, "com.example.b", 0xdeadbeef, 0, 0,
-> -                                    0, 0);
-> +                                    0, 0, 0, NULL);
->                 ASSERT_EXIT(ret >= 0);
->
->                 ret = kdbus_msg_recv_poll(conn_b, 100, NULL, NULL);
-> @@ -1188,7 +1194,7 @@ static int test_policy_priv(struct kdbus_test_env *env)
->                 ASSERT_RETURN(ret == 0);
->
->                 ret = kdbus_msg_send(unpriv, "com.example.b", 0xdeadbeef, 0, 0,
-> -                                    0, 0);
-> +                                    0, 0, 0, NULL);
->                 ASSERT_EXIT(ret == -EPERM);
->         }));
->         ASSERT_RETURN(ret >= 0);
-> @@ -1229,7 +1235,7 @@ static int test_policy_priv(struct kdbus_test_env *env)
->                 ASSERT_RETURN(unpriv);
->
->                 ret = kdbus_msg_send(unpriv, "com.example.c", 0xdeadbeef, 0, 0,
-> -                                    0, 0);
-> +                                    0, 0, 0, NULL);
->                 ASSERT_EXIT(ret >= 0);
->
->                 ret = kdbus_msg_recv_poll(owner, 100, NULL, NULL);
-> @@ -1239,7 +1245,7 @@ static int test_policy_priv(struct kdbus_test_env *env)
->                 kdbus_conn_free(conn);
->
->                 ret = kdbus_msg_send(unpriv, "com.example.c", 0xdeadbeef, 0, 0,
-> -                                    0, 0);
-> +                                    0, 0, 0, NULL);
->                 ASSERT_EXIT(ret == -EPERM);
->
->                 kdbus_conn_free(unpriv);
-> diff --git a/tools/testing/selftests/kdbus/test-send.c b/tools/testing/selftests/kdbus/test-send.c
-> new file mode 100644
-> index 0000000..042106f
-> --- /dev/null
-> +++ b/tools/testing/selftests/kdbus/test-send.c
-> @@ -0,0 +1,82 @@
-> +#include <stdio.h>
-> +#include <string.h>
-> +#include <time.h>
-> +#include <fcntl.h>
-> +#include <stdlib.h>
-> +#include <unistd.h>
-> +#include <stddef.h>
-> +#include <stdint.h>
-> +#include <errno.h>
-> +#include <assert.h>
-> +#include <poll.h>
-> +#include <sys/ioctl.h>
-> +
-> +#include "kdbus-test.h"
-> +#include "kdbus-util.h"
-> +#include "kdbus-enum.h"
-> +
-> +int get_file(const char *fname, int flags, const char *content)
-> +{
-> +       FILE *f;
-> +
-> +       if (access(fname, F_OK) < 0) {
-> +               f = fopen(fname, "w");
-> +               if (!f)
-> +                       return -1;
-> +               fprintf(f, "%s\n", content);
-> +               fclose(f);
-> +       }
-> +
-> +       return open(fname, flags);
-> +}
-> +
-> +int kdbus_test_send(struct kdbus_test_env *env)
-> +{
-> +       int ret;
-> +       int serial = 1;
-> +       int fds[3];
-> +       size_t i;
-> +
-> +       if (!env->conn)
-> +               return EXIT_FAILURE;
-> +
-> +       fds[0] = get_file("/tmp/kdbus-test-send.rd", O_RDONLY, "foo");
-> +       fds[1] = get_file("/tmp/kdbus-test-send.wr", O_WRONLY, "bar");
-> +       fds[2] = get_file("/tmp/kdbus-test-send.rdwr", O_RDWR, "baz");
+Signed-off-by: Dolev Raviv <draviv@codeaurora.org>
+Signed-off-by: Noa Rubens <noag@codeaurora.org>
+Signed-off-by: Raviv Shvili <rshvili@codeaurora.org>
+Signed-off-by: Gilad Broner <gbroner@codeaurora.org>
+Signed-off-by: Yaniv Gardi <ygardi@codeaurora.org>
 
-I'm not a big fan of adding tests that only work if the caller does
-custom setups. We run the tests as root (and we already skip specific
-tests if you're not root). Why not provide all the required
-infrastructure yourself? Check in main() whether you can set the
-required sec-labels, if not, just skip the test.
+---
+ drivers/scsi/ufs/ufs.h        |  53 +++--------
+ drivers/scsi/ufs/ufshcd.c     | 208 +++++++++++++++++++++++++++++++++++++++++-
+ include/scsi/scsi.h           |   1 +
+ include/uapi/scsi/Kbuild      |   1 +
+ include/uapi/scsi/ufs/Kbuild  |   3 +
+ include/uapi/scsi/ufs/ioctl.h |  58 ++++++++++++
+ include/uapi/scsi/ufs/ufs.h   |  67 ++++++++++++++
+ 7 files changed, 348 insertions(+), 43 deletions(-)
+ create mode 100644 include/uapi/scsi/ufs/Kbuild
+ create mode 100644 include/uapi/scsi/ufs/ioctl.h
+ create mode 100644 include/uapi/scsi/ufs/ufs.h
 
-I really appreciate the test, but I don't see the point if this cannot
-be run as part of the test-suite. If you cannot provide a fully
-integrated test, then please make it a separate binary that just links
-in kdbus-util.c. Then add a proper comment to the test that explain
-what it does, and, more importantly, what is required to run it.
+diff --git a/drivers/scsi/ufs/ufs.h b/drivers/scsi/ufs/ufs.h
+index 05e0f23..eab739d 100644
+--- a/drivers/scsi/ufs/ufs.h
++++ b/drivers/scsi/ufs/ufs.h
+@@ -38,6 +38,7 @@
+ 
+ #include <linux/mutex.h>
+ #include <linux/types.h>
++#include <scsi/ufs/ufs.h>
+ 
+ #define MAX_CDB_SIZE	16
+ #define GENERAL_UPIU_REQUEST_SIZE 32
+@@ -72,6 +73,16 @@ enum {
+ 	UFS_UPIU_RPMB_WLUN		= 0xC4,
+ };
+ 
++/**
++ * ufs_is_valid_unit_desc_lun - checks if the given LUN has a unit descriptor
++ * @lun: LU number to check
++ * @return: true if the lun has a matching unit descriptor, false otherwise
++ */
++static inline bool ufs_is_valid_unit_desc_lun(u8 lun)
++{
++	return lun == UFS_UPIU_RPMB_WLUN || (lun < UFS_UPIU_MAX_GENERAL_LUN);
++}
++
+ /*
+  * UFS Protocol Information Unit related definitions
+  */
+@@ -127,35 +138,6 @@ enum {
+ 	UPIU_QUERY_FUNC_STANDARD_WRITE_REQUEST          = 0x81,
+ };
+ 
+-/* Flag idn for Query Requests*/
+-enum flag_idn {
+-	QUERY_FLAG_IDN_FDEVICEINIT      = 0x01,
+-	QUERY_FLAG_IDN_PWR_ON_WPE	= 0x03,
+-	QUERY_FLAG_IDN_BKOPS_EN         = 0x04,
+-};
+-
+-/* Attribute idn for Query requests */
+-enum attr_idn {
+-	QUERY_ATTR_IDN_ACTIVE_ICC_LVL	= 0x03,
+-	QUERY_ATTR_IDN_BKOPS_STATUS	= 0x05,
+-	QUERY_ATTR_IDN_EE_CONTROL	= 0x0D,
+-	QUERY_ATTR_IDN_EE_STATUS	= 0x0E,
+-};
+-
+-/* Descriptor idn for Query requests */
+-enum desc_idn {
+-	QUERY_DESC_IDN_DEVICE		= 0x0,
+-	QUERY_DESC_IDN_CONFIGURAION	= 0x1,
+-	QUERY_DESC_IDN_UNIT		= 0x2,
+-	QUERY_DESC_IDN_RFU_0		= 0x3,
+-	QUERY_DESC_IDN_INTERCONNECT	= 0x4,
+-	QUERY_DESC_IDN_STRING		= 0x5,
+-	QUERY_DESC_IDN_RFU_1		= 0x6,
+-	QUERY_DESC_IDN_GEOMETRY		= 0x7,
+-	QUERY_DESC_IDN_POWER		= 0x8,
+-	QUERY_DESC_IDN_MAX,
+-};
+-
+ enum desc_header_offset {
+ 	QUERY_DESC_LENGTH_OFFSET	= 0x00,
+ 	QUERY_DESC_DESC_TYPE_OFFSET	= 0x01,
+@@ -278,19 +260,6 @@ enum bkops_status {
+ 	BKOPS_STATUS_MAX		 = BKOPS_STATUS_CRITICAL,
+ };
+ 
+-/* UTP QUERY Transaction Specific Fields OpCode */
+-enum query_opcode {
+-	UPIU_QUERY_OPCODE_NOP		= 0x0,
+-	UPIU_QUERY_OPCODE_READ_DESC	= 0x1,
+-	UPIU_QUERY_OPCODE_WRITE_DESC	= 0x2,
+-	UPIU_QUERY_OPCODE_READ_ATTR	= 0x3,
+-	UPIU_QUERY_OPCODE_WRITE_ATTR	= 0x4,
+-	UPIU_QUERY_OPCODE_READ_FLAG	= 0x5,
+-	UPIU_QUERY_OPCODE_SET_FLAG	= 0x6,
+-	UPIU_QUERY_OPCODE_CLEAR_FLAG	= 0x7,
+-	UPIU_QUERY_OPCODE_TOGGLE_FLAG	= 0x8,
+-};
+-
+ /* Query response result code */
+ enum {
+ 	QUERY_RESULT_SUCCESS                    = 0x00,
+diff --git a/drivers/scsi/ufs/ufshcd.c b/drivers/scsi/ufs/ufshcd.c
+index 786df28..efeb252 100644
+--- a/drivers/scsi/ufs/ufshcd.c
++++ b/drivers/scsi/ufs/ufshcd.c
+@@ -38,6 +38,7 @@
+  */
+ 
+ #include <linux/async.h>
++#include <scsi/ufs/ioctl.h>
+ #include <linux/devfreq.h>
+ #include <linux/nls.h>
+ #include <linux/of.h>
+@@ -2208,7 +2209,7 @@ static inline int ufshcd_read_unit_desc_param(struct ufs_hba *hba,
+ 	 * Unit descriptors are only available for general purpose LUs (LUN id
+ 	 * from 0 to 7) and RPMB Well known LU.
+ 	 */
+-	if (lun != UFS_UPIU_RPMB_WLUN && (lun >= UFS_UPIU_MAX_GENERAL_LUN))
++	if (!ufs_is_valid_unit_desc_lun(lun))
+ 		return -EOPNOTSUPP;
+ 
+ 	return ufshcd_read_desc_param(hba, QUERY_DESC_IDN_UNIT, lun,
+@@ -5047,6 +5048,207 @@ out:
+ }
+ 
+ /**
++ * ufshcd_query_ioctl - perform user read queries
++ * @hba: per-adapter instance
++ * @lun: used for lun specific queries
++ * @buffer: user space buffer for reading and submitting query data and params
++ * @return: 0 for success negative error code otherwise
++ *
++ * Expected/Submitted buffer structure is struct ufs_ioctl_query_data.
++ * It will read the opcode, idn and buf_length parameters, and, put the
++ * response in the buffer field while updating the used size in buf_length.
++ */
++static int ufshcd_query_ioctl(struct ufs_hba *hba, u8 lun, void __user *buffer)
++{
++	struct ufs_ioctl_query_data ioctl_data;
++	int err = 0;
++	int length = 0;
++	void *data_ptr;
++	bool flag;
++	u32 att;
++	u8 index;
++	u8 *desc = NULL;
++
++	/* extract params from user buffer */
++	if (copy_from_user(&ioctl_data, buffer,
++			sizeof(struct ufs_ioctl_query_data))) {
++		err = -EFAULT;
++		goto out;
++	}
++
++	/* verify legal parameters & send query */
++	switch (ioctl_data.opcode) {
++	case UPIU_QUERY_OPCODE_READ_DESC:
++		switch (ioctl_data.idn) {
++		case QUERY_DESC_IDN_DEVICE:
++		case QUERY_DESC_IDN_CONFIGURAION:
++		case QUERY_DESC_IDN_INTERCONNECT:
++		case QUERY_DESC_IDN_GEOMETRY:
++		case QUERY_DESC_IDN_POWER:
++			index = 0;
++			break;
++		case QUERY_DESC_IDN_UNIT:
++			if (!ufs_is_valid_unit_desc_lun(lun)) {
++				dev_err(hba->dev,
++					"%s: No unit descriptor for lun 0x%x\n",
++					__func__, lun);
++				err = -EINVAL;
++				goto out;
++			}
++			index = lun;
++			break;
++		default:
++			goto out;
++		}
++
++		if (ioctl_data.buf_size > QUERY_DESC_MAX_SIZE) {
++			err = -EINVAL;
++			goto out;
++		}
++
++		desc = kzalloc(ioctl_data.buf_size, GFP_KERNEL);
++		if (!desc) {
++			err = -ENOMEM;
++			goto out;
++		}
++
++		length = ioctl_data.buf_size;
++		err = ufshcd_query_descriptor(hba, ioctl_data.opcode,
++				ioctl_data.idn, index, 0, desc, &length);
++		break;
++	case UPIU_QUERY_OPCODE_READ_ATTR:
++		switch (ioctl_data.idn) {
++		case QUERY_ATTR_IDN_BOOT_LU_EN:
++		case QUERY_ATTR_IDN_POWER_MODE:
++		case QUERY_ATTR_IDN_ACTIVE_ICC_LVL:
++		case QUERY_ATTR_IDN_OOO_DATA_EN:
++		case QUERY_ATTR_IDN_BKOPS_STATUS:
++		case QUERY_ATTR_IDN_PURGE_STATUS:
++		case QUERY_ATTR_IDN_MAX_DATA_IN:
++		case QUERY_ATTR_IDN_MAX_DATA_OUT:
++		case QUERY_ATTR_IDN_REF_CLK_FREQ:
++		case QUERY_ATTR_IDN_CONF_DESC_LOCK:
++		case QUERY_ATTR_IDN_MAX_NUM_OF_RTT:
++		case QUERY_ATTR_IDN_EE_CONTROL:
++		case QUERY_ATTR_IDN_EE_STATUS:
++		case QUERY_ATTR_IDN_SECONDS_PASSED:
++			index = 0;
++			break;
++		case QUERY_ATTR_IDN_DYN_CAP_NEEDED:
++		case QUERY_ATTR_IDN_CORR_PRG_BLK_NUM:
++			index = lun;
++			break;
++		default:
++			goto out_einval;
++		}
++		err = ufshcd_query_attr(hba, ioctl_data.opcode,
++					ioctl_data.idn, index, 0, &att);
++		break;
++	case UPIU_QUERY_OPCODE_READ_FLAG:
++		switch (ioctl_data.idn) {
++		case QUERY_FLAG_IDN_FDEVICEINIT:
++		case QUERY_FLAG_IDN_PERMANENT_WPE:
++		case QUERY_FLAG_IDN_PWR_ON_WPE:
++		case QUERY_FLAG_IDN_BKOPS_EN:
++		case QUERY_FLAG_IDN_PURGE_ENABLE:
++		case QUERY_FLAG_IDN_FPHYRESOURCEREMOVAL:
++		case QUERY_FLAG_IDN_BUSY_RTC:
++			break;
++		default:
++			goto out_einval;
++		}
++		err = ufshcd_query_flag_retry(hba, ioctl_data.opcode,
++				ioctl_data.idn, &flag);
++		break;
++	default:
++		goto out_einval;
++	}
++
++	if (err) {
++		dev_err(hba->dev, "%s: Query for idn %d failed\n", __func__,
++				ioctl_data.idn);
++		goto out_release_mem;
++	}
++
++	/* copy response data */
++	switch (ioctl_data.opcode) {
++	case UPIU_QUERY_OPCODE_READ_DESC:
++		ioctl_data.buf_size = length;
++		data_ptr = desc;
++		break;
++	case UPIU_QUERY_OPCODE_READ_ATTR:
++		ioctl_data.buf_size = sizeof(u32);
++		data_ptr = &att;
++		break;
++	case UPIU_QUERY_OPCODE_READ_FLAG:
++		ioctl_data.buf_size = 1;
++		data_ptr = &flag;
++		break;
++	default:
++		BUG_ON(true);
++	}
++
++	/* copy to user */
++	err = copy_to_user(buffer, &ioctl_data,
++			sizeof(struct ufs_ioctl_query_data));
++	if (err)
++		dev_err(hba->dev, "%s: Failed copying back to user.\n",
++			__func__);
++	err = copy_to_user(buffer + sizeof(struct ufs_ioctl_query_data),
++			data_ptr, ioctl_data.buf_size);
++	if (err)
++		dev_err(hba->dev, "%s: err %d copying back to user.\n",
++				__func__, err);
++	goto out_release_mem;
++
++out_einval:
++	dev_err(hba->dev,
++		"%s: illegal ufs query ioctl data, opcode 0x%x, idn 0x%x\n",
++		__func__, ioctl_data.opcode, (unsigned int)ioctl_data.idn);
++	err = -EINVAL;
++out_release_mem:
++	kfree(desc);
++out:
++	return err;
++}
++
++/**
++ * ufshcd_ioctl - ufs ioctl callback registered in scsi_host
++ * @dev: scsi device required for per LUN queries
++ * @cmd: command opcode
++ * @buffer: user space buffer for transferring data
++ *
++ * Supported commands:
++ * UFS_IOCTL_QUERY
++ */
++static int ufshcd_ioctl(struct scsi_device *dev, int cmd, void __user *buffer)
++{
++	struct ufs_hba *hba = shost_priv(dev->host);
++	int err = 0;
++
++	BUG_ON(!hba);
++	if (!buffer)
++		return -EINVAL;
++
++	switch (cmd) {
++	case UFS_IOCTL_QUERY:
++		pm_runtime_get_sync(hba->dev);
++		err = ufshcd_query_ioctl(hba, ufshcd_scsi_to_upiu_lun(dev->lun),
++				buffer);
++		pm_runtime_put_sync(hba->dev);
++		break;
++	case BLKROSET:
++		err = -ENOIOCTLCMD;
++		break;
++	default:
++		err = -EINVAL;
++		break;
++	}
++
++	return err;
++}
++
++/**
+  * ufshcd_async_scan - asynchronous execution for probing hba
+  * @data: data pointer to pass to this function
+  * @cookie: cookie data
+@@ -5106,6 +5308,10 @@ static struct scsi_host_template ufshcd_driver_template = {
+ 	.eh_device_reset_handler = ufshcd_eh_device_reset_handler,
+ 	.eh_host_reset_handler   = ufshcd_eh_host_reset_handler,
+ 	.eh_timed_out		= ufshcd_eh_timed_out,
++	.ioctl			= ufshcd_ioctl,
++#ifdef CONFIG_COMPAT
++	.compat_ioctl		= ufshcd_ioctl,
++#endif
+ 	.this_id		= -1,
+ 	.sg_tablesize		= SG_ALL,
+ 	.cmd_per_lun		= UFSHCD_CMD_PER_LUN,
+diff --git a/include/scsi/scsi.h b/include/scsi/scsi.h
+index e0a3398..fada160 100644
+--- a/include/scsi/scsi.h
++++ b/include/scsi/scsi.h
+@@ -284,6 +284,7 @@ static inline int scsi_is_wlun(u64 lun)
+  * Here are some scsi specific ioctl commands which are sometimes useful.
+  *
+  * Note that include/linux/cdrom.h also defines IOCTL 0x5300 - 0x5395
++ * include/uapi/scsi/ufs/ioctl.h defines 0x5388
+  */
+ 
+ /* Used to obtain PUN and LUN info.  Conflicts with CDROMAUDIOBUFSIZ */
+diff --git a/include/uapi/scsi/Kbuild b/include/uapi/scsi/Kbuild
+index 75746d5..d404525 100644
+--- a/include/uapi/scsi/Kbuild
++++ b/include/uapi/scsi/Kbuild
+@@ -1,5 +1,6 @@
+ # UAPI Header export list
+ header-y += fc/
++header-y += ufs/
+ header-y += scsi_bsg_fc.h
+ header-y += scsi_netlink.h
+ header-y += scsi_netlink_fc.h
+diff --git a/include/uapi/scsi/ufs/Kbuild b/include/uapi/scsi/ufs/Kbuild
+new file mode 100644
+index 0000000..cc3ef20
+--- /dev/null
++++ b/include/uapi/scsi/ufs/Kbuild
+@@ -0,0 +1,3 @@
++# UAPI Header export list
++header-y += ioctl.h
++header-y += ufs.h
+diff --git a/include/uapi/scsi/ufs/ioctl.h b/include/uapi/scsi/ufs/ioctl.h
+new file mode 100644
+index 0000000..3a8fa77
+--- /dev/null
++++ b/include/uapi/scsi/ufs/ioctl.h
+@@ -0,0 +1,58 @@
++#ifndef UAPI_UFS_IOCTL_H_
++#define UAPI_UFS_IOCTL_H_
++
++#include <linux/types.h>
++
++/*
++ *  IOCTL opcode for ufs queries has the following opcode after
++ *  SCSI_IOCTL_GET_PCI
++ */
++#define UFS_IOCTL_QUERY		_IOWR('L', 0x88, struct ufs_ioctl_query_data)
++
++/**
++ * struct ufs_ioctl_query_data - used to transfer data to and from
++ * user via ioctl
++ * @opcode: type of data to query (descriptor/attribute/flag)
++ * @idn: id of the data structure
++ * @buf_size: number of allocated bytes/data size on return
++ * @buffer: data location
++ *
++ * Received: buffer and buf_size (available space for transferred data)
++ * Submitted: opcode, idn, length, buf_size
++ */
++struct ufs_ioctl_query_data {
++	/*
++	 * User should select one of the opcode defined in "enum query_opcode".
++	 * Please check include/uapi/scsi/ufs/ufs.h for the definition of it.
++	 * Note that only UPIU_QUERY_OPCODE_READ_DESC,
++	 * UPIU_QUERY_OPCODE_READ_ATTR & UPIU_QUERY_OPCODE_READ_FLAG are
++	 * supported as of now. All other query_opcode would be considered
++	 * invalid.
++	 * As of now only read query operations are supported.
++	 */
++	__u32 opcode;
++	/*
++	 * User should specify the size of the buffer (buffer[0] below) where
++	 * it wants to read the query data (attribute/flag/descriptor).
++	 * As we might end up reading less data then what is specified in
++	 * buf_size. So we are updating buf_size to what exactly we have read.
++	 */
++	__u16 buf_size;
++	/*
++	 * User should select one of the idn from "enum flag_idn" or "enum
++	 * attr_idn" or "enum desc_idn" based on whether opcode above is
++	 * attribute, flag or descriptor.
++	 * Please check include/uapi/scsi/ufs/ufs.h for the definition of it.
++	 */
++	__u8 idn;
++	/*
++	 * placeholder for the start of the data buffer where kernel will copy
++	 * the query data (attribute/flag/descriptor) read from the UFS device
++	 * Note:
++	 * For Read Attribute you will have to allocate 4 bytes
++	 * For Read Flag you will have to allocate 1 byte
++	 */
++	__u8 buffer[0];
++};
++
++#endif /* UAPI_UFS_IOCTL_H_ */
+diff --git a/include/uapi/scsi/ufs/ufs.h b/include/uapi/scsi/ufs/ufs.h
+new file mode 100644
+index 0000000..8e4baff
+--- /dev/null
++++ b/include/uapi/scsi/ufs/ufs.h
+@@ -0,0 +1,67 @@
++#ifndef UAPI_UFS_H_
++#define UAPI_UFS_H_
++
++/* Flag idn for Query Requests*/
++enum flag_idn {
++	QUERY_FLAG_IDN_FDEVICEINIT		= 0x01,
++	QUERY_FLAG_IDN_PERMANENT_WPE		= 0x02,
++	QUERY_FLAG_IDN_PWR_ON_WPE		= 0x03,
++	QUERY_FLAG_IDN_BKOPS_EN			= 0x04,
++	QUERY_FLAG_IDN_RESERVED1		= 0x05,
++	QUERY_FLAG_IDN_PURGE_ENABLE		= 0x06,
++	QUERY_FLAG_IDN_RESERVED2		= 0x07,
++	QUERY_FLAG_IDN_FPHYRESOURCEREMOVAL      = 0x08,
++	QUERY_FLAG_IDN_BUSY_RTC			= 0x09,
++};
++
++/* Attribute idn for Query requests */
++enum attr_idn {
++	QUERY_ATTR_IDN_BOOT_LU_EN		= 0x00,
++	QUERY_ATTR_IDN_RESERVED			= 0x01,
++	QUERY_ATTR_IDN_POWER_MODE		= 0x02,
++	QUERY_ATTR_IDN_ACTIVE_ICC_LVL		= 0x03,
++	QUERY_ATTR_IDN_OOO_DATA_EN		= 0x04,
++	QUERY_ATTR_IDN_BKOPS_STATUS		= 0x05,
++	QUERY_ATTR_IDN_PURGE_STATUS		= 0x06,
++	QUERY_ATTR_IDN_MAX_DATA_IN		= 0x07,
++	QUERY_ATTR_IDN_MAX_DATA_OUT		= 0x08,
++	QUERY_ATTR_IDN_DYN_CAP_NEEDED		= 0x09,
++	QUERY_ATTR_IDN_REF_CLK_FREQ		= 0x0A,
++	QUERY_ATTR_IDN_CONF_DESC_LOCK		= 0x0B,
++	QUERY_ATTR_IDN_MAX_NUM_OF_RTT		= 0x0C,
++	QUERY_ATTR_IDN_EE_CONTROL		= 0x0D,
++	QUERY_ATTR_IDN_EE_STATUS		= 0x0E,
++	QUERY_ATTR_IDN_SECONDS_PASSED		= 0x0F,
++	QUERY_ATTR_IDN_CNTX_CONF		= 0x10,
++	QUERY_ATTR_IDN_CORR_PRG_BLK_NUM		= 0x11,
++};
++
++/* Descriptor idn for Query requests */
++enum desc_idn {
++	QUERY_DESC_IDN_DEVICE		= 0x0,
++	QUERY_DESC_IDN_CONFIGURAION	= 0x1,
++	QUERY_DESC_IDN_UNIT		= 0x2,
++	QUERY_DESC_IDN_RFU_0		= 0x3,
++	QUERY_DESC_IDN_INTERCONNECT	= 0x4,
++	QUERY_DESC_IDN_STRING		= 0x5,
++	QUERY_DESC_IDN_RFU_1		= 0x6,
++	QUERY_DESC_IDN_GEOMETRY		= 0x7,
++	QUERY_DESC_IDN_POWER		= 0x8,
++	QUERY_DESC_IDN_RFU_2		= 0x9,
++	QUERY_DESC_IDN_MAX,
++};
++
++/* UTP QUERY Transaction Specific Fields OpCode */
++enum query_opcode {
++	UPIU_QUERY_OPCODE_NOP		= 0x0,
++	UPIU_QUERY_OPCODE_READ_DESC	= 0x1,
++	UPIU_QUERY_OPCODE_WRITE_DESC	= 0x2,
++	UPIU_QUERY_OPCODE_READ_ATTR	= 0x3,
++	UPIU_QUERY_OPCODE_WRITE_ATTR	= 0x4,
++	UPIU_QUERY_OPCODE_READ_FLAG	= 0x5,
++	UPIU_QUERY_OPCODE_SET_FLAG	= 0x6,
++	UPIU_QUERY_OPCODE_CLEAR_FLAG	= 0x7,
++	UPIU_QUERY_OPCODE_TOGGLE_FLAG	= 0x8,
++	UPIU_QUERY_OPCODE_MAX,
++};
++#endif /* UAPI_UFS_H_ */
+-- 
+1.8.5.2
 
-Thanks
-David
-
-> +
-> +       for (i = 0; i < ELEMENTSOF(fds); i++) {
-> +               if (fds[i] < 0) {
-> +                       fprintf(stderr, "Unable to open data/fileN file(s)\n");
-> +                       return EXIT_FAILURE;
-> +               }
-> +       }
-> +
-> +       ret = kdbus_msg_send(env->conn, "com.example.kdbus-test", serial++,
-> +                            0, 0, 0, 0, 0, NULL);
-> +       if (ret < 0)
-> +               fprintf(stderr, "error sending simple message: %d (%m)\n",
-> +                       ret);
-> +
-> +       ret = kdbus_msg_send(env->conn, "com.example.kdbus-test", serial++,
-> +                            0, 0, 0, 0, 1, fds);
-> +       if (ret < 0)
-> +               fprintf(stderr, "error sending message with 1 fd: %d (%m)\n",
-> +                       ret);
-> +
-> +       ret = kdbus_msg_send(env->conn, "com.example.kdbus-test", serial++,
-> +                            0, 0, 0, 0, 2, fds);
-> +       if (ret < 0)
-> +               fprintf(stderr, "error sending message with 2 fds: %d (%m)\n",
-> +                       ret);
-> +
-> +       ret = kdbus_msg_send(env->conn, "com.example.kdbus-test", serial++,
-> +                            0, 0, 0, 0, 3, fds);
-> +       if (ret < 0)
-> +               fprintf(stderr, "error sending message with 3 fds: %d (%m)\n",
-> +                       ret);
-> +
-> +       for (i = 0; i < ELEMENTSOF(fds); i++)
-> +               close(fds[i]);
-> +
-> +       return EXIT_SUCCESS;
-> +}
-> diff --git a/tools/testing/selftests/kdbus/test-sync.c b/tools/testing/selftests/kdbus/test-sync.c
-> index 0655a54..fcaa74f 100644
-> --- a/tools/testing/selftests/kdbus/test-sync.c
-> +++ b/tools/testing/selftests/kdbus/test-sync.c
-> @@ -113,7 +113,7 @@ static int close_epipe_sync(const char *bus)
->         }
->
->         ret = kdbus_msg_send(conn_dst, NULL, cookie, 0, 0, 0,
-> -                            KDBUS_DST_ID_BROADCAST);
-> +                            KDBUS_DST_ID_BROADCAST, 0, NULL);
->         ASSERT_RETURN(ret == 0);
->
->         cookie++;
-> diff --git a/tools/testing/selftests/kdbus/test-timeout.c b/tools/testing/selftests/kdbus/test-timeout.c
-> index cfd1930..a5cdaf2 100644
-> --- a/tools/testing/selftests/kdbus/test-timeout.c
-> +++ b/tools/testing/selftests/kdbus/test-timeout.c
-> @@ -69,7 +69,7 @@ int kdbus_test_timeout(struct kdbus_test_env *env)
->                 ASSERT_RETURN(kdbus_msg_send(conn_b, NULL, cookie,
->                               KDBUS_MSG_EXPECT_REPLY,
->                               (i + 1) * 100ULL * 1000000ULL, 0,
-> -                             conn_a->id) == 0);
-> +                             conn_a->id, 0, NULL) == 0);
->                 expected |= 1ULL << cookie;
->         }
->
-> --
-> 1.9.1
->
+-- 
+QUALCOMM ISRAEL, on behalf of Qualcomm Innovation Center, Inc. is a member of Code Aurora Forum, hosted by The Linux Foundation
