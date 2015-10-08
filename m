@@ -1,26 +1,41 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v2 net-next 3/3] bpf: add unprivileged bpf tests
-Date: Thu, 8 Oct 2015 10:55:51 -0700
-Message-ID: <5616AE27.6060108@plumgrid.com>
+From: Hannes Frederic Sowa <hannes@stressinduktion.org>
+Subject: Re: [PATCH v2 net-next 1/3] bpf: enable non-root eBPF programs
+Date: Thu, 08 Oct 2015 20:20:52 +0200
+Message-ID: <1444328452.3935641.405110585.76554E06@webmail.messagingengine.com>
 References: <1444281803-24274-1-git-send-email-ast@plumgrid.com>
- <1444281803-24274-4-git-send-email-ast@plumgrid.com>
- <CAGXu5j+QA2uyvrNteoP1zQ5Cx6tAjVxR2zqmCi8148jS+_YW4w@mail.gmail.com>
+ <1444281803-24274-2-git-send-email-ast@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAGXu5j+QA2uyvrNteoP1zQ5Cx6tAjVxR2zqmCi8148jS+_YW4w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1444281803-24274-2-git-send-email-ast@plumgrid.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexei Starovoitov <ast@plumgrid.com>, "David S. Miller" <davem@davemloft.net>
+Cc: Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@kernel.org>, Eric Dumazet <edumazet@google.com>, Daniel Borkmann <daniel@iogearbox.net>, Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 10/8/15 10:46 AM, Kees Cook wrote:
->>   samples/bpf/libbpf.h        |    8 +
->> >  samples/bpf/test_verifier.c |  357 +++++++++++++++++++++++++++++++++++++++++--
-> Instead of living in samples/ could these be moved and hooked up to
-> tools/testing/selftests/ instead?
+Hi Alexei,
 
-as a follow up patch. yes. of course.
-along with test_maps.
-Fengguang's todo already includes adding test_bpf.ko to 0-day buildbot.
+On Thu, Oct 8, 2015, at 07:23, Alexei Starovoitov wrote:
+> The feature is controlled by sysctl kernel.unprivileged_bpf_disabled.
+> This toggle defaults to off (0), but can be set true (1).  Once true,
+> bpf programs and maps cannot be accessed from unprivileged process,
+> and the toggle cannot be set back to false.
+
+This approach seems fine to me.
+
+I am wondering if it makes sense to somehow allow ebpf access per
+namespace? I currently have no idea how that could work and on which
+namespace type to depend or going with a prctl or even cgroup maybe. The
+rationale behind this is, that maybe some namespaces like openstack
+router namespaces could make usage of advanced ebpf capabilities in the
+kernel, while other namespaces, especially where untrusted third parties
+are hosted, shouldn't have access to those facilities.
+
+In that way, hosters would be able to e.g. deploy more efficient
+performance monitoring container (which should still need not to run as
+root) while the majority of the users has no access to that. Or think
+about routing instances in some namespaces, etc. etc.
+
+Thanks,
+Hannes
