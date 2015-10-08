@@ -1,569 +1,240 @@
-From: David Herrmann <dh.herrmann@gmail.com>
-Subject: Re: [PATCH v7] Input: Add userio module
-Date: Thu, 8 Oct 2015 19:20:59 +0200
-Message-ID: <CANq1E4RCwq49T=iR40NfQLtxKdLCoTLFQB2KA17ksqRyTB568w@mail.gmail.com>
-References: <20151002173714.GA8437@dtor-ws>
-	<1444060529-11164-1-git-send-email-cpaul@redhat.com>
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: Re: [PATCH v6] seccomp, ptrace: add support for dumping seccomp filters
+Date: Thu, 8 Oct 2015 10:39:36 -0700
+Message-ID: <CAGXu5j+7G+jaUhFyMa8LO0wtwox7kZjOXeTLxBr04QsRw5ypcA@mail.gmail.com>
+References: <1444211179-24925-1-git-send-email-tycho.andersen@canonical.com>
+	<1444211179-24925-2-git-send-email-tycho.andersen@canonical.com>
+	<5614F323.9050805@iogearbox.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1444060529-11164-1-git-send-email-cpaul@redhat.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Stephen Chandler Paul <cpaul@redhat.com>
-Cc: Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Greg KH <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, Joe Perches <joe@perches.com>, Jiri Slaby <jslaby@suse.com>, Vishnu Patekar <vishnupatekar0510@gmail.com>, Sebastian Ott <sebott@linux.vnet.ibm.com>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Hans de Goede <hdegoede@redhat.com>, linux-doc@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5614F323.9050805-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
+Cc: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi
-
-On Mon, Oct 5, 2015 at 5:55 PM,  <cpaul@redhat.com> wrote:
-> From: Stephen Chandler Paul <cpaul@redhat.com>
+On Wed, Oct 7, 2015 at 3:25 AM, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org> wrote:
+> On 10/07/2015 11:46 AM, Tycho Andersen wrote:
+>>
+>> This patch adds support for dumping a process' (classic BPF) seccomp
+>> filters via ptrace.
+>>
+>> PTRACE_SECCOMP_GET_FILTER allows the tracer to dump the user's classic BPF
+>> seccomp filters. addr should be an integer which represents the ith
+>> seccomp
+>> filter (0 is the most recently installed filter). data should be a struct
+>> sock_filter * with enough room for the ith filter, or NULL, in which case
+>> the filter is not saved. The return value for this command is the number
+>> of
+>> BPF instructions the program represents, or negative in the case of
+>> errors.
+>> A command specific error is ENOENT, which indicates that there is no ith
+>> filter in this seccomp tree.
+>>
+>> A caveat with this approach is that there is no way to get explicitly at
+>> the heirarchy of seccomp filters, and users need to memcmp() filters to
+>> decide which are inherited. This means that a task which installs two of
+>> the same filter can potentially confuse users of this interface.
+>>
+>> Signed-off-by: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+>> CC: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+>> CC: Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+>> CC: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>> CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+>> CC: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+>> CC: Serge E. Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+>> CC: Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+>> CC: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
+>> ---
+>>   include/linux/seccomp.h     | 11 +++++++++
+>>   include/uapi/linux/ptrace.h |  2 ++
+>>   kernel/ptrace.c             |  5 ++++
+>>   kernel/seccomp.c            | 57
+>> ++++++++++++++++++++++++++++++++++++++++++++-
+>>   4 files changed, 74 insertions(+), 1 deletion(-)
+>>
+>> diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
+>> index f426503..8861b5b 100644
+>> --- a/include/linux/seccomp.h
+>> +++ b/include/linux/seccomp.h
+>> @@ -95,4 +95,15 @@ static inline void get_seccomp_filter(struct
+>> task_struct *tsk)
+>>         return;
+>>   }
+>>   #endif /* CONFIG_SECCOMP_FILTER */
+>> +
+>> +#if defined(CONFIG_SECCOMP_FILTER) && defined(CONFIG_CHECKPOINT_RESTORE)
+>> +extern long seccomp_get_filter(struct task_struct *task, long n,
+>> +                              void __user *data);
+>> +#else
+>> +static inline long seccomp_get_filter(struct task_struct *task,
+>> +                                     long n, void __user *data)
+>> +{
+>> +       return -EINVAL;
 >
-> Debugging input devices, specifically laptop touchpads, can be tricky
-> without having the physical device handy. Here we try to remedy that
-> with userio. This module allows an application to connect to a character
-> device provided by the kernel, and emulate any serio device. In
-> combination with userspace programs that can record PS/2 devices and
-> replay them through the /dev/userio device, this allows developers to
-> debug driver issues on the PS/2 level with devices simply by requesting
-> a recording from the user experiencing the issue without having to have
-> the physical hardware in front of them.
 >
-> Signed-off-by: Stephen Chandler Paul <cpaul@redhat.com>
+> Nit: -ENOTSUP would probably be the better choice? -EINVAL might just
+> be confusing to users? (Would be unclear to them whether there's actual
+> support of dumping or whether it's just an invalid argument.)
 
-Apart from the serio-unregistration, all I have left is bike-shedding.
-Regardless of those changes, this is:
+I'm not sure what the convention should be here. Calling ptrace with
+bad args returns -EINVAL, so distinguishing the new command being
+missing vs the new command have invalid argument isn't obvious. I
+don't think this should return -ENOTSUP since then we only know we've
+got a kernel that is new enough to know what PTRACE_SECCOMP_GET_FILTER
+is but that it was built without CONFIG_SECCOMP_FILTER and
+CONFIG_CHECKPOINT_RESTORE. That's a narrow error condition, so
+probably we should stick to -EINVAL.
 
-Reviewed-by: David Herrmann <dh.herrmann@gmail.com>
+At least for seccomp, the "is this supported" test has been to send
+almost bad arguments and get an EFAULT out of it. That tells you the
+feature exists.
 
-See below for some details..
+In this case, I think -EINVAL makes sense, but I could be talked out of it.
 
-> ---
->                                     Changes
-> * Removed useless if (!userio) check in userio_device_write()
+>> +}
+>> +#endif /* CONFIG_SECCOMP_FILTER && CONFIG_CHECKPOINT_RESTORE */
+>>   #endif /* _LINUX_SECCOMP_H */
 >
->  Documentation/input/userio.txt |  70 ++++++++++
->  MAINTAINERS                    |   6 +
->  drivers/input/serio/Kconfig    |  11 ++
->  drivers/input/serio/Makefile   |   1 +
->  drivers/input/serio/userio.c   | 286 +++++++++++++++++++++++++++++++++++++++++
->  include/linux/miscdevice.h     |   1 +
->  include/uapi/linux/userio.h    |  44 +++++++
->  7 files changed, 419 insertions(+)
->  create mode 100644 Documentation/input/userio.txt
->  create mode 100644 drivers/input/serio/userio.c
->  create mode 100644 include/uapi/linux/userio.h
+> ...
 >
-> diff --git a/Documentation/input/userio.txt b/Documentation/input/userio.txt
-> new file mode 100644
-> index 0000000..0880c0f
-> --- /dev/null
-> +++ b/Documentation/input/userio.txt
-> @@ -0,0 +1,70 @@
-> +                             The userio Protocol
-> +            (c) 2015 Stephen Chandler Paul <thatslyude@gmail.com>
-> +                             Sponsored by Red Hat
-> +--------------------------------------------------------------------------------
-> +
-> +1. Introduction
-> +~~~~~~~~~~~~~~~
-> +  This module is intended to try to make the lives of input driver developers
-> +easier by allowing them to test various serio devices (mainly the various
-> +touchpads found on laptops) without having to have the physical device in front
-> +of them. userio accomplishes this by allowing any privileged userspace program
-> +to directly interact with the kernel's serio driver and control a virtual serio
-> +port from there.
-> +
-> +2. Usage overview
-> +~~~~~~~~~~~~~~~~~
-> +  In order to interact with the userio kernel module, one simply opens the
-> +/dev/userio character device in their applications. Commands are sent to the
-> +kernel module by writing to the device, and any data received from the serio
-> +driver is read as-is from the /dev/userio device. All of the structures and
-> +macros you need to interact with the device are defined in <linux/userio.h> and
-> +<linux/serio.h>.
-> +
-> +3. Command Structure
-> +~~~~~~~~~~~~~~~~~~~~
-> +  The struct used for sending commands to /dev/userio is as follows:
-> +
-> +       struct userio_cmd {
-> +               __u8 type;
-> +               __u8 data;
-> +       };
-> +
-> +  "type" describes the type of command that is being sent. This can be any one
-> +of the USERIO_CMD macros defined in <linux/userio.h>. "data" is the argument
-> +that goes along with the command. In the event that the command doesn't have an
-> +argument, this field can be left untouched and will be ignored by the kernel.
-> +Each command should be sent by writing the struct directly to the character
-> +device. In the event that the command you send is invalid, an error will be
-> +returned by the character device and a more descriptive error will be printed
-> +to the kernel log. Only one command can be sent at a time, any additional data
-> +written to the character device after the initial command will be ignored.
-> +  To close the virtual serio port, just close /dev/userio.
-> +
-> +4. Commands
-> +~~~~~~~~~~~
-> +
-> +4.1 USERIO_CMD_REGISTER
-> +~~~~~~~~~~~~~~~~~~~~~~~
-> +  Registers the port with the serio driver and begins transmitting data back and
-> +forth. Registration can only be performed once a port type is set with
-> +USERIO_CMD_SET_PORT_TYPE. Has no argument.
-> +
-> +4.2 USERIO_CMD_SET_PORT_TYPE
-> +~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-> +  Sets the type of port we're emulating, where "data" is the port type being
-> +set. Can be any of the macros from <linux/serio.h>. For example: SERIO_8042
-> +would set the port type to be a normal PS/2 port.
-> +
-> +4.3 USERIO_CMD_SEND_INTERRUPT
-> +~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-> +  Sends an interrupt through the virtual serio port to the serio driver, where
-> +"data" is the interrupt data being sent.
-> +
-> +5. Userspace tools
-> +~~~~~~~~~~~~~~~~~~
-> +  The userio userspace tools are able to record PS/2 devices using some of the
-> +debugging information from i8042, and play back the devices on /dev/userio. The
-> +latest version of these tools can be found at:
-> +
-> +       https://github.com/Lyude/ps2emu
-> diff --git a/MAINTAINERS b/MAINTAINERS
-> index 797236b..ba59bd7 100644
-> --- a/MAINTAINERS
-> +++ b/MAINTAINERS
-> @@ -11100,6 +11100,12 @@ S:     Maintained
->  F:     drivers/media/v4l2-core/videobuf2-*
->  F:     include/media/videobuf2-*
+>> diff --git a/kernel/ptrace.c b/kernel/ptrace.c
+>> index 787320d..b760bae 100644
+>> --- a/kernel/ptrace.c
+>> +++ b/kernel/ptrace.c
+>> @@ -1016,6 +1016,11 @@ int ptrace_request(struct task_struct *child, long
+>> request,
+>>                 break;
+>>         }
+>>   #endif
+>> +
+>> +       case PTRACE_SECCOMP_GET_FILTER:
+>> +               ret = seccomp_get_filter(child, addr, datavp);
+>> +               break;
+>> +
+>>         default:
+>>                 break;
+>>         }
+>> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+>> index 06858a7..c8a4564 100644
+>> --- a/kernel/seccomp.c
+>> +++ b/kernel/seccomp.c
+>> @@ -347,6 +347,7 @@ static struct seccomp_filter
+>> *seccomp_prepare_filter(struct sock_fprog *fprog)
+>>   {
+>>         struct seccomp_filter *sfilter;
+>>         int ret;
+>> +       bool save_orig = config_enabled(CONFIG_CHECKPOINT_RESTORE);
+>>
+>>         if (fprog->len == 0 || fprog->len > BPF_MAXINSNS)
+>>                 return ERR_PTR(-EINVAL);
+>> @@ -370,7 +371,7 @@ static struct seccomp_filter
+>> *seccomp_prepare_filter(struct sock_fprog *fprog)
+>>                 return ERR_PTR(-ENOMEM);
+>>
+>>         ret = bpf_prog_create_from_user(&sfilter->prog, fprog,
+>> -                                       seccomp_check_filter, false);
+>> +                                       seccomp_check_filter, save_orig);
+>>         if (ret < 0) {
+>>                 kfree(sfilter);
+>>                 return ERR_PTR(ret);
+>> @@ -867,3 +868,57 @@ long prctl_set_seccomp(unsigned long seccomp_mode,
+>> char __user *filter)
+>>         /* prctl interface doesn't have flags, so they are always zero. */
+>>         return do_seccomp(op, 0, uargs);
+>>   }
+>> +
+>> +#if defined(CONFIG_SECCOMP_FILTER) && defined(CONFIG_CHECKPOINT_RESTORE)
+>> +long seccomp_get_filter(struct task_struct *task, long n, void __user
+>> *data)
+>> +{
+>> +       struct seccomp_filter *filter;
+>> +       struct sock_fprog_kern *fprog;
+>> +       long ret;
+>> +
+>> +       if (n < 0)
+>> +               return -EINVAL;
 >
-> +VIRTUAL SERIO DEVICE DRIVER
-> +M:     Stephen Chandler Paul <thatslyude@gmail.com>
-> +S:     Maintained
-> +F:     drivers/input/serio/userio.c
-> +F:     include/uapi/linux/userio.h
-> +
->  VIRTIO CONSOLE DRIVER
->  M:     Amit Shah <amit.shah@redhat.com>
->  L:     virtualization@lists.linux-foundation.org
-> diff --git a/drivers/input/serio/Kconfig b/drivers/input/serio/Kconfig
-> index 200841b..22b8b58 100644
-> --- a/drivers/input/serio/Kconfig
-> +++ b/drivers/input/serio/Kconfig
-> @@ -292,4 +292,15 @@ config SERIO_SUN4I_PS2
->           To compile this driver as a module, choose M here: the
->           module will be called sun4i-ps2.
 >
-> +config USERIO
-> +       tristate "Virtual serio device support"
-> +       help
-> +         Say Y here if you want to emulate serio devices using the userio
-> +         kernel module.
-> +
-> +         To compile this driver as a module, choose M here: the module will be
-> +         called userio.
-> +
-> +         If you are unsure, say N.
-> +
->  endif
-> diff --git a/drivers/input/serio/Makefile b/drivers/input/serio/Makefile
-> index c600089..2374ef9 100644
-> --- a/drivers/input/serio/Makefile
-> +++ b/drivers/input/serio/Makefile
-> @@ -30,3 +30,4 @@ obj-$(CONFIG_SERIO_APBPS2)    += apbps2.o
->  obj-$(CONFIG_SERIO_OLPC_APSP)  += olpc_apsp.o
->  obj-$(CONFIG_HYPERV_KEYBOARD)  += hyperv-keyboard.o
->  obj-$(CONFIG_SERIO_SUN4I_PS2)  += sun4i-ps2.o
-> +obj-$(CONFIG_USERIO)           += userio.o
-> diff --git a/drivers/input/serio/userio.c b/drivers/input/serio/userio.c
-> new file mode 100644
-> index 0000000..0ada7cf
-> --- /dev/null
-> +++ b/drivers/input/serio/userio.c
-> @@ -0,0 +1,286 @@
-> +/*
-> + * userio kernel serio device emulation module
-> + * Copyright (C) 2015 Red Hat
-> + * Copyright (C) 2015 Stephen Chandler Paul <thatslyude@gmail.com>
-> + *
-> + * This program is free software; you can redistribute it and/or modify it
-> + * under the terms of the GNU Lesser General Public License as published by the
-> + * Free Software Foundation; either version 2 of the License, or (at your
-> + * option) any later version.
-> + *
-> + * This program is distributed in the hope that it will be useful, but WITHOUT
-> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-> + * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
-> + * details.
-> + */
-
-We put an empty line here, usually.
-
-> +#include <linux/circ_buf.h>
-> +#include <linux/mutex.h>
-> +#include <linux/module.h>
-> +#include <linux/init.h>
-> +#include <linux/kernel.h>
-> +#include <linux/serio.h>
-> +#include <linux/slab.h>
-> +#include <linux/fs.h>
-> +#include <linux/miscdevice.h>
-> +#include <linux/sched.h>
-> +#include <linux/poll.h>
-> +#include <uapi/linux/userio.h>
-> +
-> +#define USERIO_NAME "userio"
-> +#define USERIO_BUFSIZE 16
-> +
-> +static struct miscdevice userio_misc;
-> +
-> +struct userio_device {
-> +       struct serio *serio;
-> +       struct mutex lock;
-> +
-> +       bool running;
-> +
-> +       u8 head;
-> +       u8 tail;
-> +
-> +       spinlock_t buf_lock;
-> +       unsigned char buf[USERIO_BUFSIZE];
-> +
-> +       wait_queue_head_t waitq;
-> +};
-> +
-> +/**
-> + * userio_device_write - Write data from serio to a userio device in userspace
-> + * @id: The serio port for the userio device
-> + * @val: The data to write to the device
-> + */
-> +static int userio_device_write(struct serio *id, unsigned char val)
-> +{
-> +       struct userio_device *userio = id->port_data;
-> +       unsigned long flags;
-> +
-> +       spin_lock_irqsave(&userio->buf_lock, flags);
-> +
-> +       userio->buf[userio->head] = val;
-> +       userio->head = (userio->head + 1) % USERIO_BUFSIZE;
-> +
-> +       if (userio->head == userio->tail)
-> +               dev_warn(userio_misc.this_device,
-> +                        "Buffer overflowed, userio client isn't keeping up");
-> +
-> +       spin_unlock_irqrestore(&userio->buf_lock, flags);
-> +
-> +       wake_up_interruptible(&userio->waitq);
-> +
-> +       return 0;
-> +}
-> +
-> +static int userio_char_open(struct inode *inode, struct file *file)
-> +{
-> +       struct userio_device *userio;
-> +
-> +       userio = kzalloc(sizeof(struct userio_device), GFP_KERNEL);
-> +       if (!userio)
-> +               return -ENOMEM;
-> +
-> +       mutex_init(&userio->lock);
-> +       spin_lock_init(&userio->buf_lock);
-> +       init_waitqueue_head(&userio->waitq);
-> +
-> +       userio->serio = kzalloc(sizeof(struct serio), GFP_KERNEL);
-> +       if (!userio->serio) {
-> +               kfree(userio);
-> +               return -ENOMEM;
-> +       }
-> +
-> +       userio->serio->write = userio_device_write;
-> +       userio->serio->port_data = userio;
-> +
-> +       file->private_data = userio;
-> +
-> +       return 0;
-> +}
-> +
-> +static int userio_char_release(struct inode *inode, struct file *file)
-> +{
-> +       struct userio_device *userio = file->private_data;
-> +
-> +       /* Don't free the serio port here, serio_unregister_port() does
-> +        * this for us */
-> +       if (userio->running)
-> +               serio_unregister_port(userio->serio);
-> +       else
-> +               kfree(userio->serio);
-> +
-> +       kfree(userio);
-
-I'm not very familiar with the serio-subsystem, but is there a
-guarantee that .write() will not be called once unregistered? I can
-see that it's not scheduled by userio anymore, but maybe there's an
-async path that can trigger .write() callbacks. Dunno.. I'll leave
-that to Dmitry.
-
-> +
-> +       return 0;
-> +}
-> +
-> +static ssize_t userio_char_read(struct file *file, char __user *user_buffer,
-> +                               size_t count, loff_t *ppos)
-> +{
-> +       struct userio_device *userio = file->private_data;
-> +       int ret;
-> +       size_t nonwrap_len, copylen;
-> +       unsigned char buf[USERIO_BUFSIZE];
-> +       unsigned long flags;
-> +
-> +       if (!count)
-> +               return 0;
-> +
-> +       ret = mutex_lock_interruptible(&userio->lock);
-> +       if (ret)
-> +               return ret;
-
-I cannot see why you need to lock the mutex here. The spin-lock should
-be perfectly fine, given that you don't check the device-state,
-anyway. Also, given that you don't have a shutdown-commands, except
-for close(), I don't see why we'd ever need the mutex-lock here, ever.
-
-> +
-> +       /*
-> +        * By the time we get here, the data that was waiting might have been
-> +        * taken by another thread. Grab the mutex and check if there's still
-> +        * any data waiting, otherwise repeat this process until we have data
-> +        * (unless the file descriptor is non-blocking of course)
-> +        */
-> +       for (;;) {
-> +               spin_lock_irqsave(&userio->buf_lock, flags);
-> +
-> +               if (userio->head != userio->tail)
-> +                       break;
-> +
-> +               spin_unlock_irqrestore(&userio->buf_lock, flags);
-> +
-> +               if (file->f_flags & O_NONBLOCK) {
-> +                       ret = -EAGAIN;
-> +                       goto out;
-> +               }
-> +
-> +               ret = wait_event_interruptible(userio->waitq,
-> +                                              userio->head != userio->tail);
-> +               if (ret)
-> +                       goto out;
-> +       }
-> +
-> +       nonwrap_len = CIRC_CNT_TO_END(userio->head, userio->tail,
-> +                                     USERIO_BUFSIZE);
-> +       copylen = min(nonwrap_len, count);
-> +       memcpy(&buf, &userio->buf[userio->tail], copylen);
-> +
-> +       userio->tail = (userio->tail + copylen) % USERIO_BUFSIZE;
-> +
-> +       spin_unlock_irqrestore(&userio->buf_lock, flags);
-> +
-> +       if (copy_to_user(user_buffer, &buf, copylen))
-
-No need for '&' before 'buf'.
-
-> +               ret = -EFAULT;
-> +       else
-> +               ret = copylen;
-> +
-> +out:
-> +       mutex_unlock(&userio->lock);
-> +       return ret;
-> +}
-> +
-> +static ssize_t userio_char_write(struct file *file, const char __user *buffer,
-> +                                size_t count, loff_t *ppos)
-> +{
-> +       struct userio_device *userio = file->private_data;
-> +       struct userio_cmd cmd;
-> +       int ret;
-> +
-> +       if (count < sizeof(cmd))
-> +               return -EINVAL;
-> +
-> +       if (copy_from_user(&cmd, buffer, sizeof(cmd)))
-> +               return -EFAULT;
-
-I know we discussed that before, but I'm still slightly uncomfortable
-that we ignore trailing bytes. How about adding a check to each case
-below? (see below for an example)
-
-> +
-> +       ret = mutex_lock_interruptible(&userio->lock);
-> +       if (ret)
-> +               return ret;
-> +
-> +       switch (cmd.type) {
-> +       case USERIO_CMD_REGISTER:
-
-                if (count != sizeof(cmd)) {
-                        ret = -EINVAL;
-                        goto out;
-                }
-
-And same for the other 2 commands. This guarantees that each cmd gets
-the correct payload size.
-
-> +               if (!userio->serio->id.type) {
-> +                       dev_warn(userio_misc.this_device,
-> +                                "No port type given on /dev/userio\n");
-> +
-> +                       ret = -EINVAL;
-> +                       goto out;
-> +               }
-> +               if (userio->running) {
-> +                       dev_warn(userio_misc.this_device,
-> +                                "Begin command sent, but we're already running\n");
-> +
-> +                       ret = -EBUSY;
-> +                       goto out;
-> +               }
-> +
-> +               userio->running = true;
-> +               serio_register_port(userio->serio);
-> +               break;
-> +
-> +       case USERIO_CMD_SET_PORT_TYPE:
-> +               if (userio->running) {
-> +                       dev_warn(userio_misc.this_device,
-> +                                "Can't change port type on an already running userio instance\n");
-> +
-> +                       ret = -EBUSY;
-> +                       goto out;
-> +               }
-> +
-> +               userio->serio->id.type = cmd.data;
-> +               break;
-> +
-> +       case USERIO_CMD_SEND_INTERRUPT:
-> +               if (!userio->running) {
-> +                       dev_warn(userio_misc.this_device,
-> +                                "The device must be registered before sending interrupts\n");
-> +
-> +                       ret = -ENODEV;
-> +                       goto out;
-> +               }
-> +
-> +               serio_interrupt(userio->serio, cmd.data, 0);
-> +               break;
-> +
-> +       default:
-> +               ret = -EOPNOTSUPP;
-> +               goto out;
-> +       }
-> +
-> +       ret = sizeof(cmd);
-> +
-> +out:
-> +       mutex_unlock(&userio->lock);
-> +       return ret;
-> +}
-> +
-> +static unsigned int userio_char_poll(struct file *file, poll_table *wait)
-> +{
-> +       struct userio_device *userio = file->private_data;
-> +
-> +       poll_wait(file, &userio->waitq, wait);
-> +
-> +       if (userio->head != userio->tail)
-> +               return POLLIN | POLLRDNORM;
-> +
-> +       return 0;
-> +}
-> +
-> +static const struct file_operations userio_fops = {
-> +       .owner          = THIS_MODULE,
-> +       .open           = userio_char_open,
-> +       .release        = userio_char_release,
-> +       .read           = userio_char_read,
-> +       .write          = userio_char_write,
-> +       .poll           = userio_char_poll,
-> +       .llseek         = no_llseek,
-> +};
-> +
-> +static struct miscdevice userio_misc = {
-> +       .fops   = &userio_fops,
-> +       .minor  = USERIO_MINOR,
-> +       .name   = USERIO_NAME,
-> +};
-> +
-> +MODULE_ALIAS_MISCDEV(USERIO_MINOR);
-> +MODULE_ALIAS("devname:" USERIO_NAME);
-> +
-> +MODULE_AUTHOR("Stephen Chandler Paul <thatslyude@gmail.com>");
-> +MODULE_DESCRIPTION("Virtual Serio Device Support");
-> +MODULE_LICENSE("GPL");
-> +
-> +module_driver(userio_misc, misc_register, misc_deregister);
-> diff --git a/include/linux/miscdevice.h b/include/linux/miscdevice.h
-> index 81f6e42..5430374 100644
-> --- a/include/linux/miscdevice.h
-> +++ b/include/linux/miscdevice.h
-> @@ -49,6 +49,7 @@
->  #define LOOP_CTRL_MINOR                237
->  #define VHOST_NET_MINOR                238
->  #define UHID_MINOR             239
-> +#define USERIO_MINOR           240
->  #define MISC_DYNAMIC_MINOR     255
+> I would probably give 'n' a better name, maybe 'filter_off' to denote an
+> offset in the task's filter list?
 >
->  struct device;
-> diff --git a/include/uapi/linux/userio.h b/include/uapi/linux/userio.h
-> new file mode 100644
-> index 0000000..37d147f
-> --- /dev/null
-> +++ b/include/uapi/linux/userio.h
-> @@ -0,0 +1,44 @@
-> +/*
-> + * userio: virtual serio device support
-> + * Copyright (C) 2015 Red Hat
-> + * Copyright (C) 2015 Lyude (Stephen Chandler Paul) <cpaul@redhat.com>
-> + *
-> + * This program is free software; you can redistribute it and/or modify it
-> + * under the terms of the GNU Lesser General Public License as published by the
-> + * Free Software Foundation; either version 2 of the License, or (at your
-> + * option) any later version.
-> + *
-> + * This program is distributed in the hope that it will be useful, but WITHOUT
-> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-> + * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
-> + * details.
-> + *
-> + * This is the public header used for user-space communication with the userio
-> + * driver. __attribute__((__packed__)) is used for all structs to keep ABI
-> + * compatibility between all architectures.
-> + */
-> +
-> +#ifndef _USERIO_H
-> +#define _USERIO_H
-> +
-> +#include <linux/types.h>
-> +
-> +enum userio_cmd_type {
-> +       USERIO_CMD_REGISTER = 0,
-> +       USERIO_CMD_SET_PORT_TYPE = 1,
-> +       USERIO_CMD_SEND_INTERRUPT = 2
-> +};
-> +
-> +/*
-> + * userio Commands
-> + * All commands sent to /dev/userio are encoded using this structure. The type
-> + * field should contain a USERIO_CMD* value that indicates what kind of command
-> + * is being sent to userio. The data field should contain the accompanying
-> + * argument for the command, if there is one.
-> + */
-> +struct userio_cmd {
-> +       __u8 type;
-> +       __u8 data;
-> +} __attribute__((__packed__));
-> +
-> +#endif /* !_USERIO_H */
+> So, it's called as seccomp_get_filter(child, addr, datavp), and addr is
+> an unsigned long in ptrace_request(). Any reasons why making this 'long n'
+> with adding this above check?
+>
+>> +       spin_lock_irq(&current->sighand->siglock);
+>> +       if (!capable(CAP_SYS_ADMIN) ||
+>
+>
+> The capability check should probably happen before taking the task's
+> spinlock.
 
-Otherwise, looks all good.
+I don't have a strong opinion about this. Any races here are crazy
+anyway, so I don't think there's a reason to optimize. I'd probably be
+conservative and leave the spin lock as-is.
 
-Thanks
-David
+>
+>> +           current->seccomp.mode != SECCOMP_MODE_DISABLED) {
+>> +               ret = -EACCES;
+>> +               goto out_self;
+>> +       }
+>> +
+>> +       spin_lock_irq(&task->sighand->siglock);
+>> +       if (task->seccomp.mode != SECCOMP_MODE_FILTER) {
+>> +               ret = -EINVAL;
+>> +               goto out_task;
+>> +       }
+>> +
+>> +       filter = task->seccomp.filter;
+>> +       while (n > 0 && filter) {
+>> +               filter = filter->prev;
+>> +               n--;
+>> +       }
+>> +
+>> +       if (!filter) {
+>> +               ret = -ENOENT;
+>> +               goto out_task;
+>> +       }
+>> +
+>> +       fprog = filter->prog->orig_prog;
+>
+>
+> You could add this check ...
+>
+>
+> https://git.kernel.org/cgit/linux/kernel/git/davem/net.git/commit/?id=93d08b6966cf730ea669d4d98f43627597077153
+>
+> ... here as well, so we don't get surprises in future. ;)
+
+Oh yes, please. Gotta double-check !fprog.
+
+>
+>
+>> +       ret = fprog->len;
+>> +       if (!data)
+>> +               goto out_task;
+>> +
+>> +       if (copy_to_user(data, fprog->filter, bpf_classic_proglen(fprog)))
+>> {
+>> +               ret = -EFAULT;
+>> +               goto out_task;
+>> +       }
+>> +
+>> +out_task:
+>> +       spin_unlock_irq(&task->sighand->siglock);
+>> +
+>> +out_self:
+>> +       spin_unlock_irq(&current->sighand->siglock);
+>> +       return ret;
+>> +}
+>> +#endif
+>>
+>
+
+-Kees
+
+-- 
+Kees Cook
+Chrome OS Security
