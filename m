@@ -1,68 +1,96 @@
-From: =?UTF-8?Q?P=c3=a1draig_Brady?= <P@draigBrady.com>
-Subject: Re: [PATCH v5 8/9] vfs: Add vfs_copy_file_range() support for
- pagecache copies
-Date: Fri, 9 Oct 2015 12:15:53 +0100
-Message-ID: <5617A1E9.1080509@draigBrady.com>
-References: <1443634014-3026-1-git-send-email-Anna.Schumaker@Netapp.com>
- <1443634014-3026-9-git-send-email-Anna.Schumaker@Netapp.com>
- <87vbai6sud.fsf@notabene.neil.brown.name>
+From: Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [PATCH v2 net-next 1/3] bpf: enable non-root eBPF programs
+Date: Fri, 09 Oct 2015 13:45:39 +0200
+Message-ID: <87mvvsb6zg.fsf@stressinduktion.org>
+References: <1444281803-24274-1-git-send-email-ast@plumgrid.com> <1444281803-24274-2-git-send-email-ast@plumgrid.com> <1444328452.3935641.405110585.76554E06@webmail.messagingengine.com> <5616E8A8.5020809@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <87vbai6sud.fsf@notabene.neil.brown.name>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Neil Brown <nfbrown@novell.com>, Anna Schumaker <Anna.Schumaker@netapp.com>, linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, darrick.wong@oracle.com, mtk.manpages@gmail.com, andros@netapp.com, hch@infradead.org
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5616E8A8.5020809-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 08/10/15 02:40, Neil Brown wrote:
-> Anna Schumaker <Anna.Schumaker@netapp.com> writes:
->=20
->> @@ -1338,34 +1362,26 @@ ssize_t vfs_copy_file_range(struct file *fil=
-e_in, loff_t pos_in,
->>  			    struct file *file_out, loff_t pos_out,
->>  			    size_t len, unsigned int flags)
->>  {
->> -	struct inode *inode_in;
->> -	struct inode *inode_out;
->>  	ssize_t ret;
->> =20
->> -	if (flags)
->> +	/* Flags should only be used exclusively. */
->> +	if ((flags & COPY_FR_COPY) && (flags & ~COPY_FR_COPY))
->> +		return -EINVAL;
->> +	if ((flags & COPY_FR_REFLINK) && (flags & ~COPY_FR_REFLINK))
->> +		return -EINVAL;
->> +	if ((flags & COPY_FR_DEDUP) && (flags & ~COPY_FR_DEDUP))
->>  		return -EINVAL;
->> =20
->=20
-> Do you also need:
->=20
->    if (flags & ~(COPY_FR_COPY | COPY_FR_REFLINK | COPY_FR_DEDUP))
->    	return -EINVAL;
->=20
-> so that future user-space can test if the kernel supports new flags?
+Hi,
 
-Seems like a good idea, yes.
+Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> writes:
 
-Also that got me thinking about COPY_FR_SPARSE.
-What's the current behavior when copying a sparse range?
-Is the hole propagated by default (good), or is it expanded?
+> On 10/8/15 11:20 AM, Hannes Frederic Sowa wrote:
+>> Hi Alexei,
+>>
+>> On Thu, Oct 8, 2015, at 07:23, Alexei Starovoitov wrote:
+>>> The feature is controlled by sysctl kernel.unprivileged_bpf_disabled.
+>>> This toggle defaults to off (0), but can be set true (1).  Once true,
+>>> bpf programs and maps cannot be accessed from unprivileged process,
+>>> and the toggle cannot be set back to false.
+>>
+>> This approach seems fine to me.
+>>
+>> I am wondering if it makes sense to somehow allow ebpf access per
+>> namespace? I currently have no idea how that could work and on which
+>> namespace type to depend or going with a prctl or even cgroup maybe. The
+>> rationale behind this is, that maybe some namespaces like openstack
+>> router namespaces could make usage of advanced ebpf capabilities in the
+>> kernel, while other namespaces, especially where untrusted third parties
+>> are hosted, shouldn't have access to those facilities.
+>>
+>> In that way, hosters would be able to e.g. deploy more efficient
+>> performance monitoring container (which should still need not to run as
+>> root) while the majority of the users has no access to that. Or think
+>> about routing instances in some namespaces, etc. etc.
+>
+> when we're talking about eBPF for networking or performance monitoring
+> it's all going to be under root anyway.
 
-Note cp(1) has --sparse=3D{never,auto,always}. Auto is the default,
-so it would be good I think if that was the default mode for copy_file_=
-range().
-With other sparse modes, we'd have to avoid copy_file_range() unless
-there was control possible with COPY_FR_SPARSE_{AUTO,NONE,ALWAYS}.
-Note currently cp --sparse=3Dalways will detect runs of zeros and also
-avoid speculative preallocation by using fallocate (fd, FALLOC_FL_PUNCH=
-_HOLE, ...)
+I am not so sure, actually. Like PCP (Performance CoPilot), which does
+long term collecting of performance data in the kernel and maybe sending
+it over the network, it would be great if at least some capabilities
+could be dropped after the bpf filedescriptor was allocated. But current
+bpf syscall always checks capabilities on every call, which is actually
+quite unusual for capabilities.
 
-thanks,
-P=E1draig.
---
-To unsubscribe from this list: send the line "unsubscribe linux-btrfs" =
-in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+For networking the basic technique was also to drop capabilities sooner
+than later.
+
+Can we filter bpf syscall finegrained with selinux?
+
+> The next question is
+> how to let the programs run only for traffic or for applications within
+> namespaces. Something gotta do this demux. It either can be in-kernel
+> C code which is configured via some API that calls different eBPF
+> programs based on cgroup or based on netns, or it can be another
+> eBPF program that does demux on its own.
+
+This sounds quite complex. Afaics this problem hasn't even be solved in
+perf so far, tracepoints hit independent of the namespace currently.
+
+> In case of tracing such 'demuxing' program can be attached to kernel
+> events and call 'worker' programs via tail_call, so that 'worker'
+> programs will have an illusion that they're working only with events
+> that belong to their namespace.
+> imo existing facilities already allow 'per namespace' eBPF, though
+> the prog_array used to jump from 'demuxing' bpf into 'worker' bpf
+> currently is a bit awkward to use (because of FD passing via daemon),
+> but that will get solved soon.
+
+Aha, so client namespaces hand over their fds to parent demuxer and it
+sets up the necessary calls. Yeah, this seems to work.
+
+> It feels that in-kernel C code doing filtering may be
+> 'more robust' from namespace isolation point of view, but I don't
+> think we have a concrete and tested proposal, so I would
+> experiment with 'demuxing' bpf first.
+> The programs in general don't have a notion of namespace. They
+> need to be attached to veth via TC to get packets for
+> particular namespace.
+
+Okay.
+
+For me namespacing of ebpf code is actually not that important, I would
+much rather like to control which namespace is allowed to execute ebpf
+in an unpriviledged manner. Like Thomas wrote, a capability was great
+for that, but I don't know if any new capabilities will be added.
+
+Thanks,
+Hannes
