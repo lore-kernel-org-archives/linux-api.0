@@ -1,96 +1,37 @@
-From: Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH v2 net-next 1/3] bpf: enable non-root eBPF programs
-Date: Fri, 09 Oct 2015 13:45:39 +0200
-Message-ID: <87mvvsb6zg.fsf@stressinduktion.org>
-References: <1444281803-24274-1-git-send-email-ast@plumgrid.com> <1444281803-24274-2-git-send-email-ast@plumgrid.com> <1444328452.3935641.405110585.76554E06@webmail.messagingengine.com> <5616E8A8.5020809@plumgrid.com>
-Mime-Version: 1.0
-Content-Type: text/plain
+From: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: [PATCH] coresight: etm3x: adding documentation for sysFS's cpu interface
+Date: Fri,  9 Oct 2015 08:18:20 -0600
+Message-ID: <1444400300-9670-1-git-send-email-mathieu.poirier@linaro.org>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5616E8A8.5020809-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org
+Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+Supplementing ABI documentation with a description of the newly
+added interface.
 
-Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> writes:
+Signed-off-by: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+---
+ Documentation/ABI/testing/sysfs-bus-coresight-devices-etm3x | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-> On 10/8/15 11:20 AM, Hannes Frederic Sowa wrote:
->> Hi Alexei,
->>
->> On Thu, Oct 8, 2015, at 07:23, Alexei Starovoitov wrote:
->>> The feature is controlled by sysctl kernel.unprivileged_bpf_disabled.
->>> This toggle defaults to off (0), but can be set true (1).  Once true,
->>> bpf programs and maps cannot be accessed from unprivileged process,
->>> and the toggle cannot be set back to false.
->>
->> This approach seems fine to me.
->>
->> I am wondering if it makes sense to somehow allow ebpf access per
->> namespace? I currently have no idea how that could work and on which
->> namespace type to depend or going with a prctl or even cgroup maybe. The
->> rationale behind this is, that maybe some namespaces like openstack
->> router namespaces could make usage of advanced ebpf capabilities in the
->> kernel, while other namespaces, especially where untrusted third parties
->> are hosted, shouldn't have access to those facilities.
->>
->> In that way, hosters would be able to e.g. deploy more efficient
->> performance monitoring container (which should still need not to run as
->> root) while the majority of the users has no access to that. Or think
->> about routing instances in some namespaces, etc. etc.
->
-> when we're talking about eBPF for networking or performance monitoring
-> it's all going to be under root anyway.
-
-I am not so sure, actually. Like PCP (Performance CoPilot), which does
-long term collecting of performance data in the kernel and maybe sending
-it over the network, it would be great if at least some capabilities
-could be dropped after the bpf filedescriptor was allocated. But current
-bpf syscall always checks capabilities on every call, which is actually
-quite unusual for capabilities.
-
-For networking the basic technique was also to drop capabilities sooner
-than later.
-
-Can we filter bpf syscall finegrained with selinux?
-
-> The next question is
-> how to let the programs run only for traffic or for applications within
-> namespaces. Something gotta do this demux. It either can be in-kernel
-> C code which is configured via some API that calls different eBPF
-> programs based on cgroup or based on netns, or it can be another
-> eBPF program that does demux on its own.
-
-This sounds quite complex. Afaics this problem hasn't even be solved in
-perf so far, tracepoints hit independent of the namespace currently.
-
-> In case of tracing such 'demuxing' program can be attached to kernel
-> events and call 'worker' programs via tail_call, so that 'worker'
-> programs will have an illusion that they're working only with events
-> that belong to their namespace.
-> imo existing facilities already allow 'per namespace' eBPF, though
-> the prog_array used to jump from 'demuxing' bpf into 'worker' bpf
-> currently is a bit awkward to use (because of FD passing via daemon),
-> but that will get solved soon.
-
-Aha, so client namespaces hand over their fds to parent demuxer and it
-sets up the necessary calls. Yeah, this seems to work.
-
-> It feels that in-kernel C code doing filtering may be
-> 'more robust' from namespace isolation point of view, but I don't
-> think we have a concrete and tested proposal, so I would
-> experiment with 'demuxing' bpf first.
-> The programs in general don't have a notion of namespace. They
-> need to be attached to veth via TC to get packets for
-> particular namespace.
-
-Okay.
-
-For me namespacing of ebpf code is actually not that important, I would
-much rather like to control which namespace is allowed to execute ebpf
-in an unpriviledged manner. Like Thomas wrote, a capability was great
-for that, but I don't know if any new capabilities will be added.
-
-Thanks,
-Hannes
+diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm3x b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm3x
+index 67e3557bc4bf..924265a1295d 100644
+--- a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm3x
++++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm3x
+@@ -245,6 +245,12 @@ KernelVersion:	3.19
+ Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+ Description: 	(RW) Define the event that controls the trigger.
+ 
++What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/cpu
++Date:		October 2015
++KernelVersion:	4.4
++Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
++Description:	(RO) Holds the cpu number this tracer is affined to.
++
+ What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/mgmt/etmccr
+ Date:		September 2015
+ KernelVersion:	4.4
+-- 
+1.9.1
