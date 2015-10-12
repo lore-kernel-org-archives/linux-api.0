@@ -1,7 +1,7 @@
 From: Paul Osmialowski <p.osmialowsk@samsung.com>
-Subject: [RFC v2 8/9] kmsg: add ioctl for kmsg* devices operating on buffers
-Date: Mon, 12 Oct 2015 11:29:16 +0200
-Message-ID: <1444642157-32618-9-git-send-email-p.osmialowsk@samsung.com>
+Subject: [RFC v2 9/9] kmsg: selftests
+Date: Mon, 12 Oct 2015 11:29:17 +0200
+Message-ID: <1444642157-32618-10-git-send-email-p.osmialowsk@samsung.com>
 References: <1444642157-32618-1-git-send-email-p.osmialowsk@samsung.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-reply-to: <1444642157-32618-1-git-send-email-p.osmialowsk@samsung.com>
@@ -10,253 +10,1112 @@ To: Jonathan Corbet <corbet@lwn.net>, Arnd Bergmann <arnd@arndb.de>, Andrew Mort
 Cc: Marcin Niesluchowski <m.niesluchow@samsung.com>, Karol Lewandowski <k.lewandowsk@samsung.com>, Paul Osmialowski <p.osmialowsk@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Shuah Khan <shuahkh@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Marcin Niesluchowski <m.niesluchow@samsung.com>
+This patch adds selftests framework and four test scenarios for kmsg.
 
-There is no possibility to clear additional kmsg buffers,
-get size of them or know what size should be passed to read
-file operation (too small size causes it to retrun -EINVAL).
+The framework shape and code was inspired by similar selftests framework
+for kdbus.
 
-Add following ioctls which solve those issues:
-* KMSG_CMD_GET_BUF_SIZE
-* KMSG_CMD_GET_READ_SIZE_MAX
-* KMSG_CMD_CLEAR
-
-Signed-off-by: Marcin Niesluchowski <m.niesluchow@samsung.com>
+Signed-off-by: Paul Osmialowski <p.osmialowsk@samsung.com>
 ---
- Documentation/ioctl/ioctl-number.txt |   2 +-
- include/uapi/linux/kmsg_ioctl.h      |  15 ++++++
- kernel/printk/printk.c               | 102 ++++++++++++++++++++++++++---------
- 3 files changed, 92 insertions(+), 27 deletions(-)
+ samples/kmsg/kmsg-api.h                            |  44 +++
+ tools/testing/selftests/Makefile                   |   1 +
+ tools/testing/selftests/kmsg/.gitignore            |   1 +
+ tools/testing/selftests/kmsg/Makefile              |  30 ++
+ tools/testing/selftests/kmsg/kmsg-test.c           | 329 +++++++++++++++++++++
+ tools/testing/selftests/kmsg/kmsg-test.h           |  34 +++
+ tools/testing/selftests/kmsg/test-buffer-add-del.c |  76 +++++
+ .../kmsg/test-buffer-add-write-read-del.c          | 161 ++++++++++
+ .../kmsg/test-buffer-buf-multithreaded-torture.c   | 199 +++++++++++++
+ .../selftests/kmsg/test-buffer-buf-torture.c       | 139 +++++++++
+ 10 files changed, 1014 insertions(+)
+ create mode 100644 samples/kmsg/kmsg-api.h
+ create mode 100644 tools/testing/selftests/kmsg/.gitignore
+ create mode 100644 tools/testing/selftests/kmsg/Makefile
+ create mode 100644 tools/testing/selftests/kmsg/kmsg-test.c
+ create mode 100644 tools/testing/selftests/kmsg/kmsg-test.h
+ create mode 100644 tools/testing/selftests/kmsg/test-buffer-add-del.c
+ create mode 100644 tools/testing/selftests/kmsg/test-buffer-add-write-read-del.c
+ create mode 100644 tools/testing/selftests/kmsg/test-buffer-buf-multithreaded-torture.c
+ create mode 100644 tools/testing/selftests/kmsg/test-buffer-buf-torture.c
 
-diff --git a/Documentation/ioctl/ioctl-number.txt b/Documentation/ioctl/ioctl-number.txt
-index a36dc46..c55e49e 100644
---- a/Documentation/ioctl/ioctl-number.txt
-+++ b/Documentation/ioctl/ioctl-number.txt
-@@ -316,7 +316,7 @@ Code  Seq#(hex)	Include File		Comments
- 					<mailto:vgo@ratio.de>
- 0xB1	00-1F	PPPoX			<mailto:mostrows@styx.uwaterloo.ca>
- 0xB3	00	linux/mmc/ioctl.h
--0xBB	00-02	uapi/linux/kmsg_ioctl.h
-+0xBB	00-83	uapi/linux/kmsg_ioctl.h
- 0xC0	00-0F	linux/usb/iowarrior.h
- 0xCA	00-0F	uapi/misc/cxl.h
- 0xCA	80-8F	uapi/scsi/cxlflash_ioctl.h
-diff --git a/include/uapi/linux/kmsg_ioctl.h b/include/uapi/linux/kmsg_ioctl.h
-index 89c0c61..2389d9f 100644
---- a/include/uapi/linux/kmsg_ioctl.h
-+++ b/include/uapi/linux/kmsg_ioctl.h
-@@ -27,4 +27,19 @@ struct kmsg_cmd_buffer_add {
- 					      struct kmsg_cmd_buffer_add)
- #define KMSG_CMD_BUFFER_DEL		_IOW(KMSG_IOCTL_MAGIC, 0x01, int)
- 
-+/*
-+ * A ioctl interface for kmsg* devices.
-+ *
-+ * KMSG_CMD_GET_BUF_SIZE:	Retrieve cyclic log buffer size associated with
-+ *				device.
-+ * KMSG_CMD_GET_READ_SIZE_MAX:	Retrieve max size of data read by kmsg read
-+ *				operation.
-+ * KMSG_CMD_CLEAR:		Clears cyclic log buffer. After that operation
-+ *				there is no data to read from buffer unless
-+ *				logs are written.
-+ */
-+#define KMSG_CMD_GET_BUF_SIZE		_IOR(KMSG_IOCTL_MAGIC, 0x80, __u32)
-+#define KMSG_CMD_GET_READ_SIZE_MAX	_IOR(KMSG_IOCTL_MAGIC, 0x81, __u32)
-+#define KMSG_CMD_CLEAR			_IO(KMSG_IOCTL_MAGIC, 0x82)
+diff --git a/samples/kmsg/kmsg-api.h b/samples/kmsg/kmsg-api.h
+new file mode 100644
+index 0000000..9004acd
+--- /dev/null
++++ b/samples/kmsg/kmsg-api.h
+@@ -0,0 +1,44 @@
++#ifndef KMSG_API_H
++#define KMSG_API_H
 +
- #endif
-diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-index be08aae..1bc4a31 100644
---- a/kernel/printk/printk.c
-+++ b/kernel/printk/printk.c
-@@ -262,6 +262,10 @@ struct log_buffer {
- 	u64 next_seq;
- #ifdef CONFIG_PRINTK
- 	u32 next_idx;		/* index of the next record to store */
-+/* sequence number of the next record to read after last 'clear' command */
-+	u64 clear_seq;
-+/* index of the next record to read after last 'clear' command */
-+	u32 clear_idx;
- 	int mode;		/* mode of device */
- 	int minor;		/* minor representing buffer device */
- #endif
-@@ -279,10 +283,6 @@ static u64 console_seq;
- static u32 console_idx;
- static enum log_flags console_prev;
- 
--/* the next printk record to read after the last 'clear' command */
--static u64 clear_seq;
--static u32 clear_idx;
--
- #define PREFIX_MAX		32
- #define LOG_LINE_MAX		(1024 - PREFIX_MAX)
- 
-@@ -306,6 +306,8 @@ static struct log_buffer log_buf = {
- 	.first_idx	= 0,
- 	.next_seq	= 0,
- 	.next_idx	= 0,
-+	.clear_seq	= 0,
-+	.clear_idx	= 0,
- 	.mode		= 0,
- 	.minor		= 0,
- };
-@@ -1116,18 +1118,14 @@ static loff_t kmsg_llseek(struct log_buffer *log_b, struct file *file,
- 		user->seq = log_b->first_seq;
- 		break;
- 	case SEEK_DATA:
--		/* no clear index for kmsg_sys buffers */
--		if (log_b != &log_buf) {
--			ret = -EINVAL;
--			break;
--		}
- 		/*
- 		 * The first record after the last SYSLOG_ACTION_CLEAR,
--		 * like issued by 'dmesg -c'. Reading /dev/kmsg itself
--		 * changes no global state, and does not clear anything.
-+		 * like issued by 'dmesg -c' or KMSG_CMD_CLEAR ioctl
-+		 * command. Reading /dev/kmsg itself changes no global
-+		 * state, and does not clear anything.
- 		 */
--		user->idx = clear_idx;
--		user->seq = clear_seq;
-+		user->idx = log_b->clear_idx;
-+		user->seq = log_b->clear_seq;
- 		break;
- 	case SEEK_END:
- 		/* after the last record */
-@@ -1267,6 +1265,56 @@ static int devkmsg_open(struct inode *inode, struct file *file)
- 	return ret;
- }
- 
-+static long kmsg_ioctl(struct log_buffer *log_b, unsigned int cmd,
-+		       unsigned long arg)
++#include <stdint.h>
++#include <errno.h>
++#include <sys/ioctl.h>
++#include <linux/kmsg_ioctl.h>
++
++static inline int kmsg_cmd_buffer_add(int fd, struct kmsg_cmd_buffer_add *cmd)
 +{
-+	void __user *argp = (void __user *)arg;
-+	static const u32 read_size_max = CONSOLE_EXT_LOG_MAX;
++	int ret = ioctl(fd, KMSG_CMD_BUFFER_ADD, cmd);
 +
-+	switch (cmd) {
-+	case KMSG_CMD_GET_BUF_SIZE:
-+		if (copy_to_user(argp, &log_b->len, sizeof(u32)))
-+			return -EFAULT;
-+		break;
-+	case KMSG_CMD_GET_READ_SIZE_MAX:
-+		if (copy_to_user(argp, &read_size_max, sizeof(u32)))
-+			return -EFAULT;
-+		break;
-+	case KMSG_CMD_CLEAR:
-+		if (!capable(CAP_SYSLOG))
-+			return -EPERM;
-+		raw_spin_lock_irq(&log_b->lock);
-+		log_b->clear_seq = log_b->next_seq;
-+		log_b->clear_idx = log_b->next_idx;
-+		raw_spin_unlock_irq(&log_b->lock);
-+		break;
-+	default:
-+		return -ENOTTY;
-+	}
-+	return 0;
++	return (ret < 0) ? (errno > 0 ? -errno : -EINVAL) : 0;
 +}
 +
-+static long devkmsg_ioctl(struct file *file, unsigned int cmd,
-+			  unsigned long arg)
++static inline int kmsg_cmd_buffer_del(int fd, int *minor)
 +{
-+	long ret = -ENXIO;
-+	int minor = iminor(file->f_inode);
-+	struct log_buffer *log_b;
++	int ret = ioctl(fd, KMSG_CMD_BUFFER_DEL, minor);
 +
-+	if (minor == log_buf.minor)
-+		return kmsg_ioctl(&log_buf, cmd, arg);
++	return (ret < 0) ? (errno > 0 ? -errno : -EINVAL) : 0;
++}
 +
-+	rcu_read_lock();
-+	list_for_each_entry_rcu(log_b, &log_buf.list, list) {
-+		if (log_b->minor == minor) {
-+			ret = kmsg_ioctl(log_b, cmd, arg);
-+			break;
++static inline int kmsg_cmd_get_buf_size(int fd, uint32_t *size)
++{
++	int ret = ioctl(fd, KMSG_CMD_GET_BUF_SIZE, size);
++
++	return (ret < 0) ? (errno > 0 ? -errno : -EINVAL) : 0;
++}
++
++static inline int kmsg_cmd_get_read_size_max(int fd, uint32_t *max_size)
++{
++	int ret = ioctl(fd, KMSG_CMD_GET_READ_SIZE_MAX, max_size);
++
++	return (ret < 0) ? (errno > 0 ? -errno : -EINVAL) : 0;
++}
++
++static inline int kmsg_cmd_clear(int fd)
++{
++	int ret = ioctl(fd, KMSG_CMD_CLEAR);
++
++	return (ret < 0) ? (errno > 0 ? -errno : -EINVAL) : 0;
++}
++
++#endif /* KMSG_API_H */
+diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+index ac40ec9..4834ef8 100644
+--- a/tools/testing/selftests/Makefile
++++ b/tools/testing/selftests/Makefile
+@@ -7,6 +7,7 @@ TARGETS += ftrace
+ TARGETS += futex
+ TARGETS += kcmp
+ TARGETS += kdbus
++TARGETS += kmsg
+ TARGETS += membarrier
+ TARGETS += memfd
+ TARGETS += memory-hotplug
+diff --git a/tools/testing/selftests/kmsg/.gitignore b/tools/testing/selftests/kmsg/.gitignore
+new file mode 100644
+index 0000000..687d517
+--- /dev/null
++++ b/tools/testing/selftests/kmsg/.gitignore
+@@ -0,0 +1 @@
++kmsg-test
+diff --git a/tools/testing/selftests/kmsg/Makefile b/tools/testing/selftests/kmsg/Makefile
+new file mode 100644
+index 0000000..b4ba892
+--- /dev/null
++++ b/tools/testing/selftests/kmsg/Makefile
+@@ -0,0 +1,30 @@
++CFLAGS += -I../../../../usr/include/
++CFLAGS += -I../../../../samples/kmsg/
++CFLAGS += -I../../../../include/uapi/
++CFLAGS += -std=gnu99 -Wall
++CFLAGS += -DKBUILD_MODNAME=\"kmsg\" -D_GNU_SOURCE
++CFLAGS += -pthread
++LDLIBS += -pthread
++
++OBJS= \
++	kmsg-test.o				\
++	test-buffer-add-del.o			\
++	test-buffer-add-write-read-del.o	\
++	test-buffer-buf-torture.o		\
++	test-buffer-buf-multithreaded-torture.o
++
++all: kmsg-test
++
++include ../lib.mk
++
++%.o: %.c kmsg-test.h
++	$(CC) $(CFLAGS) -c $< -o $@
++
++kmsg-test: $(OBJS)
++	$(CC) $(CFLAGS) $^ $(LDLIBS) -o $@
++
++run_tests:
++	./kmsg-test --tap
++
++clean:
++	rm -f *.o kmsg-test
+diff --git a/tools/testing/selftests/kmsg/kmsg-test.c b/tools/testing/selftests/kmsg/kmsg-test.c
+new file mode 100644
+index 0000000..4f17b73
+--- /dev/null
++++ b/tools/testing/selftests/kmsg/kmsg-test.c
+@@ -0,0 +1,329 @@
++#include <stddef.h>
++#include <stdbool.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <time.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <getopt.h>
++#include <sys/types.h>
++#include <sys/wait.h>
++#include <sys/stat.h>
++
++#include "kmsg-test.h"
++
++struct kmsg_test {
++	const char	*name;
++	const char	*desc;
++	int (*func)(const struct kmsg_test_args *args);
++};
++
++static const struct kmsg_test tests[] = {
++	{
++		.name	= "buffer-add-del",
++		.desc	= "create and delete kmsg devices",
++		.func	= kmsg_test_buffer_add_del,
++	}, {
++		.name	= "buffer-add-write-read-del",
++		.desc	= "create w/r and del kmsg device",
++		.func	= kmsg_test_buffer_add_write_read_del,
++	}, {
++		.name	= "buffer-buf-torture",
++		.desc	= "fill more than whole buffer can hold",
++		.func	= kmsg_test_buffer_buf_torture,
++	}, {
++		.name	= "buffer-buf-multitheaded-torture",
++		.desc	= "fill from many threads",
++		.func	= kmsg_test_buffer_buf_multithreaded_torture,
++	},
++};
++
++#define N_TESTS ARRAY_SIZE(tests)
++
++FILE *kmsg_get_device(int minor, const char *mode)
++{
++	char path[80] = "";
++	dev_t dev = makedev(1, minor);
++
++	if (minor < 0) {
++		printf("Invalid minor number %d\n", minor);
++		return NULL;
++	}
++
++	snprintf(path, sizeof(path), "/tmp/kmsg-%d", minor);
++
++	if (access(path, F_OK) < 0) {
++		if (mknod(path, S_IFCHR | 0600, dev)) {
++			printf("Cannot create device %s with minor %d\n",
++								path, minor);
++			return NULL;
 +		}
 +	}
-+	rcu_read_unlock();
++
++	if (access(path, F_OK) < 0) {
++		printf("Cannot access device %s\n", path);
++		return NULL;
++	}
++
++	return fopen(path, mode);
++}
++
++int kmsg_drop_device(int minor)
++{
++	char path[80] = "";
++
++	if (minor < 0) {
++		printf("Invalid minor number %d\n", minor);
++		return -1;
++	}
++
++	snprintf(path, sizeof(path), "/tmp/kmsg-%d", minor);
++
++	return unlink(path);
++}
++
++static void usage(const char *argv0)
++{
++	unsigned int i, j;
++
++	printf("Usage: %s [options]\n"
++	       "Options:\n"
++	       "\t-x, --loop		Run in a loop\n"
++	       "\t-f, --fork		Fork before running a test\n"
++	       "\t-h, --help		Print this help\n"
++	       "\t-t, --test <test-id>	Run one specific test only\n"
++	       "\t-w, --wait <secs>	Wait <secs> before actually starting test\n"
++	       "\n", argv0);
++
++	printf("By default, all test are run once, and a summary is printed.\n"
++	       "Available tests for --test:\n\n");
++
++	for (i = 0; i < N_TESTS; i++) {
++		const struct kmsg_test *t = tests + i;
++
++		printf("\t%s", t->name);
++
++		for (j = 0; j < 24 - strlen(t->name); j++)
++			printf(" ");
++
++		printf("Test %s\n", t->desc);
++	}
++
++	printf("\n");
++	printf("Note that some tests may, if run specifically by --test, ");
++	printf("behave differently, and not terminate by themselves.\n");
++
++	exit(EXIT_FAILURE);
++}
++
++static void print_test_result(int ret)
++{
++	switch (ret) {
++	case TEST_OK:
++		printf("OK");
++		break;
++	case TEST_SKIP:
++		printf("SKIPPED");
++		break;
++	case TEST_ERR:
++		printf("ERROR");
++		break;
++	}
++}
++
++static int test_run(const struct kmsg_test *t,
++		    const struct kmsg_test_args *kmsg_args,
++		    int wait)
++{
++	int ret;
++
++	if (wait > 0) {
++		printf("Sleeping %d seconds before running test ...\n", wait);
++		sleep(wait);
++	}
++
++	ret = t->func(kmsg_args);
 +	return ret;
 +}
 +
- static int devkmsg_release(struct inode *inode, struct file *file)
- {
- 	struct devkmsg_user *user = file->private_data;
-@@ -1285,6 +1333,8 @@ const struct file_operations kmsg_fops = {
- 	.write_iter = devkmsg_write,
- 	.llseek = devkmsg_llseek,
- 	.poll = devkmsg_poll,
-+	.unlocked_ioctl = devkmsg_ioctl,
-+	.compat_ioctl = devkmsg_ioctl,
- 	.release = devkmsg_release,
- };
- 
-@@ -1889,18 +1939,18 @@ static int syslog_print_all(char __user *buf, int size, bool clear)
- 		u32 idx;
- 		enum log_flags prev;
- 
--		if (clear_seq < log_buf.first_seq) {
-+		if (log_buf.clear_seq < log_buf.first_seq) {
- 			/* messages are gone, move to first available one */
--			clear_seq = log_buf.first_seq;
--			clear_idx = log_buf.first_idx;
-+			log_buf.clear_seq = log_buf.first_seq;
-+			log_buf.clear_idx = log_buf.first_idx;
- 		}
- 
- 		/*
- 		 * Find first record that fits, including all following records,
- 		 * into the user-provided buffer for this dump.
- 		 */
--		seq = clear_seq;
--		idx = clear_idx;
-+		seq = log_buf.clear_seq;
-+		idx = log_buf.clear_idx;
- 		prev = 0;
- 		while (seq < log_buf.next_seq) {
- 			struct printk_log *msg = log_from_idx(&log_buf, idx);
-@@ -1912,8 +1962,8 @@ static int syslog_print_all(char __user *buf, int size, bool clear)
- 		}
- 
- 		/* move first record forward until length fits into the buffer */
--		seq = clear_seq;
--		idx = clear_idx;
-+		seq = log_buf.clear_seq;
-+		idx = log_buf.clear_idx;
- 		prev = 0;
- 		while (len > size && seq < log_buf.next_seq) {
- 			struct printk_log *msg = log_from_idx(&log_buf, idx);
-@@ -1959,8 +2009,8 @@ static int syslog_print_all(char __user *buf, int size, bool clear)
- 	}
- 
- 	if (clear) {
--		clear_seq = log_buf.next_seq;
--		clear_idx = log_buf.next_idx;
-+		log_buf.clear_seq = log_buf.next_seq;
-+		log_buf.clear_idx = log_buf.next_idx;
- 	}
- 	raw_spin_unlock_irq(&log_buf.lock);
- 
-@@ -3341,8 +3391,8 @@ void kmsg_dump(enum kmsg_dump_reason reason)
- 		dumper->active = true;
- 
- 		raw_spin_lock_irqsave(&log_buf.lock, flags);
--		dumper->cur_seq = clear_seq;
--		dumper->cur_idx = clear_idx;
-+		dumper->cur_seq = log_buf.clear_seq;
-+		dumper->cur_idx = log_buf.clear_idx;
- 		dumper->next_seq = log_buf.next_seq;
- 		dumper->next_idx = log_buf.next_idx;
- 		raw_spin_unlock_irqrestore(&log_buf.lock, flags);
-@@ -3548,8 +3598,8 @@ EXPORT_SYMBOL_GPL(kmsg_dump_get_buffer);
-  */
- void kmsg_dump_rewind_nolock(struct kmsg_dumper *dumper)
- {
--	dumper->cur_seq = clear_seq;
--	dumper->cur_idx = clear_idx;
-+	dumper->cur_seq = log_buf.clear_seq;
-+	dumper->cur_idx = log_buf.clear_idx;
- 	dumper->next_seq = log_buf.next_seq;
- 	dumper->next_idx = log_buf.next_idx;
- }
++static int test_run_forked(const struct kmsg_test *t,
++			   const struct kmsg_test_args *kmsg_args,
++			   int wait)
++{
++	int ret;
++	pid_t pid;
++
++	pid = fork();
++	if (pid < 0) {
++		return TEST_ERR;
++	} else if (pid == 0) {
++		ret = test_run(t, kmsg_args, wait);
++		_exit(ret);
++	}
++
++	pid = waitpid(pid, &ret, 0);
++	if (pid <= 0)
++		return TEST_ERR;
++	else if (!WIFEXITED(ret))
++		return TEST_ERR;
++	else
++		return WEXITSTATUS(ret);
++}
++
++static int start_all_tests(const struct kmsg_test_args *kmsg_args)
++{
++	int ret;
++	unsigned int fail_cnt = 0;
++	unsigned int skip_cnt = 0;
++	unsigned int ok_cnt = 0;
++	unsigned int i, n;
++	const struct kmsg_test *t;
++
++	for (i = 0; i < N_TESTS; i++) {
++		t = tests + i;
++
++		printf("Testing %s (%s) ", t->desc, t->name);
++		for (n = 0; n < 60 - strlen(t->desc) - strlen(t->name); n++)
++			printf(".");
++		printf(" ");
++
++		ret = test_run_forked(t, kmsg_args, 0);
++		switch (ret) {
++		case TEST_OK:
++			ok_cnt++;
++			break;
++		case TEST_SKIP:
++			skip_cnt++;
++			break;
++		case TEST_ERR:
++			fail_cnt++;
++			break;
++		}
++
++		print_test_result(ret);
++		printf("\n");
++	}
++
++	printf("\nSUMMARY: %u tests passed, %u skipped, %u failed\n",
++					    ok_cnt, skip_cnt, fail_cnt);
++
++	return fail_cnt > 0 ? TEST_ERR : TEST_OK;
++}
++
++static int start_one_test(const struct kmsg_test_args *kmsg_args)
++{
++	int i, ret;
++	bool test_found = false;
++	const struct kmsg_test *t;
++
++	for (i = 0; i < N_TESTS; i++) {
++		t = tests + i;
++
++		if (strcmp(t->name, kmsg_args->test))
++			continue;
++
++		do {
++			test_found = true;
++			if (kmsg_args->fork)
++				ret = test_run_forked(t, kmsg_args,
++						      kmsg_args->wait);
++			else
++				ret = test_run(t, kmsg_args,
++					       kmsg_args->wait);
++
++			printf("Testing %s: ", t->desc);
++			print_test_result(ret);
++			printf("\n");
++
++			if (ret != TEST_OK)
++				break;
++		} while (kmsg_args->loop);
++
++		return ret;
++	}
++
++	if (!test_found) {
++		printf("Unknown test-id '%s'\n", kmsg_args->test);
++		return TEST_ERR;
++	}
++
++	return TEST_OK;
++}
++
++static int start_tests(const struct kmsg_test_args *kmsg_args)
++{
++	int ret = 0;
++
++	if (kmsg_args->test) {
++		ret = start_one_test(kmsg_args);
++	} else  {
++		do {
++			ret = start_all_tests(kmsg_args);
++			if (ret != TEST_OK)
++				break;
++		} while (kmsg_args->loop);
++	}
++
++	return ret;
++}
++
++int main(int argc, char *argv[])
++{
++	int t, ret = 0;
++	struct kmsg_test_args *kmsg_args;
++	char *exec = basename(argv[0]);
++
++	kmsg_args = malloc(sizeof(*kmsg_args));
++	if (!kmsg_args) {
++		printf("unable to malloc() kmsg_args\n");
++		return EXIT_FAILURE;
++	}
++
++	memset(kmsg_args, 0, sizeof(*kmsg_args));
++
++	static const struct option options[] = {
++		{ "loop",	no_argument,		NULL, 'x' },
++		{ "help",	no_argument,		NULL, 'h' },
++		{ "test",	required_argument,	NULL, 't' },
++		{ "wait",	required_argument,	NULL, 'w' },
++		{ "fork",	no_argument,		NULL, 'f' },
++		{}
++	};
++
++	if (strcmp(exec, "kmsg-test") != 0)
++		kmsg_args->test = exec;
++
++	while ((t = getopt_long(argc, argv, "hxfm:r:t:b:w:a",
++						options, NULL)) >= 0) {
++		switch (t) {
++		case 'x':
++			kmsg_args->loop = 1;
++			break;
++
++		case 't':
++			kmsg_args->test = optarg;
++			break;
++
++		case 'w':
++			kmsg_args->wait = strtol(optarg, NULL, 10);
++			break;
++
++		case 'f':
++			kmsg_args->fork = 1;
++			break;
++
++		default:
++		case 'h':
++			usage(argv[0]);
++		}
++	}
++
++	ret = start_tests(kmsg_args);
++	if (ret == TEST_ERR)
++		return EXIT_FAILURE;
++
++	free(kmsg_args);
++
++	return 0;
++}
+diff --git a/tools/testing/selftests/kmsg/kmsg-test.h b/tools/testing/selftests/kmsg/kmsg-test.h
+new file mode 100644
+index 0000000..b9ce896
+--- /dev/null
++++ b/tools/testing/selftests/kmsg/kmsg-test.h
+@@ -0,0 +1,34 @@
++#ifndef _KMSG_TEST_H_
++#define _KMSG_TEST_H_
++
++#include <stdio.h>
++
++#define DEV_KMSG "/dev/kmsg"
++
++#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
++
++#define KMSG_REQUESTED_BUF_SIZE (1024 * 256)
++
++enum {
++	TEST_OK,
++	TEST_SKIP,
++	TEST_ERR,
++};
++
++struct kmsg_test_args {
++	int loop;
++	int wait;
++	int fork;
++	const char *test;
++};
++
++FILE *kmsg_get_device(int minor, const char *mode);
++int kmsg_drop_device(int minor);
++
++int kmsg_test_buffer_add_del(const struct kmsg_test_args *args);
++int kmsg_test_buffer_add_write_read_del(const struct kmsg_test_args *args);
++int kmsg_test_buffer_buf_torture(const struct kmsg_test_args *args);
++int kmsg_test_buffer_buf_multithreaded_torture(
++					const struct kmsg_test_args *args);
++
++#endif /* _KMSG_TEST_H_ */
+diff --git a/tools/testing/selftests/kmsg/test-buffer-add-del.c b/tools/testing/selftests/kmsg/test-buffer-add-del.c
+new file mode 100644
+index 0000000..22b69ac
+--- /dev/null
++++ b/tools/testing/selftests/kmsg/test-buffer-add-del.c
+@@ -0,0 +1,76 @@
++#include <stddef.h>
++#include <stdint.h>
++#include <stdio.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <kmsg-api.h>
++
++#include "kmsg-test.h"
++
++int kmsg_test_buffer_add_del(const struct kmsg_test_args *args)
++{
++	int i;
++	int fd = open(DEV_KMSG, O_RDWR);
++	struct kmsg_cmd_buffer_add cmd = { 0 };
++	int minors[] = { -1, -1, -1, -1 };
++	FILE *fds[ARRAY_SIZE(minors)];
++	int retval = TEST_OK;
++	uint32_t size;
++
++	if (fd < 0) {
++		printf("Failed: cannot open %s\n", DEV_KMSG);
++		return TEST_ERR;
++	}
++
++	for (i = 0; i < ARRAY_SIZE(minors); i++) {
++		fds[i] = NULL;
++		cmd.size = KMSG_REQUESTED_BUF_SIZE;
++		cmd.mode = 0662;
++		if (kmsg_cmd_buffer_add(fd, &cmd)) {
++			printf("Failed to add buffer\n");
++			goto error;
++		}
++		if (cmd.minor < 0) {
++			printf("Minor number < 0\n");
++			goto error;
++		}
++		minors[i] = cmd.minor;
++		fds[i] = kmsg_get_device(minors[i], "r");
++		if (!fds[i]) {
++			printf("Cannot get device %d\n", i);
++			goto error;
++		}
++		size = 0;
++		if (kmsg_cmd_get_buf_size(fileno(fds[i]), &size)) {
++			printf("Cannot get buf size on defice %d\n", i);
++			goto error;
++		}
++		if (size != KMSG_REQUESTED_BUF_SIZE) {
++			printf("Invalid buf size on device %d\n", i);
++			goto error;
++		}
++	}
++
++	goto cleanup;
++
++error:
++	retval = TEST_ERR;
++
++cleanup:
++	for (i = 0; i < ARRAY_SIZE(minors); i++) {
++		if (minors[i] < 0)
++			continue;
++		if (fds[i])
++			fclose(fds[i]);
++		if (kmsg_drop_device(minors[i])) {
++			printf("Failed to delete device file %d\n", i);
++			retval = TEST_ERR;
++		}
++		if (kmsg_cmd_buffer_del(fd, &minors[i])) {
++			printf("Failed to delete buffer %d\n", i);
++			retval = TEST_ERR;
++		}
++	}
++	close(fd);
++	return retval;
++}
+diff --git a/tools/testing/selftests/kmsg/test-buffer-add-write-read-del.c b/tools/testing/selftests/kmsg/test-buffer-add-write-read-del.c
+new file mode 100644
+index 0000000..ab4223f
+--- /dev/null
++++ b/tools/testing/selftests/kmsg/test-buffer-add-write-read-del.c
+@@ -0,0 +1,161 @@
++#include <stddef.h>
++#include <stdint.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <kmsg-api.h>
++
++#include "kmsg-test.h"
++
++static const char *message(char *buff, size_t size, int i, int j)
++{
++	snprintf(buff, size, "Test message (%d, %d)", i, j);
++	return buff;
++}
++
++int kmsg_test_buffer_add_write_read_del(const struct kmsg_test_args *args)
++{
++	int i, j;
++	int fd = open(DEV_KMSG, O_RDWR);
++	struct kmsg_cmd_buffer_add cmd = { 0 };
++	int minors[] = { -1, -1, -1, -1 };
++	FILE *fds[ARRAY_SIZE(minors)];
++	FILE *log[ARRAY_SIZE(minors)];
++	int logfd;
++	int retval = TEST_OK;
++	uint32_t size;
++	char txt[80] = "";
++	char *buff = NULL;
++	const char *msg;
++	char *msgend;
++
++	if (fd < 0) {
++		printf("Failed: cannot open %s\n", DEV_KMSG);
++		return TEST_ERR;
++	}
++
++	for (i = 0; i < ARRAY_SIZE(minors); i++) {
++		fds[i] = NULL;
++		log[i] = NULL;
++		cmd.size = KMSG_REQUESTED_BUF_SIZE;
++		cmd.mode = 0662;
++		if (kmsg_cmd_buffer_add(fd, &cmd)) {
++			printf("Failed to add buffer\n");
++			goto error;
++		}
++		if (cmd.minor < 0) {
++			printf("Minor number < 0\n");
++			goto error;
++		}
++		minors[i] = cmd.minor;
++
++		fds[i] = kmsg_get_device(minors[i], "w");
++		if (!fds[i]) {
++			printf("Cannot get device %d for write\n", i);
++			goto error;
++		}
++		size = 0;
++		if (kmsg_cmd_get_buf_size(fileno(fds[i]), &size)) {
++			printf("Cannot get buf size on defice %d\n", i);
++			goto error;
++		}
++		if (size != KMSG_REQUESTED_BUF_SIZE) {
++			printf("Invalid buf size on device %d\n", i);
++			goto error;
++		}
++		log[i] = kmsg_get_device(minors[i], "r");
++		if (!log[i]) {
++			printf("Cannot get device %d for read\n", i);
++			goto error;
++		}
++		size = 0;
++		if (kmsg_cmd_get_buf_size(fileno(log[i]), &size)) {
++			printf("Cannot get buf size on defice %d\n", i);
++			goto error;
++		}
++		if (size != KMSG_REQUESTED_BUF_SIZE) {
++			printf("Invalid buf size on device %d\n", i);
++			goto error;
++		}
++
++		for (j = 0; j <= i; j++) {
++			if (kmsg_cmd_clear(fileno(fds[j]))) {
++				printf("Cannot clear buffer on device %d\n", j);
++				goto error;
++			}
++			fprintf(fds[j], "%s\n", message(txt, ARRAY_SIZE(txt),
++									i, j));
++			fflush(fds[j]);
++		}
++
++		for (j = 0; j <= i; j++) {
++			logfd = fileno(log[j]);
++			size = 0;
++			if (kmsg_cmd_get_read_size_max(logfd, &size)) {
++				printf("Cannot get buf size on device %d\n", j);
++				goto error;
++			}
++			if (!size) {
++				printf("Expected non-zero buf size on %d\n", j);
++				goto error;
++			}
++			buff = malloc(size);
++			if (!buff) {
++				printf("Out of memory\n");
++				goto error;
++			}
++			if (read(logfd, buff, size) <= 0) {
++				printf("Could not read from buffer %d\n", j);
++				goto error;
++			}
++			msg = strchr(buff, ';');
++			msgend = strchr(buff, '\n');
++			if ((!msg) || (!msgend)) {
++				printf("Could not read stored log on %d\n", j);
++				goto error;
++			}
++			msg++;
++			*msgend = 0;
++			if (strcmp(msg, message(txt, ARRAY_SIZE(txt), i, j))) {
++				printf("Messages do not match on %d\n", j);
++				goto error;
++			}
++			free(buff);
++			buff = NULL;
++		}
++	}
++
++	goto cleanup;
++
++error:
++	retval = TEST_ERR;
++
++cleanup:
++	for (i = 0; i < ARRAY_SIZE(minors); i++) {
++		if (minors[i] < 0)
++			continue;
++		if (fds[i])
++			fclose(fds[i]);
++		if (log[i]) {
++			if (kmsg_cmd_clear(fileno(log[i]))) {
++				printf("Failed to clear device %d\n", i);
++				retval = TEST_ERR;
++			}
++			fclose(log[i]);
++		}
++		if (kmsg_drop_device(minors[i])) {
++			printf("Failed to delete device file %d\n", i);
++			retval = TEST_ERR;
++		}
++		if (kmsg_cmd_buffer_del(fd, &minors[i])) {
++			printf("Failed to delete buffer %d\n", i);
++			retval = TEST_ERR;
++		}
++	}
++	close(fd);
++	if (buff)
++		free(buff);
++	return retval;
++}
+diff --git a/tools/testing/selftests/kmsg/test-buffer-buf-multithreaded-torture.c b/tools/testing/selftests/kmsg/test-buffer-buf-multithreaded-torture.c
+new file mode 100644
+index 0000000..60d37aa
+--- /dev/null
++++ b/tools/testing/selftests/kmsg/test-buffer-buf-multithreaded-torture.c
+@@ -0,0 +1,199 @@
++#include <stddef.h>
++#include <stdbool.h>
++#include <stdint.h>
++#include <stdio.h>
++#include <string.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <pthread.h>
++#include <kmsg-api.h>
++
++#include "kmsg-test.h"
++
++#define SOME_BUFF_SIZE 4096
++#define THREADS_PER_DEVICE 10
++
++static bool ok = true;
++static bool nok = !true;
++
++static void *kmsg_test_thread_func(void *data)
++{
++	char buff[SOME_BUFF_SIZE];
++	int minor = *((int *)data);
++	FILE *f = kmsg_get_device(minor, "w");
++	int fd;
++	void *retval = &ok;
++	int iter;
++	ssize_t s;
++	uint32_t size, done;
++	uint32_t max_size;
++
++	memset(buff, 'A', ARRAY_SIZE(buff));
++	buff[ARRAY_SIZE(buff) - 1] = 0;
++
++	if (!f) {
++		printf("Cannot get device for write\n");
++		return &nok;
++	}
++	fd = fileno(f);
++
++	size = 0;
++	if (kmsg_cmd_get_buf_size(fd, &size)) {
++		printf("Cannot get buf size\n");
++		goto error;
++	}
++	if (size != KMSG_REQUESTED_BUF_SIZE) {
++		printf("Invalid buf size\n");
++		goto error;
++	}
++
++	if (kmsg_cmd_clear(fd)) {
++		printf("Cannot clear buffer\n");
++		goto error;
++	}
++
++	iter = 0;
++	while (done < (KMSG_REQUESTED_BUF_SIZE * 2)) {
++		s = write(fd, buff, ARRAY_SIZE(buff));
++		if (s < 0) {
++			printf("Cannot write iteration %d\n", iter);
++			goto error;
++		}
++		done += s;
++
++		max_size = 0;
++		if (kmsg_cmd_get_read_size_max(fd, &max_size)) {
++			printf("Cannot get max_size\n");
++			goto error;
++		}
++		if (!max_size) {
++			printf("Expected non-zero max_size\n");
++			goto error;
++		}
++
++		iter++;
++	}
++
++	goto cleanup;
++
++error:
++	retval = &nok;
++
++cleanup:
++	fclose(f);
++
++	return retval;
++}
++
++int kmsg_test_buffer_buf_multithreaded_torture(
++					const struct kmsg_test_args *args)
++{
++	int i, j;
++	int fd = open(DEV_KMSG, O_RDWR);
++	struct kmsg_cmd_buffer_add cmd = { 0 };
++	int minors[] = { -1, -1, -1, -1 };
++	FILE *log[ARRAY_SIZE(minors)];
++	int retval = TEST_OK;
++	pthread_t threads[ARRAY_SIZE(minors)][THREADS_PER_DEVICE];
++	bool started[ARRAY_SIZE(minors)][THREADS_PER_DEVICE];
++	uint32_t size;
++	uint32_t max_size;
++	void *retptr;
++
++	for (i = 0; i < ARRAY_SIZE(minors); i++)
++		for (j = 0; j < THREADS_PER_DEVICE; j++)
++			started[i][j] = false;
++
++	if (fd < 0) {
++		printf("Failed: cannot open %s\n", DEV_KMSG);
++		return TEST_ERR;
++	}
++
++	for (i = 0; i < ARRAY_SIZE(minors); i++) {
++		log[i] = NULL;
++		cmd.size = KMSG_REQUESTED_BUF_SIZE;
++		cmd.mode = 0662;
++		if (kmsg_cmd_buffer_add(fd, &cmd)) {
++			printf("Failed to add buffer\n");
++			goto error;
++		}
++		if (cmd.minor < 0) {
++			printf("Minor number < 0\n");
++			goto error;
++		}
++		minors[i] = cmd.minor;
++
++		log[i] = kmsg_get_device(minors[i], "r");
++		if (!log[i]) {
++			printf("Cannot get device %d for read\n", i);
++			goto error;
++		}
++		size = 0;
++		if (kmsg_cmd_get_buf_size(fileno(log[i]), &size)) {
++			printf("Cannot get buf size on defice %d\n", i);
++			goto error;
++		}
++		if (size != KMSG_REQUESTED_BUF_SIZE) {
++			printf("Invalid buf size on device %d\n", i);
++			goto error;
++		}
++
++		for (j = 0; j < THREADS_PER_DEVICE; j++) {
++			if (pthread_create(&threads[i][j], NULL,
++					  kmsg_test_thread_func, &minors[i])) {
++				printf("Cannot create thread %d for dev %d\n",
++									j, i);
++				goto error;
++			}
++			started[i][j] = true;
++		}
++	}
++
++	goto cleanup;
++
++error:
++	retval = TEST_ERR;
++
++cleanup:
++	for (i = 0; i < ARRAY_SIZE(minors); i++) {
++		for (j = 0; j < THREADS_PER_DEVICE; j++)
++			if (started[i][j]) {
++				if (pthread_join(threads[i][j], &retptr)) {
++					printf("pthread_join() failed %d:%d\n",
++									i, j);
++					retval = TEST_ERR;
++				}
++				if (!(*((bool *)retptr)))
++					retval = TEST_ERR;
++			}
++		if (minors[i] < 0)
++			continue;
++		if (log[i]) {
++			max_size = 0;
++			if (kmsg_cmd_get_read_size_max(fileno(log[i]),
++								&max_size)) {
++				printf("Cannot get max_size\n");
++				retval = TEST_ERR;
++			}
++			if (!max_size) {
++				printf("Expected non-zero max_size\n");
++				retval = TEST_ERR;
++			}
++			if (kmsg_cmd_clear(fileno(log[i]))) {
++				printf("Failed to clear device %d\n", i);
++				retval = TEST_ERR;
++			}
++			fclose(log[i]);
++		}
++		if (kmsg_drop_device(minors[i])) {
++			printf("Failed to delete device file %d\n", i);
++			retval = TEST_ERR;
++		}
++		if (kmsg_cmd_buffer_del(fd, &minors[i])) {
++			printf("Failed to delete buffer %d\n", i);
++			retval = TEST_ERR;
++		}
++	}
++	close(fd);
++	return retval;
++}
+diff --git a/tools/testing/selftests/kmsg/test-buffer-buf-torture.c b/tools/testing/selftests/kmsg/test-buffer-buf-torture.c
+new file mode 100644
+index 0000000..700a2fa
+--- /dev/null
++++ b/tools/testing/selftests/kmsg/test-buffer-buf-torture.c
+@@ -0,0 +1,139 @@
++#include <stddef.h>
++#include <stdint.h>
++#include <stdio.h>
++#include <string.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <kmsg-api.h>
++
++#include "kmsg-test.h"
++
++#define SOME_BUFF_SIZE 4096
++
++int kmsg_test_buffer_buf_torture(const struct kmsg_test_args *args)
++{
++	int i, iter;
++	int fd = open(DEV_KMSG, O_RDWR);
++	struct kmsg_cmd_buffer_add cmd = { 0 };
++	int minors[] = { -1, -1, -1, -1 };
++	FILE *fds[ARRAY_SIZE(minors)];
++	FILE *log[ARRAY_SIZE(minors)];
++	int retval = TEST_OK;
++	char buff[SOME_BUFF_SIZE];
++	ssize_t s;
++	int logfd;
++	uint32_t size, done;
++	uint32_t max_size;
++
++	memset(buff, 'A', ARRAY_SIZE(buff));
++	buff[ARRAY_SIZE(buff) - 1] = 0;
++
++	if (fd < 0) {
++		printf("Failed: cannot open %s\n", DEV_KMSG);
++		return TEST_ERR;
++	}
++
++	for (i = 0; i < ARRAY_SIZE(minors); i++) {
++		fds[i] = NULL;
++		log[i] = NULL;
++		cmd.size = KMSG_REQUESTED_BUF_SIZE;
++		cmd.mode = 0662;
++		if (kmsg_cmd_buffer_add(fd, &cmd)) {
++			printf("Failed to add buffer\n");
++			goto error;
++		}
++		if (cmd.minor < 0) {
++			printf("Minor number < 0\n");
++			goto error;
++		}
++		minors[i] = cmd.minor;
++
++		fds[i] = kmsg_get_device(minors[i], "w");
++		if (!fds[i]) {
++			printf("Cannot get device %d for write\n", i);
++			goto error;
++		}
++		size = 0;
++		if (kmsg_cmd_get_buf_size(fileno(fds[i]), &size)) {
++			printf("Cannot get buf size on defice %d\n", i);
++			goto error;
++		}
++		if (size != KMSG_REQUESTED_BUF_SIZE) {
++			printf("Invalid buf size on device %d\n", i);
++			goto error;
++		}
++		log[i] = kmsg_get_device(minors[i], "r");
++		if (!log[i]) {
++			printf("Cannot get device %d for read\n", i);
++			goto error;
++		}
++		size = 0;
++		if (kmsg_cmd_get_buf_size(fileno(log[i]), &size)) {
++			printf("Cannot get buf size on defice %d\n", i);
++			goto error;
++		}
++		if (size != KMSG_REQUESTED_BUF_SIZE) {
++			printf("Invalid buf size on device %d\n", i);
++			goto error;
++		}
++
++		logfd = fileno(fds[i]);
++		if (kmsg_cmd_clear(logfd)) {
++			printf("Cannot clear buffer on device %d\n", i);
++			goto error;
++		}
++
++		iter = 0;
++		while (done < (KMSG_REQUESTED_BUF_SIZE * 2)) {
++			s = write(logfd, buff, ARRAY_SIZE(buff));
++			if (s < 0) {
++				printf("Cannot write %d to device %d, %s\n",
++						    iter, i, strerror(errno));
++				goto error;
++			}
++			done += s;
++
++			max_size = 0;
++			if (kmsg_cmd_get_read_size_max(logfd, &max_size)) {
++				printf("Cannot get max_size on device %d\n", i);
++				goto error;
++			}
++			if (!max_size) {
++				printf("Expected non-zero max_size on %d\n", i);
++				goto error;
++			}
++
++			iter++;
++		}
++	}
++
++	goto cleanup;
++
++error:
++	retval = TEST_ERR;
++
++cleanup:
++	for (i = 0; i < ARRAY_SIZE(minors); i++) {
++		if (minors[i] < 0)
++			continue;
++		if (fds[i])
++			fclose(fds[i]);
++		if (log[i]) {
++			if (kmsg_cmd_clear(fileno(log[i]))) {
++				printf("Failed to clear device %d\n", i);
++				retval = TEST_ERR;
++			}
++			fclose(log[i]);
++		}
++		if (kmsg_drop_device(minors[i])) {
++			printf("Failed to delete device file %d\n", i);
++			retval = TEST_ERR;
++		}
++		if (kmsg_cmd_buffer_del(fd, &minors[i])) {
++			printf("Failed to delete buffer %d\n", i);
++			retval = TEST_ERR;
++		}
++	}
++	close(fd);
++	return retval;
++}
 -- 
 1.9.1
