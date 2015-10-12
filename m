@@ -1,7 +1,7 @@
 From: Paul Osmialowski <p.osmialowsk@samsung.com>
-Subject: [RFC v2 7/9] kmsg: add ioctl for adding and deleting kmsg* devices
-Date: Mon, 12 Oct 2015 11:29:15 +0200
-Message-ID: <1444642157-32618-8-git-send-email-p.osmialowsk@samsung.com>
+Subject: [RFC v2 4/9] kmsg: add additional buffers support to memory class
+Date: Mon, 12 Oct 2015 11:29:12 +0200
+Message-ID: <1444642157-32618-5-git-send-email-p.osmialowsk@samsung.com>
 References: <1444642157-32618-1-git-send-email-p.osmialowsk@samsung.com>
 Return-path: <linux-doc-owner@vger.kernel.org>
 In-reply-to: <1444642157-32618-1-git-send-email-p.osmialowsk@samsung.com>
@@ -12,275 +12,205 @@ List-Id: linux-api@vger.kernel.org
 
 From: Marcin Niesluchowski <m.niesluchow@samsung.com>
 
-There is no possibility to add/delete kmsg* buffers from userspace.
+Memory class does not support additional kmsg buffers.
 
-Adds following ioctl for main kmsg device adding and deleting
-additional kmsg devices:
-* KMSG_CMD_BUFFER_ADD
-* KMSG_CMD_BUFFER_DEL
+Add additional kmsg buffers support to:
+* devnode() callback of "mem" class
+* file operations of major "mem" character device
 
 Signed-off-by: Marcin Niesluchowski <m.niesluchow@samsung.com>
 ---
- Documentation/ioctl/ioctl-number.txt |   1 +
- drivers/char/mem.c                   |   2 +-
- include/linux/printk.h               |   7 ++
- include/uapi/linux/Kbuild            |   1 +
- include/uapi/linux/kmsg_ioctl.h      |  30 +++++++++
- kernel/printk/printk.c               | 125 +++++++++++++++++++++++++++++++++++
- 6 files changed, 165 insertions(+), 1 deletion(-)
- create mode 100644 include/uapi/linux/kmsg_ioctl.h
+ drivers/char/mem.c     | 27 ++++++++++++++++++++-------
+ include/linux/printk.h | 32 ++++++++++++++++++++++++++++++++
+ kernel/printk/printk.c | 43 +++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 95 insertions(+), 7 deletions(-)
 
-diff --git a/Documentation/ioctl/ioctl-number.txt b/Documentation/ioctl/ioctl-number.txt
-index 50b7374..a36dc46 100644
---- a/Documentation/ioctl/ioctl-number.txt
-+++ b/Documentation/ioctl/ioctl-number.txt
-@@ -316,6 +316,7 @@ Code  Seq#(hex)	Include File		Comments
- 					<mailto:vgo@ratio.de>
- 0xB1	00-1F	PPPoX			<mailto:mostrows@styx.uwaterloo.ca>
- 0xB3	00	linux/mmc/ioctl.h
-+0xBB	00-02	uapi/linux/kmsg_ioctl.h
- 0xC0	00-0F	linux/usb/iowarrior.h
- 0xCA	00-0F	uapi/misc/cxl.h
- 0xCA	80-8F	uapi/scsi/cxlflash_ioctl.h
 diff --git a/drivers/char/mem.c b/drivers/char/mem.c
-index 7d46234..ac824de 100644
+index 6b1721f..7d46234 100644
 --- a/drivers/char/mem.c
 +++ b/drivers/char/mem.c
-@@ -808,7 +808,7 @@ static int memory_open(struct inode *inode, struct file *filp)
+@@ -799,9 +799,6 @@ static const struct memdev {
+ 	 [7] = { "full", 0666, &full_fops, 0 },
+ 	 [8] = { "random", 0666, &random_fops, 0 },
+ 	 [9] = { "urandom", 0666, &urandom_fops, 0 },
+-#ifdef CONFIG_PRINTK
+-	[11] = { "kmsg", 0644, &kmsg_fops, 0 },
+-#endif
+ };
+ 
+ static int memory_open(struct inode *inode, struct file *filp)
+@@ -811,7 +808,7 @@ static int memory_open(struct inode *inode, struct file *filp)
  
  	minor = iminor(inode);
  	if (minor >= ARRAY_SIZE(devlist))
--		return kmsg_memory_open(inode, filp);
-+		return kmsg_memory_open_ext(inode, filp);
+-		return -ENXIO;
++		return kmsg_memory_open(inode, filp);
  
  	dev = &devlist[minor];
  	if (!dev->fops)
-diff --git a/include/linux/printk.h b/include/linux/printk.h
-index 35111e8..294adab 100644
---- a/include/linux/printk.h
-+++ b/include/linux/printk.h
-@@ -427,9 +427,11 @@ extern struct class *mem_class;
- #define KMSG_MINOR	11
+@@ -833,16 +830,28 @@ static const struct file_operations memory_fops = {
  
- extern const struct file_operations kmsg_fops;
-+extern const struct file_operations kmsg_fops_ext;
- 
- extern struct device *init_kmsg(int minor, umode_t mode);
- extern int kmsg_memory_open(struct inode *inode, struct file *filp);
-+extern int kmsg_memory_open_ext(struct inode *inode, struct file *filp);
- extern int kmsg_mode(int minor, umode_t *mode);
- extern int kmsg_sys_buffer_add(size_t size, umode_t mode);
- extern void kmsg_sys_buffer_del(int minor);
-@@ -446,6 +448,11 @@ static inline int kmsg_memory_open(struct inode *inode, struct file *filp)
- 	return -ENXIO;
+ static char *mem_devnode(struct device *dev, umode_t *mode)
+ {
+-	if (mode && devlist[MINOR(dev->devt)].mode)
+-		*mode = devlist[MINOR(dev->devt)].mode;
++	int minor = MINOR(dev->devt);
++
++	if (!mode)
++		goto out;
++
++	if (minor >= ARRAY_SIZE(devlist)) {
++		kmsg_mode(minor, mode);
++		goto out;
++	}
++
++	if (devlist[minor].mode)
++		*mode = devlist[minor].mode;
++out:
+ 	return NULL;
  }
  
-+static inline int kmsg_memory_open_ext(struct inode *inode, struct file *filp)
+-static struct class *mem_class;
++struct class *mem_class;
+ 
+ static int __init chr_dev_init(void)
+ {
+ 	int minor;
++	struct device *kmsg;
+ 
+ 	if (register_chrdev(MEM_MAJOR, "mem", &memory_fops))
+ 		printk("unable to get major %d for memory devs\n", MEM_MAJOR);
+@@ -866,6 +875,10 @@ static int __init chr_dev_init(void)
+ 			      NULL, devlist[minor].name);
+ 	}
+ 
++	kmsg = init_kmsg(KMSG_MINOR, 0644);
++	if (IS_ERR(kmsg))
++		return PTR_ERR(kmsg);
++
+ 	return tty_init();
+ }
+ 
+diff --git a/include/linux/printk.h b/include/linux/printk.h
+index 9729565..67840e0 100644
+--- a/include/linux/printk.h
++++ b/include/linux/printk.h
+@@ -417,8 +417,40 @@ do {									\
+ 	no_printk(KERN_DEBUG pr_fmt(fmt), ##__VA_ARGS__)
+ #endif
+ 
++struct file;
++struct inode;
++
++#ifdef CONFIG_PRINTK
++
++extern struct class *mem_class;
++
++#define KMSG_MINOR	11
++
+ extern const struct file_operations kmsg_fops;
+ 
++extern struct device *init_kmsg(int minor, umode_t mode);
++extern int kmsg_memory_open(struct inode *inode, struct file *filp);
++extern int kmsg_mode(int minor, umode_t *mode);
++
++#else
++
++static inline struct device *init_kmsg(int minor, umode_t mode)
++{
++	return NULL;
++}
++
++static inline int kmsg_memory_open(struct inode *inode, struct file *filp)
 +{
 +	return -ENXIO;
 +}
 +
- static inline int kmsg_mode(int minor, umode_t *mode)
- {
- 	return -ENXIO;
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index e777078..d998999 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -225,6 +225,7 @@ header-y += kernel-page-flags.h
- header-y += kexec.h
- header-y += keyboard.h
- header-y += keyctl.h
-+header-y += kmsg_ioctl.h
- 
- ifneq ($(wildcard $(srctree)/arch/$(SRCARCH)/include/uapi/asm/kvm.h \
- 		  $(srctree)/arch/$(SRCARCH)/include/asm/kvm.h),)
-diff --git a/include/uapi/linux/kmsg_ioctl.h b/include/uapi/linux/kmsg_ioctl.h
-new file mode 100644
-index 0000000..89c0c61
---- /dev/null
-+++ b/include/uapi/linux/kmsg_ioctl.h
-@@ -0,0 +1,30 @@
-+/*
-+ * This is ioctl include for kmsg* devices
-+ */
-+
-+#ifndef _KMSG_IOCTL_H_
-+#define _KMSG_IOCTL_H_
-+
-+#include <linux/ioctl.h>
-+#include <linux/types.h>
-+
-+struct kmsg_cmd_buffer_add {
-+	size_t size;
-+	unsigned short mode;
-+	int minor;
-+} __attribute__((packed));
-+
-+#define KMSG_IOCTL_MAGIC	0xBB
-+
-+/*
-+ * A ioctl interface for kmsg device.
-+ *
-+ * KMSG_CMD_BUFFER_ADD:	Creates additional kmsg device based on its size
-+ *			and mode. Minor of created device is put.
-+ * KMSG_CMD_BUFFER_DEL:	Removes additional kmsg device based on its minor
-+ */
-+#define KMSG_CMD_BUFFER_ADD		_IOWR(KMSG_IOCTL_MAGIC, 0x00, \
-+					      struct kmsg_cmd_buffer_add)
-+#define KMSG_CMD_BUFFER_DEL		_IOW(KMSG_IOCTL_MAGIC, 0x01, int)
++static inline int kmsg_mode(int minor, umode_t *mode)
++{
++	return -ENXIO;
++}
 +
 +#endif
++
+ enum {
+ 	DUMP_PREFIX_NONE,
+ 	DUMP_PREFIX_ADDRESS,
 diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-index c13ba89..be08aae 100644
+index 0d4d726..3157239 100644
 --- a/kernel/printk/printk.c
 +++ b/kernel/printk/printk.c
-@@ -56,6 +56,10 @@
- #define CREATE_TRACE_POINTS
- #include <trace/events/printk.h>
+@@ -46,6 +46,8 @@
+ #include <linux/utsname.h>
+ #include <linux/ctype.h>
+ #include <linux/uio.h>
++#include <linux/device.h>
++#include <linux/kdev_t.h>
  
-+#ifdef CONFIG_PRINTK
-+#include <uapi/linux/kmsg_ioctl.h>
-+#endif
-+
- #include "console_cmdline.h"
- #include "braille.h"
+ #include <asm/uaccess.h>
  
-@@ -1284,6 +1288,120 @@ const struct file_operations kmsg_fops = {
+@@ -253,6 +255,7 @@ struct log_buffer {
+ 	u64 next_seq;
+ #ifdef CONFIG_PRINTK
+ 	u32 next_idx;		/* index of the next record to store */
++	int mode;		/* mode of device */
+ 	int minor;		/* minor representing buffer device */
+ #endif
+ };
+@@ -295,6 +298,7 @@ static struct log_buffer log_buf = {
+ 	.first_idx	= 0,
+ 	.next_seq	= 0,
+ 	.next_idx	= 0,
++	.mode		= 0,
+ 	.minor		= 0,
+ };
+ 
+@@ -1216,6 +1220,45 @@ const struct file_operations kmsg_fops = {
  	.release = devkmsg_release,
  };
  
-+#define KMSG_MAX_MINOR_LEN	20
-+
-+static int kmsg_open_ext(struct inode *inode, struct file *file)
++/* Should be used for device registration */
++struct device *init_kmsg(int minor, umode_t mode)
 +{
-+	return kmsg_fops.open(inode, file);
++	log_buf.minor = minor;
++	log_buf.mode = mode;
++	return device_create(mem_class, NULL, MKDEV(MEM_MAJOR, minor),
++			NULL, "kmsg");
 +}
 +
-+static ssize_t kmsg_write_iter_ext(struct kiocb *iocb, struct iov_iter *from)
++int kmsg_memory_open(struct inode *inode, struct file *filp)
 +{
-+	return kmsg_fops.write_iter(iocb, from);
++	filp->f_op = &kmsg_fops;
++
++	return kmsg_fops.open(inode, filp);
 +}
 +
-+static ssize_t kmsg_read_ext(struct file *file, char __user *buf,
-+			     size_t count, loff_t *ppos)
++int kmsg_mode(int minor, umode_t *mode)
 +{
-+	return kmsg_fops.read(file, buf, count, ppos);
-+}
++	int ret = -ENXIO;
++	struct log_buffer *log_b;
 +
-+static loff_t kmsg_llseek_ext(struct file *file, loff_t offset, int whence)
-+{
-+	return kmsg_fops.llseek(file, offset, whence);
-+}
-+
-+static unsigned int kmsg_poll_ext(struct file *file,
-+				  struct poll_table_struct *wait)
-+{
-+	return kmsg_fops.poll(file, wait);
-+}
-+
-+static long kmsg_ioctl_buffers(struct file *file, unsigned int cmd,
-+			       unsigned long arg)
-+{
-+	void __user *argp = (void __user *)arg;
-+	size_t size;
-+	umode_t mode;
-+	char name[4 + KMSG_MAX_MINOR_LEN + 1];
-+	struct device *dev;
-+	int minor;
-+
-+	if (iminor(file->f_inode) != log_buf.minor)
-+		return -ENOTTY;
-+
-+	switch (cmd) {
-+	case KMSG_CMD_BUFFER_ADD:
-+		if (copy_from_user(&size, argp, sizeof(size)))
-+			return -EFAULT;
-+		argp += sizeof(size);
-+		if (copy_from_user(&mode, argp, sizeof(mode)))
-+			return -EFAULT;
-+		argp += sizeof(mode);
-+		minor = kmsg_sys_buffer_add(size, mode);
-+		if (minor < 0)
-+			return minor;
-+		sprintf(name, "kmsg%d", minor);
-+		dev = device_create(mem_class, NULL, MKDEV(MEM_MAJOR, minor),
-+				    NULL, name);
-+		if (IS_ERR(dev)) {
-+			kmsg_sys_buffer_del(minor);
-+			return PTR_ERR(dev);
-+		}
-+		if (copy_to_user(argp, &minor, sizeof(minor))) {
-+			device_destroy(mem_class, MKDEV(MEM_MAJOR, minor));
-+			kmsg_sys_buffer_del(minor);
-+			return -EFAULT;
-+		}
-+		return 0;
-+	case KMSG_CMD_BUFFER_DEL:
-+		if (copy_from_user(&minor, argp, sizeof(minor)))
-+			return -EFAULT;
-+		if (minor <= log_buf.minor)
-+			return -EINVAL;
-+		device_destroy(mem_class, MKDEV(MEM_MAJOR, minor));
-+		kmsg_sys_buffer_del(minor);
++	if (minor == log_buf.minor) {
++		*mode = log_buf.mode;
 +		return 0;
 +	}
-+	return -ENOTTY;
-+}
 +
-+static long kmsg_unlocked_ioctl_ext(struct file *file, unsigned int cmd,
-+				    unsigned long arg)
-+{
-+	long ret = kmsg_ioctl_buffers(file, cmd, arg);
++	rcu_read_lock();
++	list_for_each_entry_rcu(log_b, &log_buf.list, list) {
++		if (log_b->minor == minor) {
++			*mode = log_b->mode;
++			ret = 0;
++			break;
++		}
++	}
++	rcu_read_unlock();
 +
-+	if (ret == -ENOTTY)
-+		return kmsg_fops.unlocked_ioctl(file, cmd, arg);
 +	return ret;
 +}
 +
-+static long kmsg_compat_ioctl_ext(struct file *file, unsigned int cmd,
-+				  unsigned long arg)
-+{
-+	long ret = kmsg_ioctl_buffers(file, cmd, arg);
-+
-+	if (ret == -ENOTTY)
-+		return kmsg_fops.compat_ioctl(file, cmd, arg);
-+	return ret;
-+}
-+
-+static int kmsg_release_ext(struct inode *inode, struct file *file)
-+{
-+	return kmsg_fops.release(inode, file);
-+}
-+
-+const struct file_operations kmsg_fops_ext = {
-+	.open		= kmsg_open_ext,
-+	.read		= kmsg_read_ext,
-+	.write_iter	= kmsg_write_iter_ext,
-+	.llseek		= kmsg_llseek_ext,
-+	.poll		= kmsg_poll_ext,
-+	.unlocked_ioctl	= kmsg_unlocked_ioctl_ext,
-+	.compat_ioctl	= kmsg_compat_ioctl_ext,
-+	.release	= kmsg_release_ext,
-+};
-+
- /* Should be used for device registration */
- struct device *init_kmsg(int minor, umode_t mode)
- {
-@@ -1300,6 +1418,13 @@ int kmsg_memory_open(struct inode *inode, struct file *filp)
- 	return kmsg_fops.open(inode, filp);
- }
- 
-+int kmsg_memory_open_ext(struct inode *inode, struct file *filp)
-+{
-+	filp->f_op = &kmsg_fops_ext;
-+
-+	return kmsg_fops_ext.open(inode, filp);
-+}
-+
- int kmsg_mode(int minor, umode_t *mode)
- {
- 	int ret = -ENXIO;
+ #ifdef CONFIG_KEXEC_CORE
+ /*
+  * This appends the listed symbols to /proc/vmcore
 -- 
 1.9.1
 
