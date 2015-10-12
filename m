@@ -1,304 +1,286 @@
 From: Paul Osmialowski <p.osmialowsk@samsung.com>
-Subject: [RFC v2 1/9] printk: move code regarding log message storing format
-Date: Mon, 12 Oct 2015 11:29:09 +0200
-Message-ID: <1444642157-32618-2-git-send-email-p.osmialowsk@samsung.com>
+Subject: [RFC v2 7/9] kmsg: add ioctl for adding and deleting kmsg* devices
+Date: Mon, 12 Oct 2015 11:29:15 +0200
+Message-ID: <1444642157-32618-8-git-send-email-p.osmialowsk@samsung.com>
 References: <1444642157-32618-1-git-send-email-p.osmialowsk@samsung.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
 In-reply-to: <1444642157-32618-1-git-send-email-p.osmialowsk@samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-doc-owner@vger.kernel.org
 To: Jonathan Corbet <corbet@lwn.net>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, Petr Mladek <pmladek@suse.cz>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Mack <daniel@zonque.org>, Kay Sievers <kay.sievers@vrfy.org>, Joe Perches <joe@perches.com>, Tejun Heo <tj@kernel.org>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
 Cc: Marcin Niesluchowski <m.niesluchow@samsung.com>, Karol Lewandowski <k.lewandowsk@samsung.com>, Paul Osmialowski <p.osmialowsk@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Shuah Khan <shuahkh@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
 From: Marcin Niesluchowski <m.niesluchow@samsung.com>
 
-Preparation commit for future changes purpose.
+There is no possibility to add/delete kmsg* buffers from userspace.
 
-Moves some code responsible for storing log messages in proper format.
+Adds following ioctl for main kmsg device adding and deleting
+additional kmsg devices:
+* KMSG_CMD_BUFFER_ADD
+* KMSG_CMD_BUFFER_DEL
 
 Signed-off-by: Marcin Niesluchowski <m.niesluchow@samsung.com>
 ---
- kernel/printk/printk.c | 254 ++++++++++++++++++++++++-------------------------
- 1 file changed, 127 insertions(+), 127 deletions(-)
+ Documentation/ioctl/ioctl-number.txt |   1 +
+ drivers/char/mem.c                   |   2 +-
+ include/linux/printk.h               |   7 ++
+ include/uapi/linux/Kbuild            |   1 +
+ include/uapi/linux/kmsg_ioctl.h      |  30 +++++++++
+ kernel/printk/printk.c               | 125 +++++++++++++++++++++++++++++++++++
+ 6 files changed, 165 insertions(+), 1 deletion(-)
+ create mode 100644 include/uapi/linux/kmsg_ioctl.h
 
-diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-index 8f0324e..d209072 100644
---- a/kernel/printk/printk.c
-+++ b/kernel/printk/printk.c
-@@ -475,6 +475,133 @@ static int log_store(int facility, int level,
- 	return msg->text_len;
+diff --git a/Documentation/ioctl/ioctl-number.txt b/Documentation/ioctl/ioctl-number.txt
+index 50b7374..a36dc46 100644
+--- a/Documentation/ioctl/ioctl-number.txt
++++ b/Documentation/ioctl/ioctl-number.txt
+@@ -316,6 +316,7 @@ Code  Seq#(hex)	Include File		Comments
+ 					<mailto:vgo@ratio.de>
+ 0xB1	00-1F	PPPoX			<mailto:mostrows@styx.uwaterloo.ca>
+ 0xB3	00	linux/mmc/ioctl.h
++0xBB	00-02	uapi/linux/kmsg_ioctl.h
+ 0xC0	00-0F	linux/usb/iowarrior.h
+ 0xCA	00-0F	uapi/misc/cxl.h
+ 0xCA	80-8F	uapi/scsi/cxlflash_ioctl.h
+diff --git a/drivers/char/mem.c b/drivers/char/mem.c
+index 7d46234..ac824de 100644
+--- a/drivers/char/mem.c
++++ b/drivers/char/mem.c
+@@ -808,7 +808,7 @@ static int memory_open(struct inode *inode, struct file *filp)
+ 
+ 	minor = iminor(inode);
+ 	if (minor >= ARRAY_SIZE(devlist))
+-		return kmsg_memory_open(inode, filp);
++		return kmsg_memory_open_ext(inode, filp);
+ 
+ 	dev = &devlist[minor];
+ 	if (!dev->fops)
+diff --git a/include/linux/printk.h b/include/linux/printk.h
+index 35111e8..294adab 100644
+--- a/include/linux/printk.h
++++ b/include/linux/printk.h
+@@ -427,9 +427,11 @@ extern struct class *mem_class;
+ #define KMSG_MINOR	11
+ 
+ extern const struct file_operations kmsg_fops;
++extern const struct file_operations kmsg_fops_ext;
+ 
+ extern struct device *init_kmsg(int minor, umode_t mode);
+ extern int kmsg_memory_open(struct inode *inode, struct file *filp);
++extern int kmsg_memory_open_ext(struct inode *inode, struct file *filp);
+ extern int kmsg_mode(int minor, umode_t *mode);
+ extern int kmsg_sys_buffer_add(size_t size, umode_t mode);
+ extern void kmsg_sys_buffer_del(int minor);
+@@ -446,6 +448,11 @@ static inline int kmsg_memory_open(struct inode *inode, struct file *filp)
+ 	return -ENXIO;
  }
  
-+static bool printk_time = IS_ENABLED(CONFIG_PRINTK_TIME);
-+module_param_named(time, printk_time, bool, S_IRUGO | S_IWUSR);
-+
-+static size_t print_time(u64 ts, char *buf)
++static inline int kmsg_memory_open_ext(struct inode *inode, struct file *filp)
 +{
-+	unsigned long rem_nsec;
-+
-+	if (!printk_time)
-+		return 0;
-+
-+	rem_nsec = do_div(ts, 1000000000);
-+
-+	if (!buf)
-+		return snprintf(NULL, 0, "[%5lu.000000] ", (unsigned long)ts);
-+
-+	return sprintf(buf, "[%5lu.%06lu] ",
-+		       (unsigned long)ts, rem_nsec / 1000);
++	return -ENXIO;
 +}
++
+ static inline int kmsg_mode(int minor, umode_t *mode)
+ {
+ 	return -ENXIO;
+diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
+index e777078..d998999 100644
+--- a/include/uapi/linux/Kbuild
++++ b/include/uapi/linux/Kbuild
+@@ -225,6 +225,7 @@ header-y += kernel-page-flags.h
+ header-y += kexec.h
+ header-y += keyboard.h
+ header-y += keyctl.h
++header-y += kmsg_ioctl.h
+ 
+ ifneq ($(wildcard $(srctree)/arch/$(SRCARCH)/include/uapi/asm/kvm.h \
+ 		  $(srctree)/arch/$(SRCARCH)/include/asm/kvm.h),)
+diff --git a/include/uapi/linux/kmsg_ioctl.h b/include/uapi/linux/kmsg_ioctl.h
+new file mode 100644
+index 0000000..89c0c61
+--- /dev/null
++++ b/include/uapi/linux/kmsg_ioctl.h
+@@ -0,0 +1,30 @@
++/*
++ * This is ioctl include for kmsg* devices
++ */
++
++#ifndef _KMSG_IOCTL_H_
++#define _KMSG_IOCTL_H_
++
++#include <linux/ioctl.h>
++#include <linux/types.h>
++
++struct kmsg_cmd_buffer_add {
++	size_t size;
++	unsigned short mode;
++	int minor;
++} __attribute__((packed));
++
++#define KMSG_IOCTL_MAGIC	0xBB
 +
 +/*
-+ * Continuation lines are buffered, and not committed to the record buffer
-+ * until the line is complete, or a race forces it. The line fragments
-+ * though, are printed immediately to the consoles to ensure everything has
-+ * reached the console in case of a kernel crash.
++ * A ioctl interface for kmsg device.
++ *
++ * KMSG_CMD_BUFFER_ADD:	Creates additional kmsg device based on its size
++ *			and mode. Minor of created device is put.
++ * KMSG_CMD_BUFFER_DEL:	Removes additional kmsg device based on its minor
 + */
-+static struct cont {
-+	char buf[LOG_LINE_MAX];
-+	size_t len;			/* length == 0 means unused buffer */
-+	size_t cons;			/* bytes written to console */
-+	struct task_struct *owner;	/* task of first print*/
-+	u64 ts_nsec;			/* time of first print */
-+	u8 level;			/* log level of first message */
-+	u8 facility;			/* log facility of first message */
-+	enum log_flags flags;		/* prefix, newline flags */
-+	bool flushed:1;			/* buffer sealed and committed */
-+} cont;
++#define KMSG_CMD_BUFFER_ADD		_IOWR(KMSG_IOCTL_MAGIC, 0x00, \
++					      struct kmsg_cmd_buffer_add)
++#define KMSG_CMD_BUFFER_DEL		_IOW(KMSG_IOCTL_MAGIC, 0x01, int)
 +
-+static void cont_flush(enum log_flags flags)
-+{
-+	if (cont.flushed)
-+		return;
-+	if (cont.len == 0)
-+		return;
-+
-+	if (cont.cons) {
-+		/*
-+		 * If a fragment of this line was directly flushed to the
-+		 * console; wait for the console to pick up the rest of the
-+		 * line. LOG_NOCONS suppresses a duplicated output.
-+		 */
-+		log_store(cont.facility, cont.level, flags | LOG_NOCONS,
-+			  cont.ts_nsec, NULL, 0, cont.buf, cont.len);
-+		cont.flags = flags;
-+		cont.flushed = true;
-+	} else {
-+		/*
-+		 * If no fragment of this line ever reached the console,
-+		 * just submit it to the store and free the buffer.
-+		 */
-+		log_store(cont.facility, cont.level, flags, 0,
-+			  NULL, 0, cont.buf, cont.len);
-+		cont.len = 0;
-+	}
-+}
-+
-+static bool cont_add(int facility, int level, const char *text, size_t len)
-+{
-+	if (cont.len && cont.flushed)
-+		return false;
-+
-+	/*
-+	 * If ext consoles are present, flush and skip in-kernel
-+	 * continuation.  See nr_ext_console_drivers definition.  Also, if
-+	 * the line gets too long, split it up in separate records.
-+	 */
-+	if (nr_ext_console_drivers || cont.len + len > sizeof(cont.buf)) {
-+		cont_flush(LOG_CONT);
-+		return false;
-+	}
-+
-+	if (!cont.len) {
-+		cont.facility = facility;
-+		cont.level = level;
-+		cont.owner = current;
-+		cont.ts_nsec = local_clock();
-+		cont.flags = 0;
-+		cont.cons = 0;
-+		cont.flushed = false;
-+	}
-+
-+	memcpy(cont.buf + cont.len, text, len);
-+	cont.len += len;
-+
-+	if (cont.len > (sizeof(cont.buf) * 80) / 100)
-+		cont_flush(LOG_CONT);
-+
-+	return true;
-+}
-+
-+static size_t cont_print_text(char *text, size_t size)
-+{
-+	size_t textlen = 0;
-+	size_t len;
-+
-+	if (cont.cons == 0 && (console_prev & LOG_NEWLINE)) {
-+		textlen += print_time(cont.ts_nsec, text);
-+		size -= textlen;
-+	}
-+
-+	len = cont.len - cont.cons;
-+	if (len > 0) {
-+		if (len+1 > size)
-+			len = size-1;
-+		memcpy(text + textlen, cont.buf + cont.cons, len);
-+		textlen += len;
-+		cont.cons = cont.len;
-+	}
-+
-+	if (cont.flushed) {
-+		if (cont.flags & LOG_NEWLINE)
-+			text[textlen++] = '\n';
-+		/* got everything, release buffer */
-+		cont.len = 0;
-+	}
-+	return textlen;
-+}
-+
- int dmesg_restrict = IS_ENABLED(CONFIG_SECURITY_DMESG_RESTRICT);
++#endif
+diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
+index c13ba89..be08aae 100644
+--- a/kernel/printk/printk.c
++++ b/kernel/printk/printk.c
+@@ -56,6 +56,10 @@
+ #define CREATE_TRACE_POINTS
+ #include <trace/events/printk.h>
  
- static int syslog_action_restricted(int type)
-@@ -1030,25 +1157,6 @@ static inline void boot_delay_msec(int level)
- }
- #endif
++#ifdef CONFIG_PRINTK
++#include <uapi/linux/kmsg_ioctl.h>
++#endif
++
+ #include "console_cmdline.h"
+ #include "braille.h"
  
--static bool printk_time = IS_ENABLED(CONFIG_PRINTK_TIME);
--module_param_named(time, printk_time, bool, S_IRUGO | S_IWUSR);
--
--static size_t print_time(u64 ts, char *buf)
--{
--	unsigned long rem_nsec;
--
--	if (!printk_time)
--		return 0;
--
--	rem_nsec = do_div(ts, 1000000000);
--
--	if (!buf)
--		return snprintf(NULL, 0, "[%5lu.000000] ", (unsigned long)ts);
--
--	return sprintf(buf, "[%5lu.%06lu] ",
--		       (unsigned long)ts, rem_nsec / 1000);
--}
--
- static size_t print_prefix(const struct printk_log *msg, bool syslog, char *buf)
+@@ -1284,6 +1288,120 @@ const struct file_operations kmsg_fops = {
+ 	.release = devkmsg_release,
+ };
+ 
++#define KMSG_MAX_MINOR_LEN	20
++
++static int kmsg_open_ext(struct inode *inode, struct file *file)
++{
++	return kmsg_fops.open(inode, file);
++}
++
++static ssize_t kmsg_write_iter_ext(struct kiocb *iocb, struct iov_iter *from)
++{
++	return kmsg_fops.write_iter(iocb, from);
++}
++
++static ssize_t kmsg_read_ext(struct file *file, char __user *buf,
++			     size_t count, loff_t *ppos)
++{
++	return kmsg_fops.read(file, buf, count, ppos);
++}
++
++static loff_t kmsg_llseek_ext(struct file *file, loff_t offset, int whence)
++{
++	return kmsg_fops.llseek(file, offset, whence);
++}
++
++static unsigned int kmsg_poll_ext(struct file *file,
++				  struct poll_table_struct *wait)
++{
++	return kmsg_fops.poll(file, wait);
++}
++
++static long kmsg_ioctl_buffers(struct file *file, unsigned int cmd,
++			       unsigned long arg)
++{
++	void __user *argp = (void __user *)arg;
++	size_t size;
++	umode_t mode;
++	char name[4 + KMSG_MAX_MINOR_LEN + 1];
++	struct device *dev;
++	int minor;
++
++	if (iminor(file->f_inode) != log_buf.minor)
++		return -ENOTTY;
++
++	switch (cmd) {
++	case KMSG_CMD_BUFFER_ADD:
++		if (copy_from_user(&size, argp, sizeof(size)))
++			return -EFAULT;
++		argp += sizeof(size);
++		if (copy_from_user(&mode, argp, sizeof(mode)))
++			return -EFAULT;
++		argp += sizeof(mode);
++		minor = kmsg_sys_buffer_add(size, mode);
++		if (minor < 0)
++			return minor;
++		sprintf(name, "kmsg%d", minor);
++		dev = device_create(mem_class, NULL, MKDEV(MEM_MAJOR, minor),
++				    NULL, name);
++		if (IS_ERR(dev)) {
++			kmsg_sys_buffer_del(minor);
++			return PTR_ERR(dev);
++		}
++		if (copy_to_user(argp, &minor, sizeof(minor))) {
++			device_destroy(mem_class, MKDEV(MEM_MAJOR, minor));
++			kmsg_sys_buffer_del(minor);
++			return -EFAULT;
++		}
++		return 0;
++	case KMSG_CMD_BUFFER_DEL:
++		if (copy_from_user(&minor, argp, sizeof(minor)))
++			return -EFAULT;
++		if (minor <= log_buf.minor)
++			return -EINVAL;
++		device_destroy(mem_class, MKDEV(MEM_MAJOR, minor));
++		kmsg_sys_buffer_del(minor);
++		return 0;
++	}
++	return -ENOTTY;
++}
++
++static long kmsg_unlocked_ioctl_ext(struct file *file, unsigned int cmd,
++				    unsigned long arg)
++{
++	long ret = kmsg_ioctl_buffers(file, cmd, arg);
++
++	if (ret == -ENOTTY)
++		return kmsg_fops.unlocked_ioctl(file, cmd, arg);
++	return ret;
++}
++
++static long kmsg_compat_ioctl_ext(struct file *file, unsigned int cmd,
++				  unsigned long arg)
++{
++	long ret = kmsg_ioctl_buffers(file, cmd, arg);
++
++	if (ret == -ENOTTY)
++		return kmsg_fops.compat_ioctl(file, cmd, arg);
++	return ret;
++}
++
++static int kmsg_release_ext(struct inode *inode, struct file *file)
++{
++	return kmsg_fops.release(inode, file);
++}
++
++const struct file_operations kmsg_fops_ext = {
++	.open		= kmsg_open_ext,
++	.read		= kmsg_read_ext,
++	.write_iter	= kmsg_write_iter_ext,
++	.llseek		= kmsg_llseek_ext,
++	.poll		= kmsg_poll_ext,
++	.unlocked_ioctl	= kmsg_unlocked_ioctl_ext,
++	.compat_ioctl	= kmsg_compat_ioctl_ext,
++	.release	= kmsg_release_ext,
++};
++
+ /* Should be used for device registration */
+ struct device *init_kmsg(int minor, umode_t mode)
  {
- 	size_t len = 0;
-@@ -1544,114 +1652,6 @@ static inline void printk_delay(void)
- 	}
+@@ -1300,6 +1418,13 @@ int kmsg_memory_open(struct inode *inode, struct file *filp)
+ 	return kmsg_fops.open(inode, filp);
  }
  
--/*
-- * Continuation lines are buffered, and not committed to the record buffer
-- * until the line is complete, or a race forces it. The line fragments
-- * though, are printed immediately to the consoles to ensure everything has
-- * reached the console in case of a kernel crash.
-- */
--static struct cont {
--	char buf[LOG_LINE_MAX];
--	size_t len;			/* length == 0 means unused buffer */
--	size_t cons;			/* bytes written to console */
--	struct task_struct *owner;	/* task of first print*/
--	u64 ts_nsec;			/* time of first print */
--	u8 level;			/* log level of first message */
--	u8 facility;			/* log facility of first message */
--	enum log_flags flags;		/* prefix, newline flags */
--	bool flushed:1;			/* buffer sealed and committed */
--} cont;
--
--static void cont_flush(enum log_flags flags)
--{
--	if (cont.flushed)
--		return;
--	if (cont.len == 0)
--		return;
--
--	if (cont.cons) {
--		/*
--		 * If a fragment of this line was directly flushed to the
--		 * console; wait for the console to pick up the rest of the
--		 * line. LOG_NOCONS suppresses a duplicated output.
--		 */
--		log_store(cont.facility, cont.level, flags | LOG_NOCONS,
--			  cont.ts_nsec, NULL, 0, cont.buf, cont.len);
--		cont.flags = flags;
--		cont.flushed = true;
--	} else {
--		/*
--		 * If no fragment of this line ever reached the console,
--		 * just submit it to the store and free the buffer.
--		 */
--		log_store(cont.facility, cont.level, flags, 0,
--			  NULL, 0, cont.buf, cont.len);
--		cont.len = 0;
--	}
--}
--
--static bool cont_add(int facility, int level, const char *text, size_t len)
--{
--	if (cont.len && cont.flushed)
--		return false;
--
--	/*
--	 * If ext consoles are present, flush and skip in-kernel
--	 * continuation.  See nr_ext_console_drivers definition.  Also, if
--	 * the line gets too long, split it up in separate records.
--	 */
--	if (nr_ext_console_drivers || cont.len + len > sizeof(cont.buf)) {
--		cont_flush(LOG_CONT);
--		return false;
--	}
--
--	if (!cont.len) {
--		cont.facility = facility;
--		cont.level = level;
--		cont.owner = current;
--		cont.ts_nsec = local_clock();
--		cont.flags = 0;
--		cont.cons = 0;
--		cont.flushed = false;
--	}
--
--	memcpy(cont.buf + cont.len, text, len);
--	cont.len += len;
--
--	if (cont.len > (sizeof(cont.buf) * 80) / 100)
--		cont_flush(LOG_CONT);
--
--	return true;
--}
--
--static size_t cont_print_text(char *text, size_t size)
--{
--	size_t textlen = 0;
--	size_t len;
--
--	if (cont.cons == 0 && (console_prev & LOG_NEWLINE)) {
--		textlen += print_time(cont.ts_nsec, text);
--		size -= textlen;
--	}
--
--	len = cont.len - cont.cons;
--	if (len > 0) {
--		if (len+1 > size)
--			len = size-1;
--		memcpy(text + textlen, cont.buf + cont.cons, len);
--		textlen += len;
--		cont.cons = cont.len;
--	}
--
--	if (cont.flushed) {
--		if (cont.flags & LOG_NEWLINE)
--			text[textlen++] = '\n';
--		/* got everything, release buffer */
--		cont.len = 0;
--	}
--	return textlen;
--}
--
- asmlinkage int vprintk_emit(int facility, int level,
- 			    const char *dict, size_t dictlen,
- 			    const char *fmt, va_list args)
++int kmsg_memory_open_ext(struct inode *inode, struct file *filp)
++{
++	filp->f_op = &kmsg_fops_ext;
++
++	return kmsg_fops_ext.open(inode, filp);
++}
++
+ int kmsg_mode(int minor, umode_t *mode)
+ {
+ 	int ret = -ENXIO;
 -- 
 1.9.1
+
