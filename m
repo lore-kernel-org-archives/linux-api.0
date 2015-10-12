@@ -1,101 +1,304 @@
 From: Paul Osmialowski <p.osmialowsk@samsung.com>
-Subject: [RFC v2 6/9] kmsg: add predefined _PID, _TID,
- _COMM keywords to kmsg* log dict
-Date: Mon, 12 Oct 2015 11:29:14 +0200
-Message-ID: <1444642157-32618-7-git-send-email-p.osmialowsk@samsung.com>
+Subject: [RFC v2 1/9] printk: move code regarding log message storing format
+Date: Mon, 12 Oct 2015 11:29:09 +0200
+Message-ID: <1444642157-32618-2-git-send-email-p.osmialowsk@samsung.com>
 References: <1444642157-32618-1-git-send-email-p.osmialowsk@samsung.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-reply-to: <1444642157-32618-1-git-send-email-p.osmialowsk@samsung.com>
-Sender: linux-doc-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Jonathan Corbet <corbet@lwn.net>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, Petr Mladek <pmladek@suse.cz>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Mack <daniel@zonque.org>, Kay Sievers <kay.sievers@vrfy.org>, Joe Perches <joe@perches.com>, Tejun Heo <tj@kernel.org>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
 Cc: Marcin Niesluchowski <m.niesluchow@samsung.com>, Karol Lewandowski <k.lewandowsk@samsung.com>, Paul Osmialowski <p.osmialowsk@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Shuah Khan <shuahkh@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
 From: Marcin Niesluchowski <m.niesluchow@samsung.com>
 
-kmsg* devices write operation wrote no dict along with message
-Due to usage of kmsg devices in userspace dict has been added
-identifying pid, tid and comm of writing process.
+Preparation commit for future changes purpose.
+
+Moves some code responsible for storing log messages in proper format.
 
 Signed-off-by: Marcin Niesluchowski <m.niesluchow@samsung.com>
 ---
- kernel/printk/printk.c | 40 ++++++++++++++++++++++++++++++++++++----
- 1 file changed, 36 insertions(+), 4 deletions(-)
+ kernel/printk/printk.c | 254 ++++++++++++++++++++++++-------------------------
+ 1 file changed, 127 insertions(+), 127 deletions(-)
 
 diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-index aac7ce8..c13ba89 100644
+index 8f0324e..d209072 100644
 --- a/kernel/printk/printk.c
 +++ b/kernel/printk/printk.c
-@@ -877,7 +877,34 @@ void log_buf_release(struct kref *ref)
- 	kfree(log_b);
+@@ -475,6 +475,133 @@ static int log_store(int facility, int level,
+ 	return msg->text_len;
  }
  
--static int kmsg_sys_write(int minor, int level, const char *fmt, ...)
-+#define MAX_PID_LEN	20
-+#define MAX_TID_LEN	20
-+/*
-+ * Fromat below describes dict appended to message written from userspace:
-+ * "_PID=<pid>\0_TID=<tid>\0_COMM=<comm>"
-+ * KMSG_DICT_MAX_LEN definition represents maximal length of this dict.
-+ */
-+#define KMSG_DICT_MAX_LEN	(5 + MAX_PID_LEN + 1 + \
-+				 5 + MAX_TID_LEN + 1 + \
-+				 6 + TASK_COMM_LEN)
++static bool printk_time = IS_ENABLED(CONFIG_PRINTK_TIME);
++module_param_named(time, printk_time, bool, S_IRUGO | S_IWUSR);
 +
-+static size_t set_kmsg_dict(char *buf)
++static size_t print_time(u64 ts, char *buf)
 +{
-+	size_t len;
++	unsigned long rem_nsec;
 +
-+	len = sprintf(buf, "_PID=%d", task_tgid_nr(current)) + 1;
-+	len += sprintf(buf + len, "_TID=%d", task_pid_nr(current)) + 1;
-+	memcpy(buf + len, "_COMM=", 6);
-+	len += 6;
-+	get_task_comm(buf + len, current);
-+	while (buf[len] != '\0')
-+		len++;
-+	return len;
++	if (!printk_time)
++		return 0;
++
++	rem_nsec = do_div(ts, 1000000000);
++
++	if (!buf)
++		return snprintf(NULL, 0, "[%5lu.000000] ", (unsigned long)ts);
++
++	return sprintf(buf, "[%5lu.%06lu] ",
++		       (unsigned long)ts, rem_nsec / 1000);
 +}
 +
-+static int kmsg_sys_write(int minor, int level,
-+			  const char *dict, size_t dictlen,
-+			  const char *fmt, ...)
- {
- 	va_list args;
- 	int ret = -ENXIO;
-@@ -892,7 +919,7 @@ static int kmsg_sys_write(int minor, int level, const char *fmt, ...)
- 
- 		va_start(args, fmt);
- 		log_format_and_store(log_b, 1 /* LOG_USER */, level,
--				     NULL, 0, fmt, args);
-+				     dict, dictlen, fmt, args);
- 		va_end(args);
- 		wake_up_interruptible(&log_b->wait);
- 
-@@ -912,6 +939,8 @@ static ssize_t devkmsg_write(struct kiocb *iocb, struct iov_iter *from)
- 	int level = default_message_loglevel;
- 	int facility = 1;	/* LOG_USER */
- 	size_t len = iov_iter_count(from);
-+	char dict[KMSG_DICT_MAX_LEN];
-+	size_t dictlen;
- 	ssize_t ret = len;
- 	int minor = iminor(iocb->ki_filp->f_inode);
- 
-@@ -951,10 +980,13 @@ static ssize_t devkmsg_write(struct kiocb *iocb, struct iov_iter *from)
- 		}
- 	}
- 
-+	dictlen = set_kmsg_dict(dict);
++/*
++ * Continuation lines are buffered, and not committed to the record buffer
++ * until the line is complete, or a race forces it. The line fragments
++ * though, are printed immediately to the consoles to ensure everything has
++ * reached the console in case of a kernel crash.
++ */
++static struct cont {
++	char buf[LOG_LINE_MAX];
++	size_t len;			/* length == 0 means unused buffer */
++	size_t cons;			/* bytes written to console */
++	struct task_struct *owner;	/* task of first print*/
++	u64 ts_nsec;			/* time of first print */
++	u8 level;			/* log level of first message */
++	u8 facility;			/* log facility of first message */
++	enum log_flags flags;		/* prefix, newline flags */
++	bool flushed:1;			/* buffer sealed and committed */
++} cont;
 +
- 	if (minor == log_buf.minor) {
--		printk_emit(facility, level, NULL, 0, "%s", line);
-+		printk_emit(facility, level, dict, dictlen, "%s", line);
- 	} else {
--		int error = kmsg_sys_write(minor, level, "%s", line);
-+		int error = kmsg_sys_write(minor, level, dict, dictlen,
-+					   "%s", line);
++static void cont_flush(enum log_flags flags)
++{
++	if (cont.flushed)
++		return;
++	if (cont.len == 0)
++		return;
++
++	if (cont.cons) {
++		/*
++		 * If a fragment of this line was directly flushed to the
++		 * console; wait for the console to pick up the rest of the
++		 * line. LOG_NOCONS suppresses a duplicated output.
++		 */
++		log_store(cont.facility, cont.level, flags | LOG_NOCONS,
++			  cont.ts_nsec, NULL, 0, cont.buf, cont.len);
++		cont.flags = flags;
++		cont.flushed = true;
++	} else {
++		/*
++		 * If no fragment of this line ever reached the console,
++		 * just submit it to the store and free the buffer.
++		 */
++		log_store(cont.facility, cont.level, flags, 0,
++			  NULL, 0, cont.buf, cont.len);
++		cont.len = 0;
++	}
++}
++
++static bool cont_add(int facility, int level, const char *text, size_t len)
++{
++	if (cont.len && cont.flushed)
++		return false;
++
++	/*
++	 * If ext consoles are present, flush and skip in-kernel
++	 * continuation.  See nr_ext_console_drivers definition.  Also, if
++	 * the line gets too long, split it up in separate records.
++	 */
++	if (nr_ext_console_drivers || cont.len + len > sizeof(cont.buf)) {
++		cont_flush(LOG_CONT);
++		return false;
++	}
++
++	if (!cont.len) {
++		cont.facility = facility;
++		cont.level = level;
++		cont.owner = current;
++		cont.ts_nsec = local_clock();
++		cont.flags = 0;
++		cont.cons = 0;
++		cont.flushed = false;
++	}
++
++	memcpy(cont.buf + cont.len, text, len);
++	cont.len += len;
++
++	if (cont.len > (sizeof(cont.buf) * 80) / 100)
++		cont_flush(LOG_CONT);
++
++	return true;
++}
++
++static size_t cont_print_text(char *text, size_t size)
++{
++	size_t textlen = 0;
++	size_t len;
++
++	if (cont.cons == 0 && (console_prev & LOG_NEWLINE)) {
++		textlen += print_time(cont.ts_nsec, text);
++		size -= textlen;
++	}
++
++	len = cont.len - cont.cons;
++	if (len > 0) {
++		if (len+1 > size)
++			len = size-1;
++		memcpy(text + textlen, cont.buf + cont.cons, len);
++		textlen += len;
++		cont.cons = cont.len;
++	}
++
++	if (cont.flushed) {
++		if (cont.flags & LOG_NEWLINE)
++			text[textlen++] = '\n';
++		/* got everything, release buffer */
++		cont.len = 0;
++	}
++	return textlen;
++}
++
+ int dmesg_restrict = IS_ENABLED(CONFIG_SECURITY_DMESG_RESTRICT);
  
- 		if (error)
- 			ret = error;
+ static int syslog_action_restricted(int type)
+@@ -1030,25 +1157,6 @@ static inline void boot_delay_msec(int level)
+ }
+ #endif
+ 
+-static bool printk_time = IS_ENABLED(CONFIG_PRINTK_TIME);
+-module_param_named(time, printk_time, bool, S_IRUGO | S_IWUSR);
+-
+-static size_t print_time(u64 ts, char *buf)
+-{
+-	unsigned long rem_nsec;
+-
+-	if (!printk_time)
+-		return 0;
+-
+-	rem_nsec = do_div(ts, 1000000000);
+-
+-	if (!buf)
+-		return snprintf(NULL, 0, "[%5lu.000000] ", (unsigned long)ts);
+-
+-	return sprintf(buf, "[%5lu.%06lu] ",
+-		       (unsigned long)ts, rem_nsec / 1000);
+-}
+-
+ static size_t print_prefix(const struct printk_log *msg, bool syslog, char *buf)
+ {
+ 	size_t len = 0;
+@@ -1544,114 +1652,6 @@ static inline void printk_delay(void)
+ 	}
+ }
+ 
+-/*
+- * Continuation lines are buffered, and not committed to the record buffer
+- * until the line is complete, or a race forces it. The line fragments
+- * though, are printed immediately to the consoles to ensure everything has
+- * reached the console in case of a kernel crash.
+- */
+-static struct cont {
+-	char buf[LOG_LINE_MAX];
+-	size_t len;			/* length == 0 means unused buffer */
+-	size_t cons;			/* bytes written to console */
+-	struct task_struct *owner;	/* task of first print*/
+-	u64 ts_nsec;			/* time of first print */
+-	u8 level;			/* log level of first message */
+-	u8 facility;			/* log facility of first message */
+-	enum log_flags flags;		/* prefix, newline flags */
+-	bool flushed:1;			/* buffer sealed and committed */
+-} cont;
+-
+-static void cont_flush(enum log_flags flags)
+-{
+-	if (cont.flushed)
+-		return;
+-	if (cont.len == 0)
+-		return;
+-
+-	if (cont.cons) {
+-		/*
+-		 * If a fragment of this line was directly flushed to the
+-		 * console; wait for the console to pick up the rest of the
+-		 * line. LOG_NOCONS suppresses a duplicated output.
+-		 */
+-		log_store(cont.facility, cont.level, flags | LOG_NOCONS,
+-			  cont.ts_nsec, NULL, 0, cont.buf, cont.len);
+-		cont.flags = flags;
+-		cont.flushed = true;
+-	} else {
+-		/*
+-		 * If no fragment of this line ever reached the console,
+-		 * just submit it to the store and free the buffer.
+-		 */
+-		log_store(cont.facility, cont.level, flags, 0,
+-			  NULL, 0, cont.buf, cont.len);
+-		cont.len = 0;
+-	}
+-}
+-
+-static bool cont_add(int facility, int level, const char *text, size_t len)
+-{
+-	if (cont.len && cont.flushed)
+-		return false;
+-
+-	/*
+-	 * If ext consoles are present, flush and skip in-kernel
+-	 * continuation.  See nr_ext_console_drivers definition.  Also, if
+-	 * the line gets too long, split it up in separate records.
+-	 */
+-	if (nr_ext_console_drivers || cont.len + len > sizeof(cont.buf)) {
+-		cont_flush(LOG_CONT);
+-		return false;
+-	}
+-
+-	if (!cont.len) {
+-		cont.facility = facility;
+-		cont.level = level;
+-		cont.owner = current;
+-		cont.ts_nsec = local_clock();
+-		cont.flags = 0;
+-		cont.cons = 0;
+-		cont.flushed = false;
+-	}
+-
+-	memcpy(cont.buf + cont.len, text, len);
+-	cont.len += len;
+-
+-	if (cont.len > (sizeof(cont.buf) * 80) / 100)
+-		cont_flush(LOG_CONT);
+-
+-	return true;
+-}
+-
+-static size_t cont_print_text(char *text, size_t size)
+-{
+-	size_t textlen = 0;
+-	size_t len;
+-
+-	if (cont.cons == 0 && (console_prev & LOG_NEWLINE)) {
+-		textlen += print_time(cont.ts_nsec, text);
+-		size -= textlen;
+-	}
+-
+-	len = cont.len - cont.cons;
+-	if (len > 0) {
+-		if (len+1 > size)
+-			len = size-1;
+-		memcpy(text + textlen, cont.buf + cont.cons, len);
+-		textlen += len;
+-		cont.cons = cont.len;
+-	}
+-
+-	if (cont.flushed) {
+-		if (cont.flags & LOG_NEWLINE)
+-			text[textlen++] = '\n';
+-		/* got everything, release buffer */
+-		cont.len = 0;
+-	}
+-	return textlen;
+-}
+-
+ asmlinkage int vprintk_emit(int facility, int level,
+ 			    const char *dict, size_t dictlen,
+ 			    const char *fmt, va_list args)
 -- 
 1.9.1
-
