@@ -1,54 +1,65 @@
-From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Subject: Re: [PATCH v2 net-next 0/3] bpf: unprivileged
-Date: Mon, 12 Oct 2015 19:22:32 -0700 (PDT)
-Message-ID: <20151012.192232.764687069258026388.davem@davemloft.net>
-References: <1444281803-24274-1-git-send-email-ast@plumgrid.com>
+From: Trond Myklebust <trond.myklebust@primarydata.com>
+Subject: Re: [PATCH v5 8/9] vfs: Add vfs_copy_file_range() support for
+ pagecache copies
+Date: Mon, 12 Oct 2015 23:36:31 -0400
+Message-ID: <CAHQdGtQoV0g1p2FYC1vFtFwh=jNq5n+AYOxAuSORVfbfhRY1Hg@mail.gmail.com>
+References: <1443634014-3026-1-git-send-email-Anna.Schumaker@Netapp.com>
+	<1443634014-3026-9-git-send-email-Anna.Schumaker@Netapp.com>
+	<20151011142203.GA31867@infradead.org>
+	<20151012231749.GC11398@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1444281803-24274-1-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org
-Cc: luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20151012231749.GC11398@birch.djwong.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Anna Schumaker <Anna.Schumaker@netapp.com>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, Linux btrfs Developers List <linux-btrfs@vger.kernel.org>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Linux API Mailing List <linux-api@vger.kernel.org>, Zach Brown <zab@zabbo.net>, Alexander Viro <viro@zeniv.linux.org.uk>, Chris Mason <clm@fb.com>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, William Andros Adamson <andros@netapp.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Date: Wed,  7 Oct 2015 22:23:20 -0700
+On Mon, Oct 12, 2015 at 7:17 PM, Darrick J. Wong
+<darrick.wong@oracle.com> wrote:
+> On Sun, Oct 11, 2015 at 07:22:03AM -0700, Christoph Hellwig wrote:
+>> On Wed, Sep 30, 2015 at 01:26:52PM -0400, Anna Schumaker wrote:
+>> > This allows us to have an in-kernel copy mechanism that avoids frequent
+>> > switches between kernel and user space.  This is especially useful so
+>> > NFSD can support server-side copies.
+>> >
+>> > I make pagecache copies configurable by adding three new (exclusive)
+>> > flags:
+>> > - COPY_FR_REFLINK tells vfs_copy_file_range() to only create a reflink.
+>> > - COPY_FR_COPY does a full data copy, but may be filesystem accelerated.
+>> > - COPY_FR_DEDUP creates a reflink, but only if the contents of both
+>> >   ranges are identical.
+>>
+>> All but FR_COPY really should be a separate system call.  Clones (an
+>> dedup as a special case of clones) are really a separate beast from file
+>> copies.
+>>
+>> If I want to clone a file I either want it clone fully or fail, not copy
+>> a certain amount.  That means that a) we need to return an error not
+>> short "write", and b) locking impementations are important - we need to
+>> prevent other applications from racing with our clone even if it is
+>> large, while to get these semantics for the possible short returning
+>> file copy will require a proper userland locking protocol. Last but not
+>> least file copies need to be interruptible while clones should be not.
+>> All this is already important for local file systems and even more
+>> important for NFS exporting.
+>>
+>> So I'd suggest to drop this patch and just let your syscall handle
+>> actualy copies with all their horrors.  We can go with Peng's patches
+>> to generalize the btrfs ioctls for clones for now which is what everyone
+>> already uses anyway, and then add a separate sys_file_clone later.
+>
+> Hm.  Peng's patches only generalize the CLONE and CLONE_RANGE ioctls from
+> btrfs, however they don't port over the (vastly different) EXTENT_SAME ioctl.
+>
+> What does everyone think about generalizing EXTENT_SAME?  The interface enables
+> one to ask the kernel to dedupe multiple file ranges in a single call.  That's
+> more complex than what I was proposing with COPY_FR_DEDUP(E), but I'm assuming
+> that the extra complexity buys us the ability to ... multi-dedupe at the same
+> time, with locks held on the source file?
 
-> v1-v2:
-> - this set logically depends on cb patch
->   "bpf: fix cb access in socket filter programs":
->   http://patchwork.ozlabs.org/patch/527391/
->   which is must have to allow unprivileged programs.
->   Thanks Daniel for finding that issue.
-> - refactored sysctl to be similar to 'modules_disabled'
-> - dropped bpf_trace_printk
-> - split tests into separate patch and added more tests
->   based on discussion
-> 
-> v1 cover letter:
-> I think it is time to liberate eBPF from CAP_SYS_ADMIN.
-> As was discussed when eBPF was first introduced two years ago
-> the only piece missing in eBPF verifier is 'pointer leak detection'
-> to make it available to non-root users.
-> Patch 1 adds this pointer analysis.
-> The eBPF programs, obviously, need to see and operate on kernel addresses,
-> but with these extra checks they won't be able to pass these addresses
-> to user space.
-> Patch 2 adds accounting of kernel memory used by programs and maps.
-> It changes behavoir for existing root users, but I think it needs
-> to be done consistently for both root and non-root, since today
-> programs and maps are only limited by number of open FDs (RLIMIT_NOFILE).
-> Patch 2 accounts program's and map's kernel memory as RLIMIT_MEMLOCK.
-> 
-> Unprivileged eBPF is only meaningful for 'socket filter'-like programs.
-> eBPF programs for tracing and TC classifiers/actions will stay root only.
-> 
-> In parallel the bpf fuzzing effort is ongoing and so far
-> we've found only one verifier bug and that was already fixed.
-> The 'constant blinding' pass also being worked on.
-> It will obfuscate constant-like values that are part of eBPF ISA
-> to make jit spraying attacks even harder.
+How is this supposed to be implemented on something like NFS without
+protocol changes?
 
-Scary stuff, but I don't see any major problems, so series applied!
+Trond
