@@ -1,46 +1,37 @@
-From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v10 24/46] xfs: Add richacl support
-Date: Tue, 13 Oct 2015 15:39:15 +0200
-Message-ID: <CAHc6FU7aNW3drN+Mj2PHyz0Tv8RHexSuUzWCPnCA7eCWY68pHQ@mail.gmail.com>
-References: <1444604337-17651-1-git-send-email-andreas.gruenbacher@gmail.com>
-	<1444604337-17651-25-git-send-email-andreas.gruenbacher@gmail.com>
-	<20151012001033.GA27164@dastard>
-	<CAHpGcMKeJHDegs2cYKaJdX4Tw43Jp30Nv_2WoSNZfBzGJKu=BQ@mail.gmail.com>
-	<20151012040545.GC27164@dastard>
+From: Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [RFC v2 1/9] printk: move code regarding log message storing format
+Date: Tue, 13 Oct 2015 15:57:31 +0200 (CEST)
+Message-ID: <alpine.DEB.2.10.1510131556120.27910@AMDC1262.digital.local>
+References: <1444642157-32618-1-git-send-email-p.osmialowsk@samsung.com>
+ <1444642157-32618-2-git-send-email-p.osmialowsk@samsung.com>
+ <1444659628.2258.6.camel@perches.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151012040545.GC27164@dastard>
+In-reply-to: <1444659628.2258.6.camel-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Cc: =?UTF-8?Q?Andreas_Gr=C3=BCnbacher?= <andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
+Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Kay Sievers <kay.sievers-tD+1rO4QERM@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Marcin Niesluchowski <m.niesluchow-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 12, 2015 at 6:05 AM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wro=
-te:
-> On Mon, Oct 12, 2015 at 03:51:15AM +0200, Andreas Gr=C3=BCnbacher wro=
-te:
->> 2015-10-12 2:10 GMT+02:00 Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>:
->> > Also, I really dislike the API where passing a NULL acl means to
->> > "set this acl" actually means "remove the existing ACL". Why no
->> > ->remove_acl method called from the generic code?
->>
->> It's not uncommon, it saves inode operations and wiring-up code.
->
-> I know it's common. All it does is put extra branches in the
-> filesystem code to do this, because remove is a different operation
-> to set. The API sucks, and we're not limited on inode operations,
-> and the operator overloading makes the filesystem code unnecessarily
-> complex as it has to detect when to branch out ot remove or not...
+Hi Joe,
 
-I've tried it out. The filesystem code could be simplified (see the
-richacl-wip [*] branch until the next posting). Adding a
-remove_richacl inode operation on top of that really doesn't help.
+Thanks for your comment. I'll consider that.
 
 Thanks,
-Andreas
+Paul
 
-[*] git://git.kernel.org/pub/scm/linux/kernel/git/agruen/linux-richacl.=
-git
-richacl-wip
+On Mon, 12 Oct 2015, Joe Perches wrote:
+
+> On Mon, 2015-10-12 at 11:29 +0200, Paul Osmialowski wrote:
+>> From: Marcin Niesluchowski <m.niesluchow-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+>>
+>> Preparation commit for future changes purpose.
+>>
+>> Moves some code responsible for storing log messages in proper format.
+>
+> Perhaps better still would be to move the code into
+> a separate file to reduce the bulk and complexity
+> of printk.c
+>
+>
