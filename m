@@ -1,60 +1,25 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [RFC v2 07/18] kthread: Allow to cancel kthread work
-Date: Wed, 14 Oct 2015 13:30:39 -0400
-Message-ID: <20151014173039.GB12799@mtj.duckdns.org>
-References: <20150922193513.GE17659@mtj.duckdns.org>
- <20150925112617.GA3122@pathway.suse.cz>
- <20150928170314.GF2589@mtj.duckdns.org>
- <20151002154336.GC3122@pathway.suse.cz>
- <20151002192453.GA7564@mtj.duckdns.org>
- <20151005100758.GK9603@pathway.suse.cz>
- <20151005110924.GL9603@pathway.suse.cz>
- <20151007092130.GD3122@pathway.suse.cz>
- <20151007142446.GA2012@mtj.duckdns.org>
- <20151014102022.GA2880@pathway.suse.cz>
+From: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v5 5/9] vfs: Copy shouldn't forbid ranges inside the same
+ file
+Date: Wed, 14 Oct 2015 13:37:13 -0400
+Message-ID: <561E92C9.7040205@Netapp.com>
+References: <1443634014-3026-1-git-send-email-Anna.Schumaker@Netapp.com>
+ <1443634014-3026-6-git-send-email-Anna.Schumaker@Netapp.com>
+ <20151011142233.GC31867@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20151014102022.GA2880@pathway.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20151011142233.GC31867-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+I would have folded this and patch 4 earlier if I had written patch 1, but I didn't feel comfortable modifying Zach's work too much.  I can make that change if it's not really a problem.
 
-On Wed, Oct 14, 2015 at 12:20:22PM +0200, Petr Mladek wrote:
-> IMHO, it would be great if it is easy to convert between the
-> kthread worker and workqueues API. It will allow to choose
+Anna
 
-Sure, keep the APIs similar so that they can be easily converted back
-and forth but that doesn't mean kthread_worker should be as complex as
-workqueue.  Workqueue is *really* complex partly for historical
-reasons and partly because it has to serve all corner cases.  Please
-make something simple which is similar enough to enable easy miration.
-That amount of complexity simply isn't necessary for kthread_worker.
-
-...
-> PS: I am not convinced that all my concerns were non-issues.
-> For example, I agree that a race when queuing the same work
-> to more kthread workers might look theoretical. On the other
-> hand, the API allows it and it might be hard to debug. IMHO,
-
-There are big differences in terms of complexity between ensuring
-something like the above working correctly under all circumstances and
-implementing a warning trap which would trigger well enough to warn
-against unsupported usages.  These are active trade-offs to make and
-not particularly hard ones either.  Let's please keep kthread_worker
-simple.
-
-Thanks.
-
--- 
-tejun
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+On 10/11/2015 10:22 AM, Christoph Hellwig wrote:
+> Needs to be folded.
+> 
