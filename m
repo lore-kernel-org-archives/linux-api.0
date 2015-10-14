@@ -1,74 +1,41 @@
-From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v5 9/9] btrfs: btrfs_copy_file_range() only supports
- reflinks
-Date: Wed, 14 Oct 2015 11:46:08 -0700
-Message-ID: <20151014184608.GK850@birch.djwong.org>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH v5 8/9] vfs: Add vfs_copy_file_range() support for
+ pagecache copies
+Date: Wed, 14 Oct 2015 11:49:46 -0700
+Message-ID: <20151014184946.GA15214@infradead.org>
 References: <1443634014-3026-1-git-send-email-Anna.Schumaker@Netapp.com>
- <1443634014-3026-10-git-send-email-Anna.Schumaker@Netapp.com>
- <20151011142939.GA30905@infradead.org>
- <561B8A09.5070507@draigBrady.com>
- <20151012143444.GA10156@infradead.org>
- <20151012234106.GD11398@birch.djwong.org>
- <20151013072959.GB10794@infradead.org>
+ <1443634014-3026-9-git-send-email-Anna.Schumaker@Netapp.com>
+ <20151011142203.GA31867@infradead.org>
+ <20151012231749.GC11398@birch.djwong.org>
+ <561E980C.9010509@Netapp.com>
+ <CALCETrU0-Q-q0u0BAPwu+mbyS+LVp6M1Hqro3xwzSm7eNCbEmg@mail.gmail.com>
+ <20151014182701.GC31225@infradead.org>
+ <CALCETrWrHs6x+aZ7c=sySRCdzwdfUQZH_DL++vLL78NXXN+7FQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20151013072959.GB10794-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: P??draig Brady <P@draigBrady.com>, Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org
+In-Reply-To: <CALCETrWrHs6x+aZ7c=sySRCdzwdfUQZH_DL++vLL78NXXN+7FQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux btrfs Developers List <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Zach Brown <zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 13, 2015 at 12:29:59AM -0700, Christoph Hellwig wrote:
-> On Mon, Oct 12, 2015 at 04:41:06PM -0700, Darrick J. Wong wrote:
-> > One of the patches in last week's XFS reflink patchbomb adds FALLOC_FL_UNSHARE
-> > flag; at the moment it _only_ forces copy-on-write of shared blocks, and it
-> > leaves holes alone.
-> 
-> Yes, I've seen the implementation. 
-> 
-> > Obviously we haven't yet figured out what are peoples' preferences in terms of
-> > "fill the holes and unshare the shared" vs. "only unshare the shared" vs. "only
-> > fill the holes".  It isn't that hard to add a FALLOC_FL_UNSHARE_FILL_HOLES flag
-> > that fills the holes while unsharing is going on.
-> > 
-> > Personally I suspect that the most interest is in filling holes and unsharing,
-> > because they don't want to pay for allocation at a critical stage for anywhere
-> > in the file.  But I could be wrong, so allowing both goals to be expressed via
-> > mode allows flexibility.
-> 
-> Exactly.  And a normal falloc should do just that - fill holes and
-> ensure that we don't need to COW already allocated locks.  So I don't
-> think we need a new fallocate interface for that.
+On Wed, Oct 14, 2015 at 11:38:13AM -0700, Andy Lutomirski wrote:
+> One might argue that reflink is like copy + immediate dedupe.
 
-The documentation for fallocate ought to be updated to include that as part of
-guaranteeing that subsequent writes to the range won't fail due to ENOSPC,
-shared blocks will be unshared.
+Not, it's not.  It's all that and more, because it is an operation that
+is atomic vs other writes to the file and it's an operation that either
+clones the whole range or nothing.  That's a very important difference.
 
-Incidentally, btrfs leaves shared blocks alone.  OTOH, given that it's totally
-COW it probably doesn't make sense to unshare blocks anyway... but maybe I
-also don't want to dive into btrfs f-allocation behavior at this time. :)
+> Also, I
+> can imagine there being network protocols over which you can't really
+> tell the difference between reflink and server-to-server copy.
 
-Ok, so I'll rework the XFS funshare code into something that hangs off the
-regular fallocate call, and get rid of the explicit 'funshare' bits.
-
-> The question is if we
-> want a copy interface that gives you the same semantics as if you also
-> called an fallocate on the destination range.  For that case we'd
-> usually want to avoid doing the clone and instead do a in-kernel or
-> hardware assisted copy and then fill the holes with unwritten extents.
-
-Probably; I can easily imagine people wanting to fill the holes and also
-not wanting them filled.
-
---D
-
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+For NFS we specificly have a CLONE and a COPY operations so that smart
+servers can support the proper clone, and dumb servers still get copy
+offload.  Other protocols might only be able to support COPY if they
+don't have a CLONE primitive.  Note that a clone also always is a valid
+copy, just with much simpler an at the same time more useful semantics.
+Take a look at the NFSv4.2 sections for CLONE vs COPY if you're
+interested.
