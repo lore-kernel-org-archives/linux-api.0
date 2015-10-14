@@ -1,25 +1,33 @@
-From: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v5 5/9] vfs: Copy shouldn't forbid ranges inside the same
- file
-Date: Wed, 14 Oct 2015 13:37:13 -0400
-Message-ID: <561E92C9.7040205@Netapp.com>
+From: Anna Schumaker <Anna.Schumaker@netapp.com>
+Subject: Re: [PATCH v5 7/9] vfs: Remove copy_file_range mountpoint checks
+Date: Wed, 14 Oct 2015 13:41:23 -0400
+Message-ID: <561E93C3.2090507@Netapp.com>
 References: <1443634014-3026-1-git-send-email-Anna.Schumaker@Netapp.com>
- <1443634014-3026-6-git-send-email-Anna.Schumaker@Netapp.com>
- <20151011142233.GC31867@infradead.org>
+ <1443634014-3026-8-git-send-email-Anna.Schumaker@Netapp.com>
+ <20151011142347.GD31867@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151011142233.GC31867-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <20151011142347.GD31867@infradead.org>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, darrick.wong@oracle.com, mtk.manpages@gmail.com, andros@netapp.com
 List-Id: linux-api@vger.kernel.org
 
-I would have folded this and patch 4 earlier if I had written patch 1, but I didn't feel comfortable modifying Zach's work too much.  I can make that change if it's not really a problem.
+On 10/11/2015 10:23 AM, Christoph Hellwig wrote:
+> On Wed, Sep 30, 2015 at 01:26:51PM -0400, Anna Schumaker wrote:
+>> I still want to do an in-kernel copy even if the files are on different
+>> mountpoints, and NFS has a "server to server" copy that expects two
+>> files on different mountpoints.  Let's have individual filesystems
+>> implement this check instead.
+> 
+> NAK.  I thing this is a bad idea in general and will only be convinced
+> by a properly audited actual implementation.  And even then with a flag
+> where the file system specificly needs to opt into this behavior instead
+> of getting it by default.
+> 
+
+So I should drop this patch even with the pagecache copy?  Andy Adamson will have to add it in later as part of his server-to-server patches.
 
 Anna
-
-On 10/11/2015 10:22 AM, Christoph Hellwig wrote:
-> Needs to be folded.
-> 
