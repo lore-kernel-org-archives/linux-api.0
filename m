@@ -1,45 +1,51 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH] selftests: memfd_test: Revised STACK_SIZE to make it
- 16-byte aligned
-Date: Thu, 15 Oct 2015 07:50:05 -0600
-Message-ID: <561FAF0D.7040804@osg.samsung.com>
-References: <1443684782-10898-1-git-send-email-zhang.chunyan@linaro.org>
- <8675019.20qUY4dC6X@wuerfel>
+From: Bjorn Helgaas <helgaas@kernel.org>
+Subject: Re: [PATCH v5 0/4] PCI: Add support for PCI Enhanced Allocation
+ "BARs"
+Date: Thu, 15 Oct 2015 09:06:57 -0500
+Message-ID: <20151015140657.GB12958@localhost>
+References: <1444175438-7443-1-git-send-email-ddaney.cavm@gmail.com>
+ <5FE5E296BC647B42A2509AB982F88C1321D86B95@ORSMSX108.amr.corp.intel.com>
+ <20151014161731.GA3029@sean.stalley.intel.com>
+ <561E8221.7070701@caviumnetworks.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <8675019.20qUY4dC6X@wuerfel>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <561E8221.7070701@caviumnetworks.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Daney <ddaney@caviumnetworks.com>
+Cc: "Sean O. Stalley" <sean.stalley@intel.com>, Bjorn Helgaas <bhelgaas@google.com>, David Daney <ddaney.cavm@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-pci@vger.kernel.org" <linux-pci@vger.kernel.org>, "Michael S. Tsirkin" <mst@redhat.com>, Rafal Milecki <zajec5@gmail.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "yinghai@kernel.org" <yinghai@kernel.org>, "rajatxjain@gmail.com" <rajatxjain@gmail.com>, "gong.chen@linux.intel.com" <gong.chen@linux.intel.com>, David Daney <david.daney@cavium.com>
 List-Id: linux-api@vger.kernel.org
 
-On 10/15/2015 02:44 AM, Arnd Bergmann wrote:
-> On Thursday 01 October 2015 15:33:02 Chunyan Zhang wrote:
->> There is a mandate of 16-byte aligned stack on AArch64 [1], so the
->> STACK_SIZE here should also be 16-byte aligned, otherwise we would
->> get an error when calling clone().
->>
->> [1] http://lxr.free-electrons.com/source/arch/arm64/kernel/process.c#L265
->>
->> Signed-off-by: Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
->>
+On Wed, Oct 14, 2015 at 09:26:09AM -0700, David Daney wrote:
+> On 10/14/2015 09:17 AM, Sean O. Stalley wrote:
+> >Signed-off-by: Sean O. Stalley <sean.stalley@intel.com>
+> >
 > 
-> Acked-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+> Thanks a lot Sean.
 > 
-> This should probably also be marked
+> I think you cannot SOB if the patches are not flowing through you
+> (as may be the case for my two additions).  Perhaps a Tested-by: or
+> Acked-by: would be more appropriate.
 > 
-> Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> >I tested it out with the QEMU EA Patches here:
+> >	[https://lists.nongnu.org/archive/html/qemu-devel/2015-07/msg00348.html]
+> >
+> >Also, I found 1 trivial typo in the commit message of PATCH 1/4:
+> >	"Signed-off-by: Signed-off-by: David Daney <david.daney@cavium.com>"
 > 
+> Aargh!  I need to be more careful.
+> 
+> In any case, what should be the next course of action?
+> 
+>   A) I receive Tested-by/Acked-by from Sean, and resend the four patches?
+> 
+>   B) Bjorn takes these as is, but fixes the headers as needed.
+> 
+> Bjorn, what do you think?
 
-Thank you both. Now applied to linux-kselftest next for 4.4
+You do not need to repost patches just to add Tested-by/Acked-by/etc.
 
--- Shuah
+I can also fix trivial things like your Signed-off-by typo.
 
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+Bjorn
