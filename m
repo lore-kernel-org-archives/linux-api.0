@@ -1,77 +1,78 @@
-From: Alex Deucher <alexdeucher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v4 04/79] drm_mode.h: use __u32 and __u64 from linux/types.h
-Date: Thu, 15 Oct 2015 09:32:10 -0400
-Message-ID: <CADnq5_N5LK4Dy1okY7G6jPNB68PN2ijpwv=bt2bBC0FPGASoSQ@mail.gmail.com>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: Re: [PATCH v4 04/79] drm_mode.h: use __u32 and __u64 from
+ linux/types.h
+Date: Thu, 15 Oct 2015 16:48:44 +0300
+Message-ID: <20151015134844.GY6104@lakka.kapsi.fi>
 References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
-	<1444888618-4506-5-git-send-email-mikko.rapeli@iki.fi>
+ <1444888618-4506-5-git-send-email-mikko.rapeli@iki.fi>
+ <CADnq5_N5LK4Dy1okY7G6jPNB68PN2ijpwv=bt2bBC0FPGASoSQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1444888618-4506-5-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Maling list - DRI developers <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+Content-Disposition: inline
+In-Reply-To: <CADnq5_N5LK4Dy1okY7G6jPNB68PN2ijpwv=bt2bBC0FPGASoSQ@mail.gmail.com>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Alex Deucher <alexdeucher@gmail.com>
+Cc: linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Maling list - DRI developers <dri-devel@lists.freedesktop.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 15, 2015 at 1:55 AM, Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org> wro=
-te:
-> Fixes userspace compilation error:
->
-> drm/drm_mode.h:472:2: error: unknown type name =E2=80=98uint32_t=E2=80=
-=99
->
-> Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-
-NACK on all these type conversions.  This has not been a problem for
-years and years and the result looks terrible.
-
-Alex
-
-> ---
->  include/uapi/drm/drm_mode.h | 16 ++++++++--------
->  1 file changed, 8 insertions(+), 8 deletions(-)
->
-> diff --git a/include/uapi/drm/drm_mode.h b/include/uapi/drm/drm_mode.=
-h
-> index 359107a..0ed8d9d 100644
-> --- a/include/uapi/drm/drm_mode.h
-> +++ b/include/uapi/drm/drm_mode.h
-> @@ -508,14 +508,14 @@ struct drm_mode_crtc_page_flip {
->
->  /* create a dumb scanout buffer */
->  struct drm_mode_create_dumb {
-> -       uint32_t height;
-> -       uint32_t width;
-> -       uint32_t bpp;
-> -       uint32_t flags;
-> +       __u32 height;
-> +       __u32 width;
-> +       __u32 bpp;
-> +       __u32 flags;
->         /* handle, pitch, size will be returned */
-> -       uint32_t handle;
-> -       uint32_t pitch;
-> -       uint64_t size;
-> +       __u32 handle;
-> +       __u32 pitch;
-> +       __u64 size;
->  };
->
->  /* set up for mmap of a dumb scanout buffer */
-> @@ -532,7 +532,7 @@ struct drm_mode_map_dumb {
->  };
->
->  struct drm_mode_destroy_dumb {
-> -       uint32_t handle;
-> +       __u32 handle;
->  };
->
->  /* page-flip flags are valid, plus: */
-> --
-> 2.5.0
->
-> _______________________________________________
-> dri-devel mailing list
-> dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org
-> http://lists.freedesktop.org/mailman/listinfo/dri-devel
+T24gVGh1LCBPY3QgMTUsIDIwMTUgYXQgMDk6MzI6MTBBTSAtMDQwMCwgQWxleCBEZXVjaGVyIHdy
+b3RlOgo+IE9uIFRodSwgT2N0IDE1LCAyMDE1IGF0IDE6NTUgQU0sIE1pa2tvIFJhcGVsaSA8bWlr
+a28ucmFwZWxpQGlraS5maT4gd3JvdGU6Cj4gPiBGaXhlcyB1c2Vyc3BhY2UgY29tcGlsYXRpb24g
+ZXJyb3I6Cj4gPgo+ID4gZHJtL2RybV9tb2RlLmg6NDcyOjI6IGVycm9yOiB1bmtub3duIHR5cGUg
+bmFtZSDigJh1aW50MzJfdOKAmQo+ID4KPiA+IFNpZ25lZC1vZmYtYnk6IE1pa2tvIFJhcGVsaSA8
+bWlra28ucmFwZWxpQGlraS5maT4KPiAKPiBOQUNLIG9uIGFsbCB0aGVzZSB0eXBlIGNvbnZlcnNp
+b25zLiAgVGhpcyBoYXMgbm90IGJlZW4gYSBwcm9ibGVtIGZvcgo+IHllYXJzIGFuZCB5ZWFycyBh
+bmQgdGhlIHJlc3VsdCBsb29rcyB0ZXJyaWJsZS4KCkRvY3VtZW50YXRpb24vQ29kaW5nU3R5bGUs
+IHNlY3Rpb24gNQoKIChlKSBUeXBlcyBzYWZlIGZvciB1c2UgaW4gdXNlcnNwYWNlLgoKICAgICBJ
+biBjZXJ0YWluIHN0cnVjdHVyZXMgd2hpY2ggYXJlIHZpc2libGUgdG8gdXNlcnNwYWNlLCB3ZSBj
+YW5ub3QKICAgICByZXF1aXJlIEM5OSB0eXBlcyBhbmQgY2Fubm90IHVzZSB0aGUgJ3UzMicgZm9y
+bSBhYm92ZS4gVGh1cywgd2UKICAgICB1c2UgX191MzIgYW5kIHNpbWlsYXIgdHlwZXMgaW4gYWxs
+IHN0cnVjdHVyZXMgd2hpY2ggYXJlIHNoYXJlZAogICAgIHdpdGggdXNlcnNwYWNlLgoKSSBoYXZl
+IG9ubHkgYmVlbiBsb29raW5nIGF0IGtlcm5lbCBoZWFkZXJzIGZyb20gdXNlcnNwYWNlIG9jY2F0
+aW9uYWxseSBpbgp0aGUgcGFzdCAxMCB5ZWFycyBhbmQgaGFkIGEgc2V2ZXJhbCBjYXNlcyB3aGVy
+ZSB0aGUgcHJvdmlkZWQgaGVhZGVycyBkaWQKbm90IGNvbXBpbGUgd2hlbiBpbmNsdWRlZCBpbnRv
+IHRyaXZpYWwgcHJvZ3JhbXMgdHJ5aW5nIHRvIHVzZSB0aGUgc3RydWN0cwpmb3IgYW4gaW9jdGwo
+KSBmb3IgZXhhbXBsZS4gVGhpcyBsb25nIGxhc3RpbmcgcHJvYmxlbSB0cmlnZ2VyZWQgbWUgdG8g
+d3JpdGUKYSB0ZXN0IGZvciB0aGlzIGFuZCBwcm92aWRlIHRoZXNlIGZpeGVzIHRvby4gSW4gcHJl
+dmlvdXMgcmV2aWV3cyB1c2FnZQpvZiA8c3RkaW50Lmg+IGFuZCBpdHMgdHlwZXMgaW4ga2VybmVs
+IGhlYWRlcnMgd2FzIGFscmVhZHkgTkFDSydlZApzbyBJIGNoYW5nZWQgc2V2ZXJhbCBwbGFjZXMg
+ZnJvbSB1aW50MzJfdCdzIHRvIF9fdTMyLgoKV2l0aCB0aGVzZSBjaGFuZ2VzIGl0IGlzIGJ0dyB0
+cml2aWFsIG5vdyB0byBhZGQgYSBncmVwIHRlc3QgdGhlIHRoZXJlCmFyZSBubyB1aW50MzJfdCdz
+IGluIGluY2x1ZGUvdWFwaS8gYW55bW9yZSwgdGh1cyBlbmZvcmNpbmcgdGhhdCBjb2Rpbmcgc3R5
+bGUKcnVsZS4KCi1NaWtrbwoKPiBBbGV4Cj4gCj4gPiAtLS0KPiA+ICBpbmNsdWRlL3VhcGkvZHJt
+L2RybV9tb2RlLmggfCAxNiArKysrKysrKy0tLS0tLS0tCj4gPiAgMSBmaWxlIGNoYW5nZWQsIDgg
+aW5zZXJ0aW9ucygrKSwgOCBkZWxldGlvbnMoLSkKPiA+Cj4gPiBkaWZmIC0tZ2l0IGEvaW5jbHVk
+ZS91YXBpL2RybS9kcm1fbW9kZS5oIGIvaW5jbHVkZS91YXBpL2RybS9kcm1fbW9kZS5oCj4gPiBp
+bmRleCAzNTkxMDdhLi4wZWQ4ZDlkIDEwMDY0NAo+ID4gLS0tIGEvaW5jbHVkZS91YXBpL2RybS9k
+cm1fbW9kZS5oCj4gPiArKysgYi9pbmNsdWRlL3VhcGkvZHJtL2RybV9tb2RlLmgKPiA+IEBAIC01
+MDgsMTQgKzUwOCwxNCBAQCBzdHJ1Y3QgZHJtX21vZGVfY3J0Y19wYWdlX2ZsaXAgewo+ID4KPiA+
+ICAvKiBjcmVhdGUgYSBkdW1iIHNjYW5vdXQgYnVmZmVyICovCj4gPiAgc3RydWN0IGRybV9tb2Rl
+X2NyZWF0ZV9kdW1iIHsKPiA+IC0gICAgICAgdWludDMyX3QgaGVpZ2h0Owo+ID4gLSAgICAgICB1
+aW50MzJfdCB3aWR0aDsKPiA+IC0gICAgICAgdWludDMyX3QgYnBwOwo+ID4gLSAgICAgICB1aW50
+MzJfdCBmbGFnczsKPiA+ICsgICAgICAgX191MzIgaGVpZ2h0Owo+ID4gKyAgICAgICBfX3UzMiB3
+aWR0aDsKPiA+ICsgICAgICAgX191MzIgYnBwOwo+ID4gKyAgICAgICBfX3UzMiBmbGFnczsKPiA+
+ICAgICAgICAgLyogaGFuZGxlLCBwaXRjaCwgc2l6ZSB3aWxsIGJlIHJldHVybmVkICovCj4gPiAt
+ICAgICAgIHVpbnQzMl90IGhhbmRsZTsKPiA+IC0gICAgICAgdWludDMyX3QgcGl0Y2g7Cj4gPiAt
+ICAgICAgIHVpbnQ2NF90IHNpemU7Cj4gPiArICAgICAgIF9fdTMyIGhhbmRsZTsKPiA+ICsgICAg
+ICAgX191MzIgcGl0Y2g7Cj4gPiArICAgICAgIF9fdTY0IHNpemU7Cj4gPiAgfTsKPiA+Cj4gPiAg
+Lyogc2V0IHVwIGZvciBtbWFwIG9mIGEgZHVtYiBzY2Fub3V0IGJ1ZmZlciAqLwo+ID4gQEAgLTUz
+Miw3ICs1MzIsNyBAQCBzdHJ1Y3QgZHJtX21vZGVfbWFwX2R1bWIgewo+ID4gIH07Cj4gPgo+ID4g
+IHN0cnVjdCBkcm1fbW9kZV9kZXN0cm95X2R1bWIgewo+ID4gLSAgICAgICB1aW50MzJfdCBoYW5k
+bGU7Cj4gPiArICAgICAgIF9fdTMyIGhhbmRsZTsKPiA+ICB9Owo+ID4KPiA+ICAvKiBwYWdlLWZs
+aXAgZmxhZ3MgYXJlIHZhbGlkLCBwbHVzOiAqLwo+ID4gLS0KPiA+IDIuNS4wCj4gPgo+ID4gX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KPiA+IGRyaS1kZXZl
+bCBtYWlsaW5nIGxpc3QKPiA+IGRyaS1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKPiA+IGh0
+dHA6Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9kcmktZGV2ZWwKX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KZHJpLWRldmVsIG1h
+aWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHA6Ly9saXN0cy5m
+cmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9kcmktZGV2ZWwK
