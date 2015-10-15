@@ -1,54 +1,44 @@
-From: Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>
-Subject: Re: [PATCH v4 71/79] include/uapi/linux/fuse.h: use linux/types.h
- also in userspace
-Date: Thu, 15 Oct 2015 20:32:45 +0200
-Message-ID: <CAJfpegtSK-ttDXN+vz+yzsU9P1m7fDCn2VwXfHyJuWL6-O-g3g@mail.gmail.com>
-References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
-	<1444888618-4506-72-git-send-email-mikko.rapeli@iki.fi>
-	<CAJfpegv2P0=FCsqriYteyZQ9Ldu4DE1JfNs=URW7Cd-9fpA=oQ@mail.gmail.com>
-	<20151015174154.GZ6104@lakka.kapsi.fi>
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: Re: [PATCH v3] selftests/seccomp: build and pass on arm64
+Date: Thu, 15 Oct 2015 11:42:52 -0700
+Message-ID: <CAGXu5jKXeu-kBie+wJODoAjoK1kX+ScFRSn0s3s_wvN+sHT1yw@mail.gmail.com>
+References: <20151006193025.GA11826@www.outflux.net>
+	<561FB33F.5030906@osg.samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151015174154.GZ6104-dqH1CgrzRhOk/eJAJmRu5A@public.gmane.org>
+In-Reply-To: <561FB33F.5030906-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Cc: Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, fuse-devel <fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: AKASHI Takahiro <takahiro.akashi-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 15, 2015 at 7:41 PM, Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org> wrote:
-> On Thu, Oct 15, 2015 at 05:20:24PM +0200, Miklos Szeredi wrote:
->> On Thu, Oct 15, 2015 at 7:56 AM, Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org> wrote:
->> > Kernel headers should not use stdint.h.
+On Thu, Oct 15, 2015 at 7:07 AM, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+> On 10/06/2015 01:30 PM, Kees Cook wrote:
+>> Changing arm64 syscalls is done via a specific register set, more like s390
+>> than like arm (specific ptrace call) and x86 (part of general registers).
+>> Since (restarting) poll doesn't exist on arm64, switch to using nanosleep
+>> for testing restart_syscall. And since it looks like the syscall ABI is
+>> inconsistent on arm-compat, so we must work around it (and document it) in
+>> the test.
 >>
->> Including <linux/types.h> breaks compile of library on non-Linux
->> archs.  Allowing this patch would mean having a different header in
->> the fuse lib as the one in the kernel.  This is useless complexity and
->> a source of bugs.  We've already been there, and much prefer the
->> current state.
+>> Signed-off-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+>> ---
+>> v3:
+>>  - correctly set syscall number on native arm64.
+>> v2:
+>>  - switch to nanosleep from a bad mix of poll and ppoll for testing restart.
+>> ---
 >
-> Hmm. Why should Linux uapi header care about non-Linux platforms?
->
-> If fuse lib already has an embedded copy of this header, why should
-> this change break anything fuse lib?
+> Is this good to go? Failed to apply to linux-kselftest next.
+> If you can rebase and resend. I can get this into 4.4-rc1
 
-It has a copy, but that copy is often updated with new features taken
-from the kernel.  There's no reason to have two different versions of
-the header file for no good reason.
+Yes please. :)
 
-> In my other patches I got review comments that kernel headers should not
-> use <stdint.h> and also Documentation/CodingStyle section 5 says:
->
->  (e) Types safe for use in userspace.
->
->      In certain structures which are visible to userspace, we cannot
->      require C99 types and cannot use the 'u32' form above. Thus, we
->      use __u32 and similar types in all structures which are shared
->      with userspace.
+Thanks!
 
-Ok, if you cannot require C99, then the __uXX types are the way to go.
-But for the fuse API we *can* use C99 types, nothing preventing us
-from doing it.
+-Kees
 
-Thanks,
-Miklos
+-- 
+Kees Cook
+Chrome OS Security
