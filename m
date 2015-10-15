@@ -1,70 +1,77 @@
-From: Will Deacon <will.deacon@arm.com>
-Subject: Re: [PATCHv3] ARM64:Fix MINSIGSTKSZ and SIGSTKSZ
-Date: Thu, 15 Oct 2015 13:47:56 +0100
-Message-ID: <20151015124756.GB27524@arm.com>
-References: <1444386580-10917-1-git-send-email-manjeet.p@samsung.com>
- <20151009103352.GK26278@arm.com>
- <20151015121241.GA26080@port70.net>
+From: Alex Deucher <alexdeucher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v4 04/79] drm_mode.h: use __u32 and __u64 from linux/types.h
+Date: Thu, 15 Oct 2015 09:32:10 -0400
+Message-ID: <CADnq5_N5LK4Dy1okY7G6jPNB68PN2ijpwv=bt2bBC0FPGASoSQ@mail.gmail.com>
+References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
+	<1444888618-4506-5-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-arch-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20151015121241.GA26080@port70.net>
-Sender: linux-arch-owner@vger.kernel.org
-To: Szabolcs Nagy <nsz@port70.net>
-Cc: Manjeet Pawar <manjeet.p@samsung.com>, catalin.marinas@arm.com, arnd@arndb.de, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, pankaj.m@samsung.com, Akhilesh Kumar <akhilesh.k@samsung.com>, Rohit Thapliyal <r.thapliyal@samsung.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1444888618-4506-5-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Maling list - DRI developers <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 15, 2015 at 02:12:41PM +0200, Szabolcs Nagy wrote:
-> * Will Deacon <will.deacon@arm.com> [2015-10-09 11:33:52 +0100]:
-> 
-> > On Fri, Oct 09, 2015 at 03:59:40PM +0530, Manjeet Pawar wrote:
-> > > MINSIGSTKSZ and SIGSTKSZ for ARM64 are not correctly set in latest kernel.
-> > > This patch fixes this issue.
-> > > 
-> > > This issue is reported in LTP (testcase: sigaltstack02.c).
-> > > Testcase failed when sigaltstack() called with stack size "MINSIGSTKSZ - 1"
-> > > Since in Glibc-2.22, MINSIGSTKSZ is set to 5120 but in kernel
-> > > it is set to 2048 so testcase gets failed.
-> > > 
-> > > Testcase Output:
-> > > sigaltstack02 1  TPASS  :  stgaltstack() fails, Invalid Flag value,errno:22
-> > > sigaltstack02 2  TFAIL  :  sigaltstack() returned 0, expected -1,errno:12
-> > 
-> > I'm still unable to reproduce this failure. Is this with defconfig?
-> > 
-> > > Reported Issue in Glibc Bugzilla:
-> > > Bugfix in Glibc-2.22: [Bug 16850]
-> > > https://sourceware.org/bugzilla/show_bug.cgi?id=16850
-> > > 
-> > > Signed-off-by: Akhilesh Kumar <akhilesh.k@samsung.com>
-> > > Signed-off-by: Manjeet Pawar <manjeet.p@samsung.com>
-> > > Signed-off-by: Rohit Thapliyal <r.thapliyal@samsung.com>
-> > > ---
-> > > v1 -> Changes in uapi overall header
-> > > v2 -> Changes done in arm64 headers
-> > > v3 -> Changes done in both uapi & arm64 headers
-> > > 
-> > >  arch/arm64/include/uapi/asm/signal.h |    3 +++
-> > >  include/uapi/asm-generic/signal.h    |    2 ++
-> > >  2 files changed, 5 insertions(+)
-> > 
-> > Acked-by: Will Deacon <will.deacon@arm.com>
-> > 
-> > Arnd: are you planning to take this via asm-generic, or shall I queue it
-> > on the arm64 fixes branch?
-> > 
-> 
-> i just noticed this and wanted to note that an old
-> glibc can fail on a new kernel with this patch if
-> an application uses MINSIGSTKSZ altstack.
+On Thu, Oct 15, 2015 at 1:55 AM, Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org> wro=
+te:
+> Fixes userspace compilation error:
+>
+> drm/drm_mode.h:472:2: error: unknown type name =E2=80=98uint32_t=E2=80=
+=99
+>
+> Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 
-I was worried about that (which was also why I didn't Cc stable on this,
-because we shouldn't pretend that glibc and the kernel are synchronised),
-but the value *is* incorrect and glibc has already been updated. In
-other words, not merging this patch is also problematic, because we're
-advertising a size that's significantly too small.
+NACK on all these type conversions.  This has not been a problem for
+years and years and the result looks terrible.
 
-Would you rather we kept the old incorrect value in the kernel headers?
+Alex
 
-Will
+> ---
+>  include/uapi/drm/drm_mode.h | 16 ++++++++--------
+>  1 file changed, 8 insertions(+), 8 deletions(-)
+>
+> diff --git a/include/uapi/drm/drm_mode.h b/include/uapi/drm/drm_mode.=
+h
+> index 359107a..0ed8d9d 100644
+> --- a/include/uapi/drm/drm_mode.h
+> +++ b/include/uapi/drm/drm_mode.h
+> @@ -508,14 +508,14 @@ struct drm_mode_crtc_page_flip {
+>
+>  /* create a dumb scanout buffer */
+>  struct drm_mode_create_dumb {
+> -       uint32_t height;
+> -       uint32_t width;
+> -       uint32_t bpp;
+> -       uint32_t flags;
+> +       __u32 height;
+> +       __u32 width;
+> +       __u32 bpp;
+> +       __u32 flags;
+>         /* handle, pitch, size will be returned */
+> -       uint32_t handle;
+> -       uint32_t pitch;
+> -       uint64_t size;
+> +       __u32 handle;
+> +       __u32 pitch;
+> +       __u64 size;
+>  };
+>
+>  /* set up for mmap of a dumb scanout buffer */
+> @@ -532,7 +532,7 @@ struct drm_mode_map_dumb {
+>  };
+>
+>  struct drm_mode_destroy_dumb {
+> -       uint32_t handle;
+> +       __u32 handle;
+>  };
+>
+>  /* page-flip flags are valid, plus: */
+> --
+> 2.5.0
+>
+> _______________________________________________
+> dri-devel mailing list
+> dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org
+> http://lists.freedesktop.org/mailman/listinfo/dri-devel
