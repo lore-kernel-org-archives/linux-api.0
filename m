@@ -1,82 +1,56 @@
-From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v4 77/79] include/uapi/linux/elfcore.h: remove non-compiling userspace parts
-Date: Thu, 15 Oct 2015 07:56:55 +0200
-Message-ID: <1444888618-4506-78-git-send-email-mikko.rapeli@iki.fi>
+From: Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>
+Subject: Re: [PATCH v4 11/79] savage_drm.h: include <drm/drm.h>
+Date: Thu, 15 Oct 2015 08:44:05 +0200
+Message-ID: <20151015064405.GQ26718@phenom.ffwll.local>
 References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: mikko.rapeli@iki.fi, linux-api@vger.kernel.org
+ <1444888618-4506-12-git-send-email-mikko.rapeli@iki.fi>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1444888618-4506-12-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Remove typedef elf_greg_t greg_t and friends from userspace.
-Remove struct elf_prstatus completely from userspace.
+On Thu, Oct 15, 2015 at 07:55:49AM +0200, Mikko Rapeli wrote:
+> Fixes compiler error:
+> 
+> drm/savage_drm.h:50:24: error: array type has incomplete element type
+>   struct drm_tex_region texList[SAVAGE_NR_TEX_HEAPS][SAVAGE_NR_TEX_REGIONS +
+> 
+> Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 
-elfcore.h as such does not compile in userspace. All userspace users
-of <linux/elfcore.h> like gcc/gdb and linux-tools contain their own modified
-versions of the file. With these changes the file compiles but is generally
-not usable for things like core dump parsing but luckily userspace users
-already know this and have their own modified version of the needed
-definitions and headers. But at least this compiles now.
+Queued for -next, thanks for the patch.
+-Daniel
 
-Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
----
- include/uapi/linux/elfcore.h | 21 +++++++--------------
- 1 file changed, 7 insertions(+), 14 deletions(-)
+> ---
+>  include/uapi/drm/savage_drm.h | 2 ++
+>  1 file changed, 2 insertions(+)
+> 
+> diff --git a/include/uapi/drm/savage_drm.h b/include/uapi/drm/savage_drm.h
+> index 818d49b..9dc9dc1 100644
+> --- a/include/uapi/drm/savage_drm.h
+> +++ b/include/uapi/drm/savage_drm.h
+> @@ -26,6 +26,8 @@
+>  #ifndef __SAVAGE_DRM_H__
+>  #define __SAVAGE_DRM_H__
+>  
+> +#include <drm/drm.h>
+> +
+>  #ifndef __SAVAGE_SAREA_DEFINES__
+>  #define __SAVAGE_SAREA_DEFINES__
+>  
+> -- 
+> 2.5.0
+> 
+> _______________________________________________
+> dri-devel mailing list
+> dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org
+> http://lists.freedesktop.org/mailman/listinfo/dri-devel
 
-diff --git a/include/uapi/linux/elfcore.h b/include/uapi/linux/elfcore.h
-index 569737c..6c23066 100644
---- a/include/uapi/linux/elfcore.h
-+++ b/include/uapi/linux/elfcore.h
-@@ -15,15 +15,7 @@ struct elf_siginfo
- 	int	si_errno;			/* errno */
- };
- 
--
--#ifndef __KERNEL__
--typedef elf_greg_t greg_t;
--typedef elf_gregset_t gregset_t;
--typedef elf_fpregset_t fpregset_t;
--typedef elf_fpxregset_t fpxregset_t;
--#define NGREG ELF_NGREG
--#endif
--
-+#ifdef __KERNEL__
- /*
-  * Definitions to generate Intel SVR4-like core files.
-  * These mostly have the same names as the SVR4 types with "elf_"
-@@ -48,10 +40,10 @@ struct elf_prstatus
- 	struct sigaltstack pr_altstack;	/* Alternate stack info */
- 	struct sigaction pr_action;	/* Signal action for current sig */
- #endif
--	pid_t	pr_pid;
--	pid_t	pr_ppid;
--	pid_t	pr_pgrp;
--	pid_t	pr_sid;
-+	__kernel_pid_t	pr_pid;
-+	__kernel_pid_t	pr_ppid;
-+	__kernel_pid_t	pr_pgrp;
-+	__kernel_pid_t	pr_sid;
- 	struct timeval pr_utime;	/* User time */
- 	struct timeval pr_stime;	/* System time */
- 	struct timeval pr_cutime;	/* Cumulative user time */
-@@ -72,6 +64,7 @@ struct elf_prstatus
- #endif
- 	int pr_fpvalid;		/* True if math co-processor being used.  */
- };
-+#endif /* __KERNEL__ */
- 
- #define ELF_PRARGSZ	(80)	/* Number of chars for args */
- 
-@@ -84,7 +77,7 @@ struct elf_prpsinfo
- 	unsigned long pr_flag;	/* flags */
- 	__kernel_uid_t	pr_uid;
- 	__kernel_gid_t	pr_gid;
--	pid_t	pr_pid, pr_ppid, pr_pgrp, pr_sid;
-+	__kernel_pid_t	pr_pid, pr_ppid, pr_pgrp, pr_sid;
- 	/* Lots missing */
- 	char	pr_fname[16];	/* filename of executable */
- 	char	pr_psargs[ELF_PRARGSZ];	/* initial part of arg list */
 -- 
-2.5.0
+Daniel Vetter
+Software Engineer, Intel Corporation
+http://blog.ffwll.ch
