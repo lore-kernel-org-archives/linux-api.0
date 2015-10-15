@@ -1,7 +1,7 @@
 From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v4 23/79] rds.h: use __u8, __u16, __s16, __u32 and __s64 from linux/types.h
-Date: Thu, 15 Oct 2015 07:56:01 +0200
-Message-ID: <1444888618-4506-24-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH v4 25/79] scsi_bsg_fc.h: use __u8, __u32 and __u64 from linux/types.h
+Date: Thu, 15 Oct 2015 07:56:03 +0200
+Message-ID: <1444888618-4506-26-git-send-email-mikko.rapeli@iki.fi>
 References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,215 +10,180 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: mikko.rapeli@iki.fi, "David S. Miller" <davem@davemloft.net>, Sowmini Varadhan <sowmini.varadhan@oracle.com>, linux-api@vger.kernel.org
+Cc: mikko.rapeli@iki.fi, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 =46ixes userspace compilation errors like:
 
-linux/rds.h:96:2: error: unknown type name =E2=80=98uint8_t=E2=80=99
+scsi/scsi_bsg_fc.h:83:2: error: unknown type name =E2=80=98uint8_t=E2=80=
+=99
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 ---
- include/uapi/linux/rds.h | 102 +++++++++++++++++++++++----------------=
+ include/uapi/scsi/scsi_bsg_fc.h | 54 +++++++++++++++++++++------------=
 --------
- 1 file changed, 51 insertions(+), 51 deletions(-)
+ 1 file changed, 28 insertions(+), 26 deletions(-)
 
-diff --git a/include/uapi/linux/rds.h b/include/uapi/linux/rds.h
-index 0f9265c..539f9f8 100644
---- a/include/uapi/linux/rds.h
-+++ b/include/uapi/linux/rds.h
-@@ -103,8 +103,8 @@
- #define RDS_INFO_LAST			10010
+diff --git a/include/uapi/scsi/scsi_bsg_fc.h b/include/uapi/scsi/scsi_b=
+sg_fc.h
+index 3031b90..0b3d18a 100644
+--- a/include/uapi/scsi/scsi_bsg_fc.h
++++ b/include/uapi/scsi/scsi_bsg_fc.h
+@@ -22,6 +22,8 @@
+ #ifndef SCSI_BSG_FC_H
+ #define SCSI_BSG_FC_H
 =20
- struct rds_info_counter {
--	uint8_t	name[32];
--	uint64_t	value;
-+	__u8	name[32];
-+	__u64	value;
- } __attribute__((packed));
-=20
- #define RDS_INFO_CONNECTION_FLAG_SENDING	0x01
-@@ -114,35 +114,35 @@ struct rds_info_counter {
- #define TRANSNAMSIZ	16
-=20
- struct rds_info_connection {
--	uint64_t	next_tx_seq;
--	uint64_t	next_rx_seq;
-+	__u64	next_tx_seq;
-+	__u64	next_rx_seq;
- 	__be32		laddr;
- 	__be32		faddr;
--	uint8_t	transport[TRANSNAMSIZ];		/* null term ascii */
--	uint8_t	flags;
-+	__u8	transport[TRANSNAMSIZ];		/* null term ascii */
-+	__u8	flags;
- } __attribute__((packed));
-=20
- #define RDS_INFO_MESSAGE_FLAG_ACK               0x01
- #define RDS_INFO_MESSAGE_FLAG_FAST_ACK          0x02
-=20
- struct rds_info_message {
--	uint64_t	seq;
--	uint32_t	len;
-+	__u64	seq;
-+	__u32	len;
- 	__be32		laddr;
- 	__be32		faddr;
- 	__be16		lport;
- 	__be16		fport;
--	uint8_t	flags;
-+	__u8	flags;
- } __attribute__((packed));
-=20
- struct rds_info_socket {
--	uint32_t	sndbuf;
-+	__u32	sndbuf;
- 	__be32		bound_addr;
- 	__be32		connected_addr;
- 	__be16		bound_port;
- 	__be16		connected_port;
--	uint32_t	rcvbuf;
--	uint64_t	inum;
-+	__u32	rcvbuf;
-+	__u64	inum;
- } __attribute__((packed));
-=20
- struct rds_info_tcp_socket {
-@@ -150,25 +150,25 @@ struct rds_info_tcp_socket {
- 	__be16          local_port;
- 	__be32          peer_addr;
- 	__be16          peer_port;
--	uint64_t       hdr_rem;
--	uint64_t       data_rem;
--	uint32_t       last_sent_nxt;
--	uint32_t       last_expected_una;
--	uint32_t       last_seen_una;
-+	__u64       hdr_rem;
-+	__u64       data_rem;
-+	__u32       last_sent_nxt;
-+	__u32       last_expected_una;
-+	__u32       last_seen_una;
- } __attribute__((packed));
-=20
- #define RDS_IB_GID_LEN	16
- struct rds_info_rdma_connection {
- 	__be32		src_addr;
- 	__be32		dst_addr;
--	uint8_t		src_gid[RDS_IB_GID_LEN];
--	uint8_t		dst_gid[RDS_IB_GID_LEN];
-+	__u8		src_gid[RDS_IB_GID_LEN];
-+	__u8		dst_gid[RDS_IB_GID_LEN];
-=20
--	uint32_t	max_send_wr;
--	uint32_t	max_recv_wr;
--	uint32_t	max_send_sge;
--	uint32_t	rdma_mr_max;
--	uint32_t	rdma_mr_size;
-+	__u32	max_send_wr;
-+	__u32	max_recv_wr;
-+	__u32	max_send_sge;
-+	__u32	rdma_mr_max;
-+	__u32	rdma_mr_size;
- };
-=20
++#include <linux/types.h>
++
  /*
-@@ -209,70 +209,70 @@ struct rds_info_rdma_connection {
-  * (so that the application does not have to worry about
-  * alignment).
+  * This file intended to be included by both kernel and user space
   */
--typedef uint64_t	rds_rdma_cookie_t;
-+typedef __u64	rds_rdma_cookie_t;
+@@ -80,10 +82,10 @@
+  * with the transport upon completion of the login.
+  */
+ struct fc_bsg_host_add_rport {
+-	uint8_t		reserved;
++	__u8		reserved;
 =20
- struct rds_iovec {
--	uint64_t	addr;
--	uint64_t	bytes;
-+	__u64	addr;
-+	__u64	bytes;
+ 	/* FC Address Identier of the remote port to login to */
+-	uint8_t		port_id[3];
++	__u8		port_id[3];
  };
 =20
- struct rds_get_mr_args {
- 	struct rds_iovec vec;
--	uint64_t	cookie_addr;
--	uint64_t	flags;
-+	__u64	cookie_addr;
-+	__u64	flags;
+ /* Response:
+@@ -101,10 +103,10 @@ struct fc_bsg_host_add_rport {
+  * remain logged in with the remote port.
+  */
+ struct fc_bsg_host_del_rport {
+-	uint8_t		reserved;
++	__u8		reserved;
+=20
+ 	/* FC Address Identier of the remote port to logout of */
+-	uint8_t		port_id[3];
++	__u8		port_id[3];
  };
 =20
- struct rds_get_mr_for_dest_args {
- 	struct sockaddr_storage	dest_addr;
- 	struct rds_iovec 	vec;
--	uint64_t		cookie_addr;
--	uint64_t		flags;
-+	__u64		cookie_addr;
-+	__u64		flags;
+ /* Response:
+@@ -125,10 +127,10 @@ struct fc_bsg_host_els {
+ 	 * ELS Command Code being sent (must be the same as byte 0
+ 	 * of the payload)
+ 	 */
+-	uint8_t 	command_code;
++	__u8 	command_code;
+=20
+ 	/* FC Address Identier of the remote port to send the ELS to */
+-	uint8_t		port_id[3];
++	__u8		port_id[3];
  };
 =20
- struct rds_free_mr_args {
- 	rds_rdma_cookie_t cookie;
--	uint64_t	flags;
-+	__u64	flags;
+ /* Response:
+@@ -165,14 +167,14 @@ struct fc_bsg_ctels_reply {
+ 	 * Note: x_RJT/BSY status will indicae that the rjt_data field
+ 	 *   is valid and contains the reason/explanation values.
+ 	 */
+-	uint32_t	status;		/* See FC_CTELS_STATUS_xxx */
++	__u32	status;		/* See FC_CTELS_STATUS_xxx */
+=20
+ 	/* valid if status is not FC_CTELS_STATUS_OK */
+ 	struct	{
+-		uint8_t	action;		/* fragment_id for CT REJECT */
+-		uint8_t	reason_code;
+-		uint8_t	reason_explanation;
+-		uint8_t	vendor_unique;
++		__u8	action;		/* fragment_id for CT REJECT */
++		__u8	reason_code;
++		__u8	reason_explanation;
++		__u8	vendor_unique;
+ 	} rjt_data;
  };
 =20
- struct rds_rdma_args {
- 	rds_rdma_cookie_t cookie;
- 	struct rds_iovec remote_vec;
--	uint64_t	local_vec_addr;
--	uint64_t	nr_local;
--	uint64_t	flags;
--	uint64_t	user_token;
-+	__u64	local_vec_addr;
-+	__u64	nr_local;
-+	__u64	flags;
-+	__u64	user_token;
+@@ -188,17 +190,17 @@ struct fc_bsg_ctels_reply {
+  * and whether to tear it down after the request.
+  */
+ struct fc_bsg_host_ct {
+-	uint8_t		reserved;
++	__u8		reserved;
+=20
+ 	/* FC Address Identier of the remote port to send the ELS to */
+-	uint8_t		port_id[3];
++	__u8		port_id[3];
+=20
+ 	/*
+ 	 * We need words 0-2 of the generic preamble for the LLD's
+ 	 */
+-	uint32_t	preamble_word0;	/* revision & IN_ID */
+-	uint32_t	preamble_word1;	/* GS_Type, GS_SubType, Options, Rsvd */
+-	uint32_t	preamble_word2;	/* Cmd Code, Max Size */
++	__u32	preamble_word0;	/* revision & IN_ID */
++	__u32	preamble_word1;	/* GS_Type, GS_SubType, Options, Rsvd */
++	__u32	preamble_word2;	/* Cmd Code, Max Size */
+=20
+ };
+ /* Response:
+@@ -218,17 +220,17 @@ struct fc_bsg_host_vendor {
+ 	 * Identifies the vendor that the message is formatted for. This
+ 	 * should be the recipient of the message.
+ 	 */
+-	uint64_t vendor_id;
++	__u64 vendor_id;
+=20
+ 	/* start of vendor command area */
+-	uint32_t vendor_cmd[0];
++	__u32 vendor_cmd[0];
  };
 =20
- struct rds_atomic_args {
- 	rds_rdma_cookie_t cookie;
--	uint64_t 	local_addr;
--	uint64_t 	remote_addr;
-+	__u64 	local_addr;
-+	__u64 	remote_addr;
+ /* Response:
+  */
+ struct fc_bsg_host_vendor_reply {
+ 	/* start of vendor response area */
+-	uint32_t vendor_rsp[0];
++	__u32 vendor_rsp[0];
+ };
+=20
+=20
+@@ -247,7 +249,7 @@ struct fc_bsg_rport_els {
+ 	 * ELS Command Code being sent (must be the same as
+ 	 * byte 0 of the payload)
+ 	 */
+-	uint8_t els_code;
++	__u8 els_code;
+ };
+=20
+ /* Response:
+@@ -265,9 +267,9 @@ struct fc_bsg_rport_ct {
+ 	/*
+ 	 * We need words 0-2 of the generic preamble for the LLD's
+ 	 */
+-	uint32_t	preamble_word0;	/* revision & IN_ID */
+-	uint32_t	preamble_word1;	/* GS_Type, GS_SubType, Options, Rsvd */
+-	uint32_t	preamble_word2;	/* Cmd Code, Max Size */
++	__u32	preamble_word0;	/* revision & IN_ID */
++	__u32	preamble_word1;	/* GS_Type, GS_SubType, Options, Rsvd */
++	__u32	preamble_word2;	/* Cmd Code, Max Size */
+ };
+ /* Response:
+  *
+@@ -279,7 +281,7 @@ struct fc_bsg_rport_ct {
+=20
+ /* request (CDB) structure of the sg_io_v4 */
+ struct fc_bsg_request {
+-	uint32_t msgcode;
++	__u32 msgcode;
  	union {
- 		struct {
--			uint64_t	compare;
--			uint64_t	swap;
-+			__u64	compare;
-+			__u64	swap;
- 		} cswp;
- 		struct {
--			uint64_t	add;
-+			__u64	add;
- 		} fadd;
- 		struct {
--			uint64_t	compare;
--			uint64_t	swap;
--			uint64_t	compare_mask;
--			uint64_t	swap_mask;
-+			__u64	compare;
-+			__u64	swap;
-+			__u64	compare_mask;
-+			__u64	swap_mask;
- 		} m_cswp;
- 		struct {
--			uint64_t	add;
--			uint64_t	nocarry_mask;
-+			__u64	add;
-+			__u64	nocarry_mask;
- 		} m_fadd;
- 	};
--	uint64_t	flags;
--	uint64_t	user_token;
-+	__u64	flags;
-+	__u64	user_token;
- };
+ 		struct fc_bsg_host_add_rport	h_addrport;
+ 		struct fc_bsg_host_del_rport	h_delrport;
+@@ -303,10 +305,10 @@ struct fc_bsg_reply {
+ 	 *    msg and status fields. The per-msgcode reply structure
+ 	 *    will contain valid data.
+ 	 */
+-	uint32_t result;
++	__u32 result;
 =20
- struct rds_rdma_notify {
--	uint64_t	user_token;
--	int32_t		status;
-+	__u64	user_token;
-+	__s32		status;
- };
+ 	/* If there was reply_payload, how much was recevied ? */
+-	uint32_t reply_payload_rcv_len;
++	__u32 reply_payload_rcv_len;
 =20
- #define RDS_RDMA_SUCCESS	0
+ 	union {
+ 		struct fc_bsg_host_vendor_reply		vendor_reply;
 --=20
 2.5.0
