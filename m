@@ -1,66 +1,70 @@
 From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v4 22/79] cld.h: use __u8, __u16, __s16, __u32 and __s64 from linux/types.h
-Date: Thu, 15 Oct 2015 07:56:00 +0200
-Message-ID: <1444888618-4506-23-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH v4 17/79] include/uapi/sound/emu10k1.h: added
+	EMU10K1 version of DECLARE_BITMAP macro
+Date: Thu, 15 Oct 2015 07:55:55 +0200
+Message-ID: <1444888618-4506-18-git-send-email-mikko.rapeli@iki.fi>
 References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <alsa-devel-bounces@alsa-project.org>
 In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <http://mailman.alsa-project.org/mailman/options/alsa-devel>,
+ <mailto:alsa-devel-request@alsa-project.org?subject=unsubscribe>
+List-Archive: <http://mailman.alsa-project.org/pipermail/alsa-devel/>
+List-Post: <mailto:alsa-devel@alsa-project.org>
+List-Help: <mailto:alsa-devel-request@alsa-project.org?subject=help>
+List-Subscribe: <http://mailman.alsa-project.org/mailman/listinfo/alsa-devel>,
+ <mailto:alsa-devel-request@alsa-project.org?subject=subscribe>
+Errors-To: alsa-devel-bounces@alsa-project.org
+Sender: alsa-devel-bounces@alsa-project.org
 To: linux-kernel@vger.kernel.org
-Cc: mikko.rapeli@iki.fi, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
+Cc: mikko.rapeli@iki.fi, alsa-devel@alsa-project.org, linux-api@vger.kernel.org, Takashi Iwai <tiwai@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-=46ixes userspace compilation errors like:
-
-linux/nfsd/cld.h:40:2: error: unknown type name =E2=80=98uint16_t=E2=80=
-=99
-
-Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
----
- include/uapi/linux/nfsd/cld.h | 14 ++++++++------
- 1 file changed, 8 insertions(+), 6 deletions(-)
-
-diff --git a/include/uapi/linux/nfsd/cld.h b/include/uapi/linux/nfsd/cl=
-d.h
-index f14a9ab..d9f2306 100644
---- a/include/uapi/linux/nfsd/cld.h
-+++ b/include/uapi/linux/nfsd/cld.h
-@@ -22,6 +22,8 @@
- #ifndef _NFSD_CLD_H
- #define _NFSD_CLD_H
-=20
-+#include <linux/types.h>
-+
- /* latest upcall version available */
- #define CLD_UPCALL_VERSION 1
-=20
-@@ -37,18 +39,18 @@ enum cld_command {
-=20
- /* representation of long-form NFSv4 client ID */
- struct cld_name {
--	uint16_t	cn_len;				/* length of cm_id */
-+	__u16	cn_len;				/* length of cm_id */
- 	unsigned char	cn_id[NFS4_OPAQUE_LIMIT];	/* client-provided */
- } __attribute__((packed));
-=20
- /* message struct for communication with userspace */
- struct cld_msg {
--	uint8_t		cm_vers;		/* upcall version */
--	uint8_t		cm_cmd;			/* upcall command */
--	int16_t		cm_status;		/* return code */
--	uint32_t	cm_xid;			/* transaction id */
-+	__u8		cm_vers;		/* upcall version */
-+	__u8		cm_cmd;			/* upcall command */
-+	__s16		cm_status;		/* return code */
-+	__u32	cm_xid;			/* transaction id */
- 	union {
--		int64_t		cm_gracetime;	/* grace period start time */
-+		__s64		cm_gracetime;	/* grace period start time */
- 		struct cld_name	cm_name;
- 	} __attribute__((packed)) cm_u;
- } __attribute__((packed));
---=20
-2.5.0
+Rml4ZXMgdXNlcnNwYWNlIGNvbXBpbGF0aW9uIGVycm9yOgoKZXJyb3I6IGV4cGVjdGVkIHNwZWNp
+Zmllci1xdWFsaWZpZXItbGlzdCBiZWZvcmUg4oCYREVDTEFSRV9CSVRNQVDigJkKICBERUNMQVJF
+X0JJVE1BUChncHJfdmFsaWQsIDB4MjAwKTsgLyogYml0bWFzayBvZiB2YWxpZCBpbml0aWFsaXpl
+cnMgKi8KCkRFQ0xBUkVfQklUTUFQIG1hY3JvIGlzIG5vdCBtZWFudCBmb3IgdXNlcnNwYWNlIGhl
+YWRlcnMgYW5kIHRodXMKYWRkZWQgaGVyZSBhcyBwcml2YXRlIGNvcHkgZm9yIGVtdTEway5oLgoK
+Rml4IHdhcyBzdWdnZXN0ZWQgYnkgQXJuZCBCZXJnbWFubiA8YXJuZEBhcm5kYi5kZT4gaW4gbWVz
+c2FnZQo8MjE2ODgwNy40WXhoNWdsMTFRQHd1ZXJmZWw+IGFuZCBUYWthc2hpIEl3YWkgPHRpd2Fp
+QHN1c2UuZGU+CmluIG1lc3NhZ2UgPHM1aDF0aHg4OHRrLndsLXRpd2FpQHN1c2UuZGU+IG9uIGxr
+bWwuCgpTaWduZWQtb2ZmLWJ5OiBNaWtrbyBSYXBlbGkgPG1pa2tvLnJhcGVsaUBpa2kuZmk+Ci0t
+LQogaW5jbHVkZS91YXBpL3NvdW5kL2VtdTEwazEuaCB8IDE0ICsrKysrKysrKysrLS0tCiAxIGZp
+bGUgY2hhbmdlZCwgMTEgaW5zZXJ0aW9ucygrKSwgMyBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQg
+YS9pbmNsdWRlL3VhcGkvc291bmQvZW11MTBrMS5oIGIvaW5jbHVkZS91YXBpL3NvdW5kL2VtdTEw
+azEuaAppbmRleCBlYzE1MzViLi41MTc1ZTE2IDEwMDY0NAotLS0gYS9pbmNsdWRlL3VhcGkvc291
+bmQvZW11MTBrMS5oCisrKyBiL2luY2x1ZGUvdWFwaS9zb3VuZC9lbXUxMGsxLmgKQEAgLTM0LDYg
+KzM0LDE0IEBACiAKICNkZWZpbmUgRU1VMTBLMV9GWDgwMTBfUENNX0NPVU5UCQk4CiAKKy8qCisg
+KiBGb2xsb3dpbmcgZGVmaW5pdGlvbiBpcyBjb3BpZWQgZnJvbSBsaW51eC90eXBlcy5oIHRvIHN1
+cHBvcnQgY29tcGlsaW5nCisgKiB0aGlzIGhlYWRlciBmaWxlIGluIHVzZXJzcGFjZSBzaW5jZSB0
+aGV5IGFyZSBub3QgZ2VuZXJhbGx5IGF2YWlsYWJsZSBmb3IKKyAqIHVhcGkgaGVhZGVycy4KKyAq
+LworI2RlZmluZSBfX0VNVTEwSzFfREVDTEFSRV9CSVRNQVAobmFtZSxiaXRzKSBcCisJdW5zaWdu
+ZWQgbG9uZyBuYW1lWyhiaXRzKSAvIChzaXplb2YodW5zaWduZWQgbG9uZykgKiA4KV0KKwogLyog
+aW5zdHJ1Y3Rpb24gc2V0ICovCiAjZGVmaW5lIGlNQUMwCSAweDAwCS8qIFIgPSBBICsgKFggKiBZ
+ID4+IDMxKSAgIDsgc2F0dXJhdGlvbiAqLwogI2RlZmluZSBpTUFDMQkgMHgwMQkvKiBSID0gQSAr
+ICgtWCAqIFkgPj4gMzEpICA7IHNhdHVyYXRpb24gKi8KQEAgLTMwMCw3ICszMDgsNyBAQCBzdHJ1
+Y3Qgc25kX2VtdTEwazFfZng4MDEwX2NvbnRyb2xfb2xkX2dwciB7CiBzdHJ1Y3Qgc25kX2VtdTEw
+azFfZng4MDEwX2NvZGUgewogCWNoYXIgbmFtZVsxMjhdOwogCi0JREVDTEFSRV9CSVRNQVAoZ3By
+X3ZhbGlkLCAweDIwMCk7IC8qIGJpdG1hc2sgb2YgdmFsaWQgaW5pdGlhbGl6ZXJzICovCisJX19F
+TVUxMEsxX0RFQ0xBUkVfQklUTUFQKGdwcl92YWxpZCwgMHgyMDApOyAvKiBiaXRtYXNrIG9mIHZh
+bGlkIGluaXRpYWxpemVycyAqLwogCV9fdTMyIF9fdXNlciAqZ3ByX21hcDsJCS8qIGluaXRpYWxp
+emVycyAqLwogCiAJdW5zaWduZWQgaW50IGdwcl9hZGRfY29udHJvbF9jb3VudDsgLyogY291bnQg
+b2YgR1BSIGNvbnRyb2xzIHRvIGFkZC9yZXBsYWNlICovCkBAIC0zMTMsMTEgKzMyMSwxMSBAQCBz
+dHJ1Y3Qgc25kX2VtdTEwazFfZng4MDEwX2NvZGUgewogCXVuc2lnbmVkIGludCBncHJfbGlzdF9j
+b250cm9sX3RvdGFsOyAvKiB0b3RhbCBjb3VudCBvZiBHUFIgY29udHJvbHMgKi8KIAlzdHJ1Y3Qg
+c25kX2VtdTEwazFfZng4MDEwX2NvbnRyb2xfZ3ByIF9fdXNlciAqZ3ByX2xpc3RfY29udHJvbHM7
+IC8qIGxpc3RlZCBHUFIgY29udHJvbHMgKi8KIAotCURFQ0xBUkVfQklUTUFQKHRyYW1fdmFsaWQs
+IDB4MTAwKTsgLyogYml0bWFzayBvZiB2YWxpZCBpbml0aWFsaXplcnMgKi8KKwlfX0VNVTEwSzFf
+REVDTEFSRV9CSVRNQVAodHJhbV92YWxpZCwgMHgxMDApOyAvKiBiaXRtYXNrIG9mIHZhbGlkIGlu
+aXRpYWxpemVycyAqLwogCV9fdTMyIF9fdXNlciAqdHJhbV9kYXRhX21hcDsJICAvKiBkYXRhIGlu
+aXRpYWxpemVycyAqLwogCV9fdTMyIF9fdXNlciAqdHJhbV9hZGRyX21hcDsJICAvKiBtYXAgaW5p
+dGlhbGl6ZXJzICovCiAKLQlERUNMQVJFX0JJVE1BUChjb2RlX3ZhbGlkLCAxMDI0KTsgLyogYml0
+bWFzayBvZiB2YWxpZCBpbnN0cnVjdGlvbnMgKi8KKwlfX0VNVTEwSzFfREVDTEFSRV9CSVRNQVAo
+Y29kZV92YWxpZCwgMTAyNCk7IC8qIGJpdG1hc2sgb2YgdmFsaWQgaW5zdHJ1Y3Rpb25zICovCiAJ
+X191MzIgX191c2VyICpjb2RlOwkJICAvKiBvbmUgaW5zdHJ1Y3Rpb24gLSA2NCBiaXRzICovCiB9
+OwogCi0tIAoyLjUuMAoKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX18KQWxzYS1kZXZlbCBtYWlsaW5nIGxpc3QKQWxzYS1kZXZlbEBhbHNhLXByb2plY3Qub3Jn
+Cmh0dHA6Ly9tYWlsbWFuLmFsc2EtcHJvamVjdC5vcmcvbWFpbG1hbi9saXN0aW5mby9hbHNhLWRl
+dmVsCg==
