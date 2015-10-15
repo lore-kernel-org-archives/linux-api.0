@@ -1,40 +1,75 @@
 From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v4 46/79] include/uapi/linux/packet_diag.h: include linux/netdevice.h
-Date: Thu, 15 Oct 2015 07:56:24 +0200
-Message-ID: <1444888618-4506-47-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH v4 30/79] gntdev.h: use __u32 and __u64 from
+	linux/types.h
+Date: Thu, 15 Oct 2015 07:56:08 +0200
+Message-ID: <1444888618-4506-31-git-send-email-mikko.rapeli@iki.fi>
 References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <xen-devel-bounces@lists.xen.org>
 In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <http://lists.xen.org/cgi-bin/mailman/options/xen-devel>,
+	<mailto:xen-devel-request@lists.xen.org?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xen.org>
+List-Help: <mailto:xen-devel-request@lists.xen.org?subject=help>
+List-Subscribe: <http://lists.xen.org/cgi-bin/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xen.org?subject=subscribe>
+Sender: xen-devel-bounces@lists.xen.org
+Errors-To: xen-devel-bounces@lists.xen.org
 To: linux-kernel@vger.kernel.org
-Cc: mikko.rapeli@iki.fi, linux-api@vger.kernel.org
+Cc: mikko.rapeli@iki.fi, David Vrabel <david.vrabel@citrix.com>, linux-api@vger.kernel.org, xen-devel@lists.xenproject.org, Boris Ostrovsky <boris.ostrovsky@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
-=46ixes userspace compilation error:
-
-error: =E2=80=98MAX_ADDR_LEN=E2=80=99 undeclared here (not in a functio=
-n)
-
-Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
----
- include/uapi/linux/packet_diag.h | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/include/uapi/linux/packet_diag.h b/include/uapi/linux/pack=
-et_diag.h
-index d08c63f..2a75e97 100644
---- a/include/uapi/linux/packet_diag.h
-+++ b/include/uapi/linux/packet_diag.h
-@@ -2,6 +2,7 @@
- #define __PACKET_DIAG_H__
-=20
- #include <linux/types.h>
-+#include <linux/netdevice.h>
-=20
- struct packet_diag_req {
- 	__u8	sdiag_family;
---=20
-2.5.0
+Rml4ZXMgdXNlcnNwYWNlIGNvbXBpbGF0aW9uIGVycm9ycyBsaWtlOgoKeGVuL2dudGRldi5oOjM4
+OjI6IGVycm9yOiB1bmtub3duIHR5cGUgbmFtZSDigJh1aW50MzJfdOKAmQoKU2lnbmVkLW9mZi1i
+eTogTWlra28gUmFwZWxpIDxtaWtrby5yYXBlbGlAaWtpLmZpPgotLS0KIGluY2x1ZGUvdWFwaS94
+ZW4vZ250ZGV2LmggfCAzNCArKysrKysrKysrKysrKysrKystLS0tLS0tLS0tLS0tLS0tCiAxIGZp
+bGUgY2hhbmdlZCwgMTggaW5zZXJ0aW9ucygrKSwgMTYgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0
+IGEvaW5jbHVkZS91YXBpL3hlbi9nbnRkZXYuaCBiL2luY2x1ZGUvdWFwaS94ZW4vZ250ZGV2LmgK
+aW5kZXggNTMwNGJkMy4uYWE3NjEwYSAxMDA2NDQKLS0tIGEvaW5jbHVkZS91YXBpL3hlbi9nbnRk
+ZXYuaAorKysgYi9pbmNsdWRlL3VhcGkveGVuL2dudGRldi5oCkBAIC0zMywxMSArMzMsMTMgQEAK
+ICNpZm5kZWYgX19MSU5VWF9QVUJMSUNfR05UREVWX0hfXwogI2RlZmluZSBfX0xJTlVYX1BVQkxJ
+Q19HTlRERVZfSF9fCiAKKyNpbmNsdWRlIDxsaW51eC90eXBlcy5oPgorCiBzdHJ1Y3QgaW9jdGxf
+Z250ZGV2X2dyYW50X3JlZiB7CiAJLyogVGhlIGRvbWFpbiBJRCBvZiB0aGUgZ3JhbnQgdG8gYmUg
+bWFwcGVkLiAqLwotCXVpbnQzMl90IGRvbWlkOworCV9fdTMyIGRvbWlkOwogCS8qIFRoZSBncmFu
+dCByZWZlcmVuY2Ugb2YgdGhlIGdyYW50IHRvIGJlIG1hcHBlZC4gKi8KLQl1aW50MzJfdCByZWY7
+CisJX191MzIgcmVmOwogfTsKIAogLyoKQEAgLTUwLDExICs1MiwxMSBAQCBfSU9DKF9JT0NfTk9O
+RSwgJ0cnLCAwLCBzaXplb2Yoc3RydWN0IGlvY3RsX2dudGRldl9tYXBfZ3JhbnRfcmVmKSkKIHN0
+cnVjdCBpb2N0bF9nbnRkZXZfbWFwX2dyYW50X3JlZiB7CiAJLyogSU4gcGFyYW1ldGVycyAqLwog
+CS8qIFRoZSBudW1iZXIgb2YgZ3JhbnRzIHRvIGJlIG1hcHBlZC4gKi8KLQl1aW50MzJfdCBjb3Vu
+dDsKLQl1aW50MzJfdCBwYWQ7CisJX191MzIgY291bnQ7CisJX191MzIgcGFkOwogCS8qIE9VVCBw
+YXJhbWV0ZXJzICovCiAJLyogVGhlIG9mZnNldCB0byBiZSB1c2VkIG9uIGEgc3Vic2VxdWVudCBj
+YWxsIHRvIG1tYXAoKS4gKi8KLQl1aW50NjRfdCBpbmRleDsKKwlfX3U2NCBpbmRleDsKIAkvKiBW
+YXJpYWJsZSBJTiBwYXJhbWV0ZXIuICovCiAJLyogQXJyYXkgb2YgZ3JhbnQgcmVmZXJlbmNlcywg
+b2Ygc2l6ZSBAY291bnQuICovCiAJc3RydWN0IGlvY3RsX2dudGRldl9ncmFudF9yZWYgcmVmc1sx
+XTsKQEAgLTcwLDEwICs3MiwxMCBAQCBfSU9DKF9JT0NfTk9ORSwgJ0cnLCAxLCBzaXplb2Yoc3Ry
+dWN0IGlvY3RsX2dudGRldl91bm1hcF9ncmFudF9yZWYpKQogc3RydWN0IGlvY3RsX2dudGRldl91
+bm1hcF9ncmFudF9yZWYgewogCS8qIElOIHBhcmFtZXRlcnMgKi8KIAkvKiBUaGUgb2Zmc2V0IHdh
+cyByZXR1cm5lZCBieSB0aGUgY29ycmVzcG9uZGluZyBtYXAgb3BlcmF0aW9uLiAqLwotCXVpbnQ2
+NF90IGluZGV4OworCV9fdTY0IGluZGV4OwogCS8qIFRoZSBudW1iZXIgb2YgcGFnZXMgdG8gYmUg
+dW5tYXBwZWQuICovCi0JdWludDMyX3QgY291bnQ7Ci0JdWludDMyX3QgcGFkOworCV9fdTMyIGNv
+dW50OworCV9fdTMyIHBhZDsKIH07CiAKIC8qCkBAIC05MywxMyArOTUsMTMgQEAgX0lPQyhfSU9D
+X05PTkUsICdHJywgMiwgc2l6ZW9mKHN0cnVjdCBpb2N0bF9nbnRkZXZfZ2V0X29mZnNldF9mb3Jf
+dmFkZHIpKQogc3RydWN0IGlvY3RsX2dudGRldl9nZXRfb2Zmc2V0X2Zvcl92YWRkciB7CiAJLyog
+SU4gcGFyYW1ldGVycyAqLwogCS8qIFRoZSB2aXJ0dWFsIGFkZHJlc3Mgb2YgdGhlIGZpcnN0IG1h
+cHBlZCBwYWdlIGluIGEgcmFuZ2UuICovCi0JdWludDY0X3QgdmFkZHI7CisJX191NjQgdmFkZHI7
+CiAJLyogT1VUIHBhcmFtZXRlcnMgKi8KIAkvKiBUaGUgb2Zmc2V0IHRoYXQgd2FzIHVzZWQgaW4g
+dGhlIGluaXRpYWwgbW1hcCgpIG9wZXJhdGlvbi4gKi8KLQl1aW50NjRfdCBvZmZzZXQ7CisJX191
+NjQgb2Zmc2V0OwogCS8qIFRoZSBudW1iZXIgb2YgcGFnZXMgbWFwcGVkIGluIHRoZSBWTSBhcmVh
+IHRoYXQgYmVnaW5zIGF0IEB2YWRkci4gKi8KLQl1aW50MzJfdCBjb3VudDsKLQl1aW50MzJfdCBw
+YWQ7CisJX191MzIgY291bnQ7CisJX191MzIgcGFkOwogfTsKIAogLyoKQEAgLTExMyw3ICsxMTUs
+NyBAQCBfSU9DKF9JT0NfTk9ORSwgJ0cnLCAzLCBzaXplb2Yoc3RydWN0IGlvY3RsX2dudGRldl9z
+ZXRfbWF4X2dyYW50cykpCiBzdHJ1Y3QgaW9jdGxfZ250ZGV2X3NldF9tYXhfZ3JhbnRzIHsKIAkv
+KiBJTiBwYXJhbWV0ZXIgKi8KIAkvKiBUaGUgbWF4aW11bSBudW1iZXIgb2YgZ3JhbnRzIHRoYXQg
+bWF5IGJlIG1hcHBlZCBhdCBvbmNlLiAqLwotCXVpbnQzMl90IGNvdW50OworCV9fdTMyIGNvdW50
+OwogfTsKIAogLyoKQEAgLTEzNSwxMSArMTM3LDExIEBAIHN0cnVjdCBpb2N0bF9nbnRkZXZfdW5t
+YXBfbm90aWZ5IHsKIAkgKiBiZSBjbGVhcmVkLiBPdGhlcndpc2UsIGl0IGNhbiBiZSBhbnkgYnl0
+ZSBpbiB0aGUgcGFnZSB3aG9zZQogCSAqIG5vdGlmaWNhdGlvbiB3ZSBhcmUgYWRqdXN0aW5nLgog
+CSAqLwotCXVpbnQ2NF90IGluZGV4OworCV9fdTY0IGluZGV4OwogCS8qIEFjdGlvbihzKSB0byB0
+YWtlIG9uIHVubWFwICovCi0JdWludDMyX3QgYWN0aW9uOworCV9fdTMyIGFjdGlvbjsKIAkvKiBF
+dmVudCBjaGFubmVsIHRvIG5vdGlmeSAqLwotCXVpbnQzMl90IGV2ZW50X2NoYW5uZWxfcG9ydDsK
+KwlfX3UzMiBldmVudF9jaGFubmVsX3BvcnQ7CiB9OwogCiAvKiBDbGVhciAoc2V0IHRvIHplcm8p
+IHRoZSBieXRlIHNwZWNpZmllZCBieSBpbmRleCAqLwotLSAKMi41LjAKCgpfX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpYZW4tZGV2ZWwgbWFpbGluZyBsaXN0
+Clhlbi1kZXZlbEBsaXN0cy54ZW4ub3JnCmh0dHA6Ly9saXN0cy54ZW4ub3JnL3hlbi1kZXZlbAo=
