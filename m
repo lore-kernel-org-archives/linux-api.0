@@ -1,78 +1,45 @@
-From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: Re: [PATCH v4 04/79] drm_mode.h: use __u32 and __u64 from
- linux/types.h
-Date: Thu, 15 Oct 2015 16:48:44 +0300
-Message-ID: <20151015134844.GY6104@lakka.kapsi.fi>
-References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
- <1444888618-4506-5-git-send-email-mikko.rapeli@iki.fi>
- <CADnq5_N5LK4Dy1okY7G6jPNB68PN2ijpwv=bt2bBC0FPGASoSQ@mail.gmail.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH] selftests: memfd_test: Revised STACK_SIZE to make it
+ 16-byte aligned
+Date: Thu, 15 Oct 2015 07:50:05 -0600
+Message-ID: <561FAF0D.7040804@osg.samsung.com>
+References: <1443684782-10898-1-git-send-email-zhang.chunyan@linaro.org>
+ <8675019.20qUY4dC6X@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-Content-Disposition: inline
-In-Reply-To: <CADnq5_N5LK4Dy1okY7G6jPNB68PN2ijpwv=bt2bBC0FPGASoSQ@mail.gmail.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Alex Deucher <alexdeucher@gmail.com>
-Cc: linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Maling list - DRI developers <dri-devel@lists.freedesktop.org>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <8675019.20qUY4dC6X@wuerfel>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gVGh1LCBPY3QgMTUsIDIwMTUgYXQgMDk6MzI6MTBBTSAtMDQwMCwgQWxleCBEZXVjaGVyIHdy
-b3RlOgo+IE9uIFRodSwgT2N0IDE1LCAyMDE1IGF0IDE6NTUgQU0sIE1pa2tvIFJhcGVsaSA8bWlr
-a28ucmFwZWxpQGlraS5maT4gd3JvdGU6Cj4gPiBGaXhlcyB1c2Vyc3BhY2UgY29tcGlsYXRpb24g
-ZXJyb3I6Cj4gPgo+ID4gZHJtL2RybV9tb2RlLmg6NDcyOjI6IGVycm9yOiB1bmtub3duIHR5cGUg
-bmFtZSDigJh1aW50MzJfdOKAmQo+ID4KPiA+IFNpZ25lZC1vZmYtYnk6IE1pa2tvIFJhcGVsaSA8
-bWlra28ucmFwZWxpQGlraS5maT4KPiAKPiBOQUNLIG9uIGFsbCB0aGVzZSB0eXBlIGNvbnZlcnNp
-b25zLiAgVGhpcyBoYXMgbm90IGJlZW4gYSBwcm9ibGVtIGZvcgo+IHllYXJzIGFuZCB5ZWFycyBh
-bmQgdGhlIHJlc3VsdCBsb29rcyB0ZXJyaWJsZS4KCkRvY3VtZW50YXRpb24vQ29kaW5nU3R5bGUs
-IHNlY3Rpb24gNQoKIChlKSBUeXBlcyBzYWZlIGZvciB1c2UgaW4gdXNlcnNwYWNlLgoKICAgICBJ
-biBjZXJ0YWluIHN0cnVjdHVyZXMgd2hpY2ggYXJlIHZpc2libGUgdG8gdXNlcnNwYWNlLCB3ZSBj
-YW5ub3QKICAgICByZXF1aXJlIEM5OSB0eXBlcyBhbmQgY2Fubm90IHVzZSB0aGUgJ3UzMicgZm9y
-bSBhYm92ZS4gVGh1cywgd2UKICAgICB1c2UgX191MzIgYW5kIHNpbWlsYXIgdHlwZXMgaW4gYWxs
-IHN0cnVjdHVyZXMgd2hpY2ggYXJlIHNoYXJlZAogICAgIHdpdGggdXNlcnNwYWNlLgoKSSBoYXZl
-IG9ubHkgYmVlbiBsb29raW5nIGF0IGtlcm5lbCBoZWFkZXJzIGZyb20gdXNlcnNwYWNlIG9jY2F0
-aW9uYWxseSBpbgp0aGUgcGFzdCAxMCB5ZWFycyBhbmQgaGFkIGEgc2V2ZXJhbCBjYXNlcyB3aGVy
-ZSB0aGUgcHJvdmlkZWQgaGVhZGVycyBkaWQKbm90IGNvbXBpbGUgd2hlbiBpbmNsdWRlZCBpbnRv
-IHRyaXZpYWwgcHJvZ3JhbXMgdHJ5aW5nIHRvIHVzZSB0aGUgc3RydWN0cwpmb3IgYW4gaW9jdGwo
-KSBmb3IgZXhhbXBsZS4gVGhpcyBsb25nIGxhc3RpbmcgcHJvYmxlbSB0cmlnZ2VyZWQgbWUgdG8g
-d3JpdGUKYSB0ZXN0IGZvciB0aGlzIGFuZCBwcm92aWRlIHRoZXNlIGZpeGVzIHRvby4gSW4gcHJl
-dmlvdXMgcmV2aWV3cyB1c2FnZQpvZiA8c3RkaW50Lmg+IGFuZCBpdHMgdHlwZXMgaW4ga2VybmVs
-IGhlYWRlcnMgd2FzIGFscmVhZHkgTkFDSydlZApzbyBJIGNoYW5nZWQgc2V2ZXJhbCBwbGFjZXMg
-ZnJvbSB1aW50MzJfdCdzIHRvIF9fdTMyLgoKV2l0aCB0aGVzZSBjaGFuZ2VzIGl0IGlzIGJ0dyB0
-cml2aWFsIG5vdyB0byBhZGQgYSBncmVwIHRlc3QgdGhlIHRoZXJlCmFyZSBubyB1aW50MzJfdCdz
-IGluIGluY2x1ZGUvdWFwaS8gYW55bW9yZSwgdGh1cyBlbmZvcmNpbmcgdGhhdCBjb2Rpbmcgc3R5
-bGUKcnVsZS4KCi1NaWtrbwoKPiBBbGV4Cj4gCj4gPiAtLS0KPiA+ICBpbmNsdWRlL3VhcGkvZHJt
-L2RybV9tb2RlLmggfCAxNiArKysrKysrKy0tLS0tLS0tCj4gPiAgMSBmaWxlIGNoYW5nZWQsIDgg
-aW5zZXJ0aW9ucygrKSwgOCBkZWxldGlvbnMoLSkKPiA+Cj4gPiBkaWZmIC0tZ2l0IGEvaW5jbHVk
-ZS91YXBpL2RybS9kcm1fbW9kZS5oIGIvaW5jbHVkZS91YXBpL2RybS9kcm1fbW9kZS5oCj4gPiBp
-bmRleCAzNTkxMDdhLi4wZWQ4ZDlkIDEwMDY0NAo+ID4gLS0tIGEvaW5jbHVkZS91YXBpL2RybS9k
-cm1fbW9kZS5oCj4gPiArKysgYi9pbmNsdWRlL3VhcGkvZHJtL2RybV9tb2RlLmgKPiA+IEBAIC01
-MDgsMTQgKzUwOCwxNCBAQCBzdHJ1Y3QgZHJtX21vZGVfY3J0Y19wYWdlX2ZsaXAgewo+ID4KPiA+
-ICAvKiBjcmVhdGUgYSBkdW1iIHNjYW5vdXQgYnVmZmVyICovCj4gPiAgc3RydWN0IGRybV9tb2Rl
-X2NyZWF0ZV9kdW1iIHsKPiA+IC0gICAgICAgdWludDMyX3QgaGVpZ2h0Owo+ID4gLSAgICAgICB1
-aW50MzJfdCB3aWR0aDsKPiA+IC0gICAgICAgdWludDMyX3QgYnBwOwo+ID4gLSAgICAgICB1aW50
-MzJfdCBmbGFnczsKPiA+ICsgICAgICAgX191MzIgaGVpZ2h0Owo+ID4gKyAgICAgICBfX3UzMiB3
-aWR0aDsKPiA+ICsgICAgICAgX191MzIgYnBwOwo+ID4gKyAgICAgICBfX3UzMiBmbGFnczsKPiA+
-ICAgICAgICAgLyogaGFuZGxlLCBwaXRjaCwgc2l6ZSB3aWxsIGJlIHJldHVybmVkICovCj4gPiAt
-ICAgICAgIHVpbnQzMl90IGhhbmRsZTsKPiA+IC0gICAgICAgdWludDMyX3QgcGl0Y2g7Cj4gPiAt
-ICAgICAgIHVpbnQ2NF90IHNpemU7Cj4gPiArICAgICAgIF9fdTMyIGhhbmRsZTsKPiA+ICsgICAg
-ICAgX191MzIgcGl0Y2g7Cj4gPiArICAgICAgIF9fdTY0IHNpemU7Cj4gPiAgfTsKPiA+Cj4gPiAg
-Lyogc2V0IHVwIGZvciBtbWFwIG9mIGEgZHVtYiBzY2Fub3V0IGJ1ZmZlciAqLwo+ID4gQEAgLTUz
-Miw3ICs1MzIsNyBAQCBzdHJ1Y3QgZHJtX21vZGVfbWFwX2R1bWIgewo+ID4gIH07Cj4gPgo+ID4g
-IHN0cnVjdCBkcm1fbW9kZV9kZXN0cm95X2R1bWIgewo+ID4gLSAgICAgICB1aW50MzJfdCBoYW5k
-bGU7Cj4gPiArICAgICAgIF9fdTMyIGhhbmRsZTsKPiA+ICB9Owo+ID4KPiA+ICAvKiBwYWdlLWZs
-aXAgZmxhZ3MgYXJlIHZhbGlkLCBwbHVzOiAqLwo+ID4gLS0KPiA+IDIuNS4wCj4gPgo+ID4gX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KPiA+IGRyaS1kZXZl
-bCBtYWlsaW5nIGxpc3QKPiA+IGRyaS1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKPiA+IGh0
-dHA6Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9kcmktZGV2ZWwKX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KZHJpLWRldmVsIG1h
-aWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHA6Ly9saXN0cy5m
-cmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9kcmktZGV2ZWwK
+On 10/15/2015 02:44 AM, Arnd Bergmann wrote:
+> On Thursday 01 October 2015 15:33:02 Chunyan Zhang wrote:
+>> There is a mandate of 16-byte aligned stack on AArch64 [1], so the
+>> STACK_SIZE here should also be 16-byte aligned, otherwise we would
+>> get an error when calling clone().
+>>
+>> [1] http://lxr.free-electrons.com/source/arch/arm64/kernel/process.c#L265
+>>
+>> Signed-off-by: Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+>>
+> 
+> Acked-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+> 
+> This should probably also be marked
+> 
+> Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> 
+
+Thank you both. Now applied to linux-kselftest next for 4.4
+
+-- Shuah
+
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
