@@ -1,91 +1,76 @@
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH v4 29/79] gntalloc.h: use __u16, __u32 and __u64 from linux/types.h
-Date: Thu, 15 Oct 2015 07:56:07 +0200
-Message-ID: <1444888618-4506-30-git-send-email-mikko.rapeli@iki.fi>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: [PATCH v4 26/79] scsi_netlink.h: use __u8, __u16 and __u64 from linux/types.h
+Date: Thu, 15 Oct 2015 07:56:04 +0200
+Message-ID: <1444888618-4506-27-git-send-email-mikko.rapeli@iki.fi>
 References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: mikko.rapeli-X3B1VOXEql0@public.gmane.org, Konrad Rzeszutek Wilk <konrad.wilk-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Boris Ostrovsky <boris.ostrovsky-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, David Vrabel <david.vrabel-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: mikko.rapeli@iki.fi, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 =46ixes userspace compilation errors like:
 
-xen/gntalloc.h:22:2: error: unknown type name =E2=80=98uint16_t=E2=80=99
+scsi/scsi_netlink.h:43:2: error: unknown type name =E2=80=98uint8_t=E2=80=
+=99
 
-Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 ---
- include/uapi/xen/gntalloc.h | 22 ++++++++++++----------
- 1 file changed, 12 insertions(+), 10 deletions(-)
+ include/uapi/scsi/scsi_netlink.h | 22 +++++++++++-----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
 
-diff --git a/include/uapi/xen/gntalloc.h b/include/uapi/xen/gntalloc.h
-index 76bd580..48d2790 100644
---- a/include/uapi/xen/gntalloc.h
-+++ b/include/uapi/xen/gntalloc.h
-@@ -11,6 +11,8 @@
- #ifndef __LINUX_PUBLIC_GNTALLOC_H__
- #define __LINUX_PUBLIC_GNTALLOC_H__
+diff --git a/include/uapi/scsi/scsi_netlink.h b/include/uapi/scsi/scsi_=
+netlink.h
+index 62b4eda..36b53a76 100644
+--- a/include/uapi/scsi/scsi_netlink.h
++++ b/include/uapi/scsi/scsi_netlink.h
+@@ -22,8 +22,8 @@
+ #ifndef SCSI_NETLINK_H
+ #define SCSI_NETLINK_H
 =20
-+#include <linux/types.h>
-+
+-#include <linux/netlink.h>
+ #include <linux/types.h>
++#include <linux/netlink.h>
+=20
  /*
-  * Allocates a new page and creates a new grant reference.
+  * This file intended to be included by both kernel and user space
+@@ -40,12 +40,12 @@
+=20
+ /* SCSI_TRANSPORT_MSG event message header */
+ struct scsi_nl_hdr {
+-	uint8_t version;
+-	uint8_t transport;
+-	uint16_t magic;
+-	uint16_t msgtype;
+-	uint16_t msglen;
+-} __attribute__((aligned(sizeof(uint64_t))));
++	__u8 version;
++	__u8 transport;
++	__u16 magic;
++	__u16 msgtype;
++	__u16 msglen;
++} __attribute__((aligned(sizeof(__u64))));
+=20
+ /* scsi_nl_hdr->version value */
+ #define SCSI_NL_VERSION				1
+@@ -89,10 +89,10 @@ struct scsi_nl_hdr {
   */
-@@ -19,17 +21,17 @@ _IOC(_IOC_NONE, 'G', 5, sizeof(struct ioctl_gntallo=
-c_alloc_gref))
- struct ioctl_gntalloc_alloc_gref {
- 	/* IN parameters */
- 	/* The ID of the domain to be given access to the grants. */
--	uint16_t domid;
-+	__u16 domid;
- 	/* Flags for this mapping */
--	uint16_t flags;
-+	__u16 flags;
- 	/* Number of pages to map */
--	uint32_t count;
-+	__u32 count;
- 	/* OUT parameters */
- 	/* The offset to be used on a subsequent call to mmap(). */
--	uint64_t index;
-+	__u64 index;
- 	/* The grant references of the newly created grant, one per page */
- 	/* Variable size, depending on count */
--	uint32_t gref_ids[1];
-+	__u32 gref_ids[1];
- };
+ struct scsi_nl_host_vendor_msg {
+ 	struct scsi_nl_hdr snlh;		/* must be 1st element ! */
+-	uint64_t vendor_id;
+-	uint16_t host_no;
+-	uint16_t vmsg_datalen;
+-} __attribute__((aligned(sizeof(uint64_t))));
++	__u64 vendor_id;
++	__u16 host_no;
++	__u16 vmsg_datalen;
++} __attribute__((aligned(sizeof(__u64))));
 =20
- #define GNTALLOC_FLAG_WRITABLE 1
-@@ -43,9 +45,9 @@ _IOC(_IOC_NONE, 'G', 6, sizeof(struct ioctl_gntalloc_=
-dealloc_gref))
- struct ioctl_gntalloc_dealloc_gref {
- 	/* IN parameters */
- 	/* The offset returned in the map operation */
--	uint64_t index;
-+	__u64 index;
- 	/* Number of references to unmap */
--	uint32_t count;
-+	__u32 count;
- };
 =20
  /*
-@@ -67,11 +69,11 @@ struct ioctl_gntalloc_unmap_notify {
- 	 * be cleared. Otherwise, it can be any byte in the page whose
- 	 * notification we are adjusting.
- 	 */
--	uint64_t index;
-+	__u64 index;
- 	/* Action(s) to take on unmap */
--	uint32_t action;
-+	__u32 action;
- 	/* Event channel to notify */
--	uint32_t event_channel_port;
-+	__u32 event_channel_port;
- };
-=20
- /* Clear (set to zero) the byte specified by index */
 --=20
 2.5.0
