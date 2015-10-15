@@ -1,7 +1,7 @@
 From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v4 41/79] include/uapi/linux/ipv6_route.h: include linux/in6.h
-Date: Thu, 15 Oct 2015 07:56:19 +0200
-Message-ID: <1444888618-4506-42-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH v4 37/79] include/uapi/linux/socket.h: include sys/socket.h in userspace
+Date: Thu, 15 Oct 2015 07:56:15 +0200
+Message-ID: <1444888618-4506-38-git-send-email-mikko.rapeli@iki.fi>
 References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -13,28 +13,34 @@ To: linux-kernel@vger.kernel.org
 Cc: mikko.rapeli@iki.fi, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-=46ixes userspace compile errors like:
+This libc header has sockaddr definition for userspace.
 
-error: field =E2=80=98mf6cc_origin=E2=80=99 has incomplete type
-  struct sockaddr_in6 mf6cc_origin;  /* Origin of mcast */
+=46ixes userspace compilation errors like these from kernel headers inc=
+luding
+only linux/socket.h:
+
+error: field =E2=80=98ifru_addr=E2=80=99 has incomplete type
+struct sockaddr ifru_addr;
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 ---
- include/uapi/linux/mroute6.h | 1 +
- 1 file changed, 1 insertion(+)
+ include/uapi/linux/socket.h | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/include/uapi/linux/mroute6.h b/include/uapi/linux/mroute6.=
-h
-index ce91215..5e17444 100644
---- a/include/uapi/linux/mroute6.h
-+++ b/include/uapi/linux/mroute6.h
-@@ -3,6 +3,7 @@
+diff --git a/include/uapi/linux/socket.h b/include/uapi/linux/socket.h
+index 76ab0c6..8a81197 100644
+--- a/include/uapi/linux/socket.h
++++ b/include/uapi/linux/socket.h
+@@ -1,6 +1,10 @@
+ #ifndef _UAPI_LINUX_SOCKET_H
+ #define _UAPI_LINUX_SOCKET_H
 =20
- #include <linux/types.h>
- #include <linux/sockios.h>
-+#include <linux/in6.h>
-=20
++#ifndef __KERNEL__
++#include <sys/socket.h>
++#endif
++
  /*
-  *	Based on the MROUTING 3.5 defines primarily to keep
+  * Desired design of maximum size and alignment (see RFC2553)
+  */
 --=20
 2.5.0
