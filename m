@@ -1,113 +1,40 @@
-From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v4 28/79] hdspm.h: use __u8,
-	__u32 and __u64 from linux/types.h instead of stdint.h
-Date: Thu, 15 Oct 2015 07:56:06 +0200
-Message-ID: <1444888618-4506-29-git-send-email-mikko.rapeli@iki.fi>
+From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Subject: [PATCH v4 48/79] include/uapi/linux/mqueue.h: include linux/types.h
+Date: Thu, 15 Oct 2015 07:56:26 +0200
+Message-ID: <1444888618-4506-49-git-send-email-mikko.rapeli@iki.fi>
 References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <alsa-devel-bounces@alsa-project.org>
-In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
-List-Unsubscribe: <http://mailman.alsa-project.org/mailman/options/alsa-devel>,
- <mailto:alsa-devel-request@alsa-project.org?subject=unsubscribe>
-List-Archive: <http://mailman.alsa-project.org/pipermail/alsa-devel/>
-List-Post: <mailto:alsa-devel@alsa-project.org>
-List-Help: <mailto:alsa-devel-request@alsa-project.org?subject=help>
-List-Subscribe: <http://mailman.alsa-project.org/mailman/listinfo/alsa-devel>,
- <mailto:alsa-devel-request@alsa-project.org?subject=subscribe>
-Errors-To: alsa-devel-bounces@alsa-project.org
-Sender: alsa-devel-bounces@alsa-project.org
-To: linux-kernel@vger.kernel.org
-Cc: mikko.rapeli@iki.fi, alsa-devel@alsa-project.org, linux-api@vger.kernel.org, Takashi Iwai <tiwai@suse.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: mikko.rapeli-X3B1VOXEql0@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Kernel headers should use linux/types.h based definitions.
+=46ixes userspace compile error:
 
-Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
+error: unknown type name =E2=80=98__kernel_long_t=E2=80=99
+ __kernel_long_t mq_flags; /* message queue flags   */
+
+Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 ---
- include/uapi/sound/hdspm.h | 40 ++++++++++++++++++----------------------
- 1 file changed, 18 insertions(+), 22 deletions(-)
+ include/uapi/linux/mqueue.h | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/include/uapi/sound/hdspm.h b/include/uapi/sound/hdspm.h
-index 5737332..c4db6f5 100644
---- a/include/uapi/sound/hdspm.h
-+++ b/include/uapi/sound/hdspm.h
-@@ -20,11 +20,7 @@
-  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-  */
- 
--#ifdef __KERNEL__
- #include <linux/types.h>
--#else
--#include <stdint.h>
--#endif
- 
- /* Maximum channels is 64 even on 56Mode you have 64playbacks to matrix */
- #define HDSPM_MAX_CHANNELS      64
-@@ -46,15 +42,15 @@ enum hdspm_speed {
- /* -------------------- IOCTL Peak/RMS Meters -------------------- */
- 
- struct hdspm_peak_rms {
--	uint32_t input_peaks[64];
--	uint32_t playback_peaks[64];
--	uint32_t output_peaks[64];
-+	__u32 input_peaks[64];
-+	__u32 playback_peaks[64];
-+	__u32 output_peaks[64];
- 
--	uint64_t input_rms[64];
--	uint64_t playback_rms[64];
--	uint64_t output_rms[64];
-+	__u64 input_rms[64];
-+	__u64 playback_rms[64];
-+	__u64 output_rms[64];
- 
--	uint8_t speed; /* enum {ss, ds, qs} */
-+	__u8 speed; /* enum {ss, ds, qs} */
- 	int status2;
- };
- 
-@@ -155,21 +151,21 @@ enum hdspm_syncsource {
- };
- 
- struct hdspm_status {
--	uint8_t card_type; /* enum hdspm_io_type */
-+	__u8 card_type; /* enum hdspm_io_type */
- 	enum hdspm_syncsource autosync_source;
- 
--	uint64_t card_clock;
--	uint32_t master_period;
-+	__u64 card_clock;
-+	__u32 master_period;
- 
- 	union {
- 		struct {
--			uint8_t sync_wc; /* enum hdspm_sync */
--			uint8_t sync_madi; /* enum hdspm_sync */
--			uint8_t sync_tco; /* enum hdspm_sync */
--			uint8_t sync_in; /* enum hdspm_sync */
--			uint8_t madi_input; /* enum hdspm_madi_input */
--			uint8_t channel_format; /* enum hdspm_madi_channel_format */
--			uint8_t frame_format; /* enum hdspm_madi_frame_format */
-+			__u8 sync_wc; /* enum hdspm_sync */
-+			__u8 sync_madi; /* enum hdspm_sync */
-+			__u8 sync_tco; /* enum hdspm_sync */
-+			__u8 sync_in; /* enum hdspm_sync */
-+			__u8 madi_input; /* enum hdspm_madi_input */
-+			__u8 channel_format; /* enum hdspm_madi_channel_format */
-+			__u8 frame_format; /* enum hdspm_madi_frame_format */
- 		} madi;
- 	} card_specific;
- };
-@@ -184,7 +180,7 @@ struct hdspm_status {
- #define HDSPM_ADDON_TCO 1
- 
- struct hdspm_version {
--	uint8_t card_type; /* enum hdspm_io_type */
-+	__u8 card_type; /* enum hdspm_io_type */
- 	char cardname[20];
- 	unsigned int serial;
- 	unsigned short firmware_rev;
--- 
+diff --git a/include/uapi/linux/mqueue.h b/include/uapi/linux/mqueue.h
+index d0a2b8e..bbd5116 100644
+--- a/include/uapi/linux/mqueue.h
++++ b/include/uapi/linux/mqueue.h
+@@ -18,6 +18,8 @@
+ #ifndef _LINUX_MQUEUE_H
+ #define _LINUX_MQUEUE_H
+=20
++#include <linux/types.h>
++
+ #define MQ_PRIO_MAX 	32768
+ /* per-uid limit of kernel memory used by mqueue, in bytes */
+ #define MQ_BYTES_MAX	819200
+--=20
 2.5.0
