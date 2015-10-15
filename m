@@ -1,39 +1,37 @@
-From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v4 49/79] include/uapi/linux/mroute.h: include linux/in.h
-Date: Thu, 15 Oct 2015 07:56:27 +0200
-Message-ID: <1444888618-4506-50-git-send-email-mikko.rapeli@iki.fi>
-References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH v5 9/9] btrfs: btrfs_copy_file_range() only supports
+ reflinks
+Date: Wed, 14 Oct 2015 23:00:45 -0700
+Message-ID: <20151015060045.GA23996@infradead.org>
+References: <1443634014-3026-1-git-send-email-Anna.Schumaker@Netapp.com>
+ <1443634014-3026-10-git-send-email-Anna.Schumaker@Netapp.com>
+ <20151011142939.GA30905@infradead.org>
+ <561B8A09.5070507@draigBrady.com>
+ <20151012143444.GA10156@infradead.org>
+ <20151012234106.GD11398@birch.djwong.org>
+ <20151013072959.GB10794@infradead.org>
+ <20151014184608.GK850@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: mikko.rapeli@iki.fi, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20151014184608.GK850@birch.djwong.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: Christoph Hellwig <hch@infradead.org>, P??draig Brady <P@draigBrady.com>, Anna Schumaker <Anna.Schumaker@netapp.com>, linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, mtk.manpages@gmail.com, andros@netapp.com
 List-Id: linux-api@vger.kernel.org
 
-=46ixes userspace compile errors like:
+On Wed, Oct 14, 2015 at 11:46:08AM -0700, Darrick J. Wong wrote:
+> The documentation for fallocate ought to be updated to include that as part of
+> guaranteeing that subsequent writes to the range won't fail due to ENOSPC,
+> shared blocks will be unshared.
+> 
+> Incidentally, btrfs leaves shared blocks alone.  OTOH, given that it's totally
+> COW it probably doesn't make sense to unshare blocks anyway... but maybe I
+> also don't want to dive into btrfs f-allocation behavior at this time. :)
+> 
+> Ok, so I'll rework the XFS funshare code into something that hangs off the
+> regular fallocate call, and get rid of the explicit 'funshare' bits.
 
-error: field =E2=80=98vifc_lcl_addr=E2=80=99 has incomplete type
- struct in_addr vifc_lcl_addr;     /* Local interface address */
-
-Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
----
- include/uapi/linux/mroute.h | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/include/uapi/linux/mroute.h b/include/uapi/linux/mroute.h
-index a382d2c..b1f9428 100644
---- a/include/uapi/linux/mroute.h
-+++ b/include/uapi/linux/mroute.h
-@@ -3,6 +3,7 @@
-=20
- #include <linux/sockios.h>
- #include <linux/types.h>
-+#include <linux/in.h>
-=20
- /*
-  *	Based on the MROUTING 3.5 defines primarily to keep
---=20
-2.5.0
+Yes, that would be my preference.  I'd also like to understand what
+exactly btrfs does in fallocate.
