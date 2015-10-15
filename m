@@ -1,323 +1,105 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 1/6] block: cleanup blkdev_ioctl
-Date: Thu, 15 Oct 2015 14:10:47 +0200
-Message-ID: <1444911052-9423-2-git-send-email-hch@lst.de>
-References: <1444911052-9423-1-git-send-email-hch@lst.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Szabolcs Nagy <nsz@port70.net>
+Subject: Re: [PATCHv3] ARM64:Fix MINSIGSTKSZ and SIGSTKSZ
+Date: Thu, 15 Oct 2015 14:12:41 +0200
+Message-ID: <20151015121241.GA26080@port70.net>
+References: <1444386580-10917-1-git-send-email-manjeet.p@samsung.com>
+ <20151009103352.GK26278@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1444911052-9423-1-git-send-email-hch@lst.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: axboe@fb.com
-Cc: linux-scsi@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org, keith.busch@intel.com, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20151009103352.GK26278@arm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Will Deacon <will.deacon@arm.com>
+Cc: Manjeet Pawar <manjeet.p@samsung.com>, catalin.marinas@arm.com, arnd@arndb.de, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, pankaj.m@samsung.com, Akhilesh Kumar <akhilesh.k@samsung.com>, Rohit Thapliyal <r.thapliyal@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-Split out helpers for all non-trivial ioctls to make this function simpler,
-and also start passing around a pointer version of the argument, as that's
-what most ioctl handlers actually need.
+* Will Deacon <will.deacon@arm.com> [2015-10-09 11:33:52 +0100]:
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- block/ioctl.c | 227 ++++++++++++++++++++++++++++++++--------------------------
- 1 file changed, 127 insertions(+), 100 deletions(-)
+> On Fri, Oct 09, 2015 at 03:59:40PM +0530, Manjeet Pawar wrote:
+> > MINSIGSTKSZ and SIGSTKSZ for ARM64 are not correctly set in latest kernel.
+> > This patch fixes this issue.
+> > 
+> > This issue is reported in LTP (testcase: sigaltstack02.c).
+> > Testcase failed when sigaltstack() called with stack size "MINSIGSTKSZ - 1"
+> > Since in Glibc-2.22, MINSIGSTKSZ is set to 5120 but in kernel
+> > it is set to 2048 so testcase gets failed.
+> > 
+> > Testcase Output:
+> > sigaltstack02 1  TPASS  :  stgaltstack() fails, Invalid Flag value,errno:22
+> > sigaltstack02 2  TFAIL  :  sigaltstack() returned 0, expected -1,errno:12
+> 
+> I'm still unable to reproduce this failure. Is this with defconfig?
+> 
+> > Reported Issue in Glibc Bugzilla:
+> > Bugfix in Glibc-2.22: [Bug 16850]
+> > https://sourceware.org/bugzilla/show_bug.cgi?id=16850
+> > 
+> > Signed-off-by: Akhilesh Kumar <akhilesh.k@samsung.com>
+> > Signed-off-by: Manjeet Pawar <manjeet.p@samsung.com>
+> > Signed-off-by: Rohit Thapliyal <r.thapliyal@samsung.com>
+> > ---
+> > v1 -> Changes in uapi overall header
+> > v2 -> Changes done in arm64 headers
+> > v3 -> Changes done in both uapi & arm64 headers
+> > 
+> >  arch/arm64/include/uapi/asm/signal.h |    3 +++
+> >  include/uapi/asm-generic/signal.h    |    2 ++
+> >  2 files changed, 5 insertions(+)
+> 
+> Acked-by: Will Deacon <will.deacon@arm.com>
+> 
+> Arnd: are you planning to take this via asm-generic, or shall I queue it
+> on the arm64 fixes branch?
+> 
 
-diff --git a/block/ioctl.c b/block/ioctl.c
-index 8061eba..df62b47 100644
---- a/block/ioctl.c
-+++ b/block/ioctl.c
-@@ -193,10 +193,20 @@ int blkdev_reread_part(struct block_device *bdev)
- }
- EXPORT_SYMBOL(blkdev_reread_part);
- 
--static int blk_ioctl_discard(struct block_device *bdev, uint64_t start,
--			     uint64_t len, int secure)
-+static int blk_ioctl_discard(struct block_device *bdev, fmode_t mode,
-+		unsigned long arg, unsigned long flags)
- {
--	unsigned long flags = 0;
-+	uint64_t range[2];
-+	uint64_t start, len;
-+
-+	if (!(mode & FMODE_WRITE))
-+		return -EBADF;
-+
-+	if (copy_from_user(range, (void __user *)arg, sizeof(range)))
-+		return -EFAULT;
-+
-+	start = range[0];
-+	len = range[1];
- 
- 	if (start & 511)
- 		return -EINVAL;
-@@ -207,14 +217,24 @@ static int blk_ioctl_discard(struct block_device *bdev, uint64_t start,
- 
- 	if (start + len > (i_size_read(bdev->bd_inode) >> 9))
- 		return -EINVAL;
--	if (secure)
--		flags |= BLKDEV_DISCARD_SECURE;
- 	return blkdev_issue_discard(bdev, start, len, GFP_KERNEL, flags);
- }
- 
--static int blk_ioctl_zeroout(struct block_device *bdev, uint64_t start,
--			     uint64_t len)
-+static int blk_ioctl_zeroout(struct block_device *bdev, fmode_t mode,
-+		unsigned long arg)
- {
-+	uint64_t range[2];
-+	uint64_t start, len;
-+
-+	if (!(mode & FMODE_WRITE))
-+		return -EBADF;
-+
-+	if (copy_from_user(range, (void __user *)arg, sizeof(range)))
-+		return -EFAULT;
-+
-+	start = range[0];
-+	len = range[1];
-+
- 	if (start & 511)
- 		return -EINVAL;
- 	if (len & 511)
-@@ -295,89 +315,115 @@ static inline int is_unrecognized_ioctl(int ret)
- 		ret == -ENOIOCTLCMD;
- }
- 
--/*
-- * always keep this in sync with compat_blkdev_ioctl()
-- */
--int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
--			unsigned long arg)
-+static int blkdev_flushbuf(struct block_device *bdev, fmode_t mode,
-+		unsigned cmd, unsigned long arg)
- {
--	struct gendisk *disk = bdev->bd_disk;
--	struct backing_dev_info *bdi;
--	loff_t size;
--	int ret, n;
--	unsigned int max_sectors;
-+	int ret;
- 
--	switch(cmd) {
--	case BLKFLSBUF:
--		if (!capable(CAP_SYS_ADMIN))
--			return -EACCES;
--
--		ret = __blkdev_driver_ioctl(bdev, mode, cmd, arg);
--		if (!is_unrecognized_ioctl(ret))
--			return ret;
-+	if (!capable(CAP_SYS_ADMIN))
-+		return -EACCES;
- 
--		fsync_bdev(bdev);
--		invalidate_bdev(bdev);
--		return 0;
-+	ret = __blkdev_driver_ioctl(bdev, mode, cmd, arg);
-+	if (!is_unrecognized_ioctl(ret))
-+		return ret;
- 
--	case BLKROSET:
--		ret = __blkdev_driver_ioctl(bdev, mode, cmd, arg);
--		if (!is_unrecognized_ioctl(ret))
--			return ret;
--		if (!capable(CAP_SYS_ADMIN))
--			return -EACCES;
--		if (get_user(n, (int __user *)(arg)))
--			return -EFAULT;
--		set_device_ro(bdev, n);
--		return 0;
-+	fsync_bdev(bdev);
-+	invalidate_bdev(bdev);
-+	return 0;
-+}
- 
--	case BLKDISCARD:
--	case BLKSECDISCARD: {
--		uint64_t range[2];
-+static int blkdev_roset(struct block_device *bdev, fmode_t mode,
-+		unsigned cmd, unsigned long arg)
-+{
-+	int ret, n;
- 
--		if (!(mode & FMODE_WRITE))
--			return -EBADF;
-+	ret = __blkdev_driver_ioctl(bdev, mode, cmd, arg);
-+	if (!is_unrecognized_ioctl(ret))
-+		return ret;
-+	if (!capable(CAP_SYS_ADMIN))
-+		return -EACCES;
-+	if (get_user(n, (int __user *)arg))
-+		return -EFAULT;
-+	set_device_ro(bdev, n);
-+	return 0;
-+}
- 
--		if (copy_from_user(range, (void __user *)arg, sizeof(range)))
--			return -EFAULT;
-+static int blkdev_getgeo(struct block_device *bdev,
-+		struct hd_geometry __user *argp)
-+{
-+	struct gendisk *disk = bdev->bd_disk;
-+	struct hd_geometry geo;
-+	int ret;
- 
--		return blk_ioctl_discard(bdev, range[0], range[1],
--					 cmd == BLKSECDISCARD);
--	}
--	case BLKZEROOUT: {
--		uint64_t range[2];
-+	if (!argp)
-+		return -EINVAL;
-+	if (!disk->fops->getgeo)
-+		return -ENOTTY;
-+
-+	/*
-+	 * We need to set the startsect first, the driver may
-+	 * want to override it.
-+	 */
-+	memset(&geo, 0, sizeof(geo));
-+	geo.start = get_start_sect(bdev);
-+	ret = disk->fops->getgeo(bdev, &geo);
-+	if (ret)
-+		return ret;
-+	if (copy_to_user(argp, &geo, sizeof(geo)))
-+		return -EFAULT;
-+	return 0;
-+}
- 
--		if (!(mode & FMODE_WRITE))
--			return -EBADF;
-+/* set the logical block size */
-+static int blkdev_bszset(struct block_device *bdev, fmode_t mode,
-+		int __user *argp)
-+{
-+	int ret, n;
- 
--		if (copy_from_user(range, (void __user *)arg, sizeof(range)))
--			return -EFAULT;
-+	if (!capable(CAP_SYS_ADMIN))
-+		return -EACCES;
-+	if (!argp)
-+		return -EINVAL;
-+	if (get_user(n, argp))
-+		return -EFAULT;
- 
--		return blk_ioctl_zeroout(bdev, range[0], range[1]);
-+	if (!(mode & FMODE_EXCL)) {
-+		bdgrab(bdev);
-+		if (blkdev_get(bdev, mode | FMODE_EXCL, &bdev) < 0)
-+			return -EBUSY;
- 	}
- 
--	case HDIO_GETGEO: {
--		struct hd_geometry geo;
-+	ret = set_blocksize(bdev, n);
-+	if (!(mode & FMODE_EXCL))
-+		blkdev_put(bdev, mode | FMODE_EXCL);
-+	return ret;
-+}
- 
--		if (!arg)
--			return -EINVAL;
--		if (!disk->fops->getgeo)
--			return -ENOTTY;
--
--		/*
--		 * We need to set the startsect first, the driver may
--		 * want to override it.
--		 */
--		memset(&geo, 0, sizeof(geo));
--		geo.start = get_start_sect(bdev);
--		ret = disk->fops->getgeo(bdev, &geo);
--		if (ret)
--			return ret;
--		if (copy_to_user((struct hd_geometry __user *)arg, &geo,
--					sizeof(geo)))
--			return -EFAULT;
--		return 0;
--	}
-+/*
-+ * always keep this in sync with compat_blkdev_ioctl()
-+ */
-+int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
-+			unsigned long arg)
-+{
-+	struct backing_dev_info *bdi;
-+	void __user *argp = (void __user *)arg;
-+	loff_t size;
-+	unsigned int max_sectors;
-+
-+	switch (cmd) {
-+	case BLKFLSBUF:
-+		return blkdev_flushbuf(bdev, mode, cmd, arg);
-+	case BLKROSET:
-+		return blkdev_roset(bdev, mode, cmd, arg);
-+	case BLKDISCARD:
-+		return blk_ioctl_discard(bdev, mode, arg, 0);
-+	case BLKSECDISCARD:
-+		return blk_ioctl_discard(bdev, mode, arg,
-+				BLKDEV_DISCARD_SECURE);
-+	case BLKZEROOUT:
-+		return blk_ioctl_zeroout(bdev, mode, arg);
-+	case HDIO_GETGEO:
-+		return blkdev_getgeo(bdev, argp);
- 	case BLKRAGET:
- 	case BLKFRAGET:
- 		if (!arg)
-@@ -414,28 +460,11 @@ int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
- 		bdi->ra_pages = (arg * 512) / PAGE_CACHE_SIZE;
- 		return 0;
- 	case BLKBSZSET:
--		/* set the logical block size */
--		if (!capable(CAP_SYS_ADMIN))
--			return -EACCES;
--		if (!arg)
--			return -EINVAL;
--		if (get_user(n, (int __user *) arg))
--			return -EFAULT;
--		if (!(mode & FMODE_EXCL)) {
--			bdgrab(bdev);
--			if (blkdev_get(bdev, mode | FMODE_EXCL, &bdev) < 0)
--				return -EBUSY;
--		}
--		ret = set_blocksize(bdev, n);
--		if (!(mode & FMODE_EXCL))
--			blkdev_put(bdev, mode | FMODE_EXCL);
--		return ret;
-+		return blkdev_bszset(bdev, mode, argp);
- 	case BLKPG:
--		ret = blkpg_ioctl(bdev, (struct blkpg_ioctl_arg __user *) arg);
--		break;
-+		return blkpg_ioctl(bdev, argp);
- 	case BLKRRPART:
--		ret = blkdev_reread_part(bdev);
--		break;
-+		return blkdev_reread_part(bdev);
- 	case BLKGETSIZE:
- 		size = i_size_read(bdev->bd_inode);
- 		if ((size >> 9) > ~0UL)
-@@ -447,11 +476,9 @@ int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
- 	case BLKTRACESTOP:
- 	case BLKTRACESETUP:
- 	case BLKTRACETEARDOWN:
--		ret = blk_trace_ioctl(bdev, cmd, (char __user *) arg);
--		break;
-+		return blk_trace_ioctl(bdev, cmd, argp);
- 	default:
--		ret = __blkdev_driver_ioctl(bdev, mode, cmd, arg);
-+		return __blkdev_driver_ioctl(bdev, mode, cmd, arg);
- 	}
--	return ret;
- }
- EXPORT_SYMBOL_GPL(blkdev_ioctl);
--- 
-1.9.1
+i just noticed this and wanted to note that an old
+glibc can fail on a new kernel with this patch if
+an application uses MINSIGSTKSZ altstack.
+
+(the specific LTP bug could have been fixed on the libc
+side, checking against whatever the libc MINSIGSTKSZ is
+as long as it is larger than the kernel value, which
+makes sense as userspace may have additional overhead
+the kernel is not aware of so please don't try to keep
+this in sync with glibc.. hopefully there will not be
+another change though).
+
+> Will
+> 
+> > diff --git a/arch/arm64/include/uapi/asm/signal.h b/arch/arm64/include/uapi/asm/signal.h
+> > index 8d1e723..991bf5d 100644
+> > --- a/arch/arm64/include/uapi/asm/signal.h
+> > +++ b/arch/arm64/include/uapi/asm/signal.h
+> > @@ -19,6 +19,9 @@
+> >  /* Required for AArch32 compatibility. */
+> >  #define SA_RESTORER	0x04000000
+> >  
+> > +#define MINSIGSTKSZ 5120
+> > +#define SIGSTKSZ    16384
+> > +
+> >  #include <asm-generic/signal.h>
+> >  
+> >  #endif
+> > diff --git a/include/uapi/asm-generic/signal.h b/include/uapi/asm-generic/signal.h
+> > index 9df61f1..b98b67b 100644
+> > --- a/include/uapi/asm-generic/signal.h
+> > +++ b/include/uapi/asm-generic/signal.h
+> > @@ -80,8 +80,10 @@
+> >   *	SA_RESTORER	0x04000000
+> >   */
+> >  
+> > +#if !defined MINSIGSTKSZ || !defined SIGSTKSZ
+> >  #define MINSIGSTKSZ	2048
+> >  #define SIGSTKSZ	8192
+> > +#endif
+> >  
+> >  #ifndef __ASSEMBLY__
+> >  typedef struct {
+> > -- 
+> > 1.7.9.5
+> > 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
