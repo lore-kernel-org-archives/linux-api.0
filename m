@@ -1,37 +1,64 @@
-From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH v5 8/9] vfs: Add vfs_copy_file_range() support for
- pagecache copies
-Date: Wed, 14 Oct 2015 22:56:30 -0700
-Message-ID: <20151015055630.GA8373@infradead.org>
-References: <1443634014-3026-1-git-send-email-Anna.Schumaker@Netapp.com>
- <1443634014-3026-9-git-send-email-Anna.Schumaker@Netapp.com>
- <20151011142203.GA31867@infradead.org>
- <20151012231749.GC11398@birch.djwong.org>
- <561E980C.9010509@Netapp.com>
- <CALCETrU0-Q-q0u0BAPwu+mbyS+LVp6M1Hqro3xwzSm7eNCbEmg@mail.gmail.com>
- <20151014182701.GC31225@infradead.org>
- <CALCETrWrHs6x+aZ7c=sySRCdzwdfUQZH_DL++vLL78NXXN+7FQ@mail.gmail.com>
- <20151014184946.GA15214@infradead.org>
- <CALCETrV2ZG=EV5KLEeOERSbDjXCyaULAn0k34msSPFWvf0Tm9w@mail.gmail.com>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: [PATCH v4 03/79] drm.h: use __kernel_size_t instead of size_t
+Date: Thu, 15 Oct 2015 07:55:41 +0200
+Message-ID: <1444888618-4506-4-git-send-email-mikko.rapeli@iki.fi>
+References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrV2ZG=EV5KLEeOERSbDjXCyaULAn0k34msSPFWvf0Tm9w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux btrfs Developers List <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Zach Brown <zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: mikko.rapeli@iki.fi, David Airlie <airlied@linux.ie>, dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 14, 2015 at 11:53:45AM -0700, Andy Lutomirski wrote:
-> Would copy_file_range without the reflink option removed still be
-> permitted to link blocks on supported filesystems (btrfs and maybe
-> XFS)?
+=46all back to size_t for non Linux platforms.
 
-Absolutely.  Unless the COPY_FALLOCATE or whatever we call it option is
-specified of course.  But I'd really love to get basic copy
-infrastructure in for 4.4 and then define these options later.
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+=46ixes userspace compilation error:
+
+drm/drm.h:132:2: error: unknown type name =E2=80=98size_t=E2=80=99
+
+Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
+---
+ include/uapi/drm/drm.h | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/include/uapi/drm/drm.h b/include/uapi/drm/drm.h
+index 3801584..b4e92eb 100644
+--- a/include/uapi/drm/drm.h
++++ b/include/uapi/drm/drm.h
+@@ -54,6 +54,7 @@ typedef int32_t  __s32;
+ typedef uint32_t __u32;
+ typedef int64_t  __s64;
+ typedef uint64_t __u64;
++typedef size_t   __kernel_size_t;
+ typedef unsigned long drm_handle_t;
+=20
+ #endif
+@@ -129,11 +130,11 @@ struct drm_version {
+ 	int version_major;	  /**< Major version */
+ 	int version_minor;	  /**< Minor version */
+ 	int version_patchlevel;	  /**< Patch level */
+-	size_t name_len;	  /**< Length of name buffer */
++	__kernel_size_t name_len;	  /**< Length of name buffer */
+ 	char __user *name;	  /**< Name of driver */
+-	size_t date_len;	  /**< Length of date buffer */
++	__kernel_size_t date_len;	  /**< Length of date buffer */
+ 	char __user *date;	  /**< User-space buffer to hold date */
+-	size_t desc_len;	  /**< Length of desc buffer */
++	__kernel_size_t desc_len;	  /**< Length of desc buffer */
+ 	char __user *desc;	  /**< User-space buffer to hold desc */
+ };
+=20
+@@ -143,7 +144,7 @@ struct drm_version {
+  * \sa drmGetBusid() and drmSetBusId().
+  */
+ struct drm_unique {
+-	size_t unique_len;	  /**< Length of unique */
++	__kernel_size_t unique_len;	  /**< Length of unique */
+ 	char __user *unique;	  /**< Unique name for driver instantiation */
+ };
+=20
+--=20
+2.5.0
