@@ -1,43 +1,36 @@
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH v4 63/79] include/uapi/linux/kexec.h: use __kernel_size_t instead of size_t
-Date: Thu, 15 Oct 2015 07:56:41 +0200
-Message-ID: <1444888618-4506-64-git-send-email-mikko.rapeli@iki.fi>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: [PATCH v4 53/79] include/uapi/linux/errqueue.h: include linux/time.h
+Date: Thu, 15 Oct 2015 07:56:31 +0200
+Message-ID: <1444888618-4506-54-git-send-email-mikko.rapeli@iki.fi>
 References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: mikko.rapeli-X3B1VOXEql0@public.gmane.org, Eric Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: mikko.rapeli@iki.fi, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-=46ixes userspace compilation error:
+Fixes userspace compilation error:
 
-error: unknown type name =E2=80=98size_t=E2=80=99
-  size_t bufsz;
+error: array type has incomplete element type
+ struct timespec ts[3];
 
-Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 ---
- include/uapi/linux/kexec.h | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ include/uapi/linux/errqueue.h | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/include/uapi/linux/kexec.h b/include/uapi/linux/kexec.h
-index 99048e5..26be201 100644
---- a/include/uapi/linux/kexec.h
-+++ b/include/uapi/linux/kexec.h
-@@ -50,9 +50,9 @@
-  */
- struct kexec_segment {
- 	const void *buf;
--	size_t bufsz;
-+	__kernel_size_t bufsz;
- 	const void *mem;
--	size_t memsz;
-+	__kernel_size_t memsz;
- };
-=20
- #endif /* __KERNEL__ */
---=20
+diff --git a/include/uapi/linux/errqueue.h b/include/uapi/linux/errqueue.h
+index 07bdce1..6b1cdc6 100644
+--- a/include/uapi/linux/errqueue.h
++++ b/include/uapi/linux/errqueue.h
+@@ -2,6 +2,7 @@
+ #define _UAPI_LINUX_ERRQUEUE_H
+ 
+ #include <linux/types.h>
++#include <linux/time.h>
+ 
+ struct sock_extended_err {
+ 	__u32	ee_errno;	
+-- 
 2.5.0
