@@ -1,7 +1,7 @@
 From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v4 32/79] include/uapi/asm-generic/ipcbuf.h: include linux/posix_types.h
-Date: Thu, 15 Oct 2015 07:56:10 +0200
-Message-ID: <1444888618-4506-33-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH v4 31/79] include/uapi/linux/sysctl.h: use __kernel_size_t instead of size_t
+Date: Thu, 15 Oct 2015 07:56:09 +0200
+Message-ID: <1444888618-4506-32-git-send-email-mikko.rapeli@iki.fi>
 References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,31 +10,33 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: mikko.rapeli@iki.fi, Arnd Bergmann <arnd@arndb.de>, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+Cc: mikko.rapeli@iki.fi, Yasuaki Ishimatsu <isimatu.yasuaki@jp.fujitsu.com>, Prarit Bhargava <prarit@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 =46ixes userspace compilation error:
 
-error: unknown type name =E2=80=98__kernel_key_t=E2=80=99
+error: unknown type name =E2=80=98size_t=E2=80=99
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 ---
- include/uapi/asm-generic/ipcbuf.h | 2 ++
- 1 file changed, 2 insertions(+)
+ include/uapi/linux/sysctl.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/include/uapi/asm-generic/ipcbuf.h b/include/uapi/asm-gener=
-ic/ipcbuf.h
-index 3dbcc1e..909f825 100644
---- a/include/uapi/asm-generic/ipcbuf.h
-+++ b/include/uapi/asm-generic/ipcbuf.h
-@@ -1,6 +1,8 @@
- #ifndef __ASM_GENERIC_IPCBUF_H
- #define __ASM_GENERIC_IPCBUF_H
+diff --git a/include/uapi/linux/sysctl.h b/include/uapi/linux/sysctl.h
+index 0956373..6595f3a 100644
+--- a/include/uapi/linux/sysctl.h
++++ b/include/uapi/linux/sysctl.h
+@@ -37,9 +37,9 @@ struct __sysctl_args {
+ 	int __user *name;
+ 	int nlen;
+ 	void __user *oldval;
+-	size_t __user *oldlenp;
++	__kernel_size_t __user *oldlenp;
+ 	void __user *newval;
+-	size_t newlen;
++	__kernel_size_t newlen;
+ 	unsigned long __unused[4];
+ };
 =20
-+#include <linux/posix_types.h>
-+
- /*
-  * The generic ipc64_perm structure:
-  * Note extra padding because this structure is passed back and forth
 --=20
 2.5.0
