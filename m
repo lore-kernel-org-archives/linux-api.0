@@ -1,50 +1,37 @@
-From: Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH] selftests: memfd_test: Revised STACK_SIZE to make it
- 16-byte aligned
-Date: Thu, 15 Oct 2015 11:22:16 +0800
-Message-ID: <CAG2=9p9xW2u=Cac9BE7sWPCq8zaYs-tmaQbHm-SM2ZhEMH4Tow@mail.gmail.com>
-References: <1443684782-10898-1-git-send-email-zhang.chunyan@linaro.org>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH v5 8/9] vfs: Add vfs_copy_file_range() support for
+ pagecache copies
+Date: Wed, 14 Oct 2015 22:56:30 -0700
+Message-ID: <20151015055630.GA8373@infradead.org>
+References: <1443634014-3026-1-git-send-email-Anna.Schumaker@Netapp.com>
+ <1443634014-3026-9-git-send-email-Anna.Schumaker@Netapp.com>
+ <20151011142203.GA31867@infradead.org>
+ <20151012231749.GC11398@birch.djwong.org>
+ <561E980C.9010509@Netapp.com>
+ <CALCETrU0-Q-q0u0BAPwu+mbyS+LVp6M1Hqro3xwzSm7eNCbEmg@mail.gmail.com>
+ <20151014182701.GC31225@infradead.org>
+ <CALCETrWrHs6x+aZ7c=sySRCdzwdfUQZH_DL++vLL78NXXN+7FQ@mail.gmail.com>
+ <20151014184946.GA15214@infradead.org>
+ <CALCETrV2ZG=EV5KLEeOERSbDjXCyaULAn0k34msSPFWvf0Tm9w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1443684782-10898-1-git-send-email-zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrV2ZG=EV5KLEeOERSbDjXCyaULAn0k34msSPFWvf0Tm9w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux btrfs Developers List <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Zach Brown <zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hello Shuah,
+On Wed, Oct 14, 2015 at 11:53:45AM -0700, Andy Lutomirski wrote:
+> Would copy_file_range without the reflink option removed still be
+> permitted to link blocks on supported filesystems (btrfs and maybe
+> XFS)?
 
-Can this patch be allowed to merge into next realse?
-
-Thanks,
-Chunyan
-
-On Thu, Oct 1, 2015 at 3:33 PM, Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
-> There is a mandate of 16-byte aligned stack on AArch64 [1], so the
-> STACK_SIZE here should also be 16-byte aligned, otherwise we would
-> get an error when calling clone().
->
-> [1] http://lxr.free-electrons.com/source/arch/arm64/kernel/process.c#L265
->
-> Signed-off-by: Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-> ---
->  tools/testing/selftests/memfd/memfd_test.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
->
-> diff --git a/tools/testing/selftests/memfd/memfd_test.c b/tools/testing/selftests/memfd/memfd_test.c
-> index 0b9eafb..aa5d3eb 100644
-> --- a/tools/testing/selftests/memfd/memfd_test.c
-> +++ b/tools/testing/selftests/memfd/memfd_test.c
-> @@ -18,7 +18,7 @@
->  #include <unistd.h>
->
->  #define MFD_DEF_SIZE 8192
-> -#define STACK_SIZE 65535
-> +#define STACK_SIZE 65536
->
->  static int sys_memfd_create(const char *name,
->                             unsigned int flags)
-> --
-> 1.9.1
->
+Absolutely.  Unless the COPY_FALLOCATE or whatever we call it option is
+specified of course.  But I'd really love to get basic copy
+infrastructure in for 4.4 and then define these options later.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
