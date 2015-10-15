@@ -1,62 +1,54 @@
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH] linux/if.h linux/hdlc/ioctl.h: move IFNAMSIZ definition to hdlc/ioctl.h
-Date: Thu, 15 Oct 2015 20:11:54 +0200
-Message-ID: <1444932714-13156-1-git-send-email-mikko.rapeli@iki.fi>
-References: <20151015180850.GC6104@lakka.kapsi.fi>
+From: Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>
+Subject: Re: [PATCH v4 71/79] include/uapi/linux/fuse.h: use linux/types.h
+ also in userspace
+Date: Thu, 15 Oct 2015 20:32:45 +0200
+Message-ID: <CAJfpegtSK-ttDXN+vz+yzsU9P1m7fDCn2VwXfHyJuWL6-O-g3g@mail.gmail.com>
+References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
+	<1444888618-4506-72-git-send-email-mikko.rapeli@iki.fi>
+	<CAJfpegv2P0=FCsqriYteyZQ9Ldu4DE1JfNs=URW7Cd-9fpA=oQ@mail.gmail.com>
+	<20151015174154.GZ6104@lakka.kapsi.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151015180850.GC6104-dqH1CgrzRhOk/eJAJmRu5A@public.gmane.org>
+In-Reply-To: <20151015174154.GZ6104-dqH1CgrzRhOk/eJAJmRu5A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: fransklaver-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: mikko.rapeli-X3B1VOXEql0@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Cc: Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, fuse-devel <fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-=46ixes userspace compiler error:
+On Thu, Oct 15, 2015 at 7:41 PM, Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org> wrote:
+> On Thu, Oct 15, 2015 at 05:20:24PM +0200, Miklos Szeredi wrote:
+>> On Thu, Oct 15, 2015 at 7:56 AM, Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org> wrote:
+>> > Kernel headers should not use stdint.h.
+>>
+>> Including <linux/types.h> breaks compile of library on non-Linux
+>> archs.  Allowing this patch would mean having a different header in
+>> the fuse lib as the one in the kernel.  This is useless complexity and
+>> a source of bugs.  We've already been there, and much prefer the
+>> current state.
+>
+> Hmm. Why should Linux uapi header care about non-Linux platforms?
+>
+> If fuse lib already has an embedded copy of this header, why should
+> this change break anything fuse lib?
 
-error: =E2=80=98IFNAMSIZ=E2=80=99 undeclared here (not in a function)
+It has a copy, but that copy is often updated with new features taken
+from the kernel.  There's no reason to have two different versions of
+the header file for no good reason.
 
-Suggested by Frans Klaver <fransklaver-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> on lkml message
-<20150530195223.GA15645-LuJdRk73L+f/9pzu0YdTqQ@public.gmane.org>.
+> In my other patches I got review comments that kernel headers should not
+> use <stdint.h> and also Documentation/CodingStyle section 5 says:
+>
+>  (e) Types safe for use in userspace.
+>
+>      In certain structures which are visible to userspace, we cannot
+>      require C99 types and cannot use the 'u32' form above. Thus, we
+>      use __u32 and similar types in all structures which are shared
+>      with userspace.
 
-Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
----
- include/uapi/linux/hdlc/ioctl.h | 1 +
- include/uapi/linux/if.h         | 6 ++----
- 2 files changed, 3 insertions(+), 4 deletions(-)
+Ok, if you cannot require C99, then the __uXX types are the way to go.
+But for the fuse API we *can* use C99 types, nothing preventing us
+from doing it.
 
-diff --git a/include/uapi/linux/hdlc/ioctl.h b/include/uapi/linux/hdlc/=
-ioctl.h
-index 04bc027..d1b1de5 100644
---- a/include/uapi/linux/hdlc/ioctl.h
-+++ b/include/uapi/linux/hdlc/ioctl.h
-@@ -1,6 +1,7 @@
- #ifndef __HDLC_IOCTL_H__
- #define __HDLC_IOCTL_H__
-=20
-+#define IFNAMSIZ        16
-=20
- #define GENERIC_HDLC_VERSION 4	/* For synchronization with sethdlc uti=
-lity */
-=20
-diff --git a/include/uapi/linux/if.h b/include/uapi/linux/if.h
-index 9cf2394..0f98f0a 100644
---- a/include/uapi/linux/if.h
-+++ b/include/uapi/linux/if.h
-@@ -22,10 +22,8 @@
- #include <linux/types.h>		/* for "__kernel_caddr_t" et al	*/
- #include <linux/socket.h>		/* for "struct sockaddr" et al	*/
- #include <linux/compiler.h>		/* for "__user" et al           */
--
--#define	IFNAMSIZ	16
--#define	IFALIASZ	256
--#include <linux/hdlc/ioctl.h>
-+#include <linux/hdlc/ioctl.h>           /* for IFNAMSIZ               =
-  */
-+#define        IFALIASZ        256
-=20
- /**
-  * enum net_device_flags - &struct net_device flags
---=20
-2.6.1
+Thanks,
+Miklos
