@@ -1,71 +1,111 @@
-From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v4 75/79] include/uapi/xen/privcmd.h: fix compilation in userspace
-Date: Thu, 15 Oct 2015 07:56:53 +0200
-Message-ID: <1444888618-4506-76-git-send-email-mikko.rapeli@iki.fi>
+From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Subject: [PATCH v4 76/79] coda_psdev.h: move upc_req definition from uapi to kernel side headers
+Date: Thu, 15 Oct 2015 07:56:54 +0200
+Message-ID: <1444888618-4506-77-git-send-email-mikko.rapeli@iki.fi>
 References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: mikko.rapeli@iki.fi, Stefano Stabellini <stefano.stabellini@eu.citrix.com>, Russell King <linux@arm.linux.org.uk>, Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>, Boris Ostrovsky <boris.ostrovsky@oracle.com>, David Vrabel <david.vrabel@citrix.com>, xen-devel@lists.xenproject.org, linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: mikko.rapeli-X3B1VOXEql0@public.gmane.org, Jan Harkes <jaharkes-ETDLCGt7PQU3uPMLIKxrzw@public.gmane.org>, coda-ETDLCGt7PQU3uPMLIKxrzw@public.gmane.org, codalist-/uMB558Y47wP4a1z8dhFYw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-xen/interface/xen.h is not exported from kernel headers so remove the
-dependency and provide needed defines for domid_t and xen_pfn_t if they
-are not already defined by some other e.g. Xen specific headers.
+Only users of upc_req in kernel side fs/coda/psdev.c and fs/coda/upcall=
+=2Ec
+already include linux/coda_psdev.h.
 
-Suggested by Andrew Cooper <andrew.cooper3@citrix.com> on lkml message
-<5569F9C9.8000607@citrix.com>.
+Suggested by Jan Harkes <jaharkes-ETDLCGt7PQU3uPMLIKxrzw@public.gmane.org> on lkml message
+<20150531111913.GA23377-ETDLCGt7PQU3uPMLIKxrzw@public.gmane.org>.
 
-The ifdef for ARM is ugly but did not find better solutions for it.
+=46ixes these include/uapi/linux/coda_psdev.h compilation errors in use=
+rspace:
 
-Fixes userspace compilation error:
+=2E/linux/coda_psdev.h:12:19: error: field =E2=80=98uc_chain=E2=80=99 h=
+as incomplete type
+  struct list_head    uc_chain;
+                   ^
+=2E/linux/coda_psdev.h:13:2: error: unknown type name =E2=80=98caddr_t=E2=
+=80=99
+  caddr_t             uc_data;
+  ^
+=2E/linux/coda_psdev.h:14:2: error: unknown type name =E2=80=98u_short=E2=
+=80=99
+  u_short             uc_flags;
+  ^
+=2E/linux/coda_psdev.h:15:2: error: unknown type name =E2=80=98u_short=E2=
+=80=99
+  u_short             uc_inSize;  /* Size is at most 5000 bytes */
+  ^
+=2E/linux/coda_psdev.h:16:2: error: unknown type name =E2=80=98u_short=E2=
+=80=99
+  u_short             uc_outSize;
+  ^
+=2E/linux/coda_psdev.h:17:2: error: unknown type name =E2=80=98u_short=E2=
+=80=99
+  u_short             uc_opcode;  /* copied from data to save lookup */
+  ^
+=2E/linux/coda_psdev.h:19:2: error: unknown type name =E2=80=98wait_que=
+ue_head_t=E2=80=99
+  wait_queue_head_t   uc_sleep;   /* process' wait queue */
+  ^
 
-xen/privcmd.h:38:31: fatal error: xen/interface/xen.h: No such file or directory
-
-Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
+Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 ---
- arch/arm/include/asm/xen/interface.h |  2 +-
- include/uapi/xen/privcmd.h           | 14 +++++++++++++-
- 2 files changed, 14 insertions(+), 2 deletions(-)
+ include/linux/coda_psdev.h      | 11 +++++++++++
+ include/uapi/linux/coda_psdev.h | 13 -------------
+ 2 files changed, 11 insertions(+), 13 deletions(-)
 
-diff --git a/arch/arm/include/asm/xen/interface.h b/arch/arm/include/asm/xen/interface.h
-index 5006600..68a9d99 100644
---- a/arch/arm/include/asm/xen/interface.h
-+++ b/arch/arm/include/asm/xen/interface.h
-@@ -36,7 +36,7 @@
-  * fine since it simply wouldn't be able to create any sure pfns in
-  * the first place.
-  */
--typedef uint64_t xen_pfn_t;
-+typedef __u64 xen_pfn_t;
- #define PRI_xen_pfn "llx"
- typedef uint64_t xen_ulong_t;
- #define PRI_xen_ulong "llx"
-diff --git a/include/uapi/xen/privcmd.h b/include/uapi/xen/privcmd.h
-index 7ddeeda..95b73a9 100644
---- a/include/uapi/xen/privcmd.h
-+++ b/include/uapi/xen/privcmd.h
-@@ -35,7 +35,19 @@
- 
- #include <linux/types.h>
- #include <linux/compiler.h>
--#include <xen/interface/xen.h>
-+
-+/* Might be defined by Xen specific headers, but if not */
-+#ifndef domid_t
-+typedef __u16 domid_t;
-+#endif /* domid_t */
-+
-+#ifndef xen_pfn_t
-+#if (defined __ARMEL__ || defined __ARMEB__)
-+typedef __u64 xen_pfn_t;
-+#else
-+typedef unsigned long xen_pfn_t;
-+#endif /* (defined __ARMEL__ || defined __ARMEB__) */
-+#endif /* xen_pfn_t */
- 
- struct privcmd_hypercall {
- 	__u64 op;
--- 
+diff --git a/include/linux/coda_psdev.h b/include/linux/coda_psdev.h
+index 5b8721e..b3c0830 100644
+--- a/include/linux/coda_psdev.h
++++ b/include/linux/coda_psdev.h
+@@ -19,6 +19,17 @@ struct venus_comm {
+ 	struct mutex	    vc_mutex;
+ };
+=20
++/* messages between coda filesystem in kernel and Venus */
++struct upc_req {
++        struct list_head    uc_chain;
++        caddr_t             uc_data;
++        u_short             uc_flags;
++        u_short             uc_inSize;  /* Size is at most 5000 bytes =
+*/
++        u_short             uc_outSize;
++        u_short             uc_opcode;  /* copied from data to save lo=
+okup */
++        int                 uc_unique;
++        wait_queue_head_t   uc_sleep;   /* process' wait queue */
++};
+=20
+ static inline struct venus_comm *coda_vcp(struct super_block *sb)
+ {
+diff --git a/include/uapi/linux/coda_psdev.h b/include/uapi/linux/coda_=
+psdev.h
+index 79d0598..e2c44d2 100644
+--- a/include/uapi/linux/coda_psdev.h
++++ b/include/uapi/linux/coda_psdev.h
+@@ -6,19 +6,6 @@
+ #define CODA_PSDEV_MAJOR 67
+ #define MAX_CODADEVS  5	   /* how many do we allow */
+=20
+-
+-/* messages between coda filesystem in kernel and Venus */
+-struct upc_req {
+-	struct list_head    uc_chain;
+-	caddr_t	            uc_data;
+-	u_short	            uc_flags;
+-	u_short             uc_inSize;  /* Size is at most 5000 bytes */
+-	u_short	            uc_outSize;
+-	u_short	            uc_opcode;  /* copied from data to save lookup */
+-	int		    uc_unique;
+-	wait_queue_head_t   uc_sleep;   /* process' wait queue */
+-};
+-
+ #define CODA_REQ_ASYNC  0x1
+ #define CODA_REQ_READ   0x2
+ #define CODA_REQ_WRITE  0x4
+--=20
 2.5.0
