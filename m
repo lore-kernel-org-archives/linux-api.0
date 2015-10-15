@@ -1,7 +1,7 @@
 From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v4 38/79] include/uapi/linux/rds.h: include linux/socket.h and linux/types.h
-Date: Thu, 15 Oct 2015 07:56:16 +0200
-Message-ID: <1444888618-4506-39-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH v4 36/79] include/uapi/asm-generic/signal.h: use __kernel_size_t instead of size_t
+Date: Thu, 15 Oct 2015 07:56:14 +0200
+Message-ID: <1444888618-4506-37-git-send-email-mikko.rapeli@iki.fi>
 References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,31 +10,31 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: mikko.rapeli@iki.fi, "David S. Miller" <davem@davemloft.net>, Sowmini Varadhan <sowmini.varadhan@oracle.com>, linux-api@vger.kernel.org
+Cc: mikko.rapeli@iki.fi, Arnd Bergmann <arnd@arndb.de>, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-=46ixes userspace compilation errors like:
+=46ixes userspace compiler error:
 
-error: unknown type name =E2=80=98__be32=E2=80=99
-error: field =E2=80=98dest_addr=E2=80=99 has incomplete type
-   struct sockaddr_storage dest_addr;
+error: unknown type name =E2=80=98size_t=E2=80=99
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 ---
- include/uapi/linux/rds.h | 1 +
- 1 file changed, 1 insertion(+)
+ include/uapi/asm-generic/signal.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/uapi/linux/rds.h b/include/uapi/linux/rds.h
-index 539f9f8..3bf329f 100644
---- a/include/uapi/linux/rds.h
-+++ b/include/uapi/linux/rds.h
-@@ -35,6 +35,7 @@
- #define _LINUX_RDS_H
+diff --git a/include/uapi/asm-generic/signal.h b/include/uapi/asm-gener=
+ic/signal.h
+index 9df61f1..0a7c415 100644
+--- a/include/uapi/asm-generic/signal.h
++++ b/include/uapi/asm-generic/signal.h
+@@ -111,7 +111,7 @@ struct sigaction {
+ typedef struct sigaltstack {
+ 	void __user *ss_sp;
+ 	int ss_flags;
+-	size_t ss_size;
++	__kernel_size_t ss_size;
+ } stack_t;
 =20
- #include <linux/types.h>
-+#include <linux/socket.h>
-=20
- #define RDS_IB_ABI_VERSION		0x301
-=20
+ #endif /* __ASSEMBLY__ */
 --=20
 2.5.0
