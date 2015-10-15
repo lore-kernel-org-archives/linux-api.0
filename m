@@ -1,37 +1,45 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH v5 9/9] btrfs: btrfs_copy_file_range() only supports
- reflinks
-Date: Wed, 14 Oct 2015 23:00:45 -0700
-Message-ID: <20151015060045.GA23996@infradead.org>
-References: <1443634014-3026-1-git-send-email-Anna.Schumaker@Netapp.com>
- <1443634014-3026-10-git-send-email-Anna.Schumaker@Netapp.com>
- <20151011142939.GA30905@infradead.org>
- <561B8A09.5070507@draigBrady.com>
- <20151012143444.GA10156@infradead.org>
- <20151012234106.GD11398@birch.djwong.org>
- <20151013072959.GB10794@infradead.org>
- <20151014184608.GK850@birch.djwong.org>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: [PATCH v4 43/79] include/uapi/linux/if_pppol2tp.h: include linux/in.h and linux/in6.h
+Date: Thu, 15 Oct 2015 07:56:21 +0200
+Message-ID: <1444888618-4506-44-git-send-email-mikko.rapeli@iki.fi>
+References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20151014184608.GK850@birch.djwong.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: Christoph Hellwig <hch@infradead.org>, P??draig Brady <P@draigBrady.com>, Anna Schumaker <Anna.Schumaker@netapp.com>, linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, mtk.manpages@gmail.com, andros@netapp.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: mikko.rapeli@iki.fi, James Chapman <jchapman@katalix.com>, netdev@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 14, 2015 at 11:46:08AM -0700, Darrick J. Wong wrote:
-> The documentation for fallocate ought to be updated to include that as part of
-> guaranteeing that subsequent writes to the range won't fail due to ENOSPC,
-> shared blocks will be unshared.
-> 
-> Incidentally, btrfs leaves shared blocks alone.  OTOH, given that it's totally
-> COW it probably doesn't make sense to unshare blocks anyway... but maybe I
-> also don't want to dive into btrfs f-allocation behavior at this time. :)
-> 
-> Ok, so I'll rework the XFS funshare code into something that hangs off the
-> regular fallocate call, and get rid of the explicit 'funshare' bits.
+=46ixes userspace compilation errors like:
 
-Yes, that would be my preference.  I'd also like to understand what
-exactly btrfs does in fallocate.
+error: field =E2=80=98addr=E2=80=99 has incomplete type
+ struct sockaddr_in addr; /* IP address and port to send to */
+                    ^
+error: field =E2=80=98addr=E2=80=99 has incomplete type
+ struct sockaddr_in6 addr; /* IP address and port to send to */
+
+Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
+---
+ include/uapi/linux/if_pppol2tp.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/include/uapi/linux/if_pppol2tp.h b/include/uapi/linux/if_p=
+ppol2tp.h
+index 163e8ad..4bd1f55 100644
+--- a/include/uapi/linux/if_pppol2tp.h
++++ b/include/uapi/linux/if_pppol2tp.h
+@@ -16,7 +16,8 @@
+ #define _UAPI__LINUX_IF_PPPOL2TP_H
+=20
+ #include <linux/types.h>
+-
++#include <linux/in.h>
++#include <linux/in6.h>
+=20
+ /* Structure used to connect() the socket to a particular tunnel UDP
+  * socket over IPv4.
+--=20
+2.5.0
