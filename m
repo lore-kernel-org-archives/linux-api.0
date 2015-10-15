@@ -1,111 +1,51 @@
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH v4 76/79] coda_psdev.h: move upc_req definition from uapi to kernel side headers
-Date: Thu, 15 Oct 2015 07:56:54 +0200
-Message-ID: <1444888618-4506-77-git-send-email-mikko.rapeli@iki.fi>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: [PATCH v4 66/79] include/uapi/linux/coda.h: use __kernel_pid_t and add u_short etc definitions for userspace
+Date: Thu, 15 Oct 2015 07:56:44 +0200
+Message-ID: <1444888618-4506-67-git-send-email-mikko.rapeli@iki.fi>
 References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: mikko.rapeli-X3B1VOXEql0@public.gmane.org, Jan Harkes <jaharkes-ETDLCGt7PQU3uPMLIKxrzw@public.gmane.org>, coda-ETDLCGt7PQU3uPMLIKxrzw@public.gmane.org, codalist-/uMB558Y47wP4a1z8dhFYw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: mikko.rapeli@iki.fi, Jan Harkes <jaharkes@cs.cmu.edu>, coda@cs.cmu.edu, codalist@coda.cs.cmu.edu, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Only users of upc_req in kernel side fs/coda/psdev.c and fs/coda/upcall=
-=2Ec
-already include linux/coda_psdev.h.
+Fixes userspace compilation errors about unknown pid_t, u_short etc types.
 
-Suggested by Jan Harkes <jaharkes-ETDLCGt7PQU3uPMLIKxrzw@public.gmane.org> on lkml message
-<20150531111913.GA23377-ETDLCGt7PQU3uPMLIKxrzw@public.gmane.org>.
-
-=46ixes these include/uapi/linux/coda_psdev.h compilation errors in use=
-rspace:
-
-=2E/linux/coda_psdev.h:12:19: error: field =E2=80=98uc_chain=E2=80=99 h=
-as incomplete type
-  struct list_head    uc_chain;
-                   ^
-=2E/linux/coda_psdev.h:13:2: error: unknown type name =E2=80=98caddr_t=E2=
-=80=99
-  caddr_t             uc_data;
-  ^
-=2E/linux/coda_psdev.h:14:2: error: unknown type name =E2=80=98u_short=E2=
-=80=99
-  u_short             uc_flags;
-  ^
-=2E/linux/coda_psdev.h:15:2: error: unknown type name =E2=80=98u_short=E2=
-=80=99
-  u_short             uc_inSize;  /* Size is at most 5000 bytes */
-  ^
-=2E/linux/coda_psdev.h:16:2: error: unknown type name =E2=80=98u_short=E2=
-=80=99
-  u_short             uc_outSize;
-  ^
-=2E/linux/coda_psdev.h:17:2: error: unknown type name =E2=80=98u_short=E2=
-=80=99
-  u_short             uc_opcode;  /* copied from data to save lookup */
-  ^
-=2E/linux/coda_psdev.h:19:2: error: unknown type name =E2=80=98wait_que=
-ue_head_t=E2=80=99
-  wait_queue_head_t   uc_sleep;   /* process' wait queue */
-  ^
-
-Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 ---
- include/linux/coda_psdev.h      | 11 +++++++++++
- include/uapi/linux/coda_psdev.h | 13 -------------
- 2 files changed, 11 insertions(+), 13 deletions(-)
+ include/uapi/linux/coda.h | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/coda_psdev.h b/include/linux/coda_psdev.h
-index 5b8721e..b3c0830 100644
---- a/include/linux/coda_psdev.h
-+++ b/include/linux/coda_psdev.h
-@@ -19,6 +19,17 @@ struct venus_comm {
- 	struct mutex	    vc_mutex;
+diff --git a/include/uapi/linux/coda.h b/include/uapi/linux/coda.h
+index 695fade..591bb42 100644
+--- a/include/uapi/linux/coda.h
++++ b/include/uapi/linux/coda.h
+@@ -100,7 +100,14 @@ typedef unsigned long long u_quad_t;
+ #if defined(__linux__)
+ #include <linux/time.h>
+ #define cdev_t u_quad_t
++typedef unsigned long u_long;
++typedef unsigned int u_int;
++typedef unsigned short u_short;
++typedef u_long ino_t;
++
+ #ifndef __KERNEL__
++typedef u_long dev_t;
++typedef void * caddr_t;
+ #if !defined(_UQUAD_T_) && (!defined(__GLIBC__) || __GLIBC__ < 2)
+ #define _UQUAD_T_ 1
+ typedef unsigned long long u_quad_t;
+@@ -295,8 +302,8 @@ struct coda_statfs {
+ struct coda_in_hdr {
+     u_int32_t opcode;
+     u_int32_t unique;	    /* Keep multiple outstanding msgs distinct */
+-    pid_t pid;
+-    pid_t pgid;
++    __kernel_pid_t pid;
++    __kernel_pid_t pgid;
+     vuid_t uid;
  };
-=20
-+/* messages between coda filesystem in kernel and Venus */
-+struct upc_req {
-+        struct list_head    uc_chain;
-+        caddr_t             uc_data;
-+        u_short             uc_flags;
-+        u_short             uc_inSize;  /* Size is at most 5000 bytes =
-*/
-+        u_short             uc_outSize;
-+        u_short             uc_opcode;  /* copied from data to save lo=
-okup */
-+        int                 uc_unique;
-+        wait_queue_head_t   uc_sleep;   /* process' wait queue */
-+};
-=20
- static inline struct venus_comm *coda_vcp(struct super_block *sb)
- {
-diff --git a/include/uapi/linux/coda_psdev.h b/include/uapi/linux/coda_=
-psdev.h
-index 79d0598..e2c44d2 100644
---- a/include/uapi/linux/coda_psdev.h
-+++ b/include/uapi/linux/coda_psdev.h
-@@ -6,19 +6,6 @@
- #define CODA_PSDEV_MAJOR 67
- #define MAX_CODADEVS  5	   /* how many do we allow */
-=20
--
--/* messages between coda filesystem in kernel and Venus */
--struct upc_req {
--	struct list_head    uc_chain;
--	caddr_t	            uc_data;
--	u_short	            uc_flags;
--	u_short             uc_inSize;  /* Size is at most 5000 bytes */
--	u_short	            uc_outSize;
--	u_short	            uc_opcode;  /* copied from data to save lookup */
--	int		    uc_unique;
--	wait_queue_head_t   uc_sleep;   /* process' wait queue */
--};
--
- #define CODA_REQ_ASYNC  0x1
- #define CODA_REQ_READ   0x2
- #define CODA_REQ_WRITE  0x4
---=20
+ 
+-- 
 2.5.0
