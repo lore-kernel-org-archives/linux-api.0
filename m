@@ -1,104 +1,145 @@
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: Re: [PATCH v4 75/79] include/uapi/xen/privcmd.h: fix compilation in
- userspace
-Date: Thu, 15 Oct 2015 14:35:31 +0300
-Message-ID: <20151015113531.GX6104@lakka.kapsi.fi>
-References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
- <1444888618-4506-76-git-send-email-mikko.rapeli@iki.fi>
- <561F7FF8.9030703@citrix.com>
- <20151015111801.GW6104@lakka.kapsi.fi>
- <561F8CF7.9070102@citrix.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <561F8CF7.9070102-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Vrabel <david.vrabel-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Stefano Stabellini <stefano.stabellini-mvvWK6WmYclDPfheJLI6IQ@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Konrad Rzeszutek Wilk <konrad.wilk-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Boris Ostrovsky <boris.ostrovsky-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 6/6] NVMe: Add persistent reservation ops
+Date: Thu, 15 Oct 2015 14:10:52 +0200
+Message-ID: <1444911052-9423-7-git-send-email-hch@lst.de>
+References: <1444911052-9423-1-git-send-email-hch@lst.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1444911052-9423-1-git-send-email-hch@lst.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: axboe@fb.com
+Cc: keith.busch@intel.com, linux-scsi@vger.kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 15, 2015 at 12:24:39PM +0100, David Vrabel wrote:
-> On 15/10/15 12:18, Mikko Rapeli wrote:
-> > On Thu, Oct 15, 2015 at 11:29:12AM +0100, David Vrabel wrote:
-> >> On 15/10/15 06:56, Mikko Rapeli wrote:
-> >>> xen/interface/xen.h is not exported from kernel headers so remove the
-> >>> dependency and provide needed defines for domid_t and xen_pfn_t if they
-> >>> are not already defined by some other e.g. Xen specific headers.
-> >>>
-> >>> Suggested by Andrew Cooper <andrew.cooper3-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org> on lkml message
-> >>> <5569F9C9.8000607-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>.
-> >>>
-> >>> The ifdef for ARM is ugly but did not find better solutions for it.
-> >>>
-> >>> Fixes userspace compilation error:
-> >>>
-> >>> xen/privcmd.h:38:31: fatal error: xen/interface/xen.h: No such file or directory
-> >> [...]
-> >>> --- a/include/uapi/xen/privcmd.h
-> >>> +++ b/include/uapi/xen/privcmd.h
-> >>> @@ -35,7 +35,19 @@
-> >>>  
-> >>>  #include <linux/types.h>
-> >>>  #include <linux/compiler.h>
-> >>> -#include <xen/interface/xen.h>
-> >>> +
-> >>> +/* Might be defined by Xen specific headers, but if not */
-> >>> +#ifndef domid_t
-> >>> +typedef __u16 domid_t;
-> >>> +#endif /* domid_t */
-> >>
-> >> As the kbuild bot points out, this does not work since the existence of
-> >> a typedef cannot be checked with #ifdef.
-> > 
-> > Yeah, this hack doesn't cut it. Sorry. Tried to implement these changes:
-> > http://www.spinics.net/lists/linux-api/msg11048.html
-> > 
-> >> I'm not really sure what problem you're trying to solve.  A user space
-> >> program making use of this interface gets the domid_t and xen_pfn_t etc
-> >> typedefs from the headers provided as part of the libxenctrl library.
-> > 
-> > I'm trying to make sure that kernel headers in userspace compile with minimal
-> > dependencies which are gcc and libc.
-> > 
-> > For me it is clear by now that many Linux API's and ABI's like Xen parts do
-> > not live in the uapi header files and instead there's a separate userspace
-> > library with needed headers and defines which have embedded copies of
-> > the needed API and ABI definitions, like header files.
-> > 
-> > So how could this file be changed so that it compiles in userspace without
-> > definitions from libxenctrl?
-> 
-> I don't think anything needs to be changed.
-> 
-> Instead I would make your compilation check of this header dependent on
-> the existence of the xen/interface/xen.h header. Or you may exclude the
-> check of this header entirely.
+From: Keith Busch <keith.busch@intel.com>
 
-There are not many headers in uapi which require additional userspace
-headers to compile (I'm not saying that uapi headers represent the full
-API's/ABI's, it's clear they don't). If there are ~700 headers and just a
-single one needs an exception and additional dependencies, I would try to
-make it work without the dependency. I just need some advice and guidance
-from maintainers how to do this.
+Signed-off-by: Keith Busch <keith.busch@intel.com>
+[hch: rebased, set PTPL=1]
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ drivers/nvme/host/pci.c | 95 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 95 insertions(+)
 
-Or we should start tracking these userspace library dependencies too,
-at least at linux-headers package levels in distributions. This might
-be a good idea anyway, but then we might as well move headers like this
-directly to the userspace library and out of include/uapi.
-
-Both would solve the non-compiling uapi header problem.
-
-> > I guess I could copy the needed definitions for domid_t and xen_pfn_t from
-> > xen/interface/xen.h of libxenctrl. That I should have done to begin with
-> > instead of trying to hack something on my own.
-> 
-> I do not want definitions duplicated/copied from the hypervisor ABI
-> headers.  This causes problems when support for new architectures is
-> added (for example).
-
-Understood.
-
--Mikko
-
-> David
+diff --git a/drivers/nvme/host/pci.c b/drivers/nvme/host/pci.c
+index ad58ee3..6230608 100644
+--- a/drivers/nvme/host/pci.c
++++ b/drivers/nvme/host/pci.c
+@@ -39,8 +39,10 @@
+ #include <linux/slab.h>
+ #include <linux/t10-pi.h>
+ #include <linux/types.h>
++#include <linux/pr.h>
+ #include <scsi/sg.h>
+ #include <asm-generic/io-64-nonatomic-lo-hi.h>
++#include <asm/unaligned.h>
+ 
+ #include <uapi/linux/nvme_ioctl.h>
+ #include "nvme.h"
+@@ -2058,6 +2060,98 @@ static int nvme_revalidate_disk(struct gendisk *disk)
+ 	return 0;
+ }
+ 
++static char nvme_pr_type(enum pr_type type)
++{
++	switch (type) {
++	case PR_WRITE_EXCLUSIVE:
++		return 1;
++	case PR_EXCLUSIVE_ACCESS:
++		return 2;
++	case PR_WRITE_EXCLUSIVE_REG_ONLY:
++		return 3;
++	case PR_EXCLUSIVE_ACCESS_REG_ONLY:
++		return 4;
++	case PR_WRITE_EXCLUSIVE_ALL_REGS:
++		return 5;
++	case PR_EXCLUSIVE_ACCESS_ALL_REGS:
++		return 6;
++	default:
++		return 0;
++	}
++};
++
++static int nvme_pr_command(struct block_device *bdev, u32 cdw10,
++				u64 key, u64 sa_key, u8 op)
++{
++	struct nvme_ns *ns = bdev->bd_disk->private_data;
++	struct nvme_command c;
++	u8 data[16] = { 0, };
++
++	put_unaligned_le64(key, &data[0]);
++	put_unaligned_le64(sa_key, &data[8]);
++
++	memset(&c, 0, sizeof(c));
++	c.common.opcode = op;
++	c.common.nsid = ns->ns_id;
++	c.common.cdw10[0] = cdw10;
++
++	return nvme_submit_sync_cmd(ns->queue, &c, data, 16);
++}
++
++static int nvme_pr_register(struct block_device *bdev, u64 old,
++		u64 new, unsigned flags)
++{
++	u32 cdw10;
++
++	if (flags & ~PR_FL_IGNORE_KEY)
++		return -EOPNOTSUPP;
++
++	cdw10 = old ? 2 : 0;
++	cdw10 |= (flags & PR_FL_IGNORE_KEY) ? 1 << 3 : 0;
++	cdw10 |= (1 << 30) | (1 << 31); /* PTPL=1 */
++	return nvme_pr_command(bdev, cdw10, old, new, nvme_cmd_resv_register);
++}
++
++static int nvme_pr_reserve(struct block_device *bdev, u64 key,
++		enum pr_type type, unsigned flags)
++{
++	u32 cdw10;
++
++	if (flags & ~PR_FL_IGNORE_KEY)
++		return -EOPNOTSUPP;
++
++	cdw10 = nvme_pr_type(type) << 8;
++	cdw10 |= ((flags & PR_FL_IGNORE_KEY) ? 1 << 3 : 0);
++	return nvme_pr_command(bdev, cdw10, key, 0, nvme_cmd_resv_acquire);
++}
++
++static int nvme_pr_preempt(struct block_device *bdev, u64 old, u64 new,
++		enum pr_type type, bool abort)
++{
++	u32 cdw10 = nvme_pr_type(type) << 8 | abort ? 2 : 1;
++	return nvme_pr_command(bdev, cdw10, old, new, nvme_cmd_resv_acquire);
++}
++
++static int nvme_pr_clear(struct block_device *bdev, u64 key)
++{
++	u32 cdw10 = 1 | key ? 1 << 3 : 0;
++	return nvme_pr_command(bdev, cdw10, key, 0, nvme_cmd_resv_register);
++}
++
++static int nvme_pr_release(struct block_device *bdev, u64 key, enum pr_type type)
++{
++	u32 cdw10 = nvme_pr_type(type) << 8 | key ? 1 << 3 : 0;
++	return nvme_pr_command(bdev, cdw10, key, 0, nvme_cmd_resv_release);
++}
++
++static const struct pr_ops nvme_pr_ops = {
++	.pr_register	= nvme_pr_register,
++	.pr_reserve	= nvme_pr_reserve,
++	.pr_release	= nvme_pr_release,
++	.pr_preempt	= nvme_pr_preempt,
++	.pr_clear	= nvme_pr_clear,
++};
++
+ static const struct block_device_operations nvme_fops = {
+ 	.owner		= THIS_MODULE,
+ 	.ioctl		= nvme_ioctl,
+@@ -2066,6 +2160,7 @@ static const struct block_device_operations nvme_fops = {
+ 	.release	= nvme_release,
+ 	.getgeo		= nvme_getgeo,
+ 	.revalidate_disk= nvme_revalidate_disk,
++	.pr_ops		= &nvme_pr_ops,
+ };
+ 
+ static int nvme_kthread(void *data)
+-- 
+1.9.1
