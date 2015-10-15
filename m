@@ -1,19 +1,21 @@
-From: Arnd Bergmann <arnd@arndb.de>
+From: Will Deacon <will.deacon@arm.com>
 Subject: Re: [PATCHv3] ARM64:Fix MINSIGSTKSZ and SIGSTKSZ
-Date: Thu, 15 Oct 2015 14:44:05 +0200
-Message-ID: <6205380.pxTZSIhjca@wuerfel>
-References: <1444386580-10917-1-git-send-email-manjeet.p@samsung.com> <20151009103352.GK26278@arm.com> <20151015121241.GA26080@port70.net>
+Date: Thu, 15 Oct 2015 13:47:56 +0100
+Message-ID: <20151015124756.GB27524@arm.com>
+References: <1444386580-10917-1-git-send-email-manjeet.p@samsung.com>
+ <20151009103352.GK26278@arm.com>
+ <20151015121241.GA26080@port70.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-arch-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <20151015121241.GA26080@port70.net>
 Sender: linux-arch-owner@vger.kernel.org
 To: Szabolcs Nagy <nsz@port70.net>
-Cc: Will Deacon <will.deacon@arm.com>, Manjeet Pawar <manjeet.p@samsung.com>, catalin.marinas@arm.com, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, pankaj.m@samsung.com, Akhilesh Kumar <akhilesh.k@samsung.com>, Rohit Thapliyal <r.thapliyal@samsung.com>
+Cc: Manjeet Pawar <manjeet.p@samsung.com>, catalin.marinas@arm.com, arnd@arndb.de, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, pankaj.m@samsung.com, Akhilesh Kumar <akhilesh.k@samsung.com>, Rohit Thapliyal <r.thapliyal@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thursday 15 October 2015 14:12:41 Szabolcs Nagy wrote:
+On Thu, Oct 15, 2015 at 02:12:41PM +0200, Szabolcs Nagy wrote:
 > * Will Deacon <will.deacon@arm.com> [2015-10-09 11:33:52 +0100]:
 > 
 > > On Fri, Oct 09, 2015 at 03:59:40PM +0530, Manjeet Pawar wrote:
@@ -57,11 +59,12 @@ On Thursday 15 October 2015 14:12:41 Szabolcs Nagy wrote:
 > glibc can fail on a new kernel with this patch if
 > an application uses MINSIGSTKSZ altstack.
 
-Well worth noting, but I think we should consider this intentional:
+I was worried about that (which was also why I didn't Cc stable on this,
+because we shouldn't pretend that glibc and the kernel are synchronised),
+but the value *is* incorrect and glibc has already been updated. In
+other words, not merging this patch is also problematic, because we're
+advertising a size that's significantly too small.
 
-If an application built against an old glibc uses MINSIGSTKSZ, it
-current gets random data corruption of a segmentation fault that
-are both hard to track down, while a new kernel would result in
-more sensible error code that is easier to debug.
+Would you rather we kept the old incorrect value in the kernel headers?
 
-	Arnd
+Will
