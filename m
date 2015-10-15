@@ -1,48 +1,67 @@
-From: Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] Input: input.h: Fix EVIOCSFF macro inconsistency by
- using _IOW()
-Date: Wed, 14 Oct 2015 17:25:19 -0700
-Message-ID: <20151015002519.GC3673@dtor-ws>
-References: <1442510796-3062-1-git-send-email-elias.vds@gmail.com>
+From: Dmitry Torokhov <dmitry.torokhov@gmail.com>
+Subject: Re: [PATCH 2/2] Input: uinput: Sanity check on ff_effects_max and
+ EV_FF
+Date: Wed, 14 Oct 2015 17:52:26 -0700
+Message-ID: <20151015005226.GD3673@dtor-ws>
+References: <1442510988-3164-1-git-send-email-elias.vds@gmail.com>
+ <1442510988-3164-3-git-send-email-elias.vds@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-input-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1442510796-3062-1-git-send-email-elias.vds-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Elias Vanderstuyft <elias.vds-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <1442510988-3164-3-git-send-email-elias.vds@gmail.com>
+Sender: linux-input-owner@vger.kernel.org
+To: Elias Vanderstuyft <elias.vds@gmail.com>
+Cc: linux-input@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 17, 2015 at 07:26:36PM +0200, Elias Vanderstuyft wrote:
-> Just like the EVIOCSABS(abs) macro, use the more compact
-> _IOW(..., type) instead of _IOC(_IOC_WRITE, ..., sizeof(type))
-> for the EVIOCSFF macro.
+On Thu, Sep 17, 2015 at 07:29:48PM +0200, Elias Vanderstuyft wrote:
+> Currently the user can specify a non-zero value for ff_effects_max,
+> without setting the EV_FF bit.
+> Inversely,
+> the user can also set ff_effects_max to zero with the EV_FF bit set,
+> in this case the uninitialized method ff->upload can be dereferenced,
+> resulting in a kernel oops.
 > 
-> Signed-off-by: Elias Vanderstuyft <elias.vds-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-
-Applied, thank you.
-
+> Instead of adding a check in uinput_create_device() and
+> omitting setup of ff-core infrastructure silently in case the check fails,
+> perform the check early in uinput_setup_device(),
+> and print a helpful message and return -EINVAL in case the check fails.
+> 
+> Signed-off-by: Elias Vanderstuyft <elias.vds@gmail.com>
 > ---
->  include/uapi/linux/input.h | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+>  drivers/input/misc/uinput.c | 15 +++++++++++++++
+>  1 file changed, 15 insertions(+)
 > 
-> diff --git a/include/uapi/linux/input.h b/include/uapi/linux/input.h
-> index 731417c..63915a7 100644
-> --- a/include/uapi/linux/input.h
-> +++ b/include/uapi/linux/input.h
-> @@ -147,7 +147,7 @@ struct input_keymap_entry {
->  #define EVIOCGABS(abs)		_IOR('E', 0x40 + (abs), struct input_absinfo)	/* get abs value/limits */
->  #define EVIOCSABS(abs)		_IOW('E', 0xc0 + (abs), struct input_absinfo)	/* set abs value/limits */
+> diff --git a/drivers/input/misc/uinput.c b/drivers/input/misc/uinput.c
+> index 345df9b..3a90a16 100644
+> --- a/drivers/input/misc/uinput.c
+> +++ b/drivers/input/misc/uinput.c
+> @@ -393,6 +393,21 @@ static int uinput_setup_device(struct uinput_device *udev,
+>  	if (IS_ERR(user_dev))
+>  		return PTR_ERR(user_dev);
 >  
-> -#define EVIOCSFF		_IOC(_IOC_WRITE, 'E', 0x80, sizeof(struct ff_effect))	/* send a force effect to a force feedback device */
-> +#define EVIOCSFF		_IOW('E', 0x80, struct ff_effect)	/* send a force effect to a force feedback device */
->  #define EVIOCRMFF		_IOW('E', 0x81, int)			/* Erase a force effect */
->  #define EVIOCGEFFECTS		_IOR('E', 0x84, int)			/* Report number of effects playable at the same time */
->  
-> -- 
-> 1.9.3
-> 
+> +	if (!!user_dev->ff_effects_max ^ test_bit(EV_FF, dev->evbit)) {
+> +		if (user_dev->ff_effects_max)
+> +			printk(KERN_DEBUG
+> +				"%s: ff_effects_max (%u) should be zero "
+> +				"when FF_BIT is not set\n",
+> +				UINPUT_NAME, user_dev->ff_effects_max);
+> +		else
+> +			printk(KERN_DEBUG
+> +				"%s: ff_effects_max should be non-zero "
+> +				"when FF_BIT is set\n",
+> +				UINPUT_NAME);
+
+I do not think this is the right place for this check: userspace is
+allowed to write device structure before calling any ioctls to set
+various bits. Also, userspace doe snot have to explicitly set EV_FF bit
+as input_ff_create() does it for us.
+
+I think the check should be in uinput_create_device() and we should only
+check case when udev->ff_effects_max is 0 but EV_FF is set.
+
+Thanks.
 
 -- 
 Dmitry
