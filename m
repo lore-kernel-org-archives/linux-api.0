@@ -1,55 +1,66 @@
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: Re: [PATCH v4 23/79] rds.h: use __u8, __u16, __s16, __u32 and __s64
- from linux/types.h
-Date: Fri, 16 Oct 2015 01:00:25 +0300
-Message-ID: <20151015220025.GG6104@lakka.kapsi.fi>
-References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
- <1444888618-4506-24-git-send-email-mikko.rapeli@iki.fi>
- <20151015110614.GL948@oracle.com>
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: Re: [PATCH v3] selftests/seccomp: build and pass on arm64
+Date: Thu, 15 Oct 2015 15:07:52 -0700
+Message-ID: <CAGXu5jJMpSTBFqS3Xj0ftMYVwJuUU8MUbggrWW8wN5CGDBsLvA@mail.gmail.com>
+References: <20151006193025.GA11826@www.outflux.net>
+	<561FB33F.5030906@osg.samsung.com>
+	<CAGXu5jKXeu-kBie+wJODoAjoK1kX+ScFRSn0s3s_wvN+sHT1yw@mail.gmail.com>
+	<56200761.8050607@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20151015110614.GL948-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <56200761.8050607-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sowmini Varadhan <sowmini.varadhan-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: AKASHI Takahiro <takahiro.akashi-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 15, 2015 at 07:06:14AM -0400, Sowmini Varadhan wrote:
-> On (10/15/15 07:56), Mikko Rapeli wrote:
-> > Date: Thu, 15 Oct 2015 07:56:01 +0200
-> > From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-> > To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> > Cc: mikko.rapeli-X3B1VOXEql0@public.gmane.org, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, S=
-owmini
-> >  Varadhan <sowmini.varadhan-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> > Subject: [PATCH v4 23/79] rds.h: use __u8, __u16, __s16, __u32 and =
-__s64
-> >  from linux/types.h
-> > X-Mailer: git-send-email 2.6.1
-> >=20
-> > Fixes userspace compilation errors like:
-> >=20
-> > linux/rds.h:96:2: error: unknown type name =E2=80=98uint8_t=E2=80=99
->=20
-> Can't you just include <stdint.h> in linux/rds.h? (similar to the
-> fix for linux/rds)? It would reduce the deltas significantly,=20
-> and portable applications are likely to expect uint8_t etc anyway.
+On Thu, Oct 15, 2015 at 1:06 PM, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+> On 10/15/2015 12:42 PM, Kees Cook wrote:
+>> On Thu, Oct 15, 2015 at 7:07 AM, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+>>> On 10/06/2015 01:30 PM, Kees Cook wrote:
+>>>> Changing arm64 syscalls is done via a specific register set, more like s390
+>>>> than like arm (specific ptrace call) and x86 (part of general registers).
+>>>> Since (restarting) poll doesn't exist on arm64, switch to using nanosleep
+>>>> for testing restart_syscall. And since it looks like the syscall ABI is
+>>>> inconsistent on arm-compat, so we must work around it (and document it) in
+>>>> the test.
+>>>>
+>>>> Signed-off-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+>>>> ---
+>>>> v3:
+>>>>  - correctly set syscall number on native arm64.
+>>>> v2:
+>>>>  - switch to nanosleep from a bad mix of poll and ppoll for testing restart.
+>>>> ---
+>>>
+>>> Is this good to go? Failed to apply to linux-kselftest next.
+>>> If you can rebase and resend. I can get this into 4.4-rc1
+>>
+>> Yes please. :)
+>>
+>
+> ok. Please rebase to linux-kselftest next and resend the patch.
 
-What kind of portability should exported userspace headers from Linux k=
-ernel
-need?
+Am I looking at the right tree? linux-kselftest#next doesn't appear to
+have the s390 patch that was included in 4.3.
 
-Reviews to my previous changes NACKed <stdint.h> usage and
-Documentation/CodingStyle chapter 5 says:
+-Kees
 
- (e) Types safe for use in userspace.
+>
+> thanks,
+> -- Shuah
+>
+>
+> --
+> Shuah Khan
+> Sr. Linux Kernel Developer
+> Open Source Innovation Group
+> Samsung Research America (Silicon Valley)
+> shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
 
-     In certain structures which are visible to userspace, we cannot
-     require C99 types and cannot use the 'u32' form above. Thus, we
-     use __u32 and similar types in all structures which are shared
-     with userspace.
 
--Mikko
+
+-- 
+Kees Cook
+Chrome OS Security
