@@ -1,42 +1,113 @@
 From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v4 40/79] include/uapi/linux/if_tunnel.h: include linux/if.h, linux/ip.h and linux/in6.h
-Date: Thu, 15 Oct 2015 07:56:18 +0200
-Message-ID: <1444888618-4506-41-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH v4 28/79] hdspm.h: use __u8,
+	__u32 and __u64 from linux/types.h instead of stdint.h
+Date: Thu, 15 Oct 2015 07:56:06 +0200
+Message-ID: <1444888618-4506-29-git-send-email-mikko.rapeli@iki.fi>
 References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <alsa-devel-bounces@alsa-project.org>
 In-Reply-To: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <http://mailman.alsa-project.org/mailman/options/alsa-devel>,
+ <mailto:alsa-devel-request@alsa-project.org?subject=unsubscribe>
+List-Archive: <http://mailman.alsa-project.org/pipermail/alsa-devel/>
+List-Post: <mailto:alsa-devel@alsa-project.org>
+List-Help: <mailto:alsa-devel-request@alsa-project.org?subject=help>
+List-Subscribe: <http://mailman.alsa-project.org/mailman/listinfo/alsa-devel>,
+ <mailto:alsa-devel-request@alsa-project.org?subject=subscribe>
+Errors-To: alsa-devel-bounces@alsa-project.org
+Sender: alsa-devel-bounces@alsa-project.org
 To: linux-kernel@vger.kernel.org
-Cc: mikko.rapeli@iki.fi, "David S. Miller" <davem@davemloft.net>, Tom Herbert <therbert@google.com>, Pravin B Shelar <pshelar@nicira.com>, Thomas Graf <tgraf@suug.ch>, netdev@vger.kernel.org, linux-api@vger.kernel.org
+Cc: mikko.rapeli@iki.fi, alsa-devel@alsa-project.org, linux-api@vger.kernel.org, Takashi Iwai <tiwai@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-=46ixes userspace compilation errors like:
-
-error: field =E2=80=98iph=E2=80=99 has incomplete type
-error: field =E2=80=98prefix=E2=80=99 has incomplete type
+Kernel headers should use linux/types.h based definitions.
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 ---
- include/uapi/linux/if_tunnel.h | 3 +++
- 1 file changed, 3 insertions(+)
+ include/uapi/sound/hdspm.h | 40 ++++++++++++++++++----------------------
+ 1 file changed, 18 insertions(+), 22 deletions(-)
 
-diff --git a/include/uapi/linux/if_tunnel.h b/include/uapi/linux/if_tun=
-nel.h
-index af4de90..8afe695 100644
---- a/include/uapi/linux/if_tunnel.h
-+++ b/include/uapi/linux/if_tunnel.h
-@@ -2,6 +2,9 @@
- #define _UAPI_IF_TUNNEL_H_
-=20
+diff --git a/include/uapi/sound/hdspm.h b/include/uapi/sound/hdspm.h
+index 5737332..c4db6f5 100644
+--- a/include/uapi/sound/hdspm.h
++++ b/include/uapi/sound/hdspm.h
+@@ -20,11 +20,7 @@
+  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#ifdef __KERNEL__
  #include <linux/types.h>
-+#include <linux/if.h>
-+#include <linux/ip.h>
-+#include <linux/in6.h>
- #include <asm/byteorder.h>
-=20
-=20
---=20
+-#else
+-#include <stdint.h>
+-#endif
+ 
+ /* Maximum channels is 64 even on 56Mode you have 64playbacks to matrix */
+ #define HDSPM_MAX_CHANNELS      64
+@@ -46,15 +42,15 @@ enum hdspm_speed {
+ /* -------------------- IOCTL Peak/RMS Meters -------------------- */
+ 
+ struct hdspm_peak_rms {
+-	uint32_t input_peaks[64];
+-	uint32_t playback_peaks[64];
+-	uint32_t output_peaks[64];
++	__u32 input_peaks[64];
++	__u32 playback_peaks[64];
++	__u32 output_peaks[64];
+ 
+-	uint64_t input_rms[64];
+-	uint64_t playback_rms[64];
+-	uint64_t output_rms[64];
++	__u64 input_rms[64];
++	__u64 playback_rms[64];
++	__u64 output_rms[64];
+ 
+-	uint8_t speed; /* enum {ss, ds, qs} */
++	__u8 speed; /* enum {ss, ds, qs} */
+ 	int status2;
+ };
+ 
+@@ -155,21 +151,21 @@ enum hdspm_syncsource {
+ };
+ 
+ struct hdspm_status {
+-	uint8_t card_type; /* enum hdspm_io_type */
++	__u8 card_type; /* enum hdspm_io_type */
+ 	enum hdspm_syncsource autosync_source;
+ 
+-	uint64_t card_clock;
+-	uint32_t master_period;
++	__u64 card_clock;
++	__u32 master_period;
+ 
+ 	union {
+ 		struct {
+-			uint8_t sync_wc; /* enum hdspm_sync */
+-			uint8_t sync_madi; /* enum hdspm_sync */
+-			uint8_t sync_tco; /* enum hdspm_sync */
+-			uint8_t sync_in; /* enum hdspm_sync */
+-			uint8_t madi_input; /* enum hdspm_madi_input */
+-			uint8_t channel_format; /* enum hdspm_madi_channel_format */
+-			uint8_t frame_format; /* enum hdspm_madi_frame_format */
++			__u8 sync_wc; /* enum hdspm_sync */
++			__u8 sync_madi; /* enum hdspm_sync */
++			__u8 sync_tco; /* enum hdspm_sync */
++			__u8 sync_in; /* enum hdspm_sync */
++			__u8 madi_input; /* enum hdspm_madi_input */
++			__u8 channel_format; /* enum hdspm_madi_channel_format */
++			__u8 frame_format; /* enum hdspm_madi_frame_format */
+ 		} madi;
+ 	} card_specific;
+ };
+@@ -184,7 +180,7 @@ struct hdspm_status {
+ #define HDSPM_ADDON_TCO 1
+ 
+ struct hdspm_version {
+-	uint8_t card_type; /* enum hdspm_io_type */
++	__u8 card_type; /* enum hdspm_io_type */
+ 	char cardname[20];
+ 	unsigned int serial;
+ 	unsigned short firmware_rev;
+-- 
 2.5.0
