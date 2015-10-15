@@ -1,19 +1,53 @@
-From: "Mrs Cheong Yuen" <s@aglasiangranito.com>
-Subject: Possible Spam : Good News
-Date: Thu, 15 Oct 2015 12:08:34 -0700
-Message-ID: <20151015190904.028107B138B9@mail.aglasiangranito.com>
-Reply-To: cheongyuenlee-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH v3] selftests/seccomp: build and pass on arm64
+Date: Thu, 15 Oct 2015 14:06:57 -0600
+Message-ID: <56200761.8050607@osg.samsung.com>
+References: <20151006193025.GA11826@www.outflux.net>
+ <561FB33F.5030906@osg.samsung.com>
+ <CAGXu5jKXeu-kBie+wJODoAjoK1kX+ScFRSn0s3s_wvN+sHT1yw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Description: Mail message body
+In-Reply-To: <CAGXu5jKXeu-kBie+wJODoAjoK1kX+ScFRSn0s3s_wvN+sHT1yw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Recipients <s@aglasiangranito.com>
+To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: AKASHI Takahiro <takahiro.akashi-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On 10/15/2015 12:42 PM, Kees Cook wrote:
+> On Thu, Oct 15, 2015 at 7:07 AM, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+>> On 10/06/2015 01:30 PM, Kees Cook wrote:
+>>> Changing arm64 syscalls is done via a specific register set, more like s390
+>>> than like arm (specific ptrace call) and x86 (part of general registers).
+>>> Since (restarting) poll doesn't exist on arm64, switch to using nanosleep
+>>> for testing restart_syscall. And since it looks like the syscall ABI is
+>>> inconsistent on arm-compat, so we must work around it (and document it) in
+>>> the test.
+>>>
+>>> Signed-off-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+>>> ---
+>>> v3:
+>>>  - correctly set syscall number on native arm64.
+>>> v2:
+>>>  - switch to nanosleep from a bad mix of poll and ppoll for testing restart.
+>>> ---
+>>
+>> Is this good to go? Failed to apply to linux-kselftest next.
+>> If you can rebase and resend. I can get this into 4.4-rc1
+> 
+> Yes please. :)
+> 
 
-I have a business proposal for you that will benefit both party's replyme if you are intrested with this email (cheongyuenlee-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org)
-contact for more details.
- 
-Mrs cheong yuen.
+ok. Please rebase to linux-kselftest next and resend the patch.
+
+thanks,
+-- Shuah
+
+
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
