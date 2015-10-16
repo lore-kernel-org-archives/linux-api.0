@@ -1,30 +1,86 @@
-From: Sowmini Varadhan <sowmini.varadhan-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v4 23/79] rds.h: use __u8, __u16, __s16, __u32 and __s64
- from linux/types.h
-Date: Thu, 15 Oct 2015 19:03:32 -0400
-Message-ID: <20151015230332.GB12132@oracle.com>
-References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
- <1444888618-4506-24-git-send-email-mikko.rapeli@iki.fi>
- <20151015110614.GL948@oracle.com>
- <20151015220025.GG6104@lakka.kapsi.fi>
- <20151015222105.GA12132@oracle.com>
- <20151015223911.GH6104@lakka.kapsi.fi>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH] kselftests/ftrace : Add event trigger testcases
+Date: Thu, 15 Oct 2015 20:27:01 -0400
+Message-ID: <20151015202701.752af971@grimm.local.home>
+References: <20150725011310.4601.76087.stgit@localhost.localdomain>
+	<20150727093411.GE22022@danjae.kornet>
+	<55BD4AC5.8040905@hitachi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20151015223911.GH6104-dqH1CgrzRhOk/eJAJmRu5A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <55BD4AC5.8040905@hitachi.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+Cc: Namhyung Kim <namhyung@kernel.org>, Tom Zanussi <tom.zanussi@linux.intel.com>, linux-api@vger.kernel.org, Shuah Khan <shuahkh@osg.samsung.com>, linux-kernel@vger.kernel.org, Ingo Molnar <mingo@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On (10/16/15 01:39), Mikko Rapeli wrote:
-> "uint32_t vs __u32" nail is:
-> https://lkml.org/lkml/2015/6/1/160
+On Sun, 02 Aug 2015 07:40:05 +0900
+Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com> wrote:
 
-shrug. BTW, doesn't having the exported rds.h use __foo everywhere
-actually end up with the result that "the kernel use the same names
-as user space"
+> On 2015/07/27 18:34, Namhyung Kim wrote:
+> > Hi Masami,
+> > 
+> > On Sat, Jul 25, 2015 at 10:13:10AM +0900, Masami Hiramatsu wrote:
+> >> This adds simple event trigger testcases for ftracetest,
+> >> which covers following triggers.
+> >>  - traceon-traceoff trigger
+> >>  - enable/disable_event trigger
+> >>  - snapshot trigger
+> >>  - stacktrace trigger
+> >>  - trigger filters
+> >>
+> >> Signed-off-by: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+> >> Cc: Steven Rostedt <rostedt@goodmis.org>
+> >> Cc: Ingo Molnar <mingo@redhat.com>
+> >> Cc: Shuah Khan <shuahkh@osg.samsung.com>
+> >> Cc: Namhyung Kim <namhyung@kernel.org>
+> >> Cc: Tom Zanussi <tom.zanussi@linux.intel.com>
+> >> ---
+> >>  tools/testing/selftests/ftrace/test.d/functions    |    9 +++
+> >>  .../ftrace/test.d/trigger/trigger-eventonoff.tc    |   64 ++++++++++++++++++++
+> >>  .../ftrace/test.d/trigger/trigger-filter.tc        |   59 ++++++++++++++++++
+> >>  .../ftrace/test.d/trigger/trigger-snapshot.tc      |   56 ++++++++++++++++++
+> >>  .../ftrace/test.d/trigger/trigger-stacktrace.tc    |   53 +++++++++++++++++
+> >>  .../ftrace/test.d/trigger/trigger-traceonoff.tc    |   58 ++++++++++++++++++
+> >>  6 files changed, 299 insertions(+)
+> >>  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-eventonoff.tc
+> >>  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-filter.tc
+> >>  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-snapshot.tc
+> >>  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-stacktrace.tc
+> >>  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-traceonoff.tc
+> >>
+> >> diff --git a/tools/testing/selftests/ftrace/test.d/functions b/tools/testing/selftests/ftrace/test.d/functions
+> >> index 5d8cd06..36ca18e 100644
+> >> --- a/tools/testing/selftests/ftrace/test.d/functions
+> >> +++ b/tools/testing/selftests/ftrace/test.d/functions
+> >> @@ -14,3 +14,12 @@ enable_tracing() { # start trace recording
+> >>  reset_tracer() { # reset the current tracer
+> >>      echo nop > current_tracer
+> >>  }
+> >> +
+> >> +reset_trigger() { # reset all current setting triggers
+> >> +    grep -v ^# events/*/*/trigger |
+> >> +    while read line; do
+> >> +        cmd=`echo $line | cut -f2- -d:`
+> >> +	echo "!$cmd" > `echo $line | cut -f1 -d:`
+> > 
+> > Broken whitespaces?
+> 
+> Right, I'll fix that.
+> 
 
---Sowmini
+[..]
+
+> > What about checking child_comm too to verify complex filter pattern
+> > with string type?  Maybe something like below (not tested..)?
+> > 
+> > echo 'traceoff if child_pid != 0 && child_comm ~ '*sh' > events/.../trigger
+> 
+> OK, I'll add more complex patterns.
+
+Hi Masami,
+
+Did you ever send an updated patch?
+
+-- Steve
