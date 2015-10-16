@@ -1,59 +1,166 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v11 11/48] vfs: Add get_richacl and set_richacl inode
-	operations
-Date: Fri, 16 Oct 2015 17:17:49 +0200
-Message-ID: <1445008706-15115-12-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v11 16/48] richacl: Automatic Inheritance
+Date: Fri, 16 Oct 2015 17:17:54 +0200
+Message-ID: <1445008706-15115-17-git-send-email-agruenba@redhat.com>
 References: <1445008706-15115-1-git-send-email-agruenba@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1445008706-15115-1-git-send-email-agruenba@redhat.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-These operations are similar to the get_acl and set_acl operations for
-POSIX ACLs.  The distinction between access and default ACLs doesn't exist
-for richacls.
+Automatic Inheritance (AI) allows changes to the acl of a directory to
+propagate down to children.
+
+This is mostly implemented in user space: when a process changes the
+permissions of a directory and Automatic Inheritance is enabled for that
+directory, the process must propagate those changes to all children,
+recursively.
+
+The kernel enables this by keeping track of which permissions have been
+inherited at create time.  In addition, it makes sure that permission
+propagation is turned off when the permissions are set explicitly (for
+example, upon create or chmod).
+
+Automatic Inheritance works as follows:
+
+ - When the RICHACL_AUTO_INHERIT flag in the acl of a file or directory
+   is not set, the file or directory is not affected by AI.
+
+ - When the RICHACL_AUTO_INHERIT flag in the acl of a directory is set
+   and a file or subdirectory is created in that directory, the
+   inherited acl will have the RICHACL_AUTO_INHERIT flag set, and all
+   inherited aces will have the RICHACE_INHERITED_ACE flag set.  This
+   allows user space to distinguish between aces which have been
+   inherited and aces which have been explicitly added.
+
+ - When the RICHACL_PROTECTED acl flag in the acl of a file or directory
+   is set, AI will not modify the acl.  This does not affect propagation
+   of permissions from the file to its children (if the file is a
+   directory).
+
+Linux does not have a way of creating files or directories without setting the
+file permission bits, so all files created inside a directory with
+RICHACL_AUTO_INHERIT set will have the RICHACL_PROTECTED flag set.  This
+effectively disables Automatic Inheritance.
+
+Protocols which support creating files without specifying permissions can
+explicitly clear the RICHACL_PROTECTED flag after creating a file and reset the
+file masks to "undo" applying the create mode; see richacl_compute_max_masks().
+They should set the RICHACL_DEFAULTED flag.  (A mechanism that would allow to
+indicate to the kernel to ignore the create mode in the first place when there
+are inherited permissions would be nice to have.)
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+Reviewed-by: J. Bruce Fields <bfields@redhat.com>
 ---
- include/linux/fs.h | 2 ++
- 1 file changed, 2 insertions(+)
+ fs/richacl_base.c       | 10 +++++++++-
+ fs/richacl_inode.c      |  7 +++++++
+ include/linux/richacl.h | 19 ++++++++++++++++++-
+ 3 files changed, 34 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 3c22c92..08fde42 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -1662,6 +1662,7 @@ struct inode_operations {
- 	const char * (*follow_link) (struct dentry *, void **);
- 	int (*permission) (struct inode *, int);
- 	struct posix_acl * (*get_acl)(struct inode *, int);
-+	struct richacl * (*get_richacl)(struct inode *);
+diff --git a/fs/richacl_base.c b/fs/richacl_base.c
+index cb5081e..3a97a82 100644
+--- a/fs/richacl_base.c
++++ b/fs/richacl_base.c
+@@ -366,7 +366,8 @@ __richacl_chmod(struct richacl *acl, umode_t mode)
+ 	    acl->a_group_mask == group_mask &&
+ 	    acl->a_other_mask == other_mask &&
+ 	    (acl->a_flags & RICHACL_MASKED) &&
+-	    (acl->a_flags & RICHACL_WRITE_THROUGH))
++	    (acl->a_flags & RICHACL_WRITE_THROUGH) &&
++	    (!richacl_is_auto_inherit(acl) || richacl_is_protected(acl)))
+ 		return acl;
  
- 	int (*readlink) (struct dentry *, char __user *,int);
- 	void (*put_link) (struct inode *, void *);
-@@ -1691,6 +1692,7 @@ struct inode_operations {
- 			   umode_t create_mode, int *opened);
- 	int (*tmpfile) (struct inode *, struct dentry *, umode_t);
- 	int (*set_acl)(struct inode *, struct posix_acl *, int);
-+	int (*set_richacl)(struct inode *, struct richacl *);
+ 	clone = richacl_clone(acl, GFP_KERNEL);
+@@ -378,6 +379,8 @@ __richacl_chmod(struct richacl *acl, umode_t mode)
+ 	clone->a_owner_mask = owner_mask;
+ 	clone->a_group_mask = group_mask;
+ 	clone->a_other_mask = other_mask;
++	if (richacl_is_auto_inherit(clone))
++		clone->a_flags |= RICHACL_PROTECTED;
  
- 	/* WARNING: probably going away soon, do not use! */
- } ____cacheline_aligned;
+ 	return clone;
+ }
+@@ -551,6 +554,11 @@ richacl_inherit(const struct richacl *dir_acl, int isdir)
+ 			ace++;
+ 		}
+ 	}
++	if (richacl_is_auto_inherit(dir_acl)) {
++		acl->a_flags = RICHACL_AUTO_INHERIT;
++		richacl_for_each_entry(ace, acl)
++			ace->e_flags |= RICHACE_INHERITED_ACE;
++	}
+ 
+ 	return acl;
+ }
+diff --git a/fs/richacl_inode.c b/fs/richacl_inode.c
+index 4f3a1b7..b88a2f1 100644
+--- a/fs/richacl_inode.c
++++ b/fs/richacl_inode.c
+@@ -277,6 +277,13 @@ richacl_inherit_inode(const struct richacl *dir_acl, umode_t *mode_p)
+ 			richacl_put(acl);
+ 			acl = NULL;
+ 		} else {
++			/*
++			 * We need to set RICHACL_PROTECTED because we are
++			 * doing an implicit chmod
++			 */
++			if (richacl_is_auto_inherit(acl))
++				acl->a_flags |= RICHACL_PROTECTED;
++
+ 			richacl_compute_max_masks(acl);
+ 			/*
+ 			 * Ensure that the acl will not grant any permissions
+diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+index d7e10aa..67843a6 100644
+--- a/include/linux/richacl.h
++++ b/include/linux/richacl.h
+@@ -41,6 +41,9 @@ struct richacl {
+ };
+ 
+ #define RICHACL_VALID_FLAGS (					\
++	RICHACL_AUTO_INHERIT |					\
++	RICHACL_PROTECTED |					\
++	RICHACL_DEFAULTED |					\
+ 	RICHACL_WRITE_THROUGH |					\
+ 	RICHACL_MASKED)
+ 
+@@ -50,13 +53,15 @@ struct richacl {
+ 	RICHACE_NO_PROPAGATE_INHERIT_ACE |			\
+ 	RICHACE_INHERIT_ONLY_ACE |				\
+ 	RICHACE_IDENTIFIER_GROUP |				\
++	RICHACE_INHERITED_ACE |					\
+ 	RICHACE_SPECIAL_WHO)
+ 
+ #define RICHACE_INHERITANCE_FLAGS (				\
+ 	RICHACE_FILE_INHERIT_ACE |				\
+ 	RICHACE_DIRECTORY_INHERIT_ACE |				\
+ 	RICHACE_NO_PROPAGATE_INHERIT_ACE |			\
+-	RICHACE_INHERIT_ONLY_ACE )
++	RICHACE_INHERIT_ONLY_ACE |				\
++	RICHACE_INHERITED_ACE)
+ 
+ /* Valid RICHACE_* flags for directories and non-directories */
+ #define RICHACE_VALID_MASK (					\
+@@ -113,6 +118,18 @@ extern void set_cached_richacl(struct inode *, struct richacl *);
+ extern void forget_cached_richacl(struct inode *);
+ extern struct richacl *get_richacl(struct inode *);
+ 
++static inline int
++richacl_is_auto_inherit(const struct richacl *acl)
++{
++	return acl->a_flags & RICHACL_AUTO_INHERIT;
++}
++
++static inline int
++richacl_is_protected(const struct richacl *acl)
++{
++	return acl->a_flags & RICHACL_PROTECTED;
++}
++
+ /**
+  * richace_is_owner  -  check if @ace is an OWNER@ entry
+  */
 -- 
 2.5.0
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
