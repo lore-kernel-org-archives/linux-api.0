@@ -1,152 +1,93 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v11 32/48] richacl: Create richacl from mode values
-Date: Fri, 16 Oct 2015 17:18:10 +0200
-Message-ID: <1445008706-15115-33-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v11 39/48] nfsd: Add support for unmapped richace identifiers
+Date: Fri, 16 Oct 2015 17:18:17 +0200
+Message-ID: <1445008706-15115-40-git-send-email-agruenba@redhat.com>
 References: <1445008706-15115-1-git-send-email-agruenba@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1445008706-15115-1-git-send-email-agruenba@redhat.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-A file can have "no acl" in the sense that only the file mode permission
-bits determine access.  In that case, the getxattr system call fails with
-errno == ENODATA (No such attribute).
-
-Over the NFSv4 protocol, a file always has an acl, and we convert the file
-mode permission bits into an equivalent acl with richacl_from_mode.  Such
-"trivial" acls can be converted back to a file mode with
-richacl_equiv_mode.
+Add support for encoding unmapped identifiers in richacl entries: local
+filesystems are not usually supposed to store unmapped identifiers, but
+allowing that for debugging purposes can be useful; for that, nfsd must
+also be able to encode them.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
-Reviewed-by: J. Bruce Fields <bfields@redhat.com>
 ---
- fs/richacl_compat.c     | 88 +++++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/richacl.h |  1 +
- 2 files changed, 89 insertions(+)
+ fs/nfsd/acl.h     |  2 +-
+ fs/nfsd/nfs4acl.c | 17 +++++++++++------
+ fs/nfsd/nfs4xdr.c |  4 ++--
+ 3 files changed, 14 insertions(+), 9 deletions(-)
 
-diff --git a/fs/richacl_compat.c b/fs/richacl_compat.c
-index c99274f..e513958 100644
---- a/fs/richacl_compat.c
-+++ b/fs/richacl_compat.c
-@@ -827,3 +827,91 @@ richacl_apply_masks(struct richacl **acl, kuid_t owner)
- 	return 0;
+diff --git a/fs/nfsd/acl.h b/fs/nfsd/acl.h
+index d73c664..4935144 100644
+--- a/fs/nfsd/acl.h
++++ b/fs/nfsd/acl.h
+@@ -51,7 +51,7 @@ struct svc_rqst;
+ __be32 nfsd4_decode_ace_who(struct richace *ace, struct svc_rqst *rqstp,
+ 			    char *who, u32 len);
+ __be32 nfsd4_encode_ace_who(struct xdr_stream *xdr, struct svc_rqst *rqstp,
+-			    struct richace *ace);
++			    struct richace *ace, struct richacl *acl);
+ 
+ struct richacl *nfsd4_get_acl(struct svc_rqst *rqstp, struct dentry *dentry);
+ __be32 nfsd4_set_acl(struct svc_rqst *rqstp, struct svc_fh *fhp,
+diff --git a/fs/nfsd/nfs4acl.c b/fs/nfsd/nfs4acl.c
+index f017a76..3cc83fd 100644
+--- a/fs/nfsd/nfs4acl.c
++++ b/fs/nfsd/nfs4acl.c
+@@ -885,17 +885,22 @@ __be32 nfsd4_decode_ace_who(struct richace *ace, struct svc_rqst *rqstp,
  }
- EXPORT_SYMBOL_GPL(richacl_apply_masks);
-+
-+/**
-+ * richacl_from_mode  -  create an acl which corresponds to @mode
-+ *
-+ * The resulting acl doesn't have the RICHACL_MASKED flag set.
-+ *
-+ * @mode:	file mode including the file type
-+ */
-+struct richacl *
-+richacl_from_mode(umode_t mode)
-+{
-+	unsigned int owner_mask = richacl_mode_to_mask(mode >> 6);
-+	unsigned int group_mask = richacl_mode_to_mask(mode >> 3);
-+	unsigned int other_mask = richacl_mode_to_mask(mode);
-+	unsigned int denied;
-+	unsigned int entries = 0;
-+	struct richacl *acl;
-+	struct richace *ace;
-+
-+	/* RICHACE_DELETE_CHILD is meaningless for non-directories. */
-+	if (!S_ISDIR(mode)) {
-+		owner_mask &= ~RICHACE_DELETE_CHILD;
-+		group_mask &= ~RICHACE_DELETE_CHILD;
-+		other_mask &= ~RICHACE_DELETE_CHILD;
-+	}
-+
-+	denied = ~owner_mask & (group_mask | other_mask);
-+	if (denied)
-+		entries++;  /* owner@ deny entry needed */
-+	if (owner_mask & ~(group_mask & other_mask))
-+		entries++;  /* owner@ allow entry needed */
-+	denied = ~group_mask & other_mask;
-+	if (denied)
-+		entries++;  /* group@ deny entry needed */
-+	if (group_mask & ~other_mask)
-+		entries++;  /* group@ allow entry needed */
-+	if (other_mask)
-+		entries++;  /* everyone@ allow entry needed */
-+
-+	acl = richacl_alloc(entries, GFP_KERNEL);
-+	if (!acl)
-+		return NULL;
-+	acl->a_owner_mask = owner_mask;
-+	acl->a_group_mask = group_mask;
-+	acl->a_other_mask = other_mask;
-+	ace = acl->a_entries;
-+
-+	denied = ~owner_mask & (group_mask | other_mask);
-+	if (denied) {
-+		ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
-+		ace->e_flags = RICHACE_SPECIAL_WHO;
-+		ace->e_mask = denied;
-+		ace->e_id.special = RICHACE_OWNER_SPECIAL_ID;
-+		ace++;
-+	}
-+	if (owner_mask & ~(group_mask & other_mask)) {
-+		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
-+		ace->e_flags = RICHACE_SPECIAL_WHO;
-+		ace->e_mask = owner_mask;
-+		ace->e_id.special = RICHACE_OWNER_SPECIAL_ID;
-+		ace++;
-+	}
-+	denied = ~group_mask & other_mask;
-+	if (denied) {
-+		ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
-+		ace->e_flags = RICHACE_SPECIAL_WHO;
-+		ace->e_mask = denied;
-+		ace->e_id.special = RICHACE_GROUP_SPECIAL_ID;
-+		ace++;
-+	}
-+	if (group_mask & ~other_mask) {
-+		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
-+		ace->e_flags = RICHACE_SPECIAL_WHO;
-+		ace->e_mask = group_mask;
-+		ace->e_id.special = RICHACE_GROUP_SPECIAL_ID;
-+		ace++;
-+	}
-+	if (other_mask) {
-+		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
-+		ace->e_flags = RICHACE_SPECIAL_WHO;
-+		ace->e_mask = other_mask;
-+		ace->e_id.special = RICHACE_EVERYONE_SPECIAL_ID;
-+		ace++;
-+	}
-+
-+	return acl;
-+}
-+EXPORT_SYMBOL_GPL(richacl_from_mode);
-diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-index 3f3445b..6d2e5bd 100644
---- a/include/linux/richacl.h
-+++ b/include/linux/richacl.h
-@@ -249,5 +249,6 @@ extern struct richacl *richacl_create(umode_t *, struct inode *);
  
- /* richacl_compat.c */
- extern int richacl_apply_masks(struct richacl **, kuid_t);
-+extern struct richacl *richacl_from_mode(umode_t);
+ __be32 nfsd4_encode_ace_who(struct xdr_stream *xdr, struct svc_rqst *rqstp,
+-			    struct richace *ace)
++			    struct richace *ace, struct richacl *acl)
+ {
+-	if (ace->e_flags & RICHACE_SPECIAL_WHO) {
+-		unsigned int special_id = ace->e_id.special;
++	if (ace->e_flags & (RICHACE_SPECIAL_WHO | RICHACE_UNMAPPED_WHO)) {
+ 		const char *who;
+ 		unsigned int len;
+ 		__be32 *p;
  
- #endif /* __RICHACL_H */
+-		if (!nfs4acl_special_id_to_who(special_id, &who, &len)) {
+-			WARN_ON_ONCE(1);
+-			return nfserr_serverfault;
++		if (ace->e_flags & RICHACE_SPECIAL_WHO) {
++			if (!nfs4acl_special_id_to_who(ace->e_id.special,
++						       &who, &len)) {
++				WARN_ON_ONCE(1);
++				return nfserr_serverfault;
++			}
++		} else {
++			who = richace_unmapped_identifier(ace, acl);
++			len = strlen(who);
+ 		}
+ 		p = xdr_reserve_space(xdr, len + 4);
+ 		if (!p)
+diff --git a/fs/nfsd/nfs4xdr.c b/fs/nfsd/nfs4xdr.c
+index 33d028c..8728d0e 100644
+--- a/fs/nfsd/nfs4xdr.c
++++ b/fs/nfsd/nfs4xdr.c
+@@ -2325,7 +2325,7 @@ static __be32 nfsd4_encode_acl_entries(struct xdr_stream *xdr,
+ {
+ 	__be32 *p;
+ 
+-	flags_mask &= ~RICHACE_SPECIAL_WHO;
++	flags_mask &= ~(RICHACE_SPECIAL_WHO | RICHACE_UNMAPPED_WHO);
+ 
+ 	p = xdr_reserve_space(xdr, 4);
+ 	if (!p)
+@@ -2347,7 +2347,7 @@ static __be32 nfsd4_encode_acl_entries(struct xdr_stream *xdr,
+ 			*p++ = cpu_to_be32(ace->e_type);
+ 			*p++ = cpu_to_be32(ace->e_flags & flags_mask);
+ 			*p++ = cpu_to_be32(ace->e_mask & ace_mask);
+-			status = nfsd4_encode_ace_who(xdr, rqstp, ace);
++			status = nfsd4_encode_ace_who(xdr, rqstp, ace, acl);
+ 			if (status)
+ 				return status;
+ 		}
 -- 
 2.5.0
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
