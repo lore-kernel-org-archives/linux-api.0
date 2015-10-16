@@ -1,83 +1,52 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v11 44/48] nfs: Fix GETATTR bitmap verification
-Date: Fri, 16 Oct 2015 17:18:22 +0200
-Message-ID: <1445008706-15115-45-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v11 40/48] ext4: Don't allow unmapped identifiers in richacls
+Date: Fri, 16 Oct 2015 17:18:18 +0200
+Message-ID: <1445008706-15115-41-git-send-email-agruenba@redhat.com>
 References: <1445008706-15115-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
 In-Reply-To: <1445008706-15115-1-git-send-email-agruenba@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
 To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-When decoding GETATTR replies, the client checks the attribute bitmap
-for which attributes the server has sent.  It misses bits at the word
-boundaries, though; fix that.
+Don't allow acls which contain unmapped identifiers: they are meaningful
+for remote file systems only.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 ---
- fs/nfs/nfs4xdr.c | 23 +++++++++++++++++++++++
- 1 file changed, 23 insertions(+)
+ fs/ext4/richacl.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/fs/nfs/nfs4xdr.c b/fs/nfs/nfs4xdr.c
-index 788adf3..6f6d921 100644
---- a/fs/nfs/nfs4xdr.c
-+++ b/fs/nfs/nfs4xdr.c
-@@ -4375,6 +4375,11 @@ static int decode_statfs(struct xdr_stream *xdr, struct nfs_fsstat *fsstat)
- 		goto xdr_error;
- 	if ((status = decode_attr_files_total(xdr, bitmap, &fsstat->tfiles)) != 0)
- 		goto xdr_error;
-+
-+	status = -EIO;
-+	if (unlikely(bitmap[0]))
-+		goto xdr_error;
-+
- 	if ((status = decode_attr_space_avail(xdr, bitmap, &fsstat->abytes)) != 0)
- 		goto xdr_error;
- 	if ((status = decode_attr_space_free(xdr, bitmap, &fsstat->fbytes)) != 0)
-@@ -4574,6 +4579,10 @@ static int decode_getfattr_attrs(struct xdr_stream *xdr, uint32_t *bitmap,
- 		goto xdr_error;
- 	fattr->valid |= status;
+diff --git a/fs/ext4/richacl.c b/fs/ext4/richacl.c
+index 906d048..2115385 100644
+--- a/fs/ext4/richacl.c
++++ b/fs/ext4/richacl.c
+@@ -74,6 +74,10 @@ __ext4_set_richacl(handle_t *handle, struct inode *inode, struct richacl *acl)
+ 	int retval, size;
+ 	void *value;
  
-+	status = -EIO;
-+	if (unlikely(bitmap[0]))
-+		goto xdr_error;
++	/* Don't allow acls with unmapped identifiers. */
++	if (richacl_has_unmapped_identifiers(acl))
++		return -EINVAL;
 +
- 	status = decode_attr_mode(xdr, bitmap, &fmode);
- 	if (status < 0)
- 		goto xdr_error;
-@@ -4627,6 +4636,10 @@ static int decode_getfattr_attrs(struct xdr_stream *xdr, uint32_t *bitmap,
- 		goto xdr_error;
- 	fattr->valid |= status;
- 
-+	status = -EIO;
-+	if (unlikely(bitmap[1]))
-+		goto xdr_error;
-+
- 	status = decode_attr_mdsthreshold(xdr, bitmap, fattr->mdsthreshold);
- 	if (status < 0)
- 		goto xdr_error;
-@@ -4789,12 +4802,22 @@ static int decode_fsinfo(struct xdr_stream *xdr, struct nfs_fsinfo *fsinfo)
- 	if ((status = decode_attr_maxwrite(xdr, bitmap, &fsinfo->wtmax)) != 0)
- 		goto xdr_error;
- 	fsinfo->wtpref = fsinfo->wtmax;
-+
-+	status = -EIO;
-+	if (unlikely(bitmap[0]))
-+		goto xdr_error;
-+
- 	status = decode_attr_time_delta(xdr, bitmap, &fsinfo->time_delta);
- 	if (status != 0)
- 		goto xdr_error;
- 	status = decode_attr_pnfstype(xdr, bitmap, &fsinfo->layouttype);
- 	if (status != 0)
- 		goto xdr_error;
-+
-+	status = -EIO;
-+	if (unlikely(bitmap[1]))
-+		goto xdr_error;
-+
- 	status = decode_attr_layout_blksize(xdr, bitmap, &fsinfo->blksize);
- 	if (status)
- 		goto xdr_error;
+ 	if (richacl_equiv_mode(acl, &mode) == 0) {
+ 		inode->i_ctime = ext4_current_time(inode);
+ 		inode->i_mode = mode;
 -- 
 2.5.0
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
