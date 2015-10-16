@@ -1,77 +1,34 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH v3] selftests/seccomp: build and pass on arm64
-Date: Thu, 15 Oct 2015 20:09:27 -0600
-Message-ID: <56205C57.3070406@osg.samsung.com>
-References: <20151006193025.GA11826@www.outflux.net>
- <561FB33F.5030906@osg.samsung.com>
- <CAGXu5jKXeu-kBie+wJODoAjoK1kX+ScFRSn0s3s_wvN+sHT1yw@mail.gmail.com>
- <56200761.8050607@osg.samsung.com>
- <CAGXu5jJMpSTBFqS3Xj0ftMYVwJuUU8MUbggrWW8wN5CGDBsLvA@mail.gmail.com>
- <56203023.2060007@osg.samsung.com> <5620304C.3070701@osg.samsung.com>
- <CAGXu5jLsYyXxQNbPKVsdzfSbbgddpJiz2MzgwEdbLd7mhjDmxw@mail.gmail.com>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH v5 8/9] vfs: Add vfs_copy_file_range() support for
+ pagecache copies
+Date: Thu, 15 Oct 2015 22:38:08 -0700
+Message-ID: <20151016053808.GA29510@infradead.org>
+References: <1443634014-3026-1-git-send-email-Anna.Schumaker@Netapp.com>
+ <1443634014-3026-9-git-send-email-Anna.Schumaker@Netapp.com>
+ <20151011142203.GA31867@infradead.org>
+ <20151012231749.GC11398@birch.djwong.org>
+ <561E980C.9010509@Netapp.com>
+ <CALCETrU0-Q-q0u0BAPwu+mbyS+LVp6M1Hqro3xwzSm7eNCbEmg@mail.gmail.com>
+ <20151014182701.GC31225@infradead.org>
+ <561EA83E.8080000@gmail.com>
+ <20151015063621.GA3025@infradead.org>
+ <561F9B13.7020804@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAGXu5jLsYyXxQNbPKVsdzfSbbgddpJiz2MzgwEdbLd7mhjDmxw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <561F9B13.7020804-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: AKASHI Takahiro <takahiro.akashi-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+To: Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux btrfs Developers List <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Zach Brown <zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 10/15/2015 05:02 PM, Kees Cook wrote:
-> On Thu, Oct 15, 2015 at 4:01 PM, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
->> On 10/15/2015 05:00 PM, Shuah Khan wrote:
->>> On 10/15/2015 04:07 PM, Kees Cook wrote:
->>>> On Thu, Oct 15, 2015 at 1:06 PM, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
->>>>> On 10/15/2015 12:42 PM, Kees Cook wrote:
->>>>>> On Thu, Oct 15, 2015 at 7:07 AM, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
->>>>>>> On 10/06/2015 01:30 PM, Kees Cook wrote:
->>>>>>>> Changing arm64 syscalls is done via a specific register set, more like s390
->>>>>>>> than like arm (specific ptrace call) and x86 (part of general registers).
->>>>>>>> Since (restarting) poll doesn't exist on arm64, switch to using nanosleep
->>>>>>>> for testing restart_syscall. And since it looks like the syscall ABI is
->>>>>>>> inconsistent on arm-compat, so we must work around it (and document it) in
->>>>>>>> the test.
->>>>>>>>
->>>>>>>> Signed-off-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
->>>>>>>> ---
->>>>>>>> v3:
->>>>>>>>  - correctly set syscall number on native arm64.
->>>>>>>> v2:
->>>>>>>>  - switch to nanosleep from a bad mix of poll and ppoll for testing restart.
->>>>>>>> ---
->>>>>>>
->>>>>>> Is this good to go? Failed to apply to linux-kselftest next.
->>>>>>> If you can rebase and resend. I can get this into 4.4-rc1
->>>>>>
->>>>>> Yes please. :)
->>>>>>
->>>>>
->>>>> ok. Please rebase to linux-kselftest next and resend the patch.
->>>>
->>>> Am I looking at the right tree? linux-kselftest#next doesn't appear to
->>>> have the s390 patch that was included in 4.3.
->>>>
->>>
->>> I see what happened. Your patch is linux-next fixes and that went into
->>> 4.3-rc2. I can get linux-next rebase to 4.3-rc2 and get your patch in.
->>> Thanks for clearing this up.
->>
->> oops rebase linux-kselftest next i.e
-> 
-> Okay, cool. Let me know if I need to do anything more. :)
-> 
+On Thu, Oct 15, 2015 at 08:24:51AM -0400, Austin S Hemmelgarn wrote:
+> My only point with saying we shouldn't reflink by default is that there are
+> many (unintelligent) people who will assume that since the syscall has copy
+> in it's name, that's what it will do; and, while I don't think we should
+> cater to such individuals, it does make sense to have a syscall that says in
+> it's name that it copies data actually do so by default.
 
-Applied to linux-ksefltest next for 4.4-rc1
-
-thanks,
--- Shuah
-
-
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+As far as the user is concerned a reflink is a copy.  A very efficient
+copy.
