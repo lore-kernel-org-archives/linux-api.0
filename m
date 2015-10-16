@@ -1,130 +1,167 @@
-From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v11 18/48] richacl: Add richacl xattr handler
-Date: Fri, 16 Oct 2015 17:17:56 +0200
-Message-ID: <1445008706-15115-19-git-send-email-agruenba@redhat.com>
+From: Andreas Gruenbacher <agruenba@redhat.com>
+Subject: [PATCH v11 14/48] richacl: Check if an acl is equivalent to a file
+	mode
+Date: Fri, 16 Oct 2015 17:17:52 +0200
+Message-ID: <1445008706-15115-15-git-send-email-agruenba@redhat.com>
 References: <1445008706-15115-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1445008706-15115-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
+In-Reply-To: <1445008706-15115-1-git-send-email-agruenba@redhat.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Add richacl xattr handler implementing the xattr operations based on the
-get_richacl and set_richacl inode operations.
+ACLs are considered equivalent to file modes if they only consist of
+owner@, group@, and everyone@ entries, the owner@ permissions do not
+depend on whether the owner is a member in the owning group, and no
+inheritance flags are set.  This test is used to avoid storing richacls
+if the acl can be computed from the file permission bits.
 
-Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+Reviewed-by: J. Bruce Fields <bfields@redhat.com>
 ---
- fs/richacl_xattr.c            | 78 +++++++++++++++++++++++++++++++++++++++++++
- include/linux/richacl_xattr.h |  2 ++
- 2 files changed, 80 insertions(+)
+ fs/richacl_base.c       | 104 ++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/richacl.h |   1 +
+ 2 files changed, 105 insertions(+)
 
-diff --git a/fs/richacl_xattr.c b/fs/richacl_xattr.c
-index cd9979d..dc529dc 100644
---- a/fs/richacl_xattr.c
-+++ b/fs/richacl_xattr.c
-@@ -18,7 +18,9 @@
- #include <linux/fs.h>
- #include <linux/slab.h>
- #include <linux/module.h>
-+#include <linux/xattr.h>
- #include <linux/richacl_xattr.h>
-+#include <uapi/linux/xattr.h>
- 
- MODULE_LICENSE("GPL");
- 
-@@ -161,6 +163,82 @@ richacl_to_xattr(struct user_namespace *user_ns,
+diff --git a/fs/richacl_base.c b/fs/richacl_base.c
+index 764d73a..f4b8d3c 100644
+--- a/fs/richacl_base.c
++++ b/fs/richacl_base.c
+@@ -382,3 +382,107 @@ __richacl_chmod(struct richacl *acl, umode_t mode)
+ 	return clone;
  }
- EXPORT_SYMBOL_GPL(richacl_to_xattr);
- 
-+static size_t
-+richacl_xattr_list(struct dentry *dentry, char *list, size_t list_len,
-+		   const char *name, size_t name_len, int handler_flags)
+ EXPORT_SYMBOL_GPL(__richacl_chmod);
++
++/**
++ * richacl_equiv_mode  -  compute the mode equivalent of @acl
++ *
++ * An acl is considered equivalent to a file mode if it only consists of
++ * owner@, group@, and everyone@ entries and the owner@ permissions do not
++ * depend on whether the owner is a member in the owning group.
++ */
++int
++richacl_equiv_mode(const struct richacl *acl, umode_t *mode_p)
 +{
-+	const size_t size = sizeof(XATTR_NAME_RICHACL);
++	umode_t mode = *mode_p;
 +
-+	if (!IS_RICHACL(d_backing_inode(dentry)))
-+		return 0;
-+	if (list && size <= list_len)
-+		memcpy(list, XATTR_NAME_RICHACL, size);
-+	return size;
-+}
++	/*
++	 * The RICHACE_DELETE_CHILD flag is meaningless for non-directories, so
++	 * we ignore it.
++	 */
++	unsigned int x = S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
++	struct {
++		unsigned int allowed;
++		unsigned int defined;  /* allowed or denied */
++	} owner = {
++		.defined = RICHACE_POSIX_ALWAYS_ALLOWED |
++			   RICHACE_POSIX_OWNER_ALLOWED  | x,
++	}, group = {
++		.defined = RICHACE_POSIX_ALWAYS_ALLOWED | x,
++	}, everyone = {
++		.defined = RICHACE_POSIX_ALWAYS_ALLOWED | x,
++	};
++	const struct richace *ace;
 +
-+static int
-+richacl_xattr_get(struct dentry *dentry, const char *name, void *buffer,
-+		  size_t buffer_size, int handler_flags)
-+{
-+	struct inode *inode = d_backing_inode(dentry);
-+	struct richacl *acl;
-+	int error;
++	if (acl->a_flags & ~(RICHACL_WRITE_THROUGH | RICHACL_MASKED))
++		return -1;
 +
-+	if (strcmp(name, "") != 0)
-+		return -EINVAL;
-+	if (!IS_RICHACL(inode))
-+		return EOPNOTSUPP;
-+	if (S_ISLNK(inode->i_mode))
-+		return -EOPNOTSUPP;
-+	acl = get_richacl(inode);
-+	if (IS_ERR(acl))
-+		return PTR_ERR(acl);
-+	if (acl == NULL)
-+		return -ENODATA;
-+	error = richacl_to_xattr(&init_user_ns, acl, buffer, buffer_size);
-+	richacl_put(acl);
-+	return error;
-+}
++	richacl_for_each_entry(ace, acl) {
++		if (ace->e_flags & ~RICHACE_SPECIAL_WHO)
++			return -1;
 +
-+static int
-+richacl_xattr_set(struct dentry *dentry, const char *name,
-+		  const void *value, size_t size, int flags, int handler_flags)
-+{
-+	struct inode *inode = d_backing_inode(dentry);
-+	struct richacl *acl = NULL;
-+	int ret;
++		if (richace_is_owner(ace) || richace_is_everyone(ace)) {
++			x = ace->e_mask & ~owner.defined;
++			if (richace_is_allow(ace)) {
++				unsigned int group_denied =
++					group.defined & ~group.allowed;
 +
-+	if (strcmp(name, "") != 0)
-+		return -EINVAL;
-+	if (!IS_RICHACL(inode))
-+		return -EOPNOTSUPP;
-+	if (!inode->i_op->set_richacl)
-+		return -EOPNOTSUPP;
++				if (x & group_denied)
++					return -1;
++				owner.allowed |= x;
++			} else /* if (richace_is_deny(ace)) */ {
++				if (x & group.allowed)
++					return -1;
++			}
++			owner.defined |= x;
 +
-+	if (!uid_eq(current_fsuid(), inode->i_uid) &&
-+	    inode_permission(inode, MAY_CHMOD) &&
-+	    !capable(CAP_FOWNER))
-+		return -EPERM;
-+
-+	if (value) {
-+		acl = richacl_from_xattr(&init_user_ns, value, size);
-+		if (IS_ERR(acl))
-+			return PTR_ERR(acl);
++			if (richace_is_everyone(ace)) {
++				x = ace->e_mask;
++				if (richace_is_allow(ace)) {
++					group.allowed |=
++						x & ~group.defined;
++					everyone.allowed |=
++						x & ~everyone.defined;
++				}
++				group.defined |= x;
++				everyone.defined |= x;
++			}
++		} else if (richace_is_group(ace)) {
++			x = ace->e_mask & ~group.defined;
++			if (richace_is_allow(ace))
++				group.allowed |= x;
++			group.defined |= x;
++		} else
++			return -1;
 +	}
 +
-+	ret = inode->i_op->set_richacl(inode, acl);
-+	richacl_put(acl);
-+	return ret;
++	if (group.allowed & ~owner.defined)
++		return -1;
++
++	if (acl->a_flags & RICHACL_MASKED) {
++		if (acl->a_flags & RICHACL_WRITE_THROUGH) {
++			owner.allowed = acl->a_owner_mask;
++			everyone.allowed = acl->a_other_mask;
++		} else {
++			owner.allowed &= acl->a_owner_mask;
++			everyone.allowed &= acl->a_other_mask;
++		}
++		group.allowed &= acl->a_group_mask;
++	}
++
++	mode = (mode & ~S_IRWXUGO) |
++	       (richacl_mask_to_mode(owner.allowed) << 6) |
++	       (richacl_mask_to_mode(group.allowed) << 3) |
++		richacl_mask_to_mode(everyone.allowed);
++
++	/* Mask flags we can ignore */
++	x = S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
++
++	if (((richacl_mode_to_mask(mode >> 6) ^ owner.allowed)    & ~x) ||
++	    ((richacl_mode_to_mask(mode >> 3) ^ group.allowed)    & ~x) ||
++	    ((richacl_mode_to_mask(mode)      ^ everyone.allowed) & ~x))
++		return -1;
++
++	*mode_p = mode;
++	return 0;
 +}
-+
-+struct xattr_handler richacl_xattr_handler = {
-+	.prefix = XATTR_NAME_RICHACL,
-+	.list = richacl_xattr_list,
-+	.get = richacl_xattr_get,
-+	.set = richacl_xattr_set,
-+};
-+EXPORT_SYMBOL(richacl_xattr_handler);
-+
- /*
-  * Fix up the uids and gids in richacl extended attributes in place.
-  */
-diff --git a/include/linux/richacl_xattr.h b/include/linux/richacl_xattr.h
-index a088a1d..ce19b6f 100644
---- a/include/linux/richacl_xattr.h
-+++ b/include/linux/richacl_xattr.h
-@@ -39,4 +39,6 @@ static inline void richacl_fix_xattr_to_user(void *value, size_t size)
- }
- #endif
++EXPORT_SYMBOL_GPL(richacl_equiv_mode);
+diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+index e42e882..49d84dd 100644
+--- a/include/linux/richacl.h
++++ b/include/linux/richacl.h
+@@ -222,6 +222,7 @@ extern unsigned int richacl_mode_to_mask(umode_t);
+ extern unsigned int richacl_want_to_mask(unsigned int);
+ extern void richacl_compute_max_masks(struct richacl *);
+ extern struct richacl *__richacl_chmod(struct richacl *, umode_t);
++extern int richacl_equiv_mode(const struct richacl *, umode_t *);
  
-+extern struct xattr_handler richacl_xattr_handler;
-+
- #endif /* __RICHACL_XATTR_H */
+ /* richacl_inode.c */
+ extern int richacl_permission(struct inode *, const struct richacl *, int);
 -- 
 2.5.0
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
