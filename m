@@ -1,77 +1,123 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v11 28/48] richacl: Set the owner permissions to the owner mask
-Date: Fri, 16 Oct 2015 17:18:06 +0200
-Message-ID: <1445008706-15115-29-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v11 26/48] richacl: Move everyone@ aces down the acl
+Date: Fri, 16 Oct 2015 17:18:04 +0200
+Message-ID: <1445008706-15115-27-git-send-email-agruenba@redhat.com>
 References: <1445008706-15115-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
 In-Reply-To: <1445008706-15115-1-git-send-email-agruenba@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
 To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-In the write-through case, change the acl so that owner@ is granted the
-permissions set in the owner mask (to match what the permission check
-algorithm grants the owner).
+The POSIX standard puts processes which are not the owner or a member in
+the owning group or which match any ace other then everyone@ on the
+other file class.  We only know if a process is in the other class after
+processing the entire acl.
+
+Move all everyone@ aces in the acl down in the acl so that at most a
+single everyone@ allow ace remains at the end.  Permissions which are
+not explicitly allowed are implicitly denied, so an everyone@ deny ace
+is unneeded.
+
+The everyone@ aces can be moved down the acl without changing the
+permissions that the acl grants.  This transformation simplifies the
+following algorithms, and eventually allows us to turn the final
+everyone@ allow ace into an entry for the other class.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 Reviewed-by: J. Bruce Fields <bfields@redhat.com>
 ---
- fs/richacl_compat.c | 46 ++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 46 insertions(+)
+ fs/richacl_compat.c | 65 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 65 insertions(+)
 
 diff --git a/fs/richacl_compat.c b/fs/richacl_compat.c
-index 7d007d7..16deeb4 100644
+index 341e429..4f0acf5 100644
 --- a/fs/richacl_compat.c
 +++ b/fs/richacl_compat.c
-@@ -416,3 +416,49 @@ richacl_propagate_everyone(struct richacl_alloc *alloc)
+@@ -153,3 +153,68 @@ richace_change_mask(struct richacl_alloc *alloc, struct richace **ace,
  	}
  	return 0;
  }
 +
 +/**
-+ * richacl_set_owner_permissions  -  set the owner permissions to the owner mask
++ * richacl_move_everyone_aces_down  -  move everyone@ aces to the end of the acl
++ * @alloc:	acl and number of allocated entries
 + *
-+ * In the write-through case, change the acl so that owner@ is granted the
-+ * permissions set in the owner mask (to match what the permission check
-+ * algorithm grants the owner).  This leaves at most one efective owner@ allow
-+ * entry at the beginning of the acl.
++ * Move all everyone aces to the end of the acl so that only a single everyone@
++ * allow ace remains at the end, and update the mask fields of all aces on the
++ * way.  The last ace of the resulting acl will be an everyone@ allow ace only
++ * if @acl grants any permissions to @everyone.  No @everyone deny aces will
++ * remain.
++ *
++ * This transformation does not alter the permissions that the acl grants.
++ * Having at most one everyone@ allow ace at the end of the acl helps us in the
++ * following algorithms.
 + */
 +static int
-+richacl_set_owner_permissions(struct richacl_alloc *alloc)
++richacl_move_everyone_aces_down(struct richacl_alloc *alloc)
 +{
-+	unsigned int x = RICHACE_POSIX_ALWAYS_ALLOWED;
-+	unsigned int owner_mask = alloc->acl->a_owner_mask & ~x;
-+	unsigned int denied = 0;
 +	struct richace *ace;
-+
-+	if (!((alloc->acl->a_flags & RICHACL_WRITE_THROUGH)))
-+		return 0;
++	unsigned int allowed = 0, denied = 0;
 +
 +	richacl_for_each_entry(ace, alloc->acl) {
-+		if (richace_is_owner(ace)) {
-+			if (richace_is_allow(ace) && !(owner_mask & denied)) {
-+				richace_change_mask(alloc, &ace, owner_mask);
-+				owner_mask = 0;
-+			} else
-+				richace_change_mask(alloc, &ace, 0);
++		if (richace_is_inherit_only(ace))
++			continue;
++		if (richace_is_everyone(ace)) {
++			if (richace_is_allow(ace))
++				allowed |= (ace->e_mask & ~denied);
++			else if (richace_is_deny(ace))
++				denied |= (ace->e_mask & ~allowed);
++			else
++				continue;
++			if (richace_change_mask(alloc, &ace, 0))
++				return -1;
 +		} else {
-+			if (richace_is_deny(ace))
-+				denied |= ace->e_mask;
++			if (richace_is_allow(ace)) {
++				if (richace_change_mask(alloc, &ace, allowed |
++						(ace->e_mask & ~denied)))
++					return -1;
++			} else if (richace_is_deny(ace)) {
++				if (richace_change_mask(alloc, &ace, denied |
++						(ace->e_mask & ~allowed)))
++					return -1;
++			}
 +		}
 +	}
++	if (allowed & ~RICHACE_POSIX_ALWAYS_ALLOWED) {
++		struct richace *last_ace = ace - 1;
 +
-+	if (owner_mask & (denied |
-+			  ~alloc->acl->a_other_mask |
-+			  ~alloc->acl->a_group_mask)) {
-+		ace = alloc->acl->a_entries;
-+		if (richacl_insert_entry(alloc, &ace))
-+			return -1;
-+		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
-+		ace->e_flags = RICHACE_SPECIAL_WHO;
-+		ace->e_mask = owner_mask;
-+		ace->e_id.special = RICHACE_OWNER_SPECIAL_ID;
++		if (alloc->acl->a_entries &&
++		    richace_is_everyone(last_ace) &&
++		    richace_is_allow(last_ace) &&
++		    richace_is_inherit_only(last_ace) &&
++		    last_ace->e_mask == allowed)
++			last_ace->e_flags &= ~RICHACE_INHERIT_ONLY_ACE;
++		else {
++			if (richacl_insert_entry(alloc, &ace))
++				return -1;
++			ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
++			ace->e_flags = RICHACE_SPECIAL_WHO;
++			ace->e_mask = allowed;
++			ace->e_id.special = RICHACE_EVERYONE_SPECIAL_ID;
++		}
 +	}
 +	return 0;
 +}
 -- 
 2.5.0
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
