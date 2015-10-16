@@ -1,69 +1,55 @@
-From: Kevin Strasser <kevin.strasser-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: [tpmdd-devel] [PATCH 00/10] TPM2 updates for 4.4
-Date: Fri, 16 Oct 2015 12:06:23 -0700
-Message-ID: <20151016190623.GA20833@H87M>
-References: <1445020843-9382-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+From: Anna Schumaker <Anna.Schumaker@netapp.com>
+Subject: [PATCH v6 0/4] VFS: In-kernel copy system call
+Date: Fri, 16 Oct 2015 17:08:22 -0400
+Message-ID: <1445029707-31549-1-git-send-email-Anna.Schumaker@Netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1445020843-9382-1-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, Jiri Slaby <jslaby-IBi9RG/b67k@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "open list:KEYS-TRUSTED" <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:KEYS-TRUSTED" <keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Vivien Didelot <vivien.didelot-4ysUXcep3aM1wj+D4I0NRVaTQe2KTcn/@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, artem.bityutskiy-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>
+Content-Type: text/plain
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, darrick.wong@oracle.com, mtk.manpages@gmail.com, andros@netapp.com, hch@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 16, 2015 at 09:40:19PM +0300, Jarkko Sakkinen wrote:
-> This patch set enables distributions to start production of for TPM 2.0:
-> 
-> * Two critical bug fixes
-> * PPI support
-> * Basic trusted keys with authentication value and SHA256 for keyed hash
-> 
-> Next steps after this is to add policy based sealing for trusted keys and
-> algorithmic agility.
+Copy system calls came up during Plumbers a while ago, mostly because several
+filesystems (including NFS and XFS) are currently working on copy acceleration
+implementations.  We haven't heard from Zach Brown in a while, so I volunteered
+to push his patches upstream so individual filesystems don't need to keep
+writing their own ioctls.
 
-Applied the series and ran some basic trusted keys tests.
+This posting adresses Christoph's comments.  I'm pretty sure that splice() is
+already interruptible, so I don't know what else needs to be done for this
+system call.
 
-For the series:
-Tested-by: Kevin Strasser <kevin.strasser-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+I haven't started work on a "sparse" copy flag yet.  I would like to focus on
+the base system call first, and then add that later if it's still desired.
 
-> 
-> Jarkko Sakkinen (10):
->   tpm, tpm_crb: fix unaligned read of the command buffer address
->   tpm, tpm_tis: fix tpm_tis ACPI detection issue with TPM 2.0
->   sysfs: added __compat_only_sysfs_link_entry_to_kobj()
->   tpm: move the PPI attributes to character device directory.
->   tpm: update PPI documentation to address the location change.
->   tpm: introduce tpm_buf
->   keys, trusted: move struct trusted_key_options to trusted-type.h
->   tpm: seal/unseal for TPM 2.0
->   keys, trusted: seal/unseal with TPM 2.0 chips
->   MAINTAINERS: add new maintainer for TPM DEVICE DRIVER
-> 
->  Documentation/ABI/testing/sysfs-driver-ppi |  19 ++-
->  MAINTAINERS                                |   1 +
->  drivers/char/tpm/tpm-chip.c                |  24 ++-
->  drivers/char/tpm/tpm-interface.c           |  76 +++++++++
->  drivers/char/tpm/tpm.h                     | 134 ++++++++++++++--
->  drivers/char/tpm/tpm2-cmd.c                | 250 ++++++++++++++++++++++++++++-
->  drivers/char/tpm/tpm_crb.c                 |  39 ++---
->  drivers/char/tpm/tpm_ppi.c                 |  34 ++--
->  drivers/char/tpm/tpm_tis.c                 | 192 ++++++++++++++++++----
->  fs/sysfs/group.c                           |  44 +++++
->  include/keys/trusted-type.h                |  14 +-
->  include/linux/sysfs.h                      |  11 ++
->  include/linux/tpm.h                        |  26 +++
->  security/keys/trusted.c                    |  36 ++++-
->  security/keys/trusted.h                    |  11 --
->  15 files changed, 793 insertions(+), 118 deletions(-)
-> 
-> -- 
-> 2.5.0
-> 
-> 
-> ------------------------------------------------------------------------------
-> _______________________________________________
-> tpmdd-devel mailing list
-> tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-> https://lists.sourceforge.net/lists/listinfo/tpmdd-devel
+Changes in v6:
+- Squash together most patches.
+- Drop all flags except COPY_FR_REFLINK.
+- Drop patch removing same mountpoint check.
+- Change default behavior (flags = 0) to a data copy.
+
+
+Anna Schumaker (1):
+  vfs: Add vfs_copy_file_range() support for pagecache copies
+
+Zach Brown (3):
+  vfs: add copy_file_range syscall and vfs helper
+  x86: add sys_copy_file_range to syscall tables
+  btrfs: add .copy_file_range file operation
+
+ arch/x86/entry/syscalls/syscall_32.tbl |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl |   1 +
+ fs/btrfs/ctree.h                       |   3 +
+ fs/btrfs/file.c                        |   1 +
+ fs/btrfs/ioctl.c                       |  94 +++++++++++++----------
+ fs/read_write.c                        | 133 +++++++++++++++++++++++++++++++++
+ include/linux/fs.h                     |   3 +
+ include/linux/syscalls.h               |   3 +
+ include/uapi/asm-generic/unistd.h      |   4 +-
+ include/uapi/linux/fs.h                |   2 +
+ kernel/sys_ni.c                        |   1 +
+ 11 files changed, 206 insertions(+), 40 deletions(-)
+
+-- 
+2.6.1
+
