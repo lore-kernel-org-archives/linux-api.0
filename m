@@ -1,86 +1,77 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH] kselftests/ftrace : Add event trigger testcases
-Date: Thu, 15 Oct 2015 20:27:01 -0400
-Message-ID: <20151015202701.752af971@grimm.local.home>
-References: <20150725011310.4601.76087.stgit@localhost.localdomain>
-	<20150727093411.GE22022@danjae.kornet>
-	<55BD4AC5.8040905@hitachi.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH v3] selftests/seccomp: build and pass on arm64
+Date: Thu, 15 Oct 2015 20:09:27 -0600
+Message-ID: <56205C57.3070406@osg.samsung.com>
+References: <20151006193025.GA11826@www.outflux.net>
+ <561FB33F.5030906@osg.samsung.com>
+ <CAGXu5jKXeu-kBie+wJODoAjoK1kX+ScFRSn0s3s_wvN+sHT1yw@mail.gmail.com>
+ <56200761.8050607@osg.samsung.com>
+ <CAGXu5jJMpSTBFqS3Xj0ftMYVwJuUU8MUbggrWW8wN5CGDBsLvA@mail.gmail.com>
+ <56203023.2060007@osg.samsung.com> <5620304C.3070701@osg.samsung.com>
+ <CAGXu5jLsYyXxQNbPKVsdzfSbbgddpJiz2MzgwEdbLd7mhjDmxw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <55BD4AC5.8040905@hitachi.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
-Cc: Namhyung Kim <namhyung@kernel.org>, Tom Zanussi <tom.zanussi@linux.intel.com>, linux-api@vger.kernel.org, Shuah Khan <shuahkh@osg.samsung.com>, linux-kernel@vger.kernel.org, Ingo Molnar <mingo@redhat.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAGXu5jLsYyXxQNbPKVsdzfSbbgddpJiz2MzgwEdbLd7mhjDmxw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: AKASHI Takahiro <takahiro.akashi-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, 02 Aug 2015 07:40:05 +0900
-Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com> wrote:
-
-> On 2015/07/27 18:34, Namhyung Kim wrote:
-> > Hi Masami,
-> > 
-> > On Sat, Jul 25, 2015 at 10:13:10AM +0900, Masami Hiramatsu wrote:
-> >> This adds simple event trigger testcases for ftracetest,
-> >> which covers following triggers.
-> >>  - traceon-traceoff trigger
-> >>  - enable/disable_event trigger
-> >>  - snapshot trigger
-> >>  - stacktrace trigger
-> >>  - trigger filters
-> >>
-> >> Signed-off-by: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
-> >> Cc: Steven Rostedt <rostedt@goodmis.org>
-> >> Cc: Ingo Molnar <mingo@redhat.com>
-> >> Cc: Shuah Khan <shuahkh@osg.samsung.com>
-> >> Cc: Namhyung Kim <namhyung@kernel.org>
-> >> Cc: Tom Zanussi <tom.zanussi@linux.intel.com>
-> >> ---
-> >>  tools/testing/selftests/ftrace/test.d/functions    |    9 +++
-> >>  .../ftrace/test.d/trigger/trigger-eventonoff.tc    |   64 ++++++++++++++++++++
-> >>  .../ftrace/test.d/trigger/trigger-filter.tc        |   59 ++++++++++++++++++
-> >>  .../ftrace/test.d/trigger/trigger-snapshot.tc      |   56 ++++++++++++++++++
-> >>  .../ftrace/test.d/trigger/trigger-stacktrace.tc    |   53 +++++++++++++++++
-> >>  .../ftrace/test.d/trigger/trigger-traceonoff.tc    |   58 ++++++++++++++++++
-> >>  6 files changed, 299 insertions(+)
-> >>  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-eventonoff.tc
-> >>  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-filter.tc
-> >>  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-snapshot.tc
-> >>  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-stacktrace.tc
-> >>  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-traceonoff.tc
-> >>
-> >> diff --git a/tools/testing/selftests/ftrace/test.d/functions b/tools/testing/selftests/ftrace/test.d/functions
-> >> index 5d8cd06..36ca18e 100644
-> >> --- a/tools/testing/selftests/ftrace/test.d/functions
-> >> +++ b/tools/testing/selftests/ftrace/test.d/functions
-> >> @@ -14,3 +14,12 @@ enable_tracing() { # start trace recording
-> >>  reset_tracer() { # reset the current tracer
-> >>      echo nop > current_tracer
-> >>  }
-> >> +
-> >> +reset_trigger() { # reset all current setting triggers
-> >> +    grep -v ^# events/*/*/trigger |
-> >> +    while read line; do
-> >> +        cmd=`echo $line | cut -f2- -d:`
-> >> +	echo "!$cmd" > `echo $line | cut -f1 -d:`
-> > 
-> > Broken whitespaces?
+On 10/15/2015 05:02 PM, Kees Cook wrote:
+> On Thu, Oct 15, 2015 at 4:01 PM, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+>> On 10/15/2015 05:00 PM, Shuah Khan wrote:
+>>> On 10/15/2015 04:07 PM, Kees Cook wrote:
+>>>> On Thu, Oct 15, 2015 at 1:06 PM, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+>>>>> On 10/15/2015 12:42 PM, Kees Cook wrote:
+>>>>>> On Thu, Oct 15, 2015 at 7:07 AM, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+>>>>>>> On 10/06/2015 01:30 PM, Kees Cook wrote:
+>>>>>>>> Changing arm64 syscalls is done via a specific register set, more like s390
+>>>>>>>> than like arm (specific ptrace call) and x86 (part of general registers).
+>>>>>>>> Since (restarting) poll doesn't exist on arm64, switch to using nanosleep
+>>>>>>>> for testing restart_syscall. And since it looks like the syscall ABI is
+>>>>>>>> inconsistent on arm-compat, so we must work around it (and document it) in
+>>>>>>>> the test.
+>>>>>>>>
+>>>>>>>> Signed-off-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+>>>>>>>> ---
+>>>>>>>> v3:
+>>>>>>>>  - correctly set syscall number on native arm64.
+>>>>>>>> v2:
+>>>>>>>>  - switch to nanosleep from a bad mix of poll and ppoll for testing restart.
+>>>>>>>> ---
+>>>>>>>
+>>>>>>> Is this good to go? Failed to apply to linux-kselftest next.
+>>>>>>> If you can rebase and resend. I can get this into 4.4-rc1
+>>>>>>
+>>>>>> Yes please. :)
+>>>>>>
+>>>>>
+>>>>> ok. Please rebase to linux-kselftest next and resend the patch.
+>>>>
+>>>> Am I looking at the right tree? linux-kselftest#next doesn't appear to
+>>>> have the s390 patch that was included in 4.3.
+>>>>
+>>>
+>>> I see what happened. Your patch is linux-next fixes and that went into
+>>> 4.3-rc2. I can get linux-next rebase to 4.3-rc2 and get your patch in.
+>>> Thanks for clearing this up.
+>>
+>> oops rebase linux-kselftest next i.e
 > 
-> Right, I'll fix that.
+> Okay, cool. Let me know if I need to do anything more. :)
 > 
 
-[..]
+Applied to linux-ksefltest next for 4.4-rc1
 
-> > What about checking child_comm too to verify complex filter pattern
-> > with string type?  Maybe something like below (not tested..)?
-> > 
-> > echo 'traceoff if child_pid != 0 && child_comm ~ '*sh' > events/.../trigger
-> 
-> OK, I'll add more complex patterns.
+thanks,
+-- Shuah
 
-Hi Masami,
 
-Did you ever send an updated patch?
-
--- Steve
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
