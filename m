@@ -1,414 +1,237 @@
-From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v11 24/48] xfs: Add richacl support
-Date: Fri, 16 Oct 2015 17:18:02 +0200
-Message-ID: <1445008706-15115-25-git-send-email-agruenba@redhat.com>
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v11 27/48] richacl: Propagate everyone@ permissions to other aces
+Date: Fri, 16 Oct 2015 17:18:05 +0200
+Message-ID: <1445008706-15115-28-git-send-email-agruenba@redhat.com>
 References: <1445008706-15115-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1445008706-15115-1-git-send-email-agruenba@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1445008706-15115-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-The richacl feature flag (mkfs.xfs -m richacl=1) determines whether an xfs
-filesystem supports posix acls or richacls.  Richacls are stored in
-"system.richacl" xattrs.
+The trailing everyone@ allow ace can grant permissions to all file
+classes including the owner and group class.  Before we can apply the
+other mask to this entry to turn it into an "other class" entry, we need
+to ensure that members of the owner or group class will not lose any
+permissions from that ace.
 
-On the grounds that richacls add relatively little overhead compared to the
-size of xfs itself, to keep the testing matrix small, and because xfs users
-are highly likely to enable richacls anyway, richacl support cannot be
-compiled out in xfs.
+Conceptually, we do this by inserting additional <who>:<allow>::allow
+entries before the trailing everyone@ allow ace with the same
+permissions as the trailing everyone@ allow ace for owner@, group@, and
+all explicitly mentioned users and groups.  (In practice, we will rarely
+need to insert any additional aces in this step.)
 
-Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Reviewed-by: J. Bruce Fields <bfields-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- fs/xfs/Kconfig             |   1 +
- fs/xfs/Makefile            |   1 +
- fs/xfs/libxfs/xfs_format.h |  11 ++++-
- fs/xfs/xfs_iops.c          |  44 +++++++++++++++----
- fs/xfs/xfs_richacl.c       | 102 +++++++++++++++++++++++++++++++++++++++++++++
- fs/xfs/xfs_richacl.h       |  23 ++++++++++
- fs/xfs/xfs_super.c         |   6 ++-
- fs/xfs/xfs_super.h         |   4 ++
- fs/xfs/xfs_xattr.c         |   2 +
- 9 files changed, 183 insertions(+), 11 deletions(-)
- create mode 100644 fs/xfs/xfs_richacl.c
- create mode 100644 fs/xfs/xfs_richacl.h
+ fs/richacl_compat.c | 198 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 198 insertions(+)
 
-diff --git a/fs/xfs/Kconfig b/fs/xfs/Kconfig
-index 5d47b4d..3fd00f8 100644
---- a/fs/xfs/Kconfig
-+++ b/fs/xfs/Kconfig
-@@ -4,6 +4,7 @@ config XFS_FS
- 	depends on (64BIT || LBDAF)
- 	select EXPORTFS
- 	select LIBCRC32C
-+	select FS_RICHACL
- 	help
- 	  XFS is a high performance journaling filesystem which originated
- 	  on the SGI IRIX platform.  It is completely multi-threaded, can
-diff --git a/fs/xfs/Makefile b/fs/xfs/Makefile
-index a096841..1e6b984 100644
---- a/fs/xfs/Makefile
-+++ b/fs/xfs/Makefile
-@@ -84,6 +84,7 @@ xfs-y				+= xfs_aops.o \
- 				   xfs_message.o \
- 				   xfs_mount.o \
- 				   xfs_mru_cache.o \
-+				   xfs_richacl.o \
- 				   xfs_super.o \
- 				   xfs_symlink.o \
- 				   xfs_sysfs.o \
-diff --git a/fs/xfs/libxfs/xfs_format.h b/fs/xfs/libxfs/xfs_format.h
-index 9590a06..923247c 100644
---- a/fs/xfs/libxfs/xfs_format.h
-+++ b/fs/xfs/libxfs/xfs_format.h
-@@ -461,10 +461,13 @@ xfs_sb_has_ro_compat_feature(
- #define XFS_SB_FEAT_INCOMPAT_FTYPE	(1 << 0)	/* filetype in dirent */
- #define XFS_SB_FEAT_INCOMPAT_SPINODES	(1 << 1)	/* sparse inode chunks */
- #define XFS_SB_FEAT_INCOMPAT_META_UUID	(1 << 2)	/* metadata UUID */
-+#define XFS_SB_FEAT_INCOMPAT_RICHACL	(1 << 3)	/* richacls */
-+
- #define XFS_SB_FEAT_INCOMPAT_ALL \
- 		(XFS_SB_FEAT_INCOMPAT_FTYPE|	\
- 		 XFS_SB_FEAT_INCOMPAT_SPINODES|	\
--		 XFS_SB_FEAT_INCOMPAT_META_UUID)
-+		 XFS_SB_FEAT_INCOMPAT_META_UUID| \
-+		 XFS_SB_FEAT_INCOMPAT_RICHACL)
- 
- #define XFS_SB_FEAT_INCOMPAT_UNKNOWN	~XFS_SB_FEAT_INCOMPAT_ALL
- static inline bool
-@@ -530,6 +533,12 @@ static inline bool xfs_sb_version_hasmetauuid(struct xfs_sb *sbp)
- 		(sbp->sb_features_incompat & XFS_SB_FEAT_INCOMPAT_META_UUID);
+diff --git a/fs/richacl_compat.c b/fs/richacl_compat.c
+index 4f0acf5..7d007d7 100644
+--- a/fs/richacl_compat.c
++++ b/fs/richacl_compat.c
+@@ -218,3 +218,201 @@ richacl_move_everyone_aces_down(struct richacl_alloc *alloc)
+ 	}
+ 	return 0;
  }
- 
-+static inline bool xfs_sb_version_hasrichacl(struct xfs_sb *sbp)
-+{
-+	return (XFS_SB_VERSION_NUM(sbp) == XFS_SB_VERSION_5) &&
-+		(sbp->sb_features_incompat & XFS_SB_FEAT_INCOMPAT_RICHACL);
-+}
 +
- /*
-  * end of superblock version macros
-  */
-diff --git a/fs/xfs/xfs_iops.c b/fs/xfs/xfs_iops.c
-index 8294132..9e4103b 100644
---- a/fs/xfs/xfs_iops.c
-+++ b/fs/xfs/xfs_iops.c
-@@ -27,6 +27,7 @@
- #include "xfs_bmap.h"
- #include "xfs_bmap_util.h"
- #include "xfs_acl.h"
-+#include "xfs_richacl.h"
- #include "xfs_quota.h"
- #include "xfs_error.h"
- #include "xfs_attr.h"
-@@ -42,6 +43,7 @@
- #include <linux/capability.h>
- #include <linux/xattr.h>
- #include <linux/posix_acl.h>
-+#include <linux/richacl.h>
- #include <linux/security.h>
- #include <linux/fiemap.h>
- #include <linux/slab.h>
-@@ -133,7 +135,8 @@ xfs_generic_create(
- {
- 	struct inode	*inode;
- 	struct xfs_inode *ip = NULL;
--	struct posix_acl *default_acl, *acl;
-+	struct posix_acl *default_acl = NULL, *acl = NULL;
-+	struct richacl *richacl = NULL;
- 	struct xfs_name	name;
- 	int		error;
- 
-@@ -149,9 +152,15 @@ xfs_generic_create(
- 		rdev = 0;
- 	}
- 
--	error = posix_acl_create(dir, &mode, &default_acl, &acl);
--	if (error)
--		return error;
-+	if (IS_RICHACL(dir)) {
-+		richacl = richacl_create(&mode, dir);
-+		if (IS_ERR(richacl))
-+			return PTR_ERR(richacl);
-+	} else {
-+		error = posix_acl_create(dir, &mode, &default_acl, &acl);
-+		if (error)
-+			return error;
-+	}
- 
- 	if (!tmpfile) {
- 		xfs_dentry_to_name(&name, dentry, mode);
-@@ -180,6 +189,11 @@ xfs_generic_create(
- 			goto out_cleanup_inode;
- 	}
- #endif
-+	if (richacl) {
-+		error = xfs_set_richacl(inode, richacl);
-+		if (error)
-+			goto out_cleanup_inode;
-+	}
- 
- 	if (tmpfile)
- 		d_tmpfile(dentry, inode);
-@@ -189,10 +203,9 @@ xfs_generic_create(
- 	xfs_finish_inode_setup(ip);
- 
-  out_free_acl:
--	if (default_acl)
--		posix_acl_release(default_acl);
--	if (acl)
--		posix_acl_release(acl);
-+	posix_acl_release(default_acl);
-+	posix_acl_release(acl);
-+	richacl_put(richacl);
- 	return error;
- 
-  out_cleanup_inode:
-@@ -534,6 +547,13 @@ xfs_setattr_time(
- 	}
- }
- 
-+static inline int
-+xfs_acl_chmod(struct inode *inode, umode_t mode)
-+{
-+	if (IS_RICHACL(inode))
-+		return richacl_chmod(inode, inode->i_mode);
-+	return posix_acl_chmod(inode, inode->i_mode);
-+}
- int
- xfs_setattr_nonsize(
- 	struct xfs_inode	*ip,
-@@ -722,7 +742,7 @@ xfs_setattr_nonsize(
- 	 * 	     Posix ACL code seems to care about this issue either.
- 	 */
- 	if ((mask & ATTR_MODE) && !(flags & XFS_ATTR_NOACL)) {
--		error = posix_acl_chmod(inode, inode->i_mode);
-+		error = xfs_acl_chmod(inode, inode->i_mode);
- 		if (error)
- 			return error;
- 	}
-@@ -1104,6 +1124,8 @@ xfs_vn_tmpfile(
- static const struct inode_operations xfs_inode_operations = {
- 	.get_acl		= xfs_get_acl,
- 	.set_acl		= xfs_set_acl,
-+	.get_richacl		= xfs_get_richacl,
-+	.set_richacl		= xfs_set_richacl,
- 	.getattr		= xfs_vn_getattr,
- 	.setattr		= xfs_vn_setattr,
- 	.setxattr		= generic_setxattr,
-@@ -1132,6 +1154,8 @@ static const struct inode_operations xfs_dir_inode_operations = {
- 	.rename2		= xfs_vn_rename,
- 	.get_acl		= xfs_get_acl,
- 	.set_acl		= xfs_set_acl,
-+	.get_richacl		= xfs_get_richacl,
-+	.set_richacl		= xfs_set_richacl,
- 	.getattr		= xfs_vn_getattr,
- 	.setattr		= xfs_vn_setattr,
- 	.setxattr		= generic_setxattr,
-@@ -1160,6 +1184,8 @@ static const struct inode_operations xfs_dir_ci_inode_operations = {
- 	.rename2		= xfs_vn_rename,
- 	.get_acl		= xfs_get_acl,
- 	.set_acl		= xfs_set_acl,
-+	.get_richacl		= xfs_get_richacl,
-+	.set_richacl		= xfs_set_richacl,
- 	.getattr		= xfs_vn_getattr,
- 	.setattr		= xfs_vn_setattr,
- 	.setxattr		= generic_setxattr,
-diff --git a/fs/xfs/xfs_richacl.c b/fs/xfs/xfs_richacl.c
-new file mode 100644
-index 0000000..73c2d24
---- /dev/null
-+++ b/fs/xfs/xfs_richacl.c
-@@ -0,0 +1,102 @@
-+/*
-+ * Copyright (C) 2015  Red Hat, Inc.
-+ * Author: Andreas Gruenbacher <agruenba@redhat.com>
++/**
++ * __richacl_propagate_everyone  -  propagate everyone@ permissions up for @who
++ * @alloc:	acl and number of allocated entries
++ * @who:	identifier to propagate permissions for
++ * @allow:	permissions to propagate up
 + *
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms of version 2.1 of the GNU Lesser General Public License
-+ * as published by the Free Software Foundation.
++ * Propagate the permissions in @allow up from the end of the acl to the start
++ * for the specified principal @who.
 + *
-+ * This program is distributed in the hope that it would be useful, but
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
++ * The simplest possible approach to achieve this would be to insert a
++ * "<who>:<allow>::allow" ace before the final everyone@ allow ace.  Since this
++ * would often result in aces which are not needed or which could be merged
++ * with an existing ace, we make the following optimizations:
 + *
++ *   - We go through the acl and determine which permissions are already
++ *     allowed or denied to @who, and we remove those permissions from
++ *     @allow.
++ *
++ *   - If the acl contains an allow ace for @who and no aces after this entry
++ *     deny permissions in @allow, we add the permissions in @allow to this
++ *     ace.  (Propagating permissions across a deny ace which can match the
++ *     process can elevate permissions.)
++ *
++ * This transformation does not alter the permissions that the acl grants.
 + */
-+
-+#include "xfs.h"
-+#include "xfs_format.h"
-+#include "xfs_log_format.h"
-+#include "xfs_inode.h"
-+#include "xfs_attr.h"
-+
-+#include <linux/richacl_xattr.h>
-+
-+struct richacl *
-+xfs_get_richacl(struct inode *inode)
-+{
-+	struct xfs_inode *ip = XFS_I(inode);
-+	struct richacl *acl = NULL;
-+	int size = XATTR_SIZE_MAX;
-+	void *value;
-+	int error;
-+
-+	value = kmem_zalloc_large(size, KM_SLEEP);
-+	if (!value)
-+		return ERR_PTR(-ENOMEM);
-+
-+	error = xfs_attr_get(ip, XATTR_NAME_RICHACL, value, &size, ATTR_ROOT);
-+	if (error) {
-+		/*
-+		 * If the attribute doesn't exist make sure we have a negative
-+		 * cache entry, for any other error assume it is transient and
-+		 * leave the cache entry as ACL_NOT_CACHED.
-+		 */
-+		if (error != -ENOATTR)
-+			acl = ERR_PTR(error);
-+	} else
-+		acl = richacl_from_xattr(&init_user_ns, value, size);
-+
-+	if (!IS_ERR(acl))
-+		set_cached_richacl(inode, acl);
-+	kfree(value);
-+
-+	return acl;
-+}
-+
 +static int
-+xfs_remove_richacl(struct inode *inode)
++__richacl_propagate_everyone(struct richacl_alloc *alloc, struct richace *who,
++			     unsigned int allow)
 +{
-+	struct xfs_inode *ip = XFS_I(inode);
-+	int error;
++	struct richace *allow_last = NULL, *ace;
++	struct richacl *acl = alloc->acl;
 +
-+	error = xfs_attr_remove(ip, XATTR_NAME_RICHACL, ATTR_ROOT);
-+	if (error == -ENOATTR)
-+		error = 0;
-+	if (!error)
-+		set_cached_richacl(inode, NULL);
-+	return error;
-+}
-+
-+int
-+xfs_set_richacl(struct inode *inode, struct richacl *acl)
-+{
-+	struct xfs_inode *ip = XFS_I(inode);
-+	umode_t mode = inode->i_mode;
-+	int error, size;
-+	void *value;
-+
-+	if (!acl)
-+		return xfs_remove_richacl(inode);
-+
-+	if (richacl_equiv_mode(acl, &mode) == 0) {
-+		xfs_set_mode(inode, mode);
-+		return xfs_remove_richacl(inode);
++	/*
++	 * Remove the permissions from allow that are already determined for
++	 * this who value, and figure out if there is an allow entry for
++	 * this who value that is "reachable" from the trailing everyone@
++	 * allow ace.
++	 */
++	richacl_for_each_entry(ace, acl) {
++		if (richace_is_inherit_only(ace))
++			continue;
++		if (richace_is_allow(ace)) {
++			if (richace_is_same_identifier(ace, who)) {
++				allow &= ~ace->e_mask;
++				allow_last = ace;
++			}
++		} else if (richace_is_deny(ace)) {
++			if (richace_is_same_identifier(ace, who))
++				allow &= ~ace->e_mask;
++			else if (allow & ace->e_mask)
++				allow_last = NULL;
++		}
 +	}
++	ace--;
 +
-+	size = richacl_xattr_size(acl);
-+	value = kmem_zalloc_large(size, KM_SLEEP);
-+	if (!value)
-+		return -ENOMEM;
-+	richacl_to_xattr(&init_user_ns, acl, value, size);
-+	error = xfs_attr_set(ip, XATTR_NAME_RICHACL, value, size,
-+			     ATTR_ROOT);
-+	kfree(value);
-+	if (error)
-+		return error;
++	/*
++	 * If for group class entries, all the remaining permissions will
++	 * remain granted by the trailing everyone@ allow ace, no additional
++	 * entry is needed.
++	 */
++	if (!richace_is_owner(who) &&
++	    richace_is_everyone(ace) &&
++	    !(allow & ~(ace->e_mask & acl->a_other_mask)))
++		allow = 0;
 +
-+	mode &= ~S_IRWXUGO;
-+	mode |= richacl_masks_to_mode(acl);
-+	xfs_set_mode(inode, mode);
-+	set_cached_richacl(inode, acl);
++	if (allow) {
++		if (allow_last)
++			return richace_change_mask(alloc, &allow_last,
++						   allow_last->e_mask | allow);
++		else {
++			struct richace who_copy;
 +
++			richace_copy(&who_copy, who);
++			if (richacl_insert_entry(alloc, &ace))
++				return -1;
++			richace_copy(ace, &who_copy);
++			ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
++			ace->e_flags &= ~RICHACE_INHERITANCE_FLAGS;
++			ace->e_mask = allow;
++		}
++	}
 +	return 0;
 +}
-diff --git a/fs/xfs/xfs_richacl.h b/fs/xfs/xfs_richacl.h
-new file mode 100644
-index 0000000..431aa25
---- /dev/null
-+++ b/fs/xfs/xfs_richacl.h
-@@ -0,0 +1,23 @@
-+/*
-+ * Copyright (C)  2015 Red Hat, Inc.
-+ * Author: Andreas Gruenbacher <agruenba@redhat.com>
++
++/**
++ * richacl_propagate_everyone  -  propagate everyone@ permissions up the acl
++ * @alloc:	acl and number of allocated entries
 + *
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms of version 2.1 of the GNU Lesser General Public License
-+ * as published by the Free Software Foundation.
++ * Make sure that group@ and all other users and groups mentioned in the acl
++ * will not lose any permissions when finally applying the other mask to the
++ * everyone@ allow ace at the end of the acl.  We modify the permissions of
++ * existing entries or add new entries before the final everyone@ allow ace to
++ * achieve that.
 + *
-+ * This program is distributed in the hope that it would be useful, but
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
++ * For example, the following acl implicitly grants everyone rwpx access:
 + *
++ *    joe:r::allow
++ *    everyone@:rwpx::allow
++ *
++ * When applying mode 0660 to this acl, group@ would lose rwp access, and joe
++ * would lose wp access even though the mode does not exclude those
++ * permissions.  After propagating the everyone@ permissions, the result for
++ * applying mode 0660 becomes:
++ *
++ *    owner@:rwp::allow
++ *    joe:rwp::allow
++ *    group@:rwp::allow
++ *
++ * Deny aces complicate the matter.  For example, the following acl grants
++ * everyone but joe write access:
++ *
++ *    joe:wp::deny
++ *    everyone@:rwpx::allow
++ *
++ * When applying mode 0660 to this acl, group@ would lose rwp access, and joe
++ * would lose r access.  After propagating the everyone@ permissions, the
++ * result for applying mode 0660 becomes:
++ *
++ *    owner@:rwp::allow
++ *    joe:w::deny
++ *    group@:rwp::allow
++ *    joe:r::allow
 + */
++static int
++richacl_propagate_everyone(struct richacl_alloc *alloc)
++{
++	struct richace who = { .e_flags = RICHACE_SPECIAL_WHO };
++	struct richacl *acl = alloc->acl;
++	struct richace *ace;
++	unsigned int owner_allow, group_allow;
 +
-+#ifndef __FS_XFS_RICHACL_H
-+#define __FS_XFS_RICHACL_H
++	if (!acl->a_count)
++		return 0;
++	ace = acl->a_entries + acl->a_count - 1;
++	if (richace_is_inherit_only(ace) || !richace_is_everyone(ace))
++		return 0;
 +
-+struct richacl;
++	/*
++	 * Permissions the owner and group class are granted through the
++	 * trailing everyone@ allow ace.
++	 */
++	owner_allow = ace->e_mask & acl->a_owner_mask;
++	group_allow = ace->e_mask & acl->a_group_mask;
 +
-+extern struct richacl *xfs_get_richacl(struct inode *);
-+extern int xfs_set_richacl(struct inode *, struct richacl *);
++	/*
++	 * If the group or other masks hide permissions which the owner should
++	 * be allowed, we need to propagate those permissions up.  Otherwise,
++	 * those permissions may be lost when applying the other mask to the
++	 * trailing everyone@ allow ace, or when isolating the group class from
++	 * the other class through additional deny aces.
++	 */
++	if (owner_allow & ~(acl->a_group_mask & acl->a_other_mask)) {
++		/* Propagate everyone@ permissions through to owner@. */
++		who.e_id.special = RICHACE_OWNER_SPECIAL_ID;
++		if (__richacl_propagate_everyone(alloc, &who, owner_allow))
++			return -1;
++		acl = alloc->acl;
++	}
 +
-+#endif  /* __FS_XFS_RICHACL_H */
-diff --git a/fs/xfs/xfs_super.c b/fs/xfs/xfs_super.c
-index 904f637..f82ce1a 100644
---- a/fs/xfs/xfs_super.c
-+++ b/fs/xfs/xfs_super.c
-@@ -1500,7 +1500,11 @@ xfs_fs_fill_super(
- 	sb->s_maxbytes = xfs_max_file_offset(sb->s_blocksize_bits);
- 	sb->s_max_links = XFS_MAXLINK;
- 	sb->s_time_gran = 1;
--	set_posix_acl_flag(sb);
++	/*
++	 * If the other mask hides permissions which the group class should be
++	 * allowed, we need to propagate those permissions up to the owning
++	 * group and to all other members in the group class.
++	 */
++	if (group_allow & ~acl->a_other_mask) {
++		int n;
 +
-+	if (xfs_sb_version_hasrichacl(&mp->m_sb))
-+		set_richacl_flag(sb);
-+	else
-+		set_posix_acl_flag(sb);
- 
- 	/* version 5 superblocks support inode version counters. */
- 	if (XFS_SB_VERSION_NUM(&mp->m_sb) == XFS_SB_VERSION_5)
-diff --git a/fs/xfs/xfs_super.h b/fs/xfs/xfs_super.h
-index 499058f..7ae21d9 100644
---- a/fs/xfs/xfs_super.h
-+++ b/fs/xfs/xfs_super.h
-@@ -36,6 +36,9 @@ extern void xfs_qm_exit(void);
- # define set_posix_acl_flag(sb)	do { } while (0)
- #endif
- 
-+# define XFS_RICHACL_STRING	"Richacls, "
-+# define set_richacl_flag(sb)	((sb)->s_flags |= MS_RICHACL)
++		/* Propagate everyone@ permissions through to group@. */
++		who.e_id.special = RICHACE_GROUP_SPECIAL_ID;
++		if (__richacl_propagate_everyone(alloc, &who, group_allow))
++			return -1;
++		acl = alloc->acl;
 +
- #define XFS_SECURITY_STRING	"security attributes, "
- 
- #ifdef CONFIG_XFS_RT
-@@ -52,6 +55,7 @@ extern void xfs_qm_exit(void);
- 
- #define XFS_VERSION_STRING	"SGI XFS"
- #define XFS_BUILD_OPTIONS	XFS_ACL_STRING \
-+				XFS_RICHACL_STRING \
- 				XFS_SECURITY_STRING \
- 				XFS_REALTIME_STRING \
- 				XFS_DBG_STRING /* DBG must be last */
-diff --git a/fs/xfs/xfs_xattr.c b/fs/xfs/xfs_xattr.c
-index c0368151..62dc913 100644
---- a/fs/xfs/xfs_xattr.c
-+++ b/fs/xfs/xfs_xattr.c
-@@ -28,6 +28,7 @@
- #include "xfs_acl.h"
- 
- #include <linux/posix_acl_xattr.h>
-+#include <linux/richacl_xattr.h>
- #include <linux/xattr.h>
- 
- 
-@@ -103,6 +104,7 @@ const struct xattr_handler *xfs_xattr_handlers[] = {
- 	&posix_acl_access_xattr_handler,
- 	&posix_acl_default_xattr_handler,
- #endif
-+	&richacl_xattr_handler,
- 	NULL
- };
- 
++		/*
++		 * Start from the entry before the trailing everyone@ allow
++		 * entry. We will not hit everyone@ entries in the loop.
++		 */
++		for (n = acl->a_count - 2; n != -1; n--) {
++			ace = acl->a_entries + n;
++
++			if (richace_is_inherit_only(ace) ||
++			    richace_is_owner(ace) ||
++			    richace_is_group(ace))
++				continue;
++
++			/*
++			 * Any inserted entry will end up below the current
++			 * entry.
++			 */
++			if (__richacl_propagate_everyone(alloc, ace,
++							 group_allow))
++				return -1;
++			acl = alloc->acl;
++		}
++	}
++	return 0;
++}
 -- 
 2.5.0
