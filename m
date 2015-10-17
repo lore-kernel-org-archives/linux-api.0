@@ -1,59 +1,60 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] userns/capability: Add user namespace capability
-Date: Sat, 17 Oct 2015 16:55:01 -0500
-Message-ID: <20151017215501.GA22900@mail.hallyn.com>
-References: <5622700C.9090107@miglix.eu>
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Subject: Re: [PATCH v11 21/48] ext4: Add richacl feature flag
+Date: Sun, 18 Oct 2015 10:17:59 +1100
+Message-ID: <20151017231759.GV27164@dastard>
+References: <1445008706-15115-1-git-send-email-agruenba@redhat.com>
+ <1445008706-15115-22-git-send-email-agruenba@redhat.com>
+ <5621346E.5000500@gmail.com>
+ <CAHc6FU7sR2zN-K3un74wCv+1NPnrqJ=LYiWo+YQ_2X0kopyoTQ@mail.gmail.com>
+ <562141AD.60302@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <5622700C.9090107-gyUQdkDHmHmHXe+LvDLADg@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tobias Markus <tobias-gyUQdkDHmHmHXe+LvDLADg@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <562141AD.60302-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Aneesh Kumar K.V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Oct 17, 2015 at 05:58:04PM +0200, Tobias Markus wrote:
-> Add capability CAP_SYS_USER_NS.
-> Tasks having CAP_SYS_USER_NS are allowed to create a new user namespace
-> when calling clone or unshare with CLONE_NEWUSER.
-> 
-> Rationale:
-> 
-> Linux 3.8 saw the introduction of unpriviledged user namespaces,
-> allowing unpriviledged users (without CAP_SYS_ADMIN) to be a "fake" root
-> inside a separate user namespace. Before that, any namespace creation
-> required CAP_SYS_ADMIN (or, in practice, the user had to be root).
-> Unfortunately, there have been some security-relevant bugs in the
-> meantime. Because of the fairly complex nature of user namespaces, it is
-> reasonable to say that future vulnerabilties can not be excluded. Some
-> distributions even wholly disable user namespaces because of this.
+On Fri, Oct 16, 2015 at 02:27:57PM -0400, Austin S Hemmelgarn wrote:
+> On 2015-10-16 13:41, Andreas Gruenbacher wrote:
+> >On Fri, Oct 16, 2015 at 7:31 PM, Austin S Hemmelgarn
+> ><ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> >>I would like to re-iterate, on both XFS and ext4, I _really_ think this
+> >>should be a ro_compat flag, and not an incompat one.  If a person has the
+> >>ability to mount the FS (even if it's a read-only mount), then they by
+> >>definition have read access to the file or partition that the filesystem is
+> >>contained in, which means that any ACL's stored on the filesystem are
+> >>functionally irrelevant,
+> >
+> >It is unfortunately not safe to make such a file system accessible to
+> >other users, so the feature is not strictly read-only compatible.
+> If it's not safe WRT data integrity, then the design needs to be
+> reworked, as that directly implies that isn't safe for even every
+> day usage on a writable filesystem.
 
-Fwiw I'm not in favor of this.  Debian has a patch (I believe the one
-I originally wrote for Ubuntu but which Ubuntu dropped long ago) adding a
-sysctl, off by default, for enabling user namespaces.
+This is exactly what we have *incompat feature flags for*: to
+protect old code that doesn't know about potentially dangerous new
+on-disk formats from trying to parse those formats and causing
+unpredictable bad things from happening.
 
-Posix capabilities are intended for privileged actions, not for
-actions which explicitly should not require privilege, but which
-we feel are in development.
+Austin, your arguments hold no weight because they are no different
+to the considerations for any new on-disk feature: the user needs to
+have both kernel and userspace support to recover filesystems that
+go bad. If you are using a brand new fs/kernel feature, then it is
+expected that you know that your DR processes take this into
+account.
 
-In general, the feeling is that putting a feature like this behind a
-wall will only slow down the finding of any bugs, so I think the goal
-itself is questionable.  But the chosen means for achieving your goal
-are definately wrong.
+This is also why we XFS devs wait at least a year after new on-disk
+features are merged into XFS before we consider turning them on by
+default. i.e.  to give distros and recovery utilities time to pick
+up kernels and userspace pacakges that support the new feature
+before the average user will encounter it....
 
-> Both options, user namespaces with and without CAP_SYS_ADMIN, can be
-> said to represent the extreme end of the spectrum. In practice, there is
-> no reason for every process to have the abilitiy to create user
-> namespaces. Indeed, only very few and specialized programs require user
+Cheers,
 
-There is.  One of Eric's primary motivations for user namespaces was to
-finally allow unprivileged users to safely do things like manipulate
-their mounts tree without the risk of privileged (setuid) programs
-being tricked.
-
--serge
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Dave.
+-- 
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
