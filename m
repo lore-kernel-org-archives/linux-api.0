@@ -1,77 +1,73 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [PATCH v5 9/9] btrfs: btrfs_copy_file_range() only supports
- reflinks
-Date: Sat, 17 Oct 2015 08:44:35 +1100
-Message-ID: <20151016214435.GA2786@dastard>
-References: <20151011142939.GA30905@infradead.org>
- <561B8A09.5070507@draigBrady.com>
- <20151012143444.GA10156@infradead.org>
- <20151012234106.GD11398@birch.djwong.org>
- <20151013072959.GB10794@infradead.org>
- <20151014184608.GK850@birch.djwong.org>
- <20151015060045.GA23996@infradead.org>
- <20151016114919.GB6874@ret.masoncoding.com>
- <20151016122544.GC5889@infradead.org>
- <20151016131950.GC6874@ret.masoncoding.com>
+From: Mike Frysinger <vapier@gentoo.org>
+Subject: Re: [PATCH] glibc: Remove CPU set size checking from affinity
+ functions [BZ #19143]
+Date: Fri, 16 Oct 2015 23:10:03 -0400
+Message-ID: <20151017031003.GE28215@vapier.lan>
+References: <5621126E.5080801@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="5xSkJheCpeK0RUEJ"
+Return-path: <libc-alpha-return-64212-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
 Content-Disposition: inline
-In-Reply-To: <20151016131950.GC6874@ret.masoncoding.com>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Chris Mason <clm@fb.com>, Christoph Hellwig <hch@infradead.org>, "Darrick J. Wong" <darrick.wong@oracle.com>, P??draig Brady <P@draigBrady.com>, Anna Schumaker <Anna.Schumaker@netapp.com>, linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, mtk.manpages@gmail.com, andros@netapp.com
+In-Reply-To: <5621126E.5080801@redhat.com>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: GNU C Library <libc-alpha@sourceware.org>, cgroups@vger.kernel.org, kosaki.motohiro@gmail.com, Linux API <linux-api@vger.kernel.org>, Li Zefan <lizefan@huawei.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 16, 2015 at 09:19:50AM -0400, Chris Mason wrote:
-> On Fri, Oct 16, 2015 at 05:25:44AM -0700, Christoph Hellwig wrote:
-> > On Fri, Oct 16, 2015 at 07:49:19AM -0400, Chris Mason wrote:
-> > > > Yes, that would be my preference.  I'd also like to understand what
-> > > > exactly btrfs does in fallocate.
-> > > 
-> > > For which part?  The answer changes based on how many references there
-> > > are to a given fallocated region.
-> > 
-> > Both cases.  With btrfs allocating new block on every write how do you
-> > avoid that ENOSPC?  Is there a unassigned block preallocation that's
-> > made persistent in some way?
-> 
-> So:
-> 
-> fallocate 1g -> foo
-> 
-> reflink foo foo2
-> 
-> We've now implicitly doubled the size of the fallocate, but at reflink
 
-No, I don't think it implies that at all. the posix_fallocate()
-"future writes will succeed" guarantee only applies to foo, not to
-/copies/ such as foo2. At it's core, reflink is just an optimised
-file copy mechanism - the resultant copy should have the same
-behaviour as a file copied by read/write. Copies done by physically
-copying data do not duplicate fallocate() regions or guarantees from
-the source file to the destination file.
+--5xSkJheCpeK0RUEJ
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 
-> time btrfs doesn't account for the doubling.  It's actually much
-> better in this case to just use a hole because neither foo or foo2 can
-> use the preallocated space until the 1g is fully unshared.
+On 16 Oct 2015 17:06, Florian Weimer wrote:
+> The current situation, briefly stated, is this: glibc tries to guess the
+> kernel CPU set size and rejects attempts to specify an affinity mask
+> which is larger than that, but it does not work, and glibc and the
+> kernel still silently accept CPU affinity masks with invalid bits,
+> without returning an error.  The glibc check does not provide any value
+> to applications, it just adds pointless complexity to the library.
+> Therefore, I want to remove it from glibc.
 
-Right - this implies unwritten extents should not be shared by
-reflink, instead either skipped (i.e. leave as a hole in foo2 as you
-suggest) or duplicated so that the next write to the region of foo2
-will also succeed. I'd suggest that COPY_FALLOC (or whatever it'll
-get called) implies the latter behaviour, the default behaviour
-being the former...
+checking the validty of the cpuset mask at the time of setting attributes
+seems fundamentally wrong to me.  can't the cpuset change too between the
+check and the actual use ?  say you have a controller that also manages
+the cpus, and it has pre-initialized the attributes, and then brings up
+the cpu on demand before spawning the thread.  it wouldn't be possible to
+also pre-create all the attributes.
 
-> When we're doing writes, it'll check the preallocated extents for extra
-> refs and force COW if any exist.  So writes into a preallocated region
-> can enospc.
+patch makes sense to me
 
-This really seems like an btrfs interpretation/implementation
-issue, not a problem for reflink in general.
+> +	  abort ();
 
-Cheers,
+why does the test call abort instead of exit ?  abort writes to stderr.
+-mike
 
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+--5xSkJheCpeK0RUEJ
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIcBAEBCAAGBQJWIbwLAAoJEEFjO5/oN/WBuwkP/1R1mnqWa9vREbsllwz1sdUL
+K7RdVlMYD9RlxpggxLzrC2XiAX6AmTNDw0CbReiEKBm9mw2X3xuXaBikVKvmyN17
+1lt9xVvHApKXeZOORjQUobPb2efWIX8vyESjyVj+O/hI+1Ctw1FqtdAaT/NkIwJw
+JBwifbQawS1Uk8l/ym+mYkLZd7zXDWINDezsutP26h9T4klvLfhcCC4Hs0w6WfZZ
+U9P3TW7XWnbO7lJyqDk39KzPuG0of1yBX7HIY2Je1JrUMB0VD/1OJchXH69x0khQ
+nuiGoaB79OnOBz+wqH03/48PXXi7C0ANZ9apdyjFylgXeUCLBvda1wdrF60d24aW
++TMlIlgGG2IVkevY+JxfL5VH/G6ssMbhDMbGJVsMI7qJuY2wOj1LhIsbfiNFUNHF
+G+dwLPUzrTjrmuNNxe0A0WSOvaICMqNfM7qTuUeIBX7HolgQ6KMfq5yaSqxXHTAT
+ttuRhtIOYwODRi4QvGuBJAp8zfyB2xOyI39DboDqQJQmmVtxwnv/Kxta1WaiB9R2
+4RLU3m3M8zzZuzGtc+a7yv6Ad7FvF7RwSRy2a+CWbkScsfDudQf7q6iJz7LxSoRT
+U57/kcKhNYYZ5mZpRk9UCtoWC6L+iD3sVxIiIWqx8pUtPWFpno9NdpgQwFrJNvMu
+FH5+qr4MtJJwll4lkAUx
+=l60K
+-----END PGP SIGNATURE-----
+
+--5xSkJheCpeK0RUEJ--
