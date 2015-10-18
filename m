@@ -1,7 +1,7 @@
 From: Stephan Mueller <smueller@chronox.de>
-Subject: [PATCH v2 2/5] crypto: AF_ALG -- add sign/verify API
-Date: Sun, 18 Oct 2015 12:46:45 +0200
-Message-ID: <8604636.C7vCDu3JXH@myon.chronox.de>
+Subject: [PATCH v2 1/5] MPI: fix off by one in mpi_read_raw_from_sgl
+Date: Sun, 18 Oct 2015 12:45:18 +0200
+Message-ID: <3192672.E3TvJmsW94@myon.chronox.de>
 References: <1831785.BBs8Hj3CxY@myon.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -13,32 +13,33 @@ To: herbert@gondor.apana.org.au
 Cc: linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Add the flags for handling signature generation and signature
-verification.
+The patch fixes the analysis of the input data which contains an off
+by one.
 
-Also, the patch adds the interface for setting a public key.
+The issue is visible when the SGL contains one byte per SG entry.
+The code for checking for zero bytes does not operate on the data byte.
 
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
- include/uapi/linux/if_alg.h | 3 +++
- 1 file changed, 3 insertions(+)
+ lib/mpi/mpicoder.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/include/uapi/linux/if_alg.h b/include/uapi/linux/if_alg.h
-index f2acd2f..02e6162 100644
---- a/include/uapi/linux/if_alg.h
-+++ b/include/uapi/linux/if_alg.h
-@@ -34,9 +34,12 @@ struct af_alg_iv {
- #define ALG_SET_OP			3
- #define ALG_SET_AEAD_ASSOCLEN		4
- #define ALG_SET_AEAD_AUTHSIZE		5
-+#define ALG_SET_PUBKEY			6
+diff --git a/lib/mpi/mpicoder.c b/lib/mpi/mpicoder.c
+index c20ef27..c7e0a70 100644
+--- a/lib/mpi/mpicoder.c
++++ b/lib/mpi/mpicoder.c
+@@ -446,8 +446,11 @@ MPI mpi_read_raw_from_sgl(struct scatterlist *sgl, unsigned int len)
+ 		const u8 *buff = sg_virt(sg);
+ 		int len = sg->length;
  
- /* Operations */
- #define ALG_OP_DECRYPT			0
- #define ALG_OP_ENCRYPT			1
-+#define ALG_OP_SIGN			2
-+#define ALG_OP_VERIFY			3
+-		while (len-- && !*buff++)
++		while (len && !*buff) {
+ 			lzeros++;
++			len--;
++			buff++;
++		}
  
- #endif	/* _LINUX_IF_ALG_H */
+ 		if (len && *buff)
+ 			break;
 -- 
 2.5.0
