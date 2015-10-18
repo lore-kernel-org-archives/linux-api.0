@@ -1,82 +1,112 @@
-From: Richard Weinberger <richard@nod.at>
+From: Tobias Markus <tobias-gyUQdkDHmHmHXe+LvDLADg@public.gmane.org>
 Subject: Re: [PATCH] userns/capability: Add user namespace capability
-Date: Sun, 18 Oct 2015 22:48:25 +0200
-Message-ID: <56240599.3050903@nod.at>
+Date: Sun, 18 Oct 2015 23:49:49 +0200
+Message-ID: <562413FD.2020401@miglix.eu>
 References: <5622700C.9090107@miglix.eu>
  <CAFLxGvzJONWTbpD8GFfDWDQiPxONrFaRAuXonXXUWaR1pcTUgw@mail.gmail.com>
  <5623FD86.2030609@miglix.eu> <5623FF36.8080800@nod.at>
- <562403E7.6070300@miglix.eu>
+ <562403E7.6070300@miglix.eu> <56240599.3050903@nod.at>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <562403E7.6070300@miglix.eu>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tobias Markus <tobias@miglix.eu>
-Cc: LKML <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Al Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Andrew Morton <akpm@linuxfoundation.org>, Andy Lutomirski <luto@amacapital.net>, Christoph Lameter <cl@linux.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, LSM <linux-security-module@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <56240599.3050903-/L3Ra7n9ekc@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
+Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Am 18.10.2015 um 22:41 schrieb Tobias Markus:
-> On 18.10.2015 22:21, Richard Weinberger wrote:
->> Am 18.10.2015 um 22:13 schrieb Tobias Markus:
->>> On 17.10.2015 22:17, Richard Weinberger wrote:
->>>> On Sat, Oct 17, 2015 at 5:58 PM, Tobias Markus <tobias@miglix.eu> wrote:
->>>>> One question remains though: Does this break userspace executables that
->>>>> expect being able to create user namespaces without priviledge? Since
->>>>> creating user namespaces without CAP_SYS_ADMIN was not possible before
->>>>> Linux 3.8, programs should already expect a potential EPERM upon calling
->>>>> clone. Since creating a user namespace without CAP_SYS_USER_NS would
->>>>> also cause EPERM, we should be on the safe side.
->>>>
->>>> In case of doubt, yes it will break existing software.
->>>> Hiding user namespaces behind CAP_SYS_USER_NS will not magically
->>>> make them secure.
->>>>
->>> The goal is not to make user namespaces secure, but to limit access to
->>> them somewhat in order to reduce the potential attack surface.
+On 18.10.2015 22:48, Richard Weinberger wrote:
+> Am 18.10.2015 um 22:41 schrieb Tobias Markus:
+>> On 18.10.2015 22:21, Richard Weinberger wrote:
+>>> Am 18.10.2015 um 22:13 schrieb Tobias Markus:
+>>>> On 17.10.2015 22:17, Richard Weinberger wrote:
+>>>>> On Sat, Oct 17, 2015 at 5:58 PM, Tobias Markus <tobias-gyUQdkDHmHmHXe+LvDLADg@public.gmane.org> wrote:
+>>>>>> One question remains though: Does this break userspace executables that
+>>>>>> expect being able to create user namespaces without priviledge? Since
+>>>>>> creating user namespaces without CAP_SYS_ADMIN was not possible before
+>>>>>> Linux 3.8, programs should already expect a potential EPERM upon calling
+>>>>>> clone. Since creating a user namespace without CAP_SYS_USER_NS would
+>>>>>> also cause EPERM, we should be on the safe side.
+>>>>>
+>>>>> In case of doubt, yes it will break existing software.
+>>>>> Hiding user namespaces behind CAP_SYS_USER_NS will not magically
+>>>>> make them secure.
+>>>>>
+>>>> The goal is not to make user namespaces secure, but to limit access to
+>>>> them somewhat in order to reduce the potential attack surface.
+>>>
+>>> We have already a framework to reduce the attack surface, seccomp.
+>>> There is no need to invent new capabilities for every non-trivial
+>>> kernel feature.
+>>>
+>>> I can understand the user namespaces seems scary and had bugs.
+>>> But which software didn't?
+>>>
+>>> Are there any unfixed exploitable bugs in user namespaces in recent kerenls?
+>>>
+>>> Thanks,
+>>> //richard
 >>
->> We have already a framework to reduce the attack surface, seccomp.
->> There is no need to invent new capabilities for every non-trivial
->> kernel feature.
->>
->> I can understand the user namespaces seems scary and had bugs.
->> But which software didn't?
->>
->> Are there any unfixed exploitable bugs in user namespaces in recent kerenls?
->>
->> Thanks,
->> //richard
+>> Isn't seccomp about setting a per-thread syscall filter? Correct me if
+>> I'm wrong, but I don't know of any way of using seccomp to globally ban
+>> the use of clone or unshare with CLONE_NEWUSER except for a few
+>> whiteliste executables, and that's the idea of this hypothetical capability.
 > 
-> Isn't seccomp about setting a per-thread syscall filter? Correct me if
-> I'm wrong, but I don't know of any way of using seccomp to globally ban
-> the use of clone or unshare with CLONE_NEWUSER except for a few
-> whiteliste executables, and that's the idea of this hypothetical capability.
+> This is correct.
+> If you want it globally you can still use LSM.
 
-This is correct.
-If you want it globally you can still use LSM.
+The LSM isn't really the one-size-fits-all solution that distributions
+like to ship in their standard kernels...
 
-> Sure, there are no known exploitable bugs in recent kernels, but would
-> you guarantee that for the next 10 years? Every software has bugs, some
-> of them exploitable, no amount of testing can prevent that. I'm not
-> paranoid, but on the other hand, why should every Linux user having
-> CONFIG_USER_NS enabled have to expose more attack surface than he
-> absolutely has to?
+> 
+>> Sure, there are no known exploitable bugs in recent kernels, but would
+>> you guarantee that for the next 10 years? Every software has bugs, some
+>> of them exploitable, no amount of testing can prevent that. I'm not
+>> paranoid, but on the other hand, why should every Linux user having
+>> CONFIG_USER_NS enabled have to expose more attack surface than he
+>> absolutely has to?
+> 
+> And what about all the other kernel features?
+> I really don't get why you choose user namespaces as your enemy.
 
-And what about all the other kernel features?
-I really don't get why you choose user namespaces as your enemy.
+I didn't choose user namespaces as my enemy, I chose user namespaces as
+the feature that I would really like to have shipped by default by my
+and by other distributions, but that's sadly often disabled for security
+concerns. Is there any solution that can be safely used by distributions
+to have user namespaces enabled by default without worrying about security?
 
-> Richard, would you run an Apache HTTP server exposed to the internet on
-> your own laptop, without any security precautions? According to your
-> reasoning, Apache is surely scary and has many bugs, but every software
-> has bugs, right?
+> 
+>> Richard, would you run an Apache HTTP server exposed to the internet on
+>> your own laptop, without any security precautions? According to your
+>> reasoning, Apache is surely scary and has many bugs, but every software
+>> has bugs, right?
+> 
+> This argument is bogus and you know that too.
 
-This argument is bogus and you know that too.
+Sure, it's exaggregated, but still, if it's possible to reduce the
+attack surface for every user without great effort, why shouldn't that
+be done?
 
-> I really don't want to introduce a user-facing API change just for the
-> fun of it - so if there's any better way to do this, please tell me.
+To give an example more closely resembling the matter in hand:
+CAP_SYSLOG allows viewing kernel addresses when kptr_restrict is
+enabled. But why limit access to the kernel symbols? There is nothing an
+attacker can do with them, except there is a kernel bug.
 
-As I said, it really don't see why we should treat user namespaces in a special
-way. It is a kernel feature like many others are. If you don't trust it, disable it.
+But before we continue arguing endlessly, I just got an idea: What about
+adding a sysctl to enable/disable enforcement of the hypothetical
+CAP_SYS_USER_NS, just like with /proc/sys/kernel/kptr_restrict and
+CAP_SYSLOG? Would also prevent any potential userspace breakage.
 
-Thanks,
-//richard
+> 
+>> I really don't want to introduce a user-facing API change just for the
+>> fun of it - so if there's any better way to do this, please tell me.
+> 
+> As I said, it really don't see why we should treat user namespaces in a special
+> way. It is a kernel feature like many others are. If you don't trust it, disable it.
+
+And there's the problem: It's either 100% (unpriviledged user namespaces
+without limit) or 0% (disable user namespaces entirely).
+> 
+> Thanks,
+> //richard
