@@ -1,24 +1,23 @@
-From: kbuild test robot <lkp@intel.com>
-Subject: Re: [RFC v3 1/9] printk: extract kmsg-related routines from printk.c
- to kmsg.c
-Date: Mon, 19 Oct 2015 21:53:19 +0800
-Message-ID: <201510192110.9FsDZdog%fengguang.wu@intel.com>
-References: <1445259503-18158-2-git-send-email-p.osmialowsk@samsung.com>
+From: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC v3 4/9] kmsg: add additional buffers support to memory class
+Date: Mon, 19 Oct 2015 21:54:36 +0800
+Message-ID: <201510192120.b6USYAQJ%fengguang.wu@intel.com>
+References: <1445259503-18158-5-git-send-email-p.osmialowsk@samsung.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="/04w6evG8XlLl3ft"
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: multipart/mixed; boundary="k+w/mQv8wyuph6w0"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1445259503-18158-2-git-send-email-p.osmialowsk@samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-Cc: kbuild-all@01.org, Jonathan Corbet <corbet@lwn.net>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, Petr Mladek <pmladek@suse.cz>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Mack <daniel@zonque.org>, Kay Sievers <kay.sievers@vrfy.org>, Joe Perches <joe@perches.com>, Tejun Heo <tj@kernel.org>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, Marcin Niesluchowski <m.niesluchow@samsung.com>, Karol Lewandowski <k.lewandowsk@samsung.com>, Paul Osmialowski <p.osmialowsk@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Shuah Khan <shuahkh@osg.samsung.com>
+In-Reply-To: <1445259503-18158-5-git-send-email-p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: kbuild-all-JC7UmRfGjtg@public.gmane.org, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Kay Sievers <kay.sievers-tD+1rO4QERM@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Marcin Niesluchowski <m.niesluchow-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
---/04w6evG8XlLl3ft
+--k+w/mQv8wyuph6w0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 
-Hi Paul,
+Hi Marcin,
 
 [auto build test ERROR on next-20151016 -- if it's inappropriate base, please suggest rules for selecting the more suitable base]
 
@@ -28,239 +27,37 @@ reproduce:
         # save the attached .config to linux build tree
         make ARCH=x86_64 
 
-All error/warnings (new ones prefixed by >>):
+All errors (new ones prefixed by >>):
 
-   In file included from kernel/printk/printk.c:50:0:
->> kernel/printk/printk.h:195:1: error: expected identifier or '(' before '{' token
-    {
-    ^
->> kernel/printk/printk.c:1541:0: warning: "LOG_LINE_MAX" redefined
-    #define LOG_LINE_MAX  0
-    ^
-   In file included from kernel/printk/printk.c:50:0:
-   kernel/printk/printk.h:10:0: note: this is the location of the previous definition
-    #define LOG_LINE_MAX  (1024 - PREFIX_MAX)
-    ^
->> kernel/printk/printk.c:1542:0: warning: "PREFIX_MAX" redefined
-    #define PREFIX_MAX  0
-    ^
-   In file included from kernel/printk/printk.c:50:0:
-   kernel/printk/printk.h:9:0: note: this is the location of the previous definition
-    #define PREFIX_MAX  32
-    ^
->> kernel/printk/printk.h:192:22: warning: 'msg_print_text' used but never defined
-    static inline size_t msg_print_text(const struct printk_log *msg,
-                         ^
+   drivers/char/mem.c: In function 'chr_dev_init':
+>> drivers/char/mem.c:878:19: error: 'KMSG_MINOR' undeclared (first use in this function)
+     kmsg = init_kmsg(KMSG_MINOR, 0644);
+                      ^
+   drivers/char/mem.c:878:19: note: each undeclared identifier is reported only once for each function it appears in
 
-vim +195 kernel/printk/printk.h
+vim +/KMSG_MINOR +878 drivers/char/mem.c
 
-     3	
-     4	#include <linux/printk.h>
-     5	#include <linux/spinlock_types.h>
-     6	#include <linux/types.h>
-     7	#include <linux/wait.h>
-     8	
-   > 9	#define PREFIX_MAX		32
-    10	#define LOG_LINE_MAX		(1024 - PREFIX_MAX)
-    11	
-    12	/*
-    13	 * The printk log buffer consists of a chain of concatenated variable
-    14	 * length records. Every record starts with a record header, containing
-    15	 * the overall length of the record.
-    16	 *
-    17	 * The heads to the first and last entry in the buffer, as well as the
-    18	 * sequence numbers of these entries are maintained when messages are
-    19	 * stored.
-    20	 *
-    21	 * If the heads indicate available messages, the length in the header
-    22	 * tells the start next message. A length == 0 for the next message
-    23	 * indicates a wrap-around to the beginning of the buffer.
-    24	 *
-    25	 * Every record carries the monotonic timestamp in microseconds, as well as
-    26	 * the standard userspace syslog level and syslog facility. The usual
-    27	 * kernel messages use LOG_KERN; userspace-injected messages always carry
-    28	 * a matching syslog facility, by default LOG_USER. The origin of every
-    29	 * message can be reliably determined that way.
-    30	 *
-    31	 * The human readable log message directly follows the message header. The
-    32	 * length of the message text is stored in the header, the stored message
-    33	 * is not terminated.
-    34	 *
-    35	 * Optionally, a message can carry a dictionary of properties (key/value pairs),
-    36	 * to provide userspace with a machine-readable message context.
-    37	 *
-    38	 * Examples for well-defined, commonly used property names are:
-    39	 *   DEVICE=b12:8               device identifier
-    40	 *                                b12:8         block dev_t
-    41	 *                                c127:3        char dev_t
-    42	 *                                n8            netdev ifindex
-    43	 *                                +sound:card0  subsystem:devname
-    44	 *   SUBSYSTEM=pci              driver-core subsystem name
-    45	 *
-    46	 * Valid characters in property names are [a-zA-Z0-9.-_]. The plain text value
-    47	 * follows directly after a '=' character. Every property is terminated by
-    48	 * a '\0' character. The last property is not terminated.
-    49	 *
-    50	 * Example of a message structure:
-    51	 *   0000  ff 8f 00 00 00 00 00 00      monotonic time in nsec
-    52	 *   0008  34 00                        record is 52 bytes long
-    53	 *   000a        0b 00                  text is 11 bytes long
-    54	 *   000c              1f 00            dictionary is 23 bytes long
-    55	 *   000e                    03 00      LOG_KERN (facility) LOG_ERR (level)
-    56	 *   0010  69 74 27 73 20 61 20 6c      "it's a l"
-    57	 *         69 6e 65                     "ine"
-    58	 *   001b           44 45 56 49 43      "DEVIC"
-    59	 *         45 3d 62 38 3a 32 00 44      "E=b8:2\0D"
-    60	 *         52 49 56 45 52 3d 62 75      "RIVER=bu"
-    61	 *         67                           "g"
-    62	 *   0032     00 00 00                  padding to next message header
-    63	 *
-    64	 * The 'struct printk_log' buffer header must never be directly exported to
-    65	 * userspace, it is a kernel-private implementation detail that might
-    66	 * need to be changed in the future, when the requirements change.
-    67	 *
-    68	 * /dev/kmsg exports the structured data in the following line format:
-    69	 *   "<level>,<sequnum>,<tstamp>,<contflag>[,additional_vals, ... ];<msg txt>\n"
-    70	 *
-    71	 * Users of the export format should ignore possible additional values
-    72	 * separated by ',', and find the message after the ';' character.
-    73	 *
-    74	 * The optional key/value pairs are attached as continuation lines starting
-    75	 * with a space character and terminated by a newline. All possible
-    76	 * non-prinatable characters are escaped in the "\xff" notation.
-    77	 */
-    78	
-    79	enum log_flags {
-    80		LOG_NOCONS	= 1,	/* already flushed, do not print to console */
-    81		LOG_NEWLINE	= 2,	/* text ended with a newline */
-    82		LOG_PREFIX	= 4,	/* text started with a prefix */
-    83		LOG_CONT	= 8,	/* text is a fragment of a continuation line */
-    84	};
-    85	
-    86	struct printk_log {
-    87		u64 ts_nsec;		/* timestamp in nanoseconds */
-    88		u16 len;		/* length of entire record */
-    89		u16 text_len;		/* length of text buffer */
-    90		u16 dict_len;		/* length of dictionary buffer */
-    91		u8 facility;		/* syslog facility */
-    92		u8 flags:5;		/* internal record flags */
-    93		u8 level:3;		/* syslog level */
-    94	};
-    95	
-    96	/*
-    97	 * The logbuf_lock protects kmsg buffer, indices, counters.  This can be taken
-    98	 * within the scheduler's rq lock. It must be released before calling
-    99	 * console_unlock() or anything else that might wake up a process.
-   100	 */
-   101	extern raw_spinlock_t logbuf_lock;
-   102	
-   103	#ifdef CONFIG_PRINTK
-   104	
-   105	extern wait_queue_head_t log_wait;
-   106	
-   107	/* index and sequence number of the first record stored in the buffer */
-   108	extern u64 log_first_seq;
-   109	extern u32 log_first_idx;
-   110	
-   111	/* index and sequence number of the next record to store in the buffer */
-   112	extern u64 log_next_seq;
-   113	extern u32 log_next_idx;
-   114	
-   115	/* the next printk record to read after the last 'clear' command */
-   116	extern u64 clear_seq;
-   117	extern u32 clear_idx;
-   118	
-   119	ssize_t msg_print_ext_header(char *buf, size_t size,
-   120					    struct printk_log *msg, u64 seq,
-   121					    enum log_flags prev_flags);
-   122	
-   123	ssize_t msg_print_ext_body(char *buf, size_t size,
-   124					  char *dict, size_t dict_len,
-   125					  char *text, size_t text_len);
-   126	
-   127	size_t msg_print_text(const struct printk_log *msg, enum log_flags prev,
-   128				bool syslog, char *buf, size_t size);
-   129	
-   130	/* get next record; idx must point to valid msg */
-   131	static inline u32 log_next(u32 idx)
-   132	{
-   133		char *log_buf = log_buf_addr_get();
-   134		struct printk_log *msg = (struct printk_log *)(log_buf + idx);
-   135	
-   136		/* length == 0 indicates the end of the buffer; wrap */
-   137		/*
-   138		 * A length == 0 record is the end of buffer marker. Wrap around and
-   139		 * read the message at the start of the buffer as *this* one, and
-   140		 * return the one after that.
-   141		 */
-   142		if (!msg->len) {
-   143			msg = (struct printk_log *)log_buf;
-   144			return msg->len;
-   145		}
-   146		return idx + msg->len;
-   147	}
-   148	
-   149	/* get record by index; idx must point to valid msg */
-   150	static inline struct printk_log *log_from_idx(u32 idx)
-   151	{
-   152		char *log_buf = log_buf_addr_get();
-   153		struct printk_log *msg = (struct printk_log *)(log_buf + idx);
-   154	
-   155		/*
-   156		 * A length == 0 record is the end of buffer marker. Wrap around and
-   157		 * read the message at the start of the buffer.
-   158		 */
-   159		if (!msg->len)
-   160			return (struct printk_log *)log_buf;
-   161		return msg;
-   162	}
-   163	
-   164	/* human readable text of the record */
-   165	static inline char *log_text(const struct printk_log *msg)
-   166	{
-   167		return (char *)msg + sizeof(struct printk_log);
-   168	}
-   169	
-   170	/* optional key/value pair dictionary attached to the record */
-   171	static inline char *log_dict(const struct printk_log *msg)
-   172	{
-   173		return (char *)msg + sizeof(struct printk_log) + msg->text_len;
-   174	}
-   175	
-   176	#else
-   177	
-   178	static inline ssize_t msg_print_ext_header(char *buf, size_t size,
-   179						    struct printk_log *msg, u64 seq,
-   180						    enum log_flags prev_flags)
-   181	{
-   182		return 0;
-   183	}
-   184	
-   185	static inline ssize_t msg_print_ext_body(char *buf, size_t size,
-   186						  char *dict, size_t dict_len,
-   187						  char *text, size_t text_len)
-   188	{
-   189		return 0;
-   190	}
-   191	
- > 192	static inline size_t msg_print_text(const struct printk_log *msg,
-   193					    enum log_flags prev, bool syslog, char *buf,
-   194					    size_t size);
- > 195	{
-   196		return 0;
-   197	}
-   198	
+   872				continue;
+   873	
+   874			device_create(mem_class, NULL, MKDEV(MEM_MAJOR, minor),
+   875				      NULL, devlist[minor].name);
+   876		}
+   877	
+ > 878		kmsg = init_kmsg(KMSG_MINOR, 0644);
+   879		if (IS_ERR(kmsg))
+   880			return PTR_ERR(kmsg);
+   881	
 
 ---
 0-DAY kernel test infrastructure                Open Source Technology Center
 https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
 
---/04w6evG8XlLl3ft
+--k+w/mQv8wyuph6w0
 Content-Type: application/octet-stream
 Content-Disposition: attachment; filename=".config.gz"
 Content-Transfer-Encoding: base64
 
-H4sICPDzJFYAAy5jb25maWcAjFxbc9s4sn6fX8HKnIeZqpPEcZxspk75ASJBESOSYAhQkv3C
+H4sICJT0JFYAAy5jb25maWcAjFxbc9s4sn6fX8HKnIeZqpPEcZxspk75ASJBESOSYAhQkv3C
 UiQ6UY0teSV5Jvn3pxsgxVtDma3a3RjdAIFG4+sboF9/+dVjL6f90+q0Xa8eH394X6tddVid
 qo33sH2s/s8LpJdK7fFA6DfAHG93L9/ffv/0sfx44928ef/m6vVh/cGbVYdd9ej5+93D9usL
 9N/ud7/8+osv01BMgXUi9O2P5s+l6d37u/1DpErnha+FTMuA+zLgeUuUhc4KXYYyT5i+fVU9
@@ -376,4 +173,4 @@ SikC6PsrjQ+zCSquKiHLm5ZjDd/Blb3+s9/PpCqagMbCvItfeUfLHhPL6BLZ+nFHfe/I3Qsr
 zeEOPQesr80TeyJmR7lSmWFZaspAM98qFb13dEgcabgx1HoGW6hgwRB5tdE7RgT/AJBtL48s
 VgAA
 
---/04w6evG8XlLl3ft--
+--k+w/mQv8wyuph6w0--
