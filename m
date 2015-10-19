@@ -1,28 +1,47 @@
-From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH v6 5/4] copy_file_range.2: New page documenting
- copy_file_range()
-Date: Mon, 19 Oct 2015 14:03:22 -0700
-Message-ID: <20151019210322.GA2420@infradead.org>
-References: <1445029707-31549-1-git-send-email-Anna.Schumaker@Netapp.com>
- <1445029707-31549-6-git-send-email-Anna.Schumaker@Netapp.com>
- <20151018183013.GA11200@infradead.org>
- <20151019204503.GA15214@fieldses.org>
+From: Tadeusz Struk <tadeusz.struk@intel.com>
+Subject: Re: [PATCH v2 1/5] MPI: fix off by one in mpi_read_raw_from_sgl
+Date: Mon, 19 Oct 2015 16:25:29 -0700
+Message-ID: <56257BE9.7000303@intel.com>
+References: <1831785.BBs8Hj3CxY@myon.chronox.de>
+ <3192672.E3TvJmsW94@myon.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20151019204503.GA15214-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <3192672.E3TvJmsW94@myon.chronox.de>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Stephan Mueller <smueller@chronox.de>, herbert@gondor.apana.org.au
+Cc: linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 19, 2015 at 04:45:03PM -0400, J. Bruce Fields wrote:
-> So, continue to include a "flags" field but just error out if it's
-> anything but zero for now?
+On 10/18/2015 03:45 AM, Stephan Mueller wrote:
+> The patch fixes the analysis of the input data which contains an off
+> by one.
+> 
+> The issue is visible when the SGL contains one byte per SG entry.
+> The code for checking for zero bytes does not operate on the data byte.
+> 
+> Signed-off-by: Stephan Mueller <smueller@chronox.de>
+> ---
+>  lib/mpi/mpicoder.c | 5 ++++-
+>  1 file changed, 4 insertions(+), 1 deletion(-)
+> 
+> diff --git a/lib/mpi/mpicoder.c b/lib/mpi/mpicoder.c
+> index c20ef27..c7e0a70 100644
+> --- a/lib/mpi/mpicoder.c
+> +++ b/lib/mpi/mpicoder.c
+> @@ -446,8 +446,11 @@ MPI mpi_read_raw_from_sgl(struct scatterlist *sgl, unsigned int len)
+>  		const u8 *buff = sg_virt(sg);
+>  		int len = sg->length;
+>  
+> -		while (len-- && !*buff++)
+> +		while (len && !*buff) {
+>  			lzeros++;
+> +			len--;
+> +			buff++;
+> +		}
+>  
+>  		if (len && *buff)
+>  			break;
 
-Exactly!
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+ACK. Thanks for testing this Stephan.
