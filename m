@@ -1,71 +1,153 @@
 From: Paul Osmialowski <p.osmialowsk@samsung.com>
-Subject: [RFC v3 0/9] Additional kmsg devices
-Date: Mon, 19 Oct 2015 14:58:14 +0200
-Message-ID: <1445259503-18158-1-git-send-email-p.osmialowsk@samsung.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Subject: [RFC v3 7/9] kmsg: add ioctl for kmsg* devices operating on buffers
+Date: Mon, 19 Oct 2015 14:58:21 +0200
+Message-ID: <1445259503-18158-8-git-send-email-p.osmialowsk@samsung.com>
+References: <1445259503-18158-1-git-send-email-p.osmialowsk@samsung.com>
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-reply-to: <1445259503-18158-1-git-send-email-p.osmialowsk@samsung.com>
+Sender: linux-doc-owner@vger.kernel.org
 To: Jonathan Corbet <corbet@lwn.net>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, Petr Mladek <pmladek@suse.cz>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Mack <daniel@zonque.org>, Kay Sievers <kay.sievers@vrfy.org>, Joe Perches <joe@perches.com>, Tejun Heo <tj@kernel.org>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
 Cc: Marcin Niesluchowski <m.niesluchow@samsung.com>, Karol Lewandowski <k.lewandowsk@samsung.com>, Paul Osmialowski <p.osmialowsk@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Shuah Khan <shuahkh@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-Dear All,
+From: Marcin Niesluchowski <m.niesluchow@samsung.com>
 
-This is the third iteration of Marcin Niesluchowski's serie of patches
-extending kmsg interface with ability to dynamically create (and destroy)
-kmsg-like devices which can be used by userspace for logging.
+There is no possibility to clear additional kmsg buffers,
+get size of them or know what size should be passed to read
+file operation (too small size causes it to retrun -EINVAL).
 
-In this iteration, following Joe Perches's suggestion, I've extracted
-kmsg related functions from printk.c to a new file, kmsg.c.
+Add following ioctls which solve those issues:
+* KMSG_CMD_GET_BUF_SIZE
+* KMSG_CMD_GET_READ_SIZE_MAX
+* KMSG_CMD_CLEAR
 
-Best regards,
-Paul
+Signed-off-by: Marcin Niesluchowski <m.niesluchow@samsung.com>
+Signed-off-by: Paul Osmialowski <p.osmialowsk@samsung.com>
+---
+ Documentation/ioctl/ioctl-number.txt |  2 +-
+ include/uapi/linux/kmsg_ioctl.h      | 15 ++++++++++
+ kernel/printk/kmsg.c                 | 57 ++++++++++++++++++++++++++++++++++--
+ 3 files changed, 71 insertions(+), 3 deletions(-)
 
-Marcin Niesluchowski (7):
-  printk: add one function for storing log in proper format
-  kmsg: introduce additional kmsg devices support
-  kmsg: add additional buffers support to memory class
-  kmsg: add function for adding and deleting additional buffers
-  kmsg: add ioctl for adding and deleting kmsg* devices
-  kmsg: add ioctl for kmsg* devices operating on buffers
-  kmsg: add predefined _PID, _TID, _COMM keywords to kmsg* log dict
-
-Paul Osmialowski (2):
-  printk: extract kmsg-related routines from printk.c to kmsg.c
-  kmsg: selftests
-
- Documentation/ioctl/ioctl-number.txt               |    1 +
- drivers/char/mem.c                                 |   27 +-
- fs/proc/kmsg.c                                     |    4 +-
- include/linux/printk.h                             |   48 +
- include/uapi/linux/Kbuild                          |    1 +
- include/uapi/linux/kmsg_ioctl.h                    |   45 +
- kernel/printk/Makefile                             |    1 +
- kernel/printk/kmsg.c                               | 1054 +++++++++++++++++
- kernel/printk/printk.c                             | 1250 +++++---------------
- kernel/printk/printk.h                             |  247 ++++
- samples/kmsg/kmsg-api.h                            |   44 +
- tools/testing/selftests/Makefile                   |    1 +
- tools/testing/selftests/kmsg/.gitignore            |    1 +
- tools/testing/selftests/kmsg/Makefile              |   30 +
- tools/testing/selftests/kmsg/kmsg-test.c           |  329 ++++++
- tools/testing/selftests/kmsg/kmsg-test.h           |   34 +
- tools/testing/selftests/kmsg/test-buffer-add-del.c |   76 ++
- .../kmsg/test-buffer-add-write-read-del.c          |  161 +++
- .../kmsg/test-buffer-buf-multithreaded-torture.c   |  199 ++++
- .../selftests/kmsg/test-buffer-buf-torture.c       |  139 +++
- 20 files changed, 2729 insertions(+), 963 deletions(-)
- create mode 100644 include/uapi/linux/kmsg_ioctl.h
- create mode 100644 kernel/printk/kmsg.c
- create mode 100644 kernel/printk/printk.h
- create mode 100644 samples/kmsg/kmsg-api.h
- create mode 100644 tools/testing/selftests/kmsg/.gitignore
- create mode 100644 tools/testing/selftests/kmsg/Makefile
- create mode 100644 tools/testing/selftests/kmsg/kmsg-test.c
- create mode 100644 tools/testing/selftests/kmsg/kmsg-test.h
- create mode 100644 tools/testing/selftests/kmsg/test-buffer-add-del.c
- create mode 100644 tools/testing/selftests/kmsg/test-buffer-add-write-read-del.c
- create mode 100644 tools/testing/selftests/kmsg/test-buffer-buf-multithreaded-torture.c
- create mode 100644 tools/testing/selftests/kmsg/test-buffer-buf-torture.c
-
+diff --git a/Documentation/ioctl/ioctl-number.txt b/Documentation/ioctl/ioctl-number.txt
+index 76dec8b..d36bb04 100644
+--- a/Documentation/ioctl/ioctl-number.txt
++++ b/Documentation/ioctl/ioctl-number.txt
+@@ -319,7 +319,7 @@ Code  Seq#(hex)	Include File		Comments
+ 					<mailto:vgo@ratio.de>
+ 0xB1	00-1F	PPPoX			<mailto:mostrows@styx.uwaterloo.ca>
+ 0xB3	00	linux/mmc/ioctl.h
+-0xBB	00-02	uapi/linux/kmsg_ioctl.h
++0xBB	00-83	uapi/linux/kmsg_ioctl.h
+ 0xC0	00-0F	linux/usb/iowarrior.h
+ 0xCA	00-0F	uapi/misc/cxl.h
+ 0xCA	80-8F	uapi/scsi/cxlflash_ioctl.h
+diff --git a/include/uapi/linux/kmsg_ioctl.h b/include/uapi/linux/kmsg_ioctl.h
+index 89c0c61..2389d9f 100644
+--- a/include/uapi/linux/kmsg_ioctl.h
++++ b/include/uapi/linux/kmsg_ioctl.h
+@@ -27,4 +27,19 @@ struct kmsg_cmd_buffer_add {
+ 					      struct kmsg_cmd_buffer_add)
+ #define KMSG_CMD_BUFFER_DEL		_IOW(KMSG_IOCTL_MAGIC, 0x01, int)
+ 
++/*
++ * A ioctl interface for kmsg* devices.
++ *
++ * KMSG_CMD_GET_BUF_SIZE:	Retrieve cyclic log buffer size associated with
++ *				device.
++ * KMSG_CMD_GET_READ_SIZE_MAX:	Retrieve max size of data read by kmsg read
++ *				operation.
++ * KMSG_CMD_CLEAR:		Clears cyclic log buffer. After that operation
++ *				there is no data to read from buffer unless
++ *				logs are written.
++ */
++#define KMSG_CMD_GET_BUF_SIZE		_IOR(KMSG_IOCTL_MAGIC, 0x80, __u32)
++#define KMSG_CMD_GET_READ_SIZE_MAX	_IOR(KMSG_IOCTL_MAGIC, 0x81, __u32)
++#define KMSG_CMD_CLEAR			_IO(KMSG_IOCTL_MAGIC, 0x82)
++
+ #endif
+diff --git a/kernel/printk/kmsg.c b/kernel/printk/kmsg.c
+index f91a64a..0f56fc9 100644
+--- a/kernel/printk/kmsg.c
++++ b/kernel/printk/kmsg.c
+@@ -246,8 +246,9 @@ static loff_t kmsg_llseek(struct log_buffer *log_b, struct file *file,
+ 		}
+ 		/*
+ 		 * The first record after the last SYSLOG_ACTION_CLEAR,
+-		 * like issued by 'dmesg -c'. Reading /dev/kmsg itself
+-		 * changes no global state, and does not clear anything.
++		 * like issued by 'dmesg -c' or KMSG_CMD_CLEAR ioctl
++		 * command. Reading /dev/kmsg itself changes no global
++		 * state, and does not clear anything.
+ 		 */
+ 		user->idx = log_b->clear_idx;
+ 		user->seq = log_b->clear_seq;
+@@ -390,6 +391,56 @@ static int devkmsg_open(struct inode *inode, struct file *file)
+ 	return ret;
+ }
+ 
++static long kmsg_ioctl(struct log_buffer *log_b, unsigned int cmd,
++		       unsigned long arg)
++{
++	void __user *argp = (void __user *)arg;
++	static const u32 read_size_max = CONSOLE_EXT_LOG_MAX;
++
++	switch (cmd) {
++	case KMSG_CMD_GET_BUF_SIZE:
++		if (copy_to_user(argp, &log_b->len, sizeof(u32)))
++			return -EFAULT;
++		break;
++	case KMSG_CMD_GET_READ_SIZE_MAX:
++		if (copy_to_user(argp, &read_size_max, sizeof(u32)))
++			return -EFAULT;
++		break;
++	case KMSG_CMD_CLEAR:
++		if (!capable(CAP_SYSLOG))
++			return -EPERM;
++		raw_spin_lock_irq(&log_b->lock);
++		log_b->clear_seq = log_b->next_seq;
++		log_b->clear_idx = log_b->next_idx;
++		raw_spin_unlock_irq(&log_b->lock);
++		break;
++	default:
++		return -ENOTTY;
++	}
++	return 0;
++}
++
++static long devkmsg_ioctl(struct file *file, unsigned int cmd,
++			  unsigned long arg)
++{
++	long ret = -ENXIO;
++	int minor = iminor(file->f_inode);
++	struct log_buffer *log_b;
++
++	if (minor == log_buf.minor)
++		return kmsg_ioctl(&log_buf, cmd, arg);
++
++	rcu_read_lock();
++	list_for_each_entry_rcu(log_b, &log_buf.list, list) {
++		if (log_b->minor == minor) {
++			ret = kmsg_ioctl(log_b, cmd, arg);
++			break;
++		}
++	}
++	rcu_read_unlock();
++	return ret;
++}
++
+ static int devkmsg_release(struct inode *inode, struct file *file)
+ {
+ 	struct devkmsg_user *user = file->private_data;
+@@ -408,6 +459,8 @@ const struct file_operations kmsg_fops = {
+ 	.write_iter = devkmsg_write,
+ 	.llseek = devkmsg_llseek,
+ 	.poll = devkmsg_poll,
++	.unlocked_ioctl = devkmsg_ioctl,
++	.compat_ioctl = devkmsg_ioctl,
+ 	.release = devkmsg_release,
+ };
+ 
 -- 
 1.9.1
+
