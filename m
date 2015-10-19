@@ -1,288 +1,227 @@
-From: Paul Osmialowski <p.osmialowsk@samsung.com>
-Subject: [RFC v3 2/9] printk: add one function for storing log in proper format
-Date: Mon, 19 Oct 2015 14:58:16 +0200
-Message-ID: <1445259503-18158-3-git-send-email-p.osmialowsk@samsung.com>
+From: Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: [RFC v3 4/9] kmsg: add additional buffers support to memory class
+Date: Mon, 19 Oct 2015 14:58:18 +0200
+Message-ID: <1445259503-18158-5-git-send-email-p.osmialowsk@samsung.com>
 References: <1445259503-18158-1-git-send-email-p.osmialowsk@samsung.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <1445259503-18158-1-git-send-email-p.osmialowsk@samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jonathan Corbet <corbet@lwn.net>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, Petr Mladek <pmladek@suse.cz>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Mack <daniel@zonque.org>, Kay Sievers <kay.sievers@vrfy.org>, Joe Perches <joe@perches.com>, Tejun Heo <tj@kernel.org>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Marcin Niesluchowski <m.niesluchow@samsung.com>, Karol Lewandowski <k.lewandowsk@samsung.com>, Paul Osmialowski <p.osmialowsk@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Shuah Khan <shuahkh@osg.samsung.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-reply-to: <1445259503-18158-1-git-send-email-p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Kay Sievers <kay.sievers-tD+1rO4QERM@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Marcin Niesluchowski <m.niesluchow-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Marcin Niesluchowski <m.niesluchow@samsung.com>
+From: Marcin Niesluchowski <m.niesluchow-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 
-Preparation commit for future changes purpose.
+Memory class does not support additional kmsg buffers.
 
-Separate code responsible for storing log message in proper format
-from operations on consoles by putting it in another function.
+Add additional kmsg buffers support to:
+* devnode() callback of "mem" class
+* file operations of major "mem" character device
 
-Signed-off-by: Marcin Niesluchowski <m.niesluchow@samsung.com>
-Signed-off-by: Paul Osmialowski <p.osmialowsk@samsung.com>
+Signed-off-by: Marcin Niesluchowski <m.niesluchow-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Signed-off-by: Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 ---
- kernel/printk/printk.c | 222 ++++++++++++++++++++++++++-----------------------
- 1 file changed, 119 insertions(+), 103 deletions(-)
+ drivers/char/mem.c     | 27 ++++++++++++++++++++-------
+ include/linux/printk.h | 32 ++++++++++++++++++++++++++++++++
+ kernel/printk/kmsg.c   | 42 ++++++++++++++++++++++++++++++++++++++++++
+ kernel/printk/printk.c |  1 +
+ kernel/printk/printk.h |  1 +
+ 5 files changed, 96 insertions(+), 7 deletions(-)
 
-diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-index 50c48c7..ee80655 100644
---- a/kernel/printk/printk.c
-+++ b/kernel/printk/printk.c
-@@ -181,6 +181,27 @@ static char __log_buf[__LOG_BUF_LEN] __aligned(LOG_ALIGN);
- static char *log_buf = __log_buf;
- static u32 log_buf_len = __LOG_BUF_LEN;
+diff --git a/drivers/char/mem.c b/drivers/char/mem.c
+index 6b1721f..7d46234 100644
+--- a/drivers/char/mem.c
++++ b/drivers/char/mem.c
+@@ -799,9 +799,6 @@ static const struct memdev {
+ 	 [7] = { "full", 0666, &full_fops, 0 },
+ 	 [8] = { "random", 0666, &random_fops, 0 },
+ 	 [9] = { "urandom", 0666, &urandom_fops, 0 },
+-#ifdef CONFIG_PRINTK
+-	[11] = { "kmsg", 0644, &kmsg_fops, 0 },
+-#endif
+ };
  
-+/*
-+ * Continuation lines are buffered, and not committed to the record buffer
-+ * until the line is complete, or a race forces it. The line fragments
-+ * though, are printed immediately to the consoles to ensure everything has
-+ * reached the console in case of a kernel crash.
-+ */
-+static struct cont {
-+	char buf[LOG_LINE_MAX];
-+	size_t len;			/* length == 0 means unused buffer */
-+	size_t cons;			/* bytes written to console */
-+	struct task_struct *owner;	/* task of first print*/
-+	u64 ts_nsec;			/* time of first print */
-+	u8 level;			/* log level of first message */
-+	u8 facility;			/* log facility of first message */
-+	enum log_flags flags;		/* prefix, newline flags */
-+	bool flushed:1;			/* buffer sealed and committed */
-+} cont;
-+
-+static void cont_flush(enum log_flags flags);
-+static bool cont_add(int facility, int level, const char *text, size_t len);
-+
- /* Return log buffer address */
- char *log_buf_addr_get(void)
+ static int memory_open(struct inode *inode, struct file *filp)
+@@ -811,7 +808,7 @@ static int memory_open(struct inode *inode, struct file *filp)
+ 
+ 	minor = iminor(inode);
+ 	if (minor >= ARRAY_SIZE(devlist))
+-		return -ENXIO;
++		return kmsg_memory_open(inode, filp);
+ 
+ 	dev = &devlist[minor];
+ 	if (!dev->fops)
+@@ -833,16 +830,28 @@ static const struct file_operations memory_fops = {
+ 
+ static char *mem_devnode(struct device *dev, umode_t *mode)
  {
-@@ -332,6 +353,102 @@ static int log_store(int facility, int level,
- 	return msg->text_len;
+-	if (mode && devlist[MINOR(dev->devt)].mode)
+-		*mode = devlist[MINOR(dev->devt)].mode;
++	int minor = MINOR(dev->devt);
++
++	if (!mode)
++		goto out;
++
++	if (minor >= ARRAY_SIZE(devlist)) {
++		kmsg_mode(minor, mode);
++		goto out;
++	}
++
++	if (devlist[minor].mode)
++		*mode = devlist[minor].mode;
++out:
+ 	return NULL;
  }
  
-+static int log_format_and_store(int facility, int level,
-+				const char *dict, size_t dictlen,
-+				const char *fmt, va_list args)
+-static struct class *mem_class;
++struct class *mem_class;
+ 
+ static int __init chr_dev_init(void)
+ {
+ 	int minor;
++	struct device *kmsg;
+ 
+ 	if (register_chrdev(MEM_MAJOR, "mem", &memory_fops))
+ 		printk("unable to get major %d for memory devs\n", MEM_MAJOR);
+@@ -866,6 +875,10 @@ static int __init chr_dev_init(void)
+ 			      NULL, devlist[minor].name);
+ 	}
+ 
++	kmsg = init_kmsg(KMSG_MINOR, 0644);
++	if (IS_ERR(kmsg))
++		return PTR_ERR(kmsg);
++
+ 	return tty_init();
+ }
+ 
+diff --git a/include/linux/printk.h b/include/linux/printk.h
+index 9729565..67840e0 100644
+--- a/include/linux/printk.h
++++ b/include/linux/printk.h
+@@ -417,8 +417,40 @@ do {									\
+ 	no_printk(KERN_DEBUG pr_fmt(fmt), ##__VA_ARGS__)
+ #endif
+ 
++struct file;
++struct inode;
++
++#ifdef CONFIG_PRINTK
++
++extern struct class *mem_class;
++
++#define KMSG_MINOR	11
++
+ extern const struct file_operations kmsg_fops;
+ 
++extern struct device *init_kmsg(int minor, umode_t mode);
++extern int kmsg_memory_open(struct inode *inode, struct file *filp);
++extern int kmsg_mode(int minor, umode_t *mode);
++
++#else
++
++static inline struct device *init_kmsg(int minor, umode_t mode)
 +{
-+	static char textbuf[LOG_LINE_MAX];
-+	char *text = textbuf;
-+	size_t text_len = 0;
-+	enum log_flags lflags = 0;
-+	int printed_len = 0;
-+
-+	/*
-+	 * The printf needs to come first; we need the syslog
-+	 * prefix which might be passed-in as a parameter.
-+	 */
-+	text_len = vscnprintf(text, sizeof(textbuf), fmt, args);
-+
-+	/* mark and strip a trailing newline */
-+	if (text_len && text[text_len-1] == '\n') {
-+		text_len--;
-+		lflags |= LOG_NEWLINE;
-+	}
-+
-+	/* strip kernel syslog prefix and extract log level or control flags */
-+	if (facility == 0) {
-+		int kern_level = printk_get_level(text);
-+
-+		if (kern_level) {
-+			const char *end_of_header = printk_skip_level(text);
-+
-+			switch (kern_level) {
-+			case '0' ... '7':
-+				if (level == LOGLEVEL_DEFAULT)
-+					level = kern_level - '0';
-+				/* fallthrough */
-+			case 'd':	/* KERN_DEFAULT */
-+				lflags |= LOG_PREFIX;
-+			}
-+			/*
-+			 * No need to check length here because vscnprintf
-+			 * put '\0' at the end of the string. Only valid and
-+			 * newly printed level is detected.
-+			 */
-+			text_len -= end_of_header - text;
-+			text = (char *)end_of_header;
-+		}
-+	}
-+
-+	if (level == LOGLEVEL_DEFAULT)
-+		level = default_message_loglevel;
-+
-+	if (dict)
-+		lflags |= LOG_PREFIX|LOG_NEWLINE;
-+
-+	if (!(lflags & LOG_NEWLINE)) {
-+		/*
-+		 * Flush the conflicting buffer. An earlier newline was missing,
-+		 * or another task also prints continuation lines.
-+		 */
-+		if (cont.len && (lflags & LOG_PREFIX || cont.owner != current))
-+			cont_flush(LOG_NEWLINE);
-+
-+		/* buffer line if possible, otherwise store it right away */
-+		if (cont_add(facility, level, text, text_len))
-+			printed_len += text_len;
-+		else
-+			printed_len += log_store(facility, level,
-+						 lflags | LOG_CONT, 0,
-+						 dict, dictlen, text, text_len);
-+	} else {
-+		bool stored = false;
-+
-+		/*
-+		 * If an earlier newline was missing and it was the same task,
-+		 * either merge it with the current buffer and flush, or if
-+		 * there was a race with interrupts (prefix == true) then just
-+		 * flush it out and store this line separately.
-+		 * If the preceding printk was from a different task and missed
-+		 * a newline, flush and append the newline.
-+		 */
-+		if (cont.len) {
-+			if (cont.owner == current && !(lflags & LOG_PREFIX))
-+				stored = cont_add(facility, level, text,
-+						  text_len);
-+			cont_flush(LOG_NEWLINE);
-+		}
-+
-+		if (stored)
-+			printed_len += text_len;
-+		else
-+			printed_len += log_store(facility, level,
-+						 lflags, 0, dict, dictlen,
-+						 text, text_len);
-+	}
-+	return printed_len;
++	return NULL;
 +}
 +
- int dmesg_restrict = IS_ENABLED(CONFIG_SECURITY_DMESG_RESTRICT);
++static inline int kmsg_memory_open(struct inode *inode, struct file *filp)
++{
++	return -ENXIO;
++}
++
++static inline int kmsg_mode(int minor, umode_t *mode)
++{
++	return -ENXIO;
++}
++
++#endif
++
+ enum {
+ 	DUMP_PREFIX_NONE,
+ 	DUMP_PREFIX_ADDRESS,
+diff --git a/kernel/printk/kmsg.c b/kernel/printk/kmsg.c
+index 23d4160..7fcd628 100644
+--- a/kernel/printk/kmsg.c
++++ b/kernel/printk/kmsg.c
+@@ -15,6 +15,9 @@
+ #include <linux/syslog.h>
+ #include <linux/uio.h>
+ #include <linux/wait.h>
++#include <linux/device.h>
++#include <linux/major.h>
++#include <linux/kdev_t.h>
  
- static int syslog_action_restricted(int type)
-@@ -1165,24 +1282,6 @@ static inline void printk_delay(void)
- 	}
- }
+ #include <asm/uaccess.h>
  
--/*
-- * Continuation lines are buffered, and not committed to the record buffer
-- * until the line is complete, or a race forces it. The line fragments
-- * though, are printed immediately to the consoles to ensure everything has
-- * reached the console in case of a kernel crash.
-- */
--static struct cont {
--	char buf[LOG_LINE_MAX];
--	size_t len;			/* length == 0 means unused buffer */
--	size_t cons;			/* bytes written to console */
--	struct task_struct *owner;	/* task of first print*/
--	u64 ts_nsec;			/* time of first print */
--	u8 level;			/* log level of first message */
--	u8 facility;			/* log facility of first message */
--	enum log_flags flags;		/* prefix, newline flags */
--	bool flushed:1;			/* buffer sealed and committed */
--} cont;
--
- static void cont_flush(enum log_flags flags)
- {
- 	if (cont.flushed)
-@@ -1278,10 +1377,6 @@ asmlinkage int vprintk_emit(int facility, int level,
- 			    const char *fmt, va_list args)
- {
- 	static int recursion_bug;
--	static char textbuf[LOG_LINE_MAX];
--	char *text = textbuf;
--	size_t text_len = 0;
--	enum log_flags lflags = 0;
- 	unsigned long flags;
- 	int this_cpu;
- 	int printed_len = 0;
-@@ -1335,87 +1430,8 @@ asmlinkage int vprintk_emit(int facility, int level,
- 					 strlen(recursion_msg));
- 	}
+@@ -385,6 +388,45 @@ const struct file_operations kmsg_fops = {
+ 	.release = devkmsg_release,
+ };
  
--	/*
--	 * The printf needs to come first; we need the syslog
--	 * prefix which might be passed-in as a parameter.
--	 */
--	text_len = vscnprintf(text, sizeof(textbuf), fmt, args);
--
--	/* mark and strip a trailing newline */
--	if (text_len && text[text_len-1] == '\n') {
--		text_len--;
--		lflags |= LOG_NEWLINE;
--	}
--
--	/* strip kernel syslog prefix and extract log level or control flags */
--	if (facility == 0) {
--		int kern_level = printk_get_level(text);
--
--		if (kern_level) {
--			const char *end_of_header = printk_skip_level(text);
--			switch (kern_level) {
--			case '0' ... '7':
--				if (level == LOGLEVEL_DEFAULT)
--					level = kern_level - '0';
--				/* fallthrough */
--			case 'd':	/* KERN_DEFAULT */
--				lflags |= LOG_PREFIX;
--			}
--			/*
--			 * No need to check length here because vscnprintf
--			 * put '\0' at the end of the string. Only valid and
--			 * newly printed level is detected.
--			 */
--			text_len -= end_of_header - text;
--			text = (char *)end_of_header;
--		}
--	}
--
--	if (level == LOGLEVEL_DEFAULT)
--		level = default_message_loglevel;
--
--	if (dict)
--		lflags |= LOG_PREFIX|LOG_NEWLINE;
--
--	if (!(lflags & LOG_NEWLINE)) {
--		/*
--		 * Flush the conflicting buffer. An earlier newline was missing,
--		 * or another task also prints continuation lines.
--		 */
--		if (cont.len && (lflags & LOG_PREFIX || cont.owner != current))
--			cont_flush(LOG_NEWLINE);
--
--		/* buffer line if possible, otherwise store it right away */
--		if (cont_add(facility, level, text, text_len))
--			printed_len += text_len;
--		else
--			printed_len += log_store(facility, level,
--						 lflags | LOG_CONT, 0,
--						 dict, dictlen, text, text_len);
--	} else {
--		bool stored = false;
--
--		/*
--		 * If an earlier newline was missing and it was the same task,
--		 * either merge it with the current buffer and flush, or if
--		 * there was a race with interrupts (prefix == true) then just
--		 * flush it out and store this line separately.
--		 * If the preceding printk was from a different task and missed
--		 * a newline, flush and append the newline.
--		 */
--		if (cont.len) {
--			if (cont.owner == current && !(lflags & LOG_PREFIX))
--				stored = cont_add(facility, level, text,
--						  text_len);
--			cont_flush(LOG_NEWLINE);
--		}
--
--		if (stored)
--			printed_len += text_len;
--		else
--			printed_len += log_store(facility, level, lflags, 0,
--						 dict, dictlen, text, text_len);
--	}
-+	printed_len += log_format_and_store(facility, level, dict, dictlen,
-+					    fmt, args);
++/* Should be used for device registration */
++struct device *init_kmsg(int minor, umode_t mode)
++{
++	log_buf.minor = minor;
++	log_buf.mode = mode;
++	return device_create(mem_class, NULL, MKDEV(MEM_MAJOR, minor),
++			NULL, "kmsg");
++}
++
++int kmsg_memory_open(struct inode *inode, struct file *filp)
++{
++	filp->f_op = &kmsg_fops;
++
++	return kmsg_fops.open(inode, filp);
++}
++
++int kmsg_mode(int minor, umode_t *mode)
++{
++	int ret = -ENXIO;
++	struct log_buffer *log_b;
++
++	if (minor == log_buf.minor) {
++		*mode = log_buf.mode;
++		return 0;
++	}
++
++	rcu_read_lock();
++	list_for_each_entry_rcu(log_b, &log_buf.list, list) {
++		if (log_b->minor == minor) {
++			*mode = log_b->mode;
++			ret = 0;
++			break;
++		}
++	}
++	rcu_read_unlock();
++
++	return ret;
++}
++
+ static DEFINE_SPINLOCK(dump_list_lock);
+ static LIST_HEAD(dump_list);
  
- 	logbuf_cpu = UINT_MAX;
- 	raw_spin_unlock(&logbuf_lock);
+diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
+index e9ac4ba..beabebb 100644
+--- a/kernel/printk/printk.c
++++ b/kernel/printk/printk.c
+@@ -179,6 +179,7 @@ struct log_buffer log_buf = {
+ 	.next_idx	= 0,
+ 	.clear_seq	= 0,
+ 	.clear_idx	= 0,
++	.mode		= 0,
+ 	.minor		= 0,
+ };
+ 
+diff --git a/kernel/printk/printk.h b/kernel/printk/printk.h
+index 38c9278..0755100 100644
+--- a/kernel/printk/printk.h
++++ b/kernel/printk/printk.h
+@@ -118,6 +118,7 @@ struct log_buffer {
+ 	u64 clear_seq;
+ 	u32 clear_idx;
+ 
++	int mode;		/* mode of device */
+ 	int minor;		/* minor representing buffer device */
+ #endif
+ };
 -- 
 1.9.1
