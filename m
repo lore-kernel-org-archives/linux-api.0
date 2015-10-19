@@ -1,281 +1,1143 @@
-From: Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v11 21/48] ext4: Add richacl feature flag
-Date: Mon, 19 Oct 2015 14:45:09 -0400
-Message-ID: <56253A35.4070309@gmail.com>
-References: <1445008706-15115-1-git-send-email-agruenba@redhat.com>
- <1445008706-15115-22-git-send-email-agruenba@redhat.com>
- <5621346E.5000500@gmail.com>
- <CAHc6FU7sR2zN-K3un74wCv+1NPnrqJ=LYiWo+YQ_2X0kopyoTQ@mail.gmail.com>
- <5624ED40.7040206@gmail.com>
- <CAHc6FU4CVQAn6TCQzC8r9m9URmqD_eHQBwhDK2o_o4eb3myW=A@mail.gmail.com>
- <5625182C.3050007@gmail.com>
- <CAHc6FU75GXGeav1ho-QraPS_F8fpOXnoDyv17+b=koiF=9YE5A@mail.gmail.com>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: Re: [RFC v4 9/9] kmsg: selftests
+Date: Mon, 19 Oct 2015 13:28:48 -0600
+Message-ID: <56254470.4070102@osg.samsung.com>
+References: <1445273404-24562-1-git-send-email-p.osmialowsk@samsung.com>
+ <1445273404-24562-10-git-send-email-p.osmialowsk@samsung.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-512; boundary="------------ms070001020509080703050503"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAHc6FU75GXGeav1ho-QraPS_F8fpOXnoDyv17+b=koiF=9YE5A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Aneesh Kumar K.V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1445273404-24562-10-git-send-email-p.osmialowsk@samsung.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Paul Osmialowski <p.osmialowsk@samsung.com>, Jonathan Corbet <corbet@lwn.net>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, Petr Mladek <pmladek@suse.cz>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Mack <daniel@zonque.org>, Kay Sievers <kay.sievers@vrfy.org>, Joe Perches <joe@perches.com>, Tejun Heo <tj@kernel.org>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Richard Weinberger <richard.weinberger@gmail.com>, Marcin Niesluchowski <m.niesluchow@samsung.com>, Karol Lewandowski <k.lewandowsk@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Shuah Khan <shuahkh@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-This is a cryptographically signed message in MIME format.
+On 10/19/2015 10:50 AM, Paul Osmialowski wrote:
+> This patch adds selftests framework and four test scenarios for kmsg.
+> 
+> The framework shape and code was inspired by similar selftests framework
+> for kdbus.
+> 
+> Signed-off-by: Paul Osmialowski <p.osmialowsk@samsung.com>
+> ---
+>  samples/kmsg/kmsg-api.h                            |  44 +++
+>  tools/testing/selftests/Makefile                   |   1 +
+>  tools/testing/selftests/kmsg/.gitignore            |   1 +
+>  tools/testing/selftests/kmsg/Makefile              |  30 ++
+>  tools/testing/selftests/kmsg/kmsg-test.c           | 329 +++++++++++++++++++++
+>  tools/testing/selftests/kmsg/kmsg-test.h           |  34 +++
+>  tools/testing/selftests/kmsg/test-buffer-add-del.c |  76 +++++
+>  .../kmsg/test-buffer-add-write-read-del.c          | 161 ++++++++++
+>  .../kmsg/test-buffer-buf-multithreaded-torture.c   | 199 +++++++++++++
+>  .../selftests/kmsg/test-buffer-buf-torture.c       | 139 +++++++++
+>  10 files changed, 1014 insertions(+)
+>  create mode 100644 samples/kmsg/kmsg-api.h
+>  create mode 100644 tools/testing/selftests/kmsg/.gitignore
+>  create mode 100644 tools/testing/selftests/kmsg/Makefile
+>  create mode 100644 tools/testing/selftests/kmsg/kmsg-test.c
+>  create mode 100644 tools/testing/selftests/kmsg/kmsg-test.h
+>  create mode 100644 tools/testing/selftests/kmsg/test-buffer-add-del.c
+>  create mode 100644 tools/testing/selftests/kmsg/test-buffer-add-write-read-del.c
+>  create mode 100644 tools/testing/selftests/kmsg/test-buffer-buf-multithreaded-torture.c
+>  create mode 100644 tools/testing/selftests/kmsg/test-buffer-buf-torture.c
+> 
+> diff --git a/samples/kmsg/kmsg-api.h b/samples/kmsg/kmsg-api.h
+> new file mode 100644
+> index 0000000..9004acd
+> --- /dev/null
+> +++ b/samples/kmsg/kmsg-api.h
+> @@ -0,0 +1,44 @@
+> +#ifndef KMSG_API_H
+> +#define KMSG_API_H
+> +
+> +#include <stdint.h>
+> +#include <errno.h>
+> +#include <sys/ioctl.h>
+> +#include <linux/kmsg_ioctl.h>
+> +
+> +static inline int kmsg_cmd_buffer_add(int fd, struct kmsg_cmd_buffer_add *cmd)
+> +{
+> +	int ret = ioctl(fd, KMSG_CMD_BUFFER_ADD, cmd);
+> +
+> +	return (ret < 0) ? (errno > 0 ? -errno : -EINVAL) : 0;
+> +}
+> +
+> +static inline int kmsg_cmd_buffer_del(int fd, int *minor)
+> +{
+> +	int ret = ioctl(fd, KMSG_CMD_BUFFER_DEL, minor);
+> +
+> +	return (ret < 0) ? (errno > 0 ? -errno : -EINVAL) : 0;
+> +}
+> +
+> +static inline int kmsg_cmd_get_buf_size(int fd, uint32_t *size)
+> +{
+> +	int ret = ioctl(fd, KMSG_CMD_GET_BUF_SIZE, size);
+> +
+> +	return (ret < 0) ? (errno > 0 ? -errno : -EINVAL) : 0;
+> +}
+> +
+> +static inline int kmsg_cmd_get_read_size_max(int fd, uint32_t *max_size)
+> +{
+> +	int ret = ioctl(fd, KMSG_CMD_GET_READ_SIZE_MAX, max_size);
+> +
+> +	return (ret < 0) ? (errno > 0 ? -errno : -EINVAL) : 0;
+> +}
+> +
+> +static inline int kmsg_cmd_clear(int fd)
+> +{
+> +	int ret = ioctl(fd, KMSG_CMD_CLEAR);
+> +
+> +	return (ret < 0) ? (errno > 0 ? -errno : -EINVAL) : 0;
+> +}
+> +
+> +#endif /* KMSG_API_H */
+> diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+> index bf4ece6..b7bdf58 100644
+> --- a/tools/testing/selftests/Makefile
+> +++ b/tools/testing/selftests/Makefile
+> @@ -7,6 +7,7 @@ TARGETS += ftrace
+>  TARGETS += futex
+>  TARGETS += kcmp
+>  TARGETS += kdbus
 
---------------ms070001020509080703050503
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Doesn't look like this patch is based on linux-kselftest next
+or Linus's latest. Please base your work on either one of the
+above. Please make sure "make kselftest" from top level Makefile
+doesn't break.
 
-On 2015-10-19 13:33, Andreas Gruenbacher wrote:
-> On Mon, Oct 19, 2015 at 6:19 PM, Austin S Hemmelgarn
-> <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->> On 2015-10-19 11:34, Andreas Gruenbacher wrote:
->>> On Mon, Oct 19, 2015 at 3:16 PM, Austin S Hemmelgarn
->>> <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->>>> On 2015-10-16 13:41, Andreas Gruenbacher wrote:
->>>>> On Fri, Oct 16, 2015 at 7:31 PM, Austin S Hemmelgarn
->>>>> <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->>>>>> I would like to re-iterate, on both XFS and ext4, I _really_ think=
- this
->>>>>> should be a ro_compat flag, and not an incompat one.  If a person =
-has
->>>>>> the
->>>>>> ability to mount the FS (even if it's a read-only mount), then the=
-y by
->>>>>> definition have read access to the file or partition that the
->>>>>> filesystem
->>>>>> is contained in, which means that any ACL's stored on the filesyst=
-em
->>>>>> are
->>>>>> functionally irrelevant,
->>>>> It is unfortunately not safe to make such a file system accessible =
-to
->>>>> other users, so the feature is not strictly read-only compatible.
->>>> OK, seeing as I wasn't particularly clear as to why I object to this=
- in
->>>> my
->>>> other e-mail, let's try this again.
->>>> Can you please explain exactly why it isn't safe to make such a
->>>> filesystem
->>>> accessible to other users?
->>> See here: http://www.spinics.net/lists/linux-ext4/msg49541.html
->> OK, so to clarify, this isn't 'safe' because:
->> 1. The richacls that exist on the filesystem won't be enforced.
->> 2. Newly created files will have no ACL's set.
->>
->> It is worth noting that these are also issues with any kind of access
->> control mechanism.  Using your logic, all LSM's need to set separate
->> incompat feature flags in filesystems they are being used on, as shoul=
-d
->> POSIX ACLs, and for that matter so should Samba in many circumstances,=
- and
->> any NFS system not using idmapping or synchronized/centralized user
->> databases.  Now, if the SELinux (or SMACK, or TOMOYO) people had taken=
- this
->> approach, then I might be inclined to not complain (at least not to yo=
-u, I'd
->> be complaining to them about this rather poor design choice), but that=
- is
->> not the case, because (I assume) they realized that all this provides =
-is a
->> false sense of security.
->
-> LSMs reside above the filesystem level. Let's take SELinux as an
-> example. It has its own consistency check mechanism (relabeling). Fsck
-> could check the syntax of SELinux labels, but it couldn't do anything
-> sensible about corrupted labels, and syntactically correct labels also
-> don't mean much. A relabeling run to verify or restory the appropriate
-> policy would still be necessary to verify that labels are semantically
-> correct, and for that, the filesystem needs to be mounted in the right
-> place in the filesystem hierarchy.
->
-> TOMOYO and AppArmor are not based on inode labels at all.
-Apologies for being unintentionally over-inclusive WRT LSM's, and also=20
-for forgetting that TOMOYO doesn't use inode labels.
-> LSMs usually also just provide an extra layer of security; when turned
-> off, the basic security mechanisms still in effect will make sure that
-> the system works just like before. (There are configurations like MLS
-> where that is not the case, but those are uncommon.)
-Um, actually no, even without MLS (or MCS), there is no guarantee=20
-whatsoever that the system will work 'just' like before (I've actually=20
-seen systems break on any (or even in one case all) of the transitions=20
-between enforcing/permissive/off for SELinux, even assuming that=20
-relabeling is done properly).
-> ACLs are quite different from that. They can be checked statically by
-> fsck. They are a basic security concept, and when turned off, there is
-> no guarantee that the system will still be safe.
-LSM's hook into the VFS code right alongside the regular permissions=20
-checks. They are intended to supplement the regular UNIX DAC based=20
-permissions. Richacls (and POSIX ACLs) also hook into the regular=20
-permissions checks, and also are intended to supplement the regular UNIX =
+> +TARGETS += kmsg
+>  TARGETS += lib
+>  TARGETS += membarrier
+>  TARGETS += memfd
+> diff --git a/tools/testing/selftests/kmsg/.gitignore b/tools/testing/selftests/kmsg/.gitignore
+> new file mode 100644
+> index 0000000..687d517
+> --- /dev/null
+> +++ b/tools/testing/selftests/kmsg/.gitignore
+> @@ -0,0 +1 @@
+> +kmsg-test
+> diff --git a/tools/testing/selftests/kmsg/Makefile b/tools/testing/selftests/kmsg/Makefile
+> new file mode 100644
+> index 0000000..b4ba892
+> --- /dev/null
+> +++ b/tools/testing/selftests/kmsg/Makefile
+> @@ -0,0 +1,30 @@
+> +CFLAGS += -I../../../../usr/include/
+> +CFLAGS += -I../../../../samples/kmsg/
+> +CFLAGS += -I../../../../include/uapi/
+> +CFLAGS += -std=gnu99 -Wall
+> +CFLAGS += -DKBUILD_MODNAME=\"kmsg\" -D_GNU_SOURCE
+> +CFLAGS += -pthread
+> +LDLIBS += -pthread
+> +
+> +OBJS= \
+> +	kmsg-test.o				\
+> +	test-buffer-add-del.o			\
+> +	test-buffer-add-write-read-del.o	\
+> +	test-buffer-buf-torture.o		\
+> +	test-buffer-buf-multithreaded-torture.o
+> +
+> +all: kmsg-test
+> +
+> +include ../lib.mk
+> +
+> +%.o: %.c kmsg-test.h
+> +	$(CC) $(CFLAGS) -c $< -o $@
+> +
+> +kmsg-test: $(OBJS)
+> +	$(CC) $(CFLAGS) $^ $(LDLIBS) -o $@
+> +
+> +run_tests:
+> +	./kmsg-test --tap
 
-DAC based permissions. Fsck only checks the syntax of regular UNIX DAC=20
-based permissions (it doesn't verify that the listed UID/GID are=20
-actually valid in userspace, nor does it check for semantically=20
-nonsensical permissions modes like 007 or 000), and it really can't=20
-properly check anything more than that on ACL's either.  Based on all of =
+What does --tap do? Is this a longform option?
+I don't see it in usage()
 
-this, richacls and LSM's which mediate filesystem accesses are on=20
-exactly the same level with the exception that LSM's usually have way=20
-more functionality beyond just using ACL's to control file access, LSM's =
+> +
+> +clean:
+> +	rm -f *.o kmsg-test
+> diff --git a/tools/testing/selftests/kmsg/kmsg-test.c b/tools/testing/selftests/kmsg/kmsg-test.c
+> new file mode 100644
+> index 0000000..4f17b73
+> --- /dev/null
+> +++ b/tools/testing/selftests/kmsg/kmsg-test.c
+> @@ -0,0 +1,329 @@
+> +#include <stddef.h>
+> +#include <stdbool.h>
+> +#include <stdio.h>
+> +#include <stdlib.h>
+> +#include <string.h>
+> +#include <time.h>
+> +#include <fcntl.h>
+> +#include <unistd.h>
+> +#include <getopt.h>
+> +#include <sys/types.h>
+> +#include <sys/wait.h>
+> +#include <sys/stat.h>
+> +
+> +#include "kmsg-test.h"
+> +
+> +struct kmsg_test {
+> +	const char	*name;
+> +	const char	*desc;
+> +	int (*func)(const struct kmsg_test_args *args);
+> +};
+> +
+> +static const struct kmsg_test tests[] = {
+> +	{
+> +		.name	= "buffer-add-del",
+> +		.desc	= "create and delete kmsg devices",
+> +		.func	= kmsg_test_buffer_add_del,
+> +	}, {
+> +		.name	= "buffer-add-write-read-del",
+> +		.desc	= "create w/r and del kmsg device",
+> +		.func	= kmsg_test_buffer_add_write_read_del,
+> +	}, {
+> +		.name	= "buffer-buf-torture",
+> +		.desc	= "fill more than whole buffer can hold",
+> +		.func	= kmsg_test_buffer_buf_torture,
+> +	}, {
+> +		.name	= "buffer-buf-multitheaded-torture",
+> +		.desc	= "fill from many threads",
+> +		.func	= kmsg_test_buffer_buf_multithreaded_torture,
+> +	},
+> +};
+> +
+> +#define N_TESTS ARRAY_SIZE(tests)
+> +
+> +FILE *kmsg_get_device(int minor, const char *mode)
+> +{
+> +	char path[80] = "";
+> +	dev_t dev = makedev(1, minor);
+> +
+> +	if (minor < 0) {
+> +		printf("Invalid minor number %d\n", minor);
+> +		return NULL;
+> +	}
+> +
+> +	snprintf(path, sizeof(path), "/tmp/kmsg-%d", minor);
+> +
+> +	if (access(path, F_OK) < 0) {
+> +		if (mknod(path, S_IFCHR | 0600, dev)) {
+> +			printf("Cannot create device %s with minor %d\n",
+> +								path, minor);
+> +			return NULL;
+> +		}
+> +	}
+> +
+> +	if (access(path, F_OK) < 0) {
+> +		printf("Cannot access device %s\n", path);
+> +		return NULL;
+> +	}
+> +
+> +	return fopen(path, mode);
+> +}
+> +
+> +int kmsg_drop_device(int minor)
+> +{
+> +	char path[80] = "";
+> +
+> +	if (minor < 0) {
+> +		printf("Invalid minor number %d\n", minor);
+> +		return -1;
+> +	}
+> +
+> +	snprintf(path, sizeof(path), "/tmp/kmsg-%d", minor);
+> +
+> +	return unlink(path);
+> +}
+> +
+> +static void usage(const char *argv0)
+> +{
+> +	unsigned int i, j;
+> +
+> +	printf("Usage: %s [options]\n"
+> +	       "Options:\n"
+> +	       "\t-x, --loop		Run in a loop\n"
+> +	       "\t-f, --fork		Fork before running a test\n"
+> +	       "\t-h, --help		Print this help\n"
+> +	       "\t-t, --test <test-id>	Run one specific test only\n"
+> +	       "\t-w, --wait <secs>	Wait <secs> before actually starting test\n"
+> +	       "\n", argv0);
+> +
+> +	printf("By default, all test are run once, and a summary is printed.\n"
+> +	       "Available tests for --test:\n\n");
+> +
+> +	for (i = 0; i < N_TESTS; i++) {
+> +		const struct kmsg_test *t = tests + i;
+> +
+> +		printf("\t%s", t->name);
+> +
+> +		for (j = 0; j < 24 - strlen(t->name); j++)
+> +			printf(" ");
+> +
+> +		printf("Test %s\n", t->desc);
+> +	}
+> +
+> +	printf("\n");
+> +	printf("Note that some tests may, if run specifically by --test, ");
+> +	printf("behave differently, and not terminate by themselves.\n");
+> +
+> +	exit(EXIT_FAILURE);
+> +}
+> +
+> +static void print_test_result(int ret)
+> +{
+> +	switch (ret) {
+> +	case TEST_OK:
+> +		printf("OK");
+> +		break;
+> +	case TEST_SKIP:
+> +		printf("SKIPPED");
+> +		break;
+> +	case TEST_ERR:
+> +		printf("ERROR");
+> +		break;
+> +	}
+> +}
+> +
+> +static int test_run(const struct kmsg_test *t,
+> +		    const struct kmsg_test_args *kmsg_args,
+> +		    int wait)
+> +{
+> +	int ret;
+> +
+> +	if (wait > 0) {
+> +		printf("Sleeping %d seconds before running test ...\n", wait);
+> +		sleep(wait);
+> +	}
+> +
+> +	ret = t->func(kmsg_args);
+> +	return ret;
+> +}
+> +
+> +static int test_run_forked(const struct kmsg_test *t,
+> +			   const struct kmsg_test_args *kmsg_args,
+> +			   int wait)
+> +{
+> +	int ret;
+> +	pid_t pid;
+> +
+> +	pid = fork();
+> +	if (pid < 0) {
+> +		return TEST_ERR;
+> +	} else if (pid == 0) {
+> +		ret = test_run(t, kmsg_args, wait);
+> +		_exit(ret);
+> +	}
+> +
+> +	pid = waitpid(pid, &ret, 0);
+> +	if (pid <= 0)
+> +		return TEST_ERR;
+> +	else if (!WIFEXITED(ret))
+> +		return TEST_ERR;
+> +	else
+> +		return WEXITSTATUS(ret);
+> +}
+> +
+> +static int start_all_tests(const struct kmsg_test_args *kmsg_args)
+> +{
+> +	int ret;
+> +	unsigned int fail_cnt = 0;
+> +	unsigned int skip_cnt = 0;
+> +	unsigned int ok_cnt = 0;
+> +	unsigned int i, n;
+> +	const struct kmsg_test *t;
+> +
+> +	for (i = 0; i < N_TESTS; i++) {
+> +		t = tests + i;
+> +
+> +		printf("Testing %s (%s) ", t->desc, t->name);
+> +		for (n = 0; n < 60 - strlen(t->desc) - strlen(t->name); n++)
+> +			printf(".");
+> +		printf(" ");
+> +
+> +		ret = test_run_forked(t, kmsg_args, 0);
+> +		switch (ret) {
+> +		case TEST_OK:
+> +			ok_cnt++;
+> +			break;
+> +		case TEST_SKIP:
+> +			skip_cnt++;
+> +			break;
+> +		case TEST_ERR:
+> +			fail_cnt++;
+> +			break;
+> +		}
+> +
+> +		print_test_result(ret);
+> +		printf("\n");
+> +	}
+> +
+> +	printf("\nSUMMARY: %u tests passed, %u skipped, %u failed\n",
+> +					    ok_cnt, skip_cnt, fail_cnt);
+> +
+> +	return fail_cnt > 0 ? TEST_ERR : TEST_OK;
+> +}
+> +
+> +static int start_one_test(const struct kmsg_test_args *kmsg_args)
+> +{
+> +	int i, ret;
+> +	bool test_found = false;
+> +	const struct kmsg_test *t;
+> +
+> +	for (i = 0; i < N_TESTS; i++) {
+> +		t = tests + i;
+> +
+> +		if (strcmp(t->name, kmsg_args->test))
+> +			continue;
+> +
+> +		do {
+> +			test_found = true;
+> +			if (kmsg_args->fork)
+> +				ret = test_run_forked(t, kmsg_args,
+> +						      kmsg_args->wait);
+> +			else
+> +				ret = test_run(t, kmsg_args,
+> +					       kmsg_args->wait);
+> +
+> +			printf("Testing %s: ", t->desc);
+> +			print_test_result(ret);
+> +			printf("\n");
+> +
+> +			if (ret != TEST_OK)
+> +				break;
+> +		} while (kmsg_args->loop);
+> +
+> +		return ret;
+> +	}
+> +
+> +	if (!test_found) {
+> +		printf("Unknown test-id '%s'\n", kmsg_args->test);
+> +		return TEST_ERR;
+> +	}
+> +
+> +	return TEST_OK;
+> +}
+> +
+> +static int start_tests(const struct kmsg_test_args *kmsg_args)
+> +{
+> +	int ret = 0;
+> +
+> +	if (kmsg_args->test) {
+> +		ret = start_one_test(kmsg_args);
+> +	} else  {
+> +		do {
+> +			ret = start_all_tests(kmsg_args);
+> +			if (ret != TEST_OK)
+> +				break;
+> +		} while (kmsg_args->loop);
+> +	}
+> +
+> +	return ret;
+> +}
+> +
+> +int main(int argc, char *argv[])
+> +{
+> +	int t, ret = 0;
+> +	struct kmsg_test_args *kmsg_args;
+> +	char *exec = basename(argv[0]);
+> +
+> +	kmsg_args = malloc(sizeof(*kmsg_args));
+> +	if (!kmsg_args) {
+> +		printf("unable to malloc() kmsg_args\n");
+> +		return EXIT_FAILURE;
+> +	}
+> +
+> +	memset(kmsg_args, 0, sizeof(*kmsg_args));
+> +
+> +	static const struct option options[] = {
+> +		{ "loop",	no_argument,		NULL, 'x' },
+> +		{ "help",	no_argument,		NULL, 'h' },
+> +		{ "test",	required_argument,	NULL, 't' },
+> +		{ "wait",	required_argument,	NULL, 'w' },
+> +		{ "fork",	no_argument,		NULL, 'f' },
+> +		{}
+> +	};
+> +
+> +	if (strcmp(exec, "kmsg-test") != 0)
+> +		kmsg_args->test = exec;
+> +
+> +	while ((t = getopt_long(argc, argv, "hxfm:r:t:b:w:a",
+> +						options, NULL)) >= 0) {
+> +		switch (t) {
+> +		case 'x':
+> +			kmsg_args->loop = 1;
+> +			break;
+> +
+> +		case 't':
+> +			kmsg_args->test = optarg;
+> +			break;
+> +
+> +		case 'w':
+> +			kmsg_args->wait = strtol(optarg, NULL, 10);
+> +			break;
+> +
+> +		case 'f':
+> +			kmsg_args->fork = 1;
+> +			break;
+> +
+> +		default:
+> +		case 'h':
+> +			usage(argv[0]);
+> +		}
+> +	}
+> +
+> +	ret = start_tests(kmsg_args);
+> +	if (ret == TEST_ERR)
+> +		return EXIT_FAILURE;
+> +
+> +	free(kmsg_args);
+> +
+> +	return 0;
+> +}
+> diff --git a/tools/testing/selftests/kmsg/kmsg-test.h b/tools/testing/selftests/kmsg/kmsg-test.h
+> new file mode 100644
+> index 0000000..b9ce896
+> --- /dev/null
+> +++ b/tools/testing/selftests/kmsg/kmsg-test.h
+> @@ -0,0 +1,34 @@
+> +#ifndef _KMSG_TEST_H_
+> +#define _KMSG_TEST_H_
+> +
+> +#include <stdio.h>
+> +
+> +#define DEV_KMSG "/dev/kmsg"
+> +
+> +#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
+> +
+> +#define KMSG_REQUESTED_BUF_SIZE (1024 * 256)
+> +
+> +enum {
+> +	TEST_OK,
+> +	TEST_SKIP,
+> +	TEST_ERR,
+> +};
+> +
+> +struct kmsg_test_args {
+> +	int loop;
+> +	int wait;
+> +	int fork;
+> +	const char *test;
+> +};
+> +
+> +FILE *kmsg_get_device(int minor, const char *mode);
+> +int kmsg_drop_device(int minor);
+> +
+> +int kmsg_test_buffer_add_del(const struct kmsg_test_args *args);
+> +int kmsg_test_buffer_add_write_read_del(const struct kmsg_test_args *args);
+> +int kmsg_test_buffer_buf_torture(const struct kmsg_test_args *args);
+> +int kmsg_test_buffer_buf_multithreaded_torture(
+> +					const struct kmsg_test_args *args);
+> +
+> +#endif /* _KMSG_TEST_H_ */
+> diff --git a/tools/testing/selftests/kmsg/test-buffer-add-del.c b/tools/testing/selftests/kmsg/test-buffer-add-del.c
+> new file mode 100644
+> index 0000000..22b69ac
+> --- /dev/null
+> +++ b/tools/testing/selftests/kmsg/test-buffer-add-del.c
+> @@ -0,0 +1,76 @@
+> +#include <stddef.h>
+> +#include <stdint.h>
+> +#include <stdio.h>
+> +#include <fcntl.h>
+> +#include <unistd.h>
+> +#include <kmsg-api.h>
+> +
+> +#include "kmsg-test.h"
+> +
+> +int kmsg_test_buffer_add_del(const struct kmsg_test_args *args)
+> +{
+> +	int i;
+> +	int fd = open(DEV_KMSG, O_RDWR);
+> +	struct kmsg_cmd_buffer_add cmd = { 0 };
+> +	int minors[] = { -1, -1, -1, -1 };
+> +	FILE *fds[ARRAY_SIZE(minors)];
+> +	int retval = TEST_OK;
+> +	uint32_t size;
+> +
+> +	if (fd < 0) {
+> +		printf("Failed: cannot open %s\n", DEV_KMSG);
+> +		return TEST_ERR;
+> +	}
+> +
+> +	for (i = 0; i < ARRAY_SIZE(minors); i++) {
+> +		fds[i] = NULL;
+> +		cmd.size = KMSG_REQUESTED_BUF_SIZE;
+> +		cmd.mode = 0662;
+> +		if (kmsg_cmd_buffer_add(fd, &cmd)) {
+> +			printf("Failed to add buffer\n");
+> +			goto error;
+> +		}
+> +		if (cmd.minor < 0) {
+> +			printf("Minor number < 0\n");
+> +			goto error;
+> +		}
+> +		minors[i] = cmd.minor;
+> +		fds[i] = kmsg_get_device(minors[i], "r");
+> +		if (!fds[i]) {
+> +			printf("Cannot get device %d\n", i);
+> +			goto error;
+> +		}
+> +		size = 0;
+> +		if (kmsg_cmd_get_buf_size(fileno(fds[i]), &size)) {
+> +			printf("Cannot get buf size on defice %d\n", i);
+> +			goto error;
+> +		}
+> +		if (size != KMSG_REQUESTED_BUF_SIZE) {
+> +			printf("Invalid buf size on device %d\n", i);
+> +			goto error;
+> +		}
+> +	}
+> +
+> +	goto cleanup;
+> +
+> +error:
+> +	retval = TEST_ERR;
+> +
+> +cleanup:
+> +	for (i = 0; i < ARRAY_SIZE(minors); i++) {
+> +		if (minors[i] < 0)
+> +			continue;
+> +		if (fds[i])
+> +			fclose(fds[i]);
+> +		if (kmsg_drop_device(minors[i])) {
+> +			printf("Failed to delete device file %d\n", i);
+> +			retval = TEST_ERR;
+> +		}
+> +		if (kmsg_cmd_buffer_del(fd, &minors[i])) {
+> +			printf("Failed to delete buffer %d\n", i);
+> +			retval = TEST_ERR;
+> +		}
+> +	}
+> +	close(fd);
+> +	return retval;
+> +}
+> diff --git a/tools/testing/selftests/kmsg/test-buffer-add-write-read-del.c b/tools/testing/selftests/kmsg/test-buffer-add-write-read-del.c
+> new file mode 100644
+> index 0000000..ab4223f
+> --- /dev/null
+> +++ b/tools/testing/selftests/kmsg/test-buffer-add-write-read-del.c
+> @@ -0,0 +1,161 @@
+> +#include <stddef.h>
+> +#include <stdint.h>
+> +#include <stdio.h>
+> +#include <stdlib.h>
+> +#include <string.h>
+> +#include <fcntl.h>
+> +#include <unistd.h>
+> +#include <kmsg-api.h>
+> +
+> +#include "kmsg-test.h"
+> +
+> +static const char *message(char *buff, size_t size, int i, int j)
+> +{
+> +	snprintf(buff, size, "Test message (%d, %d)", i, j);
+> +	return buff;
+> +}
+> +
+> +int kmsg_test_buffer_add_write_read_del(const struct kmsg_test_args *args)
+> +{
+> +	int i, j;
+> +	int fd = open(DEV_KMSG, O_RDWR);
+> +	struct kmsg_cmd_buffer_add cmd = { 0 };
+> +	int minors[] = { -1, -1, -1, -1 };
+> +	FILE *fds[ARRAY_SIZE(minors)];
+> +	FILE *log[ARRAY_SIZE(minors)];
+> +	int logfd;
+> +	int retval = TEST_OK;
+> +	uint32_t size;
+> +	char txt[80] = "";
+> +	char *buff = NULL;
+> +	const char *msg;
+> +	char *msgend;
+> +
+> +	if (fd < 0) {
+> +		printf("Failed: cannot open %s\n", DEV_KMSG);
+> +		return TEST_ERR;
+> +	}
+> +
+> +	for (i = 0; i < ARRAY_SIZE(minors); i++) {
+> +		fds[i] = NULL;
+> +		log[i] = NULL;
+> +		cmd.size = KMSG_REQUESTED_BUF_SIZE;
+> +		cmd.mode = 0662;
+> +		if (kmsg_cmd_buffer_add(fd, &cmd)) {
+> +			printf("Failed to add buffer\n");
+> +			goto error;
+> +		}
+> +		if (cmd.minor < 0) {
+> +			printf("Minor number < 0\n");
+> +			goto error;
+> +		}
+> +		minors[i] = cmd.minor;
+> +
+> +		fds[i] = kmsg_get_device(minors[i], "w");
+> +		if (!fds[i]) {
+> +			printf("Cannot get device %d for write\n", i);
+> +			goto error;
+> +		}
+> +		size = 0;
+> +		if (kmsg_cmd_get_buf_size(fileno(fds[i]), &size)) {
+> +			printf("Cannot get buf size on defice %d\n", i);
+> +			goto error;
+> +		}
+> +		if (size != KMSG_REQUESTED_BUF_SIZE) {
+> +			printf("Invalid buf size on device %d\n", i);
+> +			goto error;
+> +		}
+> +		log[i] = kmsg_get_device(minors[i], "r");
+> +		if (!log[i]) {
+> +			printf("Cannot get device %d for read\n", i);
+> +			goto error;
+> +		}
+> +		size = 0;
+> +		if (kmsg_cmd_get_buf_size(fileno(log[i]), &size)) {
+> +			printf("Cannot get buf size on defice %d\n", i);
+> +			goto error;
+> +		}
+> +		if (size != KMSG_REQUESTED_BUF_SIZE) {
+> +			printf("Invalid buf size on device %d\n", i);
+> +			goto error;
+> +		}
+> +
+> +		for (j = 0; j <= i; j++) {
+> +			if (kmsg_cmd_clear(fileno(fds[j]))) {
+> +				printf("Cannot clear buffer on device %d\n", j);
+> +				goto error;
+> +			}
+> +			fprintf(fds[j], "%s\n", message(txt, ARRAY_SIZE(txt),
+> +									i, j));
+> +			fflush(fds[j]);
+> +		}
+> +
+> +		for (j = 0; j <= i; j++) {
+> +			logfd = fileno(log[j]);
+> +			size = 0;
+> +			if (kmsg_cmd_get_read_size_max(logfd, &size)) {
+> +				printf("Cannot get buf size on device %d\n", j);
+> +				goto error;
+> +			}
+> +			if (!size) {
+> +				printf("Expected non-zero buf size on %d\n", j);
+> +				goto error;
+> +			}
+> +			buff = malloc(size);
+> +			if (!buff) {
+> +				printf("Out of memory\n");
+> +				goto error;
+> +			}
+> +			if (read(logfd, buff, size) <= 0) {
+> +				printf("Could not read from buffer %d\n", j);
+> +				goto error;
+> +			}
+> +			msg = strchr(buff, ';');
+> +			msgend = strchr(buff, '\n');
+> +			if ((!msg) || (!msgend)) {
+> +				printf("Could not read stored log on %d\n", j);
+> +				goto error;
+> +			}
+> +			msg++;
+> +			*msgend = 0;
+> +			if (strcmp(msg, message(txt, ARRAY_SIZE(txt), i, j))) {
+> +				printf("Messages do not match on %d\n", j);
+> +				goto error;
+> +			}
+> +			free(buff);
+> +			buff = NULL;
+> +		}
+> +	}
+> +
+> +	goto cleanup;
+> +
+> +error:
+> +	retval = TEST_ERR;
+> +
+> +cleanup:
+> +	for (i = 0; i < ARRAY_SIZE(minors); i++) {
+> +		if (minors[i] < 0)
+> +			continue;
+> +		if (fds[i])
+> +			fclose(fds[i]);
+> +		if (log[i]) {
+> +			if (kmsg_cmd_clear(fileno(log[i]))) {
+> +				printf("Failed to clear device %d\n", i);
+> +				retval = TEST_ERR;
+> +			}
+> +			fclose(log[i]);
+> +		}
+> +		if (kmsg_drop_device(minors[i])) {
+> +			printf("Failed to delete device file %d\n", i);
+> +			retval = TEST_ERR;
+> +		}
+> +		if (kmsg_cmd_buffer_del(fd, &minors[i])) {
+> +			printf("Failed to delete buffer %d\n", i);
+> +			retval = TEST_ERR;
+> +		}
+> +	}
+> +	close(fd);
+> +	if (buff)
+> +		free(buff);
+> +	return retval;
+> +}
+> diff --git a/tools/testing/selftests/kmsg/test-buffer-buf-multithreaded-torture.c b/tools/testing/selftests/kmsg/test-buffer-buf-multithreaded-torture.c
+> new file mode 100644
+> index 0000000..5510b13
+> --- /dev/null
+> +++ b/tools/testing/selftests/kmsg/test-buffer-buf-multithreaded-torture.c
+> @@ -0,0 +1,199 @@
+> +#include <stddef.h>
+> +#include <stdbool.h>
+> +#include <stdint.h>
+> +#include <stdio.h>
+> +#include <string.h>
+> +#include <fcntl.h>
+> +#include <unistd.h>
+> +#include <pthread.h>
+> +#include <kmsg-api.h>
+> +
+> +#include "kmsg-test.h"
+> +
+> +#define SOME_BUFF_SIZE 4096
+> +#define THREADS_PER_DEVICE 10
+> +
+> +static bool ok = true;
+> +static bool nok = !true;
+> +
+> +static void *kmsg_test_thread_func(void *data)
+> +{
+> +	char buff[SOME_BUFF_SIZE];
+> +	int minor = *((int *)data);
+> +	FILE *f = kmsg_get_device(minor, "w");
+> +	int fd;
+> +	void *retval = &ok;
+> +	int iter;
+> +	ssize_t s;
+> +	uint32_t size, done;
+> +	uint32_t max_size;
+> +
+> +	memset(buff, 'A', ARRAY_SIZE(buff));
+> +	buff[ARRAY_SIZE(buff) - 1] = 0;
+> +
+> +	if (!f) {
+> +		printf("Cannot get device for write\n");
+> +		return &nok;
+> +	}
+> +	fd = fileno(f);
+> +
+> +	size = 0;
+> +	if (kmsg_cmd_get_buf_size(fd, &size)) {
+> +		printf("Cannot get buf size\n");
+> +		goto error;
+> +	}
+> +	if (size != KMSG_REQUESTED_BUF_SIZE) {
+> +		printf("Invalid buf size\n");
+> +		goto error;
+> +	}
+> +
+> +	if (kmsg_cmd_clear(fd)) {
+> +		printf("Cannot clear buffer\n");
+> +		goto error;
+> +	}
+> +
+> +	iter = 0;
+> +	while (done < (KMSG_REQUESTED_BUF_SIZE * 2)) {
+> +		s = write(fd, buff, ARRAY_SIZE(buff));
+> +		if (s < 0) {
+> +			printf("Cannot write iteration %d\n", iter);
+> +			goto error;
+> +		}
+> +		done += s;
+> +
+> +		max_size = 0;
+> +		if (kmsg_cmd_get_read_size_max(fd, &max_size)) {
+> +			printf("Cannot get max_size\n");
+> +			goto error;
+> +		}
+> +		if (!max_size) {
+> +			printf("Expected non-zero max_size\n");
+> +			goto error;
+> +		}
+> +
+> +		iter++;
+> +	}
+> +
+> +	goto cleanup;
+> +
+> +error:
+> +	retval = &nok;
+> +
+> +cleanup:
+> +	fclose(f);
+> +
+> +	return retval;
+> +}
+> +
+> +int kmsg_test_buffer_buf_multithreaded_torture(
+> +					const struct kmsg_test_args *args)
+> +{
+> +	int i, j;
+> +	int fd = open(DEV_KMSG, O_RDWR);
+> +	struct kmsg_cmd_buffer_add cmd = { 0 };
+> +	int minors[] = { -1, -1, -1, -1 };
+> +	FILE *log[ARRAY_SIZE(minors)];
+> +	int retval = TEST_OK;
+> +	pthread_t threads[ARRAY_SIZE(minors)][THREADS_PER_DEVICE];
+> +	bool started[ARRAY_SIZE(minors)][THREADS_PER_DEVICE];
+> +	uint32_t size;
+> +	uint32_t max_size;
+> +	void *retptr;
+> +
+> +	for (i = 0; i < ARRAY_SIZE(minors); i++)
+> +		for (j = 0; j < THREADS_PER_DEVICE; j++)
+> +			started[i][j] = false;
+> +
+> +	if (fd < 0) {
+> +		printf("Failed: cannot open %s\n", DEV_KMSG);
+> +		return TEST_ERR;
+> +	}
+> +
+> +	for (i = 0; i < ARRAY_SIZE(minors); i++) {
+> +		log[i] = NULL;
+> +		cmd.size = KMSG_REQUESTED_BUF_SIZE;
+> +		cmd.mode = 0662;
+> +		if (kmsg_cmd_buffer_add(fd, &cmd)) {
+> +			printf("Failed to add buffer\n");
+> +			goto error;
+> +		}
+> +		if (cmd.minor < 0) {
+> +			printf("Minor number < 0\n");
+> +			goto error;
+> +		}
+> +		minors[i] = cmd.minor;
+> +
+> +		log[i] = kmsg_get_device(minors[i], "r");
+> +		if (!log[i]) {
+> +			printf("Cannot get device %d for read\n", i);
+> +			goto error;
+> +		}
+> +		size = 0;
+> +		if (kmsg_cmd_get_buf_size(fileno(log[i]), &size)) {
+> +			printf("Cannot get buf size on defice %d\n", i);
+> +			goto error;
+> +		}
+> +		if (size != KMSG_REQUESTED_BUF_SIZE) {
+> +			printf("Invalid buf size on device %d\n", i);
+> +			goto error;
+> +		}
+> +
+> +		for (j = 0; j < THREADS_PER_DEVICE; j++) {
+> +			if (pthread_create(&threads[i][j], NULL,
+> +					  kmsg_test_thread_func, &minors[i])) {
+> +				printf("Cannot create thread %d for dev %d\n",
+> +									j, i);
+> +				goto error;
+> +			}
+> +			started[i][j] = true;
+> +		}
+> +	}
+> +
+> +	goto cleanup;
+> +
+> +error:
+> +	retval = TEST_ERR;
+> +
+> +cleanup:
+> +	for (i = 0; i < ARRAY_SIZE(minors); i++) {
+> +		for (j = 0; j < THREADS_PER_DEVICE; j++)
+> +			if (started[i][j]) {
+> +				if (pthread_join(threads[i][j], &retptr)) {
+> +					printf("pthread_join() failed %d:%d\n",
+> +									i, j);
+> +					retval = TEST_ERR;
+> +				}
+> +				if (!(*((bool *)retptr)))
+> +					retval = TEST_ERR;
+> +			}
+> +		if (minors[i] < 0)
+> +			continue;
+> +		if (log[i]) {
+> +			max_size = 0;
+> +			if (kmsg_cmd_get_read_size_max(fileno(log[i]),
+> +								&max_size)) {
+> +				printf("Cannot get max_size\n");
+> +				retval = TEST_ERR;
+> +			}
+> +			if (!max_size) {
+> +				printf("Expected non-zero max_size\n");
+> +				retval = TEST_ERR;
+> +			}
+> +			if (kmsg_cmd_clear(fileno(log[i]))) {
+> +				printf("Failed to clear device %d\n", i);
+> +				retval = TEST_ERR;
+> +			}
+> +			fclose(log[i]);
+> +		}
+> +		if (kmsg_drop_device(minors[i])) {
+> +			printf("Failed to delete device file %d\n", i);
+> +			retval = TEST_ERR;
+> +		}
+> +		if (kmsg_cmd_buffer_del(fd, &minors[i])) {
+> +			printf("Failed to delete buffer %d\n", i);
+> +			retval = TEST_ERR;
+> +		}
+> +	}
+> +	close(fd);
+> +	return retval;
+> +}
+> diff --git a/tools/testing/selftests/kmsg/test-buffer-buf-torture.c b/tools/testing/selftests/kmsg/test-buffer-buf-torture.c
+> new file mode 100644
+> index 0000000..700a2fa
+> --- /dev/null
+> +++ b/tools/testing/selftests/kmsg/test-buffer-buf-torture.c
+> @@ -0,0 +1,139 @@
+> +#include <stddef.h>
+> +#include <stdint.h>
+> +#include <stdio.h>
+> +#include <string.h>
+> +#include <fcntl.h>
+> +#include <unistd.h>
+> +#include <kmsg-api.h>
+> +
+> +#include "kmsg-test.h"
+> +
+> +#define SOME_BUFF_SIZE 4096
+> +
+> +int kmsg_test_buffer_buf_torture(const struct kmsg_test_args *args)
+> +{
+> +	int i, iter;
+> +	int fd = open(DEV_KMSG, O_RDWR);
+> +	struct kmsg_cmd_buffer_add cmd = { 0 };
+> +	int minors[] = { -1, -1, -1, -1 };
+> +	FILE *fds[ARRAY_SIZE(minors)];
+> +	FILE *log[ARRAY_SIZE(minors)];
+> +	int retval = TEST_OK;
+> +	char buff[SOME_BUFF_SIZE];
+> +	ssize_t s;
+> +	int logfd;
+> +	uint32_t size, done;
+> +	uint32_t max_size;
+> +
+> +	memset(buff, 'A', ARRAY_SIZE(buff));
+> +	buff[ARRAY_SIZE(buff) - 1] = 0;
+> +
+> +	if (fd < 0) {
+> +		printf("Failed: cannot open %s\n", DEV_KMSG);
+> +		return TEST_ERR;
+> +	}
+> +
+> +	for (i = 0; i < ARRAY_SIZE(minors); i++) {
+> +		fds[i] = NULL;
+> +		log[i] = NULL;
+> +		cmd.size = KMSG_REQUESTED_BUF_SIZE;
+> +		cmd.mode = 0662;
+> +		if (kmsg_cmd_buffer_add(fd, &cmd)) {
+> +			printf("Failed to add buffer\n");
+> +			goto error;
+> +		}
+> +		if (cmd.minor < 0) {
+> +			printf("Minor number < 0\n");
+> +			goto error;
+> +		}
+> +		minors[i] = cmd.minor;
+> +
+> +		fds[i] = kmsg_get_device(minors[i], "w");
+> +		if (!fds[i]) {
+> +			printf("Cannot get device %d for write\n", i);
+> +			goto error;
+> +		}
+> +		size = 0;
+> +		if (kmsg_cmd_get_buf_size(fileno(fds[i]), &size)) {
+> +			printf("Cannot get buf size on defice %d\n", i);
+> +			goto error;
+> +		}
+> +		if (size != KMSG_REQUESTED_BUF_SIZE) {
+> +			printf("Invalid buf size on device %d\n", i);
+> +			goto error;
+> +		}
+> +		log[i] = kmsg_get_device(minors[i], "r");
+> +		if (!log[i]) {
+> +			printf("Cannot get device %d for read\n", i);
+> +			goto error;
+> +		}
+> +		size = 0;
+> +		if (kmsg_cmd_get_buf_size(fileno(log[i]), &size)) {
+> +			printf("Cannot get buf size on defice %d\n", i);
+> +			goto error;
+> +		}
+> +		if (size != KMSG_REQUESTED_BUF_SIZE) {
+> +			printf("Invalid buf size on device %d\n", i);
+> +			goto error;
+> +		}
+> +
+> +		logfd = fileno(fds[i]);
+> +		if (kmsg_cmd_clear(logfd)) {
+> +			printf("Cannot clear buffer on device %d\n", i);
+> +			goto error;
+> +		}
+> +
+> +		iter = 0;
+> +		while (done < (KMSG_REQUESTED_BUF_SIZE * 2)) {
+> +			s = write(logfd, buff, ARRAY_SIZE(buff));
+> +			if (s < 0) {
+> +				printf("Cannot write %d to device %d, %s\n",
+> +						    iter, i, strerror(errno));
+> +				goto error;
+> +			}
+> +			done += s;
+> +
+> +			max_size = 0;
+> +			if (kmsg_cmd_get_read_size_max(logfd, &max_size)) {
+> +				printf("Cannot get max_size on device %d\n", i);
+> +				goto error;
+> +			}
+> +			if (!max_size) {
+> +				printf("Expected non-zero max_size on %d\n", i);
+> +				goto error;
+> +			}
+> +
+> +			iter++;
+> +		}
+> +	}
+> +
+> +	goto cleanup;
+> +
+> +error:
+> +	retval = TEST_ERR;
+> +
+> +cleanup:
+> +	for (i = 0; i < ARRAY_SIZE(minors); i++) {
+> +		if (minors[i] < 0)
+> +			continue;
+> +		if (fds[i])
+> +			fclose(fds[i]);
+> +		if (log[i]) {
+> +			if (kmsg_cmd_clear(fileno(log[i]))) {
+> +				printf("Failed to clear device %d\n", i);
+> +				retval = TEST_ERR;
+> +			}
+> +			fclose(log[i]);
+> +		}
+> +		if (kmsg_drop_device(minors[i])) {
+> +			printf("Failed to delete device file %d\n", i);
+> +			retval = TEST_ERR;
+> +		}
+> +		if (kmsg_cmd_buffer_del(fd, &minors[i])) {
+> +			printf("Failed to delete buffer %d\n", i);
+> +			retval = TEST_ERR;
+> +		}
+> +	}
+> +	close(fd);
+> +	return retval;
+> +}
+> 
 
-are usually MAC based while ACL's are DAC based, and the fact that ACL's =
 
-are (usually) not dependent on where in the filesystem hierarchy they=20
-are found.
-
-On top of that, there is no guarantee that a system will still be safe=20
-when you turn SELinux (or other LSM's) off either (in fact, for some=20
-configurations, it can be mathematically proven that the system will not =
-
-be safe if you turn off SELinux).
->> Issue 1, as I have said before, is functionally irrelevant for anyone =
-who
->> actually knows what they are doing; all you need for ext* is one of th=
-e
->> myriad of programs for un-deleting files on such a filesystem (such as=
-
->> ext4magic or extundelete, and good luck convincing them to not allow b=
-eing
->> used when this flag is set), for BTRFS you just need the regular files=
-ystem
->> administration utilities ('btrfs restore' works wonders, and that one =
-will
->> _never_ honor any kind of permissions, because it's for disaster recov=
-ery),
->> and while I don't know of any way to do this with XFS, that is only be=
-cause
->> I don't use XFS myself and have not had the need to provide tech suppo=
-rt for
->> anyone who does.  If somebody absolutely _needs_ a guarantee that the =
-acls
->> will be enforced, they need to be using whole disk encryption, not jus=
-t
->> acls, and even that can't provide such a guarantee.
->>
->> As for issue 2, that can be solved by making it a read-only compatible=
- flag,
->> which is what I was suggesting be done in the first place.  The only
->> situation I can think of that this would cause an issue for is if the
->> filesystem was not cleanly unmounted, and the log-replay doesn't set t=
-he
->> ACL's, but mounting an uncleanly unmounted filesystem that has richacl=
-s on a
->> kernel without support should fall into one of the following 2 cases m=
-ore
->> than 99% of the time:
->> 1. The system crashed hard, and the regular kernel is un-bootable for =
-some
->> reason, in this case you're at the point of disaster recovery, should =
-not be
->> exposing _anything_ to a multi-user environment, and probably care a l=
-ot
->> more about being able to get the system running again than about not
->> accidentally creating a file with a missing ACL.
->> 2. The filesystem was maliciously stolen in some way (either the hardw=
-are
->> was acquired, or more likely, someone got an image of a still mounted
->> filesystem), in which case all of my statements above regarding issue =
-1
->> apply.
-> Please spare me with all that nonsense. Compared to mount options,
-> filesystem feature flags in this case simplify things (you don't have
-> to specify whether a filesystem contains POSIX ACLs or richacls), and
-> they prevent administrator errors: when a filesystem mounts, it is
-> safe to use; when it doesn't, it is not. That's all there is to it.
-You're ignoring what I'm actually saying.  I've said absolutely nothing=20
-about needing to use mount options at all, and I'm not arguing against=20
-using filesystem feature flags, I'm arguing for using them sensibly in a =
-
-way that does not present a false sense of security.
-
-Making the comparability flag read-only will exactly solve the second=20
-issue that you outlined for more than 99% of all use cases (and the=20
-remaining cases are provably irrelevant), still indicate clearly to the=20
-FS code which type of ACL is in use on the FS, and remove the entirely=20
-false sense of security WRT the first issue you outlined.
-
-Making it an incompatible flag will likely cause headaches for some=20
-legitimate users, and at most delay competent hackers by a few seconds=20
-to a few minutes, and script kiddies by a few hours, and is really no=20
-better than security by obscurity (and from a purely logistical=20
-standpoint, that's _all_ it is) in that it actively tries to hide the=20
-fact that someone having read access to the storage the filesystem is on =
-
-can bypass the ACL's.
-
-To reiterate, if someone can call mount() on a filesystem, and mount()=20
-does not return -EPERM, then even if mount() returns a different error,=20
-they still have the ability to completely bypass all permissions and=20
-ACL's in that filesystem, because they have the ability to read the=20
-entire filesystem directly.
-
-The _only_ way to properly protect against people bypassing the ACL's is =
-
-to use full disk encryption and lock down root access on the system, and =
-
-even that can't completely prevent it from happening.
-
-
---------------ms070001020509080703050503
-Content-Type: application/pkcs7-signature; name="smime.p7s"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="smime.p7s"
-Content-Description: S/MIME Cryptographic Signature
-
-MIAGCSqGSIb3DQEHAqCAMIACAQExDzANBglghkgBZQMEAgMFADCABgkqhkiG9w0BBwEAAKCC
-Brgwgga0MIIEnKADAgECAgMRLfgwDQYJKoZIhvcNAQENBQAweTEQMA4GA1UEChMHUm9vdCBD
-QTEeMBwGA1UECxMVaHR0cDovL3d3dy5jYWNlcnQub3JnMSIwIAYDVQQDExlDQSBDZXJ0IFNp
-Z25pbmcgQXV0aG9yaXR5MSEwHwYJKoZIhvcNAQkBFhJzdXBwb3J0QGNhY2VydC5vcmcwHhcN
-MTUwOTIxMTEzNTEzWhcNMTYwMzE5MTEzNTEzWjBjMRgwFgYDVQQDEw9DQWNlcnQgV29UIFVz
-ZXIxIzAhBgkqhkiG9w0BCQEWFGFoZmVycm9pbjdAZ21haWwuY29tMSIwIAYJKoZIhvcNAQkB
-FhNhaGVtbWVsZ0BvaGlvZ3QuY29tMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA
-nQ/81tq0QBQi5w316VsVNfjg6kVVIMx760TuwA1MUaNQgQ3NyUl+UyFtjhpkNwwChjgAqfGd
-LIMTHAdObcwGfzO5uI2o1a8MHVQna8FRsU3QGouysIOGQlX8jFYXMKPEdnlt0GoQcd+BtESr
-pivbGWUEkPs1CwM6WOrs+09bAJP3qzKIr0VxervFrzrC5Dg9Rf18r9WXHElBuWHg4GYHNJ2V
-Ab8iKc10h44FnqxZK8RDN8ts/xX93i9bIBmHnFfyNRfiOUtNVeynJbf6kVtdHP+CRBkXCNRZ
-qyQT7gbTGD24P92PS2UTmDfplSBcWcTn65o3xWfesbf02jF6PL3BCrVnDRI4RgYxG3zFBJuG
-qvMoEODLhHKSXPAyQhwZINigZNdw5G1NqjXqUw+lIqdQvoPijK9J3eijiakh9u2bjWOMaleI
-SMRR6XsdM2O5qun1dqOrCgRkM0XSNtBQ2JjY7CycIx+qifJWsRaYWZz0aQU4ZrtAI7gVhO9h
-pyNaAGjvm7PdjEBiXq57e4QcgpwzvNlv8pG1c/hnt0msfDWNJtl3b6elhQ2Pz4w/QnWifZ8E
-BrFEmjeeJa2dqjE3giPVWrsH+lOvQQONsYJOuVb8b0zao4vrWeGmW2q2e3pdv0Axzm/60cJQ
-haZUv8+JdX9ZzqxOm5w5eUQSclt84u+D+hsCAwEAAaOCAVkwggFVMAwGA1UdEwEB/wQCMAAw
-VgYJYIZIAYb4QgENBEkWR1RvIGdldCB5b3VyIG93biBjZXJ0aWZpY2F0ZSBmb3IgRlJFRSBo
-ZWFkIG92ZXIgdG8gaHR0cDovL3d3dy5DQWNlcnQub3JnMA4GA1UdDwEB/wQEAwIDqDBABgNV
-HSUEOTA3BggrBgEFBQcDBAYIKwYBBQUHAwIGCisGAQQBgjcKAwQGCisGAQQBgjcKAwMGCWCG
-SAGG+EIEATAyBggrBgEFBQcBAQQmMCQwIgYIKwYBBQUHMAGGFmh0dHA6Ly9vY3NwLmNhY2Vy
-dC5vcmcwMQYDVR0fBCowKDAmoCSgIoYgaHR0cDovL2NybC5jYWNlcnQub3JnL3Jldm9rZS5j
-cmwwNAYDVR0RBC0wK4EUYWhmZXJyb2luN0BnbWFpbC5jb22BE2FoZW1tZWxnQG9oaW9ndC5j
-b20wDQYJKoZIhvcNAQENBQADggIBADMnxtSLiIunh/TQcjnRdf63yf2D8jMtYUm4yDoCF++J
-jCXbPQBGrpCEHztlNSGIkF3PH7ohKZvlqF4XePWxpY9dkr/pNyCF1PRkwxUURqvuHXbu8Lwn
-8D3U2HeOEU3KmrfEo65DcbanJCMTTW7+mU9lZICPP7ZA9/zB+L0Gm1UNFZ6AU50N/86vjQfY
-WgkCd6dZD4rQ5y8L+d/lRbJW7ZGEQw1bSFVTRpkxxDTOwXH4/GpQfnfqTAtQuJ1CsKT12e+H
-NSD/RUWGTr289dA3P4nunBlz7qfvKamxPymHeBEUcuICKkL9/OZrnuYnGROFwcdvfjGE5iLB
-kjp/ttrY4aaVW5EsLASNgiRmA6mbgEAMlw3RwVx0sVelbiIAJg9Twzk4Ct6U9uBKiJ8S0sS2
-8RCSyTmCRhJs0vvva5W9QUFGmp5kyFQEoSfBRJlbZfGX2ehI2Hi3U2/PMUm2ONuQG1E+a0AP
-u7I0NJc/Xil7rqR0gdbfkbWp0a+8dAvaM6J00aIcNo+HkcQkUgtfrw+C2Oyl3q8IjivGXZqT
-5UdGUb2KujLjqjG91Dun3/RJ/qgQlotH7WkVBs7YJVTCxfkdN36rToPcnMYOI30FWa0Q06gn
-F6gUv9/mo6riv3A5bem/BdbgaJoPnWQD9D8wSyci9G4LKC+HQAMdLmGoeZfpJzKHMYIE0TCC
-BM0CAQEwgYAweTEQMA4GA1UEChMHUm9vdCBDQTEeMBwGA1UECxMVaHR0cDovL3d3dy5jYWNl
-cnQub3JnMSIwIAYDVQQDExlDQSBDZXJ0IFNpZ25pbmcgQXV0aG9yaXR5MSEwHwYJKoZIhvcN
-AQkBFhJzdXBwb3J0QGNhY2VydC5vcmcCAxEt+DANBglghkgBZQMEAgMFAKCCAiEwGAYJKoZI
-hvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMTUxMDE5MTg0NTA5WjBPBgkq
-hkiG9w0BCQQxQgRAcgXJbxNPX3oW/KhVp4rcPDq8X5b6IhVxBuin2hYzQNEBS83jazQZzRXk
-35gU3qW3floVftalddqLYsfbfehOTTBsBgkqhkiG9w0BCQ8xXzBdMAsGCWCGSAFlAwQBKjAL
-BglghkgBZQMEAQIwCgYIKoZIhvcNAwcwDgYIKoZIhvcNAwICAgCAMA0GCCqGSIb3DQMCAgFA
-MAcGBSsOAwIHMA0GCCqGSIb3DQMCAgEoMIGRBgkrBgEEAYI3EAQxgYMwgYAweTEQMA4GA1UE
-ChMHUm9vdCBDQTEeMBwGA1UECxMVaHR0cDovL3d3dy5jYWNlcnQub3JnMSIwIAYDVQQDExlD
-QSBDZXJ0IFNpZ25pbmcgQXV0aG9yaXR5MSEwHwYJKoZIhvcNAQkBFhJzdXBwb3J0QGNhY2Vy
-dC5vcmcCAxEt+DCBkwYLKoZIhvcNAQkQAgsxgYOggYAweTEQMA4GA1UEChMHUm9vdCBDQTEe
-MBwGA1UECxMVaHR0cDovL3d3dy5jYWNlcnQub3JnMSIwIAYDVQQDExlDQSBDZXJ0IFNpZ25p
-bmcgQXV0aG9yaXR5MSEwHwYJKoZIhvcNAQkBFhJzdXBwb3J0QGNhY2VydC5vcmcCAxEt+DAN
-BgkqhkiG9w0BAQEFAASCAgBavTge9U9eNwEqfSp7bflcLiQW/boDXIQym7kg+5ETMp7q4Q8c
-96dQMgki9Ggr5ZMAO+IG7s9FNPv5IHuJIYwf53FhGfL1qXrRuiGfy0oRO0KHeUvLXhmQBT1B
-Vtfdi62uoq9lqRnGrnHDXxf1f/Dnd7unOdTfv7Ef7UITWn+zlLk2lOtgZPvmE9f1nIeu6sII
-EZ+Vfelqb8XoeemwSOe4VusJwO8/MmtR+dLqc3Q3O7n/hUOgKjr/Hf51TOjKEUSRm07ahIbs
-eFQEnNdZxRqJkNfjW1MItr4Cefi7Krkj4+9c8n58HQyie8+hecDYp+puuwTcvxlXxbuj3asq
-yaaWRWB6kEx2jOqxxGmin3VvupC0AvyO0la17gRpEXrAWn8j6/TyoHFYTw0OUc/zo7JKq3uX
-cbjLtXuaDSFSBvsZE2L0+6ELbMrhh4LkhHRvWul+HRDiGk3t2CbH2y7kcFXgvFQi4Ys1L0mk
-CfVaSat0wBeodtWbaTyrvt7nIsJWtjSInsZAmCBP9ThNzNbXlJUzeJaBBq5k73Dc4SEJ2BSj
-OQb5b1NSiiNnM0WIApoxirLUd7QsGDgl2sfkQiE0M8EEGht9Apu4jZGkR757cC+rWxEB7IbH
-9h5pUZubv5qKzVz0L60HaUnsUOsjwyVeOkV0eLYMV4R7guvTo/U6n+PdIgAAAAAAAA==
---------------ms070001020509080703050503--
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh@osg.samsung.com | (970) 217-8978
