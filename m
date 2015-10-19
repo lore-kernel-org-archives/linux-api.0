@@ -1,59 +1,28 @@
-From: bfields@fieldses.org (J. Bruce Fields)
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Subject: Re: [PATCH v6 5/4] copy_file_range.2: New page documenting
  copy_file_range()
-Date: Mon, 19 Oct 2015 16:45:03 -0400
-Message-ID: <20151019204503.GA15214@fieldses.org>
+Date: Mon, 19 Oct 2015 14:03:22 -0700
+Message-ID: <20151019210322.GA2420@infradead.org>
 References: <1445029707-31549-1-git-send-email-Anna.Schumaker@Netapp.com>
  <1445029707-31549-6-git-send-email-Anna.Schumaker@Netapp.com>
  <20151018183013.GA11200@infradead.org>
+ <20151019204503.GA15214@fieldses.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20151018183013.GA11200@infradead.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Anna Schumaker <Anna.Schumaker@netapp.com>, linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, darrick.wong@oracle.com, mtk.manpages@gmail.com, andros@netapp.com
+In-Reply-To: <20151019204503.GA15214-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Oct 18, 2015 at 11:30:13AM -0700, Christoph Hellwig wrote:
-> Just commenting on the man page here as the comment is about sematics.
-> All the infrastructure in the patch looks reasonable to me, but this
-> is something we need to get right.
-> 
-> > +.B COPY_FR_REFLINK
-> > +Create a lightweight "reflink", where data is not copied until
-> > +one of the files is modified.
-> > +.PP
-> > +The default behavior
-> > +.RI ( flags
-> > +== 0) is to perform a full data copy of the requested range.
-> > +.SH RETURN VALUE
-> > +Upon successful completion,
-> > +.BR copy_file_range ()
-> > +will return the number of bytes copied between files.
-> > +This could be less than the length originally requested.
-> 
-> As mentioned in the previous discussion I fundamentally disagree with
-> the way your word the flags here.
-> 
-> flags = 0 gives you the data from source at dest, period.  How it's
-> implemented is up to the file system as a user cannot observe how data
-> actually is stored underneath.
-> 
-> Additionaly I think the 'clone' option with it's stronger guarantees
-> should be a separate system call.  So for now just have no supported
-> flag and leave it up to the file system and storage device how to
-> implement it.
+On Mon, Oct 19, 2015 at 04:45:03PM -0400, J. Bruce Fields wrote:
+> So, continue to include a "flags" field but just error out if it's
+> anything but zero for now?
 
-So, continue to include a "flags" field but just error out if it's
-anything but zero for now?
-
-Sounds fine by me.  We can always implement the other stuff later.
-
---b.
-
-> 
-> For the future a COPY_FALLOC flag taht guaranatees you do not get ENOSPC
-> on the copied range will be very useful, but given the complexity I
-> think it's not something we should add now.
+Exactly!
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
