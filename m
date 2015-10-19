@@ -1,19 +1,20 @@
 From: kbuild test robot <lkp@intel.com>
-Subject: Re: [RFC v3 3/9] kmsg: introduce additional kmsg devices support
-Date: Mon, 19 Oct 2015 22:10:22 +0800
-Message-ID: <201510192230.q3jKYvip%fengguang.wu@intel.com>
-References: <1445259503-18158-4-git-send-email-p.osmialowsk@samsung.com>
+Subject: Re: [RFC v3 8/9] kmsg: add predefined _PID, _TID, _COMM keywords to
+ kmsg* log dict
+Date: Mon, 19 Oct 2015 22:11:05 +0800
+Message-ID: <201510192213.4NshRRV0%fengguang.wu@intel.com>
+References: <1445259503-18158-9-git-send-email-p.osmialowsk@samsung.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="J/dobhs11T7y2rNN"
+Content-Type: multipart/mixed; boundary="wRRV7LY7NUeQGEoC"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1445259503-18158-4-git-send-email-p.osmialowsk@samsung.com>
+In-Reply-To: <1445259503-18158-9-git-send-email-p.osmialowsk@samsung.com>
 Sender: linux-kernel-owner@vger.kernel.org
 Cc: kbuild-all@01.org, Jonathan Corbet <corbet@lwn.net>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, Petr Mladek <pmladek@suse.cz>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Mack <daniel@zonque.org>, Kay Sievers <kay.sievers@vrfy.org>, Joe Perches <joe@perches.com>, Tejun Heo <tj@kernel.org>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, Marcin Niesluchowski <m.niesluchow@samsung.com>, Karol Lewandowski <k.lewandowsk@samsung.com>, Paul Osmialowski <p.osmialowsk@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Shuah Khan <shuahkh@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
 
---J/dobhs11T7y2rNN
+--wRRV7LY7NUeQGEoC
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 
@@ -29,21 +30,43 @@ reproduce:
 
 All warnings (new ones prefixed by >>):
 
+   kernel/printk/kmsg.c: In function 'set_kmsg_dict':
+   kernel/printk/kmsg.c:55:32: error: implicit declaration of function 'task_tgid_nr' [-Werror=implicit-function-declaration]
+     len = sprintf(buf, "_PID=%d", task_tgid_nr(current)) + 1;
+                                   ^
+   kernel/printk/kmsg.c:56:39: error: implicit declaration of function 'task_pid_nr' [-Werror=implicit-function-declaration]
+     len += sprintf(buf + len, "_TID=%d", task_pid_nr(current)) + 1;
+                                          ^
+   kernel/printk/kmsg.c:59:2: error: implicit declaration of function 'get_task_comm' [-Werror=implicit-function-declaration]
+     get_task_comm(buf + len, current);
+     ^
    In file included from include/linux/fs.h:5:0,
                     from kernel/printk/kmsg.c:5:
    kernel/printk/kmsg.c: In function 'kmsg_sys_write':
    include/linux/wait.h:171:47: error: 'TASK_INTERRUPTIBLE' undeclared (first use in this function)
     #define wake_up_interruptible(x) __wake_up(x, TASK_INTERRUPTIBLE, 1, NULL)
                                                   ^
->> kernel/printk/kmsg.c:49:3: note: in expansion of macro 'wake_up_interruptible'
+   kernel/printk/kmsg.c:84:3: note: in expansion of macro 'wake_up_interruptible'
       wake_up_interruptible(&log_b->wait);
       ^
    include/linux/wait.h:171:47: note: each undeclared identifier is reported only once for each function it appears in
     #define wake_up_interruptible(x) __wake_up(x, TASK_INTERRUPTIBLE, 1, NULL)
                                                   ^
->> kernel/printk/kmsg.c:49:3: note: in expansion of macro 'wake_up_interruptible'
+   kernel/printk/kmsg.c:84:3: note: in expansion of macro 'wake_up_interruptible'
       wake_up_interruptible(&log_b->wait);
       ^
+   kernel/printk/kmsg.c: In function 'devkmsg_write':
+   kernel/printk/kmsg.c:40:10: error: 'TASK_COMM_LEN' undeclared (first use in this function)
+         6 + TASK_COMM_LEN)
+             ^
+>> kernel/printk/kmsg.c:102:12: note: in expansion of macro 'KMSG_DICT_MAX_LEN'
+     char dict[KMSG_DICT_MAX_LEN];
+               ^
+   kernel/printk/kmsg.c:102:7: warning: unused variable 'dict' [-Wunused-variable]
+     char dict[KMSG_DICT_MAX_LEN];
+          ^
+   In file included from include/linux/fs.h:5:0,
+                    from kernel/printk/kmsg.c:5:
    kernel/printk/kmsg.c: In function 'kmsg_read':
    include/linux/wait.h:400:31: error: 'TASK_INTERRUPTIBLE' undeclared (first use in this function)
      ___wait_event(wq, condition, TASK_INTERRUPTIBLE, 0, 0,  \
@@ -54,9 +77,9 @@ All warnings (new ones prefixed by >>):
    include/linux/wait.h:423:11: note: in expansion of macro '__wait_event_interruptible'
       __ret = __wait_event_interruptible(wq, condition); \
               ^
-   kernel/printk/kmsg.c:140:9: note: in expansion of macro 'wait_event_interruptible'
-      ret = wait_event_interruptible(log_b->wait,
-            ^
+   kernel/printk/kmsg.c:181:10: note: in expansion of macro 'wait_event_interruptible'
+       ret = wait_event_interruptible(log_b->wait,
+             ^
    include/linux/wait.h:198:43: error: 'TASK_KILLABLE' undeclared (first use in this function)
       state == TASK_INTERRUPTIBLE || state == TASK_KILLABLE) \
                                               ^
@@ -69,9 +92,9 @@ All warnings (new ones prefixed by >>):
    include/linux/wait.h:423:11: note: in expansion of macro '__wait_event_interruptible'
       __ret = __wait_event_interruptible(wq, condition); \
               ^
-   kernel/printk/kmsg.c:140:9: note: in expansion of macro 'wait_event_interruptible'
-      ret = wait_event_interruptible(log_b->wait,
-            ^
+   kernel/printk/kmsg.c:181:10: note: in expansion of macro 'wait_event_interruptible'
+       ret = wait_event_interruptible(log_b->wait,
+             ^
    include/linux/wait.h:401:9: error: implicit declaration of function 'schedule' [-Werror=implicit-function-declaration]
             schedule())
             ^
@@ -81,76 +104,59 @@ All warnings (new ones prefixed by >>):
    include/linux/wait.h:423:11: note: in expansion of macro '__wait_event_interruptible'
       __ret = __wait_event_interruptible(wq, condition); \
               ^
-   kernel/printk/kmsg.c:140:9: note: in expansion of macro 'wait_event_interruptible'
-      ret = wait_event_interruptible(log_b->wait,
-            ^
+   kernel/printk/kmsg.c:181:10: note: in expansion of macro 'wait_event_interruptible'
+       ret = wait_event_interruptible(log_b->wait,
+             ^
+   kernel/printk/kmsg.c: In function 'kmsg_sys_buffer_del':
+   include/linux/wait.h:171:47: error: 'TASK_INTERRUPTIBLE' undeclared (first use in this function)
+    #define wake_up_interruptible(x) __wake_up(x, TASK_INTERRUPTIBLE, 1, NULL)
+                                                  ^
+   kernel/printk/kmsg.c:734:2: note: in expansion of macro 'wake_up_interruptible'
+     wake_up_interruptible(&log_b->wait);
+     ^
    cc1: some warnings being treated as errors
 
-vim +/wake_up_interruptible +49 kernel/printk/kmsg.c
+vim +/KMSG_DICT_MAX_LEN +102 kernel/printk/kmsg.c
 
-     1	#include <linux/printk.h>
-     2	#include <linux/kernel.h>
-     3	#include <linux/errno.h>
-     4	#include <linux/fcntl.h>
-   > 5	#include <linux/fs.h>
-     6	#include <linux/kmsg_dump.h>
-     7	#include <linux/moduleparam.h>
-     8	#include <linux/mutex.h>
-     9	#include <linux/spinlock.h>
-    10	#include <linux/slab.h>
-    11	#include <linux/poll.h>
-    12	#include <linux/rculist.h>
-    13	#include <linux/rcupdate.h>
-    14	#include <linux/stat.h>
-    15	#include <linux/syslog.h>
-    16	#include <linux/uio.h>
-    17	#include <linux/wait.h>
-    18	
-    19	#include <asm/uaccess.h>
-    20	
-    21	#include "printk.h"
-    22	
-    23	/* /dev/kmsg - userspace message inject/listen interface */
-    24	struct devkmsg_user {
-    25		u64 seq;
-    26		u32 idx;
-    27		enum log_flags prev;
-    28		struct mutex lock;
-    29		char buf[CONSOLE_EXT_LOG_MAX];
-    30	};
-    31	
-    32	static int kmsg_sys_write(int minor, int level, const char *fmt, ...)
-    33	{
-    34		va_list args;
-    35		int ret = -ENXIO;
-    36		struct log_buffer *log_b;
-    37	
-    38		rcu_read_lock();
-    39		list_for_each_entry_rcu(log_b, &log_buf.list, list) {
-    40			if (log_b->minor != minor)
-    41				continue;
-    42	
-    43			raw_spin_lock(&log_b->lock);
-    44	
-    45			va_start(args, fmt);
-    46			log_format_and_store(log_b, 1 /* LOG_USER */, level,
-    47					     NULL, 0, fmt, args);
-    48			va_end(args);
-  > 49			wake_up_interruptible(&log_b->wait);
-    50	
-    51			raw_spin_unlock(&log_b->lock);
-    52	
+    78			raw_spin_lock(&log_b->lock);
+    79	
+    80			va_start(args, fmt);
+    81			log_format_and_store(log_b, 1 /* LOG_USER */, level,
+    82					     dict, dictlen, fmt, args);
+    83			va_end(args);
+  > 84			wake_up_interruptible(&log_b->wait);
+    85	
+    86			raw_spin_unlock(&log_b->lock);
+    87	
+    88			ret = 0;
+    89			break;
+    90		}
+    91		rcu_read_unlock();
+    92		return ret;
+    93	}
+    94	
+    95	static ssize_t devkmsg_write(struct kiocb *iocb, struct iov_iter *from)
+    96	{
+    97		char *buf, *line;
+    98		int i;
+    99		int level = default_message_loglevel;
+   100		int facility = 1;	/* LOG_USER */
+   101		size_t len = iov_iter_count(from);
+ > 102		char dict[KMSG_DICT_MAX_LEN];
+   103		size_t dictlen;
+   104		ssize_t ret = len;
+   105		int minor = iminor(iocb->ki_filp->f_inode);
 
 ---
 0-DAY kernel test infrastructure                Open Source Technology Center
 https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
 
---J/dobhs11T7y2rNN
+--wRRV7LY7NUeQGEoC
 Content-Type: application/octet-stream
 Content-Disposition: attachment; filename=".config.gz"
 Content-Transfer-Encoding: base64
 
-H4sICEz4JFYAAy5jb25maWcAjDzLdtw2svt8RR/nLmYWjq2HNc65Rws0CXYjTRA0QLbU2vDI
+H4sICPH3JFYAAy5jb25maWcAjDzLdtw2svt8RR/nLmYWjq2HNc65Rws0CXYjTRA0QLbU2vDI
 UjvRGVnK6JFx/v5WAXwAYKF1s3G6qvAq1LtA/fzTzwv2+vL4/frl7ub6/v7vxe/7h/3T9cv+
 dvHt7n7/v4tcLSrVLHguml+AuLx7eP3x4e7k89ni9JeTXz6+f7r5tNjsnx7294vs8eHb3e+v
 MPru8eGnn4E6U1UhVt3Z6VI0i7vnxcPjy+J5//JTD7/8fNadHJ//7f2efojKNLrNGqGqLueZ
@@ -596,4 +602,4 @@ TKPUufmE32PzNIncd8ktK2tv3fV0CfXDZmikwx/SPCDWSBBgIlIKUeD4XCg+bvVT6ctpfTNv
 WeukIG0Pb+wgHTtRafzs16yXw+yXy1klWOxFAuuKtukSup+JBOkVuEys9H2kIv4f7bKYh9OP
 AQA=
 
---J/dobhs11T7y2rNN--
+--wRRV7LY7NUeQGEoC--
