@@ -1,131 +1,150 @@
-From: Andreas Gruenbacher <agruenba@redhat.com>
+From: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
 Subject: Re: [PATCH v11 21/48] ext4: Add richacl feature flag
-Date: Mon, 19 Oct 2015 19:33:19 +0200
-Message-ID: <CAHc6FU75GXGeav1ho-QraPS_F8fpOXnoDyv17+b=koiF=9YE5A@mail.gmail.com>
-References: <1445008706-15115-1-git-send-email-agruenba@redhat.com>
-	<1445008706-15115-22-git-send-email-agruenba@redhat.com>
-	<5621346E.5000500@gmail.com>
-	<CAHc6FU7sR2zN-K3un74wCv+1NPnrqJ=LYiWo+YQ_2X0kopyoTQ@mail.gmail.com>
-	<5624ED40.7040206@gmail.com>
-	<CAHc6FU4CVQAn6TCQzC8r9m9URmqD_eHQBwhDK2o_o4eb3myW=A@mail.gmail.com>
-	<5625182C.3050007@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5625182C.3050007@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Austin S Hemmelgarn <ahferroin7@gmail.com>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4 <linux-ext4@vger.kernel.org>, xfs@oss.sgi.com, LKML <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, linux-cifs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>
+Date: Mon, 19 Oct 2015 10:39:15 -0600
+Message-ID: <5DE0621B-7308-41C9-A147-32E0270B28A8@dilger.ca>
+References: <1445008706-15115-1-git-send-email-agruenba@redhat.com> <1445008706-15115-22-git-send-email-agruenba@redhat.com> <5621346E.5000500@gmail.com> <CAHc6FU7sR2zN-K3un74wCv+1NPnrqJ=LYiWo+YQ_2X0kopyoTQ@mail.gmail.com> <5624ED40.7040206@gmail.com> <CAHc6FU4CVQAn6TCQzC8r9m9URmqD_eHQBwhDK2o_o4eb3myW=A@mail.gmail.com> <5625182C.3050007@gmail.com>
+Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2104\))
+Content-Type: multipart/signed; boundary="Apple-Mail=_3404C98A-6D6D-47D4-B89F-1E37AFFC17BB"; protocol="application/pgp-signature"; micalg=pgp-sha256
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5625182C.3050007-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Aneesh Kumar K.V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 19, 2015 at 6:19 PM, Austin S Hemmelgarn
-<ahferroin7@gmail.com> wrote:
+
+--Apple-Mail=_3404C98A-6D6D-47D4-B89F-1E37AFFC17BB
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain;
+	charset=us-ascii
+
+On Oct 19, 2015, at 10:19 AM, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> =
+wrote:
+>=20
 > On 2015-10-19 11:34, Andreas Gruenbacher wrote:
->>
 >> On Mon, Oct 19, 2015 at 3:16 PM, Austin S Hemmelgarn
->> <ahferroin7@gmail.com> wrote:
->>>
+>> <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
 >>> On 2015-10-16 13:41, Andreas Gruenbacher wrote:
->>>>
->>>>
+>>>>=20
 >>>> On Fri, Oct 16, 2015 at 7:31 PM, Austin S Hemmelgarn
->>>> <ahferroin7@gmail.com> wrote:
->>>>>
->>>>>
->>>>> I would like to re-iterate, on both XFS and ext4, I _really_ think this
->>>>> should be a ro_compat flag, and not an incompat one.  If a person has
->>>>> the
->>>>> ability to mount the FS (even if it's a read-only mount), then they by
->>>>> definition have read access to the file or partition that the
->>>>> filesystem
->>>>> is contained in, which means that any ACL's stored on the filesystem
->>>>> are
+>>>> <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>>>>>=20
+>>>>> I would like to re-iterate, on both XFS and ext4, I _really_ think =
+this
+>>>>> should be a ro_compat flag, and not an incompat one.  If a person =
+has the
+>>>>> ability to mount the FS (even if it's a read-only mount), then =
+they by
+>>>>> definition have read access to the file or partition that the =
+filesystem
+>>>>> is contained in, which means that any ACL's stored on the =
+filesystem are
 >>>>> functionally irrelevant,
->>>>
->>>>
->>>> It is unfortunately not safe to make such a file system accessible to
+>>>>=20
+>>>> It is unfortunately not safe to make such a file system accessible =
+to
 >>>> other users, so the feature is not strictly read-only compatible.
->>>>
->>> OK, seeing as I wasn't particularly clear as to why I object to this in
->>> my
+>>>>=20
+>>> OK, seeing as I wasn't particularly clear as to why I object to this =
+in my
 >>> other e-mail, let's try this again.
->>>
->>> Can you please explain exactly why it isn't safe to make such a
->>> filesystem
+>>>=20
+>>> Can you please explain exactly why it isn't safe to make such a =
+filesystem
 >>> accessible to other users?
->>
->>
+>>=20
 >> See here: http://www.spinics.net/lists/linux-ext4/msg49541.html
->
 > OK, so to clarify, this isn't 'safe' because:
 > 1. The richacls that exist on the filesystem won't be enforced.
 > 2. Newly created files will have no ACL's set.
->
-> It is worth noting that these are also issues with any kind of access
-> control mechanism.  Using your logic, all LSM's need to set separate
-> incompat feature flags in filesystems they are being used on, as should
-> POSIX ACLs, and for that matter so should Samba in many circumstances, and
-> any NFS system not using idmapping or synchronized/centralized user
-> databases.  Now, if the SELinux (or SMACK, or TOMOYO) people had taken this
-> approach, then I might be inclined to not complain (at least not to you, I'd
-> be complaining to them about this rather poor design choice), but that is
-> not the case, because (I assume) they realized that all this provides is a
-> false sense of security.
+>=20
+> It is worth noting that these are also issues with any kind of access =
+control mechanism.  Using your logic, all LSM's need to set separate =
+incompat feature flags in filesystems they are being used on, as should =
+POSIX ACLs, and for that matter so should Samba in many circumstances, =
+and any NFS system not using idmapping or synchronized/centralized user =
+databases.  Now, if the SELinux (or SMACK, or TOMOYO) people had taken =
+this approach, then I might be inclined to not complain (at least not to =
+you, I'd be complaining to them about this rather poor design choice), =
+but that is not the case, because (I assume) they realized that all this =
+provides is a false sense of security.
 
-LSMs reside above the filesystem level. Let's take SELinux as an
-example. It has its own consistency check mechanism (relabeling). Fsck
-could check the syntax of SELinux labels, but it couldn't do anything
-sensible about corrupted labels, and syntactically correct labels also
-don't mean much. A relabeling run to verify or restory the appropriate
-policy would still be necessary to verify that labels are semantically
-correct, and for that, the filesystem needs to be mounted in the right
-place in the filesystem hierarchy.
+I would tend to agree here.  Anyone who can mount the filesystem on a =
+kernel
+without RichACL support can do whatever they want, so at most having a
+RO_COMPAT flag would serve as a reminder for accidental problems by a
+sysadmin not in the know.  Using an INCOMPAT flag is just asking for =
+major
+headaches when someone needs to recover their filesystem on an old =
+kernel
+but doesn't provide any added safety.
 
-TOMOYO and AppArmor are not based on inode labels at all.
+Cheers, Andreas
 
-LSMs usually also just provide an extra layer of security; when turned
-off, the basic security mechanisms still in effect will make sure that
-the system works just like before. (There are configurations like MLS
-where that is not the case, but those are uncommon.)
+> Issue 1, as I have said before, is functionally irrelevant for anyone =
+who actually knows what they are doing; all you need for ext* is one of =
+the myriad of programs for un-deleting files on such a filesystem (such =
+as ext4magic or extundelete, and good luck convincing them to not allow =
+being used when this flag is set), for BTRFS you just need the regular =
+filesystem administration utilities ('btrfs restore' works wonders, and =
+that one will _never_ honor any kind of permissions, because it's for =
+disaster recovery), and while I don't know of any way to do this with =
+XFS, that is only because I don't use XFS myself and have not had the =
+need to provide tech support for anyone who does.  If somebody =
+absolutely _needs_ a guarantee that the acls will be enforced, they need =
+to be using whole disk encryption, not just acls, and even that can't =
+provide such a guarantee.
+>=20
+> As for issue 2, that can be solved by making it a read-only compatible =
+flag, which is what I was suggesting be done in the first place.  The =
+only situation I can think of that this would cause an issue for is if =
+the filesystem was not cleanly unmounted, and the log-replay doesn't set =
+the ACL's, but mounting an uncleanly unmounted filesystem that has =
+richacls on a kernel without support should fall into one of the =
+following 2 cases more than 99% of the time:
+> 1. The system crashed hard, and the regular kernel is un-bootable for =
+some reason, in this case you're at the point of disaster recovery, =
+should not be exposing _anything_ to a multi-user environment, and =
+probably care a lot more about being able to get the system running =
+again than about not accidentally creating a file with a missing ACL.
+> 2. The filesystem was maliciously stolen in some way (either the =
+hardware was acquired, or more likely, someone got an image of a still =
+mounted filesystem), in which case all of my statements above regarding =
+issue 1 apply.
+>=20
 
-ACLs are quite different from that. They can be checked statically by
-fsck. They are a basic security concept, and when turned off, there is
-no guarantee that the system will still be safe.
 
-> Issue 1, as I have said before, is functionally irrelevant for anyone who
-> actually knows what they are doing; all you need for ext* is one of the
-> myriad of programs for un-deleting files on such a filesystem (such as
-> ext4magic or extundelete, and good luck convincing them to not allow being
-> used when this flag is set), for BTRFS you just need the regular filesystem
-> administration utilities ('btrfs restore' works wonders, and that one will
-> _never_ honor any kind of permissions, because it's for disaster recovery),
-> and while I don't know of any way to do this with XFS, that is only because
-> I don't use XFS myself and have not had the need to provide tech support for
-> anyone who does.  If somebody absolutely _needs_ a guarantee that the acls
-> will be enforced, they need to be using whole disk encryption, not just
-> acls, and even that can't provide such a guarantee.
->
-> As for issue 2, that can be solved by making it a read-only compatible flag,
-> which is what I was suggesting be done in the first place.  The only
-> situation I can think of that this would cause an issue for is if the
-> filesystem was not cleanly unmounted, and the log-replay doesn't set the
-> ACL's, but mounting an uncleanly unmounted filesystem that has richacls on a
-> kernel without support should fall into one of the following 2 cases more
-> than 99% of the time:
-> 1. The system crashed hard, and the regular kernel is un-bootable for some
-> reason, in this case you're at the point of disaster recovery, should not be
-> exposing _anything_ to a multi-user environment, and probably care a lot
-> more about being able to get the system running again than about not
-> accidentally creating a file with a missing ACL.
-> 2. The filesystem was maliciously stolen in some way (either the hardware
-> was acquired, or more likely, someone got an image of a still mounted
-> filesystem), in which case all of my statements above regarding issue 1
-> apply.
+Cheers, Andreas
 
-Please spare me with all that nonsense. Compared to mount options,
-filesystem feature flags in this case simplify things (you don't have
-to specify whether a filesystem contains POSIX ACLs or richacls), and
-they prevent administrator errors: when a filesystem mounts, it is
-safe to use; when it doesn't, it is not. That's all there is to it.
 
-Andreas
+
+
+
+
+--Apple-Mail=_3404C98A-6D6D-47D4-B89F-1E37AFFC17BB
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+	filename=signature.asc
+Content-Type: application/pgp-signature;
+	name=signature.asc
+Content-Description: Message signed with OpenPGP using GPGMail
+
+-----BEGIN PGP SIGNATURE-----
+Comment: GPGTools - http://gpgtools.org
+
+iQIVAwUBViUctXKl2rkXzB/gAQiVFg//WlCjN9eSwE5gEBtGcuYLlNHlyjvM5EoU
+UAheHBujW+3QS6JFGykQuZdY1qNTgl5TeSFUXCnNprMd6Jp0XvKDtY600iXwwAmC
+l8PQoYP7v3qwgtbfNUj7la9kcAYZY9u+GDmh1e32aLI0bP+KrBwXj9o4POWtdL6F
+Z6TL7P/wBJCJj9UWVbintU8sIiMyPmnHsz52izdNoO1LOSIhfAy5XAjn9d8TED9Z
+ZCwCbAP4c6GU/DhMceQMGuTR0BPUJyqzhoSAwEd+QxBm3D2N1BUhHbehiHq9r+uG
+MSa49iOdJ6dj6KzkzFlroIX2xuPtofcxC8qYKC905rO5eQiYaU+P4raLfZpZa2pc
+2pQi09rPOM0+8LnjyFIdKyYslhf8AwcEwLQimGoBJoWPwgnjTIUCU4xmADU0WeOG
+IHV+dX3UNcI5wdXpI+vZlFHNyub4wBvty1JIuK1QkK94V2iuV0eb7PZIZwpxf5/9
+LJQexMPTikhOvXqYd4u+8ZmGNrcq7iuOrt2+LOtxaRszRV9qRIZWctZ6n7lUSYAP
+v9lNZ11QKldKQhpTaYR7ESQSlMf4+ecBPc0TumBfKW9QE0vWSTJ9vmnNLAsM1KVd
+PDV8lw/OC6hg7DlQ0fWcv8pO17t0brZ+XpW9T3ZQ4KjktW5taYDzXcjDN430+FnC
+bNhL6QX+4mQ=
+=GnvZ
+-----END PGP SIGNATURE-----
+
+--Apple-Mail=_3404C98A-6D6D-47D4-B89F-1E37AFFC17BB--
