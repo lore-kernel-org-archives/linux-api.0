@@ -1,26 +1,25 @@
 From: kbuild test robot <lkp@intel.com>
-Subject: Re: [RFC v3 1/9] printk: extract kmsg-related routines from printk.c
- to kmsg.c
-Date: Mon, 19 Oct 2015 21:59:35 +0800
-Message-ID: <201510192124.Nt0hosFP%fengguang.wu@intel.com>
-References: <1445259503-18158-2-git-send-email-p.osmialowsk@samsung.com>
+Subject: Re: [RFC v3 3/9] kmsg: introduce additional kmsg devices support
+Date: Mon, 19 Oct 2015 22:10:22 +0800
+Message-ID: <201510192230.q3jKYvip%fengguang.wu@intel.com>
+References: <1445259503-18158-4-git-send-email-p.osmialowsk@samsung.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="VbJkn9YxBvnuCH5J"
-Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Type: multipart/mixed; boundary="J/dobhs11T7y2rNN"
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1445259503-18158-2-git-send-email-p.osmialowsk@samsung.com>
-Sender: linux-doc-owner@vger.kernel.org
+In-Reply-To: <1445259503-18158-4-git-send-email-p.osmialowsk@samsung.com>
+Sender: linux-kernel-owner@vger.kernel.org
 Cc: kbuild-all@01.org, Jonathan Corbet <corbet@lwn.net>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, Petr Mladek <pmladek@suse.cz>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Mack <daniel@zonque.org>, Kay Sievers <kay.sievers@vrfy.org>, Joe Perches <joe@perches.com>, Tejun Heo <tj@kernel.org>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, Marcin Niesluchowski <m.niesluchow@samsung.com>, Karol Lewandowski <k.lewandowsk@samsung.com>, Paul Osmialowski <p.osmialowsk@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Shuah Khan <shuahkh@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
 
---VbJkn9YxBvnuCH5J
+--J/dobhs11T7y2rNN
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 
-Hi Paul,
+Hi Marcin,
 
-[auto build test ERROR on next-20151016 -- if it's inappropriate base, please suggest rules for selecting the more suitable base]
+[auto build test WARNING on next-20151016 -- if it's inappropriate base, please suggest rules for selecting the more suitable base]
 
 url:    https://github.com/0day-ci/linux/commits/Paul-Osmialowski/Additional-kmsg-devices/20151019-211509
 config: i386-defconfig (attached as .config)
@@ -28,34 +27,35 @@ reproduce:
         # save the attached .config to linux build tree
         make ARCH=i386 
 
-All error/warnings (new ones prefixed by >>):
+All warnings (new ones prefixed by >>):
 
    In file included from include/linux/fs.h:5:0,
                     from kernel/printk/kmsg.c:5:
-   kernel/printk/kmsg.c: In function 'devkmsg_read':
+   kernel/printk/kmsg.c: In function 'kmsg_sys_write':
+   include/linux/wait.h:171:47: error: 'TASK_INTERRUPTIBLE' undeclared (first use in this function)
+    #define wake_up_interruptible(x) __wake_up(x, TASK_INTERRUPTIBLE, 1, NULL)
+                                                  ^
+>> kernel/printk/kmsg.c:49:3: note: in expansion of macro 'wake_up_interruptible'
+      wake_up_interruptible(&log_b->wait);
+      ^
+   include/linux/wait.h:171:47: note: each undeclared identifier is reported only once for each function it appears in
+    #define wake_up_interruptible(x) __wake_up(x, TASK_INTERRUPTIBLE, 1, NULL)
+                                                  ^
+>> kernel/printk/kmsg.c:49:3: note: in expansion of macro 'wake_up_interruptible'
+      wake_up_interruptible(&log_b->wait);
+      ^
+   kernel/printk/kmsg.c: In function 'kmsg_read':
    include/linux/wait.h:400:31: error: 'TASK_INTERRUPTIBLE' undeclared (first use in this function)
      ___wait_event(wq, condition, TASK_INTERRUPTIBLE, 0, 0,  \
                                   ^
    include/linux/wait.h:225:52: note: in definition of macro '___wait_event'
       long __int = prepare_to_wait_event(&wq, &__wait, state);\
                                                        ^
->> include/linux/wait.h:423:11: note: in expansion of macro '__wait_event_interruptible'
+   include/linux/wait.h:423:11: note: in expansion of macro '__wait_event_interruptible'
       __ret = __wait_event_interruptible(wq, condition); \
               ^
->> kernel/printk/kmsg.c:105:9: note: in expansion of macro 'wait_event_interruptible'
-      ret = wait_event_interruptible(log_wait,
-            ^
-   include/linux/wait.h:400:31: note: each undeclared identifier is reported only once for each function it appears in
-     ___wait_event(wq, condition, TASK_INTERRUPTIBLE, 0, 0,  \
-                                  ^
-   include/linux/wait.h:225:52: note: in definition of macro '___wait_event'
-      long __int = prepare_to_wait_event(&wq, &__wait, state);\
-                                                       ^
->> include/linux/wait.h:423:11: note: in expansion of macro '__wait_event_interruptible'
-      __ret = __wait_event_interruptible(wq, condition); \
-              ^
->> kernel/printk/kmsg.c:105:9: note: in expansion of macro 'wait_event_interruptible'
-      ret = wait_event_interruptible(log_wait,
+   kernel/printk/kmsg.c:140:9: note: in expansion of macro 'wait_event_interruptible'
+      ret = wait_event_interruptible(log_b->wait,
             ^
    include/linux/wait.h:198:43: error: 'TASK_KILLABLE' undeclared (first use in this function)
       state == TASK_INTERRUPTIBLE || state == TASK_KILLABLE) \
@@ -66,78 +66,91 @@ All error/warnings (new ones prefixed by >>):
    include/linux/wait.h:400:2: note: in expansion of macro '___wait_event'
      ___wait_event(wq, condition, TASK_INTERRUPTIBLE, 0, 0,  \
      ^
->> include/linux/wait.h:423:11: note: in expansion of macro '__wait_event_interruptible'
+   include/linux/wait.h:423:11: note: in expansion of macro '__wait_event_interruptible'
       __ret = __wait_event_interruptible(wq, condition); \
               ^
->> kernel/printk/kmsg.c:105:9: note: in expansion of macro 'wait_event_interruptible'
-      ret = wait_event_interruptible(log_wait,
+   kernel/printk/kmsg.c:140:9: note: in expansion of macro 'wait_event_interruptible'
+      ret = wait_event_interruptible(log_b->wait,
             ^
->> include/linux/wait.h:401:9: error: implicit declaration of function 'schedule' [-Werror=implicit-function-declaration]
+   include/linux/wait.h:401:9: error: implicit declaration of function 'schedule' [-Werror=implicit-function-declaration]
             schedule())
             ^
    include/linux/wait.h:240:3: note: in definition of macro '___wait_event'
       cmd;       \
       ^
->> include/linux/wait.h:423:11: note: in expansion of macro '__wait_event_interruptible'
+   include/linux/wait.h:423:11: note: in expansion of macro '__wait_event_interruptible'
       __ret = __wait_event_interruptible(wq, condition); \
               ^
->> kernel/printk/kmsg.c:105:9: note: in expansion of macro 'wait_event_interruptible'
-      ret = wait_event_interruptible(log_wait,
+   kernel/printk/kmsg.c:140:9: note: in expansion of macro 'wait_event_interruptible'
+      ret = wait_event_interruptible(log_b->wait,
             ^
    cc1: some warnings being treated as errors
 
-vim +/schedule +401 include/linux/wait.h
+vim +/wake_up_interruptible +49 kernel/printk/kmsg.c
 
-82e06c81 Shaohua Li     2013-11-14  394  	if (condition)							\
-82e06c81 Shaohua Li     2013-11-14  395  		break;							\
-82e06c81 Shaohua Li     2013-11-14  396  	__wait_event_cmd(wq, condition, cmd1, cmd2);			\
-82e06c81 Shaohua Li     2013-11-14  397  } while (0)
-82e06c81 Shaohua Li     2013-11-14  398  
-35a2af94 Peter Zijlstra 2013-10-02  399  #define __wait_event_interruptible(wq, condition)			\
-35a2af94 Peter Zijlstra 2013-10-02 @400  	___wait_event(wq, condition, TASK_INTERRUPTIBLE, 0, 0,		\
-f13f4c41 Peter Zijlstra 2013-10-02 @401  		      schedule())
-^1da177e Linus Torvalds 2005-04-16  402  
-^1da177e Linus Torvalds 2005-04-16  403  /**
-^1da177e Linus Torvalds 2005-04-16  404   * wait_event_interruptible - sleep until a condition gets true
-^1da177e Linus Torvalds 2005-04-16  405   * @wq: the waitqueue to wait on
-^1da177e Linus Torvalds 2005-04-16  406   * @condition: a C expression for the event to wait for
-^1da177e Linus Torvalds 2005-04-16  407   *
-^1da177e Linus Torvalds 2005-04-16  408   * The process is put to sleep (TASK_INTERRUPTIBLE) until the
-^1da177e Linus Torvalds 2005-04-16  409   * @condition evaluates to true or a signal is received.
-^1da177e Linus Torvalds 2005-04-16  410   * The @condition is checked each time the waitqueue @wq is woken up.
-^1da177e Linus Torvalds 2005-04-16  411   *
-^1da177e Linus Torvalds 2005-04-16  412   * wake_up() has to be called after changing any variable that could
-^1da177e Linus Torvalds 2005-04-16  413   * change the result of the wait condition.
-^1da177e Linus Torvalds 2005-04-16  414   *
-^1da177e Linus Torvalds 2005-04-16  415   * The function will return -ERESTARTSYS if it was interrupted by a
-^1da177e Linus Torvalds 2005-04-16  416   * signal and 0 if @condition evaluated to true.
-^1da177e Linus Torvalds 2005-04-16  417   */
-^1da177e Linus Torvalds 2005-04-16  418  #define wait_event_interruptible(wq, condition)				\
-^1da177e Linus Torvalds 2005-04-16  419  ({									\
-^1da177e Linus Torvalds 2005-04-16  420  	int __ret = 0;							\
-e22b886a Peter Zijlstra 2014-09-24  421  	might_sleep();							\
-^1da177e Linus Torvalds 2005-04-16  422  	if (!(condition))						\
-35a2af94 Peter Zijlstra 2013-10-02 @423  		__ret = __wait_event_interruptible(wq, condition);	\
-^1da177e Linus Torvalds 2005-04-16  424  	__ret;								\
-^1da177e Linus Torvalds 2005-04-16  425  })
-^1da177e Linus Torvalds 2005-04-16  426  
-
-:::::: The code at line 401 was first introduced by commit
-:::::: f13f4c41c9cf9cd61c896e46e4e7ba2687e2af9c sched/wait: Collapse __wait_event_interruptible()
-
-:::::: TO: Peter Zijlstra <peterz@infradead.org>
-:::::: CC: Ingo Molnar <mingo@kernel.org>
+     1	#include <linux/printk.h>
+     2	#include <linux/kernel.h>
+     3	#include <linux/errno.h>
+     4	#include <linux/fcntl.h>
+   > 5	#include <linux/fs.h>
+     6	#include <linux/kmsg_dump.h>
+     7	#include <linux/moduleparam.h>
+     8	#include <linux/mutex.h>
+     9	#include <linux/spinlock.h>
+    10	#include <linux/slab.h>
+    11	#include <linux/poll.h>
+    12	#include <linux/rculist.h>
+    13	#include <linux/rcupdate.h>
+    14	#include <linux/stat.h>
+    15	#include <linux/syslog.h>
+    16	#include <linux/uio.h>
+    17	#include <linux/wait.h>
+    18	
+    19	#include <asm/uaccess.h>
+    20	
+    21	#include "printk.h"
+    22	
+    23	/* /dev/kmsg - userspace message inject/listen interface */
+    24	struct devkmsg_user {
+    25		u64 seq;
+    26		u32 idx;
+    27		enum log_flags prev;
+    28		struct mutex lock;
+    29		char buf[CONSOLE_EXT_LOG_MAX];
+    30	};
+    31	
+    32	static int kmsg_sys_write(int minor, int level, const char *fmt, ...)
+    33	{
+    34		va_list args;
+    35		int ret = -ENXIO;
+    36		struct log_buffer *log_b;
+    37	
+    38		rcu_read_lock();
+    39		list_for_each_entry_rcu(log_b, &log_buf.list, list) {
+    40			if (log_b->minor != minor)
+    41				continue;
+    42	
+    43			raw_spin_lock(&log_b->lock);
+    44	
+    45			va_start(args, fmt);
+    46			log_format_and_store(log_b, 1 /* LOG_USER */, level,
+    47					     NULL, 0, fmt, args);
+    48			va_end(args);
+  > 49			wake_up_interruptible(&log_b->wait);
+    50	
+    51			raw_spin_unlock(&log_b->lock);
+    52	
 
 ---
 0-DAY kernel test infrastructure                Open Source Technology Center
 https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
 
---VbJkn9YxBvnuCH5J
+--J/dobhs11T7y2rNN
 Content-Type: application/octet-stream
 Content-Disposition: attachment; filename=".config.gz"
 Content-Transfer-Encoding: base64
 
-H4sICFz1JFYAAy5jb25maWcAjDzLdtw2svt8RR/nLmYWjq2HNc65Rws0CXYjTRA0QLbU2vDI
+H4sICEz4JFYAAy5jb25maWcAjDzLdtw2svt8RR/nLmYWjq2HNc65Rws0CXYjTRA0QLbU2vDI
 UjvRGVnK6JFx/v5WAXwAYKF1s3G6qvAq1LtA/fzTzwv2+vL4/frl7ub6/v7vxe/7h/3T9cv+
 dvHt7n7/v4tcLSrVLHguml+AuLx7eP3x4e7k89ni9JeTXz6+f7r5tNjsnx7294vs8eHb3e+v
 MPru8eGnn4E6U1UhVt3Z6VI0i7vnxcPjy+J5//JTD7/8fNadHJ//7f2efojKNLrNGqGqLueZ
@@ -583,4 +596,4 @@ TKPUufmE32PzNIncd8ktK2tv3fV0CfXDZmikwx/SPCDWSBBgIlIKUeD4XCg+bvVT6ctpfTNv
 WeukIG0Pb+wgHTtRafzs16yXw+yXy1klWOxFAuuKtukSup+JBOkVuEys9H2kIv4f7bKYh9OP
 AQA=
 
---VbJkn9YxBvnuCH5J--
+--J/dobhs11T7y2rNN--
