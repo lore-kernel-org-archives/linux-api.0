@@ -1,253 +1,126 @@
-From: Austin S Hemmelgarn <ahferroin7@gmail.com>
-Subject: Re: [PATCH v11 21/48] ext4: Add richacl feature flag
-Date: Tue, 20 Oct 2015 08:33:54 -0400
-Message-ID: <562634B2.30209@gmail.com>
-References: <1445008706-15115-1-git-send-email-agruenba@redhat.com>
-	<1445008706-15115-22-git-send-email-agruenba@redhat.com>
-	<5621346E.5000500@gmail.com>
-	<CAHc6FU7sR2zN-K3un74wCv+1NPnrqJ=LYiWo+YQ_2X0kopyoTQ@mail.gmail.com>
-	<5624ED40.7040206@gmail.com>
-	<CAHc6FU4CVQAn6TCQzC8r9m9URmqD_eHQBwhDK2o_o4eb3myW=A@mail.gmail.com>
-	<5625182C.3050007@gmail.com>
-	<CAHc6FU75GXGeav1ho-QraPS_F8fpOXnoDyv17+b=koiF=9YE5A@mail.gmail.com>
-	<56253A35.4070309@gmail.com>
-	<CAHc6FU4jcatmY+A39oQb-2x9Gs8WFVsXOD_9eBV=_fgNzZx3Xg@mail.gmail.com>
+From: Bjorn Helgaas <helgaas-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v5 1/4] PCI: Add Enhanced Allocation register entries
+Date: Tue, 20 Oct 2015 08:12:34 -0500
+Message-ID: <20151020131234.GB8224@localhost>
+References: <1444175438-7443-1-git-send-email-ddaney.cavm@gmail.com>
+ <1444175438-7443-2-git-send-email-ddaney.cavm@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1381062868233193127=="
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <CAHc6FU4jcatmY+A39oQb-2x9Gs8WFVsXOD_9eBV=_fgNzZx3Xg@mail.gmail.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Andreas Gruenbacher <agruenba@redhat.com>
-Cc: linux-cifs@vger.kernel.org, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>, Linux API <linux-api@vger.kernel.org>, Trond Myklebust <trond.myklebust@primarydata.com>, LKML <linux-kernel@vger.kernel.org>, xfs@oss.sgi.com, "J. Bruce Fields" <bfields@fieldses.org>, Andreas Dilger <adilger.kernel@dilger.ca>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, linux-ext4 <linux-ext4@vger.kernel.org>, Anna Schumaker <anna.schumaker@netapp.com>, "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1444175438-7443-2-git-send-email-ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Daney <ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?utf-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Sean O. Stalley" <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, yinghai-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, "Signed-off-by: David Daney" <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This is a cryptographically signed message in MIME format.
+Hi David,
 
---===============1381062868233193127==
-Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-512; boundary="------------ms040606010009020500030007"
+On Tue, Oct 06, 2015 at 04:50:35PM -0700, David Daney wrote:
+> From: "Sean O. Stalley" <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> 
+> Add registers defined in PCI-SIG's Enhanced allocation ECN.
+> 
+> Signed-off-by: Sean O. Stalley <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> [david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org: Added more definitions for PCI_EA_BEI_*]
+> Signed-off-by: Signed-off-by: David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
+> ---
+>  include/uapi/linux/pci_regs.h | 44 ++++++++++++++++++++++++++++++++++++++++++-
+>  1 file changed, 43 insertions(+), 1 deletion(-)
+> 
+> diff --git a/include/uapi/linux/pci_regs.h b/include/uapi/linux/pci_regs.h
+> index 413417f..352e418 100644
+> --- a/include/uapi/linux/pci_regs.h
+> +++ b/include/uapi/linux/pci_regs.h
+> @@ -216,7 +216,8 @@
+>  #define  PCI_CAP_ID_MSIX	0x11	/* MSI-X */
+>  #define  PCI_CAP_ID_SATA	0x12	/* SATA Data/Index Conf. */
+>  #define  PCI_CAP_ID_AF		0x13	/* PCI Advanced Features */
+> -#define  PCI_CAP_ID_MAX		PCI_CAP_ID_AF
+> +#define  PCI_CAP_ID_EA		0x14	/* PCI Enhanced Allocation */
+> +#define  PCI_CAP_ID_MAX		PCI_CAP_ID_EA
+>  #define PCI_CAP_LIST_NEXT	1	/* Next capability in the list */
+>  #define PCI_CAP_FLAGS		2	/* Capability defined flags (16 bits) */
+>  #define PCI_CAP_SIZEOF		4
+> @@ -353,6 +354,47 @@
+>  #define  PCI_AF_STATUS_TP	0x01
+>  #define PCI_CAP_AF_SIZEOF	6	/* size of AF registers */
+>  
+> +/* PCI Enhanced Allocation registers */
+> +
+> +#define PCI_EA_NUM_ENT		2	/* Number of Capability Entries */
+> +#define PCI_EA_NUM_ENT_MASK	0x3f	/* Num Entries Mask */
 
-This is a cryptographically signed message in MIME format.
+Can you tweak this a bit to match the style of the rest of the file a
+bit closer?
 
---------------ms040606010009020500030007
-Content-Type: text/plain; charset=gbk; format=flowed
-Content-Transfer-Encoding: quoted-printable
+  - no indent (one space) for register offsets
+  - two spaces before masks for register fields
+  - write out masks showing register width
+  - use explicit mask, not BIT()
 
-On 2015-10-19 16:20, Andreas Gruenbacher wrote:
-> On Mon, Oct 19, 2015 at 8:45 PM, Austin S Hemmelgarn
-> <ahferroin7@gmail.com> wrote:
->> On 2015-10-19 13:33, Andreas Gruenbacher wrote:
->>> Please spare me with all that nonsense. Compared to mount options,
->>> filesystem feature flags in this case simplify things (you don't have=
+> +#define PCI_EA_FIRST_ENT	4	/* First EA Entry in List */
+> +#define PCI_EA_FIRST_ENT_BRIDGE	8	/* First EA Entry for Bridges */
+> +#define PCI_EA_ES		0x7	/* Entry Size */
 
->>> to specify whether a filesystem contains POSIX ACLs or richacls), and=
+  #define  PCI_EA_ES            0x00000007   /* Entry Size */
 
->>> they prevent administrator errors: when a filesystem mounts, it is
->>> safe to use; when it doesn't, it is not. That's all there is to it.
->>
->> You're ignoring what I'm actually saying. I've said absolutely nothing=
+> +#define PCI_EA_BEI(x)	(((x) >> 4) & 0xf) /* BAR Equivalent Indicator */
+> +/* 0-5 map to BARs 0-5 respectively */
+> +#define  PCI_EA_BEI_BAR0	0
+> +#define  PCI_EA_BEI_BAR5	5
+> +#define  PCI_EA_BEI_BRIDGE	6	/* Resource behind bridge */
+> +#define  PCI_EA_BEI_ENI		7	/* Equivalent Not Indicated */
+> +#define  PCI_EA_BEI_ROM		8	/* Expansion ROM */
+> +/* 9-14 map to VF BARs 0-5 respectively */
+> +#define  PCI_EA_BEI_VF_BAR0	9
+> +#define  PCI_EA_BEI_VF_BAR5	14
+> +#define  PCI_EA_BEI_RESERVED	15	/* Reserved - Treat like ENI */
+> +
+> +#define PCI_EA_PP(x)	(((x) >>  8) & 0xff)	/* Primary Properties */
+> +#define PCI_EA_SP(x)	(((x) >> 16) & 0xff)	/* Secondary Properties */
+> +#define  PCI_EA_P_MEM			0x00	/* Non-Prefetch Memory */
 
->> about needing to use mount options at all, and I'm not arguing against=
- using
->> filesystem feature flags, I'm arguing for using them sensibly in a way=
- that
->> does not present a false sense of security.
->
-> We could be on a multi-user system, and the user mounting the
-> filesystem may not be the only user on the system. When a filesystem
-> can be mounted read-only, it should be safe to use read-only. It is
-> not safe in general to use such a filesystem read-only, so an
-> incompatible feature flag which prevents such unsafe mounting is more
-> approporiate than a read-only incompatible feature flag.
-Except that mounting a filesystem that wasn't created on the system=20
-mounting it always has that exact same risk, because (AFAIK) all=20
-Linux/BSD/Other UNIX filesystems store GID's and UID's as numbers, not=20
-names.  Perfect example of this, take a minimal install of some Linux=20
-distribution, install a couple of packages that add new UID's, and mount =
+What does the "_P_" stand for?  Maybe it could be dropped?  Oh, I
+suppose it stands for "property."
 
-the root filesystem on a completely different distribution (say mount a=20
-Debian root filesystem on a Gentoo box), any of the new UID's from the=20
-first system will almost certainly not map to the same user on the=20
-second system (in fact, you can also do this with two Gentoo systems=20
-where the packages were installed in different orders).  This is a=20
-really basic security risk that any seasoned sysadmin should know, and=20
-most new ones find out about rather quickly.
+> +#define  PCI_EA_P_MEM_PREFETCH		0x01	/* Prefetchable Memory */
+> +#define  PCI_EA_P_IO			0x02	/* I/O Space */
+> +#define  PCI_EA_P_VIRT_MEM_PREFETCH	0x03	/* VF Prefetchable Memory */
+> +#define  PCI_EA_P_VIRT_MEM		0x04	/* VF Non-Prefetch Memory */
 
-Also, based on established context of _every_ other feature with an=20
-incompat feature flag in both ext4 and XFS, 'safe' means that you can=20
-get the correct file contents off of the filesystem,and don't run the=20
-risk of crashing the system, not that you have no risk of compromising=20
-security.
-> Mounting a filesystem read-only doesn't mean that the filesystem is
-> being recovered, it is perfectly legal to mount a filesystem read-only
-> for other reasons. I don't want to give people using read-only
-> filesystems the false sense that everything is okay.
-Yes, and this is why any sane filesystem will spit a warning out through =
+_VIRT_MEM suggests "virtual memory"; maybe you could use "VF_MEM"
+instead?
 
-dmesg when a mount is forced read-only because of incompatible features. =
+> +#define  PCI_EA_P_BRIDGE_MEM		0x05	/* Bridge Non-Prefetch Memory */
+> +#define  PCI_EA_P_BRIDGE_MEM_PREFETCH	0x06	/* Bridge Prefetchable Memory */
+> +#define  PCI_EA_P_BRIDGE_IO		0x07	/* Bridge I/O Space */
+> +/* 0x08-0xfc reserved */
+> +#define  PCI_EA_P_MEM_RESERVED		0xfd	/* Reserved Memory */
+> +#define  PCI_EA_P_IO_RESERVED		0xfe	/* Reserved I/O Space */
+> +#define  PCI_EA_P_UNAVAILABLE		0xff	/* Entry Unavailable */
+> +#define PCI_EA_WRITEABLE	BIT(30) /* Writable, 1 = RW, 0 = HwInit */
+> +#define PCI_EA_ENABLE		BIT(31) /* Enable for this entry */
 
-  If someone is actively mounting such a filesystem read-only (that is,=20
-they've specified 'ro' in the mount options), then it's relatively safe=20
-for the kernel to assume they are doing so for some very specific reason =
+  #define  PCI_EA_WRITABLE      0x40000000
+  #define  PCI_EA_ENABLE        0x80000000
 
-and/or already know about the data safety implications.
->
->> Making it an incompatible flag will likely cause headaches for some
->> legitimate users,
->
-> Indeed. It will also make it less likely for users to accidentally
-> shoot themselves in the foot. If someone knows better, they can clear
-> the feature flag.
-Except there will be a lot of people who think they know better but=20
-really don't.  Such people will do this anyway, and by modifying the=20
-filesystem run a bigger risk of shooting themselves in the foot (because =
+(note s/WRITEABLE/WRITABLE/)
 
-they'll almost certainly mount the filesystem read-write, and then end=20
-up turning on richacls again).  You're not removing the gun, you're just =
-
-hiding a potentially bigger one somewhere else.
-
-It's a separate issue entirely however whether or not you absolutely=20
-need to know that the richacls have the correct syntax in a recovery=20
-situation.  Fsck doesn't parse SELinux labels, (AFAIK) doesn't parse=20
-filecaps attributes (bad filecaps syntax will only make things have=20
-fewer privileges, but it will cause user visible brokenness), (again,=20
-AFAIK) doesn't validate POSIX ACL's, and absolutely doesn't check IMA or =
-
-EVM hashes.  IMA and EVM hashes being wrong _will_ cause almost any=20
-system actually using them they way they are intended to fail to boot,=20
-and incorrect SELinux labeling will make many systems not boot=20
-correctly, and both situations are much worse for a significant majority =
-
-of users than a (security leak due to a bad ACL.
->
-> When recovering a broken system that contains richacl filesystems, you
-> really want to have richacl support in the rescue system as well.
-> Otherwise, you won't be able to fsck those filesystems.
-While it's something that 'should' be the case, there are probably quite =
-
-a few people who will not realize this until they're already in a=20
-situation that they need to recover data.  On top of that some people=20
-will likely assume that they just need richacl support in userspace for=20
-their recovery environment.
->
->> and at most delay competent hackers by a few seconds to a
->> few minutes, and script kiddies by a few hours, and is really no bette=
-r than
->> security by obscurity (and from a purely logistical standpoint, that's=
- _all_
->> it is) in that it actively tries to hide the fact that someone having =
-read
->> access to the storage the filesystem is on can bypass the ACL's.
->>
->> To reiterate, if someone can call mount() on a filesystem, and mount()=
- does
->> not return -EPERM, then even if mount() returns a different error, the=
-y
->> still have the ability to completely bypass all permissions and ACL's =
-in
->> that filesystem, because they have the ability to read the entire file=
-system
->> directly.
->>
->> The _only_ way to properly protect against people bypassing the ACL's =
-is to
->> use full disk encryption and lock down root access on the system, and =
-even
->> that can't completely prevent it from happening.
->
-> That's all completely beside the point. I'm not talking about
-> preventing attacks at all, just basic administrative workflows.
-While that may be the case, there will be people who assume that because =
-
-it's an incompat feature, their ACL's will _always_ be enforced.  Such=20
-people should admittedly not be allowed to run systems with any real=20
-world security requirements, but that mentality is something that still=20
-needs to be considered, and this is arguably making it easier for them=20
-to shoot themselves in the foot.
-
-
---------------ms040606010009020500030007
-Content-Type: application/pkcs7-signature; name="smime.p7s"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="smime.p7s"
-Content-Description: S/MIME Cryptographic Signature
-
-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
-cnQub3JnMSIwIAYDVQQDExlDQSBDZXJ0IFNpZ25pbmcgQXV0aG9yaXR5MSEwHwYJKoZIhvcN
-AQkBFhJzdXBwb3J0QGNhY2VydC5vcmcCAxEt+DANBglghkgBZQMEAgMFAKCCAiEwGAYJKoZI
-hvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMTUxMDIwMTIzMzU0WjBPBgkq
-hkiG9w0BCQQxQgRAj1L+Syg4dbUYi2qcwmE+jNm5rTyYPrSY5Ob8jRK38O9LlayAfHOj9jb8
-SEf1wFoaPsAGxvubcBrHDkkKizb5cjBsBgkqhkiG9w0BCQ8xXzBdMAsGCWCGSAFlAwQBKjAL
-BglghkgBZQMEAQIwCgYIKoZIhvcNAwcwDgYIKoZIhvcNAwICAgCAMA0GCCqGSIb3DQMCAgFA
-MAcGBSsOAwIHMA0GCCqGSIb3DQMCAgEoMIGRBgkrBgEEAYI3EAQxgYMwgYAweTEQMA4GA1UE
-ChMHUm9vdCBDQTEeMBwGA1UECxMVaHR0cDovL3d3dy5jYWNlcnQub3JnMSIwIAYDVQQDExlD
-QSBDZXJ0IFNpZ25pbmcgQXV0aG9yaXR5MSEwHwYJKoZIhvcNAQkBFhJzdXBwb3J0QGNhY2Vy
-dC5vcmcCAxEt+DCBkwYLKoZIhvcNAQkQAgsxgYOggYAweTEQMA4GA1UEChMHUm9vdCBDQTEe
-MBwGA1UECxMVaHR0cDovL3d3dy5jYWNlcnQub3JnMSIwIAYDVQQDExlDQSBDZXJ0IFNpZ25p
-bmcgQXV0aG9yaXR5MSEwHwYJKoZIhvcNAQkBFhJzdXBwb3J0QGNhY2VydC5vcmcCAxEt+DAN
-BgkqhkiG9w0BAQEFAASCAgCWWuFoUTqUSz3x3mcTcR+lwaVb2l1uaKJ+t2BrrztgX2LuV6bR
-W5Bu+AZ5fiuCz0DkRWPTLylUlHpRhcMxbWk+K1fdwIoQ4eahjhm7IGJxCgKtl5RXhV9wQC3Q
-Epb/iIZbbRVQE/BjZKayDRlJlQTUxVGm6rq8eK2xK93KLraCKpDkXm8bE2bjzq4pcj0l1+6g
-+EcnJXt+lTVlgdiUO8iEtXbsl+JNldmLY2PFSWvHWjZmk9Io6qIABx5usfQwro7/g9WZng7N
-WzsyAHDo4OM4+wjo7hKf6jlrCTAhq2TYqJ0xfbM4qh+2NX3IE5scQxX+Tawrq729onQ+6uN9
-UvZOCljtOKWJPshwWQgWBnJk84ijIp55KYTyWwfdMFhzQxcU0MRh5gaKD8AhPAW/dY3yyhaT
-alt8FA1BkOLb1XwC1AfTZ9LSiK4aB2x9RNl1P671wl1e81zrzBXde04EsSs38hIZFbooxXc7
-NANxTEmDhKX85MRll75lDLU7sQCajx8BtYEfbSvHwh6Fs2d6DuBamBcQbL9sEK8Vu29S7CYB
-No/SBmsFRim1bLpAhUIRNo/7FnYt112SVUIVp+vpnZpybjCpz4vproYMhMiJBeXYxSVPFjGd
-AKxZRXd2s2IMc5LukNGsVk0AyBn/jtY5Jg1l1YcUKoVY6W14hA2IxbbNHwAAAAAAAA==
---------------ms040606010009020500030007--
-
-
---===============1381062868233193127==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
-
---===============1381062868233193127==--
+> +#define PCI_EA_BASE		4	/* Base Address Offset */
+> +#define PCI_EA_MAX_OFFSET	8	/* MaxOffset (resource length) */
+> +/* bit 0 is reserved */
+> +#define PCI_EA_IS_64		BIT(1)	/* 64-bit field flag */
+> +#define PCI_EA_FIELD_MASK	0xfffffffc	/* For Base & Max Offset */
+> +
+>  /* PCI-X registers (Type 0 (non-bridge) devices) */
+>  
+>  #define PCI_X_CMD		2	/* Modes & Features */
+> -- 
+> 1.9.1
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
