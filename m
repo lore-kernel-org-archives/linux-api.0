@@ -1,61 +1,104 @@
 From: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
-Subject: [PATCH v6 0/4] of: overlay: kobject & sysfs'ation
-Date: Tue, 20 Oct 2015 22:13:13 +0300
-Message-ID: <1445368397-8732-1-git-send-email-pantelis.antoniou@konsulko.com>
+Subject: [PATCH v6 2/4] of: overlay: global sysfs enable attribute
+Date: Tue, 20 Oct 2015 22:13:15 +0300
+Message-ID: <1445368397-8732-3-git-send-email-pantelis.antoniou@konsulko.com>
+References: <1445368397-8732-1-git-send-email-pantelis.antoniou@konsulko.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1445368397-8732-1-git-send-email-pantelis.antoniou@konsulko.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Rob Herring <robherring2@gmail.com>
 Cc: Frank Rowand <frowand.list@gmail.com>, Matt Porter <mporter@konsulko.com>, Koen Kooi <koen@dominion.thruhere.net>, Guenter Roeck <linux@roeck-us.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Pantelis Antoniou <pantelis.antoniou@konsulko.com>, Pantelis Antoniou <panto@antoniou-consulting.com>
 List-Id: linux-api@vger.kernel.org
 
-The first patch puts the overlays as objects in the sysfs in
-/sys/firmware/devicetree/overlays.
+A throw once master enable switch to protect against any
+further overlay applications if the administrator desires so.
 
-The next adds a master overlay enable switch (that once is set to
-disabled can't be re-enabled), while the one after that
-introduces a number of default per overlay attributes.
+Signed-off-by: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
+---
+ drivers/of/overlay.c | 43 ++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 42 insertions(+), 1 deletion(-)
 
-The patchset is against linus's tree as of today.
-
-The last patch updates the ABI docs for the sysfs entries.
-
-Changes since v5:
-* Does a single kobject_put that suffices
-* A per-fragment sysfs directory and a single value target.
-* Update in the ABI documention.
-
-Changes since v4:
-* Rebased against latest mainline.
-
-Changes since v3:
-* Used strtobool instead of kstrtoul
-* ABI Documentation includes a pointer to the discussion that
-requested the sysfs property.
-
-Changes since v2:
-* Removed the unittest patch.
-* Split the sysfs attribute patch to a global and a per-overlay
-  patch.
-* Dropped binary attributes using textual kobj_attributes instead.
-
-Changes since v1:
-* Maintainer requested changes.
-* Documented the sysfs entries
-* Per overlay sysfs attributes.
-
-
-Pantelis Antoniou (4):
-  of: overlay: kobjectify overlay objects
-  of: overlay: global sysfs enable attribute
-  of: overlay: add per overlay sysfs attributes
-  Documentation: ABI: /sys/firmware/devicetree/overlays
-
- .../ABI/testing/sysfs-firmware-devicetree-overlays |  40 +++++
- drivers/of/base.c                                  |   7 +
- drivers/of/of_private.h                            |   9 +
- drivers/of/overlay.c                               | 194 ++++++++++++++++++++-
- 4 files changed, 244 insertions(+), 6 deletions(-)
- create mode 100644 Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
-
+diff --git a/drivers/of/overlay.c b/drivers/of/overlay.c
+index 12c3e47..067404e 100644
+--- a/drivers/of/overlay.c
++++ b/drivers/of/overlay.c
+@@ -21,6 +21,7 @@
+ #include <linux/err.h>
+ #include <linux/idr.h>
+ #include <linux/sysfs.h>
++#include <linux/atomic.h>
+ 
+ #include "of_private.h"
+ 
+@@ -55,8 +56,12 @@ struct of_overlay {
+ 	struct kobject kobj;
+ };
+ 
++/* master enable switch; once set to 0 can't be re-enabled */
++static atomic_t ov_enable = ATOMIC_INIT(1);
++
+ static int of_overlay_apply_one(struct of_overlay *ov,
+ 		struct device_node *target, const struct device_node *overlay);
++static int overlay_removal_is_ok(struct of_overlay *ov);
+ 
+ static int of_overlay_apply_single_property(struct of_overlay *ov,
+ 		struct device_node *target, struct property *prop)
+@@ -339,6 +344,35 @@ void of_overlay_release(struct kobject *kobj)
+ 	kfree(ov);
+ }
+ 
++static ssize_t enable_show(struct kobject *kobj,
++		struct kobj_attribute *attr, char *buf)
++{
++	return snprintf(buf, PAGE_SIZE, "%d\n", atomic_read(&ov_enable));
++}
++
++static ssize_t enable_store(struct kobject *kobj,
++		struct kobj_attribute *attr, const char *buf, size_t count)
++{
++	int ret;
++	bool new_enable;
++
++	ret = strtobool(buf, &new_enable);
++	if (ret != 0)
++		return ret;
++	/* if we've disabled it, no going back */
++	if (atomic_read(&ov_enable) == 0)
++		return -EPERM;
++	atomic_set(&ov_enable, (int)new_enable);
++	return count;
++}
++
++static struct kobj_attribute enable_attr = __ATTR_RW(enable);
++
++static const struct attribute *overlay_global_attrs[] = {
++	&enable_attr.attr,
++	NULL
++};
++
+ static struct kobj_type of_overlay_ktype = {
+ 	.release = of_overlay_release,
+ };
+@@ -360,6 +394,10 @@ int of_overlay_create(struct device_node *tree)
+ 	struct of_overlay *ov;
+ 	int err, id;
+ 
++	/* administratively disabled */
++	if (!atomic_read(&ov_enable))
++		return -EPERM;
++
+ 	/* allocate the overlay structure */
+ 	ov = kzalloc(sizeof(*ov), GFP_KERNEL);
+ 	if (ov == NULL)
+@@ -594,5 +632,8 @@ int of_overlay_init(void)
+ 	if (!ov_kset)
+ 		return -ENOMEM;
+ 
+-	return 0;
++	rc = sysfs_create_files(&ov_kset->kobj, overlay_global_attrs);
++	WARN(rc, "%s: error adding global attributes\n", __func__);
++
++	return rc;
+ }
 -- 
 1.7.12
