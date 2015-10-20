@@ -1,52 +1,118 @@
-From: Rob Herring <robherring2@gmail.com>
-Subject: Re: [PATCH v6 3/4] of: overlay: add per overlay sysfs attributes
-Date: Tue, 20 Oct 2015 16:54:35 -0500
-Message-ID: <CAL_JsqLeQC7x3fuUFRm=MqHHwvDSLFz6GFxvOTCUToO-=yA0Kg@mail.gmail.com>
+From: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v6 4/4] Documentation: ABI: /sys/firmware/devicetree/overlays
+Date: Tue, 20 Oct 2015 17:00:13 -0500
+Message-ID: <CAL_JsqLRjnbPRR0bU=qwdMgGWiFTOKWt9SasdrQpd40_H7oc2A@mail.gmail.com>
 References: <1445368397-8732-1-git-send-email-pantelis.antoniou@konsulko.com>
- <1445368397-8732-4-git-send-email-pantelis.antoniou@konsulko.com>
- <CAL_JsqKFJttTsTfwZdMBPEjzqo_OLV=GpHTYZrDGnsgBjF3Bzg@mail.gmail.com> <8A0C91DE-EDF8-449D-918C-95C9807A7616@konsulko.com>
+ <1445368397-8732-5-git-send-email-pantelis.antoniou@konsulko.com>
+ <CAL_JsqJ1nPp17bnp5b59i7Huov8f-qOByRG2dW6XBj5-4_fvSw@mail.gmail.com> <235F6C23-4962-4114-BCB2-4279E775E23E@konsulko.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <8A0C91DE-EDF8-449D-918C-95C9807A7616@konsulko.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
-Cc: Frank Rowand <frowand.list@gmail.com>, Matt Porter <mporter@konsulko.com>, Koen Kooi <koen@dominion.thruhere.net>, Guenter Roeck <linux@roeck-us.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <235F6C23-4962-4114-BCB2-4279E775E23E-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Cc: Frank Rowand <frowand.list-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 20, 2015 at 4:11 PM, Pantelis Antoniou
-<pantelis.antoniou@konsulko.com> wrote:
+On Tue, Oct 20, 2015 at 4:02 PM, Pantelis Antoniou
+<pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
 > Hi Rob,
 >
->> On Oct 21, 2015, at 00:04 , Rob Herring <robherring2@gmail.com> wrote:
+>> On Oct 20, 2015, at 23:56 , Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrot=
+e:
 >>
 >> On Tue, Oct 20, 2015 at 2:13 PM, Pantelis Antoniou
->> <pantelis.antoniou@konsulko.com> wrote:
->>> * A per overlay can_remove sysfs attribute that reports whether
->>> the overlay can be removed or not due to another overlapping overlay.
+>> <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
+>>> Documentation ABI entry for overlays sysfs entries.
 >>>
->>> * A target sysfs attribute listing the target of each fragment,
->>> in a group named after the name of the fragment.
-
-[...]
-
->>> @@ -255,6 +278,17 @@ err_fail:
->>>        return -EINVAL;
->>> }
+>>> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+>>> ---
+>>> .../ABI/testing/sysfs-firmware-devicetree-overlays | 40 +++++++++++=
++++++++++++
+>>> 1 file changed, 40 insertions(+)
+>>> create mode 100644 Documentation/ABI/testing/sysfs-firmware-devicet=
+ree-overlays
 >>>
->>> +static ssize_t target_show(struct kobject *kobj,
->>> +               struct fragment_attribute *fattr, char *buf)
->>> +{
->>> +       struct of_overlay_info *ovinfo = fattr->ovinfo;
+>>> diff --git a/Documentation/ABI/testing/sysfs-firmware-devicetree-ov=
+erlays b/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
+>>> new file mode 100644
+>>> index 0000000..adc4068
+>>> --- /dev/null
+>>> +++ b/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
+>>> @@ -0,0 +1,40 @@
+>>> +What:          /sys/firmware/devicetree/overlays/
+>>> +Date:          October 2015
+>>> +Contact:       Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+>>> +Description:
+>>> +               This directory contains the applied device tree ove=
+rlays of
+>>> +               the running system, as directories of the overlay i=
+d.
 >>> +
->>> +       return snprintf(buf, PAGE_SIZE, "%s\n",
->>> +                       of_node_full_name(ovinfo->target));
+>>> +               enable: The master enable switch, by default is 1, =
+and when
+>>> +                       set to 0 it cannot be re-enabled for securi=
+ty reasons.
+>>> +
+>>> +               The discussion about this switch takes place in:
+>>> +               http://comments.gmane.org/gmane.linux.drivers.devic=
+etree/101871
+>>> +
+>>> +               Kees Cook:
+>>> +               "Coming from the perspective of drawing a bright li=
+ne between
+>>> +               kernel and the root user (which tends to start with=
+ disabling
+>>> +               kernel module loading), I would say that there at l=
+east needs
+>>> +               to be a high-level one-way "off" switch for the int=
+erface so
+>>> +               that systems that have this interface can choose to=
+ turn it off
+>>> +               during initial boot, etc."
+>>> +
+>>> +What:          /sys/firmware/devicetree/overlays/<id>
+>>> +Date:          October 2015
+>>> +Contact:       Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+>>> +Description:
+>>> +               Each directory represents an applied overlay, conta=
+ining
+>>> +               the following attribute files.
+>>> +
+>>> +               can_remove: The attribute set to 1 means that the o=
+verlay can
+>>> +                           be removed, while 0 means that the over=
+lay is being
+>>> +                           overlapped therefore removal is prohibi=
+ted.
+>>> +
+>>> +What:          /sys/firmware/devicetree/overlays/<id>/<fragment-na=
+me>/
+>>> +Date:          October 2015
+>>> +Contact:       Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+>>> +Description:
+>>> +               Each of these directories contain information about=
+ of the
+>>> +               particular overlay fragment.
+>>> +
+>>> +               target: The full-path of the target of the fragment
+>>> --
 >>
->> This can be a link to the node itself, can't it?
+>> What happened to attributes within the fragment dir?
 >>
 >
-> Yes. Do you want it like this?
+> There=E2=80=99s a single attribute named target that contains the tar=
+get of the fragment.
+>
+> At the moment this is the only attribute. I eventually intent to put =
+the full contents of the overlay fragment
+> there as /sysfs/firmware/devicetree/base does, but this would make th=
+ings quite complicated for now.
+>
+> Should I add a What: line for that too?
 
-Yes, hence the suggestion. Unless you see some reason why not.
+There should be an entry for every file. These should not be in the
+description. So "enable" and "can_remove" need entries too.
 
 Rob
