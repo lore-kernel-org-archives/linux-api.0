@@ -1,118 +1,240 @@
-From: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v6 4/4] Documentation: ABI: /sys/firmware/devicetree/overlays
-Date: Tue, 20 Oct 2015 17:00:13 -0500
-Message-ID: <CAL_JsqLRjnbPRR0bU=qwdMgGWiFTOKWt9SasdrQpd40_H7oc2A@mail.gmail.com>
-References: <1445368397-8732-1-git-send-email-pantelis.antoniou@konsulko.com>
- <1445368397-8732-5-git-send-email-pantelis.antoniou@konsulko.com>
- <CAL_JsqJ1nPp17bnp5b59i7Huov8f-qOByRG2dW6XBj5-4_fvSw@mail.gmail.com> <235F6C23-4962-4114-BCB2-4279E775E23E@konsulko.com>
+From: Tycho Andersen <tycho.andersen@canonical.com>
+Subject: Re: [PATCH v8] seccomp, ptrace: add support for dumping seccomp
+ filters
+Date: Tue, 20 Oct 2015 16:08:14 -0600
+Message-ID: <20151020220814.GA3232@hopstrocity>
+References: <1445370612-18843-1-git-send-email-tycho.andersen@canonical.com>
+ <1445370612-18843-2-git-send-email-tycho.andersen@canonical.com>
+ <20151020202024.GA5772@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <235F6C23-4962-4114-BCB2-4279E775E23E-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Cc: Frank Rowand <frowand.list-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: multipart/mixed; boundary="ew6BAiZeqk4r7MaW"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20151020202024.GA5772@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Oleg Nesterov <oleg@redhat.com>
+Cc: Kees Cook <keescook@chromium.org>, Alexei Starovoitov <ast@kernel.org>, Will Drewry <wad@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Daniel Borkmann <daniel@iogearbox.net>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 20, 2015 at 4:02 PM, Pantelis Antoniou
-<pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
-> Hi Rob,
->
->> On Oct 20, 2015, at 23:56 , Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrot=
-e:
->>
->> On Tue, Oct 20, 2015 at 2:13 PM, Pantelis Antoniou
->> <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
->>> Documentation ABI entry for overlays sysfs entries.
->>>
->>> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
->>> ---
->>> .../ABI/testing/sysfs-firmware-devicetree-overlays | 40 +++++++++++=
-+++++++++++
->>> 1 file changed, 40 insertions(+)
->>> create mode 100644 Documentation/ABI/testing/sysfs-firmware-devicet=
-ree-overlays
->>>
->>> diff --git a/Documentation/ABI/testing/sysfs-firmware-devicetree-ov=
-erlays b/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
->>> new file mode 100644
->>> index 0000000..adc4068
->>> --- /dev/null
->>> +++ b/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
->>> @@ -0,0 +1,40 @@
->>> +What:          /sys/firmware/devicetree/overlays/
->>> +Date:          October 2015
->>> +Contact:       Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
->>> +Description:
->>> +               This directory contains the applied device tree ove=
-rlays of
->>> +               the running system, as directories of the overlay i=
-d.
->>> +
->>> +               enable: The master enable switch, by default is 1, =
-and when
->>> +                       set to 0 it cannot be re-enabled for securi=
-ty reasons.
->>> +
->>> +               The discussion about this switch takes place in:
->>> +               http://comments.gmane.org/gmane.linux.drivers.devic=
-etree/101871
->>> +
->>> +               Kees Cook:
->>> +               "Coming from the perspective of drawing a bright li=
-ne between
->>> +               kernel and the root user (which tends to start with=
- disabling
->>> +               kernel module loading), I would say that there at l=
-east needs
->>> +               to be a high-level one-way "off" switch for the int=
-erface so
->>> +               that systems that have this interface can choose to=
- turn it off
->>> +               during initial boot, etc."
->>> +
->>> +What:          /sys/firmware/devicetree/overlays/<id>
->>> +Date:          October 2015
->>> +Contact:       Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
->>> +Description:
->>> +               Each directory represents an applied overlay, conta=
-ining
->>> +               the following attribute files.
->>> +
->>> +               can_remove: The attribute set to 1 means that the o=
-verlay can
->>> +                           be removed, while 0 means that the over=
-lay is being
->>> +                           overlapped therefore removal is prohibi=
-ted.
->>> +
->>> +What:          /sys/firmware/devicetree/overlays/<id>/<fragment-na=
-me>/
->>> +Date:          October 2015
->>> +Contact:       Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
->>> +Description:
->>> +               Each of these directories contain information about=
- of the
->>> +               particular overlay fragment.
->>> +
->>> +               target: The full-path of the target of the fragment
->>> --
->>
->> What happened to attributes within the fragment dir?
->>
->
-> There=E2=80=99s a single attribute named target that contains the tar=
-get of the fragment.
->
-> At the moment this is the only attribute. I eventually intent to put =
-the full contents of the overlay fragment
-> there as /sysfs/firmware/devicetree/base does, but this would make th=
-ings quite complicated for now.
->
-> Should I add a What: line for that too?
 
-There should be an entry for every file. These should not be in the
-description. So "enable" and "can_remove" need entries too.
+--ew6BAiZeqk4r7MaW
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Rob
+Hi Kees, Oleg,
+
+On Tue, Oct 20, 2015 at 10:20:24PM +0200, Oleg Nesterov wrote:
+>
+> No, you can't do copy_to_user() from atomic context. You need to pin this
+> filter, drop the lock/irq, then copy_to_user().
+
+Attached is a patch which addresses this.
+
+Tycho
+
+--ew6BAiZeqk4r7MaW
+Content-Type: text/x-diff; charset=us-ascii
+Content-Disposition: attachment; filename="0001-seccomp-ptrace-add-support-for-dumping-seccomp-filte.patch"
+
+>From 5be84ece99312304df2a61f727355ffd3fc604da Mon Sep 17 00:00:00 2001
+From: Tycho Andersen <tycho.andersen@canonical.com>
+Date: Fri, 2 Oct 2015 18:49:43 -0600
+Subject: [PATCH v9] seccomp, ptrace: add support for dumping seccomp filters
+
+This patch adds support for dumping a process' (classic BPF) seccomp
+filters via ptrace.
+
+PTRACE_SECCOMP_GET_FILTER allows the tracer to dump the user's classic BPF
+seccomp filters. addr should be an integer which represents the ith seccomp
+filter (0 is the most recently installed filter). data should be a struct
+sock_filter * with enough room for the ith filter, or NULL, in which case
+the filter is not saved. The return value for this command is the number of
+BPF instructions the program represents, or negative in the case of errors.
+Command specific errors are ENOENT: which indicates that there is no ith
+filter in this seccomp tree, and EMEDIUMTYPE, which indicates that the ith
+filter was not installed as a classic BPF filter.
+
+A caveat with this approach is that there is no way to get explicitly at
+the heirarchy of seccomp filters, and users need to memcmp() filters to
+decide which are inherited. This means that a task which installs two of
+the same filter can potentially confuse users of this interface.
+
+v2: * make save_orig const
+    * check that the orig_prog exists (not necessary right now, but when
+       grows eBPF support it will be)
+    * s/n/filter_off and make it an unsigned long to match ptrace
+    * count "down" the tree instead of "up" when passing a filter offset
+
+v3: * don't take the current task's lock for inspecting its seccomp mode
+    * use a 0x42** constant for the ptrace command value
+
+v4: * don't copy to userspace while holding spinlocks
+
+Signed-off-by: Tycho Andersen <tycho.andersen@canonical.com>
+CC: Kees Cook <keescook@chromium.org>
+CC: Will Drewry <wad@chromium.org>
+CC: Oleg Nesterov <oleg@redhat.com>
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Pavel Emelyanov <xemul@parallels.com>
+CC: Serge E. Hallyn <serge.hallyn@ubuntu.com>
+CC: Alexei Starovoitov <ast@kernel.org>
+CC: Daniel Borkmann <daniel@iogearbox.net>
+---
+ include/linux/seccomp.h     | 11 +++++++
+ include/uapi/linux/ptrace.h |  2 ++
+ kernel/ptrace.c             |  5 +++
+ kernel/seccomp.c            | 76 ++++++++++++++++++++++++++++++++++++++++++++-
+ 4 files changed, 93 insertions(+), 1 deletion(-)
+
+diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
+index f426503..2296e6b 100644
+--- a/include/linux/seccomp.h
++++ b/include/linux/seccomp.h
+@@ -95,4 +95,15 @@ static inline void get_seccomp_filter(struct task_struct *tsk)
+ 	return;
+ }
+ #endif /* CONFIG_SECCOMP_FILTER */
++
++#if defined(CONFIG_SECCOMP_FILTER) && defined(CONFIG_CHECKPOINT_RESTORE)
++extern long seccomp_get_filter(struct task_struct *task,
++			       unsigned long filter_off, void __user *data);
++#else
++static inline long seccomp_get_filter(struct task_struct *task,
++				      unsigned long n, void __user *data)
++{
++	return -EINVAL;
++}
++#endif /* CONFIG_SECCOMP_FILTER && CONFIG_CHECKPOINT_RESTORE */
+ #endif /* _LINUX_SECCOMP_H */
+diff --git a/include/uapi/linux/ptrace.h b/include/uapi/linux/ptrace.h
+index a7a6979..fb81065 100644
+--- a/include/uapi/linux/ptrace.h
++++ b/include/uapi/linux/ptrace.h
+@@ -64,6 +64,8 @@ struct ptrace_peeksiginfo_args {
+ #define PTRACE_GETSIGMASK	0x420a
+ #define PTRACE_SETSIGMASK	0x420b
+ 
++#define PTRACE_SECCOMP_GET_FILTER	0x420c
++
+ /* Read signals from a shared (process wide) queue */
+ #define PTRACE_PEEKSIGINFO_SHARED	(1 << 0)
+ 
+diff --git a/kernel/ptrace.c b/kernel/ptrace.c
+index 787320d..b760bae 100644
+--- a/kernel/ptrace.c
++++ b/kernel/ptrace.c
+@@ -1016,6 +1016,11 @@ int ptrace_request(struct task_struct *child, long request,
+ 		break;
+ 	}
+ #endif
++
++	case PTRACE_SECCOMP_GET_FILTER:
++		ret = seccomp_get_filter(child, addr, datavp);
++		break;
++
+ 	default:
+ 		break;
+ 	}
+diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+index 06858a7..c922805b 100644
+--- a/kernel/seccomp.c
++++ b/kernel/seccomp.c
+@@ -347,6 +347,7 @@ static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
+ {
+ 	struct seccomp_filter *sfilter;
+ 	int ret;
++	const bool save_orig = config_enabled(CONFIG_CHECKPOINT_RESTORE);
+ 
+ 	if (fprog->len == 0 || fprog->len > BPF_MAXINSNS)
+ 		return ERR_PTR(-EINVAL);
+@@ -370,7 +371,7 @@ static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
+ 		return ERR_PTR(-ENOMEM);
+ 
+ 	ret = bpf_prog_create_from_user(&sfilter->prog, fprog,
+-					seccomp_check_filter, false);
++					seccomp_check_filter, save_orig);
+ 	if (ret < 0) {
+ 		kfree(sfilter);
+ 		return ERR_PTR(ret);
+@@ -867,3 +868,76 @@ long prctl_set_seccomp(unsigned long seccomp_mode, char __user *filter)
+ 	/* prctl interface doesn't have flags, so they are always zero. */
+ 	return do_seccomp(op, 0, uargs);
+ }
++
++#if defined(CONFIG_SECCOMP_FILTER) && defined(CONFIG_CHECKPOINT_RESTORE)
++long seccomp_get_filter(struct task_struct *task, unsigned long filter_off,
++			void __user *data)
++{
++	struct seccomp_filter *filter;
++	struct sock_fprog_kern *fprog;
++	long ret;
++	unsigned long count = 0;
++
++	if (!capable(CAP_SYS_ADMIN) ||
++	    current->seccomp.mode != SECCOMP_MODE_DISABLED) {
++		return -EACCES;
++	}
++
++	spin_lock_irq(&task->sighand->siglock);
++	if (task->seccomp.mode != SECCOMP_MODE_FILTER) {
++		ret = -EINVAL;
++		goto out;
++	}
++
++	filter = task->seccomp.filter;
++	while (filter) {
++		filter = filter->prev;
++		count++;
++	}
++
++	if (filter_off >= count) {
++		ret = -ENOENT;
++		goto out;
++	}
++	count -= filter_off;
++
++	filter = task->seccomp.filter;
++	while (filter && count > 1) {
++		filter = filter->prev;
++		count--;
++	}
++
++	if (WARN_ON(count != 1)) {
++		/* The filter tree shouldn't shrink while we're using it. */
++		ret = -ENOENT;
++		goto out;
++	}
++
++	fprog = filter->prog->orig_prog;
++	if (!fprog) {
++		/* This must be a new non-cBPF filter, since we save every
++		 * every cBPF filter's orig_prog above when
++		 * CONFIG_CHECKPOINT_RESTORE is enabled.
++		 */
++		ret = -EMEDIUMTYPE;
++		goto out;
++	}
++
++	ret = fprog->len;
++	if (!data)
++		goto out;
++
++	get_seccomp_filter(task);
++	spin_unlock_irq(&task->sighand->siglock);
++
++	if (copy_to_user(data, fprog->filter, bpf_classic_proglen(fprog)))
++		ret = -EFAULT;
++
++	put_seccomp_filter(task);
++	return ret;
++
++out:
++	spin_unlock_irq(&task->sighand->siglock);
++	return ret;
++}
++#endif
+-- 
+2.5.0
+
+
+--ew6BAiZeqk4r7MaW--
