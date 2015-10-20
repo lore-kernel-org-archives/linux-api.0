@@ -1,76 +1,107 @@
-From: Masahiro Yamada <yamada.masahiro@socionext.com>
-Subject: Re: [PATCH 1/2] serial: support register interface with 16-bit stride
- for console
-Date: Tue, 20 Oct 2015 12:37:02 +0900
-Message-ID: <CAK7LNAQ-GxCRBFz+390aQQ=BcBbuEMMgxZJbS1VrqkgwTrcGYw@mail.gmail.com>
-References: <1445233224-23150-1-git-send-email-yamada.masahiro@socionext.com>
-	<1445233224-23150-2-git-send-email-yamada.masahiro@socionext.com>
-	<5625496C.90507@hurleysoftware.com>
+From: Zhao Lei <zhaolei@cn.fujitsu.com>
+Subject: RE: [PATCH v6 0/4] VFS: In-kernel copy system call
+Date: Tue, 20 Oct 2015 17:41:29 +0800
+Message-ID: <011e01d10b1b$7f70b390$7e521ab0$@cn.fujitsu.com>
+References: <1445029707-31549-1-git-send-email-Anna.Schumaker@Netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5625496C.90507@hurleysoftware.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Hurley <peter@hurleysoftware.com>
-Cc: linux-serial@vger.kernel.org, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Vineet Gupta <Vineet.Gupta1@synopsys.com>, Kevin Cernekee <cernekee@gmail.com>, Jiri Slaby <jslaby@suse.com>, Rob Herring <robh@kernel.org>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, Jonathan Corbet <corbet@lwn.net>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Wang Long <long.wanglong@huawei.com>, Noam Camus <noamc@ezchip.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Eddie Huang <eddie.huang@mediatek.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <1445029707-31549-1-git-send-email-Anna.Schumaker@Netapp.com>
+Content-Language: zh-cn
+Sender: linux-btrfs-owner@vger.kernel.org
+To: 'Anna Schumaker' <Anna.Schumaker@netapp.com>, linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, darrick.wong@oracle.com, mtk.manpages@gmail.com, andros@netapp.com, hch@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Peter,
+Hi, Anna Schumaker
 
-2015-10-20 4:50 GMT+09:00 Peter Hurley <peter@hurleysoftware.com>:
-> On 10/19/2015 01:40 AM, Masahiro Yamada wrote:
->> Currently, 8-bit (MMIO) and 32-bit (MMIO32) strides are supported for
->> the 8250 console, but 16-bit (MMIO16) stride is not.  The 8250 UART
->> device on my board has 16-bit stride (reg-shift = <1>) and I am eager
->> to use earlycon with it.
->>
->> Refer to arch/arm/boot/dts/uniphier-support-card.dtsi:
->>
->>         serialsc: uart@000b0000 {
->>                 compatible = "ns16550a";
->>                 reg = <0x000b0000 0x20>;
->>                 clock-frequency = <12288000>;
->>                 reg-shift = <1>;
->>         };
->>
->> Signed-off-by: Masahiro Yamada <yamada.masahiro@socionext.com>
->> ---
->>
->>  Documentation/kernel-parameters.txt  |  9 +++++----
->>  drivers/tty/serial/8250/8250_early.c |  5 +++++
->>  drivers/tty/serial/8250/8250_port.c  | 20 ++++++++++++++++++++
->>  drivers/tty/serial/earlycon.c        | 15 +++++++++++----
->>  drivers/tty/serial/serial_core.c     |  9 +++++++--
->>  include/linux/serial_core.h          |  1 +
->>  include/uapi/linux/serial.h          |  9 +++++----
->>  7 files changed, 54 insertions(+), 14 deletions(-)
->>
->
-> [...]
->
->> diff --git a/include/uapi/linux/serial.h b/include/uapi/linux/serial.h
->> index 25331f9..1d20d9c 100644
->> --- a/include/uapi/linux/serial.h
->> +++ b/include/uapi/linux/serial.h
->> @@ -65,10 +65,11 @@ struct serial_struct {
->>  #define SERIAL_IO_PORT       0
->>  #define SERIAL_IO_HUB6       1
->>  #define SERIAL_IO_MEM        2
->> -#define SERIAL_IO_MEM32        3
->> -#define SERIAL_IO_AU   4
->> -#define SERIAL_IO_TSI          5
->> -#define SERIAL_IO_MEM32BE 6
->> +#define SERIAL_IO_MEM16      3
->> +#define SERIAL_IO_MEM32        4
->> +#define SERIAL_IO_AU   5
->> +#define SERIAL_IO_TSI          6
->> +#define SERIAL_IO_MEM32BE 7
->
-> The existing values cannot be re-defined since they're userspace visible.
+This patchset compile ok in x86 and x86_64 target,
+But failed in arm when compiling btrfs dir, and output following error message:
+  <stdin>:1304:2: warning: #warning syscall copy_file_range not implemented [-Wcpp]   
 
-Thanks, I've sent v2.
+Reproduce:
 
+merge commands:
+cd /mnt/big1/linux
+git fetch -q --all
+git --force -B btrfs_base v4.3-rc5
+git am --abort
+git am --whitespace=nowarn PATCH_v6_1_4__vfs__add_copy_file_range_syscall_and_vfs_helper
+git am --whitespace=nowarn PATCH_v6_2_4__x86__add_sys_copy_file_range_to_syscall_tables
+git am --whitespace=nowarn PATCH_v6_3_4__btrfs__add_.copy_file_range_file_operation
+git am --whitespace=nowarn PATCH_v6_4_4__vfs__Add_vfs_copy_file_range___support_for_pagecache_copies
 
--- 
-Best Regards
-Masahiro Yamada
+compild commands:   
+make --directory=/mnt/big1/linux ARCH=arm CROSS_COMPILE=arm-buildroot-linux-uclibcgnueabi- distclean
+make --directory=/mnt/big1/linux ARCH=arm CROSS_COMPILE=arm-buildroot-linux-uclibcgnueabi- defconfig
+/mnt/big1/linux/scripts/config --file /mnt/big1/linux/.config --module CONFIG_BTRFS_FS   
+/mnt/big1/linux/scripts/config --file /mnt/big1/linux/.config --enable CONFIG_BTRFS_FS_POSIX_ACL   
+/mnt/big1/linux/scripts/config --file /mnt/big1/linux/.config --enable CONFIG_BTRFS_FS_CHECK_INTEGRITY   
+/mnt/big1/linux/scripts/config --file /mnt/big1/linux/.config --enable CONFIG_BTRFS_FS_RUN_SANITY_TESTS   
+/mnt/big1/linux/scripts/config --file /mnt/big1/linux/.config --enable CONFIG_BTRFS_DEBUG   
+/mnt/big1/linux/scripts/config --file /mnt/big1/linux/.config --enable CONFIG_BTRFS_ASSERT   
+make --directory=/mnt/big1/linux ARCH=arm CROSS_COMPILE=arm-buildroot-linux-uclibcgnueabi- -j8 fs/btrfs/   
+
+Thanks
+Zhaolei
+
+> -----Original Message-----
+> From: linux-btrfs-owner@vger.kernel.org
+> [mailto:linux-btrfs-owner@vger.kernel.org] On Behalf Of Anna Schumaker
+> Sent: Saturday, October 17, 2015 5:08 AM
+> To: linux-nfs@vger.kernel.org; linux-btrfs@vger.kernel.org;
+> linux-fsdevel@vger.kernel.org; linux-api@vger.kernel.org; zab@zabbo.net;
+> viro@zeniv.linux.org.uk; clm@fb.com; darrick.wong@oracle.com;
+> mtk.manpages@gmail.com; andros@netapp.com; hch@infradead.org
+> Subject: [PATCH v6 0/4] VFS: In-kernel copy system call
+> 
+> Copy system calls came up during Plumbers a while ago, mostly because
+> several filesystems (including NFS and XFS) are currently working on copy
+> acceleration implementations.  We haven't heard from Zach Brown in a while,
+> so I volunteered to push his patches upstream so individual filesystems don't
+> need to keep writing their own ioctls.
+> 
+> This posting adresses Christoph's comments.  I'm pretty sure that splice() is
+> already interruptible, so I don't know what else needs to be done for this
+> system call.
+> 
+> I haven't started work on a "sparse" copy flag yet.  I would like to focus on the
+> base system call first, and then add that later if it's still desired.
+> 
+> Changes in v6:
+> - Squash together most patches.
+> - Drop all flags except COPY_FR_REFLINK.
+> - Drop patch removing same mountpoint check.
+> - Change default behavior (flags = 0) to a data copy.
+> 
+> 
+> Anna Schumaker (1):
+>   vfs: Add vfs_copy_file_range() support for pagecache copies
+> 
+> Zach Brown (3):
+>   vfs: add copy_file_range syscall and vfs helper
+>   x86: add sys_copy_file_range to syscall tables
+>   btrfs: add .copy_file_range file operation
+> 
+>  arch/x86/entry/syscalls/syscall_32.tbl |   1 +
+>  arch/x86/entry/syscalls/syscall_64.tbl |   1 +
+>  fs/btrfs/ctree.h                       |   3 +
+>  fs/btrfs/file.c                        |   1 +
+>  fs/btrfs/ioctl.c                       |  94 +++++++++++++----------
+>  fs/read_write.c                        | 133
+> +++++++++++++++++++++++++++++++++
+>  include/linux/fs.h                     |   3 +
+>  include/linux/syscalls.h               |   3 +
+>  include/uapi/asm-generic/unistd.h      |   4 +-
+>  include/uapi/linux/fs.h                |   2 +
+>  kernel/sys_ni.c                        |   1 +
+>  11 files changed, 206 insertions(+), 40 deletions(-)
+> 
+> --
+> 2.6.1
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-btrfs" in the body
+> of a message to majordomo@vger.kernel.org More majordomo info at
+> http://vger.kernel.org/majordomo-info.html
+
