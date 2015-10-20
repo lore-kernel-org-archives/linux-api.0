@@ -1,240 +1,116 @@
-From: Tycho Andersen <tycho.andersen@canonical.com>
-Subject: Re: [PATCH v8] seccomp, ptrace: add support for dumping seccomp
- filters
-Date: Tue, 20 Oct 2015 16:08:14 -0600
-Message-ID: <20151020220814.GA3232@hopstrocity>
-References: <1445370612-18843-1-git-send-email-tycho.andersen@canonical.com>
- <1445370612-18843-2-git-send-email-tycho.andersen@canonical.com>
- <20151020202024.GA5772@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="ew6BAiZeqk4r7MaW"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20151020202024.GA5772@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: Kees Cook <keescook@chromium.org>, Alexei Starovoitov <ast@kernel.org>, Will Drewry <wad@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Daniel Borkmann <daniel@iogearbox.net>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+From: David Daney <ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v6 0/5] PCI: Add support for PCI Enhanced Allocation "BARs"
+Date: Tue, 20 Oct 2015 16:04:37 -0700
+Message-ID: <1445382282-2396-1-git-send-email-ddaney.cavm@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?UTF-8?q?Rafa=C5=82=20Mi=C5=82ecki?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Sean O. Stalley" <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, yinghai-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org
+Cc: David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+From: David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
 
---ew6BAiZeqk4r7MaW
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+The original patches are from Sean O. Stalley. I made a few tweaks,
+but feel that it is substancially Sean's work, so I am keeping the
+patch set version numbering scheme going.
 
-Hi Kees, Oleg,
+Tested on Cavium ThunderX system with 4 Root Complexes containing 50
+devices/bridges provisioned with EA.
 
-On Tue, Oct 20, 2015 at 10:20:24PM +0200, Oleg Nesterov wrote:
->
-> No, you can't do copy_to_user() from atomic context. You need to pin this
-> filter, drop the lock/irq, then copy_to_user().
+Here is Sean's description of the patches:
 
-Attached is a patch which addresses this.
+PCI Enhanced Allocation is a new method of allocating MMIO & IO
+resources for PCI devices & bridges. It can be used instead
+of the traditional PCI method of using BARs.
 
-Tycho
+EA entries are hardware-initialized to a fixed address.
+Unlike BARs, regions described by EA are cannot be moved.
+Because of this, only devices which are permanently connected to
+the PCI bus can use EA. A removable PCI card must not use EA.
 
---ew6BAiZeqk4r7MaW
-Content-Type: text/x-diff; charset=us-ascii
-Content-Disposition: attachment; filename="0001-seccomp-ptrace-add-support-for-dumping-seccomp-filte.patch"
+This patchset adds support for using EA entries instead of BARs
+on Root Complex Integrated Endpoints.
 
->From 5be84ece99312304df2a61f727355ffd3fc604da Mon Sep 17 00:00:00 2001
-From: Tycho Andersen <tycho.andersen@canonical.com>
-Date: Fri, 2 Oct 2015 18:49:43 -0600
-Subject: [PATCH v9] seccomp, ptrace: add support for dumping seccomp filters
+The Enhanced Allocation ECN is publicly available here:
+https://www.pcisig.com/specifications/conventional/ECN_Enhanced_Allocation_23_Oct_2014_Final.pdf
 
-This patch adds support for dumping a process' (classic BPF) seccomp
-filters via ptrace.
 
-PTRACE_SECCOMP_GET_FILTER allows the tracer to dump the user's classic BPF
-seccomp filters. addr should be an integer which represents the ith seccomp
-filter (0 is the most recently installed filter). data should be a struct
-sock_filter * with enough room for the ith filter, or NULL, in which case
-the filter is not saved. The return value for this command is the number of
-BPF instructions the program represents, or negative in the case of errors.
-Command specific errors are ENOENT: which indicates that there is no ith
-filter in this seccomp tree, and EMEDIUMTYPE, which indicates that the ith
-filter was not installed as a classic BPF filter.
+Changes from V1:
+	- Use generic PCI resource claim functions (instead of EA-specific functions)
+	- Only add support for RCiEPs (instead of all devices).
+	- Removed some debugging messages leftover from early testing.
 
-A caveat with this approach is that there is no way to get explicitly at
-the heirarchy of seccomp filters, and users need to memcmp() filters to
-decide which are inherited. This means that a task which installs two of
-the same filter can potentially confuse users of this interface.
+Changes from V2 (By David Daney):
+	- Add ea_cap to struct pci_device, to aid in finding the EA capability.
+	- Factored EA entity decoding into a separate function.
+	- Add functions to find EA entities by BEI or Property.
+	- Add handling of EA provisioned bridges.
+	- Add handling of EA SRIOV BARs.
+	- Try to assign proper resource parent so that SRIOV device creation can occur.
 
-v2: * make save_orig const
-    * check that the orig_prog exists (not necessary right now, but when
-       grows eBPF support it will be)
-    * s/n/filter_off and make it an unsigned long to match ptrace
-    * count "down" the tree instead of "up" when passing a filter offset
+Changes from V3 (By David Daney):
+	- Discarded V3 changes and started over fresh based on Sean's V2.
+	- Add more support/checking for Entry Properties.
+	- Allow EA behind bridges.
+	- Rewrite some error messages.
+	- Add patch 3/5 to prevent resizing, and better handle
+          assigning, of fixed EA resources.
+	- Add patch 4/5 to handle EA provisioned SRIOV devices.
+	- Add patch 5/5 to handle EA provisioned bridges.
 
-v3: * don't take the current task's lock for inspecting its seccomp mode
-    * use a 0x42** constant for the ptrace command value
+Changes from V4 (By David Daney):
+	- Drop patch 5/5 to handle EA provisioned bridges.
+	- Drop cases for bridge resources in 2/5.
+	- Drop unnecessary fallback resource parent handling in 3/5
+	- Small code formatting improvements.
 
-v4: * don't copy to userspace while holding spinlocks
+Changes from V5: (By David Daney) cosmetic only, as requested by Bjorn Helgaas:
+	- Split previous 3/4 into two patches, which are now 1/5 and 2/5
+	- Improve indentation of register definitions.
+	- Renamed PCI_EA_P_VIRT_MEM* to PCI_EA_P_VF_MEM*
+	- Remove use of BIT() macro from register definitions.
+	- Changed debug messages when probing EA entries to be like this:
+.
+.
+.
+pci 0002:01:00.0: [177d:a01e] type 00 class 0x020000
+pci 0002:01:00.0: EA - BEI  0, Prop 0x00: [mem 0x843000000000-0x84303fffffff 64bit]
+pci 0002:01:00.0: EA - BEI  4, Prop 0x00: [mem 0x843060000000-0x8430600fffff 64bit]
+pci 0002:01:00.0: EA - BEI  9, Prop 0x04: [mem 0x8430a0000000-0x8430a01fffff 64bit]
+pci 0002:01:00.0: EA - BEI 13, Prop 0x04: [mem 0x8430e0000000-0x8430e01fffff 64bit]
+pci 0002:01:00.0: VF(n) BAR0 space: [mem 0x8430a0000000-0x8430afffffff 64bit] (contains BAR0 for 128 VFs)
+pci 0002:01:00.0: VF(n) BAR4 space: [mem 0x8430e0000000-0x8430efffffff 64bit] (contains BAR4 for 128 VFs)
+.
+.
+.
+pci 0004:21:00.0: [1a03:2000] type 00 class 0x030000
+pci 0004:21:00.0: reg 0x10: [mem 0x881010000000-0x881010ffffff]
+pci 0004:21:00.0: reg 0x14: [mem 0x881011000000-0x88101101ffff]
+pci 0004:21:00.0: reg 0x18: [io  0x0000-0x007f]
+pci 0004:21:00.0: supports D1 D2
+.
+.
+.
 
-Signed-off-by: Tycho Andersen <tycho.andersen@canonical.com>
-CC: Kees Cook <keescook@chromium.org>
-CC: Will Drewry <wad@chromium.org>
-CC: Oleg Nesterov <oleg@redhat.com>
-CC: Andy Lutomirski <luto@amacapital.net>
-CC: Pavel Emelyanov <xemul@parallels.com>
-CC: Serge E. Hallyn <serge.hallyn@ubuntu.com>
-CC: Alexei Starovoitov <ast@kernel.org>
-CC: Daniel Borkmann <daniel@iogearbox.net>
----
- include/linux/seccomp.h     | 11 +++++++
- include/uapi/linux/ptrace.h |  2 ++
- kernel/ptrace.c             |  5 +++
- kernel/seccomp.c            | 76 ++++++++++++++++++++++++++++++++++++++++++++-
- 4 files changed, 93 insertions(+), 1 deletion(-)
+BEI and Prop values are represented as decimal and hexadecimal
+respectively to match the EA specification.
 
-diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
-index f426503..2296e6b 100644
---- a/include/linux/seccomp.h
-+++ b/include/linux/seccomp.h
-@@ -95,4 +95,15 @@ static inline void get_seccomp_filter(struct task_struct *tsk)
- 	return;
- }
- #endif /* CONFIG_SECCOMP_FILTER */
-+
-+#if defined(CONFIG_SECCOMP_FILTER) && defined(CONFIG_CHECKPOINT_RESTORE)
-+extern long seccomp_get_filter(struct task_struct *task,
-+			       unsigned long filter_off, void __user *data);
-+#else
-+static inline long seccomp_get_filter(struct task_struct *task,
-+				      unsigned long n, void __user *data)
-+{
-+	return -EINVAL;
-+}
-+#endif /* CONFIG_SECCOMP_FILTER && CONFIG_CHECKPOINT_RESTORE */
- #endif /* _LINUX_SECCOMP_H */
-diff --git a/include/uapi/linux/ptrace.h b/include/uapi/linux/ptrace.h
-index a7a6979..fb81065 100644
---- a/include/uapi/linux/ptrace.h
-+++ b/include/uapi/linux/ptrace.h
-@@ -64,6 +64,8 @@ struct ptrace_peeksiginfo_args {
- #define PTRACE_GETSIGMASK	0x420a
- #define PTRACE_SETSIGMASK	0x420b
- 
-+#define PTRACE_SECCOMP_GET_FILTER	0x420c
-+
- /* Read signals from a shared (process wide) queue */
- #define PTRACE_PEEKSIGINFO_SHARED	(1 << 0)
- 
-diff --git a/kernel/ptrace.c b/kernel/ptrace.c
-index 787320d..b760bae 100644
---- a/kernel/ptrace.c
-+++ b/kernel/ptrace.c
-@@ -1016,6 +1016,11 @@ int ptrace_request(struct task_struct *child, long request,
- 		break;
- 	}
- #endif
-+
-+	case PTRACE_SECCOMP_GET_FILTER:
-+		ret = seccomp_get_filter(child, addr, datavp);
-+		break;
-+
- 	default:
- 		break;
- 	}
-diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index 06858a7..c922805b 100644
---- a/kernel/seccomp.c
-+++ b/kernel/seccomp.c
-@@ -347,6 +347,7 @@ static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
- {
- 	struct seccomp_filter *sfilter;
- 	int ret;
-+	const bool save_orig = config_enabled(CONFIG_CHECKPOINT_RESTORE);
- 
- 	if (fprog->len == 0 || fprog->len > BPF_MAXINSNS)
- 		return ERR_PTR(-EINVAL);
-@@ -370,7 +371,7 @@ static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
- 		return ERR_PTR(-ENOMEM);
- 
- 	ret = bpf_prog_create_from_user(&sfilter->prog, fprog,
--					seccomp_check_filter, false);
-+					seccomp_check_filter, save_orig);
- 	if (ret < 0) {
- 		kfree(sfilter);
- 		return ERR_PTR(ret);
-@@ -867,3 +868,76 @@ long prctl_set_seccomp(unsigned long seccomp_mode, char __user *filter)
- 	/* prctl interface doesn't have flags, so they are always zero. */
- 	return do_seccomp(op, 0, uargs);
- }
-+
-+#if defined(CONFIG_SECCOMP_FILTER) && defined(CONFIG_CHECKPOINT_RESTORE)
-+long seccomp_get_filter(struct task_struct *task, unsigned long filter_off,
-+			void __user *data)
-+{
-+	struct seccomp_filter *filter;
-+	struct sock_fprog_kern *fprog;
-+	long ret;
-+	unsigned long count = 0;
-+
-+	if (!capable(CAP_SYS_ADMIN) ||
-+	    current->seccomp.mode != SECCOMP_MODE_DISABLED) {
-+		return -EACCES;
-+	}
-+
-+	spin_lock_irq(&task->sighand->siglock);
-+	if (task->seccomp.mode != SECCOMP_MODE_FILTER) {
-+		ret = -EINVAL;
-+		goto out;
-+	}
-+
-+	filter = task->seccomp.filter;
-+	while (filter) {
-+		filter = filter->prev;
-+		count++;
-+	}
-+
-+	if (filter_off >= count) {
-+		ret = -ENOENT;
-+		goto out;
-+	}
-+	count -= filter_off;
-+
-+	filter = task->seccomp.filter;
-+	while (filter && count > 1) {
-+		filter = filter->prev;
-+		count--;
-+	}
-+
-+	if (WARN_ON(count != 1)) {
-+		/* The filter tree shouldn't shrink while we're using it. */
-+		ret = -ENOENT;
-+		goto out;
-+	}
-+
-+	fprog = filter->prog->orig_prog;
-+	if (!fprog) {
-+		/* This must be a new non-cBPF filter, since we save every
-+		 * every cBPF filter's orig_prog above when
-+		 * CONFIG_CHECKPOINT_RESTORE is enabled.
-+		 */
-+		ret = -EMEDIUMTYPE;
-+		goto out;
-+	}
-+
-+	ret = fprog->len;
-+	if (!data)
-+		goto out;
-+
-+	get_seccomp_filter(task);
-+	spin_unlock_irq(&task->sighand->siglock);
-+
-+	if (copy_to_user(data, fprog->filter, bpf_classic_proglen(fprog)))
-+		ret = -EFAULT;
-+
-+	put_seccomp_filter(task);
-+	return ret;
-+
-+out:
-+	spin_unlock_irq(&task->sighand->siglock);
-+	return ret;
-+}
-+#endif
+David Daney (3):
+  PCI: Handle IORESOURCE_PCI_FIXED when sizing resources.
+  PCI: Handle IORESOURCE_PCI_FIXED when assigning resources.
+  PCI: Handle Enhanced Allocation (EA) capability for SRIOV devices.
+
+Sean O. Stalley (2):
+  PCI: Add Enhanced Allocation register entries
+  PCI: Add support for Enhanced Allocation devices
+
+ drivers/pci/iov.c             |  11 ++-
+ drivers/pci/pci.c             | 183 ++++++++++++++++++++++++++++++++++++++++++
+ drivers/pci/pci.h             |   1 +
+ drivers/pci/probe.c           |   3 +
+ drivers/pci/setup-bus.c       |  50 +++++++++++-
+ include/uapi/linux/pci_regs.h |  44 +++++++++-
+ 6 files changed, 286 insertions(+), 6 deletions(-)
+
 -- 
-2.5.0
-
-
---ew6BAiZeqk4r7MaW--
+1.9.1
