@@ -1,56 +1,75 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v8 04/14] task_isolation: add initial support
-Date: Tue, 20 Oct 2015 13:56:38 -0700
-Message-ID: <CALCETrWzhrYreizoKG0w6Jtz3RLFjNx9Qk_JLykcLLUQcCXBEA@mail.gmail.com>
-References: <1445373372-6567-1-git-send-email-cmetcalf@ezchip.com> <1445373372-6567-5-git-send-email-cmetcalf@ezchip.com>
+From: Rob Herring <robherring2@gmail.com>
+Subject: Re: [PATCH v6 4/4] Documentation: ABI: /sys/firmware/devicetree/overlays
+Date: Tue, 20 Oct 2015 15:56:53 -0500
+Message-ID: <CAL_JsqJ1nPp17bnp5b59i7Huov8f-qOByRG2dW6XBj5-4_fvSw@mail.gmail.com>
+References: <1445368397-8732-1-git-send-email-pantelis.antoniou@konsulko.com> <1445368397-8732-5-git-send-email-pantelis.antoniou@konsulko.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1445373372-6567-5-git-send-email-cmetcalf@ezchip.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@ezchip.com>
-Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1445368397-8732-5-git-send-email-pantelis.antoniou@konsulko.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
+Cc: Frank Rowand <frowand.list@gmail.com>, Matt Porter <mporter@konsulko.com>, Koen Kooi <koen@dominion.thruhere.net>, Guenter Roeck <linux@roeck-us.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Pantelis Antoniou <panto@antoniou-consulting.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 20, 2015 at 1:36 PM, Chris Metcalf <cmetcalf@ezchip.com> wrote:
-> +/*
-> + * In task isolation mode we try to return to userspace only after
-> + * attempting to make sure we won't be interrupted again.  To handle
-> + * the periodic scheduler tick, we test to make sure that the tick is
-> + * stopped, and if it isn't yet, we request a reschedule so that if
-> + * another task needs to run to completion first, it can do so.
-> + * Similarly, if any other subsystems require quiescing, we will need
-> + * to do that before we return to userspace.
-> + */
-> +bool _task_isolation_ready(void)
-> +{
-> +       WARN_ON_ONCE(!irqs_disabled());
+On Tue, Oct 20, 2015 at 2:13 PM, Pantelis Antoniou
+<pantelis.antoniou@konsulko.com> wrote:
+> Documentation ABI entry for overlays sysfs entries.
+>
+> Signed-off-by: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
+> ---
+>  .../ABI/testing/sysfs-firmware-devicetree-overlays | 40 ++++++++++++++++++++++
+>  1 file changed, 40 insertions(+)
+>  create mode 100644 Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
+>
+> diff --git a/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays b/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
+> new file mode 100644
+> index 0000000..adc4068
+> --- /dev/null
+> +++ b/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
+> @@ -0,0 +1,40 @@
+> +What:          /sys/firmware/devicetree/overlays/
+> +Date:          October 2015
+> +Contact:       Pantelis Antoniou <pantelis.antoniou@konsulko.com>
+> +Description:
+> +               This directory contains the applied device tree overlays of
+> +               the running system, as directories of the overlay id.
 > +
-> +       /* If we need to drain the LRU cache, we're not ready. */
-> +       if (lru_add_drain_needed(smp_processor_id()))
-> +               return false;
+> +               enable: The master enable switch, by default is 1, and when
+> +                       set to 0 it cannot be re-enabled for security reasons.
 > +
-> +       /* If vmstats need updating, we're not ready. */
-> +       if (!vmstat_idle())
-> +               return false;
+> +               The discussion about this switch takes place in:
+> +               http://comments.gmane.org/gmane.linux.drivers.devicetree/101871
 > +
-> +       /* If the tick is running, request rescheduling; we're not ready. */
-> +       if (!tick_nohz_tick_stopped()) {
-> +               set_tsk_need_resched(current);
-> +               return false;
-> +       }
+> +               Kees Cook:
+> +               "Coming from the perspective of drawing a bright line between
+> +               kernel and the root user (which tends to start with disabling
+> +               kernel module loading), I would say that there at least needs
+> +               to be a high-level one-way "off" switch for the interface so
+> +               that systems that have this interface can choose to turn it off
+> +               during initial boot, etc."
 > +
-> +       return true;
-> +}
+> +What:          /sys/firmware/devicetree/overlays/<id>
+> +Date:          October 2015
+> +Contact:       Pantelis Antoniou <pantelis.antoniou@konsulko.com>
+> +Description:
+> +               Each directory represents an applied overlay, containing
+> +               the following attribute files.
+> +
+> +               can_remove: The attribute set to 1 means that the overlay can
+> +                           be removed, while 0 means that the overlay is being
+> +                           overlapped therefore removal is prohibited.
+> +
+> +What:          /sys/firmware/devicetree/overlays/<id>/<fragment-name>/
+> +Date:          October 2015
+> +Contact:       Pantelis Antoniou <pantelis.antoniou@konsulko.com>
+> +Description:
+> +               Each of these directories contain information about of the
+> +               particular overlay fragment.
+> +
+> +               target: The full-path of the target of the fragment
+> --
 
-I still don't get why this is a loop.
+What happened to attributes within the fragment dir?
 
-I would argue that this should simply drain the LRU, quiet vmstat, and
-return.  If the tick isn't stopped, then there's a reason why it's not
-stopped (which may involve having SCHED_OTHER tasks around, in which
-case user code shouldn't do that or there should simply be a
-requirement that isolation requires a real-time scheduler class).
-
-BTW, should isolation just be a scheduler class (SCHED_ISOLATED)?
-
---Andy
+Rob
