@@ -1,50 +1,91 @@
-From: David Daney <ddaney.cavm@gmail.com>
-Subject: [PATCH v6 1/5] PCI: Handle IORESOURCE_PCI_FIXED when sizing resources.
-Date: Tue, 20 Oct 2015 16:04:38 -0700
-Message-ID: <1445382282-2396-2-git-send-email-ddaney.cavm@gmail.com>
-References: <1445382282-2396-1-git-send-email-ddaney.cavm@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1445382282-2396-1-git-send-email-ddaney.cavm@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-pci@vger.kernel.org, Bjorn Helgaas <bhelgaas@google.com>, "Michael S. Tsirkin" <mst@redhat.com>, =?UTF-8?q?Rafa=C5=82=20Mi=C5=82ecki?= <zajec5@gmail.com>, linux-api@vger.kernel.org, "Sean O. Stalley" <sean.stalley@intel.com>, yinghai@kernel.org, rajatxjain@gmail.com, gong.chen@linux.intel.com
-Cc: David Daney <david.daney@cavium.com>
+From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [PATCH v6 3/4] of: overlay: add per overlay sysfs attributes
+Date: Tue, 20 Oct 2015 16:25:02 -0700
+Message-ID: <20151020232502.GA7881@kroah.com>
+References: <1445368397-8732-1-git-send-email-pantelis.antoniou@konsulko.com>
+ <1445368397-8732-4-git-send-email-pantelis.antoniou@konsulko.com>
+ <20151020210806.GC28724@kroah.com>
+ <D2471EF1-6837-41CC-8205-FE7D8573ACC3@konsulko.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <D2471EF1-6837-41CC-8205-FE7D8573ACC3-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Cc: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Frank Rowand <frowand.list-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: David Daney <david.daney@cavium.com>
+On Wed, Oct 21, 2015 at 12:15:00AM +0300, Pantelis Antoniou wrote:
+> Hi Greg,
+> 
+> > On Oct 21, 2015, at 00:08 , Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> wrote:
+> > 
+> > On Tue, Oct 20, 2015 at 10:13:16PM +0300, Pantelis Antoniou wrote:
+> >> * A per overlay can_remove sysfs attribute that reports whether
+> >> the overlay can be removed or not due to another overlapping overlay.
+> >> 
+> >> * A target sysfs attribute listing the target of each fragment,
+> >> in a group named after the name of the fragment.
+> >> 
+> >> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+> >> ---
+> >> drivers/of/overlay.c | 103 +++++++++++++++++++++++++++++++++++++++++++++++++--
+> >> 1 file changed, 99 insertions(+), 4 deletions(-)
+> >> 
+> >> diff --git a/drivers/of/overlay.c b/drivers/of/overlay.c
+> >> index 067404e..2d51d9e2 100644
+> >> --- a/drivers/of/overlay.c
+> >> +++ b/drivers/of/overlay.c
+> >> @@ -25,8 +25,23 @@
+> >> 
+> >> #include "of_private.h"
+> >> 
+> >> +/* fwd. decl */
+> >> +struct of_overlay;
+> >> +struct of_overlay_info;
+> >> +
+> >> +/* an attribute for each fragment */
+> >> +struct fragment_attribute {
+> >> +	struct attribute attr;
+> >> +	ssize_t (*show)(struct kobject *kobj, struct fragment_attribute *fattr,
+> >> +			char *buf);
+> >> +	ssize_t (*store)(struct kobject *kobj, struct fragment_attribute *fattr,
+> >> +			 const char *buf, size_t count);
+> >> +	struct of_overlay_info *ovinfo;
+> >> +};
+> >> +
+> >> /**
+> >>  * struct of_overlay_info - Holds a single overlay info
+> >> + * @info:	info node that contains the target and overlay
+> >>  * @target:	target of the overlay operation
+> >>  * @overlay:	pointer to the overlay contents node
+> >>  *
+> >> @@ -34,8 +49,13 @@
+> >>  * records.
+> >>  */
+> >> struct of_overlay_info {
+> >> +	struct of_overlay *ov;
+> >> +	struct device_node *info;
+> >> 	struct device_node *target;
+> >> 	struct device_node *overlay;
+> >> +	struct attribute_group attr_group;
+> >> +	struct attribute *attrs[2];
+> > 
+> > Why both 2 attributes _and_ an attribute group?  Why not put the
+> > attributes in the attribute group?
+> > 
+> > And why just one attribute group?  Why not an array of them like the
+> > rest of the kernel is used to handle?
+> > 
+> 
+> Because this makes it easier to add all the attributes for all the fragments in a single
+> sysfs_create_groups() call, once for each overlay, instead of having a call to 
+> sysfs_create_group() for each fragment of the overlay.
+> 
+> Reusing driver core helpers is good, no?
 
-The new Enhanced Allocation (EA) capability support (patches to
-follow) creates resources with the IORESOURCE_PCI_FIXED set. Since
-these resources cannot be relocated or resized, their alignment is not
-really defined, and it is therefore not specified.  This causes a
-problem in pbus_size_mem() where resources with unspecified alignment
-are disabled.
+Yes it is, sorry, I missed how you used these later on, and the
+attribute_groups usage there, nice job, sorry for the noise.
 
-So, in pbus_size_mem() skip IORESOURCE_PCI_FIXED resources, instead of
-disabling them.
-
-Acked-by: Sean O. Stalley <sean.stalley@intel.com>
-Signed-off-by: David Daney <david.daney@cavium.com>
----
- drivers/pci/setup-bus.c | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
-
-diff --git a/drivers/pci/setup-bus.c b/drivers/pci/setup-bus.c
-index 508cc56..4dfef10 100644
---- a/drivers/pci/setup-bus.c
-+++ b/drivers/pci/setup-bus.c
-@@ -1037,9 +1037,10 @@ static int pbus_size_mem(struct pci_bus *bus, unsigned long mask,
- 			struct resource *r = &dev->resource[i];
- 			resource_size_t r_size;
- 
--			if (r->parent || ((r->flags & mask) != type &&
--					  (r->flags & mask) != type2 &&
--					  (r->flags & mask) != type3))
-+			if (r->parent || (r->flags | IORESOURCE_PCI_FIXED) ||
-+			    ((r->flags & mask) != type &&
-+			     (r->flags & mask) != type2 &&
-+			     (r->flags & mask) != type3))
- 				continue;
- 			r_size = resource_size(r);
- #ifdef CONFIG_PCI_IOV
--- 
-1.9.1
+greg k-h
