@@ -1,72 +1,71 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [RFC v4 9/9] kmsg: selftests
-Date: Tue, 20 Oct 2015 07:37:50 -0600
-Message-ID: <562643AE.10609@osg.samsung.com>
-References: <1445273404-24562-1-git-send-email-p.osmialowsk@samsung.com>
- <1445273404-24562-10-git-send-email-p.osmialowsk@samsung.com>
- <56254470.4070102@osg.samsung.com>
- <alpine.DEB.2.10.1510201305130.13138@AMDC1262.digital.local>
+From: Peter Hurley <peter@hurleysoftware.com>
+Subject: Re: [PATCH v2 1/2] serial: support register interface with 16-bit
+ stride for console
+Date: Tue, 20 Oct 2015 09:42:23 -0400
+Message-ID: <562644BF.4020204@hurleysoftware.com>
+References: <1445312189-28876-1-git-send-email-yamada.masahiro@socionext.com>
+ <1445312189-28876-2-git-send-email-yamada.masahiro@socionext.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.10.1510201305130.13138@AMDC1262.digital.local>
+In-Reply-To: <1445312189-28876-2-git-send-email-yamada.masahiro@socionext.com>
 Sender: linux-doc-owner@vger.kernel.org
-To: Paul Osmialowski <p.osmialowsk@samsung.com>
-Cc: Jonathan Corbet <corbet@lwn.net>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, Petr Mladek <pmladek@suse.cz>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Mack <daniel@zonque.org>, Kay Sievers <kay.sievers@vrfy.org>, Joe Perches <joe@perches.com>, Tejun Heo <tj@kernel.org>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, Richard Weinberger <richard.weinberger@gmail.com>, Marcin Niesluchowski <m.niesluchow@samsung.com>, Karol Lewandowski <k.lewandowsk@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Shuah Khan <shuahkh@osg.samsung.com>
+To: Masahiro Yamada <yamada.masahiro@socionext.com>, linux-serial@vger.kernel.org
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Vineet Gupta <Vineet.Gupta1@synopsys.com>, Kevin Cernekee <cernekee@gmail.com>, Jiri Slaby <jslaby@suse.com>, Rob Herring <robh@kernel.org>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, Jonathan Corbet <corbet@lwn.net>, linux-kernel@vger.kernel.org, Eddie Huang <eddie.huang@mediatek.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On 10/20/2015 05:10 AM, Paul Osmialowski wrote:
-> Hi Shuah,
+On 10/19/2015 11:36 PM, Masahiro Yamada wrote:
+> Currently, 8-bit (MMIO) and 32-bit (MMIO32) register strides are
+> supported for the 8250 console, but 16-bit (MMIO16) stride is not.
+> The 8250 UART device on my board is connected to a 16-bit bus
+> (reg-shift = <1>) and I am eager to use earlycon with it.
 > 
-> Thanks for your comments,
+> Refer to arch/arm/boot/dts/uniphier-support-card.dtsi:
 > 
-> On Mon, 19 Oct 2015, Shuah Khan wrote:
+>         serialsc: uart@000b0000 {
+>                 compatible = "ns16550a";
+>                 reg = <0x000b0000 0x20>;
+>                 clock-frequency = <12288000>;
+>                 reg-shift = <1>;
+>         };
 > 
->>> --- a/tools/testing/selftests/Makefile
->>> +++ b/tools/testing/selftests/Makefile
->>> @@ -7,6 +7,7 @@ TARGETS += ftrace
->>>  TARGETS += futex
->>>  TARGETS += kcmp
->>>  TARGETS += kdbus
->>
->> Doesn't look like this patch is based on linux-kselftest next
->> or Linus's latest. Please base your work on either one of the
->> above. Please make sure "make kselftest" from top level Makefile
->> doesn't break.
->>
->>> +TARGETS += kmsg
+> Signed-off-by: Masahiro Yamada <yamada.masahiro@socionext.com>
+> ---
 > 
-> Any guidelines what such test should be implemented (apart from use of
-> kselftest.h API)?
+> Changes in v2:
+>   - Do not change userspace-exported macros
+> 
+>  Documentation/kernel-parameters.txt  |  9 +++++----
+>  drivers/tty/serial/8250/8250_early.c |  5 +++++
+>  drivers/tty/serial/8250/8250_port.c  | 20 ++++++++++++++++++++
+>  drivers/tty/serial/earlycon.c        | 15 +++++++++++----
+>  drivers/tty/serial/serial_core.c     |  9 +++++++--
+>  include/linux/serial_core.h          |  1 +
+>  include/uapi/linux/serial.h          |  1 +
+>  7 files changed, 50 insertions(+), 10 deletions(-)
 
-If kselftest.h works well for reporting errors, please use it.
-No requirement on that. The one important thing to remember is
-new test shouldn't break "make kselftest" run and install tool
-kselftest_install.sh
+[...]
 
-> 
->>> +kmsg-test: $(OBJS)
->>> +    $(CC) $(CFLAGS) $^ $(LDLIBS) -o $@
->>> +
->>> +run_tests:
->>> +    ./kmsg-test --tap
->>
->> What does --tap do? Is this a longform option?
->> I don't see it in usage()
->>
-> 
-> Should be removed - I copy-pasted parts of kdbus selftests Makefile not
-> noticing that.
-> 
-> Best regards,
-> Paul
-> 
+> diff --git a/drivers/tty/serial/serial_core.c b/drivers/tty/serial/serial_core.c
+> index 603d2cc..325acce 100644
+> --- a/drivers/tty/serial/serial_core.c
+> +++ b/drivers/tty/serial/serial_core.c
+> @@ -1819,8 +1819,8 @@ uart_get_console(struct uart_port *ports, int nr, struct console *co)
+>   *	@options: ptr for <options> field; NULL if not present (out)
+>   *
+>   *	Decodes earlycon kernel command line parameters of the form
+> - *	   earlycon=<name>,io|mmio|mmio32|mmio32be,<addr>,<options>
+> - *	   console=<name>,io|mmio|mmio32|mmio32be,<addr>,<options>
+> + *	   earlycon=<name>,io|mmio|mmio16|mmio32|mmio32be,<addr>,<options>
+> + *	   console=<name>,io|mmio|mmio16|mmio32|mmio32be,<addr>,<options>
+>   *
+>   *	The optional form
+>   *	   earlycon=<name>,0x<addr>,<options>
 
+This hunk fails to apply. Please rebase on top of tty-next branch of
+Greg's tty.git tree (git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/tty.git)
 
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+Regards,
+Peter Hurley
+
