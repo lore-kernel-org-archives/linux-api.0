@@ -1,14 +1,14 @@
 From: Rob Herring <robherring2@gmail.com>
-Subject: Re: [PATCH v6 0/4] of: overlay: kobject & sysfs'ation
-Date: Tue, 20 Oct 2015 16:52:13 -0500
-Message-ID: <CAL_JsqKXdW3V10axsLTChtvkHtCjc+gVoPqzk0igqJ-+fKrY=A@mail.gmail.com>
+Subject: Re: [PATCH v6 3/4] of: overlay: add per overlay sysfs attributes
+Date: Tue, 20 Oct 2015 16:54:35 -0500
+Message-ID: <CAL_JsqLeQC7x3fuUFRm=MqHHwvDSLFz6GFxvOTCUToO-=yA0Kg@mail.gmail.com>
 References: <1445368397-8732-1-git-send-email-pantelis.antoniou@konsulko.com>
- <CAL_JsqKzwUeZp=pBcxh=4kBhY-6EQDozBweiACUYW1L=1gC4SQ@mail.gmail.com> <BFDE85A8-5F13-4CB7-A027-2E7BEB8A8F1C@konsulko.com>
+ <1445368397-8732-4-git-send-email-pantelis.antoniou@konsulko.com>
+ <CAL_JsqKFJttTsTfwZdMBPEjzqo_OLV=GpHTYZrDGnsgBjF3Bzg@mail.gmail.com> <8A0C91DE-EDF8-449D-918C-95C9807A7616@konsulko.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <BFDE85A8-5F13-4CB7-A027-2E7BEB8A8F1C@konsulko.com>
+In-Reply-To: <8A0C91DE-EDF8-449D-918C-95C9807A7616@konsulko.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
 Cc: Frank Rowand <frowand.list@gmail.com>, Matt Porter <mporter@konsulko.com>, Koen Kooi <koen@dominion.thruhere.net>, Guenter Roeck <linux@roeck-us.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
@@ -18,31 +18,35 @@ On Tue, Oct 20, 2015 at 4:11 PM, Pantelis Antoniou
 <pantelis.antoniou@konsulko.com> wrote:
 > Hi Rob,
 >
->> On Oct 21, 2015, at 00:06 , Rob Herring <robherring2@gmail.com> wrot=
-e:
+>> On Oct 21, 2015, at 00:04 , Rob Herring <robherring2@gmail.com> wrote:
 >>
 >> On Tue, Oct 20, 2015 at 2:13 PM, Pantelis Antoniou
 >> <pantelis.antoniou@konsulko.com> wrote:
->>> The first patch puts the overlays as objects in the sysfs in
->>> /sys/firmware/devicetree/overlays.
+>>> * A per overlay can_remove sysfs attribute that reports whether
+>>> the overlay can be removed or not due to another overlapping overlay.
 >>>
->>> The next adds a master overlay enable switch (that once is set to
->>> disabled can't be re-enabled), while the one after that
->>> introduces a number of default per overlay attributes.
+>>> * A target sysfs attribute listing the target of each fragment,
+>>> in a group named after the name of the fragment.
+
+[...]
+
+>>> @@ -255,6 +278,17 @@ err_fail:
+>>>        return -EINVAL;
+>>> }
 >>>
->>> The patchset is against linus's tree as of today.
->>>
->>> The last patch updates the ABI docs for the sysfs entries.
+>>> +static ssize_t target_show(struct kobject *kobj,
+>>> +               struct fragment_attribute *fattr, char *buf)
+>>> +{
+>>> +       struct of_overlay_info *ovinfo = fattr->ovinfo;
+>>> +
+>>> +       return snprintf(buf, PAGE_SIZE, "%s\n",
+>>> +                       of_node_full_name(ovinfo->target));
 >>
->> I think I told you I would take patches 1 and 2 if you split out the
->> sysfs documentation for that part of it.
+>> This can be a link to the node itself, can't it?
 >>
 >
-> Sorry, but I haven=E2=80=99t seen them being picked up anywhere, so I=
- resent them to be on the safe side.
+> Yes. Do you want it like this?
 
-You would need to separate the kill switch sysfs documentation in
-patch 4 for me to take just the global part. Or just continue to send
-them all. :)
+Yes, hence the suggestion. Unless you see some reason why not.
 
 Rob
