@@ -1,208 +1,266 @@
-From: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v5 1/4] of: overlay: kobjectify overlay objects
-Date: Tue, 20 Oct 2015 16:47:51 +0300
-Message-ID: <D785F4FF-CD2F-4ABA-A673-F51D76D628CA@konsulko.com>
-References: <1442419751-4846-1-git-send-email-pantelis.antoniou@konsulko.com> <1442419751-4846-2-git-send-email-pantelis.antoniou@konsulko.com> <20151004192210.GD9649@kroah.com>
-Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2104\))
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151004192210.GD9649-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Frank Rowand <frowand.list-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Devicetree List <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Bjorn Helgaas <helgaas@kernel.org>
+Subject: Re: [PATCH v5 2/4] PCI: Add support for Enhanced Allocation devices
+Date: Tue, 20 Oct 2015 08:48:00 -0500
+Message-ID: <20151020134759.GC8224@localhost>
+References: <1444175438-7443-1-git-send-email-ddaney.cavm@gmail.com>
+ <1444175438-7443-3-git-send-email-ddaney.cavm@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1444175438-7443-3-git-send-email-ddaney.cavm@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Daney <ddaney.cavm@gmail.com>
+Cc: linux-kernel@vger.kernel.org, linux-pci@vger.kernel.org, Bjorn Helgaas <bhelgaas@google.com>, "Michael S. Tsirkin" <mst@redhat.com>, =?utf-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5@gmail.com>, linux-api@vger.kernel.org, "Sean O. Stalley" <sean.stalley@intel.com>, yinghai@kernel.org, rajatxjain@gmail.com, gong.chen@linux.intel.com, David Daney <david.daney@cavium.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Greg,
+On Tue, Oct 06, 2015 at 04:50:36PM -0700, David Daney wrote:
+> From: "Sean O. Stalley" <sean.stalley@intel.com>
+> 
+> Add support for devices using Enhanced Allocation entries instead of BARs.
+> This patch allows the kernel to parse the EA Extended Capability structure
+> in PCI configspace and claim the BAR-equivalent resources.
+> 
+> Signed-off-by: Sean O. Stalley <sean.stalley@intel.com>
+> [david.daney@cavium.com: Add more support/checking for Entry Properties,
+> allow EA behind bridges, rewrite some error messages.]
+> Signed-off-by: David Daney <david.daney@cavium.com>
+> ---
+>  drivers/pci/pci.c   | 182 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  drivers/pci/pci.h   |   1 +
+>  drivers/pci/probe.c |   3 +
+>  3 files changed, 186 insertions(+)
+> 
+> diff --git a/drivers/pci/pci.c b/drivers/pci/pci.c
+> index 6a9a111..30a90d1 100644
+> --- a/drivers/pci/pci.c
+> +++ b/drivers/pci/pci.c
+> @@ -2148,6 +2148,188 @@ void pci_pm_init(struct pci_dev *dev)
+>  	}
+>  }
+>  
+> +static unsigned long pci_ea_set_flags(struct pci_dev *dev, u8 prop)
+> +{
+> +	unsigned long flags = IORESOURCE_PCI_FIXED;
+> +
+> +	switch (prop) {
+> +	case PCI_EA_P_MEM:
+> +	case PCI_EA_P_VIRT_MEM:
+> +		flags |= IORESOURCE_MEM;
+> +		break;
+> +	case PCI_EA_P_MEM_PREFETCH:
+> +	case PCI_EA_P_VIRT_MEM_PREFETCH:
+> +		flags |= IORESOURCE_MEM | IORESOURCE_PREFETCH;
+> +		break;
+> +	case PCI_EA_P_IO:
+> +		flags |= IORESOURCE_IO;
+> +		break;
+> +	default:
+> +		return 0;
+> +	}
+> +
+> +	return flags;
+> +}
+> +
+> +static struct resource *pci_ea_get_resource(struct pci_dev *dev, u8 bei,
+> +					    u8 prop)
+> +{
+> +	if (bei <= PCI_EA_BEI_BAR5 && prop <= PCI_EA_P_IO)
+> +		return &dev->resource[bei];
+> +	else if (bei == PCI_EA_BEI_ROM)
+> +		return &dev->resource[PCI_ROM_RESOURCE];
+> +	else
+> +		return NULL;
+> +}
+> +
+> +/* Read an Enhanced Allocation (EA) entry */
+> +static int pci_ea_read(struct pci_dev *dev, int offset)
+> +{
+> +	struct resource *res;
+> +	int ent_offset = offset;
+> +	int ent_size;
+> +	resource_size_t start;
+> +	resource_size_t end;
+> +	unsigned long flags;
+> +	u32 dw0;
+> +	u32 base;
+> +	u32 max_offset;
+> +	u8 prop;
+> +	bool support_64 = (sizeof(resource_size_t) >= 8);
+> +
+> +	pci_read_config_dword(dev, ent_offset, &dw0);
+> +	ent_offset += 4;
+> +
+> +	/* Entry size field indicates DWORDs after 1st */
+> +	ent_size = ((dw0 & PCI_EA_ES) + 1) << 2;
+> +
+> +	if (!(dw0 & PCI_EA_ENABLE)) /* Entry not enabled */
+> +		goto out;
+> +
+> +	prop = PCI_EA_PP(dw0);
+> +	/*
+> +	 * If the Property is in the reserved range, try the Secondary
+> +	 * Property instead.
+> +	 */
+> +	if (prop > PCI_EA_P_BRIDGE_IO && prop < PCI_EA_P_MEM_RESERVED)
+> +		prop = PCI_EA_SP(dw0);
+> +	if (prop > PCI_EA_P_BRIDGE_IO)
+> +		goto out;
+> +
+> +	res = pci_ea_get_resource(dev, PCI_EA_BEI(dw0), prop);
+> +	if (!res) {
+> +		dev_err(&dev->dev, "Unsupported EA entry BEI: %u\n",
+> +			PCI_EA_BEI(dw0));
+> +		goto out;
+> +	}
+> +
+> +	flags = pci_ea_set_flags(dev, prop);
+> +	if (!flags) {
+> +		dev_err(&dev->dev, "Unsupported EA properties: %u\n", prop);
+> +		goto out;
+> +	}
+> +
+> +	/* Read Base */
+> +	pci_read_config_dword(dev, ent_offset, &base);
+> +	start = (base & PCI_EA_FIELD_MASK);
+> +	ent_offset += 4;
+> +
+> +	/* Read MaxOffset */
+> +	pci_read_config_dword(dev, ent_offset, &max_offset);
+> +	ent_offset += 4;
+> +
+> +	/* Read Base MSBs (if 64-bit entry) */
+> +	if (base & PCI_EA_IS_64) {
+> +		u32 base_upper;
+> +
+> +		pci_read_config_dword(dev, ent_offset, &base_upper);
+> +		ent_offset += 4;
+> +
+> +		flags |= IORESOURCE_MEM_64;
+> +
+> +		/* entry starts above 32-bit boundary, can't use */
+> +		if (!support_64 && base_upper)
+> +			goto out;
+> +
+> +		if (support_64)
+> +			start |= ((u64)base_upper << 32);
+> +	}
+> +
+> +	dev_dbg(&dev->dev,
+> +		"EA (%u,%u) start = %pa\n", PCI_EA_BEI(dw0), prop, &start);
+> +
+> +	end = start + (max_offset | 0x03);
+> +
+> +	/* Read MaxOffset MSBs (if 64-bit entry) */
+> +	if (max_offset & PCI_EA_IS_64) {
+> +		u32 max_offset_upper;
+> +
+> +		pci_read_config_dword(dev, ent_offset, &max_offset_upper);
+> +		ent_offset += 4;
+> +
+> +		flags |= IORESOURCE_MEM_64;
+> +
+> +		/* entry too big, can't use */
+> +		if (!support_64 && max_offset_upper)
+> +			goto out;
+> +
+> +		if (support_64)
+> +			end += ((u64)max_offset_upper << 32);
+> +	}
+> +
+> +	dev_dbg(&dev->dev,
+> +		"EA (%u,%u) end = %pa\n", PCI_EA_BEI(dw0), prop, &end);
+> +
+> +	if (end < start) {
+> +		dev_err(&dev->dev, "EA Entry crosses address boundary\n");
+> +		goto out;
+> +	}
+> +
+> +	if (ent_size != ent_offset - offset) {
+> +		dev_err(&dev->dev,
+> +			"EA Entry Size (%d) does not match length read (%d)\n",
+> +			ent_size, ent_offset - offset);
+> +		goto out;
+> +	}
+> +
+> +	res->name = pci_name(dev);
+> +	res->start = start;
+> +	res->end = end;
+> +	res->flags = flags;
 
-> On Oct 4, 2015, at 22:22 , Greg Kroah-Hartman <gregkh@linuxfoundation=
-=2Eorg> wrote:
->=20
-> On Wed, Sep 16, 2015 at 07:09:08PM +0300, Pantelis Antoniou wrote:
->> We are going to need the overlays to appear on sysfs with runtime
->> global properties (like master enable) so turn them into kobjects.
->>=20
->> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
->> ---
->> drivers/of/base.c       |  7 +++++++
->> drivers/of/of_private.h |  9 +++++++++
->> drivers/of/overlay.c    | 52 +++++++++++++++++++++++++++++++++++++++=
-++++++++--
->> 3 files changed, 66 insertions(+), 2 deletions(-)
->>=20
->> diff --git a/drivers/of/base.c b/drivers/of/base.c
->> index 8b5a187..31c0c8f 100644
->> --- a/drivers/of/base.c
->> +++ b/drivers/of/base.c
->> @@ -192,6 +192,7 @@ int __of_attach_node_sysfs(struct device_node *n=
-p)
->> void __init of_core_init(void)
->> {
->> 	struct device_node *np;
->> +	int ret;
->>=20
->> 	/* Create the kset, and register existing nodes */
->> 	mutex_lock(&of_mutex);
->> @@ -208,6 +209,12 @@ void __init of_core_init(void)
->> 	/* Symlink in /proc as required by userspace ABI */
->> 	if (of_root)
->> 		proc_symlink("device-tree", NULL, "/sys/firmware/devicetree/base")=
-;
->> +
->> +	ret =3D of_overlay_init();
->> +	if (ret !=3D 0)
->> +		pr_warn("of_init: of_overlay_init failed!\n");
->> +
->> +	return 0;
->> }
->>=20
->> static struct property *__of_find_property(const struct device_node =
-*np,
->> diff --git a/drivers/of/of_private.h b/drivers/of/of_private.h
->> index 8e882e7..120eb44 100644
->> --- a/drivers/of/of_private.h
->> +++ b/drivers/of/of_private.h
->> @@ -90,4 +90,13 @@ extern void __of_detach_node_sysfs(struct device_=
-node *np);
->> #define for_each_transaction_entry_reverse(_oft, _te) \
->> 	list_for_each_entry_reverse(_te, &(_oft)->te_list, node)
->>=20
->> +#if defined(CONFIG_OF_OVERLAY)
->> +extern int of_overlay_init(void);
->> +#else
->> +static inline int of_overlay_init(void)
->> +{
->> +	return 0;
->> +}
->> +#endif
->> +
->> #endif /* _LINUX_OF_PRIVATE_H */
->> diff --git a/drivers/of/overlay.c b/drivers/of/overlay.c
->> index 24e025f..eeb3ec2 100644
->> --- a/drivers/of/overlay.c
->> +++ b/drivers/of/overlay.c
->> @@ -20,6 +20,7 @@
->> #include <linux/slab.h>
->> #include <linux/err.h>
->> #include <linux/idr.h>
->> +#include <linux/sysfs.h>
->>=20
->> #include "of_private.h"
->>=20
->> @@ -51,6 +52,7 @@ struct of_overlay {
->> 	int count;
->> 	struct of_overlay_info *ovinfo_tab;
->> 	struct of_changeset cset;
->> +	struct kobject kobj;
->> };
->>=20
->> static int of_overlay_apply_one(struct of_overlay *ov,
->> @@ -325,6 +327,24 @@ static int of_free_overlay_info(struct of_overl=
-ay *ov)
->> static LIST_HEAD(ov_list);
->> static DEFINE_IDR(ov_idr);
->>=20
->> +static inline struct of_overlay *kobj_to_overlay(struct kobject *ko=
-bj)
->> +{
->> +	return container_of(kobj, struct of_overlay, kobj);
->> +}
->> +
->> +void of_overlay_release(struct kobject *kobj)
->> +{
->> +	struct of_overlay *ov =3D kobj_to_overlay(kobj);
->> +
->> +	kfree(ov);
->> +}
->> +
->> +static struct kobj_type of_overlay_ktype =3D {
->> +	.release =3D of_overlay_release,
->> +};
->> +
->> +static struct kset *ov_kset;
->> +
->> /**
->>  * of_overlay_create() - Create and apply an overlay
->>  * @tree:	Device node containing all the overlays
->> @@ -350,6 +370,9 @@ int of_overlay_create(struct device_node *tree)
->>=20
->> 	of_changeset_init(&ov->cset);
->>=20
->> +	/* initialize kobject */
->> +	kobject_init(&ov->kobj, &of_overlay_ktype);
->> +
->> 	mutex_lock(&of_mutex);
->>=20
->> 	id =3D idr_alloc(&ov_idr, ov, 0, 0, GFP_KERNEL);
->> @@ -385,6 +408,14 @@ int of_overlay_create(struct device_node *tree)
->> 		goto err_revert_overlay;
->> 	}
->>=20
->> +	ov->kobj.kset =3D ov_kset;
->> +	err =3D kobject_add(&ov->kobj, NULL, "%d", id);
->=20
-> NULL for the parent?  Really?  Where does that cause this kobject to
-> show up in the sysfs tree?
->=20
+This is similar to reading a BAR from a normal device; can you print what
+we found so it looks similar in dmesg, e.g., similar to what
+__pci_read_base() does?  Note that "dev_dbg" is not equivalent to
+dev_printk(KERN_DEBUG).  I want the output in dmesg all the time, without
+having to enable something via dyndbg.
 
-It shows up in the root of it=E2=80=99s kset, i.e. /sys/firmware/device=
-tree/overlays
-
-It=E2=80=99s a common idiom in the kernel as evident by:
-
-$ grep 'kobject_add([^,]*,[^,]NULL' drivers/ -r
-drivers/of/base.c:		rc =3D kobject_add(&np->kobj, NULL, "%s",
-drivers/firmware/memmap.c:	if (kobject_add(&entry->kobj, NULL, "%d", ma=
-p_entries_nr++))
-drivers/firmware/efi/runtime-map.c:	ret =3D kobject_add(&entry->kobj, N=
-ULL, "%d", nr);
-
->> @@ -512,7 +545,9 @@ int of_overlay_destroy(int id)
->> 	of_free_overlay_info(ov);
->> 	idr_remove(&ov_idr, id);
->> 	of_changeset_destroy(&ov->cset);
->> -	kfree(ov);
->> +
->> +	kobject_del(&ov->kobj);
->> +	kobject_put(&ov->kobj);
->=20
-> Two drops of the reference?
->=20
-
-There=E2=80=99s a single drop. Only kobject_put drops the reference. Bu=
-t you=E2=80=99re right,
-the kobject_del is not required; it=E2=80=99s performed implicitly by t=
-he kobj_cleanup()
-method.
-
-=46ixing in the new patch.
-
-> void of_overlay_release(struct kobject *kobj)
-> {
->         struct of_overlay *ov =3D kobj_to_overlay(kobj);
->=20
->         of_node_put(ov->target_root);
->         kfree(ov->indirect_id);
->         kfree(ov);
-> }
-
->>=20
->> 	err =3D 0;
->>=20
->> @@ -542,7 +577,8 @@ int of_overlay_destroy_all(void)
->> 		of_changeset_revert(&ov->cset);
->> 		of_free_overlay_info(ov);
->> 		idr_remove(&ov_idr, ov->id);
->> -		kfree(ov);
->> +		kobject_del(&ov->kobj);
->> +		kobject_put(&ov->kobj);
->=20
-> Again, why 2?
->=20
-> thanks,
->=20
-> greg k-h
-
-Regards
-
-=E2=80=94 Pantelis
+> +
+> +out:
+> +	return offset + ent_size;
+> +}
+> +
+> +/* Enhanced Allocation Initalization */
+> +void pci_ea_init(struct pci_dev *dev)
+> +{
+> +	int ea;
+> +	u8 num_ent;
+> +	int offset;
+> +	int i;
+> +
+> +	/* find PCI EA capability in list */
+> +	ea = pci_find_capability(dev, PCI_CAP_ID_EA);
+> +	if (!ea)
+> +		return;
+> +
+> +	/* determine the number of entries */
+> +	pci_bus_read_config_byte(dev->bus, dev->devfn, ea + PCI_EA_NUM_ENT,
+> +					&num_ent);
+> +	num_ent &= PCI_EA_NUM_ENT_MASK;
+> +
+> +	offset = ea + PCI_EA_FIRST_ENT;
+> +
+> +	/* Skip DWORD 2 for type 1 functions */
+> +	if (dev->hdr_type == PCI_HEADER_TYPE_BRIDGE)
+> +		offset += 4;
+> +
+> +	/* parse each EA entry */
+> +	for (i = 0; i < num_ent; ++i)
+> +		offset = pci_ea_read(dev, offset);
+> +}
+> +
+>  static void pci_add_saved_cap(struct pci_dev *pci_dev,
+>  	struct pci_cap_saved_state *new_cap)
+>  {
+> diff --git a/drivers/pci/pci.h b/drivers/pci/pci.h
+> index 24ba9dc..a160733 100644
+> --- a/drivers/pci/pci.h
+> +++ b/drivers/pci/pci.h
+> @@ -78,6 +78,7 @@ bool pci_dev_keep_suspended(struct pci_dev *dev);
+>  void pci_config_pm_runtime_get(struct pci_dev *dev);
+>  void pci_config_pm_runtime_put(struct pci_dev *dev);
+>  void pci_pm_init(struct pci_dev *dev);
+> +void pci_ea_init(struct pci_dev *dev);
+>  void pci_allocate_cap_save_buffers(struct pci_dev *dev);
+>  void pci_free_cap_save_buffers(struct pci_dev *dev);
+>  
+> diff --git a/drivers/pci/probe.c b/drivers/pci/probe.c
+> index 8361d27..4c4af78 100644
+> --- a/drivers/pci/probe.c
+> +++ b/drivers/pci/probe.c
+> @@ -1597,6 +1597,9 @@ static struct pci_dev *pci_scan_device(struct pci_bus *bus, int devfn)
+>  
+>  static void pci_init_capabilities(struct pci_dev *dev)
+>  {
+> +	/* Enhanced Allocation */
+> +	pci_ea_init(dev);
+> +
+>  	/* MSI/MSI-X list */
+>  	pci_msi_init_pci_dev(dev);
+>  
+> -- 
+> 1.9.1
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-pci" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
