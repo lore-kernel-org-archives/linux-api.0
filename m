@@ -1,47 +1,33 @@
-From: Tadeusz Struk <tadeusz.struk@intel.com>
-Subject: Re: [PATCH v2 1/5] MPI: fix off by one in mpi_read_raw_from_sgl
-Date: Mon, 19 Oct 2015 16:25:29 -0700
-Message-ID: <56257BE9.7000303@intel.com>
-References: <1831785.BBs8Hj3CxY@myon.chronox.de>
- <3192672.E3TvJmsW94@myon.chronox.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <3192672.E3TvJmsW94@myon.chronox.de>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Stephan Mueller <smueller@chronox.de>, herbert@gondor.apana.org.au
-Cc: linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+From: Masahiro Yamada <yamada.masahiro-uWyLwvC0a2jby3iVrkZq2A@public.gmane.org>
+Subject: [PATCH v2 0/2] serial: console: add two features
+Date: Tue, 20 Oct 2015 12:36:27 +0900
+Message-ID: <1445312189-28876-1-git-send-email-yamada.masahiro@socionext.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Masahiro Yamada <yamada.masahiro-uWyLwvC0a2jby3iVrkZq2A@public.gmane.org>, Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Vineet Gupta <Vineet.Gupta1-HKixBCOQz3hWk0Htik3J/w@public.gmane.org>, Kevin Cernekee <cernekee-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jiri Slaby <jslaby-IBi9RG/b67k@public.gmane.org>, Rob Herring <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Eddie Huang <eddie.huang-NuS5LvNUpcJWk0Htik3J/w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 10/18/2015 03:45 AM, Stephan Mueller wrote:
-> The patch fixes the analysis of the input data which contains an off
-> by one.
-> 
-> The issue is visible when the SGL contains one byte per SG entry.
-> The code for checking for zero bytes does not operate on the data byte.
-> 
-> Signed-off-by: Stephan Mueller <smueller@chronox.de>
-> ---
->  lib/mpi/mpicoder.c | 5 ++++-
->  1 file changed, 4 insertions(+), 1 deletion(-)
-> 
-> diff --git a/lib/mpi/mpicoder.c b/lib/mpi/mpicoder.c
-> index c20ef27..c7e0a70 100644
-> --- a/lib/mpi/mpicoder.c
-> +++ b/lib/mpi/mpicoder.c
-> @@ -446,8 +446,11 @@ MPI mpi_read_raw_from_sgl(struct scatterlist *sgl, unsigned int len)
->  		const u8 *buff = sg_virt(sg);
->  		int len = sg->length;
->  
-> -		while (len-- && !*buff++)
-> +		while (len && !*buff) {
->  			lzeros++;
-> +			len--;
-> +			buff++;
-> +		}
->  
->  		if (len && *buff)
->  			break;
+1/2: add MMIO16 register interface support
+2/2: allow to input clock frequency from kernel parameter
 
-ACK. Thanks for testing this Stephan.
+
+Changes in v2:
+  - Do not change userspace-exported macros
+
+Masahiro Yamada (2):
+  serial: support register interface with 16-bit stride for console
+  serial: earlycon: allow to specify uartclk in earlycon
+    kernel-parameter
+
+ Documentation/kernel-parameters.txt  |  9 +++++----
+ drivers/tty/serial/8250/8250_early.c |  5 +++++
+ drivers/tty/serial/8250/8250_port.c  | 20 ++++++++++++++++++++
+ drivers/tty/serial/earlycon.c        | 23 ++++++++++++++++++-----
+ drivers/tty/serial/serial_core.c     |  9 +++++++--
+ include/linux/serial_core.h          |  1 +
+ include/uapi/linux/serial.h          |  1 +
+ 7 files changed, 57 insertions(+), 11 deletions(-)
+
+-- 
+1.9.1
