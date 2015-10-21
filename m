@@ -1,172 +1,101 @@
-From: David Daney <ddaney@caviumnetworks.com>
-Subject: Re: [PATCH v6 0/5] PCI: Add support for PCI Enhanced Allocation
- "BARs"
-Date: Wed, 21 Oct 2015 08:39:59 -0700
-Message-ID: <5627B1CF.2010703@caviumnetworks.com>
-References: <1445382282-2396-1-git-send-email-ddaney.cavm@gmail.com>
- <20151021151459.GA1583@localhost>
+From: Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v8 04/14] task_isolation: add initial support
+Date: Wed, 21 Oct 2015 18:12:48 +0200
+Message-ID: <20151021161247.GA19764@lerouge>
+References: <1445373372-6567-1-git-send-email-cmetcalf@ezchip.com>
+ <1445373372-6567-5-git-send-email-cmetcalf@ezchip.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-pci-owner@vger.kernel.org>
-In-Reply-To: <20151021151459.GA1583@localhost>
-Sender: linux-pci-owner@vger.kernel.org
-To: Bjorn Helgaas <helgaas@kernel.org>, David Daney <ddaney.cavm@gmail.com>
-Cc: linux-kernel@vger.kernel.org, linux-pci@vger.kernel.org, Bjorn Helgaas <bhelgaas@google.com>, "Michael S. Tsirkin" <mst@redhat.com>, =?UTF-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5@gmail.com>, linux-api@vger.kernel.org, "Sean O. Stalley" <sean.stalley@intel.com>, yinghai@kernel.org, rajatxjain@gmail.com, gong.chen@linux.intel.com, David Daney <david.daney@cavium.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1445373372-6567-5-git-send-email-cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Cc: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 10/21/2015 08:14 AM, Bjorn Helgaas wrote:
-[...]
-> Applied to pci/enhanced-allocation for v4.4, thanks, David!
->
-> I tweaked a couple trivial things and added a couple almost trivial patches
-> on top.  Here are the additions; let me know if you see anything wrong.
->
-
-Thanks for working with us on this.
-
-Your additional changes look to be correct to me, I will give them a 
-test within the next few days.
-
-David Daney
-
-
-> Bjorn
->
->
-> commit 6457d085fade7d96a3aa6c5dca848fd82b4a4fa4
-> Author: Bjorn Helgaas <bhelgaas@google.com>
-> Date:   Wed Oct 21 09:34:15 2015 -0500
->
->      PCI: Make Enhanced Allocation bitmasks more obvious
->
->      Expand bitmask #defines completely.  This puts the shift in the code
->      instead of in the #define, but it makes it more obvious in the header file
->      how fields in the register are laid out.
->
->      No functional change.
->
->      Signed-off-by: Bjorn Helgaas <bhelgaas@google.com>
->
-> diff --git a/drivers/pci/pci.c b/drivers/pci/pci.c
-> index 364f98b..e8330b6 100644
-> --- a/drivers/pci/pci.c
-> +++ b/drivers/pci/pci.c
-> @@ -2195,7 +2195,7 @@ static int pci_ea_read(struct pci_dev *dev, int offset)
->   	int ent_size, ent_offset = offset;
->   	resource_size_t start, end;
->   	unsigned long flags;
-> -	u32 dw0, base, max_offset;
-> +	u32 dw0, bei, base, max_offset;
->   	u8 prop;
->   	bool support_64 = (sizeof(resource_size_t) >= 8);
->
-> @@ -2208,20 +2208,21 @@ static int pci_ea_read(struct pci_dev *dev, int offset)
->   	if (!(dw0 & PCI_EA_ENABLE)) /* Entry not enabled */
->   		goto out;
->
-> -	prop = PCI_EA_PP(dw0);
-> +	bei = (dw0 & PCI_EA_BEI) >> 4;
-> +	prop = (dw0 & PCI_EA_PP) >> 8;
+On Tue, Oct 20, 2015 at 04:36:02PM -0400, Chris Metcalf wrote:
+> diff --git a/kernel/isolation.c b/kernel/isolation.c
+> new file mode 100644
+> index 000000000000..9a73235db0bb
+> --- /dev/null
+> +++ b/kernel/isolation.c
+> @@ -0,0 +1,78 @@
+> +/*
+> + *  linux/kernel/isolation.c
+> + *
+> + *  Implementation for task isolation.
+> + *
+> + *  Distributed under GPLv2.
+> + */
 > +
->   	/*
->   	 * If the Property is in the reserved range, try the Secondary
->   	 * Property instead.
->   	 */
->   	if (prop > PCI_EA_P_BRIDGE_IO && prop < PCI_EA_P_MEM_RESERVED)
-> -		prop = PCI_EA_SP(dw0);
-> +		prop = (dw0 & PCI_EA_SP) >> 16;
->   	if (prop > PCI_EA_P_BRIDGE_IO)
->   		goto out;
->
-> -	res = pci_ea_get_resource(dev, PCI_EA_BEI(dw0), prop);
-> +	res = pci_ea_get_resource(dev, bei, prop);
->   	if (!res) {
-> -		dev_err(&dev->dev, "Unsupported EA entry BEI: %u\n",
-> -			PCI_EA_BEI(dw0));
-> +		dev_err(&dev->dev, "Unsupported EA entry BEI: %u\n", bei);
->   		goto out;
->   	}
->
-> @@ -2293,7 +2294,7 @@ static int pci_ea_read(struct pci_dev *dev, int offset)
->   	res->end = end;
->   	res->flags = flags;
->   	dev_printk(KERN_DEBUG, &dev->dev, "EA - BEI %2u, Prop 0x%02x: %pR\n",
-> -		   PCI_EA_BEI(dw0), prop, res);
-> +		   bei, prop, res);
->   out:
->   	return offset + ent_size;
->   }
-> diff --git a/include/uapi/linux/pci_regs.h b/include/uapi/linux/pci_regs.h
-> index f890876..1becea8 100644
-> --- a/include/uapi/linux/pci_regs.h
-> +++ b/include/uapi/linux/pci_regs.h
-> @@ -361,7 +361,7 @@
->   #define PCI_EA_FIRST_ENT	4	/* First EA Entry in List */
->   #define PCI_EA_FIRST_ENT_BRIDGE	8	/* First EA Entry for Bridges */
->   #define  PCI_EA_ES		0x00000007 /* Entry Size */
-> -#define  PCI_EA_BEI(x)	(((x) >> 4) & 0xf) /* BAR Equivalent Indicator */
-> +#define  PCI_EA_BEI		0x000000f0 /* BAR Equivalent Indicator */
->   /* 0-5 map to BARs 0-5 respectively */
->   #define   PCI_EA_BEI_BAR0		0
->   #define   PCI_EA_BEI_BAR5		5
-> @@ -372,8 +372,8 @@
->   #define   PCI_EA_BEI_VF_BAR0		9
->   #define   PCI_EA_BEI_VF_BAR5		14
->   #define   PCI_EA_BEI_RESERVED		15	/* Reserved - Treat like ENI */
-> -#define  PCI_EA_PP(x)	(((x) >>  8) & 0xff)	/* Primary Properties */
-> -#define  PCI_EA_SP(x)	(((x) >> 16) & 0xff)	/* Secondary Properties */
-> +#define  PCI_EA_PP		0x0000ff00	/* Primary Properties */
-> +#define  PCI_EA_SP		0x00ff0000	/* Secondary Properties */
->   #define   PCI_EA_P_MEM			0x00	/* Non-Prefetch Memory */
->   #define   PCI_EA_P_MEM_PREFETCH		0x01	/* Prefetchable Memory */
->   #define   PCI_EA_P_IO			0x02	/* I/O Space */
->
-> commit 6985dcc83d70f019523ba9ff499898261f33c937
-> Author: Bjorn Helgaas <bhelgaas@google.com>
-> Date:   Wed Oct 21 09:53:39 2015 -0500
->
->      PCI: Expand Enhanced Allocation BAR output
->
->      An Enhanced Allocation Capability entry with BEI 0 fills in
->      dev->resource[0] just like a real BAR 0 would, but non-EA experts might not
->      connect "EA - BEI 0" with BAR 0.
->
->      Decode the EA jargon a little bit, e.g., change this:
->
->        pci 0002:01:00.0: EA - BEI  0, Prop 0x00: [mem 0x84300000-0x84303fff]
->
->      to this:
->
->        pci 0002:01:00.0: BAR 0: [mem 0x84300000-0x84303fff] (from Enhanced Allocation, properties 0x00)
->
->      Signed-off-by: Bjorn Helgaas <bhelgaas@google.com>
->
-> diff --git a/drivers/pci/pci.c b/drivers/pci/pci.c
-> index e8330b6..3a1454e 100644
-> --- a/drivers/pci/pci.c
-> +++ b/drivers/pci/pci.c
-> @@ -2293,8 +2293,20 @@ static int pci_ea_read(struct pci_dev *dev, int offset)
->   	res->start = start;
->   	res->end = end;
->   	res->flags = flags;
-> -	dev_printk(KERN_DEBUG, &dev->dev, "EA - BEI %2u, Prop 0x%02x: %pR\n",
-> -		   bei, prop, res);
+> +#include <linux/mm.h>
+> +#include <linux/swap.h>
+> +#include <linux/vmstat.h>
+> +#include <linux/isolation.h>
+> +#include <linux/syscalls.h>
+> +#include "time/tick-sched.h"
 > +
-> +	if (bei <= PCI_EA_BEI_BAR5)
-> +		dev_printk(KERN_DEBUG, &dev->dev, "BAR %d: %pR (from Enhanced Allocation, properties %#02x)\n",
-> +			   bei, res, prop);
-> +	else if (bei == PCI_EA_BEI_ROM)
-> +		dev_printk(KERN_DEBUG, &dev->dev, "ROM: %pR (from Enhanced Allocation, properties %#02x)\n",
-> +			   res, prop);
-> +	else if (bei >= PCI_EA_BEI_VF_BAR0 && bei <= PCI_EA_BEI_VF_BAR5)
-> +		dev_printk(KERN_DEBUG, &dev->dev, "VF BAR %d: %pR (from Enhanced Allocation, properties %#02x)\n",
-> +			   bei - PCI_EA_BEI_VF_BAR0, res, prop);
-> +	else
-> +		dev_printk(KERN_DEBUG, &dev->dev, "BEI %d res: %pR (from Enhanced Allocation, properties %#02x)\n",
-> +			   bei, res, prop);
+> +/*
+> + * This routine controls whether we can enable task-isolation mode.
+> + * The task must be affinitized to a single nohz_full core or we will
+> + * return EINVAL.  Although the application could later re-affinitize
+> + * to a housekeeping core and lose task isolation semantics, this
+> + * initial test should catch 99% of bugs with task placement prior to
+> + * enabling task isolation.
+> + */
+> +int task_isolation_set(unsigned int flags)
+> +{
+> +	if (cpumask_weight(tsk_cpus_allowed(current)) != 1 ||
+
+I think you'll have to make sure the task can not be concurrently reaffined
+to more CPUs. This may involve setting task_isolation_flags under the runqueue
+lock and thus move that tiny part to the scheduler code. And then we must forbid
+changing the affinity while the task has the isolation flag, or deactivate the flag.
+
+In any case this needs some synchronization.
+
+> +	    !tick_nohz_full_cpu(smp_processor_id()))
+> +		return -EINVAL;
 > +
->   out:
->   	return offset + ent_size;
->   }
->
+> +	current->task_isolation_flags = flags;
+> +	return 0;
+> +}
+> +
+> +/*
+> + * In task isolation mode we try to return to userspace only after
+> + * attempting to make sure we won't be interrupted again.  To handle
+> + * the periodic scheduler tick, we test to make sure that the tick is
+> + * stopped, and if it isn't yet, we request a reschedule so that if
+> + * another task needs to run to completion first, it can do so.
+> + * Similarly, if any other subsystems require quiescing, we will need
+> + * to do that before we return to userspace.
+> + */
+> +bool _task_isolation_ready(void)
+> +{
+> +	WARN_ON_ONCE(!irqs_disabled());
+> +
+> +	/* If we need to drain the LRU cache, we're not ready. */
+> +	if (lru_add_drain_needed(smp_processor_id()))
+> +		return false;
+> +
+> +	/* If vmstats need updating, we're not ready. */
+> +	if (!vmstat_idle())
+> +		return false;
+> +
+> +	/* If the tick is running, request rescheduling; we're not ready. */
+> +	if (!tick_nohz_tick_stopped()) {
+
+Note that this function tells whether the tick is in dynticks mode, which means
+the tick currently only run on-demand. But it's not necessarily completely stopped.
+
+I think we should rename that function and the field it refers to.
+
+> +		set_tsk_need_resched(current);
+> +		return false;
+> +	}
+> +
+> +	return true;
+> +}
+
+Thanks.
