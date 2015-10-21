@@ -1,106 +1,253 @@
-From: Daniel Borkmann <daniel@iogearbox.net>
-Subject: Re: [PATCH v8] seccomp, ptrace: add support for dumping seccomp filters
-Date: Wed, 21 Oct 2015 22:18:20 +0200
-Message-ID: <5627F30C.5020904@iogearbox.net>
-References: <1445370612-18843-1-git-send-email-tycho.andersen@canonical.com>	<1445370612-18843-2-git-send-email-tycho.andersen@canonical.com>	<20151020202024.GA5772@redhat.com>	<20151020220814.GA3232@hopstrocity>	<20151021185146.GA27176@redhat.com>	<20151021191533.GD30729@hopstrocity> <CAGXu5jL-LMC6SLazLE0UPcffr9cD5Z0ME4ddNjJmBKTx=dXz_A@mail.gmail.com>
+From: Tycho Andersen <tycho.andersen@canonical.com>
+Subject: Re: [PATCH v8] seccomp, ptrace: add support for dumping seccomp
+ filters
+Date: Wed, 21 Oct 2015 14:37:32 -0600
+Message-ID: <20151021203732.GE30729@hopstrocity>
+References: <1445370612-18843-1-git-send-email-tycho.andersen@canonical.com>
+ <1445370612-18843-2-git-send-email-tycho.andersen@canonical.com>
+ <20151020202024.GA5772@redhat.com>
+ <20151020220814.GA3232@hopstrocity>
+ <20151021185146.GA27176@redhat.com>
+ <20151021191533.GD30729@hopstrocity>
+ <CAGXu5jL-LMC6SLazLE0UPcffr9cD5Z0ME4ddNjJmBKTx=dXz_A@mail.gmail.com>
+ <5627F30C.5020904@iogearbox.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="gBBFr7Ir9EOA20Yy"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAGXu5jL-LMC6SLazLE0UPcffr9cD5Z0ME4ddNjJmBKTx=dXz_A@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <5627F30C.5020904@iogearbox.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>, Tycho Andersen <tycho.andersen@canonical.com>
-Cc: Oleg Nesterov <oleg@redhat.com>, Alexei Starovoitov <ast@kernel.org>, Will Drewry <wad@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Daniel Borkmann <daniel@iogearbox.net>
+Cc: Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, Alexei Starovoitov <ast@kernel.org>, Will Drewry <wad@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 10/21/2015 10:12 PM, Kees Cook wrote:
-> On Wed, Oct 21, 2015 at 12:15 PM, Tycho Andersen
-> <tycho.andersen@canonical.com> wrote:
->> Hi Oleg,
->>
->> On Wed, Oct 21, 2015 at 08:51:46PM +0200, Oleg Nesterov wrote:
->>> On 10/20, Tycho Andersen wrote:
->>>>
->>>> Hi Kees, Oleg,
->>>>
->>>> On Tue, Oct 20, 2015 at 10:20:24PM +0200, Oleg Nesterov wrote:
->>>>>
->>>>> No, you can't do copy_to_user() from atomic context. You need to pin this
->>>>> filter, drop the lock/irq, then copy_to_user().
->>>>
->>>> Attached is a patch which addresses this.
->>>
->>> Looks good to me, feel free to add my reviewed-by.
->>>
->>>
->>> a couple of questions, I am just curious...
->>>
->>>> +long seccomp_get_filter(struct task_struct *task, unsigned long filter_off,
->>>> +                   void __user *data)
->>>> +{
->>>> +   struct seccomp_filter *filter;
->>>> +   struct sock_fprog_kern *fprog;
->>>> +   long ret;
->>>> +   unsigned long count = 0;
->>>> +
->>>> +   if (!capable(CAP_SYS_ADMIN) ||
->>>> +       current->seccomp.mode != SECCOMP_MODE_DISABLED) {
->>>> +           return -EACCES;
->>>> +   }
->>>> +
->>>> +   spin_lock_irq(&task->sighand->siglock);
->>>> +   if (task->seccomp.mode != SECCOMP_MODE_FILTER) {
->>>> +           ret = -EINVAL;
->>>> +           goto out;
->>>> +   }
->>>> +
->>>> +   filter = task->seccomp.filter;
->>>> +   while (filter) {
->>>> +           filter = filter->prev;
->>>> +           count++;
->>>> +   }
->>>> +
->>>> +   if (filter_off >= count) {
->>>> +           ret = -ENOENT;
->>>> +           goto out;
->>>> +   }
->>>> +   count -= filter_off;
->>>> +
->>>> +   filter = task->seccomp.filter;
->>>> +   while (filter && count > 1) {
->>>> +           filter = filter->prev;
->>>> +           count--;
->>>> +   }
->>>> +
->>>> +   if (WARN_ON(count != 1)) {
->>>> +           /* The filter tree shouldn't shrink while we're using it. */
->>>> +           ret = -ENOENT;
->>>
->>> Yes. but this looks a bit confusing. If we want this WARN_ON() check
->>> because we are paranoid, then we should do
->>>
->>>        WARN_ON(count != 1 || filter);
->>
->> I guess you mean !filter here? We want filter to be non-null, because
->> we use it later.
->>
->>> And "while we're using it" look misleading, we rely on ->siglock.
->>>
->>> Plus if we could be shrinked the additional check can't help anyway,
->>> we can used the free filter. So I don't really understand this check
->>> and "filter != NULL" in the previous "while (filter && count > 1)".
->>> Nevermind...
->>
->> Just paranoia. You're right that we could get rid of WARN_ON and the
->> null check. I can send an updated patch to drop these bits if
->> necessary. Kees?
->
-> I like being really paranoid when dealing with the filters. Let's keep
-> the WARN_ON (with the "|| !filter" added) but maybe wrap it in
-> "unlikely"?
 
-Btw, the conditions inside the WARN_ON() macro would already resolve
-to unlikely().
+--gBBFr7Ir9EOA20Yy
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Best,
-Daniel
+On Wed, Oct 21, 2015 at 10:18:20PM +0200, Daniel Borkmann wrote:
+> On 10/21/2015 10:12 PM, Kees Cook wrote:
+> >
+> >I like being really paranoid when dealing with the filters. Let's keep
+> >the WARN_ON (with the "|| !filter" added) but maybe wrap it in
+> >"unlikely"?
+> 
+> Btw, the conditions inside the WARN_ON() macro would already resolve
+> to unlikely().
+
+Here's an updated patch with the !filter as well.
+
+Thanks,
+
+Tycho
+
+--gBBFr7Ir9EOA20Yy
+Content-Type: text/x-diff; charset=us-ascii
+Content-Disposition: attachment; filename="0001-seccomp-ptrace-add-support-for-dumping-seccomp-filte.patch"
+
+>From f37256a6f5e9e975943024ec0a26796a48521492 Mon Sep 17 00:00:00 2001
+From: Tycho Andersen <tycho.andersen@canonical.com>
+Date: Fri, 2 Oct 2015 18:49:43 -0600
+Subject: [PATCH] seccomp, ptrace: add support for dumping seccomp filters
+
+This patch adds support for dumping a process' (classic BPF) seccomp
+filters via ptrace.
+
+PTRACE_SECCOMP_GET_FILTER allows the tracer to dump the user's classic BPF
+seccomp filters. addr should be an integer which represents the ith seccomp
+filter (0 is the most recently installed filter). data should be a struct
+sock_filter * with enough room for the ith filter, or NULL, in which case
+the filter is not saved. The return value for this command is the number of
+BPF instructions the program represents, or negative in the case of errors.
+Command specific errors are ENOENT: which indicates that there is no ith
+filter in this seccomp tree, and EMEDIUMTYPE, which indicates that the ith
+filter was not installed as a classic BPF filter.
+
+A caveat with this approach is that there is no way to get explicitly at
+the heirarchy of seccomp filters, and users need to memcmp() filters to
+decide which are inherited. This means that a task which installs two of
+the same filter can potentially confuse users of this interface.
+
+v2: * make save_orig const
+    * check that the orig_prog exists (not necessary right now, but when
+       grows eBPF support it will be)
+    * s/n/filter_off and make it an unsigned long to match ptrace
+    * count "down" the tree instead of "up" when passing a filter offset
+
+v3: * don't take the current task's lock for inspecting its seccomp mode
+    * use a 0x42** constant for the ptrace command value
+
+v4: * don't copy to userspace while holding spinlocks
+
+v5: * add another condition to WARN_ON
+
+Signed-off-by: Tycho Andersen <tycho.andersen@canonical.com>
+CC: Kees Cook <keescook@chromium.org>
+CC: Will Drewry <wad@chromium.org>
+CC: Oleg Nesterov <oleg@redhat.com>
+Reviewed-by: Oleg Nesterov <oleg@redhat.com>
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Pavel Emelyanov <xemul@parallels.com>
+CC: Serge E. Hallyn <serge.hallyn@ubuntu.com>
+CC: Alexei Starovoitov <ast@kernel.org>
+CC: Daniel Borkmann <daniel@iogearbox.net>
+---
+ include/linux/seccomp.h     | 11 +++++++
+ include/uapi/linux/ptrace.h |  2 ++
+ kernel/ptrace.c             |  5 +++
+ kernel/seccomp.c            | 76 ++++++++++++++++++++++++++++++++++++++++++++-
+ 4 files changed, 93 insertions(+), 1 deletion(-)
+
+diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
+index f426503..2296e6b 100644
+--- a/include/linux/seccomp.h
++++ b/include/linux/seccomp.h
+@@ -95,4 +95,15 @@ static inline void get_seccomp_filter(struct task_struct *tsk)
+ 	return;
+ }
+ #endif /* CONFIG_SECCOMP_FILTER */
++
++#if defined(CONFIG_SECCOMP_FILTER) && defined(CONFIG_CHECKPOINT_RESTORE)
++extern long seccomp_get_filter(struct task_struct *task,
++			       unsigned long filter_off, void __user *data);
++#else
++static inline long seccomp_get_filter(struct task_struct *task,
++				      unsigned long n, void __user *data)
++{
++	return -EINVAL;
++}
++#endif /* CONFIG_SECCOMP_FILTER && CONFIG_CHECKPOINT_RESTORE */
+ #endif /* _LINUX_SECCOMP_H */
+diff --git a/include/uapi/linux/ptrace.h b/include/uapi/linux/ptrace.h
+index a7a6979..fb81065 100644
+--- a/include/uapi/linux/ptrace.h
++++ b/include/uapi/linux/ptrace.h
+@@ -64,6 +64,8 @@ struct ptrace_peeksiginfo_args {
+ #define PTRACE_GETSIGMASK	0x420a
+ #define PTRACE_SETSIGMASK	0x420b
+ 
++#define PTRACE_SECCOMP_GET_FILTER	0x420c
++
+ /* Read signals from a shared (process wide) queue */
+ #define PTRACE_PEEKSIGINFO_SHARED	(1 << 0)
+ 
+diff --git a/kernel/ptrace.c b/kernel/ptrace.c
+index 787320d..b760bae 100644
+--- a/kernel/ptrace.c
++++ b/kernel/ptrace.c
+@@ -1016,6 +1016,11 @@ int ptrace_request(struct task_struct *child, long request,
+ 		break;
+ 	}
+ #endif
++
++	case PTRACE_SECCOMP_GET_FILTER:
++		ret = seccomp_get_filter(child, addr, datavp);
++		break;
++
+ 	default:
+ 		break;
+ 	}
+diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+index 06858a7..580ac2d 100644
+--- a/kernel/seccomp.c
++++ b/kernel/seccomp.c
+@@ -347,6 +347,7 @@ static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
+ {
+ 	struct seccomp_filter *sfilter;
+ 	int ret;
++	const bool save_orig = config_enabled(CONFIG_CHECKPOINT_RESTORE);
+ 
+ 	if (fprog->len == 0 || fprog->len > BPF_MAXINSNS)
+ 		return ERR_PTR(-EINVAL);
+@@ -370,7 +371,7 @@ static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
+ 		return ERR_PTR(-ENOMEM);
+ 
+ 	ret = bpf_prog_create_from_user(&sfilter->prog, fprog,
+-					seccomp_check_filter, false);
++					seccomp_check_filter, save_orig);
+ 	if (ret < 0) {
+ 		kfree(sfilter);
+ 		return ERR_PTR(ret);
+@@ -867,3 +868,76 @@ long prctl_set_seccomp(unsigned long seccomp_mode, char __user *filter)
+ 	/* prctl interface doesn't have flags, so they are always zero. */
+ 	return do_seccomp(op, 0, uargs);
+ }
++
++#if defined(CONFIG_SECCOMP_FILTER) && defined(CONFIG_CHECKPOINT_RESTORE)
++long seccomp_get_filter(struct task_struct *task, unsigned long filter_off,
++			void __user *data)
++{
++	struct seccomp_filter *filter;
++	struct sock_fprog_kern *fprog;
++	long ret;
++	unsigned long count = 0;
++
++	if (!capable(CAP_SYS_ADMIN) ||
++	    current->seccomp.mode != SECCOMP_MODE_DISABLED) {
++		return -EACCES;
++	}
++
++	spin_lock_irq(&task->sighand->siglock);
++	if (task->seccomp.mode != SECCOMP_MODE_FILTER) {
++		ret = -EINVAL;
++		goto out;
++	}
++
++	filter = task->seccomp.filter;
++	while (filter) {
++		filter = filter->prev;
++		count++;
++	}
++
++	if (filter_off >= count) {
++		ret = -ENOENT;
++		goto out;
++	}
++	count -= filter_off;
++
++	filter = task->seccomp.filter;
++	while (filter && count > 1) {
++		filter = filter->prev;
++		count--;
++	}
++
++	if (WARN_ON(count != 1 || !filter)) {
++		/* The filter tree shouldn't shrink while we're using it. */
++		ret = -ENOENT;
++		goto out;
++	}
++
++	fprog = filter->prog->orig_prog;
++	if (!fprog) {
++		/* This must be a new non-cBPF filter, since we save every
++		 * every cBPF filter's orig_prog above when
++		 * CONFIG_CHECKPOINT_RESTORE is enabled.
++		 */
++		ret = -EMEDIUMTYPE;
++		goto out;
++	}
++
++	ret = fprog->len;
++	if (!data)
++		goto out;
++
++	get_seccomp_filter(task);
++	spin_unlock_irq(&task->sighand->siglock);
++
++	if (copy_to_user(data, fprog->filter, bpf_classic_proglen(fprog)))
++		ret = -EFAULT;
++
++	put_seccomp_filter(task);
++	return ret;
++
++out:
++	spin_unlock_irq(&task->sighand->siglock);
++	return ret;
++}
++#endif
+-- 
+2.5.0
+
+
+--gBBFr7Ir9EOA20Yy--
