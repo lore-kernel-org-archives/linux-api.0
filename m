@@ -1,70 +1,58 @@
-From: Alex Deucher <alexdeucher@gmail.com>
-Subject: Re: [PATCH v4 04/79] drm_mode.h: use __u32 and __u64 from
- linux/types.h
-Date: Wed, 21 Oct 2015 11:18:36 -0400
-Message-ID: <CADnq5_MMzO+bmMmw96=n998hDgGXPbuvFmboO3tw9PMk9S3UdQ@mail.gmail.com>
-References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
- <1444888618-4506-5-git-send-email-mikko.rapeli@iki.fi>
- <CADnq5_N5LK4Dy1okY7G6jPNB68PN2ijpwv=bt2bBC0FPGASoSQ@mail.gmail.com>
- <20151015134844.GY6104@lakka.kapsi.fi>
- <CACvgo50c+fz-Gk8ia5odUY=jPWy=sknGY+EKO01OwWQTpfEEVg@mail.gmail.com>
+From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [PATCH v6 1/4] of: overlay: kobjectify overlay objects
+Date: Wed, 21 Oct 2015 08:22:36 -0700
+Message-ID: <20151021152236.GA20589@kroah.com>
+References: <1445368397-8732-1-git-send-email-pantelis.antoniou@konsulko.com>
+ <1445368397-8732-2-git-send-email-pantelis.antoniou@konsulko.com>
+ <20151020210349.GA28724@kroah.com>
+ <302128B9-A82A-477D-A158-3283DE30F43A@konsulko.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <CACvgo50c+fz-Gk8ia5odUY=jPWy=sknGY+EKO01OwWQTpfEEVg@mail.gmail.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Emil Velikov <emil.l.velikov@gmail.com>
-Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, LKML <linux-kernel@vger.kernel.org>, Maling list - DRI developers <dri-devel@lists.freedesktop.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <302128B9-A82A-477D-A158-3283DE30F43A-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Cc: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Frank Rowand <frowand.list-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-T24gV2VkLCBPY3QgMjEsIDIwMTUgYXQgMTE6MDkgQU0sIEVtaWwgVmVsaWtvdiA8ZW1pbC5sLnZl
-bGlrb3ZAZ21haWwuY29tPiB3cm90ZToKPiBIaSBBbGV4LAo+Cj4gT24gMTUgT2N0b2JlciAyMDE1
-IGF0IDE0OjQ4LCBNaWtrbyBSYXBlbGkgPG1pa2tvLnJhcGVsaUBpa2kuZmk+IHdyb3RlOgo+PiBP
-biBUaHUsIE9jdCAxNSwgMjAxNSBhdCAwOTozMjoxMEFNIC0wNDAwLCBBbGV4IERldWNoZXIgd3Jv
-dGU6Cj4+PiBPbiBUaHUsIE9jdCAxNSwgMjAxNSBhdCAxOjU1IEFNLCBNaWtrbyBSYXBlbGkgPG1p
-a2tvLnJhcGVsaUBpa2kuZmk+IHdyb3RlOgo+Pj4gPiBGaXhlcyB1c2Vyc3BhY2UgY29tcGlsYXRp
-b24gZXJyb3I6Cj4+PiA+Cj4+PiA+IGRybS9kcm1fbW9kZS5oOjQ3MjoyOiBlcnJvcjogdW5rbm93
-biB0eXBlIG5hbWUg4oCYdWludDMyX3TigJkKPj4+ID4KPj4+ID4gU2lnbmVkLW9mZi1ieTogTWlr
-a28gUmFwZWxpIDxtaWtrby5yYXBlbGlAaWtpLmZpPgo+Pj4KPj4+IE5BQ0sgb24gYWxsIHRoZXNl
-IHR5cGUgY29udmVyc2lvbnMuICBUaGlzIGhhcyBub3QgYmVlbiBhIHByb2JsZW0gZm9yCj4+PiB5
-ZWFycyBhbmQgeWVhcnMgYW5kIHRoZSByZXN1bHQgbG9va3MgdGVycmlibGUuCj4+Cj4+IERvY3Vt
-ZW50YXRpb24vQ29kaW5nU3R5bGUsIHNlY3Rpb24gNQo+Pgo+PiAgKGUpIFR5cGVzIHNhZmUgZm9y
-IHVzZSBpbiB1c2Vyc3BhY2UuCj4+Cj4+ICAgICAgSW4gY2VydGFpbiBzdHJ1Y3R1cmVzIHdoaWNo
-IGFyZSB2aXNpYmxlIHRvIHVzZXJzcGFjZSwgd2UgY2Fubm90Cj4+ICAgICAgcmVxdWlyZSBDOTkg
-dHlwZXMgYW5kIGNhbm5vdCB1c2UgdGhlICd1MzInIGZvcm0gYWJvdmUuIFRodXMsIHdlCj4+ICAg
-ICAgdXNlIF9fdTMyIGFuZCBzaW1pbGFyIHR5cGVzIGluIGFsbCBzdHJ1Y3R1cmVzIHdoaWNoIGFy
-ZSBzaGFyZWQKPj4gICAgICB3aXRoIHVzZXJzcGFjZS4KPj4KPj4gSSBoYXZlIG9ubHkgYmVlbiBs
-b29raW5nIGF0IGtlcm5lbCBoZWFkZXJzIGZyb20gdXNlcnNwYWNlIG9jY2F0aW9uYWxseSBpbgo+
-PiB0aGUgcGFzdCAxMCB5ZWFycyBhbmQgaGFkIGEgc2V2ZXJhbCBjYXNlcyB3aGVyZSB0aGUgcHJv
-dmlkZWQgaGVhZGVycyBkaWQKPj4gbm90IGNvbXBpbGUgd2hlbiBpbmNsdWRlZCBpbnRvIHRyaXZp
-YWwgcHJvZ3JhbXMgdHJ5aW5nIHRvIHVzZSB0aGUgc3RydWN0cwo+PiBmb3IgYW4gaW9jdGwoKSBm
-b3IgZXhhbXBsZS4gVGhpcyBsb25nIGxhc3RpbmcgcHJvYmxlbSB0cmlnZ2VyZWQgbWUgdG8gd3Jp
-dGUKPj4gYSB0ZXN0IGZvciB0aGlzIGFuZCBwcm92aWRlIHRoZXNlIGZpeGVzIHRvby4gSW4gcHJl
-dmlvdXMgcmV2aWV3cyB1c2FnZQo+PiBvZiA8c3RkaW50Lmg+IGFuZCBpdHMgdHlwZXMgaW4ga2Vy
-bmVsIGhlYWRlcnMgd2FzIGFscmVhZHkgTkFDSydlZAo+PiBzbyBJIGNoYW5nZWQgc2V2ZXJhbCBw
-bGFjZXMgZnJvbSB1aW50MzJfdCdzIHRvIF9fdTMyLgo+Pgo+PiBXaXRoIHRoZXNlIGNoYW5nZXMg
-aXQgaXMgYnR3IHRyaXZpYWwgbm93IHRvIGFkZCBhIGdyZXAgdGVzdCB0aGUgdGhlcmUKPj4gYXJl
-IG5vIHVpbnQzMl90J3MgaW4gaW5jbHVkZS91YXBpLyBhbnltb3JlLCB0aHVzIGVuZm9yY2luZyB0
-aGF0IGNvZGluZyBzdHlsZQo+PiBydWxlLgo+Pgo+IEJhc2VkIG9mIHRoZSByZXBseSBmcm9tIE1p
-a2tvLCBjYW4geW91IHBsZWFzZSBlbGFib3JhdGUgeW91ciBjb25jZXJuID8KPiBBcmUgeW91IHRo
-aW5raW5nIGFib3V0IHNvbWUgY29ybmVyIGNhc2Ugd2hlcmUgdGhpcyBtYXkgY2F1c2UgYnJlYWth
-Z2UsCj4gb3IgaXQncyBzb2xlbHkgb24gc3R5bGlzdGljIHBvaW50IG9mIHZpZXcgPwoKU3R5bGUu
-Cgo+Cj4gT3ZlciB0aGUgbGFzdCBmZXcgeWVhcnMgd2UndmUgYmVlbiBkb2luZyBzb21lIGFkLWhv
-YyAnc3luY2hyb25pc2F0aW9uJwo+IHdpdGggdGhlIGhlYWRlcnMgaW4gbGliZHJtLCBhbmQgdGhp
-cyB3aWxsIGdldCB1cyBvbmUgc3RlcCBjbG9zZXIgdG8KPiBkb2luZyB0aGluZ3MgcHJvcGVybHku
-CgpIb3cgZG9lcyB0aGlzIGFmZmVjdCBsaWJkcm0gb25lIHdheSBvciBhbm90aGVyPwoKQWxleAoK
-Pgo+IEZ3aXcgSSBmdWxseSBzdXBwb3J0IHRoZXNlIGNoYW5nZXMsIGFzIGRvZXMgR3VzdGF2byBm
-b3IgZXh5bm9zIGFuZCBSb2IgZm9yIG1zbS4KPiBSZXZpZXdlZC1ieTogRW1pbCBWZWxpa292IDxl
-bWlsLmwudmVsaWtvdkBnbWFpbC5jb20+Cj4KPiBUaGFua3MKPiBFbWlsCl9fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCmRyaS1kZXZlbCBtYWlsaW5nIGxpc3QK
-ZHJpLWRldmVsQGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwOi8vbGlzdHMuZnJlZWRlc2t0b3Au
-b3JnL21haWxtYW4vbGlzdGluZm8vZHJpLWRldmVsCg==
+On Wed, Oct 21, 2015 at 04:28:33PM +0300, Pantelis Antoniou wrote:
+> Hi Greg,
+>=20
+> > On Oct 21, 2015, at 00:03 , Greg Kroah-Hartman <gregkh@linuxfoundat=
+ion.org> wrote:
+> >=20
+> > On Tue, Oct 20, 2015 at 10:13:14PM +0300, Pantelis Antoniou wrote:
+> >> We are going to need the overlays to appear on sysfs with runtime
+> >> global properties (like master enable) so turn them into kobjects.
+> >=20
+> > Why kobjects and not 'struct device=E2=80=99?
+> >=20
+>=20
+> Cause it=E2=80=99s overkill.
+>=20
+> There is no hardware/abstract device connection between an overlay an=
+d a device as what=E2=80=99s being used right now in driver core.
+>=20
+> kobjs are enough to present them in the filesystem hierarchy.
+>=20
+> > Why even have them in sysfs at all?  You need more information here=
+ as
+> > to why you want to do this.
+> >=20
+>=20
+> They have to be in sysfs so that people can have information about th=
+e overlays applied in the system, i.e. where their targets are and whet=
+her removal is possible. That=E2=80=99s what=E2=80=99s possible for now=
+; in the future we might present the full contents of the overlay there=
+, and what changes to the live tree were made.
+
+Ok, then say that in the changelog to explain what you are doing here :=
+)
+
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" i=
+n
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
