@@ -1,58 +1,45 @@
-From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH v6 1/4] of: overlay: kobjectify overlay objects
-Date: Wed, 21 Oct 2015 08:22:36 -0700
-Message-ID: <20151021152236.GA20589@kroah.com>
-References: <1445368397-8732-1-git-send-email-pantelis.antoniou@konsulko.com>
- <1445368397-8732-2-git-send-email-pantelis.antoniou@konsulko.com>
- <20151020210349.GA28724@kroah.com>
- <302128B9-A82A-477D-A158-3283DE30F43A@konsulko.com>
+From: Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>
+Subject: Re: [PATCH v4 10/79] via_drm.h: move struct via_file_private
+ definition to drivers/gpu/drm/via/via_drv.h
+Date: Wed, 21 Oct 2015 17:33:23 +0200
+Message-ID: <20151021153323.GF16848@phenom.ffwll.local>
+References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
+ <1444888618-4506-11-git-send-email-mikko.rapeli@iki.fi>
+ <CACvgo515FB4MSTWdR0dQdvNccYhMMhBD1bgL=heMLfrw7iqdmA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <302128B9-A82A-477D-A158-3283DE30F43A-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Cc: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Frank Rowand <frowand.list-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <CACvgo515FB4MSTWdR0dQdvNccYhMMhBD1bgL=heMLfrw7iqdmA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Daniel Vetter <daniel.vetter-/w4YWyX8dFk@public.gmane.org>, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, ML dri-devel <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 21, 2015 at 04:28:33PM +0300, Pantelis Antoniou wrote:
-> Hi Greg,
->=20
-> > On Oct 21, 2015, at 00:03 , Greg Kroah-Hartman <gregkh@linuxfoundat=
-ion.org> wrote:
-> >=20
-> > On Tue, Oct 20, 2015 at 10:13:14PM +0300, Pantelis Antoniou wrote:
-> >> We are going to need the overlays to appear on sysfs with runtime
-> >> global properties (like master enable) so turn them into kobjects.
-> >=20
-> > Why kobjects and not 'struct device=E2=80=99?
-> >=20
->=20
-> Cause it=E2=80=99s overkill.
->=20
-> There is no hardware/abstract device connection between an overlay an=
-d a device as what=E2=80=99s being used right now in driver core.
->=20
-> kobjs are enough to present them in the filesystem hierarchy.
->=20
-> > Why even have them in sysfs at all?  You need more information here=
- as
-> > to why you want to do this.
-> >=20
->=20
-> They have to be in sysfs so that people can have information about th=
-e overlays applied in the system, i.e. where their targets are and whet=
-her removal is possible. That=E2=80=99s what=E2=80=99s possible for now=
-; in the future we might present the full contents of the overlay there=
-, and what changes to the live tree were made.
+On Wed, Oct 21, 2015 at 03:36:22PM +0100, Emil Velikov wrote:
+> On 15 October 2015 at 06:55, Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org> wrote:
+> > Fixes userspace compile error since list_head is not exported to userspace
+> > headers.
+> >
+> > Suggested by Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> at
+> > https://lkml.org/lkml/2015/6/3/792
+> >
+> > Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+> We're safe as the only users of the struct already include via_drv.h.
+> 
+> Reviewed-by: Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> 
+> Daniel can you pick this up (esp. since you added it with commit
+> c828e20456301b0f5192a1f75e8bf8a6afd15551)
 
-Ok, then say that in the changelog to explain what you are doing here :=
-)
+Dave already applied it.
+-Daniel
 
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" i=
-n
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
+> Thanks
+> Emil
+
+-- 
+Daniel Vetter
+Software Engineer, Intel Corporation
+http://blog.ffwll.ch
