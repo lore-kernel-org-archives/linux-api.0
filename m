@@ -1,91 +1,42 @@
-From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH v6 3/4] of: overlay: add per overlay sysfs attributes
-Date: Tue, 20 Oct 2015 16:25:02 -0700
-Message-ID: <20151020232502.GA7881@kroah.com>
-References: <1445368397-8732-1-git-send-email-pantelis.antoniou@konsulko.com>
- <1445368397-8732-4-git-send-email-pantelis.antoniou@konsulko.com>
- <20151020210806.GC28724@kroah.com>
- <D2471EF1-6837-41CC-8205-FE7D8573ACC3@konsulko.com>
+From: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+Subject: Re: [PATCH v8 04/14] task_isolation: add initial support
+Date: Tue, 20 Oct 2015 20:29:29 -0400
+Message-ID: <20151020202929.485a1ef0@grimm.local.home>
+References: <1445373372-6567-1-git-send-email-cmetcalf@ezchip.com>
+	<1445373372-6567-5-git-send-email-cmetcalf@ezchip.com>
+	<CALCETrWzhrYreizoKG0w6Jtz3RLFjNx9Qk_JLykcLLUQcCXBEA@mail.gmail.com>
+	<5626B00E.3010309@ezchip.com>
+	<CALCETrX6e+mqfy-rNV3sA8xGVDNHviQ9vHBBhAPULeLecno7XQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <D2471EF1-6837-41CC-8205-FE7D8573ACC3-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+In-Reply-To: <CALCETrX6e+mqfy-rNV3sA8xGVDNHviQ9vHBBhAPULeLecno7XQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Cc: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Frank Rowand <frowand.list-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 21, 2015 at 12:15:00AM +0300, Pantelis Antoniou wrote:
-> Hi Greg,
-> 
-> > On Oct 21, 2015, at 00:08 , Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> wrote:
-> > 
-> > On Tue, Oct 20, 2015 at 10:13:16PM +0300, Pantelis Antoniou wrote:
-> >> * A per overlay can_remove sysfs attribute that reports whether
-> >> the overlay can be removed or not due to another overlapping overlay.
-> >> 
-> >> * A target sysfs attribute listing the target of each fragment,
-> >> in a group named after the name of the fragment.
-> >> 
-> >> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-> >> ---
-> >> drivers/of/overlay.c | 103 +++++++++++++++++++++++++++++++++++++++++++++++++--
-> >> 1 file changed, 99 insertions(+), 4 deletions(-)
-> >> 
-> >> diff --git a/drivers/of/overlay.c b/drivers/of/overlay.c
-> >> index 067404e..2d51d9e2 100644
-> >> --- a/drivers/of/overlay.c
-> >> +++ b/drivers/of/overlay.c
-> >> @@ -25,8 +25,23 @@
-> >> 
-> >> #include "of_private.h"
-> >> 
-> >> +/* fwd. decl */
-> >> +struct of_overlay;
-> >> +struct of_overlay_info;
-> >> +
-> >> +/* an attribute for each fragment */
-> >> +struct fragment_attribute {
-> >> +	struct attribute attr;
-> >> +	ssize_t (*show)(struct kobject *kobj, struct fragment_attribute *fattr,
-> >> +			char *buf);
-> >> +	ssize_t (*store)(struct kobject *kobj, struct fragment_attribute *fattr,
-> >> +			 const char *buf, size_t count);
-> >> +	struct of_overlay_info *ovinfo;
-> >> +};
-> >> +
-> >> /**
-> >>  * struct of_overlay_info - Holds a single overlay info
-> >> + * @info:	info node that contains the target and overlay
-> >>  * @target:	target of the overlay operation
-> >>  * @overlay:	pointer to the overlay contents node
-> >>  *
-> >> @@ -34,8 +49,13 @@
-> >>  * records.
-> >>  */
-> >> struct of_overlay_info {
-> >> +	struct of_overlay *ov;
-> >> +	struct device_node *info;
-> >> 	struct device_node *target;
-> >> 	struct device_node *overlay;
-> >> +	struct attribute_group attr_group;
-> >> +	struct attribute *attrs[2];
-> > 
-> > Why both 2 attributes _and_ an attribute group?  Why not put the
-> > attributes in the attribute group?
-> > 
-> > And why just one attribute group?  Why not an array of them like the
-> > rest of the kernel is used to handle?
-> > 
-> 
-> Because this makes it easier to add all the attributes for all the fragments in a single
-> sysfs_create_groups() call, once for each overlay, instead of having a call to 
-> sysfs_create_group() for each fragment of the overlay.
-> 
-> Reusing driver core helpers is good, no?
+On Tue, 20 Oct 2015 14:26:34 -0700
+Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
 
-Yes it is, sorry, I missed how you used these later on, and the
-attribute_groups usage there, nice job, sorry for the noise.
+> I'm not a scheduler person, so I don't know.  But "don't run me unless
+> I'm isolated" seems like a design that will, at best, only ever work
+> by dumb luck.  You have to disable migration, avoid other runnable
+> tasks, hope that the kernel keeps working the way it did when you
+> wrote the patch, hope you continue to get lucky enough that you ever
+> get to user mode in the first place, etc.
 
-greg k-h
+
+Since it only makes sense to run one isolated task per cpu (not more
+than one on the same CPU), I wonder if we should add a new interface
+for this, that would force everything else off the CPU that it
+requests. That is, you bind a task to a CPU, and then change it to
+SCHED_ISOLATED (or what not), and the kernel will force all other tasks
+off that CPU. Well, we would still have kernel threads, but that's a
+different matter.
+
+Also, doesn't RCU need to have a few ticks go by before it can safely
+disable itself from userspace? I recall something like that. Paul?
+
+-- Steve
