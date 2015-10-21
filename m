@@ -1,44 +1,65 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v8 06/14] task_isolation: provide strict mode configurable signal
-Date: Tue, 20 Oct 2015 18:42:52 -0700
-Message-ID: <CALCETrXqDi24EPn79X9SXuz+5sYGZBF3yCRzb8PwdL=YbxVujw@mail.gmail.com>
+From: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Subject: RE: [PATCH v8 06/14] task_isolation: provide strict mode configurable
+ signal
+Date: Wed, 21 Oct 2015 06:41:34 +0000
+Message-ID: <AM2PR02MB041772AEFFA939F2F8619B36BD380@AM2PR02MB0417.eurprd02.prod.outlook.com>
 References: <1445373372-6567-1-git-send-email-cmetcalf@ezchip.com>
- <1445373372-6567-7-git-send-email-cmetcalf@ezchip.com> <20151020205610.51b3d742@grimm.local.home>
- <5626EABC.9060202@ezchip.com>
+ <1445373372-6567-7-git-send-email-cmetcalf@ezchip.com>
+ <20151020205610.51b3d742@grimm.local.home> <5626EABC.9060202@ezchip.com>
+ <CALCETrXqDi24EPn79X9SXuz+5sYGZBF3yCRzb8PwdL=YbxVujw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <5626EABC.9060202@ezchip.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@ezchip.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>, Gilad Ben Yossef <giladb@ezchip.com>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrXqDi24EPn79X9SXuz+5sYGZBF3yCRzb8PwdL=YbxVujw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 20, 2015 at 6:30 PM, Chris Metcalf <cmetcalf@ezchip.com> wrote:
-> On 10/20/2015 8:56 PM, Steven Rostedt wrote:
->>
->> On Tue, 20 Oct 2015 16:36:04 -0400
->> Chris Metcalf <cmetcalf@ezchip.com> wrote:
->>
->>> Allow userspace to override the default SIGKILL delivered
->>> when a task_isolation process in STRICT mode does a syscall
->>> or otherwise synchronously enters the kernel.
->>>
->> Is this really a good idea? This means that there's no way to terminate
->> a task in this mode, even if it goes astray.
->
->
-> It doesn't map SIGKILL to some other signal unconditionally.  It just allows
-> the "hey, you broke the STRICT contract and entered the kernel" signal
-> to be something besides the default SIGKILL.
->
-
-...which has the odd side effect that sending a non-fatal signal from
-another process will cause the strict process to enter the kernel and
-receive an extra signal.
-
-I still dislike this thing.  It seems like a debugging feature being
-implemented using signals instead of existing APIs.  I *still* don't
-see why perf can't be used to accomplish your goal.
-
---Andy
+DQoNCj4gRnJvbTogQW5keSBMdXRvbWlyc2tpIFttYWlsdG86bHV0b0BhbWFjYXBpdGFsLm5ldF0N
+Cj4gU2VudDogV2VkbmVzZGF5LCBPY3RvYmVyIDIxLCAyMDE1IDQ6NDMgQU0NCj4gVG86IENocmlz
+IE1ldGNhbGYNCj4gU3ViamVjdDogUmU6IFtQQVRDSCB2OCAwNi8xNF0gdGFza19pc29sYXRpb246
+IHByb3ZpZGUgc3RyaWN0IG1vZGUNCj4gY29uZmlndXJhYmxlIHNpZ25hbA0KPiANCj4gT24gVHVl
+LCBPY3QgMjAsIDIwMTUgYXQgNjozMCBQTSwgQ2hyaXMgTWV0Y2FsZiA8Y21ldGNhbGZAZXpjaGlw
+LmNvbT4NCj4gd3JvdGU6DQo+ID4gT24gMTAvMjAvMjAxNSA4OjU2IFBNLCBTdGV2ZW4gUm9zdGVk
+dCB3cm90ZToNCj4gPj4NCj4gPj4gT24gVHVlLCAyMCBPY3QgMjAxNSAxNjozNjowNCAtMDQwMA0K
+PiA+PiBDaHJpcyBNZXRjYWxmIDxjbWV0Y2FsZkBlemNoaXAuY29tPiB3cm90ZToNCj4gPj4NCj4g
+Pj4+IEFsbG93IHVzZXJzcGFjZSB0byBvdmVycmlkZSB0aGUgZGVmYXVsdCBTSUdLSUxMIGRlbGl2
+ZXJlZA0KPiA+Pj4gd2hlbiBhIHRhc2tfaXNvbGF0aW9uIHByb2Nlc3MgaW4gU1RSSUNUIG1vZGUg
+ZG9lcyBhIHN5c2NhbGwNCj4gPj4+IG9yIG90aGVyd2lzZSBzeW5jaHJvbm91c2x5IGVudGVycyB0
+aGUga2VybmVsLg0KPiA+Pj4NCjxzbmlwPg0KPiA+DQo+ID4gSXQgZG9lc24ndCBtYXAgU0lHS0lM
+TCB0byBzb21lIG90aGVyIHNpZ25hbCB1bmNvbmRpdGlvbmFsbHkuICBJdCBqdXN0IGFsbG93cw0K
+PiA+IHRoZSAiaGV5LCB5b3UgYnJva2UgdGhlIFNUUklDVCBjb250cmFjdCBhbmQgZW50ZXJlZCB0
+aGUga2VybmVsIiBzaWduYWwNCj4gPiB0byBiZSBzb21ldGhpbmcgYmVzaWRlcyB0aGUgZGVmYXVs
+dCBTSUdLSUxMLg0KPiA+DQo+IA0KDQo8c25pcD4NCj4gDQo+IEkgc3RpbGwgZGlzbGlrZSB0aGlz
+IHRoaW5nLiAgSXQgc2VlbXMgbGlrZSBhIGRlYnVnZ2luZyBmZWF0dXJlIGJlaW5nDQo+IGltcGxl
+bWVudGVkIHVzaW5nIHNpZ25hbHMgaW5zdGVhZCBvZiBleGlzdGluZyBBUElzLiAgSSAqc3RpbGwq
+IGRvbid0DQo+IHNlZSB3aHkgcGVyZiBjYW4ndCBiZSB1c2VkIHRvIGFjY29tcGxpc2ggeW91ciBn
+b2FsLg0KPiANCg0KSXQgaXMgbm90IChqdXN0KSBhIGRlYnVnZ2luZyBmZWF0dXJlLiBUaGVyZSBh
+cmUgd29ya2xvYWRzIHdlcmUgbm90IHBlcmZvcm1pbmcgYW4gYWN0aW9uIGlzIG11Y2ggcHJlZmVy
+cmVkIHRvIGJlaW5nIGxhdGUuDQoNCkNvbnNpZGVyIHRoZSBmb2xsb3dpbmcgYXJ0aWZpY2lhbCBi
+dXQgcmVwcmVzZW50YXRpdmUgc2NlbmFyaW86IGEgdGFzayBydW5uaW5nIGluIHN0cmljdCBpc29s
+YXRpb24gaXMgY29udHJvbGxpbmcgYSByYWRpb3RoZXJhcHkgYWxwaGEgZW1pdHRlci4NClRoZSBj
+b2RlIHJ1bnMgaW4gYSB0aWdodCBldmVudCBsb29wLCByZWFkaW5nIGFuIE1NSU8gcmVnaXN0ZXIg
+d2l0aCBsb2NhdGlvbiBkYXRhLCBtYWtpbmcgc29tZSBjYWxjdWxhdGlvbiBhbmQgaW4gcmVzcG9u
+c2Ugd3JpdGluZyBhbiANCk1NSU8gcmVnaXN0ZXIgdGhhdCB0cmlnZ2VycyB0aGUgYWxwaGEgZW1p
+dHRlci4gQXMgYSBzYWZldHkgbWVhc3VyZSwgZWFjaCB0cmlnZ2VyIGlzIGZvciBhIHNwZWNpZmlj
+IHZlcnkgc2hvcnQgdGltZSBmcmFtZSAtIHRoZSBhbHBoYSBlbWl0dGVyIA0KYXV0byBzdG9wcy4N
+Cg0KVGhlIGNvZGUgaGFzIGEgc3RyaWN0IGFzc3VtcHRpb24gdGhhdCBubyBtb3JlIHRoYW4gWCBj
+eWNsZXMgcGFzcyBiZXR3ZWVuIHJlYWRpbmcgdGhlIHZhbHVlIGFuZCB0aGUgcmVzcG9uc2UgYW5k
+IHRoZSBzeXN0ZW0gaXMgYnVpbHQgaW4gDQpzdWNoIGEgd2F5IHRoYXQgYXMgbG9uZyBhcyB0aGUg
+Y29kZSBoYXMgbWFzdGVyeSBvZiB0aGUgQ1BVIHRoZSBhc3N1bXB0aW9uIGhvbGRzIHRydWUuIElm
+IHNvbWV0aGluZyBicmVha3MgdGhpcyBhc3N1bXB0aW9uICh1bnBsYW5uZWQNCmNvbnRleHQgc3dp
+dGNoIHRvIGtlcm5lbCksIHdoYXQgeW91IHdhbnQgdG8gZG8gaXMganVzdCBzdG9wIHBsYWNlDQpy
+YXRoZXIgdGhhbiBmaXJlIHRoZSBhbHBoYSBlbWl0dGVyIFggbmFub3NlY29uZHMgdG9vIGxhdGUu
+DQoNClRoaXMgZmVhdHVyZSBsZXRzIHlvdSBzYXk6IGlmIHRoZSAiY29udHJhY3QiIG9mIGlzb2xh
+dGlvbiBpcyBicm9rZW4sIG5vdGlmeS9raWxsIG1lIGF0IG9uY2UuDQoNCkZvciBjb2RlIHdoZXJl
+IGlzb2xhdGlvbiBpcyBpbXBvcnRhbnQsIHRoZSBjb3JyZWN0bmVzcyBvZiBhIGNhbGN1bGF0aW9u
+IGlzIGRlcGVuZGVudCBvbiB0aW1pbmcuIEl0J3MgbGlrZSB5b3Ugd291bGQgYWNjZXB0IHRoZSBr
+ZXJuZWwgdG8NCmtpbGwgYSB0YXNrIGlmIGl0IHJlYWQgZnJvbSBhbiB1bm1hcHBlZCB2aXJ0dWFs
+IGFkZHJlc3MgcmF0aGVyIHRoYW4gcmV0dXJuaW5nIGdhcmJhZ2UgZGF0YS4gV2l0aCBhbiBpc29s
+YXRlZCB0YXNrLCB0aGUgcmlnaHQgZGF0YSBhY3RlZCBvbiANCmxhdGVyIHRoYW4geW91IHRoaW5r
+IGlzIGdhcmJhZ2UganVzdCB0aGUgc2FtZS4NCg0KSSBob3BlIHRoaXMgc2hlZHMgc29tZSBsaWdo
+dCBvbiB0aGUgaXNzdWUuDQoNClRoYW5rcywNCkdpbGFkDQoNCg==
