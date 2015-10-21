@@ -1,125 +1,90 @@
-From: Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v4 04/79] drm_mode.h: use __u32 and __u64 from linux/types.h
-Date: Wed, 21 Oct 2015 18:42:10 +0100
-Message-ID: <CACvgo53P4_SRqi6WTZQdMSG5RZBmNdzzeH+T1j=dw_1ZLWa1aA@mail.gmail.com>
-References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
-	<1444888618-4506-5-git-send-email-mikko.rapeli@iki.fi>
-	<CADnq5_N5LK4Dy1okY7G6jPNB68PN2ijpwv=bt2bBC0FPGASoSQ@mail.gmail.com>
-	<20151015134844.GY6104@lakka.kapsi.fi>
-	<CACvgo50c+fz-Gk8ia5odUY=jPWy=sknGY+EKO01OwWQTpfEEVg@mail.gmail.com>
-	<CADnq5_MMzO+bmMmw96=n998hDgGXPbuvFmboO3tw9PMk9S3UdQ@mail.gmail.com>
-	<CACvgo50XzhdjqF1j_rRH4LTKYvNY_qq+tjy1U6WuzPmB8oTfqw@mail.gmail.com>
-	<CADnq5_OgN6tNKSGU-zUdhjNbqK+XRkGXccgxVtz+5092unza4g@mail.gmail.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH v8 06/14] task_isolation: provide strict mode configurable signal
+Date: Wed, 21 Oct 2015 11:53:09 -0700
+Message-ID: <CALCETrVuE_VCk-7_VMJ-orL8pg+0F5vq6qvt4SfgXzt_MRr-SQ@mail.gmail.com>
+References: <1445373372-6567-1-git-send-email-cmetcalf@ezchip.com>
+ <1445373372-6567-7-git-send-email-cmetcalf@ezchip.com> <20151020205610.51b3d742@grimm.local.home>
+ <5626EABC.9060202@ezchip.com> <CALCETrXqDi24EPn79X9SXuz+5sYGZBF3yCRzb8PwdL=YbxVujw@mail.gmail.com>
+ <AM2PR02MB041772AEFFA939F2F8619B36BD380@AM2PR02MB0417.eurprd02.prod.outlook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CADnq5_OgN6tNKSGU-zUdhjNbqK+XRkGXccgxVtz+5092unza4g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alex Deucher <alexdeucher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Maling list - DRI developers <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <AM2PR02MB041772AEFFA939F2F8619B36BD380@AM2PR02MB0417.eurprd02.prod.outlook.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Gilad Ben Yossef <giladb@ezchip.com>
+Cc: Chris Metcalf <cmetcalf@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 21 October 2015 at 17:27, Alex Deucher <alexdeucher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote=
-:
-> On Wed, Oct 21, 2015 at 12:21 PM, Emil Velikov <emil.l.velikov@gmail.=
-com> wrote:
->> On 21 October 2015 at 16:18, Alex Deucher <alexdeucher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wr=
-ote:
->>> On Wed, Oct 21, 2015 at 11:09 AM, Emil Velikov <emil.l.velikov@gmai=
-l.com> wrote:
->>>> Hi Alex,
->>>>
->>>> On 15 October 2015 at 14:48, Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org> wr=
-ote:
->>>>> On Thu, Oct 15, 2015 at 09:32:10AM -0400, Alex Deucher wrote:
->>>>>> On Thu, Oct 15, 2015 at 1:55 AM, Mikko Rapeli <mikko.rapeli@iki.=
-fi> wrote:
->>>>>> > Fixes userspace compilation error:
->>>>>> >
->>>>>> > drm/drm_mode.h:472:2: error: unknown type name =E2=80=98uint32=
-_t=E2=80=99
->>>>>> >
->>>>>> > Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
->>>>>>
->>>>>> NACK on all these type conversions.  This has not been a problem=
- for
->>>>>> years and years and the result looks terrible.
->>>>>
->>>>> Documentation/CodingStyle, section 5
->>>>>
->>>>>  (e) Types safe for use in userspace.
->>>>>
->>>>>      In certain structures which are visible to userspace, we can=
-not
->>>>>      require C99 types and cannot use the 'u32' form above. Thus,=
- we
->>>>>      use __u32 and similar types in all structures which are shar=
-ed
->>>>>      with userspace.
->>>>>
->>>>> I have only been looking at kernel headers from userspace occatio=
-nally in
->>>>> the past 10 years and had a several cases where the provided head=
-ers did
->>>>> not compile when included into trivial programs trying to use the=
- structs
->>>>> for an ioctl() for example. This long lasting problem triggered m=
-e to write
->>>>> a test for this and provide these fixes too. In previous reviews =
-usage
->>>>> of <stdint.h> and its types in kernel headers was already NACK'ed
->>>>> so I changed several places from uint32_t's to __u32.
->>>>>
->>>>> With these changes it is btw trivial now to add a grep test the t=
-here
->>>>> are no uint32_t's in include/uapi/ anymore, thus enforcing that c=
-oding style
->>>>> rule.
->>>>>
->>>> Based of the reply from Mikko, can you please elaborate your conce=
-rn ?
->>>> Are you thinking about some corner case where this may cause break=
-age,
->>>> or it's solely on stylistic point of view ?
->>>
->>> Style.
->>>
->> In that case shouldn't the kernel coding style (not to mention the
->> issues with stdint.h types Linus has brought a while back) be
->> considered/prevail ?
+On Tue, Oct 20, 2015 at 11:41 PM, Gilad Ben Yossef <giladb@ezchip.com> wrote:
 >
-> I don't really have a strong opinion one way or another at this point=
-=2E
-> The types just look ugly.
 >
-=46wiw I don't find them too appealing either. But the alternative did
-not fare so well :(
-
+>> From: Andy Lutomirski [mailto:luto@amacapital.net]
+>> Sent: Wednesday, October 21, 2015 4:43 AM
+>> To: Chris Metcalf
+>> Subject: Re: [PATCH v8 06/14] task_isolation: provide strict mode
+>> configurable signal
 >>
->>>>
->>>> Over the last few years we've been doing some ad-hoc 'synchronisat=
-ion'
->>>> with the headers in libdrm, and this will get us one step closer t=
-o
->>>> doing things properly.
->>>
->>> How does this affect libdrm one way or another?
->>>
->> In a strange way. Some (most?) distributions do not ship the uapi
->> headers from the kernel, but rely on the ones in libdrm. Due to
->> various issues (as addressed in the series) we have not synchronised
->> the headers, thus users such as the gallium radeon winsys has ended =
-up
->> redefining/duplicating internally.
+>> On Tue, Oct 20, 2015 at 6:30 PM, Chris Metcalf <cmetcalf@ezchip.com>
+>> wrote:
+>> > On 10/20/2015 8:56 PM, Steven Rostedt wrote:
+>> >>
+>> >> On Tue, 20 Oct 2015 16:36:04 -0400
+>> >> Chris Metcalf <cmetcalf@ezchip.com> wrote:
+>> >>
+>> >>> Allow userspace to override the default SIGKILL delivered
+>> >>> when a task_isolation process in STRICT mode does a syscall
+>> >>> or otherwise synchronously enters the kernel.
+>> >>>
+> <snip>
+>> >
+>> > It doesn't map SIGKILL to some other signal unconditionally.  It just allows
+>> > the "hey, you broke the STRICT contract and entered the kernel" signal
+>> > to be something besides the default SIGKILL.
+>> >
+>>
 >
-> The problem is that you generally need the latest headers to support
-> the latest features in the user mode stacks, so if the user tries to
-> build against an older kernel, they will be missing definitions.
+> <snip>
+>>
+>> I still dislike this thing.  It seems like a debugging feature being
+>> implemented using signals instead of existing APIs.  I *still* don't
+>> see why perf can't be used to accomplish your goal.
+>>
 >
-Pretty much that's why we have the loose release criteria for libdrm.
-Get the functionality upstream (mainline or -next), pull the changes
-(sync) and release. As the sync has been busted for a while, people
-are forced to do unpleasant things.
+> It is not (just) a debugging feature. There are workloads were not performing an action is much preferred to being late.
+>
+> Consider the following artificial but representative scenario: a task running in strict isolation is controlling a radiotherapy alpha emitter.
+> The code runs in a tight event loop, reading an MMIO register with location data, making some calculation and in response writing an
+> MMIO register that triggers the alpha emitter. As a safety measure, each trigger is for a specific very short time frame - the alpha emitter
+> auto stops.
+>
+> The code has a strict assumption that no more than X cycles pass between reading the value and the response and the system is built in
+> such a way that as long as the code has mastery of the CPU the assumption holds true. If something breaks this assumption (unplanned
+> context switch to kernel), what you want to do is just stop place
+> rather than fire the alpha emitter X nanoseconds too late.
+>
+> This feature lets you say: if the "contract" of isolation is broken, notify/kill me at once.
 
--Emil
+That's a fair point.  It's risky, though, for quite a few reasons.
+
+1. If someone builds an alpha emitter like this, they did it wrong.
+The kernel should write a trigger *and* a timestamp to the hardware
+and the hardware should trigger at the specified time if the time is
+in the future and throw an error if it's in the past.  If you need to
+check that you made the deadline, check the actual desired condition
+(did you meat the deadline?) not a proxy (did the signal fire?).
+
+2. This strict mode thing isn't exhaustive.  It's missing, at least,
+coverage for NMI, MCE, and SMI.  Sure, you can think that you've
+disabled all NMI sources, you can try to remember to set the
+appropriate boot flag that panics on MCE (and hope that you don't get
+screwed by broadcast MCE on Intel systems before it got fixed
+(Skylake?  Is the fix even available in a released chip?), and, for
+SMI, good luck...
+
+3. You haven't dealt with IPIs.  The TLB flush code in particular
+seems like it will break all your assumptions.
+
+Maybe it would make sense to whack more of the moles before adding a
+big assertion that there aren't any moles any more.
+
+--Andy
