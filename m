@@ -1,101 +1,79 @@
-From: Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v8 04/14] task_isolation: add initial support
-Date: Wed, 21 Oct 2015 18:12:48 +0200
-Message-ID: <20151021161247.GA19764@lerouge>
-References: <1445373372-6567-1-git-send-email-cmetcalf@ezchip.com>
- <1445373372-6567-5-git-send-email-cmetcalf@ezchip.com>
+From: Emil Velikov <emil.l.velikov@gmail.com>
+Subject: Re: [PATCH v4 04/79] drm_mode.h: use __u32 and __u64 from
+ linux/types.h
+Date: Wed, 21 Oct 2015 17:21:27 +0100
+Message-ID: <CACvgo50XzhdjqF1j_rRH4LTKYvNY_qq+tjy1U6WuzPmB8oTfqw@mail.gmail.com>
+References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
+ <1444888618-4506-5-git-send-email-mikko.rapeli@iki.fi>
+ <CADnq5_N5LK4Dy1okY7G6jPNB68PN2ijpwv=bt2bBC0FPGASoSQ@mail.gmail.com>
+ <20151015134844.GY6104@lakka.kapsi.fi>
+ <CACvgo50c+fz-Gk8ia5odUY=jPWy=sknGY+EKO01OwWQTpfEEVg@mail.gmail.com>
+ <CADnq5_MMzO+bmMmw96=n998hDgGXPbuvFmboO3tw9PMk9S3UdQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1445373372-6567-5-git-send-email-cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
-Cc: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <CADnq5_MMzO+bmMmw96=n998hDgGXPbuvFmboO3tw9PMk9S3UdQ@mail.gmail.com>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Alex Deucher <alexdeucher@gmail.com>
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, LKML <linux-kernel@vger.kernel.org>, Maling list - DRI developers <dri-devel@lists.freedesktop.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 20, 2015 at 04:36:02PM -0400, Chris Metcalf wrote:
-> diff --git a/kernel/isolation.c b/kernel/isolation.c
-> new file mode 100644
-> index 000000000000..9a73235db0bb
-> --- /dev/null
-> +++ b/kernel/isolation.c
-> @@ -0,0 +1,78 @@
-> +/*
-> + *  linux/kernel/isolation.c
-> + *
-> + *  Implementation for task isolation.
-> + *
-> + *  Distributed under GPLv2.
-> + */
-> +
-> +#include <linux/mm.h>
-> +#include <linux/swap.h>
-> +#include <linux/vmstat.h>
-> +#include <linux/isolation.h>
-> +#include <linux/syscalls.h>
-> +#include "time/tick-sched.h"
-> +
-> +/*
-> + * This routine controls whether we can enable task-isolation mode.
-> + * The task must be affinitized to a single nohz_full core or we will
-> + * return EINVAL.  Although the application could later re-affinitize
-> + * to a housekeeping core and lose task isolation semantics, this
-> + * initial test should catch 99% of bugs with task placement prior to
-> + * enabling task isolation.
-> + */
-> +int task_isolation_set(unsigned int flags)
-> +{
-> +	if (cpumask_weight(tsk_cpus_allowed(current)) != 1 ||
-
-I think you'll have to make sure the task can not be concurrently reaffined
-to more CPUs. This may involve setting task_isolation_flags under the runqueue
-lock and thus move that tiny part to the scheduler code. And then we must forbid
-changing the affinity while the task has the isolation flag, or deactivate the flag.
-
-In any case this needs some synchronization.
-
-> +	    !tick_nohz_full_cpu(smp_processor_id()))
-> +		return -EINVAL;
-> +
-> +	current->task_isolation_flags = flags;
-> +	return 0;
-> +}
-> +
-> +/*
-> + * In task isolation mode we try to return to userspace only after
-> + * attempting to make sure we won't be interrupted again.  To handle
-> + * the periodic scheduler tick, we test to make sure that the tick is
-> + * stopped, and if it isn't yet, we request a reschedule so that if
-> + * another task needs to run to completion first, it can do so.
-> + * Similarly, if any other subsystems require quiescing, we will need
-> + * to do that before we return to userspace.
-> + */
-> +bool _task_isolation_ready(void)
-> +{
-> +	WARN_ON_ONCE(!irqs_disabled());
-> +
-> +	/* If we need to drain the LRU cache, we're not ready. */
-> +	if (lru_add_drain_needed(smp_processor_id()))
-> +		return false;
-> +
-> +	/* If vmstats need updating, we're not ready. */
-> +	if (!vmstat_idle())
-> +		return false;
-> +
-> +	/* If the tick is running, request rescheduling; we're not ready. */
-> +	if (!tick_nohz_tick_stopped()) {
-
-Note that this function tells whether the tick is in dynticks mode, which means
-the tick currently only run on-demand. But it's not necessarily completely stopped.
-
-I think we should rename that function and the field it refers to.
-
-> +		set_tsk_need_resched(current);
-> +		return false;
-> +	}
-> +
-> +	return true;
-> +}
-
-Thanks.
+T24gMjEgT2N0b2JlciAyMDE1IGF0IDE2OjE4LCBBbGV4IERldWNoZXIgPGFsZXhkZXVjaGVyQGdt
+YWlsLmNvbT4gd3JvdGU6Cj4gT24gV2VkLCBPY3QgMjEsIDIwMTUgYXQgMTE6MDkgQU0sIEVtaWwg
+VmVsaWtvdiA8ZW1pbC5sLnZlbGlrb3ZAZ21haWwuY29tPiB3cm90ZToKPj4gSGkgQWxleCwKPj4K
+Pj4gT24gMTUgT2N0b2JlciAyMDE1IGF0IDE0OjQ4LCBNaWtrbyBSYXBlbGkgPG1pa2tvLnJhcGVs
+aUBpa2kuZmk+IHdyb3RlOgo+Pj4gT24gVGh1LCBPY3QgMTUsIDIwMTUgYXQgMDk6MzI6MTBBTSAt
+MDQwMCwgQWxleCBEZXVjaGVyIHdyb3RlOgo+Pj4+IE9uIFRodSwgT2N0IDE1LCAyMDE1IGF0IDE6
+NTUgQU0sIE1pa2tvIFJhcGVsaSA8bWlra28ucmFwZWxpQGlraS5maT4gd3JvdGU6Cj4+Pj4gPiBG
+aXhlcyB1c2Vyc3BhY2UgY29tcGlsYXRpb24gZXJyb3I6Cj4+Pj4gPgo+Pj4+ID4gZHJtL2RybV9t
+b2RlLmg6NDcyOjI6IGVycm9yOiB1bmtub3duIHR5cGUgbmFtZSDigJh1aW50MzJfdOKAmQo+Pj4+
+ID4KPj4+PiA+IFNpZ25lZC1vZmYtYnk6IE1pa2tvIFJhcGVsaSA8bWlra28ucmFwZWxpQGlraS5m
+aT4KPj4+Pgo+Pj4+IE5BQ0sgb24gYWxsIHRoZXNlIHR5cGUgY29udmVyc2lvbnMuICBUaGlzIGhh
+cyBub3QgYmVlbiBhIHByb2JsZW0gZm9yCj4+Pj4geWVhcnMgYW5kIHllYXJzIGFuZCB0aGUgcmVz
+dWx0IGxvb2tzIHRlcnJpYmxlLgo+Pj4KPj4+IERvY3VtZW50YXRpb24vQ29kaW5nU3R5bGUsIHNl
+Y3Rpb24gNQo+Pj4KPj4+ICAoZSkgVHlwZXMgc2FmZSBmb3IgdXNlIGluIHVzZXJzcGFjZS4KPj4+
+Cj4+PiAgICAgIEluIGNlcnRhaW4gc3RydWN0dXJlcyB3aGljaCBhcmUgdmlzaWJsZSB0byB1c2Vy
+c3BhY2UsIHdlIGNhbm5vdAo+Pj4gICAgICByZXF1aXJlIEM5OSB0eXBlcyBhbmQgY2Fubm90IHVz
+ZSB0aGUgJ3UzMicgZm9ybSBhYm92ZS4gVGh1cywgd2UKPj4+ICAgICAgdXNlIF9fdTMyIGFuZCBz
+aW1pbGFyIHR5cGVzIGluIGFsbCBzdHJ1Y3R1cmVzIHdoaWNoIGFyZSBzaGFyZWQKPj4+ICAgICAg
+d2l0aCB1c2Vyc3BhY2UuCj4+Pgo+Pj4gSSBoYXZlIG9ubHkgYmVlbiBsb29raW5nIGF0IGtlcm5l
+bCBoZWFkZXJzIGZyb20gdXNlcnNwYWNlIG9jY2F0aW9uYWxseSBpbgo+Pj4gdGhlIHBhc3QgMTAg
+eWVhcnMgYW5kIGhhZCBhIHNldmVyYWwgY2FzZXMgd2hlcmUgdGhlIHByb3ZpZGVkIGhlYWRlcnMg
+ZGlkCj4+PiBub3QgY29tcGlsZSB3aGVuIGluY2x1ZGVkIGludG8gdHJpdmlhbCBwcm9ncmFtcyB0
+cnlpbmcgdG8gdXNlIHRoZSBzdHJ1Y3RzCj4+PiBmb3IgYW4gaW9jdGwoKSBmb3IgZXhhbXBsZS4g
+VGhpcyBsb25nIGxhc3RpbmcgcHJvYmxlbSB0cmlnZ2VyZWQgbWUgdG8gd3JpdGUKPj4+IGEgdGVz
+dCBmb3IgdGhpcyBhbmQgcHJvdmlkZSB0aGVzZSBmaXhlcyB0b28uIEluIHByZXZpb3VzIHJldmll
+d3MgdXNhZ2UKPj4+IG9mIDxzdGRpbnQuaD4gYW5kIGl0cyB0eXBlcyBpbiBrZXJuZWwgaGVhZGVy
+cyB3YXMgYWxyZWFkeSBOQUNLJ2VkCj4+PiBzbyBJIGNoYW5nZWQgc2V2ZXJhbCBwbGFjZXMgZnJv
+bSB1aW50MzJfdCdzIHRvIF9fdTMyLgo+Pj4KPj4+IFdpdGggdGhlc2UgY2hhbmdlcyBpdCBpcyBi
+dHcgdHJpdmlhbCBub3cgdG8gYWRkIGEgZ3JlcCB0ZXN0IHRoZSB0aGVyZQo+Pj4gYXJlIG5vIHVp
+bnQzMl90J3MgaW4gaW5jbHVkZS91YXBpLyBhbnltb3JlLCB0aHVzIGVuZm9yY2luZyB0aGF0IGNv
+ZGluZyBzdHlsZQo+Pj4gcnVsZS4KPj4+Cj4+IEJhc2VkIG9mIHRoZSByZXBseSBmcm9tIE1pa2tv
+LCBjYW4geW91IHBsZWFzZSBlbGFib3JhdGUgeW91ciBjb25jZXJuID8KPj4gQXJlIHlvdSB0aGlu
+a2luZyBhYm91dCBzb21lIGNvcm5lciBjYXNlIHdoZXJlIHRoaXMgbWF5IGNhdXNlIGJyZWFrYWdl
+LAo+PiBvciBpdCdzIHNvbGVseSBvbiBzdHlsaXN0aWMgcG9pbnQgb2YgdmlldyA/Cj4KPiBTdHls
+ZS4KPgpJbiB0aGF0IGNhc2Ugc2hvdWxkbid0IHRoZSBrZXJuZWwgY29kaW5nIHN0eWxlIChub3Qg
+dG8gbWVudGlvbiB0aGUKaXNzdWVzIHdpdGggc3RkaW50LmggdHlwZXMgTGludXMgaGFzIGJyb3Vn
+aHQgYSB3aGlsZSBiYWNrKSBiZQpjb25zaWRlcmVkL3ByZXZhaWwgPwoKPj4KPj4gT3ZlciB0aGUg
+bGFzdCBmZXcgeWVhcnMgd2UndmUgYmVlbiBkb2luZyBzb21lIGFkLWhvYyAnc3luY2hyb25pc2F0
+aW9uJwo+PiB3aXRoIHRoZSBoZWFkZXJzIGluIGxpYmRybSwgYW5kIHRoaXMgd2lsbCBnZXQgdXMg
+b25lIHN0ZXAgY2xvc2VyIHRvCj4+IGRvaW5nIHRoaW5ncyBwcm9wZXJseS4KPgo+IEhvdyBkb2Vz
+IHRoaXMgYWZmZWN0IGxpYmRybSBvbmUgd2F5IG9yIGFub3RoZXI/Cj4KSW4gYSBzdHJhbmdlIHdh
+eS4gU29tZSAobW9zdD8pIGRpc3RyaWJ1dGlvbnMgZG8gbm90IHNoaXAgdGhlIHVhcGkKaGVhZGVy
+cyBmcm9tIHRoZSBrZXJuZWwsIGJ1dCByZWx5IG9uIHRoZSBvbmVzIGluIGxpYmRybS4gRHVlIHRv
+CnZhcmlvdXMgaXNzdWVzIChhcyBhZGRyZXNzZWQgaW4gdGhlIHNlcmllcykgd2UgaGF2ZSBub3Qg
+c3luY2hyb25pc2VkCnRoZSBoZWFkZXJzLCB0aHVzIHVzZXJzIHN1Y2ggYXMgdGhlIGdhbGxpdW0g
+cmFkZW9uIHdpbnN5cyBoYXMgZW5kZWQgdXAKcmVkZWZpbmluZy9kdXBsaWNhdGluZyBpbnRlcm5h
+bGx5LgoKVGhhbmtzCkVtaWwKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX18KZHJpLWRldmVsIG1haWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0
+b3Aub3JnCmh0dHA6Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9kcmkt
+ZGV2ZWwK
