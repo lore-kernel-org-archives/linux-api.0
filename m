@@ -1,39 +1,87 @@
-From: Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v4 10/79] via_drm.h: move struct via_file_private
- definition to drivers/gpu/drm/via/via_drv.h
-Date: Wed, 21 Oct 2015 17:25:44 +0100
-Message-ID: <CACvgo52MN_u=vFYGos1QUfVZhAtTV7OGi4hH+pJ9+bO+Q8hi7A@mail.gmail.com>
+From: Alex Deucher <alexdeucher@gmail.com>
+Subject: Re: [PATCH v4 04/79] drm_mode.h: use __u32 and __u64 from
+ linux/types.h
+Date: Wed, 21 Oct 2015 12:27:27 -0400
+Message-ID: <CADnq5_OgN6tNKSGU-zUdhjNbqK+XRkGXccgxVtz+5092unza4g@mail.gmail.com>
 References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
-	<1444888618-4506-11-git-send-email-mikko.rapeli@iki.fi>
-	<CACvgo515FB4MSTWdR0dQdvNccYhMMhBD1bgL=heMLfrw7iqdmA@mail.gmail.com>
-	<20151021153323.GF16848@phenom.ffwll.local>
+ <1444888618-4506-5-git-send-email-mikko.rapeli@iki.fi>
+ <CADnq5_N5LK4Dy1okY7G6jPNB68PN2ijpwv=bt2bBC0FPGASoSQ@mail.gmail.com>
+ <20151015134844.GY6104@lakka.kapsi.fi>
+ <CACvgo50c+fz-Gk8ia5odUY=jPWy=sknGY+EKO01OwWQTpfEEVg@mail.gmail.com>
+ <CADnq5_MMzO+bmMmw96=n998hDgGXPbuvFmboO3tw9PMk9S3UdQ@mail.gmail.com>
+ <CACvgo50XzhdjqF1j_rRH4LTKYvNY_qq+tjy1U6WuzPmB8oTfqw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151021153323.GF16848-dv86pmgwkMBes7Z6vYuT8azUEOm+Xw19@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, ML dri-devel <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: Daniel Vetter <daniel.vetter-/w4YWyX8dFk@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <CACvgo50XzhdjqF1j_rRH4LTKYvNY_qq+tjy1U6WuzPmB8oTfqw@mail.gmail.com>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Emil Velikov <emil.l.velikov@gmail.com>
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, LKML <linux-kernel@vger.kernel.org>, Maling list - DRI developers <dri-devel@lists.freedesktop.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 21 October 2015 at 16:33, Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org> wrote:
-> On Wed, Oct 21, 2015 at 03:36:22PM +0100, Emil Velikov wrote:
->> On 15 October 2015 at 06:55, Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org> wrote:
->> > Fixes userspace compile error since list_head is not exported to userspace
->> > headers.
->> >
->> > Suggested by Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> at
->> > https://lkml.org/lkml/2015/6/3/792
->> >
->> > Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
->> We're safe as the only users of the struct already include via_drv.h.
->>
->> Reviewed-by: Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->>
->> Daniel can you pick this up (esp. since you added it with commit
->> c828e20456301b0f5192a1f75e8bf8a6afd15551)
->
-> Dave already applied it.
-Did not notice. Sorry for the noise.
-
--Emil
+T24gV2VkLCBPY3QgMjEsIDIwMTUgYXQgMTI6MjEgUE0sIEVtaWwgVmVsaWtvdiA8ZW1pbC5sLnZl
+bGlrb3ZAZ21haWwuY29tPiB3cm90ZToKPiBPbiAyMSBPY3RvYmVyIDIwMTUgYXQgMTY6MTgsIEFs
+ZXggRGV1Y2hlciA8YWxleGRldWNoZXJAZ21haWwuY29tPiB3cm90ZToKPj4gT24gV2VkLCBPY3Qg
+MjEsIDIwMTUgYXQgMTE6MDkgQU0sIEVtaWwgVmVsaWtvdiA8ZW1pbC5sLnZlbGlrb3ZAZ21haWwu
+Y29tPiB3cm90ZToKPj4+IEhpIEFsZXgsCj4+Pgo+Pj4gT24gMTUgT2N0b2JlciAyMDE1IGF0IDE0
+OjQ4LCBNaWtrbyBSYXBlbGkgPG1pa2tvLnJhcGVsaUBpa2kuZmk+IHdyb3RlOgo+Pj4+IE9uIFRo
+dSwgT2N0IDE1LCAyMDE1IGF0IDA5OjMyOjEwQU0gLTA0MDAsIEFsZXggRGV1Y2hlciB3cm90ZToK
+Pj4+Pj4gT24gVGh1LCBPY3QgMTUsIDIwMTUgYXQgMTo1NSBBTSwgTWlra28gUmFwZWxpIDxtaWtr
+by5yYXBlbGlAaWtpLmZpPiB3cm90ZToKPj4+Pj4gPiBGaXhlcyB1c2Vyc3BhY2UgY29tcGlsYXRp
+b24gZXJyb3I6Cj4+Pj4+ID4KPj4+Pj4gPiBkcm0vZHJtX21vZGUuaDo0NzI6MjogZXJyb3I6IHVu
+a25vd24gdHlwZSBuYW1lIOKAmHVpbnQzMl904oCZCj4+Pj4+ID4KPj4+Pj4gPiBTaWduZWQtb2Zm
+LWJ5OiBNaWtrbyBSYXBlbGkgPG1pa2tvLnJhcGVsaUBpa2kuZmk+Cj4+Pj4+Cj4+Pj4+IE5BQ0sg
+b24gYWxsIHRoZXNlIHR5cGUgY29udmVyc2lvbnMuICBUaGlzIGhhcyBub3QgYmVlbiBhIHByb2Js
+ZW0gZm9yCj4+Pj4+IHllYXJzIGFuZCB5ZWFycyBhbmQgdGhlIHJlc3VsdCBsb29rcyB0ZXJyaWJs
+ZS4KPj4+Pgo+Pj4+IERvY3VtZW50YXRpb24vQ29kaW5nU3R5bGUsIHNlY3Rpb24gNQo+Pj4+Cj4+
+Pj4gIChlKSBUeXBlcyBzYWZlIGZvciB1c2UgaW4gdXNlcnNwYWNlLgo+Pj4+Cj4+Pj4gICAgICBJ
+biBjZXJ0YWluIHN0cnVjdHVyZXMgd2hpY2ggYXJlIHZpc2libGUgdG8gdXNlcnNwYWNlLCB3ZSBj
+YW5ub3QKPj4+PiAgICAgIHJlcXVpcmUgQzk5IHR5cGVzIGFuZCBjYW5ub3QgdXNlIHRoZSAndTMy
+JyBmb3JtIGFib3ZlLiBUaHVzLCB3ZQo+Pj4+ICAgICAgdXNlIF9fdTMyIGFuZCBzaW1pbGFyIHR5
+cGVzIGluIGFsbCBzdHJ1Y3R1cmVzIHdoaWNoIGFyZSBzaGFyZWQKPj4+PiAgICAgIHdpdGggdXNl
+cnNwYWNlLgo+Pj4+Cj4+Pj4gSSBoYXZlIG9ubHkgYmVlbiBsb29raW5nIGF0IGtlcm5lbCBoZWFk
+ZXJzIGZyb20gdXNlcnNwYWNlIG9jY2F0aW9uYWxseSBpbgo+Pj4+IHRoZSBwYXN0IDEwIHllYXJz
+IGFuZCBoYWQgYSBzZXZlcmFsIGNhc2VzIHdoZXJlIHRoZSBwcm92aWRlZCBoZWFkZXJzIGRpZAo+
+Pj4+IG5vdCBjb21waWxlIHdoZW4gaW5jbHVkZWQgaW50byB0cml2aWFsIHByb2dyYW1zIHRyeWlu
+ZyB0byB1c2UgdGhlIHN0cnVjdHMKPj4+PiBmb3IgYW4gaW9jdGwoKSBmb3IgZXhhbXBsZS4gVGhp
+cyBsb25nIGxhc3RpbmcgcHJvYmxlbSB0cmlnZ2VyZWQgbWUgdG8gd3JpdGUKPj4+PiBhIHRlc3Qg
+Zm9yIHRoaXMgYW5kIHByb3ZpZGUgdGhlc2UgZml4ZXMgdG9vLiBJbiBwcmV2aW91cyByZXZpZXdz
+IHVzYWdlCj4+Pj4gb2YgPHN0ZGludC5oPiBhbmQgaXRzIHR5cGVzIGluIGtlcm5lbCBoZWFkZXJz
+IHdhcyBhbHJlYWR5IE5BQ0snZWQKPj4+PiBzbyBJIGNoYW5nZWQgc2V2ZXJhbCBwbGFjZXMgZnJv
+bSB1aW50MzJfdCdzIHRvIF9fdTMyLgo+Pj4+Cj4+Pj4gV2l0aCB0aGVzZSBjaGFuZ2VzIGl0IGlz
+IGJ0dyB0cml2aWFsIG5vdyB0byBhZGQgYSBncmVwIHRlc3QgdGhlIHRoZXJlCj4+Pj4gYXJlIG5v
+IHVpbnQzMl90J3MgaW4gaW5jbHVkZS91YXBpLyBhbnltb3JlLCB0aHVzIGVuZm9yY2luZyB0aGF0
+IGNvZGluZyBzdHlsZQo+Pj4+IHJ1bGUuCj4+Pj4KPj4+IEJhc2VkIG9mIHRoZSByZXBseSBmcm9t
+IE1pa2tvLCBjYW4geW91IHBsZWFzZSBlbGFib3JhdGUgeW91ciBjb25jZXJuID8KPj4+IEFyZSB5
+b3UgdGhpbmtpbmcgYWJvdXQgc29tZSBjb3JuZXIgY2FzZSB3aGVyZSB0aGlzIG1heSBjYXVzZSBi
+cmVha2FnZSwKPj4+IG9yIGl0J3Mgc29sZWx5IG9uIHN0eWxpc3RpYyBwb2ludCBvZiB2aWV3ID8K
+Pj4KPj4gU3R5bGUuCj4+Cj4gSW4gdGhhdCBjYXNlIHNob3VsZG4ndCB0aGUga2VybmVsIGNvZGlu
+ZyBzdHlsZSAobm90IHRvIG1lbnRpb24gdGhlCj4gaXNzdWVzIHdpdGggc3RkaW50LmggdHlwZXMg
+TGludXMgaGFzIGJyb3VnaHQgYSB3aGlsZSBiYWNrKSBiZQo+IGNvbnNpZGVyZWQvcHJldmFpbCA/
+CgpJIGRvbid0IHJlYWxseSBoYXZlIGEgc3Ryb25nIG9waW5pb24gb25lIHdheSBvciBhbm90aGVy
+IGF0IHRoaXMgcG9pbnQuClRoZSB0eXBlcyBqdXN0IGxvb2sgdWdseS4KCj4KPj4+Cj4+PiBPdmVy
+IHRoZSBsYXN0IGZldyB5ZWFycyB3ZSd2ZSBiZWVuIGRvaW5nIHNvbWUgYWQtaG9jICdzeW5jaHJv
+bmlzYXRpb24nCj4+PiB3aXRoIHRoZSBoZWFkZXJzIGluIGxpYmRybSwgYW5kIHRoaXMgd2lsbCBn
+ZXQgdXMgb25lIHN0ZXAgY2xvc2VyIHRvCj4+PiBkb2luZyB0aGluZ3MgcHJvcGVybHkuCj4+Cj4+
+IEhvdyBkb2VzIHRoaXMgYWZmZWN0IGxpYmRybSBvbmUgd2F5IG9yIGFub3RoZXI/Cj4+Cj4gSW4g
+YSBzdHJhbmdlIHdheS4gU29tZSAobW9zdD8pIGRpc3RyaWJ1dGlvbnMgZG8gbm90IHNoaXAgdGhl
+IHVhcGkKPiBoZWFkZXJzIGZyb20gdGhlIGtlcm5lbCwgYnV0IHJlbHkgb24gdGhlIG9uZXMgaW4g
+bGliZHJtLiBEdWUgdG8KPiB2YXJpb3VzIGlzc3VlcyAoYXMgYWRkcmVzc2VkIGluIHRoZSBzZXJp
+ZXMpIHdlIGhhdmUgbm90IHN5bmNocm9uaXNlZAo+IHRoZSBoZWFkZXJzLCB0aHVzIHVzZXJzIHN1
+Y2ggYXMgdGhlIGdhbGxpdW0gcmFkZW9uIHdpbnN5cyBoYXMgZW5kZWQgdXAKPiByZWRlZmluaW5n
+L2R1cGxpY2F0aW5nIGludGVybmFsbHkuCgpUaGUgcHJvYmxlbSBpcyB0aGF0IHlvdSBnZW5lcmFs
+bHkgbmVlZCB0aGUgbGF0ZXN0IGhlYWRlcnMgdG8gc3VwcG9ydAp0aGUgbGF0ZXN0IGZlYXR1cmVz
+IGluIHRoZSB1c2VyIG1vZGUgc3RhY2tzLCBzbyBpZiB0aGUgdXNlciB0cmllcyB0bwpidWlsZCBh
+Z2FpbnN0IGFuIG9sZGVyIGtlcm5lbCwgdGhleSB3aWxsIGJlIG1pc3NpbmcgZGVmaW5pdGlvbnMu
+CgpBbGV4Cl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCmRy
+aS1kZXZlbCBtYWlsaW5nIGxpc3QKZHJpLWRldmVsQGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRw
+Oi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4vbGlzdGluZm8vZHJpLWRldmVsCg==
