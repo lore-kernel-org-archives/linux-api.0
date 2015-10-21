@@ -1,45 +1,44 @@
-From: Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>
-Subject: Re: [PATCH v4 10/79] via_drm.h: move struct via_file_private
- definition to drivers/gpu/drm/via/via_drv.h
-Date: Wed, 21 Oct 2015 17:33:23 +0200
-Message-ID: <20151021153323.GF16848@phenom.ffwll.local>
+From: Daniel Vetter <daniel@ffwll.ch>
+Subject: Re: [PATCH v4 12/79] include/uapi/drm/sis_drm.h: move
+ sis_file_private to drivers/gpu/drm/sis/sis_drv.h
+Date: Wed, 21 Oct 2015 17:34:16 +0200
+Message-ID: <20151021153416.GG16848@phenom.ffwll.local>
 References: <1444888618-4506-1-git-send-email-mikko.rapeli@iki.fi>
- <1444888618-4506-11-git-send-email-mikko.rapeli@iki.fi>
- <CACvgo515FB4MSTWdR0dQdvNccYhMMhBD1bgL=heMLfrw7iqdmA@mail.gmail.com>
+ <1444888618-4506-13-git-send-email-mikko.rapeli@iki.fi>
+ <CACvgo51C=qc7WAPWr9oNczO9v7fCj04oH-k80vGXNNYLcAt+nQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
 Content-Disposition: inline
-In-Reply-To: <CACvgo515FB4MSTWdR0dQdvNccYhMMhBD1bgL=heMLfrw7iqdmA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Daniel Vetter <daniel.vetter-/w4YWyX8dFk@public.gmane.org>, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, ML dri-devel <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CACvgo51C=qc7WAPWr9oNczO9v7fCj04oH-k80vGXNNYLcAt+nQ@mail.gmail.com>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Emil Velikov <emil.l.velikov@gmail.com>
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, "open list:ABI/API" <linux-api@vger.kernel.org>, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel@vger.kernel.org>, ML dri-devel <dri-devel@lists.freedesktop.org>, Daniel Vetter <daniel.vetter@ffwll.ch>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 21, 2015 at 03:36:22PM +0100, Emil Velikov wrote:
-> On 15 October 2015 at 06:55, Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org> wrote:
-> > Fixes userspace compile error since list_head is not exported to userspace
-> > headers.
-> >
-> > Suggested by Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> at
-> > https://lkml.org/lkml/2015/6/3/792
-> >
-> > Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-> We're safe as the only users of the struct already include via_drv.h.
-> 
-> Reviewed-by: Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> 
-> Daniel can you pick this up (esp. since you added it with commit
-> c828e20456301b0f5192a1f75e8bf8a6afd15551)
-
-Dave already applied it.
--Daniel
-
-> 
-> Thanks
-> Emil
-
--- 
-Daniel Vetter
-Software Engineer, Intel Corporation
-http://blog.ffwll.ch
+T24gV2VkLCBPY3QgMjEsIDIwMTUgYXQgMDM6Mzk6MDdQTSArMDEwMCwgRW1pbCBWZWxpa292IHdy
+b3RlOgo+IE9uIDE1IE9jdG9iZXIgMjAxNSBhdCAwNjo1NSwgTWlra28gUmFwZWxpIDxtaWtrby5y
+YXBlbGlAaWtpLmZpPiB3cm90ZToKPiA+IEZpeGVzIHVzZXJzcGFjZSBjb21waWxlIGVycm9yOgo+
+ID4KPiA+IGRybS9zaXNfZHJtLmg6Njg6MTk6IGVycm9yOiBmaWVsZCDigJhvYmpfbGlzdOKAmSBo
+YXMgaW5jb21wbGV0ZSB0eXBlCj4gPiAgIHN0cnVjdCBsaXN0X2hlYWQgb2JqX2xpc3Q7Cj4gPgo+
+ID4gU3VnZ2VzdGVkIGJ5IEVtaWwgVmVsaWtvdiA8ZW1pbC5sLnZlbGlrb3ZAZ21haWwuY29tPiBh
+dAo+ID4gaHR0cHM6Ly9sa21sLm9yZy9sa21sLzIwMTUvNi8zLzc5Mgo+ID4KPiA+IFNpZ25lZC1v
+ZmYtYnk6IE1pa2tvIFJhcGVsaSA8bWlra28ucmFwZWxpQGlraS5maT4KPiA+IC0tLQo+IEFuYWxv
+Z291cyB0byB0aGUgdmlhIHBhdGNoLiBEYW5pZWwgY2FuIHlvdSBwbGVhc2UgcGljayB0aGlzIG9u
+ZSBhcyB3ZWxsID8KPiAKPiBIdW5rIHdhcyBhZGRlZCB3aXRoIGNvbW1pdCBmZGMwYjhhNjNjMTEy
+NGJiMDI1YTI4NDZkNDE1MzFhMTIzODQ1NzQwCj4gCj4gUmV2aWV3ZWQtYnk6IEVtaWwgVmVsaWtv
+diA8ZW1pbC5sLnZlbGlrb3ZAZ21haWwuY29tPgoKU2FtZSBkZWFsLCBhbHJlYWR5IG1lcmdlZC4K
+LURhbmllbAotLSAKRGFuaWVsIFZldHRlcgpTb2Z0d2FyZSBFbmdpbmVlciwgSW50ZWwgQ29ycG9y
+YXRpb24KaHR0cDovL2Jsb2cuZmZ3bGwuY2gKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX18KZHJpLWRldmVsIG1haWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMu
+ZnJlZWRlc2t0b3Aub3JnCmh0dHA6Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0
+aW5mby9kcmktZGV2ZWwK
