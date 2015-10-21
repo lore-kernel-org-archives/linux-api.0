@@ -1,68 +1,111 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH] userns/capability: Add user namespace capability
-Date: Wed, 21 Oct 2015 11:53:31 -0700
-Message-ID: <CALCETrWfZ9hXvLPtJnZhU-ZdoUbYNo-QSydMPvP6Q7Rp0oCQaw@mail.gmail.com>
-References: <5622700C.9090107@miglix.eu> <5624FD3B.2050401@gmail.com>
+From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v8] seccomp, ptrace: add support for dumping seccomp
+	filters
+Date: Wed, 21 Oct 2015 20:51:46 +0200
+Message-ID: <20151021185146.GA27176@redhat.com>
+References: <1445370612-18843-1-git-send-email-tycho.andersen@canonical.com> <1445370612-18843-2-git-send-email-tycho.andersen@canonical.com> <20151020202024.GA5772@redhat.com> <20151020220814.GA3232@hopstrocity>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5624FD3B.2050401-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20151020220814.GA3232@hopstrocity>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tobias Markus <tobias-gyUQdkDHmHmHXe+LvDLADg@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Oct 19, 2015 7:25 AM, "Austin S Hemmelgarn" <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+On 10/20, Tycho Andersen wrote:
 >
-> On 2015-10-17 11:58, Tobias Markus wrote:
->>
->> Add capability CAP_SYS_USER_NS.
->> Tasks having CAP_SYS_USER_NS are allowed to create a new user namespace
->> when calling clone or unshare with CLONE_NEWUSER.
->>
->> Rationale:
->>
->> Linux 3.8 saw the introduction of unpriviledged user namespaces,
->> allowing unpriviledged users (without CAP_SYS_ADMIN) to be a "fake" root
->> inside a separate user namespace. Before that, any namespace creation
->> required CAP_SYS_ADMIN (or, in practice, the user had to be root).
->> Unfortunately, there have been some security-relevant bugs in the
->> meantime. Because of the fairly complex nature of user namespaces, it is
->> reasonable to say that future vulnerabilties can not be excluded. Some
->> distributions even wholly disable user namespaces because of this.
->>
->> Both options, user namespaces with and without CAP_SYS_ADMIN, can be
->> said to represent the extreme end of the spectrum. In practice, there is
->> no reason for every process to have the abilitiy to create user
->> namespaces. Indeed, only very few and specialized programs require user
->> namespaces. This seems to be a perfect fit for the (file) capability
->> system: Priviledged users could manually allow only a certain executable
->> to be able to create user namespaces by setting a certain capability,
->> I'd suggest the name CAP_SYS_USER_NS. Executables completely unrelated
->> to user namespaces should and can not create them.
->>
->> The capability should only be required in the "root" user namespace (the
->> user namespace with level 0) though, to allow nested user namespaces to
->> work as intended. If a user namespace has a level greater than 0, the
->> original process must have had CAP_SYS_USER_NS, so it is "trusted" anyway.
->>
->> One question remains though: Does this break userspace executables that
->> expect being able to create user namespaces without priviledge? Since
->> creating user namespaces without CAP_SYS_ADMIN was not possible before
->> Linux 3.8, programs should already expect a potential EPERM upon calling
->> clone. Since creating a user namespace without CAP_SYS_USER_NS would
->> also cause EPERM, we should be on the safe side.
+> Hi Kees, Oleg,
 >
+> On Tue, Oct 20, 2015 at 10:20:24PM +0200, Oleg Nesterov wrote:
+> >
+> > No, you can't do copy_to_user() from atomic context. You need to pin this
+> > filter, drop the lock/irq, then copy_to_user().
 >
-> Potentially stupid counter proposal:
-> Make it CAP_SYS_NS, make it allow access to all namespace types for non-root/CAP_SYS_ADMIN users, and teach the stuff that's using userns just to get to mount/pid/net/ipc namespaces to use those instead when it's something that doesn't really need to think it's running as root.
->
-> While this would still add a new capability (which is arguably not a good thing), the resultant capability would be significantly more useful for many of the use cases.
+> Attached is a patch which addresses this.
 
-Then you'd have to come up with some argument that it could possibly
-be safe.  You'd need *at least* no_new_privs forced on.  You would
-also have fun defining the privilege to own such a namespace once
-created.
+Looks good to me, feel free to add my reviewed-by.
 
---Andy
+
+a couple of questions, I am just curious...
+
+> +long seccomp_get_filter(struct task_struct *task, unsigned long filter_off,
+> +			void __user *data)
+> +{
+> +	struct seccomp_filter *filter;
+> +	struct sock_fprog_kern *fprog;
+> +	long ret;
+> +	unsigned long count = 0;
+> +
+> +	if (!capable(CAP_SYS_ADMIN) ||
+> +	    current->seccomp.mode != SECCOMP_MODE_DISABLED) {
+> +		return -EACCES;
+> +	}
+> +
+> +	spin_lock_irq(&task->sighand->siglock);
+> +	if (task->seccomp.mode != SECCOMP_MODE_FILTER) {
+> +		ret = -EINVAL;
+> +		goto out;
+> +	}
+> +
+> +	filter = task->seccomp.filter;
+> +	while (filter) {
+> +		filter = filter->prev;
+> +		count++;
+> +	}
+> +
+> +	if (filter_off >= count) {
+> +		ret = -ENOENT;
+> +		goto out;
+> +	}
+> +	count -= filter_off;
+> +
+> +	filter = task->seccomp.filter;
+> +	while (filter && count > 1) {
+> +		filter = filter->prev;
+> +		count--;
+> +	}
+> +
+> +	if (WARN_ON(count != 1)) {
+> +		/* The filter tree shouldn't shrink while we're using it. */
+> +		ret = -ENOENT;
+
+Yes. but this looks a bit confusing. If we want this WARN_ON() check
+because we are paranoid, then we should do
+
+	WARN_ON(count != 1 || filter);
+
+And "while we're using it" look misleading, we rely on ->siglock.
+
+Plus if we could be shrinked the additional check can't help anyway,
+we can used the free filter. So I don't really understand this check
+and "filter != NULL" in the previous "while (filter && count > 1)".
+Nevermind...
+
+The question is:
+
+> +	fprog = filter->prog->orig_prog;
+> +	if (!fprog) {
+
+So is it possible or not? I didn't see the previous changes which
+added "bool save" to seccomp_attach_filter() so I simply can't know.
+
+Now,
+
+> +		/* This must be a new non-cBPF filter, since we save every
+> +		 * every cBPF filter's orig_prog above when
+> +		 * CONFIG_CHECKPOINT_RESTORE is enabled.
+> +		 */
+> +		ret = -EMEDIUMTYPE;
+
+If this is possible, then probably we should simply change both
+"while (filter)" loops above to skip a filter if orig_prog == NULL
+and remove the -EMEDIUMTYPE code ?
+
+Or what? Probably "a new non-cBPF filter" answers my question,
+but I do not know what this cBPF/non-cBPF actually means ;)
+
+In short. Who can attach a filter without "save => true" ?
+
+Oleg.
