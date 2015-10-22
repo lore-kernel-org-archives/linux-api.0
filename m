@@ -1,57 +1,37 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH] userns/capability: Add user namespace capability
-Date: Thu, 22 Oct 2015 16:44:49 -0500
-Message-ID: <874mhi4lym.fsf@x220.int.ebiederm.org>
-References: <5622700C.9090107@miglix.eu>
-	<20151017215501.GA22900@mail.hallyn.com> <5623FD82.4030902@miglix.eu>
-	<87twpi63ai.fsf@x220.int.ebiederm.org>
-	<CALCETrWKN+Uzw_TYqVTGatNZ3LT5RbSM1WuYPoXeKQs9Yw_qjg@mail.gmail.com>
+From: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
+Subject: Re: [RFC PATCH 0/3] restartable sequences benchmarks
+Date: Thu, 22 Oct 2015 15:10:54 -0700
+Message-ID: <20151022221054.GA2949757@devbig217.prn1.facebook.com>
+References: <cover.1445464158.git.davejwatson@fb.com>
+ <CALCETrWXR0BMeEygiLoT5gbyYpGxren_Fch=S4RSryfqwdxH8g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrWKN+Uzw_TYqVTGatNZ3LT5RbSM1WuYPoXeKQs9Yw_qjg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-	(Andy Lutomirski's message of "Thu, 22 Oct 2015 14:02:09 -0700")
+Content-Disposition: inline
+In-Reply-To: <CALCETrWXR0BMeEygiLoT5gbyYpGxren_Fch=S4RSryfqwdxH8g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Tobias Markus <tobias-gyUQdkDHmHmHXe+LvDLADg@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, "linux-kernel@vger.kernel.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Richard Weinberger <richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Yves-Alexis Perez <corsac-8fiUuRrzOP0dnm+yROfE0A@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Cc: kernel-team-b10kYP2dOMg@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
+On Thu, Oct 22, 2015 at 12:11:42PM -0700, Andy Lutomirski wrote:
+> On Thu, Oct 22, 2015 at 11:06 AM, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org> wrote:
+> >
+> >                                    RSS CPUIDLE LATENCYMS
+> > jemalloc 4.0.0                     31G   33%     390
+> > jemalloc + this patch              25G   33%     390
+> > jemalloc + this patch using lsl    25G   30%     420
+> > jemalloc + PT's rseq patch         25G   32%     405
+> > glibc malloc 2.20                  27G   30%     420
+> > tcmalloc gperftools trunk (2.2)    21G   30%     480
+> 
+> Slightly confused.  This is showing a space efficiency improvement but
+> not a performance improvement?  Is the idea that percpu free lists are
+> more space efficient than per-thread free lists?
+> 
+> --Andy
 
-> At the risk of pointing out a can of worms, the attack surface also
-> includes things like the iptables configuration APIs, parsers, and
-> filter/conntrack/action modules.
-
-It is worth noting that module auto-load does not happen if the
-triggering code does not have the proper permissions in the initial user
-namespace.
-
-I agree that is another piece of code that should be counted.  How that
-compares to the other 130,000 or so lines of code in the network stack
-an unprivileged user can caused to be exercised already I don't know.
-In my back of the napkin swag I had totally forgotten to count anything
-in the network stack.
-
-A lot of the netfilter code that I have read and looked at is
-compartively simple and clean so I don't expect there is much risk
-except from sheer volume of code there.
-
-It is also tricky to count because the entire network side of the
-networking stack is exposed to hostile users on the internet so anything
-except the configuration is already exposed to hostile users.  The
-average check entry is 15-20 lines long.  There appear to be 117 unique
-check entry functions in the kernel so there may be another 2.5k lines of
-code there.
-
-Hmm.  And we have not had any design issues with the network stack.
-
-Absent of design issues where the code even when implemented correctly
-has the wrong semantics, we are left with the probability of exploitable
-buggy code.  I suspect we have enough code even without user namespaces
-enabled that the probability of exploitable buggy code someone in the
-code that unprivilged users can cause to be exercised run is > 50%.
-
-I wonder if there are any good statistical models that give realistic
-estimates of those things.
-
-Eric
+Correct - the service was already tuned such that most requests hit
+the (very large) thread free lists to avoided taking expensive locks
+talking to the central arena.  There were more threads than cpus, so
+the memory win is just needing fewer free lists. 
