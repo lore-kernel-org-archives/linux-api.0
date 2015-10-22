@@ -1,71 +1,233 @@
-From: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH v7 0/6] of: overlay: kobject & sysfs'ation
-Date: Thu, 22 Oct 2015 22:50:21 +0300
-Message-ID: <1445543427-26275-1-git-send-email-pantelis.antoniou@konsulko.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Frank Rowand <frowand.list-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Pantelis Antoniou <panto-wVdstyuyKrO8r51toPun2/C9HSW9iNxf@public.gmane.org>
+From: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
+Subject: [PATCH v7 5/6] of: overlay: add per overlay sysfs attributes
+Date: Thu, 22 Oct 2015 22:50:26 +0300
+Message-ID: <1445543427-26275-6-git-send-email-pantelis.antoniou@konsulko.com>
+References: <1445543427-26275-1-git-send-email-pantelis.antoniou@konsulko.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1445543427-26275-1-git-send-email-pantelis.antoniou@konsulko.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Rob Herring <robherring2@gmail.com>
+Cc: Frank Rowand <frowand.list@gmail.com>, Matt Porter <mporter@konsulko.com>, Koen Kooi <koen@dominion.thruhere.net>, Guenter Roeck <linux@roeck-us.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Pantelis Antoniou <pantelis.antoniou@konsulko.com>, Pantelis Antoniou <panto@antoniou-consulting.com>
 List-Id: linux-api@vger.kernel.org
 
-The first patch puts the overlays as objects in the sysfs in
-/sys/firmware/devicetree/overlays.
+* A per overlay can_remove sysfs attribute that reports whether
+the overlay can be removed or not due to another overlapping overlay.
 
-The #2 adds a master overlay enable switch (that once is set to
-disabled can't be re-enabled), while the one after that
-introduces a number of default per overlay attributes.
-The patch following is the ABI docs for the sysfs entries of #2,
-while the next one updates the doc entry for the kernel parameter
-of_overlay_disable.
+* A target sysfs attribute listing the target of each fragment,
+in a group named after the name of the fragment.
 
-Patch #5 add per overlay sysfs attributes, and the next one is
-documentation about it.
+Signed-off-by: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
+---
+ drivers/of/overlay.c | 103 +++++++++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 99 insertions(+), 4 deletions(-)
 
-The patchset is against linus's tree as of today.
-
-Changes since v6:
-* Updated changelogs as per maintainer suggestion.
-* Fixed documentation entries and split them up
-* Added command line parameter docs.
-
-Changes since v5:
-* Does a single kobject_put that suffices
-* A per-fragment sysfs directory and a single value target.
-* Update in the ABI documention.
-
-Changes since v4:
-* Rebased against latest mainline.
-
-Changes since v3:
-* Used strtobool instead of kstrtoul
-* ABI Documentation includes a pointer to the discussion that
-requested the sysfs property.
-
-Changes since v2:
-* Removed the unittest patch.
-* Split the sysfs attribute patch to a global and a per-overlay
-  patch.
-* Dropped binary attributes using textual kobj_attributes instead.
-
-Changes since v1:
-* Maintainer requested changes.
-* Documented the sysfs entries
-* Per overlay sysfs attributes.
-Pantelis Antoniou (6):
-  of: overlay: kobjectify overlay objects
-  of: overlay: global sysfs enable attribute
-  Documentation: ABI: overlays - global attributes
-  Documentation: document of_overlay_disable parameter
-  of: overlay: add per overlay sysfs attributes
-  Documentation: ABI: overlays - per overlay docs
-
- .../ABI/testing/sysfs-firmware-devicetree-overlays |  52 ++++++
- Documentation/kernel-parameters.txt                |   3 +
- drivers/of/base.c                                  |   7 +
- drivers/of/of_private.h                            |   9 +
- drivers/of/overlay.c                               | 201 ++++++++++++++++++++-
- 5 files changed, 266 insertions(+), 6 deletions(-)
- create mode 100644 Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
-
+diff --git a/drivers/of/overlay.c b/drivers/of/overlay.c
+index 91f10ed..6398810 100644
+--- a/drivers/of/overlay.c
++++ b/drivers/of/overlay.c
+@@ -25,8 +25,23 @@
+ 
+ #include "of_private.h"
+ 
++/* fwd. decl */
++struct of_overlay;
++struct of_overlay_info;
++
++/* an attribute for each fragment */
++struct fragment_attribute {
++	struct attribute attr;
++	ssize_t (*show)(struct kobject *kobj, struct fragment_attribute *fattr,
++			char *buf);
++	ssize_t (*store)(struct kobject *kobj, struct fragment_attribute *fattr,
++			 const char *buf, size_t count);
++	struct of_overlay_info *ovinfo;
++};
++
+ /**
+  * struct of_overlay_info - Holds a single overlay info
++ * @info:	info node that contains the target and overlay
+  * @target:	target of the overlay operation
+  * @overlay:	pointer to the overlay contents node
+  *
+@@ -34,8 +49,13 @@
+  * records.
+  */
+ struct of_overlay_info {
++	struct of_overlay *ov;
++	struct device_node *info;
+ 	struct device_node *target;
+ 	struct device_node *overlay;
++	struct attribute_group attr_group;
++	struct attribute *attrs[2];
++	struct fragment_attribute target_attr;
+ };
+ 
+ /**
+@@ -52,6 +72,7 @@ struct of_overlay {
+ 	struct list_head node;
+ 	int count;
+ 	struct of_overlay_info *ovinfo_tab;
++	const struct attribute_group **attr_groups;
+ 	struct of_changeset cset;
+ 	struct kobject kobj;
+ };
+@@ -252,6 +273,8 @@ static int of_fill_overlay_info(struct of_overlay *ov,
+ 	if (ovinfo->target == NULL)
+ 		goto err_fail;
+ 
++	ovinfo->info = of_node_get(info_node);
++
+ 	return 0;
+ 
+ err_fail:
+@@ -262,6 +285,17 @@ err_fail:
+ 	return -EINVAL;
+ }
+ 
++static ssize_t target_show(struct kobject *kobj,
++		struct fragment_attribute *fattr, char *buf)
++{
++	struct of_overlay_info *ovinfo = fattr->ovinfo;
++
++	return snprintf(buf, PAGE_SIZE, "%s\n",
++			of_node_full_name(ovinfo->target));
++}
++
++static const struct fragment_attribute target_template_attr = __ATTR_RO(target);
++
+ /**
+  * of_build_overlay_info() - Build an overlay info array
+  * @ov		Overlay to build
+@@ -279,7 +313,7 @@ static int of_build_overlay_info(struct of_overlay *ov,
+ {
+ 	struct device_node *node;
+ 	struct of_overlay_info *ovinfo;
+-	int cnt, err;
++	int i, cnt, err;
+ 
+ 	/* worst case; every child is a node */
+ 	cnt = 0;
+@@ -300,14 +334,45 @@ static int of_build_overlay_info(struct of_overlay *ov,
+ 
+ 	/* if nothing filled, return error */
+ 	if (cnt == 0) {
+-		kfree(ovinfo);
+-		return -ENODEV;
++		err = -ENODEV;
++		goto err_free_ovinfo;
+ 	}
+ 
+ 	ov->count = cnt;
+ 	ov->ovinfo_tab = ovinfo;
+ 
++	ov->attr_groups = kcalloc(cnt + 1,
++			sizeof(struct attribute_group *), GFP_KERNEL);
++	if (ov->attr_groups == NULL) {
++		err = -ENOMEM;
++		goto err_free_ovinfo;
++	}
++
++	for (i = 0; i < cnt; i++) {
++		ovinfo = &ov->ovinfo_tab[i];
++
++		ov->attr_groups[i] = &ovinfo->attr_group;
++
++		ovinfo->target_attr = target_template_attr;
++		/* make lockdep happy */
++		sysfs_attr_init(&ovinfo->target_attr.attr);
++		ovinfo->target_attr.ovinfo = ovinfo;
++
++		ovinfo->attrs[0] = &ovinfo->target_attr.attr;
++		ovinfo->attrs[1] = NULL;
++
++		/* NOTE: direct reference to the full_name */
++		ovinfo->attr_group.name = kbasename(ovinfo->info->full_name);
++		ovinfo->attr_group.attrs = ovinfo->attrs;
++
++	}
++	ov->attr_groups[i] = NULL;
++
+ 	return 0;
++
++err_free_ovinfo:
++	kfree(ovinfo);
++	return err;
+ }
+ 
+ /**
+@@ -324,12 +389,16 @@ static int of_free_overlay_info(struct of_overlay *ov)
+ 	struct of_overlay_info *ovinfo;
+ 	int i;
+ 
++	/* free attribute groups space */
++	kfree(ov->attr_groups);
++
+ 	/* do it in reverse */
+ 	for (i = ov->count - 1; i >= 0; i--) {
+ 		ovinfo = &ov->ovinfo_tab[i];
+ 
+ 		of_node_put(ovinfo->target);
+ 		of_node_put(ovinfo->overlay);
++		of_node_put(ovinfo->info);
+ 	}
+ 	kfree(ov->ovinfo_tab);
+ 
+@@ -380,8 +449,25 @@ static const struct attribute *overlay_global_attrs[] = {
+ 	NULL
+ };
+ 
++static ssize_t can_remove_show(struct kobject *kobj,
++		struct kobj_attribute *attr, char *buf)
++{
++	struct of_overlay *ov = kobj_to_overlay(kobj);
++
++	return snprintf(buf, PAGE_SIZE, "%d\n", overlay_removal_is_ok(ov));
++}
++
++static struct kobj_attribute can_remove_attr = __ATTR_RO(can_remove);
++
++static struct attribute *overlay_attrs[] = {
++	&can_remove_attr.attr,
++	NULL
++};
++
+ static struct kobj_type of_overlay_ktype = {
+ 	.release = of_overlay_release,
++	.sysfs_ops = &kobj_sysfs_ops,	/* default kobj sysfs ops */
++	.default_attrs = overlay_attrs,
+ };
+ 
+ static struct kset *ov_kset;
+@@ -461,13 +547,21 @@ int of_overlay_create(struct device_node *tree)
+ 		goto err_cancel_overlay;
+ 	}
+ 
++	err = sysfs_create_groups(&ov->kobj, ov->attr_groups);
++	if (err != 0) {
++		pr_err("%s: sysfs_create_groups() failed for tree@%s\n",
++				__func__, tree->full_name);
++		goto err_remove_kobj;
++	}
++
+ 	/* add to the tail of the overlay list */
+ 	list_add_tail(&ov->node, &ov_list);
+ 
+ 	mutex_unlock(&of_mutex);
+ 
+ 	return id;
+-
++err_remove_kobj:
++	kobject_put(&ov->kobj);
+ err_cancel_overlay:
+ 	of_changeset_revert(&ov->cset);
+ err_revert_overlay:
+@@ -586,6 +680,7 @@ int of_overlay_destroy(int id)
+ 
+ 
+ 	list_del(&ov->node);
++	sysfs_remove_groups(&ov->kobj, ov->attr_groups);
+ 	of_changeset_revert(&ov->cset);
+ 	of_free_overlay_info(ov);
+ 	idr_remove(&ov_idr, id);
 -- 
 1.7.12
