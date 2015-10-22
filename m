@@ -1,113 +1,28 @@
-From: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
-Subject: [PATCH v7 2/6] of: overlay: global sysfs enable attribute
-Date: Thu, 22 Oct 2015 22:50:23 +0300
-Message-ID: <1445543427-26275-3-git-send-email-pantelis.antoniou@konsulko.com>
+From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [PATCH v7 1/6] of: overlay: kobjectify overlay objects
+Date: Thu, 22 Oct 2015 13:17:21 -0700
+Message-ID: <20151022201721.GA27977@kroah.com>
 References: <1445543427-26275-1-git-send-email-pantelis.antoniou@konsulko.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1445543427-26275-1-git-send-email-pantelis.antoniou@konsulko.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Rob Herring <robherring2@gmail.com>
-Cc: Frank Rowand <frowand.list@gmail.com>, Matt Porter <mporter@konsulko.com>, Koen Kooi <koen@dominion.thruhere.net>, Guenter Roeck <linux@roeck-us.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Pantelis Antoniou <pantelis.antoniou@konsulko.com>, Pantelis Antoniou <panto@antoniou-consulting.com>
+ <1445543427-26275-2-git-send-email-pantelis.antoniou@konsulko.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1445543427-26275-2-git-send-email-pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Cc: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Frank Rowand <frowand.list-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pantelis Antoniou <panto-wVdstyuyKrO8r51toPun2/C9HSW9iNxf@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-A throw once master enable switch to protect against any
-further overlay applications if the administrator desires so.
+On Thu, Oct 22, 2015 at 10:50:22PM +0300, Pantelis Antoniou wrote:
+> We are going to need the overlays to appear on sysfs with runtime
+> global properties (like master enable) so turn them into kobjects.
+> 
+> They have to be in sysfs so that people can have information about the
+> overlays applied in the system, i.e. where their targets are and whether
+> removal is possible. In a future more attributes can be added
+> in a backwards compatible manner.
+> 
+> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
 
-A kernel command line option is provided as well.
-
-Signed-off-by: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
----
- drivers/of/overlay.c | 50 +++++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 49 insertions(+), 1 deletion(-)
-
-diff --git a/drivers/of/overlay.c b/drivers/of/overlay.c
-index 12c3e47..91f10ed 100644
---- a/drivers/of/overlay.c
-+++ b/drivers/of/overlay.c
-@@ -21,6 +21,7 @@
- #include <linux/err.h>
- #include <linux/idr.h>
- #include <linux/sysfs.h>
-+#include <linux/atomic.h>
- 
- #include "of_private.h"
- 
-@@ -55,8 +56,19 @@ struct of_overlay {
- 	struct kobject kobj;
- };
- 
-+/* master enable switch; once set to 0 can't be re-enabled */
-+static atomic_t ov_enable = ATOMIC_INIT(1);
-+
-+static int __init of_overlay_disable_setup(char *str __always_unused)
-+{
-+	atomic_set(&ov_enable, 0);
-+	return 1;
-+}
-+__setup("of_overlay_disable", of_overlay_disable_setup);
-+
- static int of_overlay_apply_one(struct of_overlay *ov,
- 		struct device_node *target, const struct device_node *overlay);
-+static int overlay_removal_is_ok(struct of_overlay *ov);
- 
- static int of_overlay_apply_single_property(struct of_overlay *ov,
- 		struct device_node *target, struct property *prop)
-@@ -339,6 +351,35 @@ void of_overlay_release(struct kobject *kobj)
- 	kfree(ov);
- }
- 
-+static ssize_t enable_show(struct kobject *kobj,
-+		struct kobj_attribute *attr, char *buf)
-+{
-+	return snprintf(buf, PAGE_SIZE, "%d\n", atomic_read(&ov_enable));
-+}
-+
-+static ssize_t enable_store(struct kobject *kobj,
-+		struct kobj_attribute *attr, const char *buf, size_t count)
-+{
-+	int ret;
-+	bool new_enable;
-+
-+	ret = strtobool(buf, &new_enable);
-+	if (ret != 0)
-+		return ret;
-+	/* if we've disabled it, no going back */
-+	if (atomic_read(&ov_enable) == 0)
-+		return -EPERM;
-+	atomic_set(&ov_enable, (int)new_enable);
-+	return count;
-+}
-+
-+static struct kobj_attribute enable_attr = __ATTR_RW(enable);
-+
-+static const struct attribute *overlay_global_attrs[] = {
-+	&enable_attr.attr,
-+	NULL
-+};
-+
- static struct kobj_type of_overlay_ktype = {
- 	.release = of_overlay_release,
- };
-@@ -360,6 +401,10 @@ int of_overlay_create(struct device_node *tree)
- 	struct of_overlay *ov;
- 	int err, id;
- 
-+	/* administratively disabled */
-+	if (!atomic_read(&ov_enable))
-+		return -EPERM;
-+
- 	/* allocate the overlay structure */
- 	ov = kzalloc(sizeof(*ov), GFP_KERNEL);
- 	if (ov == NULL)
-@@ -594,5 +639,8 @@ int of_overlay_init(void)
- 	if (!ov_kset)
- 		return -ENOMEM;
- 
--	return 0;
-+	rc = sysfs_create_files(&ov_kset->kobj, overlay_global_attrs);
-+	WARN(rc, "%s: error adding global attributes\n", __func__);
-+
-+	return rc;
- }
--- 
-1.7.12
+Acked-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
