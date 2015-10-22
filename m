@@ -1,38 +1,45 @@
-From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH] TTY, devpts: document pty count limiting
-Date: Thu, 22 Oct 2015 07:33:49 -0700
-Message-ID: <20151022143349.GA21861@kroah.com>
-References: <20151021100854.7888.90252.stgit@buzz>
- <20151021170423.GA29006@kroah.com>
- <87twpjczor.fsf@x220.int.ebiederm.org>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH 14/23] userfaultfd: wake pending userfaults
+Date: Thu, 22 Oct 2015 17:15:09 +0200
+Message-ID: <20151022151509.GO3604@twins.programming.kicks-ass.net>
+References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
+ <1431624680-20153-15-git-send-email-aarcange@redhat.com>
+ <20151022121056.GB7520@twins.programming.kicks-ass.net>
+ <20151022132015.GF19147@redhat.com>
+ <20151022133824.GR17308@twins.programming.kicks-ass.net>
+ <20151022141831.GA1331@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <87twpjczor.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Greg Kroah-Hartman <gregkh-l3A5Bk7waGM@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <20151022141831.GA1331@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrea Arcangeli <aarcange@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-api@vger.kernel.org, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave.hansen@intel.com>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 21, 2015 at 11:08:52PM -0500, Eric W. Biederman wrote:
-> Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> writes:
-> 
-> > On Wed, Oct 21, 2015 at 01:08:54PM +0300, Konstantin Khlebnikov wrote:
-> >> Logic was changed in kernel 3.4 by commit e9aba5158a80 ("tty: rework pty
-> >> count limiting") but still isn't documented. Better late than never.
-> >> 
-> >> Signed-off-by: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-> >> ---
-> >>  Documentation/filesystems/devpts.txt |    9 +++++++++
-> >>  Documentation/sysctl/kernel.txt      |    7 +++++++
-> >>  2 files changed, 16 insertions(+)
-> >
-> > Any reason you didn't cc: the tty maintainer on this?
-> 
-> It looks like he attempted to and managed to get your old suse.de
-> address.
+On Thu, Oct 22, 2015 at 04:18:31PM +0200, Andrea Arcangeli wrote:
 
-Ah, you are right, my apologies, that address is long dead :)
+> The risk of memory corruption is still zero no matter what happens
+> here, in the extremely rare case the app will get a SIGBUS or a
 
-greg k-h
+That might still upset people, SIGBUS isn't something an app can really
+recover from.
+
+> I'm not exactly sure why we allow VM_FAULT_RETRY only once currently
+> so I'm tempted to drop FAULT_FLAG_TRIED entirely.
+
+I think to ensure we make forward progress.
+
+> I've no real preference on how to tweak the page fault code to be able
+> to return VM_FAULT_RETRY indefinitely and I would aim for the smallest
+> change possible, so if you've suggestions now it's good time.
+
+Indefinitely is such a long time, we should try and finish
+computation before the computer dies etc. :-)
+
+Yes, yes.. I know, extremely unlikely etc. Still guarantees are good.
+
+
+In any case, I'm not really too bothered how you fix it, just figured
+I'd let you know.
