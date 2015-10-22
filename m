@@ -1,198 +1,122 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v8 06/14] task_isolation: provide strict mode configurable signal
-Date: Thu, 22 Oct 2015 14:00:15 -0700
-Message-ID: <CALCETrVQXwYwhEwbJsvN18w8qD-qVVCQAa8b9RcXD=RmXSqLiQ@mail.gmail.com>
-References: <1445373372-6567-1-git-send-email-cmetcalf@ezchip.com>
- <1445373372-6567-7-git-send-email-cmetcalf@ezchip.com> <20151020205610.51b3d742@grimm.local.home>
- <5626EABC.9060202@ezchip.com> <CALCETrXqDi24EPn79X9SXuz+5sYGZBF3yCRzb8PwdL=YbxVujw@mail.gmail.com>
- <AM2PR02MB041772AEFFA939F2F8619B36BD380@AM2PR02MB0417.eurprd02.prod.outlook.com>
- <CALCETrVuE_VCk-7_VMJ-orL8pg+0F5vq6qvt4SfgXzt_MRr-SQ@mail.gmail.com> <56294ACA.4000700@ezchip.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH] userns/capability: Add user namespace capability
+Date: Thu, 22 Oct 2015 14:02:09 -0700
+Message-ID: <CALCETrWKN+Uzw_TYqVTGatNZ3LT5RbSM1WuYPoXeKQs9Yw_qjg@mail.gmail.com>
+References: <5622700C.9090107@miglix.eu> <20151017215501.GA22900@mail.hallyn.com>
+ <5623FD82.4030902@miglix.eu> <87twpi63ai.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <56294ACA.4000700@ezchip.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@ezchip.com>
-Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87twpi63ai.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Tobias Markus <tobias-gyUQdkDHmHmHXe+LvDLADg@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Richard Weinberger <richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Yves-Alexis Perez <corsac-8fiUuRrzOP0dnm+yROfE0A@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 22, 2015 at 1:44 PM, Chris Metcalf <cmetcalf@ezchip.com> wrote:
-> On 10/21/2015 02:53 PM, Andy Lutomirski wrote:
->>
->> On Tue, Oct 20, 2015 at 11:41 PM, Gilad Ben Yossef <giladb@ezchip.com>
->> wrote:
->>>
->>>
->>>> From: Andy Lutomirski [mailto:luto@amacapital.net]
->>>> Sent: Wednesday, October 21, 2015 4:43 AM
->>>> To: Chris Metcalf
->>>> Subject: Re: [PATCH v8 06/14] task_isolation: provide strict mode
->>>> configurable signal
+On Thu, Oct 22, 2015 at 1:45 PM, Eric W. Biederman
+<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>
+> Thank you for a creative solution to a problem that you perceive.  I
+> appreciate it when people aim to solve problems they see.
+>
+> Tobias Markus <tobias-gyUQdkDHmHmHXe+LvDLADg@public.gmane.org> writes:
+>
+>> On 17.10.2015 23:55, Serge E. Hallyn wrote:
+>>> On Sat, Oct 17, 2015 at 05:58:04PM +0200, Tobias Markus wrote:
+>>>> Add capability CAP_SYS_USER_NS.
+>>>> Tasks having CAP_SYS_USER_NS are allowed to create a new user namespace
+>>>> when calling clone or unshare with CLONE_NEWUSER.
 >>>>
->>>> On Tue, Oct 20, 2015 at 6:30 PM, Chris Metcalf <cmetcalf@ezchip.com>
->>>> wrote:
->>>>>
->>>>> On 10/20/2015 8:56 PM, Steven Rostedt wrote:
->>>>>>
->>>>>> On Tue, 20 Oct 2015 16:36:04 -0400
->>>>>> Chris Metcalf <cmetcalf@ezchip.com> wrote:
->>>>>>
->>>>>>> Allow userspace to override the default SIGKILL delivered
->>>>>>> when a task_isolation process in STRICT mode does a syscall
->>>>>>> or otherwise synchronously enters the kernel.
->>>>>>>
->>> <snip>
->>>>>
->>>>> It doesn't map SIGKILL to some other signal unconditionally.  It just
->>>>> allows
->>>>> the "hey, you broke the STRICT contract and entered the kernel" signal
->>>>> to be something besides the default SIGKILL.
->>>>>
->>> <snip>
+>>>> Rationale:
 >>>>
->>>> I still dislike this thing.  It seems like a debugging feature being
->>>> implemented using signals instead of existing APIs.  I *still* don't
->>>> see why perf can't be used to accomplish your goal.
->>>>
->>> It is not (just) a debugging feature. There are workloads were not
->>> performing an action is much preferred to being late.
+>>>> Linux 3.8 saw the introduction of unpriviledged user namespaces,
+>>>> allowing unpriviledged users (without CAP_SYS_ADMIN) to be a "fake" root
+>>>> inside a separate user namespace. Before that, any namespace creation
+>>>> required CAP_SYS_ADMIN (or, in practice, the user had to be root).
+>>>> Unfortunately, there have been some security-relevant bugs in the
+>>>> meantime. Because of the fairly complex nature of user namespaces, it is
+>>>> reasonable to say that future vulnerabilties can not be excluded. Some
+>>>> distributions even wholly disable user namespaces because of this.
 >>>
->>> Consider the following artificial but representative scenario: a task
->>> running in strict isolation is controlling a radiotherapy alpha emitter.
->>> The code runs in a tight event loop, reading an MMIO register with
->>> location data, making some calculation and in response writing an
->>> MMIO register that triggers the alpha emitter. As a safety measure, each
->>> trigger is for a specific very short time frame - the alpha emitter
->>> auto stops.
->>>
->>> The code has a strict assumption that no more than X cycles pass between
->>> reading the value and the response and the system is built in
->>> such a way that as long as the code has mastery of the CPU the assumption
->>> holds true. If something breaks this assumption (unplanned
->>> context switch to kernel), what you want to do is just stop place
->>> rather than fire the alpha emitter X nanoseconds too late.
->>>
->>> This feature lets you say: if the "contract" of isolation is broken,
->>> notify/kill me at once.
+>>> Fwiw I'm not in favor of this.  Debian has a patch (I believe the one
+>>> I originally wrote for Ubuntu but which Ubuntu dropped long ago) adding a
+>>> sysctl, off by default, for enabling user namespaces.
 >>
->> That's a fair point.  It's risky, though, for quite a few reasons.
+>> While it certainly works, enabling a feature like this at runtime
+>> doesn't seem like a long term solution.
 >>
->> 1. If someone builds an alpha emitter like this, they did it wrong.
->> The kernel should write a trigger *and* a timestamp to the hardware
->> and the hardware should trigger at the specified time if the time is
->> in the future and throw an error if it's in the past.  If you need to
->> check that you made the deadline, check the actual desired condition
->> (did you meat the deadline?) not a proxy (did the signal fire?).
+>> The fact that Debian added this patch in the first place already
+>> demonstrates that there is demand for a way to limit unpriviledged user
+>> namespace creation. Please, don't get me wrong: I would *really like* to
+>> see widespread adoption and continued development of user namespaces!
+>> But the status quo remains: Distributions outright disabling user
+>> namespaces (e.g. Arch Linux) won't make it easier.
+>
+> Let me say I applaud Arch Linux for not doing what so many distributions
+> do and enable every feature in the kernel.  I appreciate a distribution
+> that does not enable interesting kernel features while they are still
+> having their bugs shaken out of them.
+>
+> I also think Debians approach to limit things while they mature is also
+> wisdom.
+>
+>>> Posix capabilities are intended for privileged actions, not for
+>>> actions which explicitly should not require privilege, but which
+>>> we feel are in development.
+>>>
+>>
+>> Certainly, in an ideal world, user namespaces will never lead to any
+>> kernel-level exploits. But reality is different: There *have been*
+>> serious kernel vulnerabilities due to user namespaces, and there *will
+>> be* serious kernel vulnerabilities due to user namespaces.
+>
+> When you start talk about the future that is not yet real you have
+> stopped talking about reality.  That sounds like a pessimists world view
+> rather than reality.
+>
+> The reality is new features are buggy and take time to mature.  It takes
+> time for understanding to percolate through peoples heads.
+>
+>> Now, those are the alternatives imho:
+>>
+>> * Status quo: Some distributions will disable user namespaces by default
+>> in some way or another. User wishing to use user namespaces will have to
+>> use a custom kernel or enable a sysctl flag that was patched in by the
+>> downstream developers. On distributions that enable user namespaces by
+>> default, even users that don't wish to use them in the first places will
+>> be affected by vulnerabilities.
+>
+> Again I disagree.  I see distributions waiting to enable user namespaces
+> until they mature and until they are interesting enough.  I do not see
+> rushing to enable the newest features as wisdom, unless that the point
+> of your distribution is to enable people to play with the latest
+> features.
+>
+> I suspect we are quickly coming to a point where user namespaces will be
+> sufficiently compelling that they will be enabled more widely.
 >
 >
-> Definitely a better hardware design, but as we all know, hardware
-> designers too rarely consult the software people who have to
-> right the actual code to properly drive the hardware :-)
+> At this point the most helpful things I can see to be done are.
+> - Verify all userns related fixes have made it back into 4.1.x
+> - Play with and/or audit the userns code to see if more bugs can be
+>   found.
+> - Analyze user namespaces and see if they are uniquely worse than
+>   anything else.
 >
-> My canonical example is high-performance userspace network
-> drivers, and though dropping is packet is less likely to kill a
-> patient, it's still a pretty bad thing if you're trying to design
-> a robust appliance.  In this case you really want to fix application
-> bugs that cause the code to enter the kernel when you think
-> you're in the internal loop running purely in userspace.  Things
-> like unexpected page faults, and third-party code that almost
-> never calls the kernel but in some dusty corner it occasionally
-> does, can screw up your userspace code pretty badly, and
-> mysteriously.  The "strict" mode support is not a hypothetical
-> insurance policy but a reaction to lots of Tilera customer support
-> over the years to folks failing to stay in userspace when they
-> thought they were doing the right thing.
+> I agree that if user namespaces pose a unique security challenge to
+> the kernel we should do something about them.  I think it is a healthy
+> question to ask.  For the conversation to be productive I think we need
+> numbers and analsysis, not just worst case analsysis based on fear.  To
+> date all I see are teething pains.
+>
+> My back of the napkin analysis is that there are maybe 3,000 lines of
+> code executed in user namespaces (mostly from fs/namespace.c) that
+> are not otherwise reachable from unprivileged users, while there are
+> perhaps 100,000 - 250,000 lines of code reachable by unprivileged users
+> (not counting drivers).
 
-But this is *exactly* the case where perf or other out-of-band
-debugging could be a much better solution.  Perf could notify a
-non-isolated thread that an interrupt happened, you'd still drop a
-packet or two, but you wouldn't also drop the next ten thousand
-packets while handling the signal.
-
->
->> 2. This strict mode thing isn't exhaustive.  It's missing, at least,
->> coverage for NMI, MCE, and SMI.  Sure, you can think that you've
->> disabled all NMI sources, you can try to remember to set the
->> appropriate boot flag that panics on MCE (and hope that you don't get
->> screwed by broadcast MCE on Intel systems before it got fixed
->> (Skylake?  Is the fix even available in a released chip?), and, for
->> SMI, good luck...
->
->
-> You are confusing this strict mode support with the debug
-> support in patch 07/14.
-
-Nope.  I'm confusing this strict mode with what Gilad described: using
-strict mode to cause outright shutdown instead of failure to meet a
-deadline.
-
-(FWIW, you could also use an ordinary hardware watchdog timer to
-promote your failure to meet a deadline to a shutdown.  No new kernel
-support needed.)
-
->
-> Strict mode is for synchronous application errors.  You might
-> be right that there are cases that haven't been covered, but
-> certainly most of them are covered on the three platforms that
-> are supported in this initial series.  (You pointed me to one
-> that I would have missed on x86, namely the bounds check
-> exception from a bad bounds setup.)  I'm pretty confident I
-> have all of them for tile, since I know that hardware best,
-> and I think we're in good shape for arm64, though I'm still
-> coming up to speed on that architecture.
-
-Again, for this definition of strict mode, I still don't see why it's
-the right design.  If you want to debug your application to detect
-application errors, use a debugging interface.
-
->
-> NMIs and machine checks are asynchronous interrupts that
-> don't have to do with what the application is doing, more or less.
-> Those should not be delivered to task-isolation cores at all,
-> so we just generate console spew when you set the
-> task_isolation_debug boot option.  I honestly don't know enough
-> about system management interrupts to comment on that,
-> though again, I would hope one can configure the system to
-> just not deliver them to nohz_full cores, and I think it would
-> be reasonable to generate some kernel spew if that happens.
-
-Hah hah yeah right.  On most existing Intel CPUs, you *cannot*
-configure machine checks to do anything other than broadcast to all
-cores or cause immediate shutdown.  And getting any sort of reasonable
-control over SMI more or less requires special firmware.
-
->
->> 3. You haven't dealt with IPIs.  The TLB flush code in particular
->> seems like it will break all your assumptions.
->
->
-> Again, not a synchronous application error that we are trying
-> to catch with this signalling mechanism.
->
-> That said it could obviously be a more general application error
-> (e.g. a process with threads on both nohz_full and housekeeping
-> cores, where the housekeeping core unmaps some memory and
-> thus requires a TLB flush IPI).  But this is covered by the
-> task_isolation_debug patch for kernel/smp.c.
->
->> Maybe it would make sense to whack more of the moles before adding a
->> big assertion that there aren't any moles any more.
->
->
-> Maybe, but I've whacked the ones I know how to whack.
-> If there are ones I've missed I'm happy to add them in a
-> subsequent version of this series, or in follow-on patches.
->
-
-I agree that you can, in principle, catch all the synchronous
-application errors using this mechanism.  I'm saying that catching
-them seems quite useful, but catching them using a prctl that causes a
-signal and explicitly does *not* solve the deadline enforcement
-problem seems to have dubious value in the upstream kernel.
-
-You can't catch the asynchronous application errors with this
-mechanism (or at least your ability to catch them depends on which
-patch version IIRC), which include calling anything like munmap or
-membarrier in another thread.
+At the risk of pointing out a can of worms, the attack surface also
+includes things like the iptables configuration APIs, parsers, and
+filter/conntrack/action modules.
 
 --Andy
