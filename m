@@ -1,168 +1,81 @@
-From: Hugh Dickins <hughd@google.com>
-Subject: Re: [PATCH v4 2/4] mm, proc: account for shmem swap in
- /proc/pid/smaps
-Date: Wed, 21 Oct 2015 15:38:49 -0700 (PDT)
-Message-ID: <alpine.LSU.2.11.1510211424010.3905@eggly.anvils>
-References: <1443792951-13944-1-git-send-email-vbabka@suse.cz> <1443792951-13944-3-git-send-email-vbabka@suse.cz> <alpine.LSU.2.11.1510041806040.15067@eggly.anvils> <5627A397.6090305@suse.cz>
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: Re: [RFC v3 9/9] kmsg: selftests
+Date: Thu, 22 Oct 2015 11:32:12 +1100
+Message-ID: <1445473932.30295.4.camel@ellerman.id.au>
+References: <1445259503-18158-1-git-send-email-p.osmialowsk@samsung.com>
+	 <1445259503-18158-10-git-send-email-p.osmialowsk@samsung.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <5627A397.6090305@suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Hugh Dickins <hughd@google.com>, linux-mm@kvack.org, Jerome Marchand <jmarchan@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, Michal Hocko <mhocko@suse.cz>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Randy Dunlap <rdunlap@infradead.org>, linux-s390@vger.kernel.org, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Linux API <linux-api@vger.kernel.org>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1445259503-18158-10-git-send-email-p.osmialowsk@samsung.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Paul Osmialowski <p.osmialowsk@samsung.com>, Jonathan Corbet <corbet@lwn.net>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, Petr Mladek <pmladek@suse.cz>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Mack <daniel@zonque.org>, Kay Sievers <kay.sievers@vrfy.org>, Joe Perches <joe@perches.com>, Tejun Heo <tj@kernel.org>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Marcin Niesluchowski <m.niesluchow@samsung.com>, Karol Lewandowski <k.lewandowsk@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Shuah Khan <shuahkh@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 21 Oct 2015, Vlastimil Babka wrote:
-> On 10/05/2015 05:01 AM, Hugh Dickins wrote:
-> > On Fri, 2 Oct 2015, Vlastimil Babka wrote:
-> > 
-> > > Currently, /proc/pid/smaps will always show "Swap: 0 kB" for shmem-backed
-> > > mappings, even if the mapped portion does contain pages that were swapped
-> > > out.
-> > > This is because unlike private anonymous mappings, shmem does not change
-> > > pte
-> > > to swap entry, but pte_none when swapping the page out. In the smaps page
-> > > walk, such page thus looks like it was never faulted in.
-> > > 
-> > > This patch changes smaps_pte_entry() to determine the swap status for
-> > > such
-> > > pte_none entries for shmem mappings, similarly to how mincore_page() does
-> > > it.
-> > > Swapped out pages are thus accounted for.
-> > > 
-> > > The accounting is arguably still not as precise as for private anonymous
-> > > mappings, since now we will count also pages that the process in question
-> > > never
-> > > accessed, but only another process populated them and then let them
-> > > become
-> > > swapped out. I believe it is still less confusing and subtle than not
-> > > showing
-> > > any swap usage by shmem mappings at all. Also, swapped out pages only
-> > > becomee a
-> > > performance issue for future accesses, and we cannot predict those for
-> > > neither
-> > > kind of mapping.
-> > > 
-> > > Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
-> > > Acked-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-> > 
-> > Neither Ack nor Nack from me.
-> > 
-> > I don't want to stand in the way of this patch, if you and others
-> > believe that it will help to diagnose problems in the field better
-> > than what's shown at present; but to me it looks dangerously like
-> > replacing no information by wrong information.
-> > 
-> > As you acknowledge in the commit message, if a file of 100 pages
-> > were copied to tmpfs, and 100 tasks map its full extent, but they
-> > all mess around with the first 50 pages and take no interest in
-> > the last 50, then it's quite likely that that last 50 will get
-> > swapped out; then with your patch, 100 tasks are each shown as
-> > using 50 pages of swap, when none of them are actually using any.
+On Mon, 2015-10-19 at 14:58 +0200, Paul Osmialowski wrote:
+
+> This patch adds selftests framework and four test scenarios for kmsg.
 > 
-> Yeah, but isn't it the same with private memory which was swapped out at some
-> point and we don't know if it will be touched or not? The
-> difference is in private case we know the process touched it at least
-> once, but that can also mean nothing for the future (or maybe it just
-> mmapped with MAP_POPULATE and didn't care about half of it).
+> The framework shape and code was inspired by similar selftests framework
+> for kdbus.
 
-I see that as quite different myself; but agree that neither way
-predicts the future.  Now, if you can make a patch to predict the future...
+> diff --git a/tools/testing/selftests/kmsg/Makefile b/tools/testing/selftests/kmsg/Makefile
+> new file mode 100644
+> index 0000000..b4ba892
+> --- /dev/null
+> +++ b/tools/testing/selftests/kmsg/Makefile
+> @@ -0,0 +1,30 @@
+> +CFLAGS += -I../../../../usr/include/
+> +CFLAGS += -I../../../../samples/kmsg/
+> +CFLAGS += -I../../../../include/uapi/
 
-FWIW, I do seem to be looking at it more from a point of view of how
-much swap the process is using, whereas you're looking at it more
-from a point of view of what delays would be incurred in accessing.
+Please don't directly include the unexported kernel headers.
 
-> 
-> That's basically what I was trying to say in the changelog. I interpret
-> the Swap: value as the amount of swap-in potential, if the process was
-> going to access it, which is what the particular customer also expects (see
-> below). In that case showing zero is IMHO wrong and inconsistent with the
-> anonymous private mappings.
+> +CFLAGS += -std=gnu99 -Wall
+> +CFLAGS += -DKBUILD_MODNAME=\"kmsg\" -D_GNU_SOURCE
 
-Yes, your changelog is honest about the difference, I don't dispute that.
-As I said, neither Ack nor Nack from me: I just don't feel in a position
-to judge whether changing the output of smaps to please this customer is
-likely to displease another customer or not.
+Are you building userspace code here? I'm not sure why you need KBUILD_MODNAME.
 
-> 
-> > It is rather as if we didn't bother to record Rss, and just put
-> > Size in there instead: you are (for understandable reasons) treating
-> > the virtual address space as if every page of it had been touched.
-> > 
-> > But I accept that there may well be a class of processes and problems
-> > which would be better served by this fiction than the present: I expect
-> > you have much more experience of helping out in such situations than I.
-> 
-> Well, the customers driving this change would in the best case want to
-> see the shmem swap accounted continuously and e.g. see it immediately in the
-> top output. Fixing (IMHO) the smaps output is the next best thing. The use
-> case here is a application that really doesn't like page faults, and has
-> background thread that checks and prefaults such areas when they are expected
-> to be used soon. So they would like to identify these areas.
+> +CFLAGS += -pthread
+> +LDLIBS += -pthread
+> +
+> +OBJS= \
+> +	kmsg-test.o				\
+> +	test-buffer-add-del.o			\
+> +	test-buffer-add-write-read-del.o	\
+> +	test-buffer-buf-torture.o		\
+> +	test-buffer-buf-multithreaded-torture.o
+> +
+> +all: kmsg-test
+> +
+> +include ../lib.mk
+> +
+> +%.o: %.c kmsg-test.h
+> +	$(CC) $(CFLAGS) -c $< -o $@
+> +
+> +kmsg-test: $(OBJS)
+> +	$(CC) $(CFLAGS) $^ $(LDLIBS) -o $@
 
-And I guess I won't be able to sell mlock(2) to you :)
+Those look the same as the implicit rules to me, so I don't think you need to
+spell them out.
 
-Still neither Ack nor Nack from me: while your number is more information
-(or misinformation) than always 0, it's still not clear to me that it will
-give them what they need.
+> +
+> +run_tests:
+> +	./kmsg-test --tap
 
-...
-> > 
-> > And for private mappings of tmpfs files?  I expected it to show an
-> > inderminate mixture of the two, but it looks like you treat the private
-> > mapping just like a shared one, and take no notice of the COWed pages
-> > out on swap which would have been reported before.  Oh, no, I think
-> > I misread, and you add the two together?  I agree that's the easiest
-> > thing to do, and therefore perhaps the best; but it doesn't fill me
-> > with conviction that it's the right thing to do.
-> 
-> Thanks for pointing this out, I totally missed this possibility! Well
-> the current patch is certainly not the right thing to do, as it can
-> over-account. The most correct solution would have to be implemented into the
-> page walk and only check into shmem radix tree for individual pages that were
-> not COWed. Michal Hocko suggested I try that, and although it does add some
-> overhead (the complexity is n*log(n) AFAICT), it's not that bad from
-> preliminary checks. Another advantage is that no new shmem code is needed, as
-> we can use the generic find_get_entry(). Unless we want to really limit the
-> extra complexity only to the special private mapping case with non-zero swap
-> usage of the shmem object etc... I'll repost the series with that approach.
-> 
-> Other non-perfect solutions that come to mind:
-> 
-> 1) For private mappings, count only the swapents. "Swap:" is no longer
-> showing full swap-in potential though.
-> 2) For private mappings, do not count swapents. Ditto.
-> 3) Provide two separate counters. The user won't know how much they
-> overlap, though.
-> 
-> From these I would be inclined towards 3) as being more universal, although
-> then it's no longer a simple "we're fixing a Swap: 0 value which is wrong",
-> but closer to original Jerome's versions, which IIRC introduced several
-> shmem-specific counters.
-> 
-> Well at least now I do understand why you don't particularly like this
-> approach...
+This should be giving you a warning about redefining run_tests.
 
-Have you considered extending mincore(2) for them?
+It sounds like you don't actually need to pass --tap, so you don't need to
+override run_tests.
 
-It was always intended that more info could be added into its byte array
-later - the man page I'm looking at says "The settings of the other bits
-[than the least significant] in each byte are undefined; these bits are
-reserved for possible later use."
+So you should just define:
 
-That way your customers could get a precise picture of the status of
-each page: without ambiguity as to whether it's anon, shmem, file, anon
-swap, shmem swap, whatever; without ambiguity as to where 40kB of 80kB
-lies in the region, the unused half or the vital half etc.
+TEST_PROGS := kmsg-test
 
-Or forget passing back the info: just offer an madvise(,, MADV_POPULATE)?
+Before you include lib.mk and then both the run and emit rules will work
+without any more work on your part.
 
-Hugh
+cheers
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
