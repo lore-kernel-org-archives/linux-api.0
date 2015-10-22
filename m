@@ -1,7 +1,7 @@
 From: Dave Watson <davejwatson@fb.com>
-Subject: [RFC PATCH 2/3] restartable sequences: x86 ABI
-Date: Thu, 22 Oct 2015 11:06:54 -0700
-Message-ID: <b61f16b6a758f10c0e69677e77c5db328fc9c9ab.1445464158.git.davejwatson@fb.com>
+Subject: [RFC PATCH 3/3] restartable sequences: basic user-space self-tests
+Date: Thu, 22 Oct 2015 11:07:06 -0700
+Message-ID: <8599a58de3220519f4311c7f6267ff0d87087a8a.1445464158.git.davejwatson@fb.com>
 References: <cover.1445464158.git.davejwatson@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -12,254 +12,454 @@ Sender: linux-kernel-owner@vger.kernel.org
 To: davejwatson@fb.com, kernel-team@fb.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, pjt@google.com, mathieu.desnoyers@efficios.com
 List-Id: linux-api@vger.kernel.org
 
-Implements the x86 (i386 & x86-64) ABIs for interrupting and restarting
-execution within restartable sequence sections.
+    Implements basic tests of RSEQ functionality.
 
-Ptrace is modified to single step over the entire critical region.
+    "basic_percpu_ops_test" implements a few simple per-cpu operations and
+    testing their correctness.
 ---
- arch/x86/entry/common.c                      |  3 ++
- arch/x86/entry/syscalls/syscall_64.tbl       |  1 +
- arch/x86/include/asm/restartable_sequences.h | 44 ++++++++++++++++++++++++++
- arch/x86/kernel/Makefile                     |  2 ++
- arch/x86/kernel/ptrace.c                     |  6 ++--
- arch/x86/kernel/restartable_sequences.c      | 47 ++++++++++++++++++++++++++++
- arch/x86/kernel/signal.c                     | 12 ++++++-
- kernel/restartable_sequences.c               | 11 +++++--
- 8 files changed, 120 insertions(+), 6 deletions(-)
- create mode 100644 arch/x86/include/asm/restartable_sequences.h
- create mode 100644 arch/x86/kernel/restartable_sequences.c
+ tools/testing/selftests/rseq/Makefile              |  14 +
+ .../testing/selftests/rseq/basic_percpu_ops_test.c | 331 +++++++++++++++++++++
+ tools/testing/selftests/rseq/rseq.c                |  48 +++
+ tools/testing/selftests/rseq/rseq.h                |  17 ++
+ 4 files changed, 410 insertions(+)
+ create mode 100644 tools/testing/selftests/rseq/Makefile
+ create mode 100644 tools/testing/selftests/rseq/basic_percpu_ops_test.c
+ create mode 100644 tools/testing/selftests/rseq/rseq.c
+ create mode 100644 tools/testing/selftests/rseq/rseq.h
 
-diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
-index 80dcc92..e817f04 100644
---- a/arch/x86/entry/common.c
-+++ b/arch/x86/entry/common.c
-@@ -24,6 +24,7 @@
- 
- #include <asm/desc.h>
- #include <asm/traps.h>
-+#include <asm/restartable_sequences.h>
- 
- #define CREATE_TRACE_POINTS
- #include <trace/events/syscalls.h>
-@@ -253,6 +254,8 @@ __visible void prepare_exit_to_usermode(struct pt_regs *regs)
- 		if (cached_flags & _TIF_NOTIFY_RESUME) {
- 			clear_thread_flag(TIF_NOTIFY_RESUME);
- 			tracehook_notify_resume(regs);
-+			if (rseq_active(current))
-+				arch_rseq_handle_notify_resume(regs);
- 		}
- 
- 		if (cached_flags & _TIF_USER_RETURN_NOTIFY)
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 278842f..0fd4243 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -331,6 +331,7 @@
- 322	64	execveat		stub_execveat
- 323	common	userfaultfd		sys_userfaultfd
- 324	common	membarrier		sys_membarrier
-+325	common	restartable_sequences	sys_restartable_sequences
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/arch/x86/include/asm/restartable_sequences.h b/arch/x86/include/asm/restartable_sequences.h
+diff --git a/tools/testing/selftests/rseq/Makefile b/tools/testing/selftests/rseq/Makefile
 new file mode 100644
-index 0000000..c0bcab2
+index 0000000..3a9cb5c
 --- /dev/null
-+++ b/arch/x86/include/asm/restartable_sequences.h
-@@ -0,0 +1,44 @@
-+#ifndef _ASM_X86_RESTARTABLE_SEQUENCES_H
-+#define _ASM_X86_RESTARTABLE_SEQUENCES_H
++++ b/tools/testing/selftests/rseq/Makefile
+@@ -0,0 +1,14 @@
++CFLAGS += -Wall
++LDFLAGS += -lpthread
 +
-+#include <asm/processor.h>
-+#include <asm/ptrace.h>
-+#include <linux/sched.h>
++TESTS = basic_test basic_percpu_ops_test
 +
-+#ifdef CONFIG_RESTARTABLE_SEQUENCES
++basic_percpu_ops_test: basic_percpu_ops_test.c
 +
-+static inline unsigned long arch_rseq_in_crit_section(struct task_struct *p,
-+						struct pt_regs *regs)
++
++all: $(TESTS)
++%: %.c
++	$(CC) $(CFLAGS) -o $@ $^ rseq.c $(LDFLAGS)
++
++clean:
++	$(RM) $(TESTS)
+diff --git a/tools/testing/selftests/rseq/basic_percpu_ops_test.c b/tools/testing/selftests/rseq/basic_percpu_ops_test.c
+new file mode 100644
+index 0000000..63a668d
+--- /dev/null
++++ b/tools/testing/selftests/rseq/basic_percpu_ops_test.c
+@@ -0,0 +1,331 @@
++#define _GNU_SOURCE
++#include <assert.h>
++#include <pthread.h>
++#include <sched.h>
++#include <stdint.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++
++#include "rseq.h"
++
++#if defined(__x86_64__)
++
++#define barrier() {__asm__ __volatile__("" : : : "memory"); }
++
++struct rseq_section {
++	void *begin;
++	void *end;
++	void *restart;
++};
++
++extern struct rseq_section const __start___rseq_sections[]
++__attribute((weak));
++extern struct rseq_section const __stop___rseq_sections[]
++__attribute((weak));
++
++/* Implemented by percpu_ops.S */
++struct percpu_lock {
++	int word[CPU_SETSIZE][16];  /* cache aligned; lock-word is [cpu][0] */
++};
++
++/* A simple percpu spinlock.  Returns the cpu lock was acquired on. */
++int rseq_percpu_lock(struct percpu_lock *lock)
 +{
-+	unsigned long ip = (unsigned long)regs->ip;
++	int out = -1;
 +
-+	return rseq_lookup(p, ip);
++	asm volatile (
++		"1:\n\t"
++		"movl %1, %0\n\t"
++		"leaq (,%0,8), %%r10\n\t"
++		"leaq (%2, %%r10, 8), %%r10\n\t"
++		"2:\n\t"
++		"cmpl $0, (%%r10)\n\t"
++		"jne 2b\n\t"
++		"movl $1, (%%r10)\n\t"
++		"3:\n\t"
++		".pushsection __rseq_sections, \"a\"\n\t"
++		".quad 1b, 3b, 1b\n\t"
++		".popsection\n\t"
++		: "+r" (out)
++		: "m" (__rseq_current_cpu), "r" ((unsigned long)lock)
++		: "memory", "r10");
++	return out;
 +}
 +
-+static inline bool arch_rseq_needs_notify_resume(struct task_struct *p)
-+{
-+#ifdef CONFIG_PREEMPT
-+	/*
-+	 * Under CONFIG_PREEMPT it's possible for regs to be incoherent in the
-+	 * case that we took an interrupt during syscall entry.  Avoid this by
-+	 * always deferring to our notify-resume handler.
-+	 */
-+	return true;
-+#else
-+	return arch_rseq_in_crit_section(p, task_pt_regs(p));
-+#endif
-+}
-+
-+void arch_rseq_handle_notify_resume(struct pt_regs *regs);
-+void arch_rseq_check_critical_section(struct task_struct *p,
-+				      struct pt_regs *regs);
-+
-+#else /* !CONFIG_RESTARTABLE_SEQUENCES */
-+
-+static inline void arch_rseq_handle_notify_resume(struct pt_regs *regs) {}
-+static inline void arch_rseq_check_critical_section(struct task_struct *p,
-+						    struct pt_regs *regs) {}
-+
-+#endif
-+
-+#endif /* _ASM_X86_RESTARTABLE_SEQUENCES_H */
-diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
-index b1b78ff..ee98fb6 100644
---- a/arch/x86/kernel/Makefile
-+++ b/arch/x86/kernel/Makefile
-@@ -110,6 +110,8 @@ obj-$(CONFIG_EFI)			+= sysfb_efi.o
- obj-$(CONFIG_PERF_EVENTS)		+= perf_regs.o
- obj-$(CONFIG_TRACING)			+= tracepoint.o
- 
-+obj-$(CONFIG_RESTARTABLE_SEQUENCES)	+= restartable_sequences.o
-+
- ###
- # 64 bit specific files
- ifeq ($(CONFIG_X86_64),y)
-diff --git a/arch/x86/kernel/ptrace.c b/arch/x86/kernel/ptrace.c
-index 558f50e..934aeaf 100644
---- a/arch/x86/kernel/ptrace.c
-+++ b/arch/x86/kernel/ptrace.c
-@@ -1439,6 +1439,8 @@ void send_sigtrap(struct task_struct *tsk, struct pt_regs *regs,
- 	struct siginfo info;
- 
- 	fill_sigtrap_info(tsk, regs, error_code, si_code, &info);
--	/* Send us the fake SIGTRAP */
--	force_sig_info(SIGTRAP, &info, tsk);
-+	/* Don't single step in to a restartable sequence */
-+	if (!rseq_lookup(tsk, (unsigned long)regs->ip))
-+		/* Send us the fake SIGTRAP */
-+		force_sig_info(SIGTRAP, &info, tsk);
- }
-diff --git a/arch/x86/kernel/restartable_sequences.c b/arch/x86/kernel/restartable_sequences.c
-new file mode 100644
-index 0000000..330568a
---- /dev/null
-+++ b/arch/x86/kernel/restartable_sequences.c
-@@ -0,0 +1,47 @@
 +/*
-+ * Restartable Sequences: x86 ABI.
++ * cmpxchg [with an additional check value].
 + *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; either version 2 of the License, or
-+ * (at your option) any later version.
++ * Returns:
++ *  -1 if *p != old or cpu != current cpu [ || check_ptr != check_val, ]
++ * otherwise 0.
 + *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * Copyright (C) 2015, Google, Inc.,
-+ * Paul Turner <pjt@google.com> and Andrew Hunter <ahh@google.com>
-+ *
++ * Note: When specified, check_ptr is dereferenced iff *p == old
 + */
-+
-+#include <linux/sched.h>
-+#include <linux/uaccess.h>
-+#include <asm/restartable_sequences.h>
-+#include <asm/restartable_sequences.h>
-+
-+void arch_rseq_check_critical_section(struct task_struct *p,
-+				      struct pt_regs *regs)
++int rseq_percpu_cmpxchg(int cpu, intptr_t *p, intptr_t old, intptr_t new)
 +{
-+	unsigned long ip = arch_rseq_in_crit_section(p, regs);
-+
-+	if (!ip)
-+		return;
-+
-+	/* RSEQ only applies to user-mode execution */
-+	BUG_ON(!user_mode(regs));
-+
-+	regs->ip = ip;
++	asm volatile goto (
++		"1:\n\t"
++		"cmpl %1, %0\n\t"
++		"jne %l[fail]\n\t"
++		"cmpq %2, %3\n\t"
++		"jne %l[fail]\n\t"
++		"movq %4, %3\n\t"
++		"2:\n\t"
++		".pushsection __rseq_sections, \"a\"\n\t"
++		".quad 1b, 2b, 1b\n\t"
++		".popsection\n\t"
++		:
++		: "r" (cpu), "m" (__rseq_current_cpu),
++		  "r" (old), "m" (*p), "r" (new)
++		: "memory"
++		: fail);
++	return 0;
++fail:
++	return -1;
++}
++int rseq_percpu_cmpxchgcheck(int cpu, intptr_t *p, intptr_t old, intptr_t new,
++			intptr_t *check_ptr, intptr_t check_val)
++{
++	asm volatile goto (
++		"1:\n\t"
++		"cmpl %1, %0\n\t"
++		"jne %l[fail]\n\t"
++		"cmpq %2, %3\n\t"
++		"jne %l[fail]\n\t"
++		"cmpq %5, %6\n\t"
++		"jne %l[fail]\n\t"
++		"movq %4, %3\n\t"
++		"2:\n\t"
++		".pushsection __rseq_sections, \"a\"\n\t"
++		".quad 1b, 2b, 1b\n\t"
++		".popsection\n\t"
++		:
++		: "r" (cpu), "m" (__rseq_current_cpu),
++		  "r" (old), "m" (*p), "r" (new),
++		  "r" (check_val), "m" (*check_ptr)
++		: "memory"
++		: fail);
++	return 0;
++fail:
++	return -1;
 +}
 +
-+void arch_rseq_handle_notify_resume(struct pt_regs *regs)
++
++void rseq_percpu_unlock(struct percpu_lock *lock, int cpu)
 +{
-+	struct restartable_sequence_state *rseq_state = &current->rseq_state;
-+
-+	/* If this update fails our user-state is incoherent. */
-+	if (put_user(task_cpu(current), rseq_state->cpu_pointer))
-+		force_sig(SIGSEGV, current);
-+
-+	arch_rseq_check_critical_section(current, regs);
++	barrier();  /* need a release-store here, this suffices on x86. */
++	assert(lock->word[cpu][0] == 1);
++	lock->word[cpu][0] = 0;
 +}
-diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
-index da52e6b..1516e5d 100644
---- a/arch/x86/kernel/signal.c
-+++ b/arch/x86/kernel/signal.c
-@@ -30,6 +30,7 @@
- #include <asm/fpu/signal.h>
- #include <asm/vdso.h>
- #include <asm/mce.h>
-+#include <asm/restartable_sequences.h>
- #include <asm/sighandling.h>
- #include <asm/vm86.h>
- 
-@@ -377,7 +378,7 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
- 		 */
- 		put_user_ex(*((u64 *)&rt_retcode), (u64 *)frame->retcode);
- 	} put_user_catch(err);
--	
 +
- 	err |= copy_siginfo_to_user(&frame->info, &ksig->info);
- 	err |= setup_sigcontext(&frame->uc.uc_mcontext, fpstate,
- 				regs, set->sig[0]);
-@@ -613,6 +614,15 @@ setup_rt_frame(struct ksignal *ksig, struct pt_regs *regs)
- 	sigset_t *set = sigmask_to_save();
- 	compat_sigset_t *cset = (compat_sigset_t *) set;
- 
++void rseq_unknown_restart_addr(void *addr)
++{
++	fprintf(stderr, "rseq: unrecognized restart address %p\n", addr);
++	exit(1);
++}
++
++struct spinlock_test_data {
++	struct percpu_lock lock;
++	int counts[CPU_SETSIZE];
++	int reps;
++};
++
++void *test_percpu_spinlock_thread(void *arg)
++{
++	struct spinlock_test_data *data = arg;
++	int i, cpu;
++
++	rseq_configure_cpu_pointer();
++	for (i = 0; i < data->reps; i++) {
++		cpu = rseq_percpu_lock(&data->lock);
++		data->counts[cpu]++;
++		rseq_percpu_unlock(&data->lock, cpu);
++	}
++
++	return 0;
++}
++
++/*
++ * A simple test which implements a sharded counter using a per-cpu lock.
++ * Obviously real applications might prefer to simply use a per-cpu increment;
++ * however, this is reasonable for a test and the lock can be extended to
++ * synchronize more complicated operations.
++ */
++void test_percpu_spinlock(void)
++{
++	int i, sum;
++	pthread_t test_threads[200];
++	struct spinlock_test_data data;
++
++	memset(&data, 0, sizeof(data));
++	data.reps = 5000;
++
++	for (i = 0; i < 200; i++)
++		pthread_create(&test_threads[i], NULL,
++			       test_percpu_spinlock_thread, &data);
++
++	for (i = 0; i < 200; i++)
++		pthread_join(test_threads[i], NULL);
++
++	sum = 0;
++	for (i = 0; i < CPU_SETSIZE; i++)
++		sum += data.counts[i];
++
++	assert(sum == data.reps * 200);
++}
++
++struct percpu_list_node {
++	intptr_t data;
++	struct percpu_list_node *next;
++};
++
++struct percpu_list {
++	struct percpu_list_node *heads[CPU_SETSIZE];
++};
++
++int percpu_list_push(struct percpu_list *list, struct percpu_list_node *node)
++{
++	int cpu;
++
++	do {
++		cpu = rseq_current_cpu();
++		node->next = list->heads[cpu];
++	} while (0 != rseq_percpu_cmpxchg(
++			cpu,
++			(intptr_t *)&list->heads[cpu], (intptr_t)node->next,
++			(intptr_t)node));
++
++	return cpu;
++}
++
++struct percpu_list_node *percpu_list_pop(struct percpu_list *list)
++{
++	int cpu;
++	struct percpu_list_node *head, *next;
++
++	do {
++		cpu = rseq_current_cpu();
++		head = list->heads[cpu];
++		/*
++		 * Unlike a traditional lock-less linked list; the availability
++		 * of a cmpxchg-check primitive allows us to implement pop
++		 * without concerns over ABA-type races.
++		 */
++		if (!head)
++			return 0;
++		next = head->next;
++	} while (0 != rseq_percpu_cmpxchgcheck(cpu,
++		(intptr_t *)&list->heads[cpu], (intptr_t)head, (intptr_t)next,
++		(intptr_t *)&head->next, (intptr_t)next));
++
++	return head;
++}
++
++
++void *test_percpu_list_thread(void *arg)
++{
++	int i;
++	struct percpu_list *list = (struct percpu_list *)arg;
++
++	rseq_configure_cpu_pointer();
++	for (i = 0; i < 100000; i++) {
++		struct percpu_list_node *node = percpu_list_pop(list);
++
++		sched_yield();  /* encourage shuffling */
++		if (node)
++			percpu_list_push(list, node);
++	}
++
++	return 0;
++}
++
++/*
++ * Implements a per-cpu linked list then shuffles it via popping and pushing
++ * from many threads.
++ */
++void test_percpu_list(void)
++{
++	int i, j;
++	long sum = 0, expected_sum = 0;
++	struct percpu_list list;
++	pthread_t test_threads[200];
++	cpu_set_t allowed_cpus;
++
++	memset(&list, 0, sizeof(list));
++
++	/* Generate list entries for every usable cpu. */
++	sched_getaffinity(0, sizeof(allowed_cpus), &allowed_cpus);
++	for (i = 0; i < CPU_SETSIZE; i++) {
++		if (!CPU_ISSET(i, &allowed_cpus))
++			continue;
++		for (j = 1; j <= 100; j++) {
++			struct percpu_list_node *node;
++
++			expected_sum += j;
++
++			node = malloc(sizeof(*node));
++			assert(node);
++			node->data = j;
++			node->next = list.heads[i];
++			list.heads[i] = node;
++		}
++	}
++
++	for (i = 0; i < 200; i++)
++		assert(pthread_create(&test_threads[i], NULL,
++			       test_percpu_list_thread, &list) == 0);
++
++	for (i = 0; i < 200; i++)
++		pthread_join(test_threads[i], NULL);
++
++	for (i = 0; i < CPU_SETSIZE; i++) {
++		cpu_set_t pin_mask;
++		struct percpu_list_node *node;
++
++		if (!CPU_ISSET(i, &allowed_cpus))
++			continue;
++
++		CPU_ZERO(&pin_mask);
++		CPU_SET(i, &pin_mask);
++		sched_setaffinity(0, sizeof(pin_mask), &pin_mask);
++
++		while ((node = percpu_list_pop(&list))) {
++			sum += node->data;
++			free(node);
++		}
++	}
++
 +	/*
-+	 * If we are executing in the critical section of a restartable
-+	 * sequence we need to fix up the user's stack saved ip at this point
-+	 * so that signal handler return does not allow us to jump back into
-+	 * the block across a context switch boundary.
++	 * All entries should now be accounted for (unless some external actor
++	 * is interfering with our allowed affinity while this test is
++	 * running).
 +	 */
-+	if (rseq_active(current))
-+		arch_rseq_check_critical_section(current, regs);
-+
- 	/* Set up the stack frame */
- 	if (is_ia32_frame()) {
- 		if (ksig->ka.sa.sa_flags & SA_SIGINFO)
-diff --git a/kernel/restartable_sequences.c b/kernel/restartable_sequences.c
-index 72cfa9b..87e63e2 100644
---- a/kernel/restartable_sequences.c
-+++ b/kernel/restartable_sequences.c
-@@ -20,18 +20,23 @@
- 
- #ifdef CONFIG_RESTARTABLE_SEQUENCES
- 
-+#include <asm/restartable_sequences.h>
- #include <linux/uaccess.h>
- #include <linux/preempt.h>
- #include <linux/slab.h>
- #include <linux/syscalls.h>
- 
- static void rseq_sched_in_nop(struct preempt_notifier *pn, int cpu) {}
--static void rseq_sched_out_nop(struct preempt_notifier *pn,
--			       struct task_struct *next) {}
-+static void rseq_sched_out(struct preempt_notifier *pn,
-+			   struct task_struct *next)
-+{
-+	if (arch_rseq_needs_notify_resume(current))
-+		set_thread_flag(TIF_NOTIFY_RESUME);
++	assert(sum == expected_sum);
 +}
- 
- static __read_mostly struct preempt_ops rseq_preempt_ops = {
- 	.sched_in = rseq_sched_in_nop,
--	.sched_out = rseq_sched_out_nop,
-+	.sched_out = rseq_sched_out,
- };
- 
- unsigned long rseq_lookup(struct task_struct *p, unsigned long ip)
++
++int main(int argc, char **argv)
++{
++	const struct rseq_section *iter;
++
++	for (iter = __start___rseq_sections;
++	     iter < __stop___rseq_sections;
++	     iter++) {
++		rseq_configure_region(iter->begin, iter->end, iter->restart);
++		printf("Installing region %p, %p\n", iter->begin, iter->end);
++	}
++	rseq_configure_cpu_pointer();
++
++	test_percpu_spinlock();
++	test_percpu_list();
++
++	return 0;
++}
++
++#else
++int main(int argc, char **argv)
++{
++	fprintf(stderr, "architecture not supported\n");
++	return 0;
++}
++#endif
+diff --git a/tools/testing/selftests/rseq/rseq.c b/tools/testing/selftests/rseq/rseq.c
+new file mode 100644
+index 0000000..4dc5059
+--- /dev/null
++++ b/tools/testing/selftests/rseq/rseq.c
+@@ -0,0 +1,48 @@
++#define _GNU_SOURCE
++#include <assert.h>
++#include <errno.h>
++#include <sched.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <unistd.h>
++
++#include "rseq.h"
++
++__thread volatile const int __rseq_current_cpu = -1;
++
++#define __NR_rseq	323
++#define SYS_RSEQ_SET_CRITICAL		0
++#define SYS_RSEQ_SET_CPU_POINTER	1
++
++int sys_rseq(int op, int flags, void *val1, void *val2, void *val3)
++{
++	return syscall(__NR_rseq, op, flags,
++		(intptr_t)val1, (intptr_t)val2, (intptr_t)val3);
++}
++
++static void sys_rseq_checked(int op, int flags,
++			void *val1, void *val2, void *val3)
++{
++	int rc = sys_rseq(op, flags, val1, val2, val3);
++
++	if (rc) {
++		fprintf(stderr, "sys_rseq(%d, %d, %p, %p, %p) failed(%d): %s\n",
++			op, flags, val1, val2, val3, errno, strerror(errno));
++		exit(1);
++	}
++}
++
++void rseq_configure_region(void *rseq_text_start, void *rseq_text_end,
++			void *rseq_text_restart)
++{
++	sys_rseq_checked(SYS_RSEQ_SET_CRITICAL, 0,
++			rseq_text_start, rseq_text_end, rseq_text_restart);
++}
++
++void rseq_configure_cpu_pointer(void)
++{
++	sys_rseq_checked(SYS_RSEQ_SET_CPU_POINTER, 0,
++			(void *)&__rseq_current_cpu, 0, 0);
++	assert(rseq_current_cpu() != -1); /* always updated prior to return. */
++}
+diff --git a/tools/testing/selftests/rseq/rseq.h b/tools/testing/selftests/rseq/rseq.h
+new file mode 100644
+index 0000000..e12db18
+--- /dev/null
++++ b/tools/testing/selftests/rseq/rseq.h
+@@ -0,0 +1,17 @@
++#ifndef RSEQ_TEST_H
++#define RSEQ_TEST_H
++
++int sys_rseq(int op, int flags, void *val1, void *val2, void *val3);
++/* RSEQ provided thread-local current_cpu */
++
++void rseq_configure_cpu_pointer(void);
++
++void rseq_configure_region(void *rseq_text_start, void *rseq_text_end,
++	void *rseq_text_restart);
++
++extern __thread volatile const int __rseq_current_cpu;
++static inline int rseq_current_cpu(void) { return __rseq_current_cpu; }
++
++void run_tests(void);
++
++#endif
 -- 
 2.4.6
