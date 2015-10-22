@@ -1,77 +1,62 @@
-From: Damian Hobson-Garcia <dhobsong@igel.co.jp>
-Subject: Re: [PATCH v3 1/1] eventfd: implementation of EFD_MASK flag
-Date: Thu, 22 Oct 2015 16:47:03 +0900
-Message-ID: <56289477.6090007@igel.co.jp>
-References: <1444873328-8466-1-git-send-email-dhobsong@igel.co.jp>
- <1444873328-8466-2-git-send-email-dhobsong@igel.co.jp>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH 14/23] userfaultfd: wake pending userfaults
+Date: Thu, 22 Oct 2015 14:10:56 +0200
+Message-ID: <20151022121056.GB7520@twins.programming.kicks-ass.net>
+References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
+ <1431624680-20153-15-git-send-email-aarcange@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <1444873328-8466-2-git-send-email-dhobsong@igel.co.jp>
-Sender: netdev-owner@vger.kernel.org
-To: viro@zeniv.linux.org.uk, sustrik@250bpm.com
-Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, David.Laight@aculab.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1431624680-20153-15-git-send-email-aarcange@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Andrea Arcangeli <aarcange@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-api@vger.kernel.org, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave.hansen@intel.com>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>
 List-Id: linux-api@vger.kernel.org
 
-Hello,
-
-> diff --git a/include/linux/eventfd.h b/include/linux/eventfd.h
-> index ff0b981..87de343 100644
-> --- a/include/linux/eventfd.h
-> +++ b/include/linux/eventfd.h
-<snip>
+On Thu, May 14, 2015 at 07:31:11PM +0200, Andrea Arcangeli wrote:
+> @@ -255,21 +259,23 @@ int handle_userfault(struct vm_area_struct *vma, unsigned long address,
+>  	 * through poll/read().
+>  	 */
+>  	__add_wait_queue(&ctx->fault_wqh, &uwq.wq);
+> -	for (;;) {
+> -		set_current_state(TASK_KILLABLE);
+> -		if (!uwq.pending || ACCESS_ONCE(ctx->released) ||
+> -		    fatal_signal_pending(current))
+> -			break;
+> -		spin_unlock(&ctx->fault_wqh.lock);
+> +	set_current_state(TASK_KILLABLE);
+> +	spin_unlock(&ctx->fault_wqh.lock);
 >  
-> -/*
-> - * CAREFUL: Check include/uapi/asm-generic/fcntl.h when defining
-> - * new flags, since they might collide with O_* ones. We want
-> - * to re-use O_* flags that couldn't possibly have a meaning
-> - * from eventfd, in order to leave a free define-space for
-> - * shared O_* flags.
-> - */
-> -#define EFD_SEMAPHORE (1 << 0)
-> -#define EFD_CLOEXEC O_CLOEXEC
-> -#define EFD_NONBLOCK O_NONBLOCK
-> -
-> -#define EFD_SHARED_FCNTL_FLAGS (O_CLOEXEC | O_NONBLOCK)
-> -#define EFD_FLAGS_SET (EFD_SHARED_FCNTL_FLAGS | EFD_SEMAPHORE)
-> -
->  struct file;
+> +	if (likely(!ACCESS_ONCE(ctx->released) &&
+> +		   !fatal_signal_pending(current))) {
+>  		wake_up_poll(&ctx->fd_wqh, POLLIN);
+>  		schedule();
+> +		ret |= VM_FAULT_MAJOR;
+> +	}
+
+So what happens here if schedule() spontaneously wakes for no reason?
+
+I'm not sure enough of userfaultfd semantics to say if that would be
+bad, but the code looks suspiciously like it relies on schedule() not to
+do that; which is wrong.
+
+> +	__set_current_state(TASK_RUNNING);
+> +	/* see finish_wait() comment for why list_empty_careful() */
+> +	if (!list_empty_careful(&uwq.wq.task_list)) {
+>  		spin_lock(&ctx->fault_wqh.lock);
+> +		list_del_init(&uwq.wq.task_list);
+> +		spin_unlock(&ctx->fault_wqh.lock);
+>  	}
+> -	__remove_wait_queue(&ctx->fault_wqh, &uwq.wq);
+> -	__set_current_state(TASK_RUNNING);
+> -	spin_unlock(&ctx->fault_wqh.lock);
 >  
->  #ifdef CONFIG_EVENTFD
-> diff --git a/include/uapi/linux/eventfd.h b/include/uapi/linux/eventfd.h
-> new file mode 100644
-> index 0000000..097dcad
-> --- /dev/null
-> +++ b/include/uapi/linux/eventfd.h
-> @@ -0,0 +1,33 @@
-<snip>
-> +
-> +/*
-> + * CAREFUL: Check include/asm-generic/fcntl.h when defining
-> + * new flags, since they might collide with O_* ones. We want
-> + * to re-use O_* flags that couldn't possibly have a meaning
-> + * from eventfd, in order to leave a free define-space for
-> + * shared O_* flags.
-> + */
-> +
-> +/* Provide semaphore-like semantics for reads from the eventfd. */
-> +#define EFD_SEMAPHORE (1 << 0)
-> +/* Provide event mask semantics for the eventfd. */
-> +#define EFD_MASK (1 << 1)
-> +/*  Set the close-on-exec (FD_CLOEXEC) flag on the eventfd. */
-> +#define EFD_CLOEXEC O_CLOEXEC
-> +/*  Create the eventfd in non-blocking mode. */
-> +#define EFD_NONBLOCK O_NONBLOCK
-> +#endif /* _UAPI_LINUX_EVENTFD_H */
-> 
+>  	/*
+>  	 * ctx may go away after this if the userfault pseudo fd is
 
-Since the latest version of this patch adds only the EFD_MASK definition
-to the eventfd header, I was wondering if it was really
-necessary/recommended to move the definitions from linux/eventfd.h to
-linux/uapi/eventfd.h.  From my understanding, the EFD_SEMAPHORE (and now
-EFD_MASK) define(s) are provided to user space from the libc headers
-only. Any advice would be greatly appreciated.
-
-Thank you,
-Damian
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
