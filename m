@@ -1,116 +1,77 @@
-From: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC PATCH 1/3] restartable sequences: user-space per-cpu
- critical sections
-Date: Fri, 23 Oct 2015 02:53:41 +0800
-Message-ID: <201510230203.337YMkHy%fengguang.wu@intel.com>
-References: <581c0b6403285219724961a3d250c6d95dfacea7.1445464158.git.davejwatson@fb.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [RFC PATCH 0/3] restartable sequences benchmarks
+Date: Thu, 22 Oct 2015 12:11:42 -0700
+Message-ID: <CALCETrWXR0BMeEygiLoT5gbyYpGxren_Fch=S4RSryfqwdxH8g@mail.gmail.com>
+References: <cover.1445464158.git.davejwatson@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <581c0b6403285219724961a3d250c6d95dfacea7.1445464158.git.davejwatson-b10kYP2dOMg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: kbuild-all-JC7UmRfGjtg@public.gmane.org, davejwatson-b10kYP2dOMg@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <cover.1445464158.git.davejwatson@fb.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dave Watson <davejwatson@fb.com>
+Cc: kernel-team@fb.com, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Dave,
+On Thu, Oct 22, 2015 at 11:06 AM, Dave Watson <davejwatson@fb.com> wrote:
+> We've been testing out restartable sequences + malloc changes for use
+> at Facebook.  Below are some test results, as well as some possible
+> changes based on Paul Turner's original patches
 
-[auto build test WARNING on v4.3-rc6 -- if it's inappropriate base, please suggest rules for selecting the more suitable base]
+Thanks!  I'll stare at this some time between now and Kernel Summit.
 
-url:    https://github.com/0day-ci/linux/commits/Dave-Watson/restartable-sequences-benchmarks/20151023-020939
-reproduce:
-        # apt-get install sparse
-        make ARCH=x86_64 allmodconfig
-        make C=1 CF=-D__CHECK_ENDIAN__
+>
+> https://lkml.org/lkml/2015/6/24/665
+>
+> I ran one service with several permutations of various mallocs.  The
+> service is CPU-bound, and hits the allocator quite hard.  Requests/s
+> are held constant at the source, so we use cpu idle time and latency
+> as an indicator of service quality. These are average numbers over
+> several hours.  Machines were dual E5-2660, total 16 cores +
+> hyperthreading.  This service has ~400 total threads, 70-90 of which
+> are doing work at any particular time.
+>
+>                                    RSS CPUIDLE LATENCYMS
+> jemalloc 4.0.0                     31G   33%     390
+> jemalloc + this patch              25G   33%     390
+> jemalloc + this patch using lsl    25G   30%     420
+> jemalloc + PT's rseq patch         25G   32%     405
+> glibc malloc 2.20                  27G   30%     420
+> tcmalloc gperftools trunk (2.2)    21G   30%     480
 
+Slightly confused.  This is showing a space efficiency improvement but
+not a performance improvement?  Is the idea that percpu free lists are
+more space efficient than per-thread free lists?
 
-sparse warnings: (new ones prefixed by >>)
+>
+> jemalloc rseq patch used for testing:
+> https://github.com/djwatson/jemalloc
+>
+> lsl test - using lsl segment limit to get cpu (i.e. inlined vdso
+> getcpu on x86) instead of using the thread caching as in this patch.
+> There has been some suggestions to add the thread-cached getcpu()
+> feature separately.  It does seem to move the needle in a real service
+> by about ~3% to have a thread-cached getcpu vs. not.  I don't think we
+> can use restartable sequences in production without a faster getcpu.
 
-   include/linux/sched.h:1189:34: sparse: Expected ) in function declarator
-   include/linux/sched.h:1189:34: sparse: got (
->> builtin:0:0: sparse: expected ; at end of declaration
-   include/linux/sched.h:1190:1: sparse: Expected ; at the end of type declaration
-   include/linux/sched.h:1190:1: sparse: got }
-   include/linux/radix-tree.h:212:16: sparse: incompatible types in comparison expression (different address spaces)
-   include/linux/radix-tree.h:196:16: sparse: incompatible types in comparison expression (different address spaces)
-   include/linux/radix-tree.h:196:16: sparse: incompatible types in comparison expression (different address spaces)
-   include/linux/radix-tree.h:196:16: sparse: incompatible types in comparison expression (different address spaces)
-   include/linux/radix-tree.h:196:16: sparse: incompatible types in comparison expression (different address spaces)
-   include/linux/radix-tree.h:196:16: sparse: incompatible types in comparison expression (different address spaces)
-   include/linux/radix-tree.h:196:16: sparse: incompatible types in comparison expression (different address spaces)
---
-   include/linux/sched.h:1189:34: sparse: Expected ) in function declarator
-   include/linux/sched.h:1189:34: sparse: got (
->> builtin:0:0: sparse: expected ; at end of declaration
-   include/linux/sched.h:1190:1: sparse: Expected ; at the end of type declaration
-   include/linux/sched.h:1190:1: sparse: got }
---
-   mm/page_alloc.c:6010:1: sparse: directive in argument list
-   mm/page_alloc.c:6012:1: sparse: directive in argument list
-   mm/page_alloc.c:6019:1: sparse: directive in argument list
-   mm/page_alloc.c:6021:1: sparse: directive in argument list
-   include/linux/sched.h:1189:34: sparse: Expected ) in function declarator
-   include/linux/sched.h:1189:34: sparse: got (
->> builtin:0:0: sparse: expected ; at end of declaration
-   include/linux/sched.h:1190:1: sparse: Expected ; at the end of type declaration
-   include/linux/sched.h:1190:1: sparse: got }
---
-   include/linux/sched.h:1189:34: sparse: Expected ) in function declarator
-   include/linux/sched.h:1189:34: sparse: got (
->> builtin:0:0: sparse: expected ; at end of declaration
-   include/linux/sched.h:1190:1: sparse: Expected ; at the end of type declaration
-   include/linux/sched.h:1190:1: sparse: got }
-   include/linux/radix-tree.h:212:16: sparse: incompatible types in comparison expression (different address spaces)
-   include/linux/radix-tree.h:196:16: sparse: incompatible types in comparison expression (different address spaces)
-   include/linux/radix-tree.h:196:16: sparse: incompatible types in comparison expression (different address spaces)
---
-   mm/debug.c:176:1: sparse: directive in argument list
-   mm/debug.c:178:1: sparse: directive in argument list
-   mm/debug.c:187:1: sparse: directive in argument list
-   mm/debug.c:189:1: sparse: directive in argument list
-   mm/debug.c:190:1: sparse: directive in argument list
-   mm/debug.c:192:1: sparse: directive in argument list
-   mm/debug.c:194:1: sparse: directive in argument list
-   mm/debug.c:196:1: sparse: directive in argument list
-   mm/debug.c:197:1: sparse: directive in argument list
-   mm/debug.c:199:1: sparse: directive in argument list
-   mm/debug.c:200:1: sparse: directive in argument list
-   mm/debug.c:202:1: sparse: directive in argument list
-   mm/debug.c:206:1: sparse: directive in argument list
-   mm/debug.c:208:1: sparse: directive in argument list
-   mm/debug.c:221:1: sparse: directive in argument list
-   mm/debug.c:223:1: sparse: directive in argument list
-   mm/debug.c:224:1: sparse: directive in argument list
-   mm/debug.c:226:1: sparse: directive in argument list
-   mm/debug.c:228:1: sparse: directive in argument list
-   mm/debug.c:230:1: sparse: directive in argument list
-   mm/debug.c:231:1: sparse: directive in argument list
-   mm/debug.c:233:1: sparse: directive in argument list
-   mm/debug.c:234:1: sparse: directive in argument list
-   mm/debug.c:236:1: sparse: directive in argument list
-   include/linux/sched.h:1189:34: sparse: Expected ) in function declarator
-   include/linux/sched.h:1189:34: sparse: got (
->> builtin:0:0: sparse: expected ; at end of declaration
-   include/linux/sched.h:1190:1: sparse: Expected ; at the end of type declaration
-   include/linux/sched.h:1190:1: sparse: got }
---
-   include/linux/sched.h:1189:34: sparse: Expected ) in function declarator
-   include/linux/sched.h:1189:34: sparse: got (
->> builtin:0:0: sparse: expected ; at end of declaration
-   include/linux/sched.h:1190:1: sparse: Expected ; at the end of type declaration
-   include/linux/sched.h:1190:1: sparse: got }
-   include/linux/radix-tree.h:212:16: sparse: incompatible types in comparison expression (different address spaces)
-   include/linux/radix-tree.h:212:16: sparse: incompatible types in comparison expression (different address spaces)
---
-   include/linux/sched.h:1189:34: sparse: Expected ) in function declarator
-   include/linux/sched.h:1189:34: sparse: got (
->> builtin:0:0: sparse: expected ; at end of declaration
-   include/linux/sched.h:1190:1: sparse: Expected ; at the end of type declaration
-   include/linux/sched.h:1190:1: sparse: got }
-   mm/memcontrol.c:3289:21: sparse: incompatible types in comparison expression (different address spaces)
-   mm/memcontrol.c:3291:21: sparse: incompatible types in comparison expression (different address spaces)
-   mm/memcontrol.c:4861:23: sparse: incompatible types in comparison expression (different address spaces)
+If nothing else, I'd like to replace the thread-cached getcpu thing
+with percpu gsbase, at least on x86.  That doesn't necessarily have to
+be exclusive with restartable sequences.
 
----
-0-DAY kernel test infrastructure                Open Source Technology Center
-https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
+>
+> GS-segment / migration only tests
+>
+> There's been some interest in seeing if we can do this with only gs
+> segment, here's some numbers for those.  This doesn't have to be gs,
+> it could just be a migration signal sent to userspace as well, the
+> same approaches would apply.
+>
+> GS patch: https://lkml.org/lkml/2014/9/13/59
+>
+>                                    RSS CPUIDLE LATENCYMS
+> jemalloc 4.0.0                     31G   33%     390
+> jemalloc + percpu locking          25G   25%     420
+> jemalloc + preempt lock / signal   25G   32%     415
+
+Neat!
+
+--Andy
