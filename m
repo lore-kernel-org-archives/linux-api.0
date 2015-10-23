@@ -1,7 +1,7 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v12 41/49] ext4: Don't allow unmapped identifiers in richacls
-Date: Fri, 23 Oct 2015 20:41:54 +0200
-Message-ID: <1445625722-13791-42-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v12 43/49] sunrpc: Allow to demand-allocate pages to encode into
+Date: Fri, 23 Oct 2015 20:41:56 +0200
+Message-ID: <1445625722-13791-44-git-send-email-agruenba@redhat.com>
 References: <1445625722-13791-1-git-send-email-agruenba@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1445625722-13791-1-git-send-email-agruenba@redhat.com>
@@ -10,28 +10,34 @@ To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, And
 Cc: Andreas Gruenbacher <agruenba@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Don't allow acls which contain unmapped identifiers: they are meaningful
-for remote file systems only.
+When encoding large, variable-length objects such as acls into xdr_bufs,
+it is easier to allocate buffer pages on demand rather than precomputing
+the required buffer size.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 ---
- fs/ext4/richacl.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ net/sunrpc/xdr.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-diff --git a/fs/ext4/richacl.c b/fs/ext4/richacl.c
-index 906d048..2115385 100644
---- a/fs/ext4/richacl.c
-+++ b/fs/ext4/richacl.c
-@@ -74,6 +74,10 @@ __ext4_set_richacl(handle_t *handle, struct inode *inode, struct richacl *acl)
- 	int retval, size;
- 	void *value;
- 
-+	/* Don't allow acls with unmapped identifiers. */
-+	if (richacl_has_unmapped_identifiers(acl))
-+		return -EINVAL;
+diff --git a/net/sunrpc/xdr.c b/net/sunrpc/xdr.c
+index 4439ac4..63c1c36 100644
+--- a/net/sunrpc/xdr.c
++++ b/net/sunrpc/xdr.c
+@@ -537,6 +537,15 @@ static __be32 *xdr_get_next_encode_buffer(struct xdr_stream *xdr,
+ 	 */
+ 	xdr->scratch.iov_base = xdr->p;
+ 	xdr->scratch.iov_len = frag1bytes;
 +
- 	if (richacl_equiv_mode(acl, &mode) == 0) {
- 		inode->i_ctime = ext4_current_time(inode);
- 		inode->i_mode = mode;
++	if (!*xdr->page_ptr) {
++		struct page *page = alloc_page(GFP_NOFS);
++
++		if (!page)
++			return NULL;
++		*xdr->page_ptr = page;
++	}
++
+ 	p = page_address(*xdr->page_ptr);
+ 	/*
+ 	 * Note this is where the next encode will start after we've
 -- 
 2.5.0
