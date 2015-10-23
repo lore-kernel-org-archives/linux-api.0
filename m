@@ -1,77 +1,146 @@
-From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v12 30/49] richacl: Set the other permissions to the other mask
-Date: Fri, 23 Oct 2015 20:41:43 +0200
-Message-ID: <1445625722-13791-31-git-send-email-agruenba@redhat.com>
+From: Andreas Gruenbacher <agruenba@redhat.com>
+Subject: [PATCH v12 32/49] richacl: Apply the file masks to a richacl
+Date: Fri, 23 Oct 2015 20:41:45 +0200
+Message-ID: <1445625722-13791-33-git-send-email-agruenba@redhat.com>
 References: <1445625722-13791-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1445625722-13791-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1445625722-13791-1-git-send-email-agruenba@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Andreas Gruenbacher <agruenba@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Change the acl so that everyone@ is granted the permissions set in the
-other mask.
+Put all the pieces of the acl transformation puzzle together for
+computing a richacl which has the file masks "applied" so that the
+standard nfsv4 access check algorithm can be used on the richacl.
 
-Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Reviewed-by: J. Bruce Fields <bfields-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+Reviewed-by: J. Bruce Fields <bfields@redhat.com>
 ---
- fs/richacl_compat.c | 41 +++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 41 insertions(+)
+ fs/richacl_compat.c     | 101 ++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/richacl.h |   3 ++
+ 2 files changed, 104 insertions(+)
 
 diff --git a/fs/richacl_compat.c b/fs/richacl_compat.c
-index d9fee8b..76183c9 100644
+index 7553f1a..ea3effd 100644
 --- a/fs/richacl_compat.c
 +++ b/fs/richacl_compat.c
-@@ -462,3 +462,44 @@ richacl_set_owner_permissions(struct richacl_alloc *alloc)
+@@ -726,3 +726,104 @@ richacl_isolate_group_class(struct richacl_alloc *alloc, unsigned int deny)
  	}
  	return 0;
  }
 +
 +/**
-+ * richacl_set_other_permissions  -  set the other permissions to the other mask
++ * __richacl_apply_masks  -  apply the file masks to all aces
 + * @alloc:	acl and number of allocated entries
-+ * @added:	permissions added for everyone@
 + *
-+ * Change the acl so that everyone@ is granted the permissions set in the other
-+ * mask.  This leaves at most one efective everyone@ allow entry at the end of
-+ * the acl.  If everyone@ end up being granted additional permissions, these
-+ * permissions are returned in @added.
++ * Apply the owner mask to owner@ aces, the other mask to
++ * everyone@ aces, and the group mask to all other aces.
++ *
++ * The previous transformations have brought the acl into a
++ * form in which applying the masks will not lead to the
++ * accidental loss of permissions anymore.
 + */
 +static int
-+richacl_set_other_permissions(struct richacl_alloc *alloc, unsigned int *added)
++__richacl_apply_masks(struct richacl_alloc *alloc, kuid_t owner)
 +{
-+	struct richacl *acl = alloc->acl;
-+	unsigned int x = RICHACE_POSIX_ALWAYS_ALLOWED;
-+	unsigned int other_mask = acl->a_other_mask & ~x;
 +	struct richace *ace;
 +
-+	if (!(other_mask &&
-+	      (acl->a_flags & RICHACL_WRITE_THROUGH)))
-+		return 0;
++	richacl_for_each_entry(ace, alloc->acl) {
++		unsigned int mask;
 +
-+	*added = other_mask;
-+	ace = acl->a_entries + acl->a_count - 1;
-+	if (acl->a_count == 0 ||
-+	    !richace_is_everyone(ace) ||
-+	    richace_is_inherit_only(ace)) {
-+		ace++;
-+		if (richacl_insert_entry(alloc, &ace))
++		if (richace_is_inherit_only(ace) || !richace_is_allow(ace))
++			continue;
++		if (richace_is_owner(ace) ||
++		    (richace_is_unix_user(ace) && uid_eq(owner, ace->e_id.uid)))
++			mask = alloc->acl->a_owner_mask;
++		else if (richace_is_everyone(ace))
++			mask = alloc->acl->a_other_mask;
++		else
++			mask = alloc->acl->a_group_mask;
++		if (richace_change_mask(alloc, &ace, ace->e_mask & mask))
 +			return -1;
-+		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
-+		ace->e_flags = RICHACE_SPECIAL_WHO;
-+		ace->e_mask = other_mask;
-+		ace->e_id.special = RICHACE_EVERYONE_SPECIAL_ID;
-+	} else {
-+		*added &= ~ace->e_mask;
-+		richace_change_mask(alloc, &ace, other_mask);
 +	}
 +	return 0;
 +}
++
++/**
++ * richacl_apply_masks  -  apply the masks to the acl
++ *
++ * Transform @acl so that the standard NFSv4 permission check algorithm (which
++ * is not aware of file masks) will compute the same access decisions as the
++ * richacl permission check algorithm (which looks at the acl and the file
++ * masks).
++ *
++ * This algorithm is split into several steps:
++ *
++ *   - Move everyone@ aces to the end of the acl.  This simplifies the other
++ *     transformations, and allows the everyone@ allow ace at the end of the
++ *     acl to eventually allow permissions to the other class only.
++ *
++ *   - Propagate everyone@ permissions up the acl.  This transformation makes
++ *     sure that the owner and group class aces won't lose any permissions when
++ *     we apply the other mask to the everyone@ allow ace at the end of the acl.
++ *
++ *   - Apply the file masks to all aces.
++ *
++ *   - Make sure everyone is granted the other mask permissions.  This step can
++ *     elevate elevate permissions for the owner and group classes, which is
++ *     corrected later.
++ *
++ *   - Make sure that the group class is not granted any permissions from
++ *     everyone@.
++ *
++ *   - Make sure the owner is granted the owner mask permissions.
++ *
++ *   - Make sure the owner is not granted any permissions beyond the owner
++ *     mask from group class aces or from everyone@.
++ *
++ * NOTE: Depending on the acl and file masks, this algorithm can increase the
++ * number of aces by almost a factor of three in the worst case. This may make
++ * the acl too large for some purposes.
++ */
++int
++richacl_apply_masks(struct richacl **acl, kuid_t owner)
++{
++	if ((*acl)->a_flags & RICHACL_MASKED) {
++		struct richacl_alloc alloc = {
++			.acl = richacl_clone(*acl, GFP_KERNEL),
++			.count = (*acl)->a_count,
++		};
++		unsigned int added = 0;
++
++		if (!alloc.acl)
++			return -ENOMEM;
++		if (richacl_move_everyone_aces_down(&alloc) ||
++		    richacl_propagate_everyone(&alloc) ||
++		    __richacl_apply_masks(&alloc, owner) ||
++		    richacl_set_other_permissions(&alloc, &added) ||
++		    richacl_isolate_group_class(&alloc, added) ||
++		    richacl_set_owner_permissions(&alloc) ||
++		    richacl_isolate_owner_class(&alloc)) {
++			richacl_put(alloc.acl);
++			return -ENOMEM;
++		}
++
++		alloc.acl->a_flags &= ~(RICHACL_WRITE_THROUGH | RICHACL_MASKED);
++		richacl_put(*acl);
++		*acl = alloc.acl;
++	}
++	return 0;
++}
++EXPORT_SYMBOL_GPL(richacl_apply_masks);
+diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+index 7cfa64d..3fdfc57 100644
+--- a/include/linux/richacl.h
++++ b/include/linux/richacl.h
+@@ -205,4 +205,7 @@ extern int richacl_permission(struct inode *, const struct richacl *, int);
+ extern int richacl_chmod(struct inode *, umode_t);
+ extern struct richacl *richacl_create(umode_t *, struct inode *);
+ 
++/* richacl_compat.c */
++extern int richacl_apply_masks(struct richacl **, kuid_t);
++
+ #endif /* __RICHACL_H */
 -- 
 2.5.0
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
