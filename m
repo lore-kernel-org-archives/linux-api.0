@@ -1,124 +1,137 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v12 27/49] richacl: Move everyone@ aces down the acl
-Date: Fri, 23 Oct 2015 20:41:40 +0200
-Message-ID: <1445625722-13791-28-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v12 33/49] richacl: Create richacl from mode values
+Date: Fri, 23 Oct 2015 20:41:46 +0200
+Message-ID: <1445625722-13791-34-git-send-email-agruenba@redhat.com>
 References: <1445625722-13791-1-git-send-email-agruenba@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1445625722-13791-1-git-send-email-agruenba@redhat.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
 Cc: Andreas Gruenbacher <agruenba@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-The POSIX standard puts processes which are not the owner or a member in
-the owning group or which match any ace other then everyone@ on the
-other file class.  We only know if a process is in the other class after
-processing the entire acl.
+A file can have "no acl" in the sense that only the file mode permission
+bits determine access.  In that case, the getxattr system call fails with
+errno == ENODATA (No such attribute).
 
-Move all everyone@ aces in the acl down in the acl so that at most a
-single everyone@ allow ace remains at the end.  Permissions which are
-not explicitly allowed are implicitly denied, so an everyone@ deny ace
-is unneeded.
-
-The everyone@ aces can be moved down the acl without changing the
-permissions that the acl grants.  This transformation simplifies the
-following algorithms, and eventually allows us to turn the final
-everyone@ allow ace into an entry for the other class.
+Over the NFSv4 protocol, a file always has an acl, and we convert the file
+mode permission bits into an equivalent acl with richacl_from_mode.  Such
+"trivial" acls can be converted back to a file mode with
+richacl_equiv_mode.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 Reviewed-by: J. Bruce Fields <bfields@redhat.com>
 ---
- fs/richacl_compat.c | 65 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 65 insertions(+)
+ fs/richacl_compat.c     | 88 +++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/richacl.h |  1 +
+ 2 files changed, 89 insertions(+)
 
 diff --git a/fs/richacl_compat.c b/fs/richacl_compat.c
-index 5c59999..962d314 100644
+index ea3effd..3a11773 100644
 --- a/fs/richacl_compat.c
 +++ b/fs/richacl_compat.c
-@@ -153,3 +153,68 @@ richace_change_mask(struct richacl_alloc *alloc, struct richace **ace,
- 	}
+@@ -827,3 +827,91 @@ richacl_apply_masks(struct richacl **acl, kuid_t owner)
  	return 0;
  }
+ EXPORT_SYMBOL_GPL(richacl_apply_masks);
 +
 +/**
-+ * richacl_move_everyone_aces_down  -  move everyone@ aces to the end of the acl
-+ * @alloc:	acl and number of allocated entries
++ * richacl_from_mode  -  create an acl which corresponds to @mode
 + *
-+ * Move all everyone aces to the end of the acl so that only a single everyone@
-+ * allow ace remains at the end, and update the mask fields of all aces on the
-+ * way.  The last ace of the resulting acl will be an everyone@ allow ace only
-+ * if @acl grants any permissions to @everyone.  No @everyone deny aces will
-+ * remain.
++ * The resulting acl doesn't have the RICHACL_MASKED flag set.
 + *
-+ * This transformation does not alter the permissions that the acl grants.
-+ * Having at most one everyone@ allow ace at the end of the acl helps us in the
-+ * following algorithms.
++ * @mode:	file mode including the file type
 + */
-+static int
-+richacl_move_everyone_aces_down(struct richacl_alloc *alloc)
++struct richacl *
++richacl_from_mode(umode_t mode)
 +{
++	unsigned int owner_mask = richacl_mode_to_mask(mode >> 6);
++	unsigned int group_mask = richacl_mode_to_mask(mode >> 3);
++	unsigned int other_mask = richacl_mode_to_mask(mode);
++	unsigned int denied;
++	unsigned int entries = 0;
++	struct richacl *acl;
 +	struct richace *ace;
-+	unsigned int allowed = 0, denied = 0;
 +
-+	richacl_for_each_entry(ace, alloc->acl) {
-+		if (richace_is_inherit_only(ace))
-+			continue;
-+		if (richace_is_everyone(ace)) {
-+			if (richace_is_allow(ace))
-+				allowed |= (ace->e_mask & ~denied);
-+			else if (richace_is_deny(ace))
-+				denied |= (ace->e_mask & ~allowed);
-+			else
-+				continue;
-+			if (richace_change_mask(alloc, &ace, 0))
-+				return -1;
-+		} else {
-+			if (richace_is_allow(ace)) {
-+				if (richace_change_mask(alloc, &ace, allowed |
-+						(ace->e_mask & ~denied)))
-+					return -1;
-+			} else if (richace_is_deny(ace)) {
-+				if (richace_change_mask(alloc, &ace, denied |
-+						(ace->e_mask & ~allowed)))
-+					return -1;
-+			}
-+		}
++	/* RICHACE_DELETE_CHILD is meaningless for non-directories. */
++	if (!S_ISDIR(mode)) {
++		owner_mask &= ~RICHACE_DELETE_CHILD;
++		group_mask &= ~RICHACE_DELETE_CHILD;
++		other_mask &= ~RICHACE_DELETE_CHILD;
 +	}
-+	if (allowed & ~RICHACE_POSIX_ALWAYS_ALLOWED) {
-+		struct richace *last_ace = ace - 1;
 +
-+		if (alloc->acl->a_entries &&
-+		    richace_is_everyone(last_ace) &&
-+		    richace_is_allow(last_ace) &&
-+		    richace_is_inherit_only(last_ace) &&
-+		    last_ace->e_mask == allowed)
-+			last_ace->e_flags &= ~RICHACE_INHERIT_ONLY_ACE;
-+		else {
-+			if (richacl_insert_entry(alloc, &ace))
-+				return -1;
-+			ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
-+			ace->e_flags = RICHACE_SPECIAL_WHO;
-+			ace->e_mask = allowed;
-+			ace->e_id.special = RICHACE_EVERYONE_SPECIAL_ID;
-+		}
++	denied = ~owner_mask & (group_mask | other_mask);
++	if (denied)
++		entries++;  /* owner@ deny entry needed */
++	if (owner_mask & ~(group_mask & other_mask))
++		entries++;  /* owner@ allow entry needed */
++	denied = ~group_mask & other_mask;
++	if (denied)
++		entries++;  /* group@ deny entry needed */
++	if (group_mask & ~other_mask)
++		entries++;  /* group@ allow entry needed */
++	if (other_mask)
++		entries++;  /* everyone@ allow entry needed */
++
++	acl = richacl_alloc(entries, GFP_KERNEL);
++	if (!acl)
++		return NULL;
++	acl->a_owner_mask = owner_mask;
++	acl->a_group_mask = group_mask;
++	acl->a_other_mask = other_mask;
++	ace = acl->a_entries;
++
++	denied = ~owner_mask & (group_mask | other_mask);
++	if (denied) {
++		ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
++		ace->e_flags = RICHACE_SPECIAL_WHO;
++		ace->e_mask = denied;
++		ace->e_id.special = RICHACE_OWNER_SPECIAL_ID;
++		ace++;
 +	}
-+	return 0;
++	if (owner_mask & ~(group_mask & other_mask)) {
++		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
++		ace->e_flags = RICHACE_SPECIAL_WHO;
++		ace->e_mask = owner_mask;
++		ace->e_id.special = RICHACE_OWNER_SPECIAL_ID;
++		ace++;
++	}
++	denied = ~group_mask & other_mask;
++	if (denied) {
++		ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
++		ace->e_flags = RICHACE_SPECIAL_WHO;
++		ace->e_mask = denied;
++		ace->e_id.special = RICHACE_GROUP_SPECIAL_ID;
++		ace++;
++	}
++	if (group_mask & ~other_mask) {
++		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
++		ace->e_flags = RICHACE_SPECIAL_WHO;
++		ace->e_mask = group_mask;
++		ace->e_id.special = RICHACE_GROUP_SPECIAL_ID;
++		ace++;
++	}
++	if (other_mask) {
++		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
++		ace->e_flags = RICHACE_SPECIAL_WHO;
++		ace->e_mask = other_mask;
++		ace->e_id.special = RICHACE_EVERYONE_SPECIAL_ID;
++		ace++;
++	}
++
++	return acl;
 +}
++EXPORT_SYMBOL_GPL(richacl_from_mode);
+diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+index 3fdfc57..10bfd0f 100644
+--- a/include/linux/richacl.h
++++ b/include/linux/richacl.h
+@@ -207,5 +207,6 @@ extern struct richacl *richacl_create(umode_t *, struct inode *);
+ 
+ /* richacl_compat.c */
+ extern int richacl_apply_masks(struct richacl **, kuid_t);
++extern struct richacl *richacl_from_mode(umode_t);
+ 
+ #endif /* __RICHACL_H */
 -- 
 2.5.0
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
