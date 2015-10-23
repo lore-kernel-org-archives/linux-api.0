@@ -1,7 +1,7 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v12 43/49] sunrpc: Allow to demand-allocate pages to encode into
-Date: Fri, 23 Oct 2015 20:41:56 +0200
-Message-ID: <1445625722-13791-44-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v12 47/49] nfs: Distinguish missing users and groups from nobody
+Date: Fri, 23 Oct 2015 20:42:00 +0200
+Message-ID: <1445625722-13791-48-git-send-email-agruenba@redhat.com>
 References: <1445625722-13791-1-git-send-email-agruenba@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1445625722-13791-1-git-send-email-agruenba@redhat.com>
@@ -10,34 +10,173 @@ To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, And
 Cc: Andreas Gruenbacher <agruenba@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-When encoding large, variable-length objects such as acls into xdr_bufs,
-it is easier to allocate buffer pages on demand rather than precomputing
-the required buffer size.
+User and group names are mapped to IDs using the kernel keyring infrastructure.
+When a name does not exist, it is mapped to the nobody user or group; there is
+no way to tell the difference from the mapping result.
+
+In ACLs, we need to make that distinction.  For that, use the new "xuid" and
+"xgid" maps: they behave like the old "uid" and "gid" maps except that the IDs
+of existing users and groups are prefixed by a "+" sign.
+
+When the "xuid" or "xgid" maps are not supported, nfs falls back to the "uid"
+and "gid" maps.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 ---
- net/sunrpc/xdr.c | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ fs/nfs/nfs4idmap.c        | 57 ++++++++++++++++++++++++++++++++++++++---------
+ fs/nfs/nfs4xdr.c          |  6 +++--
+ include/linux/nfs_fs_sb.h |  1 +
+ 3 files changed, 52 insertions(+), 12 deletions(-)
 
-diff --git a/net/sunrpc/xdr.c b/net/sunrpc/xdr.c
-index 4439ac4..63c1c36 100644
---- a/net/sunrpc/xdr.c
-+++ b/net/sunrpc/xdr.c
-@@ -537,6 +537,15 @@ static __be32 *xdr_get_next_encode_buffer(struct xdr_stream *xdr,
- 	 */
- 	xdr->scratch.iov_base = xdr->p;
- 	xdr->scratch.iov_len = frag1bytes;
+diff --git a/fs/nfs/nfs4idmap.c b/fs/nfs/nfs4idmap.c
+index 2e49022..34dd404 100644
+--- a/fs/nfs/nfs4idmap.c
++++ b/fs/nfs/nfs4idmap.c
+@@ -100,10 +100,12 @@ static bool nfs_fattr_map_owner_name(struct nfs_server *server, struct nfs_fattr
+ {
+ 	struct nfs4_string *owner = fattr->owner_name;
+ 	kuid_t uid;
++	int ret;
+ 
+ 	if (!(fattr->valid & NFS_ATTR_FATTR_OWNER_NAME))
+ 		return false;
+-	if (nfs_map_name_to_uid(server, owner->data, owner->len, &uid) == 0) {
++	ret = nfs_map_name_to_uid(server, owner->data, owner->len, &uid);
++	if (ret == 0 || ret == -ENOENT) {
+ 		fattr->uid = uid;
+ 		fattr->valid |= NFS_ATTR_FATTR_OWNER;
+ 	}
+@@ -114,10 +116,12 @@ static bool nfs_fattr_map_group_name(struct nfs_server *server, struct nfs_fattr
+ {
+ 	struct nfs4_string *group = fattr->group_name;
+ 	kgid_t gid;
++	int ret;
+ 
+ 	if (!(fattr->valid & NFS_ATTR_FATTR_GROUP_NAME))
+ 		return false;
+-	if (nfs_map_group_to_gid(server, group->data, group->len, &gid) == 0) {
++	ret = nfs_map_group_to_gid(server, group->data, group->len, &gid);
++	if (ret == 0 || ret == -ENOENT) {
+ 		fattr->gid = gid;
+ 		fattr->valid |= NFS_ATTR_FATTR_GROUP;
+ 	}
+@@ -351,20 +355,23 @@ static ssize_t nfs_idmap_lookup_name(__u32 id, const char *type, char *buf,
+ }
+ 
+ /* Name -> ID */
++/* Returns -ENOENT for unknown names (with @id set to the nobody id). */
+ static int nfs_idmap_lookup_id(const char *name, size_t namelen, const char *type,
+ 			       __u32 *id, struct idmap *idmap)
+ {
+-	char id_str[NFS_UINT_MAXLEN];
++	char id_str[NFS_UINT_MAXLEN + 1];
+ 	long id_long;
+ 	ssize_t data_size;
+ 	int ret = 0;
+ 
+-	data_size = nfs_idmap_get_key(name, namelen, type, id_str, NFS_UINT_MAXLEN, idmap);
++	data_size = nfs_idmap_get_key(name, namelen, type, id_str, sizeof(id_str), idmap);
+ 	if (data_size <= 0) {
+ 		ret = -EINVAL;
+ 	} else {
+ 		ret = kstrtol(id_str, 10, &id_long);
+ 		*id = (__u32)id_long;
++		if (!ret && *id_str != '+')
++			ret = -ENOENT;
+ 	}
+ 	return ret;
+ }
+@@ -719,9 +726,24 @@ int nfs_map_name_to_uid(const struct nfs_server *server, const char *name, size_
+ 	__u32 id = -1;
+ 	int ret = 0;
+ 
+-	if (!nfs_map_string_to_numeric(name, namelen, &id))
+-		ret = nfs_idmap_lookup_id(name, namelen, "uid", &id, idmap);
+-	if (ret == 0) {
++	if (!nfs_map_string_to_numeric(name, namelen, &id)) {
++		struct nfs_client *client = server->nfs_client;
++		const char *type;
 +
-+	if (!*xdr->page_ptr) {
-+		struct page *page = alloc_page(GFP_NOFS);
++		for(;;) {
++			type = "xuid";
++			if (test_bit(NFS_CS_NOXUID, &client->cl_flags))
++				type = "uid";
 +
-+		if (!page)
-+			return NULL;
-+		*xdr->page_ptr = page;
++			ret = nfs_idmap_lookup_id(name, namelen, type, &id, idmap);
++			if (ret != -EINVAL || test_bit(NFS_CS_NOXUID, &client->cl_flags))
++				break;
++			printk(KERN_NOTICE "NFS: Falling back from nfsidmap "
++			       "xuid/xgid to uid/gid\n");
++			set_bit(NFS_CS_NOXUID, &client->cl_flags);
++		}
 +	}
++	if (ret == 0 || ret == -ENOENT) {
+ 		*uid = make_kuid(&init_user_ns, id);
+ 		if (!uid_valid(*uid))
+ 			ret = -ERANGE;
+@@ -736,9 +758,24 @@ int nfs_map_group_to_gid(const struct nfs_server *server, const char *name, size
+ 	__u32 id = -1;
+ 	int ret = 0;
+ 
+-	if (!nfs_map_string_to_numeric(name, namelen, &id))
+-		ret = nfs_idmap_lookup_id(name, namelen, "gid", &id, idmap);
+-	if (ret == 0) {
++	if (!nfs_map_string_to_numeric(name, namelen, &id)) {
++		struct nfs_client *client = server->nfs_client;
++		const char *type;
 +
- 	p = page_address(*xdr->page_ptr);
- 	/*
- 	 * Note this is where the next encode will start after we've
++		for(;;) {
++			type = "xgid";
++			if (test_bit(NFS_CS_NOXUID, &client->cl_flags))
++				type = "gid";
++
++			ret = nfs_idmap_lookup_id(name, namelen, type, &id, idmap);
++			if (ret != -EINVAL || test_bit(NFS_CS_NOXUID, &client->cl_flags))
++				break;
++			printk(KERN_NOTICE "NFS: Falling back from nfsidmap "
++			       "xuid/xgid to uid/gid\n");
++			set_bit(NFS_CS_NOXUID, &client->cl_flags);
++		}
++	}
++	if (ret == 0 || ret == -ENOENT) {
+ 		*gid = make_kgid(&init_user_ns, id);
+ 		if (!gid_valid(*gid))
+ 			ret = -ERANGE;
+diff --git a/fs/nfs/nfs4xdr.c b/fs/nfs/nfs4xdr.c
+index eefed15..adeb894 100644
+--- a/fs/nfs/nfs4xdr.c
++++ b/fs/nfs/nfs4xdr.c
+@@ -3875,7 +3875,8 @@ static int decode_attr_owner(struct xdr_stream *xdr, uint32_t *bitmap,
+ 				ret = NFS_ATTR_FATTR_OWNER_NAME;
+ 			}
+ 		} else if (len < XDR_MAX_NETOBJ) {
+-			if (nfs_map_name_to_uid(server, (char *)p, len, uid) == 0)
++			ret = nfs_map_name_to_uid(server, (char *)p, len, uid);
++			if (ret == 0 || ret == -ENOENT)
+ 				ret = NFS_ATTR_FATTR_OWNER;
+ 			else
+ 				dprintk("%s: nfs_map_name_to_uid failed!\n",
+@@ -3918,7 +3919,8 @@ static int decode_attr_group(struct xdr_stream *xdr, uint32_t *bitmap,
+ 				ret = NFS_ATTR_FATTR_GROUP_NAME;
+ 			}
+ 		} else if (len < XDR_MAX_NETOBJ) {
+-			if (nfs_map_group_to_gid(server, (char *)p, len, gid) == 0)
++			ret = nfs_map_group_to_gid(server, (char *)p, len, gid);
++			if (ret == 0 || ret == -ENOENT)
+ 				ret = NFS_ATTR_FATTR_GROUP;
+ 			else
+ 				dprintk("%s: nfs_map_group_to_gid failed!\n",
+diff --git a/include/linux/nfs_fs_sb.h b/include/linux/nfs_fs_sb.h
+index 570a7df..c7d42b7 100644
+--- a/include/linux/nfs_fs_sb.h
++++ b/include/linux/nfs_fs_sb.h
+@@ -36,6 +36,7 @@ struct nfs_client {
+ #define NFS_CS_RENEWD		3		/* - renewd started */
+ #define NFS_CS_STOP_RENEW	4		/* no more state to renew */
+ #define NFS_CS_CHECK_LEASE_TIME	5		/* need to check lease time */
++#define NFS_CS_NOXUID		6		/* don't use idmap xuid / xgid */
+ 	unsigned long		cl_flags;	/* behavior switches */
+ #define NFS_CS_NORESVPORT	0		/* - use ephemeral src port */
+ #define NFS_CS_DISCRTRY		1		/* - disconnect on RPC retry */
 -- 
 2.5.0
