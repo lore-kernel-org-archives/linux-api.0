@@ -1,65 +1,288 @@
-From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v12 22/49] xfs: Fix error path in xfs_get_acl
-Date: Fri, 23 Oct 2015 20:41:35 +0200
-Message-ID: <1445625722-13791-23-git-send-email-agruenba@redhat.com>
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v12 24/49] xfs: Change how listxattr generates synthetic attributes
+Date: Fri, 23 Oct 2015 20:41:37 +0200
+Message-ID: <1445625722-13791-25-git-send-email-agruenba@redhat.com>
 References: <1445625722-13791-1-git-send-email-agruenba@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <1445625722-13791-1-git-send-email-agruenba@redhat.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Andreas Gruenbacher <agruenba@redhat.com>
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1445625722-13791-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Error codes from xfs_attr_get other than -ENOATTR were not properly
-reported.  Fix that.
+Instead of adding the synthesized POSIX ACL attribute names after listing all
+non-synthesized attributes, generate them immediately when listing the
+non-synthesized attributes.
 
-In addition, the declaration of struct xfs_inode in xfs_acl.h isn't needed.
+In addition, merge xfs_xattr_put_listent and xfs_xattr_put_listent_sizes to
+ensure that the list size is computed correctly; the split version was
+overestimating the list size for non-root users.
 
-Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- fs/xfs/xfs_acl.c | 1 +
- fs/xfs/xfs_acl.h | 1 -
- 2 files changed, 1 insertion(+), 1 deletion(-)
+ fs/xfs/xfs_acl.c   |  23 ---------
+ fs/xfs/xfs_acl.h   |   4 --
+ fs/xfs/xfs_xattr.c | 137 +++++++++++++++++++++++------------------------------
+ 3 files changed, 59 insertions(+), 105 deletions(-)
 
 diff --git a/fs/xfs/xfs_acl.c b/fs/xfs/xfs_acl.c
-index 4b64167..e87fd3f 100644
+index 7b03383..778a464 100644
 --- a/fs/xfs/xfs_acl.c
 +++ b/fs/xfs/xfs_acl.c
-@@ -160,6 +160,7 @@ xfs_get_acl(struct inode *inode, int type)
- 		 */
- 		if (error == -ENOATTR)
- 			goto out_update_cache;
-+		acl = ERR_PTR(error);
- 		goto out;
- 	}
+@@ -231,29 +231,6 @@ __xfs_set_acl(struct inode *inode, int type, struct posix_acl *acl)
+ 	return error;
+ }
  
+-static int
+-xfs_acl_exists(struct inode *inode, unsigned char *name)
+-{
+-	int len = XFS_ACL_MAX_SIZE(XFS_M(inode->i_sb));
+-
+-	return (xfs_attr_get(XFS_I(inode), name, NULL, &len,
+-			    ATTR_ROOT|ATTR_KERNOVAL) == 0);
+-}
+-
+-int
+-posix_acl_access_exists(struct inode *inode)
+-{
+-	return xfs_acl_exists(inode, SGI_ACL_FILE);
+-}
+-
+-int
+-posix_acl_default_exists(struct inode *inode)
+-{
+-	if (!S_ISDIR(inode->i_mode))
+-		return 0;
+-	return xfs_acl_exists(inode, SGI_ACL_DEFAULT);
+-}
+-
+ int
+ xfs_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+ {
 diff --git a/fs/xfs/xfs_acl.h b/fs/xfs/xfs_acl.h
-index 3841b07..9ee0a0d 100644
+index 9ee0a0d..cf973f5 100644
 --- a/fs/xfs/xfs_acl.h
 +++ b/fs/xfs/xfs_acl.h
-@@ -20,7 +20,6 @@
- 
- struct inode;
- struct posix_acl;
--struct xfs_inode;
- 
+@@ -24,15 +24,11 @@ struct posix_acl;
  #ifdef CONFIG_XFS_POSIX_ACL
  extern struct posix_acl *xfs_get_acl(struct inode *inode, int type);
+ extern int xfs_set_acl(struct inode *inode, struct posix_acl *acl, int type);
+-extern int posix_acl_access_exists(struct inode *inode);
+-extern int posix_acl_default_exists(struct inode *inode);
+ #else
+ static inline struct posix_acl *xfs_get_acl(struct inode *inode, int type)
+ {
+ 	return NULL;
+ }
+ # define xfs_set_acl					NULL
+-# define posix_acl_access_exists(inode)			0
+-# define posix_acl_default_exists(inode)		0
+ #endif /* CONFIG_XFS_POSIX_ACL */
+ #endif	/* __XFS_ACL_H__ */
+diff --git a/fs/xfs/xfs_xattr.c b/fs/xfs/xfs_xattr.c
+index c0368151..8428aed 100644
+--- a/fs/xfs/xfs_xattr.c
++++ b/fs/xfs/xfs_xattr.c
+@@ -106,47 +106,19 @@ const struct xattr_handler *xfs_xattr_handlers[] = {
+ 	NULL
+ };
+ 
+-static unsigned int xfs_xattr_prefix_len(int flags)
+-{
+-	if (flags & XFS_ATTR_SECURE)
+-		return sizeof("security");
+-	else if (flags & XFS_ATTR_ROOT)
+-		return sizeof("trusted");
+-	else
+-		return sizeof("user");
+-}
+-
+-static const char *xfs_xattr_prefix(int flags)
+-{
+-	if (flags & XFS_ATTR_SECURE)
+-		return xfs_xattr_security_handler.prefix;
+-	else if (flags & XFS_ATTR_ROOT)
+-		return xfs_xattr_trusted_handler.prefix;
+-	else
+-		return xfs_xattr_user_handler.prefix;
+-}
+-
+ static int
+-xfs_xattr_put_listent(
++__xfs_xattr_put_listent(
+ 	struct xfs_attr_list_context *context,
+-	int		flags,
+-	unsigned char	*name,
+-	int		namelen,
+-	int		valuelen,
+-	unsigned char	*value)
++	char *prefix,
++	int prefix_len,
++	unsigned char *name,
++	int namelen)
+ {
+-	unsigned int prefix_len = xfs_xattr_prefix_len(flags);
+ 	char *offset;
+ 	int arraytop;
+ 
+-	ASSERT(context->count >= 0);
+-
+-	/*
+-	 * Only show root namespace entries if we are actually allowed to
+-	 * see them.
+-	 */
+-	if ((flags & XFS_ATTR_ROOT) && !capable(CAP_SYS_ADMIN))
+-		return 0;
++	if (!context->alist)
++		goto compute_size;
+ 
+ 	arraytop = context->count + prefix_len + namelen + 1;
+ 	if (arraytop > context->firstu) {
+@@ -154,17 +126,19 @@ xfs_xattr_put_listent(
+ 		return 1;
+ 	}
+ 	offset = (char *)context->alist + context->count;
+-	strncpy(offset, xfs_xattr_prefix(flags), prefix_len);
++	strncpy(offset, prefix, prefix_len);
+ 	offset += prefix_len;
+ 	strncpy(offset, (char *)name, namelen);			/* real name */
+ 	offset += namelen;
+ 	*offset = '\0';
++
++compute_size:
+ 	context->count += prefix_len + namelen + 1;
+ 	return 0;
+ }
+ 
+ static int
+-xfs_xattr_put_listent_sizes(
++xfs_xattr_put_listent(
+ 	struct xfs_attr_list_context *context,
+ 	int		flags,
+ 	unsigned char	*name,
+@@ -172,24 +146,55 @@ xfs_xattr_put_listent_sizes(
+ 	int		valuelen,
+ 	unsigned char	*value)
+ {
+-	context->count += xfs_xattr_prefix_len(flags) + namelen + 1;
+-	return 0;
+-}
++	char *prefix;
++	int prefix_len;
+ 
+-static int
+-list_one_attr(const char *name, const size_t len, void *data,
+-		size_t size, ssize_t *result)
+-{
+-	char *p = data + *result;
++	ASSERT(context->count >= 0);
+ 
+-	*result += len;
+-	if (!size)
+-		return 0;
+-	if (*result > size)
+-		return -ERANGE;
++	if (flags & XFS_ATTR_ROOT) {
++#ifdef CONFIG_XFS_POSIX_ACL
++		if (namelen == SGI_ACL_FILE_SIZE &&
++		    strncmp(name, SGI_ACL_FILE,
++			    SGI_ACL_FILE_SIZE) == 0) {
++			int ret = __xfs_xattr_put_listent(
++					context, XATTR_SYSTEM_PREFIX,
++					XATTR_SYSTEM_PREFIX_LEN,
++					XATTR_POSIX_ACL_ACCESS,
++					strlen(XATTR_POSIX_ACL_ACCESS));
++			if (ret)
++				return ret;
++		} else if (namelen == SGI_ACL_DEFAULT_SIZE &&
++			 strncmp(name, SGI_ACL_DEFAULT,
++				 SGI_ACL_DEFAULT_SIZE) == 0) {
++			int ret = __xfs_xattr_put_listent(
++					context, XATTR_SYSTEM_PREFIX,
++					XATTR_SYSTEM_PREFIX_LEN,
++					XATTR_POSIX_ACL_DEFAULT,
++					strlen(XATTR_POSIX_ACL_DEFAULT));
++			if (ret)
++				return ret;
++		}
++#endif
+ 
+-	strcpy(p, name);
+-	return 0;
++		/*
++		 * Only show root namespace entries if we are actually allowed to
++		 * see them.
++		 */
++		if (!capable(CAP_SYS_ADMIN))
++			return 0;
++
++		prefix = XATTR_TRUSTED_PREFIX;
++		prefix_len = XATTR_TRUSTED_PREFIX_LEN;
++	} else if (flags & XFS_ATTR_SECURE) {
++		prefix = XATTR_SECURITY_PREFIX;
++		prefix_len = XATTR_SECURITY_PREFIX_LEN;
++	} else {
++		prefix = XATTR_USER_PREFIX;
++		prefix_len = XATTR_USER_PREFIX_LEN;
++	}
++
++	return __xfs_xattr_put_listent(context, prefix, prefix_len, name,
++				       namelen);
+ }
+ 
+ ssize_t
+@@ -198,7 +203,6 @@ xfs_vn_listxattr(struct dentry *dentry, char *data, size_t size)
+ 	struct xfs_attr_list_context context;
+ 	struct attrlist_cursor_kern cursor = { 0 };
+ 	struct inode		*inode = d_inode(dentry);
+-	int			error;
+ 
+ 	/*
+ 	 * First read the regular on-disk attributes.
+@@ -207,37 +211,14 @@ xfs_vn_listxattr(struct dentry *dentry, char *data, size_t size)
+ 	context.dp = XFS_I(inode);
+ 	context.cursor = &cursor;
+ 	context.resynch = 1;
+-	context.alist = data;
++	context.alist = size ? data : NULL;
+ 	context.bufsize = size;
+ 	context.firstu = context.bufsize;
+-
+-	if (size)
+-		context.put_listent = xfs_xattr_put_listent;
+-	else
+-		context.put_listent = xfs_xattr_put_listent_sizes;
++	context.put_listent = xfs_xattr_put_listent;
+ 
+ 	xfs_attr_list_int(&context);
+ 	if (context.count < 0)
+ 		return -ERANGE;
+ 
+-	/*
+-	 * Then add the two synthetic ACL attributes.
+-	 */
+-	if (posix_acl_access_exists(inode)) {
+-		error = list_one_attr(POSIX_ACL_XATTR_ACCESS,
+-				strlen(POSIX_ACL_XATTR_ACCESS) + 1,
+-				data, size, &context.count);
+-		if (error)
+-			return error;
+-	}
+-
+-	if (posix_acl_default_exists(inode)) {
+-		error = list_one_attr(POSIX_ACL_XATTR_DEFAULT,
+-				strlen(POSIX_ACL_XATTR_DEFAULT) + 1,
+-				data, size, &context.count);
+-		if (error)
+-			return error;
+-	}
+-
+ 	return context.count;
+ }
 -- 
 2.5.0
 
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
