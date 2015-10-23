@@ -1,62 +1,227 @@
-From: Frederic Weisbecker <fweisbec@gmail.com>
-Subject: Re: [PATCH v8 00/14] support "task_isolation" mode for nohz_full
-Date: Fri, 23 Oct 2015 04:33:02 +0200
-Message-ID: <20151023023300.GC28099@lerouge>
-References: <1443453446-7827-1-git-send-email-cmetcalf@ezchip.com>
- <1445373372-6567-1-git-send-email-cmetcalf@ezchip.com>
- <20151021123900.GD3604@twins.programming.kicks-ass.net>
- <562947B0.7050103@ezchip.com>
+From: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+Subject: [BUGFIX PATCH] kselftest/ftrace: Fix the testcases for kprobes on
+ do_fork
+Date: Fri, 23 Oct 2015 16:50:36 +0900
+Message-ID: <20151023075036.17335.96786.stgit@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <562947B0.7050103@ezchip.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@ezchip.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Shuah Khan <shuahkh@osg.samsung.com>
+Cc: linux-api@vger.kernel.org, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Namhyung Kim <namhyung@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 22, 2015 at 04:31:44PM -0400, Chris Metcalf wrote:
-> On 10/21/2015 08:39 AM, Peter Zijlstra wrote:
-> >Can you *please* start a new thread with each posting?
-> >
-> >This is absolutely unmanageable.
-> 
-> I've been explicitly threading the multiple patch series on purpose
-> due to this text in "git help send-email":
-> 
->        --in-reply-to=<identifier>
->               Make the first mail (or all the mails with --no-thread) appear
->               as a reply to the given Message-Id, which avoids breaking
->               threads to provide a new patch series. The second and subsequent
->               emails will be sent as replies according to the
->               --[no]-chain-reply-to setting.
-> 
->               So for example when --thread and --no-chain-reply-to are
->               specified, the second and subsequent patches will be replies to
->               the first one like in the illustration below where [PATCH v2
->               0/3] is in reply to [PATCH 0/2]:
-> 
->               [PATCH 0/2] Here is what I did...
->                 [PATCH 1/2] Clean up and tests
->                 [PATCH 2/2] Implementation
->                 [PATCH v2 0/3] Here is a reroll
->                   [PATCH v2 1/3] Clean up
->                   [PATCH v2 2/3] New tests
->                   [PATCH v2 3/3] Implementation
-> 
-> It sounds like this is exactly the behavior you are objecting
-> to.  It's all one to me because I am not seeing these emails
-> come up in some hugely nested fashion, but just viewing the
-> responses that I haven't yet triaged away.
+Fix the testcase for kprobes which fails (false positive)
+because do_fork is renamed to _do_fork which is introduced
+by commit 3033f14ab78c32687 ("clone: support passing tls
+argument via C rather than pt_regs magic")
 
-I personally (and I think this is the general LKML behaviour) use in-reply-to
-when I post a single patch that is a fix for a bug, or a small enhancement,
-discussed on some thread. It works well as it fits the conversation inline.
+This looks into /proc/kallsyms and checks whether do_fork
+or _do_fork exists.
 
-But for anything that requires significant changes, namely a patchset,
-and that includes a new version of such patchset, it's usually better
-to create a new thread. Otherwise the thread becomes an infinite mess and it
-eventually expands further the mail client columns.
+Without this fix (failure logs are removed):
+  ----
+  # ./ftracetest
+  === Ftrace unit tests ===
+  [1] Basic trace file check      [PASS]
+  [2] Basic test for tracers      [PASS]
+  [3] Basic trace clock test      [PASS]
+  [4] Basic event tracing check   [PASS]
+  [5] event tracing - enable/disable with event level files       [PASS]
+  [6] event tracing - enable/disable with subsystem level files   [PASS]
+  [7] event tracing - enable/disable with top level files [PASS]
+  [8] ftrace - function graph filters with stack tracer   [PASS]
+  [9] ftrace - function graph filters     [PASS]
+  [10] ftrace - function profiler with function tracing   [PASS]
+  [11] Kprobe dynamic event - adding and removing [FAIL]
+  [12] Kprobe dynamic event - busy event check    [FAIL]
+  [13] Kprobe dynamic event with arguments        [FAIL]
+  [14] Kprobe dynamic event with function tracer  [FAIL]
+  [15] Kretprobe dynamic event with arguments     [FAIL]
 
-Thanks.
+  # of passed:  10
+  # of failed:  5
+  # of unresolved:  0
+  # of untested:  0
+  # of unsupported:  0
+  # of xfailed:  0
+  # of undefined(test bug):  0
+  ----
+
+With this fix:
+  ----
+  # ftracetest
+  === Ftrace unit tests ===
+  [1] Basic trace file check      [PASS]
+  [2] Basic test for tracers      [PASS]
+  kselftest/ftrace: Fix the testcases for kprobes on do_fork
+  [3] Basic trace clock test      [PASS]
+  [4] Basic event tracing check   [PASS]
+  [5] event tracing - enable/disable with event level files       [PASS]
+  [6] event tracing - enable/disable with subsystem level files   [PASS]
+  [7] event tracing - enable/disable with top level files [PASS]
+  [8] ftrace - function graph filters with stack tracer   [PASS]
+  [9] ftrace - function graph filters     [PASS]
+  [10] ftrace - function profiler with function tracing   [PASS]
+  [11] Kprobe dynamic event - adding and removing [PASS]
+  [12] Kprobe dynamic event - busy event check    [PASS]
+  [13] Kprobe dynamic event with arguments        [PASS]
+  [14] Kprobe dynamic event with function tracer  [PASS]
+  [15] Kretprobe dynamic event with arguments     [PASS]
+
+  # of passed:  15
+  # of failed:  0
+  # of unresolved:  0
+  # of untested:  0
+  # of unsupported:  0
+  # of xfailed:  0
+  # of undefined(test bug):  0
+  ----
+
+Signed-off-by: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: Shuah Khan <shuahkh@osg.samsung.com>
+Cc: Namhyung Kim <namhyung@kernel.org>
+Cc: Heiko Carstens <heiko.carstens@de.ibm.com>
+Cc: linux-api@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
+---
+ .../ftrace/test.d/kprobe/add_and_remove.tc         |    3 ++-
+ .../selftests/ftrace/test.d/kprobe/busy_check.tc   |    3 ++-
+ .../selftests/ftrace/test.d/kprobe/kprobe_args.tc  |    3 ++-
+ .../ftrace/test.d/kprobe/kprobe_ftrace.tc          |   15 ++++++++-------
+ .../ftrace/test.d/kprobe/kretprobe_args.tc         |    3 ++-
+ 5 files changed, 16 insertions(+), 11 deletions(-)
+
+diff --git a/tools/testing/selftests/ftrace/test.d/kprobe/add_and_remove.tc b/tools/testing/selftests/ftrace/test.d/kprobe/add_and_remove.tc
+index a5a4262..345e2ad 100644
+--- a/tools/testing/selftests/ftrace/test.d/kprobe/add_and_remove.tc
++++ b/tools/testing/selftests/ftrace/test.d/kprobe/add_and_remove.tc
+@@ -2,10 +2,11 @@
+ # description: Kprobe dynamic event - adding and removing
+ 
+ [ -f kprobe_events ] || exit_unsupported # this is configurable
++FORK=`grep do_fork$ /proc/kallsyms | cut -f 3 -d" "`
+ 
+ echo 0 > events/enable
+ echo > kprobe_events
+-echo p:myevent do_fork > kprobe_events
++echo p:myevent $FORK > kprobe_events
+ grep myevent kprobe_events
+ test -d events/kprobes/myevent
+ echo > kprobe_events
+diff --git a/tools/testing/selftests/ftrace/test.d/kprobe/busy_check.tc b/tools/testing/selftests/ftrace/test.d/kprobe/busy_check.tc
+index d8c7bb6..fe80134 100644
+--- a/tools/testing/selftests/ftrace/test.d/kprobe/busy_check.tc
++++ b/tools/testing/selftests/ftrace/test.d/kprobe/busy_check.tc
+@@ -2,10 +2,11 @@
+ # description: Kprobe dynamic event - busy event check
+ 
+ [ -f kprobe_events ] || exit_unsupported
++FORK=`grep do_fork$ /proc/kallsyms | cut -f 3 -d" "`
+ 
+ echo 0 > events/enable
+ echo > kprobe_events
+-echo p:myevent do_fork > kprobe_events
++echo p:myevent $FORK > kprobe_events
+ test -d events/kprobes/myevent
+ echo 1 > events/kprobes/myevent/enable
+ echo > kprobe_events && exit 1 # this must fail
+diff --git a/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_args.tc b/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_args.tc
+index c45ee27..938b061 100644
+--- a/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_args.tc
++++ b/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_args.tc
+@@ -2,10 +2,11 @@
+ # description: Kprobe dynamic event with arguments
+ 
+ [ -f kprobe_events ] || exit_unsupported # this is configurable
++FORK=`grep do_fork$ /proc/kallsyms | cut -f 3 -d" "`
+ 
+ echo 0 > events/enable
+ echo > kprobe_events
+-echo 'p:testprobe do_fork $stack $stack0 +0($stack)' > kprobe_events
++echo 'p:testprobe '$FORK' $stack $stack0 +0($stack)' > kprobe_events
+ grep testprobe kprobe_events
+ test -d events/kprobes/testprobe
+ echo 1 > events/kprobes/testprobe/enable
+diff --git a/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_ftrace.tc b/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_ftrace.tc
+index ab41d2b..51067c9 100644
+--- a/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_ftrace.tc
++++ b/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_ftrace.tc
+@@ -3,34 +3,35 @@
+ 
+ [ -f kprobe_events ] || exit_unsupported # this is configurable
+ grep function available_tracers || exit_unsupported # this is configurable
++FORK=`grep do_fork$ /proc/kallsyms | cut -f 3 -d" "`
+ 
+ # prepare
+ echo nop > current_tracer
+-echo do_fork > set_ftrace_filter
++echo $FORK > set_ftrace_filter
+ echo 0 > events/enable
+ echo > kprobe_events
+-echo 'p:testprobe do_fork' > kprobe_events
++echo 'p:testprobe '"$FORK" > kprobe_events
+ 
+ # kprobe on / ftrace off
+ echo 1 > events/kprobes/testprobe/enable
+ echo > trace
+ ( echo "forked")
+ grep testprobe trace
+-! grep 'do_fork <-' trace
++! grep "$FORK"' <-' trace
+ 
+ # kprobe on / ftrace on
+ echo function > current_tracer
+ echo > trace
+ ( echo "forked")
+ grep testprobe trace
+-grep 'do_fork <-' trace
++grep "$FORK"' <-' trace
+ 
+ # kprobe off / ftrace on
+ echo 0 > events/kprobes/testprobe/enable
+ echo > trace
+ ( echo "forked")
+ ! grep testprobe trace
+-grep 'do_fork <-' trace
++grep "$FORK"' <-' trace
+ 
+ # kprobe on / ftrace on
+ echo 1 > events/kprobes/testprobe/enable
+@@ -38,14 +39,14 @@ echo function > current_tracer
+ echo > trace
+ ( echo "forked")
+ grep testprobe trace
+-grep 'do_fork <-' trace
++grep "$FORK"' <-' trace
+ 
+ # kprobe on / ftrace off
+ echo nop > current_tracer
+ echo > trace
+ ( echo "forked")
+ grep testprobe trace
+-! grep 'do_fork <-' trace
++! grep "$FORK"' <-' trace
+ 
+ # cleanup
+ echo nop > current_tracer
+diff --git a/tools/testing/selftests/ftrace/test.d/kprobe/kretprobe_args.tc b/tools/testing/selftests/ftrace/test.d/kprobe/kretprobe_args.tc
+index 3171798..683d290 100644
+--- a/tools/testing/selftests/ftrace/test.d/kprobe/kretprobe_args.tc
++++ b/tools/testing/selftests/ftrace/test.d/kprobe/kretprobe_args.tc
+@@ -2,10 +2,11 @@
+ # description: Kretprobe dynamic event with arguments
+ 
+ [ -f kprobe_events ] || exit_unsupported # this is configurable
++FORK=`grep do_fork$ /proc/kallsyms | cut -f 3 -d" "`
+ 
+ echo 0 > events/enable
+ echo > kprobe_events
+-echo 'r:testprobe2 do_fork $retval' > kprobe_events
++echo 'r:testprobe2 '$FORK' $retval' > kprobe_events
+ grep testprobe2 kprobe_events
+ test -d events/kprobes/testprobe2
+ echo 1 > events/kprobes/testprobe2/enable
