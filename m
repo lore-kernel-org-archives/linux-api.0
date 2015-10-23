@@ -1,51 +1,250 @@
-From: Anna Schumaker <Anna.Schumaker@netapp.com>
-Subject: [PATCH v7 0/4] VFS: In-kernel copy system call
-Date: Fri, 23 Oct 2015 15:32:11 -0400
-Message-ID: <1445628736-13058-1-git-send-email-Anna.Schumaker@Netapp.com>
+From: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v7 5/4] copy_file_range.2: New page documenting copy_file_range()
+Date: Fri, 23 Oct 2015 15:32:16 -0400
+Message-ID: <1445628736-13058-6-git-send-email-Anna.Schumaker@Netapp.com>
+References: <1445628736-13058-1-git-send-email-Anna.Schumaker@Netapp.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, darrick.wong@oracle.com, mtk.manpages@gmail.com, andros@netapp.com, hch@infradead.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1445628736-13058-1-git-send-email-Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Copy system calls came up during Plumbers a while ago, mostly because several
-filesystems (including NFS and XFS) are currently working on copy acceleration
-implementations.  We haven't heard from Zach Brown in a while, so I volunteered
-to push his patches upstream so individual filesystems don't need to keep
-writing their own ioctls.
+copy_file_range() is a new system call for copying ranges of data
+completely in the kernel.  This gives filesystems an opportunity to
+implement some kind of "copy acceleration", such as reflinks or
+server-side-copy (in the case of NFS).
 
-This posting removes the COPY_FR_REFLINK flag.  Patch 3 still adds btrfs
-support for copy_file_range() as a reflink, so if this behavior is undesireable
-then the patch can be dropped.
+Signed-off-by: Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+Reviewed-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+---
+v7:
+- Remove COPY_FR_REFLINK
+- Fix extra punctuation in the license
+- Make a note about sparse file expansion
+---
+ man2/copy_file_range.2 | 199 +++++++++++++++++++++++++++++++++++++++++++++++++
+ man2/splice.2          |   1 +
+ 2 files changed, 200 insertions(+)
+ create mode 100644 man2/copy_file_range.2
 
-Changes in v7:
-- Remove COPY_FR_REFLINK flag.
-- Fix build warning on ARM devices.
-- Meniton sparse file expansion in the man page.
-
-
-Anna Schumaker (1):
-  vfs: Add vfs_copy_file_range() support for pagecache copies
-
-Zach Brown (3):
-  vfs: add copy_file_range syscall and vfs helper
-  x86: add sys_copy_file_range to syscall tables
-  btrfs: add .copy_file_range file operation
-
- arch/arm/include/uapi/asm/unistd.h     |   1 +
- arch/x86/entry/syscalls/syscall_32.tbl |   1 +
- arch/x86/entry/syscalls/syscall_64.tbl |   1 +
- fs/btrfs/ctree.h                       |   3 +
- fs/btrfs/file.c                        |   1 +
- fs/btrfs/ioctl.c                       |  91 ++++++++++++----------
- fs/read_write.c                        | 133 +++++++++++++++++++++++++++++++++
- include/linux/fs.h                     |   3 +
- include/linux/syscalls.h               |   3 +
- include/uapi/asm-generic/unistd.h      |   4 +-
- kernel/sys_ni.c                        |   1 +
- 11 files changed, 202 insertions(+), 40 deletions(-)
-
+diff --git a/man2/copy_file_range.2 b/man2/copy_file_range.2
+new file mode 100644
+index 0000000..d619e37
+--- /dev/null
++++ b/man2/copy_file_range.2
+@@ -0,0 +1,199 @@
++.\"This manpage is Copyright (C) 2015 Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
++.\"
++.\" %%%LICENSE_START(VERBATIM)
++.\" Permission is granted to make and distribute verbatim copies of this
++.\" manual provided the copyright notice and this permission notice are
++.\" preserved on all copies.
++.\"
++.\" Permission is granted to copy and distribute modified versions of
++.\" this manual under the conditions for verbatim copying, provided that
++.\" the entire resulting derived work is distributed under the terms of
++.\" a permission notice identical to this one.
++.\"
++.\" Since the Linux kernel and libraries are constantly changing, this
++.\" manual page may be incorrect or out-of-date.  The author(s) assume
++.\" no responsibility for errors or omissions, or for damages resulting
++.\" from the use of the information contained herein.  The author(s) may
++.\" not have taken the same level of care in the production of this
++.\" manual, which is licensed free of charge, as they might when working
++.\" professionally.
++.\"
++.\" Formatted or processed versions of this manual, if unaccompanied by
++.\" the source, must acknowledge the copyright and authors of this work.
++.\" %%%LICENSE_END
++.\"
++.TH COPY 2 2015-10-16 "Linux" "Linux Programmer's Manual"
++.SH NAME
++copy_file_range \- Copy a range of data from one file to another
++.SH SYNOPSIS
++.nf
++.B #include <sys/syscall.h>
++.B #include <unistd.h>
++
++.BI "ssize_t copy_file_range(int " fd_in ", loff_t *" off_in ", int " fd_out ",
++.BI "                        loff_t *" off_out ", size_t " len \
++", unsigned int " flags );
++.fi
++.SH DESCRIPTION
++The
++.BR copy_file_range ()
++system call performs an in-kernel copy between two file descriptors
++without the additional cost of transferring data from the kernel to userspace
++and then back into the kernel.
++It copies up to
++.I len
++bytes of data from file descriptor
++.I fd_in
++to file descriptor
++.IR fd_out ,
++overwriting any data that exists within the requested range of the target file.
++
++The following semantics apply for
++.IR off_in ,
++and similar statements apply to
++.IR off_out :
++.IP * 3
++If
++.I off_in
++is NULL, then bytes are read from
++.I fd_in
++starting from the current file offset, and the offset is
++adjusted by the number of bytes copied.
++.IP *
++If
++.I off_in
++is not NULL, then
++.I off_in
++must point to a buffer that specifies the starting
++offset where bytes from
++.I fd_in
++will be read.  The current file offset of
++.I fd_in
++is not changed, but
++.I off_in
++is adjusted appropriately.
++.PP
++
++The
++.I flags
++argument must be set to 0.
++.SH RETURN VALUE
++Upon successful completion,
++.BR copy_file_range ()
++will return the number of bytes copied between files.
++This could be less than the length originally requested.
++
++On error,
++.BR copy_file_range ()
++returns \-1 and
++.I errno
++is set to indicate the error.
++.SH ERRORS
++.TP
++.B EBADF
++One or more file descriptors are not valid; or
++.I fd_in
++is not open for reading; or
++.I fd_out
++is not open for writing.
++.TP
++.B EINVAL
++Requested range extends beyond the end of the source file; or the
++.I flags
++argument is not 0.
++.TP
++.B EIO
++A low level I/O error occurred while copying.
++.TP
++.B ENOMEM
++Out of memory.
++.TP
++.B ENOSPC
++There is not enough space on the target filesystem to complete the copy.
++.TP
++.B EXDEV
++.IR file_in " and " file_out
++are not on the same mounted filesystem.
++.SH VERSIONS
++The
++.BR copy_file_range ()
++system call first appeared in Linux 4.4.
++.SH CONFORMING TO
++The
++.BR copy_file_range ()
++system call is a nonstandard Linux extension.
++.SH NOTES
++If
++.I file_in
++is a sparse file, then
++.BR copy_file_range ()
++may expand any holes existing in the requested range.
++Users may benefit from calling
++.BR copy_file_range ()
++in a loop, and using
++.BR lseek (2)
++to find the locations of data segments.
++.SH EXAMPLE
++.nf
++#define _GNU_SOURCE
++#include <fcntl.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <sys/stat.h>
++#include <sys/syscall.h>
++#include <unistd.h>
++
++loff_t copy_file_range(int fd_in, loff_t *off_in, int fd_out,
++                       loff_t *off_out, size_t len, unsigned int flags)
++{
++    return syscall(__NR_copy_file_range, fd_in, off_in, fd_out,
++                   off_out, len, flags);
++}
++
++int main(int argc, char **argv)
++{
++    int fd_in, fd_out;
++    struct stat stat;
++    loff_t len, ret;
++    char buf[2];
++
++    if (argc != 3) {
++        fprintf(stderr, "Usage: %s <source> <destination>\\n", argv[0]);
++        exit(EXIT_FAILURE);
++    }
++
++    fd_in = open(argv[1], O_RDONLY);
++    if (fd_in == \-1) {
++        perror("open (argv[1])");
++        exit(EXIT_FAILURE);
++    }
++
++    if (fstat(fd_in, &stat) == \-1) {
++        perror("fstat");
++        exit(EXIT_FAILURE);
++    }
++    len = stat.st_size;
++
++    fd_out = open(argv[2], O_CREAT|O_WRONLY|O_TRUNC, 0644);
++    if (fd_out == \-1) {
++        perror("open (argv[2])");
++        exit(EXIT_FAILURE);
++    }
++
++    do {
++        ret = copy_file_range(fd_in, NULL, fd_out, NULL, len, 0);
++        if (ret == \-1) {
++            perror("copy_file_range");
++            exit(EXIT_FAILURE);
++        }
++
++        len \-= ret;
++    } while (len > 0);
++
++    close(fd_in);
++    close(fd_out);
++    exit(EXIT_SUCCESS);
++}
++.fi
++.SH SEE ALSO
++.BR splice (2)
+diff --git a/man2/splice.2 b/man2/splice.2
+index b9b4f42..5c162e0 100644
+--- a/man2/splice.2
++++ b/man2/splice.2
+@@ -238,6 +238,7 @@ only pointers are copied, not the pages of the buffer.
+ See
+ .BR tee (2).
+ .SH SEE ALSO
++.BR copy_file_range (2),
+ .BR sendfile (2),
+ .BR tee (2),
+ .BR vmsplice (2)
 -- 
 2.6.2
-
