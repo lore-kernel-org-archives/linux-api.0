@@ -1,7 +1,7 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v12 42/49] xfs: Don't allow unmapped identifiers in richacls
-Date: Fri, 23 Oct 2015 20:41:55 +0200
-Message-ID: <1445625722-13791-43-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v12 40/49] nfsd: Add support for unmapped richace identifiers
+Date: Fri, 23 Oct 2015 20:41:53 +0200
+Message-ID: <1445625722-13791-41-git-send-email-agruenba@redhat.com>
 References: <1445625722-13791-1-git-send-email-agruenba@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1445625722-13791-1-git-send-email-agruenba@redhat.com>
@@ -10,28 +10,85 @@ To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, And
 Cc: Andreas Gruenbacher <agruenba@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Don't allow acls which contain unmapped identifiers: they are meaningful
-for remote file systems only.
+Add support for encoding unmapped identifiers in richacl entries: local
+filesystems are not usually supposed to store unmapped identifiers, but
+allowing that for debugging purposes can be useful; for that, nfsd must
+also be able to encode them.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 ---
- fs/xfs/xfs_richacl.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ fs/nfsd/acl.h     |  2 +-
+ fs/nfsd/nfs4acl.c | 17 +++++++++++------
+ fs/nfsd/nfs4xdr.c |  4 ++--
+ 3 files changed, 14 insertions(+), 9 deletions(-)
 
-diff --git a/fs/xfs/xfs_richacl.c b/fs/xfs/xfs_richacl.c
-index 92a036e..6870679 100644
---- a/fs/xfs/xfs_richacl.c
-+++ b/fs/xfs/xfs_richacl.c
-@@ -78,6 +78,10 @@ xfs_set_richacl(struct inode *inode, struct richacl *acl)
- 	if (!acl)
- 		return xfs_remove_richacl(inode);
+diff --git a/fs/nfsd/acl.h b/fs/nfsd/acl.h
+index d73c664..4935144 100644
+--- a/fs/nfsd/acl.h
++++ b/fs/nfsd/acl.h
+@@ -51,7 +51,7 @@ struct svc_rqst;
+ __be32 nfsd4_decode_ace_who(struct richace *ace, struct svc_rqst *rqstp,
+ 			    char *who, u32 len);
+ __be32 nfsd4_encode_ace_who(struct xdr_stream *xdr, struct svc_rqst *rqstp,
+-			    struct richace *ace);
++			    struct richace *ace, struct richacl *acl);
  
-+	/* Don't allow acls with unmapped identifiers. */
-+	if (richacl_has_unmapped_identifiers(acl))
-+		return -EINVAL;
-+
- 	if (richacl_equiv_mode(acl, &mode) == 0) {
- 		xfs_set_mode(inode, mode);
- 		return xfs_remove_richacl(inode);
+ struct richacl *nfsd4_get_acl(struct svc_rqst *rqstp, struct dentry *dentry);
+ __be32 nfsd4_set_acl(struct svc_rqst *rqstp, struct svc_fh *fhp,
+diff --git a/fs/nfsd/nfs4acl.c b/fs/nfsd/nfs4acl.c
+index f017a76..3cc83fd 100644
+--- a/fs/nfsd/nfs4acl.c
++++ b/fs/nfsd/nfs4acl.c
+@@ -885,17 +885,22 @@ __be32 nfsd4_decode_ace_who(struct richace *ace, struct svc_rqst *rqstp,
+ }
+ 
+ __be32 nfsd4_encode_ace_who(struct xdr_stream *xdr, struct svc_rqst *rqstp,
+-			    struct richace *ace)
++			    struct richace *ace, struct richacl *acl)
+ {
+-	if (ace->e_flags & RICHACE_SPECIAL_WHO) {
+-		unsigned int special_id = ace->e_id.special;
++	if (ace->e_flags & (RICHACE_SPECIAL_WHO | RICHACE_UNMAPPED_WHO)) {
+ 		const char *who;
+ 		unsigned int len;
+ 		__be32 *p;
+ 
+-		if (!nfs4acl_special_id_to_who(special_id, &who, &len)) {
+-			WARN_ON_ONCE(1);
+-			return nfserr_serverfault;
++		if (ace->e_flags & RICHACE_SPECIAL_WHO) {
++			if (!nfs4acl_special_id_to_who(ace->e_id.special,
++						       &who, &len)) {
++				WARN_ON_ONCE(1);
++				return nfserr_serverfault;
++			}
++		} else {
++			who = richace_unmapped_identifier(ace, acl);
++			len = strlen(who);
+ 		}
+ 		p = xdr_reserve_space(xdr, len + 4);
+ 		if (!p)
+diff --git a/fs/nfsd/nfs4xdr.c b/fs/nfsd/nfs4xdr.c
+index 33d028c..8728d0e 100644
+--- a/fs/nfsd/nfs4xdr.c
++++ b/fs/nfsd/nfs4xdr.c
+@@ -2325,7 +2325,7 @@ static __be32 nfsd4_encode_acl_entries(struct xdr_stream *xdr,
+ {
+ 	__be32 *p;
+ 
+-	flags_mask &= ~RICHACE_SPECIAL_WHO;
++	flags_mask &= ~(RICHACE_SPECIAL_WHO | RICHACE_UNMAPPED_WHO);
+ 
+ 	p = xdr_reserve_space(xdr, 4);
+ 	if (!p)
+@@ -2347,7 +2347,7 @@ static __be32 nfsd4_encode_acl_entries(struct xdr_stream *xdr,
+ 			*p++ = cpu_to_be32(ace->e_type);
+ 			*p++ = cpu_to_be32(ace->e_flags & flags_mask);
+ 			*p++ = cpu_to_be32(ace->e_mask & ace_mask);
+-			status = nfsd4_encode_ace_who(xdr, rqstp, ace);
++			status = nfsd4_encode_ace_who(xdr, rqstp, ace, acl);
+ 			if (status)
+ 				return status;
+ 		}
 -- 
 2.5.0
