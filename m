@@ -1,74 +1,48 @@
-From: Eric Biggers <ebiggers3@gmail.com>
-Subject: Re: [PATCH v7 0/4] VFS: In-kernel copy system call
-Date: Sat, 24 Oct 2015 11:52:37 -0500
-Message-ID: <20151024165237.GA6436@zzz>
-References: <1445628736-13058-1-git-send-email-Anna.Schumaker@Netapp.com>
+From: Dmitry Torokhov <dmitry.torokhov@gmail.com>
+Subject: Re: [PATCH v7] Input: Add userio module
+Date: Sat, 24 Oct 2015 15:26:26 -0700
+Message-ID: <20151024222626.GA18702@dtor-pixel>
+References: <20151002173714.GA8437@dtor-ws>
+ <1444060529-11164-1-git-send-email-cpaul@redhat.com>
+ <CANq1E4RCwq49T=iR40NfQLtxKdLCoTLFQB2KA17ksqRyTB568w@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1445628736-13058-1-git-send-email-Anna.Schumaker@Netapp.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Anna Schumaker <Anna.Schumaker@netapp.com>
-Cc: linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, darrick.wong@oracle.com, mtk.manpages@gmail.com, andros@netapp.com, hch@infradead.org
+In-Reply-To: <CANq1E4RCwq49T=iR40NfQLtxKdLCoTLFQB2KA17ksqRyTB568w@mail.gmail.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: David Herrmann <dh.herrmann@gmail.com>
+Cc: Stephen Chandler Paul <cpaul@redhat.com>, linux-kernel <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Greg KH <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, Joe Perches <joe@perches.com>, Jiri Slaby <jslaby@suse.com>, Vishnu Patekar <vishnupatekar0510@gmail.com>, Sebastian Ott <sebott@linux.vnet.ibm.com>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Hans de Goede <hdegoede@redhat.com>, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-A few comments:
+On Thu, Oct 08, 2015 at 07:20:59PM +0200, David Herrmann wrote:
+> On Mon, Oct 5, 2015 at 5:55 PM,  <cpaul@redhat.com> wrote:
+> > +static int userio_char_release(struct inode *inode, struct file *file)
+> > +{
+> > +       struct userio_device *userio = file->private_data;
+> > +
+> > +       /* Don't free the serio port here, serio_unregister_port() does
+> > +        * this for us */
+> > +       if (userio->running)
+> > +               serio_unregister_port(userio->serio);
+> > +       else
+> > +               kfree(userio->serio);
+> > +
+> > +       kfree(userio);
+> 
+> I'm not very familiar with the serio-subsystem, but is there a
+> guarantee that .write() will not be called once unregistered? I can
+> see that it's not scheduled by userio anymore, but maybe there's an
+> async path that can trigger .write() callbacks. Dunno.. I'll leave
+> that to Dmitry.
 
->       if (!(file_in->f_mode & FMODE_READ) ||
->           !(file_out->f_mode & FMODE_WRITE) ||
->           (file_out->f_flags & O_APPEND) ||
->           !file_out->f_op)
->               return -EBADF;
+I think this is OK. When port is unregistered we the driver will be
+disconnected from it, and is not supposed to call serio_write() anymore.
+In fact, it should not access port after calling serio_close(). If it
+keeps the pointer and uses it is a bug in the other driver; we can't
+really do much about it.
 
-Isn't 'f_op' always non-NULL?
+Thanks.
 
-If the destination file cannot be append-only, shouldn't this be documented?
-
->	if (inode_in->i_sb != inode_out->i_sb ||
->		file_in->f_path.mnt != file_out->f_path.mnt)
->		return -EXDEV;
-
-Doesn't the same mount already imply the same superblock?
-
-> /*
->  * copy_file_range() differs from regular file read and write in that it
->  * specifically allows return partial success.  When it does so is up to
->  * the copy_file_range method.
->  */
-
-What does this mean?  I thought that read() and write() can also return partial
-success.
-
->       f_out = fdget(fd_out);
->       if (!f_in.file || !f_out.file) {
->               ret = -EBADF;
->               goto out;
->	}
-
-This looked wrong at first because it may call fdput() on a 'struct fd' that was
-not successfully acquired, but it looks like it works currently because of how
-the FDPUT_FPUT flag is used.  It may be a good idea to write it the "obvious"
-way, though (use separate labels depending on which fdput()s need to happen).
-
-
-Other questions:
-
-Should FMODE_PREAD or FMODE_PWRITE access be checked if the user specifies their
-own 'off_in' or 'off_out', respectively?
-
-What is supposed to happen if the user passes provides a file descriptor to a
-non-regular file, such as a block device or char device?
-
-If the 'in' file has fewer than 'len' bytes remaining until EOF, what is the
-expected behavior?  It looks like the btrfs implementation has different
-behavior from the pagecache implementation.
-
-It appears the btrfs implementation has alignment restrictions --- where is this
-documented and how will users know what alignment to use?
-
-Are copies within the same file permitted and can the ranges overlap?  The man
-page doesn't say.
-
-It looks like the initial patch defines __NR_copy_file_range for the ARM
-architecture but doesn't actually hook that system call up for ARM; why is that?
+-- 
+Dmitry
