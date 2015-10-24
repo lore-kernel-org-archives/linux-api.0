@@ -1,54 +1,31 @@
-From: =?UTF-8?Q?P=c3=a1draig_Brady?= <P@draigBrady.com>
-Subject: Re: [PATCH v7 5/4] copy_file_range.2: New page documenting
- copy_file_range()
-Date: Sat, 24 Oct 2015 13:02:21 +0100
-Message-ID: <562B734D.50800@draigBrady.com>
-References: <1445628736-13058-1-git-send-email-Anna.Schumaker@Netapp.com>
- <1445628736-13058-6-git-send-email-Anna.Schumaker@Netapp.com>
+From: Eric Dumazet <eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH RFC net-next 0/2] tcp: Redundant Data Bundling (RDB)
+Date: Sat, 24 Oct 2015 05:57:25 -0700
+Message-ID: <1445691445.22974.200.camel@edumazet-glaptop2.roam.corp.google.com>
+References: <1445633413-3532-1-git-send-email-bro.devel+kernel@gmail.com>
+	 <CAK6E8=eSYoxo6BLPh=jpmfudcRSJ3uT3YhZ0n-XP_dnxKCNH3A@mail.gmail.com>
+	 <61F74109-9FDC-485A-978B-714B7AA27445@ifi.uio.no>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1445628736-13058-6-git-send-email-Anna.Schumaker@Netapp.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Anna Schumaker <Anna.Schumaker@netapp.com>, linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, darrick.wong@oracle.com, mtk.manpages@gmail.com, andros@netapp.com, hch@infradead.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <61F74109-9FDC-485A-978B-714B7AA27445-6miFZF/5cTBuMpJDpNschA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jonas Markussen <jonassm-6miFZF/5cTBuMpJDpNschA@public.gmane.org>
+Cc: Yuchung Cheng <ycheng-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Bendik =?ISO-8859-1?Q?R=F8nning?= Opstad <bro.devel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Alexey Kuznetsov <kuznet-v/Mj1YrvjDBInbfyfbPRSQ@public.gmane.org>, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, Hideaki YOSHIFUJI <yoshfuji-VfPWfsRibaP+Ru+s062T9g@public.gmane.org>, Patrick McHardy <kaber-dcUjhNyLwpNeoWH0uzbU5w@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Neal Cardwell <ncardwell-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tom Herbert <tom-BjP2VixgY4xUbtYUoyoikg@public.gmane.org>, Paolo Abeni <pabeni-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Erik Kline <ek-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Hannes Frederic Sowa <hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Jiri Pirko <jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org>, Alexander Duyck <alexander.h.duyck-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Florian Westphal <fw-HFFVJYpyMKqzQB+pC5nmwQ@public.gmane.org>, Daniel Lee <Longinus00-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Marcelo Ricardo Leitner <mleitner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Willem de Bruijn <willemb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linus
 List-Id: linux-api@vger.kernel.org
 
-On 23/10/15 20:32, Anna Schumaker wrote:
-> +    len =3D stat.st_size;
-> +
-> +    fd_out =3D open(argv[2], O_CREAT|O_WRONLY|O_TRUNC, 0644);
-> +    if (fd_out =3D=3D \-1) {
-> +        perror("open (argv[2])");
-> +        exit(EXIT_FAILURE);
-> +    }
-> +
-> +    do {
-> +        ret =3D copy_file_range(fd_in, NULL, fd_out, NULL, len, 0);
-> +        if (ret =3D=3D \-1) {
-> +            perror("copy_file_range");
-> +            exit(EXIT_FAILURE);
-> +        }
-> +
-> +        len \-=3D ret;
-> +    } while (len > 0);
+On Sat, 2015-10-24 at 08:00 +0000, Jonas Markussen wrote:
 
-Is this an infinite loop if len decreases before the copy completes?
-Perhaps this should be: while (len && ret);
+> Repacketization is only on retransmissions; RDB bundles previously se=
+nt segments with the next =E2=80=9Cnormal=E2=80=9D transmission instead=
+=2E=20
+>=20
+> This makes the flow recover the lost segment  before a retransmission=
+ is triggered by an RTO or fast retransmit.
 
-Otherwise this set looks good.
+Thank you for this very high quality patch submission.
 
-I'm a bit worried about the sparse expansion and default reflinking
-which might preclude cp(1) from using this call in most cases, but I wi=
-ll
-test and try to use it. coreutils has heuristics for determining if fil=
-es
-are remote, which we might use to restrict to that use case.
+Please give us a few days for proper evaluation.
 
-thanks,
-P=E1draig.
---
-To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
-" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Thanks !
