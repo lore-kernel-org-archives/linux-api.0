@@ -1,239 +1,85 @@
-From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [BUGFIX PATCH] kselftest/ftrace: Fix the testcases for kprobes
- on do_fork
-Date: Mon, 26 Oct 2015 22:35:39 +0900
-Message-ID: <20151026133539.GA20161@danjae.kornet>
-References: <20151023075036.17335.96786.stgit@localhost.localdomain>
+From: Lyude <cpaul@redhat.com>
+Subject: Re: [PATCH v6.2 1/1] Input: Add userio module
+Date: Mon, 26 Oct 2015 09:51:57 -0400
+Message-ID: <1445867517.3535.6.camel@redhat.com>
+References: <1444053984.8404.1.camel@redhat.com>
+	 <1445633266-14691-1-git-send-email-cpaul@redhat.com>
+	 <20151024224012.GA13584@dtor-pixel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20151023075036.17335.96786.stgit@localhost.localdomain>
+In-Reply-To: <20151024224012.GA13584@dtor-pixel>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-api@vger.kernel.org, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>
+To: Dmitry Torokhov <dmitry.torokhov@gmail.com>
+Cc: David Herrmann <dh.herrmann@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-input@vger.kernel.org, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Greg KH <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, Joe Perches <joe@perches.com>, Jiri Slaby <jslaby@suse.com>, Vishnu Patekar <vishnupatekar0510@gmail.com>, Sebastian Ott <sebott@linux.vnet.ibm.com>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Hans de Goede <hdegoede@redhat.com>, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Masami,
+Hi! So, I'm guessing you want me to merge this with the patch I've got
+right now and post the new version? (Just making sure since I'm a bit
+new to this :)
 
-On Fri, Oct 23, 2015 at 04:50:36PM +0900, Masami Hiramatsu wrote:
-> Fix the testcase for kprobes which fails (false positive)
-> because do_fork is renamed to _do_fork which is introduced
-> by commit 3033f14ab78c32687 ("clone: support passing tls
-> argument via C rather than pt_regs magic")
+On Sat, 2015-10-24 at 15:40 -0700, Dmitry Torokhov wrote:
+> Hi Stephen,
 > 
-> This looks into /proc/kallsyms and checks whether do_fork
-> or _do_fork exists.
+> On Fri, Oct 23, 2015 at 04:47:46PM -0400, cpaul@redhat.com wrote:
+> > From: Stephen Chandler Paul <cpaul@redhat.com>
+> > 
+> > Debugging input devices, specifically laptop touchpads, can be
+> > tricky
+> > without having the physical device handy. Here we try to remedy
+> > that
+> > with userio. This module allows an application to connect to a
+> > character
+> > device provided by the kernel, and emulate any serio device. In
+> > combination with userspace programs that can record PS/2 devices
+> > and
+> > replay them through the /dev/userio device, this allows developers
+> > to
+> > debug driver issues on the PS/2 level with devices simply by
+> > requesting
+> > a recording from the user experiencing the issue without having to
+> > have
+> > the physical hardware in front of them.
+> > 
+> > Signed-off-by: Stephen Chandler Paul <cpaul@redhat.com>
+> > Reviewed-by: David Herrmann <dh.herrmann@gmail.com>
+> > ---
+> > 				    Changes
+> > * Remove the if (!userio) { return -1; } check that somehow got
+> > left in.
+> > 
+> > Sorry this took so long! I was wondering why you hadn't replied
+> > yet, only to
+> > notice I only made this change on my own tree and never sent out a
+> > response
+> > patch. Oops.
 > 
-> Without this fix (failure logs are removed):
->   ----
->   # ./ftracetest
->   === Ftrace unit tests ===
->   [1] Basic trace file check      [PASS]
->   [2] Basic test for tracers      [PASS]
->   [3] Basic trace clock test      [PASS]
->   [4] Basic event tracing check   [PASS]
->   [5] event tracing - enable/disable with event level files       [PASS]
->   [6] event tracing - enable/disable with subsystem level files   [PASS]
->   [7] event tracing - enable/disable with top level files [PASS]
->   [8] ftrace - function graph filters with stack tracer   [PASS]
->   [9] ftrace - function graph filters     [PASS]
->   [10] ftrace - function profiler with function tracing   [PASS]
->   [11] Kprobe dynamic event - adding and removing [FAIL]
->   [12] Kprobe dynamic event - busy event check    [FAIL]
->   [13] Kprobe dynamic event with arguments        [FAIL]
->   [14] Kprobe dynamic event with function tracer  [FAIL]
->   [15] Kretprobe dynamic event with arguments     [FAIL]
+> Thank you for making all the changes.
 > 
->   # of passed:  10
->   # of failed:  5
->   # of unresolved:  0
->   # of untested:  0
->   # of unsupported:  0
->   # of xfailed:  0
->   # of undefined(test bug):  0
->   ----
+> > +
+> > +static ssize_t userio_char_read(struct file *file, char __user
+> > *user_buffer,
+> > +				size_t count, loff_t *ppos)
+> > +{
+> > +	struct userio_device *userio = file->private_data;
+> > +	int ret;
+> > +	size_t nonwrap_len, copylen;
+> > +	unsigned char buf[USERIO_BUFSIZE];
+> > +	unsigned long flags;
+> > +
+> > +	if (!count)
+> > +		return 0;
 > 
-> With this fix:
->   ----
->   # ftracetest
->   === Ftrace unit tests ===
->   [1] Basic trace file check      [PASS]
->   [2] Basic test for tracers      [PASS]
->   kselftest/ftrace: Fix the testcases for kprobes on do_fork
->   [3] Basic trace clock test      [PASS]
->   [4] Basic event tracing check   [PASS]
->   [5] event tracing - enable/disable with event level files       [PASS]
->   [6] event tracing - enable/disable with subsystem level files   [PASS]
->   [7] event tracing - enable/disable with top level files [PASS]
->   [8] ftrace - function graph filters with stack tracer   [PASS]
->   [9] ftrace - function graph filters     [PASS]
->   [10] ftrace - function profiler with function tracing   [PASS]
->   [11] Kprobe dynamic event - adding and removing [PASS]
->   [12] Kprobe dynamic event - busy event check    [PASS]
->   [13] Kprobe dynamic event with arguments        [PASS]
->   [14] Kprobe dynamic event with function tracer  [PASS]
->   [15] Kretprobe dynamic event with arguments     [PASS]
+> This is not quite right: read of size 0 should still check if there
+> is
+> data in the buffer and return -EAGAIN for non-blocking descriptors.
 > 
->   # of passed:  15
->   # of failed:  0
->   # of unresolved:  0
->   # of untested:  0
->   # of unsupported:  0
->   # of xfailed:  0
->   # of undefined(test bug):  0
->   ----
+> I cooked a patch (below) that should adjust the read behavior (_+ a
+> coupe of formatting changes), please take a look.
 > 
-> Signed-off-by: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
-> Cc: Steven Rostedt <rostedt@goodmis.org>
-> Cc: Ingo Molnar <mingo@redhat.com>
-> Cc: Shuah Khan <shuahkh@osg.samsung.com>
-> Cc: Heiko Carstens <heiko.carstens@de.ibm.com>
-> Cc: linux-api@vger.kernel.org
-> Cc: linux-kernel@vger.kernel.org
-
-Acked-by: Namhyung Kim <namhyung@kernel.org>
-
-Thanks
-Namhyung
-
-
-> ---
->  .../ftrace/test.d/kprobe/add_and_remove.tc         |    3 ++-
->  .../selftests/ftrace/test.d/kprobe/busy_check.tc   |    3 ++-
->  .../selftests/ftrace/test.d/kprobe/kprobe_args.tc  |    3 ++-
->  .../ftrace/test.d/kprobe/kprobe_ftrace.tc          |   15 ++++++++-------
->  .../ftrace/test.d/kprobe/kretprobe_args.tc         |    3 ++-
->  5 files changed, 16 insertions(+), 11 deletions(-)
+> Thanks!
 > 
-> diff --git a/tools/testing/selftests/ftrace/test.d/kprobe/add_and_remove.tc b/tools/testing/selftests/ftrace/test.d/kprobe/add_and_remove.tc
-> index a5a4262..345e2ad 100644
-> --- a/tools/testing/selftests/ftrace/test.d/kprobe/add_and_remove.tc
-> +++ b/tools/testing/selftests/ftrace/test.d/kprobe/add_and_remove.tc
-> @@ -2,10 +2,11 @@
->  # description: Kprobe dynamic event - adding and removing
->  
->  [ -f kprobe_events ] || exit_unsupported # this is configurable
-> +FORK=`grep do_fork$ /proc/kallsyms | cut -f 3 -d" "`
->  
->  echo 0 > events/enable
->  echo > kprobe_events
-> -echo p:myevent do_fork > kprobe_events
-> +echo p:myevent $FORK > kprobe_events
->  grep myevent kprobe_events
->  test -d events/kprobes/myevent
->  echo > kprobe_events
-> diff --git a/tools/testing/selftests/ftrace/test.d/kprobe/busy_check.tc b/tools/testing/selftests/ftrace/test.d/kprobe/busy_check.tc
-> index d8c7bb6..fe80134 100644
-> --- a/tools/testing/selftests/ftrace/test.d/kprobe/busy_check.tc
-> +++ b/tools/testing/selftests/ftrace/test.d/kprobe/busy_check.tc
-> @@ -2,10 +2,11 @@
->  # description: Kprobe dynamic event - busy event check
->  
->  [ -f kprobe_events ] || exit_unsupported
-> +FORK=`grep do_fork$ /proc/kallsyms | cut -f 3 -d" "`
->  
->  echo 0 > events/enable
->  echo > kprobe_events
-> -echo p:myevent do_fork > kprobe_events
-> +echo p:myevent $FORK > kprobe_events
->  test -d events/kprobes/myevent
->  echo 1 > events/kprobes/myevent/enable
->  echo > kprobe_events && exit 1 # this must fail
-> diff --git a/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_args.tc b/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_args.tc
-> index c45ee27..938b061 100644
-> --- a/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_args.tc
-> +++ b/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_args.tc
-> @@ -2,10 +2,11 @@
->  # description: Kprobe dynamic event with arguments
->  
->  [ -f kprobe_events ] || exit_unsupported # this is configurable
-> +FORK=`grep do_fork$ /proc/kallsyms | cut -f 3 -d" "`
->  
->  echo 0 > events/enable
->  echo > kprobe_events
-> -echo 'p:testprobe do_fork $stack $stack0 +0($stack)' > kprobe_events
-> +echo 'p:testprobe '$FORK' $stack $stack0 +0($stack)' > kprobe_events
->  grep testprobe kprobe_events
->  test -d events/kprobes/testprobe
->  echo 1 > events/kprobes/testprobe/enable
-> diff --git a/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_ftrace.tc b/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_ftrace.tc
-> index ab41d2b..51067c9 100644
-> --- a/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_ftrace.tc
-> +++ b/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_ftrace.tc
-> @@ -3,34 +3,35 @@
->  
->  [ -f kprobe_events ] || exit_unsupported # this is configurable
->  grep function available_tracers || exit_unsupported # this is configurable
-> +FORK=`grep do_fork$ /proc/kallsyms | cut -f 3 -d" "`
->  
->  # prepare
->  echo nop > current_tracer
-> -echo do_fork > set_ftrace_filter
-> +echo $FORK > set_ftrace_filter
->  echo 0 > events/enable
->  echo > kprobe_events
-> -echo 'p:testprobe do_fork' > kprobe_events
-> +echo 'p:testprobe '"$FORK" > kprobe_events
->  
->  # kprobe on / ftrace off
->  echo 1 > events/kprobes/testprobe/enable
->  echo > trace
->  ( echo "forked")
->  grep testprobe trace
-> -! grep 'do_fork <-' trace
-> +! grep "$FORK"' <-' trace
->  
->  # kprobe on / ftrace on
->  echo function > current_tracer
->  echo > trace
->  ( echo "forked")
->  grep testprobe trace
-> -grep 'do_fork <-' trace
-> +grep "$FORK"' <-' trace
->  
->  # kprobe off / ftrace on
->  echo 0 > events/kprobes/testprobe/enable
->  echo > trace
->  ( echo "forked")
->  ! grep testprobe trace
-> -grep 'do_fork <-' trace
-> +grep "$FORK"' <-' trace
->  
->  # kprobe on / ftrace on
->  echo 1 > events/kprobes/testprobe/enable
-> @@ -38,14 +39,14 @@ echo function > current_tracer
->  echo > trace
->  ( echo "forked")
->  grep testprobe trace
-> -grep 'do_fork <-' trace
-> +grep "$FORK"' <-' trace
->  
->  # kprobe on / ftrace off
->  echo nop > current_tracer
->  echo > trace
->  ( echo "forked")
->  grep testprobe trace
-> -! grep 'do_fork <-' trace
-> +! grep "$FORK"' <-' trace
->  
->  # cleanup
->  echo nop > current_tracer
-> diff --git a/tools/testing/selftests/ftrace/test.d/kprobe/kretprobe_args.tc b/tools/testing/selftests/ftrace/test.d/kprobe/kretprobe_args.tc
-> index 3171798..683d290 100644
-> --- a/tools/testing/selftests/ftrace/test.d/kprobe/kretprobe_args.tc
-> +++ b/tools/testing/selftests/ftrace/test.d/kprobe/kretprobe_args.tc
-> @@ -2,10 +2,11 @@
->  # description: Kretprobe dynamic event with arguments
->  
->  [ -f kprobe_events ] || exit_unsupported # this is configurable
-> +FORK=`grep do_fork$ /proc/kallsyms | cut -f 3 -d" "`
->  
->  echo 0 > events/enable
->  echo > kprobe_events
-> -echo 'r:testprobe2 do_fork $retval' > kprobe_events
-> +echo 'r:testprobe2 '$FORK' $retval' > kprobe_events
->  grep testprobe2 kprobe_events
->  test -d events/kprobes/testprobe2
->  echo 1 > events/kprobes/testprobe2/enable
-> 
+-- 
+Cheers,
+	Lyude
