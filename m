@@ -1,118 +1,64 @@
-From: Jerome Marchand <jmarchan@redhat.com>
-Subject: Re: [PATCH v4 2/4] mm, proc: account for shmem swap in
- /proc/pid/smaps
-Date: Mon, 26 Oct 2015 12:22:48 +0100
-Message-ID: <562E0D08.4020607@redhat.com>
-References: <1443792951-13944-1-git-send-email-vbabka@suse.cz>
- <1443792951-13944-3-git-send-email-vbabka@suse.cz>
- <alpine.LSU.2.11.1510041806040.15067@eggly.anvils> <5627A397.6090305@suse.cz>
+From: =?UTF-8?Q?P=c3=a1draig_Brady?= <P@draigBrady.com>
+Subject: Re: [PATCH v7 5/4] copy_file_range.2: New page documenting
+ copy_file_range()
+Date: Mon, 26 Oct 2015 12:19:33 +0000
+Message-ID: <562E1A55.4050409@draigBrady.com>
+References: <1445628736-13058-1-git-send-email-Anna.Schumaker@Netapp.com>
+ <1445628736-13058-6-git-send-email-Anna.Schumaker@Netapp.com>
+ <562B734D.50800@draigBrady.com> <20151026033925.GA9945@infradead.org>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
- protocol="application/pgp-signature";
- boundary="MPHfUuw6Ai8p3dwKDWqpU6HH7AHH6qmEJ"
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <5627A397.6090305@suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Vlastimil Babka <vbabka@suse.cz>, Hugh Dickins <hughd@google.com>
-Cc: linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, Michal Hocko <mhocko@suse.cz>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Randy Dunlap <rdunlap@infradead.org>, linux-s390@vger.kernel.org, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Linux API <linux-api@vger.kernel.org>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20151026033925.GA9945-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---MPHfUuw6Ai8p3dwKDWqpU6HH7AHH6qmEJ
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: quoted-printable
-
-On 10/21/2015 04:39 PM, Vlastimil Babka wrote:
-> On 10/05/2015 05:01 AM, Hugh Dickins wrote:
->> On Fri, 2 Oct 2015, Vlastimil Babka wrote:
-
->> As you acknowledge in the commit message, if a file of 100 pages
->> were copied to tmpfs, and 100 tasks map its full extent, but they
->> all mess around with the first 50 pages and take no interest in
->> the last 50, then it's quite likely that that last 50 will get
->> swapped out; then with your patch, 100 tasks are each shown as
->> using 50 pages of swap, when none of them are actually using any.
+On 26/10/15 03:39, Christoph Hellwig wrote:
+> On Sat, Oct 24, 2015 at 01:02:21PM +0100, P??draig Brady wrote:
+>> I'm a bit worried about the sparse expansion and default reflinking
+>> which might preclude cp(1) from using this call in most cases, but I=
+ will
+>> test and try to use it. coreutils has heuristics for determining if =
+files
+>> are remote, which we might use to restrict to that use case.
 >=20
-> Yeah, but isn't it the same with private memory which was swapped out a=
-t
-> some point and we don't know if it will be touched or not? The
-> difference is in private case we know the process touched it at least
-> once, but that can also mean nothing for the future (or maybe it just
-> mmapped with MAP_POPULATE and didn't care about half of it).
->=20
-> That's basically what I was trying to say in the changelog. I interpret=
+> Can you explain why reflinking and hole expansion are an issue if don=
+e
+> locally and not if done remotely?  I'd really like to make the call a=
+s
+> usable as possible for everyone, but we really need clear sem=EF=BF=BD=
+ntics for
+> that.
 
-> the Swap: value as the amount of swap-in potential, if the process was
-> going to access it, which is what the particular customer also expects
-> (see below). In that case showing zero is IMHO wrong and inconsistent
-> with the anonymous private mappings.
+=46air point on local vs remote. I was just assuming that remote
+copy offload would not do reflinking on the backend, or at
+least wasn't an exposed option over the remote interface.
 
-I didn't understand the changelog that way an IMHO it's a pretty
-specific interpretation. I've always understood memory accounting as
-being primarily the answer to the question: how much resources a
-process uses? I guess its meaning as been overloaded with corollaries
-that are only true in the most simple non-shared cases, such as yours
-or "how much memory would be freed if this process goes away?", but I
-don't think it should ever be used as a definition.
+I get the impression that you think reflinking should be hidden
+from the user, i.e. cp(1) should not have had the --reflink option
+(for the last 6 years)?  I'm not convinced of that, and even so
+I think lower level interfaces would benefit from finer grained options=
+=2E
+This would be especially useful since there is no general interface
+to reflink at present. I was happy with the reflink control options,
+thinking the extra control could allow cp to use this by default.
 
-I suppose the reason I didn't understand the changelog the way you
-intended is because I think that sometimes it's correct to blame a
-process for pages it never accessed (and I also believe that
-over-accounting is better that under accounting,  but I must admit
-that it is a quite arbitrary point of view). For instance, what if a
-process has a shared anonymous mapping that includes pages that it
-never accessed, but have been populated by an other process that has
-already exited or munmaped the range? That process is not to blame for
-the appearance of these pages, but it's the only reason why they
-stay.
+> Also note that Annas current series allows for hole filling - any dec=
+ent
+> implementation should not do them, but that's really a quality of
+> implementation and not an interface issue.
 
-I'll offer a lollipop to anyone who comes up with a simple consistent
-model on how to account shmem pages for all the possible cases, a
-"Grand Unified Theory of Memory Accounting" so to speak.
+I think you're saying the default `cp --sparse=3Dauto` operation
+could rely on copy_file_range(...complete file...), while
+cp --sparse=3D{always,never} would have to iterate over the
+file, punching or filling holes as appropriate. I thought
+Anna indicated differently wrt splice filling holes by default.
 
-> Other non-perfect solutions that come to mind:
->=20
-> 1) For private mappings, count only the swapents. "Swap:" is no longer
-> showing full swap-in potential though.
-> 2) For private mappings, do not count swapents. Ditto.
-> 3) Provide two separate counters. The user won't know how much they
-> overlap, though.
->=20
-> From these I would be inclined towards 3) as being more universal,
-> although then it's no longer a simple "we're fixing a Swap: 0 value
-> which is wrong", but closer to original Jerome's versions, which IIRC
-> introduced several shmem-specific counters.
+TBH I'm not clear on the semantics of the current implementation,
+so need to test the above in various cases.
 
-You remember correctly. Given all the controversy around shmem
-accounting, maybe it would indeed be better to leave existing
-counters, that are relatively well defined and understood, untouched
-and add specific counters to mess around instead.
-
-Thanks,
-Jerome
-
-
---MPHfUuw6Ai8p3dwKDWqpU6HH7AHH6qmEJ
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQEcBAEBCAAGBQJWLg0IAAoJEHTzHJCtsuoC3t4IALLwNYFPiAiS0OO5U8ea70QA
-qbosmcLZ1JjIoPxXCsJ0IZ+4wPUXRW7c0tYVsJ09JUcS6ohUJOyOv2SYVT6rge5h
-/0TXeQaakyvP3CQhrAwKX7a5afnuL/xpGCzNBAp9RaSXbihecY81djMJKnIarvca
-H46bxBnLl2VBWNmUc9/SXaekkY//fgyGY1yvZszk0bqMUjEm1KD0gfA9dTMU0yZR
-vL39NW1u6gYvrH7z825wW+lCcx4a5FROg3zd+Scv2yO6JF9ls4GFsPl112CL2ud0
-6vDSq6i1O8OXWUSakHqjzzmVMtF427neNe3tRrW0TBu2lts3oTT3VV0h7IsU7Hc=
-=ZDhz
------END PGP SIGNATURE-----
-
---MPHfUuw6Ai8p3dwKDWqpU6HH7AHH6qmEJ--
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+thanks,
+P=C3=A1draig.
