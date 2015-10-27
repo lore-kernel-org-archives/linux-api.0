@@ -1,46 +1,29 @@
-From: Peter Hurley <peter@hurleysoftware.com>
-Subject: Re: [PATCH v3] serial: support 16-bit register interface for console
-Date: Tue, 27 Oct 2015 09:53:02 -0400
-Message-ID: <562F81BE.3000502@hurleysoftware.com>
-References: <1445832662-23250-1-git-send-email-yamada.masahiro@socionext.com>
+From: Tadeusz Struk <tadeusz.struk-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2 0/5] crypto: add algif_akcipher user space API
+Date: Tue, 27 Oct 2015 08:16:53 -0700
+Message-ID: <562F9565.3090005@intel.com>
+References: <1831785.BBs8Hj3CxY@myon.chronox.de>
+ <BDD3AC1F-26D5-41D2-863B-CF8C7BF5FFEE@holtmann.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1445832662-23250-1-git-send-email-yamada.masahiro@socionext.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Masahiro Yamada <yamada.masahiro@socionext.com>, linux-serial@vger.kernel.org
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Vineet Gupta <Vineet.Gupta1@synopsys.com>, Rob Herring <robh@kernel.org>, Kevin Cernekee <cernekee@gmail.com>, linux-api@vger.kernel.org, Jiri Slaby <jslaby@suse.com>, linux-doc@vger.kernel.org, Jonathan Corbet <corbet@lwn.net>, linux-kernel@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <BDD3AC1F-26D5-41D2-863B-CF8C7BF5FFEE-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>, Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+Cc: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Masahiro,
+Hi Marcel,
+On 10/26/2015 09:54 PM, Marcel Holtmann wrote:
+> after having discussions with David Howells and David Woodhouse, I don't think we should expose akcipher via AF_ALG at all. I think the akcipher operations for sign/verify/encrypt/decrypt should operate on asymmetric keys in the first place. With akcipher you are pretty much bound to public and private keys and the key is the important part and not the akcipher itself. Especially since we want to support private keys in hardware (like TPM for example).
+> 
+> It seems more appropriate to use keyctl to derive the symmetric session key from your asymmetric key. And then use the symmetric session key id with skcipher via AF_ALG. Especially once symmetric key type has been introduced this seems to be trivial then.
+> 
+> I am not really in favor of having two userspace facing APIs for asymmetric cipher usage. And we need to have an API that is capable to work with hardware keys.
 
-On 10/26/2015 12:11 AM, Masahiro Yamada wrote:
-> Currently, 8-bit (MMIO) and 32-bit (MMIO32) register interfaces are
-> supported for the 8250 console, but the 16-bit (MMIO16) is not.
-> The 8250 UART device on my board is connected to a 16-bit bus
-> and my main motivation is to use earlycon with it.
-> (Refer to arch/arm/boot/dts/uniphier-support-card.dtsi)
-
-As I noted in reviewing v2, the patch hunk below does not apply.
-You must rebase your changes on top of Greg's tty-next tree.
-
-Regards,
-Peter Hurley
-
-> diff --git a/drivers/tty/serial/serial_core.c b/drivers/tty/serial/serial_core.c
-> index 603d2cc..325acce 100644
-> --- a/drivers/tty/serial/serial_core.c
-> +++ b/drivers/tty/serial/serial_core.c
-> @@ -1819,8 +1819,8 @@ uart_get_console(struct uart_port *ports, int nr, struct console *co)
->   *	@options: ptr for <options> field; NULL if not present (out)
->   *
->   *	Decodes earlycon kernel command line parameters of the form
-> - *	   earlycon=<name>,io|mmio|mmio32|mmio32be,<addr>,<options>
-> - *	   console=<name>,io|mmio|mmio32|mmio32be,<addr>,<options>
-> + *	   earlycon=<name>,io|mmio|mmio16|mmio32|mmio32be,<addr>,<options>
-> + *	   console=<name>,io|mmio|mmio16|mmio32|mmio32be,<addr>,<options>
->   *
->   *	The optional form
->   *	   earlycon=<name>,0x<addr>,<options>
-
+The main use case for algif_akcipher will be to allow a web server, which needs to handle
+tens of thousand TLS handshakes per second, to offload the RSA operation to a HW accelerator.
+Do you think we can use keyctl for this?
+Thanks,
+T
