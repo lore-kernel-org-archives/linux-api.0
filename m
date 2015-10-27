@@ -1,51 +1,97 @@
-From: Steve French <smfrench-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v7 1/4] vfs: add copy_file_range syscall and vfs helper
-Date: Tue, 27 Oct 2015 11:03:37 -0500
-Message-ID: <CAH2r5mtRzSX3dZAXZwgVLQfjjfrkX8X=7b2uxQJ+De=5JjmqCw@mail.gmail.com>
-References: <1445628736-13058-1-git-send-email-Anna.Schumaker@Netapp.com> <1445628736-13058-2-git-send-email-Anna.Schumaker@Netapp.com>
+From: Chris Metcalf <cmetcalf@ezchip.com>
+Subject: Re: [PATCH v8 04/14] task_isolation: add initial support
+Date: Tue, 27 Oct 2015 12:40:29 -0400
+Message-ID: <562FA8FD.8080502@ezchip.com>
+References: <1445373372-6567-1-git-send-email-cmetcalf@ezchip.com>
+ <1445373372-6567-5-git-send-email-cmetcalf@ezchip.com>
+ <20151021161247.GA19764@lerouge>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1445628736-13058-2-git-send-email-Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
-Cc: "linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20151021161247.GA19764@lerouge>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Frederic Weisbecker <fweisbec@gmail.com>
+Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The patch set looks good so far, and copy offload is important for
-CIFS/SMB3 (not just Windows/Mac/Samba but most servers support one of
-the various methods available to do this over the network via CIFS and
-also SMB2/SMB3).  I have only implemented two ways of copy offload in
-cifs.ko so far but will look at adding the remaining mechanisms.
+On 10/21/2015 12:12 PM, Frederic Weisbecker wrote:
+> On Tue, Oct 20, 2015 at 04:36:02PM -0400, Chris Metcalf wrote:
+>> +/*
+>> + * This routine controls whether we can enable task-isolation mode.
+>> + * The task must be affinitized to a single nohz_full core or we will
+>> + * return EINVAL.  Although the application could later re-affinitize
+>> + * to a housekeeping core and lose task isolation semantics, this
+>> + * initial test should catch 99% of bugs with task placement prior to
+>> + * enabling task isolation.
+>> + */
+>> +int task_isolation_set(unsigned int flags)
+>> +{
+>> +	if (cpumask_weight(tsk_cpus_allowed(current)) != 1 ||
+> I think you'll have to make sure the task can not be concurrently reaffined
+> to more CPUs. This may involve setting task_isolation_flags under the runqueue
+> lock and thus move that tiny part to the scheduler code. And then we must forbid
+> changing the affinity while the task has the isolation flag, or deactivate the flag.
+>
+> In any case this needs some synchronization.
 
-Currently cifs.ko does have a similar restriction to the below one
-that you have in your patch1, but I was planning to relax it (as long
-as source and target are on the same server) since some of the
-important use cases are having the server do copy offload from one
-share to another.   So we should support the case where the files are
-on the same file system type (nfs, cifs etc.) but not necessarily on
-the same superblock (for the case of cifs they will be on the same
-server, but with some forms of copy offload that would not necessarily
-have to be on the same server).
+Well, as the comment says, this is not intended as a hard guarantee.
+As written, it might race with a concurrent sched_setaffinity(), but
+then again, it also is totally OK as written for sched_setaffinity() to
+change it away after the prctl() is complete, so it's not necessary to
+do any explicit synchronization.
 
-The following check should be removed (an alternative would be to
-check that source and target are the same filesystem type ie nfs, or
-cifs or xfs etc. or simply let the file systems check file_in and
-file_out's validity)
+This harks back again to the whole "polite vs aggressive" issue with
+how we envision task isolation.
 
-> +       /* this could be relaxed once a method supports cross-fs copies */
-> +       if (inode_in->i_sb != inode_out->i_sb ||
-> +           file_in->f_path.mnt != file_out->f_path.mnt)
-> +               return -EXDEV;
+The "polite" model basically allows you to set up the conditions for
+task isolation to be useful, and then if they are useful, great! What
+you're suggesting here is a bit more of the "aggressive" model, where
+we actually fail sched_setaffinity() either for any cpumask after
+task isolation is set, or perhaps just for resetting it to housekeeping
+cores.  (Note that we could in principle use PF_NO_SETAFFINITY to
+just hard fail all attempts to call sched_setaffinity once we enable
+task isolation, so we don't have to add more mechanism on that path.)
 
+I'm a little reluctant to ever fail sched_setaffinity() based on the
+task isolation status with the current "polite" model, since an
+unprivileged application can set up for task isolation, and then
+presumably no one can override it via sched_setaffinity() from another
+task.  (I suppose you could do some kind of permissions-based thing
+where root can always override it, or some suitable capability, etc.,
+but I feel like that gets complicated quickly, for little benefit.)
 
+The alternative you mention is that if the task is re-affinitized, it
+loses its task-isolation status, and that also seems like an unfortunate
+API, since if you are setting it with prctl(), it's really cleanest just to
+only be able to unset it with prctl() as well.
 
+I think given the current "polite" API, the only question is whether in
+fact *no* initial test is the best thing, or if an initial test (as 
+introduced
+in the v8 version) is defensible just as a help for catching an obvious
+mistake in setting up your task isolation.  I decided the advantage
+of catching the mistake were more important than the "API purity"
+of being 100% consistent in how we handled the interactions between
+affinity and isolation, but I am certainly open to argument on that one.
+
+Meanwhile I think it still feels like the v8 code is the best compromise.
+
+>> +	/* If the tick is running, request rescheduling; we're not ready. */
+>> +	if (!tick_nohz_tick_stopped()) {
+> Note that this function tells whether the tick is in dynticks mode, which means
+> the tick currently only run on-demand. But it's not necessarily completely stopped.
+
+I think in fact this is the semantics we want (and that people requested),
+e.g. if the user requests an alarm(), we may still be ticking even though
+tick_nohz_tick_stopped() is true, but that test is still the right condition
+to use to return to user space, since the user explicitly requested the 
+alarm.
+
+> I think we should rename that function and the field it refers to.
+
+Sounds like a good idea.
 
 -- 
-Thanks,
-
-Steve
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Chris Metcalf, EZChip Semiconductor
+http://www.ezchip.com
