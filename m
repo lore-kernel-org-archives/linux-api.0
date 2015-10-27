@@ -1,243 +1,167 @@
-From: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v8 06/14] task_isolation: provide strict mode configurable
- signal
-Date: Tue, 27 Oct 2015 15:37:47 -0400
-Message-ID: <562FD28B.8020806@ezchip.com>
-References: <1445373372-6567-1-git-send-email-cmetcalf@ezchip.com>
- <1445373372-6567-7-git-send-email-cmetcalf@ezchip.com>
- <20151020205610.51b3d742@grimm.local.home> <5626EABC.9060202@ezchip.com>
- <CALCETrXqDi24EPn79X9SXuz+5sYGZBF3yCRzb8PwdL=YbxVujw@mail.gmail.com>
- <AM2PR02MB041772AEFFA939F2F8619B36BD380@AM2PR02MB0417.eurprd02.prod.outlook.com>
- <CALCETrVuE_VCk-7_VMJ-orL8pg+0F5vq6qvt4SfgXzt_MRr-SQ@mail.gmail.com>
- <56294ACA.4000700@ezchip.com>
- <CALCETrVQXwYwhEwbJsvN18w8qD-qVVCQAa8b9RcXD=RmXSqLiQ@mail.gmail.com>
+From: David Woodhouse <dwmw2@infradead.org>
+Subject: Re: [PATCH v2 0/5] crypto: add algif_akcipher user space API
+Date: Wed, 28 Oct 2015 08:15:16 +0900
+Message-ID: <1445987716.3405.127.camel@infradead.org>
+References: <1831785.BBs8Hj3CxY@myon.chronox.de>
+	 <1979544.kURdYDnObN@tauon.atsec.com>
+	 <1445937541.3405.75.camel@infradead.org>
+	 <9859277.cZClo5B21s@tauon.atsec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrVQXwYwhEwbJsvN18w8qD-qVVCQAa8b9RcXD=RmXSqLiQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: multipart/signed; micalg="sha-1"; protocol="application/x-pkcs7-signature";
+	boundary="=-Zw8eq4OSDmP9kXNFxcZ0"
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <9859277.cZClo5B21s@tauon.atsec.com>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Stephan Mueller <smueller@chronox.de>
+Cc: Marcel Holtmann <marcel@holtmann.org>, Herbert Xu <herbert@gondor.apana.org.au>, linux-crypto@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On 10/22/2015 05:00 PM, Andy Lutomirski wrote:
-> On Thu, Oct 22, 2015 at 1:44 PM, Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org> wrote:
->> On 10/21/2015 02:53 PM, Andy Lutomirski wrote:
->>> On Tue, Oct 20, 2015 at 11:41 PM, Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
->>> wrote:
->>>>
->>>>> From: Andy Lutomirski [mailto:luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org]
->>>>> Sent: Wednesday, October 21, 2015 4:43 AM
->>>>> To: Chris Metcalf
->>>>> Subject: Re: [PATCH v8 06/14] task_isolation: provide strict mode
->>>>> configurable signal
->>>>>
->>>>> On Tue, Oct 20, 2015 at 6:30 PM, Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
->>>>> wrote:
->>>>>> On 10/20/2015 8:56 PM, Steven Rostedt wrote:
->>>>>>> On Tue, 20 Oct 2015 16:36:04 -0400
->>>>>>> Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org> wrote:
->>>>>>>
->>>>>>>> Allow userspace to override the default SIGKILL delivered
->>>>>>>> when a task_isolation process in STRICT mode does a syscall
->>>>>>>> or otherwise synchronously enters the kernel.
->>>>>>>>
->>>> <snip>
->>>>>> It doesn't map SIGKILL to some other signal unconditionally.  It just
->>>>>> allows
->>>>>> the "hey, you broke the STRICT contract and entered the kernel" signal
->>>>>> to be something besides the default SIGKILL.
->>>>>>
->>>> <snip>
->>>>> I still dislike this thing.  It seems like a debugging feature being
->>>>> implemented using signals instead of existing APIs.  I *still* don't
->>>>> see why perf can't be used to accomplish your goal.
->>>>>
->>>> It is not (just) a debugging feature. There are workloads were not
->>>> performing an action is much preferred to being late.
->>>>
->>>> Consider the following artificial but representative scenario: a task
->>>> running in strict isolation is controlling a radiotherapy alpha emitter.
->>>> The code runs in a tight event loop, reading an MMIO register with
->>>> location data, making some calculation and in response writing an
->>>> MMIO register that triggers the alpha emitter. As a safety measure, each
->>>> trigger is for a specific very short time frame - the alpha emitter
->>>> auto stops.
->>>>
->>>> The code has a strict assumption that no more than X cycles pass between
->>>> reading the value and the response and the system is built in
->>>> such a way that as long as the code has mastery of the CPU the assumption
->>>> holds true. If something breaks this assumption (unplanned
->>>> context switch to kernel), what you want to do is just stop place
->>>> rather than fire the alpha emitter X nanoseconds too late.
->>>>
->>>> This feature lets you say: if the "contract" of isolation is broken,
->>>> notify/kill me at once.
->>> That's a fair point.  It's risky, though, for quite a few reasons.
->>>
->>> 1. If someone builds an alpha emitter like this, they did it wrong.
->>> The kernel should write a trigger *and* a timestamp to the hardware
->>> and the hardware should trigger at the specified time if the time is
->>> in the future and throw an error if it's in the past.  If you need to
->>> check that you made the deadline, check the actual desired condition
->>> (did you meat the deadline?) not a proxy (did the signal fire?).
->>
->> Definitely a better hardware design, but as we all know, hardware
->> designers too rarely consult the software people who have to
->> right the actual code to properly drive the hardware :-)
->>
->> My canonical example is high-performance userspace network
->> drivers, and though dropping is packet is less likely to kill a
->> patient, it's still a pretty bad thing if you're trying to design
->> a robust appliance.  In this case you really want to fix application
->> bugs that cause the code to enter the kernel when you think
->> you're in the internal loop running purely in userspace.  Things
->> like unexpected page faults, and third-party code that almost
->> never calls the kernel but in some dusty corner it occasionally
->> does, can screw up your userspace code pretty badly, and
->> mysteriously.  The "strict" mode support is not a hypothetical
->> insurance policy but a reaction to lots of Tilera customer support
->> over the years to folks failing to stay in userspace when they
->> thought they were doing the right thing.
-> But this is *exactly* the case where perf or other out-of-band
-> debugging could be a much better solution.  Perf could notify a
-> non-isolated thread that an interrupt happened, you'd still drop a
-> packet or two, but you wouldn't also drop the next ten thousand
-> packets while handling the signal.
 
-There's no reason the signal needs to be delivered to one of
-the nohz_full cores.  If you're setting up to catch these signals
-rather than have them just SIGKILL you, then you want to
-run a separate thread on a housekeeping core that is doing
-a sigwait() or equivalent.  I'm not sure why using perf to do
-this is particularly better; I'm most interested in ensuring that
-it is easy for applications to set this up if they want it, and
-perf isn't always super-easy to use.
+--=-Zw8eq4OSDmP9kXNFxcZ0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-That said, maybe it's easier than I think to do that specific
-thing, and worth considering doing it that way instead.  Is there
-an easily-explained way to do what you suggest where perf
-delivers a signal?  I assume you have in mind creating a
-synthetic sampling perf event and using perf_event_open()
-to get a file descriptor for it, and waiting with poll or SIGIO?
-(Too bad perf_event_open isn't supported by glibc and we
-have to use syscall() to even call it.)  Seems complex...
+On Tue, 2015-10-27 at 11:50 +0100, Stephan Mueller wrote:
+>=20
+> >expose that critically limited API to userspace. We need to expose an
+> >API which supports hardware keys, and basically that means using the
+> >kernel's key subsystem.
+>=20
+> Agreed. But at the same time, that interface should be able to support th=
+e use=20
+> case where the software wants to be in control (just take OpenSSL as the=
+=20
+> simple example where you can add an engine for the Linux kernel backed RS=
+A=20
+> operation).
 
->>> 2. This strict mode thing isn't exhaustive.  It's missing, at least,
->>> coverage for NMI, MCE, and SMI.  Sure, you can think that you've
->>> disabled all NMI sources, you can try to remember to set the
->>> appropriate boot flag that panics on MCE (and hope that you don't get
->>> screwed by broadcast MCE on Intel systems before it got fixed
->>> (Skylake?  Is the fix even available in a released chip?), and, for
->>> SMI, good luck...
->>
->> You are confusing this strict mode support with the debug
->> support in patch 07/14.
-> Nope.  I'm confusing this strict mode with what Gilad described: using
-> strict mode to cause outright shutdown instead of failure to meet a
-> deadline.
+Absolutely. The interface needs to support *both*.
 
-Yeah, fair point.  We certainly could wire up a mode to deliver
-a signal or whatever for asynchronous interrupts (which I'm claiming
-are primarily kernel bugs) instead of just synchronous interrupts
-(which I'm claiming are application bugs).  That could be an
-additional mode bit for prctl(), e.g. PR_TASK_ISOLATION_DEBUG
-to align with the task_isolation_debug boot variable that enables
-the kernel printk spew.
+I've spent a lot of time chasing through userspace stacks, fixing
+broken assumptions that we will *always* have the actual key material
+in a file =E2=80=94 and making libraries and applications accept PKCS#11 UR=
+Is
+referring to keys in hardware as well as filenames.
 
-> (FWIW, you could also use an ordinary hardware watchdog timer to
-> promote your failure to meet a deadline to a shutdown.  No new kernel
-> support needed.)
+I am violently opposed to exposing an API from the kernel which makes
+that *same* fundamental mistake, and ties its users to using *only*
+software keys.
 
-But more hardware support is needed; there may not be a handy
-hardware watchdog timer to use out of the box, and you don't
-want to require the customer to buy new hardware to support
-a feature like this if you don't have to.
+FROM THE BEGINNING, users of this new API should be able to cope with
+the fact that they might not *have* the key material, and that they
+might simply be referring to a key which exists elsewhere. Such as in
+the TPM, or within an SGX software enclave.
 
->> Strict mode is for synchronous application errors.  You might
->> be right that there are cases that haven't been covered, but
->> certainly most of them are covered on the three platforms that
->> are supported in this initial series.  (You pointed me to one
->> that I would have missed on x86, namely the bounds check
->> exception from a bad bounds setup.)  I'm pretty confident I
->> have all of them for tile, since I know that hardware best,
->> and I think we're in good shape for arm64, though I'm still
->> coming up to speed on that architecture.
-> Again, for this definition of strict mode, I still don't see why it's
-> the right design.  If you want to debug your application to detect
-> application errors, use a debugging interface.
-
-Maybe.  But we basically want a single notification that the
-app (and/or maybe kernel) screwed up.  Invoking all of perf
-for that seems like overkill and a signal seems totally adequate,
-whether for development fixing bugs, or production catching
-bad things.  There are a reasonable number of precedents for
-doing things this way: SIGPIPE and SIGFPE, to name two.
+--=20
+dwmw2
 
 
->> NMIs and machine checks are asynchronous interrupts that
->> don't have to do with what the application is doing, more or less.
->> Those should not be delivered to task-isolation cores at all,
->> so we just generate console spew when you set the
->> task_isolation_debug boot option.  I honestly don't know enough
->> about system management interrupts to comment on that,
->> though again, I would hope one can configure the system to
->> just not deliver them to nohz_full cores, and I think it would
->> be reasonable to generate some kernel spew if that happens.
-> Hah hah yeah right.  On most existing Intel CPUs, you *cannot*
-> configure machine checks to do anything other than broadcast to all
-> cores or cause immediate shutdown.  And getting any sort of reasonable
-> control over SMI more or less requires special firmware.
 
-Yeah, as Gilad said, x86 may not be the best choice to run
-a task-isolated application unless you can really set up those
-kinds of things to stay off your core.
+--=-Zw8eq4OSDmP9kXNFxcZ0
+Content-Type: application/x-pkcs7-signature; name="smime.p7s"
+Content-Disposition: attachment; filename="smime.p7s"
+Content-Transfer-Encoding: base64
 
->>> 3. You haven't dealt with IPIs.  The TLB flush code in particular
->>> seems like it will break all your assumptions.
->>
->> Again, not a synchronous application error that we are trying
->> to catch with this signalling mechanism.
->>
->> That said it could obviously be a more general application error
->> (e.g. a process with threads on both nohz_full and housekeeping
->> cores, where the housekeeping core unmaps some memory and
->> thus requires a TLB flush IPI).  But this is covered by the
->> task_isolation_debug patch for kernel/smp.c.
->>
->>> Maybe it would make sense to whack more of the moles before adding a
->>> big assertion that there aren't any moles any more.
->>
->> Maybe, but I've whacked the ones I know how to whack.
->> If there are ones I've missed I'm happy to add them in a
->> subsequent version of this series, or in follow-on patches.
->>
-> I agree that you can, in principle, catch all the synchronous
-> application errors using this mechanism.  I'm saying that catching
-> them seems quite useful, but catching them using a prctl that causes a
-> signal and explicitly does *not* solve the deadline enforcement
-> problem seems to have dubious value in the upstream kernel.
+MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIISjjCCBicw
+ggUPoAMCAQICAw3vNzANBgkqhkiG9w0BAQUFADCBjDELMAkGA1UEBhMCSUwxFjAUBgNVBAoTDVN0
+YXJ0Q29tIEx0ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRlIFNpZ25pbmcx
+ODA2BgNVBAMTL1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUgQ2xpZW50IENB
+MB4XDTE1MDUwNTA5NDM0MVoXDTE2MDUwNTA5NTMzNlowQjEcMBoGA1UEAwwTZHdtdzJAaW5mcmFk
+ZWFkLm9yZzEiMCAGCSqGSIb3DQEJARYTZHdtdzJAaW5mcmFkZWFkLm9yZzCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBAMkbm9kPbx1j/X4RVyf/pPKSYwelcco69TvnQQbKM8m8xkWjXJI1
+jpJ1jMaGUZGFToINMSZi7lZawUozudWbXSKy1SikENSTJHffsdRAIlsp+hR8vWvjsKUry6sEdqPG
+doa5RY7+N4WRusWZDYW/RRWE6i9EL9qV86CVPYqw22UBOUw4/j/HVGCV6TSB8yE5iEwhk/hUuzRr
+FZm1MJMR7mCS7BCR8Lr5jFY61lWpBiXNXIxLZCvDc26KR5L5tYX43iUVO3fzES1GRVoYnxxk2tmz
+fcsZG5vK+Trc9L8OZJfkYrEHH3+Iw41MQ0w/djVtYr1+HYldx0QmYXAtnhIj+UMCAwEAAaOCAtkw
+ggLVMAkGA1UdEwQCMAAwCwYDVR0PBAQDAgSwMB0GA1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcD
+BDAdBgNVHQ4EFgQUszC96C3w5/2+d+atSr0IpT26YI4wHwYDVR0jBBgwFoAUU3Ltkpzg2ssBXHx+
+ljVO8tS4UYIwHgYDVR0RBBcwFYETZHdtdzJAaW5mcmFkZWFkLm9yZzCCAUwGA1UdIASCAUMwggE/
+MIIBOwYLKwYBBAGBtTcBAgMwggEqMC4GCCsGAQUFBwIBFiJodHRwOi8vd3d3LnN0YXJ0c3NsLmNv
+bS9wb2xpY3kucGRmMIH3BggrBgEFBQcCAjCB6jAnFiBTdGFydENvbSBDZXJ0aWZpY2F0aW9uIEF1
+dGhvcml0eTADAgEBGoG+VGhpcyBjZXJ0aWZpY2F0ZSB3YXMgaXNzdWVkIGFjY29yZGluZyB0byB0
+aGUgQ2xhc3MgMSBWYWxpZGF0aW9uIHJlcXVpcmVtZW50cyBvZiB0aGUgU3RhcnRDb20gQ0EgcG9s
+aWN5LCByZWxpYW5jZSBvbmx5IGZvciB0aGUgaW50ZW5kZWQgcHVycG9zZSBpbiBjb21wbGlhbmNl
+IG9mIHRoZSByZWx5aW5nIHBhcnR5IG9ibGlnYXRpb25zLjA2BgNVHR8ELzAtMCugKaAnhiVodHRw
+Oi8vY3JsLnN0YXJ0c3NsLmNvbS9jcnR1MS1jcmwuY3JsMIGOBggrBgEFBQcBAQSBgTB/MDkGCCsG
+AQUFBzABhi1odHRwOi8vb2NzcC5zdGFydHNzbC5jb20vc3ViL2NsYXNzMS9jbGllbnQvY2EwQgYI
+KwYBBQUHMAKGNmh0dHA6Ly9haWEuc3RhcnRzc2wuY29tL2NlcnRzL3N1Yi5jbGFzczEuY2xpZW50
+LmNhLmNydDAjBgNVHRIEHDAahhhodHRwOi8vd3d3LnN0YXJ0c3NsLmNvbS8wDQYJKoZIhvcNAQEF
+BQADggEBAHMQmxHHodpS85X8HRyxhvfkys7r+taCNOaNU9cxQu/cZ/6k5nS2qGNMzZ6jb7ueY/V7
+7p+4DW/9ZWODDTf4Fz00mh5SSVc20Bz7t+hhxwHd62PZgENh5i76Qq2tw48U8AsYo5damHby1epf
+neZafLpUkLLO7AGBJIiRVTevdvyXQ0qnixOmKMWyvrhSNGuVIKVdeqLP+102Dwf+dpFyw+j1hz28
+jEEKpHa+NR1b2kXuSPi/rMGhexwlJOh4tK8KQ6Ryr0rIN//NSbOgbyYZrzc/ZUWX9V5OA84ChFb2
+vkFl0OcYrttp/rhDBLITwffPxSZeoBh9H7zYzkbCXKL3BUIwggYnMIIFD6ADAgECAgMN7zcwDQYJ
+KoZIhvcNAQEFBQAwgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQKEw1TdGFydENvbSBMdGQuMSswKQYD
+VQQLEyJTZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWduaW5nMTgwNgYDVQQDEy9TdGFydENv
+bSBDbGFzcyAxIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVudCBDQTAeFw0xNTA1MDUwOTQzNDFa
+Fw0xNjA1MDUwOTUzMzZaMEIxHDAaBgNVBAMME2R3bXcyQGluZnJhZGVhZC5vcmcxIjAgBgkqhkiG
+9w0BCQEWE2R3bXcyQGluZnJhZGVhZC5vcmcwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIB
+AQDJG5vZD28dY/1+EVcn/6TykmMHpXHKOvU750EGyjPJvMZFo1ySNY6SdYzGhlGRhU6CDTEmYu5W
+WsFKM7nVm10istUopBDUkyR337HUQCJbKfoUfL1r47ClK8urBHajxnaGuUWO/jeFkbrFmQ2Fv0UV
+hOovRC/alfOglT2KsNtlATlMOP4/x1Rglek0gfMhOYhMIZP4VLs0axWZtTCTEe5gkuwQkfC6+YxW
+OtZVqQYlzVyMS2Qrw3NuikeS+bWF+N4lFTt38xEtRkVaGJ8cZNrZs33LGRubyvk63PS/DmSX5GKx
+Bx9/iMONTENMP3Y1bWK9fh2JXcdEJmFwLZ4SI/lDAgMBAAGjggLZMIIC1TAJBgNVHRMEAjAAMAsG
+A1UdDwQEAwIEsDAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwQwHQYDVR0OBBYEFLMwvegt
+8Of9vnfmrUq9CKU9umCOMB8GA1UdIwQYMBaAFFNy7ZKc4NrLAVx8fpY1TvLUuFGCMB4GA1UdEQQX
+MBWBE2R3bXcyQGluZnJhZGVhZC5vcmcwggFMBgNVHSAEggFDMIIBPzCCATsGCysGAQQBgbU3AQID
+MIIBKjAuBggrBgEFBQcCARYiaHR0cDovL3d3dy5zdGFydHNzbC5jb20vcG9saWN5LnBkZjCB9wYI
+KwYBBQUHAgIwgeowJxYgU3RhcnRDb20gQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwAwIBARqBvlRo
+aXMgY2VydGlmaWNhdGUgd2FzIGlzc3VlZCBhY2NvcmRpbmcgdG8gdGhlIENsYXNzIDEgVmFsaWRh
+dGlvbiByZXF1aXJlbWVudHMgb2YgdGhlIFN0YXJ0Q29tIENBIHBvbGljeSwgcmVsaWFuY2Ugb25s
+eSBmb3IgdGhlIGludGVuZGVkIHB1cnBvc2UgaW4gY29tcGxpYW5jZSBvZiB0aGUgcmVseWluZyBw
+YXJ0eSBvYmxpZ2F0aW9ucy4wNgYDVR0fBC8wLTAroCmgJ4YlaHR0cDovL2NybC5zdGFydHNzbC5j
+b20vY3J0dTEtY3JsLmNybDCBjgYIKwYBBQUHAQEEgYEwfzA5BggrBgEFBQcwAYYtaHR0cDovL29j
+c3Auc3RhcnRzc2wuY29tL3N1Yi9jbGFzczEvY2xpZW50L2NhMEIGCCsGAQUFBzAChjZodHRwOi8v
+YWlhLnN0YXJ0c3NsLmNvbS9jZXJ0cy9zdWIuY2xhc3MxLmNsaWVudC5jYS5jcnQwIwYDVR0SBBww
+GoYYaHR0cDovL3d3dy5zdGFydHNzbC5jb20vMA0GCSqGSIb3DQEBBQUAA4IBAQBzEJsRx6HaUvOV
+/B0csYb35MrO6/rWgjTmjVPXMULv3Gf+pOZ0tqhjTM2eo2+7nmP1e+6fuA1v/WVjgw03+Bc9NJoe
+UklXNtAc+7foYccB3etj2YBDYeYu+kKtrcOPFPALGKOXWph28tXqX53mWny6VJCyzuwBgSSIkVU3
+r3b8l0NKp4sTpijFsr64UjRrlSClXXqiz/tdNg8H/naRcsPo9Yc9vIxBCqR2vjUdW9pF7kj4v6zB
+oXscJSToeLSvCkOkcq9KyDf/zUmzoG8mGa83P2VFl/VeTgPOAoRW9r5BZdDnGK7baf64QwSyE8H3
+z8UmXqAYfR+82M5Gwlyi9wVCMIIGNDCCBBygAwIBAgIBHjANBgkqhkiG9w0BAQUFADB9MQswCQYD
+VQQGEwJJTDEWMBQGA1UEChMNU3RhcnRDb20gTHRkLjErMCkGA1UECxMiU2VjdXJlIERpZ2l0YWwg
+Q2VydGlmaWNhdGUgU2lnbmluZzEpMCcGA1UEAxMgU3RhcnRDb20gQ2VydGlmaWNhdGlvbiBBdXRo
+b3JpdHkwHhcNMDcxMDI0MjEwMTU1WhcNMTcxMDI0MjEwMTU1WjCBjDELMAkGA1UEBhMCSUwxFjAU
+BgNVBAoTDVN0YXJ0Q29tIEx0ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRl
+IFNpZ25pbmcxODA2BgNVBAMTL1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUg
+Q2xpZW50IENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxwmDzM4t2BqxKaQuE6uW
+vooyg4ymiEGWVUet1G8SD+rqvyNH4QrvnEIaFHxOhESip7vMz39ScLpNLbL1QpOlPW/tFIzNHS3q
+d2XRNYG5Sv9RcGE+T4qbLtsjjJbi6sL7Ls/f/X9ftTyhxvxWkf8KW37iKrueKsxw2HqolH7GM6FX
+5UfNAwAu4ZifkpmZzU1slBhyWwaQPEPPZRsWoTb7q8hmgv6Nv3Hg9rmA1/VPBIOQ6SKRkHXG0Hhm
+q1dOFoAFI411+a/9nWm5rcVjGcIWZ2v/43Yksq60jExipA4l5uv9/+Hm33mbgmCszdj/Dthf13tg
+Av2O83hLJ0exTqfrlwIDAQABo4IBrTCCAakwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC
+AQYwHQYDVR0OBBYEFFNy7ZKc4NrLAVx8fpY1TvLUuFGCMB8GA1UdIwQYMBaAFE4L7xqkQFulF2mH
+MMo0aEPQQa7yMGYGCCsGAQUFBwEBBFowWDAnBggrBgEFBQcwAYYbaHR0cDovL29jc3Auc3RhcnRz
+c2wuY29tL2NhMC0GCCsGAQUFBzAChiFodHRwOi8vd3d3LnN0YXJ0c3NsLmNvbS9zZnNjYS5jcnQw
+WwYDVR0fBFQwUjAnoCWgI4YhaHR0cDovL3d3dy5zdGFydHNzbC5jb20vc2ZzY2EuY3JsMCegJaAj
+hiFodHRwOi8vY3JsLnN0YXJ0c3NsLmNvbS9zZnNjYS5jcmwwgYAGA1UdIAR5MHcwdQYLKwYBBAGB
+tTcBAgEwZjAuBggrBgEFBQcCARYiaHR0cDovL3d3dy5zdGFydHNzbC5jb20vcG9saWN5LnBkZjA0
+BggrBgEFBQcCARYoaHR0cDovL3d3dy5zdGFydHNzbC5jb20vaW50ZXJtZWRpYXRlLnBkZjANBgkq
+hkiG9w0BAQUFAAOCAgEACoMIfXirLAZcuGOMXq4cuSN3TaFx2H2GvD5VSy/6rV55BYHbWNaPeQn3
+oBSU8KgQZn/Kck1JxbLpAxVCNtsxeW1R87ifhsYZ0qjdrA9anrW2MAWCtosmAOT4OxK9QPoSjCMx
+M3HbkZCDJgnlE8jMopH21BbyAYr7b5EfGRQJNtgWcvqSXwKHnTutR08+Kkn0KAkXCzeQNLeA5LlY
+UzFyM7kPAp8pIRMQ+seHunmyG642S2+y/qHEdMuGIwpfz3eDF1PdctL04qYK/zu+Qg1Bw0RwgigV
+Zs/0c5HP2/e9DBHh7eSwtzYlk4AUr6yxLlcwSjOfOmKEQ/Q8tzh0IFiNu9IPuTGAPBn4CPxD0+Ru
+8T2wg8/s43R/PT3kd1OEqOJUl7q+h+r6fpvU0Fzxd2tC8Ga6fDEPme+1Nbi+03pVjuZQKbGwKJ66
+gEn06WqaxVZC+J8hh/jR0k9mST1iAZPNYulcNJ8tKmVtjYsv0L1TSm2+NwON58tO+pIVzu3DWwSE
+XSf+qkDavQam+QtEOZxLBXI++aMUEapSn+k3Lxm48ZCYfAWLb/Xj7F5JQMbZvCexglAbYR0kIHqW
+5DnsYSdMD/IplJMojx0NBrxJ3fN9dvX2Y6BIXRsF1du4qESm4/3CKuyUV7p9DW3mPlHTGLvYxnyK
+Qy7VFBkoLINszBrOUeIxggNvMIIDawIBATCBlDCBjDELMAkGA1UEBhMCSUwxFjAUBgNVBAoTDVN0
+YXJ0Q29tIEx0ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRlIFNpZ25pbmcx
+ODA2BgNVBAMTL1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUgQ2xpZW50IENB
+AgMN7zcwCQYFKw4DAhoFAKCCAa8wGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0B
+CQUxDxcNMTUxMDI3MjMxNTE2WjAjBgkqhkiG9w0BCQQxFgQUUzMPERo3KbwpkIoYWAV6IosVMYUw
+gaUGCSsGAQQBgjcQBDGBlzCBlDCBjDELMAkGA1UEBhMCSUwxFjAUBgNVBAoTDVN0YXJ0Q29tIEx0
+ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRlIFNpZ25pbmcxODA2BgNVBAMT
+L1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUgQ2xpZW50IENBAgMN7zcwgacG
+CyqGSIb3DQEJEAILMYGXoIGUMIGMMQswCQYDVQQGEwJJTDEWMBQGA1UEChMNU3RhcnRDb20gTHRk
+LjErMCkGA1UECxMiU2VjdXJlIERpZ2l0YWwgQ2VydGlmaWNhdGUgU2lnbmluZzE4MDYGA1UEAxMv
+U3RhcnRDb20gQ2xhc3MgMSBQcmltYXJ5IEludGVybWVkaWF0ZSBDbGllbnQgQ0ECAw3vNzANBgkq
+hkiG9w0BAQEFAASCAQCcEy7ePkRL6ZRCv7Y9HvQKiGoM9bXFJjjC4zcTr+9lBJtV2SN5dR5Zpufw
+k9j+D9F0FKKKDcSAZ+BIMKwjdULi+tMkwbmfFx6wM78XgmUIGoo+piV/CyepbwM0IRWygqepywzh
+fc6giobBkWG6B3+soWZfeSVWd3y6n2aI7HFz1H9PiuvviTklNna7IqPsFYeuNXu0UJsI/sCg7ZFK
+Rhen6Jj4YSztiEAJ+QxNGslpjcVwZ8lnask5UkUUr+FtQcLNHNFjWKYzJsKUZ67CZSwvbzgM2iUY
+OT9V8zpxkipdDCaN+PVKSblKwjctmXKGELvGTGhQ49kxFrGdgdiPio5JAAAAAAAA
 
-When you say "does not solve the deadline enforcement problem",
-I'm not sure what point you're making.  The application presumably
-can meet its own deadlines when it's not interrupted; the intent
-here is to notice when the kernel gets in its way and notify it.
 
-Granted you could add separate mechanisms to create deadlines
-within the application, but that feels like a separate layer that
-may or may not be desired for any given application.
-
-> You can't catch the asynchronous application errors with this
-> mechanism (or at least your ability to catch them depends on which
-> patch version IIRC), which include calling anything like munmap or
-> membarrier in another thread.
-
-Yes, and munmap in another thread is certainly an application bug
-at some level, so that's another reason to allow using the same
-mechanism to notify the application of an asynchronous interrupt.
-I'll add that for the next version of the patch series.
-
--- 
-Chris Metcalf, EZChip Semiconductor
-http://www.ezchip.com
+--=-Zw8eq4OSDmP9kXNFxcZ0--
