@@ -1,39 +1,43 @@
-From: Lyude <cpaul@redhat.com>
-Subject: Re: [PATCH v6.2 1/1] Input: Add userio module
-Date: Tue, 27 Oct 2015 14:10:42 -0400
-Message-ID: <1445969442.3281.15.camel@redhat.com>
-References: <1444053984.8404.1.camel@redhat.com>
-	 <1445633266-14691-1-git-send-email-cpaul@redhat.com>
-	 <20151024224012.GA13584@dtor-pixel> <1445867517.3535.6.camel@redhat.com>
-	 <20151026232645.GA26171@dtor-pixel>
+From: Jonas Markussen <jonassm@ifi.uio.no>
+Subject: Re: [PATCH RFC net-next 2/2] tcp: Add Redundant Data Bundling (RDB)
+Date: Tue, 27 Oct 2015 19:15:42 +0000
+Message-ID: <B3A5466A-E881-4EDD-85F1-20E153D92CA8@ifi.uio.no>
+References: <1445633413-3532-1-git-send-email-bro.devel+kernel@gmail.com>
+ <1445633413-3532-3-git-send-email-bro.devel+kernel@gmail.com>
+ <CADVnQykhCKU+5DyX1r73nRQjqw7qbM81yHgTzY5pG=h9kpj6Xw@mail.gmail.com>
+ <C1235108-1DC2-408E-8CAC-65DBE628AB78@simula.no>
+ <CAK6E8=fyY_kQ4ZpyC+q3fH-CFvwDt_=ro2Y7qB9bxgMCpkcC3g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151026232645.GA26171@dtor-pixel>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Dmitry Torokhov <dmitry.torokhov@gmail.com>
-Cc: David Herrmann <dh.herrmann@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-input@vger.kernel.org, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Greg KH <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, Joe Perches <joe@perches.com>, Jiri Slaby <jslaby@suse.com>, Vishnu Patekar <vishnupatekar0510@gmail.com>, Sebastian Ott <sebott@linux.vnet.ibm.com>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Hans de Goede <hdegoede@redhat.com>, linux-doc@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <CAK6E8=fyY_kQ4ZpyC+q3fH-CFvwDt_=ro2Y7qB9bxgMCpkcC3g@mail.gmail.com>
+Content-Language: en-US
+Content-ID: <AC1CFB50A906A94791D24CED57A355FE@mail.uio.no>
+Sender: linux-doc-owner@vger.kernel.org
+To: Yuchung Cheng <ycheng@google.com>
+Cc: Andreas Petlund <apetlund@simula.no>, Neal Cardwell <ncardwell@google.com>, =?iso-8859-1?Q?Bendik_R=F8nning_Opstad?= <bro.devel@gmail.com>, "David S. Miller" <davem@davemloft.net>, Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>, James Morris <jmorris@namei.org>, Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>, Patrick McHardy <kaber@trash.net>, Jonathan Corbet <corbet@lwn.net>, Eric Dumazet <edumazet@google.com>, Tom Herbert <tom@herbertland.com>, Paolo Abeni <pabeni@redhat.com>, Erik Kline <ek@google.com>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Al Viro <viro@zeniv.linux.org.uk>, Jiri Pirko <jiri@resnulli.us>, Alexander Duyck <alexander.h.duyck@redhat.com>, Florian Westphal <fw@strlen.de>, Daniel Lee <Longinus00@gmail.com>, Marcelo Ricardo Leitner <mleitner@redhat.com>, Daniel Borkmann <daniel@iogearbox.net>, Willem de Bruijn <willemb@google.com>=?iso-
 List-Id: linux-api@vger.kernel.org
 
-Gotcha, tested it and took a look at the changes, looks good to me.
+On 26 Oct 2015, at 22:58, Yuchung Cheng <ycheng@google.com> wrote:
+> but would RDB be voided if this developer turns on RDB then turns on
+> Nagle later?
 
-On Mon, 2015-10-26 at 16:26 -0700, Dmitry Torokhov wrote:
-> Hi,
-> 
-> On Mon, Oct 26, 2015 at 09:51:57AM -0400, Lyude wrote:
-> > Hi! So, I'm guessing you want me to merge this with the patch I've got
-> > right now and post the new version? (Just making sure since I'm a bit
-> > new to this :)
-> > 
-> 
-> If you apply my patch on top of yours and it still works you do not need
-> to resend anything. If I messed up and you need to fix something ideally
-> just send me an incremental patch so that I can see where exactly I
-> screwed up and I'll fold it all together.
-> 
-> Thanks.
-> 
--- 
-Cheers,
-	Lyude
+The short answer is answer is "kind of"
+
+My understanding is that Nagle will delay segments until they're
+either MSS-sized or until segments "down the pipe" are acknowledged.
+
+As RDB isn't able to bundle if the payload is more than MSS/2, only
+an application that that sends data less frequent than an RTT would
+still theoretically benefit from RDB even if Nagle is on.
+
+However, in my opinion this is a scenario where Nagle itself is void:
+
+If you transmit more rarely than the RTT, enabling Nagle makes no
+difference.
+
+If you transfer more frequent than the RTT, enabling Nagle makes
+RDB void.
+
+-Jonas
