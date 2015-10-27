@@ -1,29 +1,51 @@
-From: Tadeusz Struk <tadeusz.struk-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 0/5] crypto: add algif_akcipher user space API
-Date: Tue, 27 Oct 2015 08:16:53 -0700
-Message-ID: <562F9565.3090005@intel.com>
-References: <1831785.BBs8Hj3CxY@myon.chronox.de>
- <BDD3AC1F-26D5-41D2-863B-CF8C7BF5FFEE@holtmann.org>
+From: Steve French <smfrench-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v7 1/4] vfs: add copy_file_range syscall and vfs helper
+Date: Tue, 27 Oct 2015 11:03:37 -0500
+Message-ID: <CAH2r5mtRzSX3dZAXZwgVLQfjjfrkX8X=7b2uxQJ+De=5JjmqCw@mail.gmail.com>
+References: <1445628736-13058-1-git-send-email-Anna.Schumaker@Netapp.com> <1445628736-13058-2-git-send-email-Anna.Schumaker@Netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <BDD3AC1F-26D5-41D2-863B-CF8C7BF5FFEE-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>, Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Cc: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1445628736-13058-2-git-send-email-Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Cc: "linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Marcel,
-On 10/26/2015 09:54 PM, Marcel Holtmann wrote:
-> after having discussions with David Howells and David Woodhouse, I don't think we should expose akcipher via AF_ALG at all. I think the akcipher operations for sign/verify/encrypt/decrypt should operate on asymmetric keys in the first place. With akcipher you are pretty much bound to public and private keys and the key is the important part and not the akcipher itself. Especially since we want to support private keys in hardware (like TPM for example).
-> 
-> It seems more appropriate to use keyctl to derive the symmetric session key from your asymmetric key. And then use the symmetric session key id with skcipher via AF_ALG. Especially once symmetric key type has been introduced this seems to be trivial then.
-> 
-> I am not really in favor of having two userspace facing APIs for asymmetric cipher usage. And we need to have an API that is capable to work with hardware keys.
+The patch set looks good so far, and copy offload is important for
+CIFS/SMB3 (not just Windows/Mac/Samba but most servers support one of
+the various methods available to do this over the network via CIFS and
+also SMB2/SMB3).  I have only implemented two ways of copy offload in
+cifs.ko so far but will look at adding the remaining mechanisms.
 
-The main use case for algif_akcipher will be to allow a web server, which needs to handle
-tens of thousand TLS handshakes per second, to offload the RSA operation to a HW accelerator.
-Do you think we can use keyctl for this?
+Currently cifs.ko does have a similar restriction to the below one
+that you have in your patch1, but I was planning to relax it (as long
+as source and target are on the same server) since some of the
+important use cases are having the server do copy offload from one
+share to another.   So we should support the case where the files are
+on the same file system type (nfs, cifs etc.) but not necessarily on
+the same superblock (for the case of cifs they will be on the same
+server, but with some forms of copy offload that would not necessarily
+have to be on the same server).
+
+The following check should be removed (an alternative would be to
+check that source and target are the same filesystem type ie nfs, or
+cifs or xfs etc. or simply let the file systems check file_in and
+file_out's validity)
+
+> +       /* this could be relaxed once a method supports cross-fs copies */
+> +       if (inode_in->i_sb != inode_out->i_sb ||
+> +           file_in->f_path.mnt != file_out->f_path.mnt)
+> +               return -EXDEV;
+
+
+
+
+-- 
 Thanks,
-T
+
+Steve
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
