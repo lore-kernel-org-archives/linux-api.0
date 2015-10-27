@@ -1,8 +1,7 @@
 From: Paul Turner <commonly@gmail.com>
-Subject: [RFC PATCH v2 1/3] restartable sequences: user-space per-cpu
- critical sections
-Date: Tue, 27 Oct 2015 16:56:53 -0700
-Message-ID: <20151027235653.16059.8933.stgit@pjt-glaptop.roam.corp.google.com>
+Subject: [RFC PATCH v2 2/3] restartable sequences: x86 ABI
+Date: Tue, 27 Oct 2015 16:57:05 -0700
+Message-ID: <20151027235705.16059.63268.stgit@pjt-glaptop.roam.corp.google.com>
 References: <20151027235635.16059.11630.stgit@pjt-glaptop.roam.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -16,221 +15,143 @@ List-Id: linux-api@vger.kernel.org
 
 From: Paul Turner <pjt@google.com>
 
-Introduce the notion of a restartable sequence.  This is a piece of user code
-that can be described in 3 components:
+Recall the general ABI is:
+   The kernel ABI generally consists of:
+     a) A shared TLS word which exports the current cpu and event-count
+     b) A shared TLS word which, when non-zero, stores the first post-commit
+        instruction if a sequence is active.  (The kernel observing rips greater
+        than this takes no action and concludes user-space has completed its
+        critical section, but not yet cleared this state).
+     c) An architecture specific way to publish the state read from (a) which
+        user-space believes to be current.
 
- 1) Establish where [e.g. which cpu] the thread is running
- 2) Preparatory work that is dependent on the state in [1].
- 3) A committing instruction that proceeds only if [2] and [1] have proceeded
-    in a coherent state (i.e. not thread from the same address state has run
-    on the same cpu).
+This patch defines (c) for x86, both x86_64 and i386.
 
-Preemption, or other interruption beyond [1] guarantees that [3] will not
-execute.  With support for control being transferred to a user-defined restart
-handler.  This handler may arrange for the original operation to be retried,
-including potentially resynchronizing with dependent state that may
-have been updated in the interim.
+The exact sequence is:
+  *0. Userspace stores current event+cpu counter values
+   1. Userspace loads the rip to move to at failure into cx
+   2. Userspace loads the rip of the instruction following
+      the critical section into a registered TLS address.
+   3. Userspace loads the values read at [0] into a known
+      location.
+   4. Userspace tests to see whether the current event and
+      cpu counter values match those stored at 0.  Manually
+      jumping to the address from [1] in the case of a
+      mismatch.
 
-This may be used in combination with an in-memory cpu-id to allow user programs
-to implement cpu-local data-structures and primitives, without the use/overhead
-of any atomics.
+      Note that if we are preempted or otherwise interrupted
+      then the kernel can also now perform this comparison
+      and conditionally jump us to [1].
+   4. Our final instruction bfeore [2] is then our commit.
+      The critical section is self-terminating.  [2] must
+      also be cleared at this point.
 
-The kernel ABI generally consists of:
- a) A shared TLS word which exports the current cpu and associated event-count
- b) A shared TLS word which, when non-zero, stores the first post-commit
-    instruction if a sequence is active.  (The kernel observing rips greater
-    than this takes no action and concludes user-space has completed its
-    critical section, but not yet cleared this state).
- c) An architecture specific way to publish the state read from (a) which
-    user-space believes to be current.
+ For x86_64:
+   [3] uses rdx to represent cpu and event counter as a
+       single 64-bit value.
 
-[ (a) is only read by userspace, it is published by the kernel.
-  (b) is only ready by the kernel, it is published by userspace. ]
+ For i386:
+   [3] uses ax for cpu and dx for the event_counter.
+
+  Both:
+   Instruction after commit: rseq_state->post_commit_instr
+   Current event and cpu state: rseq_state->event_and_cpu
+
+An example user-space x86_64 implementation:
+    __asm__ __volatile__ goto (
+                    "movq $%l[failed], %%rcx\n"
+                    "movq $1f, %[commit_instr]\n"
+                    "cmpq %[start_value], %[current_value]\n"
+                    "jnz %l[failed]\n"
+                    "movq %[to_write], (%[target])\n"
+                    "1: movq $0, %[commit_instr]\n"
+      : /* no outputs */
+      : [start_value]"d"(start_value.storage),
+        [current_value]"m"(__rseq_state),
+        [to_write]"r"(to_write),
+        [target]"r"(p),
+        [commit_instr]"m"(__rseq_state.post_commit_instr)
+      : "rcx", "memory"
+      : failed
 
 Signed-off-by: Paul Turner <pjt@google.com>
 ---
- arch/Kconfig                           |    7 ++
- arch/x86/Kconfig                       |    1 
- arch/x86/entry/syscalls/syscall_64.tbl |    1 
- fs/exec.c                              |    1 
- include/linux/sched.h                  |   27 ++++++++
- include/uapi/asm-generic/unistd.h      |    4 +
- init/Kconfig                           |   11 +++
- kernel/Makefile                        |    2 -
- kernel/restartable_sequences.c         |  112 ++++++++++++++++++++++++++++++++
- kernel/sched/core.c                    |    4 +
- kernel/sched/sched.h                   |    3 +
- kernel/sys_ni.c                        |    2 +
- 12 files changed, 172 insertions(+), 3 deletions(-)
- create mode 100644 kernel/restartable_sequences.c
+ arch/x86/entry/common.c                      |    3 +
+ arch/x86/include/asm/restartable_sequences.h |   18 +++
+ arch/x86/kernel/Makefile                     |    2 
+ arch/x86/kernel/restartable_sequences.c      |  136 ++++++++++++++++++++++++++
+ arch/x86/kernel/signal.c                     |    7 +
+ kernel/restartable_sequences.c               |   10 +-
+ 6 files changed, 173 insertions(+), 3 deletions(-)
+ create mode 100644 arch/x86/include/asm/restartable_sequences.h
+ create mode 100644 arch/x86/kernel/restartable_sequences.c
 
-diff --git a/arch/Kconfig b/arch/Kconfig
-index 671810c..336880c 100644
---- a/arch/Kconfig
-+++ b/arch/Kconfig
-@@ -241,6 +241,13 @@ config HAVE_REGS_AND_STACK_ACCESS_API
- 	  declared in asm/ptrace.h
- 	  For example the kprobes-based event tracer needs this API.
+diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
+index a89fdbc..e382487 100644
+--- a/arch/x86/entry/common.c
++++ b/arch/x86/entry/common.c
+@@ -23,6 +23,7 @@
+ #include <linux/uprobes.h>
  
-+config HAVE_RESTARTABLE_SEQUENCE_SUPPORT
-+	bool
-+	depends on HAVE_REGS_AND_STACK_ACCESS_API
-+	help
-+	  This symbol should be selected by an architecture if it supports an
-+	  implementation of restartable sequences.
-+
- config HAVE_CLK
- 	bool
- 	help
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 262b79c..25a0a60 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -135,6 +135,7 @@ config X86
- 	select HAVE_PERF_REGS
- 	select HAVE_PERF_USER_STACK_DUMP
- 	select HAVE_REGS_AND_STACK_ACCESS_API
-+	select HAVE_RESTARTABLE_SEQUENCE_SUPPORT
- 	select HAVE_SYSCALL_TRACEPOINTS
- 	select HAVE_UID16			if X86_32 || IA32_EMULATION
- 	select HAVE_UNSTABLE_SCHED_CLOCK
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 278842f..0fd4243 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -331,6 +331,7 @@
- 322	64	execveat		stub_execveat
- 323	common	userfaultfd		sys_userfaultfd
- 324	common	membarrier		sys_membarrier
-+325	common	restartable_sequences	sys_restartable_sequences
+ #include <asm/desc.h>
++#include <asm/restartable_sequences.h>
+ #include <asm/traps.h>
+ #include <asm/vdso.h>
+ #include <asm/uaccess.h>
+@@ -249,6 +250,8 @@ static void exit_to_usermode_loop(struct pt_regs *regs, u32 cached_flags)
+ 		if (cached_flags & _TIF_NOTIFY_RESUME) {
+ 			clear_thread_flag(TIF_NOTIFY_RESUME);
+ 			tracehook_notify_resume(regs);
++			if (rseq_active(current))
++				arch_rseq_update_event_counter(regs);
+ 		}
  
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/fs/exec.c b/fs/exec.c
-index 0a77a69..120ef19 100644
---- a/fs/exec.c
-+++ b/fs/exec.c
-@@ -1599,6 +1599,7 @@ static int do_execveat_common(int fd, struct filename *filename,
- 	current->in_execve = 0;
- 	acct_update_integrals(current);
- 	task_numa_free(current);
-+	rseq_clear_state_exec();
- 	free_bprm(bprm);
- 	kfree(pathbuf);
- 	putname(filename);
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 9e1e06c..03ab1f0 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1189,6 +1189,21 @@ struct mempolicy;
- struct pipe_inode_info;
- struct uts_namespace;
- 
-+#ifdef CONFIG_RESTARTABLE_SEQUENCES
-+struct restartable_sequence_state {
-+	__user void *post_commit_instr_addr;
-+	__user u64 *event_and_cpu;
-+
-+	u32 last_switch_count;
-+	u32 event_counter;
-+	struct preempt_notifier notifier;
-+};
-+
-+void rseq_clear_state_exec(void);
-+#else
-+static inline void rseq_clear_state_exec(void) {}
-+#endif
-+
- struct load_weight {
- 	unsigned long weight;
- 	u32 inv_weight;
-@@ -1820,6 +1835,9 @@ struct task_struct {
- #ifdef CONFIG_DEBUG_ATOMIC_SLEEP
- 	unsigned long	task_state_change;
- #endif
-+#ifdef CONFIG_RESTARTABLE_SEQUENCES
-+	struct restartable_sequence_state rseq_state;
-+#endif
- 	int pagefault_disabled;
- /* CPU-specific state of this task */
- 	struct thread_struct thread;
-@@ -3189,4 +3207,13 @@ static inline unsigned long rlimit_max(unsigned int limit)
- 	return task_rlimit_max(current, limit);
- }
- 
-+#ifdef CONFIG_RESTARTABLE_SEQUENCES
-+static inline int rseq_active(struct task_struct *p)
-+{
-+	return p->rseq_state.event_and_cpu != NULL;
-+}
-+#else
-+static inline int rseq_active(struct task_struct *p) { return 0; }
-+#endif
-+
- #endif
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index ee12400..9659f31 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -713,9 +713,11 @@ __SC_COMP(__NR_execveat, sys_execveat, compat_sys_execveat)
- __SYSCALL(__NR_userfaultfd, sys_userfaultfd)
- #define __NR_membarrier 283
- __SYSCALL(__NR_membarrier, sys_membarrier)
-+#define __NR_restartable_sequences 284
-+__SYSCALL(__NR_restartable_sequences, sys_restartable_sequences)
- 
- #undef __NR_syscalls
--#define __NR_syscalls 284
-+#define __NR_syscalls 285
- 
- /*
-  * All syscalls below here should go away really,
-diff --git a/init/Kconfig b/init/Kconfig
-index c24b6f7..98c02f2 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -2040,7 +2040,16 @@ config STOP_MACHINE
- source "block/Kconfig"
- 
- config PREEMPT_NOTIFIERS
--	bool
-+	bool n
-+
-+config RESTARTABLE_SEQUENCES
-+	bool "Userspace Restartable Sequences (RSEQ)"
-+	default n
-+	depends on HAVE_RESTARTABLE_SEQUENCE_SUPPORT && PREEMPT_NOTIFIERS
-+	help
-+	  Allows binaries to define a region of user-text within which
-+	  execution will be restarted in the event of signal delivery or
-+	  preemption.
- 
- config PADATA
- 	depends on SMP
-diff --git a/kernel/Makefile b/kernel/Makefile
-index 53abf00..dbe6963 100644
---- a/kernel/Makefile
-+++ b/kernel/Makefile
-@@ -101,8 +101,8 @@ obj-$(CONFIG_JUMP_LABEL) += jump_label.o
- obj-$(CONFIG_CONTEXT_TRACKING) += context_tracking.o
- obj-$(CONFIG_TORTURE_TEST) += torture.o
- obj-$(CONFIG_MEMBARRIER) += membarrier.o
--
- obj-$(CONFIG_HAS_IOMEM) += memremap.o
-+obj-$(CONFIG_RESTARTABLE_SEQUENCES) += restartable_sequences.o
- 
- $(obj)/configs.o: $(obj)/config_data.h
- 
-diff --git a/kernel/restartable_sequences.c b/kernel/restartable_sequences.c
+ 		if (cached_flags & _TIF_USER_RETURN_NOTIFY)
+diff --git a/arch/x86/include/asm/restartable_sequences.h b/arch/x86/include/asm/restartable_sequences.h
 new file mode 100644
-index 0000000..c99a574
+index 0000000..75864a7
 --- /dev/null
-+++ b/kernel/restartable_sequences.c
-@@ -0,0 +1,112 @@
++++ b/arch/x86/include/asm/restartable_sequences.h
+@@ -0,0 +1,18 @@
++#ifndef _ASM_X86_RESTARTABLE_SEQUENCES_H
++#define _ASM_X86_RESTARTABLE_SEQUENCES_H
++
++#include <asm/processor.h>
++#include <asm/ptrace.h>
++#include <linux/sched.h>
++
++#ifdef CONFIG_RESTARTABLE_SEQUENCES
++
++void arch_rseq_update_event_counter(struct pt_regs *regs);
++
++#else /* !CONFIG_RESTARTABLE_SEQUENCES */
++
++static inline void arch_rseq_update_event_counter(struct pt_regs *regs) {}
++
++#endif
++
++#endif /* _ASM_X86_RESTARTABLE_SEQUENCES_H */
+diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+index b1b78ff..ee98fb6 100644
+--- a/arch/x86/kernel/Makefile
++++ b/arch/x86/kernel/Makefile
+@@ -110,6 +110,8 @@ obj-$(CONFIG_EFI)			+= sysfb_efi.o
+ obj-$(CONFIG_PERF_EVENTS)		+= perf_regs.o
+ obj-$(CONFIG_TRACING)			+= tracepoint.o
+ 
++obj-$(CONFIG_RESTARTABLE_SEQUENCES)	+= restartable_sequences.o
++
+ ###
+ # 64 bit specific files
+ ifeq ($(CONFIG_X86_64),y)
+diff --git a/arch/x86/kernel/restartable_sequences.c b/arch/x86/kernel/restartable_sequences.c
+new file mode 100644
+index 0000000..9f43efd
+--- /dev/null
++++ b/arch/x86/kernel/restartable_sequences.c
+@@ -0,0 +1,136 @@
 +/*
-+ * Restartable Sequences are a lightweight interface that allows user-level
-+ * code to be executed atomically relative to scheduler preemption.  Typically
-+ * used for implementing per-cpu operations.
++ * Restartable Sequences: x86 ABI.
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -251,130 +172,171 @@ index 0000000..c99a574
 + *
 + */
 +
-+#ifdef CONFIG_RESTARTABLE_SEQUENCES
-+
++#include <linux/sched.h>
 +#include <linux/uaccess.h>
-+#include <linux/preempt.h>
-+#include <linux/syscalls.h>
++#include <asm/ptrace.h>
++#include <asm/processor-flags.h>
++#include <asm/restartable_sequences.h>
 +
-+static void rseq_sched_in_nop(struct preempt_notifier *pn, int cpu) {}
-+static void rseq_sched_out_nop(struct preempt_notifier *pn,
-+			       struct task_struct *next) {}
++static inline u64 rseq_encode_cpu_and_event_count(int cpu, int event_count)
++{
++	return (u64)(event_count) << 32 | cpu;
++}
 +
-+static __read_mostly struct preempt_ops rseq_preempt_ops = {
-+	.sched_in = rseq_sched_in_nop,
-+	.sched_out = rseq_sched_out_nop,
-+};
++static inline int rseq_regs_cpu(struct pt_regs *regs, int is_i386)
++{
++#ifdef CONFIG_64BIT
++	return is_i386 ? regs->ax : regs->dx & 0xFFFF;
++#else
++	return regs->ax;
++#endif
++}
 +
-+int rseq_configure_current(__user u64 *event_and_cpu,
-+			   __user void *post_commit_instr_addr)
++static inline int rseq_regs_event_count(struct pt_regs *regs, int is_i386)
++{
++#ifdef CONFIG_64BIT
++	return is_i386 ? regs->dx : regs->dx >> 32;
++#else
++	return regs->dx;
++#endif
++}
++
++void arch_rseq_update_event_counter(struct pt_regs *regs)
 +{
 +	struct restartable_sequence_state *rseq_state = &current->rseq_state;
-+	int addr_size = test_tsk_thread_flag(current, TIF_IA32) ? 4 : 8;
-+	int registered = 0;
++	int cpu = task_cpu(current);
++	int is_i386 = test_tsk_thread_flag(current, TIF_IA32);
++	int addr_size = is_i386 ? 4 : 8;
++	long post_commit_instr = 0;
++	u64 state_value;
 +
-+	/* Disable */
-+	if (!event_and_cpu && !post_commit_instr_addr)
-+		goto valid;
-+
-+	if (!event_and_cpu || !post_commit_instr_addr)
-+		return -EINVAL;
-+
-+	if (!access_ok(VERIFY_WRITE, event_and_cpu, sizeof(*event_and_cpu)) ||
-+	    !access_ok(VERIFY_READ, post_commit_instr_addr, addr_size))
-+		return -EINVAL;
-+
-+valid:
-+	preempt_disable();
-+
-+	if (rseq_state->event_and_cpu)
-+		registered = 1;
-+
-+	rseq_state->event_counter = 1;
-+	rseq_state->event_and_cpu = event_and_cpu;
-+	rseq_state->post_commit_instr_addr = post_commit_instr_addr;
-+
-+	if (event_and_cpu && !registered) {
-+		preempt_notifier_init(&rseq_state->notifier,
-+				      &rseq_preempt_ops);
-+		preempt_notifier_inc();
-+		preempt_notifier_register(&rseq_state->notifier);
-+	} else if (!event_and_cpu && registered) {
-+		preempt_notifier_unregister(&rseq_state->notifier);
-+		preempt_notifier_dec();
++	/*
++	 * Note: post_commit_instr must be zero-initialized above for the case
++	 * of a 32-bit thread on a 64-bit system.
++	 */
++	if (copy_from_user(&post_commit_instr,
++			   rseq_state->post_commit_instr_addr, addr_size)) {
++		goto fail;
 +	}
 +
-+	preempt_enable();
++	/* Handle potentially being within a critical section. */
++	if (regs->ip < post_commit_instr) {
++		/*
++		 * The ABI is relatively compact, with some differences for 32
++		 * and 64-bit threads.
++		 *
++		 * Progress is ordered as follows:
++		 *  *0. USerspace stores current event+cpu counter values
++		 *   1. Userspace loads the rip to move to at failure into cx
++		 *   2. Userspace loads the rip of the instruction following
++		 *      the critical section into a registered TLS address.
++		 *   3. Userspace loads the values read at [0] into a known
++		 *      location.
++		 *   4. Userspace tests to see whether the current event and
++		 *      cpu counter values match those stored at 0.  Manually
++		 *      jumping to the address from [1] in the case of a
++		 *      mismatch.
++		 *
++		 *      Note that if we are preempted or otherwise interrupted
++		 *      then the kernel can also now perform this comparison
++		 *      and conditionally jump us to [1].
++		 *   4. Our final instruction bfeore [2] is then our commit.
++		 *      The critical section is self-terminating.  [2] must
++		 *      also be cleared at this point.
++		 *
++		 * For x86_64:
++		 *   [3] uses rdx to represent cpu and event counter as a
++		 *       single 64-bit value.
++		 *
++		 * For i386:
++		 *   [3] uses ax for cpu and dx for the event_counter.
++		 *
++		 *  Both:
++		 *   Instruction after commit: rseq_state->post_commit_instr
++		 *   Current event and cpu state: rseq_state->event_and_cpu
++		 *
++		 */
++		if (rseq_regs_cpu(regs, is_i386) != cpu ||
++		    rseq_regs_event_count(regs, is_i386) !=
++				rseq_state->event_counter) {
++			if (clear_user(rseq_state->post_commit_instr_addr,
++						addr_size))
++				goto fail;
 +
-+	/* Will update *event_and_cpu on return. */
-+	if (event_and_cpu)
-+		set_thread_flag(TIF_NOTIFY_RESUME);
++			/*
++			 * We set this after potentially failing in clear_user
++			 * so that the signal arrives at the faulting rip.
++			 */
++			regs->ip = regs->cx;
++		}
++	}
 +
-+	return 0;
++	/* Update state. Compute the next expected state value. */
++	state_value = rseq_encode_cpu_and_event_count(cpu,
++			++rseq_state->event_counter);
++
++	if (put_user(state_value, rseq_state->event_and_cpu))
++		goto fail;
++
++	return;
++fail:
++	/*
++	 * User space has made some (invalid) protection change that does not
++	 * allow us to safely continue execution.  SEGV is the result.
++	 */
++	force_sig(SIGSEGV, current);
 +}
-+
-+void rseq_clear_state_exec()
-+{
-+	rseq_configure_current(NULL, NULL);
-+}
-+
-+/*
-+ * RSEQ syscall interface.
-+ *
-+ * Usage:
-+ *   sys_restartable_sequences(flags, &event_and_cpu, &post_commit_instr_addr)
-+
-+ *  flags is currently unused.
-+ */
-+SYSCALL_DEFINE3(restartable_sequences,
-+		int, flags, long, event_and_cpu, long, post_commit_instr_addr)
-+{
-+	return rseq_configure_current((__user u64 *)event_and_cpu,
-+				      (__user void *)post_commit_instr_addr);
-+}
-+#else
-+SYSCALL_DEFINE0(restartable_sequences)
-+{
-+	return -ENOSYS;
-+}
-+#endif
-+
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index aa59732..84e0641 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -2120,6 +2120,10 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
+diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
+index b7ffb7c..58f8813 100644
+--- a/arch/x86/kernel/signal.c
++++ b/arch/x86/kernel/signal.c
+@@ -30,6 +30,7 @@
+ #include <asm/fpu/signal.h>
+ #include <asm/vdso.h>
+ #include <asm/mce.h>
++#include <asm/restartable_sequences.h>
+ #include <asm/sighandling.h>
+ #include <asm/vm86.h>
  
- 	p->numa_group = NULL;
- #endif /* CONFIG_NUMA_BALANCING */
-+
+@@ -615,6 +616,12 @@ setup_rt_frame(struct ksignal *ksig, struct pt_regs *regs)
+ 	sigset_t *set = sigmask_to_save();
+ 	compat_sigset_t *cset = (compat_sigset_t *) set;
+ 
 +#ifdef CONFIG_RESTARTABLE_SEQUENCES
-+	memset(&p->rseq_state, 0, sizeof(p->rseq_state));
++	/* Increment the event counter for the, present, pre-signal frame. */
++	if (rseq_active(current))
++		arch_rseq_update_event_counter(regs);
 +#endif
- }
- 
- DEFINE_STATIC_KEY_FALSE(sched_numa_balancing);
-diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index efd3bfc..e8de833 100644
---- a/kernel/sched/sched.h
-+++ b/kernel/sched/sched.h
-@@ -957,6 +957,9 @@ static inline void __set_task_cpu(struct task_struct *p, unsigned int cpu)
- {
- 	set_task_rq(p, cpu);
- #ifdef CONFIG_SMP
-+	if (rseq_active(p))
-+		set_tsk_thread_flag(p, TIF_NOTIFY_RESUME);
 +
- 	/*
- 	 * After ->cpu is set up to a new value, task_rq_lock(p, ...) can be
- 	 * successfuly executed on another CPU. We must ensure that updates of
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index a02decf..0bdf060 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -248,3 +248,5 @@ cond_syscall(sys_execveat);
+ 	/* Set up the stack frame */
+ 	if (is_ia32_frame()) {
+ 		if (ksig->ka.sa.sa_flags & SA_SIGINFO)
+diff --git a/kernel/restartable_sequences.c b/kernel/restartable_sequences.c
+index c99a574..5449561 100644
+--- a/kernel/restartable_sequences.c
++++ b/kernel/restartable_sequences.c
+@@ -24,17 +24,21 @@
  
- /* membarrier */
- cond_syscall(sys_membarrier);
-+/* restartable sequences */
-+cond_syscall(sys_restartable_sequences);
+ #ifdef CONFIG_RESTARTABLE_SEQUENCES
+ 
++#include <asm/restartable_sequences.h>
+ #include <linux/uaccess.h>
+ #include <linux/preempt.h>
+ #include <linux/syscalls.h>
+ 
+ static void rseq_sched_in_nop(struct preempt_notifier *pn, int cpu) {}
+-static void rseq_sched_out_nop(struct preempt_notifier *pn,
+-			       struct task_struct *next) {}
++static void rseq_sched_out(struct preempt_notifier *pn,
++			   struct task_struct *next)
++{
++	set_thread_flag(TIF_NOTIFY_RESUME);
++}
+ 
+ static __read_mostly struct preempt_ops rseq_preempt_ops = {
+ 	.sched_in = rseq_sched_in_nop,
+-	.sched_out = rseq_sched_out_nop,
++	.sched_out = rseq_sched_out,
+ };
+ 
+ int rseq_configure_current(__user u64 *event_and_cpu,
