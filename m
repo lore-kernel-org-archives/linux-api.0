@@ -1,588 +1,166 @@
-From: Paul Turner <commonly@gmail.com>
-Subject: [RFC PATCH v2 3/3] restartable sequences: basic self-tests
-Date: Tue, 27 Oct 2015 16:57:16 -0700
-Message-ID: <20151027235716.16059.47610.stgit@pjt-glaptop.roam.corp.google.com>
-References: <20151027235635.16059.11630.stgit@pjt-glaptop.roam.corp.google.com>
+From: David Woodhouse <dwmw2@infradead.org>
+Subject: Re: [PATCH v2 0/5] crypto: add algif_akcipher user space API
+Date: Wed, 28 Oct 2015 09:37:02 +0900
+Message-ID: <1445992622.3405.148.camel@infradead.org>
+References: <1831785.BBs8Hj3CxY@myon.chronox.de>
+	 <1499937.MpmApGzYrd@tauon.atsec.com>
+	 <1445989396.3405.131.camel@infradead.org>
+	 <1885267.SGBklDhT9E@myon.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151027235635.16059.11630.stgit@pjt-glaptop.roam.corp.google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Dave Watson <davejwatson@fb.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Josh Triplett <josh@joshtriplett.org>, Ingo Molnar <mingo@redhat.com>, Chris Lameter <cl@linux.com>, Linus Torvalds <torvalds@linux-foundation.org>
+Content-Type: multipart/signed; micalg="sha-1"; protocol="application/x-pkcs7-signature";
+	boundary="=-wwW7s9sT9vrDXnrT4tG6"
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <1885267.SGBklDhT9E@myon.chronox.de>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Stephan Mueller <smueller@chronox.de>
+Cc: Marcel Holtmann <marcel@holtmann.org>, Herbert Xu <herbert@gondor.apana.org.au>, linux-crypto@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-From: pjt <pjt@pjt-glaptop.roam.corp.google.com>
 
-Implements two basic tests of RSEQ functionality.
+--=-wwW7s9sT9vrDXnrT4tG6
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-The first, "basic_test" only asserts that RSEQ works moderately correctly.
-E.g. that:
-- The CPUID pointer works
-- Code infinitely looping within a critical section will eventually be
-interrupted.
-- Critical sections are interrupted by signals.
+On Wed, 2015-10-28 at 00:47 +0100, Stephan Mueller wrote:
+>=20
+> Ohh, I see. So, you are saying that there should not be a setpub/privkey =
+for=20
+> the akcipher AF_ALG interface?!
+>=20
+> If somebody wants to use akcipher, he shall set the key via the keyring a=
+nd=20
+> akcipher shall obtain it from the keyring?
+>=20
+> However, for the actual data shoveling, AF_ALG should still be used?
 
-"basic_percpu_ops_test" is a slightly more "realistic" variant, implementing a
-few simple per-cpu operations and testing their correctness.  It also includes
-a trivial example of user-space may multiplexing the critical section via the
-restart handler.
+That might seem ideal, but Herbert doesn't want that =E2=80=94 he wants
+akcipher to work *only* with its own internal keys, not with keys from
+the kernel's key subsystem.
 
-Signed-off-by: Paul Turner <pjt@google.com>
----
- tools/testing/selftests/rseq/Makefile              |   13 +
- .../testing/selftests/rseq/basic_percpu_ops_test.c |  268 ++++++++++++++++++++
- tools/testing/selftests/rseq/basic_test.c          |   87 ++++++
- tools/testing/selftests/rseq/rseq.c                |   36 +++
- tools/testing/selftests/rseq/rseq.h                |  109 ++++++++
- 5 files changed, 513 insertions(+)
- create mode 100644 tools/testing/selftests/rseq/Makefile
- create mode 100644 tools/testing/selftests/rseq/basic_percpu_ops_test.c
- create mode 100644 tools/testing/selftests/rseq/basic_test.c
- create mode 100644 tools/testing/selftests/rseq/rseq.c
- create mode 100644 tools/testing/selftests/rseq/rseq.h
+David has patches (not upstream yet; used for testing) which expose a
+verify operation for kernel keys through sys_keyctl(). Adding the other
+three operations would be feasible.
 
-diff --git a/tools/testing/selftests/rseq/Makefile b/tools/testing/selftests/rseq/Makefile
-new file mode 100644
-index 0000000..40b9338
---- /dev/null
-+++ b/tools/testing/selftests/rseq/Makefile
-@@ -0,0 +1,13 @@
-+CFLAGS += -Wall
-+LDFLAGS += -lpthread
-+
-+TESTS = basic_test basic_percpu_ops_test
-+
-+all: $(TESTS)
-+%: %.c
-+	$(CC) $(CFLAGS) -o $@ $^ rseq.c $(LDFLAGS)
-+
-+include ../lib.mk
-+
-+clean:
-+	$(RM) $(TESTS)
-diff --git a/tools/testing/selftests/rseq/basic_percpu_ops_test.c b/tools/testing/selftests/rseq/basic_percpu_ops_test.c
-new file mode 100644
-index 0000000..dcc57ad
---- /dev/null
-+++ b/tools/testing/selftests/rseq/basic_percpu_ops_test.c
-@@ -0,0 +1,268 @@
-+#define _GNU_SOURCE
-+#include <assert.h>
-+#include <pthread.h>
-+#include <sched.h>
-+#include <stdint.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+
-+#include "rseq.h"
-+
-+struct percpu_lock {
-+	intptr_t word[CPU_SETSIZE][64 / sizeof(intptr_t)];  /* Cache aligned */
-+};
-+
-+/* A simple percpu spinlock.  Returns the cpu lock was acquired on. */
-+int rseq_percpu_lock(struct percpu_lock *lock)
-+{
-+	struct rseq_state start;
-+	int cpu;
-+
-+	do {
-+		start = rseq_start();
-+		cpu = rseq_cpu_at_start(start);
-+	} while (lock->word[cpu][0] ||
-+		 !rseq_finish(&lock->word[cpu][0], 1, start));
-+	return cpu;
-+}
-+
-+void rseq_percpu_unlock(struct percpu_lock *lock, int cpu)
-+{
-+	barrier();  /* need a release-store here, this suffices on x86. */
-+	assert(lock->word[cpu][0] == 1);
-+	lock->word[cpu][0] = 0;
-+}
-+
-+/*
-+ * cmpxchg [with an additional check value].
-+ *
-+ * Returns:
-+ *  -1 if *p != old [ || check_ptr != check_val, ] otherwise
-+ *  cpu that rseq_percpu_cmpxchgcheck was executed.
-+ *   - If this is different from the passed cpu, no modifications were made.
-+ *
-+ * Note: When specified, check_ptr is dereferenced iff *p == old
-+ */
-+int rseq_percpu_cmpxchg(int cpu, intptr_t *p, intptr_t old, intptr_t new)
-+{
-+	struct rseq_state start;
-+
-+	while (1) {
-+		start = rseq_start();
-+		if (rseq_current_cpu() != cpu) return rseq_current_cpu();
-+		if (*p != old)
-+			return -1;
-+		if (rseq_finish(p, new, start)) return cpu;
-+	}
-+}
-+
-+int rseq_percpu_cmpxchgcheck(int cpu, intptr_t *p, intptr_t old, intptr_t new,
-+			     intptr_t *check_ptr, intptr_t check_val)
-+{
-+	struct rseq_state start;
-+
-+	while (1) {
-+		start = rseq_start();
-+		if (rseq_current_cpu() != cpu) return rseq_current_cpu();
-+		/*
-+		 * Note that we'd want the ultimate implementation of this to
-+		 * be open coded (similar to rseq_finish) so that we can
-+		 * guarantee *check is not dereferenced when old does not
-+		 * match.  This could also be facilitated with a generic
-+		 * rseq_read_if_valid(...) helper.
-+		 */
-+		if (*p != old || *check_ptr != check_val)
-+			return -1;
-+		if (rseq_finish(p, new, start)) return cpu;
-+	}
-+}
-+
-+void rseq_unknown_restart_addr(void *addr)
-+{
-+	fprintf(stderr, "rseq: unrecognized restart address %p\n", addr);
-+	exit(1);
-+}
-+
-+struct spinlock_test_data {
-+	struct percpu_lock lock;
-+	int counts[CPU_SETSIZE];
-+	int reps;
-+};
-+
-+void *test_percpu_spinlock_thread(void *arg)
-+{
-+	struct spinlock_test_data *data = arg;
-+
-+	int i, cpu;
-+	rseq_init_current_thread();
-+	for (i = 0; i < data->reps; i++) {
-+		cpu = rseq_percpu_lock(&data->lock);
-+		data->counts[cpu]++;
-+		rseq_percpu_unlock(&data->lock, cpu);
-+	}
-+
-+	return 0;
-+}
-+
-+/*
-+ * A simple test which implements a sharded counter using a per-cpu lock.
-+ * Obviously real applications might prefer to simply use a per-cpu increment;
-+ * however, this is reasonable for a test and the lock can be extended to
-+ * synchronize more complicated operations.
-+ */
-+void test_percpu_spinlock()
-+{
-+	const int num_threads = 200;
-+	int i, sum;
-+	pthread_t test_threads[num_threads];
-+	struct spinlock_test_data data;
-+
-+	memset(&data, 0, sizeof(data));
-+	data.reps = 5000;
-+
-+	for (i = 0; i < num_threads; i++)
-+		pthread_create(&test_threads[i], NULL,
-+			       test_percpu_spinlock_thread, &data);
-+
-+	for (i = 0; i < num_threads; i++)
-+		pthread_join(test_threads[i], NULL);
-+
-+	sum = 0;
-+	for (i = 0; i < CPU_SETSIZE; i++)
-+		sum += data.counts[i];
-+
-+	assert(sum == data.reps * num_threads);
-+}
-+
-+struct percpu_list_node {
-+	intptr_t data;
-+	struct percpu_list_node *next;
-+};
-+
-+struct percpu_list {
-+	struct percpu_list_node *heads[CPU_SETSIZE];
-+};
-+
-+int percpu_list_push(struct percpu_list *list, struct percpu_list_node *node)
-+{
-+	int cpu;
-+
-+	do {
-+		cpu = rseq_current_cpu();
-+		node->next = list->heads[cpu];
-+	} while (cpu != rseq_percpu_cmpxchg(cpu,
-+			(intptr_t *)&list->heads[cpu], (intptr_t)node->next,
-+			(intptr_t)node));
-+
-+	return cpu;
-+}
-+
-+struct percpu_list_node *percpu_list_pop(struct percpu_list *list)
-+{
-+	int cpu;
-+	struct percpu_list_node *head, *next;
-+
-+	do {
-+		cpu = rseq_current_cpu();
-+		head = list->heads[cpu];
-+		/*
-+		 * Unlike a traditional lock-less linked list; the availability
-+		 * of a cmpxchg-check primitive allows us to implement pop
-+		 * without concerns over ABA-type races.
-+		 */
-+		if (!head) return 0;
-+		next = head->next;
-+	} while (cpu != rseq_percpu_cmpxchgcheck(cpu,
-+		(intptr_t *)&list->heads[cpu], (intptr_t)head, (intptr_t)next,
-+		(intptr_t *)&head->next, (intptr_t)next));
-+
-+	return head;
-+}
-+
-+
-+void *test_percpu_list_thread(void *arg)
-+{
-+	int i;
-+	struct percpu_list *list = (struct percpu_list *)arg;
-+
-+	rseq_init_current_thread();
-+	for (i = 0; i < 100000; i++) {
-+		struct percpu_list_node *node = percpu_list_pop(list);
-+		sched_yield();  /* encourage shuffling */
-+		if (node) percpu_list_push(list, node);
-+	}
-+
-+	return 0;
-+}
-+
-+/* Simultaneous modification to a per-cpu linked list from many threads.  */
-+void test_percpu_list()
-+{
-+	int i, j;
-+	long sum = 0, expected_sum = 0;
-+	struct percpu_list list;
-+	pthread_t test_threads[200];
-+	cpu_set_t allowed_cpus;
-+
-+	memset(&list, 0, sizeof(list));
-+
-+	/* Generate list entries for every usable cpu. */
-+	sched_getaffinity(0, sizeof(allowed_cpus), &allowed_cpus);
-+	for (i = 0; i < CPU_SETSIZE; i++) {
-+		if (!CPU_ISSET(i, &allowed_cpus)) continue;
-+		for (j = 1; j <= 100; j++) {
-+			struct percpu_list_node *node;
-+
-+			expected_sum += j;
-+
-+			node = malloc(sizeof(*node));
-+			assert(node);
-+			node->data = j;
-+			node->next = list.heads[i];
-+			list.heads[i] = node;
-+		}
-+	}
-+
-+	for (i = 0; i < 200; i++)
-+		assert(pthread_create(&test_threads[i], NULL,
-+			       test_percpu_list_thread, &list) == 0);
-+
-+	for (i = 0; i < 200; i++)
-+		pthread_join(test_threads[i], NULL);
-+
-+	for (i = 0; i < CPU_SETSIZE; i++) {
-+		cpu_set_t pin_mask;
-+		struct percpu_list_node *node;
-+
-+		if (!CPU_ISSET(i, &allowed_cpus)) continue;
-+
-+		CPU_ZERO(&pin_mask);
-+		CPU_SET(i, &pin_mask);
-+		sched_setaffinity(0, sizeof(pin_mask), &pin_mask);
-+
-+		while ((node = percpu_list_pop(&list))) {
-+			sum += node->data;
-+			free(node);
-+		}
-+	}
-+
-+	/*
-+	 * All entries should now be accounted for (unless some external actor
-+	 * is interfering with our allowed affinity while this test is
-+	 * running).
-+	 */
-+	assert(sum == expected_sum);
-+}
-+
-+int main(int argc, char **argv)
-+{
-+	rseq_init_current_thread();
-+	printf("spinlock\n");
-+	test_percpu_spinlock();
-+	printf("percpu_list\n");
-+	test_percpu_list();
-+
-+	return 0;
-+}
-+
-diff --git a/tools/testing/selftests/rseq/basic_test.c b/tools/testing/selftests/rseq/basic_test.c
-new file mode 100644
-index 0000000..a3d3cdf
---- /dev/null
-+++ b/tools/testing/selftests/rseq/basic_test.c
-@@ -0,0 +1,87 @@
-+/*
-+ * Basic test coverage for critical regions and rseq_current_cpu().
-+ */
-+
-+#define _GNU_SOURCE
-+#include <assert.h>
-+#include <sched.h>
-+#include <signal.h>
-+#include <stdio.h>
-+#include <string.h>
-+#include <sys/time.h>
-+
-+#include "rseq.h"
-+
-+void test_cpu_pointer()
-+{
-+	cpu_set_t affinity, test_affinity;
-+	int i;
-+
-+	sched_getaffinity(0, sizeof(affinity), &affinity);
-+	CPU_ZERO(&test_affinity);
-+	for (i = 0; i < CPU_SETSIZE; i++) {
-+		if (CPU_ISSET(i, &affinity)) {
-+			CPU_SET(i, &test_affinity);
-+			sched_setaffinity(0, sizeof(test_affinity),
-+					  &test_affinity);
-+			assert(rseq_current_cpu() == sched_getcpu());
-+			assert(rseq_current_cpu() == i);
-+			CPU_CLR(i, &test_affinity);
-+		}
-+	}
-+	sched_setaffinity(0, sizeof(affinity), &affinity);
-+}
-+
-+void test_critical_section()
-+{
-+	/*
-+	 * This depends solely on some environmental event triggering a counter
-+	 * increase.
-+	 */
-+	struct rseq_state start = rseq_start(), current;
-+	do {
-+		current = rseq_start();
-+	} while (start.cpu == current.cpu &&
-+		 start.event_counter == current.event_counter);
-+}
-+
-+volatile int signals_delivered;
-+volatile struct rseq_state start;
-+
-+void test_signal_interrupt_handler()
-+{
-+	struct rseq_state current = rseq_start();
-+	/*
-+	 * The potential critical section bordered by 'start' must be invalid.
-+	 */
-+	assert(current.cpu != start.cpu ||
-+	       current.event_counter != start.event_counter);
-+	signals_delivered++;
-+}
-+
-+void test_signal_interrupts()
-+{
-+	struct itimerval it = {{0, 1}, {0, 1}};
-+	setitimer(ITIMER_PROF, &it, NULL);
-+	signal(SIGPROF, test_signal_interrupt_handler);
-+
-+	do {
-+		start = rseq_start();
-+	} while (signals_delivered < 10);
-+	setitimer(ITIMER_PROF, NULL, NULL);
-+}
-+
-+int main(int argc, char **argv)
-+{
-+	rseq_init_current_thread();
-+
-+	printf("testing current cpu\n");
-+	test_cpu_pointer();
-+	printf("testing critical section\n");
-+	test_critical_section();
-+	printf("testing critical section is interrupted by signal\n");
-+	test_signal_interrupts();
-+
-+	return 0;
-+}
-+
-diff --git a/tools/testing/selftests/rseq/rseq.c b/tools/testing/selftests/rseq/rseq.c
-new file mode 100644
-index 0000000..0ed5c8e
---- /dev/null
-+++ b/tools/testing/selftests/rseq/rseq.c
-@@ -0,0 +1,36 @@
-+#define _GNU_SOURCE
-+#include <assert.h>
-+#include <errno.h>
-+#include <sched.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <unistd.h>
-+
-+#include "rseq.h"
-+
-+__thread volatile struct rseq_state __rseq_state = { .cpu=-1 };
-+
-+#define __NR_rseq	325
-+
-+int sys_rseq(int flags,
-+	     volatile uint64_t* event_and_cpu,
-+	     volatile void* post_commit_instr)
-+{
-+	return syscall(__NR_rseq, flags,
-+		       (intptr_t)event_and_cpu,
-+		       (intptr_t)post_commit_instr);
-+}
-+
-+void rseq_init_current_thread(void)
-+{
-+	int rc = sys_rseq(0, &__rseq_state.storage,
-+			  &__rseq_state.post_commit_instr);
-+	if (rc) {
-+		fprintf(stderr,"Error: sys_rseq(...) failed(%d): %s\n",
-+			errno, strerror(errno));
-+		exit(1);
-+	}
-+	assert(rseq_current_cpu() != -1); /* always updated prior to return. */
-+}
-+
-diff --git a/tools/testing/selftests/rseq/rseq.h b/tools/testing/selftests/rseq/rseq.h
-new file mode 100644
-index 0000000..d16e02d
---- /dev/null
-+++ b/tools/testing/selftests/rseq/rseq.h
-@@ -0,0 +1,109 @@
-+#ifndef RSEQ_H
-+#define RSEQ_H
-+
-+#include <stdint.h>
-+
-+struct rseq_state {
-+	union {
-+		/*
-+		 * Updated by the kernel.  The time between two rseq state
-+		 * objects can be considered non-interrupted if-and-only-if
-+		 * both cpu and event_counter match.
-+		 *
-+		 * Explicitly: the kernel is allowed to maintain a
-+		 * per-cpu event_counter.
-+		 */
-+		struct {
-+			int cpu;
-+			int event_counter;
-+		};
-+		uint64_t storage;
-+	};
-+	void* post_commit_instr;
-+};
-+
-+extern __thread volatile struct rseq_state __rseq_state;
-+
-+int sys_rseq(int flags,
-+	     volatile uint64_t* event_and_cpu,
-+	     volatile void* post_commit_instr);
-+
-+#define barrier() __asm__ __volatile__("": : :"memory")
-+
-+static inline struct rseq_state rseq_start()
-+{
-+	struct rseq_state result = __rseq_state;
-+	/*
-+	 * We need to ensure that the compiler does not re-order the loads of
-+	 * any protected values before we read the current state.
-+	 */
-+	barrier();
-+	return result;
-+}
-+
-+static inline int rseq_cpu_at_start(struct rseq_state start_value)
-+{
-+	return start_value.cpu;
-+}
-+
-+static inline int rseq_current_cpu(void)
-+{
-+	return __rseq_state.cpu;
-+}
-+
-+static inline int rseq_finish(intptr_t *p, intptr_t to_write,
-+			      struct rseq_state start_value)
-+{
-+#ifdef __x86_64__
-+	__asm__ __volatile__ goto (
-+			"movq $%l[failed], %%rcx\n"
-+			"movq $1f, %[commit_instr]\n"
-+			"cmpq %[start_value], %[current_value]\n"
-+			"jnz %l[failed]\n"
-+			"movq %[to_write], (%[target])\n"
-+			"1: movq $0, %[commit_instr]\n"
-+	  : /* no outputs */
-+	  : [start_value]"d"(start_value.storage),
-+	    [current_value]"m"(__rseq_state),
-+	    [to_write]"r"(to_write),
-+	    [target]"r"(p),
-+	    [commit_instr]"m"(__rseq_state.post_commit_instr)
-+	  : "rcx", "memory"
-+	  : failed
-+	);
-+#elif __i386__
-+	__asm__ __volatile__ goto (
-+			"movl $%l[failed], %%ecx\n"
-+			"movl $1f, %[post_commit_instr]\n"
-+			"cmp %[start_cpu], %[current_cpu]\n"
-+			"jnz %l[failed]\n"
-+			"cmp %[start_event], %[current_event]\n"
-+			"jnz %l[failed]\n"
-+			"movl %[to_write], (%[target])\n"
-+			"1: movl $0, %[post_commit_instr]\n"
-+	  : /* no outputs */
-+	  : [start_cpu]"a"(start_value.cpu),
-+	    [start_event]"d"(start_value.event_counter),
-+	    [current_cpu]"g"(__rseq_state.cpu),
-+	    [current_event]"g"(__rseq_state.event_counter),
-+	    [post_commit_instr]"g"(__rseq_state.post_commit_instr),
-+	    [to_write]"r"(to_write),
-+	    [target]"r"(p)
-+	  : "ecx", "memory"
-+	  : failed
-+	);
-+#else
-+#error unsupported target
-+#endif
-+	return 1;
-+failed:
-+	return 0;
-+}
-+
-+/*
-+ * Initialize rseq for the current thread.  Must be called once by any thread
-+ * which uses restartable_sequences.
-+ */
-+void rseq_init_current_thread(void);
-+
-+#endif  /* RSEQ_H_ */
+Perhaps if we *really* want this to appear through AF_ALG, the key
+subsystem could register its own RSA (and other) implementation(s) with
+the crypto subsystem. Then we could find some way that we can pass the
+key_serial_t through alg_setkey() instead of the actual key data
+without it (or Herbert) noticing that's what we're doing. But... ick.
+And I don't think we can select algorithms based on the actual key
+rather than the type. We should do it properly, if at all. And define
+the API as taking key IDs instead of having it be a nasty special-case
+hack for a specific (but really, very generic) algorithm provider.
+
+--=20
+dwmw2
+
+
+
+--=-wwW7s9sT9vrDXnrT4tG6
+Content-Type: application/x-pkcs7-signature; name="smime.p7s"
+Content-Disposition: attachment; filename="smime.p7s"
+Content-Transfer-Encoding: base64
+
+MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIISjjCCBicw
+ggUPoAMCAQICAw3vNzANBgkqhkiG9w0BAQUFADCBjDELMAkGA1UEBhMCSUwxFjAUBgNVBAoTDVN0
+YXJ0Q29tIEx0ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRlIFNpZ25pbmcx
+ODA2BgNVBAMTL1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUgQ2xpZW50IENB
+MB4XDTE1MDUwNTA5NDM0MVoXDTE2MDUwNTA5NTMzNlowQjEcMBoGA1UEAwwTZHdtdzJAaW5mcmFk
+ZWFkLm9yZzEiMCAGCSqGSIb3DQEJARYTZHdtdzJAaW5mcmFkZWFkLm9yZzCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBAMkbm9kPbx1j/X4RVyf/pPKSYwelcco69TvnQQbKM8m8xkWjXJI1
+jpJ1jMaGUZGFToINMSZi7lZawUozudWbXSKy1SikENSTJHffsdRAIlsp+hR8vWvjsKUry6sEdqPG
+doa5RY7+N4WRusWZDYW/RRWE6i9EL9qV86CVPYqw22UBOUw4/j/HVGCV6TSB8yE5iEwhk/hUuzRr
+FZm1MJMR7mCS7BCR8Lr5jFY61lWpBiXNXIxLZCvDc26KR5L5tYX43iUVO3fzES1GRVoYnxxk2tmz
+fcsZG5vK+Trc9L8OZJfkYrEHH3+Iw41MQ0w/djVtYr1+HYldx0QmYXAtnhIj+UMCAwEAAaOCAtkw
+ggLVMAkGA1UdEwQCMAAwCwYDVR0PBAQDAgSwMB0GA1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcD
+BDAdBgNVHQ4EFgQUszC96C3w5/2+d+atSr0IpT26YI4wHwYDVR0jBBgwFoAUU3Ltkpzg2ssBXHx+
+ljVO8tS4UYIwHgYDVR0RBBcwFYETZHdtdzJAaW5mcmFkZWFkLm9yZzCCAUwGA1UdIASCAUMwggE/
+MIIBOwYLKwYBBAGBtTcBAgMwggEqMC4GCCsGAQUFBwIBFiJodHRwOi8vd3d3LnN0YXJ0c3NsLmNv
+bS9wb2xpY3kucGRmMIH3BggrBgEFBQcCAjCB6jAnFiBTdGFydENvbSBDZXJ0aWZpY2F0aW9uIEF1
+dGhvcml0eTADAgEBGoG+VGhpcyBjZXJ0aWZpY2F0ZSB3YXMgaXNzdWVkIGFjY29yZGluZyB0byB0
+aGUgQ2xhc3MgMSBWYWxpZGF0aW9uIHJlcXVpcmVtZW50cyBvZiB0aGUgU3RhcnRDb20gQ0EgcG9s
+aWN5LCByZWxpYW5jZSBvbmx5IGZvciB0aGUgaW50ZW5kZWQgcHVycG9zZSBpbiBjb21wbGlhbmNl
+IG9mIHRoZSByZWx5aW5nIHBhcnR5IG9ibGlnYXRpb25zLjA2BgNVHR8ELzAtMCugKaAnhiVodHRw
+Oi8vY3JsLnN0YXJ0c3NsLmNvbS9jcnR1MS1jcmwuY3JsMIGOBggrBgEFBQcBAQSBgTB/MDkGCCsG
+AQUFBzABhi1odHRwOi8vb2NzcC5zdGFydHNzbC5jb20vc3ViL2NsYXNzMS9jbGllbnQvY2EwQgYI
+KwYBBQUHMAKGNmh0dHA6Ly9haWEuc3RhcnRzc2wuY29tL2NlcnRzL3N1Yi5jbGFzczEuY2xpZW50
+LmNhLmNydDAjBgNVHRIEHDAahhhodHRwOi8vd3d3LnN0YXJ0c3NsLmNvbS8wDQYJKoZIhvcNAQEF
+BQADggEBAHMQmxHHodpS85X8HRyxhvfkys7r+taCNOaNU9cxQu/cZ/6k5nS2qGNMzZ6jb7ueY/V7
+7p+4DW/9ZWODDTf4Fz00mh5SSVc20Bz7t+hhxwHd62PZgENh5i76Qq2tw48U8AsYo5damHby1epf
+neZafLpUkLLO7AGBJIiRVTevdvyXQ0qnixOmKMWyvrhSNGuVIKVdeqLP+102Dwf+dpFyw+j1hz28
+jEEKpHa+NR1b2kXuSPi/rMGhexwlJOh4tK8KQ6Ryr0rIN//NSbOgbyYZrzc/ZUWX9V5OA84ChFb2
+vkFl0OcYrttp/rhDBLITwffPxSZeoBh9H7zYzkbCXKL3BUIwggYnMIIFD6ADAgECAgMN7zcwDQYJ
+KoZIhvcNAQEFBQAwgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQKEw1TdGFydENvbSBMdGQuMSswKQYD
+VQQLEyJTZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWduaW5nMTgwNgYDVQQDEy9TdGFydENv
+bSBDbGFzcyAxIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVudCBDQTAeFw0xNTA1MDUwOTQzNDFa
+Fw0xNjA1MDUwOTUzMzZaMEIxHDAaBgNVBAMME2R3bXcyQGluZnJhZGVhZC5vcmcxIjAgBgkqhkiG
+9w0BCQEWE2R3bXcyQGluZnJhZGVhZC5vcmcwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIB
+AQDJG5vZD28dY/1+EVcn/6TykmMHpXHKOvU750EGyjPJvMZFo1ySNY6SdYzGhlGRhU6CDTEmYu5W
+WsFKM7nVm10istUopBDUkyR337HUQCJbKfoUfL1r47ClK8urBHajxnaGuUWO/jeFkbrFmQ2Fv0UV
+hOovRC/alfOglT2KsNtlATlMOP4/x1Rglek0gfMhOYhMIZP4VLs0axWZtTCTEe5gkuwQkfC6+YxW
+OtZVqQYlzVyMS2Qrw3NuikeS+bWF+N4lFTt38xEtRkVaGJ8cZNrZs33LGRubyvk63PS/DmSX5GKx
+Bx9/iMONTENMP3Y1bWK9fh2JXcdEJmFwLZ4SI/lDAgMBAAGjggLZMIIC1TAJBgNVHRMEAjAAMAsG
+A1UdDwQEAwIEsDAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwQwHQYDVR0OBBYEFLMwvegt
+8Of9vnfmrUq9CKU9umCOMB8GA1UdIwQYMBaAFFNy7ZKc4NrLAVx8fpY1TvLUuFGCMB4GA1UdEQQX
+MBWBE2R3bXcyQGluZnJhZGVhZC5vcmcwggFMBgNVHSAEggFDMIIBPzCCATsGCysGAQQBgbU3AQID
+MIIBKjAuBggrBgEFBQcCARYiaHR0cDovL3d3dy5zdGFydHNzbC5jb20vcG9saWN5LnBkZjCB9wYI
+KwYBBQUHAgIwgeowJxYgU3RhcnRDb20gQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwAwIBARqBvlRo
+aXMgY2VydGlmaWNhdGUgd2FzIGlzc3VlZCBhY2NvcmRpbmcgdG8gdGhlIENsYXNzIDEgVmFsaWRh
+dGlvbiByZXF1aXJlbWVudHMgb2YgdGhlIFN0YXJ0Q29tIENBIHBvbGljeSwgcmVsaWFuY2Ugb25s
+eSBmb3IgdGhlIGludGVuZGVkIHB1cnBvc2UgaW4gY29tcGxpYW5jZSBvZiB0aGUgcmVseWluZyBw
+YXJ0eSBvYmxpZ2F0aW9ucy4wNgYDVR0fBC8wLTAroCmgJ4YlaHR0cDovL2NybC5zdGFydHNzbC5j
+b20vY3J0dTEtY3JsLmNybDCBjgYIKwYBBQUHAQEEgYEwfzA5BggrBgEFBQcwAYYtaHR0cDovL29j
+c3Auc3RhcnRzc2wuY29tL3N1Yi9jbGFzczEvY2xpZW50L2NhMEIGCCsGAQUFBzAChjZodHRwOi8v
+YWlhLnN0YXJ0c3NsLmNvbS9jZXJ0cy9zdWIuY2xhc3MxLmNsaWVudC5jYS5jcnQwIwYDVR0SBBww
+GoYYaHR0cDovL3d3dy5zdGFydHNzbC5jb20vMA0GCSqGSIb3DQEBBQUAA4IBAQBzEJsRx6HaUvOV
+/B0csYb35MrO6/rWgjTmjVPXMULv3Gf+pOZ0tqhjTM2eo2+7nmP1e+6fuA1v/WVjgw03+Bc9NJoe
+UklXNtAc+7foYccB3etj2YBDYeYu+kKtrcOPFPALGKOXWph28tXqX53mWny6VJCyzuwBgSSIkVU3
+r3b8l0NKp4sTpijFsr64UjRrlSClXXqiz/tdNg8H/naRcsPo9Yc9vIxBCqR2vjUdW9pF7kj4v6zB
+oXscJSToeLSvCkOkcq9KyDf/zUmzoG8mGa83P2VFl/VeTgPOAoRW9r5BZdDnGK7baf64QwSyE8H3
+z8UmXqAYfR+82M5Gwlyi9wVCMIIGNDCCBBygAwIBAgIBHjANBgkqhkiG9w0BAQUFADB9MQswCQYD
+VQQGEwJJTDEWMBQGA1UEChMNU3RhcnRDb20gTHRkLjErMCkGA1UECxMiU2VjdXJlIERpZ2l0YWwg
+Q2VydGlmaWNhdGUgU2lnbmluZzEpMCcGA1UEAxMgU3RhcnRDb20gQ2VydGlmaWNhdGlvbiBBdXRo
+b3JpdHkwHhcNMDcxMDI0MjEwMTU1WhcNMTcxMDI0MjEwMTU1WjCBjDELMAkGA1UEBhMCSUwxFjAU
+BgNVBAoTDVN0YXJ0Q29tIEx0ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRl
+IFNpZ25pbmcxODA2BgNVBAMTL1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUg
+Q2xpZW50IENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxwmDzM4t2BqxKaQuE6uW
+vooyg4ymiEGWVUet1G8SD+rqvyNH4QrvnEIaFHxOhESip7vMz39ScLpNLbL1QpOlPW/tFIzNHS3q
+d2XRNYG5Sv9RcGE+T4qbLtsjjJbi6sL7Ls/f/X9ftTyhxvxWkf8KW37iKrueKsxw2HqolH7GM6FX
+5UfNAwAu4ZifkpmZzU1slBhyWwaQPEPPZRsWoTb7q8hmgv6Nv3Hg9rmA1/VPBIOQ6SKRkHXG0Hhm
+q1dOFoAFI411+a/9nWm5rcVjGcIWZ2v/43Yksq60jExipA4l5uv9/+Hm33mbgmCszdj/Dthf13tg
+Av2O83hLJ0exTqfrlwIDAQABo4IBrTCCAakwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC
+AQYwHQYDVR0OBBYEFFNy7ZKc4NrLAVx8fpY1TvLUuFGCMB8GA1UdIwQYMBaAFE4L7xqkQFulF2mH
+MMo0aEPQQa7yMGYGCCsGAQUFBwEBBFowWDAnBggrBgEFBQcwAYYbaHR0cDovL29jc3Auc3RhcnRz
+c2wuY29tL2NhMC0GCCsGAQUFBzAChiFodHRwOi8vd3d3LnN0YXJ0c3NsLmNvbS9zZnNjYS5jcnQw
+WwYDVR0fBFQwUjAnoCWgI4YhaHR0cDovL3d3dy5zdGFydHNzbC5jb20vc2ZzY2EuY3JsMCegJaAj
+hiFodHRwOi8vY3JsLnN0YXJ0c3NsLmNvbS9zZnNjYS5jcmwwgYAGA1UdIAR5MHcwdQYLKwYBBAGB
+tTcBAgEwZjAuBggrBgEFBQcCARYiaHR0cDovL3d3dy5zdGFydHNzbC5jb20vcG9saWN5LnBkZjA0
+BggrBgEFBQcCARYoaHR0cDovL3d3dy5zdGFydHNzbC5jb20vaW50ZXJtZWRpYXRlLnBkZjANBgkq
+hkiG9w0BAQUFAAOCAgEACoMIfXirLAZcuGOMXq4cuSN3TaFx2H2GvD5VSy/6rV55BYHbWNaPeQn3
+oBSU8KgQZn/Kck1JxbLpAxVCNtsxeW1R87ifhsYZ0qjdrA9anrW2MAWCtosmAOT4OxK9QPoSjCMx
+M3HbkZCDJgnlE8jMopH21BbyAYr7b5EfGRQJNtgWcvqSXwKHnTutR08+Kkn0KAkXCzeQNLeA5LlY
+UzFyM7kPAp8pIRMQ+seHunmyG642S2+y/qHEdMuGIwpfz3eDF1PdctL04qYK/zu+Qg1Bw0RwgigV
+Zs/0c5HP2/e9DBHh7eSwtzYlk4AUr6yxLlcwSjOfOmKEQ/Q8tzh0IFiNu9IPuTGAPBn4CPxD0+Ru
+8T2wg8/s43R/PT3kd1OEqOJUl7q+h+r6fpvU0Fzxd2tC8Ga6fDEPme+1Nbi+03pVjuZQKbGwKJ66
+gEn06WqaxVZC+J8hh/jR0k9mST1iAZPNYulcNJ8tKmVtjYsv0L1TSm2+NwON58tO+pIVzu3DWwSE
+XSf+qkDavQam+QtEOZxLBXI++aMUEapSn+k3Lxm48ZCYfAWLb/Xj7F5JQMbZvCexglAbYR0kIHqW
+5DnsYSdMD/IplJMojx0NBrxJ3fN9dvX2Y6BIXRsF1du4qESm4/3CKuyUV7p9DW3mPlHTGLvYxnyK
+Qy7VFBkoLINszBrOUeIxggNvMIIDawIBATCBlDCBjDELMAkGA1UEBhMCSUwxFjAUBgNVBAoTDVN0
+YXJ0Q29tIEx0ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRlIFNpZ25pbmcx
+ODA2BgNVBAMTL1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUgQ2xpZW50IENB
+AgMN7zcwCQYFKw4DAhoFAKCCAa8wGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0B
+CQUxDxcNMTUxMDI4MDAzNzAyWjAjBgkqhkiG9w0BCQQxFgQUp69MdpxHvEEaBjGrzs1JpuuWUokw
+gaUGCSsGAQQBgjcQBDGBlzCBlDCBjDELMAkGA1UEBhMCSUwxFjAUBgNVBAoTDVN0YXJ0Q29tIEx0
+ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRlIFNpZ25pbmcxODA2BgNVBAMT
+L1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUgQ2xpZW50IENBAgMN7zcwgacG
+CyqGSIb3DQEJEAILMYGXoIGUMIGMMQswCQYDVQQGEwJJTDEWMBQGA1UEChMNU3RhcnRDb20gTHRk
+LjErMCkGA1UECxMiU2VjdXJlIERpZ2l0YWwgQ2VydGlmaWNhdGUgU2lnbmluZzE4MDYGA1UEAxMv
+U3RhcnRDb20gQ2xhc3MgMSBQcmltYXJ5IEludGVybWVkaWF0ZSBDbGllbnQgQ0ECAw3vNzANBgkq
+hkiG9w0BAQEFAASCAQC+LSvJ1I3FL1pbNcvXKrmDqDzVIakZp8gyVxUKhJmH0AxMkydvorNYIb4Q
+y/R99wU7H+tm5xvM6hS9zKf8JvchfEMA7DAG1CLF4MlCv9ypw1ZDLLfd2MYa6VdxRQmN8LKzjIZh
+5jxiTTxyoiyUyoXRWo5mLgHtSFd0j6o0Re0uYAj+tO6SncOXCJ49HEIAM2AYQJhD5r2ZmnUH2m+J
+UPqq1pn10RKmtutDAxO1mEumFWrakQv9g0jA0EUV4OaAkf7TNQ0ZGXxugzavv/uLjRhqRPlWb4ij
+nVrhaQyIx4wP0kNOjf6FsAyGxQubVX3EdiiYTvtxiw+hn80zfenckhmiAAAAAAAA
+
+
+--=-wwW7s9sT9vrDXnrT4tG6--
