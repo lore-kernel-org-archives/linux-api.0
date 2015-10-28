@@ -1,50 +1,123 @@
-From: Paul Turner <commonly-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC PATCH v2 2/3] restartable sequences: x86 ABI
-Date: Tue, 27 Oct 2015 22:19:24 -0700
-Message-ID: <CADm5QV90dE+05in-P9_ZjcF=mB173gFmD=LALxNDeye0HZ1Zug@mail.gmail.com>
-References: <20151027235635.16059.11630.stgit@pjt-glaptop.roam.corp.google.com>
- <20151027235705.16059.63268.stgit@pjt-glaptop.roam.corp.google.com> <20151028050314.GC11242@worktop.amr.corp.intel.com>
+From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH] arch: uapi: asm: mman.h: Let MADV_FREE have same value
+ for all architectures
+Date: Wed, 28 Oct 2015 16:18:43 +0900
+Message-ID: <20151028071843.GH26803@bbox>
+References: <5480E715.3020900@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151028050314.GC11242-IIpfhp3q70xmmu7s1q4rt2t3HXsI98Cx0E9HWUfgJXw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <5480E715.3020900-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+To: Chen Gang <gang.chen.5i5j-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org" <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org" <rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org>, "ink-biIs/Y0ymYJMZLIVYojuPNP0rXTJTi09@public.gmane.org" <ink-biIs/Y0ymYJMZLIVYojuPNP0rXTJTi09@public.gmane.org>, "mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, "jejb-6jwH94ZQLHl74goWV3ctuw@public.gmane.org" <jejb-6jwH94ZQLHl74goWV3ctuw@public.gmane.org>, "deller-Mmb7MZpHnFY@public.gmane.org" <deller-Mmb7MZpHnFY@public.gmane.org>, "chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org" <chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org>, "jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 27, 2015 at 10:03 PM, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
->
-> On Tue, Oct 27, 2015 at 04:57:05PM -0700, Paul Turner wrote:
-> > +static void rseq_sched_out(struct preempt_notifier *pn,
-> > +                        struct task_struct *next)
-> > +{
-> > +     set_thread_flag(TIF_NOTIFY_RESUME);
-> > +}
-> >
-> >  static __read_mostly struct preempt_ops rseq_preempt_ops = {
-> >       .sched_in = rseq_sched_in_nop,
-> > -     .sched_out = rseq_sched_out_nop,
-> > +     .sched_out = rseq_sched_out,
-> >  };
->
-> Since we're unconditionally setting this TIF flag for these tasks, can't
-> we introduce something similar to the (contested) TIF_NOHZ_FULL thing
-> which is kept on the task indefinitely.
->
-So Andy and I talked about this also, I'm in favor, in particular this
-has two nice effects:
- a) In exit_to_usermode_loop() we can ensure that this is evaluated
-prior to _TIF_SIGPENDING.  This removes the current requirement that
-we also validate this state in setup_rt_frame() [which can perturb
-this state prior to our existing notifier].
- b) We avoid spurious interactions with other things that use notify resume.
+Hello Chen,
 
-> That avoids having the preempt notifiers and this atomic op in the
-> schedule path.
+n Fri, Dec 05, 2014 at 06:58:29AM +0800, Chen Gang wrote:
+> For uapi, need try to let all macros have same value, and MADV_FREE is
+> added into main branch recently, so need redefine MADV_FREE for it.
+> 
+> At present, '8' can be shared with all architectures, so redefine it to
+> '8'.
 
+Recently, I cleaned MADV_FREE patchset up and will send uptodate version
+to Andrew to replace old implementation in mmotm tree which is not a
+linus's tree so this change shouldn't break anyting.
 
-So we still want something there (although it can be definitely be
-inlined as opposed to a preempt_notifier) since this allows us to only
-evaluate this check on returns to user-space that might matter as
-opposed to every syscall.
+When I look at status of this patch, it seems Andrew missed it
+so I want to include this patch when I respin if you don't mind.
+
+Is it okay for you?
+
+Thanks.
+
+> 
+> Signed-off-by: Chen Gang <gang.chen.5i5j-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> ---
+>  arch/alpha/include/uapi/asm/mman.h     | 2 +-
+>  arch/mips/include/uapi/asm/mman.h      | 2 +-
+>  arch/parisc/include/uapi/asm/mman.h    | 2 +-
+>  arch/xtensa/include/uapi/asm/mman.h    | 2 +-
+>  include/uapi/asm-generic/mman-common.h | 2 +-
+>  5 files changed, 5 insertions(+), 5 deletions(-)
+> 
+> diff --git a/arch/alpha/include/uapi/asm/mman.h b/arch/alpha/include/uapi/asm/mman.h
+> index 836fbd4..0b8a5de 100644
+> --- a/arch/alpha/include/uapi/asm/mman.h
+> +++ b/arch/alpha/include/uapi/asm/mman.h
+> @@ -44,9 +44,9 @@
+>  #define MADV_WILLNEED	3		/* will need these pages */
+>  #define	MADV_SPACEAVAIL	5		/* ensure resources are available */
+>  #define MADV_DONTNEED	6		/* don't need these pages */
+> -#define MADV_FREE	7		/* free pages only if memory pressure */
+>  
+>  /* common/generic parameters */
+> +#define MADV_FREE	8		/* free pages only if memory pressure */
+>  #define MADV_REMOVE	9		/* remove these pages & resources */
+>  #define MADV_DONTFORK	10		/* don't inherit across fork */
+>  #define MADV_DOFORK	11		/* do inherit across fork */
+> diff --git a/arch/mips/include/uapi/asm/mman.h b/arch/mips/include/uapi/asm/mman.h
+> index 106e741..d247f54 100644
+> --- a/arch/mips/include/uapi/asm/mman.h
+> +++ b/arch/mips/include/uapi/asm/mman.h
+> @@ -67,9 +67,9 @@
+>  #define MADV_SEQUENTIAL 2		/* expect sequential page references */
+>  #define MADV_WILLNEED	3		/* will need these pages */
+>  #define MADV_DONTNEED	4		/* don't need these pages */
+> -#define MADV_FREE	5		/* free pages only if memory pressure */
+>  
+>  /* common parameters: try to keep these consistent across architectures */
+> +#define MADV_FREE	8		/* free pages only if memory pressure */
+>  #define MADV_REMOVE	9		/* remove these pages & resources */
+>  #define MADV_DONTFORK	10		/* don't inherit across fork */
+>  #define MADV_DOFORK	11		/* do inherit across fork */
+> diff --git a/arch/parisc/include/uapi/asm/mman.h b/arch/parisc/include/uapi/asm/mman.h
+> index 6cb8db7..700d83f 100644
+> --- a/arch/parisc/include/uapi/asm/mman.h
+> +++ b/arch/parisc/include/uapi/asm/mman.h
+> @@ -40,9 +40,9 @@
+>  #define MADV_SPACEAVAIL 5               /* insure that resources are reserved */
+>  #define MADV_VPS_PURGE  6               /* Purge pages from VM page cache */
+>  #define MADV_VPS_INHERIT 7              /* Inherit parents page size */
+> -#define MADV_FREE	8		/* free pages only if memory pressure */
+>  
+>  /* common/generic parameters */
+> +#define MADV_FREE	8		/* free pages only if memory pressure */
+>  #define MADV_REMOVE	9		/* remove these pages & resources */
+>  #define MADV_DONTFORK	10		/* don't inherit across fork */
+>  #define MADV_DOFORK	11		/* do inherit across fork */
+> diff --git a/arch/xtensa/include/uapi/asm/mman.h b/arch/xtensa/include/uapi/asm/mman.h
+> index 1b19f25..77eaca4 100644
+> --- a/arch/xtensa/include/uapi/asm/mman.h
+> +++ b/arch/xtensa/include/uapi/asm/mman.h
+> @@ -80,9 +80,9 @@
+>  #define MADV_SEQUENTIAL	2		/* expect sequential page references */
+>  #define MADV_WILLNEED	3		/* will need these pages */
+>  #define MADV_DONTNEED	4		/* don't need these pages */
+> -#define MADV_FREE	5		/* free pages only if memory pressure */
+>  
+>  /* common parameters: try to keep these consistent across architectures */
+> +#define MADV_FREE	8		/* free pages only if memory pressure */
+>  #define MADV_REMOVE	9		/* remove these pages & resources */
+>  #define MADV_DONTFORK	10		/* don't inherit across fork */
+>  #define MADV_DOFORK	11		/* do inherit across fork */
+> diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
+> index 7a94102..8695959 100644
+> --- a/include/uapi/asm-generic/mman-common.h
+> +++ b/include/uapi/asm-generic/mman-common.h
+> @@ -34,9 +34,9 @@
+>  #define MADV_SEQUENTIAL	2		/* expect sequential page references */
+>  #define MADV_WILLNEED	3		/* will need these pages */
+>  #define MADV_DONTNEED	4		/* don't need these pages */
+> -#define MADV_FREE	5		/* free pages only if memory pressure */
+>  
+>  /* common parameters: try to keep these consistent across architectures */
+> +#define MADV_FREE	8		/* free pages only if memory pressure */
+>  #define MADV_REMOVE	9		/* remove these pages & resources */
+>  #define MADV_DONTFORK	10		/* don't inherit across fork */
+>  #define MADV_DOFORK	11		/* do inherit across fork */
+> -- 
+> 1.9.3
