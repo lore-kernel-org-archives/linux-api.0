@@ -1,123 +1,121 @@
-From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+From: Chen Gang <xili_gchen_5257@hotmail.com>
 Subject: Re: [PATCH] arch: uapi: asm: mman.h: Let MADV_FREE have same value
  for all architectures
-Date: Wed, 28 Oct 2015 16:18:43 +0900
-Message-ID: <20151028071843.GH26803@bbox>
+Date: Wed, 28 Oct 2015 16:45:48 +0800
+Message-ID: <COL130-W37C2F06A47515014535992B9210@phx.gbl>
 References: <5480E715.3020900@gmail.com>
+ <20151028071843.GH26803@bbox>,<56308B0B.3000801@hotmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <5480E715.3020900-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Chen Gang <gang.chen.5i5j-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: "akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org" <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org" <rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org>, "ink-biIs/Y0ymYJMZLIVYojuPNP0rXTJTi09@public.gmane.org" <ink-biIs/Y0ymYJMZLIVYojuPNP0rXTJTi09@public.gmane.org>, "mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, "jejb-6jwH94ZQLHl74goWV3ctuw@public.gmane.org" <jejb-6jwH94ZQLHl74goWV3ctuw@public.gmane.org>, "deller-Mmb7MZpHnFY@public.gmane.org" <deller-Mmb7MZpHnFY@public.gmane.org>, "chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org" <chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org>, "jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="gb2312"
+Content-Transfer-Encoding: base64
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <56308B0B.3000801@hotmail.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Minchan Kim <minchan@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, "rth@twiddle.net" <rth@twiddle.net>, "ink@jurassic.park.msu.ru" <ink@jurassic.park.msu.ru>, "mattst88@gmail.com" <mattst88@gmail.com>, Ralf Baechle <ralf@linux-mips.org>, "jejb@parisc-linux.org" <jejb@parisc-linux.org>, "deller@gmx.de" <deller@gmx.de>, "chris@zankel.net" <chris@zankel.net>, Max Filippov <jcmvbkbc@gmail.com>, Arnd Bergmann <arnd@arndb.de>, kernel mailing list <linux-kernel@vger.kernel.org>, "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "gang.chen.5i5j@gmail.com" <gang.chen.5i5j@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Hello Chen,
-
-n Fri, Dec 05, 2014 at 06:58:29AM +0800, Chen Gang wrote:
-> For uapi, need try to let all macros have same value, and MADV_FREE is
-> added into main branch recently, so need redefine MADV_FREE for it.
-> 
-> At present, '8' can be shared with all architectures, so redefine it to
-> '8'.
-
-Recently, I cleaned MADV_FREE patchset up and will send uptodate version
-to Andrew to replace old implementation in mmotm tree which is not a
-linus's tree so this change shouldn't break anyting.
-
-When I look at status of this patch, it seems Andrew missed it
-so I want to include this patch when I respin if you don't mind.
-
-Is it okay for you?
-
-Thanks.
-
-> 
-> Signed-off-by: Chen Gang <gang.chen.5i5j-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> ---
->  arch/alpha/include/uapi/asm/mman.h     | 2 +-
->  arch/mips/include/uapi/asm/mman.h      | 2 +-
->  arch/parisc/include/uapi/asm/mman.h    | 2 +-
->  arch/xtensa/include/uapi/asm/mman.h    | 2 +-
->  include/uapi/asm-generic/mman-common.h | 2 +-
->  5 files changed, 5 insertions(+), 5 deletions(-)
-> 
-> diff --git a/arch/alpha/include/uapi/asm/mman.h b/arch/alpha/include/uapi/asm/mman.h
-> index 836fbd4..0b8a5de 100644
-> --- a/arch/alpha/include/uapi/asm/mman.h
-> +++ b/arch/alpha/include/uapi/asm/mman.h
-> @@ -44,9 +44,9 @@
->  #define MADV_WILLNEED	3		/* will need these pages */
->  #define	MADV_SPACEAVAIL	5		/* ensure resources are available */
->  #define MADV_DONTNEED	6		/* don't need these pages */
-> -#define MADV_FREE	7		/* free pages only if memory pressure */
->  
->  /* common/generic parameters */
-> +#define MADV_FREE	8		/* free pages only if memory pressure */
->  #define MADV_REMOVE	9		/* remove these pages & resources */
->  #define MADV_DONTFORK	10		/* don't inherit across fork */
->  #define MADV_DOFORK	11		/* do inherit across fork */
-> diff --git a/arch/mips/include/uapi/asm/mman.h b/arch/mips/include/uapi/asm/mman.h
-> index 106e741..d247f54 100644
-> --- a/arch/mips/include/uapi/asm/mman.h
-> +++ b/arch/mips/include/uapi/asm/mman.h
-> @@ -67,9 +67,9 @@
->  #define MADV_SEQUENTIAL 2		/* expect sequential page references */
->  #define MADV_WILLNEED	3		/* will need these pages */
->  #define MADV_DONTNEED	4		/* don't need these pages */
-> -#define MADV_FREE	5		/* free pages only if memory pressure */
->  
->  /* common parameters: try to keep these consistent across architectures */
-> +#define MADV_FREE	8		/* free pages only if memory pressure */
->  #define MADV_REMOVE	9		/* remove these pages & resources */
->  #define MADV_DONTFORK	10		/* don't inherit across fork */
->  #define MADV_DOFORK	11		/* do inherit across fork */
-> diff --git a/arch/parisc/include/uapi/asm/mman.h b/arch/parisc/include/uapi/asm/mman.h
-> index 6cb8db7..700d83f 100644
-> --- a/arch/parisc/include/uapi/asm/mman.h
-> +++ b/arch/parisc/include/uapi/asm/mman.h
-> @@ -40,9 +40,9 @@
->  #define MADV_SPACEAVAIL 5               /* insure that resources are reserved */
->  #define MADV_VPS_PURGE  6               /* Purge pages from VM page cache */
->  #define MADV_VPS_INHERIT 7              /* Inherit parents page size */
-> -#define MADV_FREE	8		/* free pages only if memory pressure */
->  
->  /* common/generic parameters */
-> +#define MADV_FREE	8		/* free pages only if memory pressure */
->  #define MADV_REMOVE	9		/* remove these pages & resources */
->  #define MADV_DONTFORK	10		/* don't inherit across fork */
->  #define MADV_DOFORK	11		/* do inherit across fork */
-> diff --git a/arch/xtensa/include/uapi/asm/mman.h b/arch/xtensa/include/uapi/asm/mman.h
-> index 1b19f25..77eaca4 100644
-> --- a/arch/xtensa/include/uapi/asm/mman.h
-> +++ b/arch/xtensa/include/uapi/asm/mman.h
-> @@ -80,9 +80,9 @@
->  #define MADV_SEQUENTIAL	2		/* expect sequential page references */
->  #define MADV_WILLNEED	3		/* will need these pages */
->  #define MADV_DONTNEED	4		/* don't need these pages */
-> -#define MADV_FREE	5		/* free pages only if memory pressure */
->  
->  /* common parameters: try to keep these consistent across architectures */
-> +#define MADV_FREE	8		/* free pages only if memory pressure */
->  #define MADV_REMOVE	9		/* remove these pages & resources */
->  #define MADV_DONTFORK	10		/* don't inherit across fork */
->  #define MADV_DOFORK	11		/* do inherit across fork */
-> diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
-> index 7a94102..8695959 100644
-> --- a/include/uapi/asm-generic/mman-common.h
-> +++ b/include/uapi/asm-generic/mman-common.h
-> @@ -34,9 +34,9 @@
->  #define MADV_SEQUENTIAL	2		/* expect sequential page references */
->  #define MADV_WILLNEED	3		/* will need these pages */
->  #define MADV_DONTNEED	4		/* don't need these pages */
-> -#define MADV_FREE	5		/* free pages only if memory pressure */
->  
->  /* common parameters: try to keep these consistent across architectures */
-> +#define MADV_FREE	8		/* free pages only if memory pressure */
->  #define MADV_REMOVE	9		/* remove these pages & resources */
->  #define MADV_DONTFORK	10		/* don't inherit across fork */
->  #define MADV_DOFORK	11		/* do inherit across fork */
-> -- 
-> 1.9.3
+T24gMjAxNcTqMTDUwjI4yNUgMTU6MTgsIE1pbmNoYW4gS2ltIHdyb3RlOgo+IEhlbGxvIENoZW4s
+Cj4KPiBuIEZyaSwgRGVjIDA1LCAyMDE0IGF0IDA2OjU4OjI5QU0gKzA4MDAsIENoZW4gR2FuZyB3
+cm90ZToKPj4gRm9yIHVhcGksIG5lZWQgdHJ5IHRvIGxldCBhbGwgbWFjcm9zIGhhdmUgc2FtZSB2
+YWx1ZSwgYW5kIE1BRFZfRlJFRSBpcwo+PiBhZGRlZCBpbnRvIG1haW4gYnJhbmNoIHJlY2VudGx5
+LCBzbyBuZWVkIHJlZGVmaW5lIE1BRFZfRlJFRSBmb3IgaXQuCj4+Cj4+IEF0IHByZXNlbnQsICc4
+JyBjYW4gYmUgc2hhcmVkIHdpdGggYWxsIGFyY2hpdGVjdHVyZXMsIHNvIHJlZGVmaW5lIGl0IHRv
+Cj4+ICc4Jy4KPgo+IFJlY2VudGx5LCBJIGNsZWFuZWQgTUFEVl9GUkVFIHBhdGNoc2V0IHVwIGFu
+ZCB3aWxsIHNlbmQgdXB0b2RhdGUgdmVyc2lvbgo+IHRvIEFuZHJldyB0byByZXBsYWNlIG9sZCBp
+bXBsZW1lbnRhdGlvbiBpbiBtbW90bSB0cmVlIHdoaWNoIGlzIG5vdCBhCj4gbGludXMncyB0cmVl
+IHNvIHRoaXMgY2hhbmdlIHNob3VsZG4ndCBicmVhayBhbnl0aW5nLgo+Cj4gV2hlbiBJIGxvb2sg
+YXQgc3RhdHVzIG9mIHRoaXMgcGF0Y2gsIGl0IHNlZW1zIEFuZHJldyBtaXNzZWQgaXQKPiBzbyBJ
+IHdhbnQgdG8gaW5jbHVkZSB0aGlzIHBhdGNoIHdoZW4gSSByZXNwaW4gaWYgeW91IGRvbid0IG1p
+bmQuCj4KPiBJcyBpdCBva2F5IGZvciB5b3U/Cj4KCkZvciBtZSwgaXQgaXMgT0suIEFuZCB0aGFu
+ayB5b3UgZm9yIHlvdXIgd29yay4gOi0pCgoKPiBUaGFua3MuCj4KPj4KPj4gU2lnbmVkLW9mZi1i
+eTogQ2hlbiBHYW5nIDxnYW5nLmNoZW4uNWk1akBnbWFpbC5jb20+Cj4+IC0tLQo+PiAgYXJjaC9h
+bHBoYS9pbmNsdWRlL3VhcGkvYXNtL21tYW4uaCAgICAgfCAyICstCj4+ICBhcmNoL21pcHMvaW5j
+bHVkZS91YXBpL2FzbS9tbWFuLmggICAgICB8IDIgKy0KPj4gIGFyY2gvcGFyaXNjL2luY2x1ZGUv
+dWFwaS9hc20vbW1hbi5oICAgIHwgMiArLQo+PiAgYXJjaC94dGVuc2EvaW5jbHVkZS91YXBpL2Fz
+bS9tbWFuLmggICAgfCAyICstCj4+ICBpbmNsdWRlL3VhcGkvYXNtLWdlbmVyaWMvbW1hbi1jb21t
+b24uaCB8IDIgKy0KPj4gIDUgZmlsZXMgY2hhbmdlZCwgNSBpbnNlcnRpb25zKCspLCA1IGRlbGV0
+aW9ucygtKQo+Pgo+PiBkaWZmIC0tZ2l0IGEvYXJjaC9hbHBoYS9pbmNsdWRlL3VhcGkvYXNtL21t
+YW4uaCBiL2FyY2gvYWxwaGEvaW5jbHVkZS91YXBpL2FzbS9tbWFuLmgKPj4gaW5kZXggODM2ZmJk
+NC4uMGI4YTVkZSAxMDA2NDQKPj4gLS0tIGEvYXJjaC9hbHBoYS9pbmNsdWRlL3VhcGkvYXNtL21t
+YW4uaAo+PiArKysgYi9hcmNoL2FscGhhL2luY2x1ZGUvdWFwaS9hc20vbW1hbi5oCj4+IEBAIC00
+NCw5ICs0NCw5IEBACj4+ICAjZGVmaW5lIE1BRFZfV0lMTE5FRUQgICAgICAgMyAgICAgICAgICAg
+ICAgIC8qIHdpbGwgbmVlZCB0aGVzZSBwYWdlcyAqLwo+PiAgI2RlZmluZSAgICAgTUFEVl9TUEFD
+RUFWQUlMIDUgICAgICAgICAgICAgICAvKiBlbnN1cmUgcmVzb3VyY2VzIGFyZSBhdmFpbGFibGUg
+Ki8KPj4gICNkZWZpbmUgTUFEVl9ET05UTkVFRCAgICAgICA2ICAgICAgICAgICAgICAgLyogZG9u
+J3QgbmVlZCB0aGVzZSBwYWdlcyAqLwo+PiAtI2RlZmluZSBNQURWX0ZSRUUgICA3ICAgICAgICAg
+ICAgICAgLyogZnJlZSBwYWdlcyBvbmx5IGlmIG1lbW9yeSBwcmVzc3VyZSAqLwo+Pgo+PiAgLyog
+Y29tbW9uL2dlbmVyaWMgcGFyYW1ldGVycyAqLwo+PiArI2RlZmluZSBNQURWX0ZSRUUgICA4ICAg
+ICAgICAgICAgICAgLyogZnJlZSBwYWdlcyBvbmx5IGlmIG1lbW9yeSBwcmVzc3VyZSAqLwo+PiAg
+I2RlZmluZSBNQURWX1JFTU9WRSA5ICAgICAgICAgICAgICAgLyogcmVtb3ZlIHRoZXNlIHBhZ2Vz
+ICYgcmVzb3VyY2VzICovCj4+ICAjZGVmaW5lIE1BRFZfRE9OVEZPUksgICAgICAgMTAgICAgICAg
+ICAgICAgIC8qIGRvbid0IGluaGVyaXQgYWNyb3NzIGZvcmsgKi8KPj4gICNkZWZpbmUgTUFEVl9E
+T0ZPUksgMTEgICAgICAgICAgICAgIC8qIGRvIGluaGVyaXQgYWNyb3NzIGZvcmsgKi8KPj4gZGlm
+ZiAtLWdpdCBhL2FyY2gvbWlwcy9pbmNsdWRlL3VhcGkvYXNtL21tYW4uaCBiL2FyY2gvbWlwcy9p
+bmNsdWRlL3VhcGkvYXNtL21tYW4uaAo+PiBpbmRleCAxMDZlNzQxLi5kMjQ3ZjU0IDEwMDY0NAo+
+PiAtLS0gYS9hcmNoL21pcHMvaW5jbHVkZS91YXBpL2FzbS9tbWFuLmgKPj4gKysrIGIvYXJjaC9t
+aXBzL2luY2x1ZGUvdWFwaS9hc20vbW1hbi5oCj4+IEBAIC02Nyw5ICs2Nyw5IEBACj4+ICAjZGVm
+aW5lIE1BRFZfU0VRVUVOVElBTCAyICAgICAgICAgICAvKiBleHBlY3Qgc2VxdWVudGlhbCBwYWdl
+IHJlZmVyZW5jZXMgKi8KPj4gICNkZWZpbmUgTUFEVl9XSUxMTkVFRCAgICAgICAzICAgICAgICAg
+ICAgICAgLyogd2lsbCBuZWVkIHRoZXNlIHBhZ2VzICovCj4+ICAjZGVmaW5lIE1BRFZfRE9OVE5F
+RUQgICAgICAgNCAgICAgICAgICAgICAgIC8qIGRvbid0IG5lZWQgdGhlc2UgcGFnZXMgKi8KPj4g
+LSNkZWZpbmUgTUFEVl9GUkVFICAgNSAgICAgICAgICAgICAgIC8qIGZyZWUgcGFnZXMgb25seSBp
+ZiBtZW1vcnkgcHJlc3N1cmUgKi8KPj4KPj4gIC8qIGNvbW1vbiBwYXJhbWV0ZXJzOiB0cnkgdG8g
+a2VlcCB0aGVzZSBjb25zaXN0ZW50IGFjcm9zcyBhcmNoaXRlY3R1cmVzICovCj4+ICsjZGVmaW5l
+IE1BRFZfRlJFRSAgIDggICAgICAgICAgICAgICAvKiBmcmVlIHBhZ2VzIG9ubHkgaWYgbWVtb3J5
+IHByZXNzdXJlICovCj4+ICAjZGVmaW5lIE1BRFZfUkVNT1ZFIDkgICAgICAgICAgICAgICAvKiBy
+ZW1vdmUgdGhlc2UgcGFnZXMgJiByZXNvdXJjZXMgKi8KPj4gICNkZWZpbmUgTUFEVl9ET05URk9S
+SyAgICAgICAxMCAgICAgICAgICAgICAgLyogZG9uJ3QgaW5oZXJpdCBhY3Jvc3MgZm9yayAqLwo+
+PiAgI2RlZmluZSBNQURWX0RPRk9SSyAxMSAgICAgICAgICAgICAgLyogZG8gaW5oZXJpdCBhY3Jv
+c3MgZm9yayAqLwo+PiBkaWZmIC0tZ2l0IGEvYXJjaC9wYXJpc2MvaW5jbHVkZS91YXBpL2FzbS9t
+bWFuLmggYi9hcmNoL3BhcmlzYy9pbmNsdWRlL3VhcGkvYXNtL21tYW4uaAo+PiBpbmRleCA2Y2I4
+ZGI3Li43MDBkODNmIDEwMDY0NAo+PiAtLS0gYS9hcmNoL3BhcmlzYy9pbmNsdWRlL3VhcGkvYXNt
+L21tYW4uaAo+PiArKysgYi9hcmNoL3BhcmlzYy9pbmNsdWRlL3VhcGkvYXNtL21tYW4uaAo+PiBA
+QCAtNDAsOSArNDAsOSBAQAo+PiAgI2RlZmluZSBNQURWX1NQQUNFQVZBSUwgNSAgICAgICAgICAg
+ICAgIC8qIGluc3VyZSB0aGF0IHJlc291cmNlcyBhcmUgcmVzZXJ2ZWQgKi8KPj4gICNkZWZpbmUg
+TUFEVl9WUFNfUFVSR0UgIDYgICAgICAgICAgICAgICAvKiBQdXJnZSBwYWdlcyBmcm9tIFZNIHBh
+Z2UgY2FjaGUgKi8KPj4gICNkZWZpbmUgTUFEVl9WUFNfSU5IRVJJVCA3ICAgICAgICAgICAgICAv
+KiBJbmhlcml0IHBhcmVudHMgcGFnZSBzaXplICovCj4+IC0jZGVmaW5lIE1BRFZfRlJFRSAgIDgg
+ICAgICAgICAgICAgICAvKiBmcmVlIHBhZ2VzIG9ubHkgaWYgbWVtb3J5IHByZXNzdXJlICovCj4+
+Cj4+ICAvKiBjb21tb24vZ2VuZXJpYyBwYXJhbWV0ZXJzICovCj4+ICsjZGVmaW5lIE1BRFZfRlJF
+RSAgIDggICAgICAgICAgICAgICAvKiBmcmVlIHBhZ2VzIG9ubHkgaWYgbWVtb3J5IHByZXNzdXJl
+ICovCj4+ICAjZGVmaW5lIE1BRFZfUkVNT1ZFIDkgICAgICAgICAgICAgICAvKiByZW1vdmUgdGhl
+c2UgcGFnZXMgJiByZXNvdXJjZXMgKi8KPj4gICNkZWZpbmUgTUFEVl9ET05URk9SSyAgICAgICAx
+MCAgICAgICAgICAgICAgLyogZG9uJ3QgaW5oZXJpdCBhY3Jvc3MgZm9yayAqLwo+PiAgI2RlZmlu
+ZSBNQURWX0RPRk9SSyAxMSAgICAgICAgICAgICAgLyogZG8gaW5oZXJpdCBhY3Jvc3MgZm9yayAq
+Lwo+PiBkaWZmIC0tZ2l0IGEvYXJjaC94dGVuc2EvaW5jbHVkZS91YXBpL2FzbS9tbWFuLmggYi9h
+cmNoL3h0ZW5zYS9pbmNsdWRlL3VhcGkvYXNtL21tYW4uaAo+PiBpbmRleCAxYjE5ZjI1Li43N2Vh
+Y2E0IDEwMDY0NAo+PiAtLS0gYS9hcmNoL3h0ZW5zYS9pbmNsdWRlL3VhcGkvYXNtL21tYW4uaAo+
+PiArKysgYi9hcmNoL3h0ZW5zYS9pbmNsdWRlL3VhcGkvYXNtL21tYW4uaAo+PiBAQCAtODAsOSAr
+ODAsOSBAQAo+PiAgI2RlZmluZSBNQURWX1NFUVVFTlRJQUwgICAgIDIgICAgICAgICAgICAgICAv
+KiBleHBlY3Qgc2VxdWVudGlhbCBwYWdlIHJlZmVyZW5jZXMgKi8KPj4gICNkZWZpbmUgTUFEVl9X
+SUxMTkVFRCAgICAgICAzICAgICAgICAgICAgICAgLyogd2lsbCBuZWVkIHRoZXNlIHBhZ2VzICov
+Cj4+ICAjZGVmaW5lIE1BRFZfRE9OVE5FRUQgICAgICAgNCAgICAgICAgICAgICAgIC8qIGRvbid0
+IG5lZWQgdGhlc2UgcGFnZXMgKi8KPj4gLSNkZWZpbmUgTUFEVl9GUkVFICAgNSAgICAgICAgICAg
+ICAgIC8qIGZyZWUgcGFnZXMgb25seSBpZiBtZW1vcnkgcHJlc3N1cmUgKi8KPj4KPj4gIC8qIGNv
+bW1vbiBwYXJhbWV0ZXJzOiB0cnkgdG8ga2VlcCB0aGVzZSBjb25zaXN0ZW50IGFjcm9zcyBhcmNo
+aXRlY3R1cmVzICovCj4+ICsjZGVmaW5lIE1BRFZfRlJFRSAgIDggICAgICAgICAgICAgICAvKiBm
+cmVlIHBhZ2VzIG9ubHkgaWYgbWVtb3J5IHByZXNzdXJlICovCj4+ICAjZGVmaW5lIE1BRFZfUkVN
+T1ZFIDkgICAgICAgICAgICAgICAvKiByZW1vdmUgdGhlc2UgcGFnZXMgJiByZXNvdXJjZXMgKi8K
+Pj4gICNkZWZpbmUgTUFEVl9ET05URk9SSyAgICAgICAxMCAgICAgICAgICAgICAgLyogZG9uJ3Qg
+aW5oZXJpdCBhY3Jvc3MgZm9yayAqLwo+PiAgI2RlZmluZSBNQURWX0RPRk9SSyAxMSAgICAgICAg
+ICAgICAgLyogZG8gaW5oZXJpdCBhY3Jvc3MgZm9yayAqLwo+PiBkaWZmIC0tZ2l0IGEvaW5jbHVk
+ZS91YXBpL2FzbS1nZW5lcmljL21tYW4tY29tbW9uLmggYi9pbmNsdWRlL3VhcGkvYXNtLWdlbmVy
+aWMvbW1hbi1jb21tb24uaAo+PiBpbmRleCA3YTk0MTAyLi44Njk1OTU5IDEwMDY0NAo+PiAtLS0g
+YS9pbmNsdWRlL3VhcGkvYXNtLWdlbmVyaWMvbW1hbi1jb21tb24uaAo+PiArKysgYi9pbmNsdWRl
+L3VhcGkvYXNtLWdlbmVyaWMvbW1hbi1jb21tb24uaAo+PiBAQCAtMzQsOSArMzQsOSBAQAo+PiAg
+I2RlZmluZSBNQURWX1NFUVVFTlRJQUwgICAgIDIgICAgICAgICAgICAgICAvKiBleHBlY3Qgc2Vx
+dWVudGlhbCBwYWdlIHJlZmVyZW5jZXMgKi8KPj4gICNkZWZpbmUgTUFEVl9XSUxMTkVFRCAgICAg
+ICAzICAgICAgICAgICAgICAgLyogd2lsbCBuZWVkIHRoZXNlIHBhZ2VzICovCj4+ICAjZGVmaW5l
+IE1BRFZfRE9OVE5FRUQgICAgICAgNCAgICAgICAgICAgICAgIC8qIGRvbid0IG5lZWQgdGhlc2Ug
+cGFnZXMgKi8KPj4gLSNkZWZpbmUgTUFEVl9GUkVFICAgNSAgICAgICAgICAgICAgIC8qIGZyZWUg
+cGFnZXMgb25seSBpZiBtZW1vcnkgcHJlc3N1cmUgKi8KPj4KPj4gIC8qIGNvbW1vbiBwYXJhbWV0
+ZXJzOiB0cnkgdG8ga2VlcCB0aGVzZSBjb25zaXN0ZW50IGFjcm9zcyBhcmNoaXRlY3R1cmVzICov
+Cj4+ICsjZGVmaW5lIE1BRFZfRlJFRSAgIDggICAgICAgICAgICAgICAvKiBmcmVlIHBhZ2VzIG9u
+bHkgaWYgbWVtb3J5IHByZXNzdXJlICovCj4+ICAjZGVmaW5lIE1BRFZfUkVNT1ZFIDkgICAgICAg
+ICAgICAgICAvKiByZW1vdmUgdGhlc2UgcGFnZXMgJiByZXNvdXJjZXMgKi8KPj4gICNkZWZpbmUg
+TUFEVl9ET05URk9SSyAgICAgICAxMCAgICAgICAgICAgICAgLyogZG9uJ3QgaW5oZXJpdCBhY3Jv
+c3MgZm9yayAqLwo+PiAgI2RlZmluZSBNQURWX0RPRk9SSyAxMSAgICAgICAgICAgICAgLyogZG8g
+aW5oZXJpdCBhY3Jvc3MgZm9yayAqLwo+PiAtLQo+PiAxLjkuMwoKLS0KQ2hlbiBHYW5nCgpPcGVu
+LCBzaGFyZSwgYW5kIGF0dGl0dWRlIGxpa2UgYWlyLCB3YXRlciwgYW5kIGxpZmUgd2hpY2ggR29k
+IGJsZXNzZWQKIAkJIAkgICAJCSAg
