@@ -1,73 +1,71 @@
-From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Subject: [PATCH v1 1/4] crypto: add entry for sm3-256
-Date: Thu, 29 Oct 2015 17:59:25 +0200
-Message-ID: <1446134370-11460-2-git-send-email-jarkko.sakkinen@linux.intel.com>
-References: <1446134370-11460-1-git-send-email-jarkko.sakkinen@linux.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1446134370-11460-1-git-send-email-jarkko.sakkinen@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Huewe <peterhuewe@gmx.de>, Marcel Selhorst <tpmdd@selhorst.net>, Mimi Zohar <zohar@linux.vnet.ibm.com>, David Howells <dhowells@redhat.com>
-Cc: tpmdd-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org, keyrings@vger.kernel.org, chris.j.arges@canonical.com, seth.forshee@canonical.com, colin.king@canonical.com, josh@joshtriplett.org, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, "open list:CRYPTO API" <linux-crypto@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
+From: David Daney <ddaney-M3mlKVOIwJVv6pq1l3V1OdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [PATCH v6 1/5] PCI: Handle IORESOURCE_PCI_FIXED when sizing resources.
+Date: Thu, 29 Oct 2015 13:57:10 -0700
+Message-ID: <56328826.2020406@caviumnetworks.com>
+References: <1445382282-2396-1-git-send-email-ddaney.cavm@gmail.com> <1445382282-2396-2-git-send-email-ddaney.cavm@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1445382282-2396-2-git-send-email-ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Daney <ddaney.cavm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?UTF-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Sean O. Stalley" <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, yinghai-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Added entry for sm3-256 to the following tables:
+Bjorn,
 
-* hash_algo_name
-* hash_digest_size
+A small snafu...
 
-Needed for TPM 2.0 trusted key sealing.
+On 10/20/2015 04:04 PM, David Daney wrote:
+> From: David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
+>
+> The new Enhanced Allocation (EA) capability support (patches to
+> follow) creates resources with the IORESOURCE_PCI_FIXED set. Since
+> these resources cannot be relocated or resized, their alignment is not
+> really defined, and it is therefore not specified.  This causes a
+> problem in pbus_size_mem() where resources with unspecified alignment
+> are disabled.
+>
+> So, in pbus_size_mem() skip IORESOURCE_PCI_FIXED resources, instead of
+> disabling them.
+>
+> Acked-by: Sean O. Stalley <sean.stalley-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: David Daney <david.daney-YGCgFSpz5w/QT0dZR+AlfA@public.gmane.org>
+> ---
+>   drivers/pci/setup-bus.c | 7 ++++---
+>   1 file changed, 4 insertions(+), 3 deletions(-)
+>
+> diff --git a/drivers/pci/setup-bus.c b/drivers/pci/setup-bus.c
+> index 508cc56..4dfef10 100644
+> --- a/drivers/pci/setup-bus.c
+> +++ b/drivers/pci/setup-bus.c
+> @@ -1037,9 +1037,10 @@ static int pbus_size_mem(struct pci_bus *bus, unsigned long mask,
+>   			struct resource *r = &dev->resource[i];
+>   			resource_size_t r_size;
+>
+> -			if (r->parent || ((r->flags & mask) != type &&
+> -					  (r->flags & mask) != type2 &&
+> -					  (r->flags & mask) != type3))
+> +			if (r->parent || (r->flags | IORESOURCE_PCI_FIXED) ||
 
-Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
----
- crypto/hash_info.c             | 2 ++
- include/crypto/hash_info.h     | 3 +++
- include/uapi/linux/hash_info.h | 1 +
- 3 files changed, 6 insertions(+)
+Should be:
 
-diff --git a/crypto/hash_info.c b/crypto/hash_info.c
-index 3e7ff46..6f3a113 100644
---- a/crypto/hash_info.c
-+++ b/crypto/hash_info.c
-@@ -31,6 +31,7 @@ const char *const hash_algo_name[HASH_ALGO__LAST] = {
- 	[HASH_ALGO_TGR_128]	= "tgr128",
- 	[HASH_ALGO_TGR_160]	= "tgr160",
- 	[HASH_ALGO_TGR_192]	= "tgr192",
-+	[HASH_ALGO_SM3_256]	= "sm3-256",
- };
- EXPORT_SYMBOL_GPL(hash_algo_name);
- 
-@@ -52,5 +53,6 @@ const int hash_digest_size[HASH_ALGO__LAST] = {
- 	[HASH_ALGO_TGR_128]	= TGR128_DIGEST_SIZE,
- 	[HASH_ALGO_TGR_160]	= TGR160_DIGEST_SIZE,
- 	[HASH_ALGO_TGR_192]	= TGR192_DIGEST_SIZE,
-+	[HASH_ALGO_SM3_256]	= SM3_256_DIGEST_SIZE,
- };
- EXPORT_SYMBOL_GPL(hash_digest_size);
-diff --git a/include/crypto/hash_info.h b/include/crypto/hash_info.h
-index e1e5a3e..d86e050 100644
---- a/include/crypto/hash_info.h
-+++ b/include/crypto/hash_info.h
-@@ -34,6 +34,9 @@
- #define TGR160_DIGEST_SIZE 20
- #define TGR192_DIGEST_SIZE 24
- 
-+/* not defined in include/crypto/ */
-+#define SM3_256_DIGEST_SIZE 32
-+
- extern const char *const hash_algo_name[HASH_ALGO__LAST];
- extern const int hash_digest_size[HASH_ALGO__LAST];
- 
-diff --git a/include/uapi/linux/hash_info.h b/include/uapi/linux/hash_info.h
-index ca18c45..ebf8fd8 100644
---- a/include/uapi/linux/hash_info.h
-+++ b/include/uapi/linux/hash_info.h
-@@ -31,6 +31,7 @@ enum hash_algo {
- 	HASH_ALGO_TGR_128,
- 	HASH_ALGO_TGR_160,
- 	HASH_ALGO_TGR_192,
-+	HASH_ALGO_SM3_256,
- 	HASH_ALGO__LAST
- };
- 
--- 
-2.5.0
+   r->flags & IORESOURCE_PCI_FIXED
+
+With the erroneous '|', sizing of bridge resources can break.
+
+Q:  How to fix this.
+
+   A) Replace this patch entirely?
+
+   B) A patch on top of this one?
+
+
+> +			    ((r->flags & mask) != type &&
+> +			     (r->flags & mask) != type2 &&
+> +			     (r->flags & mask) != type3))
+>   				continue;
+>   			r_size = resource_size(r);
+>   #ifdef CONFIG_PCI_IOV
+>
