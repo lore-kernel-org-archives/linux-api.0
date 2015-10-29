@@ -1,44 +1,28 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Persistent Reservation API V4
-Date: Wed, 28 Oct 2015 14:48:33 -0400
-Message-ID: <20151028184833.GA21955@redhat.com>
-References: <1444911052-9423-1-git-send-email-hch@lst.de>
- <20151028184356.GA21933@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20151028184356.GA21933@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: axboe@fb.com, linux-scsi@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org, keith.busch@intel.com, dm-devel@redhat.com
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: [PATCH v1 0/4] TPM2: select hash algorithm for a trusted key
+Date: Thu, 29 Oct 2015 17:59:24 +0200
+Message-ID: <1446134370-11460-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Peter Huewe <peterhuewe@gmx.de>, Marcel Selhorst <tpmdd@selhorst.net>, Mimi Zohar <zohar@linux.vnet.ibm.com>, David Howells <dhowells@redhat.com>
+Cc: tpmdd-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org, keyrings@vger.kernel.org, chris.j.arges@canonical.com, seth.forshee@canonical.com, colin.king@canonical.com, josh@joshtriplett.org, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Jason Gunthorpe <jgunthorpe@obsidianresearch.com>, "open list:ABI/API" <linux-api@vger.kernel.org>, "open list:CRYPTO API" <linux-crypto@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 28 2015 at  2:43pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+Jarkko Sakkinen (4):
+  crypto: add entry for sm3-256
+  tpm: choose hash algorithm for sealing when using TPM 2.0
+  keys, trusted: select the hash algorithm
+  keys, trusted: update documentation for 'hash=' option
 
-> On Thu, Oct 15 2015 at  8:10am -0400,
-> Christoph Hellwig <hch@lst.de> wrote:
-> 
-> > This series adds support for a simplified Persistent Reservation API
-> > to the block layer.  The intent is that both in-kernel and userspace
-> > consumers can use the API instead of having to hand craft SCSI or NVMe
-> > command through the various pass through interfaces.  It also adds
-> > DM support as getting reservations through dm-multipath is a major
-> > pain with the current scheme.
-> > 
-> > The ioctl API is documented in Documentation/block/pr.txt, but to
-> > fully understand the concept you'll have to read up the SPC spec,
-> > PRs are too complicated that trying to rephrase them into different
-> > terminology is just going to create confusion.
-> > 
-> > Note that Mike wants to include the DM patches so through the DM
-> > tree, so they are only included for reference.
-> 
-> I looked at these again and the DM changes look good.  Any update on
-> if/when the block changes will land?
+ Documentation/security/keys-trusted-encrypted.txt |  3 ++
+ crypto/hash_info.c                                |  2 ++
+ drivers/char/tpm/tpm.h                            | 10 ++++--
+ drivers/char/tpm/tpm2-cmd.c                       | 42 +++++++++++++++++++++--
+ include/crypto/hash_info.h                        |  3 ++
+ include/keys/trusted-type.h                       |  1 +
+ include/uapi/linux/hash_info.h                    |  1 +
+ security/keys/trusted.c                           | 20 ++++++++++-
+ 8 files changed, 75 insertions(+), 7 deletions(-)
 
-I should've looked at Jens' tree before asking.. I now see Jens has
-for-4.4/reservations
-
-I'll rebase accordingly and pick up the DM changes.
+-- 
+2.5.0
