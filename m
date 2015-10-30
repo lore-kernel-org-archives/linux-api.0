@@ -1,103 +1,76 @@
-From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 7/8] mm: clear PG_dirty to mark page freeable
-Date: Fri, 30 Oct 2015 13:55:04 +0100
-Message-ID: <20151030125504.GC23627@dhcp22.suse.cz>
+From: Shaohua Li <shli@kernel.org>
+Subject: Re: [PATCH 1/8] mm: support madvise(MADV_FREE)
+Date: Fri, 30 Oct 2015 09:49:37 -0700
+Message-ID: <20151030164937.GA44946@kernel.org>
 References: <1446188504-28023-1-git-send-email-minchan@kernel.org>
- <1446188504-28023-8-git-send-email-minchan@kernel.org>
+ <1446188504-28023-2-git-send-email-minchan@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1446188504-28023-8-git-send-email-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+In-Reply-To: <1446188504-28023-2-git-send-email-minchan@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Minchan Kim <minchan@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, zhangyanfei@cn.fujitsu.com, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, Daniel Micay <danielmicay@gmail.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Michal Hocko <mhocko@suse.cz>, yalin.wang2010@gmail.com
 List-Id: linux-api@vger.kernel.org
 
-On Fri 30-10-15 16:01:43, Minchan Kim wrote:
-> Basically, MADV_FREE relies on dirty bit in page table entry to decide
-> whether VM allows to discard the page or not.  IOW, if page table entry
-> includes marked dirty bit, VM shouldn't discard the page.
-> 
-> However, as a example, if swap-in by read fault happens, page table entry
-> doesn't have dirty bit so MADV_FREE could discard the page wrongly.
-> 
-> For avoiding the problem, MADV_FREE did more checks with PageDirty
-> and PageSwapCache. It worked out because swapped-in page lives on
-> swap cache and since it is evicted from the swap cache, the page has
-> PG_dirty flag. So both page flags check effectively prevent
-> wrong discarding by MADV_FREE.
-> 
-> However, a problem in above logic is that swapped-in page has
-> PG_dirty still after they are removed from swap cache so VM cannot
-> consider the page as freeable any more even if madvise_free is
-> called in future.
-> 
-> Look at below example for detail.
-> 
->     ptr = malloc();
->     memset(ptr);
->     ..
->     ..
->     .. heavy memory pressure so all of pages are swapped out
->     ..
->     ..
->     var = *ptr; -> a page swapped-in and could be removed from
->                    swapcache. Then, page table doesn't mark
->                    dirty bit and page descriptor includes PG_dirty
->     ..
->     ..
->     madvise_free(ptr); -> It doesn't clear PG_dirty of the page.
->     ..
->     ..
->     ..
->     .. heavy memory pressure again.
->     .. In this time, VM cannot discard the page because the page
->     .. has *PG_dirty*
-> 
-> To solve the problem, this patch clears PG_dirty if only the page is owned
-> exclusively by current process when madvise is called because PG_dirty
-> represents ptes's dirtiness in several processes so we could clear it only
-> if we own it exclusively.
-> 
-> Acked-by: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> Signed-off-by: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-
-Acked-by: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
-
-> ---
->  mm/madvise.c | 12 ++++++++++--
->  1 file changed, 10 insertions(+), 2 deletions(-)
-> 
-> diff --git a/mm/madvise.c b/mm/madvise.c
-> index 9ee9df8c768d..fc24104d6b3a 100644
-> --- a/mm/madvise.c
-> +++ b/mm/madvise.c
-> @@ -303,11 +303,19 @@ static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
->  		if (!page)
->  			continue;
->  
-> -		if (PageSwapCache(page)) {
-> +		if (PageSwapCache(page) || PageDirty(page)) {
->  			if (!trylock_page(page))
->  				continue;
-> +			/*
-> +			 * If page is shared with others, we couldn't clear
-> +			 * PG_dirty of the page.
-> +			 */
-> +			if (page_count(page) != 1 + !!PageSwapCache(page)) {
+On Fri, Oct 30, 2015 at 04:01:37PM +0900, Minchan Kim wrote:
+> +static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
+> +				unsigned long end, struct mm_walk *walk)
+> +
+> +{
+> +	struct mmu_gather *tlb = walk->private;
+> +	struct mm_struct *mm = tlb->mm;
+> +	struct vm_area_struct *vma = walk->vma;
+> +	spinlock_t *ptl;
+> +	pte_t *pte, ptent;
+> +	struct page *page;
+> +
+> +	split_huge_page_pmd(vma, addr, pmd);
+> +	if (pmd_trans_unstable(pmd))
+> +		return 0;
+> +
+> +	pte = pte_offset_map_lock(mm, pmd, addr, &ptl);
+> +	arch_enter_lazy_mmu_mode();
+> +	for (; addr != end; pte++, addr += PAGE_SIZE) {
+> +		ptent = *pte;
+> +
+> +		if (!pte_present(ptent))
+> +			continue;
+> +
+> +		page = vm_normal_page(vma, addr, ptent);
+> +		if (!page)
+> +			continue;
+> +
+> +		if (PageSwapCache(page)) {
+> +			if (!trylock_page(page))
+> +				continue;
+> +
+> +			if (!try_to_free_swap(page)) {
 > +				unlock_page(page);
 > +				continue;
 > +			}
->  
-> -			if (!try_to_free_swap(page)) {
-> +			if (PageSwapCache(page) && !try_to_free_swap(page)) {
->  				unlock_page(page);
->  				continue;
->  			}
-> -- 
-> 1.9.1
+> +
+> +			ClearPageDirty(page);
+> +			unlock_page(page);
+> +		}
+> +
+> +		/*
+> +		 * Some of architecture(ex, PPC) don't update TLB
+> +		 * with set_pte_at and tlb_remove_tlb_entry so for
+> +		 * the portability, remap the pte with old|clean
+> +		 * after pte clearing.
+> +		 */
+> +		ptent = ptep_get_and_clear_full(mm, addr, pte,
+> +						tlb->fullmm);
+> +		ptent = pte_mkold(ptent);
+> +		ptent = pte_mkclean(ptent);
+> +		set_pte_at(mm, addr, pte, ptent);
+> +		tlb_remove_tlb_entry(tlb, pte, addr);
 
--- 
-Michal Hocko
-SUSE Labs
+The orginal ptent might not be dirty. In that case, the tlb_remove_tlb_entry
+is unnecessary, so please add a check. In practice, I saw more TLB flush with
+FREE compared to DONTNEED because of this issue.
+
+Thanks,
+Shaohua
