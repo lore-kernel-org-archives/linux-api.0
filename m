@@ -1,73 +1,124 @@
-From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Subject: [PATCH v2 2/3] crypto: add entry for sm3-256
-Date: Fri, 30 Oct 2015 13:35:08 +0200
-Message-ID: <1446204910-29948-3-git-send-email-jarkko.sakkinen@linux.intel.com>
-References: <1446204910-29948-1-git-send-email-jarkko.sakkinen@linux.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1446204910-29948-1-git-send-email-jarkko.sakkinen@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Huewe <peterhuewe@gmx.de>, Marcel Selhorst <tpmdd@selhorst.net>, Mimi Zohar <zohar@linux.vnet.ibm.com>, David Howells <dhowells@redhat.com>
-Cc: tpmdd-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org, keyrings@vger.kernel.org, chris.j.arges@canonical.com, seth.forshee@canonical.com, colin.king@canonical.com, josh@joshtriplett.org, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, "open list:CRYPTO API" <linux-crypto@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH 4/8] mm: free swp_entry in madvise_free
+Date: Fri, 30 Oct 2015 13:28:14 +0100
+Message-ID: <20151030122814.GA23627@dhcp22.suse.cz>
+References: <1446188504-28023-1-git-send-email-minchan@kernel.org>
+ <1446188504-28023-5-git-send-email-minchan@kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1446188504-28023-5-git-send-email-minchan@kernel.org>
+Sender: owner-linux-mm@kvack.org
+To: Minchan Kim <minchan@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, zhangyanfei@cn.fujitsu.com, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, Daniel Micay <danielmicay@gmail.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, yalin.wang2010@gmail.com, Shaohua Li <shli@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Added entry for sm3-256 to the following tables:
+On Fri 30-10-15 16:01:40, Minchan Kim wrote:
+> When I test below piece of code with 12 processes(ie, 512M * 12 = 6G
+> consume) on my (3G ram + 12 cpu + 8G swap, the madvise_free is siginficat
+> slower (ie, 2x times) than madvise_dontneed.
+> 
+> loop = 5;
+> mmap(512M);
+> while (loop--) {
+>         memset(512M);
+>         madvise(MADV_FREE or MADV_DONTNEED);
+> }
+> 
+> The reason is lots of swapin.
+> 
+> 1) dontneed: 1,612 swapin
+> 2) madvfree: 879,585 swapin
+> 
+> If we find hinted pages were already swapped out when syscall is called,
+> it's pointless to keep the swapped-out pages in pte.
+> Instead, let's free the cold page because swapin is more expensive
+> than (alloc page + zeroing).
+> 
+> With this patch, it reduced swapin from 879,585 to 1,878 so elapsed time
+> 
+> 1) dontneed: 6.10user 233.50system 0:50.44elapsed
+> 2) madvfree: 6.03user 401.17system 1:30.67elapsed
+> 2) madvfree + below patch: 6.70user 339.14system 1:04.45elapsed
+> 
+> Acked-by: Hugh Dickins <hughd@google.com>
+> Signed-off-by: Minchan Kim <minchan@kernel.org>
 
-* hash_algo_name
-* hash_digest_size
+Yes this makes a lot of sense.
 
-Needed for TPM 2.0 trusted key sealing.
+Acked-by: Michal Hocko <mhocko@suse.com>
 
-Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
----
- crypto/hash_info.c             | 2 ++
- include/crypto/hash_info.h     | 3 +++
- include/uapi/linux/hash_info.h | 1 +
- 3 files changed, 6 insertions(+)
+One nit below.
 
-diff --git a/crypto/hash_info.c b/crypto/hash_info.c
-index 3e7ff46..7b1e0b1 100644
---- a/crypto/hash_info.c
-+++ b/crypto/hash_info.c
-@@ -31,6 +31,7 @@ const char *const hash_algo_name[HASH_ALGO__LAST] = {
- 	[HASH_ALGO_TGR_128]	= "tgr128",
- 	[HASH_ALGO_TGR_160]	= "tgr160",
- 	[HASH_ALGO_TGR_192]	= "tgr192",
-+	[HASH_ALGO_SM3_256]	= "sm3-256",
- };
- EXPORT_SYMBOL_GPL(hash_algo_name);
- 
-@@ -52,5 +53,6 @@ const int hash_digest_size[HASH_ALGO__LAST] = {
- 	[HASH_ALGO_TGR_128]	= TGR128_DIGEST_SIZE,
- 	[HASH_ALGO_TGR_160]	= TGR160_DIGEST_SIZE,
- 	[HASH_ALGO_TGR_192]	= TGR192_DIGEST_SIZE,
-+	[HASH_ALGO_SM3_256]	= SM3256_DIGEST_SIZE,
- };
- EXPORT_SYMBOL_GPL(hash_digest_size);
-diff --git a/include/crypto/hash_info.h b/include/crypto/hash_info.h
-index e1e5a3e..56f217d 100644
---- a/include/crypto/hash_info.h
-+++ b/include/crypto/hash_info.h
-@@ -34,6 +34,9 @@
- #define TGR160_DIGEST_SIZE 20
- #define TGR192_DIGEST_SIZE 24
- 
-+/* not defined in include/crypto/ */
-+#define SM3256_DIGEST_SIZE 32
-+
- extern const char *const hash_algo_name[HASH_ALGO__LAST];
- extern const int hash_digest_size[HASH_ALGO__LAST];
- 
-diff --git a/include/uapi/linux/hash_info.h b/include/uapi/linux/hash_info.h
-index ca18c45..ebf8fd8 100644
---- a/include/uapi/linux/hash_info.h
-+++ b/include/uapi/linux/hash_info.h
-@@ -31,6 +31,7 @@ enum hash_algo {
- 	HASH_ALGO_TGR_128,
- 	HASH_ALGO_TGR_160,
- 	HASH_ALGO_TGR_192,
-+	HASH_ALGO_SM3_256,
- 	HASH_ALGO__LAST
- };
- 
+> ---
+>  mm/madvise.c | 26 +++++++++++++++++++++++++-
+>  1 file changed, 25 insertions(+), 1 deletion(-)
+> 
+> diff --git a/mm/madvise.c b/mm/madvise.c
+> index 640311704e31..663bd9fa0ae0 100644
+> --- a/mm/madvise.c
+> +++ b/mm/madvise.c
+> @@ -270,6 +270,8 @@ static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
+>  	spinlock_t *ptl;
+>  	pte_t *pte, ptent;
+>  	struct page *page;
+> +	swp_entry_t entry;
+
+This could go into !pte_present if block
+
+> +	int nr_swap = 0;
+>  
+>  	split_huge_page_pmd(vma, addr, pmd);
+>  	if (pmd_trans_unstable(pmd))
+> @@ -280,8 +282,22 @@ static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
+>  	for (; addr != end; pte++, addr += PAGE_SIZE) {
+>  		ptent = *pte;
+>  
+> -		if (!pte_present(ptent))
+> +		if (pte_none(ptent))
+>  			continue;
+> +		/*
+> +		 * If the pte has swp_entry, just clear page table to
+> +		 * prevent swap-in which is more expensive rather than
+> +		 * (page allocation + zeroing).
+> +		 */
+> +		if (!pte_present(ptent)) {
+> +			entry = pte_to_swp_entry(ptent);
+> +			if (non_swap_entry(entry))
+> +				continue;
+> +			nr_swap--;
+> +			free_swap_and_cache(entry);
+> +			pte_clear_not_present_full(mm, addr, pte, tlb->fullmm);
+> +			continue;
+> +		}
+>  
+>  		page = vm_normal_page(vma, addr, ptent);
+>  		if (!page)
+> @@ -313,6 +329,14 @@ static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
+>  		set_pte_at(mm, addr, pte, ptent);
+>  		tlb_remove_tlb_entry(tlb, pte, addr);
+>  	}
+> +
+> +	if (nr_swap) {
+> +		if (current->mm == mm)
+> +			sync_mm_rss(mm);
+> +
+> +		add_mm_counter(mm, MM_SWAPENTS, nr_swap);
+> +	}
+> +
+>  	arch_leave_lazy_mmu_mode();
+>  	pte_unmap_unlock(pte - 1, ptl);
+>  	cond_resched();
+> -- 
+> 1.9.1
+
 -- 
-2.5.0
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
