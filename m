@@ -1,58 +1,67 @@
-From: Chris J Arges <chris.j.arges-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: [PATCH] livepatch: old_name@old_addr scheme in livepatch sysfs directory
-Date: Fri, 30 Oct 2015 22:44:08 -0500
-Message-ID: <1446263060-22175-1-git-send-email-chris.j.arges@canonical.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Chris J Arges <chris.j.arges-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 1/2] Documentation: afe4404: Add DT bindings for the
+ AFE4404 heart monitor
+Date: Sat, 31 Oct 2015 13:44:15 -0500
+Message-ID: <CAL_JsqJJjtAXzi-3Aeb6pwwSUUv0i9g0g43Fq60CeSmNEiYoaQ@mail.gmail.com>
+References: <1446309089-21094-1-git-send-email-afd@ti.com> <1446309089-21094-2-git-send-email-afd@ti.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1446309089-21094-2-git-send-email-afd-l0cyMroinI0@public.gmane.org>
+Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Andrew F. Davis" <afd-l0cyMroinI0@public.gmane.org>
+Cc: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-The following directory structure will allow for cases when the same
-function name exists in a single object.
-	/sys/kernel/livepatch/<patch>/<object>/<function@address>
+gmail thinks this is spam BTW.
 
-An example of this issue is documented here:
-	https://github.com/dynup/kpatch/issues/493
+On Sat, Oct 31, 2015 at 11:31 AM, Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org> wrote:
+> Add the TI afe4404 heart monitor DT bindings documentation.
+> Create health directory created under iio.
+>
+> Signed-off-by: Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
+> ---
+>  .../devicetree/bindings/iio/health/afe4404.txt     | 27 ++++++++++++++++++++++
+>  1 file changed, 27 insertions(+)
+>  create mode 100644 Documentation/devicetree/bindings/iio/health/afe4404.txt
+>
+> diff --git a/Documentation/devicetree/bindings/iio/health/afe4404.txt b/Documentation/devicetree/bindings/iio/health/afe4404.txt
+> new file mode 100644
+> index 0000000..d377033
+> --- /dev/null
+> +++ b/Documentation/devicetree/bindings/iio/health/afe4404.txt
+> @@ -0,0 +1,27 @@
+> +* Texas Instruments AFE4404 Heart rate and Pulse Oximeter
+> +
+> +Required properties:
+> + - compatible          : Should be "ti,afe4404".
+> + - reg                 : I2C address of the device.
+> + - led-supply          : Regulator supply to the device.
 
-Signed-off-by: Chris J Arges <chris.j.arges-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
----
- Documentation/ABI/testing/sysfs-kernel-livepatch | 4 ++--
- kernel/livepatch/core.c                          | 3 ++-
- 2 files changed, 4 insertions(+), 3 deletions(-)
+Is led correct name or copy-n-paste? The datasheet has tx_sup and
+rx_sup for supplies.
 
-diff --git a/Documentation/ABI/testing/sysfs-kernel-livepatch b/Documentation/ABI/testing/sysfs-kernel-livepatch
-index 5bf42a8..afa0470 100644
---- a/Documentation/ABI/testing/sysfs-kernel-livepatch
-+++ b/Documentation/ABI/testing/sysfs-kernel-livepatch
-@@ -33,12 +33,12 @@ Description:
- 		The object directory contains subdirectories for each function
- 		that is patched within the object.
- 
--What:		/sys/kernel/livepatch/<patch>/<object>/<function>
-+What:		/sys/kernel/livepatch/<patch>/<object>/<function@address>
- Date:		Nov 2014
- KernelVersion:	3.19.0
- Contact:	live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
- Description:
--		The function directory contains attributes regarding the
-+		The function@address directory contains attributes regarding the
- 		properties and state of the patched function.
- 
- 		There are currently no such attributes.
-diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
-index 6e53441..347cb3e 100644
---- a/kernel/livepatch/core.c
-+++ b/kernel/livepatch/core.c
-@@ -733,7 +733,8 @@ static int klp_init_func(struct klp_object *obj, struct klp_func *func)
- 	func->state = KLP_DISABLED;
- 
- 	return kobject_init_and_add(&func->kobj, &klp_ktype_func,
--				    &obj->kobj, "%s", func->old_name);
-+				    &obj->kobj, "%s@%p", func->old_name,
-+				    (void *)func->old_addr);
- }
- 
- /* parts of the initialization that is done only when the object is loaded */
--- 
-1.9.1
+> + - interrupt-parent    : Phandle to he parent interrupt controller.
+> + - interrupts          : The interrupt line the device ADC_RDY pin is connected to.
+> +
+> +Optional properties:
+> + - reset-gpios         : GPIO used to reset the device.
+> +
+> +Example:
+> +
+> +&i2c2 {
+> +       heart_mon@58 {
+> +               compatible = "ti,afe4404";
+> +               reg = <0x58>;
+> +
+> +               led-supply = <&vbat>;
+> +
+> +               interrupt-parent = <&gpio1>;
+> +               interrupts = <28 IRQ_TYPE_EDGE_RISING>;
+> +
+> +               reset-gpios = <&gpio1 16 GPIO_ACTIVE_LOW>;
+> +       };
+> +};
+> --
+> 1.9.1
+>
