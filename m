@@ -1,67 +1,76 @@
-From: Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 1/2] Documentation: afe4404: Add DT bindings for the
- AFE4404 heart monitor
-Date: Sat, 31 Oct 2015 13:44:15 -0500
-Message-ID: <CAL_JsqJJjtAXzi-3Aeb6pwwSUUv0i9g0g43Fq60CeSmNEiYoaQ@mail.gmail.com>
-References: <1446309089-21094-1-git-send-email-afd@ti.com> <1446309089-21094-2-git-send-email-afd@ti.com>
+From: Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>
+Subject: [PATCH selftests 0/6] Fix some broken tests
+Date: Sat, 31 Oct 2015 23:35:10 +0000
+Message-ID: <1446334510.2595.13.camel@decadent.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1446309089-21094-2-git-send-email-afd-l0cyMroinI0@public.gmane.org>
-Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Andrew F. Davis" <afd-l0cyMroinI0@public.gmane.org>
-Cc: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: multipart/signed; micalg="pgp-sha512";
+	protocol="application/pgp-signature"; boundary="=-sZ/woAzhmDqZb9CON04+"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-gmail thinks this is spam BTW.
 
-On Sat, Oct 31, 2015 at 11:31 AM, Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org> wrote:
-> Add the TI afe4404 heart monitor DT bindings documentation.
-> Create health directory created under iio.
->
-> Signed-off-by: Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
-> ---
->  .../devicetree/bindings/iio/health/afe4404.txt     | 27 ++++++++++++++++++++++
->  1 file changed, 27 insertions(+)
->  create mode 100644 Documentation/devicetree/bindings/iio/health/afe4404.txt
->
-> diff --git a/Documentation/devicetree/bindings/iio/health/afe4404.txt b/Documentation/devicetree/bindings/iio/health/afe4404.txt
-> new file mode 100644
-> index 0000000..d377033
-> --- /dev/null
-> +++ b/Documentation/devicetree/bindings/iio/health/afe4404.txt
-> @@ -0,0 +1,27 @@
-> +* Texas Instruments AFE4404 Heart rate and Pulse Oximeter
-> +
-> +Required properties:
-> + - compatible          : Should be "ti,afe4404".
-> + - reg                 : I2C address of the device.
-> + - led-supply          : Regulator supply to the device.
+--=-sZ/woAzhmDqZb9CON04+
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: base64
 
-Is led correct name or copy-n-paste? The datasheet has tx_sup and
-rx_sup for supplies.
+VGhpcyBzZXJpZXMgZml4ZXMgc29tZSBzZWxmLXRlc3RzIHRoYXQgYXJlIGJyb2tlbiwgdW5yZWxp
+YWJsZSBvcgpwcm9kdWNlIGNvbXBpbGVyIHdhcm5pbmdzIGluIDQuMy4KCkJlbi4KCkJlbiBIdXRj
+aGluZ3MgKDYpOgrCoCBzZWxmdGVzdHM6IEFkZCBtaXNzaW5nICNpbmNsdWRlIGRpcmVjdGl2ZXMK
+wqAgc2VsZnRlc3RzOiBtZW1mZDogU3RvcCB1bm5lY2Vzc2FyeSByZWJ1aWxkcwrCoCBzZWxmdGVz
+dHM6IGtwcm9iZTogQ2hvb3NlIGFuIGFsd2F5cy1kZWZpbmVkIGZ1bmN0aW9uIHRvIHByb2JlCsKg
+IHNlbGZ0ZXN0czogTWFrZSBzY3JpcHRzIGV4ZWN1dGFibGUKwqAgc2VsZnRlc3RzOiB2bTogVHJ5
+IGhhcmRlciB0byBhbGxvY2F0ZSBodWdlIHBhZ2VzCsKgIHNlbGZ0ZXN0czogYnJlYWtwb2ludDog
+QWN0dWFsbHkgYnVpbGQgaXQKCsKgdG9vbHMvdGVzdGluZy9zZWxmdGVzdHMvYnJlYWtwb2ludHMv
+TWFrZWZpbGXCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgfMKgwqAyICstCsKgLi4uL3NlbGZ0
+ZXN0cy9mdHJhY2UvdGVzdC5kL2twcm9iZS9hZGRfYW5kX3JlbW92ZS50Y8KgwqDCoMKgwqDCoHzC
+oMKgMiArLQrCoC4uLi90ZXN0aW5nL3NlbGZ0ZXN0cy9mdHJhY2UvdGVzdC5kL2twcm9iZS9idXN5
+X2NoZWNrLnRjwqDCoHzCoMKgMiArLQrCoC4uLi90ZXN0aW5nL3NlbGZ0ZXN0cy9mdHJhY2UvdGVz
+dC5kL2twcm9iZS9rcHJvYmVfYXJncy50YyB8wqDCoDIgKy0KwqAuLi4vc2VsZnRlc3RzL2Z0cmFj
+ZS90ZXN0LmQva3Byb2JlL2twcm9iZV9mdHJhY2UudGPCoMKgwqDCoMKgwqDCoHwgMTQgKysrKysr
+Ky0tLS0tLS0KwqAuLi4vc2VsZnRlc3RzL2Z0cmFjZS90ZXN0LmQva3Byb2JlL2tyZXRwcm9iZV9h
+cmdzLnRjwqDCoMKgwqDCoMKgfMKgwqAyICstCsKgdG9vbHMvdGVzdGluZy9zZWxmdGVzdHMvbWVt
+ZmQvTWFrZWZpbGXCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgfCAxMiAr
+KysrKystLS0tLS0KwqB0b29scy90ZXN0aW5nL3NlbGZ0ZXN0cy9tZW1mZC9tZW1mZF90ZXN0LmPC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoHzCoMKgMSArCsKgdG9vbHMvdGVzdGluZy9z
+ZWxmdGVzdHMvbWVtZmQvcnVuX2Z1c2VfdGVzdC5zaMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoHzC
+oMKgMArCoHRvb2xzL3Rlc3Rpbmcvc2VsZnRlc3RzL21xdWV1ZS9tcV9vcGVuX3Rlc3RzLmPCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqB8wqDCoDEgKwrCoHRvb2xzL3Rlc3Rpbmcvc2VsZnRlc3RzL21x
+dWV1ZS9tcV9wZXJmX3Rlc3RzLmPCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqB8wqDCoDEgKwrCoHRv
+b2xzL3Rlc3Rpbmcvc2VsZnRlc3RzL3N0YXRpY19rZXlzL3Rlc3Rfc3RhdGljX2tleXMuc2jCoMKg
+wqB8wqDCoDAKwqB0b29scy90ZXN0aW5nL3NlbGZ0ZXN0cy90aW1lcnMvbmFub3NsZWVwLmPCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoHzCoMKgMSArCsKgdG9vbHMvdGVzdGluZy9zZWxm
+dGVzdHMvdm0vcnVuX3ZtdGVzdHPCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgfCAxNSArKysrKysrKysrKysrKy0KwqAxNCBmaWxlcyBjaGFuZ2VkLCAzNiBpbnNlcnRpb25z
+KCspLCAxOSBkZWxldGlvbnMoLSkKwqBtb2RlIGNoYW5nZSAxMDA2NDQgPT4gMTAwNzU1IHRvb2xz
+L3Rlc3Rpbmcvc2VsZnRlc3RzL21lbWZkL3J1bl9mdXNlX3Rlc3Quc2gKwqBtb2RlIGNoYW5nZSAx
+MDA2NDQgPT4gMTAwNzU1IHRvb2xzL3Rlc3Rpbmcvc2VsZnRlc3RzL3N0YXRpY19rZXlzL3Rlc3Rf
+c3RhdGljX2tleXMuc2gKCi0tIApCZW4gSHV0Y2hpbmdzCkFsbCBleHRyZW1pc3RzIHNob3VsZCBi
+ZSB0YWtlbiBvdXQgYW5kIHNob3Qu
 
-> + - interrupt-parent    : Phandle to he parent interrupt controller.
-> + - interrupts          : The interrupt line the device ADC_RDY pin is connected to.
-> +
-> +Optional properties:
-> + - reset-gpios         : GPIO used to reset the device.
-> +
-> +Example:
-> +
-> +&i2c2 {
-> +       heart_mon@58 {
-> +               compatible = "ti,afe4404";
-> +               reg = <0x58>;
-> +
-> +               led-supply = <&vbat>;
-> +
-> +               interrupt-parent = <&gpio1>;
-> +               interrupts = <28 IRQ_TYPE_EDGE_RISING>;
-> +
-> +               reset-gpios = <&gpio1 16 GPIO_ACTIVE_LOW>;
-> +       };
-> +};
-> --
-> 1.9.1
->
+
+--=-sZ/woAzhmDqZb9CON04+
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIVAwUAVjVQLue/yOyVhhEJAQpL0A/8C8uvQjO1B4VJoIddwIQA6ROXxkbcnfBN
+y9ZOrE9WupQgnKxkhGlLAxGFl673VyHqQwYxjYp2MwkjK2LUs45Cwx9bKYlAQ3BU
+PUlDPbuNk8OU8TH8kvlDfz6aQFRjhm6WWy4bjC6d7itc76iD9RhyBy+6NmmBljqT
+W8zHS913JknkwGy1v3HFTtFWONUkz984/Ka/yl+IA59jzo1NL4r5K+0G5slbSRFd
+KDduhdBQkdDvkLsSTWLXgHfzepGDEq+sOTE9fIcWeFcE1B7XLHiveHhTAD8QB1FF
+hzqQmxTytZYODoAuZ6GaFt0P9CAZsTl1oLfmkzvzx9nOnaF/WYi1YdKzlo3Rfcul
+UQ+lbODJDuqYKI0uxnDwTVlw+7SWy+921Ty17snpKCDfqDop7+6xYJuMBURiOjDo
+mhFe7vWADAxnB2y5rsC5WWFsMoKOM5hGzXTRb7Tm5P5CQiheZbwVaNNaDUPmmhtW
+L7uW9z0V500UnalaLtLncdZLV/2CZUEunWmaukEaEosegp1YzMnBkSAVsLqke8Vn
+7z2odrdwBsYnliYBaqDFKlP9FvSIGwYdQEKi8KCv9nJteNuvYyxtfqKbBL+o+qPQ
+hv7mUa+mEcWV83cStwQbWgyWo5m9tcVRXTLl8FkQP0Bh61LvYJS3kQMt1mDF0YAR
+7fMAspNihbo=
+=GAg8
+-----END PGP SIGNATURE-----
+
+--=-sZ/woAzhmDqZb9CON04+--
