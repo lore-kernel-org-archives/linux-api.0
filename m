@@ -1,29 +1,117 @@
-From: Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: livepatch: old_name@old_addr scheme in livepatch sysfs
- directory
-Date: Sun, 1 Nov 2015 10:07:14 +0100 (CET)
-Message-ID: <alpine.LNX.2.00.1511010958430.17538@pobox.suse.cz>
-References: <1446263060-22175-1-git-send-email-chris.j.arges@canonical.com> <20151101015258.GA8199@packer-debian-8-amd64.digitalocean.com> <56358EA4.10900@canonical.com>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <56358EA4.10900-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Chris J Arges <chris.j.arges-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Cc: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Finn Thain <fthain@telegraphics.com.au>
+Subject: [PATCH v7 25/26] m68k/mac: Fix PRAM accessors
+Date: Sun, 01 Nov 2015 21:42:27 +1100
+Message-ID: <20151101104208.511910567@telegraphics.com.au>
+References: <20151101104202.301856132@telegraphics.com.au>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=mac68k-fix-pram-accessors
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, linux-m68k@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, Geert Uytterhoeven <geert@linux-m68k.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, 31 Oct 2015, Chris J Arges wrote:
+Signed-off-by: Finn Thain <fthain@telegraphics.com.au>
+Acked-by: Geert Uytterhoeven <geert@linux-m68k.org>
 
-> Makes sense to me. Is there a reason why the sysfs entries are visible
-> to non-root users?
+---
 
-Well, kptr_restrict applies only to values printed using '%pK'. So if the 
-sysfs handler is using other printk() format string to print the pointer, 
-it'll be leaked out (and should eventually be fixed).
+Tested on a PowerBook 520 and Quadra 650.
 
-Thanks,
+Changes since v2:
+- Make use of the RTC_* macros from the previous patch and add a few more
+besides.
 
--- 
-Jiri Kosina
-SUSE Labs
+---
+ arch/m68k/mac/misc.c     |   39 +++++++++++++++++++++++++++++++++------
+ include/uapi/linux/pmu.h |    2 ++
+ 2 files changed, 35 insertions(+), 6 deletions(-)
+
+Index: linux/arch/m68k/mac/misc.c
+===================================================================
+--- linux.orig/arch/m68k/mac/misc.c	2015-11-01 21:41:56.000000000 +1100
++++ linux/arch/m68k/mac/misc.c	2015-11-01 21:41:57.000000000 +1100
+@@ -119,19 +119,22 @@ static void pmu_write_time(long data)
+ static unsigned char pmu_pram_read_byte(int offset)
+ {
+ 	struct adb_request req;
+-	if (pmu_request(&req, NULL, 3, PMU_READ_NVRAM,
+-			(offset >> 8) & 0xFF, offset & 0xFF) < 0)
++
++	if (pmu_request(&req, NULL, 3, PMU_READ_XPRAM,
++	                offset & 0xFF, 1) < 0)
+ 		return 0;
+ 	while (!req.complete)
+ 		pmu_poll();
+-	return req.reply[3];
++
++	return req.reply[1];
+ }
+ 
+ static void pmu_pram_write_byte(unsigned char data, int offset)
+ {
+ 	struct adb_request req;
+-	if (pmu_request(&req, NULL, 4, PMU_WRITE_NVRAM,
+-			(offset >> 8) & 0xFF, offset & 0xFF, data) < 0)
++
++	if (pmu_request(&req, NULL, 4, PMU_WRITE_XPRAM,
++	                offset & 0xFF, 1, data) < 0)
+ 		return;
+ 	while (!req.complete)
+ 		pmu_poll();
+@@ -257,6 +260,16 @@ static void via_rtc_send(__u8 data)
+ #define RTC_REG_WRITE_PROTECT   13
+ 
+ /*
++ * Inside Mac has no information about two-byte RTC commands but
++ * the MESS source code has the essentials.
++ */
++
++#define RTC_REG_XPRAM           14
++#define RTC_CMD_XPRAM_READ      (RTC_CMD_READ(RTC_REG_XPRAM) << 8)
++#define RTC_CMD_XPRAM_WRITE     (RTC_CMD_WRITE(RTC_REG_XPRAM) << 8)
++#define RTC_CMD_XPRAM_ARG(a)    (((a & 0xE0) << 3) | ((a & 0x1F) << 2))
++
++/*
+  * Execute a VIA PRAM/RTC command. For read commands
+  * data should point to a one-byte buffer for the
+  * resulting data. For write commands it should point
+@@ -303,11 +316,25 @@ static void via_rtc_command(int command,
+ 
+ static unsigned char via_pram_read_byte(int offset)
+ {
+-	return 0;
++	unsigned char temp;
++
++	via_rtc_command(RTC_CMD_XPRAM_READ | RTC_CMD_XPRAM_ARG(offset), &temp);
++
++	return temp;
+ }
+ 
+ static void via_pram_write_byte(unsigned char data, int offset)
+ {
++	unsigned char temp;
++
++	temp = 0x55;
++	via_rtc_command(RTC_CMD_WRITE(RTC_REG_WRITE_PROTECT), &temp);
++
++	temp = data;
++	via_rtc_command(RTC_CMD_XPRAM_WRITE | RTC_CMD_XPRAM_ARG(offset), &temp);
++
++	temp = 0x55 | RTC_FLG_WRITE_PROTECT;
++	via_rtc_command(RTC_CMD_WRITE(RTC_REG_WRITE_PROTECT), &temp);
+ }
+ 
+ /*
+Index: linux/include/uapi/linux/pmu.h
+===================================================================
+--- linux.orig/include/uapi/linux/pmu.h	2015-11-01 21:41:23.000000000 +1100
++++ linux/include/uapi/linux/pmu.h	2015-11-01 21:41:57.000000000 +1100
+@@ -18,7 +18,9 @@
+ #define PMU_POWER_CTRL		0x11	/* control power of some devices */
+ #define PMU_ADB_CMD		0x20	/* send ADB packet */
+ #define PMU_ADB_POLL_OFF	0x21	/* disable ADB auto-poll */
++#define PMU_WRITE_XPRAM		0x32	/* write eXtended Parameter RAM */
+ #define PMU_WRITE_NVRAM		0x33	/* write non-volatile RAM */
++#define PMU_READ_XPRAM		0x3a	/* read eXtended Parameter RAM */
+ #define PMU_READ_NVRAM		0x3b	/* read non-volatile RAM */
+ #define PMU_SET_RTC		0x30	/* set real-time clock */
+ #define PMU_READ_RTC		0x38	/* read real-time clock */
