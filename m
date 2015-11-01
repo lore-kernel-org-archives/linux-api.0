@@ -1,117 +1,79 @@
-From: Finn Thain <fthain@telegraphics.com.au>
-Subject: [PATCH v7 25/26] m68k/mac: Fix PRAM accessors
-Date: Sun, 01 Nov 2015 21:42:27 +1100
-Message-ID: <20151101104208.511910567@telegraphics.com.au>
-References: <20151101104202.301856132@telegraphics.com.au>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=mac68k-fix-pram-accessors
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-m68k@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, Geert Uytterhoeven <geert@linux-m68k.org>, linux-api@vger.kernel.org
+From: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 0/2] iio: Heart Rate Monitors
+Date: Sun, 1 Nov 2015 18:35:54 +0000
+Message-ID: <56365B8A.3030908@kernel.org>
+References: <1446309089-21094-1-git-send-email-afd@ti.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1446309089-21094-1-git-send-email-afd-l0cyMroinI0@public.gmane.org>
+Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Andrew F. Davis" <afd-l0cyMroinI0@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>
+Cc: devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Finn Thain <fthain@telegraphics.com.au>
-Acked-by: Geert Uytterhoeven <geert@linux-m68k.org>
+On 31/10/15 16:31, Andrew F. Davis wrote:
+> Hello all,
+> 
+> This series adds the TI AFE4404 "Ultra-small, Integrated AFE for
+> Wearable, Optical Heart Rate Monitoring and Bio-Sensing".
+> 
+> This work is based on previous work by Dan Murphy [0] who is working
+> on other tasks at the moment, so I will be helping to continue
+> upstreaming this driver. This is more of a re-write than a continuation
+> and there are many changes so I am submitting this as a v1.
+> 
+> This device is very similar to the AFE4403 and I was originally planning
+> on pushing the two drivers together with common core functions in a
+> third file. The AFE4403 driver is still being tested so I merged common
+> code back into this driver, this is why this driver may seem a bit
+> unnecessarily modular. I will probably split this stuff back out when
+> I push the AFE4403.
+> 
+> I also had some issues with sysfs naming for the channels; this device
+> has three input channels from three LED stages and two ambient
+> channels based on the LED stages. This might have been be a good place
+> for using IIO modifiers[1], but we also have two differential channels
+> based on the ambient channels, and channels cannot have both modifiers
+> and be differential (the modifier is stored in the differential channel's
+> ID field?).
+True enough. Didn't expect to run into this particular problem, but I guess
+someone will always make hardware breaking any assumptions we make from the
+software side of things.
+ So I used sysfs names that would be close to what they
+> would be if IIO supported these things.
+Fair enough as a starting point though we probably want to figure out how
+to do this 'right'.   Adding an extra field to the channel descriptor will
+be easy enough - it'll be event codes that are nasty to handle.
 
----
-
-Tested on a PowerBook 520 and Quadra 650.
-
-Changes since v2:
-- Make use of the RTC_* macros from the previous patch and add a few more
-besides.
-
----
- arch/m68k/mac/misc.c     |   39 +++++++++++++++++++++++++++++++++------
- include/uapi/linux/pmu.h |    2 ++
- 2 files changed, 35 insertions(+), 6 deletions(-)
-
-Index: linux/arch/m68k/mac/misc.c
-===================================================================
---- linux.orig/arch/m68k/mac/misc.c	2015-11-01 21:41:56.000000000 +1100
-+++ linux/arch/m68k/mac/misc.c	2015-11-01 21:41:57.000000000 +1100
-@@ -119,19 +119,22 @@ static void pmu_write_time(long data)
- static unsigned char pmu_pram_read_byte(int offset)
- {
- 	struct adb_request req;
--	if (pmu_request(&req, NULL, 3, PMU_READ_NVRAM,
--			(offset >> 8) & 0xFF, offset & 0xFF) < 0)
-+
-+	if (pmu_request(&req, NULL, 3, PMU_READ_XPRAM,
-+	                offset & 0xFF, 1) < 0)
- 		return 0;
- 	while (!req.complete)
- 		pmu_poll();
--	return req.reply[3];
-+
-+	return req.reply[1];
- }
- 
- static void pmu_pram_write_byte(unsigned char data, int offset)
- {
- 	struct adb_request req;
--	if (pmu_request(&req, NULL, 4, PMU_WRITE_NVRAM,
--			(offset >> 8) & 0xFF, offset & 0xFF, data) < 0)
-+
-+	if (pmu_request(&req, NULL, 4, PMU_WRITE_XPRAM,
-+	                offset & 0xFF, 1, data) < 0)
- 		return;
- 	while (!req.complete)
- 		pmu_poll();
-@@ -257,6 +260,16 @@ static void via_rtc_send(__u8 data)
- #define RTC_REG_WRITE_PROTECT   13
- 
- /*
-+ * Inside Mac has no information about two-byte RTC commands but
-+ * the MESS source code has the essentials.
-+ */
-+
-+#define RTC_REG_XPRAM           14
-+#define RTC_CMD_XPRAM_READ      (RTC_CMD_READ(RTC_REG_XPRAM) << 8)
-+#define RTC_CMD_XPRAM_WRITE     (RTC_CMD_WRITE(RTC_REG_XPRAM) << 8)
-+#define RTC_CMD_XPRAM_ARG(a)    (((a & 0xE0) << 3) | ((a & 0x1F) << 2))
-+
-+/*
-  * Execute a VIA PRAM/RTC command. For read commands
-  * data should point to a one-byte buffer for the
-  * resulting data. For write commands it should point
-@@ -303,11 +316,25 @@ static void via_rtc_command(int command,
- 
- static unsigned char via_pram_read_byte(int offset)
- {
--	return 0;
-+	unsigned char temp;
-+
-+	via_rtc_command(RTC_CMD_XPRAM_READ | RTC_CMD_XPRAM_ARG(offset), &temp);
-+
-+	return temp;
- }
- 
- static void via_pram_write_byte(unsigned char data, int offset)
- {
-+	unsigned char temp;
-+
-+	temp = 0x55;
-+	via_rtc_command(RTC_CMD_WRITE(RTC_REG_WRITE_PROTECT), &temp);
-+
-+	temp = data;
-+	via_rtc_command(RTC_CMD_XPRAM_WRITE | RTC_CMD_XPRAM_ARG(offset), &temp);
-+
-+	temp = 0x55 | RTC_FLG_WRITE_PROTECT;
-+	via_rtc_command(RTC_CMD_WRITE(RTC_REG_WRITE_PROTECT), &temp);
- }
- 
- /*
-Index: linux/include/uapi/linux/pmu.h
-===================================================================
---- linux.orig/include/uapi/linux/pmu.h	2015-11-01 21:41:23.000000000 +1100
-+++ linux/include/uapi/linux/pmu.h	2015-11-01 21:41:57.000000000 +1100
-@@ -18,7 +18,9 @@
- #define PMU_POWER_CTRL		0x11	/* control power of some devices */
- #define PMU_ADB_CMD		0x20	/* send ADB packet */
- #define PMU_ADB_POLL_OFF	0x21	/* disable ADB auto-poll */
-+#define PMU_WRITE_XPRAM		0x32	/* write eXtended Parameter RAM */
- #define PMU_WRITE_NVRAM		0x33	/* write non-volatile RAM */
-+#define PMU_READ_XPRAM		0x3a	/* read eXtended Parameter RAM */
- #define PMU_READ_NVRAM		0x3b	/* read non-volatile RAM */
- #define PMU_SET_RTC		0x30	/* set real-time clock */
- #define PMU_READ_RTC		0x38	/* read real-time clock */
+Jonathan
+> 
+> [0] http://www.spinics.net/lists/linux-iio/msg18413.html
+> [1] IIO_MOD_TEMP_AMBIENT could be renamed IIO_MOD_AMBIENT as it can
+> also apply to LIGHT, PRESSURE, HUMIDITY, etc..
+No problem with this change so please send a patch.
+> 
+> Thanks,
+> Andrew
+> 
+> Andrew F. Davis (2):
+>   Documentation: afe4404: Add DT bindings for the AFE4404 heart monitor
+>   iio: health: Add driver for the TI AFE4404 heart monitor
+> 
+>  .../ABI/testing/sysfs-bus-iio-health-afe4404       |  70 +++
+>  .../devicetree/bindings/iio/health/afe4404.txt     |  27 ++
+>  drivers/iio/Kconfig                                |   1 +
+>  drivers/iio/Makefile                               |   1 +
+>  drivers/iio/health/Kconfig                         |  24 +
+>  drivers/iio/health/Makefile                        |   6 +
+>  drivers/iio/health/afe4404.c                       | 526 +++++++++++++++++++++
+>  drivers/iio/health/afe440x.h                       | 159 +++++++
+>  8 files changed, 814 insertions(+)
+>  create mode 100644 Documentation/ABI/testing/sysfs-bus-iio-health-afe4404
+>  create mode 100644 Documentation/devicetree/bindings/iio/health/afe4404.txt
+>  create mode 100644 drivers/iio/health/Kconfig
+>  create mode 100644 drivers/iio/health/Makefile
+>  create mode 100644 drivers/iio/health/afe4404.c
+>  create mode 100644 drivers/iio/health/afe440x.h
+> 
