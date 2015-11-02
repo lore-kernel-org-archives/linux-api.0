@@ -1,83 +1,74 @@
 From: Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>
-Subject: Re: [PATCH selftests 0/6] Fix some broken tests
-Date: Mon, 02 Nov 2015 12:15:52 +0000
-Message-ID: <1446466552.25466.5.camel@decadent.org.uk>
-References: <1446334510.2595.13.camel@decadent.org.uk>
+Subject: [PATCH v2 selftests 0/6] Fix some broken tests
+Date: Mon, 2 Nov 2015 12:20:48 +0000
+Message-ID: <20151102122048.GA17015@decadent.org.uk>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha512";
-	protocol="application/pgp-signature"; boundary="=-f6aNqRrQ30g/8HimvCAc"
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="u3/rZRmxL6MmkK24"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1446334510.2595.13.camel-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>
+Content-Disposition: inline
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 
---=-f6aNqRrQ30g/8HimvCAc
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: base64
+--u3/rZRmxL6MmkK24
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-T24gU2F0LCAyMDE1LTEwLTMxIGF0IDIzOjM1ICswMDAwLCBCZW4gSHV0Y2hpbmdzIHdyb3RlOgo+
-IFRoaXMgc2VyaWVzIGZpeGVzIHNvbWUgc2VsZi10ZXN0cyB0aGF0IGFyZSBicm9rZW4sIHVucmVs
-aWFibGUgb3IKPiBwcm9kdWNlIGNvbXBpbGVyIHdhcm5pbmdzIGluIDQuMy4KCkkgbm93IHJlYWxp
-c2UgdGhhdCBFdm9sdXRpb24gMy4xOCBoYXMgcmVncmVzc2VkIGFuZCBpcyBtYW5nbGluZyB0aGUK
-cGF0Y2hlcyBJIHNlbmQuIMKgSSdsbCBzZW5kIHVubWFuZ2xlZCBwYXRjaGVzIHNob3J0bHkuCgpC
-ZW4uCgo+IEJlbi4KPiAKPiBCZW4gSHV0Y2hpbmdzICg2KToKPiDCoCBzZWxmdGVzdHM6IEFkZCBt
-aXNzaW5nICNpbmNsdWRlIGRpcmVjdGl2ZXMKPiDCoCBzZWxmdGVzdHM6IG1lbWZkOiBTdG9wIHVu
-bmVjZXNzYXJ5IHJlYnVpbGRzCj4gwqAgc2VsZnRlc3RzOiBrcHJvYmU6IENob29zZSBhbiBhbHdh
-eXMtZGVmaW5lZCBmdW5jdGlvbiB0byBwcm9iZQo+IMKgIHNlbGZ0ZXN0czogTWFrZSBzY3JpcHRz
-IGV4ZWN1dGFibGUKPiDCoCBzZWxmdGVzdHM6IHZtOiBUcnkgaGFyZGVyIHRvIGFsbG9jYXRlIGh1
-Z2UgcGFnZXMKPiDCoCBzZWxmdGVzdHM6IGJyZWFrcG9pbnQ6IEFjdHVhbGx5IGJ1aWxkIGl0Cj4g
-Cj4gwqB0b29scy90ZXN0aW5nL3NlbGZ0ZXN0cy9icmVha3BvaW50cy9NYWtlZmlsZcKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqB8wqDCoDIgKy0KPiDCoC4uLi9zZWxmdGVzdHMvZnRyYWNlL3Rl
-c3QuZC9rcHJvYmUvYWRkX2FuZF9yZW1vdmUudGPCoMKgwqDCoMKgwqB8wqDCoDIgKy0KPiDCoC4u
-Li90ZXN0aW5nL3NlbGZ0ZXN0cy9mdHJhY2UvdGVzdC5kL2twcm9iZS9idXN5X2NoZWNrLnRjwqDC
-oHzCoMKgMiArLQo+IMKgLi4uL3Rlc3Rpbmcvc2VsZnRlc3RzL2Z0cmFjZS90ZXN0LmQva3Byb2Jl
-L2twcm9iZV9hcmdzLnRjIHzCoMKgMiArLQo+IMKgLi4uL3NlbGZ0ZXN0cy9mdHJhY2UvdGVzdC5k
-L2twcm9iZS9rcHJvYmVfZnRyYWNlLnRjwqDCoMKgwqDCoMKgwqB8IDE0ICsrKysrKystLS0tLS0t
-Cj4gwqAuLi4vc2VsZnRlc3RzL2Z0cmFjZS90ZXN0LmQva3Byb2JlL2tyZXRwcm9iZV9hcmdzLnRj
-wqDCoMKgwqDCoMKgfMKgwqAyICstCj4gwqB0b29scy90ZXN0aW5nL3NlbGZ0ZXN0cy9tZW1mZC9N
-YWtlZmlsZcKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqB8IDEyICsrKysr
-Ky0tLS0tLQo+IMKgdG9vbHMvdGVzdGluZy9zZWxmdGVzdHMvbWVtZmQvbWVtZmRfdGVzdC5jwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqB8wqDCoDEgKwo+IMKgdG9vbHMvdGVzdGluZy9z
-ZWxmdGVzdHMvbWVtZmQvcnVuX2Z1c2VfdGVzdC5zaMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoHzC
-oMKgMAo+IMKgdG9vbHMvdGVzdGluZy9zZWxmdGVzdHMvbXF1ZXVlL21xX29wZW5fdGVzdHMuY8Kg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoHzCoMKgMSArCj4gwqB0b29scy90ZXN0aW5nL3NlbGZ0ZXN0
-cy9tcXVldWUvbXFfcGVyZl90ZXN0cy5jwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgfMKgwqAxICsK
-PiDCoHRvb2xzL3Rlc3Rpbmcvc2VsZnRlc3RzL3N0YXRpY19rZXlzL3Rlc3Rfc3RhdGljX2tleXMu
-c2jCoMKgwqB8wqDCoDAKPiDCoHRvb2xzL3Rlc3Rpbmcvc2VsZnRlc3RzL3RpbWVycy9uYW5vc2xl
-ZXAuY8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgfMKgwqAxICsKPiDCoHRvb2xzL3Rl
-c3Rpbmcvc2VsZnRlc3RzL3ZtL3J1bl92bXRlc3RzwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoHwgMTUgKysrKysrKysrKysrKystCj4gwqAxNCBmaWxlcyBjaGFuZ2VkLCAz
-NiBpbnNlcnRpb25zKCspLCAxOSBkZWxldGlvbnMoLSkKPiDCoG1vZGUgY2hhbmdlIDEwMDY0NCA9
-PiAxMDA3NTUgdG9vbHMvdGVzdGluZy9zZWxmdGVzdHMvbWVtZmQvcnVuX2Z1c2VfdGVzdC5zaAo+
-IMKgbW9kZSBjaGFuZ2UgMTAwNjQ0ID0+IDEwMDc1NSB0b29scy90ZXN0aW5nL3NlbGZ0ZXN0cy9z
-dGF0aWNfa2V5cy90ZXN0X3N0YXRpY19rZXlzLnNoCj4gCi0tIApCZW4gSHV0Y2hpbmdzCk5vdGhp
-bmcgaXMgZXZlciBhIGNvbXBsZXRlIGZhaWx1cmU7IGl0IGNhbiBhbHdheXMgc2VydmUgYXMgYSBi
-YWQgZXhhbXBsZS4=
+This series fixes some self-tests that are broken, unreliable or
+produce compiler warnings in 4.3.
+
+Ben.
+
+Ben Hutchings (6):
+  selftests: Add missing #include directives
+  selftests: memfd: Stop unnecessary rebuilds
+  selftests: kprobe: Choose an always-defined function to probe
+  selftests: Make scripts executable
+  selftests: vm: Try harder to allocate huge pages
+  selftests: breakpoint: Actually build it
+
+ tools/testing/selftests/breakpoints/Makefile              |  2 +-
+ .../selftests/ftrace/test.d/kprobe/add_and_remove.tc      |  2 +-
+ .../testing/selftests/ftrace/test.d/kprobe/busy_check.tc  |  2 +-
+ .../testing/selftests/ftrace/test.d/kprobe/kprobe_args.tc |  2 +-
+ .../selftests/ftrace/test.d/kprobe/kprobe_ftrace.tc       | 14 +++++++-------
+ .../selftests/ftrace/test.d/kprobe/kretprobe_args.tc      |  2 +-
+ tools/testing/selftests/memfd/Makefile                    | 12 ++++++------
+ tools/testing/selftests/memfd/memfd_test.c                |  1 +
+ tools/testing/selftests/memfd/run_fuse_test.sh            |  0
+ tools/testing/selftests/mqueue/mq_open_tests.c            |  1 +
+ tools/testing/selftests/mqueue/mq_perf_tests.c            |  1 +
+ tools/testing/selftests/static_keys/test_static_keys.sh   |  0
+ tools/testing/selftests/timers/nanosleep.c                |  1 +
+ tools/testing/selftests/vm/run_vmtests                    | 15 ++++++++++++++-
+ 14 files changed, 36 insertions(+), 19 deletions(-)
+ mode change 100644 => 100755 tools/testing/selftests/memfd/run_fuse_test.sh
+ mode change 100644 => 100755 tools/testing/selftests/static_keys/test_static_keys.sh
 
 
---=-f6aNqRrQ30g/8HimvCAc
+--u3/rZRmxL6MmkK24
 Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
+Content-Description: Digital signature
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1
 
-iQIVAwUAVjdT+Oe/yOyVhhEJAQoPAhAAiCf0bz6pNlgtrScSJuZV3G2mQ42/AmWG
-yPSOAWwhHcUMRd/0NrELWla161nNmJOBLggCA885sPyR3YRwdZW2UC3f6FFBy6zB
-nWandrmKCQPtalJui1BDq3FiL1aXHseB9ux6CiXCxBlBQUsCizkkV0l+SmNoXxhB
-1Bl5uytBu1BJfapOC5VL1fKen5RWyGSSVKTnAdyzEBp7Ft+nwOSKTcfzHH/32DZp
-KyMVyOCsfb5NHTyibUhLHcdSEs3dfs+cRLFqLK3L0nAr2ectN6LPElyf40WLcxFb
-aWLwsRcCPI/SFn2Ltwe2Fam+jOt+RTJEid/5iRf0ZQn94Xxk+MtIvUhWBwAyQ3Qd
-FCbtlTQyEkZA0T/r5PDryoV+RDeioTXPQd2efBSoEQtEL1J7IhOUCoYci7qjPZNL
-dg8Gb9OocaGMIXyQ15ZvJl8Qq4qt5o1RW0cKYTsax2CXSnkkcsoXEW3/LJmXYpZH
-sigm/c53KaSayzYZV/0m/n2BXdy7Uh6bjAj3EjwMECWxWAOF2f4AI78WOMg8ssbY
-JjjApwiB4h+auqFTJRzNb5yLEbOGf81YyNvcHF+eMvHenZeuC6pMeaaXfcfwp7gx
-+YhCRMBgcOFgCcl2b9ADRsmk9yvUI6+IgVyHbi2tAYS+Ug0wYGLLaSd5LjTx8cpO
-qAB7jxhnacg=
-=BGOV
+iQIVAwUBVjdVIOe/yOyVhhEJAQpCqQ/9F/ttBUnkhvQJJJv/fKtdi94hX63Z3hg7
+hunPFuZCkIhhTvATl2N41NAUF111VWK76XnfCFuP1JocR7SHMNuwJfwm1r1PWYVg
+X08UL9THcoTmZh0rDHIVrf/jQ0ACcHHfuMocdFPVbIZuo2ct0T7Z+rS+CyH7FDTC
+uPzloI9e9mtxxV0zQWDgUuumoUZS/m0xCPCyemykGcrNUt8wWxfvgT7fvTaFcQPL
+BdlCMJourkRTnrKhb+yctYNrPduJl6kdFfOo2fOJbAZkljwhJHdcnrKbaCUAXUId
+FereonBDMvQ8QaHtQx0AAe2TmmT6M9IaLJfz/qGEU9xusVu3D5h1VVnIvoTNvFt3
+LIUwdFcq53hf0Ird6B+IXbHrmcxD0UmmnD+DxW8Sv6wbQn8wiakwsSGon+0AXXzr
+WZzsajy3aG4z2M0Dy/4sR9yL69lAsunegev4TjjNncvWFkd7p8Oyx2h5BZ9lw5C4
+ciPYhJJaoKONsZRoWbCn2Axxq/Dz76i8Kb5JvBTtVCJ0MuCECE/MXsRVi8vNYb0P
+OEji/YTI/Tx2rNALLQ3Yz2d88IvkartSps4v70S8CE1nvkjm4yQJ/IpkDwv8GGvF
+2OI1aQpnTZ1EnENNoWOBJuB1iEWmiePv68o3CAO15J14GvKgpAvz8NYSLHdQ/xWj
+/R9f62p/WnQ=
+=8CSU
 -----END PGP SIGNATURE-----
 
---=-f6aNqRrQ30g/8HimvCAc--
+--u3/rZRmxL6MmkK24--
