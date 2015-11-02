@@ -1,91 +1,144 @@
-From: =?UTF-8?B?IlVOSVRFRCBOQVRJT04i?= <mtec.cxs-y7mWNqJcIDpfJ/NunPodnw@public.gmane.org>
-Subject: =?UTF-8?B?Q09OVEFDVCBESEwgT0ZGSUNFIElNTUVESUFURUxZIEZPUiBZT1VSIEE=?=
- =?UTF-8?B?VE0gTUFTVEVSQ0FSRA==?=
-Date: Sun, 01 Nov 15 22:07:53 +0000
-Message-ID: <OID_1446415068145040_0mtec.cxs@terra.com.br>
-Reply-To: UNITED_NATION.FUND-O5WfVfzUwx8@public.gmane.org
+From: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 3/8] arch: uapi: asm: mman.h: Let MADV_FREE have same
+ value for all architectures
+Date: Sun, 1 Nov 2015 16:08:27 -0800 (PST)
+Message-ID: <alpine.LSU.2.11.1511011542030.11427@eggly.anvils>
+References: <1446188504-28023-1-git-send-email-minchan@kernel.org> <1446188504-28023-4-git-send-email-minchan@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1446188504-28023-4-git-send-email-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Chen Gang <gang.chen.5i5j-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org" <rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org>, "ink-biIs/Y0ymYJMZLIVYojuPNP0rXTJTi09@public.gmane.org" <ink-biIs/Y0ymYJMZLIVYojuPNP0rXTJTi09@public.gmane.org>, "mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ralf Baechle <ralf@l>
 List-Id: linux-api@vger.kernel.org
 
+On Fri, 30 Oct 2015, Minchan Kim wrote:
+> From: Chen Gang <gang.chen.5i5j-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> 
+> For uapi, need try to let all macros have same value, and MADV_FREE is
+> added into main branch recently, so need redefine MADV_FREE for it.
+> 
+> At present, '8' can be shared with all architectures, so redefine it to
+> '8'.
+> 
+> Cc: rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org <rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org>,
+> Cc: ink-biIs/Y0ymYJMZLIVYojuPNP0rXTJTi09@public.gmane.org <ink-biIs/Y0ymYJMZLIVYojuPNP0rXTJTi09@public.gmane.org>
+> Cc: mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org <mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> Cc: Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>
+> Cc: jejb-6jwH94ZQLHl74goWV3ctuw@public.gmane.org <jejb-6jwH94ZQLHl74goWV3ctuw@public.gmane.org>
+> Cc: deller-Mmb7MZpHnFY@public.gmane.org <deller-Mmb7MZpHnFY@public.gmane.org>
+> Cc: chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org <chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org>
+> Cc: jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org <jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+> Cc: linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Acked-by: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+> Signed-off-by: Chen Gang <gang.chen.5i5j-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
+Let me add
+Acked-by: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+to this one too.
 
+But I have extended your mail's Cc list: Darrick pointed out earlier
+that dietlibc has a Solaris #define MADV_FREE 0x5 in its mman.h,
+and that was in the kernel's sparc mman.h up until 2.6.25.  I doubt
+that presents any obstacle nowadays, but Dave Miller should be Cc'ed.
 
+I was a little suspicious that 8 is available for MADV_FREE: why did
+the common/generic parameters start at 9 instead of 8 back in 2.6.16?
+I think the answer is that we had MADV_REMOVE coming in from one
+direction, and MADV_DONTFORK coming from another direction, and when
+Roland looked for where to start the commons for MADV_DONTFORK, it
+appeared that 8 was occupied - by MADV_REMOVE; then a little later
+MADV_REMOVE was shifted to become the first of the commons, at 9.
 
+Hugh
 
-
-Attention;=C2=A0Beneficiary,
-
-This=C2=A0is=C2=A0to=C2=A0official=C2=A0inform=C2=A0you=C2=A0that=C2=A0=
-we=C2=A0have=C2=A0been=C2=A0having=C2=A0meetings=C2=A0for=C2=A0the=C2=A0=
-past=C2=A0three=C2=A0(3)=C2=A0weeks=C2=A0which=C2=A0ended=C2=A0two=C2=A0=
-days=C2=A0ago=C2=A0with=C2=A0MR.=C2=A0JIM=C2=A0YONG=C2=A0KIM=C2=A0the=C2=
-=A0world=C2=A0bank=C2=A0president=C2=A0and=C2=A0other=C2=A0seven=C2=A0c=
-ontinent=C2=A0presidents=C2=A0on=C2=A0the=C2=A0congress=C2=A0we=C2=A0tr=
-eated=C2=A0on=C2=A0solution=C2=A0to=C2=A0scam=C2=A0victim=C2=A0problems=
-=2E
-
-Note:=C2=A0we=C2=A0have=C2=A0decided=C2=A0to=C2=A0contact=C2=A0you=C2=A0=
-following=C2=A0the=C2=A0reports=C2=A0we=C2=A0received=C2=A0from=C2=A0an=
-ti-fraud=C2=A0international=C2=A0monitoring=C2=A0group=C2=A0your=C2=A0n=
-ame/email=C2=A0has=C2=A0been=C2=A0submitted=C2=A0to=C2=A0us=C2=A0theref=
-ore=C2=A0the=C2=A0united=C2=A0nations=C2=A0have=C2=A0agreed=C2=A0to=C2=A0=
-compensate=C2=A0you=C2=A0with=C2=A0the=C2=A0sum=C2=A0of=C2=A0(USD$1.5=C2=
-=A0Million)=C2=A0this=C2=A0compensation=C2=A0is=C2=A0also=C2=A0includin=
-g=C2=A0international=C2=A0business=C2=A0that=C2=A0failed=C2=A0you=C2=A0=
-in=C2=A0past=C2=A0due=C2=A0to=C2=A0government=C2=A0problems=C2=A0etc.
-
-We=C2=A0have=C2=A0arranged=C2=A0your=C2=A0payment=C2=A0through=C2=A0our=
-=C2=A0ATM=C2=A0MasterCard=C2=A0and=C2=A0deposited=C2=A0it=C2=A0in=C2=A0=
-DHL=C2=A0Office=C2=A0to=C2=A0deliver=C2=A0it=C2=A0to=C2=A0you=C2=A0whic=
-h=C2=A0is=C2=A0the=C2=A0latest=C2=A0instruction=C2=A0from=C2=A0the=C2=A0=
-World=C2=A0Bank=C2=A0president=C2=A0MR.=C2=A0JIM=C2=A0YONG=C2=A0KIM,=C2=
-=A0For=C2=A0your=C2=A0information=E2=80=99s,=C2=A0the=C2=A0delivery=C2=A0=
-charges=C2=A0already=C2=A0paid=C2=A0by=C2=A0U.N=C2=A0treasury,=C2=A0the=
-=C2=A0only=C2=A0money=C2=A0you=C2=A0will=C2=A0send=C2=A0to=C2=A0DHL=C2=A0=
-office=C2=A0Benin=C2=A0Republic=C2=A0is=C2=A0$165=C2=A0dollars=C2=A0for=
-=C2=A0security=C2=A0keeping=C2=A0fee,=C2=A0U.N=C2=A0coordinator=C2=A0al=
-ready=C2=A0paid=C2=A0for=C2=A0others=C2=A0charges=C2=A0fees=C2=A0for=C2=
-=A0delivery=C2=A0except=C2=A0the=C2=A0security=C2=A0keeping=C2=A0fee,=C2=
-=A0the=C2=A0director=C2=A0of=C2=A0DHL=C2=A0refused=C2=A0to=C2=A0collect=
-=C2=A0the=C2=A0security=C2=A0keeping=C2=A0fee=C2=A0from=C2=A0U.N=C2=A0t=
-reasury=C2=A0because=C2=A0Direct=C2=A0of=C2=A0DHL=C2=A0office=C2=A0said=
-=C2=A0they=C2=A0don=E2=80=99t=C2=A0know=C2=A0exactly=C2=A0time=C2=A0you=
-=C2=A0will=C2=A0contact=C2=A0them=C2=A0to=C2=A0reconfirm=C2=A0your=C2=A0=
-details=C2=A0to=C2=A0avoid=C2=A0counting=C2=A0demurrage.
-
-Therefore=C2=A0be=C2=A0advice=C2=A0to=C2=A0contact=C2=A0DHL=C2=A0Office=
-=C2=A0agent=C2=A0Benin.=C2=A0Rev:Joseph=C2=A0harries=C2=A0who=C2=A0is=C2=
-=A0in=C2=A0position=C2=A0to=C2=A0post=C2=A0your=C2=A0ATM=C2=A0MasterCar=
-d,=C2=A0contact=C2=A0DHL=C2=A0Office=C2=A0=C2=A0immediately=C2=A0with=C2=
-=A0the=C2=A0bellow=C2=A0email=C2=A0&=C2=A0phone=C2=A0number=C2=A0=C2=A0=
-as=C2=A0listed=C2=A0below.
-
-Contact=C2=A0name:=C2=A0Rev:=C2=A0JOSEPH=C2=A0=C2=A0HARRIES
-Email:(=C2=A0post_dhl.benin_post-0mR/uhS/Yu8@public.gmane.org=C2=A0)
-Tell:=C2=A0+229-9838-1881
-
-Make=C2=A0sure=C2=A0you=C2=A0reconfirmed=C2=A0DHL=C2=A0Office=C2=A0your=
-=C2=A0details=C2=A0ASAP=C2=A0as=C2=A0stated=C2=A0below=C2=A0to=C2=A0avo=
-id=C2=A0wrong=C2=A0delivery.
-
-Your=C2=A0full=C2=A0name..........
-Home=C2=A0address:.........
-Your=C2=A0country...........
-Your=C2=A0city..............
-Telephone......
-Occupation:.......
-Age:=E2=80=A6=E2=80=A6=E2=80=A6=E2=80=A6=E2=80=A6=E2=80=A6..
-
-
-Let=C2=A0us=C2=A0know=C2=A0as=C2=A0soon=C2=A0as=C2=A0possible=C2=A0you=C2=
-=A0receive=C2=A0your=C2=A0ATM=C2=A0MasterCard=C2=A0for=C2=A0proper=C2=A0=
-verifications.
-
-Regards,
-MR=C2=A0Paul=C2=A0Ogie.
-DEPUTY=C2=A0SECRETARY-GENERAL=C2=A0(U.N)
-Benin=C2=A0Republic.
+> ---
+>  arch/alpha/include/uapi/asm/mman.h     | 2 +-
+>  arch/mips/include/uapi/asm/mman.h      | 2 +-
+>  arch/parisc/include/uapi/asm/mman.h    | 2 +-
+>  arch/xtensa/include/uapi/asm/mman.h    | 2 +-
+>  include/uapi/asm-generic/mman-common.h | 2 +-
+>  5 files changed, 5 insertions(+), 5 deletions(-)
+> 
+> diff --git a/arch/alpha/include/uapi/asm/mman.h b/arch/alpha/include/uapi/asm/mman.h
+> index 836fbd44f65b..0b8a5de7aee3 100644
+> --- a/arch/alpha/include/uapi/asm/mman.h
+> +++ b/arch/alpha/include/uapi/asm/mman.h
+> @@ -44,9 +44,9 @@
+>  #define MADV_WILLNEED	3		/* will need these pages */
+>  #define	MADV_SPACEAVAIL	5		/* ensure resources are available */
+>  #define MADV_DONTNEED	6		/* don't need these pages */
+> -#define MADV_FREE	7		/* free pages only if memory pressure */
+>  
+>  /* common/generic parameters */
+> +#define MADV_FREE	8		/* free pages only if memory pressure */
+>  #define MADV_REMOVE	9		/* remove these pages & resources */
+>  #define MADV_DONTFORK	10		/* don't inherit across fork */
+>  #define MADV_DOFORK	11		/* do inherit across fork */
+> diff --git a/arch/mips/include/uapi/asm/mman.h b/arch/mips/include/uapi/asm/mman.h
+> index 106e741aa7ee..d247f5457944 100644
+> --- a/arch/mips/include/uapi/asm/mman.h
+> +++ b/arch/mips/include/uapi/asm/mman.h
+> @@ -67,9 +67,9 @@
+>  #define MADV_SEQUENTIAL 2		/* expect sequential page references */
+>  #define MADV_WILLNEED	3		/* will need these pages */
+>  #define MADV_DONTNEED	4		/* don't need these pages */
+> -#define MADV_FREE	5		/* free pages only if memory pressure */
+>  
+>  /* common parameters: try to keep these consistent across architectures */
+> +#define MADV_FREE	8		/* free pages only if memory pressure */
+>  #define MADV_REMOVE	9		/* remove these pages & resources */
+>  #define MADV_DONTFORK	10		/* don't inherit across fork */
+>  #define MADV_DOFORK	11		/* do inherit across fork */
+> diff --git a/arch/parisc/include/uapi/asm/mman.h b/arch/parisc/include/uapi/asm/mman.h
+> index 6cb8db76fd4e..700d83fd9352 100644
+> --- a/arch/parisc/include/uapi/asm/mman.h
+> +++ b/arch/parisc/include/uapi/asm/mman.h
+> @@ -40,9 +40,9 @@
+>  #define MADV_SPACEAVAIL 5               /* insure that resources are reserved */
+>  #define MADV_VPS_PURGE  6               /* Purge pages from VM page cache */
+>  #define MADV_VPS_INHERIT 7              /* Inherit parents page size */
+> -#define MADV_FREE	8		/* free pages only if memory pressure */
+>  
+>  /* common/generic parameters */
+> +#define MADV_FREE	8		/* free pages only if memory pressure */
+>  #define MADV_REMOVE	9		/* remove these pages & resources */
+>  #define MADV_DONTFORK	10		/* don't inherit across fork */
+>  #define MADV_DOFORK	11		/* do inherit across fork */
+> diff --git a/arch/xtensa/include/uapi/asm/mman.h b/arch/xtensa/include/uapi/asm/mman.h
+> index 1b19f25bc567..77eaca434071 100644
+> --- a/arch/xtensa/include/uapi/asm/mman.h
+> +++ b/arch/xtensa/include/uapi/asm/mman.h
+> @@ -80,9 +80,9 @@
+>  #define MADV_SEQUENTIAL	2		/* expect sequential page references */
+>  #define MADV_WILLNEED	3		/* will need these pages */
+>  #define MADV_DONTNEED	4		/* don't need these pages */
+> -#define MADV_FREE	5		/* free pages only if memory pressure */
+>  
+>  /* common parameters: try to keep these consistent across architectures */
+> +#define MADV_FREE	8		/* free pages only if memory pressure */
+>  #define MADV_REMOVE	9		/* remove these pages & resources */
+>  #define MADV_DONTFORK	10		/* don't inherit across fork */
+>  #define MADV_DOFORK	11		/* do inherit across fork */
+> diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
+> index 7a94102b7a02..869595947873 100644
+> --- a/include/uapi/asm-generic/mman-common.h
+> +++ b/include/uapi/asm-generic/mman-common.h
+> @@ -34,9 +34,9 @@
+>  #define MADV_SEQUENTIAL	2		/* expect sequential page references */
+>  #define MADV_WILLNEED	3		/* will need these pages */
+>  #define MADV_DONTNEED	4		/* don't need these pages */
+> -#define MADV_FREE	5		/* free pages only if memory pressure */
+>  
+>  /* common parameters: try to keep these consistent across architectures */
+> +#define MADV_FREE	8		/* free pages only if memory pressure */
+>  #define MADV_REMOVE	9		/* remove these pages & resources */
+>  #define MADV_DONTFORK	10		/* don't inherit across fork */
+>  #define MADV_DOFORK	11		/* do inherit across fork */
+> -- 
+> 1.9.1
+> 
+> 
