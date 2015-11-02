@@ -1,33 +1,51 @@
-From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: livepatch: old_name@old_addr scheme in livepatch sysfs directory
-Date: Mon, 2 Nov 2015 04:08:32 -0500
-Message-ID: <20151102090832.GB24801@packer-debian-8-amd64.digitalocean.com>
-References: <1446263060-22175-1-git-send-email-chris.j.arges@canonical.com>
- <20151101015258.GA8199@packer-debian-8-amd64.digitalocean.com>
- <56358EA4.10900@canonical.com>
- <alpine.LNX.2.00.1511010958430.17538@pobox.suse.cz>
+From: David Laight <David.Laight@ACULAB.COM>
+Subject: RE: [PATCH RFC net-next 2/2] tcp: Add Redundant Data Bundling (RDB)
+Date: Mon, 2 Nov 2015 09:18:20 +0000
+Message-ID: <063D6719AE5E284EB5DD2968C1650D6D1CBC86C4@AcuExch.aculab.com>
+References: <1445633413-3532-1-git-send-email-bro.devel+kernel@gmail.com>
+ <C1235108-1DC2-408E-8CAC-65DBE628AB78@simula.no>
+ <CAK6E8=fyY_kQ4ZpyC+q3fH-CFvwDt_=ro2Y7qB9bxgMCpkcC3g@mail.gmail.com>
+ <3710572.sJUWpao1xp@bro-compal>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LNX.2.00.1511010958430.17538-ztGlSCb7Y1iN3ZZ/Hiejyg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Chris J Arges <chris.j.arges-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=Windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <3710572.sJUWpao1xp@bro-compal>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: "'bro.devel+kernel@gmail.com'" <bro.devel+kernel@gmail.com>, Yuchung Cheng <ycheng@google.com>
+Cc: Andreas Petlund <apetlund@simula.no>, Neal Cardwell <ncardwell@google.com>, "David S. Miller" <davem@davemloft.net>, Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>, James Morris <jmorris@namei.org>, Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>, Patrick McHardy <kaber@trash.net>, Jonathan Corbet <corbet@lwn.net>, Eric Dumazet <edumazet@google.com>, Tom Herbert <tom@herbertland.com>, Paolo Abeni <pabeni@redhat.com>, Erik Kline <ek@google.com>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Al Viro <viro@zeniv.linux.org.uk>, Jiri Pirko <jiri@resnulli.us>, Alexander Duyck <alexander.h.duyck@redhat.com>, Florian Westphal <fw@strlen.de>, Daniel Lee <Longinus00@gmail.com>, Marcelo Ricardo Leitner <mleitner@redhat.com>, Daniel Borkmann <daniel@iogearbox.net>, Willem de Bruijn <willemb@google.com>, =?Windows-1252?Q?Linus_L=FCssing?= <linus.luessing@c0d3.blue>linux-
 List-Id: linux-api@vger.kernel.org
 
-+++ Jiri Kosina [01/11/15 10:07 +0100]:
->On Sat, 31 Oct 2015, Chris J Arges wrote:
->
->> Makes sense to me. Is there a reason why the sysfs entries are visible
->> to non-root users?
->
->Well, kptr_restrict applies only to values printed using '%pK'. So if the
->sysfs handler is using other printk() format string to print the pointer,
->it'll be leaked out (and should eventually be fixed).
+=46rom: Bendik R=F8nning Opstad
+> Sent: 29 October 2015 22:54
+=2E..
+> > > > The semantics of the tp->nonagle bits are already a bit complex=
+=2E My
+> > > > sense is that having a setsockopt of TCP_RDB transparently modi=
+fy the
+> > > > nagle behavior is going to add more extra complexity and unanti=
+cipated
+> > > > behavior than is warranted given the slight possible gain in
+> > > > convenience to the app writer. What about a model where the
+> > > > application user just needs to remember to call
+> > > > setsockopt(TCP_NODELAY) if they want the TCP_RDB behavior to be
+> > > > sensible? I see your nice tests at
+> > > >
+> > > >   https://github.com/bendikro/packetdrill/commit/9916b6c53e33dd=
+04329d29b
+> > > >   7d8baf703b2c2ac1b> >
+> > > > are already doing that. And my sense is that likewise most
+> > > > well-engineered "thin stream" apps will already be using
+> > > > setsockopt(TCP_NODELAY). Is that workable?
+>=20
+> This is definitely workable. I agree that it may not be an ideal solu=
+tion to
+> have TCP_RDB disable Nagle, however, it would be useful with a way to=
+ easily
+> enable RDB and disable Nagle.
 
-Hm, I think the func.n solution might be a good temporary fix for now.
-Even if we do go with func@addr and use the '%pK' format specifier we
-will run into the same problem at kptr_restrict == 2.
+If enabling RDB disables Nagle, then what happens when you turn RDB bac=
+k off?
 
-Jessica
+	David
