@@ -1,42 +1,83 @@
-From: David Laight <David.Laight@ACULAB.COM>
-Subject: RE: [PATCH RFC net-next 2/2] tcp: Add Redundant Data Bundling (RDB)
-Date: Mon, 2 Nov 2015 09:37:54 +0000
-Message-ID: <063D6719AE5E284EB5DD2968C1650D6D1CBC86F1@AcuExch.aculab.com>
-References: <1445633413-3532-1-git-send-email-bro.devel+kernel@gmail.com>
- <1445633413-3532-3-git-send-email-bro.devel+kernel@gmail.com>
+From: Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>
+Subject: Re: [PATCH selftests 0/6] Fix some broken tests
+Date: Mon, 02 Nov 2015 12:15:52 +0000
+Message-ID: <1446466552.25466.5.camel@decadent.org.uk>
+References: <1446334510.2595.13.camel@decadent.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1445633413-3532-3-git-send-email-bro.devel+kernel@gmail.com>
-Content-Language: en-US
-Sender: linux-doc-owner@vger.kernel.org
-To: =?utf-8?B?J0JlbmRpayBSw7hubmluZyBPcHN0YWQn?= <bro.devel@gmail.com>, "David S. Miller" <davem@davemloft.net>, Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>, James Morris <jmorris@namei.org>, Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>, Patrick McHardy <kaber@trash.net>, Jonathan Corbet <corbet@lwn.net>
-Cc: Eric Dumazet <edumazet@google.com>, Neal Cardwell <ncardwell@google.com>, Tom Herbert <tom@herbertland.com>, Yuchung Cheng <ycheng@google.com>, Paolo Abeni <pabeni@redhat.com>, Erik Kline <ek@google.com>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Al Viro <viro@zeniv.linux.org.uk>, Jiri Pirko <jiri@resnulli.us>, Alexander Duyck <alexander.h.duyck@redhat.com>, Florian Westphal <fw@strlen.de>, Daniel Lee <Longinus00@gmail.com>, Marcelo Ricardo Leitner <mleitner@redhat.com>, Daniel Borkmann <daniel@iogearbox.net>, Willem de Bruijn <willemb@google.com>, =?utf-8?B?TGludXMgTMO8c3Npbmc=?= <linus.luessing@c0d3.blue>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Andreas
+Content-Type: multipart/signed; micalg="pgp-sha512";
+	protocol="application/pgp-signature"; boundary="=-f6aNqRrQ30g/8HimvCAc"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1446334510.2595.13.camel-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-RnJvbTogQmVuZGlrIFLDuG5uaW5nIE9wc3RhZA0KPiBTZW50OiAyMyBPY3RvYmVyIDIwMTUgMjE6
-NTANCj4gUkRCIGlzIGEgbWVjaGFuaXNtIHRoYXQgZW5hYmxlcyBhIFRDUCBzZW5kZXIgdG8gYnVu
-ZGxlIHJlZHVuZGFudA0KPiAoYWxyZWFkeSBzZW50KSBkYXRhIHdpdGggVENQIHBhY2tldHMgY29u
-dGFpbmluZyBuZXcgZGF0YS4gQnkgYnVuZGxpbmcNCj4gKHJldHJhbnNtaXR0aW5nKSBhbHJlYWR5
-IHNlbnQgZGF0YSB3aXRoIGVhY2ggVENQIHBhY2tldCBjb250YWluaW5nIG5ldw0KPiBkYXRhLCB0
-aGUgY29ubmVjdGlvbiB3aWxsIGJlIG1vcmUgcmVzaXN0YW50IHRvIHNwb3JhZGljIHBhY2tldCBs
-b3NzDQo+IHdoaWNoIHJlZHVjZXMgdGhlIGFwcGxpY2F0aW9uIGxheWVyIGxhdGVuY3kgc2lnbmlm
-aWNhbnRseSBpbiBjb25nZXN0ZWQNCj4gc2NlbmFyaW9zLg0KDQpXaGF0IHNvcnQgb2YgdHJhZmZp
-YyBmbG93cyBkbyB5b3UgZXhwZWN0IHRoaXMgdG8gaGVscD8NCg0KQW4gc3NoIChvciBzaW1pbGFy
-KSBjb25uZWN0aW9uIHdpbGwgZ2V0IGFkZGl0aW9uYWwgZGF0YSB0byBzZW5kLA0KYnV0IHRoYXQg
-c29ydCBvZiBkYXRhIGZsb3cgbmVlZHMgTmFnbGUgaW4gb3JkZXIgdG8gcmVkdWNlIHRoZQ0KbnVt
-YmVyIG9mIHBhY2tldHMgc2VudC4NCk9UT0ggaXQgbWlnaHQgYmVuZWZpdCBmcm9tIGluY2x1ZGlu
-ZyB1bmFja2VkIGRhdGEgaWYgdGhlIE5hZ2xlDQp0aW1lciBleHBpcmVzLg0KQmVpbmcgYWJsZSB0
-byBzZXQgdGhlIE5hZ2xlIHRpbWVyIG9uIGEgcGVyLWNvbm5lY3Rpb24gYmFzaXMNCihvciBtYXli
-ZSB1c2luZyBzb21ldGhpbmcgYmFzZWQgb24gdGhlIFJUVCBpbnN0ZWFkIG9mIDIgc2VjcykNCm1p
-Z2h0IG1ha2UgcGFja2V0IGxvc3MgbGVzcyBwcm9ibGVtYXRpYy4NCg0KRGF0YSBmbG93cyB0aGF0
-IGFscmVhZHkgaGF2ZSBOYWdsZSBkaXNhYmxlZCAocHJvYmFibHkgYW55dGhpbmcgdGhhdA0KaXNu
-J3QgY29tbWFuZC1yZXNwb25zZSBhbmQgaXNuJ3QgdW5pZGlyZWN0aW9uYWwgYnVsayBkYXRhKSBh
-cmUNCmxpa2VseSB0byBnZW5lcmF0ZSBhIGxvdCBvZiBwYWNrZXRzIHdpdGhpbiB0aGUgUlRULg0K
-UmVzZW5kaW5nIHVuYWNrZWQgZGF0YSB3aWxsIGp1c3QgZWF0IGludG8gYXZhaWxhYmxlIG5ldHdv
-cmsgYmFuZHdpZHRoDQphbmQgY291bGQgZWFzaWx5IG1ha2UgYW55IGNvbmdlc3Rpb24gd29yc2Uu
-DQoNCkkgdGhpbmsgdGhhdCBtZWFucyB5b3Ugc2hvdWxkbid0IHJlc2VuZCBkYXRhIG1vcmUgdGhh
-biBvbmNlLCBhbmQvb3INCnNob3VsZCBtYWtlIHN1cmUgdGhhdCB0aGUgcmVzZW50IGRhdGEgaXNu
-J3QgYSBzaWduaWZpY2FudCBvdmVyaGVhZA0Kb24gdGhlIHBhY2tldCBiZWluZyBzZW50Lg0KDQoJ
-RGF2aWQNCg0KDQo=
+
+--=-f6aNqRrQ30g/8HimvCAc
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: base64
+
+T24gU2F0LCAyMDE1LTEwLTMxIGF0IDIzOjM1ICswMDAwLCBCZW4gSHV0Y2hpbmdzIHdyb3RlOgo+
+IFRoaXMgc2VyaWVzIGZpeGVzIHNvbWUgc2VsZi10ZXN0cyB0aGF0IGFyZSBicm9rZW4sIHVucmVs
+aWFibGUgb3IKPiBwcm9kdWNlIGNvbXBpbGVyIHdhcm5pbmdzIGluIDQuMy4KCkkgbm93IHJlYWxp
+c2UgdGhhdCBFdm9sdXRpb24gMy4xOCBoYXMgcmVncmVzc2VkIGFuZCBpcyBtYW5nbGluZyB0aGUK
+cGF0Y2hlcyBJIHNlbmQuIMKgSSdsbCBzZW5kIHVubWFuZ2xlZCBwYXRjaGVzIHNob3J0bHkuCgpC
+ZW4uCgo+IEJlbi4KPiAKPiBCZW4gSHV0Y2hpbmdzICg2KToKPiDCoCBzZWxmdGVzdHM6IEFkZCBt
+aXNzaW5nICNpbmNsdWRlIGRpcmVjdGl2ZXMKPiDCoCBzZWxmdGVzdHM6IG1lbWZkOiBTdG9wIHVu
+bmVjZXNzYXJ5IHJlYnVpbGRzCj4gwqAgc2VsZnRlc3RzOiBrcHJvYmU6IENob29zZSBhbiBhbHdh
+eXMtZGVmaW5lZCBmdW5jdGlvbiB0byBwcm9iZQo+IMKgIHNlbGZ0ZXN0czogTWFrZSBzY3JpcHRz
+IGV4ZWN1dGFibGUKPiDCoCBzZWxmdGVzdHM6IHZtOiBUcnkgaGFyZGVyIHRvIGFsbG9jYXRlIGh1
+Z2UgcGFnZXMKPiDCoCBzZWxmdGVzdHM6IGJyZWFrcG9pbnQ6IEFjdHVhbGx5IGJ1aWxkIGl0Cj4g
+Cj4gwqB0b29scy90ZXN0aW5nL3NlbGZ0ZXN0cy9icmVha3BvaW50cy9NYWtlZmlsZcKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqB8wqDCoDIgKy0KPiDCoC4uLi9zZWxmdGVzdHMvZnRyYWNlL3Rl
+c3QuZC9rcHJvYmUvYWRkX2FuZF9yZW1vdmUudGPCoMKgwqDCoMKgwqB8wqDCoDIgKy0KPiDCoC4u
+Li90ZXN0aW5nL3NlbGZ0ZXN0cy9mdHJhY2UvdGVzdC5kL2twcm9iZS9idXN5X2NoZWNrLnRjwqDC
+oHzCoMKgMiArLQo+IMKgLi4uL3Rlc3Rpbmcvc2VsZnRlc3RzL2Z0cmFjZS90ZXN0LmQva3Byb2Jl
+L2twcm9iZV9hcmdzLnRjIHzCoMKgMiArLQo+IMKgLi4uL3NlbGZ0ZXN0cy9mdHJhY2UvdGVzdC5k
+L2twcm9iZS9rcHJvYmVfZnRyYWNlLnRjwqDCoMKgwqDCoMKgwqB8IDE0ICsrKysrKystLS0tLS0t
+Cj4gwqAuLi4vc2VsZnRlc3RzL2Z0cmFjZS90ZXN0LmQva3Byb2JlL2tyZXRwcm9iZV9hcmdzLnRj
+wqDCoMKgwqDCoMKgfMKgwqAyICstCj4gwqB0b29scy90ZXN0aW5nL3NlbGZ0ZXN0cy9tZW1mZC9N
+YWtlZmlsZcKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqB8IDEyICsrKysr
+Ky0tLS0tLQo+IMKgdG9vbHMvdGVzdGluZy9zZWxmdGVzdHMvbWVtZmQvbWVtZmRfdGVzdC5jwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqB8wqDCoDEgKwo+IMKgdG9vbHMvdGVzdGluZy9z
+ZWxmdGVzdHMvbWVtZmQvcnVuX2Z1c2VfdGVzdC5zaMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoHzC
+oMKgMAo+IMKgdG9vbHMvdGVzdGluZy9zZWxmdGVzdHMvbXF1ZXVlL21xX29wZW5fdGVzdHMuY8Kg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoHzCoMKgMSArCj4gwqB0b29scy90ZXN0aW5nL3NlbGZ0ZXN0
+cy9tcXVldWUvbXFfcGVyZl90ZXN0cy5jwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgfMKgwqAxICsK
+PiDCoHRvb2xzL3Rlc3Rpbmcvc2VsZnRlc3RzL3N0YXRpY19rZXlzL3Rlc3Rfc3RhdGljX2tleXMu
+c2jCoMKgwqB8wqDCoDAKPiDCoHRvb2xzL3Rlc3Rpbmcvc2VsZnRlc3RzL3RpbWVycy9uYW5vc2xl
+ZXAuY8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgfMKgwqAxICsKPiDCoHRvb2xzL3Rl
+c3Rpbmcvc2VsZnRlc3RzL3ZtL3J1bl92bXRlc3RzwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoHwgMTUgKysrKysrKysrKysrKystCj4gwqAxNCBmaWxlcyBjaGFuZ2VkLCAz
+NiBpbnNlcnRpb25zKCspLCAxOSBkZWxldGlvbnMoLSkKPiDCoG1vZGUgY2hhbmdlIDEwMDY0NCA9
+PiAxMDA3NTUgdG9vbHMvdGVzdGluZy9zZWxmdGVzdHMvbWVtZmQvcnVuX2Z1c2VfdGVzdC5zaAo+
+IMKgbW9kZSBjaGFuZ2UgMTAwNjQ0ID0+IDEwMDc1NSB0b29scy90ZXN0aW5nL3NlbGZ0ZXN0cy9z
+dGF0aWNfa2V5cy90ZXN0X3N0YXRpY19rZXlzLnNoCj4gCi0tIApCZW4gSHV0Y2hpbmdzCk5vdGhp
+bmcgaXMgZXZlciBhIGNvbXBsZXRlIGZhaWx1cmU7IGl0IGNhbiBhbHdheXMgc2VydmUgYXMgYSBi
+YWQgZXhhbXBsZS4=
+
+
+--=-f6aNqRrQ30g/8HimvCAc
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIVAwUAVjdT+Oe/yOyVhhEJAQoPAhAAiCf0bz6pNlgtrScSJuZV3G2mQ42/AmWG
+yPSOAWwhHcUMRd/0NrELWla161nNmJOBLggCA885sPyR3YRwdZW2UC3f6FFBy6zB
+nWandrmKCQPtalJui1BDq3FiL1aXHseB9ux6CiXCxBlBQUsCizkkV0l+SmNoXxhB
+1Bl5uytBu1BJfapOC5VL1fKen5RWyGSSVKTnAdyzEBp7Ft+nwOSKTcfzHH/32DZp
+KyMVyOCsfb5NHTyibUhLHcdSEs3dfs+cRLFqLK3L0nAr2ectN6LPElyf40WLcxFb
+aWLwsRcCPI/SFn2Ltwe2Fam+jOt+RTJEid/5iRf0ZQn94Xxk+MtIvUhWBwAyQ3Qd
+FCbtlTQyEkZA0T/r5PDryoV+RDeioTXPQd2efBSoEQtEL1J7IhOUCoYci7qjPZNL
+dg8Gb9OocaGMIXyQ15ZvJl8Qq4qt5o1RW0cKYTsax2CXSnkkcsoXEW3/LJmXYpZH
+sigm/c53KaSayzYZV/0m/n2BXdy7Uh6bjAj3EjwMECWxWAOF2f4AI78WOMg8ssbY
+JjjApwiB4h+auqFTJRzNb5yLEbOGf81YyNvcHF+eMvHenZeuC6pMeaaXfcfwp7gx
++YhCRMBgcOFgCcl2b9ADRsmk9yvUI6+IgVyHbi2tAYS+Ug0wYGLLaSd5LjTx8cpO
+qAB7jxhnacg=
+=BGOV
+-----END PGP SIGNATURE-----
+
+--=-f6aNqRrQ30g/8HimvCAc--
