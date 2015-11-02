@@ -1,66 +1,83 @@
-From: Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>
-Subject: [PATCH v2 selftests 6/6] selftests: breakpoint: Actually build it
-Date: Mon, 2 Nov 2015 12:22:29 +0000
-Message-ID: <20151102122229.GG17015@decadent.org.uk>
-References: <20151102122048.GA17015@decadent.org.uk>
+From: "Andrew F. Davis" <afd@ti.com>
+Subject: Re: [PATCH 1/2] Documentation: afe4404: Add DT bindings for the
+ AFE4404 heart monitor
+Date: Mon, 2 Nov 2015 10:08:30 -0600
+Message-ID: <56378A7E.20900@ti.com>
+References: <1446309089-21094-1-git-send-email-afd@ti.com>
+ <1446309089-21094-2-git-send-email-afd@ti.com>
+ <CAL_JsqJJjtAXzi-3Aeb6pwwSUUv0i9g0g43Fq60CeSmNEiYoaQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="OFj+1YLvsEfSXdCH"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20151102122048.GA17015-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAL_JsqJJjtAXzi-3Aeb6pwwSUUv0i9g0g43Fq60CeSmNEiYoaQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Rob Herring <robh+dt@kernel.org>
+Cc: Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Jonathan Cameron <jic23@kernel.org>, Hartmut Knaack <knaack.h@gmx.de>, Lars-Peter Clausen <lars@metafoo.de>, Peter Meerwald <pmeerw@pmeerw.net>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, "linux-iio@vger.kernel.org" <linux-iio@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+On 10/31/2015 01:44 PM, Rob Herring wrote:
+> gmail thinks this is spam BTW.
+>
 
---OFj+1YLvsEfSXdCH
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Strange, the mailing lists do too.
 
-Fixes: 9fae100cbd10 ("selftests: breakpoints: fix installing error on ...")
-Signed-off-by: Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>
----
- tools/testing/selftests/breakpoints/Makefile | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+> On Sat, Oct 31, 2015 at 11:31 AM, Andrew F. Davis <afd@ti.com> wrote:
+>> Add the TI afe4404 heart monitor DT bindings documentation.
+>> Create health directory created under iio.
+>>
+>> Signed-off-by: Andrew F. Davis <afd@ti.com>
+>> ---
+>>   .../devicetree/bindings/iio/health/afe4404.txt     | 27 ++++++++++++++++++++++
+>>   1 file changed, 27 insertions(+)
+>>   create mode 100644 Documentation/devicetree/bindings/iio/health/afe4404.txt
+>>
+>> diff --git a/Documentation/devicetree/bindings/iio/health/afe4404.txt b/Documentation/devicetree/bindings/iio/health/afe4404.txt
+>> new file mode 100644
+>> index 0000000..d377033
+>> --- /dev/null
+>> +++ b/Documentation/devicetree/bindings/iio/health/afe4404.txt
+>> @@ -0,0 +1,27 @@
+>> +* Texas Instruments AFE4404 Heart rate and Pulse Oximeter
+>> +
+>> +Required properties:
+>> + - compatible          : Should be "ti,afe4404".
+>> + - reg                 : I2C address of the device.
+>> + - led-supply          : Regulator supply to the device.
+>
+> Is led correct name or copy-n-paste? The datasheet has tx_sup and
+> rx_sup for supplies.
+>
 
-diff --git a/tools/testing/selftests/breakpoints/Makefile b/tools/testing/s=
-elftests/breakpoints/Makefile
-index d27108b..c0d9570 100644
---- a/tools/testing/selftests/breakpoints/Makefile
-+++ b/tools/testing/selftests/breakpoints/Makefile
-@@ -6,7 +6,7 @@ ifeq ($(ARCH),x86)
- TEST_PROGS :=3D breakpoint_test
- endif
-=20
--all:
-+all: $(TEST_PROGS)
-=20
- include ../lib.mk
-=20
+Looking back at the data sheet it looks like it also has an io_sup.
+rx_sup seems to be the supply that must be on to keep the device on.
+io_sup and tx_sup can be disabled without losing register values and
+reseting the device.
 
---OFj+1YLvsEfSXdCH
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
+I'm not sure if it makes sense to list the needed supplies, so I may
+just rename led-supply to tx_sup-supply and have the be the only one.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIVAwUBVjdVhOe/yOyVhhEJAQqX2g/9EAsYuoMWZOxskf9st/XI04CGTYL9smJF
-7jAdXVbclAMMN1DYeqzW6wG8dghRxotlHGmotWDAA68GuTpq72MNSkmL2jqe/VDR
-2YKp1X5OeNVpeVOr0BmupnuXjWkglseXsgNRk35bPblChqALhghiJ53GmBG0jaKz
-R9LUgRhU6SflJX6I84T0HJWCopejm1XlYQmjS2JAKv3QADw2fI0gj7bAMSWS6qdC
-mDqtSf8GscdpAlSHjNGfjiDHxUtzjSypzfMu9Qs9Dy/c9Juwgv+0/32HF/NdL0gp
-sBoOpnbmZIpVLyqvzCryT69wiOP3akVbmNPin9jNLe16/nxt/qoX94NAF1eBjUtc
-a+zYmAd/co96BkwLS4h87/QzSbg3SE31klemveewgjHIaYYA1QK6/xdzZUx2b+xV
-nJT+rkSYIDH94kQNguePbgboV6X61y0X21WNelfWOhICj7AVHQQeFCjeFblR6pzC
-9K688yClALg02VImRwWyKNRBLjzLUVW0lDWjjaQKoUOemHX0CH0XQcFV2G5Cuxbs
-8ChQK13YP090S5vBoyVUPtF3DUOyvslmZuT3UTru0HFh6f6Oc8YgxoD0jp+5QmKw
-mnQSXXTotbvDbmYBLkOAxz38F3wRZWurRmUFWEOqmhX94Kf/Ju/pEDf2aWQE91xc
-uVl/l53oCxw=
-=3EFm
------END PGP SIGNATURE-----
-
---OFj+1YLvsEfSXdCH--
+>> + - interrupt-parent    : Phandle to he parent interrupt controller.
+>> + - interrupts          : The interrupt line the device ADC_RDY pin is connected to.
+>> +
+>> +Optional properties:
+>> + - reset-gpios         : GPIO used to reset the device.
+>> +
+>> +Example:
+>> +
+>> +&i2c2 {
+>> +       heart_mon@58 {
+>> +               compatible = "ti,afe4404";
+>> +               reg = <0x58>;
+>> +
+>> +               led-supply = <&vbat>;
+>> +
+>> +               interrupt-parent = <&gpio1>;
+>> +               interrupts = <28 IRQ_TYPE_EDGE_RISING>;
+>> +
+>> +               reset-gpios = <&gpio1 16 GPIO_ACTIVE_LOW>;
+>> +       };
+>> +};
+>> --
+>> 1.9.1
+>>
