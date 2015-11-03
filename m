@@ -1,7 +1,8 @@
 From: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH 10/13] Move USE_WCACHING to drivers/block/pktcdvd.c
-Date: Tue,  3 Nov 2015 11:46:31 -0800
-Message-ID: <1446579994-9937-11-git-send-email-palmer__35921.144919894$1446595256$gmane$org@dabbelt.com>
+Subject: [PATCH 02/13] Use sys_ni.c instead of #ifdef to disable fork on
+ CONFIG_NOMMU
+Date: Tue,  3 Nov 2015 11:46:23 -0800
+Message-ID: <1446579994-9937-3-git-send-email-palmer__22543.9362497584$1446595257$gmane$org@dabbelt.com>
 References: <1442271047-4908-1-git-send-email-palmer@dabbelt.com>
  <1446579994-9937-1-git-send-email-palmer@dabbelt.com>
 Mime-Version: 1.0
@@ -22,62 +23,49 @@ To: arnd-r2nGTMty4D4@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gm
 Cc: dave-gkUM19QKKo4@public.gmane.org, linux-xtensa-PjhNF2WwrV/0Sa2dR60CXw@public.gmane.org, jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bhe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, tomi.valkeinen-l0cyMroinI0@public.gmane.org, 3chas3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, aishchuk-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org, iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-I don't think this was ever intended to be exposed to userspace, but
-it did require an "#ifdef CONFIG_*".  Since the name is kind of
-generic and was only used in one place, I've moved the definition to
-the one user.
+I think this change actually doesn't do anything: __NR_fork was still
+being defined either way, and on my machine fork() in <unistd.h> comes
+from libc.
+
+This just moves to the standard mechanism for defining syscalls that
+aren't implemented instead, which has the side-effect of no longer
+having an #ifdef CONFIG_* in a user-visible header.
 
 Signed-off-by: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
 Reviewed-by: Andrew Waterman <waterman-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
 Reviewed-by: Albert Ou <aou-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
 ---
- drivers/block/pktcdvd.c      | 11 +++++++++++
- include/uapi/linux/pktcdvd.h | 11 -----------
- 2 files changed, 11 insertions(+), 11 deletions(-)
+ include/uapi/asm-generic/unistd.h | 4 ----
+ kernel/sys_ni.c                   | 1 +
+ 2 files changed, 1 insertion(+), 4 deletions(-)
 
-diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
-index 7be2375..18d2d05 100644
---- a/drivers/block/pktcdvd.c
-+++ b/drivers/block/pktcdvd.c
-@@ -90,6 +90,17 @@ do {									\
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index ee12400..ffd2957 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -869,11 +869,7 @@ __SYSCALL(__NR_uselib, sys_uselib)
+ __SYSCALL(__NR__sysctl, sys_sysctl)
  
- #define MAX_SPEED 0xffff
- 
-+/*
-+ * use drive write caching -- we need deferred error handling to be
-+ * able to successfully recover with this option (drive will return good
-+ * status as soon as the cdb is validated).
-+ */
-+#if defined(CONFIG_CDROM_PKTCDVD_WCACHE)
-+#define USE_WCACHING		1
-+#else
-+#define USE_WCACHING		0
-+#endif
-+
- static DEFINE_MUTEX(pktcdvd_mutex);
- static struct pktcdvd_device *pkt_devs[MAX_WRITERS];
- static struct proc_dir_entry *pkt_proc;
-diff --git a/include/uapi/linux/pktcdvd.h b/include/uapi/linux/pktcdvd.h
-index 2640b9d..05c2bee 100644
---- a/include/uapi/linux/pktcdvd.h
-+++ b/include/uapi/linux/pktcdvd.h
-@@ -29,17 +29,6 @@
- #define PACKET_WAIT_TIME	(HZ * 5 / 1000)
- 
- /*
-- * use drive write caching -- we need deferred error handling to be
-- * able to successfully recover with this option (drive will return good
-- * status as soon as the cdb is validated).
-- */
--#if defined(CONFIG_CDROM_PKTCDVD_WCACHE)
--#define USE_WCACHING		1
+ #define __NR_fork 1079
+-#ifdef CONFIG_MMU
+ __SYSCALL(__NR_fork, sys_fork)
 -#else
--#define USE_WCACHING		0
--#endif
--
--/*
-  * No user-servicable parts beyond this point ->
-  */
+-__SYSCALL(__NR_fork, sys_ni_syscall)
+-#endif /* CONFIG_MMU */
  
+ #undef __NR_syscalls
+ #define __NR_syscalls (__NR_fork+1)
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index a02decf..c830f7f 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -174,6 +174,7 @@ cond_syscall(sys_setfsuid);
+ cond_syscall(sys_setfsgid);
+ cond_syscall(sys_capget);
+ cond_syscall(sys_capset);
++cond_syscall(sys_fork);
+ 
+ /* arch-specific weak syscall entries */
+ cond_syscall(sys_pciconfig_read);
 -- 
 2.4.10
