@@ -1,198 +1,280 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v13 27/51] xfs: Fix richacl access by ioctl
-Date: Tue,  3 Nov 2015 16:17:03 +0100
-Message-ID: <1446563847-14005-28-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v13 33/51] richacl: Isolate the owner and group classes
+Date: Tue,  3 Nov 2015 16:17:09 +0100
+Message-ID: <1446563847-14005-34-git-send-email-agruenba@redhat.com>
 References: <1446563847-14005-1-git-send-email-agruenba@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1446563847-14005-1-git-send-email-agruenba@redhat.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
 Cc: Andreas Gruenbacher <agruenba@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Make sure that the XFS_IOC_ATTRMULTI_BY_HANDLE ioctl exposes richacls in
-the same way as the xattr interface: check for mode-equivalent richacls,
-update the inode permission bits, and perform user namespace mapping.
+When applying the file masks to an acl, we need to ensure that no
+process gets more permissions than allowed by its file mask.
+
+This may require inserting an owner@ deny ace to ensure this if the
+owner mask contains fewer permissions than the group or other mask.  For
+example, when applying mode 0446 to the following acl:
+
+   everyone@:rw::allow
+
+A deny ace needs to be inserted so that the owner won't get elevated
+write access:
+
+   owner@:w::deny
+   everyone@:rw::allow
+
+Likewise, we may need to insert group class deny aces if the group mask
+contains fewer permissions than the other mask.  For example, when
+applying mode 0646 to the following acl:
+
+   owner@:rw::allow
+   everyone@:rw::allow
+
+A deny ace needs to be inserted so that the owning group won't get
+elevated write access:
+
+   owner@:rw::allow
+   group@:w::deny
+   everyone@:rw::allow
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+Reviewed-by: J. Bruce Fields <bfields@redhat.com>
 ---
- fs/xfs/xfs_ioctl.c   | 27 +++++++++++++++++++++++++++
- fs/xfs/xfs_richacl.c | 52 ++++++++++++++++++++++++++++++++++++++++++++++++----
- fs/xfs/xfs_richacl.h |  3 +++
- 3 files changed, 78 insertions(+), 4 deletions(-)
+ fs/richacl_compat.c | 223 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 223 insertions(+)
 
-diff --git a/fs/xfs/xfs_ioctl.c b/fs/xfs/xfs_ioctl.c
-index e939c20..deae7df 100644
---- a/fs/xfs/xfs_ioctl.c
-+++ b/fs/xfs/xfs_ioctl.c
-@@ -40,6 +40,7 @@
- #include "xfs_symlink.h"
- #include "xfs_trans.h"
- #include "xfs_pnfs.h"
-+#include "xfs_richacl.h"
- 
- #include <linux/capability.h>
- #include <linux/dcache.h>
-@@ -48,6 +49,7 @@
- #include <linux/pagemap.h>
- #include <linux/slab.h>
- #include <linux/exportfs.h>
-+#include <linux/xattr.h>
- 
- /*
-  * xfs_find_handle maps from userspace xfs_fsop_handlereq structure to
-@@ -461,10 +463,20 @@ xfs_attrmulti_attr_get(
- 	if (!kbuf)
- 		return -ENOMEM;
- 
-+	if (flags & ATTR_ROOT) {
-+		if (!strcmp(name, XATTR_RICHACL)) {
-+			error = xfs_richacl_get_ioctl(inode, kbuf, (int *)len);
-+			if (error)
-+				goto out_kfree;
-+			goto out_copy;
-+		}
-+	}
-+
- 	error = xfs_attr_get(XFS_I(inode), name, kbuf, (int *)len, flags);
- 	if (error)
- 		goto out_kfree;
- 
-+out_copy:
- 	if (copy_to_user(ubuf, kbuf, *len))
- 		error = -EFAULT;
- 
-@@ -493,7 +505,16 @@ xfs_attrmulti_attr_set(
- 	if (IS_ERR(kbuf))
- 		return PTR_ERR(kbuf);
- 
-+	if (flags & ATTR_ROOT) {
-+		if (!strcmp(name, XATTR_RICHACL)) {
-+			error = xfs_richacl_set_ioctl(inode, kbuf, len, flags);
-+			goto out_kfree;
-+		}
-+	}
-+
- 	error = xfs_attr_set(XFS_I(inode), name, kbuf, len, flags);
-+
-+out_kfree:
- 	kfree(kbuf);
- 	return error;
- }
-@@ -506,6 +527,12 @@ xfs_attrmulti_attr_remove(
- {
- 	if (IS_IMMUTABLE(inode) || IS_APPEND(inode))
- 		return -EPERM;
-+
-+	if (flags & ATTR_ROOT) {
-+		if (!strcmp(name, XATTR_RICHACL))
-+			return xfs_richacl_set_ioctl(inode, NULL, 0, flags);
-+	}
-+
- 	return xfs_attr_remove(XFS_I(inode), name, flags);
- }
- 
-diff --git a/fs/xfs/xfs_richacl.c b/fs/xfs/xfs_richacl.c
-index 92a036e..f8f5a62 100644
---- a/fs/xfs/xfs_richacl.c
-+++ b/fs/xfs/xfs_richacl.c
-@@ -67,8 +67,8 @@ xfs_remove_richacl(struct inode *inode)
- 	return error;
- }
- 
--int
--xfs_set_richacl(struct inode *inode, struct richacl *acl)
-+static int
-+__xfs_set_richacl(struct inode *inode, struct richacl *acl, int xflags)
- {
- 	struct xfs_inode *ip = XFS_I(inode);
- 	umode_t mode = inode->i_mode;
-@@ -88,8 +88,7 @@ xfs_set_richacl(struct inode *inode, struct richacl *acl)
- 	if (!value)
- 		return -ENOMEM;
- 	richacl_to_xattr(&init_user_ns, acl, value, size);
--	error = xfs_attr_set(ip, XATTR_RICHACL, value, size,
--			     ATTR_ROOT);
-+	error = xfs_attr_set(ip, XATTR_RICHACL, value, size, xflags);
- 	kfree(value);
- 	if (error)
- 		return error;
-@@ -101,3 +100,48 @@ xfs_set_richacl(struct inode *inode, struct richacl *acl)
- 
+diff --git a/fs/richacl_compat.c b/fs/richacl_compat.c
+index 76183c9..7553f1a 100644
+--- a/fs/richacl_compat.c
++++ b/fs/richacl_compat.c
+@@ -503,3 +503,226 @@ richacl_set_other_permissions(struct richacl_alloc *alloc, unsigned int *added)
+ 	}
  	return 0;
  }
 +
-+int
-+xfs_set_richacl(struct inode *inode, struct richacl *acl)
++/**
++ * richacl_max_allowed  -  maximum permissions that anybody is allowed
++ */
++static unsigned int
++richacl_max_allowed(struct richacl *acl)
 +{
-+	return __xfs_set_richacl(inode, acl, ATTR_ROOT);
-+}
++	struct richace *ace;
++	unsigned int allowed = 0;
 +
-+int
-+xfs_richacl_get_ioctl(struct inode *inode, void *value, int *len)
-+{
-+	struct user_namespace *user_ns = current_user_ns();
-+	struct richacl *acl;
-+	int error;
-+
-+	acl = get_richacl(inode);
-+	if (IS_ERR_OR_NULL(acl))
-+		return PTR_ERR(acl);
-+	error = richacl_to_xattr(user_ns, acl, value, *len);
-+	if (error > 0) {
-+		*len = error;
-+		error = 0;
++	richacl_for_each_entry_reverse(ace, acl) {
++		if (richace_is_inherit_only(ace))
++			continue;
++		if (richace_is_allow(ace))
++			allowed |= ace->e_mask;
++		else if (richace_is_deny(ace)) {
++			if (richace_is_everyone(ace))
++				allowed &= ~ace->e_mask;
++		}
 +	}
-+	richacl_put(acl);
-+	return error;
++	return allowed;
 +}
 +
-+int
-+xfs_richacl_set_ioctl(struct inode *inode, void *value, unsigned int size,
-+		      int xflags)
++/**
++ * richacl_isolate_owner_class  -  limit the owner class to the owner file mask
++ * @alloc:	acl and number of allocated entries
++ *
++ * POSIX requires that after a chmod, the owner class is granted no more
++ * permissions than the owner file permission bits.  For richacls, this
++ * means that the owner class must not be granted any permissions that the
++ * owner mask does not include.
++ *
++ * When we apply file masks to an acl which grant more permissions to the group
++ * or other class than to the owner class, we may end up in a situation where
++ * the owner is granted additional permissions from other aces.  For example,
++ * given this acl:
++ *
++ *    everyone@:rwx::allow
++ *
++ * when file masks corresponding to mode 0406 are applied, after
++ * richacl_propagate_everyone() and __richacl_apply_masks(), we end up with:
++ *
++ *    owner@:r::allow
++ *    everyone@:rw::allow
++ *
++ * This acl still grants the owner rw access through the everyone@ allow ace.
++ * To fix this, we must deny the owner w access:
++ *
++ *    owner@:w::deny
++ *    owner@:r::allow
++ *    everyone@:rw::allow
++ */
++static int
++richacl_isolate_owner_class(struct richacl_alloc *alloc)
 +{
-+	struct user_namespace *user_ns = current_user_ns();
-+	struct richacl *acl = NULL;
-+	int error;
++	struct richacl *acl = alloc->acl;
++	struct richace *ace;
++	unsigned int deny;
 +
-+	if (!IS_RICHACL(inode))
-+		return -EOPNOTSUPP;
-+	if (value) {
-+		acl = richacl_from_xattr(user_ns, value, size);
-+		if (IS_ERR(acl))
-+			return PTR_ERR(acl);
++	deny = richacl_max_allowed(acl) & ~acl->a_owner_mask;
++	if (!deny)
++		return 0;
++
++	/*
++	 * Figure out if we can update an existig OWNER@ DENY entry.
++	 */
++	richacl_for_each_entry(ace, acl) {
++		if (richace_is_inherit_only(ace))
++			continue;
++		if (richace_is_allow(ace))
++			break;
++		if (richace_is_owner(ace))
++			return richace_change_mask(alloc, &ace,
++						   ace->e_mask | deny);
 +	}
-+	error = __xfs_set_richacl(inode, acl, xflags);
-+	richacl_put(acl);
-+	return error;
-+}
-diff --git a/fs/xfs/xfs_richacl.h b/fs/xfs/xfs_richacl.h
-index 431aa25..1fd1fc1 100644
---- a/fs/xfs/xfs_richacl.h
-+++ b/fs/xfs/xfs_richacl.h
-@@ -20,4 +20,7 @@ struct richacl;
- extern struct richacl *xfs_get_richacl(struct inode *);
- extern int xfs_set_richacl(struct inode *, struct richacl *);
- 
-+extern int xfs_richacl_get_ioctl(struct inode *, void *, int *);
-+extern int xfs_richacl_set_ioctl(struct inode *, void *, int, int);
 +
- #endif  /* __FS_XFS_RICHACL_H */
++	/* Insert an owner@ deny entry at the front. */
++	ace = acl->a_entries;
++	if (richacl_insert_entry(alloc, &ace))
++		return -1;
++	ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
++	ace->e_flags = RICHACE_SPECIAL_WHO;
++	ace->e_mask = deny;
++	ace->e_id.special = RICHACE_OWNER_SPECIAL_ID;
++	return 0;
++}
++
++/**
++ * __richacl_isolate_who  -  isolate entry from everyone@ allow entry
++ * @alloc:	acl and number of allocated entries
++ * @who:	identifier to isolate
++ * @deny:	permissions this identifier should not be allowed
++ *
++ * See richacl_isolate_group_class().
++ */
++static int
++__richacl_isolate_who(struct richacl_alloc *alloc, struct richace *who,
++		      unsigned int deny)
++{
++	struct richacl *acl = alloc->acl;
++	struct richace *ace, who_copy;
++	int n;
++
++	/*
++	 * Compute the permissions already defined for @who.  There are no
++	 * everyone@ deny aces left in the acl at this stage.
++	 */
++	richacl_for_each_entry(ace, acl) {
++		if (richace_is_inherit_only(ace))
++			continue;
++		if (richace_is_same_identifier(ace, who))
++			deny &= ~ace->e_mask;
++	}
++	if (!deny)
++		return 0;
++
++	/*
++	 * Figure out if we can update an existig deny entry.  Start from the
++	 * entry before the trailing everyone@ allow entry. We will not hit
++	 * everyone@ entries in the loop.
++	 */
++	for (n = acl->a_count - 2; n != -1; n--) {
++		ace = acl->a_entries + n;
++		if (richace_is_inherit_only(ace))
++			continue;
++		if (richace_is_deny(ace)) {
++			if (richace_is_same_identifier(ace, who))
++				return richace_change_mask(alloc, &ace,
++							   ace->e_mask | deny);
++		} else if (richace_is_allow(ace) &&
++			   (ace->e_mask & deny))
++			break;
++	}
++
++	/*
++	 * Insert a new entry before the trailing everyone@ deny entry.
++	 */
++	richace_copy(&who_copy, who);
++	ace = acl->a_entries + acl->a_count - 1;
++	if (richacl_insert_entry(alloc, &ace))
++		return -1;
++	richace_copy(ace, &who_copy);
++	ace->e_type = RICHACE_ACCESS_DENIED_ACE_TYPE;
++	ace->e_flags &= ~RICHACE_INHERITANCE_FLAGS;
++	ace->e_mask = deny;
++	return 0;
++}
++
++/**
++ * richacl_isolate_group_class  -  limit the group class to the group file mask
++ * @alloc:	acl and number of allocated entries
++ * @deny:	additional permissions to deny
++ *
++ * POSIX requires that after a chmod, the group class is granted no more
++ * permissions than the group file permission bits.  For richacls, this
++ * means that the group class must not be granted any permissions that the
++ * group mask does not include.
++ *
++ * When we apply file masks to an acl which grant more permissions to the other
++ * class than to the group class, we may end up in a situation where processes
++ * in the group class are granted additional permission from other aces.  For
++ * example, given this acl:
++ *
++ *    joe:rwx::allow
++ *    everyone@:rwx::allow
++ *
++ * when file masks corresponding to mode 0646 are applied, after
++ * richacl_propagate_everyone() and __richacl_apply_masks(), we end up with:
++ *
++ *    joe:r::allow
++ *    owner@:rw::allow
++ *    group@:r::allow
++ *    everyone@:rw::allow
++ *
++ * This acl still grants joe and group@ rw access through the everyone@ allow
++ * ace.  To fix this, we must deny w access to group class aces before the
++ * everyone@ allow ace at the end of the acl:
++ *
++ *    joe:r::allow
++ *    owner@:rw::allow
++ *    group@:r::allow
++ *    joe:w::deny
++ *    group@:w::deny
++ *    everyone@:rw::allow
++ */
++static int
++richacl_isolate_group_class(struct richacl_alloc *alloc, unsigned int deny)
++{
++	struct richace who = {
++		.e_flags = RICHACE_SPECIAL_WHO,
++		.e_id.special = RICHACE_GROUP_SPECIAL_ID,
++	};
++	struct richace *ace;
++
++	if (!alloc->acl->a_count)
++		return 0;
++	ace = alloc->acl->a_entries + alloc->acl->a_count - 1;
++	if (richace_is_inherit_only(ace) || !richace_is_everyone(ace))
++		return 0;
++	deny |= ace->e_mask & ~alloc->acl->a_group_mask;
++
++	if (deny) {
++		unsigned int n;
++
++		if (__richacl_isolate_who(alloc, &who, deny))
++			return -1;
++		/*
++		 * Start from the entry before the trailing everyone@ allow
++		 * entry.  We will not hit everyone@ entries in the loop.
++		 */
++		for (n = alloc->acl->a_count - 2; n != -1; n--) {
++			ace = alloc->acl->a_entries + n;
++
++			if (richace_is_inherit_only(ace) ||
++			    richace_is_owner(ace) ||
++			    richace_is_group(ace))
++				continue;
++			if (__richacl_isolate_who(alloc, ace, deny))
++				return -1;
++		}
++	}
++	return 0;
++}
 -- 
 2.5.0
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
