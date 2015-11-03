@@ -1,94 +1,37 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v13 31/51] richacl: Set the owner permissions to the owner mask
-Date: Tue,  3 Nov 2015 16:17:07 +0100
-Message-ID: <1446563847-14005-32-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v13 43/51] ext4: Don't allow unmapped identifiers in richacls
+Date: Tue,  3 Nov 2015 16:17:19 +0100
+Message-ID: <1446563847-14005-44-git-send-email-agruenba@redhat.com>
 References: <1446563847-14005-1-git-send-email-agruenba@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1446563847-14005-1-git-send-email-agruenba@redhat.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
 Cc: Andreas Gruenbacher <agruenba@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-In the write-through case, change the acl so that owner@ is granted the
-permissions set in the owner mask (to match what the permission check
-algorithm grants the owner).
+Don't allow acls which contain unmapped identifiers: they are meaningful
+for remote file systems only.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
-Reviewed-by: J. Bruce Fields <bfields@redhat.com>
 ---
- fs/richacl_compat.c | 46 ++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 46 insertions(+)
+ fs/ext4/richacl.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/fs/richacl_compat.c b/fs/richacl_compat.c
-index e90d57c..d9fee8b 100644
---- a/fs/richacl_compat.c
-+++ b/fs/richacl_compat.c
-@@ -416,3 +416,49 @@ richacl_propagate_everyone(struct richacl_alloc *alloc)
- 	}
- 	return 0;
- }
+diff --git a/fs/ext4/richacl.c b/fs/ext4/richacl.c
+index 906d048..2115385 100644
+--- a/fs/ext4/richacl.c
++++ b/fs/ext4/richacl.c
+@@ -74,6 +74,10 @@ __ext4_set_richacl(handle_t *handle, struct inode *inode, struct richacl *acl)
+ 	int retval, size;
+ 	void *value;
+ 
++	/* Don't allow acls with unmapped identifiers. */
++	if (richacl_has_unmapped_identifiers(acl))
++		return -EINVAL;
 +
-+/**
-+ * richacl_set_owner_permissions  -  set the owner permissions to the owner mask
-+ *
-+ * In the write-through case, change the acl so that owner@ is granted the
-+ * permissions set in the owner mask (to match what the permission check
-+ * algorithm grants the owner).  This leaves at most one efective owner@ allow
-+ * entry at the beginning of the acl.
-+ */
-+static int
-+richacl_set_owner_permissions(struct richacl_alloc *alloc)
-+{
-+	unsigned int x = RICHACE_POSIX_ALWAYS_ALLOWED;
-+	unsigned int owner_mask = alloc->acl->a_owner_mask & ~x;
-+	unsigned int denied = 0;
-+	struct richace *ace;
-+
-+	if (!((alloc->acl->a_flags & RICHACL_WRITE_THROUGH)))
-+		return 0;
-+
-+	richacl_for_each_entry(ace, alloc->acl) {
-+		if (richace_is_owner(ace)) {
-+			if (richace_is_allow(ace) && !(owner_mask & denied)) {
-+				richace_change_mask(alloc, &ace, owner_mask);
-+				owner_mask = 0;
-+			} else
-+				richace_change_mask(alloc, &ace, 0);
-+		} else {
-+			if (richace_is_deny(ace))
-+				denied |= ace->e_mask;
-+		}
-+	}
-+
-+	if (owner_mask & (denied |
-+			  ~alloc->acl->a_other_mask |
-+			  ~alloc->acl->a_group_mask)) {
-+		ace = alloc->acl->a_entries;
-+		if (richacl_insert_entry(alloc, &ace))
-+			return -1;
-+		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
-+		ace->e_flags = RICHACE_SPECIAL_WHO;
-+		ace->e_mask = owner_mask;
-+		ace->e_id.special = RICHACE_OWNER_SPECIAL_ID;
-+	}
-+	return 0;
-+}
+ 	if (richacl_equiv_mode(acl, &mode) == 0) {
+ 		inode->i_ctime = ext4_current_time(inode);
+ 		inode->i_mode = mode;
 -- 
 2.5.0
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
