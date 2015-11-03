@@ -1,7 +1,7 @@
 From: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH 06/13] Move ep_take_care_of_epollwakeup() to fs/eventpoll.c
-Date: Tue,  3 Nov 2015 11:46:27 -0800
-Message-ID: <1446579994-9937-7-git-send-email-palmer__44577.7442808778$1446595249$gmane$org@dabbelt.com>
+Subject: [PATCH 03/13] Move COMPAT_ATM_ADDPARTY to net/atm/svc.c
+Date: Tue,  3 Nov 2015 11:46:24 -0800
+Message-ID: <1446579994-9937-4-git-send-email-palmer__8944.533536169$1446595252$gmane$org@dabbelt.com>
 References: <1442271047-4908-1-git-send-email-palmer@dabbelt.com>
  <1446579994-9937-1-git-send-email-palmer@dabbelt.com>
 Mime-Version: 1.0
@@ -22,62 +22,49 @@ To: arnd-r2nGTMty4D4@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gm
 Cc: dave-gkUM19QKKo4@public.gmane.org, linux-xtensa-PjhNF2WwrV/0Sa2dR60CXw@public.gmane.org, jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bhe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, tomi.valkeinen-l0cyMroinI0@public.gmane.org, 3chas3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, aishchuk-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org, iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This doesn't make any sense to expose to userspace, so it's been moved
-to the one user.  This was introduced by commit 95f19f658ce1 ("epoll:
-drop EPOLLWAKEUP if PM_SLEEP is disabled").
+This used to be behind an #ifdef COMPAT_COMPAT, so most of userspace
+wouldn't have seen the definition before.  Unfortunately this header
+file became visible to userspace, so the definition has instead been
+moved to net/atm/svc.c (the only user).
 
 Signed-off-by: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
 Reviewed-by: Andrew Waterman <waterman-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
 Reviewed-by: Albert Ou <aou-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
 ---
- fs/eventpoll.c                 | 13 +++++++++++++
- include/uapi/linux/eventpoll.h | 12 ------------
- 2 files changed, 13 insertions(+), 12 deletions(-)
+ include/uapi/linux/atmdev.h | 4 ----
+ net/atm/svc.c               | 5 +++++
+ 2 files changed, 5 insertions(+), 4 deletions(-)
 
-diff --git a/fs/eventpoll.c b/fs/eventpoll.c
-index 1e009ca..aadee3d 100644
---- a/fs/eventpoll.c
-+++ b/fs/eventpoll.c
-@@ -1812,6 +1812,19 @@ SYSCALL_DEFINE1(epoll_create, int, size)
- 	return sys_epoll_create1(0);
- }
+diff --git a/include/uapi/linux/atmdev.h b/include/uapi/linux/atmdev.h
+index 93e0ec0..3dcec70 100644
+--- a/include/uapi/linux/atmdev.h
++++ b/include/uapi/linux/atmdev.h
+@@ -100,10 +100,6 @@ struct atm_dev_stats {
+ 					/* use backend to make new if */
+ #define ATM_ADDPARTY  	_IOW('a', ATMIOC_SPECIAL+4,struct atm_iobuf)
+  					/* add party to p2mp call */
+-#ifdef CONFIG_COMPAT
+-/* It actually takes struct sockaddr_atmsvc, not struct atm_iobuf */
+-#define COMPAT_ATM_ADDPARTY  	_IOW('a', ATMIOC_SPECIAL+4,struct compat_atm_iobuf)
+-#endif
+ #define ATM_DROPPARTY 	_IOW('a', ATMIOC_SPECIAL+5,int)
+ 					/* drop party from p2mp call */
  
-+#ifdef CONFIG_PM_SLEEP
-+static inline void ep_take_care_of_epollwakeup(struct epoll_event *epev)
-+{
-+	if ((epev->events & EPOLLWAKEUP) && !capable(CAP_BLOCK_SUSPEND))
-+		epev->events &= ~EPOLLWAKEUP;
-+}
-+#else
-+static inline void ep_take_care_of_epollwakeup(struct epoll_event *epev)
-+{
-+	epev->events &= ~EPOLLWAKEUP;
-+}
+diff --git a/net/atm/svc.c b/net/atm/svc.c
+index 3fa0a9e..9e2e6ef 100644
+--- a/net/atm/svc.c
++++ b/net/atm/svc.c
+@@ -27,6 +27,11 @@
+ #include "signaling.h"
+ #include "addr.h"
+ 
++#ifdef CONFIG_COMPAT
++/* It actually takes struct sockaddr_atmsvc, not struct atm_iobuf */
++#define COMPAT_ATM_ADDPARTY _IOW('a', ATMIOC_SPECIAL+4, struct compat_atm_iobuf)
 +#endif
 +
- /*
-  * The following function implements the controller interface for
-  * the eventpoll file that enables the insertion/removal/change of
-diff --git a/include/uapi/linux/eventpoll.h b/include/uapi/linux/eventpoll.h
-index bc81fb2..7850373 100644
---- a/include/uapi/linux/eventpoll.h
-+++ b/include/uapi/linux/eventpoll.h
-@@ -61,16 +61,4 @@ struct epoll_event {
- 	__u64 data;
- } EPOLL_PACKED;
+ static int svc_create(struct net *net, struct socket *sock, int protocol,
+ 		      int kern);
  
--#ifdef CONFIG_PM_SLEEP
--static inline void ep_take_care_of_epollwakeup(struct epoll_event *epev)
--{
--	if ((epev->events & EPOLLWAKEUP) && !capable(CAP_BLOCK_SUSPEND))
--		epev->events &= ~EPOLLWAKEUP;
--}
--#else
--static inline void ep_take_care_of_epollwakeup(struct epoll_event *epev)
--{
--	epev->events &= ~EPOLLWAKEUP;
--}
--#endif
- #endif /* _UAPI_LINUX_EVENTPOLL_H */
 -- 
 2.4.10
