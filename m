@@ -1,90 +1,75 @@
 From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 5/8] mm: move lazily freed pages to inactive list
-Date: Tue, 3 Nov 2015 09:52:23 +0900
-Message-ID: <20151103005223.GD17906@bbox>
+Subject: Re: [PATCH 4/8] mm: free swp_entry in madvise_free
+Date: Tue, 3 Nov 2015 09:53:17 +0900
+Message-ID: <20151103005317.GE17906@bbox>
 References: <1446188504-28023-1-git-send-email-minchan@kernel.org>
- <1446188504-28023-6-git-send-email-minchan@kernel.org>
- <20151030172212.GB44946@kernel.org>
+ <1446188504-28023-5-git-send-email-minchan@kernel.org>
+ <20151030122814.GA23627@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20151030122814.GA23627-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20151030172212.GB44946-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, "Wang, Yalin" <Yalin.Wang-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
+To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 30, 2015 at 10:22:12AM -0700, Shaohua Li wrote:
-> On Fri, Oct 30, 2015 at 04:01:41PM +0900, Minchan Kim wrote:
-> > MADV_FREE is a hint that it's okay to discard pages if there is memory
-> > pressure and we use reclaimers(ie, kswapd and direct reclaim) to free them
-> > so there is no value keeping them in the active anonymous LRU so this
-> > patch moves them to inactive LRU list's head.
+On Fri, Oct 30, 2015 at 01:28:14PM +0100, Michal Hocko wrote:
+> On Fri 30-10-15 16:01:40, Minchan Kim wrote:
+> > When I test below piece of code with 12 processes(ie, 512M * 12 = 6G
+> > consume) on my (3G ram + 12 cpu + 8G swap, the madvise_free is siginficat
+> > slower (ie, 2x times) than madvise_dontneed.
 > > 
-> > This means that MADV_FREE-ed pages which were living on the inactive list
-> > are reclaimed first because they are more likely to be cold rather than
-> > recently active pages.
+> > loop = 5;
+> > mmap(512M);
+> > while (loop--) {
+> >         memset(512M);
+> >         madvise(MADV_FREE or MADV_DONTNEED);
+> > }
 > > 
-> > An arguable issue for the approach would be whether we should put the page
-> > to the head or tail of the inactive list.  I chose head because the kernel
-> > cannot make sure it's really cold or warm for every MADV_FREE usecase but
-> > at least we know it's not *hot*, so landing of inactive head would be a
-> > comprimise for various usecases.
+> > The reason is lots of swapin.
 > > 
-> > This fixes suboptimal behavior of MADV_FREE when pages living on the
-> > active list will sit there for a long time even under memory pressure
-> > while the inactive list is reclaimed heavily.  This basically breaks the
-> > whole purpose of using MADV_FREE to help the system to free memory which
-> > is might not be used.
+> > 1) dontneed: 1,612 swapin
+> > 2) madvfree: 879,585 swapin
+> > 
+> > If we find hinted pages were already swapped out when syscall is called,
+> > it's pointless to keep the swapped-out pages in pte.
+> > Instead, let's free the cold page because swapin is more expensive
+> > than (alloc page + zeroing).
+> > 
+> > With this patch, it reduced swapin from 879,585 to 1,878 so elapsed time
+> > 
+> > 1) dontneed: 6.10user 233.50system 0:50.44elapsed
+> > 2) madvfree: 6.03user 401.17system 1:30.67elapsed
+> > 2) madvfree + below patch: 6.70user 339.14system 1:04.45elapsed
+> > 
+> > Acked-by: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> > Signed-off-by: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 > 
-> My main concern is the policy how we should treat the FREE pages. Moving it to
-> inactive lru is definitionly a good start, I'm wondering if it's enough. The
-> MADV_FREE increases memory pressure and cause unnecessary reclaim because of
-> the lazy memory free. While MADV_FREE is intended to be a better replacement of
-> MADV_DONTNEED, MADV_DONTNEED doesn't have the memory pressure issue as it free
-> memory immediately. So I hope the MADV_FREE doesn't have impact on memory
-> pressure too. I'm thinking of adding an extra lru list and wartermark for this
-> to make sure FREE pages can be freed before system wide page reclaim. As you
-> said, this is arguable, but I hope we can discuss about this issue more.
+> Yes this makes a lot of sense.
+> 
+> Acked-by: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
 
-Yes, it's arguble. ;-)
-
-It seems the divergence comes from MADV_FREE is *replacement* of MADV_DONTNEED.
-But I don't think so. If we could discard MADV_FREEed page *anytime*, I agree
-but it's not true because the page would be dirty state when VM want to reclaim.
-
-I'm also against with your's suggestion which let's discard FREEed page before
-system wide page reclaim because system would have lots of clean cold page
-caches or anonymous pages. In such case, reclaiming of them would be better.
-Yeb, it's really workload-dependent so we might need some heuristic which is
-normally what we want to avoid.
-
-Having said that, I agree with you we could do better than the deactivation
-and frankly speaking, I'm thinking of another LRU list(e.g. tentatively named
-"ezreclaim LRU list"). What I have in mind is to age (anon|file|ez)
-fairly. IOW, I want to percolate ez-LRU list reclaiming into get_scan_count.
-When the MADV_FREE is called, we could move hinted pages from anon-LRU to
-ez-LRU and then If VM find to not be able to discard a page in ez-LRU,
-it could promote it to acive-anon-LRU which would be very natural aging
-concept because it mean someone touches the page recenlty.
-
-With that, I don't want to bias one side and don't want to add some knob for
-tuning the heuristic but let's rely on common fair aging scheme of VM.
-
-Another bonus with new LRU list is we could support MADV_FREE on swapless
-system.
+Thanks!
 
 > 
-> Or do you want to push this first and address the policy issue later?
-
-I believe adding new LRU list would be controversial(ie, not trivial)
-for maintainer POV even though code wouldn't be complicated.
-So, I want to see problems in *real practice*, not any theoritical
-test program before diving into that.
-To see such voice of request, we should release the syscall.
-So, I want to push this first.
-
+> One nit below.
 > 
-> Thanks,
-> Shaohua
+> > ---
+> >  mm/madvise.c | 26 +++++++++++++++++++++++++-
+> >  1 file changed, 25 insertions(+), 1 deletion(-)
+> > 
+> > diff --git a/mm/madvise.c b/mm/madvise.c
+> > index 640311704e31..663bd9fa0ae0 100644
+> > --- a/mm/madvise.c
+> > +++ b/mm/madvise.c
+> > @@ -270,6 +270,8 @@ static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
+> >  	spinlock_t *ptl;
+> >  	pte_t *pte, ptent;
+> >  	struct page *page;
+> > +	swp_entry_t entry;
+> 
+> This could go into !pte_present if block
+
+Sure, I fixed.
