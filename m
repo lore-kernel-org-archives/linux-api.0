@@ -1,433 +1,125 @@
-From: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
-Subject: Re: [PATCH v13 10/51] vfs: Cache base_acl objects in inodes
-Date: Tue, 3 Nov 2015 15:29:50 -0700
-Message-ID: <D235953B-3EAF-4B00-AC07-4420B85E9E9E@dilger.ca>
-References: <1446563847-14005-1-git-send-email-agruenba@redhat.com> <1446563847-14005-11-git-send-email-agruenba@redhat.com>
-Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2104\))
-Content-Type: multipart/signed; boundary="Apple-Mail=_124A55A8-7810-46A6-8154-225356928F53"; protocol="application/pgp-signature"; micalg=pgp-sha256
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1446563847-14005-11-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Andy Lutomirski <luto@kernel.org>
+Subject: [PATCH v3] capabilities.7, prctl.2: Document ambient capabilities
+Date: Tue,  3 Nov 2015 15:42:17 -0800
+Message-ID: <3721cd96525af4cb0a671e9a36ac6402c8e5379a.1446594067.git.luto@kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michael Kerrisk-manpages <mtk.manpages@gmail.com>
+Cc: Serge Hallyn <serge.hallyn@ubuntu.com>, Andrew Morton <akpm@linuxfoundation.org>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Markku Savela <msa@moth.iki.fi>, Jonathan Corbet <corbet@lwn.net>, Andy Lutomirski <luto@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+---
 
---Apple-Mail=_124A55A8-7810-46A6-8154-225356928F53
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain;
-	charset=us-ascii
+Changes from v2: Add a note about arg3 == 0 in CLEAR_ALL.
 
-On Nov 3, 2015, at 8:16 AM, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> =
-wrote:
->=20
-> POSIX ACLs and richacls are both objects allocated by kmalloc() with a
-> reference count which are freed by kfree_rcu().  An inode can either
-> cache an access and a default POSIX ACL, or a richacl (richacls do not
-> have default acls).  To allow an inode to cache either of the two =
-kinds
-> of acls, introduce a new base_acl type and convert i_acl and
-> i_default_acl to that type. In most cases, the vfs then doesn't have =
-to
-> care which kind of acl an inode caches (if any).
+man2/prctl.2        | 13 +++++++++++++
+ man7/capabilities.7 | 40 ++++++++++++++++++++++++++++++++++------
+ 2 files changed, 47 insertions(+), 6 deletions(-)
 
-For new wrapper functions like this better to name them as "NOUN_VERB" =
-so
-rather than "VERB_NOUN" so that related functions sort together, like
-base_acl_init(), base_acl_get(), base_acl_put(), base_acl_refcount(), =
-etc.
-
-> Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> ---
-> drivers/staging/lustre/lustre/llite/llite_lib.c |  2 +-
-> fs/f2fs/acl.c                                   |  4 ++--
-> fs/inode.c                                      |  4 ++--
-> fs/jffs2/acl.c                                  |  6 ++++--
-> fs/posix_acl.c                                  | 18 =
-+++++++++---------
-> include/linux/fs.h                              | 25 =
-++++++++++++++++++++++---
-> include/linux/posix_acl.h                       | 12 ++++--------
-> include/linux/richacl.h                         |  2 +-
-> 8 files changed, 45 insertions(+), 28 deletions(-)
->=20
-> diff --git a/drivers/staging/lustre/lustre/llite/llite_lib.c =
-b/drivers/staging/lustre/lustre/llite/llite_lib.c
-> index b4ed6c8..5766f69 100644
-> --- a/drivers/staging/lustre/lustre/llite/llite_lib.c
-> +++ b/drivers/staging/lustre/lustre/llite/llite_lib.c
-> @@ -1118,7 +1118,7 @@ void ll_clear_inode(struct inode *inode)
-> 	}
-> #ifdef CONFIG_FS_POSIX_ACL
-> 	else if (lli->lli_posix_acl) {
-> -		LASSERT(atomic_read(&lli->lli_posix_acl->a_refcount) =3D=3D=
- 1);
-> +		=
-LASSERT(atomic_read(&lli->lli_posix_acl->a_base.ba_refcount) =3D=3D 1);
-
-It probably makes sense to have a wrapper for this, like =
-base_acl_refcount()
-so that the details are similarly abstracted from the callers, or there
-isn't much benefit to having get_base_acl() and put_base_acl() at all.
-
-> 		LASSERT(lli->lli_remote_perms =3D=3D NULL);
-> 		posix_acl_release(lli->lli_posix_acl);
-> 		lli->lli_posix_acl =3D NULL;
-> diff --git a/fs/f2fs/acl.c b/fs/f2fs/acl.c
-> index c8f25f7..a4207de 100644
-> --- a/fs/f2fs/acl.c
-> +++ b/fs/f2fs/acl.c
-> @@ -270,7 +270,7 @@ static struct posix_acl *f2fs_acl_clone(const =
-struct posix_acl *acl,
-> 				sizeof(struct posix_acl_entry);
-> 		clone =3D kmemdup(acl, size, flags);
-> 		if (clone)
-> -			atomic_set(&clone->a_refcount, 1);
-> +			atomic_set(&clone->a_base.ba_refcount, 1);
-
-This should be base_acl_init() since this should also reset the RCU =
-state
-if it was just copied from "acl" above.  That wouldn't be quite correct =
-if
-there are other fields added to struct base_acl that don't need to be
-initialized when it is copied, so possibly base_acl_reinit() would be =
-better
-here and below if that will be the case in the near future (I haven't =
-looked
-through the whole patch series yet).
-
-> 	}
-> 	return clone;
-> }
-> @@ -282,7 +282,7 @@ static int f2fs_acl_create_masq(struct posix_acl =
-*acl, umode_t *mode_p)
-> 	umode_t mode =3D *mode_p;
-> 	int not_equiv =3D 0;
->=20
-> -	/* assert(atomic_read(acl->a_refcount) =3D=3D 1); */
-> +	/* assert(atomic_read(acl->a_base.ba_refcount) =3D=3D 1); */
-
-May as well make the comment use the base_acl_refcount() wrapper =
-function too.
-
->=20
-> 	FOREACH_ACL_ENTRY(pa, acl, pe) {
-> 		switch(pa->e_tag) {
-> diff --git a/fs/inode.c b/fs/inode.c
-> index 78a17b8..2a387f4 100644
-> --- a/fs/inode.c
-> +++ b/fs/inode.c
-> @@ -233,9 +233,9 @@ void __destroy_inode(struct inode *inode)
->=20
-> #ifdef CONFIG_FS_POSIX_ACL
-> 	if (inode->i_acl && inode->i_acl !=3D ACL_NOT_CACHED)
-> -		posix_acl_release(inode->i_acl);
-> +		put_base_acl(inode->i_acl);
-> 	if (inode->i_default_acl && inode->i_default_acl !=3D =
-ACL_NOT_CACHED)
-> -		posix_acl_release(inode->i_default_acl);
-> +		put_base_acl(inode->i_default_acl);
-> #endif
-> 	this_cpu_dec(nr_inodes);
-> }
-> diff --git a/fs/jffs2/acl.c b/fs/jffs2/acl.c
-> index 2f7a3c0..04a5836 100644
-> --- a/fs/jffs2/acl.c
-> +++ b/fs/jffs2/acl.c
-> @@ -294,13 +294,15 @@ int jffs2_init_acl_post(struct inode *inode)
-> 	int rc;
->=20
-> 	if (inode->i_default_acl) {
-> -		rc =3D __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_DEFAULT, =
-inode->i_default_acl);
-> +		rc =3D __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_DEFAULT,
-> +				     *acl_by_type(inode, =
-ACL_TYPE_DEFAULT));
-> 		if (rc)
-> 			return rc;
-> 	}
->=20
-> 	if (inode->i_acl) {
-> -		rc =3D __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_ACCESS, =
-inode->i_acl);
-> +		rc =3D __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_ACCESS,
-> +				     *acl_by_type(inode, =
-ACL_TYPE_ACCESS));
-> 		if (rc)
-> 			return rc;
-> 	}
-> diff --git a/fs/posix_acl.c b/fs/posix_acl.c
-> index 4fb17de..b3b2265 100644
-> --- a/fs/posix_acl.c
-> +++ b/fs/posix_acl.c
-> @@ -25,9 +25,9 @@ struct posix_acl **acl_by_type(struct inode *inode, =
-int type)
-> {
-> 	switch (type) {
-> 	case ACL_TYPE_ACCESS:
-> -		return &inode->i_acl;
-> +		return (struct posix_acl **)&inode->i_acl;
-> 	case ACL_TYPE_DEFAULT:
-> -		return &inode->i_default_acl;
-> +		return (struct posix_acl **)&inode->i_default_acl;
-
-This would be better to use container_of() to unwrap struct base_acl =
-from
-struct posix_acl.  That avoids the hard requirement (which isn't =
-documented
-anywhere) that base_acl needs to be the first member of struct =
-posix_acl.
-
-I was originally going to write that you should add a comment that =
-base_acl
-needs to be the first member of both richacl and posix_acl, but =
-container_of()
-is both cleaner and safer.
-
-Looking further down, that IS actually needed due to the way kfree is =
-used on
-the base_acl pointer, but using container_of() is still cleaner and =
-safer
-than directly casting double pointers (which some compilers and static
-analysis tools will be unhappy with).
-
-> 	default:
-> 		BUG();
-> 	}
-> @@ -83,16 +83,16 @@ EXPORT_SYMBOL(forget_cached_acl);
->=20
-> void forget_all_cached_acls(struct inode *inode)
-> {
-> -	struct posix_acl *old_access, *old_default;
-> +	struct base_acl *old_access, *old_default;
-> 	spin_lock(&inode->i_lock);
-> 	old_access =3D inode->i_acl;
-> 	old_default =3D inode->i_default_acl;
-> 	inode->i_acl =3D inode->i_default_acl =3D ACL_NOT_CACHED;
-> 	spin_unlock(&inode->i_lock);
-> 	if (old_access !=3D ACL_NOT_CACHED)
-> -		posix_acl_release(old_access);
-> +		put_base_acl(old_access);
-> 	if (old_default !=3D ACL_NOT_CACHED)
-> -		posix_acl_release(old_default);
-> +		put_base_acl(old_default);
-> }
-> EXPORT_SYMBOL(forget_all_cached_acls);
->=20
-> @@ -129,7 +129,7 @@ EXPORT_SYMBOL(get_acl);
-> void
-> posix_acl_init(struct posix_acl *acl, int count)
-> {
-> -	atomic_set(&acl->a_refcount, 1);
-> +	atomic_set(&acl->a_base.ba_refcount, 1);
-
-This should be base_acl_init().
-
-> 	acl->a_count =3D count;
-> }
-> EXPORT_SYMBOL(posix_acl_init);
-> @@ -162,7 +162,7 @@ posix_acl_clone(const struct posix_acl *acl, gfp_t =
-flags)
-> 		           sizeof(struct posix_acl_entry);
-> 		clone =3D kmemdup(acl, size, flags);
-> 		if (clone)
-> -			atomic_set(&clone->a_refcount, 1);
-> +			atomic_set(&clone->a_base.ba_refcount, 1);
-
-Also base_acl_init() or base_acl_reinit().
-
-> 	}
-> 	return clone;
-> }
-> @@ -384,7 +384,7 @@ static int posix_acl_create_masq(struct posix_acl =
-*acl, umode_t *mode_p)
-> 	umode_t mode =3D *mode_p;
-> 	int not_equiv =3D 0;
->=20
-> -	/* assert(atomic_read(acl->a_refcount) =3D=3D 1); */
-> +	/* assert(atomic_read(acl->a_base.ba_refcount) =3D=3D 1); */
-
-base_acl_refcount().
-
-> 	FOREACH_ACL_ENTRY(pa, acl, pe) {
->                 switch(pa->e_tag) {
-> @@ -439,7 +439,7 @@ static int __posix_acl_chmod_masq(struct posix_acl =
-*acl, umode_t mode)
-> 	struct posix_acl_entry *group_obj =3D NULL, *mask_obj =3D NULL;
-> 	struct posix_acl_entry *pa, *pe;
->=20
-> -	/* assert(atomic_read(acl->a_refcount) =3D=3D 1); */
-> +	/* assert(atomic_read(acl->a_base.ba_refcount) =3D=3D 1); */
-
-...
-
-> 	FOREACH_ACL_ENTRY(pa, acl, pe) {
-> 		switch(pa->e_tag) {
-> diff --git a/include/linux/fs.h b/include/linux/fs.h
-> index ba91a89..3c22c92 100644
-> --- a/include/linux/fs.h
-> +++ b/include/linux/fs.h
-> @@ -576,6 +576,12 @@ static inline void mapping_allow_writable(struct =
-address_space *mapping)
-> #define i_size_ordered_init(inode) do { } while (0)
-> #endif
->=20
-> +struct base_acl {
-> +	union {
-> +		atomic_t ba_refcount;
-> +		struct rcu_head ba_rcu;
-> +	};
-> +};
-> struct posix_acl;
-
-Is this forward declaration of struct posix_acl even needed anymore =
-after
-the change below?  There shouldn't be references to the struct in the =
-common
-code anymore (at least not by the end of the patch series.
-
-> #define ACL_NOT_CACHED ((void *)(-1))
->=20
-> @@ -595,9 +601,9 @@ struct inode {
-> 	kgid_t			i_gid;
-> 	unsigned int		i_flags;
->=20
-> -#ifdef CONFIG_FS_POSIX_ACL
-> -	struct posix_acl	*i_acl;
-> -	struct posix_acl	*i_default_acl;
-> +#if defined(CONFIG_FS_POSIX_ACL)
-> +	struct base_acl		*i_acl;
-> +	struct base_acl		*i_default_acl;
-> #endif
->=20
-> 	const struct inode_operations	*i_op;
-> @@ -3059,4 +3065,17 @@ static inline bool dir_relax(struct inode =
-*inode)
->=20
-> extern bool path_noexec(const struct path *path);
->=20
-> +static inline struct base_acl *get_base_acl(struct base_acl *acl)
-
-> +{
-> +	if (acl)
-> +		atomic_inc(&acl->ba_refcount);
-> +	return acl;
-> +}
-> +
-> +static inline void put_base_acl(struct base_acl *acl)
-> +{
-> +	if (acl && atomic_dec_and_test(&acl->ba_refcount))
-> +		kfree_rcu(acl, ba_rcu);
-
-Hmm, using the base_acl pointer as the pointer to kfree means that the
-base_acl structure DOES need to be the first one in both struct =
-posix_acl
-and struct richacl, so that needs to be commented at each structure so
-it doesn't accidentally break in the future.
-
-> +}
-> +
-> #endif /* _LINUX_FS_H */
-> diff --git a/include/linux/posix_acl.h b/include/linux/posix_acl.h
-> index 3e96a6a..2c46441 100644
-> --- a/include/linux/posix_acl.h
-> +++ b/include/linux/posix_acl.h
-> @@ -43,10 +43,7 @@ struct posix_acl_entry {
-> };
->=20
-> struct posix_acl {
-> -	union {
-> -		atomic_t		a_refcount;
-> -		struct rcu_head		a_rcu;
-> -	};
-> +	struct base_acl		a_base;
-
-	struct base_acl		a_base;	/* must be first, see =
-base_acl_put() */
-
-> 	unsigned int		a_count;
-> 	struct posix_acl_entry	a_entries[0];
-> };
-> @@ -61,8 +58,7 @@ struct posix_acl {
-> static inline struct posix_acl *
-> posix_acl_dup(struct posix_acl *acl)
-> {
-> -	if (acl)
-> -		atomic_inc(&acl->a_refcount);
-> +	get_base_acl(&acl->a_base);
-> 	return acl;
-> }
->=20
-> @@ -72,8 +68,8 @@ posix_acl_dup(struct posix_acl *acl)
-> static inline void
-> posix_acl_release(struct posix_acl *acl)
-> {
-> -	if (acl && atomic_dec_and_test(&acl->a_refcount))
-> -		kfree_rcu(acl, a_rcu);
-> +	BUILD_BUG_ON(offsetof(struct posix_acl, a_base) !=3D 0);
-> +	put_base_acl(&acl->a_base);
-> }
->=20
->=20
-> diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-> index 1d9f5f7..2baef35 100644
-> --- a/include/linux/richacl.h
-> +++ b/include/linux/richacl.h
-> @@ -57,7 +57,7 @@ static inline struct richacl *
-> richacl_get(struct richacl *acl)
-> {
-> 	if (acl)
-> -		atomic_inc(&acl->a_refcount);
-> +		atomic_inc(&acl->a_base.ba_refcount);
-> 	return acl;
-
-This should also use base_acl_get() for consistency.  That said, where =
-is
-the call to base_acl_put() in the richacl code?
-
-Also, where is the change to struct richacl?  It looks like this patch =
-would
-not be able to compile by itself.  I was going to say that struct =
-richacl
-also needs a comment like struct posix_acl that struct base_acl needs to =
-be
-first.
-
-Cheers, Andreas
-
-
-
-
-
-
---Apple-Mail=_124A55A8-7810-46A6-8154-225356928F53
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
-	filename=signature.asc
-Content-Type: application/pgp-signature;
-	name=signature.asc
-Content-Description: Message signed with OpenPGP using GPGMail
-
------BEGIN PGP SIGNATURE-----
-Comment: GPGTools - http://gpgtools.org
-
-iQIVAwUBVjk1X3Kl2rkXzB/gAQiSPA/9HwI8jDfYrPQGfFL4NjZZNxfBK6rnfVsw
-XRPQCXVJDDCjhM0t6RHBuQxJiGjBeHbqE3WkoqTUg7njFG5URFExY6XXOJBnjdTW
-nwxR0gM840ni52uLCaD+QkvIxbvbBYZQmFdtYv5wB78usBcFFSltEx7sXh7+lQru
-eMW3dlIAQhdKhhvN1BccVS3XBDD6TwNvgB4CK3/rOWCAU4YJLooeMPTebvEmcNYJ
-j5bMqBhPJT3oyYlN0Q8dIV/NOFC59lwBEoItzHSnYkPLTawFP9CUNeXHRNP/39t/
-rwRFRNl30EQFwB5FfPWFNtJhKgjAtlojiTU2OgXbTTn7041dEhkdVqkhLmU9odky
-PD3UGjD6rSn3nnpvop7roAyoBUX5hU2G4gAKoo4aIwkp5kaN/L86JUHp1Sp23Ik2
-JyxldGVwoLBSbgJKW6bBamP6IeA+kDuG1MwW5Af+9iPbM0Tf730kaON1B6X3s1xn
-EHhgVYaqx5G8GcIr8+XYVxnnC/fwnka03DFZxRI0A/oSdRxI0TS+98jcbPliNiE5
-sHoxCvmuegRXMMfYBzQcG6d6SXDz+oG3TRtonZkn3qIuWV2dBTQTY1mjrdu5RR/r
-uIkBGaib0UjU6F5HHlTj4tNgXmkU4rPS7mOLcZ3mzr6eNinE3lr0oa9d9bY7zVLk
-uta4gJIXPtY=
-=vbcX
------END PGP SIGNATURE-----
-
---Apple-Mail=_124A55A8-7810-46A6-8154-225356928F53--
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/man2/prctl.2 b/man2/prctl.2
+index e743a6305969..bf8680f3b62d 100644
+--- a/man2/prctl.2
++++ b/man2/prctl.2
+@@ -954,6 +954,19 @@ had been called.
+ For further information on Intel MPX, see the kernel source file
+ .IR Documentation/x86/intel_mpx.txt .
+ .\"
++.TP
++.BR PR_CAP_AMBIENT " (since Linux 4.2)"
++Reads or changes the ambient capability set.  If arg2 is PR_CAP_AMBIENT_RAISE,
++then the capability specified in arg3 is added to the ambient set.  This will
++fail, returning EPERM, if the capability is not already both permitted and
++inheritable or if the SECBIT_NO_CAP_AMBIENT_RAISE securebit is set.  If arg2
++is PR_CAP_AMBIENT_LOWER, then the capability specified in arg3 is removed
++from the ambient set.  If arg2 is PR_CAP_AMBIENT_IS_SET, then
++.BR prctl (2)
++will return 1 if the capability in arg3 is in the ambient set and 0 if not.
++If arg2 is PR_CAP_AMBIENT_CLEAR_ALL, then all capabilities will
++be removed from the ambient set.  (Using PR_CAP_AMBIENT_CLEAR_ALL requires
++setting arg3 to zero.)
+ .SH RETURN VALUE
+ On success,
+ .BR PR_GET_DUMPABLE ,
+diff --git a/man7/capabilities.7 b/man7/capabilities.7
+index 616189c881e4..8934d05a5b07 100644
+--- a/man7/capabilities.7
++++ b/man7/capabilities.7
+@@ -700,13 +700,34 @@ a program whose associated file capabilities grant that capability).
+ .IR Inheritable :
+ This is a set of capabilities preserved across an
+ .BR execve (2).
+-It provides a mechanism for a process to assign capabilities
+-to the permitted set of the new program during an
+-.BR execve (2).
++Inheritable capabilities remain inheritable when executing any program,
++and inheritable capabilities are added to the permitted set when executing
++a program that has the corresponding bits set in the file inheritable set.
++.IP
++Because inheritable capabilities are not generally preserved across
++.BR execve (2)
++when running as a non-root user, applications that wish to run helper
++programs with elevated capabilities should consider using ambient capabilities,
++described below.
+ .TP
+ .IR Effective :
+ This is the set of capabilities used by the kernel to
+ perform permission checks for the thread.
++.TP
++.IR Ambient " (since Linux 4.3):"
++This is a set of capabilities that are preserved across an
++.BR execve (2)
++of a program that does not have file capabilities.  The ambient capability
++set obeys the invariant that no capability can ever be ambient if it is
++not both permitted and inheritable.  Ambient capabilities are
++preserved in the permitted set and added to the effective
++set when
++.BR execve (2)
++is called.  The ambient capability set is modified using
++.BR prctl (2).
++Executing a program that changes uid or gid due to the setuid or setgid
++bits or executing a program that has any file capabilities set will clear
++the ambient set.
+ .PP
+ A child created via
+ .BR fork (2)
+@@ -788,10 +809,12 @@ the process using the following algorithm:
+ .in +4n
+ .nf
+ 
++P'(ambient) = (file has capabilities or is setuid or setgid) ? 0 : P(ambient)
++
+ P'(permitted) = (P(inheritable) & F(inheritable)) |
+-                (F(permitted) & cap_bset)
++                (F(permitted) & cap_bset) | P'(ambient)
+ 
+-P'(effective) = F(effective) ? P'(permitted) : 0
++P'(effective) = F(effective) ? P'(permitted) : P'(ambient)
+ 
+ P'(inheritable) = P(inheritable)    [i.e., unchanged]
+ 
+@@ -1074,6 +1097,10 @@ an effective or real UID of 0 calls
+ .BR execve (2).
+ (See the subsection
+ .IR "Capabilities and execution of programs by root" .)
++.TP
++.B SECBIT_NO_CAP_AMBIENT_RAISE
++Setting this flag disallows
++.BR PR_CAP_AMBIENT_RAISE .
+ .PP
+ Each of the above "base" flags has a companion "locked" flag.
+ Setting any of the "locked" flags is irreversible,
+@@ -1082,8 +1109,9 @@ corresponding "base" flag.
+ The locked flags are:
+ .BR SECBIT_KEEP_CAPS_LOCKED ,
+ .BR SECBIT_NO_SETUID_FIXUP_LOCKED ,
++.BR SECBIT_NOROOT_LOCKED ,
+ and
+-.BR SECBIT_NOROOT_LOCKED .
++.BR SECBIT_NO_CAP_AMBIENT_RAISE .
+ .PP
+ The
+ .I securebits
+-- 
+2.4.3
