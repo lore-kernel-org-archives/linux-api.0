@@ -1,102 +1,27 @@
-From: Miroslav Benes <mbenes@suse.cz>
-Subject: Re: [PATCH v2] livepatch: old_name.number scheme in livepatch sysfs
- directory
-Date: Tue, 3 Nov 2015 17:09:48 +0100 (CET)
-Message-ID: <alpine.LNX.2.00.1511031705340.6257@pobox.suse.cz>
-References: <20151102203241.GF27488@treble.redhat.com> <1446505187-28970-1-git-send-email-chris.j.arges@canonical.com> <alpine.LNX.2.00.1511031146070.6257@pobox.suse.cz> <20151103145843.GH27488@treble.redhat.com>
+From: Trond Myklebust <trond.myklebust@primarydata.com>
+Subject: Re: [PATCH v13 45/51] sunrpc: Allow to demand-allocate pages to
+ encode into
+Date: Tue, 3 Nov 2015 11:25:46 -0500
+Message-ID: <CAHQdGtScoRb-722ES168O8tkp-Rbvwe6bZ=70WwgiXpCC3vsHw@mail.gmail.com>
+References: <1446563847-14005-1-git-send-email-agruenba@redhat.com>
+	<1446563847-14005-46-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151103145843.GH27488@treble.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Josh Poimboeuf <jpoimboe@redhat.com>
-Cc: Chris J Arges <chris.j.arges@canonical.com>, live-patching@vger.kernel.org, jeyu@redhat.com, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1446563847-14005-46-git-send-email-agruenba@redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Andreas Gruenbacher <agruenba@redhat.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, linux-cifs@vger.kernel.org, Linux API Mailing List <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 3 Nov 2015, Josh Poimboeuf wrote:
+On Tue, Nov 3, 2015 at 10:17 AM, Andreas Gruenbacher
+<agruenba@redhat.com> wrote:
+> When encoding large, variable-length objects such as acls into xdr_bufs,
+> it is easier to allocate buffer pages on demand rather than precomputing
+> the required buffer size.
+>
 
-> On Tue, Nov 03, 2015 at 11:52:08AM +0100, Miroslav Benes wrote:
-> > On Mon, 2 Nov 2015, Chris J Arges wrote:
-> > 
-> > [...]
-> > 
-> > > +static int klp_get_func_pos_callback(void *data, const char *name,
-> > > +				      struct module *mod, unsigned long addr)
-> > > +{
-> > > +	struct klp_find_arg *args = data;
-> > > +
-> > > +	if ((mod && !args->objname) || (!mod && args->objname))
-> > > +		return 0;
-> > > +
-> > > +	if (strcmp(args->name, name))
-> > > +		return 0;
-> > > +
-> > > +	if (args->objname && strcmp(args->objname, mod->name))
-> > > +		return 0;
-> > > +
-> > > +	/* on address match, return 1 to break kallsyms_on_each_symbol loop */
-> > > +	if (args->addr == addr)
-> > > +		return 1;
-> > > +
-> > > +	/* if we don't match addr, count instance of named symbol */
-> > > +	args->count++;
-> > > +
-> > > +	return 0;
-> > > +}
-> > > +
-> > > +static int klp_get_func_pos(struct klp_object *obj, struct klp_func *func)
-> > > +{
-> > > +	struct klp_find_arg args = {
-> > > +		.objname = obj->name,
-> > > +		.name = func->old_name,
-> > > +		.addr = func->old_addr,
-> > > +		.count = 0,
-> > > +	};
-> > > +
-> > > +	mutex_lock(&module_mutex);
-> > > +	kallsyms_on_each_symbol(klp_get_func_pos_callback, &args);
-> > > +	mutex_unlock(&module_mutex);
-> > > +
-> > > +	return args.count;
-> > > +}
-> > > +
-> > >  static int klp_init_func(struct klp_object *obj, struct klp_func *func)
-> > >  {
-> > >  	INIT_LIST_HEAD(&func->stack_node);
-> > >  	func->state = KLP_DISABLED;
-> > >  
-> > >  	return kobject_init_and_add(&func->kobj, &klp_ktype_func,
-> > > -				    &obj->kobj, "%s", func->old_name);
-> > > +				    &obj->kobj, "%s,%d", func->old_name,
-> > > +				    klp_get_func_pos(obj, func));
-> > >  }
-> > 
-> > There is a problem which I missed before. klp_init_func() is called before 
-> > klp_find_verify_func_addr() in klp_init_object(). This means that 
-> > func->old_addr is either not verified yet or worse it is still 0. This 
-> > means that klp_get_func_pos_callback() never returns 1 and is thus called 
-> > on each symbol. So if you for example patched cmdline_proc_show the 
-> > resulting directory in sysfs would be called cmdline_proc_show,1 because 
-> > addr is never matched. Had old_addr been specified the name would have 
-> > been probably correct, but not for sure.
-> > 
-> > This should be fixed as well.
-> 
-> Even worse, klp_init_func() can be called even if the object hasn't been
-> loaded.  In that case there's no way to know what the value of n is, and
-> therefore no way to reliably create the sysfs entry.
+NACK. We're not doing allocations from inside the XDR encoders. This
+can and should be done before calling into the SUNRPC layer.
 
-Ah, right.
-
-> Should we create "func,n" in klp_init_object_loaded() instead of
-> klp_init_func()?
-
-So that the function entries in sysfs would be created only when the 
-object is loaded? Well, why not, but in that case it could easily confuse 
-the user. Object entry would be empty for not loaded object. I would not 
-dare to propose to remove such object entries. It would make things worse. 
-So maybe we could introduce an attribute in sysfs object entry which would 
-say if the object is loaded or not. Or something like that. Hm, we can 
-easily mess this up :)
-
-Miroslav
+Trond
