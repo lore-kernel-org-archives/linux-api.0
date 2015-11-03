@@ -1,125 +1,62 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: [PATCH v3] capabilities.7, prctl.2: Document ambient capabilities
-Date: Tue,  3 Nov 2015 15:42:17 -0800
-Message-ID: <3721cd96525af4cb0a671e9a36ac6402c8e5379a.1446594067.git.luto@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Michael Kerrisk-manpages <mtk.manpages@gmail.com>
-Cc: Serge Hallyn <serge.hallyn@ubuntu.com>, Andrew Morton <akpm@linuxfoundation.org>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Markku Savela <msa@moth.iki.fi>, Jonathan Corbet <corbet@lwn.net>, Andy Lutomirski <luto@kernel.org>
+From: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH v4] Remove #ifdef CONFIG_* from all userspace headers
+Date: Tue,  3 Nov 2015 11:46:21 -0800
+Message-ID: <1446579994-9937-1-git-send-email-palmer__19123.0113305666$1446595218$gmane$org@dabbelt.com>
+References: <1442271047-4908-1-git-send-email-palmer@dabbelt.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <kexec-bounces+glkk-kexec=m.gmane.org-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
+In-Reply-To: <1442271047-4908-1-git-send-email-palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/kexec>,
+ <mailto:kexec-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/kexec/>
+List-Post: <mailto:kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
+List-Help: <mailto:kexec-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/kexec>,
+ <mailto:kexec-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=subscribe>
+Sender: "kexec" <kexec-bounces-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
+Errors-To: kexec-bounces+glkk-kexec=m.gmane.org-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+To: arnd-r2nGTMty4D4@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: dave-gkUM19QKKo4@public.gmane.org, linux-xtensa-PjhNF2WwrV/0Sa2dR60CXw@public.gmane.org, jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bhe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, tomi.valkeinen-l0cyMroinI0@public.gmane.org, 3chas3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, aishchuk-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org, iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Reviewed-by: Kees Cook <keescook@chromium.org>
-Signed-off-by: Andy Lutomirski <luto@kernel.org>
----
+I think this is good to go.  There are two acks, but I wasn't sure if I was
+supposed to collect them in the patches or not.  Arnd Bergman acked #1 and #7.
 
-Changes from v2: Add a note about arg3 == 0 in CLEAR_ALL.
+Changes since v3 (<1442271047-4908-1-git-send-email-palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>)
 
-man2/prctl.2        | 13 +++++++++++++
- man7/capabilities.7 | 40 ++++++++++++++++++++++++++++++++++------
- 2 files changed, 47 insertions(+), 6 deletions(-)
+ * #4 is very different: rather than defining a canonical value for
+   MAP_UNINITIALIZED, it just punts on the problem and lets arch maintainers
+   deal with it.  There's still an #ifndef MAP_UNINITIALIZED in there, but that
+   shouldn't get triggered by anything because the arch headers should set it
+   to whatever they actually want.
 
-diff --git a/man2/prctl.2 b/man2/prctl.2
-index e743a6305969..bf8680f3b62d 100644
---- a/man2/prctl.2
-+++ b/man2/prctl.2
-@@ -954,6 +954,19 @@ had been called.
- For further information on Intel MPX, see the kernel source file
- .IR Documentation/x86/intel_mpx.txt .
- .\"
-+.TP
-+.BR PR_CAP_AMBIENT " (since Linux 4.2)"
-+Reads or changes the ambient capability set.  If arg2 is PR_CAP_AMBIENT_RAISE,
-+then the capability specified in arg3 is added to the ambient set.  This will
-+fail, returning EPERM, if the capability is not already both permitted and
-+inheritable or if the SECBIT_NO_CAP_AMBIENT_RAISE securebit is set.  If arg2
-+is PR_CAP_AMBIENT_LOWER, then the capability specified in arg3 is removed
-+from the ambient set.  If arg2 is PR_CAP_AMBIENT_IS_SET, then
-+.BR prctl (2)
-+will return 1 if the capability in arg3 is in the ambient set and 0 if not.
-+If arg2 is PR_CAP_AMBIENT_CLEAR_ALL, then all capabilities will
-+be removed from the ambient set.  (Using PR_CAP_AMBIENT_CLEAR_ALL requires
-+setting arg3 to zero.)
- .SH RETURN VALUE
- On success,
- .BR PR_GET_DUMPABLE ,
-diff --git a/man7/capabilities.7 b/man7/capabilities.7
-index 616189c881e4..8934d05a5b07 100644
---- a/man7/capabilities.7
-+++ b/man7/capabilities.7
-@@ -700,13 +700,34 @@ a program whose associated file capabilities grant that capability).
- .IR Inheritable :
- This is a set of capabilities preserved across an
- .BR execve (2).
--It provides a mechanism for a process to assign capabilities
--to the permitted set of the new program during an
--.BR execve (2).
-+Inheritable capabilities remain inheritable when executing any program,
-+and inheritable capabilities are added to the permitted set when executing
-+a program that has the corresponding bits set in the file inheritable set.
-+.IP
-+Because inheritable capabilities are not generally preserved across
-+.BR execve (2)
-+when running as a non-root user, applications that wish to run helper
-+programs with elevated capabilities should consider using ambient capabilities,
-+described below.
- .TP
- .IR Effective :
- This is the set of capabilities used by the kernel to
- perform permission checks for the thread.
-+.TP
-+.IR Ambient " (since Linux 4.3):"
-+This is a set of capabilities that are preserved across an
-+.BR execve (2)
-+of a program that does not have file capabilities.  The ambient capability
-+set obeys the invariant that no capability can ever be ambient if it is
-+not both permitted and inheritable.  Ambient capabilities are
-+preserved in the permitted set and added to the effective
-+set when
-+.BR execve (2)
-+is called.  The ambient capability set is modified using
-+.BR prctl (2).
-+Executing a program that changes uid or gid due to the setuid or setgid
-+bits or executing a program that has any file capabilities set will clear
-+the ambient set.
- .PP
- A child created via
- .BR fork (2)
-@@ -788,10 +809,12 @@ the process using the following algorithm:
- .in +4n
- .nf
- 
-+P'(ambient) = (file has capabilities or is setuid or setgid) ? 0 : P(ambient)
-+
- P'(permitted) = (P(inheritable) & F(inheritable)) |
--                (F(permitted) & cap_bset)
-+                (F(permitted) & cap_bset) | P'(ambient)
- 
--P'(effective) = F(effective) ? P'(permitted) : 0
-+P'(effective) = F(effective) ? P'(permitted) : P'(ambient)
- 
- P'(inheritable) = P(inheritable)    [i.e., unchanged]
- 
-@@ -1074,6 +1097,10 @@ an effective or real UID of 0 calls
- .BR execve (2).
- (See the subsection
- .IR "Capabilities and execution of programs by root" .)
-+.TP
-+.B SECBIT_NO_CAP_AMBIENT_RAISE
-+Setting this flag disallows
-+.BR PR_CAP_AMBIENT_RAISE .
- .PP
- Each of the above "base" flags has a companion "locked" flag.
- Setting any of the "locked" flags is irreversible,
-@@ -1082,8 +1109,9 @@ corresponding "base" flag.
- The locked flags are:
- .BR SECBIT_KEEP_CAPS_LOCKED ,
- .BR SECBIT_NO_SETUID_FIXUP_LOCKED ,
-+.BR SECBIT_NOROOT_LOCKED ,
- and
--.BR SECBIT_NOROOT_LOCKED .
-+.BR SECBIT_NO_CAP_AMBIENT_RAISE .
- .PP
- The
- .I securebits
--- 
-2.4.3
+ * #11 defines MAX_RAW_MINORS to 2^20 instead of 2^16.
+
+ * #13 moves the variable around a bit so it gets initialized.  I forgot I was
+   in perl and not C :).
+
+Changes since v2 (<1441832902-28993-1-git-send-email-palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>)
+
+ * Patch set renamed.
+
+ * #2 is rewritten to use sys_ni.c instead of an #ifdef
+
+ * #3, #6, #8, #9, #10, and #11 no longer use "#ifdef __KERNEL__" but
+   have instead moved the offending lines to the correct, kernel-only
+   files.
+
+ * #4 has been rewritten to always define MAP_UNINITIALIZED to
+   non-zero, rather than defining it to zero when in userspace.
+
+ * #5 got a whole lot longer -- rather than just always hiding these
+   fields from userspace, there is now a second "struct
+   elf_fdpic_prstatus" structure.  This should allow userspace to
+   parse core dumps correctly.
+
+ * Rebased onto 9c488de24f7264f08d341024bffdd637b4d04c96.
+
+Changes since v1 (<1441152610-22566-1-git-send-email-palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>)
+
+ * All patches but #1 were added.
