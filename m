@@ -1,75 +1,73 @@
-From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 4/8] mm: free swp_entry in madvise_free
-Date: Tue, 3 Nov 2015 09:53:17 +0900
-Message-ID: <20151103005317.GE17906@bbox>
+From: Minchan Kim <minchan@kernel.org>
+Subject: Re: [PATCH 6/8] mm: lru_deactivate_fn should clear PG_referenced
+Date: Tue, 3 Nov 2015 10:10:30 +0900
+Message-ID: <20151103011030.GF17906@bbox>
 References: <1446188504-28023-1-git-send-email-minchan@kernel.org>
- <1446188504-28023-5-git-send-email-minchan@kernel.org>
- <20151030122814.GA23627@dhcp22.suse.cz>
+ <1446188504-28023-7-git-send-email-minchan@kernel.org>
+ <20151030124711.GB23627@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151030122814.GA23627-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+In-Reply-To: <20151030124711.GB23627@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, zhangyanfei@cn.fujitsu.com, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, Daniel Micay <danielmicay@gmail.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, yalin.wang2010@gmail.com, Shaohua Li <shli@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 30, 2015 at 01:28:14PM +0100, Michal Hocko wrote:
-> On Fri 30-10-15 16:01:40, Minchan Kim wrote:
-> > When I test below piece of code with 12 processes(ie, 512M * 12 = 6G
-> > consume) on my (3G ram + 12 cpu + 8G swap, the madvise_free is siginficat
-> > slower (ie, 2x times) than madvise_dontneed.
-> > 
-> > loop = 5;
-> > mmap(512M);
-> > while (loop--) {
-> >         memset(512M);
-> >         madvise(MADV_FREE or MADV_DONTNEED);
-> > }
-> > 
-> > The reason is lots of swapin.
-> > 
-> > 1) dontneed: 1,612 swapin
-> > 2) madvfree: 879,585 swapin
-> > 
-> > If we find hinted pages were already swapped out when syscall is called,
-> > it's pointless to keep the swapped-out pages in pte.
-> > Instead, let's free the cold page because swapin is more expensive
-> > than (alloc page + zeroing).
-> > 
-> > With this patch, it reduced swapin from 879,585 to 1,878 so elapsed time
-> > 
-> > 1) dontneed: 6.10user 233.50system 0:50.44elapsed
-> > 2) madvfree: 6.03user 401.17system 1:30.67elapsed
-> > 2) madvfree + below patch: 6.70user 339.14system 1:04.45elapsed
-> > 
-> > Acked-by: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> > Signed-off-by: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+On Fri, Oct 30, 2015 at 01:47:11PM +0100, Michal Hocko wrote:
+> On Fri 30-10-15 16:01:42, Minchan Kim wrote:
+> > deactivate_page aims for accelerate for reclaiming through
+> > moving pages from active list to inactive list so we should
+> > clear PG_referenced for the goal.
 > 
-> Yes this makes a lot of sense.
-> 
-> Acked-by: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
+> I might be missing something but aren't we using PG_referenced only for
+> pagecache (and shmem) pages?
 
-Thanks!
+You don't miss anything. For pages which are candidate of MADV_FREEing(
+ie, normal anonymous page, not shmem, tmpfs), they shouldn't have any
+PG_referenced. Although normal anonymous pages have it, VM doesn't respect
+it. One thing I suspect is GUP with FOLL_TOUCH which calls mark_page_accesssed
+on anonymous page and will mark PG_referenced.
+Technically, it's not a problem but just want to notice in this time.
+
+Primary reason was I want to make deactivate_page *general* so it could
+be used for file page as well as anon pages in future.
+But at the moment, user of deactivate_page is only MADV_FREE so it might
+be better to merge the logic for anon page deactivation into
+deactivate_file_page and rename it as general "deactivate_page"
+if you're thinking it's better.
 
 > 
-> One nit below.
-> 
+> > 
+> > Acked-by: Hugh Dickins <hughd@google.com>
+> > Suggested-by: Andrew Morton <akpm@linux-foundation.org>
+> > Signed-off-by: Minchan Kim <minchan@kernel.org>
 > > ---
-> >  mm/madvise.c | 26 +++++++++++++++++++++++++-
-> >  1 file changed, 25 insertions(+), 1 deletion(-)
+> >  mm/swap.c | 1 +
+> >  1 file changed, 1 insertion(+)
 > > 
-> > diff --git a/mm/madvise.c b/mm/madvise.c
-> > index 640311704e31..663bd9fa0ae0 100644
-> > --- a/mm/madvise.c
-> > +++ b/mm/madvise.c
-> > @@ -270,6 +270,8 @@ static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
-> >  	spinlock_t *ptl;
-> >  	pte_t *pte, ptent;
-> >  	struct page *page;
-> > +	swp_entry_t entry;
+> > diff --git a/mm/swap.c b/mm/swap.c
+> > index d0eacc5f62a3..4a6aec976ab1 100644
+> > --- a/mm/swap.c
+> > +++ b/mm/swap.c
+> > @@ -810,6 +810,7 @@ static void lru_deactivate_fn(struct page *page, struct lruvec *lruvec,
+> >  
+> >  		del_page_from_lru_list(page, lruvec, lru + LRU_ACTIVE);
+> >  		ClearPageActive(page);
+> > +		ClearPageReferenced(page);
+> >  		add_page_to_lru_list(page, lruvec, lru);
+> >  
+> >  		__count_vm_event(PGDEACTIVATE);
+> > -- 
+> > 1.9.1
 > 
-> This could go into !pte_present if block
+> -- 
+> Michal Hocko
+> SUSE Labs
 
-Sure, I fixed.
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
