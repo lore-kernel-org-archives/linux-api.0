@@ -1,12 +1,12 @@
 From: Palmer Dabbelt <palmer@dabbelt.com>
 Subject: [PATCH 08/13] Move MAX_SHARED_LIBS to fs/binfmt_flat.c
 Date: Tue,  3 Nov 2015 11:46:29 -0800
-Message-ID: <1446579994-9937-9-git-send-email-palmer__43069.0559711822$1446580275$gmane$org@dabbelt.com>
+Message-ID: <1446579994-9937-9-git-send-email-palmer__38980.7737352841$1446580278$gmane$org@dabbelt.com>
 References: <1442271047-4908-1-git-send-email-palmer@dabbelt.com>
  <1446579994-9937-1-git-send-email-palmer@dabbelt.com>
-Return-path: <linux-arch-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 In-Reply-To: <1446579994-9937-1-git-send-email-palmer@dabbelt.com>
-Sender: linux-arch-owner@vger.kernel.org
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: arnd@arndb.de, dhowells@redhat.com
 Cc: viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, kexec@lists.infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-xtensa@linux-xtensa.org, mathieu.desnoyers@efficios.com, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, a.p.zijlstra@chello.nl, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org, Palmer Dabbelt <palmer@dabbelt.com>
 List-Id: linux-api@vger.kernel.org
@@ -60,3 +60,4 @@ index 88cd6ba..1b177c7 100644
   * development,  all fields are in network byte order.
 -- 
 2.4.10
+
