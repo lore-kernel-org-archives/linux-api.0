@@ -1,7 +1,7 @@
 From: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH 09/13] Move bp_type_idx to kernel/event/hw_breakpoint.c
-Date: Tue,  3 Nov 2015 11:46:30 -0800
-Message-ID: <1446579994-9937-10-git-send-email-palmer__13572.3265856088$1446595253$gmane$org@dabbelt.com>
+Subject: [PATCH 08/13] Move MAX_SHARED_LIBS to fs/binfmt_flat.c
+Date: Tue,  3 Nov 2015 11:46:29 -0800
+Message-ID: <1446579994-9937-9-git-send-email-palmer__23355.5352352143$1446595253$gmane$org@dabbelt.com>
 References: <1442271047-4908-1-git-send-email-palmer@dabbelt.com>
  <1446579994-9937-1-git-send-email-palmer@dabbelt.com>
 Mime-Version: 1.0
@@ -22,59 +22,52 @@ To: arnd-r2nGTMty4D4@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gm
 Cc: dave-gkUM19QKKo4@public.gmane.org, linux-xtensa-PjhNF2WwrV/0Sa2dR60CXw@public.gmane.org, jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bhe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, tomi.valkeinen-l0cyMroinI0@public.gmane.org, 3chas3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, aishchuk-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org, iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This has a "#ifdef CONFIG_*" that used to be exposed to userspace.
-
-The names in here are so generic that I don't think it's a good idea
-to expose them to userspace (or even the rest of the kernel).  Since
-there's only one kernel user, it's been moved to that file.
+I'm not sure what this is, but it doesn't feel like something that
+should be exposed to userspace here.  I'm assuming this file was
+exposed for the structure in it, which doesn't depend on
+MAX_SHARED_LIBS.
 
 Signed-off-by: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
 Reviewed-by: Andrew Waterman <waterman-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
 Reviewed-by: Albert Ou <aou-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
 ---
- include/uapi/linux/hw_breakpoint.h | 10 ----------
- kernel/events/hw_breakpoint.c      | 10 ++++++++++
- 2 files changed, 10 insertions(+), 10 deletions(-)
+ fs/binfmt_flat.c          | 6 ++++++
+ include/uapi/linux/flat.h | 6 ------
+ 2 files changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/include/uapi/linux/hw_breakpoint.h b/include/uapi/linux/hw_breakpoint.h
-index b04000a..7a6a5a7 100644
---- a/include/uapi/linux/hw_breakpoint.h
-+++ b/include/uapi/linux/hw_breakpoint.h
-@@ -17,14 +17,4 @@ enum {
- 	HW_BREAKPOINT_INVALID   = HW_BREAKPOINT_RW | HW_BREAKPOINT_X,
- };
+diff --git a/fs/binfmt_flat.c b/fs/binfmt_flat.c
+index f723cd3..e89fb43 100644
+--- a/fs/binfmt_flat.c
++++ b/fs/binfmt_flat.c
+@@ -72,6 +72,12 @@
+ #define RELOC_FAILED 0xff00ff01		/* Relocation incorrect somewhere */
+ #define UNLOADED_LIB 0x7ff000ff		/* Placeholder for unused library */
  
--enum bp_type_idx {
--	TYPE_INST 	= 0,
--#ifdef CONFIG_HAVE_MIXED_BREAKPOINTS_REGS
--	TYPE_DATA	= 0,
--#else
--	TYPE_DATA	= 1,
--#endif
--	TYPE_MAX
--};
--
- #endif /* _UAPI_LINUX_HW_BREAKPOINT_H */
-diff --git a/kernel/events/hw_breakpoint.c b/kernel/events/hw_breakpoint.c
-index 92ce5f4..5ad117e 100644
---- a/kernel/events/hw_breakpoint.c
-+++ b/kernel/events/hw_breakpoint.c
-@@ -58,6 +58,16 @@ struct bp_cpuinfo {
- 	unsigned int	flexible; /* XXX: placeholder, see fetch_this_slot() */
- };
- 
-+enum bp_type_idx {
-+	TYPE_INST	= 0,
-+#if defined(CONFIG_HAVE_MIXED_BREAKPOINTS_REGS)
-+	TYPE_DATA	= 0,
++#ifdef CONFIG_BINFMT_SHARED_FLAT
++#define	MAX_SHARED_LIBS			(4)
 +#else
-+	TYPE_DATA	= 1,
++#define	MAX_SHARED_LIBS			(1)
 +#endif
-+	TYPE_MAX
-+};
 +
- static DEFINE_PER_CPU(struct bp_cpuinfo, bp_cpuinfo[TYPE_MAX]);
- static int nr_slots[TYPE_MAX];
+ struct lib_info {
+ 	struct {
+ 		unsigned long start_code;		/* Start of text segment */
+diff --git a/include/uapi/linux/flat.h b/include/uapi/linux/flat.h
+index 88cd6ba..1b177c7 100644
+--- a/include/uapi/linux/flat.h
++++ b/include/uapi/linux/flat.h
+@@ -13,12 +13,6 @@
  
+ #define	FLAT_VERSION			0x00000004L
+ 
+-#ifdef CONFIG_BINFMT_SHARED_FLAT
+-#define	MAX_SHARED_LIBS			(4)
+-#else
+-#define	MAX_SHARED_LIBS			(1)
+-#endif
+-
+ /*
+  * To make everything easier to port and manage cross platform
+  * development,  all fields are in network byte order.
 -- 
 2.4.10
