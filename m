@@ -1,108 +1,77 @@
-From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v13 29/51] richacl: Move everyone@ aces down the acl
-Date: Tue,  3 Nov 2015 16:17:05 +0100
-Message-ID: <1446563847-14005-30-git-send-email-agruenba@redhat.com>
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v13 32/51] richacl: Set the other permissions to the other mask
+Date: Tue,  3 Nov 2015 16:17:08 +0100
+Message-ID: <1446563847-14005-33-git-send-email-agruenba@redhat.com>
 References: <1446563847-14005-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1446563847-14005-1-git-send-email-agruenba@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Andreas Gruenbacher <agruenba@redhat.com>
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1446563847-14005-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-The POSIX standard puts processes which are not the owner or a member in
-the owning group or which match any ace other then everyone@ on the
-other file class.  We only know if a process is in the other class after
-processing the entire acl.
+Change the acl so that everyone@ is granted the permissions set in the
+other mask.
 
-Move all everyone@ aces in the acl down in the acl so that at most a
-single everyone@ allow ace remains at the end.  Permissions which are
-not explicitly allowed are implicitly denied, so an everyone@ deny ace
-is unneeded.
-
-The everyone@ aces can be moved down the acl without changing the
-permissions that the acl grants.  This transformation simplifies the
-following algorithms, and eventually allows us to turn the final
-everyone@ allow ace into an entry for the other class.
-
-Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
-Reviewed-by: J. Bruce Fields <bfields@redhat.com>
+Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Reviewed-by: J. Bruce Fields <bfields-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- fs/richacl_compat.c | 65 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 65 insertions(+)
+ fs/richacl_compat.c | 41 +++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 41 insertions(+)
 
 diff --git a/fs/richacl_compat.c b/fs/richacl_compat.c
-index 5c59999..962d314 100644
+index d9fee8b..76183c9 100644
 --- a/fs/richacl_compat.c
 +++ b/fs/richacl_compat.c
-@@ -153,3 +153,68 @@ richace_change_mask(struct richacl_alloc *alloc, struct richace **ace,
+@@ -462,3 +462,44 @@ richacl_set_owner_permissions(struct richacl_alloc *alloc)
  	}
  	return 0;
  }
 +
 +/**
-+ * richacl_move_everyone_aces_down  -  move everyone@ aces to the end of the acl
++ * richacl_set_other_permissions  -  set the other permissions to the other mask
 + * @alloc:	acl and number of allocated entries
++ * @added:	permissions added for everyone@
 + *
-+ * Move all everyone aces to the end of the acl so that only a single everyone@
-+ * allow ace remains at the end, and update the mask fields of all aces on the
-+ * way.  The last ace of the resulting acl will be an everyone@ allow ace only
-+ * if @acl grants any permissions to @everyone.  No @everyone deny aces will
-+ * remain.
-+ *
-+ * This transformation does not alter the permissions that the acl grants.
-+ * Having at most one everyone@ allow ace at the end of the acl helps us in the
-+ * following algorithms.
++ * Change the acl so that everyone@ is granted the permissions set in the other
++ * mask.  This leaves at most one efective everyone@ allow entry at the end of
++ * the acl.  If everyone@ end up being granted additional permissions, these
++ * permissions are returned in @added.
 + */
 +static int
-+richacl_move_everyone_aces_down(struct richacl_alloc *alloc)
++richacl_set_other_permissions(struct richacl_alloc *alloc, unsigned int *added)
 +{
++	struct richacl *acl = alloc->acl;
++	unsigned int x = RICHACE_POSIX_ALWAYS_ALLOWED;
++	unsigned int other_mask = acl->a_other_mask & ~x;
 +	struct richace *ace;
-+	unsigned int allowed = 0, denied = 0;
 +
-+	richacl_for_each_entry(ace, alloc->acl) {
-+		if (richace_is_inherit_only(ace))
-+			continue;
-+		if (richace_is_everyone(ace)) {
-+			if (richace_is_allow(ace))
-+				allowed |= (ace->e_mask & ~denied);
-+			else if (richace_is_deny(ace))
-+				denied |= (ace->e_mask & ~allowed);
-+			else
-+				continue;
-+			if (richace_change_mask(alloc, &ace, 0))
-+				return -1;
-+		} else {
-+			if (richace_is_allow(ace)) {
-+				if (richace_change_mask(alloc, &ace, allowed |
-+						(ace->e_mask & ~denied)))
-+					return -1;
-+			} else if (richace_is_deny(ace)) {
-+				if (richace_change_mask(alloc, &ace, denied |
-+						(ace->e_mask & ~allowed)))
-+					return -1;
-+			}
-+		}
-+	}
-+	if (allowed & ~RICHACE_POSIX_ALWAYS_ALLOWED) {
-+		struct richace *last_ace = ace - 1;
++	if (!(other_mask &&
++	      (acl->a_flags & RICHACL_WRITE_THROUGH)))
++		return 0;
 +
-+		if (alloc->acl->a_entries &&
-+		    richace_is_everyone(last_ace) &&
-+		    richace_is_allow(last_ace) &&
-+		    richace_is_inherit_only(last_ace) &&
-+		    last_ace->e_mask == allowed)
-+			last_ace->e_flags &= ~RICHACE_INHERIT_ONLY_ACE;
-+		else {
-+			if (richacl_insert_entry(alloc, &ace))
-+				return -1;
-+			ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
-+			ace->e_flags = RICHACE_SPECIAL_WHO;
-+			ace->e_mask = allowed;
-+			ace->e_id.special = RICHACE_EVERYONE_SPECIAL_ID;
-+		}
++	*added = other_mask;
++	ace = acl->a_entries + acl->a_count - 1;
++	if (acl->a_count == 0 ||
++	    !richace_is_everyone(ace) ||
++	    richace_is_inherit_only(ace)) {
++		ace++;
++		if (richacl_insert_entry(alloc, &ace))
++			return -1;
++		ace->e_type = RICHACE_ACCESS_ALLOWED_ACE_TYPE;
++		ace->e_flags = RICHACE_SPECIAL_WHO;
++		ace->e_mask = other_mask;
++		ace->e_id.special = RICHACE_EVERYONE_SPECIAL_ID;
++	} else {
++		*added &= ~ace->e_mask;
++		richace_change_mask(alloc, &ace, other_mask);
 +	}
 +	return 0;
 +}
 -- 
 2.5.0
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
