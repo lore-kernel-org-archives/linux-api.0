@@ -1,22 +1,22 @@
-From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
+From: Josh Poimboeuf <jpoimboe@redhat.com>
 Subject: Re: [PATCH v2] livepatch: old_name.number scheme in livepatch sysfs
  directory
-Date: Tue, 3 Nov 2015 13:44:41 +0100
-Message-ID: <20151103124440.GK2599@pathway.suse.cz>
+Date: Tue, 3 Nov 2015 08:58:43 -0600
+Message-ID: <20151103145843.GH27488@treble.redhat.com>
 References: <20151102203241.GF27488@treble.redhat.com>
  <1446505187-28970-1-git-send-email-chris.j.arges@canonical.com>
  <alpine.LNX.2.00.1511031146070.6257@pobox.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.LNX.2.00.1511031146070.6257-ztGlSCb7Y1iN3ZZ/Hiejyg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
-Cc: Chris J Arges <chris.j.arges-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <alpine.LNX.2.00.1511031146070.6257@pobox.suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Miroslav Benes <mbenes@suse.cz>
+Cc: Chris J Arges <chris.j.arges@canonical.com>, live-patching@vger.kernel.org, jeyu@redhat.com, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue 2015-11-03 11:52:08, Miroslav Benes wrote:
+On Tue, Nov 03, 2015 at 11:52:08AM +0100, Miroslav Benes wrote:
 > On Mon, 2 Nov 2015, Chris J Arges wrote:
 > 
 > [...]
@@ -80,12 +80,15 @@ On Tue 2015-11-03 11:52:08, Miroslav Benes wrote:
 > resulting directory in sysfs would be called cmdline_proc_show,1 because 
 > addr is never matched. Had old_addr been specified the name would have 
 > been probably correct, but not for sure.
+> 
+> This should be fixed as well.
 
-This might happen when the function name is unique. Then we might but
-we do not need to pre-define the address in the patch.
+Even worse, klp_init_func() can be called even if the object hasn't been
+loaded.  In that case there's no way to know what the value of n is, and
+therefore no way to reliably create the sysfs entry.
 
-Also I would omit the suffix at all when it is the first occurrence.
-It will cause that unique symbols will not be numbered.
+Should we create "func,n" in klp_init_object_loaded() instead of
+klp_init_func()?
 
-Best Regards,
-Petr
+-- 
+Josh
