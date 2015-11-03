@@ -1,112 +1,83 @@
-From: Chris J Arges <chris.j.arges-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: [PATCH v2] livepatch: old_name.number scheme in livepatch sysfs directory
-Date: Mon,  2 Nov 2015 16:59:41 -0600
-Message-ID: <1446505187-28970-1-git-send-email-chris.j.arges@canonical.com>
-References: <20151102203241.GF27488@treble.redhat.com>
+From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 1/8] mm: support madvise(MADV_FREE)
+Date: Tue, 3 Nov 2015 09:10:49 +0900
+Message-ID: <20151103001049.GC17906@bbox>
+References: <1446188504-28023-1-git-send-email-minchan@kernel.org>
+ <1446188504-28023-2-git-send-email-minchan@kernel.org>
+ <20151030164937.GA44946@kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151102203241.GF27488-8wJ5/zUtDR0XGNroddHbYwC/G2K4zDHf@public.gmane.org>
+In-Reply-To: <20151030164937.GA44946-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Content-Disposition: inline
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Chris J Arges <chris.j.arges-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-The following directory structure will allow for cases when the same
-function name exists in a single object.
-	/sys/kernel/livepatch/<patch>/<object>/<function.number>
+On Fri, Oct 30, 2015 at 09:49:37AM -0700, Shaohua Li wrote:
+> On Fri, Oct 30, 2015 at 04:01:37PM +0900, Minchan Kim wrote:
+> > +static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
+> > +				unsigned long end, struct mm_walk *walk)
+> > +
+> > +{
+> > +	struct mmu_gather *tlb = walk->private;
+> > +	struct mm_struct *mm = tlb->mm;
+> > +	struct vm_area_struct *vma = walk->vma;
+> > +	spinlock_t *ptl;
+> > +	pte_t *pte, ptent;
+> > +	struct page *page;
+> > +
+> > +	split_huge_page_pmd(vma, addr, pmd);
+> > +	if (pmd_trans_unstable(pmd))
+> > +		return 0;
+> > +
+> > +	pte = pte_offset_map_lock(mm, pmd, addr, &ptl);
+> > +	arch_enter_lazy_mmu_mode();
+> > +	for (; addr != end; pte++, addr += PAGE_SIZE) {
+> > +		ptent = *pte;
+> > +
+> > +		if (!pte_present(ptent))
+> > +			continue;
+> > +
+> > +		page = vm_normal_page(vma, addr, ptent);
+> > +		if (!page)
+> > +			continue;
+> > +
+> > +		if (PageSwapCache(page)) {
+> > +			if (!trylock_page(page))
+> > +				continue;
+> > +
+> > +			if (!try_to_free_swap(page)) {
+> > +				unlock_page(page);
+> > +				continue;
+> > +			}
+> > +
+> > +			ClearPageDirty(page);
+> > +			unlock_page(page);
+> > +		}
+> > +
+> > +		/*
+> > +		 * Some of architecture(ex, PPC) don't update TLB
+> > +		 * with set_pte_at and tlb_remove_tlb_entry so for
+> > +		 * the portability, remap the pte with old|clean
+> > +		 * after pte clearing.
+> > +		 */
+> > +		ptent = ptep_get_and_clear_full(mm, addr, pte,
+> > +						tlb->fullmm);
+> > +		ptent = pte_mkold(ptent);
+> > +		ptent = pte_mkclean(ptent);
+> > +		set_pte_at(mm, addr, pte, ptent);
+> > +		tlb_remove_tlb_entry(tlb, pte, addr);
+> 
+> The orginal ptent might not be dirty. In that case, the tlb_remove_tlb_entry
+> is unnecessary, so please add a check. In practice, I saw more TLB flush with
+> FREE compared to DONTNEED because of this issue.
 
-The number corresponds to the nth occurrence of the symbol name in
-kallsyms for the patched object.
+Actually, it was my TODO but I forgot it. :(
+I fixed for new version.
+Thanks for the pointing out.
 
-An example of this issue is documented here:
-	https://github.com/dynup/kpatch/issues/493
-
-Signed-off-by: Chris J Arges <chris.j.arges-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
----
- Documentation/ABI/testing/sysfs-kernel-livepatch |  2 +-
- kernel/livepatch/core.c                          | 45 ++++++++++++++++++++++--
- 2 files changed, 44 insertions(+), 3 deletions(-)
-
-diff --git a/Documentation/ABI/testing/sysfs-kernel-livepatch b/Documentation/ABI/testing/sysfs-kernel-livepatch
-index 5bf42a8..dcd36db 100644
---- a/Documentation/ABI/testing/sysfs-kernel-livepatch
-+++ b/Documentation/ABI/testing/sysfs-kernel-livepatch
-@@ -33,7 +33,7 @@ Description:
- 		The object directory contains subdirectories for each function
- 		that is patched within the object.
- 
--What:		/sys/kernel/livepatch/<patch>/<object>/<function>
-+What:		/sys/kernel/livepatch/<patch>/<object>/<function.number>
- Date:		Nov 2014
- KernelVersion:	3.19.0
- Contact:	live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
-index 6e53441..6bcf600 100644
---- a/kernel/livepatch/core.c
-+++ b/kernel/livepatch/core.c
-@@ -587,7 +587,7 @@ EXPORT_SYMBOL_GPL(klp_enable_patch);
-  * /sys/kernel/livepatch/<patch>
-  * /sys/kernel/livepatch/<patch>/enabled
-  * /sys/kernel/livepatch/<patch>/<object>
-- * /sys/kernel/livepatch/<patch>/<object>/<func>
-+ * /sys/kernel/livepatch/<patch>/<object>/<func.number>
-  */
- 
- static ssize_t enabled_store(struct kobject *kobj, struct kobj_attribute *attr,
-@@ -727,13 +727,54 @@ static void klp_free_patch(struct klp_patch *patch)
- 	kobject_put(&patch->kobj);
- }
- 
-+static int klp_get_func_pos_callback(void *data, const char *name,
-+				      struct module *mod, unsigned long addr)
-+{
-+	struct klp_find_arg *args = data;
-+
-+	if ((mod && !args->objname) || (!mod && args->objname))
-+		return 0;
-+
-+	if (strcmp(args->name, name))
-+		return 0;
-+
-+	if (args->objname && strcmp(args->objname, mod->name))
-+		return 0;
-+
-+	/* on address match, return 1 to break kallsyms_on_each_symbol loop */
-+	if (args->addr == addr)
-+		return 1;
-+
-+	/* if we don't match addr, count instance of named symbol */
-+	args->count++;
-+
-+	return 0;
-+}
-+
-+static int klp_get_func_pos(struct klp_object *obj, struct klp_func *func)
-+{
-+	struct klp_find_arg args = {
-+		.objname = obj->name,
-+		.name = func->old_name,
-+		.addr = func->old_addr,
-+		.count = 0,
-+	};
-+
-+	mutex_lock(&module_mutex);
-+	kallsyms_on_each_symbol(klp_get_func_pos_callback, &args);
-+	mutex_unlock(&module_mutex);
-+
-+	return args.count;
-+}
-+
- static int klp_init_func(struct klp_object *obj, struct klp_func *func)
- {
- 	INIT_LIST_HEAD(&func->stack_node);
- 	func->state = KLP_DISABLED;
- 
- 	return kobject_init_and_add(&func->kobj, &klp_ktype_func,
--				    &obj->kobj, "%s", func->old_name);
-+				    &obj->kobj, "%s,%d", func->old_name,
-+				    klp_get_func_pos(obj, func));
- }
- 
- /* parts of the initialization that is done only when the object is loaded */
--- 
-1.9.1
+> 
+> Thanks,
+> Shaohua
