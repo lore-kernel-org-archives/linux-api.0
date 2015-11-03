@@ -1,7 +1,7 @@
 From: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH 08/13] Move MAX_SHARED_LIBS to fs/binfmt_flat.c
-Date: Tue,  3 Nov 2015 11:46:29 -0800
-Message-ID: <1446579994-9937-9-git-send-email-palmer__23355.5352352143$1446595253$gmane$org@dabbelt.com>
+Subject: [PATCH 07/13] Make FB_BACKLIGHT_{LEVELS,MAX} always visible
+Date: Tue,  3 Nov 2015 11:46:28 -0800
+Message-ID: <1446579994-9937-8-git-send-email-palmer__38670.5049350441$1446595254$gmane$org@dabbelt.com>
 References: <1442271047-4908-1-git-send-email-palmer@dabbelt.com>
  <1446579994-9937-1-git-send-email-palmer@dabbelt.com>
 Mime-Version: 1.0
@@ -22,52 +22,32 @@ To: arnd-r2nGTMty4D4@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gm
 Cc: dave-gkUM19QKKo4@public.gmane.org, linux-xtensa-PjhNF2WwrV/0Sa2dR60CXw@public.gmane.org, jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bhe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, tomi.valkeinen-l0cyMroinI0@public.gmane.org, 3chas3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, aishchuk-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org, iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-I'm not sure what this is, but it doesn't feel like something that
-should be exposed to userspace here.  I'm assuming this file was
-exposed for the structure in it, which doesn't depend on
-MAX_SHARED_LIBS.
+Nothing else in the kernel defines this, and this header is visible to
+userspace.  Rather than hiding it in an #ifdef, I think it's sane to
+just make this visible to userspace.
 
 Signed-off-by: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
 Reviewed-by: Andrew Waterman <waterman-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
 Reviewed-by: Albert Ou <aou-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
 ---
- fs/binfmt_flat.c          | 6 ++++++
- include/uapi/linux/flat.h | 6 ------
- 2 files changed, 6 insertions(+), 6 deletions(-)
+ include/uapi/linux/fb.h | 3 ---
+ 1 file changed, 3 deletions(-)
 
-diff --git a/fs/binfmt_flat.c b/fs/binfmt_flat.c
-index f723cd3..e89fb43 100644
---- a/fs/binfmt_flat.c
-+++ b/fs/binfmt_flat.c
-@@ -72,6 +72,12 @@
- #define RELOC_FAILED 0xff00ff01		/* Relocation incorrect somewhere */
- #define UNLOADED_LIB 0x7ff000ff		/* Placeholder for unused library */
+diff --git a/include/uapi/linux/fb.h b/include/uapi/linux/fb.h
+index fb795c3..8926f13 100644
+--- a/include/uapi/linux/fb.h
++++ b/include/uapi/linux/fb.h
+@@ -392,11 +392,8 @@ struct fb_cursor {
+ 	struct fb_image	image;	/* Cursor image */
+ };
  
-+#ifdef CONFIG_BINFMT_SHARED_FLAT
-+#define	MAX_SHARED_LIBS			(4)
-+#else
-+#define	MAX_SHARED_LIBS			(1)
-+#endif
-+
- struct lib_info {
- 	struct {
- 		unsigned long start_code;		/* Start of text segment */
-diff --git a/include/uapi/linux/flat.h b/include/uapi/linux/flat.h
-index 88cd6ba..1b177c7 100644
---- a/include/uapi/linux/flat.h
-+++ b/include/uapi/linux/flat.h
-@@ -13,12 +13,6 @@
- 
- #define	FLAT_VERSION			0x00000004L
- 
--#ifdef CONFIG_BINFMT_SHARED_FLAT
--#define	MAX_SHARED_LIBS			(4)
--#else
--#define	MAX_SHARED_LIBS			(1)
+-#ifdef CONFIG_FB_BACKLIGHT
+ /* Settings for the generic backlight code */
+ #define FB_BACKLIGHT_LEVELS	128
+ #define FB_BACKLIGHT_MAX	0xFF
 -#endif
 -
- /*
-  * To make everything easier to port and manage cross platform
-  * development,  all fields are in network byte order.
+ 
+ #endif /* _UAPI_LINUX_FB_H */
 -- 
 2.4.10
