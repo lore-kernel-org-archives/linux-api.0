@@ -1,7 +1,7 @@
 From: Palmer Dabbelt <palmer@dabbelt.com>
-Subject: [PATCH 01/13] Remove #ifdef CONFIG_64BIT from all asm-generic/fcntl.h
-Date: Tue,  3 Nov 2015 11:46:22 -0800
-Message-ID: <1446579994-9937-2-git-send-email-palmer@dabbelt.com>
+Subject: [PATCH 13/13] Re-enable and clean up "check_config()" in headers_check.pl
+Date: Tue,  3 Nov 2015 11:46:34 -0800
+Message-ID: <1446579994-9937-14-git-send-email-palmer@dabbelt.com>
 References: <1442271047-4908-1-git-send-email-palmer@dabbelt.com>
  <1446579994-9937-1-git-send-email-palmer@dabbelt.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -11,44 +11,63 @@ To: arnd@arndb.de, dhowells@redhat.com
 Cc: viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, kexec@lists.infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-xtensa@linux-xtensa.org, mathieu.desnoyers@efficios.com, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, a.p.zijlstra@chello.nl, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org, Palmer Dabbelt <palmer@dabbelt.com>
 List-Id: linux-api@vger.kernel.org
 
-When working on the RISC-V port I noticed that F_SETLK64 was being
-defined on our 64-bit platform, despite our port being so new that
-we've only ever had the 64-bit file ops.  Since there's not compat
-layer for these, this causes fcntl to bail out.
+I recently got bit by a CONFIG_ in userspace bug.  This has apparently
+happened before, but the check got disabled for triggering too much.
+In order to reduce false positives, I added some hueristics to avoid
+detecting comments.
 
-It turns out that one of the ways in with F_SETLK64 was being defined
-(there's some more in glibc, but that's a whole different story... :))
-is the result of CONFIG_64BIT showing up in this user-visible header.
-<asm-generic/bitsperlong.h> confirms this isn't sane, so I replaced it
-with a __BITS_PER_LONG check.
+Since these tests all pass, I've now re-enabled them.
 
 Signed-off-by: Palmer Dabbelt <palmer@dabbelt.com>
 Reviewed-by: Andrew Waterman <waterman@eecs.berkeley.edu>
 Reviewed-by: Albert Ou <aou@eecs.berkeley.edu>
 ---
- include/uapi/asm-generic/fcntl.h | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ scripts/headers_check.pl | 19 +++++++++++++++++--
+ 1 file changed, 17 insertions(+), 2 deletions(-)
 
-diff --git a/include/uapi/asm-generic/fcntl.h b/include/uapi/asm-generic/fcntl.h
-index e063eff..14a5c82 100644
---- a/include/uapi/asm-generic/fcntl.h
-+++ b/include/uapi/asm-generic/fcntl.h
-@@ -1,6 +1,7 @@
- #ifndef _ASM_GENERIC_FCNTL_H
- #define _ASM_GENERIC_FCNTL_H
+diff --git a/scripts/headers_check.pl b/scripts/headers_check.pl
+index 62320f9..1634b51 100755
+--- a/scripts/headers_check.pl
++++ b/scripts/headers_check.pl
+@@ -27,6 +27,7 @@ my $ret = 0;
+ my $line;
+ my $lineno = 0;
+ my $filename;
++my $check_config_in_multiline_comment = 0;
  
-+#include <asm/bitsperlong.h>
- #include <linux/types.h>
+ foreach my $file (@files) {
+ 	$filename = $file;
+@@ -40,7 +41,7 @@ foreach my $file (@files) {
+ 		&check_asm_types();
+ 		&check_sizetypes();
+ 		&check_declarations();
+-		# Dropped for now. Too much noise &check_config();
++		&check_config();
+ 	}
+ 	close $fh;
+ }
+@@ -78,7 +79,21 @@ sub check_declarations
  
- /*
-@@ -115,7 +116,7 @@
- #define F_GETSIG	11	/* for sockets. */
- #endif
- 
--#ifndef CONFIG_64BIT
-+#if (__BITS_PER_LONG == 32)
- #ifndef F_GETLK64
- #define F_GETLK64	12	/*  using 'struct flock64' */
- #define F_SETLK64	13
+ sub check_config
+ {
+-	if ($line =~ m/[^a-zA-Z0-9_]+CONFIG_([a-zA-Z0-9_]+)[^a-zA-Z0-9_]/) {
++	my $nocomments = $line;
++	$nocomments =~ s/\/\*.*\*\///; # Remove ANSI-style comments (/* to */)
++	$nocomments =~ s/\/\/.*//;     # Remove C99-style comments (// to EOL)
++
++	# Check to see if we're within a multiline comment, and if so
++	# just remove the whole line.  I tried matching on '^ * ', but
++	# there's one header that doesn't prepend multi-line comments
++	# with * so that won't work.
++	if ($nocomments =~ m/\/\*/) { $check_config_in_multiline_comment = 1; }
++	if ($nocomments =~ m/\*\//) { $check_config_in_multiline_comment = 0; }
++	if ($check_config_in_multiline_comment == 1) { $nocomments = "" }
++
++	# Check to see if there is something that looks like CONFIG_
++	# inside a userspace-accessible header file and if so, print that out.
++	if ($nocomments =~ m/[^a-zA-Z0-9_]+CONFIG_([a-zA-Z0-9_]+)[^a-zA-Z0-9_]/) {
+ 		printf STDERR "$filename:$lineno: leaks CONFIG_$1 to userspace where it is not valid\n";
+ 	}
+ }
 -- 
 2.4.10
