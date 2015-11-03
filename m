@@ -1,369 +1,433 @@
-From: kbuild test robot <lkp@intel.com>
-Subject: Re: [PATCH 09/13] Move bp_type_idx to kernel/event/hw_breakpoint.c
-Date: Wed, 4 Nov 2015 05:29:32 +0800
-Message-ID: <201511040530.DxH74Phm%fengguang.wu@intel.com>
-References: <1446579994-9937-10-git-send-email-palmer@dabbelt.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="0OAP2g/MAC+5xKAE"
-Return-path: <linux-arch-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1446579994-9937-10-git-send-email-palmer@dabbelt.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Palmer Dabbelt <palmer@dabbelt.com>
-Cc: kbuild-all@01.org, arnd@arndb.de, dhowells@redhat.com, viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, kexec@lists.infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-xtensa@linux-xtensa.org, mathieu.desnoyers@efficios.com, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, a.p.zijlstra@chello.nl, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel
+From: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
+Subject: Re: [PATCH v13 10/51] vfs: Cache base_acl objects in inodes
+Date: Tue, 3 Nov 2015 15:29:50 -0700
+Message-ID: <D235953B-3EAF-4B00-AC07-4420B85E9E9E@dilger.ca>
+References: <1446563847-14005-1-git-send-email-agruenba@redhat.com> <1446563847-14005-11-git-send-email-agruenba@redhat.com>
+Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2104\))
+Content-Type: multipart/signed; boundary="Apple-Mail=_124A55A8-7810-46A6-8154-225356928F53"; protocol="application/pgp-signature"; micalg=pgp-sha256
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1446563847-14005-11-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 
---0OAP2g/MAC+5xKAE
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+--Apple-Mail=_124A55A8-7810-46A6-8154-225356928F53
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain;
+	charset=us-ascii
 
-Hi Palmer,
+On Nov 3, 2015, at 8:16 AM, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> =
+wrote:
+>=20
+> POSIX ACLs and richacls are both objects allocated by kmalloc() with a
+> reference count which are freed by kfree_rcu().  An inode can either
+> cache an access and a default POSIX ACL, or a richacl (richacls do not
+> have default acls).  To allow an inode to cache either of the two =
+kinds
+> of acls, introduce a new base_acl type and convert i_acl and
+> i_default_acl to that type. In most cases, the vfs then doesn't have =
+to
+> care which kind of acl an inode caches (if any).
 
-[auto build test ERROR on v4.3-rc7]
-[also ERROR on: next-20151103]
+For new wrapper functions like this better to name them as "NOUN_VERB" =
+so
+rather than "VERB_NOUN" so that related functions sort together, like
+base_acl_init(), base_acl_get(), base_acl_put(), base_acl_refcount(), =
+etc.
 
-url:    https://github.com/0day-ci/linux/commits/Palmer-Dabbelt/Remove-ifdef-CONFIG_64BIT-from-all-asm-generic-fcntl-h/20151104-035501
-base:   https://github.com/0day-ci/linux Palmer-Dabbelt/Remove-ifdef-CONFIG_64BIT-from-all-asm-generic-fcntl-h/20151104-035501
-config: arm-socfpga_defconfig (attached as .config)
-reproduce:
-        wget https://git.kernel.org/cgit/linux/kernel/git/wfg/lkp-tests.git/plain/sbin/make.cross -O ~/bin/make.cross
-        chmod +x ~/bin/make.cross
-        # save the attached .config to linux build tree
-        make.cross ARCH=arm 
+> Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> ---
+> drivers/staging/lustre/lustre/llite/llite_lib.c |  2 +-
+> fs/f2fs/acl.c                                   |  4 ++--
+> fs/inode.c                                      |  4 ++--
+> fs/jffs2/acl.c                                  |  6 ++++--
+> fs/posix_acl.c                                  | 18 =
++++++++++---------
+> include/linux/fs.h                              | 25 =
+++++++++++++++++++++++---
+> include/linux/posix_acl.h                       | 12 ++++--------
+> include/linux/richacl.h                         |  2 +-
+> 8 files changed, 45 insertions(+), 28 deletions(-)
+>=20
+> diff --git a/drivers/staging/lustre/lustre/llite/llite_lib.c =
+b/drivers/staging/lustre/lustre/llite/llite_lib.c
+> index b4ed6c8..5766f69 100644
+> --- a/drivers/staging/lustre/lustre/llite/llite_lib.c
+> +++ b/drivers/staging/lustre/lustre/llite/llite_lib.c
+> @@ -1118,7 +1118,7 @@ void ll_clear_inode(struct inode *inode)
+> 	}
+> #ifdef CONFIG_FS_POSIX_ACL
+> 	else if (lli->lli_posix_acl) {
+> -		LASSERT(atomic_read(&lli->lli_posix_acl->a_refcount) =3D=3D=
+ 1);
+> +		=
+LASSERT(atomic_read(&lli->lli_posix_acl->a_base.ba_refcount) =3D=3D 1);
 
-All errors (new ones prefixed by >>):
+It probably makes sense to have a wrapper for this, like =
+base_acl_refcount()
+so that the details are similarly abstracted from the callers, or there
+isn't much benefit to having get_base_acl() and put_base_acl() at all.
 
-   arch/arm/kernel/ptrace.c: In function 'ptrace_get_hbp_resource_info':
->> arch/arm/kernel/ptrace.c:440:33: error: 'TYPE_INST' undeclared (first use in this function)
-     num_brps = hw_breakpoint_slots(TYPE_INST);
-                                    ^
-   arch/arm/kernel/ptrace.c:440:33: note: each undeclared identifier is reported only once for each function it appears in
->> arch/arm/kernel/ptrace.c:441:33: error: 'TYPE_DATA' undeclared (first use in this function)
-     num_wrps = hw_breakpoint_slots(TYPE_DATA);
-                                    ^
+> 		LASSERT(lli->lli_remote_perms =3D=3D NULL);
+> 		posix_acl_release(lli->lli_posix_acl);
+> 		lli->lli_posix_acl =3D NULL;
+> diff --git a/fs/f2fs/acl.c b/fs/f2fs/acl.c
+> index c8f25f7..a4207de 100644
+> --- a/fs/f2fs/acl.c
+> +++ b/fs/f2fs/acl.c
+> @@ -270,7 +270,7 @@ static struct posix_acl *f2fs_acl_clone(const =
+struct posix_acl *acl,
+> 				sizeof(struct posix_acl_entry);
+> 		clone =3D kmemdup(acl, size, flags);
+> 		if (clone)
+> -			atomic_set(&clone->a_refcount, 1);
+> +			atomic_set(&clone->a_base.ba_refcount, 1);
+
+This should be base_acl_init() since this should also reset the RCU =
+state
+if it was just copied from "acl" above.  That wouldn't be quite correct =
+if
+there are other fields added to struct base_acl that don't need to be
+initialized when it is copied, so possibly base_acl_reinit() would be =
+better
+here and below if that will be the case in the near future (I haven't =
+looked
+through the whole patch series yet).
+
+> 	}
+> 	return clone;
+> }
+> @@ -282,7 +282,7 @@ static int f2fs_acl_create_masq(struct posix_acl =
+*acl, umode_t *mode_p)
+> 	umode_t mode =3D *mode_p;
+> 	int not_equiv =3D 0;
+>=20
+> -	/* assert(atomic_read(acl->a_refcount) =3D=3D 1); */
+> +	/* assert(atomic_read(acl->a_base.ba_refcount) =3D=3D 1); */
+
+May as well make the comment use the base_acl_refcount() wrapper =
+function too.
+
+>=20
+> 	FOREACH_ACL_ENTRY(pa, acl, pe) {
+> 		switch(pa->e_tag) {
+> diff --git a/fs/inode.c b/fs/inode.c
+> index 78a17b8..2a387f4 100644
+> --- a/fs/inode.c
+> +++ b/fs/inode.c
+> @@ -233,9 +233,9 @@ void __destroy_inode(struct inode *inode)
+>=20
+> #ifdef CONFIG_FS_POSIX_ACL
+> 	if (inode->i_acl && inode->i_acl !=3D ACL_NOT_CACHED)
+> -		posix_acl_release(inode->i_acl);
+> +		put_base_acl(inode->i_acl);
+> 	if (inode->i_default_acl && inode->i_default_acl !=3D =
+ACL_NOT_CACHED)
+> -		posix_acl_release(inode->i_default_acl);
+> +		put_base_acl(inode->i_default_acl);
+> #endif
+> 	this_cpu_dec(nr_inodes);
+> }
+> diff --git a/fs/jffs2/acl.c b/fs/jffs2/acl.c
+> index 2f7a3c0..04a5836 100644
+> --- a/fs/jffs2/acl.c
+> +++ b/fs/jffs2/acl.c
+> @@ -294,13 +294,15 @@ int jffs2_init_acl_post(struct inode *inode)
+> 	int rc;
+>=20
+> 	if (inode->i_default_acl) {
+> -		rc =3D __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_DEFAULT, =
+inode->i_default_acl);
+> +		rc =3D __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_DEFAULT,
+> +				     *acl_by_type(inode, =
+ACL_TYPE_DEFAULT));
+> 		if (rc)
+> 			return rc;
+> 	}
+>=20
+> 	if (inode->i_acl) {
+> -		rc =3D __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_ACCESS, =
+inode->i_acl);
+> +		rc =3D __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_ACCESS,
+> +				     *acl_by_type(inode, =
+ACL_TYPE_ACCESS));
+> 		if (rc)
+> 			return rc;
+> 	}
+> diff --git a/fs/posix_acl.c b/fs/posix_acl.c
+> index 4fb17de..b3b2265 100644
+> --- a/fs/posix_acl.c
+> +++ b/fs/posix_acl.c
+> @@ -25,9 +25,9 @@ struct posix_acl **acl_by_type(struct inode *inode, =
+int type)
+> {
+> 	switch (type) {
+> 	case ACL_TYPE_ACCESS:
+> -		return &inode->i_acl;
+> +		return (struct posix_acl **)&inode->i_acl;
+> 	case ACL_TYPE_DEFAULT:
+> -		return &inode->i_default_acl;
+> +		return (struct posix_acl **)&inode->i_default_acl;
+
+This would be better to use container_of() to unwrap struct base_acl =
+from
+struct posix_acl.  That avoids the hard requirement (which isn't =
+documented
+anywhere) that base_acl needs to be the first member of struct =
+posix_acl.
+
+I was originally going to write that you should add a comment that =
+base_acl
+needs to be the first member of both richacl and posix_acl, but =
+container_of()
+is both cleaner and safer.
+
+Looking further down, that IS actually needed due to the way kfree is =
+used on
+the base_acl pointer, but using container_of() is still cleaner and =
+safer
+than directly casting double pointers (which some compilers and static
+analysis tools will be unhappy with).
+
+> 	default:
+> 		BUG();
+> 	}
+> @@ -83,16 +83,16 @@ EXPORT_SYMBOL(forget_cached_acl);
+>=20
+> void forget_all_cached_acls(struct inode *inode)
+> {
+> -	struct posix_acl *old_access, *old_default;
+> +	struct base_acl *old_access, *old_default;
+> 	spin_lock(&inode->i_lock);
+> 	old_access =3D inode->i_acl;
+> 	old_default =3D inode->i_default_acl;
+> 	inode->i_acl =3D inode->i_default_acl =3D ACL_NOT_CACHED;
+> 	spin_unlock(&inode->i_lock);
+> 	if (old_access !=3D ACL_NOT_CACHED)
+> -		posix_acl_release(old_access);
+> +		put_base_acl(old_access);
+> 	if (old_default !=3D ACL_NOT_CACHED)
+> -		posix_acl_release(old_default);
+> +		put_base_acl(old_default);
+> }
+> EXPORT_SYMBOL(forget_all_cached_acls);
+>=20
+> @@ -129,7 +129,7 @@ EXPORT_SYMBOL(get_acl);
+> void
+> posix_acl_init(struct posix_acl *acl, int count)
+> {
+> -	atomic_set(&acl->a_refcount, 1);
+> +	atomic_set(&acl->a_base.ba_refcount, 1);
+
+This should be base_acl_init().
+
+> 	acl->a_count =3D count;
+> }
+> EXPORT_SYMBOL(posix_acl_init);
+> @@ -162,7 +162,7 @@ posix_acl_clone(const struct posix_acl *acl, gfp_t =
+flags)
+> 		           sizeof(struct posix_acl_entry);
+> 		clone =3D kmemdup(acl, size, flags);
+> 		if (clone)
+> -			atomic_set(&clone->a_refcount, 1);
+> +			atomic_set(&clone->a_base.ba_refcount, 1);
+
+Also base_acl_init() or base_acl_reinit().
+
+> 	}
+> 	return clone;
+> }
+> @@ -384,7 +384,7 @@ static int posix_acl_create_masq(struct posix_acl =
+*acl, umode_t *mode_p)
+> 	umode_t mode =3D *mode_p;
+> 	int not_equiv =3D 0;
+>=20
+> -	/* assert(atomic_read(acl->a_refcount) =3D=3D 1); */
+> +	/* assert(atomic_read(acl->a_base.ba_refcount) =3D=3D 1); */
+
+base_acl_refcount().
+
+> 	FOREACH_ACL_ENTRY(pa, acl, pe) {
+>                 switch(pa->e_tag) {
+> @@ -439,7 +439,7 @@ static int __posix_acl_chmod_masq(struct posix_acl =
+*acl, umode_t mode)
+> 	struct posix_acl_entry *group_obj =3D NULL, *mask_obj =3D NULL;
+> 	struct posix_acl_entry *pa, *pe;
+>=20
+> -	/* assert(atomic_read(acl->a_refcount) =3D=3D 1); */
+> +	/* assert(atomic_read(acl->a_base.ba_refcount) =3D=3D 1); */
+
+...
+
+> 	FOREACH_ACL_ENTRY(pa, acl, pe) {
+> 		switch(pa->e_tag) {
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index ba91a89..3c22c92 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -576,6 +576,12 @@ static inline void mapping_allow_writable(struct =
+address_space *mapping)
+> #define i_size_ordered_init(inode) do { } while (0)
+> #endif
+>=20
+> +struct base_acl {
+> +	union {
+> +		atomic_t ba_refcount;
+> +		struct rcu_head ba_rcu;
+> +	};
+> +};
+> struct posix_acl;
+
+Is this forward declaration of struct posix_acl even needed anymore =
+after
+the change below?  There shouldn't be references to the struct in the =
+common
+code anymore (at least not by the end of the patch series.
+
+> #define ACL_NOT_CACHED ((void *)(-1))
+>=20
+> @@ -595,9 +601,9 @@ struct inode {
+> 	kgid_t			i_gid;
+> 	unsigned int		i_flags;
+>=20
+> -#ifdef CONFIG_FS_POSIX_ACL
+> -	struct posix_acl	*i_acl;
+> -	struct posix_acl	*i_default_acl;
+> +#if defined(CONFIG_FS_POSIX_ACL)
+> +	struct base_acl		*i_acl;
+> +	struct base_acl		*i_default_acl;
+> #endif
+>=20
+> 	const struct inode_operations	*i_op;
+> @@ -3059,4 +3065,17 @@ static inline bool dir_relax(struct inode =
+*inode)
+>=20
+> extern bool path_noexec(const struct path *path);
+>=20
+> +static inline struct base_acl *get_base_acl(struct base_acl *acl)
+
+> +{
+> +	if (acl)
+> +		atomic_inc(&acl->ba_refcount);
+> +	return acl;
+> +}
+> +
+> +static inline void put_base_acl(struct base_acl *acl)
+> +{
+> +	if (acl && atomic_dec_and_test(&acl->ba_refcount))
+> +		kfree_rcu(acl, ba_rcu);
+
+Hmm, using the base_acl pointer as the pointer to kfree means that the
+base_acl structure DOES need to be the first one in both struct =
+posix_acl
+and struct richacl, so that needs to be commented at each structure so
+it doesn't accidentally break in the future.
+
+> +}
+> +
+> #endif /* _LINUX_FS_H */
+> diff --git a/include/linux/posix_acl.h b/include/linux/posix_acl.h
+> index 3e96a6a..2c46441 100644
+> --- a/include/linux/posix_acl.h
+> +++ b/include/linux/posix_acl.h
+> @@ -43,10 +43,7 @@ struct posix_acl_entry {
+> };
+>=20
+> struct posix_acl {
+> -	union {
+> -		atomic_t		a_refcount;
+> -		struct rcu_head		a_rcu;
+> -	};
+> +	struct base_acl		a_base;
+
+	struct base_acl		a_base;	/* must be first, see =
+base_acl_put() */
+
+> 	unsigned int		a_count;
+> 	struct posix_acl_entry	a_entries[0];
+> };
+> @@ -61,8 +58,7 @@ struct posix_acl {
+> static inline struct posix_acl *
+> posix_acl_dup(struct posix_acl *acl)
+> {
+> -	if (acl)
+> -		atomic_inc(&acl->a_refcount);
+> +	get_base_acl(&acl->a_base);
+> 	return acl;
+> }
+>=20
+> @@ -72,8 +68,8 @@ posix_acl_dup(struct posix_acl *acl)
+> static inline void
+> posix_acl_release(struct posix_acl *acl)
+> {
+> -	if (acl && atomic_dec_and_test(&acl->a_refcount))
+> -		kfree_rcu(acl, a_rcu);
+> +	BUILD_BUG_ON(offsetof(struct posix_acl, a_base) !=3D 0);
+> +	put_base_acl(&acl->a_base);
+> }
+>=20
+>=20
+> diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+> index 1d9f5f7..2baef35 100644
+> --- a/include/linux/richacl.h
+> +++ b/include/linux/richacl.h
+> @@ -57,7 +57,7 @@ static inline struct richacl *
+> richacl_get(struct richacl *acl)
+> {
+> 	if (acl)
+> -		atomic_inc(&acl->a_refcount);
+> +		atomic_inc(&acl->a_base.ba_refcount);
+> 	return acl;
+
+This should also use base_acl_get() for consistency.  That said, where =
+is
+the call to base_acl_put() in the richacl code?
+
+Also, where is the change to struct richacl?  It looks like this patch =
+would
+not be able to compile by itself.  I was going to say that struct =
+richacl
+also needs a comment like struct posix_acl that struct base_acl needs to =
+be
+first.
+
+Cheers, Andreas
+
+
+
+
+
+
+--Apple-Mail=_124A55A8-7810-46A6-8154-225356928F53
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+	filename=signature.asc
+Content-Type: application/pgp-signature;
+	name=signature.asc
+Content-Description: Message signed with OpenPGP using GPGMail
+
+-----BEGIN PGP SIGNATURE-----
+Comment: GPGTools - http://gpgtools.org
+
+iQIVAwUBVjk1X3Kl2rkXzB/gAQiSPA/9HwI8jDfYrPQGfFL4NjZZNxfBK6rnfVsw
+XRPQCXVJDDCjhM0t6RHBuQxJiGjBeHbqE3WkoqTUg7njFG5URFExY6XXOJBnjdTW
+nwxR0gM840ni52uLCaD+QkvIxbvbBYZQmFdtYv5wB78usBcFFSltEx7sXh7+lQru
+eMW3dlIAQhdKhhvN1BccVS3XBDD6TwNvgB4CK3/rOWCAU4YJLooeMPTebvEmcNYJ
+j5bMqBhPJT3oyYlN0Q8dIV/NOFC59lwBEoItzHSnYkPLTawFP9CUNeXHRNP/39t/
+rwRFRNl30EQFwB5FfPWFNtJhKgjAtlojiTU2OgXbTTn7041dEhkdVqkhLmU9odky
+PD3UGjD6rSn3nnpvop7roAyoBUX5hU2G4gAKoo4aIwkp5kaN/L86JUHp1Sp23Ik2
+JyxldGVwoLBSbgJKW6bBamP6IeA+kDuG1MwW5Af+9iPbM0Tf730kaON1B6X3s1xn
+EHhgVYaqx5G8GcIr8+XYVxnnC/fwnka03DFZxRI0A/oSdRxI0TS+98jcbPliNiE5
+sHoxCvmuegRXMMfYBzQcG6d6SXDz+oG3TRtonZkn3qIuWV2dBTQTY1mjrdu5RR/r
+uIkBGaib0UjU6F5HHlTj4tNgXmkU4rPS7mOLcZ3mzr6eNinE3lr0oa9d9bY7zVLk
+uta4gJIXPtY=
+=vbcX
+-----END PGP SIGNATURE-----
+
+--Apple-Mail=_124A55A8-7810-46A6-8154-225356928F53--
 --
-   arch/arm/kernel/hw_breakpoint.c: In function 'hw_breakpoint_slots':
->> arch/arm/kernel/hw_breakpoint.c:290:7: error: 'TYPE_INST' undeclared (first use in this function)
-     case TYPE_INST:
-          ^
-   arch/arm/kernel/hw_breakpoint.c:290:7: note: each undeclared identifier is reported only once for each function it appears in
->> arch/arm/kernel/hw_breakpoint.c:292:7: error: 'TYPE_DATA' undeclared (first use in this function)
-     case TYPE_DATA:
-          ^
-
-vim +/TYPE_INST +440 arch/arm/kernel/ptrace.c
-
-864232fa Will Deacon 2010-09-03  434  
-864232fa Will Deacon 2010-09-03  435  static u32 ptrace_get_hbp_resource_info(void)
-864232fa Will Deacon 2010-09-03  436  {
-864232fa Will Deacon 2010-09-03  437  	u8 num_brps, num_wrps, debug_arch, wp_len;
-864232fa Will Deacon 2010-09-03  438  	u32 reg = 0;
-864232fa Will Deacon 2010-09-03  439  
-864232fa Will Deacon 2010-09-03 @440  	num_brps	= hw_breakpoint_slots(TYPE_INST);
-864232fa Will Deacon 2010-09-03 @441  	num_wrps	= hw_breakpoint_slots(TYPE_DATA);
-864232fa Will Deacon 2010-09-03  442  	debug_arch	= arch_get_debug_arch();
-864232fa Will Deacon 2010-09-03  443  	wp_len		= arch_get_max_wp_len();
-864232fa Will Deacon 2010-09-03  444  
-
-:::::: The code at line 440 was first introduced by commit
-:::::: 864232fa1a2f8dfe003438ef0851a56722740f3e ARM: 6357/1: hw-breakpoint: add new ptrace requests for hw-breakpoint interaction
-
-:::::: TO: Will Deacon <will.deacon@arm.com>
-:::::: CC: Russell King <rmk+kernel@arm.linux.org.uk>
-
----
-0-DAY kernel test infrastructure                Open Source Technology Center
-https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
-
---0OAP2g/MAC+5xKAE
-Content-Type: application/octet-stream
-Content-Disposition: attachment; filename=".config.gz"
-Content-Transfer-Encoding: base64
-
-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
-
---0OAP2g/MAC+5xKAE--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
