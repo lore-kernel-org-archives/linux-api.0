@@ -1,36 +1,49 @@
 From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v2 11/13] arm: add pmd_mkclean for THP
-Date: Wed,  4 Nov 2015 10:26:05 +0900
-Message-ID: <1446600367-7976-12-git-send-email-minchan@kernel.org>
+Subject: [PATCH v2 07/13] mm: mark stable page dirty in KSM
+Date: Wed,  4 Nov 2015 10:26:01 +0900
+Message-ID: <1446600367-7976-8-git-send-email-minchan@kernel.org>
 References: <1446600367-7976-1-git-send-email-minchan@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1446600367-7976-1-git-send-email-minchan@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, Daniel Micay <danielmicay@gmail.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Shaohua Li <shli@kernel.org>, Michal Hocko <mhocko@suse.cz>, yalin.wang2010@gmail.com, Minchan Kim <minchan@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-MADV_FREE needs pmd_dirty and pmd_mkclean for detecting recent overwrite
-of the contents since MADV_FREE syscall is called for THP page.
+The MADV_FREE patchset changes page reclaim to simply free a clean
+anonymous page with no dirty ptes, instead of swapping it out; but
+KSM uses clean write-protected ptes to reference the stable ksm page.
+So be sure to mark that page dirty, so it's never mistakenly discarded.
 
-This patch adds pmd_mkclean for THP page MADV_FREE support.
-
+[hughd: adjusted comments]
+Acked-by: Hugh Dickins <hughd@google.com>
 Signed-off-by: Minchan Kim <minchan@kernel.org>
 ---
- arch/arm/include/asm/pgtable-3level.h | 1 +
- 1 file changed, 1 insertion(+)
+ mm/ksm.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/arch/arm/include/asm/pgtable-3level.h b/arch/arm/include/asm/pgtable-3level.h
-index a745a2a53853..6d6012a320b2 100644
---- a/arch/arm/include/asm/pgtable-3level.h
-+++ b/arch/arm/include/asm/pgtable-3level.h
-@@ -249,6 +249,7 @@ PMD_BIT_FUNC(mkold,	&= ~PMD_SECT_AF);
- PMD_BIT_FUNC(mksplitting, |= L_PMD_SECT_SPLITTING);
- PMD_BIT_FUNC(mkwrite,   &= ~L_PMD_SECT_RDONLY);
- PMD_BIT_FUNC(mkdirty,   |= L_PMD_SECT_DIRTY);
-+PMD_BIT_FUNC(mkclean,   &= ~L_PMD_SECT_DIRTY);
- PMD_BIT_FUNC(mkyoung,   |= PMD_SECT_AF);
- 
- #define pmd_mkhuge(pmd)		(__pmd(pmd_val(pmd) & ~PMD_TABLE_BIT))
+diff --git a/mm/ksm.c b/mm/ksm.c
+index 7ee101eaacdf..18d2b7afecff 100644
+--- a/mm/ksm.c
++++ b/mm/ksm.c
+@@ -1053,6 +1053,12 @@ static int try_to_merge_one_page(struct vm_area_struct *vma,
+ 			 */
+ 			set_page_stable_node(page, NULL);
+ 			mark_page_accessed(page);
++			/*
++			 * Page reclaim just frees a clean page with no dirty
++			 * ptes: make sure that the ksm page would be swapped.
++			 */
++			if (!PageDirty(page))
++				SetPageDirty(page);
+ 			err = 0;
+ 		} else if (pages_identical(page, kpage))
+ 			err = replace_page(vma, page, kpage, orig_pte);
 -- 
 1.9.1
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
