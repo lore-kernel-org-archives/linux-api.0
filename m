@@ -1,86 +1,32 @@
-From: Daniel Micay <danielmicay@gmail.com>
-Subject: Re: [PATCH v2 01/13] mm: support madvise(MADV_FREE)
-Date: Wed, 4 Nov 2015 01:04:45 -0500
-Message-ID: <56399FFD.1050302@gmail.com>
-References: <1446600367-7976-1-git-send-email-minchan@kernel.org>
- <1446600367-7976-2-git-send-email-minchan@kernel.org>
- <CALCETrUuNs=26UQtkU88cKPomx_Bik9mbgUUF9q7Nmh1pQJ4qg@mail.gmail.com>
- <56399CA5.8090101@gmail.com> <56399D66.5010606@gmail.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH 5/8] mm: move lazily freed pages to inactive list
+Date: Wed, 4 Nov 2015 09:15:12 +0100
+Message-ID: <20151104081512.GB29607@dhcp22.suse.cz>
+References: <1446188504-28023-1-git-send-email-minchan@kernel.org>
+ <1446188504-28023-6-git-send-email-minchan@kernel.org>
+ <20151030172212.GB44946@kernel.org>
+ <20151103005223.GD17906@bbox>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
- protocol="application/pgp-signature";
- boundary="9mwiVDRwihtmkUwV9X70biccg5OpnXm2c"
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <56399D66.5010606@gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Andy Lutomirski <luto@amacapital.net>, Minchan Kim <minchan@kernel.org>
-Cc: Hugh Dickins <hughd@google.com>, Andrew Morton <akpm@linux-foundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Michal Hocko <mhocko@suse.cz>, "linux-mm@kvack.org" <linux-mm@kvack.org>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Rik van Riel <riel@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, Linux API <linux-api@vger.kernel.org>, Jason Evans <je@fb.com>, Shaohua Li <shli@kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, yalin.wang2010@gmail.com, Mel Gorman <mgorman@suse.de>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20151103005223.GD17906@bbox>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Minchan Kim <minchan@kernel.org>
+Cc: Shaohua Li <shli@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, zhangyanfei@cn.fujitsu.com, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, Daniel Micay <danielmicay@gmail.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, yalin.wang2010@gmail.com, "Wang, Yalin" <Yalin.Wang@sonymobile.com>
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---9mwiVDRwihtmkUwV9X70biccg5OpnXm2c
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+On Tue 03-11-15 09:52:23, Minchan Kim wrote:
+[...]
+> I believe adding new LRU list would be controversial(ie, not trivial)
+> for maintainer POV even though code wouldn't be complicated.
+> So, I want to see problems in *real practice*, not any theoritical
+> test program before diving into that.
+> To see such voice of request, we should release the syscall.
+> So, I want to push this first.
 
-On 04/11/15 12:53 AM, Daniel Micay wrote:
->> In the common case it will be passed many pages by the allocator. Ther=
-e
->> will still be a layer of purging logic on top of MADV_FREE but it can =
-be
->> much thinner than the current workarounds for MADV_DONTNEED. So the
->> allocator would still be coalescing dirty ranges and only purging when=
-
->> the ratio of dirty:clean pages rises above some threshold. It would be=
-
->> able to weight the largest ranges for purging first rather than logic
->> based on stuff like aging as is used for MADV_DONTNEED.
->=20
-> I would expect that jemalloc would just start putting the dirty ranges
-> into the usual pair of red-black trees (with coalescing) and then doing=
-
-> purging starting from the largest spans to get back down below whatever=
-
-> dirty:clean ratio it's trying to keep. Right now, it has all lots of
-> other logic to deal with this since each MADV_DONTNEED call results in
-> lots of zeroing and then page faults.
-
-Er, I mean dirty:active (i.e. ratio of unpurged, dirty pages to ones
-that are handed out as allocations, which is kept at something like
-1:8). A high constant cost in the madvise call but quick handling of
-each page means that allocators need to be more aggressive with purging
-more than they strictly need to in one go. For example, it might need to
-purge 2M to meet the ratio but it could have a contiguous span of 32M of
-dirty pages. If the cost per page is low enough, it could just do the
-entire range.
-
-
---9mwiVDRwihtmkUwV9X70biccg5OpnXm2c
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBCAAGBQJWOZ/9AAoJEPnnEuWa9fIqyRsP/ApuxErM7bPshCha4gdN1S75
-TMXYV0q8K9MqUm5lK78cLTJNQUFM1CrFP8DiWHinL5322XqW/nEmbzWTSrQMBTdc
-vv6kt5twjJ+vPB5YpOFqPNpDVc6YNiMWlVzwqDJf8FoumULa1JtMQOpQDYVIIsHj
-DLr4A6otsEUaoZ0/sszJMJDc4hdU+gy05tvSihorOTn+ZwS/vteZhcANXtsNlt7f
-lYcf8LsUrWDwwgHAeuz5ghcvstw5pd9DmhmoAz7GykCTWG44toG0FjTYhyH8/5Vu
-fKZ9A+pgmSa8xrhVs6rrLSY0zEPzg0S9nJixaeXKEh5czQAj0kn5cCHqoKIpvtmj
-0PWPX+LgSyankBK85nS+8va7d3uRk9ui3Sh9TwRhMYAoN+nJl9mwO+zxP22X60NR
-mPyrEo/HM2bnzjHT1H8onBMJU0e5k341AmLgIsEEZi/K375ql8wN7TX+/oMBTpr6
-5K0AEYFZdAOfmgb4sKXk2jKFZUL6odcqbI7cgEvnWw2js4F/RTORuWWkHFdtKQ9E
-pxF07fjSwmR9dFCvOekJ34yq52LD8WXI/XEQ1sNv+eeI5drUfEu66Zns1rDgRoEm
-SNoJYL7hhvcOsE+HM6EPjzHshfE0fwc1Dr3t1YxGFHBNnDTBDbJ3jR3Lvhl/RVt7
-H+lXFWurH2FImUYb7Trv
-=9mdk
------END PGP SIGNATURE-----
-
---9mwiVDRwihtmkUwV9X70biccg5OpnXm2c--
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Completely agreed. The functionality is useful already and a new LRU
+list is not justified yet.
+-- 
+Michal Hocko
+SUSE Labs
