@@ -1,94 +1,42 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v2 02/13] mm: define MADV_FREE for some arches
-Date: Wed,  4 Nov 2015 10:25:56 +0900
-Message-ID: <1446600367-7976-3-git-send-email-minchan@kernel.org>
+From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: [PATCH v2 08/13] x86: add pmd_[dirty|mkclean] for THP
+Date: Wed,  4 Nov 2015 10:26:02 +0900
+Message-ID: <1446600367-7976-9-git-send-email-minchan@kernel.org>
 References: <1446600367-7976-1-git-send-email-minchan@kernel.org>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1446600367-7976-1-git-send-email-minchan@kernel.org>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, Daniel Micay <danielmicay@gmail.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Shaohua Li <shli@kernel.org>, Michal Hocko <mhocko@suse.cz>, yalin.wang2010@gmail.com, Minchan Kim <minchan@kernel.org>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, "James E.J. Bottomley" <jejb@parisc-linux.org>, Helge Deller <deller@gmx.de>, Ralf Baechle <ralf@linux-mips.org>, Chris Zankel <chris@zankel.net>, Max Filippov <jcmvbkbc@gmail.com>, kbuild test robot <fengguang.wu@intel.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1446600367-7976-1-git-send-email-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Most architectures use asm-generic, but alpha, mips, parisc, xtensa
-need their own definitions.
+MADV_FREE needs pmd_dirty and pmd_mkclean for detecting recent overwrite
+of the contents since MADV_FREE syscall is called for THP page.
 
-This patch defines MADV_FREE for them so it should fix build break
-for their architectures.
+This patch adds pmd_dirty and pmd_mkclean for THP page MADV_FREE
+support.
 
-Maybe, I should split and feed piecies to arch maintainers but
-included here for mmotm convenience.
-
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: Richard Henderson <rth@twiddle.net>
-Cc: Ivan Kokshaysky <ink@jurassic.park.msu.ru>
-Cc: "James E.J. Bottomley" <jejb@parisc-linux.org>
-Cc: Helge Deller <deller@gmx.de>
-Cc: Ralf Baechle <ralf@linux-mips.org>
-Cc: Chris Zankel <chris@zankel.net>
-Acked-by: Max Filippov <jcmvbkbc@gmail.com>
-Reported-by: kbuild test robot <fengguang.wu@intel.com>
-Signed-off-by: Minchan Kim <minchan@kernel.org>
+Signed-off-by: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Signed-off-by: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 ---
- arch/alpha/include/uapi/asm/mman.h  | 1 +
- arch/mips/include/uapi/asm/mman.h   | 1 +
- arch/parisc/include/uapi/asm/mman.h | 1 +
- arch/xtensa/include/uapi/asm/mman.h | 1 +
- 4 files changed, 4 insertions(+)
+ arch/x86/include/asm/pgtable.h | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/arch/alpha/include/uapi/asm/mman.h b/arch/alpha/include/uapi/asm/mman.h
-index 0086b472bc2b..836fbd44f65b 100644
---- a/arch/alpha/include/uapi/asm/mman.h
-+++ b/arch/alpha/include/uapi/asm/mman.h
-@@ -44,6 +44,7 @@
- #define MADV_WILLNEED	3		/* will need these pages */
- #define	MADV_SPACEAVAIL	5		/* ensure resources are available */
- #define MADV_DONTNEED	6		/* don't need these pages */
-+#define MADV_FREE	7		/* free pages only if memory pressure */
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index 867da5bbb4a3..b964d54300e1 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -267,6 +267,11 @@ static inline pmd_t pmd_mkold(pmd_t pmd)
+ 	return pmd_clear_flags(pmd, _PAGE_ACCESSED);
+ }
  
- /* common/generic parameters */
- #define MADV_REMOVE	9		/* remove these pages & resources */
-diff --git a/arch/mips/include/uapi/asm/mman.h b/arch/mips/include/uapi/asm/mman.h
-index cfcb876cae6b..106e741aa7ee 100644
---- a/arch/mips/include/uapi/asm/mman.h
-+++ b/arch/mips/include/uapi/asm/mman.h
-@@ -67,6 +67,7 @@
- #define MADV_SEQUENTIAL 2		/* expect sequential page references */
- #define MADV_WILLNEED	3		/* will need these pages */
- #define MADV_DONTNEED	4		/* don't need these pages */
-+#define MADV_FREE	5		/* free pages only if memory pressure */
- 
- /* common parameters: try to keep these consistent across architectures */
- #define MADV_REMOVE	9		/* remove these pages & resources */
-diff --git a/arch/parisc/include/uapi/asm/mman.h b/arch/parisc/include/uapi/asm/mman.h
-index 294d251ca7b2..6cb8db76fd4e 100644
---- a/arch/parisc/include/uapi/asm/mman.h
-+++ b/arch/parisc/include/uapi/asm/mman.h
-@@ -40,6 +40,7 @@
- #define MADV_SPACEAVAIL 5               /* insure that resources are reserved */
- #define MADV_VPS_PURGE  6               /* Purge pages from VM page cache */
- #define MADV_VPS_INHERIT 7              /* Inherit parents page size */
-+#define MADV_FREE	8		/* free pages only if memory pressure */
- 
- /* common/generic parameters */
- #define MADV_REMOVE	9		/* remove these pages & resources */
-diff --git a/arch/xtensa/include/uapi/asm/mman.h b/arch/xtensa/include/uapi/asm/mman.h
-index 201aec0e0446..1b19f25bc567 100644
---- a/arch/xtensa/include/uapi/asm/mman.h
-+++ b/arch/xtensa/include/uapi/asm/mman.h
-@@ -80,6 +80,7 @@
- #define MADV_SEQUENTIAL	2		/* expect sequential page references */
- #define MADV_WILLNEED	3		/* will need these pages */
- #define MADV_DONTNEED	4		/* don't need these pages */
-+#define MADV_FREE	5		/* free pages only if memory pressure */
- 
- /* common parameters: try to keep these consistent across architectures */
- #define MADV_REMOVE	9		/* remove these pages & resources */
++static inline pmd_t pmd_mkclean(pmd_t pmd)
++{
++	return pmd_clear_flags(pmd, _PAGE_DIRTY);
++}
++
+ static inline pmd_t pmd_wrprotect(pmd_t pmd)
+ {
+ 	return pmd_clear_flags(pmd, _PAGE_RW);
 -- 
 1.9.1
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
