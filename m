@@ -1,43 +1,38 @@
-From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: Re: [PATCH v13 21/51] ext4: Add richacl feature flag
-Date: Wed, 4 Nov 2015 03:43:31 +0100
-Message-ID: <CAHc6FU4=aNhir7UJjr=Xh28aWB7sZ0xhaawpmHxeB33RzaMHug@mail.gmail.com>
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v13 02/51] vfs: Add MAY_CREATE_FILE and MAY_CREATE_DIR
+ permission flags
+Date: Wed, 4 Nov 2015 04:02:27 +0100
+Message-ID: <CAHc6FU7q1WOTk_XH+pYOU2=i_ranmtbney9epyFQuTi27qOaGQ@mail.gmail.com>
 References: <1446563847-14005-1-git-send-email-agruenba@redhat.com>
-	<1446563847-14005-22-git-send-email-agruenba@redhat.com>
-	<06282344-726E-49AD-936B-7BFF8F43B967@dilger.ca>
-	<CAHc6FU46EuDQ0S9TPYuLosHvppsqcqOF_oxxgTFHr+uXj59Drg@mail.gmail.com>
+	<1446563847-14005-3-git-send-email-agruenba@redhat.com>
+	<507E7A63-024B-4EBD-B0C3-4ABE8280440F@dilger.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <CAHc6FU46EuDQ0S9TPYuLosHvppsqcqOF_oxxgTFHr+uXj59Drg@mail.gmail.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Andreas Dilger <adilger@dilger.ca>
-Cc: linux-cifs@vger.kernel.org, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>, Linux API <linux-api@vger.kernel.org>, Trond Myklebust <trond.myklebust@primarydata.com>, LKML <linux-kernel@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, "J. Bruce Fields" <bfields@fieldses.org>, Andreas Dilger <adilger.kernel@dilger.ca>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, linux-ext4 <linux-ext4@vger.kernel.org>, Anna Schumaker <anna.schumaker@netapp.com>, "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <507E7A63-024B-4EBD-B0C3-4ABE8280440F-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 4, 2015 at 3:28 AM, Andreas Gruenbacher <agruenba@redhat.com> wrote:
-> It's the commit message that's misleading here, I'll fix it.
+On Wed, Nov 4, 2015 at 3:33 AM, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org> wrote:
+> On Nov 3, 2015, at 8:16 AM, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>> @@ -3667,7 +3674,7 @@ EXPORT_SYMBOL(dentry_unhash);
+>>
+>> int vfs_rmdir(struct inode *dir, struct dentry *dentry)
+>> {
+>> -     int error = may_delete(dir, dentry, 1);
+>> +     int error = may_delete(dir, dentry, true, false);
+>
+> This is a prime example why passing "true" and "false" as function arguments
+> is not very useful, and especially prone to bugs when there are two of them.
+>
+> That said, this is code originally from Al, so he may have a different
+> opinion.
 
-Commit message changed to:
-
-    This feature flag selects richacl instead of POSIX ACL support on the
-    filesystem.  When this feature is off, the "acl" and "noacl" mount options
-    control whether POSIX ACLs are enabled.  When it is on, richacls are
-    automatically enabled and using the "noacl" mount option leads to an error.
+Have you checked how vfs_rename uses the is_dir and new_is_dir
+variables? Using file modes there probably won't help readability. An
+enum maybe?
 
 Thanks,
 Andreas
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
