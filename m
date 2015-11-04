@@ -1,85 +1,41 @@
-From: Daniel Micay <danielmicay@gmail.com>
-Subject: Re: [PATCH v2 01/13] mm: support madvise(MADV_FREE)
-Date: Wed, 4 Nov 2015 17:05:47 -0500
-Message-ID: <563A813B.9080903@gmail.com>
-References: <1446600367-7976-1-git-send-email-minchan@kernel.org>
- <1446600367-7976-2-git-send-email-minchan@kernel.org>
- <CALCETrUuNs=26UQtkU88cKPomx_Bik9mbgUUF9q7Nmh1pQJ4qg@mail.gmail.com>
- <56399CA5.8090101@gmail.com>
- <CALCETrU5P-mmjf+8QuS3-pm__R02j2nnRc5B1gQkeC013XWNvA@mail.gmail.com>
+From: Andreas Gruenbacher <agruenba@redhat.com>
+Subject: Re: [PATCH v13 12/51] vfs: Cache richacl in struct inode
+Date: Wed, 4 Nov 2015 23:10:43 +0100
+Message-ID: <CAHc6FU7+UpYGA991zPLyzG2L5pDgkD93L7BXak-TDJT_E_E2YA@mail.gmail.com>
+References: <1446563847-14005-1-git-send-email-agruenba@redhat.com>
+	<1446563847-14005-13-git-send-email-agruenba@redhat.com>
+	<713E53A4-D073-4745-B57D-77AD07E89957@dilger.ca>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
- protocol="application/pgp-signature";
- boundary="2IVeWpq2IbSSTeFp3TFicxabJLij5cBB9"
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <CALCETrU5P-mmjf+8QuS3-pm__R02j2nnRc5B1gQkeC013XWNvA@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Minchan Kim <minchan@kernel.org>, Hugh Dickins <hughd@google.com>, Andrew Morton <akpm@linux-foundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Michal Hocko <mhocko@suse.cz>, "linux-mm@kvack.org" <linux-mm@kvack.org>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Rik van Riel <riel@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, Linux API <linux-api@vger.kernel.org>, Jason Evans <je@fb.com>, Shaohua Li <shli@kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, yalin wang <yalin.wang2010@gmail.com>, Mel Gorman <mgorman@suse.de>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <713E53A4-D073-4745-B57D-77AD07E89957@dilger.ca>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andreas Dilger <adilger@dilger.ca>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4 <linux-ext4@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, LKML <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, linux-cifs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---2IVeWpq2IbSSTeFp3TFicxabJLij5cBB9
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Andreas,
 
-> With enough pages at once, though, munmap would be fine, too.
+On Wed, Nov 4, 2015 at 3:03 AM, Andreas Dilger <adilger@dilger.ca> wrote:
+>> @@ -33,7 +33,7 @@ richacl_alloc(int count, gfp_t gfp)
+>>       struct richacl *acl = kzalloc(size, gfp);
+>>
+>>       if (acl) {
+>> -             atomic_set(&acl->a_refcount, 1);
+>> +             atomic_set(&acl->a_base.ba_refcount, 1);
+>>               acl->a_count = count;
+>>       }
+>>       return acl;
+>> @@ -52,7 +52,7 @@ richacl_clone(const struct richacl *acl, gfp_t gfp)
+>>
+>>       if (dup) {
+>>               memcpy(dup, acl, size);
+>> -             atomic_set(&dup->a_refcount, 1);
+>> +             atomic_set(&dup->a_base.ba_refcount, 1);
+>
+> These two calls should be base_acl_init().
 
-That implies lots of page faults and zeroing though. The zeroing alone
-is a major performance issue.
+Yes. This should all be fixed in the next snapshot.
 
-There are separate issues with munmap since it ends up resulting in a
-lot more virtual memory fragmentation. It would help if the kernel used
-first-best-fit for mmap instead of the current naive algorithm (bonus:
-O(log n) worst-case, not O(n)). Since allocators like jemalloc and
-PartitionAlloc want 2M aligned spans, mixing them with other allocators
-can also accelerate the VM fragmentation caused by the dumb mmap
-algorithm (i.e. they make a 2M aligned mapping, some other mmap user
-does 4k, now there's a nearly 2M gap when the next 2M region is made and
-the kernel keeps going rather than reusing it). Anyway, that's a totally
-separate issue from this. Just felt like complaining :).
-
-> Maybe what's really needed is a MADV_FREE variant that takes an iovec.
-> On an all-cores multithreaded mm, the TLB shootdown broadcast takes
-> thousands of cycles on each core more or less regardless of how much
-> of the TLB gets zapped.
-
-That would work very well. The allocator ends up having a sequence of
-dirty spans that it needs to purge in one go. As long as purging is
-fairly spread out, the cost of a single TLB shootdown isn't that bad. It
-is extremely bad if it needs to do it over and over to purge a bunch of
-ranges, which can happen if the memory has ended up being very, very
-fragmentated despite the efforts to compact it (depends on what the
-application ends up doing).
-
-
---2IVeWpq2IbSSTeFp3TFicxabJLij5cBB9
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBCAAGBQJWOoE7AAoJEPnnEuWa9fIqY8cP/i3Vush0x4uyrzNPqvIVcxOf
-Z+RF1KG7P7XeVO2g3M+h8Mx1klWsgnKJHjOw9v7UU4LEn9kmioiTXs4KgjBebVap
-RJhhBDqlqoIm83ktfRAN2/hL/gfW3IUBmWZUv64YR7JD9w3O4RcbEv85HcXplQlC
-0/kb5PasDsuXu0lWmAhEQO1ebKssnX3OryUxO6MNKGPlL73kXd1K2WOu9b4xtlWp
-3M0iWJ7An4ItkV1vFh94WB22Ix2uwhqnC+I4p1SbZiivhGDd8lHDP1CIW/mAbYpS
-wIV0srQSYIwF66fnaExtRBdxVPzxyYsyMXf8TBO/XoPrm6Nh8Q5k438AbSsslzAb
-6fqDoKVgz6ZEBsqJKSbrbGw6rSHtMLQLGTUDlBj5Z9jJU4IPNVf0Y1lyO8xNNN40
-rJLBzcpCu0LiGzBJMIwUxSQb2Cze8QUmGd/+k17BbE26/9MjaZWrD4S7XANFbhL2
-NYSBnemJsjFrz9waiI/pE4Q/qpramCDpdWwN7l3uO8auzVwn1NVmdo6pCLV5nSrZ
-MaRYavbmf+fFZmZ0/ptqVQG7HAN0dyjHuLVtSjGerj/o2cQ6MB0ibabqOEs9FB54
-7xL3i2JycJn5Pk9TsSZHh1fxI2QNM70ltADzH8fG/Qprne3dzU0TqBskXpmy0et+
-vNEz9RtJG8JKLuHkv26d
-=X3NF
------END PGP SIGNATURE-----
-
---2IVeWpq2IbSSTeFp3TFicxabJLij5cBB9--
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Thanks,
+Andreas
