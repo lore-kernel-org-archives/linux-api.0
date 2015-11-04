@@ -1,62 +1,159 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH v2 selftests 0/6] Fix some broken tests
-Date: Tue, 3 Nov 2015 17:00:47 -0700
-Message-ID: <56394AAF.9060200@osg.samsung.com>
-References: <20151102122048.GA17015@decadent.org.uk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151102122048.GA17015-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+From: Minchan Kim <minchan@kernel.org>
+Subject: [PATCH v2 00/13] MADV_FREE support
+Date: Wed,  4 Nov 2015 10:25:54 +0900
+Message-ID: <1446600367-7976-1-git-send-email-minchan@kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, Daniel Micay <danielmicay@gmail.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Shaohua Li <shli@kernel.org>, Michal Hocko <mhocko@suse.cz>, yalin.wang2010@gmail.com, Minchan Kim <minchan@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 11/02/2015 05:20 AM, Ben Hutchings wrote:
-> This series fixes some self-tests that are broken, unreliable or 
-> produce compiler warnings in 4.3.
-> 
-> Ben.
-> 
-> Ben Hutchings (6): selftests: Add missing #include directives 
-> selftests: memfd: Stop unnecessary rebuilds selftests: kprobe:
-> Choose an always-defined function to probe selftests: Make scripts
-> executable selftests: vm: Try harder to allocate huge pages 
-> selftests: breakpoint: Actually build it
-> 
-> tools/testing/selftests/breakpoints/Makefile              |  2 +- 
-> .../selftests/ftrace/test.d/kprobe/add_and_remove.tc      |  2 +- 
-> .../testing/selftests/ftrace/test.d/kprobe/busy_check.tc  |  2 +- 
-> .../testing/selftests/ftrace/test.d/kprobe/kprobe_args.tc |  2 +- 
-> .../selftests/ftrace/test.d/kprobe/kprobe_ftrace.tc       | 14
-> +++++++------- .../selftests/ftrace/test.d/kprobe/kretprobe_args.tc
-> |  2 +- tools/testing/selftests/memfd/Makefile                    |
-> 12 ++++++------ tools/testing/selftests/memfd/memfd_test.c
-> |  1 + tools/testing/selftests/memfd/run_fuse_test.sh            |
-> 0 tools/testing/selftests/mqueue/mq_open_tests.c            |  1 + 
-> tools/testing/selftests/mqueue/mq_perf_tests.c            |  1 + 
-> tools/testing/selftests/static_keys/test_static_keys.sh   |  0 
-> tools/testing/selftests/timers/nanosleep.c                |  1 + 
-> tools/testing/selftests/vm/run_vmtests                    | 15
-> ++++++++++++++- 14 files changed, 36 insertions(+), 19
-> deletions(-) mode change 100644 => 100755
-> tools/testing/selftests/memfd/run_fuse_test.sh mode change 100644
-> => 100755 tools/testing/selftests/static_keys/test_static_keys.sh
-> 
+MADV_FREE is on linux-next so long time. The reason was two, I think.
 
-Ben,
+1. MADV_FREE code on reclaim path was really mess.
 
-Thanks for doing this. Several tests pass now with your patches.
-All 6 patches applied to linux-kselftest next for 4.4
+2. Andrew really want to see voice of userland people who want to use
+   the syscall.
 
-thanks,
--- Shuah
+A few month ago, Daniel Micay(jemalloc active contributor) requested me
+to make progress upstreaming but I was busy at that time so it took
+so long time for me to revist the code and finally, I clean it up the
+mess recently so it solves the #2 issue.
 
+As well, Daniel and Jason(jemalloc maintainer) requested it to Andrew
+again recently and they said it would be great to have even though
+it has swap dependency now so Andrew decided he will do that for v4.4.
+
+When I test MADV_FREE patches on recent mmotm, there is some
+problem with THP-refcount redesign so it's hard for long running
+test. Even, there is some dependency with it because patch ordering of
+MADV_FREE in mmotm is after THP refcount redesign so I discussed it
+with Andrew in hallway this kernel summit and decided to send
+patchset based on v4.3-rc7.
+
+I have been tested it on v4.3-rc7 and couldn't find any problem so far.
+
+In the meanwhile, Hugh reviewed all of code and asked me to tidy up
+a lot patches related MADV_FREE on mmotm so this is the result of
+the request.
+
+A final modification since I sent clean up patchset(ie, MADV_FREE
+refactoring and fix KSM page), there are four.
+
+ 1. Replace description and comment of KSM fix patch with Hugh's suggestion
+ 2. Avoid forcing SetPageDirty in try_to_unmap_one to avoid clean
+    page swapout from Yalin
+ 3. Adding uapi patch to make value of MADV_FREE for all arches same
+    from Chen
+ 4. Does lazy split of THP when MADV_FREE is called
+
+About 3, I include it because I thought it was good but Andrew
+just missed the patch at that time. But when I read quilt series
+file now, it seems Shaohua had some problem with it but I couldn't
+find any mail in my mailbox. If it has something wrong,
+please tell us.
+
+About 4(ie, mm: don't split THP page when syscall is called),
+it is new implementation so need to review.
+I don't understand why it added both SetPageDirty and pte_mkdirty
+to subpages unconditionally in split code of THP from the beginning.
+I guess at that time, there was no MADV_FREE so it was no problem
+and would be more safe to mark both.
+
+#mm-support-madvisemadv_free.patch: other-arch syscall numbering mess ("arch: uapi: asm: mman.h: Let MADV_FREE have same value for all architectures"). Shaohua Li <shli@kernel.org> testing disasters.
+
+TODO: I will send man page patch if it would land for v4.4.
+
+Andrew, you could replace all of MADV_FREE related patches with
+this. IOW, these are
+
+	# MADV_FREE stuff:
+	x86-add-pmd_-for-thp.patch
+	x86-add-pmd_-for-thp-fix.patch
+	sparc-add-pmd_-for-thp.patch
+	sparc-add-pmd_-for-thp-fix.patch
+	powerpc-add-pmd_-for-thp.patch
+	arm-add-pmd_mkclean-for-thp.patch
+	arm64-add-pmd_-for-thp.patch
+
+	mm-support-madvisemadv_free.patch
+	mm-support-madvisemadv_free-fix.patch
+	mm-support-madvisemadv_free-fix-2.patch
+	mm-support-madvisemadv_free-fix-3.patch
+	mm-support-madvisemadv_free-vs-thp-rename-split_huge_page_pmd-to-split_huge_pmd.patch
+	mm-support-madvisemadv_free-fix-5.patch
+	mm-support-madvisemadv_free-fix-6.patch
+	mm-mark-stable-page-dirty-in-ksm.patch
+	mm-dont-split-thp-page-when-syscall-is-called.patch
+	mm-dont-split-thp-page-when-syscall-is-called-fix.patch
+	mm-dont-split-thp-page-when-syscall-is-called-fix-2.patch
+	mm-dont-split-thp-page-when-syscall-is-called-fix-3.patch
+	mm-dont-split-thp-page-when-syscall-is-called-fix-4.patch
+	mm-dont-split-thp-page-when-syscall-is-called-fix-5.patch
+	mm-dont-split-thp-page-when-syscall-is-called-fix-6.patch
+	mm-dont-split-thp-page-when-syscall-is-called-fix-6-fix.patch
+	mm-free-swp_entry-in-madvise_free.patch
+	mm-move-lazy-free-pages-to-inactive-list.patch
+	mm-move-lazy-free-pages-to-inactive-list-fix.patch
+	mm-move-lazy-free-pages-to-inactive-list-fix-fix.patch
+	mm-move-lazy-free-pages-to-inactive-list-fix-fix-fix.patch
+
+ * Change from v1
+   * Don't do unnecessary TLB flush - Shaohua
+   * Added Acked-by - Hugh, Michal
+   * Merge deactivate_page and deactivate_file_page
+   * Add pmd_dirty/pmd_mkclean patches for several arches
+   * Add lazy THP split patch
+   * Drop zhangyanfei@cn.fujitsu.com - Delivery Failure
+
+Chen Gang (1):
+  arch: uapi: asm: mman.h: Let MADV_FREE have same value for all
+    architectures
+
+Minchan Kim (12):
+  mm: support madvise(MADV_FREE)
+  mm: define MADV_FREE for some arches
+  mm: free swp_entry in madvise_free
+  mm: move lazily freed pages to inactive list
+  mm: clear PG_dirty to mark page freeable
+  mm: mark stable page dirty in KSM
+  x86: add pmd_[dirty|mkclean] for THP
+  sparc: add pmd_[dirty|mkclean] for THP
+  powerpc: add pmd_[dirty|mkclean] for THP
+  arm: add pmd_mkclean for THP
+  arm64: add pmd_mkclean for THP
+  mm: don't split THP page when syscall is called
+
+ arch/alpha/include/uapi/asm/mman.h       |   1 +
+ arch/arm/include/asm/pgtable-3level.h    |   1 +
+ arch/arm64/include/asm/pgtable.h         |   1 +
+ arch/mips/include/uapi/asm/mman.h        |   1 +
+ arch/parisc/include/uapi/asm/mman.h      |   1 +
+ arch/powerpc/include/asm/pgtable-ppc64.h |   2 +
+ arch/sparc/include/asm/pgtable_64.h      |   9 ++
+ arch/x86/include/asm/pgtable.h           |   5 +
+ arch/xtensa/include/uapi/asm/mman.h      |   1 +
+ include/linux/huge_mm.h                  |   3 +
+ include/linux/rmap.h                     |   1 +
+ include/linux/swap.h                     |   2 +-
+ include/linux/vm_event_item.h            |   1 +
+ include/uapi/asm-generic/mman-common.h   |   1 +
+ mm/huge_memory.c                         |  46 +++++++-
+ mm/ksm.c                                 |   6 ++
+ mm/madvise.c                             | 177 +++++++++++++++++++++++++++++++
+ mm/rmap.c                                |   7 ++
+ mm/swap.c                                |  62 ++++++-----
+ mm/swap_state.c                          |   5 +-
+ mm/truncate.c                            |   2 +-
+ mm/vmscan.c                              |  10 +-
+ mm/vmstat.c                              |   1 +
+ 23 files changed, 308 insertions(+), 38 deletions(-)
 
 -- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+1.9.1
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
