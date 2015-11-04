@@ -1,7 +1,7 @@
 From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v2 12/13] arm64: add pmd_mkclean for THP
-Date: Wed,  4 Nov 2015 10:26:06 +0900
-Message-ID: <1446600367-7976-13-git-send-email-minchan@kernel.org>
+Subject: [PATCH v2 09/13] sparc: add pmd_[dirty|mkclean] for THP
+Date: Wed,  4 Nov 2015 10:26:03 +0900
+Message-ID: <1446600367-7976-10-git-send-email-minchan@kernel.org>
 References: <1446600367-7976-1-git-send-email-minchan@kernel.org>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1446600367-7976-1-git-send-email-minchan@kernel.org>
@@ -13,25 +13,35 @@ List-Id: linux-api@vger.kernel.org
 MADV_FREE needs pmd_dirty and pmd_mkclean for detecting recent overwrite
 of the contents since MADV_FREE syscall is called for THP page.
 
-This patch adds pmd_mkclean for THP page MADV_FREE support.
+This patch adds pmd_dirty and pmd_mkclean for THP page MADV_FREE
+support.
 
 Signed-off-by: Minchan Kim <minchan@kernel.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
 ---
- arch/arm64/include/asm/pgtable.h | 1 +
- 1 file changed, 1 insertion(+)
+ arch/sparc/include/asm/pgtable_64.h | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-diff --git a/arch/arm64/include/asm/pgtable.h b/arch/arm64/include/asm/pgtable.h
-index 26b066690593..a945263addd4 100644
---- a/arch/arm64/include/asm/pgtable.h
-+++ b/arch/arm64/include/asm/pgtable.h
-@@ -325,6 +325,7 @@ void pmdp_splitting_flush(struct vm_area_struct *vma, unsigned long address,
- #define pmd_mksplitting(pmd)	pte_pmd(pte_mkspecial(pmd_pte(pmd)))
- #define pmd_mkold(pmd)		pte_pmd(pte_mkold(pmd_pte(pmd)))
- #define pmd_mkwrite(pmd)	pte_pmd(pte_mkwrite(pmd_pte(pmd)))
-+#define pmd_mkclean(pmd)       pte_pmd(pte_mkclean(pmd_pte(pmd)))
- #define pmd_mkdirty(pmd)	pte_pmd(pte_mkdirty(pmd_pte(pmd)))
- #define pmd_mkyoung(pmd)	pte_pmd(pte_mkyoung(pmd_pte(pmd)))
- #define pmd_mknotpresent(pmd)	(__pmd(pmd_val(pmd) & ~PMD_TYPE_MASK))
+diff --git a/arch/sparc/include/asm/pgtable_64.h b/arch/sparc/include/asm/pgtable_64.h
+index 131d36fcd07a..5833dc5ee7d7 100644
+--- a/arch/sparc/include/asm/pgtable_64.h
++++ b/arch/sparc/include/asm/pgtable_64.h
+@@ -717,6 +717,15 @@ static inline pmd_t pmd_mkdirty(pmd_t pmd)
+ 	return __pmd(pte_val(pte));
+ }
+ 
++static inline pmd_t pmd_mkclean(pmd_t pmd)
++{
++	pte_t pte = __pte(pmd_val(pmd));
++
++	pte = pte_mkclean(pte);
++
++	return __pmd(pte_val(pte));
++}
++
+ static inline pmd_t pmd_mkyoung(pmd_t pmd)
+ {
+ 	pte_t pte = __pte(pmd_val(pmd));
 -- 
 1.9.1
 
