@@ -1,77 +1,104 @@
-From: Chris J Arges <chris.j.arges-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: Re: [PATCH v2] livepatch: old_name.number scheme in livepatch sysfs
- directory
-Date: Wed, 4 Nov 2015 10:17:52 -0600
-Message-ID: <563A2FB0.60101@canonical.com>
-References: <20151102203241.GF27488@treble.redhat.com>
- <1446505187-28970-1-git-send-email-chris.j.arges@canonical.com>
- <alpine.LNX.2.00.1511031146070.6257@pobox.suse.cz>
- <20151103145843.GH27488@treble.redhat.com>
- <alpine.LNX.2.00.1511031705340.6257@pobox.suse.cz>
- <20151103165058.GM27488@treble.redhat.com>
- <alpine.LNX.2.00.1511041047200.5621@pobox.suse.cz>
- <20151104160354.GA29899@treble.redhat.com>
+From: Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 5/8] mm: move lazily freed pages to inactive list
+Date: Wed, 4 Nov 2015 09:53:42 -0800
+Message-ID: <20151104175342.GA98327@kernel.org>
+References: <1446188504-28023-1-git-send-email-minchan@kernel.org>
+ <1446188504-28023-6-git-send-email-minchan@kernel.org>
+ <20151030172212.GB44946@kernel.org>
+ <20151103005223.GD17906@bbox>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151104160354.GA29899-8wJ5/zUtDR0XGNroddHbYwC/G2K4zDHf@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20151103005223.GD17906@bbox>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
-Cc: live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, "Wang, Yalin" <Yalin.Wang-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Tue, Nov 03, 2015 at 09:52:23AM +0900, Minchan Kim wrote:
+> On Fri, Oct 30, 2015 at 10:22:12AM -0700, Shaohua Li wrote:
+> > On Fri, Oct 30, 2015 at 04:01:41PM +0900, Minchan Kim wrote:
+> > > MADV_FREE is a hint that it's okay to discard pages if there is memory
+> > > pressure and we use reclaimers(ie, kswapd and direct reclaim) to free them
+> > > so there is no value keeping them in the active anonymous LRU so this
+> > > patch moves them to inactive LRU list's head.
+> > > 
+> > > This means that MADV_FREE-ed pages which were living on the inactive list
+> > > are reclaimed first because they are more likely to be cold rather than
+> > > recently active pages.
+> > > 
+> > > An arguable issue for the approach would be whether we should put the page
+> > > to the head or tail of the inactive list.  I chose head because the kernel
+> > > cannot make sure it's really cold or warm for every MADV_FREE usecase but
+> > > at least we know it's not *hot*, so landing of inactive head would be a
+> > > comprimise for various usecases.
+> > > 
+> > > This fixes suboptimal behavior of MADV_FREE when pages living on the
+> > > active list will sit there for a long time even under memory pressure
+> > > while the inactive list is reclaimed heavily.  This basically breaks the
+> > > whole purpose of using MADV_FREE to help the system to free memory which
+> > > is might not be used.
+> > 
+> > My main concern is the policy how we should treat the FREE pages. Moving it to
+> > inactive lru is definitionly a good start, I'm wondering if it's enough. The
+> > MADV_FREE increases memory pressure and cause unnecessary reclaim because of
+> > the lazy memory free. While MADV_FREE is intended to be a better replacement of
+> > MADV_DONTNEED, MADV_DONTNEED doesn't have the memory pressure issue as it free
+> > memory immediately. So I hope the MADV_FREE doesn't have impact on memory
+> > pressure too. I'm thinking of adding an extra lru list and wartermark for this
+> > to make sure FREE pages can be freed before system wide page reclaim. As you
+> > said, this is arguable, but I hope we can discuss about this issue more.
+> 
+> Yes, it's arguble. ;-)
+> 
+> It seems the divergence comes from MADV_FREE is *replacement* of MADV_DONTNEED.
+> But I don't think so. If we could discard MADV_FREEed page *anytime*, I agree
+> but it's not true because the page would be dirty state when VM want to reclaim. 
 
+There certainly are other usage cases, but even your patch log mainly describes
+the jemalloc usage case, which uses MADV_DONTNEED.
 
-On 11/04/2015 10:03 AM, Josh Poimboeuf wrote:
-> On Wed, Nov 04, 2015 at 10:52:52AM +0100, Miroslav Benes wrote:
->> On Tue, 3 Nov 2015, Josh Poimboeuf wrote:
->>>> Object entry would be empty for not loaded object. I would not 
->>>> dare to propose to remove such object entries. It would make things worse. 
->>>
->>> Why would removing an empty object entry make things worse?
->>
->> I think it all comes down to a question whether the sysfs entries say what 
->> a patch is capable to patch or what this patch is currently patching in 
->> the system. I am inclined to the former so the removal would make me 
->> nervous. But I am not against the second approach. We are still in testing 
->> mode as far as sysfs is concerned so we can try even harsh changes and see 
->> how it's gonna go.
+> I'm also against with your's suggestion which let's discard FREEed page before
+> system wide page reclaim because system would have lots of clean cold page
+> caches or anonymous pages. In such case, reclaiming of them would be better.
+> Yeb, it's really workload-dependent so we might need some heuristic which is
+> normally what we want to avoid.
 > 
-> I see your point.  This approach only describes what is patched now, but
-> it doesn't describe what *will* be patched.  Ideally we could find a way
-> to describe both.
+> Having said that, I agree with you we could do better than the deactivation
+> and frankly speaking, I'm thinking of another LRU list(e.g. tentatively named
+> "ezreclaim LRU list"). What I have in mind is to age (anon|file|ez)
+> fairly. IOW, I want to percolate ez-LRU list reclaiming into get_scan_count.
+> When the MADV_FREE is called, we could move hinted pages from anon-LRU to
+> ez-LRU and then If VM find to not be able to discard a page in ez-LRU,
+> it could promote it to acive-anon-LRU which would be very natural aging
+> concept because it mean someone touches the page recenlty.
 > 
-> Speaking of harsh changes, here's an idea.
+> With that, I don't want to bias one side and don't want to add some knob for
+> tuning the heuristic but let's rely on common fair aging scheme of VM.
 > 
-> What if we require the patch author to supply the value of 'n' instead
-> of supplying the symbol address?  We could get rid of 'old_addr' as an
-> input in klp_func and and replace it with 'old_sympos' which has the
-> value of 'n'.  Or alternatively we could require old_name to be of the
-> format "func,n".
+> Another bonus with new LRU list is we could support MADV_FREE on swapless
+> system.
+> 
+> > 
+> > Or do you want to push this first and address the policy issue later?
+> 
+> I believe adding new LRU list would be controversial(ie, not trivial)
+> for maintainer POV even though code wouldn't be complicated.
+> So, I want to see problems in *real practice*, not any theoritical
+> test program before diving into that.
+> To see such voice of request, we should release the syscall.
+> So, I want to push this first.
 
-I like the idea of old_sympos better than modifying the string.
-In addition if no old_sympos is specified then it should default to 0,
-since this will probably be the more common case.
+The memory pressure issue isn't just in artificial test. In jemalloc, there is
+a knob (lg_dirty_mult) to control the rate memory should be purged (using
+MADV_DONTNEED). We already had several reports in our production environment
+changing the knob can cause extra memory usage (and swap and so on). If
+jemalloc uses MADV_FREE, jemalloc will not purge any memory, which is equivent
+to disable current MADV_DONTNEED (eg, lg_dirty_mult = -1). I'm sure this will
+cause the similar issue, eg (extram memory usage, swap). That said I don't
+object to push this first, but the memory pressue issue can happen in real
+production, I hope it's not ignored.
 
-> 
-> That would uniquely identify each patched function, even _before_ the
-> object is loaded.
-> 
-> It would also fix another big problem we have today, where there's no
-> way to disambiguate duplicate symbols in modules, for both function
-> addresses and for relocs.
-> 
-> It would simplify the code in other places as well: no special handling
-> for kASLR, no need for klp_verify_vmlinux_symbol() vs
-> klp_find_object_symbol().
-> 
-> A drawback is that it requires the patch author to do a little more due
-> diligence when filling out klp_func.  But we already require them to be
-> careful.
-> 
-> Thoughts?
-> 
-
-I'll hold off on my v3 for now. Very interesting discussion : ).
---chris
+Thanks,
+Shaohua
