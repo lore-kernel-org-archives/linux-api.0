@@ -1,120 +1,102 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: Re: [PATCH 5/8] mm: move lazily freed pages to inactive list
-Date: Thu, 5 Nov 2015 10:11:25 +0900
-Message-ID: <20151105011125.GG7357@bbox>
-References: <1446188504-28023-1-git-send-email-minchan@kernel.org>
- <1446188504-28023-6-git-send-email-minchan@kernel.org>
- <20151030172212.GB44946@kernel.org>
- <20151103005223.GD17906@bbox>
- <20151104175342.GA98327@kernel.org>
- <20151104182047.GA116691@kernel.org>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH v2 01/13] mm: support madvise(MADV_FREE)
+Date: Wed, 4 Nov 2015 17:29:57 -0800
+Message-ID: <CALCETrWWgbPNwCr-=LF8p33H25C_aNS5vy4wd3NUap6SmrsmkA@mail.gmail.com>
+References: <1446600367-7976-1-git-send-email-minchan@kernel.org>
+ <1446600367-7976-2-git-send-email-minchan@kernel.org> <CALCETrUuNs=26UQtkU88cKPomx_Bik9mbgUUF9q7Nmh1pQJ4qg@mail.gmail.com>
+ <20151105001348.GC7357@bbox> <CALCETrV0yd26+G_kvmRbJwjCNguUh6iLwhyO1yKQ2bgiiWegEw@mail.gmail.com>
+ <20151105005607.GE7357@bbox>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=UTF-8
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20151104182047.GA116691@kernel.org>
-Content-Disposition: inline
+In-Reply-To: <20151105005607.GE7357@bbox>
 Sender: owner-linux-mm@kvack.org
-To: Shaohua Li <shli@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, zhangyanfei@cn.fujitsu.com, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, Daniel Micay <danielmicay@gmail.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Michal Hocko <mhocko@suse.cz>, yalin.wang2010@gmail.com, "Wang, Yalin" <Yalin.Wang@sonymobile.com>
+To: Minchan Kim <minchan@kernel.org>
+Cc: Hugh Dickins <hughd@google.com>, Andrew Morton <akpm@linux-foundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Michal Hocko <mhocko@suse.cz>, "linux-mm@kvack.org" <linux-mm@kvack.org>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Rik van Riel <riel@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, Linux API <linux-api@vger.kernel.org>, Jason Evans <je@fb.com>, Shaohua Li <shli@kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, yalin wang <yalin.wang2010@gmail.com>, Daniel Micay <danielmicay@gmail.com>, Mel Gorman <mgorman@suse.de>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 04, 2015 at 10:20:47AM -0800, Shaohua Li wrote:
-> On Wed, Nov 04, 2015 at 09:53:42AM -0800, Shaohua Li wrote:
-> > On Tue, Nov 03, 2015 at 09:52:23AM +0900, Minchan Kim wrote:
-> > > On Fri, Oct 30, 2015 at 10:22:12AM -0700, Shaohua Li wrote:
-> > > > On Fri, Oct 30, 2015 at 04:01:41PM +0900, Minchan Kim wrote:
-> > > > > MADV_FREE is a hint that it's okay to discard pages if there is memory
-> > > > > pressure and we use reclaimers(ie, kswapd and direct reclaim) to free them
-> > > > > so there is no value keeping them in the active anonymous LRU so this
-> > > > > patch moves them to inactive LRU list's head.
-> > > > > 
-> > > > > This means that MADV_FREE-ed pages which were living on the inactive list
-> > > > > are reclaimed first because they are more likely to be cold rather than
-> > > > > recently active pages.
-> > > > > 
-> > > > > An arguable issue for the approach would be whether we should put the page
-> > > > > to the head or tail of the inactive list.  I chose head because the kernel
-> > > > > cannot make sure it's really cold or warm for every MADV_FREE usecase but
-> > > > > at least we know it's not *hot*, so landing of inactive head would be a
-> > > > > comprimise for various usecases.
-> > > > > 
-> > > > > This fixes suboptimal behavior of MADV_FREE when pages living on the
-> > > > > active list will sit there for a long time even under memory pressure
-> > > > > while the inactive list is reclaimed heavily.  This basically breaks the
-> > > > > whole purpose of using MADV_FREE to help the system to free memory which
-> > > > > is might not be used.
-> > > > 
-> > > > My main concern is the policy how we should treat the FREE pages. Moving it to
-> > > > inactive lru is definitionly a good start, I'm wondering if it's enough. The
-> > > > MADV_FREE increases memory pressure and cause unnecessary reclaim because of
-> > > > the lazy memory free. While MADV_FREE is intended to be a better replacement of
-> > > > MADV_DONTNEED, MADV_DONTNEED doesn't have the memory pressure issue as it free
-> > > > memory immediately. So I hope the MADV_FREE doesn't have impact on memory
-> > > > pressure too. I'm thinking of adding an extra lru list and wartermark for this
-> > > > to make sure FREE pages can be freed before system wide page reclaim. As you
-> > > > said, this is arguable, but I hope we can discuss about this issue more.
-> > > 
-> > > Yes, it's arguble. ;-)
-> > > 
-> > > It seems the divergence comes from MADV_FREE is *replacement* of MADV_DONTNEED.
-> > > But I don't think so. If we could discard MADV_FREEed page *anytime*, I agree
-> > > but it's not true because the page would be dirty state when VM want to reclaim. 
-> > 
-> > There certainly are other usage cases, but even your patch log mainly describes
-> > the jemalloc usage case, which uses MADV_DONTNEED.
-> > 
-> > > I'm also against with your's suggestion which let's discard FREEed page before
-> > > system wide page reclaim because system would have lots of clean cold page
-> > > caches or anonymous pages. In such case, reclaiming of them would be better.
-> > > Yeb, it's really workload-dependent so we might need some heuristic which is
-> > > normally what we want to avoid.
-> > > 
-> > > Having said that, I agree with you we could do better than the deactivation
-> > > and frankly speaking, I'm thinking of another LRU list(e.g. tentatively named
-> > > "ezreclaim LRU list"). What I have in mind is to age (anon|file|ez)
-> > > fairly. IOW, I want to percolate ez-LRU list reclaiming into get_scan_count.
-> > > When the MADV_FREE is called, we could move hinted pages from anon-LRU to
-> > > ez-LRU and then If VM find to not be able to discard a page in ez-LRU,
-> > > it could promote it to acive-anon-LRU which would be very natural aging
-> > > concept because it mean someone touches the page recenlty.
-> > > 
-> > > With that, I don't want to bias one side and don't want to add some knob for
-> > > tuning the heuristic but let's rely on common fair aging scheme of VM.
-> > > 
-> > > Another bonus with new LRU list is we could support MADV_FREE on swapless
-> > > system.
-> > > 
-> > > > 
-> > > > Or do you want to push this first and address the policy issue later?
-> > > 
-> > > I believe adding new LRU list would be controversial(ie, not trivial)
-> > > for maintainer POV even though code wouldn't be complicated.
-> > > So, I want to see problems in *real practice*, not any theoritical
-> > > test program before diving into that.
-> > > To see such voice of request, we should release the syscall.
-> > > So, I want to push this first.
-> > 
-> > The memory pressure issue isn't just in artificial test. In jemalloc, there is
-> > a knob (lg_dirty_mult) to control the rate memory should be purged (using
-> > MADV_DONTNEED). We already had several reports in our production environment
-> > changing the knob can cause extra memory usage (and swap and so on). If
-> > jemalloc uses MADV_FREE, jemalloc will not purge any memory, which is equivent
-> > to disable current MADV_DONTNEED (eg, lg_dirty_mult = -1). I'm sure this will
-> > cause the similar issue, eg (extram memory usage, swap). That said I don't
-> > object to push this first, but the memory pressue issue can happen in real
-> > production, I hope it's not ignored.
-> 
-> I think the question is if application uses MADV_DONTNEED originally, how much
-> better if we replace it to MADV_FREE compared to just delete the MADV_DONTNEED,
-> considering anonymous memory is hard to be reclaimed currently.
+On Wed, Nov 4, 2015 at 4:56 PM, Minchan Kim <minchan@kernel.org> wrote:
+> On Wed, Nov 04, 2015 at 04:42:37PM -0800, Andy Lutomirski wrote:
+>> On Wed, Nov 4, 2015 at 4:13 PM, Minchan Kim <minchan@kernel.org> wrote:
+>> > On Tue, Nov 03, 2015 at 07:41:35PM -0800, Andy Lutomirski wrote:
+>> >> On Nov 3, 2015 5:30 PM, "Minchan Kim" <minchan@kernel.org> wrote:
+>> >> >
+>> >> > Linux doesn't have an ability to free pages lazy while other OS already
+>> >> > have been supported that named by madvise(MADV_FREE).
+>> >> >
+>> >> > The gain is clear that kernel can discard freed pages rather than swapping
+>> >> > out or OOM if memory pressure happens.
+>> >> >
+>> >> > Without memory pressure, freed pages would be reused by userspace without
+>> >> > another additional overhead(ex, page fault + allocation + zeroing).
+>> >> >
+>> >>
+>> >> [...]
+>> >>
+>> >> >
+>> >> > How it works:
+>> >> >
+>> >> > When madvise syscall is called, VM clears dirty bit of ptes of the range.
+>> >> > If memory pressure happens, VM checks dirty bit of page table and if it
+>> >> > found still "clean", it means it's a "lazyfree pages" so VM could discard
+>> >> > the page instead of swapping out.  Once there was store operation for the
+>> >> > page before VM peek a page to reclaim, dirty bit is set so VM can swap out
+>> >> > the page instead of discarding.
+>> >>
+>> >> What happens if you MADV_FREE something that's MAP_SHARED or isn't
+>> >> ordinary anonymous memory?  There's a long history of MADV_DONTNEED on
+>> >> such mappings causing exploitable problems, and I think it would be
+>> >> nice if MADV_FREE were obviously safe.
+>> >
+>> > It filter out VM_LOCKED|VM_HUGETLB|VM_PFNMAP and file-backed vma and MAP_SHARED
+>> > with vma_is_anonymous.
+>> >
+>> >>
+>> >> Does this set the write protect bit?
+>> >
+>> > No.
+>> >
+>> >>
+>> >> What happens on architectures without hardware dirty tracking?  For
+>> >> that matter, even on architecture with hardware dirty tracking, what
+>> >> happens in multithreaded processes that have the dirty TLB state
+>> >> cached in a different CPU's TLB?
+>> >>
+>> >> Using the dirty bit for these semantics scares me.  This API creates a
+>> >> page that can have visible nonzero contents and then can
+>> >> asynchronously and magically zero itself thereafter.  That makes me
+>> >> nervous.  Could we use the accessed bit instead?  Then the observable
+>> >
+>> > Access bit is used by aging algorithm for reclaim. In addition,
+>> > we have supported clear_refs feacture.
+>> > IOW, it could be reset anytime so it's hard to use marker for
+>> > lazy freeing at the moment.
+>> >
+>>
+>> That's unfortunate.  I think that the ABI would be much nicer if it
+>> used the accessed bit.
+>>
+>> In any case, shouldn't the aging algorithm be irrelevant here?  A
+>> MADV_FREE page that isn't accessed can be discarded, whereas we could
+>> hopefully just say that a MADV_FREE page that is accessed gets moved
+>> to whatever list holds recently accessed pages and also stops being a
+>> candidate for discarding due to MADV_FREE?
+>
+> I meant if we use access bit as indicator for lazy-freeing page,
+> we could discard valid page which is never hinted by MADV_FREE but
+> just doesn't mark access bit in page table by aging algorithm.
 
-So, the question from my side is application will use MADV_FREE
-as replacement of MADV_DONTNEED without any tune or modification?
-At least, I'd like to know jemalloc if they have a plan.
+Oh, is the rule that the anonymous pages that are clean are discarded
+instead of swapped out?  That is, does your patch set detect that an
+anonymous page can be discarded if it's clean and that the lack of a
+dirty bit is the only indication that the page has been hit with
+MADV_FREE?
 
-> 
-> Thanks,
-> Shaohua
+If so, that seems potentially error prone -- I had assumed that pages
+that were swapped in but not written since swap-in would also be
+clean, and I don't see how you distinguish them.
+
+--Andy
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
