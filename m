@@ -1,55 +1,129 @@
 From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v13 45/51] sunrpc: Allow to demand-allocate pages to
- encode into
-Date: Thu, 5 Nov 2015 12:07:05 +0100
-Message-ID: <CAHc6FU5xkjWJeGFR5mO8+OAEMwwU6yWK7H8CV1fn5dk-LS23-g@mail.gmail.com>
-References: <1446563847-14005-1-git-send-email-agruenba@redhat.com>
-	<1446563847-14005-46-git-send-email-agruenba@redhat.com>
-	<CAHQdGtScoRb-722ES168O8tkp-Rbvwe6bZ=70WwgiXpCC3vsHw@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Subject: [PATCH v14 00/22] Richacls (Core and Ext4)
+Date: Thu,  5 Nov 2015 12:39:18 +0100
+Message-ID: <1446723580-3747-1-git-send-email-agruenba@redhat.com>
 Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAHQdGtScoRb-722ES168O8tkp-Rbvwe6bZ=70WwgiXpCC3vsHw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Trond,
+Here is another update to the richacl patch queue.  This posting contains
+the patches ready to be merged; the patches later in the queue still need
+some more review.
 
-On Tue, Nov 3, 2015 at 5:25 PM, Trond Myklebust
-<trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org> wrote:
-> On Tue, Nov 3, 2015 at 10:17 AM, Andreas Gruenbacher
-> <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->> When encoding large, variable-length objects such as acls into xdr_bufs,
->> it is easier to allocate buffer pages on demand rather than precomputing
->> the required buffer size.
->
-> NACK. We're not doing allocations from inside the XDR encoders. This
-> can and should be done before calling into the SUNRPC layer.
+Changes since the last posting (http://lwn.net/Articles/662881/):
 
-an XDR-encoded ACL can be up to 64k (16 pages) in size. In practice,
-large ACLs like that will almost never occur and almost all ACLs will
-fit into a single page though.
+ * Functions {get,put}_base_acl renamed to base_acl_{get,put}. Functions
+   base_acl_init and base_acl_refcount added and used where appropriate.
+   Better document that struct base_acl must be the first member in an ACL.
 
-The XDR-encoded ACL contains strings for the user and group names
-which need to be looked up when the idmapper is used. Those lookups
-are somewhat expensive; in addition, the lookup results can change
-over time. When precomputing the size, allocating space, and then
-encoding the ACL, we could run out of space when encoding.
+ * Function acl_by_type un-exported and changed to return a struct base_acl
+   pointer.
 
-So we could always allocate the maximum 16 pages, encode the acl, and
-free the unused pages. This would be rather wasteful though.
+ * The "Cache base_acl objects in inodes" and "Cache richacl in struct
+   inode" patches were not perfectly split.
 
-Given how simple it is to allocate pages as we go, this seems the
-better choice here. This doesn't break any existing code either; NULL
-page pointers would have oopsed in xdr_get_next_encode_buffer before.
+ * Fix the commit message of "Add richacl feature flag".
 
->From the memory management point of view, there is no difference in
-preallocating GFP_NOFS pages and allocating them on demand; the pages
-are allocated in the same task and locking context in both cases.
 
-So could you please explain why you object to this change?
+The complete patch queue is available in git form here:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/agruen/linux-richacl.git \
+	richacl-2015-11-05
+
+
+The richacl user-space utilitites, man pages, and test suite are available
+here:
+
+  https://github.com/andreas-gruenbacher/richacl
+
+
+Changes to other user-space packages for richacl are available here:
+
+  https://github.com/andreas-gruenbacher/coreutils
+  https://github.com/andreas-gruenbacher/e2fsprogs
+  https://github.com/andreas-gruenbacher/xfsprogs-dev
+  https://github.com/andreas-gruenbacher/nfs-utils
+
+
+Please see the richacl homepage for more information:
+
+  http://www.bestbits.at/richacl/
+
 
 Thanks,
 Andreas
+
+Andreas Gruenbacher (20):
+  vfs: Add IS_ACL() and IS_RICHACL() tests
+  vfs: Add MAY_CREATE_FILE and MAY_CREATE_DIR permission flags
+  vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD permission flags
+  vfs: Make the inode passed to inode_change_ok non-const
+  vfs: Add permission flags for setting file attributes
+  richacl: In-memory representation and helper functions
+  richacl: Permission mapping functions
+  richacl: Compute maximum file masks from an acl
+  richacl: Permission check algorithm
+  posix_acl: Unexport acl_by_type and make it static
+  vfs: Cache base_acl objects in inodes
+  vfs: Add get_richacl and set_richacl inode operations
+  vfs: Cache richacl in struct inode
+  richacl: Update the file masks in chmod()
+  richacl: Check if an acl is equivalent to a file mode
+  richacl: Create-time inheritance
+  richacl: Automatic Inheritance
+  richacl: xattr mapping functions
+  richacl: Add richacl xattr handler
+  vfs: Add richacl permission checking
+
+Aneesh Kumar K.V (2):
+  ext4: Add richacl support
+  ext4: Add richacl feature flag
+
+ drivers/staging/lustre/lustre/llite/llite_lib.c |   2 +-
+ fs/Kconfig                                      |   3 +
+ fs/Makefile                                     |   2 +
+ fs/attr.c                                       |  81 +++-
+ fs/ext4/Kconfig                                 |  11 +
+ fs/ext4/Makefile                                |   1 +
+ fs/ext4/ext4.h                                  |   6 +-
+ fs/ext4/file.c                                  |   3 +
+ fs/ext4/ialloc.c                                |  11 +-
+ fs/ext4/inode.c                                 |  12 +-
+ fs/ext4/namei.c                                 |   5 +
+ fs/ext4/richacl.c                               | 142 ++++++
+ fs/ext4/richacl.h                               |  40 ++
+ fs/ext4/super.c                                 |  49 +-
+ fs/ext4/xattr.c                                 |   7 +
+ fs/f2fs/acl.c                                   |   4 +-
+ fs/inode.c                                      |  15 +-
+ fs/jffs2/acl.c                                  |  10 +-
+ fs/namei.c                                      | 111 +++--
+ fs/posix_acl.c                                  |  50 +--
+ fs/richacl_base.c                               | 564 ++++++++++++++++++++++++
+ fs/richacl_inode.c                              | 333 ++++++++++++++
+ fs/richacl_xattr.c                              | 298 +++++++++++++
+ fs/xattr.c                                      |  34 +-
+ include/linux/fs.h                              |  60 ++-
+ include/linux/posix_acl.h                       |  13 +-
+ include/linux/richacl.h                         | 208 +++++++++
+ include/linux/richacl_xattr.h                   |  44 ++
+ include/uapi/linux/Kbuild                       |   2 +
+ include/uapi/linux/fs.h                         |   3 +-
+ include/uapi/linux/richacl.h                    | 152 +++++++
+ include/uapi/linux/richacl_xattr.h              |  44 ++
+ include/uapi/linux/xattr.h                      |   2 +
+ 33 files changed, 2213 insertions(+), 109 deletions(-)
+ create mode 100644 fs/ext4/richacl.c
+ create mode 100644 fs/ext4/richacl.h
+ create mode 100644 fs/richacl_base.c
+ create mode 100644 fs/richacl_inode.c
+ create mode 100644 fs/richacl_xattr.c
+ create mode 100644 include/linux/richacl.h
+ create mode 100644 include/linux/richacl_xattr.h
+ create mode 100644 include/uapi/linux/richacl.h
+ create mode 100644 include/uapi/linux/richacl_xattr.h
+
+-- 
+2.5.0
