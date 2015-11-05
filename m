@@ -1,91 +1,87 @@
-From: Miroslav Benes <mbenes@suse.cz>
-Subject: Re: [PATCH v2] livepatch: old_name.number scheme in livepatch sysfs
- directory
-Date: Thu, 5 Nov 2015 16:18:12 +0100 (CET)
-Message-ID: <alpine.LNX.2.00.1511051609320.13864@pobox.suse.cz>
-References: <20151102203241.GF27488@treble.redhat.com> <1446505187-28970-1-git-send-email-chris.j.arges@canonical.com> <alpine.LNX.2.00.1511031146070.6257@pobox.suse.cz> <20151103145843.GH27488@treble.redhat.com> <alpine.LNX.2.00.1511031705340.6257@pobox.suse.cz>
- <20151103165058.GM27488@treble.redhat.com> <alpine.LNX.2.00.1511041047200.5621@pobox.suse.cz> <20151104160354.GA29899@treble.redhat.com>
+From: Shuichi Ihara <sihara@ddn.com>
+Subject: Re: [v15 0/4] ext4: add project quota support
+Date: Thu, 5 Nov 2015 15:13:10 +0000
+Message-ID: <7360A48E-8576-49DB-878B-DFC2EFC83BC4@ddn.com>
+References: <1442146833-13652-1-git-send-email-lixi@ddn.com>
+ <43B1BB97-8D53-4D93-9B57-B5E2048F7E7A@dilger.ca>
+ <CAPTn0cBp4d09u9XzQm2cXzd6kcE0+FDRX0b_H=xJBZT-i5eKcw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151104160354.GA29899@treble.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Josh Poimboeuf <jpoimboe@redhat.com>
-Cc: Chris J Arges <chris.j.arges@canonical.com>, live-patching@vger.kernel.org, jeyu@redhat.com, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <CAPTn0cBp4d09u9XzQm2cXzd6kcE0+FDRX0b_H=xJBZT-i5eKcw@mail.gmail.com>
+Content-Language: ja-JP
+Content-ID: <BD2F65B7E5A97B49852D7E490EA23CC2@ddn.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Li Xi <pkuelelixi@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Theodore Ts'o <tytso@mit.edu>
+Cc: linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-ext4 <linux-ext4@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Jan Kara <jack@suse.cz>, Al Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, Dave Chinner <david@fromorbit.com>, =?utf-8?B?0JTQvNC40YLRgNC40Lkg0JzQvtC90LDRhdC+0LI=?= <dmonakhov@openvz.org>, Shuichi Ihara <ihashu@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 4 Nov 2015, Josh Poimboeuf wrote:
-
-> On Wed, Nov 04, 2015 at 10:52:52AM +0100, Miroslav Benes wrote:
-> > On Tue, 3 Nov 2015, Josh Poimboeuf wrote:
-> > > > Object entry would be empty for not loaded object. I would not 
-> > > > dare to propose to remove such object entries. It would make things worse. 
-> > > 
-> > > Why would removing an empty object entry make things worse?
-> > 
-> > I think it all comes down to a question whether the sysfs entries say what 
-> > a patch is capable to patch or what this patch is currently patching in 
-> > the system. I am inclined to the former so the removal would make me 
-> > nervous. But I am not against the second approach. We are still in testing 
-> > mode as far as sysfs is concerned so we can try even harsh changes and see 
-> > how it's gonna go.
-> 
-> I see your point.  This approach only describes what is patched now, but
-> it doesn't describe what *will* be patched.  Ideally we could find a way
-> to describe both.
-> 
-> Speaking of harsh changes, here's an idea.
-
-Which is the very same you proposed last year when I tried to persuade you 
-to get rid off old_addr and stuff. I called it crazy I remember :D. So 
-here we are again...
-
-> What if we require the patch author to supply the value of 'n' instead
-> of supplying the symbol address?  We could get rid of 'old_addr' as an
-> input in klp_func and and replace it with 'old_sympos' which has the
-> value of 'n'.  Or alternatively we could require old_name to be of the
-> format "func,n".
-> 
-> That would uniquely identify each patched function, even _before_ the
-> object is loaded.
-
-I find it reasonable and we should try it. I think that old_sympos should 
-have this semantics
-
-0 - default, preserve more or less current behaviour. If the symbol is 
-    unique there is no problem. If it is not the patching would fail.
-1, 2, ... - occurrence of the symbol in kallsyms.
-
-The advantage is that if the user does not care and is certain that the 
-symbol is unique he doesn't have to do anything. If the symbol is not 
-unique he still has means how to solve it.
-
-Does it make sense?
-
-> It would also fix another big problem we have today, where there's no
-> way to disambiguate duplicate symbols in modules, for both function
-> addresses and for relocs.
-
-True.
-
-> It would simplify the code in other places as well: no special handling
-> for kASLR, no need for klp_verify_vmlinux_symbol() vs
-> klp_find_object_symbol().
-
-Which would be great.
-
-> A drawback is that it requires the patch author to do a little more due
-> diligence when filling out klp_func.  But we already require them to be
-> careful.
-
-Yes, I don't think this should be a problem.
-
-> Thoughts?
-
-Yup, we should try it. I suppose that the order of the symbols in kallsyms 
-table is stable for once-built kernel. It is the order of the symbols in 
-the object files, isn't it? And since each livepatch module is built 
-against the specific kernel there should be no issues with this.
-
-Regards,
-Miroslav
+SGVsbG8gVGVkLCBBbmRyZWFzLA0KDQoNCg0KU2hpbG9uZyBwb3N0ZWQgYW4gZW1haWwgaGVyZSBh
+IHdlZWsgYWdvIGJlbG93Lg0KaHR0cDovL2xpc3RzLm9wZW53YWxsLm5ldC9saW51eC1leHQ0LzIw
+MTUvMTAvMzAvMg0KDQp3ZSBpZGVudGlmaWVkIDEwIHByb2plY3QgcXVvdGEgcmVsYXRlZCB4ZnN0
+ZXN0IGFuZCBwb3J0ZWQgdGhlbSBpbnRvIGV4dDQveHh4Lg0KdGVzdCBudW1iZXIgYXJlIDMwNCwg
+MzA1LCAyOTksIDI0NCwgMTk2LCAxMzQsIDEwOCwgMTA3LCAxMDYsIDA1MCBpbiB4ZnMuDQoNCg0K
+V2UgcG9ydGVkIDkvMTAgdGVzdHMgaW50byBleHQ0L3h4eA0KZXh0NC8wNTAgZXh0NC8xMDYgZXh0
+NC8xMDcgZXh0NC8xMDggZXh0NC8xOTYgZXh0NC8yNDQgZXh0NC8yOTkgZXh0NC80MDAgZXh0NC80
+MDENCg0KcGxlYXNlIGNoZWNrIGh0dHBzOi8vZ2l0aHViLmNvbS93YW5nc2hpbG9uZy94ZnN0ZXN0
+cw0KDQpBbiBhbm90aGVyIHBhdGNoIHdhcyBub3QgdmFsaWQgc2luY2UgcXVvdGEgdXRpbGl0eSBp
+cyBkaWZmZXJlbnQuDQoNCg0KSW4gb3JkZXIgdG8gcnVuIHBvcnRlZCB0ZXN0cywgcGF0Y2hlZCBx
+dW90YS10b29scyBhbmQgTGkgWGkgcG9ydGVkIHBhdGNoIG9mIGUyZnNwcm9ncyByZXF1aXJlZC4N
+Cmh0dHBzOi8vZ2l0aHViLmNvbS93YW5nc2hpbG9uZy9xdW90YS10b29scy9jb21taXRzL3Byb2pl
+Y3QNCmh0dHA6Ly9saXN0cy5vcGVud2FsbC5uZXQvbGludXgtZXh0NC8yMDE1LzEwLzI5LzINCg0K
+VGhhbmtzDQpJaGFyYQ0KDQoxMS81LzE1LCAxMTo0NSBQTSAsICJsaW51eC1leHQ0LW93bmVyQHZn
+ZXIua2VybmVsLm9yZyAoTGkgWGkg44Gu5Luj55CGKSIgPGxpbnV4LWV4dDQtb3duZXJAdmdlci5r
+ZXJuZWwub3JnIChwa3VlbGVsaXhpQGdtYWlsLmNvbSDjga7ku6PnkIYpPiB3cm90ZToNCg0KPk9u
+IEZyaSwgU2VwIDI1LCAyMDE1IGF0IDE6MTIgQU0sIEFuZHJlYXMgRGlsZ2VyIDxhZGlsZ2VyQGRp
+bGdlci5jYT4gd3JvdGU6DQo+PiBPbiBTZXAgMTMsIDIwMTUsIGF0IDI6MjAgUE0sIExpIFhpIDxw
+a3VlbGVsaXhpQGdtYWlsLmNvbT4gd3JvdGU6DQo+Pj4NCj4+PiBUaGUgZm9sbG93aW5nIHBhdGNo
+ZXMgcHJvcG9zZSBhbiBpbXBsZW1lbnRhdGlvbiBvZiBwcm9qZWN0IHF1b3RhDQo+Pj4gc3VwcG9y
+dCBmb3IgZXh0NC4gQSBwcm9qZWN0IGlzIGFuIGFnZ3JlZ2F0ZSBvZiB1bnJlbGF0ZWQgaW5vZGVz
+DQo+Pj4gd2hpY2ggbWlnaHQgc2NhdHRlciBpbiBkaWZmZXJlbnQgZGlyZWN0b3JpZXMuIElub2Rl
+cyB0aGF0IGJlbG9uZw0KPj4+IHRvIHRoZSBzYW1lIHByb2plY3QgcG9zc2VzcyBhbiBpZGVudGlj
+YWwgaWRlbnRpZmljYXRpb24gaS5lLg0KPj4+ICdwcm9qZWN0IElEJywganVzdCBsaWtlIGV2ZXJ5
+IGlub2RlIGhhcyBpdHMgdXNlci9ncm91cA0KPj4+IGlkZW50aWZpY2F0aW9uLiBUaGUgZm9sbG93
+aW5nIHBhdGNoZXMgYWRkIHByb2plY3QgcXVvdGEgYXMNCj4+PiBzdXBwbGVtZW50IHRvIHRoZSBm
+b3JtZXIgdWVyL2dyb3VwIHF1b3RhIHR5cGVzLg0KPj4NCj4+IFdlIGRpc2N1c3NlZCB0aGlzIG9u
+IHRoZSBleHQ0IGRldmVsb3BlciBjb25jYWxsIHRvZGF5IGFuZCB0cmllZCB0bw0KPj4gbW92ZSB0
+aGUgbGFuZGluZyBvZiB0aGVzZSBwYXRjaGVzIGZvcndhcmQuICBTb21lIG5vdGVzIGJlbG93Og0K
+Pj4NCj4+IC0gVGVkOiBhZ3JlZWQgdG8gcmVzZXJ2ZSBFWFQ0X0ZFQVRVUkVfUk9fQ09NUEFUX1BS
+T0pFQ1QsIHNfcHJqX3F1b3RhX2ludW0sDQo+PiAgIEVYVDRfUFJPSklOSEVSSVRfRkwsIGFuZCBp
+X3Byb2ppZCBmaWVsZHMgZm9yIHVzZSBieSBwcm9qZWN0IHF1b3RhIHRvDQo+PiAgIGF2b2lkIGNv
+bXBhdGliaWxpdHkgaXNzdWVzIGlmIHBhdGNoZXMgYXJlIG5vdCBsYW5kZWQgaW1tZWRpYXRlbHku
+DQo+PiAgICAtIFRlZDogdG8gZG8gZmluYWwgY2hlY2sgb2YgaW5vZGUgZmxhZyB2YWx1ZQ0KPj4g
+ICAgLSBleHQ0IHByb2plY3QgcXVvdGEgaW5vZGUgZG9lcyBub3QgbmVlZCB0byB1c2UgYSByZXNl
+cnZlZCBpbm9kZSwgYnV0DQo+PiAgICAgIGNvdWxkIGFmdGVyIEphbidzIHBhdGNoIHRvIGluY3Jl
+YXNlIHJlc2VydmVkIGlub2RlcyBsYW5kcw0KPj4gLSBMaSBYaTogaWRlbnRpZnkgeGZzdGVzdHMg
+c3VidGVzdHMgdGhhdCBhcmUgZXhlcmNpc2luZyBwcm9qZWN0IHF1b3RhDQo+PiAgICAtIHN1Ym1p
+dCBwYXRjaGVzIHRvIHhmc3Rlc3RzIHRoYXQgd2lsbCBhY3RpdmF0ZSB0aGVtIGZvciBleHQ0DQo+
+PiAgICAtIGtlZXAgaW4gZXh0NCB4ZnN0ZXN0cyBmb3IgdGVzdGluZyB1bnRpbCBwYXRjaGVzIGxh
+bmQgdXBzdHJlYW0NCj4+ICAgIC0gdGhpcyBuZWVkcyB0byBiZSBkb25lIGJlZm9yZSBsYW5kaW5n
+IHRvIGVuc3VyZSBleHQ0IGNvZGUgd29ya3MNCj4+IC0gTGkgWGk6IGRvY3VtZW50IHRoZSBiZWhh
+dmlvdXIgb2YgcHJvamVjdCBxdW90YSAoaWYgbm8gZXhpc3RpbmcNCj4+ICAgZG9jdW1lbnQgZXhp
+c3RzIGZvciBYRlMgYWxyZWFkeSksIHNvbWUgb2YgdGhpcyBpcyBhbHJlYWR5IGJlbG93DQo+PiAg
+ICAtIHVwZGF0ZSBtYW4gcGFnZXMgZm9yIGRmKDEpIGFuZCBzdGF0ZnMoMikgZm9yIHN1YmRpciB3
+aXRoIHByb2plY3QgSUQNCj4+ICAgICAgKGkuZS4gdGhhdCBpdCByZXR1cm5zIG9ubHkgcXVvdGEg
+dXNhZ2UgYW5kIGxpbWl0IGZvciBwcm9qZWN0IElEKQ0KPj4gICAgLSBUZWQ6IHdoZXJlIHNob3Vs
+ZCBkb2N1bWVudCBnbz8gbGludXgvRG9jdW1lbnRhdGlvbi9mcz8gZXh0NCB3aWtpPw0KPj4gICAg
+LSBub3QgYSByZXF1aXJlbWVudCBmb3IgdGVzdGluZywgY2FuIGJlIGRvbmUgYWZ0ZXIgbGFuZGlu
+Zw0KPj4NCj4+IC0gQWxsOiBkZWNpZGUgb24gYSBjb21tb24gdG9vbCBmb3Igc2V0dGluZyBwcm9q
+ZWN0IElEIG9uIGZpbGUvZGlyZWN0b3J5DQo+PiAgICAtIGRvbid0IHdhbnQgdG8gcmVxdWlyZSB4
+ZnN1dGlscyBpbiBvcmRlciB0byB1c2UgcHJvamVjdCBxdW90YQ0KPj4gICAgLSBzdGFydCB3aXRo
+IGNoYXR0ciAodXNpbmcgRlNfSU9DX0ZTe0dFVCxTRVR9WEFUVFIpIGluIGUyZnNwcm9ncw0KPj4g
+ICAgICAtIGFsbG93cyB0ZXN0aW5nIHByb2plY3QgcXVvdGEgd2l0aCBlMmZzcHJvZ3MvZXh0NA0K
+Pj4gICAgLSBjaHByb2ogKGxpa2UgY2hvd24vY2hncnApIHdvdWxkIGFsc28gYmUgYW4gb3B0aW9u
+DQo+PiAgICAgIC0gbmVlZHMgbW9yZSBkaXNjdXNzaW9uL2RldmVsb3BtZW50IGVmZm9ydCwgZ29l
+cyBpbnRvIGZpbGV1dGlscw0KPj4gICAgLSB0aGlzIGRvZXNuJ3QgbmVlZCB0byBiZSBkZWNpZGVk
+IGltbWVkaWF0ZWx5LCBhbmQgYm90aCBjb3VsZCBiZSBkb25lDQo+Pg0KPkhpLA0KPg0KPkkndmUg
+cHVzaGVkIHRoZSBwYXRjaCBvZiBFeHQ0IGFzIHdlbGwgYXMgZTJmc3Byb2dzLiBTaGlsb25nIGhh
+cyBhZGRlZCB0ZXN0DQo+c3VpdHMgZm9yIGV4dDQgcHJvamVjdCBxdW90YSBpbiB4ZnN0ZXN0LCBh
+bmQgd2lsbCBwdXNoIHBhdGNoZXMgc29vbi4gSQ0KPndpbGwgd3JpdGUNCj5uZWNlc3NhcnkgZG9j
+dW1lbnRhdGlvbiBib3RoIGZvciBtYW51YWwgYW5kIGxpbnV4L0RvY3VtZW50YXRpb24vZnMuDQo+
+DQo+SG9wZWZ1bGx5LCBhdCBsZWFzdCB0aGUga2VybmVsIHBhdGNoZXMgb2YgZXh0NCBwcm9qZWN0
+IHF1b3RhIHdpbGwgYmUgbWVyZ2VkDQo+c29vbi4NCj4NCj5SZWdhcmRzLA0KPkxpIFhpDQo+LS0N
+Cj5UbyB1bnN1YnNjcmliZSBmcm9tIHRoaXMgbGlzdDogc2VuZCB0aGUgbGluZSAidW5zdWJzY3Jp
+YmUgbGludXgtZXh0NCIgaW4NCj50aGUgYm9keSBvZiBhIG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZn
+ZXIua2VybmVsLm9yZw0KPk1vcmUgbWFqb3Jkb21vIGluZm8gYXQgIGh0dHA6Ly92Z2VyLmtlcm5l
+bC5vcmcvbWFqb3Jkb21vLWluZm8uaHRtbA0K
