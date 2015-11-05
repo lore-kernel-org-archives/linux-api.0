@@ -1,117 +1,154 @@
-From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v2 01/13] mm: support madvise(MADV_FREE)
-Date: Thu, 5 Nov 2015 10:48:55 +0900
-Message-ID: <20151105014855.GJ7357@bbox>
-References: <1446600367-7976-1-git-send-email-minchan@kernel.org>
- <1446600367-7976-2-git-send-email-minchan@kernel.org>
- <CALCETrUuNs=26UQtkU88cKPomx_Bik9mbgUUF9q7Nmh1pQJ4qg@mail.gmail.com>
- <20151105001348.GC7357@bbox>
- <CALCETrV0yd26+G_kvmRbJwjCNguUh6iLwhyO1yKQ2bgiiWegEw@mail.gmail.com>
- <20151105005607.GE7357@bbox>
- <CALCETrWWgbPNwCr-=LF8p33H25C_aNS5vy4wd3NUap6SmrsmkA@mail.gmail.com>
+From: Bendik =?ISO-8859-1?Q?R=F8nning?= Opstad <bro.devel@gmail.com>
+Subject: Re: [PATCH RFC net-next 2/2] tcp: Add Redundant Data Bundling (RDB)
+Date: Thu, 05 Nov 2015 03:06:41 +0100
+Message-ID: <2582037.foOh8SgZpQ@garfield>
+References: <1445633413-3532-1-git-send-email-bro.devel+kernel@gmail.com> <1445633413-3532-3-git-send-email-bro.devel+kernel@gmail.com> <063D6719AE5E284EB5DD2968C1650D6D1CBC86F1@AcuExch.aculab.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrWWgbPNwCr-=LF8p33H25C_aNS5vy4wd3NUap6SmrsmkA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, yalin wang <yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <063D6719AE5E284EB5DD2968C1650D6D1CBC86F1@AcuExch.aculab.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: David Laight <David.Laight@aculab.com>
+Cc: "David S. Miller" <davem@davemloft.net>, Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>, James Morris <jmorris@namei.org>, Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>, Patrick McHardy <kaber@trash.net>, Jonathan Corbet <corbet@lwn.net>, Eric Dumazet <edumazet@google.com>, Neal Cardwell <ncardwell@google.com>, Tom Herbert <tom@herbertland.com>, Yuchung Cheng <ycheng@google.com>, Paolo Abeni <pabeni@redhat.com>, Erik Kline <ek@google.com>, Hannes Frederic Sowa <hannes@stressinduktion.org>, Al Viro <viro@zeniv.linux.org.uk>, Jiri Pirko <jiri@resnulli.us>, Alexander Duyck <alexander.h.duyck@redhat.com>, Florian Westphal <fw@strlen.de>, Daniel Lee <Longinus00@gmail.com>, Marcelo Ricardo Leitner <mleitner@redhat.com>, Daniel Borkmann <daniel@iogearbox.net>, Willem de Bruijn <willemb@google.com>, =?UTF-8?Q?Linus_L=C3=BCssing?= <linus.luessing@c0d3.blue>, linux-doc@vger.kernel
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 04, 2015 at 05:29:57PM -0800, Andy Lutomirski wrote:
-> On Wed, Nov 4, 2015 at 4:56 PM, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> > On Wed, Nov 04, 2015 at 04:42:37PM -0800, Andy Lutomirski wrote:
-> >> On Wed, Nov 4, 2015 at 4:13 PM, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> >> > On Tue, Nov 03, 2015 at 07:41:35PM -0800, Andy Lutomirski wrote:
-> >> >> On Nov 3, 2015 5:30 PM, "Minchan Kim" <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> >> >> >
-> >> >> > Linux doesn't have an ability to free pages lazy while other OS already
-> >> >> > have been supported that named by madvise(MADV_FREE).
-> >> >> >
-> >> >> > The gain is clear that kernel can discard freed pages rather than swapping
-> >> >> > out or OOM if memory pressure happens.
-> >> >> >
-> >> >> > Without memory pressure, freed pages would be reused by userspace without
-> >> >> > another additional overhead(ex, page fault + allocation + zeroing).
-> >> >> >
-> >> >>
-> >> >> [...]
-> >> >>
-> >> >> >
-> >> >> > How it works:
-> >> >> >
-> >> >> > When madvise syscall is called, VM clears dirty bit of ptes of the range.
-> >> >> > If memory pressure happens, VM checks dirty bit of page table and if it
-> >> >> > found still "clean", it means it's a "lazyfree pages" so VM could discard
-> >> >> > the page instead of swapping out.  Once there was store operation for the
-> >> >> > page before VM peek a page to reclaim, dirty bit is set so VM can swap out
-> >> >> > the page instead of discarding.
-> >> >>
-> >> >> What happens if you MADV_FREE something that's MAP_SHARED or isn't
-> >> >> ordinary anonymous memory?  There's a long history of MADV_DONTNEED on
-> >> >> such mappings causing exploitable problems, and I think it would be
-> >> >> nice if MADV_FREE were obviously safe.
-> >> >
-> >> > It filter out VM_LOCKED|VM_HUGETLB|VM_PFNMAP and file-backed vma and MAP_SHARED
-> >> > with vma_is_anonymous.
-> >> >
-> >> >>
-> >> >> Does this set the write protect bit?
-> >> >
-> >> > No.
-> >> >
-> >> >>
-> >> >> What happens on architectures without hardware dirty tracking?  For
-> >> >> that matter, even on architecture with hardware dirty tracking, what
-> >> >> happens in multithreaded processes that have the dirty TLB state
-> >> >> cached in a different CPU's TLB?
-> >> >>
-> >> >> Using the dirty bit for these semantics scares me.  This API creates a
-> >> >> page that can have visible nonzero contents and then can
-> >> >> asynchronously and magically zero itself thereafter.  That makes me
-> >> >> nervous.  Could we use the accessed bit instead?  Then the observable
-> >> >
-> >> > Access bit is used by aging algorithm for reclaim. In addition,
-> >> > we have supported clear_refs feacture.
-> >> > IOW, it could be reset anytime so it's hard to use marker for
-> >> > lazy freeing at the moment.
-> >> >
-> >>
-> >> That's unfortunate.  I think that the ABI would be much nicer if it
-> >> used the accessed bit.
-> >>
-> >> In any case, shouldn't the aging algorithm be irrelevant here?  A
-> >> MADV_FREE page that isn't accessed can be discarded, whereas we could
-> >> hopefully just say that a MADV_FREE page that is accessed gets moved
-> >> to whatever list holds recently accessed pages and also stops being a
-> >> candidate for discarding due to MADV_FREE?
-> >
-> > I meant if we use access bit as indicator for lazy-freeing page,
-> > we could discard valid page which is never hinted by MADV_FREE but
-> > just doesn't mark access bit in page table by aging algorithm.
-> 
-> Oh, is the rule that the anonymous pages that are clean are discarded
-> instead of swapped out?  That is, does your patch set detect that an
+On Monday, November 02, 2015 09:37:54 AM David Laight wrote:
+> From: Bendik R=F8nning Opstad
+> > Sent: 23 October 2015 21:50
+> > RDB is a mechanism that enables a TCP sender to bundle redundant
+> > (already sent) data with TCP packets containing new data. By bundli=
+ng
+> > (retransmitting) already sent data with each TCP packet containing =
+new
+> > data, the connection will be more resistant to sporadic packet loss
+> > which reduces the application layer latency significantly in conges=
+ted
+> > scenarios.
+>=20
+> What sort of traffic flows do you expect this to help?
 
-The page swapped-in after swapped-out has clean pte and swap device
-has valid data if the page isn't touch so VM discards the page rather
-than swapout. Of course, pte should point out the swap slot.
-If VM decide to remove the page from swap slot, it should be marked
-PG_dirty.
+As mentioned in the cover letter, RDB is aimed at reducing the
+latencies for "thin-stream" traffic often produced by
+latency-sensitive applications. This blog post describes RDB and the
+underlying motivation:
+http://mlab.no/blog/2015/10/redundant-data-bundling-in-tcp
 
-> anonymous page can be discarded if it's clean and that the lack of a
-> dirty bit is the only indication that the page has been hit with
-> MADV_FREE?
+=46urther information is available in the links referred to in the blog
+post.
 
-No dirty bit, exactly speaking, PG_Dirty
-because the page I mentioned above has clean pte but will have PG_dirty.
+> An ssh (or similar) connection will get additional data to send,
+> but that sort of data flow needs Nagle in order to reduce the
+> number of packets sent.
 
-> 
-> If so, that seems potentially error prone -- I had assumed that pages
-> that were swapped in but not written since swap-in would also be
-> clean, and I don't see how you distinguish them.
+Whether an application needs to reduce the number of packets sent
+depends on the perspective of who you ask. If low latency is of high
+priority for the application it may need to increase the number of
+packets sent by disabling Nagle to reduce the segments sojourn times
+on the sender side.
 
-I hope above will answer.
-> 
-> --Andy
+As for SSH clients, it seems OpenSSH disables Nagle for interactive
+sessions.
+
+> OTOH it might benefit from including unacked data if the Nagle
+> timer expires.
+> Being able to set the Nagle timer on a per-connection basis
+> (or maybe using something based on the RTT instead of 2 secs)
+> might make packet loss less problematic.
+
+There is no timer for Nagle? The current (Minshall variant)
+implementation restricts sending a small segment as long as the
+previously transmitted packet was small and is not yet ACKed.
+
+> Data flows that already have Nagle disabled (probably anything that
+> isn't command-response and isn't unidirectional bulk data) are
+> likely to generate a lot of packets within the RTT.
+
+How many packets such applications need to transmit for optimal
+latency varies to a great extent. Packets per RTT is not a very useful
+metric in this regard, considering the strict dependency on the RTT.
+
+This is why we propose a dynamic packets in flight limit (DPIFL) that
+indirectly relies on the application write frequency, i.e. how often
+the application performs write systems calls. This limit is used to
+ensure that only applications that write data less frequently than a
+certain limit may utilize RDB.
+
+> Resending unacked data will just eat into available network bandwidth
+> and could easily make any congestion worse.
+>
+> I think that means you shouldn't resend data more than once, and/or
+> should make sure that the resent data isn't a significant overhead
+> on the packet being sent.
+
+It is important to remember what type of traffic flows we are
+discussing. The applications RDB is aimed at helping produce
+application-limited flows that transmit small amounts of data, both in
+terms of payload per packet and packets per second.
+
+Analysis of traces from latency-sensitive applications producing
+traffic with thin-stream characteristics show inter-transmission times
+ranging from a few ms (typically 20-30 ms on average) to many hundred
+ms.
+(http://mlab.no/blog/2015/10/redundant-data-bundling-in-tcp/#thin_strea=
+ms)
+
+Increasing the amount of transmitted data will certainly contribute to
+congestion to some degree, but it is not (necessarily) an unreasonable
+trade-off considering the relatively small amounts of data such
+applications transmit compared to greedy flows.
+
+RDB does not cause more packets to be sent through the network, as it
+uses available "free" space in packets already scheduled for
+transmission. With a bundling limitation of only one previous segment,
+the bandwidth requirement is doubled - accounting for headers it would
+be less.
+
+By increasing the BW requirement for an application that produces
+relatively little data, we still end up with a low BW requirement.
+The suggested minimum lower bound inter-transmission time is 10 ms,
+meaning that when an application writes data more frequently than
+every 10 ms (on average) it will not be allowed to utilize RDB.
+
+To what degree RDB affects competing traffic will of course depend on
+the link capacity and the number of simultaneous flows utilizing RDB.
+We have performed tests to asses how RDB affects competing traffic. In
+one of the test scenarios, 10 RDB-enabled thin streams and 10 regular
+TCP thin streams compete against 5 greedy TCP flows over a shared
+bottleneck limited to 5Mbit/s. The results from this test show that by
+only bundling one previous segment with each packet (segment size: 120
+bytes), the effect on the the competing thin-stream traffic is modest.
+(http://mlab.no/blog/2015/10/redundant-data-bundling-in-tcp/#latency_te=
+st_with_cross_traffic).
+
+Also relevant to the discussion is the paper "Reducing web latency:
+the virtue of gentle aggression, (2013)", and one of the presented
+mechanisms (called Proactive) which applies redundancy by transmitting
+every packet twice. While doubling the bandwidth requirements when
+using Proactive, their measurements show negligible effect on the
+baseline traffic because, as they explain, the traffic utilizing the
+mechanism (Web service traffic in their case) is only a small amount
+of the total traffic passing through their servers.
+
+While RDB and the Proactive mechanism have slightly different
+approaches, they aim at solving the same basic problem; the increased
+latencies caused by the need for normal retransmissions. By
+proactively (re)transmitting redundant data they are able to avoid the
+need for normal retransmissions to a great extent, which reduces
+application layer latency by alleviating head-of-line blocking on the
+receiver.
+
+An important property of RDB is that by only using packets already
+scheduled for transmission, a limit is naturally imposed when severe
+congestion occurs. As soon as loss is detected, resulting in a
+reduction of the CWND (i.e. becomes network limited), new data from
+the application will be appended to the SKB in the output queue
+containing the newest (unsent) data. Depending on the rate at which the
+application produces data and the level of congestion (the size of the
+CWND), the new data from the application will eventually fill up the
+SKBs such that skb->len >=3D MSS. The result is that there is no "free"
+space available to bundle redundant data, effectively disabling RDB
+and enforcing a behavior equal to regular TCP.
+
+Bendik
+
