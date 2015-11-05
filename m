@@ -1,76 +1,118 @@
-From: Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>
-Subject: Re: [PATCH v13 45/51] sunrpc: Allow to demand-allocate pages to
- encode into
-Date: Thu, 5 Nov 2015 10:57:04 -0500
-Message-ID: <CAHQdGtQitLZq9fKHhzZbqS5ESRYNgNpw=M+y715mWMjFi-cgNQ@mail.gmail.com>
-References: <1446563847-14005-1-git-send-email-agruenba@redhat.com>
-	<1446563847-14005-46-git-send-email-agruenba@redhat.com>
-	<CAHQdGtScoRb-722ES168O8tkp-Rbvwe6bZ=70WwgiXpCC3vsHw@mail.gmail.com>
-	<CAHc6FU5xkjWJeGFR5mO8+OAEMwwU6yWK7H8CV1fn5dk-LS23-g@mail.gmail.com>
+From: Chris J Arges <chris.j.arges@canonical.com>
+Subject: Re: [PATCH v2] livepatch: old_name.number scheme in livepatch sysfs
+ directory
+Date: Thu, 5 Nov 2015 10:07:26 -0600
+Message-ID: <20151105160726.GA23833@canonical.com>
+References: <20151102203241.GF27488@treble.redhat.com>
+ <1446505187-28970-1-git-send-email-chris.j.arges@canonical.com>
+ <alpine.LNX.2.00.1511031146070.6257@pobox.suse.cz>
+ <20151103145843.GH27488@treble.redhat.com>
+ <alpine.LNX.2.00.1511031705340.6257@pobox.suse.cz>
+ <20151103165058.GM27488@treble.redhat.com>
+ <alpine.LNX.2.00.1511041047200.5621@pobox.suse.cz>
+ <20151104160354.GA29899@treble.redhat.com>
+ <alpine.LNX.2.00.1511051609320.13864@pobox.suse.cz>
+ <20151105155656.GD28254@treble.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAHc6FU5xkjWJeGFR5mO8+OAEMwwU6yWK7H8CV1fn5dk-LS23-g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20151105155656.GD28254@treble.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Miroslav Benes <mbenes@suse.cz>, live-patching@vger.kernel.org, jeyu@redhat.com, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 5, 2015 at 6:07 AM, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> Trond,
->
-> On Tue, Nov 3, 2015 at 5:25 PM, Trond Myklebust
-> <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org> wrote:
->> On Tue, Nov 3, 2015 at 10:17 AM, Andreas Gruenbacher
->> <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->>> When encoding large, variable-length objects such as acls into xdr_bufs,
->>> it is easier to allocate buffer pages on demand rather than precomputing
->>> the required buffer size.
->>
->> NACK. We're not doing allocations from inside the XDR encoders. This
->> can and should be done before calling into the SUNRPC layer.
->
-> an XDR-encoded ACL can be up to 64k (16 pages) in size. In practice,
-> large ACLs like that will almost never occur and almost all ACLs will
-> fit into a single page though.
->
-> The XDR-encoded ACL contains strings for the user and group names
-> which need to be looked up when the idmapper is used. Those lookups
-> are somewhat expensive; in addition, the lookup results can change
-> over time. When precomputing the size, allocating space, and then
-> encoding the ACL, we could run out of space when encoding.
->
-> So we could always allocate the maximum 16 pages, encode the acl, and
-> free the unused pages. This would be rather wasteful though.
->
-> Given how simple it is to allocate pages as we go, this seems the
-> better choice here. This doesn't break any existing code either; NULL
-> page pointers would have oopsed in xdr_get_next_encode_buffer before.
->
-> From the memory management point of view, there is no difference in
-> preallocating GFP_NOFS pages and allocating them on demand; the pages
-> are allocated in the same task and locking context in both cases.
->
-> So could you please explain why you object to this change?
+On Thu, Nov 05, 2015 at 09:56:56AM -0600, Josh Poimboeuf wrote:
+> On Thu, Nov 05, 2015 at 04:18:12PM +0100, Miroslav Benes wrote:
+> > On Wed, 4 Nov 2015, Josh Poimboeuf wrote:
+> > 
+> > > On Wed, Nov 04, 2015 at 10:52:52AM +0100, Miroslav Benes wrote:
+> > > > On Tue, 3 Nov 2015, Josh Poimboeuf wrote:
+> > > > > > Object entry would be empty for not loaded object. I would not 
+> > > > > > dare to propose to remove such object entries. It would make things worse. 
+> > > > > 
+> > > > > Why would removing an empty object entry make things worse?
+> > > > 
+> > > > I think it all comes down to a question whether the sysfs entries say what 
+> > > > a patch is capable to patch or what this patch is currently patching in 
+> > > > the system. I am inclined to the former so the removal would make me 
+> > > > nervous. But I am not against the second approach. We are still in testing 
+> > > > mode as far as sysfs is concerned so we can try even harsh changes and see 
+> > > > how it's gonna go.
+> > > 
+> > > I see your point.  This approach only describes what is patched now, but
+> > > it doesn't describe what *will* be patched.  Ideally we could find a way
+> > > to describe both.
+> > > 
+> > > Speaking of harsh changes, here's an idea.
+> > 
+> > Which is the very same you proposed last year when I tried to persuade you 
+> > to get rid off old_addr and stuff. I called it crazy I remember :D. So 
+> > here we are again...
+> 
+> Ah, I knew I had entertained the idea before, but I forgot we discussed
+> it.  It is indeed a little crazy.  But this is live patching after all
+> ;-)
+> 
+> > > What if we require the patch author to supply the value of 'n' instead
+> > > of supplying the symbol address?  We could get rid of 'old_addr' as an
+> > > input in klp_func and and replace it with 'old_sympos' which has the
+> > > value of 'n'.  Or alternatively we could require old_name to be of the
+> > > format "func,n".
+> > > 
+> > > That would uniquely identify each patched function, even _before_ the
+> > > object is loaded.
+> > 
+> > I find it reasonable and we should try it. I think that old_sympos should 
+> > have this semantics
+> > 
+> > 0 - default, preserve more or less current behaviour. If the symbol is 
+> >     unique there is no problem. If it is not the patching would fail.
+> > 1, 2, ... - occurrence of the symbol in kallsyms.
+> > 
+> > The advantage is that if the user does not care and is certain that the 
+> > symbol is unique he doesn't have to do anything. If the symbol is not 
+> > unique he still has means how to solve it.
+> > 
+> > Does it make sense?
+> 
+> Sounds good!
+> 
+> > > It would also fix another big problem we have today, where there's no
+> > > way to disambiguate duplicate symbols in modules, for both function
+> > > addresses and for relocs.
+> > 
+> > True.
+> > 
+> > > It would simplify the code in other places as well: no special handling
+> > > for kASLR, no need for klp_verify_vmlinux_symbol() vs
+> > > klp_find_object_symbol().
+> > 
+> > Which would be great.
+> > 
+> > > A drawback is that it requires the patch author to do a little more due
+> > > diligence when filling out klp_func.  But we already require them to be
+> > > careful.
+> > 
+> > Yes, I don't think this should be a problem.
+> > 
+> > > Thoughts?
+> > 
+> > Yup, we should try it. I suppose that the order of the symbols in kallsyms 
+> > table is stable for once-built kernel. It is the order of the symbols in 
+> > the object files, isn't it? And since each livepatch module is built 
+> > against the specific kernel there should be no issues with this.
+> 
+> The order of the symbols in an object's symbol table does appear to be
+> the same as the order in kallsyms (per-object).  So yeah, let's try it.
+> 
+> -- 
+> Josh
 >
 
-Allocating memory deep in the bowels of the RPC code with the
-expectation that it will be freed by the caller of the RPC request is
-a layering violation of the ugliest sort. How is anyone who is
-unfamiliar with the code going to be able to understand what is going
-on without tracing through 1000 lines of code to spot where the
-allocation is happening?
+Great! Using this feedback to create the next patch. I'll post something in the
+next few days.
 
-Aside from that, we do not want any non-critical blocking while
-holding the RPC socket lock. Your allocation request will block all
-further traffic to the server until it is satisfied. That includes
-blocking page writeback, which might actually free up memory to
-satisfy the allocation.
-
-As I said above, there is no reason whatsoever to have to do all this
-inside encode_setacl(). The entire ACL encoding into pages can be done
-before even calling into the RPC layer, just like we do today.
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--chris
+ 
