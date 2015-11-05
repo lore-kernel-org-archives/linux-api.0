@@ -1,53 +1,55 @@
-From: Sergey Senozhatsky <sergey.senozhatsky.work-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 01/13] mm: support madvise(MADV_FREE)
-Date: Thu, 5 Nov 2015 12:41:20 +0900
-Message-ID: <20151105034120.GA502@swordfish>
-References: <1446600367-7976-1-git-send-email-minchan@kernel.org>
- <1446600367-7976-2-git-send-email-minchan@kernel.org>
- <20151104021624.GA2476@swordfish>
- <20151104233910.GA7357@bbox>
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v13 45/51] sunrpc: Allow to demand-allocate pages to
+ encode into
+Date: Thu, 5 Nov 2015 12:07:05 +0100
+Message-ID: <CAHc6FU5xkjWJeGFR5mO8+OAEMwwU6yWK7H8CV1fn5dk-LS23-g@mail.gmail.com>
+References: <1446563847-14005-1-git-send-email-agruenba@redhat.com>
+	<1446563847-14005-46-git-send-email-agruenba@redhat.com>
+	<CAHQdGtScoRb-722ES168O8tkp-Rbvwe6bZ=70WwgiXpCC3vsHw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20151104233910.GA7357@bbox>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Sergey Senozhatsky <sergey.senozhatsky.work-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAHQdGtScoRb-722ES168O8tkp-Rbvwe6bZ=70WwgiXpCC3vsHw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Minchan,
+Trond,
 
-On (11/05/15 08:39), Minchan Kim wrote:
-[..]
-> > 
-> > I think it makes sense to update pmd_trans_unstable() and
-> > pmd_none_or_trans_huge_or_clear_bad() comments in asm-generic/pgtable.h
-> > Because they explicitly mention MADV_DONTNEED only. Just a thought.
-> 
-> Hmm, When I read comments(but actually I don't understand it 100%), it
-> says pmd disappearing from MADV_DONTNEED with mmap_sem read-side
-> lock. But MADV_FREE doesn't remove the pmd. So, I don't understand
-> what I should add comment. Please suggest if I am missing something.
-> 
+On Tue, Nov 3, 2015 at 5:25 PM, Trond Myklebust
+<trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org> wrote:
+> On Tue, Nov 3, 2015 at 10:17 AM, Andreas Gruenbacher
+> <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>> When encoding large, variable-length objects such as acls into xdr_bufs,
+>> it is easier to allocate buffer pages on demand rather than precomputing
+>> the required buffer size.
+>
+> NACK. We're not doing allocations from inside the XDR encoders. This
+> can and should be done before calling into the SUNRPC layer.
 
-Hm, sorry, I need to think about it more, probably my comment is irrelevant.
-Was fantasizing some stupid use cases like doing MADV_DONTNEED and MADV_FREE
-on overlapping addresses from different threads, processes that share mem, etc.
+an XDR-encoded ACL can be up to 64k (16 pages) in size. In practice,
+large ACLs like that will almost never occur and almost all ACLs will
+fit into a single page though.
 
-> > > @@ -379,6 +502,14 @@ madvise_vma(struct vm_area_struct *vma, struct vm_area_struct **prev,
-> > >  		return madvise_remove(vma, prev, start, end);
-> > >  	case MADV_WILLNEED:
-> > >  		return madvise_willneed(vma, prev, start, end);
-> > > +	case MADV_FREE:
-> > > +		/*
-> > > +		 * XXX: In this implementation, MADV_FREE works like
-> > 		  ^^^^
-> > 		XXX
-> 
-> What does it mean?
+The XDR-encoded ACL contains strings for the user and group names
+which need to be looked up when the idmapper is used. Those lookups
+are somewhat expensive; in addition, the lookup results can change
+over time. When precomputing the size, allocating space, and then
+encoding the ACL, we could run out of space when encoding.
 
-not much. just a minor note that there is a 'XXX' in "XXX: In this implementation"
-comment.
+So we could always allocate the maximum 16 pages, encode the acl, and
+free the unused pages. This would be rather wasteful though.
 
-	-ss
+Given how simple it is to allocate pages as we go, this seems the
+better choice here. This doesn't break any existing code either; NULL
+page pointers would have oopsed in xdr_get_next_encode_buffer before.
+
+>From the memory management point of view, there is no difference in
+preallocating GFP_NOFS pages and allocating them on demand; the pages
+are allocated in the same task and locking context in both cases.
+
+So could you please explain why you object to this change?
+
+Thanks,
+Andreas
