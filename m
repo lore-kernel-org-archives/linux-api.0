@@ -1,133 +1,100 @@
-From: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v6 3/4] of: overlay: add per overlay sysfs attributes
-Date: Thu, 5 Nov 2015 22:17:49 +0200
-Message-ID: <0FEFA6E6-0AAD-4D53-ACAD-D3B30F59D4B7@konsulko.com>
-References: <1445368397-8732-1-git-send-email-pantelis.antoniou@konsulko.com> <1445368397-8732-4-git-send-email-pantelis.antoniou@konsulko.com> <CAL_JsqKFJttTsTfwZdMBPEjzqo_OLV=GpHTYZrDGnsgBjF3Bzg@mail.gmail.com> <8A0C91DE-EDF8-449D-918C-95C9807A7616@konsulko.com> <CAL_JsqLeQC7x3fuUFRm=MqHHwvDSLFz6GFxvOTCUToO-=yA0Kg@mail.gmail.com> <1148C5AF-CA7C-44CE-9CBD-BCD949C6B5FD@konsulko.com> <CAL_JsqJse8wyRRAf2dbVBYQ9QtxD6JL02kd8zGuFxK3gnY_0rQ@mail.gmail.com> <FA84C326-4CE3-4695-9F04-4AEF7A897BE7@konsulko.com> <CAL_JsqL8+4HCrSFQf5oi1PdE0mQveL9OFPFPfVGT+xm-JeMO2g@mail.gmail.com>
-Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2104\))
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAL_JsqL8+4HCrSFQf5oi1PdE0mQveL9OFPFPfVGT+xm-JeMO2g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Frank Rowand <frowand.list-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: Elias Vanderstuyft <elias.vds-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 2/2] Input: uinput: Sanity check on ff_effects_max and EV_FF
+Date: Thu, 5 Nov 2015 23:34:55 +0100
+Message-ID: <CADbOyBSeXDLzaSj=z3W2oMzg1DV3fP651wzLztUezSmf3B05qA@mail.gmail.com>
+References: <1442510988-3164-1-git-send-email-elias.vds@gmail.com>
+	<1442510988-3164-3-git-send-email-elias.vds@gmail.com>
+	<20151015005226.GD3673@dtor-ws>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20151015005226.GD3673@dtor-ws>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "open list:HID CORE LAYER" <linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Rob,
+Hi Dmitry,
 
-> On Nov 5, 2015, at 21:52 , Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->=20
-> On Thu, Oct 22, 2015 at 11:15 AM, Pantelis Antoniou
-> <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
->> Hi Rob,
->>=20
->>> On Oct 22, 2015, at 00:52 , Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wro=
-te:
->>>=20
->>> On Wed, Oct 21, 2015 at 2:37 PM, Pantelis Antoniou
->>> <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
->>>> Hi Rob,
->>>>=20
->>>>> On Oct 21, 2015, at 00:54 , Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> w=
-rote:
->>>>>=20
->>>>> On Tue, Oct 20, 2015 at 4:11 PM, Pantelis Antoniou
->>>>> <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
->>>>>> Hi Rob,
->>>>>>=20
->>>>>>> On Oct 21, 2015, at 00:04 , Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>=
- wrote:
->>>>>>>=20
->>>>>>> On Tue, Oct 20, 2015 at 2:13 PM, Pantelis Antoniou
->>>>>>> <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
->>>>>>>> * A per overlay can_remove sysfs attribute that reports whethe=
-r
->>>>>>>> the overlay can be removed or not due to another overlapping o=
-verlay.
->>>>>>>>=20
->>>>>>>> * A target sysfs attribute listing the target of each fragment=
-,
->>>>>>>> in a group named after the name of the fragment.
->>>>>=20
->>>>> [...]
->>>>>=20
->>>>>>>> @@ -255,6 +278,17 @@ err_fail:
->>>>>>>>     return -EINVAL;
->>>>>>>> }
->>>>>>>>=20
->>>>>>>> +static ssize_t target_show(struct kobject *kobj,
->>>>>>>> +               struct fragment_attribute *fattr, char *buf)
->>>>>>>> +{
->>>>>>>> +       struct of_overlay_info *ovinfo =3D fattr->ovinfo;
->>>>>>>> +
->>>>>>>> +       return snprintf(buf, PAGE_SIZE, "%s\n",
->>>>>>>> +                       of_node_full_name(ovinfo->target));
->>>>>>>=20
->>>>>>> This can be a link to the node itself, can't it?
->>>>>>>=20
->>>>>>=20
->>>>>> Yes. Do you want it like this?
->>>>>=20
->>>>> Yes, hence the suggestion. Unless you see some reason why not.
->>>>>=20
->>>>=20
->>>> Nope, can=E2=80=99t be done. The sysfs API only allows linking one=
- kobj to another.
->>>> The kobj is the overlay but the target is in the fragment attribut=
-e group.
->>>=20
->>> Can't we make the fragments kobj's as well?
->>>=20
->>=20
->> We could, but it break the mental model of what a kobj should repres=
-ent.
->> An overlay is an object which can be address, a fragment is never di=
-rectly
->> exposed.
->=20
-> But you are exposing fragments as there is a directory for each one.
->=20
-> Overlays are just logical collections of fragments. You could go as
-> far to say overlays don't need to be exposed at all and only fragment=
-s
-> need to be (not that we should). We already have overlays and nodes a=
-s
-> kobjs, so I don't think fragments as kobjs breaks the mental model.
->=20
+Excuse me for the long delay.
 
-I disagree; fragments are merely an internal implementation detail, nam=
-ely that an overlay
-is comprised of a collection of fragments.
+On Thu, Oct 15, 2015 at 2:52 AM, Dmitry Torokhov
+<dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> On Thu, Sep 17, 2015 at 07:29:48PM +0200, Elias Vanderstuyft wrote:
+>> Currently the user can specify a non-zero value for ff_effects_max,
+>> without setting the EV_FF bit.
+>> Inversely,
+>> the user can also set ff_effects_max to zero with the EV_FF bit set,
+>> in this case the uninitialized method ff->upload can be dereferenced,
+>> resulting in a kernel oops.
+>>
+>> Instead of adding a check in uinput_create_device() and
+>> omitting setup of ff-core infrastructure silently in case the check fails,
+>> perform the check early in uinput_setup_device(),
+>> and print a helpful message and return -EINVAL in case the check fails.
+>>
+>> Signed-off-by: Elias Vanderstuyft <elias.vds-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>> ---
+>>  drivers/input/misc/uinput.c | 15 +++++++++++++++
+>>  1 file changed, 15 insertions(+)
+>>
+>> diff --git a/drivers/input/misc/uinput.c b/drivers/input/misc/uinput.c
+>> index 345df9b..3a90a16 100644
+>> --- a/drivers/input/misc/uinput.c
+>> +++ b/drivers/input/misc/uinput.c
+>> @@ -393,6 +393,21 @@ static int uinput_setup_device(struct uinput_device *udev,
+>>       if (IS_ERR(user_dev))
+>>               return PTR_ERR(user_dev);
+>>
+>> +     if (!!user_dev->ff_effects_max ^ test_bit(EV_FF, dev->evbit)) {
+>> +             if (user_dev->ff_effects_max)
+>> +                     printk(KERN_DEBUG
+>> +                             "%s: ff_effects_max (%u) should be zero "
+>> +                             "when FF_BIT is not set\n",
+>> +                             UINPUT_NAME, user_dev->ff_effects_max);
+>> +             else
+>> +                     printk(KERN_DEBUG
+>> +                             "%s: ff_effects_max should be non-zero "
+>> +                             "when FF_BIT is set\n",
+>> +                             UINPUT_NAME);
+>
+> I do not think this is the right place for this check: userspace is
+> allowed to write device structure before calling any ioctls to set
+> various bits. Also, userspace doe snot have to explicitly set EV_FF bit
+> as input_ff_create() does it for us.
 
-Being able to address fragments individually, which is what making a fr=
-agment a kobj does,
-conceptually, is not making sense.
+OK, I put it here to be consistent with the uinput_validate_absbits() function,
+which checks absbit in case the EV_ABS bit is set,
+but I incorrectly assumed the EV_ABS bit was required to be set.
 
-We are being driven to consider having them as kobjs as a consequence o=
-f the gaps in the
-sysfs internal kernel API, that is that we can only make links between =
-kobjs=E2=80=99 only not in
-arbitrary points from one sysfs directory to another.
+> I think the check should be in uinput_create_device() and we should only
+> check case when udev->ff_effects_max is 0 but EV_FF is set.
 
->> TBH a link attribute is indeed better than a path attribute, but mar=
-ginally so.
->> It=E2=80=99s not worth the trouble IMO.
->=20
-> It is just an ABI we have to support forever=E2=80=A6
->=20
+This made me think about the whole idea whether or not
+allowing ff_effects_max to be zero is possible for a FF device.
+I think it is perfectly possible to have a FF device with no support
+for uploading effects,
+but with an adjustable AUTOCENTER-force axis.
+Or, more exotically, a device with a trigger-button which on press
+automatically emits rumble,
+with adjustable GAIN.
 
-I don=E2=80=99t think that=E2=80=99s that a big deal IMO. Following a l=
-ink is no different than reading the path attribute.
+The only places where we'd need to change code for allowing this,
+is in:
+- http://lxr.free-electrons.com/source/drivers/input/ff-core.c?v=4.3#L316
+    : remove if-then-block
+- http://lxr.free-electrons.com/source/drivers/input/misc/uinput.c?v=4.3#L266
+    : change if-test to "udev->ff_effects_max || test_bit(EV_FF, dev->evbit)"
+Of course, the latter change may conflict with your initial reply:
+userspace does not have to explicitly set the EV_FF bit in advance;
+however it does make sense to set the bit if e.g. only FF_AUTOCENTER
+support is available,
+but no uploading of effects (ff->upload and friends will still be set,
+but not used, thanks to check_effect_access()).
 
-> Rob
+What do you think about this: should I go with "forbid ff_effects_max
+to be zero, and check on it" or "allow ff_effects_max to be zero"?
+My previous patches wouldn't conflict with either options.
 
-Regards
-
-
-=E2=80=94 Pantelis
-
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" i=
-n
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Thanks,
+Elias
