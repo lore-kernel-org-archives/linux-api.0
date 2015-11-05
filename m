@@ -1,78 +1,109 @@
-From: mudongliang <mudongliangabcd@gmail.com>
-Subject: [PATCH] uapi elf: delete unused macros
-Date: Thu, 05 Nov 2015 23:41:33 +0800
-Message-ID: <563B78AD.2060906@gmail.com>
+From: Josh Poimboeuf <jpoimboe@redhat.com>
+Subject: Re: [PATCH v2] livepatch: old_name.number scheme in livepatch sysfs
+ directory
+Date: Thu, 5 Nov 2015 09:56:56 -0600
+Message-ID: <20151105155656.GD28254@treble.redhat.com>
+References: <20151102203241.GF27488@treble.redhat.com>
+ <1446505187-28970-1-git-send-email-chris.j.arges@canonical.com>
+ <alpine.LNX.2.00.1511031146070.6257@pobox.suse.cz>
+ <20151103145843.GH27488@treble.redhat.com>
+ <alpine.LNX.2.00.1511031705340.6257@pobox.suse.cz>
+ <20151103165058.GM27488@treble.redhat.com>
+ <alpine.LNX.2.00.1511041047200.5621@pobox.suse.cz>
+ <20151104160354.GA29899@treble.redhat.com>
+ <alpine.LNX.2.00.1511051609320.13864@pobox.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LNX.2.00.1511051609320.13864@pobox.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: benh@kernel.crashing.org, paulus@samba.org, mpe@ellerman.id.au, takahiro.akashi@linaro.org, will.deacon@arm.com
-Cc: linuxppc-dev@lists.ozlabs.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+To: Miroslav Benes <mbenes@suse.cz>
+Cc: Chris J Arges <chris.j.arges@canonical.com>, live-patching@vger.kernel.org, jeyu@redhat.com, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-delete unused macros and unify the comment format
+On Thu, Nov 05, 2015 at 04:18:12PM +0100, Miroslav Benes wrote:
+> On Wed, 4 Nov 2015, Josh Poimboeuf wrote:
+> 
+> > On Wed, Nov 04, 2015 at 10:52:52AM +0100, Miroslav Benes wrote:
+> > > On Tue, 3 Nov 2015, Josh Poimboeuf wrote:
+> > > > > Object entry would be empty for not loaded object. I would not 
+> > > > > dare to propose to remove such object entries. It would make things worse. 
+> > > > 
+> > > > Why would removing an empty object entry make things worse?
+> > > 
+> > > I think it all comes down to a question whether the sysfs entries say what 
+> > > a patch is capable to patch or what this patch is currently patching in 
+> > > the system. I am inclined to the former so the removal would make me 
+> > > nervous. But I am not against the second approach. We are still in testing 
+> > > mode as far as sysfs is concerned so we can try even harsh changes and see 
+> > > how it's gonna go.
+> > 
+> > I see your point.  This approach only describes what is patched now, but
+> > it doesn't describe what *will* be patched.  Ideally we could find a way
+> > to describe both.
+> > 
+> > Speaking of harsh changes, here's an idea.
+> 
+> Which is the very same you proposed last year when I tried to persuade you 
+> to get rid off old_addr and stuff. I called it crazy I remember :D. So 
+> here we are again...
 
->From e21328f3450e841abf8a312865910806d0858373 Mon Sep 17 00:00:00 2001
-From: mudongliang <mudongliangabcd@gmail.com>
-Date: Thu, 5 Nov 2015 22:46:19 +0800
-Subject: [PATCH] unify the comment form and delete unused macros
+Ah, I knew I had entertained the idea before, but I forgot we discussed
+it.  It is indeed a little crazy.  But this is live patching after all
+;-)
 
-Signed-off-by: mudongliang <mudongliangabcd@gmail.com>
----
- arch/powerpc/boot/elf.h  | 6 ++----
- include/uapi/linux/elf.h | 7 ++-----
- 2 files changed, 4 insertions(+), 9 deletions(-)
+> > What if we require the patch author to supply the value of 'n' instead
+> > of supplying the symbol address?  We could get rid of 'old_addr' as an
+> > input in klp_func and and replace it with 'old_sympos' which has the
+> > value of 'n'.  Or alternatively we could require old_name to be of the
+> > format "func,n".
+> > 
+> > That would uniquely identify each patched function, even _before_ the
+> > object is loaded.
+> 
+> I find it reasonable and we should try it. I think that old_sympos should 
+> have this semantics
+> 
+> 0 - default, preserve more or less current behaviour. If the symbol is 
+>     unique there is no problem. If it is not the patching would fail.
+> 1, 2, ... - occurrence of the symbol in kallsyms.
+> 
+> The advantage is that if the user does not care and is certain that the 
+> symbol is unique he doesn't have to do anything. If the symbol is not 
+> unique he still has means how to solve it.
+> 
+> Does it make sense?
 
-diff --git a/arch/powerpc/boot/elf.h b/arch/powerpc/boot/elf.h
-index 1941bc5..e6e00ed 100644
---- a/arch/powerpc/boot/elf.h
-+++ b/arch/powerpc/boot/elf.h
-@@ -133,15 +133,13 @@ typedef struct elf64_phdr {
- #define	ELFCLASSNONE	0	/* EI_CLASS */
- #define	ELFCLASS32	1
- #define	ELFCLASS64	2
--#define	ELFCLASSNUM	3
- 
--#define ELFDATANONE	0	/* e_ident[EI_DATA] */
-+#define ELFDATANONE	0	/* EI_DATA */
- #define ELFDATA2LSB	1
- #define ELFDATA2MSB	2
- 
--#define EV_NONE		0	/* e_version, EI_VERSION */
-+#define EV_NONE		0	/* EI_VERSION */
- #define EV_CURRENT	1
--#define EV_NUM		2
- 
- #define ELFOSABI_NONE	0
- #define ELFOSABI_LINUX	3
-diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
-index 71e1d0e..bd049b2 100644
---- a/include/uapi/linux/elf.h
-+++ b/include/uapi/linux/elf.h
-@@ -342,15 +342,12 @@ typedef struct elf64_shdr {
- #define	ELFCLASSNONE	0		/* EI_CLASS */
- #define	ELFCLASS32	1
- #define	ELFCLASS64	2
--#define	ELFCLASSNUM	3
- 
--#define ELFDATANONE	0		/* e_ident[EI_DATA] */
-+#define ELFDATANONE	0		/* EI_DATA */
- #define ELFDATA2LSB	1
--#define ELFDATA2MSB	2
- 
--#define EV_NONE		0		/* e_version, EI_VERSION */
-+#define EV_NONE		0		/* EI_VERSION */
- #define EV_CURRENT	1
--#define EV_NUM		2
- 
- #define ELFOSABI_NONE	0
- #define ELFOSABI_LINUX	3
+Sounds good!
+
+> > It would also fix another big problem we have today, where there's no
+> > way to disambiguate duplicate symbols in modules, for both function
+> > addresses and for relocs.
+> 
+> True.
+> 
+> > It would simplify the code in other places as well: no special handling
+> > for kASLR, no need for klp_verify_vmlinux_symbol() vs
+> > klp_find_object_symbol().
+> 
+> Which would be great.
+> 
+> > A drawback is that it requires the patch author to do a little more due
+> > diligence when filling out klp_func.  But we already require them to be
+> > careful.
+> 
+> Yes, I don't think this should be a problem.
+> 
+> > Thoughts?
+> 
+> Yup, we should try it. I suppose that the order of the symbols in kallsyms 
+> table is stable for once-built kernel. It is the order of the symbols in 
+> the object files, isn't it? And since each livepatch module is built 
+> against the specific kernel there should be no issues with this.
+
+The order of the symbols in an object's symbol table does appear to be
+the same as the order in kallsyms (per-object).  So yeah, let's try it.
+
 -- 
-2.1.4
-
--- 
-My best regards to you.
-
-     No System Is Safe!
-     mudongliang
+Josh
