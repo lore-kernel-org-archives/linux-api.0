@@ -1,66 +1,91 @@
-From: Li Xi <pkuelelixi@gmail.com>
-Subject: Re: [v15 0/4] ext4: add project quota support
-Date: Thu, 5 Nov 2015 22:45:12 +0800
-Message-ID: <CAPTn0cBp4d09u9XzQm2cXzd6kcE0+FDRX0b_H=xJBZT-i5eKcw@mail.gmail.com>
-References: <1442146833-13652-1-git-send-email-lixi@ddn.com>
-	<43B1BB97-8D53-4D93-9B57-B5E2048F7E7A@dilger.ca>
+From: Miroslav Benes <mbenes@suse.cz>
+Subject: Re: [PATCH v2] livepatch: old_name.number scheme in livepatch sysfs
+ directory
+Date: Thu, 5 Nov 2015 16:18:12 +0100 (CET)
+Message-ID: <alpine.LNX.2.00.1511051609320.13864@pobox.suse.cz>
+References: <20151102203241.GF27488@treble.redhat.com> <1446505187-28970-1-git-send-email-chris.j.arges@canonical.com> <alpine.LNX.2.00.1511031146070.6257@pobox.suse.cz> <20151103145843.GH27488@treble.redhat.com> <alpine.LNX.2.00.1511031705340.6257@pobox.suse.cz>
+ <20151103165058.GM27488@treble.redhat.com> <alpine.LNX.2.00.1511041047200.5621@pobox.suse.cz> <20151104160354.GA29899@treble.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <43B1BB97-8D53-4D93-9B57-B5E2048F7E7A@dilger.ca>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Andreas Dilger <adilger@dilger.ca>
-Cc: linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-ext4 <linux-ext4@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>, Jan Kara <jack@suse.cz>, Al Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, Dave Chinner <david@fromorbit.com>, =?UTF-8?B?0JTQvNC40YLRgNC40Lkg0JzQvtC90LDRhdC+0LI=?= <dmonakhov@openvz.org>, Shuichi Ihara <ihashu@gmail.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20151104160354.GA29899@treble.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Chris J Arges <chris.j.arges@canonical.com>, live-patching@vger.kernel.org, jeyu@redhat.com, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 25, 2015 at 1:12 AM, Andreas Dilger <adilger@dilger.ca> wrote:
-> On Sep 13, 2015, at 2:20 PM, Li Xi <pkuelelixi@gmail.com> wrote:
->>
->> The following patches propose an implementation of project quota
->> support for ext4. A project is an aggregate of unrelated inodes
->> which might scatter in different directories. Inodes that belong
->> to the same project possess an identical identification i.e.
->> 'project ID', just like every inode has its user/group
->> identification. The following patches add project quota as
->> supplement to the former uer/group quota types.
->
-> We discussed this on the ext4 developer concall today and tried to
-> move the landing of these patches forward.  Some notes below:
->
-> - Ted: agreed to reserve EXT4_FEATURE_RO_COMPAT_PROJECT, s_prj_quota_inum,
->   EXT4_PROJINHERIT_FL, and i_projid fields for use by project quota to
->   avoid compatibility issues if patches are not landed immediately.
->    - Ted: to do final check of inode flag value
->    - ext4 project quota inode does not need to use a reserved inode, but
->      could after Jan's patch to increase reserved inodes lands
-> - Li Xi: identify xfstests subtests that are exercising project quota
->    - submit patches to xfstests that will activate them for ext4
->    - keep in ext4 xfstests for testing until patches land upstream
->    - this needs to be done before landing to ensure ext4 code works
-> - Li Xi: document the behaviour of project quota (if no existing
->   document exists for XFS already), some of this is already below
->    - update man pages for df(1) and statfs(2) for subdir with project ID
->      (i.e. that it returns only quota usage and limit for project ID)
->    - Ted: where should document go? linux/Documentation/fs? ext4 wiki?
->    - not a requirement for testing, can be done after landing
->
-> - All: decide on a common tool for setting project ID on file/directory
->    - don't want to require xfsutils in order to use project quota
->    - start with chattr (using FS_IOC_FS{GET,SET}XATTR) in e2fsprogs
->      - allows testing project quota with e2fsprogs/ext4
->    - chproj (like chown/chgrp) would also be an option
->      - needs more discussion/development effort, goes into fileutils
->    - this doesn't need to be decided immediately, and both could be done
->
-Hi,
+On Wed, 4 Nov 2015, Josh Poimboeuf wrote:
 
-I've pushed the patch of Ext4 as well as e2fsprogs. Shilong has added test
-suits for ext4 project quota in xfstest, and will push patches soon. I
-will write
-necessary documentation both for manual and linux/Documentation/fs.
+> On Wed, Nov 04, 2015 at 10:52:52AM +0100, Miroslav Benes wrote:
+> > On Tue, 3 Nov 2015, Josh Poimboeuf wrote:
+> > > > Object entry would be empty for not loaded object. I would not 
+> > > > dare to propose to remove such object entries. It would make things worse. 
+> > > 
+> > > Why would removing an empty object entry make things worse?
+> > 
+> > I think it all comes down to a question whether the sysfs entries say what 
+> > a patch is capable to patch or what this patch is currently patching in 
+> > the system. I am inclined to the former so the removal would make me 
+> > nervous. But I am not against the second approach. We are still in testing 
+> > mode as far as sysfs is concerned so we can try even harsh changes and see 
+> > how it's gonna go.
+> 
+> I see your point.  This approach only describes what is patched now, but
+> it doesn't describe what *will* be patched.  Ideally we could find a way
+> to describe both.
+> 
+> Speaking of harsh changes, here's an idea.
 
-Hopefully, at least the kernel patches of ext4 project quota will be merged
-soon.
+Which is the very same you proposed last year when I tried to persuade you 
+to get rid off old_addr and stuff. I called it crazy I remember :D. So 
+here we are again...
+
+> What if we require the patch author to supply the value of 'n' instead
+> of supplying the symbol address?  We could get rid of 'old_addr' as an
+> input in klp_func and and replace it with 'old_sympos' which has the
+> value of 'n'.  Or alternatively we could require old_name to be of the
+> format "func,n".
+> 
+> That would uniquely identify each patched function, even _before_ the
+> object is loaded.
+
+I find it reasonable and we should try it. I think that old_sympos should 
+have this semantics
+
+0 - default, preserve more or less current behaviour. If the symbol is 
+    unique there is no problem. If it is not the patching would fail.
+1, 2, ... - occurrence of the symbol in kallsyms.
+
+The advantage is that if the user does not care and is certain that the 
+symbol is unique he doesn't have to do anything. If the symbol is not 
+unique he still has means how to solve it.
+
+Does it make sense?
+
+> It would also fix another big problem we have today, where there's no
+> way to disambiguate duplicate symbols in modules, for both function
+> addresses and for relocs.
+
+True.
+
+> It would simplify the code in other places as well: no special handling
+> for kASLR, no need for klp_verify_vmlinux_symbol() vs
+> klp_find_object_symbol().
+
+Which would be great.
+
+> A drawback is that it requires the patch author to do a little more due
+> diligence when filling out klp_func.  But we already require them to be
+> careful.
+
+Yes, I don't think this should be a problem.
+
+> Thoughts?
+
+Yup, we should try it. I suppose that the order of the symbols in kallsyms 
+table is stable for once-built kernel. It is the order of the symbols in 
+the object files, isn't it? And since each livepatch module is built 
+against the specific kernel there should be no issues with this.
 
 Regards,
-Li Xi
+Miroslav
