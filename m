@@ -1,43 +1,36 @@
-From: Daniel Micay <danielmicay@gmail.com>
+From: Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: [PATCH v2 01/13] mm: support madvise(MADV_FREE)
-Date: Thu, 5 Nov 2015 15:13:09 -0500
-Message-ID: <563BB855.6020304@gmail.com>
+Date: Thu, 5 Nov 2015 15:14:05 -0500
+Message-ID: <563BB88D.7060606@gmail.com>
 References: <1446600367-7976-1-git-send-email-minchan@kernel.org>
  <1446600367-7976-2-git-send-email-minchan@kernel.org>
  <CALCETrUuNs=26UQtkU88cKPomx_Bik9mbgUUF9q7Nmh1pQJ4qg@mail.gmail.com>
  <56399CA5.8090101@gmail.com>
  <CALCETrU5P-mmjf+8QuS3-pm__R02j2nnRc5B1gQkeC013XWNvA@mail.gmail.com>
  <563A813B.9080903@gmail.com> <20151105181726.GA63566@kernel.org>
+ <563BB855.6020304@gmail.com>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha256;
  protocol="application/pgp-signature";
- boundary="ClqICLLTDgILX9WnJ236tnF4v7NNE29Gh"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151105181726.GA63566@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Shaohua Li <shli@kernel.org>
-Cc: Andy Lutomirski <luto@amacapital.net>, Minchan Kim <minchan@kernel.org>, Hugh Dickins <hughd@google.com>, Andrew Morton <akpm@linux-foundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Michal Hocko <mhocko@suse.cz>, "linux-mm@kvack.org" <linux-mm@kvack.org>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Rik van Riel <riel@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, Linux API <linux-api@vger.kernel.org>, Jason Evans <je@fb.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, yalin wang <yalin.wang2010@gmail.com>, Mel Gorman <mgorman@suse.de>
+ boundary="vp9n9XES77FArX27xHt834GedEwaqaWxq"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <563BB855.6020304-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, yalin wang <yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---ClqICLLTDgILX9WnJ236tnF4v7NNE29Gh
+--vp9n9XES77FArX27xHt834GedEwaqaWxq
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: quoted-printable
 
-> I posted a patch doing exactly iovec madvise. Doesn't support MADV_FREE=
- yet
-> though, but should be easy to do it.
->=20
-> http://marc.info/?l=3Dlinux-mm&m=3D144615663522661&w=3D2
+> active:clean
 
-I think that would be a great way to deal with this. It keeps the nice
-property of still being able to drop pages in allocations that have been
-handed out but not yet touched. The allocator just needs to be designed
-to do lots of purging in one go (i.e. something like an 8:1 active:clean
-ratio triggers purging and it goes all the way to 16:1).
+active:dirty*, sigh.
 
 
---ClqICLLTDgILX9WnJ236tnF4v7NNE29Gh
+--vp9n9XES77FArX27xHt834GedEwaqaWxq
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: OpenPGP digital signature
 Content-Disposition: attachment; filename="signature.asc"
@@ -45,19 +38,19 @@ Content-Disposition: attachment; filename="signature.asc"
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v2
 
-iQIcBAEBCAAGBQJWO7hZAAoJEPnnEuWa9fIq5usQAI/qFzkBpBjxnmiLTb8sPPzm
-OUZp6yZi5bjcreflXXxsvufHbOZ1zqkVFe8JnxGn+Pg1chYSEm4xRUyK/9LCchqR
-1Be3avsVfUPJGuiRrHnrY6Qq46Vmk2Iu6HaY8vgkmN/c/qMifY8PgADPQ+RPJ7Du
-yNkm1kpBoxoYnKu5X2QCfQU6G8TJGCUA+nuqalvNPSqySHAfl5slAXvLJUFc42gg
-CENG0PWWsPQXbPQGYP3CAuKxMW+hNw7YnG5J2SYyncjnviVfjdoo1aIgINkRokY9
-z5CtxU3EEI7B5H8qPWiRe6i/2/JLUMlnixEVsTyh4Nr1yLNYP43jCeH+/+CKIiQK
-ABOcnjPBfqEiHbzF5V1DOOUbzOBDiM0TonVgfUPhX3+IY7Dbm73d+ErX98fJmPI2
-EufQaD6ZN+KcUj8lWR1pBACzC7wUUn86HJYLuHFv3hbmMqVKDlOiV5C7KIpJ0+nD
-foQeyiwxoIJNiSAkIv/Y764IVrWo6S3z7U8sTHUeF+E3YMnl6uOngySG/Arwiynl
-PeswqHKYi/LDF2sEYlFGYeQRF+yCQ2cTqiVZcl1mhkDJjhZt2goiY0pzxb36/XZo
-HKwGEAruCW+aDAt5aXzjylzU6kPkWiuwZh8BBZ/Ya7bMrPcgxV0AqZGWvnTb3m4/
-+dwvdZaiiHv8o6jEcXy+
-=X40y
+iQIcBAEBCAAGBQJWO7iOAAoJEPnnEuWa9fIqMv8QAIzD2J9PzxJpfXpm5AhyoC+v
+alYaKROuo4IZ7m3bjAznsWWX5/A1NmfGzto6XA7iNPdRXr+7qX/uFE9ljPgqw+0e
+Na5ngKHOtxmV1SEt2ZnibVM88TflroEQLOSEKRngTB9aFN0XbDRIb88CYfD4d+CG
+hLnOP1QSc/7EqjfFwy4VD8FL23f4F2ki+sYhtDsb2KN7apiOGNmrsVKNf4kpuoyi
+CAokM0JeRoJZb2WdGrBp4A7QOGdSbmWNqJlchvwrtB9Lyl01xulIeUTpPxjXUs+5
+/KPHKRxQvBzwq4rKuSdjfHKslaayf2cg/Ecp8baZyzpwmjpgibxEBNhoL1Fw/7K+
+eZxgG+OL4n0NL3z90i14JDtf4pgmdD3uRtcpaz3j5IU+SSHswBCQems0YwARQCHc
+tdE5QzgEvdNuFQgJq209ZaAWkZZoiNw4Gug1jNhBG+haGxxOzFki+KQB/OIreTPT
+vWphmc5KaL+0/Gj26lcJyiBShsqBDfpjGWUc/Gng63JQMkNnqP0ziDDGMBBO8Fdr
+xBm07i0ZChi1TRQIlQfUHVhyzFHxjBFmgNpqSyTGGHs90IMgtrr1+8hEvDkQI26E
+kmdMu2DB76+33mIDpLLu4C3gMulTVwcp1QVZBilTgU0z2yHHq9x9DF8SBqxtLlM6
+AYDag0KsZsSR7hBF/3bK
+=5Y66
 -----END PGP SIGNATURE-----
 
---ClqICLLTDgILX9WnJ236tnF4v7NNE29Gh--
+--vp9n9XES77FArX27xHt834GedEwaqaWxq--
