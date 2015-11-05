@@ -1,104 +1,85 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v2 01/13] mm: support madvise(MADV_FREE)
-Date: Wed, 4 Nov 2015 16:42:37 -0800
-Message-ID: <CALCETrV0yd26+G_kvmRbJwjCNguUh6iLwhyO1yKQ2bgiiWegEw@mail.gmail.com>
-References: <1446600367-7976-1-git-send-email-minchan@kernel.org>
- <1446600367-7976-2-git-send-email-minchan@kernel.org> <CALCETrUuNs=26UQtkU88cKPomx_Bik9mbgUUF9q7Nmh1pQJ4qg@mail.gmail.com>
- <20151105001348.GC7357@bbox>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20151105001348.GC7357@bbox>
-Sender: owner-linux-mm@kvack.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: Hugh Dickins <hughd@google.com>, Andrew Morton <akpm@linux-foundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Michal Hocko <mhocko@suse.cz>, "linux-mm@kvack.org" <linux-mm@kvack.org>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Rik van Riel <riel@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, Linux API <linux-api@vger.kernel.org>, Jason Evans <je@fb.com>, Shaohua Li <shli@kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, yalin wang <yalin.wang2010@gmail.com>, Daniel Micay <danielmicay@gmail.com>, Mel Gorman <mgorman@suse.de>
+From: Amanieu d'Antras <amanieu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v2 00/20] Fix handling of compat_siginfo_t
+Date: Thu,  5 Nov 2015 00:50:19 +0000
+Message-ID: <1446684640-4112-1-git-send-email-amanieu@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Amanieu d'Antras <amanieu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, linux-parisc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sparclinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 4, 2015 at 4:13 PM, Minchan Kim <minchan@kernel.org> wrote:
-> On Tue, Nov 03, 2015 at 07:41:35PM -0800, Andy Lutomirski wrote:
->> On Nov 3, 2015 5:30 PM, "Minchan Kim" <minchan@kernel.org> wrote:
->> >
->> > Linux doesn't have an ability to free pages lazy while other OS already
->> > have been supported that named by madvise(MADV_FREE).
->> >
->> > The gain is clear that kernel can discard freed pages rather than swapping
->> > out or OOM if memory pressure happens.
->> >
->> > Without memory pressure, freed pages would be reused by userspace without
->> > another additional overhead(ex, page fault + allocation + zeroing).
->> >
->>
->> [...]
->>
->> >
->> > How it works:
->> >
->> > When madvise syscall is called, VM clears dirty bit of ptes of the range.
->> > If memory pressure happens, VM checks dirty bit of page table and if it
->> > found still "clean", it means it's a "lazyfree pages" so VM could discard
->> > the page instead of swapping out.  Once there was store operation for the
->> > page before VM peek a page to reclaim, dirty bit is set so VM can swap out
->> > the page instead of discarding.
->>
->> What happens if you MADV_FREE something that's MAP_SHARED or isn't
->> ordinary anonymous memory?  There's a long history of MADV_DONTNEED on
->> such mappings causing exploitable problems, and I think it would be
->> nice if MADV_FREE were obviously safe.
->
-> It filter out VM_LOCKED|VM_HUGETLB|VM_PFNMAP and file-backed vma and MAP_SHARED
-> with vma_is_anonymous.
->
->>
->> Does this set the write protect bit?
->
-> No.
->
->>
->> What happens on architectures without hardware dirty tracking?  For
->> that matter, even on architecture with hardware dirty tracking, what
->> happens in multithreaded processes that have the dirty TLB state
->> cached in a different CPU's TLB?
->>
->> Using the dirty bit for these semantics scares me.  This API creates a
->> page that can have visible nonzero contents and then can
->> asynchronously and magically zero itself thereafter.  That makes me
->> nervous.  Could we use the accessed bit instead?  Then the observable
->
-> Access bit is used by aging algorithm for reclaim. In addition,
-> we have supported clear_refs feacture.
-> IOW, it could be reset anytime so it's hard to use marker for
-> lazy freeing at the moment.
->
+The current handling of compat_siginfo_t is a mess: each architecture has its
+own implementation, all of which are incorrect in different ways. This patch
+series replaces all of the arch-specific versions with a single generic one that
+is guaranteed to produce the same results as a 32-bit kernel.
 
-That's unfortunate.  I think that the ABI would be much nicer if it
-used the accessed bit.
+Most architectures are able to use the generic compat_siginfo_t, except x86 and
+MIPS. MIPS uses a slightly different compat_siginfo_t structure for ABI reasons
+but can still use the generic copy_siginfo_{to,from}_user32. x86 can't use the
+generic versions because it needs special handling for __SI_CHLD for x32 tasks.
 
-In any case, shouldn't the aging algorithm be irrelevant here?  A
-MADV_FREE page that isn't accessed can be discarded, whereas we could
-hopefully just say that a MADV_FREE page that is accessed gets moved
-to whatever list holds recently accessed pages and also stops being a
-candidate for discarding due to MADV_FREE?
+One issue that isn't resolved in this series is sending signals between a 32-bit
+process and 64-bit process. Sending a si_int will work correctly, but a si_ptr
+value will likely get corrupted due to the different layouts of the 32-bit and
+64-bit siginfo_t structures.
 
->>
->> > +               if (!PageDirty(page) && (flags & TTU_FREE)) {
->> > +                       /* It's a freeable page by MADV_FREE */
->> > +                       dec_mm_counter(mm, MM_ANONPAGES);
->> > +                       goto discard;
->> > +               }
->>
->> Does something clear TTU_FREE the next time the page gets marked clean?
->
-> Sorry, I don't understand. Could you elaborate it more?
+signalfd_copyinfo was also modified to properly generate data for compat tasks.
+In particular the ssi_ptr and ssi_data members need to be sign-extended to 64
+bits rather than zero-extended, since that is the behavior in 32-bit kernels.
 
-I don't fully understand how TTU_FREE ends up being set here, but, if
-the page is dirtied by user code and then cleaned later by the kernel,
-what prevents TTU_FREE from being incorrectly set here?
+This series has been tested on x86_64 and arm64.
 
+Changes since v1:
+- Properly copy padding bytes and avoid leaking uninitialized data to userspace
+- Fixed compile errors on mips and powerpc
+- Fixed some compiler warnings
+- Fixed some formatting issues
 
---Andy
+Amanieu d'Antras (20):
+  compat: Add generic compat_siginfo_t
+  compat: Add generic copy_siginfo_{to,from}_user32
+  x86: Update compat_siginfo_t to be closer to the generic version
+  x86: Rewrite copy_siginfo_{to,from}_user32
+  mips: Clean up compat_siginfo_t
+  mips: Use generic copy_siginfo_{to,from}_user32
+  arm64: Use generic compat_siginfo_t
+  arm64: Use generic copy_siginfo_{to,from}_user32
+  parisc: Use generic compat_siginfo_t
+  parsic: Use generic copy_siginfo_{to,from}_user32
+  s390: Use generic compat_siginfo_t
+  s390: Use generic copy_siginfo_{to,from}_user32
+  powerpc: Use generic compat_siginfo_t
+  powerpc: Use generic copy_siginfo_{to,from}_user32
+  tile: Use generic compat_siginfo_t
+  tile: Use generic copy_siginfo_{to,from}_user32
+  sparc: Use generic compat_siginfo_t
+  sparc: Use generic copy_siginfo_{to,from}_user32
+  signalfd: Fix some issues in signalfd_copyinfo
+  signal: Remove unnecessary zero-initialization of siginfo_t
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+ arch/arm64/include/asm/compat.h    |  59 --------
+ arch/arm64/kernel/signal32.c       |  85 -----------
+ arch/mips/include/asm/compat.h     |  63 ++++----
+ arch/mips/kernel/signal32.c        |  62 --------
+ arch/parisc/include/asm/compat.h   |  52 -------
+ arch/parisc/kernel/signal32.c      | 102 -------------
+ arch/powerpc/include/asm/compat.h  |  60 --------
+ arch/powerpc/kernel/signal_32.c    |  72 +---------
+ arch/s390/include/asm/compat.h     |  51 -------
+ arch/s390/kernel/compat_signal.c   | 102 -------------
+ arch/sparc/include/asm/compat.h    |  54 -------
+ arch/sparc/kernel/signal32.c       |  69 ---------
+ arch/tile/include/asm/compat.h     |  57 --------
+ arch/tile/kernel/compat_signal.c   |  75 ----------
+ arch/x86/include/asm/compat.h      |  39 +++--
+ arch/x86/kernel/signal_compat.c    | 285 ++++++++++++++++++++++++++++---------
+ fs/signalfd.c                      |  58 +++++---
+ include/linux/compat.h             |  66 ++++++++-
+ include/uapi/asm-generic/siginfo.h |   1 +
+ kernel/compat.c                    | 224 +++++++++++++++++++++++++++++
+ kernel/ptrace.c                    |   1 -
+ kernel/signal.c                    |  16 ++-
+ 22 files changed, 615 insertions(+), 1038 deletions(-)
+
+-- 
+2.6.2
