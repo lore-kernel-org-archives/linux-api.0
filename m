@@ -1,105 +1,188 @@
-From: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v6 3/4] of: overlay: add per overlay sysfs attributes
-Date: Thu, 5 Nov 2015 13:52:31 -0600
-Message-ID: <CAL_JsqL8+4HCrSFQf5oi1PdE0mQveL9OFPFPfVGT+xm-JeMO2g@mail.gmail.com>
-References: <1445368397-8732-1-git-send-email-pantelis.antoniou@konsulko.com>
- <1445368397-8732-4-git-send-email-pantelis.antoniou@konsulko.com>
- <CAL_JsqKFJttTsTfwZdMBPEjzqo_OLV=GpHTYZrDGnsgBjF3Bzg@mail.gmail.com>
- <8A0C91DE-EDF8-449D-918C-95C9807A7616@konsulko.com> <CAL_JsqLeQC7x3fuUFRm=MqHHwvDSLFz6GFxvOTCUToO-=yA0Kg@mail.gmail.com>
- <1148C5AF-CA7C-44CE-9CBD-BCD949C6B5FD@konsulko.com> <CAL_JsqJse8wyRRAf2dbVBYQ9QtxD6JL02kd8zGuFxK3gnY_0rQ@mail.gmail.com>
- <FA84C326-4CE3-4695-9F04-4AEF7A897BE7@konsulko.com>
+From: =?UTF-8?B?5oWV5Yas5Lqu?= <mudongliangabcd@gmail.com>
+Subject: [PATCH] uapi elf: delete unused macros
+Date: Thu, 5 Nov 2015 22:54:34 +0800
+Message-ID: <CAD-N9QU=C0dMN50F67GihvTBikUVmF4uSGvj=nZZfJpeum+=1A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <FA84C326-4CE3-4695-9F04-4AEF7A897BE7-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Cc: Frank Rowand <frowand.list-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: multipart/mixed; boundary="===============3122139937888910795=="
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: benh@kernel.crashing.org, paulus@samba.org, mpe@ellerman.id.au, takahiro.akashi@linaro.org, will.deacon@arm.com
+Cc: linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-kernel <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 22, 2015 at 11:15 AM, Pantelis Antoniou
-<pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
-> Hi Rob,
->
->> On Oct 22, 2015, at 00:52 , Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrot=
-e:
->>
->> On Wed, Oct 21, 2015 at 2:37 PM, Pantelis Antoniou
->> <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
->>> Hi Rob,
->>>
->>>> On Oct 21, 2015, at 00:54 , Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wr=
-ote:
->>>>
->>>> On Tue, Oct 20, 2015 at 4:11 PM, Pantelis Antoniou
->>>> <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
->>>>> Hi Rob,
->>>>>
->>>>>> On Oct 21, 2015, at 00:04 , Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> =
-wrote:
->>>>>>
->>>>>> On Tue, Oct 20, 2015 at 2:13 PM, Pantelis Antoniou
->>>>>> <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
->>>>>>> * A per overlay can_remove sysfs attribute that reports whether
->>>>>>> the overlay can be removed or not due to another overlapping ov=
-erlay.
->>>>>>>
->>>>>>> * A target sysfs attribute listing the target of each fragment,
->>>>>>> in a group named after the name of the fragment.
->>>>
->>>> [...]
->>>>
->>>>>>> @@ -255,6 +278,17 @@ err_fail:
->>>>>>>      return -EINVAL;
->>>>>>> }
->>>>>>>
->>>>>>> +static ssize_t target_show(struct kobject *kobj,
->>>>>>> +               struct fragment_attribute *fattr, char *buf)
->>>>>>> +{
->>>>>>> +       struct of_overlay_info *ovinfo =3D fattr->ovinfo;
->>>>>>> +
->>>>>>> +       return snprintf(buf, PAGE_SIZE, "%s\n",
->>>>>>> +                       of_node_full_name(ovinfo->target));
->>>>>>
->>>>>> This can be a link to the node itself, can't it?
->>>>>>
->>>>>
->>>>> Yes. Do you want it like this?
->>>>
->>>> Yes, hence the suggestion. Unless you see some reason why not.
->>>>
->>>
->>> Nope, can=E2=80=99t be done. The sysfs API only allows linking one =
-kobj to another.
->>> The kobj is the overlay but the target is in the fragment attribute=
- group.
->>
->> Can't we make the fragments kobj's as well?
->>
->
-> We could, but it break the mental model of what a kobj should represe=
-nt.
-> An overlay is an object which can be address, a fragment is never dir=
-ectly
-> exposed.
+--===============3122139937888910795==
+Content-Type: multipart/alternative; boundary=001a11c36c46e605890523cc4fa0
 
-But you are exposing fragments as there is a directory for each one.
+--001a11c36c46e605890523cc4fa0
+Content-Type: text/plain; charset=UTF-8
 
-Overlays are just logical collections of fragments. You could go as
-far to say overlays don't need to be exposed at all and only fragments
-need to be (not that we should). We already have overlays and nodes as
-kobjs, so I don't think fragments as kobjs breaks the mental model.
+delete unused macros and unify the comment format
 
-> TBH a link attribute is indeed better than a path attribute, but marg=
-inally so.
-> It=E2=80=99s not worth the trouble IMO.
+>From e21328f3450e841abf8a312865910806d0858373 Mon Sep 17 00:00:00 2001
+From: mudongliang <mudongliangabcd@gmail.com>
+Date: Thu, 5 Nov 2015 22:46:19 +0800
+Subject: [PATCH] unify the comment form and delete unused macros
 
-It is just an ABI we have to support forever...
+Signed-off-by: mudongliang <mudongliangabcd@gmail.com>
+---
+ arch/powerpc/boot/elf.h  | 6 ++----
+ include/uapi/linux/elf.h | 7 ++-----
+ 2 files changed, 4 insertions(+), 9 deletions(-)
 
-Rob
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" i=
-n
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/arch/powerpc/boot/elf.h b/arch/powerpc/boot/elf.h
+index 1941bc5..e6e00ed 100644
+--- a/arch/powerpc/boot/elf.h
++++ b/arch/powerpc/boot/elf.h
+@@ -133,15 +133,13 @@ typedef struct elf64_phdr {
+ #define ELFCLASSNONE 0 /* EI_CLASS */
+ #define ELFCLASS32 1
+ #define ELFCLASS64 2
+-#define ELFCLASSNUM 3
+
+-#define ELFDATANONE 0 /* e_ident[EI_DATA] */
++#define ELFDATANONE 0 /* EI_DATA */
+ #define ELFDATA2LSB 1
+ #define ELFDATA2MSB 2
+
+-#define EV_NONE 0 /* e_version, EI_VERSION */
++#define EV_NONE 0 /* EI_VERSION */
+ #define EV_CURRENT 1
+-#define EV_NUM 2
+
+ #define ELFOSABI_NONE 0
+ #define ELFOSABI_LINUX 3
+diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
+index 71e1d0e..bd049b2 100644
+--- a/include/uapi/linux/elf.h
++++ b/include/uapi/linux/elf.h
+@@ -342,15 +342,12 @@ typedef struct elf64_shdr {
+ #define ELFCLASSNONE 0 /* EI_CLASS */
+ #define ELFCLASS32 1
+ #define ELFCLASS64 2
+-#define ELFCLASSNUM 3
+
+-#define ELFDATANONE 0 /* e_ident[EI_DATA] */
++#define ELFDATANONE 0 /* EI_DATA */
+ #define ELFDATA2LSB 1
+-#define ELFDATA2MSB 2
+
+-#define EV_NONE 0 /* e_version, EI_VERSION */
++#define EV_NONE 0 /* EI_VERSION */
+ #define EV_CURRENT 1
+-#define EV_NUM 2
+
+ #define ELFOSABI_NONE 0
+ #define ELFOSABI_LINUX 3
+-- 
+2.1.4
+
+-- 
+My best regards to you.
+
+     No System Is Safe!
+     mudongliang
+
+--001a11c36c46e605890523cc4fa0
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>delete unused macros and unify the comment format</di=
+v><div><br></div><div>From e21328f3450e841abf8a312865910806d0858373 Mon Sep=
+ 17 00:00:00 2001</div><div>From: mudongliang &lt;<a href=3D"mailto:mudongl=
+iangabcd@gmail.com">mudongliangabcd@gmail.com</a>&gt;</div><div>Date: Thu, =
+5 Nov 2015 22:46:19 +0800</div><div>Subject: [PATCH] unify the comment form=
+ and delete unused macros</div><div><br></div><div>Signed-off-by: mudonglia=
+ng &lt;<a href=3D"mailto:mudongliangabcd@gmail.com">mudongliangabcd@gmail.c=
+om</a>&gt;</div><div>---</div><div>=C2=A0arch/powerpc/boot/elf.h =C2=A0| 6 =
+++----</div><div>=C2=A0include/uapi/linux/elf.h | 7 ++-----</div><div>=C2=
+=A02 files changed, 4 insertions(+), 9 deletions(-)</div><div><br></div><di=
+v>diff --git a/arch/powerpc/boot/elf.h b/arch/powerpc/boot/elf.h</div><div>=
+index 1941bc5..e6e00ed 100644</div><div>--- a/arch/powerpc/boot/elf.h</div>=
+<div>+++ b/arch/powerpc/boot/elf.h</div><div>@@ -133,15 +133,13 @@ typedef =
+struct elf64_phdr {</div><div>=C2=A0#define<span class=3D"" style=3D"white-=
+space:pre">	</span>ELFCLASSNONE<span class=3D"" style=3D"white-space:pre">	=
+</span>0<span class=3D"" style=3D"white-space:pre">	</span>/* EI_CLASS */</=
+div><div>=C2=A0#define<span class=3D"" style=3D"white-space:pre">	</span>EL=
+FCLASS32<span class=3D"" style=3D"white-space:pre">	</span>1</div><div>=C2=
+=A0#define<span class=3D"" style=3D"white-space:pre">	</span>ELFCLASS64<spa=
+n class=3D"" style=3D"white-space:pre">	</span>2</div><div>-#define<span cl=
+ass=3D"" style=3D"white-space:pre">	</span>ELFCLASSNUM<span class=3D"" styl=
+e=3D"white-space:pre">	</span>3</div><div>=C2=A0</div><div>-#define ELFDATA=
+NONE<span class=3D"" style=3D"white-space:pre">	</span>0<span class=3D"" st=
+yle=3D"white-space:pre">	</span>/* e_ident[EI_DATA] */</div><div>+#define E=
+LFDATANONE<span class=3D"" style=3D"white-space:pre">	</span>0<span class=
+=3D"" style=3D"white-space:pre">	</span>/* EI_DATA */</div><div>=C2=A0#defi=
+ne ELFDATA2LSB<span class=3D"" style=3D"white-space:pre">	</span>1</div><di=
+v>=C2=A0#define ELFDATA2MSB<span class=3D"" style=3D"white-space:pre">	</sp=
+an>2</div><div>=C2=A0</div><div>-#define EV_NONE<span class=3D"" style=3D"w=
+hite-space:pre">		</span>0<span class=3D"" style=3D"white-space:pre">	</spa=
+n>/* e_version, EI_VERSION */</div><div>+#define EV_NONE<span class=3D"" st=
+yle=3D"white-space:pre">		</span>0<span class=3D"" style=3D"white-space:pre=
+">	</span>/* EI_VERSION */</div><div>=C2=A0#define EV_CURRENT<span class=3D=
+"" style=3D"white-space:pre">	</span>1</div><div>-#define EV_NUM<span class=
+=3D"" style=3D"white-space:pre">		</span>2</div><div>=C2=A0</div><div>=C2=
+=A0#define ELFOSABI_NONE<span class=3D"" style=3D"white-space:pre">	</span>=
+0</div><div>=C2=A0#define ELFOSABI_LINUX<span class=3D"" style=3D"white-spa=
+ce:pre">	</span>3</div><div>diff --git a/include/uapi/linux/elf.h b/include=
+/uapi/linux/elf.h</div><div>index 71e1d0e..bd049b2 100644</div><div>--- a/i=
+nclude/uapi/linux/elf.h</div><div>+++ b/include/uapi/linux/elf.h</div><div>=
+@@ -342,15 +342,12 @@ typedef struct elf64_shdr {</div><div>=C2=A0#define<s=
+pan class=3D"" style=3D"white-space:pre">	</span>ELFCLASSNONE<span class=3D=
+"" style=3D"white-space:pre">	</span>0<span class=3D"" style=3D"white-space=
+:pre">		</span>/* EI_CLASS */</div><div>=C2=A0#define<span class=3D"" style=
+=3D"white-space:pre">	</span>ELFCLASS32<span class=3D"" style=3D"white-spac=
+e:pre">	</span>1</div><div>=C2=A0#define<span class=3D"" style=3D"white-spa=
+ce:pre">	</span>ELFCLASS64<span class=3D"" style=3D"white-space:pre">	</spa=
+n>2</div><div>-#define<span class=3D"" style=3D"white-space:pre">	</span>EL=
+FCLASSNUM<span class=3D"" style=3D"white-space:pre">	</span>3</div><div>=C2=
+=A0</div><div>-#define ELFDATANONE<span class=3D"" style=3D"white-space:pre=
+">	</span>0<span class=3D"" style=3D"white-space:pre">		</span>/* e_ident[E=
+I_DATA] */</div><div>+#define ELFDATANONE<span class=3D"" style=3D"white-sp=
+ace:pre">	</span>0<span class=3D"" style=3D"white-space:pre">		</span>/* EI=
+_DATA */</div><div>=C2=A0#define ELFDATA2LSB<span class=3D"" style=3D"white=
+-space:pre">	</span>1</div><div>-#define ELFDATA2MSB<span class=3D"" style=
+=3D"white-space:pre">	</span>2</div><div>=C2=A0</div><div>-#define EV_NONE<=
+span class=3D"" style=3D"white-space:pre">		</span>0<span class=3D"" style=
+=3D"white-space:pre">		</span>/* e_version, EI_VERSION */</div><div>+#defin=
+e EV_NONE<span class=3D"" style=3D"white-space:pre">		</span>0<span class=
+=3D"" style=3D"white-space:pre">		</span>/* EI_VERSION */</div><div>=C2=A0#=
+define EV_CURRENT<span class=3D"" style=3D"white-space:pre">	</span>1</div>=
+<div>-#define EV_NUM<span class=3D"" style=3D"white-space:pre">		</span>2</=
+div><div>=C2=A0</div><div>=C2=A0#define ELFOSABI_NONE<span class=3D"" style=
+=3D"white-space:pre">	</span>0</div><div>=C2=A0#define ELFOSABI_LINUX<span =
+class=3D"" style=3D"white-space:pre">	</span>3</div><div>--=C2=A0</div><div=
+>2.1.4</div><div><br></div>-- <br><div class=3D"gmail_signature"><div dir=
+=3D"ltr"><div><div dir=3D"ltr"><div><div dir=3D"ltr">My best regards to you=
+.<span style=3D"color:rgb(17,17,17);font-family:Helvetica,Arial,sans-serif;=
+font-size:12px;line-height:19.44px"><br></span></div><div dir=3D"ltr"><span=
+ style=3D"color:rgb(17,17,17);font-family:Helvetica,Arial,sans-serif;font-s=
+ize:12px;line-height:19.44px"><br></span></div><div dir=3D"ltr"><span style=
+=3D"color:rgb(17,17,17);font-family:Helvetica,Arial,sans-serif;font-size:12=
+px;line-height:19.44px">=C2=A0 =C2=A0 =C2=A0No System Is Safe!</span><div><=
+span style=3D"color:rgb(17,17,17);font-family:Helvetica,Arial,sans-serif;fo=
+nt-size:12px;line-height:19.44px">=C2=A0 =C2=A0 =C2=A0mudongliang</span></d=
+iv></div></div></div></div></div></div>
+</div>
+
+--001a11c36c46e605890523cc4fa0--
+
+--===============3122139937888910795==
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: inline
+
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KTGludXhwcGMt
+ZGV2IG1haWxpbmcgbGlzdApMaW51eHBwYy1kZXZAbGlzdHMub3psYWJzLm9yZwpodHRwczovL2xp
+c3RzLm96bGFicy5vcmcvbGlzdGluZm8vbGludXhwcGMtZGV2
+
+--===============3122139937888910795==--
