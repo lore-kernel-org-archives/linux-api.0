@@ -1,309 +1,51 @@
-From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Subject: [PATCH v3] keys, trusted: select hash algorithm for TPM2 chips
-Date: Thu,  5 Nov 2015 18:57:37 +0200
-Message-ID: <1446742659-11919-1-git-send-email-jarkko.sakkinen@linux.intel.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
-Sender: linux-doc-owner@vger.kernel.org
-To: Peter Huewe <peterhuewe@gmx.de>, Marcel Selhorst <tpmdd@selhorst.net>, Mimi Zohar <zohar@linux.vnet.ibm.com>
-Cc: Petko Manolov <petkan@mip-labs.com>, Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, "Mark D. Baushke" <mdb@juniper.net>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, David Safford <safford@us.ibm.com>, Jonathan Corbet <corbet@lwn.net>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Jason Gunthorpe <jgunthorpe@obsidianresearch.com>, David Howells <dhowells@redhat.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, "open list:KEYS-ENCRYPTED" <linux-security-module@vger.kernel.org>, "open list:KEYS-ENCRYPTED" <keyrings@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, "open list:CRYPTO API" <linux-crypto@vger.kernel.org>, "moderated list:TPM DEVICE DRIVER" <tpmdd-devel@lists.sourceforge.net>, "open list:ABI/API" <linux-api@vger.kernel.org>
+From: Punnaiah Choudary Kalluri <punnaiah.choudary.kalluri@xilinx.com>
+Subject: [PATCH] mtd: Expand the ecc placement locations to 1216
+Date: Thu, 5 Nov 2015 22:28:55 +0530
+Message-ID: <1446742735-20824-1-git-send-email-punnaia@xilinx.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: dwmw2@infradead.org, computersforpeace@gmail.com, michals@xilinx.com
+Cc: linux-mtd@lists.infradead.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, kpc528@gmail.com, kalluripunnaiahchoudary@gmail.com, Punnaiah Choudary Kalluri <punnaia@xilinx.com>
 List-Id: linux-api@vger.kernel.org
 
-Added 'hash=' option for selecting the hash algorithm for add_key()
-syscall and documentation for it.
+Device like MT29F32G08ABCDBJ4 have a writesize/oobsize of 16K/1216 Bytes.
+So, increasing the maximum ecc placement locations to 1216
 
-Added entry for sm3-256 to the following tables in order to support
-TPM_ALG_SM3_256:
-
-* hash_algo_name
-* hash_digest_size
-
-Includes support for the following hash algorithms:
-
-* sha1
-* sha256
-* sha384
-* sha512
-* sm3-256
-
-v2:
-
-* Added the missing dependency to CRYPTO_HASH_INFO
-
-v3:
-
-* Squashed patches into a single patch as the commits did not make
-  alone any sense.
-* Added a klog message when TPM 1.x is used for sealing and other than
-  SHA-1 is used as the hash algorithm.
-* Got rid of TPM2_HASH_COUNT and moved into ARRAY_SIZE(tpm2_hash_map).
-
-Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Signed-off-by: Punnaiah Choudary Kalluri <punnaia@xilinx.com>
 ---
- Documentation/security/keys-trusted-encrypted.txt |  3 ++
- crypto/hash_info.c                                |  2 ++
- drivers/char/tpm/tpm.h                            | 10 ++++--
- drivers/char/tpm/tpm2-cmd.c                       | 40 +++++++++++++++++++++--
- include/crypto/hash_info.h                        |  3 ++
- include/keys/trusted-type.h                       |  1 +
- include/uapi/linux/hash_info.h                    |  1 +
- security/keys/Kconfig                             |  1 +
- security/keys/trusted.c                           | 23 ++++++++++++-
- 9 files changed, 77 insertions(+), 7 deletions(-)
+ include/linux/mtd/mtd.h    | 2 +-
+ include/uapi/mtd/mtd-abi.h | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/Documentation/security/keys-trusted-encrypted.txt b/Documentation/security/keys-trusted-encrypted.txt
-index e105ae9..fd2565b 100644
---- a/Documentation/security/keys-trusted-encrypted.txt
-+++ b/Documentation/security/keys-trusted-encrypted.txt
-@@ -38,6 +38,9 @@ Usage:
-        pcrlock=	  pcr number to be extended to "lock" blob
-        migratable= 0|1 indicating permission to reseal to new PCR values,
-                    default 1 (resealing allowed)
-+       hash=      hash algorithm name as a string. For TPM 1.x the only
-+                  allowed value is sha1. For TPM 2.x the allowed values
-+		  are sha1, sha256, sha384, sha512 and sm3-256.
- 
- "keyctl print" returns an ascii hex copy of the sealed key, which is in standard
- TPM_STORED_DATA format.  The key length for new keys are always in bytes.
-diff --git a/crypto/hash_info.c b/crypto/hash_info.c
-index 3e7ff46..7b1e0b1 100644
---- a/crypto/hash_info.c
-+++ b/crypto/hash_info.c
-@@ -31,6 +31,7 @@ const char *const hash_algo_name[HASH_ALGO__LAST] = {
- 	[HASH_ALGO_TGR_128]	= "tgr128",
- 	[HASH_ALGO_TGR_160]	= "tgr160",
- 	[HASH_ALGO_TGR_192]	= "tgr192",
-+	[HASH_ALGO_SM3_256]	= "sm3-256",
- };
- EXPORT_SYMBOL_GPL(hash_algo_name);
- 
-@@ -52,5 +53,6 @@ const int hash_digest_size[HASH_ALGO__LAST] = {
- 	[HASH_ALGO_TGR_128]	= TGR128_DIGEST_SIZE,
- 	[HASH_ALGO_TGR_160]	= TGR160_DIGEST_SIZE,
- 	[HASH_ALGO_TGR_192]	= TGR192_DIGEST_SIZE,
-+	[HASH_ALGO_SM3_256]	= SM3256_DIGEST_SIZE,
- };
- EXPORT_SYMBOL_GPL(hash_digest_size);
-diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
-index a4257a3..cdd49cd 100644
---- a/drivers/char/tpm/tpm.h
-+++ b/drivers/char/tpm/tpm.h
-@@ -83,16 +83,20 @@ enum tpm2_structures {
+diff --git a/include/linux/mtd/mtd.h b/include/linux/mtd/mtd.h
+index f17fa75..1fd3cc6 100644
+--- a/include/linux/mtd/mtd.h
++++ b/include/linux/mtd/mtd.h
+@@ -95,7 +95,7 @@ struct mtd_oob_ops {
  };
  
- enum tpm2_return_codes {
--	TPM2_RC_INITIALIZE	= 0x0100,
--	TPM2_RC_TESTING		= 0x090A,
-+	TPM2_RC_HASH		= 0x0083, /* RC_FMT1 */
-+	TPM2_RC_INITIALIZE	= 0x0100, /* RC_VER1 */
- 	TPM2_RC_DISABLED	= 0x0120,
-+	TPM2_RC_TESTING		= 0x090A, /* RC_WARN */
- };
- 
- enum tpm2_algorithms {
- 	TPM2_ALG_SHA1		= 0x0004,
- 	TPM2_ALG_KEYEDHASH	= 0x0008,
- 	TPM2_ALG_SHA256		= 0x000B,
--	TPM2_ALG_NULL		= 0x0010
-+	TPM2_ALG_SHA384		= 0x000C,
-+	TPM2_ALG_SHA512		= 0x000D,
-+	TPM2_ALG_NULL		= 0x0010,
-+	TPM2_ALG_SM3_256	= 0x0012,
- };
- 
- enum tpm2_command_codes {
-diff --git a/drivers/char/tpm/tpm2-cmd.c b/drivers/char/tpm/tpm2-cmd.c
-index bd7039f..3acc7b5 100644
---- a/drivers/char/tpm/tpm2-cmd.c
-+++ b/drivers/char/tpm/tpm2-cmd.c
-@@ -16,6 +16,7 @@
-  */
- 
- #include "tpm.h"
-+#include <crypto/hash_info.h>
- #include <keys/trusted-type.h>
- 
- enum tpm2_object_attributes {
-@@ -104,6 +105,19 @@ struct tpm2_cmd {
- 	union tpm2_cmd_params	params;
- } __packed;
- 
-+struct tpm2_hash {
-+	unsigned int crypto_id;
-+	unsigned int tpm_id;
-+};
-+
-+static struct tpm2_hash tpm2_hash_map[] = {
-+	{HASH_ALGO_SHA1, TPM2_ALG_SHA1},
-+	{HASH_ALGO_SHA256, TPM2_ALG_SHA256},
-+	{HASH_ALGO_SHA384, TPM2_ALG_SHA384},
-+	{HASH_ALGO_SHA512, TPM2_ALG_SHA512},
-+	{HASH_ALGO_SM3_256, TPM2_ALG_SM3_256},
-+};
-+
+ #define MTD_MAX_OOBFREE_ENTRIES_LARGE	32
+-#define MTD_MAX_ECCPOS_ENTRIES_LARGE	640
++#define MTD_MAX_ECCPOS_ENTRIES_LARGE	1216
  /*
-  * Array with one entry per ordinal defining the maximum amount
-  * of time the chip could take to return the result. The values
-@@ -429,8 +443,24 @@ int tpm2_seal_trusted(struct tpm_chip *chip,
- {
- 	unsigned int blob_len;
- 	struct tpm_buf buf;
-+	u32 hash = TPM2_ALG_SHA256;
-+	int i;
- 	int rc;
- 
-+	if (options->hash) {
-+		for (i = 0; i < ARRAY_SIZE(tpm2_hash_map); i++) {
-+			if (options->hash == tpm2_hash_map[i].crypto_id) {
-+				hash = tpm2_hash_map[i].tpm_id;
-+				dev_dbg(chip->pdev, "%s: hash: %s 0x%08X\n",
-+					__func__, hash_algo_name[i], hash);
-+				break;
-+			}
-+		}
-+
-+		if (i == ARRAY_SIZE(tpm2_hash_map))
-+			return -EINVAL;
-+	}
-+
- 	rc = tpm_buf_init(&buf, TPM2_ST_SESSIONS, TPM2_CC_CREATE);
- 	if (rc)
- 		return rc;
-@@ -454,7 +484,7 @@ int tpm2_seal_trusted(struct tpm_chip *chip,
- 	tpm_buf_append_u16(&buf, 14);
- 
- 	tpm_buf_append_u16(&buf, TPM2_ALG_KEYEDHASH);
--	tpm_buf_append_u16(&buf, TPM2_ALG_SHA256);
-+	tpm_buf_append_u16(&buf, hash);
- 	tpm_buf_append_u32(&buf, TPM2_ATTR_USER_WITH_AUTH);
- 	tpm_buf_append_u16(&buf, 0); /* policy digest size */
- 	tpm_buf_append_u16(&buf, TPM2_ALG_NULL);
-@@ -487,8 +517,12 @@ int tpm2_seal_trusted(struct tpm_chip *chip,
- out:
- 	tpm_buf_destroy(&buf);
- 
--	if (rc > 0)
--		rc = -EPERM;
-+	if (rc > 0) {
-+		if ((rc & TPM2_RC_HASH) == TPM2_RC_HASH)
-+			rc = -EINVAL;
-+		else
-+			rc = -EPERM;
-+	}
- 
- 	return rc;
- }
-diff --git a/include/crypto/hash_info.h b/include/crypto/hash_info.h
-index e1e5a3e..56f217d 100644
---- a/include/crypto/hash_info.h
-+++ b/include/crypto/hash_info.h
-@@ -34,6 +34,9 @@
- #define TGR160_DIGEST_SIZE 20
- #define TGR192_DIGEST_SIZE 24
- 
-+/* not defined in include/crypto/ */
-+#define SM3256_DIGEST_SIZE 32
-+
- extern const char *const hash_algo_name[HASH_ALGO__LAST];
- extern const int hash_digest_size[HASH_ALGO__LAST];
- 
-diff --git a/include/keys/trusted-type.h b/include/keys/trusted-type.h
-index f91ecd9..a6a1008 100644
---- a/include/keys/trusted-type.h
-+++ b/include/keys/trusted-type.h
-@@ -36,6 +36,7 @@ struct trusted_key_options {
- 	uint32_t pcrinfo_len;
- 	unsigned char pcrinfo[MAX_PCRINFO_SIZE];
- 	int pcrlock;
-+	uint32_t hash;
+  * Internal ECC layout control structure. For historical reasons, there is a
+  * similar, smaller struct nand_ecclayout_user (in mtd-abi.h) that is retained
+diff --git a/include/uapi/mtd/mtd-abi.h b/include/uapi/mtd/mtd-abi.h
+index 763bb69..c4d592c 100644
+--- a/include/uapi/mtd/mtd-abi.h
++++ b/include/uapi/mtd/mtd-abi.h
+@@ -220,8 +220,8 @@ struct nand_oobfree {
+ 	__u32 length;
  };
  
- extern struct key_type key_type_trusted;
-diff --git a/include/uapi/linux/hash_info.h b/include/uapi/linux/hash_info.h
-index ca18c45..ebf8fd8 100644
---- a/include/uapi/linux/hash_info.h
-+++ b/include/uapi/linux/hash_info.h
-@@ -31,6 +31,7 @@ enum hash_algo {
- 	HASH_ALGO_TGR_128,
- 	HASH_ALGO_TGR_160,
- 	HASH_ALGO_TGR_192,
-+	HASH_ALGO_SM3_256,
- 	HASH_ALGO__LAST
- };
- 
-diff --git a/security/keys/Kconfig b/security/keys/Kconfig
-index 72483b8..fe4d74e 100644
---- a/security/keys/Kconfig
-+++ b/security/keys/Kconfig
-@@ -54,6 +54,7 @@ config TRUSTED_KEYS
- 	select CRYPTO
- 	select CRYPTO_HMAC
- 	select CRYPTO_SHA1
-+	select CRYPTO_HASH_INFO
- 	help
- 	  This option provides support for creating, sealing, and unsealing
- 	  keys in the kernel. Trusted keys are random number symmetric keys,
-diff --git a/security/keys/trusted.c b/security/keys/trusted.c
-index 903dace..dc1f50c 100644
---- a/security/keys/trusted.c
-+++ b/security/keys/trusted.c
-@@ -11,6 +11,7 @@
-  * See Documentation/security/keys-trusted-encrypted.txt
-  */
- 
-+#include <crypto/hash_info.h>
- #include <linux/uaccess.h>
- #include <linux/module.h>
- #include <linux/init.h>
-@@ -710,7 +711,8 @@ enum {
- 	Opt_err = -1,
- 	Opt_new, Opt_load, Opt_update,
- 	Opt_keyhandle, Opt_keyauth, Opt_blobauth,
--	Opt_pcrinfo, Opt_pcrlock, Opt_migratable
-+	Opt_pcrinfo, Opt_pcrlock, Opt_migratable,
-+	Opt_hash,
- };
- 
- static const match_table_t key_tokens = {
-@@ -723,6 +725,7 @@ static const match_table_t key_tokens = {
- 	{Opt_pcrinfo, "pcrinfo=%s"},
- 	{Opt_pcrlock, "pcrlock=%s"},
- 	{Opt_migratable, "migratable=%s"},
-+	{Opt_hash, "hash=%s"},
- 	{Opt_err, NULL}
- };
- 
-@@ -736,6 +739,7 @@ static int getoptions(char *c, struct trusted_key_payload *pay,
- 	int res;
- 	unsigned long handle;
- 	unsigned long lock;
-+	int i;
- 
- 	while ((p = strsep(&c, " \t"))) {
- 		if (*p == '\0' || *p == ' ' || *p == '\t')
-@@ -787,6 +791,23 @@ static int getoptions(char *c, struct trusted_key_payload *pay,
- 				return -EINVAL;
- 			opt->pcrlock = lock;
- 			break;
-+		case Opt_hash:
-+			for (i = 0; i < HASH_ALGO__LAST; i++) {
-+				if (!strcmp(args[0].from, hash_algo_name[i])) {
-+					opt->hash = i;
-+					break;
-+				}
-+			}
-+			res = tpm_is_tpm2(TPM_ANY_NUM);
-+			if (res < 0)
-+				return res;
-+			if (i == HASH_ALGO__LAST)
-+				return -EINVAL;
-+			if  (!res && i != HASH_ALGO_SHA1) {
-+				pr_info("trusted_key: TPM 1.x only supports SHA-1.\n");
-+				return -EINVAL;
-+			}
-+			break;
- 		default:
- 			return -EINVAL;
- 		}
+-#define MTD_MAX_OOBFREE_ENTRIES	8
+-#define MTD_MAX_ECCPOS_ENTRIES	64
++#define MTD_MAX_OOBFREE_ENTRIES	32
++#define MTD_MAX_ECCPOS_ENTRIES	1216
+ /*
+  * OBSOLETE: ECC layout control structure. Exported to user-space via ioctl
+  * ECCGETLAYOUT for backwards compatbility and should not be mistaken as a
 -- 
-2.5.0
-
+2.1.2
