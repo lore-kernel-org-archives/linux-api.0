@@ -1,112 +1,77 @@
-From: Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 2/2] Input: uinput: Sanity check on ff_effects_max and
- EV_FF
-Date: Thu, 5 Nov 2015 17:32:07 -0800
-Message-ID: <20151106013207.GA24081@dtor-ws>
-References: <1442510988-3164-1-git-send-email-elias.vds@gmail.com>
- <1442510988-3164-3-git-send-email-elias.vds@gmail.com>
- <20151015005226.GD3673@dtor-ws>
- <CADbOyBSeXDLzaSj=z3W2oMzg1DV3fP651wzLztUezSmf3B05qA@mail.gmail.com>
+From: mudongliang <mudongliangabcd@gmail.com>
+Subject: [PATCH] uapi elf: delete unused macros
+Date: Fri, 06 Nov 2015 22:45:47 +0800
+Message-ID: <563CBD1B.1060407@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CADbOyBSeXDLzaSj=z3W2oMzg1DV3fP651wzLztUezSmf3B05qA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Elias Vanderstuyft <elias.vds-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: "open list:HID CORE LAYER" <linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: benh@kernel.crashing.org, mpe@ellerman.id.au, paulus@samba.org, mudongliangabcd@gmail.com, will.deacon@arm.com, takahiro.akashi@linaro.org
+Cc: linuxppc-dev@lists.ozlabs.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 05, 2015 at 11:34:55PM +0100, Elias Vanderstuyft wrote:
-> Hi Dmitry,
-> 
-> Excuse me for the long delay.
-> 
-> On Thu, Oct 15, 2015 at 2:52 AM, Dmitry Torokhov
-> <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > On Thu, Sep 17, 2015 at 07:29:48PM +0200, Elias Vanderstuyft wrote:
-> >> Currently the user can specify a non-zero value for ff_effects_max,
-> >> without setting the EV_FF bit.
-> >> Inversely,
-> >> the user can also set ff_effects_max to zero with the EV_FF bit set,
-> >> in this case the uninitialized method ff->upload can be dereferenced,
-> >> resulting in a kernel oops.
-> >>
-> >> Instead of adding a check in uinput_create_device() and
-> >> omitting setup of ff-core infrastructure silently in case the check fails,
-> >> perform the check early in uinput_setup_device(),
-> >> and print a helpful message and return -EINVAL in case the check fails.
-> >>
-> >> Signed-off-by: Elias Vanderstuyft <elias.vds-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> >> ---
-> >>  drivers/input/misc/uinput.c | 15 +++++++++++++++
-> >>  1 file changed, 15 insertions(+)
-> >>
-> >> diff --git a/drivers/input/misc/uinput.c b/drivers/input/misc/uinput.c
-> >> index 345df9b..3a90a16 100644
-> >> --- a/drivers/input/misc/uinput.c
-> >> +++ b/drivers/input/misc/uinput.c
-> >> @@ -393,6 +393,21 @@ static int uinput_setup_device(struct uinput_device *udev,
-> >>       if (IS_ERR(user_dev))
-> >>               return PTR_ERR(user_dev);
-> >>
-> >> +     if (!!user_dev->ff_effects_max ^ test_bit(EV_FF, dev->evbit)) {
-> >> +             if (user_dev->ff_effects_max)
-> >> +                     printk(KERN_DEBUG
-> >> +                             "%s: ff_effects_max (%u) should be zero "
-> >> +                             "when FF_BIT is not set\n",
-> >> +                             UINPUT_NAME, user_dev->ff_effects_max);
-> >> +             else
-> >> +                     printk(KERN_DEBUG
-> >> +                             "%s: ff_effects_max should be non-zero "
-> >> +                             "when FF_BIT is set\n",
-> >> +                             UINPUT_NAME);
-> >
-> > I do not think this is the right place for this check: userspace is
-> > allowed to write device structure before calling any ioctls to set
-> > various bits. Also, userspace doe snot have to explicitly set EV_FF bit
-> > as input_ff_create() does it for us.
-> 
-> OK, I put it here to be consistent with the uinput_validate_absbits() function,
-> which checks absbit in case the EV_ABS bit is set,
-> but I incorrectly assumed the EV_ABS bit was required to be set.
-> 
-> > I think the check should be in uinput_create_device() and we should only
-> > check case when udev->ff_effects_max is 0 but EV_FF is set.
-> 
-> This made me think about the whole idea whether or not
-> allowing ff_effects_max to be zero is possible for a FF device.
-> I think it is perfectly possible to have a FF device with no support
-> for uploading effects,
-> but with an adjustable AUTOCENTER-force axis.
-> Or, more exotically, a device with a trigger-button which on press
-> automatically emits rumble,
-> with adjustable GAIN.
-> 
-> The only places where we'd need to change code for allowing this,
-> is in:
-> - http://lxr.free-electrons.com/source/drivers/input/ff-core.c?v=4.3#L316
->     : remove if-then-block
-> - http://lxr.free-electrons.com/source/drivers/input/misc/uinput.c?v=4.3#L266
->     : change if-test to "udev->ff_effects_max || test_bit(EV_FF, dev->evbit)"
-> Of course, the latter change may conflict with your initial reply:
-> userspace does not have to explicitly set the EV_FF bit in advance;
-> however it does make sense to set the bit if e.g. only FF_AUTOCENTER
-> support is available,
-> but no uploading of effects (ff->upload and friends will still be set,
-> but not used, thanks to check_effect_access()).
-> 
-> What do you think about this: should I go with "forbid ff_effects_max
-> to be zero, and check on it" or "allow ff_effects_max to be zero"?
-> My previous patches wouldn't conflict with either options.
+>From 13f516acc709d88d3162e92bc891c8e39cc9fc1a Mon Sep 17 00:00:00 2001
+From: mudongliang <mudongliangabcd@gmail.com>
+Date: Fri, 6 Nov 2015 14:35:19 +0800
+Subject: [PATCH] unify the comment form and delete unused macros
 
-I do not think I ever saw a device that would not support any FF effects
-but would need autocenter, so I'd disallowed max effects being 0.
+Signed-off-by: mudongliang <mudongliangabcd@gmail.com>
+---
+ arch/powerpc/boot/elf.h  | 6 ++----
+ include/uapi/linux/elf.h | 6 ++----
+ 2 files changed, 4 insertions(+), 8 deletions(-)
 
-By the way, there is a batch from David/Benjamin reworking the uinput
-device setup, be mindful of it when adjusting your patch please.
+diff --git a/arch/powerpc/boot/elf.h b/arch/powerpc/boot/elf.h
+index 1941bc5..e6e00ed 100644
+--- a/arch/powerpc/boot/elf.h
++++ b/arch/powerpc/boot/elf.h
+@@ -133,15 +133,13 @@ typedef struct elf64_phdr {
+ #define	ELFCLASSNONE	0	/* EI_CLASS */
+ #define	ELFCLASS32	1
+ #define	ELFCLASS64	2
+-#define	ELFCLASSNUM	3
+ 
+-#define ELFDATANONE	0	/* e_ident[EI_DATA] */
++#define ELFDATANONE	0	/* EI_DATA */
+ #define ELFDATA2LSB	1
+ #define ELFDATA2MSB	2
+ 
+-#define EV_NONE		0	/* e_version, EI_VERSION */
++#define EV_NONE		0	/* EI_VERSION */
+ #define EV_CURRENT	1
+-#define EV_NUM		2
+ 
+ #define ELFOSABI_NONE	0
+ #define ELFOSABI_LINUX	3
+diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
+index 71e1d0e..ff81b20 100644
+--- a/include/uapi/linux/elf.h
++++ b/include/uapi/linux/elf.h
+@@ -342,15 +342,13 @@ typedef struct elf64_shdr {
+ #define	ELFCLASSNONE	0		/* EI_CLASS */
+ #define	ELFCLASS32	1
+ #define	ELFCLASS64	2
+-#define	ELFCLASSNUM	3
+ 
+-#define ELFDATANONE	0		/* e_ident[EI_DATA] */
++#define ELFDATANONE	0		/* EI_DATA */
+ #define ELFDATA2LSB	1
+ #define ELFDATA2MSB	2
+ 
+-#define EV_NONE		0		/* e_version, EI_VERSION */
++#define EV_NONE		0		/* EI_VERSION */
+ #define EV_CURRENT	1
+-#define EV_NUM		2
+ 
+ #define ELFOSABI_NONE	0
+ #define ELFOSABI_LINUX	3
+-- 
+2.1.4
 
-Thanks.
 
 -- 
-Dmitry
+My best regards to you.
+
+     No System Is Safe!
+     mudongliang
