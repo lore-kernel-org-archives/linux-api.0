@@ -1,41 +1,114 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [v15 0/4] ext4: add project quota support
-Date: Mon, 9 Nov 2015 08:28:30 +1100
-Message-ID: <20151108212830.GL19199@dastard>
-References: <1442146833-13652-1-git-send-email-lixi@ddn.com>
- <43B1BB97-8D53-4D93-9B57-B5E2048F7E7A@dilger.ca>
- <CAPTn0cBp4d09u9XzQm2cXzd6kcE0+FDRX0b_H=xJBZT-i5eKcw@mail.gmail.com>
- <7360A48E-8576-49DB-878B-DFC2EFC83BC4@ddn.com>
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v13 45/51] sunrpc: Allow to demand-allocate pages to
+ encode into
+Date: Sun, 8 Nov 2015 23:19:35 +0100
+Message-ID: <CAHc6FU6mmJj0N6Jq1_fp59kv5h3XeuLUamfNg3iNo64=+rTYCA@mail.gmail.com>
+References: <1446563847-14005-1-git-send-email-agruenba@redhat.com>
+	<1446563847-14005-46-git-send-email-agruenba@redhat.com>
+	<CAHQdGtScoRb-722ES168O8tkp-Rbvwe6bZ=70WwgiXpCC3vsHw@mail.gmail.com>
+	<CAHc6FU5xkjWJeGFR5mO8+OAEMwwU6yWK7H8CV1fn5dk-LS23-g@mail.gmail.com>
+	<CAHQdGtQitLZq9fKHhzZbqS5ESRYNgNpw=M+y715mWMjFi-cgNQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <7360A48E-8576-49DB-878B-DFC2EFC83BC4-LfVdkaOWEx8@public.gmane.org>
+In-Reply-To: <CAHQdGtQitLZq9fKHhzZbqS5ESRYNgNpw=M+y715mWMjFi-cgNQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shuichi Ihara <sihara-LfVdkaOWEx8@public.gmane.org>
-Cc: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, =?utf-8?B?0JTQvNC40YLRgNC40Lkg0JzQvtC90LDRhdC+0LI=?= <dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Shuichi Ihara <ihashu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 05, 2015 at 03:13:10PM +0000, Shuichi Ihara wrote:
-> Hello Ted, Andreas,
-> 
-> Shilong posted an email here a week ago below.
-> http://lists.openwall.net/linux-ext4/2015/10/30/2
-> 
-> we identified 10 project quota related xfstest and ported them into ext4/xxx.
-> test number are 304, 305, 299, 244, 196, 134, 108, 107, 106, 050 in xfs.
-> 
-> 
-> We ported 9/10 tests into ext4/xxx
-> ext4/050 ext4/106 ext4/107 ext4/108 ext4/196 ext4/244 ext4/299 ext4/400 ext4/401
+On Thu, Nov 5, 2015 at 4:57 PM, Trond Myklebust
+<trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org> wrote:
+> On Thu, Nov 5, 2015 at 6:07 AM, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>> Trond,
+>>
+>> On Tue, Nov 3, 2015 at 5:25 PM, Trond Myklebust
+>> <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org> wrote:
+>>> On Tue, Nov 3, 2015 at 10:17 AM, Andreas Gruenbacher
+>>> <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>>>> When encoding large, variable-length objects such as acls into xdr_bufs,
+>>>> it is easier to allocate buffer pages on demand rather than precomputing
+>>>> the required buffer size.
+>>>
+>>> NACK. We're not doing allocations from inside the XDR encoders. This
+>>> can and should be done before calling into the SUNRPC layer.
+>>
+>> an XDR-encoded ACL can be up to 64k (16 pages) in size. In practice,
+>> large ACLs like that will almost never occur and almost all ACLs will
+>> fit into a single page though.
+>>
+>> The XDR-encoded ACL contains strings for the user and group names
+>> which need to be looked up when the idmapper is used. Those lookups
+>> are somewhat expensive; in addition, the lookup results can change
+>> over time. When precomputing the size, allocating space, and then
+>> encoding the ACL, we could run out of space when encoding.
+>>
+>> So we could always allocate the maximum 16 pages, encode the acl, and
+>> free the unused pages. This would be rather wasteful though.
+>>
+>> Given how simple it is to allocate pages as we go, this seems the
+>> better choice here. This doesn't break any existing code either; NULL
+>> page pointers would have oopsed in xdr_get_next_encode_buffer before.
+>>
+>> From the memory management point of view, there is no difference in
+>> preallocating GFP_NOFS pages and allocating them on demand; the pages
+>> are allocated in the same task and locking context in both cases.
+>>
+>> So could you please explain why you object to this change?
+>
+> Allocating memory deep in the bowels of the RPC code with the
+> expectation that it will be freed by the caller of the RPC request is
+> a layering violation of the ugliest sort.
 
-Please make them generic tests - the ext4 project quota
-functioanlity should work with those tests being completely
-unchanged except for a "_requires_project_quota()" function...
+Ah, there we have it, Godwin's Law for software discussions.
 
-Cheers,
+What happens here is the following: the caller sets up an xdr_stream
+that contains an array of NULL page pointers (__nfs4_proc_set_acl ->
+nfs4_encode_acl -> xdr_init_encode_pages). It does so on purpose to
+tell the XDR layer to allocate pages for it as needed, and it knows it
+is responsible for later freeing those pages.
 
-Dave.
--- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+Without this patch, the XDR layer would immediately Oops when hitting
+a NULL page pointer. This tells us that the XDR layer is so far not
+prepared to handle NULL page pointers, and that we can assign a
+meaning to NULL page pointers without affecting existing callers.
+
+Using the existing XDR layer for XDR-encoding ACLs makes sense because
+the XDR layer already knows how to align things, encode into multiple
+pages, handle strings that wrap across pages, etc. I really don't want
+to duplicate all that for ACLs.
+
+> How is anyone who is
+> unfamiliar with the code going to be able to understand what is going
+> on without tracing through 1000 lines of code to spot where the
+> allocation is happening?
+
+Somebody unfamiliar with the existing code will not understand it
+without putting some effort in, either. What do you expect? Besides,
+the caller doesn't care where the allocation is happening, it just
+cares that it is happening when it should.
+
+> Aside from that, we do not want any non-critical blocking while
+> holding the RPC socket lock. Your allocation request will block all
+> further traffic to the server until it is satisfied. That includes
+> blocking page writeback, which might actually free up memory to
+> satisfy the allocation.
+>
+> As I said above, there is no reason whatsoever to have to do all this
+> inside encode_setacl(). The entire ACL encoding into pages can be done
+> before even calling into the RPC layer, just like we do today.
+
+You have pointed that out before, and as a consequence, it was fixed
+in the July 22 snapshot (https://lwn.net/Articles/652058/):
+
+    * Changes to the nfs patches: acls are now encoded above the sunrpc
+      layer. This means we can no longer encode small acls directly into the
+      scratch area of an xdr_buf, we always have to allocate extra memory.
+      But we also don't need to touch the nfs sunrpc code, which Trond objected
+      to.
+
+Since then, the ACL encoding happens in __nfs4_proc_set_acl, before
+calling into the RPC layer.
+
+Thanks,
+Andreas
