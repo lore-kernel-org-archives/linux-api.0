@@ -1,308 +1,389 @@
-From: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
-Subject: Re: [PATCH v14 02/22] vfs: Add MAY_CREATE_FILE and MAY_CREATE_DIR permission flags
-Date: Sun, 8 Nov 2015 01:18:55 -0700
-Message-ID: <0B5A4519-9506-41AA-9AA9-A67EA070E6F8@dilger.ca>
-References: <1446723580-3747-1-git-send-email-agruenba@redhat.com> <1446723580-3747-3-git-send-email-agruenba@redhat.com> <ABAAFEBD-0C80-41A3-8D29-F2AB9BAF1823@dilger.ca> <1446918268-858-1-git-send-email-agruenba@redhat.com>
-Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2104\))
-Content-Type: multipart/signed; boundary="Apple-Mail=_28C5425C-AF5E-40F9-B6EB-6C6221836E29"; protocol="application/pgp-signature"; micalg=pgp-sha256
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1446918268-858-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Jann Horn <jann@thejh.net>
+Subject: [PATCH] ptrace: use fsuid, fsgid, effective creds for fs access checks
+Date: Sun,  8 Nov 2015 13:08:36 +0100
+Message-ID: <1446984516-1784-1-git-send-email-jann@thejh.net>
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "Eric W. Biederman" <ebiederm@xmission.com>, Joe Perches <joe@perches.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, security@kernel.org, Willy Tarreau <w@1wt.eu>, Kees Cook <keescook@google.com>, Jann Horn <jann@thejh.net>
 List-Id: linux-api@vger.kernel.org
 
+By checking the effective credentials instead of the real UID /
+permitted capabilities, ensure that the calling process actually
+intended to use its credentials.
 
---Apple-Mail=_28C5425C-AF5E-40F9-B6EB-6C6221836E29
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain;
-	charset=us-ascii
+To ensure that all ptrace checks use the correct caller
+credentials (e.g. in case out-of-tree code or newly added code
+omits the PTRACE_MODE_*CREDS flag), use two new flags and
+require one of them to be set.
 
-On Nov 7, 2015, at 10:44 AM, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> =
-wrote:
->=20
-> On Fri, Nov 6, 2015 at 9:58 PM, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org> =
-wrote:
->> I thought you proposed adding an enum for these parameters, and =
-possibly
->> making them a single parameter flag, to make the code in the caller =
-more
->> readable.
->=20
-> No, the result would just be different but not any better; vfs_rename =
-would
-> become messy.  I've played with this patch some more, and I find the =
-approach
-> below which splits may_delete into may_delete and may_replace much =
-better.
-> What do you think?
+The problem was that when a privileged task had temporarily dropped
+its privileges, e.g. by calling setreuid(0, user_uid), with the
+intent to perform following syscalls with the credentials of
+a user, it still passed ptrace access checks that the user would
+not be able to pass.
 
-This is definitely better than the previous patch.  You can add:
+While an attacker should not be able to convince the privileged
+task to perform a ptrace() syscall, this is a problem because the
+ptrace access check is reused for things in procfs.
 
-Reviewed-by: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
+In particular, the following somewhat interesting procfs entries
+only rely on ptrace access checks:
 
-Cheers, Andreas
+ /proc/$pid/stat - uses the check for determining whether pointers
+     should be visible, useful for bypassing ASLR
+ /proc/$pid/maps - also useful for bypassing ASLR
+ /proc/$pid/cwd - useful for gaining access to restricted
+     directories that contain files with lax permissions, e.g. in
+     this scenario:
+     lrwxrwxrwx root root /proc/13020/cwd -> /root/foobar
+     drwx------ root root /root
+     drwxr-xr-x root root /root/foobar
+     -rw-r--r-- root root /root/foobar/secret
 
-> ---------- 8< ----------
->=20
-> Richacls distinguish between creating non-directories and directories. =
-To
-> support that, add an isdir parameter to may_create(). When checking
-> inode_permission() for create permission, pass in an additional
-> MAY_CREATE_FILE or MAY_CREATE_DIR mask flag.
->=20
-> Add may_replace() to allow checking for delete and create access when
-> replacing an existing file in vfs_rename().
->=20
-> Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Reviewed-by: J. Bruce Fields <bfields-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> ---
-> fs/namei.c         | 49 =
-+++++++++++++++++++++++++++++++++----------------
-> include/linux/fs.h |  2 ++
-> 2 files changed, 35 insertions(+), 16 deletions(-)
->=20
-> diff --git a/fs/namei.c b/fs/namei.c
-> index 224ecf1..4e5dc2f 100644
-> --- a/fs/namei.c
-> +++ b/fs/namei.c
-> @@ -453,7 +453,9 @@ static int sb_permission(struct super_block *sb, =
-struct inode *inode, int mask)
->  * this, letting us set arbitrary permissions for filesystem access =
-without
->  * changing the "normal" UIDs which are used for other things.
->  *
-> - * When checking for MAY_APPEND, MAY_WRITE must also be set in @mask.
-> + * MAY_WRITE must be set in @mask whenever MAY_APPEND, =
-MAY_CREATE_FILE, or
-> + * MAY_CREATE_DIR are set.  That way, file systems that don't support =
-these
-> + * permissions will check for MAY_WRITE instead.
->  */
-> int inode_permission(struct inode *inode, int mask)
-> {
-> @@ -2549,7 +2551,8 @@ EXPORT_SYMBOL(__check_sticky);
->  * 10. We don't allow removal of NFS sillyrenamed files; it's handled =
-by
->  *     nfs_async_unlink().
->  */
-> -static int may_delete(struct inode *dir, struct dentry *victim, bool =
-isdir)
-> +static int may_delete_replace(struct inode *dir, struct dentry =
-*victim,
-> +			      bool isdir, int mask)
-> {
-> 	struct inode *inode =3D d_backing_inode(victim);
-> 	int error;
-> @@ -2561,7 +2564,7 @@ static int may_delete(struct inode *dir, struct =
-dentry *victim, bool isdir)
-> 	BUG_ON(victim->d_parent->d_inode !=3D dir);
-> 	audit_inode_child(dir, victim, AUDIT_TYPE_CHILD_DELETE);
->=20
-> -	error =3D inode_permission(dir, MAY_WRITE | MAY_EXEC);
-> +	error =3D inode_permission(dir, mask | MAY_WRITE | MAY_EXEC);
-> 	if (error)
-> 		return error;
-> 	if (IS_APPEND(dir))
-> @@ -2584,6 +2587,18 @@ static int may_delete(struct inode *dir, struct =
-dentry *victim, bool isdir)
-> 	return 0;
-> }
->=20
-> +static int may_delete(struct inode *dir, struct dentry *victim, bool =
-isdir)
-> +{
-> +	return may_delete_replace(dir, victim, isdir, 0);
-> +}
-> +
-> +static int may_replace(struct inode *dir, struct dentry *victim, bool =
-isdir)
-> +{
-> +	int mask =3D isdir ? MAY_CREATE_DIR : MAY_CREATE_FILE;
-> +
-> +	return may_delete_replace(dir, victim, isdir, mask);
-> +}
-> +
-> /*	Check whether we can create an object with dentry child in =
-directory
->  *  dir.
->  *  1. We can't do it if child already exists (open has special =
-treatment for
-> @@ -2592,14 +2607,16 @@ static int may_delete(struct inode *dir, =
-struct dentry *victim, bool isdir)
->  *  3. We should have write and exec permissions on dir
->  *  4. We can't do it if dir is immutable (done in permission())
->  */
-> -static inline int may_create(struct inode *dir, struct dentry *child)
-> +static inline int may_create(struct inode *dir, struct dentry *child, =
-bool isdir)
-> {
-> +	int mask =3D isdir ? MAY_CREATE_DIR : MAY_CREATE_FILE;
-> +
-> 	audit_inode_child(dir, child, AUDIT_TYPE_CHILD_CREATE);
-> 	if (child->d_inode)
-> 		return -EEXIST;
-> 	if (IS_DEADDIR(dir))
-> 		return -ENOENT;
-> -	return inode_permission(dir, MAY_WRITE | MAY_EXEC);
-> +	return inode_permission(dir, MAY_WRITE | MAY_EXEC | mask);
-> }
->=20
-> /*
-> @@ -2649,7 +2666,7 @@ EXPORT_SYMBOL(unlock_rename);
-> int vfs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
-> 		bool want_excl)
-> {
-> -	int error =3D may_create(dir, dentry);
-> +	int error =3D may_create(dir, dentry, false);
-> 	if (error)
-> 		return error;
->=20
-> @@ -3494,7 +3511,7 @@ EXPORT_SYMBOL(user_path_create);
->=20
-> int vfs_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, =
-dev_t dev)
-> {
-> -	int error =3D may_create(dir, dentry);
-> +	int error =3D may_create(dir, dentry, false);
->=20
-> 	if (error)
-> 		return error;
-> @@ -3586,7 +3603,7 @@ SYSCALL_DEFINE3(mknod, const char __user *, =
-filename, umode_t, mode, unsigned, d
->=20
-> int vfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
-> {
-> -	int error =3D may_create(dir, dentry);
-> +	int error =3D may_create(dir, dentry, true);
-> 	unsigned max_links =3D dir->i_sb->s_max_links;
->=20
-> 	if (error)
-> @@ -3667,7 +3684,7 @@ EXPORT_SYMBOL(dentry_unhash);
->=20
-> int vfs_rmdir(struct inode *dir, struct dentry *dentry)
-> {
-> -	int error =3D may_delete(dir, dentry, 1);
-> +	int error =3D may_delete(dir, dentry, true);
->=20
-> 	if (error)
-> 		return error;
-> @@ -3789,7 +3806,7 @@ SYSCALL_DEFINE1(rmdir, const char __user *, =
-pathname)
-> int vfs_unlink(struct inode *dir, struct dentry *dentry, struct inode =
-**delegated_inode)
-> {
-> 	struct inode *target =3D dentry->d_inode;
-> -	int error =3D may_delete(dir, dentry, 0);
-> +	int error =3D may_delete(dir, dentry, false);
->=20
-> 	if (error)
-> 		return error;
-> @@ -3923,7 +3940,7 @@ SYSCALL_DEFINE1(unlink, const char __user *, =
-pathname)
->=20
-> int vfs_symlink(struct inode *dir, struct dentry *dentry, const char =
-*oldname)
-> {
-> -	int error =3D may_create(dir, dentry);
-> +	int error =3D may_create(dir, dentry, false);
->=20
-> 	if (error)
-> 		return error;
-> @@ -4006,7 +4023,7 @@ int vfs_link(struct dentry *old_dentry, struct =
-inode *dir, struct dentry *new_de
-> 	if (!inode)
-> 		return -ENOENT;
->=20
-> -	error =3D may_create(dir, new_dentry);
-> +	error =3D may_create(dir, new_dentry, false);
-> 	if (error)
-> 		return error;
->=20
-> @@ -4199,14 +4216,14 @@ int vfs_rename(struct inode *old_dir, struct =
-dentry *old_dentry,
-> 		return error;
->=20
-> 	if (!target) {
-> -		error =3D may_create(new_dir, new_dentry);
-> +		error =3D may_create(new_dir, new_dentry, is_dir);
-> 	} else {
-> 		new_is_dir =3D d_is_dir(new_dentry);
->=20
-> 		if (!(flags & RENAME_EXCHANGE))
-> -			error =3D may_delete(new_dir, new_dentry, =
-is_dir);
-> +			error =3D may_replace(new_dir, new_dentry, =
-is_dir);
-> 		else
-> -			error =3D may_delete(new_dir, new_dentry, =
-new_is_dir);
-> +			error =3D may_replace(new_dir, new_dentry, =
-new_is_dir);
-> 	}
-> 	if (error)
-> 		return error;
-> @@ -4469,7 +4486,7 @@ SYSCALL_DEFINE2(rename, const char __user *, =
-oldname, const char __user *, newna
->=20
-> int vfs_whiteout(struct inode *dir, struct dentry *dentry)
-> {
-> -	int error =3D may_create(dir, dentry);
-> +	int error =3D may_create(dir, dentry, false);
-> 	if (error)
-> 		return error;
->=20
-> diff --git a/include/linux/fs.h b/include/linux/fs.h
-> index 4efa435..d6e2330 100644
-> --- a/include/linux/fs.h
-> +++ b/include/linux/fs.h
-> @@ -82,6 +82,8 @@ typedef void (dax_iodone_t)(struct buffer_head =
-*bh_map, int uptodate);
-> #define MAY_CHDIR		0x00000040
-> /* called from RCU mode, don't block */
-> #define MAY_NOT_BLOCK		0x00000080
-> +#define MAY_CREATE_FILE		0x00000100
-> +#define MAY_CREATE_DIR		0x00000200
->=20
-> /*
->  * flags in file.f_mode.  Note that FMODE_READ and FMODE_WRITE must =
-correspond
-> --
-> 2.5.0
->=20
+Therefore, on a system where a root-owned mode 6755 binary
+changes its effective credentials as described and then dumps a
+user-specified file, this could be used by an attacker to reveal
+the memory layout of root's processes or reveal the contents of
+files he is not allowed to access (through /proc/$pid/cwd).
 
+Signed-off-by: Jann Horn <jann@thejh.net>
+---
+ fs/proc/array.c        |  3 ++-
+ fs/proc/base.c         | 24 ++++++++++++++----------
+ fs/proc/namespaces.c   |  4 ++--
+ include/linux/ptrace.h | 17 ++++++++++++++++-
+ kernel/events/core.c   |  2 +-
+ kernel/futex.c         |  2 +-
+ kernel/futex_compat.c  |  2 +-
+ kernel/kcmp.c          |  6 ++++--
+ kernel/ptrace.c        | 37 ++++++++++++++++++++++++++++++-------
+ mm/process_vm_access.c |  2 +-
+ security/commoncap.c   |  7 ++++++-
+ 11 files changed, 78 insertions(+), 28 deletions(-)
 
-Cheers, Andreas
+diff --git a/fs/proc/array.c b/fs/proc/array.c
+index f60f012..00928c6 100644
+--- a/fs/proc/array.c
++++ b/fs/proc/array.c
+@@ -395,7 +395,8 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
+ 
+ 	state = *get_task_state(task);
+ 	vsize = eip = esp = 0;
+-	permitted = ptrace_may_access(task, PTRACE_MODE_READ | PTRACE_MODE_NOAUDIT);
++	permitted = ptrace_may_access(task,
++		PTRACE_MODE_READ | PTRACE_MODE_NOAUDIT | PTRACE_MODE_FSCREDS);
+ 	mm = get_task_mm(task);
+ 	if (mm) {
+ 		vsize = task_vsize(mm);
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index b25eee4..d6b9475 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -403,7 +403,8 @@ static const struct file_operations proc_pid_cmdline_ops = {
+ static int proc_pid_auxv(struct seq_file *m, struct pid_namespace *ns,
+ 			 struct pid *pid, struct task_struct *task)
+ {
+-	struct mm_struct *mm = mm_access(task, PTRACE_MODE_READ);
++	struct mm_struct *mm = mm_access(task,
++		PTRACE_MODE_READ | PTRACE_MODE_FSCREDS);
+ 	if (mm && !IS_ERR(mm)) {
+ 		unsigned int nwords = 0;
+ 		do {
+@@ -431,7 +432,8 @@ static int proc_pid_wchan(struct seq_file *m, struct pid_namespace *ns,
+ 	wchan = get_wchan(task);
+ 
+ 	if (lookup_symbol_name(wchan, symname) < 0) {
+-		if (!ptrace_may_access(task, PTRACE_MODE_READ))
++		if (!ptrace_may_access(task,
++				PTRACE_MODE_READ | PTRACE_MODE_FSCREDS))
+ 			return 0;
+ 		seq_printf(m, "%lu", wchan);
+ 	} else {
+@@ -447,7 +449,8 @@ static int lock_trace(struct task_struct *task)
+ 	int err = mutex_lock_killable(&task->signal->cred_guard_mutex);
+ 	if (err)
+ 		return err;
+-	if (!ptrace_may_access(task, PTRACE_MODE_ATTACH)) {
++	if (!ptrace_may_access(task,
++			PTRACE_MODE_ATTACH | PTRACE_MODE_FSCREDS)) {
+ 		mutex_unlock(&task->signal->cred_guard_mutex);
+ 		return -EPERM;
+ 	}
+@@ -700,7 +703,8 @@ static int proc_fd_access_allowed(struct inode *inode)
+ 	 */
+ 	task = get_proc_task(inode);
+ 	if (task) {
+-		allowed = ptrace_may_access(task, PTRACE_MODE_READ);
++		allowed = ptrace_may_access(task,
++			PTRACE_MODE_READ | PTRACE_MODE_FSCREDS);
+ 		put_task_struct(task);
+ 	}
+ 	return allowed;
+@@ -735,7 +739,7 @@ static bool has_pid_permissions(struct pid_namespace *pid,
+ 		return true;
+ 	if (in_group_p(pid->pid_gid))
+ 		return true;
+-	return ptrace_may_access(task, PTRACE_MODE_READ);
++	return ptrace_may_access(task, PTRACE_MODE_READ | PTRACE_MODE_FSCREDS);
+ }
+ 
+ 
+@@ -812,7 +816,7 @@ struct mm_struct *proc_mem_open(struct inode *inode, unsigned int mode)
+ 	struct mm_struct *mm = ERR_PTR(-ESRCH);
+ 
+ 	if (task) {
+-		mm = mm_access(task, mode);
++		mm = mm_access(task, mode | PTRACE_MODE_FSCREDS);
+ 		put_task_struct(task);
+ 
+ 		if (!IS_ERR_OR_NULL(mm)) {
+@@ -1849,7 +1853,7 @@ static int map_files_d_revalidate(struct dentry *dentry, unsigned int flags)
+ 	if (!task)
+ 		goto out_notask;
+ 
+-	mm = mm_access(task, PTRACE_MODE_READ);
++	mm = mm_access(task, PTRACE_MODE_READ | PTRACE_MODE_FSCREDS);
+ 	if (IS_ERR_OR_NULL(mm))
+ 		goto out;
+ 
+@@ -2000,7 +2004,7 @@ static struct dentry *proc_map_files_lookup(struct inode *dir,
+ 		goto out;
+ 
+ 	result = -EACCES;
+-	if (!ptrace_may_access(task, PTRACE_MODE_READ))
++	if (!ptrace_may_access(task, PTRACE_MODE_READ | PTRACE_MODE_FSCREDS))
+ 		goto out_put_task;
+ 
+ 	result = -ENOENT;
+@@ -2053,7 +2057,7 @@ proc_map_files_readdir(struct file *file, struct dir_context *ctx)
+ 		goto out;
+ 
+ 	ret = -EACCES;
+-	if (!ptrace_may_access(task, PTRACE_MODE_READ))
++	if (!ptrace_may_access(task, PTRACE_MODE_READ | PTRACE_MODE_FSCREDS))
+ 		goto out_put_task;
+ 
+ 	ret = 0;
+@@ -2522,7 +2526,7 @@ static int do_io_accounting(struct task_struct *task, struct seq_file *m, int wh
+ 	if (result)
+ 		return result;
+ 
+-	if (!ptrace_may_access(task, PTRACE_MODE_READ)) {
++	if (!ptrace_may_access(task, PTRACE_MODE_READ | PTRACE_MODE_FSCREDS)) {
+ 		result = -EACCES;
+ 		goto out_unlock;
+ 	}
+diff --git a/fs/proc/namespaces.c b/fs/proc/namespaces.c
+index f6e8354..0cbe012 100644
+--- a/fs/proc/namespaces.c
++++ b/fs/proc/namespaces.c
+@@ -42,7 +42,7 @@ static const char *proc_ns_follow_link(struct dentry *dentry, void **cookie)
+ 	if (!task)
+ 		return error;
+ 
+-	if (ptrace_may_access(task, PTRACE_MODE_READ)) {
++	if (ptrace_may_access(task, PTRACE_MODE_READ | PTRACE_MODE_FSCREDS)) {
+ 		error = ns_get_path(&ns_path, task, ns_ops);
+ 		if (!error)
+ 			nd_jump_link(&ns_path);
+@@ -63,7 +63,7 @@ static int proc_ns_readlink(struct dentry *dentry, char __user *buffer, int bufl
+ 	if (!task)
+ 		return res;
+ 
+-	if (ptrace_may_access(task, PTRACE_MODE_READ)) {
++	if (ptrace_may_access(task, PTRACE_MODE_READ | PTRACE_MODE_FSCREDS)) {
+ 		res = ns_get_name(name, sizeof(name), task, ns_ops);
+ 		if (res >= 0)
+ 			res = readlink_copy(buffer, buflen, name);
+diff --git a/include/linux/ptrace.h b/include/linux/ptrace.h
+index 061265f..63f4a3c 100644
+--- a/include/linux/ptrace.h
++++ b/include/linux/ptrace.h
+@@ -57,7 +57,22 @@ extern void exit_ptrace(struct task_struct *tracer, struct list_head *dead);
+ #define PTRACE_MODE_READ	0x01
+ #define PTRACE_MODE_ATTACH	0x02
+ #define PTRACE_MODE_NOAUDIT	0x04
+-/* Returns true on success, false on denial. */
++#define PTRACE_MODE_FSCREDS 0x08
++#define PTRACE_MODE_REALCREDS 0x10
++/**
++ * ptrace_may_access - check whether the caller is permitted to access
++ * a target task.
++ * @task: target task
++ * @mode: selects type of access and caller credentials
++ *
++ * Returns true on success, false on denial.
++ *
++ * One of the flags PTRACE_MODE_FSCREDS and PTRACE_MODE_REALCREDS must
++ * be set in @mode to specify whether the access was requested through
++ * a filesystem syscall (should use effective capabilities and fsuid
++ * of the caller) or through an explicit syscall such as
++ * process_vm_writev or ptrace (and should use the real credentials).
++ */
+ extern bool ptrace_may_access(struct task_struct *task, unsigned int mode);
+ 
+ static inline int ptrace_reparented(struct task_struct *child)
+diff --git a/kernel/events/core.c b/kernel/events/core.c
+index b11756f..0decdf3 100644
+--- a/kernel/events/core.c
++++ b/kernel/events/core.c
+@@ -3384,7 +3384,7 @@ find_lively_task_by_vpid(pid_t vpid)
+ 
+ 	/* Reuse ptrace permission checks for now. */
+ 	err = -EACCES;
+-	if (!ptrace_may_access(task, PTRACE_MODE_READ))
++	if (!ptrace_may_access(task, PTRACE_MODE_READ | PTRACE_MODE_REALCREDS))
+ 		goto errout;
+ 
+ 	return task;
+diff --git a/kernel/futex.c b/kernel/futex.c
+index 6e443ef..11e467e 100644
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -2872,7 +2872,7 @@ SYSCALL_DEFINE3(get_robust_list, int, pid,
+ 	}
+ 
+ 	ret = -EPERM;
+-	if (!ptrace_may_access(p, PTRACE_MODE_READ))
++	if (!ptrace_may_access(p, PTRACE_MODE_READ | PTRACE_MODE_REALCREDS))
+ 		goto err_unlock;
+ 
+ 	head = p->robust_list;
+diff --git a/kernel/futex_compat.c b/kernel/futex_compat.c
+index 55c8c93..5596298 100644
+--- a/kernel/futex_compat.c
++++ b/kernel/futex_compat.c
+@@ -155,7 +155,7 @@ COMPAT_SYSCALL_DEFINE3(get_robust_list, int, pid,
+ 	}
+ 
+ 	ret = -EPERM;
+-	if (!ptrace_may_access(p, PTRACE_MODE_READ))
++	if (!ptrace_may_access(p, PTRACE_MODE_READ | PTRACE_MODE_REALCREDS))
+ 		goto err_unlock;
+ 
+ 	head = p->compat_robust_list;
+diff --git a/kernel/kcmp.c b/kernel/kcmp.c
+index 0aa69ea..4a568e4 100644
+--- a/kernel/kcmp.c
++++ b/kernel/kcmp.c
+@@ -122,8 +122,10 @@ SYSCALL_DEFINE5(kcmp, pid_t, pid1, pid_t, pid2, int, type,
+ 			&task2->signal->cred_guard_mutex);
+ 	if (ret)
+ 		goto err;
+-	if (!ptrace_may_access(task1, PTRACE_MODE_READ) ||
+-	    !ptrace_may_access(task2, PTRACE_MODE_READ)) {
++	if (!ptrace_may_access(task1,
++		  PTRACE_MODE_READ | PTRACE_MODE_REALCREDS) ||
++	    !ptrace_may_access(task2,
++	    PTRACE_MODE_READ | PTRACE_MODE_REALCREDS)) {
+ 		ret = -EPERM;
+ 		goto err_unlock;
+ 	}
+diff --git a/kernel/ptrace.c b/kernel/ptrace.c
+index 787320d..28f007b 100644
+--- a/kernel/ptrace.c
++++ b/kernel/ptrace.c
+@@ -219,6 +219,13 @@ static int ptrace_has_cap(struct user_namespace *ns, unsigned int mode)
+ static int __ptrace_may_access(struct task_struct *task, unsigned int mode)
+ {
+ 	const struct cred *cred = current_cred(), *tcred;
++	kuid_t caller_uid;
++	kgid_t caller_gid;
++
++	if (!(mode & PTRACE_MODE_FSCREDS) != !(mode & PTRACE_MODE_REALCREDS)) {
++		WARN(1, "denying ptrace access check without PTRACE_MODE_*CREDS\n");
++		return -EPERM;
++	}
+ 
+ 	/* May we inspect the given task?
+ 	 * This check is used both for attaching with ptrace
+@@ -233,13 +240,28 @@ static int __ptrace_may_access(struct task_struct *task, unsigned int mode)
+ 	if (same_thread_group(task, current))
+ 		return 0;
+ 	rcu_read_lock();
++	if (mode & PTRACE_MODE_FSCREDS) {
++		caller_uid = cred->fsuid;
++		caller_gid = cred->fsgid;
++	} else {
++		/*
++		 * Using the euid would make more sense here, but something
++		 * in userland might rely on the old behavior, and this
++		 * shouldn't be a security problem since
++		 * PTRACE_MODE_REALCREDS implies that the caller explicitly
++		 * used a syscall that requests access to another process
++		 * (and not a filesystem syscall to procfs).
++		 */
++		caller_uid = cred->uid;
++		caller_gid = cred->gid;
++	}
+ 	tcred = __task_cred(task);
+-	if (uid_eq(cred->uid, tcred->euid) &&
+-	    uid_eq(cred->uid, tcred->suid) &&
+-	    uid_eq(cred->uid, tcred->uid)  &&
+-	    gid_eq(cred->gid, tcred->egid) &&
+-	    gid_eq(cred->gid, tcred->sgid) &&
+-	    gid_eq(cred->gid, tcred->gid))
++	if (uid_eq(caller_uid, tcred->euid) &&
++	    uid_eq(caller_uid, tcred->suid) &&
++	    uid_eq(caller_uid, tcred->uid)  &&
++	    gid_eq(caller_gid, tcred->egid) &&
++	    gid_eq(caller_gid, tcred->sgid) &&
++	    gid_eq(caller_gid, tcred->gid))
+ 		goto ok;
+ 	if (ptrace_has_cap(tcred->user_ns, mode))
+ 		goto ok;
+@@ -306,7 +328,8 @@ static int ptrace_attach(struct task_struct *task, long request,
+ 		goto out;
+ 
+ 	task_lock(task);
+-	retval = __ptrace_may_access(task, PTRACE_MODE_ATTACH);
++	retval = __ptrace_may_access(task,
++	  PTRACE_MODE_ATTACH | PTRACE_MODE_REALCREDS);
+ 	task_unlock(task);
+ 	if (retval)
+ 		goto unlock_creds;
+diff --git a/mm/process_vm_access.c b/mm/process_vm_access.c
+index e88d071..a2be821 100644
+--- a/mm/process_vm_access.c
++++ b/mm/process_vm_access.c
+@@ -194,7 +194,7 @@ static ssize_t process_vm_rw_core(pid_t pid, struct iov_iter *iter,
+ 		goto free_proc_pages;
+ 	}
+ 
+-	mm = mm_access(task, PTRACE_MODE_ATTACH);
++	mm = mm_access(task, PTRACE_MODE_ATTACH | PTRACE_MODE_REALCREDS);
+ 	if (!mm || IS_ERR(mm)) {
+ 		rc = IS_ERR(mm) ? PTR_ERR(mm) : -ESRCH;
+ 		/*
+diff --git a/security/commoncap.c b/security/commoncap.c
+index 1832cf7..48071ed 100644
+--- a/security/commoncap.c
++++ b/security/commoncap.c
+@@ -137,12 +137,17 @@ int cap_ptrace_access_check(struct task_struct *child, unsigned int mode)
+ {
+ 	int ret = 0;
+ 	const struct cred *cred, *child_cred;
++	const kernel_cap_t *caller_caps;
+ 
+ 	rcu_read_lock();
+ 	cred = current_cred();
+ 	child_cred = __task_cred(child);
++	if (mode & PTRACE_MODE_FSCREDS)
++		caller_caps = &cred->cap_effective;
++	else
++		caller_caps = &cred->cap_permitted;
+ 	if (cred->user_ns == child_cred->user_ns &&
+-	    cap_issubset(child_cred->cap_permitted, cred->cap_permitted))
++	    cap_issubset(child_cred->cap_permitted, *caller_caps))
+ 		goto out;
+ 	if (ns_capable(child_cred->user_ns, CAP_SYS_PTRACE))
+ 		goto out;
+-- 
+2.1.4
 
-
-
-
-
-
---Apple-Mail=_28C5425C-AF5E-40F9-B6EB-6C6221836E29
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
-	filename=signature.asc
-Content-Type: application/pgp-signature;
-	name=signature.asc
-Content-Description: Message signed with OpenPGP using GPGMail
-
------BEGIN PGP SIGNATURE-----
-Comment: GPGTools - http://gpgtools.org
-
-iQIVAwUBVj8Fb3Kl2rkXzB/gAQjlFw//aWzy9SPFugHLc3t+sSL41Y1t+7aX4X8N
-dd6d5FXGYH1PL+H1Z0iic/7Cmartf5YyNuILYboa89rUAEU7drzG4AkzLQ0TZ8OO
-xac09BSBQ1XXO9SUB/ph4WvXwwSZRYGISqFi6+GZ4W5MIn/cKkB1zyFgwAwmWn6Z
-v8QoR9t/Tipy0LjCdyMPfQx6hBYVaix3oUP5BNQvKcjkjzaPYig6QFcnXjUL6CTD
-DhnQV8adxJLaWQfbt5IFg3pLABtGqnrKfqEDPPyD8waiu6Qt8amRXz01bKHuOgBv
-VFOjgG8NBFJsFWFVsmmkSijeQNn8AzxQ8MNQAjdZgbzVIkFYVPGf/ZJxOhgt5dKb
-ocNJsfF2Lrwksa729XLD6GAIIjRtk+HHGE+L5K/HQz0uv1WxUb9/AVSrusmsgyYB
-tDbaiQENZm0V9pvxb0SM+jqI0lo93P9gl0ie8XcxRGQrMGxx9V4tm6aqhD8cQhsO
-zDAaN90AWoTQme/ZkeqH3H2xePtNvXaCatMA9dlKvJkpL02vuxEC97BP5oVkLxHF
-5n1mb6s9Pt6a6g091sZET5Mn7sqNDuRsCub5iOIlJyK69jXPPah9x5HnfUbNurP6
-EhbUhSqw/zFBj9JbLxyMSa30bBFIpLApzukXgSbxlpd1Lcs6h1a7zqJ+qS/6JEuc
-fDrfsrLN9zM=
-=YAtC
------END PGP SIGNATURE-----
-
---Apple-Mail=_28C5425C-AF5E-40F9-B6EB-6C6221836E29--
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
