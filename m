@@ -1,65 +1,36 @@
-From: Joonsoo Kim <js1304@gmail.com>
-Subject: Re: [PATCH 1/2] mm: introduce page reference manipulation functions
-Date: Mon, 9 Nov 2015 17:00:32 +0900
-Message-ID: <CAAmzW4MugYCu1+ZsRp63o=26eTuJG22C+nNrGBhDJvQDOzbQJw@mail.gmail.com>
-References: <1447053784-27811-1-git-send-email-iamjoonsoo.kim@lge.com>
-	<20151109075337.GC472@swordfish>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20151109075337.GC472@swordfish>
-Sender: owner-linux-mm@kvack.org
-To: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@suse.de>, Vlastimil Babka <vbabka@suse.cz>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linux Memory Management List <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Joonsoo Kim <iamjoonsoo.kim@lge.com>
+From: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+Subject: [PATCH 1/2] selftests/mlock2: Add missing #define _GNU_SOURCE
+Date: Mon,  9 Nov 2015 11:14:28 +0100
+Message-ID: <1447064069-21469-2-git-send-email-geert@linux-m68k.org>
+References: <1447064069-21469-1-git-send-email-geert@linux-m68k.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1447064069-21469-1-git-send-email-geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Thierry Reding <treding-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-2015-11-09 16:53 GMT+09:00 Sergey Senozhatsky
-<sergey.senozhatsky.work@gmail.com>:
-> Hi,
->
-> On (11/09/15 16:23), Joonsoo Kim wrote:
-> [..]
->> +static inline int page_count(struct page *page)
->> +{
->> +     return atomic_read(&compound_head(page)->_count);
->> +}
->> +
->> +static inline void set_page_count(struct page *page, int v)
->> +{
->> +     atomic_set(&page->_count, v);
->> +}
->> +
->> +/*
->> + * Setup the page count before being freed into the page allocator for
->> + * the first time (boot or memory hotplug)
->> + */
->> +static inline void init_page_count(struct page *page)
->> +{
->> +     set_page_count(page, 1);
->> +}
->> +
->> +static inline void page_ref_add(struct page *page, int nr)
->> +{
->> +     atomic_add(nr, &page->_count);
->> +}
->
-> Since page_ref_FOO wrappers operate with page->_count and there
-> are already page_count()/set_page_count()/etc. may be name new
-> wrappers in page_count_FOO() manner?
+On glibc 2.3.6:
 
-Hello,
+    mlock2-tests.c: In function 'seek_to_smaps_entry':
+    mlock2-tests.c:158: warning: implicit declaration of function 'getline'
 
-I used that page_count_ before but change my mind.
-I think that ref is more relevant to this operation.
-Perhaps, it'd be better to change page_count()/set_page_count()
-to page_ref()/set_page_ref().
+According to the manpage of getline(), it needs _GNU_SOURCE before glibc
+2.10.
 
-FYI, some functions such as page_(un)freeze_refs uses ref. :)
+Signed-off-by: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+---
+ tools/testing/selftests/vm/mlock2-tests.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-Thanks.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/tools/testing/selftests/vm/mlock2-tests.c b/tools/testing/selftests/vm/mlock2-tests.c
+index 4431994aade2ef6f..cb247219f1f72889 100644
+--- a/tools/testing/selftests/vm/mlock2-tests.c
++++ b/tools/testing/selftests/vm/mlock2-tests.c
+@@ -1,3 +1,4 @@
++#define _GNU_SOURCE
+ #include <sys/mman.h>
+ #include <stdint.h>
+ #include <stdio.h>
+-- 
+1.9.1
