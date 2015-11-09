@@ -1,79 +1,248 @@
-From: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 1/2] selftests/mlock2: Add missing #define _GNU_SOURCE
-Date: Mon, 9 Nov 2015 10:50:13 -0500
-Message-ID: <20151109155013.GB28486@akamai.com>
-References: <1447064069-21469-1-git-send-email-geert@linux-m68k.org>
- <1447064069-21469-2-git-send-email-geert@linux-m68k.org>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="xXmbgvnjoT4axfJE"
+From: Chris J Arges <chris.j.arges-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Subject: [PATCH v3] livepatch: old_name,number scheme in livepatch sysfs directory
+Date: Mon,  9 Nov 2015 10:16:05 -0600
+Message-ID: <1447085770-11729-1-git-send-email-chris.j.arges@canonical.com>
+References: <20151105155656.GD28254@treble.redhat.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1447064069-21469-2-git-send-email-geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+In-Reply-To: <20151105155656.GD28254-8wJ5/zUtDR0XGNroddHbYwC/G2K4zDHf@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
-Cc: Thierry Reding <treding-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Chris J Arges <chris.j.arges-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+In cases of duplicate symbols in vmlinux, old_sympos will be used to
+disambiguate instead of old_addr. Normally old_sympos will be 0, and
+default to only returning the first found instance of that symbol. If an
+incorrect symbol position is specified then livepatching will fail.
+Finally, old_addr is now an internal structure element and not to be
+specified by the user.
 
---xXmbgvnjoT4axfJE
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+The following directory structure will allow for cases when the same
+function name exists in a single object.
+	/sys/kernel/livepatch/<patch>/<object>/<function.number>
 
-On Mon, 09 Nov 2015, Geert Uytterhoeven wrote:
+The number corresponds to the nth occurrence of the symbol name in
+kallsyms for the patched object.
 
-> On glibc 2.3.6:
->=20
->     mlock2-tests.c: In function 'seek_to_smaps_entry':
->     mlock2-tests.c:158: warning: implicit declaration of function 'getlin=
-e'
->=20
-> According to the manpage of getline(), it needs _GNU_SOURCE before glibc
-> 2.10.
->=20
-> Signed-off-by: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+An example of patching multiple symbols can be found here:
+	https://github.com/dynup/kpatch/issues/493
 
-Acked-by: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Chris J Arges <chris.j.arges-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+---
+ Documentation/ABI/testing/sysfs-kernel-livepatch |  6 ++-
+ include/linux/livepatch.h                        | 20 ++++---
+ kernel/livepatch/core.c                          | 66 ++++++++++++++++--------
+ 3 files changed, 61 insertions(+), 31 deletions(-)
 
-> ---
->  tools/testing/selftests/vm/mlock2-tests.c | 1 +
->  1 file changed, 1 insertion(+)
->=20
-> diff --git a/tools/testing/selftests/vm/mlock2-tests.c b/tools/testing/se=
-lftests/vm/mlock2-tests.c
-> index 4431994aade2ef6f..cb247219f1f72889 100644
-> --- a/tools/testing/selftests/vm/mlock2-tests.c
-> +++ b/tools/testing/selftests/vm/mlock2-tests.c
-> @@ -1,3 +1,4 @@
-> +#define _GNU_SOURCE
->  #include <sys/mman.h>
->  #include <stdint.h>
->  #include <stdio.h>
-> --=20
-> 1.9.1
->=20
-
---xXmbgvnjoT4axfJE
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBAgAGBQJWQMC1AAoJELbVsDOpoOa9uXkP/3uW+yjR5261IFUO67qvtzp+
-BaO41gzVnUXhMt/qOsVoF/NtgUJPGnd/4THRwlIXX+PzcYeGEgIOS5W96sQeUwdJ
-B/VTaz2LyCxQd2AWOEPWMppj41fJaeBdMqFd6Qs2P+6o0JeJ4g9wsGuR5qJ7iWVD
-Woqjh5pVLxscuLEQHD7UaJlWY+n5O4ENh4YMNcOZcSNqDWQhFtIxNynRrUjyeqhs
-rxPR16clAt4UjlqGVspW3cdKbZHV5d+YcrkfGljfCxJt4OkuUfT8Mb6VQ4B7K1wP
-f3y8sgtIGys6bFtCIoVeQOKCDbbdILEVMRbedq2cRIM9IESOcp/CMNVjDmtszrxQ
-nHeta9Oy2Wk0NX/8UNxDRPSDuUcuHHVldA4sm6TYyxAiSNQftCDimAKOGBhF66OM
-E9NtGcVVwWuO8MIHpnsujH0YUjY+R7KpVFBfzvWi0+ylykxxdLbAVxY6lGuu+vUO
-j5p7j5YutBcFiL/J5WAAIhK8r7hpxwi0lnCDCXIiycqZ7J61JMEVDWg5TKBxUvV2
-2eKEeawXCwT4CxQ5iRH7hrBwtqrZpysUbREODom1AYAk1Ixx5/5XwtNBQqvTd6CP
-IYZINMffw8ZS9+tNfg5x22FzE1ZAEGqbZ5fgyHAZ7YllSCUenijHa5OBGoiU7qrp
-szr0snjEEv3ehdopPWTf
-=Kaqv
------END PGP SIGNATURE-----
-
---xXmbgvnjoT4axfJE--
+diff --git a/Documentation/ABI/testing/sysfs-kernel-livepatch b/Documentation/ABI/testing/sysfs-kernel-livepatch
+index 5bf42a8..21b6bc1 100644
+--- a/Documentation/ABI/testing/sysfs-kernel-livepatch
++++ b/Documentation/ABI/testing/sysfs-kernel-livepatch
+@@ -33,7 +33,7 @@ Description:
+ 		The object directory contains subdirectories for each function
+ 		that is patched within the object.
+ 
+-What:		/sys/kernel/livepatch/<patch>/<object>/<function>
++What:		/sys/kernel/livepatch/<patch>/<object>/<function,number>
+ Date:		Nov 2014
+ KernelVersion:	3.19.0
+ Contact:	live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+@@ -41,4 +41,8 @@ Description:
+ 		The function directory contains attributes regarding the
+ 		properties and state of the patched function.
+ 
++		The directory name contains the patched function name and a
++		number corresponding to the nth occurrence of the symbol name
++		in kallsyms for the patched object.
++
+ 		There are currently no such attributes.
+diff --git a/include/linux/livepatch.h b/include/linux/livepatch.h
+index 31db7a0..986e06d 100644
+--- a/include/linux/livepatch.h
++++ b/include/linux/livepatch.h
+@@ -37,8 +37,9 @@ enum klp_state {
+  * struct klp_func - function structure for live patching
+  * @old_name:	name of the function to be patched
+  * @new_func:	pointer to the patched function code
+- * @old_addr:	a hint conveying at what address the old function
++ * @old_sympos: a hint indicating which symbol position the old function
+  *		can be found (optional, vmlinux patches only)
++ * @old_addr:	the address of the function being patched
+  * @kobj:	kobject for sysfs resources
+  * @state:	tracks function-level patch application state
+  * @stack_node:	list node for klp_ops func_stack list
+@@ -47,17 +48,20 @@ struct klp_func {
+ 	/* external */
+ 	const char *old_name;
+ 	void *new_func;
++
+ 	/*
+-	 * The old_addr field is optional and can be used to resolve
+-	 * duplicate symbol names in the vmlinux object.  If this
+-	 * information is not present, the symbol is located by name
+-	 * with kallsyms. If the name is not unique and old_addr is
+-	 * not provided, the patch application fails as there is no
+-	 * way to resolve the ambiguity.
++	 * The old_sympos field is optional and can be used to resolve duplicate
++	 * symbol names in the vmlinux object.  If this information is not
++	 * present, the first symbol located with kallsyms is used. This value
++	 * corresponds to the nth occurrence of the symbol name in kallsyms for
++	 * the patched object. If the name is not unique and old_sympos is not
++	 * provided, the patch application fails as there is no way to resolve
++	 * the ambiguity.
+ 	 */
+-	unsigned long old_addr;
++	unsigned long old_sympos;
+ 
+ 	/* internal */
++	unsigned long old_addr;
+ 	struct kobject kobj;
+ 	enum klp_state state;
+ 	struct list_head stack_node;
+diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
+index 6e53441..1dd0d44 100644
+--- a/kernel/livepatch/core.c
++++ b/kernel/livepatch/core.c
+@@ -142,6 +142,7 @@ struct klp_find_arg {
+ 	 * name in the same object.
+ 	 */
+ 	unsigned long count;
++	unsigned long pos;
+ };
+ 
+ static int klp_find_callback(void *data, const char *name,
+@@ -166,28 +167,39 @@ static int klp_find_callback(void *data, const char *name,
+ 	args->addr = addr;
+ 	args->count++;
+ 
++	/*
++	 * ensure count matches the symbol position
++	 */
++	if (args->pos == (args->count-1))
++		return 1;
++
+ 	return 0;
+ }
+ 
+ static int klp_find_object_symbol(const char *objname, const char *name,
+-				  unsigned long *addr)
++				  unsigned long *addr, unsigned long sympos)
+ {
+ 	struct klp_find_arg args = {
+ 		.objname = objname,
+ 		.name = name,
+ 		.addr = 0,
+-		.count = 0
++		.count = 0,
++		.pos = sympos,
+ 	};
+ 
+ 	mutex_lock(&module_mutex);
+ 	kallsyms_on_each_symbol(klp_find_callback, &args);
+ 	mutex_unlock(&module_mutex);
+ 
+-	if (args.count == 0)
++	/*
++	 * Ensure an address was found, then check that the symbol position
++	 * count matches sympos.
++	 */
++	if (args.addr == 0)
+ 		pr_err("symbol '%s' not found in symbol table\n", name);
+-	else if (args.count > 1)
+-		pr_err("unresolvable ambiguity (%lu matches) on symbol '%s' in object '%s'\n",
+-		       args.count, name, objname);
++	else if (sympos != (args.count - 1))
++		pr_err("symbol position %lu for symbol '%s' in object '%s' not found\n",
++		       sympos, name, objname ? objname : "vmlinux");
+ 	else {
+ 		*addr = args.addr;
+ 		return 0;
+@@ -239,20 +251,19 @@ static int klp_verify_vmlinux_symbol(const char *name, unsigned long addr)
+ static int klp_find_verify_func_addr(struct klp_object *obj,
+ 				     struct klp_func *func)
+ {
++	int sympos = 0;
+ 	int ret;
+ 
+-#if defined(CONFIG_RANDOMIZE_BASE)
+-	/* If KASLR has been enabled, adjust old_addr accordingly */
+-	if (kaslr_enabled() && func->old_addr)
+-		func->old_addr += kaslr_offset();
+-#endif
++	if (func->old_sympos && !klp_is_module(obj))
++		sympos = func->old_sympos;
+ 
+-	if (!func->old_addr || klp_is_module(obj))
+-		ret = klp_find_object_symbol(obj->name, func->old_name,
+-					     &func->old_addr);
+-	else
+-		ret = klp_verify_vmlinux_symbol(func->old_name,
+-						func->old_addr);
++	/*
++	 * Verify the symbol, find old_addr, and write it to the structure.
++	 * By default sympos will be 0 and thus will only look for the first
++	 * occurrence. If another value is specified then that will be used.
++	 */
++	ret = klp_find_object_symbol(obj->name, func->old_name,
++				     &func->old_addr, sympos);
+ 
+ 	return ret;
+ }
+@@ -277,7 +288,7 @@ static int klp_find_external_symbol(struct module *pmod, const char *name,
+ 	preempt_enable();
+ 
+ 	/* otherwise check if it's in another .o within the patch module */
+-	return klp_find_object_symbol(pmod->name, name, addr);
++	return klp_find_object_symbol(pmod->name, name, addr, 0);
+ }
+ 
+ static int klp_write_object_relocations(struct module *pmod,
+@@ -307,7 +318,7 @@ static int klp_write_object_relocations(struct module *pmod,
+ 			else
+ 				ret = klp_find_object_symbol(obj->mod->name,
+ 							     reloc->name,
+-							     &reloc->val);
++							     &reloc->val, 0);
+ 			if (ret)
+ 				return ret;
+ 		}
+@@ -587,7 +598,7 @@ EXPORT_SYMBOL_GPL(klp_enable_patch);
+  * /sys/kernel/livepatch/<patch>
+  * /sys/kernel/livepatch/<patch>/enabled
+  * /sys/kernel/livepatch/<patch>/<object>
+- * /sys/kernel/livepatch/<patch>/<object>/<func>
++ * /sys/kernel/livepatch/<patch>/<object>/<func,number>
+  */
+ 
+ static ssize_t enabled_store(struct kobject *kobj, struct kobj_attribute *attr,
+@@ -732,8 +743,7 @@ static int klp_init_func(struct klp_object *obj, struct klp_func *func)
+ 	INIT_LIST_HEAD(&func->stack_node);
+ 	func->state = KLP_DISABLED;
+ 
+-	return kobject_init_and_add(&func->kobj, &klp_ktype_func,
+-				    &obj->kobj, "%s", func->old_name);
++	return 0;
+ }
+ 
+ /* parts of the initialization that is done only when the object is loaded */
+@@ -755,6 +765,18 @@ static int klp_init_object_loaded(struct klp_patch *patch,
+ 			return ret;
+ 	}
+ 
++	/*
++	 * for each function initialize and add, old_sympos will be already
++	 * verified at this point
++	 */
++	klp_for_each_func(obj, func) {
++		ret = kobject_init_and_add(&func->kobj, &klp_ktype_func,
++				    &obj->kobj, "%s,%lu", func->old_name,
++				    func->old_sympos ? func->old_sympos : 0);
++		if (ret)
++			return ret;
++	}
++
+ 	return 0;
+ }
+ 
+-- 
+1.9.1
