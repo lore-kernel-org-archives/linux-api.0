@@ -1,56 +1,78 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v2 9/9] [media] omap3isp: support 64-bit version
-	of omap3isp_stat_data
-Date: Mon, 09 Nov 2015 21:30:41 +0100
-Message-ID: <3870339.ZAkvtJ2orM@wuerfel>
-References: <1442524780-781677-1-git-send-email-arnd@arndb.de>
- <1442524780-781677-10-git-send-email-arnd@arndb.de>
- <5733951.qvCn4pc5g5@avalon>
+From: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+Subject: Re: [PATCH 0/2] selftests/mlock2: Build warning fixes on Debian/m68k 4.0
+Date: Mon, 9 Nov 2015 21:43:37 +0100
+Message-ID: <CAMuHMdV3cUafEh-_m199ta14RcM4FmyxXMHt_WiL75wtHfVO6g@mail.gmail.com>
+References: <1447064069-21469-1-git-send-email-geert@linux-m68k.org>
+	<20151109154836.GA28486@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <5733951.qvCn4pc5g5@avalon>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: y2038@lists.linaro.org
-Cc: linux-samsung-soc@vger.kernel.org, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Hans Verkuil <hverkuil@xs4all.nl>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20151109154836.GA28486-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Cc: Thierry Reding <treding-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux-Arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gTW9uZGF5IDA5IE5vdmVtYmVyIDIwMTUgMjI6MDk6MjYgTGF1cmVudCBQaW5jaGFydCB3cm90
-ZToKPiBIaSBBcm5kLAo+IAo+IFRoYW5rIHlvdSBmb3IgdGhlIHBhdGNoLgo+IAo+IE9uIFRodXJz
-ZGF5IDE3IFNlcHRlbWJlciAyMDE1IDIzOjE5OjQwIEFybmQgQmVyZ21hbm4gd3JvdGU6Cj4gPiBD
-IGxpYnJhcmllcyB3aXRoIDY0LWJpdCB0aW1lX3QgdXNlIGFuIGluY29tcGF0aWJsZSBmb3JtYXQg
-Zm9yCj4gPiBzdHJ1Y3Qgb21hcDNpc3Bfc3RhdF9kYXRhLiBUaGlzIGNoYW5nZXMgdGhlIGtlcm5l
-bCBjb2RlIHRvCj4gPiBzdXBwb3J0IGVpdGhlciB2ZXJzaW9uLCBieSBtb3Zpbmcgb3ZlciB0aGUg
-bm9ybWFsIGhhbmRsaW5nCj4gPiB0byB0aGUgNjQtYml0IHZhcmlhbnQsIGFuZCBhZGRpbmcgY29t
-cGF0aWJsaXR5IGNvZGUgdG8gaGFuZGxlCj4gPiB0aGUgb2xkIGJpbmFyeSBmb3JtYXQgd2l0aCB0
-aGUgZXhpc3RpbmcgaW9jdGwgY29tbWFuZCBjb2RlLgo+ID4gCj4gPiBGb3J0dW5hdGVseSwgdGhl
-IGNvbW1hbmQgY29kZSBpbmNsdWRlcyB0aGUgc2l6ZSBvZiB0aGUgc3RydWN0dXJlLAo+ID4gc28g
-dGhlIGRpZmZlcmVuY2UgZ2V0cyBoYW5kbGVkIGF1dG9tYXRpY2FsbHkuCj4gCj4gV2UgcGxhbiB0
-byBkZXNpZ24gYSBuZXcgaW50ZXJmYWNlIHRvIGhhbmRsZSBzdGF0aXN0aWNzIGluIFY0TDIuIFRo
-YXQgQVBJIAo+IHNob3VsZCBzdXBwb3J0IHByb3BlciA2NC1iaXQgdGltZXN0YW1wcyBvdXQgb2Yg
-dGhlIGJveCwgYW5kIHdpbGwgYmUgCj4gaW1wbGVtZW50ZWQgYnkgdGhlIE9NQVAzIElTUCBkcml2
-ZXIuIFVzZXJzcGFjZSBzaG91bGQgdGhlbiBtb3ZlIHRvIGl0LiBJIAo+IHdvbmRlciBpZiBpdCdz
-IHdvcnRoIGl0IHRvIGZpeCB0aGUgZXhpc3RpbmcgVklESU9DX09NQVAzSVNQX1NUQVRfUkVRIGlv
-Y3RsIAo+IGdpdmVuIHRoYXQgSSBleHBlY3QgaXQgdG8gaGF2ZSBhIGhhbmRmdWwgb2YgdXNlcnMg
-YXQgbW9zdC4KCldlIHN0aWxsIG5lZWQgdG8gZG8gc29tZXRoaW5nIHRvIHRoZSBkcml2ZXIuIFRo
-ZSBhbHRlcm5hdGl2ZSB3b3VsZApiZSB0byBtYWtlIHRoZSBleGlzdGluZyBpb2N0bCBjb21tYW5k
-IG9wdGlvbmFsIGF0IGtlcm5lbCBjb21waWxlLXRpbWUKc28gd2UgY2FuIHN0aWxsIGJ1aWxkIHRo
-ZSBkcml2ZXIgb25jZSB3ZSByZW1vdmUgdGhlICdzdHJ1Y3QgdGltZXZhbCcKZGVmaW5pdGlvbi4g
-VGhhdCBwYXRjaCB3b3VsZCBhZGQgc2xpZ2h0bHkgbGVzcyBjb21wbGV4aXR5IGhlcmUKYnV0IGFs
-c28gbG9zZSBmdW5jdGlvbmFsaXR5LgoKQXMgbXkgcGF0Y2ggaGVyZSBkZXBlbmRzIG9uIHRoZSBz
-dHJ1Y3QgdjRsMl90aW1ldmFsIEkgaW50cm9kdWNlZCBpbgphbiBlYXJsaWVyIHBhdGNoIG9mIHRo
-ZSBzZXJpZXMsIHdlIHdpbGwgaGF2ZSB0byBjaGFuZ2UgaXQgYW55d2F5cywKYnV0IEknZCBwcmVm
-ZXIgdG8ga2VlcCB0aGUgYmFzaWMgaWRlYS4gTGV0J3MgZ2V0IGJhY2sgdG8gdGhpcyBvbmUKYWZ0
-ZXIgdGhlIHY0bF9idWZmZXIgcmVwbGFjZW1lbnQgd29yayBpcyBkb25lLgoKCUFybmQKX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KWTIwMzggbWFpbGluZyBs
-aXN0ClkyMDM4QGxpc3RzLmxpbmFyby5vcmcKaHR0cHM6Ly9saXN0cy5saW5hcm8ub3JnL21haWxt
-YW4vbGlzdGluZm8veTIwMzgK
+Hi Eric,
+
+[CC linux-arch for more architecture-specific breakage]
+
+On Mon, Nov 9, 2015 at 4:48 PM, Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org> wrote:
+> On Mon, 09 Nov 2015, Geert Uytterhoeven wrote:
+>> The following 2 patches are needed to fix build warnings on Debian/m68k
+>> 4.0.
+>>
+>> However, after wiring up the mlock2 syscall, the test fails with:
+>>
+>> # ./mlock2-tests
+>> fread kpageflags: Success
+>> #
+>>
+>> as the fread() call returns 0, not 1.
+>
+> This would fail is the index into the kpageflags file is not being
+> calculated properly.  This tests works on x86_64 (I am in the process of
+> testing x86 incase this is a 32bit issue).  I am fairly sure that I
+> tested it on x86, but it has been a while.
+
+Found it: /proc/kpageflags is always empty, as m68k doesn't set up max_pfn.
+
+After fixing that, the test is working fine.
+Funny how we managed to survive that long without setting it ;-)
+
+Note that several other architectures also don't set max_pfn. Some may
+be nommu, and are thus not affected, but others probably are:
+
+    hexagon
+    mn10300
+    nios2
+    score
+
+And a few of the others (e.g. avr32, didn't check all of them) assign to a
+local max_pfn variable instead of the global one, so it won't work on those
+neither.
+
+>> The original commit description for the test said "Note that the limit
+>> test needs to be run a normal user.". But running it as a non-root user
+>> also fails:
+>
+> The original commit says that the on-fault-limit test needs to be run as
+> a regular user becuase it relies on enforcing memory limits.
+> mlock2-tests has to be run as root to get access to the various files
+> under /proc it needs to verify things are working.
+
+Ah, I just used "git log -p" on mlock2-tests.c, and didn't notice the commit
+actually added two tests.
+
+Thanks!
+
+Gr{oetje,eeting}s,
+
+                        Geert
+
+--
+Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org
+
+In personal conversations with technical people, I call myself a hacker. But
+when I'm talking to journalists I just say "programmer" or something like that.
+                                -- Linus Torvalds
