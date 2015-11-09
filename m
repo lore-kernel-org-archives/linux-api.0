@@ -1,121 +1,295 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH] ptrace: use fsuid, fsgid, effective creds for fs access
- checks
-Date: Mon, 9 Nov 2015 12:55:54 -0800
-Message-ID: <20151109125554.43e6a711e59d1b8bf99cdeb1@linux-foundation.org>
-References: <1446984516-1784-1-git-send-email-jann@thejh.net>
+From: Josh Poimboeuf <jpoimboe@redhat.com>
+Subject: Re: [PATCH v3] livepatch: old_name,number scheme in livepatch sysfs
+ directory
+Date: Mon, 9 Nov 2015 14:56:08 -0600
+Message-ID: <20151109205608.GC3914@treble.redhat.com>
+References: <20151105155656.GD28254@treble.redhat.com>
+ <1447085770-11729-1-git-send-email-chris.j.arges@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1446984516-1784-1-git-send-email-jann@thejh.net>
+Content-Disposition: inline
+In-Reply-To: <1447085770-11729-1-git-send-email-chris.j.arges@canonical.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jann@thejh.net>
-Cc: Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "Eric W. Biederman" <ebiederm@xmission.com>, Joe Perches <joe@perches.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, security@kernel.org, Willy Tarreau <w@1wt.eu>, Kees Cook <keescook@google.com>
+To: Chris J Arges <chris.j.arges@canonical.com>
+Cc: live-patching@vger.kernel.org, jeyu@redhat.com, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun,  8 Nov 2015 13:08:36 +0100 Jann Horn <jann@thejh.net> wrote:
+I'd recommend splitting this up into two separate patches:
 
-> By checking the effective credentials instead of the real UID /
-> permitted capabilities, ensure that the calling process actually
-> intended to use its credentials.
-> 
-> To ensure that all ptrace checks use the correct caller
-> credentials (e.g. in case out-of-tree code or newly added code
-> omits the PTRACE_MODE_*CREDS flag), use two new flags and
-> require one of them to be set.
-> 
-> The problem was that when a privileged task had temporarily dropped
-> its privileges, e.g. by calling setreuid(0, user_uid), with the
-> intent to perform following syscalls with the credentials of
-> a user, it still passed ptrace access checks that the user would
-> not be able to pass.
-> 
-> While an attacker should not be able to convince the privileged
-> task to perform a ptrace() syscall, this is a problem because the
-> ptrace access check is reused for things in procfs.
-> 
-> In particular, the following somewhat interesting procfs entries
-> only rely on ptrace access checks:
-> 
->  /proc/$pid/stat - uses the check for determining whether pointers
->      should be visible, useful for bypassing ASLR
->  /proc/$pid/maps - also useful for bypassing ASLR
->  /proc/$pid/cwd - useful for gaining access to restricted
->      directories that contain files with lax permissions, e.g. in
->      this scenario:
->      lrwxrwxrwx root root /proc/13020/cwd -> /root/foobar
->      drwx------ root root /root
->      drwxr-xr-x root root /root/foobar
->      -rw-r--r-- root root /root/foobar/secret
-> 
-> Therefore, on a system where a root-owned mode 6755 binary
-> changes its effective credentials as described and then dumps a
-> user-specified file, this could be used by an attacker to reveal
-> the memory layout of root's processes or reveal the contents of
-> files he is not allowed to access (through /proc/$pid/cwd).
+1. introduce old_sympos
+2. change the sysfs interface
 
-I'll await reviewer input on this one.  Meanwhile, a bunch of
-minor(ish) things...
+On Mon, Nov 09, 2015 at 10:16:05AM -0600, Chris J Arges wrote:
+> In cases of duplicate symbols in vmlinux, old_sympos will be used to
+> disambiguate instead of old_addr. Normally old_sympos will be 0, and
+> default to only returning the first found instance of that symbol. If an
+> incorrect symbol position is specified then livepatching will fail.
 
-> --- a/fs/proc/array.c
-> +++ b/fs/proc/array.c
-> @@ -395,7 +395,8 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
+In the case of old_sympos == 0, instead of just returning the first
+symbol it finds, I think it should ensure that the symbol is unique.  As
+Miroslav suggested:
+
+  0 - default, preserve more or less current behaviour. If the symbol is 
+      unique there is no problem. If it is not the patching would fail.
+  1, 2, ... - occurrence of the symbol in kallsyms.
+  
+  The advantage is that if the user does not care and is certain that the 
+  symbol is unique he doesn't have to do anything. If the symbol is not 
+  unique he still has means how to solve it.
+
+> Finally, old_addr is now an internal structure element and not to be
+> specified by the user.
+> 
+> The following directory structure will allow for cases when the same
+> function name exists in a single object.
+> 	/sys/kernel/livepatch/<patch>/<object>/<function.number>
+
+Period should be changed to a comma.
+
+> The number corresponds to the nth occurrence of the symbol name in
+> kallsyms for the patched object.
+> 
+> An example of patching multiple symbols can be found here:
+> 	https://github.com/dynup/kpatch/issues/493
+> 
+> Signed-off-by: Chris J Arges <chris.j.arges@canonical.com>
+> ---
+>  Documentation/ABI/testing/sysfs-kernel-livepatch |  6 ++-
+>  include/linux/livepatch.h                        | 20 ++++---
+>  kernel/livepatch/core.c                          | 66 ++++++++++++++++--------
+>  3 files changed, 61 insertions(+), 31 deletions(-)
+> 
+> diff --git a/Documentation/ABI/testing/sysfs-kernel-livepatch b/Documentation/ABI/testing/sysfs-kernel-livepatch
+> index 5bf42a8..21b6bc1 100644
+> --- a/Documentation/ABI/testing/sysfs-kernel-livepatch
+> +++ b/Documentation/ABI/testing/sysfs-kernel-livepatch
+> @@ -33,7 +33,7 @@ Description:
+>  		The object directory contains subdirectories for each function
+>  		that is patched within the object.
 >  
->  	state = *get_task_state(task);
->  	vsize = eip = esp = 0;
-> -	permitted = ptrace_may_access(task, PTRACE_MODE_READ | PTRACE_MODE_NOAUDIT);
-> +	permitted = ptrace_may_access(task,
-> +		PTRACE_MODE_READ | PTRACE_MODE_NOAUDIT | PTRACE_MODE_FSCREDS);
-
-There's lots of ugliness in the patch to do with fitting code into 80 cols. 
-Can we do
-
-#define PTRACE_foo (PTRACE_MODE_READ|PTRACE_MODE_FSCREDS)
-
-to avoid all that?
-
-> --- a/include/linux/ptrace.h
-> +++ b/include/linux/ptrace.h
-> @@ -57,7 +57,22 @@ extern void exit_ptrace(struct task_struct *tracer, struct list_head *dead);
->  #define PTRACE_MODE_READ	0x01
->  #define PTRACE_MODE_ATTACH	0x02
->  #define PTRACE_MODE_NOAUDIT	0x04
-> -/* Returns true on success, false on denial. */
-> +#define PTRACE_MODE_FSCREDS 0x08
-> +#define PTRACE_MODE_REALCREDS 0x10
-> +/**
-> + * ptrace_may_access - check whether the caller is permitted to access
-> + * a target task.
-> + * @task: target task
-> + * @mode: selects type of access and caller credentials
-> + *
-> + * Returns true on success, false on denial.
-> + *
-> + * One of the flags PTRACE_MODE_FSCREDS and PTRACE_MODE_REALCREDS must
-> + * be set in @mode to specify whether the access was requested through
-> + * a filesystem syscall (should use effective capabilities and fsuid
-> + * of the caller) or through an explicit syscall such as
-> + * process_vm_writev or ptrace (and should use the real credentials).
-> + */
->  extern bool ptrace_may_access(struct task_struct *task, unsigned int mode);
-
-It is unconventional to put the kernedoc in the header - people have
-been trained to look for it in the .c file.
-
-> +++ b/kernel/ptrace.c
-> @@ -219,6 +219,13 @@ static int ptrace_has_cap(struct user_namespace *ns, unsigned int mode)
->  static int __ptrace_may_access(struct task_struct *task, unsigned int mode)
->  {
->  	const struct cred *cred = current_cred(), *tcred;
-> +	kuid_t caller_uid;
-> +	kgid_t caller_gid;
+> -What:		/sys/kernel/livepatch/<patch>/<object>/<function>
+> +What:		/sys/kernel/livepatch/<patch>/<object>/<function,number>
+>  Date:		Nov 2014
+>  KernelVersion:	3.19.0
+>  Contact:	live-patching@vger.kernel.org
+> @@ -41,4 +41,8 @@ Description:
+>  		The function directory contains attributes regarding the
+>  		properties and state of the patched function.
+>  
+> +		The directory name contains the patched function name and a
+> +		number corresponding to the nth occurrence of the symbol name
+> +		in kallsyms for the patched object.
 > +
-> +	if (!(mode & PTRACE_MODE_FSCREDS) != !(mode & PTRACE_MODE_REALCREDS)) {
+>  		There are currently no such attributes.
+> diff --git a/include/linux/livepatch.h b/include/linux/livepatch.h
+> index 31db7a0..986e06d 100644
+> --- a/include/linux/livepatch.h
+> +++ b/include/linux/livepatch.h
+> @@ -37,8 +37,9 @@ enum klp_state {
+>   * struct klp_func - function structure for live patching
+>   * @old_name:	name of the function to be patched
+>   * @new_func:	pointer to the patched function code
+> - * @old_addr:	a hint conveying at what address the old function
+> + * @old_sympos: a hint indicating which symbol position the old function
+>   *		can be found (optional, vmlinux patches only)
 
-So setting either one of these and not the other is an error.  How
-come?
+Why is old_sympos only checked for vmlinux patches only?  It's a
+per-object count, so it should work for modules as well.
 
-> +		WARN(1, "denying ptrace access check without PTRACE_MODE_*CREDS\n");
+> + * @old_addr:	the address of the function being patched
+>   * @kobj:	kobject for sysfs resources
+>   * @state:	tracks function-level patch application state
+>   * @stack_node:	list node for klp_ops func_stack list
+> @@ -47,17 +48,20 @@ struct klp_func {
+>  	/* external */
+>  	const char *old_name;
+>  	void *new_func;
+> +
+>  	/*
+> -	 * The old_addr field is optional and can be used to resolve
+> -	 * duplicate symbol names in the vmlinux object.  If this
+> -	 * information is not present, the symbol is located by name
+> -	 * with kallsyms. If the name is not unique and old_addr is
+> -	 * not provided, the patch application fails as there is no
+> -	 * way to resolve the ambiguity.
+> +	 * The old_sympos field is optional and can be used to resolve duplicate
+> +	 * symbol names in the vmlinux object.  If this information is not
+> +	 * present, the first symbol located with kallsyms is used. This value
+> +	 * corresponds to the nth occurrence of the symbol name in kallsyms for
+> +	 * the patched object. If the name is not unique and old_sympos is not
+> +	 * provided, the patch application fails as there is no way to resolve
+> +	 * the ambiguity.
+>  	 */
+> -	unsigned long old_addr;
+> +	unsigned long old_sympos;
+>  
+>  	/* internal */
+> +	unsigned long old_addr;
+>  	struct kobject kobj;
+>  	enum klp_state state;
+>  	struct list_head stack_node;
+> diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
+> index 6e53441..1dd0d44 100644
+> --- a/kernel/livepatch/core.c
+> +++ b/kernel/livepatch/core.c
+> @@ -142,6 +142,7 @@ struct klp_find_arg {
+>  	 * name in the same object.
+>  	 */
+>  	unsigned long count;
+> +	unsigned long pos;
+>  };
+>  
+>  static int klp_find_callback(void *data, const char *name,
+> @@ -166,28 +167,39 @@ static int klp_find_callback(void *data, const char *name,
+>  	args->addr = addr;
+>  	args->count++;
+>  
+> +	/*
+> +	 * ensure count matches the symbol position
+> +	 */
+> +	if (args->pos == (args->count-1))
+> +		return 1;
+> +
 
-This warning cannot be triggered by malicious userspace, I trust?
+The code can be simplified a bit if args->addr only gets set when
+args->pos is a match.  Then klp_find_object_symbol() only needs to check
+args.addr to see if a match was found.
+
+>  	return 0;
+>  }
+>  
+>  static int klp_find_object_symbol(const char *objname, const char *name,
+> -				  unsigned long *addr)
+> +				  unsigned long *addr, unsigned long sympos)
+>  {
+>  	struct klp_find_arg args = {
+>  		.objname = objname,
+>  		.name = name,
+>  		.addr = 0,
+> -		.count = 0
+> +		.count = 0,
+> +		.pos = sympos,
+>  	};
+>  
+>  	mutex_lock(&module_mutex);
+>  	kallsyms_on_each_symbol(klp_find_callback, &args);
+>  	mutex_unlock(&module_mutex);
+>  
+> -	if (args.count == 0)
+> +	/*
+> +	 * Ensure an address was found, then check that the symbol position
+> +	 * count matches sympos.
+> +	 */
+> +	if (args.addr == 0)
+>  		pr_err("symbol '%s' not found in symbol table\n", name);
+> -	else if (args.count > 1)
+> -		pr_err("unresolvable ambiguity (%lu matches) on symbol '%s' in object '%s'\n",
+> -		       args.count, name, objname);
+> +	else if (sympos != (args.count - 1))
+> +		pr_err("symbol position %lu for symbol '%s' in object '%s' not found\n",
+> +		       sympos, name, objname ? objname : "vmlinux");
+>  	else {
+>  		*addr = args.addr;
+>  		return 0;
+> @@ -239,20 +251,19 @@ static int klp_verify_vmlinux_symbol(const char *name, unsigned long addr)
+>  static int klp_find_verify_func_addr(struct klp_object *obj,
+>  				     struct klp_func *func)
+>  {
+> +	int sympos = 0;
+>  	int ret;
+>  
+> -#if defined(CONFIG_RANDOMIZE_BASE)
+> -	/* If KASLR has been enabled, adjust old_addr accordingly */
+> -	if (kaslr_enabled() && func->old_addr)
+> -		func->old_addr += kaslr_offset();
+> -#endif
+> +	if (func->old_sympos && !klp_is_module(obj))
+> +		sympos = func->old_sympos;
+>  
+> -	if (!func->old_addr || klp_is_module(obj))
+> -		ret = klp_find_object_symbol(obj->name, func->old_name,
+> -					     &func->old_addr);
+> -	else
+> -		ret = klp_verify_vmlinux_symbol(func->old_name,
+> -						func->old_addr);
+> +	/*
+> +	 * Verify the symbol, find old_addr, and write it to the structure.
+> +	 * By default sympos will be 0 and thus will only look for the first
+> +	 * occurrence. If another value is specified then that will be used.
+> +	 */
+> +	ret = klp_find_object_symbol(obj->name, func->old_name,
+> +				     &func->old_addr, sympos);
+>  
+>  	return ret;
+>  }
+> @@ -277,7 +288,7 @@ static int klp_find_external_symbol(struct module *pmod, const char *name,
+>  	preempt_enable();
+>  
+>  	/* otherwise check if it's in another .o within the patch module */
+> -	return klp_find_object_symbol(pmod->name, name, addr);
+> +	return klp_find_object_symbol(pmod->name, name, addr, 0);
+>  }
+>  
+>  static int klp_write_object_relocations(struct module *pmod,
+> @@ -307,7 +318,7 @@ static int klp_write_object_relocations(struct module *pmod,
+>  			else
+>  				ret = klp_find_object_symbol(obj->mod->name,
+>  							     reloc->name,
+> -							     &reloc->val);
+> +							     &reloc->val, 0);
+
+I think it would be a good idea to also add old_sympos to klp_reloc so
+the relocation code is consistent with the klp_func symbol addressing.
+
+>  			if (ret)
+>  				return ret;
+>  		}
+> @@ -587,7 +598,7 @@ EXPORT_SYMBOL_GPL(klp_enable_patch);
+>   * /sys/kernel/livepatch/<patch>
+>   * /sys/kernel/livepatch/<patch>/enabled
+>   * /sys/kernel/livepatch/<patch>/<object>
+> - * /sys/kernel/livepatch/<patch>/<object>/<func>
+> + * /sys/kernel/livepatch/<patch>/<object>/<func,number>
+>   */
+>  
+>  static ssize_t enabled_store(struct kobject *kobj, struct kobj_attribute *attr,
+> @@ -732,8 +743,7 @@ static int klp_init_func(struct klp_object *obj, struct klp_func *func)
+>  	INIT_LIST_HEAD(&func->stack_node);
+>  	func->state = KLP_DISABLED;
+>  
+> -	return kobject_init_and_add(&func->kobj, &klp_ktype_func,
+> -				    &obj->kobj, "%s", func->old_name);
+> +	return 0;
+>  }
+
+The sysfs entry can still be created here, since the function name and
+sympos are both already known.
+
+>  
+>  /* parts of the initialization that is done only when the object is loaded */
+> @@ -755,6 +765,18 @@ static int klp_init_object_loaded(struct klp_patch *patch,
+>  			return ret;
+>  	}
+>  
+> +	/*
+> +	 * for each function initialize and add, old_sympos will be already
+> +	 * verified at this point
+> +	 */
+> +	klp_for_each_func(obj, func) {
+> +		ret = kobject_init_and_add(&func->kobj, &klp_ktype_func,
+> +				    &obj->kobj, "%s,%lu", func->old_name,
+> +				    func->old_sympos ? func->old_sympos : 0);
+> +		if (ret)
+> +			return ret;
+> +	}
+> +
+>  	return 0;
+>  }
+>  
+> -- 
+> 1.9.1
+> 
+
+-- 
+Josh
