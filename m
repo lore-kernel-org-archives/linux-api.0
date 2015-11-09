@@ -1,52 +1,45 @@
-From: Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
-Subject: Re: [Y2038] [PATCH v2 9/9] [media] omap3isp: support 64-bit version of omap3isp_stat_data
-Date: Mon, 09 Nov 2015 23:04:36 +0200
-Message-ID: <5182415.f83yL8ScIF@avalon>
-References: <1442524780-781677-1-git-send-email-arnd@arndb.de> <5733951.qvCn4pc5g5@avalon> <3870339.ZAkvtJ2orM@wuerfel>
+From: Willy Tarreau <w@1wt.eu>
+Subject: Re: [PATCH] ptrace: use fsuid, fsgid, effective creds for fs access checks
+Date: Mon, 9 Nov 2015 22:06:08 +0100
+Message-ID: <20151109210608.GH26584@1wt.eu>
+References: <1446984516-1784-1-git-send-email-jann@thejh.net> <20151109125554.43e6a711e59d1b8bf99cdeb1@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <3870339.ZAkvtJ2orM@wuerfel>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20151109125554.43e6a711e59d1b8bf99cdeb1@linux-foundation.org>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Jann Horn <jann@thejh.net>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "Eric W. Biederman" <ebiederm@xmission.com>, Joe Perches <joe@perches.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, security@kernel.org, Kees Cook <keescook@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Arnd,
-
-On Monday 09 November 2015 21:30:41 Arnd Bergmann wrote:
-> On Monday 09 November 2015 22:09:26 Laurent Pinchart wrote:
-> > On Thursday 17 September 2015 23:19:40 Arnd Bergmann wrote:
-> > > C libraries with 64-bit time_t use an incompatible format for
-> > > struct omap3isp_stat_data. This changes the kernel code to
-> > > support either version, by moving over the normal handling
-> > > to the 64-bit variant, and adding compatiblity code to handle
-> > > the old binary format with the existing ioctl command code.
-> > > 
-> > > Fortunately, the command code includes the size of the structure,
-> > > so the difference gets handled automatically.
-> > 
-> > We plan to design a new interface to handle statistics in V4L2. That API
-> > should support proper 64-bit timestamps out of the box, and will be
-> > implemented by the OMAP3 ISP driver. Userspace should then move to it. I
-> > wonder if it's worth it to fix the existing VIDIOC_OMAP3ISP_STAT_REQ ioctl
-> > given that I expect it to have a handful of users at most.
+On Mon, Nov 09, 2015 at 12:55:54PM -0800, Andrew Morton wrote:
+> > --- a/fs/proc/array.c
+> > +++ b/fs/proc/array.c
+> > @@ -395,7 +395,8 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
+> >  
+> >  	state = *get_task_state(task);
+> >  	vsize = eip = esp = 0;
+> > -	permitted = ptrace_may_access(task, PTRACE_MODE_READ | PTRACE_MODE_NOAUDIT);
+> > +	permitted = ptrace_may_access(task,
+> > +		PTRACE_MODE_READ | PTRACE_MODE_NOAUDIT | PTRACE_MODE_FSCREDS);
 > 
-> We still need to do something to the driver. The alternative would
-> be to make the existing ioctl command optional at kernel compile-time
-> so we can still build the driver once we remove the 'struct timeval'
-> definition. That patch would add slightly less complexity here
-> but also lose functionality.
+> There's lots of ugliness in the patch to do with fitting code into 80 cols. 
+> Can we do
 > 
-> As my patch here depends on the struct v4l2_timeval I introduced in
-> an earlier patch of the series, we will have to change it anyways,
-> but I'd prefer to keep the basic idea. Let's get back to this one
-> after the v4l_buffer replacement work is done.
+> #define PTRACE_foo (PTRACE_MODE_READ|PTRACE_MODE_FSCREDS)
+> 
+> to avoid all that?
 
-Fine with me. I'll mark the patch as "Obsoleted" in patchwork in the meantime.
+Or even simply bypass the 80-cols rule. Making code ugly or less easy
+to read for sake of an arbitrary rule is often not fun, and that's even
+more so when it comes to security fixes that people are expected to
+easily understand next time they put their fingers there.
 
--- 
-Regards,
+Willy
 
-Laurent Pinchart
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
