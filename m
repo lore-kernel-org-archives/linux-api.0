@@ -1,75 +1,29 @@
-From: "Kirill A. Shutemov" <kirill@shutemov.name>
-Subject: Re: [PATCH 1/2] mm: introduce page reference manipulation functions
-Date: Mon, 9 Nov 2015 13:45:37 +0200
-Message-ID: <20151109114537.GA3903@node.shutemov.name>
-References: <1447053784-27811-1-git-send-email-iamjoonsoo.kim@lge.com>
- <20151109075337.GC472@swordfish>
- <CAAmzW4MugYCu1+ZsRp63o=26eTuJG22C+nNrGBhDJvQDOzbQJw@mail.gmail.com>
+From: James Morris <jmorris@namei.org>
+Subject: Re: [PATCH v4] keys, trusted: select hash algorithm for TPM2 chips
+Date: Tue, 10 Nov 2015 00:00:25 +1100 (AEDT)
+Message-ID: <alpine.LRH.2.20.1511092359320.30224@namei.org>
+References: <1446752588-3429-1-git-send-email-jarkko.sakkinen@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <CAAmzW4MugYCu1+ZsRp63o=26eTuJG22C+nNrGBhDJvQDOzbQJw@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Joonsoo Kim <js1304@gmail.com>
-Cc: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@suse.de>, Vlastimil Babka <vbabka@suse.cz>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linux Memory Management List <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <1446752588-3429-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Cc: Peter Huewe <peterhuewe@gmx.de>, Marcel Selhorst <tpmdd@selhorst.net>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Petko Manolov <petkan@mip-labs.com>, Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, "Mark D. Baushke" <mdb@juniper.net>, David Safford <safford@us.ibm.com>, Jonathan Corbet <corbet@lwn.net>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Jason Gunthorpe <jgunthorpe@obsidianresearch.com>, David Howells <dhowells@redhat.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, "open list:KEYS-TRUSTED" <linux-security-module@vger.kernel.org>, "open list:KEYS-TRUSTED" <keyrings@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, "open list:CRYPTO API" <linux-crypto@vger.kernel.org>, "moderated list:TPM DEVICE DRIVER" <tpmdd-devel@lists.>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 09, 2015 at 05:00:32PM +0900, Joonsoo Kim wrote:
-> 2015-11-09 16:53 GMT+09:00 Sergey Senozhatsky
-> <sergey.senozhatsky.work@gmail.com>:
-> > Hi,
-> >
-> > On (11/09/15 16:23), Joonsoo Kim wrote:
-> > [..]
-> >> +static inline int page_count(struct page *page)
-> >> +{
-> >> +     return atomic_read(&compound_head(page)->_count);
-> >> +}
-> >> +
-> >> +static inline void set_page_count(struct page *page, int v)
-> >> +{
-> >> +     atomic_set(&page->_count, v);
-> >> +}
-> >> +
-> >> +/*
-> >> + * Setup the page count before being freed into the page allocator for
-> >> + * the first time (boot or memory hotplug)
-> >> + */
-> >> +static inline void init_page_count(struct page *page)
-> >> +{
-> >> +     set_page_count(page, 1);
-> >> +}
-> >> +
-> >> +static inline void page_ref_add(struct page *page, int nr)
-> >> +{
-> >> +     atomic_add(nr, &page->_count);
-> >> +}
-> >
-> > Since page_ref_FOO wrappers operate with page->_count and there
-> > are already page_count()/set_page_count()/etc. may be name new
-> > wrappers in page_count_FOO() manner?
+On Thu, 5 Nov 2015, Jarkko Sakkinen wrote:
+
+> v4:
 > 
-> Hello,
+> * Added missing select CRYPTO_HASH_INFO in drivers/char/tpm/Kconfig
 > 
-> I used that page_count_ before but change my mind.
-> I think that ref is more relevant to this operation.
-> Perhaps, it'd be better to change page_count()/set_page_count()
-> to page_ref()/set_page_ref().
+> Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
 
-What about get_page() vs. page_cache_get() and put_page() vs.
-page_cache_release()? Two different helpers for the same thing is annyoing
-me for some time (plus PAGE_SIZE vs. PAGE_CACHE_SIZE, etc.).
 
-If you want coherent API you might want to get them consitent too.
+Reviewed-by: James Morris <james.l.morris@oracle.com>
 
-> FYI, some functions such as page_(un)freeze_refs uses ref. :)
 
 -- 
- Kirill A. Shutemov
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+James Morris
+<jmorris@namei.org>
