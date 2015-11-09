@@ -1,187 +1,56 @@
-From: Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
-Subject: Re: [PATCH v2 9/9] [media] omap3isp: support 64-bit version of omap3isp_stat_data
-Date: Mon, 09 Nov 2015 22:09:26 +0200
-Message-ID: <5733951.qvCn4pc5g5@avalon>
-References: <1442524780-781677-1-git-send-email-arnd@arndb.de> <1442524780-781677-10-git-send-email-arnd@arndb.de>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v2 9/9] [media] omap3isp: support 64-bit version
+	of omap3isp_stat_data
+Date: Mon, 09 Nov 2015 21:30:41 +0100
+Message-ID: <3870339.ZAkvtJ2orM@wuerfel>
+References: <1442524780-781677-1-git-send-email-arnd@arndb.de>
+ <1442524780-781677-10-git-send-email-arnd@arndb.de>
+ <5733951.qvCn4pc5g5@avalon>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1442524780-781677-10-git-send-email-arnd-r2nGTMty4D4@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+In-Reply-To: <5733951.qvCn4pc5g5@avalon>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+To: y2038@lists.linaro.org
+Cc: linux-samsung-soc@vger.kernel.org, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Hans Verkuil <hverkuil@xs4all.nl>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Arnd,
-
-Thank you for the patch.
-
-On Thursday 17 September 2015 23:19:40 Arnd Bergmann wrote:
-> C libraries with 64-bit time_t use an incompatible format for
-> struct omap3isp_stat_data. This changes the kernel code to
-> support either version, by moving over the normal handling
-> to the 64-bit variant, and adding compatiblity code to handle
-> the old binary format with the existing ioctl command code.
-> 
-> Fortunately, the command code includes the size of the structure,
-> so the difference gets handled automatically.
-
-We plan to design a new interface to handle statistics in V4L2. That API 
-should support proper 64-bit timestamps out of the box, and will be 
-implemented by the OMAP3 ISP driver. Userspace should then move to it. I 
-wonder if it's worth it to fix the existing VIDIOC_OMAP3ISP_STAT_REQ ioctl 
-given that I expect it to have a handful of users at most.
-
-> Signed-off-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-> ---
->  drivers/media/platform/omap3isp/isph3a_aewb.c |  2 ++
->  drivers/media/platform/omap3isp/isph3a_af.c   |  2 ++
->  drivers/media/platform/omap3isp/isphist.c     |  2 ++
->  drivers/media/platform/omap3isp/ispstat.c     | 18 ++++++++++++++++--
->  drivers/media/platform/omap3isp/ispstat.h     |  2 ++
->  include/uapi/linux/omap3isp.h                 | 19 +++++++++++++++++++
->  6 files changed, 43 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/media/platform/omap3isp/isph3a_aewb.c
-> b/drivers/media/platform/omap3isp/isph3a_aewb.c index
-> ccaf92f39236..2d567725608f 100644
-> --- a/drivers/media/platform/omap3isp/isph3a_aewb.c
-> +++ b/drivers/media/platform/omap3isp/isph3a_aewb.c
-> @@ -250,6 +250,8 @@ static long h3a_aewb_ioctl(struct v4l2_subdev *sd,
-> unsigned int cmd, void *arg) return omap3isp_stat_config(stat, arg);
->  	case VIDIOC_OMAP3ISP_STAT_REQ:
->  		return omap3isp_stat_request_statistics(stat, arg);
-> +	case VIDIOC_OMAP3ISP_STAT_REQ_TIME32:
-> +		return omap3isp_stat_request_statistics_time32(stat, arg);
->  	case VIDIOC_OMAP3ISP_STAT_EN: {
->  		unsigned long *en = arg;
->  		return omap3isp_stat_enable(stat, !!*en);
-> diff --git a/drivers/media/platform/omap3isp/isph3a_af.c
-> b/drivers/media/platform/omap3isp/isph3a_af.c index
-> 92937f7eecef..2ac02371318b 100644
-> --- a/drivers/media/platform/omap3isp/isph3a_af.c
-> +++ b/drivers/media/platform/omap3isp/isph3a_af.c
-> @@ -314,6 +314,8 @@ static long h3a_af_ioctl(struct v4l2_subdev *sd,
-> unsigned int cmd, void *arg) return omap3isp_stat_config(stat, arg);
->  	case VIDIOC_OMAP3ISP_STAT_REQ:
->  		return omap3isp_stat_request_statistics(stat, arg);
-> +	case VIDIOC_OMAP3ISP_STAT_REQ_TIME32:
-> +		return omap3isp_stat_request_statistics_time32(stat, arg);
->  	case VIDIOC_OMAP3ISP_STAT_EN: {
->  		int *en = arg;
->  		return omap3isp_stat_enable(stat, !!*en);
-> diff --git a/drivers/media/platform/omap3isp/isphist.c
-> b/drivers/media/platform/omap3isp/isphist.c index
-> 7138b043a4aa..669b97b079ee 100644
-> --- a/drivers/media/platform/omap3isp/isphist.c
-> +++ b/drivers/media/platform/omap3isp/isphist.c
-> @@ -436,6 +436,8 @@ static long hist_ioctl(struct v4l2_subdev *sd, unsigned
-> int cmd, void *arg) return omap3isp_stat_config(stat, arg);
->  	case VIDIOC_OMAP3ISP_STAT_REQ:
->  		return omap3isp_stat_request_statistics(stat, arg);
-> +	case VIDIOC_OMAP3ISP_STAT_REQ_TIME32:
-> +		return omap3isp_stat_request_statistics_time32(stat, arg);
->  	case VIDIOC_OMAP3ISP_STAT_EN: {
->  		int *en = arg;
->  		return omap3isp_stat_enable(stat, !!*en);
-> diff --git a/drivers/media/platform/omap3isp/ispstat.c
-> b/drivers/media/platform/omap3isp/ispstat.c index
-> fa96e330c563..3d70332422b5 100644
-> --- a/drivers/media/platform/omap3isp/ispstat.c
-> +++ b/drivers/media/platform/omap3isp/ispstat.c
-> @@ -496,8 +496,7 @@ int omap3isp_stat_request_statistics(struct ispstat
-> *stat, return PTR_ERR(buf);
->  	}
-> 
-> -	data->ts.tv_sec = buf->ts.tv_sec;
-> -	data->ts.tv_usec = buf->ts.tv_usec;
-> +	data->ts = buf->ts;
->  	data->config_counter = buf->config_counter;
->  	data->frame_number = buf->frame_number;
->  	data->buf_size = buf->buf_size;
-> @@ -509,6 +508,21 @@ int omap3isp_stat_request_statistics(struct ispstat
-> *stat, return 0;
->  }
-> 
-> +int omap3isp_stat_request_statistics_time32(struct ispstat *stat,
-> +					struct omap3isp_stat_data_time32 *data)
-> +{
-> +	struct omap3isp_stat_data data64;
-> +	int ret;
-> +
-> +	ret = omap3isp_stat_request_statistics(stat, &data64);
-> +
-> +	data->ts.tv_sec = data64.ts.tv_sec;
-> +	data->ts.tv_usec = data64.ts.tv_usec;
-> +	memcpy(&data->buf, &data64.buf, sizeof(*data) - sizeof(data->ts));
-> +
-> +	return ret;
-> +}
-> +
->  /*
->   * omap3isp_stat_config - Receives new statistic engine configuration.
->   * @new_conf: Pointer to config structure.
-> diff --git a/drivers/media/platform/omap3isp/ispstat.h
-> b/drivers/media/platform/omap3isp/ispstat.h index
-> 7b4f136567a3..b19ea6c8f733 100644
-> --- a/drivers/media/platform/omap3isp/ispstat.h
-> +++ b/drivers/media/platform/omap3isp/ispstat.h
-> @@ -130,6 +130,8 @@ struct ispstat_generic_config {
->  int omap3isp_stat_config(struct ispstat *stat, void *new_conf);
->  int omap3isp_stat_request_statistics(struct ispstat *stat,
->  				     struct omap3isp_stat_data *data);
-> +int omap3isp_stat_request_statistics_time32(struct ispstat *stat,
-> +				     struct omap3isp_stat_data_time32 *data);
->  int omap3isp_stat_init(struct ispstat *stat, const char *name,
->  		       const struct v4l2_subdev_ops *sd_ops);
->  void omap3isp_stat_cleanup(struct ispstat *stat);
-> diff --git a/include/uapi/linux/omap3isp.h b/include/uapi/linux/omap3isp.h
-> index c090cf9249bb..4bff66aefca5 100644
-> --- a/include/uapi/linux/omap3isp.h
-> +++ b/include/uapi/linux/omap3isp.h
-> @@ -54,6 +54,8 @@
->  	_IOWR('V', BASE_VIDIOC_PRIVATE + 5, struct omap3isp_h3a_af_config)
->  #define VIDIOC_OMAP3ISP_STAT_REQ \
->  	_IOWR('V', BASE_VIDIOC_PRIVATE + 6, struct omap3isp_stat_data)
-> +#define VIDIOC_OMAP3ISP_STAT_REQ_TIME32 \
-> +	_IOWR('V', BASE_VIDIOC_PRIVATE + 6, struct omap3isp_stat_data_time32)
->  #define VIDIOC_OMAP3ISP_STAT_EN \
->  	_IOWR('V', BASE_VIDIOC_PRIVATE + 7, unsigned long)
-> 
-> @@ -164,7 +166,11 @@ struct omap3isp_h3a_aewb_config {
->   * @config_counter: Number of the configuration associated with the data.
->   */
->  struct omap3isp_stat_data {
-> +#ifdef __KERNEL__
-> +	struct v4l2_timeval ts;
-> +#else
->  	struct timeval ts;
-> +#endif
->  	void __user *buf;
->  	__u32 buf_size;
->  	__u16 frame_number;
-> @@ -172,6 +178,19 @@ struct omap3isp_stat_data {
->  	__u16 config_counter;
->  };
-> 
-> +#ifdef __KERNEL__
-> +struct omap3isp_stat_data_time32 {
-> +	struct {
-> +		__s32	tv_sec;
-> +		__s32	tv_usec;
-> +	} ts;
-> +	__u32 buf;
-> +	__u32 buf_size;
-> +	__u16 frame_number;
-> +	__u16 cur_frame;
-> +	__u16 config_counter;
-> +};
-> +#endif
-> 
->  /* Histogram related structs */
-
--- 
-Regards,
-
-Laurent Pinchart
+T24gTW9uZGF5IDA5IE5vdmVtYmVyIDIwMTUgMjI6MDk6MjYgTGF1cmVudCBQaW5jaGFydCB3cm90
+ZToKPiBIaSBBcm5kLAo+IAo+IFRoYW5rIHlvdSBmb3IgdGhlIHBhdGNoLgo+IAo+IE9uIFRodXJz
+ZGF5IDE3IFNlcHRlbWJlciAyMDE1IDIzOjE5OjQwIEFybmQgQmVyZ21hbm4gd3JvdGU6Cj4gPiBD
+IGxpYnJhcmllcyB3aXRoIDY0LWJpdCB0aW1lX3QgdXNlIGFuIGluY29tcGF0aWJsZSBmb3JtYXQg
+Zm9yCj4gPiBzdHJ1Y3Qgb21hcDNpc3Bfc3RhdF9kYXRhLiBUaGlzIGNoYW5nZXMgdGhlIGtlcm5l
+bCBjb2RlIHRvCj4gPiBzdXBwb3J0IGVpdGhlciB2ZXJzaW9uLCBieSBtb3Zpbmcgb3ZlciB0aGUg
+bm9ybWFsIGhhbmRsaW5nCj4gPiB0byB0aGUgNjQtYml0IHZhcmlhbnQsIGFuZCBhZGRpbmcgY29t
+cGF0aWJsaXR5IGNvZGUgdG8gaGFuZGxlCj4gPiB0aGUgb2xkIGJpbmFyeSBmb3JtYXQgd2l0aCB0
+aGUgZXhpc3RpbmcgaW9jdGwgY29tbWFuZCBjb2RlLgo+ID4gCj4gPiBGb3J0dW5hdGVseSwgdGhl
+IGNvbW1hbmQgY29kZSBpbmNsdWRlcyB0aGUgc2l6ZSBvZiB0aGUgc3RydWN0dXJlLAo+ID4gc28g
+dGhlIGRpZmZlcmVuY2UgZ2V0cyBoYW5kbGVkIGF1dG9tYXRpY2FsbHkuCj4gCj4gV2UgcGxhbiB0
+byBkZXNpZ24gYSBuZXcgaW50ZXJmYWNlIHRvIGhhbmRsZSBzdGF0aXN0aWNzIGluIFY0TDIuIFRo
+YXQgQVBJIAo+IHNob3VsZCBzdXBwb3J0IHByb3BlciA2NC1iaXQgdGltZXN0YW1wcyBvdXQgb2Yg
+dGhlIGJveCwgYW5kIHdpbGwgYmUgCj4gaW1wbGVtZW50ZWQgYnkgdGhlIE9NQVAzIElTUCBkcml2
+ZXIuIFVzZXJzcGFjZSBzaG91bGQgdGhlbiBtb3ZlIHRvIGl0LiBJIAo+IHdvbmRlciBpZiBpdCdz
+IHdvcnRoIGl0IHRvIGZpeCB0aGUgZXhpc3RpbmcgVklESU9DX09NQVAzSVNQX1NUQVRfUkVRIGlv
+Y3RsIAo+IGdpdmVuIHRoYXQgSSBleHBlY3QgaXQgdG8gaGF2ZSBhIGhhbmRmdWwgb2YgdXNlcnMg
+YXQgbW9zdC4KCldlIHN0aWxsIG5lZWQgdG8gZG8gc29tZXRoaW5nIHRvIHRoZSBkcml2ZXIuIFRo
+ZSBhbHRlcm5hdGl2ZSB3b3VsZApiZSB0byBtYWtlIHRoZSBleGlzdGluZyBpb2N0bCBjb21tYW5k
+IG9wdGlvbmFsIGF0IGtlcm5lbCBjb21waWxlLXRpbWUKc28gd2UgY2FuIHN0aWxsIGJ1aWxkIHRo
+ZSBkcml2ZXIgb25jZSB3ZSByZW1vdmUgdGhlICdzdHJ1Y3QgdGltZXZhbCcKZGVmaW5pdGlvbi4g
+VGhhdCBwYXRjaCB3b3VsZCBhZGQgc2xpZ2h0bHkgbGVzcyBjb21wbGV4aXR5IGhlcmUKYnV0IGFs
+c28gbG9zZSBmdW5jdGlvbmFsaXR5LgoKQXMgbXkgcGF0Y2ggaGVyZSBkZXBlbmRzIG9uIHRoZSBz
+dHJ1Y3QgdjRsMl90aW1ldmFsIEkgaW50cm9kdWNlZCBpbgphbiBlYXJsaWVyIHBhdGNoIG9mIHRo
+ZSBzZXJpZXMsIHdlIHdpbGwgaGF2ZSB0byBjaGFuZ2UgaXQgYW55d2F5cywKYnV0IEknZCBwcmVm
+ZXIgdG8ga2VlcCB0aGUgYmFzaWMgaWRlYS4gTGV0J3MgZ2V0IGJhY2sgdG8gdGhpcyBvbmUKYWZ0
+ZXIgdGhlIHY0bF9idWZmZXIgcmVwbGFjZW1lbnQgd29yayBpcyBkb25lLgoKCUFybmQKX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KWTIwMzggbWFpbGluZyBs
+aXN0ClkyMDM4QGxpc3RzLmxpbmFyby5vcmcKaHR0cHM6Ly9saXN0cy5saW5hcm8ub3JnL21haWxt
+YW4vbGlzdGluZm8veTIwMzgK
