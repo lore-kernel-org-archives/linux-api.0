@@ -1,7 +1,7 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v15 15/22] richacl: Check if an acl is equivalent to a file mode
-Date: Mon,  9 Nov 2015 12:08:56 +0100
-Message-ID: <1447067343-31479-16-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v15 19/22] richacl: Add richacl xattr handler
+Date: Mon,  9 Nov 2015 12:09:00 +0100
+Message-ID: <1447067343-31479-20-git-send-email-agruenba@redhat.com>
 References: <1447067343-31479-1-git-send-email-agruenba@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1447067343-31479-1-git-send-email-agruenba@redhat.com>
@@ -10,142 +10,122 @@ To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, And
 Cc: Andreas Gruenbacher <agruenba@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-ACLs are considered equivalent to file modes if they only consist of
-owner@, group@, and everyone@ entries, the owner@ permissions do not
-depend on whether the owner is a member in the owning group, and no
-inheritance flags are set.  This test is used to avoid storing richacls
-if the acl can be computed from the file permission bits.
+Add richacl xattr handler implementing the xattr operations based on the
+get_richacl and set_richacl inode operations.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
-Reviewed-by: J. Bruce Fields <bfields@redhat.com>
 ---
- fs/richacl_base.c       | 104 ++++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/richacl.h |   1 +
- 2 files changed, 105 insertions(+)
+ fs/richacl_xattr.c            | 78 +++++++++++++++++++++++++++++++++++++++++++
+ include/linux/richacl_xattr.h |  2 ++
+ 2 files changed, 80 insertions(+)
 
-diff --git a/fs/richacl_base.c b/fs/richacl_base.c
-index e4dd779..74e5cb5 100644
---- a/fs/richacl_base.c
-+++ b/fs/richacl_base.c
-@@ -382,3 +382,107 @@ __richacl_chmod(struct richacl *acl, umode_t mode)
- 	return clone;
- }
- EXPORT_SYMBOL_GPL(__richacl_chmod);
-+
-+/**
-+ * richacl_equiv_mode  -  compute the mode equivalent of @acl
-+ *
-+ * An acl is considered equivalent to a file mode if it only consists of
-+ * owner@, group@, and everyone@ entries and the owner@ permissions do not
-+ * depend on whether the owner is a member in the owning group.
-+ */
-+int
-+richacl_equiv_mode(const struct richacl *acl, umode_t *mode_p)
-+{
-+	umode_t mode = *mode_p;
-+
-+	/*
-+	 * The RICHACE_DELETE_CHILD flag is meaningless for non-directories, so
-+	 * we ignore it.
-+	 */
-+	unsigned int x = S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
-+	struct {
-+		unsigned int allowed;
-+		unsigned int defined;  /* allowed or denied */
-+	} owner = {
-+		.defined = RICHACE_POSIX_ALWAYS_ALLOWED |
-+			   RICHACE_POSIX_OWNER_ALLOWED  | x,
-+	}, group = {
-+		.defined = RICHACE_POSIX_ALWAYS_ALLOWED | x,
-+	}, everyone = {
-+		.defined = RICHACE_POSIX_ALWAYS_ALLOWED | x,
-+	};
-+	const struct richace *ace;
-+
-+	if (acl->a_flags & ~(RICHACL_WRITE_THROUGH | RICHACL_MASKED))
-+		return -1;
-+
-+	richacl_for_each_entry(ace, acl) {
-+		if (ace->e_flags & ~RICHACE_SPECIAL_WHO)
-+			return -1;
-+
-+		if (richace_is_owner(ace) || richace_is_everyone(ace)) {
-+			x = ace->e_mask & ~owner.defined;
-+			if (richace_is_allow(ace)) {
-+				unsigned int group_denied =
-+					group.defined & ~group.allowed;
-+
-+				if (x & group_denied)
-+					return -1;
-+				owner.allowed |= x;
-+			} else /* if (richace_is_deny(ace)) */ {
-+				if (x & group.allowed)
-+					return -1;
-+			}
-+			owner.defined |= x;
-+
-+			if (richace_is_everyone(ace)) {
-+				x = ace->e_mask;
-+				if (richace_is_allow(ace)) {
-+					group.allowed |=
-+						x & ~group.defined;
-+					everyone.allowed |=
-+						x & ~everyone.defined;
-+				}
-+				group.defined |= x;
-+				everyone.defined |= x;
-+			}
-+		} else if (richace_is_group(ace)) {
-+			x = ace->e_mask & ~group.defined;
-+			if (richace_is_allow(ace))
-+				group.allowed |= x;
-+			group.defined |= x;
-+		} else
-+			return -1;
-+	}
-+
-+	if (group.allowed & ~owner.defined)
-+		return -1;
-+
-+	if (acl->a_flags & RICHACL_MASKED) {
-+		if (acl->a_flags & RICHACL_WRITE_THROUGH) {
-+			owner.allowed = acl->a_owner_mask;
-+			everyone.allowed = acl->a_other_mask;
-+		} else {
-+			owner.allowed &= acl->a_owner_mask;
-+			everyone.allowed &= acl->a_other_mask;
-+		}
-+		group.allowed &= acl->a_group_mask;
-+	}
-+
-+	mode = (mode & ~S_IRWXUGO) |
-+	       (richacl_mask_to_mode(owner.allowed) << 6) |
-+	       (richacl_mask_to_mode(group.allowed) << 3) |
-+		richacl_mask_to_mode(everyone.allowed);
-+
-+	/* Mask flags we can ignore */
-+	x = S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
-+
-+	if (((richacl_mode_to_mask(mode >> 6) ^ owner.allowed)    & ~x) ||
-+	    ((richacl_mode_to_mask(mode >> 3) ^ group.allowed)    & ~x) ||
-+	    ((richacl_mode_to_mask(mode)      ^ everyone.allowed) & ~x))
-+		return -1;
-+
-+	*mode_p = mode;
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(richacl_equiv_mode);
-diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-index a2d5600..b7128bf 100644
---- a/include/linux/richacl.h
-+++ b/include/linux/richacl.h
-@@ -185,6 +185,7 @@ extern unsigned int richacl_mode_to_mask(umode_t);
- extern unsigned int richacl_want_to_mask(unsigned int);
- extern void richacl_compute_max_masks(struct richacl *);
- extern struct richacl *__richacl_chmod(struct richacl *, umode_t);
-+extern int richacl_equiv_mode(const struct richacl *, umode_t *);
+diff --git a/fs/richacl_xattr.c b/fs/richacl_xattr.c
+index 38473b6..767c1f7 100644
+--- a/fs/richacl_xattr.c
++++ b/fs/richacl_xattr.c
+@@ -18,7 +18,9 @@
+ #include <linux/fs.h>
+ #include <linux/slab.h>
+ #include <linux/module.h>
++#include <linux/xattr.h>
+ #include <linux/richacl_xattr.h>
++#include <uapi/linux/xattr.h>
  
- /* richacl_inode.c */
- extern int richacl_permission(struct inode *, const struct richacl *, int);
+ MODULE_LICENSE("GPL");
+ 
+@@ -161,6 +163,82 @@ richacl_to_xattr(struct user_namespace *user_ns,
+ }
+ EXPORT_SYMBOL_GPL(richacl_to_xattr);
+ 
++static size_t
++richacl_xattr_list(struct dentry *dentry, char *list, size_t list_len,
++		   const char *name, size_t name_len, int handler_flags)
++{
++	const size_t size = sizeof(XATTR_NAME_RICHACL);
++
++	if (!IS_RICHACL(d_backing_inode(dentry)))
++		return 0;
++	if (list && size <= list_len)
++		memcpy(list, XATTR_NAME_RICHACL, size);
++	return size;
++}
++
++static int
++richacl_xattr_get(struct dentry *dentry, const char *name, void *buffer,
++		  size_t buffer_size, int handler_flags)
++{
++	struct inode *inode = d_backing_inode(dentry);
++	struct richacl *acl;
++	int error;
++
++	if (strcmp(name, "") != 0)
++		return -EINVAL;
++	if (!IS_RICHACL(inode))
++		return EOPNOTSUPP;
++	if (S_ISLNK(inode->i_mode))
++		return -EOPNOTSUPP;
++	acl = get_richacl(inode);
++	if (IS_ERR(acl))
++		return PTR_ERR(acl);
++	if (acl == NULL)
++		return -ENODATA;
++	error = richacl_to_xattr(&init_user_ns, acl, buffer, buffer_size);
++	richacl_put(acl);
++	return error;
++}
++
++static int
++richacl_xattr_set(struct dentry *dentry, const char *name,
++		  const void *value, size_t size, int flags, int handler_flags)
++{
++	struct inode *inode = d_backing_inode(dentry);
++	struct richacl *acl = NULL;
++	int ret;
++
++	if (strcmp(name, "") != 0)
++		return -EINVAL;
++	if (!IS_RICHACL(inode))
++		return -EOPNOTSUPP;
++	if (!inode->i_op->set_richacl)
++		return -EOPNOTSUPP;
++
++	if (!uid_eq(current_fsuid(), inode->i_uid) &&
++	    inode_permission(inode, MAY_CHMOD) &&
++	    !capable(CAP_FOWNER))
++		return -EPERM;
++
++	if (value) {
++		acl = richacl_from_xattr(&init_user_ns, value, size);
++		if (IS_ERR(acl))
++			return PTR_ERR(acl);
++	}
++
++	ret = inode->i_op->set_richacl(inode, acl);
++	richacl_put(acl);
++	return ret;
++}
++
++struct xattr_handler richacl_xattr_handler = {
++	.prefix = XATTR_NAME_RICHACL,
++	.list = richacl_xattr_list,
++	.get = richacl_xattr_get,
++	.set = richacl_xattr_set,
++};
++EXPORT_SYMBOL(richacl_xattr_handler);
++
+ /*
+  * Fix up the uids and gids in richacl extended attributes in place.
+  */
+diff --git a/include/linux/richacl_xattr.h b/include/linux/richacl_xattr.h
+index 7fc5ca8..45ec27a 100644
+--- a/include/linux/richacl_xattr.h
++++ b/include/linux/richacl_xattr.h
+@@ -39,4 +39,6 @@ static inline void richacl_fix_xattr_to_user(void *value, size_t size)
+ }
+ #endif
+ 
++extern struct xattr_handler richacl_xattr_handler;
++
+ #endif /* __RICHACL_XATTR_H */
 -- 
 2.5.0
