@@ -1,114 +1,34 @@
-From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v13 45/51] sunrpc: Allow to demand-allocate pages to
- encode into
-Date: Sun, 8 Nov 2015 23:19:35 +0100
-Message-ID: <CAHc6FU6mmJj0N6Jq1_fp59kv5h3XeuLUamfNg3iNo64=+rTYCA@mail.gmail.com>
-References: <1446563847-14005-1-git-send-email-agruenba@redhat.com>
-	<1446563847-14005-46-git-send-email-agruenba@redhat.com>
-	<CAHQdGtScoRb-722ES168O8tkp-Rbvwe6bZ=70WwgiXpCC3vsHw@mail.gmail.com>
-	<CAHc6FU5xkjWJeGFR5mO8+OAEMwwU6yWK7H8CV1fn5dk-LS23-g@mail.gmail.com>
-	<CAHQdGtQitLZq9fKHhzZbqS5ESRYNgNpw=M+y715mWMjFi-cgNQ@mail.gmail.com>
+From: Wei Jiangang <weijg.fnst-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+Subject: [PATCH] tools:testing/selftests: fix typo in futex/README
+Date: Mon, 9 Nov 2015 14:26:39 +0800
+Message-ID: <1447050399-24404-1-git-send-email-weijg.fnst@cn.fujitsu.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAHQdGtQitLZq9fKHhzZbqS5ESRYNgNpw=M+y715mWMjFi-cgNQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, weijg.fnst-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 5, 2015 at 4:57 PM, Trond Myklebust
-<trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org> wrote:
-> On Thu, Nov 5, 2015 at 6:07 AM, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->> Trond,
->>
->> On Tue, Nov 3, 2015 at 5:25 PM, Trond Myklebust
->> <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org> wrote:
->>> On Tue, Nov 3, 2015 at 10:17 AM, Andreas Gruenbacher
->>> <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->>>> When encoding large, variable-length objects such as acls into xdr_bufs,
->>>> it is easier to allocate buffer pages on demand rather than precomputing
->>>> the required buffer size.
->>>
->>> NACK. We're not doing allocations from inside the XDR encoders. This
->>> can and should be done before calling into the SUNRPC layer.
->>
->> an XDR-encoded ACL can be up to 64k (16 pages) in size. In practice,
->> large ACLs like that will almost never occur and almost all ACLs will
->> fit into a single page though.
->>
->> The XDR-encoded ACL contains strings for the user and group names
->> which need to be looked up when the idmapper is used. Those lookups
->> are somewhat expensive; in addition, the lookup results can change
->> over time. When precomputing the size, allocating space, and then
->> encoding the ACL, we could run out of space when encoding.
->>
->> So we could always allocate the maximum 16 pages, encode the acl, and
->> free the unused pages. This would be rather wasteful though.
->>
->> Given how simple it is to allocate pages as we go, this seems the
->> better choice here. This doesn't break any existing code either; NULL
->> page pointers would have oopsed in xdr_get_next_encode_buffer before.
->>
->> From the memory management point of view, there is no difference in
->> preallocating GFP_NOFS pages and allocating them on demand; the pages
->> are allocated in the same task and locking context in both cases.
->>
->> So could you please explain why you object to this change?
->
-> Allocating memory deep in the bowels of the RPC code with the
-> expectation that it will be freed by the caller of the RPC request is
-> a layering violation of the ugliest sort.
+Correct typo in tools/testing/selftests/futex/README.
 
-Ah, there we have it, Godwin's Law for software discussions.
+Signed-off-by: Wei Jiangang <weijg.fnst-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+---
+ tools/testing/selftests/futex/README | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-What happens here is the following: the caller sets up an xdr_stream
-that contains an array of NULL page pointers (__nfs4_proc_set_acl ->
-nfs4_encode_acl -> xdr_init_encode_pages). It does so on purpose to
-tell the XDR layer to allocate pages for it as needed, and it knows it
-is responsible for later freeing those pages.
-
-Without this patch, the XDR layer would immediately Oops when hitting
-a NULL page pointer. This tells us that the XDR layer is so far not
-prepared to handle NULL page pointers, and that we can assign a
-meaning to NULL page pointers without affecting existing callers.
-
-Using the existing XDR layer for XDR-encoding ACLs makes sense because
-the XDR layer already knows how to align things, encode into multiple
-pages, handle strings that wrap across pages, etc. I really don't want
-to duplicate all that for ACLs.
-
-> How is anyone who is
-> unfamiliar with the code going to be able to understand what is going
-> on without tracing through 1000 lines of code to spot where the
-> allocation is happening?
-
-Somebody unfamiliar with the existing code will not understand it
-without putting some effort in, either. What do you expect? Besides,
-the caller doesn't care where the allocation is happening, it just
-cares that it is happening when it should.
-
-> Aside from that, we do not want any non-critical blocking while
-> holding the RPC socket lock. Your allocation request will block all
-> further traffic to the server until it is satisfied. That includes
-> blocking page writeback, which might actually free up memory to
-> satisfy the allocation.
->
-> As I said above, there is no reason whatsoever to have to do all this
-> inside encode_setacl(). The entire ACL encoding into pages can be done
-> before even calling into the RPC layer, just like we do today.
-
-You have pointed that out before, and as a consequence, it was fixed
-in the July 22 snapshot (https://lwn.net/Articles/652058/):
-
-    * Changes to the nfs patches: acls are now encoded above the sunrpc
-      layer. This means we can no longer encode small acls directly into the
-      scratch area of an xdr_buf, we always have to allocate extra memory.
-      But we also don't need to touch the nfs sunrpc code, which Trond objected
-      to.
-
-Since then, the ACL encoding happens in __nfs4_proc_set_acl, before
-calling into the RPC layer.
-
-Thanks,
-Andreas
+diff --git a/tools/testing/selftests/futex/README b/tools/testing/selftests/futex/README
+index 3224a049b196..0558bb9ce0a6 100644
+--- a/tools/testing/selftests/futex/README
++++ b/tools/testing/selftests/futex/README
+@@ -27,7 +27,7 @@ o The build system shall remain as simple as possible, avoiding any archive or
+ o Where possible, any helper functions or other package-wide code shall be
+   implemented in header files, avoiding the need to compile intermediate object
+   files.
+-o External dependendencies shall remain as minimal as possible. Currently gcc
++o External dependencies shall remain as minimal as possible. Currently gcc
+   and glibc are the only dependencies.
+ o Tests return 0 for success and < 0 for failure.
+ 
+-- 
+1.9.3
