@@ -1,55 +1,60 @@
-From: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH 01/14] Remove #ifdef CONFIG_64BIT from all asm-generic/fcntl.h
-Date: Mon,  9 Nov 2015 17:30:58 -0800
-Message-ID: <1447119071-19392-2-git-send-email-palmer__36263.3297256709$1447119474$gmane$org@dabbelt.com>
+From: Palmer Dabbelt <palmer@dabbelt.com>
+Subject: [PATCH 03/14] Move COMPAT_ATM_ADDPARTY to net/atm/svc.c
+Date: Mon,  9 Nov 2015 17:31:00 -0800
+Message-ID: <1447119071-19392-4-git-send-email-palmer@dabbelt.com>
 References: <1446579994-9937-1-git-send-email-palmer@dabbelt.com>
  <1447119071-19392-1-git-send-email-palmer@dabbelt.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1447119071-19392-1-git-send-email-palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: arnd-r2nGTMty4D4@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
-Cc: viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org, aishchuk-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, bhe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, 3chas3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org, dave-gkUM19QKKo4@public.gmane.org, dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org, jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xtensa-PjhNF2WwrV/0Sa2dR60CXw@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, tomi.valkeinen-l0cyMroinI0@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1447119071-19392-1-git-send-email-palmer@dabbelt.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: arnd@arndb.de, dhowells@redhat.com, peterz@infradead.org
+Cc: viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-xtensa@linux-xtensa.org, mathieu.desnoyers@efficios.com, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, a.p.zijlstra@chello.nl, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org, Palmer Dabbelt <palmer@dabbelt.com>
 List-Id: linux-api@vger.kernel.org
 
-When working on the RISC-V port I noticed that F_SETLK64 was being
-defined on our 64-bit platform, despite our port being so new that
-we've only ever had the 64-bit file ops.  Since there's not compat
-layer for these, this causes fcntl to bail out.
+This used to be behind an #ifdef COMPAT_COMPAT, so most of userspace
+wouldn't have seen the definition before.  Unfortunately this header
+file became visible to userspace, so the definition has instead been
+moved to net/atm/svc.c (the only user).
 
-It turns out that one of the ways in with F_SETLK64 was being defined
-(there's some more in glibc, but that's a whole different story... :))
-is the result of CONFIG_64BIT showing up in this user-visible header.
-<asm-generic/bitsperlong.h> confirms this isn't sane, so I replaced it
-with a __BITS_PER_LONG check.
-
-Signed-off-by: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
-Reviewed-by: Andrew Waterman <waterman-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
-Reviewed-by: Albert Ou <aou-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
-Reviewed-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Signed-off-by: Palmer Dabbelt <palmer@dabbelt.com>
+Reviewed-by: Andrew Waterman <waterman@eecs.berkeley.edu>
+Reviewed-by: Albert Ou <aou@eecs.berkeley.edu>
 ---
- include/uapi/asm-generic/fcntl.h | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ include/uapi/linux/atmdev.h | 4 ----
+ net/atm/svc.c               | 5 +++++
+ 2 files changed, 5 insertions(+), 4 deletions(-)
 
-diff --git a/include/uapi/asm-generic/fcntl.h b/include/uapi/asm-generic/fcntl.h
-index e063eff..14a5c82 100644
---- a/include/uapi/asm-generic/fcntl.h
-+++ b/include/uapi/asm-generic/fcntl.h
-@@ -1,6 +1,7 @@
- #ifndef _ASM_GENERIC_FCNTL_H
- #define _ASM_GENERIC_FCNTL_H
+diff --git a/include/uapi/linux/atmdev.h b/include/uapi/linux/atmdev.h
+index 93e0ec0..3dcec70 100644
+--- a/include/uapi/linux/atmdev.h
++++ b/include/uapi/linux/atmdev.h
+@@ -100,10 +100,6 @@ struct atm_dev_stats {
+ 					/* use backend to make new if */
+ #define ATM_ADDPARTY  	_IOW('a', ATMIOC_SPECIAL+4,struct atm_iobuf)
+  					/* add party to p2mp call */
+-#ifdef CONFIG_COMPAT
+-/* It actually takes struct sockaddr_atmsvc, not struct atm_iobuf */
+-#define COMPAT_ATM_ADDPARTY  	_IOW('a', ATMIOC_SPECIAL+4,struct compat_atm_iobuf)
+-#endif
+ #define ATM_DROPPARTY 	_IOW('a', ATMIOC_SPECIAL+5,int)
+ 					/* drop party from p2mp call */
  
-+#include <asm/bitsperlong.h>
- #include <linux/types.h>
+diff --git a/net/atm/svc.c b/net/atm/svc.c
+index 3fa0a9e..9e2e6ef 100644
+--- a/net/atm/svc.c
++++ b/net/atm/svc.c
+@@ -27,6 +27,11 @@
+ #include "signaling.h"
+ #include "addr.h"
  
- /*
-@@ -115,7 +116,7 @@
- #define F_GETSIG	11	/* for sockets. */
- #endif
++#ifdef CONFIG_COMPAT
++/* It actually takes struct sockaddr_atmsvc, not struct atm_iobuf */
++#define COMPAT_ATM_ADDPARTY _IOW('a', ATMIOC_SPECIAL+4, struct compat_atm_iobuf)
++#endif
++
+ static int svc_create(struct net *net, struct socket *sock, int protocol,
+ 		      int kern);
  
--#ifndef CONFIG_64BIT
-+#if (__BITS_PER_LONG == 32)
- #ifndef F_GETLK64
- #define F_GETLK64	12	/*  using 'struct flock64' */
- #define F_SETLK64	13
 -- 
 2.4.10
+
