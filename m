@@ -1,70 +1,34 @@
-From: Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
-Subject: Re: [PATCH 1/2] mm: introduce page reference manipulation functions
-Date: Tue, 10 Nov 2015 09:28:42 +0900
-Message-ID: <20151110002842.GC13894@js1304-P5Q-DELUXE>
-References: <1447053784-27811-1-git-send-email-iamjoonsoo.kim@lge.com>
- <20151109075337.GC472@swordfish>
- <CAAmzW4MugYCu1+ZsRp63o=26eTuJG22C+nNrGBhDJvQDOzbQJw@mail.gmail.com>
- <20151109114537.GA3903@node.shutemov.name>
+From: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Subject: Re: [PATCH v8 4/4] vfs: Add vfs_copy_file_range() support for
+ pagecache copies
+Date: Tue, 10 Nov 2015 00:56:45 +0000
+Message-ID: <20151110005645.GX22011@ZenIV.linux.org.uk>
+References: <1446844701-848-1-git-send-email-Anna.Schumaker@Netapp.com>
+ <1446844701-848-5-git-send-email-Anna.Schumaker@Netapp.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20151109114537.GA3903-sVvlyX1904swdBt8bTSxpkEMvNT87kid@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
-Cc: Sergey Senozhatsky <sergey.senozhatsky.work-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Michal Nazarewicz <mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Linux Memory Management List <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <1446844701-848-5-git-send-email-Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Cc: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 09, 2015 at 01:45:37PM +0200, Kirill A. Shutemov wrote:
-> On Mon, Nov 09, 2015 at 05:00:32PM +0900, Joonsoo Kim wrote:
-> > 2015-11-09 16:53 GMT+09:00 Sergey Senozhatsky
-> > <sergey.senozhatsky.work-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
-> > > Hi,
-> > >
-> > > On (11/09/15 16:23), Joonsoo Kim wrote:
-> > > [..]
-> > >> +static inline int page_count(struct page *page)
-> > >> +{
-> > >> +     return atomic_read(&compound_head(page)->_count);
-> > >> +}
-> > >> +
-> > >> +static inline void set_page_count(struct page *page, int v)
-> > >> +{
-> > >> +     atomic_set(&page->_count, v);
-> > >> +}
-> > >> +
-> > >> +/*
-> > >> + * Setup the page count before being freed into the page allocator for
-> > >> + * the first time (boot or memory hotplug)
-> > >> + */
-> > >> +static inline void init_page_count(struct page *page)
-> > >> +{
-> > >> +     set_page_count(page, 1);
-> > >> +}
-> > >> +
-> > >> +static inline void page_ref_add(struct page *page, int nr)
-> > >> +{
-> > >> +     atomic_add(nr, &page->_count);
-> > >> +}
-> > >
-> > > Since page_ref_FOO wrappers operate with page->_count and there
-> > > are already page_count()/set_page_count()/etc. may be name new
-> > > wrappers in page_count_FOO() manner?
-> > 
-> > Hello,
-> > 
-> > I used that page_count_ before but change my mind.
-> > I think that ref is more relevant to this operation.
-> > Perhaps, it'd be better to change page_count()/set_page_count()
-> > to page_ref()/set_page_ref().
-> 
-> What about get_page() vs. page_cache_get() and put_page() vs.
-> page_cache_release()? Two different helpers for the same thing is annyoing
-> me for some time (plus PAGE_SIZE vs. PAGE_CACHE_SIZE, etc.).
-> 
-> If you want coherent API you might want to get them consitent too.
+On Fri, Nov 06, 2015 at 04:18:20PM -0500, Anna Schumaker wrote:
 
-In fact, consistent naming is out of interest of this patchset. :)
+> I moved the rw_verify_area() calls into the fallback code since some
+> filesystems can handle reflinking a large range.
 
-Thanks.
+
+Take a look at rw_verify_area() - it does a lot more than "trim down to
+2Gb" - starting with "deal with mandatory locks".  LSM checks as well...
+
+So that one is bogus, IMO.  I've no problem with fallback per se, but
+rw_verify_area() should be unconditional here.  If anything, we might
+add a variant that would skip the "trim down to 2Gb" and use it there,
+but skipping it entirely is wrong.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
