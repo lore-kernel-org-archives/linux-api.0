@@ -1,7 +1,7 @@
 From: Jessica Yu <jeyu@redhat.com>
-Subject: [RFC PATCH 3/5] livepatch: reuse module loader code to write relocations
-Date: Mon,  9 Nov 2015 23:45:53 -0500
-Message-ID: <1447130755-17383-4-git-send-email-jeyu@redhat.com>
+Subject: [RFC PATCH 2/5] module: save load_info for livepatch modules
+Date: Mon,  9 Nov 2015 23:45:52 -0500
+Message-ID: <1447130755-17383-3-git-send-email-jeyu@redhat.com>
 References: <1447130755-17383-1-git-send-email-jeyu@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1447130755-17383-1-git-send-email-jeyu@redhat.com>
@@ -10,202 +10,166 @@ To: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>,
 Cc: linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, Jessica Yu <jeyu@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Reuse module loader code to write relocations, thereby eliminating the
-need for architecture specific code in livepatch. Namely, we reuse
-apply_relocate_add() in the module loader to write relocs instead of
-duplicating functionality in livepatch's klp_write_module_reloc(). To
-apply relocation sections, remaining SHN_LIVEPATCH symbols referenced by
-relocs are resolved and then apply_relocate_add() is called to apply
-those relocations.
+In livepatch modules, preserve section, symbol, string information from
+the load_info struct in the module loader. This information is used to
+patch modules that are not loaded in memory yet; specifically it is used
+to resolve remaining symbols and write relocations when the target
+module loads.
 
 Signed-off-by: Jessica Yu <jeyu@redhat.com>
 ---
- include/linux/livepatch.h | 11 ++++--
- include/linux/module.h    |  6 ++++
- kernel/livepatch/core.c   | 89 +++++++++++++++++++++++++++++------------------
- 3 files changed, 70 insertions(+), 36 deletions(-)
+ include/linux/module.h  | 25 +++++++++++++++++++++++++
+ kernel/livepatch/core.c | 17 +++++++++++++++++
+ kernel/module.c         | 36 ++++++++++++++++++++++--------------
+ 3 files changed, 64 insertions(+), 14 deletions(-)
 
-diff --git a/include/linux/livepatch.h b/include/linux/livepatch.h
-index 31db7a0..601e892 100644
---- a/include/linux/livepatch.h
-+++ b/include/linux/livepatch.h
-@@ -85,7 +85,7 @@ struct klp_reloc {
- /**
-  * struct klp_object - kernel object structure for live patching
-  * @name:	module name (or NULL for vmlinux)
-- * @relocs:	relocation entries to be applied at load time
-+ * @reloc_secs:	relocation sections to be applied at load time
-  * @funcs:	function entries for functions to be patched in the object
-  * @kobj:	kobject for sysfs resources
-  * @mod:	kernel module associated with the patched object
-@@ -95,7 +95,7 @@ struct klp_reloc {
- struct klp_object {
- 	/* external */
- 	const char *name;
--	struct klp_reloc *relocs;
-+	struct list_head reloc_secs;
- 	struct klp_func *funcs;
- 
- 	/* internal */
-@@ -129,6 +129,13 @@ struct klp_patch {
- #define klp_for_each_func(obj, func) \
- 	for (func = obj->funcs; func->old_name; func++)
- 
-+struct klp_reloc_sec {
-+	unsigned int index;
-+	char *name;
-+	char *objname;
-+	struct list_head list;
-+};
-+
- int klp_register_patch(struct klp_patch *);
- int klp_unregister_patch(struct klp_patch *);
- int klp_enable_patch(struct klp_patch *);
 diff --git a/include/linux/module.h b/include/linux/module.h
-index c8680b1..3c34eb8 100644
+index 3a19c79..c8680b1 100644
 --- a/include/linux/module.h
 +++ b/include/linux/module.h
-@@ -793,9 +793,15 @@ extern int module_sysfs_initialized;
- #ifdef CONFIG_DEBUG_SET_MODULE_RONX
- extern void set_all_modules_text_rw(void);
- extern void set_all_modules_text_ro(void);
-+extern void
-+set_page_attributes(void *start, void *end,
-+		    int (*set)(unsigned long start, int num_pages));
- #else
- static inline void set_all_modules_text_rw(void) { }
- static inline void set_all_modules_text_ro(void) { }
-+static inline void
-+set_page_attributes(void *start, void *end,
-+		    int (*set)(unsigned long start, int num_pages)) { }
+@@ -36,6 +36,20 @@ struct modversion_info {
+ 	char name[MODULE_NAME_LEN];
+ };
+ 
++struct load_info {
++	Elf_Ehdr *hdr;
++	unsigned long len;
++	Elf_Shdr *sechdrs;
++	char *secstrings, *strtab;
++	unsigned long symoffs, stroffs;
++	struct _ddebug *debug;
++	unsigned int num_debug;
++	bool sig_ok;
++	struct {
++		unsigned int sym, str, mod, vers, info, pcpu;
++	} index;
++};
++
+ struct module;
+ 
+ struct module_kobject {
+@@ -462,6 +476,8 @@ struct module {
+ 
+ #ifdef CONFIG_LIVEPATCH
+ 	bool klp_alive;
++	/* save info to patch to-be-loaded modules */
++	struct load_info *info;
  #endif
  
- #ifdef CONFIG_GENERIC_BUG
+ #ifdef CONFIG_MODULE_UNLOAD
+@@ -635,6 +651,15 @@ static inline bool module_requested_async_probing(struct module *module)
+ 	return module && module->async_probe_requested;
+ }
+ 
++#ifdef CONFIG_LIVEPATCH
++extern void klp_prepare_patch_module(struct module *mod,
++				     struct load_info *info);
++extern int
++apply_relocate_add(Elf64_Shdr *sechdrs, const char *strtab,
++		   unsigned int symindex, unsigned int relsec,
++		   struct module *me);
++#endif
++
+ #else /* !CONFIG_MODULES... */
+ 
+ /* Given an address, look for it in the exception tables. */
 diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
-index 087a8c7..26c419f 100644
+index 6e53441..087a8c7 100644
 --- a/kernel/livepatch/core.c
 +++ b/kernel/livepatch/core.c
-@@ -28,6 +28,8 @@
- #include <linux/list.h>
- #include <linux/kallsyms.h>
- #include <linux/livepatch.h>
-+#include <linux/elf.h>
-+#include <asm/cacheflush.h>
+@@ -1001,6 +1001,23 @@ static struct notifier_block klp_module_nb = {
+ 	.priority = INT_MIN+1, /* called late but before ftrace notifier */
+ };
  
- /**
-  * struct klp_ops - structure for tracking registered ftrace ops structs
-@@ -281,46 +283,54 @@ static int klp_find_external_symbol(struct module *pmod, const char *name,
- }
- 
- static int klp_write_object_relocations(struct module *pmod,
--					struct klp_object *obj)
-+					struct klp_object *obj,
-+					struct klp_patch *patch)
- {
--	int ret;
--	struct klp_reloc *reloc;
-+	int relindex, num_relas;
-+	int i, ret = 0;
-+	unsigned long addr;
-+	unsigned int bind;
-+	char *symname;
-+	struct klp_reloc_sec *reloc_sec;
-+	struct load_info *info;
-+	Elf_Rela *rela;
-+	Elf_Sym *sym, *symtab;
++/*
++ * Save necessary information from info in order to be able to
++ * patch modules that might be loaded later
++ */
++void klp_prepare_patch_module(struct module *mod, struct load_info *info)
++{
 +	Elf_Shdr *symsect;
- 
- 	if (WARN_ON(!klp_is_object_loaded(obj)))
- 		return -EINVAL;
- 
--	if (WARN_ON(!obj->relocs))
--		return -EINVAL;
--
--	for (reloc = obj->relocs; reloc->name; reloc++) {
--		if (!klp_is_module(obj)) {
--			ret = klp_verify_vmlinux_symbol(reloc->name,
--							reloc->val);
--			if (ret)
--				return ret;
--		} else {
--			/* module, reloc->val needs to be discovered */
--			if (reloc->external)
--				ret = klp_find_external_symbol(pmod,
--							       reloc->name,
--							       &reloc->val);
--			else
--				ret = klp_find_object_symbol(obj->mod->name,
--							     reloc->name,
--							     &reloc->val);
--			if (ret)
--				return ret;
--		}
--		ret = klp_write_module_reloc(pmod, reloc->type, reloc->loc,
--					     reloc->val + reloc->addend);
--		if (ret) {
--			pr_err("relocation failed for symbol '%s' at 0x%016lx (%d)\n",
--			       reloc->name, reloc->val, ret);
--			return ret;
-+	info = pmod->info;
++
 +	symsect = info->sechdrs + info->index.sym;
-+	symtab = (void *)info->hdr + symsect->sh_offset;
++	/* update sh_addr to point to symtab */
++	symsect->sh_addr = (unsigned long)info->hdr + symsect->sh_offset;
 +
-+	/* For each __klp_rela section for this object */
-+	list_for_each_entry(reloc_sec, &obj->reloc_secs, list) {
-+		relindex = reloc_sec->index;
-+		num_relas = info->sechdrs[relindex].sh_size / sizeof(Elf_Rela);
-+		rela = (Elf_Rela *) info->sechdrs[relindex].sh_addr;
++	mod->info = kzalloc(sizeof(*info), GFP_KERNEL);
++	memcpy(mod->info, info, sizeof(*info));
 +
-+		/* For each rela in this __klp_rela section */
-+		for (i = 0; i < num_relas; i++, rela++) {
-+			sym = symtab + ELF_R_SYM(rela->r_info);
-+			symname = info->strtab + sym->st_name;
-+			bind = ELF_ST_BIND(sym->st_info);
++}
 +
-+			if (sym->st_shndx == SHN_LIVEPATCH) {
-+				if (bind == STB_LIVEPATCH_EXT)
-+					ret = klp_find_external_symbol(pmod, symname, &addr);
-+				else
-+					ret = klp_find_object_symbol(obj->name, symname, &addr);
-+				if (ret)
-+					return ret;
-+				sym->st_value = addr;
-+			}
- 		}
-+		ret = apply_relocate_add(info->sechdrs, info->strtab,
-+					 info->index.sym, relindex, pmod);
- 	}
- 
--	return 0;
-+	return ret;
- }
- 
- static void notrace klp_ftrace_handler(unsigned long ip,
-@@ -741,12 +751,23 @@ static int klp_init_object_loaded(struct klp_patch *patch,
- 				  struct klp_object *obj)
+ static int __init klp_init(void)
  {
- 	struct klp_func *func;
-+	struct module *pmod;
  	int ret;
+diff --git a/kernel/module.c b/kernel/module.c
+index 8f051a1..8ae3ca5 100644
+--- a/kernel/module.c
++++ b/kernel/module.c
+@@ -318,20 +318,6 @@ int unregister_module_notifier(struct notifier_block *nb)
+ }
+ EXPORT_SYMBOL(unregister_module_notifier);
  
--	if (obj->relocs) {
--		ret = klp_write_object_relocations(patch->mod, obj);
-+	pmod = patch->mod;
-+
-+	if (!list_empty(&obj->reloc_secs)) {
-+		set_page_attributes(pmod->module_core,
-+				    pmod->module_core + pmod->core_text_size,
-+				    set_memory_rw);
-+
-+		ret = klp_write_object_relocations(pmod, obj, patch);
- 		if (ret)
- 			return ret;
-+
-+		set_page_attributes(pmod->module_core,
-+				    pmod->module_core + pmod->core_text_size,
-+				    set_memory_ro);
- 	}
+-struct load_info {
+-	Elf_Ehdr *hdr;
+-	unsigned long len;
+-	Elf_Shdr *sechdrs;
+-	char *secstrings, *strtab;
+-	unsigned long symoffs, stroffs;
+-	struct _ddebug *debug;
+-	unsigned int num_debug;
+-	bool sig_ok;
+-	struct {
+-		unsigned int sym, str, mod, vers, info, pcpu;
+-	} index;
+-};
+-
+ /* We require a truly strong try_module_get(): 0 means failure due to
+    ongoing or failed initialization etc. */
+ static inline int strong_try_module_get(struct module *mod)
+@@ -2137,6 +2123,11 @@ static int simplify_symbols(struct module *mod, const struct load_info *info)
+ 			       (long)sym[i].st_value);
+ 			break;
  
- 	klp_for_each_func(obj, func) {
++#ifdef CONFIG_LIVEPATCH
++		case SHN_LIVEPATCH:
++			break;
++#endif
++
+ 		case SHN_UNDEF:
+ 			ksym = resolve_symbol_wait(mod, info, name);
+ 			/* Ok if resolved.  */
+@@ -2185,6 +2176,11 @@ static int apply_relocations(struct module *mod, const struct load_info *info)
+ 		if (!(info->sechdrs[infosec].sh_flags & SHF_ALLOC))
+ 			continue;
+ 
++#ifdef CONFIG_LIVEPATCH
++		if (info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH)
++			continue;
++#endif
++
+ 		if (info->sechdrs[i].sh_type == SHT_REL)
+ 			err = apply_relocate(info->sechdrs, info->strtab,
+ 					     info->index.sym, i, mod);
+@@ -3530,8 +3526,20 @@ static int load_module(struct load_info *info, const char __user *uargs,
+ 	if (err < 0)
+ 		goto bug_cleanup;
+ 
++#ifdef CONFIG_LIVEPATCH
++	/*
++	 * Save sechdrs, indices, and other data from info
++	 * in order to patch to-be-loaded modules.
++	 * Do not call free_copy() for livepatch modules.
++	 */
++	if (get_modinfo((struct load_info *)info, "livepatch"))
++		klp_prepare_patch_module(mod, info);
++	else
++		free_copy(info);
++#else
+ 	/* Get rid of temporary copy. */
+ 	free_copy(info);
++#endif
+ 
+ 	/* Done! */
+ 	trace_module_load(mod);
 -- 
 2.4.3
