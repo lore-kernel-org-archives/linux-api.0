@@ -1,7 +1,7 @@
 From: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH 11/14] Always define MAX_RAW_MINORS as 2**20 in userspace
-Date: Mon,  9 Nov 2015 17:31:08 -0800
-Message-ID: <1447119071-19392-12-git-send-email-palmer@dabbelt.com>
+Subject: [PATCH 10/14] Move USE_WCACHING to drivers/block/pktcdvd.c
+Date: Mon,  9 Nov 2015 17:31:07 -0800
+Message-ID: <1447119071-19392-11-git-send-email-palmer@dabbelt.com>
 References: <1446579994-9937-1-git-send-email-palmer@dabbelt.com>
  <1447119071-19392-1-git-send-email-palmer@dabbelt.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -11,60 +11,62 @@ To: arnd-r2nGTMty4D4@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gm
 Cc: viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org, aishchuk-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, bhe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, 3chas3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org, dave-gkUM19QKKo4@public.gmane.org, dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org, jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xtensa-PjhNF2WwrV/0Sa2dR60CXw@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, tomi.valkeinen-l0cyMroinI0@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-While I don't think this was ever meant to be exposed to userspace, if
-anyone is using it then this will at least provide a correct (if
-unlikely) definition.
-
-MAX_RAW_MINORS used to be used in the kernel, where it's been replaced
-with CONFIG_MAX_RAW_MINORS.
-
-Note that there's a checkpatch.pl warning about a split config string
-here, but I've left that alone.
+I don't think this was ever intended to be exposed to userspace, but
+it did require an "#ifdef CONFIG_*".  Since the name is kind of
+generic and was only used in one place, I've moved the definition to
+the one user.
 
 Signed-off-by: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
 Reviewed-by: Andrew Waterman <waterman-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
 Reviewed-by: Albert Ou <aou-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
 ---
- drivers/char/raw.c       | 7 ++++---
- include/uapi/linux/raw.h | 2 +-
- 2 files changed, 5 insertions(+), 4 deletions(-)
+ drivers/block/pktcdvd.c      | 11 +++++++++++
+ include/uapi/linux/pktcdvd.h | 11 -----------
+ 2 files changed, 11 insertions(+), 11 deletions(-)
 
-diff --git a/drivers/char/raw.c b/drivers/char/raw.c
-index 60316fb..2a69117 100644
---- a/drivers/char/raw.c
-+++ b/drivers/char/raw.c
-@@ -36,7 +36,7 @@ static struct raw_device_data *raw_devices;
- static DEFINE_MUTEX(raw_mutex);
- static const struct file_operations raw_ctl_fops; /* forward declaration */
+diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
+index 2f477d4..55f0df3 100644
+--- a/drivers/block/pktcdvd.c
++++ b/drivers/block/pktcdvd.c
+@@ -90,6 +90,17 @@ do {									\
  
--static int max_raw_minors = MAX_RAW_MINORS;
-+static int max_raw_minors = CONFIG_MAX_RAW_DEVS;
+ #define MAX_SPEED 0xffff
  
- module_param(max_raw_minors, int, 0);
- MODULE_PARM_DESC(max_raw_minors, "Maximum number of raw devices (1-65536)");
-@@ -317,8 +317,9 @@ static int __init raw_init(void)
++/*
++ * use drive write caching -- we need deferred error handling to be
++ * able to successfully recover with this option (drive will return good
++ * status as soon as the cdb is validated).
++ */
++#if defined(CONFIG_CDROM_PKTCDVD_WCACHE)
++#define USE_WCACHING		1
++#else
++#define USE_WCACHING		0
++#endif
++
+ static DEFINE_MUTEX(pktcdvd_mutex);
+ static struct pktcdvd_device *pkt_devs[MAX_WRITERS];
+ static struct proc_dir_entry *pkt_proc;
+diff --git a/include/uapi/linux/pktcdvd.h b/include/uapi/linux/pktcdvd.h
+index 2640b9d..05c2bee 100644
+--- a/include/uapi/linux/pktcdvd.h
++++ b/include/uapi/linux/pktcdvd.h
+@@ -29,17 +29,6 @@
+ #define PACKET_WAIT_TIME	(HZ * 5 / 1000)
  
- 	if (max_raw_minors < 1 || max_raw_minors > 65536) {
- 		printk(KERN_WARNING "raw: invalid max_raw_minors (must be"
--			" between 1 and 65536), using %d\n", MAX_RAW_MINORS);
--		max_raw_minors = MAX_RAW_MINORS;
-+			" between 1 and 65536), using %d\n",
-+		       max_raw_minors);
-+		max_raw_minors = 65536;
- 	}
+ /*
+- * use drive write caching -- we need deferred error handling to be
+- * able to successfully recover with this option (drive will return good
+- * status as soon as the cdb is validated).
+- */
+-#if defined(CONFIG_CDROM_PKTCDVD_WCACHE)
+-#define USE_WCACHING		1
+-#else
+-#define USE_WCACHING		0
+-#endif
+-
+-/*
+  * No user-servicable parts beyond this point ->
+  */
  
- 	raw_devices = vzalloc(sizeof(struct raw_device_data) * max_raw_minors);
-diff --git a/include/uapi/linux/raw.h b/include/uapi/linux/raw.h
-index 62d543e..f3d009b 100644
---- a/include/uapi/linux/raw.h
-+++ b/include/uapi/linux/raw.h
-@@ -13,6 +13,6 @@ struct raw_config_request
- 	__u64	block_minor;
- };
- 
--#define MAX_RAW_MINORS CONFIG_MAX_RAW_DEVS
-+#define MAX_RAW_MINORS (1 << 20)
- 
- #endif /* __LINUX_RAW_H */
 -- 
 2.4.10
