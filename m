@@ -1,73 +1,62 @@
-From: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH 14/14] Re-enable and clean up "check_config()" in headers_check.pl
-Date: Mon,  9 Nov 2015 17:31:11 -0800
-Message-ID: <1447119071-19392-15-git-send-email-palmer__41026.5602906749$1447119304$gmane$org@dabbelt.com>
+From: Palmer Dabbelt <palmer@dabbelt.com>
+Subject: [PATCH 08/14] Move MAX_SHARED_LIBS to fs/binfmt_flat.c
+Date: Mon,  9 Nov 2015 17:31:05 -0800
+Message-ID: <1447119071-19392-9-git-send-email-palmer__20858.6433240727$1447119310$gmane$org@dabbelt.com>
 References: <1446579994-9937-1-git-send-email-palmer@dabbelt.com>
  <1447119071-19392-1-git-send-email-palmer@dabbelt.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1447119071-19392-1-git-send-email-palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: arnd-r2nGTMty4D4@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
-Cc: viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org, aishchuk-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, bhe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, 3chas3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org, dave-gkUM19QKKo4@public.gmane.org, dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org, jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xtensa-PjhNF2WwrV/0Sa2dR60CXw@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, tomi.valkeinen-l0cyMroinI0@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <1447119071-19392-1-git-send-email-palmer@dabbelt.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: arnd@arndb.de, dhowells@redhat.com, peterz@infradead.org
+Cc: viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-xtensa@linux-xtensa.org, mathieu.desnoyers@efficios.com, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, a.p.zijlstra@chello.nl, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org, Palmer Dabbelt <palmer@dabbelt.com>
 List-Id: linux-api@vger.kernel.org
 
-I recently got bit by a CONFIG_ in userspace bug.  This has apparently
-happened before, but the check got disabled for triggering too much.
-In order to reduce false positives, I added some hueristics to avoid
-detecting comments.
+I'm not sure what this is, but it doesn't feel like something that
+should be exposed to userspace here.  I'm assuming this file was
+exposed for the structure in it, which doesn't depend on
+MAX_SHARED_LIBS.
 
-Since these tests all pass, I've now re-enabled them.
-
-Signed-off-by: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
-Reviewed-by: Andrew Waterman <waterman-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
-Reviewed-by: Albert Ou <aou-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
+Signed-off-by: Palmer Dabbelt <palmer@dabbelt.com>
+Reviewed-by: Andrew Waterman <waterman@eecs.berkeley.edu>
+Reviewed-by: Albert Ou <aou@eecs.berkeley.edu>
 ---
- scripts/headers_check.pl | 19 +++++++++++++++++--
- 1 file changed, 17 insertions(+), 2 deletions(-)
+ fs/binfmt_flat.c          | 6 ++++++
+ include/uapi/linux/flat.h | 6 ------
+ 2 files changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/scripts/headers_check.pl b/scripts/headers_check.pl
-index 62320f9..1634b51 100755
---- a/scripts/headers_check.pl
-+++ b/scripts/headers_check.pl
-@@ -27,6 +27,7 @@ my $ret = 0;
- my $line;
- my $lineno = 0;
- my $filename;
-+my $check_config_in_multiline_comment = 0;
+diff --git a/fs/binfmt_flat.c b/fs/binfmt_flat.c
+index f723cd3..e89fb43 100644
+--- a/fs/binfmt_flat.c
++++ b/fs/binfmt_flat.c
+@@ -72,6 +72,12 @@
+ #define RELOC_FAILED 0xff00ff01		/* Relocation incorrect somewhere */
+ #define UNLOADED_LIB 0x7ff000ff		/* Placeholder for unused library */
  
- foreach my $file (@files) {
- 	$filename = $file;
-@@ -40,7 +41,7 @@ foreach my $file (@files) {
- 		&check_asm_types();
- 		&check_sizetypes();
- 		&check_declarations();
--		# Dropped for now. Too much noise &check_config();
-+		&check_config();
- 	}
- 	close $fh;
- }
-@@ -78,7 +79,21 @@ sub check_declarations
++#ifdef CONFIG_BINFMT_SHARED_FLAT
++#define	MAX_SHARED_LIBS			(4)
++#else
++#define	MAX_SHARED_LIBS			(1)
++#endif
++
+ struct lib_info {
+ 	struct {
+ 		unsigned long start_code;		/* Start of text segment */
+diff --git a/include/uapi/linux/flat.h b/include/uapi/linux/flat.h
+index 88cd6ba..1b177c7 100644
+--- a/include/uapi/linux/flat.h
++++ b/include/uapi/linux/flat.h
+@@ -13,12 +13,6 @@
  
- sub check_config
- {
--	if ($line =~ m/[^a-zA-Z0-9_]+CONFIG_([a-zA-Z0-9_]+)[^a-zA-Z0-9_]/) {
-+	my $nocomments = $line;
-+	$nocomments =~ s/\/\*.*\*\///; # Remove ANSI-style comments (/* to */)
-+	$nocomments =~ s/\/\/.*//;     # Remove C99-style comments (// to EOL)
-+
-+	# Check to see if we're within a multiline comment, and if so
-+	# just remove the whole line.  I tried matching on '^ * ', but
-+	# there's one header that doesn't prepend multi-line comments
-+	# with * so that won't work.
-+	if ($nocomments =~ m/\/\*/) { $check_config_in_multiline_comment = 1; }
-+	if ($nocomments =~ m/\*\//) { $check_config_in_multiline_comment = 0; }
-+	if ($check_config_in_multiline_comment == 1) { $nocomments = "" }
-+
-+	# Check to see if there is something that looks like CONFIG_
-+	# inside a userspace-accessible header file and if so, print that out.
-+	if ($nocomments =~ m/[^a-zA-Z0-9_]+CONFIG_([a-zA-Z0-9_]+)[^a-zA-Z0-9_]/) {
- 		printf STDERR "$filename:$lineno: leaks CONFIG_$1 to userspace where it is not valid\n";
- 	}
- }
+ #define	FLAT_VERSION			0x00000004L
+ 
+-#ifdef CONFIG_BINFMT_SHARED_FLAT
+-#define	MAX_SHARED_LIBS			(4)
+-#else
+-#define	MAX_SHARED_LIBS			(1)
+-#endif
+-
+ /*
+  * To make everything easier to port and manage cross platform
+  * development,  all fields are in network byte order.
 -- 
 2.4.10
