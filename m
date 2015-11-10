@@ -1,101 +1,47 @@
-From: Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>
-Subject: Re: [PATCH selftests 5/6] selftests: vm: Try harder to allocate
- huge pages
-Date: Tue, 10 Nov 2015 21:48:24 +0000
-Message-ID: <1447192104.6006.148.camel@decadent.org.uk>
-References: <1446334510.2595.13.camel@decadent.org.uk>
-	 <1446334747.2595.19.camel@decadent.org.uk>
-	 <alpine.DEB.2.10.1511101159480.29993@chino.kir.corp.google.com>
+From: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v9 0/4] VFS: In-kernel copy system call
+Date: Tue, 10 Nov 2015 16:53:29 -0500
+Message-ID: <1447192413-15376-1-git-send-email-Anna.Schumaker@Netapp.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha512";
-	protocol="application/pgp-signature"; boundary="=-ModOyT22Cj1GC5VjRhVi"
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.DEB.2.10.1511101159480.29993-X6Q0R45D7oAcqpCFd4KODRPsWskHk0ljAL8bYrjMMd8@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+To: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+Copy system calls came up during Plumbers a while ago, mostly because several
+filesystems (including NFS and XFS) are currently working on copy acceleration
+implementations.  We haven't heard from Zach Brown in a while, so I volunteered
+to push his patches upstream so individual filesystems don't need to keep
+writing their own ioctls.
 
---=-ModOyT22Cj1GC5VjRhVi
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: base64
+Changes in v9:
+- Update syscall number for sys_mlock2()
+- Fix calls to rw_verify_area()
 
-T24gVHVlLCAyMDE1LTExLTEwIGF0IDEyOjAxIC0wODAwLCBEYXZpZCBSaWVudGplcyB3cm90ZToK
-PiBPbiBTYXQsIDMxIE9jdCAyMDE1LCBCZW4gSHV0Y2hpbmdzIHdyb3RlOgo+IAo+ID4gSWYgd2Ug
-bmVlZCB0byBpbmNyZWFzZSB0aGUgbnVtYmVyIG9mIGh1Z2UgcGFnZXMsIGRyb3AgY2FjaGVzIGZp
-cnN0Cj4gPiB0byByZWR1Y2UgZnJhZ21lbnRhdGlvbiBhbmQgdGhlbiBjaGVjayB0aGF0IHdlIGFj
-dHVhbGx5IGFsbG9jYXRlZAo+ID4gYXMgbWFueSBhcyB3ZSB3YW50ZWQuwqDCoFJldHJ5IG9uY2Ug
-aWYgdGhhdCBkb2Vzbid0IHdvcmsuCj4gPiAKPiA+IFNpZ25lZC1vZmYtYnk6IEJlbiBIdXRjaGlu
-Z3MgPGJlbkBkZWNhZGVudC5vcmcudWs+Cj4gPiAtLS0KPiA+IFRoZSB0ZXN0IGFsd2F5cyBmYWls
-cyBmb3IgbWUgaW4gYSAxIEdCIFZNIHdpdGhvdXQgdGhpcy4KPiA+IAo+ID4gQmVuLgo+ID4gCj4g
-PiDCoHRvb2xzL3Rlc3Rpbmcvc2VsZnRlc3RzL3ZtL3J1bl92bXRlc3RzIHwgMTUgKysrKysrKysr
-KysrKystCj4gPiDCoDEgZmlsZSBjaGFuZ2VkLCAxNCBpbnNlcnRpb25zKCspLCAxIGRlbGV0aW9u
-KC0pCj4gPiAKPiA+IGRpZmYgLS1naXQgYS90b29scy90ZXN0aW5nL3NlbGZ0ZXN0cy92bS9ydW5f
-dm10ZXN0cyBiL3Rvb2xzL3Rlc3Rpbmcvc2VsZnRlc3RzL3ZtL3J1bl92bXRlc3RzCj4gPiBpbmRl
-eCA5MTc5Y2U4Li45N2VkMWIyIDEwMDc1NQo+ID4gLS0tIGEvdG9vbHMvdGVzdGluZy9zZWxmdGVz
-dHMvdm0vcnVuX3ZtdGVzdHMKPiA+ICsrKyBiL3Rvb2xzL3Rlc3Rpbmcvc2VsZnRlc3RzL3ZtL3J1
-bl92bXRlc3RzCj4gPiBAQCAtMjAsMTMgKzIwLDI2IEBAIGRvbmUgPCAvcHJvYy9tZW1pbmZvCj4g
-PiDCoGlmIFsgLW4gIiRmcmVlcGdzIiBdICYmIFsgLW4gIiRwZ3NpemUiIF07IHRoZW4KPiA+IMKg
-wqDCoMKgwqDCoG5yX2h1Z2VwZ3M9YGNhdCAvcHJvYy9zeXMvdm0vbnJfaHVnZXBhZ2VzYAo+ID4g
-wqDCoMKgwqDCoMKgbmVlZHBncz1gZXhwciAkbmVlZG1lbSAvICRwZ3NpemVgCj4gPiAtwqDCoMKg
-wqDCoGlmIFsgJGZyZWVwZ3MgLWx0ICRuZWVkcGdzIF07IHRoZW4KPiA+ICvCoMKgwqDCoMKgdHJp
-ZXM9Mgo+ID4gK8KgwqDCoMKgwqB3aGlsZSBbICR0cmllcyAtZ3QgMCBdICYmIFsgJGZyZWVwZ3Mg
-LWx0ICRuZWVkcGdzIF07IGRvCj4gPiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgbGFja3Bn
-cz0kKCggJG5lZWRwZ3MgLSAkZnJlZXBncyApKQo+ID4gK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgZWNobyAzID4gL3Byb2Mvc3lzL3ZtL2Ryb3BfY2FjaGVzCj4gPiDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgZWNobyAkKCggJGxhY2twZ3MgKyAkbnJfaHVnZXBncyApKSA+IC9wcm9jL3N5
-cy92bS9ucl9odWdlcGFnZXMKPiA+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqBpZiBbICQ/
-IC1uZSAwIF07IHRoZW4KPiA+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgZWNobyAiUGxlYXNlIHJ1biB0aGlzIHRlc3QgYXMgcm9vdCIKPiA+IMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgZXhpdCAxCj4gPiDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgZmkKPiA+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoHdoaWxlIHJl
-YWQgbmFtZSBzaXplIHVuaXQ7IGRvCj4gPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgaWYgWyAiJG5hbWUiID0gIkh1Z2VQYWdlc19GcmVlOiIgXTsgdGhlbgo+ID4g
-K8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqBmcmVlcGdzPSRzaXplCj4gPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgZmkKPiA+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoGRvbmUgPCAvcHJvYy9tZW1p
-bmZvCj4gPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqB0cmllcz0kKCh0cmllcyAtIDEpKQo+
-ID4gK8KgwqDCoMKgwqBkb25lCj4gPiArwqDCoMKgwqDCoGlmIFsgJGZyZWVwZ3MgLWx0ICRuZWVk
-cGdzIF07IHRoZW4KPiA+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoHByaW50ZiAiTm90IGVu
-b3VnaCBodWdlIHBhZ2VzIGF2YWlsYWJsZSAoJWQgPCAlZClcbiIgXAo+ID4gK8KgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAkZnJlZXBncyAkbmVlZHBncwo+ID4gK8KgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgZXhpdCAxCj4gPiDCoMKgwqDCoMKgwqBmaQo+ID4gwqBlbHNl
-Cj4gPiDCoMKgwqDCoMKgwqBlY2hvICJubyBodWdldGxiZnMgc3VwcG9ydCBpbiBrZXJuZWw/Igo+
-ID4gCj4gCj4gSSBrbm93IHRoaXMgcGF0Y2ggaXMgaW4gLW1tIGFuZCBoYXNuJ3QgYmVlbiBtZXJn
-ZWQgYnkgTGludXMgeWV0LCBidXQgSSdtIAo+IHdvbmRlcmluZyB3aHkgdGhlIG11bHRpcGxlIC9w
-cm9jL3N5cy92bS9kcm9wX2NhY2hlcyBpcyBoZWxwaW5nP8KgIFdvdWxkIGl0IAo+IHNpbXBseSBz
-dWZmaWNlIHRvIHB1dCBhIHNsZWVwIGluIHRoZXJlIGluc3RlYWQgb3IgaXMgZHJvcF9jYWNoZXMg
-YWN0dWFsbHkgCj4gZG9pbmcgc29tZXRoaW5nIHVzZWZ1bCBhIHNlY29uZCB0aW1lIGFyb3VuZD8K
-CkluaXRpYWxseSBJIGp1c3QgcmV0cmllZCBzZXR0aW5nIG5yX2h1Z2VwYWdlcyB1cCB0byAxMCB0
-aW1lcywgd2hpY2gKd2Fzbid0IHN1ZmZpY2llbnQuIMKgVGhlbiBJIGFkZGVkIHRoZSBkcm9wX2Nh
-Y2hlcywgYW5kIGFmdGVyIHRoYXQKc2V0dGluZyBucl9odWdlcGFnZXMgdGVuZGVkIHRvIHdvcmtl
-ZCBmaXJzdCB0aW1lIHNvIEkgcmVkdWNlZCB0aGUgcmV0cnkKY291bnQuIMKgSXQgbWlnaHQgbm90
-IGJlIG5lY2Vzc2FyeSB0byByZXRyeSBhdCBhbGwuCgpCZW4uCgotLSAKQmVuIEh1dGNoaW5ncwpB
-bGwgdGhlIHNpbXBsZSBwcm9ncmFtcyBoYXZlIGJlZW4gd3JpdHRlbiwgYW5kIGFsbCB0aGUgZ29v
-ZCBuYW1lcyB0YWtlbi4=
+Thanks,
+Anna
 
 
---=-ModOyT22Cj1GC5VjRhVi
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
+Anna Schumaker (1):
+  vfs: Add vfs_copy_file_range() support for pagecache copies
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
+Zach Brown (3):
+  vfs: add copy_file_range syscall and vfs helper
+  x86: add sys_copy_file_range to syscall tables
+  btrfs: add .copy_file_range file operation
 
-iQIVAwUAVkJmKOe/yOyVhhEJAQo0lQ//c7C5rLWMP/QLxxAF6B0nEtQV52w+eAZF
-nVKjGxN0EX+Co/i35LTgfDM60Md4WLzIrhsVv3iTZQzqW3LdGrHZHB4Myake5pym
-XgI6mkehbOSg4qcvhoBp74LHHK9tvkwrYqNoJCU9vFWD1YUwbvBxVmChl3OAP/6V
-6BmXrdCZw2GaTLkFCv0doEnzsVnA/AoY5gHwrwbvjWQRQPZkXfsudxYXdEcybpC0
-sYIlyB7EuzzgUtyN7Q1F8i3Hi6QlPKTYXjgrkyr3Fz8LFX5pKvshzlt9Y+26aLZJ
-3xTs1sekPWCaA3dP9CrhF8ox+vJGgmf86nbRXkOq/6I2UglpTWrhI+Ew2fjAmOOp
-3RkCeAWmlofI3zi1o3lqEj73aHJQB8aTL5iJk7J+hBH3n8AXKvhOUBiDyX9MJaup
-JV4F8pjfHV6LaUmV+xk8mTj/kgYp5YaoWvTVn9bPz4LRvwd1ipd7niZoFOAVXu8C
-XdkvviO1JtRP+9zYu/tG/JAq4C2srFxPTFPo6Hx41XiTWnRtLbuZRL3g5iHI4BXD
-ogqO4BRB3sJ+vUGAR4/uIQYGhM86Eqod3naJoUAu7yq0ozhXRoEuP+gmZ/Q/Xyfs
-hN41rHrmTInWlyugr/irpelSfTjSSon37RfJj1au9DuLqBN7nXDsLdBsuhsQfg+k
-XbtpPl6Rt2E=
-=wkeZ
------END PGP SIGNATURE-----
+ arch/x86/entry/syscalls/syscall_32.tbl |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl |   1 +
+ fs/btrfs/ctree.h                       |   3 +
+ fs/btrfs/file.c                        |   1 +
+ fs/btrfs/ioctl.c                       |  91 ++++++++++++++----------
+ fs/read_write.c                        | 125 +++++++++++++++++++++++++++++++++
+ include/linux/fs.h                     |   3 +
+ include/linux/syscalls.h               |   3 +
+ include/uapi/asm-generic/unistd.h      |   4 +-
+ kernel/sys_ni.c                        |   1 +
+ 10 files changed, 193 insertions(+), 40 deletions(-)
 
---=-ModOyT22Cj1GC5VjRhVi--
+-- 
+2.6.2
