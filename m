@@ -1,34 +1,55 @@
-From: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Subject: Re: [PATCH v8 4/4] vfs: Add vfs_copy_file_range() support for
- pagecache copies
-Date: Tue, 10 Nov 2015 00:56:45 +0000
-Message-ID: <20151110005645.GX22011@ZenIV.linux.org.uk>
-References: <1446844701-848-1-git-send-email-Anna.Schumaker@Netapp.com>
- <1446844701-848-5-git-send-email-Anna.Schumaker@Netapp.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1446844701-848-5-git-send-email-Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
-Cc: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
+From: Palmer Dabbelt <palmer@dabbelt.com>
+Subject: [PATCH 01/14] Remove #ifdef CONFIG_64BIT from all asm-generic/fcntl.h
+Date: Mon,  9 Nov 2015 17:30:58 -0800
+Message-ID: <1447119071-19392-2-git-send-email-palmer@dabbelt.com>
+References: <1446579994-9937-1-git-send-email-palmer@dabbelt.com>
+ <1447119071-19392-1-git-send-email-palmer@dabbelt.com>
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <1447119071-19392-1-git-send-email-palmer@dabbelt.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: arnd@arndb.de, dhowells@redhat.com, peterz@infradead.org
+Cc: viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-xtensa@linux-xtensa.org, mathieu.desnoyers@efficios.com, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, a.p.zijlstra@chello.nl, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org, Palmer Dabbelt <palmer@dabbelt.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 06, 2015 at 04:18:20PM -0500, Anna Schumaker wrote:
+When working on the RISC-V port I noticed that F_SETLK64 was being
+defined on our 64-bit platform, despite our port being so new that
+we've only ever had the 64-bit file ops.  Since there's not compat
+layer for these, this causes fcntl to bail out.
 
-> I moved the rw_verify_area() calls into the fallback code since some
-> filesystems can handle reflinking a large range.
+It turns out that one of the ways in with F_SETLK64 was being defined
+(there's some more in glibc, but that's a whole different story... :))
+is the result of CONFIG_64BIT showing up in this user-visible header.
+<asm-generic/bitsperlong.h> confirms this isn't sane, so I replaced it
+with a __BITS_PER_LONG check.
 
+Signed-off-by: Palmer Dabbelt <palmer@dabbelt.com>
+Reviewed-by: Andrew Waterman <waterman@eecs.berkeley.edu>
+Reviewed-by: Albert Ou <aou@eecs.berkeley.edu>
+Reviewed-by: Arnd Bergmann <arnd@arndb.de>
+---
+ include/uapi/asm-generic/fcntl.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-Take a look at rw_verify_area() - it does a lot more than "trim down to
-2Gb" - starting with "deal with mandatory locks".  LSM checks as well...
-
-So that one is bogus, IMO.  I've no problem with fallback per se, but
-rw_verify_area() should be unconditional here.  If anything, we might
-add a variant that would skip the "trim down to 2Gb" and use it there,
-but skipping it entirely is wrong.
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/include/uapi/asm-generic/fcntl.h b/include/uapi/asm-generic/fcntl.h
+index e063eff..14a5c82 100644
+--- a/include/uapi/asm-generic/fcntl.h
++++ b/include/uapi/asm-generic/fcntl.h
+@@ -1,6 +1,7 @@
+ #ifndef _ASM_GENERIC_FCNTL_H
+ #define _ASM_GENERIC_FCNTL_H
+ 
++#include <asm/bitsperlong.h>
+ #include <linux/types.h>
+ 
+ /*
+@@ -115,7 +116,7 @@
+ #define F_GETSIG	11	/* for sockets. */
+ #endif
+ 
+-#ifndef CONFIG_64BIT
++#if (__BITS_PER_LONG == 32)
+ #ifndef F_GETLK64
+ #define F_GETLK64	12	/*  using 'struct flock64' */
+ #define F_SETLK64	13
+-- 
+2.4.10
