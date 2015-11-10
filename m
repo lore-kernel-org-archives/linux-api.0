@@ -1,81 +1,126 @@
-From: Josh Poimboeuf <jpoimboe@redhat.com>
-Subject: Re: [PATCH v3] livepatch: old_name,number scheme in livepatch sysfs
- directory
-Date: Mon, 9 Nov 2015 22:54:34 -0600
-Message-ID: <20151110045434.GB18117@treble.hsd1.ky.comcast.net>
-References: <20151105155656.GD28254@treble.redhat.com>
- <1447085770-11729-1-git-send-email-chris.j.arges@canonical.com>
- <20151109205608.GC3914@treble.redhat.com>
- <564125BE.2090604@canonical.com>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH] block: create ioctl to discard-or-zeroout a range of blocks
+Date: Mon, 9 Nov 2015 21:15:26 -0800
+Message-ID: <20151110051526.GA2217@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <564125BE.2090604@canonical.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Chris J Arges <chris.j.arges@canonical.com>
-Cc: live-patching@vger.kernel.org, jeyu@redhat.com, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 09, 2015 at 05:01:18PM -0600, Chris J Arges wrote:
-> On 11/09/2015 02:56 PM, Josh Poimboeuf wrote:
-> > I'd recommend splitting this up into two separate patches:
-> > 
-> > 1. introduce old_sympos
-> > 2. change the sysfs interface
-> > 
-> > On Mon, Nov 09, 2015 at 10:16:05AM -0600, Chris J Arges wrote:
-> >> In cases of duplicate symbols in vmlinux, old_sympos will be used to
-> >> disambiguate instead of old_addr. Normally old_sympos will be 0, and
-> >> default to only returning the first found instance of that symbol. If an
-> >> incorrect symbol position is specified then livepatching will fail.
-> > 
-> > In the case of old_sympos == 0, instead of just returning the first
-> > symbol it finds, I think it should ensure that the symbol is unique.  As
-> > Miroslav suggested:
-> > 
-> >   0 - default, preserve more or less current behaviour. If the symbol is 
-> >       unique there is no problem. If it is not the patching would fail.
-> >   1, 2, ... - occurrence of the symbol in kallsyms.
-> >   
-> >   The advantage is that if the user does not care and is certain that the 
-> >   symbol is unique he doesn't have to do anything. If the symbol is not 
-> >   unique he still has means how to solve it.
-> > 
-> 
-> So one part that will be confusing here is as follows.
-> 
-> If '0' is specified for old_sympos, should the symbol be 'func_name,0'
-> or 'func_name,1' provided we have a unique symbol? We could also default
-> to 'what the user provides', but this seems odd.
+Create a new ioctl to expose the block layer's newfound ability to
+issue either a zeroing discard, a WRITE SAME with a zero page, or a
+regular write with the zero page.  This BLKZEROOUT2 ioctl takes
+{start, length, flags} as parameters.  So far, the only flag available
+is to enable the zeroing discard part -- without it, the call invokes
+the old BLKZEROOUT behavior.  start and length have the same meaning
+as in BLKZEROOUT.
 
-I don't feel strongly either way, but I think using the same number the
-user provides is fine, since it makes the sysfs interface consistent
-with the old_sympos usage.
+Furthermore, because BLKZEROOUT2 issues commands directly to the
+storage device, we must invalidate the page cache (as a regular
+O_DIRECT write would do) to avoid returning stale cache contents at a
+later time.  BLKZEROOUT never did this, which lead to coherency
+problems when e2fsprogs tried to use it.
 
-> Another option would be to use no postfix when 0 is given, and only
-> introduce the ',n' postfix if old_sympos is > 0.
+v2: Padded the structure with extra space for future fun, since the
+maintainer never responded...
 
-IMO always having a suffix is good, as it makes parsing less surprising
-and less error-prone.
+Signed-off-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+---
+ block/ioctl.c           |   45 ++++++++++++++++++++++++++++++++++++++-------
+ include/uapi/linux/fs.h |    9 +++++++++
+ 2 files changed, 47 insertions(+), 7 deletions(-)
 
-> >>  static int klp_write_object_relocations(struct module *pmod,
-> >> @@ -307,7 +318,7 @@ static int klp_write_object_relocations(struct module *pmod,
-> >>  			else
-> >>  				ret = klp_find_object_symbol(obj->mod->name,
-> >>  							     reloc->name,
-> >> -							     &reloc->val);
-> >> +							     &reloc->val, 0);
-> > 
-> > I think it would be a good idea to also add old_sympos to klp_reloc so
-> > the relocation code is consistent with the klp_func symbol addressing.
-> >
-> 
-> So you are thinking as an optional external field as well? I'll have to
-> look at this a bit more but makes sense to me.
-
-Yeah, the semantics would be the same as klp_func.old_sympos.  We could
-add a new klp_reloc.sympos and make klp_reloc.val a private field.
-
--- 
-Josh
+diff --git a/block/ioctl.c b/block/ioctl.c
+index 8061eba..79a2e1c 100644
+--- a/block/ioctl.c
++++ b/block/ioctl.c
+@@ -213,19 +213,39 @@ static int blk_ioctl_discard(struct block_device *bdev, uint64_t start,
+ }
+ 
+ static int blk_ioctl_zeroout(struct block_device *bdev, uint64_t start,
+-			     uint64_t len)
++			     uint64_t len, uint32_t flags)
+ {
++	int ret;
++	struct address_space *mapping;
++	uint64_t end = start + len - 1;
++
++	if (flags & ~BLKZEROOUT2_DISCARD_OK)
++		return -EINVAL;
+ 	if (start & 511)
+ 		return -EINVAL;
+ 	if (len & 511)
+ 		return -EINVAL;
+-	start >>= 9;
+-	len >>= 9;
+-
+-	if (start + len > (i_size_read(bdev->bd_inode) >> 9))
++	if (end >= i_size_read(bdev->bd_inode))
+ 		return -EINVAL;
+ 
+-	return blkdev_issue_zeroout(bdev, start, len, GFP_KERNEL, false);
++	/* Invalidate the page cache, including dirty pages */
++	mapping = bdev->bd_inode->i_mapping;
++	truncate_inode_pages_range(mapping, start, end);
++
++	ret = blkdev_issue_zeroout(bdev, start >> 9, len >> 9, GFP_KERNEL,
++				   flags & BLKZEROOUT2_DISCARD_OK);
++	if (ret)
++		goto out;
++
++	/*
++	 * Invalidate again; if someone wandered in and dirtied a page,
++	 * the caller will be given -EBUSY.
++	 */
++	ret = invalidate_inode_pages2_range(mapping,
++					    start >> PAGE_CACHE_SHIFT,
++					    end >> PAGE_CACHE_SHIFT);
++out:
++	return ret;
+ }
+ 
+ static int put_ushort(unsigned long arg, unsigned short val)
+@@ -353,7 +373,18 @@ int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
+ 		if (copy_from_user(range, (void __user *)arg, sizeof(range)))
+ 			return -EFAULT;
+ 
+-		return blk_ioctl_zeroout(bdev, range[0], range[1]);
++		return blk_ioctl_zeroout(bdev, range[0], range[1], 0);
++	}
++	case BLKZEROOUT2: {
++		struct blkzeroout2 p;
++
++		if (!(mode & FMODE_WRITE))
++			return -EBADF;
++
++		if (copy_from_user(&p, (void __user *)arg, sizeof(p)))
++			return -EFAULT;
++
++		return blk_ioctl_zeroout(bdev, p.start, p.length, p.flags);
+ 	}
+ 
+ 	case HDIO_GETGEO: {
+diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+index 9b964a5..b811fa4 100644
+--- a/include/uapi/linux/fs.h
++++ b/include/uapi/linux/fs.h
+@@ -152,6 +152,15 @@ struct inodes_stat_t {
+ #define BLKSECDISCARD _IO(0x12,125)
+ #define BLKROTATIONAL _IO(0x12,126)
+ #define BLKZEROOUT _IO(0x12,127)
++struct blkzeroout2 {
++	__u64 start;
++	__u64 length;
++	__u32 flags;
++	__u32 padding;
++	__u64 padding2;
++};
++#define BLKZEROOUT2_DISCARD_OK	1
++#define BLKZEROOUT2 _IOR(0x12, 127, struct blkzeroout2)
+ 
+ #define BMAP_IOCTL 1		/* obsolete - kept for compatibility */
+ #define FIBMAP	   _IO(0x00,1)	/* bmap access */
