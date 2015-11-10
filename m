@@ -1,63 +1,70 @@
-From: Palmer Dabbelt <palmer@dabbelt.com>
-Subject: [PATCH 08/14] Move MAX_SHARED_LIBS to fs/binfmt_flat.c
-Date: Mon,  9 Nov 2015 17:31:05 -0800
-Message-ID: <1447119071-19392-9-git-send-email-palmer__14641.4607567296$1447119310$gmane$org@dabbelt.com>
+From: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH 11/14] Always define MAX_RAW_MINORS as 2**20 in userspace
+Date: Mon,  9 Nov 2015 17:31:08 -0800
+Message-ID: <1447119071-19392-12-git-send-email-palmer@dabbelt.com>
 References: <1446579994-9937-1-git-send-email-palmer@dabbelt.com>
  <1447119071-19392-1-git-send-email-palmer@dabbelt.com>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1447119071-19392-1-git-send-email-palmer@dabbelt.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: arnd@arndb.de, dhowells@redhat.com, peterz@infradead.org
-Cc: viro@zeniv.linux.org.uk, ast@plumgrid.com, aishchuk@linux.vnet.ibm.com, aarcange@redhat.com, akpm@linux-foundation.org, luto@kernel.org, acme@kernel.org, bhe@redhat.com, 3chas3@gmail.com, chris@zankel.net, dave@sr71.net, dyoung@redhat.com, drysdale@google.com, davem@davemloft.net, ebiederm@xmission.com, geoff@infradead.org, gregkh@linuxfoundation.org, hpa@zytor.com, mingo@kernel.org, iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org, josh@joshtriplett.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-xtensa@linux-xtensa.org, mathieu.desnoyers@efficios.com, jcmvbkbc@gmail.com, paulmck@linux.vnet.ibm.com, a.p.zijlstra@chello.nl, tglx@linutronix.de, tomi.valkeinen@ti.com, vgoyal@redhat.com, x86@kernel.org, Palmer Dabbelt <palmer@dabbelt.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1447119071-19392-1-git-send-email-palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: arnd-r2nGTMty4D4@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
+Cc: viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org, aishchuk-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, bhe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, 3chas3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org, dave-gkUM19QKKo4@public.gmane.org, dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, geoff-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org, jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xtensa-PjhNF2WwrV/0Sa2dR60CXw@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, tomi.valkeinen-l0cyMroinI0@public.gmane.org, vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-I'm not sure what this is, but it doesn't feel like something that
-should be exposed to userspace here.  I'm assuming this file was
-exposed for the structure in it, which doesn't depend on
-MAX_SHARED_LIBS.
+While I don't think this was ever meant to be exposed to userspace, if
+anyone is using it then this will at least provide a correct (if
+unlikely) definition.
 
-Signed-off-by: Palmer Dabbelt <palmer@dabbelt.com>
-Reviewed-by: Andrew Waterman <waterman@eecs.berkeley.edu>
-Reviewed-by: Albert Ou <aou@eecs.berkeley.edu>
+MAX_RAW_MINORS used to be used in the kernel, where it's been replaced
+with CONFIG_MAX_RAW_MINORS.
+
+Note that there's a checkpatch.pl warning about a split config string
+here, but I've left that alone.
+
+Signed-off-by: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
+Reviewed-by: Andrew Waterman <waterman-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
+Reviewed-by: Albert Ou <aou-aFE07iDfcCIb0cFwG/AQJIdd74u8MsAO@public.gmane.org>
 ---
- fs/binfmt_flat.c          | 6 ++++++
- include/uapi/linux/flat.h | 6 ------
- 2 files changed, 6 insertions(+), 6 deletions(-)
+ drivers/char/raw.c       | 7 ++++---
+ include/uapi/linux/raw.h | 2 +-
+ 2 files changed, 5 insertions(+), 4 deletions(-)
 
-diff --git a/fs/binfmt_flat.c b/fs/binfmt_flat.c
-index f723cd3..e89fb43 100644
---- a/fs/binfmt_flat.c
-+++ b/fs/binfmt_flat.c
-@@ -72,6 +72,12 @@
- #define RELOC_FAILED 0xff00ff01		/* Relocation incorrect somewhere */
- #define UNLOADED_LIB 0x7ff000ff		/* Placeholder for unused library */
+diff --git a/drivers/char/raw.c b/drivers/char/raw.c
+index 60316fb..2a69117 100644
+--- a/drivers/char/raw.c
++++ b/drivers/char/raw.c
+@@ -36,7 +36,7 @@ static struct raw_device_data *raw_devices;
+ static DEFINE_MUTEX(raw_mutex);
+ static const struct file_operations raw_ctl_fops; /* forward declaration */
  
-+#ifdef CONFIG_BINFMT_SHARED_FLAT
-+#define	MAX_SHARED_LIBS			(4)
-+#else
-+#define	MAX_SHARED_LIBS			(1)
-+#endif
-+
- struct lib_info {
- 	struct {
- 		unsigned long start_code;		/* Start of text segment */
-diff --git a/include/uapi/linux/flat.h b/include/uapi/linux/flat.h
-index 88cd6ba..1b177c7 100644
---- a/include/uapi/linux/flat.h
-+++ b/include/uapi/linux/flat.h
-@@ -13,12 +13,6 @@
+-static int max_raw_minors = MAX_RAW_MINORS;
++static int max_raw_minors = CONFIG_MAX_RAW_DEVS;
  
- #define	FLAT_VERSION			0x00000004L
+ module_param(max_raw_minors, int, 0);
+ MODULE_PARM_DESC(max_raw_minors, "Maximum number of raw devices (1-65536)");
+@@ -317,8 +317,9 @@ static int __init raw_init(void)
  
--#ifdef CONFIG_BINFMT_SHARED_FLAT
--#define	MAX_SHARED_LIBS			(4)
--#else
--#define	MAX_SHARED_LIBS			(1)
--#endif
--
- /*
-  * To make everything easier to port and manage cross platform
-  * development,  all fields are in network byte order.
+ 	if (max_raw_minors < 1 || max_raw_minors > 65536) {
+ 		printk(KERN_WARNING "raw: invalid max_raw_minors (must be"
+-			" between 1 and 65536), using %d\n", MAX_RAW_MINORS);
+-		max_raw_minors = MAX_RAW_MINORS;
++			" between 1 and 65536), using %d\n",
++		       max_raw_minors);
++		max_raw_minors = 65536;
+ 	}
+ 
+ 	raw_devices = vzalloc(sizeof(struct raw_device_data) * max_raw_minors);
+diff --git a/include/uapi/linux/raw.h b/include/uapi/linux/raw.h
+index 62d543e..f3d009b 100644
+--- a/include/uapi/linux/raw.h
++++ b/include/uapi/linux/raw.h
+@@ -13,6 +13,6 @@ struct raw_config_request
+ 	__u64	block_minor;
+ };
+ 
+-#define MAX_RAW_MINORS CONFIG_MAX_RAW_DEVS
++#define MAX_RAW_MINORS (1 << 20)
+ 
+ #endif /* __LINUX_RAW_H */
 -- 
 2.4.10
-
