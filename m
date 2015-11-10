@@ -1,90 +1,103 @@
 From: Miroslav Benes <mbenes@suse.cz>
 Subject: Re: [PATCH v3] livepatch: old_name,number scheme in livepatch sysfs
  directory
-Date: Tue, 10 Nov 2015 09:49:09 +0100 (CET)
-Message-ID: <alpine.LNX.2.00.1511100944120.16914@pobox.suse.cz>
-References: <20151105155656.GD28254@treble.redhat.com> <1447085770-11729-1-git-send-email-chris.j.arges@canonical.com> <20151109205608.GC3914@treble.redhat.com> <564125BE.2090604@canonical.com> <20151110045434.GB18117@treble.hsd1.ky.comcast.net>
+Date: Tue, 10 Nov 2015 10:02:14 +0100 (CET)
+Message-ID: <alpine.LNX.2.00.1511100949590.16914@pobox.suse.cz>
+References: <20151105155656.GD28254@treble.redhat.com> <1447085770-11729-1-git-send-email-chris.j.arges@canonical.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151110045434.GB18117@treble.hsd1.ky.comcast.net>
+In-Reply-To: <1447085770-11729-1-git-send-email-chris.j.arges@canonical.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Josh Poimboeuf <jpoimboe@redhat.com>
-Cc: Chris J Arges <chris.j.arges@canonical.com>, live-patching@vger.kernel.org, jeyu@redhat.com, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Chris J Arges <chris.j.arges@canonical.com>
+Cc: live-patching@vger.kernel.org, jeyu@redhat.com, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 9 Nov 2015, Josh Poimboeuf wrote:
+On Mon, 9 Nov 2015, Chris J Arges wrote:
 
-> On Mon, Nov 09, 2015 at 05:01:18PM -0600, Chris J Arges wrote:
-> > On 11/09/2015 02:56 PM, Josh Poimboeuf wrote:
-> > > I'd recommend splitting this up into two separate patches:
-> > > 
-> > > 1. introduce old_sympos
-> > > 2. change the sysfs interface
-> > > 
-> > > On Mon, Nov 09, 2015 at 10:16:05AM -0600, Chris J Arges wrote:
-> > >> In cases of duplicate symbols in vmlinux, old_sympos will be used to
-> > >> disambiguate instead of old_addr. Normally old_sympos will be 0, and
-> > >> default to only returning the first found instance of that symbol. If an
-> > >> incorrect symbol position is specified then livepatching will fail.
-> > > 
-> > > In the case of old_sympos == 0, instead of just returning the first
-> > > symbol it finds, I think it should ensure that the symbol is unique.  As
-> > > Miroslav suggested:
-> > > 
-> > >   0 - default, preserve more or less current behaviour. If the symbol is 
-> > >       unique there is no problem. If it is not the patching would fail.
-> > >   1, 2, ... - occurrence of the symbol in kallsyms.
-> > >   
-> > >   The advantage is that if the user does not care and is certain that the 
-> > >   symbol is unique he doesn't have to do anything. If the symbol is not 
-> > >   unique he still has means how to solve it.
-> > > 
-> > 
-> > So one part that will be confusing here is as follows.
-> > 
-> > If '0' is specified for old_sympos, should the symbol be 'func_name,0'
-> > or 'func_name,1' provided we have a unique symbol? We could also default
-> > to 'what the user provides', but this seems odd.
-> 
-> I don't feel strongly either way, but I think using the same number the
-> user provides is fine, since it makes the sysfs interface consistent
-> with the old_sympos usage.
+> In cases of duplicate symbols in vmlinux, old_sympos will be used to
+> disambiguate instead of old_addr. Normally old_sympos will be 0, and
+> default to only returning the first found instance of that symbol. If an
+> incorrect symbol position is specified then livepatching will fail.
+> Finally, old_addr is now an internal structure element and not to be
+> specified by the user.
 
-I think it should be func_name,1 even if '0' is specified and the symbol 
-is unique. Because if we say that 1, 2, ... is the occurrence of the 
-symbol in kallsyms it should stay that way everywhere. Hence for 
-old_sympos == 0 it is func_name,1 in sysfs; for 1 it is still func_name,1; 
-for 2 it is func_name,2 and so on.
+Hi,
 
-And I'd add this to sysfs documentation.
+Josh has already mentioned it, but in this case '0' would be same as '1'. 
+'0' should fail if the symbol is ambiguous.
 
-> > Another option would be to use no postfix when 0 is given, and only
-> > introduce the ',n' postfix if old_sympos is > 0.
-> 
-> IMO always having a suffix is good, as it makes parsing less surprising
-> and less error-prone.
+Few more things follow, but Josh pointed out the issues.
 
-Agreed.
+[...]
 
-> > >>  static int klp_write_object_relocations(struct module *pmod,
-> > >> @@ -307,7 +318,7 @@ static int klp_write_object_relocations(struct module *pmod,
-> > >>  			else
-> > >>  				ret = klp_find_object_symbol(obj->mod->name,
-> > >>  							     reloc->name,
-> > >> -							     &reloc->val);
-> > >> +							     &reloc->val, 0);
-> > > 
-> > > I think it would be a good idea to also add old_sympos to klp_reloc so
-> > > the relocation code is consistent with the klp_func symbol addressing.
-> > >
-> > 
-> > So you are thinking as an optional external field as well? I'll have to
-> > look at this a bit more but makes sense to me.
-> 
-> Yeah, the semantics would be the same as klp_func.old_sympos.  We could
-> add a new klp_reloc.sympos and make klp_reloc.val a private field.
+> @@ -239,20 +251,19 @@ static int klp_verify_vmlinux_symbol(const char *name, unsigned long addr)
+>  static int klp_find_verify_func_addr(struct klp_object *obj,
+>  				     struct klp_func *func)
+>  {
+> +	int sympos = 0;
+>  	int ret;
+>  
+> -#if defined(CONFIG_RANDOMIZE_BASE)
+> -	/* If KASLR has been enabled, adjust old_addr accordingly */
+> -	if (kaslr_enabled() && func->old_addr)
+> -		func->old_addr += kaslr_offset();
+> -#endif
+> +	if (func->old_sympos && !klp_is_module(obj))
+> +		sympos = func->old_sympos;
 
-Agreed as well.
+We need to deal with ambiguity in modules as well. 
 
+Also, maybe the function could be renamed, because there would be no 
+verification here in the future.
+
+>  static ssize_t enabled_store(struct kobject *kobj, struct kobj_attribute *attr,
+> @@ -732,8 +743,7 @@ static int klp_init_func(struct klp_object *obj, struct klp_func *func)
+>  	INIT_LIST_HEAD(&func->stack_node);
+>  	func->state = KLP_DISABLED;
+>  
+> -	return kobject_init_and_add(&func->kobj, &klp_ktype_func,
+> -				    &obj->kobj, "%s", func->old_name);
+> +	return 0;
+>  }
+>  
+>  /* parts of the initialization that is done only when the object is loaded */
+> @@ -755,6 +765,18 @@ static int klp_init_object_loaded(struct klp_patch *patch,
+>  			return ret;
+>  	}
+>  
+> +	/*
+> +	 * for each function initialize and add, old_sympos will be already
+> +	 * verified at this point
+> +	 */
+> +	klp_for_each_func(obj, func) {
+> +		ret = kobject_init_and_add(&func->kobj, &klp_ktype_func,
+> +				    &obj->kobj, "%s,%lu", func->old_name,
+> +				    func->old_sympos ? func->old_sympos : 0);
+> +		if (ret)
+> +			return ret;
+> +	}
+> +
+>  	return 0;
+>  }
+
+There is a problem with error handling in klp_init_object() after the 
+change. 
+
+free:
+        klp_free_funcs_limited(obj, func);
+        kobject_put(&obj->kobj);
+        return ret;
+
+This snippet ensures that all already created sysfs func entries are 
+destroyed. 'func' is the function which klp_init_func() failed for (or 
+'{}' if nothing failed). When you move kobject_init_and_add() with the 
+loop to klp_init_object_loaded(), we do not know where the exact problem 
+was in klp_init_object(). So I agree with Josh that it can stay in 
+klp_init_func(). old_sympos is defined and if the following 
+klp_find_verify_func_addr() fails (for example when old_sympos is '0' and 
+the symbol is not unique) we deal with it here in klp_init_object() 
+correctly.
+
+Thanks,
 Miroslav
