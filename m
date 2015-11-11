@@ -1,41 +1,82 @@
-From: Josh Poimboeuf <jpoimboe@redhat.com>
-Subject: Re: [RFC PATCH 0/5] Arch-independent livepatch
-Date: Wed, 11 Nov 2015 10:28:10 -0600
-Message-ID: <20151111162809.GD5331@treble.redhat.com>
-References: <1447130755-17383-1-git-send-email-jeyu@redhat.com>
- <alpine.LNX.2.00.1511111456510.12467@pobox.suse.cz>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+From: Chris J Arges <chris.j.arges@canonical.com>
+Subject: [PATCH 3/3 v4] livepatch: old_name,number scheme in livepatch sysfs directory
+Date: Wed, 11 Nov 2015 10:29:01 -0600
+Message-ID: <1447259366-7055-4-git-send-email-chris.j.arges@canonical.com>
+References: <20151103200608.GQ27488@treble.redhat.com>
+ <1447259366-7055-1-git-send-email-chris.j.arges@canonical.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LNX.2.00.1511111456510.12467@pobox.suse.cz>
+In-Reply-To: <1447259366-7055-1-git-send-email-chris.j.arges@canonical.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Miroslav Benes <mbenes@suse.cz>
-Cc: Jessica Yu <jeyu@redhat.com>, Rusty Russell <rusty@rustcorp.com.au>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org
+To: live-patching@vger.kernel.org
+Cc: jeyu@redhat.com, Chris J Arges <chris.j.arges@canonical.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 11, 2015 at 03:00:44PM +0100, Miroslav Benes wrote:
-> > Background: Why does livepatch need to write its own relocations?
-> > ==
-> > A typical livepatch module contains patched versions of functions that can
-> > reference non-exported global symbols and non-included local symbols.
-> > Relocations referencing these types of symbols cannot be left in as-is
-> > since the kernel module loader cannot resolve them and will therefore
-> > reject the livepatch module. Furthermore, we cannot apply relocations that
-> > affect modules not loaded yet at run time (e.g. a patch to a driver). The
-> > current kpatch build system therefore solves this problem by embedding
-> > special "dynrela" (dynamic reloc) sections in the resulting patch module
-> > elf output. Using these dynrela sections, livepatch can correctly resolve
-> > symbols while taking into account its scope and what module the symbol
-> > belongs to, and then manually apply the dynamic relocations.
-> 
-> I'll only add that we solve the problem with kallsyms calls in kGraft. It 
-> can get really cumbersome from time to time, so this work would simplify 
-> our effort as well.
+The following directory structure will allow for cases when the same
+function name exists in a single object.
+	/sys/kernel/livepatch/<patch>/<object>/<function,number>
 
-I haven't yet reviewed the code in-depth, but overall I think this patch
-set is a good idea.  It simplifies livepatch itself as well as the patch
-creation process (for both kGraft and kpatch-build), so it's a win-win.
+The number corresponds to the nth occurrence of the symbol name in
+kallsyms for the patched object.
 
+An example of patching multiple symbols can be found here:
+	https://github.com/dynup/kpatch/issues/493
+
+Signed-off-by: Chris J Arges <chris.j.arges@canonical.com>
+---
+ Documentation/ABI/testing/sysfs-kernel-livepatch |  6 +++++-
+ kernel/livepatch/core.c                          | 10 ++++++++--
+ 2 files changed, 13 insertions(+), 3 deletions(-)
+
+diff --git a/Documentation/ABI/testing/sysfs-kernel-livepatch b/Documentation/ABI/testing/sysfs-kernel-livepatch
+index 5bf42a8..21b6bc1 100644
+--- a/Documentation/ABI/testing/sysfs-kernel-livepatch
++++ b/Documentation/ABI/testing/sysfs-kernel-livepatch
+@@ -33,7 +33,7 @@ Description:
+ 		The object directory contains subdirectories for each function
+ 		that is patched within the object.
+ 
+-What:		/sys/kernel/livepatch/<patch>/<object>/<function>
++What:		/sys/kernel/livepatch/<patch>/<object>/<function,number>
+ Date:		Nov 2014
+ KernelVersion:	3.19.0
+ Contact:	live-patching@vger.kernel.org
+@@ -41,4 +41,8 @@ Description:
+ 		The function directory contains attributes regarding the
+ 		properties and state of the patched function.
+ 
++		The directory name contains the patched function name and a
++		number corresponding to the nth occurrence of the symbol name
++		in kallsyms for the patched object.
++
+ 		There are currently no such attributes.
+diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
+index 4eb8691..ed2cbbf 100644
+--- a/kernel/livepatch/core.c
++++ b/kernel/livepatch/core.c
+@@ -542,7 +542,7 @@ EXPORT_SYMBOL_GPL(klp_enable_patch);
+  * /sys/kernel/livepatch/<patch>
+  * /sys/kernel/livepatch/<patch>/enabled
+  * /sys/kernel/livepatch/<patch>/<object>
+- * /sys/kernel/livepatch/<patch>/<object>/<func>
++ * /sys/kernel/livepatch/<patch>/<object>/<func,number>
+  */
+ 
+ static ssize_t enabled_store(struct kobject *kobj, struct kobj_attribute *attr,
+@@ -687,8 +687,14 @@ static int klp_init_func(struct klp_object *obj, struct klp_func *func)
+ 	INIT_LIST_HEAD(&func->stack_node);
+ 	func->state = KLP_DISABLED;
+ 
++	/* The format for the sysfs directory is <func,number> where number is
++	 * the occurrence of this symbol in kallsyms. If the user selects 0 for
++	 * old_sympos, then 1 will be used since a unique symbol will be the
++	 * first occurrence.
++	 */
+ 	return kobject_init_and_add(&func->kobj, &klp_ktype_func,
+-				    &obj->kobj, "%s", func->old_name);
++				    &obj->kobj, "%s,%lu", func->old_name,
++				    func->old_sympos ? func->old_sympos : 1);
+ }
+ 
+ /* parts of the initialization that is done only when the object is loaded */
 -- 
-Josh
+1.9.1
