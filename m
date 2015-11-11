@@ -1,47 +1,192 @@
-From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH v15 00/22] Richacls (Core and Ext4)
-Date: Tue, 10 Nov 2015 23:57:07 -0800
-Message-ID: <20151111075707.GA23752@infradead.org>
-References: <1447067343-31479-1-git-send-email-agruenba@redhat.com>
- <20151110112943.GA17038@infradead.org>
- <CAHc6FU5g7=wd1Wt4+GCaLJjNu7giruZyAON3VcYn-A=ffYMsmw@mail.gmail.com>
+From: Minfei Huang <mnfhuang@gmail.com>
+Subject: Re: [RFC PATCH 2/5] module: save load_info for livepatch modules
+Date: Wed, 11 Nov 2015 16:08:09 +0800
+Message-ID: <20151111080809.GA5011@dhcp-129-10.nay.redhat.com>
+References: <1447130755-17383-1-git-send-email-jeyu@redhat.com>
+ <1447130755-17383-3-git-send-email-jeyu@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAHc6FU5g7=wd1Wt4+GCaLJjNu7giruZyAON3VcYn-A=ffYMsmw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1447130755-17383-3-git-send-email-jeyu@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jessica Yu <jeyu@redhat.com>
+Cc: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Miroslav Benes <mbenes@suse.cz>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 10, 2015 at 01:39:52PM +0100, Andreas Gruenbacher wrote:
-> > It still has the same crappy fs interfaces with lots of boilerplate
-> > code
+On 11/09/15 at 11:45pm, Jessica Yu wrote:
+> In livepatch modules, preserve section, symbol, string information from
+> the load_info struct in the module loader. This information is used to
+> patch modules that are not loaded in memory yet; specifically it is used
+> to resolve remaining symbols and write relocations when the target
+> module loads.
 > 
-> Could you please be more specific so that I can trace this complaint
-> to some actual code?
-
-if (IS_RICHACL())
-	richacl_foo()
-else
-	posix_acl_foo()
-
-for every call from the filesystem is the major one that came to mind.
-
-> > and still abuses xattrs instead of a proper syscall interface.
-> > That's far from being ready to merge.
+> Signed-off-by: Jessica Yu <jeyu@redhat.com>
+> ---
+>  include/linux/module.h  | 25 +++++++++++++++++++++++++
+>  kernel/livepatch/core.c | 17 +++++++++++++++++
+>  kernel/module.c         | 36 ++++++++++++++++++++++--------------
+>  3 files changed, 64 insertions(+), 14 deletions(-)
 > 
-> The xattr syscall interface is what's used for very similar kinds of
-> things today; using it for richacls as well sure does not count as
-> abuse. Things could be improved in the xattr interface and in its
-> implementation, but we need more substantial reasons than that for
-> reimplementing the wheel once again.
+> diff --git a/include/linux/module.h b/include/linux/module.h
+> index 3a19c79..c8680b1 100644
+> --- a/include/linux/module.h
+> +++ b/include/linux/module.h
+> @@ -36,6 +36,20 @@ struct modversion_info {
+>  	char name[MODULE_NAME_LEN];
+>  };
+>  
+> +struct load_info {
+> +	Elf_Ehdr *hdr;
+> +	unsigned long len;
+> +	Elf_Shdr *sechdrs;
+> +	char *secstrings, *strtab;
+> +	unsigned long symoffs, stroffs;
+> +	struct _ddebug *debug;
+> +	unsigned int num_debug;
+> +	bool sig_ok;
+> +	struct {
+> +		unsigned int sym, str, mod, vers, info, pcpu;
+> +	} index;
+> +};
+> +
+>  struct module;
+>  
+>  struct module_kobject {
+> @@ -462,6 +476,8 @@ struct module {
+>  
+>  #ifdef CONFIG_LIVEPATCH
+>  	bool klp_alive;
+> +	/* save info to patch to-be-loaded modules */
+> +	struct load_info *info;
+>  #endif
+>  
+>  #ifdef CONFIG_MODULE_UNLOAD
+> @@ -635,6 +651,15 @@ static inline bool module_requested_async_probing(struct module *module)
+>  	return module && module->async_probe_requested;
+>  }
+>  
+> +#ifdef CONFIG_LIVEPATCH
+> +extern void klp_prepare_patch_module(struct module *mod,
+> +				     struct load_info *info);
+> +extern int
+> +apply_relocate_add(Elf64_Shdr *sechdrs, const char *strtab,
+> +		   unsigned int symindex, unsigned int relsec,
+> +		   struct module *me);
+> +#endif
+> +
+>  #else /* !CONFIG_MODULES... */
+>  
+>  /* Given an address, look for it in the exception tables. */
+> diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
+> index 6e53441..087a8c7 100644
+> --- a/kernel/livepatch/core.c
+> +++ b/kernel/livepatch/core.c
+> @@ -1001,6 +1001,23 @@ static struct notifier_block klp_module_nb = {
+>  	.priority = INT_MIN+1, /* called late but before ftrace notifier */
+>  };
+>  
+> +/*
+> + * Save necessary information from info in order to be able to
+> + * patch modules that might be loaded later
+> + */
+> +void klp_prepare_patch_module(struct module *mod, struct load_info *info)
+> +{
+> +	Elf_Shdr *symsect;
+> +
+> +	symsect = info->sechdrs + info->index.sym;
+> +	/* update sh_addr to point to symtab */
+> +	symsect->sh_addr = (unsigned long)info->hdr + symsect->sh_offset;
+> +
+> +	mod->info = kzalloc(sizeof(*info), GFP_KERNEL);
 
-And it's a horrible interface.  Look at all the pain for example in
-XFS which has a different ACL format, or in fact everyone who just
-uses a different xattr name or even none at all.  And all the mess
-of people trying to shoe horn crazy interfaces into xattrs.
+We should test the value of mod->info, since kernel may fail to allocate
+the memory.
 
-It was an experiment worth trying with Posix ACLs, but it failed, so
-do not repeat it.
+Thanks
+Minfei
+
+> +	memcpy(mod->info, info, sizeof(*info));
+> +
+> +}
+> +
+>  static int __init klp_init(void)
+>  {
+>  	int ret;
+> diff --git a/kernel/module.c b/kernel/module.c
+> index 8f051a1..8ae3ca5 100644
+> --- a/kernel/module.c
+> +++ b/kernel/module.c
+> @@ -318,20 +318,6 @@ int unregister_module_notifier(struct notifier_block *nb)
+>  }
+>  EXPORT_SYMBOL(unregister_module_notifier);
+>  
+> -struct load_info {
+> -	Elf_Ehdr *hdr;
+> -	unsigned long len;
+> -	Elf_Shdr *sechdrs;
+> -	char *secstrings, *strtab;
+> -	unsigned long symoffs, stroffs;
+> -	struct _ddebug *debug;
+> -	unsigned int num_debug;
+> -	bool sig_ok;
+> -	struct {
+> -		unsigned int sym, str, mod, vers, info, pcpu;
+> -	} index;
+> -};
+> -
+>  /* We require a truly strong try_module_get(): 0 means failure due to
+>     ongoing or failed initialization etc. */
+>  static inline int strong_try_module_get(struct module *mod)
+> @@ -2137,6 +2123,11 @@ static int simplify_symbols(struct module *mod, const struct load_info *info)
+>  			       (long)sym[i].st_value);
+>  			break;
+>  
+> +#ifdef CONFIG_LIVEPATCH
+> +		case SHN_LIVEPATCH:
+> +			break;
+> +#endif
+> +
+>  		case SHN_UNDEF:
+>  			ksym = resolve_symbol_wait(mod, info, name);
+>  			/* Ok if resolved.  */
+> @@ -2185,6 +2176,11 @@ static int apply_relocations(struct module *mod, const struct load_info *info)
+>  		if (!(info->sechdrs[infosec].sh_flags & SHF_ALLOC))
+>  			continue;
+>  
+> +#ifdef CONFIG_LIVEPATCH
+> +		if (info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH)
+> +			continue;
+> +#endif
+> +
+>  		if (info->sechdrs[i].sh_type == SHT_REL)
+>  			err = apply_relocate(info->sechdrs, info->strtab,
+>  					     info->index.sym, i, mod);
+> @@ -3530,8 +3526,20 @@ static int load_module(struct load_info *info, const char __user *uargs,
+>  	if (err < 0)
+>  		goto bug_cleanup;
+>  
+> +#ifdef CONFIG_LIVEPATCH
+> +	/*
+> +	 * Save sechdrs, indices, and other data from info
+> +	 * in order to patch to-be-loaded modules.
+> +	 * Do not call free_copy() for livepatch modules.
+> +	 */
+> +	if (get_modinfo((struct load_info *)info, "livepatch"))
+> +		klp_prepare_patch_module(mod, info);
+> +	else
+> +		free_copy(info);
+> +#else
+>  	/* Get rid of temporary copy. */
+>  	free_copy(info);
+> +#endif
+>  
+>  	/* Done! */
+>  	trace_module_load(mod);
+> -- 
+> 2.4.3
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe live-patching" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
