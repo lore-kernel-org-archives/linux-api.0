@@ -1,49 +1,140 @@
-From: David Rientjes <rientjes@google.com>
-Subject: Re: [PATCH selftests 5/6] selftests: vm: Try harder to allocate huge
- pages
-Date: Tue, 10 Nov 2015 17:11:15 -0800 (PST)
-Message-ID: <alpine.DEB.2.10.1511101710470.19847@chino.kir.corp.google.com>
-References: <1446334510.2595.13.camel@decadent.org.uk> <1446334747.2595.19.camel@decadent.org.uk> <alpine.DEB.2.10.1511101159480.29993@chino.kir.corp.google.com> <1447192104.6006.148.camel@decadent.org.uk>
+From: Andreas Gruenbacher <agruenba@redhat.com>
+Subject: Re: [PATCH v15 19/22] richacl: Add richacl xattr handler
+Date: Wed, 11 Nov 2015 02:16:33 +0100
+Message-ID: <CAHc6FU7hZdo7aoz2TmhSuw1Gkr=-+YhP2MLz408w8ZDrf-Y_6A@mail.gmail.com>
+References: <1447067343-31479-1-git-send-email-agruenba@redhat.com>
+	<1447067343-31479-20-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="397176738-1583944356-1447204275=:19847"
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1447192104.6006.148.camel@decadent.org.uk>
-Sender: owner-linux-mm@kvack.org
-To: Ben Hutchings <ben@decadent.org.uk>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-api@vger.kernel.org, linux-mm@kvack.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1447067343-31479-20-git-send-email-agruenba@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4 <linux-ext4@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, LKML <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, linux-cifs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
+Cc: Andreas Gruenbacher <agruenba@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On Mon, Nov 9, 2015 at 12:09 PM, Andreas Gruenbacher
+<agruenba@redhat.com> wrote:
+> Add richacl xattr handler implementing the xattr operations based on the
+> get_richacl and set_richacl inode operations.
+>
+> Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+> ---
+>  fs/richacl_xattr.c            | 78 +++++++++++++++++++++++++++++++++++++++++++
+>  include/linux/richacl_xattr.h |  2 ++
+>  2 files changed, 80 insertions(+)
+>
+> diff --git a/fs/richacl_xattr.c b/fs/richacl_xattr.c
+> index 38473b6..767c1f7 100644
+> --- a/fs/richacl_xattr.c
+> +++ b/fs/richacl_xattr.c
+> @@ -18,7 +18,9 @@
+>  #include <linux/fs.h>
+>  #include <linux/slab.h>
+>  #include <linux/module.h>
+> +#include <linux/xattr.h>
+>  #include <linux/richacl_xattr.h>
+> +#include <uapi/linux/xattr.h>
+>
+>  MODULE_LICENSE("GPL");
+>
+> @@ -161,6 +163,82 @@ richacl_to_xattr(struct user_namespace *user_ns,
+>  }
+>  EXPORT_SYMBOL_GPL(richacl_to_xattr);
+>
+> +static size_t
+> +richacl_xattr_list(struct dentry *dentry, char *list, size_t list_len,
+> +                  const char *name, size_t name_len, int handler_flags)
+> +{
+> +       const size_t size = sizeof(XATTR_NAME_RICHACL);
+> +
+> +       if (!IS_RICHACL(d_backing_inode(dentry)))
+> +               return 0;
+> +       if (list && size <= list_len)
+> +               memcpy(list, XATTR_NAME_RICHACL, size);
+> +       return size;
+> +}
+> +
+> +static int
+> +richacl_xattr_get(struct dentry *dentry, const char *name, void *buffer,
+> +                 size_t buffer_size, int handler_flags)
+> +{
+> +       struct inode *inode = d_backing_inode(dentry);
+> +       struct richacl *acl;
+> +       int error;
+> +
+> +       if (strcmp(name, "") != 0)
+> +               return -EINVAL;
+> +       if (!IS_RICHACL(inode))
+> +               return EOPNOTSUPP;
 
---397176738-1583944356-1447204275=:19847
-Content-Type: TEXT/PLAIN; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+This should have been -EOPNOTSUPP instead.
 
-On Tue, 10 Nov 2015, Ben Hutchings wrote:
-
-> > I know this patch is in -mm and hasn't been merged by Linus yet, but =
-I'm=20
-> > wondering why the multiple /proc/sys/vm/drop_caches is helping?=C2=A0=
- Would it=20
-> > simply suffice to put a sleep in there instead or is drop_caches actu=
-ally=20
-> > doing something useful a second time around?
->=20
-> Initially I just retried setting nr_hugepages up to 10 times, which
-> wasn't sufficient. =C2=A0Then I added the drop_caches, and after that
-> setting nr_hugepages tended to worked first time so I reduced the retry
-> count. =C2=A0It might not be necessary to retry at all.
->=20
-
-Ok, thanks.  I was just trying to make sure that the additional=20
-drop_caches wasn't actually required for the test, in which case we would=
-=20
-have to fix drop_caches :)
---397176738-1583944356-1447204275=:19847--
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> +       if (S_ISLNK(inode->i_mode))
+> +               return -EOPNOTSUPP;
+> +       acl = get_richacl(inode);
+> +       if (IS_ERR(acl))
+> +               return PTR_ERR(acl);
+> +       if (acl == NULL)
+> +               return -ENODATA;
+> +       error = richacl_to_xattr(&init_user_ns, acl, buffer, buffer_size);
+> +       richacl_put(acl);
+> +       return error;
+> +}
+> +
+> +static int
+> +richacl_xattr_set(struct dentry *dentry, const char *name,
+> +                 const void *value, size_t size, int flags, int handler_flags)
+> +{
+> +       struct inode *inode = d_backing_inode(dentry);
+> +       struct richacl *acl = NULL;
+> +       int ret;
+> +
+> +       if (strcmp(name, "") != 0)
+> +               return -EINVAL;
+> +       if (!IS_RICHACL(inode))
+> +               return -EOPNOTSUPP;
+> +       if (!inode->i_op->set_richacl)
+> +               return -EOPNOTSUPP;
+> +
+> +       if (!uid_eq(current_fsuid(), inode->i_uid) &&
+> +           inode_permission(inode, MAY_CHMOD) &&
+> +           !capable(CAP_FOWNER))
+> +               return -EPERM;
+> +
+> +       if (value) {
+> +               acl = richacl_from_xattr(&init_user_ns, value, size);
+> +               if (IS_ERR(acl))
+> +                       return PTR_ERR(acl);
+> +       }
+> +
+> +       ret = inode->i_op->set_richacl(inode, acl);
+> +       richacl_put(acl);
+> +       return ret;
+> +}
+> +
+> +struct xattr_handler richacl_xattr_handler = {
+> +       .prefix = XATTR_NAME_RICHACL,
+> +       .list = richacl_xattr_list,
+> +       .get = richacl_xattr_get,
+> +       .set = richacl_xattr_set,
+> +};
+> +EXPORT_SYMBOL(richacl_xattr_handler);
+> +
+>  /*
+>   * Fix up the uids and gids in richacl extended attributes in place.
+>   */
+> diff --git a/include/linux/richacl_xattr.h b/include/linux/richacl_xattr.h
+> index 7fc5ca8..45ec27a 100644
+> --- a/include/linux/richacl_xattr.h
+> +++ b/include/linux/richacl_xattr.h
+> @@ -39,4 +39,6 @@ static inline void richacl_fix_xattr_to_user(void *value, size_t size)
+>  }
+>  #endif
+>
+> +extern struct xattr_handler richacl_xattr_handler;
+> +
+>  #endif /* __RICHACL_XATTR_H */
+> --
+> 2.5.0
+>
