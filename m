@@ -1,37 +1,68 @@
-From: Eric Biggers <ebiggers3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v9 0/4] VFS: In-kernel copy system call
-Date: Wed, 11 Nov 2015 08:53:37 -0600
-Message-ID: <20151111145337.GA2392@zzz>
-References: <1447192413-15376-1-git-send-email-Anna.Schumaker@Netapp.com>
+From: Petr Mladek <pmladek@suse.com>
+Subject: Re: [RFC PATCH 3/5] livepatch: reuse module loader code to write
+ relocations
+Date: Wed, 11 Nov 2015 16:22:57 +0100
+Message-ID: <20151111152256.GP2599@pathway.suse.cz>
+References: <1447130755-17383-1-git-send-email-jeyu@redhat.com>
+ <1447130755-17383-4-git-send-email-jeyu@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1447192413-15376-1-git-send-email-Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
-Cc: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, clm-b10kYP2dOMg@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
+In-Reply-To: <1447130755-17383-4-git-send-email-jeyu@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jessica Yu <jeyu@redhat.com>
+Cc: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Miroslav Benes <mbenes@suse.cz>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 10, 2015 at 04:53:30PM -0500, Anna Schumaker wrote:
->	out:
->		fdput(f_in);
->	out1:
->		fdput(f_out);
+On Mon 2015-11-09 23:45:53, Jessica Yu wrote:
+> Reuse module loader code to write relocations, thereby eliminating the
+> need for architecture specific code in livepatch. Namely, we reuse
+> apply_relocate_add() in the module loader to write relocs instead of
+> duplicating functionality in livepatch's klp_write_module_reloc(). To
+> apply relocation sections, remaining SHN_LIVEPATCH symbols referenced by
+> relocs are resolved and then apply_relocate_add() is called to apply
+> those relocations.
+> 
+> Signed-off-by: Jessica Yu <jeyu@redhat.com>
+> ---
+>  include/linux/livepatch.h | 11 ++++--
+>  include/linux/module.h    |  6 ++++
+>  kernel/livepatch/core.c   | 89 +++++++++++++++++++++++++++++------------------
+>  3 files changed, 70 insertions(+), 36 deletions(-)
+> 
+> index 087a8c7..26c419f 100644
+> --- a/kernel/livepatch/core.c
+> +++ b/kernel/livepatch/core.c
+> @@ -28,6 +28,8 @@
+>  #include <linux/list.h>
+>  #include <linux/kallsyms.h>
+>  #include <linux/livepatch.h>
+> +#include <linux/elf.h>
+> +#include <asm/cacheflush.h>
+>  
+>  /**
+>   * struct klp_ops - structure for tracking registered ftrace ops structs
+> @@ -281,46 +283,54 @@ static int klp_find_external_symbol(struct module *pmod, const char *name,
+>  }
+>  
+>  static int klp_write_object_relocations(struct module *pmod,
+> -					struct klp_object *obj)
+> +					struct klp_object *obj,
+> +					struct klp_patch *patch)
+>  {
+[...]
 
-The fdput()s are in the wrong order.  fdget(f_in) is first at the beginning, so
-fdput(f_in) needs to be last at the end.
+> +
+> +	/* For each __klp_rela section for this object */
+> +	list_for_each_entry(reloc_sec, &obj->reloc_secs, list) {
 
->       /* this could be relaxed once a method supports cross-fs copies */
->       if (inode_in->i_sb != inode_out->i_sb)
->               return -EXDEV;
+Who, when, and how will define reloc_secs, please?
 
-This allows the same superblock but different mounts --- is that intentional?
-The commit message says otherwise: it says the vfs entry point requires the same
-superblock and mount.
+I guess that it is just an optimization. It helps to avoid going
+through all elf sections of all livepatch modules. Therefore, I think
+that we might fill this when the livepatch module is loaded. But
+I do not see the code for this.
 
-
-Was there a decision made on FMODE_PREAD and FMODE_PWRITE?  To me it seems
-logical that the if the user explicitly specifies an offset, then the
-corresponding mode should be checked.  That would check whether the file is
-seekable or not, I believe.  Note that e.g. sys_sendfile() does the same thing.
+Best Regards,
+Petr
