@@ -1,570 +1,298 @@
-From: Gabriel Laskar <gabriel@lse.epita.fr>
-Subject: [PATCH 5/9] include/uapi/drm/amdgpu_drm.h: use __u{32,64} types instead of uint{32,64}_t
-Date: Thu, 12 Nov 2015 19:14:07 +0100
-Message-ID: <1447352051-22022-6-git-send-email-gabriel@lse.epita.fr>
-References: <1447352051-22022-1-git-send-email-gabriel@lse.epita.fr>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1447352051-22022-1-git-send-email-gabriel@lse.epita.fr>
-Sender: linux-kernel-owner@vger.kernel.org
-To: DRI devel <dri-devel@lists.freedesktop.org>
-Cc: Gabriel Laskar <gabriel@lse.epita.fr>, David Airlie <airlied@linux.ie>, "open list:ABI/API" <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>
+From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: livepatch: reuse module loader code to write relocations
+Date: Thu, 12 Nov 2015 14:14:59 -0500
+Message-ID: <20151112191458.GB5841@packer-debian-8-amd64.digitalocean.com>
+References: <1447130755-17383-1-git-send-email-jeyu@redhat.com>
+ <1447130755-17383-4-git-send-email-jeyu@redhat.com>
+ <alpine.LNX.2.00.1511111519250.12467@pobox.suse.cz>
+ <20151111200732.GB30025@packer-debian-8-amd64.digitalocean.com>
+ <alpine.LNX.2.00.1511121601370.9440@pobox.suse.cz>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LNX.2.00.1511121601370.9440-ztGlSCb7Y1iN3ZZ/Hiejyg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
+Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Kernel headers should use linux/types.h
++++ Miroslav Benes [12/11/15 16:27 +0100]:
+>On Wed, 11 Nov 2015, Jessica Yu wrote:
+>
+>> +++ Miroslav Benes [11/11/15 15:30 +0100]:
+>> > On Mon, 9 Nov 2015, Jessica Yu wrote:
+>> >
+>> > So I guess we don't need klp_reloc anymore.
+>>
+>> Yes, that's correct. I am noticing just now that I forgot to remove
+>> the klp_reloc struct definition from livepatch.h. That change will be
+>> reflected in v2...
+>>
+>> > If true, we should really
+>> > start thinking about proper documentation because there are going to be
+>> > plenty of assumptions about a patch module and we need to have it written
+>> > somewhere. Especially how the relocation sections look like.
+>>
+>> Agreed. As a first step the patch module format can perhaps be
+>> documented somewhere. Perhaps it's time we create
+>> Documentation/livepatch/? :-)
+>
+>Yes, I think so.
+>
+>> > > diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
+>> > > index 087a8c7..26c419f 100644
+>> > > --- a/kernel/livepatch/core.c
+>> > > +++ b/kernel/livepatch/core.c
+>> > > @@ -28,6 +28,8 @@
+>> > >  #include <linux/list.h>
+>> > >  #include <linux/kallsyms.h>
+>> > >  #include <linux/livepatch.h>
+>> > > +#include <linux/elf.h>
+>> > > +#include <asm/cacheflush.h>
+>> > >
+>> > >  /**
+>> > >   * struct klp_ops - structure for tracking registered ftrace ops structs
+>> > > @@ -281,46 +283,54 @@ static int klp_find_external_symbol(struct module
+>> > > *pmod, const char *name,
+>> > >  }
+>> > >
+>> > >  static int klp_write_object_relocations(struct module *pmod,
+>> > > -					struct klp_object *obj)
+>> > > +					struct klp_object *obj,
+>> > > +					struct klp_patch *patch)
+>> > >  {
+>> > > -	int ret;
+>> > > -	struct klp_reloc *reloc;
+>> > > +	int relindex, num_relas;
+>> > > +	int i, ret = 0;
+>> > > +	unsigned long addr;
+>> > > +	unsigned int bind;
+>> > > +	char *symname;
+>> > > +	struct klp_reloc_sec *reloc_sec;
+>> > > +	struct load_info *info;
+>> > > +	Elf_Rela *rela;
+>> > > +	Elf_Sym *sym, *symtab;
+>> > > +	Elf_Shdr *symsect;
+>> > >
+>> > >  	if (WARN_ON(!klp_is_object_loaded(obj)))
+>> > >  		return -EINVAL;
+>> > >
+>> > > -	if (WARN_ON(!obj->relocs))
+>> > > -		return -EINVAL;
+>> > > -
+>> > > -	for (reloc = obj->relocs; reloc->name; reloc++) {
+>> > > -		if (!klp_is_module(obj)) {
+>> > > -			ret = klp_verify_vmlinux_symbol(reloc->name,
+>> > > -							reloc->val);
+>> > > -			if (ret)
+>> > > -				return ret;
+>> > > -		} else {
+>> > > -			/* module, reloc->val needs to be discovered */
+>> > > -			if (reloc->external)
+>> > > -				ret = klp_find_external_symbol(pmod,
+>> > > -							       reloc->name,
+>> > > -							       &reloc->val);
+>> > > -			else
+>> > > -				ret = klp_find_object_symbol(obj->mod->name,
+>> > > -							     reloc->name,
+>> > > -							     &reloc->val);
+>> > > -			if (ret)
+>> > > -				return ret;
+>> > > -		}
+>> > > -		ret = klp_write_module_reloc(pmod, reloc->type, reloc->loc,
+>> > > -					     reloc->val + reloc->addend);
+>> > > -		if (ret) {
+>> > > -			pr_err("relocation failed for symbol '%s' at 0x%016lx
+>> > > (%d)\n",
+>> > > -			       reloc->name, reloc->val, ret);
+>> > > -			return ret;
+>> > > +	info = pmod->info;
+>> > > +	symsect = info->sechdrs + info->index.sym;
+>> > > +	symtab = (void *)info->hdr + symsect->sh_offset;
+>> > > +
+>> > > +	/* For each __klp_rela section for this object */
+>> > > +	list_for_each_entry(reloc_sec, &obj->reloc_secs, list) {
+>> > > +		relindex = reloc_sec->index;
+>> > > +		num_relas = info->sechdrs[relindex].sh_size /
+>> > > sizeof(Elf_Rela);
+>> > > +		rela = (Elf_Rela *) info->sechdrs[relindex].sh_addr;
+>> > > +
+>> > > +		/* For each rela in this __klp_rela section */
+>> > > +		for (i = 0; i < num_relas; i++, rela++) {
+>> > > +			sym = symtab + ELF_R_SYM(rela->r_info);
+>> > > +			symname = info->strtab + sym->st_name;
+>> > > +			bind = ELF_ST_BIND(sym->st_info);
+>> > > +
+>> > > +			if (sym->st_shndx == SHN_LIVEPATCH) {
+>> > > +				if (bind == STB_LIVEPATCH_EXT)
+>> > > +					ret = klp_find_external_symbol(pmod,
+>> > > symname, &addr);
+>> > > +				else
+>> > > +					ret =
+>> > > klp_find_object_symbol(obj->name, symname, &addr);
+>> > > +				if (ret)
+>> > > +					return ret;
+>> > > +				sym->st_value = addr;
+>> > > +			}
+>> > >  		}
+>> > > +		ret = apply_relocate_add(info->sechdrs, info->strtab,
+>> > > +					 info->index.sym, relindex, pmod);
+>> > >  	}
+>> > >
+>> > > -	return 0;
+>> > > +	return ret;
+>> > >  }
+>> >
+>> > Looking at this... do we even need reloc_secs in klp_object? Question is
+>> > whether we need more than one dynrela section for an object. If not then
+>> > the binding between klp_reloc_sec and an object is the only relevant thing
+>> > in the structure, be it index or objname. So we can replace the
+>> > list of structures with just the index in klp_object, or get rid of it
+>> > completely and rely on the name of dynrela section be something like
+>> > __klp_rela_{objname}.
+>>
+>> Hm, you bring up a good point. I think theoretically yes, it is
+>> possible to just have one klp_reloc_sec for each object and therefore
+>> a list is not required (I have not checked yet how difficult it would
+>> be to implement this on the kpatch-build side of things).  However,
+>> considering the final format of the patch module, I think it is
+>> semantically clearer to leave it as a list, and for each object to
+>> possibly have more than one __klp_rela section.
+>>
+>> For example, say we are patching two functions in ext4. In my
+>> resulting kpatch module I will have two __klp_rela_ext4 sections, and
+>> they might look like this when we run readelf --sections:
+>>
+>> [34] __klp_rela_ext4.text.ext4_attr_store RELA ...
+>> [35] __klp_rela_ext4.text.ext4_attr_show RELA ...
+>>
+>> Then these two klp rela sections end up as two elements in the
+>> reloc_secs list for the ext4 patch object. I think this way, we can
+>> better tell which rela is being applied to what function. Might be
+>> easier to understand what's happening from the developer's point of
+>> view.
+>>
+>> > You see, we go through elf sections here which were preserved by module
+>> > loader. We even have relevant sections marked with SHF_RELA_LIVEPATCH. So
+>> > maybe all the stuff around klp_reloc_sec is not necessary.
+>> >
+>> > Thoughts?
+>>
+>> Ah, so this is where descriptive comments and documentation might have
+>> been useful :-) So I think we will still need to keep the
+>> klp_reloc_sec struct to help the patch module initialize. Though the
+>> name and objname fields aren't used in this patchset, they are used in
+>> the kpatch patch module code [1], where we iterate through each elf
+>> section, find the ones marked with SHF_RELA_LIVEPATCH, set the
+>> klp_reloc_sec's objname (which we find from the "name" field,
+>> formatted as __klp_rela_{objname}.text..). Once we have the objname
+>> set, we can then find the object to attach the reloc_sec to (i.e. add
+>> it to its list of reloc_secs).
+>>
+>> Hope that clears some things up.
+>
+>Ok, I'll try to explain myself and it is gonna be long. I'll try to
+>describe how we deal with dynrelas in klp today, how you use it in kpatch
+>(and this is the place where my knowledge can be wrong or obsolete), what
+>you propose and what I'd like to propose.
+>
+>1. First let's look on what we have now.
+>
+>We have a patch module in which there is a section with all dynrelas
+>needed to be resolved (it was like this in kpatch some time ago and maybe
+>it is different now so just have a patience, I'll get to it). In the init
+>function of the module kpatch builds all the relevant info from dynrela
+>section. It goes through it, creates an array of klp_reloc for each object
+>and includes each dynrela record with an objname to the array of
+>klp_object with that objname. Later when we need to apply relocations for
+>patched object we just go through the list (array) of its dynrelas in
+>klp_object and call our arch-specific klp_write_module_reloc().
 
-Signed-off-by: Gabriel Laskar <gabriel@lse.epita.fr>
----
- include/uapi/drm/amdgpu_drm.h | 292 +++++++++++++++++++++---------------------
- 1 file changed, 147 insertions(+), 145 deletions(-)
+Sounds correct to me.
 
-diff --git a/include/uapi/drm/amdgpu_drm.h b/include/uapi/drm/amdgpu_drm.h
-index e52933a..7f169c3 100644
---- a/include/uapi/drm/amdgpu_drm.h
-+++ b/include/uapi/drm/amdgpu_drm.h
-@@ -34,6 +34,8 @@
- 
- #include "drm.h"
- 
-+#include <linux/types.h>
-+
- #define DRM_AMDGPU_GEM_CREATE		0x00
- #define DRM_AMDGPU_GEM_MMAP		0x01
- #define DRM_AMDGPU_CTX			0x02
-@@ -76,19 +78,19 @@
- 
- struct drm_amdgpu_gem_create_in  {
- 	/** the requested memory size */
--	uint64_t bo_size;
-+	__u64 bo_size;
- 	/** physical start_addr alignment in bytes for some HW requirements */
--	uint64_t alignment;
-+	__u64 alignment;
- 	/** the requested memory domains */
--	uint64_t domains;
-+	__u64 domains;
- 	/** allocation flags */
--	uint64_t domain_flags;
-+	__u64 domain_flags;
- };
- 
- struct drm_amdgpu_gem_create_out  {
- 	/** returned GEM object handle */
--	uint32_t handle;
--	uint32_t _pad;
-+	__u32 handle;
-+	__u32 _pad;
- };
- 
- union drm_amdgpu_gem_create {
-@@ -105,28 +107,28 @@ union drm_amdgpu_gem_create {
- 
- struct drm_amdgpu_bo_list_in {
- 	/** Type of operation */
--	uint32_t operation;
-+	__u32 operation;
- 	/** Handle of list or 0 if we want to create one */
--	uint32_t list_handle;
-+	__u32 list_handle;
- 	/** Number of BOs in list  */
--	uint32_t bo_number;
-+	__u32 bo_number;
- 	/** Size of each element describing BO */
--	uint32_t bo_info_size;
-+	__u32 bo_info_size;
- 	/** Pointer to array describing BOs */
--	uint64_t bo_info_ptr;
-+	__u64 bo_info_ptr;
- };
- 
- struct drm_amdgpu_bo_list_entry {
- 	/** Handle of BO */
--	uint32_t bo_handle;
-+	__u32 bo_handle;
- 	/** New (if specified) BO priority to be used during migration */
--	uint32_t bo_priority;
-+	__u32 bo_priority;
- };
- 
- struct drm_amdgpu_bo_list_out {
- 	/** Handle of resource list  */
--	uint32_t list_handle;
--	uint32_t _pad;
-+	__u32 list_handle;
-+	__u32 _pad;
- };
- 
- union drm_amdgpu_bo_list {
-@@ -150,26 +152,26 @@ union drm_amdgpu_bo_list {
- 
- struct drm_amdgpu_ctx_in {
- 	/** AMDGPU_CTX_OP_* */
--	uint32_t	op;
-+	__u32	op;
- 	/** For future use, no flags defined so far */
--	uint32_t	flags;
--	uint32_t	ctx_id;
--	uint32_t	_pad;
-+	__u32	flags;
-+	__u32	ctx_id;
-+	__u32	_pad;
- };
- 
- union drm_amdgpu_ctx_out {
- 		struct {
--			uint32_t	ctx_id;
--			uint32_t	_pad;
-+			__u32	ctx_id;
-+			__u32	_pad;
- 		} alloc;
- 
- 		struct {
- 			/** For future use, no flags defined so far */
--			uint64_t	flags;
-+			__u64	flags;
- 			/** Number of resets caused by this context so far. */
--			uint32_t	hangs;
-+			__u32	hangs;
- 			/** Reset status since the last call of the ioctl. */
--			uint32_t	reset_status;
-+			__u32	reset_status;
- 		} state;
- };
- 
-@@ -189,12 +191,12 @@ union drm_amdgpu_ctx {
- #define AMDGPU_GEM_USERPTR_REGISTER	(1 << 3)
- 
- struct drm_amdgpu_gem_userptr {
--	uint64_t		addr;
--	uint64_t		size;
-+	__u64		addr;
-+	__u64		size;
- 	/* AMDGPU_GEM_USERPTR_* */
--	uint32_t		flags;
-+	__u32		flags;
- 	/* Resulting GEM handle */
--	uint32_t		handle;
-+	__u32		handle;
- };
- 
- /* same meaning as the GB_TILE_MODE and GL_MACRO_TILE_MODE fields */
-@@ -226,28 +228,28 @@ struct drm_amdgpu_gem_userptr {
- /** The same structure is shared for input/output */
- struct drm_amdgpu_gem_metadata {
- 	/** GEM Object handle */
--	uint32_t	handle;
-+	__u32	handle;
- 	/** Do we want get or set metadata */
--	uint32_t	op;
-+	__u32	op;
- 	struct {
- 		/** For future use, no flags defined so far */
--		uint64_t	flags;
-+		__u64	flags;
- 		/** family specific tiling info */
--		uint64_t	tiling_info;
--		uint32_t	data_size_bytes;
--		uint32_t	data[64];
-+		__u64	tiling_info;
-+		__u32	data_size_bytes;
-+		__u32	data[64];
- 	} data;
- };
- 
- struct drm_amdgpu_gem_mmap_in {
- 	/** the GEM object handle */
--	uint32_t handle;
--	uint32_t _pad;
-+	__u32 handle;
-+	__u32 _pad;
- };
- 
- struct drm_amdgpu_gem_mmap_out {
- 	/** mmap offset from the vma offset manager */
--	uint64_t addr_ptr;
-+	__u64 addr_ptr;
- };
- 
- union drm_amdgpu_gem_mmap {
-@@ -257,18 +259,18 @@ union drm_amdgpu_gem_mmap {
- 
- struct drm_amdgpu_gem_wait_idle_in {
- 	/** GEM object handle */
--	uint32_t handle;
-+	__u32 handle;
- 	/** For future use, no flags defined so far */
--	uint32_t flags;
-+	__u32 flags;
- 	/** Absolute timeout to wait */
--	uint64_t timeout;
-+	__u64 timeout;
- };
- 
- struct drm_amdgpu_gem_wait_idle_out {
- 	/** BO status:  0 - BO is idle, 1 - BO is busy */
--	uint32_t status;
-+	__u32 status;
- 	/** Returned current memory domain */
--	uint32_t domain;
-+	__u32 domain;
- };
- 
- union drm_amdgpu_gem_wait_idle {
-@@ -278,18 +280,18 @@ union drm_amdgpu_gem_wait_idle {
- 
- struct drm_amdgpu_wait_cs_in {
- 	/** Command submission handle */
--	uint64_t handle;
-+	__u64 handle;
- 	/** Absolute timeout to wait */
--	uint64_t timeout;
--	uint32_t ip_type;
--	uint32_t ip_instance;
--	uint32_t ring;
--	uint32_t ctx_id;
-+	__u64 timeout;
-+	__u32 ip_type;
-+	__u32 ip_instance;
-+	__u32 ring;
-+	__u32 ctx_id;
- };
- 
- struct drm_amdgpu_wait_cs_out {
- 	/** CS status:  0 - CS completed, 1 - CS still busy */
--	uint64_t status;
-+	__u64 status;
- };
- 
- union drm_amdgpu_wait_cs {
-@@ -303,11 +305,11 @@ union drm_amdgpu_wait_cs {
- /* Sets or returns a value associated with a buffer. */
- struct drm_amdgpu_gem_op {
- 	/** GEM object handle */
--	uint32_t	handle;
-+	__u32	handle;
- 	/** AMDGPU_GEM_OP_* */
--	uint32_t	op;
-+	__u32	op;
- 	/** Input or return value */
--	uint64_t	value;
-+	__u64	value;
- };
- 
- #define AMDGPU_VA_OP_MAP			1
-@@ -326,18 +328,18 @@ struct drm_amdgpu_gem_op {
- 
- struct drm_amdgpu_gem_va {
- 	/** GEM object handle */
--	uint32_t handle;
--	uint32_t _pad;
-+	__u32 handle;
-+	__u32 _pad;
- 	/** AMDGPU_VA_OP_* */
--	uint32_t operation;
-+	__u32 operation;
- 	/** AMDGPU_VM_PAGE_* */
--	uint32_t flags;
-+	__u32 flags;
- 	/** va address to assign . Must be correctly aligned.*/
--	uint64_t va_address;
-+	__u64 va_address;
- 	/** Specify offset inside of BO to assign. Must be correctly aligned.*/
--	uint64_t offset_in_bo;
-+	__u64 offset_in_bo;
- 	/** Specify mapping size. Must be correctly aligned. */
--	uint64_t map_size;
-+	__u64 map_size;
- };
- 
- #define AMDGPU_HW_IP_GFX          0
-@@ -354,24 +356,24 @@ struct drm_amdgpu_gem_va {
- #define AMDGPU_CHUNK_ID_DEPENDENCIES	0x03
- 
- struct drm_amdgpu_cs_chunk {
--	uint32_t		chunk_id;
--	uint32_t		length_dw;
--	uint64_t		chunk_data;
-+	__u32		chunk_id;
-+	__u32		length_dw;
-+	__u64		chunk_data;
- };
- 
- struct drm_amdgpu_cs_in {
- 	/** Rendering context id */
--	uint32_t		ctx_id;
-+	__u32		ctx_id;
- 	/**  Handle of resource list associated with CS */
--	uint32_t		bo_list_handle;
--	uint32_t		num_chunks;
--	uint32_t		_pad;
--	/** this points to uint64_t * which point to cs chunks */
--	uint64_t		chunks;
-+	__u32		bo_list_handle;
-+	__u32		num_chunks;
-+	__u32		_pad;
-+	/** this points to __u64 * which point to cs chunks */
-+	__u64		chunks;
- };
- 
- struct drm_amdgpu_cs_out {
--	uint64_t handle;
-+	__u64 handle;
- };
- 
- union drm_amdgpu_cs {
-@@ -388,32 +390,32 @@ union drm_amdgpu_cs {
- #define AMDGPU_IB_FLAG_PREAMBLE (1<<1)
- 
- struct drm_amdgpu_cs_chunk_ib {
--	uint32_t _pad;
-+	__u32 _pad;
- 	/** AMDGPU_IB_FLAG_* */
--	uint32_t flags;
-+	__u32 flags;
- 	/** Virtual address to begin IB execution */
--	uint64_t va_start;
-+	__u64 va_start;
- 	/** Size of submission */
--	uint32_t ib_bytes;
-+	__u32 ib_bytes;
- 	/** HW IP to submit to */
--	uint32_t ip_type;
-+	__u32 ip_type;
- 	/** HW IP index of the same type to submit to  */
--	uint32_t ip_instance;
-+	__u32 ip_instance;
- 	/** Ring index to submit to */
--	uint32_t ring;
-+	__u32 ring;
- };
- 
- struct drm_amdgpu_cs_chunk_dep {
--	uint32_t ip_type;
--	uint32_t ip_instance;
--	uint32_t ring;
--	uint32_t ctx_id;
--	uint64_t handle;
-+	__u32 ip_type;
-+	__u32 ip_instance;
-+	__u32 ring;
-+	__u32 ctx_id;
-+	__u64 handle;
- };
- 
- struct drm_amdgpu_cs_chunk_fence {
--	uint32_t handle;
--	uint32_t offset;
-+	__u32 handle;
-+	__u32 offset;
- };
- 
- struct drm_amdgpu_cs_chunk_data {
-@@ -486,83 +488,83 @@ struct drm_amdgpu_cs_chunk_data {
- /* Input structure for the INFO ioctl */
- struct drm_amdgpu_info {
- 	/* Where the return value will be stored */
--	uint64_t return_pointer;
-+	__u64 return_pointer;
- 	/* The size of the return value. Just like "size" in "snprintf",
- 	 * it limits how many bytes the kernel can write. */
--	uint32_t return_size;
-+	__u32 return_size;
- 	/* The query request id. */
--	uint32_t query;
-+	__u32 query;
- 
- 	union {
- 		struct {
--			uint32_t id;
--			uint32_t _pad;
-+			__u32 id;
-+			__u32 _pad;
- 		} mode_crtc;
- 
- 		struct {
- 			/** AMDGPU_HW_IP_* */
--			uint32_t type;
-+			__u32 type;
- 			/**
- 			 * Index of the IP if there are more IPs of the same
- 			 * type. Ignored by AMDGPU_INFO_HW_IP_COUNT.
- 			 */
--			uint32_t ip_instance;
-+			__u32 ip_instance;
- 		} query_hw_ip;
- 
- 		struct {
--			uint32_t dword_offset;
-+			__u32 dword_offset;
- 			/** number of registers to read */
--			uint32_t count;
--			uint32_t instance;
-+			__u32 count;
-+			__u32 instance;
- 			/** For future use, no flags defined so far */
--			uint32_t flags;
-+			__u32 flags;
- 		} read_mmr_reg;
- 
- 		struct {
- 			/** AMDGPU_INFO_FW_* */
--			uint32_t fw_type;
-+			__u32 fw_type;
- 			/**
- 			 * Index of the IP if there are more IPs of
- 			 * the same type.
- 			 */
--			uint32_t ip_instance;
-+			__u32 ip_instance;
- 			/**
- 			 * Index of the engine. Whether this is used depends
- 			 * on the firmware type. (e.g. MEC, SDMA)
- 			 */
--			uint32_t index;
--			uint32_t _pad;
-+			__u32 index;
-+			__u32 _pad;
- 		} query_fw;
- 	};
- };
- 
- struct drm_amdgpu_info_gds {
- 	/** GDS GFX partition size */
--	uint32_t gds_gfx_partition_size;
-+	__u32 gds_gfx_partition_size;
- 	/** GDS compute partition size */
--	uint32_t compute_partition_size;
-+	__u32 compute_partition_size;
- 	/** total GDS memory size */
--	uint32_t gds_total_size;
-+	__u32 gds_total_size;
- 	/** GWS size per GFX partition */
--	uint32_t gws_per_gfx_partition;
-+	__u32 gws_per_gfx_partition;
- 	/** GSW size per compute partition */
--	uint32_t gws_per_compute_partition;
-+	__u32 gws_per_compute_partition;
- 	/** OA size per GFX partition */
--	uint32_t oa_per_gfx_partition;
-+	__u32 oa_per_gfx_partition;
- 	/** OA size per compute partition */
--	uint32_t oa_per_compute_partition;
--	uint32_t _pad;
-+	__u32 oa_per_compute_partition;
-+	__u32 _pad;
- };
- 
- struct drm_amdgpu_info_vram_gtt {
--	uint64_t vram_size;
--	uint64_t vram_cpu_accessible_size;
--	uint64_t gtt_size;
-+	__u64 vram_size;
-+	__u64 vram_cpu_accessible_size;
-+	__u64 gtt_size;
- };
- 
- struct drm_amdgpu_info_firmware {
--	uint32_t ver;
--	uint32_t feature;
-+	__u32 ver;
-+	__u32 feature;
- };
- 
- #define AMDGPU_VRAM_TYPE_UNKNOWN 0
-@@ -576,61 +578,61 @@ struct drm_amdgpu_info_firmware {
- 
- struct drm_amdgpu_info_device {
- 	/** PCI Device ID */
--	uint32_t device_id;
-+	__u32 device_id;
- 	/** Internal chip revision: A0, A1, etc.) */
--	uint32_t chip_rev;
--	uint32_t external_rev;
-+	__u32 chip_rev;
-+	__u32 external_rev;
- 	/** Revision id in PCI Config space */
--	uint32_t pci_rev;
--	uint32_t family;
--	uint32_t num_shader_engines;
--	uint32_t num_shader_arrays_per_engine;
-+	__u32 pci_rev;
-+	__u32 family;
-+	__u32 num_shader_engines;
-+	__u32 num_shader_arrays_per_engine;
- 	/* in KHz */
--	uint32_t gpu_counter_freq;
--	uint64_t max_engine_clock;
--	uint64_t max_memory_clock;
-+	__u32 gpu_counter_freq;
-+	__u64 max_engine_clock;
-+	__u64 max_memory_clock;
- 	/* cu information */
--	uint32_t cu_active_number;
--	uint32_t cu_ao_mask;
--	uint32_t cu_bitmap[4][4];
-+	__u32 cu_active_number;
-+	__u32 cu_ao_mask;
-+	__u32 cu_bitmap[4][4];
- 	/** Render backend pipe mask. One render backend is CB+DB. */
--	uint32_t enabled_rb_pipes_mask;
--	uint32_t num_rb_pipes;
--	uint32_t num_hw_gfx_contexts;
--	uint32_t _pad;
--	uint64_t ids_flags;
-+	__u32 enabled_rb_pipes_mask;
-+	__u32 num_rb_pipes;
-+	__u32 num_hw_gfx_contexts;
-+	__u32 _pad;
-+	__u64 ids_flags;
- 	/** Starting virtual address for UMDs. */
--	uint64_t virtual_address_offset;
-+	__u64 virtual_address_offset;
- 	/** The maximum virtual address */
--	uint64_t virtual_address_max;
-+	__u64 virtual_address_max;
- 	/** Required alignment of virtual addresses. */
--	uint32_t virtual_address_alignment;
-+	__u32 virtual_address_alignment;
- 	/** Page table entry - fragment size */
--	uint32_t pte_fragment_size;
--	uint32_t gart_page_size;
-+	__u32 pte_fragment_size;
-+	__u32 gart_page_size;
- 	/** constant engine ram size*/
--	uint32_t ce_ram_size;
-+	__u32 ce_ram_size;
- 	/** video memory type info*/
--	uint32_t vram_type;
-+	__u32 vram_type;
- 	/** video memory bit width*/
--	uint32_t vram_bit_width;
-+	__u32 vram_bit_width;
- 	/* vce harvesting instance */
--	uint32_t vce_harvest_config;
-+	__u32 vce_harvest_config;
- };
- 
- struct drm_amdgpu_info_hw_ip {
- 	/** Version of h/w IP */
--	uint32_t  hw_ip_version_major;
--	uint32_t  hw_ip_version_minor;
-+	__u32  hw_ip_version_major;
-+	__u32  hw_ip_version_minor;
- 	/** Capabilities */
--	uint64_t  capabilities_flags;
-+	__u64  capabilities_flags;
- 	/** command buffer address start alignment*/
--	uint32_t  ib_start_alignment;
-+	__u32  ib_start_alignment;
- 	/** command buffer size alignment*/
--	uint32_t  ib_size_alignment;
-+	__u32  ib_size_alignment;
- 	/** Bitmask of available rings. Bit 0 means ring 0, etc. */
--	uint32_t  available_rings;
--	uint32_t  _pad;
-+	__u32  available_rings;
-+	__u32  _pad;
- };
- 
- /*
--- 
-2.6.2
+>Now this was probably changed in kpatch and you do not have one dynrela
+>section but one dynrela section for each patched function. Is that
+>correct? (and can you tell us what the reason for the change was? It might
+>be crucial because I might be missing something.). Which leads us to your
+>proposal...
+
+Your original assumption was correct; current kpatch has one big
+.kpatch.dynrelas section, and each dynrela entry within that single
+section gets sorted to the correct object as you described above. The
+one dynrela section per patched function only came with this patchset,
+but for no particular reason other than to make the kpatch-build code
+for generating the patch module slightly less complicated. But I
+haven't checked how big of a change it would be to do
+one-dynrela-section per object, perhaps (and I hope) it will be an
+easy change.
+
+>2. So we have several dynrela section for one patched object. During init
+>function in a patch module kpatch once again builds needed structures from
+>these sections. Now they are called klp_reloc_sec and contain different
+>kind of info. There is no val, loc and such, only name of the symbol,
+>objname and index to dynrela section in ELF. So when you need to write
+>relocations for the patched object you go through all relevant dynrela
+>sections (because they are stored in the klp_object), all dynrela records
+>in each section and you resolve the undefined symbols. All needed info is
+>stored in ELF. Then you just call apply_relocate_add().
+>
+>3. I propose to go one step further. I think we don't need klp_reloc_sec
+>if there is only one dynrela section for patched object (and I currently
+>cannot see why this is not possible. It is possible even with one dynrela
+>section for whole patch module, that is for all patched objects.).
+
+I think the furthest we can go in terms of simplifying klp rela secs
+is to have one __klp_rela section per object. We can't smush all the
+__klp_rela_objname sections into one big __klp_rela section since we
+could be patching some objects that won't be loaded yet, and
+apply_relocate_add() needs to work with real SHT_RELA sections + their
+corresponding section indices (i.e., we cannot call
+apply_relocate_add() with that single, combined klp rela section).
+
+So, I think I would be OK with one __klp_rela section per object.
+
+>In my proposal there would be nothing done in init function of the patched
+>module (albeit some optimization mentioned later). When you call
+>klp_write_object_relocations you would go through all ELF section and find
+>the relevant one for the object (it is marked with SHF_RELA_LIVEPATCH and
+>objname is in the name of the section. It is the same thing you do in 2.
+>in the init function.). Then you go through all dynrela records in the
+>section, you do the same things which you do in the proposed patch above,
+>and call apply_relocate_add.
+
+I'm not sure I like having klp_write_object_relocations() repeatedly
+perform a loop through all the elf sections when we can pre-process
+this information in the patch module's init function, and "cache" the
+relevant klp section indices before passing things off to
+klp_write_object_relocations(). So how about this: we do the
+__klp_rela sec sorting in the init function of the patched module. The
+patch module would iterate through its own elf sections, and when it
+encounters a __klp_rela section, it looks at its objname, find the
+corresponding klp_object, and save the section index of the __klp_rela
+section in that klp_object. Then in klp_write_object_relocations, we
+just have to look at the saved section index for the corresponding
+object and access the klp rela section through that index, do the same
+processing in this patch and call apply_relocate_add().
+
+>Now it would be crazy to go through all sections each time
+>klp_write_object_relocations is called (maybe it does not even matter but
+>nevertheless). So klp_object could have an index to its ELF dynrela
+>section. This index can be retrieved in the init function the same way you
+>do all the stuff with klp_reloc_sec.
+
+Ah, exactly what I said above :-D
+
+>If you insisted on more than one dynrela section for a patched object we
+>could have an array of indices there. Or whatever.
+>
+>It is almost the same as your proposal but in my opinion somewhat nicer.
+>We just use the info stored in ELF directly without unnecessary middle
+>layer (== klp_reloc_sec).
+>
+>Does it make sense? I hope it does. Would it work?
+
+It does make sense, and I think we can make it work without
+klp_reloc_sec. Thanks for the explanations.
+
+Jessica
