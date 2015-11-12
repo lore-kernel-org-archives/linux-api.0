@@ -1,7 +1,7 @@
 From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v3 10/17] powerpc: add pmd_[dirty|mkclean] for THP
-Date: Thu, 12 Nov 2015 13:33:06 +0900
-Message-ID: <1447302793-5376-11-git-send-email-minchan@kernel.org>
+Subject: [PATCH v3 08/17] x86: add pmd_[dirty|mkclean] for THP
+Date: Thu, 12 Nov 2015 13:33:04 +0900
+Message-ID: <1447302793-5376-9-git-send-email-minchan@kernel.org>
 References: <1447302793-5376-1-git-send-email-minchan@kernel.org>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1447302793-5376-1-git-send-email-minchan@kernel.org>
@@ -19,25 +19,25 @@ support.
 Signed-off-by: Minchan Kim <minchan@kernel.org>
 Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
 ---
- arch/powerpc/include/asm/pgtable-ppc64.h | 2 ++
- 1 file changed, 2 insertions(+)
+ arch/x86/include/asm/pgtable.h | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/arch/powerpc/include/asm/pgtable-ppc64.h b/arch/powerpc/include/asm/pgtable-ppc64.h
-index fa1dfb7f7b48..85e15c8067be 100644
---- a/arch/powerpc/include/asm/pgtable-ppc64.h
-+++ b/arch/powerpc/include/asm/pgtable-ppc64.h
-@@ -507,9 +507,11 @@ static inline pte_t *pmdp_ptep(pmd_t *pmd)
- #define pmd_pfn(pmd)		pte_pfn(pmd_pte(pmd))
- #define pmd_dirty(pmd)		pte_dirty(pmd_pte(pmd))
- #define pmd_young(pmd)		pte_young(pmd_pte(pmd))
-+#define pmd_dirty(pmd)		pte_dirty(pmd_pte(pmd))
- #define pmd_mkold(pmd)		pte_pmd(pte_mkold(pmd_pte(pmd)))
- #define pmd_wrprotect(pmd)	pte_pmd(pte_wrprotect(pmd_pte(pmd)))
- #define pmd_mkdirty(pmd)	pte_pmd(pte_mkdirty(pmd_pte(pmd)))
-+#define pmd_mkclean(pmd)	pte_pmd(pte_mkclean(pmd_pte(pmd)))
- #define pmd_mkyoung(pmd)	pte_pmd(pte_mkyoung(pmd_pte(pmd)))
- #define pmd_mkwrite(pmd)	pte_pmd(pte_mkwrite(pmd_pte(pmd)))
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index 867da5bbb4a3..b964d54300e1 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -267,6 +267,11 @@ static inline pmd_t pmd_mkold(pmd_t pmd)
+ 	return pmd_clear_flags(pmd, _PAGE_ACCESSED);
+ }
  
++static inline pmd_t pmd_mkclean(pmd_t pmd)
++{
++	return pmd_clear_flags(pmd, _PAGE_DIRTY);
++}
++
+ static inline pmd_t pmd_wrprotect(pmd_t pmd)
+ {
+ 	return pmd_clear_flags(pmd, _PAGE_RW);
 -- 
 1.9.1
 
