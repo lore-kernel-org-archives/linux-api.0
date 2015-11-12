@@ -1,49 +1,88 @@
-From: Andy Lutomirski <luto@amacapital.net>
+From: Daniel Micay <danielmicay@gmail.com>
 Subject: Re: [PATCH v3 01/17] mm: support madvise(MADV_FREE)
-Date: Wed, 11 Nov 2015 20:49:58 -0800
-Message-ID: <CALCETrWA6aZC_3LPM3niN+2HFjGEm_65m9hiEdpBtEZMn0JhwQ@mail.gmail.com>
-References: <1447302793-5376-1-git-send-email-minchan@kernel.org> <1447302793-5376-2-git-send-email-minchan@kernel.org>
+Date: Thu, 12 Nov 2015 00:21:30 -0500
+Message-ID: <564421DA.9060809@gmail.com>
+References: <1447302793-5376-1-git-send-email-minchan@kernel.org>
+ <1447302793-5376-2-git-send-email-minchan@kernel.org>
+ <CALCETrWA6aZC_3LPM3niN+2HFjGEm_65m9hiEdpBtEZMn0JhwQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: multipart/signed; micalg=pgp-sha256;
+ protocol="application/pgp-signature";
+ boundary="Se18ghPEcLHSaaDiqlU3mG3BW3BwKGCDu"
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1447302793-5376-2-git-send-email-minchan@kernel.org>
+In-Reply-To: <CALCETrWA6aZC_3LPM3niN+2HFjGEm_65m9hiEdpBtEZMn0JhwQ@mail.gmail.com>
 Sender: owner-linux-mm@kvack.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, Daniel Micay <danielmicay@gmail.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Shaohua Li <shli@kernel.org>, Michal Hocko <mhocko@suse.cz>, yalin wang <yalin.wang2010@gmail.com>
+To: Andy Lutomirski <luto@amacapital.net>, Minchan Kim <minchan@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Shaohua Li <shli@kernel.org>, Michal Hocko <mhocko@suse.cz>, yalin wang <yalin.wang2010@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 11, 2015 at 8:32 PM, Minchan Kim <minchan@kernel.org> wrote:
->
-> Linux doesn't have an ability to free pages lazy while other OS already
-> have been supported that named by madvise(MADV_FREE).
->
-> The gain is clear that kernel can discard freed pages rather than swapping
-> out or OOM if memory pressure happens.
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--Se18ghPEcLHSaaDiqlU3mG3BW3BwKGCDu
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+> I also think that the kernel should commit to either zeroing the page
+> or leaving it unchanged in response to MADV_FREE (even if the decision
+> of which to do is made later on).  I think that your patch series does
+> this, but only after a few of the patches are applied (the swap entry
+> freeing), and I think that it should be a real guaranteed part of the
+> semantics and maybe have a test case.
+
+This would be a good thing to test because it would be required to add
+MADV_FREE_UNDO down the road. It would mean the same semantics as the
+MEM_RESET and MEM_RESET_UNDO features on Windows, and there's probably
+value in that for the sake of migrating existing software too.
+
+For one example, it could be dropped into Firefox:
+
+https://dxr.mozilla.org/mozilla-central/source/memory/volatile/VolatileBu=
+fferWindows.cpp
+
+And in Chromium:
+
+https://code.google.com/p/chromium/codesearch#chromium/src/base/memory/di=
+scardable_shared_memory.cc
+
+Worth noting that both also support the API for pinning/unpinning that's
+used by Android's ashmem too. Linux really needs a feature like this for
+caches. Firefox simply doesn't drop the memory at all on Linux right now:=
 
 
->
-> When madvise syscall is called, VM clears dirty bit of ptes of the range.
-> If memory pressure happens, VM checks dirty bit of page table and if it
-> found still "clean", it means it's a "lazyfree pages" so VM could discard
-> the page instead of swapping out.  Once there was store operation for the
-> page before VM peek a page to reclaim, dirty bit is set so VM can swap out
-> the page instead of discarding.
->
+https://dxr.mozilla.org/mozilla-central/source/memory/volatile/VolatileBu=
+fferFallback.cpp
 
-I realize that this lends itself to an efficient implementation, but
-it's certainly the case that the kernel *could* use the accessed bit
-instead of the dirty bit to give more sensible user semantics, and the
-semantics that rely on the dirty bit make me uncomfortable from an ABI
-perspective.
+(Lock =3D=3D pin, Unlock =3D=3D unpin)
 
-I also think that the kernel should commit to either zeroing the page
-or leaving it unchanged in response to MADV_FREE (even if the decision
-of which to do is made later on).  I think that your patch series does
-this, but only after a few of the patches are applied (the swap entry
-freeing), and I think that it should be a real guaranteed part of the
-semantics and maybe have a test case.
+For reference:
 
---Andy
+https://msdn.microsoft.com/en-us/library/windows/desktop/aa366887(v=3Dvs.=
+85).aspx
+
+
+--Se18ghPEcLHSaaDiqlU3mG3BW3BwKGCDu
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIcBAEBCAAGBQJWRCHeAAoJEPnnEuWa9fIqwfoP/i3+X7dS4t4/swOr7e4brAqt
+ZhBVZcywBqWLWfrDka8JUtM8lFW5c3AlYBVXsPEXJytuGdz9lm8Ct+gJTJrzQ1mg
+DF1mAq6MD+DWgI5094kQJvERR1MRfR5KyH9kGQlEOSsMIWlG2uyIMmA9oCZINDSZ
+0OB7fEAtXe/DLSVtisIvH9Uybeem6MHnaKJmHrtvIiKuVn9hnfvjG7KByIc+jvBi
+w+zyXQSkmgzSFdGexyANCdfdqvZqVAKKO18HQ//n+9nPzPNmC+9sfUFByUWGocJz
+bGNxvWzfEIZJC/Xu+kBgq/mZHDttPMnF18zO2MWnMH4op7m3YvCt4GPXzX1MmDHa
+IpAlqp+KOmEZ8kSuHQ3joqcx/IB4n+amoF6sUOT2Qw6HPVhSHg0yLhovB4D4vnGh
+2OdLCqNsH8viYHty4hLgHV9M+QWMthE+sSENM3T08/kbCfnzcypkOx5d5D0iNAc6
+qgpFY6O/2MYmqC0VkX41QEuhopB18PdYa9n56Yo3nVnbbVEWqEpeSWHRCZ6j6Oib
+ojzxVnDQpDJzm85HtA2rVnRqk9Ryis2168cbS7ZoOXLXjPUhViVHNyy5fMCowTcg
+pEdz7Baaiq8R0Iuo/DZCKwtjGM/ocePEmguKM8i31pwCKXqf+TPBSBS1VYIpUJf7
+z8BjttnxfZThV8goqQDy
+=l8YU
+-----END PGP SIGNATURE-----
+
+--Se18ghPEcLHSaaDiqlU3mG3BW3BwKGCDu--
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
