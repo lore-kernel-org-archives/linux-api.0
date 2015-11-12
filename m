@@ -1,198 +1,52 @@
-From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: module: save load_info for livepatch modules
-Date: Wed, 11 Nov 2015 23:44:08 -0500
-Message-ID: <20151112044407.GC30025@packer-debian-8-amd64.digitalocean.com>
-References: <1447130755-17383-1-git-send-email-jeyu@redhat.com>
- <1447130755-17383-3-git-send-email-jeyu@redhat.com>
- <20151111143152.GG4431@pathway.suse.cz>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH v3 01/17] mm: support madvise(MADV_FREE)
+Date: Wed, 11 Nov 2015 20:49:58 -0800
+Message-ID: <CALCETrWA6aZC_3LPM3niN+2HFjGEm_65m9hiEdpBtEZMn0JhwQ@mail.gmail.com>
+References: <1447302793-5376-1-git-send-email-minchan@kernel.org> <1447302793-5376-2-git-send-email-minchan@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20151111143152.GG4431-KsEp0d+Q8qECVLCxKZUutA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1447302793-5376-2-git-send-email-minchan@kernel.org>
+Sender: owner-linux-mm@kvack.org
+To: Minchan Kim <minchan@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, Daniel Micay <danielmicay@gmail.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Shaohua Li <shli@kernel.org>, Michal Hocko <mhocko@suse.cz>, yalin wang <yalin.wang2010@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-+++ Petr Mladek [11/11/15 15:31 +0100]:
->On Mon 2015-11-09 23:45:52, Jessica Yu wrote:
->> In livepatch modules, preserve section, symbol, string information from
->> the load_info struct in the module loader. This information is used to
->> patch modules that are not loaded in memory yet; specifically it is used
->> to resolve remaining symbols and write relocations when the target
->> module loads.
->>
->> Signed-off-by: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->> ---
->>  include/linux/module.h  | 25 +++++++++++++++++++++++++
->>  kernel/livepatch/core.c | 17 +++++++++++++++++
->>  kernel/module.c         | 36 ++++++++++++++++++++++--------------
->>  3 files changed, 64 insertions(+), 14 deletions(-)
->>
->> diff --git a/include/linux/module.h b/include/linux/module.h
->> index 3a19c79..c8680b1 100644
->> --- a/include/linux/module.h
->> +++ b/include/linux/module.h
->[...]
->> @@ -635,6 +651,15 @@ static inline bool module_requested_async_probing(struct module *module)
->>  	return module && module->async_probe_requested;
->>  }
->>
->> +#ifdef CONFIG_LIVEPATCH
->> +extern void klp_prepare_patch_module(struct module *mod,
->> +				     struct load_info *info);
->> +extern int
->> +apply_relocate_add(Elf64_Shdr *sechdrs, const char *strtab,
->> +		   unsigned int symindex, unsigned int relsec,
->> +		   struct module *me);
->> +#endif
+On Wed, Nov 11, 2015 at 8:32 PM, Minchan Kim <minchan@kernel.org> wrote:
 >
->This function is already declared in moduleloader.h.
->It is implemted only when CONFIG_MODULES_USE_ELF_RELA is defined.
+> Linux doesn't have an ability to free pages lazy while other OS already
+> have been supported that named by madvise(MADV_FREE).
 >
->I guess that we want to include moduleloader.h in livepatch.
+> The gain is clear that kernel can discard freed pages rather than swapping
+> out or OOM if memory pressure happens.
+
+
 >
->> +
->>  #else /* !CONFIG_MODULES... */
->>
->>  /* Given an address, look for it in the exception tables. */
->> diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
->> index 6e53441..087a8c7 100644
->> --- a/kernel/livepatch/core.c
->> +++ b/kernel/livepatch/core.c
->> @@ -1001,6 +1001,23 @@ static struct notifier_block klp_module_nb = {
->>  	.priority = INT_MIN+1, /* called late but before ftrace notifier */
->>  };
->>
->> +/*
->> + * Save necessary information from info in order to be able to
->> + * patch modules that might be loaded later
->> + */
->> +void klp_prepare_patch_module(struct module *mod, struct load_info *info)
->> +{
->> +	Elf_Shdr *symsect;
->> +
->> +	symsect = info->sechdrs + info->index.sym;
->> +	/* update sh_addr to point to symtab */
->> +	symsect->sh_addr = (unsigned long)info->hdr + symsect->sh_offset;
->
->Is livepatch the only user of this value? By other words, is this safe?
-
-I think it is safe to say yes. klp_prepare_patch_module() is only
-called at the very end of load_module(), right before
-do_init_module(). Normally, at that point, info->hdr will have already
-been freed by free_copy() along with the elf section information
-associated with it. But if we have a livepatch module, we don't free.
-So we should be the very last user, and there should be nobody
-utilizing the memory associated with the load_info struct anymore at
-that point.
-
->> +	mod->info = kzalloc(sizeof(*info), GFP_KERNEL);
->> +	memcpy(mod->info, info, sizeof(*info));
->> +
->> +}
->
->It is strange that this funtion is defined in livepatch/core.c
->but declared in module.h. I would move the definition to
->module.c.
-
-Right, I was trying to keep all the livepatch-related functions
-together in livepatch/core.c. but I can move it to module.c if it
-makes more sense/Rusty doesn't object to it :-)
-
->>  static int __init klp_init(void)
->>  {
->>  	int ret;
->> diff --git a/kernel/module.c b/kernel/module.c
->> index 8f051a1..8ae3ca5 100644
->> --- a/kernel/module.c
->> +++ b/kernel/module.c
->> @@ -318,20 +318,6 @@ int unregister_module_notifier(struct notifier_block *nb)
->>  }
->>  EXPORT_SYMBOL(unregister_module_notifier);
->>
->> -struct load_info {
->> -	Elf_Ehdr *hdr;
->> -	unsigned long len;
->> -	Elf_Shdr *sechdrs;
->> -	char *secstrings, *strtab;
->> -	unsigned long symoffs, stroffs;
->> -	struct _ddebug *debug;
->> -	unsigned int num_debug;
->> -	bool sig_ok;
->> -	struct {
->> -		unsigned int sym, str, mod, vers, info, pcpu;
->> -	} index;
->> -};
->> -
->>  /* We require a truly strong try_module_get(): 0 means failure due to
->>     ongoing or failed initialization etc. */
->>  static inline int strong_try_module_get(struct module *mod)
->> @@ -2137,6 +2123,11 @@ static int simplify_symbols(struct module *mod, const struct load_info *info)
->>  			       (long)sym[i].st_value);
->>  			break;
->>
->> +#ifdef CONFIG_LIVEPATCH
->> +		case SHN_LIVEPATCH:
->> +			break;
->> +#endif
->
->IMHO, even a kernel compiled without CONFIG_LIVEPATCH should handle livepatch
->modules with grace. It means to reject loading.
-
-I think even right now, without considering this patchset, we don't
-reject modules "gracefully" when we load a livepatch module without
-CONFIG_LIVEPATCH. The module loader will complain and reject the
-livepatch module, saying something like "Unknown symbol
-klp_register_patch." This behavior is the same with or without
-this patch series applied. If we want to add a bit more logic to
-gracefully reject patch modules, perhaps that should be a different
-patch altogether, as I think it is unrelated to the goal of this one :-)
-
->>  		case SHN_UNDEF:
->>  			ksym = resolve_symbol_wait(mod, info, name);
->>  			/* Ok if resolved.  */
->> @@ -2185,6 +2176,11 @@ static int apply_relocations(struct module *mod, const struct load_info *info)
->>  		if (!(info->sechdrs[infosec].sh_flags & SHF_ALLOC))
->>  			continue;
->>
->> +#ifdef CONFIG_LIVEPATCH
->> +		if (info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH)
->> +			continue;
->> +#endif
->> +
->>  		if (info->sechdrs[i].sh_type == SHT_REL)
->>  			err = apply_relocate(info->sechdrs, info->strtab,
->>  					     info->index.sym, i, mod);
->> @@ -3530,8 +3526,20 @@ static int load_module(struct load_info *info, const char __user *uargs,
->>  	if (err < 0)
->>  		goto bug_cleanup;
->>
->> +#ifdef CONFIG_LIVEPATCH
->> +	/*
->> +	 * Save sechdrs, indices, and other data from info
->> +	 * in order to patch to-be-loaded modules.
->> +	 * Do not call free_copy() for livepatch modules.
->> +	 */
->> +	if (get_modinfo((struct load_info *)info, "livepatch"))
->> +		klp_prepare_patch_module(mod, info);
->> +	else
->> +		free_copy(info);
->> +#else
->
->I would move this #else one line above and get rid of the
->double free_copy(info); But it is a matter of taste.
-
-Maybe I'm missing something, but I think we do need the double
-free_copy(), because in the CONFIG_LIVEPATCH case, we still want to
-call free_copy() for non-livepatch modules. And we want to avoid
-calling free_copy() for livepatch modules (hence the extra else).
-
->>  	/* Get rid of temporary copy. */
->>  	free_copy(info);
->> +#endif
+> When madvise syscall is called, VM clears dirty bit of ptes of the range.
+> If memory pressure happens, VM checks dirty bit of page table and if it
+> found still "clean", it means it's a "lazyfree pages" so VM could discard
+> the page instead of swapping out.  Once there was store operation for the
+> page before VM peek a page to reclaim, dirty bit is set so VM can swap out
+> the page instead of discarding.
 >
 
-Thanks for the comments,
-Jessica
+I realize that this lends itself to an efficient implementation, but
+it's certainly the case that the kernel *could* use the accessed bit
+instead of the dirty bit to give more sensible user semantics, and the
+semantics that rely on the dirty bit make me uncomfortable from an ABI
+perspective.
+
+I also think that the kernel should commit to either zeroing the page
+or leaving it unchanged in response to MADV_FREE (even if the decision
+of which to do is made later on).  I think that your patch series does
+this, but only after a few of the patches are applied (the swap entry
+freeing), and I think that it should be a real guaranteed part of the
+semantics and maybe have a test case.
+
+--Andy
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
