@@ -1,77 +1,73 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH] selftests/seccomp: Get page size from sysconf
-Date: Thu, 12 Nov 2015 10:11:11 -0800
-Message-ID: <CAGXu5jLpJgiSAjEPbXsSQp0Sg+=mJNAhK=Lv5cgj-wsQwEteAw@mail.gmail.com>
-References: <1447310485-4710-1-git-send-email-bamvor.zhangjian@linaro.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1447310485-4710-1-git-send-email-bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Robert Sesek <rsesek-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+From: Gabriel Laskar <gabriel@lse.epita.fr>
+Subject: [PATCH 1/9] include/uapi/drm/armada_drm.h: use __u{32,64} types instead of uint{32,64}_t
+Date: Thu, 12 Nov 2015 19:14:03 +0100
+Message-ID: <1447352051-22022-2-git-send-email-gabriel@lse.epita.fr>
+References: <1447352051-22022-1-git-send-email-gabriel@lse.epita.fr>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1447352051-22022-1-git-send-email-gabriel@lse.epita.fr>
+Sender: linux-kernel-owner@vger.kernel.org
+To: DRI devel <dri-devel@lists.freedesktop.org>
+Cc: Gabriel Laskar <gabriel@lse.epita.fr>, David Airlie <airlied@linux.ie>, "open list:ABI/API" <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 11, 2015 at 10:41 PM, Bamvor Jian Zhang
-<bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
-> The commit fd88d16c58c2 ("selftests/seccomp: Be more precise with
-> syscall arguments") use PAGE_SIZE directly which lead to build
-> failure on arm64.
->
-> Replace it with generic interface(sysconf(_SC_PAGESIZE)) to fix this
-> failure.
+Kernel headers should use linux/types.h
 
-Oh, good catch! Can you respin this and add an ASSERT for sysconf failing?
+Signed-off-by: Gabriel Laskar <gabriel@lse.epita.fr>
+---
+ include/uapi/drm/armada_drm.h | 24 +++++++++++++-----------
+ 1 file changed, 13 insertions(+), 11 deletions(-)
 
--Kees
-
->
-> Build and test successful on arm64.
->
-> Signed-off-by: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-> ---
->  tools/testing/selftests/seccomp/seccomp_bpf.c | 9 +++++----
->  1 file changed, 5 insertions(+), 4 deletions(-)
->
-> diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c b/tools/testing/selftests/seccomp/seccomp_bpf.c
-> index e38cc54..05afca9 100644
-> --- a/tools/testing/selftests/seccomp/seccomp_bpf.c
-> +++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
-> @@ -492,6 +492,7 @@ TEST_SIGNAL(KILL_one_arg_six, SIGSYS)
->         pid_t parent = getppid();
->         int fd;
->         void *map1, *map2;
-> +       int page_size = sysconf(_SC_PAGESIZE);
->
->         ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
->         ASSERT_EQ(0, ret);
-> @@ -504,16 +505,16 @@ TEST_SIGNAL(KILL_one_arg_six, SIGSYS)
->
->         EXPECT_EQ(parent, syscall(__NR_getppid));
->         map1 = (void *)syscall(sysno,
-> -               NULL, PAGE_SIZE, PROT_READ, MAP_PRIVATE, fd, PAGE_SIZE);
-> +               NULL, page_size, PROT_READ, MAP_PRIVATE, fd, page_size);
->         EXPECT_NE(MAP_FAILED, map1);
->         /* mmap2() should never return. */
->         map2 = (void *)syscall(sysno,
-> -                NULL, PAGE_SIZE, PROT_READ, MAP_PRIVATE, fd, 0x0C0FFEE);
-> +                NULL, page_size, PROT_READ, MAP_PRIVATE, fd, 0x0C0FFEE);
->         EXPECT_EQ(MAP_FAILED, map2);
->
->         /* The test failed, so clean up the resources. */
-> -       munmap(map1, PAGE_SIZE);
-> -       munmap(map2, PAGE_SIZE);
-> +       munmap(map1, page_size);
-> +       munmap(map2, page_size);
->         close(fd);
->  }
->
-> --
-> 2.1.4
->
-
-
-
+diff --git a/include/uapi/drm/armada_drm.h b/include/uapi/drm/armada_drm.h
+index 8dec3fd..77184b7 100644
+--- a/include/uapi/drm/armada_drm.h
++++ b/include/uapi/drm/armada_drm.h
+@@ -9,6 +9,8 @@
+ #ifndef DRM_ARMADA_IOCTL_H
+ #define DRM_ARMADA_IOCTL_H
+ 
++#include <linux/types.h>
++
+ #define DRM_ARMADA_GEM_CREATE		0x00
+ #define DRM_ARMADA_GEM_MMAP		0x02
+ #define DRM_ARMADA_GEM_PWRITE		0x03
+@@ -17,27 +19,27 @@
+ 	DRM_##dir(DRM_COMMAND_BASE + DRM_ARMADA_##name, struct drm_armada_##str)
+ 
+ struct drm_armada_gem_create {
+-	uint32_t handle;
+-	uint32_t size;
++	__u32 handle;
++	__u32 size;
+ };
+ #define DRM_IOCTL_ARMADA_GEM_CREATE \
+ 	ARMADA_IOCTL(IOWR, GEM_CREATE, gem_create)
+ 
+ struct drm_armada_gem_mmap {
+-	uint32_t handle;
+-	uint32_t pad;
+-	uint64_t offset;
+-	uint64_t size;
+-	uint64_t addr;
++	__u32 handle;
++	__u32 pad;
++	__u64 offset;
++	__u64 size;
++	__u64 addr;
+ };
+ #define DRM_IOCTL_ARMADA_GEM_MMAP \
+ 	ARMADA_IOCTL(IOWR, GEM_MMAP, gem_mmap)
+ 
+ struct drm_armada_gem_pwrite {
+-	uint64_t ptr;
+-	uint32_t handle;
+-	uint32_t offset;
+-	uint32_t size;
++	__u64 ptr;
++	__u32 handle;
++	__u32 offset;
++	__u32 size;
+ };
+ #define DRM_IOCTL_ARMADA_GEM_PWRITE \
+ 	ARMADA_IOCTL(IOW, GEM_PWRITE, gem_pwrite)
 -- 
-Kees Cook
-Chrome OS Security
+2.6.2
