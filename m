@@ -1,70 +1,95 @@
-From: Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: samples: livepatch: init reloc list and mark as klp module
-Date: Thu, 12 Nov 2015 11:44:50 +0100 (CET)
-Message-ID: <alpine.LNX.2.00.1511121140240.9440@pobox.suse.cz>
-References: <1447130755-17383-1-git-send-email-jeyu@redhat.com> <1447130755-17383-5-git-send-email-jeyu@redhat.com> <20151111154249.GQ2599@pathway.suse.cz> <20151112060249.GA5841@packer-debian-8-amd64.digitalocean.com>
+From: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
+Subject: Re: [PATCH v3 01/17] mm: support madvise(MADV_FREE)
+Date: Thu, 12 Nov 2015 13:26:20 +0200
+Message-ID: <20151112112620.GB22481@node.shutemov.name>
+References: <1447302793-5376-1-git-send-email-minchan@kernel.org>
+ <1447302793-5376-2-git-send-email-minchan@kernel.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151112060249.GA5841-N0bYjD2NfQ6k4hzjq3hgyGTy53QMssKEsp+A89P3RPuQWHG76I6BsA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1447302793-5376-2-git-send-email-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 12 Nov 2015, Jessica Yu wrote:
+On Thu, Nov 12, 2015 at 01:32:57PM +0900, Minchan Kim wrote:
+> @@ -256,6 +260,125 @@ static long madvise_willneed(struct vm_area_struct *vma,
+>  	return 0;
+>  }
+>  
+> +static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
+> +				unsigned long end, struct mm_walk *walk)
+> +
+> +{
+> +	struct mmu_gather *tlb = walk->private;
+> +	struct mm_struct *mm = tlb->mm;
+> +	struct vm_area_struct *vma = walk->vma;
+> +	spinlock_t *ptl;
+> +	pte_t *pte, ptent;
+> +	struct page *page;
+> +
+> +	split_huge_page_pmd(vma, addr, pmd);
+> +	if (pmd_trans_unstable(pmd))
+> +		return 0;
+> +
+> +	pte = pte_offset_map_lock(mm, pmd, addr, &ptl);
+> +	arch_enter_lazy_mmu_mode();
+> +	for (; addr != end; pte++, addr += PAGE_SIZE) {
+> +		ptent = *pte;
+> +
+> +		if (!pte_present(ptent))
+> +			continue;
+> +
+> +		page = vm_normal_page(vma, addr, ptent);
+> +		if (!page)
+> +			continue;
+> +
+> +		if (PageSwapCache(page)) {
 
-> +++ Petr Mladek [11/11/15 16:42 +0100]:
-> > On Mon 2015-11-09 23:45:54, Jessica Yu wrote:
-> > > Intialize the list of relocation sections in the sample
-> > > klp_object (even if the list will be empty in this case).
-> > > Also mark module as a livepatch module so that the module
-> > > loader can appropriately initialize it.
-> > > 
-> > > Signed-off-by: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> > > ---
-> > >  samples/livepatch/livepatch-sample.c | 2 ++
-> > >  1 file changed, 2 insertions(+)
-> > > 
-> > > diff --git a/samples/livepatch/livepatch-sample.c
-> > > b/samples/livepatch/livepatch-sample.c
-> > > index fb8c861..2ef9345 100644
-> > > --- a/samples/livepatch/livepatch-sample.c
-> > > +++ b/samples/livepatch/livepatch-sample.c
-> > > @@ -89,3 +90,4 @@ static void livepatch_exit(void)
-> > >  module_init(livepatch_init);
-> > >  module_exit(livepatch_exit);
-> > >  MODULE_LICENSE("GPL");
-> > > +MODULE_INFO(livepatch, "Y");
-> > 
-> > This looks a bit error prone. I wonder if we could detect this
-> > information another way. For example, by a check for the
-> > livepatch-related elf sections. If it is missing,
-> > we do not need to preserve struct load_info even
-> > when it is a livepatch.
+Could you put VM_BUG_ON_PAGE(PageTransCompound(page), page) here?
+Just in case.
+
+> +			if (!trylock_page(page))
+> +				continue;
+> +
+> +			if (!try_to_free_swap(page)) {
+> +				unlock_page(page);
+> +				continue;
+> +			}
+> +
+> +			ClearPageDirty(page);
+> +			unlock_page(page);
+
+Hm. Do we handle pages shared over fork() here?
+Souldn't we ignore pages with mapcount > 0?
+
+> +		}
+> +
+> +		if (pte_young(ptent) || pte_dirty(ptent)) {
+> +			/*
+> +			 * Some of architecture(ex, PPC) don't update TLB
+> +			 * with set_pte_at and tlb_remove_tlb_entry so for
+> +			 * the portability, remap the pte with old|clean
+> +			 * after pte clearing.
+> +			 */
+> +			ptent = ptep_get_and_clear_full(mm, addr, pte,
+> +							tlb->fullmm);
+> +
+> +			ptent = pte_mkold(ptent);
+> +			ptent = pte_mkclean(ptent);
+> +			set_pte_at(mm, addr, pte, ptent);
+> +			tlb_remove_tlb_entry(tlb, pte, addr);
+> +		}
+> +	}
+> +
+> +	arch_leave_lazy_mmu_mode();
+> +	pte_unmap_unlock(pte - 1, ptl);
+> +	cond_resched();
+> +	return 0;
+> +}
 > 
-> Yeah, I agree that it is unnecessary for a livepatch module without
-> reloc secs to keep a copy of the load_info struct. My justification
-> for using MODULE_INFO is that I was trying to be consistent with the
-> way how other module "characteristics" are checked in the module
-> loader. For example, if the module came from the staging tree, the
-> module loader simply checks get_modinfo(info, "staging")). If the
-> module is a livepatch module, we check get_modinfo(info,
-> "livepatch")). I also thought that it might be useful additional
-> information for the user to be able to issue the modinfo command on a
-> module to see if it's a livepatch module or not (but maybe this
-> information won't be so useful after all, that's quite subjective).
 
-Yup, in my opinion this is a good way to do it. We already impose quite a 
-lot on a patch module and this does not make a big difference. Easy 
-identification of a patch module is good bonus as well.
-
-> But if we want to do a more thorough check, we could, like you said,
-> check for the livepatch-related elf sections before copying load_info.
-
-I wouldn't do that. It could be even more error prone.
-
-I'd like to think that we can live with load_info struct even for patch 
-modules which do not use relocations. Don't know.
-
-Miroslav
+-- 
+ Kirill A. Shutemov
