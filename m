@@ -1,7 +1,7 @@
 From: Gabriel Laskar <gabriel@lse.epita.fr>
-Subject: [PATCH 9/9] include/uapi/drm/omap_drm.h: use __u{32,64} types instead of uint{32,64}_t
-Date: Thu, 12 Nov 2015 19:14:11 +0100
-Message-ID: <1447352051-22022-10-git-send-email-gabriel@lse.epita.fr>
+Subject: [PATCH 2/9] include/uapi/drm/virtgpu_drm.h: use __u{32,64} types instead of uint{32,64}_t
+Date: Thu, 12 Nov 2015 19:14:04 +0100
+Message-ID: <1447352051-22022-3-git-send-email-gabriel@lse.epita.fr>
 References: <1447352051-22022-1-git-send-email-gabriel@lse.epita.fr>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1447352051-22022-1-git-send-email-gabriel@lse.epita.fr>
@@ -14,101 +14,164 @@ Kernel headers should use linux/types.h
 
 Signed-off-by: Gabriel Laskar <gabriel@lse.epita.fr>
 ---
- include/uapi/drm/omap_drm.h | 39 ++++++++++++++++++++-------------------
- 1 file changed, 20 insertions(+), 19 deletions(-)
+ include/uapi/drm/virtgpu_drm.h | 99 +++++++++++++++++++++---------------------
+ 1 file changed, 50 insertions(+), 49 deletions(-)
 
-diff --git a/include/uapi/drm/omap_drm.h b/include/uapi/drm/omap_drm.h
-index 1d0b117..926e42a 100644
---- a/include/uapi/drm/omap_drm.h
-+++ b/include/uapi/drm/omap_drm.h
-@@ -21,6 +21,7 @@
- #define __OMAP_DRM_H__
+diff --git a/include/uapi/drm/virtgpu_drm.h b/include/uapi/drm/virtgpu_drm.h
+index fc9e2d6..60b11e7 100644
+--- a/include/uapi/drm/virtgpu_drm.h
++++ b/include/uapi/drm/virtgpu_drm.h
+@@ -25,12 +25,13 @@
+ #define VIRTGPU_DRM_H
  
- #include <drm/drm.h>
+ #include <stddef.h>
 +#include <linux/types.h>
+ #include "drm/drm.h"
  
  /* Please note that modifications to all structs defined here are
   * subject to backwards-compatibility constraints.
-@@ -29,8 +30,8 @@
- #define OMAP_PARAM_CHIPSET_ID	1	/* ie. 0x3430, 0x4430, etc */
+  *
+- * Do not use pointers, use uint64_t instead for 32 bit / 64 bit user/kernel
++ * Do not use pointers, use __u64 instead for 32 bit / 64 bit user/kernel
+  * compatibility Keep fields aligned to their size
+  */
  
- struct drm_omap_param {
--	uint64_t param;			/* in */
--	uint64_t value;			/* in (set_param), out (get_param) */
-+	__u64 param;			/* in */
-+	__u64 value;			/* in (set_param), out (get_param) */
- };
+@@ -45,88 +46,88 @@
+ #define DRM_VIRTGPU_GET_CAPS  0x09
  
- #define OMAP_BO_SCANOUT		0x00000001	/* scanout capable (phys contiguous) */
-@@ -49,18 +50,18 @@ struct drm_omap_param {
- #define OMAP_BO_TILED		(OMAP_BO_TILED_8 | OMAP_BO_TILED_16 | OMAP_BO_TILED_32)
- 
- union omap_gem_size {
--	uint32_t bytes;		/* (for non-tiled formats) */
-+	__u32 bytes;		/* (for non-tiled formats) */
- 	struct {
--		uint16_t width;
--		uint16_t height;
-+		__u16 width;
-+		__u16 height;
- 	} tiled;		/* (for tiled formats) */
- };
- 
- struct drm_omap_gem_new {
- 	union omap_gem_size size;	/* in */
--	uint32_t flags;			/* in */
--	uint32_t handle;		/* out */
--	uint32_t __pad;
-+	__u32 flags;			/* in */
-+	__u32 handle;		/* out */
-+	__u32 __pad;
- };
- 
- /* mask of operations: */
-@@ -70,33 +71,33 @@ enum omap_gem_op {
- };
- 
- struct drm_omap_gem_cpu_prep {
--	uint32_t handle;		/* buffer handle (in) */
--	uint32_t op;			/* mask of omap_gem_op (in) */
-+	__u32 handle;		/* buffer handle (in) */
-+	__u32 op;			/* mask of omap_gem_op (in) */
- };
- 
- struct drm_omap_gem_cpu_fini {
--	uint32_t handle;		/* buffer handle (in) */
--	uint32_t op;			/* mask of omap_gem_op (in) */
-+	__u32 handle;		/* buffer handle (in) */
-+	__u32 op;			/* mask of omap_gem_op (in) */
- 	/* TODO maybe here we pass down info about what regions are touched
- 	 * by sw so we can be clever about cache ops?  For now a placeholder,
- 	 * set to zero and we just do full buffer flush..
- 	 */
--	uint32_t nregions;
--	uint32_t __pad;
-+	__u32 nregions;
-+	__u32 __pad;
- };
- 
- struct drm_omap_gem_info {
--	uint32_t handle;		/* buffer handle (in) */
+ struct drm_virtgpu_map {
+-	uint64_t offset; /* use for mmap system call */
+-	uint32_t handle;
 -	uint32_t pad;
--	uint64_t offset;		/* mmap offset (out) */
-+	__u32 handle;		/* buffer handle (in) */
++	__u64 offset; /* use for mmap system call */
++	__u32 handle;
 +	__u32 pad;
-+	__u64 offset;		/* mmap offset (out) */
- 	/* note: in case of tiled buffers, the user virtual size can be
- 	 * different from the physical size (ie. how many pages are needed
- 	 * to back the object) which is returned in DRM_IOCTL_GEM_OPEN..
- 	 * This size here is the one that should be used if you want to
- 	 * mmap() the buffer:
- 	 */
--	uint32_t size;			/* virtual size for mmap'ing (out) */
--	uint32_t __pad;
-+	__u32 size;			/* virtual size for mmap'ing (out) */
-+	__u32 __pad;
  };
  
- #define DRM_OMAP_GET_PARAM		0x00
+ struct drm_virtgpu_execbuffer {
+-	uint32_t		flags;		/* for future use */
+-	uint32_t size;
+-	uint64_t command; /* void* */
+-	uint64_t bo_handles;
+-	uint32_t num_bo_handles;
+-	uint32_t pad;
++	__u32		flags;		/* for future use */
++	__u32 size;
++	__u64 command; /* void* */
++	__u64 bo_handles;
++	__u32 num_bo_handles;
++	__u32 pad;
+ };
+ 
+ #define VIRTGPU_PARAM_3D_FEATURES 1 /* do we have 3D features in the hw */
+ 
+ struct drm_virtgpu_getparam {
+-	uint64_t param;
+-	uint64_t value;
++	__u64 param;
++	__u64 value;
+ };
+ 
+ /* NO_BO flags? NO resource flag? */
+ /* resource flag for y_0_top */
+ struct drm_virtgpu_resource_create {
+-	uint32_t target;
+-	uint32_t format;
+-	uint32_t bind;
+-	uint32_t width;
+-	uint32_t height;
+-	uint32_t depth;
+-	uint32_t array_size;
+-	uint32_t last_level;
+-	uint32_t nr_samples;
+-	uint32_t flags;
+-	uint32_t bo_handle; /* if this is set - recreate a new resource attached to this bo ? */
+-	uint32_t res_handle;  /* returned by kernel */
+-	uint32_t size;        /* validate transfer in the host */
+-	uint32_t stride;      /* validate transfer in the host */
++	__u32 target;
++	__u32 format;
++	__u32 bind;
++	__u32 width;
++	__u32 height;
++	__u32 depth;
++	__u32 array_size;
++	__u32 last_level;
++	__u32 nr_samples;
++	__u32 flags;
++	__u32 bo_handle; /* if this is set - recreate a new resource attached to this bo ? */
++	__u32 res_handle;  /* returned by kernel */
++	__u32 size;        /* validate transfer in the host */
++	__u32 stride;      /* validate transfer in the host */
+ };
+ 
+ struct drm_virtgpu_resource_info {
+-	uint32_t bo_handle;
+-	uint32_t res_handle;
+-	uint32_t size;
+-	uint32_t stride;
++	__u32 bo_handle;
++	__u32 res_handle;
++	__u32 size;
++	__u32 stride;
+ };
+ 
+ struct drm_virtgpu_3d_box {
+-	uint32_t x;
+-	uint32_t y;
+-	uint32_t z;
+-	uint32_t w;
+-	uint32_t h;
+-	uint32_t d;
++	__u32 x;
++	__u32 y;
++	__u32 z;
++	__u32 w;
++	__u32 h;
++	__u32 d;
+ };
+ 
+ struct drm_virtgpu_3d_transfer_to_host {
+-	uint32_t bo_handle;
++	__u32 bo_handle;
+ 	struct drm_virtgpu_3d_box box;
+-	uint32_t level;
+-	uint32_t offset;
++	__u32 level;
++	__u32 offset;
+ };
+ 
+ struct drm_virtgpu_3d_transfer_from_host {
+-	uint32_t bo_handle;
++	__u32 bo_handle;
+ 	struct drm_virtgpu_3d_box box;
+-	uint32_t level;
+-	uint32_t offset;
++	__u32 level;
++	__u32 offset;
+ };
+ 
+ #define VIRTGPU_WAIT_NOWAIT 1 /* like it */
+ struct drm_virtgpu_3d_wait {
+-	uint32_t handle; /* 0 is an invalid handle */
+-	uint32_t flags;
++	__u32 handle; /* 0 is an invalid handle */
++	__u32 flags;
+ };
+ 
+ struct drm_virtgpu_get_caps {
+-	uint32_t cap_set_id;
+-	uint32_t cap_set_ver;
+-	uint64_t addr;
+-	uint32_t size;
+-	uint32_t pad;
++	__u32 cap_set_id;
++	__u32 cap_set_ver;
++	__u64 addr;
++	__u32 size;
++	__u32 pad;
+ };
+ 
+ #define DRM_IOCTL_VIRTGPU_MAP \
 -- 
 2.6.2
