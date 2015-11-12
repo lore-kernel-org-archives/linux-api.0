@@ -1,491 +1,300 @@
-From: Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v3 17/17] mm: add knob to tune lazyfreeing
-Date: Thu, 12 Nov 2015 11:44:53 -0800
-Message-ID: <20151112194453.GA50352@kernel.org>
-References: <1447302793-5376-1-git-send-email-minchan@kernel.org>
- <1447302793-5376-18-git-send-email-minchan@kernel.org>
+From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: livepatch: reuse module loader code to write relocations
+Date: Thu, 12 Nov 2015 15:22:44 -0500
+Message-ID: <20151112202243.GC5841@packer-debian-8-amd64.digitalocean.com>
+References: <1447130755-17383-1-git-send-email-jeyu@redhat.com>
+ <1447130755-17383-4-git-send-email-jeyu@redhat.com>
+ <alpine.LNX.2.00.1511111519250.12467@pobox.suse.cz>
+ <20151111200732.GB30025@packer-debian-8-amd64.digitalocean.com>
+ <alpine.LNX.2.00.1511121601370.9440@pobox.suse.cz>
+ <20151112174032.GG4038@treble.hsd1.ky.comcast.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1447302793-5376-18-git-send-email-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+In-Reply-To: <20151112174032.GG4038-M1RQNqTfbHcHO9+bouH2LOBSVt8DKT+lrE5yTffgRl4@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 12, 2015 at 01:33:13PM +0900, Minchan Kim wrote:
-> MADV_FREEed page's hotness is very arguble.
-> Someone think it's hot while others are it's cold.
-> 
-> Quote from Shaohua
-> "
-> My main concern is the policy how we should treat the FREE pages. Moving it to
-> inactive lru is definitionly a good start, I'm wondering if it's enough. The
-> MADV_FREE increases memory pressure and cause unnecessary reclaim because of
-> the lazy memory free. While MADV_FREE is intended to be a better replacement of
-> MADV_DONTNEED, MADV_DONTNEED doesn't have the memory pressure issue as it free
-> memory immediately. So I hope the MADV_FREE doesn't have impact on memory
-> pressure too. I'm thinking of adding an extra lru list and wartermark for this
-> to make sure FREE pages can be freed before system wide page reclaim. As you
-> said, this is arguable, but I hope we can discuss about this issue more.
-> "
-> 
-> Quote from me
-> "
-> It seems the divergence comes from MADV_FREE is *replacement* of MADV_DONTNEED.
-> But I don't think so. If we could discard MADV_FREEed page *anytime*, I agree
-> but it's not true because the page would be dirty state when VM want to reclaim.
-> 
-> I'm also against with your's suggestion which let's discard FREEed page before
-> system wide page reclaim because system would have lots of clean cold page
-> caches or anonymous pages. In such case, reclaiming of them would be better.
-> Yeb, it's really workload-dependent so we might need some heuristic which is
-> normally what we want to avoid.
-> 
-> Having said that, I agree with you we could do better than the deactivation
-> and frankly speaking, I'm thinking of another LRU list(e.g. tentatively named
-> "ezreclaim LRU list"). What I have in mind is to age (anon|file|ez)
-> fairly. IOW, I want to percolate ez-LRU list reclaiming into get_scan_count.
-> When the MADV_FREE is called, we could move hinted pages from anon-LRU to
-> ez-LRU and then If VM find to not be able to discard a page in ez-LRU,
-> it could promote it to acive-anon-LRU which would be very natural aging
-> concept because it mean someone touches the page recenlty.
-> With that, I don't want to bias one side and don't want to add some knob for
-> tuning the heuristic but let's rely on common fair aging scheme of VM.
-> "
-> 
-> Quote from Johannes
-> "
-> thread 1:
-> Even if we're wrong about the aging of those MADV_FREE pages, their
-> contents are invalidated; they can be discarded freely, and restoring
-> them is a mere GFP_ZERO allocation. All other anonymous pages have to
-> be written to disk, and potentially be read back.
-> 
-> [ Arguably, MADV_FREE pages should even be reclaimed before inactive
->   page cache. It's the same cost to discard both types of pages, but
->   restoring page cache involves IO. ]
-> 
-> It probably makes sense to stop thinking about them as anonymous pages
-> entirely at this point when it comes to aging. They're really not. The
-> LRU lists are split to differentiate access patterns and cost of page
-> stealing (and restoring). From that angle, MADV_FREE pages really have
-> nothing in common with in-use anonymous pages, and so they shouldn't
-> be on the same LRU list.
-> 
-> thread:2
-> What about them is hot? They contain garbage, you have to write to
-> them before you can use them. Granted, you might have to refetch
-> cachelines if you don't do cacheline-aligned populating writes, but
-> you can do a lot of them before it's more expensive than doing IO.
-> 
-> "
-> 
-> Quote from Daniel
-> "
-> thread:1
-> Keep in mind that this is memory the kernel wouldn't be getting back at
-> all if the allocator wasn't going out of the way to purge it, and they
-> aren't going to go out of their way to purge it if it means the kernel
-> is going to steal the pages when there isn't actually memory pressure.
-> 
-> An allocator would be using MADV_DONTNEED if it didn't expect that the
-> pages were going to be used against shortly. MADV_FREE indicates that it
-> has time to inform the kernel that they're unused but they could still
-> be very hot.
-> 
-> thread:2
-> It's hot because applications churn through memory via the allocator.
-> 
-> Drop the pages and the application is now churning through page faults
-> and zeroing rather than simply reusing memory. It's not something that
-> may happen, it *will* happen. A page in the page cache *may* be reused,
-> but often won't be, especially when the I/O patterns don't line up well
-> with the way it works.
-> 
-> The whole point of the feature is not requiring the allocator to have
-> elaborate mechanisms for aging pages and throttling purging. That ends
-> up resulting in lots of memory held by userspace where the kernel can't
-> reclaim it under memory pressure. If it's dropped before page cache, it
-> isn't going to be able to replace any of that logic in allocators.
-> 
-> The page cache is speculative. Page caching by allocators is not really
-> speculative. Using MADV_FREE on the pages at all is speculative. The
-> memory is probably going to be reused fairly soon (unless the process
-> exits, and then it doesn't matter), but purging will end up reducing
-> memory usage for the portions that aren't.
-> 
-> It would be a different story for a full unpinning/pinning feature since
-> that would have other use cases (speculative caches), but this is really
-> only useful in allocators.
-> "
-> You could read all thread from https://lkml.org/lkml/2015/11/4/51
-> 
-> Yeah, with arguble issue and there is no one decision, I think it
-> means we should provide the knob "lazyfreeness"(I hope someone
-> give better naming).
-> 
-> It's similar to swapppiness so higher values will discard MADV_FREE
-> pages agreessively. If memory pressure happens and system works with
-> DEF_PRIOIRTY(ex, clean cold caches), VM doesn't discard any hinted
-> pages until the scanning priority is increased.
-> 
-> If memory pressure is higher(ie, the priority is not DEF_PRIORITY),
-> it scans
-> 
-> 	nr_to_reclaim * priority * lazyfreensss(def: 20) / 50
-> 
-> If system has low free memory and file cache, it start to discard
-> MADV_FREEed pages unconditionally even though user set lazyfreeness to 0.
-> 
-> Signed-off-by: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> ---
->  Documentation/sysctl/vm.txt | 13 +++++++++
->  drivers/base/node.c         |  4 +--
->  fs/proc/meminfo.c           |  4 +--
->  include/linux/memcontrol.h  |  1 +
->  include/linux/mmzone.h      |  9 +++---
->  include/linux/swap.h        | 15 ++++++++++
->  kernel/sysctl.c             |  9 ++++++
->  mm/memcontrol.c             | 32 +++++++++++++++++++++-
->  mm/vmscan.c                 | 67 ++++++++++++++++++++++++++++-----------------
->  mm/vmstat.c                 |  2 +-
->  10 files changed, 121 insertions(+), 35 deletions(-)
-> 
-> diff --git a/Documentation/sysctl/vm.txt b/Documentation/sysctl/vm.txt
-> index a4482fceacec..c1dc63381f2c 100644
-> --- a/Documentation/sysctl/vm.txt
-> +++ b/Documentation/sysctl/vm.txt
-> @@ -56,6 +56,7 @@ files can be found in mm/swap.c.
->  - percpu_pagelist_fraction
->  - stat_interval
->  - swappiness
-> +- lazyfreeness
->  - user_reserve_kbytes
->  - vfs_cache_pressure
->  - zone_reclaim_mode
-> @@ -737,6 +738,18 @@ The default value is 60.
->  
->  ==============================================================
->  
-> +lazyfreeness
-> +
-> +This control is used to define how aggressive the kernel will discard
-> +MADV_FREE hinted pages.  Higher values will increase agressiveness,
-> +lower values decrease the amount of discarding.  A value of 0 instructs
-> +the kernel not to initiate discarding until the amount of free and
-> +file-backed pages is less than the high water mark in a zone.
-> +
-> +The default value is 20.
-> +
-> +==============================================================
-> +
->  - user_reserve_kbytes
->  
->  When overcommit_memory is set to 2, "never overcommit" mode, reserve
-> diff --git a/drivers/base/node.c b/drivers/base/node.c
-> index f7a1f2107b43..3b0bf1b78b2e 100644
-> --- a/drivers/base/node.c
-> +++ b/drivers/base/node.c
-> @@ -69,8 +69,8 @@ static ssize_t node_read_meminfo(struct device *dev,
->  		       "Node %d Inactive(anon): %8lu kB\n"
->  		       "Node %d Active(file):   %8lu kB\n"
->  		       "Node %d Inactive(file): %8lu kB\n"
-> -		       "Node %d Unevictable:    %8lu kB\n"
->  		       "Node %d LazyFree:	%8lu kB\n"
-> +		       "Node %d Unevictable:    %8lu kB\n"
->  		       "Node %d Mlocked:        %8lu kB\n",
->  		       nid, K(i.totalram),
->  		       nid, K(i.freeram),
-> @@ -83,8 +83,8 @@ static ssize_t node_read_meminfo(struct device *dev,
->  		       nid, K(node_page_state(nid, NR_INACTIVE_ANON)),
->  		       nid, K(node_page_state(nid, NR_ACTIVE_FILE)),
->  		       nid, K(node_page_state(nid, NR_INACTIVE_FILE)),
-> -		       nid, K(node_page_state(nid, NR_UNEVICTABLE)),
->  		       nid, K(node_page_state(nid, NR_LZFREE)),
-> +		       nid, K(node_page_state(nid, NR_UNEVICTABLE)),
->  		       nid, K(node_page_state(nid, NR_MLOCK)));
->  
->  #ifdef CONFIG_HIGHMEM
-> diff --git a/fs/proc/meminfo.c b/fs/proc/meminfo.c
-> index 3444f7c4e0b6..f47e6a5aa2e5 100644
-> --- a/fs/proc/meminfo.c
-> +++ b/fs/proc/meminfo.c
-> @@ -101,8 +101,8 @@ static int meminfo_proc_show(struct seq_file *m, void *v)
->  		"Inactive(anon): %8lu kB\n"
->  		"Active(file):   %8lu kB\n"
->  		"Inactive(file): %8lu kB\n"
-> -		"Unevictable:    %8lu kB\n"
->  		"LazyFree:	 %8lu kB\n"
-> +		"Unevictable:    %8lu kB\n"
->  		"Mlocked:        %8lu kB\n"
->  #ifdef CONFIG_HIGHMEM
->  		"HighTotal:      %8lu kB\n"
-> @@ -159,8 +159,8 @@ static int meminfo_proc_show(struct seq_file *m, void *v)
->  		K(pages[LRU_INACTIVE_ANON]),
->  		K(pages[LRU_ACTIVE_FILE]),
->  		K(pages[LRU_INACTIVE_FILE]),
-> -		K(pages[LRU_UNEVICTABLE]),
->  		K(pages[LRU_LZFREE]),
-> +		K(pages[LRU_UNEVICTABLE]),
->  		K(global_page_state(NR_MLOCK)),
->  #ifdef CONFIG_HIGHMEM
->  		K(i.totalhigh),
-> diff --git a/include/linux/memcontrol.h b/include/linux/memcontrol.h
-> index 3e3318ddfc0e..5522ff733506 100644
-> --- a/include/linux/memcontrol.h
-> +++ b/include/linux/memcontrol.h
-> @@ -210,6 +210,7 @@ struct mem_cgroup {
->  	int		under_oom;
->  
->  	int	swappiness;
-> +	int	lzfreeness;
->  	/* OOM-Killer disable */
->  	int		oom_kill_disable;
->  
-> diff --git a/include/linux/mmzone.h b/include/linux/mmzone.h
-> index 1aaa436da0d5..cca514a9701d 100644
-> --- a/include/linux/mmzone.h
-> +++ b/include/linux/mmzone.h
-> @@ -120,8 +120,8 @@ enum zone_stat_item {
->  	NR_ACTIVE_ANON,		/*  "     "     "   "       "         */
->  	NR_INACTIVE_FILE,	/*  "     "     "   "       "         */
->  	NR_ACTIVE_FILE,		/*  "     "     "   "       "         */
-> -	NR_UNEVICTABLE,		/*  "     "     "   "       "         */
->  	NR_LZFREE,		/*  "     "     "   "       "         */
-> +	NR_UNEVICTABLE,		/*  "     "     "   "       "         */
->  	NR_MLOCK,		/* mlock()ed pages found and moved off LRU */
->  	NR_ANON_PAGES,	/* Mapped anonymous pages */
->  	NR_FILE_MAPPED,	/* pagecache pages mapped into pagetables.
-> @@ -179,14 +179,15 @@ enum lru_list {
->  	LRU_ACTIVE_ANON = LRU_BASE + LRU_ACTIVE,
->  	LRU_INACTIVE_FILE = LRU_BASE + LRU_FILE,
->  	LRU_ACTIVE_FILE = LRU_BASE + LRU_FILE + LRU_ACTIVE,
-> -	LRU_UNEVICTABLE,
->  	LRU_LZFREE,
-> +	LRU_UNEVICTABLE,
->  	NR_LRU_LISTS
->  };
->  
->  #define for_each_lru(lru) for (lru = 0; lru < NR_LRU_LISTS; lru++)
-> -
-> -#define for_each_evictable_lru(lru) for (lru = 0; lru <= LRU_ACTIVE_FILE; lru++)
-> +#define for_each_anon_file_lru(lru) \
-> +		for (lru = 0; lru <= LRU_ACTIVE_FILE; lru++)
-> +#define for_each_evictable_lru(lru) for (lru = 0; lru <= LRU_LZFREE; lru++)
->  
->  static inline int is_file_lru(enum lru_list lru)
->  {
-> diff --git a/include/linux/swap.h b/include/linux/swap.h
-> index f0310eeab3ec..73bcdc9d0e88 100644
-> --- a/include/linux/swap.h
-> +++ b/include/linux/swap.h
-> @@ -330,6 +330,7 @@ extern unsigned long mem_cgroup_shrink_node_zone(struct mem_cgroup *mem,
->  						unsigned long *nr_scanned);
->  extern unsigned long shrink_all_memory(unsigned long nr_pages);
->  extern int vm_swappiness;
-> +extern int vm_lazyfreeness;
->  extern int remove_mapping(struct address_space *mapping, struct page *page);
->  extern unsigned long vm_total_pages;
->  
-> @@ -361,11 +362,25 @@ static inline int mem_cgroup_swappiness(struct mem_cgroup *memcg)
->  	return memcg->swappiness;
->  }
->  
-> +static inline int mem_cgroup_lzfreeness(struct mem_cgroup *memcg)
-> +{
-> +	/* root ? */
-> +	if (mem_cgroup_disabled() || !memcg->css.parent)
-> +		return vm_lazyfreeness;
-> +
-> +	return memcg->lzfreeness;
-> +}
-> +
->  #else
->  static inline int mem_cgroup_swappiness(struct mem_cgroup *mem)
->  {
->  	return vm_swappiness;
->  }
-> +
-> +static inline int mem_cgroup_lzfreeness(struct mem_cgroup *mem)
-> +{
-> +	return vm_lazyfreeness;
-> +}
->  #endif
->  #ifdef CONFIG_MEMCG_SWAP
->  extern void mem_cgroup_swapout(struct page *page, swp_entry_t entry);
-> diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-> index e69201d8094e..2496b10c08e9 100644
-> --- a/kernel/sysctl.c
-> +++ b/kernel/sysctl.c
-> @@ -1268,6 +1268,15 @@ static struct ctl_table vm_table[] = {
->  		.extra1		= &zero,
->  		.extra2		= &one_hundred,
->  	},
-> +	{
-> +		.procname	= "lazyfreeness",
-> +		.data		= &vm_lazyfreeness,
-> +		.maxlen		= sizeof(vm_lazyfreeness),
-> +		.mode		= 0644,
-> +		.proc_handler	= proc_dointvec_minmax,
-> +		.extra1		= &zero,
-> +		.extra2		= &one_hundred,
-> +	},
->  #ifdef CONFIG_HUGETLB_PAGE
->  	{
->  		.procname	= "nr_hugepages",
-> diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-> index 1dc599ce1bcb..5bdbe2a20dc0 100644
-> --- a/mm/memcontrol.c
-> +++ b/mm/memcontrol.c
-> @@ -108,8 +108,8 @@ static const char * const mem_cgroup_lru_names[] = {
->  	"active_anon",
->  	"inactive_file",
->  	"active_file",
-> -	"unevictable",
->  	"lazyfree",
-> +	"unevictable",
->  };
->  
->  #define THRESHOLDS_EVENTS_TARGET 128
-> @@ -3288,6 +3288,30 @@ static int mem_cgroup_swappiness_write(struct cgroup_subsys_state *css,
->  	return 0;
->  }
->  
-> +static u64 mem_cgroup_lzfreeness_read(struct cgroup_subsys_state *css,
-> +				      struct cftype *cft)
-> +{
-> +	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
-> +
-> +	return mem_cgroup_lzfreeness(memcg);
-> +}
-> +
-> +static int mem_cgroup_lzfreeness_write(struct cgroup_subsys_state *css,
-> +				       struct cftype *cft, u64 val)
-> +{
-> +	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
-> +
-> +	if (val > 100)
-> +		return -EINVAL;
-> +
-> +	if (css->parent)
-> +		memcg->lzfreeness = val;
-> +	else
-> +		vm_lazyfreeness = val;
-> +
-> +	return 0;
-> +}
-> +
->  static void __mem_cgroup_threshold(struct mem_cgroup *memcg, bool swap)
->  {
->  	struct mem_cgroup_threshold_ary *t;
-> @@ -4085,6 +4109,11 @@ static struct cftype mem_cgroup_legacy_files[] = {
->  		.write_u64 = mem_cgroup_swappiness_write,
->  	},
->  	{
-> +		.name = "lazyfreeness",
-> +		.read_u64 = mem_cgroup_lzfreeness_read,
-> +		.write_u64 = mem_cgroup_lzfreeness_write,
-> +	},
-> +	{
->  		.name = "move_charge_at_immigrate",
->  		.read_u64 = mem_cgroup_move_charge_read,
->  		.write_u64 = mem_cgroup_move_charge_write,
-> @@ -4305,6 +4334,7 @@ mem_cgroup_css_online(struct cgroup_subsys_state *css)
->  	memcg->use_hierarchy = parent->use_hierarchy;
->  	memcg->oom_kill_disable = parent->oom_kill_disable;
->  	memcg->swappiness = mem_cgroup_swappiness(parent);
-> +	memcg->lzfreeness = mem_cgroup_lzfreeness(parent);
->  
->  	if (parent->use_hierarchy) {
->  		page_counter_init(&memcg->memory, &parent->memory);
-> diff --git a/mm/vmscan.c b/mm/vmscan.c
-> index cd65db9d3004..f1abc8a6ca31 100644
-> --- a/mm/vmscan.c
-> +++ b/mm/vmscan.c
-> @@ -141,6 +141,10 @@ struct scan_control {
->   */
->  int vm_swappiness = 60;
->  /*
-> + * From 0 .. 100.  Higher means more lazy freeing.
-> + */
-> +int vm_lazyfreeness = 20;
-> +/*
->   * The total number of pages which are beyond the high watermark within all
->   * zones.
->   */
-> @@ -2012,10 +2016,11 @@ enum scan_balance {
->   *
->   * nr[0] = anon inactive pages to scan; nr[1] = anon active pages to scan
->   * nr[2] = file inactive pages to scan; nr[3] = file active pages to scan
-> + * nr[4] = lazy free pages to scan;
->   */
->  static void get_scan_count(struct lruvec *lruvec, int swappiness,
-> -			   struct scan_control *sc, unsigned long *nr,
-> -			   unsigned long *lru_pages)
-> +			int lzfreeness, struct scan_control *sc,
-> +			unsigned long *nr, unsigned long *lru_pages)
->  {
->  	struct zone_reclaim_stat *reclaim_stat = &lruvec->reclaim_stat;
->  	u64 fraction[2];
-> @@ -2023,12 +2028,13 @@ static void get_scan_count(struct lruvec *lruvec, int swappiness,
->  	struct zone *zone = lruvec_zone(lruvec);
->  	unsigned long anon_prio, file_prio;
->  	enum scan_balance scan_balance;
-> -	unsigned long anon, file;
-> +	unsigned long anon, file, lzfree;
->  	bool force_scan = false;
->  	unsigned long ap, fp;
->  	enum lru_list lru;
->  	bool some_scanned;
->  	int pass;
-> +	unsigned long scan_lzfree = 0;
->  
->  	/*
->  	 * If the zone or memcg is small, nr[l] can be 0.  This
-> @@ -2166,7 +2172,7 @@ static void get_scan_count(struct lruvec *lruvec, int swappiness,
->  	/* Only use force_scan on second pass. */
->  	for (pass = 0; !some_scanned && pass < 2; pass++) {
->  		*lru_pages = 0;
-> -		for_each_evictable_lru(lru) {
-> +		for_each_anon_file_lru(lru) {
->  			int file = is_file_lru(lru);
->  			unsigned long size;
->  			unsigned long scan;
-> @@ -2212,6 +2218,28 @@ static void get_scan_count(struct lruvec *lruvec, int swappiness,
->  			some_scanned |= !!scan;
->  		}
->  	}
-> +
-> +	lzfree = get_lru_size(lruvec, LRU_LZFREE);
-> +	if (lzfree) {
-> +		scan_lzfree = sc->nr_to_reclaim *
-> +				(DEF_PRIORITY - sc->priority);
++++ Josh Poimboeuf [12/11/15 11:40 -0600]:
+>On Thu, Nov 12, 2015 at 04:27:01PM +0100, Miroslav Benes wrote:
+>> On Wed, 11 Nov 2015, Jessica Yu wrote:
+>>
+>> > +++ Miroslav Benes [11/11/15 15:30 +0100]:
+>> > > On Mon, 9 Nov 2015, Jessica Yu wrote:
+>> > >
+>> > > So I guess we don't need klp_reloc anymore.
+>> >
+>> > Yes, that's correct. I am noticing just now that I forgot to remove
+>> > the klp_reloc struct definition from livepatch.h. That change will be
+>> > reflected in v2...
+>> >
+>> > > If true, we should really
+>> > > start thinking about proper documentation because there are going to be
+>> > > plenty of assumptions about a patch module and we need to have it written
+>> > > somewhere. Especially how the relocation sections look like.
+>> >
+>> > Agreed. As a first step the patch module format can perhaps be
+>> > documented somewhere. Perhaps it's time we create
+>> > Documentation/livepatch/? :-)
+>>
+>> Yes, I think so.
+>>
+>> > > > diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
+>> > > > index 087a8c7..26c419f 100644
+>> > > > --- a/kernel/livepatch/core.c
+>> > > > +++ b/kernel/livepatch/core.c
+>> > > > @@ -28,6 +28,8 @@
+>> > > >  #include <linux/list.h>
+>> > > >  #include <linux/kallsyms.h>
+>> > > >  #include <linux/livepatch.h>
+>> > > > +#include <linux/elf.h>
+>> > > > +#include <asm/cacheflush.h>
+>> > > >
+>> > > >  /**
+>> > > >   * struct klp_ops - structure for tracking registered ftrace ops structs
+>> > > > @@ -281,46 +283,54 @@ static int klp_find_external_symbol(struct module
+>> > > > *pmod, const char *name,
+>> > > >  }
+>> > > >
+>> > > >  static int klp_write_object_relocations(struct module *pmod,
+>> > > > -					struct klp_object *obj)
+>> > > > +					struct klp_object *obj,
+>> > > > +					struct klp_patch *patch)
+>> > > >  {
+>> > > > -	int ret;
+>> > > > -	struct klp_reloc *reloc;
+>> > > > +	int relindex, num_relas;
+>> > > > +	int i, ret = 0;
+>> > > > +	unsigned long addr;
+>> > > > +	unsigned int bind;
+>> > > > +	char *symname;
+>> > > > +	struct klp_reloc_sec *reloc_sec;
+>> > > > +	struct load_info *info;
+>> > > > +	Elf_Rela *rela;
+>> > > > +	Elf_Sym *sym, *symtab;
+>> > > > +	Elf_Shdr *symsect;
+>> > > >
+>> > > >  	if (WARN_ON(!klp_is_object_loaded(obj)))
+>> > > >  		return -EINVAL;
+>> > > >
+>> > > > -	if (WARN_ON(!obj->relocs))
+>> > > > -		return -EINVAL;
+>> > > > -
+>> > > > -	for (reloc = obj->relocs; reloc->name; reloc++) {
+>> > > > -		if (!klp_is_module(obj)) {
+>> > > > -			ret = klp_verify_vmlinux_symbol(reloc->name,
+>> > > > -							reloc->val);
+>> > > > -			if (ret)
+>> > > > -				return ret;
+>> > > > -		} else {
+>> > > > -			/* module, reloc->val needs to be discovered */
+>> > > > -			if (reloc->external)
+>> > > > -				ret = klp_find_external_symbol(pmod,
+>> > > > -							       reloc->name,
+>> > > > -							       &reloc->val);
+>> > > > -			else
+>> > > > -				ret = klp_find_object_symbol(obj->mod->name,
+>> > > > -							     reloc->name,
+>> > > > -							     &reloc->val);
+>> > > > -			if (ret)
+>> > > > -				return ret;
+>> > > > -		}
+>> > > > -		ret = klp_write_module_reloc(pmod, reloc->type, reloc->loc,
+>> > > > -					     reloc->val + reloc->addend);
+>> > > > -		if (ret) {
+>> > > > -			pr_err("relocation failed for symbol '%s' at 0x%016lx
+>> > > > (%d)\n",
+>> > > > -			       reloc->name, reloc->val, ret);
+>> > > > -			return ret;
+>> > > > +	info = pmod->info;
+>> > > > +	symsect = info->sechdrs + info->index.sym;
+>> > > > +	symtab = (void *)info->hdr + symsect->sh_offset;
+>> > > > +
+>> > > > +	/* For each __klp_rela section for this object */
+>> > > > +	list_for_each_entry(reloc_sec, &obj->reloc_secs, list) {
+>> > > > +		relindex = reloc_sec->index;
+>> > > > +		num_relas = info->sechdrs[relindex].sh_size /
+>> > > > sizeof(Elf_Rela);
+>> > > > +		rela = (Elf_Rela *) info->sechdrs[relindex].sh_addr;
+>> > > > +
+>> > > > +		/* For each rela in this __klp_rela section */
+>> > > > +		for (i = 0; i < num_relas; i++, rela++) {
+>> > > > +			sym = symtab + ELF_R_SYM(rela->r_info);
+>> > > > +			symname = info->strtab + sym->st_name;
+>> > > > +			bind = ELF_ST_BIND(sym->st_info);
+>> > > > +
+>> > > > +			if (sym->st_shndx == SHN_LIVEPATCH) {
+>> > > > +				if (bind == STB_LIVEPATCH_EXT)
+>> > > > +					ret = klp_find_external_symbol(pmod,
+>> > > > symname, &addr);
+>> > > > +				else
+>> > > > +					ret =
+>> > > > klp_find_object_symbol(obj->name, symname, &addr);
+>> > > > +				if (ret)
+>> > > > +					return ret;
+>> > > > +				sym->st_value = addr;
+>> > > > +			}
+>> > > >  		}
+>> > > > +		ret = apply_relocate_add(info->sechdrs, info->strtab,
+>> > > > +					 info->index.sym, relindex, pmod);
+>> > > >  	}
+>> > > >
+>> > > > -	return 0;
+>> > > > +	return ret;
+>> > > >  }
+>> > >
+>> > > Looking at this... do we even need reloc_secs in klp_object? Question is
+>> > > whether we need more than one dynrela section for an object. If not then
+>> > > the binding between klp_reloc_sec and an object is the only relevant thing
+>> > > in the structure, be it index or objname. So we can replace the
+>> > > list of structures with just the index in klp_object, or get rid of it
+>> > > completely and rely on the name of dynrela section be something like
+>> > > __klp_rela_{objname}.
+>> >
+>> > Hm, you bring up a good point. I think theoretically yes, it is
+>> > possible to just have one klp_reloc_sec for each object and therefore
+>> > a list is not required (I have not checked yet how difficult it would
+>> > be to implement this on the kpatch-build side of things).  However,
+>> > considering the final format of the patch module, I think it is
+>> > semantically clearer to leave it as a list, and for each object to
+>> > possibly have more than one __klp_rela section.
+>> >
+>> > For example, say we are patching two functions in ext4. In my
+>> > resulting kpatch module I will have two __klp_rela_ext4 sections, and
+>> > they might look like this when we run readelf --sections:
+>> >
+>> > [34] __klp_rela_ext4.text.ext4_attr_store RELA ...
+>> > [35] __klp_rela_ext4.text.ext4_attr_show RELA ...
+>> >
+>> > Then these two klp rela sections end up as two elements in the
+>> > reloc_secs list for the ext4 patch object. I think this way, we can
+>> > better tell which rela is being applied to what function. Might be
+>> > easier to understand what's happening from the developer's point of
+>> > view.
+>> >
+>> > > You see, we go through elf sections here which were preserved by module
+>> > > loader. We even have relevant sections marked with SHF_RELA_LIVEPATCH. So
+>> > > maybe all the stuff around klp_reloc_sec is not necessary.
+>> > >
+>> > > Thoughts?
+>> >
+>> > Ah, so this is where descriptive comments and documentation might have
+>> > been useful :-) So I think we will still need to keep the
+>> > klp_reloc_sec struct to help the patch module initialize. Though the
+>> > name and objname fields aren't used in this patchset, they are used in
+>> > the kpatch patch module code [1], where we iterate through each elf
+>> > section, find the ones marked with SHF_RELA_LIVEPATCH, set the
+>> > klp_reloc_sec's objname (which we find from the "name" field,
+>> > formatted as __klp_rela_{objname}.text..). Once we have the objname
+>> > set, we can then find the object to attach the reloc_sec to (i.e. add
+>> > it to its list of reloc_secs).
+>> >
+>> > Hope that clears some things up.
+>>
+>> Ok, I'll try to explain myself and it is gonna be long. I'll try to
+>> describe how we deal with dynrelas in klp today, how you use it in kpatch
+>> (and this is the place where my knowledge can be wrong or obsolete), what
+>> you propose and what I'd like to propose.
+>>
+>> 1. First let's look on what we have now.
+>>
+>> We have a patch module in which there is a section with all dynrelas
+>> needed to be resolved (it was like this in kpatch some time ago and maybe
+>> it is different now so just have a patience, I'll get to it). In the init
+>> function of the module kpatch builds all the relevant info from dynrela
+>> section. It goes through it, creates an array of klp_reloc for each object
+>> and includes each dynrela record with an objname to the array of
+>> klp_object with that objname. Later when we need to apply relocations for
+>> patched object we just go through the list (array) of its dynrelas in
+>> klp_object and call our arch-specific klp_write_module_reloc().
+>>
+>> Now this was probably changed in kpatch and you do not have one dynrela
+>> section but one dynrela section for each patched function. Is that
+>> correct? (and can you tell us what the reason for the change was? It might
+>> be crucial because I might be missing something.). Which leads us to your
+>> proposal...
+>>
+>> 2. So we have several dynrela section for one patched object. During init
+>> function in a patch module kpatch once again builds needed structures from
+>> these sections. Now they are called klp_reloc_sec and contain different
+>> kind of info. There is no val, loc and such, only name of the symbol,
+>> objname and index to dynrela section in ELF. So when you need to write
+>> relocations for the patched object you go through all relevant dynrela
+>> sections (because they are stored in the klp_object), all dynrela records
+>> in each section and you resolve the undefined symbols. All needed info is
+>> stored in ELF. Then you just call apply_relocate_add().
+>>
+>> 3. I propose to go one step further. I think we don't need klp_reloc_sec
+>> if there is only one dynrela section for patched object (and I currently
+>> cannot see why this is not possible. It is possible even with one dynrela
+>> section for whole patch module, that is for all patched objects.).
+>
+>I think I agree that we don't need klp_reloc_sec, and that klp rela
+>sections can presumably be discovered by iterating over the sections.
+>
+>But I don't think it matters much whether we have one klp rela section
+>per object, or multiple rela sections per object.  Either way, can't we
+>find them when we iterate over the sections?
+>
+>For example, for one rela section per object, it could be named:
+>
+>__klp_rela.objname
+>
+>Or for multiple rela sections per object, they could be named:
+>
+>__klp_rela.objname.func1
+>__klp_rela.objname.func2
+>
+>Either way, when iterating over the sections, we could just look for
+>"__klp_rela.objname".
+>
+>All that said, I think I would vote for one rela section per object,
+>just because it seems simpler.
 
-scan_lzfree == 0 if sc->priority == DEF_PRIORITY, is this intended?
-> +		scan_lzfree = div64_u64(scan_lzfree *
-> +					lzfreeness, 50);
-> +		if (!scan_lzfree) {
-> +			unsigned long zonefile, zonefree;
-> +
-> +			zonefree = zone_page_state(zone, NR_FREE_PAGES);
-> +			zonefile = zone_page_state(zone, NR_ACTIVE_FILE) +
-> +				zone_page_state(zone, NR_INACTIVE_FILE);
-> +			if (unlikely(zonefile + zonefree <=
-> +					high_wmark_pages(zone))) {
-> +				scan_lzfree = get_lru_size(lruvec,
-> +						LRU_LZFREE) >> sc->priority;
-> +			}
-> +		}
-> +	}
-> +
-> +	nr[LRU_LZFREE] = min(scan_lzfree, lzfree);
->  }
+Looking into this more, I think we do need one __klp_rela section per
+function being patched.  Each rela section is linked to the section to
+which the relocations apply via the rela section's sh_info field. In
+SHT_RELA sections, the sh_info field contains the section index to
+which the relocs apply. We cannot have one single combined rela
+section per object as the call to apply_relocate_add() simply won't
+work, because we would have relocs that apply to different functions
+(and hence different sections).
 
-Looks there is no setting to only reclaim lazyfree pages. Could we have an
-option for this? It's legit we don't want to trash page cache because of
-lazyfree memory.
+So I guess instead of a single field in klp_object specifying the
+__klp_rela section index, we could probably just have an array of
+section indices.
 
-Thanks,
-Shaohua
+>>
+>> In my proposal there would be nothing done in init function of the patched
+>> module (albeit some optimization mentioned later). When you call
+>> klp_write_object_relocations you would go through all ELF section and find
+>> the relevant one for the object (it is marked with SHF_RELA_LIVEPATCH and
+>> objname is in the name of the section. It is the same thing you do in 2.
+>> in the init function.). Then you go through all dynrela records in the
+>> section, you do the same things which you do in the proposed patch above,
+>> and call apply_relocate_add.
+>>
+>> Now it would be crazy to go through all sections each time
+>> klp_write_object_relocations is called (maybe it does not even matter but
+>
+>Why would that be crazy?  To me it seems perfectly logical :-)  It
+>doesn't seem like a very expensive operation to me.
+>
+>> nevertheless). So klp_object could have an index to its ELF dynrela
+>> section. This index can be retrieved in the init function the same way you
+>> do all the stuff with klp_reloc_sec.
+>>
+>> If you insisted on more than one dynrela section for a patched object we
+>> could have an array of indices there. Or whatever.
+>>
+>> It is almost the same as your proposal but in my opinion somewhat nicer.
+>> We just use the info stored in ELF directly without unnecessary middle
+>> layer (== klp_reloc_sec).
+>>
+>> Does it make sense? I hope it does. Would it work?
+>
+>-- 
+>Josh
