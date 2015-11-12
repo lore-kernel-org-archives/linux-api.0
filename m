@@ -1,7 +1,7 @@
 From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v3 09/17] sparc: add pmd_[dirty|mkclean] for THP
-Date: Thu, 12 Nov 2015 13:33:05 +0900
-Message-ID: <1447302793-5376-10-git-send-email-minchan@kernel.org>
+Subject: [PATCH v3 10/17] powerpc: add pmd_[dirty|mkclean] for THP
+Date: Thu, 12 Nov 2015 13:33:06 +0900
+Message-ID: <1447302793-5376-11-git-send-email-minchan@kernel.org>
 References: <1447302793-5376-1-git-send-email-minchan@kernel.org>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1447302793-5376-1-git-send-email-minchan@kernel.org>
@@ -19,29 +19,25 @@ support.
 Signed-off-by: Minchan Kim <minchan@kernel.org>
 Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
 ---
- arch/sparc/include/asm/pgtable_64.h | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ arch/powerpc/include/asm/pgtable-ppc64.h | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/arch/sparc/include/asm/pgtable_64.h b/arch/sparc/include/asm/pgtable_64.h
-index 131d36fcd07a..5833dc5ee7d7 100644
---- a/arch/sparc/include/asm/pgtable_64.h
-+++ b/arch/sparc/include/asm/pgtable_64.h
-@@ -717,6 +717,15 @@ static inline pmd_t pmd_mkdirty(pmd_t pmd)
- 	return __pmd(pte_val(pte));
- }
+diff --git a/arch/powerpc/include/asm/pgtable-ppc64.h b/arch/powerpc/include/asm/pgtable-ppc64.h
+index fa1dfb7f7b48..85e15c8067be 100644
+--- a/arch/powerpc/include/asm/pgtable-ppc64.h
++++ b/arch/powerpc/include/asm/pgtable-ppc64.h
+@@ -507,9 +507,11 @@ static inline pte_t *pmdp_ptep(pmd_t *pmd)
+ #define pmd_pfn(pmd)		pte_pfn(pmd_pte(pmd))
+ #define pmd_dirty(pmd)		pte_dirty(pmd_pte(pmd))
+ #define pmd_young(pmd)		pte_young(pmd_pte(pmd))
++#define pmd_dirty(pmd)		pte_dirty(pmd_pte(pmd))
+ #define pmd_mkold(pmd)		pte_pmd(pte_mkold(pmd_pte(pmd)))
+ #define pmd_wrprotect(pmd)	pte_pmd(pte_wrprotect(pmd_pte(pmd)))
+ #define pmd_mkdirty(pmd)	pte_pmd(pte_mkdirty(pmd_pte(pmd)))
++#define pmd_mkclean(pmd)	pte_pmd(pte_mkclean(pmd_pte(pmd)))
+ #define pmd_mkyoung(pmd)	pte_pmd(pte_mkyoung(pmd_pte(pmd)))
+ #define pmd_mkwrite(pmd)	pte_pmd(pte_mkwrite(pmd_pte(pmd)))
  
-+static inline pmd_t pmd_mkclean(pmd_t pmd)
-+{
-+	pte_t pte = __pte(pmd_val(pmd));
-+
-+	pte = pte_mkclean(pte);
-+
-+	return __pmd(pte_val(pte));
-+}
-+
- static inline pmd_t pmd_mkyoung(pmd_t pmd)
- {
- 	pte_t pte = __pte(pmd_val(pmd));
 -- 
 1.9.1
 
