@@ -1,7 +1,7 @@
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Subject: Re: [RFC PATCH 1/5] elf: add livepatch-specific elf constants
-Date: Thu, 12 Nov 2015 09:33:47 -0600
-Message-ID: <20151112153347.GB4038@treble.hsd1.ky.comcast.net>
+Date: Thu, 12 Nov 2015 09:45:06 -0600
+Message-ID: <20151112154506.GC4038@treble.hsd1.ky.comcast.net>
 References: <1447130755-17383-1-git-send-email-jeyu@redhat.com>
  <1447130755-17383-2-git-send-email-jeyu@redhat.com>
 Mime-Version: 1.0
@@ -40,7 +40,14 @@ On Mon, Nov 09, 2015 at 11:45:51PM -0500, Jessica Yu wrote:
 >  #define SHF_EXECINSTR	0x4
 >  #define SHF_MASKPROC	0xf0000000
 > +#define SHF_RELA_LIVEPATCH  0x4000000
->  
+
+Writing the value with leading zeros (0x04000000) would it more
+readable.
+
+Also the OS-specific range mask (SHF_MASKOS) is 0x0ff00000.  Any reason
+you went with 0x04000000 as opposed to the first value in the range
+(0x00100000)?  I don't see anybody else using that value.
+
 >  /* special section indexes */
 >  #define SHN_UNDEF	0
 > @@ -295,6 +297,7 @@ typedef struct elf64_phdr {
@@ -48,12 +55,8 @@ On Mon, Nov 09, 2015 at 11:45:51PM -0500, Jessica Yu wrote:
 >  #define SHN_COMMON	0xfff2
 >  #define SHN_HIRESERVE	0xffff
 > +#define SHN_LIVEPATCH 0xff21
->   
->  typedef struct elf32_shdr {
->    Elf32_Word	sh_name;
 
-For all of these it would be good to re-indent the surrounding macros so
-their values are all vertically aligned with the new LIVEPATCH ones.
+Similar question here, why not use 0xff20 (SHN_LOOS)?
 
 -- 
 Josh
