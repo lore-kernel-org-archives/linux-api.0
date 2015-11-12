@@ -1,7 +1,7 @@
 From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v3 08/17] x86: add pmd_[dirty|mkclean] for THP
-Date: Thu, 12 Nov 2015 13:33:04 +0900
-Message-ID: <1447302793-5376-9-git-send-email-minchan@kernel.org>
+Subject: [PATCH v3 11/17] arm: add pmd_mkclean for THP
+Date: Thu, 12 Nov 2015 13:33:07 +0900
+Message-ID: <1447302793-5376-12-git-send-email-minchan@kernel.org>
 References: <1447302793-5376-1-git-send-email-minchan@kernel.org>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1447302793-5376-1-git-send-email-minchan@kernel.org>
@@ -13,31 +13,25 @@ List-Id: linux-api@vger.kernel.org
 MADV_FREE needs pmd_dirty and pmd_mkclean for detecting recent overwrite
 of the contents since MADV_FREE syscall is called for THP page.
 
-This patch adds pmd_dirty and pmd_mkclean for THP page MADV_FREE
-support.
+This patch adds pmd_mkclean for THP page MADV_FREE support.
 
 Signed-off-by: Minchan Kim <minchan@kernel.org>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
 ---
- arch/x86/include/asm/pgtable.h | 5 +++++
- 1 file changed, 5 insertions(+)
+ arch/arm/include/asm/pgtable-3level.h | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index 867da5bbb4a3..b964d54300e1 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -267,6 +267,11 @@ static inline pmd_t pmd_mkold(pmd_t pmd)
- 	return pmd_clear_flags(pmd, _PAGE_ACCESSED);
- }
+diff --git a/arch/arm/include/asm/pgtable-3level.h b/arch/arm/include/asm/pgtable-3level.h
+index a745a2a53853..6d6012a320b2 100644
+--- a/arch/arm/include/asm/pgtable-3level.h
++++ b/arch/arm/include/asm/pgtable-3level.h
+@@ -249,6 +249,7 @@ PMD_BIT_FUNC(mkold,	&= ~PMD_SECT_AF);
+ PMD_BIT_FUNC(mksplitting, |= L_PMD_SECT_SPLITTING);
+ PMD_BIT_FUNC(mkwrite,   &= ~L_PMD_SECT_RDONLY);
+ PMD_BIT_FUNC(mkdirty,   |= L_PMD_SECT_DIRTY);
++PMD_BIT_FUNC(mkclean,   &= ~L_PMD_SECT_DIRTY);
+ PMD_BIT_FUNC(mkyoung,   |= PMD_SECT_AF);
  
-+static inline pmd_t pmd_mkclean(pmd_t pmd)
-+{
-+	return pmd_clear_flags(pmd, _PAGE_DIRTY);
-+}
-+
- static inline pmd_t pmd_wrprotect(pmd_t pmd)
- {
- 	return pmd_clear_flags(pmd, _PAGE_RW);
+ #define pmd_mkhuge(pmd)		(__pmd(pmd_val(pmd) & ~PMD_TABLE_BIT))
 -- 
 1.9.1
 
