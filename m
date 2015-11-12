@@ -1,123 +1,172 @@
 From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v3 03/17] arch: uapi: asm: mman.h: Let MADV_FREE have same value for all architectures
-Date: Thu, 12 Nov 2015 13:32:59 +0900
-Message-ID: <1447302793-5376-4-git-send-email-minchan@kernel.org>
+Subject: [PATCH v3 13/17] mm: don't split THP page when syscall is called
+Date: Thu, 12 Nov 2015 13:33:09 +0900
+Message-ID: <1447302793-5376-14-git-send-email-minchan@kernel.org>
 References: <1447302793-5376-1-git-send-email-minchan@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1447302793-5376-1-git-send-email-minchan@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, Daniel Micay <danielmicay@gmail.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Shaohua Li <shli@kernel.org>, Michal Hocko <mhocko@suse.cz>, yalin.wang2010@gmail.com, Chen Gang <gang.chen.5i5j@gmail.com>, "rth@twiddle.net" <rth@twiddle.net>, "ink@jurassic.park.msu.ru" <ink@jurassic.park.msu.ru>, "mattst88@gmail.com" <mattst88@gmail.com>, Ralf Baechle <ralf@linux-mips.org>, "jejb@parisc-linux.org" <jejb@parisc-linux.org>, "deller@gmx.de" <deller@gmx.de>, "chris@zankel.net" <chris@zankel.net>, "jcmvbkbc@gmail.com" <jcmvbkbc@gmail.com>, Arnd
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, Daniel Micay <danielmicay@gmail.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Shaohua Li <shli@kernel.org>, Michal Hocko <mhocko@suse.cz>, yalin.wang2010@gmail.com, Minchan Kim <minchan@kernel.org>, Andrea Arcangeli <aarcange@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Chen Gang <gang.chen.5i5j@gmail.com>
+We don't need to split THP page when MADV_FREE syscall is called.
+It could be done when VM decide to free it in reclaim path when
+memory pressure is heavy so we could avoid unnecessary THP split.
 
-For uapi, need try to let all macros have same value, and MADV_FREE is
-added into main branch recently, so need redefine MADV_FREE for it.
+For that, this patch changes two things
 
-At present, '8' can be shared with all architectures, so redefine it to
-'8'.
+1. __split_huge_page_map
 
-Cc: rth@twiddle.net <rth@twiddle.net>,
-Cc: ink@jurassic.park.msu.ru <ink@jurassic.park.msu.ru>
-Cc: mattst88@gmail.com <mattst88@gmail.com>
-Cc: Ralf Baechle <ralf@linux-mips.org>
-Cc: jejb@parisc-linux.org <jejb@parisc-linux.org>
-Cc: deller@gmx.de <deller@gmx.de>
-Cc: chris@zankel.net <chris@zankel.net>
-Cc: jcmvbkbc@gmail.com <jcmvbkbc@gmail.com>
-Cc: Arnd Bergmann <arnd@arndb.de>
-Cc: linux-arch@vger.kernel.org
-Cc: linux-api@vger.kernel.org
-Cc: sparclinux@vger.kernel.org
-Cc: roland@kernel.org
-Cc: darrick.wong@oracle.com
-Cc: davem@davemloft.net
-Acked-by: Hugh Dickins <hughd@google.com>
-Acked-by: Minchan Kim <minchan@kernel.org>
-Signed-off-by: Chen Gang <gang.chen.5i5j@gmail.com>
+It does pte_mkdirty to subpages only if pmd_dirty is true.
+
+2. __split_huge_page_refcount
+
+It removes marking PG_dirty to subpages unconditionally.
+
+Cc: Kirill A. Shutemov <kirill@shutemov.name>
+Cc: Hugh Dickins <hughd@google.com>
+Cc: Andrea Arcangeli <aarcange@redhat.com>
+Signed-off-by: Minchan Kim <minchan@kernel.org>
 ---
- arch/alpha/include/uapi/asm/mman.h     | 2 +-
- arch/mips/include/uapi/asm/mman.h      | 2 +-
- arch/parisc/include/uapi/asm/mman.h    | 2 +-
- arch/xtensa/include/uapi/asm/mman.h    | 2 +-
- include/uapi/asm-generic/mman-common.h | 2 +-
- 5 files changed, 5 insertions(+), 5 deletions(-)
+ include/linux/huge_mm.h |  3 +++
+ mm/huge_memory.c        | 46 ++++++++++++++++++++++++++++++++++++++++++----
+ mm/madvise.c            | 12 +++++++++++-
+ 3 files changed, 56 insertions(+), 5 deletions(-)
 
-diff --git a/arch/alpha/include/uapi/asm/mman.h b/arch/alpha/include/uapi/asm/mman.h
-index 836fbd44f65b..0b8a5de7aee3 100644
---- a/arch/alpha/include/uapi/asm/mman.h
-+++ b/arch/alpha/include/uapi/asm/mman.h
-@@ -44,9 +44,9 @@
- #define MADV_WILLNEED	3		/* will need these pages */
- #define	MADV_SPACEAVAIL	5		/* ensure resources are available */
- #define MADV_DONTNEED	6		/* don't need these pages */
--#define MADV_FREE	7		/* free pages only if memory pressure */
+diff --git a/include/linux/huge_mm.h b/include/linux/huge_mm.h
+index ecb080d6ff42..e9db238a75c1 100644
+--- a/include/linux/huge_mm.h
++++ b/include/linux/huge_mm.h
+@@ -19,6 +19,9 @@ extern struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
+ 					  unsigned long addr,
+ 					  pmd_t *pmd,
+ 					  unsigned int flags);
++extern int madvise_free_huge_pmd(struct mmu_gather *tlb,
++			struct vm_area_struct *vma,
++			pmd_t *pmd, unsigned long addr);
+ extern int zap_huge_pmd(struct mmu_gather *tlb,
+ 			struct vm_area_struct *vma,
+ 			pmd_t *pmd, unsigned long addr);
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index bbac913f96bc..b8c9b44af864 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -1453,6 +1453,41 @@ int do_huge_pmd_numa_page(struct mm_struct *mm, struct vm_area_struct *vma,
+ 	return 0;
+ }
  
- /* common/generic parameters */
-+#define MADV_FREE	8		/* free pages only if memory pressure */
- #define MADV_REMOVE	9		/* remove these pages & resources */
- #define MADV_DONTFORK	10		/* don't inherit across fork */
- #define MADV_DOFORK	11		/* do inherit across fork */
-diff --git a/arch/mips/include/uapi/asm/mman.h b/arch/mips/include/uapi/asm/mman.h
-index 106e741aa7ee..d247f5457944 100644
---- a/arch/mips/include/uapi/asm/mman.h
-+++ b/arch/mips/include/uapi/asm/mman.h
-@@ -67,9 +67,9 @@
- #define MADV_SEQUENTIAL 2		/* expect sequential page references */
- #define MADV_WILLNEED	3		/* will need these pages */
- #define MADV_DONTNEED	4		/* don't need these pages */
--#define MADV_FREE	5		/* free pages only if memory pressure */
++int madvise_free_huge_pmd(struct mmu_gather *tlb, struct vm_area_struct *vma,
++		pmd_t *pmd, unsigned long addr)
++
++{
++	spinlock_t *ptl;
++	pmd_t orig_pmd;
++	struct page *page;
++	struct mm_struct *mm = tlb->mm;
++
++	if (__pmd_trans_huge_lock(pmd, vma, &ptl) != 1)
++		return 1;
++
++	orig_pmd = *pmd;
++	if (is_huge_zero_pmd(orig_pmd))
++		goto out;
++
++	page = pmd_page(orig_pmd);
++	if (PageActive(page))
++		deactivate_page(page);
++
++	if (pmd_young(orig_pmd) || pmd_dirty(orig_pmd)) {
++		orig_pmd = pmdp_huge_get_and_clear_full(tlb->mm, addr, pmd,
++			tlb->fullmm);
++		orig_pmd = pmd_mkold(orig_pmd);
++		orig_pmd = pmd_mkclean(orig_pmd);
++
++		set_pmd_at(mm, addr, pmd, orig_pmd);
++		tlb_remove_pmd_tlb_entry(tlb, pmd, addr);
++	}
++out:
++	spin_unlock(ptl);
++
++	return 0;
++}
++
+ int zap_huge_pmd(struct mmu_gather *tlb, struct vm_area_struct *vma,
+ 		 pmd_t *pmd, unsigned long addr)
+ {
+@@ -1752,8 +1787,8 @@ static void __split_huge_page_refcount(struct page *page,
+ 				      (1L << PG_mlocked) |
+ 				      (1L << PG_uptodate) |
+ 				      (1L << PG_active) |
+-				      (1L << PG_unevictable)));
+-		page_tail->flags |= (1L << PG_dirty);
++				      (1L << PG_unevictable) |
++				      (1L << PG_dirty)));
  
- /* common parameters: try to keep these consistent across architectures */
-+#define MADV_FREE	8		/* free pages only if memory pressure */
- #define MADV_REMOVE	9		/* remove these pages & resources */
- #define MADV_DONTFORK	10		/* don't inherit across fork */
- #define MADV_DOFORK	11		/* do inherit across fork */
-diff --git a/arch/parisc/include/uapi/asm/mman.h b/arch/parisc/include/uapi/asm/mman.h
-index 6cb8db76fd4e..700d83fd9352 100644
---- a/arch/parisc/include/uapi/asm/mman.h
-+++ b/arch/parisc/include/uapi/asm/mman.h
-@@ -40,9 +40,9 @@
- #define MADV_SPACEAVAIL 5               /* insure that resources are reserved */
- #define MADV_VPS_PURGE  6               /* Purge pages from VM page cache */
- #define MADV_VPS_INHERIT 7              /* Inherit parents page size */
--#define MADV_FREE	8		/* free pages only if memory pressure */
+ 		/* clear PageTail before overwriting first_page */
+ 		smp_wmb();
+@@ -1787,7 +1822,6 @@ static void __split_huge_page_refcount(struct page *page,
  
- /* common/generic parameters */
-+#define MADV_FREE	8		/* free pages only if memory pressure */
- #define MADV_REMOVE	9		/* remove these pages & resources */
- #define MADV_DONTFORK	10		/* don't inherit across fork */
- #define MADV_DOFORK	11		/* do inherit across fork */
-diff --git a/arch/xtensa/include/uapi/asm/mman.h b/arch/xtensa/include/uapi/asm/mman.h
-index 1b19f25bc567..77eaca434071 100644
---- a/arch/xtensa/include/uapi/asm/mman.h
-+++ b/arch/xtensa/include/uapi/asm/mman.h
-@@ -80,9 +80,9 @@
- #define MADV_SEQUENTIAL	2		/* expect sequential page references */
- #define MADV_WILLNEED	3		/* will need these pages */
- #define MADV_DONTNEED	4		/* don't need these pages */
--#define MADV_FREE	5		/* free pages only if memory pressure */
+ 		BUG_ON(!PageAnon(page_tail));
+ 		BUG_ON(!PageUptodate(page_tail));
+-		BUG_ON(!PageDirty(page_tail));
+ 		BUG_ON(!PageSwapBacked(page_tail));
  
- /* common parameters: try to keep these consistent across architectures */
-+#define MADV_FREE	8		/* free pages only if memory pressure */
- #define MADV_REMOVE	9		/* remove these pages & resources */
- #define MADV_DONTFORK	10		/* don't inherit across fork */
- #define MADV_DOFORK	11		/* do inherit across fork */
-diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
-index 7a94102b7a02..869595947873 100644
---- a/include/uapi/asm-generic/mman-common.h
-+++ b/include/uapi/asm-generic/mman-common.h
-@@ -34,9 +34,9 @@
- #define MADV_SEQUENTIAL	2		/* expect sequential page references */
- #define MADV_WILLNEED	3		/* will need these pages */
- #define MADV_DONTNEED	4		/* don't need these pages */
--#define MADV_FREE	5		/* free pages only if memory pressure */
+ 		lru_add_page_tail(page, page_tail, lruvec, list);
+@@ -1831,10 +1865,12 @@ static int __split_huge_page_map(struct page *page,
+ 	int ret = 0, i;
+ 	pgtable_t pgtable;
+ 	unsigned long haddr;
++	bool dirty;
  
- /* common parameters: try to keep these consistent across architectures */
-+#define MADV_FREE	8		/* free pages only if memory pressure */
- #define MADV_REMOVE	9		/* remove these pages & resources */
- #define MADV_DONTFORK	10		/* don't inherit across fork */
- #define MADV_DOFORK	11		/* do inherit across fork */
+ 	pmd = page_check_address_pmd(page, mm, address,
+ 			PAGE_CHECK_ADDRESS_PMD_SPLITTING_FLAG, &ptl);
+ 	if (pmd) {
++		dirty = pmd_dirty(*pmd);
+ 		pgtable = pgtable_trans_huge_withdraw(mm, pmd);
+ 		pmd_populate(mm, &_pmd, pgtable);
+ 		if (pmd_write(*pmd))
+@@ -1850,7 +1886,9 @@ static int __split_huge_page_map(struct page *page,
+ 			 * permissions across VMAs.
+ 			 */
+ 			entry = mk_pte(page + i, vma->vm_page_prot);
+-			entry = maybe_mkwrite(pte_mkdirty(entry), vma);
++			if (dirty)
++				entry = pte_mkdirty(entry);
++			entry = maybe_mkwrite(entry, vma);
+ 			if (!pmd_write(*pmd))
+ 				entry = pte_wrprotect(entry);
+ 			if (!pmd_young(*pmd))
+diff --git a/mm/madvise.c b/mm/madvise.c
+index 4e67ba0b1104..27ed057c0bd7 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -271,8 +271,17 @@ static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
+ 	pte_t *pte, ptent;
+ 	struct page *page;
+ 	int nr_swap = 0;
++	unsigned long next;
++
++	next = pmd_addr_end(addr, end);
++	if (pmd_trans_huge(*pmd)) {
++		if (next - addr != HPAGE_PMD_SIZE)
++			split_huge_page_pmd(vma, addr, pmd);
++		else if (!madvise_free_huge_pmd(tlb, vma, pmd, addr))
++			goto next;
++		/* fall through */
++	}
+ 
+-	split_huge_page_pmd(vma, addr, pmd);
+ 	if (pmd_trans_unstable(pmd))
+ 		return 0;
+ 
+@@ -355,6 +364,7 @@ static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
+ 	arch_leave_lazy_mmu_mode();
+ 	pte_unmap_unlock(pte - 1, ptl);
+ 	cond_resched();
++next:
+ 	return 0;
+ }
+ 
 -- 
 1.9.1
