@@ -1,35 +1,104 @@
-From: "Kirill A. Shutemov" <kirill@shutemov.name>
-Subject: Re: [PATCH v3 03/17] arch: uapi: asm: mman.h: Let MADV_FREE have
- same value for all architectures
-Date: Thu, 12 Nov 2015 13:27:53 +0200
-Message-ID: <20151112112753.GC22481@node.shutemov.name>
-References: <1447302793-5376-1-git-send-email-minchan@kernel.org>
- <1447302793-5376-4-git-send-email-minchan@kernel.org>
+From: Austin S Hemmelgarn <ahferroin7@gmail.com>
+Subject: Re: [PATCH v9 0/4] VFS: In-kernel copy system call
+Date: Thu, 12 Nov 2015 07:39:18 -0500
+Message-ID: <56448876.1030508@gmail.com>
+References: <1447192413-15376-1-git-send-email-Anna.Schumaker@Netapp.com>
+ <20151111145337.GA2392@zzz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <1447302793-5376-4-git-send-email-minchan@kernel.org>
-Sender: owner-linux-mm@kvack.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, Daniel Micay <danielmicay@gmail.com>, Shaohua Li <shli@kernel.org>, Michal Hocko <mhocko@suse.cz>, yalin.wang2010@gmail.com, Chen Gang <gang.chen.5i5j@gmail.com>, "rth@twiddle.net" <rth@twiddle.net>, "ink@jurassic.park.msu.ru" <ink@jurassic.park.msu.ru>, "mattst88@gmail.com" <mattst88@gmail.com>, Ralf Baechle <ralf@linux-mips.org>, "jejb@parisc-linux.org" <jejb@parisc-linux.org>, "deller@gmx.de" <deller@gmx.de>, "chris@zankel.net" <chris@zankel.net>, "jcmvbkbc@gmail.com" <jcmvbkbc@gmail.com>, Arnd
+Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-512; boundary="------------ms000201070102030608040507"
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20151111145337.GA2392@zzz>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Eric Biggers <ebiggers3@gmail.com>, Anna Schumaker <Anna.Schumaker@netapp.com>
+Cc: linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, darrick.wong@oracle.com, mtk.manpages@gmail.com, andros@netapp.com, hch@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 12, 2015 at 01:32:59PM +0900, Minchan Kim wrote:
-> From: Chen Gang <gang.chen.5i5j@gmail.com>
-> 
-> For uapi, need try to let all macros have same value, and MADV_FREE is
-> added into main branch recently, so need redefine MADV_FREE for it.
-> 
-> At present, '8' can be shared with all architectures, so redefine it to
-> '8'.
+This is a cryptographically signed message in MIME format.
 
-Why not fold the patch into thre previous one?
--- 
- Kirill A. Shutemov
+--------------ms000201070102030608040507
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: quoted-printable
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+On 2015-11-11 09:53, Eric Biggers wrote:
+> On Tue, Nov 10, 2015 at 04:53:30PM -0500, Anna Schumaker wrote:
+>>        /* this could be relaxed once a method supports cross-fs copies=
+ */
+>>        if (inode_in->i_sb !=3D inode_out->i_sb)
+>>                return -EXDEV;
+>
+> This allows the same superblock but different mounts --- is that intent=
+ional?
+> The commit message says otherwise: it says the vfs entry point requires=
+ the same
+> superblock and mount.
+This could be important for BTRFS (because of subvolumes, you can have=20
+multiple mounts that have the same SB, and as of right now, it can be=20
+hard to tell the difference between a nested subvolume and a separate=20
+mount point).  We do support cross-subvolume reflinks, but I'm not sure=20
+if that works between subvolumes mounted at different places (if it=20
+doesn't, I may have to look into getting that changed).
+
+
+--------------ms000201070102030608040507
+Content-Type: application/pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+Content-Description: S/MIME Cryptographic Signature
+
+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
+cnQub3JnMSIwIAYDVQQDExlDQSBDZXJ0IFNpZ25pbmcgQXV0aG9yaXR5MSEwHwYJKoZIhvcN
+AQkBFhJzdXBwb3J0QGNhY2VydC5vcmcCAxEt+DANBglghkgBZQMEAgMFAKCCAiEwGAYJKoZI
+hvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMTUxMTEyMTIzOTE4WjBPBgkq
+hkiG9w0BCQQxQgRAalYfrgZnllTUiiX6cDpK3mkZzpoLkPvdq3c7XQLPv0m2QUJD87iajbSN
+Egqbr4hgOVAEH3h2nhjoY28F3nnPvDBsBgkqhkiG9w0BCQ8xXzBdMAsGCWCGSAFlAwQBKjAL
+BglghkgBZQMEAQIwCgYIKoZIhvcNAwcwDgYIKoZIhvcNAwICAgCAMA0GCCqGSIb3DQMCAgFA
+MAcGBSsOAwIHMA0GCCqGSIb3DQMCAgEoMIGRBgkrBgEEAYI3EAQxgYMwgYAweTEQMA4GA1UE
+ChMHUm9vdCBDQTEeMBwGA1UECxMVaHR0cDovL3d3dy5jYWNlcnQub3JnMSIwIAYDVQQDExlD
+QSBDZXJ0IFNpZ25pbmcgQXV0aG9yaXR5MSEwHwYJKoZIhvcNAQkBFhJzdXBwb3J0QGNhY2Vy
+dC5vcmcCAxEt+DCBkwYLKoZIhvcNAQkQAgsxgYOggYAweTEQMA4GA1UEChMHUm9vdCBDQTEe
+MBwGA1UECxMVaHR0cDovL3d3dy5jYWNlcnQub3JnMSIwIAYDVQQDExlDQSBDZXJ0IFNpZ25p
+bmcgQXV0aG9yaXR5MSEwHwYJKoZIhvcNAQkBFhJzdXBwb3J0QGNhY2VydC5vcmcCAxEt+DAN
+BgkqhkiG9w0BAQEFAASCAgBDitmbF6AVg6ViC9lB7FrOGc8wQ2PS0AwgWB5AeiBR2CTYuR8R
+vJ1gDkh1skMuCnlAQNpVN9cze25vXjIUt4A1S6EE9K+LKPbeyDTmzRRMZNThg/szSqRoFOnm
+5BnLTtXGf7w2RlcyyxsceVKAGd6kK9U/kKw8Z5Gjzcp4LGRg8rAl4nxFIz4W6r67W+yqno1g
+aOPISmAgaiPU22xmuvLe7wuFOQr/g5QM4mZTWFDVnbzKdp7x1TwtJY8vf2RD3aeMEVIgH1ya
+EefipxOAj/M8tUGbnnp7dulrH6iDXH7zeHKJAGy0ILVOm9hDzQHKuBckOHdOAa7T1s/jod3o
+j+a8bCLh9X2fIAnd0gqnGWyntxQuaV+GsJ1xNz6/IPdI4XevKOEAYlvy+G/LPTEz3mnkY1T+
+okPMIrKUh6M3Lpnh0WJjmjuEw/RVBQx6szPUJTUXk9+zIGm24ixteqmcHTHFb4MqhJ9dJ2qK
+hBAsG96l0xhTafgcriJdvYMiVk8tT0g4RdMnICJdJyZ1lOSB6hSRKRsL1pA/9VSQMiiUNzSw
+bbVUpGkeoMrno3n37i3N/R6VMYF8lGBGe78YQTICmVfD4f/Uy9TxqRRW3zqBPUCslDExoFYF
+eOjA7stGyXwPHFgqEgDf1xHaCm4IHgFbcYAlHT8gfzB9al0nx6XceoxqVAAAAAAAAA==
+--------------ms000201070102030608040507--
