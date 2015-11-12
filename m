@@ -1,104 +1,157 @@
-From: Austin S Hemmelgarn <ahferroin7@gmail.com>
-Subject: Re: [PATCH v9 0/4] VFS: In-kernel copy system call
-Date: Thu, 12 Nov 2015 07:39:18 -0500
-Message-ID: <56448876.1030508@gmail.com>
-References: <1447192413-15376-1-git-send-email-Anna.Schumaker@Netapp.com>
- <20151111145337.GA2392@zzz>
+From: Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: module: save load_info for livepatch modules
+Date: Thu, 12 Nov 2015 14:22:28 +0100 (CET)
+Message-ID: <alpine.LNX.2.00.1511121400290.9440@pobox.suse.cz>
+References: <1447130755-17383-1-git-send-email-jeyu@redhat.com> <1447130755-17383-3-git-send-email-jeyu@redhat.com> <alpine.LNX.2.00.1511111505300.12467@pobox.suse.cz> <20151112053228.GD30025@packer-debian-8-amd64.digitalocean.com>
+ <20151112102404.GL4431@pathway.suse.cz>
 Mime-Version: 1.0
-Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-512; boundary="------------ms000201070102030608040507"
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20151111145337.GA2392@zzz>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Eric Biggers <ebiggers3@gmail.com>, Anna Schumaker <Anna.Schumaker@netapp.com>
-Cc: linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, zab@zabbo.net, viro@zeniv.linux.org.uk, clm@fb.com, darrick.wong@oracle.com, mtk.manpages@gmail.com, andros@netapp.com, hch@infradead.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20151112102404.GL4431-KsEp0d+Q8qECVLCxKZUutA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
+Cc: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This is a cryptographically signed message in MIME format.
+On Thu, 12 Nov 2015, Petr Mladek wrote:
 
---------------ms000201070102030608040507
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: quoted-printable
+> On Thu 2015-11-12 00:33:12, Jessica Yu wrote:
+> > +++ Miroslav Benes [11/11/15 15:17 +0100]:
+> > >On Mon, 9 Nov 2015, Jessica Yu wrote:
+> > >
+> > >>diff --git a/include/linux/module.h b/include/linux/module.h
+> > >>index 3a19c79..c8680b1 100644
+> > >>--- a/include/linux/module.h
+> > >>+++ b/include/linux/module.h
+> > >
+> > >[...]
+> > >
+> > >>+#ifdef CONFIG_LIVEPATCH
+> > >>+extern void klp_prepare_patch_module(struct module *mod,
+> > >>+				     struct load_info *info);
+> > >>+extern int
+> > >>+apply_relocate_add(Elf64_Shdr *sechdrs, const char *strtab,
+> > >>+		   unsigned int symindex, unsigned int relsec,
+> > >>+		   struct module *me);
+> > >>+#endif
+> > >>+
+> > >> #else /* !CONFIG_MODULES... */
+> > >
+> > >apply_relocate_add() is already in include/linux/moduleloader.h (guarded
+> > >by CONFIG_MODULES_USE_ELF_RELA), so maybe we can just include that where
+> > >we need it. As for the klp_prepare_patch_module() wouldn't it be better to
+> > >have it in our livepatch.h and include that in kernel/module.c?
+> > 
+> > Yeah, Petr pointed this out as well :-) I will just include
+> > moduleloader.h for the apply_relocate_add() declaration.
+> > 
+> > It also looks like we have some disagreement over where to put
+> > klp_prepare_patch_module(), either in livepatch/core.c (and add the
+> > function declaration in livepatch.h, and have module.c include
+> > livepatch.h) or in kernel/module.c, keeping the
+> > klp_prepare_patch_module() declaration in module.h. Maybe Rusty can
+> > provide some input.
 
-On 2015-11-11 09:53, Eric Biggers wrote:
-> On Tue, Nov 10, 2015 at 04:53:30PM -0500, Anna Schumaker wrote:
->>        /* this could be relaxed once a method supports cross-fs copies=
- */
->>        if (inode_in->i_sb !=3D inode_out->i_sb)
->>                return -EXDEV;
->
-> This allows the same superblock but different mounts --- is that intent=
-ional?
-> The commit message says otherwise: it says the vfs entry point requires=
- the same
-> superblock and mount.
-This could be important for BTRFS (because of subvolumes, you can have=20
-multiple mounts that have the same SB, and as of right now, it can be=20
-hard to tell the difference between a nested subvolume and a separate=20
-mount point).  We do support cross-subvolume reflinks, but I'm not sure=20
-if that works between subvolumes mounted at different places (if it=20
-doesn't, I may have to look into getting that changed).
+Yes, there are several ways how to do it. Maybe the best would be some 
+generic way in kernel/module.c. I am not sure if there will be another 
+user of this in the future but nevertheless. It would also allow us to 
+somehow solve the issues mentioned below. Thus, klp_prepare_patch_module 
+is inappropriate name and it should be for example just preserve_load_info 
+(or more general if needed) and it should be in kernel/module.c.
 
+> > >> /* Given an address, look for it in the exception tables. */
+> > >>diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
+> > >>index 6e53441..087a8c7 100644
+> > >>--- a/kernel/livepatch/core.c
+> > >>+++ b/kernel/livepatch/core.c
+> > >>@@ -1001,6 +1001,23 @@ static struct notifier_block klp_module_nb = {
+> > >> 	.priority = INT_MIN+1, /* called late but before ftrace notifier */
+> > >> };
+> > >>
+> > >>+/*
+> > >>+ * Save necessary information from info in order to be able to
+> > >>+ * patch modules that might be loaded later
+> > >>+ */
+> > >>+void klp_prepare_patch_module(struct module *mod, struct load_info *info)
+> > >>+{
+> > >>+	Elf_Shdr *symsect;
+> > >>+
+> > >>+	symsect = info->sechdrs + info->index.sym;
+> > >>+	/* update sh_addr to point to symtab */
+> > >>+	symsect->sh_addr = (unsigned long)info->hdr + symsect->sh_offset;
+> > >>+
+> > >>+	mod->info = kzalloc(sizeof(*info), GFP_KERNEL);
+> > >>+	memcpy(mod->info, info, sizeof(*info));
+> > >>+
+> > >>+}
+> > >
+> > >What about arch-specific 'struct mod_arch_specific'? We need to preserve
+> > >it somewhere as well for s390x and other non-x86 architectures.
+> > 
+> > Ah! Thank you for catching this, I overlooked this important detail.
+> > Yes, we do need to save the arch-specific struct. We would be in
+> > trouble for s390 relocs if we didn't. I am trying to think of a way to
+> > save this information for s390, since s390's module_finalize() frees
+> > mod->arch.syminfo, which we definitely need in order for the call to
+> > apply_relocate_add() to work. Maybe we can add an extra call right
+> > before module_finalize() that will do some livepatch-specific
+> > processing and copy this information (this would be in
+> > post_relocation() in kernel/module.c). Perhaps this patchset cannot be
+> > entirely free of arch-specific code after all :-( Still thinking.
 
---------------ms000201070102030608040507
-Content-Type: application/pkcs7-signature; name="smime.p7s"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="smime.p7s"
-Content-Description: S/MIME Cryptographic Signature
+Well, mod_arch_specific is defined as each architecture needs. So for x86 
+it is empty. It is arch-agnostic in this way and we can deal with it as 
+"a black box". We just need it not to be freed in module_finalize. And...
 
-MIAGCSqGSIb3DQEHAqCAMIACAQExDzANBglghkgBZQMEAgMFADCABgkqhkiG9w0BBwEAAKCC
-Brgwgga0MIIEnKADAgECAgMRLfgwDQYJKoZIhvcNAQENBQAweTEQMA4GA1UEChMHUm9vdCBD
-QTEeMBwGA1UECxMVaHR0cDovL3d3dy5jYWNlcnQub3JnMSIwIAYDVQQDExlDQSBDZXJ0IFNp
-Z25pbmcgQXV0aG9yaXR5MSEwHwYJKoZIhvcNAQkBFhJzdXBwb3J0QGNhY2VydC5vcmcwHhcN
-MTUwOTIxMTEzNTEzWhcNMTYwMzE5MTEzNTEzWjBjMRgwFgYDVQQDEw9DQWNlcnQgV29UIFVz
-ZXIxIzAhBgkqhkiG9w0BCQEWFGFoZmVycm9pbjdAZ21haWwuY29tMSIwIAYJKoZIhvcNAQkB
-FhNhaGVtbWVsZ0BvaGlvZ3QuY29tMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA
-nQ/81tq0QBQi5w316VsVNfjg6kVVIMx760TuwA1MUaNQgQ3NyUl+UyFtjhpkNwwChjgAqfGd
-LIMTHAdObcwGfzO5uI2o1a8MHVQna8FRsU3QGouysIOGQlX8jFYXMKPEdnlt0GoQcd+BtESr
-pivbGWUEkPs1CwM6WOrs+09bAJP3qzKIr0VxervFrzrC5Dg9Rf18r9WXHElBuWHg4GYHNJ2V
-Ab8iKc10h44FnqxZK8RDN8ts/xX93i9bIBmHnFfyNRfiOUtNVeynJbf6kVtdHP+CRBkXCNRZ
-qyQT7gbTGD24P92PS2UTmDfplSBcWcTn65o3xWfesbf02jF6PL3BCrVnDRI4RgYxG3zFBJuG
-qvMoEODLhHKSXPAyQhwZINigZNdw5G1NqjXqUw+lIqdQvoPijK9J3eijiakh9u2bjWOMaleI
-SMRR6XsdM2O5qun1dqOrCgRkM0XSNtBQ2JjY7CycIx+qifJWsRaYWZz0aQU4ZrtAI7gVhO9h
-pyNaAGjvm7PdjEBiXq57e4QcgpwzvNlv8pG1c/hnt0msfDWNJtl3b6elhQ2Pz4w/QnWifZ8E
-BrFEmjeeJa2dqjE3giPVWrsH+lOvQQONsYJOuVb8b0zao4vrWeGmW2q2e3pdv0Axzm/60cJQ
-haZUv8+JdX9ZzqxOm5w5eUQSclt84u+D+hsCAwEAAaOCAVkwggFVMAwGA1UdEwEB/wQCMAAw
-VgYJYIZIAYb4QgENBEkWR1RvIGdldCB5b3VyIG93biBjZXJ0aWZpY2F0ZSBmb3IgRlJFRSBo
-ZWFkIG92ZXIgdG8gaHR0cDovL3d3dy5DQWNlcnQub3JnMA4GA1UdDwEB/wQEAwIDqDBABgNV
-HSUEOTA3BggrBgEFBQcDBAYIKwYBBQUHAwIGCisGAQQBgjcKAwQGCisGAQQBgjcKAwMGCWCG
-SAGG+EIEATAyBggrBgEFBQcBAQQmMCQwIgYIKwYBBQUHMAGGFmh0dHA6Ly9vY3NwLmNhY2Vy
-dC5vcmcwMQYDVR0fBCowKDAmoCSgIoYgaHR0cDovL2NybC5jYWNlcnQub3JnL3Jldm9rZS5j
-cmwwNAYDVR0RBC0wK4EUYWhmZXJyb2luN0BnbWFpbC5jb22BE2FoZW1tZWxnQG9oaW9ndC5j
-b20wDQYJKoZIhvcNAQENBQADggIBADMnxtSLiIunh/TQcjnRdf63yf2D8jMtYUm4yDoCF++J
-jCXbPQBGrpCEHztlNSGIkF3PH7ohKZvlqF4XePWxpY9dkr/pNyCF1PRkwxUURqvuHXbu8Lwn
-8D3U2HeOEU3KmrfEo65DcbanJCMTTW7+mU9lZICPP7ZA9/zB+L0Gm1UNFZ6AU50N/86vjQfY
-WgkCd6dZD4rQ5y8L+d/lRbJW7ZGEQw1bSFVTRpkxxDTOwXH4/GpQfnfqTAtQuJ1CsKT12e+H
-NSD/RUWGTr289dA3P4nunBlz7qfvKamxPymHeBEUcuICKkL9/OZrnuYnGROFwcdvfjGE5iLB
-kjp/ttrY4aaVW5EsLASNgiRmA6mbgEAMlw3RwVx0sVelbiIAJg9Twzk4Ct6U9uBKiJ8S0sS2
-8RCSyTmCRhJs0vvva5W9QUFGmp5kyFQEoSfBRJlbZfGX2ehI2Hi3U2/PMUm2ONuQG1E+a0AP
-u7I0NJc/Xil7rqR0gdbfkbWp0a+8dAvaM6J00aIcNo+HkcQkUgtfrw+C2Oyl3q8IjivGXZqT
-5UdGUb2KujLjqjG91Dun3/RJ/qgQlotH7WkVBs7YJVTCxfkdN36rToPcnMYOI30FWa0Q06gn
-F6gUv9/mo6riv3A5bem/BdbgaJoPnWQD9D8wSyci9G4LKC+HQAMdLmGoeZfpJzKHMYIE0TCC
-BM0CAQEwgYAweTEQMA4GA1UEChMHUm9vdCBDQTEeMBwGA1UECxMVaHR0cDovL3d3dy5jYWNl
-cnQub3JnMSIwIAYDVQQDExlDQSBDZXJ0IFNpZ25pbmcgQXV0aG9yaXR5MSEwHwYJKoZIhvcN
-AQkBFhJzdXBwb3J0QGNhY2VydC5vcmcCAxEt+DANBglghkgBZQMEAgMFAKCCAiEwGAYJKoZI
-hvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMTUxMTEyMTIzOTE4WjBPBgkq
-hkiG9w0BCQQxQgRAalYfrgZnllTUiiX6cDpK3mkZzpoLkPvdq3c7XQLPv0m2QUJD87iajbSN
-Egqbr4hgOVAEH3h2nhjoY28F3nnPvDBsBgkqhkiG9w0BCQ8xXzBdMAsGCWCGSAFlAwQBKjAL
-BglghkgBZQMEAQIwCgYIKoZIhvcNAwcwDgYIKoZIhvcNAwICAgCAMA0GCCqGSIb3DQMCAgFA
-MAcGBSsOAwIHMA0GCCqGSIb3DQMCAgEoMIGRBgkrBgEEAYI3EAQxgYMwgYAweTEQMA4GA1UE
-ChMHUm9vdCBDQTEeMBwGA1UECxMVaHR0cDovL3d3dy5jYWNlcnQub3JnMSIwIAYDVQQDExlD
-QSBDZXJ0IFNpZ25pbmcgQXV0aG9yaXR5MSEwHwYJKoZIhvcNAQkBFhJzdXBwb3J0QGNhY2Vy
-dC5vcmcCAxEt+DCBkwYLKoZIhvcNAQkQAgsxgYOggYAweTEQMA4GA1UEChMHUm9vdCBDQTEe
-MBwGA1UECxMVaHR0cDovL3d3dy5jYWNlcnQub3JnMSIwIAYDVQQDExlDQSBDZXJ0IFNpZ25p
-bmcgQXV0aG9yaXR5MSEwHwYJKoZIhvcNAQkBFhJzdXBwb3J0QGNhY2VydC5vcmcCAxEt+DAN
-BgkqhkiG9w0BAQEFAASCAgBDitmbF6AVg6ViC9lB7FrOGc8wQ2PS0AwgWB5AeiBR2CTYuR8R
-vJ1gDkh1skMuCnlAQNpVN9cze25vXjIUt4A1S6EE9K+LKPbeyDTmzRRMZNThg/szSqRoFOnm
-5BnLTtXGf7w2RlcyyxsceVKAGd6kK9U/kKw8Z5Gjzcp4LGRg8rAl4nxFIz4W6r67W+yqno1g
-aOPISmAgaiPU22xmuvLe7wuFOQr/g5QM4mZTWFDVnbzKdp7x1TwtJY8vf2RD3aeMEVIgH1ya
-EefipxOAj/M8tUGbnnp7dulrH6iDXH7zeHKJAGy0ILVOm9hDzQHKuBckOHdOAa7T1s/jod3o
-j+a8bCLh9X2fIAnd0gqnGWyntxQuaV+GsJ1xNz6/IPdI4XevKOEAYlvy+G/LPTEz3mnkY1T+
-okPMIrKUh6M3Lpnh0WJjmjuEw/RVBQx6szPUJTUXk9+zIGm24ixteqmcHTHFb4MqhJ9dJ2qK
-hBAsG96l0xhTafgcriJdvYMiVk8tT0g4RdMnICJdJyZ1lOSB6hSRKRsL1pA/9VSQMiiUNzSw
-bbVUpGkeoMrno3n37i3N/R6VMYF8lGBGe78YQTICmVfD4f/Uy9TxqRRW3zqBPUCslDExoFYF
-eOjA7stGyXwPHFgqEgDf1xHaCm4IHgFbcYAlHT8gfzB9al0nx6XceoxqVAAAAAAAAA==
---------------ms000201070102030608040507--
+> I think about adding a flag somewhere, e.g. mod->preserve_relocs.
+> It might be set in simplify_symbols() when SHN_LIVEPATCH is found.
+> It might be checked when freeing the needed structures in both
+> the generic and arch-specific code.
+
+...that is the reason why some sort of flag seems to be necessary. It 
+could be set when livepatch is set in modinfo. We would use it for 
+preserving both load_info and mod_arch_specific struct (in some form) and 
+for...
+
+> > >>+#ifdef CONFIG_LIVEPATCH
+> > >>+	/*
+> > >>+	 * Save sechdrs, indices, and other data from info
+> > >>+	 * in order to patch to-be-loaded modules.
+> > >>+	 * Do not call free_copy() for livepatch modules.
+> > >>+	 */
+> > >>+	if (get_modinfo((struct load_info *)info, "livepatch"))
+> > >>+		klp_prepare_patch_module(mod, info);
+> > >>+	else
+> > >>+		free_copy(info);
+> > >>+#else
+> > >> 	/* Get rid of temporary copy. */
+> > >> 	free_copy(info);
+> > >>+#endif
+> > >
+> > >Maybe I am missing something but isn't it necessary to call vfree() on
+> > >info somewhere in the end?
+> > 
+> > So free_copy() will call vfree(info->hdr), except in livepatch modules
+> > we want to keep all the elf section information stored there, so we
+> > avoid calling free_copy(), As for the info struct itself, if you look
+> > at the init_module and finit_module syscall definitions in
+> > kernel/module.c, you will see that info is actually a local function
+> > variable, simply passed in to the call to load_module(), and will be
+> > automatically deallocated when the syscall returns. :-) No need to
+> > explicitly free info.
+> 
+> We still have to free the copied or preserved structures when
+> the module is unloaded.
+
+...freeing what we allocated. We need to free info->hdr somewhere if not 
+here and also mod_arch_specific struct where the patch module is removed. 
+This would unfortunately lead to changes in arch-specific code in 
+module.c. For example in arch/s390/kernel/module.c there is vfree call on 
+part of mod_arch_specific in module_finalize. We would call it only if the 
+flag mentioned above is not set and at the same time we would need to call 
+it when the patch module is being removed.
+
+Hm, this is (again) getting complicated and ugly. Is there someone who can 
+simplify things? Josh? :)
+
+Miroslav
