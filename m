@@ -1,61 +1,59 @@
-From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: samples: livepatch: init reloc list and mark as klp module
-Date: Thu, 12 Nov 2015 01:02:50 -0500
-Message-ID: <20151112060249.GA5841@packer-debian-8-amd64.digitalocean.com>
-References: <1447130755-17383-1-git-send-email-jeyu@redhat.com>
- <1447130755-17383-5-git-send-email-jeyu@redhat.com>
- <20151111154249.GQ2599@pathway.suse.cz>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+From: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: [PATCH] selftests/seccomp: Get page size from sysconf
+Date: Thu, 12 Nov 2015 14:41:25 +0800
+Message-ID: <1447310485-4710-1-git-send-email-bamvor.zhangjian@linaro.org>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20151111154249.GQ2599-KsEp0d+Q8qECVLCxKZUutA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: rsesek-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-+++ Petr Mladek [11/11/15 16:42 +0100]:
->On Mon 2015-11-09 23:45:54, Jessica Yu wrote:
->> Intialize the list of relocation sections in the sample
->> klp_object (even if the list will be empty in this case).
->> Also mark module as a livepatch module so that the module
->> loader can appropriately initialize it.
->>
->> Signed-off-by: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->> ---
->>  samples/livepatch/livepatch-sample.c | 2 ++
->>  1 file changed, 2 insertions(+)
->>
->> diff --git a/samples/livepatch/livepatch-sample.c b/samples/livepatch/livepatch-sample.c
->> index fb8c861..2ef9345 100644
->> --- a/samples/livepatch/livepatch-sample.c
->> +++ b/samples/livepatch/livepatch-sample.c
->> @@ -89,3 +90,4 @@ static void livepatch_exit(void)
->>  module_init(livepatch_init);
->>  module_exit(livepatch_exit);
->>  MODULE_LICENSE("GPL");
->> +MODULE_INFO(livepatch, "Y");
->
->This looks a bit error prone. I wonder if we could detect this
->information another way. For example, by a check for the
->livepatch-related elf sections. If it is missing,
->we do not need to preserve struct load_info even
->when it is a livepatch.
+The commit fd88d16c58c2 ("selftests/seccomp: Be more precise with
+syscall arguments") use PAGE_SIZE directly which lead to build
+failure on arm64.
 
-Yeah, I agree that it is unnecessary for a livepatch module without
-reloc secs to keep a copy of the load_info struct. My justification
-for using MODULE_INFO is that I was trying to be consistent with the
-way how other module "characteristics" are checked in the module
-loader. For example, if the module came from the staging tree, the
-module loader simply checks get_modinfo(info, "staging")). If the
-module is a livepatch module, we check get_modinfo(info,
-"livepatch")). I also thought that it might be useful additional
-information for the user to be able to issue the modinfo command on a
-module to see if it's a livepatch module or not (but maybe this
-information won't be so useful after all, that's quite subjective).
-But if we want to do a more thorough check, we could, like you said,
-check for the livepatch-related elf sections before copying load_info.
+Replace it with generic interface(sysconf(_SC_PAGESIZE)) to fix this
+failure.
 
-Thanks,
-Jessica
+Build and test successful on arm64.
+
+Signed-off-by: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+---
+ tools/testing/selftests/seccomp/seccomp_bpf.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c b/tools/testing/selftests/seccomp/seccomp_bpf.c
+index e38cc54..05afca9 100644
+--- a/tools/testing/selftests/seccomp/seccomp_bpf.c
++++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
+@@ -492,6 +492,7 @@ TEST_SIGNAL(KILL_one_arg_six, SIGSYS)
+ 	pid_t parent = getppid();
+ 	int fd;
+ 	void *map1, *map2;
++	int page_size = sysconf(_SC_PAGESIZE);
+ 
+ 	ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
+ 	ASSERT_EQ(0, ret);
+@@ -504,16 +505,16 @@ TEST_SIGNAL(KILL_one_arg_six, SIGSYS)
+ 
+ 	EXPECT_EQ(parent, syscall(__NR_getppid));
+ 	map1 = (void *)syscall(sysno,
+-		NULL, PAGE_SIZE, PROT_READ, MAP_PRIVATE, fd, PAGE_SIZE);
++		NULL, page_size, PROT_READ, MAP_PRIVATE, fd, page_size);
+ 	EXPECT_NE(MAP_FAILED, map1);
+ 	/* mmap2() should never return. */
+ 	map2 = (void *)syscall(sysno,
+-		 NULL, PAGE_SIZE, PROT_READ, MAP_PRIVATE, fd, 0x0C0FFEE);
++		 NULL, page_size, PROT_READ, MAP_PRIVATE, fd, 0x0C0FFEE);
+ 	EXPECT_EQ(MAP_FAILED, map2);
+ 
+ 	/* The test failed, so clean up the resources. */
+-	munmap(map1, PAGE_SIZE);
+-	munmap(map2, PAGE_SIZE);
++	munmap(map1, page_size);
++	munmap(map2, page_size);
+ 	close(fd);
+ }
+ 
+-- 
+2.1.4
