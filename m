@@ -1,7 +1,7 @@
 From: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [RFC PATCH 2/5] module: save load_info for livepatch modules
-Date: Thu, 12 Nov 2015 11:14:38 -0600
-Message-ID: <20151112171438.GE4038@treble.hsd1.ky.comcast.net>
+Date: Thu, 12 Nov 2015 11:21:59 -0600
+Message-ID: <20151112172159.GF4038@treble.hsd1.ky.comcast.net>
 References: <1447130755-17383-1-git-send-email-jeyu@redhat.com>
  <1447130755-17383-3-git-send-email-jeyu@redhat.com>
 Mime-Version: 1.0
@@ -141,8 +141,8 @@ On Mon, Nov 09, 2015 at 11:45:52PM -0500, Jessica Yu wrote:
 > +#endif
 > +
 
-The kernel coding style generally frowns on ifdefs inside functions.
-IMO it's fine to just remove the ifdef completely here.
+It would be good to add a short comment here stating that livepatch
+symbols are resolved later by the klp code.
 
 >  		case SHN_UNDEF:
 >  			ksym = resolve_symbol_wait(mod, info, name);
@@ -157,7 +157,8 @@ IMO it's fine to just remove the ifdef completely here.
 > +#endif
 > +
 
-Same here, I think the ifdef can be removed.
+Same here, a short comment stating that livepatch relocations are
+applied later by klp code.
 
 >  		if (info->sechdrs[i].sh_type == SHT_REL)
 >  			err = apply_relocate(info->sechdrs, info->strtab,
@@ -180,10 +181,12 @@ Same here, I think the ifdef can be removed.
 >  	/* Get rid of temporary copy. */
 >  	free_copy(info);
 > +#endif
-
-Same here, IMO.  (And as Miroslav suggested, klp_prepare_patch_module()
-can be renamed to something else (save_info()?) which exists even in the
-!CONFIG_LIVEPATCH case.
+>  
+>  	/* Done! */
+>  	trace_module_load(mod);
+> -- 
+> 2.4.3
+> 
 
 -- 
 Josh
