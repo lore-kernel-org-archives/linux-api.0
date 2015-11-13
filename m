@@ -1,68 +1,47 @@
-From: Jessica Yu <jeyu@redhat.com>
-Subject: Re: elf: add livepatch-specific elf constants
-Date: Fri, 13 Nov 2015 01:49:51 -0500
-Message-ID: <20151113064951.GD13513@packer-debian-8-amd64.digitalocean.com>
-References: <1447130755-17383-1-git-send-email-jeyu@redhat.com>
- <1447130755-17383-2-git-send-email-jeyu@redhat.com>
- <20151112154506.GC4038@treble.hsd1.ky.comcast.net>
+From: Minchan Kim <minchan@kernel.org>
+Subject: Re: [PATCH v3 01/17] mm: support madvise(MADV_FREE)
+Date: Fri, 13 Nov 2015 16:03:56 +0900
+Message-ID: <20151113070356.GG5235@bbox>
+References: <1447302793-5376-1-git-send-email-minchan@kernel.org>
+ <1447302793-5376-2-git-send-email-minchan@kernel.org>
+ <CALCETrWA6aZC_3LPM3niN+2HFjGEm_65m9hiEdpBtEZMn0JhwQ@mail.gmail.com>
+ <564421DA.9060809@gmail.com>
+ <20151113061511.GB5235@bbox>
+ <56458056.8020105@gmail.com>
+ <20151113063802.GF5235@bbox>
+ <56458720.4010400@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <56458720.4010400@gmail.com>
 Content-Disposition: inline
-In-Reply-To: <20151112154506.GC4038@treble.hsd1.ky.comcast.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Josh Poimboeuf <jpoimboe@redhat.com>
-Cc: Rusty Russell <rusty@rustcorp.com.au>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Miroslav Benes <mbenes@suse.cz>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org
+Sender: owner-linux-mm@kvack.org
+To: Daniel Micay <danielmicay@gmail.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Shaohua Li <shli@kernel.org>, Michal Hocko <mhocko@suse.cz>, yalin wang <yalin.wang2010@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-+++ Josh Poimboeuf [12/11/15 09:45 -0600]:
->On Mon, Nov 09, 2015 at 11:45:51PM -0500, Jessica Yu wrote:
->> Add livepatch elf reloc section flag, livepatch symbol bind
->> and section index
->>
->> Signed-off-by: Jessica Yu <jeyu@redhat.com>
->> ---
->>  include/uapi/linux/elf.h | 3 +++
->>  1 file changed, 3 insertions(+)
->>
->> diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
->> index 71e1d0e..967ce1b 100644
->> --- a/include/uapi/linux/elf.h
->> +++ b/include/uapi/linux/elf.h
->> @@ -118,6 +118,7 @@ typedef __s64	Elf64_Sxword;
->>  #define STB_LOCAL  0
->>  #define STB_GLOBAL 1
->>  #define STB_WEAK   2
->> +#define STB_LIVEPATCH_EXT 11
->>
->>  #define STT_NOTYPE  0
->>  #define STT_OBJECT  1
->> @@ -286,6 +287,7 @@ typedef struct elf64_phdr {
->>  #define SHF_ALLOC	0x2
->>  #define SHF_EXECINSTR	0x4
->>  #define SHF_MASKPROC	0xf0000000
->> +#define SHF_RELA_LIVEPATCH  0x4000000
->
->Writing the value with leading zeros (0x04000000) would it more
->readable.
->
->Also the OS-specific range mask (SHF_MASKOS) is 0x0ff00000.  Any reason
->you went with 0x04000000 as opposed to the first value in the range
->(0x00100000)?  I don't see anybody else using that value.
+On Fri, Nov 13, 2015 at 01:45:52AM -0500, Daniel Micay wrote:
+> > And now I am thinking if we use access bit, we could implment MADV_FREE_UNDO
+> > easily when we need it. Maybe, that's what you want. Right?
+> 
+> Yes, but why the access bit instead of the dirty bit for that? It could
+> always be made more strict (i.e. access bit) in the future, while going
+> the other way won't be possible. So I think the dirty bit is really the
+> more conservative choice since if it turns out to be a mistake it can be
+> fixed without a backwards incompatible change.
 
-I don't have any particular reason, I think I just picked any value
-and ran with it. I'll just change it to the first value in the range
-since that makes more sense.
+Absolutely true. That's why I insist on dirty bit until now although
+I didn't tell the reason. But I thought you wanted to change for using
+access bit for the future, too. It seems MADV_FREE start to bloat
+over and over again before knowing real problems and usecases.
+It's almost same situation with volatile ranges so I really want to
+stop at proper point which maintainer should decide, I hope.
+Without it, we will make the feature a lot heavy by just brain storming
+and then causes lots of churn in MM code without real bebenfit
+It would be very painful for us.
 
->>  /* special section indexes */
->>  #define SHN_UNDEF	0
->> @@ -295,6 +297,7 @@ typedef struct elf64_phdr {
->>  #define SHN_ABS		0xfff1
->>  #define SHN_COMMON	0xfff2
->>  #define SHN_HIRESERVE	0xffff
->> +#define SHN_LIVEPATCH 0xff21
->
->Similar question here, why not use 0xff20 (SHN_LOOS)?
->
->-- 
->Josh
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
