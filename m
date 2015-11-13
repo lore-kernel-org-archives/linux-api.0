@@ -1,113 +1,143 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v3 01/17] mm: support madvise(MADV_FREE)
-Date: Fri, 13 Nov 2015 11:46:07 -0800
-Message-ID: <CALCETrVx0JFchtJrrKVqEYvTwWvC+DwSLxzhD_A7EdNu2PiG7w@mail.gmail.com>
-References: <1447302793-5376-1-git-send-email-minchan@kernel.org>
- <1447302793-5376-2-git-send-email-minchan@kernel.org> <CALCETrWA6aZC_3LPM3niN+2HFjGEm_65m9hiEdpBtEZMn0JhwQ@mail.gmail.com>
- <564421DA.9060809@gmail.com> <20151113061511.GB5235@bbox> <56458056.8020105@gmail.com>
- <20151113063802.GF5235@bbox> <56458720.4010400@gmail.com> <20151113070356.GG5235@bbox>
- <56459B9A.7080501@gmail.com>
+From: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v3] block: create ioctl to discard-or-zeroout a range of blocks
+Date: Fri, 13 Nov 2015 15:23:25 -0500
+Message-ID: <x491tbt643m.fsf@segfault.boston.devel.redhat.com>
+References: <20151111062948.GA2214@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <56459B9A.7080501@gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Daniel Micay <danielmicay@gmail.com>
-Cc: Minchan Kim <minchan@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Shaohua Li <shli@kernel.org>, Michal Hocko <mhocko@suse.cz>, yalin wang <yalin.wang2010@gmail.com>
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20151111062948.GA2214-PTl6brltDGh4DFYR7WNSRA@public.gmane.org> (Darrick J. Wong's
+	message of "Tue, 10 Nov 2015 22:29:48 -0800")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Seymour, Shane M" <shane.seymour-ZPxbGqLxI0U@public.gmane.org>, "linux-kernel@vger.kernel.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api@vger.kernel.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, "martin.petersen@oracle.com" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 13, 2015 at 12:13 AM, Daniel Micay <danielmicay@gmail.com> wrote:
-> On 13/11/15 02:03 AM, Minchan Kim wrote:
->> On Fri, Nov 13, 2015 at 01:45:52AM -0500, Daniel Micay wrote:
->>>> And now I am thinking if we use access bit, we could implment MADV_FREE_UNDO
->>>> easily when we need it. Maybe, that's what you want. Right?
->>>
->>> Yes, but why the access bit instead of the dirty bit for that? It could
->>> always be made more strict (i.e. access bit) in the future, while going
->>> the other way won't be possible. So I think the dirty bit is really the
->>> more conservative choice since if it turns out to be a mistake it can be
->>> fixed without a backwards incompatible change.
->>
->> Absolutely true. That's why I insist on dirty bit until now although
->> I didn't tell the reason. But I thought you wanted to change for using
->> access bit for the future, too. It seems MADV_FREE start to bloat
->> over and over again before knowing real problems and usecases.
->> It's almost same situation with volatile ranges so I really want to
->> stop at proper point which maintainer should decide, I hope.
->> Without it, we will make the feature a lot heavy by just brain storming
->> and then causes lots of churn in MM code without real bebenfit
->> It would be very painful for us.
+"Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> writes:
+
+> Create a new ioctl to expose the block layer's newfound ability to
+> issue either a zeroing discard, a WRITE SAME with a zero page, or a
+> regular write with the zero page.  This BLKZEROOUT2 ioctl takes
+> {start, length, flags} as parameters.  So far, the only flag available
+> is to enable the zeroing discard part -- without it, the call invokes
+> the old BLKZEROOUT behavior.  start and length have the same meaning
+> as in BLKZEROOUT.
 >
-> Well, I don't think you need more than a good API and an implementation
-> with no known bugs, kernel security concerns or backwards compatibility
-> issues. Configuration and API extensions are something for later (i.e.
-> land a baseline, then submit stuff like sysctl tunables). Just my take
-> on it though...
+> Furthermore, because BLKZEROOUT2 issues commands directly to the
+> storage device, we must invalidate the page cache (as a regular
+> O_DIRECT write would do) to avoid returning stale cache contents at a
+> later time.
 >
+> v3: Add extra padding for future expansion, and check the padding is zero.
 
-As long as it's anonymous MAP_PRIVATE only, then the security aspects
-should be okay.  MADV_DONTNEED seems to work on pretty much any VMA,
-and there's been long history of interesting bugs there.
+Is there someplace we document ioctls?  This stuff really could use some
+good documentation.
 
-As for dirty vs accessed, an argument in favor of going straight to
-accessed is that it means that users can write code like this without
-worrying about whether they have a kernel that uses the dirty bit:
+Cheers,
+Jeff
 
-x = mmap(...);
-*x = 1;  /* mark it present */
-
-/* i'm done with it */
-*x = 1;
-madvise(MADV_FREE, x, ...);
-
-wait a while;
-
-/* is it still there? */
-if (*x == 1) {
-  /* use whatever was cached there */
-} else {
- /* reinitialize it */
- *x = 1;
-}
-
-With the dirty bit, this will look like it works, but on occasion
-users will lose the race where they probe *x to see if the data was
-lost and then the data gets lost before the next write comes in.
-
-Sure, that load from *x could be changed to RMW or users could do a
-dummy write (e.g. x[1] = 1; if (*x == 1) ...), but people might forget
-to do that, and the caching implications are a little bit worse.
-
-Note that switching to RMW is really really dangerous.  Doing:
-
-*x &= 1;
-if (*x == 1) ...;
-
-is safe on x86 if the compiler generates:
-
-andl $1, (%[x]);
-cmpl $1, (%[x]);
-
-but is unsafe if the compiler generates:
-
-movl (%[x]), %eax;
-andl $1, %eax;
-movl %eax, (%[x]);
-cmpl $1, %eax;
-
-and even worse if the write is omitted when "provably" unnecessary.
-
-OTOH, if switching to the accessed bit is too much of a mess, then
-using the dirty bit at first isn't so bad.
-
---Andy
-
--- 
-Andy Lutomirski
-AMA Capital Management, LLC
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+>
+> Signed-off-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+> ---
+>  block/ioctl.c           |   48 ++++++++++++++++++++++++++++++++++++++++-------
+>  include/uapi/linux/fs.h |    9 +++++++++
+>  2 files changed, 50 insertions(+), 7 deletions(-)
+>
+> diff --git a/block/ioctl.c b/block/ioctl.c
+> index 8061eba..8e67551 100644
+> --- a/block/ioctl.c
+> +++ b/block/ioctl.c
+> @@ -213,19 +213,39 @@ static int blk_ioctl_discard(struct block_device *bdev, uint64_t start,
+>  }
+>  
+>  static int blk_ioctl_zeroout(struct block_device *bdev, uint64_t start,
+> -			     uint64_t len)
+> +			     uint64_t len, uint32_t flags)
+>  {
+> +	int ret;
+> +	struct address_space *mapping;
+> +	uint64_t end = start + len - 1;
+> +
+> +	if (flags & ~BLKZEROOUT2_DISCARD_OK)
+> +		return -EINVAL;
+>  	if (start & 511)
+>  		return -EINVAL;
+>  	if (len & 511)
+>  		return -EINVAL;
+> -	start >>= 9;
+> -	len >>= 9;
+> -
+> -	if (start + len > (i_size_read(bdev->bd_inode) >> 9))
+> +	if (end >= i_size_read(bdev->bd_inode))
+>  		return -EINVAL;
+>  
+> -	return blkdev_issue_zeroout(bdev, start, len, GFP_KERNEL, false);
+> +	/* Invalidate the page cache, including dirty pages */
+> +	mapping = bdev->bd_inode->i_mapping;
+> +	truncate_inode_pages_range(mapping, start, end);
+> +
+> +	ret = blkdev_issue_zeroout(bdev, start >> 9, len >> 9, GFP_KERNEL,
+> +				   flags & BLKZEROOUT2_DISCARD_OK);
+> +	if (ret)
+> +		goto out;
+> +
+> +	/*
+> +	 * Invalidate again; if someone wandered in and dirtied a page,
+> +	 * the caller will be given -EBUSY.
+> +	 */
+> +	ret = invalidate_inode_pages2_range(mapping,
+> +					    start >> PAGE_CACHE_SHIFT,
+> +					    end >> PAGE_CACHE_SHIFT);
+> +out:
+> +	return ret;
+>  }
+>  
+>  static int put_ushort(unsigned long arg, unsigned short val)
+> @@ -353,7 +373,21 @@ int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
+>  		if (copy_from_user(range, (void __user *)arg, sizeof(range)))
+>  			return -EFAULT;
+>  
+> -		return blk_ioctl_zeroout(bdev, range[0], range[1]);
+> +		return blk_ioctl_zeroout(bdev, range[0], range[1], 0);
+> +	}
+> +	case BLKZEROOUT2: {
+> +		struct blkzeroout2 p;
+> +
+> +		if (!(mode & FMODE_WRITE))
+> +			return -EBADF;
+> +
+> +		if (copy_from_user(&p, (void __user *)arg, sizeof(p)))
+> +			return -EFAULT;
+> +
+> +		if (p.padding || p.padding2)
+> +			return -EINVAL;
+> +
+> +		return blk_ioctl_zeroout(bdev, p.start, p.length, p.flags);
+>  	}
+>  
+>  	case HDIO_GETGEO: {
+> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+> index 9b964a5..b811fa4 100644
+> --- a/include/uapi/linux/fs.h
+> +++ b/include/uapi/linux/fs.h
+> @@ -152,6 +152,15 @@ struct inodes_stat_t {
+>  #define BLKSECDISCARD _IO(0x12,125)
+>  #define BLKROTATIONAL _IO(0x12,126)
+>  #define BLKZEROOUT _IO(0x12,127)
+> +struct blkzeroout2 {
+> +	__u64 start;
+> +	__u64 length;
+> +	__u32 flags;
+> +	__u32 padding;
+> +	__u64 padding2;
+> +};
+> +#define BLKZEROOUT2_DISCARD_OK	1
+> +#define BLKZEROOUT2 _IOR(0x12, 127, struct blkzeroout2)
+>  
+>  #define BMAP_IOCTL 1		/* obsolete - kept for compatibility */
+>  #define FIBMAP	   _IO(0x00,1)	/* bmap access */
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
