@@ -1,84 +1,197 @@
-From: Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v3 01/17] mm: support madvise(MADV_FREE)
-Date: Fri, 13 Nov 2015 03:13:14 -0500
-Message-ID: <56459B9A.7080501@gmail.com>
-References: <1447302793-5376-1-git-send-email-minchan@kernel.org>
- <1447302793-5376-2-git-send-email-minchan@kernel.org>
- <CALCETrWA6aZC_3LPM3niN+2HFjGEm_65m9hiEdpBtEZMn0JhwQ@mail.gmail.com>
- <564421DA.9060809@gmail.com> <20151113061511.GB5235@bbox>
- <56458056.8020105@gmail.com> <20151113063802.GF5235@bbox>
- <56458720.4010400@gmail.com> <20151113070356.GG5235@bbox>
+From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: module: save load_info for livepatch modules
+Date: Fri, 13 Nov 2015 03:20:20 -0500
+Message-ID: <20151113082020.GF13513@packer-debian-8-amd64.digitalocean.com>
+References: <1447130755-17383-1-git-send-email-jeyu@redhat.com>
+ <1447130755-17383-3-git-send-email-jeyu@redhat.com>
+ <20151111143152.GG4431@pathway.suse.cz>
+ <20151112044407.GC30025@packer-debian-8-amd64.digitalocean.com>
+ <20151112100548.GK4431@pathway.suse.cz>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
- protocol="application/pgp-signature";
- boundary="ecsUtC3W8kFJ8SxDviaGGgFSqHrMGNiT1"
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151113070356.GG5235@bbox>
+Content-Disposition: inline
+In-Reply-To: <20151112100548.GK4431-KsEp0d+Q8qECVLCxKZUutA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, yalin wang <yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
+Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---ecsUtC3W8kFJ8SxDviaGGgFSqHrMGNiT1
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: quoted-printable
-
-On 13/11/15 02:03 AM, Minchan Kim wrote:
-> On Fri, Nov 13, 2015 at 01:45:52AM -0500, Daniel Micay wrote:
->>> And now I am thinking if we use access bit, we could implment MADV_FR=
-EE_UNDO
->>> easily when we need it. Maybe, that's what you want. Right?
++++ Petr Mladek [12/11/15 11:05 +0100]:
+>On Wed 2015-11-11 23:44:08, Jessica Yu wrote:
+>> +++ Petr Mladek [11/11/15 15:31 +0100]:
+>> >On Mon 2015-11-09 23:45:52, Jessica Yu wrote:
+>> >>diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
+>> >>index 6e53441..087a8c7 100644
+>> >>--- a/kernel/livepatch/core.c
+>> >>+++ b/kernel/livepatch/core.c
+>> >>@@ -1001,6 +1001,23 @@ static struct notifier_block klp_module_nb = {
+>> >> 	.priority = INT_MIN+1, /* called late but before ftrace notifier */
+>> >> };
+>> >>
+>> >>+/*
+>> >>+ * Save necessary information from info in order to be able to
+>> >>+ * patch modules that might be loaded later
+>> >>+ */
+>> >>+void klp_prepare_patch_module(struct module *mod, struct load_info *info)
+>> >>+{
+>> >>+	Elf_Shdr *symsect;
+>> >>+
+>> >>+	symsect = info->sechdrs + info->index.sym;
+>> >>+	/* update sh_addr to point to symtab */
+>> >>+	symsect->sh_addr = (unsigned long)info->hdr + symsect->sh_offset;
+>> >
+>> >Is livepatch the only user of this value? By other words, is this safe?
 >>
->> Yes, but why the access bit instead of the dirty bit for that? It coul=
-d
->> always be made more strict (i.e. access bit) in the future, while goin=
-g
->> the other way won't be possible. So I think the dirty bit is really th=
-e
->> more conservative choice since if it turns out to be a mistake it can =
-be
->> fixed without a backwards incompatible change.
->=20
-> Absolutely true. That's why I insist on dirty bit until now although
-> I didn't tell the reason. But I thought you wanted to change for using
-> access bit for the future, too. It seems MADV_FREE start to bloat
-> over and over again before knowing real problems and usecases.
-> It's almost same situation with volatile ranges so I really want to
-> stop at proper point which maintainer should decide, I hope.
-> Without it, we will make the feature a lot heavy by just brain storming=
+>> I think it is safe to say yes. klp_prepare_patch_module() is only
+>> called at the very end of load_module(), right before
+>> do_init_module(). Normally, at that point, info->hdr will have already
+>> been freed by free_copy() along with the elf section information
+>> associated with it. But if we have a livepatch module, we don't free.
+>> So we should be the very last user, and there should be nobody
+>> utilizing the memory associated with the load_info struct anymore at
+>> that point.
+>
+>I see. It looks safe at this point. But still I wonder if it would be
+>possible to calculate this later in the livepatch code. It will allow
+>to potentially use the info structure also by other subsystem.
 
-> and then causes lots of churn in MM code without real bebenfit
-> It would be very painful for us.
+We can technically reassign sh_addr later in livepatch somewhere, yes,
+I'd have to think more about where it'd make the most sense to do
+this. Maybe in patch_init? It just seemed at the time a bit clearer to
+do it in klp_prepare_patch_module() (soon to be called
+copy_module_info() probably).
 
-Well, I don't think you need more than a good API and an implementation
-with no known bugs, kernel security concerns or backwards compatibility
-issues. Configuration and API extensions are something for later (i.e.
-land a baseline, then submit stuff like sysctl tunables). Just my take
-on it though...
+>BTW: Where is "sh_addr" value used, please? I see it used only
+>in the third patch as info->sechdrs[relindex].sh_addr. But it is
+>an array. I am not sure if it is the same variable.
 
+I will add a more informative comment in the code, see my reply to
+Miroslav.
 
---ecsUtC3W8kFJ8SxDviaGGgFSqHrMGNiT1
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+>
+>> >>+	mod->info = kzalloc(sizeof(*info), GFP_KERNEL);
+>> >>+	memcpy(mod->info, info, sizeof(*info));
+>> >>+
+>> >>+}
+>> >
+>> >It is strange that this funtion is defined in livepatch/core.c
+>> >but declared in module.h. I would move the definition to
+>> >module.c.
+>>
+>> Right, I was trying to keep all the livepatch-related functions
+>> together in livepatch/core.c. but I can move it to module.c if it
+>> makes more sense/Rusty doesn't object to it :-)
+>
+>Sure. I think that we could use some generic name, e.g. copy_module_info().
+>
+>> >> static int __init klp_init(void)
+>> >> {
+>> >> 	int ret;
+>> >>diff --git a/kernel/module.c b/kernel/module.c
+>> >>index 8f051a1..8ae3ca5 100644
+>> >>--- a/kernel/module.c
+>> >>+++ b/kernel/module.c
+>> >>@@ -2137,6 +2123,11 @@ static int simplify_symbols(struct module *mod, const struct load_info *info)
+>> >> 			       (long)sym[i].st_value);
+>> >> 			break;
+>> >>
+>> >>+#ifdef CONFIG_LIVEPATCH
+>> >>+		case SHN_LIVEPATCH:
+>> >>+			break;
+>> >>+#endif
+>> >
+>> >IMHO, even a kernel compiled without CONFIG_LIVEPATCH should handle livepatch
+>> >modules with grace. It means to reject loading.
+>>
+>> I think even right now, without considering this patchset, we don't
+>> reject modules "gracefully" when we load a livepatch module without
+>> CONFIG_LIVEPATCH. The module loader will complain and reject the
+>> livepatch module, saying something like "Unknown symbol
+>> klp_register_patch." This behavior is the same with or without
+>> this patch series applied. If we want to add a bit more logic to
+>> gracefully reject patch modules, perhaps that should be a different
+>> patch altogether, as I think it is unrelated to the goal of this one :-)
+>
+>Yup, the module load would fail anyway because of the missing symbol.
+>But I think that we should fail on the first error occurence.
+>
+>In each case, IMHO, we should not do the "default:" action for this
+>section even when complied without CONFIG_LIVEPATCH.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
+See comment below -- 
 
-iQIcBAEBCAAGBQJWRZuaAAoJEPnnEuWa9fIqlKwP/RMTaGkNLQ9TdIGkFDZTbPG5
-zOLwhzEg751X4CA+4b25bVAKoVq39rhLrnQD2BDyPbptDKXPCQ0f8Z++0lnk5qZg
-tybT+TJLs9SK3CA9pCHQjWtc9Dy1ekqTYkrNY0P4rcCPbxVDYaqKSwnf+O+7SZss
-w6jnMjLEu23zjQamBcU5dwTrvmQRXwX4Gw0jCKcRzmhECOZvKfstBEnfIDBc9glJ
-vytE/lXER5B3rTnp5k7NSrgE9EfNv/TTXrtbYVVAUatEhq0MBtHQ8LQdmTSgU3EA
-3vk1/pXDvMa1atOw7eQdgkmDcD/dxhHFT5jsEfAV452JdVdpnRsPQYTU62rqXru+
-Tnl6sej264zgSQMEWTLPbUvpPC6y9CFRIqYHLjNF5Uni8c08R7dtWaf+39r2cPXA
-j4gISD6Y7KxhXdewbmVnDPJEBsnM7C9AKgcs3qrOlBK824p0VqhJNF2xaryBzrF2
-xfOrsg5rJuS9nJRBx254WiUa1atHhgUx8kyNx3pZLKBrsVe1pL3MbZMED73j8bv7
-cyfOzYcElo3OknSsMRkkLERGD9lC+OOEADfbQGKt7NgZlf2Uxv6HR2GIOaWG9i/P
-T6Hk884xMmKQLl59+6s699XcYpMYJ4Tt5IdZLxghmZvBTb2/IpOn0IZI0At6dlzd
-hoR8O/tiXi4hxoMMW4x4
-=31Tg
------END PGP SIGNATURE-----
+>
+>> >> 		case SHN_UNDEF:
+>> >> 			ksym = resolve_symbol_wait(mod, info, name);
+>> >> 			/* Ok if resolved.  */
+>> >>@@ -2185,6 +2176,11 @@ static int apply_relocations(struct module *mod, const struct load_info *info)
+>> >> 		if (!(info->sechdrs[infosec].sh_flags & SHF_ALLOC))
+>> >> 			continue;
+>> >>
+>> >>+#ifdef CONFIG_LIVEPATCH
+>> >>+		if (info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH)
+>> >>+			continue;
+>> >>+#endif
+>
+>I guess that if we do not trigger the error above, and do
+>not have the check here, we will try to call apply_relocate() below.
+>I guess that it will fail. If we are lucky it will print "Unknown
+>relocation". I think that we could do better.
 
---ecsUtC3W8kFJ8SxDviaGGgFSqHrMGNiT1--
+For the loading of livepatch modules in !CONFIG_LIVEPATCH kernels, we
+should probably gracefully reject it in the beginning of load_module()
+(so that MODULE_INFO flag might come in handy here after all). If it's
+a livepatch module && !CONFIG_LIVEPATCH, reject it. Then we wouldn't
+even call apply_relocations() here, we wouldn't run into the
+possibility of this check falling through, nor would
+simplify_symbols() be even called.
+
+>> >>+
+>> >> 		if (info->sechdrs[i].sh_type == SHT_REL)
+>> >> 			err = apply_relocate(info->sechdrs, info->strtab,
+>> >> 					     info->index.sym, i, mod);
+>> >>@@ -3530,8 +3526,20 @@ static int load_module(struct load_info *info, const char __user *uargs,
+>> >> 	if (err < 0)
+>> >> 		goto bug_cleanup;
+>> >>
+>> >>+#ifdef CONFIG_LIVEPATCH
+>> >>+	/*
+>> >>+	 * Save sechdrs, indices, and other data from info
+>> >>+	 * in order to patch to-be-loaded modules.
+>> >>+	 * Do not call free_copy() for livepatch modules.
+>> >>+	 */
+>> >>+	if (get_modinfo((struct load_info *)info, "livepatch"))
+>> >>+		klp_prepare_patch_module(mod, info);
+>> >>+	else
+>> >>+		free_copy(info);
+>> >>+#else
+>> >
+>> >I would move this #else one line above and get rid of the
+>> >double free_copy(info); But it is a matter of taste.
+>>
+>> Maybe I'm missing something, but I think we do need the double
+>> free_copy(), because in the CONFIG_LIVEPATCH case, we still want to
+>> call free_copy() for non-livepatch modules. And we want to avoid
+>> calling free_copy() for livepatch modules (hence the extra else).
+>
+>Ah, this was just a cosmetic change. I meant to use something like:
+>
+>#ifdef CONFIG_LIVEPATCH
+>	/*
+>	 * Save sechdrs, indices, and other data from info
+>	 * in order to patch to-be-loaded modules.
+>	 * Do not call free_copy() for livepatch modules.
+>	 */
+>	if (get_modinfo((struct load_info *)info, "livepatch"))
+>		klp_prepare_patch_module(mod, info);
+>	else
+>#endif
+>		/* Get rid of temporary copy. */
+>		free_copy(info);
+>
+
+Oh OK, so that's what you meant. :-)
+
+Thanks,
+Jessica
