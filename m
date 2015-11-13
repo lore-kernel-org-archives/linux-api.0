@@ -1,38 +1,109 @@
-From: Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
+From: Miroslav Benes <mbenes@suse.cz>
 Subject: Re: module: save load_info for livepatch modules
-Date: Fri, 13 Nov 2015 13:56:08 +0100 (CET)
-Message-ID: <alpine.LNX.2.00.1511131353300.15073@pobox.suse.cz>
-References: <1447130755-17383-1-git-send-email-jeyu@redhat.com> <1447130755-17383-3-git-send-email-jeyu@redhat.com> <alpine.LNX.2.00.1511111505300.12467@pobox.suse.cz> <20151112053228.GD30025@packer-debian-8-amd64.digitalocean.com> <20151112102404.GL4431@pathway.suse.cz>
- <alpine.LNX.2.00.1511121400290.9440@pobox.suse.cz> <20151112150345.GT2599@pathway.suse.cz> <20151112170501.GD4038@treble.hsd1.ky.comcast.net> <20151112221750.GA13513@packer-debian-8-amd64.digitalocean.com>
- <alpine.LNX.2.00.1511131304280.15073@pobox.suse.cz>
+Date: Fri, 13 Nov 2015 14:07:52 +0100 (CET)
+Message-ID: <alpine.LNX.2.00.1511131402450.15073@pobox.suse.cz>
+References: <1447130755-17383-1-git-send-email-jeyu@redhat.com> <1447130755-17383-3-git-send-email-jeyu@redhat.com> <20151111143152.GG4431@pathway.suse.cz> <20151112044407.GC30025@packer-debian-8-amd64.digitalocean.com> <20151112100548.GK4431@pathway.suse.cz>
+ <alpine.LNX.2.00.1511121518080.9440@pobox.suse.cz> <20151113063547.GC13513@packer-debian-8-amd64.digitalocean.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.LNX.2.00.1511131304280.15073-ztGlSCb7Y1iN3ZZ/Hiejyg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20151113063547.GC13513@packer-debian-8-amd64.digitalocean.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jessica Yu <jeyu@redhat.com>
+Cc: Petr Mladek <pmladek@suse.com>, Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 13 Nov 2015, Miroslav Benes wrote:
+On Fri, 13 Nov 2015, Jessica Yu wrote:
 
-> I agree this seems like the best approach. So if we preserve 
-> mod_arch_syminfo (in case of s390) we should free it not in 
-> module_finalize, but somewhere in free_module... where 
-> module_arch_cleanup() is called... and also module_arch_freeing_init() is 
-> called there too. And what you find there for s390 is 
+> +++ Miroslav Benes [12/11/15 15:19 +0100]:
+> > On Thu, 12 Nov 2015, Petr Mladek wrote:
+> > 
+> > > On Wed 2015-11-11 23:44:08, Jessica Yu wrote:
+> > > > +++ Petr Mladek [11/11/15 15:31 +0100]:
+> > > > >On Mon 2015-11-09 23:45:52, Jessica Yu wrote:
+> > > > >>diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
+> > > > >>index 6e53441..087a8c7 100644
+> > > > >>--- a/kernel/livepatch/core.c
+> > > > >>+++ b/kernel/livepatch/core.c
+> > > > >>@@ -1001,6 +1001,23 @@ static struct notifier_block klp_module_nb = {
+> > > > >> 	.priority = INT_MIN+1, /* called late but before ftrace
+> > > notifier */
+> > > > >> };
+> > > > >>
+> > > > >>+/*
+> > > > >>+ * Save necessary information from info in order to be able to
+> > > > >>+ * patch modules that might be loaded later
+> > > > >>+ */
+> > > > >>+void klp_prepare_patch_module(struct module *mod, struct load_info
+> > > *info)
+> > > > >>+{
+> > > > >>+	Elf_Shdr *symsect;
+> > > > >>+
+> > > > >>+	symsect = info->sechdrs + info->index.sym;
+> > > > >>+	/* update sh_addr to point to symtab */
+> > > > >>+	symsect->sh_addr = (unsigned long)info->hdr +
+> > > symsect->sh_offset;
+> > > > >
+> > > > >Is livepatch the only user of this value? By other words, is this safe?
+> > > >
+> > > > I think it is safe to say yes. klp_prepare_patch_module() is only
+> > > > called at the very end of load_module(), right before
+> > > > do_init_module(). Normally, at that point, info->hdr will have already
+> > > > been freed by free_copy() along with the elf section information
+> > > > associated with it. But if we have a livepatch module, we don't free.
+> > > > So we should be the very last user, and there should be nobody
+> > > > utilizing the memory associated with the load_info struct anymore at
+> > > > that point.
+> > > 
+> > > I see. It looks safe at this point. But still I wonder if it would be
+> > > possible to calculate this later in the livepatch code. It will allow
+> > > to potentially use the info structure also by other subsystem.
+> > > 
+> > > BTW: Where is "sh_addr" value used, please? I see it used only
+> > > in the third patch as info->sechdrs[relindex].sh_addr. But it is
+> > > an array. I am not sure if it is the same variable.
+> > 
+> > Jessica, why do we need to update sh_addr for symtab? It is not clear to
+> > me.
 > 
-> 	vfree(mod->arch.syminfo);
-> 	mod->arch.syminfo = NULL;
+> Ah, I definitely need to make that comment a lot more informative.
+> Will make sure to add that in v2. 
+> So, the sh_addr field tells us where a certain section is in memory.
+> Here, we need to update the symbol table section's sh_addr because if
+> we don't, it will eventually point to freed module init memory, which
+> is freed in do_init_module(). Let me explain what happens.
 > 
-> Well, it does nothing here, because mod->arch.syminfo is already NULL. It 
-> was freed in module_finalize. So we can even remove this code from 
-> module_finalize and all should be fine. At least for s390.
+> At the beginning of load_module(), the sh_addr fields of each section
+> initially point to the vmalloc'd memory within info->hdr (which is
+> allocated in copy_module_from_{fd,user}() in module.c). The sh_addr's
+> are first assigned in rewrite_section_headers(), called from
+> setup_load_info(). These sh_addr's initially just point to an offset
+> within info->hdr depending on each section's sh_offset.
+> 
+> However, in move_module(), where we layout and allocate the memory
+> where the module will finally reside, these sh_addr's will get
+> reassigned. For the symtab section's sh_addr, it gets reassigned to
+> module init memory. (In layout_symtab(), you'll see that the symtab
+> section gets marked with INIT_OFFSET_MASK, which indicates that it
+> will get an address in init memory when the sh_addr's get reassigned
+> in move_module()). Thus the symbol table that simplify_symbols() uses
+> is actually in init memory, and will be freed later in
+> do_init_module().
+> 
+> info->hdr is just a temporary holding place for module elf section
+> data in memory. Normally, we would get rid of info->hdr and free the
+> memory associated with it at the end of the module loading process
+> (via free_copy()). But in this patchset, we save all the original elf
+> section information because we need it (along with the original
+> symtab) in order to make the call to apply_relocate_add(). If you look
+> at apply_relocate_add() for x86, s390, etc you'll see that it expects
+> a symbol table at the symbol section's sh_addr field (basically, an
+> array of Elf_Sym's). This is why we fix up the sh_addr of the symtab
+> section to point back to the memory associated with info->hdr (and not
+> module init memory). I hope that makes sense.
 
-Which is not true because module_arch_freeing_init is also called from 
-do_init_module, called from load_module. So we should move it to 
-module_arch_cleanup.
+Great explanation. Thanks.
 
-That code is like a maze without Ariadne's thread.
+Only info->hdr makes me worried. See my other mail.
 
 Miroslav
