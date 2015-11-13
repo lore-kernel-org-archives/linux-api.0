@@ -1,7 +1,7 @@
 From: Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
 Subject: Re: module: save load_info for livepatch modules
-Date: Fri, 13 Nov 2015 13:46:34 +0100 (CET)
-Message-ID: <alpine.LNX.2.00.1511131338510.15073@pobox.suse.cz>
+Date: Fri, 13 Nov 2015 13:56:08 +0100 (CET)
+Message-ID: <alpine.LNX.2.00.1511131353300.15073@pobox.suse.cz>
 References: <1447130755-17383-1-git-send-email-jeyu@redhat.com> <1447130755-17383-3-git-send-email-jeyu@redhat.com> <alpine.LNX.2.00.1511111505300.12467@pobox.suse.cz> <20151112053228.GD30025@packer-debian-8-amd64.digitalocean.com> <20151112102404.GL4431@pathway.suse.cz>
  <alpine.LNX.2.00.1511121400290.9440@pobox.suse.cz> <20151112150345.GT2599@pathway.suse.cz> <20151112170501.GD4038@treble.hsd1.ky.comcast.net> <20151112221750.GA13513@packer-debian-8-amd64.digitalocean.com>
  <alpine.LNX.2.00.1511131304280.15073@pobox.suse.cz>
@@ -16,27 +16,23 @@ List-Id: linux-api@vger.kernel.org
 
 On Fri, 13 Nov 2015, Miroslav Benes wrote:
 
-> As for load_info, I don't have a strong opinion whether to keep it for all 
-> modules or for livepatch modules only.
+> I agree this seems like the best approach. So if we preserve 
+> mod_arch_syminfo (in case of s390) we should free it not in 
+> module_finalize, but somewhere in free_module... where 
+> module_arch_cleanup() is called... and also module_arch_freeing_init() is 
+> called there too. And what you find there for s390 is 
+> 
+> 	vfree(mod->arch.syminfo);
+> 	mod->arch.syminfo = NULL;
+> 
+> Well, it does nothing here, because mod->arch.syminfo is already NULL. It 
+> was freed in module_finalize. So we can even remove this code from 
+> module_finalize and all should be fine. At least for s390.
 
-I have. We cannot keep it, even for livepatch modules...
+Which is not true because module_arch_freeing_init is also called from 
+do_init_module, called from load_module. So we should move it to 
+module_arch_cleanup.
 
-In info->hdr there is a temporary copy of the whole module (see 
-init_module syscall and the first parts of load_module). In load_module 
-a final struct module * is created with parts of info->hdr copied (I'll 
-get to that later). So if we saved info->hdr for later purposes we would 
-just have two copies of the same module in the memory. The original one 
-with !SHF_ALLOC sections and everything in vmalloc area, and the new
-final copy with SHF_ALLOC sections only. This is not good.
-
-If this is correct (and I think it is after some staring into the code) we 
-need to do something different. We should build the info we need for 
-delayed relocations from the final copy (or refactor the existing 
-module code).
-
-The second problem... dynrela sections need to be marked with SHF_ALLOC 
-flag, right? Perhaps it would be better not to do it and copy also 
-SHF_RELA_LIVEPATCH sections. It is equivalent but not hidden somewhere 
-else (in userspace "kpatch-build" tool).
+That code is like a maze without Ariadne's thread.
 
 Miroslav
