@@ -1,66 +1,68 @@
-From: Daniel Micay <danielmicay@gmail.com>
-Subject: Re: [PATCH v3 01/17] mm: support madvise(MADV_FREE)
-Date: Fri, 13 Nov 2015 01:45:52 -0500
-Message-ID: <56458720.4010400@gmail.com>
-References: <1447302793-5376-1-git-send-email-minchan@kernel.org>
- <1447302793-5376-2-git-send-email-minchan@kernel.org>
- <CALCETrWA6aZC_3LPM3niN+2HFjGEm_65m9hiEdpBtEZMn0JhwQ@mail.gmail.com>
- <564421DA.9060809@gmail.com> <20151113061511.GB5235@bbox>
- <56458056.8020105@gmail.com> <20151113063802.GF5235@bbox>
+From: Jessica Yu <jeyu@redhat.com>
+Subject: Re: elf: add livepatch-specific elf constants
+Date: Fri, 13 Nov 2015 01:49:51 -0500
+Message-ID: <20151113064951.GD13513@packer-debian-8-amd64.digitalocean.com>
+References: <1447130755-17383-1-git-send-email-jeyu@redhat.com>
+ <1447130755-17383-2-git-send-email-jeyu@redhat.com>
+ <20151112154506.GC4038@treble.hsd1.ky.comcast.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
- protocol="application/pgp-signature";
- boundary="WPFUm5Gj72Qb6xXvdVJKIAmvmmpJe2WhO"
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20151113063802.GF5235@bbox>
-Sender: owner-linux-mm@kvack.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Shaohua Li <shli@kernel.org>, Michal Hocko <mhocko@suse.cz>, yalin wang <yalin.wang2010@gmail.com>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20151112154506.GC4038@treble.hsd1.ky.comcast.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Rusty Russell <rusty@rustcorp.com.au>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Miroslav Benes <mbenes@suse.cz>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---WPFUm5Gj72Qb6xXvdVJKIAmvmmpJe2WhO
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: quoted-printable
++++ Josh Poimboeuf [12/11/15 09:45 -0600]:
+>On Mon, Nov 09, 2015 at 11:45:51PM -0500, Jessica Yu wrote:
+>> Add livepatch elf reloc section flag, livepatch symbol bind
+>> and section index
+>>
+>> Signed-off-by: Jessica Yu <jeyu@redhat.com>
+>> ---
+>>  include/uapi/linux/elf.h | 3 +++
+>>  1 file changed, 3 insertions(+)
+>>
+>> diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
+>> index 71e1d0e..967ce1b 100644
+>> --- a/include/uapi/linux/elf.h
+>> +++ b/include/uapi/linux/elf.h
+>> @@ -118,6 +118,7 @@ typedef __s64	Elf64_Sxword;
+>>  #define STB_LOCAL  0
+>>  #define STB_GLOBAL 1
+>>  #define STB_WEAK   2
+>> +#define STB_LIVEPATCH_EXT 11
+>>
+>>  #define STT_NOTYPE  0
+>>  #define STT_OBJECT  1
+>> @@ -286,6 +287,7 @@ typedef struct elf64_phdr {
+>>  #define SHF_ALLOC	0x2
+>>  #define SHF_EXECINSTR	0x4
+>>  #define SHF_MASKPROC	0xf0000000
+>> +#define SHF_RELA_LIVEPATCH  0x4000000
+>
+>Writing the value with leading zeros (0x04000000) would it more
+>readable.
+>
+>Also the OS-specific range mask (SHF_MASKOS) is 0x0ff00000.  Any reason
+>you went with 0x04000000 as opposed to the first value in the range
+>(0x00100000)?  I don't see anybody else using that value.
 
-> And now I am thinking if we use access bit, we could implment MADV_FREE=
-_UNDO
-> easily when we need it. Maybe, that's what you want. Right?
+I don't have any particular reason, I think I just picked any value
+and ran with it. I'll just change it to the first value in the range
+since that makes more sense.
 
-Yes, but why the access bit instead of the dirty bit for that? It could
-always be made more strict (i.e. access bit) in the future, while going
-the other way won't be possible. So I think the dirty bit is really the
-more conservative choice since if it turns out to be a mistake it can be
-fixed without a backwards incompatible change.
-
-
---WPFUm5Gj72Qb6xXvdVJKIAmvmmpJe2WhO
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBCAAGBQJWRYcgAAoJEPnnEuWa9fIqh34P/Ag7Y9sG5+idtmJvxE+JI4AN
-XLkBfKB5BGcUO80XUs65tXm5y2Qvyom1lUCMjZJvjNFMxr36wReHWe+kbC4sngY0
-pGSHCTmWmzzy8GrlBlHv+VmvpkojhNO3FEkQWgIBkDdX4ildyo/Y8aH7HTKIBqxq
-OfqJPCmInu3dpoGJ0msj8hVp4yxvq+QfExnZ9O2Ys9WanG+m5H+nnxTuVS6RjGDN
-IcgzrEezTXMc87LEzPTny8sni8yLV87piEygepKS3MBiAEnkeB6MnaMm5iufp45h
-2JygXJenjk4spr9LZ2L6DjjyIGfkmf5TnmJMLP2RhsikWt+cRKNlEtBWDSWEhHLg
-KIoL+QN9QMRqXe+OdfcQVT8rVQRzpiXINA4qJPxcyChr0Vnw5a50EOIZEJjvPOL/
-7zdukf541LMVGXeLWGpJ4tyiSQCdgyFqHchkNCltlF4S9EWJNHFVPrrGHWq0PpzK
-ducLhHLsLnB7gPEVOn2jwdz8AB/r1xshq8dhsBrYvdHty753oebKWQfwUBRYuG9A
-fotX/N/Xdlxx1V9oR3WRR5MJ5Pcch3zUiCqmTntVaVYBK09YNB1P3739Fncu3tOA
-N8xtDwfX1FrFGIpcZUUqeJ+5i7f34FG8GT6U95EniCyAOM9eY8TvRAdgt7wFUfKS
-UA/u0RHtwXtTQA2TkjBa
-=xVCM
------END PGP SIGNATURE-----
-
---WPFUm5Gj72Qb6xXvdVJKIAmvmmpJe2WhO--
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+>>  /* special section indexes */
+>>  #define SHN_UNDEF	0
+>> @@ -295,6 +297,7 @@ typedef struct elf64_phdr {
+>>  #define SHN_ABS		0xfff1
+>>  #define SHN_COMMON	0xfff2
+>>  #define SHN_HIRESERVE	0xffff
+>> +#define SHN_LIVEPATCH 0xff21
+>
+>Similar question here, why not use 0xff20 (SHN_LOOS)?
+>
+>-- 
+>Josh
