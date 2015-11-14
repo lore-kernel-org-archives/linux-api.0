@@ -1,61 +1,88 @@
-From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: module: save load_info for livepatch modules
-Date: Fri, 13 Nov 2015 21:09:50 -0500
-Message-ID: <20151114020950.GA21414@packer-debian-8-amd64.digitalocean.com>
-References: <1447130755-17383-3-git-send-email-jeyu@redhat.com>
- <alpine.LNX.2.00.1511111505300.12467@pobox.suse.cz>
- <20151112053228.GD30025@packer-debian-8-amd64.digitalocean.com>
- <20151112102404.GL4431@pathway.suse.cz>
- <alpine.LNX.2.00.1511121400290.9440@pobox.suse.cz>
- <20151112150345.GT2599@pathway.suse.cz>
- <20151112170501.GD4038@treble.hsd1.ky.comcast.net>
- <20151112221750.GA13513@packer-debian-8-amd64.digitalocean.com>
- <alpine.LNX.2.00.1511131304280.15073@pobox.suse.cz>
- <alpine.LNX.2.00.1511131353300.15073@pobox.suse.cz>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LNX.2.00.1511131353300.15073-ztGlSCb7Y1iN3ZZ/Hiejyg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
-Cc: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: "Gabriel L. Somlo" <somlo@cmu.edu>
+Subject: [PATCH v4 4/4] devicetree: update documentation for
+	fw_cfg ARM bindings
+Date: Fri, 13 Nov 2015 22:03:55 -0500
+Message-ID: <1447470235-13643-5-git-send-email-somlo@cmu.edu>
+References: <1447470235-13643-1-git-send-email-somlo@cmu.edu>
+Return-path: <qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org>
+In-Reply-To: <1447470235-13643-1-git-send-email-somlo@cmu.edu>
+List-Unsubscribe: <https://lists.nongnu.org/mailman/options/qemu-devel>,
+	<mailto:qemu-devel-request@nongnu.org?subject=unsubscribe>
+List-Archive: <http://lists.nongnu.org/archive/html/qemu-devel>
+List-Post: <mailto:qemu-devel@nongnu.org>
+List-Help: <mailto:qemu-devel-request@nongnu.org?subject=help>
+List-Subscribe: <https://lists.nongnu.org/mailman/listinfo/qemu-devel>,
+	<mailto:qemu-devel-request@nongnu.org?subject=subscribe>
+Errors-To: qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org
+Sender: qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org
+To: gregkh@linuxfoundation.org, robh+dt@kernel.org, pawel.moll@arm.com, mark.rutland@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, arnd@arndb.de, lersek@redhat.com, ralf@linux-mips.org, rmk+kernel@arm.linux.org.uk, eric@anholt.net, hanjun.guo@linaro.org, zajec5@gmail.com, sudeep.holla@arm.com, agross@codeaurora.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org
+Cc: peter.maydell@linaro.org, matt.fleming@intel.com, mst@redhat.com, jordan.l.justen@intel.com, kernelnewbies@kernelnewbies.org, qemu-devel@nongnu.org, leif.lindholm@linaro.org, luto@amacapital.net, ard.biesheuvel@linaro.org, kraxel@redhat.com, stefanha@gmail.com, pbonzini@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-+++ Miroslav Benes [13/11/15 13:56 +0100]:
->On Fri, 13 Nov 2015, Miroslav Benes wrote:
->
->> I agree this seems like the best approach. So if we preserve
->> mod_arch_syminfo (in case of s390) we should free it not in
->> module_finalize, but somewhere in free_module... where
->> module_arch_cleanup() is called... and also module_arch_freeing_init() is
->> called there too. And what you find there for s390 is
->>
->> 	vfree(mod->arch.syminfo);
->> 	mod->arch.syminfo = NULL;
->>
->> Well, it does nothing here, because mod->arch.syminfo is already NULL. It
->> was freed in module_finalize. So we can even remove this code from
->> module_finalize and all should be fine. At least for s390.
->
->Which is not true because module_arch_freeing_init is also called from
->do_init_module, called from load_module. So we should move it to
->module_arch_cleanup.
->
->That code is like a maze without Ariadne's thread.
+From: Gabriel Somlo <somlo@cmu.edu>
 
-Heh, I agree with that sentiment.
+Remove redundant details from
+Documentation/devicetree/bindings/arm/fw-cfg.txt,
+and replace them with a pointer to the more comprehensive
+fw_cfg documentation privided by
+Documentation/ABI/testing/sysfs-firmware-qemu_fw_cfg,
+leaving the specific ARM DTB node description in place.
 
-I am slightly confused about the s390 code, and whether the authors
-originally intended for that double vfree() to happen in both
-module_finalize() and module_arch_freeing_init() (called from
-do_init_module). Seems like a mistake. If module load succeeds,
-do_init_module calls module_arch_freeing_init(). And if load_module
-fails halfway through, both module_deallocate() and free_module() will
-also call module_arch_freeing_init(). I feel like that vfree should
-only happen once in module_arch_freeing_init() and not in
-module_finalize(). If we can remove the double vfree() code from
-module_finalize(), we can copy the mod_arch_specific safely before the
-call to do_init_module().
+Signed-off-by: Gabriel Somlo <somlo@cmu.edu>
+Cc: Laszlo Ersek <lersek@redhat.com>
+---
+ Documentation/devicetree/bindings/arm/fw-cfg.txt | 37 ++----------------------
+ 1 file changed, 2 insertions(+), 35 deletions(-)
 
-Jessica
+diff --git a/Documentation/devicetree/bindings/arm/fw-cfg.txt b/Documentation/devicetree/bindings/arm/fw-cfg.txt
+index 953fb64..7aeb48a 100644
+--- a/Documentation/devicetree/bindings/arm/fw-cfg.txt
++++ b/Documentation/devicetree/bindings/arm/fw-cfg.txt
+@@ -11,43 +11,10 @@ QEMU exposes the control and data register to ARM guests as memory mapped
+ registers; their location is communicated to the guest's UEFI firmware in the
+ DTB that QEMU places at the bottom of the guest's DRAM.
+ 
+-The guest writes a selector value (a key) to the selector register, and then
+-can read the corresponding data (produced by QEMU) via the data register. If
+-the selected entry is writable, the guest can rewrite it through the data
+-register.
+ 
+-The selector register takes keys in big endian byte order.
++For a comprehensive description of the behavior of fw_cfg, please see
++Documentation/ABI/testing/sysfs-firmware-qemu_fw_cfg.
+ 
+-The data register allows accesses with 8, 16, 32 and 64-bit width (only at
+-offset 0 of the register). Accesses larger than a byte are interpreted as
+-arrays, bundled together only for better performance. The bytes constituting
+-such a word, in increasing address order, correspond to the bytes that would
+-have been transferred by byte-wide accesses in chronological order.
+-
+-The interface allows guest firmware to download various parameters and blobs
+-that affect how the firmware works and what tables it installs for the guest
+-OS. For example, boot order of devices, ACPI tables, SMBIOS tables, kernel and
+-initrd images for direct kernel booting, virtual machine UUID, SMP information,
+-virtual NUMA topology, and so on.
+-
+-The authoritative registry of the valid selector values and their meanings is
+-the QEMU source code; the structure of the data blobs corresponding to the
+-individual key values is also defined in the QEMU source code.
+-
+-The presence of the registers can be verified by selecting the "signature" blob
+-with key 0x0000, and reading four bytes from the data register. The returned
+-signature is "QEMU".
+-
+-The outermost protocol (involving the write / read sequences of the control and
+-data registers) is expected to be versioned, and/or described by feature bits.
+-The interface revision / feature bitmap can be retrieved with key 0x0001. The
+-blob to be read from the data register has size 4, and it is to be interpreted
+-as a uint32_t value in little endian byte order. The current value
+-(corresponding to the above outer protocol) is zero.
+-
+-The guest kernel is not expected to use these registers (although it is
+-certainly allowed to); the device tree bindings are documented here because
+-this is where device tree bindings reside in general.
+ 
+ Required properties:
+ 
+-- 
+2.4.3
