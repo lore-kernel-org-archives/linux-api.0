@@ -1,171 +1,27 @@
 From: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH RFD] selftests: create test-specific kconfig fragments
-Date: Sat, 14 Nov 2015 12:57:13 +0800
-Message-ID: <1447477033-7522-1-git-send-email-bamvor.zhangjian@linaro.org>
+Subject: [PATCH 0/3] Enable two testcases in kselftest
+Date: Sat, 14 Nov 2015 14:01:51 +0800
+Message-ID: <1447480914-14834-1-git-send-email-bamvor.zhangjian@linaro.org>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, khilman-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tyler.baker-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, khilman-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tyler.baker-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-There is a discussion about improving the usability of kselftest by
-creating test-specific kconfig in recent kernel Summit. Furthormore,
-there are different approaches to do it:
+Capabilities and ipc exist in selftest but is not enabled in the top
+level Makefile. I do not know whether it is intended to.
 
-1) keep test-specific kconfig fragments inside each selftest so that
-merge_configs.sh could build up a kernel that can test the specific
-or all feature(s).
+It seems that both of them are tiny tests. These patches try to enable
+them and make them build successful in cross compiling environment.
 
-2) In the main menu, have an additional option/flag for each feature
-that should be enabled when ksefltests are wanted.  Similar to the
-CONFIG_COMPILE_TEST flag.
+Bamvor Jian Zhang (3):
+  selftests/capabilities: align the usage of CFLAGS with others
+  selftests/capabilities: actually test it
+  selftest/ipc: actually test it
 
-This patch try to do option 1. Hope it is a good start for
-discussion. User could use these configs with merge_config.sh script:
+ tools/testing/selftests/Makefile              | 2 ++
+ tools/testing/selftests/capabilities/Makefile | 4 ++--
+ 2 files changed, 4 insertions(+), 2 deletions(-)
 
-Enable config for specific testcases:
-(export ARCH=xxx #for cross compiling)
-./scripts/kconfig/merge_config.sh .config \
-		tools/testing/selftests/xxx/config
-
-Enable configs for all testcases:
-(export ARCH=xxx #for cross compiling)
-./scripts/kconfig/merge_config.sh .config \
-		tools/testing/selftests/*/config
-
-Signed-off-by: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
----
- tools/testing/selftests/cpu-hotplug/config    | 2 ++
- tools/testing/selftests/firmware/config       | 1 +
- tools/testing/selftests/ftrace/config         | 1 +
- tools/testing/selftests/ipc/config            | 2 ++
- tools/testing/selftests/memory-hotplug/config | 4 ++++
- tools/testing/selftests/mount/config          | 2 ++
- tools/testing/selftests/net/config            | 3 +++
- tools/testing/selftests/pstore/config         | 4 ++++
- tools/testing/selftests/seccomp/config        | 2 ++
- tools/testing/selftests/static_keys/config    | 1 +
- tools/testing/selftests/user/config           | 1 +
- tools/testing/selftests/vm/config             | 1 +
- tools/testing/selftests/zram/config           | 2 ++
- 13 files changed, 26 insertions(+)
- create mode 100644 tools/testing/selftests/cpu-hotplug/config
- create mode 100644 tools/testing/selftests/firmware/config
- create mode 100644 tools/testing/selftests/ftrace/config
- create mode 100644 tools/testing/selftests/ipc/config
- create mode 100644 tools/testing/selftests/memory-hotplug/config
- create mode 100644 tools/testing/selftests/mount/config
- create mode 100644 tools/testing/selftests/net/config
- create mode 100644 tools/testing/selftests/pstore/config
- create mode 100644 tools/testing/selftests/seccomp/config
- create mode 100644 tools/testing/selftests/static_keys/config
- create mode 100644 tools/testing/selftests/user/config
- create mode 100644 tools/testing/selftests/vm/config
- create mode 100644 tools/testing/selftests/zram/config
-
-diff --git a/tools/testing/selftests/cpu-hotplug/config b/tools/testing/selftests/cpu-hotplug/config
-new file mode 100644
-index 0000000..e6ab090
---- /dev/null
-+++ b/tools/testing/selftests/cpu-hotplug/config
-@@ -0,0 +1,2 @@
-+CONFIG_NOTIFIER_ERROR_INJECTION=y
-+CONFIG_CPU_NOTIFIER_ERROR_INJECT=m
-diff --git a/tools/testing/selftests/firmware/config b/tools/testing/selftests/firmware/config
-new file mode 100644
-index 0000000..c8137f7
---- /dev/null
-+++ b/tools/testing/selftests/firmware/config
-@@ -0,0 +1 @@
-+CONFIG_TEST_FIRMWARE=y
-diff --git a/tools/testing/selftests/ftrace/config b/tools/testing/selftests/ftrace/config
-new file mode 100644
-index 0000000..ef82146
---- /dev/null
-+++ b/tools/testing/selftests/ftrace/config
-@@ -0,0 +1 @@
-+CONFIG_FTRACE=y
-diff --git a/tools/testing/selftests/ipc/config b/tools/testing/selftests/ipc/config
-new file mode 100644
-index 0000000..0702447
---- /dev/null
-+++ b/tools/testing/selftests/ipc/config
-@@ -0,0 +1,2 @@
-+CONFIG_EXPERT=y
-+CONFIG_CHECKPOINT_RESTORE=y
-diff --git a/tools/testing/selftests/memory-hotplug/config b/tools/testing/selftests/memory-hotplug/config
-new file mode 100644
-index 0000000..2fde301
---- /dev/null
-+++ b/tools/testing/selftests/memory-hotplug/config
-@@ -0,0 +1,4 @@
-+CONFIG_MEMORY_HOTPLUG=y
-+CONFIG_MEMORY_HOTPLUG_SPARSE=y
-+CONFIG_NOTIFIER_ERROR_INJECTION=y
-+CONFIG_MEMORY_NOTIFIER_ERROR_INJECT=m
-diff --git a/tools/testing/selftests/mount/config b/tools/testing/selftests/mount/config
-new file mode 100644
-index 0000000..b5d881e
---- /dev/null
-+++ b/tools/testing/selftests/mount/config
-@@ -0,0 +1,2 @@
-+CONFIG_USER_NS=y
-+CONFIG_DEVPTS_MULTIPLE_INSTANCES=y
-diff --git a/tools/testing/selftests/net/config b/tools/testing/selftests/net/config
-new file mode 100644
-index 0000000..e57b4ac
---- /dev/null
-+++ b/tools/testing/selftests/net/config
-@@ -0,0 +1,3 @@
-+CONFIG_USER_NS=y
-+CONFIG_BPF_SYSCALL=y
-+CONFIG_TEST_BPF=m
-diff --git a/tools/testing/selftests/pstore/config b/tools/testing/selftests/pstore/config
-new file mode 100644
-index 0000000..6a8e5a9
---- /dev/null
-+++ b/tools/testing/selftests/pstore/config
-@@ -0,0 +1,4 @@
-+CONFIG_MISC_FILESYSTEMS=y
-+CONFIG_PSTORE=y
-+CONFIG_PSTORE_PMSG=y
-+CONFIG_PSTORE_CONSOLE=y
-diff --git a/tools/testing/selftests/seccomp/config b/tools/testing/selftests/seccomp/config
-new file mode 100644
-index 0000000..db1e11b
---- /dev/null
-+++ b/tools/testing/selftests/seccomp/config
-@@ -0,0 +1,2 @@
-+CONFIG_SECCOMP=y
-+CONFIG_SECCOMP_FILTER=y
-diff --git a/tools/testing/selftests/static_keys/config b/tools/testing/selftests/static_keys/config
-new file mode 100644
-index 0000000..d538fb7
---- /dev/null
-+++ b/tools/testing/selftests/static_keys/config
-@@ -0,0 +1 @@
-+CONFIG_TEST_STATIC_KEYS=m
-diff --git a/tools/testing/selftests/user/config b/tools/testing/selftests/user/config
-new file mode 100644
-index 0000000..784ed84
---- /dev/null
-+++ b/tools/testing/selftests/user/config
-@@ -0,0 +1 @@
-+CONFIG_TEST_USER_COPY=m
-diff --git a/tools/testing/selftests/vm/config b/tools/testing/selftests/vm/config
-new file mode 100644
-index 0000000..698c7ed
---- /dev/null
-+++ b/tools/testing/selftests/vm/config
-@@ -0,0 +1 @@
-+CONFIG_USERFAULTFD=y
-diff --git a/tools/testing/selftests/zram/config b/tools/testing/selftests/zram/config
-new file mode 100644
-index 0000000..e0cc47e
---- /dev/null
-+++ b/tools/testing/selftests/zram/config
-@@ -0,0 +1,2 @@
-+CONFIG_ZSMALLOC=y
-+CONFIG_ZRAM=m
 -- 
 2.1.4
