@@ -1,8 +1,8 @@
 From: "Gabriel L. Somlo" <somlo@cmu.edu>
-Subject: [PATCH v4 1/4] firmware: introduce sysfs driver for
-	QEMU's fw_cfg device
-Date: Fri, 13 Nov 2015 22:03:52 -0500
-Message-ID: <1447470235-13643-2-git-send-email-somlo@cmu.edu>
+Subject: [PATCH v4 3/4] firmware: create directory hierarchy
+	for sysfs fw_cfg entries
+Date: Fri, 13 Nov 2015 22:03:54 -0500
+Message-ID: <1447470235-13643-4-git-send-email-somlo@cmu.edu>
 References: <1447470235-13643-1-git-send-email-somlo@cmu.edu>
 Return-path: <qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org>
 In-Reply-To: <1447470235-13643-1-git-send-email-somlo@cmu.edu>
@@ -21,892 +21,243 @@ List-Id: linux-api@vger.kernel.org
 
 From: Gabriel Somlo <somlo@cmu.edu>
 
-Make fw_cfg entries of type "file" available via sysfs. Entries
-are listed under /sys/firmware/qemu_fw_cfg/by_key, in folders
-named after each entry's selector key. Filename, selector value,
-and size read-only attributes are included for each entry. Also,
-a "raw" attribute allows retrieval of the full binary content of
-each entry.
+Each fw_cfg entry of type "file" has an associated 56-char,
+nul-terminated ASCII string which represents its name. While
+the fw_cfg device doesn't itself impose any specific naming
+convention, QEMU developers have traditionally used path name
+semantics (i.e. "etc/acpi/rsdp") to descriptively name the
+various fw_cfg "blobs" passed into the guest.
 
-This patch also provides a documentation file outlining the
-guest-side "hardware" interface exposed by the QEMU fw_cfg device.
+This patch attempts, on a best effort basis, to create a
+directory hierarchy representing the content of fw_cfg file
+names, under /sys/firmware/qemu_fw_cfg/by_name.
 
-The fw_cfg device can be instantiated automatically from ACPI or
-the Device Tree, or manually by using a kernel module (or command
-line) parameter, with a syntax outlined in the documentation file.
+Upon successful creation of all directories representing the
+"dirname" portion of a fw_cfg file, a symlink will be created
+to represent the "basename", pointing at the appropriate
+/sys/firmware/qemu_fw_cfg/by_key entry. If a file name is not
+suitable for this procedure (e.g., if its basename or dirname
+components collide with an already existing dirname component
+or basename, respectively) the corresponding fw_cfg blob is
+skipped and will remain available in sysfs only by its selector
+key value.
 
 Signed-off-by: Gabriel Somlo <somlo@cmu.edu>
+Cc: Andy Lutomirski <luto@amacapital.net>
 ---
- .../ABI/testing/sysfs-firmware-qemu_fw_cfg         | 198 +++++++
- drivers/firmware/Kconfig                           |  19 +
- drivers/firmware/Makefile                          |   1 +
- drivers/firmware/qemu_fw_cfg.c                     | 611 +++++++++++++++++++++
- 4 files changed, 829 insertions(+)
- create mode 100644 Documentation/ABI/testing/sysfs-firmware-qemu_fw_cfg
- create mode 100644 drivers/firmware/qemu_fw_cfg.c
+ .../ABI/testing/sysfs-firmware-qemu_fw_cfg         |  42 ++++++++
+ drivers/firmware/qemu_fw_cfg.c                     | 109 ++++++++++++++++++++-
+ 2 files changed, 148 insertions(+), 3 deletions(-)
 
 diff --git a/Documentation/ABI/testing/sysfs-firmware-qemu_fw_cfg b/Documentation/ABI/testing/sysfs-firmware-qemu_fw_cfg
-new file mode 100644
-index 0000000..b908b6d
---- /dev/null
+index b908b6d..a346ee0 100644
+--- a/Documentation/ABI/testing/sysfs-firmware-qemu_fw_cfg
 +++ b/Documentation/ABI/testing/sysfs-firmware-qemu_fw_cfg
-@@ -0,0 +1,198 @@
-+What:		/sys/firmware/qemu_fw_cfg/
-+Date:		August 2015
-+Contact:	Gabriel Somlo <somlo@cmu.edu>
-+Description:
-+		Several different architectures supported by QEMU (x86, arm,
-+		sun4*, ppc/mac) are provisioned with a firmware configuration
-+		(fw_cfg) device, originally intended as a way for the host to
-+		provide configuration data to the guest firmware. Starting
-+		with QEMU v2.4, arbitrary fw_cfg file entries may be specified
-+		by the user on the command line, which makes fw_cfg additionally
-+		useful as an out-of-band, asynchronous mechanism for providing
-+		configuration data to the guest userspace.
+@@ -196,3 +196,45 @@ Description:
+ 			  entry via the control register, and reading a number
+ 			  of bytes equal to the blob size from the data
+ 			  register.
 +
-+		=== Guest-side Hardware Interface ===
++		--- Listing fw_cfg blobs by file name ---
 +
-+		The fw_cfg device is available to guest VMs as a register pair
-+		(control and data), accessible as either a IO ports or as MMIO
-+		addresses, depending on the architecture.
++		While the fw_cfg device does not impose any specific naming
++		convention on the blobs registered in the file directory,
++		QEMU developers have traditionally used path name semantics
++		to give each blob a descriptive name. For example:
 +
-+		--- Control Register ---
-+
-+		Width: 16-bit
-+		Access: Write-Only
-+		Endianness: LE (if IOport) or BE (if MMIO)
-+
-+		A write to the control register selects the index for one of
-+		the firmware configuration items (or "blobs") available on the
-+		fw_cfg device, which can subsequently be read from the data
-+		register.
-+
-+		Each time the control register is written, an data offset
-+		internal to the fw_cfg device will be set to zero. This data
-+		offset impacts which portion of the selected fw_cfg blob is
-+		accessed by reading the data register, as explained below.
-+
-+		--- Data Register ---
-+
-+		Width: 8-bit (if IOport), or 8/16/32/64-bit (if MMIO)
-+		Access: Read-Only
-+		Endianness: string preserving
-+
-+		The data register allows access to an array of bytes which
-+		represent the fw_cfg blob last selected by a write to the
-+		control register.
-+
-+		Immediately following a write to the control register, the data
-+		offset will be set to zero. Each successful read access to the
-+		data register will increment the data offset by the appropriate
-+		access width.
-+
-+		Each fw_cfg blob has a maximum associated data length. Once the
-+		data offset exceeds this maximum length, any subsequent reads
-+		via the data register will return 0x00.
-+
-+		An N-byte wide read of the data register will return the next
-+		available N bytes of the selected fw_cfg blob, as a substring,
-+		in increasing address order, similar to memcpy(), zero-padded
-+		if necessary should the maximum data length of the selected
-+		item be reached, as described above.
-+
-+		--- Per-arch Register Details ---
-+
-+		-------------------------------------------------------------
-+		arch	access	       base	ctrl	ctrl	data	max.
-+			mode	    address	offset	endian	offset	data
-+						(bytes)			(bytes)
-+		-------------------------------------------------------------
-+		x86	IOport	      0x510	0	LE	1	1
-+		arm	MMIO	  0x9020000	8	BE	0	8
-+		sun4u	IOport	      0x510	0	LE	1	1
-+		sun4m	MMIO	0xd00000510	0	BE	2	1
-+		ppc/mac	MMIO	 0xf0000510	0	BE	2	1
-+		-------------------------------------------------------------
-+
-+		NOTE 1. On platforms where the fw_cfg registers are exposed as
-+		IO ports, the data port number will always be one greater than
-+		the port number of the control register. I.e., the two ports
-+		are overlapping, and can not be mapped separately.
-+
-+		NOTE 2. QEMU publishes the base and size of the register set
-+		in ACPI (as _HID "QEMU0002", on x86 and select aarch64 subsets)
-+		and in the Device Tree (as compatible = "qemu,fw-cfg-mmio", on
-+		arm guests).
-+
-+		NOTE 3. On architectures where automatic detection of fw_cfg
-+		"hardware" (via ACPI or DT) is not supported, the guest side
-+		kernel driver allows configuration using a command line
-+		parameter, with the following syntax:
-+
-+			[fw_cfg.]ioport=<size>@<base>[:<ctrl_off>:<data_off>]
-+		or
-+			[fw_cfg.]mmio=<size>@<base>[:<ctrl_off>:<data_off>]
-+
-+		where:
-+			<size> : size of ioport or mmio range
-+			<base> : physical base address of ioport or mmio range
-+		and, optionally:
-+			<ctrl_off> : offset of control register
-+			<data_off> : offset of data register
-+
-+		Since neither ACPI nor DT provide specific details on register
-+		offsets within the overall specified register set range, using
-+		<ctrl_off> and <data_off> allows the arm-specific default MMIO
-+		offset values (8 and 0, respectively) to be overridden for e.g.
-+		sun4m and ppc/mac, where the ofsets should be 0 and 2,
-+		respectively. Using ppc/mac as an example:
-+
-+			fw_cfg.mmio=3@0xf0000510:0:2
-+
-+		=== Firmware Configuration Items of Interest ===
-+
-+		Originally, the index key, size, and formatting of blobs in
-+		fw_cfg was hard coded by mutual agreement between QEMU on the
-+		host side, and the guest-side firmware. Later on, a file
-+		transfer interface was added: by reading a special blob, the
-+		fw_cfg consumer can retrieve a list of records containing the
-+		name, selector key, and size of further fw_cfg blobs made
-+		available by the host. Below we describe three fw_cfg blobs
-+		of interest to the sysfs driver.
-+
-+		--- Signature (Key 0x0000, FW_CFG_SIGNATURE) ---
-+
-+		The presence of the fw_cfg device can be verified by selecting
-+		the signature blob by writing 0x0000 to the control register,
-+		and reading four bytes from the data register. If the fw_cfg
-+		device is present, the four bytes read will match the ASCII
-+		characters "QEMU".
-+
-+		--- Revision (Key 0x0001, FW_CFG_ID) ---
-+
-+		A 32-bit little-endian unsigned integer, this item is used as
-+		an interface revision number.
-+
-+		--- File Directory (Key 0x0019, FW_CFG_FILE_DIR) ---
-+
-+		Any fw_cfg blobs stored at key 0x0020 FW_CFG_FILE_FIRST() or
-+		higher will have an associated entry in this "directory" blob,
-+		which facilitates the discovery of available items by software
-+		(e.g. BIOS) running on the guest. The format of the directory
-+		blob is shown below.
-+
-+		NOTE: All integers are stored in big-endian format!
-+
-+		/* the entire file directory "blob" */
-+		struct FWCfgFiles {
-+			u32 count;		/* total number of entries */
-+			struct FWCfgFile f[];	/* entry array, see below */
-+		};
-+
-+		/* an individual directory entry, 64 bytes total */
-+		struct FWCfgFile {
-+			u32 size;	/* size of referenced blob */
-+			u16 select;	/* selector key for referenced blob */
-+			u16 reserved;
-+			char name[56];	/* blob name, nul-terminated ASCII */
-+		};
-+
-+		=== SysFS fw_cfg Interface ===
-+
-+		The fw_cfg sysfs interface described in this document is only
-+		intended to display discoverable blobs (i.e., those registered
-+		with the file directory), as there is no way to determine the
-+		presence or size of "legacy" blobs (with selector keys between
-+		0x0002 and 0x0018) programmatically.
-+
-+		All fw_cfg information is shown under:
-+
-+			/sys/firmware/qemu_fw_cfg/
-+
-+		The only legacy blob displayed is the fw_cfg device revision:
-+
-+			/sys/firmware/qemu_fw_cfg/rev
-+
-+		--- Discoverable fw_cfg blobs by selector key ---
-+
-+		All discoverable blobs listed in the fw_cfg file directory are
-+		displayed as entries named after their unique selector key
-+		value, e.g.:
-+
-+			/sys/firmware/qemu_fw_cfg/by_key/32
-+			/sys/firmware/qemu_fw_cfg/by_key/33
-+			/sys/firmware/qemu_fw_cfg/by_key/34
++			"bootorder"
++			"genroms/kvmvapic.bin"
++			"etc/e820"
++			"etc/boot-fail-wait"
++			"etc/system-states"
++			"etc/table-loader"
++			"etc/acpi/rsdp"
++			"etc/acpi/tables"
++			"etc/smbios/smbios-tables"
++			"etc/smbios/smbios-anchor"
 +			...
 +
-+		Each such fw_cfg sysfs entry has the following values exported
-+		as attributes:
++		In addition to the listing by unique selector key described
++		above, the fw_cfg sysfs driver also attempts to build a tree
++		of directories matching the path name components of fw_cfg
++		blob names, ending in symlinks to the by_key entry for each
++		"basename", as illustrated below (assume current directory is
++		/sys/firmware):
 +
-+		name  	: The 56-byte nul-terminated ASCII string used as the
-+			  blob's 'file name' in the fw_cfg directory.
-+		size  	: The length of the blob, as given in the fw_cfg
-+			  directory.
-+		key	: The value of the blob's selector key as given in the
-+			  fw_cfg directory. This value is the same as used in
-+			  the parent directory name.
-+		raw	: The raw bytes of the blob, obtained by selecting the
-+			  entry via the control register, and reading a number
-+			  of bytes equal to the blob size from the data
-+			  register.
-diff --git a/drivers/firmware/Kconfig b/drivers/firmware/Kconfig
-index cf478fe..3cf920a 100644
---- a/drivers/firmware/Kconfig
-+++ b/drivers/firmware/Kconfig
-@@ -161,6 +161,25 @@ config RASPBERRYPI_FIRMWARE
- 	  This option enables support for communicating with the firmware on the
- 	  Raspberry Pi.
- 
-+config FW_CFG_SYSFS
-+	tristate "QEMU fw_cfg device support in sysfs"
-+	depends on SYSFS
-+	default n
-+	help
-+	  Say Y or M here to enable the exporting of the QEMU firmware
-+	  configuration (fw_cfg) file entries via sysfs. Entries are
-+	  found under /sys/firmware/fw_cfg when this option is enabled
-+	  and loaded.
++		    qemu_fw_cfg/by_name/bootorder -> ../by_key/38
++		    qemu_fw_cfg/by_name/etc/e820 -> ../../by_key/35
++		    qemu_fw_cfg/by_name/etc/acpi/rsdp -> ../../../by_key/41
++		    ...
 +
-+config FW_CFG_SYSFS_CMDLINE
-+	bool "QEMU fw_cfg device parameter parsing"
-+	depends on FW_CFG_SYSFS
-+	help
-+	  Allow the qemu_fw_cfg device to be initialized via the kernel
-+	  command line or using a module parameter.
-+	  WARNING: Using incorrect parameters (base address in particular)
-+	  may crash your system.
++		Construction of the directory tree and symlinks is done on a
++		"best-effort" basis, as there is no guarantee that components
++		of fw_cfg blob names are always "well behaved". I.e., there is
++		the possibility that a symlink (basename) will conflict with
++		a dirname component of another fw_cfg blob, in which case the
++		creation of the offending /sys/firmware/qemu_fw_cfg/by_name
++		entry will be skipped.
 +
- config QCOM_SCM
- 	bool
- 	depends on ARM || ARM64
-diff --git a/drivers/firmware/Makefile b/drivers/firmware/Makefile
-index 48dd417..474bada 100644
---- a/drivers/firmware/Makefile
-+++ b/drivers/firmware/Makefile
-@@ -14,6 +14,7 @@ obj-$(CONFIG_ISCSI_IBFT_FIND)	+= iscsi_ibft_find.o
- obj-$(CONFIG_ISCSI_IBFT)	+= iscsi_ibft.o
- obj-$(CONFIG_FIRMWARE_MEMMAP)	+= memmap.o
- obj-$(CONFIG_RASPBERRYPI_FIRMWARE) += raspberrypi.o
-+obj-$(CONFIG_FW_CFG_SYSFS)	+= qemu_fw_cfg.o
- obj-$(CONFIG_QCOM_SCM)		+= qcom_scm.o
- obj-$(CONFIG_QCOM_SCM_64)	+= qcom_scm-64.o
- obj-$(CONFIG_QCOM_SCM_32)	+= qcom_scm-32.o
++		The authoritative list of entries will continue to be found
++		under the /sys/firmware/qemu_fw_cfg/by_key directory.
 diff --git a/drivers/firmware/qemu_fw_cfg.c b/drivers/firmware/qemu_fw_cfg.c
-new file mode 100644
-index 0000000..618304a
---- /dev/null
+index 618304a..9ac1ca7 100644
+--- a/drivers/firmware/qemu_fw_cfg.c
 +++ b/drivers/firmware/qemu_fw_cfg.c
-@@ -0,0 +1,611 @@
+@@ -318,9 +318,103 @@ static struct bin_attribute fw_cfg_sysfs_attr_raw = {
+ 	.read = fw_cfg_sysfs_read_raw,
+ };
+ 
+-/* kobjects representing top-level and by_key folders */
 +/*
-+ * drivers/firmware/qemu_fw_cfg.c
-+ *
-+ * Copyright 2015 Carnegie Mellon University
-+ *
-+ * Expose entries from QEMU's firmware configuration (fw_cfg) device in
-+ * sysfs (read-only, under "/sys/firmware/qemu_fw_cfg/...").
-+ *
-+ * The fw_cfg device may be instantiated via either an ACPI node (on x86
-+ * and select subsets of aarch64), a Device Tree node (on arm), or using
-+ * a kernel module (or command line) parameter with the following syntax:
-+ *
-+ *      [fw_cfg.]ioport=<size>@<base>[:<ctrl_off>:<data_off>]
-+ * or
-+ *      [fw_cfg.]mmio=<size>@<base>[:<ctrl_off>:<data_off>]
-+ *
-+ * where:
-+ *      <size>     := size of ioport or mmio range
-+ *      <base>     := physical base address of ioport or mmio range
-+ *      <ctrl_off> := (optional) offset of control register
-+ *      <data_off> := (optional) offset of data register
-+ *
-+ * e.g.:
-+ *      fw_cfg.ioport=2@0x510:0:1		(the default on x86)
-+ * or
-+ *      fw_cfg.mmio=0xA@0x9020000:8:0		(the default on arm)
++ * Create a kset subdirectory matching each '/' delimited dirname token
++ * in 'name', starting with sysfs kset/folder 'dir'; At the end, create
++ * a symlink directed at the given 'target'.
++ * NOTE: We do this on a best-effort basis, since 'name' is not guaranteed
++ * to be a well-behaved path name. Whenever a symlink vs. kset directory
++ * name collision occurs, the kernel will issue big scary warnings while
++ * refusing to add the offending link or directory. We follow up with our
++ * own, slightly less scary error messages explaining the situation :)
 + */
-+
-+#include <linux/module.h>
-+#include <linux/platform_device.h>
-+#include <linux/acpi.h>
-+#include <linux/slab.h>
-+#include <linux/io.h>
-+#include <linux/ioport.h>
-+
-+MODULE_AUTHOR("Gabriel L. Somlo <somlo@cmu.edu>");
-+MODULE_DESCRIPTION("QEMU fw_cfg sysfs support");
-+MODULE_LICENSE("GPL");
-+
-+/* selector key values for "well-known" fw_cfg entries */
-+#define FW_CFG_SIGNATURE  0x00
-+#define FW_CFG_ID         0x01
-+#define FW_CFG_FILE_DIR   0x19
-+
-+/* size in bytes of fw_cfg signature */
-+#define FW_CFG_SIG_SIZE 4
-+
-+/* fw_cfg "file name" is up to 56 characters (including terminating nul) */
-+#define FW_CFG_MAX_FILE_PATH 56
-+
-+/* fw_cfg file directory entry type */
-+struct fw_cfg_file {
-+	u32 size;
-+	u16 select;
-+	u16 reserved;
-+	char name[FW_CFG_MAX_FILE_PATH];
-+};
-+
-+/* fw_cfg device i/o register addresses */
-+static bool fw_cfg_is_mmio;
-+static phys_addr_t fw_cfg_p_base;
-+static resource_size_t fw_cfg_p_size;
-+static void __iomem *fw_cfg_dev_base;
-+static void __iomem *fw_cfg_reg_ctrl;
-+static void __iomem *fw_cfg_reg_data;
-+
-+/* atomic access to fw_cfg device (potentially slow i/o, so using mutex) */
-+static DEFINE_MUTEX(fw_cfg_dev_lock);
-+
-+/* pick appropriate endianness for selector key */
-+static inline u16 fw_cfg_sel_endianness(u16 key)
++static int fw_cfg_build_symlink(struct kset *dir,
++				struct kobject *target, const char *name)
 +{
-+	return fw_cfg_is_mmio ? cpu_to_be16(key) : cpu_to_le16(key);
-+}
++	int ret;
++	struct kset *subdir;
++	struct kobject *ko;
++	char *name_copy, *p, *tok;
 +
-+/* read chunk of given fw_cfg blob (caller responsible for sanity-check) */
-+static inline void fw_cfg_read_blob(u16 key,
-+				    void *buf, loff_t pos, size_t count)
-+{
-+	mutex_lock(&fw_cfg_dev_lock);
-+	iowrite16(fw_cfg_sel_endianness(key), fw_cfg_reg_ctrl);
-+	while (pos-- > 0)
-+		ioread8(fw_cfg_reg_data);
-+	ioread8_rep(fw_cfg_reg_data, buf, count);
-+	mutex_unlock(&fw_cfg_dev_lock);
-+}
-+
-+/* clean up fw_cfg device i/o */
-+static void fw_cfg_io_cleanup(void)
-+{
-+	if (fw_cfg_is_mmio) {
-+		iounmap(fw_cfg_dev_base);
-+		release_mem_region(fw_cfg_p_base, fw_cfg_p_size);
-+	} else {
-+		ioport_unmap(fw_cfg_dev_base);
-+		release_region(fw_cfg_p_base, fw_cfg_p_size);
-+	}
-+}
-+
-+/* initialize fw_cfg device i/o from platform data */
-+static int fw_cfg_do_platform_probe(struct platform_device *pdev)
-+{
-+	char sig[FW_CFG_SIG_SIZE];
-+	struct resource *range, *ctrl, *data;
-+
-+	/* acquire i/o range details */
-+	fw_cfg_is_mmio = false;
-+	range = platform_get_resource(pdev, IORESOURCE_IO, 0);
-+	if (!range) {
-+		fw_cfg_is_mmio = true;
-+		range = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-+		if (!range)
-+			return -EINVAL;
-+	}
-+	fw_cfg_p_base = range->start;
-+	fw_cfg_p_size = resource_size(range);
-+
-+	if (fw_cfg_is_mmio) {
-+		if (!request_mem_region(fw_cfg_p_base,
-+					fw_cfg_p_size, "fw_cfg_mem"))
-+			return -EBUSY;
-+		fw_cfg_dev_base = ioremap(fw_cfg_p_base, fw_cfg_p_size);
-+		if (!fw_cfg_dev_base) {
-+			release_mem_region(fw_cfg_p_base, fw_cfg_p_size);
-+			return -EFAULT;
-+		}
-+		/* set register addresses (using arm/mmio offsets) */
-+		fw_cfg_reg_ctrl = fw_cfg_dev_base + 0x08;
-+		fw_cfg_reg_data = fw_cfg_dev_base + 0x00;
-+	} else {
-+		if (!request_region(fw_cfg_p_base,
-+				    fw_cfg_p_size, "fw_cfg_io"))
-+			return -EBUSY;
-+		fw_cfg_dev_base = ioport_map(fw_cfg_p_base, fw_cfg_p_size);
-+		if (!fw_cfg_dev_base) {
-+			release_region(fw_cfg_p_base, fw_cfg_p_size);
-+			return -EFAULT;
-+		}
-+		/* set register addresses (using pc/i386/ioport offsets) */
-+		fw_cfg_reg_ctrl = fw_cfg_dev_base + 0x00;
-+		fw_cfg_reg_data = fw_cfg_dev_base + 0x01;
-+	}
-+
-+	/* were custom register offsets provided (e.g. on the command line)? */
-+	ctrl = platform_get_resource_byname(pdev, IORESOURCE_REG, "ctrl");
-+	data = platform_get_resource_byname(pdev, IORESOURCE_REG, "data");
-+	if (ctrl && data) {
-+		fw_cfg_reg_ctrl = fw_cfg_dev_base + ctrl->start;
-+		fw_cfg_reg_data = fw_cfg_dev_base + data->start;
-+	}
-+
-+	/* verify fw_cfg device signature */
-+	fw_cfg_read_blob(FW_CFG_SIGNATURE, sig, 0, FW_CFG_SIG_SIZE);
-+	if (memcmp(sig, "QEMU", FW_CFG_SIG_SIZE) != 0) {
-+		fw_cfg_io_cleanup();
-+		return -ENODEV;
-+	}
-+
-+	return 0;
-+}
-+
-+/* fw_cfg revision attribute, in /sys/firmware/qemu_fw_cfg top-level dir. */
-+static u32 fw_cfg_rev;
-+
-+static ssize_t fw_cfg_showrev(struct kobject *k, struct attribute *a, char *buf)
-+{
-+	return sprintf(buf, "%u\n", fw_cfg_rev);
-+}
-+
-+static const struct {
-+	struct attribute attr;
-+	ssize_t (*show)(struct kobject *k, struct attribute *a, char *buf);
-+} fw_cfg_rev_attr = {
-+	.attr = { .name = "rev", .mode = S_IRUSR },
-+	.show = fw_cfg_showrev,
-+};
-+
-+/* fw_cfg_sysfs_entry type */
-+struct fw_cfg_sysfs_entry {
-+	struct kobject kobj;
-+	struct fw_cfg_file f;
-+	struct list_head list;
-+};
-+
-+/* get fw_cfg_sysfs_entry from kobject member */
-+static inline struct fw_cfg_sysfs_entry *to_entry(struct kobject *kobj)
-+{
-+	return container_of(kobj, struct fw_cfg_sysfs_entry, kobj);
-+}
-+
-+/* fw_cfg_sysfs_attribute type */
-+struct fw_cfg_sysfs_attribute {
-+	struct attribute attr;
-+	ssize_t (*show)(struct fw_cfg_sysfs_entry *entry, char *buf);
-+};
-+
-+/* get fw_cfg_sysfs_attribute from attribute member */
-+static inline struct fw_cfg_sysfs_attribute *to_attr(struct attribute *attr)
-+{
-+	return container_of(attr, struct fw_cfg_sysfs_attribute, attr);
-+}
-+
-+/* global cache of fw_cfg_sysfs_entry objects */
-+static LIST_HEAD(fw_cfg_entry_cache);
-+
-+/* kobjects removed lazily by kernel, mutual exclusion needed */
-+static DEFINE_SPINLOCK(fw_cfg_cache_lock);
-+
-+static inline void fw_cfg_sysfs_cache_enlist(struct fw_cfg_sysfs_entry *entry)
-+{
-+	spin_lock(&fw_cfg_cache_lock);
-+	list_add_tail(&entry->list, &fw_cfg_entry_cache);
-+	spin_unlock(&fw_cfg_cache_lock);
-+}
-+
-+static inline void fw_cfg_sysfs_cache_delist(struct fw_cfg_sysfs_entry *entry)
-+{
-+	spin_lock(&fw_cfg_cache_lock);
-+	list_del(&entry->list);
-+	spin_unlock(&fw_cfg_cache_lock);
-+}
-+
-+static void fw_cfg_sysfs_cache_cleanup(void)
-+{
-+	struct fw_cfg_sysfs_entry *entry, *next;
-+
-+	list_for_each_entry_safe(entry, next, &fw_cfg_entry_cache, list) {
-+		/* will end up invoking fw_cfg_sysfs_cache_delist()
-+		 * via each object's release() method (i.e. destructor)
-+		 */
-+		kobject_put(&entry->kobj);
-+	}
-+}
-+
-+/* default_attrs: per-entry attributes and show methods */
-+
-+#define FW_CFG_SYSFS_ATTR(_attr) \
-+struct fw_cfg_sysfs_attribute fw_cfg_sysfs_attr_##_attr = { \
-+	.attr = { .name = __stringify(_attr), .mode = S_IRUSR }, \
-+	.show = fw_cfg_sysfs_show_##_attr, \
-+}
-+
-+static ssize_t fw_cfg_sysfs_show_size(struct fw_cfg_sysfs_entry *e, char *buf)
-+{
-+	return sprintf(buf, "%u\n", e->f.size);
-+}
-+
-+static ssize_t fw_cfg_sysfs_show_key(struct fw_cfg_sysfs_entry *e, char *buf)
-+{
-+	return sprintf(buf, "%u\n", e->f.select);
-+}
-+
-+static ssize_t fw_cfg_sysfs_show_name(struct fw_cfg_sysfs_entry *e, char *buf)
-+{
-+	return sprintf(buf, "%s\n", e->f.name);
-+}
-+
-+static FW_CFG_SYSFS_ATTR(size);
-+static FW_CFG_SYSFS_ATTR(key);
-+static FW_CFG_SYSFS_ATTR(name);
-+
-+static struct attribute *fw_cfg_sysfs_entry_attrs[] = {
-+	&fw_cfg_sysfs_attr_size.attr,
-+	&fw_cfg_sysfs_attr_key.attr,
-+	&fw_cfg_sysfs_attr_name.attr,
-+	NULL,
-+};
-+
-+/* sysfs_ops: find fw_cfg_[entry, attribute] and call appropriate show method */
-+static ssize_t fw_cfg_sysfs_attr_show(struct kobject *kobj, struct attribute *a,
-+				      char *buf)
-+{
-+	struct fw_cfg_sysfs_entry *entry = to_entry(kobj);
-+	struct fw_cfg_sysfs_attribute *attr = to_attr(a);
-+
-+	return attr->show(entry, buf);
-+}
-+
-+static const struct sysfs_ops fw_cfg_sysfs_attr_ops = {
-+	.show = fw_cfg_sysfs_attr_show,
-+};
-+
-+/* release: destructor, to be called via kobject_put() */
-+static void fw_cfg_sysfs_release_entry(struct kobject *kobj)
-+{
-+	struct fw_cfg_sysfs_entry *entry = to_entry(kobj);
-+
-+	fw_cfg_sysfs_cache_delist(entry);
-+	kfree(entry);
-+}
-+
-+/* kobj_type: ties together all properties required to register an entry */
-+static struct kobj_type fw_cfg_sysfs_entry_ktype = {
-+	.default_attrs = fw_cfg_sysfs_entry_attrs,
-+	.sysfs_ops = &fw_cfg_sysfs_attr_ops,
-+	.release = fw_cfg_sysfs_release_entry,
-+};
-+
-+/* raw-read method and attribute */
-+static ssize_t fw_cfg_sysfs_read_raw(struct file *filp, struct kobject *kobj,
-+				     struct bin_attribute *bin_attr,
-+				     char *buf, loff_t pos, size_t count)
-+{
-+	struct fw_cfg_sysfs_entry *entry = to_entry(kobj);
-+
-+	if (pos > entry->f.size)
++	if (!dir || !target || !name || !*name)
 +		return -EINVAL;
 +
-+	if (count > entry->f.size - pos)
-+		count = entry->f.size - pos;
-+
-+	fw_cfg_read_blob(entry->f.select, buf, pos, count);
-+	return count;
-+}
-+
-+static struct bin_attribute fw_cfg_sysfs_attr_raw = {
-+	.attr = { .name = "raw", .mode = S_IRUSR },
-+	.read = fw_cfg_sysfs_read_raw,
-+};
-+
-+/* kobjects representing top-level and by_key folders */
-+static struct kobject *fw_cfg_top_ko;
-+static struct kobject *fw_cfg_sel_ko;
-+
-+/* register an individual fw_cfg file */
-+static int fw_cfg_register_file(const struct fw_cfg_file *f)
-+{
-+	int err;
-+	struct fw_cfg_sysfs_entry *entry;
-+
-+	/* allocate new entry */
-+	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
-+	if (!entry)
++	/* clone a copy of name for parsing */
++	name_copy = p = kstrdup(name, GFP_KERNEL);
++	if (!name_copy)
 +		return -ENOMEM;
 +
-+	/* set file entry information */
-+	memcpy(&entry->f, f, sizeof(struct fw_cfg_file));
++	/* create folders for each dirname token, then symlink for basename */
++	while ((tok = strsep(&p, "/")) && *tok) {
 +
-+	/* register entry under "/sys/firmware/qemu_fw_cfg/by_key/" */
-+	err = kobject_init_and_add(&entry->kobj, &fw_cfg_sysfs_entry_ktype,
-+				   fw_cfg_sel_ko, "%d", entry->f.select);
-+	if (err)
-+		goto err_register;
-+
-+	/* add raw binary content access */
-+	err = sysfs_create_bin_file(&entry->kobj, &fw_cfg_sysfs_attr_raw);
-+	if (err)
-+		goto err_add_raw;
-+
-+	/* success, add entry to global cache */
-+	fw_cfg_sysfs_cache_enlist(entry);
-+	return 0;
-+
-+err_add_raw:
-+	kobject_del(&entry->kobj);
-+err_register:
-+	kfree(entry);
-+	return err;
-+}
-+
-+/* iterate over all fw_cfg directory entries, registering each one */
-+static int fw_cfg_register_dir_entries(void)
-+{
-+	int ret = 0;
-+	u32 count, i;
-+	struct fw_cfg_file *dir;
-+	size_t dir_size;
-+
-+	fw_cfg_read_blob(FW_CFG_FILE_DIR, &count, 0, sizeof(count));
-+	count = be32_to_cpu(count);
-+	dir_size = count * sizeof(struct fw_cfg_file);
-+
-+	dir = kmalloc(dir_size, GFP_KERNEL);
-+	if (!dir)
-+		return -ENOMEM;
-+
-+	fw_cfg_read_blob(FW_CFG_FILE_DIR, dir, sizeof(count), dir_size);
-+
-+	for (i = 0; i < count; i++) {
-+		dir[i].size = be32_to_cpu(dir[i].size);
-+		dir[i].select = be16_to_cpu(dir[i].select);
-+		ret = fw_cfg_register_file(&dir[i]);
-+		if (ret)
++		/* last (basename) token? If so, add symlink here */
++		if (!p || !*p) {
++			ret = sysfs_create_link(&dir->kobj, target, tok);
 +			break;
++		}
++
++		/* does the current dir contain an item named after tok ? */
++		ko = kset_find_obj(dir, tok);
++		if (ko) {
++			/* drop reference added by kset_find_obj */
++			kobject_put(ko);
++
++			/* ko MUST be a kset - we're about to use it as one ! */
++			if (ko->ktype != dir->kobj.ktype) {
++				ret = -EINVAL;
++				break;
++			}
++
++			/* descend into already existing subdirectory */
++			dir = to_kset(ko);
++		} else {
++			/* create new subdirectory kset */
++			subdir = kzalloc(sizeof(struct kset), GFP_KERNEL);
++			if (!subdir) {
++				ret = -ENOMEM;
++				break;
++			}
++			subdir->kobj.kset = dir;
++			subdir->kobj.ktype = dir->kobj.ktype;
++			ret = kobject_set_name(&subdir->kobj, "%s", tok);
++			if (ret) {
++				kfree(subdir);
++				break;
++			}
++			ret = kset_register(subdir);
++			if (ret) {
++				kfree(subdir);
++				break;
++			}
++
++			/* descend into newly created subdirectory */
++			dir = subdir;
++		}
 +	}
 +
-+	kfree(dir);
++	/* we're done with cloned copy of name */
++	kfree(name_copy);
 +	return ret;
 +}
 +
-+/* unregister top-level or by_key folder */
-+static inline void fw_cfg_kobj_cleanup(struct kobject *kobj)
++/* recursively unregister fw_cfg/by_name/ kset directory tree */
++static void fw_cfg_kset_unregister_recursive(struct kset *kset)
 +{
-+	kobject_del(kobj);
-+	kobject_put(kobj);
++	struct kobject *k, *next;
++
++	list_for_each_entry_safe(k, next, &kset->list, entry)
++		/* all set members are ksets too, but check just in case... */
++		if (k->ktype == kset->kobj.ktype)
++			fw_cfg_kset_unregister_recursive(to_kset(k));
++
++	/* symlinks are cleanly and automatically removed with the directory */
++	kset_unregister(kset);
 +}
 +
-+static int fw_cfg_sysfs_probe(struct platform_device *pdev)
-+{
-+	int err;
++/* kobjects & kset representing top-level, by_key, and by_name folders */
+ static struct kobject *fw_cfg_top_ko;
+ static struct kobject *fw_cfg_sel_ko;
++static struct kset *fw_cfg_fname_kset;
+ 
+ /* register an individual fw_cfg file */
+ static int fw_cfg_register_file(const struct fw_cfg_file *f)
+@@ -347,6 +441,9 @@ static int fw_cfg_register_file(const struct fw_cfg_file *f)
+ 	if (err)
+ 		goto err_add_raw;
+ 
++	/* try adding "/sys/firmware/qemu_fw_cfg/by_name/" symlink */
++	fw_cfg_build_symlink(fw_cfg_fname_kset, &entry->kobj, entry->f.name);
 +
-+	/* NOTE: If we supported multiple fw_cfg devices, we'd first create
-+	 * a subdirectory named after e.g. pdev->id, then hang per-device
-+	 * by_key subdirectories underneath it. However, only
-+	 * one fw_cfg device exist system-wide, so if one was already found
-+	 * earlier, we might as well stop here.
-+	 */
-+	if (fw_cfg_sel_ko)
-+		return -EBUSY;
-+
-+	/* create by_key subdirectory of /sys/firmware/qemu_fw_cfg/ */
-+	err = -ENOMEM;
-+	fw_cfg_sel_ko = kobject_create_and_add("by_key", fw_cfg_top_ko);
-+	if (!fw_cfg_sel_ko)
-+		goto err_sel;
-+
-+	/* initialize fw_cfg device i/o from platform data */
-+	err = fw_cfg_do_platform_probe(pdev);
-+	if (err)
-+		goto err_probe;
-+
-+	/* get revision number, add matching top-level attribute */
-+	fw_cfg_read_blob(FW_CFG_ID, &fw_cfg_rev, 0, sizeof(fw_cfg_rev));
-+	fw_cfg_rev = le32_to_cpu(fw_cfg_rev);
-+	err = sysfs_create_file(fw_cfg_top_ko, &fw_cfg_rev_attr.attr);
-+	if (err)
-+		goto err_rev;
-+
-+	/* process fw_cfg file directory entry, registering each file */
-+	err = fw_cfg_register_dir_entries();
-+	if (err)
-+		goto err_dir;
-+
-+	/* success */
-+	pr_debug("fw_cfg: loaded.\n");
-+	return 0;
-+
-+err_dir:
-+	fw_cfg_sysfs_cache_cleanup();
-+	sysfs_remove_file(fw_cfg_top_ko, &fw_cfg_rev_attr.attr);
-+err_rev:
-+	fw_cfg_io_cleanup();
-+err_probe:
-+	fw_cfg_kobj_cleanup(fw_cfg_sel_ko);
-+err_sel:
-+	return err;
-+}
-+
-+static int fw_cfg_sysfs_remove(struct platform_device *pdev)
-+{
-+	pr_debug("fw_cfg: unloading.\n");
-+	fw_cfg_sysfs_cache_cleanup();
-+	fw_cfg_kobj_cleanup(fw_cfg_sel_ko);
-+	fw_cfg_io_cleanup();
-+	return 0;
-+}
-+
-+static const struct of_device_id fw_cfg_sysfs_mmio_match[] = {
-+	{ .compatible = "qemu,fw-cfg-mmio", },
-+	{},
-+};
-+MODULE_DEVICE_TABLE(of, fw_cfg_sysfs_mmio_match);
-+
-+#ifdef CONFIG_ACPI
-+static const struct acpi_device_id fw_cfg_sysfs_acpi_match[] = {
-+	{ "QEMU0002", },
-+	{},
-+};
-+MODULE_DEVICE_TABLE(acpi, fw_cfg_sysfs_acpi_match);
-+#endif
-+
-+static struct platform_driver fw_cfg_sysfs_driver = {
-+	.probe = fw_cfg_sysfs_probe,
-+	.remove = fw_cfg_sysfs_remove,
-+	.driver = {
-+		.name = "fw_cfg",
-+		.of_match_table = fw_cfg_sysfs_mmio_match,
-+		.acpi_match_table = ACPI_PTR(fw_cfg_sysfs_acpi_match),
-+	},
-+};
-+
-+#ifdef CONFIG_FW_CFG_SYSFS_CMDLINE
-+
-+static struct platform_device *fw_cfg_cmdline_dev;
-+
-+static int fw_cfg_cmdline_set(const char *arg, const struct kernel_param *kp)
-+{
-+	struct resource res[3] = {};
-+	char *str;
-+	phys_addr_t base;
-+	resource_size_t size, ctrl_off, data_off;
-+	int processed, consumed = 0;
-+
-+	/* only one fw_cfg device can exist system-wide, so if one
-+	 * was processed on the command line already, we might as
-+	 * well stop here.
-+	 */
-+	if (fw_cfg_cmdline_dev) {
-+		/* avoid leaking previously registered device */
-+		platform_device_unregister(fw_cfg_cmdline_dev);
-+		return -EINVAL;
-+	}
-+
-+	/* consume "<size>" portion of command line argument */
-+	size = memparse(arg, &str);
-+
-+	/* get "@<base>[:<ctrl_off>:<data_off>]" chunks */
-+	processed = sscanf(str, "@%lli%n:%lli:%lli%n",
-+			   &base, &consumed,
-+			   &ctrl_off, &data_off, &consumed);
-+
-+	/* sscanf() must process precisely 1 or 3 chunks:
-+	 * <base> is mandatory, optionally followed by <ctrl_off>
-+	 * and <data_off>;
-+	 * there must be no extra characters after the last chunk,
-+	 * so str[consumed] must be '\0'.
-+	 */
-+	if (str[consumed] ||
-+	    (processed != 1 && processed != 3))
-+		return -EINVAL;
-+
-+	res[0].start = base;
-+	res[0].end = base + size - 1;
-+	res[0].flags = !strcmp(kp->name, "mmio") ? IORESOURCE_MEM :
-+						   IORESOURCE_IO;
-+
-+	/* insert register offsets, if provided */
-+	if (processed > 1) {
-+		res[1].name = "ctrl";
-+		res[1].start = ctrl_off;
-+		res[1].flags = IORESOURCE_REG;
-+		res[2].name = "data";
-+		res[2].start = data_off;
-+		res[2].flags = IORESOURCE_REG;
-+	}
-+
-+	/* "processed" happens to nicely match the number of resources
-+	 * we need to pass in to this platform device.
-+	 */
-+	fw_cfg_cmdline_dev = platform_device_register_simple("fw_cfg",
-+					PLATFORM_DEVID_NONE, res, processed);
-+	if (IS_ERR(fw_cfg_cmdline_dev))
-+		return PTR_ERR(fw_cfg_cmdline_dev);
-+
-+	return 0;
-+}
-+
-+static int fw_cfg_cmdline_get(char *buf, const struct kernel_param *kp)
-+{
-+	/* stay silent if device was not configured via the command
-+	 * line, or if the parameter name (ioport/mmio) doesn't match
-+	 * the device setting
-+	 */
-+	if (!fw_cfg_cmdline_dev ||
-+	    (!strcmp(kp->name, "mmio") ^
-+	     (fw_cfg_cmdline_dev->resource[0].flags == IORESOURCE_MEM)))
-+		return 0;
-+
-+	switch (fw_cfg_cmdline_dev->num_resources) {
-+	case 1:
-+		return snprintf(buf, PAGE_SIZE, "0x%llx@0x%llx",
-+				resource_size(&fw_cfg_cmdline_dev->resource[0]),
-+				fw_cfg_cmdline_dev->resource[0].start);
-+	case 3:
-+		return snprintf(buf, PAGE_SIZE, "0x%llx@0x%llx:%llu:%llu",
-+				resource_size(&fw_cfg_cmdline_dev->resource[0]),
-+				fw_cfg_cmdline_dev->resource[0].start,
-+				fw_cfg_cmdline_dev->resource[1].start,
-+				fw_cfg_cmdline_dev->resource[2].start);
-+	}
-+
-+	/* Should never get here */
-+	WARN(1, "Unexpected number of resources: %d\n",
-+		fw_cfg_cmdline_dev->num_resources);
-+	return 0;
-+}
-+
-+static const struct kernel_param_ops fw_cfg_cmdline_param_ops = {
-+	.set = fw_cfg_cmdline_set,
-+	.get = fw_cfg_cmdline_get,
-+};
-+
-+device_param_cb(ioport, &fw_cfg_cmdline_param_ops, NULL, S_IRUSR);
-+device_param_cb(mmio, &fw_cfg_cmdline_param_ops, NULL, S_IRUSR);
-+
-+#endif /* CONFIG_FW_CFG_SYSFS_CMDLINE */
-+
-+static int __init fw_cfg_sysfs_init(void)
-+{
-+	/* create /sys/firmware/qemu_fw_cfg/ top level directory */
-+	fw_cfg_top_ko = kobject_create_and_add("qemu_fw_cfg", firmware_kobj);
-+	if (!fw_cfg_top_ko)
-+		return -ENOMEM;
-+
-+	return platform_driver_register(&fw_cfg_sysfs_driver);
-+}
-+
-+static void __exit fw_cfg_sysfs_exit(void)
-+{
-+	platform_driver_unregister(&fw_cfg_sysfs_driver);
-+
-+#ifdef CONFIG_FW_CFG_SYSFS_CMDLINE
-+	platform_device_unregister(fw_cfg_cmdline_dev);
-+#endif
-+
-+	/* clean up /sys/firmware/qemu_fw_cfg/ */
-+	fw_cfg_kobj_cleanup(fw_cfg_top_ko);
-+}
-+
-+module_init(fw_cfg_sysfs_init);
-+module_exit(fw_cfg_sysfs_exit);
+ 	/* success, add entry to global cache */
+ 	fw_cfg_sysfs_cache_enlist(entry);
+ 	return 0;
+@@ -401,18 +498,21 @@ static int fw_cfg_sysfs_probe(struct platform_device *pdev)
+ 
+ 	/* NOTE: If we supported multiple fw_cfg devices, we'd first create
+ 	 * a subdirectory named after e.g. pdev->id, then hang per-device
+-	 * by_key subdirectories underneath it. However, only
++	 * by_key (and by_name) subdirectories underneath it. However, only
+ 	 * one fw_cfg device exist system-wide, so if one was already found
+ 	 * earlier, we might as well stop here.
+ 	 */
+ 	if (fw_cfg_sel_ko)
+ 		return -EBUSY;
+ 
+-	/* create by_key subdirectory of /sys/firmware/qemu_fw_cfg/ */
++	/* create by_key and by_name subdirs of /sys/firmware/qemu_fw_cfg/ */
+ 	err = -ENOMEM;
+ 	fw_cfg_sel_ko = kobject_create_and_add("by_key", fw_cfg_top_ko);
+ 	if (!fw_cfg_sel_ko)
+ 		goto err_sel;
++	fw_cfg_fname_kset = kset_create_and_add("by_name", NULL, fw_cfg_top_ko);
++	if (!fw_cfg_fname_kset)
++		goto err_name;
+ 
+ 	/* initialize fw_cfg device i/o from platform data */
+ 	err = fw_cfg_do_platform_probe(pdev);
+@@ -441,6 +541,8 @@ err_dir:
+ err_rev:
+ 	fw_cfg_io_cleanup();
+ err_probe:
++	fw_cfg_kset_unregister_recursive(fw_cfg_fname_kset);
++err_name:
+ 	fw_cfg_kobj_cleanup(fw_cfg_sel_ko);
+ err_sel:
+ 	return err;
+@@ -450,6 +552,7 @@ static int fw_cfg_sysfs_remove(struct platform_device *pdev)
+ {
+ 	pr_debug("fw_cfg: unloading.\n");
+ 	fw_cfg_sysfs_cache_cleanup();
++	fw_cfg_kset_unregister_recursive(fw_cfg_fname_kset);
+ 	fw_cfg_kobj_cleanup(fw_cfg_sel_ko);
+ 	fw_cfg_io_cleanup();
+ 	return 0;
 -- 
 2.4.3
