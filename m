@@ -1,86 +1,112 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH v2] selftests/seccomp: Get page size from sysconf
-Date: Fri, 13 Nov 2015 14:41:22 -0800
-Message-ID: <CAGXu5jJxxtfOfUzjWByh+wyVb56U2k42SneLnnE8dST8r_Yz=A@mail.gmail.com>
-References: <1447384671-17758-1-git-send-email-bamvor.zhangjian@linaro.org>
+From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: module: save load_info for livepatch modules
+Date: Fri, 13 Nov 2015 19:36:19 -0500
+Message-ID: <20151114003536.GA14759@packer-debian-8-amd64.digitalocean.com>
+References: <1447130755-17383-3-git-send-email-jeyu@redhat.com>
+ <alpine.LNX.2.00.1511111505300.12467@pobox.suse.cz>
+ <20151112053228.GD30025@packer-debian-8-amd64.digitalocean.com>
+ <20151112102404.GL4431@pathway.suse.cz>
+ <alpine.LNX.2.00.1511121400290.9440@pobox.suse.cz>
+ <20151112150345.GT2599@pathway.suse.cz>
+ <20151112170501.GD4038@treble.hsd1.ky.comcast.net>
+ <20151112221750.GA13513@packer-debian-8-amd64.digitalocean.com>
+ <alpine.LNX.2.00.1511131304280.15073@pobox.suse.cz>
+ <alpine.LNX.2.00.1511131338510.15073@pobox.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1447384671-17758-1-git-send-email-bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LNX.2.00.1511131338510.15073-ztGlSCb7Y1iN3ZZ/Hiejyg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Robert Sesek <rsesek-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+To: Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
+Cc: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 12, 2015 at 7:17 PM, Bamvor Jian Zhang
-<bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
-> The commit fd88d16c58c2 ("selftests/seccomp: Be more precise with
-> syscall arguments.") use PAGE_SIZE directly which lead to build
-> failure on arm64.
++++ Miroslav Benes [13/11/15 13:46 +0100]:
+>On Fri, 13 Nov 2015, Miroslav Benes wrote:
 >
-> Replace it with generic interface(sysconf(_SC_PAGESIZE)) to fix this
-> failure.
+>> As for load_info, I don't have a strong opinion whether to keep it for all
+>> modules or for livepatch modules only.
 >
-> Build and test successful on x86_64 and arm64.
+>I have. We cannot keep it, even for livepatch modules...
 >
-> Signed-off-by: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+>In info->hdr there is a temporary copy of the whole module (see
+>init_module syscall and the first parts of load_module). In load_module
+>a final struct module * is created with parts of info->hdr copied (I'll
+>get to that later). So if we saved info->hdr for later purposes we would
+>just have two copies of the same module in the memory. The original one
+>with !SHF_ALLOC sections and everything in vmalloc area, and the new
+>final copy with SHF_ALLOC sections only. This is not good.
+>
+>If this is correct (and I think it is after some staring into the code) we
+>need to do something different. We should build the info we need for
+>delayed relocations from the final copy (or refactor the existing
+>module code).
+>
+>The second problem... dynrela sections need to be marked with SHF_ALLOC
+>flag, right? Perhaps it would be better not to do it and copy also
+>SHF_RELA_LIVEPATCH sections. It is equivalent but not hidden somewhere
+>else (in userspace "kpatch-build" tool).
 
-Acked-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Hm, OK. I understand your concern about leaving a redundant copy of
+the module in memory and I agree that we need to do better. I think I
+have a solution.
 
-Shuah, can you please pull this for kselftest? It fixes arm64 after
-Robert's changes.
+I'm looking at exactly what components we need to make the calls to
+apply_relocate_add() work. It's quite simple, I think we only need to
+keep the following:
 
-Thanks!
+1. A copy of the module's elf section headers i.e. info->sechdrs.
+This should be easy to copy. memcpy [info->hdr->e_shnum *
+sizeof(Elf_Shdr)] bytes from info->sechdrs. We can maybe put
+this in a new field called module->sechdrs.
 
--Kees
+2. A copy of each __klp_rela section.
+If we don't keep info, the current code will discard/not copy the rela
+sections over to module core memory since they are !SHF_ALLOC. In
+kpatch-build, it is very easy to simply |= the SHF_ALLOC flag with
+each __klp_rela section and they will automatically get copied over to
+module core memory, and their sh_addr's automatically get reassigned
+as well. Thus the klp rela sections will be accessible at
+sechdrs[index_of_klpsec].sh_addr. I think this is the easiest solution.
 
-> ---
-> Add assertion for page_size.
->
->  tools/testing/selftests/seccomp/seccomp_bpf.c | 11 +++++++----
->  1 file changed, 7 insertions(+), 4 deletions(-)
->
-> diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c b/tools/testing/selftests/seccomp/seccomp_bpf.c
-> index e38cc54..882fe83 100644
-> --- a/tools/testing/selftests/seccomp/seccomp_bpf.c
-> +++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
-> @@ -492,6 +492,9 @@ TEST_SIGNAL(KILL_one_arg_six, SIGSYS)
->         pid_t parent = getppid();
->         int fd;
->         void *map1, *map2;
-> +       int page_size = sysconf(_SC_PAGESIZE);
-> +
-> +       ASSERT_LT(0, page_size);
->
->         ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
->         ASSERT_EQ(0, ret);
-> @@ -504,16 +507,16 @@ TEST_SIGNAL(KILL_one_arg_six, SIGSYS)
->
->         EXPECT_EQ(parent, syscall(__NR_getppid));
->         map1 = (void *)syscall(sysno,
-> -               NULL, PAGE_SIZE, PROT_READ, MAP_PRIVATE, fd, PAGE_SIZE);
-> +               NULL, page_size, PROT_READ, MAP_PRIVATE, fd, page_size);
->         EXPECT_NE(MAP_FAILED, map1);
->         /* mmap2() should never return. */
->         map2 = (void *)syscall(sysno,
-> -                NULL, PAGE_SIZE, PROT_READ, MAP_PRIVATE, fd, 0x0C0FFEE);
-> +                NULL, page_size, PROT_READ, MAP_PRIVATE, fd, 0x0C0FFEE);
->         EXPECT_EQ(MAP_FAILED, map2);
->
->         /* The test failed, so clean up the resources. */
-> -       munmap(map1, PAGE_SIZE);
-> -       munmap(map2, PAGE_SIZE);
-> +       munmap(map1, page_size);
-> +       munmap(map2, page_size);
->         close(fd);
->  }
->
-> --
-> 2.1.4
->
+3. A copy of the symbol table. 
+Notice that module already has a "symtab" field. In kernels configured
+with CONFIG_KALLSYMS, it points to a trimmed down symtab (the
+mod->core_symtab) in module core memory. This symtab is not normally
+complete; only "core" symbols are kept in it. See add_kallsyms()
+(called in post_relocations()) for how core symbols are copied into
+this symtab. Then, after the symbols have been copied, module->symtab
+is reassigned to point to this core_symtab in do_init_module(). Since
+CONFIG_LIVEPATCH requires CONFIG_KALLSYMS, I think we can assume that
+mod->symtab will be pointing to mod->core_symtab at the end of the
+module load process, since mod->symtab gets assigned to core_symtab in
+do_init_module() if CONFIG_KALLSYMS is set.
 
+So for livepatch, what we can do is make sure every symbol in a
+livepatch module gets copied into this core symtab. It is important we
+keep every symbol since apply_relocate_add() will be using the
+original symbol indices. We can implement this by adding a check in
+add_kallsyms() to see if we're dealing with a livepatch module. If
+yes, just copy all the symbols over.
 
+Then, we will also update Elf_Shdr corresponding to the symbol table
+section (sechdrs[symindex].sh_addr) to make sure its sh_addr points to
+mod->symtab, so apply_relocate_add() will be able to use it.
 
--- 
-Kees Cook
-Chrome OS Security
+4. A copy of mod_arch_specific
+I think we discussed this in another email somewhere, but we need to
+keep a copy if this somewhere as well. 
+
+So to summarize, keep a copy of sechdrs in module->sechdrs, keep a
+copy of mod_arch_specific, mark klp rela sections with SHF_ALLOC,
+re-use module->symtab by making sure every symbol gets considered a
+"core" symbol and gets copied over. And of course any memory we
+allocate (sechdrs, arch stuff) we will free in perhaps free_module()
+somewhere.
+
+I haven't implemented it yet but I think it will work, and we don't
+need to keep load_info in this scheme. What do you think?
+
+Thanks,
+Jessica
