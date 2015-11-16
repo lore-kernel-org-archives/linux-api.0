@@ -1,42 +1,28 @@
-From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Subject: Re: [PATCH v2] selftests/seccomp: Get page size from sysconf
-Date: Mon, 16 Nov 2015 16:42:21 +1100
-Message-ID: <1447652541.959.8.camel@ellerman.id.au>
-References: <1447384671-17758-1-git-send-email-bamvor.zhangjian@linaro.org>
-	 <CAGXu5jJxxtfOfUzjWByh+wyVb56U2k42SneLnnE8dST8r_Yz=A@mail.gmail.com>
+From: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [Qemu-devel] [PATCH v4 4/4] devicetree: update documentation for
+ fw_cfg ARM bindings
+Date: Mon, 16 Nov 2015 09:38:18 +0100
+Message-ID: <564995FA.40308@redhat.com>
+References: <1447470235-13643-1-git-send-email-somlo@cmu.edu>
+ <1447470235-13643-5-git-send-email-somlo@cmu.edu>
+ <20151115020754.GA21323@rob-hp-laptop>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAGXu5jJxxtfOfUzjWByh+wyVb56U2k42SneLnnE8dST8r_Yz=A@mail.gmail.com>
+In-Reply-To: <20151115020754.GA21323@rob-hp-laptop>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Robert Sesek <rsesek-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+To: Rob Herring <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
+Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, eric-WhKQ6XTQaPysTnJN9+BGXg@public.gmane.org, hanjun.guo-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, sudeep.holla-5wv7dgnIgG8@public.gmane.org, agross-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jordan.l.justen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, kernelnewbies-7JyXY6prKcjpASu1u0TL5ti2O/JbrIOy@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, stefanha-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2015-11-13 at 14:41 -0800, Kees Cook wrote:
 
-> On Thu, Nov 12, 2015 at 7:17 PM, Bamvor Jian Zhang
-> <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
 
-> > The commit fd88d16c58c2 ("selftests/seccomp: Be more precise with
-> > syscall arguments.") use PAGE_SIZE directly which lead to build
-> > failure on arm64.
-> > 
-> > Replace it with generic interface(sysconf(_SC_PAGESIZE)) to fix this
-> > failure.
-> > 
-> > Build and test successful on x86_64 and arm64.
-> > 
-> > Signed-off-by: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-> 
-> Acked-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-> 
-> Shuah, can you please pull this for kselftest? It fixes arm64 after
-> Robert's changes.
+On 15/11/2015 03:07, Rob Herring wrote:
+> We generally don't want DT docs to depend on other kernel documentation.
 
-Also works on powerpc with 64k pages.
+DT docs do not contain a copy of the data sheets, either.  There is no
+reason to say how to use the device (and even then, only doing so
+partially) in the DT docs.
 
-Tested-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-
-cheers
+Paolo
