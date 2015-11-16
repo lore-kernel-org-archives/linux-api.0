@@ -1,36 +1,54 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v2 2/3] [media] include/media: move driver interface headers to a separate dir
-Date: Mon, 16 Nov 2015 13:30:19 +0100
-Message-ID: <11305053.FloWFxl3Yn@wuerfel>
-References: <013152dcb3d4eaddd39aa4a37868430567bdc2d6.1447671420.git.mchehab@osg.samsung.com> <23e53dd0223c40ecf7128e0b270fcfbea8e1c43b.1447671420.git.mchehab@osg.samsung.com>
+From: "Gabriel L. Somlo" <somlo@cmu.edu>
+Subject: Re: [Qemu-devel] [PATCH v4 4/4] devicetree: update documentation for
+ fw_cfg ARM bindings
+Date: Mon, 16 Nov 2015 08:51:52 -0500
+Message-ID: <20151116135152.GE23241@HEDWIG.INI.CMU.EDU>
+References: <1447470235-13643-1-git-send-email-somlo@cmu.edu>
+ <1447470235-13643-5-git-send-email-somlo@cmu.edu>
+ <20151115020754.GA21323@rob-hp-laptop>
+ <564995FA.40308@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-sh-owner@vger.kernel.org>
-In-Reply-To: <23e53dd0223c40ecf7128e0b270fcfbea8e1c43b.1447671420.git.mchehab@osg.samsung.com>
-Sender: linux-sh-owner@vger.kernel.org
-To: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Cc: Linux Media Mailing List <linux-media@vger.kernel.org>, Mauro Carvalho Chehab <mchehab@infradead.org>, Hans Verkuil <hverkuil@xs4all.nl>, Kyungmin Park <kyungmin.park@samsung.com>, Heungjun Kim <riverful.kim@samsung.com>, Guennadi Liakhovetski <g.liakhovetski@gmx.de>, Andy Walls <awalls@md.metrocast.net>, Sylwester Nawrocki <s.nawrocki@samsung.com>, Kukjin Kim <kgene@kernel.org>, Krzysztof Kozlowski <k.kozlowski@samsung.com>, Josh Wu <josh.wu@atmel.com>, Hans de Goede <hdegoede@redhat.com>, Mike Isely <isely@pobox.com>, Jaroslav Kysela <perex@perex.cz>, Takashi Iwai <tiwai@suse.com>, Andrew Morton <akpm@linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "David S. Miller" <davem@davemloft.net>, Joe Perches <joe@perches.com>, Jiri Slaby <jslaby@suse.com>, Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>, Vinod Koul <vinod.koul@intel.com>, Ul
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <564995FA.40308@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Paolo Bonzini <pbonzini@redhat.com>
+Cc: Rob Herring <robh@kernel.org>, gregkh@linuxfoundation.org, pawel.moll@arm.com, mark.rutland@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, arnd@arndb.de, lersek@redhat.com, ralf@linux-mips.org, rmk+kernel@arm.linux.org.uk, eric@anholt.net, hanjun.guo@linaro.org, zajec5@gmail.com, sudeep.holla@arm.com, agross@codeaurora.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, peter.maydell@linaro.org, matt.fleming@intel.com, mst@redhat.com, jordan.l.justen@intel.com, kernelnewbies@kernelnewbies.org, qemu-devel@nongnu.org, leif.lindholm@linaro.org, luto@amacapital.net, ard.biesheuvel@linaro.org, kraxel@redhat.com, stefanha@gmail.com
 List-Id: linux-api@vger.kernel.org
 
-On Monday 16 November 2015 09:00:44 Mauro Carvalho Chehab wrote:
-> Let's not mix headers used by the core with those headers that
-> are needed by some driver-specific interface header.
+On Mon, Nov 16, 2015 at 09:38:18AM +0100, Paolo Bonzini wrote:
+> On 15/11/2015 03:07, Rob Herring wrote:
+> > We generally don't want DT docs to depend on other kernel documentation.
 > 
-> The headers used on drivers were manually moved using:
->     mkdir include/media/drv-intf/
->     git mv include/media/cx2341x.h include/media/cx25840.h \
-> 	include/media/exynos-fimc.h include/media/msp3400.h \
-> 	include/media/s3c_camif.h include/media/saa7146.h \
-> 	include/media/saa7146_vv.h  include/media/sh_mobile_ceu.h \
-> 	include/media/sh_mobile_csi2.h include/media/sh_vou.h \
-> 	include/media/si476x.h include/media/soc_mediabus.h \
-> 	include/media/tea575x.h include/media/drv-intf/
-> 
+> DT docs do not contain a copy of the data sheets, either.  There is no
+> reason to say how to use the device (and even then, only doing so
+> partially) in the DT docs.
 
-Acked-by: Arnd Bergmann <arnd@arndb.de>
+I believe "Documentation/devicetree/bindings/arm/fw-cfg.txt"
+was added by Laszlo (via commit 53275a61) mainly to document
+the (base,size) DT node for ARM fw_cfg register set (based on
+the idea that Documentation/devicetree/... is the authoritative
+place to park DT node information like that.
 
-I probably would have left soc_mediabus.h where it is, but I can
-see there are reasons to move it.
+The additional bits about how fw_cfg works were added for context,
+since at the time the kernel itself didn't have anything else to
+do with fw_cfg.
 
-	Arnd
+Since the sysfs driver I'm proposing (to allow fw_cfg data to be
+viewed from userspace) works on a wider set of architectures (x86,
+ARM, ppc/mac and sun4*), documentation on fw_cfg behavior belongs
+in a more cross-platform location, such as
+Documentation/ABI/testing/sysfs-firmware-qemu_fw_cfg.
+
+So Documentation/devicetree/bindings/arm/fw-cfg.txt should probably
+be limited to specifying the DT node details for ARM only. I figured
+it'd be nice to point at the new interface doc file to compensate
+for removing that information, but I'd be happy to not do that and
+just remove the redundant bits.
+
+Probably some of the stuff I just wrote should go into the commit
+log for the next version of the patch :)
+
+Thanks much,
+--Gabriel
