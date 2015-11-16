@@ -1,37 +1,24 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: CGroup Namespaces (v4)
-Date: Mon, 16 Nov 2015 17:37:58 -0500
-Message-ID: <20151116223758.GM18894@mtj.duckdns.org>
-References: <1447703505-29672-1-git-send-email-serge@hallyn.com>
- <CAFLxGvzVmbZHrpaTmXUAK03hsnVPwEs3SJGNFNXfthh3NL8EDg@mail.gmail.com>
- <20151116204606.GA30681@mail.hallyn.com>
- <564A41AF.4040208@nod.at>
- <20151116205452.GA30975@mail.hallyn.com>
- <87y4dxh9b8.fsf@x220.int.ebiederm.org>
+From: "Seymour, Shane M" <shane.seymour@hpe.com>
+Subject: RE: [PATCH v4] block: create ioctl to discard-or-zeroout a range of
+ blocks
+Date: Mon, 16 Nov 2015 22:56:29 +0000
+Message-ID: <DDB9C85B850785449757F9914A034FCB444D32C8@G9W0766.americas.hpqcorp.net>
+References: <20151113220143.GE2217@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <87y4dxh9b8.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Richard Weinberger <richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, LXC development mailing-list <lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>, cgroups mailinglist <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20151113220143.GE2217@birch.djwong.org>
+Content-Language: en-US
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Darrick J. Wong" <darrick.wong@oracle.com>, Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, "J. Bruce Fields" <bfields@fieldses.org>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
-Hello, Eric.
 
-On Mon, Nov 16, 2015 at 04:24:27PM -0600, Eric W. Biederman wrote:
-> Does this allow mixing of cgroupfs and cgroupfs2?  That is can I: "mount
-> -t cgroupfs" inside a container and "mount -t cgroupfs2" outside a
-> container? and still have reasonable things happen?  I suspect the
-> semantics of cgroups prevent this but I am interested to know what happens.
+> v4: Check the start/len arguments for overflows prior to feeding the page
+>     cache bogus numbers (that it'll ignore anyway).
 
-cgroup v1 and v2 are just separate hierarchies.  They can't nest each
-other but co-existing and namespacing on their own is completely fine.
-The caveat is that a given controller can be on only one hierarchy but
-that's the same among v1 hierarchies too.
+> Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
 
-Thanks.
-
--- 
-tejun
+Reviewed-by: Shane Seymour <shane.seymour@hpe.com>
