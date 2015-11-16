@@ -1,82 +1,44 @@
-From: Chris J Arges <chris.j.arges@canonical.com>
-Subject: [PATCH 3/3 v7] livepatch: function,sympos scheme in livepatch sysfs directory
-Date: Mon, 16 Nov 2015 11:03:07 -0600
-Message-ID: <1447693391-10065-4-git-send-email-chris.j.arges@canonical.com>
-References: <1447431804-18786-1-git-send-email-chris.j.arges@canonical.com>
- <1447693391-10065-1-git-send-email-chris.j.arges@canonical.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1447693391-10065-1-git-send-email-chris.j.arges@canonical.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: live-patching@vger.kernel.org, jpoimboe@redhat.com, sjenning@redhat.com, jikos@kernel.org, vojtech@suse.com
-Cc: pmladek@suse.com, jeyu@redhat.com, Chris J Arges <chris.j.arges@canonical.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH 2/3] selftests/capabilities: actually test it
+Date: Mon, 16 Nov 2015 10:49:30 -0800
+Message-ID: <CALCETrWOP=4pJrnJsfW2zVWvGHNnZDC5HYy5tOop8W-X4U2H8A@mail.gmail.com>
+References: <1447480914-14834-1-git-send-email-bamvor.zhangjian@linaro.org>
+ <1447480914-14834-3-git-send-email-bamvor.zhangjian@linaro.org> <1447651093.959.7.camel@ellerman.id.au>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1447651093.959.7.camel-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Kevin Hilman <khilman-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Tyler Baker <tyler.baker-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-The following directory structure will allow for cases when the same
-function name exists in a single object.
-	/sys/kernel/livepatch/<patch>/<object>/<function,sympos>
+On Sun, Nov 15, 2015 at 9:18 PM, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org> wrote:
+> On Sat, 2015-11-14 at 14:01 +0800, Bamvor Jian Zhang wrote:
+>
+>> The capatabilities exist in selftest but no in the TARGET list.
+>> Add it to the TARGET.
+>>
+>> Signed-off-by: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+>> ---
+>>  tools/testing/selftests/Makefile | 1 +
+>>  1 file changed, 1 insertion(+)
+>>
+>> diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+>> index 2458288..71b147e 100644
+>> --- a/tools/testing/selftests/Makefile
+>> +++ b/tools/testing/selftests/Makefile
+>> @@ -1,4 +1,5 @@
+>>  TARGETS = breakpoints
+>> +TARGETS += capabilities
+>>  TARGETS += cpu-hotplug
+>>  TARGETS += efivarfs
+>>  TARGETS += exec
+>
+>
+> This breaks when you use TARGETS on the command line, eg:
 
-The sympos number corresponds to the nth occurrence of the symbol name in
-kallsyms for the patched object.
+Taking a step back for a second: isn't the variable you want
+TEST_PROGS, not TARGETS?
 
-An example of patching multiple symbols can be found here:
-	https://github.com/dynup/kpatch/issues/493
-
-Signed-off-by: Chris J Arges <chris.j.arges@canonical.com>
----
- Documentation/ABI/testing/sysfs-kernel-livepatch |  6 +++++-
- kernel/livepatch/core.c                          | 10 ++++++++--
- 2 files changed, 13 insertions(+), 3 deletions(-)
-
-diff --git a/Documentation/ABI/testing/sysfs-kernel-livepatch b/Documentation/ABI/testing/sysfs-kernel-livepatch
-index 5bf42a8..da87f43 100644
---- a/Documentation/ABI/testing/sysfs-kernel-livepatch
-+++ b/Documentation/ABI/testing/sysfs-kernel-livepatch
-@@ -33,7 +33,7 @@ Description:
- 		The object directory contains subdirectories for each function
- 		that is patched within the object.
- 
--What:		/sys/kernel/livepatch/<patch>/<object>/<function>
-+What:		/sys/kernel/livepatch/<patch>/<object>/<function,sympos>
- Date:		Nov 2014
- KernelVersion:	3.19.0
- Contact:	live-patching@vger.kernel.org
-@@ -41,4 +41,8 @@ Description:
- 		The function directory contains attributes regarding the
- 		properties and state of the patched function.
- 
-+		The directory name contains the patched function name and a
-+		sympos number corresponding to the nth occurrence of the symbol
-+		name in kallsyms for the patched object.
-+
- 		There are currently no such attributes.
-diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
-index 9d98c7b..2a1fd1f 100644
---- a/kernel/livepatch/core.c
-+++ b/kernel/livepatch/core.c
-@@ -534,7 +534,7 @@ EXPORT_SYMBOL_GPL(klp_enable_patch);
-  * /sys/kernel/livepatch/<patch>
-  * /sys/kernel/livepatch/<patch>/enabled
-  * /sys/kernel/livepatch/<patch>/<object>
-- * /sys/kernel/livepatch/<patch>/<object>/<func>
-+ * /sys/kernel/livepatch/<patch>/<object>/<function,sympos>
-  */
- 
- static ssize_t enabled_store(struct kobject *kobj, struct kobj_attribute *attr,
-@@ -679,8 +679,14 @@ static int klp_init_func(struct klp_object *obj, struct klp_func *func)
- 	INIT_LIST_HEAD(&func->stack_node);
- 	func->state = KLP_DISABLED;
- 
-+	/* The format for the sysfs directory is <function,sympos> where sympos
-+	 * is the nth occurrence of this symbol in kallsyms for the patched
-+	 * object. If the user selects 0 for old_sympos, then 1 will be used
-+	 * since a unique symbol will be the first occurrence.
-+	 */
- 	return kobject_init_and_add(&func->kobj, &klp_ktype_func,
--				    &obj->kobj, "%s", func->old_name);
-+				    &obj->kobj, "%s,%lu", func->old_name,
-+				    func->old_sympos ? func->old_sympos : 1);
- }
- 
- /* parts of the initialization that is done only when the object is loaded */
--- 
-1.9.1
+--Andy
