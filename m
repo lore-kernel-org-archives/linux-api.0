@@ -1,79 +1,123 @@
-From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Subject: Re: [PATCH 1/3] selftests/capabilities: align the usage of CFLAGS
- with others
-Date: Mon, 16 Nov 2015 20:00:45 +1100
-Message-ID: <1447664445.2191.1.camel@ellerman.id.au>
-References: <1447480914-14834-1-git-send-email-bamvor.zhangjian@linaro.org>
-	 <1447480914-14834-2-git-send-email-bamvor.zhangjian@linaro.org>
-	 <1447650976.959.5.camel@ellerman.id.au>
-	 <CAFy1USTzsUcmwoS3Y4LRQjQykK2CSMKZ7JEDX517x6R3u801cw@mail.gmail.com>
+From: Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: module: save load_info for livepatch modules
+Date: Mon, 16 Nov 2015 13:12:29 +0100 (CET)
+Message-ID: <alpine.LNX.2.00.1511161303120.24384@pobox.suse.cz>
+References: <1447130755-17383-3-git-send-email-jeyu@redhat.com> <alpine.LNX.2.00.1511111505300.12467@pobox.suse.cz> <20151112053228.GD30025@packer-debian-8-amd64.digitalocean.com> <20151112102404.GL4431@pathway.suse.cz> <alpine.LNX.2.00.1511121400290.9440@pobox.suse.cz>
+ <20151112150345.GT2599@pathway.suse.cz> <20151112170501.GD4038@treble.hsd1.ky.comcast.net> <20151112221750.GA13513@packer-debian-8-amd64.digitalocean.com> <alpine.LNX.2.00.1511131304280.15073@pobox.suse.cz> <alpine.LNX.2.00.1511131338510.15073@pobox.suse.cz>
+ <20151114003536.GA14759@packer-debian-8-amd64.digitalocean.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAFy1USTzsUcmwoS3Y4LRQjQykK2CSMKZ7JEDX517x6R3u801cw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20151114003536.GA14759-N0bYjD2NfQ6k4hzjq3hgyGTy53QMssKEsp+A89P3RPuQWHG76I6BsA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Bamvor Zhang Jian <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, Kevin Hilman <khilman-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Tyler Baker <tyler.baker-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+To: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2015-11-16 at 16:52 +0800, Bamvor Zhang Jian wrote:
-> Hi, Michael
-> On 11/16/2015 01:16 PM, Michael Ellerman wrote:
-> > On Sat, 2015-11-14 at 14:01 +0800, Bamvor Jian Zhang wrote:
-> > > User need to provide cap-ng.h and libcap-ng.so for cross compiling
-> > > which could be done by pass extra cflags to EXTRA_CLAGS. But other
-> > > testcases pass CFLAGS instead.
-> > > 
-> > > Change CLAGS ':=' to CLAGS '+=' to align with others. Delete useless
-> > > EXTRA_CLAGS at the same time.
+On Fri, 13 Nov 2015, Jessica Yu wrote:
+
+> +++ Miroslav Benes [13/11/15 13:46 +0100]:
+> > On Fri, 13 Nov 2015, Miroslav Benes wrote:
 > > 
-> > Actually I think you can clean this up even more. I don't see any reason it
-> > can't use the implicit rule for compilation.
-
-> Yes, and with your comment in 2/3, how about this one:
-
-Yeah that's fine. You have to say ${TEST_FILES} ${TEST_PROGS} twice, but that's
-not so bad.
-
-I think it's more common to use $( ) brackets in Makefiles, so I'd prefer you
-used that rather than ${ }.
-
-cheers
-
-> diff --git a/tools/testing/selftests/capabilities/Makefile
-> b/tools/testing/selftests/capabilities/Makefile
-> index 8c8f0c1..de07767 100644
-> --- a/tools/testing/selftests/capabilities/Makefile
-> +++ b/tools/testing/selftests/capabilities/Makefile
-> @@ -1,18 +1,13 @@
-> -all:
-> -
-> -include ../lib.mk
-> -
-> -.PHONY: all clean
-> -
-> -TARGETS := validate_cap test_execve
-> +TEST_FILES := validate_cap
->  TEST_PROGS := test_execve
+> > > As for load_info, I don't have a strong opinion whether to keep it for all
+> > > modules or for livepatch modules only.
+> > 
+> > I have. We cannot keep it, even for livepatch modules...
+> > 
+> > In info->hdr there is a temporary copy of the whole module (see
+> > init_module syscall and the first parts of load_module). In load_module
+> > a final struct module * is created with parts of info->hdr copied (I'll
+> > get to that later). So if we saved info->hdr for later purposes we would
+> > just have two copies of the same module in the memory. The original one
+> > with !SHF_ALLOC sections and everything in vmalloc area, and the new
+> > final copy with SHF_ALLOC sections only. This is not good.
+> > 
+> > If this is correct (and I think it is after some staring into the code) we
+> > need to do something different. We should build the info we need for
+> > delayed relocations from the final copy (or refactor the existing
+> > module code).
+> > 
+> > The second problem... dynrela sections need to be marked with SHF_ALLOC
+> > flag, right? Perhaps it would be better not to do it and copy also
+> > SHF_RELA_LIVEPATCH sections. It is equivalent but not hidden somewhere
+> > else (in userspace "kpatch-build" tool).
 > 
-> -CFLAGS := -O2 -g -std=gnu99 -Wall -lcap-ng
-> +CFLAGS += -O2 -g -std=gnu99 -Wall
-> +LDLIBS += -lcap-ng -lrt -ldl
+> Hm, OK. I understand your concern about leaving a redundant copy of
+> the module in memory and I agree that we need to do better. I think I
+> have a solution.
 > 
-> -all: $(TARGETS)
-> +all: ${TEST_PROGS} ${TEST_FILES}
+> I'm looking at exactly what components we need to make the calls to
+> apply_relocate_add() work. It's quite simple, I think we only need to
+> keep the following:
 > 
->  clean:
-> - $(RM) $(TARGETS)
-> + ${RM} ${TEST_PROGS} ${TEST_FILES}
-> +
-> +include ../lib.mk
+> 1. A copy of the module's elf section headers i.e. info->sechdrs.
+> This should be easy to copy. memcpy [info->hdr->e_shnum *
+> sizeof(Elf_Shdr)] bytes from info->sechdrs. We can maybe put
+> this in a new field called module->sechdrs.
+
+Yes.
+
+> 2. A copy of each __klp_rela section.
+> If we don't keep info, the current code will discard/not copy the rela
+> sections over to module core memory since they are !SHF_ALLOC. In
+> kpatch-build, it is very easy to simply |= the SHF_ALLOC flag with
+> each __klp_rela section and they will automatically get copied over to
+> module core memory, and their sh_addr's automatically get reassigned
+> as well. Thus the klp rela sections will be accessible at
+> sechdrs[index_of_klpsec].sh_addr. I think this is the easiest solution.
+
+I agree.
+
+> 3. A copy of the symbol table. Notice that module already has a "symtab"
+> field. In kernels configured
+> with CONFIG_KALLSYMS, it points to a trimmed down symtab (the
+> mod->core_symtab) in module core memory. This symtab is not normally
+> complete; only "core" symbols are kept in it. See add_kallsyms()
+> (called in post_relocations()) for how core symbols are copied into
+> this symtab. Then, after the symbols have been copied, module->symtab
+> is reassigned to point to this core_symtab in do_init_module(). Since
+> CONFIG_LIVEPATCH requires CONFIG_KALLSYMS, I think we can assume that
+> mod->symtab will be pointing to mod->core_symtab at the end of the
+> module load process, since mod->symtab gets assigned to core_symtab in
+> do_init_module() if CONFIG_KALLSYMS is set.
 > 
-> -$(TARGETS): %: %.c
-> - $(CC) -o $@ $(CFLAGS) $(EXTRA_CFLAGS) $^ -lrt -ldl
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> So for livepatch, what we can do is make sure every symbol in a
+> livepatch module gets copied into this core symtab. It is important we
+> keep every symbol since apply_relocate_add() will be using the
+> original symbol indices. We can implement this by adding a check in
+> add_kallsyms() to see if we're dealing with a livepatch module. If
+> yes, just copy all the symbols over.
 > 
+> Then, we will also update Elf_Shdr corresponding to the symbol table
+> section (sechdrs[symindex].sh_addr) to make sure its sh_addr points to
+> mod->symtab, so apply_relocate_add() will be able to use it.
+
+It seems like the way (while looking at the code). I think we should do 
+the same for strtab. It is also the parameter of apply_relocate_add and 
+although it is not directly used in x86 code, it is (albeit for error 
+handling) for s390 case. It corresponds to symtab. Also only the core 
+symbols are preserved.
+
+> 4. A copy of mod_arch_specific
+> I think we discussed this in another email somewhere, but we need to
+> keep a copy if this somewhere as well. 
+> So to summarize, keep a copy of sechdrs in module->sechdrs, keep a
+> copy of mod_arch_specific, mark klp rela sections with SHF_ALLOC,
+> re-use module->symtab by making sure every symbol gets considered a
+> "core" symbol and gets copied over. And of course any memory we
+> allocate (sechdrs, arch stuff) we will free in perhaps free_module()
+> somewhere.
+> 
+> I haven't implemented it yet but I think it will work, and we don't
+> need to keep load_info in this scheme. What do you think?
+
+I think it should be work. Great. I think this is the way to go. The only 
+thing which needs to be solved is where all needed info should be stored. 
+Whether directly in struct module (for example module->sechdrs you 
+mentioned) or somewhere in our livepatching code only (klp_patch?). As we 
+have already discussed it depends if such functionality could be useful 
+also for someone else. I am not sure if we came to a final decision, but 
+we inclined to make it general, didn't we?
+
+Thanks,
+Miroslav
