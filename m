@@ -1,48 +1,91 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH 2/3] selftests/capabilities: actually test it
-Date: Mon, 16 Nov 2015 10:56:17 -0800
-Message-ID: <CALCETrXW--Qs2Q1sexoih2AECAFyr6GHrq8d9Y3B713bodKrcg@mail.gmail.com>
-References: <1447480914-14834-1-git-send-email-bamvor.zhangjian@linaro.org>
- <1447480914-14834-3-git-send-email-bamvor.zhangjian@linaro.org>
- <1447651093.959.7.camel@ellerman.id.au> <CALCETrWOP=4pJrnJsfW2zVWvGHNnZDC5HYy5tOop8W-X4U2H8A@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrWOP=4pJrnJsfW2zVWvGHNnZDC5HYy5tOop8W-X4U2H8A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Cc: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Kevin Hilman <khilman-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Tyler Baker <tyler.baker-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+From: serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org
+Subject: [PATCH 4/8] cgroup: export cgroup_get() and cgroup_put()
+Date: Mon, 16 Nov 2015 13:51:41 -0600
+Message-ID: <1447703505-29672-5-git-send-email-serge@hallyn.com>
+References: <1447703505-29672-1-git-send-email-serge@hallyn.com>
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1447703505-29672-1-git-send-email-serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 16, 2015 at 10:49 AM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
-> On Sun, Nov 15, 2015 at 9:18 PM, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org> wrote:
->> On Sat, 2015-11-14 at 14:01 +0800, Bamvor Jian Zhang wrote:
->>
->>> The capatabilities exist in selftest but no in the TARGET list.
->>> Add it to the TARGET.
->>>
->>> Signed-off-by: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
->>> ---
->>>  tools/testing/selftests/Makefile | 1 +
->>>  1 file changed, 1 insertion(+)
->>>
->>> diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
->>> index 2458288..71b147e 100644
->>> --- a/tools/testing/selftests/Makefile
->>> +++ b/tools/testing/selftests/Makefile
->>> @@ -1,4 +1,5 @@
->>>  TARGETS = breakpoints
->>> +TARGETS += capabilities
->>>  TARGETS += cpu-hotplug
->>>  TARGETS += efivarfs
->>>  TARGETS += exec
->>
->>
->> This breaks when you use TARGETS on the command line, eg:
->
-> Taking a step back for a second: isn't the variable you want
-> TEST_PROGS, not TARGETS?
+From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-Never mind, I read the patch wrong.
+move cgroup_get() and cgroup_put() into cgroup.h so that
+they can be called from other places.
 
---Andy
+Signed-off-by: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Acked-by: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+---
+ include/linux/cgroup.h |   21 +++++++++++++++++++++
+ kernel/cgroup.c        |   22 ----------------------
+ 2 files changed, 21 insertions(+), 22 deletions(-)
+
+diff --git a/include/linux/cgroup.h b/include/linux/cgroup.h
+index 29f0b02..99096be 100644
+--- a/include/linux/cgroup.h
++++ b/include/linux/cgroup.h
+@@ -231,6 +231,27 @@ void css_task_iter_end(struct css_task_iter *it);
+ #define css_for_each_descendant_post(pos, css)				\
+ 	for ((pos) = css_next_descendant_post(NULL, (css)); (pos);	\
+ 	     (pos) = css_next_descendant_post((pos), (css)))
++/* convenient tests for these bits */
++static inline bool cgroup_is_dead(const struct cgroup *cgrp)
++{
++	return !(cgrp->self.flags & CSS_ONLINE);
++}
++
++static inline void cgroup_get(struct cgroup *cgrp)
++{
++	WARN_ON_ONCE(cgroup_is_dead(cgrp));
++	css_get(&cgrp->self);
++}
++
++static inline bool cgroup_tryget(struct cgroup *cgrp)
++{
++	return css_tryget(&cgrp->self);
++}
++
++static inline void cgroup_put(struct cgroup *cgrp)
++{
++	css_put(&cgrp->self);
++}
+ 
+ /**
+  * cgroup_taskset_for_each - iterate cgroup_taskset
+diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+index e29c346..e972259 100644
+--- a/kernel/cgroup.c
++++ b/kernel/cgroup.c
+@@ -417,28 +417,6 @@ out_unlock:
+ 	return css;
+ }
+ 
+-/* convenient tests for these bits */
+-static inline bool cgroup_is_dead(const struct cgroup *cgrp)
+-{
+-	return !(cgrp->self.flags & CSS_ONLINE);
+-}
+-
+-static void cgroup_get(struct cgroup *cgrp)
+-{
+-	WARN_ON_ONCE(cgroup_is_dead(cgrp));
+-	css_get(&cgrp->self);
+-}
+-
+-static bool cgroup_tryget(struct cgroup *cgrp)
+-{
+-	return css_tryget(&cgrp->self);
+-}
+-
+-static void cgroup_put(struct cgroup *cgrp)
+-{
+-	css_put(&cgrp->self);
+-}
+-
+ struct cgroup_subsys_state *of_css(struct kernfs_open_file *of)
+ {
+ 	struct cgroup *cgrp = of->kn->parent->priv;
+-- 
+1.7.9.5
