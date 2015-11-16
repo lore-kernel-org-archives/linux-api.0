@@ -1,54 +1,82 @@
-From: "Gabriel L. Somlo" <somlo@cmu.edu>
-Subject: Re: [Qemu-devel] [PATCH v4 4/4] devicetree: update documentation for
- fw_cfg ARM bindings
-Date: Mon, 16 Nov 2015 08:51:52 -0500
-Message-ID: <20151116135152.GE23241@HEDWIG.INI.CMU.EDU>
-References: <1447470235-13643-1-git-send-email-somlo@cmu.edu>
- <1447470235-13643-5-git-send-email-somlo@cmu.edu>
- <20151115020754.GA21323@rob-hp-laptop>
- <564995FA.40308@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Chris J Arges <chris.j.arges@canonical.com>
+Subject: [PATCH 3/3 v7] livepatch: function,sympos scheme in livepatch sysfs directory
+Date: Mon, 16 Nov 2015 11:03:07 -0600
+Message-ID: <1447693391-10065-4-git-send-email-chris.j.arges@canonical.com>
+References: <1447431804-18786-1-git-send-email-chris.j.arges@canonical.com>
+ <1447693391-10065-1-git-send-email-chris.j.arges@canonical.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <564995FA.40308@redhat.com>
+In-Reply-To: <1447693391-10065-1-git-send-email-chris.j.arges@canonical.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Paolo Bonzini <pbonzini@redhat.com>
-Cc: Rob Herring <robh@kernel.org>, gregkh@linuxfoundation.org, pawel.moll@arm.com, mark.rutland@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, arnd@arndb.de, lersek@redhat.com, ralf@linux-mips.org, rmk+kernel@arm.linux.org.uk, eric@anholt.net, hanjun.guo@linaro.org, zajec5@gmail.com, sudeep.holla@arm.com, agross@codeaurora.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, peter.maydell@linaro.org, matt.fleming@intel.com, mst@redhat.com, jordan.l.justen@intel.com, kernelnewbies@kernelnewbies.org, qemu-devel@nongnu.org, leif.lindholm@linaro.org, luto@amacapital.net, ard.biesheuvel@linaro.org, kraxel@redhat.com, stefanha@gmail.com
+To: live-patching@vger.kernel.org, jpoimboe@redhat.com, sjenning@redhat.com, jikos@kernel.org, vojtech@suse.com
+Cc: pmladek@suse.com, jeyu@redhat.com, Chris J Arges <chris.j.arges@canonical.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 16, 2015 at 09:38:18AM +0100, Paolo Bonzini wrote:
-> On 15/11/2015 03:07, Rob Herring wrote:
-> > We generally don't want DT docs to depend on other kernel documentation.
-> 
-> DT docs do not contain a copy of the data sheets, either.  There is no
-> reason to say how to use the device (and even then, only doing so
-> partially) in the DT docs.
+The following directory structure will allow for cases when the same
+function name exists in a single object.
+	/sys/kernel/livepatch/<patch>/<object>/<function,sympos>
 
-I believe "Documentation/devicetree/bindings/arm/fw-cfg.txt"
-was added by Laszlo (via commit 53275a61) mainly to document
-the (base,size) DT node for ARM fw_cfg register set (based on
-the idea that Documentation/devicetree/... is the authoritative
-place to park DT node information like that.
+The sympos number corresponds to the nth occurrence of the symbol name in
+kallsyms for the patched object.
 
-The additional bits about how fw_cfg works were added for context,
-since at the time the kernel itself didn't have anything else to
-do with fw_cfg.
+An example of patching multiple symbols can be found here:
+	https://github.com/dynup/kpatch/issues/493
 
-Since the sysfs driver I'm proposing (to allow fw_cfg data to be
-viewed from userspace) works on a wider set of architectures (x86,
-ARM, ppc/mac and sun4*), documentation on fw_cfg behavior belongs
-in a more cross-platform location, such as
-Documentation/ABI/testing/sysfs-firmware-qemu_fw_cfg.
+Signed-off-by: Chris J Arges <chris.j.arges@canonical.com>
+---
+ Documentation/ABI/testing/sysfs-kernel-livepatch |  6 +++++-
+ kernel/livepatch/core.c                          | 10 ++++++++--
+ 2 files changed, 13 insertions(+), 3 deletions(-)
 
-So Documentation/devicetree/bindings/arm/fw-cfg.txt should probably
-be limited to specifying the DT node details for ARM only. I figured
-it'd be nice to point at the new interface doc file to compensate
-for removing that information, but I'd be happy to not do that and
-just remove the redundant bits.
-
-Probably some of the stuff I just wrote should go into the commit
-log for the next version of the patch :)
-
-Thanks much,
---Gabriel
+diff --git a/Documentation/ABI/testing/sysfs-kernel-livepatch b/Documentation/ABI/testing/sysfs-kernel-livepatch
+index 5bf42a8..da87f43 100644
+--- a/Documentation/ABI/testing/sysfs-kernel-livepatch
++++ b/Documentation/ABI/testing/sysfs-kernel-livepatch
+@@ -33,7 +33,7 @@ Description:
+ 		The object directory contains subdirectories for each function
+ 		that is patched within the object.
+ 
+-What:		/sys/kernel/livepatch/<patch>/<object>/<function>
++What:		/sys/kernel/livepatch/<patch>/<object>/<function,sympos>
+ Date:		Nov 2014
+ KernelVersion:	3.19.0
+ Contact:	live-patching@vger.kernel.org
+@@ -41,4 +41,8 @@ Description:
+ 		The function directory contains attributes regarding the
+ 		properties and state of the patched function.
+ 
++		The directory name contains the patched function name and a
++		sympos number corresponding to the nth occurrence of the symbol
++		name in kallsyms for the patched object.
++
+ 		There are currently no such attributes.
+diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
+index 9d98c7b..2a1fd1f 100644
+--- a/kernel/livepatch/core.c
++++ b/kernel/livepatch/core.c
+@@ -534,7 +534,7 @@ EXPORT_SYMBOL_GPL(klp_enable_patch);
+  * /sys/kernel/livepatch/<patch>
+  * /sys/kernel/livepatch/<patch>/enabled
+  * /sys/kernel/livepatch/<patch>/<object>
+- * /sys/kernel/livepatch/<patch>/<object>/<func>
++ * /sys/kernel/livepatch/<patch>/<object>/<function,sympos>
+  */
+ 
+ static ssize_t enabled_store(struct kobject *kobj, struct kobj_attribute *attr,
+@@ -679,8 +679,14 @@ static int klp_init_func(struct klp_object *obj, struct klp_func *func)
+ 	INIT_LIST_HEAD(&func->stack_node);
+ 	func->state = KLP_DISABLED;
+ 
++	/* The format for the sysfs directory is <function,sympos> where sympos
++	 * is the nth occurrence of this symbol in kallsyms for the patched
++	 * object. If the user selects 0 for old_sympos, then 1 will be used
++	 * since a unique symbol will be the first occurrence.
++	 */
+ 	return kobject_init_and_add(&func->kobj, &klp_ktype_func,
+-				    &obj->kobj, "%s", func->old_name);
++				    &obj->kobj, "%s,%lu", func->old_name,
++				    func->old_sympos ? func->old_sympos : 1);
+ }
+ 
+ /* parts of the initialization that is done only when the object is loaded */
+-- 
+1.9.1
