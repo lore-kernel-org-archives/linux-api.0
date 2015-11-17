@@ -1,118 +1,32 @@
 From: Marc Titinger <mtitinger-rdvid1DuHRBWk0Htik3J/w@public.gmane.org>
-Subject: [RFC 2/2] iio: ina2xx: convert AVERGING ratio setting from generic sysfs attr to ABI
-Date: Tue, 17 Nov 2015 11:44:10 +0100
-Message-ID: <1447757050-4214-3-git-send-email-mtitinger@baylibre.com>
-References: <1447757050-4214-1-git-send-email-mtitinger@baylibre.com>
+Subject: [RFC 0/2] ABI: IIO: proposal for AVERAGING_RATIO support
+Date: Tue, 17 Nov 2015 11:44:08 +0100
+Message-ID: <1447757050-4214-1-git-send-email-mtitinger@baylibre.com>
 Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1447757050-4214-1-git-send-email-mtitinger-rdvid1DuHRBWk0Htik3J/w@public.gmane.org>
 Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, knaack.h-Mmb7MZpHnFY@public.gmane.org, lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org, pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org
 Cc: daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Marc Titinger <mtitinger-rdvid1DuHRBWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-using the proposed ABI addition for IIO_CHAN_INFO_AVERAGING_RATIO, convert
-the sysfs attribute for averaging ratio to using in_averaging_ratio as a
-directory-bound channel info.
+This is an attempt to document/define simple downsampling/averaging
+features for some ADC devices.
 
-Signed-off-by: Marc Titinger <mtitinger-rdvid1DuHRBWk0Htik3J/w@public.gmane.org>
----
- drivers/iio/adc/ina2xx-iio.c | 47 ++++++--------------------------------------
- 1 file changed, 6 insertions(+), 41 deletions(-)
+As discussed in https://lkml.org/lkml/2015/11/16/566
 
-diff --git a/drivers/iio/adc/ina2xx-iio.c b/drivers/iio/adc/ina2xx-iio.c
-index d4dd908..f6daa5b 100644
---- a/drivers/iio/adc/ina2xx-iio.c
-+++ b/drivers/iio/adc/ina2xx-iio.c
-@@ -179,7 +179,7 @@ static int ina2xx_read_raw(struct iio_dev *indio_dev,
- 
- 		return ina2xx_get_value(chip, chan->address, regval, val, val2);
- 
--	case IIO_CHAN_INFO_AVERAGE_RAW:
-+	case IIO_CHAN_INFO_AVERAGING_RATIO:
- 		*val = chip->avg;
- 		return IIO_VAL_INT;
- 
-@@ -219,6 +219,8 @@ static int ina2xx_calibrate(struct ina2xx_chip_info *chip)
-  */
- static const int ina226_avg_tab[] = { 1, 4, 16, 64, 128, 256, 512, 1024 };
- 
-+static IIO_CONST_ATTR_AVERAGING_RATIO_AVAIL("1, 4, 16, 64, 128, 256, 512, 1024");
-+
- static unsigned int ina226_set_average(struct ina2xx_chip_info *chip,
- 				       unsigned int val,
- 				       unsigned int *config)
-@@ -286,7 +288,7 @@ static int ina2xx_write_raw(struct iio_dev *indio_dev,
- 	tmp = config;
- 
- 	switch (mask) {
--	case IIO_CHAN_INFO_AVERAGE_RAW:
-+	case IIO_CHAN_INFO_AVERAGING_RATIO:
- 
- 		ret = ina226_set_average(chip, val, &tmp);
- 		break;
-@@ -308,40 +310,6 @@ _err:
- 	return ret;
- }
- 
--
--static ssize_t ina2xx_averaging_steps_show(struct device *dev,
--					   struct device_attribute *attr,
--					   char *buf)
--{
--	struct ina2xx_chip_info *chip = iio_priv(dev_to_iio_dev(dev));
--
--	return sprintf(buf, "%d\n", chip->avg);
--}
--
--
--static ssize_t ina2xx_averaging_steps_store(struct device *dev,
--				struct device_attribute *attr,
--				const char *buf, size_t len)
--{
--	unsigned long val;
--	int ret;
--
--	ret = kstrtoul((const char *) buf, 10, &val);
--	if (ret)
--		return -EINVAL;
--
--	/* unexposed missuse of INFO_AVERAGE_RAW, until a proper ABI for the
--	 * averaging steps setting is specified.
--	 */
--	ret  = ina2xx_write_raw(dev_to_iio_dev(dev), NULL, val, 0,
--				IIO_CHAN_INFO_AVERAGE_RAW);
--	if (ret < 0)
--		return ret;
--
--	return len;
--}
--
--
- #define INA2XX_CHAN(_type, _index, _address) { \
- 	.type = _type, \
- 	.address = _address, \
-@@ -349,6 +317,7 @@ static ssize_t ina2xx_averaging_steps_store(struct device *dev,
- 	.channel = (_index), \
- 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW), \
- 	.info_mask_shared_by_dir = BIT(IIO_CHAN_INFO_SAMP_FREQ) | \
-+				   BIT(IIO_CHAN_INFO_AVERAGING_RATIO) | \
- 				   BIT(IIO_CHAN_INFO_CALIBSCALE), \
- 	.scan_index = (_index), \
- 	.scan_type = { \
-@@ -382,13 +351,9 @@ static int ina2xx_debug_reg(struct iio_dev *indio_dev,
- /* frequencies matching the cummulated integration times for vshunt and vbus */
- static IIO_CONST_ATTR_SAMP_FREQ_AVAIL("61 120 236 455 850 1506 2450 3571");
- 
--static IIO_DEVICE_ATTR(in_averaging_steps, S_IRUGO | S_IWUSR,
--		       ina2xx_averaging_steps_show,
--		       ina2xx_averaging_steps_store, 0);
--
- static struct attribute *ina2xx_attributes[] = {
--	&iio_dev_attr_in_averaging_steps.dev_attr.attr,
- 	&iio_const_attr_sampling_frequency_available.dev_attr.attr,
-+	&iio_const_attr_averaging_ratio_available.dev_attr.attr,
- 	NULL,
- };
- 
+As an illustration, Patch 2 is an instance of implementation
+using ina226.
+
+Marc Titinger (2):
+  ABI: iio: support AVERAGING_RATIO setting
+  iio: ina2xx: convert AVERGING ratio setting from generic sysfs attr to
+    ABI
+
+ Documentation/ABI/testing/sysfs-bus-iio | 13 +++++++++
+ drivers/iio/adc/ina2xx-iio.c            | 47 +++++----------------------------
+ drivers/iio/industrialio-core.c         |  1 +
+ include/linux/iio/iio.h                 |  1 +
+ include/linux/iio/sysfs.h               |  9 +++++++
+ 5 files changed, 30 insertions(+), 41 deletions(-)
+
 -- 
 1.9.1
