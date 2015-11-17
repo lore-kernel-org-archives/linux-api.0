@@ -1,150 +1,199 @@
 From: Dave Hansen <dave@sr71.net>
-Subject: [PATCH 00/37] x86: Memory Protection Keys
-Date: Mon, 16 Nov 2015 19:35:11 -0800
-Message-ID: <20151117033511.BFFA1440@viggo.jf.intel.com>
-Return-path: <linux-arch-owner@vger.kernel.org>
-Sender: linux-arch-owner@vger.kernel.org
+Subject: [PATCH 29/37] mm: implement new mprotect_key() system call
+Date: Mon, 16 Nov 2015 19:35:52 -0800
+Message-ID: <20151117033552.44890BA6@viggo.jf.intel.com>
+References: <20151117033511.BFFA1440@viggo.jf.intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20151117033511.BFFA1440@viggo.jf.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: x86@kernel.org, Dave Hansen <dave@sr71.net>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, aarcange@redhat.com, akpm@linux-foundation.org, jack@suse.cz, kirill.shutemov@linux.intel.com, n-horiguchi@ah.jp.nec.com
+Cc: x86@kernel.org, Dave Hansen <dave@sr71.net>, dave.hansen@linux.intel.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Memory Protection Keys for User pages is a CPU feature which will
-first appear on Skylake Servers, but will also be supported on
-future non-server parts.  It provides a mechanism for enforcing
-page-based protections, but without requiring modification of the
-page tables when an application changes protection domains.  See
-the Documentation/ patch for more details.
 
-Changes from RFCv3:
+From: Dave Hansen <dave.hansen@linux.intel.com>
 
- * Added 'current' and 'foreign' variants of get_user_pages() to
-   help indicate whether protection keys should be enforced.
-   Thanks to Jerome Glisse for pointing out this issue.
- * Added "allocation" and set/get system calls so that we can do
-   management of proection keys in the kernel.  This opens the
-   door to use of specific protection keys for kernel use in the
-   future, such as for execute-only memory.
- * Removed the kselftest code for the moment.  It will be
-   submitted separately.
+mprotect_key() is just like mprotect, except it also takes a
+protection key as an argument.  On systems that do not support
+protection keys, it still works, but requires that key=0.
+Otherwise it does exactly what mprotect does.
 
-Thanks Ingo and Thomas for most of these):
-Changes from RFCv2 (Thanks Ingo and Thomas for most of these):
+I expect it to get used like this, if you want to guarantee that
+any mapping you create can *never* be accessed without the right
+protection keys set up.
 
- * few minor compile warnings
- * changed 'nopku' interaction with cpuid bits.  Now, we do not
-   clear the PKU cpuid bit, we just skip enabling it.
- * changed __pkru_allows_write() to also check access disable bit
- * removed the unused write_pkru()
- * made si_pkey a u64 and added some patch description details.
-   Also made it share space in siginfo with MPX and clarified
-   comments.
- * give some real text for the Processor Trace xsave state
- * made vma_pkey() less ugly (and much more optimized actually)
- * added SEGV_PKUERR to copy_siginfo_to_user()
- * remove page table walk when filling in si_pkey, added some
-   big fat comments about it being inherently racy.
- * added self test code
+	pkey_deny_access(11); // random pkey
+	int real_prot = PROT_READ|PROT_WRITE;
+	ptr = mmap(NULL, PAGE_SIZE, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+	ret = mprotect_key(ptr, PAGE_SIZE, real_prot, 11);
 
-This code is not runnable to anyone outside of Intel unless they
-have some special hardware or a fancy simulator.  If you are
-interested in running this for real, please get in touch with me.
-Hardware is available to a very small but nonzero number of
-people.
+This way, there is *no* window where the mapping is accessible
+since it was always either PROT_NONE or had a protection key set.
 
-This set is also available here (with the new syscall):
+We settled on 'unsigned long' for the type of the key here.  We
+only need 4 bits on x86 today, but I figured that other
+architectures might need some more space.
 
-	git://git.kernel.org/pub/scm/linux/kernel/git/daveh/x86-pkeys.git pkeys-v010
-
-=== diffstat ===
-
- Documentation/kernel-parameters.txt         |   3 +
- Documentation/x86/protection-keys.txt       |  53 +++++
- arch/mips/mm/gup.c                          |   3 +-
- arch/powerpc/include/asm/mman.h             |   5 +-
- arch/powerpc/include/asm/mmu_context.h      |  12 +
- arch/s390/include/asm/mmu_context.h         |  12 +
- arch/s390/mm/gup.c                          |   3 +-
- arch/sh/mm/gup.c                            |   2 +-
- arch/sparc/mm/gup.c                         |   2 +-
- arch/unicore32/include/asm/mmu_context.h    |  12 +
- arch/x86/Kconfig                            |  16 ++
- arch/x86/entry/syscalls/syscall_32.tbl      |   5 +
- arch/x86/entry/syscalls/syscall_64.tbl      |   5 +
- arch/x86/include/asm/cpufeature.h           |  54 +++--
- arch/x86/include/asm/disabled-features.h    |  12 +
- arch/x86/include/asm/fpu/types.h            |  12 +
- arch/x86/include/asm/fpu/xstate.h           |   4 +-
- arch/x86/include/asm/mmu.h                  |   7 +
- arch/x86/include/asm/mmu_context.h          | 110 ++++++++-
- arch/x86/include/asm/pgtable.h              |  38 +++
- arch/x86/include/asm/pgtable_types.h        |  34 ++-
- arch/x86/include/asm/pkeys.h                |  68 ++++++
- arch/x86/include/asm/required-features.h    |   4 +
- arch/x86/include/asm/special_insns.h        |  20 ++
- arch/x86/include/uapi/asm/mman.h            |  22 ++
- arch/x86/include/uapi/asm/processor-flags.h |   2 +
- arch/x86/kernel/cpu/common.c                |  42 ++++
- arch/x86/kernel/fpu/xstate.c                | 250 +++++++++++++++++++-
- arch/x86/kernel/ldt.c                       |   4 +-
- arch/x86/kernel/process_64.c                |   2 +
- arch/x86/kernel/setup.c                     |   9 +
- arch/x86/mm/fault.c                         | 153 ++++++++++--
- arch/x86/mm/gup.c                           |  52 ++--
- arch/x86/mm/mpx.c                           |   4 +-
- drivers/char/agp/frontend.c                 |   2 +-
- drivers/gpu/drm/amd/amdgpu/amdgpu_ttm.c     |   4 +-
- drivers/gpu/drm/i915/i915_gem_userptr.c     |   2 +-
- drivers/gpu/drm/radeon/radeon_ttm.c         |   4 +-
- drivers/gpu/drm/via/via_dmablit.c           |   3 +-
- drivers/infiniband/core/umem.c              |   2 +-
- drivers/infiniband/core/umem_odp.c          |   8 +-
- drivers/infiniband/hw/mthca/mthca_memfree.c |   3 +-
- drivers/infiniband/hw/qib/qib_user_pages.c  |   3 +-
- drivers/infiniband/hw/usnic/usnic_uiom.c    |   2 +-
- drivers/iommu/amd_iommu_v2.c                |   8 +-
- drivers/media/pci/ivtv/ivtv-udma.c          |   4 +-
- drivers/media/pci/ivtv/ivtv-yuv.c           |  10 +-
- drivers/media/v4l2-core/videobuf-dma-sg.c   |   3 +-
- drivers/misc/sgi-gru/grufault.c             |   3 +-
- drivers/scsi/st.c                           |   2 -
- drivers/staging/android/ashmem.c            |   4 +-
- drivers/video/fbdev/pvr2fb.c                |   4 +-
- drivers/virt/fsl_hypervisor.c               |   5 +-
- fs/exec.c                                   |   8 +-
- fs/proc/task_mmu.c                          |   5 +
- include/asm-generic/mm_hooks.h              |  13 +
- include/linux/mm.h                          |  52 +++-
- include/linux/mman.h                        |   6 +-
- include/linux/pkeys.h                       |  59 +++++
- include/uapi/asm-generic/mman-common.h      |   5 +
- include/uapi/asm-generic/siginfo.h          |  17 +-
- kernel/events/uprobes.c                     |   8 +-
- kernel/signal.c                             |   4 +
- mm/Kconfig                                  |  13 +
- mm/frame_vector.c                           |   9 +-
- mm/gup.c                                    | 153 ++++++------
- mm/ksm.c                                    |  10 +-
- mm/memory.c                                 |   8 +-
- mm/mempolicy.c                              |   6 +-
- mm/mmap.c                                   |   2 +-
- mm/mprotect.c                               | 134 ++++++++++-
- mm/nommu.c                                  |  35 ++-
- mm/process_vm_access.c                      |   6 +-
- mm/util.c                                   |   4 +-
- net/ceph/pagevec.c                          |   2 +-
- security/tomoyo/domain.c                    |   9 +-
- virt/kvm/async_pf.c                         |   2 +-
- virt/kvm/kvm_main.c                         |  13 +-
- 78 files changed, 1410 insertions(+), 285 deletions(-)
-
-
+Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
 Cc: linux-api@vger.kernel.org
-Cc: linux-arch@vger.kernel.org
-Cc: aarcange@redhat.com
-Cc: akpm@linux-foundation.org
-Cc: jack@suse.cz
-Cc: kirill.shutemov@linux.intel.com
-Cc: linux-api@vger.kernel.org
-Cc: linux-arch@vger.kernel.org
-Cc: n-horiguchi@ah.jp.nec.com
-Cc: x86@kernel.org
+---
+
+ b/arch/x86/include/asm/mmu_context.h |   10 +++++++--
+ b/include/linux/pkeys.h              |    7 +++++-
+ b/mm/Kconfig                         |    7 ++++++
+ b/mm/mprotect.c                      |   36 +++++++++++++++++++++++++++++------
+ 4 files changed, 51 insertions(+), 9 deletions(-)
+
+diff -puN arch/x86/include/asm/mmu_context.h~pkeys-85-mprotect_pkey arch/x86/include/asm/mmu_context.h
+--- a/arch/x86/include/asm/mmu_context.h~pkeys-85-mprotect_pkey	2015-11-16 12:36:28.811598913 -0800
++++ b/arch/x86/include/asm/mmu_context.h	2015-11-16 19:22:01.920396860 -0800
+@@ -4,6 +4,7 @@
+ #include <asm/desc.h>
+ #include <linux/atomic.h>
+ #include <linux/mm_types.h>
++#include <linux/pkeys.h>
+ 
+ #include <trace/events/tlb.h>
+ 
+@@ -243,10 +244,14 @@ static inline void arch_unmap(struct mm_
+ 		mpx_notify_unmap(mm, vma, start, end);
+ }
+ 
++#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
++/*
++ * If the config option is off, we get the generic version from
++ * include/linux/pkeys.h.
++ */
+ static inline int vma_pkey(struct vm_area_struct *vma)
+ {
+ 	u16 pkey = 0;
+-#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
+ 	unsigned long vma_pkey_mask = VM_PKEY_BIT0 | VM_PKEY_BIT1 |
+ 				      VM_PKEY_BIT2 | VM_PKEY_BIT3;
+ 	/*
+@@ -259,9 +264,10 @@ static inline int vma_pkey(struct vm_are
+ 	 */
+ 	pkey = (vma->vm_flags >> vm_pkey_shift) &
+ 	       (vma_pkey_mask >> vm_pkey_shift);
+-#endif
++
+ 	return pkey;
+ }
++#endif
+ 
+ static inline bool __pkru_allows_pkey(u16 pkey, bool write)
+ {
+diff -puN include/linux/pkeys.h~pkeys-85-mprotect_pkey include/linux/pkeys.h
+--- a/include/linux/pkeys.h~pkeys-85-mprotect_pkey	2015-11-16 12:36:28.812598958 -0800
++++ b/include/linux/pkeys.h	2015-11-16 19:22:05.259547173 -0800
+@@ -2,10 +2,10 @@
+ #define _LINUX_PKEYS_H
+ 
+ #include <linux/mm_types.h>
+-#include <asm/mmu_context.h>
+ 
+ #ifdef CONFIG_ARCH_HAS_PKEYS
+ #include <asm/pkeys.h>
++#include <asm/mmu_context.h>
+ #else /* ! CONFIG_ARCH_HAS_PKEYS */
+ 
+ /*
+@@ -17,6 +17,11 @@ static inline bool arch_validate_pkey(in
+ {
+ 	return true;
+ }
++
++static inline int vma_pkey(struct vm_area_struct *vma)
++{
++	return 0;
++}
+ #endif /* ! CONFIG_ARCH_HAS_PKEYS */
+ 
+ #endif /* _LINUX_PKEYS_H */
+diff -puN mm/Kconfig~pkeys-85-mprotect_pkey mm/Kconfig
+--- a/mm/Kconfig~pkeys-85-mprotect_pkey	2015-11-16 12:36:28.814599049 -0800
++++ b/mm/Kconfig	2015-11-16 19:22:03.862484284 -0800
+@@ -673,3 +673,10 @@ config ARCH_USES_HIGH_VMA_FLAGS
+ 	bool
+ config ARCH_HAS_PKEYS
+ 	bool
++
++config NR_PROTECTION_KEYS
++	int
++	# Everything supports a _single_ key, so allow folks to
++	# at least call APIs that take keys, but require that the
++	# key be 0.
++	default 1
+diff -puN mm/mprotect.c~pkeys-85-mprotect_pkey mm/mprotect.c
+--- a/mm/mprotect.c~pkeys-85-mprotect_pkey	2015-11-16 12:36:28.816599140 -0800
++++ b/mm/mprotect.c	2015-11-16 19:22:05.259547173 -0800
+@@ -24,6 +24,7 @@
+ #include <linux/migrate.h>
+ #include <linux/perf_event.h>
+ #include <linux/ksm.h>
++#include <linux/pkeys.h>
+ #include <asm/uaccess.h>
+ #include <asm/pgtable.h>
+ #include <asm/cacheflush.h>
+@@ -344,10 +345,13 @@ fail:
+ 	return error;
+ }
+ 
+-SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
+-		unsigned long, prot)
++/*
++ * pkey=-1 when doing a legacy mprotect()
++ */
++static int do_mprotect_pkey(unsigned long start, size_t len,
++		unsigned long prot, int pkey)
+ {
+-	unsigned long vm_flags, nstart, end, tmp, reqprot;
++	unsigned long nstart, end, tmp, reqprot;
+ 	struct vm_area_struct *vma, *prev;
+ 	int error = -EINVAL;
+ 	const int grows = prot & (PROT_GROWSDOWN|PROT_GROWSUP);
+@@ -373,8 +377,6 @@ SYSCALL_DEFINE3(mprotect, unsigned long,
+ 	if ((prot & PROT_READ) && (current->personality & READ_IMPLIES_EXEC))
+ 		prot |= PROT_EXEC;
+ 
+-	vm_flags = calc_vm_prot_bits(prot, 0);
+-
+ 	down_write(&current->mm->mmap_sem);
+ 
+ 	vma = find_vma(current->mm, start);
+@@ -407,7 +409,14 @@ SYSCALL_DEFINE3(mprotect, unsigned long,
+ 
+ 		/* Here we know that vma->vm_start <= nstart < vma->vm_end. */
+ 
+-		newflags = vm_flags;
++		/*
++		 * If this is a vanilla, non-pkey mprotect, inherit the
++		 * pkey from the VMA we are working on.
++		 */
++		if (pkey == -1)
++			newflags = calc_vm_prot_bits(prot, vma_pkey(vma));
++		else
++			newflags = calc_vm_prot_bits(prot, pkey);
+ 		newflags |= (vma->vm_flags & ~(VM_READ | VM_WRITE | VM_EXEC));
+ 
+ 		/* newflags >> 4 shift VM_MAY% in place of VM_% */
+@@ -443,3 +452,18 @@ out:
+ 	up_write(&current->mm->mmap_sem);
+ 	return error;
+ }
++
++SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
++		unsigned long, prot)
++{
++	return do_mprotect_pkey(start, len, prot, -1);
++}
++
++SYSCALL_DEFINE4(pkey_mprotect, unsigned long, start, size_t, len,
++		unsigned long, prot, int, pkey)
++{
++	if (!arch_validate_pkey(pkey))
++		return -EINVAL;
++
++	return do_mprotect_pkey(start, len, prot, pkey);
++}
+_
