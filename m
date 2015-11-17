@@ -1,7 +1,7 @@
 From: Bamvor Jian Zhang <bamvor.zhangjian@linaro.org>
-Subject: [PATCH V2 1/2] selftests: create test-specific kconfig fragments
-Date: Tue, 17 Nov 2015 22:34:16 +0800
-Message-ID: <1447770857-9883-2-git-send-email-bamvor.zhangjian@linaro.org>
+Subject: [PATCH V2 2/2] scripts/kconfig/Makefile: add kselftest-mergeconfig
+Date: Tue, 17 Nov 2015 22:34:17 +0800
+Message-ID: <1447770857-9883-3-git-send-email-bamvor.zhangjian@linaro.org>
 References: <1447770857-9883-1-git-send-email-bamvor.zhangjian@linaro.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1447770857-9883-1-git-send-email-bamvor.zhangjian@linaro.org>
@@ -10,153 +10,43 @@ To: linux-api@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org, shuahkh@osg.samsung.com, khilman@linaro.org, tyler.baker@linaro.org, broonie@kernel.org, mpe@ellerman.id.au, dvhart@infradead.org, Bamvor Jian Zhang <bamvor.zhangjian@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-Create the config file in each directory of testcase which need
-more kernel configuration than the default defconfig. User could
-use these configs with merge_config.sh script:
+Add kselftest-mergeconfig to enable the dependencies of kernel
+config for all the kselftest testcases. User could call it after
+create the kernel configuration(.config), eg:
 
-Enable config for specific testcases:
-(export ARCH=xxx #for cross compiling)
-./scripts/kconfig/merge_config.sh .config \
-		tools/testing/selftests/xxx/config
-
-Enable configs for all testcases:
-(export ARCH=xxx #for cross compiling)
-./scripts/kconfig/merge_config.sh .config \
-		tools/testing/selftests/*/config
+$ make kselftest-mergeconfig
 
 Signed-off-by: Bamvor Jian Zhang <bamvor.zhangjian@linaro.org>
 ---
- tools/testing/selftests/cpu-hotplug/config    | 2 ++
- tools/testing/selftests/firmware/config       | 1 +
- tools/testing/selftests/ftrace/config         | 1 +
- tools/testing/selftests/ipc/config            | 2 ++
- tools/testing/selftests/memory-hotplug/config | 4 ++++
- tools/testing/selftests/mount/config          | 2 ++
- tools/testing/selftests/net/config            | 3 +++
- tools/testing/selftests/pstore/config         | 4 ++++
- tools/testing/selftests/seccomp/config        | 2 ++
- tools/testing/selftests/static_keys/config    | 1 +
- tools/testing/selftests/user/config           | 1 +
- tools/testing/selftests/vm/config             | 1 +
- tools/testing/selftests/zram/config           | 2 ++
- 13 files changed, 26 insertions(+)
- create mode 100644 tools/testing/selftests/cpu-hotplug/config
- create mode 100644 tools/testing/selftests/firmware/config
- create mode 100644 tools/testing/selftests/ftrace/config
- create mode 100644 tools/testing/selftests/ipc/config
- create mode 100644 tools/testing/selftests/memory-hotplug/config
- create mode 100644 tools/testing/selftests/mount/config
- create mode 100644 tools/testing/selftests/net/config
- create mode 100644 tools/testing/selftests/pstore/config
- create mode 100644 tools/testing/selftests/seccomp/config
- create mode 100644 tools/testing/selftests/static_keys/config
- create mode 100644 tools/testing/selftests/user/config
- create mode 100644 tools/testing/selftests/vm/config
- create mode 100644 tools/testing/selftests/zram/config
+ scripts/kconfig/Makefile | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-diff --git a/tools/testing/selftests/cpu-hotplug/config b/tools/testing/selftests/cpu-hotplug/config
-new file mode 100644
-index 0000000..e6ab090
---- /dev/null
-+++ b/tools/testing/selftests/cpu-hotplug/config
-@@ -0,0 +1,2 @@
-+CONFIG_NOTIFIER_ERROR_INJECTION=y
-+CONFIG_CPU_NOTIFIER_ERROR_INJECT=m
-diff --git a/tools/testing/selftests/firmware/config b/tools/testing/selftests/firmware/config
-new file mode 100644
-index 0000000..c8137f7
---- /dev/null
-+++ b/tools/testing/selftests/firmware/config
-@@ -0,0 +1 @@
-+CONFIG_TEST_FIRMWARE=y
-diff --git a/tools/testing/selftests/ftrace/config b/tools/testing/selftests/ftrace/config
-new file mode 100644
-index 0000000..ef82146
---- /dev/null
-+++ b/tools/testing/selftests/ftrace/config
-@@ -0,0 +1 @@
-+CONFIG_FTRACE=y
-diff --git a/tools/testing/selftests/ipc/config b/tools/testing/selftests/ipc/config
-new file mode 100644
-index 0000000..0702447
---- /dev/null
-+++ b/tools/testing/selftests/ipc/config
-@@ -0,0 +1,2 @@
-+CONFIG_EXPERT=y
-+CONFIG_CHECKPOINT_RESTORE=y
-diff --git a/tools/testing/selftests/memory-hotplug/config b/tools/testing/selftests/memory-hotplug/config
-new file mode 100644
-index 0000000..2fde301
---- /dev/null
-+++ b/tools/testing/selftests/memory-hotplug/config
-@@ -0,0 +1,4 @@
-+CONFIG_MEMORY_HOTPLUG=y
-+CONFIG_MEMORY_HOTPLUG_SPARSE=y
-+CONFIG_NOTIFIER_ERROR_INJECTION=y
-+CONFIG_MEMORY_NOTIFIER_ERROR_INJECT=m
-diff --git a/tools/testing/selftests/mount/config b/tools/testing/selftests/mount/config
-new file mode 100644
-index 0000000..b5d881e
---- /dev/null
-+++ b/tools/testing/selftests/mount/config
-@@ -0,0 +1,2 @@
-+CONFIG_USER_NS=y
-+CONFIG_DEVPTS_MULTIPLE_INSTANCES=y
-diff --git a/tools/testing/selftests/net/config b/tools/testing/selftests/net/config
-new file mode 100644
-index 0000000..e57b4ac
---- /dev/null
-+++ b/tools/testing/selftests/net/config
-@@ -0,0 +1,3 @@
-+CONFIG_USER_NS=y
-+CONFIG_BPF_SYSCALL=y
-+CONFIG_TEST_BPF=m
-diff --git a/tools/testing/selftests/pstore/config b/tools/testing/selftests/pstore/config
-new file mode 100644
-index 0000000..6a8e5a9
---- /dev/null
-+++ b/tools/testing/selftests/pstore/config
-@@ -0,0 +1,4 @@
-+CONFIG_MISC_FILESYSTEMS=y
-+CONFIG_PSTORE=y
-+CONFIG_PSTORE_PMSG=y
-+CONFIG_PSTORE_CONSOLE=y
-diff --git a/tools/testing/selftests/seccomp/config b/tools/testing/selftests/seccomp/config
-new file mode 100644
-index 0000000..db1e11b
---- /dev/null
-+++ b/tools/testing/selftests/seccomp/config
-@@ -0,0 +1,2 @@
-+CONFIG_SECCOMP=y
-+CONFIG_SECCOMP_FILTER=y
-diff --git a/tools/testing/selftests/static_keys/config b/tools/testing/selftests/static_keys/config
-new file mode 100644
-index 0000000..d538fb7
---- /dev/null
-+++ b/tools/testing/selftests/static_keys/config
-@@ -0,0 +1 @@
-+CONFIG_TEST_STATIC_KEYS=m
-diff --git a/tools/testing/selftests/user/config b/tools/testing/selftests/user/config
-new file mode 100644
-index 0000000..784ed84
---- /dev/null
-+++ b/tools/testing/selftests/user/config
-@@ -0,0 +1 @@
-+CONFIG_TEST_USER_COPY=m
-diff --git a/tools/testing/selftests/vm/config b/tools/testing/selftests/vm/config
-new file mode 100644
-index 0000000..698c7ed
---- /dev/null
-+++ b/tools/testing/selftests/vm/config
-@@ -0,0 +1 @@
-+CONFIG_USERFAULTFD=y
-diff --git a/tools/testing/selftests/zram/config b/tools/testing/selftests/zram/config
-new file mode 100644
-index 0000000..e0cc47e
---- /dev/null
-+++ b/tools/testing/selftests/zram/config
-@@ -0,0 +1,2 @@
-+CONFIG_ZSMALLOC=y
-+CONFIG_ZRAM=m
+diff --git a/scripts/kconfig/Makefile b/scripts/kconfig/Makefile
+index d79cba4..5896092 100644
+--- a/scripts/kconfig/Makefile
++++ b/scripts/kconfig/Makefile
+@@ -126,6 +126,14 @@ PHONY += tinyconfig
+ tinyconfig:
+ 	$(Q)$(MAKE) -f $(srctree)/Makefile allnoconfig tiny.config
+ 
++PHONY += kselftest-mergeconfig
++kselftest-mergeconfig: $(obj)/conf
++	$(if $(wildcard $(srctree)/.config),, $(error No .config exists, config your kernel first!))
++	$(Q)$(CONFIG_SHELL) $(srctree)/scripts/kconfig/merge_config.sh \
++		-m -O $(objtree) $(srctree)/.config \
++		$(srctree)/tools/testing/selftests/*/config
++	+$(Q)$(MAKE) -f $(srctree)/Makefile olddefconfig
++
+ # Help text used by make help
+ help:
+ 	@echo  '  config	  - Update current config utilising a line-oriented program'
+@@ -151,6 +159,7 @@ help:
+ 	@echo  '  kvmconfig	  - Enable additional options for kvm guest kernel support'
+ 	@echo  '  xenconfig       - Enable additional options for xen dom0 and guest kernel support'
+ 	@echo  '  tinyconfig	  - Configure the tiniest possible kernel'
++	@echo  '  kselftest-mergeconfig - Merge all the config dependencies of kselftest to .config'
+ 
+ # lxdialog stuff
+ check-lxdialog  := $(srctree)/$(src)/lxdialog/check-lxdialog.sh
 -- 
 1.8.4.5
