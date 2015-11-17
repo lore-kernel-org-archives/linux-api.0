@@ -1,112 +1,118 @@
-From: Marc Titinger <mtitinger@baylibre.com>
-Subject: [RFC 1/2] ABI: iio: support AVERAGING_RATIO setting
-Date: Tue, 17 Nov 2015 11:44:09 +0100
-Message-ID: <1447757050-4214-2-git-send-email-mtitinger@baylibre.com>
+From: Marc Titinger <mtitinger-rdvid1DuHRBWk0Htik3J/w@public.gmane.org>
+Subject: [RFC 2/2] iio: ina2xx: convert AVERGING ratio setting from generic sysfs attr to ABI
+Date: Tue, 17 Nov 2015 11:44:10 +0100
+Message-ID: <1447757050-4214-3-git-send-email-mtitinger@baylibre.com>
 References: <1447757050-4214-1-git-send-email-mtitinger@baylibre.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1447757050-4214-1-git-send-email-mtitinger@baylibre.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: jic23@kernel.org, knaack.h@gmx.de, lars@metafoo.de, pmeerw@pmeerw.net
-Cc: daniel.baluta@intel.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-iio@vger.kernel.org, Marc Titinger <mtitinger@baylibre.com>
+Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1447757050-4214-1-git-send-email-mtitinger-rdvid1DuHRBWk0Htik3J/w@public.gmane.org>
+Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, knaack.h-Mmb7MZpHnFY@public.gmane.org, lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org, pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org
+Cc: daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Marc Titinger <mtitinger-rdvid1DuHRBWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Some ADC devices allow averaging/downsampling. The minimal parameter
-set for this will be the number of taps used for computing a mean value.
+using the proposed ABI addition for IIO_CHAN_INFO_AVERAGING_RATIO, convert
+the sysfs attribute for averaging ratio to using in_averaging_ratio as a
+directory-bound channel info.
 
-In some cases the ratio will hold discrete values for instance "1, 4, 16"
-hence an averaging_ratio_available property is useful. The possible ratio
-values are less likely to changing with the device settings, so this patch
-only provides a CONST version of the definition helper.
-
-Tested with ina226:
-
-# ls /sys/bus/iio/devices/iio\:device0/
-averaging_ratio_available     in_voltage0_raw
-dev                           in_voltage1_raw
-in_averaging_ratio            name
-in_calibscale                 power
-in_current2_raw               sampling_frequency_available
-in_power3_raw                 subsystem
-in_sampling_frequency         uevent
-
-# cat averaging_ratio_available
-1, 4, 16, 64, 128, 256, 512, 1024
-
-Signed-off-by: Marc Titinger <mtitinger@baylibre.com>
+Signed-off-by: Marc Titinger <mtitinger-rdvid1DuHRBWk0Htik3J/w@public.gmane.org>
 ---
- Documentation/ABI/testing/sysfs-bus-iio | 13 +++++++++++++
- drivers/iio/industrialio-core.c         |  1 +
- include/linux/iio/iio.h                 |  1 +
- include/linux/iio/sysfs.h               |  9 +++++++++
- 4 files changed, 24 insertions(+)
+ drivers/iio/adc/ina2xx-iio.c | 47 ++++++--------------------------------------
+ 1 file changed, 6 insertions(+), 41 deletions(-)
 
-diff --git a/Documentation/ABI/testing/sysfs-bus-iio b/Documentation/ABI/testing/sysfs-bus-iio
-index 42d360f..a208dfe 100644
---- a/Documentation/ABI/testing/sysfs-bus-iio
-+++ b/Documentation/ABI/testing/sysfs-bus-iio
-@@ -56,6 +56,19 @@ Description:
- 		When the internal sampling clock can only take a small
- 		discrete set of values, this file lists those available.
+diff --git a/drivers/iio/adc/ina2xx-iio.c b/drivers/iio/adc/ina2xx-iio.c
+index d4dd908..f6daa5b 100644
+--- a/drivers/iio/adc/ina2xx-iio.c
++++ b/drivers/iio/adc/ina2xx-iio.c
+@@ -179,7 +179,7 @@ static int ina2xx_read_raw(struct iio_dev *indio_dev,
  
-+What:		/sys/bus/iio/devices/iio:deviceX/averaging_ratio
-+KernelVersion:	4.x.x
-+Contact:	linux-iio@vger.kernel.org
-+Description:
-+		Hardware dependent ADC averaging. Controls the averaging ratio
-+		of the digital filter if available.
+ 		return ina2xx_get_value(chip, chan->address, regval, val, val2);
+ 
+-	case IIO_CHAN_INFO_AVERAGE_RAW:
++	case IIO_CHAN_INFO_AVERAGING_RATIO:
+ 		*val = chip->avg;
+ 		return IIO_VAL_INT;
+ 
+@@ -219,6 +219,8 @@ static int ina2xx_calibrate(struct ina2xx_chip_info *chip)
+  */
+ static const int ina226_avg_tab[] = { 1, 4, 16, 64, 128, 256, 512, 1024 };
+ 
++static IIO_CONST_ATTR_AVERAGING_RATIO_AVAIL("1, 4, 16, 64, 128, 256, 512, 1024");
 +
-+What:		/sys/bus/iio/devices/iio:deviceX/averaging_ratio_available
-+KernelVersion:	4.x.x
-+Contact:	linux-iio@vger.kernel.org
-+Description:
-+		Hardware dependent values supported by the averaging filter.
-+
- What:		/sys/bus/iio/devices/iio:deviceX/oversampling_ratio
- KernelVersion:	2.6.38
- Contact:	linux-iio@vger.kernel.org
-diff --git a/drivers/iio/industrialio-core.c b/drivers/iio/industrialio-core.c
-index b3fcc2c..e4745f0 100644
---- a/drivers/iio/industrialio-core.c
-+++ b/drivers/iio/industrialio-core.c
-@@ -142,6 +142,7 @@ static const char * const iio_chan_info_postfix[] = {
- 	[IIO_CHAN_INFO_DEBOUNCE_TIME] = "debounce_time",
- 	[IIO_CHAN_INFO_CALIBEMISSIVITY] = "calibemissivity",
- 	[IIO_CHAN_INFO_OVERSAMPLING_RATIO] = "oversampling_ratio",
-+	[IIO_CHAN_INFO_AVERAGING_RATIO] = "averaging_ratio",
+ static unsigned int ina226_set_average(struct ina2xx_chip_info *chip,
+ 				       unsigned int val,
+ 				       unsigned int *config)
+@@ -286,7 +288,7 @@ static int ina2xx_write_raw(struct iio_dev *indio_dev,
+ 	tmp = config;
+ 
+ 	switch (mask) {
+-	case IIO_CHAN_INFO_AVERAGE_RAW:
++	case IIO_CHAN_INFO_AVERAGING_RATIO:
+ 
+ 		ret = ina226_set_average(chip, val, &tmp);
+ 		break;
+@@ -308,40 +310,6 @@ _err:
+ 	return ret;
+ }
+ 
+-
+-static ssize_t ina2xx_averaging_steps_show(struct device *dev,
+-					   struct device_attribute *attr,
+-					   char *buf)
+-{
+-	struct ina2xx_chip_info *chip = iio_priv(dev_to_iio_dev(dev));
+-
+-	return sprintf(buf, "%d\n", chip->avg);
+-}
+-
+-
+-static ssize_t ina2xx_averaging_steps_store(struct device *dev,
+-				struct device_attribute *attr,
+-				const char *buf, size_t len)
+-{
+-	unsigned long val;
+-	int ret;
+-
+-	ret = kstrtoul((const char *) buf, 10, &val);
+-	if (ret)
+-		return -EINVAL;
+-
+-	/* unexposed missuse of INFO_AVERAGE_RAW, until a proper ABI for the
+-	 * averaging steps setting is specified.
+-	 */
+-	ret  = ina2xx_write_raw(dev_to_iio_dev(dev), NULL, val, 0,
+-				IIO_CHAN_INFO_AVERAGE_RAW);
+-	if (ret < 0)
+-		return ret;
+-
+-	return len;
+-}
+-
+-
+ #define INA2XX_CHAN(_type, _index, _address) { \
+ 	.type = _type, \
+ 	.address = _address, \
+@@ -349,6 +317,7 @@ static ssize_t ina2xx_averaging_steps_store(struct device *dev,
+ 	.channel = (_index), \
+ 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW), \
+ 	.info_mask_shared_by_dir = BIT(IIO_CHAN_INFO_SAMP_FREQ) | \
++				   BIT(IIO_CHAN_INFO_AVERAGING_RATIO) | \
+ 				   BIT(IIO_CHAN_INFO_CALIBSCALE), \
+ 	.scan_index = (_index), \
+ 	.scan_type = { \
+@@ -382,13 +351,9 @@ static int ina2xx_debug_reg(struct iio_dev *indio_dev,
+ /* frequencies matching the cummulated integration times for vshunt and vbus */
+ static IIO_CONST_ATTR_SAMP_FREQ_AVAIL("61 120 236 455 850 1506 2450 3571");
+ 
+-static IIO_DEVICE_ATTR(in_averaging_steps, S_IRUGO | S_IWUSR,
+-		       ina2xx_averaging_steps_show,
+-		       ina2xx_averaging_steps_store, 0);
+-
+ static struct attribute *ina2xx_attributes[] = {
+-	&iio_dev_attr_in_averaging_steps.dev_attr.attr,
+ 	&iio_const_attr_sampling_frequency_available.dev_attr.attr,
++	&iio_const_attr_averaging_ratio_available.dev_attr.attr,
+ 	NULL,
  };
  
- /**
-diff --git a/include/linux/iio/iio.h b/include/linux/iio/iio.h
-index 7bb7f67..4c84de5 100644
---- a/include/linux/iio/iio.h
-+++ b/include/linux/iio/iio.h
-@@ -46,6 +46,7 @@ enum iio_chan_info_enum {
- 	IIO_CHAN_INFO_DEBOUNCE_TIME,
- 	IIO_CHAN_INFO_CALIBEMISSIVITY,
- 	IIO_CHAN_INFO_OVERSAMPLING_RATIO,
-+	IIO_CHAN_INFO_AVERAGING_RATIO,
- };
- 
- enum iio_shared_by {
-diff --git a/include/linux/iio/sysfs.h b/include/linux/iio/sysfs.h
-index 9cd8f74..4478ba1 100644
---- a/include/linux/iio/sysfs.h
-+++ b/include/linux/iio/sysfs.h
-@@ -76,6 +76,15 @@ struct iio_const_attr {
- /* Generic attributes of onetype or another */
- 
- /**
-+ * IIO_CONST_ATTR_AVERAGING_RATIO_AVAIL - list available averaging ratios
-+ * @_string: ratio string for the attribute
-+ *
-+ * Constant version
-+ **/
-+#define IIO_CONST_ATTR_AVERAGING_RATIO_AVAIL(_string)                 \
-+	IIO_CONST_ATTR(averaging_ratio_available, _string)
-+
-+/**
-  * IIO_DEV_ATTR_SAMP_FREQ - sets any internal clock frequency
-  * @_mode: sysfs file mode/permissions
-  * @_show: output method for the attribute
 -- 
 1.9.1
