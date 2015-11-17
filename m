@@ -1,7 +1,7 @@
 From: Dave Hansen <dave@sr71.net>
-Subject: [PATCH 29/37] mm: implement new mprotect_key() system call
-Date: Mon, 16 Nov 2015 19:35:52 -0800
-Message-ID: <20151117033552.44890BA6@viggo.jf.intel.com>
+Subject: [PATCH 34/37] x86, pkeys: allocation/free syscalls
+Date: Mon, 16 Nov 2015 19:35:58 -0800
+Message-ID: <20151117033558.D37B424A@viggo.jf.intel.com>
 References: <20151117033511.BFFA1440@viggo.jf.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20151117033511.BFFA1440@viggo.jf.intel.com>
@@ -13,187 +13,428 @@ List-Id: linux-api@vger.kernel.org
 
 From: Dave Hansen <dave.hansen@linux.intel.com>
 
-mprotect_key() is just like mprotect, except it also takes a
-protection key as an argument.  On systems that do not support
-protection keys, it still works, but requires that key=0.
-Otherwise it does exactly what mprotect does.
+This patch adds two new system calls:
 
-I expect it to get used like this, if you want to guarantee that
-any mapping you create can *never* be accessed without the right
-protection keys set up.
+	int pkey_alloc(unsigned long flags, unsigned long init_access_rights)
+	int pkey_free(int pkey);
 
-	pkey_deny_access(11); // random pkey
-	int real_prot = PROT_READ|PROT_WRITE;
-	ptr = mmap(NULL, PAGE_SIZE, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-	ret = mprotect_key(ptr, PAGE_SIZE, real_prot, 11);
+These establish which protection keys are valid for use by
+userspace.  A key which was not obtained by pkey_alloc() may not
+be passed to pkey_mprotect().
 
-This way, there is *no* window where the mapping is accessible
-since it was always either PROT_NONE or had a protection key set.
+In addition, the 'init_access_rights' argument to pkey_alloc() specifies
+the rights that will be established for the returned pkey.  For instance
 
-We settled on 'unsigned long' for the type of the key here.  We
-only need 4 bits on x86 today, but I figured that other
-architectures might need some more space.
+	pkey = pkey_alloc(flags, PKEY_DENY_WRITE);
+
+will return with the bits set in PKRU such that writing to 'pkey' is
+already denied.  This keeps userspace from needing to have knowledge
+about manipulating PKRU.  It is still free to do so if it wishes, but
+it is no longer required.
+
+The kernel does _not_ enforce that this interface must be used for
+changes to PKRU, even for keys it does not control.
 
 Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
 Cc: linux-api@vger.kernel.org
 ---
 
- b/arch/x86/include/asm/mmu_context.h |   10 +++++++--
- b/include/linux/pkeys.h              |    7 +++++-
- b/mm/Kconfig                         |    7 ++++++
- b/mm/mprotect.c                      |   36 +++++++++++++++++++++++++++++------
- 4 files changed, 51 insertions(+), 9 deletions(-)
+ b/arch/x86/entry/syscalls/syscall_32.tbl |    2 
+ b/arch/x86/entry/syscalls/syscall_64.tbl |    2 
+ b/arch/x86/include/asm/mmu.h             |    7 ++
+ b/arch/x86/include/asm/mmu_context.h     |    8 +++
+ b/arch/x86/include/asm/pgtable.h         |    5 +-
+ b/arch/x86/include/asm/pkeys.h           |   55 ++++++++++++++++++++++
+ b/arch/x86/kernel/fpu/xstate.c           |   75 +++++++++++++++++++++++++++++++
+ b/include/asm-generic/mm_hooks.h         |    1 
+ b/include/linux/pkeys.h                  |   23 +++++++++
+ b/include/uapi/asm-generic/mman-common.h |    5 ++
+ b/mm/mprotect.c                          |   55 ++++++++++++++++++++++
+ 11 files changed, 236 insertions(+), 2 deletions(-)
 
-diff -puN arch/x86/include/asm/mmu_context.h~pkeys-85-mprotect_pkey arch/x86/include/asm/mmu_context.h
---- a/arch/x86/include/asm/mmu_context.h~pkeys-85-mprotect_pkey	2015-11-16 12:36:28.811598913 -0800
-+++ b/arch/x86/include/asm/mmu_context.h	2015-11-16 19:22:01.920396860 -0800
-@@ -4,6 +4,7 @@
- #include <asm/desc.h>
- #include <linux/atomic.h>
- #include <linux/mm_types.h>
+diff -puN arch/x86/entry/syscalls/syscall_32.tbl~pkey-allocation-syscalls arch/x86/entry/syscalls/syscall_32.tbl
+--- a/arch/x86/entry/syscalls/syscall_32.tbl~pkey-allocation-syscalls	2015-11-16 12:36:32.972787782 -0800
++++ b/arch/x86/entry/syscalls/syscall_32.tbl	2015-11-16 19:21:52.519973697 -0800
+@@ -384,3 +384,5 @@
+ 375	i386	membarrier		sys_membarrier
+ 376	i386	mlock2			sys_mlock2
+ 377	i386	pkey_mprotect		sys_pkey_mprotect
++378	i386	pkey_alloc		sys_pkey_alloc
++379	i386	pkey_free		sys_pkey_free
+diff -puN arch/x86/entry/syscalls/syscall_64.tbl~pkey-allocation-syscalls arch/x86/entry/syscalls/syscall_64.tbl
+--- a/arch/x86/entry/syscalls/syscall_64.tbl~pkey-allocation-syscalls	2015-11-16 12:36:32.973787828 -0800
++++ b/arch/x86/entry/syscalls/syscall_64.tbl	2015-11-16 19:21:52.520973742 -0800
+@@ -333,6 +333,8 @@
+ 324	common	membarrier		sys_membarrier
+ 325	common	mlock2			sys_mlock2
+ 326	common	pkey_mprotect		sys_pkey_mprotect
++327	common	pkey_alloc		sys_pkey_alloc
++328	common	pkey_free		sys_pkey_free
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+diff -puN arch/x86/include/asm/mmu_context.h~pkey-allocation-syscalls arch/x86/include/asm/mmu_context.h
+--- a/arch/x86/include/asm/mmu_context.h~pkey-allocation-syscalls	2015-11-16 12:36:32.975787919 -0800
++++ b/arch/x86/include/asm/mmu_context.h	2015-11-16 19:21:52.520973742 -0800
+@@ -108,7 +108,12 @@ static inline void enter_lazy_tlb(struct
+ static inline int init_new_context(struct task_struct *tsk,
+ 				   struct mm_struct *mm)
+ {
++#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
++	/* pkey 0 is the default and always allocated */
++	mm->context.pkey_allocation_map = 0x1;
++#endif
+ 	init_new_context_ldt(tsk, mm);
++
+ 	return 0;
+ }
+ static inline void destroy_context(struct mm_struct *mm)
+@@ -333,4 +338,7 @@ static inline bool arch_pte_access_permi
+ 	return __pkru_allows_pkey(pte_flags_pkey(pte_flags(pte)), write);
+ }
+ 
++extern int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
++		unsigned long init_val);
++
+ #endif /* _ASM_X86_MMU_CONTEXT_H */
+diff -puN arch/x86/include/asm/mmu.h~pkey-allocation-syscalls arch/x86/include/asm/mmu.h
+--- a/arch/x86/include/asm/mmu.h~pkey-allocation-syscalls	2015-11-16 12:36:32.976787964 -0800
++++ b/arch/x86/include/asm/mmu.h	2015-11-16 12:36:32.992788690 -0800
+@@ -22,6 +22,13 @@ typedef struct {
+ 	void __user *vdso;
+ 
+ 	atomic_t perf_rdpmc_allowed;	/* nonzero if rdpmc is allowed */
++#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
++	/*
++	 * One bit per protection key says whether userspace can
++	 * use it or not.  protected by mmap_sem.
++	 */
++	u16 pkey_allocation_map;
++#endif
+ } mm_context_t;
+ 
+ #ifdef CONFIG_SMP
+diff -puN arch/x86/include/asm/pgtable.h~pkey-allocation-syscalls arch/x86/include/asm/pgtable.h
+--- a/arch/x86/include/asm/pgtable.h~pkey-allocation-syscalls	2015-11-16 12:36:32.978788055 -0800
++++ b/arch/x86/include/asm/pgtable.h	2015-11-16 12:36:32.992788690 -0800
+@@ -912,16 +912,17 @@ static inline pte_t pte_swp_clear_soft_d
+ 
+ #define PKRU_AD_BIT 0x1
+ #define PKRU_WD_BIT 0x2
++#define PKRU_BITS_PER_PKEY 2
+ 
+ static inline bool __pkru_allows_read(u32 pkru, u16 pkey)
+ {
+-	int pkru_pkey_bits = pkey * 2;
++	int pkru_pkey_bits = pkey * PKRU_BITS_PER_PKEY;
+ 	return !(pkru & (PKRU_AD_BIT << pkru_pkey_bits));
+ }
+ 
+ static inline bool __pkru_allows_write(u32 pkru, u16 pkey)
+ {
+-	int pkru_pkey_bits = pkey * 2;
++	int pkru_pkey_bits = pkey * PKRU_BITS_PER_PKEY;
+ 	/*
+ 	 * Access-disable disables writes too so we need to check
+ 	 * both bits here.
+diff -puN arch/x86/include/asm/pkeys.h~pkey-allocation-syscalls arch/x86/include/asm/pkeys.h
+--- a/arch/x86/include/asm/pkeys.h~pkey-allocation-syscalls	2015-11-16 12:36:32.979788100 -0800
++++ b/arch/x86/include/asm/pkeys.h	2015-11-16 19:21:52.520973742 -0800
+@@ -7,6 +7,61 @@
+ 
+ #define ARCH_VM_PKEY_FLAGS (VM_PKEY_BIT0 | VM_PKEY_BIT1 | VM_PKEY_BIT2 | VM_PKEY_BIT3)
+ 
++#define mm_pkey_allocation_map(mm)	(mm->context.pkey_allocation_map)
++#define mm_set_pkey_allocated(mm, pkey) do {		\
++	mm_pkey_allocation_map(mm) |= (1 << pkey);	\
++} while (0)
++#define mm_set_pkey_free(mm, pkey) do {			\
++	mm_pkey_allocation_map(mm) &= ~(1 << pkey);	\
++} while (0)
++
++static inline
++bool mm_pkey_is_allocated(struct mm_struct *mm, unsigned long pkey)
++{
++	if (!arch_validate_pkey(pkey))
++		return true;
++
++	return mm_pkey_allocation_map(mm) & (1 << pkey);
++}
++
++static inline
++int mm_pkey_alloc(struct mm_struct *mm)
++{
++	int all_pkeys_mask = ((1 << arch_max_pkey()) - 1);
++	int ret;
++
++	/*
++	 * Are we out of pkeys?  We must handle this specially
++	 * because ffz() behavior is undefined if there are no
++	 * zeros.
++	 */
++	if (mm_pkey_allocation_map(mm) == all_pkeys_mask)
++		return -1;
++
++	ret = ffz(mm_pkey_allocation_map(mm));
++
++	mm_set_pkey_allocated(mm, ret);
++
++	return ret;
++}
++
++static inline
++int mm_pkey_free(struct mm_struct *mm, int pkey)
++{
++	/*
++	 * pkey 0 is special, always allocated and can never
++	 * be freed.
++	 */
++	if (!pkey || !arch_validate_pkey(pkey))
++		return -EINVAL;
++	if (!mm_pkey_is_allocated(mm, pkey))
++		return -EINVAL;
++
++	mm_set_pkey_free(mm, pkey);
++
++	return 0;
++}
++
+ #endif /*_ASM_X86_PKEYS_H */
+ 
+ 
+diff -puN arch/x86/kernel/fpu/xstate.c~pkey-allocation-syscalls arch/x86/kernel/fpu/xstate.c
+--- a/arch/x86/kernel/fpu/xstate.c~pkey-allocation-syscalls	2015-11-16 12:36:32.981788191 -0800
++++ b/arch/x86/kernel/fpu/xstate.c	2015-11-16 19:21:52.521973787 -0800
+@@ -5,6 +5,8 @@
+  */
+ #include <linux/compat.h>
+ #include <linux/cpu.h>
++#include <linux/mman.h>
 +#include <linux/pkeys.h>
  
- #include <trace/events/tlb.h>
- 
-@@ -243,10 +244,14 @@ static inline void arch_unmap(struct mm_
- 		mpx_notify_unmap(mm, vma, start, end);
+ #include <asm/fpu/api.h>
+ #include <asm/fpu/internal.h>
+@@ -775,6 +777,7 @@ const void *get_xsave_field_ptr(int xsav
+ 	return get_xsave_addr(&fpu->state.xsave, xsave_state);
  }
  
-+#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
-+/*
-+ * If the config option is off, we get the generic version from
-+ * include/linux/pkeys.h.
-+ */
- static inline int vma_pkey(struct vm_area_struct *vma)
- {
- 	u16 pkey = 0;
--#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
- 	unsigned long vma_pkey_mask = VM_PKEY_BIT0 | VM_PKEY_BIT1 |
- 				      VM_PKEY_BIT2 | VM_PKEY_BIT3;
- 	/*
-@@ -259,9 +264,10 @@ static inline int vma_pkey(struct vm_are
- 	 */
- 	pkey = (vma->vm_flags >> vm_pkey_shift) &
- 	       (vma_pkey_mask >> vm_pkey_shift);
--#endif
-+
- 	return pkey;
- }
-+#endif
- 
- static inline bool __pkru_allows_pkey(u16 pkey, bool write)
- {
-diff -puN include/linux/pkeys.h~pkeys-85-mprotect_pkey include/linux/pkeys.h
---- a/include/linux/pkeys.h~pkeys-85-mprotect_pkey	2015-11-16 12:36:28.812598958 -0800
-+++ b/include/linux/pkeys.h	2015-11-16 19:22:05.259547173 -0800
-@@ -2,10 +2,10 @@
- #define _LINUX_PKEYS_H
- 
- #include <linux/mm_types.h>
--#include <asm/mmu_context.h>
- 
- #ifdef CONFIG_ARCH_HAS_PKEYS
- #include <asm/pkeys.h>
-+#include <asm/mmu_context.h>
- #else /* ! CONFIG_ARCH_HAS_PKEYS */
++#ifdef CONFIG_ARCH_HAS_PKEYS
  
  /*
-@@ -17,6 +17,11 @@ static inline bool arch_validate_pkey(in
- {
+  * Set xfeatures (aka XSTATE_BV) bit for a feature that we want
+@@ -864,6 +867,78 @@ static void fpu__xfeature_set_state(int
+ 	preempt_disable();
+ 	fpu__restore(fpu);
+ 	preempt_enable();
++}
++
++#define NR_VALID_PKRU_BITS (CONFIG_NR_PROTECTION_KEYS * 2)
++#define PKRU_VALID_MASK (NR_VALID_PKRU_BITS - 1)
++
++/*
++ * This will go out and modify the XSAVE buffer so that PKRU is
++ * set to a particular state for access to 'pkey'.
++ *
++ * PKRU state does affect kernel access to user memory.  We do
++ * not modfiy PKRU *itself* here, only the XSAVE state that will
++ * be restored in to PKRU when we return back to userspace.
++ */
++int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
++		unsigned long init_val)
++{
++	struct xregs_state *xsave = &tsk->thread.fpu.state.xsave;
++	struct pkru_state *old_pkru_state;
++	struct pkru_state new_pkru_state;
++	int pkey_shift = (pkey * PKRU_BITS_PER_PKEY);
++	u32 new_pkru_bits = 0;
++
++	if (!arch_validate_pkey(pkey))
++		return -EINVAL;
++	/*
++	 * This check implies XSAVE support.  OSPKE only gets
++	 * set if we enable XSAVE and we enable PKU in XCR0.
++	 */
++	if (!boot_cpu_has(X86_FEATURE_OSPKE))
++		return -EINVAL;
++
++	/* Set the bits we need in PKRU  */
++	if (init_val & PKEY_DISABLE_ACCESS)
++		new_pkru_bits |= PKRU_AD_BIT;
++	if (init_val & PKEY_DISABLE_WRITE)
++		new_pkru_bits |= PKRU_WD_BIT;
++
++	/* Shift the bits in to the correct place in PKRU for pkey. */
++	new_pkru_bits <<= pkey_shift;
++
++	/* Locate old copy of the state in the xsave buffer */
++	old_pkru_state = get_xsave_addr(xsave, XFEATURE_MASK_PKRU);
++
++	/*
++	 * When state is not in the buffer, it is in the init
++	 * state, set it manually.  Otherwise, copy out the old
++	 * state.
++	 */
++	if (!old_pkru_state)
++		new_pkru_state.pkru = 0;
++	else
++		new_pkru_state.pkru = old_pkru_state->pkru;
++
++	/* mask off any old bits in place */
++	new_pkru_state.pkru &= ~((PKRU_AD_BIT|PKRU_WD_BIT) << pkey_shift);
++	/* Set the newly-requested bits */
++	new_pkru_state.pkru |= new_pkru_bits;
++
++	/*
++	 * We could theoretically live without zeroing pkru.pad.
++	 * The current XSAVE feature state definition says that
++	 * only bytes 0->3 are used.  But we do not want to
++	 * chance leaking kernel stack out to userspace in case a
++	 * memcpy() of the whole xsave buffer was done.
++	 *
++	 * They're in the same cacheline anyway.
++	 */
++	new_pkru_state.pad = 0;
++
++	fpu__xfeature_set_state(XFEATURE_MASK_PKRU, &new_pkru_state,
++			sizeof(new_pkru_state));
+ 
+ 	return 0;
+ }
++#endif /* CONFIG_ARCH_HAS_PKEYS */
+diff -puN include/asm-generic/mm_hooks.h~pkey-allocation-syscalls include/asm-generic/mm_hooks.h
+--- a/include/asm-generic/mm_hooks.h~pkey-allocation-syscalls	2015-11-16 12:36:32.983788282 -0800
++++ b/include/asm-generic/mm_hooks.h	2015-11-16 12:36:32.993788735 -0800
+@@ -38,4 +38,5 @@ static inline bool arch_pte_access_permi
+ 	/* by default, allow everything */
  	return true;
  }
 +
-+static inline int vma_pkey(struct vm_area_struct *vma)
+ #endif	/* _ASM_GENERIC_MM_HOOKS_H */
+diff -puN include/linux/pkeys.h~pkey-allocation-syscalls include/linux/pkeys.h
+--- a/include/linux/pkeys.h~pkey-allocation-syscalls	2015-11-16 12:36:32.984788327 -0800
++++ b/include/linux/pkeys.h	2015-11-16 19:21:52.521973787 -0800
+@@ -23,6 +23,29 @@ static inline int vma_pkey(struct vm_are
+ {
+ 	return 0;
+ }
++
++static inline bool mm_pkey_is_allocated(struct mm_struct *mm, int pkey)
++{
++	return (pkey == 0);
++}
++
++static inline int mm_pkey_alloc(struct mm_struct *mm)
++{
++	return -1;
++}
++
++static inline int mm_pkey_free(struct mm_struct *mm, int pkey)
++{
++	WARN_ONCE(1, "free of protection key when disabled");
++	return -EINVAL;
++}
++
++static inline int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
++			unsigned long init_val)
 +{
 +	return 0;
 +}
++
  #endif /* ! CONFIG_ARCH_HAS_PKEYS */
  
  #endif /* _LINUX_PKEYS_H */
-diff -puN mm/Kconfig~pkeys-85-mprotect_pkey mm/Kconfig
---- a/mm/Kconfig~pkeys-85-mprotect_pkey	2015-11-16 12:36:28.814599049 -0800
-+++ b/mm/Kconfig	2015-11-16 19:22:03.862484284 -0800
-@@ -673,3 +673,10 @@ config ARCH_USES_HIGH_VMA_FLAGS
- 	bool
- config ARCH_HAS_PKEYS
- 	bool
+diff -puN include/uapi/asm-generic/mman-common.h~pkey-allocation-syscalls include/uapi/asm-generic/mman-common.h
+--- a/include/uapi/asm-generic/mman-common.h~pkey-allocation-syscalls	2015-11-16 12:36:32.986788418 -0800
++++ b/include/uapi/asm-generic/mman-common.h	2015-11-16 12:36:32.994788781 -0800
+@@ -71,4 +71,9 @@
+ #define MAP_HUGE_SHIFT	26
+ #define MAP_HUGE_MASK	0x3f
+ 
++#define PKEY_DISABLE_ACCESS	0x1
++#define PKEY_DISABLE_WRITE	0x2
++#define PKEY_ACCESS_MASK	(PKEY_DISABLE_ACCESS |\
++				 PKEY_DISABLE_WRITE)
 +
-+config NR_PROTECTION_KEYS
-+	int
-+	# Everything supports a _single_ key, so allow folks to
-+	# at least call APIs that take keys, but require that the
-+	# key be 0.
-+	default 1
-diff -puN mm/mprotect.c~pkeys-85-mprotect_pkey mm/mprotect.c
---- a/mm/mprotect.c~pkeys-85-mprotect_pkey	2015-11-16 12:36:28.816599140 -0800
-+++ b/mm/mprotect.c	2015-11-16 19:22:05.259547173 -0800
-@@ -24,6 +24,7 @@
+ #endif /* __ASM_GENERIC_MMAN_COMMON_H */
+diff -puN mm/mprotect.c~pkey-allocation-syscalls mm/mprotect.c
+--- a/mm/mprotect.c~pkey-allocation-syscalls	2015-11-16 12:36:32.988788509 -0800
++++ b/mm/mprotect.c	2015-11-16 19:21:52.522973832 -0800
+@@ -23,11 +23,13 @@
+ #include <linux/mmu_notifier.h>
  #include <linux/migrate.h>
  #include <linux/perf_event.h>
- #include <linux/ksm.h>
 +#include <linux/pkeys.h>
+ #include <linux/ksm.h>
+ #include <linux/pkeys.h>
  #include <asm/uaccess.h>
  #include <asm/pgtable.h>
  #include <asm/cacheflush.h>
-@@ -344,10 +345,13 @@ fail:
- 	return error;
- }
++#include <asm/mmu_context.h>
+ #include <asm/tlbflush.h>
  
--SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
--		unsigned long, prot)
-+/*
-+ * pkey=-1 when doing a legacy mprotect()
-+ */
-+static int do_mprotect_pkey(unsigned long start, size_t len,
-+		unsigned long prot, int pkey)
- {
--	unsigned long vm_flags, nstart, end, tmp, reqprot;
-+	unsigned long nstart, end, tmp, reqprot;
- 	struct vm_area_struct *vma, *prev;
- 	int error = -EINVAL;
- 	const int grows = prot & (PROT_GROWSDOWN|PROT_GROWSUP);
-@@ -373,8 +377,6 @@ SYSCALL_DEFINE3(mprotect, unsigned long,
- 	if ((prot & PROT_READ) && (current->personality & READ_IMPLIES_EXEC))
- 		prot |= PROT_EXEC;
+ #include "internal.h"
+@@ -379,6 +381,14 @@ static int do_mprotect_pkey(unsigned lon
  
--	vm_flags = calc_vm_prot_bits(prot, 0);
--
  	down_write(&current->mm->mmap_sem);
  
++	/*
++	 * If userspace did not allocate the pkey, do not let
++	 * them use it here.
++	 */
++	error = -EINVAL;
++	if (!mm_pkey_is_allocated(current->mm, pkey))
++		goto out;
++
  	vma = find_vma(current->mm, start);
-@@ -407,7 +409,14 @@ SYSCALL_DEFINE3(mprotect, unsigned long,
+ 	error = -ENOMEM;
+ 	if (!vma)
+@@ -474,3 +484,48 @@ SYSCALL_DEFINE4(pkey_mprotect, unsigned
  
- 		/* Here we know that vma->vm_start <= nstart < vma->vm_end. */
- 
--		newflags = vm_flags;
-+		/*
-+		 * If this is a vanilla, non-pkey mprotect, inherit the
-+		 * pkey from the VMA we are working on.
-+		 */
-+		if (pkey == -1)
-+			newflags = calc_vm_prot_bits(prot, vma_pkey(vma));
-+		else
-+			newflags = calc_vm_prot_bits(prot, pkey);
- 		newflags |= (vma->vm_flags & ~(VM_READ | VM_WRITE | VM_EXEC));
- 
- 		/* newflags >> 4 shift VM_MAY% in place of VM_% */
-@@ -443,3 +452,18 @@ out:
- 	up_write(&current->mm->mmap_sem);
- 	return error;
+ 	return do_mprotect_pkey(start, len, prot, pkey);
  }
 +
-+SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
-+		unsigned long, prot)
++SYSCALL_DEFINE2(pkey_alloc, unsigned long, flags, unsigned long, init_val)
 +{
-+	return do_mprotect_pkey(start, len, prot, -1);
-+}
++	int pkey;
++	int ret;
 +
-+SYSCALL_DEFINE4(pkey_mprotect, unsigned long, start, size_t, len,
-+		unsigned long, prot, int, pkey)
-+{
-+	if (!arch_validate_pkey(pkey))
++	/* No flags supported yet. */
++	if (flags)
++		return -EINVAL;
++	/* check for unsupported init values */
++	if (init_val & ~PKEY_ACCESS_MASK)
 +		return -EINVAL;
 +
-+	return do_mprotect_pkey(start, len, prot, pkey);
++	down_write(&current->mm->mmap_sem);
++	pkey = mm_pkey_alloc(current->mm);
++
++	ret = -ENOSPC;
++	if (pkey == -1)
++		goto out;
++
++	ret = arch_set_user_pkey_access(current, pkey, init_val);
++	if (ret) {
++		mm_pkey_free(current->mm, pkey);
++		goto out;
++	}
++	ret = pkey;
++out:
++	up_write(&current->mm->mmap_sem);
++	return ret;
++}
++
++SYSCALL_DEFINE1(pkey_free, int, pkey)
++{
++	int ret;
++
++	down_write(&current->mm->mmap_sem);
++	ret = mm_pkey_free(current->mm, pkey);
++	up_write(&current->mm->mmap_sem);
++
++	/*
++	 * We could provie warnings or errors if any VMA still
++	 * has the pkey set here.
++	 */
++	return ret;
 +}
 _
