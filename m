@@ -1,142 +1,41 @@
-From: Dave Hansen <dave@sr71.net>
-Subject: [PATCH 27/37] mm, multi-arch: pass a protection key in to calc_vm_flag_bits()
-Date: Mon, 16 Nov 2015 19:35:49 -0800
-Message-ID: <20151117033549.4376B78C@viggo.jf.intel.com>
-References: <20151117033511.BFFA1440@viggo.jf.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151117033511.BFFA1440@viggo.jf.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: x86@kernel.org, Dave Hansen <dave@sr71.net>, dave.hansen@linux.intel.com, linux-api@vger.kernel.org, linux-arch@vger.kernel.org
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: Re: CGroup Namespaces (v4)
+Date: Mon, 16 Nov 2015 21:54:58 -0600
+Message-ID: <20151117035458.GA3158@mail.hallyn.com>
+References: <1447703505-29672-1-git-send-email-serge@hallyn.com>
+ <CAFLxGvzVmbZHrpaTmXUAK03hsnVPwEs3SJGNFNXfthh3NL8EDg@mail.gmail.com>
+ <20151116204606.GA30681@mail.hallyn.com>
+ <564A41AF.4040208@nod.at>
+ <20151116205452.GA30975@mail.hallyn.com>
+ <87y4dxh9b8.fsf@x220.int.ebiederm.org>
+ <20151117011349.GA1958@mail.hallyn.com>
+ <20151117014026.GA2331@mail.hallyn.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20151117014026.GA2331-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Richard Weinberger <richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, LXC development mailing-list <lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups mailinglist <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Mon, Nov 16, 2015 at 07:40:26PM -0600, Serge E. Hallyn wrote:
+> On Mon, Nov 16, 2015 at 07:13:49PM -0600, Serge E. Hallyn wrote:
+> > On Mon, Nov 16, 2015 at 04:24:27PM -0600, Eric W. Biederman wrote:
+...
+> > > Similary have you considered what it required to be able to safely set
+> > > FS_USERNS_MOUNT?
+> > 
+> > I think the only thing we need to do is
+> > 
+> > 1. go through and make sure that any ability to change mount flags is under
+> > capable() (which I have not yet done).  The cgroup_mount() itself checks that
+> > flags are not changed, but there may be some subtle way to effect a change
+> > that I'm not aware of yet.
+> > 
+> 
+> At least the ability to change the clone_children and release agent through
+> remount need to be restricted to init_user_ns root.
 
-From: Dave Hansen <dave.hansen@linux.intel.com>
-
-This plumbs a protection key through calc_vm_flag_bits().  We
-could have done this in calc_vm_prot_bits(), but I did not feel
-super strongly which way to go.  It was pretty arbitrary which
-one to use.
-
-Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
-Cc: linux-api@vger.kernel.org
-Cc: linux-arch@vger.kernel.org
----
-
- b/arch/powerpc/include/asm/mman.h  |    5 +++--
- b/drivers/char/agp/frontend.c      |    2 +-
- b/drivers/staging/android/ashmem.c |    4 ++--
- b/include/linux/mman.h             |    6 +++---
- b/mm/mmap.c                        |    2 +-
- b/mm/mprotect.c                    |    2 +-
- b/mm/nommu.c                       |    2 +-
- 7 files changed, 12 insertions(+), 11 deletions(-)
-
-diff -puN arch/powerpc/include/asm/mman.h~pkeys-84-calc_vm_prot_bits arch/powerpc/include/asm/mman.h
---- a/arch/powerpc/include/asm/mman.h~pkeys-84-calc_vm_prot_bits	2015-11-16 12:36:26.421490430 -0800
-+++ b/arch/powerpc/include/asm/mman.h	2015-11-16 12:36:26.434491019 -0800
-@@ -18,11 +18,12 @@
-  * This file is included by linux/mman.h, so we can't use cacl_vm_prot_bits()
-  * here.  How important is the optimization?
-  */
--static inline unsigned long arch_calc_vm_prot_bits(unsigned long prot)
-+static inline unsigned long arch_calc_vm_prot_bits(unsigned long prot,
-+		unsigned long pkey)
- {
- 	return (prot & PROT_SAO) ? VM_SAO : 0;
- }
--#define arch_calc_vm_prot_bits(prot) arch_calc_vm_prot_bits(prot)
-+#define arch_calc_vm_prot_bits(prot, pkey) arch_calc_vm_prot_bits(prot, pkey)
- 
- static inline pgprot_t arch_vm_get_page_prot(unsigned long vm_flags)
- {
-diff -puN drivers/char/agp/frontend.c~pkeys-84-calc_vm_prot_bits drivers/char/agp/frontend.c
---- a/drivers/char/agp/frontend.c~pkeys-84-calc_vm_prot_bits	2015-11-16 12:36:26.423490520 -0800
-+++ b/drivers/char/agp/frontend.c	2015-11-16 12:36:26.435491065 -0800
-@@ -156,7 +156,7 @@ static pgprot_t agp_convert_mmap_flags(i
- {
- 	unsigned long prot_bits;
- 
--	prot_bits = calc_vm_prot_bits(prot) | VM_SHARED;
-+	prot_bits = calc_vm_prot_bits(prot, 0) | VM_SHARED;
- 	return vm_get_page_prot(prot_bits);
- }
- 
-diff -puN drivers/staging/android/ashmem.c~pkeys-84-calc_vm_prot_bits drivers/staging/android/ashmem.c
---- a/drivers/staging/android/ashmem.c~pkeys-84-calc_vm_prot_bits	2015-11-16 12:36:26.424490566 -0800
-+++ b/drivers/staging/android/ashmem.c	2015-11-16 12:36:26.435491065 -0800
-@@ -372,8 +372,8 @@ static int ashmem_mmap(struct file *file
- 	}
- 
- 	/* requested protection bits must match our allowed protection mask */
--	if (unlikely((vma->vm_flags & ~calc_vm_prot_bits(asma->prot_mask)) &
--		     calc_vm_prot_bits(PROT_MASK))) {
-+	if (unlikely((vma->vm_flags & ~calc_vm_prot_bits(asma->prot_mask, 0)) &
-+		     calc_vm_prot_bits(PROT_MASK, 0))) {
- 		ret = -EPERM;
- 		goto out;
- 	}
-diff -puN include/linux/mman.h~pkeys-84-calc_vm_prot_bits include/linux/mman.h
---- a/include/linux/mman.h~pkeys-84-calc_vm_prot_bits	2015-11-16 12:36:26.426490656 -0800
-+++ b/include/linux/mman.h	2015-11-16 12:36:26.436491110 -0800
-@@ -35,7 +35,7 @@ static inline void vm_unacct_memory(long
-  */
- 
- #ifndef arch_calc_vm_prot_bits
--#define arch_calc_vm_prot_bits(prot) 0
-+#define arch_calc_vm_prot_bits(prot, pkey) 0
- #endif
- 
- #ifndef arch_vm_get_page_prot
-@@ -70,12 +70,12 @@ static inline int arch_validate_prot(uns
-  * Combine the mmap "prot" argument into "vm_flags" used internally.
-  */
- static inline unsigned long
--calc_vm_prot_bits(unsigned long prot)
-+calc_vm_prot_bits(unsigned long prot, unsigned long pkey)
- {
- 	return _calc_vm_trans(prot, PROT_READ,  VM_READ ) |
- 	       _calc_vm_trans(prot, PROT_WRITE, VM_WRITE) |
- 	       _calc_vm_trans(prot, PROT_EXEC,  VM_EXEC) |
--	       arch_calc_vm_prot_bits(prot);
-+	       arch_calc_vm_prot_bits(prot, pkey);
- }
- 
- /*
-diff -puN mm/mmap.c~pkeys-84-calc_vm_prot_bits mm/mmap.c
---- a/mm/mmap.c~pkeys-84-calc_vm_prot_bits	2015-11-16 12:36:26.428490747 -0800
-+++ b/mm/mmap.c	2015-11-16 12:36:26.437491156 -0800
-@@ -1309,7 +1309,7 @@ unsigned long do_mmap(struct file *file,
- 	 * to. we assume access permissions have been handled by the open
- 	 * of the memory object, so we don't do any here.
- 	 */
--	vm_flags |= calc_vm_prot_bits(prot) | calc_vm_flag_bits(flags) |
-+	vm_flags |= calc_vm_prot_bits(prot, 0) | calc_vm_flag_bits(flags) |
- 			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
- 
- 	if (flags & MAP_LOCKED)
-diff -puN mm/mprotect.c~pkeys-84-calc_vm_prot_bits mm/mprotect.c
---- a/mm/mprotect.c~pkeys-84-calc_vm_prot_bits	2015-11-16 12:36:26.429490793 -0800
-+++ b/mm/mprotect.c	2015-11-16 19:22:07.781660707 -0800
-@@ -373,7 +373,7 @@ SYSCALL_DEFINE3(mprotect, unsigned long,
- 	if ((prot & PROT_READ) && (current->personality & READ_IMPLIES_EXEC))
- 		prot |= PROT_EXEC;
- 
--	vm_flags = calc_vm_prot_bits(prot);
-+	vm_flags = calc_vm_prot_bits(prot, 0);
- 
- 	down_write(&current->mm->mmap_sem);
- 
-diff -puN mm/nommu.c~pkeys-84-calc_vm_prot_bits mm/nommu.c
---- a/mm/nommu.c~pkeys-84-calc_vm_prot_bits	2015-11-16 12:36:26.431490883 -0800
-+++ b/mm/nommu.c	2015-11-16 12:36:26.438491201 -0800
-@@ -1081,7 +1081,7 @@ static unsigned long determine_vm_flags(
- {
- 	unsigned long vm_flags;
- 
--	vm_flags = calc_vm_prot_bits(prot) | calc_vm_flag_bits(flags);
-+	vm_flags = calc_vm_prot_bits(prot, 0) | calc_vm_flag_bits(flags);
- 	/* vm_flags |= mm->def_flags; */
- 
- 	if (!(capabilities & NOMMU_MAP_DIRECT)) {
-_
+No, they can only be changed on a new mount, so these are fine.
