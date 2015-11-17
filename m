@@ -1,321 +1,336 @@
-From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Subject: [PATCH 1/2] keys, trusted: select hash algorithm for TPM2 chips
-Date: Tue, 17 Nov 2015 18:27:21 +0200
-Message-ID: <1447777643-10777-2-git-send-email-jarkko.sakkinen@linux.intel.com>
-References: <1447777643-10777-1-git-send-email-jarkko.sakkinen@linux.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1447777643-10777-1-git-send-email-jarkko.sakkinen@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Huewe <peterhuewe@gmx.de>, Marcel Selhorst <tpmdd@selhorst.net>, David Howells <dhowells@redhat.com>
-Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, David Safford <safford@us.ibm.com>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Jonathan Corbet <corbet@lwn.net>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Jason Gunthorpe <jgunthorpe@obsidianresearch.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, "open list:KEYS-TRUSTED" <linux-security-module@vger.kernel.org>, "open list:KEYS-TRUSTED" <keyrings@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, "open list:CRYPTO API" <linux-crypto@vger.kernel.org>, "moderated list:TPM DEVICE DRIVER" <tpmdd-devel@lists.sourceforge.net>, "open list:ABI/API" <linux-api@vger.kernel.org>
+From: "Andrew F. Davis" <afd-l0cyMroinI0@public.gmane.org>
+Subject: Re: [PATCH 2/2] iio: health: Add driver for the TI AFE4404 heart
+ monitor
+Date: Tue, 17 Nov 2015 11:07:52 -0600
+Message-ID: <564B5EE8.1040604@ti.com>
+References: <1446309089-21094-1-git-send-email-afd@ti.com>
+ <1446309089-21094-3-git-send-email-afd@ti.com> <56367B95.3030105@kernel.org>
+ <5637C96C.5010602@ti.com> <563A5F1E.70904@kernel.org>
+ <563A75E7.3040602@ti.com> <563BA952.107@kernel.org> <5642434C.3020609@ti.com>
+ <56487595.5010402@kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <56487595.5010402-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>
+Cc: devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Added 'hash=' option for selecting the hash algorithm for add_key()
-syscall and documentation for it.
+On 11/15/2015 06:07 AM, Jonathan Cameron wrote:
+> On 10/11/15 19:19, Andrew F. Davis wrote:
+>> On 11/05/2015 01:09 PM, Jonathan Cameron wrote:
+>>> Lars, Hartmut, Peter,
+>>>
+>>> This is becoming a really involved ABI discussion so I'd like some
+>>> input on this if any of you have the time.
+>>>
+>>> I'm going to be busy now until at least the weekend...
+>>>
+>>> On 04/11/15 21:17, Andrew F. Davis wrote:
+>>>> On 11/04/2015 01:40 PM, Jonathan Cameron wrote:
+>>>>> On 02/11/15 20:37, Andrew F. Davis wrote:
+>>>>>> On 11/01/2015 02:52 PM, Jonathan Cameron wrote:
+>>>>>>> On 31/10/15 16:31, Andrew F. Davis wrote:
+>>>>>>>> Add driver for the TI AFE4404 heart rate monitor and pulse oximeter.
+>>>>>>>> This device detects reflected LED light fluctuations and presents an ADC
+>>>>>>>> value to the user space for further signal processing.
+>>>>>>>>
+>>>>>>>> Data sheet located here:
+>>>>>>>> http://www.ti.com/product/AFE4404/datasheet
+>>>>>>>>
+>>>>>>>> Signed-off-by: Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
+>>>>>>> Hi Andrew,
+>>>>>>>
+>>>>>>> Good to see this resurface.  It's a fascinating little device.
+>>>>>>>
+>>>>>>> Anyhow, most of the interesting bit in here is unsuprisingly concerned
+>>>>>>> with the interface.  I know we went round a few loops of this before but
+>>>>>>> it still feels like we haven't worked out to handle it well.  I would like
+>>>>>>> as much input as we can get on this as inevitablly it will have
+>>>>>>> repercussions outside this driver.
+>>>>>>>
+>>>>>>> Your approach of hammering out descriptive sysfs attributes is a good
+>>>>>>> starting point but we need to work towards a formal description that
+>>>>>>> can be generalised.  Whilst there are not many similar devices out there
+>>>>>>> to this one, I suspect there are a few and more may well show up in
+>>>>>>> future.
+>>>>>>>
+>>>>>>
+>>>>>> Yeah, I'm working on brining up drivers for them now :)
+>>>>> cool
+>>>>>>
+>>>>>>> The escence of my rather roundabout response inline is that I'm suggesting
+>>>>>>> adding a new channel type to represent light transmission, taking the analogous
+>>>>>>> case of proximity devices in which we are looking at light reflection.
+>>>>>>> I've also taken the justification we use for illuminance vs intensity readings
+>>>>>>> for two sensor ALS sensors as a precident for having compound channels of a different
+>>>>>>> type to the 'raw' data that feeds them.  Hence I propose something along
+>>>>>>> the lines of:
+>>>>>>>
+>>>>>>> in_intensityX_raw (raw channel value with the led on)
+>>>>>>> in_intensityX_ambient_raw (raw channel value with the led off)
+>>>>>>>
+>>>>>>
+>>>>>> I'm not sure, I know it may be too late for a lot of drivers but putting the 'X'
+>>>>>> against the 'intensity' works for devices like ADCs/DACs with a simple list
+>>>>>> of numeric channels, but for any other device with named channels this will
+>>>>>> become very inconsistent, especially when adding modified channels and
+>>>>>> differential channels.
+>>>>> Sadly its ABI now so we can't realistically change it.  We can extend, we can't
+>>>>> replace (we we can over the course of a lot of years but that's a nightmare).
+>>>>>
+>>>>>>
+>>>>>> For example:
+>>>>>>
+>>>>>> in_intensity5_name_ambient-2_mean_raw
+>>>>> The oddity here is that in your case the device in interacting with a stimulus
+>>>>> output.  Normally the index reflects an actual sensor.  We are kind of bludgeoning
+>>>>> it in. The only equivalently nasty case I know of is touch screens where different
+>>>>> resistances are being connected - from a generic point of view those are a nightmare
+>>>>> as well (as every implementation does it differently).
+>>>>
+>>>> Yeah, this part really doesn't fit the mold for this subsystem, or
+>>>> any really, hwmon, input, were also considered, but the plan is still
+>>>> to attempt to shoehorn it in to this one, so hopefully you can bear with me
+>>>> on all these oddities :)
+>>> Much as it irritates my sense of neat and tidy I guess that if we do end up with
+>>> an ABI for this that we don't like later it isn't the end of the world as I doubt
+>>> we'll be inundated with hundreds of these sensors.
+>>>
+>>> However, lets keep the naming within reason to how we would naturally extend
+>>> the ABI.
+>>>
+>>> Having thought more on these differential channels, do we really need to have
+>>> them explicitly as differential channels at all?  Perhaps we are better off with
+>>>
+>>> in_intensity0_led1_raw
+>>> in_intensity1_ambient_raw
+>>> in_intensity2_transmitted_led1_raw
+>>>
+>>> in_intensity3_led2_raw
+>>> in_intensity4_ambient_raw
+>>> in_intensity5_transmitted_led2_raw
+>>>
+>>> in_intenisty6_led3_raw
+>>> in_intenisty7_ambient_raw
+>>> in_intensity8_transmitted_led3_raw
+>>>
+>>> in_intensity9_transmitted_led1_meanfiltered_raw
+>>> (and it does want to be explicitly meanfiltered and not mean
+>>> which would imply the mean over all time)
+>>>
+>>> in_intensity10_transmitted_led2_meanfiltered_raw
+>>>
+>>> It's simple, descriptive and almost fits in the current ABI - you could
+>>> even blugeon it in easily enough except for the mean filtered case.
+>>> In many ways this is your naming proposal after all.
+>>>
+>>
+>> One issue might be that we really only have 4 real channels that become
+>> different things depending on how you setup the device. Matching the
+>> names of the registers is the only way we can label these, as the user
+>> might change their use.
+>>
+>> in_intensity_[RegName]_raw
+>>
+>> I really can't see any way around it, the channels are just too adjustable.
+> Lots of channels to cover the use case the hardware supports.  This happens
+> all the time on SoC ADCs as they can be wired to pretty much anything
+> internally or externally.
+>>
+>> This will really be true for the 	 driver, the part looks to
+>> have about 13 different measurement inputs it can take, all user-select
+>> multiplexed into 1 register/channel. :/
+>
+> That's fine, support them all independently then use available_scan_masks
+> to control which sets are possible.  You end up with a lot of 'channels'
+> but a coherent interface.   Sounds like 52 channels in that devices case
+> which isn't too bad - of which you can only have 4 at a time (or looking
+> at the sheet, only 1 at a time perhaps? - note for fiddly cases we have
+> the validate_scan_mask callback to do this in code - see validate_scanmask_onehot
+> for example).
+>
 
-Added entry for sm3-256 to the following tables in order to support
-TPM_ALG_SM3_256:
+I see, I'll look into this.
 
-* hash_algo_name
-* hash_digest_size
+After looking over the max30100 driver, I've realized I really don't need to
+be exposing these channels to sysfs at all as they are only useful measured
+together in a triggered/timed buffer. Should clean things up a bit.
 
-Includes support for the following hash algorithms:
+> This is a common enough case on ADCs (particularly soc ones) where you have
+> sampling slots that can effectively be allocated to hundreds of channels,
+> but the ability to only pick a few at a time.
+>
+> Looking at that part you might want to add some configuration (device tree
+> or similar) to restrict what channels are actually plausible given you either
+> have a weighcell or a body composition thingy attached to a given physical
+> input!
+>
 
-* sha1
-* sha256
-* sha384
-* sha512
-* sm3-256
+I think all inputs will be hooked up in a real use case, I'm not sure
+though.
 
-v2:
+[...]
 
-* Added missing select CRYPTO_HASH_INFO to security/keys/Kconfig
+>>>
+>>>>
+>>>>>>
+>>>>>>> The led version of ambient strikes me as odd to start with given I think the LED
+>>>>>>> is turned off during that measurement?  This is merely to do with when they
+>>>>>>> occur in the sequence?
+>>>>>>>
+>>>>>>> What we are really dealing with here is a single photodiode and an led sequencer.
+>>>>>>> Perhaps we need a modifier that simply means the source is an led driven at the same instance?
+>>>>>>> (this is the same as for proximity sensors, but there the signal is explicitly proximity).
+>>>>>>>
+>>>>>>
+>>>>>> Yeah, the device is basically one photodiode and one ADC feeding to one of four storage
+>>>>>> registers. The sequencer controls which LEDs are on, what buffer to fill, and
+>>>>>> when the ADC is sampling from which buffer to which register. This is all user definable
+>>>>>> so you can sample one LED twice, or not even sample the ambient light at all if you
+>>>>>> want.
+>>>>>>
+>>>>>> This I why I would like to keep the input names locked to the data sheet, they are named
+>>>>>> based on the name of the sequencer control that fills them. Abstracting this away would
+>>>>>> add endless confusion.
+>>>>>>
+>>>>>>> Maybe, we should be treating these as a different type entirely?  They are measuring light
+>>>>>>> levels, but in common with proximity sensors the 'interesting' bit is what is effecting
+>>>>>>> those levels.  Perhaps a new type would make sense.
+>>>>>>> How about:
+>>>>>>>
+>>>>>>> in_intensitytransmittedX_raw
+>>>>>>> in_intensityX_raw
+>>>>>>>
+>>>>>>> This makes a mess of the differential channels however, as suddenly they are taking the
+>>>>>>> difference of two signals of different types.  Ah well there goes a good plan.  I'd neglected
+>>>>>>> that the transmitted version is the combination of the ambient and the transmitted.
+>>>>>>>
+>>>>>>> This is irritatingly hard to map onto anything generic.
+>>>>>>>
+>>>>>>
+>>>>>> Exactly, there is no reason to enforce generic names for devices like these.
+>>>>> If there is going to be more than one of them and a common userspace library
+>>>>> then we need to have at least a consistent ABI.
+>>>>
+>>>> Sure, so then I would just avoid the issue by not adding another type for this,
+>>>> mostly one off, case.
+>>> I'm wondering ultimately how one off it is... What over devices use light transmitted...
+>>> Hmm. scanners etc I guess, can't think of other cases with a single led and light sensor
+>>> off the top of my head..  Ahah, optical swipe card readers (I'm sure I saw one somewhere
+>>> once ;)
+>>>
+>>
+>> Radar, X-ray, if you include all reflected electromagnetic waves as light...
+> Fair point (my day job is x-ray so I ought to have thought of that - we use pin diodes
+> on some machines to indirectly estimate very small masses).
+>
+> Still this got more complex in my mind when I saw the other device vaguely similar to this
+> one that I have a driver to review for... Matt Rantostay's
+> [RFC v1] iio: light: add MAX30100 oximeter driver support
+>
+> I think that type is using reflected light rather than transmitted for a similar job.  What
+> fun.
+>
+> Actually if you wouldn't mind taking a look at Matt's driver as someone rather more
+> knowledgeable about these kinds of drivers than me that would be great!
+>
 
-v3:
+ACK, I'll comment on that thread if I find something interesting. Looks like the health
+folder will be growing :)
 
-* Squashed patches into a single patch as the commits did not make
-  alone any sense.
-* Added a klog message when TPM 1.x is used for sealing and other than
-  SHA-1 is used as the hash algorithm.
-* Got rid of TPM2_HASH_COUNT and moved into ARRAY_SIZE(tpm2_hash_map).
+[...]
 
-v4:
+>>>>
+>>>>> Yes, the framework grows over time, and yes it needs to be extended. This is only
+>>>>> natural as new devices turn up that do new things.
+>>>>>
+>>>>> Be careful to note that your strings naming the things would be just as much part of
+>>>>> the ABI as any new modifier or channel type.
+>>>>>
+>>>>
+>>>> Not necessarily, if the names match a regualar pattern or are provided to userspace in
+>>>> a standard way, it wouldn't be any different that any other ABI that has different files
+>>>> available or returns different values depending on what devices are available.
+>>>
+>>> I agree, so where is the advantage?  All you end up with is a massive look up table
+>>> of namings. We have that now, just the other way around and deliberately more restrictive
+>>> to try and keep life sane fo the userspace libraries.
+>>>
+>>
+>> This will help us to lose the lookup table we need now, the available sysfs names and
+>> their uses can all be read out dynamically from a single common interface.
+> It's just moving the look up table around. From a review point of view I much
+> prefer the restrictions we effectively apply now by having it done this way as
+> it means I can be 99% sure that most drivers are within the ABI (sure we could write
+> tools to check this doing it the other way)
 
-* Added missing select CRYPTO_HASH_INFO to drivers/char/tpm/Kconfig
+I can see it being nice from a review point of view, no real objections to the current
+way, just an idea.
 
-v5:
 
-* Minor clean ups.
-* Removed dev_dbg() from tpm2-cmd.c in order to get rid of
-  CRYPTO_HASH_INFO dep.
+[...]
 
-Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Reviewed-by: James Morris <james.l.morris@oracle.com>
----
- Documentation/security/keys-trusted-encrypted.txt |  3 ++
- crypto/hash_info.c                                |  2 ++
- drivers/char/tpm/tpm.h                            | 10 +++++--
- drivers/char/tpm/tpm2-cmd.c                       | 36 +++++++++++++++++++++--
- include/crypto/hash_info.h                        |  3 ++
- include/keys/trusted-type.h                       |  1 +
- include/uapi/linux/hash_info.h                    |  1 +
- security/keys/Kconfig                             |  1 +
- security/keys/trusted.c                           | 27 ++++++++++++++++-
- 9 files changed, 77 insertions(+), 7 deletions(-)
+>>>>>>>> +
+>>>>>>>> +What:        /sys/bus/iio/devices/iio:deviceX/out_current_offdac_ledY_raw
+>>>>>>>> +        /sys/bus/iio/devices/iio:deviceX/out_current_offdac_ledY_ambient_raw
+>>>>>>>> +Date:        October 2015
+>>>>>>>> +KernelVersion:
+>>>>>>>> +Contact:    Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
+>>>>>>>> +Description:
+>>>>>>>> +        Get and set the offset cancellation DAC setting for these
+>>>>>>>> +        stages.
+>>>>>>>> +        Values range from 0 -> 15
+>>>>>>> Are these in mA?
+>>>>>>>
+>>>>>>> Not sure I like the naming here.  You could either treat them as explicit output
+>>>>>>> channels, or (and I'd be tempted to favour this) as calibration offsets for the
+>>>>>>> in_intensitytransmitted_ channel described above (or maybe the straight intensity
+>>>>>>> channels - I'm now confused on what is what here!).
+>>>>>>>
+>>>>>>
+>>>>>> Can you imagine how the user will feel if we try to hide all the details with
+>>>>>> these names? The data sheet calls them 'offdac_led1' so why hide that.
+>>>>> Because the next datasheet that comes along for a different part might call
+>>>>> them something subtly different then we end up with needing custom userspace
+>>>>> code for each part.  If we do that then there is no point in having the devices
+>>>>> in IIO in the first place.   The reason all this ABI needs to be considered from
+>>>>> a generic point of view is that we are setting precedence.  Naming should not
+>>>>> be defined by what it happened to be called on the particular instance of
+>>>>> the datasheet against which the first driver was defined (and yes we have
+>>>>> had instances of the names changing entirely on datasheets).
+>>>>>
+>>>>> The point is to come up with ABI that is generic. That is probably the most
+>>>>> important part of IIO (and the bit we spend most time discussing / arguing about).
+>>>>>
+>>>>> This is a calibration offset applied to the incoming signal - arguably by calling
+>>>>> offdac_led1 you are obscuring the useful information to the user which is 'what
+>>>>> is this for?'.
+>>>>>
+>>>>
+>>>> If anything they would be offsets for the in_intensity_ledX_raw channels, but
+>>>> then I'm not sure how you would handle types, the offset is set with current,
+>>>> the measured value is in intensity.
+>>> The advantage of caliboffset is it's unscaled and the relationship to the output
+>>> is deliberately never defined as it's rarely linear - so 'what' it is doesn't
+>>> actually matter.
+>>>
+>>> We have these on IMUs for example - they often correspond to something magic
+>>> in the analog front end that is not even in the datasheet - though if you are
+>>> lucky there is an application note explaining the magic test needed to derive
+>>> a value (sometimes read from another register under some particular condition).
+>>> Usually they are just burnt in values that no one normally touches.
+>>>
+>>
+>> Hmm, looking back at the data sheet these gains are not for the individual channels,
+>> they change the whole front end gain, so they probably won't work as channel
+>> claiboffsets.
+> That's what info_mask_shared_by_all is for.
+>
+>
 
-diff --git a/Documentation/security/keys-trusted-encrypted.txt b/Documentation/security/keys-trusted-encrypted.txt
-index e105ae9..fd2565b 100644
---- a/Documentation/security/keys-trusted-encrypted.txt
-+++ b/Documentation/security/keys-trusted-encrypted.txt
-@@ -38,6 +38,9 @@ Usage:
-        pcrlock=	  pcr number to be extended to "lock" blob
-        migratable= 0|1 indicating permission to reseal to new PCR values,
-                    default 1 (resealing allowed)
-+       hash=      hash algorithm name as a string. For TPM 1.x the only
-+                  allowed value is sha1. For TPM 2.x the allowed values
-+		  are sha1, sha256, sha384, sha512 and sm3-256.
- 
- "keyctl print" returns an ascii hex copy of the sealed key, which is in standard
- TPM_STORED_DATA format.  The key length for new keys are always in bytes.
-diff --git a/crypto/hash_info.c b/crypto/hash_info.c
-index 3e7ff46..7b1e0b1 100644
---- a/crypto/hash_info.c
-+++ b/crypto/hash_info.c
-@@ -31,6 +31,7 @@ const char *const hash_algo_name[HASH_ALGO__LAST] = {
- 	[HASH_ALGO_TGR_128]	= "tgr128",
- 	[HASH_ALGO_TGR_160]	= "tgr160",
- 	[HASH_ALGO_TGR_192]	= "tgr192",
-+	[HASH_ALGO_SM3_256]	= "sm3-256",
- };
- EXPORT_SYMBOL_GPL(hash_algo_name);
- 
-@@ -52,5 +53,6 @@ const int hash_digest_size[HASH_ALGO__LAST] = {
- 	[HASH_ALGO_TGR_128]	= TGR128_DIGEST_SIZE,
- 	[HASH_ALGO_TGR_160]	= TGR160_DIGEST_SIZE,
- 	[HASH_ALGO_TGR_192]	= TGR192_DIGEST_SIZE,
-+	[HASH_ALGO_SM3_256]	= SM3256_DIGEST_SIZE,
- };
- EXPORT_SYMBOL_GPL(hash_digest_size);
-diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
-index a4257a3..cdd49cd 100644
---- a/drivers/char/tpm/tpm.h
-+++ b/drivers/char/tpm/tpm.h
-@@ -83,16 +83,20 @@ enum tpm2_structures {
- };
- 
- enum tpm2_return_codes {
--	TPM2_RC_INITIALIZE	= 0x0100,
--	TPM2_RC_TESTING		= 0x090A,
-+	TPM2_RC_HASH		= 0x0083, /* RC_FMT1 */
-+	TPM2_RC_INITIALIZE	= 0x0100, /* RC_VER1 */
- 	TPM2_RC_DISABLED	= 0x0120,
-+	TPM2_RC_TESTING		= 0x090A, /* RC_WARN */
- };
- 
- enum tpm2_algorithms {
- 	TPM2_ALG_SHA1		= 0x0004,
- 	TPM2_ALG_KEYEDHASH	= 0x0008,
- 	TPM2_ALG_SHA256		= 0x000B,
--	TPM2_ALG_NULL		= 0x0010
-+	TPM2_ALG_SHA384		= 0x000C,
-+	TPM2_ALG_SHA512		= 0x000D,
-+	TPM2_ALG_NULL		= 0x0010,
-+	TPM2_ALG_SM3_256	= 0x0012,
- };
- 
- enum tpm2_command_codes {
-diff --git a/drivers/char/tpm/tpm2-cmd.c b/drivers/char/tpm/tpm2-cmd.c
-index c121304..d9d0822 100644
---- a/drivers/char/tpm/tpm2-cmd.c
-+++ b/drivers/char/tpm/tpm2-cmd.c
-@@ -16,6 +16,7 @@
-  */
- 
- #include "tpm.h"
-+#include <crypto/hash_info.h>
- #include <keys/trusted-type.h>
- 
- enum tpm2_object_attributes {
-@@ -104,6 +105,19 @@ struct tpm2_cmd {
- 	union tpm2_cmd_params	params;
- } __packed;
- 
-+struct tpm2_hash {
-+	unsigned int crypto_id;
-+	unsigned int tpm_id;
-+};
-+
-+static struct tpm2_hash tpm2_hash_map[] = {
-+	{HASH_ALGO_SHA1, TPM2_ALG_SHA1},
-+	{HASH_ALGO_SHA256, TPM2_ALG_SHA256},
-+	{HASH_ALGO_SHA384, TPM2_ALG_SHA384},
-+	{HASH_ALGO_SHA512, TPM2_ALG_SHA512},
-+	{HASH_ALGO_SM3_256, TPM2_ALG_SM3_256},
-+};
-+
- /*
-  * Array with one entry per ordinal defining the maximum amount
-  * of time the chip could take to return the result. The values
-@@ -429,8 +443,20 @@ int tpm2_seal_trusted(struct tpm_chip *chip,
- {
- 	unsigned int blob_len;
- 	struct tpm_buf buf;
-+	u32 hash;
-+	int i;
- 	int rc;
- 
-+	for (i = 0; i < ARRAY_SIZE(tpm2_hash_map); i++) {
-+		if (options->hash == tpm2_hash_map[i].crypto_id) {
-+			hash = tpm2_hash_map[i].tpm_id;
-+			break;
-+		}
-+	}
-+
-+	if (i == ARRAY_SIZE(tpm2_hash_map))
-+		return -EINVAL;
-+
- 	rc = tpm_buf_init(&buf, TPM2_ST_SESSIONS, TPM2_CC_CREATE);
- 	if (rc)
- 		return rc;
-@@ -455,7 +481,7 @@ int tpm2_seal_trusted(struct tpm_chip *chip,
- 	tpm_buf_append_u16(&buf, 14);
- 
- 	tpm_buf_append_u16(&buf, TPM2_ALG_KEYEDHASH);
--	tpm_buf_append_u16(&buf, TPM2_ALG_SHA256);
-+	tpm_buf_append_u16(&buf, hash);
- 	tpm_buf_append_u32(&buf, TPM2_ATTR_USER_WITH_AUTH);
- 	tpm_buf_append_u16(&buf, 0); /* policy digest size */
- 	tpm_buf_append_u16(&buf, TPM2_ALG_NULL);
-@@ -488,8 +514,12 @@ int tpm2_seal_trusted(struct tpm_chip *chip,
- out:
- 	tpm_buf_destroy(&buf);
- 
--	if (rc > 0)
--		rc = -EPERM;
-+	if (rc > 0) {
-+		if ((rc & TPM2_RC_HASH) == TPM2_RC_HASH)
-+			rc = -EINVAL;
-+		else
-+			rc = -EPERM;
-+	}
- 
- 	return rc;
- }
-diff --git a/include/crypto/hash_info.h b/include/crypto/hash_info.h
-index e1e5a3e..56f217d 100644
---- a/include/crypto/hash_info.h
-+++ b/include/crypto/hash_info.h
-@@ -34,6 +34,9 @@
- #define TGR160_DIGEST_SIZE 20
- #define TGR192_DIGEST_SIZE 24
- 
-+/* not defined in include/crypto/ */
-+#define SM3256_DIGEST_SIZE 32
-+
- extern const char *const hash_algo_name[HASH_ALGO__LAST];
- extern const int hash_digest_size[HASH_ALGO__LAST];
- 
-diff --git a/include/keys/trusted-type.h b/include/keys/trusted-type.h
-index f91ecd9..a6a1008 100644
---- a/include/keys/trusted-type.h
-+++ b/include/keys/trusted-type.h
-@@ -36,6 +36,7 @@ struct trusted_key_options {
- 	uint32_t pcrinfo_len;
- 	unsigned char pcrinfo[MAX_PCRINFO_SIZE];
- 	int pcrlock;
-+	uint32_t hash;
- };
- 
- extern struct key_type key_type_trusted;
-diff --git a/include/uapi/linux/hash_info.h b/include/uapi/linux/hash_info.h
-index ca18c45..ebf8fd8 100644
---- a/include/uapi/linux/hash_info.h
-+++ b/include/uapi/linux/hash_info.h
-@@ -31,6 +31,7 @@ enum hash_algo {
- 	HASH_ALGO_TGR_128,
- 	HASH_ALGO_TGR_160,
- 	HASH_ALGO_TGR_192,
-+	HASH_ALGO_SM3_256,
- 	HASH_ALGO__LAST
- };
- 
-diff --git a/security/keys/Kconfig b/security/keys/Kconfig
-index 72483b8..fe4d74e 100644
---- a/security/keys/Kconfig
-+++ b/security/keys/Kconfig
-@@ -54,6 +54,7 @@ config TRUSTED_KEYS
- 	select CRYPTO
- 	select CRYPTO_HMAC
- 	select CRYPTO_SHA1
-+	select CRYPTO_HASH_INFO
- 	help
- 	  This option provides support for creating, sealing, and unsealing
- 	  keys in the kernel. Trusted keys are random number symmetric keys,
-diff --git a/security/keys/trusted.c b/security/keys/trusted.c
-index 903dace..b5b0a55 100644
---- a/security/keys/trusted.c
-+++ b/security/keys/trusted.c
-@@ -11,6 +11,7 @@
-  * See Documentation/security/keys-trusted-encrypted.txt
-  */
- 
-+#include <crypto/hash_info.h>
- #include <linux/uaccess.h>
- #include <linux/module.h>
- #include <linux/init.h>
-@@ -710,7 +711,8 @@ enum {
- 	Opt_err = -1,
- 	Opt_new, Opt_load, Opt_update,
- 	Opt_keyhandle, Opt_keyauth, Opt_blobauth,
--	Opt_pcrinfo, Opt_pcrlock, Opt_migratable
-+	Opt_pcrinfo, Opt_pcrlock, Opt_migratable,
-+	Opt_hash,
- };
- 
- static const match_table_t key_tokens = {
-@@ -723,6 +725,7 @@ static const match_table_t key_tokens = {
- 	{Opt_pcrinfo, "pcrinfo=%s"},
- 	{Opt_pcrlock, "pcrlock=%s"},
- 	{Opt_migratable, "migratable=%s"},
-+	{Opt_hash, "hash=%s"},
- 	{Opt_err, NULL}
- };
- 
-@@ -736,6 +739,14 @@ static int getoptions(char *c, struct trusted_key_payload *pay,
- 	int res;
- 	unsigned long handle;
- 	unsigned long lock;
-+	int i;
-+	int tpm2;
-+
-+	tpm2 = tpm_is_tpm2(TPM_ANY_NUM);
-+	if (tpm2 < 0)
-+		return tpm2;
-+
-+	opt->hash = tpm2 ? HASH_ALGO_SHA256 : HASH_ALGO_SHA1;
- 
- 	while ((p = strsep(&c, " \t"))) {
- 		if (*p == '\0' || *p == ' ' || *p == '\t')
-@@ -787,6 +798,20 @@ static int getoptions(char *c, struct trusted_key_payload *pay,
- 				return -EINVAL;
- 			opt->pcrlock = lock;
- 			break;
-+		case Opt_hash:
-+			for (i = 0; i < HASH_ALGO__LAST; i++) {
-+				if (!strcmp(args[0].from, hash_algo_name[i])) {
-+					opt->hash = i;
-+					break;
-+				}
-+			}
-+			if (i == HASH_ALGO__LAST)
-+				return -EINVAL;
-+			if  (!tpm2 && i != HASH_ALGO_SHA1) {
-+				pr_info("trusted_key: TPM 1.x only supports SHA-1.\n");
-+				return -EINVAL;
-+			}
-+			break;
- 		default:
- 			return -EINVAL;
- 		}
--- 
-2.5.0
+Hmmm, I may have been misinterpreting it's use, I'll look into this.
+
+[...]
