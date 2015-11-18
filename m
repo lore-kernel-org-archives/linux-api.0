@@ -1,68 +1,90 @@
-From: =?UTF-8?Q?Fran=c3=a7ois_Revol?= <revol@free.fr>
-Subject: Re: [PATCH v4 4/4] devicetree: update documentation
- for fw_cfg ARM bindings
-Date: Wed, 18 Nov 2015 14:04:24 +0100
-Message-ID: <564C7758.6010103@free.fr>
-References: <1447470235-13643-1-git-send-email-somlo@cmu.edu>
-	<1447470235-13643-5-git-send-email-somlo@cmu.edu>
-	<20151115020754.GA21323@rob-hp-laptop> <564995FA.40308@redhat.com>
-	<CAL_JsqKEi9BozyLQ9sKM3VL-hSSRntDyET859N1qTTMT4jkDOw@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: quoted-printable
-Return-path: <qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org>
-In-Reply-To: <CAL_JsqKEi9BozyLQ9sKM3VL-hSSRntDyET859N1qTTMT4jkDOw@mail.gmail.com>
-List-Unsubscribe: <https://lists.nongnu.org/mailman/options/qemu-devel>,
-	<mailto:qemu-devel-request@nongnu.org?subject=unsubscribe>
-List-Archive: <http://lists.nongnu.org/archive/html/qemu-devel>
-List-Post: <mailto:qemu-devel@nongnu.org>
-List-Help: <mailto:qemu-devel-request@nongnu.org?subject=help>
-List-Subscribe: <https://lists.nongnu.org/mailman/listinfo/qemu-devel>,
-	<mailto:qemu-devel-request@nongnu.org?subject=subscribe>
-Errors-To: qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org
-Sender: qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org
-To: Rob Herring <robh@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>
-Cc: Mark Rutland <mark.rutland@arm.com>, Peter Maydell <peter.maydell@linaro.org>, mst@redhat.com, stefanha@gmail.com, QEMU Developers <qemu-devel@nongnu.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Eric Anholt <eric@anholt.net>, kraxel@redhat.com, Pawel Moll <pawel.moll@arm.com>, kernelnewbies@kernelnewbies.org, =?UTF-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5@gmail.com>, Russell King <rmk+kernel@arm.linux.org.uk>, Laszlo Ersek <lersek@redhat.com>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Ian Campbell <ijc+devicetree@hellion.org.uk>, jordan.l.justen@intel.com, "Gabriel L. Somlo" <somlo@cmu.edu>, Kumar Gala <galak@codeaurora.org>, Leif Lindholm <leif.lindholm@linaro.org>, Sudeep Holla <sudeep.holla@arm.com>, "matt.fleming@intel.com" <matt.fleming@intel.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>lin
+From: Petr Mladek <pmladek@suse.com>
+Subject: [PATCH v3 01/22] timer: Allow to check when the timer callback has not finished yet
+Date: Wed, 18 Nov 2015 14:25:06 +0100
+Message-ID: <1447853127-3461-2-git-send-email-pmladek@suse.com>
+References: <1447853127-3461-1-git-send-email-pmladek@suse.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1447853127-3461-1-git-send-email-pmladek@suse.com>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-On 17/11/2015 23:14, Rob Herring wrote:
-> On Mon, Nov 16, 2015 at 2:38 AM, Paolo Bonzini <pbonzini@redhat.com> wr=
-ote:
->>
->>
->> On 15/11/2015 03:07, Rob Herring wrote:
->>> We generally don't want DT docs to depend on other kernel documentati=
-on.
->>
->> DT docs do not contain a copy of the data sheets, either.  There is no
->> reason to say how to use the device (and even then, only doing so
->> partially) in the DT docs.
->=20
-> The difference is datasheets apply to all OS's, kernel documentation
-> does not. In theory at least this could be used for other OS's, right?
+timer_pending() checks whether the list of callbacks is empty.
+Each callback is removed from the list before it is called,
+see call_timer_fn() in __run_timers().
 
-Would be nice indeed, as it's part of their intended purpose.
+Sometimes we need to make sure that the callback has finished.
+For example, if we want to free some resources that are accessed
+by the callback.
 
-For now we have to shoehorn things into linux-only stuff (like initrd)
-because well, nobody cares enough about NetBSD to compile U-Boot with
-its internal API, so let alone adding custom Haiku code.
+For this purpose, this patch adds timer_active(). It checks both
+the list of callbacks and the running_timer. It takes the base_lock
+to see a consistent state.
 
-And of course, for things linux doesn't care about (like framebuffer
-description) then we're stuck trying to guess where it's at and writing
-drivers for our bootloader.
+I plan to use it to implement delayed works in kthread worker.
+But I guess that it will have wider use. In fact, I wonder if
+timer_pending() is misused in some situations.
 
-So if at least people were considering they aren't the only users of
-this, that'd make life better for everyone.
+Signed-off-by: Petr Mladek <pmladek@suse.com>
+---
+ include/linux/timer.h |  2 ++
+ kernel/time/timer.c   | 24 ++++++++++++++++++++++++
+ 2 files changed, 26 insertions(+)
 
-> Perhaps QEMU is the right place to thoroughly describe this and DT and
-> sysfs docs can refer to it.
+diff --git a/include/linux/timer.h b/include/linux/timer.h
+index 61aa61dc410c..237b7c3e2b4e 100644
+--- a/include/linux/timer.h
++++ b/include/linux/timer.h
+@@ -165,6 +165,8 @@ static inline int timer_pending(const struct timer_list * timer)
+ 	return timer->entry.pprev != NULL;
+ }
+ 
++extern int timer_active(struct timer_list *timer);
++
+ extern void add_timer_on(struct timer_list *timer, int cpu);
+ extern int del_timer(struct timer_list * timer);
+ extern int mod_timer(struct timer_list *timer, unsigned long expires);
+diff --git a/kernel/time/timer.c b/kernel/time/timer.c
+index bbc5d1114583..1c16f3230771 100644
+--- a/kernel/time/timer.c
++++ b/kernel/time/timer.c
+@@ -778,6 +778,30 @@ static struct tvec_base *lock_timer_base(struct timer_list *timer,
+ 	}
+ }
+ 
++/**
++ * timer_active - is a timer still in use?
++ * @timer: the timer in question
++ *
++ * timer_in_use() will tell whether the timer is pending or if the callback
++ * is curretly running.
++ *
++ * Use this function if you want to make sure that some resources
++ * will not longer get accessed by the timer callback. timer_pending()
++ * is not safe in this case.
++ */
++int timer_active(struct timer_list *timer)
++{
++	struct tvec_base *base;
++	unsigned long flags;
++	int ret;
++
++	base = lock_timer_base(timer, &flags);
++	ret = timer_pending(timer) || base->running_timer == timer;
++	spin_unlock_irqrestore(&base->lock, flags);
++
++	return ret;
++}
++
+ static inline int
+ __mod_timer(struct timer_list *timer, unsigned long expires,
+ 	    bool pending_only, int pinned)
+-- 
+1.8.5.6
 
-The brilliant idea of FDT was that we could have a canonical source and
-blob for it where people could send patches, but of course Linux and BSD
-freaks disagreed, so you now find Linux-flavoured DTs for rPi and other
-things, as well as BSD versions.
-
-Please, at least get the binding documentation for this unique and
-usable for everyone!
-
-Fran=E7ois.
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
