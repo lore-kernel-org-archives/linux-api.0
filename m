@@ -1,58 +1,106 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH v3 00/22] kthread: Use kthread worker API more widely
-Date: Wed, 18 Nov 2015 06:25:45 -0800
-Message-ID: <20151118142545.GD5184@linux.vnet.ibm.com>
-References: <1447853127-3461-1-git-send-email-pmladek@suse.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH 2/2] mm/page_ref: add tracepoint to track down page
+ reference manipulation
+Date: Wed, 18 Nov 2015 16:34:30 +0100
+Message-ID: <564C9A86.1090906@suse.cz>
+References: <1447053784-27811-1-git-send-email-iamjoonsoo.kim@lge.com>
+ <1447053784-27811-2-git-send-email-iamjoonsoo.kim@lge.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-2
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <1447853127-3461-1-git-send-email-pmladek@suse.com>
+In-Reply-To: <1447053784-27811-2-git-send-email-iamjoonsoo.kim@lge.com>
 Sender: owner-linux-mm@kvack.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Catalin Marinas <catalin.marinas@arm.com>, linux-watchdog@vger.kernel.org, Corey Minyard <minyard@acm.org>, openipmi-developer@lists.sourceforge.net, Doug Ledford <dledford@redhat.com>, Sean Hefty <sean.hefty@intel.com>, Hal
+To: Joonsoo Kim <js1304@gmail.com>, Andrew Morton <akpm@linux-foundation.org>
+Cc: Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@suse.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Joonsoo Kim <iamjoonsoo.kim@lge.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 18, 2015 at 02:25:05PM +0100, Petr Mladek wrote:
-> My intention is to make it easier to manipulate and maintain kthreads.
-> Especially, I want to replace all the custom main cycles with a
-> generic one. Also I want to make the kthreads sleep in a consistent
-> state in a common place when there is no work.
-> 
-> My first attempt was with a brand new API (iterant kthread), see
-> http://thread.gmane.org/gmane.linux.kernel.api/11892 . But I was
-> directed to improve the existing kthread worker API. This is
-> the 3rd iteration of the new direction.
-> 
-> 
-> 1st patch: add support to check if a timer callback is being called
-> 
-> 2nd..12th patches: improve the existing kthread worker API
-> 
-> 13th..18th, 20th, 22nd patches: convert several kthreads into
->       the kthread worker API, namely: khugepaged, ring buffer
->       benchmark, hung_task, kmemleak, ipmi, IB/fmr_pool,
->       memstick/r592, intel_powerclamp
->       
-> 21st, 23rd patches: do some preparation steps; they usually do
->       some clean up that makes sense even without the conversion.
-> 
->   
-> Changes against v2:
-> 
->   + used worker->lock to synchronize the operations with the work
->     instead of the PENDING bit as suggested by Tejun Heo; it simplified
->     the implementation in several ways
-> 
->   + added timer_active(); used it together with del_timer_sync()
->     to cancel the work a less tricky way
-> 
->   + removed the controversial conversion of the RCU kthreads
+On 11/09/2015 08:23 AM, Joonsoo Kim wrote:
+> CMA allocation should be guaranteed to succeed by definition, but,
+> unfortunately, it would be failed sometimes. It is hard to track down
+> the problem, because it is related to page reference manipulation and
+> we don't have any facility to analyze it.
 
-Thank you!  ;-)
+Reminds me of the PeterZ's VM_PINNED patchset. What happened to it?
+https://lwn.net/Articles/600502/
 
-							Thanx, Paul
+> This patch adds tracepoints to track down page reference manipulation.
+> With it, we can find exact reason of failure and can fix the problem.
+> Following is an example of tracepoint output.
+> 
+> <...>-9018  [004]    92.678375: page_ref_set:         pfn=0x17ac9 flags=0x0 count=1 mapcount=0 mapping=(nil) mt=4 val=1
+> <...>-9018  [004]    92.678378: kernel_stack:
+>  => get_page_from_freelist (ffffffff81176659)
+>  => __alloc_pages_nodemask (ffffffff81176d22)
+>  => alloc_pages_vma (ffffffff811bf675)
+>  => handle_mm_fault (ffffffff8119e693)
+>  => __do_page_fault (ffffffff810631ea)
+>  => trace_do_page_fault (ffffffff81063543)
+>  => do_async_page_fault (ffffffff8105c40a)
+>  => async_page_fault (ffffffff817581d8)
+> [snip]
+> <...>-9018  [004]    92.678379: page_ref_mod:         pfn=0x17ac9 flags=0x40048 count=2 mapcount=1 mapping=0xffff880015a78dc1 mt=4 val=1
+> [snip]
+> ...
+> ...
+> <...>-9131  [001]    93.174468: test_pages_isolated:  start_pfn=0x17800 end_pfn=0x17c00 fin_pfn=0x17ac9 ret=fail
+> [snip]
+> <...>-9018  [004]    93.174843: page_ref_mod_and_test: pfn=0x17ac9 flags=0x40068 count=0 mapcount=0 mapping=0xffff880015a78dc1 mt=4 val=-1 ret=1
+>  => release_pages (ffffffff8117c9e4)
+>  => free_pages_and_swap_cache (ffffffff811b0697)
+>  => tlb_flush_mmu_free (ffffffff81199616)
+>  => tlb_finish_mmu (ffffffff8119a62c)
+>  => exit_mmap (ffffffff811a53f7)
+>  => mmput (ffffffff81073f47)
+>  => do_exit (ffffffff810794e9)
+>  => do_group_exit (ffffffff81079def)
+>  => SyS_exit_group (ffffffff81079e74)
+>  => entry_SYSCALL_64_fastpath (ffffffff817560b6)
+> 
+> This output shows that problem comes from exit path. In exit path,
+> to improve performance, pages are not freed immediately. They are gathered
+> and processed by batch. During this process, migration cannot be possible
+> and CMA allocation is failed. This problem is hard to find without this
+> page reference tracepoint facility.
+
+Yeah but when you realized it was this problem, what was the fix? Probably not
+remove batching from exit path? Shouldn't CMA in this case just try waiting for
+the pins to go away, which would eventually happen? And for long-term pins,
+VM_PINNED would make sure the pages are migrated away from CMA pageblocks first?
+
+So I'm worried that this is quite nontrivial change for a very specific usecase.
+
+> Enabling this feature bloat kernel text 20 KB in my configuration.
+
+It's not just that, see below.
+
+[...]
+
+
+>  static inline int page_ref_freeze(struct page *page, int count)
+>  {
+> -	return likely(atomic_cmpxchg(&page->_count, count, 0) == count);
+> +	int ret = likely(atomic_cmpxchg(&page->_count, count, 0) == count);
+
+The "likely" mean makes no sense anymore, doe it?
+
+> diff --git a/mm/Kconfig.debug b/mm/Kconfig.debug
+> index 957d3da..71d2399 100644
+> --- a/mm/Kconfig.debug
+> +++ b/mm/Kconfig.debug
+> @@ -28,3 +28,7 @@ config DEBUG_PAGEALLOC
+>  
+>  config PAGE_POISONING
+>  	bool
+> +
+> +config DEBUG_PAGE_REF
+> +	bool "Enable tracepoint to track down page reference manipulation"
+
+So you should probably state the costs. Which is the extra memory, and also that
+all the page ref manipulations are now turned to function calls, even if the
+tracepoints are disabled. Patch 1 didn't change that many callsites, so maybe it
+would be feasible to have the tracepoints inline, where being disabled has
+near-zero overhead?
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
