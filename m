@@ -1,136 +1,83 @@
 From: Petr Mladek <pmladek@suse.com>
-Subject: [PATCH v3 00/22] kthread: Use kthread worker API more widely
-Date: Wed, 18 Nov 2015 14:25:05 +0100
-Message-ID: <1447853127-3461-1-git-send-email-pmladek@suse.com>
+Subject: [PATCH v3 02/22] kthread/smpboot: Do not park in kthread_create_on_cpu()
+Date: Wed, 18 Nov 2015 14:25:07 +0100
+Message-ID: <1447853127-3461-3-git-send-email-pmladek@suse.com>
+References: <1447853127-3461-1-git-send-email-pmladek@suse.com>
 Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1447853127-3461-1-git-send-email-pmladek@suse.com>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>, Catalin Marinas <catalin.marinas@arm.com>, linux-watchdog@vger.kernel.org, Corey Minyard <minyard@acm.org>, openipmi-developer@lists.sourceforge.net, Doug Ledford <dledford@redhat.com>, Sean Hefty <sean.hefty@intel.com>, Hal Rosenstock <hal.rosenstock@gmail.com>, linux-rdma@vger.kernel.org, Maxim Levitsky <maximlevitsky@gmail.com>, Zhang Rui <rui.zhang@intel.com>, Eduardo Valentin <edubezval@gmail.com>, Jacob Pan <jacob.j>
+Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-My intention is to make it easier to manipulate and maintain kthreads.
-Especially, I want to replace all the custom main cycles with a
-generic one. Also I want to make the kthreads sleep in a consistent
-state in a common place when there is no work.
+kthread_create_on_cpu() was added by the commit 2a1d446019f9a5983e
+("kthread: Implement park/unpark facility"). It is currently used
+only when enabling new CPU. For this purpose, the newly created
+kthread has to be parked.
 
-My first attempt was with a brand new API (iterant kthread), see
-http://thread.gmane.org/gmane.linux.kernel.api/11892 . But I was
-directed to improve the existing kthread worker API. This is
-the 3rd iteration of the new direction.
+The CPU binding is a bit tricky. The kthread is parked when the CPU
+has not been allowed yet. And the CPU is bound when the kthread
+is unparked.
 
+The function would be useful for more per-CPU kthreads, e.g.
+bnx2fc_thread, fcoethread. For this purpose, the newly created
+kthread should stay in the uninterruptible state.
 
-1st patch: add support to check if a timer callback is being called
+This patch moves the parking into smpboot. It binds the thread
+already when created. Then the function might be used universally.
+Also the behavior is consistent with kthread_create() and
+kthread_create_on_node().
 
-2nd..12th patches: improve the existing kthread worker API
+Signed-off-by: Petr Mladek <pmladek@suse.com>
+---
+ kernel/kthread.c | 8 ++++++--
+ kernel/smpboot.c | 5 +++++
+ 2 files changed, 11 insertions(+), 2 deletions(-)
 
-13th..18th, 20th, 22nd patches: convert several kthreads into
-      the kthread worker API, namely: khugepaged, ring buffer
-      benchmark, hung_task, kmemleak, ipmi, IB/fmr_pool,
-      memstick/r592, intel_powerclamp
-      
-21st, 23rd patches: do some preparation steps; they usually do
-      some clean up that makes sense even without the conversion.
-
-  
-Changes against v2:
-
-  + used worker->lock to synchronize the operations with the work
-    instead of the PENDING bit as suggested by Tejun Heo; it simplified
-    the implementation in several ways
-
-  + added timer_active(); used it together with del_timer_sync()
-    to cancel the work a less tricky way
-
-  + removed the controversial conversion of the RCU kthreads
-
-  + added several other examples: hung_task, kmemleak, ipmi,
-    IB/fmr_pool, memstick/r592, intel_powerclamp
-
-  + the helper fixes for the ring buffer benchmark has been improved
-    as suggested by Steven; they already are in the Linus tree now
-
-  + fixed a possible race between the check for existing khugepaged
-    worker and queuing the work
+diff --git a/kernel/kthread.c b/kernel/kthread.c
+index 9ff173dca1ae..1ffc11ec5546 100644
+--- a/kernel/kthread.c
++++ b/kernel/kthread.c
+@@ -390,10 +390,10 @@ struct task_struct *kthread_create_on_cpu(int (*threadfn)(void *data),
+ 				   cpu);
+ 	if (IS_ERR(p))
+ 		return p;
++	kthread_bind(p, cpu);
++	/* CPU hotplug need to bind once again when unparking the thread. */
+ 	set_bit(KTHREAD_IS_PER_CPU, &to_kthread(p)->flags);
+ 	to_kthread(p)->cpu = cpu;
+-	/* Park the thread to get it out of TASK_UNINTERRUPTIBLE state */
+-	kthread_park(p);
+ 	return p;
+ }
  
-
-Changes against v1:
-
-  + remove wrappers to manipulate the scheduling policy and priority
-
-  + remove questionable wakeup_and_destroy_kthread_worker() variant
-
-  + do not check for chained work when draining the queue
-
-  + allocate struct kthread worker in create_kthread_work() and
-    use more simple checks for running worker
-
-  + add support for delayed kthread works and use them instead
-    of waiting inside the works
-
-  + rework the "unrelated" fixes for the ring buffer benchmark
-    as discussed in the 1st RFC; also sent separately
-
-  + convert also the consumer in the ring buffer benchmark
-
-
-I have tested this patch set against the stable Linus tree
-for 4.4-rc1.
-
-Petr Mladek (22):
-  timer: Allow to check when the timer callback has not finished yet
-  kthread/smpboot: Do not park in kthread_create_on_cpu()
-  kthread: Allow to call __kthread_create_on_node() with va_list args
-  kthread: Add create_kthread_worker*()
-  kthread: Add drain_kthread_worker()
-  kthread: Add destroy_kthread_worker()
-  kthread: Detect when a kthread work is used by more workers
-  kthread: Initial support for delayed kthread work
-  kthread: Allow to cancel kthread work
-  kthread: Allow to modify delayed kthread work
-  kthread: Better support freezable kthread workers
-  kthread: Use try_lock_kthread_work() in flush_kthread_work()
-  mm/huge_page: Convert khugepaged() into kthread worker API
-  ring_buffer: Convert benchmark kthreads into kthread worker API
-  hung_task: Convert hungtaskd into kthread worker API
-  kmemleak: Convert kmemleak kthread into kthread worker API
-  ipmi: Convert kipmi kthread into kthread worker API
-  IB/fmr_pool: Convert the cleanup thread into kthread worker API
-  memstick/r592: Better synchronize debug messages in r592_io kthread
-  memstick/r592: convert r592_io kthread into kthread worker API
-  thermal/intel_powerclamp: Remove duplicated code that starts the
-    kthread
-  thermal/intel_powerclamp: Convert the kthread to kthread worker API
-
- drivers/char/ipmi/ipmi_si_intf.c     | 116 ++++---
- drivers/infiniband/core/fmr_pool.c   |  54 ++-
- drivers/memstick/host/r592.c         |  61 ++--
- drivers/memstick/host/r592.h         |   5 +-
- drivers/thermal/intel_powerclamp.c   | 302 +++++++++--------
- include/linux/kthread.h              |  56 ++++
- include/linux/timer.h                |   2 +
- kernel/hung_task.c                   |  41 ++-
- kernel/kthread.c                     | 618 +++++++++++++++++++++++++++++++----
- kernel/smpboot.c                     |   5 +
- kernel/time/timer.c                  |  24 ++
- kernel/trace/ring_buffer_benchmark.c | 133 ++++----
- mm/huge_memory.c                     | 134 ++++----
- mm/kmemleak.c                        |  86 +++--
- 14 files changed, 1142 insertions(+), 495 deletions(-)
-
-CC: Catalin Marinas <catalin.marinas@arm.com>
-CC: linux-watchdog@vger.kernel.org
-CC: Corey Minyard <minyard@acm.org>
-CC: openipmi-developer@lists.sourceforge.net
-CC: Doug Ledford <dledford@redhat.com>
-CC: Sean Hefty <sean.hefty@intel.com>
-CC: Hal Rosenstock <hal.rosenstock@gmail.com>
-CC: linux-rdma@vger.kernel.org
-CC: Maxim Levitsky <maximlevitsky@gmail.com>
-CC: Zhang Rui <rui.zhang@intel.com>
-CC: Eduardo Valentin <edubezval@gmail.com>
-CC: Jacob Pan <jacob.jun.pan@linux.intel.com>
-CC: linux-pm@vger.kernel.org
-
+@@ -407,6 +407,10 @@ static void __kthread_unpark(struct task_struct *k, struct kthread *kthread)
+ 	 * which might be about to be cleared.
+ 	 */
+ 	if (test_and_clear_bit(KTHREAD_IS_PARKED, &kthread->flags)) {
++		/*
++		 * Newly created kthread was parked when the CPU was offline.
++		 * The binding was lost and we need to set it again.
++		 */
+ 		if (test_bit(KTHREAD_IS_PER_CPU, &kthread->flags))
+ 			__kthread_bind(k, kthread->cpu, TASK_PARKED);
+ 		wake_up_state(k, TASK_PARKED);
+diff --git a/kernel/smpboot.c b/kernel/smpboot.c
+index d264f59bff56..79f07014be6e 100644
+--- a/kernel/smpboot.c
++++ b/kernel/smpboot.c
+@@ -186,6 +186,11 @@ __smpboot_create_thread(struct smp_hotplug_thread *ht, unsigned int cpu)
+ 		kfree(td);
+ 		return PTR_ERR(tsk);
+ 	}
++	/*
++	 * Park the thread so that it could start right on the CPU
++	 * when it is available.
++	 */
++	kthread_park(tsk);
+ 	get_task_struct(tsk);
+ 	*per_cpu_ptr(ht->store, cpu) = tsk;
+ 	if (ht->create) {
 -- 
 1.8.5.6
 
