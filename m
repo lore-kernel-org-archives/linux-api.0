@@ -1,38 +1,152 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Subject: Re: CGroup Namespaces (v4)
-Date: Tue, 17 Nov 2015 20:30:22 -0600
-Message-ID: <20151118023022.GA17501@mail.hallyn.com>
-References: <1447703505-29672-1-git-send-email-serge@hallyn.com>
-	<CAFLxGvzVmbZHrpaTmXUAK03hsnVPwEs3SJGNFNXfthh3NL8EDg@mail.gmail.com>
-	<20151116204606.GA30681@mail.hallyn.com> <564A41AF.4040208@nod.at>
-	<20151116205452.GA30975@mail.hallyn.com>
-	<87y4dxh9b8.fsf@x220.int.ebiederm.org>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v3] block: create ioctl to discard-or-zeroout a range of
+ blocks
+Date: Tue, 17 Nov 2015 20:38:04 -0800
+Message-ID: <20151118043804.GC32467@birch.djwong.org>
+References: <20151111062948.GA2214@birch.djwong.org>
+ <x491tbt643m.fsf@segfault.boston.devel.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <87y4dxh9b8.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LXC development mailing-list <lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups mailinglist <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+In-Reply-To: <x491tbt643m.fsf-RRHT56Q3PSP4kTEheFKJxxDDeQx5vsVwAInAS/Ez/D0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Seymour, Shane M" <shane.seymour-ZPxbGqLxI0U@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, "martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 16, 2015 at 04:24:27PM -0600, Eric W. Biederman wrote:
-> Similary have you considered what it required to be able to safely set
-> FS_USERNS_MOUNT?
+On Fri, Nov 13, 2015 at 03:23:25PM -0500, Jeff Moyer wrote:
+> "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> writes:
+> 
+> > Create a new ioctl to expose the block layer's newfound ability to
+> > issue either a zeroing discard, a WRITE SAME with a zero page, or a
+> > regular write with the zero page.  This BLKZEROOUT2 ioctl takes
+> > {start, length, flags} as parameters.  So far, the only flag available
+> > is to enable the zeroing discard part -- without it, the call invokes
+> > the old BLKZEROOUT behavior.  start and length have the same meaning
+> > as in BLKZEROOUT.
+> >
+> > Furthermore, because BLKZEROOUT2 issues commands directly to the
+> > storage device, we must invalidate the page cache (as a regular
+> > O_DIRECT write would do) to avoid returning stale cache contents at a
+> > later time.
+> >
+> > v3: Add extra padding for future expansion, and check the padding is zero.
+> 
+> Is there someplace we document ioctls?  This stuff really could use some
+> good documentation.
 
-I pushed the one patch which I feel is needed to my branch (it's also
-included in another reply).  Aditya had already added FS_USERNS_MOUNT to
-the cgroup fs flags, so I think we're now all set.  I can start
-unprivileged containers which mount cgroupfs (which make systemd happy).
+There's no place that I know of.  I looked in man-pages.git but didn't see
+anything promising.  There's what, like ~2000 ioctls?
 
--serge
+--D
+
+> 
+> Cheers,
+> Jeff
+> 
+> >
+> > Signed-off-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+> > ---
+> >  block/ioctl.c           |   48 ++++++++++++++++++++++++++++++++++++++++-------
+> >  include/uapi/linux/fs.h |    9 +++++++++
+> >  2 files changed, 50 insertions(+), 7 deletions(-)
+> >
+> > diff --git a/block/ioctl.c b/block/ioctl.c
+> > index 8061eba..8e67551 100644
+> > --- a/block/ioctl.c
+> > +++ b/block/ioctl.c
+> > @@ -213,19 +213,39 @@ static int blk_ioctl_discard(struct block_device *bdev, uint64_t start,
+> >  }
+> >  
+> >  static int blk_ioctl_zeroout(struct block_device *bdev, uint64_t start,
+> > -			     uint64_t len)
+> > +			     uint64_t len, uint32_t flags)
+> >  {
+> > +	int ret;
+> > +	struct address_space *mapping;
+> > +	uint64_t end = start + len - 1;
+> > +
+> > +	if (flags & ~BLKZEROOUT2_DISCARD_OK)
+> > +		return -EINVAL;
+> >  	if (start & 511)
+> >  		return -EINVAL;
+> >  	if (len & 511)
+> >  		return -EINVAL;
+> > -	start >>= 9;
+> > -	len >>= 9;
+> > -
+> > -	if (start + len > (i_size_read(bdev->bd_inode) >> 9))
+> > +	if (end >= i_size_read(bdev->bd_inode))
+> >  		return -EINVAL;
+> >  
+> > -	return blkdev_issue_zeroout(bdev, start, len, GFP_KERNEL, false);
+> > +	/* Invalidate the page cache, including dirty pages */
+> > +	mapping = bdev->bd_inode->i_mapping;
+> > +	truncate_inode_pages_range(mapping, start, end);
+> > +
+> > +	ret = blkdev_issue_zeroout(bdev, start >> 9, len >> 9, GFP_KERNEL,
+> > +				   flags & BLKZEROOUT2_DISCARD_OK);
+> > +	if (ret)
+> > +		goto out;
+> > +
+> > +	/*
+> > +	 * Invalidate again; if someone wandered in and dirtied a page,
+> > +	 * the caller will be given -EBUSY.
+> > +	 */
+> > +	ret = invalidate_inode_pages2_range(mapping,
+> > +					    start >> PAGE_CACHE_SHIFT,
+> > +					    end >> PAGE_CACHE_SHIFT);
+> > +out:
+> > +	return ret;
+> >  }
+> >  
+> >  static int put_ushort(unsigned long arg, unsigned short val)
+> > @@ -353,7 +373,21 @@ int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
+> >  		if (copy_from_user(range, (void __user *)arg, sizeof(range)))
+> >  			return -EFAULT;
+> >  
+> > -		return blk_ioctl_zeroout(bdev, range[0], range[1]);
+> > +		return blk_ioctl_zeroout(bdev, range[0], range[1], 0);
+> > +	}
+> > +	case BLKZEROOUT2: {
+> > +		struct blkzeroout2 p;
+> > +
+> > +		if (!(mode & FMODE_WRITE))
+> > +			return -EBADF;
+> > +
+> > +		if (copy_from_user(&p, (void __user *)arg, sizeof(p)))
+> > +			return -EFAULT;
+> > +
+> > +		if (p.padding || p.padding2)
+> > +			return -EINVAL;
+> > +
+> > +		return blk_ioctl_zeroout(bdev, p.start, p.length, p.flags);
+> >  	}
+> >  
+> >  	case HDIO_GETGEO: {
+> > diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+> > index 9b964a5..b811fa4 100644
+> > --- a/include/uapi/linux/fs.h
+> > +++ b/include/uapi/linux/fs.h
+> > @@ -152,6 +152,15 @@ struct inodes_stat_t {
+> >  #define BLKSECDISCARD _IO(0x12,125)
+> >  #define BLKROTATIONAL _IO(0x12,126)
+> >  #define BLKZEROOUT _IO(0x12,127)
+> > +struct blkzeroout2 {
+> > +	__u64 start;
+> > +	__u64 length;
+> > +	__u32 flags;
+> > +	__u32 padding;
+> > +	__u64 padding2;
+> > +};
+> > +#define BLKZEROOUT2_DISCARD_OK	1
+> > +#define BLKZEROOUT2 _IOR(0x12, 127, struct blkzeroout2)
+> >  
+> >  #define BMAP_IOCTL 1		/* obsolete - kept for compatibility */
+> >  #define FIBMAP	   _IO(0x00,1)	/* bmap access */
+> > --
+> > To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> > Please read the FAQ at  http://www.tux.org/lkml/
