@@ -1,7 +1,7 @@
 From: Petr Mladek <pmladek@suse.com>
-Subject: [PATCH v3 03/22] kthread: Allow to call __kthread_create_on_node() with va_list args
-Date: Wed, 18 Nov 2015 14:25:08 +0100
-Message-ID: <1447853127-3461-4-git-send-email-pmladek@suse.com>
+Subject: [PATCH v3 05/22] kthread: Add drain_kthread_worker()
+Date: Wed, 18 Nov 2015 14:25:10 +0100
+Message-ID: <1447853127-3461-6-git-send-email-pmladek@suse.com>
 References: <1447853127-3461-1-git-send-email-pmladek@suse.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1447853127-3461-1-git-send-email-pmladek@suse.com>
@@ -10,119 +10,65 @@ To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, 
 Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-kthread_create_on_node() implements a bunch of logic to create
-the kthread. It is already called by kthread_create_on_cpu().
+flush_kthread_worker() returns when the currently queued works are proceed.
+But some other works might have been queued in the meantime.
 
-We are going to extend the kthread worker API and will
-need to call kthread_create_on_node() with va_list args there.
+This patch adds drain_kthread_work() that is inspired by drain_workqueue().
+It returns when the queue is completely empty and warns when it takes too
+long.
 
-This patch does only a refactoring and does not modify the existing
-behavior.
+The initial implementation does not block queuing new works when draining.
+It makes things much easier. The blocking would be useful to debug
+potential problems but it is not clear if it is worth the complication
+at the moment.
 
 Signed-off-by: Petr Mladek <pmladek@suse.com>
 ---
- kernel/kthread.c | 72 +++++++++++++++++++++++++++++++++-----------------------
- 1 file changed, 42 insertions(+), 30 deletions(-)
+ kernel/kthread.c | 34 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 34 insertions(+)
 
 diff --git a/kernel/kthread.c b/kernel/kthread.c
-index 1ffc11ec5546..bfe8742c4217 100644
+index df402e18bb5a..a18ad3b58f61 100644
 --- a/kernel/kthread.c
 +++ b/kernel/kthread.c
-@@ -244,33 +244,10 @@ static void create_kthread(struct kthread_create_info *create)
- 	}
+@@ -804,3 +804,37 @@ void flush_kthread_worker(struct kthread_worker *worker)
+ 	wait_for_completion(&fwork.done);
  }
- 
--/**
-- * kthread_create_on_node - create a kthread.
-- * @threadfn: the function to run until signal_pending(current).
-- * @data: data ptr for @threadfn.
-- * @node: task and thread structures for the thread are allocated on this node
-- * @namefmt: printf-style name for the thread.
-- *
-- * Description: This helper function creates and names a kernel
-- * thread.  The thread will be stopped: use wake_up_process() to start
-- * it.  See also kthread_run().  The new thread has SCHED_NORMAL policy and
-- * is affine to all CPUs.
-- *
-- * If thread is going to be bound on a particular cpu, give its node
-- * in @node, to get NUMA affinity for kthread stack, or else give NUMA_NO_NODE.
-- * When woken, the thread will run @threadfn() with @data as its
-- * argument. @threadfn() can either call do_exit() directly if it is a
-- * standalone thread for which no one will call kthread_stop(), or
-- * return when 'kthread_should_stop()' is true (which means
-- * kthread_stop() has been called).  The return value should be zero
-- * or a negative error number; it will be passed to kthread_stop().
-- *
-- * Returns a task_struct or ERR_PTR(-ENOMEM) or ERR_PTR(-EINTR).
-- */
--struct task_struct *kthread_create_on_node(int (*threadfn)(void *data),
--					   void *data, int node,
--					   const char namefmt[],
--					   ...)
-+static struct task_struct *__kthread_create_on_node(int (*threadfn)(void *data),
-+						    void *data, int node,
-+						    const char namefmt[],
-+						    va_list args)
- {
- 	DECLARE_COMPLETION_ONSTACK(done);
- 	struct task_struct *task;
-@@ -311,11 +288,8 @@ struct task_struct *kthread_create_on_node(int (*threadfn)(void *data),
- 	task = create->result;
- 	if (!IS_ERR(task)) {
- 		static const struct sched_param param = { .sched_priority = 0 };
--		va_list args;
- 
--		va_start(args, namefmt);
- 		vsnprintf(task->comm, sizeof(task->comm), namefmt, args);
--		va_end(args);
- 		/*
- 		 * root may have changed our (kthreadd's) priority or CPU mask.
- 		 * The kernel thread should not inherit these properties.
-@@ -326,6 +300,44 @@ struct task_struct *kthread_create_on_node(int (*threadfn)(void *data),
- 	kfree(create);
- 	return task;
- }
+ EXPORT_SYMBOL_GPL(flush_kthread_worker);
 +
 +/**
-+ * kthread_create_on_node - create a kthread.
-+ * @threadfn: the function to run until signal_pending(current).
-+ * @data: data ptr for @threadfn.
-+ * @node: task and thread structures for the thread are allocated on this node
-+ * @namefmt: printf-style name for the thread.
++ * drain_kthread_worker - drain a kthread worker
++ * @worker: worker to be drained
 + *
-+ * Description: This helper function creates and names a kernel
-+ * thread.  The thread will be stopped: use wake_up_process() to start
-+ * it.  See also kthread_run().  The new thread has SCHED_NORMAL policy and
-+ * is affine to all CPUs.
++ * Wait until there is no work queued for the given kthread worker.
++ * @worker is flushed repeatedly until it becomes empty.  The number
++ * of flushing is determined by the depth of chaining and should
++ * be relatively short.  Whine if it takes too long.
 + *
-+ * If thread is going to be bound on a particular cpu, give its node
-+ * in @node, to get NUMA affinity for kthread stack, or else give NUMA_NO_NODE.
-+ * When woken, the thread will run @threadfn() with @data as its
-+ * argument. @threadfn() can either call do_exit() directly if it is a
-+ * standalone thread for which no one will call kthread_stop(), or
-+ * return when 'kthread_should_stop()' is true (which means
-+ * kthread_stop() has been called).  The return value should be zero
-+ * or a negative error number; it will be passed to kthread_stop().
-+ *
-+ * Returns a task_struct or ERR_PTR(-ENOMEM) or ERR_PTR(-EINTR).
++ * The caller is responsible for blocking all users of this kthread
++ * worker from queuing new works. Also it is responsible for blocking
++ * the already queued works from an infinite re-queuing!
 + */
-+struct task_struct *kthread_create_on_node(int (*threadfn)(void *data),
-+					   void *data, int node,
-+					   const char namefmt[],
-+					   ...)
++void drain_kthread_worker(struct kthread_worker *worker)
 +{
-+	struct task_struct *task;
-+	va_list args;
++	int flush_cnt = 0;
 +
-+	va_start(args, namefmt);
-+	task = __kthread_create_on_node(threadfn, data, node, namefmt, args);
-+	va_end(args);
++	spin_lock_irq(&worker->lock);
 +
-+	return task;
++	while (!list_empty(&worker->work_list)) {
++		spin_unlock_irq(&worker->lock);
++
++		flush_kthread_worker(worker);
++		WARN_ONCE(flush_cnt++ > 10,
++			  "kthread worker %s: drain_kthread_worker() isn't complete after %u tries\n",
++			  worker->task->comm, flush_cnt);
++
++		spin_lock_irq(&worker->lock);
++	}
++
++	spin_unlock_irq(&worker->lock);
 +}
- EXPORT_SYMBOL(kthread_create_on_node);
- 
- static void __kthread_bind_mask(struct task_struct *p, const struct cpumask *mask, long state)
++EXPORT_SYMBOL(drain_kthread_worker);
 -- 
 1.8.5.6
 
