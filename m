@@ -1,48 +1,38 @@
-From: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
-Subject: Re: [Qemu-devel] [PATCH v4 4/4] devicetree: update documentation for
- fw_cfg ARM bindings
-Date: Tue, 17 Nov 2015 21:17:27 -0500
-Message-ID: <20151118021727.GA14351@GLSMBP.INI.CMU.EDU>
-References: <1447470235-13643-1-git-send-email-somlo@cmu.edu>
- <1447470235-13643-5-git-send-email-somlo@cmu.edu>
- <20151115020754.GA21323@rob-hp-laptop>
- <564995FA.40308@redhat.com>
- <CAL_JsqKEi9BozyLQ9sKM3VL-hSSRntDyET859N1qTTMT4jkDOw@mail.gmail.com>
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: Re: CGroup Namespaces (v4)
+Date: Tue, 17 Nov 2015 20:30:22 -0600
+Message-ID: <20151118023022.GA17501@mail.hallyn.com>
+References: <1447703505-29672-1-git-send-email-serge@hallyn.com>
+	<CAFLxGvzVmbZHrpaTmXUAK03hsnVPwEs3SJGNFNXfthh3NL8EDg@mail.gmail.com>
+	<20151116204606.GA30681@mail.hallyn.com> <564A41AF.4040208@nod.at>
+	<20151116205452.GA30975@mail.hallyn.com>
+	<87y4dxh9b8.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAL_JsqKEi9BozyLQ9sKM3VL-hSSRntDyET859N1qTTMT4jkDOw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rob Herring <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Laszlo Ersek <lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, Russell King <rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Eric Anholt <eric-WhKQ6XTQaPysTnJN9+BGXg@public.gmane.org>, Hanjun Guo <hanjun.guo-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, =?utf-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Sudeep Holla <sudeep.holla-5wv7dgnIgG8@public.gmane.org>, Andy Gross <agross-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Maydell <peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jordan.l.just
+In-Reply-To: <87y4dxh9b8.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LXC development mailing-list <lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups mailinglist <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 17, 2015 at 04:14:42PM -0600, Rob Herring wrote:
-> On Mon, Nov 16, 2015 at 2:38 AM, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> >
-> >
-> > On 15/11/2015 03:07, Rob Herring wrote:
-> >> We generally don't want DT docs to depend on other kernel documentation.
-> >
-> > DT docs do not contain a copy of the data sheets, either.  There is no
-> > reason to say how to use the device (and even then, only doing so
-> > partially) in the DT docs.
-> 
-> The difference is datasheets apply to all OS's, kernel documentation
-> does not. In theory at least this could be used for other OS's, right?
-> 
-> Perhaps QEMU is the right place to thoroughly describe this and DT and
-> sysfs docs can refer to it.
+On Mon, Nov 16, 2015 at 04:24:27PM -0600, Eric W. Biederman wrote:
+> Similary have you considered what it required to be able to safely set
+> FS_USERNS_MOUNT?
 
-So, leave only ARM/DT specifc details in 
-Documentation/devicetree/bindings/arm/fw-cfg.txt,
-and rework the fw_cfg sysfs patch (1/4) to only document
-sysfs specific details in
-Documentation/ABI/testing/sysfs-firmware-qemu_fw_cfg ?
+I pushed the one patch which I feel is needed to my branch (it's also
+included in another reply).  Aditya had already added FS_USERNS_MOUNT to
+the cgroup fs flags, so I think we're now all set.  I can start
+unprivileged containers which mount cgroupfs (which make systemd happy).
 
-The fw_cfg "datasheet" does exist in QEMU already, so there is
-something to point at from either/both of the above.
-
-Thanks,
---Gabriel
+-serge
