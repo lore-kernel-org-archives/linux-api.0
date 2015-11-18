@@ -1,307 +1,85 @@
-From: Prarit Bhargava <prarit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH] tools, testing, add test for intel_pstate driver
-Date: Wed, 18 Nov 2015 12:04:48 -0500
-Message-ID: <1447866288-8125-1-git-send-email-prarit@redhat.com>
+From: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
+Subject: Re: Re: [Qemu-devel] [PATCH v4 4/4] devicetree: update documentation
+ for fw_cfg ARM bindings
+Date: Wed, 18 Nov 2015 15:54:49 -0500
+Message-ID: <20151118205448.GD2109@HEDWIG.INI.CMU.EDU>
+References: <1447470235-13643-1-git-send-email-somlo@cmu.edu>
+ <1447470235-13643-5-git-send-email-somlo@cmu.edu>
+ <20151115020754.GA21323@rob-hp-laptop>
+ <564995FA.40308@redhat.com>
+ <CAL_JsqKEi9BozyLQ9sKM3VL-hSSRntDyET859N1qTTMT4jkDOw@mail.gmail.com>
+ <564C7758.6010103@free.fr>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <564C7758.6010103-GANU6spQydw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Prarit Bhargava <prarit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+To: =?iso-8859-1?Q?Fran=E7ois?= Revol <revol-GANU6spQydw@public.gmane.org>
+Cc: Rob Herring <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Peter Maydell <peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, stefanha-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, QEMU Developers <qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>, Eric Anholt <eric-WhKQ6XTQaPysTnJN9+BGXg@public.gmane.org>, kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Gross <agross-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, kernelnewbies-7JyXY6prKcjpASu1u0TL5ti2O/JbrIOy@public.gmane.org, =?utf-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Russell King <rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Laszlo Ersek <lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, jordan.l.justen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Leif Lindholm <leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Ard Biesheuvel <ard.bie>
 List-Id: linux-api@vger.kernel.org
 
-This test used the cpupower utility to set the cpu frequency from the
-maximum turbo value to the minimum supported value in steps of 100 MHz.
+On Wed, Nov 18, 2015 at 02:04:24PM +0100, Fran=E7ois Revol wrote:
+> On 17/11/2015 23:14, Rob Herring wrote:
+> > On Mon, Nov 16, 2015 at 2:38 AM, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org=
+> wrote:
+> >>
+> >>
+> >> On 15/11/2015 03:07, Rob Herring wrote:
+> >>> We generally don't want DT docs to depend on other kernel documen=
+tation.
+> >>
+> >> DT docs do not contain a copy of the data sheets, either.  There i=
+s no
+> >> reason to say how to use the device (and even then, only doing so
+> >> partially) in the DT docs.
+> >=20
+> > The difference is datasheets apply to all OS's, kernel documentatio=
+n
+> > does not. In theory at least this could be used for other OS's, rig=
+ht?
+>=20
+> Would be nice indeed, as it's part of their intended purpose.
+>=20
+> For now we have to shoehorn things into linux-only stuff (like initrd=
+)
+> because well, nobody cares enough about NetBSD to compile U-Boot with
+> its internal API, so let alone adding custom Haiku code.
+>=20
+> And of course, for things linux doesn't care about (like framebuffer
+> description) then we're stuck trying to guess where it's at and writi=
+ng
+> drivers for our bootloader.
+>=20
+> So if at least people were considering they aren't the only users of
+> this, that'd make life better for everyone.
+>=20
+> > Perhaps QEMU is the right place to thoroughly describe this and DT =
+and
+> > sysfs docs can refer to it.
+>=20
+> The brilliant idea of FDT was that we could have a canonical source a=
+nd
+> blob for it where people could send patches, but of course Linux and =
+BSD
+> freaks disagreed, so you now find Linux-flavoured DTs for rPi and oth=
+er
+> things, as well as BSD versions.
+>=20
+> Please, at least get the binding documentation for this unique and
+> usable for everyone!
 
-The results are displayed in a table which indicate the "Target" state,
-or the requested frequency in MHz, the Actual frequency, as read from
-/proc/cpuinfo, the difference between the Target and Actual frequencies,
-and the value of MSR 0x199 (MSR_IA32_PERF_CTL) which indicates what
-pstate the cpu is in, and the value of
-/sys/devices/system/cpu/intel_pstate/max_perf_pct X maximum turbo state
+That would be 'docs/specs/fw_cfg.txt' in the QEMU source tree. I will
+avoid cut'n'pasting anything from there into either the proposed
+Documentation/ABI/testing/sysfs-firmware-qemu_fw_cfg (leaving only the
+sysfs specific bits in there), and also remove any redundant bits from
+Documentation/devicetree/bindings/arm/fw-cfg.txt.
 
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Signed-off-by: Prarit Bhargava <prarit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
----
- tools/testing/selftests/intel_pstate/Makefile |   15 ++++
- tools/testing/selftests/intel_pstate/aperf.c  |   80 +++++++++++++++++
- tools/testing/selftests/intel_pstate/msr.c    |   39 +++++++++
- tools/testing/selftests/intel_pstate/run.sh   |  113 +++++++++++++++++++++++++
- 4 files changed, 247 insertions(+)
- create mode 100644 tools/testing/selftests/intel_pstate/Makefile
- create mode 100644 tools/testing/selftests/intel_pstate/aperf.c
- create mode 100644 tools/testing/selftests/intel_pstate/msr.c
- create mode 100755 tools/testing/selftests/intel_pstate/run.sh
+I'm inclined to add (in v5) a mention of 'qemu:docs/specs/fw_cfg.txt'
+to both the proposed fw_cfg sysfs doc file, and to the existing fw_cfg
+arm/dt node doc file, unless I get strong objections against doing so..=
+=2E :)
 
-diff --git a/tools/testing/selftests/intel_pstate/Makefile b/tools/testing/selftests/intel_pstate/Makefile
-new file mode 100644
-index 0000000..f5f1a28
---- /dev/null
-+++ b/tools/testing/selftests/intel_pstate/Makefile
-@@ -0,0 +1,15 @@
-+CC := $(CROSS_COMPILE)gcc
-+CFLAGS := $(CFLAGS) -Wall -D_GNU_SOURCE
-+LDFLAGS := $(LDFLAGS) -lm
-+
-+TARGETS := msr aperf
-+
-+TEST_PROGS := $(TARGETS) run.sh
-+
-+.PHONY: all clean
-+all: $(TARGETS)
-+
-+$(TARGETS): $(HEADERS)
-+
-+clean:
-+	rm -f $(TARGETS)
-diff --git a/tools/testing/selftests/intel_pstate/aperf.c b/tools/testing/selftests/intel_pstate/aperf.c
-new file mode 100644
-index 0000000..6046e18
---- /dev/null
-+++ b/tools/testing/selftests/intel_pstate/aperf.c
-@@ -0,0 +1,80 @@
-+#include <math.h>
-+#include <unistd.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <sys/types.h>
-+#include <sys/stat.h>
-+#include <fcntl.h>
-+#include <sys/timeb.h>
-+#include <sched.h>
-+#include <errno.h>
-+
-+void usage(char *name) {
-+	printf ("Usage: %s cpunum\n", name);
-+}
-+
-+int main(int argc, char **argv) {
-+	int i, cpu, fd;
-+	char msr_file_name[64];
-+	long long tsc, old_tsc, new_tsc;
-+	long long aperf, old_aperf, new_aperf;
-+	long long mperf, old_mperf, new_mperf;
-+	struct timeb before, after;
-+	long long int start, finish, total;
-+	cpu_set_t cpuset;
-+
-+	if (argc != 2) {
-+		usage(argv[0]);
-+		return 1;
-+	}
-+
-+	errno = 0;
-+	cpu = strtol(argv[1], (char **) NULL, 10);
-+
-+	if (errno) {
-+		usage(argv[0]);
-+		return 1;
-+	}
-+
-+	sprintf(msr_file_name, "/dev/cpu/%d/msr", cpu);
-+	fd = open(msr_file_name, O_RDONLY);
-+
-+	if (fd == -1) {
-+		perror("Failed to open");
-+		return 1;
-+	}
-+
-+	CPU_ZERO(&cpuset);
-+	CPU_SET(cpu, &cpuset);
-+
-+	if (sched_setaffinity(0, sizeof(cpu_set_t), &cpuset)) {
-+		perror("Failed to set cpu affinity");
-+		return 1;
-+	}
-+
-+	ftime(&before);
-+	pread(fd, &old_tsc,  sizeof(old_tsc), 0x10);
-+	pread(fd, &old_aperf,  sizeof(old_mperf), 0xe7);
-+	pread(fd, &old_mperf,  sizeof(old_aperf), 0xe8);
-+
-+	for (i=0; i<0x8fffffff; i++) {
-+		sqrt(i);
-+	}
-+
-+	ftime(&after);
-+	pread(fd, &new_tsc,  sizeof(new_tsc), 0x10);
-+	pread(fd, &new_aperf,  sizeof(new_mperf), 0xe7);
-+	pread(fd, &new_mperf,  sizeof(new_aperf), 0xe8);
-+
-+	tsc = new_tsc-old_tsc;
-+	aperf = new_aperf-old_aperf;
-+	mperf = new_mperf-old_mperf;
-+
-+	start = before.time*1000 + before.millitm;
-+	finish = after.time*1000 + after.millitm;
-+	total = finish - start;
-+
-+	printf("runTime: %4.2f\n", 1.0*total/1000);
-+	printf("freq: %7.0f\n", tsc / (1.0*aperf / (1.0 * mperf)) / total);
-+	return 0;
-+}
-diff --git a/tools/testing/selftests/intel_pstate/msr.c b/tools/testing/selftests/intel_pstate/msr.c
-new file mode 100644
-index 0000000..abbbfc8
---- /dev/null
-+++ b/tools/testing/selftests/intel_pstate/msr.c
-@@ -0,0 +1,39 @@
-+#include <math.h>
-+#include <unistd.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <sys/types.h>
-+#include <sys/stat.h>
-+#include <fcntl.h>
-+#include <sys/timeb.h>
-+#include <sched.h>
-+#include <errno.h>
-+
-+
-+int main(int argc, char **argv) {
-+	int cpu, fd;
-+	long long msr;
-+	char msr_file_name[64];
-+
-+	if (argc != 2)
-+		return 1;
-+
-+	errno = 0;
-+	cpu = strtol(argv[1], (char **) NULL, 10);
-+
-+	if (errno)
-+		return 1;
-+
-+	sprintf(msr_file_name, "/dev/cpu/%d/msr", cpu);
-+	fd = open(msr_file_name, O_RDONLY);
-+
-+	if (fd == -1) {
-+		perror("Failed to open");
-+		return 1;
-+	}
-+
-+	pread(fd, &msr,  sizeof(msr), 0x199);
-+
-+	printf("msr 0x199: 0x%llx\n", msr);
-+	return 0;
-+}
-diff --git a/tools/testing/selftests/intel_pstate/run.sh b/tools/testing/selftests/intel_pstate/run.sh
-new file mode 100755
-index 0000000..bdaf37e
---- /dev/null
-+++ b/tools/testing/selftests/intel_pstate/run.sh
-@@ -0,0 +1,113 @@
-+#!/bin/bash
-+#
-+# This test runs on Intel x86 based hardware which support the intel_pstate
-+# driver.  The test checks the frequency settings from the maximum turbo
-+# state to the minimum supported frequency, in decrements of 100MHz.  The
-+# test runs the aperf.c program to put load on each processor.
-+#
-+# The results are displayed in a table which indicate the "Target" state,
-+# or the requested frequency in MHz, the Actual frequency, as read from
-+# /proc/cpuinfo, the difference between the Target and Actual frequencies,
-+# and the value of MSR 0x199 (MSR_IA32_PERF_CTL) which indicates what
-+# pstate the cpu is in, and the value of
-+# /sys/devices/system/cpu/intel_pstate/max_perf_pct X maximum turbo state
-+#
-+# Notes: In some cases several frequency values may be placed in the
-+# /tmp/result.X files.  This is done on purpose in order to catch cases
-+# where the pstate driver may not be working at all.  There is the case
-+# where, for example, several "similar" frequencies are in the file:
-+#
-+#
-+#/tmp/result.3100:1:cpu MHz              : 2899.980
-+#/tmp/result.3100:2:cpu MHz              : 2900.000
-+#/tmp/result.3100:3:msr 0x199: 0x1e00
-+#/tmp/result.3100:4:max_perf_pct 94
-+#
-+# and the test will error out in those cases.  The result.X file can be checked
-+# for consistency and modified to remove the extra MHz values.  The result.X
-+# files can be re-evaluated by setting EVALUATE_ONLY to 1 below.
-+
-+EVALUATE_ONLY=0
-+
-+max_cpus=$(($(nproc)-1))
-+
-+# compile programs
-+gcc -o aperf aperf.c -lm
-+[ $? -ne 0 ] && echo "Problem compiling aperf.c." && exit 1
-+gcc -o msr msr.c -lm
-+[ $? -ne 0 ] && echo "Problem compiling msr.c." && exit 1
-+
-+function run_test () {
-+
-+	file_ext=$1
-+	for cpu in `seq 0 $max_cpus`
-+	do
-+		echo "launching aperf load on $cpu"
-+		./aperf $cpu &
-+	done
-+
-+	echo "sleeping for 5 seconds"
-+	sleep 5
-+	num_freqs=$(cat /proc/cpuinfo | grep MHz | sort -u | wc -l)
-+	if [ $num_freqs -le 2 ]; then
-+		cat /proc/cpuinfo | grep MHz | sort -u | tail -1 > /tmp/result.$1
-+	else
-+		cat /proc/cpuinfo | grep MHz | sort -u > /tmp/result.$1
-+	fi
-+	./msr 0 >> /tmp/result.$1
-+
-+	max_perf_pct=$(cat /sys/devices/system/cpu/intel_pstate/max_perf_pct)
-+	echo "max_perf_pct $max_perf_pct" >> /tmp/result.$1
-+
-+	for job in `jobs -p`
-+	do
-+		echo "waiting for job id $job"
-+		wait $job
-+	done
-+}
-+
-+#
-+# MAIN (ALL UNITS IN MHZ)
-+#
-+
-+# Get the marketing frequency
-+_mkt_freq=$(cat /proc/cpuinfo | grep -m 1 "model name" | awk '{print $NF}')
-+_mkt_freq=$(echo $_mkt_freq | tr -d [:alpha:][:punct:])
-+mkt_freq=${_mkt_freq}0
-+
-+# Get the ranges from cpupower
-+_min_freq=$(cpupower frequency-info -l | tail -1 | awk ' { print $1 } ')
-+min_freq=$(($_min_freq / 1000))
-+_max_freq=$(cpupower frequency-info -l | tail -1 | awk ' { print $2 } ')
-+max_freq=$(($_max_freq / 1000))
-+
-+
-+for freq in `seq $max_freq -100 $min_freq`
-+do
-+	echo "Setting maximum frequency to $freq"
-+	cpupower frequency-set -g powersave --max=${freq}MHz >& /dev/null
-+	[ $EVALUATE_ONLY -eq 0 ] && run_test $freq
-+done
-+
-+echo "=============================================================================="
-+
-+echo "The marketing frequency of the cpu is $mkt_freq MHz"
-+echo "The maximum frequency of the cpu is $max_freq MHz"
-+echo "The minimum frequency of the cpu is $min_freq MHz"
-+
-+cpupower frequency-set -g powersave --max=${max_freq}MHz >& /dev/null
-+
-+# make a pretty table
-+echo "Target      Actual      Difference     MSR(0x199)     max_perf_pct"
-+for freq in `seq $max_freq -100 $min_freq`
-+do
-+	result_freq=$(cat /tmp/result.${freq} | grep "cpu MHz" | awk ' { print $4 } ' | awk -F "." ' { print $1 } ')
-+	msr=$(cat /tmp/result.${freq} | grep "msr" | awk ' { print $3 } ')
-+	max_perf_pct=$(cat /tmp/result.${freq} | grep "max_perf_pct" | awk ' { print $2 } ' )
-+	if [ $result_freq -eq $freq ]; then
-+		echo " $freq        $result_freq             0          $msr         $(($max_perf_pct*3300))"
-+	else
-+		echo " $freq        $result_freq          $(($result_freq-$freq))          $msr          $(($max_perf_pct*$max_freq))"
-+	fi
-+done
-+exit 0
--- 
-1.7.9.3
+Thanks,
+--Gabriel
