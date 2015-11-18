@@ -1,155 +1,123 @@
 From: Vlastimil Babka <vbabka@suse.cz>
-Subject: [PATCH v5 6/6] mm, procfs: breakdown RSS for anon, shmem and file in /proc/pid/status
-Date: Wed, 18 Nov 2015 10:29:36 +0100
-Message-ID: <1447838976-17607-7-git-send-email-vbabka@suse.cz>
-References: <1447838976-17607-1-git-send-email-vbabka@suse.cz>
+Subject: [PATCH v5 0/6] enhance shmem process and swap accounting
+Date: Wed, 18 Nov 2015 10:29:30 +0100
+Message-ID: <1447838976-17607-1-git-send-email-vbabka@suse.cz>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1447838976-17607-1-git-send-email-vbabka@suse.cz>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org
 Cc: linux-kernel@vger.kernel.org, Jerome Marchand <jmarchan@redhat.com>, Hugh Dickins <hughd@google.com>, Michal Hocko <mhocko@suse.cz>, Peter Zijlstra <peterz@infradead.org>, Oleg Nesterov <oleg@redhat.com>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, Vlastimil Babka <vbabka@suse.cz>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Michal Hocko <mhocko@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Jerome Marchand <jmarchan@redhat.com>
+Changes since v4:
+o Rebase on next-20151118
+o Hugh pointed out a problem with private mappings of tmpfs files where
+  smaps would show a sum of shmem object's swapped out pages and swapped
+  out COWed pages. Fixed this by falling back to the find_get_page() approach.
+  Patches are now layered by employing find_get_page() first, and then
+  optimizing the non-private mappings on top (with some measurements).
+o Expanded commit messages.
 
-There are several shortcomings with the accounting of shared memory (SysV shm,
-shared anonymous mapping, mapping of a tmpfs file). The values in
-/proc/<pid>/status and <...>/statm don't allow to distinguish between shmem
-memory and a shared mapping to a regular file, even though theirs implication
-on memory usage are quite different: during reclaim, file mapping can be
-dropped or written back on disk, while shmem needs a place in swap.
+Changes since v3:
+o Rebase on next-20151002
+o Apply (feedb)acks from Michal Hocko and Konstantin Khlebnikov (Thanks!)
+  - drop CONFIG_SHMEM ifdefs, as it was the 2nd suggestion already
+  - add comments about not taking i_mutex in patch 2
+o Rename VmAnon/VmFile/VmShm to RssAnon/RssFile... to make it hopefully more
+  obvious that it's a breakdown of VmRSS. Naming things sucks.
 
-Also, to distinguish the memory occupied by anonymous and file mappings, one
-has to read the /proc/pid/statm file, which has a field for the file mappings
-(again, including shmem) and total memory occupied by these mappings (i.e.
-equivalent to VmRSS in the <...>/status file. Getting the value for anonymous
-mappings only is thus not exactly user-friendly (the statm file is intended
-to be rather efficiently machine-readable).
+Changes since v2:
+o Rebase on next-20150805.
+o This means that /proc/pid/maps has the proportional swap share (SwapPss:)
+  field as per https://lkml.org/lkml/2015/6/15/274
+  It's not clear what to do with shmem here so it's 0 for now.
+  - swapped out shmem doesn't have swap entries, so we would have to look at who
+    else has the shmem object (partially) mapped
+  - to be more precise we should also check if his range actually includes 
+    the offset in question, which could get rather involved
+  - or is there some easy way I don't see?
+o Konstantin suggested for patch 3/4 that I drop the CONFIG_SHMEM #ifdefs
+  I didn't see the point in going against tinyfication when the work is
+  already done, but I can do that if more people think it's better and it
+  would block the series.
 
-To address both of these shortcomings, this patch adds a breakdown of VmRSS in
-/proc/<pid>/status via new fields RssAnon, RssFile and RssShmem, making use of
-the previous preparatory patch. These fields tell the user the memory occupied
-by private anonymous pages, mapped regular files and shmem, respectively.
-Other existing fields in /status and /statm files are left without change.
-The /statm file can be extended in the future, if there's a need for that.
+Changes since v1:
+o In Patch 2, rely on SHMEM_I(inode)->swapped if possible, and fallback to
+  radix tree iterator on partially mapped shmem objects, i.e. decouple shmem
+  swap usage determination from the page walk, for performance reasons.
+  Thanks to Jerome and Konstantin for the tips.
+  The downside is that mm/shmem.c had to be touched.
 
-Example (part of) /proc/pid/status output including the new Rss* fields:
+This series is based on Jerome Marchand's [1] so let me quote the first
+paragraph from there:
 
-VmPeak:  2001008 kB
-VmSize:  2001004 kB
-VmLck:         0 kB
-VmPin:         0 kB
-VmHWM:      5108 kB
-VmRSS:      5108 kB
-RssAnon:              92 kB
-RssFile:            1324 kB
-RssShmem:           3692 kB
-VmData:      192 kB
-VmStk:       136 kB
-VmExe:         4 kB
-VmLib:      1784 kB
-VmPTE:      3928 kB
-VmPMD:        20 kB
-VmSwap:        0 kB
-HugetlbPages:          0 kB
+There are several shortcomings with the accounting of shared memory
+(sysV shm, shared anonymous mapping, mapping to a tmpfs file). The
+values in /proc/<pid>/status and statm don't allow to distinguish
+between shmem memory and a shared mapping to a regular file, even
+though theirs implication on memory usage are quite different: at
+reclaim, file mapping can be dropped or write back on disk while shmem
+needs a place in swap. As for shmem pages that are swapped-out or in
+swap cache, they aren't accounted at all.
 
-[vbabka@suse.cz: forward-porting, tweak changelog]
-Signed-off-by: Jerome Marchand <jmarchan@redhat.com>
-Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
-Acked-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Acked-by: Michal Hocko <mhocko@suse.com>
-Acked-by: Hugh Dickins <hughd@google.com>
----
- Documentation/filesystems/proc.txt | 13 +++++++++++--
- fs/proc/task_mmu.c                 | 14 ++++++++++++--
- 2 files changed, 23 insertions(+), 4 deletions(-)
+The original motivation for myself is that a customer found (IMHO rightfully)
+confusing that e.g. top output for process swap usage is unreliable with
+respect to swapped out shmem pages, which are not accounted for.
 
-diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
-index fdeb5b3..ffcd495 100644
---- a/Documentation/filesystems/proc.txt
-+++ b/Documentation/filesystems/proc.txt
-@@ -169,6 +169,9 @@ For example, to get the status information of a process, all you have to do is
-   VmLck:         0 kB
-   VmHWM:       476 kB
-   VmRSS:       476 kB
-+  RssAnon:             352 kB
-+  RssFile:             120 kB
-+  RssShmem:              4 kB
-   VmData:      156 kB
-   VmStk:        88 kB
-   VmExe:        68 kB
-@@ -231,7 +234,12 @@ Table 1-2: Contents of the status files (as of 4.1)
-  VmSize                      total program size
-  VmLck                       locked memory size
-  VmHWM                       peak resident set size ("high water mark")
-- VmRSS                       size of memory portions
-+ VmRSS                       size of memory portions. It contains the three
-+                             following parts (VmRSS = RssAnon + RssFile + RssShmem)
-+ RssAnon                     size of resident anonymous memory
-+ RssFile                     size of resident file mappings
-+ RssShmem                    size of resident shmem memory (includes SysV shm,
-+                             mapping of tmpfs and shared anonymous mappings)
-  VmData                      size of data, stack, and text segments
-  VmStk                       size of data, stack, and text segments
-  VmExe                       size of text segment
-@@ -266,7 +274,8 @@ Table 1-3: Contents of the statm files (as of 2.6.8-rc3)
-  Field    Content
-  size     total program size (pages)		(same as VmSize in status)
-  resident size of memory portions (pages)	(same as VmRSS in status)
-- shared   number of pages that are shared	(i.e. backed by a file)
-+ shared   number of pages that are shared	(i.e. backed by a file, same
-+						as RssFile+RssShmem in status)
-  trs      number of pages that are 'code'	(not including libs; broken,
- 							includes data segment)
-  lrs      number of pages of library		(always 0 on 2.6)
-diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-index 19d190b..67aaaad 100644
---- a/fs/proc/task_mmu.c
-+++ b/fs/proc/task_mmu.c
-@@ -23,9 +23,13 @@
- 
- void task_mem(struct seq_file *m, struct mm_struct *mm)
- {
--	unsigned long data, text, lib, swap, ptes, pmds;
-+	unsigned long data, text, lib, swap, ptes, pmds, anon, file, shmem;
- 	unsigned long hiwater_vm, total_vm, hiwater_rss, total_rss;
- 
-+	anon = get_mm_counter(mm, MM_ANONPAGES);
-+	file = get_mm_counter(mm, MM_FILEPAGES);
-+	shmem = get_mm_counter(mm, MM_SHMEMPAGES);
-+
- 	/*
- 	 * Note: to minimize their overhead, mm maintains hiwater_vm and
- 	 * hiwater_rss only when about to *lower* total_vm or rss.  Any
-@@ -36,7 +40,7 @@ void task_mem(struct seq_file *m, struct mm_struct *mm)
- 	hiwater_vm = total_vm = mm->total_vm;
- 	if (hiwater_vm < mm->hiwater_vm)
- 		hiwater_vm = mm->hiwater_vm;
--	hiwater_rss = total_rss = get_mm_rss(mm);
-+	hiwater_rss = total_rss = anon + file + shmem;
- 	if (hiwater_rss < mm->hiwater_rss)
- 		hiwater_rss = mm->hiwater_rss;
- 
-@@ -53,6 +57,9 @@ void task_mem(struct seq_file *m, struct mm_struct *mm)
- 		"VmPin:\t%8lu kB\n"
- 		"VmHWM:\t%8lu kB\n"
- 		"VmRSS:\t%8lu kB\n"
-+		"RssAnon:\t%8lu kB\n"
-+		"RssFile:\t%8lu kB\n"
-+		"RssShmem:\t%8lu kB\n"
- 		"VmData:\t%8lu kB\n"
- 		"VmStk:\t%8lu kB\n"
- 		"VmExe:\t%8lu kB\n"
-@@ -66,6 +73,9 @@ void task_mem(struct seq_file *m, struct mm_struct *mm)
- 		mm->pinned_vm << (PAGE_SHIFT-10),
- 		hiwater_rss << (PAGE_SHIFT-10),
- 		total_rss << (PAGE_SHIFT-10),
-+		anon << (PAGE_SHIFT-10),
-+		file << (PAGE_SHIFT-10),
-+		shmem << (PAGE_SHIFT-10),
- 		data << (PAGE_SHIFT-10),
- 		mm->stack_vm << (PAGE_SHIFT-10), text, lib,
- 		ptes >> 10,
+The fundamental difference between private anonymous and shmem pages is that
+the latter has PTE's converted to pte_none, and not swapents. As such, they are
+not accounted to the number of swapents visible e.g. in /proc/pid/status VmSwap
+row. It might be theoretically possible to use swapents when swapping out shmem
+(without extra cost, as one has to change all mappers anyway), and on swap in
+only convert the swapent for the faulting process, leaving swapents in other
+processes until they also fault (so again no extra cost). But I don't know how
+many assumptions this would break, and it would be too disruptive change for a
+relatively small benefit.
+
+Instead, my approach is to document the limitation of VmSwap, and provide means
+to determine the swap usage for shmem areas for those who are interested and
+willing to pay the price, using /proc/pid/smaps. Because outside of ipcs, I
+don't think it's possible to currently to determine the usage at all.  The
+previous patchset [1] did introduce new shmem-specific fields into smaps
+output, and functions to determine the values. I take a simpler approach,
+noting that smaps output already has a "Swap: X kB" line, where currently X ==
+0 always for shmem areas. I think we can just consider this a bug and provide
+the proper value by consulting the radix tree, as e.g. mincore_page() does. In the
+patch changelog I explain why this is also not perfect (and cannot be without
+swapents), but still arguably much better than showing a 0.
+
+The last two patches are adapted from Jerome's patchset and provide a VmRSS
+breakdown to RssAnon, RssFile and RssShm in /proc/pid/status. Hugh noted that
+this is a welcome addition, and I agree that it might help e.g. debugging
+process memory usage at albeit non-zero, but still rather low cost of extra
+per-mm counter and some page flag checks.
+
+[1] http://lwn.net/Articles/611966/
+
+Jerome Marchand (2):
+  mm, shmem: add internal shmem resident memory accounting
+  mm, procfs: breakdown RSS for anon, shmem and file in /proc/pid/status
+
+Vlastimil Babka (4):
+  mm, documentation: clarify /proc/pid/status VmSwap limitations for
+    shmem
+  mm, proc: account for shmem swap in /proc/pid/smaps
+  mm, proc: reduce cost of /proc/pid/smaps for shmem mappings
+  mm, proc: reduce cost of /proc/pid/smaps for unpopulated shmem
+    mappings
+
+ Documentation/filesystems/proc.txt | 21 ++++++++--
+ arch/s390/mm/pgtable.c             |  5 +--
+ fs/proc/task_mmu.c                 | 70 ++++++++++++++++++++++++++++++--
+ include/linux/mm.h                 | 18 ++++++++-
+ include/linux/mm_types.h           |  7 ++--
+ include/linux/shmem_fs.h           |  4 ++
+ kernel/events/uprobes.c            |  2 +-
+ mm/memory.c                        | 30 +++++---------
+ mm/oom_kill.c                      |  5 ++-
+ mm/rmap.c                          | 12 ++----
+ mm/shmem.c                         | 81 ++++++++++++++++++++++++++++++++++++++
+ 11 files changed, 208 insertions(+), 47 deletions(-)
+
 -- 
 2.6.3
 
