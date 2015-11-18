@@ -1,85 +1,40 @@
-From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH] mm: Loosen MADV_NOHUGEPAGE to enable Qemu postcopy on
- s390
-Date: Wed, 18 Nov 2015 14:31:54 +0100
-Message-ID: <564C7DCA.8010400@suse.cz>
-References: <1447341516-18076-1-git-send-email-jjherne@linux.vnet.ibm.com>
+From: Shuichi Ihara <sihara@ddn.com>
+Subject: Re: [v15 0/4] ext4: add project quota support
+Date: Wed, 18 Nov 2015 14:14:32 +0000
+Message-ID: <81500210-A31E-45CE-A3AE-9F5D0A785954@ddn.com>
+References: <1442146833-13652-1-git-send-email-lixi@ddn.com>
+ <43B1BB97-8D53-4D93-9B57-B5E2048F7E7A@dilger.ca>
+ <CAPTn0cBp4d09u9XzQm2cXzd6kcE0+FDRX0b_H=xJBZT-i5eKcw@mail.gmail.com>
+ <7360A48E-8576-49DB-878B-DFC2EFC83BC4@ddn.com>
+ <20151108212830.GL19199@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-2
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1447341516-18076-1-git-send-email-jjherne-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Jason J. Herne" <jjherne-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, borntraeger-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20151108212830.GL19199@dastard>
+Content-Language: ja-JP
+Content-ID: <FFB51B8D7215304CA532148B0EFD5957@ddn.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Dave Chinner <david@fromorbit.com>
+Cc: Li Xi <pkuelelixi@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Theodore Ts'o <tytso@mit.edu>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-ext4 <linux-ext4@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Jan Kara <jack@suse.cz>, Al Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, =?utf-8?B?0JTQvNC40YLRgNC40Lkg0JzQvtC90LDRhdC+0LI=?= <dmonakhov@openvz.org>, Shuichi Ihara <ihashu@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-[CC += linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org]
-
-Since this is a kernel-user-space API change, please CC linux-api@. The kernel
-source file Documentation/SubmitChecklist notes that all Linux kernel patches
-that change userspace interfaces should be CCed to linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, so
-that the various parties who are interested in API changes are informed. For
-further information, see https://www.kernel.org/doc/man-pages/linux-api-ml.html
-
-On 11/12/2015 04:18 PM, Jason J. Herne wrote:
-> MADV_NOHUGEPAGE processing is too restrictive. kvm already disables
-> hugepage but hugepage_madvise() takes the error path when we ask to turn
-> on the MADV_NOHUGEPAGE bit and the bit is already on. This causes Qemu's
-> new postcopy migration feature to fail on s390 because its first action is
-> to madvise the guest address space as NOHUGEPAGE. This patch modifies the
-> code so that the operation succeeds without error now.
-> 
-> Signed-off-by: Jason J. Herne <jjherne-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-> Reviewed-by: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-
-Looks like the manpage should be fine, as it wasn't very specific wrt these
-madvise flags. The only thing that potentially applies is:
-
-"EINVAL advice is not a valid."
-
-which itself looks like it needs fixing. Valid what, value? As in completely
-unknown flags, or flags not valid for the given vma?
-
-Anyway, I agree that it doesn't make sense to fail madvise when the given flag
-is already set. On the other hand, I don't think the userspace app should fail
-just because of madvise failing? It should in general be an advice that the
-kernel is also strictly speaking free to ignore as it shouldn't affect
-correctnes, just performance. Yeah, there are exceptions today like
-MADV_DONTNEED, but that shouldn't apply to hugepages?
-So I think Qemu needs fixing too. Also what happens if the kernel is build
-without CONFIG_TRANSPARENT_HUGEPAGE? Then madvise also returns EINVAL, how does
-Qemu handle that?
-
-> ---
->  mm/huge_memory.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-> index c29ddeb..62fe06b 100644
-> --- a/mm/huge_memory.c
-> +++ b/mm/huge_memory.c
-> @@ -2009,7 +2009,7 @@ int hugepage_madvise(struct vm_area_struct *vma,
->  		/*
->  		 * Be somewhat over-protective like KSM for now!
->  		 */
-> -		if (*vm_flags & (VM_HUGEPAGE | VM_NO_THP))
-> +		if (*vm_flags & VM_NO_THP)
->  			return -EINVAL;
->  		*vm_flags &= ~VM_NOHUGEPAGE;
->  		*vm_flags |= VM_HUGEPAGE;
-> @@ -2025,7 +2025,7 @@ int hugepage_madvise(struct vm_area_struct *vma,
->  		/*
->  		 * Be somewhat over-protective like KSM for now!
->  		 */
-> -		if (*vm_flags & (VM_NOHUGEPAGE | VM_NO_THP))
-> +		if (*vm_flags & VM_NO_THP)
->  			return -EINVAL;
->  		*vm_flags &= ~VM_HUGEPAGE;
->  		*vm_flags |= VM_NOHUGEPAGE;
-> 
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+DQoxMS85LzE1LCA2OjI4IEFNICwgIkRhdmUgQ2hpbm5lciIgPGRhdmlkQGZyb21vcmJpdC5jb20+
+IHdyb3RlOg0KDQo+T24gVGh1LCBOb3YgMDUsIDIwMTUgYXQgMDM6MTM6MTBQTSArMDAwMCwgU2h1
+aWNoaSBJaGFyYSB3cm90ZToNCj4+IEhlbGxvIFRlZCwgQW5kcmVhcywNCj4+IA0KPj4gU2hpbG9u
+ZyBwb3N0ZWQgYW4gZW1haWwgaGVyZSBhIHdlZWsgYWdvIGJlbG93Lg0KPj4gaHR0cDovL2xpc3Rz
+Lm9wZW53YWxsLm5ldC9saW51eC1leHQ0LzIwMTUvMTAvMzAvMg0KPj4gDQo+PiB3ZSBpZGVudGlm
+aWVkIDEwIHByb2plY3QgcXVvdGEgcmVsYXRlZCB4ZnN0ZXN0IGFuZCBwb3J0ZWQgdGhlbSBpbnRv
+IGV4dDQveHh4Lg0KPj4gdGVzdCBudW1iZXIgYXJlIDMwNCwgMzA1LCAyOTksIDI0NCwgMTk2LCAx
+MzQsIDEwOCwgMTA3LCAxMDYsIDA1MCBpbiB4ZnMuDQo+PiANCj4+IA0KPj4gV2UgcG9ydGVkIDkv
+MTAgdGVzdHMgaW50byBleHQ0L3h4eA0KPj4gZXh0NC8wNTAgZXh0NC8xMDYgZXh0NC8xMDcgZXh0
+NC8xMDggZXh0NC8xOTYgZXh0NC8yNDQgZXh0NC8yOTkgZXh0NC80MDAgZXh0NC80MDENCj4NCj5Q
+bGVhc2UgbWFrZSB0aGVtIGdlbmVyaWMgdGVzdHMgLSB0aGUgZXh0NCBwcm9qZWN0IHF1b3RhDQo+
+ZnVuY3Rpb2FubGl0eSBzaG91bGQgd29yayB3aXRoIHRob3NlIHRlc3RzIGJlaW5nIGNvbXBsZXRl
+bHkNCj51bmNoYW5nZWQgZXhjZXB0IGZvciBhICJfcmVxdWlyZXNfcHJvamVjdF9xdW90YSgpIiBm
+dW5jdGlvbi4uLg0KDQpSaWdodCBub3csIHdlIGVuaGFuY2VkIHF1b3RhdG9vbCB0byBzdXBwb3J0
+IHByb2plY3QgcXVvdGEgYW5kIGFib3ZlIHByb2plY3QgcXVvdGEgdGVzdHMgaW4gZXh0NCB1c2Vz
+IHRoYXQgaW50ZXJmYWNlLg0KeGZzIHVzZXMgb3duIGludGVyZmFjZSB4ZnNfeHggZm9yIHByb2pl
+Y3QgcXVvdGEgdGVzdHMgaW4geGZzLg0Kd2hhdCBpbnRlcmZhY2UgYXJlIHlvdSBsb29raW5nIGF0
+IGlmIHdlIG1vdmUgZXh0NCdzIHByb2plY3QgcXVvdGEgdGVzdHMgaW50byBnZW5lcmljIHRlc3Rz
+Pw0KDQpUaGFua3MNCkloYXJhDQo=
