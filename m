@@ -1,41 +1,84 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH v3 01/22] timer: Allow to check when the timer callback
- has not finished yet
-Date: Wed, 18 Nov 2015 23:32:28 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1511182331010.3761@nanos>
-References: <1447853127-3461-1-git-send-email-pmladek@suse.com> <1447853127-3461-2-git-send-email-pmladek@suse.com>
+From: Minchan Kim <minchan@kernel.org>
+Subject: Re: [PATCH 2/2] mm/page_ref: add tracepoint to track down page
+ reference manipulation
+Date: Thu, 19 Nov 2015 15:50:15 +0900
+Message-ID: <20151119065015.GB15540@bbox>
+References: <1447053784-27811-1-git-send-email-iamjoonsoo.kim@lge.com>
+ <1447053784-27811-2-git-send-email-iamjoonsoo.kim@lge.com>
+ <564C9A86.1090906@suse.cz>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1447853127-3461-2-git-send-email-pmladek@suse.com>
+In-Reply-To: <564C9A86.1090906@suse.cz>
+Content-Disposition: inline
 Sender: owner-linux-mm@kvack.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Joonsoo Kim <js1304@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Michal Nazarewicz <mina86@mina86.com>, Mel Gorman <mgorman@suse.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Joonsoo Kim <iamjoonsoo.kim@lge.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 18 Nov 2015, Petr Mladek wrote:
-> timer_pending() checks whether the list of callbacks is empty.
-> Each callback is removed from the list before it is called,
-> see call_timer_fn() in __run_timers().
+On Wed, Nov 18, 2015 at 04:34:30PM +0100, Vlastimil Babka wrote:
+> On 11/09/2015 08:23 AM, Joonsoo Kim wrote:
+> > CMA allocation should be guaranteed to succeed by definition, but,
+> > unfortunately, it would be failed sometimes. It is hard to track down
+> > the problem, because it is related to page reference manipulation and
+> > we don't have any facility to analyze it.
 > 
-> Sometimes we need to make sure that the callback has finished.
-> For example, if we want to free some resources that are accessed
-> by the callback.
+> Reminds me of the PeterZ's VM_PINNED patchset. What happened to it?
+> https://lwn.net/Articles/600502/
 > 
-> For this purpose, this patch adds timer_active(). It checks both
-> the list of callbacks and the running_timer. It takes the base_lock
-> to see a consistent state.
+> > This patch adds tracepoints to track down page reference manipulation.
+> > With it, we can find exact reason of failure and can fix the problem.
+> > Following is an example of tracepoint output.
+> > 
+> > <...>-9018  [004]    92.678375: page_ref_set:         pfn=0x17ac9 flags=0x0 count=1 mapcount=0 mapping=(nil) mt=4 val=1
+> > <...>-9018  [004]    92.678378: kernel_stack:
+> >  => get_page_from_freelist (ffffffff81176659)
+> >  => __alloc_pages_nodemask (ffffffff81176d22)
+> >  => alloc_pages_vma (ffffffff811bf675)
+> >  => handle_mm_fault (ffffffff8119e693)
+> >  => __do_page_fault (ffffffff810631ea)
+> >  => trace_do_page_fault (ffffffff81063543)
+> >  => do_async_page_fault (ffffffff8105c40a)
+> >  => async_page_fault (ffffffff817581d8)
+> > [snip]
+> > <...>-9018  [004]    92.678379: page_ref_mod:         pfn=0x17ac9 flags=0x40048 count=2 mapcount=1 mapping=0xffff880015a78dc1 mt=4 val=1
+> > [snip]
+> > ...
+> > ...
+> > <...>-9131  [001]    93.174468: test_pages_isolated:  start_pfn=0x17800 end_pfn=0x17c00 fin_pfn=0x17ac9 ret=fail
+> > [snip]
+> > <...>-9018  [004]    93.174843: page_ref_mod_and_test: pfn=0x17ac9 flags=0x40068 count=0 mapcount=0 mapping=0xffff880015a78dc1 mt=4 val=-1 ret=1
+> >  => release_pages (ffffffff8117c9e4)
+> >  => free_pages_and_swap_cache (ffffffff811b0697)
+> >  => tlb_flush_mmu_free (ffffffff81199616)
+> >  => tlb_finish_mmu (ffffffff8119a62c)
+> >  => exit_mmap (ffffffff811a53f7)
+> >  => mmput (ffffffff81073f47)
+> >  => do_exit (ffffffff810794e9)
+> >  => do_group_exit (ffffffff81079def)
+> >  => SyS_exit_group (ffffffff81079e74)
+> >  => entry_SYSCALL_64_fastpath (ffffffff817560b6)
+> > 
+> > This output shows that problem comes from exit path. In exit path,
+> > to improve performance, pages are not freed immediately. They are gathered
+> > and processed by batch. During this process, migration cannot be possible
+> > and CMA allocation is failed. This problem is hard to find without this
+> > page reference tracepoint facility.
 > 
-> I plan to use it to implement delayed works in kthread worker.
-> But I guess that it will have wider use. In fact, I wonder if
-> timer_pending() is misused in some situations.
+> Yeah but when you realized it was this problem, what was the fix? Probably not
+> remove batching from exit path? Shouldn't CMA in this case just try waiting for
+> the pins to go away, which would eventually happen? And for long-term pins,
+> VM_PINNED would make sure the pages are migrated away from CMA pageblocks first?
+> 
+> So I'm worried that this is quite nontrivial change for a very specific usecase.
 
-Well. That's nice and good. But how will that new function solve
-anything? After you drop the lock the state is not longer valid.
- 
-Thanks,
+This patch is not to solve the problem but just to expose what is culprit.
 
-	tglx
+For using VM_PINNED, firstly, we should know where are long-term pins.
+There are obviously clear places which will be first target if we use
+VM_PINNED but somewhere are vague. For vague places, this patch will
+help finding there. Even we don't use VM_PINNED, this patch will expose
+current obstacle which can help to understand current problems.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
