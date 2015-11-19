@@ -1,84 +1,128 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: Re: [PATCH 2/2] mm/page_ref: add tracepoint to track down page
- reference manipulation
-Date: Thu, 19 Nov 2015 15:50:15 +0900
-Message-ID: <20151119065015.GB15540@bbox>
-References: <1447053784-27811-1-git-send-email-iamjoonsoo.kim@lge.com>
- <1447053784-27811-2-git-send-email-iamjoonsoo.kim@lge.com>
- <564C9A86.1090906@suse.cz>
+From: Christian Borntraeger <borntraeger@de.ibm.com>
+Subject: Re: [PATCH] mm: Loosen MADV_NOHUGEPAGE to enable Qemu postcopy on
+ s390
+Date: Thu, 19 Nov 2015 09:22:06 +0100
+Message-ID: <564D86AE.1010305@de.ibm.com>
+References: <1447341516-18076-1-git-send-email-jjherne@linux.vnet.ibm.com>
+ <564C7DCA.8010400@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=iso-8859-2
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <564C9A86.1090906@suse.cz>
-Content-Disposition: inline
+In-Reply-To: <564C7DCA.8010400@suse.cz>
 Sender: owner-linux-mm@kvack.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Joonsoo Kim <js1304@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Michal Nazarewicz <mina86@mina86.com>, Mel Gorman <mgorman@suse.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Joonsoo Kim <iamjoonsoo.kim@lge.com>
+To: Vlastimil Babka <vbabka@suse.cz>, "Jason J. Herne" <jjherne@linux.vnet.ibm.com>, linux-s390@vger.kernel.org
+Cc: linux-mm@kvack.org, akpm@linux-foundation.org, aarcange@redhat.com, linux-api@vger.kernel.org, linux-man@vger.kernel.org, qemu-devel <qemu-devel@nongnu.org>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Juan Quintela <quintela@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 18, 2015 at 04:34:30PM +0100, Vlastimil Babka wrote:
-> On 11/09/2015 08:23 AM, Joonsoo Kim wrote:
-> > CMA allocation should be guaranteed to succeed by definition, but,
-> > unfortunately, it would be failed sometimes. It is hard to track down
-> > the problem, because it is related to page reference manipulation and
-> > we don't have any facility to analyze it.
+On 11/18/2015 02:31 PM, Vlastimil Babka wrote:
+> [CC += linux-api@vger.kernel.org]
 > 
-> Reminds me of the PeterZ's VM_PINNED patchset. What happened to it?
-> https://lwn.net/Articles/600502/
+> Since this is a kernel-user-space API change, please CC linux-api@. The kernel
+> source file Documentation/SubmitChecklist notes that all Linux kernel patches
+> that change userspace interfaces should be CCed to linux-api@vger.kernel.org, so
+> that the various parties who are interested in API changes are informed. For
+> further information, see https://www.kernel.org/doc/man-pages/linux-api-ml.html
 > 
-> > This patch adds tracepoints to track down page reference manipulation.
-> > With it, we can find exact reason of failure and can fix the problem.
-> > Following is an example of tracepoint output.
-> > 
-> > <...>-9018  [004]    92.678375: page_ref_set:         pfn=0x17ac9 flags=0x0 count=1 mapcount=0 mapping=(nil) mt=4 val=1
-> > <...>-9018  [004]    92.678378: kernel_stack:
-> >  => get_page_from_freelist (ffffffff81176659)
-> >  => __alloc_pages_nodemask (ffffffff81176d22)
-> >  => alloc_pages_vma (ffffffff811bf675)
-> >  => handle_mm_fault (ffffffff8119e693)
-> >  => __do_page_fault (ffffffff810631ea)
-> >  => trace_do_page_fault (ffffffff81063543)
-> >  => do_async_page_fault (ffffffff8105c40a)
-> >  => async_page_fault (ffffffff817581d8)
-> > [snip]
-> > <...>-9018  [004]    92.678379: page_ref_mod:         pfn=0x17ac9 flags=0x40048 count=2 mapcount=1 mapping=0xffff880015a78dc1 mt=4 val=1
-> > [snip]
-> > ...
-> > ...
-> > <...>-9131  [001]    93.174468: test_pages_isolated:  start_pfn=0x17800 end_pfn=0x17c00 fin_pfn=0x17ac9 ret=fail
-> > [snip]
-> > <...>-9018  [004]    93.174843: page_ref_mod_and_test: pfn=0x17ac9 flags=0x40068 count=0 mapcount=0 mapping=0xffff880015a78dc1 mt=4 val=-1 ret=1
-> >  => release_pages (ffffffff8117c9e4)
-> >  => free_pages_and_swap_cache (ffffffff811b0697)
-> >  => tlb_flush_mmu_free (ffffffff81199616)
-> >  => tlb_finish_mmu (ffffffff8119a62c)
-> >  => exit_mmap (ffffffff811a53f7)
-> >  => mmput (ffffffff81073f47)
-> >  => do_exit (ffffffff810794e9)
-> >  => do_group_exit (ffffffff81079def)
-> >  => SyS_exit_group (ffffffff81079e74)
-> >  => entry_SYSCALL_64_fastpath (ffffffff817560b6)
-> > 
-> > This output shows that problem comes from exit path. In exit path,
-> > to improve performance, pages are not freed immediately. They are gathered
-> > and processed by batch. During this process, migration cannot be possible
-> > and CMA allocation is failed. This problem is hard to find without this
-> > page reference tracepoint facility.
+> On 11/12/2015 04:18 PM, Jason J. Herne wrote:
+>> MADV_NOHUGEPAGE processing is too restrictive. kvm already disables
+>> hugepage but hugepage_madvise() takes the error path when we ask to turn
+>> on the MADV_NOHUGEPAGE bit and the bit is already on. This causes Qemu's
+>> new postcopy migration feature to fail on s390 because its first action is
+>> to madvise the guest address space as NOHUGEPAGE. This patch modifies the
+>> code so that the operation succeeds without error now.
+>>
+>> Signed-off-by: Jason J. Herne <jjherne@linux.vnet.ibm.com>
+>> Reviewed-by: Andrea Arcangeli <aarcange@redhat.com>
 > 
-> Yeah but when you realized it was this problem, what was the fix? Probably not
-> remove batching from exit path? Shouldn't CMA in this case just try waiting for
-> the pins to go away, which would eventually happen? And for long-term pins,
-> VM_PINNED would make sure the pages are migrated away from CMA pageblocks first?
+> Looks like the manpage should be fine, as it wasn't very specific wrt these
+> madvise flags. The only thing that potentially applies is:
 > 
-> So I'm worried that this is quite nontrivial change for a very specific usecase.
+> "EINVAL advice is not a valid."
+> 
+> which itself looks like it needs fixing. Valid what, value? As in completely
+> unknown flags, or flags not valid for the given vma?
+> 
+> Anyway, I agree that it doesn't make sense to fail madvise when the given flag
+> is already set. On the other hand, I don't think the userspace app should fail
+> just because of madvise failing? It should in general be an advice that the
+> kernel is also strictly speaking free to ignore as it shouldn't affect
+> correctnes, just performance. Yeah, there are exceptions today like
+> MADV_DONTNEED, but that shouldn't apply to hugepages?
+> So I think Qemu needs fixing too.
 
-This patch is not to solve the problem but just to expose what is culprit.
+yes, I agree. David, Juan. I think The postcopy code should not fail if the madvise.
+Can you fix that? 
 
-For using VM_PINNED, firstly, we should know where are long-term pins.
-There are obviously clear places which will be first target if we use
-VM_PINNED but somewhere are vague. For vague places, this patch will
-help finding there. Even we don't use VM_PINNED, this patch will expose
-current obstacle which can help to understand current problems.
+ Also what happens if the kernel is build
+> without CONFIG_TRANSPARENT_HUGEPAGE? Then madvise also returns EINVAL,
+
+Does it? To me it looks more like we would trigger a kernel bug.
+
+mm/madvise.c:
+        case MADV_HUGEPAGE:
+        case MADV_NOHUGEPAGE:
+                error = hugepage_madvise(vma, &new_flags, behavior);  <-----
+                if (error)
+                        goto out;
+                break;
+        }
+
+
+include/linux/huge_mm.h:
+static inline int hugepage_madvise(struct vm_area_struct *vma,
+                                   unsigned long *vm_flags, int advice)
+{
+        BUG();
+        return 0;
+}
+
+If we just remove the BUG() statement the code would actually be correct
+in simply ignoring an MADVISE it cannot handle. If you agree, I can
+spin a patch.
+
+
+
+
+> how does Qemu handle that?
+
+The normal qemu startup ignores the return value of the madvise. Only the
+recent post migration changes want to disable huge pages for userfaultd.
+And this code checks the return value. And yes, we should change that
+in QEMU.
+
+
+
+
+> 
+>> ---
+>>  mm/huge_memory.c | 4 ++--
+>>  1 file changed, 2 insertions(+), 2 deletions(-)
+>>
+>> diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+>> index c29ddeb..62fe06b 100644
+>> --- a/mm/huge_memory.c
+>> +++ b/mm/huge_memory.c
+>> @@ -2009,7 +2009,7 @@ int hugepage_madvise(struct vm_area_struct *vma,
+>>  		/*
+>>  		 * Be somewhat over-protective like KSM for now!
+>>  		 */
+>> -		if (*vm_flags & (VM_HUGEPAGE | VM_NO_THP))
+>> +		if (*vm_flags & VM_NO_THP)
+>>  			return -EINVAL;
+>>  		*vm_flags &= ~VM_NOHUGEPAGE;
+>>  		*vm_flags |= VM_HUGEPAGE;
+>> @@ -2025,7 +2025,7 @@ int hugepage_madvise(struct vm_area_struct *vma,
+>>  		/*
+>>  		 * Be somewhat over-protective like KSM for now!
+>>  		 */
+>> -		if (*vm_flags & (VM_NOHUGEPAGE | VM_NO_THP))
+>> +		if (*vm_flags & VM_NO_THP)
+>>  			return -EINVAL;
+>>  		*vm_flags &= ~VM_HUGEPAGE;
+>>  		*vm_flags |= VM_NOHUGEPAGE;
+>>
+> 
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
