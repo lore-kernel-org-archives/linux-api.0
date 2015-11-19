@@ -1,73 +1,52 @@
 From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH v5 3/6] mm, proc: reduce cost of /proc/pid/smaps for
- shmem mappings
-Date: Thu, 19 Nov 2015 11:04:55 +0100
-Message-ID: <20151119100455.GB8494@dhcp22.suse.cz>
+Subject: Re: [PATCH v5 4/6] mm, proc: reduce cost of /proc/pid/smaps for
+ unpopulated shmem mappings
+Date: Thu, 19 Nov 2015 11:13:33 +0100
+Message-ID: <20151119101333.GC8494@dhcp22.suse.cz>
 References: <1447838976-17607-1-git-send-email-vbabka@suse.cz>
- <1447838976-17607-4-git-send-email-vbabka@suse.cz>
+ <1447838976-17607-5-git-send-email-vbabka@suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <1447838976-17607-4-git-send-email-vbabka@suse.cz>
+In-Reply-To: <1447838976-17607-5-git-send-email-vbabka@suse.cz>
 Sender: owner-linux-mm@kvack.org
 To: Vlastimil Babka <vbabka@suse.cz>
 Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Jerome Marchand <jmarchan@redhat.com>, Hugh Dickins <hughd@google.com>, Peter Zijlstra <peterz@infradead.org>, Oleg Nesterov <oleg@redhat.com>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 18-11-15 10:29:33, Vlastimil Babka wrote:
-> The previous patch has improved swap accounting for shmem mapping, which
-> however made /proc/pid/smaps more expensive for shmem mappings, as we consult
-> the radix tree for each pte_none entry, so the overal complexity is
-> O(n*log(n)).
+On Wed 18-11-15 10:29:34, Vlastimil Babka wrote:
+> Following the previous patch, further reduction of /proc/pid/smaps cost is
+> possible for private writable shmem mappings with unpopulated areas where
+> the page walk invokes the .pte_hole function. We can use radix tree iterator
+> for each such area instead of calling find_get_entry() in a loop. This is
+> possible at the extra maintenance cost of introducing another shmem function
+> shmem_partial_swap_usage().
 > 
-> We can reduce this significantly for mappings that cannot contain COWed pages,
-> because then we can either use the statistics tha shmem object itself tracks
-> (if the mapping contains the whole object, or the swap usage of the whole
-> object is zero), or use the radix tree iterator, which is much more effective
-> than repeated find_get_entry() calls.
+> To demonstrate the diference, I have measured this on a process that creates a
+> private writable 2GB mapping of a partially swapped out /dev/shm/file (which
+> cannot employ the optimizations from the prvious patch) and doesn't populate it
+> at all. I time how long does it take to cat /proc/pid/smaps of this process 100
+> times.
 > 
-> This patch therefore introduces a function shmem_swap_usage(vma) and makes
-> /proc/pid/smaps use it when possible. Only for writable private mappings of
-> shmem objects (i.e. tmpfs files) with the shmem object itself (partially)
-> swapped outwe have to resort to the find_get_entry() approach. Hopefully
-> such mappings are relatively uncommon.
-> 
-> To demonstrate the diference, I have measured this on a process that creates
-> a 2GB mapping and dirties single pages with a stride of 2MB, and time how long
-> does it take to cat /proc/pid/smaps of this process 100 times.
-> 
-> Private writable mapping of a /dev/shm/file (the most complex case):
+> Before this patch:
 > 
 > real    0m3.831s
 > user    0m0.180s
 > sys     0m3.212s
 > 
-> Shared mapping of an almost full mapping of a partially swapped /dev/shm/file
-> (which needs to employ the radix tree iterator).
+> After this patch:
 > 
-> real    0m1.351s
-> user    0m0.096s
-> sys     0m0.768s
+> real    0m1.176s
+> user    0m0.180s
+> sys     0m0.684s
 > 
-> Same, but with /dev/shm/file not swapped (so no radix tree walk needed)
-> 
-> real    0m0.935s
-> user    0m0.128s
-> sys     0m0.344s
-> 
-> Private anonymous mapping:
-> 
-> real    0m0.949s
-> user    0m0.116s
-> sys     0m0.348s
-> 
-> The cost is now much closer to the private anonymous mapping case, unless the
-> shmem mapping is private and writable.
+> The time is similar to case where radix tree iterator is employed on the whole
+> mapping.
 > 
 > Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
 
-Looks good to me
+Looks good as well.
 Acked-by: Michal Hocko <mhocko@suse.com>
 [...]
 -- 
