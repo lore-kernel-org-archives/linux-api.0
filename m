@@ -1,95 +1,182 @@
-From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Subject: Re: [PATCH v3 01/22] timer: Allow to check when the timer callback
- has not finished yet
-Date: Thu, 19 Nov 2015 13:43:49 +0100
-Message-ID: <20151119124349.GP4431@pathway.suse.cz>
+From: Yuval Shaia <yuval.shaia@oracle.com>
+Subject: Re: [PATCH v3 18/22] IB/fmr_pool: Convert the cleanup thread into
+ kthread worker API
+Date: Thu, 19 Nov 2015 14:46:45 +0200
+Message-ID: <20151119124644.GA3282@yuval-lab>
 References: <1447853127-3461-1-git-send-email-pmladek@suse.com>
- <1447853127-3461-2-git-send-email-pmladek@suse.com>
- <alpine.DEB.2.11.1511182331010.3761@nanos>
+ <1447853127-3461-19-git-send-email-pmladek@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.11.1511182331010.3761@nanos>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <1447853127-3461-19-git-send-email-pmladek@suse.com>
+Sender: owner-linux-mm@kvack.org
+To: Petr Mladek <pmladek@suse.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Doug Ledford <dledford@redhat.com>, Sean Hefty <sean.hefty@intel.com>, Hal Rosenstock <hal.rosenstock@gmail.com>, linux-rdma@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed 2015-11-18 23:32:28, Thomas Gleixner wrote:
-> On Wed, 18 Nov 2015, Petr Mladek wrote:
-> > timer_pending() checks whether the list of callbacks is empty.
-> > Each callback is removed from the list before it is called,
-> > see call_timer_fn() in __run_timers().
-> > 
-> > Sometimes we need to make sure that the callback has finished.
-> > For example, if we want to free some resources that are accessed
-> > by the callback.
-> > 
-> > For this purpose, this patch adds timer_active(). It checks both
-> > the list of callbacks and the running_timer. It takes the base_lock
-> > to see a consistent state.
-> > 
-> > I plan to use it to implement delayed works in kthread worker.
-> > But I guess that it will have wider use. In fact, I wonder if
-> > timer_pending() is misused in some situations.
+On Wed, Nov 18, 2015 at 02:25:23PM +0100, Petr Mladek wrote:
+> Kthreads are currently implemented as an infinite loop. Each
+> has its own variant of checks for terminating, freezing,
+> awakening. In many cases it is unclear to say in which state
+> it is and sometimes it is done a wrong way.
 > 
-> Well. That's nice and good. But how will that new function solve
-> anything? After you drop the lock the state is not longer valid.
+> The plan is to convert kthreads into kthread_worker or workqueues
+> API. It allows to split the functionality into separate operations.
+> It helps to make a better structure. Also it defines a clean state
+> where no locks are taken, IRQs blocked, the kthread might sleep
+> or even be safely migrated.
+> 
+> The kthread worker API is useful when we want to have a dedicated
+> single thread for the work. It helps to make sure that it is
+> available when needed. Also it allows a better control, e.g.
+> define a scheduling priority.
+> 
+> This patch converts the frm_pool kthread into the kthread worker
+s/frm/fmr
+> API because I am not sure how busy the thread is. It is well
+> possible that it does not need a dedicated kthread and workqueues
+> would be perfectly fine. Well, the conversion between kthread
+> worker API and workqueues is pretty trivial.
+> 
+> The patch moves one iteration from the kthread into the work function.
+> It preserves the check for a spurious queuing (wake up). Then it
+> processes one request. Finally, it re-queues itself if more requests
+> are pending.
+> 
+> Otherwise, wake_up_process() is replaced by queuing the work.
+> 
+> Important: The change is only compile tested. I did not find an easy
+> way how to check it in a real life.
+What are the expectations?
+> 
+> Signed-off-by: Petr Mladek <pmladek@suse.com>
+> CC: Doug Ledford <dledford@redhat.com>
+> CC: Sean Hefty <sean.hefty@intel.com>
+> CC: Hal Rosenstock <hal.rosenstock@gmail.com>
+> CC: linux-rdma@vger.kernel.org
+> ---
+>  drivers/infiniband/core/fmr_pool.c | 54 ++++++++++++++++++--------------------
+>  1 file changed, 25 insertions(+), 29 deletions(-)
+> 
+> diff --git a/drivers/infiniband/core/fmr_pool.c b/drivers/infiniband/core/fmr_pool.c
+> index 9f5ad7cc33c8..5f2b06bd14da 100644
+> --- a/drivers/infiniband/core/fmr_pool.c
+> +++ b/drivers/infiniband/core/fmr_pool.c
+> @@ -96,7 +96,8 @@ struct ib_fmr_pool {
+>  						   void *              arg);
+>  	void                     *flush_arg;
+>  
+> -	struct task_struct       *thread;
+> +	struct kthread_worker	  *worker;
+> +	struct kthread_work	  work;
+>  
+>  	atomic_t                  req_ser;
+>  	atomic_t                  flush_ser;
+> @@ -174,29 +175,26 @@ static void ib_fmr_batch_release(struct ib_fmr_pool *pool)
+>  	spin_unlock_irq(&pool->pool_lock);
+>  }
+>  
+> -static int ib_fmr_cleanup_thread(void *pool_ptr)
+> +static void ib_fmr_cleanup_func(struct kthread_work *work)
+>  {
+> -	struct ib_fmr_pool *pool = pool_ptr;
+> +	struct ib_fmr_pool *pool = container_of(work, struct ib_fmr_pool, work);
+>  
+> -	do {
+> -		if (atomic_read(&pool->flush_ser) - atomic_read(&pool->req_ser) < 0) {
+> -			ib_fmr_batch_release(pool);
+> -
+> -			atomic_inc(&pool->flush_ser);
+> -			wake_up_interruptible(&pool->force_wait);
+> +	/*
+> +	 * The same request might be queued twice when it appears and
+> +	 * by re-queuing from this work.
+> +	 */
+> +	if (atomic_read(&pool->flush_ser) - atomic_read(&pool->req_ser) >= 0)
+> +		return;
+>  
+> -			if (pool->flush_function)
+> -				pool->flush_function(pool, pool->flush_arg);
+> -		}
+> +	ib_fmr_batch_release(pool);
+> +	atomic_inc(&pool->flush_ser);
+> +	wake_up_interruptible(&pool->force_wait);
+>  
+> -		set_current_state(TASK_INTERRUPTIBLE);
+> -		if (atomic_read(&pool->flush_ser) - atomic_read(&pool->req_ser) >= 0 &&
+> -		    !kthread_should_stop())
+> -			schedule();
+> -		__set_current_state(TASK_RUNNING);
+> -	} while (!kthread_should_stop());
+> +	if (pool->flush_function)
+> +		pool->flush_function(pool, pool->flush_arg);
+>  
+> -	return 0;
+> +	if (atomic_read(&pool->flush_ser) - atomic_read(&pool->req_ser) < 0)
+> +		queue_kthread_work(pool->worker, &pool->work);
+>  }
+>  
+>  /**
+> @@ -286,15 +284,13 @@ struct ib_fmr_pool *ib_create_fmr_pool(struct ib_pd             *pd,
+>  	atomic_set(&pool->flush_ser, 0);
+>  	init_waitqueue_head(&pool->force_wait);
+>  
+> -	pool->thread = kthread_run(ib_fmr_cleanup_thread,
+> -				   pool,
+> -				   "ib_fmr(%s)",
+> -				   device->name);
+> -	if (IS_ERR(pool->thread)) {
+> -		printk(KERN_WARNING PFX "couldn't start cleanup thread\n");
+> -		ret = PTR_ERR(pool->thread);
+> +	pool->worker = create_kthread_worker(0, "ib_fmr(%s)", device->name);
+Is this patch depends on some other patch?
+> +	if (IS_ERR(pool->worker)) {
+> +		pr_warn(PFX "couldn't start cleanup kthread worker\n");
+> +		ret = PTR_ERR(pool->worker);
+>  		goto out_free_pool;
+>  	}
+> +	init_kthread_work(&pool->work, ib_fmr_cleanup_func);
+>  
+>  	{
+>  		struct ib_pool_fmr *fmr;
+> @@ -362,7 +358,7 @@ void ib_destroy_fmr_pool(struct ib_fmr_pool *pool)
+>  	LIST_HEAD(fmr_list);
+>  	int                 i;
+>  
+> -	kthread_stop(pool->thread);
+> +	destroy_kthread_worker(pool->worker);
+>  	ib_fmr_batch_release(pool);
+>  
+>  	i = 0;
+> @@ -412,7 +408,7 @@ int ib_flush_fmr_pool(struct ib_fmr_pool *pool)
+>  	spin_unlock_irq(&pool->pool_lock);
+>  
+>  	serial = atomic_inc_return(&pool->req_ser);
+> -	wake_up_process(pool->thread);
+> +	queue_kthread_work(pool->worker, &pool->work);
+>  
+>  	if (wait_event_interruptible(pool->force_wait,
+>  				     atomic_read(&pool->flush_ser) - serial >= 0))
+> @@ -526,7 +522,7 @@ int ib_fmr_pool_unmap(struct ib_pool_fmr *fmr)
+>  			list_add_tail(&fmr->list, &pool->dirty_list);
+>  			if (++pool->dirty_len >= pool->dirty_watermark) {
+>  				atomic_inc(&pool->req_ser);
+> -				wake_up_process(pool->thread);
+> +				queue_kthread_work(pool->worker, &pool->work);
+>  			}
+>  		}
+>  	}
+> -- 
+> 1.8.5.6
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rdma" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-If we prevent anyone from setting up the timer and timer_pending()
-returns false, we are sure that the timer will stay as is.
-
-For example, I use it in the function try_to_cancel_kthread_work().
-Any manipulation with the timer is protected by worker->lock.
-If the timer is not pending but still active, I have to drop
-the lock and busy wait for the timer callback. See
-http://thread.gmane.org/gmane.linux.kernel.mm/141493/focus=141501
-
-
-Also I wonder if the following usage in
-drivers/infiniband/hw/nes/nes_cm.c is safe:
-
-static int mini_cm_dealloc_core(struct nes_cm_core *cm_core)
-{
-	nes_debug(NES_DBG_CM, "De-Alloc CM Core (%p)\n", cm_core);
-
-	if (!cm_core)
-		return -EINVAL;
-
-	barrier();
-
-	if (timer_pending(&cm_core->tcp_timer))
-		del_timer(&cm_core->tcp_timer);
-
-	destroy_workqueue(cm_core->event_wq);
-	destroy_workqueue(cm_core->disconn_wq);
-
-We destroy the workqueue but the timer callback might still
-be in progress and queue new work.
-
-
-There are many more locations where I see the pattern:
-
-      if (timer_pending())
-		del_timer();
-      clean_up_stuff();
-
-IMHO, we should use:
-
-      if (timer_active())
-		del_timer_sync();
-      /* really safe to free stuff */
-      clean_up_stuff();
-
-or just
-
-   del_timer_sync();
-   clean_up_stuff();
-
-
-I wonder if timer_pending() is used in more racy scenarios. Or maybe,
-I just miss something that makes it all safe.
-
-Thanks,
-Petr
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
