@@ -1,7 +1,7 @@
 From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v4 07/16] x86: add pmd_[dirty|mkclean] for THP
-Date: Fri, 20 Nov 2015 17:02:39 +0900
-Message-ID: <1448006568-16031-8-git-send-email-minchan@kernel.org>
+Subject: [PATCH v4 08/16] sparc: add pmd_[dirty|mkclean] for THP
+Date: Fri, 20 Nov 2015 17:02:40 +0900
+Message-ID: <1448006568-16031-9-git-send-email-minchan@kernel.org>
 References: <1448006568-16031-1-git-send-email-minchan@kernel.org>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1448006568-16031-1-git-send-email-minchan@kernel.org>
@@ -19,25 +19,29 @@ support.
 Signed-off-by: Minchan Kim <minchan@kernel.org>
 Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
 ---
- arch/x86/include/asm/pgtable.h | 5 +++++
- 1 file changed, 5 insertions(+)
+ arch/sparc/include/asm/pgtable_64.h | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index 867da5bbb4a3..b964d54300e1 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -267,6 +267,11 @@ static inline pmd_t pmd_mkold(pmd_t pmd)
- 	return pmd_clear_flags(pmd, _PAGE_ACCESSED);
+diff --git a/arch/sparc/include/asm/pgtable_64.h b/arch/sparc/include/asm/pgtable_64.h
+index 131d36fcd07a..5833dc5ee7d7 100644
+--- a/arch/sparc/include/asm/pgtable_64.h
++++ b/arch/sparc/include/asm/pgtable_64.h
+@@ -717,6 +717,15 @@ static inline pmd_t pmd_mkdirty(pmd_t pmd)
+ 	return __pmd(pte_val(pte));
  }
  
 +static inline pmd_t pmd_mkclean(pmd_t pmd)
 +{
-+	return pmd_clear_flags(pmd, _PAGE_DIRTY);
++	pte_t pte = __pte(pmd_val(pmd));
++
++	pte = pte_mkclean(pte);
++
++	return __pmd(pte_val(pte));
 +}
 +
- static inline pmd_t pmd_wrprotect(pmd_t pmd)
+ static inline pmd_t pmd_mkyoung(pmd_t pmd)
  {
- 	return pmd_clear_flags(pmd, _PAGE_RW);
+ 	pte_t pte = __pte(pmd_val(pmd));
 -- 
 1.9.1
 
