@@ -1,42 +1,36 @@
-From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: [PATCH v4 09/16] powerpc: add pmd_[dirty|mkclean] for THP
-Date: Fri, 20 Nov 2015 17:02:41 +0900
-Message-ID: <1448006568-16031-10-git-send-email-minchan@kernel.org>
+From: Minchan Kim <minchan@kernel.org>
+Subject: [PATCH v4 10/16] arm: add pmd_mkclean for THP
+Date: Fri, 20 Nov 2015 17:02:42 +0900
+Message-ID: <1448006568-16031-11-git-send-email-minchan@kernel.org>
 References: <1448006568-16031-1-git-send-email-minchan@kernel.org>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1448006568-16031-1-git-send-email-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1448006568-16031-1-git-send-email-minchan@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, Daniel Micay <danielmicay@gmail.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Shaohua Li <shli@kernel.org>, Michal Hocko <mhocko@suse.cz>, yalin.wang2010@gmail.com, Andy Lutomirski <luto@amacapital.net>, Minchan Kim <minchan@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
 MADV_FREE needs pmd_dirty and pmd_mkclean for detecting recent overwrite
 of the contents since MADV_FREE syscall is called for THP page.
 
-This patch adds pmd_dirty and pmd_mkclean for THP page MADV_FREE
-support.
+This patch adds pmd_mkclean for THP page MADV_FREE support.
 
-Signed-off-by: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Signed-off-by: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Signed-off-by: Minchan Kim <minchan@kernel.org>
 ---
- arch/powerpc/include/asm/pgtable-ppc64.h | 2 ++
- 1 file changed, 2 insertions(+)
+ arch/arm/include/asm/pgtable-3level.h | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/arch/powerpc/include/asm/pgtable-ppc64.h b/arch/powerpc/include/asm/pgtable-ppc64.h
-index fa1dfb7f7b48..85e15c8067be 100644
---- a/arch/powerpc/include/asm/pgtable-ppc64.h
-+++ b/arch/powerpc/include/asm/pgtable-ppc64.h
-@@ -507,9 +507,11 @@ static inline pte_t *pmdp_ptep(pmd_t *pmd)
- #define pmd_pfn(pmd)		pte_pfn(pmd_pte(pmd))
- #define pmd_dirty(pmd)		pte_dirty(pmd_pte(pmd))
- #define pmd_young(pmd)		pte_young(pmd_pte(pmd))
-+#define pmd_dirty(pmd)		pte_dirty(pmd_pte(pmd))
- #define pmd_mkold(pmd)		pte_pmd(pte_mkold(pmd_pte(pmd)))
- #define pmd_wrprotect(pmd)	pte_pmd(pte_wrprotect(pmd_pte(pmd)))
- #define pmd_mkdirty(pmd)	pte_pmd(pte_mkdirty(pmd_pte(pmd)))
-+#define pmd_mkclean(pmd)	pte_pmd(pte_mkclean(pmd_pte(pmd)))
- #define pmd_mkyoung(pmd)	pte_pmd(pte_mkyoung(pmd_pte(pmd)))
- #define pmd_mkwrite(pmd)	pte_pmd(pte_mkwrite(pmd_pte(pmd)))
+diff --git a/arch/arm/include/asm/pgtable-3level.h b/arch/arm/include/asm/pgtable-3level.h
+index a745a2a53853..6d6012a320b2 100644
+--- a/arch/arm/include/asm/pgtable-3level.h
++++ b/arch/arm/include/asm/pgtable-3level.h
+@@ -249,6 +249,7 @@ PMD_BIT_FUNC(mkold,	&= ~PMD_SECT_AF);
+ PMD_BIT_FUNC(mksplitting, |= L_PMD_SECT_SPLITTING);
+ PMD_BIT_FUNC(mkwrite,   &= ~L_PMD_SECT_RDONLY);
+ PMD_BIT_FUNC(mkdirty,   |= L_PMD_SECT_DIRTY);
++PMD_BIT_FUNC(mkclean,   &= ~L_PMD_SECT_DIRTY);
+ PMD_BIT_FUNC(mkyoung,   |= PMD_SECT_AF);
  
+ #define pmd_mkhuge(pmd)		(__pmd(pmd_val(pmd) & ~PMD_TABLE_BIT))
 -- 
 1.9.1
