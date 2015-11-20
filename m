@@ -1,70 +1,138 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [v15 0/4] ext4: add project quota support
-Date: Fri, 20 Nov 2015 08:47:27 +1100
-Message-ID: <20151119214727.GC19199@dastard>
-References: <1442146833-13652-1-git-send-email-lixi@ddn.com>
- <43B1BB97-8D53-4D93-9B57-B5E2048F7E7A@dilger.ca>
- <CAPTn0cBp4d09u9XzQm2cXzd6kcE0+FDRX0b_H=xJBZT-i5eKcw@mail.gmail.com>
- <7360A48E-8576-49DB-878B-DFC2EFC83BC4@ddn.com>
- <20151108212830.GL19199@dastard>
- <81500210-A31E-45CE-A3AE-9F5D0A785954@ddn.com>
+From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Subject: Re: [PATCH 2/2] mm/page_ref: add tracepoint to track down page
+ reference manipulation
+Date: Fri, 20 Nov 2015 15:33:25 +0900
+Message-ID: <20151120063325.GB13061@js1304-P5Q-DELUXE>
+References: <1447053784-27811-1-git-send-email-iamjoonsoo.kim@lge.com>
+ <1447053784-27811-2-git-send-email-iamjoonsoo.kim@lge.com>
+ <564C9A86.1090906@suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <81500210-A31E-45CE-A3AE-9F5D0A785954@ddn.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Shuichi Ihara <sihara@ddn.com>
-Cc: Li Xi <pkuelelixi@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Theodore Ts'o <tytso@mit.edu>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-ext4 <linux-ext4@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Jan Kara <jack@suse.cz>, Al Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, =?utf-8?B?0JTQvNC40YLRgNC40Lkg0JzQvtC90LDRhdC+0LI=?= <dmonakhov@openvz.org>, Shuichi Ihara <ihashu@gmail.com>
+In-Reply-To: <564C9A86.1090906@suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@suse.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, rostedt@goodmis.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 18, 2015 at 02:14:32PM +0000, Shuichi Ihara wrote:
+Ccing Steven.
+
+Hello,
+
+On Wed, Nov 18, 2015 at 04:34:30PM +0100, Vlastimil Babka wrote:
+> On 11/09/2015 08:23 AM, Joonsoo Kim wrote:
+> > CMA allocation should be guaranteed to succeed by definition, but,
+> > unfortunately, it would be failed sometimes. It is hard to track down
+> > the problem, because it is related to page reference manipulation and
+> > we don't have any facility to analyze it.
 > 
-> 11/9/15, 6:28 AM , "Dave Chinner" <david@fromorbit.com> wrote:
+> Reminds me of the PeterZ's VM_PINNED patchset. What happened to it?
+> https://lwn.net/Articles/600502/
 > 
-> >On Thu, Nov 05, 2015 at 03:13:10PM +0000, Shuichi Ihara wrote:
-> >> Hello Ted, Andreas,
-> >> 
-> >> Shilong posted an email here a week ago below.
-> >> http://lists.openwall.net/linux-ext4/2015/10/30/2
-> >> 
-> >> we identified 10 project quota related xfstest and ported them into ext4/xxx.
-> >> test number are 304, 305, 299, 244, 196, 134, 108, 107, 106, 050 in xfs.
-> >> 
-> >> 
-> >> We ported 9/10 tests into ext4/xxx
-> >> ext4/050 ext4/106 ext4/107 ext4/108 ext4/196 ext4/244 ext4/299 ext4/400 ext4/401
-> >
-> >Please make them generic tests - the ext4 project quota
-> >functioanlity should work with those tests being completely
-> >unchanged except for a "_requires_project_quota()" function...
+> > This patch adds tracepoints to track down page reference manipulation.
+> > With it, we can find exact reason of failure and can fix the problem.
+> > Following is an example of tracepoint output.
+> > 
+> > <...>-9018  [004]    92.678375: page_ref_set:         pfn=0x17ac9 flags=0x0 count=1 mapcount=0 mapping=(nil) mt=4 val=1
+> > <...>-9018  [004]    92.678378: kernel_stack:
+> >  => get_page_from_freelist (ffffffff81176659)
+> >  => __alloc_pages_nodemask (ffffffff81176d22)
+> >  => alloc_pages_vma (ffffffff811bf675)
+> >  => handle_mm_fault (ffffffff8119e693)
+> >  => __do_page_fault (ffffffff810631ea)
+> >  => trace_do_page_fault (ffffffff81063543)
+> >  => do_async_page_fault (ffffffff8105c40a)
+> >  => async_page_fault (ffffffff817581d8)
+> > [snip]
+> > <...>-9018  [004]    92.678379: page_ref_mod:         pfn=0x17ac9 flags=0x40048 count=2 mapcount=1 mapping=0xffff880015a78dc1 mt=4 val=1
+> > [snip]
+> > ...
+> > ...
+> > <...>-9131  [001]    93.174468: test_pages_isolated:  start_pfn=0x17800 end_pfn=0x17c00 fin_pfn=0x17ac9 ret=fail
+> > [snip]
+> > <...>-9018  [004]    93.174843: page_ref_mod_and_test: pfn=0x17ac9 flags=0x40068 count=0 mapcount=0 mapping=0xffff880015a78dc1 mt=4 val=-1 ret=1
+> >  => release_pages (ffffffff8117c9e4)
+> >  => free_pages_and_swap_cache (ffffffff811b0697)
+> >  => tlb_flush_mmu_free (ffffffff81199616)
+> >  => tlb_finish_mmu (ffffffff8119a62c)
+> >  => exit_mmap (ffffffff811a53f7)
+> >  => mmput (ffffffff81073f47)
+> >  => do_exit (ffffffff810794e9)
+> >  => do_group_exit (ffffffff81079def)
+> >  => SyS_exit_group (ffffffff81079e74)
+> >  => entry_SYSCALL_64_fastpath (ffffffff817560b6)
+> > 
+> > This output shows that problem comes from exit path. In exit path,
+> > to improve performance, pages are not freed immediately. They are gathered
+> > and processed by batch. During this process, migration cannot be possible
+> > and CMA allocation is failed. This problem is hard to find without this
+> > page reference tracepoint facility.
 > 
-> Right now, we enhanced quotatool to support project quota and above project quota tests in ext4 uses that interface.
-> xfs uses own interface xfs_xx for project quota tests in xfs.
-> what interface are you looking at if we move ext4's project quota tests into generic tests?
+> Yeah but when you realized it was this problem, what was the fix? Probably not
+> remove batching from exit path? Shouldn't CMA in this case just try waiting for
+> the pins to go away, which would eventually happen? And for long-term pins,
+> VM_PINNED would make sure the pages are migrated away from CMA pageblocks first?
+> 
+> So I'm worried that this is quite nontrivial change for a very specific usecase.
 
-The project quota support in the generic quota tool should work XFS
-as well as ext4. If it doesn't, then it's not a generic tool, right?
-The whole point of having ext4 use the same userspace API as XFS is
-so that all quotas can be managed with the one tool. Essentially, if
-ext4 project quotas cannot be controlled by xfs_quota, then the ext4
-code is not compatible with XFS and hence still needs work.
+Minchan already answered it. Thanks, Minchan.
+This also can be used for memory-offlining and compaction.
 
-FWIW, if ext4 has implemented the kernel project quota interfaces
-correctly, then it should not matter whether we use xfs_quota or the
-generic quotatool because the kernel will translate the filesystem
-information to whatever format the quota was requested in...
+> > Enabling this feature bloat kernel text 20 KB in my configuration.
+> 
+> It's not just that, see below.
+> 
+> [...]
+> 
+> 
+> >  static inline int page_ref_freeze(struct page *page, int count)
+> >  {
+> > -	return likely(atomic_cmpxchg(&page->_count, count, 0) == count);
+> > +	int ret = likely(atomic_cmpxchg(&page->_count, count, 0) == count);
+> 
+> The "likely" mean makes no sense anymore, doe it?
 
-So, you should be able to simply use the xfs_quota tool in the tests
-you make generic without needing any significant modification to the
-tests to run them on ext4. Yes, that may mean you need to send a 5
-line patch to make xfs_quota run on ext4, but that's trivial
-compared to duplicating >10 tests and then having to maintain them
-forever...
+I don't know how compiler uses this hint exactly but it will have same
+effect as before. Why do you think it makes no sense now?
 
-Cheers,
+> 
+> > diff --git a/mm/Kconfig.debug b/mm/Kconfig.debug
+> > index 957d3da..71d2399 100644
+> > --- a/mm/Kconfig.debug
+> > +++ b/mm/Kconfig.debug
+> > @@ -28,3 +28,7 @@ config DEBUG_PAGEALLOC
+> >  
+> >  config PAGE_POISONING
+> >  	bool
+> > +
+> > +config DEBUG_PAGE_REF
+> > +	bool "Enable tracepoint to track down page reference manipulation"
+> 
+> So you should probably state the costs. Which is the extra memory, and also that
+> all the page ref manipulations are now turned to function calls, even if the
+> tracepoints are disabled.
 
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+Yes, will do.
+
+> Patch 1 didn't change that many callsites, so maybe it
+> would be feasible to have the tracepoints inline, where being disabled has
+> near-zero overhead?
+
+Hmm...Although I changed just one get_page() in previous patch, it would
+be used in many places. So, it's not feasible to inline tracepoints to
+each callsites directly.
+
+In fact, I tried to inline tracepoint into wrapper function directly,
+but, it fails due to (maybe) header file dependency.
+
+Steven, is it possible to add tracepoint to inlined fucntion such as
+get_page() in include/linux/mm.h?
+
+Thanks.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
