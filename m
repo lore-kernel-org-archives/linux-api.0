@@ -1,138 +1,88 @@
-From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Subject: Re: [PATCH 2/2] mm/page_ref: add tracepoint to track down page
- reference manipulation
-Date: Fri, 20 Nov 2015 15:33:25 +0900
-Message-ID: <20151120063325.GB13061@js1304-P5Q-DELUXE>
-References: <1447053784-27811-1-git-send-email-iamjoonsoo.kim@lge.com>
- <1447053784-27811-2-git-send-email-iamjoonsoo.kim@lge.com>
- <564C9A86.1090906@suse.cz>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <564C9A86.1090906@suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@suse.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, rostedt@goodmis.org
+From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: [PATCH v4 02/16] mm: define MADV_FREE for some arches
+Date: Fri, 20 Nov 2015 17:02:34 +0900
+Message-ID: <1448006568-16031-3-git-send-email-minchan@kernel.org>
+References: <1448006568-16031-1-git-send-email-minchan@kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1448006568-16031-1-git-send-email-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Richard Henderson <rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org>, Ivan Kokshaysky <ink-biIs/Y0ymYJMZLIVYojuPNP0rXTJTi09@public.gmane.org>, "James E.J. Bottomley" <jejb-6jwH94ZQLHl74goWV3ctuw@public.gmane.org>, Helge Deller <deller-Mmb7MZpHnFY@public.gmane.org>, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, Chris Zankel <chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org>, Max Filippov <jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, kbuild test robot <fengguang.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Ccing Steven.
+Most architectures use asm-generic, but alpha, mips, parisc, xtensa
+need their own definitions.
 
-Hello,
+This patch defines MADV_FREE for them so it should fix build break
+for their architectures.
 
-On Wed, Nov 18, 2015 at 04:34:30PM +0100, Vlastimil Babka wrote:
-> On 11/09/2015 08:23 AM, Joonsoo Kim wrote:
-> > CMA allocation should be guaranteed to succeed by definition, but,
-> > unfortunately, it would be failed sometimes. It is hard to track down
-> > the problem, because it is related to page reference manipulation and
-> > we don't have any facility to analyze it.
-> 
-> Reminds me of the PeterZ's VM_PINNED patchset. What happened to it?
-> https://lwn.net/Articles/600502/
-> 
-> > This patch adds tracepoints to track down page reference manipulation.
-> > With it, we can find exact reason of failure and can fix the problem.
-> > Following is an example of tracepoint output.
-> > 
-> > <...>-9018  [004]    92.678375: page_ref_set:         pfn=0x17ac9 flags=0x0 count=1 mapcount=0 mapping=(nil) mt=4 val=1
-> > <...>-9018  [004]    92.678378: kernel_stack:
-> >  => get_page_from_freelist (ffffffff81176659)
-> >  => __alloc_pages_nodemask (ffffffff81176d22)
-> >  => alloc_pages_vma (ffffffff811bf675)
-> >  => handle_mm_fault (ffffffff8119e693)
-> >  => __do_page_fault (ffffffff810631ea)
-> >  => trace_do_page_fault (ffffffff81063543)
-> >  => do_async_page_fault (ffffffff8105c40a)
-> >  => async_page_fault (ffffffff817581d8)
-> > [snip]
-> > <...>-9018  [004]    92.678379: page_ref_mod:         pfn=0x17ac9 flags=0x40048 count=2 mapcount=1 mapping=0xffff880015a78dc1 mt=4 val=1
-> > [snip]
-> > ...
-> > ...
-> > <...>-9131  [001]    93.174468: test_pages_isolated:  start_pfn=0x17800 end_pfn=0x17c00 fin_pfn=0x17ac9 ret=fail
-> > [snip]
-> > <...>-9018  [004]    93.174843: page_ref_mod_and_test: pfn=0x17ac9 flags=0x40068 count=0 mapcount=0 mapping=0xffff880015a78dc1 mt=4 val=-1 ret=1
-> >  => release_pages (ffffffff8117c9e4)
-> >  => free_pages_and_swap_cache (ffffffff811b0697)
-> >  => tlb_flush_mmu_free (ffffffff81199616)
-> >  => tlb_finish_mmu (ffffffff8119a62c)
-> >  => exit_mmap (ffffffff811a53f7)
-> >  => mmput (ffffffff81073f47)
-> >  => do_exit (ffffffff810794e9)
-> >  => do_group_exit (ffffffff81079def)
-> >  => SyS_exit_group (ffffffff81079e74)
-> >  => entry_SYSCALL_64_fastpath (ffffffff817560b6)
-> > 
-> > This output shows that problem comes from exit path. In exit path,
-> > to improve performance, pages are not freed immediately. They are gathered
-> > and processed by batch. During this process, migration cannot be possible
-> > and CMA allocation is failed. This problem is hard to find without this
-> > page reference tracepoint facility.
-> 
-> Yeah but when you realized it was this problem, what was the fix? Probably not
-> remove batching from exit path? Shouldn't CMA in this case just try waiting for
-> the pins to go away, which would eventually happen? And for long-term pins,
-> VM_PINNED would make sure the pages are migrated away from CMA pageblocks first?
-> 
-> So I'm worried that this is quite nontrivial change for a very specific usecase.
+Maybe, I should split and feed piecies to arch maintainers but
+included here for mmotm convenience.
 
-Minchan already answered it. Thanks, Minchan.
-This also can be used for memory-offlining and compaction.
+Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Richard Henderson <rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org>
+Cc: Ivan Kokshaysky <ink-biIs/Y0ymYJMZLIVYojuPNP0rXTJTi09@public.gmane.org>
+Cc: "James E.J. Bottomley" <jejb-6jwH94ZQLHl74goWV3ctuw@public.gmane.org>
+Cc: Helge Deller <deller-Mmb7MZpHnFY@public.gmane.org>
+Cc: Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>
+Cc: Chris Zankel <chris-YvXeqwSYzG2sTnJN9+BGXg@public.gmane.org>
+Acked-by: Max Filippov <jcmvbkbc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Reported-by: kbuild test robot <fengguang.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+---
+ arch/alpha/include/uapi/asm/mman.h  | 1 +
+ arch/mips/include/uapi/asm/mman.h   | 1 +
+ arch/parisc/include/uapi/asm/mman.h | 1 +
+ arch/xtensa/include/uapi/asm/mman.h | 1 +
+ 4 files changed, 4 insertions(+)
 
-> > Enabling this feature bloat kernel text 20 KB in my configuration.
-> 
-> It's not just that, see below.
-> 
-> [...]
-> 
-> 
-> >  static inline int page_ref_freeze(struct page *page, int count)
-> >  {
-> > -	return likely(atomic_cmpxchg(&page->_count, count, 0) == count);
-> > +	int ret = likely(atomic_cmpxchg(&page->_count, count, 0) == count);
-> 
-> The "likely" mean makes no sense anymore, doe it?
-
-I don't know how compiler uses this hint exactly but it will have same
-effect as before. Why do you think it makes no sense now?
-
-> 
-> > diff --git a/mm/Kconfig.debug b/mm/Kconfig.debug
-> > index 957d3da..71d2399 100644
-> > --- a/mm/Kconfig.debug
-> > +++ b/mm/Kconfig.debug
-> > @@ -28,3 +28,7 @@ config DEBUG_PAGEALLOC
-> >  
-> >  config PAGE_POISONING
-> >  	bool
-> > +
-> > +config DEBUG_PAGE_REF
-> > +	bool "Enable tracepoint to track down page reference manipulation"
-> 
-> So you should probably state the costs. Which is the extra memory, and also that
-> all the page ref manipulations are now turned to function calls, even if the
-> tracepoints are disabled.
-
-Yes, will do.
-
-> Patch 1 didn't change that many callsites, so maybe it
-> would be feasible to have the tracepoints inline, where being disabled has
-> near-zero overhead?
-
-Hmm...Although I changed just one get_page() in previous patch, it would
-be used in many places. So, it's not feasible to inline tracepoints to
-each callsites directly.
-
-In fact, I tried to inline tracepoint into wrapper function directly,
-but, it fails due to (maybe) header file dependency.
-
-Steven, is it possible to add tracepoint to inlined fucntion such as
-get_page() in include/linux/mm.h?
-
-Thanks.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/arch/alpha/include/uapi/asm/mman.h b/arch/alpha/include/uapi/asm/mman.h
+index 0086b472bc2b..836fbd44f65b 100644
+--- a/arch/alpha/include/uapi/asm/mman.h
++++ b/arch/alpha/include/uapi/asm/mman.h
+@@ -44,6 +44,7 @@
+ #define MADV_WILLNEED	3		/* will need these pages */
+ #define	MADV_SPACEAVAIL	5		/* ensure resources are available */
+ #define MADV_DONTNEED	6		/* don't need these pages */
++#define MADV_FREE	7		/* free pages only if memory pressure */
+ 
+ /* common/generic parameters */
+ #define MADV_REMOVE	9		/* remove these pages & resources */
+diff --git a/arch/mips/include/uapi/asm/mman.h b/arch/mips/include/uapi/asm/mman.h
+index cfcb876cae6b..106e741aa7ee 100644
+--- a/arch/mips/include/uapi/asm/mman.h
++++ b/arch/mips/include/uapi/asm/mman.h
+@@ -67,6 +67,7 @@
+ #define MADV_SEQUENTIAL 2		/* expect sequential page references */
+ #define MADV_WILLNEED	3		/* will need these pages */
+ #define MADV_DONTNEED	4		/* don't need these pages */
++#define MADV_FREE	5		/* free pages only if memory pressure */
+ 
+ /* common parameters: try to keep these consistent across architectures */
+ #define MADV_REMOVE	9		/* remove these pages & resources */
+diff --git a/arch/parisc/include/uapi/asm/mman.h b/arch/parisc/include/uapi/asm/mman.h
+index 294d251ca7b2..6cb8db76fd4e 100644
+--- a/arch/parisc/include/uapi/asm/mman.h
++++ b/arch/parisc/include/uapi/asm/mman.h
+@@ -40,6 +40,7 @@
+ #define MADV_SPACEAVAIL 5               /* insure that resources are reserved */
+ #define MADV_VPS_PURGE  6               /* Purge pages from VM page cache */
+ #define MADV_VPS_INHERIT 7              /* Inherit parents page size */
++#define MADV_FREE	8		/* free pages only if memory pressure */
+ 
+ /* common/generic parameters */
+ #define MADV_REMOVE	9		/* remove these pages & resources */
+diff --git a/arch/xtensa/include/uapi/asm/mman.h b/arch/xtensa/include/uapi/asm/mman.h
+index 201aec0e0446..1b19f25bc567 100644
+--- a/arch/xtensa/include/uapi/asm/mman.h
++++ b/arch/xtensa/include/uapi/asm/mman.h
+@@ -80,6 +80,7 @@
+ #define MADV_SEQUENTIAL	2		/* expect sequential page references */
+ #define MADV_WILLNEED	3		/* will need these pages */
+ #define MADV_DONTNEED	4		/* don't need these pages */
++#define MADV_FREE	5		/* free pages only if memory pressure */
+ 
+ /* common parameters: try to keep these consistent across architectures */
+ #define MADV_REMOVE	9		/* remove these pages & resources */
+-- 
+1.9.1
