@@ -1,85 +1,46 @@
-From: punnaiah choudary kalluri <punnaia-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] mtd: Expand the ecc placement locations to 1216
-Date: Sat, 21 Nov 2015 20:59:15 +0530
-Message-ID: <CAGnW=BZzoo1YFyAYx+oKkCPBOCTSz_KYY+t0=2wh4Fscx7e0eg@mail.gmail.com>
-References: <1446742735-20824-1-git-send-email-punnaia@xilinx.com>
-	<20151120193342.GX64635@google.com>
+From: Yakir Yang <ykk@rock-chips.com>
+Subject: [RFC PATCH v1 0/2] Add basic HDCP function support for dw_hdmi driver
+Date: Sun, 22 Nov 2015 21:31:17 +0800
+Message-ID: <1448199077-10221-1-git-send-email-ykk@rock-chips.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151120193342.GX64635-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Punnaiah Choudary Kalluri <punnaiah.choudary.kalluri-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "michals-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org" <michals-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org>, "linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Punnaiah Choudary <kpc528-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Russell King <rmk+kernel@arm.linux.org.uk>, Vladimir Zapolskiy <vladimir_zapolskiy@mentor.com>, Thierry Reding <treding@nvidia.com>, Philipp Zabel <p.zabel@pengutronix.de>, Andy Yan <andy.yan@rock-chips.com>
+Cc: Fabio Estevam <fabio.estevam@freescale.com>, devicetree@vger.kernel.org, linux-samsung-soc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-rockchip@lists.infradead.org, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Nov 21, 2015 at 1:03 AM, Brian Norris
-<computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On Thu, Nov 05, 2015 at 10:28:55PM +0530, Punnaiah Choudary Kalluri wrote:
->> Device like MT29F32G08ABCDBJ4 have a writesize/oobsize of 16K/1216 Bytes.
->> So, increasing the maximum ecc placement locations to 1216
->
-> I'd really prefer not increasing the size of the internal arrays any
-> more. The structures should be rewritten to be dynamic.
-
-Ok. I have seen the comment "nand_ecclayout should be expandable in the
-future simply by the above macros" and so increased the macro sizes.
-As you said, it is ideal to have memory allocated dynamically for eccpos and
-oobfree fields.
-
->
->> Signed-off-by: Punnaiah Choudary Kalluri <punnaia-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org>
->> ---
->>  include/linux/mtd/mtd.h    | 2 +-
->>  include/uapi/mtd/mtd-abi.h | 4 ++--
->>  2 files changed, 3 insertions(+), 3 deletions(-)
->>
->> diff --git a/include/linux/mtd/mtd.h b/include/linux/mtd/mtd.h
->> index f17fa75..1fd3cc6 100644
->> --- a/include/linux/mtd/mtd.h
->> +++ b/include/linux/mtd/mtd.h
->> @@ -95,7 +95,7 @@ struct mtd_oob_ops {
->>  };
->>
->>  #define MTD_MAX_OOBFREE_ENTRIES_LARGE        32
->> -#define MTD_MAX_ECCPOS_ENTRIES_LARGE 640
->> +#define MTD_MAX_ECCPOS_ENTRIES_LARGE 1216
->>  /*
->>   * Internal ECC layout control structure. For historical reasons, there is a
->>   * similar, smaller struct nand_ecclayout_user (in mtd-abi.h) that is retained
->> diff --git a/include/uapi/mtd/mtd-abi.h b/include/uapi/mtd/mtd-abi.h
->> index 763bb69..c4d592c 100644
->> --- a/include/uapi/mtd/mtd-abi.h
->> +++ b/include/uapi/mtd/mtd-abi.h
->> @@ -220,8 +220,8 @@ struct nand_oobfree {
->>       __u32 length;
->>  };
->>
->> -#define MTD_MAX_OOBFREE_ENTRIES      8
->> -#define MTD_MAX_ECCPOS_ENTRIES       64
->> +#define MTD_MAX_OOBFREE_ENTRIES      32
->> +#define MTD_MAX_ECCPOS_ENTRIES       1216
->
-> NAK. This is part of the ABI, and changing this will break user space.
-> If you actually bothered to read code, you might understand why there
-> are now internal and external versions of this struct. The external
-> (user space) version cannot be changed. The internal version can be
-> refactored, as long as the external version still maintains some sanity,
-> at least for old/small devices.
-
-Sorry, I am confused here.
-Arasan nand controller supports 24 bit ecc and uses BCH algorithm. So,
-it requires
-672 ecc positions. in this case, how the user space know which are the free
-slots available in spare area?
-because as per the above definitions only 64 positions can be defined.
-
-Regards,
-Punnaiah
-
->
->>  /*
->>   * OBSOLETE: ECC layout control structure. Exported to user-space via ioctl
->>   * ECCGETLAYOUT for backwards compatbility and should not be mistaken as a
->
-> Brian
+SGksCgpUaGlzIHNlcmllcyB0cnkgdG8gYWRkIHRoZSBiYXNpYyBIRENQIGZ1bmN0aW9uIHN1cHBv
+cnQgZm9yIGJyaWRnZQpkd19oZG1pIGRyaXZlci4gQmVzaWRlIHRoaXMgc2VyaWVzIGFsc28gcmVz
+ZW5kIHRoZSBwYXRjaCBmcm9tIFNlYW4KUGF1bCB0aGF0IHRyeSB0byBpbnRyb2R1Y2UgYSBjb21t
+b24gd2F5IGZvciB1c2Vyc3BhY2UgdG8gb3BlcmF0ZQp0aGUgSERDUCBmdW5jdGlvbi4KClVzZXJz
+cGFjZSBjb3VsZCBjaG9zZSB0byBlbmFibGUvZGlzYWJsZSB0aGUgSERDUCBmdW5jdGlvbiB0aHJv
+dWdodAp0aGUgbmV3IHN0YW5kYXJkIHByb3BlcnRpZXMgIkNvbnRlbnQgUHJvdGVjdGlvbiIsIGFu
+ZCBkcml2ZXIgd291bGQKcmVmbGVjdCB0aGUgSERDUCBhdXRoIHN0YXR1cyB0byAiQ29udGVudCBQ
+cm90ZWN0aW9uIEtTViIgcHJvcGVydHkuCgpCZXNpZGUgdGhpcyBzZXJpZXMgYWxzbyBiYXNlIG9u
+IFZsYWRpbWlyIFphcG9sc2tpeSdzIHBhdGNoIHRoYXQgaGVscAp0byBpbnRyb2R1Y2UgRERDIHN1
+cHBvcnQgZm9yIGR3X2hkbWkgZHJpdmVyLgoKW1Jlc2VuZF0gU2VhbiBQdWFsOiBodHRwczovL3Bh
+dGNod29yay5rZXJuZWwub3JnL3BhdGNoLzcyNzk4MDEKW1JlYmFzZWQgb25dIFZsYWRpbWlyIFph
+cG9sc2tpeTogaHR0cHM6Ly9wYXRjaHdvcmsua2VybmVsLm9yZy9wYXRjaC83Mjc5ODAxCgpUaGFu
+a3MKLSBZYWtpcgoKCgpTZWFuIFBhdWwgKDEpOgogIGRybTogQWRkIENvbnRlbnQgUHJvdGVjdGlv
+biBwcm9wZXJ0aWVzIHRvIGRybQoKWWFraXIgWWFuZyAoMSk6CiAgZHJtOiBicmlkZ3cvZHdfaGRt
+aTogYWRkIGJhc2ljIGhkbWkgaGRjcCBkcml2ZXIKCiBkcml2ZXJzL2dwdS9kcm0vYnJpZGdlL2R3
+X2hkbWkuYyB8IDM1NSArKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKystLS0KIGRy
+aXZlcnMvZ3B1L2RybS9icmlkZ2UvZHdfaGRtaS5oIHwgIDIwICsrKwogZHJpdmVycy9ncHUvZHJt
+L2RybV9jcnRjLmMgICAgICAgfCAgMjEgKysrCiBkcml2ZXJzL2dwdS9kcm0vZHJtX3N5c2ZzLmMg
+ICAgICB8ICA0NiArKysrKwogaW5jbHVkZS9kcm0vYnJpZGdlL2R3X2hkbWkuaCAgICAgfCAgMTcg
+KysKIGluY2x1ZGUvZHJtL2RybV9jcnRjLmggICAgICAgICAgIHwgICAzICsKIGluY2x1ZGUvdWFw
+aS9kcm0vZHJtX21vZGUuaCAgICAgIHwgICA0ICsKIDcgZmlsZXMgY2hhbmdlZCwgNDQ3IGluc2Vy
+dGlvbnMoKyksIDE5IGRlbGV0aW9ucygtKQoKLS0gCjEuOS4xCgoKX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX18KZHJpLWRldmVsIG1haWxpbmcgbGlzdApkcmkt
+ZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHA6Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcv
+bWFpbG1hbi9saXN0aW5mby9kcmktZGV2ZWwK
