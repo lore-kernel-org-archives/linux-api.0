@@ -1,67 +1,77 @@
-From: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Subject: Re: [PATCH 2/2] mm/page_ref: add tracepoint to track down page
- reference manipulation
-Date: Mon, 23 Nov 2015 09:26:04 -0500
-Message-ID: <20151123092604.7ec1397d@gandalf.local.home>
-References: <1447053784-27811-1-git-send-email-iamjoonsoo.kim@lge.com>
-	<1447053784-27811-2-git-send-email-iamjoonsoo.kim@lge.com>
-	<564C9A86.1090906@suse.cz>
-	<20151120063325.GB13061@js1304-P5Q-DELUXE>
-	<20151120114225.7efeeafe@grimm.local.home>
-	<20151123082805.GB29397@js1304-P5Q-DELUXE>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151123082805.GB29397@js1304-P5Q-DELUXE>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
-Cc: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Michal Nazarewicz <mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: "Gabriel L. Somlo" <somlo@cmu.edu>
+Subject: [PATCH v5 4/4] devicetree: update documentation for fw_cfg ARM bindings
+Date: Mon, 23 Nov 2015 10:57:44 -0500
+Message-ID: <1448294264-17388-5-git-send-email-somlo@cmu.edu>
+References: <1448294264-17388-1-git-send-email-somlo@cmu.edu>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1448294264-17388-1-git-send-email-somlo@cmu.edu>
+Sender: linux-kernel-owner@vger.kernel.org
+To: gregkh@linuxfoundation.org, robh+dt@kernel.org, pawel.moll@arm.com, mark.rutland@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, arnd@arndb.de, lersek@redhat.com, ralf@linux-mips.org, rmk+kernel@arm.linux.org.uk, eric@anholt.net, hanjun.guo@linaro.org, zajec5@gmail.com, sudeep.holla@arm.com, agross@codeaurora.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org
+Cc: qemu-devel@nongnu.org, jordan.l.justen@intel.com, mst@redhat.com, peter.maydell@linaro.org, leif.lindholm@linaro.org, ard.biesheuvel@linaro.org, pbonzini@redhat.com, kraxel@redhat.com, luto@amacapital.net, stefanha@gmail.com, revol@free.fr
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 23 Nov 2015 17:28:05 +0900
-Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org> wrote:
+From: Gabriel Somlo <somlo@cmu.edu>
 
-> On Fri, Nov 20, 2015 at 11:42:25AM -0500, Steven Rostedt wrote:
-> > On Fri, 20 Nov 2015 15:33:25 +0900
-> > Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org> wrote:
-> > 
-> >   
-> > > Steven, is it possible to add tracepoint to inlined fucntion such as
-> > > get_page() in include/linux/mm.h?  
-> > 
-> > I highly recommend against it. The tracepoint code adds a bit of bloat,
-> > and if you inline it, you add that bloat to every use case. Also, it  
-> 
-> Is it worse than adding function call to my own stub function into
-> inlined function such as get_page(). I implemented it as following.
-> 
-> get_page()
-> {
->         atomic_inc()
->         stub_get_page()
-> }
-> 
-> stub_get_page() in foo.c
-> {
->         trace_page_ref_get_page()
-> }
+Remove fw_cfg hardware interface details from
+Documentation/devicetree/bindings/arm/fw-cfg.txt,
+and replace them with a pointer to the authoritative
+documentation in the QEMU source tree.
 
-Now you just slowed down the fast path. But what you could do is:
+Signed-off-by: Gabriel Somlo <somlo@cmu.edu>
+Cc: Laszlo Ersek <lersek@redhat.com>
+---
+ Documentation/devicetree/bindings/arm/fw-cfg.txt | 38 ++----------------------
+ 1 file changed, 2 insertions(+), 36 deletions(-)
 
-get_page()
-{
-	atomic_inc();
-	if (trace_page_ref_get_page_enabled())
-		stub_get_page();
-}
-
-Now that "trace_page_ref_get_page_enabled()" will turn into:
-
-	if (static_key_false(&__tracepoint_page_ref_get_page.key)) {
-
-which is a jump label (nop when disabled, a jmp when enabled). That's
-less bloat but doesn't solve the include problem. You still need to add
-the include of that will cause havoc with other tracepoints.
-
--- Steve
+diff --git a/Documentation/devicetree/bindings/arm/fw-cfg.txt b/Documentation/devicetree/bindings/arm/fw-cfg.txt
+index 953fb64..ce27386 100644
+--- a/Documentation/devicetree/bindings/arm/fw-cfg.txt
++++ b/Documentation/devicetree/bindings/arm/fw-cfg.txt
+@@ -11,43 +11,9 @@ QEMU exposes the control and data register to ARM guests as memory mapped
+ registers; their location is communicated to the guest's UEFI firmware in the
+ DTB that QEMU places at the bottom of the guest's DRAM.
+ 
+-The guest writes a selector value (a key) to the selector register, and then
+-can read the corresponding data (produced by QEMU) via the data register. If
+-the selected entry is writable, the guest can rewrite it through the data
+-register.
++The authoritative guest-side hardware interface documentation to the fw_cfg
++device ca be found in "docs/specs/fw_cfg.txt" in the QEMU source tree.
+ 
+-The selector register takes keys in big endian byte order.
+-
+-The data register allows accesses with 8, 16, 32 and 64-bit width (only at
+-offset 0 of the register). Accesses larger than a byte are interpreted as
+-arrays, bundled together only for better performance. The bytes constituting
+-such a word, in increasing address order, correspond to the bytes that would
+-have been transferred by byte-wide accesses in chronological order.
+-
+-The interface allows guest firmware to download various parameters and blobs
+-that affect how the firmware works and what tables it installs for the guest
+-OS. For example, boot order of devices, ACPI tables, SMBIOS tables, kernel and
+-initrd images for direct kernel booting, virtual machine UUID, SMP information,
+-virtual NUMA topology, and so on.
+-
+-The authoritative registry of the valid selector values and their meanings is
+-the QEMU source code; the structure of the data blobs corresponding to the
+-individual key values is also defined in the QEMU source code.
+-
+-The presence of the registers can be verified by selecting the "signature" blob
+-with key 0x0000, and reading four bytes from the data register. The returned
+-signature is "QEMU".
+-
+-The outermost protocol (involving the write / read sequences of the control and
+-data registers) is expected to be versioned, and/or described by feature bits.
+-The interface revision / feature bitmap can be retrieved with key 0x0001. The
+-blob to be read from the data register has size 4, and it is to be interpreted
+-as a uint32_t value in little endian byte order. The current value
+-(corresponding to the above outer protocol) is zero.
+-
+-The guest kernel is not expected to use these registers (although it is
+-certainly allowed to); the device tree bindings are documented here because
+-this is where device tree bindings reside in general.
+ 
+ Required properties:
+ 
+-- 
+2.4.3
