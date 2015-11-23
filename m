@@ -1,267 +1,118 @@
-From: Corey Minyard <minyard@acm.org>
-Subject: Re: [PATCH v3 17/22] ipmi: Convert kipmi kthread into kthread worker
- API
-Date: Mon, 23 Nov 2015 13:36:06 -0600
-Message-ID: <56536AA6.5040102@acm.org>
-References: <1447853127-3461-1-git-send-email-pmladek@suse.com> <1447853127-3461-18-git-send-email-pmladek@suse.com>
-Reply-To: minyard@acm.org
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Subject: Re: [v15 0/4] ext4: add project quota support
+Date: Tue, 24 Nov 2015 07:15:23 +1100
+Message-ID: <20151123201522.GN19199@dastard>
+References: <1442146833-13652-1-git-send-email-lixi@ddn.com>
+ <43B1BB97-8D53-4D93-9B57-B5E2048F7E7A@dilger.ca>
+ <CAPTn0cBp4d09u9XzQm2cXzd6kcE0+FDRX0b_H=xJBZT-i5eKcw@mail.gmail.com>
+ <7360A48E-8576-49DB-878B-DFC2EFC83BC4@ddn.com>
+ <20151108212830.GL19199@dastard>
+ <81500210-A31E-45CE-A3AE-9F5D0A785954@ddn.com>
+ <20151119214727.GC19199@dastard>
+ <20151123092523.GB23418@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1447853127-3461-18-git-send-email-pmladek@suse.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Petr Mladek <pmladek@suse.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, openipmi-developer@lists.sourceforge.net
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20151123092523.GB23418-+0h/O2h83AeN3ZZ/Hiejyg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: Shuichi Ihara <sihara-LfVdkaOWEx8@public.gmane.org>, Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, =?utf-8?B?0JTQvNC40YLRgNC40Lkg0JzQvtC90LDRhdC+0LI=?= <dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Shuichi Ihara <ihashu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Mon, Nov 23, 2015 at 10:25:23AM +0100, Jan Kara wrote:
+> On Fri 20-11-15 08:47:27, Dave Chinner wrote:
+> > On Wed, Nov 18, 2015 at 02:14:32PM +0000, Shuichi Ihara wrote:
+> > > 
+> > > 11/9/15, 6:28 AM , "Dave Chinner" <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
+> > > 
+> > > >On Thu, Nov 05, 2015 at 03:13:10PM +0000, Shuichi Ihara wrote:
+> > > >> Hello Ted, Andreas,
+> > > >> 
+> > > >> Shilong posted an email here a week ago below.
+> > > >> http://lists.openwall.net/linux-ext4/2015/10/30/2
+> > > >> 
+> > > >> we identified 10 project quota related xfstest and ported them into ext4/xxx.
+> > > >> test number are 304, 305, 299, 244, 196, 134, 108, 107, 106, 050 in xfs.
+> > > >> 
+> > > >> 
+> > > >> We ported 9/10 tests into ext4/xxx
+> > > >> ext4/050 ext4/106 ext4/107 ext4/108 ext4/196 ext4/244 ext4/299 ext4/400 ext4/401
+> > > >
+> > > >Please make them generic tests - the ext4 project quota
+> > > >functioanlity should work with those tests being completely
+> > > >unchanged except for a "_requires_project_quota()" function...
+> > > 
+> > > Right now, we enhanced quotatool to support project quota and above project quota tests in ext4 uses that interface.
+> > > xfs uses own interface xfs_xx for project quota tests in xfs.
+> > > what interface are you looking at if we move ext4's project quota tests into generic tests?
+> > 
+> > The project quota support in the generic quota tool should work XFS
+> > as well as ext4. If it doesn't, then it's not a generic tool, right?
+> > The whole point of having ext4 use the same userspace API as XFS is
+> > so that all quotas can be managed with the one tool. Essentially, if
+> > ext4 project quotas cannot be controlled by xfs_quota, then the ext4
+> > code is not compatible with XFS and hence still needs work.
+> > 
+> > FWIW, if ext4 has implemented the kernel project quota interfaces
+> > correctly, then it should not matter whether we use xfs_quota or the
+> > generic quotatool because the kernel will translate the filesystem
+> > information to whatever format the quota was requested in...
+> > 
+> > So, you should be able to simply use the xfs_quota tool in the tests
+> > you make generic without needing any significant modification to the
+> > tests to run them on ext4. Yes, that may mean you need to send a 5
+> > line patch to make xfs_quota run on ext4, but that's trivial
+> > compared to duplicating >10 tests and then having to maintain them
+> > forever...
+> 
+> Yeah, last time I tried the only modification xfs_quota tool needed to work
+> correctly with ext4 was to remove / modify the check for filesystem type
+> in fs_table_initialise_mounts(). The question is how to properly deal with
+> that. I don't think just removing the fs type check is the right way to go
+> as that will have unexpected side effects for operations working on
+> "all" filesystems - currently these are restricted to "all" *XFS*
+> filesystems.
+> 
+> Maybe we can add a command line option which will disable the fs type check
+> so that non-XFS filesystems can be handled. We used to have an option like
+> this for xfs_io but it seems it got removed so I'm not sure we want to add
+> that into xfs_quota though. Dave?
+
+The option is still there in xfs_io, we just ignore it because
+we do the detection automatically now via:
+
+                if (!platform_test_xfs_fd(c))
+                        flags |= IO_FOREIGN;
+
+The rest of the libxcmd infrastructure handles enabling/disabling
+the commands for foreign filesystems  via the
+io/init.c::init_check_command() function, which does:
+
+        if (file && !(ct->flags & CMD_FOREIGN_OK) &&
+                                        (file->flags & IO_FOREIGN)) {
+                fprintf(stderr,
+        _("foreign file active, %s command is for XFS filesystems only\n"),
+                        ct->name);
+                return 0;
+        }
 
 
-On 11/18/2015 07:25 AM, Petr Mladek wrote:
-> Kthreads are currently implemented as an infinite loop. Each
-> has its own variant of checks for terminating, freezing,
-> awakening. In many cases it is unclear to say in which state
-> it is and sometimes it is done a wrong way.
->
-> The plan is to convert kthreads into kthread_worker or workqueues
-> API. It allows to split the functionality into separate operations.
-> It helps to make a better structure. Also it defines a clean state
-> where no locks are taken, IRQs blocked, the kthread might sleep
-> or even be safely migrated.
->
-> The kthread worker API is useful when we want to have a dedicated
-> single thread for the work. It helps to make sure that it is
-> available when needed. Also it allows a better control, e.g.
-> define a scheduling priority.
->
-> This patch converts kipmi kthread into the kthread worker API because
-> it modifies the scheduling priority. The change is quite straightforward.
+It is trivial to add this to xfs_quota (ok, it's 20 lines of code)
+and so allow the relevant commands the tests need to operate on
+foreign filesystems.
 
-I think this is correct.  That code was hard to get right, but I don't
-see where any
-logic is actually changed.
+> Another option would be to use generic quota-tools for project quota tests
+> once the patches land. But that would require some more work on xfstests
+> side and so far I didn't get an official submission of patches for
+> quota-tools to support project quota.
 
-This also doesn't really look any simpler (you end up with more LOC than
-you did before :) ),
-though it will make things more consistent and reduce errors and that's
-a good thing.
+Eventually, yes. But we don't have to wait for that to happen if we
+use the xfs-quota tool to begin with.
 
-My only comment is I would like the worker function named ipmi_worker,
-not ipmi_func.
+Cheers,
 
-Reviewed-by: Corey Minyard <cminyard@mvista.com>
-
-> First, we move the per-thread variable "busy_until" into the per-thread
-> structure struct smi_info. As a side effect, we could omit one parameter
-> in ipmi_thread_busy_wait(). On the other hand, the structure could not
-> longer be passed with the const qualifier.
->
-> The value of "busy_until" is initialized when the kthread is created.
-> Also the scheduling priority is set there. This helps to avoid an extra
-> init work.
->
-> One iteration of the kthread cycle is moved to a delayed work function.
-> The different delays between the cycles are solved the following way:
->
->   + immediate cycle (nope) is converted into goto within the same work
->
->   + immediate cycle with a possible reschedule is converted into
->     re-queuing with a zero delay
->
->   + schedule_timeout() is converted into re-queuing with the given
->     delay
->
->   + interruptible sleep is converted into nothing; The work
->     will get queued again from the check_start_timer_thread().
->     By other words the external wakeup_up_process() will get
->     replaced by queuing with a zero delay.
->
-> Probably the most tricky change is when the worker is being stopped.
-> We need to explicitly cancel the work to prevent it from re-queuing.
->
-> Signed-off-by: Petr Mladek <pmladek@suse.com>
-> CC: Corey Minyard <minyard@acm.org>
-> CC: openipmi-developer@lists.sourceforge.net
-> ---
->  drivers/char/ipmi/ipmi_si_intf.c | 116 ++++++++++++++++++++++-----------------
->  1 file changed, 66 insertions(+), 50 deletions(-)
->
-> diff --git a/drivers/char/ipmi/ipmi_si_intf.c b/drivers/char/ipmi/ipmi_si_intf.c
-> index 654f6f36a071..fdb97eaded4b 100644
-> --- a/drivers/char/ipmi/ipmi_si_intf.c
-> +++ b/drivers/char/ipmi/ipmi_si_intf.c
-> @@ -302,7 +302,9 @@ struct smi_info {
->  	/* Counters and things for the proc filesystem. */
->  	atomic_t stats[SI_NUM_STATS];
->  
-> -	struct task_struct *thread;
-> +	struct kthread_worker *worker;
-> +	struct delayed_kthread_work work;
-> +	struct timespec64 busy_until;
->  
->  	struct list_head link;
->  	union ipmi_smi_info_union addr_info;
-> @@ -929,8 +931,9 @@ static void check_start_timer_thread(struct smi_info *smi_info)
->  	if (smi_info->si_state == SI_NORMAL && smi_info->curr_msg == NULL) {
->  		smi_mod_timer(smi_info, jiffies + SI_TIMEOUT_JIFFIES);
->  
-> -		if (smi_info->thread)
-> -			wake_up_process(smi_info->thread);
-> +		if (smi_info->worker)
-> +			mod_delayed_kthread_work(smi_info->worker,
-> +						 &smi_info->work, 0);
->  
->  		start_next_msg(smi_info);
->  		smi_event_handler(smi_info, 0);
-> @@ -1008,10 +1011,10 @@ static inline int ipmi_si_is_busy(struct timespec64 *ts)
->  }
->  
->  static inline int ipmi_thread_busy_wait(enum si_sm_result smi_result,
-> -					const struct smi_info *smi_info,
-> -					struct timespec64 *busy_until)
-> +					struct smi_info *smi_info)
->  {
->  	unsigned int max_busy_us = 0;
-> +	struct timespec64 *busy_until = &smi_info->busy_until;
->  
->  	if (smi_info->intf_num < num_max_busy_us)
->  		max_busy_us = kipmid_max_busy_us[smi_info->intf_num];
-> @@ -1042,53 +1045,49 @@ static inline int ipmi_thread_busy_wait(enum si_sm_result smi_result,
->   * (if that is enabled).  See the paragraph on kimid_max_busy_us in
->   * Documentation/IPMI.txt for details.
->   */
-> -static int ipmi_thread(void *data)
-> +static void ipmi_func(struct kthread_work *work)
->  {
-> -	struct smi_info *smi_info = data;
-> +	struct smi_info *smi_info = container_of(work, struct smi_info,
-> +						 work.work);
->  	unsigned long flags;
->  	enum si_sm_result smi_result;
-> -	struct timespec64 busy_until;
-> +	int busy_wait;
->  
-> -	ipmi_si_set_not_busy(&busy_until);
-> -	set_user_nice(current, MAX_NICE);
-> -	while (!kthread_should_stop()) {
-> -		int busy_wait;
-> +next:
-> +	spin_lock_irqsave(&(smi_info->si_lock), flags);
-> +	smi_result = smi_event_handler(smi_info, 0);
->  
-> -		spin_lock_irqsave(&(smi_info->si_lock), flags);
-> -		smi_result = smi_event_handler(smi_info, 0);
-> +	/*
-> +	 * If the driver is doing something, there is a possible
-> +	 * race with the timer.  If the timer handler see idle,
-> +	 * and the thread here sees something else, the timer
-> +	 * handler won't restart the timer even though it is
-> +	 * required.  So start it here if necessary.
-> +	 */
-> +	if (smi_result != SI_SM_IDLE && !smi_info->timer_running)
-> +		smi_mod_timer(smi_info, jiffies + SI_TIMEOUT_JIFFIES);
->  
-> -		/*
-> -		 * If the driver is doing something, there is a possible
-> -		 * race with the timer.  If the timer handler see idle,
-> -		 * and the thread here sees something else, the timer
-> -		 * handler won't restart the timer even though it is
-> -		 * required.  So start it here if necessary.
-> -		 */
-> -		if (smi_result != SI_SM_IDLE && !smi_info->timer_running)
-> -			smi_mod_timer(smi_info, jiffies + SI_TIMEOUT_JIFFIES);
-> -
-> -		spin_unlock_irqrestore(&(smi_info->si_lock), flags);
-> -		busy_wait = ipmi_thread_busy_wait(smi_result, smi_info,
-> -						  &busy_until);
-> -		if (smi_result == SI_SM_CALL_WITHOUT_DELAY)
-> -			; /* do nothing */
-> -		else if (smi_result == SI_SM_CALL_WITH_DELAY && busy_wait)
-> -			schedule();
-> -		else if (smi_result == SI_SM_IDLE) {
-> -			if (atomic_read(&smi_info->need_watch)) {
-> -				schedule_timeout_interruptible(100);
-> -			} else {
-> -				/* Wait to be woken up when we are needed. */
-> -				__set_current_state(TASK_INTERRUPTIBLE);
-> -				schedule();
-> -			}
-> -		} else
-> -			schedule_timeout_interruptible(1);
-> +	spin_unlock_irqrestore(&(smi_info->si_lock), flags);
-> +	busy_wait = ipmi_thread_busy_wait(smi_result, smi_info);
-> +
-> +	if (smi_result == SI_SM_CALL_WITHOUT_DELAY)
-> +		goto next;
-> +	if (smi_result == SI_SM_CALL_WITH_DELAY && busy_wait) {
-> +		queue_delayed_kthread_work(smi_info->worker,
-> +					   &smi_info->work, 0);
-> +	} else if (smi_result == SI_SM_IDLE) {
-> +		if (atomic_read(&smi_info->need_watch)) {
-> +			queue_delayed_kthread_work(smi_info->worker,
-> +						   &smi_info->work, 100);
-> +		} else {
-> +			/* Nope. Wait to be queued when we are needed. */
-> +		}
-> +	} else {
-> +		queue_delayed_kthread_work(smi_info->worker,
-> +					   &smi_info->work, 1);
->  	}
-> -	return 0;
->  }
->  
-> -
->  static void poll(void *send_info)
->  {
->  	struct smi_info *smi_info = send_info;
-> @@ -1229,17 +1228,29 @@ static int smi_start_processing(void       *send_info,
->  		enable = 1;
->  
->  	if (enable) {
-> -		new_smi->thread = kthread_run(ipmi_thread, new_smi,
-> -					      "kipmi%d", new_smi->intf_num);
-> -		if (IS_ERR(new_smi->thread)) {
-> +		struct kthread_worker *worker;
-> +
-> +		worker = create_kthread_worker(0, "kipmi%d",
-> +					       new_smi->intf_num);
-> +
-> +		if (IS_ERR(worker)) {
->  			dev_notice(new_smi->dev, "Could not start"
->  				   " kernel thread due to error %ld, only using"
->  				   " timers to drive the interface\n",
-> -				   PTR_ERR(new_smi->thread));
-> -			new_smi->thread = NULL;
-> +				   PTR_ERR(worker));
-> +			goto out;
->  		}
-> +
-> +		ipmi_si_set_not_busy(&new_smi->busy_until);
-> +		set_user_nice(worker->task, MAX_NICE);
-> +
-> +		init_delayed_kthread_work(&new_smi->work, ipmi_func);
-> +		queue_delayed_kthread_work(worker, &new_smi->work, 0);
-> +
-> +		new_smi->worker = worker;
->  	}
->  
-> +out:
->  	return 0;
->  }
->  
-> @@ -3414,8 +3425,13 @@ static void check_for_broken_irqs(struct smi_info *smi_info)
->  
->  static inline void wait_for_timer_and_thread(struct smi_info *smi_info)
->  {
-> -	if (smi_info->thread != NULL)
-> -		kthread_stop(smi_info->thread);
-> +	if (smi_info->worker != NULL) {
-> +		struct kthread_worker *worker = smi_info->worker;
-> +
-> +		smi_info->worker = NULL;
-> +		cancel_delayed_kthread_work_sync(&smi_info->work);
-> +		destroy_kthread_worker(worker);
-> +	}
->  	if (smi_info->timer_running)
->  		del_timer_sync(&smi_info->si_timer);
->  }
+Dave.
+-- 
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
