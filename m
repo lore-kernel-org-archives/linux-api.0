@@ -1,80 +1,114 @@
-From: Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
-Subject: Re: [PATCH 06/18] [media] media.h: create connector entities for hybrid TV devices
-Date: Mon, 23 Nov 2015 20:09:02 +0200
-Message-ID: <2199127.5C1OIPJBTt@avalon>
-References: <cover.1441559233.git.mchehab@osg.samsung.com> <9af2bbe9e63004f843e8478bc3d31cd03ea75d64.1441559233.git.mchehab@osg.samsung.com>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: [GIT PULL] Kselftest fixes for 4.4-rc3
+Date: Mon, 23 Nov 2015 11:31:47 -0700
+Message-ID: <56535B93.8070401@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <9af2bbe9e63004f843e8478bc3d31cd03ea75d64.1441559233.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "open list:KERNEL SELFTEST F..." <linux-api@vger.kernel.org>, Shuah Khan <shuahkh@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Mauro,
+Hi Linus,
 
-Thank you for the patch.
+Could you please pull the following update for 4.4-rc3.
 
-On Sunday 06 September 2015 14:30:49 Mauro Carvalho Chehab wrote:
-> Add entities to represent the connectors that exists inside a
-> hybrid TV device.
-> 
-> Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-> 
-> diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
-> index b17f6763aff4..69433405aec2 100644
-> --- a/include/uapi/linux/media.h
-> +++ b/include/uapi/linux/media.h
-> @@ -61,6 +61,7 @@ struct media_device_info {
->  #define MEDIA_ENT_T_DVB_BASE		0x00000000
->  #define MEDIA_ENT_T_V4L2_BASE		0x00010000
->  #define MEDIA_ENT_T_V4L2_SUBDEV_BASE	0x00020000
-> +#define MEDIA_ENT_T_CONNECTOR_BASE	0x00030000
-> 
->  /*
->   * V4L2 entities - Those are used for DMA (mmap/DMABUF) and
-> @@ -105,6 +106,13 @@ struct media_device_info {
->  #define MEDIA_ENT_T_DVB_CA		(MEDIA_ENT_T_DVB_BASE + 4)
->  #define MEDIA_ENT_T_DVB_NET_DECAP	(MEDIA_ENT_T_DVB_BASE + 5)
-> 
-> +/* Connectors */
-> +#define MEDIA_ENT_T_CONN_RF		(MEDIA_ENT_T_CONNECTOR_BASE)
-> +#define MEDIA_ENT_T_CONN_SVIDEO		(MEDIA_ENT_T_CONNECTOR_BASE + 1)
-> +#define MEDIA_ENT_T_CONN_COMPOSITE	(MEDIA_ENT_T_CONNECTOR_BASE + 2)
-> +	/* For internal test signal generators and other debug connectors */
+thanks,
+-- Shuah
 
-No need to a \t at the beginning of the line.
+----------------------------------------------------------------------
+The following changes since commit 8005c49d9aea74d382f474ce11afbbc7d7130bec:
 
-> +#define MEDIA_ENT_T_CONN_TEST		(MEDIA_ENT_T_CONNECTOR_BASE + 3)
+  Linux 4.4-rc1 (2015-11-15 17:00:27 -0800)
 
-I'd like to see more information about this.
+are available in the git repository at:
 
-When later renaming types to functions you rename this type as well, and I'm 
-still not convinced that we shouldn't have both types and functions.
+  git://git.kernel.org/pub/scm/linux/kernel/git/shuah/linux-kselftest
+tags/linux-kselftest-4.4-rc3
 
-Let's discuss these topics and the one below on the documentation patches.
+for you to fetch changes up to 2ce47b44b25d8fb0114ff117813742adbefec8ff:
 
->  #ifndef __KERNEL__
->  /* Legacy symbols used to avoid userspace compilation breakages */
->  #define MEDIA_ENT_TYPE_SHIFT		16
-> @@ -121,9 +129,9 @@ struct media_device_info {
->  #define MEDIA_ENT_T_DEVNODE_DVB		(MEDIA_ENT_T_DEVNODE + 4)
->  #endif
-> 
-> -/* Entity types */
-> -
-> +/* Entity flags */
->  #define MEDIA_ENT_FL_DEFAULT		(1 << 0)
-> +#define MEDIA_ENT_FL_CONNECTOR		(1 << 1)
+  selftests/seccomp: Get page size from sysconf (2015-11-18 16:56:53 -0700)
 
-Ditto, I'm not sure about the use cases.
+----------------------------------------------------------------
+linux-kselftest-4.4-rc3
 
->  struct media_entity_desc {
->  	__u32 id;
+This update consists of one minor documentation fix and a fix
+to an existing test.
 
+----------------------------------------------------------------
+Bamvor Jian Zhang (1):
+      selftests/seccomp: Get page size from sysconf
+
+Wei Jiangang (1):
+      tools:testing/selftests: fix typo in futex/README
+
+ tools/testing/selftests/futex/README          |  2 +-
+ tools/testing/selftests/seccomp/seccomp_bpf.c | 11 +++++++----
+ 2 files changed, 8 insertions(+), 5 deletions(-)
+
+--------------------------------------------------------------------------
+
+
+diff --git a/tools/testing/selftests/futex/README
+b/tools/testing/selftests/futex/README
+index 3224a04..0558bb9 100644
+--- a/tools/testing/selftests/futex/README
++++ b/tools/testing/selftests/futex/README
+@@ -27,7 +27,7 @@ o The build system shall remain as simple as possible,
+avoiding any archive or
+ o Where possible, any helper functions or other package-wide code shall be
+   implemented in header files, avoiding the need to compile
+intermediate object
+   files.
+-o External dependendencies shall remain as minimal as possible.
+Currently gcc
++o External dependencies shall remain as minimal as possible. Currently gcc
+   and glibc are the only dependencies.
+ o Tests return 0 for success and < 0 for failure.
+
+diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c
+b/tools/testing/selftests/seccomp/seccomp_bpf.c
+index e38cc54..882fe83 100644
+--- a/tools/testing/selftests/seccomp/seccomp_bpf.c
++++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
+@@ -492,6 +492,9 @@ TEST_SIGNAL(KILL_one_arg_six, SIGSYS)
+        pid_t parent = getppid();
+        int fd;
+        void *map1, *map2;
++       int page_size = sysconf(_SC_PAGESIZE);
++
++       ASSERT_LT(0, page_size);
+
+        ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
+        ASSERT_EQ(0, ret);
+@@ -504,16 +507,16 @@ TEST_SIGNAL(KILL_one_arg_six, SIGSYS)
+
+        EXPECT_EQ(parent, syscall(__NR_getppid));
+        map1 = (void *)syscall(sysno,
+-               NULL, PAGE_SIZE, PROT_READ, MAP_PRIVATE, fd, PAGE_SIZE);
++               NULL, page_size, PROT_READ, MAP_PRIVATE, fd, page_size);
+        EXPECT_NE(MAP_FAILED, map1);
+        /* mmap2() should never return. */
+        map2 = (void *)syscall(sysno,
+-                NULL, PAGE_SIZE, PROT_READ, MAP_PRIVATE, fd, 0x0C0FFEE);
++                NULL, page_size, PROT_READ, MAP_PRIVATE, fd, 0x0C0FFEE);
+        EXPECT_EQ(MAP_FAILED, map2);
+
+        /* The test failed, so clean up the resources. */
+-       munmap(map1, PAGE_SIZE);
+-       munmap(map2, PAGE_SIZE);
++       munmap(map1, page_size);
++       munmap(map2, page_size);
+        close(fd);
+ }
+
+~
 -- 
-Regards,
-
-Laurent Pinchart
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh@osg.samsung.com | (970) 217-8978
