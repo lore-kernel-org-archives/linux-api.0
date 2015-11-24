@@ -1,8 +1,8 @@
 From: Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
 Subject: Re: [PATCH 2/2] mm/page_ref: add tracepoint to track down page
  reference manipulation
-Date: Tue, 24 Nov 2015 10:56:04 +0900
-Message-ID: <20151124015604.GB32335@js1304-P5Q-DELUXE>
+Date: Tue, 24 Nov 2015 10:45:28 +0900
+Message-ID: <20151124014527.GA32335@js1304-P5Q-DELUXE>
 References: <1447053784-27811-1-git-send-email-iamjoonsoo.kim@lge.com>
  <1447053784-27811-2-git-send-email-iamjoonsoo.kim@lge.com>
  <564C9A86.1090906@suse.cz>
@@ -66,11 +66,9 @@ On Mon, Nov 23, 2015 at 09:26:04AM -0500, Steven Rostedt wrote:
 > less bloat but doesn't solve the include problem. You still need to add
 > the include of that will cause havoc with other tracepoints.
 
-Yes, it also has include dependency problem so I can't use
-trace_page_ref_get_page_enabled() in mm.h.
-
-BTW, I try to open code trace_page_ref_get_page_enabled() in
-get_page() as following and it works fine.
+Yes, It also has a include dependency problem so I can't use
+trace_page_ref_get_page_enabled() in mm.h. BTW, I tested following
+implementation and it works fine.
 
 extern struct tracepoint __tracepoint_page_ref_get_page;
 
@@ -81,9 +79,10 @@ get_page()
                 stub_get_page()
 }
 
-I know that it's not good coding practice to use raw data structure,
-but, page reference management functions has complex dependency
-so I'm not sure I can solve it completely. For this special case, can
-I use it?
+This would not slow down fast path although it can't prevent bloat.
+I know that it isn't good code practice, but, this page reference
+handling functions have complex include dependency so I'm not sure
+I can solve it completely. For this special case, can I use
+this raw data structure?
 
 Thanks.
