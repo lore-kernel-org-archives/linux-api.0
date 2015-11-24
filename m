@@ -1,56 +1,80 @@
-From: Alexander Duyck <alexander.duyck@gmail.com>
-Subject: Re: [RFC PATCH V2 0/3] IXGBE/VFIO: Add live migration support for
- SRIOV NIC
-Date: Tue, 24 Nov 2015 06:20:29 -0800
-Message-ID: <5654722D.4010409@gmail.com>
-References: <1448372298-28386-1-git-send-email-tianyu.lan@intel.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH v3 07/22] kthread: Detect when a kthread work is used by
+ more workers
+Date: Tue, 24 Nov 2015 09:49:42 -0500
+Message-ID: <20151124144942.GC17033@mtj.duckdns.org>
+References: <1447853127-3461-1-git-send-email-pmladek@suse.com>
+ <1447853127-3461-8-git-send-email-pmladek@suse.com>
+ <20151123222703.GH19072@mtj.duckdns.org>
+ <20151124100650.GF10750@pathway.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <1448372298-28386-1-git-send-email-tianyu.lan@intel.com>
-Sender: netdev-owner@vger.kernel.org
-To: Lan Tianyu <tianyu.lan@intel.com>, a.motakis@virtualopensystems.com, alex.williamson@redhat.com, b.reynal@virtualopensystems.com, bhelgaas@google.com, carolyn.wyborny@intel.com, donald.c.skidmore@intel.com, eddie.dong@intel.com, nrupal.jani@intel.com, agraf@suse.de, kvm@vger.kernel.org, pbonzini@redhat.com, qemu-devel@nongnu.org, emil.s.tantilov@intel.com, gerlitz.or@gmail.com, mark.d.rustad@intel.com, mst@redhat.com, eric.auger@linaro.org, intel-wired-lan@lists.osuosl.org, jeffrey.t.kirsher@intel.com, jesse.brandeburg@intel.com, john.ronciak@intel.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, matthew.vick@intel.com, mitch.a.williams@intel.com, netdev@vger.kernel.org, shannon.nelson@intel.com, weiyang@linux.vnet.ibm.com, zajec5@gmail.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20151124100650.GF10750@pathway.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Petr Mladek <pmladek@suse.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 11/24/2015 05:38 AM, Lan Tianyu wrote:
-> This patchset is to propose a solution of adding live migration
-> support for SRIOV NIC.
->
-> During migration, Qemu needs to let VF driver in the VM to know
-> migration start and end. Qemu adds faked PCI migration capability
-> to help to sync status between two sides during migration.
->
-> Qemu triggers VF's mailbox irq via sending MSIX msg when migration
-> status is changed. VF driver tells Qemu its mailbox vector index
-> via the new PCI capability. In some cases(NIC is suspended or closed),
-> VF mailbox irq is freed and VF driver can disable irq injecting via
-> new capability.
->
-> VF driver will put down nic before migration and put up again on
-> the target machine.
->
-> Lan Tianyu (3):
->    VFIO: Add new ioctl cmd VFIO_GET_PCI_CAP_INFO
->    PCI: Add macros for faked PCI migration capability
->    Ixgbevf: Add migration support for ixgbevf driver
->
->   drivers/net/ethernet/intel/ixgbevf/ixgbevf.h      |   5 ++
->   drivers/net/ethernet/intel/ixgbevf/ixgbevf_main.c | 102 ++++++++++++++++++++++
->   drivers/vfio/pci/vfio_pci.c                       |  21 +++++
->   drivers/vfio/pci/vfio_pci_config.c                |  38 ++++++--
->   drivers/vfio/pci/vfio_pci_private.h               |   5 ++
->   include/uapi/linux/pci_regs.h                     |  18 +++-
->   include/uapi/linux/vfio.h                         |  12 +++
->   7 files changed, 194 insertions(+), 7 deletions(-)
+Hello, Petr.
 
-I'm still not a fan of this approach.  I really feel like this is 
-something that should be resolved by extending the existing PCI hot-plug 
-rather than trying to instrument this per driver.  Then you will get the 
-goodness for multiple drivers and multiple OSes instead of just one.  An 
-added advantage to dealing with this in the PCI hot-plug environment 
-would be that you could then still do a hot-plug even if the guest 
-didn't load a driver for the VF since you would be working with the PCI 
-slot instead of the device itself.
+On Tue, Nov 24, 2015 at 11:06:50AM +0100, Petr Mladek wrote:
+> > > @@ -610,6 +625,12 @@ repeat:
+> > >  	if (work) {
+> > >  		__set_current_state(TASK_RUNNING);
+> > >  		work->func(work);
+> > > +
+> > > +		spin_lock_irq(&worker->lock);
+> > > +		/* Allow to queue the work into another worker */
+> > > +		if (!kthread_work_pending(work))
+> > > +			work->worker = NULL;
+> > > +		spin_unlock_irq(&worker->lock);
+> > 
+> > Doesn't this mean that the work item can't be freed from its callback?
+> > That pattern tends to happen regularly.
+> 
+> I am not sure if I understand your question. Do you mean switching
+> work->func during the life time of the struct kthread_work? This
+> should not be affected by the above code.
 
-- Alex
+So, something like the following.
+
+void my_work_fn(work)
+{
+	struct my_struct *s = container_of(work, ...);
+
+	do something with s;
+	kfree(s);
+}
+
+and the queuer does
+
+	struct my_struct *s = kmalloc(sizeof(*s));
+
+	init s and s->work;
+	queue(&s->work);
+
+expecting s to be freed on completion.  IOW, you can't expect the work
+item to remain accessible once the work function starts executing.
+
+> The above code allows to queue an _unused_ kthread_work into any
+> kthread_worker. For example, it is needed for khugepaged,
+> see http://marc.info/?l=linux-kernel&m=144785344924871&w=2
+> The work is static but the worker can be started/stopped
+> (allocated/freed) repeatedly. It means that the work need
+> to be usable with many workers. But it is associated only
+> with one worker when being used.
+
+It can just re-init work items when it restarts workers, right?
+
+Thanks.
+
+-- 
+tejun
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
