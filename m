@@ -1,78 +1,77 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 3/8] cgroup: add function to get task's cgroup
-Date: Tue, 24 Nov 2015 11:27:28 -0500
-Message-ID: <20151124162728.GN17033@mtj.duckdns.org>
-References: <1447703505-29672-1-git-send-email-serge@hallyn.com>
-	<1447703505-29672-4-git-send-email-serge@hallyn.com>
+From: Petr Mladek <pmladek@suse.com>
+Subject: Re: [PATCH v3 07/22] kthread: Detect when a kthread work is used by
+ more workers
+Date: Tue, 24 Nov 2015 17:28:23 +0100
+Message-ID: <20151124162822.GJ10750@pathway.suse.cz>
+References: <1447853127-3461-1-git-send-email-pmladek@suse.com>
+ <1447853127-3461-8-git-send-email-pmladek@suse.com>
+ <20151123222703.GH19072@mtj.duckdns.org>
+ <20151124100650.GF10750@pathway.suse.cz>
+ <20151124144942.GC17033@mtj.duckdns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <1447703505-29672-4-git-send-email-serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+In-Reply-To: <20151124144942.GC17033@mtj.duckdns.org>
+Sender: owner-linux-mm@kvack.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+On Tue 2015-11-24 09:49:42, Tejun Heo wrote:
+> Hello, Petr.
+> 
+> On Tue, Nov 24, 2015 at 11:06:50AM +0100, Petr Mladek wrote:
+> > > > @@ -610,6 +625,12 @@ repeat:
+> > > >  	if (work) {
+> > > >  		__set_current_state(TASK_RUNNING);
+> > > >  		work->func(work);
+> > > > +
+> > > > +		spin_lock_irq(&worker->lock);
+> > > > +		/* Allow to queue the work into another worker */
+> > > > +		if (!kthread_work_pending(work))
+> > > > +			work->worker = NULL;
+> > > > +		spin_unlock_irq(&worker->lock);
+> > > 
+> > > Doesn't this mean that the work item can't be freed from its callback?
+> > > That pattern tends to happen regularly.
+> > 
+> > I am not sure if I understand your question. Do you mean switching
+> > work->func during the life time of the struct kthread_work? This
+> > should not be affected by the above code.
+> 
+>IOW, you can't expect the work
+> item to remain accessible once the work function starts executing.
 
-On Mon, Nov 16, 2015 at 01:51:40PM -0600, serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org wrote:
-> diff --git a/include/linux/cgroup.h b/include/linux/cgroup.h
-> index 22e3754..29f0b02 100644
-> --- a/include/linux/cgroup.h
-> +++ b/include/linux/cgroup.h
-> @@ -326,6 +326,7 @@ static inline bool css_tryget_online(struct cgroup_subsys_state *css)
->  		return percpu_ref_tryget_live(&css->refcnt);
->  	return true;
->  }
-> +struct cgroup *get_task_cgroup(struct task_struct *task);
+I see, I was not aware of this pattern.
 
-Please move this where other prototypes are.
 
-> +/*
-> + * get_task_cgroup - returns the cgroup of the task in the default cgroup
-> + * hierarchy.
-> + *
-> + * @task: target task
-> + * This function returns the @task's cgroup on the default cgroup hierarchy. The
-> + * returned cgroup has its reference incremented (by calling cgroup_get()). So
-> + * the caller must cgroup_put() the obtained reference once it is done with it.
-> + */
-> +struct cgroup *get_task_cgroup(struct task_struct *task)
-> +{
-> +	struct cgroup *cgrp;
-> +
-> +	mutex_lock(&cgroup_mutex);
-> +	spin_lock_bh(&css_set_lock);
-> +
-> +	cgrp = task_cgroup_from_root(task, &cgrp_dfl_root);
-> +	cgroup_get(cgrp);
-> +
-> +	spin_unlock_bh(&css_set_lock);
-> +	mutex_unlock(&cgroup_mutex);
-> +	return cgrp;
-> +}
-> +EXPORT_SYMBOL_GPL(get_task_cgroup);
+> > The above code allows to queue an _unused_ kthread_work into any
+> > kthread_worker. For example, it is needed for khugepaged,
+> > see http://marc.info/?l=linux-kernel&m=144785344924871&w=2
+> > The work is static but the worker can be started/stopped
+> > (allocated/freed) repeatedly. It means that the work need
+> > to be usable with many workers. But it is associated only
+> > with one worker when being used.
+>
+> It can just re-init work items when it restarts workers, right?
 
-So, exposing cgroup_mutex this way can lead to ugly lock dependency
-issues as cgroup_mutex is expected to be outside of pretty much
-everything.  task_cgroup_path() does it but it has no users (should
-prolly removed) and cgroup_attach_task_all() is pretty specific.
+Yes, this would work. It might be slightly inconvenient but
+it looks like a good compromise. It helps to keep the API
+implementation rather simple and rather secure.
 
-Hmmm... cc'ing Li (btw, please cc him and Johannes from the next
-posting).  Li, I don't think cset_cgroup_from_root() really needs
-cgroup_mutex.  css_set_lock seems to be enough.  What do you think?
+Alternatively, we could allow to queue the work on another worker
+if it is not pending. But then we would need to check the pending
+status without the worker->lock because work->worker might point
+to an already freed worker. We need to check the pending
+status in many situations. It might open a can of worms that
+I probably do not want to catch.
 
-Thanks.
+Thank you and PeterZ for explanation,
+Petr
 
--- 
-tejun
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
