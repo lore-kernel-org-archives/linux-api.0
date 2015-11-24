@@ -1,84 +1,122 @@
-From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH 14/18] [media] media-device: export the entity function
- via new ioctl
-Date: Tue, 24 Nov 2015 08:27:14 -0200
-Message-ID: <20151124082714.63d2530b@recife.lan>
-References: <cover.1441559233.git.mchehab@osg.samsung.com>
-	<13a08789f63775c6f014c08969bc8ed3f0550c82.1441559233.git.mchehab@osg.samsung.com>
-	<2850958.hkaPDHPL2k@avalon>
+From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
+Subject: Re: [PATCH v3 17/22] ipmi: Convert kipmi kthread into kthread worker
+ API
+Date: Tue, 24 Nov 2015 13:12:33 +0100
+Message-ID: <20151124121233.GH10750@pathway.suse.cz>
+References: <1447853127-3461-1-git-send-email-pmladek@suse.com>
+ <1447853127-3461-18-git-send-email-pmladek@suse.com>
+ <56536AA6.5040102@acm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <2850958.hkaPDHPL2k@avalon>
+Content-Disposition: inline
+In-Reply-To: <56536AA6.5040102-HInyCGIudOg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
-Cc: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Corey Minyard <minyard-HInyCGIudOg@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, openipmi-developer-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Em Mon, 23 Nov 2015 19:46:22 +0200
-Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org> escreveu:
-
-> Hi Mauro,
+On Mon 2015-11-23 13:36:06, Corey Minyard wrote:
 > 
-> Thank you for the patch.
 > 
-> On Sunday 06 September 2015 14:30:57 Mauro Carvalho Chehab wrote:
-> > Now that entities have a main function, expose it via
-> > MEDIA_IOC_G_TOPOLOGY ioctl.
-> > 
-> > Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-> > 
-> > diff --git a/drivers/media/media-device.c b/drivers/media/media-device.c
-> > index ccef9621d147..32090030c342 100644
-> > --- a/drivers/media/media-device.c
-> > +++ b/drivers/media/media-device.c
-> > @@ -263,6 +263,7 @@ static long __media_device_get_topology(struct
-> > media_device *mdev, /* Copy fields to userspace struct if not error */
-> >  		memset(&uentity, 0, sizeof(uentity));
-> >  		uentity.id = entity->graph_obj.id;
-> > +		uentity.function = entity->function;
-> >  		strncpy(uentity.name, entity->name,
-> >  			sizeof(uentity.name));
-> > 
-> > diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
-> > index 69433405aec2..d232cc680c67 100644
-> > --- a/include/uapi/linux/media.h
-> > +++ b/include/uapi/linux/media.h
-> > @@ -284,7 +284,8 @@ struct media_links_enum {
-> >  struct media_v2_entity {
-> >  	__u32 id;
-> >  	char name[64];		/* FIXME: move to a property? (RFC says so) */
-> > -	__u16 reserved[14];
-> > +	__u32 function;		/* Main function of the entity */
+> On 11/18/2015 07:25 AM, Petr Mladek wrote:
+> > Kthreads are currently implemented as an infinite loop. Each
+> > has its own variant of checks for terminating, freezing,
+> > awakening. In many cases it is unclear to say in which state
+> > it is and sometimes it is done a wrong way.
+> >
+> > The plan is to convert kthreads into kthread_worker or workqueues
+> > API. It allows to split the functionality into separate operations.
+> > It helps to make a better structure. Also it defines a clean state
+> > where no locks are taken, IRQs blocked, the kthread might sleep
+> > or even be safely migrated.
+> >
+> > The kthread worker API is useful when we want to have a dedicated
+> > single thread for the work. It helps to make sure that it is
+> > available when needed. Also it allows a better control, e.g.
+> > define a scheduling priority.
+> >
+> > This patch converts kipmi kthread into the kthread worker API because
+> > it modifies the scheduling priority. The change is quite straightforward.
 > 
-> Shouldn't we use kerneldoc instead of inline comments ?
+> I think this is correct.  That code was hard to get right, but I don't
+> see where any
+> logic is actually changed.
 
-We don't use kernel-doc for uAPI. Instead, we document those via the
-media infrastructure DocBook.
+I believe that it was hard to make it working.
 
-I don't object to use the same format here, but adding the uAPI stuff
-to both device-drivers.xml and media_api.xml doesn't seem right.
 
-That's said, we may eventually change the media infrastructure DocBook
-to also run the kernel-doc script and benefit of kernel-doc markups
-also for the uAPI, but this is out of the scope of this work, and would
-take some time to do it.
+> This also doesn't really look any simpler (you end up with more LOC than
+> you did before :) ),
+> though it will make things more consistent and reduce errors and that's
+> a good thing.
 
-So, at least for now, I would keep the comments like the above.
+I have just realized that the original code actually looks racy. For
+example, it does:
 
-> 
-> Also, as this is the main function only, I'd mention that in the subject line. 
+	__set_current_state(TASK_INTERRUPTIBLE);
+	schedule();
 
-OK.
+without rechecking the state in between. There might already be a new
+message and it might miss the wake_up_process(). Similar problem is
+with the schedule_timeout_interruptible(100); I mean:
 
-> The implementation itself looks fine to me, I'll discuss the API over the 
-> documentation patch.
 
-Ok.
-> 
-> > +	__u16 reserved[12];
-> >  };
-> > 
-> >  /* Should match the specific fields at media_intf_devnode */
-> 
+CPU 0					CPU 1
+
+
+ipmi_thread()
+  spin_lock_irqsave();
+  smi_result = smi_event_handler();
+  spin_unlock_irqrestore();
+
+  [...]
+  else if (smi_result == SI_SM_IDLE)
+    /* true */
+    if (atomic_read(need_watch)) {
+      /* true */
+
+					sender()
+					  spin_lock_irqsave()
+					  check_start_timer_thread()
+					    wake_up_process()
+
+					    /*
+					     * NOPE because kthread
+					     * is not sleeping
+					     */
+
+     schedule_timeout_interruptible(100);
+
+     /*
+      * We sleep 100 jiffies but
+      * there is a pending message.
+      */
+
+
+This is not a problem with the kthread worker API because
+
+	mod_delayed_kthread_work(smi_info->worker,
+				 &smi_info->work, 0);
+
+would queue the work to be done immediately and
+
+	queue_delayed_kthread_work(smi_info->worker,
+				   &smi_info->work, 100);
+
+would do nothing in this case.
+
+
+> My only comment is I would like the worker function named ipmi_worker,
+> not ipmi_func.
+
+You probably want it because the original name was ipmi_thread. But
+it might cause confusion with new_smi->worker. The function gets
+assigned to work->func, see struct kthread_work. Therefore I think that
+_func suffix makes more sense.
+
+> Reviewed-by: Corey Minyard <cminyard-Igf4POYTYCDQT0dZR+AlfA@public.gmane.org>
+
+
+Thanks a lot for review,
+Petr
