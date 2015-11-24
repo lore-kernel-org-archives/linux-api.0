@@ -1,25 +1,27 @@
-From: Tejun Heo <tj@kernel.org>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Subject: Re: [PATCH v3 07/22] kthread: Detect when a kthread work is used by
  more workers
-Date: Tue, 24 Nov 2015 09:49:42 -0500
-Message-ID: <20151124144942.GC17033@mtj.duckdns.org>
+Date: Tue, 24 Nov 2015 15:56:41 +0100
+Message-ID: <20151124145641.GV17308@twins.programming.kicks-ass.net>
 References: <1447853127-3461-1-git-send-email-pmladek@suse.com>
  <1447853127-3461-8-git-send-email-pmladek@suse.com>
  <20151123222703.GH19072@mtj.duckdns.org>
  <20151124100650.GF10750@pathway.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20151124100650.GF10750@pathway.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20151124100650.GF10750-KsEp0d+Q8qECVLCxKZUutA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
+Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hello, Petr.
-
 On Tue, Nov 24, 2015 at 11:06:50AM +0100, Petr Mladek wrote:
+> On Mon 2015-11-23 17:27:03, Tejun Heo wrote:
+> > Hello,
+> > 
+> > On Wed, Nov 18, 2015 at 02:25:12PM +0100, Petr Mladek wrote:
 > > > @@ -610,6 +625,12 @@ repeat:
 > > >  	if (work) {
 > > >  		__set_current_state(TASK_RUNNING);
@@ -38,43 +40,8 @@ On Tue, Nov 24, 2015 at 11:06:50AM +0100, Petr Mladek wrote:
 > work->func during the life time of the struct kthread_work? This
 > should not be affected by the above code.
 
-So, something like the following.
+No, work->func(work) doing: kfree(work).
 
-void my_work_fn(work)
-{
-	struct my_struct *s = container_of(work, ...);
-
-	do something with s;
-	kfree(s);
-}
-
-and the queuer does
-
-	struct my_struct *s = kmalloc(sizeof(*s));
-
-	init s and s->work;
-	queue(&s->work);
-
-expecting s to be freed on completion.  IOW, you can't expect the work
-item to remain accessible once the work function starts executing.
-
-> The above code allows to queue an _unused_ kthread_work into any
-> kthread_worker. For example, it is needed for khugepaged,
-> see http://marc.info/?l=linux-kernel&m=144785344924871&w=2
-> The work is static but the worker can be started/stopped
-> (allocated/freed) repeatedly. It means that the work need
-> to be usable with many workers. But it is associated only
-> with one worker when being used.
-
-It can just re-init work items when it restarts workers, right?
-
-Thanks.
-
--- 
-tejun
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+That is indeed something quite frequently done, and since you now have
+references to work after calling func, things would go *boom* rather
+quickly.
