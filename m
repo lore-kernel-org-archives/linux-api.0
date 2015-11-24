@@ -1,73 +1,84 @@
-From: Petr Mladek <pmladek@suse.com>
-Subject: Re: [PATCH v3 09/22] kthread: Allow to cancel kthread work
-Date: Tue, 24 Nov 2015 11:21:43 +0100
-Message-ID: <20151124102143.GG10750@pathway.suse.cz>
-References: <1447853127-3461-1-git-send-email-pmladek@suse.com>
- <1447853127-3461-10-git-send-email-pmladek@suse.com>
- <20151123225823.GI19072@mtj.duckdns.org>
+From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH 14/18] [media] media-device: export the entity function
+ via new ioctl
+Date: Tue, 24 Nov 2015 08:27:14 -0200
+Message-ID: <20151124082714.63d2530b@recife.lan>
+References: <cover.1441559233.git.mchehab@osg.samsung.com>
+	<13a08789f63775c6f014c08969bc8ed3f0550c82.1441559233.git.mchehab@osg.samsung.com>
+	<2850958.hkaPDHPL2k@avalon>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20151123225823.GI19072@mtj.duckdns.org>
-Sender: owner-linux-mm@kvack.org
-To: Tejun Heo <tj@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <2850958.hkaPDHPL2k@avalon>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
+Cc: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon 2015-11-23 17:58:23, Tejun Heo wrote:
-> Hello,
-> 
-> On Wed, Nov 18, 2015 at 02:25:14PM +0100, Petr Mladek wrote:
-> > +static int
-> > +try_to_cancel_kthread_work(struct kthread_work *work,
-> > +				   spinlock_t *lock,
-> > +				   unsigned long *flags)
-> > +{
-> > +	int ret = 0;
-> > +
-> > +	if (work->timer) {
-> > +		/* Try to cancel the timer if pending. */
-> > +		if (del_timer(work->timer)) {
-> > +			ret = 1;
-> > +			goto out;
-> > +		}
-> > +
-> > +		/* Are we racing with the timer callback? */
-> > +		if (timer_active(work->timer)) {
-> > +			/* Bad luck, need to avoid a deadlock. */
-> > +			spin_unlock_irqrestore(lock, *flags);
-> > +			del_timer_sync(work->timer);
-> > +			ret = -EAGAIN;
-> > +			goto out;
-> > +		}
-> 
-> As the timer side is already kinda trylocking anyway, can't the cancel
-> path be made simpler?  Sth like
-> 
-> 	lock(worker);
-> 	work->canceling = true;
-> 	del_timer_sync(work->timer);
-> 	unlock(worker);
-> 
-> And the timer can do (ignoring the multiple worker support, do we even
-> need that?)
-> 
-> 	while (!trylock(worker)) {
-> 		if (work->canceling)
-> 			return;
-> 		cpu_relax();
-> 	}
-> 	queue;
-> 	unlock(worker);
+Em Mon, 23 Nov 2015 19:46:22 +0200
+Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org> escreveu:
 
-Why did I not find out this myself ?:-)
+> Hi Mauro,
+> 
+> Thank you for the patch.
+> 
+> On Sunday 06 September 2015 14:30:57 Mauro Carvalho Chehab wrote:
+> > Now that entities have a main function, expose it via
+> > MEDIA_IOC_G_TOPOLOGY ioctl.
+> > 
+> > Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+> > 
+> > diff --git a/drivers/media/media-device.c b/drivers/media/media-device.c
+> > index ccef9621d147..32090030c342 100644
+> > --- a/drivers/media/media-device.c
+> > +++ b/drivers/media/media-device.c
+> > @@ -263,6 +263,7 @@ static long __media_device_get_topology(struct
+> > media_device *mdev, /* Copy fields to userspace struct if not error */
+> >  		memset(&uentity, 0, sizeof(uentity));
+> >  		uentity.id = entity->graph_obj.id;
+> > +		uentity.function = entity->function;
+> >  		strncpy(uentity.name, entity->name,
+> >  			sizeof(uentity.name));
+> > 
+> > diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
+> > index 69433405aec2..d232cc680c67 100644
+> > --- a/include/uapi/linux/media.h
+> > +++ b/include/uapi/linux/media.h
+> > @@ -284,7 +284,8 @@ struct media_links_enum {
+> >  struct media_v2_entity {
+> >  	__u32 id;
+> >  	char name[64];		/* FIXME: move to a property? (RFC says so) */
+> > -	__u16 reserved[14];
+> > +	__u32 function;		/* Main function of the entity */
+> 
+> Shouldn't we use kerneldoc instead of inline comments ?
 
-Thanks for hint,
-Petr
+We don't use kernel-doc for uAPI. Instead, we document those via the
+media infrastructure DocBook.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+I don't object to use the same format here, but adding the uAPI stuff
+to both device-drivers.xml and media_api.xml doesn't seem right.
+
+That's said, we may eventually change the media infrastructure DocBook
+to also run the kernel-doc script and benefit of kernel-doc markups
+also for the uAPI, but this is out of the scope of this work, and would
+take some time to do it.
+
+So, at least for now, I would keep the comments like the above.
+
+> 
+> Also, as this is the main function only, I'd mention that in the subject line. 
+
+OK.
+
+> The implementation itself looks fine to me, I'll discuss the API over the 
+> documentation patch.
+
+Ok.
+> 
+> > +	__u16 reserved[12];
+> >  };
+> > 
+> >  /* Should match the specific fields at media_intf_devnode */
+> 
