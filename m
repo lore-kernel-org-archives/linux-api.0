@@ -1,29 +1,34 @@
-From: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>
-Subject: Re: [PATCH v4 00/16] MADV_FREE support
-Date: Wed, 25 Nov 2015 12:36:46 -0500
-Message-ID: <20151125173646.GA10156@cmpxchg.org>
-References: <1448006568-16031-1-git-send-email-minchan@kernel.org>
- <20151124135851.bd50e261e30ed4e178baaef9@linux-foundation.org>
- <20151125025318.GA2678@bbox>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 7/8] cgroup: mount cgroupns-root when inside non-init
+ cgroupns
+Date: Wed, 25 Nov 2015 14:10:41 -0500
+Message-ID: <20151125191041.GB14240@htj.duckdns.org>
+References: <1447703505-29672-1-git-send-email-serge@hallyn.com>
+ <1447703505-29672-8-git-send-email-serge@hallyn.com>
+ <20151124171610.GS17033@mtj.duckdns.org>
+ <20151125060156.GA678@mail.hallyn.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20151125025318.GA2678@bbox>
+In-Reply-To: <20151125060156.GA678-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+To: "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Cc: serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 25, 2015 at 11:53:18AM +0900, Minchan Kim wrote:
-> That's really what we(Daniel, Michael and me) want so far.
-> A people who is reluctant to it is Johannes who wanted to support
-> MADV_FREE on swapless system via new LRU from the beginning.
-> 
-> If Johannes is not strong against Andrew's plan, I will resend
-> new patchset(ie, not including new stuff) based on next -mmotm.
-> 
-> Hannes?
+Hello, Serge.
 
-Yeah, let's shelve the new stuff for now and get this going. As Daniel
-said, the feature is already useful, and we can improve it later on.
+On Wed, Nov 25, 2015 at 12:01:56AM -0600, Serge E. Hallyn wrote:
+> that was my goal with https://git.kernel.org/cgit/linux/kernel/git/sergeh/linux-security.git/commit/?h=cgroupns.v4&id=8eb75d2bb24df59e262f050dce567d2332adc5f3
+> (which was sent inline earlier in this thread in response to Eric)  Does
+> that look sufficient?
+
+Hmmm... but that wouldn't work with non-root and user ns.  I think
+what's necessary is ensuring that namespace scoped mount never creates
+a new hierarchy but always reuses an existing one.
+
+Thanks.
+
+-- 
+tejun
