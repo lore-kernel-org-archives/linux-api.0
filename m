@@ -1,62 +1,48 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [RFC PATCH 00/10] Support for Cortex-M Prototyping System
-Date: Wed, 25 Nov 2015 12:22:24 +0100
-Message-ID: <20614077.l46PyO8gV6@wuerfel>
-References: <1448447621-17900-1-git-send-email-vladimir.murzin@arm.com>
+From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC PATCH V2 3/3] Ixgbevf: Add migration support for ixgbevf
+ driver
+Date: Wed, 25 Nov 2015 14:28:05 +0200
+Message-ID: <20151125142437-mutt-send-email-mst@redhat.com>
+References: <1448372298-28386-1-git-send-email-tianyu.lan@intel.com>
+ <1448372298-28386-4-git-send-email-tianyu.lan@intel.com>
+ <20151124230551-mutt-send-email-mst@redhat.com>
+ <56554994.1090305@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1448447621-17900-1-git-send-email-vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <56554994.1090305-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
-Cc: linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, afaerber-l3A5Bk7waGM@public.gmane.org, mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Mark.Rutland-5wv7dgnIgG8@public.gmane.org, Pawel.Moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Lan Tianyu <tianyu.lan-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, b.reynal-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, carolyn.wyborny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, donald.c.skidmore-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, eddie.dong-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, nrupal.jani-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, agraf-l3A5Bk7waGM@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, emil.s.tantilov-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, gerlitz.or-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mark.d.rustad-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, intel-wired-lan-qjLDD68F18P21nG7glBr7A@public.gmane.org, jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, jesse.brandeburg-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, john.ronciak-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, matthew.vick-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, mitch.a.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, shannon.nelson-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, weiyang-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wednesday 25 November 2015 10:33:31 Vladimir Murzin wrote:
-> Hi,
-> 
-> This patch series provide the basic support for running ucLinux on V2M-MPS2
-> platform.
-> 
-> With these patches applied ucLinux can be run on both HW and FVP models
-> with Cortex-M3/M4/M7 configurations.
-> 
-> Board description:
-> 
-> http://infocenter.arm.com/help/topic/com.arm.doc.100112_0100_03_en/arm_versatile_express_cortex_m_prototyping_system_(v2m_mps2)_technical_reference_manual_100112_0100_03_en.pdf
-> 
-> Application notes (cover Cortex-M3/M4/M7):
-> 
-> http://infocenter.arm.com/help/topic/com.arm.doc.dai0385a/DAI0385A_cortex_m3_on_v2m_mps2.pdf
-> http://infocenter.arm.com/help/topic/com.arm.doc.dai0386a/DAI0386A_cortex_m4_on_v2m_mps2.pdf
-> http://infocenter.arm.com/help/topic/com.arm.doc.dai0399a/DAI0399A_cortex_m7_on_v2m_mps2.pdf
-> http://infocenter.arm.com/help/topic/com.arm.doc.dai0400a/DAI0400A_cortex_m7_on_v2m_mps2.pdf
-> 
-> Cortex-M System Design Kit (referenced as CMDK from documents above):
-> 
-> http://infocenter.arm.com/help/topic/com.arm.doc.ddi0479c/DDI0479C_cortex_m_system_design_kit_r1p0_trm.pdf
-> 
-> I'd be happy to hear any feedback/comments on this series!
+On Wed, Nov 25, 2015 at 01:39:32PM +0800, Lan Tianyu wrote:
+> On 2015=E5=B9=B411=E6=9C=8825=E6=97=A5 05:20, Michael S. Tsirkin wrot=
+e:
+> > I have to say, I was much more interested in the idea
+> > of tracking dirty memory. I have some thoughts about
+> > that one - did you give up on it then?
+>=20
+> No, our finial target is to keep VF active before doing
+> migration and tracking dirty memory is essential. But this
+> seems not easy to do that in short term for upstream. As
+> starters, stop VF before migration.
 
-Looks pretty good overall, I didn't have any specific concerns.
+=46rankly, I don't really see what this short term hack buys us,
+and if it goes in, we'll have to maintain it forever.
 
-> Remain questions:
-> 
->  - Application notes 399/400 have PSRAM located at address different to what
->    we have for AN385/AN386, so I'm wondering what is the best practice to handle
->    CONFIG_DRAM_BASE? Different defconfig or there is better place?
+Also, assuming you just want to do ifdown/ifup for some reason, it's
+easy enough to do using a guest agent, in a completely generic way.
 
-I would not want to add more than one defconfig for a relatively simple
-platform. Most actual users would have to modify their config anyway, so
-I think it's best to just have one config file for the most common machine
-here and let users change the dram base if they have the other one.
 
-We can also look at using the Kconfig fragments infrastructure more here.
- 
->  - I'm not sure about naming of dts files: Application Notes (mps2-an*) vs Cortex-M (mps2-cm*);
->    any preference?
-
-I don't mind either way.
-
-	Arnd
+> After deep thinking, the way of stopping VF still needs tracking
+> DMA-accessed dirty memory to make sure the received data buffer
+> before stopping VF migrated. It's easier to do that via dummy writing
+> data buffer when receive packet.
+>=20
+>=20
+> --=20
+> Best regards
+> Tianyu Lan
