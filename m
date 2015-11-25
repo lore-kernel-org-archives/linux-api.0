@@ -1,41 +1,66 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 7/8] cgroup: mount cgroupns-root when inside non-init
- cgroupns
-Date: Wed, 25 Nov 2015 14:57:05 -0500
-Message-ID: <20151125195705.GE14240@htj.duckdns.org>
-References: <1447703505-29672-1-git-send-email-serge@hallyn.com>
- <1447703505-29672-8-git-send-email-serge@hallyn.com>
- <20151124171610.GS17033@mtj.duckdns.org>
- <20151125060156.GA678@mail.hallyn.com>
- <20151125191041.GB14240@htj.duckdns.org>
- <20151125195553.GA5852@ubuntumail>
+From: Rob Herring <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [RFC PATCH 01/10] dt-bindings: document the MPS2 timer bindings
+Date: Wed, 25 Nov 2015 14:04:53 -0600
+Message-ID: <20151125200441.GA30473@rob-hp-laptop>
+References: <1448447621-17900-1-git-send-email-vladimir.murzin@arm.com>
+ <1448447621-17900-2-git-send-email-vladimir.murzin@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20151125195553.GA5852@ubuntumail>
+In-Reply-To: <1448447621-17900-2-git-send-email-vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+To: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+Cc: arnd-r2nGTMty4D4@public.gmane.org, linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, afaerber-l3A5Bk7waGM@public.gmane.org, mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Mark.Rutland-5wv7dgnIgG8@public.gmane.org, Pawel.Moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 25, 2015 at 07:55:53PM +0000, Serge Hallyn wrote:
-> Quoting Tejun Heo (tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org):
-> > Hello, Serge.
-> > 
-> > On Wed, Nov 25, 2015 at 12:01:56AM -0600, Serge E. Hallyn wrote:
-> > > that was my goal with https://git.kernel.org/cgit/linux/kernel/git/sergeh/linux-security.git/commit/?h=cgroupns.v4&id=8eb75d2bb24df59e262f050dce567d2332adc5f3
-> > > (which was sent inline earlier in this thread in response to Eric)  Does
-> > > that look sufficient?
-> > 
-> > Hmmm... but that wouldn't work with non-root and user ns.  I think
+On Wed, Nov 25, 2015 at 10:33:32AM +0000, Vladimir Murzin wrote:
+> This adds documentation of device tree bindings for the
+> timers found on ARM MPS2 platform.
 > 
-> Are you sure?  IIUC that code block is only hit when we didn't find
-> an already-mounted subsystem.
+> Signed-off-by: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
 
-Heh, you're right.  This should work.
+Acked-by: Rob Herring <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 
-Thanks.
-
--- 
-tejun
+> ---
+>  .../devicetree/bindings/timer/arm,mps2-timer.txt   |   28 ++++++++++++++++++++
+>  1 file changed, 28 insertions(+)
+>  create mode 100644 Documentation/devicetree/bindings/timer/arm,mps2-timer.txt
+> 
+> diff --git a/Documentation/devicetree/bindings/timer/arm,mps2-timer.txt b/Documentation/devicetree/bindings/timer/arm,mps2-timer.txt
+> new file mode 100644
+> index 0000000..48f84d7
+> --- /dev/null
+> +++ b/Documentation/devicetree/bindings/timer/arm,mps2-timer.txt
+> @@ -0,0 +1,28 @@
+> +ARM MPS2 timer
+> +
+> +The MPS2 platform has simple general-purpose 32 bits timers.
+> +
+> +Required properties:
+> +- compatible	: Should be "arm,mps2-timer"
+> +- reg		: Address and length of the register set
+> +- interrupts	: Reference to the timer interrupt
+> +
+> +Required clocking property, have to be one of:
+> +- clocks	   : The input clock of the timer
+> +- clock-frequency : The rate in HZ in input of the ARM MPS2 timer
+> +
+> +Examples:
+> +
+> +timer1: mps2-timer@40000000 {
+> +	compatible = "arm,mps2-timer";
+> +	reg = <0x40000000 0x1000>;
+> +	interrupts = <8>;
+> +	clocks = <&sysclk>;
+> +};
+> +
+> +timer2: mps2-timer@40001000 {
+> +	compatible = "arm,mps2-timer";
+> +	reg = <0x40001000 0x1000>;
+> +	interrupts = <9>;
+> +	clock-frequency = <25000000>;
+> +};
+> -- 
+> 1.7.9.5
+> 
