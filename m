@@ -1,35 +1,43 @@
-From: Lan Tianyu <tianyu.lan-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC PATCH V2 3/3] Ixgbevf: Add migration support for ixgbevf
- driver
-Date: Wed, 25 Nov 2015 13:39:32 +0800
-Message-ID: <56554994.1090305@intel.com>
-References: <1448372298-28386-1-git-send-email-tianyu.lan@intel.com> <1448372298-28386-4-git-send-email-tianyu.lan@intel.com> <20151124230551-mutt-send-email-mst@redhat.com>
+From: "Serge E. Hallyn" <serge.hallyn@ubuntu.com>
+Subject: Re: [PATCH 7/8] cgroup: mount cgroupns-root when inside non-init
+ cgroupns
+Date: Wed, 25 Nov 2015 00:01:56 -0600
+Message-ID: <20151125060156.GA678@mail.hallyn.com>
+References: <1447703505-29672-1-git-send-email-serge@hallyn.com>
+ <1447703505-29672-8-git-send-email-serge@hallyn.com>
+ <20151124171610.GS17033@mtj.duckdns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151124230551-mutt-send-email-mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, b.reynal-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, carolyn.wyborny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, donald.c.skidmore-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, eddie.dong-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, nrupal.jani-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, agraf-l3A5Bk7waGM@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, emil.s.tantilov-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, gerlitz.or-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mark.d.rustad-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, intel-wired-lan-qjLDD68F18P21nG7glBr7A@public.gmane.org, jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, jesse.brandeburg-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, john.ronciak-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, matthew.vick-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, mitch.a.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, shannon.nelson-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, weiyang-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20151124171610.GS17033@mtj.duckdns.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: serge@hallyn.com, linux-kernel@vger.kernel.org, adityakali@google.com, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, cgroups@vger.kernel.org, lxc-devel@lists.linuxcontainers.org, akpm@linux-foundation.org, ebiederm@xmission.com
 List-Id: linux-api@vger.kernel.org
 
-On 2015=E5=B9=B411=E6=9C=8825=E6=97=A5 05:20, Michael S. Tsirkin wrote:
-> I have to say, I was much more interested in the idea
-> of tracking dirty memory. I have some thoughts about
-> that one - did you give up on it then?
+On Tue, Nov 24, 2015 at 12:16:10PM -0500, Tejun Heo wrote:
+...
+> > +		if (ns != &init_cgroup_ns) {
+> > +			struct dentry *nsdentry;
+> > +			struct cgroup *cgrp;
+> > +
+> > +			cgrp = cset_cgroup_from_root(ns->root_cgrps, root);
+> > +			nsdentry = kernfs_obtain_root(dentry->d_sb,
+> > +				cgrp->kn);
+> > +			dput(dentry);
+> > +			dentry = nsdentry;
+> > +		}
+> > +	}
+> 
+> So, this would effectively allow namespace mounts to claim controllers
+> which aren't configured otherwise which doesn't seem like a good idea.
+> I think the right thing to do for namespace mounts is to always
+> require an existing superblock.
 
-No, our finial target is to keep VF active before doing
-migration and tracking dirty memory is essential. But this
-seems not easy to do that in short term for upstream. As
-starters, stop VF before migration.
+that was my goal with https://git.kernel.org/cgit/linux/kernel/git/sergeh/linux-security.git/commit/?h=cgroupns.v4&id=8eb75d2bb24df59e262f050dce567d2332adc5f3
+(which was sent inline earlier in this thread in response to Eric)  Does
+that look sufficient?
 
-After deep thinking, the way of stopping VF still needs tracking
-DMA-accessed dirty memory to make sure the received data buffer
-before stopping VF migrated. It's easier to do that via dummy writing
-data buffer when receive packet.
-
-
---=20
-Best regards
-Tianyu Lan
+thanks,
+-serge
