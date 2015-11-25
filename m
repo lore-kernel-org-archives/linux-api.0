@@ -1,7 +1,7 @@
 From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: [RFC PATCH 04/10] serial: mps2-uart: add MPS2 UART driver
-Date: Wed, 25 Nov 2015 10:33:35 +0000
-Message-ID: <1448447621-17900-5-git-send-email-vladimir.murzin@arm.com>
+Subject: [RFC PATCH 02/10] clockevents/drivers: add MPS2 Timer driver
+Date: Wed, 25 Nov 2015 10:33:33 +0000
+Message-ID: <1448447621-17900-3-git-send-email-vladimir.murzin@arm.com>
 References: <1448447621-17900-1-git-send-email-vladimir.murzin@arm.com>
 Content-Type: text/plain; charset=WINDOWS-1252
 Content-Transfer-Encoding: quoted-printable
@@ -12,62 +12,55 @@ To: arnd@arndb.de, linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.le
 Cc: Mark.Rutland@arm.com, Pawel.Moll@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, jslaby@suse.cz, robh+dt@kernel.org, devicetree@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This driver adds support to the UART controller found on ARM MPS2
-platform.
+MPS2 platform has simple 32 bits general purpose countdown timers.
+
+The driver uses the first detected timer as a clocksource and the rest
+of the timers as a clockevent
 
 Signed-off-by: Vladimir Murzin <vladimir.murzin@arm.com>
 ---
- drivers/tty/serial/Kconfig       |   12 +
- drivers/tty/serial/Makefile      |    1 +
- drivers/tty/serial/mps2-uart.c   |  596 ++++++++++++++++++++++++++++++++++=
+ drivers/clocksource/Kconfig      |    5 +
+ drivers/clocksource/Makefile     |    1 +
+ drivers/clocksource/mps2-timer.c |  280 ++++++++++++++++++++++++++++++++++=
 ++++
- include/uapi/linux/serial_core.h |    3 +
- 4 files changed, 612 insertions(+)
- create mode 100644 drivers/tty/serial/mps2-uart.c
+ 3 files changed, 286 insertions(+)
+ create mode 100644 drivers/clocksource/mps2-timer.c
 
-diff --git a/drivers/tty/serial/Kconfig b/drivers/tty/serial/Kconfig
-index 1aec440..b47f8fc 100644
---- a/drivers/tty/serial/Kconfig
-+++ b/drivers/tty/serial/Kconfig
-@@ -1473,6 +1473,18 @@ config SERIAL_EFM32_UART
- =09  This driver support the USART and UART ports on
- =09  Energy Micro's efm32 SoCs.
+diff --git a/drivers/clocksource/Kconfig b/drivers/clocksource/Kconfig
+index 71cfdf7..552ab54 100644
+--- a/drivers/clocksource/Kconfig
++++ b/drivers/clocksource/Kconfig
+@@ -136,6 +136,11 @@ config CLKSRC_STM32
+ =09depends on OF && ARM && (ARCH_STM32 || COMPILE_TEST)
+ =09select CLKSRC_MMIO
 =20
-+config SERIAL_MPS2_UART_CONSOLE
-+=09bool "MPS2 UART console support"
-+=09depends on SERIAL_MPS2_UART
-+=09select SERIAL_CORE_CONSOLE
++config CLKSRC_MPS2
++=09bool "Clocksource for MPS2 SoCs"
++=09depends on OF && (ARM || COMPILE_TEST)
++=09select CLKSRC_MMIO
 +
-+config SERIAL_MPS2_UART
-+=09tristate "MPS2 UART port"
-+=09depends on ARM || COMPILE_TEST
-+=09select SERIAL_CORE
-+=09help
-+=09  This driver support the UART ports on ARM MPS2.
-+
- config SERIAL_EFM32_UART_CONSOLE
- =09bool "EFM32 UART/USART console support"
- =09depends on SERIAL_EFM32_UART=3Dy
-diff --git a/drivers/tty/serial/Makefile b/drivers/tty/serial/Makefile
-index 5ab4111..7f589f5 100644
---- a/drivers/tty/serial/Makefile
-+++ b/drivers/tty/serial/Makefile
-@@ -93,6 +93,7 @@ obj-$(CONFIG_SERIAL_CONEXANT_DIGICOLOR)=09+=3D digicolor-=
-usart.o
- obj-$(CONFIG_SERIAL_MEN_Z135)=09+=3D men_z135_uart.o
- obj-$(CONFIG_SERIAL_SPRD) +=3D sprd_serial.o
- obj-$(CONFIG_SERIAL_STM32)=09+=3D stm32-usart.o
-+obj-$(CONFIG_SERIAL_MPS2_UART)=09+=3D mps2-uart.o
-=20
- # GPIOLIB helpers for modem control lines
- obj-$(CONFIG_SERIAL_MCTRL_GPIO)=09+=3D serial_mctrl_gpio.o
-diff --git a/drivers/tty/serial/mps2-uart.c b/drivers/tty/serial/mps2-uart.=
-c
+ config ARM_ARCH_TIMER
+ =09bool
+ =09select CLKSRC_OF if OF
+diff --git a/drivers/clocksource/Makefile b/drivers/clocksource/Makefile
+index 56bd16e..7033b9c 100644
+--- a/drivers/clocksource/Makefile
++++ b/drivers/clocksource/Makefile
+@@ -39,6 +39,7 @@ obj-$(CONFIG_CLKSRC_EFM32)=09+=3D time-efm32.o
+ obj-$(CONFIG_CLKSRC_STM32)=09+=3D timer-stm32.o
+ obj-$(CONFIG_CLKSRC_EXYNOS_MCT)=09+=3D exynos_mct.o
+ obj-$(CONFIG_CLKSRC_LPC32XX)=09+=3D time-lpc32xx.o
++obj-$(CONFIG_CLKSRC_MPS2)=09+=3D mps2-timer.o
+ obj-$(CONFIG_CLKSRC_SAMSUNG_PWM)=09+=3D samsung_pwm_timer.o
+ obj-$(CONFIG_FSL_FTM_TIMER)=09+=3D fsl_ftm_timer.o
+ obj-$(CONFIG_VF_PIT_TIMER)=09+=3D vf_pit_timer.o
+diff --git a/drivers/clocksource/mps2-timer.c b/drivers/clocksource/mps2-ti=
+mer.c
 new file mode 100644
-index 0000000..00e882e
+index 0000000..77befe2
 --- /dev/null
-+++ b/drivers/tty/serial/mps2-uart.c
-@@ -0,0 +1,596 @@
++++ b/drivers/clocksource/mps2-timer.c
+@@ -0,0 +1,280 @@
 +/*
 + * Copyright (C) 2015 ARM Limited
 + *
@@ -77,610 +70,282 @@ index 0000000..00e882e
 + * it under the terms of the GNU General Public License version 2 as
 + * published by the Free Software Foundation.
 + *
-+ * TODO: support for SysRq
 + */
 +
 +#define pr_fmt(fmt)=09KBUILD_MODNAME ": " fmt
 +
-+#include <linux/bitops.h>
 +#include <linux/clk.h>
-+#include <linux/console.h>
++#include <linux/clockchips.h>
++#include <linux/clocksource.h>
++#include <linux/err.h>
++#include <linux/interrupt.h>
 +#include <linux/io.h>
-+#include <linux/kernel.h>
-+#include <linux/module.h>
-+#include <linux/of_device.h>
++#include <linux/irq.h>
++#include <linux/of_address.h>
 +#include <linux/of.h>
-+#include <linux/platform_device.h>
-+#include <linux/serial_core.h>
-+#include <linux/tty_flip.h>
-+#include <linux/types.h>
++#include <linux/of_irq.h>
++#include <linux/sched_clock.h>
++#include <linux/slab.h>
 +
-+#define SERIAL_NAME "ttyMPS"
-+#define DRIVER_NAME "mps2-uart"
-+#define MAKE_NAME(x) (DRIVER_NAME # x)
++#define TIMER_CTRL=09=090x0
++#define TIMER_CTRL_ENABLE=09BIT(0)
++#define TIMER_CTRL_IE=09=09BIT(3)
 +
-+#define UARTn_DATA=09=09=09=090x0
++#define TIMER_VALUE=09=090x4
++#define TIMER_RELOAD=09=090x8
++#define TIMER_INT=09=090xc
 +
-+#define UARTn_STATE=09=09=09=090x4
-+#define UARTn_STATE_TX_FULL=09=09=09BIT(0)
-+#define UARTn_STATE_RX_FULL=09=09=09BIT(1)
-+#define UARTn_STATE_TX_OVERRUN=09=09=09BIT(2)
-+#define UARTn_STATE_RX_OVERRUN=09=09=09BIT(3)
-+
-+#define UARTn_CTRL=09=09=09=090x8
-+#define UARTn_CTRL_TX_ENABLE=09=09=09BIT(0)
-+#define UARTn_CTRL_RX_ENABLE=09=09=09BIT(1)
-+#define UARTn_CTRL_TX_INT_ENABLE=09=09BIT(2)
-+#define UARTn_CTRL_RX_INT_ENABLE=09=09BIT(3)
-+#define UARTn_CTRL_TX_OVERRUN_INT_ENABLE=09BIT(4)
-+#define UARTn_CTRL_RX_OVERRUN_INT_ENABLE=09BIT(5)
-+
-+#define UARTn_INT=09=09=09=090xc
-+#define UARTn_INT_TX=09=09=09=09BIT(0)
-+#define UARTn_INT_RX=09=09=09=09BIT(1)
-+#define UARTn_INT_TX_OVERRUN=09=09=09BIT(2)
-+#define UARTn_INT_RX_OVERRUN=09=09=09BIT(3)
-+
-+#define UARTn_BAUDDIV=09=09=09=090x10
-+#define UARTn_BAUDDIV_MASK=09=09=09GENMASK(20, 0)
-+
-+#define MPS2_MAX_PORTS=09=09=09=093
-+
-+struct mps2_uart_port {
-+=09struct uart_port port;
-+=09struct clk *clk;
-+=09unsigned int tx_irq;
-+=09unsigned int rx_irq;
++struct clockevent_mps2 {
++=09void __iomem *reg;
++=09u32 clock_count_per_tick;
++=09struct clock_event_device clkevt;
 +};
 +
-+static inline struct mps2_uart_port *to_mps2_port(struct uart_port *port)
++static void __iomem *sched_clock_base;
++
++static u64 notrace mps2_sched_read(void)
 +{
-+=09return container_of(port, struct mps2_uart_port, port);
++        return ~readl_relaxed(sched_clock_base + TIMER_VALUE);
 +}
 +
-+static void mps2_uart_write8(struct uart_port *port, u8 val, unsigned off)
-+{
-+=09struct mps2_uart_port *mps_port =3D to_mps2_port(port);
 +
-+=09writeb(val, mps_port->port.membase + off);
++static inline struct clockevent_mps2 *to_mps2_clkevt(struct clock_event_de=
+vice *c)
++{
++=09return container_of(c, struct clockevent_mps2, clkevt);
 +}
 +
-+static u8 mps2_uart_read8(struct uart_port *port, unsigned off)
++static void clockevent_mps2_writel(u32 val, struct clock_event_device *c, =
+u32 offset)
 +{
-+=09struct mps2_uart_port *mps_port =3D to_mps2_port(port);
-+
-+=09return readb(mps_port->port.membase + off);
++=09writel(val, to_mps2_clkevt(c)->reg + offset);
 +}
 +
-+static void mps2_uart_write32(struct uart_port *port, u32 val, unsigned of=
-f)
++static int mps2_timer_shutdown(struct clock_event_device *ce)
 +{
-+=09struct mps2_uart_port *mps_port =3D to_mps2_port(port);
++=09clockevent_mps2_writel(0, ce, TIMER_RELOAD);
++=09clockevent_mps2_writel(0, ce, TIMER_CTRL);
 +
-+=09writel_relaxed(val, mps_port->port.membase + off);
++=09return 0;
 +}
 +
-+static unsigned int mps2_uart_tx_empty(struct uart_port *port)
++static int mps2_timer_set_next_event(unsigned long next, struct clock_even=
+t_device *ce)
 +{
-+=09u8 status =3D mps2_uart_read8(port, UARTn_STATE);
++=09clockevent_mps2_writel(next, ce, TIMER_VALUE);
++=09clockevent_mps2_writel(TIMER_CTRL_IE | TIMER_CTRL_ENABLE, ce, TIMER_CTR=
+L);
 +
-+=09return (status & UARTn_STATE_TX_FULL) ? 0 : TIOCSER_TEMT;
++=09return 0;
 +}
 +
-+static void mps2_uart_set_mctrl(struct uart_port *port, unsigned int mctrl=
-)
++static int mps2_timer_set_periodic(struct clock_event_device *ce)
 +{
++=09u32 clock_count_per_tick =3D to_mps2_clkevt(ce)->clock_count_per_tick;
++
++=09clockevent_mps2_writel(clock_count_per_tick, ce, TIMER_RELOAD);
++=09clockevent_mps2_writel(clock_count_per_tick, ce, TIMER_VALUE);
++=09clockevent_mps2_writel(TIMER_CTRL_IE | TIMER_CTRL_ENABLE, ce, TIMER_CTR=
+L);
++
++=09return 0;
 +}
 +
-+static unsigned int mps2_uart_get_mctrl(struct uart_port *port)
++static irqreturn_t mps2_timer_interrupt(int irq, void *dev_id)
 +{
-+=09return TIOCM_CAR | TIOCM_CTS | TIOCM_DSR;
++=09struct clockevent_mps2 *ce =3D dev_id;
++=09u32 status =3D readl(ce->reg + TIMER_INT);
++
++=09if (!status)
++=09=09return IRQ_NONE;
++
++=09writel(1, ce->reg + TIMER_INT);
++
++=09ce->clkevt.event_handler(&ce->clkevt);
++
++=09return IRQ_HANDLED;
 +}
 +
-+static void mps2_uart_stop_tx(struct uart_port *port)
++static int __init mps2_clockevents_init(struct device_node *np)
 +{
-+=09u8 control =3D mps2_uart_read8(port, UARTn_CTRL);
++=09void __iomem *base;
++=09struct clk *clk;
++=09struct irqaction *ia;
++=09struct clockevent_mps2 *ce;
++=09u32 rate;
++=09int irq, ret;
++=09const char *name =3D "mps2-clkevt";
 +
-+=09control &=3D ~(UARTn_CTRL_TX_ENABLE=09=09|
-+=09=09     UARTn_CTRL_TX_INT_ENABLE=09=09|
-+=09=09     UARTn_CTRL_TX_OVERRUN_INT_ENABLE);
++=09ret =3D of_property_read_u32(np, "clock-frequency", &rate);
 +
-+=09mps2_uart_write8(port, control, UARTn_CTRL);
-+}
-+
-+static void mps2_uart_tx_chars(struct uart_port *port)
-+{
-+=09struct circ_buf *xmit =3D &port->state->xmit;
-+
-+=09while (!(mps2_uart_read8(port, UARTn_STATE) & UARTn_STATE_TX_FULL)) {
-+=09=09if (port->x_char) {
-+=09=09=09mps2_uart_write8(port, port->x_char, UARTn_DATA);
-+=09=09=09port->x_char =3D 0;
-+=09=09=09port->icount.tx++;
-+=09=09=09continue;
++=09if (ret) {
++=09=09clk =3D of_clk_get(np, 0);
++=09=09if (IS_ERR(clk)) {
++=09=09=09ret =3D PTR_ERR(clk);
++=09=09=09pr_err("failed to get clock for clockevent: %d\n", ret);
++=09=09=09goto err_clk_get;
 +=09=09}
 +
-+=09=09if (uart_circ_empty(xmit) || uart_tx_stopped(port))
-+=09=09=09break;
++=09=09ret =3D clk_prepare_enable(clk);
++=09=09if (ret) {
++=09=09=09pr_err("failed to enable clock for clockevent: %d\n", ret);
++=09=09=09clk_put(clk);
++=09=09=09goto err_clk_enable;
++=09=09}
 +
-+=09=09mps2_uart_write8(port, xmit->buf[xmit->tail], UARTn_DATA);
-+=09=09xmit->tail =3D (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
-+=09=09port->icount.tx++;
++=09=09rate =3D clk_get_rate(clk);
 +=09}
 +
-+=09if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-+=09=09uart_write_wakeup(port);
-+
-+=09if (uart_circ_empty(xmit))
-+=09=09mps2_uart_stop_tx(port);
-+}
-+
-+static void mps2_uart_start_tx(struct uart_port *port)
-+{
-+=09u8 control =3D mps2_uart_read8(port, UARTn_CTRL);
-+
-+=09control |=3D (UARTn_CTRL_TX_ENABLE=09=09|
-+=09=09    UARTn_CTRL_TX_INT_ENABLE=09=09|
-+=09=09    UARTn_CTRL_TX_OVERRUN_INT_ENABLE);
-+
-+=09mps2_uart_write8(port, control, UARTn_CTRL);
-+=09mps2_uart_tx_chars(port);
-+}
-+
-+static void mps2_uart_stop_rx(struct uart_port *port)
-+{
-+=09u8 control =3D mps2_uart_read8(port, UARTn_CTRL);
-+
-+=09control &=3D ~(UARTn_CTRL_RX_ENABLE=09=09|
-+=09=09     UARTn_CTRL_RX_INT_ENABLE=09=09|
-+=09=09     UARTn_CTRL_RX_OVERRUN_INT_ENABLE);
-+
-+=09mps2_uart_write8(port, control, UARTn_CTRL);
-+}
-+
-+static void mps2_uart_enable_ms(struct uart_port *port)
-+{
-+}
-+
-+static void mps2_uart_break_ctl(struct uart_port *port, int ctl)
-+{
-+}
-+
-+static void mps2_uart_rx_chars(struct uart_port *port)
-+{
-+=09struct tty_port *tport =3D &port->state->port;
-+
-+=09while (mps2_uart_read8(port, UARTn_STATE) & UARTn_STATE_RX_FULL) {
-+=09=09u8 rxdata =3D mps2_uart_read8(port, UARTn_DATA);
-+
-+=09=09port->icount.rx++;
-+=09=09tty_insert_flip_char(&port->state->port, rxdata, TTY_NORMAL);
-+=09};
-+
-+=09spin_unlock(&port->lock);
-+=09tty_flip_buffer_push(tport);
-+=09spin_lock(&port->lock);
-+}
-+
-+static irqreturn_t mps2_uart_rxirq(int irq, void *data)
-+{
-+
-+=09struct uart_port *port =3D data;
-+=09u8 irqflag =3D mps2_uart_read8(port, UARTn_INT);
-+
-+=09if (unlikely(!(irqflag & UARTn_INT_RX)))
-+=09=09return IRQ_NONE;
-+
-+=09spin_lock(&port->lock);
-+
-+=09mps2_uart_write8(port, UARTn_INT_RX, UARTn_INT);
-+=09mps2_uart_rx_chars(port);
-+
-+=09spin_unlock(&port->lock);
-+
-+=09return IRQ_HANDLED;
-+}
-+
-+static irqreturn_t mps2_uart_txirq(int irq, void *data)
-+{
-+=09struct uart_port *port =3D data;
-+=09u8 irqflag =3D mps2_uart_read8(port, UARTn_INT);
-+
-+=09if (unlikely(!(irqflag & UARTn_INT_TX)))
-+=09=09return IRQ_NONE;
-+
-+=09mps2_uart_write8(port, UARTn_INT_TX, UARTn_INT);
-+=09mps2_uart_tx_chars(port);
-+
-+=09return IRQ_HANDLED;
-+}
-+
-+static irqreturn_t mps2_uart_oerrirq(int irq, void *data)
-+{
-+=09irqreturn_t handled =3D IRQ_NONE;
-+=09struct uart_port *port =3D data;
-+=09u8 irqflag =3D mps2_uart_read8(port, UARTn_INT);
-+
-+=09spin_lock(&port->lock);
-+
-+=09if (irqflag & UARTn_INT_RX_OVERRUN) {
-+=09=09struct tty_port *tport =3D &port->state->port;
-+
-+=09=09mps2_uart_write8(port, UARTn_INT_RX_OVERRUN, UARTn_INT);
-+=09=09tty_insert_flip_char(tport, 0, TTY_OVERRUN);
-+=09=09port->icount.overrun++;
-+=09=09handled =3D IRQ_HANDLED;
++=09base =3D of_iomap(np, 0);
++=09if (!base) {
++=09=09ret =3D -EADDRNOTAVAIL;
++=09=09pr_err("failed to map register for clockevent: %d\n", ret);
++=09=09goto err_iomap;
 +=09}
 +
-+=09/* XXX: this shouldn't happen? */
-+=09if (irqflag & UARTn_INT_TX_OVERRUN) {
-+=09=09mps2_uart_write8(port, UARTn_INT_TX_OVERRUN, UARTn_INT);
-+=09=09handled =3D IRQ_HANDLED;
++=09irq =3D irq_of_parse_and_map(np, 0);
++=09if (!irq) {
++=09=09ret =3D -ENOENT;
++=09=09pr_err("failed to get irq for clockevent: %d\n", ret);
++=09=09goto err_get_irq;
 +=09}
 +
-+=09spin_unlock(&port->lock);
++=09ce =3D kzalloc(sizeof(struct clockevent_mps2), GFP_KERNEL);
++=09if (!ce) {
++=09=09ret =3D -ENOMEM;
++=09=09pr_err("failed to allocate clockevent: %d\n", ret);
++=09=09goto err_ce_alloc;
++=09}
 +
-+=09return handled;
-+}
++=09ce->reg =3D base;
++=09ce->clock_count_per_tick =3D DIV_ROUND_CLOSEST(rate, HZ);
++=09ce->clkevt.irq =3D irq;
++=09ce->clkevt.name =3D name;
++=09ce->clkevt.rating =3D 200;
++=09ce->clkevt.features =3D CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHO=
+T;
++=09ce->clkevt.cpumask =3D cpu_possible_mask;
++=09ce->clkevt.set_state_shutdown=09=3D mps2_timer_shutdown,
++=09ce->clkevt.set_state_periodic=09=3D mps2_timer_set_periodic,
++=09ce->clkevt.set_state_oneshot=09=3D mps2_timer_shutdown,
++=09ce->clkevt.set_next_event=09=3D mps2_timer_set_next_event;
 +
-+static int mps2_uart_startup(struct uart_port *port)
-+{
-+=09struct mps2_uart_port *mps_port =3D to_mps2_port(port);
-+=09u8 control =3D mps2_uart_read8(port, UARTn_CTRL);
-+=09int ret;
++=09ia =3D kzalloc(sizeof(struct irqaction), GFP_KERNEL);
++=09if (!ia) {
++=09=09ret =3D -ENOMEM;
++=09=09pr_err("failed to allocate irqaction: %d\n", ret);
++=09=09goto err_ia_alloc;
++=09}
 +
-+=09control &=3D ~(UARTn_CTRL_RX_ENABLE=09=09|
-+=09=09     UARTn_CTRL_TX_ENABLE=09=09|
-+=09=09     UARTn_CTRL_RX_INT_ENABLE=09=09|
-+=09=09     UARTn_CTRL_TX_INT_ENABLE=09=09|
-+=09=09     UARTn_CTRL_RX_OVERRUN_INT_ENABLE=09|
-+=09=09     UARTn_CTRL_TX_OVERRUN_INT_ENABLE);
++=09ia->name =3D name;
++=09ia->flags =3D IRQF_TIMER;
++=09ia->handler =3D mps2_timer_interrupt;
++=09ia->dev_id =3D ce;
 +
-+=09mps2_uart_write8(port, control, UARTn_CTRL);
++=09writel(0, base + TIMER_CTRL);
 +
-+=09ret =3D request_irq(mps_port->rx_irq, mps2_uart_rxirq, 0,
-+=09=09=09  MAKE_NAME(-rx), mps_port);
++=09ret =3D setup_irq(irq, ia);
++
 +=09if (ret) {
-+=09=09pr_info("failed to register rxirq (%d)\n", ret);
-+=09=09goto err_no_rxirq;
++=09=09pr_err("failed to setup irq: %d\n", ret);
++=09=09goto err_setup_irq;
 +=09}
 +
-+=09ret =3D request_irq(mps_port->tx_irq, mps2_uart_txirq, 0,
-+=09=09=09  MAKE_NAME(-tx), mps_port);
++=09clockevents_config_and_register(&ce->clkevt, rate, 0xf, 0xffffffff);
++
++=09return 0;
++
++err_setup_irq:
++=09kfree(ia);
++err_ia_alloc:
++=09kfree(ce);
++err_ce_alloc:
++err_get_irq:
++=09iounmap(base);
++err_iomap:
++=09clk_disable_unprepare(clk);
++err_clk_enable:
++=09clk_put(clk);
++err_clk_get:
++=09return ret;
++}
++
++static int mps2_clocksource_init(struct device_node *np)
++{
++=09void __iomem *base;
++=09struct clk *clk;
++=09u32 rate;
++=09int ret;
++=09const char *name =3D "mps2-clksrc";
++
++=09ret =3D of_property_read_u32(np, "clock-frequency", &rate);
++
 +=09if (ret) {
-+=09=09pr_info("failed to register txirq (%d)\n", ret);
-+=09=09goto err_no_txirq;
++=09=09clk =3D of_clk_get(np, 0);
++=09=09if (IS_ERR(clk)) {
++=09=09=09ret =3D PTR_ERR(clk);
++=09=09=09pr_err("failed to get clock for clocksource: %d\n", ret);
++=09=09=09goto err_clk_get;
++=09=09}
++
++=09=09ret =3D clk_prepare_enable(clk);
++=09=09if (ret) {
++=09=09=09pr_err("failed to enable clock for clocksource: %d\n", ret);
++=09=09=09clk_put(clk);
++=09=09=09goto err_clk_enable;
++=09=09}
++
++=09=09rate =3D clk_get_rate(clk);
 +=09}
 +
-+=09ret =3D request_irq(port->irq, mps2_uart_oerrirq, IRQF_SHARED,
-+=09=09=09  MAKE_NAME(-overrun), mps_port);
-+
-+=09if (ret)
-+=09=09pr_info("failed to register oerrirq (%d)\n", ret);
-+=09else {
-+=09=09control |=3D UARTn_CTRL_RX_ENABLE=09=09=09|
-+=09=09=09   UARTn_CTRL_TX_ENABLE=09=09=09|
-+=09=09=09   UARTn_CTRL_RX_INT_ENABLE=09=09|
-+=09=09=09   UARTn_CTRL_TX_INT_ENABLE=09=09|
-+=09=09=09   UARTn_CTRL_RX_OVERRUN_INT_ENABLE=09|
-+=09=09=09   UARTn_CTRL_TX_OVERRUN_INT_ENABLE;
-+
-+=09=09mps2_uart_write8(port, control, UARTn_CTRL);
-+
-+=09=09return 0;
++=09base =3D of_iomap(np, 0);
++=09if (!base) {
++=09=09ret =3D -EADDRNOTAVAIL;
++=09=09pr_err("failed to map register for clocksource: %d\n", ret);
++=09=09goto err_iomap;
 +=09}
 +
-+=09free_irq(mps_port->tx_irq, mps_port);
-+err_no_txirq:
-+=09free_irq(mps_port->rx_irq, mps_port);
-+err_no_rxirq:
-+=09return ret;
-+}
++=09writel(0, base + TIMER_CTRL);
 +
-+static void mps2_uart_shutdown(struct uart_port *port)
-+{
-+=09struct mps2_uart_port *mps_port =3D to_mps2_port(port);
-+=09u8 control =3D mps2_uart_read8(port, UARTn_CTRL);
++=09writel(0xffffffff, base + TIMER_VALUE);
++=09writel(0xffffffff, base + TIMER_RELOAD);
 +
-+=09control &=3D ~(UARTn_CTRL_RX_ENABLE=09=09|
-+=09=09     UARTn_CTRL_TX_ENABLE=09=09|
-+=09=09     UARTn_CTRL_RX_INT_ENABLE=09=09|
-+=09=09     UARTn_CTRL_TX_INT_ENABLE=09=09|
-+=09=09     UARTn_CTRL_RX_OVERRUN_INT_ENABLE=09|
-+=09=09     UARTn_CTRL_TX_OVERRUN_INT_ENABLE);
++=09writel(TIMER_CTRL_ENABLE, base + TIMER_CTRL);
 +
-+=09mps2_uart_write8(port, control, UARTn_CTRL);
++=09ret =3D clocksource_mmio_init(base + TIMER_VALUE, name,
++=09=09=09=09    rate, 200, 32,
++=09=09=09=09    clocksource_mmio_readl_down);
++=09if (ret) {
++=09=09pr_err("failed to init clocksource: %d\n", ret);
++=09=09goto err_clocksource_init;
++=09}
 +
-+=09free_irq(mps_port->rx_irq, mps_port);
-+=09free_irq(mps_port->tx_irq, mps_port);
-+=09free_irq(port->irq, mps_port);
-+}
-+
-+static void mps2_uart_set_termios(struct uart_port *port,
-+=09struct ktermios *new, struct ktermios *old)
-+{
-+=09unsigned long flags;
-+=09unsigned int baud, bauddiv;
-+
-+=09new->c_cflag &=3D ~(CRTSCTS | CMSPAR);
-+=09new->c_cflag &=3D ~CSIZE;
-+=09new->c_cflag |=3D CS8;
-+=09new->c_cflag &=3D ~PARENB;
-+=09new->c_cflag &=3D ~CSTOPB;
-+
-+=09baud =3D uart_get_baud_rate(port, new, old,
-+=09=09=09DIV_ROUND_CLOSEST(port->uartclk, UARTn_BAUDDIV_MASK),
-+=09=09=09DIV_ROUND_CLOSEST(port->uartclk, 16));
-+
-+=09bauddiv =3D DIV_ROUND_CLOSEST(port->uartclk, baud);
-+
-+=09spin_lock_irqsave(&port->lock, flags);
-+
-+=09uart_update_timeout(port, new->c_cflag, baud);
-+=09mps2_uart_write32(port, bauddiv, UARTn_BAUDDIV);
-+
-+=09spin_unlock_irqrestore(&port->lock, flags);
-+}
-+
-+static const char *mps2_uart_type(struct uart_port *port)
-+{
-+=09return (port->type =3D=3D PORT_MPS2UART) ? DRIVER_NAME : NULL;
-+}
-+
-+static void mps2_uart_release_port(struct uart_port *port)
-+{
-+}
-+
-+static int mps2_uart_request_port(struct uart_port *port)
-+{
-+=09return 0;
-+}
-+
-+static void mps2_uart_config_port(struct uart_port *port, int type)
-+{
-+=09if (type & UART_CONFIG_TYPE && !mps2_uart_request_port(port))
-+=09=09port->type =3D PORT_MPS2UART;
-+}
-+
-+static int mps2_uart_verify_port(struct uart_port *port, struct serial_str=
-uct *serinfo)
-+{
-+=09return -EINVAL;
-+}
-+
-+static const struct uart_ops mps2_uart_pops =3D {
-+=09.tx_empty =3D mps2_uart_tx_empty,
-+=09.set_mctrl =3D mps2_uart_set_mctrl,
-+=09.get_mctrl =3D mps2_uart_get_mctrl,
-+=09.stop_tx =3D mps2_uart_stop_tx,
-+=09.start_tx =3D mps2_uart_start_tx,
-+=09.stop_rx =3D mps2_uart_stop_rx,
-+=09.enable_ms =3D mps2_uart_enable_ms,
-+=09.break_ctl =3D mps2_uart_break_ctl,
-+=09.startup =3D mps2_uart_startup,
-+=09.shutdown =3D mps2_uart_shutdown,
-+=09.set_termios =3D mps2_uart_set_termios,
-+=09.type =3D mps2_uart_type,
-+=09.release_port =3D mps2_uart_release_port,
-+=09.request_port =3D mps2_uart_request_port,
-+=09.config_port =3D mps2_uart_config_port,
-+=09.verify_port =3D mps2_uart_verify_port,
-+};
-+
-+static struct mps2_uart_port mps2_uart_ports[MPS2_MAX_PORTS];
-+
-+#ifdef CONFIG_SERIAL_MPS2_UART_CONSOLE
-+static void mps2_uart_console_putchar(struct uart_port *port, int ch)
-+{
-+=09while (mps2_uart_read8(port, UARTn_STATE) & UARTn_STATE_TX_FULL)
-+=09=09cpu_relax();
-+
-+=09mps2_uart_write8(port, ch, UARTn_DATA);
-+}
-+
-+static void mps2_uart_console_write(struct console *co, const char *s, uns=
-igned int cnt)
-+{
-+=09struct uart_port *port =3D &mps2_uart_ports[co->index].port;
-+
-+=09uart_console_write(port, s, cnt, mps2_uart_console_putchar);
-+}
-+
-+static int mps2_uart_console_setup(struct console *co, char *options)
-+{
-+=09struct mps2_uart_port *mps_port;
-+=09int baud =3D 9600;
-+=09int bits =3D 8;
-+=09int parity =3D 'n';
-+=09int flow =3D 'n';
-+
-+=09if (co->index < 0 || co->index >=3D MPS2_MAX_PORTS)
-+=09=09return -ENODEV;
-+
-+=09mps_port =3D &mps2_uart_ports[co->index];
-+
-+=09if (options)
-+=09=09uart_parse_options(options, &baud, &parity, &bits, &flow);
-+
-+=09return uart_set_options(&mps_port->port, co, baud, parity, bits, flow);
-+}
-+
-+static struct uart_driver mps2_uart_driver;
-+
-+static struct console mps2_uart_console =3D {
-+=09.name =3D SERIAL_NAME,
-+=09.device =3D uart_console_device,
-+=09.write =3D mps2_uart_console_write,
-+=09.setup =3D mps2_uart_console_setup,
-+=09.flags =3D CON_PRINTBUFFER,
-+=09.index =3D -1,
-+=09.data =3D &mps2_uart_driver,
-+};
-+
-+#define MPS2_SERIAL_CONSOLE (&mps2_uart_console)
-+
-+#else
-+#define MPS2_SERIAL_CONSOLE NULL
-+#endif
-+
-+static struct uart_driver mps2_uart_driver =3D {
-+=09.driver_name =3D DRIVER_NAME,
-+=09.dev_name =3D SERIAL_NAME,
-+=09.nr =3D MPS2_MAX_PORTS,
-+=09.cons =3D MPS2_SERIAL_CONSOLE,
-+};
-+
-+static struct mps2_uart_port *mps2_of_get_port(struct platform_device *pde=
-v)
-+{
-+=09struct device_node *np =3D pdev->dev.of_node;
-+=09int id;
-+
-+=09if (!np)
-+=09=09return NULL;
-+
-+=09id =3D of_alias_get_id(np, "serial");
-+=09if (id < 0)
-+=09=09id =3D 0;
-+
-+=09if (WARN_ON(id >=3D MPS2_MAX_PORTS))
-+=09=09return NULL;
-+
-+=09mps2_uart_ports[id].port.line =3D id;
-+=09return &mps2_uart_ports[id];
-+}
-+
-+static int mps2_init_port(struct mps2_uart_port *mps_port,
-+=09=09=09struct platform_device *pdev)
-+{
-+=09int ret =3D 0;
-+=09struct resource *res;
-+
-+=09res =3D platform_get_resource(pdev, IORESOURCE_MEM, 0);
-+=09mps_port->port.membase =3D devm_ioremap_resource(&pdev->dev, res);
-+=09if (IS_ERR(mps_port->port.membase))
-+=09=09return PTR_ERR(mps_port->port.membase);
-+
-+=09mps_port->port.mapbase =3D res->start;
-+=09mps_port->port.mapsize =3D resource_size(res);
-+
-+=09mps_port->rx_irq =3D platform_get_irq(pdev, 0);
-+=09mps_port->tx_irq =3D platform_get_irq(pdev, 1);
-+=09mps_port->port.irq =3D platform_get_irq(pdev, 2);
-+
-+=09mps_port->port.iotype =3D UPIO_MEM;
-+=09mps_port->port.flags =3D UPF_BOOT_AUTOCONF;
-+=09mps_port->port.fifosize =3D 1;
-+=09mps_port->port.ops =3D &mps2_uart_pops;
-+=09mps_port->port.dev =3D &pdev->dev;
-+
-+=09mps_port->clk =3D devm_clk_get(&pdev->dev, NULL);
-+=09if (IS_ERR(mps_port->clk))
-+=09=09return PTR_ERR(mps_port->clk);
-+
-+=09ret =3D clk_prepare_enable(mps_port->clk);
-+=09if (ret)
-+=09=09return ret;
-+
-+=09mps_port->port.uartclk =3D clk_get_rate(mps_port->clk);
-+=09if (!mps_port->port.uartclk)
-+=09=09ret =3D -EINVAL;
-+
-+=09clk_disable_unprepare(mps_port->clk);
-+
-+=09return ret;
-+}
-+
-+static int mps2_serial_probe(struct platform_device *pdev)
-+{
-+=09struct mps2_uart_port *mps_port;
-+=09int ret;
-+
-+=09mps_port =3D mps2_of_get_port(pdev);
-+=09if (!mps_port)
-+=09=09return -ENODEV;
-+
-+=09ret =3D mps2_init_port(mps_port, pdev);
-+=09if (ret)
-+=09=09return ret;
-+
-+=09ret =3D uart_add_one_port(&mps2_uart_driver, &mps_port->port);
-+=09if (ret)
-+=09=09return ret;
-+
-+=09platform_set_drvdata(pdev, mps_port);
++=09sched_clock_base =3D base;
++=09sched_clock_register(mps2_sched_read, 32, rate);
 +
 +=09return 0;
-+}
 +
-+static int mps2_serial_remove(struct platform_device *pdev)
-+{
-+=09struct mps2_uart_port *mps_port =3D platform_get_drvdata(pdev);
-+
-+=09uart_remove_one_port(&mps2_uart_driver, &mps_port->port);
-+
-+=09return 0;
-+}
-+
-+#ifdef CONFIG_OF
-+static const struct of_device_id mps2_match[] =3D {
-+=09{ .compatible =3D "arm,mps2-uart", },
-+=09{},
-+};
-+MODULE_DEVICE_TABLE(of, mps2_match);
-+#endif
-+
-+static struct platform_driver mps2_serial_driver =3D {
-+=09.probe =3D mps2_serial_probe,
-+=09.remove =3D mps2_serial_remove,
-+
-+=09.driver =3D {
-+=09=09.name =3D DRIVER_NAME,
-+=09=09.of_match_table =3D of_match_ptr(mps2_match),
-+=09},
-+};
-+
-+static int __init mps2_uart_init(void)
-+{
-+=09int ret;
-+
-+=09ret =3D uart_register_driver(&mps2_uart_driver);
-+=09if (ret)
-+=09=09return ret;
-+
-+=09ret =3D platform_driver_register(&mps2_serial_driver);
-+=09if (ret)
-+=09=09uart_unregister_driver(&mps2_uart_driver);
-+
-+=09pr_info("MPS2 UART driver initialized\n");
-+
++err_clocksource_init:
++=09iounmap(base);
++err_iomap:
++=09clk_disable_unprepare(clk);
++err_clk_enable:
++=09clk_put(clk);
++err_clk_get:
 +=09return ret;
-+}
-+module_init(mps2_uart_init);
 +
-+static void __exit mps2_uart_exit(void)
++}
++
++static void __init mps2_timer_init(struct device_node *np)
 +{
-+=09platform_driver_unregister(&mps2_serial_driver);
-+=09uart_unregister_driver(&mps2_uart_driver);
++=09static int clksrc;
++
++=09if (!clksrc && !mps2_clocksource_init(np))
++=09=09clksrc =3D 1;
++=09else
++=09=09mps2_clockevents_init(np);
 +}
-+module_exit(mps2_uart_exit);
 +
-+MODULE_AUTHOR("Vladimir Murzin <vladimir.murzin@arm.com>");
-+MODULE_DESCRIPTION("MPS2 UART driver");
-+MODULE_LICENSE("GPL v2");
-+MODULE_ALIAS("platform:" DRIVER_NAME);
-diff --git a/include/uapi/linux/serial_core.h b/include/uapi/linux/serial_c=
-ore.h
-index 93ba148..f097fe9 100644
---- a/include/uapi/linux/serial_core.h
-+++ b/include/uapi/linux/serial_core.h
-@@ -261,4 +261,7 @@
- /* STM32 USART */
- #define PORT_STM32=09113
-=20
-+/* MPS2 UART */
-+#define PORT_MPS2UART=09114
-+
- #endif /* _UAPILINUX_SERIAL_CORE_H */
++CLOCKSOURCE_OF_DECLARE(mps2_timer, "arm,mps2-timer", mps2_timer_init);
 --=20
 1.7.9.5
