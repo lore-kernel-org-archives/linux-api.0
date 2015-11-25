@@ -1,143 +1,68 @@
 From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: [RFC PATCH 10/10] ARM: dts: introduce MPS2 AN399/AN400
-Date: Wed, 25 Nov 2015 10:33:41 +0000
-Message-ID: <1448447621-17900-11-git-send-email-vladimir.murzin@arm.com>
+Subject: [RFC PATCH 01/10] dt-bindings: document the MPS2 timer bindings
+Date: Wed, 25 Nov 2015 10:33:32 +0000
+Message-ID: <1448447621-17900-2-git-send-email-vladimir.murzin@arm.com>
 References: <1448447621-17900-1-git-send-email-vladimir.murzin@arm.com>
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
 In-Reply-To: <1448447621-17900-1-git-send-email-vladimir.murzin@arm.com>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
 To: arnd@arndb.de, linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.lezcano@linaro.org, tglx@linutronix.de, u.kleine-koenig@pengutronix.de, afaerber@suse.de, mcoquelin.stm32@gmail.com
-Cc: Mark.Rutland@arm.com, Pawel.Moll@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, jslaby@suse.cz, robh+dt@kernel.org, devicetree@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
+Cc: Mark.Rutland@arm.com, devicetree@vger.kernel.org, Pawel.Moll@arm.com, ijc+devicetree@hellion.org.uk, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, robh+dt@kernel.org, linux-serial@vger.kernel.org, galak@codeaurora.org, jslaby@suse.cz, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-Application Notes 399 and 400 shares the same memory map and
-features. Both are shipped with Cortex-M7 and have the same  peripheral
-as AN385/AN386, but with different location of PSRAM and Ethernet
-controller.
+This adds documentation of device tree bindings for the
+timers found on ARM MPS2 platform.
 
 Signed-off-by: Vladimir Murzin <vladimir.murzin@arm.com>
 ---
- arch/arm/boot/dts/Makefile       |    4 +-
- arch/arm/boot/dts/mps2-an399.dts |   92 ++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 95 insertions(+), 1 deletion(-)
- create mode 100644 arch/arm/boot/dts/mps2-an399.dts
+ .../devicetree/bindings/timer/arm,mps2-timer.txt   |   28 ++++++++++++++++++++
+ 1 file changed, 28 insertions(+)
+ create mode 100644 Documentation/devicetree/bindings/timer/arm,mps2-timer.txt
 
-diff --git a/arch/arm/boot/dts/Makefile b/arch/arm/boot/dts/Makefile
-index 4ef3720..6603a1f 100644
---- a/arch/arm/boot/dts/Makefile
-+++ b/arch/arm/boot/dts/Makefile
-@@ -237,7 +237,9 @@ dtb-$(CONFIG_ARCH_MMP) +=3D \
- dtb-$(CONFIG_MACH_MESON8B) +=3D \
- =09meson8b-mxq.dtb \
- =09meson8b-odroidc1.dtb
--dtb-$(CONFIG_ARCH_MPS2) +=3D mps2-an385.dtb
-+dtb-$(CONFIG_ARCH_MPS2) +=3D \
-+=09mps2-an385.dtb \
-+=09mps2-an399.dtb
- dtb-$(CONFIG_ARCH_MOXART) +=3D \
- =09moxart-uc7112lx.dtb
- dtb-$(CONFIG_SOC_IMX1) +=3D \
-diff --git a/arch/arm/boot/dts/mps2-an399.dts b/arch/arm/boot/dts/mps2-an39=
-9.dts
+diff --git a/Documentation/devicetree/bindings/timer/arm,mps2-timer.txt b/Documentation/devicetree/bindings/timer/arm,mps2-timer.txt
 new file mode 100644
-index 0000000..e591d75
+index 0000000..48f84d7
 --- /dev/null
-+++ b/arch/arm/boot/dts/mps2-an399.dts
-@@ -0,0 +1,92 @@
-+/*
-+ * Copyright (C) 2015 ARM Limited
-+ *
-+ * Author: Vladimir Murzin <vladimir.murzin@arm.com>
-+ *
-+ * This file is dual-licensed: you can use it either under the terms
-+ * of the GPL or the X11 license, at your option. Note that this dual
-+ * licensing only applies to this file, and not this project as a
-+ * whole.
-+ *
-+ *  a) This file is free software; you can redistribute it and/or
-+ *     modify it under the terms of the GNU General Public License as
-+ *     published by the Free Software Foundation; either version 2 of the
-+ *     License, or (at your option) any later version.
-+ *
-+ *     This file is distributed in the hope that it will be useful,
-+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *     GNU General Public License for more details.
-+ *
-+ * Or, alternatively,
-+ *
-+ *  b) Permission is hereby granted, free of charge, to any person
-+ *     obtaining a copy of this software and associated documentation
-+ *     files (the "Software"), to deal in the Software without
-+ *     restriction, including without limitation the rights to use,
-+ *     copy, modify, merge, publish, distribute, sublicense, and/or
-+ *     sell copies of the Software, and to permit persons to whom the
-+ *     Software is furnished to do so, subject to the following
-+ *     conditions:
-+ *
-+ *     The above copyright notice and this permission notice shall be
-+ *     included in all copies or substantial portions of the Software.
-+ *
-+ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-+ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-+ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-+ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-+ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-+ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-+ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-+ *     OTHER DEALINGS IN THE SOFTWARE.
-+ */
++++ b/Documentation/devicetree/bindings/timer/arm,mps2-timer.txt
+@@ -0,0 +1,28 @@
++ARM MPS2 timer
 +
-+/dts-v1/;
++The MPS2 platform has simple general-purpose 32 bits timers.
 +
-+#include "mps2.dtsi"
++Required properties:
++- compatible	: Should be "arm,mps2-timer"
++- reg		: Address and length of the register set
++- interrupts	: Reference to the timer interrupt
 +
-+/ {
-+=09model =3D "ARM MPS2 Application Note 399/400";
-+=09compatible =3D "arm,mps2";
++Required clocking property, have to be one of:
++- clocks	   : The input clock of the timer
++- clock-frequency : The rate in HZ in input of the ARM MPS2 timer
 +
-+=09aliases {
-+=09=09serial0 =3D &uart0;
-+=09};
++Examples:
 +
-+=09chosen {
-+=09=09bootargs =3D "rdinit=3D/sbin/init earlycon";
-+=09=09stdout-path =3D "serial0:9600n8";
-+=09};
-+
-+=09memory {
-+=09=09device_type =3D "memory";
-+=09=09reg =3D <0x60000000 0x1000000>;
-+=09};
-+
-+
-+=09ethernet@a0000000 {
-+=09=09compatible =3D "smsc,lan9220", "smsc,lan9115";
-+=09=09reg =3D <0xa0000000 0x10000>;
-+=09=09interrupts =3D <13>;
-+=09=09interrupt-parent =3D <&nvic>;
-+=09=09smsc,irq-active-high;
-+=09};
++timer1: mps2-timer@40000000 {
++	compatible = "arm,mps2-timer";
++	reg = <0x40000000 0x1000>;
++	interrupts = <8>;
++	clocks = <&sysclk>;
 +};
 +
-+&uart0 {
-+=09status =3D "okay";
++timer2: mps2-timer@40001000 {
++	compatible = "arm,mps2-timer";
++	reg = <0x40001000 0x1000>;
++	interrupts = <9>;
++	clock-frequency = <25000000>;
 +};
-+
-+
-+&timer0 {
-+=09status =3D "okay";
-+};
-+
-+&timer1 {
-+=09status =3D "okay";
-+};
-+
-+&wdt {
-+=09status =3D "okay";
-+};
---=20
+-- 
 1.7.9.5
