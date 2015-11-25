@@ -1,51 +1,95 @@
-From: Philipp Zabel <p.zabel@pengutronix.de>
-Subject: Re: [RFC PATCH 1/2] drm: add support for for clk and de polarity
-Date: Wed, 25 Nov 2015 18:22:21 +0100
-Message-ID: <1448472141.3390.17.camel@pengutronix.de>
-References: <55A67FDB.8010602@gmx.at> <55A6813A.8090706@gmx.at>
+From: Alexander Duyck <alexander.duyck@gmail.com>
+Subject: Re: [RFC PATCH V2 3/3] Ixgbevf: Add migration support
+	for ixgbevf driver
+Date: Wed, 25 Nov 2015 09:24:51 -0800
+Message-ID: <CAKgT0UcGQoFUy8Y973sfkXZSvCA_wThtuJgmdxeebMsfSjf8Og@mail.gmail.com>
+References: <1448372298-28386-1-git-send-email-tianyu.lan@intel.com>
+	<1448372298-28386-4-git-send-email-tianyu.lan@intel.com>
+	<20151124230551-mutt-send-email-mst@redhat.com>
+	<56554994.1090305@intel.com>
+	<20151125142437-mutt-send-email-mst@redhat.com>
+	<5655DB99.3040007@intel.com>
+	<CAKgT0UdM5NGOARoiCNvh3Hu0xyvfJ-VoRqDu8bg6RyupSCEYHw@mail.gmail.com>
+	<20151125183435-mutt-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <55A6813A.8090706@gmx.at>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Manfred Schlaegl <manfred.schlaegl@gmx.at>
-Cc: linux-fbdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, Manfred Schlaegl <manfred.schlaegl@ginzinger.com>, Tomi Valkeinen <tomi.valkeinen@ti.com>, Steve Longerbeam <slongerbeam@gmail.com>, Deepak Das <deepak_das@mentor.com>, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org>
+In-Reply-To: <20151125183435-mutt-send-email-mst@redhat.com>
+List-Unsubscribe: <https://lists.nongnu.org/mailman/options/qemu-devel>,
+	<mailto:qemu-devel-request@nongnu.org?subject=unsubscribe>
+List-Archive: <http://lists.nongnu.org/archive/html/qemu-devel>
+List-Post: <mailto:qemu-devel@nongnu.org>
+List-Help: <mailto:qemu-devel-request@nongnu.org?subject=help>
+List-Subscribe: <https://lists.nongnu.org/mailman/listinfo/qemu-devel>,
+	<mailto:qemu-devel-request@nongnu.org?subject=subscribe>
+Errors-To: qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org
+Sender: qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org
+To: "Michael S. Tsirkin" <mst@redhat.com>
+Cc: Wei Yang <weiyang@linux.vnet.ibm.com>, "Tantilov,
+	Emil S" <emil.s.tantilov@intel.com>, kvm@vger.kernel.org, qemu-devel@nongnu.org, "Brandeburg,
+	Jesse" <jesse.brandeburg@intel.com>, "Rustad,
+	Mark D" <mark.d.rustad@intel.com>, Carolyn Wyborny <carolyn.wyborny@intel.com>, Eric Auger <eric.auger@linaro.org>, "Skidmore,
+	Donald C" <donald.c.skidmore@intel.com>, zajec5@gmail.com, Alexander Graf <agraf@suse.de>, intel-wired-lan <intel-wired-lan@lists.osuosl.org>, Jeff Kirsher <jeffrey.t.kirsher@intel.com>, Or Gerlitz <gerlitz.or@gmail.com>, Mitch Williams <mitch.a.williams@intel.com>, nrupal.jani@intel.com, Bjorn Helgaas <bhelgaas@google.com>, a.motakis@virtualopensystems.com, "Lan,
+	Tianyu" <tianyu.lan@intel.com>, b.reynal@virtualopensystems.com, linux-api@vger.kernel.org, "Nelson,
+	Shannon" <shannon.nelson@intel.com>, eddie.dong@intel.com, Alex Williamson <alex.williamson@r>
 List-Id: linux-api@vger.kernel.org
 
-QW0gTWl0dHdvY2gsIGRlbiAxNS4wNy4yMDE1LCAxNzo1MCArMDIwMCBzY2hyaWViIE1hbmZyZWQg
-U2NobGFlZ2w6Cj4gVG8gZ2V0IGZ1bGwgc3VwcG9ydCBmb3IgcGFyYWxsZWwgYW5kIExWRFMgZGlz
-cGxheXMgd2l0aCBkcm06Cj4gQWRkIHJlcHJlc2VudGF0aW9uIGZvciBjbG9jayBhbmQgZGF0YSBl
-bmFibGUgcG9sYXJpdHkgaW4gZHJtX2Rpc3BsYXlfbW9kZQo+IGZsYWdzIChzaW1pbGFyIHRvIEhT
-WU5DL1ZTWU5DIHBvbGFyaXR5KSBhbmQgdXBkYXRlIGNvbnZlcnNpb24gZnVuY3Rpb25zCj4gZnJv
-bS90byB2aWRlb21vZGUgYWNjb3JkaW5nbHkuCj4gCj4gVGhpcyBpcyBlc3BlY2lhbGx5IGltcG9y
-dGFudCBmb3IgZW1iZWRkZWQgZGV2aWNlcyB3aGVyZSBwYXJhbGxlbChSR0IpIGFuZAo+IExWRFMg
-ZGlzcGxheXMgYXJlIHN0aWxsIHdpZGVseSB1c2VkIGFuZCBkcm0gYWxyZWFkeSBwbGF5cyBhbiBp
-bXBvcnRhbnQKPiByb2xlLgo+IAo+IFRlc3RlZCBvbiBGcmVlc2NhbGUgaS5NWDUzKHBhcmFsbGVs
-KSBhbmQgaS5NWDYoTFZEUykuCj4gCj4gQmFja2dyb3VuZDoKPiBUaGVyZSB3YXMgdGhlIGFiaWxp
-dHkgdG8gc2V0IHBvbGFyaXR5IG9mIGNsb2NrIGFuZCBkYXRhIGVuYWJsZSBzaWduYWxzCj4gaW4g
-ZGV2aWNldHJlZShkaXNwbGF5LXRpbWluZyksIHN0cnVjdCBkaXNwbGF5X3RpbWluZyBhbmQgc3Ry
-dWN0IHZpZGVvbW9kZSwKPiBidXQgdGhlcmUgd2FzIG5vIHJlcHJlc2VudGF0aW9uIGZvciB0aGlz
-IGluIHN0cnVjdCBkcm1fZGlzcGxheV9tb2RlLgo+IEV4YW1wbGUgb24gRnJlZXNjYWxlIGkuTVg1
-My9pLk1YNiBTb0MnczoKPiAgKiBBIHBhcmFsbGVsIGRpc3BsYXkgdXNpbmcgZGlmZmVyZW50IGNs
-b2NrIHBvbGFyaXR5IGlzIHNldCB1cCB1c2luZwo+ICAgIGRpc3BsYXktdGltaW5nIGluIGRldmlj
-ZXRyZWUKPiAgKiBpcHV2MyBwYXJhbGxlbCBvdXRwdXRzIGNsb2NrIHdpdGggd3JvbmcgcG9sYXJp
-dHkKPiAKPiBTaWduZWQtb2ZmLWJ5OiBNYW5mcmVkIFNjaGxhZWdsIDxtYW5mcmVkLnNjaGxhZWds
-QGdteC5hdD4KCkFueSBjb21tZW50cyBvbiB3aGV0aGVyIGRhdGEgZW5hYmxlIGFuZCBwaXhlbCBj
-bG9jayBwb2xhcml0eSBmbGFncyBjYW4KYmUgYWRkZWQgdG8gdGhlIHZpc2libGUgRFJNX01PREVf
-RkxBR3MsIGFuZCBpZiBub3QsIHdoZXJlIGVsc2UgdGhpcwppbmZvcm1hdGlvbiBzaG91bGQgYmUg
-a2VwdD8gc3RydWN0IGRybV9kaXNwbGF5X2luZm8/CgpUaGlzIHBhdGNoIGFuZCB0aGUgZm9sbG93
-aW5nIElQVXYzIHBhdGNoIGFyZSB1c2VmdWwgYW5kIG5lY2Vzc2FyeSBmb3IKcXVpdGUgc29tZSBw
-YW5lbHMgY29ubmVjdGVkIHRvIGkuTVggU29DcywgYnV0IGFkZGluZyBEUk1fTU9ERV9GTEFHcyBp
-cwpzb21ld2hhdCBvdXQgb2YgbXkganVyaXNkaWN0aW9uLgoKYmVzdCByZWdhcmRzClBoaWxpcHAK
-Cl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCmRyaS1kZXZl
-bCBtYWlsaW5nIGxpc3QKZHJpLWRldmVsQGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwOi8vbGlz
-dHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4vbGlzdGluZm8vZHJpLWRldmVsCg==
+On Wed, Nov 25, 2015 at 8:39 AM, Michael S. Tsirkin <mst@redhat.com> wrote:
+> On Wed, Nov 25, 2015 at 08:24:38AM -0800, Alexander Duyck wrote:
+>> >> Also, assuming you just want to do ifdown/ifup for some reason, it's
+>> >> easy enough to do using a guest agent, in a completely generic way.
+>> >>
+>> >
+>> > Just ifdown/ifup is not enough for migration. It needs to restore some PCI
+>> > settings before doing ifup on the target machine
+>>
+>> That is why I have been suggesting making use of suspend/resume logic
+>> that is already in place for PCI power management.  In the case of a
+>> suspend/resume we already have to deal with the fact that the device
+>> will go through a D0->D3->D0 reset so we have to restore all of the
+>> existing state.  It would take a significant load off of Qemu since
+>> the guest would be restoring its own state instead of making Qemu have
+>> to do all of the device migration work.
+>
+> That can work, though again, the issue is you need guest
+> cooperation to migrate.
+
+Right now the problem is you need to have guest cooperation anyway as
+you need to have some way of tracking the dirty pages.  If the IOMMU
+on the host were to provide some sort of dirty page tracking then we
+could exclude the guest from the equation, but until then we need the
+guest to notify us of what pages it is letting the device dirty.  I'm
+still of the opinion that the best way to go there is to just modify
+the DMA API that is used in the guest so that it supports some sort of
+page flag modification or something along those lines so we can track
+all of the pages that might be written to by the device.
+
+> If you reset device on destination instead of restoring state,
+> then that issue goes away, but maybe the downtime
+> will be increased.
+
+Yes, the downtime will be increased, but it shouldn't be by much.
+Depending on the setup a VF with a single queue can have about 3MB of
+data outstanding when you move the driver over.  After that it is just
+a matter of bringing the interface back up which should take only a
+few hundred milliseconds assuming the PF is fairly responsive.
+
+> Will it really? I think it's worth it to start with the
+> simplest solution (reset on destination) and see
+> what the effect is, then add optimizations.
+
+Agreed.  My thought would be to start with something like
+dma_mark_clean() that could be used to take care of marking the pages
+for migration when they are unmapped or synced.
+
+> One thing that I've been thinking about for a while, is saving (some)
+> state speculatively.  For example, notify guest a bit before migration
+> is done, so it can save device state. If guest responds quickly, you
+> have state that can be restored.  If it doesn't, still migrate, and it
+> will have to reset on destination.
+
+I'm not sure how much more device state we really need to save.  The
+driver in the guest has to have enough state to recover in the event
+of a device failure resulting in a slot reset.  To top it off the
+driver is able to reconfigure things probably as quick as we could if
+we were restoring the state.
