@@ -1,50 +1,44 @@
-From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v4 00/16] MADV_FREE support
-Date: Wed, 25 Nov 2015 11:53:18 +0900
-Message-ID: <20151125025318.GA2678@bbox>
-References: <1448006568-16031-1-git-send-email-minchan@kernel.org>
- <20151124135851.bd50e261e30ed4e178baaef9@linux-foundation.org>
+From: Lan Tianyu <tianyu.lan-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH V2 0/3] IXGBE/VFIO: Add live migration support for
+ SRIOV NIC
+Date: Wed, 25 Nov 2015 11:18:32 +0800
+Message-ID: <56552888.90108@intel.com>
+References: <1448372298-28386-1-git-send-email-tianyu.lan@intel.com> <5654722D.4010409@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20151124135851.bd50e261e30ed4e178baaef9-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+In-Reply-To: <5654722D.4010409-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+To: Alexander Duyck <alexander.duyck-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, b.reynal-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, carolyn.wyborny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, donald.c.skidmore-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, eddie.dong-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, nrupal.jani-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, agraf-l3A5Bk7waGM@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, emil.s.tantilov-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, gerlitz.or-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mark.d.rustad-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, intel-wired-lan-qjLDD68F18P21nG7glBr7A@public.gmane.org, jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, jesse.brandeburg-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, john.ronciak-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, matthew.vick-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, mitch.a.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, shannon.nelson-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, weiyang-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Andrew,
+On 2015=E5=B9=B411=E6=9C=8824=E6=97=A5 22:20, Alexander Duyck wrote:
+> I'm still not a fan of this approach.  I really feel like this is
+> something that should be resolved by extending the existing PCI hot-p=
+lug
+> rather than trying to instrument this per driver.  Then you will get =
+the
+> goodness for multiple drivers and multiple OSes instead of just one. =
+ An
+> added advantage to dealing with this in the PCI hot-plug environment
+> would be that you could then still do a hot-plug even if the guest
+> didn't load a driver for the VF since you would be working with the P=
+CI
+> slot instead of the device itself.
+>=20
+> - Alex
 
-On Tue, Nov 24, 2015 at 01:58:51PM -0800, Andrew Morton wrote:
-> On Fri, 20 Nov 2015 17:02:32 +0900 Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> 
-> > I have been spent a lot of time to land MADV_FREE feature
-> > by request of userland people(esp, Daniel and Jason, jemalloc guys.
-> 
-> A couple of things...
-> 
-> There's a massive and complex reject storm against Kirill's page-flags
-> and thp changes.  The problems in hugetlb.c are more than I can
-> reasonably fix up, sorry.  How would you feel about redoing the patches
-> against next -mm?
+Hi Alex:
+	What's you mentioned seems the bonding driver solution.
+Paper "Live Migration with Pass-through Device for Linux VM" describes
+it. It does VF hotplug during migration. In order to maintain Network
+connection when VF is out, it takes advantage of Linux bonding driver t=
+o
+switch between VF NIC and emulated NIC. But the side affects, that
+requires VM to do additional configure and the performance during
+switching two NIC is not good.
 
-No problem at all.
-
-> 
-> Secondly, "mm: introduce lazyfree LRU list" and "mm: support MADV_FREE
-> on swapless system" are new, and require significant reviewer
-> attention.  But there's so much other stuff flying around that I doubt
-> if we'll get effective review.  So perhaps it would be best to shelve
-> those new things and introduce them later, after the basic old
-> MADV_FREE work has settled in?
-> 
-
-That's really what we(Daniel, Michael and me) want so far.
-A people who is reluctant to it is Johannes who wanted to support
-MADV_FREE on swapless system via new LRU from the beginning.
-
-If Johannes is not strong against Andrew's plan, I will resend
-new patchset(ie, not including new stuff) based on next -mmotm.
-
-Hannes?
+--=20
+Best regards
+Tianyu Lan
