@@ -1,62 +1,37 @@
-From: Rob Herring <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [RFC PATCH 03/10] dt-bindings: document the MPS2 UART bindings
-Date: Wed, 25 Nov 2015 14:07:29 -0600
-Message-ID: <20151125200729.GJ30473@rob-hp-laptop>
-References: <1448447621-17900-1-git-send-email-vladimir.murzin@arm.com>
- <1448447621-17900-4-git-send-email-vladimir.murzin@arm.com>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: [PATCH v3 02/22] kthread/smpboot: Do not park in
+ kthread_create_on_cpu()
+Date: Wed, 25 Nov 2015 22:16:16 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1511252216040.12555@nanos>
+References: <1447853127-3461-1-git-send-email-pmladek@suse.com> <1447853127-3461-3-git-send-email-pmladek@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1448447621-17900-4-git-send-email-vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+In-Reply-To: <1447853127-3461-3-git-send-email-pmladek-IBi9RG/b67k@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
-Cc: arnd-r2nGTMty4D4@public.gmane.org, linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, afaerber-l3A5Bk7waGM@public.gmane.org, mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Mark.Rutland-5wv7dgnIgG8@public.gmane.org, Pawel.Moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 25, 2015 at 10:33:34AM +0000, Vladimir Murzin wrote:
-> This adds documentation of device tree bindings for the
-> UART found on ARM MPS2 platform
+On Wed, 18 Nov 2015, Petr Mladek wrote:
+> kthread_create_on_cpu() was added by the commit 2a1d446019f9a5983e
+> ("kthread: Implement park/unpark facility"). It is currently used
+> only when enabling new CPU. For this purpose, the newly created
+> kthread has to be parked.
 > 
-> Signed-off-by: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
-
-Why did ARM invent a new UART?
-
-Acked-by: Rob Herring <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
-
-> ---
->  .../devicetree/bindings/serial/arm,mps2-uart.txt   |   22 ++++++++++++++++++++
->  1 file changed, 22 insertions(+)
->  create mode 100644 Documentation/devicetree/bindings/serial/arm,mps2-uart.txt
+> The CPU binding is a bit tricky. The kthread is parked when the CPU
+> has not been allowed yet. And the CPU is bound when the kthread
+> is unparked.
 > 
-> diff --git a/Documentation/devicetree/bindings/serial/arm,mps2-uart.txt b/Documentation/devicetree/bindings/serial/arm,mps2-uart.txt
-> new file mode 100644
-> index 0000000..b3f7cb1
-> --- /dev/null
-> +++ b/Documentation/devicetree/bindings/serial/arm,mps2-uart.txt
-> @@ -0,0 +1,22 @@
-> +ARM MPS2 UART
-> +
-> +Required properties:
-> +- compatible	: Should be "arm,mps2-uart"
-> +- reg		: Address and length of the register set
-> +- interrupts	: Reference to the UART RX, TX and overrun interrupts
-> +
-> +Required clocking property:
-> +- clocks	: The input clock of the UART
-> +
-> +
-> +Examples:
-> +
-> +uart0: serial@40004000 {
-> +	compatible = "arm,mps2-uart";
-> +	reg = <0x40004000 0x1000>;
-> +	interrupts = <0 1 12>;
-> +	clocks = <&sysclk>;
-> +};
-> +
-> +
-> +
-> -- 
-> 1.7.9.5
+> The function would be useful for more per-CPU kthreads, e.g.
+> bnx2fc_thread, fcoethread. For this purpose, the newly created
+> kthread should stay in the uninterruptible state.
 > 
+> This patch moves the parking into smpboot. It binds the thread
+> already when created. Then the function might be used universally.
+> Also the behavior is consistent with kthread_create() and
+> kthread_create_on_node().
+> 
+> Signed-off-by: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
+
+Reviewed-by: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
