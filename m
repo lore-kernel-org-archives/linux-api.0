@@ -1,91 +1,50 @@
-From: Rob Herring <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v5 4/4] devicetree: update documentation for fw_cfg ARM
- bindings
-Date: Tue, 24 Nov 2015 20:42:43 -0600
-Message-ID: <20151125024243.GA8005@rob-hp-laptop>
-References: <1448294264-17388-1-git-send-email-somlo@cmu.edu>
- <1448294264-17388-5-git-send-email-somlo@cmu.edu>
+From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v4 00/16] MADV_FREE support
+Date: Wed, 25 Nov 2015 11:53:18 +0900
+Message-ID: <20151125025318.GA2678@bbox>
+References: <1448006568-16031-1-git-send-email-minchan@kernel.org>
+ <20151124135851.bd50e261e30ed4e178baaef9@linux-foundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1448294264-17388-5-git-send-email-somlo-D+Gtc/HYRWM@public.gmane.org>
+In-Reply-To: <20151124135851.bd50e261e30ed4e178baaef9-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
-Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, eric-WhKQ6XTQaPysTnJN9+BGXg@public.gmane.org, hanjun.guo-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, sudeep.holla-5wv7dgnIgG8@public.gmane.org, agross-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, jordan.l.justen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, stefanha-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, revol-GANU6spQydw@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 23, 2015 at 10:57:44AM -0500, Gabriel L. Somlo wrote:
-> From: Gabriel Somlo <somlo-D+Gtc/HYRWM@public.gmane.org>
-> 
-> Remove fw_cfg hardware interface details from
-> Documentation/devicetree/bindings/arm/fw-cfg.txt,
-> and replace them with a pointer to the authoritative
-> documentation in the QEMU source tree.
-> 
-> Signed-off-by: Gabriel Somlo <somlo-D+Gtc/HYRWM@public.gmane.org>
-> Cc: Laszlo Ersek <lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Hi Andrew,
 
-Acked-by: Rob Herring <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+On Tue, Nov 24, 2015 at 01:58:51PM -0800, Andrew Morton wrote:
+> On Fri, 20 Nov 2015 17:02:32 +0900 Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> 
+> > I have been spent a lot of time to land MADV_FREE feature
+> > by request of userland people(esp, Daniel and Jason, jemalloc guys.
+> 
+> A couple of things...
+> 
+> There's a massive and complex reject storm against Kirill's page-flags
+> and thp changes.  The problems in hugetlb.c are more than I can
+> reasonably fix up, sorry.  How would you feel about redoing the patches
+> against next -mm?
 
-> ---
->  Documentation/devicetree/bindings/arm/fw-cfg.txt | 38 ++----------------------
->  1 file changed, 2 insertions(+), 36 deletions(-)
+No problem at all.
+
 > 
-> diff --git a/Documentation/devicetree/bindings/arm/fw-cfg.txt b/Documentation/devicetree/bindings/arm/fw-cfg.txt
-> index 953fb64..ce27386 100644
-> --- a/Documentation/devicetree/bindings/arm/fw-cfg.txt
-> +++ b/Documentation/devicetree/bindings/arm/fw-cfg.txt
-> @@ -11,43 +11,9 @@ QEMU exposes the control and data register to ARM guests as memory mapped
->  registers; their location is communicated to the guest's UEFI firmware in the
->  DTB that QEMU places at the bottom of the guest's DRAM.
->  
-> -The guest writes a selector value (a key) to the selector register, and then
-> -can read the corresponding data (produced by QEMU) via the data register. If
-> -the selected entry is writable, the guest can rewrite it through the data
-> -register.
-> +The authoritative guest-side hardware interface documentation to the fw_cfg
-> +device ca be found in "docs/specs/fw_cfg.txt" in the QEMU source tree.
->  
-> -The selector register takes keys in big endian byte order.
-> -
-> -The data register allows accesses with 8, 16, 32 and 64-bit width (only at
-> -offset 0 of the register). Accesses larger than a byte are interpreted as
-> -arrays, bundled together only for better performance. The bytes constituting
-> -such a word, in increasing address order, correspond to the bytes that would
-> -have been transferred by byte-wide accesses in chronological order.
-> -
-> -The interface allows guest firmware to download various parameters and blobs
-> -that affect how the firmware works and what tables it installs for the guest
-> -OS. For example, boot order of devices, ACPI tables, SMBIOS tables, kernel and
-> -initrd images for direct kernel booting, virtual machine UUID, SMP information,
-> -virtual NUMA topology, and so on.
-> -
-> -The authoritative registry of the valid selector values and their meanings is
-> -the QEMU source code; the structure of the data blobs corresponding to the
-> -individual key values is also defined in the QEMU source code.
-> -
-> -The presence of the registers can be verified by selecting the "signature" blob
-> -with key 0x0000, and reading four bytes from the data register. The returned
-> -signature is "QEMU".
-> -
-> -The outermost protocol (involving the write / read sequences of the control and
-> -data registers) is expected to be versioned, and/or described by feature bits.
-> -The interface revision / feature bitmap can be retrieved with key 0x0001. The
-> -blob to be read from the data register has size 4, and it is to be interpreted
-> -as a uint32_t value in little endian byte order. The current value
-> -(corresponding to the above outer protocol) is zero.
-> -
-> -The guest kernel is not expected to use these registers (although it is
-> -certainly allowed to); the device tree bindings are documented here because
-> -this is where device tree bindings reside in general.
->  
->  Required properties:
->  
-> -- 
-> 2.4.3
+> Secondly, "mm: introduce lazyfree LRU list" and "mm: support MADV_FREE
+> on swapless system" are new, and require significant reviewer
+> attention.  But there's so much other stuff flying around that I doubt
+> if we'll get effective review.  So perhaps it would be best to shelve
+> those new things and introduce them later, after the basic old
+> MADV_FREE work has settled in?
 > 
-> --
-> To unsubscribe from this list: send the line "unsubscribe devicetree" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+That's really what we(Daniel, Michael and me) want so far.
+A people who is reluctant to it is Johannes who wanted to support
+MADV_FREE on swapless system via new LRU from the beginning.
+
+If Johannes is not strong against Andrew's plan, I will resend
+new patchset(ie, not including new stuff) based on next -mmotm.
+
+Hannes?
