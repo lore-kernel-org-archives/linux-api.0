@@ -1,7 +1,7 @@
 From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: [RFC PATCH 02/10] clockevents/drivers: add MPS2 Timer driver
-Date: Wed, 25 Nov 2015 10:33:33 +0000
-Message-ID: <1448447621-17900-3-git-send-email-vladimir.murzin@arm.com>
+Subject: [RFC PATCH 09/10] ARM: dts: introduce MPS2 AN385/AN386
+Date: Wed, 25 Nov 2015 10:33:40 +0000
+Message-ID: <1448447621-17900-10-git-send-email-vladimir.murzin@arm.com>
 References: <1448447621-17900-1-git-send-email-vladimir.murzin@arm.com>
 Content-Type: text/plain; charset=WINDOWS-1252
 Content-Transfer-Encoding: quoted-printable
@@ -12,340 +12,361 @@ To: arnd@arndb.de, linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.le
 Cc: Mark.Rutland@arm.com, Pawel.Moll@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, jslaby@suse.cz, robh+dt@kernel.org, devicetree@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-MPS2 platform has simple 32 bits general purpose countdown timers.
-
-The driver uses the first detected timer as a clocksource and the rest
-of the timers as a clockevent
+Application Notes 385 and 386 shares the same memory map and features
+except the CPU is used. AN385 is supplied with Cortex-M3 CPU and AN386
+is supplied with Cortex-M4.
 
 Signed-off-by: Vladimir Murzin <vladimir.murzin@arm.com>
 ---
- drivers/clocksource/Kconfig      |    5 +
- drivers/clocksource/Makefile     |    1 +
- drivers/clocksource/mps2-timer.c |  280 ++++++++++++++++++++++++++++++++++=
+ arch/arm/boot/dts/Makefile       |    1 +
+ arch/arm/boot/dts/mps2-an385.dts |   90 +++++++++++++++
+ arch/arm/boot/dts/mps2.dtsi      |  227 ++++++++++++++++++++++++++++++++++=
 ++++
- 3 files changed, 286 insertions(+)
- create mode 100644 drivers/clocksource/mps2-timer.c
+ 3 files changed, 318 insertions(+)
+ create mode 100644 arch/arm/boot/dts/mps2-an385.dts
+ create mode 100644 arch/arm/boot/dts/mps2.dtsi
 
-diff --git a/drivers/clocksource/Kconfig b/drivers/clocksource/Kconfig
-index 71cfdf7..552ab54 100644
---- a/drivers/clocksource/Kconfig
-+++ b/drivers/clocksource/Kconfig
-@@ -136,6 +136,11 @@ config CLKSRC_STM32
- =09depends on OF && ARM && (ARCH_STM32 || COMPILE_TEST)
- =09select CLKSRC_MMIO
-=20
-+config CLKSRC_MPS2
-+=09bool "Clocksource for MPS2 SoCs"
-+=09depends on OF && (ARM || COMPILE_TEST)
-+=09select CLKSRC_MMIO
-+
- config ARM_ARCH_TIMER
- =09bool
- =09select CLKSRC_OF if OF
-diff --git a/drivers/clocksource/Makefile b/drivers/clocksource/Makefile
-index 56bd16e..7033b9c 100644
---- a/drivers/clocksource/Makefile
-+++ b/drivers/clocksource/Makefile
-@@ -39,6 +39,7 @@ obj-$(CONFIG_CLKSRC_EFM32)=09+=3D time-efm32.o
- obj-$(CONFIG_CLKSRC_STM32)=09+=3D timer-stm32.o
- obj-$(CONFIG_CLKSRC_EXYNOS_MCT)=09+=3D exynos_mct.o
- obj-$(CONFIG_CLKSRC_LPC32XX)=09+=3D time-lpc32xx.o
-+obj-$(CONFIG_CLKSRC_MPS2)=09+=3D mps2-timer.o
- obj-$(CONFIG_CLKSRC_SAMSUNG_PWM)=09+=3D samsung_pwm_timer.o
- obj-$(CONFIG_FSL_FTM_TIMER)=09+=3D fsl_ftm_timer.o
- obj-$(CONFIG_VF_PIT_TIMER)=09+=3D vf_pit_timer.o
-diff --git a/drivers/clocksource/mps2-timer.c b/drivers/clocksource/mps2-ti=
-mer.c
+diff --git a/arch/arm/boot/dts/Makefile b/arch/arm/boot/dts/Makefile
+index 30bbc37..4ef3720 100644
+--- a/arch/arm/boot/dts/Makefile
++++ b/arch/arm/boot/dts/Makefile
+@@ -237,6 +237,7 @@ dtb-$(CONFIG_ARCH_MMP) +=3D \
+ dtb-$(CONFIG_MACH_MESON8B) +=3D \
+ =09meson8b-mxq.dtb \
+ =09meson8b-odroidc1.dtb
++dtb-$(CONFIG_ARCH_MPS2) +=3D mps2-an385.dtb
+ dtb-$(CONFIG_ARCH_MOXART) +=3D \
+ =09moxart-uc7112lx.dtb
+ dtb-$(CONFIG_SOC_IMX1) +=3D \
+diff --git a/arch/arm/boot/dts/mps2-an385.dts b/arch/arm/boot/dts/mps2-an38=
+5.dts
 new file mode 100644
-index 0000000..77befe2
+index 0000000..ddb03d3
 --- /dev/null
-+++ b/drivers/clocksource/mps2-timer.c
-@@ -0,0 +1,280 @@
++++ b/arch/arm/boot/dts/mps2-an385.dts
+@@ -0,0 +1,90 @@
 +/*
 + * Copyright (C) 2015 ARM Limited
 + *
 + * Author: Vladimir Murzin <vladimir.murzin@arm.com>
 + *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License version 2 as
-+ * published by the Free Software Foundation.
++ * This file is dual-licensed: you can use it either under the terms
++ * of the GPL or the X11 license, at your option. Note that this dual
++ * licensing only applies to this file, and not this project as a
++ * whole.
 + *
++ *  a) This file is free software; you can redistribute it and/or
++ *     modify it under the terms of the GNU General Public License as
++ *     published by the Free Software Foundation; either version 2 of the
++ *     License, or (at your option) any later version.
++ *
++ *     This file is distributed in the hope that it will be useful,
++ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *     GNU General Public License for more details.
++ *
++ * Or, alternatively,
++ *
++ *  b) Permission is hereby granted, free of charge, to any person
++ *     obtaining a copy of this software and associated documentation
++ *     files (the "Software"), to deal in the Software without
++ *     restriction, including without limitation the rights to use,
++ *     copy, modify, merge, publish, distribute, sublicense, and/or
++ *     sell copies of the Software, and to permit persons to whom the
++ *     Software is furnished to do so, subject to the following
++ *     conditions:
++ *
++ *     The above copyright notice and this permission notice shall be
++ *     included in all copies or substantial portions of the Software.
++ *
++ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
++ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
++ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ *     OTHER DEALINGS IN THE SOFTWARE.
 + */
 +
-+#define pr_fmt(fmt)=09KBUILD_MODNAME ": " fmt
++/dts-v1/;
 +
-+#include <linux/clk.h>
-+#include <linux/clockchips.h>
-+#include <linux/clocksource.h>
-+#include <linux/err.h>
-+#include <linux/interrupt.h>
-+#include <linux/io.h>
-+#include <linux/irq.h>
-+#include <linux/of_address.h>
-+#include <linux/of.h>
-+#include <linux/of_irq.h>
-+#include <linux/sched_clock.h>
-+#include <linux/slab.h>
++#include "mps2.dtsi"
 +
-+#define TIMER_CTRL=09=090x0
-+#define TIMER_CTRL_ENABLE=09BIT(0)
-+#define TIMER_CTRL_IE=09=09BIT(3)
++/ {
++=09model =3D "ARM MPS2 Application Note 385/386";
++=09compatible =3D "arm,mps2";
 +
-+#define TIMER_VALUE=09=090x4
-+#define TIMER_RELOAD=09=090x8
-+#define TIMER_INT=09=090xc
++=09aliases {
++=09=09serial0 =3D &uart0;
++=09};
 +
-+struct clockevent_mps2 {
-+=09void __iomem *reg;
-+=09u32 clock_count_per_tick;
-+=09struct clock_event_device clkevt;
++=09chosen {
++=09=09bootargs =3D "init=3D/sbin/init earlycon";
++=09=09stdout-path =3D "serial0:9600n8";
++=09};
++
++=09memory {
++=09=09device_type =3D "memory";
++=09=09reg =3D <0x21000000 0x1000000>;
++=09};
++
++=09ethernet@40200000 {
++=09=09compatible =3D "smsc,lan9220", "smsc,lan9115";
++=09=09reg =3D <0x40200000 0x10000>;
++=09=09interrupts =3D <13>;
++=09=09interrupt-parent =3D <&nvic>;
++=09=09smsc,irq-active-high;
++=09};
 +};
 +
-+static void __iomem *sched_clock_base;
++&uart0 {
++=09status =3D "okay";
++};
 +
-+static u64 notrace mps2_sched_read(void)
-+{
-+        return ~readl_relaxed(sched_clock_base + TIMER_VALUE);
-+}
++&timer0 {
++=09status =3D "okay";
++};
++
++&timer1 {
++=09status =3D "okay";
++};
++
++&wdt {
++=09status =3D "okay";
++};
+diff --git a/arch/arm/boot/dts/mps2.dtsi b/arch/arm/boot/dts/mps2.dtsi
+new file mode 100644
+index 0000000..5d2c539
+--- /dev/null
++++ b/arch/arm/boot/dts/mps2.dtsi
+@@ -0,0 +1,227 @@
++/*
++ * Copyright (C) 2015 ARM Limited
++ *
++ * Author: Vladimir Murzin <vladimir.murzin@arm.com>
++ *
++ * This file is dual-licensed: you can use it either under the terms
++ * of the GPL or the X11 license, at your option. Note that this dual
++ * licensing only applies to this file, and not this project as a
++ * whole.
++ *
++ *  a) This file is free software; you can redistribute it and/or
++ *     modify it under the terms of the GNU General Public License as
++ *     published by the Free Software Foundation; either version 2 of the
++ *     License, or (at your option) any later version.
++ *
++ *     This file is distributed in the hope that it will be useful,
++ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *     GNU General Public License for more details.
++ *
++ * Or, alternatively,
++ *
++ *  b) Permission is hereby granted, free of charge, to any person
++ *     obtaining a copy of this software and associated documentation
++ *     files (the "Software"), to deal in the Software without
++ *     restriction, including without limitation the rights to use,
++ *     copy, modify, merge, publish, distribute, sublicense, and/or
++ *     sell copies of the Software, and to permit persons to whom the
++ *     Software is furnished to do so, subject to the following
++ *     conditions:
++ *
++ *     The above copyright notice and this permission notice shall be
++ *     included in all copies or substantial portions of the Software.
++ *
++ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
++ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
++ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ *     OTHER DEALINGS IN THE SOFTWARE.
++ */
++
++#include "armv7-m.dtsi"
++
++/ {
++=09oscclk0: clk-osc0 {
++=09=09compatible =3D "fixed-clock";
++=09=09#clock-cells =3D <0>;
++=09=09clock-frequency =3D <50000000>;
++=09};
++
++=09oscclk1: clk-osc1 {
++=09=09compatible =3D "fixed-clock";
++=09=09#clock-cells =3D <0>;
++=09=09clock-frequency =3D <24576000>;
++=09};
++
++=09oscclk2: clk-osc2 {
++=09=09compatible =3D "fixed-clock";
++=09=09#clock-cells =3D <0>;
++=09=09clock-frequency =3D <25000000>;
++=09};
++
++=09cfgclk: clk-cfg {
++=09=09compatible =3D "fixed-clock";
++=09=09#clock-cells =3D <0>;
++=09=09clock-frequency =3D <5000000>;
++=09};
++
++=09spicfgclk: clk-spicfg {
++=09=09compatible =3D "fixed-clock";
++=09=09#clock-cells =3D <0>;
++=09=09clock-frequency =3D <75000000>;
++=09};
++
++=09sysclk: clk-sys {
++=09=09compatible =3D "fixed-factor-clock";
++=09=09clocks =3D <&oscclk0>;
++=09=09#clock-cells =3D <0>;
++=09=09clock-div =3D <2>;
++=09=09clock-mult =3D <1>;
++=09};
++
++=09audmclk: clk-audm {
++=09=09compatible =3D "fixed-factor-clock";
++=09=09clocks =3D <&oscclk1>;
++=09=09#clock-cells =3D <0>;
++=09=09clock-div =3D <2>;
++=09=09clock-mult =3D <1>;
++=09};
++
++=09audsclk: clk-auds {
++=09=09compatible =3D "fixed-factor-clock";
++=09=09clocks =3D <&oscclk1>;
++=09=09#clock-cells =3D <0>;
++=09=09clock-div =3D <8>;
++=09=09clock-mult =3D <1>;
++=09};
++
++=09spiclcd: clk-cpiclcd {
++=09=09compatible =3D "fixed-factor-clock";
++=09=09clocks =3D <&oscclk0>;
++=09=09#clock-cells =3D <0>;
++=09=09clock-div =3D <2>;
++=09=09clock-mult =3D <1>;
++=09};
++
++=09spicon: clk-spicon {
++=09=09compatible =3D "fixed-factor-clock";
++=09=09clocks =3D <&oscclk0>;
++=09=09#clock-cells =3D <0>;
++=09=09clock-div =3D <2>;
++=09=09clock-mult =3D <1>;
++=09};
++
++=09i2cclcd: clk-i2cclcd {
++=09=09compatible =3D "fixed-factor-clock";
++=09=09clocks =3D <&oscclk0>;
++=09=09#clock-cells =3D <0>;
++=09=09clock-div =3D <2>;
++=09=09clock-mult =3D <1>;
++=09};
++
++=09i2caud: clk-i2caud {
++=09=09compatible =3D "fixed-factor-clock";
++=09=09clocks =3D <&oscclk0>;
++=09=09#clock-cells =3D <0>;
++=09=09clock-div =3D <2>;
++=09=09clock-mult =3D <1>;
++=09};
++
++=09soc {
++=09=09compatible =3D "simple-bus";
++=09=09ranges;
++
++=09=09apb {
++=09=09=09compatible =3D "simple-bus";
++=09=09=09#address-cells =3D <1>;
++=09=09=09#size-cells =3D <1>;
++=09=09=09ranges =3D <0 0x40000000 0x10000>;
++
++=09=09=09timer0: mps2-timer0@0 {
++=09=09=09=09compatible =3D "arm,mps2-timer";
++=09=09=09=09reg =3D <0x0 0x1000>;
++=09=09=09=09interrupts =3D <8>;
++=09=09=09=09clocks =3D <&sysclk>;
++=09=09=09=09status =3D "disabled";
++=09=09=09};
++
++=09=09=09timer1: mps2-timer1@1000 {
++=09=09=09=09compatible =3D "arm,mps2-timer";
++=09=09=09=09reg =3D <0x1000 0x1000>;
++=09=09=09=09interrupts =3D <9>;
++=09=09=09=09clocks =3D <&sysclk>;
++=09=09=09=09status =3D "disabled";
++=09=09=09};
++
++=09=09=09timer2: dual-timer@2000 {
++=09=09=09=09compatible =3D "arm,sp804";
++=09=09=09=09reg =3D <0x2000 0x1000>;
++=09=09=09=09clocks =3D <&sysclk>;
++=09=09=09=09interrupts =3D <10>;
++=09=09=09=09status =3D "disabled";
++=09=09=09};
 +
 +
-+static inline struct clockevent_mps2 *to_mps2_clkevt(struct clock_event_de=
-vice *c)
-+{
-+=09return container_of(c, struct clockevent_mps2, clkevt);
-+}
++=09=09=09uart0: serial@4000 {
++=09=09=09=09compatible =3D "arm,mps2-uart";
++=09=09=09=09reg =3D <0x4000 0x1000>;
++=09=09=09=09interrupts =3D <0 1 12>;
++=09=09=09=09clocks =3D <&sysclk>;
++=09=09=09=09status =3D "disabled";
++=09=09=09};
 +
-+static void clockevent_mps2_writel(u32 val, struct clock_event_device *c, =
-u32 offset)
-+{
-+=09writel(val, to_mps2_clkevt(c)->reg + offset);
-+}
++=09=09=09uart1: serial@5000 {
++=09=09=09=09compatible =3D "arm,mps2-uart";
++=09=09=09=09reg =3D <0x5000 0x1000>;
++=09=09=09=09interrupts =3D <2 3 12>;
++=09=09=09=09clocks =3D <&sysclk>;
++=09=09=09=09status =3D "disabled";
++=09=09=09};
 +
-+static int mps2_timer_shutdown(struct clock_event_device *ce)
-+{
-+=09clockevent_mps2_writel(0, ce, TIMER_RELOAD);
-+=09clockevent_mps2_writel(0, ce, TIMER_CTRL);
++=09=09=09uart2: serial@6000 {
++=09=09=09=09compatible =3D "arm,mps2-uart";
++=09=09=09=09reg =3D <0x6000 0x1000>;
++=09=09=09=09interrupts =3D <4 5 12>;
++=09=09=09=09clocks =3D <&sysclk>;
++=09=09=09=09status =3D "disabled";
++=09=09=09};
 +
-+=09return 0;
-+}
++=09=09=09wdt: watchdog@8000 {
++=09=09=09=09compatible =3D "arm,sp805", "arm,primecell";
++=09=09=09=09arm,primecell-periphid =3D <0x00141805>;
++=09=09=09=09reg =3D <0x8000 0x1000>;
++=09=09=09=09interrupts =3D <0>;
++=09=09=09=09clocks =3D <&sysclk>;
++=09=09=09=09clock-names =3D "apb_pclk";
++=09=09=09=09status =3D "disabled";
++=09=09=09};
++=09=09};
 +
-+static int mps2_timer_set_next_event(unsigned long next, struct clock_even=
-t_device *ce)
-+{
-+=09clockevent_mps2_writel(next, ce, TIMER_VALUE);
-+=09clockevent_mps2_writel(TIMER_CTRL_IE | TIMER_CTRL_ENABLE, ce, TIMER_CTR=
-L);
++=09=09fpgaio {
++=09=09=09compatible =3D "syscon", "simple-mfd";
++=09=09=09reg =3D <0x40028000 0x10>;
 +
-+=09return 0;
-+}
++=09=09=09led@0 {
++=09=09=09=09compatible =3D "register-bit-led";
++=09=09=09=09offset =3D <0x0>;
++=09=09=09=09mask =3D <0x01>;
++=09=09=09=09label =3D "userled:0";
++=09=09=09=09linux,default-trigger =3D "heartbeat";
++=09=09=09=09default-state =3D "on";
++=09=09=09};
 +
-+static int mps2_timer_set_periodic(struct clock_event_device *ce)
-+{
-+=09u32 clock_count_per_tick =3D to_mps2_clkevt(ce)->clock_count_per_tick;
-+
-+=09clockevent_mps2_writel(clock_count_per_tick, ce, TIMER_RELOAD);
-+=09clockevent_mps2_writel(clock_count_per_tick, ce, TIMER_VALUE);
-+=09clockevent_mps2_writel(TIMER_CTRL_IE | TIMER_CTRL_ENABLE, ce, TIMER_CTR=
-L);
-+
-+=09return 0;
-+}
-+
-+static irqreturn_t mps2_timer_interrupt(int irq, void *dev_id)
-+{
-+=09struct clockevent_mps2 *ce =3D dev_id;
-+=09u32 status =3D readl(ce->reg + TIMER_INT);
-+
-+=09if (!status)
-+=09=09return IRQ_NONE;
-+
-+=09writel(1, ce->reg + TIMER_INT);
-+
-+=09ce->clkevt.event_handler(&ce->clkevt);
-+
-+=09return IRQ_HANDLED;
-+}
-+
-+static int __init mps2_clockevents_init(struct device_node *np)
-+{
-+=09void __iomem *base;
-+=09struct clk *clk;
-+=09struct irqaction *ia;
-+=09struct clockevent_mps2 *ce;
-+=09u32 rate;
-+=09int irq, ret;
-+=09const char *name =3D "mps2-clkevt";
-+
-+=09ret =3D of_property_read_u32(np, "clock-frequency", &rate);
-+
-+=09if (ret) {
-+=09=09clk =3D of_clk_get(np, 0);
-+=09=09if (IS_ERR(clk)) {
-+=09=09=09ret =3D PTR_ERR(clk);
-+=09=09=09pr_err("failed to get clock for clockevent: %d\n", ret);
-+=09=09=09goto err_clk_get;
-+=09=09}
-+
-+=09=09ret =3D clk_prepare_enable(clk);
-+=09=09if (ret) {
-+=09=09=09pr_err("failed to enable clock for clockevent: %d\n", ret);
-+=09=09=09clk_put(clk);
-+=09=09=09goto err_clk_enable;
-+=09=09}
-+
-+=09=09rate =3D clk_get_rate(clk);
-+=09}
-+
-+=09base =3D of_iomap(np, 0);
-+=09if (!base) {
-+=09=09ret =3D -EADDRNOTAVAIL;
-+=09=09pr_err("failed to map register for clockevent: %d\n", ret);
-+=09=09goto err_iomap;
-+=09}
-+
-+=09irq =3D irq_of_parse_and_map(np, 0);
-+=09if (!irq) {
-+=09=09ret =3D -ENOENT;
-+=09=09pr_err("failed to get irq for clockevent: %d\n", ret);
-+=09=09goto err_get_irq;
-+=09}
-+
-+=09ce =3D kzalloc(sizeof(struct clockevent_mps2), GFP_KERNEL);
-+=09if (!ce) {
-+=09=09ret =3D -ENOMEM;
-+=09=09pr_err("failed to allocate clockevent: %d\n", ret);
-+=09=09goto err_ce_alloc;
-+=09}
-+
-+=09ce->reg =3D base;
-+=09ce->clock_count_per_tick =3D DIV_ROUND_CLOSEST(rate, HZ);
-+=09ce->clkevt.irq =3D irq;
-+=09ce->clkevt.name =3D name;
-+=09ce->clkevt.rating =3D 200;
-+=09ce->clkevt.features =3D CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHO=
-T;
-+=09ce->clkevt.cpumask =3D cpu_possible_mask;
-+=09ce->clkevt.set_state_shutdown=09=3D mps2_timer_shutdown,
-+=09ce->clkevt.set_state_periodic=09=3D mps2_timer_set_periodic,
-+=09ce->clkevt.set_state_oneshot=09=3D mps2_timer_shutdown,
-+=09ce->clkevt.set_next_event=09=3D mps2_timer_set_next_event;
-+
-+=09ia =3D kzalloc(sizeof(struct irqaction), GFP_KERNEL);
-+=09if (!ia) {
-+=09=09ret =3D -ENOMEM;
-+=09=09pr_err("failed to allocate irqaction: %d\n", ret);
-+=09=09goto err_ia_alloc;
-+=09}
-+
-+=09ia->name =3D name;
-+=09ia->flags =3D IRQF_TIMER;
-+=09ia->handler =3D mps2_timer_interrupt;
-+=09ia->dev_id =3D ce;
-+
-+=09writel(0, base + TIMER_CTRL);
-+
-+=09ret =3D setup_irq(irq, ia);
-+
-+=09if (ret) {
-+=09=09pr_err("failed to setup irq: %d\n", ret);
-+=09=09goto err_setup_irq;
-+=09}
-+
-+=09clockevents_config_and_register(&ce->clkevt, rate, 0xf, 0xffffffff);
-+
-+=09return 0;
-+
-+err_setup_irq:
-+=09kfree(ia);
-+err_ia_alloc:
-+=09kfree(ce);
-+err_ce_alloc:
-+err_get_irq:
-+=09iounmap(base);
-+err_iomap:
-+=09clk_disable_unprepare(clk);
-+err_clk_enable:
-+=09clk_put(clk);
-+err_clk_get:
-+=09return ret;
-+}
-+
-+static int mps2_clocksource_init(struct device_node *np)
-+{
-+=09void __iomem *base;
-+=09struct clk *clk;
-+=09u32 rate;
-+=09int ret;
-+=09const char *name =3D "mps2-clksrc";
-+
-+=09ret =3D of_property_read_u32(np, "clock-frequency", &rate);
-+
-+=09if (ret) {
-+=09=09clk =3D of_clk_get(np, 0);
-+=09=09if (IS_ERR(clk)) {
-+=09=09=09ret =3D PTR_ERR(clk);
-+=09=09=09pr_err("failed to get clock for clocksource: %d\n", ret);
-+=09=09=09goto err_clk_get;
-+=09=09}
-+
-+=09=09ret =3D clk_prepare_enable(clk);
-+=09=09if (ret) {
-+=09=09=09pr_err("failed to enable clock for clocksource: %d\n", ret);
-+=09=09=09clk_put(clk);
-+=09=09=09goto err_clk_enable;
-+=09=09}
-+
-+=09=09rate =3D clk_get_rate(clk);
-+=09}
-+
-+=09base =3D of_iomap(np, 0);
-+=09if (!base) {
-+=09=09ret =3D -EADDRNOTAVAIL;
-+=09=09pr_err("failed to map register for clocksource: %d\n", ret);
-+=09=09goto err_iomap;
-+=09}
-+
-+=09writel(0, base + TIMER_CTRL);
-+
-+=09writel(0xffffffff, base + TIMER_VALUE);
-+=09writel(0xffffffff, base + TIMER_RELOAD);
-+
-+=09writel(TIMER_CTRL_ENABLE, base + TIMER_CTRL);
-+
-+=09ret =3D clocksource_mmio_init(base + TIMER_VALUE, name,
-+=09=09=09=09    rate, 200, 32,
-+=09=09=09=09    clocksource_mmio_readl_down);
-+=09if (ret) {
-+=09=09pr_err("failed to init clocksource: %d\n", ret);
-+=09=09goto err_clocksource_init;
-+=09}
-+
-+=09sched_clock_base =3D base;
-+=09sched_clock_register(mps2_sched_read, 32, rate);
-+
-+=09return 0;
-+
-+err_clocksource_init:
-+=09iounmap(base);
-+err_iomap:
-+=09clk_disable_unprepare(clk);
-+err_clk_enable:
-+=09clk_put(clk);
-+err_clk_get:
-+=09return ret;
-+
-+}
-+
-+static void __init mps2_timer_init(struct device_node *np)
-+{
-+=09static int clksrc;
-+
-+=09if (!clksrc && !mps2_clocksource_init(np))
-+=09=09clksrc =3D 1;
-+=09else
-+=09=09mps2_clockevents_init(np);
-+}
-+
-+CLOCKSOURCE_OF_DECLARE(mps2_timer, "arm,mps2-timer", mps2_timer_init);
++=09=09=09led@1 {
++=09=09=09=09compatible =3D "register-bit-led";
++=09=09=09=09offset =3D <0x0>;
++=09=09=09=09mask =3D <0x02>;
++=09=09=09=09label =3D "userled:1";
++=09=09=09=09linux,default-trigger =3D "usr";
++=09=09=09=09default-state =3D "off";
++=09=09=09};
++=09=09};
++=09};
++};
 --=20
 1.7.9.5
