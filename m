@@ -1,157 +1,65 @@
-From: Dan Carpenter <dan.carpenter@oracle.com>
-Subject: Re: [PATCH v1] usb: devio: Add ioctl to disallow detaching kernel
- USB drivers.
-Date: Thu, 26 Nov 2015 12:20:14 +0300
-Message-ID: <20151126092014.GD7289@mwanda>
-References: <1448466334-21346-1-git-send-email-emilio.lopez@collabora.co.uk>
- <1448466334-21346-2-git-send-email-emilio.lopez@collabora.co.uk>
- <20151126085924.GD26397@shlinux2>
+From: Manfred Schlaegl <manfred.schlaegl@gmx.at>
+Subject: Re: [RFC PATCH 1/2] drm: add support for for clk and de polarity
+Date: Thu, 26 Nov 2015 15:20:51 +0100
+Message-ID: <56571543.20701@gmx.at>
+References: <55A67FDB.8010602@gmx.at> <55A6813A.8090706@gmx.at>
+ <1448472141.3390.17.camel@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20151126085924.GD26397@shlinux2>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Chen <peter.chen@freescale.com>
-Cc: Emilio =?iso-8859-1?Q?L=F3pez?= <emilio.lopez@collabora.co.uk>, gregkh@linuxfoundation.org, stern@rowland.harvard.edu, kborer@gmail.com, reillyg@chromium.org, keescook@chromium.org, linux-api@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org, jorgelo@chromium.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <1448472141.3390.17.camel@pengutronix.de>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Philipp Zabel <p.zabel@pengutronix.de>
+Cc: linux-fbdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, Manfred Schlaegl <manfred.schlaegl@ginzinger.com>, Tomi Valkeinen <tomi.valkeinen@ti.com>, Steve Longerbeam <slongerbeam@gmail.com>, Deepak Das <deepak_das@mentor.com>, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 26, 2015 at 04:59:25PM +0800, Peter Chen wrote:
-> On Wed, Nov 25, 2015 at 12:45:34PM -0300, Emilio L=F3pez wrote:
-> > From: Reilly Grant <reillyg@chromium.org>
-> >=20
-> > The new USBDEVFS_DROP_PRIVILEGES ioctl allows a process to voluntar=
-ily
-> > relinquish the ability to issue other ioctls that may interfere wit=
-h
-> > other processes and drivers that have claimed an interface on the
-> > device.
-> >=20
-> > Signed-off-by: Reilly Grant <reillyg@chromium.org>
-> > Reviewed-by: Jorge Lucangeli Obes <jorgelo@chromium.org>
-> > Reviewed-by: Kees Cook <keescook@chromium.org>
-> > [emilio.lopez: fix build for v4.4-rc2 and adjust patch title prefix=
-]
-> > Signed-off-by: Emilio L=F3pez <emilio.lopez@collabora.co.uk>
-> >=20
-> > ---
-> >=20
-> >  drivers/usb/core/devio.c          | 50 +++++++++++++++++++++++++++=
-++++++++----
-> >  include/uapi/linux/usbdevice_fs.h |  1 +
-> >  2 files changed, 47 insertions(+), 4 deletions(-)
-> >=20
-> > diff --git a/drivers/usb/core/devio.c b/drivers/usb/core/devio.c
-> > index 38ae877c..a5ccc50 100644
-> > --- a/drivers/usb/core/devio.c
-> > +++ b/drivers/usb/core/devio.c
-> > @@ -77,6 +77,7 @@ struct usb_dev_state {
-> >  	unsigned long ifclaimed;
-> >  	u32 secid;
-> >  	u32 disabled_bulk_eps;
-> > +	bool privileges_dropped;
-> >  };
-> > =20
-> >  struct async {
-> > @@ -878,7 +879,7 @@ static int usbdev_open(struct inode *inode, str=
-uct file *file)
-> >  	int ret;
-> > =20
-> >  	ret =3D -ENOMEM;
-> > -	ps =3D kmalloc(sizeof(struct usb_dev_state), GFP_KERNEL);
-> > +	ps =3D kzalloc(sizeof(struct usb_dev_state), GFP_KERNEL);
-> >  	if (!ps)
-> >  		goto out_free_ps;
-> > =20
-> > @@ -911,11 +912,8 @@ static int usbdev_open(struct inode *inode, st=
-ruct file *file)
-> >  	INIT_LIST_HEAD(&ps->async_pending);
-> >  	INIT_LIST_HEAD(&ps->async_completed);
-> >  	init_waitqueue_head(&ps->wait);
-> > -	ps->discsignr =3D 0;
-> >  	ps->disc_pid =3D get_pid(task_pid(current));
-> >  	ps->cred =3D get_current_cred();
-> > -	ps->disccontext =3D NULL;
-> > -	ps->ifclaimed =3D 0;
->=20
-> The above changes seem to be not related with this change.
->=20
-
-It is though.  They added a new struct member and thought that now it
-was cleaner to use kzalloc() instead of initializing the new member to
-zero.
-
-> >  	security_task_getsecid(current, &ps->secid);
-> >  	smp_wmb();
-> >  	list_add_tail(&ps->list, &dev->filelist);
-> > @@ -1215,6 +1213,35 @@ static int proc_connectinfo(struct usb_dev_s=
-tate *ps, void __user *arg)
-> > =20
-> >  static int proc_resetdevice(struct usb_dev_state *ps)
-> >  {
-> > +	if (ps->privileges_dropped) {
-> > +		struct usb_host_config *actconfig =3D ps->dev->actconfig;
-> > +
-> > +		/* Don't touch the device if any interfaces are claimed. It
-> > +		 * could interfere with other drivers' operations and this
-> > +		 * process has dropped its privileges to do such things.
-> > +		 */
-> > +		if (actconfig) {
-> > +			int i;
-> > +
-> > +			for (i =3D 0; i < actconfig->desc.bNumInterfaces; ++i) {
-> > +				if (usb_interface_claimed(
-> > +					actconfig->interface[i])) {
-> > +					dev_warn(&ps->dev->dev,
-> > +						"usbfs: interface %d claimed by"
-> > +						" %s while '%s'"
-> > +						" resets device\n",
-> > +						actconfig->interface[i]
-> > +							->cur_altsetting
-> > +							->desc.bInterfaceNumber,
->=20
-> The length of line is 80 characters
->=20
-> > +						actconfig->interface[i]
-> > +							->dev.driver->name,
-> > +						current->comm);
-> > +					return -EACCES;
-> > +				}
-> > +			}
-> > +		}
-> > +	}
-
-Yeah.  Better to flip this around:
-
-static int proc_resetdevice(struct usb_dev_state *ps)
-{
-        struct usb_host_config *actconfig =3D ps->dev->actconfig;
-        struct usb_interface *interface;
-        int i;
-
-        if (ps->privileges_dropped && actconfig) {
-                for (i =3D 0; i < actconfig->desc.bNumInterfaces; ++i) =
-{
-                        interface =3D actconfig->interface[i];
-                        if (usb_interface_claimed(interface)) {
-                                dev_warn(&ps->dev->dev,
-                                        "usbfs: interface %d claimed by=
- %s while '%s' resets device\n",
-                                        interface->cur_altsetting->desc=
-=2EbInterfaceNumber,
-                                        interface->dev.driver->name,
-                                        current->comm);
-                                return -EACCES;
-                        }
-                }
-        }
-
-        return usb_reset_device(ps->dev);
-}
-
-It still goes over the 80 character limit, but that's cleaner than
-breaking up the variable.
-
-regards,
-dan carpenter
+T24gMjAxNS0xMS0yNSAxODoyMiwgUGhpbGlwcCBaYWJlbCB3cm90ZToKPiBBbSBNaXR0d29jaCwg
+ZGVuIDE1LjA3LjIwMTUsIDE3OjUwICswMjAwIHNjaHJpZWIgTWFuZnJlZCBTY2hsYWVnbDoKPj4g
+VG8gZ2V0IGZ1bGwgc3VwcG9ydCBmb3IgcGFyYWxsZWwgYW5kIExWRFMgZGlzcGxheXMgd2l0aCBk
+cm06Cj4+IEFkZCByZXByZXNlbnRhdGlvbiBmb3IgY2xvY2sgYW5kIGRhdGEgZW5hYmxlIHBvbGFy
+aXR5IGluIGRybV9kaXNwbGF5X21vZGUKPj4gZmxhZ3MgKHNpbWlsYXIgdG8gSFNZTkMvVlNZTkMg
+cG9sYXJpdHkpIGFuZCB1cGRhdGUgY29udmVyc2lvbiBmdW5jdGlvbnMKPj4gZnJvbS90byB2aWRl
+b21vZGUgYWNjb3JkaW5nbHkuCj4+Cj4+IFRoaXMgaXMgZXNwZWNpYWxseSBpbXBvcnRhbnQgZm9y
+IGVtYmVkZGVkIGRldmljZXMgd2hlcmUgcGFyYWxsZWwoUkdCKSBhbmQKPj4gTFZEUyBkaXNwbGF5
+cyBhcmUgc3RpbGwgd2lkZWx5IHVzZWQgYW5kIGRybSBhbHJlYWR5IHBsYXlzIGFuIGltcG9ydGFu
+dAo+PiByb2xlLgo+Pgo+PiBUZXN0ZWQgb24gRnJlZXNjYWxlIGkuTVg1MyhwYXJhbGxlbCkgYW5k
+IGkuTVg2KExWRFMpLgo+Pgo+PiBCYWNrZ3JvdW5kOgo+PiBUaGVyZSB3YXMgdGhlIGFiaWxpdHkg
+dG8gc2V0IHBvbGFyaXR5IG9mIGNsb2NrIGFuZCBkYXRhIGVuYWJsZSBzaWduYWxzCj4+IGluIGRl
+dmljZXRyZWUoZGlzcGxheS10aW1pbmcpLCBzdHJ1Y3QgZGlzcGxheV90aW1pbmcgYW5kIHN0cnVj
+dCB2aWRlb21vZGUsCj4+IGJ1dCB0aGVyZSB3YXMgbm8gcmVwcmVzZW50YXRpb24gZm9yIHRoaXMg
+aW4gc3RydWN0IGRybV9kaXNwbGF5X21vZGUuCj4+IEV4YW1wbGUgb24gRnJlZXNjYWxlIGkuTVg1
+My9pLk1YNiBTb0MnczoKPj4gICogQSBwYXJhbGxlbCBkaXNwbGF5IHVzaW5nIGRpZmZlcmVudCBj
+bG9jayBwb2xhcml0eSBpcyBzZXQgdXAgdXNpbmcKPj4gICAgZGlzcGxheS10aW1pbmcgaW4gZGV2
+aWNldHJlZQo+PiAgKiBpcHV2MyBwYXJhbGxlbCBvdXRwdXRzIGNsb2NrIHdpdGggd3JvbmcgcG9s
+YXJpdHkKPj4KPj4gU2lnbmVkLW9mZi1ieTogTWFuZnJlZCBTY2hsYWVnbCA8bWFuZnJlZC5zY2hs
+YWVnbEBnbXguYXQ+Cj4gCj4gQW55IGNvbW1lbnRzIG9uIHdoZXRoZXIgZGF0YSBlbmFibGUgYW5k
+IHBpeGVsIGNsb2NrIHBvbGFyaXR5IGZsYWdzIGNhbgo+IGJlIGFkZGVkIHRvIHRoZSB2aXNpYmxl
+IERSTV9NT0RFX0ZMQUdzLCBhbmQgaWYgbm90LCB3aGVyZSBlbHNlIHRoaXMKPiBpbmZvcm1hdGlv
+biBzaG91bGQgYmUga2VwdD8gc3RydWN0IGRybV9kaXNwbGF5X2luZm8/Cj4gCj4gVGhpcyBwYXRj
+aCBhbmQgdGhlIGZvbGxvd2luZyBJUFV2MyBwYXRjaCBhcmUgdXNlZnVsIGFuZCBuZWNlc3Nhcnkg
+Zm9yCj4gcXVpdGUgc29tZSBwYW5lbHMgY29ubmVjdGVkIHRvIGkuTVggU29DcywgYnV0IGFkZGlu
+ZyBEUk1fTU9ERV9GTEFHcyBpcwo+IHNvbWV3aGF0IG91dCBvZiBteSBqdXJpc2RpY3Rpb24uCj4g
+Cj4gYmVzdCByZWdhcmRzCj4gUGhpbGlwcAo+IAoKR29vZCB0byBzZWUgdGhhdCB0aGlzIGRpc2N1
+c3Npb24gaXMgdHJpZ2dlcmVkLgoKU3RhdGUgb2YgdGhlIHNlbnQgcGF0Y2hlcyByZXNwZWN0aXZl
+IHRvIGdpdDovL2dpdC5rZXJuZWwub3JnL3B1Yi9zY20vbGludXgva2VybmVsL2dpdC90b3J2YWxk
+cy9saW51eC5naXQgKDc4YzRhNDkpCiAqIFtSRkMgUEFUQ0ggMS8yXSBkcm06IGFkZCBzdXBwb3J0
+IGZvciBmb3IgY2xrIGFuZCBkZSBwb2xhcml0eQogICAqIGFwcGxpZXMgdW5tb2RpZmllZAogKiBb
+UkZDIFBBVENIIDIvMl0gZ3B1OiBpcHUtdjM6IHVzZSBjbG9jayBhbmQgZGUgcG9sYXJpdHkgZnJv
+bSB2aWRlb21vZGUKICAgKiBkb2VzIG5vdCBhcHBseSAtPiBidXQgdGhpcyBjYW4gYmUgZml4ZWQg
+d2l0aCBjb3JyZWN0aW9ucyBvZiBsaW5lIG9mZnNldHMgKHVzaW5nIHBhdGNoKQpGcm9tIGEgY29k
+ZSByZXZpZXcgSSB0aGluayB0aGUgbW9kaWZpY2F0aW9ucyBtdXN0IHdvcmssIGJ1dCBJIGRpZCBu
+byB0ZXN0aW5nIG9uIGtlcm5lbCB2ZXJzaW9ucyBuZXdlciB0aGFuIDQuMS4xMy4KT24gZGVtYW5k
+LCBJIGNhbiByZWRvIHRlc3RzIG9uIHNvbWUgb2Ygb3VyIGkuTVg1MyAocGFyYWxsZWwpIGFuZCBp
+Lk1YNiAobHZkcykgYm9hcmRzIGFuZCBzZW5kIGFjdHVhbCBwYXRjaGVzLgoKYmVzdCByZWdhcmRz
+LApNYW5mcmVkCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+XwpkcmktZGV2ZWwgbWFpbGluZyBsaXN0CmRyaS1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcK
+aHR0cDovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2RyaS1kZXZlbAo=
