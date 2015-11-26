@@ -1,65 +1,118 @@
-From: Manfred Schlaegl <manfred.schlaegl@gmx.at>
-Subject: Re: [RFC PATCH 1/2] drm: add support for for clk and de polarity
-Date: Thu, 26 Nov 2015 15:20:51 +0100
-Message-ID: <56571543.20701@gmx.at>
-References: <55A67FDB.8010602@gmx.at> <55A6813A.8090706@gmx.at>
- <1448472141.3390.17.camel@pengutronix.de>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH v1 0/1] ioctl to disallow detaching kernel USB drivers
+Date: Thu, 26 Nov 2015 09:29:14 -0800
+Message-ID: <20151126172914.GA8671@kroah.com>
+References: <1448466334-21346-1-git-send-email-emilio.lopez@collabora.co.uk>
+ <5656CEA1.9010203@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <1448472141.3390.17.camel@pengutronix.de>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Philipp Zabel <p.zabel@pengutronix.de>
-Cc: linux-fbdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, Manfred Schlaegl <manfred.schlaegl@ginzinger.com>, Tomi Valkeinen <tomi.valkeinen@ti.com>, Steve Longerbeam <slongerbeam@gmail.com>, Deepak Das <deepak_das@mentor.com>, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <5656CEA1.9010203@samsung.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Krzysztof Opasiak <k.opasiak@samsung.com>
+Cc: Emilio =?iso-8859-1?Q?L=F3pez?= <emilio.lopez@collabora.co.uk>, stern@rowland.harvard.edu, kborer@gmail.com, reillyg@chromium.org, keescook@chromium.org, linux-api@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org, jorgelo@chromium.org, dan.carpenter@oracle.com
 List-Id: linux-api@vger.kernel.org
 
-T24gMjAxNS0xMS0yNSAxODoyMiwgUGhpbGlwcCBaYWJlbCB3cm90ZToKPiBBbSBNaXR0d29jaCwg
-ZGVuIDE1LjA3LjIwMTUsIDE3OjUwICswMjAwIHNjaHJpZWIgTWFuZnJlZCBTY2hsYWVnbDoKPj4g
-VG8gZ2V0IGZ1bGwgc3VwcG9ydCBmb3IgcGFyYWxsZWwgYW5kIExWRFMgZGlzcGxheXMgd2l0aCBk
-cm06Cj4+IEFkZCByZXByZXNlbnRhdGlvbiBmb3IgY2xvY2sgYW5kIGRhdGEgZW5hYmxlIHBvbGFy
-aXR5IGluIGRybV9kaXNwbGF5X21vZGUKPj4gZmxhZ3MgKHNpbWlsYXIgdG8gSFNZTkMvVlNZTkMg
-cG9sYXJpdHkpIGFuZCB1cGRhdGUgY29udmVyc2lvbiBmdW5jdGlvbnMKPj4gZnJvbS90byB2aWRl
-b21vZGUgYWNjb3JkaW5nbHkuCj4+Cj4+IFRoaXMgaXMgZXNwZWNpYWxseSBpbXBvcnRhbnQgZm9y
-IGVtYmVkZGVkIGRldmljZXMgd2hlcmUgcGFyYWxsZWwoUkdCKSBhbmQKPj4gTFZEUyBkaXNwbGF5
-cyBhcmUgc3RpbGwgd2lkZWx5IHVzZWQgYW5kIGRybSBhbHJlYWR5IHBsYXlzIGFuIGltcG9ydGFu
-dAo+PiByb2xlLgo+Pgo+PiBUZXN0ZWQgb24gRnJlZXNjYWxlIGkuTVg1MyhwYXJhbGxlbCkgYW5k
-IGkuTVg2KExWRFMpLgo+Pgo+PiBCYWNrZ3JvdW5kOgo+PiBUaGVyZSB3YXMgdGhlIGFiaWxpdHkg
-dG8gc2V0IHBvbGFyaXR5IG9mIGNsb2NrIGFuZCBkYXRhIGVuYWJsZSBzaWduYWxzCj4+IGluIGRl
-dmljZXRyZWUoZGlzcGxheS10aW1pbmcpLCBzdHJ1Y3QgZGlzcGxheV90aW1pbmcgYW5kIHN0cnVj
-dCB2aWRlb21vZGUsCj4+IGJ1dCB0aGVyZSB3YXMgbm8gcmVwcmVzZW50YXRpb24gZm9yIHRoaXMg
-aW4gc3RydWN0IGRybV9kaXNwbGF5X21vZGUuCj4+IEV4YW1wbGUgb24gRnJlZXNjYWxlIGkuTVg1
-My9pLk1YNiBTb0MnczoKPj4gICogQSBwYXJhbGxlbCBkaXNwbGF5IHVzaW5nIGRpZmZlcmVudCBj
-bG9jayBwb2xhcml0eSBpcyBzZXQgdXAgdXNpbmcKPj4gICAgZGlzcGxheS10aW1pbmcgaW4gZGV2
-aWNldHJlZQo+PiAgKiBpcHV2MyBwYXJhbGxlbCBvdXRwdXRzIGNsb2NrIHdpdGggd3JvbmcgcG9s
-YXJpdHkKPj4KPj4gU2lnbmVkLW9mZi1ieTogTWFuZnJlZCBTY2hsYWVnbCA8bWFuZnJlZC5zY2hs
-YWVnbEBnbXguYXQ+Cj4gCj4gQW55IGNvbW1lbnRzIG9uIHdoZXRoZXIgZGF0YSBlbmFibGUgYW5k
-IHBpeGVsIGNsb2NrIHBvbGFyaXR5IGZsYWdzIGNhbgo+IGJlIGFkZGVkIHRvIHRoZSB2aXNpYmxl
-IERSTV9NT0RFX0ZMQUdzLCBhbmQgaWYgbm90LCB3aGVyZSBlbHNlIHRoaXMKPiBpbmZvcm1hdGlv
-biBzaG91bGQgYmUga2VwdD8gc3RydWN0IGRybV9kaXNwbGF5X2luZm8/Cj4gCj4gVGhpcyBwYXRj
-aCBhbmQgdGhlIGZvbGxvd2luZyBJUFV2MyBwYXRjaCBhcmUgdXNlZnVsIGFuZCBuZWNlc3Nhcnkg
-Zm9yCj4gcXVpdGUgc29tZSBwYW5lbHMgY29ubmVjdGVkIHRvIGkuTVggU29DcywgYnV0IGFkZGlu
-ZyBEUk1fTU9ERV9GTEFHcyBpcwo+IHNvbWV3aGF0IG91dCBvZiBteSBqdXJpc2RpY3Rpb24uCj4g
-Cj4gYmVzdCByZWdhcmRzCj4gUGhpbGlwcAo+IAoKR29vZCB0byBzZWUgdGhhdCB0aGlzIGRpc2N1
-c3Npb24gaXMgdHJpZ2dlcmVkLgoKU3RhdGUgb2YgdGhlIHNlbnQgcGF0Y2hlcyByZXNwZWN0aXZl
-IHRvIGdpdDovL2dpdC5rZXJuZWwub3JnL3B1Yi9zY20vbGludXgva2VybmVsL2dpdC90b3J2YWxk
-cy9saW51eC5naXQgKDc4YzRhNDkpCiAqIFtSRkMgUEFUQ0ggMS8yXSBkcm06IGFkZCBzdXBwb3J0
-IGZvciBmb3IgY2xrIGFuZCBkZSBwb2xhcml0eQogICAqIGFwcGxpZXMgdW5tb2RpZmllZAogKiBb
-UkZDIFBBVENIIDIvMl0gZ3B1OiBpcHUtdjM6IHVzZSBjbG9jayBhbmQgZGUgcG9sYXJpdHkgZnJv
-bSB2aWRlb21vZGUKICAgKiBkb2VzIG5vdCBhcHBseSAtPiBidXQgdGhpcyBjYW4gYmUgZml4ZWQg
-d2l0aCBjb3JyZWN0aW9ucyBvZiBsaW5lIG9mZnNldHMgKHVzaW5nIHBhdGNoKQpGcm9tIGEgY29k
-ZSByZXZpZXcgSSB0aGluayB0aGUgbW9kaWZpY2F0aW9ucyBtdXN0IHdvcmssIGJ1dCBJIGRpZCBu
-byB0ZXN0aW5nIG9uIGtlcm5lbCB2ZXJzaW9ucyBuZXdlciB0aGFuIDQuMS4xMy4KT24gZGVtYW5k
-LCBJIGNhbiByZWRvIHRlc3RzIG9uIHNvbWUgb2Ygb3VyIGkuTVg1MyAocGFyYWxsZWwpIGFuZCBp
-Lk1YNiAobHZkcykgYm9hcmRzIGFuZCBzZW5kIGFjdHVhbCBwYXRjaGVzLgoKYmVzdCByZWdhcmRz
-LApNYW5mcmVkCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-XwpkcmktZGV2ZWwgbWFpbGluZyBsaXN0CmRyaS1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcK
-aHR0cDovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2RyaS1kZXZlbAo=
+On Thu, Nov 26, 2015 at 10:19:29AM +0100, Krzysztof Opasiak wrote:
+>=20
+>=20
+> On 11/25/2015 04:45 PM, Emilio L=F3pez wrote:
+> >Hi everyone,
+> >
+> >This patch introduces a new ioctl, USBDEVFS_DROP_PRIVILEGES,
+> >to voluntarily forgo the ability to issue ioctls which may
+> >interfere with other users of the USB device.
+> >
+> >This feature allows a privileged process (in the case of Chrome OS,
+> >permission_broker) to open a USB device node and then drop a number
+> >of capabilities that are considered "privileged".
+>=20
+> We had the same idea in Tizen but for now we didn't have time to impl=
+ement
+> it.
+>=20
+>  These privileges
+> >include the ability to reset the device if there are other users
+> >(most notably a kernel driver) or to disconnect a kernel driver
+> >from the device. The file descriptor can then be passed to an
+> >unprivileged process.
+>=20
+> And how about switching configuration? This can be also harmful even =
+if the
+> are no other users for any interface in this configuration.
+> (Just imagine the situation in which only second config contains an H=
+ID
+> function and when app switch configuration it is activated without us=
+er
+> knowing about this;))
+
+Adding this option might be nice.
+
+> >This is useful for granting a process access to a device with
+> >multiple functions. It won't be able to use its access to one
+> >function to disrupt or take over control of another function.
+>=20
+> I run through your code and as far as I understand above is not exact=
+ly
+> true. Your patch allows only to prevent userspace from accessing inte=
+rfaces
+> which has kernel drivers, there is no way to stop an application from=
+ taking
+> control over all free interfaces.
+>=20
+> Let's say that your device has 3 interfaces. First of them has a kern=
+el
+> driver but second and third doesn't. You have 2 apps. One should comm=
+unicate
+> using second interface and another one third. But first app is malici=
+ous and
+> it claims all free interfaces of received device (your patch doesn't =
+prevent
+> this). And when second app starts it is unable to do anything with th=
+e
+> device because all interfaces are taken. How would you like to handle=
+ this?
+
+You can't, and why would you ever want to, as you can't tell what an ap=
+p
+"should" or "should not" do.  If you really care about this, then use a
+LSM policy to prevent this.
+
+> Moreover I'm not convinced to this patch as it hardcodes the *policy*=
+ in
+> kernel code.
+
+What policy is that?
+
+> Generally our approach (with passing fd from broker to
+> unprivileged process) was similar but we found out that if we would l=
+ike to
+> do this correctly there is much more things to filter than in this pa=
+tch. We
+> had two main ideas:
+>=20
+> - implement some LSM hooks in ioctls() but this leads to a lot of add=
+itional
+> callbacks in lsm ops struct which even now is very big. But as a bene=
+fit we
+> would get a very flexible policy consistent with other system policie=
+s
+>=20
+> - split single usb device node into multiple files which could repres=
+ent
+> single endpoins only for io and separate control file for privileged =
+but
+> it's quite a lot of work and I don't know if any one is going to acce=
+pt such
+> a change
+
+I've been asking for that for well over a decade, but no one ever did
+the work.  I think if you work through the options, it ends up not bein=
+g
+a viable solution...
+
+thanks,
+
+greg k-h
