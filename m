@@ -1,195 +1,97 @@
-From: Peter Chen <peter.chen@freescale.com>
-Subject: Re: [PATCH v1] usb: devio: Add ioctl to disallow detaching kernel
- USB drivers.
-Date: Thu, 26 Nov 2015 16:59:25 +0800
-Message-ID: <20151126085924.GD26397@shlinux2>
+From: Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH v1 0/1] ioctl to disallow detaching kernel USB drivers
+Date: Thu, 26 Nov 2015 10:19:29 +0100
+Message-ID: <5656CEA1.9010203@samsung.com>
 References: <1448466334-21346-1-git-send-email-emilio.lopez@collabora.co.uk>
- <1448466334-21346-2-git-send-email-emilio.lopez@collabora.co.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1448466334-21346-2-git-send-email-emilio.lopez@collabora.co.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Emilio =?iso-8859-1?Q?L=F3pez?= <emilio.lopez@collabora.co.uk>
-Cc: gregkh@linuxfoundation.org, stern@rowland.harvard.edu, kborer@gmail.com, reillyg@chromium.org, keescook@chromium.org, linux-api@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org, jorgelo@chromium.org, dan.carpenter@oracle.com
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-reply-to: <1448466334-21346-1-git-send-email-emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: =?UTF-8?Q?Emilio_L=c3=b3pez?= <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org, kborer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jorgelo-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 25, 2015 at 12:45:34PM -0300, Emilio L=F3pez wrote:
-> From: Reilly Grant <reillyg@chromium.org>
->=20
-> The new USBDEVFS_DROP_PRIVILEGES ioctl allows a process to voluntaril=
-y
-> relinquish the ability to issue other ioctls that may interfere with
-> other processes and drivers that have claimed an interface on the
-> device.
->=20
-> Signed-off-by: Reilly Grant <reillyg@chromium.org>
-> Reviewed-by: Jorge Lucangeli Obes <jorgelo@chromium.org>
-> Reviewed-by: Kees Cook <keescook@chromium.org>
-> [emilio.lopez: fix build for v4.4-rc2 and adjust patch title prefix]
-> Signed-off-by: Emilio L=F3pez <emilio.lopez@collabora.co.uk>
->=20
-> ---
->=20
->  drivers/usb/core/devio.c          | 50 +++++++++++++++++++++++++++++=
-++++++----
->  include/uapi/linux/usbdevice_fs.h |  1 +
->  2 files changed, 47 insertions(+), 4 deletions(-)
->=20
-> diff --git a/drivers/usb/core/devio.c b/drivers/usb/core/devio.c
-> index 38ae877c..a5ccc50 100644
-> --- a/drivers/usb/core/devio.c
-> +++ b/drivers/usb/core/devio.c
-> @@ -77,6 +77,7 @@ struct usb_dev_state {
->  	unsigned long ifclaimed;
->  	u32 secid;
->  	u32 disabled_bulk_eps;
-> +	bool privileges_dropped;
->  };
-> =20
->  struct async {
-> @@ -878,7 +879,7 @@ static int usbdev_open(struct inode *inode, struc=
-t file *file)
->  	int ret;
-> =20
->  	ret =3D -ENOMEM;
-> -	ps =3D kmalloc(sizeof(struct usb_dev_state), GFP_KERNEL);
-> +	ps =3D kzalloc(sizeof(struct usb_dev_state), GFP_KERNEL);
->  	if (!ps)
->  		goto out_free_ps;
-> =20
-> @@ -911,11 +912,8 @@ static int usbdev_open(struct inode *inode, stru=
-ct file *file)
->  	INIT_LIST_HEAD(&ps->async_pending);
->  	INIT_LIST_HEAD(&ps->async_completed);
->  	init_waitqueue_head(&ps->wait);
-> -	ps->discsignr =3D 0;
->  	ps->disc_pid =3D get_pid(task_pid(current));
->  	ps->cred =3D get_current_cred();
-> -	ps->disccontext =3D NULL;
-> -	ps->ifclaimed =3D 0;
 
-The above changes seem to be not related with this change.
 
->  	security_task_getsecid(current, &ps->secid);
->  	smp_wmb();
->  	list_add_tail(&ps->list, &dev->filelist);
-> @@ -1215,6 +1213,35 @@ static int proc_connectinfo(struct usb_dev_sta=
-te *ps, void __user *arg)
-> =20
->  static int proc_resetdevice(struct usb_dev_state *ps)
->  {
-> +	if (ps->privileges_dropped) {
-> +		struct usb_host_config *actconfig =3D ps->dev->actconfig;
-> +
-> +		/* Don't touch the device if any interfaces are claimed. It
-> +		 * could interfere with other drivers' operations and this
-> +		 * process has dropped its privileges to do such things.
-> +		 */
-> +		if (actconfig) {
-> +			int i;
-> +
-> +			for (i =3D 0; i < actconfig->desc.bNumInterfaces; ++i) {
-> +				if (usb_interface_claimed(
-> +					actconfig->interface[i])) {
-> +					dev_warn(&ps->dev->dev,
-> +						"usbfs: interface %d claimed by"
-> +						" %s while '%s'"
-> +						" resets device\n",
-> +						actconfig->interface[i]
-> +							->cur_altsetting
-> +							->desc.bInterfaceNumber,
+On 11/25/2015 04:45 PM, Emilio L=C3=B3pez wrote:
+> Hi everyone,
+>
+> This patch introduces a new ioctl, USBDEVFS_DROP_PRIVILEGES,
+> to voluntarily forgo the ability to issue ioctls which may
+> interfere with other users of the USB device.
+>
+> This feature allows a privileged process (in the case of Chrome OS,
+> permission_broker) to open a USB device node and then drop a number
+> of capabilities that are considered "privileged".
 
-The length of line is 80 characters
+We had the same idea in Tizen but for now we didn't have time to=20
+implement it.
 
-> +						actconfig->interface[i]
-> +							->dev.driver->name,
-> +						current->comm);
-> +					return -EACCES;
-> +				}
-> +			}
-> +		}
-> +	}
-> +
->  	return usb_reset_device(ps->dev);
->  }
-> =20
-> @@ -1922,6 +1949,9 @@ static int proc_ioctl(struct usb_dev_state *ps,=
- struct usbdevfs_ioctl *ctl)
->  	struct usb_interface    *intf =3D NULL;
->  	struct usb_driver       *driver =3D NULL;
-> =20
-> +	if (ps->privileges_dropped)
-> +		return -EACCES;
-> +
->  	/* alloc buffer */
->  	size =3D _IOC_SIZE(ctl->ioctl_code);
->  	if (size > 0) {
-> @@ -2084,6 +2114,9 @@ static int proc_disconnect_claim(struct usb_dev=
-_state *ps, void __user *arg)
->  					sizeof(dc.driver)) =3D=3D 0)
->  			return -EBUSY;
-> =20
-> +		if (ps->privileges_dropped)
-> +			return -EACCES;
-> +
->  		dev_dbg(&intf->dev, "disconnect by usbfs\n");
->  		usb_driver_release_interface(driver, intf);
->  	}
-> @@ -2130,6 +2163,12 @@ static int proc_free_streams(struct usb_dev_st=
-ate *ps, void __user *arg)
->  	return r;
->  }
-> =20
-> +static int proc_drop_privileges(struct usb_dev_state *ps)
-> +{
-> +	ps->privileges_dropped =3D true;
-> +	return 0;
-> +}
-> +
->  /*
->   * NOTE:  All requests here that have interface numbers as parameter=
-s
->   * are assuming that somehow the configuration has been prevented fr=
-om
-> @@ -2318,6 +2357,9 @@ static long usbdev_do_ioctl(struct file *file, =
-unsigned int cmd,
->  	case USBDEVFS_FREE_STREAMS:
->  		ret =3D proc_free_streams(ps, p);
->  		break;
-> +	case USBDEVFS_DROP_PRIVILEGES:
-> +		ret =3D proc_drop_privileges(ps);
-> +		break;
->  	}
-> =20
->   done:
-> diff --git a/include/uapi/linux/usbdevice_fs.h b/include/uapi/linux/u=
-sbdevice_fs.h
-> index 019ba1e..99c296b 100644
-> --- a/include/uapi/linux/usbdevice_fs.h
-> +++ b/include/uapi/linux/usbdevice_fs.h
-> @@ -187,5 +187,6 @@ struct usbdevfs_streams {
->  #define USBDEVFS_DISCONNECT_CLAIM  _IOR('U', 27, struct usbdevfs_dis=
-connect_claim)
->  #define USBDEVFS_ALLOC_STREAMS     _IOR('U', 28, struct usbdevfs_str=
-eams)
->  #define USBDEVFS_FREE_STREAMS      _IOR('U', 29, struct usbdevfs_str=
-eams)
-> +#define USBDEVFS_DROP_PRIVILEGES   _IO('U', 30)
-> =20
->  #endif /* _UAPI_LINUX_USBDEVICE_FS_H */
-> --=20
-> 2.5.0
->=20
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-usb" =
-in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+  These privileges
+> include the ability to reset the device if there are other users
+> (most notably a kernel driver) or to disconnect a kernel driver
+> from the device. The file descriptor can then be passed to an
+> unprivileged process.
 
+And how about switching configuration? This can be also harmful even if=
+=20
+the are no other users for any interface in this configuration.
+(Just imagine the situation in which only second config contains an HID=
+=20
+function and when app switch configuration it is activated without user=
+=20
+knowing about this;))
+
+>
+> This is useful for granting a process access to a device with
+> multiple functions. It won't be able to use its access to one
+> function to disrupt or take over control of another function.
+
+I run through your code and as far as I understand above is not exactly=
+=20
+true. Your patch allows only to prevent userspace from accessing=20
+interfaces which has kernel drivers, there is no way to stop an=20
+application from taking control over all free interfaces.
+
+Let's say that your device has 3 interfaces. First of them has a kernel=
+=20
+driver but second and third doesn't. You have 2 apps. One should=20
+communicate using second interface and another one third. But first app=
+=20
+is malicious and it claims all free interfaces of received device (your=
+=20
+patch doesn't prevent this). And when second app starts it is unable to=
+=20
+do anything with the device because all interfaces are taken. How would=
+=20
+you like to handle this?
+
+Moreover I'm not convinced to this patch as it hardcodes the *policy* i=
+n=20
+kernel code. Generally our approach (with passing fd from broker to=20
+unprivileged process) was similar but we found out that if we would lik=
+e=20
+to do this correctly there is much more things to filter than in this=20
+patch. We had two main ideas:
+
+- implement some LSM hooks in ioctls() but this leads to a lot of=20
+additional callbacks in lsm ops struct which even now is very big. But=20
+as a benefit we would get a very flexible policy consistent with other=20
+system policies
+
+- split single usb device node into multiple files which could represen=
+t=20
+single endpoins only for io and separate control file for privileged bu=
+t=20
+it's quite a lot of work and I don't know if any one is going to accept=
+=20
+such a change
+
+Best regards,
 --=20
-
-Best Regards,
-Peter Chen
+Krzysztof Opasiak
+Samsung R&D Institute Poland
+Samsung Electronics
