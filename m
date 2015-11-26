@@ -1,100 +1,195 @@
-From: Alexander Duyck <alexander.duyck@gmail.com>
-Subject: Re: [RFC PATCH V2 0/3] IXGBE/VFIO: Add live migration
- support for SRIOV NIC
-Date: Wed, 25 Nov 2015 19:56:32 -0800
-Message-ID: <CAKgT0Ucyq=7OSYBVvU9Z01b3f6scS+eBMLg+yphW7bwkNZosPQ@mail.gmail.com>
-References: <1448372298-28386-1-git-send-email-tianyu.lan@intel.com>
-	<5654722D.4010409@gmail.com> <56552888.90108@intel.com>
-	<CAKgT0UcSrewenfM2YdVojHFFqfK2aVbBN5LH8=BFzc1p0f9hvQ@mail.gmail.com>
-	<56556F98.5060507@intel.com>
-	<CAKgT0UevBmRLpM1PvuuVDUW79A66RcPrfO8uGiqL1RiALW7apg@mail.gmail.com>
-	<A12AC9D104E08D47BAF23C492F83C53B25CDE9E3@SHSMSX104.ccr.corp.intel.com>
+From: Peter Chen <peter.chen@freescale.com>
+Subject: Re: [PATCH v1] usb: devio: Add ioctl to disallow detaching kernel
+ USB drivers.
+Date: Thu, 26 Nov 2015 16:59:25 +0800
+Message-ID: <20151126085924.GD26397@shlinux2>
+References: <1448466334-21346-1-git-send-email-emilio.lopez@collabora.co.uk>
+ <1448466334-21346-2-git-send-email-emilio.lopez@collabora.co.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org>
-In-Reply-To: <A12AC9D104E08D47BAF23C492F83C53B25CDE9E3@SHSMSX104.ccr.corp.intel.com>
-List-Unsubscribe: <https://lists.nongnu.org/mailman/options/qemu-devel>,
-	<mailto:qemu-devel-request@nongnu.org?subject=unsubscribe>
-List-Archive: <http://lists.nongnu.org/archive/html/qemu-devel>
-List-Post: <mailto:qemu-devel@nongnu.org>
-List-Help: <mailto:qemu-devel-request@nongnu.org?subject=help>
-List-Subscribe: <https://lists.nongnu.org/mailman/listinfo/qemu-devel>,
-	<mailto:qemu-devel-request@nongnu.org?subject=subscribe>
-Errors-To: qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org
-Sender: qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org
-To: "Dong, Eddie" <eddie.dong@intel.com>
-Cc: Wei Yang <weiyang@linux.vnet.ibm.com>, "Tantilov,
-	Emil S" <emil.s.tantilov@intel.com>, "kvm@vger.kernel.org" <kvm@vger.kernel.org>, "Michael S. Tsirkin" <mst@redhat.com>, "qemu-devel@nongnu.org" <qemu-devel@nongnu.org>, "Brandeburg,
-	Jesse" <jesse.brandeburg@intel.com>, "Rustad,
-	Mark D" <mark.d.rustad@intel.com>, "Wyborny,
-	Carolyn" <carolyn.wyborny@intel.com>, Eric Auger <eric.auger@linaro.org>, "Skidmore,
-	Donald C" <donald.c.skidmore@intel.com>, "zajec5@gmail.com" <zajec5@gmail.com>, Alexander Graf <agraf@suse.de>, intel-wired-lan <intel-wired-lan@lists.osuosl.org>, "Kirsher,
-	Jeffrey T" <jeffrey.t.kirsher@intel.com>, Or Gerlitz <gerlitz.or@gmail.com>, "Williams,
-	Mitch A" <mitch.a.williams@intel.com>, "Jani,
-	Nrupal" <nrupal.jani@intel.com>, Bjorn Helgaas <bhelgaas@google.com>, "a.motakis@virtualopensystems.com" <a.motakis@virtualopensystems.com>, "Lan, Tianyu" <tianyu>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1448466334-21346-2-git-send-email-emilio.lopez@collabora.co.uk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Emilio =?iso-8859-1?Q?L=F3pez?= <emilio.lopez@collabora.co.uk>
+Cc: gregkh@linuxfoundation.org, stern@rowland.harvard.edu, kborer@gmail.com, reillyg@chromium.org, keescook@chromium.org, linux-api@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org, jorgelo@chromium.org, dan.carpenter@oracle.com
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 25, 2015 at 7:15 PM, Dong, Eddie <eddie.dong@intel.com> wrote:
->> On Wed, Nov 25, 2015 at 12:21 AM, Lan Tianyu <tianyu.lan@intel.com> wrot=
-e:
->> > On 2015=E5=B9=B411=E6=9C=8825=E6=97=A5 13:30, Alexander Duyck wrote:
->> >> No, what I am getting at is that you can't go around and modify the
->> >> configuration space for every possible device out there.  This
->> >> solution won't scale.
->> >
->> >
->> > PCI config space regs are emulation by Qemu and so We can find the
->> > free PCI config space regs for the faked PCI capability. Its position
->> > can be not permanent.
->>
->> Yes, but do you really want to edit every driver on every OS that you pl=
-an to
->> support this on.  What about things like direct assignment of regular Et=
-hernet
->> ports?  What you really need is a solution that will work generically on=
- any
->> existing piece of hardware out there.
->
-> The fundamental assumption of this patch series is to modify the driver i=
-n guest to self-emulate or track the device state, so that the migration ma=
-y be possible.
-> I don't think we can modify OS, without modifying the drivers, even using=
- the PCIe hotplug mechanism.
-> In the meantime, modifying Windows OS is a big challenge given that only =
-Microsoft can do. While, modifying driver is relatively simple and manageab=
-le to device vendors, if the device vendor want to support state-clone base=
-d migration.
+On Wed, Nov 25, 2015 at 12:45:34PM -0300, Emilio L=F3pez wrote:
+> From: Reilly Grant <reillyg@chromium.org>
+>=20
+> The new USBDEVFS_DROP_PRIVILEGES ioctl allows a process to voluntaril=
+y
+> relinquish the ability to issue other ioctls that may interfere with
+> other processes and drivers that have claimed an interface on the
+> device.
+>=20
+> Signed-off-by: Reilly Grant <reillyg@chromium.org>
+> Reviewed-by: Jorge Lucangeli Obes <jorgelo@chromium.org>
+> Reviewed-by: Kees Cook <keescook@chromium.org>
+> [emilio.lopez: fix build for v4.4-rc2 and adjust patch title prefix]
+> Signed-off-by: Emilio L=F3pez <emilio.lopez@collabora.co.uk>
+>=20
+> ---
+>=20
+>  drivers/usb/core/devio.c          | 50 +++++++++++++++++++++++++++++=
+++++++----
+>  include/uapi/linux/usbdevice_fs.h |  1 +
+>  2 files changed, 47 insertions(+), 4 deletions(-)
+>=20
+> diff --git a/drivers/usb/core/devio.c b/drivers/usb/core/devio.c
+> index 38ae877c..a5ccc50 100644
+> --- a/drivers/usb/core/devio.c
+> +++ b/drivers/usb/core/devio.c
+> @@ -77,6 +77,7 @@ struct usb_dev_state {
+>  	unsigned long ifclaimed;
+>  	u32 secid;
+>  	u32 disabled_bulk_eps;
+> +	bool privileges_dropped;
+>  };
+> =20
+>  struct async {
+> @@ -878,7 +879,7 @@ static int usbdev_open(struct inode *inode, struc=
+t file *file)
+>  	int ret;
+> =20
+>  	ret =3D -ENOMEM;
+> -	ps =3D kmalloc(sizeof(struct usb_dev_state), GFP_KERNEL);
+> +	ps =3D kzalloc(sizeof(struct usb_dev_state), GFP_KERNEL);
+>  	if (!ps)
+>  		goto out_free_ps;
+> =20
+> @@ -911,11 +912,8 @@ static int usbdev_open(struct inode *inode, stru=
+ct file *file)
+>  	INIT_LIST_HEAD(&ps->async_pending);
+>  	INIT_LIST_HEAD(&ps->async_completed);
+>  	init_waitqueue_head(&ps->wait);
+> -	ps->discsignr =3D 0;
+>  	ps->disc_pid =3D get_pid(task_pid(current));
+>  	ps->cred =3D get_current_cred();
+> -	ps->disccontext =3D NULL;
+> -	ps->ifclaimed =3D 0;
 
-The problem is the code you are presenting, even as a proof of concept
-is seriously flawed.  It does a poor job of exposing how any of this
-can be duplicated for any other VF other than the one you are working
-on.
+The above changes seem to be not related with this change.
 
-I am not saying you cannot modify the drivers, however what you are
-doing is far too invasive.  Do you seriously plan on modifying all of
-the PCI device drivers out there in order to allow any device that
-might be direct assigned to a port to support migration?  I certainly
-hope not.  That is why I have said that this solution will not scale.
+>  	security_task_getsecid(current, &ps->secid);
+>  	smp_wmb();
+>  	list_add_tail(&ps->list, &dev->filelist);
+> @@ -1215,6 +1213,35 @@ static int proc_connectinfo(struct usb_dev_sta=
+te *ps, void __user *arg)
+> =20
+>  static int proc_resetdevice(struct usb_dev_state *ps)
+>  {
+> +	if (ps->privileges_dropped) {
+> +		struct usb_host_config *actconfig =3D ps->dev->actconfig;
+> +
+> +		/* Don't touch the device if any interfaces are claimed. It
+> +		 * could interfere with other drivers' operations and this
+> +		 * process has dropped its privileges to do such things.
+> +		 */
+> +		if (actconfig) {
+> +			int i;
+> +
+> +			for (i =3D 0; i < actconfig->desc.bNumInterfaces; ++i) {
+> +				if (usb_interface_claimed(
+> +					actconfig->interface[i])) {
+> +					dev_warn(&ps->dev->dev,
+> +						"usbfs: interface %d claimed by"
+> +						" %s while '%s'"
+> +						" resets device\n",
+> +						actconfig->interface[i]
+> +							->cur_altsetting
+> +							->desc.bInterfaceNumber,
 
-What I am counter proposing seems like a very simple proposition.  It
-can be implemented in two steps.
+The length of line is 80 characters
 
-1.  Look at modifying dma_mark_clean().  It is a function called in
-the sync and unmap paths of the lib/swiotlb.c.  If you could somehow
-modify it to take care of marking the pages you unmap for Rx as being
-dirty it will get you a good way towards your goal as it will allow
-you to continue to do DMA while you are migrating the VM.
+> +						actconfig->interface[i]
+> +							->dev.driver->name,
+> +						current->comm);
+> +					return -EACCES;
+> +				}
+> +			}
+> +		}
+> +	}
+> +
+>  	return usb_reset_device(ps->dev);
+>  }
+> =20
+> @@ -1922,6 +1949,9 @@ static int proc_ioctl(struct usb_dev_state *ps,=
+ struct usbdevfs_ioctl *ctl)
+>  	struct usb_interface    *intf =3D NULL;
+>  	struct usb_driver       *driver =3D NULL;
+> =20
+> +	if (ps->privileges_dropped)
+> +		return -EACCES;
+> +
+>  	/* alloc buffer */
+>  	size =3D _IOC_SIZE(ctl->ioctl_code);
+>  	if (size > 0) {
+> @@ -2084,6 +2114,9 @@ static int proc_disconnect_claim(struct usb_dev=
+_state *ps, void __user *arg)
+>  					sizeof(dc.driver)) =3D=3D 0)
+>  			return -EBUSY;
+> =20
+> +		if (ps->privileges_dropped)
+> +			return -EACCES;
+> +
+>  		dev_dbg(&intf->dev, "disconnect by usbfs\n");
+>  		usb_driver_release_interface(driver, intf);
+>  	}
+> @@ -2130,6 +2163,12 @@ static int proc_free_streams(struct usb_dev_st=
+ate *ps, void __user *arg)
+>  	return r;
+>  }
+> =20
+> +static int proc_drop_privileges(struct usb_dev_state *ps)
+> +{
+> +	ps->privileges_dropped =3D true;
+> +	return 0;
+> +}
+> +
+>  /*
+>   * NOTE:  All requests here that have interface numbers as parameter=
+s
+>   * are assuming that somehow the configuration has been prevented fr=
+om
+> @@ -2318,6 +2357,9 @@ static long usbdev_do_ioctl(struct file *file, =
+unsigned int cmd,
+>  	case USBDEVFS_FREE_STREAMS:
+>  		ret =3D proc_free_streams(ps, p);
+>  		break;
+> +	case USBDEVFS_DROP_PRIVILEGES:
+> +		ret =3D proc_drop_privileges(ps);
+> +		break;
+>  	}
+> =20
+>   done:
+> diff --git a/include/uapi/linux/usbdevice_fs.h b/include/uapi/linux/u=
+sbdevice_fs.h
+> index 019ba1e..99c296b 100644
+> --- a/include/uapi/linux/usbdevice_fs.h
+> +++ b/include/uapi/linux/usbdevice_fs.h
+> @@ -187,5 +187,6 @@ struct usbdevfs_streams {
+>  #define USBDEVFS_DISCONNECT_CLAIM  _IOR('U', 27, struct usbdevfs_dis=
+connect_claim)
+>  #define USBDEVFS_ALLOC_STREAMS     _IOR('U', 28, struct usbdevfs_str=
+eams)
+>  #define USBDEVFS_FREE_STREAMS      _IOR('U', 29, struct usbdevfs_str=
+eams)
+> +#define USBDEVFS_DROP_PRIVILEGES   _IO('U', 30)
+> =20
+>  #endif /* _UAPI_LINUX_USBDEVICE_FS_H */
+> --=20
+> 2.5.0
+>=20
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-usb" =
+in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-2.  Look at making use of the existing PCI suspend/resume calls that
-are there to support PCI power management.  They have everything
-needed to allow you to pause and resume DMA for the device before and
-after the migration while retaining the driver state.  If you can
-implement something that allows you to trigger these calls from the
-PCI subsystem such as hot-plug then you would have a generic solution
-that can be easily reproduced for multiple drivers beyond those
-supported by ixgbevf.
+--=20
 
-Thanks.
-
-- Alex
+Best Regards,
+Peter Chen
