@@ -1,7 +1,7 @@
 From: serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
-Subject: [PATCH 1/7] kernfs: Add API to generate relative kernfs path
-Date: Fri, 27 Nov 2015 14:52:19 -0600
-Message-ID: <1448657545-531-2-git-send-email-serge.hallyn@ubuntu.com>
+Subject: [PATCH 5/7] cgroup: mount cgroupns-root when inside non-init cgroupns
+Date: Fri, 27 Nov 2015 14:52:23 -0600
+Message-ID: <1448657545-531-6-git-send-email-serge.hallyn@ubuntu.com>
 References: <1448657545-531-1-git-send-email-serge.hallyn@ubuntu.com>
 Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1448657545-531-1-git-send-email-serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
@@ -12,262 +12,178 @@ List-Id: linux-api@vger.kernel.org
 
 From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-The new function kernfs_path_from_node() generates and returns kernfs
-path of a given kernfs_node relative to a given parent kernfs_node.
+This patch enables cgroup mounting inside userns when a process
+as appropriate privileges. The cgroup filesystem mounted is
+rooted at the cgroupns-root. Thus, in a container-setup, only
+the hierarchy under the cgroupns-root is exposed inside the container.
+This allows container management tools to run inside the containers
+without depending on any global state.
+In order to support this, a new kernfs api is added to lookup the
+dentry for the cgroupns-root.
 
-Changelog 20151125:
-  - Fully-wing multilinecomments
-  - Rework kernfs_path_from_node_locked() logic
-  - Replace BUG_ONs with returning NULL
-  - Use a const char* for /.. and precalculate its size
-
-Note - kernfs_path_from_node_locked from x to x will return '/'.  This
-is precisely what we want for cgroup namespaces.  If in general '.' is
-preferred, we could switch that and change it back for /proc/$$/cgroups.
+Changelog:
+	20151116 - Don't allow user namespaces to bind new subsystems
+	20151118 - postpone the FS_USERNS_MOUNT flag until the
+	           last patch, until we can convince ourselves it
+		   is safe.
 
 Signed-off-by: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Acked-by: Serge E. Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 ---
- fs/kernfs/dir.c        |  181 ++++++++++++++++++++++++++++++++++++++++--------
- include/linux/kernfs.h |    3 +
- 2 files changed, 157 insertions(+), 27 deletions(-)
+ fs/kernfs/mount.c      |   50 ++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/kernfs.h |    2 ++
+ kernel/cgroup.c        |   39 ++++++++++++++++++++++++++++++++++++-
+ 3 files changed, 90 insertions(+), 1 deletion(-)
 
-diff --git a/fs/kernfs/dir.c b/fs/kernfs/dir.c
-index 91e0045..d456896 100644
---- a/fs/kernfs/dir.c
-+++ b/fs/kernfs/dir.c
-@@ -44,28 +44,133 @@ static int kernfs_name_locked(struct kernfs_node *kn, char *buf, size_t buflen)
- 	return strlcpy(buf, kn->parent ? kn->name : "/", buflen);
+diff --git a/fs/kernfs/mount.c b/fs/kernfs/mount.c
+index 8eaf417..cc41fe1 100644
+--- a/fs/kernfs/mount.c
++++ b/fs/kernfs/mount.c
+@@ -62,6 +62,56 @@ struct kernfs_root *kernfs_root_from_sb(struct super_block *sb)
+ 	return NULL;
  }
  
--static char * __must_check kernfs_path_locked(struct kernfs_node *kn, char *buf,
--					      size_t buflen)
-+/* kernfs_node_depth - compute depth from @from to @to */
-+static size_t kernfs_node_distance(struct kernfs_node *from, struct kernfs_node *to)
- {
--	char *p = buf + buflen;
--	int len;
-+	size_t depth = 0;
- 
--	*--p = '\0';
-+	BUG_ON(!to);
-+	BUG_ON(!from);
- 
--	do {
--		len = strlen(kn->name);
--		if (p - buf < len + 1) {
--			buf[0] = '\0';
--			p = NULL;
--			break;
--		}
--		p -= len;
--		memcpy(p, kn->name, len);
--		*--p = '/';
--		kn = kn->parent;
--	} while (kn && kn->parent);
-+	while (to->parent && to != from) {
-+		depth++;
-+		to = to->parent;
-+	}
-+	return depth;
-+}
- 
--	return p;
-+static struct kernfs_node *kernfs_common_ancestor(struct kernfs_node *a,
-+		struct kernfs_node *b)
-+{
-+	size_t da = kernfs_node_distance(kernfs_root(a)->kn, a);
-+	size_t db = kernfs_node_distance(kernfs_root(b)->kn, b);
-+
-+	if (da == 0)
-+		return a;
-+	if (db == 0)
-+		return b;
-+
-+	while (da > db) {
-+		a = a->parent;
-+		da--;
-+	}
-+	while (db > da) {
-+		b = b->parent;
-+		db--;
-+	}
-+
-+	/* worst case b and a will be the same at root */
-+	while (b != a) {
-+		b = b->parent;
-+		a = a->parent;
-+	}
-+
-+	return a;
-+}
-+
 +/**
-+ * kernfs_path_from_node_locked - find a relative path from @kn_from to @kn_to
-+ * @kn_from: reference node of the path
-+ * @kn_to: kernfs node to which path is needed
-+ * @buf: buffer to copy the path into
-+ * @buflen: size of @buf
++ * kernfs_obtain_root - get a dentry for the given kernfs_node
++ * @sb: the kernfs super_block
++ * @kn: kernfs_node for which a dentry is needed
 + *
-+ * We need to handle couple of scenarios here:
-+ * [1] when @kn_from is an ancestor of @kn_to at some level
-+ * kn_from: /n1/n2/n3
-+ * kn_to:   /n1/n2/n3/n4/n5
-+ * result:  /n4/n5
-+ *
-+ * [2] when @kn_from is on a different hierarchy and we need to find common
-+ * ancestor between @kn_from and @kn_to.
-+ * kn_from: /n1/n2/n3/n4
-+ * kn_to:   /n1/n2/n5
-+ * result:  /../../n5
-+ * OR
-+ * kn_from: /n1/n2/n3/n4/n5   [depth=5]
-+ * kn_to:   /n1/n2/n3         [depth=3]
-+ * result:  /../..
++ * This can be used by callers which want to mount only a part of the kernfs
++ * as root of the filesystem.
 + */
-+static char *
-+__must_check kernfs_path_from_node_locked(struct kernfs_node *kn_from,
-+					  struct kernfs_node *kn_to, char *buf,
-+					  size_t buflen)
++struct dentry *kernfs_obtain_root(struct super_block *sb,
++				  struct kernfs_node *kn)
 +{
-+	char *p = buf;
-+	struct kernfs_node *kn, *common;
-+	const char parent_str[] = "/..";
-+	int i;
-+	size_t depth_from, depth_to, len = 0, nlen = 0,
-+	       plen = sizeof(parent_str) - 1;
++	struct dentry *dentry;
++	struct inode *inode;
 +
-+	/* We atleast need 2 bytes to write "/\0". */
-+	if (buflen < 2)
-+		return NULL;
++	BUG_ON(sb->s_op != &kernfs_sops);
 +
-+	if (!kn_from)
-+		kn_from = kernfs_root(kn_to)->kn;
-+
-+	if (kn_from == kn_to) {
-+		*p = '/';
-+		*(++p) = '\0';
-+		return buf;
++	/* inode for the given kernfs_node should already exist. */
++	inode = kernfs_get_inode(sb, kn);
++	if (!inode) {
++		pr_debug("kernfs: could not get inode for '");
++		pr_cont_kernfs_path(kn);
++		pr_cont("'.\n");
++		return ERR_PTR(-EINVAL);
 +	}
 +
-+	common = kernfs_common_ancestor(kn_from, kn_to);
-+	if (!common) {
-+		WARN_ONCE("%s: kn_from and kn_to on different roots\n",
-+			__func__);
-+		return NULL;
++	/* instantiate and link root dentry */
++	dentry = d_obtain_root(inode);
++	if (!dentry) {
++		pr_debug("kernfs: could not get dentry for '");
++		pr_cont_kernfs_path(kn);
++		pr_cont("'.\n");
++		return ERR_PTR(-ENOMEM);
 +	}
 +
-+	depth_to = kernfs_node_distance(common, kn_to);
-+	depth_from = kernfs_node_distance(common, kn_from);
-+
-+	for (i = 0; i < depth_from; i++) {
-+		if (len + plen + 1 > buflen)
-+			return NULL;
-+		strcpy(p, parent_str);
-+		p += plen;
-+		len += plen;
++	/*
++	 * If this is a new dentry, set it up. We need kernfs_mutex because
++	 * this may be called by callers other than kernfs_fill_super.
++	 */
++	mutex_lock(&kernfs_mutex);
++	if (!dentry->d_fsdata) {
++		kernfs_get(kn);
++		dentry->d_fsdata = kn;
++	} else {
++		WARN_ON(dentry->d_fsdata != kn);
 +	}
++	mutex_unlock(&kernfs_mutex);
 +
-+	/* Calculate how many bytes we need for the rest */
-+	for (kn = kn_to; kn != common; kn = kn->parent)
-+		nlen += strlen(kn->name) + 1;
-+
-+	if (len + nlen + 1 > buflen)
-+		return NULL;
-+
-+	p += nlen;
-+	*p = '\0';
-+	for (kn = kn_to; kn != common; kn = kn->parent) {
-+		nlen = strlen(kn->name);
-+		p -= nlen;
-+		memcpy(p, kn->name, nlen);
-+		*(--p) = '/';
-+	}
-+
-+	return buf;
- }
- 
- /**
-@@ -115,26 +220,48 @@ size_t kernfs_path_len(struct kernfs_node *kn)
- }
- 
- /**
-- * kernfs_path - build full path of a given node
-+ * kernfs_path_from_node - build path of node @kn relative to @kn_root.
-+ * @kn_root: parent kernfs_node relative to which we need to build the path
-  * @kn: kernfs_node of interest
-- * @buf: buffer to copy @kn's name into
-+ * @buf: buffer to copy @kn's path into
-  * @buflen: size of @buf
-  *
-- * Builds and returns the full path of @kn in @buf of @buflen bytes.  The
-- * path is built from the end of @buf so the returned pointer usually
-- * doesn't match @buf.  If @buf isn't long enough, @buf is nul terminated
-+ * Builds and returns @kn's path relative to @kn_root. @kn_root and @kn must
-+ * be on the same kernfs-root. If @kn_root is not parent of @kn, then a relative
-+ * path (which includes '..'s) as needed to reach from @kn_root to @kn is
-+ * returned.
-+ * The path may be built from the end of @buf so the returned pointer may not
-+ * match @buf.  If @buf isn't long enough, @buf is nul terminated
-  * and %NULL is returned.
-  */
--char *kernfs_path(struct kernfs_node *kn, char *buf, size_t buflen)
-+char *kernfs_path_from_node(struct kernfs_node *kn_root, struct kernfs_node *kn,
-+			    char *buf, size_t buflen)
- {
- 	unsigned long flags;
- 	char *p;
- 
- 	spin_lock_irqsave(&kernfs_rename_lock, flags);
--	p = kernfs_path_locked(kn, buf, buflen);
-+	p = kernfs_path_from_node_locked(kn_root, kn, buf, buflen);
- 	spin_unlock_irqrestore(&kernfs_rename_lock, flags);
- 	return p;
- }
-+EXPORT_SYMBOL_GPL(kernfs_path_from_node);
-+
-+/**
-+ * kernfs_path - build full path of a given node
-+ * @kn: kernfs_node of interest
-+ * @buf: buffer to copy @kn's name into
-+ * @buflen: size of @buf
-+ *
-+ * Builds and returns the full path of @kn in @buf of @buflen bytes.  The
-+ * path is built from the end of @buf so the returned pointer usually
-+ * doesn't match @buf.  If @buf isn't long enough, @buf is nul terminated
-+ * and %NULL is returned.
-+ */
-+char *kernfs_path(struct kernfs_node *kn, char *buf, size_t buflen)
-+{
-+	return kernfs_path_from_node(NULL, kn, buf, buflen);
++	return dentry;
 +}
- EXPORT_SYMBOL_GPL(kernfs_path);
- 
- /**
-@@ -168,8 +295,8 @@ void pr_cont_kernfs_path(struct kernfs_node *kn)
- 
- 	spin_lock_irqsave(&kernfs_rename_lock, flags);
- 
--	p = kernfs_path_locked(kn, kernfs_pr_cont_buf,
--			       sizeof(kernfs_pr_cont_buf));
-+	p = kernfs_path_from_node_locked(NULL, kn, kernfs_pr_cont_buf,
-+					 sizeof(kernfs_pr_cont_buf));
- 	if (p)
- 		pr_cont("%s", p);
- 	else
++
+ static int kernfs_fill_super(struct super_block *sb, unsigned long magic)
+ {
+ 	struct kernfs_super_info *info = kernfs_info(sb);
 diff --git a/include/linux/kernfs.h b/include/linux/kernfs.h
-index 5d4e9c4..d025ebd 100644
+index d025ebd..1903777 100644
 --- a/include/linux/kernfs.h
 +++ b/include/linux/kernfs.h
-@@ -267,6 +267,9 @@ static inline bool kernfs_ns_enabled(struct kernfs_node *kn)
+@@ -284,6 +284,8 @@ struct kernfs_node *kernfs_node_from_dentry(struct dentry *dentry);
+ struct kernfs_root *kernfs_root_from_sb(struct super_block *sb);
+ struct inode *kernfs_get_inode(struct super_block *sb, struct kernfs_node *kn);
  
- int kernfs_name(struct kernfs_node *kn, char *buf, size_t buflen);
- size_t kernfs_path_len(struct kernfs_node *kn);
-+char * __must_check kernfs_path_from_node(struct kernfs_node *root_kn,
-+					  struct kernfs_node *kn, char *buf,
-+					  size_t buflen);
- char * __must_check kernfs_path(struct kernfs_node *kn, char *buf,
- 				size_t buflen);
- void pr_cont_kernfs_name(struct kernfs_node *kn);
++struct dentry *kernfs_obtain_root(struct super_block *sb,
++				  struct kernfs_node *kn);
+ struct kernfs_root *kernfs_create_root(struct kernfs_syscall_ops *scops,
+ 				       unsigned int flags, void *priv);
+ void kernfs_destroy_root(struct kernfs_root *root);
+diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+index 0afed6b..2f487a4 100644
+--- a/kernel/cgroup.c
++++ b/kernel/cgroup.c
+@@ -2005,6 +2005,15 @@ static struct dentry *cgroup_mount(struct file_system_type *fs_type,
+ 	int ret;
+ 	int i;
+ 	bool new_sb;
++	struct cgroup_namespace *ns = current->nsproxy->cgroup_ns;
++
++	get_cgroup_ns(ns);
++
++	/* Check if the caller has permission to mount. */
++	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN)) {
++		put_cgroup_ns(ns);
++		return ERR_PTR(-EPERM);
++	}
+ 
+ 	/*
+ 	 * The first time anyone tries to mount a cgroup, enable the list
+@@ -2121,6 +2130,11 @@ static struct dentry *cgroup_mount(struct file_system_type *fs_type,
+ 		goto out_unlock;
+ 	}
+ 
++	if (!opts.none && !capable(CAP_SYS_ADMIN)) {
++		ret = -EPERM;
++		goto out_unlock;
++	}
++
+ 	root = kzalloc(sizeof(*root), GFP_KERNEL);
+ 	if (!root) {
+ 		ret = -ENOMEM;
+@@ -2139,12 +2153,34 @@ out_free:
+ 	kfree(opts.release_agent);
+ 	kfree(opts.name);
+ 
+-	if (ret)
++	if (ret) {
++		put_cgroup_ns(ns);
+ 		return ERR_PTR(ret);
++	}
++
+ out_mount:
+ 	dentry = kernfs_mount(fs_type, flags, root->kf_root,
+ 			      is_v2 ? CGROUP2_SUPER_MAGIC : CGROUP_SUPER_MAGIC,
+ 			      &new_sb);
++
++	if (!IS_ERR(dentry)) {
++		/*
++		 * In non-init cgroup namespace, instead of root cgroup's
++		 * dentry, we return the dentry corresponding to the
++		 * cgroupns->root_cgrp.
++		 */
++		if (ns != &init_cgroup_ns) {
++			struct dentry *nsdentry;
++			struct cgroup *cgrp;
++
++			cgrp = cset_cgroup_from_root(ns->root_cset, root);
++			nsdentry = kernfs_obtain_root(dentry->d_sb,
++				cgrp->kn);
++			dput(dentry);
++			dentry = nsdentry;
++		}
++	}
++
+ 	if (IS_ERR(dentry) || !new_sb)
+ 		cgroup_put(&root->cgrp);
+ 
+@@ -2157,6 +2193,7 @@ out_mount:
+ 		deactivate_super(pinned_sb);
+ 	}
+ 
++	put_cgroup_ns(ns);
+ 	return dentry;
+ }
+ 
 -- 
 1.7.9.5
