@@ -1,71 +1,120 @@
 From: WEN Pingbo <pingbo.wen@linaro.org>
-Subject: [PATCH 0/3] introduce new evdev interface type
-Date: Fri, 27 Nov 2015 18:00:29 +0800
-Message-ID: <1448618432-32357-1-git-send-email-pingbo.wen@linaro.org>
+Subject: [PATCH 3/3] uinput: convert input_event to input_value
+Date: Fri, 27 Nov 2015 18:00:32 +0800
+Message-ID: <1448618432-32357-4-git-send-email-pingbo.wen@linaro.org>
+References: <1448618432-32357-1-git-send-email-pingbo.wen@linaro.org>
 Return-path: <linux-input-owner@vger.kernel.org>
+In-Reply-To: <1448618432-32357-1-git-send-email-pingbo.wen@linaro.org>
 Sender: linux-input-owner@vger.kernel.org
 To: y2038@list.linaro.org, dmitry.torokhov@gmail.com, aksgarg1989@gmail.com, arnd@arndb.de
 Cc: linux-input@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, WEN Pingbo <pingbo.wen@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-To solve the y2038 problem in input_event, I had some attempts before [1],
-and this is the second one.
+This patch depends on 'add new evdev interface'.
 
-We can force userspace to use monotonic time in event timestamp, so the
-'struct timeval' is enough to keep y2038-safe, as Arnd suggested. But we
-can not find a way to make kernel compatible with old binaries, which use
-realtime, and there are still some devices, which depend on realtime.
+We should not use input_event in kernel any more. Convert it in
+uinput, and adapt to new api changes.
 
-So I get a idea to add a new evdev interface, which is y2038 safe. And
-userspace can switch between the old and new interface via ioctl.
+Signed-off-by: WEN Pingbo <pingbo.wen@linaro.org>
+---
+ drivers/input/misc/uinput.c | 23 +++++++++++------------
+ include/linux/uinput.h      |  2 +-
+ 2 files changed, 12 insertions(+), 13 deletions(-)
 
-The patch series add three evdev interface type:
-
-- EV_IF_LEGACY
-  send event by input_event. This is the default option, keep kernel
-  backward compatible.
-
-- EV_IF_RAW
-  send event by input_value, which doesn't contain a timestamp. If
-  userspace don't need the event timestamp, EV_IF_RAW is the best choice.
-
-- EV_IF_COMPOSITE
-  send event by input_composite_event. This is a new structure, which
-  append a nanosecond timestamp after input_value. Since the input_value
-  and s64 are the same size, so you can treat it as two input_value.
-
-Actually, evdev is not interesting in event timestamp, all it should do is
-to keep event sequences, and evdev already satisfy this. So in the kernel,
-the event should only store in input_value, input_event and
-input_composite_event is used by userspace only.
-
-I also wrote a evtest tool [2], to validate those patches. The tool create
-a evdev device via uinput, and inject event through evdev or uinput, with 
-different interface type.
-
-I have run this test in my Dragonboard 410c, by this command:
-
-$ evtest -l -r -c -n 400000
-
-No problem found, all events are received normally.
-
-[1]: previous patches - https://www.spinics.net/lists/y2038/msg00959.html
-[2]: evtest source code - https://github.com/wengpingbo/evtest
-
-WEN Pingbo (3):
-  input: evdev: introduce new evdev interface
-  input: evdev: add new ioctl EVIOCSIFTYPE / EVIOCGIFTYPE
-  uinput: convert input_event to input_value
-
- drivers/input/evdev.c        | 117 ++++++++++++++++------------------
- drivers/input/input-compat.c | 148 ++++++++++++++++++++++++++++---------------
- drivers/input/input-compat.h |  48 ++++++++++----
- drivers/input/misc/uinput.c  |  23 ++++---
- include/linux/input.h        |  12 ----
- include/linux/uinput.h       |   2 +-
- include/uapi/linux/input.h   |  27 ++++++++
- 7 files changed, 225 insertions(+), 152 deletions(-)
-
+diff --git a/drivers/input/misc/uinput.c b/drivers/input/misc/uinput.c
+index 5adbced..d84c6d4 100644
+--- a/drivers/input/misc/uinput.c
++++ b/drivers/input/misc/uinput.c
+@@ -50,7 +50,6 @@ static int uinput_dev_event(struct input_dev *dev,
+ 	udev->buff[udev->head].type = type;
+ 	udev->buff[udev->head].code = code;
+ 	udev->buff[udev->head].value = value;
+-	do_gettimeofday(&udev->buff[udev->head].time);
+ 	udev->head = (udev->head + 1) % UINPUT_BUFFER_SIZE;
+ 
+ 	wake_up_interruptible(&udev->waitq);
+@@ -436,24 +435,24 @@ static int uinput_setup_device(struct uinput_device *udev,
+ static ssize_t uinput_inject_events(struct uinput_device *udev,
+ 				    const char __user *buffer, size_t count)
+ {
+-	struct input_event ev;
++	struct input_value ev;
+ 	size_t bytes = 0;
+ 
+-	if (count != 0 && count < input_event_size())
++	if (count != 0 && count < input_event_size(EV_IF_LEGACY))
+ 		return -EINVAL;
+ 
+-	while (bytes + input_event_size() <= count) {
++	while (bytes + input_event_size(EV_IF_LEGACY) <= count) {
+ 		/*
+ 		 * Note that even if some events were fetched successfully
+ 		 * we are still going to return EFAULT instead of partial
+ 		 * count to let userspace know that it got it's buffers
+ 		 * all wrong.
+ 		 */
+-		if (input_event_from_user(buffer + bytes, &ev))
++		if (input_event_from_user(buffer + bytes, &ev, EV_IF_LEGACY))
+ 			return -EFAULT;
+ 
+ 		input_event(udev->dev, ev.type, ev.code, ev.value);
+-		bytes += input_event_size();
++		bytes += input_event_size(EV_IF_LEGACY);
+ 	}
+ 
+ 	return bytes;
+@@ -482,7 +481,7 @@ static ssize_t uinput_write(struct file *file, const char __user *buffer,
+ }
+ 
+ static bool uinput_fetch_next_event(struct uinput_device *udev,
+-				    struct input_event *event)
++				    struct input_value *event)
+ {
+ 	bool have_event;
+ 
+@@ -502,16 +501,16 @@ static bool uinput_fetch_next_event(struct uinput_device *udev,
+ static ssize_t uinput_events_to_user(struct uinput_device *udev,
+ 				     char __user *buffer, size_t count)
+ {
+-	struct input_event event;
++	struct input_value event;
+ 	size_t read = 0;
+ 
+-	while (read + input_event_size() <= count &&
++	while (read + input_event_size(EV_IF_LEGACY) <= count &&
+ 	       uinput_fetch_next_event(udev, &event)) {
+ 
+-		if (input_event_to_user(buffer + read, &event))
++		if (input_value_to_user(buffer + read, &event, EV_IF_LEGACY))
+ 			return -EFAULT;
+ 
+-		read += input_event_size();
++		read += input_event_size(EV_IF_LEGACY);
+ 	}
+ 
+ 	return read;
+@@ -523,7 +522,7 @@ static ssize_t uinput_read(struct file *file, char __user *buffer,
+ 	struct uinput_device *udev = file->private_data;
+ 	ssize_t retval;
+ 
+-	if (count != 0 && count < input_event_size())
++	if (count != 0 && count < input_event_size(EV_IF_LEGACY))
+ 		return -EINVAL;
+ 
+ 	do {
+diff --git a/include/linux/uinput.h b/include/linux/uinput.h
+index 0994c0d..bdb6fca 100644
+--- a/include/linux/uinput.h
++++ b/include/linux/uinput.h
+@@ -66,7 +66,7 @@ struct uinput_device {
+ 	unsigned char		ready;
+ 	unsigned char		head;
+ 	unsigned char		tail;
+-	struct input_event	buff[UINPUT_BUFFER_SIZE];
++	struct input_value	buff[UINPUT_BUFFER_SIZE];
+ 	unsigned int		ff_effects_max;
+ 
+ 	struct uinput_request	*requests[UINPUT_NUM_REQUESTS];
 -- 
 1.9.1
 
