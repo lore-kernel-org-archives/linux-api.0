@@ -1,122 +1,150 @@
-From: Tomi Valkeinen <tomi.valkeinen@ti.com>
-Subject: Re: [RFC PATCH 1/2] drm: add support for for clk and de polarity
-Date: Fri, 27 Nov 2015 09:37:50 +0200
-Message-ID: <5658084E.7040007@ti.com>
-References: <55A67FDB.8010602@gmx.at> <55A6813A.8090706@gmx.at>
- <1448472141.3390.17.camel@pengutronix.de> <56571543.20701@gmx.at>
+From: Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH v1 0/1] ioctl to disallow detaching kernel USB drivers
+Date: Fri, 27 Nov 2015 09:44:45 +0100
+Message-ID: <565817FD.3090409@samsung.com>
+References: <1448466334-21346-1-git-send-email-emilio.lopez@collabora.co.uk>
+ <5656CEA1.9010203@samsung.com> <20151126172914.GA8671@kroah.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature";
-	boundary="2L1n6QkDqsr0FlKjWKS2ojDVTnw8acTR1"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <56571543.20701@gmx.at>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Manfred Schlaegl <manfred.schlaegl@gmx.at>, Philipp Zabel <p.zabel@pengutronix.de>
-Cc: David Airlie <airlied@linux.ie>, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>, dri-devel@lists.freedesktop.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Manfred Schlaegl <manfred.schlaegl@ginzinger.com>, Steve Longerbeam <slongerbeam@gmail.com>, Deepak Das <deepak_das@mentor.com>, Jiada Wang <jiada_wang@mentor.com>, linux-fbdev@vger.kernel.org, Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Content-Type: text/plain; charset=windows-1252;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-reply-to: <20151126172914.GA8671-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: =?UTF-8?Q?Emilio_L=c3=b3pez?= <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org, kborer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jorgelo-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
---2L1n6QkDqsr0FlKjWKS2ojDVTnw8acTR1
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
 
 
-
-On 26/11/15 16:20, Manfred Schlaegl wrote:
-> On 2015-11-25 18:22, Philipp Zabel wrote:
->> Am Mittwoch, den 15.07.2015, 17:50 +0200 schrieb Manfred Schlaegl:
->>> To get full support for parallel and LVDS displays with drm:
->>> Add representation for clock and data enable polarity in drm_display_=
-mode
->>> flags (similar to HSYNC/VSYNC polarity) and update conversion functio=
-ns
->>> from/to videomode accordingly.
->>>
->>> This is especially important for embedded devices where parallel(RGB)=
- and
->>> LVDS displays are still widely used and drm already plays an importan=
-t
->>> role.
->>>
->>> Tested on Freescale i.MX53(parallel) and i.MX6(LVDS).
->>>
->>> Background:
->>> There was the ability to set polarity of clock and data enable signal=
-s
->>> in devicetree(display-timing), struct display_timing and struct video=
-mode,
->>> but there was no representation for this in struct drm_display_mode.
->>> Example on Freescale i.MX53/i.MX6 SoC's:
->>>  * A parallel display using different clock polarity is set up using
->>>    display-timing in devicetree
->>>  * ipuv3 parallel outputs clock with wrong polarity
->>>
->>> Signed-off-by: Manfred Schlaegl <manfred.schlaegl@gmx.at>
+On 11/26/2015 06:29 PM, Greg KH wrote:
+> On Thu, Nov 26, 2015 at 10:19:29AM +0100, Krzysztof Opasiak wrote:
 >>
->> Any comments on whether data enable and pixel clock polarity flags can=
-
->> be added to the visible DRM_MODE_FLAGs, and if not, where else this
->> information should be kept? struct drm_display_info?
 >>
->> This patch and the following IPUv3 patch are useful and necessary for
->> quite some panels connected to i.MX SoCs, but adding DRM_MODE_FLAGs is=
-
->> somewhat out of my jurisdiction.
+>> On 11/25/2015 04:45 PM, Emilio L=F3pez wrote:
+>>> Hi everyone,
+>>>
+>>> This patch introduces a new ioctl, USBDEVFS_DROP_PRIVILEGES,
+>>> to voluntarily forgo the ability to issue ioctls which may
+>>> interfere with other users of the USB device.
+>>>
+>>> This feature allows a privileged process (in the case of Chrome OS,
+>>> permission_broker) to open a USB device node and then drop a number
+>>> of capabilities that are considered "privileged".
 >>
->> best regards
->> Philipp
+>> We had the same idea in Tizen but for now we didn't have time to imp=
+lement
+>> it.
 >>
->=20
-> Good to see that this discussion is triggered.
+>>   These privileges
+>>> include the ability to reset the device if there are other users
+>>> (most notably a kernel driver) or to disconnect a kernel driver
+>> >from the device. The file descriptor can then be passed to an
+>>> unprivileged process.
+>>
+>> And how about switching configuration? This can be also harmful even=
+ if the
+>> are no other users for any interface in this configuration.
+>> (Just imagine the situation in which only second config contains an =
+HID
+>> function and when app switch configuration it is activated without u=
+ser
+>> knowing about this;))
+>
+> Adding this option might be nice.
+>
+>>> This is useful for granting a process access to a device with
+>>> multiple functions. It won't be able to use its access to one
+>>> function to disrupt or take over control of another function.
+>>
+>> I run through your code and as far as I understand above is not exac=
+tly
+>> true. Your patch allows only to prevent userspace from accessing int=
+erfaces
+>> which has kernel drivers, there is no way to stop an application fro=
+m taking
+>> control over all free interfaces.
+>>
+>> Let's say that your device has 3 interfaces. First of them has a ker=
+nel
+>> driver but second and third doesn't. You have 2 apps. One should com=
+municate
+>> using second interface and another one third. But first app is malic=
+ious and
+>> it claims all free interfaces of received device (your patch doesn't=
+ prevent
+>> this). And when second app starts it is unable to do anything with t=
+he
+>> device because all interfaces are taken. How would you like to handl=
+e this?
+>
+> You can't, and why would you ever want to, as you can't tell what an =
+app
+> "should" or "should not" do.  If you really care about this, then use=
+ a
+> LSM policy to prevent this.
 
-I seem to have missed this one. This is important for omapdrm also.
-We've had similar patch in TI's linux for a while, but I have never had
-time to start upstreaming it.
+Well, an app can declare what it does and what it needs in it's manifes=
+t=20
+file (or some equivalent of this) and the platform should ensure that=20
+app can do only what it has declared.
 
-Two comments:
+I would really like to use LSM policy in here but currently it is=20
+impossible as one device node represents whole device. Permissions (eve=
+n=20
+those from LSM) are being checked only on open() not on each ioctl() so=
+=20
+as far as I know there is nothing which prevents any owner of opened fd=
+=20
+to claim all available (not taken by someone else) interfaces and LSM=20
+policy is unable to filter those calls (unless we add some LSM hooks=20
+over there).
 
-The "pixclock polarity" could be explained a bit, as it's not really
-about polarity. This was discussed when the display-timings stuff was
-worked on, and display-timings.txt explains what the "pixelclk-active"
-property means.
+>
+>> Moreover I'm not convinced to this patch as it hardcodes the *policy=
+* in
+>> kernel code.
+>
+> What policy is that?
 
-So here I think you could maybe have a comment pointing to
-display-timings.txt, or perhaps a short comment about what the flag is.
-Or if you come up with a great name for the define, that's good too =3D).=
+It's a policy which defines set of ioctls which cannot be issued in=20
+"restricted mode".
 
+>
+>> Generally our approach (with passing fd from broker to
+>> unprivileged process) was similar but we found out that if we would =
+like to
+>> do this correctly there is much more things to filter than in this p=
+atch. We
+>> had two main ideas:
+>>
+>> - implement some LSM hooks in ioctls() but this leads to a lot of ad=
+ditional
+>> callbacks in lsm ops struct which even now is very big. But as a ben=
+efit we
+>> would get a very flexible policy consistent with other system polici=
+es
+>>
+>> - split single usb device node into multiple files which could repre=
+sent
+>> single endpoins only for io and separate control file for privileged=
+ but
+>> it's quite a lot of work and I don't know if any one is going to acc=
+ept such
+>> a change
+>
+> I've been asking for that for well over a decade, but no one ever did
+> the work.  I think if you work through the options, it ends up not be=
+ing
+> a viable solution...
+>
 
-The other comment is not about this patch as such, but similar flags
-that OMAP has, and possibly some other platforms too:
+I'm not surprised that no one ever did this as it looks like quite a lo=
+t=20
+of work and current interface is still working;) Do you have some link=20
+to a discussion or sth which shows why it's not a good solution?
 
-1) sync signals driven on rising or falling edge of pixel clock
-2) hsync and vsync happen at the same time or hsync happens first,
-followed by vsync
-
-Any other platforms have similar features?
-
- Tomi
-
-
---2L1n6QkDqsr0FlKjWKS2ojDVTnw8acTR1
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBCAAGBQJWWAhOAAoJEPo9qoy8lh71IfwP/02Hnhwv2Q0w0pgyrEGz06kM
-5XfjrDXpEiJ7xEjiYGgzFxbw2fOOkv5Cm6HG8+uGApHQYgHtFIW+TjAO5o67XmAC
-tRPEgh9wyKJleIsxsBtpvXNfmzlZcu945Vj1UovM804efqzir1Ah33M0ea2nldt/
-cXkFNFIqQEm++9jqE/kmrRknxk0F6yptzupaFvj+it1oeS4BnvXCP/QrfY6GhXAT
-10cnFv7p9iMrhDXo7DJNkHPCnn1x3YbodlZ4SXsLg26u3wMcdDTv+QUmJTQIdqF4
-GuzlrrGG5KMy5t+1xqHT9M1+ZIZVt4gxcEH6/ErKAlsf3BIiW/eHsiLPfqdDxkfR
-7ejCyTn84gtD3TiveMBhlplMEt0Ho8qRweIBb3/SQrizMKcM7oGppMwsk8Q998oA
-H35JNr85ZM2L/09os/fz4XskiOCw99Ih6vN0ha4AUR1UJDdFVGFkNJXO09VVioCu
-doE7t07HYlF2+t+QB9k5AzzM7cdXgg+3EMwMikx+042NMvcY9wH/KoJKZerjoB9W
-2WMTlo0BT9Z2e+A9cHmH62T73Uy1rArc83OqRN1QK9GOV1tk2iW5l6PCb1IHC/XI
-ir4LR6eXN4NyWk+epv09lnVSiASwKNiBYkI1zf6pa3E0w5xyQMjZFY3XQiEM286K
-/p/rEqKNIFxj2Z1+Z7eM
-=tIMc
------END PGP SIGNATURE-----
-
---2L1n6QkDqsr0FlKjWKS2ojDVTnw8acTR1--
+--=20
+Krzysztof Opasiak
+Samsung R&D Institute Poland
+Samsung Electronics
