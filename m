@@ -1,56 +1,66 @@
-From: Pingbo Wen <pingbo.wen-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 2/3] input: evdev: add new ioctl EVIOCSIFTYPE / EVIOCGIFTYPE
-Date: Sun, 29 Nov 2015 17:19:30 +0800
-Message-ID: <C143A796-AFAA-4422-A60D-E462173BDC81@linaro.org>
-References: <1448618432-32357-1-git-send-email-pingbo.wen@linaro.org> <1448618432-32357-3-git-send-email-pingbo.wen@linaro.org> <2705528.qSj27KAuDS@wuerfel>
+From: Pingbo Wen <pingbo.wen@linaro.org>
+Subject: Re: [PATCH 0/3] introduce new evdev interface type
+Date: Sun, 29 Nov 2015 17:13:50 +0800
+Message-ID: <DDC9234F-F89D-4112-BD68-FC6EFEC7E215@linaro.org>
+References: <1448618432-32357-1-git-send-email-pingbo.wen@linaro.org> <8705201.iaeQDTRocP@wuerfel>
 Mime-Version: 1.0 (Mac OS X Mail 9.1 \(3096.5\))
 Content-Type: text/plain; charset=gb2312
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <2705528.qSj27KAuDS@wuerfel>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: Pingbo Wen <pingbo.wen-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, aksgarg1989-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <8705201.iaeQDTRocP@wuerfel>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Pingbo Wen <pingbo.wen@linaro.org>, y2038@lists.linaro.org, dmitry.torokhov@gmail.com, aksgarg1989@gmail.com, linux-input@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+Hi, Arnd
 
-> =D4=DA 2015=C4=EA11=D4=C228=C8=D5=A3=AC00:59=A3=ACArnd Bergmann <arnd=
+> =D4=DA 2015=C4=EA11=D4=C228=C8=D5=A3=AC00:58=A3=ACArnd Bergmann <arnd=
 @arndb.de> =D0=B4=B5=C0=A3=BA
 >=20
-> On Friday 27 November 2015 18:00:31 WEN Pingbo wrote:
->> This patch depends on 'introduce new evdev interface'.
+> On Friday 27 November 2015 18:00:29 WEN Pingbo wrote:
+>> To solve the y2038 problem in input_event, I had some attempts befor=
+e [1],
+>> and this is the second one.
 >>=20
->> Userspace cat set / get evdev interface type via the two ioctl
->> commands. And default interface type is EV_IF_LEGACY, so the old bin=
-ary
->> will work normal with new kernel. Maybe we should change this defaul=
-t
->> option to encourage people to move to new interface.
+>> We can force userspace to use monotonic time in event timestamp, so =
+the
+>> 'struct timeval' is enough to keep y2038-safe, as Arnd suggested. Bu=
+t we
+>> can not find a way to make kernel compatible with old binaries, whic=
+h use
+>> realtime, and there are still some devices, which depend on realtime=
+=2E
 >>=20
->> And since all events are stored as input_value in evdev, there are n=
-o
->> need to flush evdev_client's buffer if we change clk_type and if_typ=
-e.
+>> So I get a idea to add a new evdev interface, which is y2038 safe. A=
+nd
+>> userspace can switch between the old and new interface via ioctl.
+>>=20
+>> The patch series add three evdev interface type:
+>>=20
+>> - EV_IF_LEGACY
+>>  send event by input_event. This is the default option, keep kernel
+>>  backward compatible.
 >=20
-> I would split out the change to evdev_set_clk_type into a separate pa=
-tch.
+> The problem I see with this approach is that it still breaks any
+> legacy source code that is compiled with a new libc that uses 64-bit
+> time_t. If we are requiring source code changes for building users
+> of input devices with a new libc, we can easily get them to handle
+> the overflow (they normally only care about the microsecond portion
+> anyway, so it doesn't matter in most cases), or to use monotonic time=
+=2E
 
-Agreed.
+I don=A1=AFt think so.
 
->=20
->> +	case EVIOCSIFTYPE:
->> +		if (get_user(if_type, ip))
->> +			return -EFAULT;
->> +
->> +		return evdev_set_if_type(client, if_type);
->> +	case EVIOCGIFTYPE:
->> +		return put_user(client->if_type, ip);
->> 	}
->=20
-> This look asymmetric: EVIOCSIFTYPE uses a EVDEV_* constant, while
-> EVIOCGIFTYPE returns a EV_IF_* constant. Should those just
-> be the same constants anyway?
+Actually, from the view of userspace, EV_IF_LEGACY interface is work
+exactly the same as old evdev. We didn=A1=AFt change anything in input_=
+event
+and input_event_compat. And the problem you said will still be there,
+even without those patches.
 
-Yes, thanks for pointing it out. I need add evdev_get_if_type() here.
-
-Pingbo
+Pingbo--
+To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
+ in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at  http://www.tux.org/lkml/
