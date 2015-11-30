@@ -1,25 +1,46 @@
-From: Ralf Baechle <ralf@linux-mips.org>
-Subject: Re: [PATCH net-next v3 04/17] tx4939: use __ethtool_get_ksettings
-Date: Tue, 1 Dec 2015 00:51:20 +0100
-Message-ID: <20151130235119.GA16597@linux-mips.org>
-References: <1448921155-24764-1-git-send-email-ddecotig@gmail.com>
- <1448921155-24764-5-git-send-email-ddecotig@gmail.com>
+From: Alex Deucher <alexdeucher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 02/20] drm: Kbuild: add admgpu_drm.h to the installed headers
+Date: Mon, 30 Nov 2015 18:57:40 -0500
+Message-ID: <CADnq5_PYBaeZ+u2Vi-PX6efhAm1mphUnXJt+dnmQ8i-DPe1m8w@mail.gmail.com>
+References: <1448892658-14256-1-git-send-email-gabriel@lse.epita.fr>
+	<1448892658-14256-3-git-send-email-gabriel@lse.epita.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Received: from localhost.localdomain ([127.0.0.1]:60812 "EHLO linux-mips.org"
-        rhost-flags-OK-OK-OK-FAIL) by eddie.linux-mips.org with ESMTP
-        id S27009844AbbK3XvfqY91g (ORCPT <rfc822;linux-api@vger.kernel.org>
-        + 2 others); Tue, 1 Dec 2015 00:51:35 +0100
-Content-Disposition: inline
-In-Reply-To: <1448921155-24764-5-git-send-email-ddecotig@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Decotigny <ddecotig@gmail.com>
-Cc: "David S. Miller" <davem@davemloft.net>, Ben Hutchings <ben@decadent.org.uk>, Amir Vadai <amirv@mellanox.com>, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-mips@linux-mips.org, fcoe-devel@open-fcoe.org, Eric Dumazet <edumazet@google.com>, Eugenia Emantayev <eugenia@mellanox.co.il>, Or Gerlitz <ogerlitz@mellanox.com>, Ido Shamay <idos@mellanox.com>, Joe Perches <joe@perches.com>, Saeed Mahameed <saeedm@mellanox.com>, Govindarajulu Varadarajan <_govind@gmx.com>, Venkata Duvvuru <VenkatKumar.Duvvuru@Emulex.Com>, Jeff Kirsher <jeffrey.t.kirsher@intel.com>, Eyal Perry <eyalpe@mellanox.com>, Pravin B Shelar <pshelar@nicira.com>, Ed Swierk <eswierk@skyportsystems.com>, Robert Love <robert.w.love@intel.com>, "James E.J. Bottomley" <JBottomley@parallels.com>, Yuval Mintz <Yuval.Mintz@qlogic.com>, David Decotigny <decot@googlers.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1448892658-14256-3-git-send-email-gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+Cc: David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, "open list:DRM DRIVERS" <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 30, 2015 at 02:05:42PM -0800, David Decotigny wrote:
+On Mon, Nov 30, 2015 at 9:10 AM, Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org> wrote:
+> Signed-off-by: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+> CC: Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> CC: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 
-Acked-by: Ralf Baechle <ralf@linux-mips.org>
+Acked-by: Alex Deucher <alexander.deucher-5C7GfCeVMHo@public.gmane.org>
 
-  Ralf
+>
+> ---
+>  include/uapi/drm/Kbuild | 1 +
+>  1 file changed, 1 insertion(+)
+>
+> diff --git a/include/uapi/drm/Kbuild b/include/uapi/drm/Kbuild
+> index 38d4370..159551f 100644
+> --- a/include/uapi/drm/Kbuild
+> +++ b/include/uapi/drm/Kbuild
+> @@ -3,6 +3,7 @@ header-y += drm.h
+>  header-y += drm_fourcc.h
+>  header-y += drm_mode.h
+>  header-y += drm_sarea.h
+> +header-y += amdgpu_drm.h
+>  header-y += exynos_drm.h
+>  header-y += i810_drm.h
+>  header-y += i915_drm.h
+> --
+> 2.6.2
+>
+> _______________________________________________
+> dri-devel mailing list
+> dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org
+> http://lists.freedesktop.org/mailman/listinfo/dri-devel
