@@ -1,7 +1,7 @@
 From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v5 06/12] mm: mark stable page dirty in KSM
-Date: Mon, 30 Nov 2015 15:39:37 +0900
-Message-ID: <1448865583-2446-7-git-send-email-minchan@kernel.org>
+Subject: [PATCH v5 09/12] powerpc: add pmd_[dirty|mkclean] for THP
+Date: Mon, 30 Nov 2015 15:39:40 +0900
+Message-ID: <1448865583-2446-10-git-send-email-minchan@kernel.org>
 References: <1448865583-2446-1-git-send-email-minchan@kernel.org>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1448865583-2446-1-git-send-email-minchan@kernel.org>
@@ -10,35 +10,34 @@ To: Andrew Morton <akpm@linux-foundation.org>
 Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, Daniel Micay <danielmicay@gmail.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Shaohua Li <shli@kernel.org>, Michal Hocko <mhocko@suse.cz>, yalin.wang2010@gmail.com, Andy Lutomirski <luto@amacapital.net>, Minchan Kim <minchan@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-The MADV_FREE patchset changes page reclaim to simply free a clean
-anonymous page with no dirty ptes, instead of swapping it out; but
-KSM uses clean write-protected ptes to reference the stable ksm page.
-So be sure to mark that page dirty, so it's never mistakenly discarded.
+MADV_FREE needs pmd_dirty and pmd_mkclean for detecting recent overwrite
+of the contents since MADV_FREE syscall is called for THP page.
 
-[hughd: adjusted comments]
-Acked-by: Hugh Dickins <hughd@google.com>
+This patch adds pmd_dirty and pmd_mkclean for THP page MADV_FREE
+support.
+
 Signed-off-by: Minchan Kim <minchan@kernel.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
 ---
- mm/ksm.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ arch/powerpc/include/asm/pgtable-ppc64.h | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/mm/ksm.c b/mm/ksm.c
-index 30cb0f753e19..5e967536c38e 100644
---- a/mm/ksm.c
-+++ b/mm/ksm.c
-@@ -1015,6 +1015,12 @@ static int try_to_merge_one_page(struct vm_area_struct *vma,
- 			 */
- 			set_page_stable_node(page, NULL);
- 			mark_page_accessed(page);
-+			/*
-+			 * Page reclaim just frees a clean page with no dirty
-+			 * ptes: make sure that the ksm page would be swapped.
-+			 */
-+			if (!PageDirty(page))
-+				SetPageDirty(page);
- 			err = 0;
- 		} else if (pages_identical(page, kpage))
- 			err = replace_page(vma, page, kpage, orig_pte);
+diff --git a/arch/powerpc/include/asm/pgtable-ppc64.h b/arch/powerpc/include/asm/pgtable-ppc64.h
+index 0db2a3f8e554..21d961bbac0e 100644
+--- a/arch/powerpc/include/asm/pgtable-ppc64.h
++++ b/arch/powerpc/include/asm/pgtable-ppc64.h
+@@ -502,9 +502,11 @@ static inline pte_t *pmdp_ptep(pmd_t *pmd)
+ #define pmd_pfn(pmd)		pte_pfn(pmd_pte(pmd))
+ #define pmd_dirty(pmd)		pte_dirty(pmd_pte(pmd))
+ #define pmd_young(pmd)		pte_young(pmd_pte(pmd))
++#define pmd_dirty(pmd)		pte_dirty(pmd_pte(pmd))
+ #define pmd_mkold(pmd)		pte_pmd(pte_mkold(pmd_pte(pmd)))
+ #define pmd_wrprotect(pmd)	pte_pmd(pte_wrprotect(pmd_pte(pmd)))
+ #define pmd_mkdirty(pmd)	pte_pmd(pte_mkdirty(pmd_pte(pmd)))
++#define pmd_mkclean(pmd)	pte_pmd(pte_mkclean(pmd_pte(pmd)))
+ #define pmd_mkyoung(pmd)	pte_pmd(pte_mkyoung(pmd_pte(pmd)))
+ #define pmd_mkwrite(pmd)	pte_pmd(pte_mkwrite(pmd_pte(pmd)))
+ 
 -- 
 1.9.1
 
