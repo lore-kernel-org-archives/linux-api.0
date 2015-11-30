@@ -1,99 +1,141 @@
-From: Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] mtd: Expand the ecc placement locations to 1216
-Date: Mon, 30 Nov 2015 13:11:05 -0800
-Message-ID: <20151130211105.GO64635@google.com>
-References: <1446742735-20824-1-git-send-email-punnaia@xilinx.com>
- <20151120193342.GX64635@google.com>
- <CAGnW=BZzoo1YFyAYx+oKkCPBOCTSz_KYY+t0=2wh4Fscx7e0eg@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: David Decotigny <ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH net-next v3 00/17] RFC: new ETHTOOL_GSETTINGS/SSETTINGS API
+Date: Mon, 30 Nov 2015 14:05:38 -0800
+Message-ID: <1448921155-24764-1-git-send-email-ddecotig@gmail.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAGnW=BZzoo1YFyAYx+oKkCPBOCTSz_KYY+t0=2wh4Fscx7e0eg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: punnaiah choudary kalluri <punnaia-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org>
-Cc: Punnaiah Choudary Kalluri <punnaiah.choudary.kalluri-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "michals-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org" <michals-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org>, "linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Punnaiah Choudary <kpc528-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+To: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>, Amir Vadai <amirv-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, fcoe-devel-s9riP+hp16TNLxjTenLetw@public.gmane.org
+Cc: Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eugenia Emantayev <eugenia-VPRAkNaXOzVS1MOuV/RT9w@public.gmane.org>, Or Gerlitz <ogerlitz-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Ido Shamay <idos-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Saeed Mahameed <saeedm-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Govindarajulu Varadarajan <_govind-KK0ffGbhmjU@public.gmane.org>, Venkata Duvvuru <VenkatKumar.Duvvuru-iH1Dq9VlAzfQT0dZR+AlfA@public.gmane.org>, Jeff Kirsher <jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Eyal Perry <eyalpe-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Pravin B Shelar <pshelar-l0M0P4e3n4LQT0dZR+AlfA@public.gmane.org>, Ed Swierk <eswierk-FilZDy9cOaHkQYj/0HfcvtBPR1lH4CV8@public.gmane.org>, Robert Love <robert.w.love-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "James E.J. Bottomley" <JBottomley-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Yuval Mintz <Yuval.Mintz-h88ZbnxC6KDQT0dZR+AlfA@public.gmane.org>, David Decotigny <decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Punnaiah,
+From: David Decotigny <decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org>
 
-On Sat, Nov 21, 2015 at 08:59:15PM +0530, punnaiah choudary kalluri wrote:
-> On Sat, Nov 21, 2015 at 1:03 AM, Brian Norris
-> <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > On Thu, Nov 05, 2015 at 10:28:55PM +0530, Punnaiah Choudary Kalluri wrote:
-> >> Device like MT29F32G08ABCDBJ4 have a writesize/oobsize of 16K/1216 Bytes.
-> >> So, increasing the maximum ecc placement locations to 1216
-> >
-> > I'd really prefer not increasing the size of the internal arrays any
-> > more. The structures should be rewritten to be dynamic.
-> 
-> Ok. I have seen the comment "nand_ecclayout should be expandable in the
-> future simply by the above macros" and so increased the macro sizes.
-> As you said, it is ideal to have memory allocated dynamically for eccpos and
-> oobfree fields.
 
-Yes, it *can* be done. Previously, we couldn't do this, because any
-change there would also change the ABI, which is off limits, but I fixed
-that by separating the 'nand_ecclayout' and 'nand_ecclayout_user'
-structs. That still doesn't make it preferable. These structs are
-getting pretty big, and they hold a very low density of information...
+History:
+ v3
+ - rebased v2 on top of latest net-next, minor checkpatch/printf %*pb
+   updates
+ v2
+ - keep return 0 in get_settings when successful, instead of
+   propagating positive result from driver's get_settings callback.
+ v1
+ - original submission
 
-> >
-> >> Signed-off-by: Punnaiah Choudary Kalluri <punnaia-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org>
-> >> ---
-> >>  include/linux/mtd/mtd.h    | 2 +-
-> >>  include/uapi/mtd/mtd-abi.h | 4 ++--
-> >>  2 files changed, 3 insertions(+), 3 deletions(-)
-> >>
-> >> diff --git a/include/linux/mtd/mtd.h b/include/linux/mtd/mtd.h
-> >> index f17fa75..1fd3cc6 100644
-> >> --- a/include/linux/mtd/mtd.h
-> >> +++ b/include/linux/mtd/mtd.h
-> >> @@ -95,7 +95,7 @@ struct mtd_oob_ops {
-> >>  };
-> >>
-> >>  #define MTD_MAX_OOBFREE_ENTRIES_LARGE        32
-> >> -#define MTD_MAX_ECCPOS_ENTRIES_LARGE 640
-> >> +#define MTD_MAX_ECCPOS_ENTRIES_LARGE 1216
-> >>  /*
-> >>   * Internal ECC layout control structure. For historical reasons, there is a
-> >>   * similar, smaller struct nand_ecclayout_user (in mtd-abi.h) that is retained
-> >> diff --git a/include/uapi/mtd/mtd-abi.h b/include/uapi/mtd/mtd-abi.h
-> >> index 763bb69..c4d592c 100644
-> >> --- a/include/uapi/mtd/mtd-abi.h
-> >> +++ b/include/uapi/mtd/mtd-abi.h
-> >> @@ -220,8 +220,8 @@ struct nand_oobfree {
-> >>       __u32 length;
-> >>  };
-> >>
-> >> -#define MTD_MAX_OOBFREE_ENTRIES      8
-> >> -#define MTD_MAX_ECCPOS_ENTRIES       64
-> >> +#define MTD_MAX_OOBFREE_ENTRIES      32
-> >> +#define MTD_MAX_ECCPOS_ENTRIES       1216
-> >
-> > NAK. This is part of the ABI, and changing this will break user space.
-> > If you actually bothered to read code, you might understand why there
-> > are now internal and external versions of this struct. The external
-> > (user space) version cannot be changed. The internal version can be
-> > refactored, as long as the external version still maintains some sanity,
-> > at least for old/small devices.
-> 
-> Sorry, I am confused here.
-> Arasan nand controller supports 24 bit ecc and uses BCH algorithm. So,
-> it requires
-> 672 ecc positions. in this case, how the user space know which are the free
-> slots available in spare area?
-> because as per the above definitions only 64 positions can be defined.
 
-If you actually need to know this info from user space, then you need to
-define a new interface to expose that. The existing one is legacy, and
-it is insufficient for most modern use cases. It won't work for you.
+The main goal of this series is to support ethtool link mode masks
+larger than 32 bits. It implements a new ioctl pair
+(ETHTOOL_GSETTINGS/SSETTINGS), its associated callbacks
+(get/set_settings) and a new struct ethtool_settings, which should
+eventually replace legacy ethtool_cmd. Internally, the kernel uses
+fixed length link mode masks defined at compilation time in ethtool.h
+(for now: 31 bits), that can be increased by changing
+__ETHTOOL_LINK_MODE_LAST in ethtool.h (absolute max is 4064 bits,
+checked at compile time), and the user/kernel interface allows this
+length to be arbitrary within 1..4064. This should allow some
+flexibility without using too much malloc/stack space, at the cost of
+a small kernel/user handshake for the user to determine the sizes of
+those bitmaps.
 
-Other mechanisms can already help you though. For one, auto-placed OOB
-(e.g., 'nandwrite --autoplace') can let the MTD layer automatically put
-your data into the available spare area.
+Along the way, I chose to drop in the new structure the 3 ethtool_cmd
+fields marked "deprecated" (transceiver/maxrxpkt/maxtxpkt). They are
+still available for old drivers via the old ETHTOOL_GSET/SSET API, but
+are not available to drivers that switch to new API. Of those 3
+fields, ethtool_cmd::transceiver seems to be still actively used by
+several drivers, maybe we should not consider this field deprecated?
+The 2 other fields are basically not used. This transition requires
+some care in the way old and new ethtool talk to the kernel.
 
-Why do you need to access the spare area anyway? Modern NAND filesystems
-shouldn't really be storing anything there anyway.
+More technical details provided in the description for main patch. In
+particular details about backward compatibility properties.
 
-Brian
+Some questions to more experts than me:
+ - the kernel/interface multiplexes the "tell me the bitmap length"
+   handshake and the "give me the settings" inside the new
+   ETHTOOL_GSETTINGS cmd. I was thinking of making this into 2
+   separate cmds: 1 cmd ETHTOOL_GKERNELPROPERTIES which would be
+   kernel-wide rather than device-specific, would return properties
+   like "length of the link mode bitmaps", and possibly others. And
+   ETHTOOL_GSETTINGS would expect the proper bitmaps
+ - the link mode bitmaps are piggybacked at tail of the new struct
+   ethtool_settings. Since its user-visible definition does not assume
+   specific bitmap width, I am using a 0-length array as the publicly
+   visible placeholder. But then, the kernel needs to specialize it
+   (struct ethtool_ksettings) to specify its current link mode
+   masks. This means that kernel code is "littered" with
+   "ksettings->parent.field" to access "field" inside
+   ethtool_settings:
+   + I don't like the field name "parent", any suggestion welcome
+   + and/or: I could use ethtool_settings everywhere (instead of a new
+     ethtool_ksettings) and an accessor to retrieve the link mode
+     masks?
+   + or: we could decide to make the link mode masks statically
+     bounded again, ie. make their width public, but larger than
+     current 32, and unchangeable forever. This would make everything
+     straightforward, but we might hit limits later, or have an
+     unneeded memory/stack usage for unused bits.
+   any preference?
+ - crossing user/kernel boundary requires conversion of the kernel
+   bitmaps (unsigned long[]) to something more strict (in my case:
+   u32) to accomodate for 32/64 compat. Maybe I should add a
+   copy_bitmap_from_user/copy_bitmap_to_user API inside bitmap.h
+   instead of defining my own in ethtool.c?
+ - I am using a typedef struct (ethtool_link_mode_mask_t) to build and
+   hold the new masks. Makes it handy to use in the drivers (see mlx4
+   for an example). Not very nice.
+ - I foresee bugs where people use the legacy/deprecated SUPPORTED_x
+   macros instead of the new ETHTOOL_LINK_MODE_x_BIT enums in the new
+   get/set__ksettings callbacks. Not sure how to prevent problems with
+   this.
+
+The only driver which was converted for now is mlx4. I am not
+considering fcoe as fully converted, but I updated it a minima to be
+able to remove __ethtool_get_settings, now known as
+__ethtool_get_ksettings.
+
+Tested with legacy and "future" ethtool on 64b x86 kernel and 32+64b
+ethtool, and on a 32b x86 kernel + 32b ethtool.
+
+############################################
+# Patch Set Summary:
+
+David Decotigny (17):
+  net: usnic: remove unused call to ethtool_ops::get_settings
+  net: usnic: use __ethtool_get_settings
+  net: ethtool: add new ETHTOOL_GSETTINGS/SSETTINGS API
+  tx4939: use __ethtool_get_ksettings
+  net: usnic: use __ethtool_get_ksettings
+  net: bonding: use __ethtool_get_ksettings
+  net: ipvlan: use __ethtool_get_ksettings
+  net: macvlan: use __ethtool_get_ksettings
+  net: team: use __ethtool_get_ksettings
+  net: fcoe: use __ethtool_get_ksettings
+  net: rdma: use __ethtool_get_ksettings
+  net: 8021q: use __ethtool_get_ksettings
+  net: bridge: use __ethtool_get_ksettings
+  net: core: use __ethtool_get_ksettings
+  net: ethtool: remove unused __ethtool_get_settings
+  net: mlx4: convenience predicate for debug messages
+  net: mlx4: use new ETHTOOL_G/SSETTINGS API
+
+ arch/mips/txx9/generic/setup_tx4939.c           |   7 +-
+ drivers/infiniband/hw/usnic/usnic_ib_verbs.c    |  10 +-
+ drivers/net/bonding/bond_main.c                 |  14 +-
+ drivers/net/ethernet/mellanox/mlx4/en_ethtool.c | 323 ++++++++--------
+ drivers/net/ethernet/mellanox/mlx4/en_main.c    |   1 +
+ drivers/net/ethernet/mellanox/mlx4/mlx4_en.h    |   5 +-
+ drivers/net/ipvlan/ipvlan_main.c                |   8 +-
+ drivers/net/macvlan.c                           |   8 +-
+ drivers/net/team/team.c                         |   8 +-
+ drivers/scsi/fcoe/fcoe_transport.c              |  36 +-
+ include/linux/ethtool.h                         |  97 ++++-
+ include/rdma/ib_addr.h                          |  14 +-
+ include/uapi/linux/ethtool.h                    | 323 ++++++++++++----
+ net/8021q/vlan_dev.c                            |   8 +-
+ net/bridge/br_if.c                              |   6 +-
+ net/core/ethtool.c                              | 478 +++++++++++++++++++++++-
+ net/core/net-sysfs.c                            |  15 +-
+ net/packet/af_packet.c                          |  11 +-
+ 18 files changed, 1046 insertions(+), 326 deletions(-)
+
+-- 
+2.6.0.rc2.230.g3dd15c0
