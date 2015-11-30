@@ -1,47 +1,81 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 1/8] kernfs: Add API to generate relative
-	kernfs path
-Date: Mon, 30 Nov 2015 10:11:47 -0500
-Message-ID: <20151130151147.GG3535@mtj.duckdns.org>
-References: <1447703505-29672-1-git-send-email-serge@hallyn.com>
- <1447703505-29672-2-git-send-email-serge@hallyn.com>
- <20151124161630.GL17033@mtj.duckdns.org>
- <20151127052511.GA25490@mail.hallyn.com>
-Reply-To: LXC development mailing-list <lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH 0/3] introduce new evdev interface type
+Date: Mon, 30 Nov 2015 16:13:11 +0100
+Message-ID: <3322044.DFSNLmiFGl@wuerfel>
+References: <1448618432-32357-1-git-send-email-pingbo.wen@linaro.org> <8705201.iaeQDTRocP@wuerfel> <DDC9234F-F89D-4112-BD68-FC6EFEC7E215@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <lxc-devel-bounces-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20151127052511.GA25490-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
-List-Unsubscribe: <http://lists.linuxcontainers.org/options/lxc-devel>,
- <mailto:lxc-devel-request-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxcontainers.org/pipermail/lxc-devel/>
-List-Post: <mailto:lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
-List-Help: <mailto:lxc-devel-request-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.linuxcontainers.org/listinfo/lxc-devel>,
- <mailto:lxc-devel-request-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org?subject=subscribe>
-Errors-To: lxc-devel-bounces-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org
-Sender: "lxc-devel" <lxc-devel-bounces-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
-To: "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Cc: adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <DDC9234F-F89D-4112-BD68-FC6EFEC7E215@linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Pingbo Wen <pingbo.wen@linaro.org>
+Cc: y2038@lists.linaro.org, dmitry.torokhov@gmail.com, aksgarg1989@gmail.com, linux-input@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-SGVsbG8sCgpPbiBUaHUsIE5vdiAyNiwgMjAxNSBhdCAxMToyNToxMVBNIC0wNjAwLCBTZXJnZSBF
-LiBIYWxseW4gd3JvdGU6Cj4gPiA+ICsJLyogU2hvcnQtY2lyY3VpdCB0aGUgZWFzeSBjYXNlIC0g
-a25fdG8gaXMgdGhlIHJvb3Qgbm9kZS4gKi8KPiA+ID4gKwlpZiAoKGtuX2Zyb20gPT0ga25fdG8p
-IHx8ICgha25fZnJvbSAmJiAha25fdG8tPnBhcmVudCkpIHsKPiA+ID4gKwkJKnAgPSAnLyc7Cj4g
-PiA+ICsJCSoocCArIDEpID0gJ1wwJzsKPiA+IAo+ID4gSG1tLi4uIHNvIGlmIGtuX2Zyb20gPT0g
-a25fdG8sIHRoZSBvdXRwdXQgaXMgIi8iPwo+IAo+IFllcywgdGhhdCdzIHdoYXQgc2VlbXMgdG8g
-bWFrZSB0aGUgbW9zdCBzZW5zZSBmb3IgY2dyb3VwIG5hbWVzcGFjZXMuICBJCj4gY291bGQgc2Vl
-IGEgY2FzZSBmb3IgJy4nIGJlaW5nIHVzZWQgaW5zdGVhZCBpbiBnZW5lcmFsLCBidXQgZm9yIGNn
-cm91cAo+IG5hbWVzcGFjZXMgSSB0aGluayB3ZSdkIGhhdmUgdG8gY29udmVydCB0aG9zZSBiYWNr
-IHRvICcvJy4gIE90aGVyd2lzZQo+IHdlJ2xsIGZhaWwgaW4gYmVpbmcgYWJsZSB0byBydW4gbGVn
-YWN5IHNvZnR3YXJlLCB3aGljaCB3b3VsZCBnZXQKPiBjb25mdXNlZC4KClllYWgsIEkgYWdyZWUg
-YnV0IHRoZSBuYW1lIGlzIGtpbmRhIG1pc2xlYWRpbmcgdGhvLiAgVGhlIG91dHB1dCBpc24ndApy
-ZWFsbHkgYSByZWxhdGl2ZSBwYXRoIGJ1dCByYXRoZXIgYWJzb2x1dGUgcGF0aCBhZ2FpbnN0IHRo
-ZSBzcGVjaWZpZWQKcm9vdC4gIE1heWJlIHVwZGF0aW5nIHRoZSBmdW5jdGlvbiBhbmQgcGFyYW1l
-dGVyIG5hbWVzIHdvdWxkIGJlCmhlbHBmdWw/CgpUaGFua3MuCgotLSAKdGVqdW4KX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KbHhjLWRldmVsIG1haWxpbmcg
-bGlzdApseGMtZGV2ZWxAbGlzdHMubGludXhjb250YWluZXJzLm9yZwpodHRwOi8vbGlzdHMubGlu
-dXhjb250YWluZXJzLm9yZy9saXN0aW5mby9seGMtZGV2ZWwK
+On Sunday 29 November 2015 17:13:50 Pingbo Wen wrote:
+> > =E5=9C=A8 2015=E5=B9=B411=E6=9C=8828=E6=97=A5=EF=BC=8C00:58=EF=BC=8C=
+Arnd Bergmann <arnd@arndb.de> =E5=86=99=E9=81=93=EF=BC=9A
+> >=20
+> > On Friday 27 November 2015 18:00:29 WEN Pingbo wrote:
+> >> To solve the y2038 problem in input_event, I had some attempts bef=
+ore [1],
+> >> and this is the second one.
+> >>=20
+> >> We can force userspace to use monotonic time in event timestamp, s=
+o the
+> >> 'struct timeval' is enough to keep y2038-safe, as Arnd suggested. =
+But we
+> >> can not find a way to make kernel compatible with old binaries, wh=
+ich use
+> >> realtime, and there are still some devices, which depend on realti=
+me.
+> >>=20
+> >> So I get a idea to add a new evdev interface, which is y2038 safe.=
+ And
+> >> userspace can switch between the old and new interface via ioctl.
+> >>=20
+> >> The patch series add three evdev interface type:
+> >>=20
+> >> - EV_IF_LEGACY
+> >>  send event by input_event. This is the default option, keep kerne=
+l
+> >>  backward compatible.
+> >=20
+> > The problem I see with this approach is that it still breaks any
+> > legacy source code that is compiled with a new libc that uses 64-bi=
+t
+> > time_t. If we are requiring source code changes for building users
+> > of input devices with a new libc, we can easily get them to handle
+> > the overflow (they normally only care about the microsecond portion
+> > anyway, so it doesn't matter in most cases), or to use monotonic ti=
+me.
+>=20
+> I don=E2=80=99t think so.
+>=20
+> Actually, from the view of userspace, EV_IF_LEGACY interface is work
+> exactly the same as old evdev. We didn=E2=80=99t change anything in i=
+nput_event
+> and input_event_compat. And the problem you said will still be there,
+> even without those patches.
+
+I think we're still talking past one another. I thought we had establis=
+hed
+that
+
+1. the current interface is broken when time_t changes in user space
+2. we can fix it by redefining struct input_event in a way that
+   is independent of time_t
+3. once both user space and kernel are using the same ABI independent
+   of time_t, we can look improving the timestamps so they don't
+   overflow
+4. the monotonic timestamp interface already avoids the overflow, so
+   it would be sufficient as a solution for 3.
+
+Where did I lose you here? Did you find any other facts that I
+was missing? I don't know whether the two new event structures make
+the interface better in some other way, but it seems mostly unrelated
+to either of the two problems we already have with time_t (the
+ABI mismatch, and the use of non-monotonic timestamps).
+
+	Arnd
