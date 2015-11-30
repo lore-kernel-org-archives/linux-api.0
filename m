@@ -1,229 +1,76 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v5 12/12] mm: don't split THP page when syscall is called
-Date: Mon, 30 Nov 2015 15:39:43 +0900
-Message-ID: <1448865583-2446-13-git-send-email-minchan@kernel.org>
-References: <1448865583-2446-1-git-send-email-minchan@kernel.org>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1448865583-2446-1-git-send-email-minchan@kernel.org>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Jason Evans <je@fb.com>, Daniel Micay <danielmicay@gmail.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Shaohua Li <shli@kernel.org>, Michal Hocko <mhocko@suse.cz>, yalin.wang2010@gmail.com, Andy Lutomirski <luto@amacapital.net>, Minchan Kim <minchan@kernel.org>, Andrea Arcangeli <aarcange@redhat.com>
+From: "Lan, Tianyu" <tianyu.lan-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH V2 0/3] IXGBE/VFIO: Add live migration support for
+ SRIOV NIC
+Date: Mon, 30 Nov 2015 14:53:57 +0800
+Message-ID: <565BF285.4040507@intel.com>
+References: <1448372298-28386-1-git-send-email-tianyu.lan@intel.com>
+ <5654722D.4010409@gmail.com> <56552888.90108@intel.com>
+ <CAKgT0UcSrewenfM2YdVojHFFqfK2aVbBN5LH8=BFzc1p0f9hvQ@mail.gmail.com>
+ <56556F98.5060507@intel.com>
+ <CAKgT0UevBmRLpM1PvuuVDUW79A66RcPrfO8uGiqL1RiALW7apg@mail.gmail.com>
+ <A12AC9D104E08D47BAF23C492F83C53B25CDE9E3@SHSMSX104.ccr.corp.intel.com>
+ <CAKgT0Ucyq=7OSYBVvU9Z01b3f6scS+eBMLg+yphW7bwkNZosPQ@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAKgT0Ucyq=7OSYBVvU9Z01b3f6scS+eBMLg+yphW7bwkNZosPQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexander Duyck <alexander.duyck-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Dong, Eddie" <eddie.dong-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: "a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org" <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "b.reynal-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org" <b.reynal-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Wyborny, Carolyn" <carolyn.wyborny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Skidmore, Donald C" <donald.c.skidmore-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Jani, Nrupal" <nrupal.jani-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Alexander Graf <agraf-l3A5Bk7waGM@public.gmane.org>, "kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org" <qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>, "Tantilov, Emil S" <emil.s.tantilov-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Or Gerlitz <gerlitz.or-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Rustad, Mark D" <mark.d.rustad-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Eric Auger <eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, intel-wired-lan <intel-wired-lan-qjLDD68F18P21nG7glBr7A@public.gmane.org>, "Kirsher, Jeffrey T" <jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Brandeburg, Jesse" <jesse.brandeburg-ral2JQCrhuE@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-We don't need to split THP page when MADV_FREE syscall is called
-if [start, len] is aligned with THP size. The split could be done
-when VM decide to free it in reclaim path if memory pressure is
-heavy. With that, we could avoid unnecessary THP split.
+On 11/26/2015 11:56 AM, Alexander Duyck wrote:
+> > I am not saying you cannot modify the drivers, however what you are
+> doing is far too invasive.  Do you seriously plan on modifying all of
+> the PCI device drivers out there in order to allow any device that
+> might be direct assigned to a port to support migration?  I certainly
+> hope not.  That is why I have said that this solution will not scale.
 
-For the feature, this patch changes pte dirtness marking logic of THP.
-Now, it marks every ptes of pages dirty unconditionally in splitting,
-which makes MADV_FREE void. So, instead, this patch propagates pmd
-dirtiness to all pages via PG_dirty and restores pte dirtiness from
-PG_dirty. With this, if pmd is clean(ie, MADV_FREEed) when split
-happens(e,g, shrink_page_list), all of pages are clean too so we
-could discard them.
+Current drivers are not migration friendly. If the driver wants to
+support migration, it's necessary to be changed.
 
-Cc: Kirill A. Shutemov <kirill@shutemov.name>
-Cc: Hugh Dickins <hughd@google.com>
-Cc: Andrea Arcangeli <aarcange@redhat.com>
-Signed-off-by: Minchan Kim <minchan@kernel.org>
----
- include/linux/huge_mm.h |  3 ++
- mm/huge_memory.c        | 87 ++++++++++++++++++++++++++++++++++++++++++++++---
- mm/madvise.c            |  8 ++++-
- 3 files changed, 92 insertions(+), 6 deletions(-)
+RFC PATCH V1 presented our ideas about how to deal with MMIO, ring and
+DMA tracking during migration. These are common for most drivers and
+they maybe problematic in the previous version but can be corrected later.
 
-diff --git a/include/linux/huge_mm.h b/include/linux/huge_mm.h
-index 72cd942edb22..0160201993d4 100644
---- a/include/linux/huge_mm.h
-+++ b/include/linux/huge_mm.h
-@@ -19,6 +19,9 @@ extern struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
- 					  unsigned long addr,
- 					  pmd_t *pmd,
- 					  unsigned int flags);
-+extern int madvise_free_huge_pmd(struct mmu_gather *tlb,
-+			struct vm_area_struct *vma,
-+			pmd_t *pmd, unsigned long addr, unsigned long next);
- extern int zap_huge_pmd(struct mmu_gather *tlb,
- 			struct vm_area_struct *vma,
- 			pmd_t *pmd, unsigned long addr);
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index b41793b12a2d..2aa28cbe7263 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -1530,6 +1530,77 @@ int do_huge_pmd_numa_page(struct mm_struct *mm, struct vm_area_struct *vma,
- 	return 0;
- }
- 
-+int madvise_free_huge_pmd(struct mmu_gather *tlb, struct vm_area_struct *vma,
-+		pmd_t *pmd, unsigned long addr, unsigned long next)
-+
-+{
-+	spinlock_t *ptl;
-+	pmd_t orig_pmd;
-+	struct page *page;
-+	struct mm_struct *mm = tlb->mm;
-+	int ret = 0;
-+
-+	if (!pmd_trans_huge_lock(pmd, vma, &ptl))
-+		goto out;
-+
-+	orig_pmd = *pmd;
-+	if (is_huge_zero_pmd(orig_pmd)) {
-+		ret = 1;
-+		goto out;
-+	}
-+
-+	page = pmd_page(orig_pmd);
-+	/*
-+	 * If other processes are mapping this page, we couldn't discard
-+	 * the page unless they all do MADV_FREE so let's skip the page.
-+	 */
-+	if (page_mapcount(page) != 1)
-+		goto out;
-+
-+	if (!trylock_page(page))
-+		goto out;
-+
-+	/*
-+	 * If user want to discard part-pages of THP, split it so MADV_FREE
-+	 * will deactivate only them.
-+	 */
-+	if (next - addr != HPAGE_PMD_SIZE) {
-+		get_page(page);
-+		spin_unlock(ptl);
-+		if (split_huge_page(page)) {
-+			put_page(page);
-+			unlock_page(page);
-+			goto out_unlocked;
-+		}
-+		put_page(page);
-+		unlock_page(page);
-+		ret = 1;
-+		goto out_unlocked;
-+	}
-+
-+	if (PageDirty(page))
-+		ClearPageDirty(page);
-+	unlock_page(page);
-+
-+	if (PageActive(page))
-+		deactivate_page(page);
-+
-+	if (pmd_young(orig_pmd) || pmd_dirty(orig_pmd)) {
-+		orig_pmd = pmdp_huge_get_and_clear_full(tlb->mm, addr, pmd,
-+			tlb->fullmm);
-+		orig_pmd = pmd_mkold(orig_pmd);
-+		orig_pmd = pmd_mkclean(orig_pmd);
-+
-+		set_pmd_at(mm, addr, pmd, orig_pmd);
-+		tlb_remove_pmd_tlb_entry(tlb, pmd, addr);
-+	}
-+	ret = 1;
-+out:
-+	spin_unlock(ptl);
-+out_unlocked:
-+	return ret;
-+}
-+
- int zap_huge_pmd(struct mmu_gather *tlb, struct vm_area_struct *vma,
- 		 pmd_t *pmd, unsigned long addr)
- {
-@@ -2784,7 +2855,7 @@ static void __split_huge_pmd_locked(struct vm_area_struct *vma, pmd_t *pmd,
- 	struct page *page;
- 	pgtable_t pgtable;
- 	pmd_t _pmd;
--	bool young, write;
-+	bool young, write, dirty;
- 	int i;
- 
- 	VM_BUG_ON(haddr & ~HPAGE_PMD_MASK);
-@@ -2808,6 +2879,7 @@ static void __split_huge_pmd_locked(struct vm_area_struct *vma, pmd_t *pmd,
- 	atomic_add(HPAGE_PMD_NR - 1, &page->_count);
- 	write = pmd_write(*pmd);
- 	young = pmd_young(*pmd);
-+	dirty = pmd_dirty(*pmd);
- 
- 	pgtable = pgtable_trans_huge_withdraw(mm, pmd);
- 	pmd_populate(mm, &_pmd, pgtable);
-@@ -2825,12 +2897,14 @@ static void __split_huge_pmd_locked(struct vm_area_struct *vma, pmd_t *pmd,
- 			entry = swp_entry_to_pte(swp_entry);
- 		} else {
- 			entry = mk_pte(page + i, vma->vm_page_prot);
--			entry = maybe_mkwrite(pte_mkdirty(entry), vma);
-+			entry = maybe_mkwrite(entry, vma);
- 			if (!write)
- 				entry = pte_wrprotect(entry);
- 			if (!young)
- 				entry = pte_mkold(entry);
- 		}
-+		if (dirty)
-+			SetPageDirty(page + i);
- 		pte = pte_offset_map(&_pmd, haddr);
- 		BUG_ON(!pte_none(*pte));
- 		set_pte_at(mm, haddr, pte, entry);
-@@ -3028,6 +3102,8 @@ static void freeze_page_vma(struct vm_area_struct *vma, struct page *page,
- 			continue;
- 		flush_cache_page(vma, address, page_to_pfn(page));
- 		entry = ptep_clear_flush(vma, address, pte + i);
-+		if (pte_dirty(entry))
-+			SetPageDirty(page);
- 		swp_entry = make_migration_entry(page, pte_write(entry));
- 		swp_pte = swp_entry_to_pte(swp_entry);
- 		if (pte_soft_dirty(entry))
-@@ -3086,7 +3162,8 @@ static void unfreeze_page_vma(struct vm_area_struct *vma, struct page *page,
- 		page_add_anon_rmap(page, vma, address, false);
- 
- 		entry = pte_mkold(mk_pte(page, vma->vm_page_prot));
--		entry = pte_mkdirty(entry);
-+		if (PageDirty(page))
-+			entry = pte_mkdirty(entry);
- 		if (is_write_migration_entry(swp_entry))
- 			entry = maybe_mkwrite(entry, vma);
- 
-@@ -3147,8 +3224,8 @@ static int __split_huge_page_tail(struct page *head, int tail,
- 			 (1L << PG_uptodate) |
- 			 (1L << PG_active) |
- 			 (1L << PG_locked) |
--			 (1L << PG_unevictable)));
--	page_tail->flags |= (1L << PG_dirty);
-+			 (1L << PG_unevictable) |
-+			 (1L << PG_dirty)));
- 
- 	/*
- 	 * After clearing PageTail the gup refcount can be released.
-diff --git a/mm/madvise.c b/mm/madvise.c
-index 975e24e4c134..563d6c145d75 100644
---- a/mm/madvise.c
-+++ b/mm/madvise.c
-@@ -271,8 +271,13 @@ static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
- 	pte_t *orig_pte, *pte, ptent;
- 	struct page *page;
- 	int nr_swap = 0;
-+	unsigned long next;
-+
-+	next = pmd_addr_end(addr, end);
-+	if (pmd_trans_huge(*pmd))
-+		if (madvise_free_huge_pmd(tlb, vma, pmd, addr, next))
-+			goto next;
- 
--	split_huge_pmd(vma, pmd, addr);
- 	if (pmd_trans_unstable(pmd))
- 		return 0;
- 
-@@ -381,6 +386,7 @@ static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
- 	arch_leave_lazy_mmu_mode();
- 	pte_unmap_unlock(orig_pte, ptl);
- 	cond_resched();
-+next:
- 	return 0;
- }
- 
--- 
-1.9.1
+Doing suspend and resume() may help to do migration easily but some
+devices requires low service down time. Especially network and I got
+that some cloud company promised less than 500ms network service downtime.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+So I think performance effect also should be taken into account when we 
+design the framework.
+
+
+>
+> What I am counter proposing seems like a very simple proposition.  It
+> can be implemented in two steps.
+>
+> 1.  Look at modifying dma_mark_clean().  It is a function called in
+> the sync and unmap paths of the lib/swiotlb.c.  If you could somehow
+> modify it to take care of marking the pages you unmap for Rx as being
+> dirty it will get you a good way towards your goal as it will allow
+> you to continue to do DMA while you are migrating the VM.
+>
+> 2.  Look at making use of the existing PCI suspend/resume calls that
+> are there to support PCI power management.  They have everything
+> needed to allow you to pause and resume DMA for the device before and
+> after the migration while retaining the driver state.  If you can
+> implement something that allows you to trigger these calls from the
+> PCI subsystem such as hot-plug then you would have a generic solution
+> that can be easily reproduced for multiple drivers beyond those
+> supported by ixgbevf.
+
+Glanced at PCI hotplug code. The hotplug events are triggered by PCI 
+hotplug controller and these event are defined in the controller spec.
+It's hard to extend more events. Otherwise, we also need to add some 
+specific codes in the PCI hotplug core since it's only add and remove
+PCI device when it gets events. It's also a challenge to modify Windows 
+hotplug codes. So we may need to find another way.
+
+
+
+>
+> Thanks.
+>
+> - Alex
