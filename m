@@ -1,7 +1,7 @@
 From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v5 11/12] arm64: add pmd_mkclean for THP
-Date: Mon, 30 Nov 2015 15:39:42 +0900
-Message-ID: <1448865583-2446-12-git-send-email-minchan@kernel.org>
+Subject: [PATCH v5 10/12] arm: add pmd_mkclean for THP
+Date: Mon, 30 Nov 2015 15:39:41 +0900
+Message-ID: <1448865583-2446-11-git-send-email-minchan@kernel.org>
 References: <1448865583-2446-1-git-send-email-minchan@kernel.org>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1448865583-2446-1-git-send-email-minchan@kernel.org>
@@ -17,21 +17,21 @@ This patch adds pmd_mkclean for THP page MADV_FREE support.
 
 Signed-off-by: Minchan Kim <minchan@kernel.org>
 ---
- arch/arm64/include/asm/pgtable.h | 1 +
+ arch/arm/include/asm/pgtable-3level.h | 1 +
  1 file changed, 1 insertion(+)
 
-diff --git a/arch/arm64/include/asm/pgtable.h b/arch/arm64/include/asm/pgtable.h
-index d2a1879b466b..fab3ddb30df7 100644
---- a/arch/arm64/include/asm/pgtable.h
-+++ b/arch/arm64/include/asm/pgtable.h
-@@ -340,6 +340,7 @@ static inline pgprot_t mk_sect_prot(pgprot_t prot)
- #define pmd_wrprotect(pmd)	pte_pmd(pte_wrprotect(pmd_pte(pmd)))
- #define pmd_mkold(pmd)		pte_pmd(pte_mkold(pmd_pte(pmd)))
- #define pmd_mkwrite(pmd)	pte_pmd(pte_mkwrite(pmd_pte(pmd)))
-+#define pmd_mkclean(pmd)       pte_pmd(pte_mkclean(pmd_pte(pmd)))
- #define pmd_mkdirty(pmd)	pte_pmd(pte_mkdirty(pmd_pte(pmd)))
- #define pmd_mkyoung(pmd)	pte_pmd(pte_mkyoung(pmd_pte(pmd)))
- #define pmd_mknotpresent(pmd)	(__pmd(pmd_val(pmd) & ~PMD_TYPE_MASK))
+diff --git a/arch/arm/include/asm/pgtable-3level.h b/arch/arm/include/asm/pgtable-3level.h
+index 59d1457ca551..dc46398bc3a5 100644
+--- a/arch/arm/include/asm/pgtable-3level.h
++++ b/arch/arm/include/asm/pgtable-3level.h
+@@ -240,6 +240,7 @@ PMD_BIT_FUNC(wrprotect,	|= L_PMD_SECT_RDONLY);
+ PMD_BIT_FUNC(mkold,	&= ~PMD_SECT_AF);
+ PMD_BIT_FUNC(mkwrite,   &= ~L_PMD_SECT_RDONLY);
+ PMD_BIT_FUNC(mkdirty,   |= L_PMD_SECT_DIRTY);
++PMD_BIT_FUNC(mkclean,   &= ~L_PMD_SECT_DIRTY);
+ PMD_BIT_FUNC(mkyoung,   |= PMD_SECT_AF);
+ 
+ #define pmd_mkhuge(pmd)		(__pmd(pmd_val(pmd) & ~PMD_TABLE_BIT))
 -- 
 1.9.1
 
