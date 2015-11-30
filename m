@@ -1,80 +1,63 @@
-From: Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v1 0/1] ioctl to disallow detaching kernel USB drivers
-Date: Mon, 30 Nov 2015 19:48:56 +0100
-Message-ID: <565C9A18.6000006@samsung.com>
-References: <Pine.LNX.4.44L0.1511301113120.1938-100000@iolanthe.rowland.org>
- <565C8376.6070505@samsung.com> <20151130172028.GA1088@kroah.com>
+From: Philipp Zabel <p.zabel@pengutronix.de>
+Subject: Re: [RFC PATCH 1/2] drm: add support for for clk and de polarity
+Date: Mon, 30 Nov 2015 22:09:09 +0100
+Message-ID: <1448917749.3890.42.camel@pengutronix.de>
+References: <55A67FDB.8010602@gmx.at> <55A6813A.8090706@gmx.at>
+ <1448472141.3390.17.camel@pengutronix.de> <56571543.20701@gmx.at>
+ <5658084E.7040007@ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <20151130172028.GA1088-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>, =?UTF-8?Q?Emilio_L=c3=b3pez?= <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>, kborer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jorgelo-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <5658084E.7040007@ti.com>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Tomi Valkeinen <tomi.valkeinen@ti.com>
+Cc: linux-fbdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, Manfred Schlaegl <manfred.schlaegl@ginzinger.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, Steve Longerbeam <slongerbeam@gmail.com>, Deepak Das <deepak_das@mentor.com>, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>
 List-Id: linux-api@vger.kernel.org
 
-
-
-On 11/30/2015 06:20 PM, Greg KH wrote:
-> On Mon, Nov 30, 2015 at 06:12:22PM +0100, Krzysztof Opasiak wrote:
->>
->>
->> On 11/30/2015 05:16 PM, Alan Stern wrote:
->>> On Fri, 27 Nov 2015, Krzysztof Opasiak wrote:
->>>
->>>>>> I run through your code and as far as I understand above is not exactly
->>>>>> true. Your patch allows only to prevent userspace from accessing interfaces
->>>>>> which has kernel drivers, there is no way to stop an application from taking
->>>>>> control over all free interfaces.
->>>>>>
->>>>>> Let's say that your device has 3 interfaces. First of them has a kernel
->>>>>> driver but second and third doesn't. You have 2 apps. One should communicate
->>>>>> using second interface and another one third. But first app is malicious and
->>>>>> it claims all free interfaces of received device (your patch doesn't prevent
->>>>>> this). And when second app starts it is unable to do anything with the
->>>>>> device because all interfaces are taken. How would you like to handle this?
->>>>>
->>>>> You can't, and why would you ever want to, as you can't tell what an app
->>>>> "should" or "should not" do.  If you really care about this, then use a
->>>>> LSM policy to prevent this.
->>>>
->>>> Well, an app can declare what it does and what it needs in it's manifest
->>>> file (or some equivalent of this) and the platform should ensure that
->>>> app can do only what it has declared.
->>>>
->>>> I would really like to use LSM policy in here but currently it is
->>>> impossible as one device node represents whole device. Permissions (even
->>>> those from LSM) are being checked only on open() not on each ioctl() so
->>>> as far as I know there is nothing which prevents any owner of opened fd
->>>> to claim all available (not taken by someone else) interfaces and LSM
->>>> policy is unable to filter those calls (unless we add some LSM hooks
->>>> over there).
->>>
->>> How about this approach?  Once a process has dropped its usbfs
->>> privileges, it's not allowed to claim any interfaces (either explicitly
->>> or implicitly).  Instead, it or some manager program must claim the
->>> appropriate interfaces before dropping privileges.
->>>
->>
->> I agree that restricting interface claiming only to privileged process is a
->> good idea. Unfortunately this generates a problem when program needs more
->> than one interface (like in cdc - data + control for example). We need to
->> declare both of them in first call to "usb-manager" or reopen the dev node
->> at second call and claim all interfaces claimed using this fd till now and
->> claim one more and then drop privileges and send a new fd.
->
-> Have you seen such a device that is controlled this way in userspace?
-> Don't over-engineer something that is probably pretty rare...
->
-
-Yes I have seen such devices (not cdc of course) and they were driven 
-using libusb (vendor specific service + "driver" to bypass publishing 
-protocol code due to kernel's GPL). I have even seen an android app 
-written in java which claims and uses multiple interfaces using 
-android's USB API, so it's real;)
-
--- 
-Krzysztof Opasiak
-Samsung R&D Institute Poland
-Samsung Electronics
+QW0gRnJlaXRhZywgZGVuIDI3LjExLjIwMTUsIDA5OjM3ICswMjAwIHNjaHJpZWIgVG9taSBWYWxr
+ZWluZW46Cj4gT24gMjYvMTEvMTUgMTY6MjAsIE1hbmZyZWQgU2NobGFlZ2wgd3JvdGU6Cj4gPiBH
+b29kIHRvIHNlZSB0aGF0IHRoaXMgZGlzY3Vzc2lvbiBpcyB0cmlnZ2VyZWQuCj4gCj4gSSBzZWVt
+IHRvIGhhdmUgbWlzc2VkIHRoaXMgb25lLiBUaGlzIGlzIGltcG9ydGFudCBmb3Igb21hcGRybSBh
+bHNvLgo+IFdlJ3ZlIGhhZCBzaW1pbGFyIHBhdGNoIGluIFRJJ3MgbGludXggZm9yIGEgd2hpbGUs
+IGJ1dCBJIGhhdmUgbmV2ZXIgaGFkCj4gdGltZSB0byBzdGFydCB1cHN0cmVhbWluZyBpdC4KPiAK
+PiBUd28gY29tbWVudHM6Cj4gCj4gVGhlICJwaXhjbG9jayBwb2xhcml0eSIgY291bGQgYmUgZXhw
+bGFpbmVkIGEgYml0LCBhcyBpdCdzIG5vdCByZWFsbHkKPiBhYm91dCBwb2xhcml0eS4gVGhpcyB3
+YXMgZGlzY3Vzc2VkIHdoZW4gdGhlIGRpc3BsYXktdGltaW5ncyBzdHVmZiB3YXMKPiB3b3JrZWQg
+b24sIGFuZCBkaXNwbGF5LXRpbWluZ3MudHh0IGV4cGxhaW5zIHdoYXQgdGhlICJwaXhlbGNsay1h
+Y3RpdmUiCj4gcHJvcGVydHkgbWVhbnMuCgpZZXMsIHRoZSByZWxldmFudCBwYXJ0IG9mIHRoaXMg
+c2V0dGluZyBpcyB3aGV0aGVyIHRoZSBwYW5lbCB3aWxsIHNhbXBsZQp0aGUgZGF0YSBidXMgb24g
+dGhlIGZhbGxpbmcgb3IgcmlzaW5nIGVkZ2Ugb2YgdGhlIHBpeGVsIGNsb2NrIHNpZ25hbC4KVGhl
+IGRpc3BsYXkgaW50ZXJmYWNlIGhhcyBndWFyYW50ZWUgdGhhdCB0aGUgZGF0YSBidXMgaXMgc3Rh
+YmxlIGFyb3VuZAp0aGF0IHRpbWUuCgo+IFNvIGhlcmUgSSB0aGluayB5b3UgY291bGQgbWF5YmUg
+aGF2ZSBhIGNvbW1lbnQgcG9pbnRpbmcgdG8KPiBkaXNwbGF5LXRpbWluZ3MudHh0LCBvciBwZXJo
+YXBzIGEgc2hvcnQgY29tbWVudCBhYm91dCB3aGF0IHRoZSBmbGFnIGlzLgo+IE9yIGlmIHlvdSBj
+b21lIHVwIHdpdGggYSBncmVhdCBuYW1lIGZvciB0aGUgZGVmaW5lLCB0aGF0J3MgZ29vZCB0b28g
+PSkuCgpXZSBoYXZlIHRoZSBjaG9pY2Ugb2YgZGVzY3JpYmluZyB0aGUgZmxhZyBmcm9tIHBvaW50
+IG9mIHZpZXcgb2YgdGhlCmRpc3BsYXkgY29udHJvbGxlciAoYXMgdGhlIERJU1BMQVlfRkxBR1Mg
+ZG8pLCBmcm9tIHBvaW50IG9mIHZpZXcgb2YgdGhlCnBhbmVsLCBvciB1c2luZyBhIHNvbWV3aGF0
+IG5ldXRyYWwgZGVzY3JpcHRpb24gbGlrZSBpbiB0aGUgZGV2aWNlIHRyZWUuCldoaWNoIGNob2lj
+ZSBJJ2QgcHJlZmVyIGRlcGVuZHMgb24gd2hldGhlciB0aGUgZmxhZ3MgZ28gaW50bwpkcm1fZGlz
+cGxheV9tb2RlIC8gZHJtX21vZGVfbW9kZWluZm8gb3IgaW4gZHJtX2Rpc3BsYXlfaW5mby4KCklu
+IGFueSBjYXNlLCBJIHRoaW5rIHRoYXQgaXQnZCBiZSBiZXR0ZXIgdG8gdGFsayBhYm91dCBkcml2
+aW5nIG9yCnNhbXBsaW5nIGRhdGEgb24gcmlzaW5nIG9yIGZhbGxpbmcgZWRnZXMgaW5zdGVhZCBv
+ZiBjbG9jayBwb2xhcml0eS4KCj4gVGhlIG90aGVyIGNvbW1lbnQgaXMgbm90IGFib3V0IHRoaXMg
+cGF0Y2ggYXMgc3VjaCwgYnV0IHNpbWlsYXIgZmxhZ3MKPiB0aGF0IE9NQVAgaGFzLCBhbmQgcG9z
+c2libHkgc29tZSBvdGhlciBwbGF0Zm9ybXMgdG9vOgo+IAo+IDEpIHN5bmMgc2lnbmFscyBkcml2
+ZW4gb24gcmlzaW5nIG9yIGZhbGxpbmcgZWRnZSBvZiBwaXhlbCBjbG9jawo+IDIpIGhzeW5jIGFu
+ZCB2c3luYyBoYXBwZW4gYXQgdGhlIHNhbWUgdGltZSBvciBoc3luYyBoYXBwZW5zIGZpcnN0LAo+
+IGZvbGxvd2VkIGJ5IHZzeW5jCj4gCj4gQW55IG90aGVyIHBsYXRmb3JtcyBoYXZlIHNpbWlsYXIg
+ZmVhdHVyZXM/CgpUaGUgaS5NWDYgZGlzcGxheSBpbnRlcmZhY2UgY29uc2lzdHMgb2YgYSBudW1i
+ZXIgb2YgcmF0aGVyIGZyZWVseQpjb25maWd1cmFibGUgc2lnbmFsIGdlbmVyYXRvcnMsIHNvIGFs
+bCBvZiB0aGlzIHNob3VsZCBiZSBwb3NzaWJsZSB0byBkby4KCnJlZ2FyZHMKUGhpbGlwcAoKX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KZHJpLWRldmVsIG1h
+aWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHA6Ly9saXN0cy5m
+cmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9kcmktZGV2ZWwK
