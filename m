@@ -1,140 +1,202 @@
-From: Alexander Duyck <alexander.duyck@gmail.com>
-Subject: Re: [RFC PATCH V2 0/3] IXGBE/VFIO: Add live migration support for
- SRIOV NIC
-Date: Tue, 1 Dec 2015 10:36:33 -0800
-Message-ID: <CAKgT0UfJ7w6yYcZcF2YZyDKEwvE7Gh3P-jfGQGKLfPH2crVBzw@mail.gmail.com>
-References: <CAKgT0UcSrewenfM2YdVojHFFqfK2aVbBN5LH8=BFzc1p0f9hvQ@mail.gmail.com>
-	<56556F98.5060507@intel.com>
-	<CAKgT0UevBmRLpM1PvuuVDUW79A66RcPrfO8uGiqL1RiALW7apg@mail.gmail.com>
-	<A12AC9D104E08D47BAF23C492F83C53B25CDE9E3@SHSMSX104.ccr.corp.intel.com>
-	<CAKgT0Ucyq=7OSYBVvU9Z01b3f6scS+eBMLg+yphW7bwkNZosPQ@mail.gmail.com>
-	<565BF285.4040507@intel.com>
-	<CAKgT0Uc+-gFAetEfde6DmMOFK+vDE6UkgsNF8oLNqaQc4USSeg@mail.gmail.com>
-	<565DB6FF.1050602@intel.com>
-	<20151201171140-mutt-send-email-mst@redhat.com>
-	<CAKgT0UfLEJpV-KdqRGfzBeas8bdqfHCmT5Xc8iVVP03g_pQO8A@mail.gmail.com>
-	<20151201193026-mutt-send-email-mst@redhat.com>
+From: Jessica Yu <jeyu@redhat.com>
+Subject: Re: module: preserve Elf information for livepatch modules
+Date: Tue, 1 Dec 2015 16:06:01 -0500
+Message-ID: <20151201210600.GD3974@packer-debian-8-amd64.digitalocean.com>
+References: <1448943679-3412-1-git-send-email-jeyu@redhat.com>
+ <1448943679-3412-3-git-send-email-jeyu@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151201193026-mutt-send-email-mst@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Michael S. Tsirkin" <mst@redhat.com>
-Cc: "Lan, Tianyu" <tianyu.lan@intel.com>, "Dong, Eddie" <eddie.dong@intel.com>, "a.motakis@virtualopensystems.com" <a.motakis@virtualopensystems.com>, Alex Williamson <alex.williamson@redhat.com>, "b.reynal@virtualopensystems.com" <b.reynal@virtualopensystems.com>, Bjorn Helgaas <bhelgaas@google.com>, "Wyborny, Carolyn" <carolyn.wyborny@intel.com>, "Skidmore, Donald C" <donald.c.skidmore@intel.com>, "Jani, Nrupal" <nrupal.jani@intel.com>, Alexander Graf <agraf@suse.de>, "kvm@vger.kernel.org" <kvm@vger.kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, "qemu-devel@nongnu.org" <qemu-devel@nongnu.org>, "Tantilov, Emil S" <emil.s.tantilov@intel.com>, Or Gerlitz <gerlitz.or@gmail.com>, "Rustad, Mark D" <mark.d.rustad@intel.com>, Eric Auger <eric.auger@linaro.org>, intel-wired-lan <intel-wired-lan@lists.osuosl.org>, "Kirsher, Jeffrey T" <jeffrey.t.kirsher@intel.com>, Brandeb
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1448943679-3412-3-git-send-email-jeyu@redhat.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>
+Cc: linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 1, 2015 at 9:37 AM, Michael S. Tsirkin <mst@redhat.com> wrote:
-> On Tue, Dec 01, 2015 at 09:04:32AM -0800, Alexander Duyck wrote:
->> On Tue, Dec 1, 2015 at 7:28 AM, Michael S. Tsirkin <mst@redhat.com> wrote:
-
->> > There are several components to this:
->> > - dma_map_* needs to prevent page from
->> >   being migrated while device is running.
->> >   For example, expose some kind of bitmap from guest
->> >   to host, set bit there while page is mapped.
->> >   What happens if we stop the guest and some
->> >   bits are still set? See dma_alloc_coherent below
->> >   for some ideas.
->>
->> Yeah, I could see something like this working.  Maybe we could do
->> something like what was done for the NX bit and make use of the upper
->> order bits beyond the limits of the memory range to mark pages as
->> non-migratable?
->>
->> I'm curious.  What we have with a DMA mapped region is essentially
->> shared memory between the guest and the device.  How would we resolve
->> something like this with IVSHMEM, or are we blocked there as well in
->> terms of migration?
++++ Jessica Yu [30/11/15 23:21 -0500]:
+>For livepatch modules, copy Elf section, symbol, and string information
+>from the load_info struct in the module loader.
 >
-> I have some ideas. Will post later.
-
-I look forward to it.
-
->> > - dma_unmap_* needs to mark page as dirty
->> >   This can be done by writing into a page.
->> >
->> > - dma_sync_* needs to mark page as dirty
->> >   This is trickier as we can not change the data.
->> >   One solution is using atomics.
->> >   For example:
->> >         int x = ACCESS_ONCE(*p);
->> >         cmpxchg(p, x, x);
->> >   Seems to do a write without changing page
->> >   contents.
->>
->> Like I said we can probably kill 2 birds with one stone by just
->> implementing our own dma_mark_clean() for x86 virtualized
->> environments.
->>
->> I'd say we could take your solution one step further and just use 0
->> instead of bothering to read the value.  After all it won't write the
->> area if the value at the offset is not 0.
+>Livepatch uses special relocation sections in order to be able to patch
+>modules that are not yet loaded, as well as apply patches to the kernel
+>when the addresses of symbols cannot be determined at compile time (for
+>example, when kaslr is enabled). Livepatch modules must preserve Elf
+>information such as section indices in order to apply the remaining
+>relocation sections at the appropriate time (i.e. when the target module
+>loads).
 >
-> Really almost any atomic that has no side effect will do.
-> atomic or with 0
-> atomic and with ffffffff
+>Signed-off-by: Jessica Yu <jeyu@redhat.com>
+>---
+> include/linux/module.h |  9 +++++
+> kernel/module.c        | 98 ++++++++++++++++++++++++++++++++++++++++++++++++--
+> 2 files changed, 105 insertions(+), 2 deletions(-)
 >
-> It's just that cmpxchg already happens to have a portable
-> wrapper.
-
-I was originally thinking maybe an atomic_add with 0 would be the way
-to go.  Either way though we still are using a locked prefix and
-having to dirty a cache line per page which is going to come at some
-cost.
-
->> > - dma_alloc_coherent memory (e.g. device rings)
->> >   must be migrated after device stopped modifying it.
->> >   Just stopping the VCPU is not enough:
->> >   you must make sure device is not changing it.
->> >
->> >   Or maybe the device has some kind of ring flush operation,
->> >   if there was a reasonably portable way to do this
->> >   (e.g. a flush capability could maybe be added to SRIOV)
->> >   then hypervisor could do this.
->>
->> This is where things start to get messy. I was suggesting the
->> suspend/resume to resolve this bit, but it might be possible to also
->> deal with this via something like this via clearing the bus master
->> enable bit for the VF.  If I am not mistaken that should disable MSI-X
->> interrupts and halt any DMA.  That should work as long as you have
->> some mechanism that is tracking the pages in use for DMA.
+>diff --git a/include/linux/module.h b/include/linux/module.h
+>index 3a19c79..9b46256 100644
+>--- a/include/linux/module.h
+>+++ b/include/linux/module.h
+>@@ -425,6 +425,14 @@ struct module {
 >
-> A bigger issue is recovering afterwards.
+> 	/* Notes attributes */
+> 	struct module_notes_attrs *notes_attrs;
+>+
+>+	/* Elf information (optionally saved) */
+>+	Elf_Ehdr *hdr;
+>+	Elf_Shdr *sechdrs;
+>+	char *secstrings;
+>+	struct {
+>+		unsigned int sym, str, mod, vers, info, pcpu;
+>+	} index;
+> #endif
 
-Agreed.
+This particular patch unforunately breaks !CONFIG_KALLSYMS kernel
+builds, as I've just discovered. These fields should move out of the
+CONFIG_KALLSYMS block. And..
 
->> >   In case you need to resume on source, you
->> >   really need to follow the same path
->> >   as on destination, preferably detecting
->> >   device reset and restoring the device
->> >   state.
->>
->> The problem with detecting the reset is that you would likely have to
->> be polling to do something like that.
+> 	/* The command line arguments (may be mangled).  People like
+>@@ -461,6 +469,7 @@ struct module {
+> #endif
 >
-> We could some event to guest to notify it about this event
-> through a new or existing channel.
+> #ifdef CONFIG_LIVEPATCH
+>+	bool klp; /* Is this a livepatch module? */
+> 	bool klp_alive;
+> #endif
 >
-> Or we could make it possible for userspace to trigger this,
-> then notify guest through the guest agent.
-
-The first thing that comes to mind would be to use something like PCIe
-Advanced Error Reporting, however I don't know if we can put a
-requirement on the system supporting the q35 machine type or not in
-order to support migration.
-
->>  I believe the fm10k driver
->> already has code like that in place where it will detect a reset as a
->> part of its watchdog, however the response time is something like 2
->> seconds for that.  That was one of the reasons I preferred something
->> like hot-plug as that should be functioning as soon as the guest is up
->> and it is a mechanism that operates outside of the VF drivers.
+>diff --git a/kernel/module.c b/kernel/module.c
+>index 8f051a1..433c2d6 100644
+>--- a/kernel/module.c
+>+++ b/kernel/module.c
+>@@ -1984,6 +1984,13 @@ static void unset_module_core_ro_nx(struct module *mod) { }
+> static void unset_module_init_ro_nx(struct module *mod) { }
+> #endif
 >
-> That's pretty minor.
-> A bigger issue is making sure guest does not crash
-> when device is suddenly reset under it's legs.
+>+static void free_module_elf(struct module *mod)
+>+{
+>+	kfree(mod->hdr);
+>+	kfree(mod->sechdrs);
+>+	kfree(mod->secstrings);
+>+}
+>+
+> void __weak module_memfree(void *module_region)
+> {
+> 	vfree(module_region);
+>@@ -2022,6 +2029,9 @@ static void free_module(struct module *mod)
+> 	/* Free any allocated parameters. */
+> 	destroy_params(mod->kp, mod->num_kp);
+>
+>+	/* Free Elf information if it was saved */
+>+	free_module_elf(mod);
+>+
+> 	/* Now we can delete it from the lists */
+> 	mutex_lock(&module_mutex);
+> 	/* Unlink carefully: kallsyms could be walking list. */
+>@@ -2137,6 +2147,10 @@ static int simplify_symbols(struct module *mod, const struct load_info *info)
+> 			       (long)sym[i].st_value);
+> 			break;
+>
+>+		case SHN_LIVEPATCH:
+>+			/* klp symbols are resolved by livepatch */
+>+			break;
+>+
+> 		case SHN_UNDEF:
+> 			ksym = resolve_symbol_wait(mod, info, name);
+> 			/* Ok if resolved.  */
+>@@ -2185,6 +2199,10 @@ static int apply_relocations(struct module *mod, const struct load_info *info)
+> 		if (!(info->sechdrs[infosec].sh_flags & SHF_ALLOC))
+> 			continue;
+>
+>+		/* klp relocation sections are applied by livepatch */
+>+		if (info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH)
+>+			continue;
+>+
+> 		if (info->sechdrs[i].sh_type == SHT_REL)
+> 			err = apply_relocate(info->sechdrs, info->strtab,
+> 					     info->index.sym, i, mod);
+>@@ -2393,6 +2411,11 @@ static char elf_type(const Elf_Sym *sym, const struct load_info *info)
+> {
+> 	const Elf_Shdr *sechdrs = info->sechdrs;
+>
+>+	if (ELF_ST_BIND(sym->st_info) == STB_LIVEPATCH_EXT)
+>+		return 'K';
+>+	if (sym->st_shndx == SHN_LIVEPATCH)
+>+		return 'k';
+>+
+> 	if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
+> 		if (ELF_ST_TYPE(sym->st_info) == STT_OBJECT)
+> 			return 'v';
+>@@ -2475,7 +2498,7 @@ static void layout_symtab(struct module *mod, struct load_info *info)
+>
+> 	/* Compute total space required for the core symbols' strtab. */
+> 	for (ndst = i = 0; i < nsrc; i++) {
+>-		if (i == 0 ||
+>+		if (i == 0 || mod->klp ||
+> 		    is_core_symbol(src+i, info->sechdrs, info->hdr->e_shnum)) {
+> 			strtab_size += strlen(&info->strtab[src[i].st_name])+1;
+> 			ndst++;
+>@@ -2517,7 +2540,7 @@ static void add_kallsyms(struct module *mod, const struct load_info *info)
+> 	mod->core_strtab = s = mod->module_core + info->stroffs;
+> 	src = mod->symtab;
+> 	for (ndst = i = 0; i < mod->num_symtab; i++) {
+>-		if (i == 0 ||
+>+		if (i == 0 || mod->klp ||
+> 		    is_core_symbol(src+i, info->sechdrs, info->hdr->e_shnum)) {
+> 			dst[ndst] = src[i];
+> 			dst[ndst++].st_name = s - mod->core_strtab;
+>@@ -2638,6 +2661,64 @@ static int elf_header_check(struct load_info *info)
+> 	return 0;
+> }
+>
+>+/*
+>+ * copy_module_elf - preserve Elf information about a module
+>+ */
+>+static int copy_module_elf(struct module *mod, struct load_info *info)
+>+{
+>+	unsigned int size;
+>+	int ret = 0;
+>+	Elf_Shdr *symsect;
+>+
+>+	/* Elf header */
+>+	size = sizeof(Elf_Ehdr);
+>+	mod->hdr = kzalloc(size, GFP_KERNEL);
+>+	if (mod->hdr == NULL) {
+>+		ret = -ENOMEM;
+>+		goto out;
+>+	}
+>+	memcpy(mod->hdr, info->hdr, size);
+>+
+>+	/* Elf section header table */
+>+	size = sizeof(Elf_Shdr) * info->hdr->e_shnum;
+>+	mod->sechdrs = kzalloc(size, GFP_KERNEL);
+>+	if (mod->sechdrs == NULL) {
+>+		ret = -ENOMEM;
+>+		goto free_hdr;
+>+	}
+>+	memcpy(mod->sechdrs, info->sechdrs, size);
+>+
+>+	/* Elf section name string table */
+>+	size = info->sechdrs[info->hdr->e_shstrndx].sh_size;
+>+	mod->secstrings = kzalloc(size, GFP_KERNEL);
+>+	if (mod->secstrings == NULL) {
+>+		ret = -ENOMEM;
+>+		goto free_sechdrs;
+>+	}
+>+	memcpy(mod->secstrings, info->secstrings, size);
+>+
+>+	/* Elf section indices */
+>+	memcpy(&mod->index, &info->index, sizeof(info->index));
+>+
+>+	/*
+>+	 * Update symtab's sh_addr to point to a valid
+>+	 * symbol table, as the temporary symtab in module
+>+	 * init memory will be freed
+>+	 */
+>+	symsect = mod->sechdrs + mod->index.sym;
+>+	symsect->sh_addr = (unsigned long)mod->core_symtab;
 
-I know the ixgbevf driver should already have logic to address some of
-that.  If you look through the code there should be logic there for a
-surprise removal support in ixgbevf.  The only issue is that unlike
-fm10k it will not restore itself after a resume or slot_reset call.
+..instead of relying on CONFIG_KALLSYMS being set, check for
+CONFIG_KALLSYMS before the sh_addr assignment above (mod->core_symtab
+only exists when CONFIG_KALLSYMS is set). Then we can leave
+{free,copy}_module_elf() outside any #ifdef blocks.
+
+Jessica
