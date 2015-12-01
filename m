@@ -1,45 +1,33 @@
-From: Boris Brezillon <boris.brezillon@free-electrons.com>
-Subject: Re: [PATCH] mtd: Expand the ecc placement locations to 1216
-Date: Tue, 1 Dec 2015 12:15:12 +0100
-Message-ID: <20151201121512.40ce9cce@bbrezillon>
-References: <1446742735-20824-1-git-send-email-punnaia@xilinx.com>
-	<20151120193342.GX64635@google.com>
+From: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [RFC PATCH 03/10] dt-bindings: document the MPS2 UART bindings
+Date: Tue, 01 Dec 2015 11:35:28 +0000
+Message-ID: <565D8600.4040105@arm.com>
+References: <1448447621-17900-1-git-send-email-vladimir.murzin@arm.com> <1448447621-17900-4-git-send-email-vladimir.murzin@arm.com> <20151125200729.GJ30473@rob-hp-laptop>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151120193342.GX64635@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Brian Norris <computersforpeace@gmail.com>
-Cc: Punnaiah Choudary Kalluri <punnaiah.choudary.kalluri@xilinx.com>, dwmw2@infradead.org, michals@xilinx.com, linux-mtd@lists.infradead.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, kpc528@gmail.com, kalluripunnaiahchoudary@gmail.com, Punnaiah Choudary Kalluri <punnaia@xilinx.com>
+Content-Type: text/plain; charset=WINDOWS-1252
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20151125200729.GJ30473@rob-hp-laptop>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Rob Herring <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: arnd-r2nGTMty4D4@public.gmane.org, linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, afaerber-l3A5Bk7waGM@public.gmane.org, mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Mark.Rutland-5wv7dgnIgG8@public.gmane.org, Pawel.Moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Brian, Punnaiah,
-
-On Fri, 20 Nov 2015 11:33:42 -0800
-Brian Norris <computersforpeace@gmail.com> wrote:
-
-> On Thu, Nov 05, 2015 at 10:28:55PM +0530, Punnaiah Choudary Kalluri wrote:
-> > Device like MT29F32G08ABCDBJ4 have a writesize/oobsize of 16K/1216 Bytes.
-> > So, increasing the maximum ecc placement locations to 1216
+On 25/11/15 20:07, Rob Herring wrote:
+> On Wed, Nov 25, 2015 at 10:33:34AM +0000, Vladimir Murzin wrote:
+>> This adds documentation of device tree bindings for the
+>> UART found on ARM MPS2 platform
+>>
+>> Signed-off-by: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
 > 
-> I'd really prefer not increasing the size of the internal arrays any
-> more. The structures should be rewritten to be dynamic.
+> Why did ARM invent a new UART?
 
-I already started this migration (you can find the code here [1]). I
-was planning to rework this series to make the eccpos definition mimic
-what's done for oobfree (as suggested by Brian) before sending it, but
-I'm not sure when I'll be able to do that, so if you really need that
-quickly I suggest you submit those patches instead of reimplementing
-it yourself.
+It is not something new and it was inherited from MPS (version 1) and I
+can only guess why it was there in a first place ;)
 
-Best Regards,
+> 
+> Acked-by: Rob Herring <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 
-Boris
+Thanks for your time.
 
-[1]https://github.com/bbrezillon/linux-sunxi/commits/nand/ecclayout
-
--- 
-Boris Brezillon, Free Electrons
-Embedded Linux and Kernel engineering
-http://free-electrons.com
+Vladimir
