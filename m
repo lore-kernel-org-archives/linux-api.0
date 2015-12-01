@@ -1,93 +1,374 @@
-From: Pingbo Wen <pingbo.wen-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 0/3] introduce new evdev interface type
-Date: Tue, 1 Dec 2015 16:34:00 +0800
-Message-ID: <CB4E5A6F-D514-4D3B-9C95-13A52C509EC9@linaro.org>
-References: <1448618432-32357-1-git-send-email-pingbo.wen@linaro.org> <8705201.iaeQDTRocP@wuerfel> <DDC9234F-F89D-4112-BD68-FC6EFEC7E215@linaro.org> <3322044.DFSNLmiFGl@wuerfel>
-Mime-Version: 1.0 (Mac OS X Mail 9.1 \(3096.5\))
-Content-Type: text/plain; charset=gb2312
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: livepatch: reuse module loader code to write relocations
+Date: Tue, 1 Dec 2015 03:43:51 -0500
+Message-ID: <20151201084350.GA3974@packer-debian-8-amd64.digitalocean.com>
+References: <1448943679-3412-1-git-send-email-jeyu@redhat.com>
+ <1448943679-3412-5-git-send-email-jeyu@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <3322044.DFSNLmiFGl@wuerfel>
+Content-Disposition: inline
+In-Reply-To: <1448943679-3412-5-git-send-email-jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: Pingbo Wen <pingbo.wen-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, aksgarg1989-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi, Arnd
++++ Jessica Yu [30/11/15 23:21 -0500]:
+>Reuse module loader code to write relocations, thereby eliminating the need
+>for architecture specific relocation code in livepatch. Namely, we reuse
+>apply_relocate_add() in the module loader to write relocations instead of
+>duplicating functionality in livepatch's klp_write_module_reloc(). To apply
+>relocation sections, remaining SHN_LIVEPATCH symbols referenced by relocs
+>are resolved and then apply_relocate_add() is called to apply those
+>relocations.
+>
+>In addition, remove x86 livepatch relocation code. It is no longer needed
+>since symbol resolution and relocation work have been offloaded to module
+>loader.
+>
+>Signed-off-by: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>---
+> arch/x86/include/asm/livepatch.h |  2 -
+> arch/x86/kernel/Makefile         |  1 -
+> arch/x86/kernel/livepatch.c      | 91 --------------------------------------
+> include/linux/livepatch.h        | 30 ++++++-------
+> include/linux/module.h           |  6 +++
+> kernel/livepatch/core.c          | 94 ++++++++++++++++++++++------------------
+> 6 files changed, 70 insertions(+), 154 deletions(-)
+> delete mode 100644 arch/x86/kernel/livepatch.c
+>
+>diff --git a/arch/x86/include/asm/livepatch.h b/arch/x86/include/asm/livepatch.h
+>index 19c099a..7312e25 100644
+>--- a/arch/x86/include/asm/livepatch.h
+>+++ b/arch/x86/include/asm/livepatch.h
+>@@ -33,8 +33,6 @@ static inline int klp_check_compiler_support(void)
+> #endif
+> 	return 0;
+> }
+>-int klp_write_module_reloc(struct module *mod, unsigned long type,
+>-			   unsigned long loc, unsigned long value);
+>
+> static inline void klp_arch_set_pc(struct pt_regs *regs, unsigned long ip)
+> {
+>diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+>index b1b78ff..c5e9a5c 100644
+>--- a/arch/x86/kernel/Makefile
+>+++ b/arch/x86/kernel/Makefile
+>@@ -67,7 +67,6 @@ obj-$(CONFIG_X86_MPPARSE)	+= mpparse.o
+> obj-y				+= apic/
+> obj-$(CONFIG_X86_REBOOTFIXUPS)	+= reboot_fixups_32.o
+> obj-$(CONFIG_DYNAMIC_FTRACE)	+= ftrace.o
+>-obj-$(CONFIG_LIVEPATCH)		+= livepatch.o
+> obj-$(CONFIG_FUNCTION_GRAPH_TRACER) += ftrace.o
+> obj-$(CONFIG_FTRACE_SYSCALLS)	+= ftrace.o
+> obj-$(CONFIG_X86_TSC)		+= trace_clock.o
+>diff --git a/arch/x86/kernel/livepatch.c b/arch/x86/kernel/livepatch.c
+>deleted file mode 100644
+>index d1d35cc..0000000
+>--- a/arch/x86/kernel/livepatch.c
+>+++ /dev/null
+>@@ -1,91 +0,0 @@
+>-/*
+>- * livepatch.c - x86-specific Kernel Live Patching Core
+>- *
+>- * Copyright (C) 2014 Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>- * Copyright (C) 2014 SUSE
+>- *
+>- * This program is free software; you can redistribute it and/or
+>- * modify it under the terms of the GNU General Public License
+>- * as published by the Free Software Foundation; either version 2
+>- * of the License, or (at your option) any later version.
+>- *
+>- * This program is distributed in the hope that it will be useful,
+>- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+>- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+>- * GNU General Public License for more details.
+>- *
+>- * You should have received a copy of the GNU General Public License
+>- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+>- */
+>-
+>-#include <linux/module.h>
+>-#include <linux/uaccess.h>
+>-#include <asm/cacheflush.h>
+>-#include <asm/page_types.h>
+>-#include <asm/elf.h>
+>-#include <asm/livepatch.h>
+>-
+>-/**
+>- * klp_write_module_reloc() - write a relocation in a module
+>- * @mod:	module in which the section to be modified is found
+>- * @type:	ELF relocation type (see asm/elf.h)
+>- * @loc:	address that the relocation should be written to
+>- * @value:	relocation value (sym address + addend)
+>- *
+>- * This function writes a relocation to the specified location for
+>- * a particular module.
+>- */
+>-int klp_write_module_reloc(struct module *mod, unsigned long type,
+>-			   unsigned long loc, unsigned long value)
+>-{
+>-	int ret, numpages, size = 4;
+>-	bool readonly;
+>-	unsigned long val;
+>-	unsigned long core = (unsigned long)mod->module_core;
+>-	unsigned long core_size = mod->core_size;
+>-
+>-	switch (type) {
+>-	case R_X86_64_NONE:
+>-		return 0;
+>-	case R_X86_64_64:
+>-		val = value;
+>-		size = 8;
+>-		break;
+>-	case R_X86_64_32:
+>-		val = (u32)value;
+>-		break;
+>-	case R_X86_64_32S:
+>-		val = (s32)value;
+>-		break;
+>-	case R_X86_64_PC32:
+>-		val = (u32)(value - loc);
+>-		break;
+>-	default:
+>-		/* unsupported relocation type */
+>-		return -EINVAL;
+>-	}
+>-
+>-	if (loc < core || loc >= core + core_size)
+>-		/* loc does not point to any symbol inside the module */
+>-		return -EINVAL;
+>-
+>-	readonly = false;
+>-
+>-#ifdef CONFIG_DEBUG_SET_MODULE_RONX
+>-	if (loc < core + mod->core_ro_size)
+>-		readonly = true;
+>-#endif
+>-
+>-	/* determine if the relocation spans a page boundary */
+>-	numpages = ((loc & PAGE_MASK) == ((loc + size) & PAGE_MASK)) ? 1 : 2;
+>-
+>-	if (readonly)
+>-		set_memory_rw(loc & PAGE_MASK, numpages);
+>-
+>-	ret = probe_kernel_write((void *)loc, &val, size);
+>-
+>-	if (readonly)
+>-		set_memory_ro(loc & PAGE_MASK, numpages);
+>-
+>-	return ret;
+>-}
+>diff --git a/include/linux/livepatch.h b/include/linux/livepatch.h
+>index 31db7a0..54f62a6 100644
+>--- a/include/linux/livepatch.h
+>+++ b/include/linux/livepatch.h
+>@@ -64,28 +64,21 @@ struct klp_func {
+> };
+>
+> /**
+>- * struct klp_reloc - relocation structure for live patching
+>- * @loc:	address where the relocation will be written
+>- * @val:	address of the referenced symbol (optional,
+>- *		vmlinux	patches only)
+>- * @type:	ELF relocation type
+>- * @name:	name of the referenced symbol (for lookup/verification)
+>- * @addend:	offset from the referenced symbol
+>- * @external:	symbol is either exported or within the live patch module itself
+>+ * struct klp_reloc_sec - relocation section struct for live patching
+>+ * @index:	Elf section index of the relocation section
+>+ * @name:	name of the relocation section
+>+ * @objname:	name of the object associated with the klp reloc section
+>  */
+>-struct klp_reloc {
+>-	unsigned long loc;
+>-	unsigned long val;
+>-	unsigned long type;
+>-	const char *name;
+>-	int addend;
+>-	int external;
+>+struct klp_reloc_sec {
+>+	unsigned int index;
+>+	char *name;
+>+	char *objname;
+> };
+>
+> /**
+>  * struct klp_object - kernel object structure for live patching
+>  * @name:	module name (or NULL for vmlinux)
+>- * @relocs:	relocation entries to be applied at load time
+>+ * @reloc_secs:	relocation sections to be applied at load time
+>  * @funcs:	function entries for functions to be patched in the object
+>  * @kobj:	kobject for sysfs resources
+>  * @mod:	kernel module associated with the patched object
+>@@ -95,7 +88,7 @@ struct klp_reloc {
+> struct klp_object {
+> 	/* external */
+> 	const char *name;
+>-	struct klp_reloc *relocs;
+>+	struct klp_reloc_sec *reloc_secs;
+> 	struct klp_func *funcs;
+>
+> 	/* internal */
+>@@ -129,6 +122,9 @@ struct klp_patch {
+> #define klp_for_each_func(obj, func) \
+> 	for (func = obj->funcs; func->old_name; func++)
+>
+>+#define klp_for_each_reloc_sec(obj, reloc_sec) \
+>+	for (reloc_sec = obj->reloc_secs; reloc_sec->name; reloc_sec++)
+>+
+> int klp_register_patch(struct klp_patch *);
+> int klp_unregister_patch(struct klp_patch *);
+> int klp_enable_patch(struct klp_patch *);
+>diff --git a/include/linux/module.h b/include/linux/module.h
+>index 9b46256..ea61147 100644
+>--- a/include/linux/module.h
+>+++ b/include/linux/module.h
+>@@ -777,9 +777,15 @@ extern int module_sysfs_initialized;
+> #ifdef CONFIG_DEBUG_SET_MODULE_RONX
+> extern void set_all_modules_text_rw(void);
+> extern void set_all_modules_text_ro(void);
+>+extern void
+>+set_page_attributes(void *start, void *end,
+>+		    int (*set)(unsigned long start, int num_pages));
+> #else
+> static inline void set_all_modules_text_rw(void) { }
+> static inline void set_all_modules_text_ro(void) { }
+>+static inline void
+>+set_page_attributes(void *start, void *end,
+>+		    int (*set)(unsigned long start, int num_pages)) { }
+> #endif
+>
+> #ifdef CONFIG_GENERIC_BUG
+>diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
+>index db545cb..17b7278 100644
+>--- a/kernel/livepatch/core.c
+>+++ b/kernel/livepatch/core.c
+>@@ -28,6 +28,9 @@
+> #include <linux/list.h>
+> #include <linux/kallsyms.h>
+> #include <linux/livepatch.h>
+>+#include <linux/elf.h>
+>+#include <asm/cacheflush.h>
+>+#include <linux/moduleloader.h>
+>
+> /**
+>  * struct klp_ops - structure for tracking registered ftrace ops structs
+>@@ -281,52 +284,48 @@ static int klp_find_external_symbol(struct module *pmod, const char *name,
+> }
+>
+> static int klp_write_object_relocations(struct module *pmod,
+>-					struct klp_object *obj)
+>+					struct klp_object *obj,
+>+					struct klp_patch *patch)
+> {
+>-	int ret;
+>-	struct klp_reloc *reloc;
+>+	int relindex, num_relas;
+>+	int i, ret = 0;
+>+	unsigned long addr;
+>+	char *symname;
+>+	struct klp_reloc_sec *reloc_sec;
+>+	Elf_Rela *rela;
+>+	Elf_Sym *sym, *symtab;
+>
+> 	if (WARN_ON(!klp_is_object_loaded(obj)))
+> 		return -EINVAL;
+>
+>-	if (WARN_ON(!obj->relocs))
+>-		return -EINVAL;
+>-
+>-	for (reloc = obj->relocs; reloc->name; reloc++) {
+>-		if (!klp_is_module(obj)) {
+>-
+>-#if defined(CONFIG_RANDOMIZE_BASE)
+>-			/* If KASLR has been enabled, adjust old value accordingly */
+>-			if (kaslr_enabled())
+>-				reloc->val += kaslr_offset();
+>-#endif
+>-			ret = klp_verify_vmlinux_symbol(reloc->name,
+>-							reloc->val);
+>-			if (ret)
+>-				return ret;
+>-		} else {
+>-			/* module, reloc->val needs to be discovered */
+>-			if (reloc->external)
+>-				ret = klp_find_external_symbol(pmod,
+>-							       reloc->name,
+>-							       &reloc->val);
+>-			else
+>-				ret = klp_find_object_symbol(obj->mod->name,
+>-							     reloc->name,
+>-							     &reloc->val);
+>-			if (ret)
+>-				return ret;
+>-		}
+>-		ret = klp_write_module_reloc(pmod, reloc->type, reloc->loc,
+>-					     reloc->val + reloc->addend);
+>-		if (ret) {
+>-			pr_err("relocation failed for symbol '%s' at 0x%016lx (%d)\n",
+>-			       reloc->name, reloc->val, ret);
+>-			return ret;
+>+	symtab = (void *)pmod->core_symtab;
+>+
+>+	/* For each __klp_rela section for this object */
+>+	klp_for_each_reloc_sec(obj, reloc_sec) {
+>+		relindex = reloc_sec->index;
+>+		num_relas = pmod->sechdrs[relindex].sh_size / sizeof(Elf_Rela);
+>+		rela = (Elf_Rela *) pmod->sechdrs[relindex].sh_addr;
+>+
+>+		/* For each rela in this __klp_rela section */
+>+		for (i = 0; i < num_relas; i++, rela++) {
+>+			sym = symtab + ELF_R_SYM(rela->r_info);
+>+			symname = pmod->core_strtab + sym->st_name;
+>+
+>+			if (sym->st_shndx == SHN_LIVEPATCH) {
+>+				if (sym->st_info == 'K')
+>+					ret = klp_find_external_symbol(pmod, symname, &addr);
+>+				else
+>+					ret = klp_find_object_symbol(obj->name, symname, &addr);
+>+				if (ret)
+>+					return ret;
+>+				sym->st_value = addr;
 
->>>>=20
->>>> The patch series add three evdev interface type:
->>>>=20
->>>> - EV_IF_LEGACY
->>>> send event by input_event. This is the default option, keep kernel
->>>> backward compatible.
->>>=20
->>> The problem I see with this approach is that it still breaks any
->>> legacy source code that is compiled with a new libc that uses 64-bi=
-t
->>> time_t. If we are requiring source code changes for building users
->>> of input devices with a new libc, we can easily get them to handle
->>> the overflow (they normally only care about the microsecond portion
->>> anyway, so it doesn't matter in most cases), or to use monotonic ti=
-me.
->>=20
->> I don=A1=AFt think so.
->>=20
->> Actually, from the view of userspace, EV_IF_LEGACY interface is work
->> exactly the same as old evdev. We didn=A1=AFt change anything in inp=
-ut_event
->> and input_event_compat. And the problem you said will still be there=
-,
->> even without those patches.
->=20
-> I think we're still talking past one another. I thought we had establ=
-ished
-> that
->=20
-> 1. the current interface is broken when time_t changes in user space
+I'll note here that this patchset has the same problem that current
+livepatch has in that it will be unable to handle duplicate symbols
+within the same object (i.e. sysfs will be unable to create entries
+with the same name and livepatch errors out). After the Chris's sympos
+patchset gets merged I should be able to rebase this patchset on top
+of it to resolve the duplicate symbol issue.
 
-What kinds of changes in time_t? Extending it to 64-bits in both kernel
-and userspace? Ok, I get confused here, if there are some sample codes
-or use-cases here, it will help me a lot.
+>+			}
+> 		}
+>+		ret = apply_relocate_add(pmod->sechdrs, pmod->core_strtab,
+>+					 pmod->index.sym, relindex, pmod);
+> 	}
+>
+>-	return 0;
+>+	return ret;
+> }
+>
+> static void notrace klp_ftrace_handler(unsigned long ip,
+>@@ -747,13 +746,22 @@ static int klp_init_object_loaded(struct klp_patch *patch,
+> 				  struct klp_object *obj)
+> {
+> 	struct klp_func *func;
+>+	struct module *pmod;
+> 	int ret;
+>
+>-	if (obj->relocs) {
+>-		ret = klp_write_object_relocations(patch->mod, obj);
+>-		if (ret)
+>-			return ret;
+>-	}
+>+	pmod = patch->mod;
+>+
+>+	set_page_attributes(pmod->module_core,
+>+			    pmod->module_core + pmod->core_text_size,
+>+			    set_memory_rw);
 
-> 2. we can fix it by redefining struct input_event in a way that
->   is independent of time_t
-> 3. once both user space and kernel are using the same ABI independent
->   of time_t, we can look improving the timestamps so they don't
->   overflow
-> 4. the monotonic timestamp interface already avoids the overflow, so
->   it would be sufficient as a solution for 3.
->=20
-> Where did I lose you here? Did you find any other facts that I
-> was missing? I don't know whether the two new event structures make
-> the interface better in some other way, but it seems mostly unrelated
-> to either of the two problems we already have with time_t (the
-> ABI mismatch, and the use of non-monotonic timestamps).
+Note #2: When Josh's module cleanup patches get merged, I'll swap out these
+set_page_attribute() calls for (un)set_module_core_ro_nx().
 
-It seems we are mismatch here.
-
-Actually input_composite_event has the similar structure with input_eve=
-nt,
-but with a nicer definition, which can take both monotonic and non-mono=
-tonic
-timestamps safely.
-
-What I assumed here, is that leaving EV_IF_LEGACY as a untouched, depre=
-cated
-interface. If userspace try to adapt to new libc and kernel, it should =
-move
-to new interface. The userspace can do a lazy update, keep the code unt=
-ouched,
-but suffer the y2038 problem by itself.
-
-We can force kernel using monotonic time in EV_IF_LEGACY interface, and
-making input_event independent from time_t(after evdev has converted to
-input_value, it=A1=AFs easy to do that), but that also imply userspace
-must change their code to fit this change. If changing userspace code i=
-s
-a mandatory option, why not to force them do a complete conversion?
-
-Pingbo--
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Jessica
