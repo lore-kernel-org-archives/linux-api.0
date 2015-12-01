@@ -1,33 +1,59 @@
-From: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
-Subject: Re: [RFC PATCH 03/10] dt-bindings: document the MPS2 UART bindings
-Date: Tue, 01 Dec 2015 11:35:28 +0000
-Message-ID: <565D8600.4040105@arm.com>
-References: <1448447621-17900-1-git-send-email-vladimir.murzin@arm.com> <1448447621-17900-4-git-send-email-vladimir.murzin@arm.com> <20151125200729.GJ30473@rob-hp-laptop>
+From: "Lan, Tianyu" <tianyu.lan@intel.com>
+Subject: Re: [RFC PATCH V2 0/3] IXGBE/VFIO: Add live migration support for
+ SRIOV NIC
+Date: Tue, 1 Dec 2015 23:04:31 +0800
+Message-ID: <565DB6FF.1050602@intel.com>
+References: <1448372298-28386-1-git-send-email-tianyu.lan@intel.com>
+ <5654722D.4010409@gmail.com> <56552888.90108@intel.com>
+ <CAKgT0UcSrewenfM2YdVojHFFqfK2aVbBN5LH8=BFzc1p0f9hvQ@mail.gmail.com>
+ <56556F98.5060507@intel.com>
+ <CAKgT0UevBmRLpM1PvuuVDUW79A66RcPrfO8uGiqL1RiALW7apg@mail.gmail.com>
+ <A12AC9D104E08D47BAF23C492F83C53B25CDE9E3@SHSMSX104.ccr.corp.intel.com>
+ <CAKgT0Ucyq=7OSYBVvU9Z01b3f6scS+eBMLg+yphW7bwkNZosPQ@mail.gmail.com>
+ <565BF285.4040507@intel.com>
+ <CAKgT0Uc+-gFAetEfde6DmMOFK+vDE6UkgsNF8oLNqaQc4USSeg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151125200729.GJ30473@rob-hp-laptop>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rob Herring <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: arnd-r2nGTMty4D4@public.gmane.org, linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, afaerber-l3A5Bk7waGM@public.gmane.org, mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Mark.Rutland-5wv7dgnIgG8@public.gmane.org, Pawel.Moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAKgT0Uc+-gFAetEfde6DmMOFK+vDE6UkgsNF8oLNqaQc4USSeg@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexander Duyck <alexander.duyck@gmail.com>
+Cc: "Dong, Eddie" <eddie.dong@intel.com>, "a.motakis@virtualopensystems.com" <a.motakis@virtualopensystems.com>, Alex Williamson <alex.williamson@redhat.com>, "b.reynal@virtualopensystems.com" <b.reynal@virtualopensystems.com>, Bjorn Helgaas <bhelgaas@google.com>, "Wyborny, Carolyn" <carolyn.wyborny@intel.com>, "Skidmore, Donald C" <donald.c.skidmore@intel.com>, "Jani, Nrupal" <nrupal.jani@intel.com>, Alexander Graf <agraf@suse.de>, "kvm@vger.kernel.org" <kvm@vger.kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, "qemu-devel@nongnu.org" <qemu-devel@nongnu.org>, "Tantilov, Emil S" <emil.s.tantilov@intel.com>, Or Gerlitz <gerlitz.or@gmail.com>, "Rustad, Mark D" <mark.d.rustad@intel.com>, "Michael S. Tsirkin" <mst@redhat.com>, Eric Auger <eric.auger@linaro.org>, intel-wired-lan <intel-wired-lan@lists.osuosl.org>, "Kirsher, Jeffrey T" <jeffrey.t.kirsher@intel.com>, Brande
 List-Id: linux-api@vger.kernel.org
 
-On 25/11/15 20:07, Rob Herring wrote:
-> On Wed, Nov 25, 2015 at 10:33:34AM +0000, Vladimir Murzin wrote:
->> This adds documentation of device tree bindings for the
->> UART found on ARM MPS2 platform
->>
->> Signed-off-by: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
-> 
-> Why did ARM invent a new UART?
 
-It is not something new and it was inherited from MPS (version 1) and I
-can only guess why it was there in a first place ;)
 
-> 
-> Acked-by: Rob Herring <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+On 12/1/2015 12:07 AM, Alexander Duyck wrote:
+> They can only be corrected if the underlying assumptions are correct
+> and they aren't.  Your solution would have never worked correctly.
+> The problem is you assume you can keep the device running when you are
+> migrating and you simply cannot.  At some point you will always have
+> to stop the device in order to complete the migration, and you cannot
+> stop it before you have stopped your page tracking mechanism.  So
+> unless the platform has an IOMMU that is somehow taking part in the
+> dirty page tracking you will not be able to stop the guest and then
+> the device, it will have to be the device and then the guest.
+>
+>> >Doing suspend and resume() may help to do migration easily but some
+>> >devices requires low service down time. Especially network and I got
+>> >that some cloud company promised less than 500ms network service downtime.
+> Honestly focusing on the downtime is getting the cart ahead of the
+> horse.  First you need to be able to do this without corrupting system
+> memory and regardless of the state of the device.  You haven't even
+> gotten to that state yet.  Last I knew the device had to be up in
+> order for your migration to even work.
 
-Thanks for your time.
+I think the issue is that the content of rx package delivered to stack 
+maybe changed during migration because the piece of memory won't be 
+migrated to new machine. This may confuse applications or stack. Current 
+dummy write solution can ensure the content of package won't change 
+after doing dummy write while the content maybe not received data if 
+migration happens before that point. We can recheck the content via 
+checksum or crc in the protocol after dummy write to ensure the content 
+is what VF received. I think stack has already done such checks and the 
+package will be abandoned if failed to pass through the check.
 
-Vladimir
+Another way is to tell all memory driver are using to Qemu and let Qemu 
+to migrate these memory after stopping VCPU and the device. This seems 
+safe but implementation maybe complex.
