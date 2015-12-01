@@ -1,64 +1,76 @@
 From: Jessica Yu <jeyu@redhat.com>
-Subject: [RFC PATCH v2 3/6] module: s390: keep mod_arch_specific for livepatch modules
-Date: Mon, 30 Nov 2015 23:21:16 -0500
-Message-ID: <1448943679-3412-4-git-send-email-jeyu@redhat.com>
+Subject: [RFC PATCH v2 1/6] Elf: add livepatch-specific Elf constants
+Date: Mon, 30 Nov 2015 23:21:14 -0500
+Message-ID: <1448943679-3412-2-git-send-email-jeyu@redhat.com>
 References: <1448943679-3412-1-git-send-email-jeyu@redhat.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1448943679-3412-1-git-send-email-jeyu@redhat.com>
-Sender: linux-doc-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>
 Cc: linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Livepatch needs to utilize the symbol information contained in the
-mod_arch_specific struct in order to be able to call the s390
-apply_relocate_add() function to apply relocations. Remove the redundant
-vfree() in module_finalize() since module_arch_freeing_init() (which also frees
-said structures) is called in do_init_module(). Keep a reference to syminfo if
-the module is a livepatch module and free the structures in
-module_arch_cleanup(). If the module isn't a livepatch module, we free the
-structures in module_arch_freeing_init() as usual.
+Add livepatch Elf relocation section flag (SHF_RELA_LIVEPATCH), livepatch
+symbol bind (STB_LIVEPATCH_EXT) and section index (SHN_LIVEPATCH).
+The values of these Elf constants were selected from OS-specific ranges
+according to the definitions from glibc.
+
+Livepatch relocation sections are marked with SHF_RELA_LIVEPATCH to
+indicate to the module loader that it should not apply that relocation
+section and that livepatch will handle them.
+
+The SHN_LIVEPATCH shndx marks symbols that will be resolved by livepatch.
+The module loader ignores these symbols and does not attempt to resolve
+them.
+
+The STB_LIVEPATCH_EXT symbol bind marks the scope of certain livepatch
+symbols, so that livepatch can appropriately resolve them.
 
 Signed-off-by: Jessica Yu <jeyu@redhat.com>
 ---
- arch/s390/kernel/module.c | 13 +++++++++++--
- 1 file changed, 11 insertions(+), 2 deletions(-)
+ include/uapi/linux/elf.h | 17 ++++++++++-------
+ 1 file changed, 10 insertions(+), 7 deletions(-)
 
-diff --git a/arch/s390/kernel/module.c b/arch/s390/kernel/module.c
-index 0c1a679..17a1979 100644
---- a/arch/s390/kernel/module.c
-+++ b/arch/s390/kernel/module.c
-@@ -51,6 +51,9 @@ void *module_alloc(unsigned long size)
+diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
+index 71e1d0e..95ff318 100644
+--- a/include/uapi/linux/elf.h
++++ b/include/uapi/linux/elf.h
+@@ -115,9 +115,10 @@ typedef __s64	Elf64_Sxword;
+ #define DT_HIPROC	0x7fffffff
  
- void module_arch_freeing_init(struct module *mod)
- {
-+	if (mod->klp)
-+		return;
-+
- 	vfree(mod->arch.syminfo);
- 	mod->arch.syminfo = NULL;
- }
-@@ -420,12 +423,18 @@ int apply_relocate_add(Elf_Shdr *sechdrs, const char *strtab,
- 	return 0;
- }
+ /* This info is needed when parsing the symbol table */
+-#define STB_LOCAL  0
+-#define STB_GLOBAL 1
+-#define STB_WEAK   2
++#define STB_LOCAL		0
++#define STB_GLOBAL		1
++#define STB_WEAK		2
++#define STB_LIVEPATCH_EXT	11
  
-+void module_arch_cleanup(struct module *mod)
-+{
-+	if (mod->klp) {
-+		vfree(mod->arch.syminfo);
-+		mod->arch.syminfo = NULL;
-+	}
-+}
-+
- int module_finalize(const Elf_Ehdr *hdr,
- 		    const Elf_Shdr *sechdrs,
- 		    struct module *me)
- {
- 	jump_label_apply_nops(me);
--	vfree(me->arch.syminfo);
--	me->arch.syminfo = NULL;
- 	return 0;
- }
+ #define STT_NOTYPE  0
+ #define STT_OBJECT  1
+@@ -282,16 +283,18 @@ typedef struct elf64_phdr {
+ #define SHT_HIUSER	0xffffffff
+ 
+ /* sh_flags */
+-#define SHF_WRITE	0x1
+-#define SHF_ALLOC	0x2
+-#define SHF_EXECINSTR	0x4
+-#define SHF_MASKPROC	0xf0000000
++#define SHF_WRITE		0x1
++#define SHF_ALLOC		0x2
++#define SHF_EXECINSTR		0x4
++#define SHF_RELA_LIVEPATCH	0x00100000
++#define SHF_MASKPROC		0xf0000000
+ 
+ /* special section indexes */
+ #define SHN_UNDEF	0
+ #define SHN_LORESERVE	0xff00
+ #define SHN_LOPROC	0xff00
+ #define SHN_HIPROC	0xff1f
++#define SHN_LIVEPATCH	0xff20
+ #define SHN_ABS		0xfff1
+ #define SHN_COMMON	0xfff2
+ #define SHN_HIRESERVE	0xffff
 -- 
 2.4.3
-
