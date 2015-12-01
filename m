@@ -1,16 +1,16 @@
-From: Pingbo Wen <pingbo.wen@linaro.org>
+From: Pingbo Wen <pingbo.wen-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 Subject: Re: [PATCH 0/3] introduce new evdev interface type
 Date: Tue, 1 Dec 2015 16:34:00 +0800
-Message-ID: <B94C5572-195B-4181-92F2-EA5FBDAF9BA9@linaro.org>
+Message-ID: <CB4E5A6F-D514-4D3B-9C95-13A52C509EC9@linaro.org>
 References: <1448618432-32357-1-git-send-email-pingbo.wen@linaro.org> <8705201.iaeQDTRocP@wuerfel> <DDC9234F-F89D-4112-BD68-FC6EFEC7E215@linaro.org> <3322044.DFSNLmiFGl@wuerfel>
 Mime-Version: 1.0 (Mac OS X Mail 9.1 \(3096.5\))
 Content-Type: text/plain; charset=gb2312
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <3322044.DFSNLmiFGl@wuerfel>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Pingbo Wen <pingbo.wen@linaro.org>, y2038@lists.linaro.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, aksgarg1989@gmail.com, linux-input@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: Pingbo Wen <pingbo.wen-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, aksgarg1989-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 Hi, Arnd
@@ -88,8 +88,6 @@ s
 a mandatory option, why not to force them do a complete conversion?
 
 Pingbo--
-To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
- in
-the body of a message to majordomo@vger.kernel.org
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
