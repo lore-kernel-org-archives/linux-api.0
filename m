@@ -1,56 +1,36 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 7/8] cgroup: mount cgroupns-root when inside non-init
-	cgroupns
-Date: Wed, 2 Dec 2015 12:05:51 -0500
-Message-ID: <20151202170551.GE19878@mtj.duckdns.org>
-References: <20151124171610.GS17033@mtj.duckdns.org>
-	<20151127051745.GA24521@mail.hallyn.com>
-	<20151130150938.GF3535@mtj.duckdns.org>
-	<20151201040704.GA31067@mail.hallyn.com>
-	<20151201164649.GD12922@mtj.duckdns.org>
-	<20151201215853.GA9153@mail.hallyn.com>
-	<20151202165312.GB19878@mtj.duckdns.org>
-	<20151202165637.GA20840@mail.hallyn.com>
-	<20151202165839.GD19878@mtj.duckdns.org>
-	<20151202170239.GA21009@mail.hallyn.com>
+From: David Miller <davem@davemloft.net>
+Subject: Re: [PATCH net-next v3 03/17] net: ethtool: add new
+ ETHTOOL_GSETTINGS/SSETTINGS API
+Date: Wed, 02 Dec 2015 12:31:59 -0500 (EST)
+Message-ID: <20151202.123159.1617446027222393431.davem@davemloft.net>
+References: <1448921155-24764-4-git-send-email-ddecotig@gmail.com>
+        <20151201.221356.2176806670215219133.davem@davemloft.net>
+        <CAG88wWbW=yxO0mzauJauEd3W-SuPq3eNGRE+Xe6ATcLKhrPq3A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20151202170239.GA21009-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Return-path: <linux-mips-bounce@linux-mips.org>
+In-Reply-To: <CAG88wWbW=yxO0mzauJauEd3W-SuPq3eNGRE+Xe6ATcLKhrPq3A@mail.gmail.com>
+Sender: linux-mips-bounce@linux-mips.org
+Errors-to: linux-mips-bounce@linux-mips.org
+List-help: <mailto:ecartis@linux-mips.org?Subject=help>
+List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
+List-software: Ecartis version 1.0.0
+List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
+List-owner: <mailto:ralf@linux-mips.org>
+List-post: <mailto:linux-mips@linux-mips.org>
+List-archive: <http://www.linux-mips.org/archives/linux-mips/>
+To: ddecotig@gmail.com
+Cc: ben@decadent.org.uk, amirv@mellanox.com, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-mips@linux-mips.org, fcoe-devel@open-fcoe.org, edumazet@google.com, eugenia@mellanox.co.il, ogerlitz@mellanox.com, idos@mellanox.com, joe@perches.com, saeedm@mellanox.com, _govind@gmx.com, VenkatKumar.Duvvuru@emulex.com, jeffrey.t.kirsher@intel.com, eyalpe@mellanox.com, pshelar@nicira.com, eswierk@skyportsystems.com, robert.w.love@intel.com, JBottomley@parallels.com, Yuval.Mintz@qlogic.com
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Dec 02, 2015 at 11:02:39AM -0600, Serge E. Hallyn wrote:
-> On Wed, Dec 02, 2015 at 11:58:39AM -0500, Tejun Heo wrote:
-> > On Wed, Dec 02, 2015 at 10:56:37AM -0600, Serge E. Hallyn wrote:
-> > > Can it be flushed when we know that the cgroup is being pinned by
-> > > a css_set?  (There's either a task or a cgroup_namespace pinning it
-> > > or we wouldn't get here)
-> > 
-> > Yeap, it can be flushed.  There's no ref coming out of cgroup to the
-> > vfs objects.
-> 
-> Ok, thanks.  Still seems to me to be more work to actually walk the
-> path ourselves, but I'll go that route and see what it looks like :)
+From: David Decotigny <ddecotig@gmail.com>
+Date: Tue, 1 Dec 2015 22:00:58 -0800
 
-I just dislike having two separate paths instantiating the same
-objects and would prefer doing it the same way userland would do if
-that isn't too complex but yeah it might turn out to be a lot more
-work.
+> There is a set of conversion routines ulong[]<->u32[] to address this
+> 32/64-bit compat issue.
 
-Thanks a lot!
+And it's extremely ugly.
 
--- 
-tejun
+There is nothing stopping you from adding bitmap_set32() et al. helpers
+to facilitate things.
