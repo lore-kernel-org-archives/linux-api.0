@@ -1,82 +1,39 @@
-From: Chris J Arges <chris.j.arges@canonical.com>
-Subject: [PATCH 3/3 v9] livepatch: function,sympos scheme in livepatch sysfs directory
-Date: Tue,  1 Dec 2015 20:40:56 -0600
-Message-ID: <1449024076-16034-4-git-send-email-chris.j.arges@canonical.com>
-References: <1448040325-32498-1-git-send-email-chris.j.arges@canonical.com>
- <1449024076-16034-1-git-send-email-chris.j.arges@canonical.com>
+From: David Miller <davem@davemloft.net>
+Subject: Re: [PATCH net-next v3 03/17] net: ethtool: add new
+ ETHTOOL_GSETTINGS/SSETTINGS API
+Date: Tue, 01 Dec 2015 22:13:56 -0500 (EST)
+Message-ID: <20151201.221356.2176806670215219133.davem@davemloft.net>
+References: <1448921155-24764-1-git-send-email-ddecotig@gmail.com>
+	<1448921155-24764-4-git-send-email-ddecotig@gmail.com>
+Mime-Version: 1.0
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1449024076-16034-1-git-send-email-chris.j.arges@canonical.com>
+In-Reply-To: <1448921155-24764-4-git-send-email-ddecotig@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: live-patching@vger.kernel.org, linux-kernel@vger.kernel.org, jpoimboe@redhat.com, jikos@kernel.org, pmladek@suse.com, mbenes@suse.cz, jeyu@redhat.com
-Cc: Chris J Arges <chris.j.arges@canonical.com>, Seth Jennings <sjenning@redhat.com>, Vojtech Pavlik <vojtech@suse.com>, linux-api@vger.kernel.org
+To: ddecotig@gmail.com
+Cc: ben@decadent.org.uk, amirv@mellanox.com, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-mips@linux-mips.org, fcoe-devel@open-fcoe.org, edumazet@google.com, eugenia@mellanox.co.il, ogerlitz@mellanox.com, idos@mellanox.com, joe@perches.com, saeedm@mellanox.com, _govind@gmx.com, VenkatKumar.Duvvuru@Emulex.Com, jeffrey.t.kirsher@intel.com, eyalpe@mellanox.com, pshelar@nicira.com, eswierk@skyportsystems.com, robert.w.love@intel.com, JBottomley@parallels.com, Yuval.Mintz@qlogic.com, decot@googlers.com
 List-Id: linux-api@vger.kernel.org
 
-The following directory structure will allow for cases when the same
-function name exists in a single object.
-	/sys/kernel/livepatch/<patch>/<object>/<function,sympos>
+From: David Decotigny <ddecotig@gmail.com>
+Date: Mon, 30 Nov 2015 14:05:41 -0800
 
-The sympos number corresponds to the nth occurrence of the symbol name in
-kallsyms for the patched object.
+> This patch defines a new ETHTOOL_GSETTINGS/SSETTINGS API, handled by
+> the new get_ksettings/set_ksettings callbacks. This API provides
+> support for most legacy ethtool_cmd fields, adds support for larger
+> link mode masks (up to 4064 bits, variable length), and removes
+> ethtool_cmd deprecated fields (transceiver/maxrxpkt/maxtxpkt).
 
-An example of patching multiple symbols can be found here:
-	https://github.com/dynup/kpatch/issues/493
+Please do not define the mask using a non-fixed type.  I know it makes
+it easier to use the various bitmap helper routines if you use 'long',
+but here it is clearly superior to use "u32" for the bitmap type and
+do the bit operations by hand if necessary.
 
-Signed-off-by: Chris J Arges <chris.j.arges@canonical.com>
----
- Documentation/ABI/testing/sysfs-kernel-livepatch |  6 +++++-
- kernel/livepatch/core.c                          | 10 ++++++++--
- 2 files changed, 13 insertions(+), 3 deletions(-)
+Otherwise you have to have all of this ulong size CPP conditional code
+which is incredibly ugly.
 
-diff --git a/Documentation/ABI/testing/sysfs-kernel-livepatch b/Documentation/ABI/testing/sysfs-kernel-livepatch
-index 5bf42a8..da87f43 100644
---- a/Documentation/ABI/testing/sysfs-kernel-livepatch
-+++ b/Documentation/ABI/testing/sysfs-kernel-livepatch
-@@ -33,7 +33,7 @@ Description:
- 		The object directory contains subdirectories for each function
- 		that is patched within the object.
- 
--What:		/sys/kernel/livepatch/<patch>/<object>/<function>
-+What:		/sys/kernel/livepatch/<patch>/<object>/<function,sympos>
- Date:		Nov 2014
- KernelVersion:	3.19.0
- Contact:	live-patching@vger.kernel.org
-@@ -41,4 +41,8 @@ Description:
- 		The function directory contains attributes regarding the
- 		properties and state of the patched function.
- 
-+		The directory name contains the patched function name and a
-+		sympos number corresponding to the nth occurrence of the symbol
-+		name in kallsyms for the patched object.
-+
- 		There are currently no such attributes.
-diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
-index e842534..94893e8 100644
---- a/kernel/livepatch/core.c
-+++ b/kernel/livepatch/core.c
-@@ -535,7 +535,7 @@ EXPORT_SYMBOL_GPL(klp_enable_patch);
-  * /sys/kernel/livepatch/<patch>
-  * /sys/kernel/livepatch/<patch>/enabled
-  * /sys/kernel/livepatch/<patch>/<object>
-- * /sys/kernel/livepatch/<patch>/<object>/<func>
-+ * /sys/kernel/livepatch/<patch>/<object>/<function,sympos>
-  */
- 
- static ssize_t enabled_store(struct kobject *kobj, struct kobj_attribute *attr,
-@@ -680,8 +680,14 @@ static int klp_init_func(struct klp_object *obj, struct klp_func *func)
- 	INIT_LIST_HEAD(&func->stack_node);
- 	func->state = KLP_DISABLED;
- 
-+	/* The format for the sysfs directory is <function,sympos> where sympos
-+	 * is the nth occurrence of this symbol in kallsyms for the patched
-+	 * object. If the user selects 0 for old_sympos, then 1 will be used
-+	 * since a unique symbol will be the first occurrence.
-+	 */
- 	return kobject_init_and_add(&func->kobj, &klp_ktype_func,
--				    &obj->kobj, "%s", func->old_name);
-+				    &obj->kobj, "%s,%lu", func->old_name,
-+				    func->old_sympos ? func->old_sympos : 1);
- }
- 
- /* parts of the initialization that is done only when the object is loaded */
--- 
-1.9.1
+Furthermore you have to use fixed sized types anyways so that we don't
+need compat code to deal with 32-bit userspace applications making
+these ethtool calls into a 64-bit kernel.
+
+THanks.
