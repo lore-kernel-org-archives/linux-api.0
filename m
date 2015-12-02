@@ -1,143 +1,686 @@
 From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: [PATCH v1 10/10] ARM: dts: introduce MPS2 AN399/AN400
-Date: Wed,  2 Dec 2015 09:33:10 +0000
-Message-ID: <1449048790-25859-11-git-send-email-vladimir.murzin@arm.com>
+Subject: [PATCH v1 04/10] serial: mps2-uart: add MPS2 UART driver
+Date: Wed,  2 Dec 2015 09:33:04 +0000
+Message-ID: <1449048790-25859-5-git-send-email-vladimir.murzin@arm.com>
 References: <1449048790-25859-1-git-send-email-vladimir.murzin@arm.com>
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
 In-Reply-To: <1449048790-25859-1-git-send-email-vladimir.murzin@arm.com>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
 To: arnd@arndb.de, linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.lezcano@linaro.org, tglx@linutronix.de, u.kleine-koenig@pengutronix.de, afaerber@suse.de, mcoquelin.stm32@gmail.com
-Cc: Mark.Rutland@arm.com, Pawel.Moll@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, jslaby@suse.cz, robh+dt@kernel.org, devicetree@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
+Cc: Mark.Rutland@arm.com, devicetree@vger.kernel.org, Pawel.Moll@arm.com, ijc+devicetree@hellion.org.uk, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, robh+dt@kernel.org, linux-serial@vger.kernel.org, galak@codeaurora.org, jslaby@suse.cz, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-Application Notes 399 and 400 shares the same memory map and
-features. Both are shipped with Cortex-M7 and have the same  peripheral
-as AN385/AN386, but with different location of PSRAM and Ethernet
-controller.
+This driver adds support to the UART controller found on ARM MPS2
+platform.
 
 Signed-off-by: Vladimir Murzin <vladimir.murzin@arm.com>
 ---
- arch/arm/boot/dts/Makefile       |    4 +-
- arch/arm/boot/dts/mps2-an399.dts |   92 ++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 95 insertions(+), 1 deletion(-)
- create mode 100644 arch/arm/boot/dts/mps2-an399.dts
+ drivers/tty/serial/Kconfig       |   12 +
+ drivers/tty/serial/Makefile      |    1 +
+ drivers/tty/serial/mps2-uart.c   |  596 ++++++++++++++++++++++++++++++++++++++
+ include/uapi/linux/serial_core.h |    3 +
+ 4 files changed, 612 insertions(+)
+ create mode 100644 drivers/tty/serial/mps2-uart.c
 
-diff --git a/arch/arm/boot/dts/Makefile b/arch/arm/boot/dts/Makefile
-index 4ef3720..6603a1f 100644
---- a/arch/arm/boot/dts/Makefile
-+++ b/arch/arm/boot/dts/Makefile
-@@ -237,7 +237,9 @@ dtb-$(CONFIG_ARCH_MMP) +=3D \
- dtb-$(CONFIG_MACH_MESON8B) +=3D \
- =09meson8b-mxq.dtb \
- =09meson8b-odroidc1.dtb
--dtb-$(CONFIG_ARCH_MPS2) +=3D mps2-an385.dtb
-+dtb-$(CONFIG_ARCH_MPS2) +=3D \
-+=09mps2-an385.dtb \
-+=09mps2-an399.dtb
- dtb-$(CONFIG_ARCH_MOXART) +=3D \
- =09moxart-uc7112lx.dtb
- dtb-$(CONFIG_SOC_IMX1) +=3D \
-diff --git a/arch/arm/boot/dts/mps2-an399.dts b/arch/arm/boot/dts/mps2-an39=
-9.dts
+diff --git a/drivers/tty/serial/Kconfig b/drivers/tty/serial/Kconfig
+index f38beb2..e98bfea 100644
+--- a/drivers/tty/serial/Kconfig
++++ b/drivers/tty/serial/Kconfig
+@@ -1473,6 +1473,18 @@ config SERIAL_EFM32_UART
+ 	  This driver support the USART and UART ports on
+ 	  Energy Micro's efm32 SoCs.
+ 
++config SERIAL_MPS2_UART_CONSOLE
++	bool "MPS2 UART console support"
++	depends on SERIAL_MPS2_UART
++	select SERIAL_CORE_CONSOLE
++
++config SERIAL_MPS2_UART
++	bool "MPS2 UART port"
++	depends on ARM || COMPILE_TEST
++	select SERIAL_CORE
++	help
++	  This driver support the UART ports on ARM MPS2.
++
+ config SERIAL_EFM32_UART_CONSOLE
+ 	bool "EFM32 UART/USART console support"
+ 	depends on SERIAL_EFM32_UART=y
+diff --git a/drivers/tty/serial/Makefile b/drivers/tty/serial/Makefile
+index 5ab4111..7f589f5 100644
+--- a/drivers/tty/serial/Makefile
++++ b/drivers/tty/serial/Makefile
+@@ -93,6 +93,7 @@ obj-$(CONFIG_SERIAL_CONEXANT_DIGICOLOR)	+= digicolor-usart.o
+ obj-$(CONFIG_SERIAL_MEN_Z135)	+= men_z135_uart.o
+ obj-$(CONFIG_SERIAL_SPRD) += sprd_serial.o
+ obj-$(CONFIG_SERIAL_STM32)	+= stm32-usart.o
++obj-$(CONFIG_SERIAL_MPS2_UART)	+= mps2-uart.o
+ 
+ # GPIOLIB helpers for modem control lines
+ obj-$(CONFIG_SERIAL_MCTRL_GPIO)	+= serial_mctrl_gpio.o
+diff --git a/drivers/tty/serial/mps2-uart.c b/drivers/tty/serial/mps2-uart.c
 new file mode 100644
-index 0000000..e591d75
+index 0000000..09bac16
 --- /dev/null
-+++ b/arch/arm/boot/dts/mps2-an399.dts
-@@ -0,0 +1,92 @@
++++ b/drivers/tty/serial/mps2-uart.c
+@@ -0,0 +1,596 @@
 +/*
 + * Copyright (C) 2015 ARM Limited
 + *
 + * Author: Vladimir Murzin <vladimir.murzin@arm.com>
 + *
-+ * This file is dual-licensed: you can use it either under the terms
-+ * of the GPL or the X11 license, at your option. Note that this dual
-+ * licensing only applies to this file, and not this project as a
-+ * whole.
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
 + *
-+ *  a) This file is free software; you can redistribute it and/or
-+ *     modify it under the terms of the GNU General Public License as
-+ *     published by the Free Software Foundation; either version 2 of the
-+ *     License, or (at your option) any later version.
-+ *
-+ *     This file is distributed in the hope that it will be useful,
-+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *     GNU General Public License for more details.
-+ *
-+ * Or, alternatively,
-+ *
-+ *  b) Permission is hereby granted, free of charge, to any person
-+ *     obtaining a copy of this software and associated documentation
-+ *     files (the "Software"), to deal in the Software without
-+ *     restriction, including without limitation the rights to use,
-+ *     copy, modify, merge, publish, distribute, sublicense, and/or
-+ *     sell copies of the Software, and to permit persons to whom the
-+ *     Software is furnished to do so, subject to the following
-+ *     conditions:
-+ *
-+ *     The above copyright notice and this permission notice shall be
-+ *     included in all copies or substantial portions of the Software.
-+ *
-+ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-+ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-+ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-+ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-+ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-+ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-+ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-+ *     OTHER DEALINGS IN THE SOFTWARE.
++ * TODO: support for SysRq
 + */
 +
-+/dts-v1/;
++#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 +
-+#include "mps2.dtsi"
++#include <linux/bitops.h>
++#include <linux/clk.h>
++#include <linux/console.h>
++#include <linux/io.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/of_device.h>
++#include <linux/of.h>
++#include <linux/platform_device.h>
++#include <linux/serial_core.h>
++#include <linux/tty_flip.h>
++#include <linux/types.h>
 +
-+/ {
-+=09model =3D "ARM MPS2 Application Note 399/400";
-+=09compatible =3D "arm,mps2";
++#define SERIAL_NAME "ttyMPS"
++#define DRIVER_NAME "mps2-uart"
++#define MAKE_NAME(x) (DRIVER_NAME # x)
 +
-+=09aliases {
-+=09=09serial0 =3D &uart0;
-+=09};
++#define UARTn_DATA				0x0
 +
-+=09chosen {
-+=09=09bootargs =3D "rdinit=3D/sbin/init earlycon";
-+=09=09stdout-path =3D "serial0:9600n8";
-+=09};
++#define UARTn_STATE				0x4
++#define UARTn_STATE_TX_FULL			BIT(0)
++#define UARTn_STATE_RX_FULL			BIT(1)
++#define UARTn_STATE_TX_OVERRUN			BIT(2)
++#define UARTn_STATE_RX_OVERRUN			BIT(3)
 +
-+=09memory {
-+=09=09device_type =3D "memory";
-+=09=09reg =3D <0x60000000 0x1000000>;
-+=09};
++#define UARTn_CTRL				0x8
++#define UARTn_CTRL_TX_ENABLE			BIT(0)
++#define UARTn_CTRL_RX_ENABLE			BIT(1)
++#define UARTn_CTRL_TX_INT_ENABLE		BIT(2)
++#define UARTn_CTRL_RX_INT_ENABLE		BIT(3)
++#define UARTn_CTRL_TX_OVERRUN_INT_ENABLE	BIT(4)
++#define UARTn_CTRL_RX_OVERRUN_INT_ENABLE	BIT(5)
 +
++#define UARTn_INT				0xc
++#define UARTn_INT_TX				BIT(0)
++#define UARTn_INT_RX				BIT(1)
++#define UARTn_INT_TX_OVERRUN			BIT(2)
++#define UARTn_INT_RX_OVERRUN			BIT(3)
 +
-+=09ethernet@a0000000 {
-+=09=09compatible =3D "smsc,lan9220", "smsc,lan9115";
-+=09=09reg =3D <0xa0000000 0x10000>;
-+=09=09interrupts =3D <13>;
-+=09=09interrupt-parent =3D <&nvic>;
-+=09=09smsc,irq-active-high;
-+=09};
++#define UARTn_BAUDDIV				0x10
++#define UARTn_BAUDDIV_MASK			GENMASK(20, 0)
++
++#define MPS2_MAX_PORTS				3
++
++struct mps2_uart_port {
++	struct uart_port port;
++	struct clk *clk;
++	unsigned int tx_irq;
++	unsigned int rx_irq;
 +};
 +
-+&uart0 {
-+=09status =3D "okay";
++static inline struct mps2_uart_port *to_mps2_port(struct uart_port *port)
++{
++	return container_of(port, struct mps2_uart_port, port);
++}
++
++static void mps2_uart_write8(struct uart_port *port, u8 val, unsigned off)
++{
++	struct mps2_uart_port *mps_port = to_mps2_port(port);
++
++	writeb(val, mps_port->port.membase + off);
++}
++
++static u8 mps2_uart_read8(struct uart_port *port, unsigned off)
++{
++	struct mps2_uart_port *mps_port = to_mps2_port(port);
++
++	return readb(mps_port->port.membase + off);
++}
++
++static void mps2_uart_write32(struct uart_port *port, u32 val, unsigned off)
++{
++	struct mps2_uart_port *mps_port = to_mps2_port(port);
++
++	writel_relaxed(val, mps_port->port.membase + off);
++}
++
++static unsigned int mps2_uart_tx_empty(struct uart_port *port)
++{
++	u8 status = mps2_uart_read8(port, UARTn_STATE);
++
++	return (status & UARTn_STATE_TX_FULL) ? 0 : TIOCSER_TEMT;
++}
++
++static void mps2_uart_set_mctrl(struct uart_port *port, unsigned int mctrl)
++{
++}
++
++static unsigned int mps2_uart_get_mctrl(struct uart_port *port)
++{
++	return TIOCM_CAR | TIOCM_CTS | TIOCM_DSR;
++}
++
++static void mps2_uart_stop_tx(struct uart_port *port)
++{
++	u8 control = mps2_uart_read8(port, UARTn_CTRL);
++
++	control &= ~(UARTn_CTRL_TX_ENABLE		|
++		     UARTn_CTRL_TX_INT_ENABLE		|
++		     UARTn_CTRL_TX_OVERRUN_INT_ENABLE);
++
++	mps2_uart_write8(port, control, UARTn_CTRL);
++}
++
++static void mps2_uart_tx_chars(struct uart_port *port)
++{
++	struct circ_buf *xmit = &port->state->xmit;
++
++	while (!(mps2_uart_read8(port, UARTn_STATE) & UARTn_STATE_TX_FULL)) {
++		if (port->x_char) {
++			mps2_uart_write8(port, port->x_char, UARTn_DATA);
++			port->x_char = 0;
++			port->icount.tx++;
++			continue;
++		}
++
++		if (uart_circ_empty(xmit) || uart_tx_stopped(port))
++			break;
++
++		mps2_uart_write8(port, xmit->buf[xmit->tail], UARTn_DATA);
++		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
++		port->icount.tx++;
++	}
++
++	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
++		uart_write_wakeup(port);
++
++	if (uart_circ_empty(xmit))
++		mps2_uart_stop_tx(port);
++}
++
++static void mps2_uart_start_tx(struct uart_port *port)
++{
++	u8 control = mps2_uart_read8(port, UARTn_CTRL);
++
++	control |= (UARTn_CTRL_TX_ENABLE		|
++		    UARTn_CTRL_TX_INT_ENABLE		|
++		    UARTn_CTRL_TX_OVERRUN_INT_ENABLE);
++
++	mps2_uart_write8(port, control, UARTn_CTRL);
++	mps2_uart_tx_chars(port);
++}
++
++static void mps2_uart_stop_rx(struct uart_port *port)
++{
++	u8 control = mps2_uart_read8(port, UARTn_CTRL);
++
++	control &= ~(UARTn_CTRL_RX_ENABLE		|
++		     UARTn_CTRL_RX_INT_ENABLE		|
++		     UARTn_CTRL_RX_OVERRUN_INT_ENABLE);
++
++	mps2_uart_write8(port, control, UARTn_CTRL);
++}
++
++static void mps2_uart_enable_ms(struct uart_port *port)
++{
++}
++
++static void mps2_uart_break_ctl(struct uart_port *port, int ctl)
++{
++}
++
++static void mps2_uart_rx_chars(struct uart_port *port)
++{
++	struct tty_port *tport = &port->state->port;
++
++	while (mps2_uart_read8(port, UARTn_STATE) & UARTn_STATE_RX_FULL) {
++		u8 rxdata = mps2_uart_read8(port, UARTn_DATA);
++
++		port->icount.rx++;
++		tty_insert_flip_char(&port->state->port, rxdata, TTY_NORMAL);
++	}
++
++	spin_unlock(&port->lock);
++	tty_flip_buffer_push(tport);
++	spin_lock(&port->lock);
++}
++
++static irqreturn_t mps2_uart_rxirq(int irq, void *data)
++{
++
++	struct uart_port *port = data;
++	u8 irqflag = mps2_uart_read8(port, UARTn_INT);
++
++	if (unlikely(!(irqflag & UARTn_INT_RX)))
++		return IRQ_NONE;
++
++	spin_lock(&port->lock);
++
++	mps2_uart_write8(port, UARTn_INT_RX, UARTn_INT);
++	mps2_uart_rx_chars(port);
++
++	spin_unlock(&port->lock);
++
++	return IRQ_HANDLED;
++}
++
++static irqreturn_t mps2_uart_txirq(int irq, void *data)
++{
++	struct uart_port *port = data;
++	u8 irqflag = mps2_uart_read8(port, UARTn_INT);
++
++	if (unlikely(!(irqflag & UARTn_INT_TX)))
++		return IRQ_NONE;
++
++	mps2_uart_write8(port, UARTn_INT_TX, UARTn_INT);
++	mps2_uart_tx_chars(port);
++
++	return IRQ_HANDLED;
++}
++
++static irqreturn_t mps2_uart_oerrirq(int irq, void *data)
++{
++	irqreturn_t handled = IRQ_NONE;
++	struct uart_port *port = data;
++	u8 irqflag = mps2_uart_read8(port, UARTn_INT);
++
++	spin_lock(&port->lock);
++
++	if (irqflag & UARTn_INT_RX_OVERRUN) {
++		struct tty_port *tport = &port->state->port;
++
++		mps2_uart_write8(port, UARTn_INT_RX_OVERRUN, UARTn_INT);
++		tty_insert_flip_char(tport, 0, TTY_OVERRUN);
++		port->icount.overrun++;
++		handled = IRQ_HANDLED;
++	}
++
++	/* XXX: this shouldn't happen? */
++	if (irqflag & UARTn_INT_TX_OVERRUN) {
++		mps2_uart_write8(port, UARTn_INT_TX_OVERRUN, UARTn_INT);
++		handled = IRQ_HANDLED;
++	}
++
++	spin_unlock(&port->lock);
++
++	return handled;
++}
++
++static int mps2_uart_startup(struct uart_port *port)
++{
++	struct mps2_uart_port *mps_port = to_mps2_port(port);
++	u8 control = mps2_uart_read8(port, UARTn_CTRL);
++	int ret;
++
++	control &= ~(UARTn_CTRL_RX_ENABLE		|
++		     UARTn_CTRL_TX_ENABLE		|
++		     UARTn_CTRL_RX_INT_ENABLE		|
++		     UARTn_CTRL_TX_INT_ENABLE		|
++		     UARTn_CTRL_RX_OVERRUN_INT_ENABLE	|
++		     UARTn_CTRL_TX_OVERRUN_INT_ENABLE);
++
++	mps2_uart_write8(port, control, UARTn_CTRL);
++
++	ret = request_irq(mps_port->rx_irq, mps2_uart_rxirq, 0,
++			  MAKE_NAME(-rx), mps_port);
++	if (ret) {
++		pr_info("failed to register rxirq (%d)\n", ret);
++		goto err_no_rxirq;
++	}
++
++	ret = request_irq(mps_port->tx_irq, mps2_uart_txirq, 0,
++			  MAKE_NAME(-tx), mps_port);
++	if (ret) {
++		pr_info("failed to register txirq (%d)\n", ret);
++		goto err_no_txirq;
++	}
++
++	ret = request_irq(port->irq, mps2_uart_oerrirq, IRQF_SHARED,
++			  MAKE_NAME(-overrun), mps_port);
++
++	if (ret)
++		pr_info("failed to register oerrirq (%d)\n", ret);
++	else {
++		control |= UARTn_CTRL_RX_ENABLE			|
++			   UARTn_CTRL_TX_ENABLE			|
++			   UARTn_CTRL_RX_INT_ENABLE		|
++			   UARTn_CTRL_TX_INT_ENABLE		|
++			   UARTn_CTRL_RX_OVERRUN_INT_ENABLE	|
++			   UARTn_CTRL_TX_OVERRUN_INT_ENABLE;
++
++		mps2_uart_write8(port, control, UARTn_CTRL);
++
++		return 0;
++	}
++
++	free_irq(mps_port->tx_irq, mps_port);
++err_no_txirq:
++	free_irq(mps_port->rx_irq, mps_port);
++err_no_rxirq:
++	return ret;
++}
++
++static void mps2_uart_shutdown(struct uart_port *port)
++{
++	struct mps2_uart_port *mps_port = to_mps2_port(port);
++	u8 control = mps2_uart_read8(port, UARTn_CTRL);
++
++	control &= ~(UARTn_CTRL_RX_ENABLE		|
++		     UARTn_CTRL_TX_ENABLE		|
++		     UARTn_CTRL_RX_INT_ENABLE		|
++		     UARTn_CTRL_TX_INT_ENABLE		|
++		     UARTn_CTRL_RX_OVERRUN_INT_ENABLE	|
++		     UARTn_CTRL_TX_OVERRUN_INT_ENABLE);
++
++	mps2_uart_write8(port, control, UARTn_CTRL);
++
++	free_irq(mps_port->rx_irq, mps_port);
++	free_irq(mps_port->tx_irq, mps_port);
++	free_irq(port->irq, mps_port);
++}
++
++static void mps2_uart_set_termios(struct uart_port *port,
++	struct ktermios *new, struct ktermios *old)
++{
++	unsigned long flags;
++	unsigned int baud, bauddiv;
++
++	new->c_cflag &= ~(CRTSCTS | CMSPAR);
++	new->c_cflag &= ~CSIZE;
++	new->c_cflag |= CS8;
++	new->c_cflag &= ~PARENB;
++	new->c_cflag &= ~CSTOPB;
++
++	baud = uart_get_baud_rate(port, new, old,
++			DIV_ROUND_CLOSEST(port->uartclk, UARTn_BAUDDIV_MASK),
++			DIV_ROUND_CLOSEST(port->uartclk, 16));
++
++	bauddiv = DIV_ROUND_CLOSEST(port->uartclk, baud);
++
++	spin_lock_irqsave(&port->lock, flags);
++
++	uart_update_timeout(port, new->c_cflag, baud);
++	mps2_uart_write32(port, bauddiv, UARTn_BAUDDIV);
++
++	spin_unlock_irqrestore(&port->lock, flags);
++}
++
++static const char *mps2_uart_type(struct uart_port *port)
++{
++	return (port->type == PORT_MPS2UART) ? DRIVER_NAME : NULL;
++}
++
++static void mps2_uart_release_port(struct uart_port *port)
++{
++}
++
++static int mps2_uart_request_port(struct uart_port *port)
++{
++	return 0;
++}
++
++static void mps2_uart_config_port(struct uart_port *port, int type)
++{
++	if (type & UART_CONFIG_TYPE && !mps2_uart_request_port(port))
++		port->type = PORT_MPS2UART;
++}
++
++static int mps2_uart_verify_port(struct uart_port *port, struct serial_struct *serinfo)
++{
++	return -EINVAL;
++}
++
++static const struct uart_ops mps2_uart_pops = {
++	.tx_empty = mps2_uart_tx_empty,
++	.set_mctrl = mps2_uart_set_mctrl,
++	.get_mctrl = mps2_uart_get_mctrl,
++	.stop_tx = mps2_uart_stop_tx,
++	.start_tx = mps2_uart_start_tx,
++	.stop_rx = mps2_uart_stop_rx,
++	.enable_ms = mps2_uart_enable_ms,
++	.break_ctl = mps2_uart_break_ctl,
++	.startup = mps2_uart_startup,
++	.shutdown = mps2_uart_shutdown,
++	.set_termios = mps2_uart_set_termios,
++	.type = mps2_uart_type,
++	.release_port = mps2_uart_release_port,
++	.request_port = mps2_uart_request_port,
++	.config_port = mps2_uart_config_port,
++	.verify_port = mps2_uart_verify_port,
 +};
 +
++static struct mps2_uart_port mps2_uart_ports[MPS2_MAX_PORTS];
 +
-+&timer0 {
-+=09status =3D "okay";
++#ifdef CONFIG_SERIAL_MPS2_UART_CONSOLE
++static void mps2_uart_console_putchar(struct uart_port *port, int ch)
++{
++	while (mps2_uart_read8(port, UARTn_STATE) & UARTn_STATE_TX_FULL)
++		cpu_relax();
++
++	mps2_uart_write8(port, ch, UARTn_DATA);
++}
++
++static void mps2_uart_console_write(struct console *co, const char *s, unsigned int cnt)
++{
++	struct uart_port *port = &mps2_uart_ports[co->index].port;
++
++	uart_console_write(port, s, cnt, mps2_uart_console_putchar);
++}
++
++static int mps2_uart_console_setup(struct console *co, char *options)
++{
++	struct mps2_uart_port *mps_port;
++	int baud = 9600;
++	int bits = 8;
++	int parity = 'n';
++	int flow = 'n';
++
++	if (co->index < 0 || co->index >= MPS2_MAX_PORTS)
++		return -ENODEV;
++
++	mps_port = &mps2_uart_ports[co->index];
++
++	if (options)
++		uart_parse_options(options, &baud, &parity, &bits, &flow);
++
++	return uart_set_options(&mps_port->port, co, baud, parity, bits, flow);
++}
++
++static struct uart_driver mps2_uart_driver;
++
++static struct console mps2_uart_console = {
++	.name = SERIAL_NAME,
++	.device = uart_console_device,
++	.write = mps2_uart_console_write,
++	.setup = mps2_uart_console_setup,
++	.flags = CON_PRINTBUFFER,
++	.index = -1,
++	.data = &mps2_uart_driver,
 +};
 +
-+&timer1 {
-+=09status =3D "okay";
++#define MPS2_SERIAL_CONSOLE (&mps2_uart_console)
++
++#else
++#define MPS2_SERIAL_CONSOLE NULL
++#endif
++
++static struct uart_driver mps2_uart_driver = {
++	.driver_name = DRIVER_NAME,
++	.dev_name = SERIAL_NAME,
++	.nr = MPS2_MAX_PORTS,
++	.cons = MPS2_SERIAL_CONSOLE,
 +};
 +
-+&wdt {
-+=09status =3D "okay";
++static struct mps2_uart_port *mps2_of_get_port(struct platform_device *pdev)
++{
++	struct device_node *np = pdev->dev.of_node;
++	int id;
++
++	if (!np)
++		return NULL;
++
++	id = of_alias_get_id(np, "serial");
++	if (id < 0)
++		id = 0;
++
++	if (WARN_ON(id >= MPS2_MAX_PORTS))
++		return NULL;
++
++	mps2_uart_ports[id].port.line = id;
++	return &mps2_uart_ports[id];
++}
++
++static int mps2_init_port(struct mps2_uart_port *mps_port,
++			struct platform_device *pdev)
++{
++	int ret = 0;
++	struct resource *res;
++
++	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++	mps_port->port.membase = devm_ioremap_resource(&pdev->dev, res);
++	if (IS_ERR(mps_port->port.membase))
++		return PTR_ERR(mps_port->port.membase);
++
++	mps_port->port.mapbase = res->start;
++	mps_port->port.mapsize = resource_size(res);
++
++	mps_port->rx_irq = platform_get_irq(pdev, 0);
++	mps_port->tx_irq = platform_get_irq(pdev, 1);
++	mps_port->port.irq = platform_get_irq(pdev, 2);
++
++	mps_port->port.iotype = UPIO_MEM;
++	mps_port->port.flags = UPF_BOOT_AUTOCONF;
++	mps_port->port.fifosize = 1;
++	mps_port->port.ops = &mps2_uart_pops;
++	mps_port->port.dev = &pdev->dev;
++
++	mps_port->clk = devm_clk_get(&pdev->dev, NULL);
++	if (IS_ERR(mps_port->clk))
++		return PTR_ERR(mps_port->clk);
++
++	ret = clk_prepare_enable(mps_port->clk);
++	if (ret)
++		return ret;
++
++	mps_port->port.uartclk = clk_get_rate(mps_port->clk);
++	if (!mps_port->port.uartclk)
++		ret = -EINVAL;
++
++	clk_disable_unprepare(mps_port->clk);
++
++	return ret;
++}
++
++static int mps2_serial_probe(struct platform_device *pdev)
++{
++	struct mps2_uart_port *mps_port;
++	int ret;
++
++	mps_port = mps2_of_get_port(pdev);
++	if (!mps_port)
++		return -ENODEV;
++
++	ret = mps2_init_port(mps_port, pdev);
++	if (ret)
++		return ret;
++
++	ret = uart_add_one_port(&mps2_uart_driver, &mps_port->port);
++	if (ret)
++		return ret;
++
++	platform_set_drvdata(pdev, mps_port);
++
++	return 0;
++}
++
++static int mps2_serial_remove(struct platform_device *pdev)
++{
++	struct mps2_uart_port *mps_port = platform_get_drvdata(pdev);
++
++	uart_remove_one_port(&mps2_uart_driver, &mps_port->port);
++
++	return 0;
++}
++
++#ifdef CONFIG_OF
++static const struct of_device_id mps2_match[] = {
++	{ .compatible = "arm,mps2-uart", },
++	{},
 +};
---=20
++MODULE_DEVICE_TABLE(of, mps2_match);
++#endif
++
++static struct platform_driver mps2_serial_driver = {
++	.probe = mps2_serial_probe,
++	.remove = mps2_serial_remove,
++
++	.driver = {
++		.name = DRIVER_NAME,
++		.of_match_table = of_match_ptr(mps2_match),
++	},
++};
++
++static int __init mps2_uart_init(void)
++{
++	int ret;
++
++	ret = uart_register_driver(&mps2_uart_driver);
++	if (ret)
++		return ret;
++
++	ret = platform_driver_register(&mps2_serial_driver);
++	if (ret)
++		uart_unregister_driver(&mps2_uart_driver);
++
++	pr_info("MPS2 UART driver initialized\n");
++
++	return ret;
++}
++module_init(mps2_uart_init);
++
++static void __exit mps2_uart_exit(void)
++{
++	platform_driver_unregister(&mps2_serial_driver);
++	uart_unregister_driver(&mps2_uart_driver);
++}
++module_exit(mps2_uart_exit);
++
++MODULE_AUTHOR("Vladimir Murzin <vladimir.murzin@arm.com>");
++MODULE_DESCRIPTION("MPS2 UART driver");
++MODULE_LICENSE("GPL v2");
++MODULE_ALIAS("platform:" DRIVER_NAME);
+diff --git a/include/uapi/linux/serial_core.h b/include/uapi/linux/serial_core.h
+index 93ba148..f097fe9 100644
+--- a/include/uapi/linux/serial_core.h
++++ b/include/uapi/linux/serial_core.h
+@@ -261,4 +261,7 @@
+ /* STM32 USART */
+ #define PORT_STM32	113
+ 
++/* MPS2 UART */
++#define PORT_MPS2UART	114
++
+ #endif /* _UAPILINUX_SERIAL_CORE_H */
+-- 
 1.7.9.5
