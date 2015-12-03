@@ -1,90 +1,102 @@
-From: Pingbo Wen <pingbo.wen@linaro.org>
-Subject: Re: [PATCH 0/3] introduce new evdev interface type
-Date: Thu, 3 Dec 2015 20:49:06 +0800
-Message-ID: <1BB6B3AD-F547-49F8-886A-56EF80CE62FE@linaro.org>
-References: <1448618432-32357-1-git-send-email-pingbo.wen@linaro.org>
- <3322044.DFSNLmiFGl@wuerfel>
- <CB4E5A6F-D514-4D3B-9C95-13A52C509EC9@linaro.org>
- <6792470.H7eb3IQorJ@wuerfel>
-Mime-Version: 1.0 (Mac OS X Mail 9.1 \(3096.5\))
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <6792470.H7eb3IQorJ@wuerfel>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: y2038@lists.linaro.org, linux-api@vger.kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-kernel@vger.kernel.org, aksgarg1989@gmail.com, linux-input@vger.kernel.org, Pingbo Wen <pingbo.wen@linaro.org>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Subject: Re: [Y2038] [PATCH 0/3] introduce new evdev interface type
+Date: Thu, 03 Dec 2015 13:54:47 +0100
+Message-ID: <3471947.HA9TBa0js5@wuerfel>
+References: <1448618432-32357-1-git-send-email-pingbo.wen@linaro.org> <6792470.H7eb3IQorJ@wuerfel> <1BB6B3AD-F547-49F8-886A-56EF80CE62FE@linaro.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1BB6B3AD-F547-49F8-886A-56EF80CE62FE-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org
+Cc: Pingbo Wen <pingbo.wen-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, aksgarg1989-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Cj4g5ZyoIDIwMTXlubQxMuaciDHml6XvvIwxODo0N++8jEFybmQgQmVyZ21hbm4gPGFybmRAYXJu
-ZGIuZGU+IOWGmemBk++8mgo+IAo+IE9uIFR1ZXNkYXkgMDEgRGVjZW1iZXIgMjAxNSAxNjozNDow
-MCBQaW5nYm8gV2VuIHdyb3RlOgo+PiAKPj4gCj4+IFdoYXQga2luZHMgb2YgY2hhbmdlcyBpbiB0
-aW1lX3Q/IEV4dGVuZGluZyBpdCB0byA2NC1iaXRzIGluIGJvdGgga2VybmVsCj4+IGFuZCB1c2Vy
-c3BhY2U/IE9rLCBJIGdldCBjb25mdXNlZCBoZXJlLCBpZiB0aGVyZSBhcmUgc29tZSBzYW1wbGUg
-Y29kZXMKPj4gb3IgdXNlLWNhc2VzIGhlcmUsIGl0IHdpbGwgaGVscCBtZSBhIGxvdC4KPiAKPiBX
-ZSBkb24ndCBjaGFuZ2UgdGltZV90IGluIHRoZSBrZXJuZWwsIHdlIGp1c3QgdHJ5IHRvIHJlcGxh
-Y2UgaXQKPiB3aXRoIHRpbWU2NF90LCBvciBrdGltZV90IHdoZXJlIGFwcHJvcHJpYXRlLgo+IAo+
-IFdoYXQgSSBtZWFudCBpcyB0aGUgcHJvYmxlbSB3aGVuIGdsaWJjIGRlZmluZXMgdGhlaXIgdGlt
-ZV90IHRvCj4gYmUgJ2xvbmcgbG9uZycgc28gdGhhdCB1c2VyIHNwYWNlIGNhbiBiZSBidWlsdCB0
-aGF0IHJ1bnMgYWZ0ZXIKPiAyMDM4LiBUaGlzIGNoYW5nZXMgdGhlIHRpbWV2YWwgYW5kIHRpbWVz
-cGVjIGRlZmluaXRpb25zLCBzbwo+IGEgcHJvY2VzcyB0aGF0IHRyaWVzIHRvIHVzZSAnc3RydWN0
-IGlucHV0X2V2ZW50JyBoYXMgYSBkaWZmZXJlbnQKPiBsYXlvdXQgY29tcGFyZWQgdG8gd2hhdCB0
-aGUga2VybmVsIGhhcy4KCk9rLCBJIGRpZG7igJl0IHJlYWNoIHRoaXMgcG9pbnQuIFRoYW5rcyB0
-byBjbGFyaWZ5LgoKPj4gCj4+IEl0IHNlZW1zIHdlIGFyZSBtaXNtYXRjaCBoZXJlLgo+PiAKPj4g
-QWN0dWFsbHkgaW5wdXRfY29tcG9zaXRlX2V2ZW50IGhhcyB0aGUgc2ltaWxhciBzdHJ1Y3R1cmUg
-d2l0aCBpbnB1dF9ldmVudCwKPj4gYnV0IHdpdGggYSBuaWNlciBkZWZpbml0aW9uLCB3aGljaCBj
-YW4gdGFrZSBib3RoIG1vbm90b25pYyBhbmQgbm9uLW1vbm90b25pYwo+PiB0aW1lc3RhbXBzIHNh
-ZmVseS4KPj4gCj4+IFdoYXQgSSBhc3N1bWVkIGhlcmUsIGlzIHRoYXQgbGVhdmluZyBFVl9JRl9M
-RUdBQ1kgYXMgYSB1bnRvdWNoZWQsIGRlcHJlY2F0ZWQKPj4gaW50ZXJmYWNlLiBJZiB1c2Vyc3Bh
-Y2UgdHJ5IHRvIGFkYXB0IHRvIG5ldyBsaWJjIGFuZCBrZXJuZWwsIGl0IHNob3VsZCBtb3ZlCj4+
-IHRvIG5ldyBpbnRlcmZhY2UuIFRoZSB1c2Vyc3BhY2UgY2FuIGRvIGEgbGF6eSB1cGRhdGUsIGtl
-ZXAgdGhlIGNvZGUgdW50b3VjaGVkLAo+PiBidXQgc3VmZmVyIHRoZSB5MjAzOCBwcm9ibGVtIGJ5
-IGl0c2VsZi4KPiAKPiBGb3JjaW5nIHRoZSBtb3ZlIHRvIHRoZSBuZXcgQVBJIGlzIHZlcnkgdWds
-eSwgYmVjYXVzZSB5b3UgY2FuJ3QgZG8gaXQKPiBpbiBhIHdheSB0aGF0IHdvcmtzIG9uIG9sZCBr
-ZXJuZWxzIGFzIHdlbGwsIHVubGVzcyB5b3UgdGhlbiB0cnkgdG8gc3VwcG9ydAo+IGJvdGggQVBJ
-cyBhdCBydW50aW1lLgo+IAo+IEp1c3QgcmVxdWlyaW5nIHVzZXIgc3BhY2UgdG8gc3dpdGNoIHRv
-IG1vbm90b25pYyB0aW1lIGlzIGVhc2lseSBkb25lLAo+IGFzIGl0IGNhbiBsaWtlbHkgd29yayBl
-aXRoZXIgd2F5LgoKSXQgc2VlbXMgSeKAmW0gbW9yZSBhZ2dyZXNzaXZlOikgQnV0IHRoZSBsZWdh
-Y3kgYmluYXJ5IGNhbiBzdGlsbCBsaXZlIDMwIHllYXJzIGxvbmdlcgp3aXRob3V0IGFueSBjaGFu
-Z2VzLgoKPiAKPj4gV2UgY2FuIGZvcmNlIGtlcm5lbCB1c2luZyBtb25vdG9uaWMgdGltZSBpbiBF
-Vl9JRl9MRUdBQ1kgaW50ZXJmYWNlLCBhbmQKPj4gbWFraW5nIGlucHV0X2V2ZW50IGluZGVwZW5k
-ZW50IGZyb20gdGltZV90KGFmdGVyIGV2ZGV2IGhhcyBjb252ZXJ0ZWQgdG8KPj4gaW5wdXRfdmFs
-dWUsIGl04oCZcyBlYXN5IHRvIGRvIHRoYXQpLCBidXQgdGhhdCBhbHNvIGltcGx5IHVzZXJzcGFj
-ZQo+PiBtdXN0IGNoYW5nZSB0aGVpciBjb2RlIHRvIGZpdCB0aGlzIGNoYW5nZS4gSWYgY2hhbmdp
-bmcgdXNlcnNwYWNlIGNvZGUgaXMKPj4gYSBtYW5kYXRvcnkgb3B0aW9uLCB3aHkgbm90IHRvIGZv
-cmNlIHRoZW0gZG8gYSBjb21wbGV0ZSBjb252ZXJzaW9uPwo+IAo+IE1vc3QgdXNlciBzcGFjZSBw
-cm9ncmFtcyB3b24ndCBjYXJlLCBhcyB0aGV5IGRvbid0IGV2ZW4gbG9vayBhdCB0aGUgdHZfc2Vj
-Cj4gcG9ydGlvbiwgYW5kIHRoZSBnb2FsIGlzIHRvIGF2b2lkIGhhdmluZyB0byBjaGFuZ2UgdGhl
-bS4KPiAKPiBUaGVyZSBpcyBzdGlsbCBhbiBvcGVuIHF1ZXN0aW9uIHRvIGhvdyBleGFjdGx5IHdl
-IHdhbnQgdG8gZ2V0IHVzZXIgc3BhY2UKPiB0byBjaGFuZ2UuCj4gCj4gV2UgY291bGQgZG8gc29t
-ZSBjb21waWxlLXRpbWUgdHJpY2sgYnkgaGF2aW5nIGEgdW5pb24gaW4gc3RydWN0IGlucHV0X2V2
-ZW50Cj4gYW5kIG1hcmsgdGhlIGV4aXN0aW5nIHRpbWV2YWwgcGFydCBhcyBkZXByZWNhdGVkLCBz
-byB3ZSBmbGFnIGFueSB1c2Ugb2YgdGhlCj4gMzItYml0IHR2X3NlYyBtZW1iZXIsIHN1Y2ggYXM6
-Cj4gCj4gc3RydWN0IGlucHV0X2V2ZW50IHsKPiAjaWYgIWRlZmluZWQoX19LRVJORUxfXykgJiYg
-X19USU1FX1RfQklUUyA9PSBfX0JJVFNfUEVSX0xPTkcKPiAgICAgICAgc3RydWN0IHRpbWV2YWwg
-dGltZTsKCj4gI2Vsc2UKPiAJc3RydWN0IHsKPiAJCXVuaW9uIHsKPiAJCQlfX3UzMiB0dl9zZWMg
-X19hdHRyaWJ1dGVfXygoZGVwcmVjYXRlZCkpOwo+IAkJCV9fdTMyIHR2X3NlY19tb25vdG9uaWM7
-Cj4gCQl9Owo+IAkJX19zMzIgdHZfdXNlYzsKPiAJfSB0aW1lOwo+ICNlbmRpZgo+ICAgICAgICBf
-X3UxNiB0eXBlOwo+ICAgICAgICBfX3UxNiBjb2RlOwo+ICAgICAgICBfX3MzMiB2YWx1ZTsKPiB9
-OwoKSSBoYXZlIG9uZSBxdWVzdGlvbiBoZXJlLCBpZiB1c2Vyc3BhY2UgdXNlIHRoaXMgc3RydWN0
-dXJlLCBhbGwgaGVscGVyIGZ1bmN0aW9ucwpvZiB0aW1ldmFsIHdpbGwgbm90IHdvcmsuIEFuZCB1
-c2Vyc3BhY2UgbmVlZCB0byB3cml0ZSBleHRyYSBoZWxwZXIgZnVuY3Rpb24gZm9yCnRoaXMgZmFr
-ZSB0aW1ldmFsLiBUaGlzIGp1c3QgY3JlYXRlIGFuIGFub3RoZXIgdXJnbHkgdGltZSBzdHJ1Y3R1
-cmUuCgpBbmQgdGhpcyBtZXRob2QgYWxzbyBmb3JjZXMgbW9zdCBvZiBvbGQgYmluYXJpZXMgdG8g
-Y29tcGlsZSB3aXRoIG5ldyBsaWJjLCBhZGp1c3QKdGhlaXIgY29kZXMgd2l0aCBuZXcgZmFrZSB0
-aW1lIHN0cnVjdHVyZS4KCkJlc2lkZXMsIEkgZ2V0IGFuIGlkZWEgdG8gY29tYmluZSB5b3VyIHN0
-cnVjdHVyZSB3aXRoIGlucHV0X2NvbXBvc2l0ZV9ldmVudDoKCnVuaW9uIHsKCXN0cnVjdCB7CgkJ
-X19zMzIgdHZfdXNlYzsKCQlfX3MzMiB0dl9zZWM7Cgl9OwoJX19zNjQgdGltZTsKfSB0aW1lOwoK
-SSBwcmVmZXIgdG8gdXNlIGEgc2luZ2xlIHM2NCB0aW1lc3RhbXAsIGlmIG91ciBnb2FsIGlzIHRv
-IHJlbW92ZSB0aW1ldmFsIGZyb20ga2VybmVsLgoKUGluZ2JvCgpfX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fXwpZMjAzOCBtYWlsaW5nIGxpc3QKWTIwMzhAbGlz
-dHMubGluYXJvLm9yZwpodHRwczovL2xpc3RzLmxpbmFyby5vcmcvbWFpbG1hbi9saXN0aW5mby95
-MjAzOAo=
+On Thursday 03 December 2015 20:49:06 Pingbo Wen wrote:
+> > =E5=9C=A8 2015=E5=B9=B412=E6=9C=881=E6=97=A5=EF=BC=8C18:47=EF=BC=8C=
+Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org> =E5=86=99=E9=81=93=EF=BC=9A
+> > On Tuesday 01 December 2015 16:34:00 Pingbo Wen wrote:
+> >> We can force kernel using monotonic time in EV_IF_LEGACY interface=
+, and
+> >> making input_event independent from time_t(after evdev has convert=
+ed to
+> >> input_value, it=E2=80=99s easy to do that), but that also imply us=
+erspace
+> >> must change their code to fit this change. If changing userspace c=
+ode is
+> >> a mandatory option, why not to force them do a complete conversion=
+?
+> >=20
+> > Most user space programs won't care, as they don't even look at the=
+ tv_sec
+> > portion, and the goal is to avoid having to change them.
+> >=20
+> > There is still an open question to how exactly we want to get user =
+space
+> > to change.
+> >=20
+> > We could do some compile-time trick by having a union in struct inp=
+ut_event
+> > and mark the existing timeval part as deprecated, so we flag any us=
+e of the
+> > 32-bit tv_sec member, such as:
+> >=20
+> > struct input_event {
+> > #if !defined(__KERNEL__) && __TIME_T_BITS =3D=3D __BITS_PER_LONG
+> >        struct timeval time;
+>=20
+> > #else
+> > 	struct {
+> > 		union {
+> > 			__u32 tv_sec __attribute__((deprecated));
+> > 			__u32 tv_sec_monotonic;
+> > 		};
+> > 		__s32 tv_usec;
+> > 	} time;
+> > #endif
+> >        __u16 type;
+> >        __u16 code;
+> >        __s32 value;
+> > };
+>=20
+> I have one question here, if userspace use this structure, all helper=
+ functions
+> of timeval will not work. And userspace need to write extra helper fu=
+nction for
+> this fake timeval. This just create an another urgly time structure.
+
+Correct, this is a useful side-effect of the change: any user space acc=
+ess to
+the event->time member that assumes it's a timeval will cause a compile=
+-time
+warning or error (depending on the access), which helps us identify the
+broken code and fix it to use monotonic times as well as access the rig=
+ht
+struct members.
+
+> And this method also forces most of old binaries to compile with new =
+libc, adjust
+> their codes with new fake time structure.
+>=20
+> Besides, I get an idea to combine your structure with input_composite=
+_event:
+>=20
+> union {
+> 	struct {
+> 		__s32 tv_usec;
+> 		__s32 tv_sec;
+> 	};
+> 	__s64 time;
+> } time;
+>=20
+> I prefer to use a single s64 timestamp, if our goal is to remove time=
+val from kernel.
+
+We can't really remove this instance of timeval anyway, so adding an __=
+s64 member
+here is not all that helpful. We should use __s64 nanoseconds for new i=
+nterfaces
+like this, but I see no reason to change the one we have here.
+
+	Arnd
