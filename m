@@ -1,79 +1,55 @@
-From: Dave Hansen <dave@sr71.net>
-Subject: [PATCH 28/34] x86: wire up mprotect_key() system call
-Date: Thu, 03 Dec 2015 17:15:03 -0800
-Message-ID: <20151204011503.2A095839@viggo.jf.intel.com>
-References: <20151204011424.8A36E365@viggo.jf.intel.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20151204011424.8A36E365@viggo.jf.intel.com>
-Sender: owner-linux-mm@kvack.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-mm@kvack.org, x86@kernel.org, Dave Hansen <dave@sr71.net>, dave.hansen@linux.intel.com, linux-api@vger.kernel.org
+From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+Subject: [PATCH 3/4] drm, ipu-v3: use https://linuxtv.org for LinuxTV URL
+Date: Fri,  4 Dec 2015 10:46:22 -0200
+Message-ID: <4a3d0cb06b3e4248ba4a659d7f2a7a8fa1a877fc.1449232861.git.mchehab@osg.samsung.com>
+References: <a825eaec8d62f2679880fc1679622da9d77820a9.1449232861.git.mchehab@osg.samsung.com>
+Return-path: <linux-media-owner@vger.kernel.org>
+In-Reply-To: <a825eaec8d62f2679880fc1679622da9d77820a9.1449232861.git.mchehab@osg.samsung.com>
+In-Reply-To: <a825eaec8d62f2679880fc1679622da9d77820a9.1449232861.git.mchehab@osg.samsung.com>
+References: <a825eaec8d62f2679880fc1679622da9d77820a9.1449232861.git.mchehab@osg.samsung.com>
+Sender: linux-media-owner@vger.kernel.org
+Cc: Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Linux Media Mailing List <linux-media@vger.kernel.org>, Mauro Carvalho Chehab <mchehab@infradead.org>, Philipp Zabel <p.zabel@pengutronix.de>, David Airlie <airlied@linux.ie>, dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+While https was always supported on linuxtv.org, only in
+Dec 3 2015 the website is using valid certificates.
 
-From: Dave Hansen <dave.hansen@linux.intel.com>
+As we're planning to drop pure http support on some
+future, change the references at DRM include and at
+the ipu-v3 driver to point to the https://linuxtv.org
+URL instead.
 
-This is all that we need to get the new system call itself
-working on x86.
-
-Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
-Cc: linux-api@vger.kernel.org
+Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
 ---
+ drivers/gpu/ipu-v3/ipu-cpmem.c | 2 +-
+ include/uapi/drm/drm_fourcc.h  | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
- b/arch/x86/entry/syscalls/syscall_32.tbl |    1 +
- b/arch/x86/entry/syscalls/syscall_64.tbl |    1 +
- b/arch/x86/include/uapi/asm/mman.h       |    6 ++++++
- b/mm/Kconfig                             |    1 +
- 4 files changed, 9 insertions(+)
-
-diff -puN arch/x86/entry/syscalls/syscall_32.tbl~pkeys-16-x86-mprotect_key arch/x86/entry/syscalls/syscall_32.tbl
---- a/arch/x86/entry/syscalls/syscall_32.tbl~pkeys-16-x86-mprotect_key	2015-12-03 16:21:31.109919982 -0800
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl	2015-12-03 16:21:31.118920390 -0800
-@@ -383,3 +383,4 @@
- 374	i386	userfaultfd		sys_userfaultfd
- 375	i386	membarrier		sys_membarrier
- 376	i386	mlock2			sys_mlock2
-+377	i386	pkey_mprotect		sys_pkey_mprotect
-diff -puN arch/x86/entry/syscalls/syscall_64.tbl~pkeys-16-x86-mprotect_key arch/x86/entry/syscalls/syscall_64.tbl
---- a/arch/x86/entry/syscalls/syscall_64.tbl~pkeys-16-x86-mprotect_key	2015-12-03 16:21:31.111920072 -0800
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl	2015-12-03 16:21:31.118920390 -0800
-@@ -332,6 +332,7 @@
- 323	common	userfaultfd		sys_userfaultfd
- 324	common	membarrier		sys_membarrier
- 325	common	mlock2			sys_mlock2
-+326	common	pkey_mprotect		sys_pkey_mprotect
+diff --git a/drivers/gpu/ipu-v3/ipu-cpmem.c b/drivers/gpu/ipu-v3/ipu-cpmem.c
+index 63eb16bf2cf0..883a314cd83a 100644
+--- a/drivers/gpu/ipu-v3/ipu-cpmem.c
++++ b/drivers/gpu/ipu-v3/ipu-cpmem.c
+@@ -161,7 +161,7 @@ static u32 ipu_ch_param_read_field(struct ipuv3_channel *ch, u32 wbs)
+  * The DRM pixel formats and IPU internal representation are ordered the other
+  * way around, with the first named component ordered at the most significant
+  * bits. Further, V4L2 formats are not well defined:
+- *     http://linuxtv.org/downloads/v4l-dvb-apis/packed-rgb.html
++ *     https://linuxtv.org/downloads/v4l-dvb-apis/packed-rgb.html
+  * We choose the interpretation which matches GStreamer behavior.
+  */
+ static int v4l2_pix_fmt_to_drm_fourcc(u32 pixelformat)
+diff --git a/include/uapi/drm/drm_fourcc.h b/include/uapi/drm/drm_fourcc.h
+index 0b69a7753558..ee2d542c65f5 100644
+--- a/include/uapi/drm/drm_fourcc.h
++++ b/include/uapi/drm/drm_fourcc.h
+@@ -225,7 +225,7 @@
+  * - multiple of 128 pixels for the width
+  * - multiple of  32 pixels for the height
+  *
+- * For more information: see http://linuxtv.org/downloads/v4l-dvb-apis/re32.html
++ * For more information: see https://linuxtv.org/downloads/v4l-dvb-apis/re32.html
+  */
+ #define DRM_FORMAT_MOD_SAMSUNG_64_32_TILE	fourcc_mod_code(SAMSUNG, 1)
  
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff -puN arch/x86/include/uapi/asm/mman.h~pkeys-16-x86-mprotect_key arch/x86/include/uapi/asm/mman.h
---- a/arch/x86/include/uapi/asm/mman.h~pkeys-16-x86-mprotect_key	2015-12-03 16:21:31.113920163 -0800
-+++ b/arch/x86/include/uapi/asm/mman.h	2015-12-03 16:21:31.118920390 -0800
-@@ -20,6 +20,12 @@
- 		((vm_flags) & VM_PKEY_BIT1 ? _PAGE_PKEY_BIT1 : 0) |	\
- 		((vm_flags) & VM_PKEY_BIT2 ? _PAGE_PKEY_BIT2 : 0) |	\
- 		((vm_flags) & VM_PKEY_BIT3 ? _PAGE_PKEY_BIT3 : 0))
-+
-+#define arch_calc_vm_prot_bits(prot, key) (		\
-+		((key) & 0x1 ? VM_PKEY_BIT0 : 0) |      \
-+		((key) & 0x2 ? VM_PKEY_BIT1 : 0) |      \
-+		((key) & 0x4 ? VM_PKEY_BIT2 : 0) |      \
-+		((key) & 0x8 ? VM_PKEY_BIT3 : 0))
- #endif
- 
- #include <asm-generic/mman.h>
-diff -puN mm/Kconfig~pkeys-16-x86-mprotect_key mm/Kconfig
---- a/mm/Kconfig~pkeys-16-x86-mprotect_key	2015-12-03 16:21:31.114920208 -0800
-+++ b/mm/Kconfig	2015-12-03 16:21:31.119920435 -0800
-@@ -679,4 +679,5 @@ config NR_PROTECTION_KEYS
- 	# Everything supports a _single_ key, so allow folks to
- 	# at least call APIs that take keys, but require that the
- 	# key be 0.
-+	default 16 if X86_INTEL_MEMORY_PROTECTION_KEYS
- 	default 1
-_
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+2.5.0
