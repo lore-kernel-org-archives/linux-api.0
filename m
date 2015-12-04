@@ -1,204 +1,143 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH 01/23] userfaultfd: linux/Documentation/vm/userfaultfd.txt
-Date: Fri, 04 Dec 2015 16:50:03 +0100
-Message-ID: <5661B62B.2020409@gmail.com>
-References: <1431624680-20153-1-git-send-email-aarcange@redhat.com> <1431624680-20153-2-git-send-email-aarcange@redhat.com> <55F29513.4030503@gmail.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH v3] capabilities.7, prctl.2: Document ambient capabilities
+Date: Fri, 4 Dec 2015 08:12:53 -0800
+Message-ID: <CALCETrXLDA3bPtZJjCa0P61jwZLYVzS5axfMRW82Yu-w1avPsw@mail.gmail.com>
+References: <3721cd96525af4cb0a671e9a36ac6402c8e5379a.1446594067.git.luto@kernel.org>
+ <5661AC50.3070300@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <55F29513.4030503@gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrea Arcangeli <aarcange@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-api@vger.kernel.org
-Cc: mtk.manpages@gmail.com, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave.hansen@intel.com>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5661AC50.3070300-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Andrea,
+On Fri, Dec 4, 2015 at 7:08 AM, Michael Kerrisk (man-pages)
+<mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> Hi Andy,
+>
+> I have applied your patch (below). Thanks for writing it.
+> But I have a question or two and a request.
+>
+> =3D=3D=3D
+>
+> In the capabilities(7) page tehre is the longstanding text:
+>
+>        An  application  can use the following call to lock itself, an=
+d
+>        all of its descendants, into an environment where the only  wa=
+y
+>        of  gaining capabilities is by executing a program with associ=
+=E2=80=90
+>        ated file capabilities:
+>
+>            prctl(PR_SET_SECUREBITS,
+>                    SECBIT_KEEP_CAPS_LOCKED |
+>                    SECBIT_NO_SETUID_FIXUP |
+>                    SECBIT_NO_SETUID_FIXUP_LOCKED |
+>                    SECBIT_NOROOT |
+>                    SECBIT_NOROOT_LOCKED);
+>
+> As far as I can estimate, no changes are needed here to include
+> SECBIT_NO_CAP_AMBIENT_RAISE and SECBIT_NO_CAP_AMBIENT_RAISE_LOCKED
+> in the above prctl() call, but could you confirm please?
 
-On 09/11/2015 10:47 AM, Michael Kerrisk (man-pages) wrote:
-> On 05/14/2015 07:30 PM, Andrea Arcangeli wrote:
->> Add documentation.
-> 
-> Hi Andrea,
-> 
-> I do not recall... Did you write a man page also for this new system call?
+Correct.  I'll probably write up a patch to suggest that doing this is
+a poor idea on a conventional distro, though, and I'll explain why.  I
+suppose than deleting this would be an option, too.
 
-No response to my last mail, so I'll try again... Did you 
-write any man page for this interface?
+>
+> =3D=3D=3D
+>
+> In the message for kernel commit
+> 58319057b7847667f0c9585b9de0e8932b0fdb08
+> you included this text:
+>
+> [[
+> Because capability inheritance is so
+> broken, setting KEEPCAPS, using setresuid to switch to nonroot uids, =
+and
+> then calling execve effectively drops capabilities.  Therefore,
+> setresuid from root to nonroot conditionally clears pA unless
+> SECBIT_NO_SETUID_FIXUP is set.  Processes that don't like this can
+> re-add bits to pA afterwards.
+> ]]
+>
+> I'm struggling to understand the significance of this text,
+> especially as your man-pages patch makes no mention of this point.
+>
+> The thing is, that text ("Therefore...") implies that there's
+> something special going on beyond the rules already documented
+> elsewhere. I mean, according to the rules aly documented elsewhere
+> in the page:
 
-Thanks,
+Whoops, I forgot to add that to the manpage.
 
-Michael
+>
+> (1) If a process with UIDs of 0 sets all its UIDs
+> nonzero, then, the permitted and effective sets are cleared
+> (that's the classical behavior), and because the permitted
+> set is cleared, then so is the ambient set.
+>
+> (2) And if we set SECBIT_NO_SETUID_FIXUP then
+> a UID 0 =3D=3D> nonzero transition doesn't clear permitted and
+> effective sets, and then of course the ambient set is not
+> cleared.
+>
+> So, what additional point were you meaning to convey in
+> the commit message? (Maybe it was just cruft in the commit
+> message, but if not, can you explain precisely the arguments
+> for setresuid() that are supposed to generate the special
+> behavior described by the above text.)
 
+It's case (1b), which is like (1) but with KEEPCAPS set.  The
+permitted set doesn't get cleared, but the ambient set is still
+cleared.
 
->> Signed-off-by: Andrea Arcangeli <aarcange@redhat.com>
->> ---
->>  Documentation/vm/userfaultfd.txt | 140 +++++++++++++++++++++++++++++++++++++++
->>  1 file changed, 140 insertions(+)
->>  create mode 100644 Documentation/vm/userfaultfd.txt
->>
->> diff --git a/Documentation/vm/userfaultfd.txt b/Documentation/vm/userfaultfd.txt
->> new file mode 100644
->> index 0000000..c2f5145
->> --- /dev/null
->> +++ b/Documentation/vm/userfaultfd.txt
->> @@ -0,0 +1,140 @@
->> += Userfaultfd =
->> +
->> +== Objective ==
->> +
->> +Userfaults allow the implementation of on-demand paging from userland
->> +and more generally they allow userland to take control various memory
->> +page faults, something otherwise only the kernel code could do.
->> +
->> +For example userfaults allows a proper and more optimal implementation
->> +of the PROT_NONE+SIGSEGV trick.
->> +
->> +== Design ==
->> +
->> +Userfaults are delivered and resolved through the userfaultfd syscall.
->> +
->> +The userfaultfd (aside from registering and unregistering virtual
->> +memory ranges) provides two primary functionalities:
->> +
->> +1) read/POLLIN protocol to notify a userland thread of the faults
->> +   happening
->> +
->> +2) various UFFDIO_* ioctls that can manage the virtual memory regions
->> +   registered in the userfaultfd that allows userland to efficiently
->> +   resolve the userfaults it receives via 1) or to manage the virtual
->> +   memory in the background
->> +
->> +The real advantage of userfaults if compared to regular virtual memory
->> +management of mremap/mprotect is that the userfaults in all their
->> +operations never involve heavyweight structures like vmas (in fact the
->> +userfaultfd runtime load never takes the mmap_sem for writing).
->> +
->> +Vmas are not suitable for page- (or hugepage) granular fault tracking
->> +when dealing with virtual address spaces that could span
->> +Terabytes. Too many vmas would be needed for that.
->> +
->> +The userfaultfd once opened by invoking the syscall, can also be
->> +passed using unix domain sockets to a manager process, so the same
->> +manager process could handle the userfaults of a multitude of
->> +different processes without them being aware about what is going on
->> +(well of course unless they later try to use the userfaultfd
->> +themselves on the same region the manager is already tracking, which
->> +is a corner case that would currently return -EBUSY).
->> +
->> +== API ==
->> +
->> +When first opened the userfaultfd must be enabled invoking the
->> +UFFDIO_API ioctl specifying a uffdio_api.api value set to UFFD_API (or
->> +a later API version) which will specify the read/POLLIN protocol
->> +userland intends to speak on the UFFD. The UFFDIO_API ioctl if
->> +successful (i.e. if the requested uffdio_api.api is spoken also by the
->> +running kernel), will return into uffdio_api.features and
->> +uffdio_api.ioctls two 64bit bitmasks of respectively the activated
->> +feature of the read(2) protocol and the generic ioctl available.
->> +
->> +Once the userfaultfd has been enabled the UFFDIO_REGISTER ioctl should
->> +be invoked (if present in the returned uffdio_api.ioctls bitmask) to
->> +register a memory range in the userfaultfd by setting the
->> +uffdio_register structure accordingly. The uffdio_register.mode
->> +bitmask will specify to the kernel which kind of faults to track for
->> +the range (UFFDIO_REGISTER_MODE_MISSING would track missing
->> +pages). The UFFDIO_REGISTER ioctl will return the
->> +uffdio_register.ioctls bitmask of ioctls that are suitable to resolve
->> +userfaults on the range registered. Not all ioctls will necessarily be
->> +supported for all memory types depending on the underlying virtual
->> +memory backend (anonymous memory vs tmpfs vs real filebacked
->> +mappings).
->> +
->> +Userland can use the uffdio_register.ioctls to manage the virtual
->> +address space in the background (to add or potentially also remove
->> +memory from the userfaultfd registered range). This means a userfault
->> +could be triggering just before userland maps in the background the
->> +user-faulted page.
->> +
->> +The primary ioctl to resolve userfaults is UFFDIO_COPY. That
->> +atomically copies a page into the userfault registered range and wakes
->> +up the blocked userfaults (unless uffdio_copy.mode &
->> +UFFDIO_COPY_MODE_DONTWAKE is set). Other ioctl works similarly to
->> +UFFDIO_COPY.
->> +
->> +== QEMU/KVM ==
->> +
->> +QEMU/KVM is using the userfaultfd syscall to implement postcopy live
->> +migration. Postcopy live migration is one form of memory
->> +externalization consisting of a virtual machine running with part or
->> +all of its memory residing on a different node in the cloud. The
->> +userfaultfd abstraction is generic enough that not a single line of
->> +KVM kernel code had to be modified in order to add postcopy live
->> +migration to QEMU.
->> +
->> +Guest async page faults, FOLL_NOWAIT and all other GUP features work
->> +just fine in combination with userfaults. Userfaults trigger async
->> +page faults in the guest scheduler so those guest processes that
->> +aren't waiting for userfaults (i.e. network bound) can keep running in
->> +the guest vcpus.
->> +
->> +It is generally beneficial to run one pass of precopy live migration
->> +just before starting postcopy live migration, in order to avoid
->> +generating userfaults for readonly guest regions.
->> +
->> +The implementation of postcopy live migration currently uses one
->> +single bidirectional socket but in the future two different sockets
->> +will be used (to reduce the latency of the userfaults to the minimum
->> +possible without having to decrease /proc/sys/net/ipv4/tcp_wmem).
->> +
->> +The QEMU in the source node writes all pages that it knows are missing
->> +in the destination node, into the socket, and the migration thread of
->> +the QEMU running in the destination node runs UFFDIO_COPY|ZEROPAGE
->> +ioctls on the userfaultfd in order to map the received pages into the
->> +guest (UFFDIO_ZEROCOPY is used if the source page was a zero page).
->> +
->> +A different postcopy thread in the destination node listens with
->> +poll() to the userfaultfd in parallel. When a POLLIN event is
->> +generated after a userfault triggers, the postcopy thread read() from
->> +the userfaultfd and receives the fault address (or -EAGAIN in case the
->> +userfault was already resolved and waken by a UFFDIO_COPY|ZEROPAGE run
->> +by the parallel QEMU migration thread).
->> +
->> +After the QEMU postcopy thread (running in the destination node) gets
->> +the userfault address it writes the information about the missing page
->> +into the socket. The QEMU source node receives the information and
->> +roughly "seeks" to that page address and continues sending all
->> +remaining missing pages from that new page offset. Soon after that
->> +(just the time to flush the tcp_wmem queue through the network) the
->> +migration thread in the QEMU running in the destination node will
->> +receive the page that triggered the userfault and it'll map it as
->> +usual with the UFFDIO_COPY|ZEROPAGE (without actually knowing if it
->> +was spontaneously sent by the source or if it was an urgent page
->> +requested through an userfault).
->> +
->> +By the time the userfaults start, the QEMU in the destination node
->> +doesn't need to keep any per-page state bitmap relative to the live
->> +migration around and a single per-page bitmap has to be maintained in
->> +the QEMU running in the source node to know which pages are still
->> +missing in the destination node. The bitmap in the source node is
->> +checked to find which missing pages to send in round robin and we seek
->> +over it when receiving incoming userfaults. After sending each page of
->> +course the bitmap is updated accordingly. It's also useful to avoid
->> +sending the same page twice (in case the userfault is read by the
->> +postcopy thread just before UFFDIO_COPY|ZEROPAGE runs in the migration
->> +thread).
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-api" in
->> the body of a message to majordomo@vger.kernel.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->>
-> 
-> 
+I'll write a manpage patch.
 
+--Andy
 
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+>
+> =3D=3D=3D
+>
+> I did quite a bit of tweaking of the text that you added for
+> the capabilities page. Could you please check the following
+> to make sure I added no errors:
+>
+>        Ambient (since Linux 4.3):
+>               This  is a set of capabilities that are preserved acros=
+s
+>               an execve(2) of a program that is not  privileged.   Th=
+e
+>               ambient capability set obeys the invariant that no capa=
+=E2=80=90
+>               bility can ever be ambient if it is not  both  permitte=
+d
+>               and inheritable.
+>
+>               The  ambient  capability  set  can  be directly modifie=
+d
+>               using prctl(2).  Ambient capabilities are  automaticall=
+y
+>               lowered  if  either  of  the  corresponding permitted o=
+r
+>               inheritable capabilities is lowered.
+>
+>               Executing a program that changes UID or GID due  to  th=
+e
+>               set-user-ID  or set-group-ID bits or executing a progra=
+m
+>               that has any file capabilities set will clear the  ambi=
+=E2=80=90
+>               ent  set.  Ambient capabilities are added to the permit=
+=E2=80=90
+>               ted set and assigned to the effective set when execve(2=
+)
+>               is called.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Looks good (other than the preexisting gotcha above).
+
+--Andy
