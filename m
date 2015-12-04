@@ -1,200 +1,242 @@
-From: Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
-Subject: [PATCH 00/34] x86: Memory Protection Keys (v5)
-Date: Thu, 03 Dec 2015 17:14:24 -0800
-Message-ID: <20151204011424.8A36E365@viggo.jf.intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org
+From: Dave Hansen <dave@sr71.net>
+Subject: [PATCH 32/34] x86, pkeys: add pkey set/get syscalls
+Date: Thu, 03 Dec 2015 17:15:08 -0800
+Message-ID: <20151204011508.0275A2E4@viggo.jf.intel.com>
+References: <20151204011424.8A36E365@viggo.jf.intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20151204011424.8A36E365@viggo.jf.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: linux-mm@kvack.org, x86@kernel.org, Dave Hansen <dave@sr71.net>, dave.hansen@linux.intel.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Memory Protection Keys for User pages is a CPU feature which will
-first appear on Skylake Servers, but will also be supported on
-future non-server parts.  It provides a mechanism for enforcing
-page-based protections, but without requiring modification of the
-page tables when an application changes protection domains.  See
-the Documentation/ patch for more details.
 
-Changes from v4:
+From: Dave Hansen <dave.hansen@linux.intel.com>
 
- * Made "allow setting of XSAVE state" safe if we got preempted
-   between when we saved our FPU state and when we restore it.
-   (I would appreciate a look from Ingo on this patch).
- * Fixed up a few things from Thomas's latest comments: splt up
-   siginfo in to x86 and generic, removed extra 'eax' variable
-   in rdpkru function, reworked vm_flags assignment, reworded
-   a comment in pte_allows_gup()
- * Add missing DISABLED/REQUIRED_MASK14 in cpufeature.h
- * Added comment about compile optimization in fault path
- * Left get_user_pages_locked() alone.  Andrea thinks we need it.
+This establishes two more system calls for protection key management:
 
-Changes from RFCv3:
+	unsigned long pkey_get(int pkey);
+	int pkey_set(int pkey, unsigned long access_rights);
 
- * Added 'current' and 'foreign' variants of get_user_pages() to
-   help indicate whether protection keys should be enforced.
-   Thanks to Jerome Glisse for pointing out this issue.
- * Added "allocation" and set/get system calls so that we can do
-   management of proection keys in the kernel.  This opens the
-   door to use of specific protection keys for kernel use in the
-   future, such as for execute-only memory.
- * Removed the kselftest code for the moment.  It will be
-   submitted separately.
+The return value from pkey_get() and the 'access_rights' passed
+to pkey_set() are the same format: a bitmask containing
+PKEY_DENY_WRITE and/or PKEY_DENY_ACCESS, or nothing set at all.
 
-Thanks Ingo and Thomas for most of these):
-Changes from RFCv2 (Thanks Ingo and Thomas for most of these):
+These replace userspace's direct use of rdpkru/wrpkru.
 
- * few minor compile warnings
- * changed 'nopku' interaction with cpuid bits.  Now, we do not
-   clear the PKU cpuid bit, we just skip enabling it.
- * changed __pkru_allows_write() to also check access disable bit
- * removed the unused write_pkru()
- * made si_pkey a u64 and added some patch description details.
-   Also made it share space in siginfo with MPX and clarified
-   comments.
- * give some real text for the Processor Trace xsave state
- * made vma_pkey() less ugly (and much more optimized actually)
- * added SEGV_PKUERR to copy_siginfo_to_user()
- * remove page table walk when filling in si_pkey, added some
-   big fat comments about it being inherently racy.
- * added self test code
+With current hardware, the kernel can not enforce that it has
+control over a given key.  But, this at least allows the kernel
+to indicate to userspace that userspace does not control a given
+protection key.
 
-This code is not runnable to anyone outside of Intel unless they
-have some special hardware or a fancy simulator.  If you are
-interested in running this for real, please get in touch with me.
-Hardware is available to a very small but nonzero number of
-people.
+The kernel does _not_ enforce that this interface must be used for
+changes to PKRU, even for keys it has not "allocated".
 
-This set is also available here (with the new syscall):
+Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: linux-api@vger.kernel.org
+---
 
-	git://git.kernel.org/pub/scm/linux/kernel/git/daveh/x86-pkeys.git pkeys-v014
+ b/arch/x86/entry/syscalls/syscall_32.tbl |    2 +
+ b/arch/x86/entry/syscalls/syscall_64.tbl |    2 +
+ b/arch/x86/include/asm/mmu_context.h     |    2 +
+ b/arch/x86/include/asm/pkeys.h           |    2 -
+ b/arch/x86/kernel/fpu/xstate.c           |   55 +++++++++++++++++++++++++++++--
+ b/include/linux/pkeys.h                  |    8 ++++
+ b/mm/mprotect.c                          |   34 +++++++++++++++++++
+ 7 files changed, 102 insertions(+), 3 deletions(-)
 
-=== diffstat ===
-
-Dave Hansen (34):
-      mm, gup: introduce concept of "foreign" get_user_pages()
-      x86, fpu: add placeholder for Processor Trace XSAVE state
-      x86, pkeys: Add Kconfig option
-      x86, pkeys: cpuid bit definition
-      x86, pkeys: define new CR4 bit
-      x86, pkeys: add PKRU xsave fields and data structure(s)
-      x86, pkeys: PTE bits for storing protection key
-      x86, pkeys: new page fault error code bit: PF_PK
-      x86, pkeys: store protection in high VMA flags
-      x86, pkeys: arch-specific protection bits
-      x86, pkeys: pass VMA down in to fault signal generation code
-      signals, pkeys: notify userspace about protection key faults
-      x86, pkeys: fill in pkey field in siginfo
-      x86, pkeys: add functions to fetch PKRU
-      mm: factor out VMA fault permission checking
-      x86, mm: simplify get_user_pages() PTE bit handling
-      x86, pkeys: check VMAs and PTEs for protection keys
-      mm: add gup flag to indicate "foreign" mm access
-      x86, pkeys: optimize fault handling in access_error()
-      x86, pkeys: differentiate instruction fetches
-      x86, pkeys: dump PKRU with other kernel registers
-      x86, pkeys: dump PTE pkey in /proc/pid/smaps
-      x86, pkeys: add Kconfig prompt to existing config option
-      mm, multi-arch: pass a protection key in to calc_vm_flag_bits()
-      x86, pkeys: add arch_validate_pkey()
-      mm: implement new mprotect_key() system call
-      x86, pkeys: make mprotect_key() mask off additional vm_flags
-      x86: wire up mprotect_key() system call
-      x86: separate out LDT init from context init
-      x86, fpu: allow setting of XSAVE state
-      x86, pkeys: allocation/free syscalls
-      x86, pkeys: add pkey set/get syscalls
-      x86, pkeys: actually enable Memory Protection Keys in CPU
-      x86, pkeys: Documentation
-
- Documentation/kernel-parameters.txt         |   3 +
- Documentation/x86/protection-keys.txt       |  53 +++++
- arch/mips/mm/gup.c                          |   3 +-
- arch/powerpc/include/asm/mman.h             |   5 +-
- arch/powerpc/include/asm/mmu_context.h      |  12 +
- arch/s390/include/asm/mmu_context.h         |  12 +
- arch/s390/mm/gup.c                          |   3 +-
- arch/sh/mm/gup.c                            |   2 +-
- arch/sparc/mm/gup.c                         |   2 +-
- arch/unicore32/include/asm/mmu_context.h    |  12 +
- arch/x86/Kconfig                            |  16 ++
- arch/x86/entry/syscalls/syscall_32.tbl      |   5 +
- arch/x86/entry/syscalls/syscall_64.tbl      |   5 +
- arch/x86/include/asm/cpufeature.h           |  56 +++--
- arch/x86/include/asm/disabled-features.h    |  13 ++
- arch/x86/include/asm/fpu/internal.h         |   2 +
- arch/x86/include/asm/fpu/types.h            |  12 +
- arch/x86/include/asm/fpu/xstate.h           |   4 +-
- arch/x86/include/asm/mmu.h                  |   7 +
- arch/x86/include/asm/mmu_context.h          | 110 ++++++++-
- arch/x86/include/asm/pgtable.h              |  38 +++
- arch/x86/include/asm/pgtable_types.h        |  34 ++-
- arch/x86/include/asm/pkeys.h                |  67 ++++++
- arch/x86/include/asm/required-features.h    |   5 +
- arch/x86/include/asm/special_insns.h        |  22 ++
- arch/x86/include/uapi/asm/mman.h            |  22 ++
- arch/x86/include/uapi/asm/processor-flags.h |   2 +
- arch/x86/kernel/cpu/common.c                |  42 ++++
- arch/x86/kernel/fpu/core.c                  |  63 +++++
- arch/x86/kernel/fpu/xstate.c                | 241 +++++++++++++++++++-
- arch/x86/kernel/ldt.c                       |   4 +-
- arch/x86/kernel/process_64.c                |   2 +
- arch/x86/kernel/setup.c                     |   9 +
- arch/x86/mm/fault.c                         | 158 +++++++++++--
- arch/x86/mm/gup.c                           |  51 +++--
- arch/x86/mm/mpx.c                           |   4 +-
- drivers/char/agp/frontend.c                 |   2 +-
- drivers/gpu/drm/amd/amdgpu/amdgpu_ttm.c     |   4 +-
- drivers/gpu/drm/i915/i915_gem_userptr.c     |   2 +-
- drivers/gpu/drm/radeon/radeon_ttm.c         |   4 +-
- drivers/gpu/drm/via/via_dmablit.c           |   3 +-
- drivers/infiniband/core/umem.c              |   2 +-
- drivers/infiniband/core/umem_odp.c          |   8 +-
- drivers/infiniband/hw/mthca/mthca_memfree.c |   3 +-
- drivers/infiniband/hw/qib/qib_user_pages.c  |   3 +-
- drivers/infiniband/hw/usnic/usnic_uiom.c    |   2 +-
- drivers/iommu/amd_iommu_v2.c                |   8 +-
- drivers/media/pci/ivtv/ivtv-udma.c          |   4 +-
- drivers/media/pci/ivtv/ivtv-yuv.c           |  10 +-
- drivers/media/v4l2-core/videobuf-dma-sg.c   |   3 +-
- drivers/misc/sgi-gru/grufault.c             |   3 +-
- drivers/scsi/st.c                           |   2 -
- drivers/staging/android/ashmem.c            |   4 +-
- drivers/video/fbdev/pvr2fb.c                |   4 +-
- drivers/virt/fsl_hypervisor.c               |   5 +-
- fs/exec.c                                   |   8 +-
- fs/proc/task_mmu.c                          |   5 +
- include/asm-generic/mm_hooks.h              |  12 +
- include/linux/mm.h                          |  55 ++++-
- include/linux/mman.h                        |   6 +-
- include/linux/pkeys.h                       |  59 +++++
- include/uapi/asm-generic/mman-common.h      |   5 +
- include/uapi/asm-generic/siginfo.h          |  17 +-
- kernel/events/uprobes.c                     |   4 +-
- kernel/signal.c                             |   4 +
- mm/Kconfig                                  |  13 ++
- mm/frame_vector.c                           |   2 +-
- mm/gup.c                                    |  93 ++++++--
- mm/ksm.c                                    |  10 +-
- mm/memory.c                                 |   8 +-
- mm/mempolicy.c                              |   6 +-
- mm/mmap.c                                   |   2 +-
- mm/mprotect.c                               | 136 ++++++++++-
- mm/nommu.c                                  |  35 ++-
- mm/process_vm_access.c                      |   6 +-
- mm/util.c                                   |   4 +-
- net/ceph/pagevec.c                          |   2 +-
- security/tomoyo/domain.c                    |   9 +-
- virt/kvm/async_pf.c                         |   2 +-
- virt/kvm/kvm_main.c                         |  13 +-
- 80 files changed, 1470 insertions(+), 223 deletions(-)
-
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
-Cc: jack-AlSwsSmVLrQ@public.gmane.org
-Cc: kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org
-Cc: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+diff -puN arch/x86/entry/syscalls/syscall_32.tbl~pkey-syscalls-set-get arch/x86/entry/syscalls/syscall_32.tbl
+--- a/arch/x86/entry/syscalls/syscall_32.tbl~pkey-syscalls-set-get	2015-12-03 16:21:33.139012003 -0800
++++ b/arch/x86/entry/syscalls/syscall_32.tbl	2015-12-03 16:21:33.151012548 -0800
+@@ -386,3 +386,5 @@
+ 377	i386	pkey_mprotect		sys_pkey_mprotect
+ 378	i386	pkey_alloc		sys_pkey_alloc
+ 379	i386	pkey_free		sys_pkey_free
++380	i386	pkey_get		sys_pkey_get
++381	i386	pkey_set		sys_pkey_set
+diff -puN arch/x86/entry/syscalls/syscall_64.tbl~pkey-syscalls-set-get arch/x86/entry/syscalls/syscall_64.tbl
+--- a/arch/x86/entry/syscalls/syscall_64.tbl~pkey-syscalls-set-get	2015-12-03 16:21:33.141012094 -0800
++++ b/arch/x86/entry/syscalls/syscall_64.tbl	2015-12-03 16:21:33.152012593 -0800
+@@ -335,6 +335,8 @@
+ 326	common	pkey_mprotect		sys_pkey_mprotect
+ 327	common	pkey_alloc		sys_pkey_alloc
+ 328	common	pkey_free		sys_pkey_free
++329	common	pkey_get		sys_pkey_get
++330	common	pkey_set		sys_pkey_set
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+diff -puN arch/x86/include/asm/mmu_context.h~pkey-syscalls-set-get arch/x86/include/asm/mmu_context.h
+--- a/arch/x86/include/asm/mmu_context.h~pkey-syscalls-set-get	2015-12-03 16:21:33.142012139 -0800
++++ b/arch/x86/include/asm/mmu_context.h	2015-12-03 16:21:33.152012593 -0800
+@@ -340,5 +340,7 @@ static inline bool arch_pte_access_permi
+ 
+ extern int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
+ 		unsigned long init_val);
++extern unsigned long arch_get_user_pkey_access(struct task_struct *tsk,
++		int pkey);
+ 
+ #endif /* _ASM_X86_MMU_CONTEXT_H */
+diff -puN arch/x86/include/asm/pkeys.h~pkey-syscalls-set-get arch/x86/include/asm/pkeys.h
+--- a/arch/x86/include/asm/pkeys.h~pkey-syscalls-set-get	2015-12-03 16:21:33.144012230 -0800
++++ b/arch/x86/include/asm/pkeys.h	2015-12-03 16:21:33.152012593 -0800
+@@ -16,7 +16,7 @@
+ } while (0)
+ 
+ static inline
+-bool mm_pkey_is_allocated(struct mm_struct *mm, unsigned long pkey)
++bool mm_pkey_is_allocated(struct mm_struct *mm, int pkey)
+ {
+ 	if (!arch_validate_pkey(pkey))
+ 		return true;
+diff -puN arch/x86/kernel/fpu/xstate.c~pkey-syscalls-set-get arch/x86/kernel/fpu/xstate.c
+--- a/arch/x86/kernel/fpu/xstate.c~pkey-syscalls-set-get	2015-12-03 16:21:33.145012275 -0800
++++ b/arch/x86/kernel/fpu/xstate.c	2015-12-03 16:21:33.153012638 -0800
+@@ -687,7 +687,7 @@ void fpu__resume_cpu(void)
+  *
+  * Note: does not work for compacted buffers.
+  */
+-void *__raw_xsave_addr(struct xregs_state *xsave, int xstate_feature_mask)
++static void *__raw_xsave_addr(struct xregs_state *xsave, int xstate_feature_mask)
+ {
+ 	int feature_nr = fls64(xstate_feature_mask) - 1;
+ 
+@@ -862,6 +862,7 @@ out:
+ 
+ #define NR_VALID_PKRU_BITS (CONFIG_NR_PROTECTION_KEYS * 2)
+ #define PKRU_VALID_MASK (NR_VALID_PKRU_BITS - 1)
++#define PKRU_INIT_STATE	0
+ 
+ /*
+  * This will go out and modify the XSAVE buffer so that PKRU is
+@@ -880,6 +881,9 @@ int arch_set_user_pkey_access(struct tas
+ 	int pkey_shift = (pkey * PKRU_BITS_PER_PKEY);
+ 	u32 new_pkru_bits = 0;
+ 
++	/* Only support manipulating current task for now */
++	if (tsk != current)
++		return -EINVAL;
+ 	if (!arch_validate_pkey(pkey))
+ 		return -EINVAL;
+ 	/*
+@@ -907,7 +911,7 @@ int arch_set_user_pkey_access(struct tas
+ 	 * state.
+ 	 */
+ 	if (!old_pkru_state)
+-		new_pkru_state.pkru = 0;
++		new_pkru_state.pkru = PKRU_INIT_STATE;
+ 	else
+ 		new_pkru_state.pkru = old_pkru_state->pkru;
+ 
+@@ -932,4 +936,51 @@ int arch_set_user_pkey_access(struct tas
+ 
+ 	return 0;
+ }
++
++/*
++ * Figures out what the rights are currently for 'pkey'.
++ * Converts from PKRU's format to the user-visible PKEY_DISABLE_*
++ * format.
++ */
++unsigned long arch_get_user_pkey_access(struct task_struct *tsk, int pkey)
++{
++	struct fpu *fpu = &current->thread.fpu;
++	u32 pkru_reg;
++	int ret = 0;
++
++	/* Only support manipulating current task for now */
++	if (tsk != current)
++		return -1;
++	if (!boot_cpu_has(X86_FEATURE_OSPKE))
++		return -1;
++	/*
++	 * The contents of PKRU itself are invalid.  Consult the
++	 * task's XSAVE buffer for PKRU contents.  This is much
++	 * more expensive than reading PKRU directly, but should
++	 * be rare or impossible with eagerfpu mode.
++	 */
++	if (!fpu->fpregs_active) {
++		struct xregs_state *xsave = &fpu->state.xsave;
++		struct pkru_state *pkru_state =
++			get_xsave_addr(xsave, XFEATURE_MASK_PKRU);
++		/*
++		 * PKRU is in its init state and not present in
++		 * the buffer in a saved form.
++		 */
++		if (!pkru_state)
++			return PKRU_INIT_STATE;
++
++		return pkru_state->pkru;
++	}
++	/*
++	 * Consult the user register directly.
++	 */
++	pkru_reg = read_pkru();
++	if (!__pkru_allows_read(pkru_reg, pkey))
++		ret |= PKEY_DISABLE_ACCESS;
++	if (!__pkru_allows_write(pkru_reg, pkey))
++		ret |= PKEY_DISABLE_WRITE;
++
++	return ret;
++}
+ #endif /* CONFIG_ARCH_HAS_PKEYS */
+diff -puN include/linux/pkeys.h~pkey-syscalls-set-get include/linux/pkeys.h
+--- a/include/linux/pkeys.h~pkey-syscalls-set-get	2015-12-03 16:21:33.147012366 -0800
++++ b/include/linux/pkeys.h	2015-12-03 16:21:33.153012638 -0800
+@@ -43,6 +43,14 @@ static inline int mm_pkey_free(struct mm
+ static inline int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
+ 			unsigned long init_val)
+ {
++	return -EINVAL;
++}
++
++static inline
++unsigned long arch_get_user_pkey_access(struct task_struct *tsk, int pkey)
++{
++	if (pkey)
++		return -1;
+ 	return 0;
+ }
+ 
+diff -puN mm/mprotect.c~pkey-syscalls-set-get mm/mprotect.c
+--- a/mm/mprotect.c~pkey-syscalls-set-get	2015-12-03 16:21:33.148012412 -0800
++++ b/mm/mprotect.c	2015-12-03 16:21:33.154012684 -0800
+@@ -531,3 +531,37 @@ SYSCALL_DEFINE1(pkey_free, int, pkey)
+ 	 */
+ 	return ret;
+ }
++
++SYSCALL_DEFINE1(pkey_get, int, pkey)
++{
++	unsigned long ret = 0;
++
++	down_write(&current->mm->mmap_sem);
++	if (!mm_pkey_is_allocated(current->mm, pkey))
++		ret = -EBADF;
++	up_write(&current->mm->mmap_sem);
++
++	if (ret)
++		return ret;
++
++	ret = arch_get_user_pkey_access(current, pkey);
++
++	return ret;
++}
++
++SYSCALL_DEFINE2(pkey_set, int, pkey, unsigned long, access_rights)
++{
++	unsigned long ret = 0;
++
++	down_write(&current->mm->mmap_sem);
++	if (!mm_pkey_is_allocated(current->mm, pkey))
++		ret = -EBADF;
++	up_write(&current->mm->mmap_sem);
++
++	if (ret)
++		return ret;
++
++	ret = arch_set_user_pkey_access(current, pkey, access_rights);
++
++	return ret;
++}
+_
