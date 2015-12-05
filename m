@@ -1,67 +1,69 @@
-From: Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 00/13] MADV_FREE support
-Date: Sat, 5 Dec 2015 10:51:58 -0500
-Message-ID: <5663081E.4010205@gmail.com>
-References: <1446600367-7976-1-git-send-email-minchan@kernel.org>
- <20151205111042.GA11598@amd>
+From: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v2 1/2] Documentation: afe4404: Add DT bindings for the
+ AFE4404 heart monitor
+Date: Sat, 5 Dec 2015 17:38:42 +0000
+Message-ID: <56632122.8040702@kernel.org>
+References: <1449086240-13375-1-git-send-email-afd@ti.com>
+ <1449086240-13375-2-git-send-email-afd@ti.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
- protocol="application/pgp-signature";
- boundary="25AEtqoWBXCvAxgbRSFnbrHf3lJq2GSlb"
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151205111042.GA11598@amd>
+In-Reply-To: <1449086240-13375-2-git-send-email-afd-l0cyMroinI0@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: "Andrew F. Davis" <afd-l0cyMroinI0@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>
+Cc: devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---25AEtqoWBXCvAxgbRSFnbrHf3lJq2GSlb
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: quoted-printable
+On 02/12/15 19:57, Andrew F. Davis wrote:
+> Add the TI afe4404 heart monitor DT bindings documentation.
+> Create health directory created under iio.
+> 
+> Signed-off-by: Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
+One little point inline - otherwise this is straightforward and
+looks good to me.
 
-On 05/12/15 06:10 AM, Pavel Machek wrote:
-> On Wed 2015-11-04 10:25:54, Minchan Kim wrote:
->> MADV_FREE is on linux-next so long time. The reason was two, I think.
->>
->> 1. MADV_FREE code on reclaim path was really mess.
->=20
-> Could you explain what MADV_FREE does?
->=20
-> Comment in code says 'free the page only when there's memory
-> pressure'. So I mark my caches MADV_FREE, no memory pressure, I can
-> keep using it? And if there's memory pressure, what happens? I get
-> zeros? SIGSEGV?
+Could add cross references to the interrupt and gpio docs.
 
-You get zeroes. It's not designed for that use case right now. It's for
-malloc implementations to use internally. There would need to be a new
-feature like MADV_FREE_UNDO for it to be usable for caches and it may
-make more sense for that to be a separate feature entirely, i.e. have a
-different flag for marking too (not sure) since it wouldn't need to
-worry about whether stuff is touched.
-
-
---25AEtqoWBXCvAxgbRSFnbrHf3lJq2GSlb
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBCAAGBQJWYwgeAAoJEPnnEuWa9fIqgHIP/jTlp7FHHc0W2g6+GR5Httb2
-2ORoNvgw05Ry1iOpPNIYOJJpUBz++nE6tDC57amsOLsV1/CKxw/kZDs+zSEeAIyR
-yQRIlG46pVA5nTmtpgBTGJX7ryD9BvDsoZKsWqkRJjby6S2Iy/v7c9bSjpmJdDVp
-4hxrAgdBKWoSxnkcIC4LTEVGr9KhPEDyVXCihGhW78gMHY5KdnF4mxPPfgGaRTmq
-eths7pEK9aAEDB1mjXRNj1q7I/PV+2yNuwGl5Bgi1JuHVKx6fpjWH42C1CBdAxPD
-8qEtaT18uJZcsO3yIp/J3caXLwYBNooQIFcDV/0HAYcGW1NjyJvoVvPdnXH+cVp2
-ICBhOVMgRUVTQiAmxMXem5PS1nMMwTI3m1WmpShCNO0XI0kF5We4WhpeAt1wns+A
-mmLF3A/9JpdYwVnF4m7Sfj0lahSyvO+XJMJObtq5YwiAps/Cg91xC43rTe4n4TpK
-rhG0stTS/RlW6/vJYcF7K5eH4dzm3xPCOY1lOKG4xlfkDalO+rLfVz/CuUjDbDCK
-4ut8JyO5eq9Wx3bG1h3/pHPrpgQOcrr7lNhrv+6259/dkzq5HQ5hl70bl8r1yZzJ
-2EX35OxYYVrwIJVI8kovg9oyECXR4xAmz/KygYVCotJ4/0NNd/1792XCqyYvPvJ8
-EL+l2snIELktLOqS2NSO
-=FiDs
------END PGP SIGNATURE-----
-
---25AEtqoWBXCvAxgbRSFnbrHf3lJq2GSlb--
+Jonathan
+> ---
+>  .../devicetree/bindings/iio/health/afe4404.txt     | 27 ++++++++++++++++++++++
+>  1 file changed, 27 insertions(+)
+>  create mode 100644 Documentation/devicetree/bindings/iio/health/afe4404.txt
+> 
+> diff --git a/Documentation/devicetree/bindings/iio/health/afe4404.txt b/Documentation/devicetree/bindings/iio/health/afe4404.txt
+> new file mode 100644
+> index 0000000..25b77a4
+> --- /dev/null
+> +++ b/Documentation/devicetree/bindings/iio/health/afe4404.txt
+> @@ -0,0 +1,27 @@
+> +* Texas Instruments AFE4404 Heart rate and Pulse Oximeter
+> +
+> +Required properties:
+> + - compatible		: Should be "ti,afe4404".
+> + - reg			: I2C address of the device.
+> + - tx_sup-supply	: Regulator supply to LEDs.
+If the sup bit is for supply I'd drop it and just have
+tx-supply.
+> + - interrupt-parent	: Phandle to he parent interrupt controller.
+> + - interrupts		: The interrupt line the device ADC_RDY pin is connected to.
+> +
+> +Optional properties:
+> + - reset-gpios		: GPIO used to reset the device.
+> +
+> +Example:
+> +
+> +&i2c2 {
+> +	heart_mon@58 {
+> +		compatible = "ti,afe4404";
+> +		reg = <0x58>;
+> +
+> +		tx_sup-supply = <&vbat>;
+> +
+> +		interrupt-parent = <&gpio1>;
+> +		interrupts = <28 IRQ_TYPE_EDGE_RISING>;
+> +
+> +		reset-gpios = <&gpio1 16 GPIO_ACTIVE_LOW>;
+> +	};
+> +};
+> 
