@@ -1,181 +1,1097 @@
-From: Alexander Duyck <alexander.duyck-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC PATCH V2 0/3] IXGBE/VFIO: Add live migration support for
- SRIOV NIC
-Date: Mon, 7 Dec 2015 09:12:08 -0800
-Message-ID: <CAKgT0UeFzW_tpdSr=Ck6X6w2XnAUJquW46mo2H0Ag=Z=q0tgtg@mail.gmail.com>
-References: <CAKgT0UevBmRLpM1PvuuVDUW79A66RcPrfO8uGiqL1RiALW7apg@mail.gmail.com>
-	<A12AC9D104E08D47BAF23C492F83C53B25CDE9E3@SHSMSX104.ccr.corp.intel.com>
-	<CAKgT0Ucyq=7OSYBVvU9Z01b3f6scS+eBMLg+yphW7bwkNZosPQ@mail.gmail.com>
-	<565BF285.4040507@intel.com>
-	<CAKgT0Uc+-gFAetEfde6DmMOFK+vDE6UkgsNF8oLNqaQc4USSeg@mail.gmail.com>
-	<565DB6FF.1050602@intel.com>
-	<20151201171140-mutt-send-email-mst@redhat.com>
-	<CAKgT0UfLEJpV-KdqRGfzBeas8bdqfHCmT5Xc8iVVP03g_pQO8A@mail.gmail.com>
-	<20151201193026-mutt-send-email-mst@redhat.com>
-	<CAKgT0UfJ7w6yYcZcF2YZyDKEwvE7Gh3P-jfGQGKLfPH2crVBzw@mail.gmail.com>
-	<20151202105955-mutt-send-email-mst@redhat.com>
-	<5661C000.8070201@intel.com>
-	<5661C86D.3010904@gmail.com>
-	<5665A884.2020102@intel.com>
+From: "Andrew F. Davis" <afd-l0cyMroinI0@public.gmane.org>
+Subject: Re: [PATCH v2 2/2] iio: health: Add driver for the TI AFE4404 heart
+ monitor
+Date: Mon, 7 Dec 2015 11:26:26 -0600
+Message-ID: <5665C142.1050105@ti.com>
+References: <1449086240-13375-1-git-send-email-afd@ti.com>
+ <1449086240-13375-3-git-send-email-afd@ti.com> <56632B28.4080702@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5665A884.2020102-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Lan, Tianyu" <tianyu.lan-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Dong, Eddie" <eddie.dong-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org" <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "b.reynal-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org" <b.reynal-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Wyborny, Carolyn" <carolyn.wyborny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Skidmore, Donald C" <donald.c.skidmore-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Jani, Nrupal" <nrupal.jani-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Alexander Graf <agraf-l3A5Bk7waGM@public.gmane.org>, "kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org" <qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org>, "Tantilov, Emil S" <emil.s.tantilov-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Or Gerlitz <gerlitz.or-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Rustad, Mark D" <mark.d.rustad-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Eric Auger <eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, intel-wired-lan <intel-wired-lan-qjLDD68F18P21nG7glBr7A@public.gmane.org>, "Kirsher, Jeffrey T" <jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Brande
+Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <56632B28.4080702-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>
+Cc: devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Dec 7, 2015 at 7:40 AM, Lan, Tianyu <tianyu.lan-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
-> On 12/5/2015 1:07 AM, Alexander Duyck wrote:
->>>
->>>
->>> We still need to support Windows guest for migration and this is why our
->>> patches keep all changes in the driver since it's impossible to change
->>> Windows kernel.
+On 12/05/2015 12:21 PM, Jonathan Cameron wrote:
+> On 02/12/15 19:57, Andrew F. Davis wrote:
+>> Add driver for the TI AFE4404 heart rate monitor and pulse oximeter.
+>> This device detects reflected LED light fluctuations and presents an ADC
+>> value to the user space for further signal processing.
 >>
+>> Datasheet: http://www.ti.com/product/AFE4404/datasheet
 >>
->> That is a poor argument.  I highly doubt Microsoft is interested in
->> having to modify all of the drivers that will support direct assignment
->> in order to support migration.  They would likely request something
->> similar to what I have in that they will want a way to do DMA tracking
->> with minimal modification required to the drivers.
+>> Signed-off-by: Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
+> I like this a lot.  Seems much simpler to me.
 >
+> Various bits and bobs inline though.  You quite rightly stated there
+> was too much to describe in the change log so I've kind of started
+> from scratch on the review as well.
 >
-> This totally depends on the NIC or other devices' vendors and they
-> should make decision to support migration or not. If yes, they would
-> modify driver.
-
-Having to modify every driver that wants to support live migration is
-a bit much.  In addition I don't see this being limited only to NIC
-devices.  You can direct assign a number of different devices, your
-solution cannot be specific to NICs.
-
-> If just target to call suspend/resume during migration, the feature will
-> be meaningless. Most cases don't want to affect user during migration
-> a lot and so the service down time is vital. Our target is to apply
-> SRIOV NIC passthough to cloud service and NFV(network functions
-> virtualization) projects which are sensitive to network performance
-> and stability. From my opinion, We should give a change for device
-> driver to implement itself migration job. Call suspend and resume
-> callback in the driver if it doesn't care the performance during migration.
-
-The suspend/resume callback should be efficient in terms of time.
-After all we don't want the system to stall for a long period of time
-when it should be either running or asleep.  Having it burn cycles in
-a power state limbo doesn't do anyone any good.  If nothing else maybe
-it will help to push the vendors to speed up those functions which
-then benefit migration and the system sleep states.
-
-Also you keep assuming you can keep the device running while you do
-the migration and you can't.  You are going to corrupt the memory if
-you do, and you have yet to provide any means to explain how you are
-going to solve that.
-
-
+> Thanks for your hard work on this.
 >
+> Jonathan
+>> ---
+>>   .../ABI/testing/sysfs-bus-iio-health-afe4404       |  20 +
+>>   drivers/iio/Kconfig                                |   1 +
+>>   drivers/iio/Makefile                               |   1 +
+>>   drivers/iio/health/Kconfig                         |  25 +
+>>   drivers/iio/health/Makefile                        |   6 +
+>>   drivers/iio/health/afe4404.c                       | 619 +++++++++++++++++++++
+>>   drivers/iio/health/afe440x.h                       | 168 ++++++
+>>   7 files changed, 840 insertions(+)
+>>   create mode 100644 Documentation/ABI/testing/sysfs-bus-iio-health-afe4404
+>>   create mode 100644 drivers/iio/health/Kconfig
+>>   create mode 100644 drivers/iio/health/Makefile
+>>   create mode 100644 drivers/iio/health/afe4404.c
+>>   create mode 100644 drivers/iio/health/afe440x.h
 >>
->>> Following is my idea to do DMA tracking.
->>>
->>> Inject event to VF driver after memory iterate stage
->>> and before stop VCPU and then VF driver marks dirty all
->>> using DMA memory. The new allocated pages also need to
->>> be marked dirty before stopping VCPU. All dirty memory
->>> in this time slot will be migrated until stop-and-copy
->>> stage. We also need to make sure to disable VF via clearing the
->>> bus master enable bit for VF before migrating these memory.
->>
->>
->> The ordering of your explanation here doesn't quite work.  What needs to
->> happen is that you have to disable DMA and then mark the pages as dirty.
->>   What the disabling of the BME does is signal to the hypervisor that
->> the device is now stopped.  The ixgbevf_suspend call already supported
->> by the driver is almost exactly what is needed to take care of something
->> like this.
+>> diff --git a/Documentation/ABI/testing/sysfs-bus-iio-health-afe4404 b/Documentation/ABI/testing/sysfs-bus-iio-health-afe4404
+>> new file mode 100644
+>> index 0000000..c104d66
+>> --- /dev/null
+>> +++ b/Documentation/ABI/testing/sysfs-bus-iio-health-afe4404
+>> @@ -0,0 +1,20 @@
+>> +What:		/sys/bus/iio/devices/iio:deviceX/tia_resistanceY
+>> +		/sys/bus/iio/devices/iio:deviceX/tia_capacitanceY
+>> +Date:		December 2015
+>> +KernelVersion:
+>> +Contact:	Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
+>> +Description:
+>> +		Get and set the resistance and the capacitance settings for the
+>> +		Transimpedance Amplifier. Y is 1 for Rf1 and Cf1, Y is 2 for
+>> +		Rf2 and Cf2 values.
+>> +		Resistance setting is from 0 -> 7
+>> +		Capcitance setting is from 0 -> 15
+> No magic numbers if at all possible.  These correspond to real resistances
+> and capacitances.
 >
+> You also want an _available attribute for each of them for the different
+> possible values.
 >
-> This is why I hope to reserve a piece of space in the dma page to do dummy
-> write. This can help to mark page dirty while not require to stop DMA and
-> not race with DMA data.
+> I'm not overly keep on the naming still but it's part specific enough that
+> if you fix the units I'll let it go ;)
 
-You can't and it will still race.  What concerns me is that your
-patches and the document you referenced earlier show a considerable
-lack of understanding about how DMA and device drivers work.  There is
-a reason why device drivers have so many memory barriers and the like
-in them.  The fact is when you have CPU and a device both accessing
-memory things have to be done in a very specific order and you cannot
-violate that.
+I'm not sure if there is a clean way to do this, these are not channels
+so parsing input will need checks based on what kind of register and value
+we send in, these are raw input to the registers for other registers, I
+changed the name to attempt to make it clear to users these are not
+channels but raw registers (out_resistance1_raw -> tia_resistance1).
 
-If you have a contiguous block of memory you expect the device to
-write into you cannot just poke a hole in it.  Such a situation is not
-supported by any hardware that I am aware of.
+I could still make this more clear in the ABI doc:
 
-As far as writing to dirty the pages it only works so long as you halt
-the DMA and then mark the pages dirty.  It has to be in that order.
-Any other order will result in data corruption and I am sure the NFV
-customers definitely don't want that.
+	Valid capacitance settings are 0 -> 7 which correspond to
+	5pF, 2.5pF, 10pF, 7.5pF, 20pF, 17.5pF, 25pF, and 22.5pF
+	respectively.
 
-> If can't do that, we have to stop DMA in a short time to mark all dma
-> pages dirty and then reenable it. I am not sure how much we can get by
-> this way to track all DMA memory with device running during migration. I
-> need to do some tests and compare results with stop DMA diretly at last
-> stage during migration.
+or something similar.
 
-We have to halt the DMA before we can complete the migration.  So
-please feel free to test this.
+>> +
+>> +What:		/sys/bus/iio/devices/iio:deviceX/tia_separate_en
+>> +Date:		December 2015
+>> +KernelVersion:
+>> +Contact:	Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
+>> +Description:
+>> +		Enable or disable separate settings for the TransImpedance
+>> +		Amplifier above, when disabled both values are set by the
+>> +		first channel.
+> Weird and wonderful but fine for a part specific attibute!
+>
+> As noted below, I think we need to document all the new ABI even though
+> much of it is just extended names on standard channels.
+>
 
-In addition I still feel you would be better off taking this in
-smaller steps.  I still say your first step would be to come up with a
-generic solution for the dirty page tracking like the dma_mark_clean()
-approach I had mentioned earlier.  If I get time I might try to take
-care of it myself later this week since you don't seem to agree with
-that approach.
+Works for me, I'll add them back.
 
->>
->> The question is how we would go about triggering it.  I really don't
->> think the PCI configuration space approach is the right idea.
->>  I wonder
->> if we couldn't get away with some sort of ACPI event instead.  We
->> already require ACPI support in order to shut down the system
->> gracefully, I wonder if we couldn't get away with something similar in
->> order to suspend/resume the direct assigned devices gracefully.
+>> diff --git a/drivers/iio/Kconfig b/drivers/iio/Kconfig
+>> index 66792e7..ac085ab 100644
+>> --- a/drivers/iio/Kconfig
+>> +++ b/drivers/iio/Kconfig
+>> @@ -52,6 +52,7 @@ source "drivers/iio/common/Kconfig"
+>>   source "drivers/iio/dac/Kconfig"
+>>   source "drivers/iio/frequency/Kconfig"
+>>   source "drivers/iio/gyro/Kconfig"
+>> +source "drivers/iio/health/Kconfig"
+>>   source "drivers/iio/humidity/Kconfig"
+>>   source "drivers/iio/imu/Kconfig"
+>>   source "drivers/iio/light/Kconfig"
+>> diff --git a/drivers/iio/Makefile b/drivers/iio/Makefile
+>> index aeca726..6c5eb2a 100644
+>> --- a/drivers/iio/Makefile
+>> +++ b/drivers/iio/Makefile
+>> @@ -18,6 +18,7 @@ obj-y += common/
+>>   obj-y += dac/
+>>   obj-y += gyro/
+>>   obj-y += frequency/
+>> +obj-y += health/
+>>   obj-y += humidity/
+>>   obj-y += imu/
+>>   obj-y += light/
+>> diff --git a/drivers/iio/health/Kconfig b/drivers/iio/health/Kconfig
+>> new file mode 100644
+>> index 0000000..526e7af
+>> --- /dev/null
+>> +++ b/drivers/iio/health/Kconfig
+>> @@ -0,0 +1,25 @@
+>> +#
+>> +# Health drivers
+>> +#
+>> +# When adding new entries keep the list in alphabetical order
+>> +
+>> +menu "Health"
+>> +
+>> +menu "Heart Rate Monitors"
+>> +
+>> +config AFE4404
+>> +	tristate "TI AFE4404 Heart Rate Monitor"
+>> +	depends on I2C
+>> +	select REGMAP_I2C
+>> +	select IIO_BUFFER
+>> +	select IIO_TRIGGERED_BUFFER
+>> +	help
+>> +	  Say yes to choose the Texas Instruments AFE4404
+>> +	  heart rate monitor and low-cost pulse oximeter.
+>> +
+>> +	  To compile this driver as a module, choose M here: the
+>> +	  module will be called afe4404.
+>> +
+>> +endmenu
+>> +
+>> +endmenu
+>> diff --git a/drivers/iio/health/Makefile b/drivers/iio/health/Makefile
+>> new file mode 100644
+>> index 0000000..c108c8d
+>> --- /dev/null
+>> +++ b/drivers/iio/health/Makefile
+>> @@ -0,0 +1,6 @@
+>> +#
+>> +# Makefile for IIO Health drivers
+>> +#
+>> +# When adding new entries keep the list in alphabetical order
+>> +
+>> +obj-$(CONFIG_AFE4404) += afe4404.o
+>> diff --git a/drivers/iio/health/afe4404.c b/drivers/iio/health/afe4404.c
+>> new file mode 100644
+>> index 0000000..d36c1d9
+>> --- /dev/null
+>> +++ b/drivers/iio/health/afe4404.c
+>> @@ -0,0 +1,619 @@
+>> +/*
+>> + * AFE4404 Heart Rate Monitors and Low-Cost Pulse Oximeters
+>> + *
+>> + * Copyright (C) 2015 Texas Instruments Incorporated - http://www.ti.com/
+>> + *	Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
+>> + *
+>> + * This program is free software; you can redistribute it and/or modify
+>> + * it under the terms of the GNU General Public License version 2 as
+>> + * published by the Free Software Foundation.
+>> + *
+>> + * This program is distributed in the hope that it will be useful, but
+>> + * WITHOUT ANY WARRANTY; without even the implied warranty of
+>> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+>> + * General Public License for more details.
+>> + */
+>> +
+>> +#include <linux/device.h>
+>> +#include <linux/delay.h>
+>> +#include <linux/err.h>
+>> +#include <linux/interrupt.h>
+>> +#include <linux/i2c.h>
+>> +#include <linux/kernel.h>
+>> +#include <linux/module.h>
+>> +#include <linux/of_gpio.h>
+>> +#include <linux/regmap.h>
+>> +#include <linux/slab.h>
+>> +#include <linux/sysfs.h>
+>> +#include <linux/regulator/consumer.h>
+>> +
+>> +#include <linux/iio/iio.h>
+>> +#include <linux/iio/sysfs.h>
+>> +#include <linux/iio/buffer.h>
+>> +#include <linux/iio/trigger.h>
+>> +#include <linux/iio/triggered_buffer.h>
+>> +#include <linux/iio/trigger_consumer.h>
+>> +
+>> +#include "afe440x.h"
+>> +
+>> +#define AFE4404_DRIVER_NAME		"afe4404"
+>> +
+>> +/* AFE4404 registers */
+>> +#define AFE4404_TIA_GAIN_SEP		0x20
+>> +#define AFE4404_TIA_GAIN		0x21
+>> +#define AFE4404_PROG_TG_STC		0x34
+>> +#define AFE4404_PROG_TG_ENDC		0x35
+>> +#define AFE4404_LED3LEDSTC		0x36
+>> +#define AFE4404_LED3LEDENDC		0x37
+>> +#define AFE4404_CLKDIV_PRF		0x39
+>> +#define AFE4404_OFFDAC			0x3a
+>> +#define AFE4404_DEC			0x3d
+>> +#define AFE4404_AVG_LED2_ALED2VAL	0x3f
+>> +#define AFE4404_AVG_LED1_ALED1VAL	0x40
+>> +
+>> +/* AFE4404 GAIN register fields */
+>> +#define AFE4404_TIA_GAIN_RES_MASK	GENMASK(2, 0)
+>> +#define AFE4404_TIA_GAIN_RES_SHIFT	0
+>> +#define AFE4404_TIA_GAIN_CAP_MASK	GENMASK(5, 3)
+>> +#define AFE4404_TIA_GAIN_CAP_SHIFT	3
+>> +
+>> +/* AFE4404 LEDCNTRL register fields */
+>> +#define AFE4404_LEDCNTRL_ILED1_MASK	GENMASK(5, 0)
+>> +#define AFE4404_LEDCNTRL_ILED1_SHIFT	0
+>> +#define AFE4404_LEDCNTRL_ILED2_MASK	GENMASK(11, 6)
+>> +#define AFE4404_LEDCNTRL_ILED2_SHIFT	6
+>> +#define AFE4404_LEDCNTRL_ILED3_MASK	GENMASK(17, 12)
+>> +#define AFE4404_LEDCNTRL_ILED3_SHIFT	12
+>> +
+>> +/* AFE4404 CONTROL2 register fields */
+>> +#define AFE440X_CONTROL2_ILED_2X_MASK	BIT(17)
+>> +#define AFE440X_CONTROL2_ILED_2X_SHIFT	17
+>> +
+>> +/* AFE4404 CONTROL3 register fields */
+>> +#define AFE440X_CONTROL3_OSC_ENABLE	BIT(9)
+>> +
+>> +/* AFE4404 OFFDAC register current fields */
+>> +#define AFE4404_OFFDAC_CURR_LED1_MASK	GENMASK(9, 5)
+>> +#define AFE4404_OFFDAC_CURR_LED1_SHIFT	5
+>> +#define AFE4404_OFFDAC_CURR_LED2_MASK	GENMASK(19, 15)
+>> +#define AFE4404_OFFDAC_CURR_LED2_SHIFT	15
+>> +#define AFE4404_OFFDAC_CURR_LED3_MASK	GENMASK(4, 0)
+>> +#define AFE4404_OFFDAC_CURR_LED3_SHIFT	0
+>> +#define AFE4404_OFFDAC_CURR_ALED1_MASK	GENMASK(14, 10)
+>> +#define AFE4404_OFFDAC_CURR_ALED1_SHIFT	10
+>> +#define AFE4404_OFFDAC_CURR_ALED2_MASK	GENMASK(4, 0)
+>> +#define AFE4404_OFFDAC_CURR_ALED2_SHIFT	0
+>> +
+>> +/* AFE4404 NULL fields */
+>> +#define NULL_MASK	0
+>> +#define NULL_SHIFT	0
+>> +
+>> +/* AFE4404 TIA_GAIN_CAP values */
+>> +#define AFE4404_TIA_GAIN_CAP_5_P	0x0
+>> +#define AFE4404_TIA_GAIN_CAP_2_5_P	0x1
+>> +#define AFE4404_TIA_GAIN_CAP_10_P	0x2
+>> +#define AFE4404_TIA_GAIN_CAP_7_5_P	0x3
+>> +#define AFE4404_TIA_GAIN_CAP_20_P	0x4
+>> +#define AFE4404_TIA_GAIN_CAP_17_5_P	0x5
+>> +#define AFE4404_TIA_GAIN_CAP_25_P	0x6
+>> +#define AFE4404_TIA_GAIN_CAP_22_5_P	0x7
+>> +
+>> +/* AFE4404 TIA_GAIN_RES values */
+>> +#define AFE4404_TIA_GAIN_RES_500_K	0x0
+>> +#define AFE4404_TIA_GAIN_RES_250_K	0x1
+>> +#define AFE4404_TIA_GAIN_RES_100_K	0x2
+>> +#define AFE4404_TIA_GAIN_RES_50_K	0x3
+>> +#define AFE4404_TIA_GAIN_RES_25_K	0x4
+>> +#define AFE4404_TIA_GAIN_RES_10_K	0x5
+>> +#define AFE4404_TIA_GAIN_RES_1_M	0x6
+>> +#define AFE4404_TIA_GAIN_RES_2_M	0x7
+>> +
+>> +enum afe4404_chan_id {
+>> +	LED1,
+>> +	ALED1,
+>> +	LED2,
+>> +	ALED2,
+>> +	LED3,
+>> +	LED1_ALED1,
+>> +	LED2_ALED2,
+>> +	AVG_LED1_ALED1,
+>> +	AVG_LED2_ALED2,
+>> +	ILED1,
+>> +	ILED2,
+>> +	ILED3,
+>> +};
+>> +
+>> +#define AFE4404_REG_INFO(_id, _reg, _offreg, _sm)		\
+>> +	[_id] = {						\
+>> +		.reg = _reg,					\
+>> +		.offreg = _offreg,				\
+>> +		.shift = _sm ## _SHIFT,				\
+>> +		.mask = _sm ## _MASK,				\
+>> +	}
+>> +
+>> +struct {
+>> +	unsigned int reg;
+>> +	unsigned int offreg;
+>> +	unsigned int shift;
+>> +	unsigned int mask;
+>> +} reg_info[] = {
+>> +	AFE4404_REG_INFO(LED1, AFE440X_LED1VAL, AFE4404_OFFDAC, AFE4404_OFFDAC_CURR_LED1),
+>> +	AFE4404_REG_INFO(ALED1, AFE440X_ALED1VAL, AFE4404_OFFDAC, AFE4404_OFFDAC_CURR_ALED1),
+>> +	AFE4404_REG_INFO(LED2, AFE440X_LED2VAL, AFE4404_OFFDAC, AFE4404_OFFDAC_CURR_LED2),
+>> +	AFE4404_REG_INFO(ALED2, AFE440X_ALED2VAL, AFE4404_OFFDAC, AFE4404_OFFDAC_CURR_ALED2),
+>> +	AFE4404_REG_INFO(LED3, AFE440X_ALED2VAL, 0, NULL),
+>> +	AFE4404_REG_INFO(LED1_ALED1, AFE440X_LED1_ALED1VAL, 0, NULL),
+>> +	AFE4404_REG_INFO(LED2_ALED2, AFE440X_LED2_ALED2VAL, 0, NULL),
+>> +	AFE4404_REG_INFO(AVG_LED1_ALED1, AFE4404_AVG_LED1_ALED1VAL, 0, NULL),
+>> +	AFE4404_REG_INFO(AVG_LED2_ALED2, AFE4404_AVG_LED2_ALED2VAL, 0, NULL),
+>> +	AFE4404_REG_INFO(ILED1, AFE440X_LEDCNTRL, 0, AFE4404_LEDCNTRL_ILED1),
+>> +	AFE4404_REG_INFO(ILED2, AFE440X_LEDCNTRL, 0, AFE4404_LEDCNTRL_ILED2),
+>> +	AFE4404_REG_INFO(ILED3, AFE440X_LEDCNTRL, 0, AFE4404_LEDCNTRL_ILED3),
+>> +};
+>> +
+>> +static const struct iio_chan_spec afe4404_channels[] = {
+>> +	/* ADC values */
+>> +	AFE440X_INTENSITY_CHAN(LED1, "led1", BIT(IIO_CHAN_INFO_OFFSET)),
+>> +	AFE440X_INTENSITY_CHAN(ALED1, "led1_ambient", BIT(IIO_CHAN_INFO_OFFSET)),
+> (this one is still 'interesting' as it's nothing to do with led1 other than it's
+> taken temporily close to it - the led is presumably off at the time! - I can't
+> think of a better way though - maybe another reviewer will)
+>> +	AFE440X_INTENSITY_CHAN(LED2, "led2", BIT(IIO_CHAN_INFO_OFFSET)),
+>> +	AFE440X_INTENSITY_CHAN(ALED2, "led2_ambient", BIT(IIO_CHAN_INFO_OFFSET)),
+>> +	AFE440X_INTENSITY_CHAN(LED3, "led3", BIT(IIO_CHAN_INFO_OFFSET)),
+>> +	AFE440X_INTENSITY_CHAN(LED1_ALED1, "led1-led1_ambient", 0),
+>> +	AFE440X_INTENSITY_CHAN(LED2_ALED2, "led2-led2_ambient", 0),
+> This trick for the differential cases is a cludge to work around deficiencies
+> in our existing infrastructure, but it's straight forward one for an unusual
+> case so fair enough.
+>
+>> +	AFE440X_INTENSITY_CHAN(AVG_LED1_ALED1, "led1-led1_ambient_mean", 0),
+>> +	AFE440X_INTENSITY_CHAN(AVG_LED2_ALED2, "led2-led2_ambient_mean", 0),
+> I'd love to better describe these two with the filters made explicit as
+> separate sysfs attributes rather than here.  It's kind of backwards but
+> we do have oversampling to define what is happening here.  I also note
+> that the true output rate of this is lower than the other channels.
+>
+> If we were to propose a decimation to match with oversampling and to
+> explicitly document them as a pair it might work.  Which is relevant
+> for a channel is dependent on the 'natural - e.g. the trigger rate'
+> at which we fill the buffer.  So if the whole device is performing
+> decimation and we read at the reduced frequency then it is oversampling
+> - if we read at the original frequency it is decimation.
+>
+> What do you think?
+
+I'm thinking these last two are kind of a mess right now, also I don't
+expose the setting to enable these yet anyway, so, I think I will just
+drop them and add them back in a latter patch that adds all their
+required functionality together.
+
+>> +	/* LED current */
+>> +	AFE440X_CURRENT_CHAN(ILED1, "led1"),
+>> +	AFE440X_CURRENT_CHAN(ILED2, "led2"),
+>> +	AFE440X_CURRENT_CHAN(ILED3, "led3"),
+>
+> Whilst all these now just 'stretch' :) the current ABI structure they
+> do need explicitly documenting somewhere.  Probably odd enough that they'll
+> want to go in your part specific doc rather than just adding the specific
+> naming to the existing abi.
+>
+
+ACK
+
+>> +};
+>> +
+>> +static ssize_t afe440x_show_register(struct device *dev,
+>> +				     struct device_attribute *attr,
+>> +				     char *buf)
+>> +{
+>> +	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+>> +	struct afe440x_data *afe440x = iio_device_get_drvdata(indio_dev);
+>> +	struct afe440x_reg *afe440x_reg = to_afe440x_reg(attr);
+>> +	unsigned int reg_val;
+>> +	int ret;
+>> +
+>> +	ret = regmap_read(afe440x->regmap, afe440x_reg->reg, &reg_val);
+>> +	if (ret)
+>> +		return ret;
+>> +
+>> +	reg_val >>= afe440x_reg->shift;
+>> +	reg_val &= afe440x_reg->mask;
+>> +
+>> +	return scnprintf(buf, PAGE_SIZE, "%u\n", reg_val);
+>> +}
+>> +
+>> +static ssize_t afe440x_store_register(struct device *dev,
+>> +				      struct device_attribute *attr,
+>> +				      const char *buf, size_t count)
+>> +{
+>> +	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+>> +	struct afe440x_data *afe440x = iio_device_get_drvdata(indio_dev);
+>> +	struct afe440x_reg *afe440x_reg = to_afe440x_reg(attr);
+>> +	unsigned int reg_val;
+>> +	int val, ret;
+>> +
+>> +	if (kstrtoint(buf, 0, &val))
+>> +		return -EINVAL;
+>> +
+>> +	ret = regmap_read(afe440x->regmap, afe440x_reg->reg, &reg_val);
+>> +	if (ret)
+>> +		return ret;
+>> +
+>> +	reg_val &= ~afe440x_reg->mask;
+>> +	reg_val |= ((val << afe440x_reg->shift) & afe440x_reg->mask);
+>> +
+>> +	ret = regmap_write(afe440x->regmap, afe440x_reg->reg, reg_val);
+>> +	if (ret)
+>> +		return ret;
+>> +
+>> +	return count;
+>> +}
+>> +
+>> +AFE440X_ATTR(tia_separate_en, AFE4404_TIA_GAIN_SEP, AFE440X_TIAGAIN_ENSEPGAIN);
+>> +
+>> +AFE440X_ATTR(tia_resistance1, AFE4404_TIA_GAIN, AFE4404_TIA_GAIN_RES);
+>> +AFE440X_ATTR(tia_capacitance1, AFE4404_TIA_GAIN, AFE4404_TIA_GAIN_CAP);
+>> +
+>> +AFE440X_ATTR(tia_resistance2, AFE4404_TIA_GAIN_SEP, AFE4404_TIA_GAIN_RES);
+>> +AFE440X_ATTR(tia_capacitance2, AFE4404_TIA_GAIN_SEP, AFE4404_TIA_GAIN_CAP);
+>> +
+>> +static struct attribute *afe4404_attributes[] = {
+>> +	&afe440x_reg_tia_separate_en.dev_attr.attr,
+>> +	&afe440x_reg_tia_resistance1.dev_attr.attr,
+>> +	&afe440x_reg_tia_capacitance1.dev_attr.attr,
+>> +	&afe440x_reg_tia_resistance2.dev_attr.attr,
+>> +	&afe440x_reg_tia_capacitance2.dev_attr.attr,
+>> +	NULL
+>> +};
+>> +
+>> +static const struct attribute_group afe4404_attribute_group = {
+>> +	.attrs = afe4404_attributes
+>> +};
+>> +
+>> +static int afe440x_read_raw(struct iio_dev *indio_dev,
+>> +			    struct iio_chan_spec const *chan,
+>> +			    int *val, int *val2, long mask)
+>> +{
+>> +	struct afe440x_data *afe440x = iio_device_get_drvdata(indio_dev);
+>> +	int ret;
+>> +
+>> +	switch (chan->type) {
+>> +	case IIO_INTENSITY:
+>> +		switch (mask) {
+>> +		case IIO_CHAN_INFO_RAW:
+>> +			ret = regmap_read(afe440x->regmap,
+>> +					  reg_info[chan->address].reg, val);
+>> +			if (ret)
+>> +				return ret;
+>> +			return IIO_VAL_INT;
+>> +		case IIO_CHAN_INFO_OFFSET:
+>> +			ret = regmap_read(afe440x->regmap,
+>> +					  reg_info[chan->address].offreg, val);
+>> +			if (ret)
+>> +				return ret;
+>> +			*val &= reg_info[chan->address].mask;
+>> +			*val >>= reg_info[chan->address].shift;
+>> +			return IIO_VAL_INT;
+>> +		}
+>> +		break;
+>> +	case IIO_CURRENT:
+>> +		switch (mask) {
+>> +		case IIO_CHAN_INFO_RAW:
+>> +			ret = regmap_read(afe440x->regmap,
+>> +					  reg_info[chan->address].reg, val);
+>> +			if (ret)
+>> +				return ret;
+>> +			*val &= reg_info[chan->address].mask;
+>> +			*val >>= reg_info[chan->address].shift;
+>> +			return IIO_VAL_INT;
+>> +		case IIO_CHAN_INFO_SCALE:
+>> +			*val = 0;
+>> +			*val2 = 800000;
+>> +			return IIO_VAL_INT_PLUS_MICRO;
+>> +		}
+>> +		break;
+>> +	default:
+>> +		break;
+>> +	}
+>> +
+>> +	return -EINVAL;
+>> +}
+>> +
+>> +static int afe440x_write_raw(struct iio_dev *indio_dev,
+>> +			     struct iio_chan_spec const *chan,
+>> +			     int val, int val2, long mask)
+>> +{
+>> +	struct afe440x_data *afe440x = iio_device_get_drvdata(indio_dev);
+>> +	unsigned int reg_val;
+>> +	int ret;
+>> +
+>> +	switch (chan->type) {
+>> +	case IIO_INTENSITY:
+>> +		switch (mask) {
+>> +		case IIO_CHAN_INFO_OFFSET:
+>> +			ret = regmap_read(afe440x->regmap,
+>> +					  reg_info[chan->address].offreg,
+>> +					  &reg_val);
+>> +			if (ret)
+>> +				return ret;
+>> +			reg_val &= ~reg_info[chan->address].mask;
+>> +			reg_val |= ((val << reg_info[chan->address].shift) &
+>> +					reg_info[chan->address].mask);
+>> +			return regmap_write(afe440x->regmap,
+>> +					    reg_info[chan->address].offreg,
+>> +					    reg_val);
+>> +		}
+>> +		break;
+>> +	case IIO_CURRENT:
+>> +		switch (mask) {
+>> +		case IIO_CHAN_INFO_RAW:
+>> +			ret = regmap_read(afe440x->regmap,
+>> +					  reg_info[chan->address].reg,
+>> +					  &reg_val);
+>> +			if (ret)
+>> +				return ret;
+>> +			reg_val &= ~reg_info[chan->address].mask;
+>> +			reg_val |= ((val << reg_info[chan->address].shift) &
+>> +					reg_info[chan->address].mask);
+>> +			return regmap_write(afe440x->regmap,
+>> +					    reg_info[chan->address].reg,
+>> +					    reg_val);
+>> +		}
+>> +		break;
+>> +	default:
+>> +		break;
+>> +	}
+>> +
+>> +	return -EINVAL;
+>> +}
+>> +
+>> +static const struct iio_info afe4404_iio_info = {
+>> +	.attrs	= &afe4404_attribute_group,
+>> +	.read_raw = afe440x_read_raw,
+>> +	.write_raw = afe440x_write_raw,
+>> +	.driver_module = THIS_MODULE,
+>> +};
+>> +
+>> +static irqreturn_t afe440x_trigger_handler(int irq, void *private)
+>> +{
+>> +	struct iio_poll_func *pf = private;
+>> +	struct iio_dev *indio_dev = pf->indio_dev;
+>> +	struct afe440x_data *afe440x = iio_device_get_drvdata(indio_dev);
+>> +	int ret, bit, reg, i = 0;
+>> +	s32 buffer[12];
+>> +
+>> +	for_each_set_bit(bit, indio_dev->active_scan_mask,
+>> +			 indio_dev->masklength) {
+>> +		reg = reg_info[bit].reg;
+> why the local reg variable? Stick it dirrectly in the functional call.
+
+No reason, just looked better to me. Will fix.
+
+>> +		ret = regmap_read(afe440x->regmap, reg, &buffer[i++]);
+>> +		if (ret)
+>> +			goto err;
+>> +	}
+>> +
+>> +	iio_push_to_buffers_with_timestamp(indio_dev, buffer, pf->timestamp);
+>> +err:
+>> +	iio_trigger_notify_done(indio_dev->trig);
+>> +
+>> +	return IRQ_HANDLED;
+>> +}
+>> +
+>> +static const struct iio_trigger_ops afe440x_trigger_ops = {
+>> +	.owner = THIS_MODULE,
+>> +};
+>> +
+>> +/* Default timings from data-sheet */
+>> +#define AFE4404_TIMING_PAIRS			\
+>> +	{ AFE440X_PRPCOUNT,	39999	},	\
+>> +	{ AFE440X_LED2LEDSTC,	0	},	\
+>> +	{ AFE440X_LED2LEDENDC,	398	},	\
+>> +	{ AFE440X_LED2STC,	80	},	\
+>> +	{ AFE440X_LED2ENDC,	398	},	\
+>> +	{ AFE440X_ADCRSTSTCT0,	5600	},	\
+>> +	{ AFE440X_ADCRSTENDCT0,	5606	},	\
+>> +	{ AFE440X_LED2CONVST,	5607	},	\
+>> +	{ AFE440X_LED2CONVEND,	6066	},	\
+>> +	{ AFE4404_LED3LEDSTC,	400	},	\
+>> +	{ AFE4404_LED3LEDENDC,	798	},	\
+>> +	{ AFE440X_ALED2STC,	480	},	\
+>> +	{ AFE440X_ALED2ENDC,	798	},	\
+>> +	{ AFE440X_ADCRSTSTCT1,	6068	},	\
+>> +	{ AFE440X_ADCRSTENDCT1,	6074	},	\
+>> +	{ AFE440X_ALED2CONVST,	6075	},	\
+>> +	{ AFE440X_ALED2CONVEND,	6534	},	\
+>> +	{ AFE440X_LED1LEDSTC,	800	},	\
+>> +	{ AFE440X_LED1LEDENDC,	1198	},	\
+>> +	{ AFE440X_LED1STC,	880	},	\
+>> +	{ AFE440X_LED1ENDC,	1198	},	\
+>> +	{ AFE440X_ADCRSTSTCT2,	6536	},	\
+>> +	{ AFE440X_ADCRSTENDCT2,	6542	},	\
+>> +	{ AFE440X_LED1CONVST,	6543	},	\
+>> +	{ AFE440X_LED1CONVEND,	7003	},	\
+>> +	{ AFE440X_ALED1STC,	1280	},	\
+>> +	{ AFE440X_ALED1ENDC,	1598	},	\
+>> +	{ AFE440X_ADCRSTSTCT3,	7005	},	\
+>> +	{ AFE440X_ADCRSTENDCT3,	7011	},	\
+>> +	{ AFE440X_ALED1CONVST,	7012	},	\
+>> +	{ AFE440X_ALED1CONVEND,	7471	},	\
+>> +	{ AFE440X_PDNCYCLESTC,	7671	},	\
+>> +	{ AFE440X_PDNCYCLEENDC,	39199	}
+>> +
+>> +static const struct reg_sequence afe4404_reg_sequences[] = {
+>> +	AFE4404_TIMING_PAIRS,
+>> +	{ AFE440X_CONTROL1, AFE440X_CONTROL1_TIMEREN },
+>> +	{ AFE4404_TIA_GAIN, AFE4404_TIA_GAIN_RES_50_K },
+>> +	{ AFE440X_LEDCNTRL, (0xf << AFE4404_LEDCNTRL_ILED1_SHIFT) |
+>> +			    (0x3 << AFE4404_LEDCNTRL_ILED2_SHIFT) |
+>> +			    (0x3 << AFE4404_LEDCNTRL_ILED3_SHIFT) },
+>> +	{ AFE440X_CONTROL2, AFE440X_CONTROL3_OSC_ENABLE	},
+>> +};
+>> +
+>> +static const struct regmap_range afe4404_yes_ranges[] = {
+>> +	regmap_reg_range(AFE440X_LED2VAL, AFE440X_LED1_ALED1VAL),
+>> +	regmap_reg_range(AFE4404_AVG_LED2_ALED2VAL, AFE4404_AVG_LED1_ALED1VAL),
+>> +};
+>> +
+>> +static const struct regmap_access_table afe4404_volatile_table = {
+>> +	.yes_ranges = afe4404_yes_ranges,
+>> +	.n_yes_ranges = ARRAY_SIZE(afe4404_yes_ranges),
+>> +};
+>> +
+>> +static const struct regmap_config afe4404_regmap_config = {
+>> +	.reg_bits = 8,
+>> +	.val_bits = 24,
+>> +
+>> +	.max_register = AFE4404_AVG_LED1_ALED1VAL,
+>> +	.cache_type = REGCACHE_RBTREE,
+>> +	.volatile_table = &afe4404_volatile_table,
+>> +};
+>> +
+>> +#ifdef CONFIG_OF
+>> +static const struct of_device_id afe4404_of_match[] = {
+>> +	{ .compatible = "ti,afe4404", },
+>> +	{ /* sentinel */ },
+>> +};
+>> +MODULE_DEVICE_TABLE(of, afe4404_of_match);
+>> +#endif
+>> +
+>> +static int afe440x_suspend(struct device *dev)
+>> +{
+>> +	struct afe440x_data *afe440x = dev_get_drvdata(dev);
+>> +	int ret;
+>> +
+>> +	ret = regmap_update_bits(afe440x->regmap, AFE440X_CONTROL2,
+>> +				 AFE440X_CONTROL2_PDN_AFE,
+>> +				 AFE440X_CONTROL2_PDN_AFE);
+>> +	if (ret)
+>> +		return ret;
+>> +
+>> +	ret = regulator_disable(afe440x->regulator);
+>> +	if (ret) {
+>> +		dev_err(dev, "Failed to disable regulator\n");
+>> +		return ret;
+>> +	}
+> Some of the static code checkers (probably coccicheck) will
+> point out that moving the return ret out of the above brackets
+> will have the same effect as you have here in less code.
+>
+> It's worth running sparse, smatch and coccicheck on drivers before
+> submitting as otherwise we miss things and then get a series
+> of 'fix' patches after this hits a public tree rather than the list
+> (you sometimes get them for posting on the list as well these days!)
+
+Makes sense, will do.
+
+>> +
+>> +	return 0;
+>> +}
+>> +
+>> +static int afe440x_resume(struct device *dev)
+>> +{
+>> +	struct afe440x_data *afe440x = dev_get_drvdata(dev);
+>> +	int ret;
+>> +
+>> +	ret = regmap_update_bits(afe440x->regmap, AFE440X_CONTROL2,
+>> +				 AFE440X_CONTROL2_PDN_AFE, 0);
+>> +	if (ret)
+>> +		return ret;
+> I'd expect you want to turn the device off on remove given you turn
+> it on during a resume...
+>> +
+>> +	ret = regulator_enable(afe440x->regulator);
+>> +	if (ret) {
+>> +		dev_err(dev, "Failed to enable regulator\n");
+>> +		return ret;
+>> +	}
+> You turn the reg on here, but nowhere else that I can see.
+> Why should it be on during the initial start?
+
+I'm not sure but I belive the regulator will be enabled on 'get'
+and when all devices using the regulator have 'put' it will be
+turned off. I manualy disable/enable in the PM code so I don't
+have to put/get them agian.
+
+>> +
+>> +	return 0;
+>> +}
+>> +
+>> +SIMPLE_DEV_PM_OPS(afe440x_pm_ops, afe440x_suspend, afe440x_resume);
+>> +
+>> +static int afe440x_iio_setup(struct afe440x_data *afe440x)
+>> +{
+>> +	struct iio_dev *indio_dev;
+>> +	int ret;
+>> +
+>> +	indio_dev = devm_iio_device_alloc(afe440x->dev, 0);
+>> +	if (!indio_dev) {
+>> +		dev_err(afe440x->dev, "Unable to allocate IIO device\n");
+>> +		return -ENOMEM;
+>> +	}
+>> +
+>> +	iio_device_set_drvdata(indio_dev, afe440x);
+>> +
+>> +	indio_dev->modes = INDIO_DIRECT_MODE;
+>> +	indio_dev->dev.parent = afe440x->dev;
+>> +	indio_dev->channels = afe440x->channels;
+>> +	indio_dev->num_channels = afe440x->num_channels;
+>> +	indio_dev->name = afe440x->name;
+>> +	indio_dev->info = afe440x->info;
+>> +
+>> +	if (afe440x->irq > 0) {
+>> +		afe440x->trig = devm_iio_trigger_alloc(afe440x->dev,
+>> +						       "%s-dev%d",
+>> +						       indio_dev->name,
+>> +						       indio_dev->id);
+>> +		if (!afe440x->trig) {
+>> +			dev_err(afe440x->dev, "Unable to allocate IIO trigger\n");
+>> +			return -ENOMEM;
+>> +		}
+>> +
+>> +		iio_trigger_set_drvdata(afe440x->trig, indio_dev);
+>> +
+>> +		afe440x->trig->ops = &afe440x_trigger_ops;
+>> +		afe440x->trig->dev.parent = afe440x->dev;
+>> +
+>> +		ret = iio_trigger_register(afe440x->trig);
+>> +		if (ret) {
+>> +			dev_err(afe440x->dev, "Unable to register IIO trigger\n");
+>> +			return ret;
+>> +		}
+>> +
+>> +		ret = devm_request_threaded_irq(afe440x->dev, afe440x->irq,
+>> +						iio_trigger_generic_data_rdy_poll,
+>> +						NULL, IRQF_ONESHOT,
+>> +						afe440x->name, afe440x->trig);
+>> +		if (ret) {
+>> +			dev_err(afe440x->dev, "Unable to request IRQ\n");
+>> +			return ret;
+>> +		}
+>> +	}
+>> +
+>> +	ret = iio_triggered_buffer_setup(indio_dev, &iio_pollfunc_store_time,
+>> +					 &afe440x_trigger_handler, NULL);
+>> +	if (ret) {
+>> +		dev_err(afe440x->dev, "Unable to setup buffer\n");
+>> +		return ret;
+>> +	}
+>> +
+>> +	ret = devm_iio_device_register(afe440x->dev, indio_dev);
+> This suprises me a little - I'd expect such a complex part to
+> do at least some power saving or similar...
+>
+> If that is the case you'll want to do that in the remove after the device
+> is unregistered (to avoid a race with userspace interfaces still available).
+>
+> Can always be added in a later patch however!
+
+Why do today what you can put off until tomorrow :) I'll look into that
+in a later patch.
+
+>> +	if (ret) {
+>> +		dev_err(afe440x->dev, "Unable to register IIO device\n");
+>> +		return ret;
+>> +	}
+>> +
+>> +	return 0;
+>> +}
+>> +
+>> +static int afe4404_probe(struct i2c_client *client,
+>> +			 const struct i2c_device_id *id)
+>> +{
+>> +	struct afe440x_data *afe440x;
+>> +	int ret;
+>> +
+>> +	afe440x = devm_kzalloc(&client->dev, sizeof(*afe440x), GFP_KERNEL);
+>> +	if (!afe440x)
+>> +		return -ENOMEM;
+> This is all still backwards to my mind and could be easily refactored
+> to provide the device specific stuff in a similar way to other IIO drivers
+> do it with a mixture of const data and appropriate callbacks.
+>
+> I appreciate I haven't seen the other driver you mentioned shares a lot
+> of the code, but I doubt it does anything that couldn't be handled that
+> way around.
+
+I'm thinking now that this driver may be getting close to correct, I will
+add the other part as part of this series if that is OK. Should clear up
+some of the issues below to have them at the same time.
+
+>> +
+>> +	i2c_set_clientdata(client, afe440x);
+>> +
+>> +	afe440x->dev = &client->dev;
+>> +	afe440x->irq = client->irq;
+>> +
+>> +	afe440x->regmap = devm_regmap_init_i2c(client, &afe4404_regmap_config);
+>> +	if (IS_ERR(afe440x->regmap)) {
+>> +		dev_err(afe440x->dev, "Unable to allocate register map\n");
+>> +		return PTR_ERR(afe440x->regmap);
+>> +	}
+>> +
+>> +	afe440x->regulator = devm_regulator_get(afe440x->dev, "tx_sup");
+>> +	if (IS_ERR(afe440x->regulator)) {
+>> +		dev_err(afe440x->dev, "Unable to get regulator\n");
+>> +		return PTR_ERR(afe440x->regulator);
+>> +	}
+> Given you turn the reg on during the resume, I'm guessing you want to turn
+> it on here and off in remove?  No reason to assume it is on when the
+> board is powered up!
+>
+>> +
+>> +	ret = regmap_write(afe440x->regmap, AFE440X_CONTROL0,
+>> +			   AFE440X_CONTROL0_SW_RESET);
+>> +	if (ret) {
+>> +		dev_err(afe440x->dev, "Unable to reset device\n");
+>> +		return ret;
+>> +	}
+>> +
+>> +	ret = regmap_register_patch(afe440x->regmap, afe4404_reg_sequences,
+>> +				    ARRAY_SIZE(afe4404_reg_sequences));
+>> +	if (ret) {
+>> +		dev_err(afe440x->dev, "Unable to set register defaults\n");
+>> +		return ret;
+>> +	}
+>> +
+> As I suggest below in the header, I'd put these elements
+> into a separate structure (as they are constant for a given part)
+
+ACK
+
+>> +	afe440x->channels = afe4404_channels;
+>> +	afe440x->num_channels = ARRAY_SIZE(afe4404_channels);
+>> +	afe440x->name = AFE4404_DRIVER_NAME;
+>> +	afe440x->info = &afe4404_iio_info;
+>> +
+>> +	return afe440x_iio_setup(afe440x);
+>> +}
+>> +
+>> +static const struct i2c_device_id afe4404_ids[] = {
+>> +	{ "afe4404", 0 },
+>> +	{ /* sentinel */ },
+>> +};
+>> +MODULE_DEVICE_TABLE(i2c, afe4404_ids);
+>> +
+>> +static struct i2c_driver afe4404_i2c_driver = {
+>> +	.driver = {
+>> +		.name = AFE4404_DRIVER_NAME,
+>> +		.of_match_table = of_match_ptr(afe4404_of_match),
+>> +		.pm = &afe440x_pm_ops,
+>> +	},
+>> +	.probe = afe4404_probe,
+>> +	.id_table = afe4404_ids,
+>> +};
+>> +module_i2c_driver(afe4404_i2c_driver);
+>> +
+>> +MODULE_AUTHOR("Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>");
+>> +MODULE_DESCRIPTION("TI AFE4404 Heart Rate and Pulse Oximeter");
+>> +MODULE_LICENSE("GPL");
+>> diff --git a/drivers/iio/health/afe440x.h b/drivers/iio/health/afe440x.h
+>> new file mode 100644
+>> index 0000000..73a2577
+>> --- /dev/null
+>> +++ b/drivers/iio/health/afe440x.h
+>> @@ -0,0 +1,168 @@
+>> +/*
+>> + * AFE440X Heart Rate Monitors and Low-Cost Pulse Oximeters
+>> + *
+>> + * Author: Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
+>> + *
+>> + * Copyright: (C) 2015 Texas Instruments, Inc.
+>> + *
+>> + * This program is free software; you can redistribute it and/or modify
+>> + * it under the terms of the GNU General Public License version 2 as
+>> + * published by the Free Software Foundation.
+>> + *
+>> + * This program is distributed in the hope that it will be useful, but
+>> + * WITHOUT ANY WARRANTY; without even the implied warranty of
+>> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+>> + * General Public License for more details.
+>> + */
+>> +
+>> +#ifndef _AFE440X_H
+>> +#define _AFE440X_H
+> I know you are aiming to support more devices and hence the header file
+> spit may make sense, but please squish it into the .c file for now and
+> pull it out as part of the series adding the new devices - avoids
+> me getting patches 'tidying this up' in the interval before the other
+> device support makes it.
+
+As above would it be better for me to push both now?
+
+>> +
+>> +/* AFE440X registers */
+>> +#define AFE440X_CONTROL0		0x00
+>> +#define AFE440X_LED2STC			0x01
+>> +#define AFE440X_LED2ENDC		0x02
+>> +#define AFE440X_LED1LEDSTC		0x03
+>> +#define AFE440X_LED1LEDENDC		0x04
+>> +#define AFE440X_ALED2STC		0x05
+>> +#define AFE440X_ALED2ENDC		0x06
+>> +#define AFE440X_LED1STC			0x07
+>> +#define AFE440X_LED1ENDC		0x08
+>> +#define AFE440X_LED2LEDSTC		0x09
+>> +#define AFE440X_LED2LEDENDC		0x0a
+>> +#define AFE440X_ALED1STC		0x0b
+>> +#define AFE440X_ALED1ENDC		0x0c
+>> +#define AFE440X_LED2CONVST		0x0d
+>> +#define AFE440X_LED2CONVEND		0x0e
+>> +#define AFE440X_ALED2CONVST		0x0f
+>> +#define AFE440X_ALED2CONVEND		0x10
+>> +#define AFE440X_LED1CONVST		0x11
+>> +#define AFE440X_LED1CONVEND		0x12
+>> +#define AFE440X_ALED1CONVST		0x13
+>> +#define AFE440X_ALED1CONVEND		0x14
+>> +#define AFE440X_ADCRSTSTCT0		0x15
+>> +#define AFE440X_ADCRSTENDCT0		0x16
+>> +#define AFE440X_ADCRSTSTCT1		0x17
+>> +#define AFE440X_ADCRSTENDCT1		0x18
+>> +#define AFE440X_ADCRSTSTCT2		0x19
+>> +#define AFE440X_ADCRSTENDCT2		0x1a
+>> +#define AFE440X_ADCRSTSTCT3		0x1b
+>> +#define AFE440X_ADCRSTENDCT3		0x1c
+>> +#define AFE440X_PRPCOUNT		0x1d
+>> +#define AFE440X_CONTROL1		0x1e
+>> +#define AFE440X_TIAGAIN			0x20
+>> +#define AFE440X_TIA_AMB_GAIN		0x21
+>> +#define AFE440X_LEDCNTRL		0x22
+>> +#define AFE440X_CONTROL2		0x23
+>> +#define AFE440X_ALARM			0x29
+>> +#define AFE440X_LED2VAL			0x2a
+>> +#define AFE440X_ALED2VAL		0x2b
+>> +#define AFE440X_LED1VAL			0x2c
+>> +#define AFE440X_ALED1VAL		0x2d
+>> +#define AFE440X_LED2_ALED2VAL		0x2e
+>> +#define AFE440X_LED1_ALED1VAL		0x2f
+>> +#define AFE440X_CONTROL3		0x31
+>> +#define AFE440X_PDNCYCLESTC		0x32
+>> +#define AFE440X_PDNCYCLEENDC		0x33
+>> +
+>> +/* CONTROL0 register fields */
+>> +#define AFE440X_CONTROL0_REG_READ	BIT(0)
+>> +#define AFE440X_CONTROL0_TM_COUNT_RST	BIT(1)
+>> +#define AFE440X_CONTROL0_SW_RESET	BIT(3)
+>> +
+>> +/* CONTROL1 register fields */
+>> +#define AFE440X_CONTROL1_TIMEREN	BIT(8)
+>> +
+>> +/* TIAGAIN register fields */
+>> +#define AFE440X_TIAGAIN_ENSEPGAIN_MASK	BIT(15)
+>> +#define AFE440X_TIAGAIN_ENSEPGAIN_SHIFT	15
+>> +
+>> +/* CONTROL2 register fields */
+>> +#define AFE440X_CONTROL2_PDN_AFE	BIT(0)
+>> +#define AFE440X_CONTROL2_PDN_RX		BIT(1)
+>> +#define AFE440X_CONTROL2_DYNAMIC4	BIT(3)
+>> +#define AFE440X_CONTROL2_DYNAMIC3	BIT(4)
+>> +#define AFE440X_CONTROL2_DYNAMIC2	BIT(14)
+>> +#define AFE440X_CONTROL2_DYNAMIC1	BIT(20)
+>> +
+>> +/* CONTROL3 register fields */
+>> +#define AFE440X_CONTROL3_CLKDIV		GENMASK(2, 0)
+>> +
+>> +/* CONTROL0 values */
+>> +#define AFE440X_CONTROL0_WRITE		0x0
+>> +#define AFE440X_CONTROL0_READ		0x1
+>> +
+>> +#define AFE440X_INTENSITY_CHAN(_index, _name, _mask)		\
+>> +	{							\
+>> +		.type = IIO_INTENSITY,				\
+>> +		.channel = _index,				\
+>> +		.address = _index,				\
+>> +		.scan_index = _index,				\
+>> +		.scan_type = {					\
+>> +				.sign = 's',			\
+>> +				.realbits = 24,			\
+>> +				.storagebits = 32,		\
+>> +				.endianness = IIO_CPU,		\
+>> +		},						\
+>> +		.extend_name = _name,				\
+>> +		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |	\
+>> +			_mask,					\
+>> +	}
+>> +
+>> +#define AFE440X_CURRENT_CHAN(_index, _name)			\
+>> +	{							\
+>> +		.type = IIO_CURRENT,				\
+>> +		.channel = _index,				\
+>> +		.address = _index,				\
+>> +		.scan_index = _index,				\
+>> +		.extend_name = _name,				\
+>> +		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |	\
+>> +			BIT(IIO_CHAN_INFO_SCALE),		\
+>> +		.output = true,					\
+>> +	}
+> I'd particularly like to see the above two definitions next to the
+> arrays they are used to instantiate - makes for easier review!
+>
+>> +
+>> +struct afe440x_reg {
+>> +	struct device_attribute dev_attr;
+>> +	unsigned int reg;
+>> +	unsigned int shift;
+>> +	unsigned int mask;
+>> +};
+>> +
+>> +#define to_afe440x_reg(_dev_attr)				\
+>> +	container_of(_dev_attr, struct afe440x_reg, dev_attr)
+>> +
+>> +#define AFE440X_ATTR(_name, _reg, _field)			\
+>> +	struct afe440x_reg afe440x_reg_##_name = {		\
+>> +		.dev_attr = __ATTR(_name, (S_IRUGO | S_IWUSR),	\
+>> +				   afe440x_show_register,	\
+>> +				   afe440x_store_register),	\
+>> +		.reg = _reg,					\
+>> +		.shift = _field ## _SHIFT,			\
+>> +		.mask = _field ## _MASK,			\
+>> +	}
+> For now I'd like to see this in the .c file
+>> +
+>> +/**
+>> + * struct afe440x_data
+>> + * @dev - Device structure
+>> + * @name - Device name
+> You still have a few bits in here that are presumably there
+> to assist supporting multiple drivers.  I don't think they
+> belong in this structure.
+>
+> Split them out to say
+> struct afe440x_device_info and pass that into your iio_setup
+> function as well.  Then they won't be in this struct for it's
+> other uses which would be cleaner (at the cost of one extra
+> parameter to that function call)
+>
+> It will also split out thsoe parts that are constant for a given
+> type of device from those that are instance specific
+> (such as Irq's etc).
+>
+
+ACK
+
+>> + * @regmap - Register map of the device
+>> + * @regulator - Pointer to the regulator for the IC
+>> + * @channels - IIO channels
+>> + * @num_channels - Number of IIO channels
+>> + * @info - IIO info for device
+>> + * @trig - IIO trigger for this device
+>> + * @irq - ADC_RDY line interrupt number
+>> +**/
+> Nicely documented - thanks.
+>> +struct afe440x_data {
+>> +	struct device *dev;
+>> +	const char *name;
+>> +	struct regmap *regmap;
+>> +	struct regulator *regulator;
+>> +	struct iio_chan_spec const *channels;
+>> +	int num_channels;
+>> +	const struct iio_info *info;
+>> +	struct iio_trigger *trig;
+>> +	int irq;
+>> +};
+>> +
+>> +#endif /* _AFE440X_H */
 >>
 >
-> I don't think there is such events in the current spec.
-> Otherwise, There are two kinds of suspend/resume callbacks.
-> 1) System suspend/resume called during S2RAM and S2DISK.
-> 2) Runtime suspend/resume called by pm core when device is idle.
-> If you want to do what you mentioned, you have to change PM core and
-> ACPI spec.
-
-The thought I had was to somehow try to move the direct assigned
-devices into their own power domain and then simulate a AC power event
-where that domain is switched off.  However I don't know if there are
-ACPI events to support that since the power domain code currently only
-appears to be in use for runtime power management.
-
-That had also given me the thought to look at something like runtime
-power management for the VFs.  We would need to do a runtime
-suspend/resume.  The only problem is I don't know if there is any way
-to get the VFs to do a quick wakeup.  It might be worthwhile looking
-at trying to check with the ACPI experts out there to see if there is
-anything we can do as bypassing having to use the configuration space
-mechanism to signal this would definitely be worth it.
-
->>> The dma page allocated by VF driver also needs to reserve space
->>> to do dummy write.
->>
->>
->> No, this will not work.  If for example you have a VF driver allocating
->> memory for a 9K receive how will that work?  It isn't as if you can poke
->> a hole in the contiguous memory.
-
-This is the bit that makes your "poke a hole" solution not portable to
-other drivers.  I don't know if you overlooked it but for many NICs
-jumbo frames means using large memory allocations to receive the data.
-That is the way ixgbevf was up until about a year ago so you cannot
-expect all the drivers that will want migration support to allow a
-space for you to write to.  In addition some storage drivers have to
-map an entire page, that means there is no room for a hole there.
-
-- Alex
