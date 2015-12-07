@@ -1,107 +1,56 @@
 From: serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
-Subject: CGroup Namespaces (v6)
-Date: Mon,  7 Dec 2015 17:06:15 -0600
-Message-ID: <1449529582-4075-1-git-send-email-serge.hallyn@ubuntu.com>
+Subject: [PATCH 4/7] cgroup: cgroup namespace setns support
+Date: Mon,  7 Dec 2015 17:06:19 -0600
+Message-ID: <1449529582-4075-5-git-send-email-serge.hallyn@ubuntu.com>
+References: <1449529582-4075-1-git-send-email-serge.hallyn@ubuntu.com>
+Reply-To: LXC development mailing-list <lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <lxc-devel-bounces-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
+In-Reply-To: <1449529582-4075-1-git-send-email-serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <http://lists.linuxcontainers.org/options/lxc-devel>,
+ <mailto:lxc-devel-request-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxcontainers.org/pipermail/lxc-devel/>
+List-Post: <mailto:lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
+List-Help: <mailto:lxc-devel-request-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linuxcontainers.org/listinfo/lxc-devel>,
+ <mailto:lxc-devel-request-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org?subject=subscribe>
+Errors-To: lxc-devel-bounces-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org
+Sender: "lxc-devel" <lxc-devel-bounces-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Cc: adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi,
-
-following is a revised set of the CGroup Namespace patchset which Aditya
-Kali has previously sent.  The code can also be found in the cgroupns.v6
-branch of
-
-https://git.kernel.org/cgit/linux/kernel/git/sergeh/linux-security.git/
-
-To summarize the semantics:
-
-1. CLONE_NEWCGROUP re-uses 0x02000000, which was previously CLONE_STOPPED
-
-2. unsharing a cgroup namespace makes all your current cgroups your new
-cgroup root.
-
-3. /proc/pid/cgroup always shows cgroup paths relative to the reader's
-cgroup namespce root.  A task outside of  your cgroup looks like
-
-	8:memory:/../../..
-
-4. when a task mounts a cgroupfs, the cgroup which shows up as root depends
-on the mounting task's  cgroup namespace.
-
-5. setns to a cgroup namespace switches your cgroup namespace but not
-your cgroups.
-
-With this, using github.com/hallyn/lxc #2015-11-09/cgns (and
-github.com/hallyn/lxcfs #2015-11-10/cgns) we can start a container in a full
-proper cgroup namespace, avoiding either cgmanager or lxcfs cgroup bind mounts.
-
-This is completely backward compatible and will be completely invisible
-to any existing cgroup users (except for those running inside a cgroup
-namespace and looking at /proc/pid/cgroup of tasks outside their
-namespace.)
-
-Changes from V5:
-1. To get a root dentry for cgroup namespace mount, walk the path from the
-   kernfs root dentry.
-
-Changes from V4:
-1. Move the FS_USERNS_MOUNT flag to last patch
-2. Rebase onto cgroup/for-4.5
-3. Don't non-init user namespaces to bind new subsystems when mounting.
-4. Address feedback from Tejun (thanks).  Specificaly, not addressed:
-   . kernfs_obtain_root - walking dentry from kernfs root.
-     (I think that's the only piece)
-5. Dropped unused get_task_cgroup fn/patch.
-6. Reworked kernfs_path_from_node_locked() to try to simplify the logic.
-   It now finds a common ancestor, walks from the source to it, then back
-   up to the target.
-
-Changes from V3:
-1. Rebased onto latest cgroup changes.  In particular switch to
-   css_set_lock and ns_common.
-2. Support all hierarchies.
-
-Changes from V2:
-1. Added documentation in Documentation/cgroups/namespace.txt
-2. Fixed a bug that caused crash
-3. Incorporated some other suggestions from last patchset:
-   - removed use of threadgroup_lock() while creating new cgroupns
-   - use task_lock() instead of rcu_read_lock() while accessing
-     task->nsproxy
-   - optimized setns() to own cgroupns
-   - simplified code around sane-behavior mount option parsing
-4. Restored ACKs from Serge Hallyn from v1 on few patches that have
-   not changed since then.
-
-Changes from V1:
-1. No pinning of processes within cgroupns. Tasks can be freely moved
-   across cgroups even outside of their cgroupns-root. Usual DAC/MAC policies
-   apply as before.
-2. Path in /proc/<pid>/cgroup is now always shown and is relative to
-   cgroupns-root. So path can contain '/..' strings depending on cgroupns-root
-   of the reader and cgroup of <pid>.
-3. setns() does not require the process to first move under target
-   cgroupns-root.
-
-Changes form RFC (V0):
-1. setns support for cgroupns
-2. 'mount -t cgroup cgroup <mntpt>' from inside a cgroupns now
-   mounts the cgroup hierarcy with cgroupns-root as the filesystem root.
-3. writes to cgroup files outside of cgroupns-root are not allowed
-4. visibility of /proc/<pid>/cgroup is further restricted by not showing
-   anything if the <pid> is in a sibling cgroupns and its cgroup falls outside
-   your cgroupns-root.
+RnJvbTogQWRpdHlhIEthbGkgPGFkaXR5YWthbGlAZ29vZ2xlLmNvbT4KCnNldG5zIG9uIGEgY2dy
+b3VwIG5hbWVzcGFjZSBpcyBhbGxvd2VkIG9ubHkgaWYKdGFzayBoYXMgQ0FQX1NZU19BRE1JTiBp
+biBpdHMgY3VycmVudCB1c2VyLW5hbWVzcGFjZSBhbmQKb3ZlciB0aGUgdXNlci1uYW1lc3BhY2Ug
+YXNzb2NpYXRlZCB3aXRoIHRhcmdldCBjZ3JvdXBucy4KTm8gaW1wbGljaXQgY2dyb3VwIGNoYW5n
+ZXMgaGFwcGVuIHdpdGggYXR0YWNoaW5nIHRvIGFub3RoZXIKY2dyb3VwbnMuIEl0IGlzIGV4cGVj
+dGVkIHRoYXQgdGhlIHNvbW9uZSBtb3ZlcyB0aGUgYXR0YWNoaW5nCnByb2Nlc3MgdW5kZXIgdGhl
+IHRhcmdldCBjZ3JvdXBucy1yb290LgoKU2lnbmVkLW9mZi1ieTogQWRpdHlhIEthbGkgPGFkaXR5
+YWthbGlAZ29vZ2xlLmNvbT4KQWNrZWQtYnk6IFNlcmdlIEUuIEhhbGx5biA8c2VyZ2UuaGFsbHlu
+QHVidW50dS5jb20+Ci0tLQoga2VybmVsL2Nncm91cC5jIHwgICAyNCArKysrKysrKysrKysrKysr
+KysrKystLS0KIDEgZmlsZSBjaGFuZ2VkLCAyMSBpbnNlcnRpb25zKCspLCAzIGRlbGV0aW9ucygt
+KQoKZGlmZiAtLWdpdCBhL2tlcm5lbC9jZ3JvdXAuYyBiL2tlcm5lbC9jZ3JvdXAuYwppbmRleCA0
+ZmQwN2I1YS4uYTVhYjc0ZCAxMDA2NDQKLS0tIGEva2VybmVsL2Nncm91cC5jCisrKyBiL2tlcm5l
+bC9jZ3JvdXAuYwpAQCAtNTkwNywxMCArNTkwNywyOCBAQCBlcnJfb3V0OgogCXJldHVybiBFUlJf
+UFRSKGVycik7CiB9CiAKLXN0YXRpYyBpbnQgY2dyb3VwbnNfaW5zdGFsbChzdHJ1Y3QgbnNwcm94
+eSAqbnNwcm94eSwgdm9pZCAqbnMpCitzdGF0aWMgaW5saW5lIHN0cnVjdCBjZ3JvdXBfbmFtZXNw
+YWNlICp0b19jZ19ucyhzdHJ1Y3QgbnNfY29tbW9uICpucykKIHsKLQlwcl9pbmZvKCJzZXRucyBu
+b3Qgc3VwcG9ydGVkIGZvciBjZ3JvdXAgbmFtZXNwYWNlIik7Ci0JcmV0dXJuIC1FSU5WQUw7CisJ
+cmV0dXJuIGNvbnRhaW5lcl9vZihucywgc3RydWN0IGNncm91cF9uYW1lc3BhY2UsIG5zKTsKK30K
+Kworc3RhdGljIGludCBjZ3JvdXBuc19pbnN0YWxsKHN0cnVjdCBuc3Byb3h5ICpuc3Byb3h5LCBz
+dHJ1Y3QgbnNfY29tbW9uICpucykKK3sKKwlzdHJ1Y3QgY2dyb3VwX25hbWVzcGFjZSAqY2dyb3Vw
+X25zID0gdG9fY2dfbnMobnMpOworCisJaWYgKCFuc19jYXBhYmxlKGN1cnJlbnRfdXNlcl9ucygp
+LCBDQVBfU1lTX0FETUlOKSB8fAorCSAgICAhbnNfY2FwYWJsZShjZ3JvdXBfbnMtPnVzZXJfbnMs
+IENBUF9TWVNfQURNSU4pKQorCQlyZXR1cm4gLUVQRVJNOworCisJLyogRG9uJ3QgbmVlZCB0byBk
+byBhbnl0aGluZyBpZiB3ZSBhcmUgYXR0YWNoaW5nIHRvIG91ciBvd24gY2dyb3VwbnMuICovCisJ
+aWYgKGNncm91cF9ucyA9PSBuc3Byb3h5LT5jZ3JvdXBfbnMpCisJCXJldHVybiAwOworCisJZ2V0
+X2Nncm91cF9ucyhjZ3JvdXBfbnMpOworCXB1dF9jZ3JvdXBfbnMobnNwcm94eS0+Y2dyb3VwX25z
+KTsKKwluc3Byb3h5LT5jZ3JvdXBfbnMgPSBjZ3JvdXBfbnM7CisKKwlyZXR1cm4gMDsKIH0KIAog
+c3RhdGljIHN0cnVjdCBuc19jb21tb24gKmNncm91cG5zX2dldChzdHJ1Y3QgdGFza19zdHJ1Y3Qg
+KnRhc2spCi0tIAoxLjcuOS41CgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fXwpseGMtZGV2ZWwgbWFpbGluZyBsaXN0Cmx4Yy1kZXZlbEBsaXN0cy5saW51eGNv
+bnRhaW5lcnMub3JnCmh0dHA6Ly9saXN0cy5saW51eGNvbnRhaW5lcnMub3JnL2xpc3RpbmZvL2x4
+Yy1kZXZlbAo=
