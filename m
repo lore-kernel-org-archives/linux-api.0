@@ -1,62 +1,54 @@
-From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: Re: [PATCH 01/20] drm: use __u{32,64} instead of uint{32,64}_t in
- virtgpu_drm.h
-Date: Mon, 7 Dec 2015 15:45:57 +0200
-Message-ID: <20151207134557.GR6104@lakka.kapsi.fi>
-References: <1448892658-14256-1-git-send-email-gabriel@lse.epita.fr>
- <1448892658-14256-2-git-send-email-gabriel@lse.epita.fr>
- <CACvgo52bSiTJmze45WUSs+sW0RfcW7Uwaworb68YA54b3PvR9Q@mail.gmail.com>
- <CAPM=9tw1Un5-fZUzYGzXLhVikEHj9gw1FfBDc=YMD7xeeKxS9Q@mail.gmail.com>
- <CACvgo504nh0-KQUMEm7D2U8cSvkFeZFhgb6Pgxkmtb1PRG6jUw@mail.gmail.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 7/8] cgroup: mount cgroupns-root when inside
+ non-init cgroupns
+Date: Mon, 7 Dec 2015 10:39:11 -0500
+Message-ID: <20151207153911.GF9175@mtj.duckdns.org>
+References: <20151130150938.GF3535@mtj.duckdns.org>
+ <20151201040704.GA31067@mail.hallyn.com>
+ <20151201164649.GD12922@mtj.duckdns.org>
+ <20151201215853.GA9153@mail.hallyn.com>
+ <20151202165312.GB19878@mtj.duckdns.org>
+ <20151202165637.GA20840@mail.hallyn.com>
+ <20151202165839.GD19878@mtj.duckdns.org>
+ <20151202170239.GA21009@mail.hallyn.com>
+ <20151202170551.GE19878@mtj.duckdns.org>
+ <20151203224706.GA19971@mail.hallyn.com>
+Reply-To: LXC development mailing-list <lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <lxc-devel-bounces-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CACvgo504nh0-KQUMEm7D2U8cSvkFeZFhgb6Pgxkmtb1PRG6jUw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Emil Velikov <emil.l.velikov@gmail.com>
-Cc: Dave Airlie <airlied@gmail.com>, Gabriel Laskar <gabriel@lse.epita.fr>, David Airlie <airlied@linux.ie>, "open list:DRM DRIVERS" <dri-devel@lists.freedesktop.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>
+In-Reply-To: <20151203224706.GA19971-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
+List-Unsubscribe: <http://lists.linuxcontainers.org/options/lxc-devel>,
+ <mailto:lxc-devel-request-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxcontainers.org/pipermail/lxc-devel/>
+List-Post: <mailto:lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
+List-Help: <mailto:lxc-devel-request-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linuxcontainers.org/listinfo/lxc-devel>,
+ <mailto:lxc-devel-request-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org?subject=subscribe>
+Errors-To: lxc-devel-bounces-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org
+Sender: "lxc-devel" <lxc-devel-bounces-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
+To: "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Cc: adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Dec 07, 2015 at 01:29:41PM +0000, Emil Velikov wrote:
-> On 5 December 2015 at 21:03, Dave Airlie <airlied@gmail.com> wrote:
-> > On 5 December 2015 at 00:22, Emil Velikov <emil.l.velikov@gmail.com> wrote:
-> >> On 30 November 2015 at 14:10, Gabriel Laskar <gabriel@lse.epita.fr> wrote:
-> >>> Signed-off-by: Gabriel Laskar <gabriel@lse.epita.fr>
-> >>> CC: Emil Velikov <emil.l.velikov@gmail.com>
-> >>> CC: Mikko Rapeli <mikko.rapeli@iki.fi>
-> >>>
-> >>> ---
-> >>>  include/uapi/drm/virtgpu_drm.h | 98 +++++++++++++++++++++---------------------
-> >>>  1 file changed, 49 insertions(+), 49 deletions(-)
-> >>>
-> >> For the series
-> >> Reviewed-by: Emil Velikov <emil.l.velikov@gmail.com>
-> >>
-> >> Dave would you have any comments wrt this and the remainder of Mikko's
-> >> series ? Alternatively what can we do to get those merged (would you
-> >> like a branch/pull request) ?
-> >
-> > Yeah a git pull for these would be good, it's about all I can do to
-> > care about them.
-> >
-> >From your earlier reply I got the impression that you'll pick Mikko's
-> work. Either way, glad to see some progress on the topic.
-> 
-> Mikko, Gabriel,
-> 
-> Will you guys be so kind to send pull requests or shall I ?
-
-Go a head and send one. I guess you are talking about the drm specific
-patches.
-
-I tested Gabriel's changes too and found one more userspace compilation
-problem from the now exported AMD header.
-
-You can pick my patches from emails or latest draft is at
-https://github.com/mcfrisk/linux/tree/headers_test_v05
-
-I'm following Linus'es tree and dropping changes which get merged from my
-development branch.
-
--Mikko
+SGVsbG8sIFNlcmdlLgoKT24gVGh1LCBEZWMgMDMsIDIwMTUgYXQgMDQ6NDc6MDZQTSAtMDYwMCwg
+U2VyZ2UgRS4gSGFsbHluIHdyb3RlOgouLi4KPiArCWRlbnRyeSA9IGRnZXQoc2ItPnNfcm9vdCk7
+Cj4gKwlpZiAoIWtuLT5wYXJlbnQpIC8vIHRoaXMgaXMgdGhlIHJvb3QKPiArCQlyZXR1cm4gZGVu
+dHJ5Owo+ICsKPiArCWtucGFyZW50ID0gZmluZF9rbl9hbmNlc3Rvcl9iZWxvdyhrbiwgTlVMTCk7
+Cj4gKwlCVUdfT04oIWtucGFyZW50KTsKCkRvaW5nIFdBUk5fT04oKSBhbmQgcmV0dXJuaW5nIGZh
+aWx1cmUgaXMgYmV0dGVyLCBJIHRoaW5rLiAgRmFpbGluZyBucwptb3VudCBpcyBhbiBva2F5IGZh
+aWx1cmUgbW9kZSBhbmQgYSBsb3QgYmV0dGVyIHRoYW4gY3Jhc2hpbmcgdGhlCnN5c3RlbS4gIEFs
+c28sIGhvdyBhYm91dCBmaW5kX25leHRfYW5jZXN0b3IoKSBmb3IgdGhlIG5hbWUgb2YgdGhlCmZ1
+bmN0aW9uPwoKPiArCWRvIHsKPiArCQlzdHJ1Y3QgZGVudHJ5ICpkdG1wOwo+ICsJCXN0cnVjdCBr
+ZXJuZnNfbm9kZSAqa250bXA7Cj4gKwo+ICsJCWlmIChrbiA9PSBrbnBhcmVudCkKPiArCQkJcmV0
+dXJuIGRlbnRyeTsKPiArCQlrbnRtcCA9IGZpbmRfa25fYW5jZXN0b3JfYmVsb3coa24sIGtucGFy
+ZW50KTsKPiArCQlCVUdfT04oIWtudG1wKTsKPiArCQlkdG1wID0gbG9va3VwX29uZV9sZW4oa250
+bXAtPm5hbWUsIGRlbnRyeSwgc3RybGVuKGtudG1wLT5uYW1lKSk7Cj4gKwkJZHB1dChkZW50cnkp
+Owo+ICsJCWlmIChJU19FUlIoZHRtcCkpCj4gKwkJCXJldHVybiBkdG1wOwo+ICsJCWtucGFyZW50
+ID0ga250bXA7Cj4gKwkJZGVudHJ5ID0gZHRtcDsKPiArCX0gd2hpbGUgKDEpOwoKT3RoZXIgdGhh
+biB0aGUgbml0cGlja3MsIGxvb2tzIGdvb2QgdG8gbWUuCgpUaGFua3MuCgotLSAKdGVqdW4KX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KbHhjLWRldmVsIG1h
+aWxpbmcgbGlzdApseGMtZGV2ZWxAbGlzdHMubGludXhjb250YWluZXJzLm9yZwpodHRwOi8vbGlz
+dHMubGludXhjb250YWluZXJzLm9yZy9saXN0aW5mby9seGMtZGV2ZWwK
