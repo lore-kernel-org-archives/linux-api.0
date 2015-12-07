@@ -1,81 +1,38 @@
-From: Casey Schaufler <casey@schaufler-ca.com>
-Subject: Re: [PATCH 1/2] security: let security modules use PTRACE_MODE_* with
- bitmasks
-Date: Mon, 7 Dec 2015 13:51:50 -0800
-Message-ID: <5665FF76.5090701@schaufler-ca.com>
-References: <20151207203824.GA27364@pc.thejh.net>
- <1449523512-29200-1-git-send-email-jann@thejh.net>
- <1449523512-29200-2-git-send-email-jann@thejh.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1449523512-29200-2-git-send-email-jann@thejh.net>
-Sender: owner-linux-mm@kvack.org
-To: Jann Horn <jann@thejh.net>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@google.com>
-Cc: Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "Eric W. Biederman" <ebiederm@xmission.com>, Joe Perches <joe@perches.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, security@kernel.org, Willy Tarreau <w@1wt.eu>
+From: serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
+Subject: [PATCH 2/7] sched: new clone flag CLONE_NEWCGROUP for cgroup namespace
+Date: Mon,  7 Dec 2015 17:06:17 -0600
+Message-ID: <1449529582-4075-3-git-send-email-serge.hallyn@ubuntu.com>
+References: <1449529582-4075-1-git-send-email-serge.hallyn@ubuntu.com>
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1449529582-4075-1-git-send-email-serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 12/7/2015 1:25 PM, Jann Horn wrote:
-> It looks like smack and yama weren't aware that the ptrace mode
-> can have flags ORed into it - PTRACE_MODE_NOAUDIT until now, but
-> only for /proc/$pid/stat, and with the PTRACE_MODE_*CREDS patch,
-> all modes have flags ORed into them.
->
-> Signed-off-by: Jann Horn <jann@thejh.net>
+From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-Acked-by: Casey Schaufler <casey@schaufler-ca.com>
+CLONE_NEWCGROUP will be used to create new cgroup namespace.
 
-> ---
->   security/smack/smack_lsm.c | 8 +++-----
->   security/yama/yama_lsm.c   | 4 ++--
->   2 files changed, 5 insertions(+), 7 deletions(-)
->
-> diff --git a/security/smack/smack_lsm.c b/security/smack/smack_lsm.c
-> index ff81026..7c57c7f 100644
-> --- a/security/smack/smack_lsm.c
-> +++ b/security/smack/smack_lsm.c
-> @@ -398,12 +398,10 @@ static int smk_copy_relabel(struct list_head *nhead, struct list_head *ohead,
->    */
->   static inline unsigned int smk_ptrace_mode(unsigned int mode)
->   {
-> -	switch (mode) {
-> -	case PTRACE_MODE_READ:
-> -		return MAY_READ;
-> -	case PTRACE_MODE_ATTACH:
-> +	if (mode & PTRACE_MODE_ATTACH)
->   		return MAY_READWRITE;
-> -	}
-> +	if (mode & PTRACE_MODE_READ)
-> +		return MAY_READ;
->   
->   	return 0;
->   }
-> diff --git a/security/yama/yama_lsm.c b/security/yama/yama_lsm.c
-> index d3c19c9..cb6ed10 100644
-> --- a/security/yama/yama_lsm.c
-> +++ b/security/yama/yama_lsm.c
-> @@ -281,7 +281,7 @@ static int yama_ptrace_access_check(struct task_struct *child,
->   	int rc = 0;
->   
->   	/* require ptrace target be a child of ptracer on attach */
-> -	if (mode == PTRACE_MODE_ATTACH) {
-> +	if (mode & PTRACE_MODE_ATTACH) {
->   		switch (ptrace_scope) {
->   		case YAMA_SCOPE_DISABLED:
->   			/* No additional restrictions. */
-> @@ -307,7 +307,7 @@ static int yama_ptrace_access_check(struct task_struct *child,
->   		}
->   	}
->   
-> -	if (rc) {
-> +	if (rc && (mode & PTRACE_MODE_NOAUDIT) == 0) {
->   		printk_ratelimited(KERN_NOTICE
->   			"ptrace of pid %d was attempted by: %s (pid %d)\n",
->   			child->pid, current->comm, current->pid);
+Signed-off-by: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Acked-by: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+---
+ include/uapi/linux/sched.h |    3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/include/uapi/linux/sched.h b/include/uapi/linux/sched.h
+index cc89dde..5f0fe01 100644
+--- a/include/uapi/linux/sched.h
++++ b/include/uapi/linux/sched.h
+@@ -21,8 +21,7 @@
+ #define CLONE_DETACHED		0x00400000	/* Unused, ignored */
+ #define CLONE_UNTRACED		0x00800000	/* set if the tracing process can't force CLONE_PTRACE on this clone */
+ #define CLONE_CHILD_SETTID	0x01000000	/* set the TID in the child */
+-/* 0x02000000 was previously the unused CLONE_STOPPED (Start in stopped state)
+-   and is now available for re-use. */
++#define CLONE_NEWCGROUP		0x02000000	/* New cgroup namespace */
+ #define CLONE_NEWUTS		0x04000000	/* New utsname namespace */
+ #define CLONE_NEWIPC		0x08000000	/* New ipc namespace */
+ #define CLONE_NEWUSER		0x10000000	/* New user namespace */
+-- 
+1.7.9.5
