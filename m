@@ -1,48 +1,348 @@
-From: Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v4 01/11] stm class: Introduce an abstraction for System
- Trace Module devices
-Date: Sat, 5 Dec 2015 22:40:10 -0500
-Message-ID: <5663AE1A.2080808@oracle.com>
-References: <1442926040-15150-1-git-send-email-alexander.shishkin@linux.intel.com>
- <1442926040-15150-2-git-send-email-alexander.shishkin@linux.intel.com>
+From: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [PATCH v1 02/10] clockevents/drivers: add MPS2 Timer driver
+Date: Mon, 07 Dec 2015 09:25:41 +0000
+Message-ID: <56655095.3010200@arm.com>
+References: <1449048790-25859-1-git-send-email-vladimir.murzin@arm.com> <1449048790-25859-3-git-send-email-vladimir.murzin@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=WINDOWS-1252
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1442926040-15150-2-git-send-email-alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+In-Reply-To: <1449048790-25859-3-git-send-email-vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexander Shishkin <alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, peter.lachner-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, norbert.schulz-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, keven.boell-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yann.fouassier-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, laurent.fert-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: arnd-r2nGTMty4D4@public.gmane.org, linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, afaerber-l3A5Bk7waGM@public.gmane.org, mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: Mark.Rutland-5wv7dgnIgG8@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pawel.Moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 09/22/2015 08:47 AM, Alexander Shishkin wrote:
-> +static ssize_t stm_char_write(struct file *file, const char __user *buf,
-> +			      size_t count, loff_t *ppos)
-> +{
-> +	struct stm_file *stmf = file->private_data;
-> +	struct stm_device *stm = stmf->stm;
-> +	char *kbuf;
-> +	int err;
+On 02/12/15 09:33, Vladimir Murzin wrote:
+> MPS2 platform has simple 32 bits general purpose countdown timers.
+> 
+> The driver uses the first detected timer as a clocksource and the rest
+> of the timers as a clockevent
+
+Daniel, you had concerns on the RFC version. Does this one look fine to
+you or there is something I should improve?
+
+Thanks
+Vladimir
+
+> 
+> Signed-off-by: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+> ---
+>  drivers/clocksource/Kconfig      |    5 +
+>  drivers/clocksource/Makefile     |    1 +
+>  drivers/clocksource/mps2-timer.c |  277 ++++++++++++++++++++++++++++++++++++++
+>  3 files changed, 283 insertions(+)
+>  create mode 100644 drivers/clocksource/mps2-timer.c
+> 
+> diff --git a/drivers/clocksource/Kconfig b/drivers/clocksource/Kconfig
+> index 2eb5f0e..8bca09c 100644
+> --- a/drivers/clocksource/Kconfig
+> +++ b/drivers/clocksource/Kconfig
+> @@ -137,6 +137,11 @@ config CLKSRC_STM32
+>  	depends on OF && ARM && (ARCH_STM32 || COMPILE_TEST)
+>  	select CLKSRC_MMIO
+>  
+> +config CLKSRC_MPS2
+> +	bool "Clocksource for MPS2 SoCs" if COMPILE_TEST
+> +	depends on OF && ARM
+> +	select CLKSRC_MMIO
 > +
-> +	/*
-> +	 * if no m/c have been assigned to this writer up to this
-> +	 * point, use "default" policy entry
-> +	 */
-> +	if (!stmf->output.nr_chans) {
-> +		err = stm_file_assign(stmf, "default", 1);
-> +		/*
-> +		 * EBUSY means that somebody else just assigned this
-> +		 * output, which is just fine for write()
-> +		 */
-> +		if (err && err != -EBUSY)
-> +			return err;
+>  config ARM_ARCH_TIMER
+>  	bool
+>  	select CLKSRC_OF if OF
+> diff --git a/drivers/clocksource/Makefile b/drivers/clocksource/Makefile
+> index 56bd16e..7033b9c 100644
+> --- a/drivers/clocksource/Makefile
+> +++ b/drivers/clocksource/Makefile
+> @@ -39,6 +39,7 @@ obj-$(CONFIG_CLKSRC_EFM32)	+= time-efm32.o
+>  obj-$(CONFIG_CLKSRC_STM32)	+= timer-stm32.o
+>  obj-$(CONFIG_CLKSRC_EXYNOS_MCT)	+= exynos_mct.o
+>  obj-$(CONFIG_CLKSRC_LPC32XX)	+= time-lpc32xx.o
+> +obj-$(CONFIG_CLKSRC_MPS2)	+= mps2-timer.o
+>  obj-$(CONFIG_CLKSRC_SAMSUNG_PWM)	+= samsung_pwm_timer.o
+>  obj-$(CONFIG_FSL_FTM_TIMER)	+= fsl_ftm_timer.o
+>  obj-$(CONFIG_VF_PIT_TIMER)	+= vf_pit_timer.o
+> diff --git a/drivers/clocksource/mps2-timer.c b/drivers/clocksource/mps2-timer.c
+> new file mode 100644
+> index 0000000..3e19af5
+> --- /dev/null
+> +++ b/drivers/clocksource/mps2-timer.c
+> @@ -0,0 +1,277 @@
+> +/*
+> + * Copyright (C) 2015 ARM Limited
+> + *
+> + * Author: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+> + *
+> + * This program is free software; you can redistribute it and/or modify
+> + * it under the terms of the GNU General Public License version 2 as
+> + * published by the Free Software Foundation.
+> + *
+> + */
+> +
+> +#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+> +
+> +#include <linux/clk.h>
+> +#include <linux/clockchips.h>
+> +#include <linux/clocksource.h>
+> +#include <linux/err.h>
+> +#include <linux/interrupt.h>
+> +#include <linux/io.h>
+> +#include <linux/irq.h>
+> +#include <linux/of_address.h>
+> +#include <linux/of.h>
+> +#include <linux/of_irq.h>
+> +#include <linux/sched_clock.h>
+> +#include <linux/slab.h>
+> +
+> +#define TIMER_CTRL		0x0
+> +#define TIMER_CTRL_ENABLE	BIT(0)
+> +#define TIMER_CTRL_IE		BIT(3)
+> +
+> +#define TIMER_VALUE		0x4
+> +#define TIMER_RELOAD		0x8
+> +#define TIMER_INT		0xc
+> +
+> +struct clockevent_mps2 {
+> +	void __iomem *reg;
+> +	u32 clock_count_per_tick;
+> +	struct clock_event_device clkevt;
+> +};
+> +
+> +static void __iomem *sched_clock_base;
+> +
+> +static u64 notrace mps2_sched_read(void)
+> +{
+> +        return ~readl_relaxed(sched_clock_base + TIMER_VALUE);
+> +}
+> +
+> +static inline struct clockevent_mps2 *to_mps2_clkevt(struct clock_event_device *c)
+> +{
+> +	return container_of(c, struct clockevent_mps2, clkevt);
+> +}
+> +
+> +static void clockevent_mps2_writel(u32 val, struct clock_event_device *c, u32 offset)
+> +{
+> +	writel(val, to_mps2_clkevt(c)->reg + offset);
+> +}
+> +
+> +static int mps2_timer_shutdown(struct clock_event_device *ce)
+> +{
+> +	clockevent_mps2_writel(0, ce, TIMER_RELOAD);
+> +	clockevent_mps2_writel(0, ce, TIMER_CTRL);
+> +
+> +	return 0;
+> +}
+> +
+> +static int mps2_timer_set_next_event(unsigned long next, struct clock_event_device *ce)
+> +{
+> +	clockevent_mps2_writel(next, ce, TIMER_VALUE);
+> +	clockevent_mps2_writel(TIMER_CTRL_IE | TIMER_CTRL_ENABLE, ce, TIMER_CTRL);
+> +
+> +	return 0;
+> +}
+> +
+> +static int mps2_timer_set_periodic(struct clock_event_device *ce)
+> +{
+> +	u32 clock_count_per_tick = to_mps2_clkevt(ce)->clock_count_per_tick;
+> +
+> +	clockevent_mps2_writel(clock_count_per_tick, ce, TIMER_RELOAD);
+> +	clockevent_mps2_writel(clock_count_per_tick, ce, TIMER_VALUE);
+> +	clockevent_mps2_writel(TIMER_CTRL_IE | TIMER_CTRL_ENABLE, ce, TIMER_CTRL);
+> +
+> +	return 0;
+> +}
+> +
+> +static irqreturn_t mps2_timer_interrupt(int irq, void *dev_id)
+> +{
+> +	struct clockevent_mps2 *ce = dev_id;
+> +	u32 status = readl(ce->reg + TIMER_INT);
+> +
+> +	if (!status) {
+> +		pr_warn("spuirous interrupt\n");
+> +		return IRQ_NONE;
 > +	}
 > +
-> +	kbuf = kmalloc(count + 1, GFP_KERNEL);
-
-This bit allows for user-controllable kmalloc() allocation lengths, including
-a possible overflow.
-
-
-Thanks,
-Sasha
+> +	writel(1, ce->reg + TIMER_INT);
+> +
+> +	ce->clkevt.event_handler(&ce->clkevt);
+> +
+> +	return IRQ_HANDLED;
+> +}
+> +
+> +static int __init mps2_clockevent_init(struct device_node *np)
+> +{
+> +	void __iomem *base;
+> +	struct clk *clk;
+> +	struct clockevent_mps2 *ce;
+> +	u32 rate;
+> +	int irq, ret;
+> +	const char *name = "mps2-clkevt";
+> +
+> +	ret = of_property_read_u32(np, "clock-frequency", &rate);
+> +	if (ret) {
+> +		clk = of_clk_get(np, 0);
+> +		if (IS_ERR(clk)) {
+> +			ret = PTR_ERR(clk);
+> +			pr_err("failed to get clock for clockevent: %d\n", ret);
+> +			goto err_clk_get;
+> +		}
+> +
+> +		ret = clk_prepare_enable(clk);
+> +		if (ret) {
+> +			pr_err("failed to enable clock for clockevent: %d\n", ret);
+> +			clk_put(clk);
+> +			goto err_clk_enable;
+> +		}
+> +
+> +		rate = clk_get_rate(clk);
+> +	}
+> +
+> +	base = of_iomap(np, 0);
+> +	if (!base) {
+> +		ret = -EADDRNOTAVAIL;
+> +		pr_err("failed to map register for clockevent: %d\n", ret);
+> +		goto err_iomap;
+> +	}
+> +
+> +	irq = irq_of_parse_and_map(np, 0);
+> +	if (!irq) {
+> +		ret = -ENOENT;
+> +		pr_err("failed to get irq for clockevent: %d\n", ret);
+> +		goto err_get_irq;
+> +	}
+> +
+> +	ce = kzalloc(sizeof(struct clockevent_mps2), GFP_KERNEL);
+> +	if (!ce) {
+> +		ret = -ENOMEM;
+> +		pr_err("failed to allocate clockevent: %d\n", ret);
+> +		goto err_ce_alloc;
+> +	}
+> +
+> +	ce->reg = base;
+> +	ce->clock_count_per_tick = DIV_ROUND_CLOSEST(rate, HZ);
+> +	ce->clkevt.irq = irq;
+> +	ce->clkevt.name = name;
+> +	ce->clkevt.rating = 200;
+> +	ce->clkevt.features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT;
+> +	ce->clkevt.cpumask = cpu_possible_mask;
+> +	ce->clkevt.set_state_shutdown	= mps2_timer_shutdown,
+> +	ce->clkevt.set_state_periodic	= mps2_timer_set_periodic,
+> +	ce->clkevt.set_state_oneshot	= mps2_timer_shutdown,
+> +	ce->clkevt.set_next_event	= mps2_timer_set_next_event;
+> +
+> +	/* Ensure timer is disabled */
+> +	writel(0, base + TIMER_CTRL);
+> +
+> +	ret = request_irq(irq, mps2_timer_interrupt, IRQF_TIMER, name, ce);
+> +	if (ret) {
+> +		pr_err("failed to request irq: %d\n", ret);
+> +		goto err_ia_alloc;
+> +	}
+> +
+> +	clockevents_config_and_register(&ce->clkevt, rate, 0xf, 0xffffffff);
+> +
+> +	return 0;
+> +
+> +err_ia_alloc:
+> +	kfree(ce);
+> +err_ce_alloc:
+> +err_get_irq:
+> +	iounmap(base);
+> +err_iomap:
+> +	clk_disable_unprepare(clk);
+> +err_clk_enable:
+> +	clk_put(clk);
+> +err_clk_get:
+> +	return ret;
+> +}
+> +
+> +static int __init mps2_clocksource_init(struct device_node *np)
+> +{
+> +	void __iomem *base;
+> +	struct clk *clk;
+> +	u32 rate;
+> +	int ret;
+> +	const char *name = "mps2-clksrc";
+> +
+> +	ret = of_property_read_u32(np, "clock-frequency", &rate);
+> +	if (ret) {
+> +		clk = of_clk_get(np, 0);
+> +		if (IS_ERR(clk)) {
+> +			ret = PTR_ERR(clk);
+> +			pr_err("failed to get clock for clocksource: %d\n", ret);
+> +			goto err_clk_get;
+> +		}
+> +
+> +		ret = clk_prepare_enable(clk);
+> +		if (ret) {
+> +			pr_err("failed to enable clock for clocksource: %d\n", ret);
+> +			clk_put(clk);
+> +			goto err_clk_enable;
+> +		}
+> +
+> +		rate = clk_get_rate(clk);
+> +	}
+> +
+> +	base = of_iomap(np, 0);
+> +	if (!base) {
+> +		ret = -EADDRNOTAVAIL;
+> +		pr_err("failed to map register for clocksource: %d\n", ret);
+> +		goto err_iomap;
+> +	}
+> +
+> +	/* Ensure timer is disabled */
+> +	writel(0, base + TIMER_CTRL);
+> +
+> +	/* ... and set it up as free-running clocksource */
+> +	writel(0xffffffff, base + TIMER_VALUE);
+> +	writel(0xffffffff, base + TIMER_RELOAD);
+> +
+> +	writel(TIMER_CTRL_ENABLE, base + TIMER_CTRL);
+> +
+> +	ret = clocksource_mmio_init(base + TIMER_VALUE, name,
+> +				    rate, 200, 32,
+> +				    clocksource_mmio_readl_down);
+> +	if (ret) {
+> +		pr_err("failed to init clocksource: %d\n", ret);
+> +		goto err_clocksource_init;
+> +	}
+> +
+> +	sched_clock_base = base;
+> +	sched_clock_register(mps2_sched_read, 32, rate);
+> +
+> +	return 0;
+> +
+> +err_clocksource_init:
+> +	iounmap(base);
+> +err_iomap:
+> +	clk_disable_unprepare(clk);
+> +err_clk_enable:
+> +	clk_put(clk);
+> +err_clk_get:
+> +	return ret;
+> +}
+> +
+> +static void __init mps2_timer_init(struct device_node *np)
+> +{
+> +	static int has_clocksource, has_clockevent;
+> +	int ret;
+> +
+> +	if (!has_clocksource) {
+> +		ret = mps2_clocksource_init(np);
+> +		if (!ret) {
+> +			has_clocksource = 1;
+> +			return;
+> +		}
+> +	}
+> +
+> +	if (!has_clockevent) {
+> +		ret = mps2_clockevent_init(np);
+> +		if (!ret) {
+> +			has_clockevent = 1;
+> +			return;
+> +		}
+> +	}
+> +}
+> +
+> +CLOCKSOURCE_OF_DECLARE(mps2_timer, "arm,mps2-timer", mps2_timer_init);
+> 
