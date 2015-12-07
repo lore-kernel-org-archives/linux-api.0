@@ -1,186 +1,404 @@
-From: Alexander Duyck <alexander.duyck@gmail.com>
-Subject: Re: [RFC PATCH V2 0/3] IXGBE/VFIO: Add live migration
- support for SRIOV NIC
-Date: Mon, 7 Dec 2015 10:42:06 -0800
-Message-ID: <CAKgT0UceN-xA9ZcFmFPbCeTC1ZCjE3ELFQMsRwGMzZ3Req8jiQ@mail.gmail.com>
-References: <565DB6FF.1050602@intel.com>
-	<20151201171140-mutt-send-email-mst@redhat.com>
-	<CAKgT0UfLEJpV-KdqRGfzBeas8bdqfHCmT5Xc8iVVP03g_pQO8A@mail.gmail.com>
-	<20151201193026-mutt-send-email-mst@redhat.com>
-	<CAKgT0UfJ7w6yYcZcF2YZyDKEwvE7Gh3P-jfGQGKLfPH2crVBzw@mail.gmail.com>
-	<20151202105955-mutt-send-email-mst@redhat.com>
-	<5661C000.8070201@intel.com> <5661C86D.3010904@gmail.com>
-	<5665A884.2020102@intel.com>
-	<CAKgT0UeFzW_tpdSr=Ck6X6w2XnAUJquW46mo2H0Ag=Z=q0tgtg@mail.gmail.com>
-	<20151207191418-mutt-send-email-mst@redhat.com>
+From: Kees Cook <keescook@google.com>
+Subject: Re: [PATCH] ptrace: use fsuid, fsgid, effective creds for fs access checks
+Date: Mon, 7 Dec 2015 12:32:06 -0800
+Message-ID: <CAGXu5jJKOnWWSuLO5zWZ9=7Nhv0hWvJ0wEVJ3n+URY7-q_BCJw@mail.gmail.com>
+References: <20151109131902.db961a5fe7b7fcbeb14f72fc@linux-foundation.org>
+	<1449367476-15673-1-git-send-email-jann@thejh.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org>
-In-Reply-To: <20151207191418-mutt-send-email-mst@redhat.com>
-List-Unsubscribe: <https://lists.nongnu.org/mailman/options/qemu-devel>,
-	<mailto:qemu-devel-request@nongnu.org?subject=unsubscribe>
-List-Archive: <http://lists.nongnu.org/archive/html/qemu-devel>
-List-Post: <mailto:qemu-devel@nongnu.org>
-List-Help: <mailto:qemu-devel-request@nongnu.org?subject=help>
-List-Subscribe: <https://lists.nongnu.org/mailman/listinfo/qemu-devel>,
-	<mailto:qemu-devel-request@nongnu.org?subject=subscribe>
-Errors-To: qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org
-Sender: qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org
-To: "Michael S. Tsirkin" <mst@redhat.com>
-Cc: Wei Yang <weiyang@linux.vnet.ibm.com>, "Tantilov,
-	Emil S" <emil.s.tantilov@intel.com>, "kvm@vger.kernel.org" <kvm@vger.kernel.org>, "qemu-devel@nongnu.org" <qemu-devel@nongnu.org>, "Brandeburg,
-	Jesse" <jesse.brandeburg@intel.com>, "Rustad,
-	Mark D" <mark.d.rustad@intel.com>, "Wyborny,
-	Carolyn" <carolyn.wyborny@intel.com>, Eric Auger <eric.auger@linaro.org>, "Skidmore,
-	Donald C" <donald.c.skidmore@intel.com>, "zajec5@gmail.com" <zajec5@gmail.com>, Alexander Graf <agraf@suse.de>, intel-wired-lan <intel-wired-lan@lists.osuosl.org>, "Kirsher,
-	Jeffrey T" <jeffrey.t.kirsher@intel.com>, Or Gerlitz <gerlitz.or@gmail.com>, "Williams,
-	Mitch A" <mitch.a.williams@intel.com>, "Jani,
-	Nrupal" <nrupal.jani@intel.com>, Bjorn Helgaas <bhelgaas@google.com>, "a.motakis@virtualopensystems.com" <a.motakis@virtualopensystems.com>, "Lan, Tianyu" <tianyu.lan@intel.com>, b.reynal@virtualopens
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <1449367476-15673-1-git-send-email-jann@thejh.net>
+Sender: owner-linux-security-module@vger.kernel.org
+To: Jann Horn <jann@thejh.net>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "Eric W. Biederman" <ebiederm@xmission.com>, Joe Perches <joe@perches.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, LKML <linux-kernel@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, linux-security-module <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "security@kernel.org" <security@kernel.org>, Willy Tarreau <w@1wt.eu>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Dec 7, 2015 at 9:39 AM, Michael S. Tsirkin <mst@redhat.com> wrote:
-> On Mon, Dec 07, 2015 at 09:12:08AM -0800, Alexander Duyck wrote:
->> On Mon, Dec 7, 2015 at 7:40 AM, Lan, Tianyu <tianyu.lan@intel.com> wrote:
->> > On 12/5/2015 1:07 AM, Alexander Duyck wrote:
-
->> > If can't do that, we have to stop DMA in a short time to mark all dma
->> > pages dirty and then reenable it. I am not sure how much we can get by
->> > this way to track all DMA memory with device running during migration. I
->> > need to do some tests and compare results with stop DMA diretly at last
->> > stage during migration.
->>
->> We have to halt the DMA before we can complete the migration.  So
->> please feel free to test this.
->>
->> In addition I still feel you would be better off taking this in
->> smaller steps.  I still say your first step would be to come up with a
->> generic solution for the dirty page tracking like the dma_mark_clean()
->> approach I had mentioned earlier.  If I get time I might try to take
->> care of it myself later this week since you don't seem to agree with
->> that approach.
+On Sat, Dec 5, 2015 at 6:04 PM, Jann Horn <jann@thejh.net> wrote:
+> By checking the effective credentials instead of the real UID /
+> permitted capabilities, ensure that the calling process actually
+> intended to use its credentials.
 >
-> Or even try to look at the dirty bit in the VT-D PTEs
-> on the host. See the mail I have just sent.
-> Might be slower, or might be faster, but is completely
-> transparent.
-
-I just saw it and I am looking over the VTd spec now.  It looks like
-there might be some performance impacts if software is changing the
-PTEs since then the VTd harwdare cannot cache them.  I still have to
-do some more reading though so I can fully understand the impacts.
-
->> >>
->> >> The question is how we would go about triggering it.  I really don't
->> >> think the PCI configuration space approach is the right idea.
->> >>  I wonder
->> >> if we couldn't get away with some sort of ACPI event instead.  We
->> >> already require ACPI support in order to shut down the system
->> >> gracefully, I wonder if we couldn't get away with something similar in
->> >> order to suspend/resume the direct assigned devices gracefully.
->> >>
->> >
->> > I don't think there is such events in the current spec.
->> > Otherwise, There are two kinds of suspend/resume callbacks.
->> > 1) System suspend/resume called during S2RAM and S2DISK.
->> > 2) Runtime suspend/resume called by pm core when device is idle.
->> > If you want to do what you mentioned, you have to change PM core and
->> > ACPI spec.
->>
->> The thought I had was to somehow try to move the direct assigned
->> devices into their own power domain and then simulate a AC power event
->> where that domain is switched off.  However I don't know if there are
->> ACPI events to support that since the power domain code currently only
->> appears to be in use for runtime power management.
->>
->> That had also given me the thought to look at something like runtime
->> power management for the VFs.  We would need to do a runtime
->> suspend/resume.  The only problem is I don't know if there is any way
->> to get the VFs to do a quick wakeup.  It might be worthwhile looking
->> at trying to check with the ACPI experts out there to see if there is
->> anything we can do as bypassing having to use the configuration space
->> mechanism to signal this would definitely be worth it.
+> To ensure that all ptrace checks use the correct caller
+> credentials (e.g. in case out-of-tree code or newly added code
+> omits the PTRACE_MODE_*CREDS flag), use two new flags and
+> require one of them to be set.
 >
-> I don't much like this idea because it relies on the
-> device being exactly the same across source/destination.
-> After all, this is always true for suspend/resume.
-> Most users do not have control over this, and you would
-> often get sightly different versions of firmware,
-> etc without noticing.
-
-The original code was operating on that assumption as well.  That is
-kind of why I suggested suspend/resume rather than reinventing the
-wheel.
-
-> I think we should first see how far along we can get
-> by doing a full device reset, and only carrying over
-> high level state such as IP, MAC, ARP cache etc.
-
-One advantage of the suspend/resume approach is that it is compatible
-with a full reset.  The suspend/resume approach assumes the device
-goes through a D0->D3->D0 reset as a part of transitioning between the
-system states.
-
-I do admit though that the PCI spec says you aren't supposed to be
-hot-swapping devices while the system is in a sleep state so odds are
-you would encounter issues if the device changed in any significant
-way.
-
->> >>> The dma page allocated by VF driver also needs to reserve space
->> >>> to do dummy write.
->> >>
->> >>
->> >> No, this will not work.  If for example you have a VF driver allocating
->> >> memory for a 9K receive how will that work?  It isn't as if you can poke
->> >> a hole in the contiguous memory.
->>
->> This is the bit that makes your "poke a hole" solution not portable to
->> other drivers.  I don't know if you overlooked it but for many NICs
->> jumbo frames means using large memory allocations to receive the data.
->> That is the way ixgbevf was up until about a year ago so you cannot
->> expect all the drivers that will want migration support to allow a
->> space for you to write to.  In addition some storage drivers have to
->> map an entire page, that means there is no room for a hole there.
->>
->> - Alex
+> The problem was that when a privileged task had temporarily dropped
+> its privileges, e.g. by calling setreuid(0, user_uid), with the
+> intent to perform following syscalls with the credentials of
+> a user, it still passed ptrace access checks that the user would
+> not be able to pass.
 >
-> I think we could start with the atomic idea.
-> cmpxchg(ptr, X, X)
-> for any value of X will never corrupt any memory.
-
-Right pretty much any atomic operation that will not result in the
-value being changed will do.
-
-> Then DMA API could gain a flag that says there actually is a hole to
-> write into, so you can do
+> While an attacker should not be able to convince the privileged
+> task to perform a ptrace() syscall, this is a problem because the
+> ptrace access check is reused for things in procfs.
 >
-> ACESS_ONCE(*ptr)=0;
+> In particular, the following somewhat interesting procfs entries
+> only rely on ptrace access checks:
 >
-> or where there is no concurrent access so you can do
+>  /proc/$pid/stat - uses the check for determining whether pointers
+>      should be visible, useful for bypassing ASLR
+>  /proc/$pid/maps - also useful for bypassing ASLR
+>  /proc/$pid/cwd - useful for gaining access to restricted
+>      directories that contain files with lax permissions, e.g. in
+>      this scenario:
+>      lrwxrwxrwx root root /proc/13020/cwd -> /root/foobar
+>      drwx------ root root /root
+>      drwxr-xr-x root root /root/foobar
+>      -rw-r--r-- root root /root/foobar/secret
 >
-> ACESS_ONCE(*ptr)=ACCESS_ONCE(*ptr);
+> Therefore, on a system where a root-owned mode 6755 binary
+> changes its effective credentials as described and then dumps a
+> user-specified file, this could be used by an attacker to reveal
+> the memory layout of root's processes or reveal the contents of
+> files he is not allowed to access (through /proc/$pid/cwd).
 >
-> A driver that sets one of these flags will gain a bit of performance.
+> Signed-off-by: Jann Horn <jann@thejh.net>
+> ---
+>  fs/proc/array.c        |  2 +-
+>  fs/proc/base.c         | 21 +++++++++++----------
+>  fs/proc/namespaces.c   |  4 ++--
+>  include/linux/ptrace.h | 24 +++++++++++++++++++++++-
+>  kernel/events/core.c   |  2 +-
+>  kernel/futex.c         |  2 +-
+>  kernel/futex_compat.c  |  2 +-
+>  kernel/kcmp.c          |  4 ++--
+>  kernel/ptrace.c        | 36 +++++++++++++++++++++++++++++-------
+>  mm/process_vm_access.c |  2 +-
+>  security/commoncap.c   |  7 ++++++-
+>  11 files changed, 78 insertions(+), 28 deletions(-)
+>
+> diff --git a/fs/proc/array.c b/fs/proc/array.c
+> index d73291f..b6c00ce 100644
+> --- a/fs/proc/array.c
+> +++ b/fs/proc/array.c
+> @@ -395,7 +395,7 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
+>
+>         state = *get_task_state(task);
+>         vsize = eip = esp = 0;
+> -       permitted = ptrace_may_access(task, PTRACE_MODE_READ | PTRACE_MODE_NOAUDIT);
+> +       permitted = ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS | PTRACE_MODE_NOAUDIT);
+>         mm = get_task_mm(task);
+>         if (mm) {
+>                 vsize = task_vsize(mm);
+> diff --git a/fs/proc/base.c b/fs/proc/base.c
+> index bd3e9e6..c0a2f29 100644
+> --- a/fs/proc/base.c
+> +++ b/fs/proc/base.c
+> @@ -403,7 +403,7 @@ static const struct file_operations proc_pid_cmdline_ops = {
+>  static int proc_pid_auxv(struct seq_file *m, struct pid_namespace *ns,
+>                          struct pid *pid, struct task_struct *task)
+>  {
+> -       struct mm_struct *mm = mm_access(task, PTRACE_MODE_READ);
+> +       struct mm_struct *mm = mm_access(task, PTRACE_MODE_READ_FSCREDS);
+>         if (mm && !IS_ERR(mm)) {
+>                 unsigned int nwords = 0;
+>                 do {
+> @@ -430,7 +430,8 @@ static int proc_pid_wchan(struct seq_file *m, struct pid_namespace *ns,
+>
+>         wchan = get_wchan(task);
+>
+> -       if (wchan && ptrace_may_access(task, PTRACE_MODE_READ) && !lookup_symbol_name(wchan, symname))
+> +       if (wchan && ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS)
+> +                       && !lookup_symbol_name(wchan, symname))
+>                 seq_printf(m, "%s", symname);
+>         else
+>                 seq_putc(m, '0');
+> @@ -444,7 +445,7 @@ static int lock_trace(struct task_struct *task)
+>         int err = mutex_lock_killable(&task->signal->cred_guard_mutex);
+>         if (err)
+>                 return err;
+> -       if (!ptrace_may_access(task, PTRACE_MODE_ATTACH)) {
+> +       if (!ptrace_may_access(task, PTRACE_MODE_ATTACH_FSCREDS)) {
+>                 mutex_unlock(&task->signal->cred_guard_mutex);
+>                 return -EPERM;
+>         }
+> @@ -697,7 +698,7 @@ static int proc_fd_access_allowed(struct inode *inode)
+>          */
+>         task = get_proc_task(inode);
+>         if (task) {
+> -               allowed = ptrace_may_access(task, PTRACE_MODE_READ);
+> +               allowed = ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS);
+>                 put_task_struct(task);
+>         }
+>         return allowed;
+> @@ -732,7 +733,7 @@ static bool has_pid_permissions(struct pid_namespace *pid,
+>                 return true;
+>         if (in_group_p(pid->pid_gid))
+>                 return true;
+> -       return ptrace_may_access(task, PTRACE_MODE_READ);
+> +       return ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS);
+>  }
+>
+>
+> @@ -809,7 +810,7 @@ struct mm_struct *proc_mem_open(struct inode *inode, unsigned int mode)
+>         struct mm_struct *mm = ERR_PTR(-ESRCH);
+>
+>         if (task) {
+> -               mm = mm_access(task, mode);
+> +               mm = mm_access(task, mode | PTRACE_MODE_FSCREDS);
+>                 put_task_struct(task);
+>
+>                 if (!IS_ERR_OR_NULL(mm)) {
+> @@ -1856,7 +1857,7 @@ static int map_files_d_revalidate(struct dentry *dentry, unsigned int flags)
+>         if (!task)
+>                 goto out_notask;
+>
+> -       mm = mm_access(task, PTRACE_MODE_READ);
+> +       mm = mm_access(task, PTRACE_MODE_READ_FSCREDS);
+>         if (IS_ERR_OR_NULL(mm))
+>                 goto out;
+>
+> @@ -2007,7 +2008,7 @@ static struct dentry *proc_map_files_lookup(struct inode *dir,
+>                 goto out;
+>
+>         result = -EACCES;
+> -       if (!ptrace_may_access(task, PTRACE_MODE_READ))
+> +       if (!ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS))
+>                 goto out_put_task;
+>
+>         result = -ENOENT;
+> @@ -2060,7 +2061,7 @@ proc_map_files_readdir(struct file *file, struct dir_context *ctx)
+>                 goto out;
+>
+>         ret = -EACCES;
+> -       if (!ptrace_may_access(task, PTRACE_MODE_READ))
+> +       if (!ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS))
+>                 goto out_put_task;
+>
+>         ret = 0;
+> @@ -2529,7 +2530,7 @@ static int do_io_accounting(struct task_struct *task, struct seq_file *m, int wh
+>         if (result)
+>                 return result;
+>
+> -       if (!ptrace_may_access(task, PTRACE_MODE_READ)) {
+> +       if (!ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS)) {
+>                 result = -EACCES;
+>                 goto out_unlock;
+>         }
+> diff --git a/fs/proc/namespaces.c b/fs/proc/namespaces.c
+> index f6e8354..0cbe012 100644
+> --- a/fs/proc/namespaces.c
+> +++ b/fs/proc/namespaces.c
+> @@ -42,7 +42,7 @@ static const char *proc_ns_follow_link(struct dentry *dentry, void **cookie)
+>         if (!task)
+>                 return error;
+>
+> -       if (ptrace_may_access(task, PTRACE_MODE_READ)) {
+> +       if (ptrace_may_access(task, PTRACE_MODE_READ | PTRACE_MODE_FSCREDS)) {
 
-I don't see the memory hole thing working out very well.  It isn't
-very portable and will just make a mess of things in general.  I tend
-to prefer the cmpxchg(ptr, 0, 0) approach.  Yes it adds a locked
-operation but the fact is we are probably going to be taking a fairly
-heavy hit anyway as the cache line is likely not stored in the L1
-cache.
+This should maybe use the PTRACE_MODE_READ_FSCREDS macro?
 
-The part I am wondering about is if there is some way for us to switch
-this on/off.  Having to always dirty a cache line in each DMA page
-isn't exactly desirable and obviously we don't need it if we are not
-KVM/Xen and we are not in the middle of a migration.  For tests where
-you are running just netperf and the like the performance effect won't
-even show up.  It will increase CPU utilization by a fraction of a
-percent.  It isn't till you start focusing on small packets or
-40/100Gbs that something like this would be an issue.
+>                 error = ns_get_path(&ns_path, task, ns_ops);
+>                 if (!error)
+>                         nd_jump_link(&ns_path);
+> @@ -63,7 +63,7 @@ static int proc_ns_readlink(struct dentry *dentry, char __user *buffer, int bufl
+>         if (!task)
+>                 return res;
+>
+> -       if (ptrace_may_access(task, PTRACE_MODE_READ)) {
+> +       if (ptrace_may_access(task, PTRACE_MODE_READ | PTRACE_MODE_FSCREDS)) {
 
-If we can get VTd on the host to take care of the dirty page tracking
-for us then that would likely work out even better because we could
-probably bulk the accesses.  So each time we go out and check the
-guest for dirty pages we could do it in two passes, one for the pages
-the guest dirtied and then one for the pages the device dirtied.
+same here?
 
-- Alex
+>                 res = ns_get_name(name, sizeof(name), task, ns_ops);
+>                 if (res >= 0)
+>                         res = readlink_copy(buffer, buflen, name);
+> diff --git a/include/linux/ptrace.h b/include/linux/ptrace.h
+> index 061265f..504c98a 100644
+> --- a/include/linux/ptrace.h
+> +++ b/include/linux/ptrace.h
+> @@ -57,7 +57,29 @@ extern void exit_ptrace(struct task_struct *tracer, struct list_head *dead);
+>  #define PTRACE_MODE_READ       0x01
+>  #define PTRACE_MODE_ATTACH     0x02
+>  #define PTRACE_MODE_NOAUDIT    0x04
+> -/* Returns true on success, false on denial. */
+> +#define PTRACE_MODE_FSCREDS 0x08
+> +#define PTRACE_MODE_REALCREDS 0x10
+> +
+> +/* shorthands for READ/ATTACH and FSCREDS/REALCREDS combinations */
+> +#define PTRACE_MODE_READ_FSCREDS (PTRACE_MODE_READ | PTRACE_MODE_FSCREDS)
+> +#define PTRACE_MODE_READ_REALCREDS (PTRACE_MODE_READ | PTRACE_MODE_REALCREDS)
+> +#define PTRACE_MODE_ATTACH_FSCREDS (PTRACE_MODE_ATTACH | PTRACE_MODE_FSCREDS)
+> +#define PTRACE_MODE_ATTACH_REALCREDS (PTRACE_MODE_ATTACH | PTRACE_MODE_REALCREDS)
+> +
+> +/**
+> + * ptrace_may_access - check whether the caller is permitted to access
+> + * a target task.
+> + * @task: target task
+> + * @mode: selects type of access and caller credentials
+> + *
+> + * Returns true on success, false on denial.
+> + *
+> + * One of the flags PTRACE_MODE_FSCREDS and PTRACE_MODE_REALCREDS must
+> + * be set in @mode to specify whether the access was requested through
+> + * a filesystem syscall (should use effective capabilities and fsuid
+> + * of the caller) or through an explicit syscall such as
+> + * process_vm_writev or ptrace (and should use the real credentials).
+> + */
+>  extern bool ptrace_may_access(struct task_struct *task, unsigned int mode);
+>
+>  static inline int ptrace_reparented(struct task_struct *child)
+> diff --git a/kernel/events/core.c b/kernel/events/core.c
+> index 36babfd..565e41a 100644
+> --- a/kernel/events/core.c
+> +++ b/kernel/events/core.c
+> @@ -3430,7 +3430,7 @@ find_lively_task_by_vpid(pid_t vpid)
+>
+>         /* Reuse ptrace permission checks for now. */
+>         err = -EACCES;
+> -       if (!ptrace_may_access(task, PTRACE_MODE_READ))
+> +       if (!ptrace_may_access(task, PTRACE_MODE_READ_REALCREDS))
+>                 goto errout;
+>
+>         return task;
+> diff --git a/kernel/futex.c b/kernel/futex.c
+> index 684d754..495a1d0 100644
+> --- a/kernel/futex.c
+> +++ b/kernel/futex.c
+> @@ -2881,7 +2881,7 @@ SYSCALL_DEFINE3(get_robust_list, int, pid,
+>         }
+>
+>         ret = -EPERM;
+> -       if (!ptrace_may_access(p, PTRACE_MODE_READ))
+> +       if (!ptrace_may_access(p, PTRACE_MODE_READ_REALCREDS))
+>                 goto err_unlock;
+>
+>         head = p->robust_list;
+> diff --git a/kernel/futex_compat.c b/kernel/futex_compat.c
+> index 55c8c93..4ae3232 100644
+> --- a/kernel/futex_compat.c
+> +++ b/kernel/futex_compat.c
+> @@ -155,7 +155,7 @@ COMPAT_SYSCALL_DEFINE3(get_robust_list, int, pid,
+>         }
+>
+>         ret = -EPERM;
+> -       if (!ptrace_may_access(p, PTRACE_MODE_READ))
+> +       if (!ptrace_may_access(p, PTRACE_MODE_READ_REALCREDS))
+>                 goto err_unlock;
+>
+>         head = p->compat_robust_list;
+> diff --git a/kernel/kcmp.c b/kernel/kcmp.c
+> index 0aa69ea..3a47fa9 100644
+> --- a/kernel/kcmp.c
+> +++ b/kernel/kcmp.c
+> @@ -122,8 +122,8 @@ SYSCALL_DEFINE5(kcmp, pid_t, pid1, pid_t, pid2, int, type,
+>                         &task2->signal->cred_guard_mutex);
+>         if (ret)
+>                 goto err;
+> -       if (!ptrace_may_access(task1, PTRACE_MODE_READ) ||
+> -           !ptrace_may_access(task2, PTRACE_MODE_READ)) {
+> +       if (!ptrace_may_access(task1, PTRACE_MODE_READ_REALCREDS) ||
+> +           !ptrace_may_access(task2, PTRACE_MODE_READ_REALCREDS)) {
+>                 ret = -EPERM;
+>                 goto err_unlock;
+>         }
+> diff --git a/kernel/ptrace.c b/kernel/ptrace.c
+> index b760bae..21aef51 100644
+> --- a/kernel/ptrace.c
+> +++ b/kernel/ptrace.c
+> @@ -219,6 +219,13 @@ static int ptrace_has_cap(struct user_namespace *ns, unsigned int mode)
+>  static int __ptrace_may_access(struct task_struct *task, unsigned int mode)
+>  {
+>         const struct cred *cred = current_cred(), *tcred;
+> +       kuid_t caller_uid;
+> +       kgid_t caller_gid;
+> +
+> +       if (!(mode & PTRACE_MODE_FSCREDS) == !(mode & PTRACE_MODE_REALCREDS)) {
+> +               WARN(1, "denying ptrace access check without PTRACE_MODE_*CREDS\n");
+> +               return -EPERM;
+> +       }
+>
+>         /* May we inspect the given task?
+>          * This check is used both for attaching with ptrace
+> @@ -233,13 +240,28 @@ static int __ptrace_may_access(struct task_struct *task, unsigned int mode)
+>         if (same_thread_group(task, current))
+>                 return 0;
+>         rcu_read_lock();
+> +       if (mode & PTRACE_MODE_FSCREDS) {
+> +               caller_uid = cred->fsuid;
+> +               caller_gid = cred->fsgid;
+> +       } else {
+> +               /*
+> +                * Using the euid would make more sense here, but something
+> +                * in userland might rely on the old behavior, and this
+> +                * shouldn't be a security problem since
+> +                * PTRACE_MODE_REALCREDS implies that the caller explicitly
+> +                * used a syscall that requests access to another process
+> +                * (and not a filesystem syscall to procfs).
+> +                */
+> +               caller_uid = cred->uid;
+> +               caller_gid = cred->gid;
+> +       }
+>         tcred = __task_cred(task);
+> -       if (uid_eq(cred->uid, tcred->euid) &&
+> -           uid_eq(cred->uid, tcred->suid) &&
+> -           uid_eq(cred->uid, tcred->uid)  &&
+> -           gid_eq(cred->gid, tcred->egid) &&
+> -           gid_eq(cred->gid, tcred->sgid) &&
+> -           gid_eq(cred->gid, tcred->gid))
+> +       if (uid_eq(caller_uid, tcred->euid) &&
+> +           uid_eq(caller_uid, tcred->suid) &&
+> +           uid_eq(caller_uid, tcred->uid)  &&
+> +           gid_eq(caller_gid, tcred->egid) &&
+> +           gid_eq(caller_gid, tcred->sgid) &&
+> +           gid_eq(caller_gid, tcred->gid))
+>                 goto ok;
+>         if (ptrace_has_cap(tcred->user_ns, mode))
+>                 goto ok;
+> @@ -306,7 +328,7 @@ static int ptrace_attach(struct task_struct *task, long request,
+>                 goto out;
+>
+>         task_lock(task);
+> -       retval = __ptrace_may_access(task, PTRACE_MODE_ATTACH);
+> +       retval = __ptrace_may_access(task, PTRACE_MODE_ATTACH_REALCREDS);
+>         task_unlock(task);
+>         if (retval)
+>                 goto unlock_creds;
+> diff --git a/mm/process_vm_access.c b/mm/process_vm_access.c
+> index e88d071..5d453e5 100644
+> --- a/mm/process_vm_access.c
+> +++ b/mm/process_vm_access.c
+> @@ -194,7 +194,7 @@ static ssize_t process_vm_rw_core(pid_t pid, struct iov_iter *iter,
+>                 goto free_proc_pages;
+>         }
+>
+> -       mm = mm_access(task, PTRACE_MODE_ATTACH);
+> +       mm = mm_access(task, PTRACE_MODE_ATTACH_REALCREDS);
+>         if (!mm || IS_ERR(mm)) {
+>                 rc = IS_ERR(mm) ? PTR_ERR(mm) : -ESRCH;
+>                 /*
+> diff --git a/security/commoncap.c b/security/commoncap.c
+> index 1832cf7..48071ed 100644
+> --- a/security/commoncap.c
+> +++ b/security/commoncap.c
+> @@ -137,12 +137,17 @@ int cap_ptrace_access_check(struct task_struct *child, unsigned int mode)
+>  {
+>         int ret = 0;
+>         const struct cred *cred, *child_cred;
+> +       const kernel_cap_t *caller_caps;
+>
+>         rcu_read_lock();
+>         cred = current_cred();
+>         child_cred = __task_cred(child);
+> +       if (mode & PTRACE_MODE_FSCREDS)
+> +               caller_caps = &cred->cap_effective;
+> +       else
+> +               caller_caps = &cred->cap_permitted;
+>         if (cred->user_ns == child_cred->user_ns &&
+> -           cap_issubset(child_cred->cap_permitted, cred->cap_permitted))
+> +           cap_issubset(child_cred->cap_permitted, *caller_caps))
+>                 goto out;
+>         if (ns_capable(child_cred->user_ns, CAP_SYS_PTRACE))
+>                 goto out;
+> --
+> 2.1.4
+>
+
+Thanks for working on this! I think it's done after the macro fix.
+
+-Kees
+
+-- 
+Kees Cook
+Chrome OS & Brillo Security
