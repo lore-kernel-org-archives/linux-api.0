@@ -1,71 +1,22 @@
 From: Jann Horn <jann@thejh.net>
-Subject: [PATCH 1/2] security: let security modules use PTRACE_MODE_* with bitmasks
-Date: Mon,  7 Dec 2015 22:25:11 +0100
-Message-ID: <1449523512-29200-2-git-send-email-jann@thejh.net>
+Subject: Re: [PATCH] ptrace: use fsuid, fsgid, effective creds for fs access checks
+Date: Mon,  7 Dec 2015 22:25:10 +0100
+Message-ID: <1449523512-29200-1-git-send-email-jann@thejh.net>
 References: <20151207203824.GA27364@pc.thejh.net>
- <1449523512-29200-1-git-send-email-jann@thejh.net>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1449523512-29200-1-git-send-email-jann@thejh.net>
+In-Reply-To: <20151207203824.GA27364@pc.thejh.net>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@google.com>, Casey Schaufler <casey@schaufler-ca.com>
-Cc: Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "Eric W. Biederman" <ebiederm@xmission.com>, Joe Perches <joe@perches.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, security@kernel.org, Willy Tarreau <w@1wt.eu>, Jann Horn <jann@thejh.net>
+Cc: Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "Eric W. Biederman" <ebiederm@xmission.com>, Joe Perches <joe@perches.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, security@kernel.org, Willy Tarreau <w@1wt.eu>
 List-Id: linux-api@vger.kernel.org
 
-It looks like smack and yama weren't aware that the ptrace mode
-can have flags ORed into it - PTRACE_MODE_NOAUDIT until now, but
-only for /proc/$pid/stat, and with the PTRACE_MODE_*CREDS patch,
-all modes have flags ORed into them.
+Whoops. After Kees pointed out my last mistake, I decided to grep around a bit to make sure
+I didn't miss anything else and noticed that apparently, Yama and Smack aren't completely
+aware that the ptrace access mode can have flags ORed in? Until now, it was just the
+NOAUDIT flag for /proc/$pid/stat, but with my patch, that would have been broken completely
+as far as I can tell. I don't use either of those LSMs and didn't test with them.
 
-Signed-off-by: Jann Horn <jann@thejh.net>
----
- security/smack/smack_lsm.c | 8 +++-----
- security/yama/yama_lsm.c   | 4 ++--
- 2 files changed, 5 insertions(+), 7 deletions(-)
-
-diff --git a/security/smack/smack_lsm.c b/security/smack/smack_lsm.c
-index ff81026..7c57c7f 100644
---- a/security/smack/smack_lsm.c
-+++ b/security/smack/smack_lsm.c
-@@ -398,12 +398,10 @@ static int smk_copy_relabel(struct list_head *nhead, struct list_head *ohead,
-  */
- static inline unsigned int smk_ptrace_mode(unsigned int mode)
- {
--	switch (mode) {
--	case PTRACE_MODE_READ:
--		return MAY_READ;
--	case PTRACE_MODE_ATTACH:
-+	if (mode & PTRACE_MODE_ATTACH)
- 		return MAY_READWRITE;
--	}
-+	if (mode & PTRACE_MODE_READ)
-+		return MAY_READ;
- 
- 	return 0;
- }
-diff --git a/security/yama/yama_lsm.c b/security/yama/yama_lsm.c
-index d3c19c9..cb6ed10 100644
---- a/security/yama/yama_lsm.c
-+++ b/security/yama/yama_lsm.c
-@@ -281,7 +281,7 @@ static int yama_ptrace_access_check(struct task_struct *child,
- 	int rc = 0;
- 
- 	/* require ptrace target be a child of ptracer on attach */
--	if (mode == PTRACE_MODE_ATTACH) {
-+	if (mode & PTRACE_MODE_ATTACH) {
- 		switch (ptrace_scope) {
- 		case YAMA_SCOPE_DISABLED:
- 			/* No additional restrictions. */
-@@ -307,7 +307,7 @@ static int yama_ptrace_access_check(struct task_struct *child,
- 		}
- 	}
- 
--	if (rc) {
-+	if (rc && (mode & PTRACE_MODE_NOAUDIT) == 0) {
- 		printk_ratelimited(KERN_NOTICE
- 			"ptrace of pid %d was attempted by: %s (pid %d)\n",
- 			child->pid, current->comm, current->pid);
--- 
-2.1.4
+Can the LSM maintainers have a look at this and say whether this looks okay now?
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
