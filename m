@@ -1,149 +1,190 @@
 From: "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 1/7] kernfs: Add API to generate relative kernfs path
-Date: Tue, 8 Dec 2015 10:46:26 -0600
-Message-ID: <20151208164626.GA13616@mail.hallyn.com>
+Subject: Re: [PATCH 5/7] cgroup: mount cgroupns-root when inside non-init
+ cgroupns
+Date: Tue, 8 Dec 2015 10:48:31 -0600
+Message-ID: <20151208164831.GB13616@mail.hallyn.com>
 References: <1449529582-4075-1-git-send-email-serge.hallyn@ubuntu.com>
- <1449529582-4075-2-git-send-email-serge.hallyn@ubuntu.com>
- <20151208155251.GA30240@mtj.duckdns.org>
+ <1449529582-4075-6-git-send-email-serge.hallyn@ubuntu.com>
+ <20151208162040.GC30240@mtj.duckdns.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20151208155251.GA30240-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
+In-Reply-To: <20151208162040.GC30240-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
 Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Cc: serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 08, 2015 at 10:52:51AM -0500, Tejun Heo wrote:
-> Hello, Serge.
+On Tue, Dec 08, 2015 at 11:20:40AM -0500, Tejun Heo wrote:
+> Hello,
 > 
-> On Mon, Dec 07, 2015 at 05:06:16PM -0600, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org wrote:
-> > +/* kernfs_node_depth - compute depth from @from to @to */
-> > +static size_t kernfs_node_distance(struct kernfs_node *from, struct kernfs_node *to)
-> >  {
-> > +	size_t depth = 0;
+> On Mon, Dec 07, 2015 at 05:06:20PM -0600, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org wrote:
+> >  fs/kernfs/mount.c      |   74 ++++++++++++++++++++++++++++++++++++++++++++++++
+> >  include/linux/kernfs.h |    2 ++
+> >  kernel/cgroup.c        |   39 ++++++++++++++++++++++++-
+> >  3 files changed, 114 insertions(+), 1 deletion(-)
+> 
+> Please put kernfs changes in a spearate patch.
+> 
+> > diff --git a/fs/kernfs/mount.c b/fs/kernfs/mount.c
+> > index 8eaf417..9219444 100644
+> > --- a/fs/kernfs/mount.c
+> > +++ b/fs/kernfs/mount.c
+> > @@ -62,6 +63,79 @@ struct kernfs_root *kernfs_root_from_sb(struct super_block *sb)
+> >  	return NULL;
+> >  }
 > >  
-> > +	BUG_ON(!to);
-> > +	BUG_ON(!from);
+> > +/*
+> > + * find the next ancestor in the path down to @child, where @parent was the
+> > + * parent whose child we want to find.
 > 
-> Do these BUG_ON()s achieve anything?  Also, would something like
-> kernfs_relative_depth() be a better name for the function?  Maybe even
-> just kernfs_depth()?
+> s/parent/ancestor/ s/child/descendant/ ?
 > 
-> ...
-> > +static struct kernfs_node *kernfs_common_ancestor(struct kernfs_node *a,
-> > +		struct kernfs_node *b)
+> > + *
+> > + * Say the path is /a/b/c/d.  @child is d, @parent is NULL.  We return the root
+> > + * node.  If @parent is b, then we return the node for c.
+> > + * Passing in d as @parent is not ok.
+> > + */
+> > +static struct kernfs_node *
+> > +find_next_ancestor(struct kernfs_node *child, struct kernfs_node *parent)
 > > +{
-> > +	size_t da = kernfs_node_distance(kernfs_root(a)->kn, a);
-> > +	size_t db = kernfs_node_distance(kernfs_root(b)->kn, b);
-> > +
-> > +	if (da == 0)
-> > +		return a;
-> > +	if (db == 0)
-> > +		return b;
-> 
-> Hmm... are the above two ifs necessary?  Wouldn't the outcome be the
-> same?  Furthermore, if a and b are on different roots the above may
-> give the wrong answer while not doing the above would return NULL.
-> 
-> > +	while (da > db) {
-> > +		a = a->parent;
-> > +		da--;
-> > +	}
-> > +	while (db > da) {
-> > +		b = b->parent;
-> > +		db--;
-> > +	}
-> > +
-> > +	/* worst case b and a will be the same at root */
-> > +	while (b != a) {
-> > +		b = b->parent;
-> > +		a = a->parent;
-> > +	}
-> > +
-> > +	return a;
-> > +}
-> ...
-> > +static char *
-> > +__must_check kernfs_path_from_node_locked(struct kernfs_node *kn_from,
-> 
-> Maybe
-> 
-> static char * __must_check
-> kernfs_path...
-> 
-> > +					  struct kernfs_node *kn_to, char *buf,
-> > +					  size_t buflen)
-> 
-> Given that @kn_from is optional and is not the target node, maybe put
-> @kn_to before @kn_from?
-> 
-> > +{
-> > +	char *p = buf;
-> > +	struct kernfs_node *kn, *common;
-> > +	const char parent_str[] = "/..";
-> > +	int i;
-> > +	size_t depth_from, depth_to, len = 0, nlen = 0,
-> > +	       plen = sizeof(parent_str) - 1;
-> 
-> Heh, idk, just put plen on a separate decl?
-> 
-> > +
-> > +	/* We atleast need 2 bytes to write "/\0". */
-> > +	if (buflen < 2)
-> > +		return NULL;
-> > +
-> > +	if (!kn_from)
-> > +		kn_from = kernfs_root(kn_to)->kn;
-> > +
-> > +	if (kn_from == kn_to) {
-> > +		*p = '/';
-> > +		*(++p) = '\0';
-> > +		return buf;
-> > +	}
-> > +
-> > +	common = kernfs_common_ancestor(kn_from, kn_to);
-> > +	if (!common) {
-> > +		WARN_ONCE("%s: kn_from and kn_to on different roots\n",
-> > +			__func__);
+> > +	if (child == parent) {
+> > +		pr_crit_once("BUG in find_next_ancestor: called with parent == child");
 > > +		return NULL;
 > > +	}
-> 
-> Have you compiled it?
-
-Yup,
-
->   WARN_ONCE()'s first argument is condition, so
-> you'd write
-> 
-> 	if (WARN_ONCE(!common, "blah blah"))
-> 		return NULL;
-
-Well that's odd, i thought I had changed all those to
-pr_*.  Will fix.
-
 > > +
-> > +	depth_to = kernfs_node_distance(common, kn_to);
-> > +	depth_from = kernfs_node_distance(common, kn_from);
-> > +
-> > +	for (i = 0; i < depth_from; i++) {
-> > +		if (len + plen + 1 > buflen)
+> > +	while (child->parent != parent) {
+> > +		if (!child->parent)
 > > +			return NULL;
-> > +		strcpy(p, parent_str);
-> > +		p += plen;
-> > +		len += plen;
+> > +		child = child->parent;
 > > +	}
 > > +
-> > +	/* Calculate how many bytes we need for the rest */
-> > +	for (kn = kn_to; kn != common; kn = kn->parent)
-> > +		nlen += strlen(kn->name) + 1;
+> > +	return child;
+> > +}
 > > +
-> > +	if (len + nlen + 1 > buflen)
-> > +		return NULL;
+> > +/**
+> > + * kernfs_obtain_root - get a dentry for the given kernfs_node
+> > + * @sb: the kernfs super_block
+> > + * @kn: kernfs_node for which a dentry is needed
+> > + *
+> > + * This can be used by callers which want to mount only a part of the kernfs
+> > + * as root of the filesystem.
+> > + */
+> > +struct dentry *kernfs_obtain_root(struct super_block *sb,
+> > +				  struct kernfs_node *kn)
 > 
-> Hmm... if we do this anyway, maybe we can make the function behave
-> more like other string formatting function (strlcpy) and return the
-> would-be length instead where ret >= len indicates truncation?
+> Wouldn't @kn, @sb be a better order?  Also, kernfs super_blocks are
+> determined by the kernfs_root and its namespace.  I wonder whether
+> specifying @ns would be better.
+> 
+> > +{
+> > +	struct dentry *dentry;
+> > +	struct kernfs_node *knparent = NULL;
+> > +
+> > +	BUG_ON(sb->s_op != &kernfs_sops);
+> > +
+> > +	dentry = dget(sb->s_root);
+> > +	if (!kn->parent) // this is the root
+> 			^^^
+> 			Do we do this now?
+> 
+> > +		return dentry;
+> > +
+> > +	knparent = find_next_ancestor(kn, NULL);
+> > +	if (!knparent) {
+> > +		pr_crit("BUG: find_next_ancestor for root dentry returned NULL\n");
+> 
+> Wouldn't stack dump helpful here?  Why not
 
-Ok, will do.
+Hm, yeah, that's a good reason to use WARN - thanks.
+
+> 	if (WARN_ONCE(!knparent, "find_next..."))
+> 		return ERR_PTR(-EINVAL);
+> 
+> or even just WARN_ON_ONCE().
+> 
+> > +		return ERR_PTR(-EINVAL);
+> > +	}
+> > +
+> > +	do {
+> > +		struct dentry *dtmp;
+> > +		struct kernfs_node *kntmp;
+> > +
+> > +		if (kn == knparent)
+> > +			return dentry;
+> > +		kntmp = find_next_ancestor(kn, knparent);
+> > +		if (!kntmp) {
+> > +			pr_crit("BUG: find_next_ancestor returned NULL for node\n");
+> 
+> Ditto.  It'd be a kernel bug.  WARN is usually the better way.
+> 
+> > diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+> > index a5ab74d..09cd718 100644
+> > --- a/kernel/cgroup.c
+> > +++ b/kernel/cgroup.c
+> > @@ -2011,6 +2011,15 @@ static struct dentry *cgroup_mount(struct file_system_type *fs_type,
+> >  	int ret;
+> >  	int i;
+> >  	bool new_sb;
+> > +	struct cgroup_namespace *ns = current->nsproxy->cgroup_ns;
+> 
+> Please move this upwards so that it's below other initialized
+> variables.
+> 
+> > +
+> > +	get_cgroup_ns(ns);
+> > +
+> > +	/* Check if the caller has permission to mount. */
+> > +	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN)) {
+> > +		put_cgroup_ns(ns);
+> > +		return ERR_PTR(-EPERM);
+> > +	}
+> >  
+> >  	/*
+> >  	 * The first time anyone tries to mount a cgroup, enable the list
+> > @@ -2127,6 +2136,11 @@ static struct dentry *cgroup_mount(struct file_system_type *fs_type,
+> >  		goto out_unlock;
+> >  	}
+> >  
+> > +	if (!opts.none && !capable(CAP_SYS_ADMIN)) {
+> > +		ret = -EPERM;
+> > +		goto out_unlock;
+> > +	}
+> 
+> Hmmm... why is !opts.none necessary?  Please add a comment explaining
+> why the above is necessary.
+> 
+> >  out_mount:
+> >  	dentry = kernfs_mount(fs_type, flags, root->kf_root,
+> >  			      is_v2 ? CGROUP2_SUPER_MAGIC : CGROUP_SUPER_MAGIC,
+> >  			      &new_sb);
+> > +
+> > +	if (!IS_ERR(dentry)) {
+> > +		/*
+> > +		 * In non-init cgroup namespace, instead of root cgroup's
+> > +		 * dentry, we return the dentry corresponding to the
+> > +		 * cgroupns->root_cgrp.
+> > +		 */
+> > +		if (ns != &init_cgroup_ns) {
+> 
+> 	if (!IS_ERR(dentry) && ns != &init_cgroup_ns) {
+> 
+> > +			struct dentry *nsdentry;
+> > +			struct cgroup *cgrp;
+> > +
+> > +			cgrp = cset_cgroup_from_root(ns->root_cset, root);
+> > +			nsdentry = kernfs_obtain_root(dentry->d_sb,
+> > +				cgrp->kn);
+> 
+> Heh, is kernfs_obtain_root() the right name?  Maybe
+> kernfs_node_to_inode()?
+> 
+> Thanks.
+> 
+> -- 
+> tejun
+> _______________________________________________
+> Containers mailing list
+> Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+> https://lists.linuxfoundation.org/mailman/listinfo/containers
