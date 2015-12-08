@@ -1,151 +1,143 @@
-From: "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: CGroup Namespaces (v6)
-Date: Tue, 8 Dec 2015 09:22:58 -0600
-Message-ID: <20151208152257.GA12530@mail.hallyn.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 1/7] kernfs: Add API to generate relative kernfs path
+Date: Tue, 8 Dec 2015 10:52:51 -0500
+Message-ID: <20151208155251.GA30240@mtj.duckdns.org>
 References: <1449529582-4075-1-git-send-email-serge.hallyn@ubuntu.com>
-	<CAMXgnP7vq1v+DeBMcu0wQ+LznBiXujkN-_Q21NE5FPiuNw3BUg@mail.gmail.com>
+ <1449529582-4075-2-git-send-email-serge.hallyn@ubuntu.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAMXgnP7vq1v+DeBMcu0wQ+LznBiXujkN-_Q21NE5FPiuNw3BUg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Alban Crequy <alban.crequy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+In-Reply-To: <1449529582-4075-2-git-send-email-serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 08, 2015 at 11:10:03AM +0100, Alban Crequy wrote:
-> Hi,
-> 
-> Thanks for the patches!
-> 
-> On 8 December 2015 at 00:06,  <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> wrote:
-> > Hi,
-> >
-> > following is a revised set of the CGroup Namespace patchset which Aditya
-> > Kali has previously sent.  The code can also be found in the cgroupns.v6
-> > branch of
-> >
-> > https://git.kernel.org/cgit/linux/kernel/git/sergeh/linux-security.git/
-> >
-> > To summarize the semantics:
-> >
-> > 1. CLONE_NEWCGROUP re-uses 0x02000000, which was previously CLONE_STOPPED
-> >
-> > 2. unsharing a cgroup namespace makes all your current cgroups your new
-> > cgroup root.
-> >
-> > 3. /proc/pid/cgroup always shows cgroup paths relative to the reader's
-> > cgroup namespce root.  A task outside of  your cgroup looks like
-> >
-> >         8:memory:/../../..
-> >
-> > 4. when a task mounts a cgroupfs, the cgroup which shows up as root depends
-> > on the mounting task's  cgroup namespace.
-> >
-> > 5. setns to a cgroup namespace switches your cgroup namespace but not
-> > your cgroups.
-> >
-> > With this, using github.com/hallyn/lxc #2015-11-09/cgns (and
-> > github.com/hallyn/lxcfs #2015-11-10/cgns) we can start a container in a full
-> > proper cgroup namespace, avoiding either cgmanager or lxcfs cgroup bind mounts.
-> 
-> I tested cgroupns.v6 with systemd-nspawn + patches from
-> https://github.com/systemd/systemd/pull/2112 using
-> unshare(CLONE_NEWCGROUP) booted with
-> systemd.unified_cgroup_hierarchy=1 in Fedora22. Tested with and
-> without userns. It worked for me :)
+Hello, Serge.
 
-Great, thanks for testing.
+On Mon, Dec 07, 2015 at 05:06:16PM -0600, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org wrote:
+> +/* kernfs_node_depth - compute depth from @from to @to */
+> +static size_t kernfs_node_distance(struct kernfs_node *from, struct kernfs_node *to)
+>  {
+> +	size_t depth = 0;
+>  
+> +	BUG_ON(!to);
+> +	BUG_ON(!from);
 
-> Do you need people to run more tests, with other scenarios?
+Do these BUG_ON()s achieve anything?  Also, would something like
+kernfs_relative_depth() be a better name for the function?  Maybe even
+just kernfs_depth()?
 
-Certainly the more testing the better.  There is a particular set of
-cases which I'd earlier tested just in the shell, which could stand
-to have a testcase.  That's to basically test all of the '..' possibilities
-for /proc/self/cgroup and make sure it's all sane.  I.e. place task t1
-into cgroups: '/', '/x1', '/x1/x2', '/x1/x2/x3';  place task t2 into
-various relative paths '/', '/x1', '/x1/x2', '/y1', etc;  have t1
-check where t2 is, then have t2 setns into t1's namespace and check where
-t1 is.
+...
+> +static struct kernfs_node *kernfs_common_ancestor(struct kernfs_node *a,
+> +		struct kernfs_node *b)
+> +{
+> +	size_t da = kernfs_node_distance(kernfs_root(a)->kn, a);
+> +	size_t db = kernfs_node_distance(kernfs_root(b)->kn, b);
+> +
+> +	if (da == 0)
+> +		return a;
+> +	if (db == 0)
+> +		return b;
 
-> Do you have patches already for /usr/bin/unshare and /usr/bin/nsenter?
+Hmm... are the above two ifs necessary?  Wouldn't the outcome be the
+same?  Furthermore, if a and b are on different roots the above may
+give the wrong answer while not doing the above would return NULL.
 
-Nope, I don't have patch for util-linux yet, I just used a custom unshare
-and setns program.
+> +	while (da > db) {
+> +		a = a->parent;
+> +		da--;
+> +	}
+> +	while (db > da) {
+> +		b = b->parent;
+> +		db--;
+> +	}
+> +
+> +	/* worst case b and a will be the same at root */
+> +	while (b != a) {
+> +		b = b->parent;
+> +		a = a->parent;
+> +	}
+> +
+> +	return a;
+> +}
+...
+> +static char *
+> +__must_check kernfs_path_from_node_locked(struct kernfs_node *kn_from,
 
-> > This is completely backward compatible and will be completely invisible
-> > to any existing cgroup users (except for those running inside a cgroup
-> > namespace and looking at /proc/pid/cgroup of tasks outside their
-> > namespace.)
-> >
-> > Changes from V5:
-> > 1. To get a root dentry for cgroup namespace mount, walk the path from the
-> >    kernfs root dentry.
-> >
-> > Changes from V4:
-> > 1. Move the FS_USERNS_MOUNT flag to last patch
-> > 2. Rebase onto cgroup/for-4.5
-> > 3. Don't non-init user namespaces to bind new subsystems when mounting.
-> > 4. Address feedback from Tejun (thanks).  Specificaly, not addressed:
-> >    . kernfs_obtain_root - walking dentry from kernfs root.
-> >      (I think that's the only piece)
-> > 5. Dropped unused get_task_cgroup fn/patch.
-> > 6. Reworked kernfs_path_from_node_locked() to try to simplify the logic.
-> >    It now finds a common ancestor, walks from the source to it, then back
-> >    up to the target.
-> >
-> > Changes from V3:
-> > 1. Rebased onto latest cgroup changes.  In particular switch to
-> >    css_set_lock and ns_common.
-> > 2. Support all hierarchies.
-> >
-> > Changes from V2:
-> > 1. Added documentation in Documentation/cgroups/namespace.txt
-> > 2. Fixed a bug that caused crash
-> > 3. Incorporated some other suggestions from last patchset:
-> >    - removed use of threadgroup_lock() while creating new cgroupns
-> >    - use task_lock() instead of rcu_read_lock() while accessing
-> >      task->nsproxy
-> >    - optimized setns() to own cgroupns
-> >    - simplified code around sane-behavior mount option parsing
-> > 4. Restored ACKs from Serge Hallyn from v1 on few patches that have
-> >    not changed since then.
-> >
-> > Changes from V1:
-> > 1. No pinning of processes within cgroupns. Tasks can be freely moved
-> >    across cgroups even outside of their cgroupns-root. Usual DAC/MAC policies
-> >    apply as before.
-> > 2. Path in /proc/<pid>/cgroup is now always shown and is relative to
-> >    cgroupns-root. So path can contain '/..' strings depending on cgroupns-root
-> >    of the reader and cgroup of <pid>.
-> > 3. setns() does not require the process to first move under target
-> >    cgroupns-root.
-> >
-> > Changes form RFC (V0):
-> > 1. setns support for cgroupns
-> > 2. 'mount -t cgroup cgroup <mntpt>' from inside a cgroupns now
-> >    mounts the cgroup hierarcy with cgroupns-root as the filesystem root.
-> > 3. writes to cgroup files outside of cgroupns-root are not allowed
-> > 4. visibility of /proc/<pid>/cgroup is further restricted by not showing
-> >    anything if the <pid> is in a sibling cgroupns and its cgroup falls outside
-> >    your cgroupns-root.
-> >
-> >
-> > _______________________________________________
-> > Containers mailing list
-> > Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-> > https://lists.linuxfoundation.org/mailman/listinfo/containers
-> _______________________________________________
-> Containers mailing list
-> Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-> https://lists.linuxfoundation.org/mailman/listinfo/containers
+Maybe
+
+static char * __must_check
+kernfs_path...
+
+> +					  struct kernfs_node *kn_to, char *buf,
+> +					  size_t buflen)
+
+Given that @kn_from is optional and is not the target node, maybe put
+@kn_to before @kn_from?
+
+> +{
+> +	char *p = buf;
+> +	struct kernfs_node *kn, *common;
+> +	const char parent_str[] = "/..";
+> +	int i;
+> +	size_t depth_from, depth_to, len = 0, nlen = 0,
+> +	       plen = sizeof(parent_str) - 1;
+
+Heh, idk, just put plen on a separate decl?
+
+> +
+> +	/* We atleast need 2 bytes to write "/\0". */
+> +	if (buflen < 2)
+> +		return NULL;
+> +
+> +	if (!kn_from)
+> +		kn_from = kernfs_root(kn_to)->kn;
+> +
+> +	if (kn_from == kn_to) {
+> +		*p = '/';
+> +		*(++p) = '\0';
+> +		return buf;
+> +	}
+> +
+> +	common = kernfs_common_ancestor(kn_from, kn_to);
+> +	if (!common) {
+> +		WARN_ONCE("%s: kn_from and kn_to on different roots\n",
+> +			__func__);
+> +		return NULL;
+> +	}
+
+Have you compiled it?  WARN_ONCE()'s first argument is condition, so
+you'd write
+
+	if (WARN_ONCE(!common, "blah blah"))
+		return NULL;
+
+> +
+> +	depth_to = kernfs_node_distance(common, kn_to);
+> +	depth_from = kernfs_node_distance(common, kn_from);
+> +
+> +	for (i = 0; i < depth_from; i++) {
+> +		if (len + plen + 1 > buflen)
+> +			return NULL;
+> +		strcpy(p, parent_str);
+> +		p += plen;
+> +		len += plen;
+> +	}
+> +
+> +	/* Calculate how many bytes we need for the rest */
+> +	for (kn = kn_to; kn != common; kn = kn->parent)
+> +		nlen += strlen(kn->name) + 1;
+> +
+> +	if (len + nlen + 1 > buflen)
+> +		return NULL;
+
+Hmm... if we do this anyway, maybe we can make the function behave
+more like other string formatting function (strlcpy) and return the
+would-be length instead where ret >= len indicates truncation?
+
+Thanks.
+
+-- 
+tejun
