@@ -1,131 +1,286 @@
-From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Subject: Re: [PATCH v8 38/55] [media] v4l2-subdev: use MEDIA_ENT_T_UNKNOWN
- for new subdevs
-Date: Tue, 8 Dec 2015 15:38:49 -0200
-Message-ID: <20151208153849.1d6c8ae4@recife.lan>
-References: <ec40936d7349f390dd8b73b90fa0e0708de596a9.1441540862.git.mchehab@osg.samsung.com>
-	<84879cc0deb14467e5436af5287148ace5b15cce.1441540862.git.mchehab@osg.samsung.com>
-	<5694046.QaGrXTB1hd@avalon>
+From: Josh Poimboeuf <jpoimboe@redhat.com>
+Subject: Re: [RFC PATCH v2 2/6] module: preserve Elf information for
+ livepatch modules
+Date: Tue, 8 Dec 2015 12:32:12 -0600
+Message-ID: <20151208183212.GB14846@treble.redhat.com>
+References: <1448943679-3412-1-git-send-email-jeyu@redhat.com>
+ <1448943679-3412-3-git-send-email-jeyu@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-media-owner@vger.kernel.org>
-In-Reply-To: <5694046.QaGrXTB1hd@avalon>
-Sender: linux-media-owner@vger.kernel.org
-To: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
-Cc: Linux Media Mailing List <linux-media@vger.kernel.org>, Hans Verkuil <hans.verkuil@cisco.com>, Sylwester Nawrocki <s.nawrocki@samsung.com>, "Lad, Prabhakar" <prabhakar.csengg@gmail.com>, Markus Elfring <elfring@users.sourceforge.net>, Lars-Peter Clausen <lars@metafoo.de>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1448943679-3412-3-git-send-email-jeyu@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jessica Yu <jeyu@redhat.com>
+Cc: Rusty Russell <rusty@rustcorp.com.au>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Em Sun, 06 Dec 2015 03:37:59 +0200
-Laurent Pinchart <laurent.pinchart@ideasonboard.com> escreveu:
+On Mon, Nov 30, 2015 at 11:21:15PM -0500, Jessica Yu wrote:
+> For livepatch modules, copy Elf section, symbol, and string information
+> from the load_info struct in the module loader.
+> 
+> Livepatch uses special relocation sections in order to be able to patch
+> modules that are not yet loaded, as well as apply patches to the kernel
+> when the addresses of symbols cannot be determined at compile time (for
+> example, when kaslr is enabled). Livepatch modules must preserve Elf
+> information such as section indices in order to apply the remaining
+> relocation sections at the appropriate time (i.e. when the target module
+> loads).
+> 
+> Signed-off-by: Jessica Yu <jeyu@redhat.com>
+> ---
+>  include/linux/module.h |  9 +++++
+>  kernel/module.c        | 98 ++++++++++++++++++++++++++++++++++++++++++++++++--
+>  2 files changed, 105 insertions(+), 2 deletions(-)
+> 
+> diff --git a/include/linux/module.h b/include/linux/module.h
+> index 3a19c79..9b46256 100644
+> --- a/include/linux/module.h
+> +++ b/include/linux/module.h
+> @@ -425,6 +425,14 @@ struct module {
+>  
+>  	/* Notes attributes */
+>  	struct module_notes_attrs *notes_attrs;
+> +
+> +	/* Elf information (optionally saved) */
+> +	Elf_Ehdr *hdr;
 
-> Hi Mauro,
-> 
-> Thank you for the patch.
-> 
-> In addition to my reply to Sakari's e-mail, please see below for a few small 
-> comments.
-> 
-> On Sunday 06 September 2015 09:02:58 Mauro Carvalho Chehab wrote:
-> > Instead of abusing MEDIA_ENT_T_V4L2_SUBDEV, initialize
-> > new subdev entities as MEDIA_ENT_T_UNKNOWN.
-> > 
-> > Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-> > Acked-by: Hans Verkuil <hans.verkuil@cisco.com>
-> > 
-> > diff --git a/drivers/media/media-device.c b/drivers/media/media-device.c
-> > index 659507bce63f..134fe7510195 100644
-> > --- a/drivers/media/media-device.c
-> > +++ b/drivers/media/media-device.c
-> > @@ -435,6 +435,12 @@ int __must_check media_device_register_entity(struct
-> > media_device *mdev, {
-> >  	int i;
-> > 
-> > +	if (entity->type == MEDIA_ENT_T_V4L2_SUBDEV_UNKNOWN ||
-> > +	    entity->type == MEDIA_ENT_T_UNKNOWN)
-> > +		dev_warn(mdev->dev,
-> > +			 "Entity type for entity %s was not initialized!\n",
-> > +			 entity->name);
-> > +
-> >  	/* Warn if we apparently re-register an entity */
-> >  	WARN_ON(entity->graph_obj.mdev != NULL);
-> >  	entity->graph_obj.mdev = mdev;
-> > diff --git a/drivers/media/v4l2-core/v4l2-subdev.c
-> > b/drivers/media/v4l2-core/v4l2-subdev.c index 60da43772de9..b3bcc8253182
-> > 100644
-> > --- a/drivers/media/v4l2-core/v4l2-subdev.c
-> > +++ b/drivers/media/v4l2-core/v4l2-subdev.c
-> > @@ -584,7 +584,7 @@ void v4l2_subdev_init(struct v4l2_subdev *sd, const
-> > struct v4l2_subdev_ops *ops) sd->host_priv = NULL;
-> >  #if defined(CONFIG_MEDIA_CONTROLLER)
-> >  	sd->entity.name = sd->name;
-> > -	sd->entity.type = MEDIA_ENT_T_V4L2_SUBDEV;
-> > +	sd->entity.type = MEDIA_ENT_T_V4L2_SUBDEV_UNKNOWN;
-> >  #endif
-> >  }
-> >  EXPORT_SYMBOL(v4l2_subdev_init);
-> > diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
-> > index f8725b881a1d..3d6210095336 100644
-> > --- a/include/uapi/linux/media.h
-> > +++ b/include/uapi/linux/media.h
-> > @@ -42,6 +42,14 @@ struct media_device_info {
-> > 
-> >  #define MEDIA_ENT_ID_FLAG_NEXT		(1 << 31)
-> > 
-> > +/* Used values for media_entity_desc::type */
-> > +
-> 
-> You remove this a couple of patches later, is it worth adding it in the first 
-> place ?
+I would rename "hdr" to "elf_hdr" to make its purpose clearer.
 
-If you had come with that earlier, I would happily have it removed ;)
-Right now, I really want to avoid changes on the patches. Handling a
-83 patch series, with two ~20 patch series depending on it (Shuah's
-ALSA patches and Sakari's internal entity numbering series) is not
-fun.
+> +	Elf_Shdr *sechdrs;
+> +	char *secstrings;
 
-So, as this is already removed on some other patch, I'll let this
-hunk as-is.
+Probably a good idea to add underscores to the names ("sec_hdrs" and
+"sec_strings") to be consistent with most of the other fields in the
+struct.
 
-> 
-> > +/*
-> > + * Initial value to be used when a new entity is created
-> > + * Drivers should change it to something useful
-> 
-> As you warn when the value isn't change I'd say "Drivers must change...".
+> +	struct {
+> +		unsigned int sym, str, mod, vers, info, pcpu;
+> +	} index;
 
-I'll fix this on a later patch.
+I might be contradicting myself from what I said before.  But I'm
+thinking we should put all these fields inside a CONFIG_LIVEPATCH ifdef.
+Then below, there could be two versions of copy_module_elf(), the real
+one for LIVEPATCH and and an empty one for !LIVEPATCH.  And the same
+story for free_module_elf().
 
-> > + */
-> > +#define MEDIA_ENT_T_UNKNOWN	0x00000000
-> > +
-> >  /*
-> >   * Base numbers for entity types
-> >   *
-> > @@ -75,6 +83,15 @@ struct media_device_info {
-> >  #define MEDIA_ENT_T_V4L2_SWRADIO	(MEDIA_ENT_T_V4L2_BASE + 6)
-> > 
-> >  /* V4L2 Sub-device entities */
-> > +
-> > +	/*
-> > +	 * Subdevs are initialized with MEDIA_ENT_T_V4L2_SUBDEV_UNKNOWN,
-> > +	 * in order to preserve backward compatibility.
-> > +	 * Drivers should change to the proper subdev type before
-> > +	 * registering the entity.
-> > +	 */
-> 
-> Leading tabs look weird here.
+>  #endif
+>  
+>  	/* The command line arguments (may be mangled).  People like
+> @@ -461,6 +469,7 @@ struct module {
+>  #endif
+>  
+>  #ifdef CONFIG_LIVEPATCH
+> +	bool klp; /* Is this a livepatch module? */
+>  	bool klp_alive;
+>  #endif
+>  
+> diff --git a/kernel/module.c b/kernel/module.c
+> index 8f051a1..433c2d6 100644
+> --- a/kernel/module.c
+> +++ b/kernel/module.c
+> @@ -1984,6 +1984,13 @@ static void unset_module_core_ro_nx(struct module *mod) { }
+>  static void unset_module_init_ro_nx(struct module *mod) { }
+>  #endif
+>  
+> +static void free_module_elf(struct module *mod)
+> +{
+> +	kfree(mod->hdr);
+> +	kfree(mod->sechdrs);
+> +	kfree(mod->secstrings);
+> +}
+> +
+>  void __weak module_memfree(void *module_region)
+>  {
+>  	vfree(module_region);
+> @@ -2022,6 +2029,9 @@ static void free_module(struct module *mod)
+>  	/* Free any allocated parameters. */
+>  	destroy_params(mod->kp, mod->num_kp);
+>  
+> +	/* Free Elf information if it was saved */
+> +	free_module_elf(mod);
+> +
+>  	/* Now we can delete it from the lists */
+>  	mutex_lock(&module_mutex);
+>  	/* Unlink carefully: kallsyms could be walking list. */
+> @@ -2137,6 +2147,10 @@ static int simplify_symbols(struct module *mod, const struct load_info *info)
+>  			       (long)sym[i].st_value);
+>  			break;
+>  
+> +		case SHN_LIVEPATCH:
+> +			/* klp symbols are resolved by livepatch */
+> +			break;
+> +
+>  		case SHN_UNDEF:
+>  			ksym = resolve_symbol_wait(mod, info, name);
+>  			/* Ok if resolved.  */
+> @@ -2185,6 +2199,10 @@ static int apply_relocations(struct module *mod, const struct load_info *info)
+>  		if (!(info->sechdrs[infosec].sh_flags & SHF_ALLOC))
+>  			continue;
+>  
+> +		/* klp relocation sections are applied by livepatch */
+> +		if (info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH)
+> +			continue;
+> +
+>  		if (info->sechdrs[i].sh_type == SHT_REL)
+>  			err = apply_relocate(info->sechdrs, info->strtab,
+>  					     info->index.sym, i, mod);
+> @@ -2393,6 +2411,11 @@ static char elf_type(const Elf_Sym *sym, const struct load_info *info)
+>  {
+>  	const Elf_Shdr *sechdrs = info->sechdrs;
+>  
+> +	if (ELF_ST_BIND(sym->st_info) == STB_LIVEPATCH_EXT)
+> +		return 'K';
+> +	if (sym->st_shndx == SHN_LIVEPATCH)
+> +		return 'k';
+> +
+>  	if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
+>  		if (ELF_ST_TYPE(sym->st_info) == STT_OBJECT)
+>  			return 'v';
+> @@ -2475,7 +2498,7 @@ static void layout_symtab(struct module *mod, struct load_info *info)
+>  
+>  	/* Compute total space required for the core symbols' strtab. */
+>  	for (ndst = i = 0; i < nsrc; i++) {
+> -		if (i == 0 ||
+> +		if (i == 0 || mod->klp ||
+>  		    is_core_symbol(src+i, info->sechdrs, info->hdr->e_shnum)) {
+>  			strtab_size += strlen(&info->strtab[src[i].st_name])+1;
+>  			ndst++;
 
-Ok, I'll remove the ident here. This hunk had to be conflict solved
-anyway, as we merged the MEDIA_ENT_T_V4L2_SUBDEV_UNKNOWN addition
-earlier. I'll do this specific change here, and hope to not cause
-context conflicts later - it will likely cause - as we renamed from
-ENT_T_foo to ENT_F_foo :( Let's hope git is smart enough here...
+Instead of accessing mod->klp directly, how about an
+'is_livepatch_module(mod)' function.  There could be two versions, with
+the !LIVEPATCH version always returning false and the LIVEPATCH version
+checking mod->klp.  Then mod->klp itself can stay inside the LIVEPATCH
+ifdef in the module struct.
 
-> 
-> > +#define MEDIA_ENT_T_V4L2_SUBDEV_UNKNOWN	MEDIA_ENT_T_V4L2_SUBDEV_BASE
-> > +
-> >  #define MEDIA_ENT_T_V4L2_SUBDEV_SENSOR	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 1)
-> >  #define MEDIA_ENT_T_V4L2_SUBDEV_FLASH	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 2)
-> >  #define MEDIA_ENT_T_V4L2_SUBDEV_LENS	(MEDIA_ENT_T_V4L2_SUBDEV_BASE + 3)
-> 
+> @@ -2517,7 +2540,7 @@ static void add_kallsyms(struct module *mod, const struct load_info *info)
+>  	mod->core_strtab = s = mod->module_core + info->stroffs;
+>  	src = mod->symtab;
+>  	for (ndst = i = 0; i < mod->num_symtab; i++) {
+> -		if (i == 0 ||
+> +		if (i == 0 || mod->klp ||
+>  		    is_core_symbol(src+i, info->sechdrs, info->hdr->e_shnum)) {
+>  			dst[ndst] = src[i];
+>  			dst[ndst++].st_name = s - mod->core_strtab;
+> @@ -2638,6 +2661,64 @@ static int elf_header_check(struct load_info *info)
+>  	return 0;
+>  }
+>  
+> +/*
+> + * copy_module_elf - preserve Elf information about a module
+> + */
+> +static int copy_module_elf(struct module *mod, struct load_info *info)
+> +{
+> +	unsigned int size;
+> +	int ret = 0;
+
+No need to initialize ret to zero here since it's never used
+uninitalized.
+
+> +	Elf_Shdr *symsect;
+> +
+> +	/* Elf header */
+> +	size = sizeof(Elf_Ehdr);
+> +	mod->hdr = kzalloc(size, GFP_KERNEL);
+
+No need to zero the memory here with kzalloc() since it will all be
+memcpy()'d anyway.  kmalloc() can be used instead (and the same for the
+other kzalloc()s below).
+
+> +	if (mod->hdr == NULL) {
+> +		ret = -ENOMEM;
+> +		goto out;
+> +	}
+> +	memcpy(mod->hdr, info->hdr, size);
+> +
+> +	/* Elf section header table */
+> +	size = sizeof(Elf_Shdr) * info->hdr->e_shnum;
+> +	mod->sechdrs = kzalloc(size, GFP_KERNEL);
+> +	if (mod->sechdrs == NULL) {
+> +		ret = -ENOMEM;
+> +		goto free_hdr;
+> +	}
+> +	memcpy(mod->sechdrs, info->sechdrs, size);
+> +
+> +	/* Elf section name string table */
+> +	size = info->sechdrs[info->hdr->e_shstrndx].sh_size;
+> +	mod->secstrings = kzalloc(size, GFP_KERNEL);
+> +	if (mod->secstrings == NULL) {
+> +		ret = -ENOMEM;
+> +		goto free_sechdrs;
+> +	}
+> +	memcpy(mod->secstrings, info->secstrings, size);
+> +
+> +	/* Elf section indices */
+> +	memcpy(&mod->index, &info->index, sizeof(info->index));
+> +
+> +	/*
+> +	 * Update symtab's sh_addr to point to a valid
+> +	 * symbol table, as the temporary symtab in module
+> +	 * init memory will be freed
+> +	 */
+> +	symsect = mod->sechdrs + mod->index.sym;
+> +	symsect->sh_addr = (unsigned long)mod->core_symtab;
+> +
+> +	return ret;
+> +
+> +free_sechdrs:
+> +	kfree(mod->sechdrs);
+> +free_hdr:
+> +	kfree(mod->hdr);
+> +out:
+> +	return ret;
+> +}
+> +
+> +
+>  #define COPY_CHUNK_SIZE (16*PAGE_SIZE)
+>  
+>  static int copy_chunked_from_user(void *dst, const void __user *usrc, unsigned long len)
+> @@ -2866,6 +2947,9 @@ static int check_modinfo(struct module *mod, struct load_info *info, int flags)
+>  			"is unknown, you have been warned.\n", mod->name);
+>  	}
+>  
+> +	if (get_modinfo(info, "livepatch"))
+> +		mod->klp = true;
+> +
+
+Similar to the is_livepatch_module() function I suggested, this can be
+put in a function so that mod->klp can be abstracted away for the
+!LIVEPATCH case.  Maybe there should be a check_livepatch_modinfo()
+function:
+
+1. the !LIVEPATCH version of the function could return an error if
+modinfo has "livepatch"
+
+2. the LIVEPATCH version could simply set mod->klp = true.
+
+>  	/* Set up license info based on the info section */
+>  	set_license(mod, get_modinfo(info, "license"));
+>  
+> @@ -3530,6 +3614,16 @@ static int load_module(struct load_info *info, const char __user *uargs,
+>  	if (err < 0)
+>  		goto bug_cleanup;
+>  
+> +	/*
+> +	 * Save sechdrs, indices, and other data from info
+> +	 * in order to patch to-be-loaded modules.
+> +	 * Do not call free_copy() for livepatch modules.
+
+I think the last line of this comment isn't right, since free_copy() is
+called below regardless.
+
+> +	 */
+> +	if (mod->klp)
+> +		err = copy_module_elf(mod, info);
+> +	if (err < 0)
+> +		goto bug_cleanup;
+
+Not strictly necessary, but I think it would be a little cleaner to only
+check the err if copy_module_elf() was called.
+
+> +
+>  	/* Get rid of temporary copy. */
+>  	free_copy(info);
+
+-- 
+Josh
