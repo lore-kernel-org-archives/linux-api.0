@@ -1,46 +1,59 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH v8 44/55] [media] uapi/media.h: Add MEDIA_IOC_G_TOPOLOGY ioctl
-Date: Tue, 08 Dec 2015 20:48:47 +0100
-Message-ID: <2308038.NjPhfBgjQD@wuerfel>
-References: <ec40936d7349f390dd8b73b90fa0e0708de596a9.1441540862.git.mchehab@osg.samsung.com> <1647957.hsKJGfKUVG@avalon> <20151208172340.43a76779@recife.lan>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: [PATCH 28/34] x86: wire up mprotect_key() system call
+Date: Tue, 8 Dec 2015 21:38:12 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1512082134470.3595@nanos>
+References: <20151204011424.8A36E365@viggo.jf.intel.com> <20151204011503.2A095839@viggo.jf.intel.com> <alpine.DEB.2.11.1512081943270.3595@nanos> <56672A50.4010801@sr71.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151208172340.43a76779-+RedX5hVuTR+urZeOPWqwQ@public.gmane.org>
+In-Reply-To: <56672A50.4010801-gkUM19QKKo4@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tuesday 08 December 2015 17:23:40 Mauro Carvalho Chehab wrote:
-> > > +
-> > > +struct media_v2_topology {
-> > > +   __u32 topology_version;
-> > > +
-> > > +   __u32 num_entities;
-> > > +   struct media_v2_entity *entities;
+On Tue, 8 Dec 2015, Dave Hansen wrote:
+> On 12/08/2015 10:44 AM, Thomas Gleixner wrote:
+> > On Thu, 3 Dec 2015, Dave Hansen wrote:
+> >>  #include <asm-generic/mman.h>
+> >> diff -puN mm/Kconfig~pkeys-16-x86-mprotect_key mm/Kconfig
+> >> --- a/mm/Kconfig~pkeys-16-x86-mprotect_key	2015-12-03 16:21:31.114920208 -0800
+> >> +++ b/mm/Kconfig	2015-12-03 16:21:31.119920435 -0800
+> >> @@ -679,4 +679,5 @@ config NR_PROTECTION_KEYS
+> >>  	# Everything supports a _single_ key, so allow folks to
+> >>  	# at least call APIs that take keys, but require that the
+> >>  	# key be 0.
+> >> +	default 16 if X86_INTEL_MEMORY_PROTECTION_KEYS
+> >>  	default 1
 > > 
-> > The kernel seems to be moving to using __u64 instead of pointers in userspace-
-> > facing structures to avoid compat32 code.
+> > What happens if I set that to 42?
+> > 
+> > I think we want to make this a runtime evaluated thingy. If pkeys are
+> > compiled in, but the machine does not support it then we don't support
+> > 16 keys, or do we?
 > 
-> We had such discussion at the MC summit. I don't object to change to
-> __u64, but we need to reach a consensus 
+> We do have runtime evaluation:
 > 
+> #define arch_max_pkey() (boot_cpu_has(X86_FEATURE_OSPKE) ?      \
+>                              CONFIG_NR_PROTECTION_KEYS : 1)
+> 
+> The config option really just sets the architectural limit for how many
+> are supported.  So it probably needs a better name at least.  Let me
+> take a look at getting rid of this config option entirely.
 
-Just saw the email fly by. Using a __u64 to pass a pointer is generally
-the preferred method for most subsystems these days.
+Well, it does not set the architectural limit. It sets some random
+value which the guy who configures the kernel choses.
 
-However, that means you probably want to extract the pointer from
-that using something like
+The limit we have in the architecture is 16 because we only have 4
+bits for it.
+ 
+arch_max_pkey() is architecture specific, so we can make this:
 
-static inline void __user *get_upointer(u64 arg)
-{
-	return (void __user *)(uintptr_t)arg;
-}
+#define arch_max_pkey() (boot_cpu_has(X86_FEATURE_OSPKE) ? 16 : 1)
 
-This is the only way that I know that works on both 32-bit and 64-bit
-architectures as well as the oddball s390 compat mode (which you don't
-care about because there are no media devices on s390).
+And when we magically get more bits in the next century, then '16' can
+become a variable or whatever.
 
-	Arnd
+Thanks,
+
+	tglx
