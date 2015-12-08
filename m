@@ -1,215 +1,154 @@
-From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Subject: Re: [PATCH v8 44/55] [media] uapi/media.h: Add MEDIA_IOC_G_TOPOLOGY
- ioctl
-Date: Tue, 8 Dec 2015 17:23:40 -0200
-Message-ID: <20151208172340.43a76779@recife.lan>
-References: <ec40936d7349f390dd8b73b90fa0e0708de596a9.1441540862.git.mchehab@osg.samsung.com>
-	<297afcfe4c9c5ebc074f92d1badd34b94e8b28f9.1441540862.git.mchehab@osg.samsung.com>
-	<1647957.hsKJGfKUVG@avalon>
+From: "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 3/7] cgroup: introduce cgroup namespaces
+Date: Tue, 8 Dec 2015 13:34:31 -0600
+Message-ID: <20151208193431.GB14814@mail.hallyn.com>
+References: <1449529582-4075-1-git-send-email-serge.hallyn@ubuntu.com>
+ <1449529582-4075-4-git-send-email-serge.hallyn@ubuntu.com>
+ <20151208160453.GB30240@mtj.duckdns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-media-owner@vger.kernel.org>
-In-Reply-To: <1647957.hsKJGfKUVG@avalon>
-Sender: linux-media-owner@vger.kernel.org
-To: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
-Cc: Linux Media Mailing List <linux-media@vger.kernel.org>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20151208160453.GB30240-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Em Sun, 06 Dec 2015 02:47:39 +0200
-Laurent Pinchart <laurent.pinchart@ideasonboard.com> escreveu:
-
-> Hi Mauro,
-> 
-> Thank you for the patch.
-> 
-> On Sunday 06 September 2015 09:03:04 Mauro Carvalho Chehab wrote:
-> > Add a new ioctl that will report the entire topology on
-> > one go.
-> > 
-> > Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-> > 
-> > diff --git a/include/media/media-entity.h b/include/media/media-entity.h
-> > index 7320cdc45833..2d5ad40254b7 100644
-> > --- a/include/media/media-entity.h
-> > +++ b/include/media/media-entity.h
-> > @@ -181,6 +181,8 @@ struct media_interface {
-> >   */
-> >  struct media_intf_devnode {
-> >  	struct media_interface		intf;
+On Tue, Dec 08, 2015 at 11:04:53AM -0500, Tejun Heo wrote:
+> On Mon, Dec 07, 2015 at 05:06:18PM -0600, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org wrote:
+> >  static const char *proc_ns_follow_link(struct dentry *dentry, void **cookie)
+> > diff --git a/include/linux/cgroup.h b/include/linux/cgroup.h
+> > index 2b3e2314..906f240 100644
+> > --- a/include/linux/cgroup.h
+> > +++ b/include/linux/cgroup.h
+> > @@ -17,11 +17,36 @@
+> >  #include <linux/seq_file.h>
+> >  #include <linux/kernfs.h>
+> >  #include <linux/jump_label.h>
+> > +#include <linux/nsproxy.h>
+> > +#include <linux/types.h>
+> > +#include <linux/ns_common.h>
+> > +#include <linux/nsproxy.h>
+> > +#include <linux/user_namespace.h>
+> >  
+> >  #include <linux/cgroup-defs.h>
+> >  
+> > +struct cgroup_namespace {
+> > +	atomic_t		count;
+> > +	struct ns_common	ns;
+> > +	struct user_namespace	*user_ns;
+> > +	struct css_set          *root_cset;
+> > +};
 > > +
-> > +	/* Should match the fields at media_v2_intf_devnode */
-> >  	u32				major;
-> >  	u32				minor;
+> > +extern struct cgroup_namespace init_cgroup_ns;
+> > +
+> > +static inline void get_cgroup_ns(struct cgroup_namespace *ns)
+> > +{
+> > +	if (ns)
+> > +		atomic_inc(&ns->count);
+> > +}
+> > +
+> ..
+> > +void free_cgroup_ns(struct cgroup_namespace *ns);
+> > +struct cgroup_namespace *copy_cgroup_ns(unsigned long flags,
+> > +		struct user_namespace *user_ns,
+> > +		struct cgroup_namespace *old_ns);
+> ...
+> > +char * __must_check cgroup_path_ns(struct cgroup *cgrp, char *buf,
+> > +				   size_t buflen, struct cgroup_namespace *ns);
+> > +char * __must_check cgroup_path(struct cgroup *cgrp, char *buf, size_t buflen);
+> ...
+> > +static inline void put_cgroup_ns(struct cgroup_namespace *ns)
+> > +{
+> > +	if (ns && atomic_dec_and_test(&ns->count))
+> > +		free_cgroup_ns(ns);
+> > +}
+> 
+> I'd prefer collecting all ns related declarations in a single place.
+
+I can group some of them, but free_cgroup_ns needs the
+cgroup_namespace definition, put_cgroup_ns() needs free_cgroup_ns(),
+and free_cgroup_ns() is static in the !CONFIG_CGROUPS case and a
+non-static function in the other case.
+
+So I'm going to put both get_cgroup_ns() and put_cgroup_ns() at the
+end of the file, with the struct namespace define at the top.  Is
+that sufficient?
+
+> > diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+> > index 7f2f007..4fd07b5a 100644
+> > --- a/kernel/cgroup.c
+> > +++ b/kernel/cgroup.c
+> > @@ -297,6 +300,13 @@ static bool cgroup_on_dfl(const struct cgroup *cgrp)
+> >  {
+> >  	return cgrp->root == &cgrp_dfl_root;
+> >  }
+> 
+> New line.
+> 
+> > +struct cgroup_namespace init_cgroup_ns = {
+> > +	.count		= { .counter = 1, },
+> > +	.user_ns	= &init_user_ns,
+> > +	.ns.ops		= &cgroupns_operations,
+> > +	.ns.inum	= PROC_CGROUP_INIT_INO,
+> > +	.root_cset	= &init_css_set,
+> > +};
+> 
+> Also, why inbetween two function defs?  cgroup.c is messy but you can
+> still put it after other variable definitions.
+> 
+> > @@ -430,18 +440,18 @@ static inline bool cgroup_is_dead(const struct cgroup *cgrp)
+> >  	return !(cgrp->self.flags & CSS_ONLINE);
+> >  }
+> >  
+> > -static void cgroup_get(struct cgroup *cgrp)
+> > +static inline void cgroup_get(struct cgroup *cgrp)
+> >  {
+> >  	WARN_ON_ONCE(cgroup_is_dead(cgrp));
+> >  	css_get(&cgrp->self);
+> >  }
+> >  
+> > -static bool cgroup_tryget(struct cgroup *cgrp)
+> > +static inline bool cgroup_tryget(struct cgroup *cgrp)
+> >  {
+> >  	return css_tryget(&cgrp->self);
+> >  }
+> >  
+> > -static void cgroup_put(struct cgroup *cgrp)
+> > +static inline void cgroup_put(struct cgroup *cgrp)
+> >  {
+> >  	css_put(&cgrp->self);
+> >  }
+> >
+> > @@ -780,7 +790,7 @@ static void put_css_set_locked(struct css_set *cset)
+> >  	kfree_rcu(cset, rcu_head);
+> >  }
+> >  
+> > -static void put_css_set(struct css_set *cset)
+> > +static inline void put_css_set(struct css_set *cset)
+> 
+> Stray diffs?
+> 
+> > @@ -2189,6 +2199,25 @@ static struct file_system_type cgroup2_fs_type = {
+> >  	.kill_sb = cgroup_kill_sb,
 > >  };
-> > diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
-> > index a1bd7afba110..b17f6763aff4 100644
-> > --- a/include/uapi/linux/media.h
-> > +++ b/include/uapi/linux/media.h
-> > @@ -206,6 +206,10 @@ struct media_pad_desc {
-> >  #define MEDIA_LNK_FL_IMMUTABLE		(1 << 1)
-> >  #define MEDIA_LNK_FL_DYNAMIC		(1 << 2)
-> > 
-> > +#define MEDIA_LNK_FL_LINK_TYPE		(0xf << 28)
-> > +#  define MEDIA_LNK_FL_DATA_LINK	(0 << 28)
-> > +#  define MEDIA_LNK_FL_INTERFACE_LINK	(1 << 28)
+> >  
+> > +char * __must_check
+> > +cgroup_path_ns(struct cgroup *cgrp, char *buf, size_t buflen,
+> > +	       struct cgroup_namespace *ns)
+> > +{
+> > +	struct cgroup *root;
 > > +
-> >  struct media_link_desc {
-> >  	struct media_pad_desc source;
-> >  	struct media_pad_desc sink;
-> > @@ -249,11 +253,93 @@ struct media_links_enum {
-> >  #define MEDIA_INTF_T_ALSA_RAWMIDI       (MEDIA_INTF_T_ALSA_BASE + 4)
-> >  #define MEDIA_INTF_T_ALSA_HWDEP         (MEDIA_INTF_T_ALSA_BASE + 5)
-> > 
-> > -/* TBD: declare the structs needed for the new G_TOPOLOGY ioctl */
-> > +/*
-> > + * MC next gen API definitions
-> > + *
-> > + * NOTE: The declarations below are close to the MC RFC for the Media
-> > + *	 Controller, the next generation. Yet, there are a few adjustments
-> > + *	 to do, as we want to be able to have a functional API before
-> > + *	 the MC properties change. Those will be properly marked below.
-> > + *	 Please also notice that I removed "num_pads", "num_links",
-> > + *	 from the proposal, as a proper userspace application will likely
-> > + *	 use lists for pads/links, just as we intend to do in Kernelspace.
-> > + *	 The API definition should be freed from fields that are bound to
-> > + *	 some specific data structure.
-> > + *
-> > + * FIXME: Currently, I opted to name the new types as "media_v2", as this
-> > + *	  won't cause any conflict with the Kernelspace namespace, nor with
-> > + *	  the previous kAPI media_*_desc namespace. This can be changed
-> > + *	  later, before the adding this API upstream.
+> > +	BUG_ON(!ns);
 > 
-> Yes, that's a good idea. Or at least we need to remove this comment if we 
-> decide to keep the v2 names :-)
-
-True ;)
-
+> Just let it crash on NULL deref.
 > 
-> > + */
-> > +
-> > +
-> > +struct media_v2_entity {
-> > +	__u32 id;
-> > +	char name[64];		/* FIXME: move to a property? (RFC says so) */
+> Thanks.
 > 
-> I agree with Sakari that we can keep the name here even if we also expose it 
-> as a property. However, there's one issue we need to address : we need to 
-> clearly define what the name field should contain and how it should be 
-> constructed, otherwise we'll end up with the exact same mess as today, and I 
-> don't want that. We can discuss it in this mail thread or as replies to a 
-> future documentation patch.
-
-
-Well, let's discuss it then. What's your proposal?
-
-I guess there are actually some different goals that we want to archive
-with "name":
-
-1) an ideally short name used when displaying an entity on some graph. 
-It would be good if such "short name" would be unique, but it won't
-hurt much if such name is not unique;
-
-2) an unique ID identifier that will likely take the position of an
-entity inside the machine bus, like PCI ID, USB ID, I2C bus + I2C addr...
-
-I guess such UID would be better addressed via properties, as it
-would likely be constructed in userspace via a different set of
-properties, depending on the device and/or bus type.
-
-> 
-> > +	__u16 reserved[14];
-> 
-> Sakari and Hans have already commented on using __u32 instead of __u16 for 
-> reserved fields, as well as on the number of reserved fields. I agree with 
-> them but have nothing to add.
-
-Ok. I'll change this on a later patch.
-
-> 
-> > +};
-> > +
-> > +/* Should match the specific fields at media_intf_devnode */
-> > +struct media_v2_intf_devnode {
-> > +	__u32 major;
-> > +	__u32 minor;
-> > +};
-> > +
-> > +struct media_v2_interface {
-> > +	__u32 id;
-> > +	__u32 intf_type;
-> > +	__u32 flags;
-> > +	__u32 reserved[9];
-> > +
-> > +	union {
-> > +		struct media_v2_intf_devnode devnode;
-> > +		__u32 raw[16];
-> > +	};
-> > +};
-> > +
-> > +struct media_v2_pad {
-> > +	__u32 id;
-> > +	__u32 entity_id;
-> > +	__u32 flags;
-> > +	__u16 reserved[9];
-> > +};
-> > +
-> > +struct media_v2_link {
-> > +    __u32 id;
-> > +    __u32 source_id;
-> > +    __u32 sink_id;
-> > +    __u32 flags;
-> > +    __u32 reserved[5];
-> > +};
-> > +
-> > +struct media_v2_topology {
-> > +	__u32 topology_version;
-> > +
-> > +	__u32 num_entities;
-> > +	struct media_v2_entity *entities;
-> 
-> The kernel seems to be moving to using __u64 instead of pointers in userspace-
-> facing structures to avoid compat32 code.
-
-We had such discussion at the MC summit. I don't object to change to
-__u64, but we need to reach a consensus ;)
-
-> 
-> > +
-> > +	__u32 num_interfaces;
-> > +	struct media_v2_interface *interfaces;
-> > +
-> > +	__u32 num_pads;
-> > +	struct media_v2_pad *pads;
-> > +
-> > +	__u32 num_links;
-> > +	struct media_v2_link *links;
-> > +
-> > +	struct {
-> > +		__u32 reserved_num;
-> > +		void *reserved_ptr;
-> > +	} reserved_types[16];
-> > +	__u32 reserved[8];
-> 
-> I'd just create __u32 reserved fields without any reserved_types, we can 
-> always use the reserved fields to add new types later.
-
-It used to be __u32... Hans requested to change it to an struct.
-
-Btw, I also prefer to use __u32 here ;)
-
-> 
-> > +};
-> > +
-> > +/* ioctls */
-> > 
-> >  #define MEDIA_IOC_DEVICE_INFO		_IOWR('|', 0x00, struct 
-> media_device_info)
-> >  #define MEDIA_IOC_ENUM_ENTITIES		_IOWR('|', 0x01, struct 
-> media_entity_desc)
-> > #define MEDIA_IOC_ENUM_LINKS		_IOWR('|', 0x02, struct media_links_enum)
-> > #define MEDIA_IOC_SETUP_LINK		_IOWR('|', 0x03, struct media_link_desc)
-> > +#define MEDIA_IOC_G_TOPOLOGY		_IOWR('|', 0x04, struct media_v2_topology)
-> > 
-> >  #endif /* __LINUX_MEDIA_H */
-> 
+> -- 
+> tejun
+> _______________________________________________
+> Containers mailing list
+> Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+> https://lists.linuxfoundation.org/mailman/listinfo/containers
