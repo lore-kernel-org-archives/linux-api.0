@@ -1,141 +1,137 @@
 From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 1/7] kernfs: Add API to generate relative kernfs path
-Date: Tue, 8 Dec 2015 10:52:51 -0500
-Message-ID: <20151208155251.GA30240@mtj.duckdns.org>
+Subject: Re: [PATCH 3/7] cgroup: introduce cgroup namespaces
+Date: Tue, 8 Dec 2015 11:04:53 -0500
+Message-ID: <20151208160453.GB30240@mtj.duckdns.org>
 References: <1449529582-4075-1-git-send-email-serge.hallyn@ubuntu.com>
- <1449529582-4075-2-git-send-email-serge.hallyn@ubuntu.com>
+ <1449529582-4075-4-git-send-email-serge.hallyn@ubuntu.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1449529582-4075-2-git-send-email-serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <1449529582-4075-4-git-send-email-serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
 Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hello, Serge.
-
-On Mon, Dec 07, 2015 at 05:06:16PM -0600, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org wrote:
-> +/* kernfs_node_depth - compute depth from @from to @to */
-> +static size_t kernfs_node_distance(struct kernfs_node *from, struct kernfs_node *to)
->  {
-> +	size_t depth = 0;
+On Mon, Dec 07, 2015 at 05:06:18PM -0600, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org wrote:
+>  static const char *proc_ns_follow_link(struct dentry *dentry, void **cookie)
+> diff --git a/include/linux/cgroup.h b/include/linux/cgroup.h
+> index 2b3e2314..906f240 100644
+> --- a/include/linux/cgroup.h
+> +++ b/include/linux/cgroup.h
+> @@ -17,11 +17,36 @@
+>  #include <linux/seq_file.h>
+>  #include <linux/kernfs.h>
+>  #include <linux/jump_label.h>
+> +#include <linux/nsproxy.h>
+> +#include <linux/types.h>
+> +#include <linux/ns_common.h>
+> +#include <linux/nsproxy.h>
+> +#include <linux/user_namespace.h>
 >  
-> +	BUG_ON(!to);
-> +	BUG_ON(!from);
-
-Do these BUG_ON()s achieve anything?  Also, would something like
-kernfs_relative_depth() be a better name for the function?  Maybe even
-just kernfs_depth()?
-
-...
-> +static struct kernfs_node *kernfs_common_ancestor(struct kernfs_node *a,
-> +		struct kernfs_node *b)
+>  #include <linux/cgroup-defs.h>
+>  
+> +struct cgroup_namespace {
+> +	atomic_t		count;
+> +	struct ns_common	ns;
+> +	struct user_namespace	*user_ns;
+> +	struct css_set          *root_cset;
+> +};
+> +
+> +extern struct cgroup_namespace init_cgroup_ns;
+> +
+> +static inline void get_cgroup_ns(struct cgroup_namespace *ns)
 > +{
-> +	size_t da = kernfs_node_distance(kernfs_root(a)->kn, a);
-> +	size_t db = kernfs_node_distance(kernfs_root(b)->kn, b);
-> +
-> +	if (da == 0)
-> +		return a;
-> +	if (db == 0)
-> +		return b;
-
-Hmm... are the above two ifs necessary?  Wouldn't the outcome be the
-same?  Furthermore, if a and b are on different roots the above may
-give the wrong answer while not doing the above would return NULL.
-
-> +	while (da > db) {
-> +		a = a->parent;
-> +		da--;
-> +	}
-> +	while (db > da) {
-> +		b = b->parent;
-> +		db--;
-> +	}
-> +
-> +	/* worst case b and a will be the same at root */
-> +	while (b != a) {
-> +		b = b->parent;
-> +		a = a->parent;
-> +	}
-> +
-> +	return a;
+> +	if (ns)
+> +		atomic_inc(&ns->count);
 > +}
+> +
+..
+> +void free_cgroup_ns(struct cgroup_namespace *ns);
+> +struct cgroup_namespace *copy_cgroup_ns(unsigned long flags,
+> +		struct user_namespace *user_ns,
+> +		struct cgroup_namespace *old_ns);
 ...
-> +static char *
-> +__must_check kernfs_path_from_node_locked(struct kernfs_node *kn_from,
-
-Maybe
-
-static char * __must_check
-kernfs_path...
-
-> +					  struct kernfs_node *kn_to, char *buf,
-> +					  size_t buflen)
-
-Given that @kn_from is optional and is not the target node, maybe put
-@kn_to before @kn_from?
-
+> +char * __must_check cgroup_path_ns(struct cgroup *cgrp, char *buf,
+> +				   size_t buflen, struct cgroup_namespace *ns);
+> +char * __must_check cgroup_path(struct cgroup *cgrp, char *buf, size_t buflen);
+...
+> +static inline void put_cgroup_ns(struct cgroup_namespace *ns)
 > +{
-> +	char *p = buf;
-> +	struct kernfs_node *kn, *common;
-> +	const char parent_str[] = "/..";
-> +	int i;
-> +	size_t depth_from, depth_to, len = 0, nlen = 0,
-> +	       plen = sizeof(parent_str) - 1;
+> +	if (ns && atomic_dec_and_test(&ns->count))
+> +		free_cgroup_ns(ns);
+> +}
 
-Heh, idk, just put plen on a separate decl?
+I'd prefer collecting all ns related declarations in a single place.
 
-> +
-> +	/* We atleast need 2 bytes to write "/\0". */
-> +	if (buflen < 2)
-> +		return NULL;
-> +
-> +	if (!kn_from)
-> +		kn_from = kernfs_root(kn_to)->kn;
-> +
-> +	if (kn_from == kn_to) {
-> +		*p = '/';
-> +		*(++p) = '\0';
-> +		return buf;
-> +	}
-> +
-> +	common = kernfs_common_ancestor(kn_from, kn_to);
-> +	if (!common) {
-> +		WARN_ONCE("%s: kn_from and kn_to on different roots\n",
-> +			__func__);
-> +		return NULL;
-> +	}
+> diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+> index 7f2f007..4fd07b5a 100644
+> --- a/kernel/cgroup.c
+> +++ b/kernel/cgroup.c
+> @@ -297,6 +300,13 @@ static bool cgroup_on_dfl(const struct cgroup *cgrp)
+>  {
+>  	return cgrp->root == &cgrp_dfl_root;
+>  }
 
-Have you compiled it?  WARN_ONCE()'s first argument is condition, so
-you'd write
+New line.
 
-	if (WARN_ONCE(!common, "blah blah"))
-		return NULL;
+> +struct cgroup_namespace init_cgroup_ns = {
+> +	.count		= { .counter = 1, },
+> +	.user_ns	= &init_user_ns,
+> +	.ns.ops		= &cgroupns_operations,
+> +	.ns.inum	= PROC_CGROUP_INIT_INO,
+> +	.root_cset	= &init_css_set,
+> +};
 
-> +
-> +	depth_to = kernfs_node_distance(common, kn_to);
-> +	depth_from = kernfs_node_distance(common, kn_from);
-> +
-> +	for (i = 0; i < depth_from; i++) {
-> +		if (len + plen + 1 > buflen)
-> +			return NULL;
-> +		strcpy(p, parent_str);
-> +		p += plen;
-> +		len += plen;
-> +	}
-> +
-> +	/* Calculate how many bytes we need for the rest */
-> +	for (kn = kn_to; kn != common; kn = kn->parent)
-> +		nlen += strlen(kn->name) + 1;
-> +
-> +	if (len + nlen + 1 > buflen)
-> +		return NULL;
+Also, why inbetween two function defs?  cgroup.c is messy but you can
+still put it after other variable definitions.
 
-Hmm... if we do this anyway, maybe we can make the function behave
-more like other string formatting function (strlcpy) and return the
-would-be length instead where ret >= len indicates truncation?
+> @@ -430,18 +440,18 @@ static inline bool cgroup_is_dead(const struct cgroup *cgrp)
+>  	return !(cgrp->self.flags & CSS_ONLINE);
+>  }
+>  
+> -static void cgroup_get(struct cgroup *cgrp)
+> +static inline void cgroup_get(struct cgroup *cgrp)
+>  {
+>  	WARN_ON_ONCE(cgroup_is_dead(cgrp));
+>  	css_get(&cgrp->self);
+>  }
+>  
+> -static bool cgroup_tryget(struct cgroup *cgrp)
+> +static inline bool cgroup_tryget(struct cgroup *cgrp)
+>  {
+>  	return css_tryget(&cgrp->self);
+>  }
+>  
+> -static void cgroup_put(struct cgroup *cgrp)
+> +static inline void cgroup_put(struct cgroup *cgrp)
+>  {
+>  	css_put(&cgrp->self);
+>  }
+>
+> @@ -780,7 +790,7 @@ static void put_css_set_locked(struct css_set *cset)
+>  	kfree_rcu(cset, rcu_head);
+>  }
+>  
+> -static void put_css_set(struct css_set *cset)
+> +static inline void put_css_set(struct css_set *cset)
+
+Stray diffs?
+
+> @@ -2189,6 +2199,25 @@ static struct file_system_type cgroup2_fs_type = {
+>  	.kill_sb = cgroup_kill_sb,
+>  };
+>  
+> +char * __must_check
+> +cgroup_path_ns(struct cgroup *cgrp, char *buf, size_t buflen,
+> +	       struct cgroup_namespace *ns)
+> +{
+> +	struct cgroup *root;
+> +
+> +	BUG_ON(!ns);
+
+Just let it crash on NULL deref.
 
 Thanks.
 
