@@ -1,63 +1,42 @@
-From: Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v2 1/5] test: firmware_class: report errors properly on failure
-Date: Wed,  9 Dec 2015 14:50:25 -0800
-Message-ID: <1449701429-121423-1-git-send-email-computersforpeace@gmail.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Luis R. Rodriguez" <mcgrof-IBi9RG/b67k@public.gmane.org>
+From: Brian Norris <computersforpeace@gmail.com>
+Subject: [PATCH v2 2/5] test: firmware_class: use kstrndup() where appropriate
+Date: Wed,  9 Dec 2015 14:50:26 -0800
+Message-ID: <1449701429-121423-2-git-send-email-computersforpeace@gmail.com>
+References: <1449701429-121423-1-git-send-email-computersforpeace@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1449701429-121423-1-git-send-email-computersforpeace@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Shuah Khan <shuahkh@osg.samsung.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ming Lei <ming.lei@canonical.com>
+Cc: Kees Cook <keescook@chromium.org>, Brian Norris <computersforpeace@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "Luis R. Rodriguez" <mcgrof@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-request_firmware() failures currently won't get reported at all (the
-error code is discarded). What's more, we get confusing messages, like:
+We're essentially just doing an open-coded kstrndup(). The only
+differences are with what happens after the first '\0' character, but
+request_firmware() doesn't care about that.
 
-    # echo -n notafile > /sys/devices/virtual/misc/test_firmware/trigger_request
-    [ 8280.311856] test_firmware: loading 'notafile'
-    [ 8280.317042] test_firmware: load of 'notafile' failed: -2
-    [ 8280.322445] test_firmware: loaded: 0
-    # echo $?
-    0
-
-Report the failures via write() errors, and don't say we "loaded"
-anything.
-
-Signed-off-by: Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Acked-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Suggested-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: Brian Norris <computersforpeace@gmail.com>
 ---
-v2: no change
+New in v2
 
-v1: thread starts here:
-    https://lkml.org/lkml/2015/12/8/816
-
- lib/test_firmware.c | 11 ++++++++---
- 1 file changed, 8 insertions(+), 3 deletions(-)
+ lib/test_firmware.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/lib/test_firmware.c b/lib/test_firmware.c
-index 86374c1c49a4..841191061816 100644
+index 841191061816..690b9c35a274 100644
 --- a/lib/test_firmware.c
 +++ b/lib/test_firmware.c
-@@ -65,14 +65,19 @@ static ssize_t trigger_request_store(struct device *dev,
- 	release_firmware(test_firmware);
- 	test_firmware = NULL;
- 	rc = request_firmware(&test_firmware, name, dev);
--	if (rc)
-+	if (rc) {
- 		pr_info("load of '%s' failed: %d\n", name, rc);
--	pr_info("loaded: %zu\n", test_firmware ? test_firmware->size : 0);
-+		goto out;
-+	}
-+	pr_info("loaded: %zu\n", test_firmware->size);
-+	rc = count;
-+
-+out:
- 	mutex_unlock(&test_fw_mutex);
+@@ -54,10 +54,9 @@ static ssize_t trigger_request_store(struct device *dev,
+ 	int rc;
+ 	char *name;
  
- 	kfree(name);
+-	name = kzalloc(count + 1, GFP_KERNEL);
++	name = kstrndup(buf, count, GFP_KERNEL);
+ 	if (!name)
+ 		return -ENOSPC;
+-	memcpy(name, buf, count);
  
--	return count;
-+	return rc;
- }
- static DEVICE_ATTR_WO(trigger_request);
+ 	pr_info("loading '%s'\n", name);
  
 -- 
 2.6.0.rc2.230.g3dd15c0
