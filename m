@@ -1,74 +1,45 @@
-From: Dave Hansen <dave@sr71.net>
-Subject: Re: [PATCH 26/34] mm: implement new mprotect_key() system call
-Date: Wed, 9 Dec 2015 07:48:11 -0800
-Message-ID: <56684D3B.5050805@sr71.net>
-References: <20151204011424.8A36E365@viggo.jf.intel.com>
- <20151204011500.69487A6C@viggo.jf.intel.com> <5662894B.7090903@gmail.com>
- <5665B767.8020802@sr71.net> <56680BA6.20406@gmail.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 5/7] cgroup: mount cgroupns-root when inside non-init
+	cgroupns
+Date: Wed, 9 Dec 2015 10:48:27 -0500
+Message-ID: <20151209154827.GI30240@mtj.duckdns.org>
+References: <1449529582-4075-1-git-send-email-serge.hallyn@ubuntu.com>
+	<1449529582-4075-6-git-send-email-serge.hallyn@ubuntu.com>
+	<20151208162040.GC30240@mtj.duckdns.org>
+	<20151208232124.GA17234@mail.hallyn.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <56680BA6.20406@gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org
-Cc: linux-mm@kvack.org, x86@kernel.org, dave.hansen@linux.intel.com, linux-api@vger.kernel.org
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20151208232124.GA17234-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Michael,
+Hello, Serge.
 
-Thanks for all the comments!  I'll fix most of it when I post a new
-version of the manpage, but I have a few general questions.
-
-On 12/09/2015 03:08 AM, Michael Kerrisk (man-pages) wrote:
->>
->> +is the protection or storage key to assign to the memory.
+On Tue, Dec 08, 2015 at 05:21:24PM -0600, Serge E. Hallyn wrote:
+> > Heh, is kernfs_obtain_root() the right name?  Maybe
+> > kernfs_node_to_inode()?
 > 
-> Why "protection or storage key" here? This phrasing seems a
-> little ambiguous to me, given that we also have a 'prot'
-> argument.  I think it would be clearer just to say 
-> "protection key". But maybe I'm missing something.
+> kernfs_node_to_dentry?
+> 
+> This would presumably make the question of whether to pass in a namespace
+> moot?
 
-x86 calls it a "protection key" while powerpc calls it a "storage key".
- They're called "protection keys" consistently inside the kernel.
+Sounds good.
 
-Should we just stick to one name in the manpages?
+Thanks.
 
-> * A general overview of why this functionality is useful.
-
-Any preference on a central spot to do the general overview?  Does it go
-in one of the manpages I'm already modifying, or a new one?
-
-> * A note on which architectures support/will support
->   this functionality.
-
-x86 only for now.  We might get powerpc support down the road somewhere.
-
-> * Explanation of what a protection domain is.
-
-A protection domain is a unique view of memory and is represented by the
-value in the PKRU register.
-
-> * Explanation of how a process (thread?) changes its
->   protection domain.
-
-Changing protection domains is done by pkey_set() system call, or by
-using the WRPKRU instruction.  The system call is preferred and less
-error-prone since it enforces that a protection is allocated before its
-access protection can be modified.
-
-> * Explanation of the relationship between page permission
->   bits (PROT_READ/PROT_WRITE/PROTE_EXEC) and 
->   PKEY_DISABLE_ACCESS and PKEY_DISABLE_WRITE.
->   It's still not clear to me. Do the PKEY_* bits
->   override the PROT_* bits. Or, something else?
-
-Protection keys add access restrictions in addition to existing page
-permissions.  They can only take away access; they never grant
-additional access.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+tejun
