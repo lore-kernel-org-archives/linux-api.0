@@ -1,133 +1,115 @@
-From: serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
-Subject: [PATCH 6/8] cgroup: mount cgroupns-root when inside non-init cgroupns
-Date: Wed,  9 Dec 2015 13:28:59 -0600
-Message-ID: <1449689341-28742-7-git-send-email-serge.hallyn@ubuntu.com>
-References: <1449689341-28742-1-git-send-email-serge.hallyn@ubuntu.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 2/2] mm/page_ref: add tracepoint to track down page
+ reference manipulation
+Date: Wed, 9 Dec 2015 15:01:54 -0500
+Message-ID: <20151209150154.31c142b9@gandalf.local.home>
+References: <1447053784-27811-1-git-send-email-iamjoonsoo.kim@lge.com>
+	<1447053784-27811-2-git-send-email-iamjoonsoo.kim@lge.com>
+	<564C9A86.1090906@suse.cz>
+	<20151120063325.GB13061@js1304-P5Q-DELUXE>
+	<20151120114225.7efeeafe@grimm.local.home>
+	<20151123082805.GB29397@js1304-P5Q-DELUXE>
+	<20151123092604.7ec1397d@gandalf.local.home>
+	<20151124014527.GA32335@js1304-P5Q-DELUXE>
+	<20151203041657.GB1495@js1304-P5Q-DELUXE>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <1449689341-28742-1-git-send-email-serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20151203041657.GB1495@js1304-P5Q-DELUXE>
+Sender: owner-linux-mm@kvack.org
+To: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Cc: Vlastimil Babka <vbabka@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@suse.de>, "Kirill A.
+ Shutemov" <kirill.shutemov@linux.intel.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+On Thu, 3 Dec 2015 13:16:58 +0900
+Joonsoo Kim <iamjoonsoo.kim@lge.com> wrote:
 
-This patch enables cgroup mounting inside userns when a process
-as appropriate privileges. The cgroup filesystem mounted is
-rooted at the cgroupns-root. Thus, in a container-setup, only
-the hierarchy under the cgroupns-root is exposed inside the container.
-This allows container management tools to run inside the containers
-without depending on any global state.
+> On Tue, Nov 24, 2015 at 10:45:28AM +0900, Joonsoo Kim wrote:
+> > On Mon, Nov 23, 2015 at 09:26:04AM -0500, Steven Rostedt wrote:  
+> > > On Mon, 23 Nov 2015 17:28:05 +0900
+> > > Joonsoo Kim <iamjoonsoo.kim@lge.com> wrote:
+> > >   
+> > > > On Fri, Nov 20, 2015 at 11:42:25AM -0500, Steven Rostedt wrote:  
+> > > > > On Fri, 20 Nov 2015 15:33:25 +0900
+> > > > > Joonsoo Kim <iamjoonsoo.kim@lge.com> wrote:
+> > > > > 
+> > > > >     
+> > > > > > Steven, is it possible to add tracepoint to inlined fucntion such as
+> > > > > > get_page() in include/linux/mm.h?    
+> > > > > 
+> > > > > I highly recommend against it. The tracepoint code adds a bit of bloat,
+> > > > > and if you inline it, you add that bloat to every use case. Also, it    
+> > > > 
+> > > > Is it worse than adding function call to my own stub function into
+> > > > inlined function such as get_page(). I implemented it as following.
+> > > > 
+> > > > get_page()
+> > > > {
+> > > >         atomic_inc()
+> > > >         stub_get_page()
+> > > > }
+> > > > 
+> > > > stub_get_page() in foo.c
+> > > > {
+> > > >         trace_page_ref_get_page()
+> > > > }  
+> > > 
+> > > Now you just slowed down the fast path. But what you could do is:
+> > > 
+> > > get_page()
+> > > {
+> > > 	atomic_inc();
+> > > 	if (trace_page_ref_get_page_enabled())
+> > > 		stub_get_page();
+> > > }
+> > > 
+> > > Now that "trace_page_ref_get_page_enabled()" will turn into:
+> > > 
+> > > 	if (static_key_false(&__tracepoint_page_ref_get_page.key)) {
+> > > 
+> > > which is a jump label (nop when disabled, a jmp when enabled). That's
+> > > less bloat but doesn't solve the include problem. You still need to add
+> > > the include of that will cause havoc with other tracepoints.  
+> > 
+> > Yes, It also has a include dependency problem so I can't use
+> > trace_page_ref_get_page_enabled() in mm.h. BTW, I tested following
+> > implementation and it works fine.
+> > 
+> > extern struct tracepoint __tracepoint_page_ref_get_page;
+> > 
+> > get_page()
+> > {
+> >         atomic_inc()
+> >         if (static_key_false(&__tracepoint_page_ref_get_page.key))
+> >                 stub_get_page()
+> > }
+> > 
+> > This would not slow down fast path although it can't prevent bloat.
+> > I know that it isn't good code practice, but, this page reference
+> > handling functions have complex include dependency so I'm not sure
+> > I can solve it completely. For this special case, can I use
+> > this raw data structure?
+> >   
+> 
+> Steven, any comment?
 
-Signed-off-by: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
----
-Changelog:
-	20151116 - Don't allow user namespaces to bind new subsystems
-	20151118 - postpone the FS_USERNS_MOUNT flag until the
-	           last patch, until we can convince ourselves it
-		   is safe.
-	20151207 - Switch to walking up the kernfs path from kn root.
-		 - Group initialized variables
-		 - Explain the capable(CAP_SYS_ADMIN) check
-		 - Style fixes
----
- kernel/cgroup.c |   40 +++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 39 insertions(+), 1 deletion(-)
+Sorry for the later reply, I was going to reply but then got called off
+to do something else, and then forgot about this message :-/
 
-diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-index f34551a..b92b3fd 100644
---- a/kernel/cgroup.c
-+++ b/kernel/cgroup.c
-@@ -2006,6 +2006,7 @@ static struct dentry *cgroup_mount(struct file_system_type *fs_type,
- {
- 	bool is_v2 = fs_type == &cgroup2_fs_type;
- 	struct super_block *pinned_sb = NULL;
-+	struct cgroup_namespace *ns = current->nsproxy->cgroup_ns;
- 	struct cgroup_subsys *ss;
- 	struct cgroup_root *root;
- 	struct cgroup_sb_opts opts;
-@@ -2014,6 +2015,14 @@ static struct dentry *cgroup_mount(struct file_system_type *fs_type,
- 	int i;
- 	bool new_sb;
- 
-+	get_cgroup_ns(ns);
-+
-+	/* Check if the caller has permission to mount. */
-+	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN)) {
-+		put_cgroup_ns(ns);
-+		return ERR_PTR(-EPERM);
-+	}
-+
- 	/*
- 	 * The first time anyone tries to mount a cgroup, enable the list
- 	 * linking each css_set to its tasks and fix up all existing tasks.
-@@ -2129,6 +2138,16 @@ static struct dentry *cgroup_mount(struct file_system_type *fs_type,
- 		goto out_unlock;
- 	}
- 
-+	/*
-+	 * We know this subsystem has not yet been bound.  Users in a non-init
-+	 * user namespace may only mount hierarchies with no bound subsystems,
-+	 * i.e. 'none,name=user1'
-+	 */
-+	if (!opts.none && !capable(CAP_SYS_ADMIN)) {
-+		ret = -EPERM;
-+		goto out_unlock;
-+	}
-+
- 	root = kzalloc(sizeof(*root), GFP_KERNEL);
- 	if (!root) {
- 		ret = -ENOMEM;
-@@ -2147,12 +2166,30 @@ out_free:
- 	kfree(opts.release_agent);
- 	kfree(opts.name);
- 
--	if (ret)
-+	if (ret) {
-+		put_cgroup_ns(ns);
- 		return ERR_PTR(ret);
-+	}
- out_mount:
- 	dentry = kernfs_mount(fs_type, flags, root->kf_root,
- 			      is_v2 ? CGROUP2_SUPER_MAGIC : CGROUP_SUPER_MAGIC,
- 			      &new_sb);
-+
-+	/*
-+	 * In non-init cgroup namespace, instead of root cgroup's
-+	 * dentry, we return the dentry corresponding to the
-+	 * cgroupns->root_cgrp.
-+	 */
-+	if (!IS_ERR(dentry) && ns != &init_cgroup_ns) {
-+		struct dentry *nsdentry;
-+		struct cgroup *cgrp;
-+
-+		cgrp = cset_cgroup_from_root(ns->root_cset, root);
-+		nsdentry = kernfs_node_dentry(cgrp->kn, dentry->d_sb);
-+		dput(dentry);
-+		dentry = nsdentry;
-+	}
-+
- 	if (IS_ERR(dentry) || !new_sb)
- 		cgroup_put(&root->cgrp);
- 
-@@ -2165,6 +2202,7 @@ out_mount:
- 		deactivate_super(pinned_sb);
- 	}
- 
-+	put_cgroup_ns(ns);
- 	return dentry;
- }
- 
--- 
-1.7.9.5
+I wanted you to look at what Andi has done here:
+
+http://lkml.kernel.org/r/1449018060-1742-2-git-send-email-andi@firstfloor.org
+
+ and here
+
+http://lkml.kernel.org/r/1449018060-1742-3-git-send-email-andi@firstfloor.org
+
+-- Steve
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
