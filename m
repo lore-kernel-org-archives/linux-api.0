@@ -1,130 +1,122 @@
-From: Brian Norris <computersforpeace@gmail.com>
-Subject: [PATCH 2/4] test: firmware_class: add asynchronous request trigger
-Date: Tue,  8 Dec 2015 18:38:32 -0800
-Message-ID: <1449628714-66641-2-git-send-email-computersforpeace@gmail.com>
+From: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Subject: Re: [PATCH 3/4] firmware: actually return NULL on failed request_firmware_nowait()
+Date: Wed, 9 Dec 2015 12:01:20 +0800
+Message-ID: <CACVXFVPC-1xaNHreph28zDL=u8L_gptU=vApSFDjiWHPYjWPbw@mail.gmail.com>
 References: <1449628714-66641-1-git-send-email-computersforpeace@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1449628714-66641-1-git-send-email-computersforpeace@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Shuah Khan <shuahkh@osg.samsung.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ming Lei <ming.lei@canonical.com>
-Cc: Kees Cook <keescook@chromium.org>, Brian Norris <computersforpeace@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "Luis R. Rodriguez" <mcgrof@suse.com>
+	<1449628714-66641-3-git-send-email-computersforpeace@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1449628714-66641-3-git-send-email-computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Luis R. Rodriguez" <mcgrof-IBi9RG/b67k@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-We might want to test for bugs like that found in commit f9692b2699bd
-("firmware: fix possible use after free on name on asynchronous
-request"), where the asynchronous request API had race conditions.
+On Wed, Dec 9, 2015 at 10:38 AM, Brian Norris
+<computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> The kerneldoc for request_firmware_nowait() says that it may call the
+> provided cont() callback with @fw == NULL, if the firmware request
+> fails. However, this is not the case when called with an empty string
+> (""). This case is short-circuited by the 'name[0] == '\0'' check
+> introduced in commit 471b095dfe0d ("firmware_class: make sure fw requests
+> contain a name"), so _request_firmware() never gets to set the fw to
+> NULL.
+>
+> Noticed while using the new 'trigger_async_request' testing hook:
+>
+>     # printf '\x00' > /sys/devices/virtual/misc/test_firmware/trigger_async_request
+>     [10553.726178] test_firmware: loading ''
+>     [10553.729859] test_firmware: loaded: 995209091
+>     # printf '\x00' > /sys/devices/virtual/misc/test_firmware/trigger_async_request
+>     [10733.676184] test_firmware: loading ''
+>     [10733.679855] Unable to handle kernel NULL pointer dereference at virtual address 00000004
+>     [10733.687951] pgd = ec188000
+>     [10733.690655] [00000004] *pgd=00000000
+>     [10733.694240] Internal error: Oops: 5 [#1] SMP ARM
+>     [10733.698847] Modules linked in: btmrvl_sdio btmrvl bluetooth sbs_battery nf_conntrack_ipv6 nf_defrag_ipv6 ip6table_filter ip6_tables asix usbnet mwifiex_sdio mwifiex cfg80211 jitterentropy_rng drbg joydev snd_seq_midi snd_seq_midi_event snd_rawmidi snd_seq snd_seq_device ppp_async ppp_generic slhc tun
+>     [10733.725670] CPU: 0 PID: 6600 Comm: bash Not tainted 4.4.0-rc4-00351-g63d0877 #178
+>     [10733.733137] Hardware name: Rockchip (Device Tree)
+>     [10733.737831] task: ed24f6c0 ti: ee322000 task.ti: ee322000
+>     [10733.743222] PC is at do_raw_spin_lock+0x18/0x1a0
+>     [10733.747831] LR is at _raw_spin_lock+0x18/0x1c
+>     [10733.752180] pc : [<c00653a0>]    lr : [<c054c204>]    psr: a00d0013
+>     [10733.752180] sp : ee323df8  ip : ee323e20  fp : ee323e1c
+>     [10733.763634] r10: 00000051  r9 : b6f18000  r8 : ee323f80
+>     [10733.768847] r7 : c089cebc  r6 : 00000001  r5 : 00000000  r4 : ec0e6000
+>     [10733.775360] r3 : dead4ead  r2 : c06bd140  r1 : eef913b4  r0 : 00000000
+>     [10733.781874] Flags: NzCv  IRQs on  FIQs on  Mode SVC_32  ISA ARM  Segment none
+>     [10733.788995] Control: 10c5387d  Table: 2c18806a  DAC: 00000051
+>     [10733.794728] Process bash (pid: 6600, stack limit = 0xee322218)
+>     [10733.800549] Stack: (0xee323df8 to 0xee324000)
+>     [10733.804896] 3de0:                                                       ec0e6000 00000000
+>     [10733.813059] 3e00: 00000001 c089cebc ee323f80 b6f18000 ee323e2c ee323e20 c054c204 c0065394
+>     [10733.821221] 3e20: ee323e44 ee323e30 c02fec60 c054c1f8 ec0e7ec0 ec3fcfc0 ee323e5c ee323e48
+>     [10733.829384] 3e40: c02fed08 c02fec48 c07dbf74 eeb05a00 ee323e8c ee323e60 c0253828 c02fecac
+>     [10733.837547] 3e60: 00000001 c0116950 ee323eac ee323e78 00000001 ec3fce00 ed2d9700 ed2d970c
+>     [10733.845710] 3e80: ee323e9c ee323e90 c02e873c c02537d4 ee323eac ee323ea0 c017bd40 c02e8720
+>     [10733.853873] 3ea0: ee323ee4 ee323eb0 c017b250 c017bd00 00000000 00000000 f3e47a54 ec128b00
+>     [10733.862035] 3ec0: c017b10c ee323f80 00000001 c000f504 ee322000 00000000 ee323f4c ee323ee8
+>     [10733.870197] 3ee0: c011b71c c017b118 ee323fb0 c011bc90 becfa8d9 00000001 ec128b00 00000001
+>     [10733.878359] 3f00: b6f18000 ee323f80 ee323f4c ee323f18 c011bc90 c0063950 ee323f3c ee323f28
+>     [10733.886522] 3f20: c0063950 c0549138 00000001 ec128b00 00000001 ec128b00 b6f18000 ee323f80
+>     [10733.894684] 3f40: ee323f7c ee323f50 c011bed8 c011b6ec c0135fb8 c0135f24 ec128b00 ec128b00
+>     [10733.902847] 3f60: 00000001 b6f18000 c000f504 ee322000 ee323fa4 ee323f80 c011c664 c011be24
+>     [10733.911009] 3f80: 00000000 00000000 00000001 b6f18000 b6e79be0 00000004 00000000 ee323fa8
+>     [10733.919172] 3fa0: c000f340 c011c618 00000001 b6f18000 00000001 b6f18000 00000001 00000000
+>     [10733.927334] 3fc0: 00000001 b6f18000 b6e79be0 00000004 00000001 00000001 8068a3f1 b6e79c84
+>     [10733.935496] 3fe0: 00000000 becfa7dc b6de194d b6e20246 400d0030 00000001 7a4536e8 49bda390
+>     [10733.943664] [<c00653a0>] (do_raw_spin_lock) from [<c054c204>] (_raw_spin_lock+0x18/0x1c)
+>     [10733.951743] [<c054c204>] (_raw_spin_lock) from [<c02fec60>] (fw_free_buf+0x24/0x64)
+>     [10733.959388] [<c02fec60>] (fw_free_buf) from [<c02fed08>] (release_firmware+0x68/0x74)
+>     [10733.967207] [<c02fed08>] (release_firmware) from [<c0253828>] (trigger_async_request_store+0x60/0x124)
+>     [10733.976501] [<c0253828>] (trigger_async_request_store) from [<c02e873c>] (dev_attr_store+0x28/0x34)
+>     [10733.985533] [<c02e873c>] (dev_attr_store) from [<c017bd40>] (sysfs_kf_write+0x4c/0x58)
+>     [10733.993437] [<c017bd40>] (sysfs_kf_write) from [<c017b250>] (kernfs_fop_write+0x144/0x1a8)
+>     [10734.001689] [<c017b250>] (kernfs_fop_write) from [<c011b71c>] (__vfs_write+0x3c/0xe4)
+>
+> After this patch:
+>
+>     # printf '\x00' > /sys/devices/virtual/misc/test_firmware/trigger_async_request
+>     [   32.126322] test_firmware: loading ''
+>     [   32.129995] test_firmware: failed to async load firmware
+>     -bash: printf: write error: No such device
+>
+> Fixes: 471b095dfe0d ("firmware_class: make sure fw requests contain a name")
+> Signed-off-by: Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-Let's add a simple file that will launch the async request, then wait
-until it's complete and report the status. It's not a true async test
-(we're using a mutex + wait_for_completion(), so we can't get more than
-one going at the same time), but it does help make sure the basic API is
-sane, and it can catch some class of bugs.
+Acked-by: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 
-Signed-off-by: Brian Norris <computersforpeace@gmail.com>
-Cc: Luis R. Rodriguez <mcgrof@suse.com>
----
- lib/test_firmware.c | 65 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 65 insertions(+)
-
-diff --git a/lib/test_firmware.c b/lib/test_firmware.c
-index 841191061816..ba0a12d0301d 100644
---- a/lib/test_firmware.c
-+++ b/lib/test_firmware.c
-@@ -12,6 +12,7 @@
- #include <linux/init.h>
- #include <linux/module.h>
- #include <linux/printk.h>
-+#include <linux/completion.h>
- #include <linux/firmware.h>
- #include <linux/device.h>
- #include <linux/fs.h>
-@@ -81,6 +82,57 @@ out:
- }
- static DEVICE_ATTR_WO(trigger_request);
- 
-+static DECLARE_COMPLETION(async_fw_done);
-+
-+static void trigger_async_request_cb(const struct firmware *fw, void *context)
-+{
-+	test_firmware = fw;
-+	complete(&async_fw_done);
-+}
-+
-+static ssize_t trigger_async_request_store(struct device *dev,
-+					   struct device_attribute *attr,
-+					   const char *buf, size_t count)
-+{
-+	int rc;
-+	char *name;
-+
-+	name = kzalloc(count + 1, GFP_KERNEL);
-+	if (!name)
-+		return -ENOSPC;
-+	memcpy(name, buf, count);
-+
-+	pr_info("loading '%s'\n", name);
-+
-+	mutex_lock(&test_fw_mutex);
-+	release_firmware(test_firmware);
-+	test_firmware = NULL;
-+	rc = request_firmware_nowait(THIS_MODULE, 1, name, dev, GFP_KERNEL,
-+				     NULL, trigger_async_request_cb);
-+	/* Free 'name' ASAP, to test for race conditions */
-+	kfree(name);
-+	if (rc) {
-+		pr_info("async load of '%s' failed: %d\n", name, rc);
-+		goto out;
-+	}
-+
-+	wait_for_completion(&async_fw_done);
-+
-+	if (test_firmware) {
-+		pr_info("loaded: %zu\n", test_firmware->size);
-+		rc = count;
-+	} else {
-+		pr_err("failed to async load firmware\n");
-+		rc = -ENODEV;
-+	}
-+
-+out:
-+	mutex_unlock(&test_fw_mutex);
-+
-+	return rc;
-+}
-+static DEVICE_ATTR_WO(trigger_async_request);
-+
- static int __init test_firmware_init(void)
- {
- 	int rc;
-@@ -97,9 +149,20 @@ static int __init test_firmware_init(void)
- 		goto dereg;
- 	}
- 
-+	rc = device_create_file(test_fw_misc_device.this_device,
-+				&dev_attr_trigger_async_request);
-+	if (rc) {
-+		pr_err("could not create async sysfs interface: %d\n", rc);
-+		goto remove_file;
-+	}
-+
- 	pr_warn("interface ready\n");
- 
- 	return 0;
-+
-+remove_file:
-+	device_remove_file(test_fw_misc_device.this_device,
-+			   &dev_attr_trigger_async_request);
- dereg:
- 	misc_deregister(&test_fw_misc_device);
- 	return rc;
-@@ -111,6 +174,8 @@ static void __exit test_firmware_exit(void)
- {
- 	release_firmware(test_firmware);
- 	device_remove_file(test_fw_misc_device.this_device,
-+			   &dev_attr_trigger_async_request);
-+	device_remove_file(test_fw_misc_device.this_device,
- 			   &dev_attr_trigger_request);
- 	misc_deregister(&test_fw_misc_device);
- 	pr_warn("removed interface\n");
--- 
-2.6.0.rc2.230.g3dd15c0
+> ---
+>  drivers/base/firmware_class.c | 8 +++++---
+>  1 file changed, 5 insertions(+), 3 deletions(-)
+>
+> diff --git a/drivers/base/firmware_class.c b/drivers/base/firmware_class.c
+> index 8524450e75bd..b9250e564ebf 100644
+> --- a/drivers/base/firmware_class.c
+> +++ b/drivers/base/firmware_class.c
+> @@ -1118,15 +1118,17 @@ static int
+>  _request_firmware(const struct firmware **firmware_p, const char *name,
+>                   struct device *device, unsigned int opt_flags)
+>  {
+> -       struct firmware *fw;
+> +       struct firmware *fw = NULL;
+>         long timeout;
+>         int ret;
+>
+>         if (!firmware_p)
+>                 return -EINVAL;
+>
+> -       if (!name || name[0] == '\0')
+> -               return -EINVAL;
+> +       if (!name || name[0] == '\0') {
+> +               ret = -EINVAL;
+> +               goto out;
+> +       }
+>
+>         ret = _request_firmware_prepare(&fw, name, device);
+>         if (ret <= 0) /* error or already assigned */
+> --
+> 2.6.0.rc2.230.g3dd15c0
+>
