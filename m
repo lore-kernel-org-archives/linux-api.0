@@ -1,56 +1,79 @@
-From: Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 2/4] test: firmware_class: add asynchronous request
- trigger
-Date: Wed, 9 Dec 2015 14:12:20 -0800
-Message-ID: <20151209221220.GB51175@google.com>
-References: <1449628714-66641-1-git-send-email-computersforpeace@gmail.com>
- <1449628714-66641-2-git-send-email-computersforpeace@gmail.com>
- <CAGXu5jJ=JKN9FJzjonixhfNFZxgZ_y74cSkyG1DWPp3BS3VJ7g@mail.gmail.com>
- <20151209214843.GA51175@google.com>
- <CAGXu5jLGp315GdOWQyamD8awzrdZDFoNVWQozTFdjQAjrtRN0w@mail.gmail.com>
+From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 1/8] kernfs: Add API to generate relative kernfs path
+Date: Wed, 9 Dec 2015 22:13:27 +0000
+Message-ID: <20151209221327.GA13029@ubuntumail>
+References: <1449689341-28742-1-git-send-email-serge.hallyn@ubuntu.com>
+ <1449689341-28742-2-git-send-email-serge.hallyn@ubuntu.com>
+ <20151209213806.GP30240@mtj.duckdns.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAGXu5jLGp315GdOWQyamD8awzrdZDFoNVWQozTFdjQAjrtRN0w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20151209213806.GP30240-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Luis R. Rodriguez" <mcgrof-IBi9RG/b67k@public.gmane.org>
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, "Serge E. Hallyn" <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Dec 09, 2015 at 02:05:17PM -0800, Kees Cook wrote:
-> On Wed, Dec 9, 2015 at 1:48 PM, Brian Norris
-> <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > I was also thinking, since use-after-free isn't necessarily immediately
-> > obvious (this worked fine in my testing), that maybe we could poison the
-> > buffer before kfree()'ing? Like:
-> >
-> >         name = ...;
-> >         len = strlen(name);
-> >
-> >         ...
-> >
-> >         rc = request_firmware_nowait(...);
-> >         if (rc) {
-> >                 pr_info("...");
-> >                 kfree(name);
-> >                 goto out;
-> >         }
-> >         /*
-> >          * Clear out the name, to test for race conditions with the
-> >          * async request
-> >          */
-> >         memset(name, 0, len);
-> >         kfree(name);
+Quoting Tejun Heo (tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org):
+> Hello, Serge.
 > 
-> Hrm, well, I'm not against it, but I think running under KASan is
-> probably the right way to find these things. But, might as well, just
-> to notice any regressions.
+> On Wed, Dec 09, 2015 at 01:28:54PM -0600, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org wrote:
+> > +/* kernfs_node_depth - compute depth from @from to @to */
+> > +static size_t kernfs_depth(struct kernfs_node *from, struct kernfs_node *to)
+> ...
+> > +char *kernfs_path(struct kernfs_node *kn, char *buf, size_t buflen)
+> > +{
+> > +	return kernfs_path_from_node(NULL, kn, buf, buflen);
+> > +}
+> ...
+> > diff --git a/include/linux/kernfs.h b/include/linux/kernfs.h
+> > index 5d4e9c4..d025ebd 100644
+> > --- a/include/linux/kernfs.h
+> > +++ b/include/linux/kernfs.h
+> > @@ -267,6 +267,9 @@ static inline bool kernfs_ns_enabled(struct kernfs_node *kn)
+> >  
+> >  int kernfs_name(struct kernfs_node *kn, char *buf, size_t buflen);
+> >  size_t kernfs_path_len(struct kernfs_node *kn);
+> > +char * __must_check kernfs_path_from_node(struct kernfs_node *root_kn,
+> > +					  struct kernfs_node *kn, char *buf,
+> > +					  size_t buflen);
+> 
+> I think I commented on the same thing before, but I think it'd make
+> more sense to put @from after @to
 
-Fair enough. The memset probably isn't that useful.
+Oh.  You said that for kernfs_path_from_node_locked(), and those were
+changed.  kernfs_path_form_node() is a different fn, but
 
-BTW, one reason I didn't notice my use-after-free is that the "use" was
-under an error path that I didn't exercise. I need to remember to turn
-my brain back on.
+> and the prototype is using @root_kn
+> which is a bit confusing.
 
-Brian
+we can rename kn_root to from here if you think that's clearer (and
+change the order here as well).
+
+> Was converting the path functions to return
+> length too much work?  If so, that's fine but please explain what
+> decisions were made.
+
+Yes, I had replied saying:
+
+ |I can change that, but the callers right now don't re-try with
+ |larger buffer anyway, so this would actually complicate them just
+ |a smidgeon.  Would you want them changed to do that?  (pr_cont_kernfs_path
+ |right now writes into a static char[] for instance)
+
+I can still make that change if you like.
+
+> I skimmed through the series and spotted several other review points
+> which didn't get addressed.  Can you please go over the previous
+> review cycle and address the review points?
+
+I did go through every email twice, once while making changes (one
+branch per response) and once while making changelog for each patch,
+sorry about whatever I missed.  I'll go through each again.
+
+I'm going to be out for awhile after today, so next version will
+unfortunately take awhile.
+
+thanks,
+-serge
