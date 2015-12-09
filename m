@@ -1,156 +1,91 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH 2/4] test: firmware_class: add asynchronous request trigger
-Date: Wed, 9 Dec 2015 13:09:02 -0800
-Message-ID: <CAGXu5jJ=JKN9FJzjonixhfNFZxgZ_y74cSkyG1DWPp3BS3VJ7g@mail.gmail.com>
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: Re: [PATCH 4/4] selftests: firmware: add empty string and async tests
+Date: Wed, 9 Dec 2015 13:10:24 -0800
+Message-ID: <CAGXu5j+wOx-NHo_hzBFUwAiUbBQT7J2axExNbb=ft87fAHG3hg@mail.gmail.com>
 References: <1449628714-66641-1-git-send-email-computersforpeace@gmail.com>
-	<1449628714-66641-2-git-send-email-computersforpeace@gmail.com>
+	<1449628714-66641-4-git-send-email-computersforpeace@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1449628714-66641-2-git-send-email-computersforpeace@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Brian Norris <computersforpeace@gmail.com>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ming Lei <ming.lei@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "Luis R. Rodriguez" <mcgrof@suse.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1449628714-66641-4-git-send-email-computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Luis R. Rodriguez" <mcgrof-IBi9RG/b67k@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 On Tue, Dec 8, 2015 at 6:38 PM, Brian Norris
-<computersforpeace@gmail.com> wrote:
-> We might want to test for bugs like that found in commit f9692b2699bd
-> ("firmware: fix possible use after free on name on asynchronous
-> request"), where the asynchronous request API had race conditions.
+<computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> Now that we've added a 'trigger_async_request' knob to test the
+> request_firmware_nowait() API, let's use it. Also add tests for the
+> empty ("") string, since there have been a couple errors in that
+> handling already.
 >
-> Let's add a simple file that will launch the async request, then wait
-> until it's complete and report the status. It's not a true async test
-> (we're using a mutex + wait_for_completion(), so we can't get more than
-> one going at the same time), but it does help make sure the basic API is
-> sane, and it can catch some class of bugs.
-
-Awesome! This is great to add. Notes below...
-
+> Since we know have real wasy that the sysfs write might fail, let's add
+> the appropriate check on the 'echo' lines too.
 >
-> Signed-off-by: Brian Norris <computersforpeace@gmail.com>
-> Cc: Luis R. Rodriguez <mcgrof@suse.com>
+> Signed-off-by: Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+
+Looks good!
+
+Acked-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+
+-Kees
+
 > ---
->  lib/test_firmware.c | 65 +++++++++++++++++++++++++++++++++++++++++++++++++++++
->  1 file changed, 65 insertions(+)
+>  tools/testing/selftests/firmware/fw_filesystem.sh | 29 ++++++++++++++++++++++-
+>  1 file changed, 28 insertions(+), 1 deletion(-)
 >
-> diff --git a/lib/test_firmware.c b/lib/test_firmware.c
-> index 841191061816..ba0a12d0301d 100644
-> --- a/lib/test_firmware.c
-> +++ b/lib/test_firmware.c
-> @@ -12,6 +12,7 @@
->  #include <linux/init.h>
->  #include <linux/module.h>
->  #include <linux/printk.h>
-> +#include <linux/completion.h>
->  #include <linux/firmware.h>
->  #include <linux/device.h>
->  #include <linux/fs.h>
-> @@ -81,6 +82,57 @@ out:
->  }
->  static DEVICE_ATTR_WO(trigger_request);
+> diff --git a/tools/testing/selftests/firmware/fw_filesystem.sh b/tools/testing/selftests/firmware/fw_filesystem.sh
+> index c4366dc74e01..e12210e1317c 100755
+> --- a/tools/testing/selftests/firmware/fw_filesystem.sh
+> +++ b/tools/testing/selftests/firmware/fw_filesystem.sh
+> @@ -48,8 +48,21 @@ echo "ABCD0123" >"$FW"
 >
-> +static DECLARE_COMPLETION(async_fw_done);
-> +
-> +static void trigger_async_request_cb(const struct firmware *fw, void *context)
-> +{
-> +       test_firmware = fw;
-> +       complete(&async_fw_done);
-> +}
-> +
-> +static ssize_t trigger_async_request_store(struct device *dev,
-> +                                          struct device_attribute *attr,
-> +                                          const char *buf, size_t count)
-> +{
-> +       int rc;
-> +       char *name;
-> +
-> +       name = kzalloc(count + 1, GFP_KERNEL);
-> +       if (!name)
-> +               return -ENOSPC;
-> +       memcpy(name, buf, count);
-
-It strikes me that this (and the existing code) should use kstrndup
-instead, since the request_firmware* interfaces will ignore \0 bytes
-in the name:
-
-    name = kstrndup(buf, count, GFP_KERNEL);
-    if (!name)
-        return -ENOSPC;
-
-> +
-> +       pr_info("loading '%s'\n", name);
-> +
-> +       mutex_lock(&test_fw_mutex);
-> +       release_firmware(test_firmware);
-> +       test_firmware = NULL;
-> +       rc = request_firmware_nowait(THIS_MODULE, 1, name, dev, GFP_KERNEL,
-> +                                    NULL, trigger_async_request_cb);
-> +       /* Free 'name' ASAP, to test for race conditions */
-> +       kfree(name);
-> +       if (rc) {
-> +               pr_info("async load of '%s' failed: %d\n", name, rc);
-
-Well, that's a little TOO soon. :) The pr_info uses it still.
-
-> +               goto out;
-> +       }
-> +
-> +       wait_for_completion(&async_fw_done);
-> +
-> +       if (test_firmware) {
-> +               pr_info("loaded: %zu\n", test_firmware->size);
-> +               rc = count;
-> +       } else {
-> +               pr_err("failed to async load firmware\n");
-> +               rc = -ENODEV;
-> +       }
-> +
-> +out:
-> +       mutex_unlock(&test_fw_mutex);
-> +
-> +       return rc;
-> +}
-> +static DEVICE_ATTR_WO(trigger_async_request);
-> +
->  static int __init test_firmware_init(void)
->  {
->         int rc;
-> @@ -97,9 +149,20 @@ static int __init test_firmware_init(void)
->                 goto dereg;
->         }
+>  NAME=$(basename "$FW")
 >
-> +       rc = device_create_file(test_fw_misc_device.this_device,
-> +                               &dev_attr_trigger_async_request);
-> +       if (rc) {
-> +               pr_err("could not create async sysfs interface: %d\n", rc);
-> +               goto remove_file;
-> +       }
+> +if printf '\x00' >"$DIR"/trigger_request; then
+> +       echo "$0: empty filename should not succeed" >&2
+> +       exit 1
+> +fi
 > +
->         pr_warn("interface ready\n");
+> +if printf '\x00' >"$DIR"/trigger_async_request; then
+> +       echo "$0: empty filename should not succeed (async)" >&2
+> +       exit 1
+> +fi
+> +
+>  # Request a firmware that doesn't exist, it should fail.
+> -echo -n "nope-$NAME" >"$DIR"/trigger_request
+> +if echo -n "nope-$NAME" >"$DIR"/trigger_request; then
+> +       echo "$0: firmware shouldn't have loaded" >&2
+> +       exit 1
+> +fi
+>  if diff -q "$FW" /dev/test_firmware >/dev/null ; then
+>         echo "$0: firmware was not expected to match" >&2
+>         exit 1
+> @@ -74,4 +87,18 @@ else
+>         echo "$0: filesystem loading works"
+>  fi
 >
->         return 0;
+> +# Try the asynchronous version too
+> +if ! echo -n "$NAME" >"$DIR"/trigger_async_request ; then
+> +       echo "$0: could not trigger async request" >&2
+> +       exit 1
+> +fi
 > +
-> +remove_file:
-> +       device_remove_file(test_fw_misc_device.this_device,
-> +                          &dev_attr_trigger_async_request);
->  dereg:
->         misc_deregister(&test_fw_misc_device);
->         return rc;
-> @@ -111,6 +174,8 @@ static void __exit test_firmware_exit(void)
->  {
->         release_firmware(test_firmware);
->         device_remove_file(test_fw_misc_device.this_device,
-> +                          &dev_attr_trigger_async_request);
-> +       device_remove_file(test_fw_misc_device.this_device,
->                            &dev_attr_trigger_request);
->         misc_deregister(&test_fw_misc_device);
->         pr_warn("removed interface\n");
+> +# Verify the contents are what we expect.
+> +if ! diff -q "$FW" /dev/test_firmware >/dev/null ; then
+> +       echo "$0: firmware was not loaded (async)" >&2
+> +       exit 1
+> +else
+> +       echo "$0: async filesystem loading works"
+> +fi
+> +
+>  exit 0
 > --
 > 2.6.0.rc2.230.g3dd15c0
 >
 
--Kees
+
 
 -- 
 Kees Cook
