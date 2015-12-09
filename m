@@ -1,543 +1,424 @@
-From: David Decotigny <ddecotig@gmail.com>
-Subject: [PATCH net-next v4 19/19] net: mlx4: use new ETHTOOL_G/SSETTINGS API
-Date: Wed,  9 Dec 2015 09:59:29 -0800
-Message-ID: <1449683969-7305-20-git-send-email-ddecotig@gmail.com>
-References: <1449683969-7305-1-git-send-email-ddecotig@gmail.com>
-Return-path: <linux-mips-bounce@linux-mips.org>
-In-Reply-To: <1449683969-7305-1-git-send-email-ddecotig@gmail.com>
-Sender: linux-mips-bounce@linux-mips.org
-Errors-to: linux-mips-bounce@linux-mips.org
-List-help: <mailto:ecartis@linux-mips.org?Subject=help>
-List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
-List-software: Ecartis version 1.0.0
-List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
-List-owner: <mailto:ralf@linux-mips.org>
-List-post: <mailto:linux-mips@linux-mips.org>
-List-archive: <http://www.linux-mips.org/archives/linux-mips/>
-To: "David S. Miller" <davem@davemloft.net>, Ben Hutchings <ben@decadent.org.uk>, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-mips@linux-mips.org, fcoe-devel@open-fcoe.org, Andrew Morton <akpm@linux-foundation.org>, Tejun Heo <tj@kernel.org>
-Cc: Eric Dumazet <edumazet@google.com>, Eugenia Emantayev <eugenia@mellanox.co.il>, Or Gerlitz <ogerlitz@mellanox.com>, Ido Shamay <idos@mellanox.com>, Joe Perches <joe@perches.com>, Saeed Mahameed <saeedm@mellanox.com>, Govindarajulu Varadarajan <_govind@gmx.com>, Venkata Duvvuru <VenkatKumar.Duvvuru@Emulex.Com>, Jeff Kirsher <jeffrey.t.kirsher@intel.com>, Pravin B Shelar <pshelar@nicira.com>, Ed Swierk <eswierk@skyportsystems.com>, Robert Love <robert.w.love@intel.com>, "James E.J. Bottomley" <JBottomley@parallels.com>, Yuval Mintz <Yuval.Mintz@qlogic.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, David Decotigny <decot@googlers.com>
+From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: livepatch: reuse module loader code to write relocations
+Date: Wed, 9 Dec 2015 14:10:14 -0500
+Message-ID: <20151209191013.GA25387@packer-debian-8-amd64.digitalocean.com>
+References: <1448943679-3412-1-git-send-email-jeyu@redhat.com>
+ <1448943679-3412-5-git-send-email-jeyu@redhat.com>
+ <20151208183844.GC14846@treble.redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20151208183844.GC14846-8wJ5/zUtDR0XGNroddHbYwC/G2K4zDHf@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: David Decotigny <decot@googlers.com>
++++ Josh Poimboeuf [08/12/15 12:38 -0600]:
+>On Mon, Nov 30, 2015 at 11:21:17PM -0500, Jessica Yu wrote:
+>> Reuse module loader code to write relocations, thereby eliminating the need
+>> for architecture specific relocation code in livepatch. Namely, we reuse
+>> apply_relocate_add() in the module loader to write relocations instead of
+>> duplicating functionality in livepatch's klp_write_module_reloc(). To apply
+>> relocation sections, remaining SHN_LIVEPATCH symbols referenced by relocs
+>> are resolved and then apply_relocate_add() is called to apply those
+>> relocations.
+>>
+>> In addition, remove x86 livepatch relocation code. It is no longer needed
+>> since symbol resolution and relocation work have been offloaded to module
+>> loader.
+>>
+>> Signed-off-by: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>> ---
+>>  arch/x86/include/asm/livepatch.h |  2 -
+>>  arch/x86/kernel/Makefile         |  1 -
+>>  arch/x86/kernel/livepatch.c      | 91 --------------------------------------
+>>  include/linux/livepatch.h        | 30 ++++++-------
+>>  include/linux/module.h           |  6 +++
+>>  kernel/livepatch/core.c          | 94 ++++++++++++++++++++++------------------
+>>  6 files changed, 70 insertions(+), 154 deletions(-)
+>>  delete mode 100644 arch/x86/kernel/livepatch.c
+>>
+>> diff --git a/arch/x86/include/asm/livepatch.h b/arch/x86/include/asm/livepatch.h
+>> index 19c099a..7312e25 100644
+>> --- a/arch/x86/include/asm/livepatch.h
+>> +++ b/arch/x86/include/asm/livepatch.h
+>> @@ -33,8 +33,6 @@ static inline int klp_check_compiler_support(void)
+>>  #endif
+>>  	return 0;
+>>  }
+>> -int klp_write_module_reloc(struct module *mod, unsigned long type,
+>> -			   unsigned long loc, unsigned long value);
+>>
+>>  static inline void klp_arch_set_pc(struct pt_regs *regs, unsigned long ip)
+>>  {
+>> diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+>> index b1b78ff..c5e9a5c 100644
+>> --- a/arch/x86/kernel/Makefile
+>> +++ b/arch/x86/kernel/Makefile
+>> @@ -67,7 +67,6 @@ obj-$(CONFIG_X86_MPPARSE)	+= mpparse.o
+>>  obj-y				+= apic/
+>>  obj-$(CONFIG_X86_REBOOTFIXUPS)	+= reboot_fixups_32.o
+>>  obj-$(CONFIG_DYNAMIC_FTRACE)	+= ftrace.o
+>> -obj-$(CONFIG_LIVEPATCH)		+= livepatch.o
+>>  obj-$(CONFIG_FUNCTION_GRAPH_TRACER) += ftrace.o
+>>  obj-$(CONFIG_FTRACE_SYSCALLS)	+= ftrace.o
+>>  obj-$(CONFIG_X86_TSC)		+= trace_clock.o
+>> diff --git a/arch/x86/kernel/livepatch.c b/arch/x86/kernel/livepatch.c
+>> deleted file mode 100644
+>> index d1d35cc..0000000
+>> --- a/arch/x86/kernel/livepatch.c
+>> +++ /dev/null
+>> @@ -1,91 +0,0 @@
+>> -/*
+>> - * livepatch.c - x86-specific Kernel Live Patching Core
+>> - *
+>> - * Copyright (C) 2014 Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>> - * Copyright (C) 2014 SUSE
+>> - *
+>> - * This program is free software; you can redistribute it and/or
+>> - * modify it under the terms of the GNU General Public License
+>> - * as published by the Free Software Foundation; either version 2
+>> - * of the License, or (at your option) any later version.
+>> - *
+>> - * This program is distributed in the hope that it will be useful,
+>> - * but WITHOUT ANY WARRANTY; without even the implied warranty of
+>> - * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+>> - * GNU General Public License for more details.
+>> - *
+>> - * You should have received a copy of the GNU General Public License
+>> - * along with this program; if not, see <http://www.gnu.org/licenses/>.
+>> - */
+>> -
+>> -#include <linux/module.h>
+>> -#include <linux/uaccess.h>
+>> -#include <asm/cacheflush.h>
+>> -#include <asm/page_types.h>
+>> -#include <asm/elf.h>
+>> -#include <asm/livepatch.h>
+>> -
+>> -/**
+>> - * klp_write_module_reloc() - write a relocation in a module
+>> - * @mod:	module in which the section to be modified is found
+>> - * @type:	ELF relocation type (see asm/elf.h)
+>> - * @loc:	address that the relocation should be written to
+>> - * @value:	relocation value (sym address + addend)
+>> - *
+>> - * This function writes a relocation to the specified location for
+>> - * a particular module.
+>> - */
+>> -int klp_write_module_reloc(struct module *mod, unsigned long type,
+>> -			   unsigned long loc, unsigned long value)
+>> -{
+>> -	int ret, numpages, size = 4;
+>> -	bool readonly;
+>> -	unsigned long val;
+>> -	unsigned long core = (unsigned long)mod->module_core;
+>> -	unsigned long core_size = mod->core_size;
+>> -
+>> -	switch (type) {
+>> -	case R_X86_64_NONE:
+>> -		return 0;
+>> -	case R_X86_64_64:
+>> -		val = value;
+>> -		size = 8;
+>> -		break;
+>> -	case R_X86_64_32:
+>> -		val = (u32)value;
+>> -		break;
+>> -	case R_X86_64_32S:
+>> -		val = (s32)value;
+>> -		break;
+>> -	case R_X86_64_PC32:
+>> -		val = (u32)(value - loc);
+>> -		break;
+>> -	default:
+>> -		/* unsupported relocation type */
+>> -		return -EINVAL;
+>> -	}
+>> -
+>> -	if (loc < core || loc >= core + core_size)
+>> -		/* loc does not point to any symbol inside the module */
+>> -		return -EINVAL;
+>> -
+>> -	readonly = false;
+>> -
+>> -#ifdef CONFIG_DEBUG_SET_MODULE_RONX
+>> -	if (loc < core + mod->core_ro_size)
+>> -		readonly = true;
+>> -#endif
+>> -
+>> -	/* determine if the relocation spans a page boundary */
+>> -	numpages = ((loc & PAGE_MASK) == ((loc + size) & PAGE_MASK)) ? 1 : 2;
+>> -
+>> -	if (readonly)
+>> -		set_memory_rw(loc & PAGE_MASK, numpages);
+>> -
+>> -	ret = probe_kernel_write((void *)loc, &val, size);
+>> -
+>> -	if (readonly)
+>> -		set_memory_ro(loc & PAGE_MASK, numpages);
+>> -
+>> -	return ret;
+>> -}
+>> diff --git a/include/linux/livepatch.h b/include/linux/livepatch.h
+>> index 31db7a0..54f62a6 100644
+>> --- a/include/linux/livepatch.h
+>> +++ b/include/linux/livepatch.h
+>> @@ -64,28 +64,21 @@ struct klp_func {
+>>  };
+>>
+>>  /**
+>> - * struct klp_reloc - relocation structure for live patching
+>> - * @loc:	address where the relocation will be written
+>> - * @val:	address of the referenced symbol (optional,
+>> - *		vmlinux	patches only)
+>> - * @type:	ELF relocation type
+>> - * @name:	name of the referenced symbol (for lookup/verification)
+>> - * @addend:	offset from the referenced symbol
+>> - * @external:	symbol is either exported or within the live patch module itself
+>> + * struct klp_reloc_sec - relocation section struct for live patching
+>> + * @index:	Elf section index of the relocation section
+>> + * @name:	name of the relocation section
+>> + * @objname:	name of the object associated with the klp reloc section
+>>   */
+>> -struct klp_reloc {
+>> -	unsigned long loc;
+>> -	unsigned long val;
+>> -	unsigned long type;
+>> -	const char *name;
+>> -	int addend;
+>> -	int external;
+>> +struct klp_reloc_sec {
+>> +	unsigned int index;
+>> +	char *name;
+>> +	char *objname;
+>>  };
+>>
+>>  /**
+>>   * struct klp_object - kernel object structure for live patching
+>>   * @name:	module name (or NULL for vmlinux)
+>> - * @relocs:	relocation entries to be applied at load time
+>> + * @reloc_secs:	relocation sections to be applied at load time
+>>   * @funcs:	function entries for functions to be patched in the object
+>>   * @kobj:	kobject for sysfs resources
+>>   * @mod:	kernel module associated with the patched object
+>> @@ -95,7 +88,7 @@ struct klp_reloc {
+>>  struct klp_object {
+>>  	/* external */
+>>  	const char *name;
+>> -	struct klp_reloc *relocs;
+>> +	struct klp_reloc_sec *reloc_secs;
+>
+>There was a lot of discussion for v1, so I'm not sure, but I thought we
+>ended up deciding to get rid of the klp_reloc_sec struct?  Instead I
+>think the symbol table can be walked directly looking for klp rela
+>sections?
+>
+>The benefits of doing so would be to make the interface simpler -- no
+>need to "cache" the section metadata when it's already easily and
+>quickly available in the module struct elf section headers.
 
-Signed-off-by: David Decotigny <decot@googlers.com>
----
- drivers/net/ethernet/mellanox/mlx4/en_ethtool.c | 344 ++++++++++++------------
- drivers/net/ethernet/mellanox/mlx4/en_main.c    |   1 +
- drivers/net/ethernet/mellanox/mlx4/mlx4_en.h    |   1 +
- 3 files changed, 177 insertions(+), 169 deletions(-)
+Ah, I might have interpreted the conclusions of that last discussion
+incorrectly.
 
-diff --git a/drivers/net/ethernet/mellanox/mlx4/en_ethtool.c b/drivers/net/ethernet/mellanox/mlx4/en_ethtool.c
-index dd84cab..f33f27b 100644
---- a/drivers/net/ethernet/mellanox/mlx4/en_ethtool.c
-+++ b/drivers/net/ethernet/mellanox/mlx4/en_ethtool.c
-@@ -501,34 +501,30 @@ static u32 mlx4_en_autoneg_get(struct net_device *dev)
- 	return autoneg;
- }
- 
--static u32 ptys_get_supported_port(struct mlx4_ptys_reg *ptys_reg)
-+static void ptys2ethtool_update_supported_port(unsigned long *mask,
-+					       struct mlx4_ptys_reg *ptys_reg)
- {
- 	u32 eth_proto = be32_to_cpu(ptys_reg->eth_proto_cap);
- 
- 	if (eth_proto & (MLX4_PROT_MASK(MLX4_10GBASE_T)
- 			 | MLX4_PROT_MASK(MLX4_1000BASE_T)
- 			 | MLX4_PROT_MASK(MLX4_100BASE_TX))) {
--			return SUPPORTED_TP;
--	}
--
--	if (eth_proto & (MLX4_PROT_MASK(MLX4_10GBASE_CR)
-+		__set_bit(ETHTOOL_LINK_MODE_TP_BIT, mask);
-+	} else if (eth_proto & (MLX4_PROT_MASK(MLX4_10GBASE_CR)
- 			 | MLX4_PROT_MASK(MLX4_10GBASE_SR)
- 			 | MLX4_PROT_MASK(MLX4_56GBASE_SR4)
- 			 | MLX4_PROT_MASK(MLX4_40GBASE_CR4)
- 			 | MLX4_PROT_MASK(MLX4_40GBASE_SR4)
- 			 | MLX4_PROT_MASK(MLX4_1000BASE_CX_SGMII))) {
--			return SUPPORTED_FIBRE;
--	}
--
--	if (eth_proto & (MLX4_PROT_MASK(MLX4_56GBASE_KR4)
-+		__set_bit(ETHTOOL_LINK_MODE_FIBRE_BIT, mask);
-+	} else if (eth_proto & (MLX4_PROT_MASK(MLX4_56GBASE_KR4)
- 			 | MLX4_PROT_MASK(MLX4_40GBASE_KR4)
- 			 | MLX4_PROT_MASK(MLX4_20GBASE_KR2)
- 			 | MLX4_PROT_MASK(MLX4_10GBASE_KR)
- 			 | MLX4_PROT_MASK(MLX4_10GBASE_KX4)
- 			 | MLX4_PROT_MASK(MLX4_1000BASE_KX))) {
--			return SUPPORTED_Backplane;
-+		__set_bit(ETHTOOL_LINK_MODE_Backplane_BIT, mask);
- 	}
--	return 0;
- }
- 
- static u32 ptys_get_active_port(struct mlx4_ptys_reg *ptys_reg)
-@@ -574,122 +570,111 @@ static u32 ptys_get_active_port(struct mlx4_ptys_reg *ptys_reg)
- enum ethtool_report {
- 	SUPPORTED = 0,
- 	ADVERTISED = 1,
--	SPEED = 2
- };
- 
-+struct ptys2ethtool_config {
-+	__ETHTOOL_DECLARE_LINK_MODE_MASK(supported);
-+	__ETHTOOL_DECLARE_LINK_MODE_MASK(advertised);
-+	u32 speed;
-+};
-+
-+static unsigned long *ptys2ethtool_link_mode(struct ptys2ethtool_config *cfg,
-+					     enum ethtool_report report)
-+{
-+	switch (report) {
-+	case SUPPORTED:
-+		return cfg->supported;
-+	case ADVERTISED:
-+		return cfg->advertised;
-+	}
-+	return NULL;
-+}
-+
-+#define MLX4_BUILD_PTYS2ETHTOOL_CONFIG(reg_, speed_, ...)		\
-+	({								\
-+		struct ptys2ethtool_config *cfg;			\
-+		const unsigned int modes[] = { __VA_ARGS__ };		\
-+		unsigned int i;						\
-+		cfg = &ptys2ethtool_map[reg_];				\
-+		cfg->speed = speed_;					\
-+		bitmap_zero(cfg->supported,				\
-+			    __ETHTOOL_LINK_MODE_MASK_NBITS);		\
-+		bitmap_zero(cfg->advertised,				\
-+			    __ETHTOOL_LINK_MODE_MASK_NBITS);		\
-+		for (i = 0 ; i < ARRAY_SIZE(modes) ; ++i) {		\
-+			__set_bit(modes[i], cfg->supported);		\
-+			__set_bit(modes[i], cfg->advertised);		\
-+		}							\
-+	})
-+
- /* Translates mlx4 link mode to equivalent ethtool Link modes/speed */
--static u32 ptys2ethtool_map[MLX4_LINK_MODES_SZ][3] = {
--	[MLX4_100BASE_TX] = {
--		SUPPORTED_100baseT_Full,
--		ADVERTISED_100baseT_Full,
--		SPEED_100
--		},
--
--	[MLX4_1000BASE_T] = {
--		SUPPORTED_1000baseT_Full,
--		ADVERTISED_1000baseT_Full,
--		SPEED_1000
--		},
--	[MLX4_1000BASE_CX_SGMII] = {
--		SUPPORTED_1000baseKX_Full,
--		ADVERTISED_1000baseKX_Full,
--		SPEED_1000
--		},
--	[MLX4_1000BASE_KX] = {
--		SUPPORTED_1000baseKX_Full,
--		ADVERTISED_1000baseKX_Full,
--		SPEED_1000
--		},
--
--	[MLX4_10GBASE_T] = {
--		SUPPORTED_10000baseT_Full,
--		ADVERTISED_10000baseT_Full,
--		SPEED_10000
--		},
--	[MLX4_10GBASE_CX4] = {
--		SUPPORTED_10000baseKX4_Full,
--		ADVERTISED_10000baseKX4_Full,
--		SPEED_10000
--		},
--	[MLX4_10GBASE_KX4] = {
--		SUPPORTED_10000baseKX4_Full,
--		ADVERTISED_10000baseKX4_Full,
--		SPEED_10000
--		},
--	[MLX4_10GBASE_KR] = {
--		SUPPORTED_10000baseKR_Full,
--		ADVERTISED_10000baseKR_Full,
--		SPEED_10000
--		},
--	[MLX4_10GBASE_CR] = {
--		SUPPORTED_10000baseKR_Full,
--		ADVERTISED_10000baseKR_Full,
--		SPEED_10000
--		},
--	[MLX4_10GBASE_SR] = {
--		SUPPORTED_10000baseKR_Full,
--		ADVERTISED_10000baseKR_Full,
--		SPEED_10000
--		},
--
--	[MLX4_20GBASE_KR2] = {
--		SUPPORTED_20000baseMLD2_Full | SUPPORTED_20000baseKR2_Full,
--		ADVERTISED_20000baseMLD2_Full | ADVERTISED_20000baseKR2_Full,
--		SPEED_20000
--		},
--
--	[MLX4_40GBASE_CR4] = {
--		SUPPORTED_40000baseCR4_Full,
--		ADVERTISED_40000baseCR4_Full,
--		SPEED_40000
--		},
--	[MLX4_40GBASE_KR4] = {
--		SUPPORTED_40000baseKR4_Full,
--		ADVERTISED_40000baseKR4_Full,
--		SPEED_40000
--		},
--	[MLX4_40GBASE_SR4] = {
--		SUPPORTED_40000baseSR4_Full,
--		ADVERTISED_40000baseSR4_Full,
--		SPEED_40000
--		},
--
--	[MLX4_56GBASE_KR4] = {
--		SUPPORTED_56000baseKR4_Full,
--		ADVERTISED_56000baseKR4_Full,
--		SPEED_56000
--		},
--	[MLX4_56GBASE_CR4] = {
--		SUPPORTED_56000baseCR4_Full,
--		ADVERTISED_56000baseCR4_Full,
--		SPEED_56000
--		},
--	[MLX4_56GBASE_SR4] = {
--		SUPPORTED_56000baseSR4_Full,
--		ADVERTISED_56000baseSR4_Full,
--		SPEED_56000
--		},
-+static struct ptys2ethtool_config ptys2ethtool_map[MLX4_LINK_MODES_SZ];
-+
-+void __init mlx4_en_init_ptys2ethtool_map(void)
-+{
-+	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_100BASE_TX, SPEED_100,
-+				       ETHTOOL_LINK_MODE_100baseT_Full_BIT);
-+	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_1000BASE_T, SPEED_1000,
-+				       ETHTOOL_LINK_MODE_1000baseT_Full_BIT);
-+	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_1000BASE_CX_SGMII, SPEED_1000,
-+				       ETHTOOL_LINK_MODE_1000baseKX_Full_BIT);
-+	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_1000BASE_KX, SPEED_1000,
-+				       ETHTOOL_LINK_MODE_1000baseKX_Full_BIT);
-+	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_10GBASE_T, SPEED_10000,
-+				       ETHTOOL_LINK_MODE_10000baseT_Full_BIT);
-+	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_10GBASE_CX4, SPEED_10000,
-+				       ETHTOOL_LINK_MODE_10000baseKX4_Full_BIT);
-+	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_10GBASE_KX4, SPEED_10000,
-+				       ETHTOOL_LINK_MODE_10000baseKX4_Full_BIT);
-+	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_10GBASE_KR, SPEED_10000,
-+				       ETHTOOL_LINK_MODE_10000baseKR_Full_BIT);
-+	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_10GBASE_CR, SPEED_10000,
-+				       ETHTOOL_LINK_MODE_10000baseKR_Full_BIT);
-+	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_10GBASE_SR, SPEED_10000,
-+				       ETHTOOL_LINK_MODE_10000baseKR_Full_BIT);
-+	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_20GBASE_KR2, SPEED_20000,
-+				       ETHTOOL_LINK_MODE_20000baseMLD2_Full_BIT,
-+				       ETHTOOL_LINK_MODE_20000baseKR2_Full_BIT);
-+	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_40GBASE_CR4, SPEED_40000,
-+				       ETHTOOL_LINK_MODE_40000baseCR4_Full_BIT);
-+	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_40GBASE_KR4, SPEED_40000,
-+				       ETHTOOL_LINK_MODE_40000baseKR4_Full_BIT);
-+	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_40GBASE_SR4, SPEED_40000,
-+				       ETHTOOL_LINK_MODE_40000baseSR4_Full_BIT);
-+	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_56GBASE_KR4, SPEED_56000,
-+				       ETHTOOL_LINK_MODE_56000baseKR4_Full_BIT);
-+	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_56GBASE_CR4, SPEED_56000,
-+				       ETHTOOL_LINK_MODE_56000baseCR4_Full_BIT);
-+	MLX4_BUILD_PTYS2ETHTOOL_CONFIG(MLX4_56GBASE_SR4, SPEED_56000,
-+				       ETHTOOL_LINK_MODE_56000baseSR4_Full_BIT);
- };
- 
--static u32 ptys2ethtool_link_modes(u32 eth_proto, enum ethtool_report report)
-+static void ptys2ethtool_update_link_modes(unsigned long *link_modes,
-+					   u32 eth_proto,
-+					   enum ethtool_report report)
- {
- 	int i;
--	u32 link_modes = 0;
--
- 	for (i = 0; i < MLX4_LINK_MODES_SZ; i++) {
- 		if (eth_proto & MLX4_PROT_MASK(i))
--			link_modes |= ptys2ethtool_map[i][report];
-+			bitmap_or(link_modes, link_modes,
-+				  ptys2ethtool_link_mode(&ptys2ethtool_map[i],
-+							 report),
-+				  __ETHTOOL_LINK_MODE_MASK_NBITS);
- 	}
--	return link_modes;
- }
- 
--static u32 ethtool2ptys_link_modes(u32 link_modes, enum ethtool_report report)
-+static u32 ethtool2ptys_link_modes(const unsigned long *link_modes,
-+				   enum ethtool_report report)
- {
- 	int i;
- 	u32 ptys_modes = 0;
- 
- 	for (i = 0; i < MLX4_LINK_MODES_SZ; i++) {
--		if (ptys2ethtool_map[i][report] & link_modes)
-+		if (bitmap_intersects(
-+			    ptys2ethtool_link_mode(&ptys2ethtool_map[i],
-+						   report),
-+			    link_modes,
-+			    __ETHTOOL_LINK_MODE_MASK_NBITS))
- 			ptys_modes |= 1 << i;
- 	}
- 	return ptys_modes;
-@@ -702,14 +687,14 @@ static u32 speed2ptys_link_modes(u32 speed)
- 	u32 ptys_modes = 0;
- 
- 	for (i = 0; i < MLX4_LINK_MODES_SZ; i++) {
--		if (ptys2ethtool_map[i][SPEED] == speed)
-+		if (ptys2ethtool_map[i].speed == speed)
- 			ptys_modes |= 1 << i;
- 	}
- 	return ptys_modes;
- }
- 
--static int ethtool_get_ptys_settings(struct net_device *dev,
--				     struct ethtool_cmd *cmd)
-+static int ethtool_get_ptys_ksettings(struct net_device *dev,
-+				      struct ethtool_ksettings *ksettings)
- {
- 	struct mlx4_en_priv *priv = netdev_priv(dev);
- 	struct mlx4_ptys_reg ptys_reg;
-@@ -737,79 +722,93 @@ static int ethtool_get_ptys_settings(struct net_device *dev,
- 	en_dbg(DRV, priv, "ptys_reg.eth_proto_lp_adv %x\n",
- 	       be32_to_cpu(ptys_reg.eth_proto_lp_adv));
- 
--	cmd->supported = 0;
--	cmd->advertising = 0;
-+	/* reset supported/advertising masks */
-+	ethtool_ksettings_zero_link_mode(ksettings, supported);
-+	ethtool_ksettings_zero_link_mode(ksettings, advertising);
- 
--	cmd->supported |= ptys_get_supported_port(&ptys_reg);
-+	ptys2ethtool_update_supported_port(ksettings->link_modes.supported,
-+					   &ptys_reg);
- 
- 	eth_proto = be32_to_cpu(ptys_reg.eth_proto_cap);
--	cmd->supported |= ptys2ethtool_link_modes(eth_proto, SUPPORTED);
-+	ptys2ethtool_update_link_modes(ksettings->link_modes.supported,
-+				       eth_proto, SUPPORTED);
- 
- 	eth_proto = be32_to_cpu(ptys_reg.eth_proto_admin);
--	cmd->advertising |= ptys2ethtool_link_modes(eth_proto, ADVERTISED);
-+	ptys2ethtool_update_link_modes(ksettings->link_modes.advertising,
-+				       eth_proto, ADVERTISED);
- 
--	cmd->supported |= SUPPORTED_Pause | SUPPORTED_Asym_Pause;
--	cmd->advertising |= (priv->prof->tx_pause) ? ADVERTISED_Pause : 0;
-+	ethtool_ksettings_add_link_mode(ksettings, supported, Pause);
-+	ethtool_ksettings_add_link_mode(ksettings, supported, Asym_Pause);
- 
--	cmd->advertising |= (priv->prof->tx_pause ^ priv->prof->rx_pause) ?
--		ADVERTISED_Asym_Pause : 0;
-+	if (priv->prof->tx_pause)
-+		ethtool_ksettings_add_link_mode(ksettings, advertising,
-+						Pause);
-+	if (priv->prof->tx_pause ^ priv->prof->rx_pause)
-+		ethtool_ksettings_add_link_mode(ksettings, advertising,
-+						Asym_Pause);
- 
--	cmd->port = ptys_get_active_port(&ptys_reg);
--	cmd->transceiver = (SUPPORTED_TP & cmd->supported) ?
--		XCVR_EXTERNAL : XCVR_INTERNAL;
-+	ksettings->parent.port = ptys_get_active_port(&ptys_reg);
- 
- 	if (mlx4_en_autoneg_get(dev)) {
--		cmd->supported |= SUPPORTED_Autoneg;
--		cmd->advertising |= ADVERTISED_Autoneg;
-+		ethtool_ksettings_add_link_mode(ksettings, supported,
-+						Autoneg);
-+		ethtool_ksettings_add_link_mode(ksettings, advertising,
-+						Autoneg);
- 	}
- 
--	cmd->autoneg = (priv->port_state.flags & MLX4_EN_PORT_ANC) ?
-+	ksettings->parent.autoneg
-+		= (priv->port_state.flags & MLX4_EN_PORT_ANC) ?
- 		AUTONEG_ENABLE : AUTONEG_DISABLE;
- 
- 	eth_proto = be32_to_cpu(ptys_reg.eth_proto_lp_adv);
--	cmd->lp_advertising = ptys2ethtool_link_modes(eth_proto, ADVERTISED);
- 
--	cmd->lp_advertising |= (priv->port_state.flags & MLX4_EN_PORT_ANC) ?
--			ADVERTISED_Autoneg : 0;
-+	ethtool_ksettings_zero_link_mode(ksettings, lp_advertising);
-+	ptys2ethtool_update_link_modes(ksettings->link_modes.lp_advertising,
-+				       eth_proto, ADVERTISED);
-+	if (priv->port_state.flags & MLX4_EN_PORT_ANC)
-+		ethtool_ksettings_add_link_mode(ksettings, lp_advertising,
-+						Autoneg);
- 
--	cmd->phy_address = 0;
--	cmd->mdio_support = 0;
--	cmd->maxtxpkt = 0;
--	cmd->maxrxpkt = 0;
--	cmd->eth_tp_mdix = ETH_TP_MDI_INVALID;
--	cmd->eth_tp_mdix_ctrl = ETH_TP_MDI_AUTO;
-+	ksettings->parent.phy_address = 0;
-+	ksettings->parent.mdio_support = 0;
-+	ksettings->parent.eth_tp_mdix = ETH_TP_MDI_INVALID;
-+	ksettings->parent.eth_tp_mdix_ctrl = ETH_TP_MDI_AUTO;
- 
- 	return ret;
- }
- 
--static void ethtool_get_default_settings(struct net_device *dev,
--					 struct ethtool_cmd *cmd)
-+static void ethtool_get_default_ksettings(struct net_device *dev,
-+					  struct ethtool_ksettings *ksettings)
- {
- 	struct mlx4_en_priv *priv = netdev_priv(dev);
- 	int trans_type;
- 
--	cmd->autoneg = AUTONEG_DISABLE;
--	cmd->supported = SUPPORTED_10000baseT_Full;
--	cmd->advertising = ADVERTISED_10000baseT_Full;
--	trans_type = priv->port_state.transceiver;
-+	ksettings->parent.autoneg = AUTONEG_DISABLE;
- 
-+	ethtool_ksettings_zero_link_mode(ksettings, supported);
-+	ethtool_ksettings_add_link_mode(ksettings, supported,
-+					10000baseT_Full);
-+
-+	ethtool_ksettings_zero_link_mode(ksettings, advertising);
-+	ethtool_ksettings_add_link_mode(ksettings, advertising,
-+					10000baseT_Full);
-+
-+	trans_type = priv->port_state.transceiver;
- 	if (trans_type > 0 && trans_type <= 0xC) {
--		cmd->port = PORT_FIBRE;
--		cmd->transceiver = XCVR_EXTERNAL;
--		cmd->supported |= SUPPORTED_FIBRE;
--		cmd->advertising |= ADVERTISED_FIBRE;
-+		ksettings->parent.port = PORT_FIBRE;
-+		ethtool_ksettings_add_link_mode(ksettings, supported, FIBRE);
-+		ethtool_ksettings_add_link_mode(ksettings, advertising, FIBRE);
- 	} else if (trans_type == 0x80 || trans_type == 0) {
--		cmd->port = PORT_TP;
--		cmd->transceiver = XCVR_INTERNAL;
--		cmd->supported |= SUPPORTED_TP;
--		cmd->advertising |= ADVERTISED_TP;
-+		ksettings->parent.port = PORT_TP;
-+		ethtool_ksettings_add_link_mode(ksettings, supported, TP);
-+		ethtool_ksettings_add_link_mode(ksettings, advertising, TP);
- 	} else  {
--		cmd->port = -1;
--		cmd->transceiver = -1;
-+		ksettings->parent.port = -1;
- 	}
- }
- 
--static int mlx4_en_get_settings(struct net_device *dev, struct ethtool_cmd *cmd)
-+static int mlx4_en_get_ksettings(struct net_device *dev,
-+				 struct ethtool_ksettings *ksettings)
- {
- 	struct mlx4_en_priv *priv = netdev_priv(dev);
- 	int ret = -EINVAL;
-@@ -822,16 +821,16 @@ static int mlx4_en_get_settings(struct net_device *dev, struct ethtool_cmd *cmd)
- 	       priv->port_state.flags & MLX4_EN_PORT_ANE);
- 
- 	if (priv->mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_ETH_PROT_CTRL)
--		ret = ethtool_get_ptys_settings(dev, cmd);
-+		ret = ethtool_get_ptys_ksettings(dev, ksettings);
- 	if (ret) /* ETH PROT CRTL is not supported or PTYS CMD failed */
--		ethtool_get_default_settings(dev, cmd);
-+		ethtool_get_default_ksettings(dev, ksettings);
- 
- 	if (netif_carrier_ok(dev)) {
--		ethtool_cmd_speed_set(cmd, priv->port_state.link_speed);
--		cmd->duplex = DUPLEX_FULL;
-+		ksettings->parent.speed = priv->port_state.link_speed;
-+		ksettings->parent.duplex = DUPLEX_FULL;
- 	} else {
--		ethtool_cmd_speed_set(cmd, SPEED_UNKNOWN);
--		cmd->duplex = DUPLEX_UNKNOWN;
-+		ksettings->parent.speed = SPEED_UNKNOWN;
-+		ksettings->parent.duplex = DUPLEX_UNKNOWN;
- 	}
- 	return 0;
- }
-@@ -855,21 +854,28 @@ static __be32 speed_set_ptys_admin(struct mlx4_en_priv *priv, u32 speed,
- 	return proto_admin;
- }
- 
--static int mlx4_en_set_settings(struct net_device *dev, struct ethtool_cmd *cmd)
-+static int mlx4_en_set_ksettings(struct net_device *dev,
-+				 const struct ethtool_ksettings *ksettings)
- {
- 	struct mlx4_en_priv *priv = netdev_priv(dev);
- 	struct mlx4_ptys_reg ptys_reg;
- 	__be32 proto_admin;
- 	int ret;
- 
--	u32 ptys_adv = ethtool2ptys_link_modes(cmd->advertising, ADVERTISED);
--	int speed = ethtool_cmd_speed(cmd);
-+	u32 ptys_adv = ethtool2ptys_link_modes(
-+		ksettings->link_modes.advertising, ADVERTISED);
-+	const int speed = ksettings->parent.speed;
- 
--	en_dbg(DRV, priv, "Set Speed=%d adv=0x%x autoneg=%d duplex=%d\n",
--	       speed, cmd->advertising, cmd->autoneg, cmd->duplex);
-+	if (en_dbg_enabled(DRV, priv)) {
-+		en_dbg(DRV, priv,
-+		       "Set Speed=%d adv={%*pbl} autoneg=%d duplex=%d\n",
-+		       speed, __ETHTOOL_LINK_MODE_MASK_NBITS,
-+		       ksettings->link_modes.advertising,
-+		       ksettings->parent.autoneg, ksettings->parent.duplex);
-+	}
- 
- 	if (!(priv->mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_ETH_PROT_CTRL) ||
--	    (cmd->duplex == DUPLEX_HALF))
-+	    (ksettings->parent.duplex == DUPLEX_HALF))
- 		return -EINVAL;
- 
- 	memset(&ptys_reg, 0, sizeof(ptys_reg));
-@@ -883,7 +889,7 @@ static int mlx4_en_set_settings(struct net_device *dev, struct ethtool_cmd *cmd)
- 		return 0;
- 	}
- 
--	proto_admin = cmd->autoneg == AUTONEG_ENABLE ?
-+	proto_admin = ksettings->parent.autoneg == AUTONEG_ENABLE ?
- 		cpu_to_be32(ptys_adv) :
- 		speed_set_ptys_admin(priv, speed,
- 				     ptys_reg.eth_proto_cap);
-@@ -1982,8 +1988,8 @@ static int mlx4_en_set_phys_id(struct net_device *dev,
- 
- const struct ethtool_ops mlx4_en_ethtool_ops = {
- 	.get_drvinfo = mlx4_en_get_drvinfo,
--	.get_settings = mlx4_en_get_settings,
--	.set_settings = mlx4_en_set_settings,
-+	.get_ksettings = mlx4_en_get_ksettings,
-+	.set_ksettings = mlx4_en_set_ksettings,
- 	.get_link = ethtool_op_get_link,
- 	.get_strings = mlx4_en_get_strings,
- 	.get_sset_count = mlx4_en_get_sset_count,
-diff --git a/drivers/net/ethernet/mellanox/mlx4/en_main.c b/drivers/net/ethernet/mellanox/mlx4/en_main.c
-index 005f910..98913bb 100644
---- a/drivers/net/ethernet/mellanox/mlx4/en_main.c
-+++ b/drivers/net/ethernet/mellanox/mlx4/en_main.c
-@@ -389,6 +389,7 @@ static void mlx4_en_verify_params(void)
- static int __init mlx4_en_init(void)
- {
- 	mlx4_en_verify_params();
-+	mlx4_en_init_ptys2ethtool_map();
- 
- 	return mlx4_register_interface(&mlx4_en_interface);
- }
-diff --git a/drivers/net/ethernet/mellanox/mlx4/mlx4_en.h b/drivers/net/ethernet/mellanox/mlx4/mlx4_en.h
-index b04054d..2d8af43 100644
---- a/drivers/net/ethernet/mellanox/mlx4/mlx4_en.h
-+++ b/drivers/net/ethernet/mellanox/mlx4/mlx4_en.h
-@@ -607,6 +607,7 @@ static inline struct mlx4_cqe *mlx4_en_get_cqe(void *buf, int idx, int cqe_sz)
- 
- #define MLX4_EN_WOL_DO_MODIFY (1ULL << 63)
- 
-+void mlx4_en_init_ptys2ethtool_map(void);
- void mlx4_en_update_loopback_state(struct net_device *dev,
- 				   netdev_features_t features);
- 
--- 
-2.6.0.rc2.230.g3dd15c0
+In that case, I think I can just get rid of my klp_for_each_reloc_sec
+macro as well as the lreloc scaffolding code from kpatch. The only
+potentially "ugly" part of this change is that I'll have to move the
+string parsing stuff here to extract the objname of the __klp_rela
+section (which may not actually look that bad, we'll see how that
+turns out).
+
+>>  	struct klp_func *funcs;
+>>
+>>  	/* internal */
+>> @@ -129,6 +122,9 @@ struct klp_patch {
+>>  #define klp_for_each_func(obj, func) \
+>>  	for (func = obj->funcs; func->old_name; func++)
+>>
+>> +#define klp_for_each_reloc_sec(obj, reloc_sec) \
+>> +	for (reloc_sec = obj->reloc_secs; reloc_sec->name; reloc_sec++)
+>> +
+>>  int klp_register_patch(struct klp_patch *);
+>>  int klp_unregister_patch(struct klp_patch *);
+>>  int klp_enable_patch(struct klp_patch *);
+>> diff --git a/include/linux/module.h b/include/linux/module.h
+>> index 9b46256..ea61147 100644
+>> --- a/include/linux/module.h
+>> +++ b/include/linux/module.h
+>> @@ -777,9 +777,15 @@ extern int module_sysfs_initialized;
+>>  #ifdef CONFIG_DEBUG_SET_MODULE_RONX
+>>  extern void set_all_modules_text_rw(void);
+>>  extern void set_all_modules_text_ro(void);
+>> +extern void
+>> +set_page_attributes(void *start, void *end,
+>> +		    int (*set)(unsigned long start, int num_pages));
+>>  #else
+>>  static inline void set_all_modules_text_rw(void) { }
+>>  static inline void set_all_modules_text_ro(void) { }
+>> +static inline void
+>> +set_page_attributes(void *start, void *end,
+>> +		    int (*set)(unsigned long start, int num_pages)) { }
+>>  #endif
+>>
+>>  #ifdef CONFIG_GENERIC_BUG
+>> diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
+>> index db545cb..17b7278 100644
+>> --- a/kernel/livepatch/core.c
+>> +++ b/kernel/livepatch/core.c
+>> @@ -28,6 +28,9 @@
+>>  #include <linux/list.h>
+>>  #include <linux/kallsyms.h>
+>>  #include <linux/livepatch.h>
+>> +#include <linux/elf.h>
+>> +#include <asm/cacheflush.h>
+>> +#include <linux/moduleloader.h>
+>>
+>>  /**
+>>   * struct klp_ops - structure for tracking registered ftrace ops structs
+>> @@ -281,52 +284,48 @@ static int klp_find_external_symbol(struct module *pmod, const char *name,
+>>  }
+>>
+>>  static int klp_write_object_relocations(struct module *pmod,
+>> -					struct klp_object *obj)
+>> +					struct klp_object *obj,
+>> +					struct klp_patch *patch)
+>>  {
+>> -	int ret;
+>> -	struct klp_reloc *reloc;
+>> +	int relindex, num_relas;
+>> +	int i, ret = 0;
+>> +	unsigned long addr;
+>> +	char *symname;
+>> +	struct klp_reloc_sec *reloc_sec;
+>> +	Elf_Rela *rela;
+>> +	Elf_Sym *sym, *symtab;
+>>
+>>  	if (WARN_ON(!klp_is_object_loaded(obj)))
+>>  		return -EINVAL;
+>>
+>> -	if (WARN_ON(!obj->relocs))
+>> -		return -EINVAL;
+>> -
+>> -	for (reloc = obj->relocs; reloc->name; reloc++) {
+>> -		if (!klp_is_module(obj)) {
+>> -
+>> -#if defined(CONFIG_RANDOMIZE_BASE)
+>> -			/* If KASLR has been enabled, adjust old value accordingly */
+>> -			if (kaslr_enabled())
+>> -				reloc->val += kaslr_offset();
+>> -#endif
+>> -			ret = klp_verify_vmlinux_symbol(reloc->name,
+>> -							reloc->val);
+>> -			if (ret)
+>> -				return ret;
+>> -		} else {
+>> -			/* module, reloc->val needs to be discovered */
+>> -			if (reloc->external)
+>> -				ret = klp_find_external_symbol(pmod,
+>> -							       reloc->name,
+>> -							       &reloc->val);
+>> -			else
+>> -				ret = klp_find_object_symbol(obj->mod->name,
+>> -							     reloc->name,
+>> -							     &reloc->val);
+>> -			if (ret)
+>> -				return ret;
+>> -		}
+>> -		ret = klp_write_module_reloc(pmod, reloc->type, reloc->loc,
+>> -					     reloc->val + reloc->addend);
+>> -		if (ret) {
+>> -			pr_err("relocation failed for symbol '%s' at 0x%016lx (%d)\n",
+>> -			       reloc->name, reloc->val, ret);
+>> -			return ret;
+>> +	symtab = (void *)pmod->core_symtab;
+>> +
+>> +	/* For each __klp_rela section for this object */
+>> +	klp_for_each_reloc_sec(obj, reloc_sec) {
+>> +		relindex = reloc_sec->index;
+>> +		num_relas = pmod->sechdrs[relindex].sh_size / sizeof(Elf_Rela);
+>> +		rela = (Elf_Rela *) pmod->sechdrs[relindex].sh_addr;
+>> +
+>> +		/* For each rela in this __klp_rela section */
+>> +		for (i = 0; i < num_relas; i++, rela++) {
+>> +			sym = symtab + ELF_R_SYM(rela->r_info);
+>> +			symname = pmod->core_strtab + sym->st_name;
+>> +
+>> +			if (sym->st_shndx == SHN_LIVEPATCH) {
+>> +				if (sym->st_info == 'K')
+>> +					ret = klp_find_external_symbol(pmod, symname, &addr);
+>> +				else
+>> +					ret = klp_find_object_symbol(obj->name, symname, &addr);
+>> +				if (ret)
+>> +					return ret;
+>> +				sym->st_value = addr;
+>
+>So I think you're also working on removing the 'external' stuff.  Any
+>idea how this code will handle that?  Specifically I'm wondering how the
+>objname and sympos of the rela's symbol will be specified.  Maybe it can
+>be encoded somehow in one of the symbol fields (st_value)?
+
+Thanks for bringing this up. I think we can just encode the symbol's
+position in kallsyms in the symbol's st_other field. It isn't used
+anywhere and has size char, which is plenty of bits to represent the
+small ints.
+
+For objname, the simplest solution might be to append ".klp.objname"
+to the symbol name, and extract out this suffix when resolving the
+symbol. Another way might be to have st_value contain the index into
+the strtab (or .kpatch.strings) that contains the objname. Then we'd
+access the objname just like how we access the symbol's name (strtab +
+sym->st_name). After we find the objname we can then overwrite
+st_value with the real address. I think this second method is cleaner.
+Thoughts?
+
+>> +			}
+>>  		}
+>> +		ret = apply_relocate_add(pmod->sechdrs, pmod->core_strtab,
+>> +					 pmod->index.sym, relindex, pmod);
+>>  	}
+>>
+>> -	return 0;
+>> +	return ret;
+>>  }
+>>
+>>  static void notrace klp_ftrace_handler(unsigned long ip,
+>> @@ -747,13 +746,22 @@ static int klp_init_object_loaded(struct klp_patch *patch,
+>>  				  struct klp_object *obj)
+>>  {
+>>  	struct klp_func *func;
+>> +	struct module *pmod;
+>>  	int ret;
+>>
+>> -	if (obj->relocs) {
+>> -		ret = klp_write_object_relocations(patch->mod, obj);
+>> -		if (ret)
+>> -			return ret;
+>> -	}
+>> +	pmod = patch->mod;
+>> +
+>> +	set_page_attributes(pmod->module_core,
+>> +			    pmod->module_core + pmod->core_text_size,
+>> +			    set_memory_rw);
+>> +
+>> +	ret = klp_write_object_relocations(pmod, obj, patch);
+>> +	if (ret)
+>> +		return ret;
+>> +
+>> +	set_page_attributes(pmod->module_core,
+>> +			    pmod->module_core + pmod->core_text_size,
+>> +			    set_memory_ro);
+>>
+>>  	klp_for_each_func(obj, func) {
+>>  		ret = klp_find_verify_func_addr(obj, func);
+>> --
+>> 2.4.3
+>>
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe live-patching" in
+>> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
+>-- 
+>Josh
