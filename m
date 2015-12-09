@@ -1,48 +1,57 @@
-From: "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 1/7] kernfs: Add API to generate relative kernfs path
-Date: Tue, 8 Dec 2015 19:17:07 -0600
-Message-ID: <20151209011707.GA18344@mail.hallyn.com>
-References: <1449529582-4075-1-git-send-email-serge.hallyn@ubuntu.com>
-	<1449529582-4075-2-git-send-email-serge.hallyn@ubuntu.com>
-	<20151208115120.GB26797@kroah.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20151208115120.GB26797-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+From: Brian Norris <computersforpeace@gmail.com>
+Subject: [PATCH 1/4] test: firmware_class: report errors properly on failure
+Date: Tue,  8 Dec 2015 18:38:31 -0800
+Message-ID: <1449628714-66641-1-git-send-email-computersforpeace@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Shuah Khan <shuahkh@osg.samsung.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ming Lei <ming.lei@canonical.com>
+Cc: Kees Cook <keescook@chromium.org>, Brian Norris <computersforpeace@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "Luis R. Rodriguez" <mcgrof@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 08, 2015 at 06:51:20AM -0500, Greg KH wrote:
-> On Mon, Dec 07, 2015 at 05:06:16PM -0600, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org wrote:
-> > From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> > 
-> > The new function kernfs_path_from_node() generates and returns kernfs
-> > path of a given kernfs_node relative to a given parent kernfs_node.
-> > 
-> > Changelog 20151125:
-> >   - Fully-wing multilinecomments
-> >   - Rework kernfs_path_from_node_locked() logic
-> >   - Replace BUG_ONs with returning NULL
-> >   - Use a const char* for /.. and precalculate its size
-> > Changelog 20151130:
-> >   - Update kernfs_path_from_node_locked comment
-> 
-> changes should go below the --- line, not here in the body of the
-> changelog that will show up in git :(
+request_firmware() failures currently won't get reported at all (the
+error code is discarded). What's more, we get confusing messages, like:
 
-Right, thanks.  I've changed them all to add a --- before the changelog.
-The format-patch ends up looking a bit weird with two --- lines, but
-subsequent git am does the right thing, so hopefully this is the right
-way.
+    # echo -n notafile > /sys/devices/virtual/misc/test_firmware/trigger_request
+    [ 8280.311856] test_firmware: loading 'notafile'
+    [ 8280.317042] test_firmware: load of 'notafile' failed: -2
+    [ 8280.322445] test_firmware: loaded: 0
+    # echo $?
+    0
+
+Report the failures via write() errors, and don't say we "loaded"
+anything.
+
+Signed-off-by: Brian Norris <computersforpeace@gmail.com>
+---
+ lib/test_firmware.c | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/lib/test_firmware.c b/lib/test_firmware.c
+index 86374c1c49a4..841191061816 100644
+--- a/lib/test_firmware.c
++++ b/lib/test_firmware.c
+@@ -65,14 +65,19 @@ static ssize_t trigger_request_store(struct device *dev,
+ 	release_firmware(test_firmware);
+ 	test_firmware = NULL;
+ 	rc = request_firmware(&test_firmware, name, dev);
+-	if (rc)
++	if (rc) {
+ 		pr_info("load of '%s' failed: %d\n", name, rc);
+-	pr_info("loaded: %zu\n", test_firmware ? test_firmware->size : 0);
++		goto out;
++	}
++	pr_info("loaded: %zu\n", test_firmware->size);
++	rc = count;
++
++out:
+ 	mutex_unlock(&test_fw_mutex);
+ 
+ 	kfree(name);
+ 
+-	return count;
++	return rc;
+ }
+ static DEVICE_ATTR_WO(trigger_request);
+ 
+-- 
+2.6.0.rc2.230.g3dd15c0
