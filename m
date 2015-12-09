@@ -1,115 +1,302 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 2/2] mm/page_ref: add tracepoint to track down page
- reference manipulation
-Date: Wed, 9 Dec 2015 15:01:54 -0500
-Message-ID: <20151209150154.31c142b9@gandalf.local.home>
-References: <1447053784-27811-1-git-send-email-iamjoonsoo.kim@lge.com>
-	<1447053784-27811-2-git-send-email-iamjoonsoo.kim@lge.com>
-	<564C9A86.1090906@suse.cz>
-	<20151120063325.GB13061@js1304-P5Q-DELUXE>
-	<20151120114225.7efeeafe@grimm.local.home>
-	<20151123082805.GB29397@js1304-P5Q-DELUXE>
-	<20151123092604.7ec1397d@gandalf.local.home>
-	<20151124014527.GA32335@js1304-P5Q-DELUXE>
-	<20151203041657.GB1495@js1304-P5Q-DELUXE>
+From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: module: preserve Elf information for livepatch modules
+Date: Wed, 9 Dec 2015 15:05:23 -0500
+Message-ID: <20151209200523.GB25387@packer-debian-8-amd64.digitalocean.com>
+References: <1448943679-3412-1-git-send-email-jeyu@redhat.com>
+ <1448943679-3412-3-git-send-email-jeyu@redhat.com>
+ <20151208183212.GB14846@treble.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20151203041657.GB1495@js1304-P5Q-DELUXE>
-Sender: owner-linux-mm@kvack.org
-To: Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Cc: Vlastimil Babka <vbabka@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@suse.de>, "Kirill A.
- Shutemov" <kirill.shutemov@linux.intel.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20151208183212.GB14846-8wJ5/zUtDR0XGNroddHbYwC/G2K4zDHf@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 3 Dec 2015 13:16:58 +0900
-Joonsoo Kim <iamjoonsoo.kim@lge.com> wrote:
++++ Josh Poimboeuf [08/12/15 12:32 -0600]:
+>On Mon, Nov 30, 2015 at 11:21:15PM -0500, Jessica Yu wrote:
+>> For livepatch modules, copy Elf section, symbol, and string information
+>> from the load_info struct in the module loader.
+>>
+>> Livepatch uses special relocation sections in order to be able to patch
+>> modules that are not yet loaded, as well as apply patches to the kernel
+>> when the addresses of symbols cannot be determined at compile time (for
+>> example, when kaslr is enabled). Livepatch modules must preserve Elf
+>> information such as section indices in order to apply the remaining
+>> relocation sections at the appropriate time (i.e. when the target module
+>> loads).
+>>
+>> Signed-off-by: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>> ---
+>>  include/linux/module.h |  9 +++++
+>>  kernel/module.c        | 98 ++++++++++++++++++++++++++++++++++++++++++++++++--
+>>  2 files changed, 105 insertions(+), 2 deletions(-)
+>>
+>> diff --git a/include/linux/module.h b/include/linux/module.h
+>> index 3a19c79..9b46256 100644
+>> --- a/include/linux/module.h
+>> +++ b/include/linux/module.h
+>> @@ -425,6 +425,14 @@ struct module {
+>>
+>>  	/* Notes attributes */
+>>  	struct module_notes_attrs *notes_attrs;
+>> +
+>> +	/* Elf information (optionally saved) */
+>> +	Elf_Ehdr *hdr;
+>
+>I would rename "hdr" to "elf_hdr" to make its purpose clearer.
+>
+>> +	Elf_Shdr *sechdrs;
+>> +	char *secstrings;
+>
+>Probably a good idea to add underscores to the names ("sec_hdrs" and
+>"sec_strings") to be consistent with most of the other fields in the
+>struct.
+>
+>> +	struct {
+>> +		unsigned int sym, str, mod, vers, info, pcpu;
+>> +	} index;
+>
+>I might be contradicting myself from what I said before.  But I'm
+>thinking we should put all these fields inside a CONFIG_LIVEPATCH ifdef.
+>Then below, there could be two versions of copy_module_elf(), the real
+>one for LIVEPATCH and and an empty one for !LIVEPATCH.  And the same
+>story for free_module_elf().
 
-> On Tue, Nov 24, 2015 at 10:45:28AM +0900, Joonsoo Kim wrote:
-> > On Mon, Nov 23, 2015 at 09:26:04AM -0500, Steven Rostedt wrote:  
-> > > On Mon, 23 Nov 2015 17:28:05 +0900
-> > > Joonsoo Kim <iamjoonsoo.kim@lge.com> wrote:
-> > >   
-> > > > On Fri, Nov 20, 2015 at 11:42:25AM -0500, Steven Rostedt wrote:  
-> > > > > On Fri, 20 Nov 2015 15:33:25 +0900
-> > > > > Joonsoo Kim <iamjoonsoo.kim@lge.com> wrote:
-> > > > > 
-> > > > >     
-> > > > > > Steven, is it possible to add tracepoint to inlined fucntion such as
-> > > > > > get_page() in include/linux/mm.h?    
-> > > > > 
-> > > > > I highly recommend against it. The tracepoint code adds a bit of bloat,
-> > > > > and if you inline it, you add that bloat to every use case. Also, it    
-> > > > 
-> > > > Is it worse than adding function call to my own stub function into
-> > > > inlined function such as get_page(). I implemented it as following.
-> > > > 
-> > > > get_page()
-> > > > {
-> > > >         atomic_inc()
-> > > >         stub_get_page()
-> > > > }
-> > > > 
-> > > > stub_get_page() in foo.c
-> > > > {
-> > > >         trace_page_ref_get_page()
-> > > > }  
-> > > 
-> > > Now you just slowed down the fast path. But what you could do is:
-> > > 
-> > > get_page()
-> > > {
-> > > 	atomic_inc();
-> > > 	if (trace_page_ref_get_page_enabled())
-> > > 		stub_get_page();
-> > > }
-> > > 
-> > > Now that "trace_page_ref_get_page_enabled()" will turn into:
-> > > 
-> > > 	if (static_key_false(&__tracepoint_page_ref_get_page.key)) {
-> > > 
-> > > which is a jump label (nop when disabled, a jmp when enabled). That's
-> > > less bloat but doesn't solve the include problem. You still need to add
-> > > the include of that will cause havoc with other tracepoints.  
-> > 
-> > Yes, It also has a include dependency problem so I can't use
-> > trace_page_ref_get_page_enabled() in mm.h. BTW, I tested following
-> > implementation and it works fine.
-> > 
-> > extern struct tracepoint __tracepoint_page_ref_get_page;
-> > 
-> > get_page()
-> > {
-> >         atomic_inc()
-> >         if (static_key_false(&__tracepoint_page_ref_get_page.key))
-> >                 stub_get_page()
-> > }
-> > 
-> > This would not slow down fast path although it can't prevent bloat.
-> > I know that it isn't good code practice, but, this page reference
-> > handling functions have complex include dependency so I'm not sure
-> > I can solve it completely. For this special case, can I use
-> > this raw data structure?
-> >   
-> 
-> Steven, any comment?
+I think in the v1 discussion we were leaning more towards making this
+generic. We could potentially just have the Elf module fields
+available in the generic case, independent of whether CONFIG_LIVEPATCH
+is set, whereas the mod->klp field should probably be only available
+when LIVEPATCH is set. I think this makes sense since the Elf fields
+aren't dependent on livepatch (although livepatch would be the only
+user of these fields at the moment). I don't know if there would be
+any users in the future that would be interested in using this Elf
+information. Thoughts on this?
 
-Sorry for the later reply, I was going to reply but then got called off
-to do something else, and then forgot about this message :-/
+>>  #endif
+>>
+>>  	/* The command line arguments (may be mangled).  People like
+>> @@ -461,6 +469,7 @@ struct module {
+>>  #endif
+>>
+>>  #ifdef CONFIG_LIVEPATCH
+>> +	bool klp; /* Is this a livepatch module? */
+>>  	bool klp_alive;
+>>  #endif
+>>
+>> diff --git a/kernel/module.c b/kernel/module.c
+>> index 8f051a1..433c2d6 100644
+>> --- a/kernel/module.c
+>> +++ b/kernel/module.c
+>> @@ -1984,6 +1984,13 @@ static void unset_module_core_ro_nx(struct module *mod) { }
+>>  static void unset_module_init_ro_nx(struct module *mod) { }
+>>  #endif
+>>
+>> +static void free_module_elf(struct module *mod)
+>> +{
+>> +	kfree(mod->hdr);
+>> +	kfree(mod->sechdrs);
+>> +	kfree(mod->secstrings);
+>> +}
+>> +
+>>  void __weak module_memfree(void *module_region)
+>>  {
+>>  	vfree(module_region);
+>> @@ -2022,6 +2029,9 @@ static void free_module(struct module *mod)
+>>  	/* Free any allocated parameters. */
+>>  	destroy_params(mod->kp, mod->num_kp);
+>>
+>> +	/* Free Elf information if it was saved */
+>> +	free_module_elf(mod);
+>> +
+>>  	/* Now we can delete it from the lists */
+>>  	mutex_lock(&module_mutex);
+>>  	/* Unlink carefully: kallsyms could be walking list. */
+>> @@ -2137,6 +2147,10 @@ static int simplify_symbols(struct module *mod, const struct load_info *info)
+>>  			       (long)sym[i].st_value);
+>>  			break;
+>>
+>> +		case SHN_LIVEPATCH:
+>> +			/* klp symbols are resolved by livepatch */
+>> +			break;
+>> +
+>>  		case SHN_UNDEF:
+>>  			ksym = resolve_symbol_wait(mod, info, name);
+>>  			/* Ok if resolved.  */
+>> @@ -2185,6 +2199,10 @@ static int apply_relocations(struct module *mod, const struct load_info *info)
+>>  		if (!(info->sechdrs[infosec].sh_flags & SHF_ALLOC))
+>>  			continue;
+>>
+>> +		/* klp relocation sections are applied by livepatch */
+>> +		if (info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH)
+>> +			continue;
+>> +
+>>  		if (info->sechdrs[i].sh_type == SHT_REL)
+>>  			err = apply_relocate(info->sechdrs, info->strtab,
+>>  					     info->index.sym, i, mod);
+>> @@ -2393,6 +2411,11 @@ static char elf_type(const Elf_Sym *sym, const struct load_info *info)
+>>  {
+>>  	const Elf_Shdr *sechdrs = info->sechdrs;
+>>
+>> +	if (ELF_ST_BIND(sym->st_info) == STB_LIVEPATCH_EXT)
+>> +		return 'K';
+>> +	if (sym->st_shndx == SHN_LIVEPATCH)
+>> +		return 'k';
+>> +
+>>  	if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
+>>  		if (ELF_ST_TYPE(sym->st_info) == STT_OBJECT)
+>>  			return 'v';
+>> @@ -2475,7 +2498,7 @@ static void layout_symtab(struct module *mod, struct load_info *info)
+>>
+>>  	/* Compute total space required for the core symbols' strtab. */
+>>  	for (ndst = i = 0; i < nsrc; i++) {
+>> -		if (i == 0 ||
+>> +		if (i == 0 || mod->klp ||
+>>  		    is_core_symbol(src+i, info->sechdrs, info->hdr->e_shnum)) {
+>>  			strtab_size += strlen(&info->strtab[src[i].st_name])+1;
+>>  			ndst++;
+>
+>Instead of accessing mod->klp directly, how about an
+>'is_livepatch_module(mod)' function.  There could be two versions, with
+>the !LIVEPATCH version always returning false and the LIVEPATCH version
+>checking mod->klp.  Then mod->klp itself can stay inside the LIVEPATCH
+>ifdef in the module struct.
 
-I wanted you to look at what Andi has done here:
+OK, that sounds good. Makes more sense for the klp field to exist only
+in the LIVEPATCH case anyway.
 
-http://lkml.kernel.org/r/1449018060-1742-2-git-send-email-andi@firstfloor.org
+>> @@ -2517,7 +2540,7 @@ static void add_kallsyms(struct module *mod, const struct load_info *info)
+>>  	mod->core_strtab = s = mod->module_core + info->stroffs;
+>>  	src = mod->symtab;
+>>  	for (ndst = i = 0; i < mod->num_symtab; i++) {
+>> -		if (i == 0 ||
+>> +		if (i == 0 || mod->klp ||
+>>  		    is_core_symbol(src+i, info->sechdrs, info->hdr->e_shnum)) {
+>>  			dst[ndst] = src[i];
+>>  			dst[ndst++].st_name = s - mod->core_strtab;
+>> @@ -2638,6 +2661,64 @@ static int elf_header_check(struct load_info *info)
+>>  	return 0;
+>>  }
+>>
+>> +/*
+>> + * copy_module_elf - preserve Elf information about a module
+>> + */
+>> +static int copy_module_elf(struct module *mod, struct load_info *info)
+>> +{
+>> +	unsigned int size;
+>> +	int ret = 0;
+>
+>No need to initialize ret to zero here since it's never used
+>uninitalized.
+>
+>> +	Elf_Shdr *symsect;
+>> +
+>> +	/* Elf header */
+>> +	size = sizeof(Elf_Ehdr);
+>> +	mod->hdr = kzalloc(size, GFP_KERNEL);
+>
+>No need to zero the memory here with kzalloc() since it will all be
+>memcpy()'d anyway.  kmalloc() can be used instead (and the same for the
+>other kzalloc()s below).
+>
+>> +	if (mod->hdr == NULL) {
+>> +		ret = -ENOMEM;
+>> +		goto out;
+>> +	}
+>> +	memcpy(mod->hdr, info->hdr, size);
+>> +
+>> +	/* Elf section header table */
+>> +	size = sizeof(Elf_Shdr) * info->hdr->e_shnum;
+>> +	mod->sechdrs = kzalloc(size, GFP_KERNEL);
+>> +	if (mod->sechdrs == NULL) {
+>> +		ret = -ENOMEM;
+>> +		goto free_hdr;
+>> +	}
+>> +	memcpy(mod->sechdrs, info->sechdrs, size);
+>> +
+>> +	/* Elf section name string table */
+>> +	size = info->sechdrs[info->hdr->e_shstrndx].sh_size;
+>> +	mod->secstrings = kzalloc(size, GFP_KERNEL);
+>> +	if (mod->secstrings == NULL) {
+>> +		ret = -ENOMEM;
+>> +		goto free_sechdrs;
+>> +	}
+>> +	memcpy(mod->secstrings, info->secstrings, size);
+>> +
+>> +	/* Elf section indices */
+>> +	memcpy(&mod->index, &info->index, sizeof(info->index));
+>> +
+>> +	/*
+>> +	 * Update symtab's sh_addr to point to a valid
+>> +	 * symbol table, as the temporary symtab in module
+>> +	 * init memory will be freed
+>> +	 */
+>> +	symsect = mod->sechdrs + mod->index.sym;
+>> +	symsect->sh_addr = (unsigned long)mod->core_symtab;
+>> +
+>> +	return ret;
+>> +
+>> +free_sechdrs:
+>> +	kfree(mod->sechdrs);
+>> +free_hdr:
+>> +	kfree(mod->hdr);
+>> +out:
+>> +	return ret;
+>> +}
+>> +
+>> +
+>>  #define COPY_CHUNK_SIZE (16*PAGE_SIZE)
+>>
+>>  static int copy_chunked_from_user(void *dst, const void __user *usrc, unsigned long len)
+>> @@ -2866,6 +2947,9 @@ static int check_modinfo(struct module *mod, struct load_info *info, int flags)
+>>  			"is unknown, you have been warned.\n", mod->name);
+>>  	}
+>>
+>> +	if (get_modinfo(info, "livepatch"))
+>> +		mod->klp = true;
+>> +
+>
+>Similar to the is_livepatch_module() function I suggested, this can be
+>put in a function so that mod->klp can be abstracted away for the
+>!LIVEPATCH case.  Maybe there should be a check_livepatch_modinfo()
+>function:
+>
+>1. the !LIVEPATCH version of the function could return an error if
+>modinfo has "livepatch"
+>
+>2. the LIVEPATCH version could simply set mod->klp = true.
+>
+>>  	/* Set up license info based on the info section */
+>>  	set_license(mod, get_modinfo(info, "license"));
+>>
+>> @@ -3530,6 +3614,16 @@ static int load_module(struct load_info *info, const char __user *uargs,
+>>  	if (err < 0)
+>>  		goto bug_cleanup;
+>>
+>> +	/*
+>> +	 * Save sechdrs, indices, and other data from info
+>> +	 * in order to patch to-be-loaded modules.
+>> +	 * Do not call free_copy() for livepatch modules.
+>
+>I think the last line of this comment isn't right, since free_copy() is
+>called below regardless.
 
- and here
+Yes you're right, forgot to update that comment.
 
-http://lkml.kernel.org/r/1449018060-1742-3-git-send-email-andi@firstfloor.org
-
--- Steve
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+>> +	 */
+>> +	if (mod->klp)
+>> +		err = copy_module_elf(mod, info);
+>> +	if (err < 0)
+>> +		goto bug_cleanup;
+>
+>Not strictly necessary, but I think it would be a little cleaner to only
+>check the err if copy_module_elf() was called.
+>
+>> +
+>>  	/* Get rid of temporary copy. */
+>>  	free_copy(info);
+>
+>-- 
+>Josh
