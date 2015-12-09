@@ -1,7 +1,7 @@
 From: Brian Norris <computersforpeace@gmail.com>
-Subject: [PATCH v2 2/5] test: firmware_class: use kstrndup() where appropriate
-Date: Wed,  9 Dec 2015 14:50:26 -0800
-Message-ID: <1449701429-121423-2-git-send-email-computersforpeace@gmail.com>
+Subject: [PATCH v2 5/5] selftests: firmware: add empty string and async tests
+Date: Wed,  9 Dec 2015 14:50:29 -0800
+Message-ID: <1449701429-121423-5-git-send-email-computersforpeace@gmail.com>
 References: <1449701429-121423-1-git-send-email-computersforpeace@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1449701429-121423-1-git-send-email-computersforpeace@gmail.com>
@@ -10,33 +10,70 @@ To: Shuah Khan <shuahkh@osg.samsung.com>, Greg Kroah-Hartman <gregkh@linuxfounda
 Cc: Kees Cook <keescook@chromium.org>, Brian Norris <computersforpeace@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "Luis R. Rodriguez" <mcgrof@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-We're essentially just doing an open-coded kstrndup(). The only
-differences are with what happens after the first '\0' character, but
-request_firmware() doesn't care about that.
+Now that we've added a 'trigger_async_request' knob to test the
+request_firmware_nowait() API, let's use it. Also add tests for the
+empty ("") string, since there have been a couple errors in that
+handling already.
 
-Suggested-by: Kees Cook <keescook@chromium.org>
+Since we now have real ways that the sysfs write might fail, let's add
+the appropriate check on the 'echo' lines too.
+
 Signed-off-by: Brian Norris <computersforpeace@gmail.com>
+Acked-by: Kees Cook <keescook@chromium.org>
 ---
-New in v2
+v2:
+ * fix some spelling in commit message (wow, I wrote an atrocious sentence!)
+ * use octal notation for printf, since the hex is non-POSIX and doesn't work
+   in dash
 
- lib/test_firmware.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ tools/testing/selftests/firmware/fw_filesystem.sh | 29 ++++++++++++++++++++++-
+ 1 file changed, 28 insertions(+), 1 deletion(-)
 
-diff --git a/lib/test_firmware.c b/lib/test_firmware.c
-index 841191061816..690b9c35a274 100644
---- a/lib/test_firmware.c
-+++ b/lib/test_firmware.c
-@@ -54,10 +54,9 @@ static ssize_t trigger_request_store(struct device *dev,
- 	int rc;
- 	char *name;
+diff --git a/tools/testing/selftests/firmware/fw_filesystem.sh b/tools/testing/selftests/firmware/fw_filesystem.sh
+index c4366dc74e01..5c495ad7958a 100755
+--- a/tools/testing/selftests/firmware/fw_filesystem.sh
++++ b/tools/testing/selftests/firmware/fw_filesystem.sh
+@@ -48,8 +48,21 @@ echo "ABCD0123" >"$FW"
  
--	name = kzalloc(count + 1, GFP_KERNEL);
-+	name = kstrndup(buf, count, GFP_KERNEL);
- 	if (!name)
- 		return -ENOSPC;
--	memcpy(name, buf, count);
+ NAME=$(basename "$FW")
  
- 	pr_info("loading '%s'\n", name);
++if printf '\000' >"$DIR"/trigger_request; then
++	echo "$0: empty filename should not succeed" >&2
++	exit 1
++fi
++
++if printf '\000' >"$DIR"/trigger_async_request; then
++	echo "$0: empty filename should not succeed (async)" >&2
++	exit 1
++fi
++
+ # Request a firmware that doesn't exist, it should fail.
+-echo -n "nope-$NAME" >"$DIR"/trigger_request
++if echo -n "nope-$NAME" >"$DIR"/trigger_request; then
++	echo "$0: firmware shouldn't have loaded" >&2
++	exit 1
++fi
+ if diff -q "$FW" /dev/test_firmware >/dev/null ; then
+ 	echo "$0: firmware was not expected to match" >&2
+ 	exit 1
+@@ -74,4 +87,18 @@ else
+ 	echo "$0: filesystem loading works"
+ fi
  
++# Try the asynchronous version too
++if ! echo -n "$NAME" >"$DIR"/trigger_async_request ; then
++	echo "$0: could not trigger async request" >&2
++	exit 1
++fi
++
++# Verify the contents are what we expect.
++if ! diff -q "$FW" /dev/test_firmware >/dev/null ; then
++	echo "$0: firmware was not loaded (async)" >&2
++	exit 1
++else
++	echo "$0: async filesystem loading works"
++fi
++
+ exit 0
 -- 
 2.6.0.rc2.230.g3dd15c0
