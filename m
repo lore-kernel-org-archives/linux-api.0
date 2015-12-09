@@ -1,57 +1,73 @@
 From: Brian Norris <computersforpeace@gmail.com>
-Subject: [PATCH 1/4] test: firmware_class: report errors properly on failure
-Date: Tue,  8 Dec 2015 18:38:31 -0800
-Message-ID: <1449628714-66641-1-git-send-email-computersforpeace@gmail.com>
+Subject: [PATCH 4/4] selftests: firmware: add empty string and async tests
+Date: Tue,  8 Dec 2015 18:38:34 -0800
+Message-ID: <1449628714-66641-4-git-send-email-computersforpeace@gmail.com>
+References: <1449628714-66641-1-git-send-email-computersforpeace@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1449628714-66641-1-git-send-email-computersforpeace@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Shuah Khan <shuahkh@osg.samsung.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ming Lei <ming.lei@canonical.com>
 Cc: Kees Cook <keescook@chromium.org>, Brian Norris <computersforpeace@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "Luis R. Rodriguez" <mcgrof@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-request_firmware() failures currently won't get reported at all (the
-error code is discarded). What's more, we get confusing messages, like:
+Now that we've added a 'trigger_async_request' knob to test the
+request_firmware_nowait() API, let's use it. Also add tests for the
+empty ("") string, since there have been a couple errors in that
+handling already.
 
-    # echo -n notafile > /sys/devices/virtual/misc/test_firmware/trigger_request
-    [ 8280.311856] test_firmware: loading 'notafile'
-    [ 8280.317042] test_firmware: load of 'notafile' failed: -2
-    [ 8280.322445] test_firmware: loaded: 0
-    # echo $?
-    0
-
-Report the failures via write() errors, and don't say we "loaded"
-anything.
+Since we know have real wasy that the sysfs write might fail, let's add
+the appropriate check on the 'echo' lines too.
 
 Signed-off-by: Brian Norris <computersforpeace@gmail.com>
 ---
- lib/test_firmware.c | 11 ++++++++---
- 1 file changed, 8 insertions(+), 3 deletions(-)
+ tools/testing/selftests/firmware/fw_filesystem.sh | 29 ++++++++++++++++++++++-
+ 1 file changed, 28 insertions(+), 1 deletion(-)
 
-diff --git a/lib/test_firmware.c b/lib/test_firmware.c
-index 86374c1c49a4..841191061816 100644
---- a/lib/test_firmware.c
-+++ b/lib/test_firmware.c
-@@ -65,14 +65,19 @@ static ssize_t trigger_request_store(struct device *dev,
- 	release_firmware(test_firmware);
- 	test_firmware = NULL;
- 	rc = request_firmware(&test_firmware, name, dev);
--	if (rc)
-+	if (rc) {
- 		pr_info("load of '%s' failed: %d\n", name, rc);
--	pr_info("loaded: %zu\n", test_firmware ? test_firmware->size : 0);
-+		goto out;
-+	}
-+	pr_info("loaded: %zu\n", test_firmware->size);
-+	rc = count;
+diff --git a/tools/testing/selftests/firmware/fw_filesystem.sh b/tools/testing/selftests/firmware/fw_filesystem.sh
+index c4366dc74e01..e12210e1317c 100755
+--- a/tools/testing/selftests/firmware/fw_filesystem.sh
++++ b/tools/testing/selftests/firmware/fw_filesystem.sh
+@@ -48,8 +48,21 @@ echo "ABCD0123" >"$FW"
+ 
+ NAME=$(basename "$FW")
+ 
++if printf '\x00' >"$DIR"/trigger_request; then
++	echo "$0: empty filename should not succeed" >&2
++	exit 1
++fi
 +
-+out:
- 	mutex_unlock(&test_fw_mutex);
++if printf '\x00' >"$DIR"/trigger_async_request; then
++	echo "$0: empty filename should not succeed (async)" >&2
++	exit 1
++fi
++
+ # Request a firmware that doesn't exist, it should fail.
+-echo -n "nope-$NAME" >"$DIR"/trigger_request
++if echo -n "nope-$NAME" >"$DIR"/trigger_request; then
++	echo "$0: firmware shouldn't have loaded" >&2
++	exit 1
++fi
+ if diff -q "$FW" /dev/test_firmware >/dev/null ; then
+ 	echo "$0: firmware was not expected to match" >&2
+ 	exit 1
+@@ -74,4 +87,18 @@ else
+ 	echo "$0: filesystem loading works"
+ fi
  
- 	kfree(name);
- 
--	return count;
-+	return rc;
- }
- static DEVICE_ATTR_WO(trigger_request);
- 
++# Try the asynchronous version too
++if ! echo -n "$NAME" >"$DIR"/trigger_async_request ; then
++	echo "$0: could not trigger async request" >&2
++	exit 1
++fi
++
++# Verify the contents are what we expect.
++if ! diff -q "$FW" /dev/test_firmware >/dev/null ; then
++	echo "$0: firmware was not loaded (async)" >&2
++	exit 1
++else
++	echo "$0: async filesystem loading works"
++fi
++
+ exit 0
 -- 
 2.6.0.rc2.230.g3dd15c0
