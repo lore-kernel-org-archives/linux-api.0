@@ -1,151 +1,56 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH 2/4] test: firmware_class: add asynchronous request trigger
-Date: Wed, 9 Dec 2015 14:05:17 -0800
-Message-ID: <CAGXu5jLGp315GdOWQyamD8awzrdZDFoNVWQozTFdjQAjrtRN0w@mail.gmail.com>
+From: Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 2/4] test: firmware_class: add asynchronous request
+ trigger
+Date: Wed, 9 Dec 2015 14:12:20 -0800
+Message-ID: <20151209221220.GB51175@google.com>
 References: <1449628714-66641-1-git-send-email-computersforpeace@gmail.com>
-	<1449628714-66641-2-git-send-email-computersforpeace@gmail.com>
-	<CAGXu5jJ=JKN9FJzjonixhfNFZxgZ_y74cSkyG1DWPp3BS3VJ7g@mail.gmail.com>
-	<20151209214843.GA51175@google.com>
+ <1449628714-66641-2-git-send-email-computersforpeace@gmail.com>
+ <CAGXu5jJ=JKN9FJzjonixhfNFZxgZ_y74cSkyG1DWPp3BS3VJ7g@mail.gmail.com>
+ <20151209214843.GA51175@google.com>
+ <CAGXu5jLGp315GdOWQyamD8awzrdZDFoNVWQozTFdjQAjrtRN0w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151209214843.GA51175-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAGXu5jLGp315GdOWQyamD8awzrdZDFoNVWQozTFdjQAjrtRN0w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
 Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Luis R. Rodriguez" <mcgrof-IBi9RG/b67k@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Dec 9, 2015 at 1:48 PM, Brian Norris
-<computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> Hi Kees,
->
-> On Wed, Dec 09, 2015 at 01:09:02PM -0800, Kees Cook wrote:
->> On Tue, Dec 8, 2015 at 6:38 PM, Brian Norris
->> <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->> > diff --git a/lib/test_firmware.c b/lib/test_firmware.c
->> > index 841191061816..ba0a12d0301d 100644
->> > --- a/lib/test_firmware.c
->> > +++ b/lib/test_firmware.c
->> > @@ -12,6 +12,7 @@
->> >  #include <linux/init.h>
->> >  #include <linux/module.h>
->> >  #include <linux/printk.h>
->> > +#include <linux/completion.h>
->> >  #include <linux/firmware.h>
->> >  #include <linux/device.h>
->> >  #include <linux/fs.h>
->> > @@ -81,6 +82,57 @@ out:
->> >  }
->> >  static DEVICE_ATTR_WO(trigger_request);
->> >
->> > +static DECLARE_COMPLETION(async_fw_done);
->> > +
->> > +static void trigger_async_request_cb(const struct firmware *fw, void *context)
->> > +{
->> > +       test_firmware = fw;
->> > +       complete(&async_fw_done);
->> > +}
->> > +
->> > +static ssize_t trigger_async_request_store(struct device *dev,
->> > +                                          struct device_attribute *attr,
->> > +                                          const char *buf, size_t count)
->> > +{
->> > +       int rc;
->> > +       char *name;
->> > +
->> > +       name = kzalloc(count + 1, GFP_KERNEL);
->> > +       if (!name)
->> > +               return -ENOSPC;
->> > +       memcpy(name, buf, count);
->>
->> It strikes me that this (and the existing code) should use kstrndup
->> instead, since the request_firmware* interfaces will ignore \0 bytes
->> in the name:
->>
->>     name = kstrndup(buf, count, GFP_KERNEL);
->>     if (!name)
->>         return -ENOSPC;
->
-> Thought of that at some point, then for some reason I didn't do it.
-> Probably laziness...
->
-> Will do in a v2, along with the more important fix below.
->
->> > +
->> > +       pr_info("loading '%s'\n", name);
->> > +
->> > +       mutex_lock(&test_fw_mutex);
->> > +       release_firmware(test_firmware);
->> > +       test_firmware = NULL;
->> > +       rc = request_firmware_nowait(THIS_MODULE, 1, name, dev, GFP_KERNEL,
->> > +                                    NULL, trigger_async_request_cb);
->> > +       /* Free 'name' ASAP, to test for race conditions */
->> > +       kfree(name);
->> > +       if (rc) {
->> > +               pr_info("async load of '%s' failed: %d\n", name, rc);
->>
->> Well, that's a little TOO soon. :) The pr_info uses it still.
->
-> Haha, yeah... nice catch.
->
-> I was also thinking, since use-after-free isn't necessarily immediately
-> obvious (this worked fine in my testing), that maybe we could poison the
-> buffer before kfree()'ing? Like:
->
->         name = ...;
->         len = strlen(name);
->
->         ...
->
->         rc = request_firmware_nowait(...);
->         if (rc) {
->                 pr_info("...");
->                 kfree(name);
->                 goto out;
->         }
->         /*
->          * Clear out the name, to test for race conditions with the
->          * async request
->          */
->         memset(name, 0, len);
->         kfree(name);
+On Wed, Dec 09, 2015 at 02:05:17PM -0800, Kees Cook wrote:
+> On Wed, Dec 9, 2015 at 1:48 PM, Brian Norris
+> <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> > I was also thinking, since use-after-free isn't necessarily immediately
+> > obvious (this worked fine in my testing), that maybe we could poison the
+> > buffer before kfree()'ing? Like:
+> >
+> >         name = ...;
+> >         len = strlen(name);
+> >
+> >         ...
+> >
+> >         rc = request_firmware_nowait(...);
+> >         if (rc) {
+> >                 pr_info("...");
+> >                 kfree(name);
+> >                 goto out;
+> >         }
+> >         /*
+> >          * Clear out the name, to test for race conditions with the
+> >          * async request
+> >          */
+> >         memset(name, 0, len);
+> >         kfree(name);
+> 
+> Hrm, well, I'm not against it, but I think running under KASan is
+> probably the right way to find these things. But, might as well, just
+> to notice any regressions.
 
-Hrm, well, I'm not against it, but I think running under KASan is
-probably the right way to find these things. But, might as well, just
-to notice any regressions.
+Fair enough. The memset probably isn't that useful.
 
--Kees
+BTW, one reason I didn't notice my use-after-free is that the "use" was
+under an error path that I didn't exercise. I need to remember to turn
+my brain back on.
 
->
->> > +               goto out;
->> > +       }
->> > +
->> > +       wait_for_completion(&async_fw_done);
->> > +
->> > +       if (test_firmware) {
->> > +               pr_info("loaded: %zu\n", test_firmware->size);
->> > +               rc = count;
->> > +       } else {
->> > +               pr_err("failed to async load firmware\n");
->> > +               rc = -ENODEV;
->> > +       }
->> > +
->> > +out:
->> > +       mutex_unlock(&test_fw_mutex);
->> > +
->> > +       return rc;
->> > +}
->> > +static DEVICE_ATTR_WO(trigger_async_request);
->> > +
->> >  static int __init test_firmware_init(void)
->> >  {
->> >         int rc;
-> ...
->
-> Brian
-
-
-
--- 
-Kees Cook
-Chrome OS & Brillo Security
+Brian
