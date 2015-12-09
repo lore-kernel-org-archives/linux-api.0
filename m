@@ -1,302 +1,157 @@
-From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: module: preserve Elf information for livepatch modules
-Date: Wed, 9 Dec 2015 15:05:23 -0500
-Message-ID: <20151209200523.GB25387@packer-debian-8-amd64.digitalocean.com>
-References: <1448943679-3412-1-git-send-email-jeyu@redhat.com>
- <1448943679-3412-3-git-send-email-jeyu@redhat.com>
- <20151208183212.GB14846@treble.redhat.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH 2/4] test: firmware_class: add asynchronous request trigger
+Date: Wed, 9 Dec 2015 13:09:02 -0800
+Message-ID: <CAGXu5jJ=JKN9FJzjonixhfNFZxgZ_y74cSkyG1DWPp3BS3VJ7g@mail.gmail.com>
+References: <1449628714-66641-1-git-send-email-computersforpeace@gmail.com>
+	<1449628714-66641-2-git-send-email-computersforpeace@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20151208183212.GB14846-8wJ5/zUtDR0XGNroddHbYwC/G2K4zDHf@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1449628714-66641-2-git-send-email-computersforpeace@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Brian Norris <computersforpeace@gmail.com>
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ming Lei <ming.lei@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "Luis R. Rodriguez" <mcgrof@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-+++ Josh Poimboeuf [08/12/15 12:32 -0600]:
->On Mon, Nov 30, 2015 at 11:21:15PM -0500, Jessica Yu wrote:
->> For livepatch modules, copy Elf section, symbol, and string information
->> from the load_info struct in the module loader.
->>
->> Livepatch uses special relocation sections in order to be able to patch
->> modules that are not yet loaded, as well as apply patches to the kernel
->> when the addresses of symbols cannot be determined at compile time (for
->> example, when kaslr is enabled). Livepatch modules must preserve Elf
->> information such as section indices in order to apply the remaining
->> relocation sections at the appropriate time (i.e. when the target module
->> loads).
->>
->> Signed-off-by: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->> ---
->>  include/linux/module.h |  9 +++++
->>  kernel/module.c        | 98 ++++++++++++++++++++++++++++++++++++++++++++++++--
->>  2 files changed, 105 insertions(+), 2 deletions(-)
->>
->> diff --git a/include/linux/module.h b/include/linux/module.h
->> index 3a19c79..9b46256 100644
->> --- a/include/linux/module.h
->> +++ b/include/linux/module.h
->> @@ -425,6 +425,14 @@ struct module {
->>
->>  	/* Notes attributes */
->>  	struct module_notes_attrs *notes_attrs;
->> +
->> +	/* Elf information (optionally saved) */
->> +	Elf_Ehdr *hdr;
+On Tue, Dec 8, 2015 at 6:38 PM, Brian Norris
+<computersforpeace@gmail.com> wrote:
+> We might want to test for bugs like that found in commit f9692b2699bd
+> ("firmware: fix possible use after free on name on asynchronous
+> request"), where the asynchronous request API had race conditions.
 >
->I would rename "hdr" to "elf_hdr" to make its purpose clearer.
->
->> +	Elf_Shdr *sechdrs;
->> +	char *secstrings;
->
->Probably a good idea to add underscores to the names ("sec_hdrs" and
->"sec_strings") to be consistent with most of the other fields in the
->struct.
->
->> +	struct {
->> +		unsigned int sym, str, mod, vers, info, pcpu;
->> +	} index;
->
->I might be contradicting myself from what I said before.  But I'm
->thinking we should put all these fields inside a CONFIG_LIVEPATCH ifdef.
->Then below, there could be two versions of copy_module_elf(), the real
->one for LIVEPATCH and and an empty one for !LIVEPATCH.  And the same
->story for free_module_elf().
+> Let's add a simple file that will launch the async request, then wait
+> until it's complete and report the status. It's not a true async test
+> (we're using a mutex + wait_for_completion(), so we can't get more than
+> one going at the same time), but it does help make sure the basic API is
+> sane, and it can catch some class of bugs.
 
-I think in the v1 discussion we were leaning more towards making this
-generic. We could potentially just have the Elf module fields
-available in the generic case, independent of whether CONFIG_LIVEPATCH
-is set, whereas the mod->klp field should probably be only available
-when LIVEPATCH is set. I think this makes sense since the Elf fields
-aren't dependent on livepatch (although livepatch would be the only
-user of these fields at the moment). I don't know if there would be
-any users in the future that would be interested in using this Elf
-information. Thoughts on this?
+Awesome! This is great to add. Notes below...
 
->>  #endif
->>
->>  	/* The command line arguments (may be mangled).  People like
->> @@ -461,6 +469,7 @@ struct module {
->>  #endif
->>
->>  #ifdef CONFIG_LIVEPATCH
->> +	bool klp; /* Is this a livepatch module? */
->>  	bool klp_alive;
->>  #endif
->>
->> diff --git a/kernel/module.c b/kernel/module.c
->> index 8f051a1..433c2d6 100644
->> --- a/kernel/module.c
->> +++ b/kernel/module.c
->> @@ -1984,6 +1984,13 @@ static void unset_module_core_ro_nx(struct module *mod) { }
->>  static void unset_module_init_ro_nx(struct module *mod) { }
->>  #endif
->>
->> +static void free_module_elf(struct module *mod)
->> +{
->> +	kfree(mod->hdr);
->> +	kfree(mod->sechdrs);
->> +	kfree(mod->secstrings);
->> +}
->> +
->>  void __weak module_memfree(void *module_region)
->>  {
->>  	vfree(module_region);
->> @@ -2022,6 +2029,9 @@ static void free_module(struct module *mod)
->>  	/* Free any allocated parameters. */
->>  	destroy_params(mod->kp, mod->num_kp);
->>
->> +	/* Free Elf information if it was saved */
->> +	free_module_elf(mod);
->> +
->>  	/* Now we can delete it from the lists */
->>  	mutex_lock(&module_mutex);
->>  	/* Unlink carefully: kallsyms could be walking list. */
->> @@ -2137,6 +2147,10 @@ static int simplify_symbols(struct module *mod, const struct load_info *info)
->>  			       (long)sym[i].st_value);
->>  			break;
->>
->> +		case SHN_LIVEPATCH:
->> +			/* klp symbols are resolved by livepatch */
->> +			break;
->> +
->>  		case SHN_UNDEF:
->>  			ksym = resolve_symbol_wait(mod, info, name);
->>  			/* Ok if resolved.  */
->> @@ -2185,6 +2199,10 @@ static int apply_relocations(struct module *mod, const struct load_info *info)
->>  		if (!(info->sechdrs[infosec].sh_flags & SHF_ALLOC))
->>  			continue;
->>
->> +		/* klp relocation sections are applied by livepatch */
->> +		if (info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH)
->> +			continue;
->> +
->>  		if (info->sechdrs[i].sh_type == SHT_REL)
->>  			err = apply_relocate(info->sechdrs, info->strtab,
->>  					     info->index.sym, i, mod);
->> @@ -2393,6 +2411,11 @@ static char elf_type(const Elf_Sym *sym, const struct load_info *info)
->>  {
->>  	const Elf_Shdr *sechdrs = info->sechdrs;
->>
->> +	if (ELF_ST_BIND(sym->st_info) == STB_LIVEPATCH_EXT)
->> +		return 'K';
->> +	if (sym->st_shndx == SHN_LIVEPATCH)
->> +		return 'k';
->> +
->>  	if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
->>  		if (ELF_ST_TYPE(sym->st_info) == STT_OBJECT)
->>  			return 'v';
->> @@ -2475,7 +2498,7 @@ static void layout_symtab(struct module *mod, struct load_info *info)
->>
->>  	/* Compute total space required for the core symbols' strtab. */
->>  	for (ndst = i = 0; i < nsrc; i++) {
->> -		if (i == 0 ||
->> +		if (i == 0 || mod->klp ||
->>  		    is_core_symbol(src+i, info->sechdrs, info->hdr->e_shnum)) {
->>  			strtab_size += strlen(&info->strtab[src[i].st_name])+1;
->>  			ndst++;
 >
->Instead of accessing mod->klp directly, how about an
->'is_livepatch_module(mod)' function.  There could be two versions, with
->the !LIVEPATCH version always returning false and the LIVEPATCH version
->checking mod->klp.  Then mod->klp itself can stay inside the LIVEPATCH
->ifdef in the module struct.
+> Signed-off-by: Brian Norris <computersforpeace@gmail.com>
+> Cc: Luis R. Rodriguez <mcgrof@suse.com>
+> ---
+>  lib/test_firmware.c | 65 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 65 insertions(+)
+>
+> diff --git a/lib/test_firmware.c b/lib/test_firmware.c
+> index 841191061816..ba0a12d0301d 100644
+> --- a/lib/test_firmware.c
+> +++ b/lib/test_firmware.c
+> @@ -12,6 +12,7 @@
+>  #include <linux/init.h>
+>  #include <linux/module.h>
+>  #include <linux/printk.h>
+> +#include <linux/completion.h>
+>  #include <linux/firmware.h>
+>  #include <linux/device.h>
+>  #include <linux/fs.h>
+> @@ -81,6 +82,57 @@ out:
+>  }
+>  static DEVICE_ATTR_WO(trigger_request);
+>
+> +static DECLARE_COMPLETION(async_fw_done);
+> +
+> +static void trigger_async_request_cb(const struct firmware *fw, void *context)
+> +{
+> +       test_firmware = fw;
+> +       complete(&async_fw_done);
+> +}
+> +
+> +static ssize_t trigger_async_request_store(struct device *dev,
+> +                                          struct device_attribute *attr,
+> +                                          const char *buf, size_t count)
+> +{
+> +       int rc;
+> +       char *name;
+> +
+> +       name = kzalloc(count + 1, GFP_KERNEL);
+> +       if (!name)
+> +               return -ENOSPC;
+> +       memcpy(name, buf, count);
 
-OK, that sounds good. Makes more sense for the klp field to exist only
-in the LIVEPATCH case anyway.
+It strikes me that this (and the existing code) should use kstrndup
+instead, since the request_firmware* interfaces will ignore \0 bytes
+in the name:
 
->> @@ -2517,7 +2540,7 @@ static void add_kallsyms(struct module *mod, const struct load_info *info)
->>  	mod->core_strtab = s = mod->module_core + info->stroffs;
->>  	src = mod->symtab;
->>  	for (ndst = i = 0; i < mod->num_symtab; i++) {
->> -		if (i == 0 ||
->> +		if (i == 0 || mod->klp ||
->>  		    is_core_symbol(src+i, info->sechdrs, info->hdr->e_shnum)) {
->>  			dst[ndst] = src[i];
->>  			dst[ndst++].st_name = s - mod->core_strtab;
->> @@ -2638,6 +2661,64 @@ static int elf_header_check(struct load_info *info)
->>  	return 0;
->>  }
->>
->> +/*
->> + * copy_module_elf - preserve Elf information about a module
->> + */
->> +static int copy_module_elf(struct module *mod, struct load_info *info)
->> +{
->> +	unsigned int size;
->> +	int ret = 0;
->
->No need to initialize ret to zero here since it's never used
->uninitalized.
->
->> +	Elf_Shdr *symsect;
->> +
->> +	/* Elf header */
->> +	size = sizeof(Elf_Ehdr);
->> +	mod->hdr = kzalloc(size, GFP_KERNEL);
->
->No need to zero the memory here with kzalloc() since it will all be
->memcpy()'d anyway.  kmalloc() can be used instead (and the same for the
->other kzalloc()s below).
->
->> +	if (mod->hdr == NULL) {
->> +		ret = -ENOMEM;
->> +		goto out;
->> +	}
->> +	memcpy(mod->hdr, info->hdr, size);
->> +
->> +	/* Elf section header table */
->> +	size = sizeof(Elf_Shdr) * info->hdr->e_shnum;
->> +	mod->sechdrs = kzalloc(size, GFP_KERNEL);
->> +	if (mod->sechdrs == NULL) {
->> +		ret = -ENOMEM;
->> +		goto free_hdr;
->> +	}
->> +	memcpy(mod->sechdrs, info->sechdrs, size);
->> +
->> +	/* Elf section name string table */
->> +	size = info->sechdrs[info->hdr->e_shstrndx].sh_size;
->> +	mod->secstrings = kzalloc(size, GFP_KERNEL);
->> +	if (mod->secstrings == NULL) {
->> +		ret = -ENOMEM;
->> +		goto free_sechdrs;
->> +	}
->> +	memcpy(mod->secstrings, info->secstrings, size);
->> +
->> +	/* Elf section indices */
->> +	memcpy(&mod->index, &info->index, sizeof(info->index));
->> +
->> +	/*
->> +	 * Update symtab's sh_addr to point to a valid
->> +	 * symbol table, as the temporary symtab in module
->> +	 * init memory will be freed
->> +	 */
->> +	symsect = mod->sechdrs + mod->index.sym;
->> +	symsect->sh_addr = (unsigned long)mod->core_symtab;
->> +
->> +	return ret;
->> +
->> +free_sechdrs:
->> +	kfree(mod->sechdrs);
->> +free_hdr:
->> +	kfree(mod->hdr);
->> +out:
->> +	return ret;
->> +}
->> +
->> +
->>  #define COPY_CHUNK_SIZE (16*PAGE_SIZE)
->>
->>  static int copy_chunked_from_user(void *dst, const void __user *usrc, unsigned long len)
->> @@ -2866,6 +2947,9 @@ static int check_modinfo(struct module *mod, struct load_info *info, int flags)
->>  			"is unknown, you have been warned.\n", mod->name);
->>  	}
->>
->> +	if (get_modinfo(info, "livepatch"))
->> +		mod->klp = true;
->> +
->
->Similar to the is_livepatch_module() function I suggested, this can be
->put in a function so that mod->klp can be abstracted away for the
->!LIVEPATCH case.  Maybe there should be a check_livepatch_modinfo()
->function:
->
->1. the !LIVEPATCH version of the function could return an error if
->modinfo has "livepatch"
->
->2. the LIVEPATCH version could simply set mod->klp = true.
->
->>  	/* Set up license info based on the info section */
->>  	set_license(mod, get_modinfo(info, "license"));
->>
->> @@ -3530,6 +3614,16 @@ static int load_module(struct load_info *info, const char __user *uargs,
->>  	if (err < 0)
->>  		goto bug_cleanup;
->>
->> +	/*
->> +	 * Save sechdrs, indices, and other data from info
->> +	 * in order to patch to-be-loaded modules.
->> +	 * Do not call free_copy() for livepatch modules.
->
->I think the last line of this comment isn't right, since free_copy() is
->called below regardless.
+    name = kstrndup(buf, count, GFP_KERNEL);
+    if (!name)
+        return -ENOSPC;
 
-Yes you're right, forgot to update that comment.
+> +
+> +       pr_info("loading '%s'\n", name);
+> +
+> +       mutex_lock(&test_fw_mutex);
+> +       release_firmware(test_firmware);
+> +       test_firmware = NULL;
+> +       rc = request_firmware_nowait(THIS_MODULE, 1, name, dev, GFP_KERNEL,
+> +                                    NULL, trigger_async_request_cb);
+> +       /* Free 'name' ASAP, to test for race conditions */
+> +       kfree(name);
+> +       if (rc) {
+> +               pr_info("async load of '%s' failed: %d\n", name, rc);
 
->> +	 */
->> +	if (mod->klp)
->> +		err = copy_module_elf(mod, info);
->> +	if (err < 0)
->> +		goto bug_cleanup;
+Well, that's a little TOO soon. :) The pr_info uses it still.
+
+> +               goto out;
+> +       }
+> +
+> +       wait_for_completion(&async_fw_done);
+> +
+> +       if (test_firmware) {
+> +               pr_info("loaded: %zu\n", test_firmware->size);
+> +               rc = count;
+> +       } else {
+> +               pr_err("failed to async load firmware\n");
+> +               rc = -ENODEV;
+> +       }
+> +
+> +out:
+> +       mutex_unlock(&test_fw_mutex);
+> +
+> +       return rc;
+> +}
+> +static DEVICE_ATTR_WO(trigger_async_request);
+> +
+>  static int __init test_firmware_init(void)
+>  {
+>         int rc;
+> @@ -97,9 +149,20 @@ static int __init test_firmware_init(void)
+>                 goto dereg;
+>         }
 >
->Not strictly necessary, but I think it would be a little cleaner to only
->check the err if copy_module_elf() was called.
+> +       rc = device_create_file(test_fw_misc_device.this_device,
+> +                               &dev_attr_trigger_async_request);
+> +       if (rc) {
+> +               pr_err("could not create async sysfs interface: %d\n", rc);
+> +               goto remove_file;
+> +       }
+> +
+>         pr_warn("interface ready\n");
 >
->> +
->>  	/* Get rid of temporary copy. */
->>  	free_copy(info);
+>         return 0;
+> +
+> +remove_file:
+> +       device_remove_file(test_fw_misc_device.this_device,
+> +                          &dev_attr_trigger_async_request);
+>  dereg:
+>         misc_deregister(&test_fw_misc_device);
+>         return rc;
+> @@ -111,6 +174,8 @@ static void __exit test_firmware_exit(void)
+>  {
+>         release_firmware(test_firmware);
+>         device_remove_file(test_fw_misc_device.this_device,
+> +                          &dev_attr_trigger_async_request);
+> +       device_remove_file(test_fw_misc_device.this_device,
+>                            &dev_attr_trigger_request);
+>         misc_deregister(&test_fw_misc_device);
+>         pr_warn("removed interface\n");
+> --
+> 2.6.0.rc2.230.g3dd15c0
 >
->-- 
->Josh
+
+-Kees
+
+-- 
+Kees Cook
+Chrome OS & Brillo Security
