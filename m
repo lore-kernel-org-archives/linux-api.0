@@ -1,101 +1,65 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: [RFC PATCH 2/2] thread_local_abi: wire up ARM system call
-Date: Thu, 10 Dec 2015 10:39:50 -0500
-Message-ID: <1449761990-23525-2-git-send-email-mathieu.desnoyers@efficios.com>
+From: Russell King - ARM Linux <linux@arm.linux.org.uk>
+Subject: Re: [RFC PATCH 2/2] thread_local_abi: wire up ARM system call
+Date: Thu, 10 Dec 2015 16:27:23 +0000
+Message-ID: <20151210162723.GN8644@n2100.arm.linux.org.uk>
 References: <1449761990-23525-1-git-send-email-mathieu.desnoyers@efficios.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1449761990-23525-1-git-send-email-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+ <1449761990-23525-2-git-send-email-mathieu.desnoyers@efficios.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1449761990-23525-2-git-send-email-mathieu.desnoyers@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Wire up the thread local ABI on ARM32. Call the
-getcpu_cache_handle_notify_resume() function on return to userspace if
-TIF_NOTIFY_RESUME thread flag is set.
+On Thu, Dec 10, 2015 at 10:39:50AM -0500, Mathieu Desnoyers wrote:
+> Wire up the thread local ABI on ARM32. Call the
+> getcpu_cache_handle_notify_resume() function on return to userspace if
+> TIF_NOTIFY_RESUME thread flag is set.
+> 
+> This provides a way to implement a sched_getcpu() on ARM without
+> requiring to perform a system call on the fast path.
+> 
+> [ Untested. ]
 
-This provides a way to implement a sched_getcpu() on ARM without
-requiring to perform a system call on the fast path.
+Why are you sending this _to_ Thomas?  Shouldn't you be sending it to me
+as the arch maintainer?
 
-[ Untested. ]
+> diff --git a/arch/arm/include/asm/unistd.h b/arch/arm/include/asm/unistd.h
+> index 7b84657..ef55382 100644
+> --- a/arch/arm/include/asm/unistd.h
+> +++ b/arch/arm/include/asm/unistd.h
+> @@ -19,7 +19,7 @@
+>   * This may need to be greater than __NR_last_syscall+1 in order to
+>   * account for the padding in the syscall table
+>   */
+> -#define __NR_syscalls  (392)
+> +#define __NR_syscalls  (393)
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-CC: Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
-CC: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
-CC: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
-CC: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-CC: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-CC: Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-CC: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-CC: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
-CC: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
-CC: Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-CC: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-CC: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>
-CC: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-CC: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-CC: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-CC: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-CC: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
----
- arch/arm/include/asm/unistd.h      | 2 +-
- arch/arm/include/uapi/asm/unistd.h | 1 +
- arch/arm/kernel/calls.S            | 1 +
- arch/arm/kernel/signal.c           | 2 ++
- 4 files changed, 5 insertions(+), 1 deletion(-)
+That will cause a build error.  Please leave this alone until we get to
+syscall 392, where upon it will need to be incremented by four.
 
-diff --git a/arch/arm/include/asm/unistd.h b/arch/arm/include/asm/unistd.h
-index 7b84657..ef55382 100644
---- a/arch/arm/include/asm/unistd.h
-+++ b/arch/arm/include/asm/unistd.h
-@@ -19,7 +19,7 @@
-  * This may need to be greater than __NR_last_syscall+1 in order to
-  * account for the padding in the syscall table
-  */
--#define __NR_syscalls  (392)
-+#define __NR_syscalls  (393)
- 
- #define __ARCH_WANT_STAT64
- #define __ARCH_WANT_SYS_GETHOSTNAME
-diff --git a/arch/arm/include/uapi/asm/unistd.h b/arch/arm/include/uapi/asm/unistd.h
-index 7a2a32a..859433a 100644
---- a/arch/arm/include/uapi/asm/unistd.h
-+++ b/arch/arm/include/uapi/asm/unistd.h
-@@ -416,6 +416,7 @@
- #define __NR_execveat			(__NR_SYSCALL_BASE+387)
- #define __NR_userfaultfd		(__NR_SYSCALL_BASE+388)
- #define __NR_membarrier			(__NR_SYSCALL_BASE+389)
-+#define __NR_thread_local_abi		(__NR_SYSCALL_BASE+390)
- 
- /*
-  * The following SWIs are ARM private.
-diff --git a/arch/arm/kernel/calls.S b/arch/arm/kernel/calls.S
-index fde6c88..82b59cc 100644
---- a/arch/arm/kernel/calls.S
-+++ b/arch/arm/kernel/calls.S
-@@ -399,6 +399,7 @@
- 		CALL(sys_execveat)
- 		CALL(sys_userfaultfd)
- 		CALL(sys_membarrier)
-+/* 390 */	CALL(sys_thread_local_abi)
- #ifndef syscalls_counted
- .equ syscalls_padding, ((NR_syscalls + 3) & ~3) - NR_syscalls
- #define syscalls_counted
-diff --git a/arch/arm/kernel/signal.c b/arch/arm/kernel/signal.c
-index 7b8f214..feaa514 100644
---- a/arch/arm/kernel/signal.c
-+++ b/arch/arm/kernel/signal.c
-@@ -594,6 +594,8 @@ do_work_pending(struct pt_regs *regs, unsigned int thread_flags, int syscall)
- 			} else {
- 				clear_thread_flag(TIF_NOTIFY_RESUME);
- 				tracehook_notify_resume(regs);
-+				if (getcpu_cache_active(current))
-+					getcpu_cache_handle_notify_resume(current);
- 			}
- 		}
- 		local_irq_disable();
+Also, I tend to wait until after -rc1 before adding any syscalls, when
+all the new syscalls are obvious and known - this avoids ending up with
+two different trees having allocated the same syscall number (which is
+why arch maintainers should be the only people who are responsible for
+merging updates to their arch's syscall numbering.)
+
+Sure, if multiple different people end up merging patches via different
+routes, the conflicts can be resolved when those different routes come
+together, but what happens if someone adds the syscall number that they
+thought they had to (eg) glibc, and then have to change it later because
+come -rc1 it ends up being different...
+
+I'd much rather that all patches to unistd.h are only mergable via the
+respective arch maintainers to keep the numbering sane.
+
+(I personally want to follow x86's syscall numbering order as much as
+possible.)
+
 -- 
-2.1.4
+RMK's Patch system: http://www.arm.linux.org.uk/developer/patches/
+FTTC broadband for 0.8mile line: currently at 9.6Mbps down 400kbps up
+according to speedtest.net.
