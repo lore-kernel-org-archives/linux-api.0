@@ -1,50 +1,90 @@
-From: Minfei Huang <mnfhuang-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC PATCH v2 4/6] livepatch: reuse module loader code to write
- relocations
-Date: Thu, 10 Dec 2015 22:20:32 +0800
-Message-ID: <20151210142032.GA2399@huangminfeis-MacBook-Pro.local>
+From: Josh Poimboeuf <jpoimboe@redhat.com>
+Subject: Re: module: preserve Elf information for livepatch modules
+Date: Thu, 10 Dec 2015 08:38:17 -0600
+Message-ID: <20151210143817.GB29872@treble.redhat.com>
 References: <1448943679-3412-1-git-send-email-jeyu@redhat.com>
- <1448943679-3412-5-git-send-email-jeyu@redhat.com>
+ <1448943679-3412-3-git-send-email-jeyu@redhat.com>
+ <20151208183212.GB14846@treble.redhat.com>
+ <20151209200523.GB25387@packer-debian-8-amd64.digitalocean.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Return-path: <linux-doc-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1448943679-3412-5-git-send-email-jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <20151209200523.GB25387@packer-debian-8-amd64.digitalocean.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Jessica Yu <jeyu@redhat.com>
+Cc: Rusty Russell <rusty@rustcorp.com.au>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 11/30/15 at 11:21P, Jessica Yu wrote:
-> +	klp_for_each_reloc_sec(obj, reloc_sec) {
-> +		relindex = reloc_sec->index;
-> +		num_relas = pmod->sechdrs[relindex].sh_size / sizeof(Elf_Rela);
-> +		rela = (Elf_Rela *) pmod->sechdrs[relindex].sh_addr;
-> +
-> +		/* For each rela in this __klp_rela section */
-> +		for (i = 0; i < num_relas; i++, rela++) {
-> +			sym = symtab + ELF_R_SYM(rela->r_info);
-> +			symname = pmod->core_strtab + sym->st_name;
-> +
-> +			if (sym->st_shndx == SHN_LIVEPATCH) {
-> +				if (sym->st_info == 'K')
-> +					ret = klp_find_external_symbol(pmod, symname, &addr);
-> +				else
-> +					ret = klp_find_object_symbol(obj->name, symname, &addr);
-> +				if (ret)
-> +					return ret;
-> +				sym->st_value = addr;
-> +			}
->  		}
-> +		ret = apply_relocate_add(pmod->sechdrs, pmod->core_strtab,
-> +					 pmod->index.sym, relindex, pmod);
+On Wed, Dec 09, 2015 at 03:05:23PM -0500, Jessica Yu wrote:
+> +++ Josh Poimboeuf [08/12/15 12:32 -0600]:
+> >On Mon, Nov 30, 2015 at 11:21:15PM -0500, Jessica Yu wrote:
+> >>For livepatch modules, copy Elf section, symbol, and string information
+> >>from the load_info struct in the module loader.
+> >>
+> >>Livepatch uses special relocation sections in order to be able to patch
+> >>modules that are not yet loaded, as well as apply patches to the kernel
+> >>when the addresses of symbols cannot be determined at compile time (for
+> >>example, when kaslr is enabled). Livepatch modules must preserve Elf
+> >>information such as section indices in order to apply the remaining
+> >>relocation sections at the appropriate time (i.e. when the target module
+> >>loads).
+> >>
+> >>Signed-off-by: Jessica Yu <jeyu@redhat.com>
+> >>---
+> >> include/linux/module.h |  9 +++++
+> >> kernel/module.c        | 98 ++++++++++++++++++++++++++++++++++++++++++++++++--
+> >> 2 files changed, 105 insertions(+), 2 deletions(-)
+> >>
+> >>diff --git a/include/linux/module.h b/include/linux/module.h
+> >>index 3a19c79..9b46256 100644
+> >>--- a/include/linux/module.h
+> >>+++ b/include/linux/module.h
+> >>@@ -425,6 +425,14 @@ struct module {
+> >>
+> >> 	/* Notes attributes */
+> >> 	struct module_notes_attrs *notes_attrs;
+> >>+
+> >>+	/* Elf information (optionally saved) */
+> >>+	Elf_Ehdr *hdr;
+> >
+> >I would rename "hdr" to "elf_hdr" to make its purpose clearer.
+> >
+> >>+	Elf_Shdr *sechdrs;
+> >>+	char *secstrings;
+> >
+> >Probably a good idea to add underscores to the names ("sec_hdrs" and
+> >"sec_strings") to be consistent with most of the other fields in the
+> >struct.
+> >
+> >>+	struct {
+> >>+		unsigned int sym, str, mod, vers, info, pcpu;
+> >>+	} index;
+> >
+> >I might be contradicting myself from what I said before.  But I'm
+> >thinking we should put all these fields inside a CONFIG_LIVEPATCH ifdef.
+> >Then below, there could be two versions of copy_module_elf(), the real
+> >one for LIVEPATCH and and an empty one for !LIVEPATCH.  And the same
+> >story for free_module_elf().
+> 
+> I think in the v1 discussion we were leaning more towards making this
+> generic. We could potentially just have the Elf module fields
+> available in the generic case, independent of whether CONFIG_LIVEPATCH
+> is set, whereas the mod->klp field should probably be only available
+> when LIVEPATCH is set. I think this makes sense since the Elf fields
+> aren't dependent on livepatch (although livepatch would be the only
+> user of these fields at the moment). I don't know if there would be
+> any users in the future that would be interested in using this Elf
+> information. Thoughts on this?
 
-It is more appropiate to test the ret.
+IIRC, I think I made the suggestion to always save the elf fields
+because otherwise it was looking like we were going to need a lot of
+spaghetti code.
 
-Thanks
-Minfei
+But if we can find a way to wrap the elf fields in LIVEPATCH while
+keeping the code simple, then there's no real downside and I think
+that's the way to go.  If somebody else wants to use the fields later,
+then they can remove or change the ifdefs as needed.
 
->  	}
->  
-> -	return 0;
-> +	return ret;
+-- 
+Josh
