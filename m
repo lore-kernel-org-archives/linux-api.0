@@ -1,33 +1,114 @@
-From: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v5 2/2] block: create ioctl to discard-or-zeroout a range of blocks
-Date: Thu, 10 Dec 2015 12:38:18 -0500
-Message-ID: <yq1y4d22ohh.fsf@sermon.lab.mkp.net>
-References: <20151208062104.21427.91134.stgit@birch.djwong.org>
-	<20151208062111.21427.30921.stgit@birch.djwong.org>
+From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH 06/18] [media] media.h: create connector entities for
+ hybrid TV devices
+Date: Thu, 10 Dec 2015 16:43:33 -0200
+Message-ID: <20151210164333.24c2b1c1@recife.lan>
+References: <cover.1441559233.git.mchehab@osg.samsung.com>
+	<9af2bbe9e63004f843e8478bc3d31cd03ea75d64.1441559233.git.mchehab@osg.samsung.com>
+	<2199127.5C1OIPJBTt@avalon>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20151208062111.21427.30921.stgit-PTl6brltDGh4DFYR7WNSRA@public.gmane.org> (Darrick
-	J. Wong's message of "Mon, 07 Dec 2015 22:21:11 -0800")
+In-Reply-To: <2199127.5C1OIPJBTt@avalon>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, shane.seymour-ZPxbGqLxI0U@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org
+To: Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
+Cc: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
->>>>> "Darrick" == Darrick J Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> writes:
+Em Mon, 23 Nov 2015 20:09:02 +0200
+Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org> escreveu:
 
-Darrick> Create a new ioctl to expose the block layer's newfound ability
-Darrick> to issue either a zeroing discard, a WRITE SAME with a zero
-Darrick> page, or a regular write with the zero page.  This BLKZEROOUT2
-Darrick> ioctl takes {start, length, flags} as parameters.  So far, the
-Darrick> only flag available is to enable the zeroing discard part --
-Darrick> without it, the call invokes the old BLKZEROOUT behavior.
-Darrick> start and length have the same meaning as in BLKZEROOUT.
+> Hi Mauro,
+> 
+> Thank you for the patch.
+> 
+> On Sunday 06 September 2015 14:30:49 Mauro Carvalho Chehab wrote:
+> > Add entities to represent the connectors that exists inside a
+> > hybrid TV device.
+> > 
+> > Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+> > 
+> > diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
+> > index b17f6763aff4..69433405aec2 100644
+> > --- a/include/uapi/linux/media.h
+> > +++ b/include/uapi/linux/media.h
+> > @@ -61,6 +61,7 @@ struct media_device_info {
+> >  #define MEDIA_ENT_T_DVB_BASE		0x00000000
+> >  #define MEDIA_ENT_T_V4L2_BASE		0x00010000
+> >  #define MEDIA_ENT_T_V4L2_SUBDEV_BASE	0x00020000
+> > +#define MEDIA_ENT_T_CONNECTOR_BASE	0x00030000
+> > 
+> >  /*
+> >   * V4L2 entities - Those are used for DMA (mmap/DMABUF) and
+> > @@ -105,6 +106,13 @@ struct media_device_info {
+> >  #define MEDIA_ENT_T_DVB_CA		(MEDIA_ENT_T_DVB_BASE + 4)
+> >  #define MEDIA_ENT_T_DVB_NET_DECAP	(MEDIA_ENT_T_DVB_BASE + 5)
+> > 
+> > +/* Connectors */
+> > +#define MEDIA_ENT_T_CONN_RF		(MEDIA_ENT_T_CONNECTOR_BASE)
+> > +#define MEDIA_ENT_T_CONN_SVIDEO		(MEDIA_ENT_T_CONNECTOR_BASE + 1)
+> > +#define MEDIA_ENT_T_CONN_COMPOSITE	(MEDIA_ENT_T_CONNECTOR_BASE + 2)
+> > +	/* For internal test signal generators and other debug connectors */
+> 
+> No need to a \t at the beginning of the line.
 
-Darrick> This new ioctl also invalidates the page cache correctly on
-Darrick> account of the previous patch in the series.
+Removed.
 
-Reviewed-by: Martin K. Petersen <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+> 
+> > +#define MEDIA_ENT_T_CONN_TEST		(MEDIA_ENT_T_CONNECTOR_BASE + 3)
+> 
+> I'd like to see more information about this.
 
--- 
-Martin K. Petersen	Oracle Linux Engineering
+Some hardware have internally a simple signal generator on the
+chipset that generate test sequences. They're part of the input
+selection switch. In the case of au0828, the demodulator (actually au8522)
+has the follow inputs:
+	- TV connector;
+	- S-Video input connector;
+	- Composite input connector;
+	- TV signal test generator.
+
+The input can be controlled via V4L2 VIDIOC_*_INPUT ioctls. The
+Media Controller should be able to reflect the topology, as keeping
+this input not visible would be inconsistent.
+
+> When later renaming types to functions you rename this type as well, and I'm 
+> still not convinced that we shouldn't have both types and functions.
+
+Not sure what you're meaning here.
+
+> Let's discuss these topics and the one below on the documentation patches.
+
+Ok.
+
+> 
+> >  #ifndef __KERNEL__
+> >  /* Legacy symbols used to avoid userspace compilation breakages */
+> >  #define MEDIA_ENT_TYPE_SHIFT		16
+> > @@ -121,9 +129,9 @@ struct media_device_info {
+> >  #define MEDIA_ENT_T_DEVNODE_DVB		(MEDIA_ENT_T_DEVNODE + 4)
+> >  #endif
+> > 
+> > -/* Entity types */
+> > -
+> > +/* Entity flags */
+> >  #define MEDIA_ENT_FL_DEFAULT		(1 << 0)
+> > +#define MEDIA_ENT_FL_CONNECTOR		(1 << 1)
+> 
+> Ditto, I'm not sure about the use cases.
+
+The distinction between connectors and "normal" entities was largely
+discussed during the MC workshop. See the workshop notes.
+
+During the discussions of the Hans RFC sent just after the workshop, we 
+decided that, instead of adding yet another graph type, it would be
+easier to just add a flag for the connectors.
+
+Regards,
+Mauro
+
+> 
+> >  struct media_entity_desc {
+> >  	__u32 id;
+> 
