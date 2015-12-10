@@ -1,137 +1,125 @@
-From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: livepatch: reuse module loader code to write relocations
-Date: Thu, 10 Dec 2015 17:07:03 -0500
-Message-ID: <20151210220703.GB6553@packer-debian-8-amd64.digitalocean.com>
-References: <1448943679-3412-1-git-send-email-jeyu@redhat.com>
- <1448943679-3412-5-git-send-email-jeyu@redhat.com>
- <20151208183844.GC14846@treble.redhat.com>
- <20151209191013.GA25387@packer-debian-8-amd64.digitalocean.com>
- <20151210142830.GA29872@treble.redhat.com>
- <20151210213328.GA6553@packer-debian-8-amd64.digitalocean.com>
- <20151210214115.GD4934@treble.redhat.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: [PATCH v5] fs: clear file privilege bits when mmap writing
+Date: Thu, 10 Dec 2015 14:33:14 -0800
+Message-ID: <20151210223314.GA14512@www.outflux.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-arch-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20151210214115.GD4934-8wJ5/zUtDR0XGNroddHbYwC/G2K4zDHf@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-arch-owner@vger.kernel.org
+To: Alexander Viro <viro@zeniv.linux.org.uk>
+Cc: Jan Kara <jack@suse.cz>, yalin wang <yalin.wang2010@gmail.com>, Willy Tarreau <w@1wt.eu>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-+++ Josh Poimboeuf [10/12/15 15:41 -0600]:
->On Thu, Dec 10, 2015 at 04:33:29PM -0500, Jessica Yu wrote:
->> +++ Josh Poimboeuf [10/12/15 08:28 -0600]:
->> >On Wed, Dec 09, 2015 at 02:10:14PM -0500, Jessica Yu wrote:
->> >>+++ Josh Poimboeuf [08/12/15 12:38 -0600]:
->> >>>>+	/* For each __klp_rela section for this object */
->> >>>>+	klp_for_each_reloc_sec(obj, reloc_sec) {
->> >>>>+		relindex = reloc_sec->index;
->> >>>>+		num_relas = pmod->sechdrs[relindex].sh_size / sizeof(Elf_Rela);
->> >>>>+		rela = (Elf_Rela *) pmod->sechdrs[relindex].sh_addr;
->> >>>>+
->> >>>>+		/* For each rela in this __klp_rela section */
->> >>>>+		for (i = 0; i < num_relas; i++, rela++) {
->> >>>>+			sym = symtab + ELF_R_SYM(rela->r_info);
->> >>>>+			symname = pmod->core_strtab + sym->st_name;
->> >>>>+
->> >>>>+			if (sym->st_shndx == SHN_LIVEPATCH) {
->> >>>>+				if (sym->st_info == 'K')
->> >>>>+					ret = klp_find_external_symbol(pmod, symname, &addr);
->> >>>>+				else
->> >>>>+					ret = klp_find_object_symbol(obj->name, symname, &addr);
->> >>>>+				if (ret)
->> >>>>+					return ret;
->> >>>>+				sym->st_value = addr;
->> >>>
->> >>>So I think you're also working on removing the 'external' stuff.  Any
->> >>>idea how this code will handle that?  Specifically I'm wondering how the
->> >>>objname and sympos of the rela's symbol will be specified.  Maybe it can
->> >>>be encoded somehow in one of the symbol fields (st_value)?
->> >>
->> >>Thanks for bringing this up. I think we can just encode the symbol's
->> >>position in kallsyms in the symbol's st_other field. It isn't used
->> >>anywhere and has size char, which is plenty of bits to represent the
->> >>small ints.
->> >
->> >st_other does seem to at least have some trivial usage in the kernel,
->> >see print_absolute_symbols() and sym_visibility() in
->> >arch/x86/tools/relocs.c.  Two of the bits are used to specify the
->> >"visibility" of a symbol.  Also readelf shows a "Vis" column in the
->> >symbol table.
->>
->> Yeah, for x86 it looks like st_other is used only for SHN_ABS symbols
->> in print_absolute_symbols(). Technically SHN_LIVEPATCH symbols
->> shouldn't be affected in this case...but despite its sparse usage in the
->> kernel it does look like using st_other to encode sympos is out of the
->> question as its meaning is architecture specific..
->>
->> >>For objname, the simplest solution might be to append ".klp.objname"
->> >>to the symbol name, and extract out this suffix when resolving the
->> >>symbol. Another way might be to have st_value contain the index into
->> >>the strtab (or .kpatch.strings) that contains the objname. Then we'd
->> >>access the objname just like how we access the symbol's name (strtab +
->> >>sym->st_name). After we find the objname we can then overwrite
->> >>st_value with the real address. I think this second method is cleaner.
->> >>Thoughts?
->> >
->> >Yeah, I guess there are a lot of possibilities for ways to encode it.
->> >
->> >Personally I think it would be nice if the encoding were something that
->> >could easily be seen when dumping the symbol table with readelf.  So,
->> >for example, the objname could be encoded in the symbol name (as you
->> >suggested), and the sympos could be in st_value.
->>
->> Sure, that should be doable. So the new process might look like this:
->>
->> For every livepatch symbol referenced by a rela..
->>
->> 1) Save the sympos encoded in st_value
->>
->> 2) Save the sym_objname that is encoded in the symbol's name with the
->> 'klp' suffix (Just to clarify: the sym_objname specifies the object
->> in which the symbol lives, and recall that we need this to remove the
->> need for the "external" flag)
->>
->> 3) Resolve the symbol by using its name (without the klp suffix),
->> sympos, and sym_objname
->>
->> 4) Set st_value to the found address
->
->Sounds right to me.
->
->> >If we do that, it'd probably be good to keep the naming consistent with
->> >the '__klp_rela_objname.symname' thing.  So something like
->> >'_klp_sym_objname.symname'.
->>
->> How about 'symname.klp.objname', and renaming the klp reloc sections
->> to '.klp.objname.rela.section_name'? Special symbol suffixes and
->> section names seem to always use '.', so maybe this would look better?
->> :-) But we can keep the underscores if people like that more. Both
->> naming methods would work, it is only a matter of preference.
->
->It's your patches, so I'd say you get to pick ;-)  My only request would
->be some consistency between the symbol names and the rela section names.
->
->> >But... would there be any side effects associated with renaming it?  For
->> >example, would it cause problems with the s390 PLT?
->
->Just to verify, did you see this question? :-)
+Normally, when a user can modify a file that has setuid or setgid bits,
+those bits are cleared when they are not the file owner or a member
+of the group. This is enforced when using write and truncate but not
+when writing to a shared mmap on the file. This could allow the file
+writer to gain privileges by changing a binary without losing the
+setuid/setgid/caps bits.
 
-Ah, sorry I missed this! So I looked through the module loader code
-for x86, s390, arm (and just grepped in a few other archs) and the
-symbol's name (st_name) is only ever used in printing error or debug
-messages, or not used at all. As long as livepatch correctly resolves
-the symbol, and st_value is set, apply_relocate_add() doesn't really
-care about the name.
+Changing the bits requires holding inode->i_mutex, so it cannot be done
+during the page fault (due to mmap_sem being held during the fault). We
+could do this during vm_mmap_pgoff, but that would need coverage in
+mprotect as well, but to check for MAP_SHARED, we'd need to hold mmap_sem
+again. We could clear at open() time, but it's possible things are
+accidentally opening with O_RDWR and only reading. Better to clear on
+close and error failures (i.e. an improvement over now, which is not
+clearing at all).
 
-s390 plt/got information (struct mod_arch_syminfo) for each symbol is
-stored in an array in mod->arch.syminfo. Every symbol that is in the
-module's symbol table will get an entry, but not every symbol will
-have their plt/got offsets filled in. Every symbol referenced by a
-PLT/GOT rela will have those offsets filled in. Since our livepatch
-symbols are real symbols, with indexes and entries in the symbol
-table, they will get their own s390 mod_arch_syminfo struct, and
-should any PLT rela reference them, a PLT entry as well, which is
-good. Tldr, names of symbols don't affect s390 plt/got handling, so we
-are safe.
+Instead, detect the need to clear the bits during the page fault, and
+actually remove the bits during final fput. Since the file was open for
+writing, it wouldn't have been possible to execute it yet.
+
+Signed-off-by: Kees Cook <keescook@chromium.org>
+---
+v5:
+- add to f_flags instead, viro
+- add i_mutex during __fput, jack
+v4:
+- delay removal instead of still needing mmap_sem for mprotect, yalin
+v3:
+- move outside of mmap_sem for real now, fengguang
+- check return code of file_remove_privs, akpm
+v2:
+- move to mmap from fault handler, jack
+---
+ fs/file_table.c                  | 11 +++++++++++
+ fs/open.c                        |  2 +-
+ include/uapi/asm-generic/fcntl.h |  4 ++++
+ mm/memory.c                      |  5 +++++
+ 4 files changed, 21 insertions(+), 1 deletion(-)
+
+diff --git a/fs/file_table.c b/fs/file_table.c
+index ad17e05ebf95..4a8b0b4553e9 100644
+--- a/fs/file_table.c
++++ b/fs/file_table.c
+@@ -191,6 +191,17 @@ static void __fput(struct file *file)
+ 
+ 	might_sleep();
+ 
++	/*
++	 * XXX: While avoiding mmap_sem, we've already been written to.
++	 * We must ignore the return value, since we can't reject the
++	 * write.
++	 */
++	if (unlikely(file->f_flags & O_REMOVEPRIV)) {
++		mutex_lock(&inode->i_mutex);
++		file_remove_privs(file);
++		mutex_unlock(&inode->i_mutex);
++	}
++
+ 	fsnotify_close(file);
+ 	/*
+ 	 * The function eventpoll_release() should be the first called
+diff --git a/fs/open.c b/fs/open.c
+index b6f1e96a7c0b..89069d16ca80 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -895,7 +895,7 @@ static inline int build_open_flags(int flags, umode_t mode, struct open_flags *o
+ 		op->mode = 0;
+ 
+ 	/* Must never be set by userspace */
+-	flags &= ~FMODE_NONOTIFY & ~O_CLOEXEC;
++	flags &= ~FMODE_NONOTIFY & ~O_CLOEXEC & ~O_REMOVEPRIV;
+ 
+ 	/*
+ 	 * O_SYNC is implemented as __O_SYNC|O_DSYNC.  As many places only
+diff --git a/include/uapi/asm-generic/fcntl.h b/include/uapi/asm-generic/fcntl.h
+index e063effe0cc1..096c4b3afe6a 100644
+--- a/include/uapi/asm-generic/fcntl.h
++++ b/include/uapi/asm-generic/fcntl.h
+@@ -88,6 +88,10 @@
+ #define __O_TMPFILE	020000000
+ #endif
+ 
++#ifndef O_REMOVEPRIV
++#define O_REMOVEPRIV	040000000
++#endif
++
+ /* a horrid kludge trying to make sure that this will fail on old kernels */
+ #define O_TMPFILE (__O_TMPFILE | O_DIRECTORY)
+ #define O_TMPFILE_MASK (__O_TMPFILE | O_DIRECTORY | O_CREAT)      
+diff --git a/mm/memory.c b/mm/memory.c
+index c387430f06c3..ad4188a8f279 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -2036,6 +2036,11 @@ static inline int wp_page_reuse(struct mm_struct *mm,
+ 
+ 		if (!page_mkwrite)
+ 			file_update_time(vma->vm_file);
++		if (unlikely((vma->vm_file->f_flags & O_REMOVEPRIV) == 0)) {
++			spin_lock(&vma->vm_file->f_lock);
++			vma->vm_file->f_flags |= O_REMOVEPRIV;
++			spin_unlock(&vma->vm_file->f_lock);
++		}
+ 	}
+ 
+ 	return VM_FAULT_WRITE;
+-- 
+2.6.3
+
+
+-- 
+Kees Cook
+Chrome OS & Brillo Security
