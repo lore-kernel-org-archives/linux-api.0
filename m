@@ -1,58 +1,60 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 2/2] mm/page_ref: add tracepoint to track down page
- reference manipulation
-Date: Wed, 9 Dec 2015 22:36:48 -0500
-Message-ID: <20151209223648.4e9122b5@grimm.local.home>
-References: <1447053784-27811-1-git-send-email-iamjoonsoo.kim@lge.com>
-	<1447053784-27811-2-git-send-email-iamjoonsoo.kim@lge.com>
-	<564C9A86.1090906@suse.cz>
-	<20151120063325.GB13061@js1304-P5Q-DELUXE>
-	<20151120114225.7efeeafe@grimm.local.home>
-	<20151123082805.GB29397@js1304-P5Q-DELUXE>
-	<20151123092604.7ec1397d@gandalf.local.home>
-	<20151124014527.GA32335@js1304-P5Q-DELUXE>
-	<20151203041657.GB1495@js1304-P5Q-DELUXE>
-	<20151209150154.31c142b9@gandalf.local.home>
-	<20151210025015.GA17967@js1304-P5Q-DELUXE>
+From: David Decotigny <ddecotig@gmail.com>
+Subject: Re: [PATCH net-next v4 12/19] net: fcoe: use __ethtool_get_ksettings
+Date: Wed, 9 Dec 2015 20:01:24 -0800
+Message-ID: <CAG88wWZP7KGC5zguP0te7KaLngLX98Q2ZsDJmbU-GHEEaLzKtA@mail.gmail.com>
+References: <1449683969-7305-13-git-send-email-ddecotig@gmail.com> <201512100349.fX57FR9Z%fengguang.wu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20151210025015.GA17967@js1304-P5Q-DELUXE>
-Sender: owner-linux-mm@kvack.org
-To: Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Cc: Vlastimil Babka <vbabka@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@suse.de>, "Kirill A.
- Shutemov" <kirill.shutemov@linux.intel.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <201512100349.fX57FR9Z%fengguang.wu@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: kbuild test robot <lkp@intel.com>
+Cc: kbuild-all@01.org, "David S. Miller" <davem@davemloft.net>, Ben Hutchings <ben@decadent.org.uk>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, linux-mips@linux-mips.org, fcoe-devel@open-fcoe.org, Andrew Morton <akpm@linux-foundation.org>, Tejun Heo <tj@kernel.org>, Eric Dumazet <edumazet@google.com>, Eugenia Emantayev <eugenia@mellanox.co.il>, Or Gerlitz <ogerlitz@mellanox.com>, Ido Shamay <idos@mellanox.com>, Joe Perches <joe@perches.com>, Saeed Mahameed <saeedm@mellanox.com>, Govindarajulu Varadarajan <_govind@gmx.com>, Venkata Duvvuru <VenkatKumar.Duvvuru@emulex.com>, Jeff Kirsher <jeffrey.t.kirsher@intel.com>, Pravin B Shelar <pshelar@nicira.com>, Ed Swierk <eswierk@skyportsystems.com>, Robert Love <robert.w.love@intel.com>, James E.J. Bo
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 10 Dec 2015 11:50:15 +0900
-Joonsoo Kim <iamjoonsoo.kim@lge.com> wrote:
+apologies, forgot to make allyesconfig/allmodconfig this time. Fixed
+in my local copy. Will be part of v5 after other feedback on this v4.
 
-> Output of cpu 3, 7 are mixed and it's not easy to analyze it.
-> 
-> I think that it'd be better not to sort stack trace. How do
-> you think about it? Could you fix it, please?
-
-It may not be that easy to fix because of the sorting algorithm. That
-would require looking going ahead one more event each time and then
-checking if its a stacktrace. I may look at it and see if I can come up
-with something that's not too invasive in the algorithms.
-
-That said, for now you can use the --cpu option. I'm not sure I ever
-documented it as it was originally added for debugging, but I use it
-enough that it may be worth while to officially support it.
-
- trace-cmd report --cpu 3
-
-Will show you just cpu 3 and nothing else. Which is what I use a lot.
-
-But doing the stack trace thing may be something to fix as well. I'll
-see what I can do, but no guarantees.
-
--- Steve
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+On Wed, Dec 9, 2015 at 11:18 AM, kbuild test robot <lkp@intel.com> wrote:
+> Hi David,
+>
+> [auto build test ERROR on net-next/master]
+>
+> url:    https://github.com/0day-ci/linux/commits/David-Decotigny/RFC-new-ETHTOOL_GSETTINGS-SSETTINGS-API/20151210-022123
+> config: i386-randconfig-b0-12100240 (attached as .config)
+> reproduce:
+>         # save the attached .config to linux build tree
+>         make ARCH=i386
+>
+> All errors (new ones prefixed by >>):
+>
+>    drivers/scsi/fcoe/fcoe_transport.c: In function 'fcoe_link_speed_update':
+>>> drivers/scsi/fcoe/fcoe_transport.c:104:32: error: request for member 'mask' in something not a structure or union
+>       if (ecmd.link_modes.supported.mask[0] & (
+>                                    ^
+>    drivers/scsi/fcoe/fcoe_transport.c:110:32: error: request for member 'mask' in something not a structure or union
+>       if (ecmd.link_modes.supported.mask[0] & (
+>                                    ^
+>    drivers/scsi/fcoe/fcoe_transport.c:117:32: error: request for member 'mask' in something not a structure or union
+>       if (ecmd.link_modes.supported.mask[0] & (
+>                                    ^
+>    drivers/scsi/fcoe/fcoe_transport.c:122:32: error: request for member 'mask' in something not a structure or union
+>       if (ecmd.link_modes.supported.mask[0] & (
+>                                    ^
+>
+> vim +/mask +104 drivers/scsi/fcoe/fcoe_transport.c
+>
+>     98          if (!__ethtool_get_ksettings(netdev, &ecmd)) {
+>     99                  lport->link_supported_speeds &= ~(FC_PORTSPEED_1GBIT  |
+>    100                                                    FC_PORTSPEED_10GBIT |
+>    101                                                    FC_PORTSPEED_20GBIT |
+>    102                                                    FC_PORTSPEED_40GBIT);
+>    103
+>  > 104                  if (ecmd.link_modes.supported.mask[0] & (
+>    105                              SUPPORTED_1000baseT_Half |
+>    106                              SUPPORTED_1000baseT_Full |
+>    107                              SUPPORTED_1000baseKX_Full))
+>
+> ---
+> 0-DAY kernel test infrastructure                Open Source Technology Center
+> https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
