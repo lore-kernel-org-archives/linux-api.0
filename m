@@ -1,151 +1,97 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH v2 3/5] test: firmware_class: add asynchronous request trigger
-Date: Wed, 9 Dec 2015 15:22:32 -0800
-Message-ID: <CAGXu5jLPDE+Pt0QxZ3M_crcN_7thdAosQPU5cFOMQF-SFy17wA@mail.gmail.com>
-References: <1449701429-121423-1-git-send-email-computersforpeace@gmail.com>
-	<1449701429-121423-3-git-send-email-computersforpeace@gmail.com>
+From: "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 1/8] kernfs: Add API to generate relative kernfs path
+Date: Wed, 9 Dec 2015 19:28:16 -0600
+Message-ID: <20151210012816.GA990@mail.hallyn.com>
+References: <1449689341-28742-1-git-send-email-serge.hallyn@ubuntu.com>
+	<1449689341-28742-2-git-send-email-serge.hallyn@ubuntu.com>
+	<20151209213806.GP30240@mtj.duckdns.org>
+	<20151209221327.GA13029@ubuntumail>
+	<20151209223651.GQ30240@mtj.duckdns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1449701429-121423-3-git-send-email-computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Luis R. Rodriguez" <mcgrof-IBi9RG/b67k@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20151209223651.GQ30240-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Dec 9, 2015 at 2:50 PM, Brian Norris
-<computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> We might want to test for bugs like that found in commit f9692b2699bd
-> ("firmware: fix possible use after free on name on asynchronous
-> request"), where the asynchronous request API had race conditions.
->
-> Let's add a simple file that will launch the async request, then wait
-> until it's complete and report the status. It's not a true async test
-> (we're using a mutex + wait_for_completion(), so we can't get more than
-> one going at the same time), but it does help make sure the basic API is
-> sane, and it can catch some class of bugs.
->
-> Signed-off-by: Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> Cc: Luis R. Rodriguez <mcgrof-IBi9RG/b67k@public.gmane.org>
+On Wed, Dec 09, 2015 at 05:36:51PM -0500, Tejun Heo wrote:
+> Hey,
+> 
+> On Wed, Dec 09, 2015 at 10:13:27PM +0000, Serge Hallyn wrote:
+> > we can rename kn_root to from here if you think that's clearer (and
+> > change the order here as well).
+> 
+> I think it'd be better for them to be consistent and in the same order
+> - the target and then the optional base.
+> 
+> > > Was converting the path functions to return
+> > > length too much work?  If so, that's fine but please explain what
+> > > decisions were made.
+> > 
+> > Yes, I had replied saying:
+> > 
+> >  |I can change that, but the callers right now don't re-try with
+> >  |larger buffer anyway, so this would actually complicate them just
+> >  |a smidgeon.  Would you want them changed to do that?  (pr_cont_kernfs_path
+> >  |right now writes into a static char[] for instance)
+> > 
+> > I can still make that change if you like.
+> 
+> Oops, sorry I forgot about that.  The reason why kernfs_path() is
+> written the current way was me being lazy.  While I think it'd be
+> better to make the functions behave like normal string handling
+> functions if we're extending it, I don't think it's that important.
+> If it's easy, please go ahead.  If not, we can get back to it later
+> when necessary.
+> 
+> > > I skimmed through the series and spotted several other review points
+> > > which didn't get addressed.  Can you please go over the previous
+> > > review cycle and address the review points?
+> > 
+> > I did go through every email twice, once while making changes (one
+> > branch per response) and once while making changelog for each patch,
+> > sorry about whatever I missed.  I'll go through each again.
+> 
+> The other chunk I noticed was inline conversions of internal functions
+> which didn't seem to belong to the patch.  I asked whether those were
+> stray chunks.  Maybe the comment was too buried to notice?  Anyways,
+> that part actually causes conflicts when applying to cgroup/for-4.5.
+> 
+> There are a couple more things.
+> 
+> * Can you please put the ns related decls after the regular cgroup
+>   stuff in cgroup.h?
+> 
+> * I think I might need to edit the documentation anyway but it'd be
+>   great if you can make the namespace section more in line with the
+>   rest of the documentation - e.g. s/CGroup/cgroup/ and more
+>   structured sectioning.
 
-Acked-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Ok fwiw I've fixed up the arguments to kernfs_path_from_node, removed
+the inlines, and moved the ns related decls after the others in cgroup.h
+(i.e. done the easy stuff) in the 2015-12-09/cgroupns.3 branch of
+git://git.kernel.org/pub/scm/linux/kernel/git/sergeh/linux-security.git
 
--Kees
+I'll address the rest either after next week or, hopefully, when I get
+a chance earlier.
 
-> ---
-> v2:
->  * use kstrndup()
->  * don't kfree(name) too early!
->
->  lib/test_firmware.c | 65 +++++++++++++++++++++++++++++++++++++++++++++++++++++
->  1 file changed, 65 insertions(+)
->
-> diff --git a/lib/test_firmware.c b/lib/test_firmware.c
-> index 690b9c35a274..a3e8ec3fb1c5 100644
-> --- a/lib/test_firmware.c
-> +++ b/lib/test_firmware.c
-> @@ -12,6 +12,7 @@
->  #include <linux/init.h>
->  #include <linux/module.h>
->  #include <linux/printk.h>
-> +#include <linux/completion.h>
->  #include <linux/firmware.h>
->  #include <linux/device.h>
->  #include <linux/fs.h>
-> @@ -80,6 +81,57 @@ out:
->  }
->  static DEVICE_ATTR_WO(trigger_request);
->
-> +static DECLARE_COMPLETION(async_fw_done);
-> +
-> +static void trigger_async_request_cb(const struct firmware *fw, void *context)
-> +{
-> +       test_firmware = fw;
-> +       complete(&async_fw_done);
-> +}
-> +
-> +static ssize_t trigger_async_request_store(struct device *dev,
-> +                                          struct device_attribute *attr,
-> +                                          const char *buf, size_t count)
-> +{
-> +       int rc;
-> +       char *name;
-> +
-> +       name = kstrndup(buf, count, GFP_KERNEL);
-> +       if (!name)
-> +               return -ENOSPC;
-> +
-> +       pr_info("loading '%s'\n", name);
-> +
-> +       mutex_lock(&test_fw_mutex);
-> +       release_firmware(test_firmware);
-> +       test_firmware = NULL;
-> +       rc = request_firmware_nowait(THIS_MODULE, 1, name, dev, GFP_KERNEL,
-> +                                    NULL, trigger_async_request_cb);
-> +       if (rc) {
-> +               pr_info("async load of '%s' failed: %d\n", name, rc);
-> +               kfree(name);
-> +               goto out;
-> +       }
-> +       /* Free 'name' ASAP, to test for race conditions */
-> +       kfree(name);
-> +
-> +       wait_for_completion(&async_fw_done);
-> +
-> +       if (test_firmware) {
-> +               pr_info("loaded: %zu\n", test_firmware->size);
-> +               rc = count;
-> +       } else {
-> +               pr_err("failed to async load firmware\n");
-> +               rc = -ENODEV;
-> +       }
-> +
-> +out:
-> +       mutex_unlock(&test_fw_mutex);
-> +
-> +       return rc;
-> +}
-> +static DEVICE_ATTR_WO(trigger_async_request);
-> +
->  static int __init test_firmware_init(void)
->  {
->         int rc;
-> @@ -96,9 +148,20 @@ static int __init test_firmware_init(void)
->                 goto dereg;
->         }
->
-> +       rc = device_create_file(test_fw_misc_device.this_device,
-> +                               &dev_attr_trigger_async_request);
-> +       if (rc) {
-> +               pr_err("could not create async sysfs interface: %d\n", rc);
-> +               goto remove_file;
-> +       }
-> +
->         pr_warn("interface ready\n");
->
->         return 0;
-> +
-> +remove_file:
-> +       device_remove_file(test_fw_misc_device.this_device,
-> +                          &dev_attr_trigger_async_request);
->  dereg:
->         misc_deregister(&test_fw_misc_device);
->         return rc;
-> @@ -110,6 +173,8 @@ static void __exit test_firmware_exit(void)
->  {
->         release_firmware(test_firmware);
->         device_remove_file(test_fw_misc_device.this_device,
-> +                          &dev_attr_trigger_async_request);
-> +       device_remove_file(test_fw_misc_device.this_device,
->                            &dev_attr_trigger_request);
->         misc_deregister(&test_fw_misc_device);
->         pr_warn("removed interface\n");
-> --
-> 2.6.0.rc2.230.g3dd15c0
->
+> At this point, it all generally looks good to me.  Let's get the
+> nits out of the way and merge it.
 
+If you wanted to take the branch as is, then I'll do the documentation
+and pr_cont_kernfs_path() etc rewrite as separate patches, but I'll
+assume you'd like to at least wait for doc rewrite.
 
-
--- 
-Kees Cook
-Chrome OS & Brillo Security
+-serge
