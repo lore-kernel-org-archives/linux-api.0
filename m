@@ -1,97 +1,145 @@
-From: "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 1/8] kernfs: Add API to generate relative kernfs path
-Date: Wed, 9 Dec 2015 19:28:16 -0600
-Message-ID: <20151210012816.GA990@mail.hallyn.com>
-References: <1449689341-28742-1-git-send-email-serge.hallyn@ubuntu.com>
-	<1449689341-28742-2-git-send-email-serge.hallyn@ubuntu.com>
-	<20151209213806.GP30240@mtj.duckdns.org>
-	<20151209221327.GA13029@ubuntumail>
-	<20151209223651.GQ30240@mtj.duckdns.org>
+From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Subject: Re: [PATCH 2/2] mm/page_ref: add tracepoint to track down page
+ reference manipulation
+Date: Thu, 10 Dec 2015 11:50:15 +0900
+Message-ID: <20151210025015.GA17967@js1304-P5Q-DELUXE>
+References: <1447053784-27811-1-git-send-email-iamjoonsoo.kim@lge.com>
+ <1447053784-27811-2-git-send-email-iamjoonsoo.kim@lge.com>
+ <564C9A86.1090906@suse.cz>
+ <20151120063325.GB13061@js1304-P5Q-DELUXE>
+ <20151120114225.7efeeafe@grimm.local.home>
+ <20151123082805.GB29397@js1304-P5Q-DELUXE>
+ <20151123092604.7ec1397d@gandalf.local.home>
+ <20151124014527.GA32335@js1304-P5Q-DELUXE>
+ <20151203041657.GB1495@js1304-P5Q-DELUXE>
+ <20151209150154.31c142b9@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20151209223651.GQ30240-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+In-Reply-To: <20151209150154.31c142b9@gandalf.local.home>
+Sender: owner-linux-mm@kvack.org
+To: Steven Rostedt <rostedt@goodmis.org>
+Cc: Vlastimil Babka <vbabka@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@suse.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Dec 09, 2015 at 05:36:51PM -0500, Tejun Heo wrote:
-> Hey,
+On Wed, Dec 09, 2015 at 03:01:54PM -0500, Steven Rostedt wrote:
+> On Thu, 3 Dec 2015 13:16:58 +0900
+> Joonsoo Kim <iamjoonsoo.kim@lge.com> wrote:
 > 
-> On Wed, Dec 09, 2015 at 10:13:27PM +0000, Serge Hallyn wrote:
-> > we can rename kn_root to from here if you think that's clearer (and
-> > change the order here as well).
-> 
-> I think it'd be better for them to be consistent and in the same order
-> - the target and then the optional base.
-> 
-> > > Was converting the path functions to return
-> > > length too much work?  If so, that's fine but please explain what
-> > > decisions were made.
+> > On Tue, Nov 24, 2015 at 10:45:28AM +0900, Joonsoo Kim wrote:
+> > > On Mon, Nov 23, 2015 at 09:26:04AM -0500, Steven Rostedt wrote:  
+> > > > On Mon, 23 Nov 2015 17:28:05 +0900
+> > > > Joonsoo Kim <iamjoonsoo.kim@lge.com> wrote:
+> > > >   
+> > > > > On Fri, Nov 20, 2015 at 11:42:25AM -0500, Steven Rostedt wrote:  
+> > > > > > On Fri, 20 Nov 2015 15:33:25 +0900
+> > > > > > Joonsoo Kim <iamjoonsoo.kim@lge.com> wrote:
+> > > > > > 
+> > > > > >     
+> > > > > > > Steven, is it possible to add tracepoint to inlined fucntion such as
+> > > > > > > get_page() in include/linux/mm.h?    
+> > > > > > 
+> > > > > > I highly recommend against it. The tracepoint code adds a bit of bloat,
+> > > > > > and if you inline it, you add that bloat to every use case. Also, it    
+> > > > > 
+> > > > > Is it worse than adding function call to my own stub function into
+> > > > > inlined function such as get_page(). I implemented it as following.
+> > > > > 
+> > > > > get_page()
+> > > > > {
+> > > > >         atomic_inc()
+> > > > >         stub_get_page()
+> > > > > }
+> > > > > 
+> > > > > stub_get_page() in foo.c
+> > > > > {
+> > > > >         trace_page_ref_get_page()
+> > > > > }  
+> > > > 
+> > > > Now you just slowed down the fast path. But what you could do is:
+> > > > 
+> > > > get_page()
+> > > > {
+> > > > 	atomic_inc();
+> > > > 	if (trace_page_ref_get_page_enabled())
+> > > > 		stub_get_page();
+> > > > }
+> > > > 
+> > > > Now that "trace_page_ref_get_page_enabled()" will turn into:
+> > > > 
+> > > > 	if (static_key_false(&__tracepoint_page_ref_get_page.key)) {
+> > > > 
+> > > > which is a jump label (nop when disabled, a jmp when enabled). That's
+> > > > less bloat but doesn't solve the include problem. You still need to add
+> > > > the include of that will cause havoc with other tracepoints.  
+> > > 
+> > > Yes, It also has a include dependency problem so I can't use
+> > > trace_page_ref_get_page_enabled() in mm.h. BTW, I tested following
+> > > implementation and it works fine.
+> > > 
+> > > extern struct tracepoint __tracepoint_page_ref_get_page;
+> > > 
+> > > get_page()
+> > > {
+> > >         atomic_inc()
+> > >         if (static_key_false(&__tracepoint_page_ref_get_page.key))
+> > >                 stub_get_page()
+> > > }
+> > > 
+> > > This would not slow down fast path although it can't prevent bloat.
+> > > I know that it isn't good code practice, but, this page reference
+> > > handling functions have complex include dependency so I'm not sure
+> > > I can solve it completely. For this special case, can I use
+> > > this raw data structure?
+> > >   
 > > 
-> > Yes, I had replied saying:
-> > 
-> >  |I can change that, but the callers right now don't re-try with
-> >  |larger buffer anyway, so this would actually complicate them just
-> >  |a smidgeon.  Would you want them changed to do that?  (pr_cont_kernfs_path
-> >  |right now writes into a static char[] for instance)
-> > 
-> > I can still make that change if you like.
+> > Steven, any comment?
 > 
-> Oops, sorry I forgot about that.  The reason why kernfs_path() is
-> written the current way was me being lazy.  While I think it'd be
-> better to make the functions behave like normal string handling
-> functions if we're extending it, I don't think it's that important.
-> If it's easy, please go ahead.  If not, we can get back to it later
-> when necessary.
-> 
-> > > I skimmed through the series and spotted several other review points
-> > > which didn't get addressed.  Can you please go over the previous
-> > > review cycle and address the review points?
-> > 
-> > I did go through every email twice, once while making changes (one
-> > branch per response) and once while making changelog for each patch,
-> > sorry about whatever I missed.  I'll go through each again.
-> 
-> The other chunk I noticed was inline conversions of internal functions
-> which didn't seem to belong to the patch.  I asked whether those were
-> stray chunks.  Maybe the comment was too buried to notice?  Anyways,
-> that part actually causes conflicts when applying to cgroup/for-4.5.
-> 
-> There are a couple more things.
-> 
-> * Can you please put the ns related decls after the regular cgroup
->   stuff in cgroup.h?
-> 
-> * I think I might need to edit the documentation anyway but it'd be
->   great if you can make the namespace section more in line with the
->   rest of the documentation - e.g. s/CGroup/cgroup/ and more
->   structured sectioning.
+> Sorry for the later reply, I was going to reply but then got called off
+> to do something else, and then forgot about this message :-/
 
-Ok fwiw I've fixed up the arguments to kernfs_path_from_node, removed
-the inlines, and moved the ns related decls after the others in cgroup.h
-(i.e. done the easy stuff) in the 2015-12-09/cgroupns.3 branch of
-git://git.kernel.org/pub/scm/linux/kernel/git/sergeh/linux-security.git
+No problem. :)
 
-I'll address the rest either after next week or, hopefully, when I get
-a chance earlier.
+> 
+> I wanted you to look at what Andi has done here:
+> 
+> http://lkml.kernel.org/r/1449018060-1742-2-git-send-email-andi@firstfloor.org
+> 
+>  and here
+> 
+> http://lkml.kernel.org/r/1449018060-1742-3-git-send-email-andi@firstfloor.org
 
-> At this point, it all generally looks good to me.  Let's get the
-> nits out of the way and merge it.
+Wow...They look like what I'm looking for. Nice!
+Thanks for the pointer!
 
-If you wanted to take the branch as is, then I'll do the documentation
-and pr_cont_kernfs_path() etc rewrite as separate patches, but I'll
-assume you'd like to at least wait for doc rewrite.
+I have one more question about trace-cmd.
+'trace-cmd report' shows time-sorted output even stack trace. See
+following example.
 
--serge
+trace-cmd-6338  [003]    54.046508: page_ref_mod:    ...
+trace-cmd-6583  [007]    54.046509: page_ref_mod:    ...
+trace-cmd-6338  [003]    54.046515: kernel_stack:         <stack trace>
+=> do_wp_page (ffffffff811a0c6f)                                                                                                                                      
+=> handle_mm_fault (ffffffff811a34e2)
+=> __do_page_fault (ffffffff810632da)
+=> trace_do_page_fault (ffffffff81063633)
+=> do_async_page_fault (ffffffff8105c3ea) 
+=> async_page_fault (ffffffff817733f8)                                                                                                                                                                   
+trace-cmd-6583  [007]    54.046515: kernel_stack:         <stack trace>                                                                                                                               
+=> do_wp_page (ffffffff811a0c6f)
+=> handle_mm_fault (ffffffff811a34e2)
+...
+
+Output of cpu 3, 7 are mixed and it's not easy to analyze it.
+
+I think that it'd be better not to sort stack trace. How do
+you think about it? Could you fix it, please?
+
+Thanks.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
