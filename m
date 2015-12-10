@@ -1,142 +1,55 @@
-From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH 2/2] mm/page_ref: add tracepoint to track down page
  reference manipulation
-Date: Thu, 10 Dec 2015 11:50:15 +0900
-Message-ID: <20151210025015.GA17967@js1304-P5Q-DELUXE>
+Date: Wed, 9 Dec 2015 22:36:48 -0500
+Message-ID: <20151209223648.4e9122b5@grimm.local.home>
 References: <1447053784-27811-1-git-send-email-iamjoonsoo.kim@lge.com>
- <1447053784-27811-2-git-send-email-iamjoonsoo.kim@lge.com>
- <564C9A86.1090906@suse.cz>
- <20151120063325.GB13061@js1304-P5Q-DELUXE>
- <20151120114225.7efeeafe@grimm.local.home>
- <20151123082805.GB29397@js1304-P5Q-DELUXE>
- <20151123092604.7ec1397d@gandalf.local.home>
- <20151124014527.GA32335@js1304-P5Q-DELUXE>
- <20151203041657.GB1495@js1304-P5Q-DELUXE>
- <20151209150154.31c142b9@gandalf.local.home>
+	<1447053784-27811-2-git-send-email-iamjoonsoo.kim@lge.com>
+	<564C9A86.1090906@suse.cz>
+	<20151120063325.GB13061@js1304-P5Q-DELUXE>
+	<20151120114225.7efeeafe@grimm.local.home>
+	<20151123082805.GB29397@js1304-P5Q-DELUXE>
+	<20151123092604.7ec1397d@gandalf.local.home>
+	<20151124014527.GA32335@js1304-P5Q-DELUXE>
+	<20151203041657.GB1495@js1304-P5Q-DELUXE>
+	<20151209150154.31c142b9@gandalf.local.home>
+	<20151210025015.GA17967@js1304-P5Q-DELUXE>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20151209150154.31c142b9@gandalf.local.home>
+In-Reply-To: <20151210025015.GA17967@js1304-P5Q-DELUXE>
 Sender: owner-linux-mm@kvack.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: Vlastimil Babka <vbabka@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@suse.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+To: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Cc: Vlastimil Babka <vbabka@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@suse.de>, "Kirill A.
+ Shutemov" <kirill.shutemov@linux.intel.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Dec 09, 2015 at 03:01:54PM -0500, Steven Rostedt wrote:
-> On Thu, 3 Dec 2015 13:16:58 +0900
-> Joonsoo Kim <iamjoonsoo.kim@lge.com> wrote:
+On Thu, 10 Dec 2015 11:50:15 +0900
+Joonsoo Kim <iamjoonsoo.kim@lge.com> wrote:
+
+> Output of cpu 3, 7 are mixed and it's not easy to analyze it.
 > 
-> > On Tue, Nov 24, 2015 at 10:45:28AM +0900, Joonsoo Kim wrote:
-> > > On Mon, Nov 23, 2015 at 09:26:04AM -0500, Steven Rostedt wrote:  
-> > > > On Mon, 23 Nov 2015 17:28:05 +0900
-> > > > Joonsoo Kim <iamjoonsoo.kim@lge.com> wrote:
-> > > >   
-> > > > > On Fri, Nov 20, 2015 at 11:42:25AM -0500, Steven Rostedt wrote:  
-> > > > > > On Fri, 20 Nov 2015 15:33:25 +0900
-> > > > > > Joonsoo Kim <iamjoonsoo.kim@lge.com> wrote:
-> > > > > > 
-> > > > > >     
-> > > > > > > Steven, is it possible to add tracepoint to inlined fucntion such as
-> > > > > > > get_page() in include/linux/mm.h?    
-> > > > > > 
-> > > > > > I highly recommend against it. The tracepoint code adds a bit of bloat,
-> > > > > > and if you inline it, you add that bloat to every use case. Also, it    
-> > > > > 
-> > > > > Is it worse than adding function call to my own stub function into
-> > > > > inlined function such as get_page(). I implemented it as following.
-> > > > > 
-> > > > > get_page()
-> > > > > {
-> > > > >         atomic_inc()
-> > > > >         stub_get_page()
-> > > > > }
-> > > > > 
-> > > > > stub_get_page() in foo.c
-> > > > > {
-> > > > >         trace_page_ref_get_page()
-> > > > > }  
-> > > > 
-> > > > Now you just slowed down the fast path. But what you could do is:
-> > > > 
-> > > > get_page()
-> > > > {
-> > > > 	atomic_inc();
-> > > > 	if (trace_page_ref_get_page_enabled())
-> > > > 		stub_get_page();
-> > > > }
-> > > > 
-> > > > Now that "trace_page_ref_get_page_enabled()" will turn into:
-> > > > 
-> > > > 	if (static_key_false(&__tracepoint_page_ref_get_page.key)) {
-> > > > 
-> > > > which is a jump label (nop when disabled, a jmp when enabled). That's
-> > > > less bloat but doesn't solve the include problem. You still need to add
-> > > > the include of that will cause havoc with other tracepoints.  
-> > > 
-> > > Yes, It also has a include dependency problem so I can't use
-> > > trace_page_ref_get_page_enabled() in mm.h. BTW, I tested following
-> > > implementation and it works fine.
-> > > 
-> > > extern struct tracepoint __tracepoint_page_ref_get_page;
-> > > 
-> > > get_page()
-> > > {
-> > >         atomic_inc()
-> > >         if (static_key_false(&__tracepoint_page_ref_get_page.key))
-> > >                 stub_get_page()
-> > > }
-> > > 
-> > > This would not slow down fast path although it can't prevent bloat.
-> > > I know that it isn't good code practice, but, this page reference
-> > > handling functions have complex include dependency so I'm not sure
-> > > I can solve it completely. For this special case, can I use
-> > > this raw data structure?
-> > >   
-> > 
-> > Steven, any comment?
-> 
-> Sorry for the later reply, I was going to reply but then got called off
-> to do something else, and then forgot about this message :-/
+> I think that it'd be better not to sort stack trace. How do
+> you think about it? Could you fix it, please?
 
-No problem. :)
+It may not be that easy to fix because of the sorting algorithm. That
+would require looking going ahead one more event each time and then
+checking if its a stacktrace. I may look at it and see if I can come up
+with something that's not too invasive in the algorithms.
 
-> 
-> I wanted you to look at what Andi has done here:
-> 
-> http://lkml.kernel.org/r/1449018060-1742-2-git-send-email-andi@firstfloor.org
-> 
->  and here
-> 
-> http://lkml.kernel.org/r/1449018060-1742-3-git-send-email-andi@firstfloor.org
+That said, for now you can use the --cpu option. I'm not sure I ever
+documented it as it was originally added for debugging, but I use it
+enough that it may be worth while to officially support it.
 
-Wow...They look like what I'm looking for. Nice!
-Thanks for the pointer!
+ trace-cmd report --cpu 3
 
-I have one more question about trace-cmd.
-'trace-cmd report' shows time-sorted output even stack trace. See
-following example.
+Will show you just cpu 3 and nothing else. Which is what I use a lot.
 
-trace-cmd-6338  [003]    54.046508: page_ref_mod:    ...
-trace-cmd-6583  [007]    54.046509: page_ref_mod:    ...
-trace-cmd-6338  [003]    54.046515: kernel_stack:         <stack trace>
-=> do_wp_page (ffffffff811a0c6f)                                                                                                                                      
-=> handle_mm_fault (ffffffff811a34e2)
-=> __do_page_fault (ffffffff810632da)
-=> trace_do_page_fault (ffffffff81063633)
-=> do_async_page_fault (ffffffff8105c3ea) 
-=> async_page_fault (ffffffff817733f8)                                                                                                                                                                   
-trace-cmd-6583  [007]    54.046515: kernel_stack:         <stack trace>                                                                                                                               
-=> do_wp_page (ffffffff811a0c6f)
-=> handle_mm_fault (ffffffff811a34e2)
-...
+But doing the stack trace thing may be something to fix as well. I'll
+see what I can do, but no guarantees.
 
-Output of cpu 3, 7 are mixed and it's not easy to analyze it.
-
-I think that it'd be better not to sort stack trace. How do
-you think about it? Could you fix it, please?
-
-Thanks.
+-- Steve
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
