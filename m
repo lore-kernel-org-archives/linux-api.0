@@ -1,269 +1,935 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH 0/3] restartable sequences v2: fast user-space
- percpu critical sections
-Date: Fri, 11 Dec 2015 13:39:45 +0000 (UTC)
-Message-ID: <729444271.232573.1449841185204.JavaMail.zimbra@efficios.com>
-References: <20151027235635.16059.11630.stgit@pjt-glaptop.roam.corp.google.com> <1070636085.232143.1449835536723.JavaMail.zimbra@efficios.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 1/3 v19] sys_membarrier(): system-wide memory barrier
+ (generic, x86)
+Date: Fri, 11 Dec 2015 19:05:49 +0100
+Message-ID: <566B107D.802@gmail.com>
+References: <1436561912-24365-1-git-send-email-mathieu.desnoyers@efficios.com> <1436561912-24365-2-git-send-email-mathieu.desnoyers@efficios.com> <5661B4E8.2070801@gmail.com> <1635187109.213051.1449305303824.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1070636085.232143.1449835536723.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+In-Reply-To: <1635187109.213051.1449305303824.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Paul Turner <commonly-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Nicholas Miell <nmiell-Wuw85uim5zDR7s880joybQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Dec 11, 2015, at 7:05 AM, Mathieu Desnoyers mathieu.desnoyers@=
-efficios.com wrote:
+Hi Matthew,
 
-> ----- On Oct 27, 2015, at 7:56 PM, Paul Turner commonly-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wro=
-te:
+On 12/05/2015 09:48 AM, Mathieu Desnoyers wrote:
+> Hi Michael,
 >=20
->> This is an update to the previously posted series at:
->>  https://lkml.org/lkml/2015/6/24/665
->>=20
->> Dave Watson has posted a similar follow-up which allows additional c=
-ritical
->> regions to be registered as well as single-step support at:
->>  https://lkml.org/lkml/2015/10/22/588
->>=20
->> This series is a new approach which introduces an alternate ABI that=
- does not
->> depend on open-coded assembly nor a central 'repository' of rseq seq=
-uences.
->> Sequences may now be inlined and the preparatory[*] work for the seq=
-uence can
->> be written in a higher level language.
+> Please find the membarrier man groff file attached. I re-integrated
+> some changes that went in initially only in the changelog text versio=
+n
+> back onto this groff source.
 >=20
-> Hi Paul,
+> Please let me know if you find any issue with it.
+
+Thanks for the page, but there's a few issues. Could you please=20
+submit a new version as an inline patch, and see what can be
+done w.r.t. the following points (see man-pages(7) for some
+background on some of these points):
+
+* Start DESCRIPTION off with a paragraph explaining what this system
+  call is about and why one would use it.
+
+* Page needs VERSIONS, CONFORMING TO, and SEE ALSO sections.
+
+* Is its possible to add a small EXAMPLE?
+
+* In a NOTES section, it might be helpful to briefly explain the follow=
+ing
+  concepts:  memory barrier and program order.
+
+Some comments on individual pieces below:
+
+> .TH MEMBARRIER 2 2015-04-15 "Linux" "Linux Programmer's Manual"
+> .SH NAME
+> membarrier \- issue memory barriers on a set of threads
+> .SH SYNOPSIS
+> .B #include <linux/membarrier.h>
+> .sp
+> .BI "int membarrier(int " cmd ", int " flags ");
+> .sp
+> .SH DESCRIPTION
+> The
+> .I cmd
+> argument is one of the following:
 >=20
-> Thanks for sending this updated series! A few questions:
+> .TP
+> .B MEMBARRIER_CMD_QUERY
+> Query the set of supported commands. It returns a bitmask of supporte=
+d
+> commands.
+
+Not clear here. Does this mean that the 'cmd' argument is a bit mask,
+rather than an enumeration? I think that needs to be spelled out.
+Also, the text should mention that the returned bitmask excludes
+MEMBARRIER_CMD_QUERY. (Why, actually?)
+
+> .TP
+> .B MEMBARRIER_CMD_SHARED
+> Execute a memory barrier on all threads running on the system.=20
+
+All threads on the system?
+
+> Upon
+> return from system call, the caller thread is ensured that all runnin=
+g
+> threads have passed through a state where all memory accesses to
+> user-space addresses match program order between entry to and return
+> from the system call (non-running threads are de facto in such a
+> state). This covers threads from all processes running on the system.
+> This command returns 0.
 >=20
-> When you say that the preparatory work can be written in a higher
-> level language, does it mean it still has to be inlined, or function
-> calls are explicitly supported ? It would be good to clarify this in
-> the changelog/documentation.
+> .PP
+> The
+> .I flags
+> argument is currently unused.
 >=20
-> Another point: in this changelog, it's unclear to me what the [*] ref=
-ers
-> to (after "preparatory"). Below there is a [*] before "A sequence ess=
-entially
-> has 3 steps", and and plain '*' before "0. Userspace stores current e=
-vent+cpu
-> counter values".
+> .PP
+> All memory accesses performed in program order from each targeted thr=
+ead
+
+What is a "targeted thread"? Some rewording is needed here.
+
+> is guaranteed to be ordered with respect to sys_membarrier(). If we u=
+se
+> the semantic "barrier()" to represent a compiler barrier forcing memo=
+ry
+> accesses to be performed in program order across the barrier, and
+> smp_mb() to represent explicit memory barriers forcing full memory
+> ordering across the barrier, we have the following ordering table for
+> each pair of barrier(), sys_membarrier() and smp_mb():
 >=20
->>=20
->> This new ABI has also been written to support debugger interaction i=
-n a way
->> that the previous ABI could not.
->>=20
->> [*] A sequence essentially has 3 steps:
->>  1) Determine which cpu the sequence is being run on
->>  2) Preparatory work specific to the state read in 1)
->>  3) A single commit instruction which finalizes any state updates.
+> The pair ordering is detailed as (O: ordered, X: not ordered):
 >=20
-> The link between those 3 steps and the following "progress" items
-> below seems a bit confusing, because those are two numbered lists.
-> Perhaps using the numbers above for the overall steps, and sub-number=
+>                        barrier()   smp_mb() sys_membarrier()
+>        barrier()          X           X            O
+>        smp_mb()           X           O            O
+>        sys_membarrier()   O           O            O
+>=20
+> .SH RETURN VALUE
+> On success, these system calls return zero. =20
+
+This sentence seems out of place. We have one system call.
+And the different operations described above return
+nonzero values on success.
+
+> On error, \-1 is returned,
+> and
+> .I errno
+> is set appropriately.
+> For a given command, with flags argument set to 0, this system call i=
 s
-> after a dot could help exposing the relation, e.g.:
->=20
-> 1.1 Userspace stores current event+cpu counter values
-> 2.1 Userspace loads the rip to move to at failure into cx
-> 2.2 Userspace loads the rip of the instruction following
->    the critical section into a registered TLS address.
-> ....
->=20
->=20
->>=20
->> We require a single instruction for (3) so that if it is interrupted=
- in any
->> way, we can proceed from (1) once more [or potentially bail].
->>=20
->> This new ABI can be described as:
->> Progress is ordered as follows:
->>  *0. Userspace stores current event+cpu counter values
->=20
-> This does not explain where those "current" values are
-> read from ? Moreover, step [3] below seems to refer to values
-> read at [0], but [0] is about storing values, not reading them.
-> There is probably a very simple explanation to this, but in its
-> current form, this is puzzling. Moreover, where is it stored ?
->=20
-> I would suggest to change event+cpu -> (event, cpu), since they
-> are not summed, but rather combined as a tuple.
->=20
->>   1. Userspace loads the rip to move to at failure into cx
->=20
-> Is it really cx (16-bit), or ecx/rcx ?
->=20
-> "the rip to move to at failure" could be defined as
-> "failure address" or "restart address", and then referred
-> to afterward. This would clarify point [4] below rather than
-> saying "to the address from =C2=AD[1]".
->=20
->>   2. Userspace loads the rip of the instruction following
->>      the critical section into a registered TLS address.
->=20
-> The critical section is not clearly defined. What is the
-> first instruction included in that c.s., and what is the
-> first instruction after the c.s. ?
->=20
->>   3. Userspace loads the values read at [0] into a known
->>      location.
->=20
-> How can we "load the value ... into" ? We usually load from,
-> and store to a location. What I think you mean here is that
-> Userspace loads the values read at [0] into a known register.
-> (I would expect location target a memory address).
->=20
->>   4. Userspace tests to see whether the current event and
->>      cpu counter values match those stored at 0.  Manually
->>      jumping to the address from [1] in the case of a
->>      mismatch.
->=20
-> address from [1] -> "failure/restart address"
->=20
->>=20
->>      Note that if we are preempted or otherwise interrupted
->>      then the kernel can also now perform this comparison
->>      and conditionally jump us to [1].
->=20
-> Does it jump us to [1] or to the failure/restart address ?
->=20
->>   5. Our final instruction before [2] is then our commit.
->>      The critical section is self-terminating.  [2] must
->>      also be cleared at this point.
->=20
-> Is it the step [2] or the instruction following the critical
-> section to you refer to here ?
->=20
->>=20
->> For x86_64:
->>   [3] uses rdx to represent cpu and event counter as a
->>       single 64-bit value.
->>=20
->> For i386:
->>   [3] uses ax for cpu and dx for the event_counter.
->=20
-> Having 16 bit only for CPU id limits us to 65536 CPUs.
-> Can this be an issue ?
->=20
-> Having 16 bit only for the event counter may start to become
-> tricky for counter overflows.
->=20
-> Are we strictly required to put both cpu id and seq counter
-> into the same register, or those could be put into two regs ?
->=20
->>=20
->>  Both:
->>   Instruction after commit: rseq_state->post_commit_instr
->>   Current event and cpu state: rseq_state->event_and_cpu
->>=20
->> Exactly, for x86_64 this looks like:
->>  movq <failed>, rcx [1]
->>  movq $1f, <commit_instr> [2]
->>  cmpq <start value>, <current value> [3] (start is in rcx)
->=20
-> As you stated yourself in a reply, rcx -> rdx.
->=20
->>  jnz <failed> (4)
->>  movq <to_write>, (<target>) (5)
->>  1: movq $0, <commit_instr>
->>=20
->> There has been some related discussion, which I am supportive of, in=
- which
->> we use fs/gs instead of TLS.  This maps naturally to the above and r=
-emoves
->> the current requirement for per-thread initialization (this is a goo=
-d thing!).
->=20
-> It would be important to keep allowing other architectures to use TLS=
--based
-> approaches though.
->=20
->>=20
->> On debugger interactions:
->>=20
->> There are some nice properties about this new style of API which all=
-ow it to
->> actually support safe interactions with a debugger:
->> a) The event counter is a per-cpu value.  This means that we can not=
- advance
->>    it if no threads from the same process execute on that cpu.  This
->>    naturally allows basic single step support with thread-isolation.
->> b) Single-step can be augmented to evalute the ABI without increment=
-ing the
->>    event count.
->> c) A debugger can also be augmented to evaluate this ABI and push re=
-starts
->>    on the kernel's behalf.
->>=20
->> This is also compatible with David's approach of not single stepping=
- between
->> 2-4 above.  However, I think these are ultimately a little stronger =
-since true
->> single-stepping and breakpoint support would be available.  Which wo=
-uld be
->> nice to allow actual debugging of sequences.
->>=20
->> (Note that I haven't bothered implementing these in the current patc=
-hset as we
->> are still winnowing down on the ABI and they just add complexity.  I=
-t's
->> important to note that they are possible however.)
->=20
-> Ensuring these restartable critical sections can be used on shared me=
-mory
-> across processes seems rather important. I wonder if the debuggabilit=
-y of the
-> critical section really justifies to introduce a "PRIVATE" and a "SHA=
-RED" mode
-> for the rseq (similar to sys_futex), or if we could just enforce that=
- no
-> breakpoint should be inserted within the critical section (except the=
- very
-> first instruction).
+> guaranteed to always return the same value until reboot.
 
-One more thought about breakpoints: I now understand that with your new=
- approach,
-the critical section ranges are only tracked momentarily during the cri=
-tical
-section. There is no registry kept of all critical sections, which coul=
-d make
-ptrace peek tweaks challenging.
+I don't understand the intent of the last sentence. What idea are you
+trying to convey?
 
-An alternative approach might be to allow the debugger to put a breakpo=
-int
-within the critical section, but override the breakpoint handler in the=
- kernel
-so that it just resumes user-space execution, effectively ignoring the
-breakpoint.
+> .SH ERRORS
+> .TP
+> .B ENOSYS
+> System call is not implemented.
+> .TP
+> .B EINVAL
+> Invalid arguments.
+
+Would be clearer to say here: "cmd is invalid or flags is nonezero"
 
 Thanks,
 
-Mathieu
+Michael
 
+
+> ----- On Dec 4, 2015, at 4:44 PM, Michael Kerrisk mtk.manpages@gmail.=
+com wrote:
 >=20
-> Thoughts ?
->=20
-> Thanks,
->=20
-> Mathieu
->=20
->=20
->>=20
+>> Hi Mathieu,
+>>
+>> In the patch below you have a man page type of text. Is that
+>> just plain text, or do you have some groff source somewhere?
+>>
 >> Thanks,
->>=20
->> - Paul
+>>
+>> Michael
+>>
+>>
+>> On 07/10/2015 10:58 PM, Mathieu Desnoyers wrote:
+>>> Here is an implementation of a new system call, sys_membarrier(), w=
+hich
+>>> executes a memory barrier on all threads running on the system. It =
+is
+>>> implemented by calling synchronize_sched(). It can be used to distr=
+ibute
+>>> the cost of user-space memory barriers asymmetrically by transformi=
+ng
+>>> pairs of memory barriers into pairs consisting of sys_membarrier() =
+and a
+>>> compiler barrier. For synchronization primitives that distinguish
+>>> between read-side and write-side (e.g. userspace RCU [1], rwlocks),=
+ the
+>>> read-side can be accelerated significantly by moving the bulk of th=
+e
+>>> memory barrier overhead to the write-side.
+>>>
+>>> The existing applications of which I am aware that would be improve=
+d by this
+>>> system call are as follows:
+>>>
+>>> * Through Userspace RCU library (http://urcu.so)
+>>>   - DNS server (Knot DNS) https://www.knot-dns.cz/
+>>>   - Network sniffer (http://netsniff-ng.org/)
+>>>   - Distributed object storage (https://sheepdog.github.io/sheepdog=
+/)
+>>>   - User-space tracing (http://lttng.org)
+>>>   - Network storage system (https://www.gluster.org/)
+>>>   - Virtual routers
+>>>   (https://events.linuxfoundation.org/sites/events/files/slides/DPD=
+K_RCU_0MQ.pdf)
+>>>   - Financial software (https://lkml.org/lkml/2015/3/23/189)
+>>>
+>>> Those projects use RCU in userspace to increase read-side speed and
+>>> scalability compared to locking. Especially in the case of RCU used
+>>> by libraries, sys_membarrier can speed up the read-side by moving t=
+he
+>>> bulk of the memory barrier cost to synchronize_rcu().
+>>>
+>>> * Direct users of sys_membarrier
+>>>   - core dotnet garbage collector (https://github.com/dotnet/corecl=
+r/issues/198)
+>>>
+>>> Microsoft core dotnet GC developers are planning to use the mprotec=
+t()
+>>> side-effect of issuing memory barriers through IPIs as a way to imp=
+lement
+>>> Windows FlushProcessWriteBuffers() on Linux. They are referring to
+>>> sys_membarrier in their github thread, specifically stating that
+>>> sys_membarrier() is what they are looking for.
+>>>
+>>> This implementation is based on kernel v4.1-rc8.
+>>>
+>>> To explain the benefit of this scheme, let's introduce two example =
+threads:
+>>>
+>>> Thread A (non-frequent, e.g. executing liburcu synchronize_rcu())
+>>> Thread B (frequent, e.g. executing liburcu
+>>> rcu_read_lock()/rcu_read_unlock())
+>>>
+>>> In a scheme where all smp_mb() in thread A are ordering memory acce=
+sses
+>>> with respect to smp_mb() present in Thread B, we can change each
+>>> smp_mb() within Thread A into calls to sys_membarrier() and each
+>>> smp_mb() within Thread B into compiler barriers "barrier()".
+>>>
+>>> Before the change, we had, for each smp_mb() pairs:
+>>>
+>>> Thread A                    Thread B
+>>> previous mem accesses       previous mem accesses
+>>> smp_mb()                    smp_mb()
+>>> following mem accesses      following mem accesses
+>>>
+>>> After the change, these pairs become:
+>>>
+>>> Thread A                    Thread B
+>>> prev mem accesses           prev mem accesses
+>>> sys_membarrier()            barrier()
+>>> follow mem accesses         follow mem accesses
+>>>
+>>> As we can see, there are two possible scenarios: either Thread B me=
+mory
+>>> accesses do not happen concurrently with Thread A accesses (1), or =
+they
+>>> do (2).
+>>>
+>>> 1) Non-concurrent Thread A vs Thread B accesses:
+>>>
+>>> Thread A                    Thread B
+>>> prev mem accesses
+>>> sys_membarrier()
+>>> follow mem accesses
+>>>                             prev mem accesses
+>>>                             barrier()
+>>>                             follow mem accesses
+>>>
+>>> In this case, thread B accesses will be weakly ordered. This is OK,
+>>> because at that point, thread A is not particularly interested in
+>>> ordering them with respect to its own accesses.
+>>>
+>>> 2) Concurrent Thread A vs Thread B accesses
+>>>
+>>> Thread A                    Thread B
+>>> prev mem accesses           prev mem accesses
+>>> sys_membarrier()            barrier()
+>>> follow mem accesses         follow mem accesses
+>>>
+>>> In this case, thread B accesses, which are ensured to be in program
+>>> order thanks to the compiler barrier, will be "upgraded" to full
+>>> smp_mb() by synchronize_sched().
+>>>
+>>> * Benchmarks
+>>>
+>>> On Intel Xeon E5405 (8 cores)
+>>> (one thread is calling sys_membarrier, the other 7 threads are busy
+>>> looping)
+>>>
+>>> 1000 non-expedited sys_membarrier calls in 33s =3D 33 milliseconds/=
+call.
+>>>
+>>> * User-space user of this system call: Userspace RCU library
+>>>
+>>> Both the signal-based and the sys_membarrier userspace RCU schemes
+>>> permit us to remove the memory barrier from the userspace RCU
+>>> rcu_read_lock() and rcu_read_unlock() primitives, thus significantl=
+y
+>>> accelerating them. These memory barriers are replaced by compiler
+>>> barriers on the read-side, and all matching memory barriers on the
+>>> write-side are turned into an invocation of a memory barrier on all
+>>> active threads in the process. By letting the kernel perform this
+>>> synchronization rather than dumbly sending a signal to every proces=
+s
+>>> threads (as we currently do), we diminish the number of unnecessary=
+ wake
+>>> ups and only issue the memory barriers on active threads. Non-runni=
+ng
+>>> threads do not need to execute such barrier anyway, because these a=
+re
+>>> implied by the scheduler context switches.
+>>>
+>>> Results in liburcu:
+>>>
+>>> Operations in 10s, 6 readers, 2 writers:
+>>>
+>>> memory barriers in reader:    1701557485 reads, 2202847 writes
+>>> signal-based scheme:          9830061167 reads,    6700 writes
+>>> sys_membarrier:               9952759104 reads,     425 writes
+>>> sys_membarrier (dyn. check):  7970328887 reads,     425 writes
+>>>
+>>> The dynamic sys_membarrier availability check adds some overhead to
+>>> the read-side compared to the signal-based scheme, but besides that=
+,
+>>> sys_membarrier slightly outperforms the signal-based scheme. Howeve=
+r,
+>>> this non-expedited sys_membarrier implementation has a much slower =
+grace
+>>> period than signal and memory barrier schemes.
+>>>
+>>> Besides diminishing the number of wake-ups, one major advantage of =
+the
+>>> membarrier system call over the signal-based scheme is that it does=
+ not
+>>> need to reserve a signal. This plays much more nicely with librarie=
+s,
+>>> and with processes injected into for tracing purposes, for which we
+>>> cannot expect that signals will be unused by the application.
+>>>
+>>> An expedited version of this system call can be added later on to s=
+peed
+>>> up the grace period. Its implementation will likely depend on readi=
+ng
+>>> the cpu_curr()->mm without holding each CPU's rq lock.
+>>>
+>>> This patch adds the system call to x86 and to asm-generic.
+>>>
+>>> [1] http://urcu.so
+>>>
+>>> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+>>> Reviewed-by: Paul E. McKenney <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+>>> Reviewed-by: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+>>> CC: KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
+>>> CC: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+>>> CC: Nicholas Miell <nmiell-Wuw85uim5zDR7s880joybQ@public.gmane.org>
+>>> CC: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+>>> CC: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>>> CC: Alan Cox <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
+>>> CC: Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+>>> CC: Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>
+>>> CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+>>> CC: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+>>> CC: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+>>> CC: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>>> CC: Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>>> CC: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>>> CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>>>
+>>> ---
+>>>
+>>> membarrier(2) man page:
+>>> --------------- snip -------------------
+>>> MEMBARRIER(2)              Linux Programmer's Manual             ME=
+MBARRIER(2)
+>>>
+>>> NAME
+>>>        membarrier - issue memory barriers on a set of threads
+>>>
+>>> SYNOPSIS
+>>>        #include <linux/membarrier.h>
+>>>
+>>>        int membarrier(int cmd, int flags);
+>>>
+>>> DESCRIPTION
+>>>        The cmd argument is one of the following:
+>>>
+>>>        MEMBARRIER_CMD_QUERY
+>>>               Query  the  set  of  supported commands. It returns a=
+ bitmask of
+>>>               supported commands.
+>>>
+>>>        MEMBARRIER_CMD_SHARED
+>>>               Execute a memory barrier on all threads running on  t=
+he  system.
+>>>               Upon  return from system call, the caller thread is e=
+nsured that
+>>>               all running threads have passed through a state where=
+ all memory
+>>>               accesses  to  user-space  addresses  match program or=
+der between
+>>>               entry to and return from the system  call  (non-runni=
+ng  threads
+>>>               are de facto in such a state). This covers threads fr=
+om all pro=E2=80=90
+>>>               cesses running on the system.  This command returns 0=
+=2E
+>>>
+>>>        The flags argument needs to be 0. For future extensions.
+>>>
+>>>        All memory accesses performed  in  program  order  from  eac=
+h  targeted
+>>>        thread is guaranteed to be ordered with respect to sys_memba=
+rrier(). If
+>>>        we use the semantic "barrier()" to represent a compiler barr=
+ier forcing
+>>>        memory  accesses  to  be performed in program order across t=
+he barrier,
+>>>        and smp_mb() to represent explicit memory barriers forcing f=
+ull  memory
+>>>        ordering  across  the barrier, we have the following orderin=
+g table for
+>>>        each pair of barrier(), sys_membarrier() and smp_mb():
+>>>
+>>>        The pair ordering is detailed as (O: ordered, X: not ordered=
+):
+>>>
+>>>                               barrier()   smp_mb() sys_membarrier()
+>>>               barrier()          X           X            O
+>>>               smp_mb()           X           O            O
+>>>               sys_membarrier()   O           O            O
+>>>
+>>> RETURN VALUE
+>>>        On success, these system calls return zero.  On error, -1 is=
+  returned,
+>>>        and errno is set appropriately. For a given command, with fl=
+ags
+>>>        argument set to 0, this system call is guaranteed to always =
+return the
+>>>        same value until reboot.
+>>>
+>>> ERRORS
+>>>        ENOSYS System call is not implemented.
+>>>
+>>>        EINVAL Invalid arguments.
+>>>
+>>> Linux                             2015-04-15                     ME=
+MBARRIER(2)
+>>> --------------- snip -------------------
+>>>
+>>> Changes since v18:
+>>> - Add unlikely() check to flags,
+>>> - Describe current users in changelog.
+>>>
+>>> Changes since v17:
+>>> - Update commit message.
+>>>
+>>> Changes since v16:
+>>> - Update documentation.
+>>> - Add man page to changelog.
+>>> - Build sys_membarrier on !CONFIG_SMP. It allows userspace applicat=
+ions
+>>>   to not care about the number of processors on the system.  Based =
+on
+>>>   recommendations from Stephen Hemminger and Steven Rostedt.
+>>> - Check that flags argument is 0, update documentation to require i=
+t.
+>>>
+>>> Changes since v15:
+>>> - Add flags argument in addition to cmd.
+>>> - Update documentation.
+>>>
+>>> Changes since v14:
+>>> - Take care of Thomas Gleixner's comments.
+>>>
+>>> Changes since v13:
+>>> - Move to kernel/membarrier.c.
+>>> - Remove MEMBARRIER_PRIVATE flag.
+>>> - Add MAINTAINERS file entry.
+>>>
+>>> Changes since v12:
+>>> - Remove _FLAG suffix from uapi flags.
+>>> - Add Expert menuconfig option CONFIG_MEMBARRIER (default=3Dy).
+>>> - Remove EXPEDITED mode. Only implement non-expedited for now, unti=
+l
+>>>   reading the cpu_curr()->mm can be done without holding the CPU's =
+rq
+>>>   lock.
+>>>
+>>> Changes since v11:
+>>> - 5 years have passed.
+>>> - Rebase on v3.19 kernel.
+>>> - Add futex-alike PRIVATE vs SHARED semantic: private for per-proce=
+ss
+>>>   barriers, non-private for memory mappings shared between processe=
+s.
+>>> - Simplify user API.
+>>> - Code refactoring.
+>>>
+>>> Changes since v10:
+>>> - Apply Randy's comments.
+>>> - Rebase on 2.6.34-rc4 -tip.
+>>>
+>>> Changes since v9:
+>>> - Clean up #ifdef CONFIG_SMP.
+>>>
+>>> Changes since v8:
+>>> - Go back to rq spin locks taken by sys_membarrier() rather than ad=
+ding
+>>>   memory barriers to the scheduler. It implies a potential RoS
+>>>   (reduction of service) if sys_membarrier() is executed in a busy-=
+loop
+>>>   by a user, but nothing more than what is already possible with ot=
+her
+>>>   existing system calls, but saves memory barriers in the scheduler=
+ fast
+>>>   path.
+>>> - re-add the memory barrier comments to x86 switch_mm() as an examp=
+le to
+>>>   other architectures.
+>>> - Update documentation of the memory barriers in sys_membarrier and
+>>>   switch_mm().
+>>> - Append execution scenarios to the changelog showing the purpose o=
+f
+>>>   each memory barrier.
+>>>
+>>> Changes since v7:
+>>> - Move spinlock-mb and scheduler related changes to separate patche=
+s.
+>>> - Add support for sys_membarrier on x86_32.
+>>> - Only x86 32/64 system calls are reserved in this patch. It is pla=
+nned
+>>>   to incrementally reserve syscall IDs on other architectures as th=
+ese
+>>>   are tested.
+>>>
+>>> Changes since v6:
+>>> - Remove some unlikely() not so unlikely.
+>>> - Add the proper scheduler memory barriers needed to only use the R=
+CU
+>>>   read lock in sys_membarrier rather than take each runqueue spinlo=
+ck:
+>>> - Move memory barriers from per-architecture switch_mm() to schedul=
+e()
+>>>   and finish_lock_switch(), where they clearly document that all da=
+ta
+>>>   protected by the rq lock is guaranteed to have memory barriers is=
+sued
+>>>   between the scheduler update and the task execution. Replacing th=
+e
+>>>   spin lock acquire/release barriers with these memory barriers imp=
+ly
+>>>   either no overhead (x86 spinlock atomic instruction already impli=
+es a
+>>>   full mb) or some hopefully small overhead caused by the upgrade o=
+f the
+>>>   spinlock acquire/release barriers to more heavyweight smp_mb().
+>>> - The "generic" version of spinlock-mb.h declares both a mapping to
+>>>   standard spinlocks and full memory barriers. Each architecture ca=
+n
+>>>   specialize this header following their own need and declare
+>>>   CONFIG_HAVE_SPINLOCK_MB to use their own spinlock-mb.h.
+>>> - Note: benchmarks of scheduler overhead with specialized spinlock-=
+mb.h
+>>>   implementations on a wide range of architecture would be welcome.
+>>>
+>>> Changes since v5:
+>>> - Plan ahead for extensibility by introducing mandatory/optional ma=
+sks
+>>>   to the "flags" system call parameter. Past experience with accept=
+4(),
+>>>   signalfd4(), eventfd2(), epoll_create1(), dup3(), pipe2(), and
+>>>   inotify_init1() indicates that this is the kind of thing we want =
+to
+>>>   plan for. Return -EINVAL if the mandatory flags received are unkn=
+own.
+>>> - Create include/linux/membarrier.h to define these flags.
+>>> - Add MEMBARRIER_QUERY optional flag.
+>>>
+>>> Changes since v4:
+>>> - Add "int expedited" parameter, use synchronize_sched() in the
+>>>   non-expedited case. Thanks to Lai Jiangshan for making us conside=
+r
+>>>   seriously using synchronize_sched() to provide the low-overhead
+>>>   membarrier scheme.
+>>> - Check num_online_cpus() =3D=3D 1, quickly return without doing no=
+thing.
+>>>
+>>> Changes since v3a:
+>>> - Confirm that each CPU indeed runs the current task's ->mm before
+>>>   sending an IPI. Ensures that we do not disturb RT tasks in the
+>>>   presence of lazy TLB shootdown.
+>>> - Document memory barriers needed in switch_mm().
+>>> - Surround helper functions with #ifdef CONFIG_SMP.
+>>>
+>>> Changes since v2:
+>>> - simply send-to-many to the mm_cpumask. It contains the list of
+>>>   processors we have to IPI to (which use the mm), and this mask is
+>>>   updated atomically.
+>>>
+>>> Changes since v1:
+>>> - Only perform the IPI in CONFIG_SMP.
+>>> - Only perform the IPI if the process has more than one thread.
+>>> - Only send IPIs to CPUs involved with threads belonging to our pro=
+cess.
+>>> - Adaptative IPI scheme (single vs many IPI with threshold).
+>>> - Issue smp_mb() at the beginning and end of the system call.
+>>> ---
+>>>  MAINTAINERS                            |  8 +++++
+>>>  arch/x86/entry/syscalls/syscall_32.tbl |  1 +
+>>>  arch/x86/entry/syscalls/syscall_64.tbl |  1 +
+>>>  include/linux/syscalls.h               |  2 ++
+>>>  include/uapi/asm-generic/unistd.h      |  4 ++-
+>>>  include/uapi/linux/Kbuild              |  1 +
+>>>  include/uapi/linux/membarrier.h        | 53 ++++++++++++++++++++++=
++++++
+>>>  init/Kconfig                           | 12 +++++++
+>>>  kernel/Makefile                        |  1 +
+>>>  kernel/membarrier.c                    | 66 ++++++++++++++++++++++=
+++++++++++++
+>>>  kernel/sys_ni.c                        |  3 ++
+>>>  11 files changed, 151 insertions(+), 1 deletion(-)
+>>>  create mode 100644 include/uapi/linux/membarrier.h
+>>>  create mode 100644 kernel/membarrier.c
+>>>
+>>> diff --git a/MAINTAINERS b/MAINTAINERS
+>>> index 0d70760..b560da6 100644
+>>> --- a/MAINTAINERS
+>>> +++ b/MAINTAINERS
+>>> @@ -6642,6 +6642,14 @@ W:	http://www.mellanox.com
+>>>  Q:	http://patchwork.ozlabs.org/project/netdev/list/
+>>>  F:	drivers/net/ethernet/mellanox/mlx4/en_*
+>>> =20
+>>> +MEMBARRIER SUPPORT
+>>> +M:	Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+>>> +M:	"Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+>>> +L:	linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>>> +S:	Supported
+>>> +F:	kernel/membarrier.c
+>>> +F:	include/uapi/linux/membarrier.h
+>>> +
+>>>  MEMORY MANAGEMENT
+>>>  L:	linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+>>>  W:	http://www.linux-mm.org
+>>> diff --git a/arch/x86/entry/syscalls/syscall_32.tbl
+>>> b/arch/x86/entry/syscalls/syscall_32.tbl
+>>> index ef8187f..e63ad61 100644
+>>> --- a/arch/x86/entry/syscalls/syscall_32.tbl
+>>> +++ b/arch/x86/entry/syscalls/syscall_32.tbl
+>>> @@ -365,3 +365,4 @@
+>>>  356	i386	memfd_create		sys_memfd_create
+>>>  357	i386	bpf			sys_bpf
+>>>  358	i386	execveat		sys_execveat			stub32_execveat
+>>> +359	i386	membarrier		sys_membarrier
+>>> diff --git a/arch/x86/entry/syscalls/syscall_64.tbl
+>>> b/arch/x86/entry/syscalls/syscall_64.tbl
+>>> index 9ef32d5..87f3cd6 100644
+>>> --- a/arch/x86/entry/syscalls/syscall_64.tbl
+>>> +++ b/arch/x86/entry/syscalls/syscall_64.tbl
+>>> @@ -329,6 +329,7 @@
+>>>  320	common	kexec_file_load		sys_kexec_file_load
+>>>  321	common	bpf			sys_bpf
+>>>  322	64	execveat		stub_execveat
+>>> +323	common	membarrier		sys_membarrier
+>>> =20
+>>>  #
+>>>  # x32-specific system call numbers start at 512 to avoid cache imp=
+act
+>>> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+>>> index b45c45b..d4ab99b 100644
+>>> --- a/include/linux/syscalls.h
+>>> +++ b/include/linux/syscalls.h
+>>> @@ -884,4 +884,6 @@ asmlinkage long sys_execveat(int dfd, const cha=
+r __user
+>>> *filename,
+>>>  			const char __user *const __user *argv,
+>>>  			const char __user *const __user *envp, int flags);
+>>> =20
+>>> +asmlinkage long sys_membarrier(int cmd, int flags);
+>>> +
+>>>  #endif
+>>> diff --git a/include/uapi/asm-generic/unistd.h
+>>> b/include/uapi/asm-generic/unistd.h
+>>> index e016bd9..8da542a 100644
+>>> --- a/include/uapi/asm-generic/unistd.h
+>>> +++ b/include/uapi/asm-generic/unistd.h
+>>> @@ -709,9 +709,11 @@ __SYSCALL(__NR_memfd_create, sys_memfd_create)
+>>>  __SYSCALL(__NR_bpf, sys_bpf)
+>>>  #define __NR_execveat 281
+>>>  __SC_COMP(__NR_execveat, sys_execveat, compat_sys_execveat)
+>>> +#define __NR_membarrier 282
+>>> +__SYSCALL(__NR_membarrier, sys_membarrier)
+>>> =20
+>>>  #undef __NR_syscalls
+>>> -#define __NR_syscalls 282
+>>> +#define __NR_syscalls 283
+>>> =20
+>>>  /*
+>>>   * All syscalls below here should go away really,
+>>> diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
+>>> index 1ff9942..e6f229a 100644
+>>> --- a/include/uapi/linux/Kbuild
+>>> +++ b/include/uapi/linux/Kbuild
+>>> @@ -251,6 +251,7 @@ header-y +=3D mdio.h
+>>>  header-y +=3D media.h
+>>>  header-y +=3D media-bus-format.h
+>>>  header-y +=3D mei.h
+>>> +header-y +=3D membarrier.h
+>>>  header-y +=3D memfd.h
+>>>  header-y +=3D mempolicy.h
+>>>  header-y +=3D meye.h
+>>> diff --git a/include/uapi/linux/membarrier.h b/include/uapi/linux/m=
+embarrier.h
+>>> new file mode 100644
+>>> index 0000000..e0b108b
+>>> --- /dev/null
+>>> +++ b/include/uapi/linux/membarrier.h
+>>> @@ -0,0 +1,53 @@
+>>> +#ifndef _UAPI_LINUX_MEMBARRIER_H
+>>> +#define _UAPI_LINUX_MEMBARRIER_H
+>>> +
+>>> +/*
+>>> + * linux/membarrier.h
+>>> + *
+>>> + * membarrier system call API
+>>> + *
+>>> + * Copyright (c) 2010, 2015 Mathieu Desnoyers <mathieu.desnoyers@e=
+fficios.com>
+>>> + *
+>>> + * Permission is hereby granted, free of charge, to any person obt=
+aining a copy
+>>> + * of this software and associated documentation files (the "Softw=
+are"), to
+>>> deal
+>>> + * in the Software without restriction, including without limitati=
+on the rights
+>>> + * to use, copy, modify, merge, publish, distribute, sublicense, a=
+nd/or sell
+>>> + * copies of the Software, and to permit persons to whom the Softw=
+are is
+>>> + * furnished to do so, subject to the following conditions:
+>>> + *
+>>> + * The above copyright notice and this permission notice shall be =
+included in
+>>> + * all copies or substantial portions of the Software.
+>>> + *
+>>> + * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,=
+ EXPRESS OR
+>>> + * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHAN=
+TABILITY,
+>>> + * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVE=
+NT SHALL THE
+>>> + * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES O=
+R OTHER
+>>> + * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,=
+ ARISING
+>>> FROM,
+>>> + * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER D=
+EALINGS IN
+>>> THE
+>>> + * SOFTWARE.
+>>> + */
+>>> +
+>>> +/**
+>>> + * enum membarrier_cmd - membarrier system call command
+>>> + * @MEMBARRIER_CMD_QUERY:   Query the set of supported commands. I=
+t returns
+>>> + *                          a bitmask of valid commands.
+>>> + * @MEMBARRIER_CMD_SHARED:  Execute a memory barrier on all runnin=
+g threads.
+>>> + *                          Upon return from system call, the call=
+er thread
+>>> + *                          is ensured that all running threads ha=
+ve passed
+>>> + *                          through a state where all memory acces=
+ses to
+>>> + *                          user-space addresses match program ord=
+er between
+>>> + *                          entry to and return from the system ca=
+ll
+>>> + *                          (non-running threads are de facto in s=
+uch a
+>>> + *                          state). This covers threads from all p=
+rocesses
+>>> + *                          running on the system. This command re=
+turns 0.
+>>> + *
+>>> + * Command to be passed to the membarrier system call. The command=
+s need to
+>>> + * be a single bit each, except for MEMBARRIER_CMD_QUERY which is =
+assigned to
+>>> + * the value 0.
+>>> + */
+>>> +enum membarrier_cmd {
+>>> +	MEMBARRIER_CMD_QUERY =3D 0,
+>>> +	MEMBARRIER_CMD_SHARED =3D (1 << 0),
+>>> +};
+>>> +
+>>> +#endif /* _UAPI_LINUX_MEMBARRIER_H */
+>>> diff --git a/init/Kconfig b/init/Kconfig
+>>> index af09b4f..4bba60f 100644
+>>> --- a/init/Kconfig
+>>> +++ b/init/Kconfig
+>>> @@ -1577,6 +1577,18 @@ config PCI_QUIRKS
+>>>  	  bugs/quirks. Disable this only if your target machine is
+>>>  	  unaffected by PCI quirks.
+>>> =20
+>>> +config MEMBARRIER
+>>> +	bool "Enable membarrier() system call" if EXPERT
+>>> +	default y
+>>> +	help
+>>> +	  Enable the membarrier() system call that allows issuing memory
+>>> +	  barriers across all running threads, which can be used to distr=
+ibute
+>>> +	  the cost of user-space memory barriers asymmetrically by transf=
+orming
+>>> +	  pairs of memory barriers into pairs consisting of membarrier() =
+and a
+>>> +	  compiler barrier.
+>>> +
+>>> +	  If unsure, say Y.
+>>> +
+>>>  config EMBEDDED
+>>>  	bool "Embedded system"
+>>>  	option allnoconfig_y
+>>> diff --git a/kernel/Makefile b/kernel/Makefile
+>>> index 43c4c92..92a481b 100644
+>>> --- a/kernel/Makefile
+>>> +++ b/kernel/Makefile
+>>> @@ -98,6 +98,7 @@ obj-$(CONFIG_CRASH_DUMP) +=3D crash_dump.o
+>>>  obj-$(CONFIG_JUMP_LABEL) +=3D jump_label.o
+>>>  obj-$(CONFIG_CONTEXT_TRACKING) +=3D context_tracking.o
+>>>  obj-$(CONFIG_TORTURE_TEST) +=3D torture.o
+>>> +obj-$(CONFIG_MEMBARRIER) +=3D membarrier.o
+>>> =20
+>>>  $(obj)/configs.o: $(obj)/config_data.h
+>>> =20
+>>> diff --git a/kernel/membarrier.c b/kernel/membarrier.c
+>>> new file mode 100644
+>>> index 0000000..536c727
+>>> --- /dev/null
+>>> +++ b/kernel/membarrier.c
+>>> @@ -0,0 +1,66 @@
+>>> +/*
+>>> + * Copyright (C) 2010, 2015 Mathieu Desnoyers <mathieu.desnoyers@e=
+fficios.com>
+>>> + *
+>>> + * membarrier system call
+>>> + *
+>>> + * This program is free software; you can redistribute it and/or m=
+odify
+>>> + * it under the terms of the GNU General Public License as publish=
+ed by
+>>> + * the Free Software Foundation; either version 2 of the License, =
+or
+>>> + * (at your option) any later version.
+>>> + *
+>>> + * This program is distributed in the hope that it will be useful,
+>>> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+>>> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+>>> + * GNU General Public License for more details.
+>>> + */
+>>> +
+>>> +#include <linux/syscalls.h>
+>>> +#include <linux/membarrier.h>
+>>> +
+>>> +/*
+>>> + * Bitmask made from a "or" of all commands within enum membarrier=
+_cmd,
+>>> + * except MEMBARRIER_CMD_QUERY.
+>>> + */
+>>> +#define MEMBARRIER_CMD_BITMASK	(MEMBARRIER_CMD_SHARED)
+>>> +
+>>> +/**
+>>> + * sys_membarrier - issue memory barriers on a set of threads
+>>> + * @cmd:   Takes command values defined in enum membarrier_cmd.
+>>> + * @flags: Currently needs to be 0. For future extensions.
+>>> + *
+>>> + * If this system call is not implemented, -ENOSYS is returned. If=
+ the
+>>> + * command specified does not exist, or if the command argument is=
+ invalid,
+>>> + * this system call returns -EINVAL. For a given command, with fla=
+gs argument
+>>> + * set to 0, this system call is guaranteed to always return the s=
+ame value
+>>> + * until reboot.
+>>> + *
+>>> + * All memory accesses performed in program order from each target=
+ed thread
+>>> + * is guaranteed to be ordered with respect to sys_membarrier(). I=
+f we use
+>>> + * the semantic "barrier()" to represent a compiler barrier forcin=
+g memory
+>>> + * accesses to be performed in program order across the barrier, a=
+nd
+>>> + * smp_mb() to represent explicit memory barriers forcing full mem=
+ory
+>>> + * ordering across the barrier, we have the following ordering tab=
+le for
+>>> + * each pair of barrier(), sys_membarrier() and smp_mb():
+>>> + *
+>>> + * The pair ordering is detailed as (O: ordered, X: not ordered):
+>>> + *
+>>> + *                        barrier()   smp_mb() sys_membarrier()
+>>> + *        barrier()          X           X            O
+>>> + *        smp_mb()           X           O            O
+>>> + *        sys_membarrier()   O           O            O
+>>> + */
+>>> +SYSCALL_DEFINE2(membarrier, int, cmd, int, flags)
+>>> +{
+>>> +	if (unlikely(flags))
+>>> +		return -EINVAL;
+>>> +	switch (cmd) {
+>>> +	case MEMBARRIER_CMD_QUERY:
+>>> +		return MEMBARRIER_CMD_BITMASK;
+>>> +	case MEMBARRIER_CMD_SHARED:
+>>> +		if (num_online_cpus() > 1)
+>>> +			synchronize_sched();
+>>> +		return 0;
+>>> +	default:
+>>> +		return -EINVAL;
+>>> +	}
+>>> +}
+>>> diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+>>> index 7995ef5..eb4fde0 100644
+>>> --- a/kernel/sys_ni.c
+>>> +++ b/kernel/sys_ni.c
+>>> @@ -243,3 +243,6 @@ cond_syscall(sys_bpf);
+>>> =20
+>>>  /* execveat */
+>>>  cond_syscall(sys_execveat);
+>>> +
+>>> +/* membarrier */
+>>> +cond_syscall(sys_membarrier);
+>>>
+>>
+>>
+>> --
+>> Michael Kerrisk
+>> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+>> Linux/UNIX System Programming Training: http://man7.org/training/
 >=20
-> --
-> Mathieu Desnoyers
-> EfficiOS Inc.
-> http://www.efficios.com
+
 
 --=20
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
