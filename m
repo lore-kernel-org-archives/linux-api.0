@@ -1,56 +1,60 @@
-From: Yongji Xie <xyjxie-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: [RFC PATCH 0/3] vfio-pci: Allow to mmap sub-page MMIO BARs and MSI-X table on PPC64 platform
-Date: Fri, 11 Dec 2015 16:53:11 +0800
-Message-ID: <1449823994-3356-1-git-send-email-xyjxie@linux.vnet.ibm.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org
-Cc: aik-sLpHqDYs0B2HXe+LvDLADg@public.gmane.org, alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org, paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, warrier-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, zhong-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, nikunj-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, Yongji Xie <xyjxie-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+From: Yongji Xie <xyjxie@linux.vnet.ibm.com>
+Subject: [RFC PATCH 1/3] powerpc/pci: Enforce all MMIO BARs to be page aligned
+Date: Fri, 11 Dec 2015 16:53:12 +0800
+Message-ID: <1449823994-3356-2-git-send-email-xyjxie@linux.vnet.ibm.com>
+References: <1449823994-3356-1-git-send-email-xyjxie@linux.vnet.ibm.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1449823994-3356-1-git-send-email-xyjxie@linux.vnet.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: kvm@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org
+Cc: aik@ozlabs.ru, alex.williamson@redhat.com, benh@kernel.crashing.org, paulus@samba.org, mpe@ellerman.id.au, warrier@linux.vnet.ibm.com, zhong@linux.vnet.ibm.com, nikunj@linux.vnet.ibm.com, Yongji Xie <xyjxie@linux.vnet.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-Current vfio-pci implementation disallows to mmap
-sub-page(size < PAGE_SIZE) MMIO BARs and MSI-X table. This is because
-sub-page BARs' mmio page may be shared with other BARs and MSI-X table
-should not be accessed directly from the guest for security reasons.
+PAGE_SIZE is 64KB by default on PPC64 platform. When vfio
+passthrough a pci device of which MMIO BARs are smaller than
+64KB(PAGE_SIZE), guest would not handle the mmio accesses
+to the BARs which leads to mmio emulations in host.
 
-But these would cause some performance issues for mmio accesses in guest
-when vfio passthrough sub-page BARs or BARs containing MSI-X table on
-PPC64 platform. This is because PAGE_SIZE is 64KB by default on PPC64
-platform and the big page may easily hit the sub-page MMIO
-BARs' unmmapping and cause the unmmaping of the mmio page which
-MSI-X table locate in, which lead to mmio emulation in host.
+This is because vfio would not allow to passthrough one
+BAR's mmio page which may be shared with other BARs.
 
-For sub-page MMIO BARs' unmmapping, this patch set enforces all MMIO
-BARs to be page aligned on PPC64 platform so that sub-page BAR's mmio
-page would not be shared with other BARs. Then we can mmap sub-page
-MMIO BARs in vfio-pci driver if all MMIO BARs are page aligned.
+To solve this performance issue, this patch enforces the
+alignment of all MMIO BARs allocations to be at least PAGE_SIZE
+on PPC64 platform because we have enough address space, so
+that one BAR's mmio page would not be shared with other BARs.
 
-For MSI-X table's unmmapping, we think MSI-X table is safe to access
-directly from the guest with EEH mechanism enabled which can ensure that
-a given pci device can only shoot the MSIs assigned for its PE. So
-we add support for mmapping MSI-X table in vfio-pci driver if EEH is
-supported.
+Signed-off-by: Yongji Xie <xyjxie@linux.vnet.ibm.com>
+---
+ arch/powerpc/kernel/pci-common.c |   10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
 
-With this patch set applied, we can get almost 100% improvement on
-performance for mmio accesses when we passthrough sub-page BARs in
-our test.
-
-The last two patches in the patch set can be used by qemu to:
-	- Add support for a VFIO-PCI ioctl to indicate that platform
-	  support all PCI BARs are page aligned.
-	- Add support for a VFIO-PCI ioctl to indicate that platform
-	  support mmapping MSI-X table.
-
-Yongji Xie (3):
-  powerpc/pci: Enforce all MMIO BARs to be page aligned
-  vfio-pci: Allow to mmap sub-page MMIO BARs if all MMIO BARs are page aligned
-  vfio-pci: Allow to mmap MSI-X table if EEH is supported
-
- arch/powerpc/kernel/pci-common.c    |   10 +++++++++-
- drivers/vfio/pci/vfio_pci.c         |   15 +++++++++++++--
- drivers/vfio/pci/vfio_pci_private.h |   10 ++++++++++
- include/uapi/linux/vfio.h           |    4 ++++
- 4 files changed, 36 insertions(+), 3 deletions(-)
-
+diff --git a/arch/powerpc/kernel/pci-common.c b/arch/powerpc/kernel/pci-common.c
+index 0f7a60f..6989e0f 100644
+--- a/arch/powerpc/kernel/pci-common.c
++++ b/arch/powerpc/kernel/pci-common.c
+@@ -1074,6 +1074,11 @@ static int skip_isa_ioresource_align(struct pci_dev *dev)
+  * bits, so it's ok to allocate at, say, 0x2800-0x28ff,
+  * but we want to try to avoid allocating at 0x2900-0x2bff
+  * which might have be mirrored at 0x0100-0x03ff..
++ *
++ * And for PPC64, we enforce the alignment of all MMIO BARs
++ * allocations to be at least PAGE_SIZE(64KB). This would be
++ * helpful to improve performance when we passthrough
++ * a PCI device of which BARs are smaller than PAGE_SIZE
+  */
+ resource_size_t pcibios_align_resource(void *data, const struct resource *res,
+ 				resource_size_t size, resource_size_t align)
+@@ -1087,7 +1092,10 @@ resource_size_t pcibios_align_resource(void *data, const struct resource *res,
+ 		if (start & 0x300)
+ 			start = (start + 0x3ff) & ~0x3ff;
+ 	}
+-
++#ifdef CONFIG_PPC64
++	if (res->flags & IORESOURCE_MEM)
++		start = PAGE_ALIGN(start);
++#endif
+ 	return start;
+ }
+ EXPORT_SYMBOL(pcibios_align_resource);
 -- 
 1.7.9.5
