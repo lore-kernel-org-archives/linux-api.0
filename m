@@ -1,48 +1,108 @@
-From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: [PATCH] [media] media.h: let be clear that tuners need to use connectors
-Date: Fri, 11 Dec 2015 19:01:31 -0200
-Message-ID: <16cd172bc9cec7ce438df95c142d2219998e32fe.1449867690.git.mchehab@osg.samsung.com>
+From: Simon Arlott <simon-A6De1vDTPLDsq35pWSNszA@public.gmane.org>
+Subject: [PATCH linux-next (v3) 1/3] MIPS: bcm963xx: Add Broadcom BCM963xx
+ board nvram data structure
+Date: Fri, 11 Dec 2015 21:54:23 +0000
+Message-ID: <566B460F.1040603@simon.arlott.org.uk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Florian Fainelli <f.fainelli-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, Kevin Cernekee <cernekee-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, MTD Maling List <linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, Jonas Gorski <jogo-p3rKhJxN3npAfugRpC6u6w@public.gmane.org>, bcm-kernel-feedback-list <bcm-kernel-feedback-list-dY08KVG/lbpWk0Htik3J/w@public.gmane.org>, MIPS Mailing List <linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-The V4L2 core won't be adding connectors to the tuners and other
-entities that need them. Let it be clear.
+Broadcom BCM963xx boards have multiple nvram variants across different
+SoCs with additional checksum fields added whenever the size of the
+nvram was extended.
 
-Suggested-by: Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
-Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Add this structure as a header file so that multiple drivers and userspace
+can use it.
+
+Signed-off-by: Simon Arlott <simon-A6De1vDTPLDsq35pWSNszA@public.gmane.org>
 ---
- include/uapi/linux/media.h | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+v3: Fix includes/type names, add comments explaining the nvram struct.
 
-diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
-index 86f9753e5c03..cacfceb0d81d 100644
---- a/include/uapi/linux/media.h
-+++ b/include/uapi/linux/media.h
-@@ -74,10 +74,11 @@ struct media_device_info {
- /*
-  * Connectors
-  */
-+/* It is a responsibility of the entity drivers to add connectors and links */
- #define MEDIA_ENT_F_CONN_RF		(MEDIA_ENT_F_BASE + 21)
- #define MEDIA_ENT_F_CONN_SVIDEO		(MEDIA_ENT_F_BASE + 22)
- #define MEDIA_ENT_F_CONN_COMPOSITE	(MEDIA_ENT_F_BASE + 23)
--	/* For internal test signal generators and other debug connectors */
-+/* For internal test signal generators and other debug connectors */
- #define MEDIA_ENT_F_CONN_TEST		(MEDIA_ENT_F_BASE + 24)
+v2: Use external struct bcm963xx_nvram definition for bcm963268part.
+
+ MAINTAINERS                         |  1 +
+ include/uapi/linux/bcm963xx_nvram.h | 53 +++++++++++++++++++++++++++++++++++++
+ 2 files changed, 54 insertions(+)
+ create mode 100644 include/uapi/linux/bcm963xx_nvram.h
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 6b6d4e2e..abf18b4 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -2393,6 +2393,7 @@ F:	drivers/irqchip/irq-bcm63*
+ F:	drivers/irqchip/irq-bcm7*
+ F:	drivers/irqchip/irq-brcmstb*
+ F:	include/linux/bcm63xx_wdt.h
++F:	include/uapi/linux/bcm963xx_nvram.h
  
- /*
-@@ -105,6 +106,10 @@ struct media_device_info {
- #define MEDIA_ENT_F_FLASH		(MEDIA_ENT_F_OLD_SUBDEV_BASE + 2)
- #define MEDIA_ENT_F_LENS		(MEDIA_ENT_F_OLD_SUBDEV_BASE + 3)
- #define MEDIA_ENT_F_ATV_DECODER		(MEDIA_ENT_F_OLD_SUBDEV_BASE + 4)
+ BROADCOM TG3 GIGABIT ETHERNET DRIVER
+ M:	Prashant Sreedharan <prashant-dY08KVG/lbpWk0Htik3J/w@public.gmane.org>
+diff --git a/include/uapi/linux/bcm963xx_nvram.h b/include/uapi/linux/bcm963xx_nvram.h
+new file mode 100644
+index 0000000..2dcb307
+--- /dev/null
++++ b/include/uapi/linux/bcm963xx_nvram.h
+@@ -0,0 +1,53 @@
++#ifndef _UAPI__LINUX_BCM963XX_NVRAM_H__
++#define _UAPI__LINUX_BCM963XX_NVRAM_H__
++
++#include <linux/types.h>
++#include <linux/if_ether.h>
++
 +/*
-+ * It is a responsibility of the entity drivers to add connectors and links
-+ *	for the tuner entities.
++ * Broadcom BCM963xx SoC board nvram data structure.
++ *
++ * The nvram structure varies in size depending on the SoC board version. Use
++ * the appropriate minimum BCM963XX_NVRAM_*_SIZE define for the information
++ * you need instead of sizeof(struct bcm963xx_nvram) as this may change.
++ *
++ * The "version" field value maps directly to the size and checksum names, e.g.
++ * version 4 uses "checksum_v4" and the data is BCM963XX_NVRAM_V4_SIZE bytes.
++ *
++ * Do not use the __reserved fields, especially not as an offset for CRC
++ * calculations (use BCM963XX_NVRAM_*_SIZE instead). These may be removed or
++ * repositioned.
 + */
- #define MEDIA_ENT_F_TUNER		(MEDIA_ENT_F_OLD_SUBDEV_BASE + 5)
- 
- #define MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN	MEDIA_ENT_F_OLD_SUBDEV_BASE
++
++#define BCM963XX_NVRAM_V4_SIZE		300
++#define BCM963XX_NVRAM_V5_SIZE		1024
++#define BCM963XX_NVRAM_V6_SIZE		BCM963XX_NVRAM_V5_SIZE
++#define BCM963XX_NVRAM_V7_SIZE		3072
++
++#define BCM963XX_NVRAM_NR_PARTS		5
++
++struct bcm963xx_nvram {
++	__u32	version;
++	char	bootline[256];
++	char	name[16];
++	__u32	main_tp_number;
++	__u32	psi_size;
++	__u32	mac_addr_count;
++	__u8	mac_addr_base[ETH_ALEN];
++	__u8	__reserved1[2];
++	__u32	checksum_v4;
++
++	__u8	__reserved2[292];
++	__u32	nand_part_offset[BCM963XX_NVRAM_NR_PARTS];
++	__u32	nand_part_size[BCM963XX_NVRAM_NR_PARTS];
++	__u8	__reserved3[388];
++	union {
++		__u32	checksum_v5;
++		__u32	checksum_v6;
++	};
++
++	__u8	__reserved4[2044];
++	__u32	checksum_v7;
++} __packed;
++
++#endif /* _UAPI__LINUX_BCM963XX_NVRAM_H__ */
 -- 
-2.5.0
+2.1.4
+
+-- 
+Simon Arlott
