@@ -1,475 +1,500 @@
-From: Simon Arlott <simon-A6De1vDTPLDsq35pWSNszA@public.gmane.org>
-Subject: [PATCH linux-next (v2) 3/3] mtd: part: Add BCM962368 CFE partitioning
- support
-Date: Thu, 10 Dec 2015 23:10:13 +0000
-Message-ID: <566A0655.5080606@simon.arlott.org.uk>
-References: <566A04FB.7000104@simon.arlott.org.uk>
+From: Shaohua Li <shli-b10kYP2dOMg@public.gmane.org>
+Subject: [PATCH V4][for-next]mm: add a new vector based madvise syscall
+Date: Thu, 10 Dec 2015 16:03:37 -0800
+Message-ID: <d01698140a51cf9b2ce233c7574c2ece9f6fa241.1449791762.git.shli@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <566A04FB.7000104-qdVf85lJwsCyrPCCpiK2c/XRex20P6io@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Florian Fainelli <f.fainelli-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, Kevin Cernekee <cernekee-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, MTD Maling List <linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, Jonas Gorski <jogo-p3rKhJxN3npAfugRpC6u6w@public.gmane.org>, bcm-kernel-feedback-list <bcm-kernel-feedback-list-dY08KVG/lbpWk0Htik3J/w@public.gmane.org>, MIPS Mailing List <linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kernel-team-b10kYP2dOMg@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Add partitioning support for BCM963268 boards with CFE bootloaders.
-The following partitions are defined:
-  "boot":           CFE and nvram data
-  "rootfs":         Currently selected rootfs
-  "data":           Configuration data
-  "rootfs1_update": Container for the whole flash area used
-                    for the first rootfs to allow it to be
-                    updated.
-  "rootfs2_update": Container for the whole flash area used
-                    for the second rootfs to allow it to be
-                    updated.
-  "rootfs_other":   The other (not currently selected) rootfs
+In jemalloc, a free(3) doesn't immediately free the memory to OS even
+the memory is page aligned/size, and hope the memory can be reused soon.
+Later the virtual address becomes fragmented, and more and more free
+memory are aggregated. If the free memory size is large, jemalloc uses
+madvise(DONT_NEED) to actually free the memory back to OS.
 
-Example:
-[    1.904302] nand: device found, Manufacturer ID: 0xc2, Chip ID: 0xf1
-[    1.911000] nand: Macronix NAND 128MiB 3,3V 8-bit
-[    1.915855] nand: 128 MiB, SLC, erase size: 128 KiB, page size: 2048=
-, OOB size: 64
-[    1.923797] bcm6368_nand 10000200.nand: detected 128MiB total, 128Ki=
-B blocks, 2KiB pages, 16B OOB, 8-bit, Hamming ECC
-[    1.936994] Bad block table found at page 65472, version 0x01
-[    1.944121] Bad block table found at page 65408, version 0x01
-[    1.951166] nand_read_bbt: bad block at 0x000007480000
-[    1.990043] bcm963268part: rootfs1: CFE boot tag found at 0x20000 wi=
-th version 6, board type 963168VX and sequence number 2
-[    2.003060] bcm963268part: rootfs2: CFE boot tag found at 0x4000000 =
-with version 6, board type 963168VX and sequence number 1
-[    2.015159] bcm963268part: CFE bootline selected latest image rootfs=
-1
-[    2.022080] 6 bcm963268part partitions found on MTD device brcmnand.=
-0
-[    2.042659] Creating 6 MTD partitions on "brcmnand.0":
-[    2.048025] 0x000000000000-0x000000020000 : "boot"
-[    2.062134] 0x000000040000-0x000001120000 : "rootfs"
-[    2.077632] 0x000007b00000-0x000007f00000 : "data"
-[    2.091363] 0x000000020000-0x000003ac0000 : "rootfs1_update"
-[    2.106228] 0x000004000000-0x000007ac0000 : "rootfs2_update"
-[    2.121093] 0x000004020000-0x000005060000 : "rootfs_other"
+The madvise has significantly overhead paritcularly because of TLB
+flush. jemalloc does madvise for several virtual address space ranges
+one time. Instead of calling madvise for each of the ranges, we
+introduce a new syscall to purge memory for several ranges one time. In
+this way, we can merge several TLB flush for the ranges to one big TLB
+flush. This also reduce mmap_sem locking and kernel/userspace switching.
 
-The nvram contains the offset and size of the boot, rootfs1, rootfs2
-and data partitions. The presence of CFE and nvram is verified by
-reading from the boot partition which is assumed to be at offset 0
-and the process aborts if the nvram read indicates that this is not
-the case.
+I'm running a simple memory allocation benchmark. 32 threads do random
+malloc/free/realloc. Corresponding jemalloc patch to utilize this API is
+attached.
+Without patch:
+real    0m18.923s
+user    1m11.819s
+sys     7m44.626s
+each cpu gets around 3000K/s TLB flush interrupt. Perf shows TLB flush
+is hotest functions. mmap_sem read locking (because of page fault) is
+also heavy.
 
-There is bcm_tag information at the start of each rootfs that is used
-to determine which rootfs is newer and what its real offset/size is.
+with patch:
+real    0m15.026s
+user    0m48.548s
+sys     6m41.153s
+each cpu gets around 140k/s TLB flush interrupt. TLB flush isn't hot at
+all. mmap_sem read locking (still because of page fault) becomes the
+sole hot spot.
 
-The CFE bootline is used to select a rootfs.
+Another test malloc a bunch of memory in 48 threads, then all threads
+free the memory. I measure the time of the memory free.
+Without patch: 34.332s
+With patch:    17.429s
 
-Signed-off-by: Simon Arlott <simon-A6De1vDTPLDsq35pWSNszA@public.gmane.org>
+MADV_FREE does the same TLB flush as MADV_NEED, this also applies to
+MADV_FREE. Other madvise type can have small benefits too, like reduce
+syscalls/mmap_sem locking.
+
+V3->V4:
+- Support all MADV_* (Andi Kleen)
+- Add compat syscall (Arnd Bergmann)
+
+V2->V3:
+- Delete iov sort (Andrew Morton)
+- Support MADV_FREE
+
+V1->V2:
+- make madvisev() acts exactly like madvise(). The only difference is
+  madvisev() returns error if a range's start equals to start + size.
+  Returning 0 (like madvise) is improper here since there are other ranges.
+
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>
+Cc: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>
+Cc: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
+Cc: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Signed-off-by: Shaohua Li <shli-b10kYP2dOMg@public.gmane.org>
 ---
-v2: Use external struct bcm963xx_nvram definition for bcm963268part.
+ arch/x86/entry/syscalls/syscall_32.tbl |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl |   2 +
+ include/linux/compat.h                 |   3 +
+ include/linux/syscalls.h               |   3 +
+ include/uapi/asm-generic/unistd.h      |   4 +-
+ kernel/sys_ni.c                        |   2 +
+ mm/madvise.c                           | 281 +++++++++++++++++++++++++++------
+ 7 files changed, 251 insertions(+), 45 deletions(-)
 
-    Removed support for the nand partition number field, it's not a
-    standard Broadcom field (was added by MitraStar Technology Corp.).
-
- drivers/mtd/Kconfig         |  21 +++
- drivers/mtd/Makefile        |   1 +
- drivers/mtd/bcm963268part.c | 326 ++++++++++++++++++++++++++++++++++++=
-++++++++
- 3 files changed, 348 insertions(+)
- create mode 100644 drivers/mtd/bcm963268part.c
-
-diff --git a/drivers/mtd/Kconfig b/drivers/mtd/Kconfig
-index 42cc953..63cb2db 100644
---- a/drivers/mtd/Kconfig
-+++ b/drivers/mtd/Kconfig
-@@ -148,6 +148,27 @@ config MTD_BCM63XX_PARTS
- 	  This provides partions parsing for BCM63xx devices with CFE
- 	  bootloaders.
-=20
-+config MTD_BCM963268_PARTS
-+	tristate "BCM963268 CFE partitioning support"
-+	depends on BMIPS_GENERIC
-+	select CRC32
-+	help
-+	  This provides partitions parsing for BCM963268 boards with CFE
-+	  bootloaders. The following partitions are defined:
-+	    "boot":           CFE and nvram data
-+	    "rootfs":         Currently selected rootfs
-+	    "data":           Configuration data
-+	    "rootfs1_update": Container for the whole flash area used
-+	                      for the first rootfs to allow it to be
-+	                      updated.
-+	    "rootfs2_update": Container for the whole flash area used
-+	                      for the second rootfs to allow it to be
-+	                      updated.
-+	    "rootfs_other":   The other (not currently selected) rootfs
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index cb713df..f65e418 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -384,3 +384,4 @@
+ 375	i386	membarrier		sys_membarrier
+ 376	i386	mlock2			sys_mlock2
+ 377	i386	copy_file_range		sys_copy_file_range
++378	i386	madvisev		sys_madvisev			compat_sys_madvisev
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index dc1040a..158eef4 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -333,6 +333,7 @@
+ 324	common	membarrier		sys_membarrier
+ 325	common	mlock2			sys_mlock2
+ 326	common	copy_file_range		sys_copy_file_range
++327	64	madvisev		sys_madvisev
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+@@ -372,3 +373,4 @@
+ 543	x32	io_setup		compat_sys_io_setup
+ 544	x32	io_submit		compat_sys_io_submit
+ 545	x32	execveat		stub_x32_execveat
++546	x32	madvisev		compat_sys_madvisev
+diff --git a/include/linux/compat.h b/include/linux/compat.h
+index a76c917..a11ddab 100644
+--- a/include/linux/compat.h
++++ b/include/linux/compat.h
+@@ -689,6 +689,9 @@ asmlinkage long compat_sys_sendfile64(int out_fd, int in_fd,
+ asmlinkage long compat_sys_sigaltstack(const compat_stack_t __user *uss_ptr,
+ 				       compat_stack_t __user *uoss_ptr);
+ 
++asmlinkage long compat_sys_madvisev(const struct compat_iovec __user *uvector,
++		compat_ulong_t nr_segs, compat_int_t behavior);
 +
-+	  A decision is made regarding which of the two rootfs is to be
-+	  used based on the nvram data.
+ #ifdef __ARCH_WANT_SYS_SIGPENDING
+ asmlinkage long compat_sys_sigpending(compat_old_sigset_t __user *set);
+ #endif
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 185815c..8df6763 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -892,4 +892,7 @@ asmlinkage long sys_copy_file_range(int fd_in, loff_t __user *off_in,
+ 
+ asmlinkage long sys_mlock2(unsigned long start, size_t len, int flags);
+ 
++asmlinkage long sys_madvisev(const struct iovec __user *uvector,
++		unsigned long nr_segs, int behavior);
 +
- config MTD_BCM47XX_PARTS
- 	tristate "BCM47XX partitioning support"
- 	depends on BCM47XX || ARCH_BCM_5301X
-diff --git a/drivers/mtd/Makefile b/drivers/mtd/Makefile
-index 99bb9a1..f0f4140 100644
---- a/drivers/mtd/Makefile
-+++ b/drivers/mtd/Makefile
-@@ -12,6 +12,7 @@ obj-$(CONFIG_MTD_CMDLINE_PARTS) +=3D cmdlinepart.o
- obj-$(CONFIG_MTD_AFS_PARTS)	+=3D afs.o
- obj-$(CONFIG_MTD_AR7_PARTS)	+=3D ar7part.o
- obj-$(CONFIG_MTD_BCM63XX_PARTS)	+=3D bcm63xxpart.o
-+obj-$(CONFIG_MTD_BCM963268_PARTS) +=3D bcm963268part.o
- obj-$(CONFIG_MTD_BCM47XX_PARTS)	+=3D bcm47xxpart.o
-=20
- # 'Users' - code which presents functionality to userspace.
-diff --git a/drivers/mtd/bcm963268part.c b/drivers/mtd/bcm963268part.c
-new file mode 100644
-index 0000000..a519499
---- /dev/null
-+++ b/drivers/mtd/bcm963268part.c
-@@ -0,0 +1,326 @@
-+/*
-+ * BCM963268 CFE image tag parser
-+ * Copyright 2015 Simon Arlott
-+ *
-+ * This program is free software; you can redistribute it and/or modif=
-y
-+ * it under the terms of the GNU General Public License as published b=
-y
-+ * the Free Software Foundation; either version 2 of the License, or
-+ * (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * Derived from drivers/mtd/bcm63xxpart.c:
-+ * Copyright =C2=A9 2006-2008  Florian Fainelli <florian-p3rKhJxN3npAfugRpC6u6w@public.gmane.org>
-+ *			  Mike Albon <malbon-p3rKhJxN3npAfugRpC6u6w@public.gmane.org>
-+ * Copyright =C2=A9 2009-2010  Daniel Dickinson <openwrt-RuxwABt7/fbiJqQIpdQb7w@public.gmane.org=
-lbox.net>
-+ * Copyright =C2=A9 2011-2013  Jonas Gorski <jonas.gorski-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-+ *
-+ * Derived from bcm963xx_4.12L.06B_consumer/bcmdrivers/opensource/char=
-/board/bcm963xx/impl1/board.c,
-+ *	bcm963xx_4.12L.06B_consumer/shared/opensource/include/bcm963xx/bcm_=
-hwdefs.h:
-+ * Copyright (c) 2002 Broadcom Corporation
-+ */
-+
-+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-+
-+#include <linux/crc32.h>
-+#include <linux/if_ether.h>
-+#include <linux/module.h>
-+#include <linux/kernel.h>
-+#include <linux/sizes.h>
-+#include <linux/slab.h>
-+#include <linux/vmalloc.h>
-+#include <linux/mtd/mtd.h>
-+#include <linux/mtd/partitions.h>
-+
-+#include <asm/mach-bcm63xx/bcm963xx_tag.h>
-+#include <uapi/linux/bcm963xx_nvram.h>
-+
-+/* Extended flash address, needs to be subtracted from bcm_tag flash o=
-ffsets */
-+#define BCM63XX_EXTENDED_SIZE		0xBFC00000
-+
-+#define BCM63XX_CFE_MAGIC_OFFSET	0x4e0
-+#define BCM963XX_CFE_VERSION_OFFSET	0x570
-+#define BCM963XX_NVRAM_OFFSET		0x580
-+
-+enum bcm963268_nvram_part {
-+	PART_BOOT =3D 0,
-+	PART_ROOTFS_1,
-+	PART_ROOTFS_2,
-+	PART_DATA,
-+	PART_BBT,
-+};
-+
-+static int bcm963268_detect_cfe(struct mtd_info *master)
+ #endif
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index 2622b33..23cac4e 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -717,9 +717,11 @@ __SYSCALL(__NR_membarrier, sys_membarrier)
+ __SYSCALL(__NR_mlock2, sys_mlock2)
+ #define __NR_copy_file_range 285
+ __SYSCALL(__NR_copy_file_range, sys_copy_file_range)
++#define __NR_madvisev 286
++__SC_COMP(__NR_madvisev, sys_madvisev, compat_sys_madvisev)
+ 
+ #undef __NR_syscalls
+-#define __NR_syscalls 286
++#define __NR_syscalls 287
+ 
+ /*
+  * All syscalls below here should go away really,
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index 2c5e3a8..8b87f39 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -198,6 +198,8 @@ cond_syscall(sys_munlockall);
+ cond_syscall(sys_mlock2);
+ cond_syscall(sys_mincore);
+ cond_syscall(sys_madvise);
++cond_syscall(sys_madvisev);
++cond_syscall(compat_sys_madvisev);
+ cond_syscall(sys_mremap);
+ cond_syscall(sys_remap_file_pages);
+ cond_syscall(compat_sys_move_pages);
+diff --git a/mm/madvise.c b/mm/madvise.c
+index f56825b..8d79774 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -21,7 +21,10 @@
+ #include <linux/swap.h>
+ #include <linux/swapops.h>
+ #include <linux/mmu_notifier.h>
+-
++#include <linux/uio.h>
++#ifdef CONFIG_COMPAT
++#include <linux/compat.h>
++#endif
+ #include <asm/tlb.h>
+ 
+ /*
+@@ -564,7 +567,8 @@ static int madvise_hwpoison(int bhv, unsigned long start, unsigned long end)
+ 
+ static long
+ madvise_vma(struct vm_area_struct *vma, struct vm_area_struct **prev,
+-		unsigned long start, unsigned long end, int behavior)
++		unsigned long start, unsigned long end, int behavior,
++		void *data)
+ {
+ 	switch (behavior) {
+ 	case MADV_REMOVE:
+@@ -616,6 +620,62 @@ madvise_behavior_valid(int behavior)
+ 	}
+ }
+ 
++typedef long (*madvise_iterate_fn)(struct vm_area_struct *vma,
++	struct vm_area_struct **prev, unsigned long start,
++	unsigned long end, int behavior, void *data);
++static int madvise_iterate_vma(unsigned long start, unsigned long end,
++	int *unmapped_error, int behavior, madvise_iterate_fn fn, void *data)
 +{
-+	char buf[9];
-+	int ret;
-+	size_t retlen;
++	struct vm_area_struct *vma, *prev;
++	unsigned long tmp;
++	int error = 0;
 +
-+	ret =3D mtd_read(master, BCM963XX_CFE_VERSION_OFFSET, 5, &retlen,
-+		       (void *)buf);
-+	buf[retlen] =3D 0;
++	/*
++	 * If the interval [start,end) covers some unmapped address
++	 * ranges, just ignore them, but return -ENOMEM at the end.
++	 * - different from the way of handling in mlock etc.
++	 */
++	vma = find_vma_prev(current->mm, start, &prev);
++	if (vma && start > vma->vm_start)
++		prev = vma;
 +
-+	if (ret < 0)
-+		return ret;
++	for (;;) {
++		/* Still start < end. */
++		error = -ENOMEM;
++		if (!vma)
++			break;
 +
-+	if (strncmp("cfe-v", buf, 5) =3D=3D 0)
-+		return 0;
++		/* Here start < (end|vma->vm_end). */
++		if (start < vma->vm_start) {
++			*unmapped_error = -ENOMEM;
++			start = vma->vm_start;
++			if (start >= end)
++				break;
++		}
 +
-+	return -EINVAL;
-+}
++		/* Here vma->vm_start <= start < (end|vma->vm_end) */
++		tmp = vma->vm_end;
++		if (end < tmp)
++			tmp = end;
 +
-+static int bcm963268_read_nvram(struct mtd_info *master,
-+	struct bcm963xx_nvram *nvram)
-+{
-+	u32 crc, expected_crc;
-+	size_t retlen;
-+	int ret;
-+
-+	/* extract nvram data */
-+	ret =3D mtd_read(master, BCM963XX_NVRAM_OFFSET, BCM963XX_NVRAM_V6_SIZ=
-E,
-+			&retlen, (void *)nvram);
-+
-+	if (ret < 0)
-+		return ret;
-+
-+	if (nvram->version < 6) {
-+		pr_warn("nvram version %d not supported\n", nvram->version);
-+		return -EINVAL;
++		/* Here vma->vm_start <= start < tmp <= (end|vma->vm_end). */
++		error = fn(vma, &prev, start, tmp, behavior, data);
++		if (error)
++			break;
++		start = tmp;
++		if (prev && start < prev->vm_end)
++			start = prev->vm_end;
++		if (start >= end)
++			break;
++		if (prev)
++			vma = prev->vm_next;
++		else	/* madvise_remove dropped mmap_sem */
++			vma = find_vma(current->mm, start);
 +	}
 +
-+	/* check checksum before using data */
-+	expected_crc =3D nvram->checksum_v6;
-+	nvram->checksum_v6 =3D 0;
++	return error;
++}
 +
-+	crc =3D crc32_le(~0, (u8 *)nvram, BCM963XX_NVRAM_V6_SIZE);
+ /*
+  * The madvise(2) system call.
+  *
+@@ -660,8 +720,7 @@ madvise_behavior_valid(int behavior)
+  */
+ SYSCALL_DEFINE3(madvise, unsigned long, start, size_t, len_in, int, behavior)
+ {
+-	unsigned long end, tmp;
+-	struct vm_area_struct *vma, *prev;
++	unsigned long end;
+ 	int unmapped_error = 0;
+ 	int error = -EINVAL;
+ 	int write;
+@@ -697,56 +756,190 @@ SYSCALL_DEFINE3(madvise, unsigned long, start, size_t, len_in, int, behavior)
+ 	else
+ 		down_read(&current->mm->mmap_sem);
+ 
+-	/*
+-	 * If the interval [start,end) covers some unmapped address
+-	 * ranges, just ignore them, but return -ENOMEM at the end.
+-	 * - different from the way of handling in mlock etc.
+-	 */
+-	vma = find_vma_prev(current->mm, start, &prev);
+-	if (vma && start > vma->vm_start)
+-		prev = vma;
+-
+ 	blk_start_plug(&plug);
+-	for (;;) {
+-		/* Still start < end. */
+-		error = -ENOMEM;
+-		if (!vma)
+-			goto out;
+ 
+-		/* Here start < (end|vma->vm_end). */
+-		if (start < vma->vm_start) {
+-			unmapped_error = -ENOMEM;
+-			start = vma->vm_start;
+-			if (start >= end)
+-				goto out;
++	error = madvise_iterate_vma(start, end, &unmapped_error,
++			behavior, madvise_vma, NULL);
++	if (error == 0 && unmapped_error != 0)
++		error = unmapped_error;
 +
-+	if (crc !=3D expected_crc)
-+		pr_warn("nvram checksum failed, contents may be invalid (expected %0=
-8x, got %08x)\n",
-+			expected_crc, crc);
++	blk_finish_plug(&plug);
++	if (write)
++		up_write(&current->mm->mmap_sem);
++	else
++		up_read(&current->mm->mmap_sem);
 +
++	return error;
++}
++
++static long
++madvisev_vma(struct vm_area_struct *vma, struct vm_area_struct **prev,
++		unsigned long start, unsigned long end, int behavior,
++		void *data)
++{
++	struct mmu_gather *tlb = data;
++	*prev = vma;
++	if (vma->vm_flags & (VM_LOCKED|VM_HUGETLB|VM_PFNMAP))
++		return -EINVAL;
++
++	switch (behavior) {
++	case MADV_FREE:
++		/*
++		 * XXX: In this implementation, MADV_FREE works like
++		 * MADV_DONTNEED on swapless system or full swap.
++		 */
++		if (get_nr_swap_pages() > 0) {
++			/* MADV_FREE works for only anon vma at the moment */
++			if (!vma_is_anonymous(vma))
++				return -EINVAL;
++			madvise_free_page_range(tlb, vma, start, end);
++			break;
+ 		}
++		/* passthrough */
++	case MADV_DONTNEED:
++		unmap_vmas(tlb, vma, start, end);
++		break;
++	}
 +	return 0;
 +}
-+
-+static bool bcm963268_boot_latest(struct bcm963xx_nvram *nvram)
+ 
+-		/* Here vma->vm_start <= start < (end|vma->vm_end) */
+-		tmp = vma->vm_end;
+-		if (end < tmp)
+-			tmp = end;
++static int do_madvisev(struct iovec *iov, unsigned long nr_segs, int behavior)
 +{
-+	char *p;
++	unsigned long start, end = 0;
++	int unmapped_error = 0;
++	size_t len;
++	struct mmu_gather tlb;
++	int error = 0;
++	int i;
++	int write;
++	struct blk_plug plug;
+ 
+-		/* Here vma->vm_start <= start < tmp <= (end|vma->vm_end). */
+-		error = madvise_vma(vma, &prev, start, tmp, behavior);
+-		if (error)
+-			goto out;
+-		start = tmp;
+-		if (prev && start < prev->vm_end)
+-			start = prev->vm_end;
+-		error = unmapped_error;
+-		if (start >= end)
+-			goto out;
+-		if (prev)
+-			vma = prev->vm_next;
+-		else	/* madvise_remove dropped mmap_sem */
+-			vma = find_vma(current->mm, start);
++#ifdef CONFIG_MEMORY_FAILURE
++	if (behavior == MADV_HWPOISON || behavior == MADV_SOFT_OFFLINE) {
++		for (i = 0; i < nr_segs; i++) {
++			start = (unsigned long)iov[i].iov_base;
++			len = iov[i].iov_len;
++			error = madvise_hwpoison(behavior, start, start + len);
++			if (error)
++				return error;
++		}
++		return 0;
+ 	}
+-out:
+-	blk_finish_plug(&plug);
++#endif
 +
-+	/* Ensure bootline is null terminated */
-+	nvram->bootline[sizeof(nvram->bootline) - 1] =3D 0;
++	if (!madvise_behavior_valid(behavior))
++		return -EINVAL;
 +
-+	/* Find previous image parameter "p" */
-+	if (!strncmp(nvram->bootline, "p=3D", 2))
-+		p =3D nvram->bootline;
++	for (i = 0; i < nr_segs; i++) {
++		start = (unsigned long)iov[i].iov_base;
++		/* Make sure iovs don't overlap and sorted */
++		if (start & ~PAGE_MASK || start < end)
++			return -EINVAL;
++		len = ((iov[i].iov_len + ~PAGE_MASK) & PAGE_MASK);
++
++		/*
++		 * Check to see whether len was rounded up from small -ve to
++		 * zero
++		 */
++		if (iov[i].iov_len && !len)
++			return -EINVAL;
++
++		end = start + len;
++
++		/*
++		 * end == start returns error (different against madvise).
++		 * return 0 is improper as there are other iovs
++		 */
++		if (end <= start)
++			return -EINVAL;
++
++		iov[i].iov_len = len;
++	}
++
++	write = madvise_need_mmap_write(behavior);
++	if (write)
++		down_write(&current->mm->mmap_sem);
 +	else
-+		p =3D strstr(nvram->bootline, " p=3D");
++		down_read(&current->mm->mmap_sem);
 +
-+	if (p =3D=3D NULL)
-+		return true;
++	if (behavior == MADV_DONTNEED || behavior == MADV_FREE) {
++		lru_add_drain();
++		tlb_gather_mmu(&tlb, current->mm,
++			(unsigned long)iov[0].iov_base, end);
++		update_hiwater_rss(current->mm);
++		for (i = 0; i < nr_segs; i++) {
++			start = (unsigned long)iov[i].iov_base;
++			len = iov[i].iov_len;
 +
-+	p +=3D 2;
-+	if (*p =3D=3D '\0')
-+		return true;
++			error = madvise_iterate_vma(start, start + len,
++				&unmapped_error, behavior, madvisev_vma, &tlb);
++			if (error)
++				break;
++		}
++		tlb_finish_mmu(&tlb, (unsigned long)iov[0].iov_base, end);
++	} else {
++		blk_start_plug(&plug);
++		for (i = 0; i < nr_segs; i++) {
++			start = (unsigned long)iov[i].iov_base;
++			len = iov[i].iov_len;
 +
-+	return *p !=3D '0';
++			error = madvise_iterate_vma(start, start + len,
++				&unmapped_error, behavior, madvise_vma, NULL);
++			if (error)
++				break;
++		}
++		blk_finish_plug(&plug);
++	}
++	if (error == 0 && unmapped_error != 0)
++		error = unmapped_error;
++
+ 	if (write)
+ 		up_write(&current->mm->mmap_sem);
+ 	else
+ 		up_read(&current->mm->mmap_sem);
++	return error;
 +}
 +
-+static bool bcm963268_parse_rootfs_tag(struct mtd_info *master,
-+	const char *name, loff_t rootfs_part, u64 *rootfs_offset,
-+	u64 *rootfs_size, unsigned int *rootfs_sequence)
++/*
++ * The vector madvise(). Like madvise except running for a vector of virtual
++ * address ranges
++ */
++SYSCALL_DEFINE3(madvisev, const struct iovec __user *, uvector,
++	unsigned long, nr_segs, int, behavior)
 +{
-+	struct bcm_tag *buf;
-+	int ret;
-+	size_t retlen;
-+	u32 computed_crc;
-+	bool rootfs_ok =3D false;
++	struct iovec iovstack[UIO_FASTIOV];
++	struct iovec *iov = NULL;
++	int error;
 +
-+	*rootfs_offset =3D 0;
-+	*rootfs_size =3D 0;
-+	*rootfs_sequence =3D 0;
++	error = rw_copy_check_uvector(CHECK_IOVEC_ONLY, uvector, nr_segs,
++			UIO_FASTIOV, iovstack, &iov);
++	if (error <= 0)
++		return error;
 +
-+	buf =3D vmalloc(sizeof(struct bcm_tag));
-+	if (!buf)
-+		goto out;
++	error = do_madvisev(iov, nr_segs, behavior);
+ 
++	if (iov != iovstack)
++		kfree(iov);
+ 	return error;
+ }
 +
-+	ret =3D mtd_read(master, rootfs_part, sizeof(*buf), &retlen, (void *)=
-buf);
-+	if (ret < 0)
-+		goto out;
++#ifdef CONFIG_COMPAT
++COMPAT_SYSCALL_DEFINE3(madvisev, const struct compat_iovec __user *, uvector,
++	compat_ulong_t, nr_segs, compat_int_t, behavior)
++{
++	struct iovec iovstack[UIO_FASTIOV];
++	struct iovec *iov = NULL;
++	int error;
 +
-+	if (retlen !=3D sizeof(*buf))
-+		goto out;
++	error = compat_rw_copy_check_uvector(CHECK_IOVEC_ONLY, uvector, nr_segs,
++			UIO_FASTIOV, iovstack, &iov);
++	if (error <= 0)
++		return error;
 +
-+	computed_crc =3D crc32_le(IMAGETAG_CRC_START, (u8 *)buf,
-+				offsetof(struct bcm_tag, header_crc));
-+	if (computed_crc =3D=3D buf->header_crc) {
-+		char *board_id =3D &buf->board_id[0];
-+		char *tag_version =3D &buf->tag_version[0];
++	error = do_madvisev(iov, nr_segs, behavior);
 +
-+		/* Get rootfs offset and size from tag data */
-+		kstrtou64(buf->flash_image_start, 10, rootfs_offset);
-+		kstrtou64(buf->root_length, 10, rootfs_size);
-+		kstrtouint(buf->dual_image, 10, rootfs_sequence);
-+
-+		pr_info("%s: CFE boot tag found at 0x%llx with version %s, board typ=
-e %s and sequence number %u\n",
-+			name, rootfs_part, tag_version, board_id,
-+			*rootfs_sequence);
-+
-+		/* Adjust for flash offset */
-+		*rootfs_offset -=3D BCM63XX_EXTENDED_SIZE;
-+
-+		/* Remove bcm_tag data from length */
-+		*rootfs_size -=3D *rootfs_offset - rootfs_part;
-+
-+		rootfs_ok =3D true;
-+	} else {
-+		pr_warn("%s: CFE boot tag at 0x%llx CRC invalid (expected %08x, actu=
-al %08x)\n",
-+			name, rootfs_part, buf->header_crc, computed_crc);
-+		goto out;
-+	}
-+
-+out:
-+	vfree(buf);
-+	return rootfs_ok;
++	if (iov != iovstack)
++		kfree(iov);
++	return error;
 +}
-+
-+static int bcm963268_parse_cfe_partitions(struct mtd_info *master,
-+	const struct mtd_partition **pparts, struct mtd_part_parser_data *dat=
-a)
-+{
-+	int nrparts, curpart;
-+	struct bcm963xx_nvram *nvram =3D NULL;
-+	struct mtd_partition *parts;
-+	u64 rootfs1_off, rootfs1_size;
-+	unsigned int rootfs1_seq;
-+	u64 rootfs2_off, rootfs2_size;
-+	unsigned int rootfs2_seq;
-+	bool rootfs1, rootfs2;
-+	bool use_first;
-+	int ret;
-+
-+	if (bcm963268_detect_cfe(master)) {
-+		ret =3D -EINVAL;
-+		goto out;
-+	}
-+
-+	nvram =3D vzalloc(sizeof(*nvram));
-+	if (!nvram) {
-+		ret =3D -ENOMEM;
-+		goto out;
-+	}
-+
-+	if (bcm963268_read_nvram(master, nvram)) {
-+		ret =3D -EINVAL;
-+		goto out;
-+	}
-+
-+	/* We've just read the nvram from offset 0,
-+	 * so it must be located there.
-+	 */
-+	if (nvram->nand_part_offset[PART_BOOT] !=3D 0) {
-+		ret =3D -EINVAL;
-+		goto out;
-+	}
-+
-+	/* Get the rootfs partition locations */
-+	rootfs1 =3D bcm963268_parse_rootfs_tag(master, "rootfs1",
-+		nvram->nand_part_offset[PART_ROOTFS_1] * SZ_1K,
-+		&rootfs1_off, &rootfs1_size, &rootfs1_seq);
-+	rootfs2 =3D bcm963268_parse_rootfs_tag(master, "rootfs2",
-+		nvram->nand_part_offset[PART_ROOTFS_2] * SZ_1K,
-+		&rootfs2_off, &rootfs2_size, &rootfs2_seq);
-+	if (!rootfs1 && !rootfs2) {
-+		ret =3D -EINVAL;
-+		goto out;
-+	}
-+
-+	/* Determine primary rootfs partition */
-+	if (rootfs1 && rootfs2) {
-+		bool use_latest =3D bcm963268_boot_latest(nvram);
-+
-+		/* Compare sequence numbers */
-+		if (use_latest)
-+			use_first =3D rootfs1_seq > rootfs2_seq;
-+		else
-+			use_first =3D rootfs1_seq < rootfs2_seq;
-+
-+		pr_info("CFE bootline selected %s image rootfs%u\n",
-+			use_latest ? "latest" : "previous",
-+			use_first ? 1 : 2);
-+	} else {
-+		use_first =3D rootfs1;
-+	}
-+
-+	/* Partitions:
-+	 * 1 boot
-+	 * 2 rootfs
-+	 * 3 data
-+	 * 4 rootfs1_update
-+	 * 5 rootfs2_update
-+	 * 6 rootfs_other
-+	 */
-+	nrparts =3D 6;
-+	curpart =3D 0;
-+
-+	parts =3D kcalloc(nrparts, sizeof(*parts), GFP_KERNEL);
-+	if (!parts) {
-+		ret =3D -ENOMEM;
-+		goto out;
-+	}
-+
-+	parts[curpart].name =3D "boot";
-+	parts[curpart].offset =3D nvram->nand_part_offset[PART_BOOT] * SZ_1K;
-+	parts[curpart].size =3D nvram->nand_part_size[PART_BOOT] * SZ_1K;
-+	curpart++;
-+
-+	parts[curpart].name =3D "rootfs";
-+	parts[curpart].offset =3D use_first ? rootfs1_off : rootfs2_off;
-+	parts[curpart].size =3D use_first ? rootfs1_size : rootfs2_size;
-+	curpart++;
-+
-+	parts[curpart].name =3D "data";
-+	parts[curpart].offset =3D nvram->nand_part_offset[PART_DATA] * SZ_1K;
-+	parts[curpart].size =3D nvram->nand_part_size[PART_DATA] * SZ_1K;
-+	curpart++;
-+
-+	/* Full rootfs partitions for updates */
-+	parts[curpart].name =3D "rootfs1_update";
-+	parts[curpart].offset =3D nvram->nand_part_offset[PART_ROOTFS_1] * SZ=
-_1K;
-+	parts[curpart].size =3D nvram->nand_part_size[PART_ROOTFS_1] * SZ_1K;
-+	curpart++;
-+
-+	parts[curpart].name =3D "rootfs2_update";
-+	parts[curpart].offset =3D nvram->nand_part_offset[PART_ROOTFS_2] * SZ=
-_1K;
-+	parts[curpart].size =3D nvram->nand_part_size[PART_ROOTFS_2] * SZ_1K;
-+	curpart++;
-+
-+	/* Other rootfs if both are available */
-+	if (rootfs1 && rootfs2) {
-+		parts[curpart].name =3D "rootfs_other";
-+		parts[curpart].offset =3D use_first ? rootfs2_off : rootfs1_off;
-+		parts[curpart].size =3D use_first ? rootfs2_size : rootfs1_size;
-+		curpart++;
-+	}
-+
-+	*pparts =3D parts;
-+	ret =3D 0;
-+
-+out:
-+	vfree(nvram);
-+
-+	if (ret < 0)
-+		return ret;
-+
-+	return nrparts;
-+};
-+
-+static struct mtd_part_parser bcm963268_cfe_parser =3D {
-+	.name =3D "bcm963268part",
-+	.parse_fn =3D bcm963268_parse_cfe_partitions,
-+};
-+module_mtd_part_parser(bcm963268_cfe_parser);
-+
-+MODULE_LICENSE("GPL");
-+MODULE_AUTHOR("Simon Arlott");
-+MODULE_DESCRIPTION("MTD partitioning for BCM963268 CFE bootloaders");
---=20
-2.1.4
-
---=20
-Simon Arlott
++#endif
+-- 
+2.4.6
