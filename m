@@ -1,32 +1,56 @@
-From: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 09/38] selftests/timers: fix write return value handlng
-Date: Thu, 10 Dec 2015 22:42:50 -0800
-Message-ID: <CALAqxLWDavuuwqDedd+QbjhcimENfoAm+D0qaYP-3pxTu3Hrog@mail.gmail.com>
-References: <1442842450-29769-1-git-send-email-a.hajda@samsung.com>
-	<1442842450-29769-10-git-send-email-a.hajda@samsung.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+From: Yongji Xie <xyjxie-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: [RFC PATCH 0/3] vfio-pci: Allow to mmap sub-page MMIO BARs and MSI-X table on PPC64 platform
+Date: Fri, 11 Dec 2015 16:53:11 +0800
+Message-ID: <1449823994-3356-1-git-send-email-xyjxie@linux.vnet.ibm.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1442842450-29769-10-git-send-email-a.hajda-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrzej Hajda <a.hajda-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Cc: lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org
+Cc: aik-sLpHqDYs0B2HXe+LvDLADg@public.gmane.org, alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org, paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, warrier-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, zhong-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, nikunj-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, Yongji Xie <xyjxie-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 21, 2015 at 6:33 AM, Andrzej Hajda <a.hajda-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org> wrote:
-> The function can return negative value.
->
-> The problem has been detected using proposed semantic patch
-> scripts/coccinelle/tests/unsigned_lesser_than_zero.cocci [1].
->
-> [1]: http://permalink.gmane.org/gmane.linux.kernel/2038576
->
-> Signed-off-by: Andrzej Hajda <a.hajda-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Current vfio-pci implementation disallows to mmap
+sub-page(size < PAGE_SIZE) MMIO BARs and MSI-X table. This is because
+sub-page BARs' mmio page may be shared with other BARs and MSI-X table
+should not be accessed directly from the guest for security reasons.
 
-Sheesh. Apologies for being so late on this. I just noticed I
-miss-filed this and it slipped through my to-queue list.
+But these would cause some performance issues for mmio accesses in guest
+when vfio passthrough sub-page BARs or BARs containing MSI-X table on
+PPC64 platform. This is because PAGE_SIZE is 64KB by default on PPC64
+platform and the big page may easily hit the sub-page MMIO
+BARs' unmmapping and cause the unmmaping of the mmio page which
+MSI-X table locate in, which lead to mmio emulation in host.
 
-Looks good. Thanks for sending this in. I'll queue it for 4.5
+For sub-page MMIO BARs' unmmapping, this patch set enforces all MMIO
+BARs to be page aligned on PPC64 platform so that sub-page BAR's mmio
+page would not be shared with other BARs. Then we can mmap sub-page
+MMIO BARs in vfio-pci driver if all MMIO BARs are page aligned.
 
-thanks
--john
+For MSI-X table's unmmapping, we think MSI-X table is safe to access
+directly from the guest with EEH mechanism enabled which can ensure that
+a given pci device can only shoot the MSIs assigned for its PE. So
+we add support for mmapping MSI-X table in vfio-pci driver if EEH is
+supported.
+
+With this patch set applied, we can get almost 100% improvement on
+performance for mmio accesses when we passthrough sub-page BARs in
+our test.
+
+The last two patches in the patch set can be used by qemu to:
+	- Add support for a VFIO-PCI ioctl to indicate that platform
+	  support all PCI BARs are page aligned.
+	- Add support for a VFIO-PCI ioctl to indicate that platform
+	  support mmapping MSI-X table.
+
+Yongji Xie (3):
+  powerpc/pci: Enforce all MMIO BARs to be page aligned
+  vfio-pci: Allow to mmap sub-page MMIO BARs if all MMIO BARs are page aligned
+  vfio-pci: Allow to mmap MSI-X table if EEH is supported
+
+ arch/powerpc/kernel/pci-common.c    |   10 +++++++++-
+ drivers/vfio/pci/vfio_pci.c         |   15 +++++++++++++--
+ drivers/vfio/pci/vfio_pci_private.h |   10 ++++++++++
+ include/uapi/linux/vfio.h           |    4 ++++
+ 4 files changed, 36 insertions(+), 3 deletions(-)
+
+-- 
+1.7.9.5
