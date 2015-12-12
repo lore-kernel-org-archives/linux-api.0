@@ -1,1124 +1,779 @@
-From: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v2 2/2] iio: health: Add driver for the TI AFE4404 heart
- monitor
-Date: Sat, 12 Dec 2015 15:41:04 +0000
-Message-ID: <566C4010.6030703@kernel.org>
-References: <1449086240-13375-1-git-send-email-afd@ti.com>
- <1449086240-13375-3-git-send-email-afd@ti.com> <56632B28.4080702@kernel.org>
- <5665C142.1050105@ti.com>
+From: Andy Shevchenko <andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v1 04/10] serial: mps2-uart: add MPS2 UART driver
+Date: Sun, 13 Dec 2015 01:39:26 +0200
+Message-ID: <CAHp75Vd98TEQ7TiD==t=RgYOqSinWgnyRjg7V=oPXmEx0nedLQ@mail.gmail.com>
+References: <1449048790-25859-1-git-send-email-vladimir.murzin@arm.com>
+	<1449048790-25859-5-git-send-email-vladimir.murzin@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5665C142.1050105-l0cyMroinI0@public.gmane.org>
+In-Reply-To: <1449048790-25859-5-git-send-email-vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Andrew F. Davis" <afd-l0cyMroinI0@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>
-Cc: devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber-l3A5Bk7waGM@public.gmane.org>, Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mark Rutland <Mark.Rutland-5wv7dgnIgG8@public.gmane.org>, Pawel Moll <Pawel.Moll-5wv7dgnIgG8@public.gmane.org>, ijc+devicetree <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, devicetree <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arm Mailing List <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 07/12/15 17:26, Andrew F. Davis wrote:
-> On 12/05/2015 12:21 PM, Jonathan Cameron wrote:
->> On 02/12/15 19:57, Andrew F. Davis wrote:
->>> Add driver for the TI AFE4404 heart rate monitor and pulse oximeter.
->>> This device detects reflected LED light fluctuations and presents an ADC
->>> value to the user space for further signal processing.
->>>
->>> Datasheet: http://www.ti.com/product/AFE4404/datasheet
->>>
->>> Signed-off-by: Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
->> I like this a lot.  Seems much simpler to me.
->>
->> Various bits and bobs inline though.  You quite rightly stated there
->> was too much to describe in the change log so I've kind of started
->> from scratch on the review as well.
->>
->> Thanks for your hard work on this.
->>
->> Jonathan
-Reponses inline.
->>> ---
->>>   .../ABI/testing/sysfs-bus-iio-health-afe4404       |  20 +
->>>   drivers/iio/Kconfig                                |   1 +
->>>   drivers/iio/Makefile                               |   1 +
->>>   drivers/iio/health/Kconfig                         |  25 +
->>>   drivers/iio/health/Makefile                        |   6 +
->>>   drivers/iio/health/afe4404.c                       | 619 +++++++++++++++++++++
->>>   drivers/iio/health/afe440x.h                       | 168 ++++++
->>>   7 files changed, 840 insertions(+)
->>>   create mode 100644 Documentation/ABI/testing/sysfs-bus-iio-health-afe4404
->>>   create mode 100644 drivers/iio/health/Kconfig
->>>   create mode 100644 drivers/iio/health/Makefile
->>>   create mode 100644 drivers/iio/health/afe4404.c
->>>   create mode 100644 drivers/iio/health/afe440x.h
->>>
->>> diff --git a/Documentation/ABI/testing/sysfs-bus-iio-health-afe4404 b/Documentation/ABI/testing/sysfs-bus-iio-health-afe4404
->>> new file mode 100644
->>> index 0000000..c104d66
->>> --- /dev/null
->>> +++ b/Documentation/ABI/testing/sysfs-bus-iio-health-afe4404
->>> @@ -0,0 +1,20 @@
->>> +What:        /sys/bus/iio/devices/iio:deviceX/tia_resistanceY
->>> +        /sys/bus/iio/devices/iio:deviceX/tia_capacitanceY
->>> +Date:        December 2015
->>> +KernelVersion:
->>> +Contact:    Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
->>> +Description:
->>> +        Get and set the resistance and the capacitance settings for the
->>> +        Transimpedance Amplifier. Y is 1 for Rf1 and Cf1, Y is 2 for
->>> +        Rf2 and Cf2 values.
->>> +        Resistance setting is from 0 -> 7
->>> +        Capcitance setting is from 0 -> 15
->> No magic numbers if at all possible.  These correspond to real resistances
->> and capacitances.
->>
->> You also want an _available attribute for each of them for the different
->> possible values.
->>
->> I'm not overly keep on the naming still but it's part specific enough that
->> if you fix the units I'll let it go ;)
-> 
-> I'm not sure if there is a clean way to do this, these are not channels
-> so parsing input will need checks based on what kind of register and value
-> we send in, these are raw input to the registers for other registers, I
-> changed the name to attempt to make it clear to users these are not
-> channels but raw registers (out_resistance1_raw -> tia_resistance1).
-> 
-> I could still make this more clear in the ABI doc:
-> 
->     Valid capacitance settings are 0 -> 7 which correspond to
->     5pF, 2.5pF, 10pF, 7.5pF, 20pF, 17.5pF, 25pF, and 22.5pF
->     respectively.
-Just do a simple mapping in the driver from magic number to real value
-and the other way around + provide the available attribute.  Rule 2 of sysfs
-interfaces: no magic values where a real meaningful one can be provided for
-the cost of a few more lines of code.
+On Wed, Dec 2, 2015 at 11:33 AM, Vladimir Murzin
+<vladimir.murzin-5wv7dgnIgG8@public.gmane.org> wrote:
+> This driver adds support to the UART controller found on ARM MPS2
+> platform.
 
-You can use the existing floating point to value pair functions from IIO
-to get you to a couple of values that can be trivially matched against
-a const table.
+Just few comments (have neither time not big desire to do full review).
 
-It's not free, but probably only 20 lines including the static const table
-of values.
-> 
-> or something similar.
-> 
->>> +
->>> +What:        /sys/bus/iio/devices/iio:deviceX/tia_separate_en
->>> +Date:        December 2015
->>> +KernelVersion:
->>> +Contact:    Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
->>> +Description:
->>> +        Enable or disable separate settings for the TransImpedance
->>> +        Amplifier above, when disabled both values are set by the
->>> +        first channel.
->> Weird and wonderful but fine for a part specific attibute!
->>
->> As noted below, I think we need to document all the new ABI even though
->> much of it is just extended names on standard channels.
->>
-> 
-> Works for me, I'll add them back.
-> 
->>> diff --git a/drivers/iio/Kconfig b/drivers/iio/Kconfig
->>> index 66792e7..ac085ab 100644
->>> --- a/drivers/iio/Kconfig
->>> +++ b/drivers/iio/Kconfig
->>> @@ -52,6 +52,7 @@ source "drivers/iio/common/Kconfig"
->>>   source "drivers/iio/dac/Kconfig"
->>>   source "drivers/iio/frequency/Kconfig"
->>>   source "drivers/iio/gyro/Kconfig"
->>> +source "drivers/iio/health/Kconfig"
->>>   source "drivers/iio/humidity/Kconfig"
->>>   source "drivers/iio/imu/Kconfig"
->>>   source "drivers/iio/light/Kconfig"
->>> diff --git a/drivers/iio/Makefile b/drivers/iio/Makefile
->>> index aeca726..6c5eb2a 100644
->>> --- a/drivers/iio/Makefile
->>> +++ b/drivers/iio/Makefile
->>> @@ -18,6 +18,7 @@ obj-y += common/
->>>   obj-y += dac/
->>>   obj-y += gyro/
->>>   obj-y += frequency/
->>> +obj-y += health/
->>>   obj-y += humidity/
->>>   obj-y += imu/
->>>   obj-y += light/
->>> diff --git a/drivers/iio/health/Kconfig b/drivers/iio/health/Kconfig
->>> new file mode 100644
->>> index 0000000..526e7af
->>> --- /dev/null
->>> +++ b/drivers/iio/health/Kconfig
->>> @@ -0,0 +1,25 @@
->>> +#
->>> +# Health drivers
->>> +#
->>> +# When adding new entries keep the list in alphabetical order
->>> +
->>> +menu "Health"
->>> +
->>> +menu "Heart Rate Monitors"
->>> +
->>> +config AFE4404
->>> +    tristate "TI AFE4404 Heart Rate Monitor"
->>> +    depends on I2C
->>> +    select REGMAP_I2C
->>> +    select IIO_BUFFER
->>> +    select IIO_TRIGGERED_BUFFER
->>> +    help
->>> +      Say yes to choose the Texas Instruments AFE4404
->>> +      heart rate monitor and low-cost pulse oximeter.
->>> +
->>> +      To compile this driver as a module, choose M here: the
->>> +      module will be called afe4404.
->>> +
->>> +endmenu
->>> +
->>> +endmenu
->>> diff --git a/drivers/iio/health/Makefile b/drivers/iio/health/Makefile
->>> new file mode 100644
->>> index 0000000..c108c8d
->>> --- /dev/null
->>> +++ b/drivers/iio/health/Makefile
->>> @@ -0,0 +1,6 @@
->>> +#
->>> +# Makefile for IIO Health drivers
->>> +#
->>> +# When adding new entries keep the list in alphabetical order
->>> +
->>> +obj-$(CONFIG_AFE4404) += afe4404.o
->>> diff --git a/drivers/iio/health/afe4404.c b/drivers/iio/health/afe4404.c
->>> new file mode 100644
->>> index 0000000..d36c1d9
->>> --- /dev/null
->>> +++ b/drivers/iio/health/afe4404.c
->>> @@ -0,0 +1,619 @@
->>> +/*
->>> + * AFE4404 Heart Rate Monitors and Low-Cost Pulse Oximeters
->>> + *
->>> + * Copyright (C) 2015 Texas Instruments Incorporated - http://www.ti.com/
->>> + *    Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
->>> + *
->>> + * This program is free software; you can redistribute it and/or modify
->>> + * it under the terms of the GNU General Public License version 2 as
->>> + * published by the Free Software Foundation.
->>> + *
->>> + * This program is distributed in the hope that it will be useful, but
->>> + * WITHOUT ANY WARRANTY; without even the implied warranty of
->>> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
->>> + * General Public License for more details.
->>> + */
->>> +
->>> +#include <linux/device.h>
->>> +#include <linux/delay.h>
->>> +#include <linux/err.h>
->>> +#include <linux/interrupt.h>
->>> +#include <linux/i2c.h>
->>> +#include <linux/kernel.h>
->>> +#include <linux/module.h>
->>> +#include <linux/of_gpio.h>
->>> +#include <linux/regmap.h>
->>> +#include <linux/slab.h>
->>> +#include <linux/sysfs.h>
->>> +#include <linux/regulator/consumer.h>
->>> +
->>> +#include <linux/iio/iio.h>
->>> +#include <linux/iio/sysfs.h>
->>> +#include <linux/iio/buffer.h>
->>> +#include <linux/iio/trigger.h>
->>> +#include <linux/iio/triggered_buffer.h>
->>> +#include <linux/iio/trigger_consumer.h>
->>> +
->>> +#include "afe440x.h"
->>> +
->>> +#define AFE4404_DRIVER_NAME        "afe4404"
->>> +
->>> +/* AFE4404 registers */
->>> +#define AFE4404_TIA_GAIN_SEP        0x20
->>> +#define AFE4404_TIA_GAIN        0x21
->>> +#define AFE4404_PROG_TG_STC        0x34
->>> +#define AFE4404_PROG_TG_ENDC        0x35
->>> +#define AFE4404_LED3LEDSTC        0x36
->>> +#define AFE4404_LED3LEDENDC        0x37
->>> +#define AFE4404_CLKDIV_PRF        0x39
->>> +#define AFE4404_OFFDAC            0x3a
->>> +#define AFE4404_DEC            0x3d
->>> +#define AFE4404_AVG_LED2_ALED2VAL    0x3f
->>> +#define AFE4404_AVG_LED1_ALED1VAL    0x40
->>> +
->>> +/* AFE4404 GAIN register fields */
->>> +#define AFE4404_TIA_GAIN_RES_MASK    GENMASK(2, 0)
->>> +#define AFE4404_TIA_GAIN_RES_SHIFT    0
->>> +#define AFE4404_TIA_GAIN_CAP_MASK    GENMASK(5, 3)
->>> +#define AFE4404_TIA_GAIN_CAP_SHIFT    3
->>> +
->>> +/* AFE4404 LEDCNTRL register fields */
->>> +#define AFE4404_LEDCNTRL_ILED1_MASK    GENMASK(5, 0)
->>> +#define AFE4404_LEDCNTRL_ILED1_SHIFT    0
->>> +#define AFE4404_LEDCNTRL_ILED2_MASK    GENMASK(11, 6)
->>> +#define AFE4404_LEDCNTRL_ILED2_SHIFT    6
->>> +#define AFE4404_LEDCNTRL_ILED3_MASK    GENMASK(17, 12)
->>> +#define AFE4404_LEDCNTRL_ILED3_SHIFT    12
->>> +
->>> +/* AFE4404 CONTROL2 register fields */
->>> +#define AFE440X_CONTROL2_ILED_2X_MASK    BIT(17)
->>> +#define AFE440X_CONTROL2_ILED_2X_SHIFT    17
->>> +
->>> +/* AFE4404 CONTROL3 register fields */
->>> +#define AFE440X_CONTROL3_OSC_ENABLE    BIT(9)
->>> +
->>> +/* AFE4404 OFFDAC register current fields */
->>> +#define AFE4404_OFFDAC_CURR_LED1_MASK    GENMASK(9, 5)
->>> +#define AFE4404_OFFDAC_CURR_LED1_SHIFT    5
->>> +#define AFE4404_OFFDAC_CURR_LED2_MASK    GENMASK(19, 15)
->>> +#define AFE4404_OFFDAC_CURR_LED2_SHIFT    15
->>> +#define AFE4404_OFFDAC_CURR_LED3_MASK    GENMASK(4, 0)
->>> +#define AFE4404_OFFDAC_CURR_LED3_SHIFT    0
->>> +#define AFE4404_OFFDAC_CURR_ALED1_MASK    GENMASK(14, 10)
->>> +#define AFE4404_OFFDAC_CURR_ALED1_SHIFT    10
->>> +#define AFE4404_OFFDAC_CURR_ALED2_MASK    GENMASK(4, 0)
->>> +#define AFE4404_OFFDAC_CURR_ALED2_SHIFT    0
->>> +
->>> +/* AFE4404 NULL fields */
->>> +#define NULL_MASK    0
->>> +#define NULL_SHIFT    0
->>> +
->>> +/* AFE4404 TIA_GAIN_CAP values */
->>> +#define AFE4404_TIA_GAIN_CAP_5_P    0x0
->>> +#define AFE4404_TIA_GAIN_CAP_2_5_P    0x1
->>> +#define AFE4404_TIA_GAIN_CAP_10_P    0x2
->>> +#define AFE4404_TIA_GAIN_CAP_7_5_P    0x3
->>> +#define AFE4404_TIA_GAIN_CAP_20_P    0x4
->>> +#define AFE4404_TIA_GAIN_CAP_17_5_P    0x5
->>> +#define AFE4404_TIA_GAIN_CAP_25_P    0x6
->>> +#define AFE4404_TIA_GAIN_CAP_22_5_P    0x7
->>> +
->>> +/* AFE4404 TIA_GAIN_RES values */
->>> +#define AFE4404_TIA_GAIN_RES_500_K    0x0
->>> +#define AFE4404_TIA_GAIN_RES_250_K    0x1
->>> +#define AFE4404_TIA_GAIN_RES_100_K    0x2
->>> +#define AFE4404_TIA_GAIN_RES_50_K    0x3
->>> +#define AFE4404_TIA_GAIN_RES_25_K    0x4
->>> +#define AFE4404_TIA_GAIN_RES_10_K    0x5
->>> +#define AFE4404_TIA_GAIN_RES_1_M    0x6
->>> +#define AFE4404_TIA_GAIN_RES_2_M    0x7
->>> +
->>> +enum afe4404_chan_id {
->>> +    LED1,
->>> +    ALED1,
->>> +    LED2,
->>> +    ALED2,
->>> +    LED3,
->>> +    LED1_ALED1,
->>> +    LED2_ALED2,
->>> +    AVG_LED1_ALED1,
->>> +    AVG_LED2_ALED2,
->>> +    ILED1,
->>> +    ILED2,
->>> +    ILED3,
->>> +};
->>> +
->>> +#define AFE4404_REG_INFO(_id, _reg, _offreg, _sm)        \
->>> +    [_id] = {                        \
->>> +        .reg = _reg,                    \
->>> +        .offreg = _offreg,                \
->>> +        .shift = _sm ## _SHIFT,                \
->>> +        .mask = _sm ## _MASK,                \
->>> +    }
->>> +
->>> +struct {
->>> +    unsigned int reg;
->>> +    unsigned int offreg;
->>> +    unsigned int shift;
->>> +    unsigned int mask;
->>> +} reg_info[] = {
->>> +    AFE4404_REG_INFO(LED1, AFE440X_LED1VAL, AFE4404_OFFDAC, AFE4404_OFFDAC_CURR_LED1),
->>> +    AFE4404_REG_INFO(ALED1, AFE440X_ALED1VAL, AFE4404_OFFDAC, AFE4404_OFFDAC_CURR_ALED1),
->>> +    AFE4404_REG_INFO(LED2, AFE440X_LED2VAL, AFE4404_OFFDAC, AFE4404_OFFDAC_CURR_LED2),
->>> +    AFE4404_REG_INFO(ALED2, AFE440X_ALED2VAL, AFE4404_OFFDAC, AFE4404_OFFDAC_CURR_ALED2),
->>> +    AFE4404_REG_INFO(LED3, AFE440X_ALED2VAL, 0, NULL),
->>> +    AFE4404_REG_INFO(LED1_ALED1, AFE440X_LED1_ALED1VAL, 0, NULL),
->>> +    AFE4404_REG_INFO(LED2_ALED2, AFE440X_LED2_ALED2VAL, 0, NULL),
->>> +    AFE4404_REG_INFO(AVG_LED1_ALED1, AFE4404_AVG_LED1_ALED1VAL, 0, NULL),
->>> +    AFE4404_REG_INFO(AVG_LED2_ALED2, AFE4404_AVG_LED2_ALED2VAL, 0, NULL),
->>> +    AFE4404_REG_INFO(ILED1, AFE440X_LEDCNTRL, 0, AFE4404_LEDCNTRL_ILED1),
->>> +    AFE4404_REG_INFO(ILED2, AFE440X_LEDCNTRL, 0, AFE4404_LEDCNTRL_ILED2),
->>> +    AFE4404_REG_INFO(ILED3, AFE440X_LEDCNTRL, 0, AFE4404_LEDCNTRL_ILED3),
->>> +};
->>> +
->>> +static const struct iio_chan_spec afe4404_channels[] = {
->>> +    /* ADC values */
->>> +    AFE440X_INTENSITY_CHAN(LED1, "led1", BIT(IIO_CHAN_INFO_OFFSET)),
->>> +    AFE440X_INTENSITY_CHAN(ALED1, "led1_ambient", BIT(IIO_CHAN_INFO_OFFSET)),
->> (this one is still 'interesting' as it's nothing to do with led1 other than it's
->> taken temporily close to it - the led is presumably off at the time! - I can't
->> think of a better way though - maybe another reviewer will)
->>> +    AFE440X_INTENSITY_CHAN(LED2, "led2", BIT(IIO_CHAN_INFO_OFFSET)),
->>> +    AFE440X_INTENSITY_CHAN(ALED2, "led2_ambient", BIT(IIO_CHAN_INFO_OFFSET)),
->>> +    AFE440X_INTENSITY_CHAN(LED3, "led3", BIT(IIO_CHAN_INFO_OFFSET)),
->>> +    AFE440X_INTENSITY_CHAN(LED1_ALED1, "led1-led1_ambient", 0),
->>> +    AFE440X_INTENSITY_CHAN(LED2_ALED2, "led2-led2_ambient", 0),
->> This trick for the differential cases is a cludge to work around deficiencies
->> in our existing infrastructure, but it's straight forward one for an unusual
->> case so fair enough.
->>
->>> +    AFE440X_INTENSITY_CHAN(AVG_LED1_ALED1, "led1-led1_ambient_mean", 0),
->>> +    AFE440X_INTENSITY_CHAN(AVG_LED2_ALED2, "led2-led2_ambient_mean", 0),
->> I'd love to better describe these two with the filters made explicit as
->> separate sysfs attributes rather than here.  It's kind of backwards but
->> we do have oversampling to define what is happening here.  I also note
->> that the true output rate of this is lower than the other channels.
->>
->> If we were to propose a decimation to match with oversampling and to
->> explicitly document them as a pair it might work.  Which is relevant
->> for a channel is dependent on the 'natural - e.g. the trigger rate'
->> at which we fill the buffer.  So if the whole device is performing
->> decimation and we read at the reduced frequency then it is oversampling
->> - if we read at the original frequency it is decimation.
->>
->> What do you think?
-> 
-> I'm thinking these last two are kind of a mess right now, also I don't
-> expose the setting to enable these yet anyway, so, I think I will just
-> drop them and add them back in a latter patch that adds all their
-> required functionality together.
-Fair enough.
-> 
->>> +    /* LED current */
->>> +    AFE440X_CURRENT_CHAN(ILED1, "led1"),
->>> +    AFE440X_CURRENT_CHAN(ILED2, "led2"),
->>> +    AFE440X_CURRENT_CHAN(ILED3, "led3"),
->>
->> Whilst all these now just 'stretch' :) the current ABI structure they
->> do need explicitly documenting somewhere.  Probably odd enough that they'll
->> want to go in your part specific doc rather than just adding the specific
->> naming to the existing abi.
->>
-> 
-> ACK
-> 
->>> +};
->>> +
->>> +static ssize_t afe440x_show_register(struct device *dev,
->>> +                     struct device_attribute *attr,
->>> +                     char *buf)
->>> +{
->>> +    struct iio_dev *indio_dev = dev_to_iio_dev(dev);
->>> +    struct afe440x_data *afe440x = iio_device_get_drvdata(indio_dev);
->>> +    struct afe440x_reg *afe440x_reg = to_afe440x_reg(attr);
->>> +    unsigned int reg_val;
->>> +    int ret;
->>> +
->>> +    ret = regmap_read(afe440x->regmap, afe440x_reg->reg, &reg_val);
->>> +    if (ret)
->>> +        return ret;
->>> +
->>> +    reg_val >>= afe440x_reg->shift;
->>> +    reg_val &= afe440x_reg->mask;
->>> +
->>> +    return scnprintf(buf, PAGE_SIZE, "%u\n", reg_val);
->>> +}
->>> +
->>> +static ssize_t afe440x_store_register(struct device *dev,
->>> +                      struct device_attribute *attr,
->>> +                      const char *buf, size_t count)
->>> +{
->>> +    struct iio_dev *indio_dev = dev_to_iio_dev(dev);
->>> +    struct afe440x_data *afe440x = iio_device_get_drvdata(indio_dev);
->>> +    struct afe440x_reg *afe440x_reg = to_afe440x_reg(attr);
->>> +    unsigned int reg_val;
->>> +    int val, ret;
->>> +
->>> +    if (kstrtoint(buf, 0, &val))
->>> +        return -EINVAL;
->>> +
->>> +    ret = regmap_read(afe440x->regmap, afe440x_reg->reg, &reg_val);
->>> +    if (ret)
->>> +        return ret;
->>> +
->>> +    reg_val &= ~afe440x_reg->mask;
->>> +    reg_val |= ((val << afe440x_reg->shift) & afe440x_reg->mask);
->>> +
->>> +    ret = regmap_write(afe440x->regmap, afe440x_reg->reg, reg_val);
->>> +    if (ret)
->>> +        return ret;
->>> +
->>> +    return count;
->>> +}
->>> +
->>> +AFE440X_ATTR(tia_separate_en, AFE4404_TIA_GAIN_SEP, AFE440X_TIAGAIN_ENSEPGAIN);
->>> +
->>> +AFE440X_ATTR(tia_resistance1, AFE4404_TIA_GAIN, AFE4404_TIA_GAIN_RES);
->>> +AFE440X_ATTR(tia_capacitance1, AFE4404_TIA_GAIN, AFE4404_TIA_GAIN_CAP);
->>> +
->>> +AFE440X_ATTR(tia_resistance2, AFE4404_TIA_GAIN_SEP, AFE4404_TIA_GAIN_RES);
->>> +AFE440X_ATTR(tia_capacitance2, AFE4404_TIA_GAIN_SEP, AFE4404_TIA_GAIN_CAP);
->>> +
->>> +static struct attribute *afe4404_attributes[] = {
->>> +    &afe440x_reg_tia_separate_en.dev_attr.attr,
->>> +    &afe440x_reg_tia_resistance1.dev_attr.attr,
->>> +    &afe440x_reg_tia_capacitance1.dev_attr.attr,
->>> +    &afe440x_reg_tia_resistance2.dev_attr.attr,
->>> +    &afe440x_reg_tia_capacitance2.dev_attr.attr,
->>> +    NULL
->>> +};
->>> +
->>> +static const struct attribute_group afe4404_attribute_group = {
->>> +    .attrs = afe4404_attributes
->>> +};
->>> +
->>> +static int afe440x_read_raw(struct iio_dev *indio_dev,
->>> +                struct iio_chan_spec const *chan,
->>> +                int *val, int *val2, long mask)
->>> +{
->>> +    struct afe440x_data *afe440x = iio_device_get_drvdata(indio_dev);
->>> +    int ret;
->>> +
->>> +    switch (chan->type) {
->>> +    case IIO_INTENSITY:
->>> +        switch (mask) {
->>> +        case IIO_CHAN_INFO_RAW:
->>> +            ret = regmap_read(afe440x->regmap,
->>> +                      reg_info[chan->address].reg, val);
->>> +            if (ret)
->>> +                return ret;
->>> +            return IIO_VAL_INT;
->>> +        case IIO_CHAN_INFO_OFFSET:
->>> +            ret = regmap_read(afe440x->regmap,
->>> +                      reg_info[chan->address].offreg, val);
->>> +            if (ret)
->>> +                return ret;
->>> +            *val &= reg_info[chan->address].mask;
->>> +            *val >>= reg_info[chan->address].shift;
->>> +            return IIO_VAL_INT;
->>> +        }
->>> +        break;
->>> +    case IIO_CURRENT:
->>> +        switch (mask) {
->>> +        case IIO_CHAN_INFO_RAW:
->>> +            ret = regmap_read(afe440x->regmap,
->>> +                      reg_info[chan->address].reg, val);
->>> +            if (ret)
->>> +                return ret;
->>> +            *val &= reg_info[chan->address].mask;
->>> +            *val >>= reg_info[chan->address].shift;
->>> +            return IIO_VAL_INT;
->>> +        case IIO_CHAN_INFO_SCALE:
->>> +            *val = 0;
->>> +            *val2 = 800000;
->>> +            return IIO_VAL_INT_PLUS_MICRO;
->>> +        }
->>> +        break;
->>> +    default:
->>> +        break;
->>> +    }
->>> +
->>> +    return -EINVAL;
->>> +}
->>> +
->>> +static int afe440x_write_raw(struct iio_dev *indio_dev,
->>> +                 struct iio_chan_spec const *chan,
->>> +                 int val, int val2, long mask)
->>> +{
->>> +    struct afe440x_data *afe440x = iio_device_get_drvdata(indio_dev);
->>> +    unsigned int reg_val;
->>> +    int ret;
->>> +
->>> +    switch (chan->type) {
->>> +    case IIO_INTENSITY:
->>> +        switch (mask) {
->>> +        case IIO_CHAN_INFO_OFFSET:
->>> +            ret = regmap_read(afe440x->regmap,
->>> +                      reg_info[chan->address].offreg,
->>> +                      &reg_val);
->>> +            if (ret)
->>> +                return ret;
->>> +            reg_val &= ~reg_info[chan->address].mask;
->>> +            reg_val |= ((val << reg_info[chan->address].shift) &
->>> +                    reg_info[chan->address].mask);
->>> +            return regmap_write(afe440x->regmap,
->>> +                        reg_info[chan->address].offreg,
->>> +                        reg_val);
->>> +        }
->>> +        break;
->>> +    case IIO_CURRENT:
->>> +        switch (mask) {
->>> +        case IIO_CHAN_INFO_RAW:
->>> +            ret = regmap_read(afe440x->regmap,
->>> +                      reg_info[chan->address].reg,
->>> +                      &reg_val);
->>> +            if (ret)
->>> +                return ret;
->>> +            reg_val &= ~reg_info[chan->address].mask;
->>> +            reg_val |= ((val << reg_info[chan->address].shift) &
->>> +                    reg_info[chan->address].mask);
->>> +            return regmap_write(afe440x->regmap,
->>> +                        reg_info[chan->address].reg,
->>> +                        reg_val);
->>> +        }
->>> +        break;
->>> +    default:
->>> +        break;
->>> +    }
->>> +
->>> +    return -EINVAL;
->>> +}
->>> +
->>> +static const struct iio_info afe4404_iio_info = {
->>> +    .attrs    = &afe4404_attribute_group,
->>> +    .read_raw = afe440x_read_raw,
->>> +    .write_raw = afe440x_write_raw,
->>> +    .driver_module = THIS_MODULE,
->>> +};
->>> +
->>> +static irqreturn_t afe440x_trigger_handler(int irq, void *private)
->>> +{
->>> +    struct iio_poll_func *pf = private;
->>> +    struct iio_dev *indio_dev = pf->indio_dev;
->>> +    struct afe440x_data *afe440x = iio_device_get_drvdata(indio_dev);
->>> +    int ret, bit, reg, i = 0;
->>> +    s32 buffer[12];
->>> +
->>> +    for_each_set_bit(bit, indio_dev->active_scan_mask,
->>> +             indio_dev->masklength) {
->>> +        reg = reg_info[bit].reg;
->> why the local reg variable? Stick it dirrectly in the functional call.
-> 
-> No reason, just looked better to me. Will fix.
-> 
->>> +        ret = regmap_read(afe440x->regmap, reg, &buffer[i++]);
->>> +        if (ret)
->>> +            goto err;
->>> +    }
->>> +
->>> +    iio_push_to_buffers_with_timestamp(indio_dev, buffer, pf->timestamp);
->>> +err:
->>> +    iio_trigger_notify_done(indio_dev->trig);
->>> +
->>> +    return IRQ_HANDLED;
->>> +}
->>> +
->>> +static const struct iio_trigger_ops afe440x_trigger_ops = {
->>> +    .owner = THIS_MODULE,
->>> +};
->>> +
->>> +/* Default timings from data-sheet */
->>> +#define AFE4404_TIMING_PAIRS            \
->>> +    { AFE440X_PRPCOUNT,    39999    },    \
->>> +    { AFE440X_LED2LEDSTC,    0    },    \
->>> +    { AFE440X_LED2LEDENDC,    398    },    \
->>> +    { AFE440X_LED2STC,    80    },    \
->>> +    { AFE440X_LED2ENDC,    398    },    \
->>> +    { AFE440X_ADCRSTSTCT0,    5600    },    \
->>> +    { AFE440X_ADCRSTENDCT0,    5606    },    \
->>> +    { AFE440X_LED2CONVST,    5607    },    \
->>> +    { AFE440X_LED2CONVEND,    6066    },    \
->>> +    { AFE4404_LED3LEDSTC,    400    },    \
->>> +    { AFE4404_LED3LEDENDC,    798    },    \
->>> +    { AFE440X_ALED2STC,    480    },    \
->>> +    { AFE440X_ALED2ENDC,    798    },    \
->>> +    { AFE440X_ADCRSTSTCT1,    6068    },    \
->>> +    { AFE440X_ADCRSTENDCT1,    6074    },    \
->>> +    { AFE440X_ALED2CONVST,    6075    },    \
->>> +    { AFE440X_ALED2CONVEND,    6534    },    \
->>> +    { AFE440X_LED1LEDSTC,    800    },    \
->>> +    { AFE440X_LED1LEDENDC,    1198    },    \
->>> +    { AFE440X_LED1STC,    880    },    \
->>> +    { AFE440X_LED1ENDC,    1198    },    \
->>> +    { AFE440X_ADCRSTSTCT2,    6536    },    \
->>> +    { AFE440X_ADCRSTENDCT2,    6542    },    \
->>> +    { AFE440X_LED1CONVST,    6543    },    \
->>> +    { AFE440X_LED1CONVEND,    7003    },    \
->>> +    { AFE440X_ALED1STC,    1280    },    \
->>> +    { AFE440X_ALED1ENDC,    1598    },    \
->>> +    { AFE440X_ADCRSTSTCT3,    7005    },    \
->>> +    { AFE440X_ADCRSTENDCT3,    7011    },    \
->>> +    { AFE440X_ALED1CONVST,    7012    },    \
->>> +    { AFE440X_ALED1CONVEND,    7471    },    \
->>> +    { AFE440X_PDNCYCLESTC,    7671    },    \
->>> +    { AFE440X_PDNCYCLEENDC,    39199    }
->>> +
->>> +static const struct reg_sequence afe4404_reg_sequences[] = {
->>> +    AFE4404_TIMING_PAIRS,
->>> +    { AFE440X_CONTROL1, AFE440X_CONTROL1_TIMEREN },
->>> +    { AFE4404_TIA_GAIN, AFE4404_TIA_GAIN_RES_50_K },
->>> +    { AFE440X_LEDCNTRL, (0xf << AFE4404_LEDCNTRL_ILED1_SHIFT) |
->>> +                (0x3 << AFE4404_LEDCNTRL_ILED2_SHIFT) |
->>> +                (0x3 << AFE4404_LEDCNTRL_ILED3_SHIFT) },
->>> +    { AFE440X_CONTROL2, AFE440X_CONTROL3_OSC_ENABLE    },
->>> +};
->>> +
->>> +static const struct regmap_range afe4404_yes_ranges[] = {
->>> +    regmap_reg_range(AFE440X_LED2VAL, AFE440X_LED1_ALED1VAL),
->>> +    regmap_reg_range(AFE4404_AVG_LED2_ALED2VAL, AFE4404_AVG_LED1_ALED1VAL),
->>> +};
->>> +
->>> +static const struct regmap_access_table afe4404_volatile_table = {
->>> +    .yes_ranges = afe4404_yes_ranges,
->>> +    .n_yes_ranges = ARRAY_SIZE(afe4404_yes_ranges),
->>> +};
->>> +
->>> +static const struct regmap_config afe4404_regmap_config = {
->>> +    .reg_bits = 8,
->>> +    .val_bits = 24,
->>> +
->>> +    .max_register = AFE4404_AVG_LED1_ALED1VAL,
->>> +    .cache_type = REGCACHE_RBTREE,
->>> +    .volatile_table = &afe4404_volatile_table,
->>> +};
->>> +
->>> +#ifdef CONFIG_OF
->>> +static const struct of_device_id afe4404_of_match[] = {
->>> +    { .compatible = "ti,afe4404", },
->>> +    { /* sentinel */ },
->>> +};
->>> +MODULE_DEVICE_TABLE(of, afe4404_of_match);
->>> +#endif
->>> +
->>> +static int afe440x_suspend(struct device *dev)
->>> +{
->>> +    struct afe440x_data *afe440x = dev_get_drvdata(dev);
->>> +    int ret;
->>> +
->>> +    ret = regmap_update_bits(afe440x->regmap, AFE440X_CONTROL2,
->>> +                 AFE440X_CONTROL2_PDN_AFE,
->>> +                 AFE440X_CONTROL2_PDN_AFE);
->>> +    if (ret)
->>> +        return ret;
->>> +
->>> +    ret = regulator_disable(afe440x->regulator);
->>> +    if (ret) {
->>> +        dev_err(dev, "Failed to disable regulator\n");
->>> +        return ret;
->>> +    }
->> Some of the static code checkers (probably coccicheck) will
->> point out that moving the return ret out of the above brackets
->> will have the same effect as you have here in less code.
->>
->> It's worth running sparse, smatch and coccicheck on drivers before
->> submitting as otherwise we miss things and then get a series
->> of 'fix' patches after this hits a public tree rather than the list
->> (you sometimes get them for posting on the list as well these days!)
-> 
-> Makes sense, will do.
-> 
->>> +
->>> +    return 0;
->>> +}
->>> +
->>> +static int afe440x_resume(struct device *dev)
->>> +{
->>> +    struct afe440x_data *afe440x = dev_get_drvdata(dev);
->>> +    int ret;
->>> +
->>> +    ret = regmap_update_bits(afe440x->regmap, AFE440X_CONTROL2,
->>> +                 AFE440X_CONTROL2_PDN_AFE, 0);
->>> +    if (ret)
->>> +        return ret;
->> I'd expect you want to turn the device off on remove given you turn
->> it on during a resume...
->>> +
->>> +    ret = regulator_enable(afe440x->regulator);
->>> +    if (ret) {
->>> +        dev_err(dev, "Failed to enable regulator\n");
->>> +        return ret;
->>> +    }
->> You turn the reg on here, but nowhere else that I can see.
->> Why should it be on during the initial start?
-> 
-> I'm not sure but I belive the regulator will be enabled on 'get'
-It won't - has to be explicity enabled.  Now as likely as not on most
-boards it will be on anyway, but you never know!
-> and when all devices using the regulator have 'put' it will be
-> turned off.
-Not true either.  Will leave it on unless explicitly disabled.
->I manualy disable/enable in the PM code so I don't
-> have to put/get them agian.
-> 
->>> +
->>> +    return 0;
->>> +}
->>> +
->>> +SIMPLE_DEV_PM_OPS(afe440x_pm_ops, afe440x_suspend, afe440x_resume);
->>> +
->>> +static int afe440x_iio_setup(struct afe440x_data *afe440x)
->>> +{
->>> +    struct iio_dev *indio_dev;
->>> +    int ret;
->>> +
->>> +    indio_dev = devm_iio_device_alloc(afe440x->dev, 0);
->>> +    if (!indio_dev) {
->>> +        dev_err(afe440x->dev, "Unable to allocate IIO device\n");
->>> +        return -ENOMEM;
->>> +    }
->>> +
->>> +    iio_device_set_drvdata(indio_dev, afe440x);
->>> +
->>> +    indio_dev->modes = INDIO_DIRECT_MODE;
->>> +    indio_dev->dev.parent = afe440x->dev;
->>> +    indio_dev->channels = afe440x->channels;
->>> +    indio_dev->num_channels = afe440x->num_channels;
->>> +    indio_dev->name = afe440x->name;
->>> +    indio_dev->info = afe440x->info;
->>> +
->>> +    if (afe440x->irq > 0) {
->>> +        afe440x->trig = devm_iio_trigger_alloc(afe440x->dev,
->>> +                               "%s-dev%d",
->>> +                               indio_dev->name,
->>> +                               indio_dev->id);
->>> +        if (!afe440x->trig) {
->>> +            dev_err(afe440x->dev, "Unable to allocate IIO trigger\n");
->>> +            return -ENOMEM;
->>> +        }
->>> +
->>> +        iio_trigger_set_drvdata(afe440x->trig, indio_dev);
->>> +
->>> +        afe440x->trig->ops = &afe440x_trigger_ops;
->>> +        afe440x->trig->dev.parent = afe440x->dev;
->>> +
->>> +        ret = iio_trigger_register(afe440x->trig);
->>> +        if (ret) {
->>> +            dev_err(afe440x->dev, "Unable to register IIO trigger\n");
->>> +            return ret;
->>> +        }
->>> +
->>> +        ret = devm_request_threaded_irq(afe440x->dev, afe440x->irq,
->>> +                        iio_trigger_generic_data_rdy_poll,
->>> +                        NULL, IRQF_ONESHOT,
->>> +                        afe440x->name, afe440x->trig);
->>> +        if (ret) {
->>> +            dev_err(afe440x->dev, "Unable to request IRQ\n");
->>> +            return ret;
->>> +        }
->>> +    }
->>> +
->>> +    ret = iio_triggered_buffer_setup(indio_dev, &iio_pollfunc_store_time,
->>> +                     &afe440x_trigger_handler, NULL);
->>> +    if (ret) {
->>> +        dev_err(afe440x->dev, "Unable to setup buffer\n");
->>> +        return ret;
->>> +    }
->>> +
->>> +    ret = devm_iio_device_register(afe440x->dev, indio_dev);
->> This suprises me a little - I'd expect such a complex part to
->> do at least some power saving or similar...
->>
->> If that is the case you'll want to do that in the remove after the device
->> is unregistered (to avoid a race with userspace interfaces still available).
->>
->> Can always be added in a later patch however!
-> 
-> Why do today what you can put off until tomorrow :) I'll look into that
-> in a later patch.
-> 
->>> +    if (ret) {
->>> +        dev_err(afe440x->dev, "Unable to register IIO device\n");
->>> +        return ret;
->>> +    }
->>> +
->>> +    return 0;
->>> +}
->>> +
->>> +static int afe4404_probe(struct i2c_client *client,
->>> +             const struct i2c_device_id *id)
->>> +{
->>> +    struct afe440x_data *afe440x;
->>> +    int ret;
->>> +
->>> +    afe440x = devm_kzalloc(&client->dev, sizeof(*afe440x), GFP_KERNEL);
->>> +    if (!afe440x)
->>> +        return -ENOMEM;
->> This is all still backwards to my mind and could be easily refactored
->> to provide the device specific stuff in a similar way to other IIO drivers
->> do it with a mixture of const data and appropriate callbacks.
->>
->> I appreciate I haven't seen the other driver you mentioned shares a lot
->> of the code, but I doubt it does anything that couldn't be handled that
->> way around.
-> 
-> I'm thinking now that this driver may be getting close to correct, I will
-> add the other part as part of this series if that is OK. Should clear up
-> some of the issues below to have them at the same time.
-Cool
-> 
->>> +
->>> +    i2c_set_clientdata(client, afe440x);
->>> +
->>> +    afe440x->dev = &client->dev;
->>> +    afe440x->irq = client->irq;
->>> +
->>> +    afe440x->regmap = devm_regmap_init_i2c(client, &afe4404_regmap_config);
->>> +    if (IS_ERR(afe440x->regmap)) {
->>> +        dev_err(afe440x->dev, "Unable to allocate register map\n");
->>> +        return PTR_ERR(afe440x->regmap);
->>> +    }
->>> +
->>> +    afe440x->regulator = devm_regulator_get(afe440x->dev, "tx_sup");
->>> +    if (IS_ERR(afe440x->regulator)) {
->>> +        dev_err(afe440x->dev, "Unable to get regulator\n");
->>> +        return PTR_ERR(afe440x->regulator);
->>> +    }
->> Given you turn the reg on during the resume, I'm guessing you want to turn
->> it on here and off in remove?  No reason to assume it is on when the
->> board is powered up!
->>
->>> +
->>> +    ret = regmap_write(afe440x->regmap, AFE440X_CONTROL0,
->>> +               AFE440X_CONTROL0_SW_RESET);
->>> +    if (ret) {
->>> +        dev_err(afe440x->dev, "Unable to reset device\n");
->>> +        return ret;
->>> +    }
->>> +
->>> +    ret = regmap_register_patch(afe440x->regmap, afe4404_reg_sequences,
->>> +                    ARRAY_SIZE(afe4404_reg_sequences));
->>> +    if (ret) {
->>> +        dev_err(afe440x->dev, "Unable to set register defaults\n");
->>> +        return ret;
->>> +    }
->>> +
->> As I suggest below in the header, I'd put these elements
->> into a separate structure (as they are constant for a given part)
-> 
-> ACK
-> 
->>> +    afe440x->channels = afe4404_channels;
->>> +    afe440x->num_channels = ARRAY_SIZE(afe4404_channels);
->>> +    afe440x->name = AFE4404_DRIVER_NAME;
->>> +    afe440x->info = &afe4404_iio_info;
->>> +
->>> +    return afe440x_iio_setup(afe440x);
->>> +}
->>> +
->>> +static const struct i2c_device_id afe4404_ids[] = {
->>> +    { "afe4404", 0 },
->>> +    { /* sentinel */ },
->>> +};
->>> +MODULE_DEVICE_TABLE(i2c, afe4404_ids);
->>> +
->>> +static struct i2c_driver afe4404_i2c_driver = {
->>> +    .driver = {
->>> +        .name = AFE4404_DRIVER_NAME,
->>> +        .of_match_table = of_match_ptr(afe4404_of_match),
->>> +        .pm = &afe440x_pm_ops,
->>> +    },
->>> +    .probe = afe4404_probe,
->>> +    .id_table = afe4404_ids,
->>> +};
->>> +module_i2c_driver(afe4404_i2c_driver);
->>> +
->>> +MODULE_AUTHOR("Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>");
->>> +MODULE_DESCRIPTION("TI AFE4404 Heart Rate and Pulse Oximeter");
->>> +MODULE_LICENSE("GPL");
->>> diff --git a/drivers/iio/health/afe440x.h b/drivers/iio/health/afe440x.h
->>> new file mode 100644
->>> index 0000000..73a2577
->>> --- /dev/null
->>> +++ b/drivers/iio/health/afe440x.h
->>> @@ -0,0 +1,168 @@
->>> +/*
->>> + * AFE440X Heart Rate Monitors and Low-Cost Pulse Oximeters
->>> + *
->>> + * Author: Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
->>> + *
->>> + * Copyright: (C) 2015 Texas Instruments, Inc.
->>> + *
->>> + * This program is free software; you can redistribute it and/or modify
->>> + * it under the terms of the GNU General Public License version 2 as
->>> + * published by the Free Software Foundation.
->>> + *
->>> + * This program is distributed in the hope that it will be useful, but
->>> + * WITHOUT ANY WARRANTY; without even the implied warranty of
->>> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
->>> + * General Public License for more details.
->>> + */
->>> +
->>> +#ifndef _AFE440X_H
->>> +#define _AFE440X_H
->> I know you are aiming to support more devices and hence the header file
->> spit may make sense, but please squish it into the .c file for now and
->> pull it out as part of the series adding the new devices - avoids
->> me getting patches 'tidying this up' in the interval before the other
->> device support makes it.
-> 
-> As above would it be better for me to push both now?
-Probably, easier to look at whether any refactoring make sense with
-both infront of us.
-> 
->>> +
->>> +/* AFE440X registers */
->>> +#define AFE440X_CONTROL0        0x00
->>> +#define AFE440X_LED2STC            0x01
->>> +#define AFE440X_LED2ENDC        0x02
->>> +#define AFE440X_LED1LEDSTC        0x03
->>> +#define AFE440X_LED1LEDENDC        0x04
->>> +#define AFE440X_ALED2STC        0x05
->>> +#define AFE440X_ALED2ENDC        0x06
->>> +#define AFE440X_LED1STC            0x07
->>> +#define AFE440X_LED1ENDC        0x08
->>> +#define AFE440X_LED2LEDSTC        0x09
->>> +#define AFE440X_LED2LEDENDC        0x0a
->>> +#define AFE440X_ALED1STC        0x0b
->>> +#define AFE440X_ALED1ENDC        0x0c
->>> +#define AFE440X_LED2CONVST        0x0d
->>> +#define AFE440X_LED2CONVEND        0x0e
->>> +#define AFE440X_ALED2CONVST        0x0f
->>> +#define AFE440X_ALED2CONVEND        0x10
->>> +#define AFE440X_LED1CONVST        0x11
->>> +#define AFE440X_LED1CONVEND        0x12
->>> +#define AFE440X_ALED1CONVST        0x13
->>> +#define AFE440X_ALED1CONVEND        0x14
->>> +#define AFE440X_ADCRSTSTCT0        0x15
->>> +#define AFE440X_ADCRSTENDCT0        0x16
->>> +#define AFE440X_ADCRSTSTCT1        0x17
->>> +#define AFE440X_ADCRSTENDCT1        0x18
->>> +#define AFE440X_ADCRSTSTCT2        0x19
->>> +#define AFE440X_ADCRSTENDCT2        0x1a
->>> +#define AFE440X_ADCRSTSTCT3        0x1b
->>> +#define AFE440X_ADCRSTENDCT3        0x1c
->>> +#define AFE440X_PRPCOUNT        0x1d
->>> +#define AFE440X_CONTROL1        0x1e
->>> +#define AFE440X_TIAGAIN            0x20
->>> +#define AFE440X_TIA_AMB_GAIN        0x21
->>> +#define AFE440X_LEDCNTRL        0x22
->>> +#define AFE440X_CONTROL2        0x23
->>> +#define AFE440X_ALARM            0x29
->>> +#define AFE440X_LED2VAL            0x2a
->>> +#define AFE440X_ALED2VAL        0x2b
->>> +#define AFE440X_LED1VAL            0x2c
->>> +#define AFE440X_ALED1VAL        0x2d
->>> +#define AFE440X_LED2_ALED2VAL        0x2e
->>> +#define AFE440X_LED1_ALED1VAL        0x2f
->>> +#define AFE440X_CONTROL3        0x31
->>> +#define AFE440X_PDNCYCLESTC        0x32
->>> +#define AFE440X_PDNCYCLEENDC        0x33
->>> +
->>> +/* CONTROL0 register fields */
->>> +#define AFE440X_CONTROL0_REG_READ    BIT(0)
->>> +#define AFE440X_CONTROL0_TM_COUNT_RST    BIT(1)
->>> +#define AFE440X_CONTROL0_SW_RESET    BIT(3)
->>> +
->>> +/* CONTROL1 register fields */
->>> +#define AFE440X_CONTROL1_TIMEREN    BIT(8)
->>> +
->>> +/* TIAGAIN register fields */
->>> +#define AFE440X_TIAGAIN_ENSEPGAIN_MASK    BIT(15)
->>> +#define AFE440X_TIAGAIN_ENSEPGAIN_SHIFT    15
->>> +
->>> +/* CONTROL2 register fields */
->>> +#define AFE440X_CONTROL2_PDN_AFE    BIT(0)
->>> +#define AFE440X_CONTROL2_PDN_RX        BIT(1)
->>> +#define AFE440X_CONTROL2_DYNAMIC4    BIT(3)
->>> +#define AFE440X_CONTROL2_DYNAMIC3    BIT(4)
->>> +#define AFE440X_CONTROL2_DYNAMIC2    BIT(14)
->>> +#define AFE440X_CONTROL2_DYNAMIC1    BIT(20)
->>> +
->>> +/* CONTROL3 register fields */
->>> +#define AFE440X_CONTROL3_CLKDIV        GENMASK(2, 0)
->>> +
->>> +/* CONTROL0 values */
->>> +#define AFE440X_CONTROL0_WRITE        0x0
->>> +#define AFE440X_CONTROL0_READ        0x1
->>> +
->>> +#define AFE440X_INTENSITY_CHAN(_index, _name, _mask)        \
->>> +    {                            \
->>> +        .type = IIO_INTENSITY,                \
->>> +        .channel = _index,                \
->>> +        .address = _index,                \
->>> +        .scan_index = _index,                \
->>> +        .scan_type = {                    \
->>> +                .sign = 's',            \
->>> +                .realbits = 24,            \
->>> +                .storagebits = 32,        \
->>> +                .endianness = IIO_CPU,        \
->>> +        },                        \
->>> +        .extend_name = _name,                \
->>> +        .info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |    \
->>> +            _mask,                    \
->>> +    }
->>> +
->>> +#define AFE440X_CURRENT_CHAN(_index, _name)            \
->>> +    {                            \
->>> +        .type = IIO_CURRENT,                \
->>> +        .channel = _index,                \
->>> +        .address = _index,                \
->>> +        .scan_index = _index,                \
->>> +        .extend_name = _name,                \
->>> +        .info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |    \
->>> +            BIT(IIO_CHAN_INFO_SCALE),        \
->>> +        .output = true,                    \
->>> +    }
->> I'd particularly like to see the above two definitions next to the
->> arrays they are used to instantiate - makes for easier review!
->>
->>> +
->>> +struct afe440x_reg {
->>> +    struct device_attribute dev_attr;
->>> +    unsigned int reg;
->>> +    unsigned int shift;
->>> +    unsigned int mask;
->>> +};
->>> +
->>> +#define to_afe440x_reg(_dev_attr)                \
->>> +    container_of(_dev_attr, struct afe440x_reg, dev_attr)
->>> +
->>> +#define AFE440X_ATTR(_name, _reg, _field)            \
->>> +    struct afe440x_reg afe440x_reg_##_name = {        \
->>> +        .dev_attr = __ATTR(_name, (S_IRUGO | S_IWUSR),    \
->>> +                   afe440x_show_register,    \
->>> +                   afe440x_store_register),    \
->>> +        .reg = _reg,                    \
->>> +        .shift = _field ## _SHIFT,            \
->>> +        .mask = _field ## _MASK,            \
->>> +    }
->> For now I'd like to see this in the .c file
->>> +
->>> +/**
->>> + * struct afe440x_data
->>> + * @dev - Device structure
->>> + * @name - Device name
->> You still have a few bits in here that are presumably there
->> to assist supporting multiple drivers.  I don't think they
->> belong in this structure.
->>
->> Split them out to say
->> struct afe440x_device_info and pass that into your iio_setup
->> function as well.  Then they won't be in this struct for it's
->> other uses which would be cleaner (at the cost of one extra
->> parameter to that function call)
->>
->> It will also split out thsoe parts that are constant for a given
->> type of device from those that are instance specific
->> (such as Irq's etc).
->>
-> 
-> ACK
-> 
->>> + * @regmap - Register map of the device
->>> + * @regulator - Pointer to the regulator for the IC
->>> + * @channels - IIO channels
->>> + * @num_channels - Number of IIO channels
->>> + * @info - IIO info for device
->>> + * @trig - IIO trigger for this device
->>> + * @irq - ADC_RDY line interrupt number
->>> +**/
->> Nicely documented - thanks.
->>> +struct afe440x_data {
->>> +    struct device *dev;
->>> +    const char *name;
->>> +    struct regmap *regmap;
->>> +    struct regulator *regulator;
->>> +    struct iio_chan_spec const *channels;
->>> +    int num_channels;
->>> +    const struct iio_info *info;
->>> +    struct iio_trigger *trig;
->>> +    int irq;
->>> +};
->>> +
->>> +#endif /* _AFE440X_H */
->>>
->>
-> -- 
-> To unsubscribe from this list: send the line "unsubscribe linux-iio" in
+>
+> Signed-off-by: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+> ---
+>  drivers/tty/serial/Kconfig       |   12 +
+>  drivers/tty/serial/Makefile      |    1 +
+>  drivers/tty/serial/mps2-uart.c   |  596 ++++++++++++++++++++++++++++=
+++++++++++
+>  include/uapi/linux/serial_core.h |    3 +
+>  4 files changed, 612 insertions(+)
+>  create mode 100644 drivers/tty/serial/mps2-uart.c
+>
+> diff --git a/drivers/tty/serial/Kconfig b/drivers/tty/serial/Kconfig
+> index f38beb2..e98bfea 100644
+> --- a/drivers/tty/serial/Kconfig
+> +++ b/drivers/tty/serial/Kconfig
+> @@ -1473,6 +1473,18 @@ config SERIAL_EFM32_UART
+>           This driver support the USART and UART ports on
+>           Energy Micro's efm32 SoCs.
+>
+> +config SERIAL_MPS2_UART_CONSOLE
+> +       bool "MPS2 UART console support"
+> +       depends on SERIAL_MPS2_UART
+> +       select SERIAL_CORE_CONSOLE
+> +
+> +config SERIAL_MPS2_UART
+> +       bool "MPS2 UART port"
+> +       depends on ARM || COMPILE_TEST
+> +       select SERIAL_CORE
+> +       help
+> +         This driver support the UART ports on ARM MPS2.
+> +
+>  config SERIAL_EFM32_UART_CONSOLE
+>         bool "EFM32 UART/USART console support"
+>         depends on SERIAL_EFM32_UART=3Dy
+> diff --git a/drivers/tty/serial/Makefile b/drivers/tty/serial/Makefil=
+e
+> index 5ab4111..7f589f5 100644
+> --- a/drivers/tty/serial/Makefile
+> +++ b/drivers/tty/serial/Makefile
+> @@ -93,6 +93,7 @@ obj-$(CONFIG_SERIAL_CONEXANT_DIGICOLOR)       +=3D =
+digicolor-usart.o
+>  obj-$(CONFIG_SERIAL_MEN_Z135)  +=3D men_z135_uart.o
+>  obj-$(CONFIG_SERIAL_SPRD) +=3D sprd_serial.o
+>  obj-$(CONFIG_SERIAL_STM32)     +=3D stm32-usart.o
+> +obj-$(CONFIG_SERIAL_MPS2_UART) +=3D mps2-uart.o
+>
+>  # GPIOLIB helpers for modem control lines
+>  obj-$(CONFIG_SERIAL_MCTRL_GPIO)        +=3D serial_mctrl_gpio.o
+> diff --git a/drivers/tty/serial/mps2-uart.c b/drivers/tty/serial/mps2=
+-uart.c
+> new file mode 100644
+> index 0000000..09bac16
+> --- /dev/null
+> +++ b/drivers/tty/serial/mps2-uart.c
+> @@ -0,0 +1,596 @@
+> +/*
+> + * Copyright (C) 2015 ARM Limited
+> + *
+> + * Author: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+> + *
+> + * This program is free software; you can redistribute it and/or mod=
+ify
+> + * it under the terms of the GNU General Public License version 2 as
+> + * published by the Free Software Foundation.
+> + *
+> + * TODO: support for SysRq
+> + */
+> +
+> +#define pr_fmt(fmt)    KBUILD_MODNAME ": " fmt
+> +
+> +#include <linux/bitops.h>
+> +#include <linux/clk.h>
+> +#include <linux/console.h>
+> +#include <linux/io.h>
+> +#include <linux/kernel.h>
+> +#include <linux/module.h>
+> +#include <linux/of_device.h>
+> +#include <linux/of.h>
+> +#include <linux/platform_device.h>
+> +#include <linux/serial_core.h>
+> +#include <linux/tty_flip.h>
+> +#include <linux/types.h>
+> +
+> +#define SERIAL_NAME "ttyMPS"
+
+Can it be ttyS?
+
+> +#define DRIVER_NAME "mps2-uart"
+> +#define MAKE_NAME(x) (DRIVER_NAME # x)
+> +
+> +#define UARTn_DATA                             0x0
+
+I think it makes sense to have same width for all offsets, i.e. 0x00
+here and so on below.
+
+> +
+> +#define UARTn_STATE                            0x4
+> +#define UARTn_STATE_TX_FULL                    BIT(0)
+> +#define UARTn_STATE_RX_FULL                    BIT(1)
+> +#define UARTn_STATE_TX_OVERRUN                 BIT(2)
+> +#define UARTn_STATE_RX_OVERRUN                 BIT(3)
+> +
+> +#define UARTn_CTRL                             0x8
+> +#define UARTn_CTRL_TX_ENABLE                   BIT(0)
+> +#define UARTn_CTRL_RX_ENABLE                   BIT(1)
+> +#define UARTn_CTRL_TX_INT_ENABLE               BIT(2)
+> +#define UARTn_CTRL_RX_INT_ENABLE               BIT(3)
+> +#define UARTn_CTRL_TX_OVERRUN_INT_ENABLE       BIT(4)
+> +#define UARTn_CTRL_RX_OVERRUN_INT_ENABLE       BIT(5)
+> +
+> +#define UARTn_INT                              0xc
+> +#define UARTn_INT_TX                           BIT(0)
+> +#define UARTn_INT_RX                           BIT(1)
+> +#define UARTn_INT_TX_OVERRUN                   BIT(2)
+> +#define UARTn_INT_RX_OVERRUN                   BIT(3)
+> +
+> +#define UARTn_BAUDDIV                          0x10
+> +#define UARTn_BAUDDIV_MASK                     GENMASK(20, 0)
+> +
+> +#define MPS2_MAX_PORTS                         3
+> +
+> +struct mps2_uart_port {
+> +       struct uart_port port;
+> +       struct clk *clk;
+> +       unsigned int tx_irq;
+> +       unsigned int rx_irq;
+> +};
+> +
+> +static inline struct mps2_uart_port *to_mps2_port(struct uart_port *=
+port)
+> +{
+> +       return container_of(port, struct mps2_uart_port, port);
+> +}
+> +
+> +static void mps2_uart_write8(struct uart_port *port, u8 val, unsigne=
+d off)
+> +{
+> +       struct mps2_uart_port *mps_port =3D to_mps2_port(port);
+> +
+> +       writeb(val, mps_port->port.membase + off);
+> +}
+> +
+> +static u8 mps2_uart_read8(struct uart_port *port, unsigned off)
+> +{
+> +       struct mps2_uart_port *mps_port =3D to_mps2_port(port);
+> +
+> +       return readb(mps_port->port.membase + off);
+> +}
+> +
+> +static void mps2_uart_write32(struct uart_port *port, u32 val, unsig=
+ned off)
+> +{
+> +       struct mps2_uart_port *mps_port =3D to_mps2_port(port);
+> +
+> +       writel_relaxed(val, mps_port->port.membase + off);
+> +}
+> +
+> +static unsigned int mps2_uart_tx_empty(struct uart_port *port)
+> +{
+> +       u8 status =3D mps2_uart_read8(port, UARTn_STATE);
+> +
+> +       return (status & UARTn_STATE_TX_FULL) ? 0 : TIOCSER_TEMT;
+> +}
+> +
+> +static void mps2_uart_set_mctrl(struct uart_port *port, unsigned int=
+ mctrl)
+> +{
+> +}
+> +
+> +static unsigned int mps2_uart_get_mctrl(struct uart_port *port)
+> +{
+> +       return TIOCM_CAR | TIOCM_CTS | TIOCM_DSR;
+> +}
+> +
+> +static void mps2_uart_stop_tx(struct uart_port *port)
+> +{
+> +       u8 control =3D mps2_uart_read8(port, UARTn_CTRL);
+> +
+> +       control &=3D ~(UARTn_CTRL_TX_ENABLE               |
+> +                    UARTn_CTRL_TX_INT_ENABLE           |
+> +                    UARTn_CTRL_TX_OVERRUN_INT_ENABLE);
+> +
+> +       mps2_uart_write8(port, control, UARTn_CTRL);
+> +}
+> +
+> +static void mps2_uart_tx_chars(struct uart_port *port)
+> +{
+> +       struct circ_buf *xmit =3D &port->state->xmit;
+> +
+> +       while (!(mps2_uart_read8(port, UARTn_STATE) & UARTn_STATE_TX_=
+=46ULL)) {
+> +               if (port->x_char) {
+> +                       mps2_uart_write8(port, port->x_char, UARTn_DA=
+TA);
+> +                       port->x_char =3D 0;
+> +                       port->icount.tx++;
+> +                       continue;
+> +               }
+> +
+> +               if (uart_circ_empty(xmit) || uart_tx_stopped(port))
+> +                       break;
+> +
+> +               mps2_uart_write8(port, xmit->buf[xmit->tail], UARTn_D=
+ATA);
+> +               xmit->tail =3D (xmit->tail + 1) & (UART_XMIT_SIZE - 1=
+);
+
+More flexible here to use % UART_XMIT_SIZE. I believe compiler makes it=
+ optimal.
+
+> +               port->icount.tx++;
+> +       }
+> +
+> +       if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
+> +               uart_write_wakeup(port);
+> +
+> +       if (uart_circ_empty(xmit))
+> +               mps2_uart_stop_tx(port);
+> +}
+> +
+> +static void mps2_uart_start_tx(struct uart_port *port)
+> +{
+> +       u8 control =3D mps2_uart_read8(port, UARTn_CTRL);
+> +
+> +       control |=3D (UARTn_CTRL_TX_ENABLE                |
+> +                   UARTn_CTRL_TX_INT_ENABLE            |
+> +                   UARTn_CTRL_TX_OVERRUN_INT_ENABLE);
+> +
+> +       mps2_uart_write8(port, control, UARTn_CTRL);
+> +       mps2_uart_tx_chars(port);
+> +}
+> +
+> +static void mps2_uart_stop_rx(struct uart_port *port)
+> +{
+> +       u8 control =3D mps2_uart_read8(port, UARTn_CTRL);
+> +
+> +       control &=3D ~(UARTn_CTRL_RX_ENABLE               |
+> +                    UARTn_CTRL_RX_INT_ENABLE           |
+> +                    UARTn_CTRL_RX_OVERRUN_INT_ENABLE);
+> +
+> +       mps2_uart_write8(port, control, UARTn_CTRL);
+> +}
+> +
+> +static void mps2_uart_enable_ms(struct uart_port *port)
+> +{
+> +}
+> +
+> +static void mps2_uart_break_ctl(struct uart_port *port, int ctl)
+> +{
+> +}
+
+Are those required to be present? If not, remove them until you have
+alive code there.
+
+> +
+> +static void mps2_uart_rx_chars(struct uart_port *port)
+> +{
+> +       struct tty_port *tport =3D &port->state->port;
+> +
+> +       while (mps2_uart_read8(port, UARTn_STATE) & UARTn_STATE_RX_FU=
+LL) {
+> +               u8 rxdata =3D mps2_uart_read8(port, UARTn_DATA);
+> +
+> +               port->icount.rx++;
+> +               tty_insert_flip_char(&port->state->port, rxdata, TTY_=
+NORMAL);
+> +       }
+> +
+> +       spin_unlock(&port->lock);
+> +       tty_flip_buffer_push(tport);
+> +       spin_lock(&port->lock);
+> +}
+> +
+> +static irqreturn_t mps2_uart_rxirq(int irq, void *data)
+> +{
+> +
+> +       struct uart_port *port =3D data;
+> +       u8 irqflag =3D mps2_uart_read8(port, UARTn_INT);
+> +
+> +       if (unlikely(!(irqflag & UARTn_INT_RX)))
+> +               return IRQ_NONE;
+> +
+> +       spin_lock(&port->lock);
+> +
+> +       mps2_uart_write8(port, UARTn_INT_RX, UARTn_INT);
+> +       mps2_uart_rx_chars(port);
+> +
+> +       spin_unlock(&port->lock);
+> +
+> +       return IRQ_HANDLED;
+> +}
+> +
+> +static irqreturn_t mps2_uart_txirq(int irq, void *data)
+> +{
+> +       struct uart_port *port =3D data;
+> +       u8 irqflag =3D mps2_uart_read8(port, UARTn_INT);
+> +
+> +       if (unlikely(!(irqflag & UARTn_INT_TX)))
+> +               return IRQ_NONE;
+> +
+> +       mps2_uart_write8(port, UARTn_INT_TX, UARTn_INT);
+> +       mps2_uart_tx_chars(port);
+> +
+> +       return IRQ_HANDLED;
+> +}
+> +
+> +static irqreturn_t mps2_uart_oerrirq(int irq, void *data)
+> +{
+> +       irqreturn_t handled =3D IRQ_NONE;
+> +       struct uart_port *port =3D data;
+> +       u8 irqflag =3D mps2_uart_read8(port, UARTn_INT);
+> +
+> +       spin_lock(&port->lock);
+> +
+> +       if (irqflag & UARTn_INT_RX_OVERRUN) {
+> +               struct tty_port *tport =3D &port->state->port;
+> +
+> +               mps2_uart_write8(port, UARTn_INT_RX_OVERRUN, UARTn_IN=
+T);
+> +               tty_insert_flip_char(tport, 0, TTY_OVERRUN);
+> +               port->icount.overrun++;
+> +               handled =3D IRQ_HANDLED;
+> +       }
+> +
+> +       /* XXX: this shouldn't happen? */
+
+If shouldn't why it's there? Otherwise better to explain which
+conditions may lead to this.
+
+> +       if (irqflag & UARTn_INT_TX_OVERRUN) {
+> +               mps2_uart_write8(port, UARTn_INT_TX_OVERRUN, UARTn_IN=
+T);
+> +               handled =3D IRQ_HANDLED;
+> +       }
+> +
+> +       spin_unlock(&port->lock);
+> +
+> +       return handled;
+> +}
+> +
+> +static int mps2_uart_startup(struct uart_port *port)
+> +{
+> +       struct mps2_uart_port *mps_port =3D to_mps2_port(port);
+> +       u8 control =3D mps2_uart_read8(port, UARTn_CTRL);
+> +       int ret;
+> +
+> +       control &=3D ~(UARTn_CTRL_RX_ENABLE               |
+> +                    UARTn_CTRL_TX_ENABLE               |
+> +                    UARTn_CTRL_RX_INT_ENABLE           |
+> +                    UARTn_CTRL_TX_INT_ENABLE           |
+> +                    UARTn_CTRL_RX_OVERRUN_INT_ENABLE   |
+> +                    UARTn_CTRL_TX_OVERRUN_INT_ENABLE);
+
+
+If you unifyf both RX and TX groups you may use them here, and above.
+
+control &=3D ~(UART=E2=80=A6RX | UART=E2=80=A6TX);
+
+Above case just RX. Maybe something alike below.
+
+> +
+> +       mps2_uart_write8(port, control, UARTn_CTRL);
+> +
+> +       ret =3D request_irq(mps_port->rx_irq, mps2_uart_rxirq, 0,
+> +                         MAKE_NAME(-rx), mps_port);
+> +       if (ret) {
+> +               pr_info("failed to register rxirq (%d)\n", ret);
+
+And why not _err() and even dev_err()? Same for stuff below.
+
+> +               goto err_no_rxirq;
+> +       }
+> +
+> +       ret =3D request_irq(mps_port->tx_irq, mps2_uart_txirq, 0,
+> +                         MAKE_NAME(-tx), mps_port);
+> +       if (ret) {
+> +               pr_info("failed to register txirq (%d)\n", ret);
+> +               goto err_no_txirq;
+> +       }
+> +
+> +       ret =3D request_irq(port->irq, mps2_uart_oerrirq, IRQF_SHARED=
+,
+> +                         MAKE_NAME(-overrun), mps_port);
+> +
+> +       if (ret)
+> +               pr_info("failed to register oerrirq (%d)\n", ret);
+> +       else {
+
+Keep style according to requirement.
+} else {
+
+> +               control |=3D UARTn_CTRL_RX_ENABLE                 |
+> +                          UARTn_CTRL_TX_ENABLE                 |
+> +                          UARTn_CTRL_RX_INT_ENABLE             |
+> +                          UARTn_CTRL_TX_INT_ENABLE             |
+> +                          UARTn_CTRL_RX_OVERRUN_INT_ENABLE     |
+> +                          UARTn_CTRL_TX_OVERRUN_INT_ENABLE;
+> +
+> +               mps2_uart_write8(port, control, UARTn_CTRL);
+> +
+> +               return 0;
+> +       }
+> +
+> +       free_irq(mps_port->tx_irq, mps_port);
+> +err_no_txirq:
+> +       free_irq(mps_port->rx_irq, mps_port);
+> +err_no_rxirq:
+> +       return ret;
+> +}
+> +
+> +static void mps2_uart_shutdown(struct uart_port *port)
+> +{
+> +       struct mps2_uart_port *mps_port =3D to_mps2_port(port);
+> +       u8 control =3D mps2_uart_read8(port, UARTn_CTRL);
+> +
+> +       control &=3D ~(UARTn_CTRL_RX_ENABLE               |
+> +                    UARTn_CTRL_TX_ENABLE               |
+> +                    UARTn_CTRL_RX_INT_ENABLE           |
+> +                    UARTn_CTRL_TX_INT_ENABLE           |
+> +                    UARTn_CTRL_RX_OVERRUN_INT_ENABLE   |
+> +                    UARTn_CTRL_TX_OVERRUN_INT_ENABLE);
+
+TX group + RX group, see above.
+
+> +
+> +       mps2_uart_write8(port, control, UARTn_CTRL);
+> +
+> +       free_irq(mps_port->rx_irq, mps_port);
+> +       free_irq(mps_port->tx_irq, mps_port);
+> +       free_irq(port->irq, mps_port);
+> +}
+> +
+> +static void mps2_uart_set_termios(struct uart_port *port,
+> +       struct ktermios *new, struct ktermios *old)
+> +{
+> +       unsigned long flags;
+> +       unsigned int baud, bauddiv;
+> +
+> +       new->c_cflag &=3D ~(CRTSCTS | CMSPAR);
+> +       new->c_cflag &=3D ~CSIZE;
+> +       new->c_cflag |=3D CS8;
+> +       new->c_cflag &=3D ~PARENB;
+> +       new->c_cflag &=3D ~CSTOPB;
+> +
+> +       baud =3D uart_get_baud_rate(port, new, old,
+> +                       DIV_ROUND_CLOSEST(port->uartclk, UARTn_BAUDDI=
+V_MASK),
+> +                       DIV_ROUND_CLOSEST(port->uartclk, 16));
+> +
+> +       bauddiv =3D DIV_ROUND_CLOSEST(port->uartclk, baud);
+> +
+> +       spin_lock_irqsave(&port->lock, flags);
+> +
+> +       uart_update_timeout(port, new->c_cflag, baud);
+> +       mps2_uart_write32(port, bauddiv, UARTn_BAUDDIV);
+> +
+> +       spin_unlock_irqrestore(&port->lock, flags);
+> +}
+> +
+> +static const char *mps2_uart_type(struct uart_port *port)
+> +{
+> +       return (port->type =3D=3D PORT_MPS2UART) ? DRIVER_NAME : NULL=
+;
+> +}
+> +
+> +static void mps2_uart_release_port(struct uart_port *port)
+> +{
+> +}
+> +
+> +static int mps2_uart_request_port(struct uart_port *port)
+> +{
+> +       return 0;
+> +}
+> +
+
+Same question about empty stubs.
+
+> +static void mps2_uart_config_port(struct uart_port *port, int type)
+> +{
+> +       if (type & UART_CONFIG_TYPE && !mps2_uart_request_port(port))
+> +               port->type =3D PORT_MPS2UART;
+> +}
+> +
+> +static int mps2_uart_verify_port(struct uart_port *port, struct seri=
+al_struct *serinfo)
+> +{
+> +       return -EINVAL;
+> +}
+> +
+> +static const struct uart_ops mps2_uart_pops =3D {
+> +       .tx_empty =3D mps2_uart_tx_empty,
+> +       .set_mctrl =3D mps2_uart_set_mctrl,
+> +       .get_mctrl =3D mps2_uart_get_mctrl,
+> +       .stop_tx =3D mps2_uart_stop_tx,
+> +       .start_tx =3D mps2_uart_start_tx,
+> +       .stop_rx =3D mps2_uart_stop_rx,
+> +       .enable_ms =3D mps2_uart_enable_ms,
+> +       .break_ctl =3D mps2_uart_break_ctl,
+> +       .startup =3D mps2_uart_startup,
+> +       .shutdown =3D mps2_uart_shutdown,
+> +       .set_termios =3D mps2_uart_set_termios,
+> +       .type =3D mps2_uart_type,
+> +       .release_port =3D mps2_uart_release_port,
+> +       .request_port =3D mps2_uart_request_port,
+> +       .config_port =3D mps2_uart_config_port,
+> +       .verify_port =3D mps2_uart_verify_port,
+> +};
+> +
+> +static struct mps2_uart_port mps2_uart_ports[MPS2_MAX_PORTS];
+> +
+> +#ifdef CONFIG_SERIAL_MPS2_UART_CONSOLE
+> +static void mps2_uart_console_putchar(struct uart_port *port, int ch=
+)
+> +{
+> +       while (mps2_uart_read8(port, UARTn_STATE) & UARTn_STATE_TX_FU=
+LL)
+> +               cpu_relax();
+> +
+> +       mps2_uart_write8(port, ch, UARTn_DATA);
+> +}
+> +
+> +static void mps2_uart_console_write(struct console *co, const char *=
+s, unsigned int cnt)
+> +{
+> +       struct uart_port *port =3D &mps2_uart_ports[co->index].port;
+> +
+> +       uart_console_write(port, s, cnt, mps2_uart_console_putchar);
+> +}
+> +
+> +static int mps2_uart_console_setup(struct console *co, char *options=
+)
+> +{
+> +       struct mps2_uart_port *mps_port;
+> +       int baud =3D 9600;
+> +       int bits =3D 8;
+> +       int parity =3D 'n';
+> +       int flow =3D 'n';
+> +
+> +       if (co->index < 0 || co->index >=3D MPS2_MAX_PORTS)
+> +               return -ENODEV;
+> +
+> +       mps_port =3D &mps2_uart_ports[co->index];
+> +
+> +       if (options)
+> +               uart_parse_options(options, &baud, &parity, &bits, &f=
+low);
+> +
+> +       return uart_set_options(&mps_port->port, co, baud, parity, bi=
+ts, flow);
+> +}
+> +
+> +static struct uart_driver mps2_uart_driver;
+> +
+> +static struct console mps2_uart_console =3D {
+> +       .name =3D SERIAL_NAME,
+> +       .device =3D uart_console_device,
+> +       .write =3D mps2_uart_console_write,
+> +       .setup =3D mps2_uart_console_setup,
+> +       .flags =3D CON_PRINTBUFFER,
+> +       .index =3D -1,
+> +       .data =3D &mps2_uart_driver,
+> +};
+> +
+> +#define MPS2_SERIAL_CONSOLE (&mps2_uart_console)
+> +
+> +#else
+> +#define MPS2_SERIAL_CONSOLE NULL
+> +#endif
+> +
+> +static struct uart_driver mps2_uart_driver =3D {
+> +       .driver_name =3D DRIVER_NAME,
+> +       .dev_name =3D SERIAL_NAME,
+> +       .nr =3D MPS2_MAX_PORTS,
+> +       .cons =3D MPS2_SERIAL_CONSOLE,
+> +};
+> +
+> +static struct mps2_uart_port *mps2_of_get_port(struct platform_devic=
+e *pdev)
+> +{
+> +       struct device_node *np =3D pdev->dev.of_node;
+> +       int id;
+> +
+> +       if (!np)
+> +               return NULL;
+> +
+> +       id =3D of_alias_get_id(np, "serial");
+> +       if (id < 0)
+> +               id =3D 0;
+> +
+> +       if (WARN_ON(id >=3D MPS2_MAX_PORTS))
+> +               return NULL;
+> +
+> +       mps2_uart_ports[id].port.line =3D id;
+> +       return &mps2_uart_ports[id];
+> +}
+> +
+> +static int mps2_init_port(struct mps2_uart_port *mps_port,
+> +                       struct platform_device *pdev)
+> +{
+> +       int ret =3D 0;
+
+Redundant assignment.
+
+> +       struct resource *res;
+> +
+> +       res =3D platform_get_resource(pdev, IORESOURCE_MEM, 0);
+> +       mps_port->port.membase =3D devm_ioremap_resource(&pdev->dev, =
+res);
+> +       if (IS_ERR(mps_port->port.membase))
+> +               return PTR_ERR(mps_port->port.membase);
+> +
+> +       mps_port->port.mapbase =3D res->start;
+> +       mps_port->port.mapsize =3D resource_size(res);
+> +
+> +       mps_port->rx_irq =3D platform_get_irq(pdev, 0);
+> +       mps_port->tx_irq =3D platform_get_irq(pdev, 1);
+> +       mps_port->port.irq =3D platform_get_irq(pdev, 2);
+> +
+> +       mps_port->port.iotype =3D UPIO_MEM;
+> +       mps_port->port.flags =3D UPF_BOOT_AUTOCONF;
+> +       mps_port->port.fifosize =3D 1;
+> +       mps_port->port.ops =3D &mps2_uart_pops;
+> +       mps_port->port.dev =3D &pdev->dev;
+> +
+> +       mps_port->clk =3D devm_clk_get(&pdev->dev, NULL);
+> +       if (IS_ERR(mps_port->clk))
+> +               return PTR_ERR(mps_port->clk);
+> +
+> +       ret =3D clk_prepare_enable(mps_port->clk);
+> +       if (ret)
+> +               return ret;
+> +
+> +       mps_port->port.uartclk =3D clk_get_rate(mps_port->clk);
+> +       if (!mps_port->port.uartclk)
+> +               ret =3D -EINVAL;
+
+So, 1 is OK, 0 is not. I think 1 is too low to be provided by hardware.
+
+> +
+> +       clk_disable_unprepare(mps_port->clk);
+> +
+> +       return ret;
+> +}
+> +
+> +static int mps2_serial_probe(struct platform_device *pdev)
+> +{
+> +       struct mps2_uart_port *mps_port;
+> +       int ret;
+> +
+> +       mps_port =3D mps2_of_get_port(pdev);
+> +       if (!mps_port)
+> +               return -ENODEV;
+> +
+> +       ret =3D mps2_init_port(mps_port, pdev);
+> +       if (ret)
+> +               return ret;
+> +
+> +       ret =3D uart_add_one_port(&mps2_uart_driver, &mps_port->port)=
+;
+> +       if (ret)
+> +               return ret;
+> +
+> +       platform_set_drvdata(pdev, mps_port);
+> +
+> +       return 0;
+> +}
+> +
+> +static int mps2_serial_remove(struct platform_device *pdev)
+> +{
+> +       struct mps2_uart_port *mps_port =3D platform_get_drvdata(pdev=
+);
+> +
+> +       uart_remove_one_port(&mps2_uart_driver, &mps_port->port);
+> +
+> +       return 0;
+> +}
+> +
+> +#ifdef CONFIG_OF
+> +static const struct of_device_id mps2_match[] =3D {
+> +       { .compatible =3D "arm,mps2-uart", },
+> +       {},
+> +};
+> +MODULE_DEVICE_TABLE(of, mps2_match);
+> +#endif
+> +
+> +static struct platform_driver mps2_serial_driver =3D {
+> +       .probe =3D mps2_serial_probe,
+> +       .remove =3D mps2_serial_remove,
+> +
+> +       .driver =3D {
+> +               .name =3D DRIVER_NAME,
+> +               .of_match_table =3D of_match_ptr(mps2_match),
+> +       },
+> +};
+> +
+> +static int __init mps2_uart_init(void)
+> +{
+> +       int ret;
+> +
+> +       ret =3D uart_register_driver(&mps2_uart_driver);
+> +       if (ret)
+> +               return ret;
+> +
+> +       ret =3D platform_driver_register(&mps2_serial_driver);
+> +       if (ret)
+> +               uart_unregister_driver(&mps2_uart_driver);
+> +
+> +       pr_info("MPS2 UART driver initialized\n");
+> +
+> +       return ret;
+> +}
+> +module_init(mps2_uart_init);
+> +
+> +static void __exit mps2_uart_exit(void)
+> +{
+> +       platform_driver_unregister(&mps2_serial_driver);
+> +       uart_unregister_driver(&mps2_uart_driver);
+> +}
+> +module_exit(mps2_uart_exit);
+
+module_platform_driver();
+And move uart_*register calls to probe/remove.
+
+> +
+> +MODULE_AUTHOR("Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>");
+> +MODULE_DESCRIPTION("MPS2 UART driver");
+> +MODULE_LICENSE("GPL v2");
+> +MODULE_ALIAS("platform:" DRIVER_NAME);
+> diff --git a/include/uapi/linux/serial_core.h b/include/uapi/linux/se=
+rial_core.h
+> index 93ba148..f097fe9 100644
+> --- a/include/uapi/linux/serial_core.h
+> +++ b/include/uapi/linux/serial_core.h
+> @@ -261,4 +261,7 @@
+>  /* STM32 USART */
+>  #define PORT_STM32     113
+>
+> +/* MPS2 UART */
+> +#define PORT_MPS2UART  114
+> +
+>  #endif /* _UAPILINUX_SERIAL_CORE_H */
+> --
+> 1.7.9.5
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kerne=
+l" in
 > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
+> Please read the FAQ at  http://www.tux.org/lkml/
+
+
+
+--=20
+With Best Regards,
+Andy Shevchenko
