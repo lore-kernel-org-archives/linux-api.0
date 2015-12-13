@@ -1,45 +1,48 @@
-From: Simon Arlott <simon@fire.lp0.eu>
-Subject: Re: [PATCH linux-next (v3) 3/3] mtd: part: Add BCM962368 CFE
- partitioning support
-Date: Sun, 13 Dec 2015 20:26:57 +0000
-Message-ID: <566DD491.4030902@simon.arlott.org.uk>
-References: <566B460F.1040603@simon.arlott.org.uk>
- <566B47D9.8020105@simon.arlott.org.uk>
- <CAOiHx==GSwCxWmaQfmHHumGu_ye6waf-DA_5+m8_Ukc1hVeBYg@mail.gmail.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [RFC PATCH 1/2] thread_local_abi system call: caching current CPU
+ number (x86)
+Date: Sun, 13 Dec 2015 12:26:23 -0800
+Message-ID: <CALCETrVdCna+oiCOv7KELOJOQO6Ct2UnwUfeft9Cy9tuT_h4zA@mail.gmail.com>
+References: <1449761990-23525-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <20151213181527.GV15533@two.firstfloor.org> <450134747.239045.1450036728930.JavaMail.zimbra@efficios.com>
+ <20151213201841.GW15533@two.firstfloor.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-mips-bounce@linux-mips.org>
-In-Reply-To: <CAOiHx==GSwCxWmaQfmHHumGu_ye6waf-DA_5+m8_Ukc1hVeBYg@mail.gmail.com>
-Sender: linux-mips-bounce@linux-mips.org
-Errors-to: linux-mips-bounce@linux-mips.org
-List-help: <mailto:ecartis@linux-mips.org?Subject=help>
-List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
-List-software: Ecartis version 1.0.0
-List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
-List-owner: <mailto:ralf@linux-mips.org>
-List-post: <mailto:linux-mips@linux-mips.org>
-List-archive: <http://www.linux-mips.org/archives/linux-mips/>
-To: Jonas Gorski <jogo@openwrt.org>
-Cc: David Woodhouse <dwmw2@infradead.org>, Brian Norris <computersforpeace@gmail.com>, Florian Fainelli <f.fainelli@gmail.com>, Ralf Baechle <ralf@linux-mips.org>, Kevin Cernekee <cernekee@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, MTD Maling List <linux-mtd@lists.infradead.org>, bcm-kernel-feedback-list <bcm-kernel-feedback-list@broadcom.com>, MIPS Mailing List <linux-mips@linux-mips.org>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20151213201841.GW15533-1g7Xle2YJi4/4alezvVtWx2eb7JE58TQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
+Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 11/12/15 23:12, Jonas Gorski wrote:
-> On Fri, Dec 11, 2015 at 11:02 PM, Simon Arlott <simon@fire.lp0.eu> wrote:
->> +#define BCM63XX_CFE_MAGIC_OFFSET       0x4e0
->> +#define BCM963XX_CFE_VERSION_OFFSET    0x570
->> +#define BCM963XX_NVRAM_OFFSET          0x580
-> 
-> You should decide whether you want to call it BCM63XX (the SoC) or
-> BCM963XX (the Board using the SoC). Also probably better served in
-> bcm963xx_nvram.h
+On Sun, Dec 13, 2015 at 12:18 PM, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org> wrote:
+>> In the context of restartable sequences [1] [2], the goal is to turn
+>> atomic operations on per-cpu data into a sequence of simple load/store
+>> operations. Therefore, improving getcpu from 12ns to 0.3ns will have a
+>
+> I don't think LSL is 12ns. It's a few cycles.
 
-I'm going to name the CFE locations, nvram and anything that is a
-property of the flash layout BCM963XX_*, as a theoretical board using
-BCM63XX with no flash wouldn't use these. The parser is still called
-bcm63xxpart so that's currently an anomaly.
+11ns on my Skylale laptop.  (rdtscp is now almost as fast as lsl.)
+FWIW, a failed LSL is 55ns.
 
-I'm working on making it support both NOR and NAND flash layouts.
+We could play sneaky tricks and use SGDT instead.  Long term on x86, I
+think we should be using per-cpu segments, though.
 
--- 
-Simon Arlott
+>
+>> Moreover, AFAIU, restartable sequences cannot do the function call
+>> required by the  vdso while within the c.s.: those need to entirely fit
+>> within an inline assembly. So this CPU number caching actually enables
+>> restartable sequences, whereas the vdso approach cannot be used in that
+>> context.
+>
+> You can use the LSL directly though. In practice people already rely
+> on it (and it's very cheap on the kernel side), so it's a defacto ABI
+> and could be documented.
+>
+> So it's not function call vs load, but LSL vs load.
+
+I do wonder if the function call itself is cheap enough that we should
+do this entirely within the vDSO.  Unfortunately, the vDSO can't use
+TLS, so that's not so easy without trickery.
+
+--Andy
