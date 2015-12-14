@@ -1,107 +1,155 @@
-From: Brian Norris <computersforpeace@gmail.com>
-Subject: Re: [RFC] selftests: report proper exit statuses
-Date: Mon, 14 Dec 2015 11:15:36 -0800
-Message-ID: <20151214191536.GA108082@google.com>
-References: <1449875706-106875-1-git-send-email-computersforpeace@gmail.com>
- <1450063175.29082.2.camel@ellerman.id.au>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: David Decotigny <ddecotig@gmail.com>
+Subject: [PATCH net-next v5 00/19] new ETHTOOL_GSETTINGS/SSETTINGS API
+Date: Mon, 14 Dec 2015 13:03:47 -0800
+Message-ID: <1450127046-4573-1-git-send-email-ddecotig@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1450063175.29082.2.camel@ellerman.id.au>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michael Ellerman <mpe@ellerman.id.au>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Kees Cook <keescook@chromium.org>
+To: "David S. Miller" <davem@davemloft.net>, Ben Hutchings <ben@decadent.org.uk>, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-mips@linux-mips.org, fcoe-devel@open-fcoe.org, Andrew Morton <akpm@linux-foundation.org>, Tejun Heo <tj@kernel.org>
+Cc: Eric Dumazet <edumazet@google.com>, Eugenia Emantayev <eugenia@mellanox.co.il>, Or Gerlitz <ogerlitz@mellanox.com>, Ido Shamay <idos@mellanox.com>, Joe Perches <joe@perches.com>, Saeed Mahameed <saeedm@mellanox.com>, Govindarajulu Varadarajan <_govind@gmx.com>, Venkata Duvvuru <VenkatKumar.Duvvuru@Emulex.Com>, Jeff Kirsher <jeffrey.t.kirsher@intel.com>, Pravin B Shelar <pshelar@nicira.com>, Ed Swierk <eswierk@skyportsystems.com>, Robert Love <robert.w.love@intel.com>, "James E.J. Bottomley" <JBottomley@parallels.com>, Yuval Mintz <Yuval.Mintz@qlogic.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, David Decotigny <decot@googlers.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Michael,
+From: David Decotigny <decot@googlers.com>
 
-On Mon, Dec 14, 2015 at 02:19:35PM +1100, Michael Ellerman wrote:
-> On Fri, 2015-12-11 at 15:15 -0800, Brian Norris wrote:
-> 
-> > There are several places where we don't report proper exit statuses, and
-> > this can have consequences -- for instance, the gen_kselftest_tar.sh
-> > script might try to produce a tarball for you, even if the 'make' or
-> > 'make install' steps didn't complete properly.
-> > 
-> > This is only an RFC (and really, it's more like a bug report), since I'm
-> > not really satisfied with my solution.
-> 
-> The changes to the tar script are probably OK.
-> 
-> But in general we do not want to exit after the first failure, which is what
-> your changes to the for loops would do.
-> 
-> The intention is to build and run as many tests as possible, on as many
-> architectures and machines as possible. So stopping the build because a header
-> or library is missing, or stopping the test run because one test fails, is the
-> exact opposite of what we want to happen.
-> 
-> For example a test might fail because it was written for x86 and doesn't work
-> on powerpc, if that caused all my powerpc tests to not run, I would be very
-> unpleased.
 
-I purposely handled errors on the compile/packaging steps, and not the
-test execution steps. As you rightly claim, I wouldn't expect a test
-suite to stop running all tests just because one test failed. But are
-you suggesting to apply the same logic to the compile phase? You want to
-ignore build failures?
+History:
+ v5
+ note: please see v4 bullets for a question regarding bitmap.c
+ - minor fix to make allyesconfig/allmodconfig
+ v4
+ - removed typedef for link mode bitmaps
+ - moved bitmap<->u32[] conversion routines to bitmap.c . This is the
+   naive implementation. I have an endian-aware version that uses
+   memcpy/memset as much as possible, but I find it harder to follow
+   (see http://paste.ubuntu.com/13863722/). Please let me know if I
+   should use it instead.
+ - fixes suggested by Ben Hutchings
+ v3
+ - rebased v2 on top of latest net-next, minor checkpatch/printf %*pb
+   updates
+ v2
+ - keep return 0 in get_settings when successful, instead of
+   propagating positive result from driver's get_settings callback.
+ v1
+ - original submission
 
-It seems perhaps that a core point of contention here is that you're
-providing a 'make' build target, yet you don't want it to act at all
-like a make target. Right now, there is no way to tell whether the build
-succeeded at all (you could build exactly 0 tests, yet get a "success"
-error code), and therefore any kind of automated build and packaging
-system based on your make targets cannot know whether the package is
-going to be properly assembled at all.
 
-> > It's probably not exhaustive, and
-> > there seem to be some major other deficiencies (e.g., verbose/useless
-> > output during build and run, non-paralle build, shell for-loops sidestep
-> > some normal 'make' behavior).
-> 
-> The goals for the kernel selftests are to make it as easy as possible to merge
-> tests, so that as many developers as possible create tests *and* merge them.
+The main goal of this series is to support ethtool link mode masks
+larger than 32 bits. It implements a new ioctl pair
+(ETHTOOL_GSETTINGS/SSETTINGS), its associated callbacks
+(get/set_settings) and a new struct ethtool_settings, which should
+eventually replace legacy ethtool_cmd. Internally, the kernel uses
+fixed length link mode masks defined at compilation time in ethtool.h
+(for now: 31 bits), that can be increased by changing
+__ETHTOOL_LINK_MODE_LAST in ethtool.h (absolute max is 4064 bits,
+checked at compile time), and the user/kernel interface allows this
+length to be arbitrary within 1..4064. This should allow some
+flexibility without using too much heap/stack space, at the cost of
+a small kernel/user handshake for the user to determine the sizes of
+those bitmaps.
 
-Either there's more behind this statement than meets the eye, or it's
-pretty terrible IMO. With the goal as stated, I could write a crap test
-that does nothing and fails to compile, and you'd like that to be
-merged? Seems like a recipe for a test suite that people contribute to,
-but no one runs.
+Along the way, I chose to drop in the new structure the 3 ethtool_cmd
+fields marked "deprecated" (transceiver/maxrxpkt/maxtxpkt). They are
+still available for old drivers via the (old) ETHTOOL_GSET/SSET API,
+but are not available to drivers that switch to new API. Of those 3
+fields, ethtool_cmd::transceiver seems to be still actively used by
+several drivers, maybe we should not consider this field deprecated?
+The 2 other fields are basically not used. This transition requires
+some care in the way old and new ethtool talk to the kernel.
 
-> The current scheme supports that by not imposing much in the way of build
-> system requirements, or standards on what is or isn't appropriate output etc.
+More technical details provided in the description for main patch. In
+particular details about backward compatibility properties.
 
-OK, well I'm not going to suggest enforcing exact output standards
-(though that might be nice, and I believe this showed up on more than
-one "TODO" list [1][2]), but I thought it's well established that a
-program's exit code should differentiate success from failure. Is that
-not a requirement?
+Some questions to more experts than me:
+ - the kernel/interface multiplexes the "tell me the bitmap length"
+   handshake and the "give me the settings" inside the new
+   ETHTOOL_GSETTINGS cmd. I was thinking of making this into 2
+   separate cmds: 1 cmd ETHTOOL_GKERNELPROPERTIES which would be
+   kernel-wide rather than device-specific, would return properties
+   like "length of the link mode bitmaps", and possibly others. And
+   ETHTOOL_GSETTINGS would expect the proper bitmaps
+ - the link mode bitmaps are piggybacked at tail of the new struct
+   ethtool_settings. Since its user-visible definition does not assume
+   specific bitmap width, I am using a 0-length array as the publicly
+   visible placeholder. But then, the kernel needs to specialize it
+   (struct ethtool_ksettings) to specify its current link mode
+   masks. This means that kernel code is "littered" with
+   "ksettings->parent.field" to access "field" inside
+   ethtool_settings:
+   + I don't like the field name "parent", any suggestion welcome
+   + and/or: I could use ethtool_settings everywhere (instead of a new
+     ethtool_ksettings) and an accessor to retrieve the link mode
+     masks?
+   + or: we could decide to make the link mode masks statically
+     bounded again, ie. make their width public, but larger than
+     current 32, and unchangeable forever. This would make everything
+     straightforward, but we might hit limits later, or have an
+     unneeded memory/stack usage for unused bits.
+   any preference?
+ - I foresee bugs where people use the legacy/deprecated SUPPORTED_x
+   macros instead of the new ETHTOOL_LINK_MODE_x_BIT enums in the new
+   get/set__ksettings callbacks. Not sure how to prevent problems with
+   this.
 
-Also, is it not reasonable for tests to enforce the rules they expect?
-e.g., if they require some library, they should check for it. And if
-they require some feature that's not on the present kernel, either they
-check for it, or we say it's unsupported to build the test on such a
-kernel (and therefore, it's not a bug to report a 'make' failure).
+The only driver which was converted for now is mlx4. I am not
+considering fcoe as fully converted, but I updated it a minima to be
+able to remove __ethtool_get_settings, now known as
+__ethtool_get_ksettings.
 
-It feels very wrong to just ignore all build errors. Alternatives: we
-could either check for dependencies, or else provide a simple opt-out
-mechanism, so a user can opt out of builds they don't want (rather than
-having them automatically dropped just because of an unreported build
-failure).
+Tested with legacy and "future" ethtool on 64b x86 kernel and 32+64b
+ethtool, and on a 32b x86 kernel + 32b ethtool.
 
-> But if have ideas for improving things while still keeping the requirements on
-> test code low then I'm all ears.
+############################################
+# Patch Set Summary:
 
-I can try to come up with acceptable improvements, but I don't feel like
-I understand your requirements well enough yet.
+David Decotigny (19):
+  lib/bitmap.c: conversion routines to/from u32 array
+  test_bitmap: unit tests for lib/bitmap.c
+  net: usnic: remove unused call to ethtool_ops::get_settings
+  net: usnic: use __ethtool_get_settings
+  net: ethtool: add new ETHTOOL_GSETTINGS/SSETTINGS API
+  tx4939: use __ethtool_get_ksettings
+  net: usnic: use __ethtool_get_ksettings
+  net: bonding: use __ethtool_get_ksettings
+  net: ipvlan: use __ethtool_get_ksettings
+  net: macvlan: use __ethtool_get_ksettings
+  net: team: use __ethtool_get_ksettings
+  net: fcoe: use __ethtool_get_ksettings
+  net: rdma: use __ethtool_get_ksettings
+  net: 8021q: use __ethtool_get_ksettings
+  net: bridge: use __ethtool_get_ksettings
+  net: core: use __ethtool_get_ksettings
+  net: ethtool: remove unused __ethtool_get_settings
+  net: mlx4: convenience predicate for debug messages
+  net: mlx4: use new ETHTOOL_G/SSETTINGS API
 
-The more I think about this, the more I think that there must be some
-balance between ease for the user and ease for the developer. Right now,
-we seem to be swung fairly far to the latter, and I don't know how much
-I'm allowed to swing back to the former.
+ arch/mips/txx9/generic/setup_tx4939.c           |   7 +-
+ drivers/infiniband/hw/usnic/usnic_ib_verbs.c    |  10 +-
+ drivers/net/bonding/bond_main.c                 |  14 +-
+ drivers/net/ethernet/mellanox/mlx4/en_ethtool.c | 344 ++++++++++----------
+ drivers/net/ethernet/mellanox/mlx4/en_main.c    |   1 +
+ drivers/net/ethernet/mellanox/mlx4/mlx4_en.h    |   5 +-
+ drivers/net/ipvlan/ipvlan_main.c                |   8 +-
+ drivers/net/macvlan.c                           |   8 +-
+ drivers/net/team/team.c                         |   8 +-
+ drivers/scsi/fcoe/fcoe_transport.c              |  36 ++-
+ include/linux/bitmap.h                          |   6 +
+ include/linux/ethtool.h                         |  84 ++++-
+ include/rdma/ib_addr.h                          |  14 +-
+ include/uapi/linux/ethtool.h                    | 320 +++++++++++++++----
+ lib/Kconfig.debug                               |   8 +
+ lib/Makefile                                    |   1 +
+ lib/bitmap.c                                    |  86 +++++
+ lib/test_bitmap.c                               | 343 ++++++++++++++++++++
+ net/8021q/vlan_dev.c                            |   8 +-
+ net/bridge/br_if.c                              |   6 +-
+ net/core/ethtool.c                              | 400 +++++++++++++++++++++++-
+ net/core/net-sysfs.c                            |  15 +-
+ net/packet/af_packet.c                          |  11 +-
+ tools/testing/selftests/lib/Makefile            |   2 +-
+ tools/testing/selftests/lib/bitmap.sh           |  10 +
+ 25 files changed, 1427 insertions(+), 328 deletions(-)
+ create mode 100644 lib/test_bitmap.c
+ create mode 100644 tools/testing/selftests/lib/bitmap.sh
 
-Brian
-
-[1] https://kselftest.wiki.kernel.org/
-[2] http://events.linuxfoundation.org/sites/events/files/slides/kselftest_feb23_2015.pdf
+-- 
+2.6.0.rc2.230.g3dd15c0
