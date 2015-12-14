@@ -1,54 +1,55 @@
-From: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Subject: Re: [PATCH 0/24] kernel: add a netlink interface to get information
- about processes (v2)
-Date: Mon, 14 Dec 2015 11:05:39 +0300
-Message-ID: <20151214080538.GC4112@odin.com>
-References: <1436172445-6979-1-git-send-email-avagin@openvz.org>
- <20151124151811.GA16393@odin.com>
- <CALCETrUzOBybH0-rcgvzMNazjadZpuxkBZLkoUDY30X_-cqBzg@mail.gmail.com>
- <1583220.Fp5vNj67Du@wuerfel>
+From: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC PATCH 2/2] block: virtio-blk: support multi virt queues per
+ virtio-blk device
+Date: Mon, 14 Dec 2015 11:31:26 +0100
+Message-ID: <566E9A7E.3030203@redhat.com>
+References: <1402680562-8328-1-git-send-email-ming.lei@canonical.com>
+ <1402680562-8328-3-git-send-email-ming.lei@canonical.com>
+ <CAJSP0QWaS--gPZ=ONFrXby1DQLw4R0RCro7bpHCdmucyjmqT_w@mail.gmail.com>
+ <CACVXFVO0SybUKArQbKkj2+hbk6q_gt3SBooNNmw1jErRR8d07A@mail.gmail.com>
+ <53A06475.7000308@redhat.com>
+ <CACVXFVO6GDu7Cp=s7kn_XBE2EFnuh+XQs4UQKTFaCLi4_9jcgg@mail.gmail.com>
+ <53A06E05.9060708@redhat.com>
+ <CACVXFVMkV5R5GUjM7Y-U54SA-ENZZ26dbbv4K2_OYPdmmiuUqg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="koi8-r"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1583220.Fp5vNj67Du@wuerfel>
+In-Reply-To: <CACVXFVMkV5R5GUjM7Y-U54SA-ENZZ26dbbv4K2_OYPdmmiuUqg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Roger Luethi <rl-7uj+XXdSDtwfv37vnLkPlQ@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pavel Odintsov <pavel.odintsov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Cc: Stefan Hajnoczi <stefanha-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Virtualization <virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Stefan Hajnoczi <stefanha-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Dec 04, 2015 at 12:43:29AM +0100, Arnd Bergmann wrote:
-> On Thursday 03 December 2015 15:20:30 Andy Lutomirski wrote:
-> > > * Netlink is designed for such type of workloads. It allows to expand
-> > >   the interface and save backward compatibility. It allows to generates
-> > >   packets with a different set of parameters.
-> > > * If we use a file descriptor, we can create it and decrease
-> > >   capabilities of the current process. It's a good feature which will be
-> > >   unavailable if we decide to create a system call.
-> > 
-> > If this is actually a real goal and it matters, then I'd suggest doing
-> > it right.  Make a way to create an fd that represents a pidns and,
-> > specifically, the right to query non-secret properties of the
-> > processes in the pidns.
-> 
-> My first thought about doing an interface here was to create a virtual
-> file system that can be queried rather than using netlink, but then I
-> realized that the idea was to avoid procfs ;-)
 
-No, we doesn't have an idea to avoid using of procfs. The idea is to
-create a new interace to get information about tasks, which will work
-faster and will be more convenient for using from applications.
 
+On 18/06/2014 06:04, Ming Lei wrote:
+> For virtio-blk, I don't think it is always better to take more queues, and
+> we need to leverage below things in host side:
 > 
-> More seriously, maybe the answer is to have a transaction file in
-> procfs itself. Procfs already knows about namespaces, so adding
-> a /proc/task-diag file as the entry point into the kernel could
-> get that out of the way.
+> - host storage top performance, generally it reaches that with more
+> than 1 jobs with libaio(suppose it is N, so basically we can use N
+> iothread per device in qemu to try to get top performance)
 > 
-> The simple_transaction infrastructure that we have is limited to
-> a little under a page for the total data size, but something similar
-> could be used.
+> - iothreads' loading(if iothreads are at full loading, increasing
+> queues doesn't help at all)
+> 
+> In my test, I only use the current per-dev iothread(x-dataplane)
+> in qemu to handle 2 vqs' notification and precess all I/O from
+> the 2 vqs, and looks it can improve IOPS by ~30%.
+> 
+> For virtio-scsi, the current usage doesn't make full use of blk-mq's
+> advantage too because only one vq is active at the same time, so I
+> guess the multi vqs' benefit won't be very much and I'd like to post
+> patches to support that first, then provide test data with
+> more queues(8, 16).
 
-Thank you for the idea.
-> 
-> 	Arnd
+Hi Ming Lei,
+
+would you like to repost these patches now that MQ support is in the kernel?
+
+Also, I changed my mind about moving linux-aio to AioContext.  I now
+think it's a good idea, because it limits the number of io_getevents
+syscalls. O:-)  So I would be happy to review your patches for that as well.
+
+Paolo
