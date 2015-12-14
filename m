@@ -1,142 +1,107 @@
-From: Dave Hansen <dave@sr71.net>
-Subject: [PATCH 25/32] mm, multi-arch: pass a protection key in to calc_vm_flag_bits()
-Date: Mon, 14 Dec 2015 11:06:23 -0800
-Message-ID: <20151214190623.2A4A3AA1@viggo.jf.intel.com>
-References: <20151214190542.39C4886D@viggo.jf.intel.com>
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20151214190542.39C4886D@viggo.jf.intel.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-mm@kvack.org, x86@kernel.org, Dave Hansen <dave@sr71.net>, dave.hansen@linux.intel.com, linux-api@vger.kernel.org, linux-arch@vger.kernel.org
+From: Brian Norris <computersforpeace@gmail.com>
+Subject: Re: [RFC] selftests: report proper exit statuses
+Date: Mon, 14 Dec 2015 11:15:36 -0800
+Message-ID: <20151214191536.GA108082@google.com>
+References: <1449875706-106875-1-git-send-email-computersforpeace@gmail.com>
+ <1450063175.29082.2.camel@ellerman.id.au>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1450063175.29082.2.camel@ellerman.id.au>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michael Ellerman <mpe@ellerman.id.au>
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
+Hi Michael,
 
-From: Dave Hansen <dave.hansen@linux.intel.com>
+On Mon, Dec 14, 2015 at 02:19:35PM +1100, Michael Ellerman wrote:
+> On Fri, 2015-12-11 at 15:15 -0800, Brian Norris wrote:
+> 
+> > There are several places where we don't report proper exit statuses, and
+> > this can have consequences -- for instance, the gen_kselftest_tar.sh
+> > script might try to produce a tarball for you, even if the 'make' or
+> > 'make install' steps didn't complete properly.
+> > 
+> > This is only an RFC (and really, it's more like a bug report), since I'm
+> > not really satisfied with my solution.
+> 
+> The changes to the tar script are probably OK.
+> 
+> But in general we do not want to exit after the first failure, which is what
+> your changes to the for loops would do.
+> 
+> The intention is to build and run as many tests as possible, on as many
+> architectures and machines as possible. So stopping the build because a header
+> or library is missing, or stopping the test run because one test fails, is the
+> exact opposite of what we want to happen.
+> 
+> For example a test might fail because it was written for x86 and doesn't work
+> on powerpc, if that caused all my powerpc tests to not run, I would be very
+> unpleased.
 
-This plumbs a protection key through calc_vm_flag_bits().  We
-could have done this in calc_vm_prot_bits(), but I did not feel
-super strongly which way to go.  It was pretty arbitrary which
-one to use.
+I purposely handled errors on the compile/packaging steps, and not the
+test execution steps. As you rightly claim, I wouldn't expect a test
+suite to stop running all tests just because one test failed. But are
+you suggesting to apply the same logic to the compile phase? You want to
+ignore build failures?
 
-Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
-Cc: linux-api@vger.kernel.org
-Cc: linux-arch@vger.kernel.org
----
+It seems perhaps that a core point of contention here is that you're
+providing a 'make' build target, yet you don't want it to act at all
+like a make target. Right now, there is no way to tell whether the build
+succeeded at all (you could build exactly 0 tests, yet get a "success"
+error code), and therefore any kind of automated build and packaging
+system based on your make targets cannot know whether the package is
+going to be properly assembled at all.
 
- b/arch/powerpc/include/asm/mman.h  |    5 +++--
- b/drivers/char/agp/frontend.c      |    2 +-
- b/drivers/staging/android/ashmem.c |    4 ++--
- b/include/linux/mman.h             |    6 +++---
- b/mm/mmap.c                        |    2 +-
- b/mm/mprotect.c                    |    2 +-
- b/mm/nommu.c                       |    2 +-
- 7 files changed, 12 insertions(+), 11 deletions(-)
+> > It's probably not exhaustive, and
+> > there seem to be some major other deficiencies (e.g., verbose/useless
+> > output during build and run, non-paralle build, shell for-loops sidestep
+> > some normal 'make' behavior).
+> 
+> The goals for the kernel selftests are to make it as easy as possible to merge
+> tests, so that as many developers as possible create tests *and* merge them.
 
-diff -puN arch/powerpc/include/asm/mman.h~pkeys-70-calc_vm_prot_bits arch/powerpc/include/asm/mman.h
---- a/arch/powerpc/include/asm/mman.h~pkeys-70-calc_vm_prot_bits	2015-12-14 10:42:50.063128373 -0800
-+++ b/arch/powerpc/include/asm/mman.h	2015-12-14 10:42:50.076128955 -0800
-@@ -18,11 +18,12 @@
-  * This file is included by linux/mman.h, so we can't use cacl_vm_prot_bits()
-  * here.  How important is the optimization?
-  */
--static inline unsigned long arch_calc_vm_prot_bits(unsigned long prot)
-+static inline unsigned long arch_calc_vm_prot_bits(unsigned long prot,
-+		unsigned long pkey)
- {
- 	return (prot & PROT_SAO) ? VM_SAO : 0;
- }
--#define arch_calc_vm_prot_bits(prot) arch_calc_vm_prot_bits(prot)
-+#define arch_calc_vm_prot_bits(prot, pkey) arch_calc_vm_prot_bits(prot, pkey)
- 
- static inline pgprot_t arch_vm_get_page_prot(unsigned long vm_flags)
- {
-diff -puN drivers/char/agp/frontend.c~pkeys-70-calc_vm_prot_bits drivers/char/agp/frontend.c
---- a/drivers/char/agp/frontend.c~pkeys-70-calc_vm_prot_bits	2015-12-14 10:42:50.064128418 -0800
-+++ b/drivers/char/agp/frontend.c	2015-12-14 10:42:50.076128955 -0800
-@@ -156,7 +156,7 @@ static pgprot_t agp_convert_mmap_flags(i
- {
- 	unsigned long prot_bits;
- 
--	prot_bits = calc_vm_prot_bits(prot) | VM_SHARED;
-+	prot_bits = calc_vm_prot_bits(prot, 0) | VM_SHARED;
- 	return vm_get_page_prot(prot_bits);
- }
- 
-diff -puN drivers/staging/android/ashmem.c~pkeys-70-calc_vm_prot_bits drivers/staging/android/ashmem.c
---- a/drivers/staging/android/ashmem.c~pkeys-70-calc_vm_prot_bits	2015-12-14 10:42:50.066128507 -0800
-+++ b/drivers/staging/android/ashmem.c	2015-12-14 10:42:50.077129000 -0800
-@@ -372,8 +372,8 @@ static int ashmem_mmap(struct file *file
- 	}
- 
- 	/* requested protection bits must match our allowed protection mask */
--	if (unlikely((vma->vm_flags & ~calc_vm_prot_bits(asma->prot_mask)) &
--		     calc_vm_prot_bits(PROT_MASK))) {
-+	if (unlikely((vma->vm_flags & ~calc_vm_prot_bits(asma->prot_mask, 0)) &
-+		     calc_vm_prot_bits(PROT_MASK, 0))) {
- 		ret = -EPERM;
- 		goto out;
- 	}
-diff -puN include/linux/mman.h~pkeys-70-calc_vm_prot_bits include/linux/mman.h
---- a/include/linux/mman.h~pkeys-70-calc_vm_prot_bits	2015-12-14 10:42:50.068128597 -0800
-+++ b/include/linux/mman.h	2015-12-14 10:42:50.077129000 -0800
-@@ -35,7 +35,7 @@ static inline void vm_unacct_memory(long
-  */
- 
- #ifndef arch_calc_vm_prot_bits
--#define arch_calc_vm_prot_bits(prot) 0
-+#define arch_calc_vm_prot_bits(prot, pkey) 0
- #endif
- 
- #ifndef arch_vm_get_page_prot
-@@ -70,12 +70,12 @@ static inline int arch_validate_prot(uns
-  * Combine the mmap "prot" argument into "vm_flags" used internally.
-  */
- static inline unsigned long
--calc_vm_prot_bits(unsigned long prot)
-+calc_vm_prot_bits(unsigned long prot, unsigned long pkey)
- {
- 	return _calc_vm_trans(prot, PROT_READ,  VM_READ ) |
- 	       _calc_vm_trans(prot, PROT_WRITE, VM_WRITE) |
- 	       _calc_vm_trans(prot, PROT_EXEC,  VM_EXEC) |
--	       arch_calc_vm_prot_bits(prot);
-+	       arch_calc_vm_prot_bits(prot, pkey);
- }
- 
- /*
-diff -puN mm/mmap.c~pkeys-70-calc_vm_prot_bits mm/mmap.c
---- a/mm/mmap.c~pkeys-70-calc_vm_prot_bits	2015-12-14 10:42:50.069128642 -0800
-+++ b/mm/mmap.c	2015-12-14 10:42:50.078129045 -0800
-@@ -1309,7 +1309,7 @@ unsigned long do_mmap(struct file *file,
- 	 * to. we assume access permissions have been handled by the open
- 	 * of the memory object, so we don't do any here.
- 	 */
--	vm_flags |= calc_vm_prot_bits(prot) | calc_vm_flag_bits(flags) |
-+	vm_flags |= calc_vm_prot_bits(prot, 0) | calc_vm_flag_bits(flags) |
- 			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
- 
- 	if (flags & MAP_LOCKED)
-diff -puN mm/mprotect.c~pkeys-70-calc_vm_prot_bits mm/mprotect.c
---- a/mm/mprotect.c~pkeys-70-calc_vm_prot_bits	2015-12-14 10:42:50.071128731 -0800
-+++ b/mm/mprotect.c	2015-12-14 10:42:50.078129045 -0800
-@@ -373,7 +373,7 @@ SYSCALL_DEFINE3(mprotect, unsigned long,
- 	if ((prot & PROT_READ) && (current->personality & READ_IMPLIES_EXEC))
- 		prot |= PROT_EXEC;
- 
--	vm_flags = calc_vm_prot_bits(prot);
-+	vm_flags = calc_vm_prot_bits(prot, 0);
- 
- 	down_write(&current->mm->mmap_sem);
- 
-diff -puN mm/nommu.c~pkeys-70-calc_vm_prot_bits mm/nommu.c
---- a/mm/nommu.c~pkeys-70-calc_vm_prot_bits	2015-12-14 10:42:50.073128821 -0800
-+++ b/mm/nommu.c	2015-12-14 10:42:50.079129090 -0800
-@@ -1090,7 +1090,7 @@ static unsigned long determine_vm_flags(
- {
- 	unsigned long vm_flags;
- 
--	vm_flags = calc_vm_prot_bits(prot) | calc_vm_flag_bits(flags);
-+	vm_flags = calc_vm_prot_bits(prot, 0) | calc_vm_flag_bits(flags);
- 	/* vm_flags |= mm->def_flags; */
- 
- 	if (!(capabilities & NOMMU_MAP_DIRECT)) {
-_
+Either there's more behind this statement than meets the eye, or it's
+pretty terrible IMO. With the goal as stated, I could write a crap test
+that does nothing and fails to compile, and you'd like that to be
+merged? Seems like a recipe for a test suite that people contribute to,
+but no one runs.
+
+> The current scheme supports that by not imposing much in the way of build
+> system requirements, or standards on what is or isn't appropriate output etc.
+
+OK, well I'm not going to suggest enforcing exact output standards
+(though that might be nice, and I believe this showed up on more than
+one "TODO" list [1][2]), but I thought it's well established that a
+program's exit code should differentiate success from failure. Is that
+not a requirement?
+
+Also, is it not reasonable for tests to enforce the rules they expect?
+e.g., if they require some library, they should check for it. And if
+they require some feature that's not on the present kernel, either they
+check for it, or we say it's unsupported to build the test on such a
+kernel (and therefore, it's not a bug to report a 'make' failure).
+
+It feels very wrong to just ignore all build errors. Alternatives: we
+could either check for dependencies, or else provide a simple opt-out
+mechanism, so a user can opt out of builds they don't want (rather than
+having them automatically dropped just because of an unreported build
+failure).
+
+> But if have ideas for improving things while still keeping the requirements on
+> test code low then I'm all ears.
+
+I can try to come up with acceptable improvements, but I don't feel like
+I understand your requirements well enough yet.
+
+The more I think about this, the more I think that there must be some
+balance between ease for the user and ease for the developer. Right now,
+we seem to be swung fairly far to the latter, and I don't know how much
+I'm allowed to swing back to the former.
+
+Brian
+
+[1] https://kselftest.wiki.kernel.org/
+[2] http://events.linuxfoundation.org/sites/events/files/slides/kselftest_feb23_2015.pdf
