@@ -1,55 +1,89 @@
-From: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC PATCH 2/2] block: virtio-blk: support multi virt queues per
- virtio-blk device
-Date: Mon, 14 Dec 2015 11:31:26 +0100
-Message-ID: <566E9A7E.3030203@redhat.com>
-References: <1402680562-8328-1-git-send-email-ming.lei@canonical.com>
- <1402680562-8328-3-git-send-email-ming.lei@canonical.com>
- <CAJSP0QWaS--gPZ=ONFrXby1DQLw4R0RCro7bpHCdmucyjmqT_w@mail.gmail.com>
- <CACVXFVO0SybUKArQbKkj2+hbk6q_gt3SBooNNmw1jErRR8d07A@mail.gmail.com>
- <53A06475.7000308@redhat.com>
- <CACVXFVO6GDu7Cp=s7kn_XBE2EFnuh+XQs4UQKTFaCLi4_9jcgg@mail.gmail.com>
- <53A06E05.9060708@redhat.com>
- <CACVXFVMkV5R5GUjM7Y-U54SA-ENZZ26dbbv4K2_OYPdmmiuUqg@mail.gmail.com>
+From: Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v1 02/10] clockevents/drivers: add MPS2 Timer driver
+Date: Mon, 14 Dec 2015 14:36:18 +0100
+Message-ID: <566EC5D2.9050005@linaro.org>
+References: <1449048790-25859-1-git-send-email-vladimir.murzin@arm.com>
+ <1449048790-25859-3-git-send-email-vladimir.murzin@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CACVXFVMkV5R5GUjM7Y-U54SA-ENZZ26dbbv4K2_OYPdmmiuUqg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Cc: Stefan Hajnoczi <stefanha-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Virtualization <virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Stefan Hajnoczi <stefanha-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1449048790-25859-3-git-send-email-vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>, arnd-r2nGTMty4D4@public.gmane.org, linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, afaerber-l3A5Bk7waGM@public.gmane.org, mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: Mark.Rutland-5wv7dgnIgG8@public.gmane.org, Pawel.Moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On 12/02/2015 10:33 AM, Vladimir Murzin wrote:
+> MPS2 platform has simple 32 bits general purpose countdown timers.
+>
+> The driver uses the first detected timer as a clocksource and the res=
+t
+> of the timers as a clockevent
+>
+> Signed-off-by: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+> ---
+
+[ ... ]
+
+> +static void clockevent_mps2_writel(u32 val, struct clock_event_devic=
+e *c, u32 offset)
+> +{
+> +	writel(val, to_mps2_clkevt(c)->reg + offset);
+> +}
+
+Is it possible to use writel_relaxed here ?
+
+[ ... ]
+
+> +static int mps2_timer_set_periodic(struct clock_event_device *ce)
+> +{
+> +	u32 clock_count_per_tick =3D to_mps2_clkevt(ce)->clock_count_per_ti=
+ck;
+> +
+> +	clockevent_mps2_writel(clock_count_per_tick, ce, TIMER_RELOAD);
+> +	clockevent_mps2_writel(clock_count_per_tick, ce, TIMER_VALUE);
+> +	clockevent_mps2_writel(TIMER_CTRL_IE | TIMER_CTRL_ENABLE, ce, TIMER=
+_CTRL);
+> +
+> +	return 0;
+> +}
+> +
+> +static irqreturn_t mps2_timer_interrupt(int irq, void *dev_id)
+> +{
+> +	struct clockevent_mps2 *ce =3D dev_id;
+> +	u32 status =3D readl(ce->reg + TIMER_INT);
+> +
+> +	if (!status) {
+> +		pr_warn("spuirous interrupt\n");
+
+typo: 'spurious'
+
+[ ... ]
+
+> +	ce =3D kzalloc(sizeof(struct clockevent_mps2), GFP_KERNEL);
+> +	if (!ce) {
+> +		ret =3D -ENOMEM;
+> +		pr_err("failed to allocate clockevent: %d\n", ret);
+
+There is already a stack trace in the kernel when an allocation fails.
+
+With the above fixed:
+
+Acked-by: Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 
 
-On 18/06/2014 06:04, Ming Lei wrote:
-> For virtio-blk, I don't think it is always better to take more queues, and
-> we need to leverage below things in host side:
-> 
-> - host storage top performance, generally it reaches that with more
-> than 1 jobs with libaio(suppose it is N, so basically we can use N
-> iothread per device in qemu to try to get top performance)
-> 
-> - iothreads' loading(if iothreads are at full loading, increasing
-> queues doesn't help at all)
-> 
-> In my test, I only use the current per-dev iothread(x-dataplane)
-> in qemu to handle 2 vqs' notification and precess all I/O from
-> the 2 vqs, and looks it can improve IOPS by ~30%.
-> 
-> For virtio-scsi, the current usage doesn't make full use of blk-mq's
-> advantage too because only one vq is active at the same time, so I
-> guess the multi vqs' benefit won't be very much and I'd like to post
-> patches to support that first, then provide test data with
-> more queues(8, 16).
+--=20
+  <http://www.linaro.org/> Linaro.org =E2=94=82 Open source software fo=
+r ARM SoCs
 
-Hi Ming Lei,
+=46ollow Linaro:  <http://www.facebook.com/pages/Linaro> Facebook |
+<http://twitter.com/#!/linaroorg> Twitter |
+<http://www.linaro.org/linaro-blog/> Blog
 
-would you like to repost these patches now that MQ support is in the kernel?
-
-Also, I changed my mind about moving linux-aio to AioContext.  I now
-think it's a good idea, because it limits the number of io_getevents
-syscalls. O:-)  So I would be happy to review your patches for that as well.
-
-Paolo
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" i=
+n
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
