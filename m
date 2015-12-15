@@ -1,20 +1,20 @@
 From: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
 Subject: Re: [PATCH v1 02/10] clockevents/drivers: add MPS2 Timer driver
-Date: Tue, 15 Dec 2015 12:47:59 +0000
-Message-ID: <56700BFF.90001@arm.com>
-References: <1449048790-25859-1-git-send-email-vladimir.murzin@arm.com> <1449048790-25859-3-git-send-email-vladimir.murzin@arm.com> <566EC5D2.9050005@linaro.org>
+Date: Tue, 15 Dec 2015 13:16:11 +0000
+Message-ID: <5670129B.700@arm.com>
+References: <1449048790-25859-1-git-send-email-vladimir.murzin@arm.com> <1449048790-25859-3-git-send-email-vladimir.murzin@arm.com> <CAL_Jsq+MhvV5BFw+x3TWTDheSpgWHjHjO02+D4V4swr493HXrg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <566EC5D2.9050005-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, arnd-r2nGTMty4D4@public.gmane.org, linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, afaerber-l3A5Bk7waGM@public.gmane.org, mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: Mark.Rutland-5wv7dgnIgG8@public.gmane.org, Pawel.Moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAL_Jsq+MhvV5BFw+x3TWTDheSpgWHjHjO02+D4V4swr493HXrg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Russell King - ARM Linux <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, =?UTF-8?B?VXdlIEtsZWluZS1Lw7ZuaWc=?= <u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, =?UTF-8?B?QW5kcmVhcyBGw6RyYmVy?= <afaerber-l3A5Bk7waGM@public.gmane.org>, Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mark Rutland <Mark.Rutland-5wv7dgnIgG8@public.gmane.org>, Pawel Moll <Pawel.Moll-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TZUIDd8j+nm9g@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 14/12/15 13:36, Daniel Lezcano wrote:
-> On 12/02/2015 10:33 AM, Vladimir Murzin wrote:
+On 14/12/15 13:56, Rob Herring wrote:
+> On Wed, Dec 2, 2015 at 3:33 AM, Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org> wrote:
 >> MPS2 platform has simple 32 bits general purpose countdown timers.
 >>
 >> The driver uses the first detected timer as a clocksource and the rest
@@ -22,66 +22,45 @@ On 14/12/15 13:36, Daniel Lezcano wrote:
 >>
 >> Signed-off-by: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
 >> ---
+>>  drivers/clocksource/Kconfig      |    5 +
+>>  drivers/clocksource/Makefile     |    1 +
+>>  drivers/clocksource/mps2-timer.c |  277 ++++++++++++++++++++++++++++++++++++++
+>>  3 files changed, 283 insertions(+)
+>>  create mode 100644 drivers/clocksource/mps2-timer.c
+>>
+>> diff --git a/drivers/clocksource/Kconfig b/drivers/clocksource/Kconfig
+>> index 2eb5f0e..8bca09c 100644
+>> --- a/drivers/clocksource/Kconfig
+>> +++ b/drivers/clocksource/Kconfig
+>> @@ -137,6 +137,11 @@ config CLKSRC_STM32
+>>         depends on OF && ARM && (ARCH_STM32 || COMPILE_TEST)
+>>         select CLKSRC_MMIO
+>>
+>> +config CLKSRC_MPS2
+>> +       bool "Clocksource for MPS2 SoCs" if COMPILE_TEST
+>> +       depends on OF && ARM
 > 
-> [ ... ]
-> 
->> +static void clockevent_mps2_writel(u32 val, struct clock_event_device
->> *c, u32 offset)
->> +{
->> +    writel(val, to_mps2_clkevt(c)->reg + offset);
->> +}
-> 
-> Is it possible to use writel_relaxed here ?
+> Does this really depend on both of these for COMPILE_TEST?
 
-I think it is possible. I'll update that part.
+Not really...
 
 > 
-> [ ... ]
-> 
->> +static int mps2_timer_set_periodic(struct clock_event_device *ce)
->> +{
->> +    u32 clock_count_per_tick = to_mps2_clkevt(ce)->clock_count_per_tick;
->> +
->> +    clockevent_mps2_writel(clock_count_per_tick, ce, TIMER_RELOAD);
->> +    clockevent_mps2_writel(clock_count_per_tick, ce, TIMER_VALUE);
->> +    clockevent_mps2_writel(TIMER_CTRL_IE | TIMER_CTRL_ENABLE, ce,
->> TIMER_CTRL);
->> +
->> +    return 0;
->> +}
->> +
->> +static irqreturn_t mps2_timer_interrupt(int irq, void *dev_id)
->> +{
->> +    struct clockevent_mps2 *ce = dev_id;
->> +    u32 status = readl(ce->reg + TIMER_INT);
->> +
->> +    if (!status) {
->> +        pr_warn("spuirous interrupt\n");
-> 
-> typo: 'spurious'
-> 
-> [ ... ]
-> 
->> +    ce = kzalloc(sizeof(struct clockevent_mps2), GFP_KERNEL);
->> +    if (!ce) {
->> +        ret = -ENOMEM;
->> +        pr_err("failed to allocate clockevent: %d\n", ret);
-> 
-> There is already a stack trace in the kernel when an allocation fails.
-> 
-> With the above fixed:
-> 
-> Acked-by: Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-> 
+> You need to select CLKSRC_OF rather than CLKSRC_MMIO as well.
 > 
 
-All above fixed locally.
+Does it looks better?
 
-Thanks
+config CLKSRC_MPS2
+	bool "Clocksource for MPS2 SoCs" if COMPILE_TEST
+	depends on GENERIC_SCHED_CLOCK
+	select CLKSRC_MMIO
+	select CLKSRC_OF
+
+
+Cheers
 Vladimir
 
-
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Rob
+> 
+> 
+> 
