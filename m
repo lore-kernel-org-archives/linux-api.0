@@ -1,55 +1,51 @@
-From: Dan Williams <dcbw-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] net: add Qualcomm IPC router
-Date: Tue, 15 Dec 2015 15:14:10 -0600
-Message-ID: <1450214050.4464.10.camel@redhat.com>
-References: <1449866519-14551-1-git-send-email-bjorn.andersson@sonymobile.com>
-	 <20151215.160114.1178824607335349574.davem@davemloft.net>
-	 <1450214005.4464.9.camel@redhat.com>
+From: Joe Perches <joe@perches.com>
+Subject: Re: [RFC v5 0/8] Additional kmsg devices
+Date: Tue, 15 Dec 2015 15:46:06 -0800
+Message-ID: <1450223166.4142.34.camel@perches.com>
+References: <1445941723-20388-1-git-send-email-p.osmialowsk@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1450214005.4464.9.camel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, bjorn.andersson-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, courtney.cavin-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1445941723-20388-1-git-send-email-p.osmialowsk@samsung.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Paul Osmialowski <p.osmialowsk@samsung.com>, Jonathan Corbet <corbet@lwn.net>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, Petr Mladek <pmladek@suse.cz>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Mack <daniel@zonque.org>, Kay Sievers <kay.sievers@vrfy.org>, Tejun Heo <tj@kernel.org>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Richard Weinberger <richard.weinberger@gmail.com>, Marcin Niesluchowski <m.niesluchow@samsung.com>, Karol Lewandowski <k.lewandowsk@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Shuah Khan <shuahkh@osg.samsung.com>, Andy Lutomirski <luto@amacapital.net>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2015-12-15 at 15:13 -0600, Dan Williams wrote:
-> On Tue, 2015-12-15 at 16:01 -0500, David Miller wrote:
-> > From: Bjorn Andersson <bjorn.andersson-/MT0OVThwyLZJqsBc5GL+g@public.gmane.org>
-> > Date: Fri, 11 Dec 2015 12:41:59 -0800
-> > 
-> > > +static unsigned int qrtr_local_nid = 1;
-> > > +module_param_named(node_id, qrtr_local_nid, uint, S_IRUGO);
-> > > +MODULE_PARM_DESC(idVendor, "Local Node Identifier");
-> 
-> Also s/idVendor/node_id?
+On Tue, 2015-10-27 at 11:28 +0100, Paul Osmialowski wrote:
+> Dear All,
+>=20
+> This is the fifth iteration of Marcin Niesluchowski's serie of patche=
+s
+> extending kmsg interface with ability to dynamically create (and dest=
+roy)
+> kmsg-like devices which can be used by userspace for logging.
+>=20
+> This iteration introduces two changes:
+>=20
+> 1. selftests are rearranged to use kselftest.h API
+>=20
+> 2. A disputed=A0=A0patch "add predefined _PID, _TID, _COMM keywords t=
+o kmsg*
+> =A0=A0=A0log dict" is removed - no chance it will be ever accepted. I=
+t is not
+> =A0=A0=A0critical for this patchset as a whole.
+>=20
+> Best regards,
+> Paul
+>=20
+> Marcin Niesluchowski (6):
+> =A0 printk: add one function for storing log in proper format
+> =A0 kmsg: introduce additional kmsg devices support
+> =A0 kmsg: add additional buffers support to memory class
+> =A0 kmsg: add function for adding and deleting additional buffers
+> =A0 kmsg: add ioctl for adding and deleting kmsg* devices
+> =A0 kmsg: add ioctl for kmsg* devices operating on buffers
+>=20
+> Paul Osmialowski (2):
+> =A0 printk: extract kmsg-related routines from printk.c to kmsg.c
+> =A0 kmsg: selftests
+>=20
 
-Well, not that it matters if the module parameter gets removed...
-
-Dan
-
-> 
-> Dan
-> 
-> > Module parameters suck.
-> > 
-> > Allow the user to choose this dynamically.  You have roughtly two
-> > choices.
-> > 
-> > 1) Subvert the 'protocol' field passed to ->create() and use that,
-> > it
-> > is
-> >    being ignored otherwise.
-> > 
-> > 2) Put it into the socket address for bind().
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe netdev"
-> > in
-> > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> --
-> To unsubscribe from this list: send the line "unsubscribe netdev" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Andrew?  Are you or anyone else interested in picking up this patchset?
