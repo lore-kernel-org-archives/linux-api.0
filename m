@@ -1,128 +1,87 @@
-From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: Re: [PATCH v1 04/10] serial: mps2-uart: add MPS2 UART driver
-Date: Tue, 15 Dec 2015 12:40:37 +0000
-Message-ID: <56700A45.3070109@arm.com>
-References: <1449048790-25859-1-git-send-email-vladimir.murzin@arm.com>	<1449048790-25859-5-git-send-email-vladimir.murzin@arm.com> <CAHp75Vd98TEQ7TiD==t=RgYOqSinWgnyRjg7V=oPXmEx0nedLQ@mail.gmail.com>
+From: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [PATCH v1 02/10] clockevents/drivers: add MPS2 Timer driver
+Date: Tue, 15 Dec 2015 12:47:59 +0000
+Message-ID: <56700BFF.90001@arm.com>
+References: <1449048790-25859-1-git-send-email-vladimir.murzin@arm.com> <1449048790-25859-3-git-send-email-vladimir.murzin@arm.com> <566EC5D2.9050005@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHp75Vd98TEQ7TiD==t=RgYOqSinWgnyRjg7V=oPXmEx0nedLQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Shevchenko <andy.shevchenko@gmail.com>
-Cc: Arnd Bergmann <arnd@arndb.de>, Russell King <linux@arm.linux.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, =?UTF-8?B?VXdlIEtsZWluZS1Lw7ZuaWc=?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?B?QW5kcmVhcyBGw6RyYmVy?= <afaerber@suse.de>, Maxime Coquelin <mcoquelin.stm32@gmail.com>, Mark Rutland <Mark.Rutland@arm.com>, Pawel Moll <Pawel.Moll@arm.com>, ijc+devicetree <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Jiri Slaby <jslaby@suse.cz>, Rob Herring <robh+dt@kernel.org>, devicetree <devicetree@vger.kernel.org>, "linux-serial@vger.kernel.org" <linux-serial@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, linux-arm Mailing List <linux-arm-kernel@lists.infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <566EC5D2.9050005-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, arnd-r2nGTMty4D4@public.gmane.org, linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, afaerber-l3A5Bk7waGM@public.gmane.org, mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: Mark.Rutland-5wv7dgnIgG8@public.gmane.org, Pawel.Moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 12/12/15 23:39, Andy Shevchenko wrote:
-> On Wed, Dec 2, 2015 at 11:33 AM, Vladimir Murzin
-> <vladimir.murzin@arm.com> wrote:
->> This driver adds support to the UART controller found on ARM MPS2
->> platform.
+On 14/12/15 13:36, Daniel Lezcano wrote:
+> On 12/02/2015 10:33 AM, Vladimir Murzin wrote:
+>> MPS2 platform has simple 32 bits general purpose countdown timers.
+>>
+>> The driver uses the first detected timer as a clocksource and the rest
+>> of the timers as a clockevent
+>>
+>> Signed-off-by: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+>> ---
 > 
-> Just few comments (have neither time not big desire to do full review).
+> [ ... ]
 > 
-
-Still better than nothing ;) I'm mostly agree on points you had, so I've
-just left some I'm doubt about...
-
->> +
->> +static void mps2_uart_enable_ms(struct uart_port *port)
+>> +static void clockevent_mps2_writel(u32 val, struct clock_event_device
+>> *c, u32 offset)
 >> +{
->> +}
->> +
->> +static void mps2_uart_break_ctl(struct uart_port *port, int ctl)
->> +{
+>> +    writel(val, to_mps2_clkevt(c)->reg + offset);
 >> +}
 > 
-> Are those required to be present? If not, remove them until you have
-> alive code there.
+> Is it possible to use writel_relaxed here ?
 
-A quick grep shows that core calls mps2_uart_break_ctl()
-unconditionally, but, yes, it checks for presence of
-mps2_uart_enable_ms() before jumping there, so it is safe to remove latter.
+I think it is possible. I'll update that part.
 
->> +static irqreturn_t mps2_uart_oerrirq(int irq, void *data)
+> 
+> [ ... ]
+> 
+>> +static int mps2_timer_set_periodic(struct clock_event_device *ce)
 >> +{
->> +       irqreturn_t handled = IRQ_NONE;
->> +       struct uart_port *port = data;
->> +       u8 irqflag = mps2_uart_read8(port, UARTn_INT);
+>> +    u32 clock_count_per_tick = to_mps2_clkevt(ce)->clock_count_per_tick;
 >> +
->> +       spin_lock(&port->lock);
+>> +    clockevent_mps2_writel(clock_count_per_tick, ce, TIMER_RELOAD);
+>> +    clockevent_mps2_writel(clock_count_per_tick, ce, TIMER_VALUE);
+>> +    clockevent_mps2_writel(TIMER_CTRL_IE | TIMER_CTRL_ENABLE, ce,
+>> TIMER_CTRL);
 >> +
->> +       if (irqflag & UARTn_INT_RX_OVERRUN) {
->> +               struct tty_port *tport = &port->state->port;
->> +
->> +               mps2_uart_write8(port, UARTn_INT_RX_OVERRUN, UARTn_INT);
->> +               tty_insert_flip_char(tport, 0, TTY_OVERRUN);
->> +               port->icount.overrun++;
->> +               handled = IRQ_HANDLED;
->> +       }
->> +
->> +       /* XXX: this shouldn't happen? */
-> 
-> If shouldn't why it's there? Otherwise better to explain which
-> conditions may lead to this.
-> 
-
-In practice I've never seen that happened and I think it never *should*
-happen since we check if there is room in TX buffer. However, I could be
-wrong here, so it is why that statement has question mark.
-
->> +       if (irqflag & UARTn_INT_TX_OVERRUN) {
->> +               mps2_uart_write8(port, UARTn_INT_TX_OVERRUN, UARTn_INT);
->> +               handled = IRQ_HANDLED;
->> +       }
->> +
->> +       spin_unlock(&port->lock);
->> +
->> +       return handled;
+>> +    return 0;
 >> +}
 >> +
-...
->> +static void mps2_uart_release_port(struct uart_port *port)
+>> +static irqreturn_t mps2_timer_interrupt(int irq, void *dev_id)
 >> +{
->> +}
+>> +    struct clockevent_mps2 *ce = dev_id;
+>> +    u32 status = readl(ce->reg + TIMER_INT);
 >> +
->> +static int mps2_uart_request_port(struct uart_port *port)
->> +{
->> +       return 0;
->> +}
->> +
+>> +    if (!status) {
+>> +        pr_warn("spuirous interrupt\n");
 > 
-> Same question about empty stubs.
-
-Looks like they called unconditionally by the core.
-
->> +static int __init mps2_uart_init(void)
->> +{
->> +       int ret;
->> +
->> +       ret = uart_register_driver(&mps2_uart_driver);
->> +       if (ret)
->> +               return ret;
->> +
->> +       ret = platform_driver_register(&mps2_serial_driver);
->> +       if (ret)
->> +               uart_unregister_driver(&mps2_uart_driver);
->> +
->> +       pr_info("MPS2 UART driver initialized\n");
->> +
->> +       return ret;
->> +}
->> +module_init(mps2_uart_init);
->> +
->> +static void __exit mps2_uart_exit(void)
->> +{
->> +       platform_driver_unregister(&mps2_serial_driver);
->> +       uart_unregister_driver(&mps2_uart_driver);
->> +}
->> +module_exit(mps2_uart_exit);
+> typo: 'spurious'
 > 
-> module_platform_driver();
-> And move uart_*register calls to probe/remove.
+> [ ... ]
+> 
+>> +    ce = kzalloc(sizeof(struct clockevent_mps2), GFP_KERNEL);
+>> +    if (!ce) {
+>> +        ret = -ENOMEM;
+>> +        pr_err("failed to allocate clockevent: %d\n", ret);
+> 
+> There is already a stack trace in the kernel when an allocation fails.
+> 
+> With the above fixed:
+> 
+> Acked-by: Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+> 
 > 
 
-With this move we'll get uart_*register for every device probed, no?
+All above fixed locally.
 
 Thanks
 Vladimir
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
