@@ -1,66 +1,147 @@
-From: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
-Subject: Re: [PATCH v1 02/10] clockevents/drivers: add MPS2 Timer driver
-Date: Tue, 15 Dec 2015 13:16:11 +0000
-Message-ID: <5670129B.700@arm.com>
-References: <1449048790-25859-1-git-send-email-vladimir.murzin@arm.com> <1449048790-25859-3-git-send-email-vladimir.murzin@arm.com> <CAL_Jsq+MhvV5BFw+x3TWTDheSpgWHjHjO02+D4V4swr493HXrg@mail.gmail.com>
+From: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Subject: Re: [PATCH 0/24] kernel: add a netlink interface to get information
+ about processes (v2)
+Date: Tue, 15 Dec 2015 18:53:59 +0300
+Message-ID: <20151215155358.GC24236@odin.com>
+References: <1436172445-6979-1-git-send-email-avagin@openvz.org>
+ <20151124151811.GA16393@odin.com>
+ <CALCETrUzOBybH0-rcgvzMNazjadZpuxkBZLkoUDY30X_-cqBzg@mail.gmail.com>
+ <20151214075217.GB4112@odin.com>
+ <CALCETrU_MtDa3p64R5bLx4BU5mKTDD0iEgtA4nLRHPfS2JbhOQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAL_Jsq+MhvV5BFw+x3TWTDheSpgWHjHjO02+D4V4swr493HXrg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrU_MtDa3p64R5bLx4BU5mKTDD0iEgtA4nLRHPfS2JbhOQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Russell King - ARM Linux <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, =?UTF-8?B?VXdlIEtsZWluZS1Lw7ZuaWc=?= <u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, =?UTF-8?B?QW5kcmVhcyBGw6RyYmVy?= <afaerber-l3A5Bk7waGM@public.gmane.org>, Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mark Rutland <Mark.Rutland-5wv7dgnIgG8@public.gmane.org>, Pawel Moll <Pawel.Moll-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TZUIDd8j+nm9g@public.gmane.org>
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Roger Luethi <rl-7uj+XXdSDtwfv37vnLkPlQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Odintsov <pavel.odintsov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 14/12/15 13:56, Rob Herring wrote:
-> On Wed, Dec 2, 2015 at 3:33 AM, Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org> wrote:
->> MPS2 platform has simple 32 bits general purpose countdown timers.
->>
->> The driver uses the first detected timer as a clocksource and the rest
->> of the timers as a clockevent
->>
->> Signed-off-by: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
->> ---
->>  drivers/clocksource/Kconfig      |    5 +
->>  drivers/clocksource/Makefile     |    1 +
->>  drivers/clocksource/mps2-timer.c |  277 ++++++++++++++++++++++++++++++++++++++
->>  3 files changed, 283 insertions(+)
->>  create mode 100644 drivers/clocksource/mps2-timer.c
->>
->> diff --git a/drivers/clocksource/Kconfig b/drivers/clocksource/Kconfig
->> index 2eb5f0e..8bca09c 100644
->> --- a/drivers/clocksource/Kconfig
->> +++ b/drivers/clocksource/Kconfig
->> @@ -137,6 +137,11 @@ config CLKSRC_STM32
->>         depends on OF && ARM && (ARCH_STM32 || COMPILE_TEST)
->>         select CLKSRC_MMIO
->>
->> +config CLKSRC_MPS2
->> +       bool "Clocksource for MPS2 SoCs" if COMPILE_TEST
->> +       depends on OF && ARM
-> 
-> Does this really depend on both of these for COMPILE_TEST?
+On Mon, Dec 14, 2015 at 02:38:06PM -0800, Andy Lutomirski wrote:
+> On Dec 13, 2015 11:52 PM, "Andrew Vagin" <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> wrote=
+:
+> >
+> > On Thu, Dec 03, 2015 at 03:20:30PM -0800, Andy Lutomirski wrote:
+> > > On Tue, Nov 24, 2015 at 7:18 AM, Andrew Vagin <avagin@virtuozzo.c=
+om> wrote:
+> > > > Hello Everybody,
+> > > >
+> > > > Sorry for the long delay. I wanted to resurrect this thread.
+> > > >
+> > > > Andy suggested to create a new syscall instead of using netlink
+> > > > interface.
+> > > >> Would it make more sense to have a new syscall instead?  You c=
+ould
+> > > >> even still use nlattr formatting for the syscall results.
+> > > >
+> > > > I tried to implement it to understand how it looks like. Here i=
+s my
+> > > > version:
+> > > > https://github.com/avagin/linux-task-diag/blob/task_diag_syscal=
+l/kernel/task_diag.c#L665
+> > > > I could not invent a better interfaces for it than using netlin=
+k
+> > > > messages as arguments. I know it looks weird.
+> > > >
+> > > > I could not say that I understood why a new system call is bett=
+er
+> > > > than using a netlink socket, so I tried to solve the problem wh=
+ich
+> > > > were mentioned for the netlink interface.
+> > > >
+> > > > The magor question was how to support pid and user namespaces i=
+n task_diag.
+> > > > I think I found a good and logical solution.
+> > > >
+> > > > As for pidns, we can use scm credentials, which is connected to=
+ each
+> > > > socket message. They contain requestor=E2=80=99s pid and we can=
+ get a pid
+> > > > namespace from it. In this case, we get a good feature to speci=
+fy a pid
+> > > > namespace without entering into it. For that, an user need to s=
+pecify
+> > > > any process from this pidns in an scm message.
+> > >
+> > > That seems a little messy.  A process can't currently move into
+> > > another pidns, but how do you make sure you have any pid at all t=
+hat
+> > > belongs to the reference pidns?  You can, of course, always use y=
+our
+> > > own pid, but that still seems odd to me.
+> >
+> > There is your pid by default, you need to do nothing for that.
+> > If we look at containers or sandboxes, we ussualy know PID of
+> > the init process.
+> >
+> >
+> > >
+> > > >
+> > > > As for credentials, we can get them from file->f_cred. In this =
+case we
+> > > > are able to create a socket and decrease permissions of the cur=
+rent
+> > > > process, but the socket will work as before. It=E2=80=99s the c=
+ommon behaviour for
+> > > > file descriptors.
+> > >
+> > > Slightly off-topic, but this netlink is really rather bad as an
+> > > example of how fds can be used as capabilities (in the real capab=
+ility
+> > > sense, not the Linux capabilities sense).  You call socket and ge=
+t a
+> > > socket.  That socket captures f_cred.  Then you drop privs, and y=
+ou
+> > > assume that the socket you're holding on to retains the right to =
+do
+> > > certain things.
+> > >
+> > > This breaks pretty badly when, through things such as this patch =
+set,
+> > > existing code that creates netlink sockets suddenly starts captur=
+ing
+> > > brand-new rights that didn't exist as part of a netlink socket be=
+fore.
+> >
+> > Sorry, I don't understand this part. Could you eloborate? Maybe giv=
+e an
+> > example.
+> >
+> > I always think that it's a feature, that we can create a descriptor=
+ and
+> > drop capabilities of the process or send this descriptor to an
+> > unprivilieged process.
+>=20
+> Suppose there's an existing program that likes this feature.  It
+> creates a netlink socket, optionally calls connect(2), and then drop
+> privileges.  It expects to retain some subset of its privileges.
+>=20
+> The problem is that by increasing the power of a netlink socket
+> created with higher-than-current privilege, you've just increased the
+> privilege retained by the old app.  In this particular case, it's
+> especially odd because it retains privilege over the old pidns,
+> whereas the old program (in theory -- probably no one does this) coul=
+d
+> have created a netlink socket, unshared pidns, and forked, and it
+> would have expected to retain no privilege over the old pidns.
 
-Not really...
+Thank you for the explanation.  If I understand you correctly, the
+problem is that we can use an arbitrary netlink socket to use task_diag=
+=2E
 
-> 
-> You need to select CLKSRC_OF rather than CLKSRC_MMIO as well.
-> 
+It can be a reason to not use netlink interface for task diag.
 
-Does it looks better?
+What do you think about the idea to add a a transaction file in
+procfs? We will open it, send a request and get required information.
 
-config CLKSRC_MPS2
-	bool "Clocksource for MPS2 SoCs" if COMPILE_TEST
-	depends on GENERIC_SCHED_CLOCK
-	select CLKSRC_MMIO
-	select CLKSRC_OF
+I want to have a file descriptor to transfer data between kernel and
+userspace, because a size of response can be too big to receive it for
+one call. If we use a file descriptor, we can divide a response into
+parts.
 
+Thanks,
+Andrew
 
-Cheers
-Vladimir
-
-> Rob
-> 
-> 
-> 
+> --Andy
