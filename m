@@ -1,228 +1,134 @@
-From: Jessica Yu <jeyu@redhat.com>
-Subject: Re: livepatch: reuse module loader code to write relocations
-Date: Wed, 16 Dec 2015 14:14:28 -0500
-Message-ID: <20151216191427.GA29092@packer-debian-8-amd64.digitalocean.com>
-References: <1448943679-3412-1-git-send-email-jeyu@redhat.com>
- <1448943679-3412-5-git-send-email-jeyu@redhat.com>
- <20151208183844.GC14846@treble.redhat.com>
- <20151209191013.GA25387@packer-debian-8-amd64.digitalocean.com>
- <20151216054048.GA28258@packer-debian-8-amd64.digitalocean.com>
- <alpine.LNX.2.00.1512161342140.25787@pobox.suse.cz>
+From: Alex Williamson <alex.williamson@redhat.com>
+Subject: Re: [RFC PATCH 2/3] vfio-pci: Allow to mmap sub-page MMIO BARs if
+ all MMIO BARs are page aligned
+Date: Wed, 16 Dec 2015 13:04:36 -0700
+Message-ID: <1450296276.2674.55.camel@redhat.com>
+References: <1449823994-3356-1-git-send-email-xyjxie@linux.vnet.ibm.com>
+	 <1449823994-3356-3-git-send-email-xyjxie@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LNX.2.00.1512161342140.25787@pobox.suse.cz>
-Sender: linux-doc-owner@vger.kernel.org
-To: Miroslav Benes <mbenes@suse.cz>
-Cc: Josh Poimboeuf <jpoimboe@redhat.com>, Rusty Russell <rusty@rustcorp.com.au>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1449823994-3356-3-git-send-email-xyjxie@linux.vnet.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Yongji Xie <xyjxie@linux.vnet.ibm.com>, kvm@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org
+Cc: aik@ozlabs.ru, benh@kernel.crashing.org, paulus@samba.org, mpe@ellerman.id.au, warrier@linux.vnet.ibm.com, zhong@linux.vnet.ibm.com, nikunj@linux.vnet.ibm.com
 List-Id: linux-api@vger.kernel.org
 
-+++ Miroslav Benes [16/12/15 13:59 +0100]:
->On Wed, 16 Dec 2015, Jessica Yu wrote:
->
->> +++ Jessica Yu [09/12/15 14:10 -0500]:
->> > +++ Josh Poimboeuf [08/12/15 12:38 -0600]:
->> > >
->> > > There was a lot of discussion for v1, so I'm not sure, but I thought we
->> > > ended up deciding to get rid of the klp_reloc_sec struct?  Instead I
->> > > think the symbol table can be walked directly looking for klp rela
->> > > sections?
->> > >
->> > > The benefits of doing so would be to make the interface simpler -- no
->> > > need to "cache" the section metadata when it's already easily and
->> > > quickly available in the module struct elf section headers.
->> >
->> > Ah, I might have interpreted the conclusions of that last discussion
->> > incorrectly.
->> >
->> > In that case, I think I can just get rid of my klp_for_each_reloc_sec
->> > macro as well as the lreloc scaffolding code from kpatch. The only
->> > potentially "ugly" part of this change is that I'll have to move the
->> > string parsing stuff here to extract the objname of the __klp_rela
->> > section (which may not actually look that bad, we'll see how that
->> > turns out).
->
->Yes, that was a conclusion we made. At least I thought so :)
->
->> Turns out the string parsing stuff, even with the help of lib/string.c,
->> doesn't
->> look very pretty. As I'm working on v3, I'm starting to think having
->> klp_write_object_relocations() loop simply through all the elf sections might
->> not be a good idea. Let me explain.
->
->Hm, I still think it is worth it...
->
->> I don't like the amount of string manipulation code that would potentially
->> come
->> with this change. Even with a string as simple as ".klp.rela.objname", we'll
->> end up with a bunch of kstrdup's/kmalloc's and kfree's (unless we modify and
->> chop the section name string in place, which I don't think we should do) that
->> are going to be required at every iteration of the loop, all just to be able
->> to
->> call strcmp() and see if we're dealing with a klp rela section that belongs to
->> the object in question. This also leads to more complicated error handling.
->
->But this shouldn't be much different from what init function of the patch
->module does now, right? You have a klp_extract_objname() which I thought
->could be moved right to livepatch code.
+On Fri, 2015-12-11 at 16:53 +0800, Yongji Xie wrote:
+> Current vfio-pci implementation disallows to mmap
+> sub-page(size < PAGE_SIZE) MMIO BARs because these BARs' mmio page
+> may be shared with other BARs.
+>=20
+> But we should allow to mmap these sub-page MMIO BARs if all MMIO BARs
+> are page aligned which leads the BARs' mmio page would not be shared
+> with other BARs.
+>=20
+> This patch adds support for this case and we also add a
+> VFIO_DEVICE_FLAGS_PCI_PAGE_ALIGNED flag to notify userspace that
+> platform supports all MMIO BARs to be page aligned.
+>=20
+> Signed-off-by: Yongji Xie <xyjxie@linux.vnet.ibm.com>
+> ---
+> =C2=A0drivers/vfio/pci/vfio_pci.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0|=C2=A0=C2=A0=C2=A010 +++++++++-
+> =C2=A0drivers/vfio/pci/vfio_pci_private.h |=C2=A0=C2=A0=C2=A0=C2=A05 =
++++++
+> =C2=A0include/uapi/linux/vfio.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0|=C2=A0=C2=A0=C2=A0=C2=A02 ++
+> =C2=A03 files changed, 16 insertions(+), 1 deletion(-)
+>=20
+> diff --git a/drivers/vfio/pci/vfio_pci.c
+> b/drivers/vfio/pci/vfio_pci.c
+> index 32b88bd..dbcad99 100644
+> --- a/drivers/vfio/pci/vfio_pci.c
+> +++ b/drivers/vfio/pci/vfio_pci.c
+> @@ -443,6 +443,9 @@ static long vfio_pci_ioctl(void *device_data,
+> =C2=A0		if (vdev->reset_works)
+> =C2=A0			info.flags |=3D VFIO_DEVICE_FLAGS_RESET;
+> =C2=A0
+> +		if (vfio_pci_bar_page_aligned())
+> +			info.flags |=3D
+> VFIO_DEVICE_FLAGS_PCI_PAGE_ALIGNED;
+> +
+> =C2=A0		info.num_regions =3D VFIO_PCI_NUM_REGIONS;
+> =C2=A0		info.num_irqs =3D VFIO_PCI_NUM_IRQS;
+> =C2=A0
+> @@ -479,7 +482,8 @@ static long vfio_pci_ioctl(void *device_data,
+> =C2=A0				=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0VFIO_REGION_INFO_FLAG_WRITE;
+> =C2=A0			if (IS_ENABLED(CONFIG_VFIO_PCI_MMAP) &&
+> =C2=A0			=C2=A0=C2=A0=C2=A0=C2=A0pci_resource_flags(pdev, info.index)=
+ &
+> -			=C2=A0=C2=A0=C2=A0=C2=A0IORESOURCE_MEM && info.size >=3D
+> PAGE_SIZE)
+> +			=C2=A0=C2=A0=C2=A0=C2=A0IORESOURCE_MEM && (info.size >=3D
+> PAGE_SIZE ||
+> +			=C2=A0=C2=A0=C2=A0=C2=A0vfio_pci_bar_page_aligned()))
+> =C2=A0				info.flags |=3D
+> VFIO_REGION_INFO_FLAG_MMAP;
+> =C2=A0			break;
+> =C2=A0		case VFIO_PCI_ROM_REGION_INDEX:
+> @@ -855,6 +859,10 @@ static int vfio_pci_mmap(void *device_data,
+> struct vm_area_struct *vma)
+> =C2=A0		return -EINVAL;
+> =C2=A0
+> =C2=A0	phys_len =3D pci_resource_len(pdev, index);
+> +
+> +	if (vfio_pci_bar_page_aligned())
+> +		phys_len =3D PAGE_ALIGN(phys_len);
+> +
+> =C2=A0	req_len =3D vma->vm_end - vma->vm_start;
+> =C2=A0	pgoff =3D vma->vm_pgoff &
+> =C2=A0		((1U << (VFIO_PCI_OFFSET_SHIFT - PAGE_SHIFT)) - 1);
+> diff --git a/drivers/vfio/pci/vfio_pci_private.h
+> b/drivers/vfio/pci/vfio_pci_private.h
+> index 0e7394f..319352a 100644
+> --- a/drivers/vfio/pci/vfio_pci_private.h
+> +++ b/drivers/vfio/pci/vfio_pci_private.h
+> @@ -69,6 +69,11 @@ struct vfio_pci_device {
+> =C2=A0#define is_irq_none(vdev) (!(is_intx(vdev) || is_msi(vdev) ||
+> is_msix(vdev)))
+> =C2=A0#define irq_is(vdev, type) (vdev->irq_type =3D=3D type)
+> =C2=A0
+> +static inline bool vfio_pci_bar_page_aligned(void)
+> +{
+> +	return IS_ENABLED(CONFIG_PPC64);
+> +}
 
-First, thanks for the comments. I think my only real gripe is that, in the
-pseudo code I provided, we are not only doing the for loop for each object, but
-also a bunch of kmalloc's/kstrdup's and kfree's just to be able to check if
-this klp section belongs to the current object, *and* also kmallocing/kfreeing
-just to provide buffers to extract parts of a symbol's name. In the patch
-module code, each klp section was parsed just once and sorted by object:
-https://github.com/flaming-toast/kpatch/blob/no_dynrela_redux/kmod/patch/livepatch-patch-hook.c#L213
-^^^ This was before we decided to get rid of 'external', so only klp sections
-had to be parsed. In v3, we are also looking to parse the symbol name (to
-eliminate 'external'), so now I'm just trying to reduce all the string stuff to
-the bare minimum needed to have this work.
+I really dislike this. =C2=A0This is a problem for any architecture tha=
+t
+runs on larger pages, and even an annoyance on 4k hosts. =C2=A0Why are =
+we
+only solving it for PPC64? =C2=A0Can't we do something similar in the c=
+ore
+PCI code and detect it?
 
-function klp_write_object_relocations(..,struct klp_object *obj,..) {
-   for each section in mod->sechdrs { // iterate through all elf sections, no more obj->reloc_secs list
-       if not a klp rela section
-           continue;
-->     sec_objname = extract_objname_from_section(section);  // .klp.rela.[objname].sectionname
-->     if (strcmp(sec_objname, obj->name)) { // this klp rela section doesn't belong to this object
-->         kfree(sec_objname);
-->         continue;
-       }
+> +
+> =C2=A0extern void vfio_pci_intx_mask(struct vfio_pci_device *vdev);
+> =C2=A0extern void vfio_pci_intx_unmask(struct vfio_pci_device *vdev);
+> =C2=A0
+> diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
+> index 751b69f..1fc8066 100644
+> --- a/include/uapi/linux/vfio.h
+> +++ b/include/uapi/linux/vfio.h
+> @@ -171,6 +171,8 @@ struct vfio_device_info {
+> =C2=A0#define VFIO_DEVICE_FLAGS_PCI	(1 << 1)	/* vfio-pci
+> device */
+> =C2=A0#define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2)	/* vfio-platform
+> device */
+> =C2=A0#define VFIO_DEVICE_FLAGS_AMBA=C2=A0=C2=A0(1 << 3)	/* vfio-amba=
+ device
+> */
+> +/* Platform support all PCI MMIO BARs to be page aligned */
+> +#define VFIO_DEVICE_FLAGS_PCI_PAGE_ALIGNED	(1 << 4)
+> =C2=A0	__u32	num_regions;	/* Max region index + 1 */
+> =C2=A0	__u32	num_irqs;	/* Max IRQ index + 1 */
+> =C2=A0};
 
-     for each rela in this klp rela section {
-        sym = symtab + ELF_R_SYM(rela->r_info);
-->      sym_objname = extract_objname_from_symbol(sym) // symname.klp.[objname]
-->      if (!sym_objname)
-->           goto handle_error; // calls kfree(sec_objname);
-->      symname = extract_symname_from_symbol(sym); // [symname].klp.objname
-->      if (!symname)
-->          goto handle_error; // calls kfree(sec_objname);
-        ret = klp_find_object_symbol(sym_objname, symname, &addr)
-        if (ret)
-->          goto handle_error2; // calls kfree(symname), then kfree(sec_objname)
-        sym->st_value = addr;
-->      if (sym_objname) // free buffers before proceeding to next iteration of loop
-->         kfree(sym_objname);
-->      kfree(symname);
-     }
-[ snipped rest of function ]
+Why is this on the device info, shouldn't it be per region? =C2=A0Do we=
+ even
+need a flag or can we just set the existing mmap flag with the
+clarification that sub-host page size regions can mmap an entire host-
+page aligned, sized area in the documentation? =C2=A0Thanks,
 
-I'm trying to figure out a way to simplify all the lines marked with '->', and
-make this code as readable and palatable as possible. I think primarily the
-kfree's and multiple error-handling goto's bothered me, which is why I
-suggested putting the symname.klp.[objname] part in .kpatch.strings and using
-those masks I suggested. Then we wouldn't even need to set-up temporary buffers to
-hold the sym_objname + symname strings. You're right that this would require
-another assumption about the patch module, but I think having the names of
-livepatch symbols formatted as 'symname.klp.objname' was already another
-assumption, and using .kpatch.strings would just be changing this assumption.
-
->> In v1, the string parsing was done only *once* for each klp rela section in
->> the
->> patch module code, and each klp rela section is sorted into their respective
->> object with the reloc_secs list. Then all klp_write_object_relocations() had
->> to
->> do is iterate over object->reloc_secs. The tradeoff here is the addition of
->> another struct (klp_reloc_sec), but that is not nearly as bad as string
->> parsing, which is imo way more error prone and is unnecessary extra work.
->
->If it is a problem (and Josh thought it was not if I recall correctly) we
->can cache indices to relevant rela sections in klp_object as we discussed
->in v1.
->
->> Here's some pseudocode to help visualize the potential issues:
->>
->> function klp_write_object_relocations(..,struct klp_object *obj,..) {
->>    for each section in mod->sechdrs { // iterate through all elf sections, no
->> more obj->reloc_secs list
->>        if not a klp rela section
->>            continue;
->>        sec_objname = extract_objname_from_section(section);  //
->> .klp.rela.[objname].sectionname
->>        if (strcmp(sec_objname, obj->name)) { // this klp rela section doesn't
->> belong to this object
->>            kfree(sec_objname);
->>            continue;
->>        }
->>
->>      for each rela in this klp rela section {
->>         sym = symtab + ELF_R_SYM(rela->r_info);
->>         sym_objname = extract_objname_from_symbol(sym) //
->> symname.klp.[objname]
->
->This is because of 'external' stuff, right?
-
-Correct, in the v2 discussion we decided symbol names can have the
-names of their objects attached, which will eliminate the need for the
-external flag and klp_find_external_symbol().
-
->>         if (!sym_objname)
->>             goto handle_error; // calls kfree(sec_objname);
->>         symname = extract_symname_from_symbol(sym); // [symname].klp.objname
->
->Can't we use a method from the patch? That is
->
->symname = pmod->core_strtab + sym->st_name;
-
-Since we are removing 'external', we decided to append the objname to the
-symbol name. But then extra string parsing is needed to get the real symbol
-name. So, pmod->core_strtab + sym->st_name would correspond to the full name,
-formatted as 'symname.klp.objname'. We parse to get the real symname and the
-objname. Then we no longer need the klp_find_external_symbol() call, it'd just
-be one call to klp_find_object_symbol(sym_objname, symname, addr)
-
->>         if (!symname)
->>             goto handle_error; // calls kfree(sec_objname);
->>         ret = klp_find_object_symbol(sym_objname, symname, &addr)
->>         if (ret)
->>             goto handle_error2; // calls kfree(symname), then
->> kfree(sec_objname)
->>
->> ...etc., you get the idea how messy that is getting, and we haven't even
->> reached the call to apply_relocate_add() yet.
->>
->> So I personally think it is better to keep the old v1 way for applying the klp
->> reloc secs. The sections are still named ".klp.rela.objname" but the parsing
->> is
->> done once in the patch module code and used only to build the patch
->> scaffolding
->> structure.
->>
->> In order to avoid adding any additional string parsing code in v3, I no longer
->> thing we should rename livepatch symbols to include the symbol objname (i.e.
->> 'symbol.klp.objname'). Recall that this change is for getting rid of external
->> dynrelas. Instead of parsing the symbol name, we could just encode 1) the
->> sympos and 2) the index into the .kpatch.strings strtab (that contains the
->> sym_objname) in sym->st_value. We define two masks (KLP_MASK_SYMPOS,
->> KLP_MASK_OBJNAME) that extract these values. st_value has either a 32 bit or
->> 64
->> bit size, both of which are big enough sizes for the sympos and string table
->> index. One perk we lose is being able to see which object a symbol belongs to
->> in readelf, but then again we didn't have this benefit to begin with in
->> v1 nor v2 (where we didn't know the symbol's object and had to use
->> klp_find_external_symbol anyway), so I wouldn't say it's a loss.
->
->Just a note. This would lead to another assumption about a patch
->module... .kpatch.strings. I suspect 'external' symbols are kpatch
->specific (I think I did not deal with it while working on relocations for
->kgraft. But I am not sure now. I haven't finished it too.), but let's try
->to make it "generic".
-
-I think 'external' is kpatch-specific (correct me if  I'm wrong), as I
-explained above we're trying to get rid of it.
-
->> Apologies for the super long explanations, but I think avoiding string parsing
->> in livepatch core code will make the relocation code much more succinct and
->> easier to read. Any objections or thoughts on all this?
->
->My main argument is that the work needs to be done somewhere and there is
->no reason why not do it right in the kernel and not in patch modules. The
->code should be more or less the same and we'd get rid of unnecessary
->layers (klp_reloc_sec) as Josh pointed out.
-
-Right, OK. I agree that this work has to be done somewhere, I am just hesitant
-about the new string handling code, as I pointed out above. If people are OK and
-agree that this is the better approach, then I will keep it.
-
-Thanks again,
-Jessica
+Alex
