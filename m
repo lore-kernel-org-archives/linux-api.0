@@ -1,96 +1,64 @@
-From: Courtney Cavin <courtney.cavin@sonymobile.com>
-Subject: Re: [PATCH] net: add Qualcomm IPC router
-Date: Wed, 16 Dec 2015 15:28:50 -0800
-Message-ID: <20151216232849.GF28026@sonymobile.com>
-References: <1449866519-14551-1-git-send-email-bjorn.andersson@sonymobile.com>
+From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: module: s390: keep mod_arch_specific for livepatch modules
+Date: Wed, 16 Dec 2015 18:48:28 -0500
+Message-ID: <20151216234828.GB29092@packer-debian-8-amd64.digitalocean.com>
+References: <1448943679-3412-1-git-send-email-jeyu@redhat.com>
+ <1448943679-3412-4-git-send-email-jeyu@redhat.com>
+ <alpine.LNX.2.00.1512161257170.25787@pobox.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1449866519-14551-1-git-send-email-bjorn.andersson@sonymobile.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Bjorn Andersson <bjorn.andersson@sonymobile.com>
-Cc: "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>, "linux-arm-msm@vger.kernel.org" <linux-arm-msm@vger.kernel.org>, "David S. Miller" <davem@davemloft.net>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>
+In-Reply-To: <alpine.LNX.2.00.1512161257170.25787-ztGlSCb7Y1iN3ZZ/Hiejyg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
+Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Dec 11, 2015 at 09:41:59PM +0100, Bjorn Andersson wrote:
-> From: Courtney Cavin <courtney.cavin@sonymobile.com>
-> 
-> Add an implementation of Qualcomm's IPC router protocol, used to
-> communicate with service providing remote processors.
-> 
-> Signed-off-by: Courtney Cavin <courtney.cavin@sonymobile.com>
-> ---
-[...]
-> +static int qrtr_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
-> +{
-> +       DECLARE_SOCKADDR(struct sockaddr_qrtr *, addr, msg->msg_name);
-> +       int (*enqueue_fn)(struct qrtr_node *, struct sk_buff *);
-> +       struct qrtr_sock *ipc = qrtr_sk(sock->sk);
-> +       struct sock *sk = sock->sk;
-> +       struct qrtr_node *node;
-> +       struct qrtr_hdr *hdr;
-> +       struct sk_buff *skb;
-> +       size_t plen;
-> +       int rc;
-> +
-> +       if (msg->msg_flags & ~(MSG_DONTWAIT))
-> +               return -EINVAL;
-> +
-> +       if (len > 65535)
-> +               return -EMSGSIZE;
-> +
-> +       lock_sock(sk);
-> +
-> +       if (addr) {
-> +               if (msg->msg_namelen < sizeof(*addr)) {
-> +                       release_sock(sk);
-> +                       return -EINVAL;
-> +               }
-> +
-> +               if (addr->sq_family != AF_QIPCRTR) {
-> +                       release_sock(sk);
-> +                       return -EINVAL;
-> +               }
-> +
-> +               rc = qrtr_autobind(sock);
-> +               if (rc) {
-> +                       release_sock(sk);
-> +                       return rc;
-> +               }
-> +       } else if (sk->sk_state == TCP_ESTABLISHED) {
-> +               addr = &ipc->peer;
-> +       } else {
-> +               release_sock(sk);
-> +               return -ENOTCONN;
-> +       }
-> +
-> +       node = NULL;
-> +       if (addr->sq_node == QRTR_NODE_BCAST) {
-> +               enqueue_fn = qrtr_bcast_enqueue;
-> +       } else if (addr->sq_node == 0 || addr->sq_node == ipc->us.sq_node) {
++++ Miroslav Benes [16/12/15 13:02 +0100]:
+>On Mon, 30 Nov 2015, Jessica Yu wrote:
+>
+>> Livepatch needs to utilize the symbol information contained in the
+>> mod_arch_specific struct in order to be able to call the s390
+>> apply_relocate_add() function to apply relocations. Remove the redundant
+>> vfree() in module_finalize() since module_arch_freeing_init() (which also frees
+>> said structures) is called in do_init_module(). Keep a reference to syminfo if
+>> the module is a livepatch module and free the structures in
+>> module_arch_cleanup(). If the module isn't a livepatch module, we free the
+>> structures in module_arch_freeing_init() as usual.
+>>
+>> Signed-off-by: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>> ---
+>>  arch/s390/kernel/module.c | 13 +++++++++++--
+>>  1 file changed, 11 insertions(+), 2 deletions(-)
+>>
+>> diff --git a/arch/s390/kernel/module.c b/arch/s390/kernel/module.c
+>> index 0c1a679..17a1979 100644
+>> --- a/arch/s390/kernel/module.c
+>> +++ b/arch/s390/kernel/module.c
+>> @@ -51,6 +51,9 @@ void *module_alloc(unsigned long size)
+>>
+>>  void module_arch_freeing_init(struct module *mod)
+>>  {
+>> +	if (mod->klp)
+>> +		return;
+>> +
+>>  	vfree(mod->arch.syminfo);
+>>  	mod->arch.syminfo = NULL;
+>>  }
+>
+>Hm, this is problematic. module_arch_freeing_init() is called from
+>module_deallocate() and this is called in the error path in load_module().
+>So if there was an error during load_module() of livepatch module which
+>led to free_modinfo label or behind mod->arch.syminfo would not be freed
+>at all. module_arch_cleanup() is called earlier under
+>free_arch_cleanup.
 
-'addr->sq_node == 0' should be removed from this if-condition.  Zero is
-a valid node id.  Clients needing the local address can use
-getsockname(2).
+Gah. Good catch. How about we add an additional check to see if
+mod->state is MODULE_STATE_LIVE? If so, we can return. This means
+we're coming from do_init_module(). If module_arch_freeing_init() was
+called and the module was in a state other than MODULE_STATE_LIVE
+(UNFORMED, GOING, COMING), we know we need to free. Think that would
+work?
 
-> +               enqueue_fn = qrtr_local_enqueue;
-> +       } else {
-> +               enqueue_fn = qrtr_node_enqueue;
-> +               node = qrtr_node_lookup(addr->sq_node);
-> +               if (!node) {
-> +                       release_sock(sk);
-> +                       return -ECONNRESET;
-> +               }
-> +       }
-
--Courtney
+Jessica
