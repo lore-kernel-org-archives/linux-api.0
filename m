@@ -1,8 +1,10 @@
 From: Bamvor Jian Zhang <bamvor.zhangjian@linaro.org>
 Subject: [PATCH v3 0/2] Create specific kconfig for kselftest
-Date: Thu, 17 Dec 2015 17:57:50 +0800
-Message-ID: <1450346273-31633-1-git-send-email-bamvor.zhangjian@linaro.org>
+Date: Thu, 17 Dec 2015 17:57:51 +0800
+Message-ID: <1450346273-31633-2-git-send-email-bamvor.zhangjian@linaro.org>
+References: <1450346273-31633-1-git-send-email-bamvor.zhangjian@linaro.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1450346273-31633-1-git-send-email-bamvor.zhangjian@linaro.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-api@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org, linux-kbuild@vger.kernel.org, shuahkh@osg.samsung.com, yann.morin.1998@free.fr, khilman@linaro.org, tyler.baker@linaro.org, broonie@kernel.org, mpe@ellerman.id.au, dvhart@infradead.org, Bamvor Jian Zhang <bamvor.zhangjian@linaro.org>
