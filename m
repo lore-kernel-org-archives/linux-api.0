@@ -1,76 +1,278 @@
-From: Miroslav Benes <mbenes@suse.cz>
-Subject: Re: module: s390: keep mod_arch_specific for livepatch modules
-Date: Thu, 17 Dec 2015 12:39:28 +0100 (CET)
-Message-ID: <alpine.LNX.2.00.1512171235550.28399@pobox.suse.cz>
-References: <1448943679-3412-1-git-send-email-jeyu@redhat.com> <1448943679-3412-4-git-send-email-jeyu@redhat.com> <alpine.LNX.2.00.1512161257170.25787@pobox.suse.cz> <20151216234828.GB29092@packer-debian-8-amd64.digitalocean.com>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+From: Pratyush Anand <panand@redhat.com>
+Subject: [PATCH V5 2/2] watchdog: Read device status through sysfs attributes
+Date: Thu, 17 Dec 2015 17:53:59 +0530
+Message-ID: <fd9cd1fafc7b9a9acedd3b6e66a8e765423ef937.1450353452.git.panand@redhat.com>
+References: <cover.1450353452.git.panand@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151216234828.GB29092@packer-debian-8-amd64.digitalocean.com>
+In-Reply-To: <cover.1450353452.git.panand@redhat.com>
+In-Reply-To: <cover.1450353452.git.panand@redhat.com>
+References: <cover.1450353452.git.panand@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jessica Yu <jeyu@redhat.com>
-Cc: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
+To: wim@iguana.be
+Cc: dyoung@redhat.com, dzickus@redhat.com, linux@roeck-us.net, linux-watchdog@vger.kernel.org, Pratyush Anand <panand@redhat.com>, "open list:ABI/API" <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 16 Dec 2015, Jessica Yu wrote:
+This patch adds following attributes to watchdog device's sysfs interface
+to read its different status.
 
-> +++ Miroslav Benes [16/12/15 13:02 +0100]:
-> > On Mon, 30 Nov 2015, Jessica Yu wrote:
-> > 
-> > > Livepatch needs to utilize the symbol information contained in the
-> > > mod_arch_specific struct in order to be able to call the s390
-> > > apply_relocate_add() function to apply relocations. Remove the redundant
-> > > vfree() in module_finalize() since module_arch_freeing_init() (which also
-> > > frees
-> > > said structures) is called in do_init_module(). Keep a reference to
-> > > syminfo if
-> > > the module is a livepatch module and free the structures in
-> > > module_arch_cleanup(). If the module isn't a livepatch module, we free the
-> > > structures in module_arch_freeing_init() as usual.
-> > > 
-> > > Signed-off-by: Jessica Yu <jeyu@redhat.com>
-> > > ---
-> > >  arch/s390/kernel/module.c | 13 +++++++++++--
-> > >  1 file changed, 11 insertions(+), 2 deletions(-)
-> > > 
-> > > diff --git a/arch/s390/kernel/module.c b/arch/s390/kernel/module.c
-> > > index 0c1a679..17a1979 100644
-> > > --- a/arch/s390/kernel/module.c
-> > > +++ b/arch/s390/kernel/module.c
-> > > @@ -51,6 +51,9 @@ void *module_alloc(unsigned long size)
-> > > 
-> > >  void module_arch_freeing_init(struct module *mod)
-> > >  {
-> > > +	if (mod->klp)
-> > > +		return;
-> > > +
-> > >  	vfree(mod->arch.syminfo);
-> > >  	mod->arch.syminfo = NULL;
-> > >  }
-> > 
-> > Hm, this is problematic. module_arch_freeing_init() is called from
-> > module_deallocate() and this is called in the error path in load_module().
-> > So if there was an error during load_module() of livepatch module which
-> > led to free_modinfo label or behind mod->arch.syminfo would not be freed
-> > at all. module_arch_cleanup() is called earlier under
-> > free_arch_cleanup.
-> 
-> Gah. Good catch. How about we add an additional check to see if
-> mod->state is MODULE_STATE_LIVE? If so, we can return. This means
-> we're coming from do_init_module(). If module_arch_freeing_init() was
-> called and the module was in a state other than MODULE_STATE_LIVE
-> (UNFORMED, GOING, COMING), we know we need to free. Think that would
-> work?
+* state - reads whether device is active or not
+* identity - reads Watchdog device's identity string.
+* timeout - reads current timeout.
+* timeleft - reads timeleft before watchdog generates a reset
+* bootstatus - reads status of the watchdog device at boot
+* status - reads watchdog device's  internal status bits
+* nowayout - reads whether nowayout feature was set or not
 
-It would I think. module_arch_freeing_init is called thrice.
+Testing with iTCO_wdt:
+ # cd /sys/class/watchdog/watchdog1/
+ # ls
+bootstatus  dev  device  identity  nowayout  power  state
+subsystem  timeleft  timeout  uevent
+ # cat identity
+iTCO_wdt
+ # cat timeout
+30
+ # cat state
+inactive
+ # echo > /dev/watchdog1
+ # cat timeleft
+26
+ # cat state
+active
+ # cat bootstatus
+0
+ # cat nowayout
+0
 
-1. in free_module(). The module is in UNFORMED state so everything is 
-fine.
+Signed-off-by: Pratyush Anand <panand@redhat.com>
+Reviewed-by: Guenter Roeck <linux@roeck-us.net>
+---
+ Documentation/ABI/testing/sysfs-class-watchdog |  51 +++++++++++
+ drivers/watchdog/Kconfig                       |   7 ++
+ drivers/watchdog/watchdog_core.c               |   2 +-
+ drivers/watchdog/watchdog_dev.c                | 114 +++++++++++++++++++++++++
+ 4 files changed, 173 insertions(+), 1 deletion(-)
+ create mode 100644 Documentation/ABI/testing/sysfs-class-watchdog
 
-2. in module_deallocate(). The module is not LIVE yet here so ok as well.
-
-3. in do_init_module() and the module is LIVE there.
-
-So yes, you are right, that should work.
-
-Miroslav
+diff --git a/Documentation/ABI/testing/sysfs-class-watchdog b/Documentation/ABI/testing/sysfs-class-watchdog
+new file mode 100644
+index 000000000000..736046b33040
+--- /dev/null
++++ b/Documentation/ABI/testing/sysfs-class-watchdog
+@@ -0,0 +1,51 @@
++What:		/sys/class/watchdog/watchdogn/bootstatus
++Date:		August 2015
++Contact:	Wim Van Sebroeck <wim@iguana.be>
++Description:
++		It is a read only file. It contains status of the watchdog
++		device at boot. It is equivalent to WDIOC_GETBOOTSTATUS of
++		ioctl interface.
++
++What:		/sys/class/watchdog/watchdogn/identity
++Date:		August 2015
++Contact:	Wim Van Sebroeck <wim@iguana.be>
++Description:
++		It is a read only file. It contains identity string of
++		watchdog device.
++
++What:		/sys/class/watchdog/watchdogn/nowayout
++Date:		August 2015
++Contact:	Wim Van Sebroeck <wim@iguana.be>
++Description:
++		It is a read only file. While reading, it gives '1' if that
++		device supports nowayout feature else, it gives '0'.
++
++What:		/sys/class/watchdog/watchdogn/state
++Date:		August 2015
++Contact:	Wim Van Sebroeck <wim@iguana.be>
++Description:
++		It is a read only file. It gives active/inactive status of
++		watchdog device.
++
++What:		/sys/class/watchdog/watchdogn/status
++Date:		August 2015
++Contact:	Wim Van Sebroeck <wim@iguana.be>
++Description:
++		It is a read only file. It contains watchdog device's
++		internal status bits. It is equivalent to WDIOC_GETSTATUS
++		of ioctl interface.
++
++What:		/sys/class/watchdog/watchdogn/timeleft
++Date:		August 2015
++Contact:	Wim Van Sebroeck <wim@iguana.be>
++Description:
++		It is a read only file. It contains value of time left for
++		reset generation. It is equivalent to WDIOC_GETTIMELEFT of
++		ioctl interface.
++
++What:		/sys/class/watchdog/watchdogn/timeout
++Date:		August 2015
++Contact:	Wim Van Sebroeck <wim@iguana.be>
++Description:
++		It is a read only file. It is read to know about current
++		value of timeout programmed.
+diff --git a/drivers/watchdog/Kconfig b/drivers/watchdog/Kconfig
+index 1c427beffadd..71e47dde7d4a 100644
+--- a/drivers/watchdog/Kconfig
++++ b/drivers/watchdog/Kconfig
+@@ -46,6 +46,13 @@ config WATCHDOG_NOWAYOUT
+ 	  get killed. If you say Y here, the watchdog cannot be stopped once
+ 	  it has been started.
+ 
++config WATCHDOG_SYSFS
++	bool "Read different watchdog information through sysfs"
++	default n
++	help
++	  Say Y here if you want to enable watchdog device status read through
++	  sysfs attributes.
++
+ #
+ # General Watchdog drivers
+ #
+diff --git a/drivers/watchdog/watchdog_core.c b/drivers/watchdog/watchdog_core.c
+index a55e846eec79..62f4496b7975 100644
+--- a/drivers/watchdog/watchdog_core.c
++++ b/drivers/watchdog/watchdog_core.c
+@@ -194,7 +194,7 @@ static int __watchdog_register_device(struct watchdog_device *wdd)
+ 
+ 	devno = wdd->cdev.dev;
+ 	wdd->dev = device_create(watchdog_class, wdd->parent, devno,
+-					NULL, "watchdog%d", wdd->id);
++					wdd, "watchdog%d", wdd->id);
+ 	if (IS_ERR(wdd->dev)) {
+ 		watchdog_dev_unregister(wdd);
+ 		ida_simple_remove(&watchdog_ida, id);
+diff --git a/drivers/watchdog/watchdog_dev.c b/drivers/watchdog/watchdog_dev.c
+index 055a4e1b4c13..d93118e97d11 100644
+--- a/drivers/watchdog/watchdog_dev.c
++++ b/drivers/watchdog/watchdog_dev.c
+@@ -247,6 +247,117 @@ out_timeleft:
+ 	return err;
+ }
+ 
++#ifdef CONFIG_WATCHDOG_SYSFS
++static ssize_t nowayout_show(struct device *dev, struct device_attribute *attr,
++				char *buf)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++
++	return sprintf(buf, "%d\n", !!test_bit(WDOG_NO_WAY_OUT, &wdd->status));
++}
++static DEVICE_ATTR_RO(nowayout);
++
++static ssize_t status_show(struct device *dev, struct device_attribute *attr,
++				char *buf)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++	ssize_t status;
++	unsigned int val;
++
++	status = watchdog_get_status(wdd, &val);
++	if (!status)
++		status = sprintf(buf, "%u\n", val);
++
++	return status;
++}
++static DEVICE_ATTR_RO(status);
++
++static ssize_t bootstatus_show(struct device *dev,
++				struct device_attribute *attr, char *buf)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++
++	return sprintf(buf, "%u\n", wdd->bootstatus);
++}
++static DEVICE_ATTR_RO(bootstatus);
++
++static ssize_t timeleft_show(struct device *dev, struct device_attribute *attr,
++				char *buf)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++	ssize_t status;
++	unsigned int val;
++
++	status = watchdog_get_timeleft(wdd, &val);
++	if (!status)
++		status = sprintf(buf, "%u\n", val);
++
++	return status;
++}
++static DEVICE_ATTR_RO(timeleft);
++
++static ssize_t timeout_show(struct device *dev, struct device_attribute *attr,
++				char *buf)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++
++	return sprintf(buf, "%u\n", wdd->timeout);
++}
++static DEVICE_ATTR_RO(timeout);
++
++static ssize_t identity_show(struct device *dev, struct device_attribute *attr,
++				char *buf)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++
++	return sprintf(buf, "%s\n", wdd->info->identity);
++}
++static DEVICE_ATTR_RO(identity);
++
++static ssize_t state_show(struct device *dev, struct device_attribute *attr,
++				char *buf)
++{
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++
++	if (watchdog_active(wdd))
++		return sprintf(buf, "active\n");
++
++	return sprintf(buf, "inactive\n");
++}
++static DEVICE_ATTR_RO(state);
++
++static umode_t wdt_is_visible(struct kobject *kobj, struct attribute *attr,
++				int n)
++{
++	struct device *dev = container_of(kobj, struct device, kobj);
++	struct watchdog_device *wdd = dev_get_drvdata(dev);
++	umode_t mode = attr->mode;
++
++	if (attr == &dev_attr_status.attr && !wdd->ops->status)
++		mode = 0;
++	else if (attr == &dev_attr_timeleft.attr && !wdd->ops->get_timeleft)
++		mode = 0;
++
++	return mode;
++}
++static struct attribute *wdt_attrs[] = {
++	&dev_attr_state.attr,
++	&dev_attr_identity.attr,
++	&dev_attr_timeout.attr,
++	&dev_attr_timeleft.attr,
++	&dev_attr_bootstatus.attr,
++	&dev_attr_status.attr,
++	&dev_attr_nowayout.attr,
++	NULL,
++};
++
++static const struct attribute_group wdt_group = {
++	.attrs = wdt_attrs,
++	.is_visible = wdt_is_visible,
++};
++__ATTRIBUTE_GROUPS(wdt);
++#endif
++
+ /*
+  *	watchdog_ioctl_op: call the watchdog drivers ioctl op if defined
+  *	@wdd: the watchdog device to do the ioctl on
+@@ -584,6 +695,9 @@ int watchdog_dev_unregister(struct watchdog_device *wdd)
+ static struct class watchdog_class = {
+ 	.name =		"watchdog",
+ 	.owner =	THIS_MODULE,
++#ifdef CONFIG_WATCHDOG_SYSFS
++	.dev_groups =	wdt_groups,
++#endif
+ };
+ 
+ /*
+-- 
+2.5.0
