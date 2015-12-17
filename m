@@ -1,46 +1,20 @@
-From: Jessica Yu <jeyu@redhat.com>
-Subject: Re: module: preserve Elf information for livepatch modules
-Date: Wed, 16 Dec 2015 19:40:50 -0500
-Message-ID: <20151217004049.GC29092@packer-debian-8-amd64.digitalocean.com>
-References: <1448943679-3412-1-git-send-email-jeyu@redhat.com>
- <1448943679-3412-3-git-send-email-jeyu@redhat.com>
- <alpine.LNX.2.00.1512161156290.25787@pobox.suse.cz>
+From: Michael-FRN3bSZE4v/5NTPwaLTJmkNGhIIjRCmT@public.gmane.org,
+	"J.Tynan <f.digeronimo"@federconsumatori.abruzzo.it
+Subject: Review & Reply
+Date: Thu, 17 Dec 2015 07:55:35 +0700
+Message-ID: <20151217005626.624DE89D5DD1@mail.microamerica.com.pe>
+Reply-To: michaeljtynan8-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LNX.2.00.1512161156290.25787@pobox.suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Miroslav Benes <mbenes@suse.cz>
-Cc: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Description: Mail message body
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Recipients <f.digeronimo-OEd0YSEqKZmNIHX6aw5/uifbKdxUEgilNRkNT7W+5VM@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-+++ Miroslav Benes [16/12/15 11:58 +0100]:
->On Mon, 30 Nov 2015, Jessica Yu wrote:
->
->> @@ -3530,6 +3614,16 @@ static int load_module(struct load_info *info, const char __user *uargs,
->>  	if (err < 0)
->>  		goto bug_cleanup;
->>
->> +	/*
->> +	 * Save sechdrs, indices, and other data from info
->> +	 * in order to patch to-be-loaded modules.
->> +	 * Do not call free_copy() for livepatch modules.
->> +	 */
->> +	if (mod->klp)
->> +		err = copy_module_elf(mod, info);
->> +	if (err < 0)
->> +		goto bug_cleanup;
->> +
->
->I think goto bug_cleanup is not sufficient. Just before this hunk sysfs is
->created. So in case of error here we should call mod_sysfs_teardown() or
->something before going to bug_cleanup. That is new error label is needed
->before bug_cleanup. Correct?
-
-Yes I think you're right. So before bug_cleanup, we'll just need a new
-label (maybe called sysfs_cleanup) that calls mod_sysfs_teardown(). In
-addition, the if (err < 0) check should have been enclosed in the if
-(mod->klp) block.
-
-Jessica
+Greetings,
+My name is Mr.Michael J. Tynan, I am a banker with Bank Of America. It is true that we have not meet each other in person, but I strongly believe in trust and friendship in every business. I have a Lebanese deceased customer's abandoned fund, which I am his personal financial adviser before his accidental death, that being the main reason why I alone working in the bank here, know much about the existence of this fund and the secrets surrounding this money. But before I disclose the full details to you, I will like to know your interest and willingness to assist me. You can call me as soon you receive my message, so that i will send to you full details about the transaction.
+My best regards,
+Mr.Michael J. Tynan
+MOBILE: +1 347 269 3740
