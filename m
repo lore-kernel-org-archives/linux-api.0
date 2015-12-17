@@ -1,278 +1,229 @@
-From: Pratyush Anand <panand@redhat.com>
-Subject: [PATCH V5 2/2] watchdog: Read device status through sysfs attributes
-Date: Thu, 17 Dec 2015 17:53:59 +0530
-Message-ID: <fd9cd1fafc7b9a9acedd3b6e66a8e765423ef937.1450353452.git.panand@redhat.com>
-References: <cover.1450353452.git.panand@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1450353452.git.panand@redhat.com>
-In-Reply-To: <cover.1450353452.git.panand@redhat.com>
-References: <cover.1450353452.git.panand@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: wim@iguana.be
-Cc: dyoung@redhat.com, dzickus@redhat.com, linux@roeck-us.net, linux-watchdog@vger.kernel.org, Pratyush Anand <panand@redhat.com>, "open list:ABI/API" <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>
+From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+Subject: Re: [PATCH] [media] uapi/media.h: Use u32 for the number of graph
+ objects
+Date: Thu, 17 Dec 2015 10:45:56 -0200
+Message-ID: <20151217104556.70d4f0f8@recife.lan>
+References: <40e950dbb6a3b7f73da52e147fa51441b762131a.1450350558.git.mchehab@osg.samsung.com>
+	<5672A69F.7020505@xs4all.nl>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-media-owner@vger.kernel.org>
+In-Reply-To: <5672A69F.7020505@xs4all.nl>
+Sender: linux-media-owner@vger.kernel.org
+To: Hans Verkuil <hverkuil@xs4all.nl>
+Cc: Linux Media Mailing List <linux-media@vger.kernel.org>, Mauro Carvalho Chehab <mchehab@infradead.org>, linux-api@vger.kernel.org, Javier Martinez Canillas <javier@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds following attributes to watchdog device's sysfs interface
-to read its different status.
+Em Thu, 17 Dec 2015 13:12:15 +0100
+Hans Verkuil <hverkuil@xs4all.nl> escreveu:
 
-* state - reads whether device is active or not
-* identity - reads Watchdog device's identity string.
-* timeout - reads current timeout.
-* timeleft - reads timeleft before watchdog generates a reset
-* bootstatus - reads status of the watchdog device at boot
-* status - reads watchdog device's  internal status bits
-* nowayout - reads whether nowayout feature was set or not
+> On 12/17/15 12:09, Mauro Carvalho Chehab wrote:
+> > While we need to keep a u64 alignment to avoid compat32 issues,
+> > having the number of entities/pads/links/interfaces represented
+> > by an u64 is incoherent with the ID number, with is an u32.
+> > 
+> > In order to make it coherent, change those quantities to u32.
+> > 
+> > Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+> > ---
+> >  include/uapi/linux/media.h | 12 ++++++++----
+> >  1 file changed, 8 insertions(+), 4 deletions(-)
+> > 
+> > diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
+> > index cacfceb0d81d..5dbb208e5451 100644
+> > --- a/include/uapi/linux/media.h
+> > +++ b/include/uapi/linux/media.h
+> > @@ -330,16 +330,20 @@ struct media_v2_link {
+> >  struct media_v2_topology {
+> >  	__u64 topology_version;
+> >  
+> > -	__u64 num_entities;
+> > +	__u32 num_entities;
+> > +	__u32 reserved1;
 
-Testing with iTCO_wdt:
- # cd /sys/class/watchdog/watchdog1/
- # ls
-bootstatus  dev  device  identity  nowayout  power  state
-subsystem  timeleft  timeout  uevent
- # cat identity
-iTCO_wdt
- # cat timeout
-30
- # cat state
-inactive
- # echo > /dev/watchdog1
- # cat timeleft
-26
- # cat state
-active
- # cat bootstatus
-0
- # cat nowayout
-0
+For the sake of later comments, let's call this proposal as:
 
-Signed-off-by: Pratyush Anand <panand@redhat.com>
-Reviewed-by: Guenter Roeck <linux@roeck-us.net>
+alternative (1): one PAD field per num_foo, just after it.
+
+> 
+> Would a name like reserved_entities, reserved_pads, etc. be better?
+> Not sure.
+
+Not sure either.
+
+> 
+> Anyway, I like this since we might want to turn the reserved fields into,
+> say, flags later.
+
+It sounds very unlikely that we would need 4 reserved flags.
+
 ---
- Documentation/ABI/testing/sysfs-class-watchdog |  51 +++++++++++
- drivers/watchdog/Kconfig                       |   7 ++
- drivers/watchdog/watchdog_core.c               |   2 +-
- drivers/watchdog/watchdog_dev.c                | 114 +++++++++++++++++++++++++
- 4 files changed, 173 insertions(+), 1 deletion(-)
- create mode 100644 Documentation/ABI/testing/sysfs-class-watchdog
 
-diff --git a/Documentation/ABI/testing/sysfs-class-watchdog b/Documentation/ABI/testing/sysfs-class-watchdog
-new file mode 100644
-index 000000000000..736046b33040
---- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-class-watchdog
-@@ -0,0 +1,51 @@
-+What:		/sys/class/watchdog/watchdogn/bootstatus
-+Date:		August 2015
-+Contact:	Wim Van Sebroeck <wim@iguana.be>
-+Description:
-+		It is a read only file. It contains status of the watchdog
-+		device at boot. It is equivalent to WDIOC_GETBOOTSTATUS of
-+		ioctl interface.
-+
-+What:		/sys/class/watchdog/watchdogn/identity
-+Date:		August 2015
-+Contact:	Wim Van Sebroeck <wim@iguana.be>
-+Description:
-+		It is a read only file. It contains identity string of
-+		watchdog device.
-+
-+What:		/sys/class/watchdog/watchdogn/nowayout
-+Date:		August 2015
-+Contact:	Wim Van Sebroeck <wim@iguana.be>
-+Description:
-+		It is a read only file. While reading, it gives '1' if that
-+		device supports nowayout feature else, it gives '0'.
-+
-+What:		/sys/class/watchdog/watchdogn/state
-+Date:		August 2015
-+Contact:	Wim Van Sebroeck <wim@iguana.be>
-+Description:
-+		It is a read only file. It gives active/inactive status of
-+		watchdog device.
-+
-+What:		/sys/class/watchdog/watchdogn/status
-+Date:		August 2015
-+Contact:	Wim Van Sebroeck <wim@iguana.be>
-+Description:
-+		It is a read only file. It contains watchdog device's
-+		internal status bits. It is equivalent to WDIOC_GETSTATUS
-+		of ioctl interface.
-+
-+What:		/sys/class/watchdog/watchdogn/timeleft
-+Date:		August 2015
-+Contact:	Wim Van Sebroeck <wim@iguana.be>
-+Description:
-+		It is a read only file. It contains value of time left for
-+		reset generation. It is equivalent to WDIOC_GETTIMELEFT of
-+		ioctl interface.
-+
-+What:		/sys/class/watchdog/watchdogn/timeout
-+Date:		August 2015
-+Contact:	Wim Van Sebroeck <wim@iguana.be>
-+Description:
-+		It is a read only file. It is read to know about current
-+		value of timeout programmed.
-diff --git a/drivers/watchdog/Kconfig b/drivers/watchdog/Kconfig
-index 1c427beffadd..71e47dde7d4a 100644
---- a/drivers/watchdog/Kconfig
-+++ b/drivers/watchdog/Kconfig
-@@ -46,6 +46,13 @@ config WATCHDOG_NOWAYOUT
- 	  get killed. If you say Y here, the watchdog cannot be stopped once
- 	  it has been started.
- 
-+config WATCHDOG_SYSFS
-+	bool "Read different watchdog information through sysfs"
-+	default n
-+	help
-+	  Say Y here if you want to enable watchdog device status read through
-+	  sysfs attributes.
-+
- #
- # General Watchdog drivers
- #
-diff --git a/drivers/watchdog/watchdog_core.c b/drivers/watchdog/watchdog_core.c
-index a55e846eec79..62f4496b7975 100644
---- a/drivers/watchdog/watchdog_core.c
-+++ b/drivers/watchdog/watchdog_core.c
-@@ -194,7 +194,7 @@ static int __watchdog_register_device(struct watchdog_device *wdd)
- 
- 	devno = wdd->cdev.dev;
- 	wdd->dev = device_create(watchdog_class, wdd->parent, devno,
--					NULL, "watchdog%d", wdd->id);
-+					wdd, "watchdog%d", wdd->id);
- 	if (IS_ERR(wdd->dev)) {
- 		watchdog_dev_unregister(wdd);
- 		ida_simple_remove(&watchdog_ida, id);
-diff --git a/drivers/watchdog/watchdog_dev.c b/drivers/watchdog/watchdog_dev.c
-index 055a4e1b4c13..d93118e97d11 100644
---- a/drivers/watchdog/watchdog_dev.c
-+++ b/drivers/watchdog/watchdog_dev.c
-@@ -247,6 +247,117 @@ out_timeleft:
- 	return err;
- }
- 
-+#ifdef CONFIG_WATCHDOG_SYSFS
-+static ssize_t nowayout_show(struct device *dev, struct device_attribute *attr,
-+				char *buf)
-+{
-+	struct watchdog_device *wdd = dev_get_drvdata(dev);
-+
-+	return sprintf(buf, "%d\n", !!test_bit(WDOG_NO_WAY_OUT, &wdd->status));
-+}
-+static DEVICE_ATTR_RO(nowayout);
-+
-+static ssize_t status_show(struct device *dev, struct device_attribute *attr,
-+				char *buf)
-+{
-+	struct watchdog_device *wdd = dev_get_drvdata(dev);
-+	ssize_t status;
-+	unsigned int val;
-+
-+	status = watchdog_get_status(wdd, &val);
-+	if (!status)
-+		status = sprintf(buf, "%u\n", val);
-+
-+	return status;
-+}
-+static DEVICE_ATTR_RO(status);
-+
-+static ssize_t bootstatus_show(struct device *dev,
-+				struct device_attribute *attr, char *buf)
-+{
-+	struct watchdog_device *wdd = dev_get_drvdata(dev);
-+
-+	return sprintf(buf, "%u\n", wdd->bootstatus);
-+}
-+static DEVICE_ATTR_RO(bootstatus);
-+
-+static ssize_t timeleft_show(struct device *dev, struct device_attribute *attr,
-+				char *buf)
-+{
-+	struct watchdog_device *wdd = dev_get_drvdata(dev);
-+	ssize_t status;
-+	unsigned int val;
-+
-+	status = watchdog_get_timeleft(wdd, &val);
-+	if (!status)
-+		status = sprintf(buf, "%u\n", val);
-+
-+	return status;
-+}
-+static DEVICE_ATTR_RO(timeleft);
-+
-+static ssize_t timeout_show(struct device *dev, struct device_attribute *attr,
-+				char *buf)
-+{
-+	struct watchdog_device *wdd = dev_get_drvdata(dev);
-+
-+	return sprintf(buf, "%u\n", wdd->timeout);
-+}
-+static DEVICE_ATTR_RO(timeout);
-+
-+static ssize_t identity_show(struct device *dev, struct device_attribute *attr,
-+				char *buf)
-+{
-+	struct watchdog_device *wdd = dev_get_drvdata(dev);
-+
-+	return sprintf(buf, "%s\n", wdd->info->identity);
-+}
-+static DEVICE_ATTR_RO(identity);
-+
-+static ssize_t state_show(struct device *dev, struct device_attribute *attr,
-+				char *buf)
-+{
-+	struct watchdog_device *wdd = dev_get_drvdata(dev);
-+
-+	if (watchdog_active(wdd))
-+		return sprintf(buf, "active\n");
-+
-+	return sprintf(buf, "inactive\n");
-+}
-+static DEVICE_ATTR_RO(state);
-+
-+static umode_t wdt_is_visible(struct kobject *kobj, struct attribute *attr,
-+				int n)
-+{
-+	struct device *dev = container_of(kobj, struct device, kobj);
-+	struct watchdog_device *wdd = dev_get_drvdata(dev);
-+	umode_t mode = attr->mode;
-+
-+	if (attr == &dev_attr_status.attr && !wdd->ops->status)
-+		mode = 0;
-+	else if (attr == &dev_attr_timeleft.attr && !wdd->ops->get_timeleft)
-+		mode = 0;
-+
-+	return mode;
-+}
-+static struct attribute *wdt_attrs[] = {
-+	&dev_attr_state.attr,
-+	&dev_attr_identity.attr,
-+	&dev_attr_timeout.attr,
-+	&dev_attr_timeleft.attr,
-+	&dev_attr_bootstatus.attr,
-+	&dev_attr_status.attr,
-+	&dev_attr_nowayout.attr,
-+	NULL,
-+};
-+
-+static const struct attribute_group wdt_group = {
-+	.attrs = wdt_attrs,
-+	.is_visible = wdt_is_visible,
-+};
-+__ATTRIBUTE_GROUPS(wdt);
-+#endif
-+
- /*
-  *	watchdog_ioctl_op: call the watchdog drivers ioctl op if defined
-  *	@wdd: the watchdog device to do the ioctl on
-@@ -584,6 +695,9 @@ int watchdog_dev_unregister(struct watchdog_device *wdd)
- static struct class watchdog_class = {
- 	.name =		"watchdog",
- 	.owner =	THIS_MODULE,
-+#ifdef CONFIG_WATCHDOG_SYSFS
-+	.dev_groups =	wdt_groups,
-+#endif
- };
- 
- /*
--- 
-2.5.0
+Just to keep it registered at the same place, Javier is in holidays
+until Monday, but he commented about that at the IRC today:
+
+(10:02:45) javier__: sailus: hi, I,m on holidays until Monday so not paying too much attention to irc and mail
+(10:04:02) javier__: mchehab: I disagree with your patch that adds fields for alignment
+(10:04:27) javier__: mchehab: those are not needed if you reorder your struct fields
+(10:04:47) javier__: i.e all u64 first and theb u32
+(10:05:42) mchehab: javier__: reordering may not be a good idea, if we need to extend the struct in the future
+(10:05:56) mchehab: but yeah, for now this would be another alternative
+(10:06:40) mchehab: please reply to the e-mail when you have time, as more people may comment on the possible alternatives
+(10:06:47) mchehab: and it is better registered than on IRC
+(10:09:12) javier__: mchehab: yes, I'm commenting here since I didn't bring my laptop and my email client in my phone doesn't wrap lines correctly
+(10:09:22) javier__: but can do it on Monday
+(10:10:35) javier__: mchehab: I think that if the ABI is found to need extension then a v2 of the ioctl is better with a diff struct
+(10:11:12) javier__: or you could have a zero length field at the need (not sure about this one though)
+(10:11:32) javier__: *at the end
+
+If I understood well, he's proposing to do is:
+
+struct media_v2_topology {
+        __u64 topology_version;
+
+       	__u32 num_entities;
+        __u32 num_interfaces;
+        __u32 num_pads;
+        __u32 num_links;
+
+        __u64 ptr_entities;
+        __u64 ptr_interfaces;
+        __u64 ptr_pads;
+        __u64 ptr_links;
+};
+
+The problem is that, if we latter need to extend it to add a new type
+the extension will not be too nice. For example, I did some experimental
+patches adding graph groups:
+	http://git.linuxtv.org/mchehab/experimental.git/commit/?h=mc_next_gen.v8.3%2btest%2bWIP&id=37b40849506002c01d98c6aa3aef66c3cc39ecee
+
+If we find this useful in some future and we need to export such
+information to userspace, that would mean that would have to add
+a media_v2_group struct:
+
+struct media_v2_group {
+	__u32 id;
+	/* some other data */
+};
+
+We'll need then to add a num_groups and a ptr_groups. If we 
+follow the above logic, we would need to add a pad field and
+increment the struct number:
+
+alternative (2): create a "packed" new version every time a new
+type is needed with, at most, a single "PAD" field.
+
+struct media_v3_topology {
+        __u64 topology_version;
+
+       	__u32 num_entities;
+        __u32 num_interfaces;
+        __u32 num_pads;
+        __u32 num_links;
+	__u32 num_groups;	/* new */
+	__u32 pad; /* to be used in the future */
+
+        __u64 ptr_entities;
+        __u64 ptr_interfaces;
+        __u64 ptr_pads;
+        __u64 ptr_links;
+	__u64 ptr_groups;	/* new */
+};
+
+the old struct will needed to be maintained as the new definition
+is incompatible with the previous one. Then, we'll need two parser
+functions, one for each structure version.
+
+alternative (3): use a "packed" struct at the beginning, but
+adding new fields always at the bottom with a per-new field
+PAD:
+
+struct media_v2_topology {
+        __u64 topology_version;
+
+       	__u32 num_entities;
+        __u32 num_interfaces;
+        __u32 num_pads;
+        __u32 num_links;
+        __u64 ptr_entities;
+        __u64 ptr_interfaces;
+        __u64 ptr_pads;
+        __u64 ptr_links;
+
+	__u32 num_groups;
+	__u32 pad; /* to be used in the future */
+	__u64 ptr_groups;
+};
+
+And this would be ugly. It would also mean that, for every late-added
+graph type, a new pad would be needed.
+
+
+There's another alternative approach:
+
+Alternative (4): To group graph elements in couples, having, at most,
+one PAD if the number of elements are ODD (e. g. one incomplete couple).
+
+struct media_v2_topology {
+        __u64 topology_version;
+
+       	__u32 num_entities;
+        __u32 num_interfaces;
+        __u64 ptr_entities;
+        __u64 ptr_interfaces;
+
+        __u32 num_pads;
+        __u32 num_links;
+        __u64 ptr_pads;
+        __u64 ptr_links;
+};
+
+This way, we would have pads only if the number of graph objects
+are odd. So, for the version with our new media_group, this would
+be:
+
+struct media_v2_topology {
+        __u64 topology_version;
+
+       	__u32 num_entities;
+        __u32 num_interfaces;
+        __u64 ptr_entities;
+        __u64 ptr_interfaces;
+
+        __u32 num_pads;
+        __u32 num_links;
+        __u64 ptr_pads;
+        __u64 ptr_links;
+
+	__u32 num_groups;
+	__u32 pad; /* to be used in the future */
+	__u64 ptr_groups;
+};
+
+And a new version with another "bar" type:
+
+struct media_v2_topology {
+        __u64 topology_version;
+
+       	__u32 num_entities;
+        __u32 num_interfaces;
+        __u64 ptr_entities;
+        __u64 ptr_interfaces;
+
+        __u32 num_pads;
+        __u32 num_links;
+        __u64 ptr_pads;
+        __u64 ptr_links;
+
+	__u32 num_groups;
+	__u32 num_bars;
+	__u64 ptr_groups;
+	__u64 ptr_bars;
+};
+
+I'm not sure what's the best alternative, but I would either to stick
+with either alternative (1) or (4).
+
+Regards,
+Mauro
