@@ -1,51 +1,76 @@
-From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: [PATCH] [media] uapi/media.h: Use u32 for the number of graph objects
-Date: Thu, 17 Dec 2015 09:09:21 -0200
-Message-ID: <40e950dbb6a3b7f73da52e147fa51441b762131a.1450350558.git.mchehab@osg.samsung.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Miroslav Benes <mbenes@suse.cz>
+Subject: Re: module: s390: keep mod_arch_specific for livepatch modules
+Date: Thu, 17 Dec 2015 12:39:28 +0100 (CET)
+Message-ID: <alpine.LNX.2.00.1512171235550.28399@pobox.suse.cz>
+References: <1448943679-3412-1-git-send-email-jeyu@redhat.com> <1448943679-3412-4-git-send-email-jeyu@redhat.com> <alpine.LNX.2.00.1512161257170.25787@pobox.suse.cz> <20151216234828.GB29092@packer-debian-8-amd64.digitalocean.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20151216234828.GB29092@packer-debian-8-amd64.digitalocean.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jessica Yu <jeyu@redhat.com>
+Cc: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-While we need to keep a u64 alignment to avoid compat32 issues,
-having the number of entities/pads/links/interfaces represented
-by an u64 is incoherent with the ID number, with is an u32.
+On Wed, 16 Dec 2015, Jessica Yu wrote:
 
-In order to make it coherent, change those quantities to u32.
+> +++ Miroslav Benes [16/12/15 13:02 +0100]:
+> > On Mon, 30 Nov 2015, Jessica Yu wrote:
+> > 
+> > > Livepatch needs to utilize the symbol information contained in the
+> > > mod_arch_specific struct in order to be able to call the s390
+> > > apply_relocate_add() function to apply relocations. Remove the redundant
+> > > vfree() in module_finalize() since module_arch_freeing_init() (which also
+> > > frees
+> > > said structures) is called in do_init_module(). Keep a reference to
+> > > syminfo if
+> > > the module is a livepatch module and free the structures in
+> > > module_arch_cleanup(). If the module isn't a livepatch module, we free the
+> > > structures in module_arch_freeing_init() as usual.
+> > > 
+> > > Signed-off-by: Jessica Yu <jeyu@redhat.com>
+> > > ---
+> > >  arch/s390/kernel/module.c | 13 +++++++++++--
+> > >  1 file changed, 11 insertions(+), 2 deletions(-)
+> > > 
+> > > diff --git a/arch/s390/kernel/module.c b/arch/s390/kernel/module.c
+> > > index 0c1a679..17a1979 100644
+> > > --- a/arch/s390/kernel/module.c
+> > > +++ b/arch/s390/kernel/module.c
+> > > @@ -51,6 +51,9 @@ void *module_alloc(unsigned long size)
+> > > 
+> > >  void module_arch_freeing_init(struct module *mod)
+> > >  {
+> > > +	if (mod->klp)
+> > > +		return;
+> > > +
+> > >  	vfree(mod->arch.syminfo);
+> > >  	mod->arch.syminfo = NULL;
+> > >  }
+> > 
+> > Hm, this is problematic. module_arch_freeing_init() is called from
+> > module_deallocate() and this is called in the error path in load_module().
+> > So if there was an error during load_module() of livepatch module which
+> > led to free_modinfo label or behind mod->arch.syminfo would not be freed
+> > at all. module_arch_cleanup() is called earlier under
+> > free_arch_cleanup.
+> 
+> Gah. Good catch. How about we add an additional check to see if
+> mod->state is MODULE_STATE_LIVE? If so, we can return. This means
+> we're coming from do_init_module(). If module_arch_freeing_init() was
+> called and the module was in a state other than MODULE_STATE_LIVE
+> (UNFORMED, GOING, COMING), we know we need to free. Think that would
+> work?
 
-Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
----
- include/uapi/linux/media.h | 12 ++++++++----
- 1 file changed, 8 insertions(+), 4 deletions(-)
+It would I think. module_arch_freeing_init is called thrice.
 
-diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
-index cacfceb0d81d..5dbb208e5451 100644
---- a/include/uapi/linux/media.h
-+++ b/include/uapi/linux/media.h
-@@ -330,16 +330,20 @@ struct media_v2_link {
- struct media_v2_topology {
- 	__u64 topology_version;
- 
--	__u64 num_entities;
-+	__u32 num_entities;
-+	__u32 reserved1;
- 	__u64 ptr_entities;
- 
--	__u64 num_interfaces;
-+	__u32 num_interfaces;
-+	__u32 reserved2;
- 	__u64 ptr_interfaces;
- 
--	__u64 num_pads;
-+	__u32 num_pads;
-+	__u32 reserved3;
- 	__u64 ptr_pads;
- 
--	__u64 num_links;
-+	__u32 num_links;
-+	__u32 reserved4;
- 	__u64 ptr_links;
- };
- 
--- 
-2.5.0
+1. in free_module(). The module is in UNFORMED state so everything is 
+fine.
+
+2. in module_deallocate(). The module is not LIVE yet here so ok as well.
+
+3. in do_init_module() and the module is LIVE there.
+
+So yes, you are right, that should work.
+
+Miroslav
