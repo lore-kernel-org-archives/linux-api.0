@@ -1,39 +1,58 @@
-From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Subject: Re: [PATCH v3 0/2] Create specific kconfig for kselftest
-Date: Fri, 18 Dec 2015 10:44:57 +1100
-Message-ID: <1450395897.19696.0.camel@ellerman.id.au>
-References: <1450346273-31633-1-git-send-email-bamvor.zhangjian@linaro.org>
+From: Stephan Mueller <smueller@chronox.de>
+Subject: [PATCH v3 4/4] crypto: algif_akcipher - enable compilation
+Date: Fri, 18 Dec 2015 00:51:32 +0100
+Message-ID: <96695903.l3df1ObXSx@myon.chronox.de>
+References: <2602093.Yrp6nKrmX6@myon.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1450346273-31633-1-git-send-email-bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, yann.morin.1998-GANU6spQydw@public.gmane.org, khilman-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tyler.baker-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <2602093.Yrp6nKrmX6@myon.chronox.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: herbert@gondor.apana.org.au
+Cc: tadeusz.struk@intel.com, marcel@holtmann.org, dwmw2@infradead.org, linux-api@vger.kernel.org, linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2015-12-17 at 17:57 +0800, Bamvor Jian Zhang wrote:
+Add the Makefile and Kconfig updates to allow algif_akcipher to be
+compiled.
 
-> There is a discussion about improving the usability of kselftest by
-> creating test-specific kconfig in recent kernel Summit.
-> 
-> Patch 1 keep test-specific kconfig fragments inside each selftest so
-> that merge_configs.sh could build up a kernel that can test the
-> specific or all feature(s).
-> 
-> Patch 2 add config option(kselftest-mergeconfig) in make file as a
-> helper to merge all the test config dependecies to .config.
-> 
-> Changes since v2:
-> 1.  Fix the misuse of objtree and srctree in the
->     kselftest-mergeconfig target.
-> 
-> Changes since v1:
-> 1.  Add kselftest-mergeconfig in scripts/kconfig/Makefile according
->     to the suggestion from Michael.
+Signed-off-by: Stephan Mueller <smueller@chronox.de>
+---
+ crypto/Kconfig  | 9 +++++++++
+ crypto/Makefile | 1 +
+ 2 files changed, 10 insertions(+)
 
-Sorry I only just noticed you put it in scripts/kconfig/Makefile. I meant for
-it to go in Makefile, alongside the other kselftest targets.
-
-cheers
+diff --git a/crypto/Kconfig b/crypto/Kconfig
+index 7240821..c085c09 100644
+--- a/crypto/Kconfig
++++ b/crypto/Kconfig
+@@ -1639,6 +1639,15 @@ config CRYPTO_USER_API_AEAD
+ 	  This option enables the user-spaces interface for AEAD
+ 	  cipher algorithms.
+ 
++config CRYPTO_USER_API_AKCIPHER
++	tristate "User-space interface for asymmetric key cipher algorithms"
++	depends on NET
++	select CRYPTO_AKCIPHER2
++	select CRYPTO_USER_API
++	help
++	  This option enables the user-spaces interface for asymmetric
++	  key cipher algorithms.
++
+ config CRYPTO_HASH_INFO
+ 	bool
+ 
+diff --git a/crypto/Makefile b/crypto/Makefile
+index 2acdbbd..23522fa 100644
+--- a/crypto/Makefile
++++ b/crypto/Makefile
+@@ -122,6 +122,7 @@ obj-$(CONFIG_CRYPTO_USER_API_HASH) += algif_hash.o
+ obj-$(CONFIG_CRYPTO_USER_API_SKCIPHER) += algif_skcipher.o
+ obj-$(CONFIG_CRYPTO_USER_API_RNG) += algif_rng.o
+ obj-$(CONFIG_CRYPTO_USER_API_AEAD) += algif_aead.o
++obj-$(CONFIG_CRYPTO_USER_API_AKCIPHER) += algif_akcipher.o
+ 
+ #
+ # generic algorithms and the async_tx api
+-- 
+2.5.0
