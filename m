@@ -1,52 +1,46 @@
-From: Bamvor Jian Zhang <bamvor.zhangjian@linaro.org>
-Subject: [PATCH v3 2/2] scripts/kconfig/Makefile: add kselftest-mergeconfig
-Date: Thu, 17 Dec 2015 17:57:53 +0800
-Message-ID: <1450346273-31633-4-git-send-email-bamvor.zhangjian@linaro.org>
-References: <1450346273-31633-1-git-send-email-bamvor.zhangjian@linaro.org>
+From: David Laight <David.Laight@ACULAB.COM>
+Subject: RE: [RFC PATCH 3/3] vfio-pci: Allow to mmap MSI-X table if EEH is
+ supported
+Date: Thu, 17 Dec 2015 10:08:04 +0000
+Message-ID: <063D6719AE5E284EB5DD2968C1650D6D1CBEF1BC@AcuExch.aculab.com>
+References: <1449823994-3356-1-git-send-email-xyjxie@linux.vnet.ibm.com>
+ <1449823994-3356-4-git-send-email-xyjxie@linux.vnet.ibm.com>
+ <1450296869.2674.62.camel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1450346273-31633-1-git-send-email-bamvor.zhangjian@linaro.org>
+In-Reply-To: <1450296869.2674.62.camel@redhat.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-api@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, linux-kbuild@vger.kernel.org, shuahkh@osg.samsung.com, yann.morin.1998@free.fr, khilman@linaro.org, tyler.baker@linaro.org, broonie@kernel.org, mpe@ellerman.id.au, dvhart@infradead.org, Bamvor Jian Zhang <bamvor.zhangjian@linaro.org>
+To: 'Alex Williamson' <alex.williamson@redhat.com>, Yongji Xie <xyjxie@linux.vnet.ibm.com>, "kvm@vger.kernel.org" <kvm@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linuxppc-dev@lists.ozlabs.org" <linuxppc-dev@lists.ozlabs.org>
+Cc: "nikunj@linux.vnet.ibm.com" <nikunj@linux.vnet.ibm.com>, "zhong@linux.vnet.ibm.com" <zhong@linux.vnet.ibm.com>, "aik@ozlabs.ru" <aik@ozlabs.ru>, "paulus@samba.org" <paulus@samba.org>, "warrier@linux.vnet.ibm.com" <warrier@linux.vnet.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-Add kselftest-mergeconfig to enable the dependencies of kernel
-config for all the kselftest testcases. User could call it after
-create the kernel configuration(.config), eg:
-
-$ make kselftest-mergeconfig
-
-Signed-off-by: Bamvor Jian Zhang <bamvor.zhangjian@linaro.org>
----
- scripts/kconfig/Makefile | 9 +++++++++
- 1 file changed, 9 insertions(+)
-
-diff --git a/scripts/kconfig/Makefile b/scripts/kconfig/Makefile
-index d79cba4..2694638 100644
---- a/scripts/kconfig/Makefile
-+++ b/scripts/kconfig/Makefile
-@@ -126,6 +126,14 @@ PHONY += tinyconfig
- tinyconfig:
- 	$(Q)$(MAKE) -f $(srctree)/Makefile allnoconfig tiny.config
- 
-+PHONY += kselftest-mergeconfig
-+kselftest-mergeconfig: $(obj)/conf
-+	$(if $(wildcard $(objtree)/.config),, $(error No .config exists, config your kernel first!))
-+	$(Q)$(CONFIG_SHELL) $(srctree)/scripts/kconfig/merge_config.sh \
-+		-m $(objtree)/.config \
-+		$(srctree)/tools/testing/selftests/*/config
-+	+$(Q)$(MAKE) -f $(srctree)/Makefile olddefconfig
-+
- # Help text used by make help
- help:
- 	@echo  '  config	  - Update current config utilising a line-oriented program'
-@@ -151,6 +159,7 @@ help:
- 	@echo  '  kvmconfig	  - Enable additional options for kvm guest kernel support'
- 	@echo  '  xenconfig       - Enable additional options for xen dom0 and guest kernel support'
- 	@echo  '  tinyconfig	  - Configure the tiniest possible kernel'
-+	@echo  '  kselftest-mergeconfig - Merge all the config dependencies of kselftest to .config'
- 
- # lxdialog stuff
- check-lxdialog  := $(srctree)/$(src)/lxdialog/check-lxdialog.sh
--- 
-2.1.4
+PiBUaGUgTVNJLVggdGFibGUgaXMgcGFyYXZpcnR1YWxpemVkIG9uIHZmaW8gaW4gZ2VuZXJhbCBh
+bmQgaW50ZXJydXB0DQo+IHJlbWFwcGluZyB0aGVvcmV0aWNhbGx5IHByb3RlY3RzIGFnYWluc3Qg
+ZXJyYW50IGludGVycnVwdHMsIHNvIHdoeSBpcw0KPiB0aGlzIFBQQzY0IHNwZWNpZmljPyBXZSBo
+YXZlIHRoZSBzYW1lIHNhZmVndWFyZHMgb24geDg2IGlmIHdlIHdhbnQgdG8NCj4gZGVjaWRlIHRo
+ZXkncmUgc3VmZmljaWVudC4gT2ZmaGFuZCwgdGhlIG9ubHkgd2F5IEkgY2FuIHRoaW5rIHRoYXQg
+YQ0KPiBkZXZpY2UgY2FuIHRvdWNoIHRoZSBNU0ktWCB0YWJsZSBpcyB2aWEgYmFja2Rvb3JzIG9y
+IHAycCBETUEgd2l0aA0KPiBhbm90aGVyIGRldmljZS4NCg0KSXMgdGhpcyBhbGwgcmVsYXRlZCB0
+byB0aGUgc3RhdGVtZW50cyBpbiB0aGUgUENJKGUpIHNwZWMgdGhhdCB0aGUNCk1TSS1YIHRhYmxl
+IGFuZCBQZW5kaW5nIGJpdCBhcnJheSBzaG91bGQgaW4gdGhlaXIgb3duIEJBUnM/DQooSVNUUiBp
+dCBldmVuIHN1Z2dlc3RzIGEgQkFSIGVhY2guKQ0KDQpTaW5jZSB0aGUgTVNJLVggdGFibGUgZXhp
+c3RzIGluIGRldmljZSBtZW1vcnkvcmVnaXN0ZXJzIHRoZXJlIGlzDQpub3RoaW5nIHRvIHN0b3Ag
+dGhlIGRldmljZSBtb2RpZnlpbmcgdGhlIHRhYmxlIGNvbnRlbnRzIChvciBldmVuDQppZ25vcmlu
+ZyB0aGUgY29udGVudHMgYW5kIHdyaXRpbmcgYWRkcmVzcytkYXRhIHBhaXJzIHRoYXQgYXJlIGtu
+b3duDQp0byByZWZlcmVuY2UgdGhlIENQVXMgTVNJLVggaW50ZXJydXB0IGdlbmVyYXRpb24gbG9n
+aWMpLg0KDQpXZSd2ZSBhbiBmcGdhIGJhc2VkIFBDSWUgc2xhdmUgdGhhdCBoYXMgc29tZSBhZGRp
+dGlvbmFsIFBDSWUgc2xhdmVzDQooYXNzb2NpYXRlZCB3aXRoIHRoZSBpbnRlcnJ1cHQgZ2VuZXJh
+dGlvbiBsb2dpYykgdGhhdCBhcmUgY3VycmVudGx5DQpuZXh0IHRvIHRoZSBQQkEgKHdoaWNoIGlz
+IDhrIGZyb20gdGhlIE1TSS1YIHRhYmxlKS4NCklmIHdlIGNhbid0IG1hcCB0aGUgUEJBIHdlIGNh
+bid0IGFjdHVhbGx5IHJhaXNlIGFueSBpbnRlcnJ1cHRzLg0KVGhlIHNhbWUgd291bGQgYmUgdHJ1
+ZSBpZiBwYWdlIHNpemUgaXMgNjRrIGFuZCBtYXBwaW5nIHRoZSBNU0ktWA0KdGFibGUgYmFubmVk
+Lg0KDQpEbyB3ZSBuZWVkIHRvIGNoYW5nZSBvdXIgUENJZSBzbGF2ZSBhZGRyZXNzIG1hcCBzbyB3
+ZSBkb24ndCBuZWVkDQp0byBhY2Nlc3MgYW55dGhpbmcgaW4gdGhlIHNhbWUgcGFnZSAod2hpY2gg
+bWlnaHQgYmUgNjRrIHdlcmUgd2UgdG8NCnRhcmdldCBsYXJnZSBwcGMgLSB3aGljaCB3ZSBkb24n
+dCBhdCB0aGUgbW9tZW50KSBhcyBib3RoIHRoZQ0KTVNJLVggdGFibGUgYW5kIHRoZSBQQkE/DQoN
+CkknZCBhbHNvIG5vdGUgdGhhdCBiZWluZyBhYmxlIHRvIHJlYWQgdGhlIE1TSS1YIHRhYmxlIGlz
+IGEgdXNlZnVsDQpkaWFnbm9zdGljIHRoYXQgdGhlIHJlbGV2YW50IGludGVycnVwdHMgYXJlIGVu
+YWJsZWQgcHJvcGVybHkuDQoNCglEYXZpZA0KDQo=
