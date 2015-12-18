@@ -1,82 +1,20 @@
-From: David Laight <David.Laight@ACULAB.COM>
-Subject: RE: [RFC PATCH 3/3] vfio-pci: Allow to mmap MSI-X table if EEH is
- supported
-Date: Fri, 18 Dec 2015 10:15:33 +0000
-Message-ID: <063D6719AE5E284EB5DD2968C1650D6D1CBEFE3E@AcuExch.aculab.com>
-References: <1449823994-3356-1-git-send-email-xyjxie@linux.vnet.ibm.com>
-	 <1449823994-3356-4-git-send-email-xyjxie@linux.vnet.ibm.com>
-	 <1450296869.2674.62.camel@redhat.com>
-	 <063D6719AE5E284EB5DD2968C1650D6D1CBEF1BC@AcuExch.aculab.com>
- <1450386414.2674.129.camel@redhat.com>
+From: Michael-FRN3bSZE4v/5NTPwaLTJmkNGhIIjRCmT@public.gmane.org,
+	"J.Tynan <f.digeronimo"@federconsumatori.abruzzo.it
+Subject: Review & Reply
+Date: Fri, 18 Dec 2015 17:18:54 +0700
+Message-ID: <20151218101947.AE93A8E86296__41902.8934477412$1450448617$gmane$org@mail.microamerica.com.pe>
+Reply-To: michaeljtynan8-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1450386414.2674.129.camel@redhat.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: 'Alex Williamson' <alex.williamson@redhat.com>, Yongji Xie <xyjxie@linux.vnet.ibm.com>, "kvm@vger.kernel.org" <kvm@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linuxppc-dev@lists.ozlabs.org" <linuxppc-dev@lists.ozlabs.org>
-Cc: "nikunj@linux.vnet.ibm.com" <nikunj@linux.vnet.ibm.com>, "zhong@linux.vnet.ibm.com" <zhong@linux.vnet.ibm.com>, "aik@ozlabs.ru" <aik@ozlabs.ru>, "paulus@samba.org" <paulus@samba.org>, "warrier@linux.vnet.ibm.com" <warrier@linux.vnet.ibm.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Description: Mail message body
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Recipients <f.digeronimo-OEd0YSEqKZmNIHX6aw5/uifbKdxUEgilNRkNT7W+5VM@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-RnJvbTogQWxleCBXaWxsaWFtc29uDQo+IFNlbnQ6IDE3IERlY2VtYmVyIDIwMTUgMjE6MDcNCi4u
-Lg0KPiA+IElzIHRoaXMgYWxsIHJlbGF0ZWQgdG8gdGhlIHN0YXRlbWVudHMgaW4gdGhlIFBDSShl
-KSBzcGVjIHRoYXQgdGhlDQo+ID4gTVNJLVggdGFibGUgYW5kIFBlbmRpbmcgYml0IGFycmF5IHNo
-b3VsZCBpbiB0aGVpciBvd24gQkFScz8NCj4gPiAoSVNUUiBpdCBldmVuIHN1Z2dlc3RzIGEgQkFS
-IGVhY2guKQ0KPiA+DQo+ID4gU2luY2UgdGhlIE1TSS1YIHRhYmxlIGV4aXN0cyBpbiBkZXZpY2Ug
-bWVtb3J5L3JlZ2lzdGVycyB0aGVyZSBpcw0KPiA+IG5vdGhpbmcgdG8gc3RvcCB0aGUgZGV2aWNl
-IG1vZGlmeWluZyB0aGUgdGFibGUgY29udGVudHMgKG9yIGV2ZW4NCj4gPiBpZ25vcmluZyB0aGUg
-Y29udGVudHMgYW5kIHdyaXRpbmcgYWRkcmVzcytkYXRhIHBhaXJzIHRoYXQgYXJlIGtub3duDQo+
-ID4gdG8gcmVmZXJlbmNlIHRoZSBDUFVzIE1TSS1YIGludGVycnVwdCBnZW5lcmF0aW9uIGxvZ2lj
-KS4NCj4gPg0KPiA+IFdlJ3ZlIGFuIGZwZ2EgYmFzZWQgUENJZSBzbGF2ZSB0aGF0IGhhcyBzb21l
-IGFkZGl0aW9uYWwgUENJZSBzbGF2ZXMNCj4gPiAoYXNzb2NpYXRlZCB3aXRoIHRoZSBpbnRlcnJ1
-cHQgZ2VuZXJhdGlvbiBsb2dpYykgdGhhdCBhcmUgY3VycmVudGx5DQo+ID4gbmV4dCB0byB0aGUg
-UEJBICh3aGljaCBpcyA4ayBmcm9tIHRoZSBNU0ktWCB0YWJsZSkuDQo+ID4gSWYgd2UgY2FuJ3Qg
-bWFwIHRoZSBQQkEgd2UgY2FuJ3QgYWN0dWFsbHkgcmFpc2UgYW55IGludGVycnVwdHMuDQo+ID4g
-VGhlIHNhbWUgd291bGQgYmUgdHJ1ZSBpZiBwYWdlIHNpemUgaXMgNjRrIGFuZCBtYXBwaW5nIHRo
-ZSBNU0ktWA0KPiA+IHRhYmxlIGJhbm5lZC4NCj4gPg0KPiA+IERvIHdlIG5lZWQgdG8gY2hhbmdl
-IG91ciBQQ0llIHNsYXZlIGFkZHJlc3MgbWFwIHNvIHdlIGRvbid0IG5lZWQNCj4gPiB0byBhY2Nl
-c3MgYW55dGhpbmcgaW4gdGhlIHNhbWUgcGFnZSAod2hpY2ggbWlnaHQgYmUgNjRrIHdlcmUgd2Ug
-dG8NCj4gPiB0YXJnZXQgbGFyZ2UgcHBjIC0gd2hpY2ggd2UgZG9uJ3QgYXQgdGhlIG1vbWVudCkg
-YXMgYm90aCB0aGUNCj4gPiBNU0ktWCB0YWJsZSBhbmQgdGhlIFBCQT8NCj4gPg0KPiA+IEknZCBh
-bHNvIG5vdGUgdGhhdCBiZWluZyBhYmxlIHRvIHJlYWQgdGhlIE1TSS1YIHRhYmxlIGlzIGEgdXNl
-ZnVsDQo+ID4gZGlhZ25vc3RpYyB0aGF0IHRoZSByZWxldmFudCBpbnRlcnJ1cHRzIGFyZSBlbmFi
-bGVkIHByb3Blcmx5Lg0KPiANCj4gWWVzLCB0aGUgc3BlYyByZXF1aXJlbWVudCBpcyB0aGF0IE1T
-SS1YIHN0cnVjdHVyZXMgbXVzdCByZXNpZGUgaW4gYSA0aw0KPiBhbGlnbmVkIGFyZWEgdGhhdCBk
-b2Vzbid0IG92ZXJsYXAgd2l0aCBvdGhlciBjb25maWd1cmF0aW9uIHJlZ2lzdGVycw0KPiBmb3Ig
-dGhlIGRldmljZS4gwqBJdCdzIG9ubHkgYW4gYWR2aXNlbWVudCB0byBwdXQgdGhlbSBpbnRvIHRo
-ZWlyIG93bg0KPiBCQVIsIGFuZCA0ayBjbGVhcmx5IHdhc24ndCBhcyBmb3J3YXJkIGxvb2tpbmcg
-YXMgd2UnZCBob3BlLiDCoFZmaW8NCj4gZG9lc24ndCBwYXJ0aWN1bGFybHkgY2FyZSBhYm91dCB0
-aGUgUEJBLCBidXQgaWYgaXQgcmVzaWRlcyBpbiB0aGUgc2FtZQ0KPiBob3N0IFBBR0VfU0laRSBh
-cmVhIGFzIHRoZSBNU0ktWCB2ZWN0b3IgdGFibGUsIHlvdSBjdXJyZW50bHkgd29uJ3QgYmUNCj4g
-YWJsZSB0byBnZXQgdG8gaXQuIMKgTW9zdCBkZXZpY2VzIGFyZSBub3QgYXQgYWxsIGRlcGVuZGVu
-dCBvbiB0aGUgUEJBDQo+IGZvciBhbnkgc29ydCBvZiBmdW5jdGlvbmFsaXR5Lg0KDQpIYXZpbmcg
-c29tZSBoaW50IGluIHRoZSBzcGVjIGFzIHRvIHdoeSB0aGVzZSBtYXBwaW5nIHJ1bGVzIG1pZ2h0
-IGJlDQpuZWVkZWQgd291bGQgaGF2ZSBiZWVuIHVzZWZ1bC4NCg0KPiBJdCdzIHJlYWxseSBtb3Jl
-IGNvcnJlY3QgdG8gc2F5IHRoYXQgYm90aCB0aGUgdmVjdG9yIHRhYmxlIGFuZCBQQkEgYXJlDQo+
-IGVtdWxhdGVkIGJ5IFFFTVUgdGhhbiBwYXJhdmlydHVhbGl6ZWQuIMKgT25seSBQUEM2NCBoYXMg
-dGhlIGd1ZXN0IE9TDQo+IHRha2luZyBhIHBhcmF2aXJ0dWFsIHBhdGggdG8gcHJvZ3JhbSB0aGUg
-dmVjdG9yIHRhYmxlLCBldmVyeW9uZSBlbHNlDQo+IGF0dGVtcHRzIHRvIHJlYWQvd3JpdGUgdG8g
-dGhlIGRldmljZSBNTUlPIHNwYWNlLCB3aGljaCBnZXRzIHRyYXBwZWQgYW5kDQo+IGVtdWxhdGVk
-IGluIFFFTVUuIMKgVGhpcyBpcyB3aHkgdGhlIFFFTVUgc2lkZSBwYXRjaCBoYXMgZnVydGhlciB1
-Z2x5DQo+IGhhY2tzIHRvIG1lc3Mgd2l0aCB0aGUgb3JkZXJpbmcgb2YgTWVtb3J5UmVnaW9ucyBz
-aW5jZSBldmVuIGlmIHdlIGNhbg0KPiBhY2Nlc3MgYW5kIG1tYXAgdGhlIE1TSS1YIHZlY3RvciB0
-YWJsZSwgd2UnbGwgc3RpbGwgdHJhcCBpbnRvIFFFTVUgZm9yDQo+IGVtdWxhdGlvbi4NCg0KVGhh
-bmtzIGZvciB0aGF0IGV4cGxhbmF0aW9uLg0KDQo+IEhvdyBleGFjdGx5IGRvZXMgdGhlIGFiaWxp
-dHkgdG8gbWFwIHRoZSBQQkEgYWZmZWN0IHlvdXIgYWJpbGl0eSB0bw0KPiByYWlzZSBhbiBpbnRl
-cnJ1cHQ/DQoNClRoZXJlIGFyZSBvdGhlciByZWdpc3RlcnMgZm9yIHRoZSBsb2dpYyBibG9jayB0
-aGF0IGNvbnZlcnRzIGludGVybmFsDQppbnRlcnJ1cHQgcmVxdWVzdHMgaW50byB0aGUgUENJZSB3
-cml0ZXMgaW4gdGhlIGxvY2F0aW9ucyBmb2xsb3dpbmcgdGhlIFBCQS4NClRoZXNlIGluY2x1ZGUg
-aW50ZXJydXB0IGVuYWJsZSBiaXRzLCBhbmQgdGhlIGFiaWxpdHkgdG8gcmVtb3ZlIHBlbmRpbmcN
-CmludGVycnVwdCByZXF1ZXN0cyAoYW5kIG90aGVyIHN0dWZmIGZvciB0ZXN0aW5nIHRoZSBpbnRl
-cnJ1cHQgYmxvY2spLg0KWWVzIEkga25vdyBJIHByb2JhYmx5IHNob3VsZG4ndCBoYXZlIGRvbmUg
-dGhhdCwgYnV0IGl0IGFsbCB3b3JrZWQuDQoNCkF0IGxlYXN0IGl0IGlzIGJldHRlciB0aGFuIHRo
-ZSBwcmV2aW91cyB2ZXJzaW9uIG9mIHRoZSBoYXJkd2FyZSB0aGF0DQpyZXF1aXJlZCB0aGUgZHJp
-dmVyIHJlYWQgYmFjayB0aGUgTVNJLVggdGFibGUgZW50cmllcyBpbiBvcmRlciB0bw0Kc2V0IHVw
-IGFuIG9uLWJvYXJkIFBURSB0byBjb252ZXJ0IGEgMzJiaXQgb24tYm9hcmQgYWRkcmVzcyB0byB0
-aGUNCjY0Yml0IFBDSWUgYWRkcmVzcyBuZWVkZWQgZm9yIHRoZSBNU0ktWC4NCg0KSSdsbCAnZml4
-JyBvdXIgYm9hcmQgYnkgbWFraW5nIGJvdGggdGhlIE1TSS1YIHRhYmxlIGFuZCBQQkEgYXJlYQ0K
-YWNjZXNzaWJsZSB0aHJvdWdoIG9uZSBvZiB0aGUgb3RoZXIgQkFScy4gKEFubm95aW5nbHkgdGhp
-cyB3aWxsDQpiZSBjb25mdXNpbmcgYmVjYXVzZSB0aGUgQkFSIG9mZnNldHMgd2lsbCBoYXZlIHRv
-IGRpZmZlci4pDQpOb3RlIHRoYXQgdGhpcyBtYWtlcyBhIGNvbXBsZXRlIG1vY2tlcnkgb2YgZGlz
-YWxsb3dpbmcgdGhlIG1hcHBpbmcNCmluIHRoZSBmaXJzdCBwbGFjZS4NCg0KCURhdmlkDQoNCg0K
+Greetings,
+My name is Mr.Michael J. Tynan, I am a banker with Bank Of America. It is true that we have not meet each other in person, but I strongly believe in trust and friendship in every business. I have a Lebanese deceased customer's abandoned fund, which I am his personal financial adviser before his accidental death, that being the main reason why I alone working in the bank here, know much about the existence of this fund and the secrets surrounding this money. But before I disclose the full details to you, I will like to know your interest and willingness to assist me. You can call me as soon you receive my message, so that i will send to you full details about the transaction.
+My best regards,
+Mr.Michael J. Tynan
+MOBILE: +1 347 269 3740
