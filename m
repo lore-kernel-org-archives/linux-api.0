@@ -1,155 +1,82 @@
-From: yongji xie <xyjxie-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [RFC PATCH 2/3] vfio-pci: Allow to mmap sub-page MMIO BARs if all
- MMIO BARs are page aligned
-Date: Fri, 18 Dec 2015 16:23:50 +0800
-Message-ID: <5673C296.8010403@linux.vnet.ibm.com>
+From: David Laight <David.Laight@ACULAB.COM>
+Subject: RE: [RFC PATCH 3/3] vfio-pci: Allow to mmap MSI-X table if EEH is
+ supported
+Date: Fri, 18 Dec 2015 10:15:33 +0000
+Message-ID: <063D6719AE5E284EB5DD2968C1650D6D1CBEFE3E@AcuExch.aculab.com>
 References: <1449823994-3356-1-git-send-email-xyjxie@linux.vnet.ibm.com>
- <1449823994-3356-3-git-send-email-xyjxie@linux.vnet.ibm.com>
- <1450296276.2674.55.camel@redhat.com> <56728DC8.20803@linux.vnet.ibm.com>
- <1450388804.2674.158.camel@redhat.com>
+	 <1449823994-3356-4-git-send-email-xyjxie@linux.vnet.ibm.com>
+	 <1450296869.2674.62.camel@redhat.com>
+	 <063D6719AE5E284EB5DD2968C1650D6D1CBEF1BC@AcuExch.aculab.com>
+ <1450386414.2674.129.camel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1450388804.2674.158.camel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org
-Cc: aik-sLpHqDYs0B2HXe+LvDLADg@public.gmane.org, benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org, paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, warrier-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, zhong-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, nikunj-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1450386414.2674.129.camel@redhat.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: 'Alex Williamson' <alex.williamson@redhat.com>, Yongji Xie <xyjxie@linux.vnet.ibm.com>, "kvm@vger.kernel.org" <kvm@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linuxppc-dev@lists.ozlabs.org" <linuxppc-dev@lists.ozlabs.org>
+Cc: "nikunj@linux.vnet.ibm.com" <nikunj@linux.vnet.ibm.com>, "zhong@linux.vnet.ibm.com" <zhong@linux.vnet.ibm.com>, "aik@ozlabs.ru" <aik@ozlabs.ru>, "paulus@samba.org" <paulus@samba.org>, "warrier@linux.vnet.ibm.com" <warrier@linux.vnet.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-
-
-On 2015/12/18 5:46, Alex Williamson wrote:
-> On Thu, 2015-12-17 at 18:26 +0800, yongji xie wrote:
->> On 2015/12/17 4:04, Alex Williamson wrote:
->>> On Fri, 2015-12-11 at 16:53 +0800, Yongji Xie wrote:
->>>> Current vfio-pci implementation disallows to mmap
->>>> sub-page(size < PAGE_SIZE) MMIO BARs because these BARs' mmio
->>>> page
->>>> may be shared with other BARs.
->>>>
->>>> But we should allow to mmap these sub-page MMIO BARs if all MMIO
->>>> BARs
->>>> are page aligned which leads the BARs' mmio page would not be
->>>> shared
->>>> with other BARs.
->>>>
->>>> This patch adds support for this case and we also add a
->>>> VFIO_DEVICE_FLAGS_PCI_PAGE_ALIGNED flag to notify userspace that
->>>> platform supports all MMIO BARs to be page aligned.
->>>>
->>>> Signed-off-by: Yongji Xie <xyjxie-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
->>>> ---
->>>>    drivers/vfio/pci/vfio_pci.c         |   10 +++++++++-
->>>>    drivers/vfio/pci/vfio_pci_private.h |    5 +++++
->>>>    include/uapi/linux/vfio.h           |    2 ++
->>>>    3 files changed, 16 insertions(+), 1 deletion(-)
->>>>
->>>> diff --git a/drivers/vfio/pci/vfio_pci.c
->>>> b/drivers/vfio/pci/vfio_pci.c
->>>> index 32b88bd..dbcad99 100644
->>>> --- a/drivers/vfio/pci/vfio_pci.c
->>>> +++ b/drivers/vfio/pci/vfio_pci.c
->>>> @@ -443,6 +443,9 @@ static long vfio_pci_ioctl(void *device_data,
->>>>    		if (vdev->reset_works)
->>>>    			info.flags |= VFIO_DEVICE_FLAGS_RESET;
->>>>    
->>>> +		if (vfio_pci_bar_page_aligned())
->>>> +			info.flags |=
->>>> VFIO_DEVICE_FLAGS_PCI_PAGE_ALIGNED;
->>>> +
->>>>    		info.num_regions = VFIO_PCI_NUM_REGIONS;
->>>>    		info.num_irqs = VFIO_PCI_NUM_IRQS;
->>>>    
->>>> @@ -479,7 +482,8 @@ static long vfio_pci_ioctl(void *device_data,
->>>>    				     VFIO_REGION_INFO_FLAG_WRIT
->>>> E;
->>>>    			if (IS_ENABLED(CONFIG_VFIO_PCI_MMAP) &&
->>>>    			    pci_resource_flags(pdev,
->>>> info.index) &
->>>> -			    IORESOURCE_MEM && info.size >=
->>>> PAGE_SIZE)
->>>> +			    IORESOURCE_MEM && (info.size >=
->>>> PAGE_SIZE ||
->>>> +			    vfio_pci_bar_page_aligned()))
->>>>    				info.flags |=
->>>> VFIO_REGION_INFO_FLAG_MMAP;
->>>>    			break;
->>>>    		case VFIO_PCI_ROM_REGION_INDEX:
->>>> @@ -855,6 +859,10 @@ static int vfio_pci_mmap(void *device_data,
->>>> struct vm_area_struct *vma)
->>>>    		return -EINVAL;
->>>>    
->>>>    	phys_len = pci_resource_len(pdev, index);
->>>> +
->>>> +	if (vfio_pci_bar_page_aligned())
->>>> +		phys_len = PAGE_ALIGN(phys_len);
->>>> +
->>>>    	req_len = vma->vm_end - vma->vm_start;
->>>>    	pgoff = vma->vm_pgoff &
->>>>    		((1U << (VFIO_PCI_OFFSET_SHIFT - PAGE_SHIFT)) -
->>>> 1);
->>>> diff --git a/drivers/vfio/pci/vfio_pci_private.h
->>>> b/drivers/vfio/pci/vfio_pci_private.h
->>>> index 0e7394f..319352a 100644
->>>> --- a/drivers/vfio/pci/vfio_pci_private.h
->>>> +++ b/drivers/vfio/pci/vfio_pci_private.h
->>>> @@ -69,6 +69,11 @@ struct vfio_pci_device {
->>>>    #define is_irq_none(vdev) (!(is_intx(vdev) || is_msi(vdev) ||
->>>> is_msix(vdev)))
->>>>    #define irq_is(vdev, type) (vdev->irq_type == type)
->>>>    
->>>> +static inline bool vfio_pci_bar_page_aligned(void)
->>>> +{
->>>> +	return IS_ENABLED(CONFIG_PPC64);
->>>> +}
->>> I really dislike this.  This is a problem for any architecture that
->>> runs on larger pages, and even an annoyance on 4k hosts.  Why are
->>> we
->>> only solving it for PPC64?
->> Yes, I know it's a problem for other architectures. But I'm not sure
->> if
->> other archs prefer
->> to enforce the alignment of all BARs to be at least PAGE_SIZE which
->> would result in
->> some waste of address space.
->>
->> So I just propose a prototype and add PPC64 support here. And other
->> archs could decide
->> to use it or not by themselves.
->>> Can't we do something similar in the core PCI code and detect it?
->> So you mean we can do it like this:
->>
->> diff --git a/drivers/pci/pci.h b/drivers/pci/pci.h
->> index d390fc1..f46c04d 100644
->> --- a/drivers/pci/pci.h
->> +++ b/drivers/pci/pci.h
->> @@ -320,6 +320,11 @@ static inline resource_size_t
->> pci_resource_alignment(struct pci_dev *dev,
->>           return resource_alignment(res);
->>    }
->>
->> +static inline bool pci_bar_page_aligned(void)
->> +{
->> +       return IS_ENABLED(CONFIG_PPC64);
->> +}
->> +
->>    void pci_enable_acs(struct pci_dev *dev);
->>
->>    struct pci_dev_reset_methods {
->>
->> or add a config option to indicate that PCI MMIO BARs should be page
->> aligned?
-> Yes, I'm thinking of a boot commandline option, maybe one that PPC64
-> can default to enabled if it chooses to.  The problem is not unique to
-> PPC64 and the solution should not be unique either.  I don't want to
-> need to revisit this for ARM, which we know is going to be similarly
-> afflicted.  Thanks,
->
-> Alex
->
-OK. I will try to fix it by adding a boot commandline option.
-It seems to be better than adding a config option. Thanks
-
-Regards
-Yongji Xie
+RnJvbTogQWxleCBXaWxsaWFtc29uDQo+IFNlbnQ6IDE3IERlY2VtYmVyIDIwMTUgMjE6MDcNCi4u
+Lg0KPiA+IElzIHRoaXMgYWxsIHJlbGF0ZWQgdG8gdGhlIHN0YXRlbWVudHMgaW4gdGhlIFBDSShl
+KSBzcGVjIHRoYXQgdGhlDQo+ID4gTVNJLVggdGFibGUgYW5kIFBlbmRpbmcgYml0IGFycmF5IHNo
+b3VsZCBpbiB0aGVpciBvd24gQkFScz8NCj4gPiAoSVNUUiBpdCBldmVuIHN1Z2dlc3RzIGEgQkFS
+IGVhY2guKQ0KPiA+DQo+ID4gU2luY2UgdGhlIE1TSS1YIHRhYmxlIGV4aXN0cyBpbiBkZXZpY2Ug
+bWVtb3J5L3JlZ2lzdGVycyB0aGVyZSBpcw0KPiA+IG5vdGhpbmcgdG8gc3RvcCB0aGUgZGV2aWNl
+IG1vZGlmeWluZyB0aGUgdGFibGUgY29udGVudHMgKG9yIGV2ZW4NCj4gPiBpZ25vcmluZyB0aGUg
+Y29udGVudHMgYW5kIHdyaXRpbmcgYWRkcmVzcytkYXRhIHBhaXJzIHRoYXQgYXJlIGtub3duDQo+
+ID4gdG8gcmVmZXJlbmNlIHRoZSBDUFVzIE1TSS1YIGludGVycnVwdCBnZW5lcmF0aW9uIGxvZ2lj
+KS4NCj4gPg0KPiA+IFdlJ3ZlIGFuIGZwZ2EgYmFzZWQgUENJZSBzbGF2ZSB0aGF0IGhhcyBzb21l
+IGFkZGl0aW9uYWwgUENJZSBzbGF2ZXMNCj4gPiAoYXNzb2NpYXRlZCB3aXRoIHRoZSBpbnRlcnJ1
+cHQgZ2VuZXJhdGlvbiBsb2dpYykgdGhhdCBhcmUgY3VycmVudGx5DQo+ID4gbmV4dCB0byB0aGUg
+UEJBICh3aGljaCBpcyA4ayBmcm9tIHRoZSBNU0ktWCB0YWJsZSkuDQo+ID4gSWYgd2UgY2FuJ3Qg
+bWFwIHRoZSBQQkEgd2UgY2FuJ3QgYWN0dWFsbHkgcmFpc2UgYW55IGludGVycnVwdHMuDQo+ID4g
+VGhlIHNhbWUgd291bGQgYmUgdHJ1ZSBpZiBwYWdlIHNpemUgaXMgNjRrIGFuZCBtYXBwaW5nIHRo
+ZSBNU0ktWA0KPiA+IHRhYmxlIGJhbm5lZC4NCj4gPg0KPiA+IERvIHdlIG5lZWQgdG8gY2hhbmdl
+IG91ciBQQ0llIHNsYXZlIGFkZHJlc3MgbWFwIHNvIHdlIGRvbid0IG5lZWQNCj4gPiB0byBhY2Nl
+c3MgYW55dGhpbmcgaW4gdGhlIHNhbWUgcGFnZSAod2hpY2ggbWlnaHQgYmUgNjRrIHdlcmUgd2Ug
+dG8NCj4gPiB0YXJnZXQgbGFyZ2UgcHBjIC0gd2hpY2ggd2UgZG9uJ3QgYXQgdGhlIG1vbWVudCkg
+YXMgYm90aCB0aGUNCj4gPiBNU0ktWCB0YWJsZSBhbmQgdGhlIFBCQT8NCj4gPg0KPiA+IEknZCBh
+bHNvIG5vdGUgdGhhdCBiZWluZyBhYmxlIHRvIHJlYWQgdGhlIE1TSS1YIHRhYmxlIGlzIGEgdXNl
+ZnVsDQo+ID4gZGlhZ25vc3RpYyB0aGF0IHRoZSByZWxldmFudCBpbnRlcnJ1cHRzIGFyZSBlbmFi
+bGVkIHByb3Blcmx5Lg0KPiANCj4gWWVzLCB0aGUgc3BlYyByZXF1aXJlbWVudCBpcyB0aGF0IE1T
+SS1YIHN0cnVjdHVyZXMgbXVzdCByZXNpZGUgaW4gYSA0aw0KPiBhbGlnbmVkIGFyZWEgdGhhdCBk
+b2Vzbid0IG92ZXJsYXAgd2l0aCBvdGhlciBjb25maWd1cmF0aW9uIHJlZ2lzdGVycw0KPiBmb3Ig
+dGhlIGRldmljZS4gwqBJdCdzIG9ubHkgYW4gYWR2aXNlbWVudCB0byBwdXQgdGhlbSBpbnRvIHRo
+ZWlyIG93bg0KPiBCQVIsIGFuZCA0ayBjbGVhcmx5IHdhc24ndCBhcyBmb3J3YXJkIGxvb2tpbmcg
+YXMgd2UnZCBob3BlLiDCoFZmaW8NCj4gZG9lc24ndCBwYXJ0aWN1bGFybHkgY2FyZSBhYm91dCB0
+aGUgUEJBLCBidXQgaWYgaXQgcmVzaWRlcyBpbiB0aGUgc2FtZQ0KPiBob3N0IFBBR0VfU0laRSBh
+cmVhIGFzIHRoZSBNU0ktWCB2ZWN0b3IgdGFibGUsIHlvdSBjdXJyZW50bHkgd29uJ3QgYmUNCj4g
+YWJsZSB0byBnZXQgdG8gaXQuIMKgTW9zdCBkZXZpY2VzIGFyZSBub3QgYXQgYWxsIGRlcGVuZGVu
+dCBvbiB0aGUgUEJBDQo+IGZvciBhbnkgc29ydCBvZiBmdW5jdGlvbmFsaXR5Lg0KDQpIYXZpbmcg
+c29tZSBoaW50IGluIHRoZSBzcGVjIGFzIHRvIHdoeSB0aGVzZSBtYXBwaW5nIHJ1bGVzIG1pZ2h0
+IGJlDQpuZWVkZWQgd291bGQgaGF2ZSBiZWVuIHVzZWZ1bC4NCg0KPiBJdCdzIHJlYWxseSBtb3Jl
+IGNvcnJlY3QgdG8gc2F5IHRoYXQgYm90aCB0aGUgdmVjdG9yIHRhYmxlIGFuZCBQQkEgYXJlDQo+
+IGVtdWxhdGVkIGJ5IFFFTVUgdGhhbiBwYXJhdmlydHVhbGl6ZWQuIMKgT25seSBQUEM2NCBoYXMg
+dGhlIGd1ZXN0IE9TDQo+IHRha2luZyBhIHBhcmF2aXJ0dWFsIHBhdGggdG8gcHJvZ3JhbSB0aGUg
+dmVjdG9yIHRhYmxlLCBldmVyeW9uZSBlbHNlDQo+IGF0dGVtcHRzIHRvIHJlYWQvd3JpdGUgdG8g
+dGhlIGRldmljZSBNTUlPIHNwYWNlLCB3aGljaCBnZXRzIHRyYXBwZWQgYW5kDQo+IGVtdWxhdGVk
+IGluIFFFTVUuIMKgVGhpcyBpcyB3aHkgdGhlIFFFTVUgc2lkZSBwYXRjaCBoYXMgZnVydGhlciB1
+Z2x5DQo+IGhhY2tzIHRvIG1lc3Mgd2l0aCB0aGUgb3JkZXJpbmcgb2YgTWVtb3J5UmVnaW9ucyBz
+aW5jZSBldmVuIGlmIHdlIGNhbg0KPiBhY2Nlc3MgYW5kIG1tYXAgdGhlIE1TSS1YIHZlY3RvciB0
+YWJsZSwgd2UnbGwgc3RpbGwgdHJhcCBpbnRvIFFFTVUgZm9yDQo+IGVtdWxhdGlvbi4NCg0KVGhh
+bmtzIGZvciB0aGF0IGV4cGxhbmF0aW9uLg0KDQo+IEhvdyBleGFjdGx5IGRvZXMgdGhlIGFiaWxp
+dHkgdG8gbWFwIHRoZSBQQkEgYWZmZWN0IHlvdXIgYWJpbGl0eSB0bw0KPiByYWlzZSBhbiBpbnRl
+cnJ1cHQ/DQoNClRoZXJlIGFyZSBvdGhlciByZWdpc3RlcnMgZm9yIHRoZSBsb2dpYyBibG9jayB0
+aGF0IGNvbnZlcnRzIGludGVybmFsDQppbnRlcnJ1cHQgcmVxdWVzdHMgaW50byB0aGUgUENJZSB3
+cml0ZXMgaW4gdGhlIGxvY2F0aW9ucyBmb2xsb3dpbmcgdGhlIFBCQS4NClRoZXNlIGluY2x1ZGUg
+aW50ZXJydXB0IGVuYWJsZSBiaXRzLCBhbmQgdGhlIGFiaWxpdHkgdG8gcmVtb3ZlIHBlbmRpbmcN
+CmludGVycnVwdCByZXF1ZXN0cyAoYW5kIG90aGVyIHN0dWZmIGZvciB0ZXN0aW5nIHRoZSBpbnRl
+cnJ1cHQgYmxvY2spLg0KWWVzIEkga25vdyBJIHByb2JhYmx5IHNob3VsZG4ndCBoYXZlIGRvbmUg
+dGhhdCwgYnV0IGl0IGFsbCB3b3JrZWQuDQoNCkF0IGxlYXN0IGl0IGlzIGJldHRlciB0aGFuIHRo
+ZSBwcmV2aW91cyB2ZXJzaW9uIG9mIHRoZSBoYXJkd2FyZSB0aGF0DQpyZXF1aXJlZCB0aGUgZHJp
+dmVyIHJlYWQgYmFjayB0aGUgTVNJLVggdGFibGUgZW50cmllcyBpbiBvcmRlciB0bw0Kc2V0IHVw
+IGFuIG9uLWJvYXJkIFBURSB0byBjb252ZXJ0IGEgMzJiaXQgb24tYm9hcmQgYWRkcmVzcyB0byB0
+aGUNCjY0Yml0IFBDSWUgYWRkcmVzcyBuZWVkZWQgZm9yIHRoZSBNU0ktWC4NCg0KSSdsbCAnZml4
+JyBvdXIgYm9hcmQgYnkgbWFraW5nIGJvdGggdGhlIE1TSS1YIHRhYmxlIGFuZCBQQkEgYXJlYQ0K
+YWNjZXNzaWJsZSB0aHJvdWdoIG9uZSBvZiB0aGUgb3RoZXIgQkFScy4gKEFubm95aW5nbHkgdGhp
+cyB3aWxsDQpiZSBjb25mdXNpbmcgYmVjYXVzZSB0aGUgQkFSIG9mZnNldHMgd2lsbCBoYXZlIHRv
+IGRpZmZlci4pDQpOb3RlIHRoYXQgdGhpcyBtYWtlcyBhIGNvbXBsZXRlIG1vY2tlcnkgb2YgZGlz
+YWxsb3dpbmcgdGhlIG1hcHBpbmcNCmluIHRoZSBmaXJzdCBwbGFjZS4NCg0KCURhdmlkDQoNCg0K
