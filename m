@@ -1,71 +1,48 @@
-From: Dmitry Torokhov <dmitry.torokhov@gmail.com>
-Subject: Re: [PATCH v2 2/2] Input: uinput: Sanity check on ff_effects_max and
- EV_FF
-Date: Fri, 18 Dec 2015 17:50:38 -0800
-Message-ID: <20151219015038.GD26333@dtor-ws>
-References: <1442510988-3164-3-git-send-email-elias.vds@gmail.com>
- <1447004254-12431-1-git-send-email-elias.vds@gmail.com>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: [RFCv4 0/9] vfs: hoist reflink/dedupe ioctls to the VFS
+Date: Sat, 19 Dec 2015 00:55:05 -0800
+Message-ID: <20151219085505.12478.71157.stgit@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1447004254-12431-1-git-send-email-elias.vds@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Elias Vanderstuyft <elias.vds@gmail.com>
-Cc: linux-input@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, David Herrmann <dh.herrmann@gmail.com>, Benjamin Tissoires <benjamin.tissoires@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Nov 08, 2015 at 06:37:34PM +0100, Elias Vanderstuyft wrote:
-> Currently the user can set ff_effects_max to zero with the EV_FF bit
-> (and the FF_GAIN and/or FF_AUTOCENTER bits) set,
-> in this case the uninitialized methods
-> ff->set_gain and/or ff->set_autocenter can be dereferenced,
-> resulting in a kernel oops.
-> 
-> Check in uinput_create_device() and
-> print a helpful message and return -EINVAL in case the check fails.
-> 
-> Signed-off-by: Elias Vanderstuyft <elias.vds@gmail.com>
+Hi all,
 
-Applied, thank you.
+This patch set goes along with the fourth revision of an RFC adding to
+XFS kernel support for tracking reverse-mappings of physical blocks to
+file and metadata; and support for mapping multiple file logical
+blocks to the same physical block, more commonly known as reflinking.
 
-> ---
-> Changes in v2:
->   - Rebase on pending patches from David Herrmann and Benjamin Tissoires:
->     - v3 Input: uinput - add new UINPUT_DEV_SETUP and UI_ABS_SETUP ioctl
->     - Input: uinput - rework ABS validation
->   - Don't require EV_FF bit to be set when ff_effects_max is non-zero
->   - Move check from uinput_setup_device() to uinput_create_device()
->   - Update commit description
-> 
-> At the same time, the new UINPUT_DEV_SETUP and UI_ABS_SETUP ioctls were
-> tested as well (in both orders).
-> The legacy write() (instead of UINPUT_DEV_SETUP) was also tested.
-> 
->  drivers/input/misc/uinput.c | 7 +++++++
->  1 file changed, 7 insertions(+)
-> 
-> diff --git a/drivers/input/misc/uinput.c b/drivers/input/misc/uinput.c
-> index 1d93037..b9d0713 100644
-> --- a/drivers/input/misc/uinput.c
-> +++ b/drivers/input/misc/uinput.c
-> @@ -272,6 +272,13 @@ static int uinput_create_device(struct uinput_device *udev)
->  		input_set_events_per_packet(dev, 60);
->  	}
->  
-> +	if (test_bit(EV_FF, dev->evbit) && !udev->ff_effects_max) {
-> +		printk(KERN_DEBUG "%s: ff_effects_max should be non-zero when FF_BIT is set\n",
-> +			UINPUT_NAME);
-> +		error = -EINVAL;
-> +		goto fail1;
-> +	}
-> +
->  	if (udev->ff_effects_max) {
->  		error = input_ff_create(dev, udev->ff_effects_max);
->  		if (error)
-> -- 
-> 1.9.3
-> 
+The first four patches are taken verbatim from Anna Schumaker's
+patches adding a physical copy call to the kernel.  The next two
+patches are from Christoph Hellwig, and hoist the clone and
+clone_range ioctls into the VFS.  These patches are a bit old at
+this point; they're in here solely to demonstrate how this (long)
+patchset diverges from upstream.
 
--- 
-Dmitry
+The third patch fixes some bugs in the first four patches, and the
+fourth patch hoists the extent_same ioctl into the VFS as the dedupe
+ioctl.
+
+The patch set is based on the current (4.4-rc5) upstream kernel.
+
+If you're going to start using this mess, you probably ought to just
+pull from my github trees for kernel[1], xfsprogs[2], and xfstests[3].
+See also the xfs-docs[4] and manpage[5] updates.
+
+This is an extraordinary way to eat your data.  Enjoy!
+
+Comments and questions are, as always, welcome.
+
+--D
+
+[1] https://github.com/djwong/linux/tree/for-dave
+[2] https://github.com/djwong/xfsprogs/tree/for-dave
+[3] https://github.com/djwong/xfstests/tree/for-dave
+[4] https://github.com/djwong/xfs-documentation/tree/for-dave
+[5] https://github.com/djwong/man-pages/commits/for-mtk
