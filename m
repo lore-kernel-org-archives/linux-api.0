@@ -1,7 +1,7 @@
 From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH 3/9] btrfs: add .copy_file_range file operation
-Date: Sat, 19 Dec 2015 00:55:25 -0800
-Message-ID: <20151219085525.12478.98763.stgit@birch.djwong.org>
+Subject: [PATCH 5/9] locks: new locks_mandatory_area calling convention
+Date: Sat, 19 Dec 2015 00:55:38 -0800
+Message-ID: <20151219085538.12478.24470.stgit@birch.djwong.org>
 References: <20151219085505.12478.71157.stgit@birch.djwong.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -10,187 +10,138 @@ Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <20151219085505.12478.71157.stgit-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
-Cc: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josef Bacik <jbacik-b10kYP2dOMg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+Cc: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
->From : Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
->From : Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>From : Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 
-This rearranges the existing COPY_RANGE ioctl implementation so that the
-.copy_file_range file operation can call the core loop that copies file
-data extent items.
+Pass a loff_t end for the last byte instead of the 32-bit count
+parameter to allow full file clones even on 32-bit architectures.
+While we're at it also drop the pointless inode argument and simplify
+the read/write selection.
 
-The extent copying loop is lifted up into its own function.  It retains
-the core btrfs error checks that should be shared.
-
-Signed-off-by: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-[Anna Schumaker: Make flags an unsigned int,
-                 Check for COPY_FR_REFLINK]
-Signed-off-by: Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
-Reviewed-by: Josef Bacik <jbacik-b10kYP2dOMg@public.gmane.org>
-Reviewed-by: David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>
-Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Acked-by: J. Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
 ---
- fs/btrfs/ctree.h |    3 ++
- fs/btrfs/file.c  |    1 +
- fs/btrfs/ioctl.c |   91 +++++++++++++++++++++++++++++++-----------------------
- 3 files changed, 56 insertions(+), 39 deletions(-)
+ fs/locks.c         |   22 +++++++++-------------
+ fs/read_write.c    |    5 ++---
+ include/linux/fs.h |   28 +++++++++++++---------------
+ 3 files changed, 24 insertions(+), 31 deletions(-)
 
 
-diff --git a/fs/btrfs/ctree.h b/fs/btrfs/ctree.h
-index 35489e7..ede7277 100644
---- a/fs/btrfs/ctree.h
-+++ b/fs/btrfs/ctree.h
-@@ -4055,6 +4055,9 @@ int btrfs_dirty_pages(struct btrfs_root *root, struct inode *inode,
- 		      loff_t pos, size_t write_bytes,
- 		      struct extent_state **cached);
- int btrfs_fdatawrite_range(struct inode *inode, loff_t start, loff_t end);
-+ssize_t btrfs_copy_file_range(struct file *file_in, loff_t pos_in,
-+			      struct file *file_out, loff_t pos_out,
-+			      size_t len, unsigned int flags);
+diff --git a/fs/locks.c b/fs/locks.c
+index 0d2b326..ab2ea2e 100644
+--- a/fs/locks.c
++++ b/fs/locks.c
+@@ -1227,21 +1227,17 @@ int locks_mandatory_locked(struct file *file)
  
- /* tree-defrag.c */
- int btrfs_defrag_leaves(struct btrfs_trans_handle *trans,
-diff --git a/fs/btrfs/file.c b/fs/btrfs/file.c
-index 72e7346..e67fe6a 100644
---- a/fs/btrfs/file.c
-+++ b/fs/btrfs/file.c
-@@ -2924,6 +2924,7 @@ const struct file_operations btrfs_file_operations = {
- #ifdef CONFIG_COMPAT
- 	.compat_ioctl	= btrfs_ioctl,
- #endif
-+	.copy_file_range = btrfs_copy_file_range,
- };
+ /**
+  * locks_mandatory_area - Check for a conflicting lock
+- * @read_write: %FLOCK_VERIFY_WRITE for exclusive access, %FLOCK_VERIFY_READ
+- *		for shared
+- * @inode:      the file to check
+  * @filp:       how the file was opened (if it was)
+- * @offset:     start of area to check
+- * @count:      length of area to check
++ * @start:	first byte in the file to check
++ * @end:	lastbyte in the file to check
++ * @type:	%F_WRLCK for a write lock, else %F_RDLCK
+  *
+  * Searches the inode's list of locks to find any POSIX locks which conflict.
+- * This function is called from rw_verify_area() and
+- * locks_verify_truncate().
+  */
+-int locks_mandatory_area(int read_write, struct inode *inode,
+-			 struct file *filp, loff_t offset,
+-			 size_t count)
++int locks_mandatory_area(struct file *filp, loff_t start, loff_t end,
++		unsigned char type)
+ {
++	struct inode *inode = file_inode(filp);
+ 	struct file_lock fl;
+ 	int error;
+ 	bool sleep = false;
+@@ -1252,9 +1248,9 @@ int locks_mandatory_area(int read_write, struct inode *inode,
+ 	fl.fl_flags = FL_POSIX | FL_ACCESS;
+ 	if (filp && !(filp->f_flags & O_NONBLOCK))
+ 		sleep = true;
+-	fl.fl_type = (read_write == FLOCK_VERIFY_WRITE) ? F_WRLCK : F_RDLCK;
+-	fl.fl_start = offset;
+-	fl.fl_end = offset + count - 1;
++	fl.fl_type = type;
++	fl.fl_start = start;
++	fl.fl_end = end;
  
- void btrfs_auto_defrag_exit(void)
-diff --git a/fs/btrfs/ioctl.c b/fs/btrfs/ioctl.c
-index da94138..0f92735 100644
---- a/fs/btrfs/ioctl.c
-+++ b/fs/btrfs/ioctl.c
-@@ -3779,17 +3779,16 @@ out:
- 	return ret;
+ 	for (;;) {
+ 		if (filp) {
+diff --git a/fs/read_write.c b/fs/read_write.c
+index 6f73af1..e4c09dc 100644
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -396,9 +396,8 @@ int rw_verify_area(int read_write, struct file *file, const loff_t *ppos, size_t
+ 	}
+ 
+ 	if (unlikely(inode->i_flctx && mandatory_lock(inode))) {
+-		retval = locks_mandatory_area(
+-			read_write == READ ? FLOCK_VERIFY_READ : FLOCK_VERIFY_WRITE,
+-			inode, file, pos, count);
++		retval = locks_mandatory_area(file, pos, pos + count - 1,
++				read_write == READ ? F_RDLCK : F_WRLCK);
+ 		if (retval < 0)
+ 			return retval;
+ 	}
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index e8a7362..73874cd 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -2030,12 +2030,9 @@ extern struct kobject *fs_kobj;
+ 
+ #define MAX_RW_COUNT (INT_MAX & PAGE_CACHE_MASK)
+ 
+-#define FLOCK_VERIFY_READ  1
+-#define FLOCK_VERIFY_WRITE 2
+-
+ #ifdef CONFIG_FILE_LOCKING
+ extern int locks_mandatory_locked(struct file *);
+-extern int locks_mandatory_area(int, struct inode *, struct file *, loff_t, size_t);
++extern int locks_mandatory_area(struct file *, loff_t, loff_t, unsigned char);
+ 
+ /*
+  * Candidates for mandatory locking have the setgid bit set
+@@ -2068,14 +2065,16 @@ static inline int locks_verify_truncate(struct inode *inode,
+ 				    struct file *filp,
+ 				    loff_t size)
+ {
+-	if (inode->i_flctx && mandatory_lock(inode))
+-		return locks_mandatory_area(
+-			FLOCK_VERIFY_WRITE, inode, filp,
+-			size < inode->i_size ? size : inode->i_size,
+-			(size < inode->i_size ? inode->i_size - size
+-			 : size - inode->i_size)
+-		);
+-	return 0;
++	if (!inode->i_flctx || !mandatory_lock(inode))
++		return 0;
++
++	if (size < inode->i_size) {
++		return locks_mandatory_area(filp, size, inode->i_size - 1,
++				F_WRLCK);
++	} else {
++		return locks_mandatory_area(filp, inode->i_size, size - 1,
++				F_WRLCK);
++	}
  }
  
--static noinline long btrfs_ioctl_clone(struct file *file, unsigned long srcfd,
--				       u64 off, u64 olen, u64 destoff)
-+static noinline int btrfs_clone_files(struct file *file, struct file *file_src,
-+					u64 off, u64 olen, u64 destoff)
+ static inline int break_lease(struct inode *inode, unsigned int mode)
+@@ -2144,9 +2143,8 @@ static inline int locks_mandatory_locked(struct file *file)
+ 	return 0;
+ }
+ 
+-static inline int locks_mandatory_area(int rw, struct inode *inode,
+-				       struct file *filp, loff_t offset,
+-				       size_t count)
++static inline int locks_mandatory_area(struct file *filp, loff_t start,
++		loff_t end, unsigned char type)
  {
- 	struct inode *inode = file_inode(file);
-+	struct inode *src = file_inode(file_src);
- 	struct btrfs_root *root = BTRFS_I(inode)->root;
--	struct fd src_file;
--	struct inode *src;
- 	int ret;
- 	u64 len = olen;
- 	u64 bs = root->fs_info->sb->s_blocksize;
--	int same_inode = 0;
-+	int same_inode = src == inode;
- 
- 	/*
- 	 * TODO:
-@@ -3802,49 +3801,20 @@ static noinline long btrfs_ioctl_clone(struct file *file, unsigned long srcfd,
- 	 *   be either compressed or non-compressed.
- 	 */
- 
--	/* the destination must be opened for writing */
--	if (!(file->f_mode & FMODE_WRITE) || (file->f_flags & O_APPEND))
--		return -EINVAL;
--
- 	if (btrfs_root_readonly(root))
- 		return -EROFS;
- 
--	ret = mnt_want_write_file(file);
--	if (ret)
--		return ret;
--
--	src_file = fdget(srcfd);
--	if (!src_file.file) {
--		ret = -EBADF;
--		goto out_drop_write;
--	}
--
--	ret = -EXDEV;
--	if (src_file.file->f_path.mnt != file->f_path.mnt)
--		goto out_fput;
--
--	src = file_inode(src_file.file);
--
--	ret = -EINVAL;
--	if (src == inode)
--		same_inode = 1;
--
--	/* the src must be open for reading */
--	if (!(src_file.file->f_mode & FMODE_READ))
--		goto out_fput;
-+	if (file_src->f_path.mnt != file->f_path.mnt ||
-+	    src->i_sb != inode->i_sb)
-+		return -EXDEV;
- 
- 	/* don't make the dst file partly checksummed */
- 	if ((BTRFS_I(src)->flags & BTRFS_INODE_NODATASUM) !=
- 	    (BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM))
--		goto out_fput;
-+		return -EINVAL;
- 
--	ret = -EISDIR;
- 	if (S_ISDIR(src->i_mode) || S_ISDIR(inode->i_mode))
--		goto out_fput;
--
--	ret = -EXDEV;
--	if (src->i_sb != inode->i_sb)
--		goto out_fput;
-+		return -EISDIR;
- 
- 	if (!same_inode) {
- 		btrfs_double_inode_lock(src, inode);
-@@ -3921,6 +3891,49 @@ out_unlock:
- 		btrfs_double_inode_unlock(src, inode);
- 	else
- 		mutex_unlock(&src->i_mutex);
-+	return ret;
-+}
-+
-+ssize_t btrfs_copy_file_range(struct file *file_in, loff_t pos_in,
-+			      struct file *file_out, loff_t pos_out,
-+			      size_t len, unsigned int flags)
-+{
-+	ssize_t ret;
-+
-+	ret = btrfs_clone_files(file_out, file_in, pos_in, len, pos_out);
-+	if (ret == 0)
-+		ret = len;
-+	return ret;
-+}
-+
-+static noinline long btrfs_ioctl_clone(struct file *file, unsigned long srcfd,
-+				       u64 off, u64 olen, u64 destoff)
-+{
-+	struct fd src_file;
-+	int ret;
-+
-+	/* the destination must be opened for writing */
-+	if (!(file->f_mode & FMODE_WRITE) || (file->f_flags & O_APPEND))
-+		return -EINVAL;
-+
-+	ret = mnt_want_write_file(file);
-+	if (ret)
-+		return ret;
-+
-+	src_file = fdget(srcfd);
-+	if (!src_file.file) {
-+		ret = -EBADF;
-+		goto out_drop_write;
-+	}
-+
-+	/* the src must be open for reading */
-+	if (!(src_file.file->f_mode & FMODE_READ)) {
-+		ret = -EINVAL;
-+		goto out_fput;
-+	}
-+
-+	ret = btrfs_clone_files(file, src_file.file, off, olen, destoff);
-+
- out_fput:
- 	fdput(src_file);
- out_drop_write:
+ 	return 0;
+ }
