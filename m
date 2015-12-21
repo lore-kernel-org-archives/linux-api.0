@@ -1,82 +1,213 @@
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Subject: Re: [PATCH v1 1/4] um: Fix ptrace GETREGS/SETREGS bugs
-Date: Mon, 21 Dec 2015 20:10:54 +0100
-Message-ID: <56784EBE.7050403@digikod.net>
-References: <1450656209-2676-1-git-send-email-mic@digikod.net>
- <1450656209-2676-2-git-send-email-mic@digikod.net> <567745E3.1030509@nod.at>
- <5677BD23.4060602@digikod.net> <5677BFBD.3090200@nod.at>
- <5677C526.5070803@digikod.net> <5677D0CD.1070602@nod.at>
+From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
+Subject: [PATCH v2 3/4] um: Add full asm/syscall.h support
+Date: Mon, 21 Dec 2015 21:26:40 +0100
+Message-ID: <1450729600-9732-1-git-send-email-mic@digikod.net>
+References: <1450726163-8399-1-git-send-email-mic@digikod.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="kXJg2g6i7GHL2aMFvhM3opR6obpSXqXMI"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5677D0CD.1070602@nod.at>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Weinberger <richard@nod.at>, linux-kernel@vger.kernel.org
-Cc: Jonathan Corbet <corbet@lwn.net>, Jeff Dike <jdike@addtoit.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Shuah Khan <shuahkh@osg.samsung.com>, Chris Metcalf <cmetcalf@ezchip.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, James Hogan <james.hogan@imgtec.com>, Thomas Meyer <thomas@m3y3r.de>, Nicolas Iooss <nicolas.iooss_linux@m4x.org>, Anton Ivanov <aivanov@brocade.com>, linux-doc@vger.kernel.org, user-mode-linux-devel@lists.sourceforge.net, user-mode-linux-user@lists.sourceforge.net, linux-api@vger.kernel.org, Meredydd Luff <meredydd@senatehouse.org>, David Drysdale <drysdale@google.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1450726163-8399-1-git-send-email-mic@digikod.net>
+Sender: linux-doc-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Jonathan Corbet <corbet@lwn.net>, Jeff Dike <jdike@addtoit.com>, Richard Weinberger <richard@nod.at>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Shuah Khan <shuahkh@osg.samsung.com>, Chris Metcalf <cmetcalf@ezchip.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, James Hogan <james.hogan@imgtec.com>, Thomas Meyer <thomas@m3y3r.de>, Nicolas Iooss <nicolas.iooss_linux@m4x.org>, Anton Ivanov <aivanov@brocade.com>, linux-doc@vger.kernel.org, user-mode-linux-devel@lists.sourceforge.net, user-mode-linux-user@lists.sourceforge.net, linux-api@vger.kernel.org, Meredydd Luff <meredydd@senatehouse.o>
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---kXJg2g6i7GHL2aMFvhM3opR6obpSXqXMI
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Add subarchitecture-independent implementation of asm-generic/syscall.h
+allowing access to user system call parameters and results:
+* syscall_get_nr()
+* syscall_rollback()
+* syscall_get_error()
+* syscall_get_return_value()
+* syscall_set_return_value()
+* syscall_get_arguments()
+* syscall_set_arguments()
+* syscall_get_arch() provided by arch/x86/um/asm/syscall.h
 
+This provides the necessary syscall helpers needed by
+HAVE_ARCH_SECCOMP_FILTER plus syscall_get_error().
 
-On 21/12/2015 11:13, Richard Weinberger wrote:
-> Am 21.12.2015 um 10:23 schrieb Micka=C3=ABl Sala=C3=BCn:
->>>>> Doesn't this break the support for changing syscall numbers using P=
-TRACE_SETREGS?
->>>>
->>>> The logic is unchanged except updating the UPT_SYSCALL_NR before sys=
-call_trace_enter(). I did my last tests with the x86_32 subarchitecture a=
-nd all tests (from selftest/seccomp), including PTRACE_SETREGS for syscal=
-l numbers tests, passed. However, 2 of this tests still fail for x86_64 (=
-only).
->>>
->>> No, the logic is different.
->>> syscall_trace_enter(regs) enters the ptrace() path and here registers=
- can be changed.
->>> Hence "syscall =3D UPT_SYSCALL_NR(r);" will see the old syscall numbe=
-r.
->>> UPT_SYSCALL_NR() returns the syscall number before the ptrace() path.=
-=2E.
->>
->> The thing is, PTRACE_SETREGS give access to *orig_ax* in the user_regs=
-_struct from arch/x86/include/asm/user_*.h and selftest/seccomp only upda=
-te this (virtual) register, not the EAX/RAX. Am I missing something?
->=20
-> Sorry, meant orig...
->=20
-> Please see the attached program. It proves that your patch is breaking =
-stuff.
-> The test is extracted from UML's selftests.
+This is inspired from Meredydd Luff's patch
+(https://gerrit.chromium.org/gerrit/21425).
 
-OK, I found the origin of this misunderstanding. On x86_32, PTRACE_SETREG=
-S set regs->syscall when updating orig_eax, which is not the case on x86_=
-64, hence the difference of behavior. I fixed this bug in the v2 series. =
-The ptsc test and all the seccomp tests pass for 32 and 64 bits!
+Signed-off-by: Micka=C3=ABl Sala=C3=BCn <mic@digikod.net>
+Cc: Jeff Dike <jdike@addtoit.com>
+Cc: Richard Weinberger <richard@nod.at>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Andy Lutomirski <luto@amacapital.net>
+Cc: Will Drewry <wad@chromium.org>
+Cc: Meredydd Luff <meredydd@senatehouse.org>
+Cc: David Drysdale <drysdale@google.com>
+---
+ arch/um/include/asm/syscall-generic.h | 138 ++++++++++++++++++++++++++=
+++++++++
+ arch/x86/um/asm/syscall.h             |   1 +
+ 2 files changed, 139 insertions(+)
+ create mode 100644 arch/um/include/asm/syscall-generic.h
 
-Where can we find the UML selftests?
+diff --git a/arch/um/include/asm/syscall-generic.h b/arch/um/include/as=
+m/syscall-generic.h
+new file mode 100644
+index 0000000..9fb9cf8
+--- /dev/null
++++ b/arch/um/include/asm/syscall-generic.h
+@@ -0,0 +1,138 @@
++/*
++ * Access to user system call parameters and results
++ *
++ * See asm-generic/syscall.h for function descriptions.
++ *
++ * Copyright (C) 2015 Micka=C3=ABl Sala=C3=BCn <mic@digikod.net>
++ *
++ * This program is free software; you can redistribute it and/or modif=
+y
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ */
++
++#ifndef __UM_SYSCALL_GENERIC_H
++#define __UM_SYSCALL_GENERIC_H
++
++#include <asm/ptrace.h>
++#include <linux/err.h>
++#include <linux/sched.h>
++#include <sysdep/ptrace.h>
++
++static inline int syscall_get_nr(struct task_struct *task, struct pt_r=
+egs *regs)
++{
++
++	return PT_REGS_SYSCALL_NR(regs);
++}
++
++static inline void syscall_rollback(struct task_struct *task,
++				    struct pt_regs *regs)
++{
++	/* do nothing */
++}
++
++static inline long syscall_get_error(struct task_struct *task,
++				     struct pt_regs *regs)
++{
++	const long error =3D regs_return_value(regs);
++
++	return IS_ERR_VALUE(error) ? error : 0;
++}
++
++static inline long syscall_get_return_value(struct task_struct *task,
++					    struct pt_regs *regs)
++{
++	return regs_return_value(regs);
++}
++
++static inline void syscall_set_return_value(struct task_struct *task,
++					    struct pt_regs *regs,
++					    int error, long val)
++{
++	PT_REGS_SET_SYSCALL_RETURN(regs, (long) error ?: val);
++}
++
++static inline void syscall_get_arguments(struct task_struct *task,
++					 struct pt_regs *regs,
++					 unsigned int i, unsigned int n,
++					 unsigned long *args)
++{
++	const struct uml_pt_regs *r =3D &regs->regs;
++
++	switch (i) {
++	case 0:
++		if (!n--)
++			break;
++		*args++ =3D UPT_SYSCALL_ARG1(r);
++	case 1:
++		if (!n--)
++			break;
++		*args++ =3D UPT_SYSCALL_ARG2(r);
++	case 2:
++		if (!n--)
++			break;
++		*args++ =3D UPT_SYSCALL_ARG3(r);
++	case 3:
++		if (!n--)
++			break;
++		*args++ =3D UPT_SYSCALL_ARG4(r);
++	case 4:
++		if (!n--)
++			break;
++		*args++ =3D UPT_SYSCALL_ARG5(r);
++	case 5:
++		if (!n--)
++			break;
++		*args++ =3D UPT_SYSCALL_ARG6(r);
++	case 6:
++		if (!n--)
++			break;
++	default:
++		BUG();
++		break;
++	}
++}
++
++static inline void syscall_set_arguments(struct task_struct *task,
++					 struct pt_regs *regs,
++					 unsigned int i, unsigned int n,
++					 const unsigned long *args)
++{
++	struct uml_pt_regs *r =3D &regs->regs;
++
++	switch (i) {
++	case 0:
++		if (!n--)
++			break;
++		UPT_SYSCALL_ARG1(r) =3D *args++;
++	case 1:
++		if (!n--)
++			break;
++		UPT_SYSCALL_ARG2(r) =3D *args++;
++	case 2:
++		if (!n--)
++			break;
++		UPT_SYSCALL_ARG3(r) =3D *args++;
++	case 3:
++		if (!n--)
++			break;
++		UPT_SYSCALL_ARG4(r) =3D *args++;
++	case 4:
++		if (!n--)
++			break;
++		UPT_SYSCALL_ARG5(r) =3D *args++;
++	case 5:
++		if (!n--)
++			break;
++		UPT_SYSCALL_ARG6(r) =3D *args++;
++	case 6:
++		if (!n--)
++			break;
++	default:
++		BUG();
++		break;
++	}
++}
++
++/* See arch/x86/um/asm/syscall.h for syscall_get_arch() definition. */
++
++#endif	/* __UM_SYSCALL_GENERIC_H */
+diff --git a/arch/x86/um/asm/syscall.h b/arch/x86/um/asm/syscall.h
+index 81d6562..11ab90d 100644
+--- a/arch/x86/um/asm/syscall.h
++++ b/arch/x86/um/asm/syscall.h
+@@ -1,6 +1,7 @@
+ #ifndef __UM_ASM_SYSCALL_H
+ #define __UM_ASM_SYSCALL_H
+=20
++#include <asm/syscall-generic.h>
+ #include <uapi/linux/audit.h>
+=20
+ typedef asmlinkage long (*sys_call_ptr_t)(unsigned long, unsigned long=
+,
+--=20
+2.6.4
 
-Thanks,
- Micka=C3=ABl
-
-
---kXJg2g6i7GHL2aMFvhM3opR6obpSXqXMI
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQEcBAEBCgAGBQJWeE6+AAoJECLe/t9zvWqV/qsH/A5OaD9hOvag5A2XmHPKbjV5
-rXQsDLmFUERVcMPRPsbq/FH3ddPBz5S/BAiIx5A6s55oR0xy3I2gMD7NDkciWWEe
-3/ncSX6h5t/BNnClwYeFhy6nCKKz6js4OleRV4UDKni1Ar1a3YDeN6fTCMw+lpK9
-Tbzl+YUIIYdZ+FuFU29EzYVPEk9PSew2jXB7l5Tqd6FFtz5S9giMqq+oF7DK4noW
-WaiCi09pxCCgdlF3VkxrHMw2AjxWbN6+xfnfRpBCwPuHZhjiMbmCo4dmv9SpNYvL
-Z8HnSHrI1MCtGlFaP6n4PXBuZHPWfTHEOn7ecsl2gvXTm/N9hqy0hQziDYRZBY0=
-=oDjJ
------END PGP SIGNATURE-----
-
---kXJg2g6i7GHL2aMFvhM3opR6obpSXqXMI--
