@@ -1,144 +1,158 @@
-From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
-Subject: [PATCH v2 4/4] um: Add seccomp support
-Date: Mon, 21 Dec 2015 21:30:15 +0100
-Message-ID: <1450729815-10194-1-git-send-email-mic@digikod.net>
-References: <1450726163-8399-1-git-send-email-mic@digikod.net>
+From: Tadeusz Struk <tstruk@gmail.com>
+Subject: [PATCH] crypto: AF_ALG - add support for keys/asymmetric-type
+Date: Mon, 21 Dec 2015 12:51:07 -0800
+Message-ID: <20151221205107.28935.59696.stgit@desktop.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1450726163-8399-1-git-send-email-mic@digikod.net>
-Sender: linux-doc-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Jonathan Corbet <corbet@lwn.net>, Jeff Dike <jdike@addtoit.com>, Richard Weinberger <richard@nod.at>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Shuah Khan <shuahkh@osg.samsung.com>, Chris Metcalf <cmetcalf@ezchip.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, James Hogan <james.hogan@imgtec.com>, Thomas Meyer <thomas@m3y3r.de>, Nicolas Iooss <nicolas.iooss_linux@m4x.org>, Anton Ivanov <aivanov@brocade.com>, linux-doc@vger.kernel.org, user-mode-linux-devel@lists.sourceforge.net, user-mode-linux-user@lists.sourceforge.net, linux-api@vger.kernel.org, Meredydd Luff <meredydd@senatehouse.o>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: herbert@gondor.apana.org.au
+Cc: tadeusz.struk@intel.com, smueller@chronox.de, dwmw2@infradead.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, keyrings@vger.kernel.org, linux-crypto@vger.kernel.org, linux-api@vger.kernel.org, tstruk@gmail.com, zohar@linux.vnet.ibm.com
 List-Id: linux-api@vger.kernel.org
 
-This brings SECCOMP_MODE_STRICT and SECCOMP_MODE_FILTER support through
-prctl(2) and seccomp(2) to User-mode Linux for i386 and x86_64
-subarchitectures.
+From: Tadeusz Struk <tadeusz.struk@intel.com>
 
-secure_computing() is called first in handle_syscall() so that the
-syscall emulation will be aborted quickly if matching a seccomp rule.
+Created on top of patchset from Stephan Mueller <smueller@chronox.de>
+https://patchwork.kernel.org/patch/7877921/
+https://patchwork.kernel.org/patch/7877971/
+https://patchwork.kernel.org/patch/7877961/
 
-This is inspired from Meredydd Luff's patch
-(https://gerrit.chromium.org/gerrit/21425).
+This patch adds support for asymmetric key type to AF_ALG.
+It will work as follows: A new PF_ALG socket options will be
+added on top of existing ALG_SET_KEY and ALG_SET_PUBKEY, namely
+ALG_SET_PUBKEY_ID and ALG_SET_KEY_ID for setting public and
+private keys respectively. When these new options will be used
+the user instead of providing the key material, will provide a
+key id and the key itself will be obtained from kernel keyring
+subsystem. The user will use the standard tools (keyctl tool
+or the keyctl syscall) for key instantiation and to obtain the
+key id. The key id can also be obtained by reading the
+/proc/keys file.
 
-Signed-off-by: Micka=C3=ABl Sala=C3=BCn <mic@digikod.net>
-Cc: Jonathan Corbet <corbet@lwn.net>
-Cc: Jeff Dike <jdike@addtoit.com>
-Cc: Richard Weinberger <richard@nod.at>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Andy Lutomirski <luto@amacapital.net>
-Cc: Will Drewry <wad@chromium.org>
-Cc: Chris Metcalf <cmetcalf@ezchip.com>
-Cc: Michael Ellerman <mpe@ellerman.id.au>
-Cc: James Hogan <james.hogan@imgtec.com>
-Cc: Meredydd Luff <meredydd@senatehouse.org>
-Cc: David Drysdale <drysdale@google.com>
+When a key will be found, the request_key() function will
+return a requested key. Next the asymmetric key subtype will be
+used to obtain the public_key, which can be either a public key
+or a private key from the cryptographic point of view, and the
+key payload will be passed to the akcipher pf_alg subtype.
+Pf_alg code will then call crypto API functions, either the
+crypto_akcipher_set_priv_key or the crypto_akcipher_set_pub_key,
+depending on the used option. Subsequently the asymmetric key
+will be freed and return code returned back to the user.
+
+Currently the interface will be restricted only to asymmetric
+ciphers, but it can be extended later to work with symmetric
+ciphers if required.
+
+The assumption is that access rights for a given user will be
+verified by the key subsystem so the pf_alg interface can call
+the request_key() without checking if the user has appropriate
+rights (Please verify this assumption).
+
+Signed-off-by: Tadeusz Struk <tadeusz.struk@intel.com>
 ---
- .../features/seccomp/seccomp-filter/arch-support.txt     |  2 +-
- arch/um/Kconfig.common                                   |  1 +
- arch/um/Kconfig.um                                       | 16 ++++++++=
-++++++++
- arch/um/include/asm/thread_info.h                        |  2 ++
- arch/um/kernel/skas/syscall.c                            |  5 +++++
- 5 files changed, 25 insertions(+), 1 deletion(-)
+ crypto/af_alg.c             |   41 +++++++++++++++++++++++++++++++++++++----
+ include/uapi/linux/if_alg.h |    2 ++
+ 2 files changed, 39 insertions(+), 4 deletions(-)
 
-diff --git a/Documentation/features/seccomp/seccomp-filter/arch-support=
-=2Etxt b/Documentation/features/seccomp/seccomp-filter/arch-support.txt
-index 76d39d6..4f66ec1 100644
---- a/Documentation/features/seccomp/seccomp-filter/arch-support.txt
-+++ b/Documentation/features/seccomp/seccomp-filter/arch-support.txt
-@@ -33,7 +33,7 @@
-     |          sh: | TODO |
-     |       sparc: | TODO |
-     |        tile: |  ok  |
--    |          um: | TODO |
-+    |          um: |  ok  |
-     |   unicore32: | TODO |
-     |         x86: |  ok  |
-     |      xtensa: | TODO |
-diff --git a/arch/um/Kconfig.common b/arch/um/Kconfig.common
-index d195a87..cc00134 100644
---- a/arch/um/Kconfig.common
-+++ b/arch/um/Kconfig.common
-@@ -2,6 +2,7 @@ config UML
- 	bool
- 	default y
- 	select HAVE_ARCH_AUDITSYSCALL
-+	select HAVE_ARCH_SECCOMP_FILTER
- 	select HAVE_UID16
- 	select HAVE_FUTEX_CMPXCHG if FUTEX
- 	select GENERIC_IRQ_SHOW
-diff --git a/arch/um/Kconfig.um b/arch/um/Kconfig.um
-index 28a9885..4b2ed58 100644
---- a/arch/um/Kconfig.um
-+++ b/arch/um/Kconfig.um
-@@ -104,3 +104,19 @@ config PGTABLE_LEVELS
- 	int
- 	default 3 if 3_LEVEL_PGTABLES
- 	default 2
-+
-+config SECCOMP
-+	def_bool y
-+	prompt "Enable seccomp to safely compute untrusted bytecode"
-+	---help---
-+	  This kernel feature is useful for number crunching applications
-+	  that may need to compute untrusted bytecode during their
-+	  execution. By using pipes or other transports made available to
-+	  the process as file descriptors supporting the read/write
-+	  syscalls, it's possible to isolate those applications in
-+	  their own address space using seccomp. Once seccomp is
-+	  enabled via prctl(PR_SET_SECCOMP), it cannot be disabled
-+	  and the task is only allowed to execute a few safe syscalls
-+	  defined by each seccomp mode.
-+
-+	  If unsure, say Y.
-diff --git a/arch/um/include/asm/thread_info.h b/arch/um/include/asm/th=
-read_info.h
-index 53968aa..053baff 100644
---- a/arch/um/include/asm/thread_info.h
-+++ b/arch/um/include/asm/thread_info.h
-@@ -62,11 +62,13 @@ static inline struct thread_info *current_thread_in=
-fo(void)
- #define TIF_SYSCALL_AUDIT	6
- #define TIF_RESTORE_SIGMASK	7
- #define TIF_NOTIFY_RESUME	8
-+#define TIF_SECCOMP		9	/* secure computing */
-=20
- #define _TIF_SYSCALL_TRACE	(1 << TIF_SYSCALL_TRACE)
- #define _TIF_SIGPENDING		(1 << TIF_SIGPENDING)
- #define _TIF_NEED_RESCHED	(1 << TIF_NEED_RESCHED)
- #define _TIF_MEMDIE		(1 << TIF_MEMDIE)
- #define _TIF_SYSCALL_AUDIT	(1 << TIF_SYSCALL_AUDIT)
-+#define _TIF_SECCOMP		(1 << TIF_SECCOMP)
-=20
- #endif
-diff --git a/arch/um/kernel/skas/syscall.c b/arch/um/kernel/skas/syscal=
-l.c
-index 0d624e0..5abc677 100644
---- a/arch/um/kernel/skas/syscall.c
-+++ b/arch/um/kernel/skas/syscall.c
-@@ -5,6 +5,7 @@
-=20
- #include <linux/kernel.h>
- #include <linux/ptrace.h>
-+#include <linux/seccomp.h>
- #include <kern_util.h>
- #include <sysdep/ptrace.h>
- #include <sysdep/ptrace_user.h>
-@@ -20,6 +21,10 @@ void handle_syscall(struct uml_pt_regs *r)
- 	UPT_SYSCALL_NR(r) =3D PT_SYSCALL_NR(r->gp);
- 	PT_REGS_SET_SYSCALL_RETURN(regs, -ENOSYS);
-=20
-+	/* Do the secure computing check first; failures should be fast. */
-+	if (secure_computing() =3D=3D -1)
-+		return;
-+
- 	if (syscall_trace_enter(regs))
+diff --git a/crypto/af_alg.c b/crypto/af_alg.c
+index 767a134..d2ec357 100644
+--- a/crypto/af_alg.c
++++ b/crypto/af_alg.c
+@@ -22,6 +22,8 @@
+ #include <linux/net.h>
+ #include <linux/rwsem.h>
+ #include <linux/security.h>
++#include <crypto/public_key.h>
++#include <keys/asymmetric-type.h>
+ 
+ struct alg_type_list {
+ 	const struct af_alg_type *type;
+@@ -173,7 +175,7 @@ static int alg_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
+ }
+ 
+ static int alg_setkey(struct sock *sk, char __user *ukey,
+-		      unsigned int keylen,
++		      unsigned int keylen, bool key_id,
+ 		      int (*setkey)(void *private, const u8 *key,
+ 				    unsigned int keylen))
+ {
+@@ -192,7 +194,30 @@ static int alg_setkey(struct sock *sk, char __user *ukey,
+ 	if (copy_from_user(key, ukey, keylen))
  		goto out;
-=20
---=20
-2.6.4
-
+ 
+-	err = setkey(ask->private, key, keylen);
++	if (key_id) {
++		struct key *keyring;
++		struct public_key *pkey;
++		char key_name[12];
++		u32 keyid = *((u32 *)key);
++
++		sprintf(key_name, "id:%08x", keyid);
++		keyring = request_key(&key_type_asymmetric, key_name, NULL);
++
++		err = -ENOKEY;
++		if (IS_ERR(keyring))
++			goto out;
++
++		pkey = keyring->payload.data[asym_crypto];
++		if (!pkey) {
++			key_put(keyring);
++			goto out;
++		}
++
++		err = setkey(ask->private, pkey->key, pkey->keylen);
++		key_put(keyring);
++	} else {
++		err = setkey(ask->private, key, keylen);
++	}
+ 
+ out:
+ 	sock_kzfree_s(sk, key, keylen);
+@@ -207,6 +232,8 @@ static int alg_setsockopt(struct socket *sock, int level, int optname,
+ 	struct alg_sock *ask = alg_sk(sk);
+ 	const struct af_alg_type *type;
+ 	int err = -ENOPROTOOPT;
++	bool key_id = ((optname == ALG_SET_PUBKEY_ID) ||
++		       (optname == ALG_SET_KEY_ID));
+ 
+ 	lock_sock(sk);
+ 	type = ask->type;
+@@ -216,16 +243,22 @@ static int alg_setsockopt(struct socket *sock, int level, int optname,
+ 
+ 	switch (optname) {
+ 	case ALG_SET_KEY:
++	case ALG_SET_KEY_ID:
+ 		if (sock->state == SS_CONNECTED)
+ 			goto unlock;
+ 
+-		err = alg_setkey(sk, optval, optlen, type->setkey);
++		/* ALG_SET_KEY_ID is only for akcipher */
++		if (!strcmp(type->name, "akcipher") && key_id)
++			goto unlock;
++
++		err = alg_setkey(sk, optval, optlen, key_id, type->setkey);
+ 		break;
+ 	case ALG_SET_PUBKEY:
++	case ALG_SET_PUBKEY_ID:
+ 		if (sock->state == SS_CONNECTED)
+ 			goto unlock;
+ 
+-		err = alg_setkey(sk, optval, optlen, type->setpubkey);
++		err = alg_setkey(sk, optval, optlen, key_id, type->setpubkey);
+ 		break;
+ 	case ALG_SET_AEAD_AUTHSIZE:
+ 		if (sock->state == SS_CONNECTED)
+diff --git a/include/uapi/linux/if_alg.h b/include/uapi/linux/if_alg.h
+index 02e6162..0379766 100644
+--- a/include/uapi/linux/if_alg.h
++++ b/include/uapi/linux/if_alg.h
+@@ -35,6 +35,8 @@ struct af_alg_iv {
+ #define ALG_SET_AEAD_ASSOCLEN		4
+ #define ALG_SET_AEAD_AUTHSIZE		5
+ #define ALG_SET_PUBKEY			6
++#define ALG_SET_PUBKEY_ID		7
++#define ALG_SET_KEY_ID			8
+ 
+ /* Operations */
+ #define ALG_OP_DECRYPT			0
