@@ -1,166 +1,82 @@
-From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
-Subject: [PATCH v2 1/4] um: Fix ptrace GETREGS/SETREGS bugs
-Date: Mon, 21 Dec 2015 20:29:20 +0100
-Message-ID: <1450726163-8399-2-git-send-email-mic@digikod.net>
-References: <1450726163-8399-1-git-send-email-mic@digikod.net>
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+Subject: Re: [PATCH v1 1/4] um: Fix ptrace GETREGS/SETREGS bugs
+Date: Mon, 21 Dec 2015 20:10:54 +0100
+Message-ID: <56784EBE.7050403@digikod.net>
+References: <1450656209-2676-1-git-send-email-mic@digikod.net>
+ <1450656209-2676-2-git-send-email-mic@digikod.net> <567745E3.1030509@nod.at>
+ <5677BD23.4060602@digikod.net> <5677BFBD.3090200@nod.at>
+ <5677C526.5070803@digikod.net> <5677D0CD.1070602@nod.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="kXJg2g6i7GHL2aMFvhM3opR6obpSXqXMI"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1450726163-8399-1-git-send-email-mic@digikod.net>
+In-Reply-To: <5677D0CD.1070602@nod.at>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Jonathan Corbet <corbet@lwn.net>, Jeff Dike <jdike@addtoit.com>, Richard Weinberger <richard@nod.at>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Shuah Khan <shuahkh@osg.samsung.com>, Chris Metcalf <cmetcalf@ezchip.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, James Hogan <james.hogan@imgtec.com>, Thomas Meyer <thomas@m3y3r.de>, Nicolas Iooss <nicolas.iooss_linux@m4x.org>, Anton Ivanov <aivanov@brocade.com>, linux-doc@vger.kernel.org, user-mode-linux-devel@lists.sourceforge.net, user-mode-linux-user@lists.sourceforge.net, linux-api@vger.kernel.org, Meredydd Luff <meredydd@senatehouse.o>
+To: Richard Weinberger <richard@nod.at>, linux-kernel@vger.kernel.org
+Cc: Jonathan Corbet <corbet@lwn.net>, Jeff Dike <jdike@addtoit.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Shuah Khan <shuahkh@osg.samsung.com>, Chris Metcalf <cmetcalf@ezchip.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, James Hogan <james.hogan@imgtec.com>, Thomas Meyer <thomas@m3y3r.de>, Nicolas Iooss <nicolas.iooss_linux@m4x.org>, Anton Ivanov <aivanov@brocade.com>, linux-doc@vger.kernel.org, user-mode-linux-devel@lists.sourceforge.net, user-mode-linux-user@lists.sourceforge.net, linux-api@vger.kernel.org, Meredydd Luff <meredydd@senatehouse.org>, David Drysdale <drysdale@google.com>
 List-Id: linux-api@vger.kernel.org
 
-This fix two related bugs:
-* PTRACE_GETREGS doesn't get the right orig_ax (syscall) value
-* PTRACE_SETREGS can't set the orig_ax value (erased by initial value)
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--kXJg2g6i7GHL2aMFvhM3opR6obpSXqXMI
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-Remove the now useless and error-prone get_syscall().
 
-=46ix inconsistent behavior in the ptrace implementation for i386 when
-updating orig_eax automatically update the syscall number as well. This
-is now updated in handle_syscall().
+On 21/12/2015 11:13, Richard Weinberger wrote:
+> Am 21.12.2015 um 10:23 schrieb Micka=C3=ABl Sala=C3=BCn:
+>>>>> Doesn't this break the support for changing syscall numbers using P=
+TRACE_SETREGS?
+>>>>
+>>>> The logic is unchanged except updating the UPT_SYSCALL_NR before sys=
+call_trace_enter(). I did my last tests with the x86_32 subarchitecture a=
+nd all tests (from selftest/seccomp), including PTRACE_SETREGS for syscal=
+l numbers tests, passed. However, 2 of this tests still fail for x86_64 (=
+only).
+>>>
+>>> No, the logic is different.
+>>> syscall_trace_enter(regs) enters the ptrace() path and here registers=
+ can be changed.
+>>> Hence "syscall =3D UPT_SYSCALL_NR(r);" will see the old syscall numbe=
+r.
+>>> UPT_SYSCALL_NR() returns the syscall number before the ptrace() path.=
+=2E.
+>>
+>> The thing is, PTRACE_SETREGS give access to *orig_ax* in the user_regs=
+_struct from arch/x86/include/asm/user_*.h and selftest/seccomp only upda=
+te this (virtual) register, not the EAX/RAX. Am I missing something?
+>=20
+> Sorry, meant orig...
+>=20
+> Please see the attached program. It proves that your patch is breaking =
+stuff.
+> The test is extracted from UML's selftests.
 
-Signed-off-by: Micka=C3=ABl Sala=C3=BCn <mic@digikod.net>
-Cc: Jeff Dike <jdike@addtoit.com>
-Cc: Richard Weinberger <richard@nod.at>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Andy Lutomirski <luto@amacapital.net>
-Cc: Will Drewry <wad@chromium.org>
-Cc: Thomas Meyer <thomas@m3y3r.de>
-Cc: Nicolas Iooss <nicolas.iooss_linux@m4x.org>
-Cc: Anton Ivanov <aivanov@brocade.com>
-Cc: Meredydd Luff <meredydd@senatehouse.org>
-Cc: David Drysdale <drysdale@google.com>
----
- arch/um/kernel/skas/syscall.c   | 25 ++++++++++++++-----------
- arch/um/os-Linux/skas/process.c |  7 -------
- arch/x86/um/ptrace_32.c         |  8 +++-----
- 3 files changed, 17 insertions(+), 23 deletions(-)
+OK, I found the origin of this misunderstanding. On x86_32, PTRACE_SETREG=
+S set regs->syscall when updating orig_eax, which is not the case on x86_=
+64, hence the difference of behavior. I fixed this bug in the v2 series. =
+The ptsc test and all the seccomp tests pass for 32 and 64 bits!
 
-diff --git a/arch/um/kernel/skas/syscall.c b/arch/um/kernel/skas/syscal=
-l.c
-index 1683b8e..0d624e0 100644
---- a/arch/um/kernel/skas/syscall.c
-+++ b/arch/um/kernel/skas/syscall.c
-@@ -7,29 +7,32 @@
- #include <linux/ptrace.h>
- #include <kern_util.h>
- #include <sysdep/ptrace.h>
-+#include <sysdep/ptrace_user.h>
- #include <sysdep/syscalls.h>
- #include <os.h>
-=20
- void handle_syscall(struct uml_pt_regs *r)
- {
- 	struct pt_regs *regs =3D container_of(r, struct pt_regs, regs);
--	long result;
- 	int syscall;
-=20
--	if (syscall_trace_enter(regs)) {
--		result =3D -ENOSYS;
-+	/* Initialize the syscall number and default return value. */
-+	UPT_SYSCALL_NR(r) =3D PT_SYSCALL_NR(r->gp);
-+	PT_REGS_SET_SYSCALL_RETURN(regs, -ENOSYS);
-+
-+	if (syscall_trace_enter(regs))
- 		goto out;
--	}
-=20
--	syscall =3D get_syscall(r);
-+	/* Update the syscall number after orig_ax has potentially been updat=
-ed
-+	 * with ptrace.
-+	 */
-+	UPT_SYSCALL_NR(r) =3D PT_SYSCALL_NR(r->gp);
-+	syscall =3D UPT_SYSCALL_NR(r);
-=20
--	if ((syscall > __NR_syscall_max) || syscall < 0)
--		result =3D -ENOSYS;
--	else
--		result =3D EXECUTE_SYSCALL(syscall, regs);
-+	if (syscall >=3D 0 && syscall <=3D __NR_syscall_max)
-+		PT_REGS_SET_SYSCALL_RETURN(regs,
-+				EXECUTE_SYSCALL(syscall, regs));
-=20
- out:
--	PT_REGS_SET_SYSCALL_RETURN(regs, result);
--
- 	syscall_trace_leave(regs);
- }
-diff --git a/arch/um/os-Linux/skas/process.c b/arch/um/os-Linux/skas/pr=
-ocess.c
-index b856c66..23025d6 100644
---- a/arch/um/os-Linux/skas/process.c
-+++ b/arch/um/os-Linux/skas/process.c
-@@ -172,13 +172,6 @@ static void handle_trap(int pid, struct uml_pt_reg=
-s *regs,
- 	handle_syscall(regs);
- }
-=20
--int get_syscall(struct uml_pt_regs *regs)
--{
--	UPT_SYSCALL_NR(regs) =3D PT_SYSCALL_NR(regs->gp);
--
--	return UPT_SYSCALL_NR(regs);
--}
--
- extern char __syscall_stub_start[];
-=20
- static int userspace_tramp(void *stack)
-diff --git a/arch/x86/um/ptrace_32.c b/arch/x86/um/ptrace_32.c
-index a29756f..47c78d5 100644
---- a/arch/x86/um/ptrace_32.c
-+++ b/arch/x86/um/ptrace_32.c
-@@ -68,6 +68,7 @@ static const int reg_offsets[] =3D {
- 	[EFL] =3D HOST_EFLAGS,
- 	[UESP] =3D HOST_SP,
- 	[SS] =3D HOST_SS,
-+	[ORIG_EAX] =3D HOST_ORIG_AX,
- };
-=20
- int putreg(struct task_struct *child, int regno, unsigned long value)
-@@ -83,6 +84,7 @@ int putreg(struct task_struct *child, int regno, unsi=
-gned long value)
- 	case EAX:
- 	case EIP:
- 	case UESP:
-+	case ORIG_EAX:
- 		break;
- 	case FS:
- 		if (value && (value & 3) !=3D 3)
-@@ -108,9 +110,6 @@ int putreg(struct task_struct *child, int regno, un=
-signed long value)
- 		value &=3D FLAG_MASK;
- 		child->thread.regs.regs.gp[HOST_EFLAGS] |=3D value;
- 		return 0;
--	case ORIG_EAX:
--		child->thread.regs.regs.syscall =3D value;
--		return 0;
- 	default :
- 		panic("Bad register in putreg() : %d\n", regno);
- 	}
-@@ -143,8 +142,6 @@ unsigned long getreg(struct task_struct *child, int=
- regno)
-=20
- 	regno >>=3D 2;
- 	switch (regno) {
--	case ORIG_EAX:
--		return child->thread.regs.regs.syscall;
- 	case FS:
- 	case GS:
- 	case DS:
-@@ -163,6 +160,7 @@ unsigned long getreg(struct task_struct *child, int=
- regno)
- 	case EDI:
- 	case EBP:
- 	case EFL:
-+	case ORIG_EAX:
- 		break;
- 	default:
- 		panic("Bad register in getreg() : %d\n", regno);
---=20
-2.6.4
+Where can we find the UML selftests?
+
+Thanks,
+ Micka=C3=ABl
+
+
+--kXJg2g6i7GHL2aMFvhM3opR6obpSXqXMI
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEcBAEBCgAGBQJWeE6+AAoJECLe/t9zvWqV/qsH/A5OaD9hOvag5A2XmHPKbjV5
+rXQsDLmFUERVcMPRPsbq/FH3ddPBz5S/BAiIx5A6s55oR0xy3I2gMD7NDkciWWEe
+3/ncSX6h5t/BNnClwYeFhy6nCKKz6js4OleRV4UDKni1Ar1a3YDeN6fTCMw+lpK9
+Tbzl+YUIIYdZ+FuFU29EzYVPEk9PSew2jXB7l5Tqd6FFtz5S9giMqq+oF7DK4noW
+WaiCi09pxCCgdlF3VkxrHMw2AjxWbN6+xfnfRpBCwPuHZhjiMbmCo4dmv9SpNYvL
+Z8HnSHrI1MCtGlFaP6n4PXBuZHPWfTHEOn7ecsl2gvXTm/N9hqy0hQziDYRZBY0=
+=oDjJ
+-----END PGP SIGNATURE-----
+
+--kXJg2g6i7GHL2aMFvhM3opR6obpSXqXMI--
