@@ -1,102 +1,199 @@
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>
+From: Richard Weinberger <richard@nod.at>
 Subject: Re: [PATCH v1 1/4] um: Fix ptrace GETREGS/SETREGS bugs
-Date: Mon, 21 Dec 2015 10:23:50 +0100
-Message-ID: <5677C526.5070803@digikod.net>
+Date: Mon, 21 Dec 2015 11:13:33 +0100
+Message-ID: <5677D0CD.1070602@nod.at>
 References: <1450656209-2676-1-git-send-email-mic@digikod.net>
  <1450656209-2676-2-git-send-email-mic@digikod.net> <567745E3.1030509@nod.at>
  <5677BD23.4060602@digikod.net> <5677BFBD.3090200@nod.at>
+ <5677C526.5070803@digikod.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="4D5nbhGxWpCLo44TQCPe2lxCqdhclsRDj"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5677BFBD.3090200-/L3Ra7n9ekc@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Jeff Dike <jdike-OPE4K8JWMJJBDgjK7y7TUQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, James Hogan <james.hogan-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>, Thomas Meyer <thomas-VsYtu1Qij5c@public.gmane.org>, Nicolas Iooss <nicolas.iooss_linux-oWGTIYur0i8@public.gmane.org>, Anton Ivanov <aivanov-43mecJUBy8ZBDgjK7y7TUQ@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, user-mode-linux-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, user-mode-linux-user-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Content-Type: multipart/mixed;
+ boundary="------------090405060008050504000809"
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <5677C526.5070803@digikod.net>
+Sender: linux-doc-owner@vger.kernel.org
+To: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>, linux-kernel@vger.kernel.org
+Cc: Jonathan Corbet <corbet@lwn.net>, Jeff Dike <jdike@addtoit.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Shuah Khan <shuahkh@osg.samsung.com>, Chris Metcalf <cmetcalf@ezchip.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, James Hogan <james.hogan@imgtec.com>, Thomas Meyer <thomas@m3y3r.de>, Nicolas Iooss <nicolas.iooss_linux@m4x.org>, Anton Ivanov <aivanov@brocade.com>, linux-doc@vger.kernel.org, user-mode-linux-devel@lists.sourceforge.net, user-mode-linux-user@lists.sourceforge.net, linux-api@vger.kernel.org, Meredydd Luff <meredydd@senatehouse.org>, David Drysdale <drysdale@google.com>
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---4D5nbhGxWpCLo44TQCPe2lxCqdhclsRDj
+This is a multi-part message in MIME format.
+--------------090405060008050504000809
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-
-On 21/12/2015 10:00, Richard Weinberger wrote:
-> [sending the mail again, Thunderbird crashed :-\]
->=20
-> Am 21.12.2015 um 09:49 schrieb Micka=C3=ABl Sala=C3=BCn:
->>
->> On 21/12/2015 01:20, Richard Weinberger wrote:
->>> Am 21.12.2015 um 01:03 schrieb Micka=C3=ABl Sala=C3=BCn:
->>>> diff --git a/arch/um/kernel/skas/syscall.c b/arch/um/kernel/skas/sys=
-call.c
->>>> index 1683b8e..65f0d1a 100644
->>>> --- a/arch/um/kernel/skas/syscall.c
->>>> +++ b/arch/um/kernel/skas/syscall.c
->>>> @@ -7,6 +7,7 @@
->>>>  #include <linux/ptrace.h>
->>>>  #include <kern_util.h>
->>>>  #include <sysdep/ptrace.h>
->>>> +#include <sysdep/ptrace_user.h>
->>>>  #include <sysdep/syscalls.h>
->>>>  #include <os.h>
->>>> =20
->>>> @@ -16,12 +17,16 @@ void handle_syscall(struct uml_pt_regs *r)
->>>>  	long result;
->>>>  	int syscall;
->>>> =20
->>>> +	/* Save the syscall register. */
->>>> +	UPT_SYSCALL_NR(r) =3D PT_SYSCALL_NR(r->gp);
->>>> +
->>>>  	if (syscall_trace_enter(regs)) {
->>>>  		result =3D -ENOSYS;
->>>>  		goto out;
->>>>  	}
->>>> =20
->>>> -	syscall =3D get_syscall(r);
->>>> +	/* Get the syscall after being potentially updated with ptrace. */=
-
->>>> +	syscall =3D UPT_SYSCALL_NR(r);
+Am 21.12.2015 um 10:23 schrieb Mickaël Salaün:
+>>>> Doesn't this break the support for changing syscall numbers using PTRACE_SETREGS?
 >>>
->>> Doesn't this break the support for changing syscall numbers using PTR=
-ACE_SETREGS?
+>>> The logic is unchanged except updating the UPT_SYSCALL_NR before syscall_trace_enter(). I did my last tests with the x86_32 subarchitecture and all tests (from selftest/seccomp), including PTRACE_SETREGS for syscall numbers tests, passed. However, 2 of this tests still fail for x86_64 (only).
 >>
->> The logic is unchanged except updating the UPT_SYSCALL_NR before sysca=
-ll_trace_enter(). I did my last tests with the x86_32 subarchitecture and=
- all tests (from selftest/seccomp), including PTRACE_SETREGS for syscall =
-numbers tests, passed. However, 2 of this tests still fail for x86_64 (on=
-ly).
->=20
-> No, the logic is different.
-> syscall_trace_enter(regs) enters the ptrace() path and here registers c=
-an be changed.
-> Hence "syscall =3D UPT_SYSCALL_NR(r);" will see the old syscall number.=
+>> No, the logic is different.
+>> syscall_trace_enter(regs) enters the ptrace() path and here registers can be changed.
+>> Hence "syscall = UPT_SYSCALL_NR(r);" will see the old syscall number.
+>> UPT_SYSCALL_NR() returns the syscall number before the ptrace() path...
+> 
+> The thing is, PTRACE_SETREGS give access to *orig_ax* in the user_regs_struct from arch/x86/include/asm/user_*.h and selftest/seccomp only update this (virtual) register, not the EAX/RAX. Am I missing something?
 
-> UPT_SYSCALL_NR() returns the syscall number before the ptrace() path...=
+Sorry, meant orig...
+
+Please see the attached program. It proves that your patch is breaking stuff.
+The test is extracted from UML's selftests.
+
+Thanks,
+//richard
+
+--------------090405060008050504000809
+Content-Type: text/x-csrc;
+ name="ptsc.c"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+ filename="ptsc.c"
+
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <signal.h>
+#include <sys/ptrace.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/user.h>
+#include <sys/syscall.h>
+#include <sys/reg.h>
+
+#define CATCH_EINTR(expr) while ((errno = 0, ((expr) < 0)) && (errno == EINTR))
+#define PT_OFFSET(r) ((r) * sizeof(long))
+#define PT_SYSCALL_NR_OFFSET PT_OFFSET(ORIG_RAX)
+#define PTRACE_OLDSETOPTIONS      21
+
+static void ptrace_child(void)
+{
+        int ret;
+        int pid = syscall(__NR_getpid), ppid = getppid();
+        int sc_result;
+
+        if (ptrace(PTRACE_TRACEME, 0, 0, 0) < 0) {
+                perror("ptrace");
+                kill(pid, SIGKILL);
+        }
+        kill(pid, SIGSTOP);
+
+        /*
+         * This syscall will be intercepted by the parent. Don't call more than
+         * once, please.
+         */
+        sc_result = syscall(__NR_getpid);
+
+        if (sc_result == pid)
+                /* Nothing modified by the parent, we are running normally. */
+                ret = 1;
+        else if (sc_result == ppid)
+                /*
+                 * Expected in check_ptrace and check_sysemu when they succeed
+                 * in modifying the stack frame
+                 */
+                ret = 0;
+        else
+                /* Serious trouble! This could be caused by a bug in host 2.6
+                 * SKAS3/2.6 patch before release -V6, together with a bug in
+                 * the UML code itself.
+                 */
+                ret = 2;
+
+        exit(ret);
+}
+
+static int stop_ptraced_child(int pid, int exitcode, int mustexit)
+{
+        int status, n, ret = 0;
+
+        if (ptrace(PTRACE_CONT, pid, 0, 0) < 0) {
+                perror("stop_ptraced_child : ptrace failed");
+                return -1;
+        }
+        CATCH_EINTR(n = waitpid(pid, &status, 0));
+        if (!WIFEXITED(status) || (WEXITSTATUS(status) != exitcode)) {
+                int exit_with = WEXITSTATUS(status);
+                if (exit_with == 2)
+                        printf("check_ptrace : child exited with status 2. "
+                                  "\nDisabling SYSEMU support.\n");
+                printf("check_ptrace : child exited with exitcode %d, while "
+                          "expecting %d; status 0x%x\n", exit_with,
+                          exitcode, status);
+                if (mustexit)
+                        exit(1);
+                ret = -1;
+        }
+
+        return ret;
+}
 
 
-The thing is, PTRACE_SETREGS give access to *orig_ax* in the user_regs_st=
-ruct from arch/x86/include/asm/user_*.h and selftest/seccomp only update =
-this (virtual) register, not the EAX/RAX. Am I missing something?
+static int start_ptraced_child(void)
+{
+        int pid, n, status;
 
- Micka=C3=ABl
+        pid = fork();
+        if (pid == 0)
+                ptrace_child();
+        else if (pid < 0)
+                printf("start_ptraced_child : fork failed");
 
+        CATCH_EINTR(n = waitpid(pid, &status, WUNTRACED));
+        if (n < 0)
+                printf("check_ptrace : waitpid failed");
+        if (!WIFSTOPPED(status) || (WSTOPSIG(status) != SIGSTOP))
+                printf("check_ptrace : expected SIGSTOP, got status = %d",
+                      status);
 
---4D5nbhGxWpCLo44TQCPe2lxCqdhclsRDj
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+        return pid;
+}
 
------BEGIN PGP SIGNATURE-----
+static void check_ptrace(void)
+{       
+        int pid, syscall, n, status;
+        
+        printf("Checking that ptrace can change system call numbers...");
+	fflush(stdout);
 
-iQEcBAEBCgAGBQJWd8UnAAoJECLe/t9zvWqV4scIAJVJe6FwebC//iEIFe4Kc7hZ
-YpXJyMIzjfdALnwqrXZwHaNvT2PtUCTTv9/Us4g/tPm3zNNO0OMl5bWsV7E4UbxV
-q084cdNUa9y882fXn6jfLDvO2sA7Z+nh/F7yXqLbRmOmSbR3GmpwmXgjvttEmEIX
-gY4Z/CTDY5vPBckArQkg0ikMKQBiNJobi+PNgIsMwfRzdgVzxggd5w/p7Sv1mOTk
-/J99QI/SOxt16GcWMhb2RaeM9lAQPiwm1u1qaauIzlaj3G8HXpNX9OBgCiV/fDeI
-rsgWSlWIWpqguutExkEq0GOcDPGwteq7Zq8SNtBWX+rJ66z4ey9RHTZP+aM7Jnk=
-=Bcug
------END PGP SIGNATURE-----
+        pid = start_ptraced_child();
 
---4D5nbhGxWpCLo44TQCPe2lxCqdhclsRDj--
+        if ((ptrace(PTRACE_OLDSETOPTIONS, pid, 0,
+                   (void *) PTRACE_O_TRACESYSGOOD) < 0))
+                printf("check_ptrace: PTRACE_OLDSETOPTIONS failed");
+
+        while (1) {
+                if (ptrace(PTRACE_SYSCALL, pid, 0, 0) < 0)
+                        printf("check_ptrace : ptrace failed");
+                
+                CATCH_EINTR(n = waitpid(pid, &status, WUNTRACED));
+                if (n < 0)
+                        printf("check_ptrace : wait failed");
+                
+                if (!WIFSTOPPED(status) ||
+                   (WSTOPSIG(status) != (SIGTRAP | 0x80)))
+                        printf("check_ptrace : expected (SIGTRAP|0x80), "
+                               "got status = %d", status);
+                
+                syscall = ptrace(PTRACE_PEEKUSER, pid, PT_SYSCALL_NR_OFFSET,
+                                 0);
+                if (syscall == __NR_getpid) {
+                        n = ptrace(PTRACE_POKEUSER, pid, PT_SYSCALL_NR_OFFSET,
+                                   __NR_getppid);
+                        if (n < 0)
+                                printf("check_ptrace : failed to modify "
+                                             "system call");
+                        break;
+                }
+        }
+        stop_ptraced_child(pid, 0, 1);
+        printf("OK\n");
+}
+
+int main(void)
+{
+	check_ptrace();
+
+	return 0;
+}
+
+--------------090405060008050504000809--
