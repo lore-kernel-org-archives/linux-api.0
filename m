@@ -1,66 +1,49 @@
 From: Jessica Yu <jeyu@redhat.com>
-Subject: Re: module: preserve Elf information for livepatch modules
-Date: Mon, 21 Dec 2015 00:44:20 -0500
-Message-ID: <20151221054420.GA22850@packer-debian-8-amd64.digitalocean.com>
+Subject: Re: livepatch: reuse module loader code to write relocations
+Date: Mon, 21 Dec 2015 00:57:42 -0500
+Message-ID: <20151221055742.GB22850@packer-debian-8-amd64.digitalocean.com>
 References: <1448943679-3412-1-git-send-email-jeyu@redhat.com>
- <1448943679-3412-3-git-send-email-jeyu@redhat.com>
- <20151217162613.GH3729@pathway.suse.cz>
+ <1448943679-3412-5-git-send-email-jeyu@redhat.com>
+ <20151208183844.GC14846@treble.redhat.com>
+ <20151209191013.GA25387@packer-debian-8-amd64.digitalocean.com>
+ <20151216054048.GA28258@packer-debian-8-amd64.digitalocean.com>
+ <20151217154500.GG3729@pathway.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii; format=flowed
 Return-path: <linux-doc-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20151217162613.GH3729@pathway.suse.cz>
+In-Reply-To: <20151217154500.GG3729@pathway.suse.cz>
 Sender: linux-doc-owner@vger.kernel.org
 To: Petr Mladek <pmladek@suse.com>
-Cc: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>, Rusty Russell <rusty@rustcorp.com.au>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-+++ Petr Mladek [17/12/15 17:26 +0100]:
->On Mon 2015-11-30 23:21:15, Jessica Yu wrote:
->> For livepatch modules, copy Elf section, symbol, and string information
->> from the load_info struct in the module loader.
++++ Petr Mladek [17/12/15 16:45 +0100]:
+>On Wed 2015-12-16 00:40:48, Jessica Yu wrote:
+>> Turns out the string parsing stuff, even with the help of lib/string.c, doesn't
+>> look very pretty. As I'm working on v3, I'm starting to think having
+>> klp_write_object_relocations() loop simply through all the elf sections might
+>> not be a good idea. Let me explain.
 >>
->> Livepatch uses special relocation sections in order to be able to patch
->> modules that are not yet loaded, as well as apply patches to the kernel
->> when the addresses of symbols cannot be determined at compile time (for
->> example, when kaslr is enabled). Livepatch modules must preserve Elf
->> information such as section indices in order to apply the remaining
->> relocation sections at the appropriate time (i.e. when the target module
->> loads).
->>
->> Signed-off-by: Jessica Yu <jeyu@redhat.com>
->> ---
->>  include/linux/module.h |  9 +++++
->>  kernel/module.c        | 98 ++++++++++++++++++++++++++++++++++++++++++++++++--
->>  2 files changed, 105 insertions(+), 2 deletions(-)
->>
->> diff --git a/include/linux/module.h b/include/linux/module.h
->> index 3a19c79..9b46256 100644
->> --- a/include/linux/module.h
->> +++ b/include/linux/module.h
->> @@ -425,6 +425,14 @@ struct module {
->>
->>  	/* Notes attributes */
->>  	struct module_notes_attrs *notes_attrs;
->> +
->> +	/* Elf information (optionally saved) */
->> +	Elf_Ehdr *hdr;
->> +	Elf_Shdr *sechdrs;
->> +	char *secstrings;
->> +	struct {
->> +		unsigned int sym, str, mod, vers, info, pcpu;
->> +	} index;
->>  #endif
+>> I don't like the amount of string manipulation code that would potentially come
+>> with this change. Even with a string as simple as ".klp.rela.objname", we'll
+>> end up with a bunch of kstrdup's/kmalloc's and kfree's (unless we modify and
+>> chop the section name string in place, which I don't think we should do) that
+>> are going to be required at every iteration of the loop, all just to be able to
+>> call strcmp() and see if we're dealing with a klp rela section that belongs to
+>> the object in question. This also leads to more complicated error handling.
 >
->I would hide this into a structure. It is 3 pointers and 6 integers
->that are mostly unused. I think about using a pointer to struct load_info
->here. We could set the unused stuff to zero and NULL.
+>I do not think that we need to allocate and free buffers every time
+>we compare a substring.
 >
->Any better idea how to share the definition with struct load_info
->is welcome.
+>One possibility is to find the position of the substring using
+>strchr(). Then you could compare it using strncmp() and pass there
+>the pointer where the substring begins.
 
-Sure. If we want to encapsulate all this information, we can perhaps
-replace this with a single pointer to a copy of load_info, and maybe
-move the struct definition of load_info to module.h.
+Hm, yes you're right. Specifically, it looks like strcspn() would also
+be useful for this situation (i.e. calculate the length of a substring
+that does not contain certain characters); combined with strncmp(),
+this should make the string code much simpler, and no more buffer
+allocating/freeing. :-)
 
 Jessica
