@@ -1,44 +1,47 @@
-From: "Luis R. Rodriguez" <mcgrof@suse.com>
-Subject: Re: [PATCH v2 4/5] firmware: actually return NULL on failed
- request_firmware_nowait()
-Date: Mon, 21 Dec 2015 20:06:10 +0100
-Message-ID: <20151221190609.GP20409@wotan.suse.de>
-References: <1449701429-121423-1-git-send-email-computersforpeace@gmail.com>
- <1449701429-121423-4-git-send-email-computersforpeace@gmail.com>
+From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
+Subject: [PATCH v2 0/4] um: Add seccomp support
+Date: Mon, 21 Dec 2015 20:29:19 +0100
+Message-ID: <1450726163-8399-1-git-send-email-mic@digikod.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1449701429-121423-4-git-send-email-computersforpeace@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Brian Norris <computersforpeace@gmail.com>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ming Lei <ming.lei@canonical.com>, Kees Cook <keescook@chromium.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Jonathan Corbet <corbet@lwn.net>, Jeff Dike <jdike@addtoit.com>, Richard Weinberger <richard@nod.at>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Shuah Khan <shuahkh@osg.samsung.com>, Chris Metcalf <cmetcalf@ezchip.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, James Hogan <james.hogan@imgtec.com>, Thomas Meyer <thomas@m3y3r.de>, Nicolas Iooss <nicolas.iooss_linux@m4x.org>, Anton Ivanov <aivanov@brocade.com>, linux-doc@vger.kernel.org, user-mode-linux-devel@lists.sourceforge.net, user-mode-linux-user@lists.sourceforge.net, linux-api@vger.kernel.org, Meredydd Luff <meredydd@senatehouse.o>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Dec 09, 2015 at 02:50:28PM -0800, Brian Norris wrote:
-> The kerneldoc for request_firmware_nowait() says that it may call the
-> provided cont() callback with @fw == NULL, if the firmware request
-> fails. However, this is not the case when called with an empty string
-> (""). This case is short-circuited by the 'name[0] == '\0'' check
-> introduced in commit 471b095dfe0d ("firmware_class: make sure fw requests
-> contain a name"), so _request_firmware() never gets to set the fw to
-> NULL.
-> 
-> Noticed while using the new 'trigger_async_request' testing hook:
+This series add seccomp support to User-mode Linux (i386 and x86_64
+subarchitectures) and fix ptrace issues. This apply on v4.4-rc4 and pas=
+s all
+the 48 tests from selftest/seccomp plus the UML ptsc test.
 
-<-- snip -->
+Changes since v1; addressed Richard Weinberger's comments:
+* fix a new PTRACE_SETREGS bug on x86_64 [1/4]
+* fix an old PTRACE_SETREGS bug when updating orig_ax on i386 [1/4]
 
-> 
->     # printf '\x00' > /sys/devices/virtual/misc/test_firmware/trigger_async_request
->     [   32.126322] test_firmware: loading ''
->     [   32.129995] test_firmware: failed to async load firmware
->     -bash: printf: write error: No such device
-> 
-> Fixes: 471b095dfe0d ("firmware_class: make sure fw requests contain a name")
-> Signed-off-by: Brian Norris <computersforpeace@gmail.com>
-> Acked-by: Ming Lei <ming.lei@canonical.com>
-> Acked-by: Kees Cook <keescook@chromium.org>
+Regards,
+ Micka=C3=ABl
 
-Acked-by: Luis R. Rodriguez <mcgrof@suse.com>
+Micka=C3=ABl Sala=C3=BCn (4):
+  um: Fix ptrace GETREGS/SETREGS bugs
+  selftests/seccomp: Remove the need for HAVE_ARCH_TRACEHOOK
+  um: Add full asm/syscall.h support
+  um: Add seccomp support
 
-  Luis
+ .../seccomp/seccomp-filter/arch-support.txt        |   2 +-
+ arch/um/Kconfig.common                             |   1 +
+ arch/um/Kconfig.um                                 |  16 +++
+ arch/um/include/asm/syscall-generic.h              | 138 +++++++++++++=
+++++++++
+ arch/um/include/asm/thread_info.h                  |   2 +
+ arch/um/kernel/skas/syscall.c                      |  30 +++--
+ arch/um/os-Linux/skas/process.c                    |   7 --
+ arch/x86/um/asm/syscall.h                          |   1 +
+ arch/x86/um/ptrace_32.c                            |   8 +-
+ tools/testing/selftests/seccomp/seccomp_bpf.c      |  27 +++-
+ 10 files changed, 205 insertions(+), 27 deletions(-)
+ create mode 100644 arch/um/include/asm/syscall-generic.h
+
+--=20
+2.6.4
