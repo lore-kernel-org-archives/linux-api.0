@@ -1,337 +1,111 @@
-From: serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
-Subject: [PATCH 1/8] kernfs: Add API to generate relative kernfs path
-Date: Tue, 22 Dec 2015 22:23:22 -0600
-Message-ID: <1450844609-9194-2-git-send-email-serge.hallyn@ubuntu.com>
-References: <1450844609-9194-1-git-send-email-serge.hallyn@ubuntu.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <1450844609-9194-1-git-send-email-serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+From: serge.hallyn@ubuntu.com
+Subject: CGroup Namespaces (v8)
+Date: Tue, 22 Dec 2015 22:23:21 -0600
+Message-ID: <1450844609-9194-1-git-send-email-serge.hallyn@ubuntu.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: adityakali@google.com, tj@kernel.org, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, cgroups@vger.kernel.org, lxc-devel@lists.linuxcontainers.org, akpm@linux-foundation.org, ebiederm@xmission.com, gregkh@linuxfoundation.org, lizefan@huawei.com, hannes@cmpxchg.org
 List-Id: linux-api@vger.kernel.org
 
-From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Hi,
 
-The new function kernfs_path_from_node() generates and returns kernfs
-path of a given kernfs_node relative to a given parent kernfs_node.
+following is a revised set of the CGroup Namespace patchset which Aditya
+Kali has previously sent.  The code can also be found in the cgroupns.v8
+branch of
 
-Signed-off-by: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Signed-off-by: Serge E. Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
----
-Changelog 20151125:
-  - Fully-wing multilinecomments
-  - Rework kernfs_path_from_node_locked() logic
-  - Replace BUG_ONs with returning NULL
-  - Use a const char* for /.. and precalculate its size
-Changelog 20151130:
-  - Update kernfs_path_from_node_locked comment
-Changelog 20151208:
-  - kernfs_node_distance:
-    * Remove BUG_ON(NULL)s
-    * Rename kernfs_node_distance to kernfs_depth
-  - kernfs_common-ancestor:
-    * Remove useless checks for depth == 0
-    * Add check to ensure nodes are from same root
-  - kernfs_path_from_node_locked:
-    * Remove needless __must_check
-    * Put p;len on its own decl line.
-    * Fix wrong WARN_ONCE usage
-Changelog 20151209:
-  - kernfs_path_from_node: change arguments to 'to' and 'from', and
-    change their order.
-Changelog 20151222:
-  - kernfs_path_from_node{,_locked}: return the string length.
-    kernfs_path is gpl-exported, so changing their return value seemed
-    ill-advised, but if noone minds I can update it too.
----
- fs/kernfs/dir.c        |  205 ++++++++++++++++++++++++++++++++++++++++--------
- include/linux/kernfs.h |    9 ++-
- 2 files changed, 179 insertions(+), 35 deletions(-)
+https://git.kernel.org/cgit/linux/kernel/git/sergeh/linux-security.git/
 
-diff --git a/fs/kernfs/dir.c b/fs/kernfs/dir.c
-index 742bf4a..e82b9a1 100644
---- a/fs/kernfs/dir.c
-+++ b/fs/kernfs/dir.c
-@@ -44,28 +44,123 @@ static int kernfs_name_locked(struct kernfs_node *kn, char *buf, size_t buflen)
- 	return strlcpy(buf, kn->parent ? kn->name : "/", buflen);
- }
- 
--static char * __must_check kernfs_path_locked(struct kernfs_node *kn, char *buf,
--					      size_t buflen)
-+/* kernfs_node_depth - compute depth from @from to @to */
-+static size_t kernfs_depth(struct kernfs_node *from, struct kernfs_node *to)
- {
--	char *p = buf + buflen;
--	int len;
-+	size_t depth = 0;
- 
--	*--p = '\0';
-+	while (to->parent && to != from) {
-+		depth++;
-+		to = to->parent;
-+	}
-+	return depth;
-+}
- 
--	do {
--		len = strlen(kn->name);
--		if (p - buf < len + 1) {
--			buf[0] = '\0';
--			p = NULL;
--			break;
--		}
--		p -= len;
--		memcpy(p, kn->name, len);
--		*--p = '/';
--		kn = kn->parent;
--	} while (kn && kn->parent);
-+static struct kernfs_node *kernfs_common_ancestor(struct kernfs_node *a,
-+						  struct kernfs_node *b)
-+{
-+	size_t da, db;
-+	struct kernfs_root *ra = kernfs_root(a), *rb = kernfs_root(b);
-+
-+	if (ra != rb)
-+		return NULL;
-+
-+	da = kernfs_depth(ra->kn, a);
-+	db = kernfs_depth(rb->kn, b);
-+
-+	while (da > db) {
-+		a = a->parent;
-+		da--;
-+	}
-+	while (db > da) {
-+		b = b->parent;
-+		db--;
-+	}
-+
-+	/* worst case b and a will be the same at root */
-+	while (b != a) {
-+		b = b->parent;
-+		a = a->parent;
-+	}
-+
-+	return a;
-+}
-+
-+/**
-+ * kernfs_path_from_node_locked - find a pseudo-absolute path to @kn_to,
-+ * where kn_from is treated as root of the path.
-+ * @kn_from: kernfs node which should be treated as root for the path
-+ * @kn_to: kernfs node to which path is needed
-+ * @buf: buffer to copy the path into
-+ * @buflen: size of @buf
-+ *
-+ * We need to handle couple of scenarios here:
-+ * [1] when @kn_from is an ancestor of @kn_to at some level
-+ * kn_from: /n1/n2/n3
-+ * kn_to:   /n1/n2/n3/n4/n5
-+ * result:  /n4/n5
-+ *
-+ * [2] when @kn_from is on a different hierarchy and we need to find common
-+ * ancestor between @kn_from and @kn_to.
-+ * kn_from: /n1/n2/n3/n4
-+ * kn_to:   /n1/n2/n5
-+ * result:  /../../n5
-+ * OR
-+ * kn_from: /n1/n2/n3/n4/n5   [depth=5]
-+ * kn_to:   /n1/n2/n3         [depth=3]
-+ * result:  /../..
-+ *
-+ * return value: length of the string.  If greater than buflen,
-+ * then contents of buf are undefined.  On error, -1 is returned.
-+ */
-+static int
-+kernfs_path_from_node_locked(struct kernfs_node *kn_to,
-+			     struct kernfs_node *kn_from, char *buf,
-+			     size_t buflen)
-+{
-+	struct kernfs_node *kn, *common;
-+	const char parent_str[] = "/..";
-+	size_t depth_from, depth_to, len = 0, nlen = 0;
-+	char *p;
-+	int i;
-+
-+	if (!kn_from)
-+		kn_from = kernfs_root(kn_to)->kn;
-+
-+	if (kn_from == kn_to)
-+		return strlcpy(buf, "/", buflen);
-+
-+	common = kernfs_common_ancestor(kn_from, kn_to);
-+	if (WARN_ON(!common))
-+		return -1;
-+
-+	depth_to = kernfs_depth(common, kn_to);
-+	depth_from = kernfs_depth(common, kn_from);
-+
-+	if (buf)
-+		buf[0] = '\0';
-+
-+	for (i = 0; i < depth_from; i++)
-+		len += strlcpy(buf + len, parent_str,
-+			       len < buflen ? buflen - len : 0);
-+
-+	/* Calculate how many bytes we need for the rest */
-+	for (kn = kn_to; kn != common; kn = kn->parent)
-+		nlen += strlen(kn->name) + 1;
- 
--	return p;
-+	if (len + nlen >= buflen)
-+		return len + nlen;
-+
-+	p = buf + len + nlen;
-+	*p = '\0';
-+	for (kn = kn_to; kn != common; kn = kn->parent) {
-+		nlen = strlen(kn->name);
-+		p -= nlen;
-+		memcpy(p, kn->name, nlen);
-+		*(--p) = '/';
-+	}
-+
-+	return len + nlen;
- }
- 
- /**
-@@ -115,6 +210,34 @@ size_t kernfs_path_len(struct kernfs_node *kn)
- }
- 
- /**
-+ * kernfs_path_from_node - build path of node @to relative to @from.
-+ * @from: parent kernfs_node relative to which we need to build the path
-+ * @to: kernfs_node of interest
-+ * @buf: buffer to copy @to's path into
-+ * @buflen: size of @buf
-+ *
-+ * Builds @to's path relative to @from in @buf. @from and @to must
-+ * be on the same kernfs-root. If @from is not parent of @to, then a relative
-+ * path (which includes '..'s) as needed to reach from @from to @to is
-+ * returned.
-+ * 
-+ * If @buf isn't long enough, the return value will be greater than @buflen
-+ * and @buf contents are undefined.
-+ */
-+int kernfs_path_from_node(struct kernfs_node *to, struct kernfs_node *from,
-+			  char *buf, size_t buflen)
-+{
-+	unsigned long flags;
-+	int ret;
-+
-+	spin_lock_irqsave(&kernfs_rename_lock, flags);
-+	ret = kernfs_path_from_node_locked(to, from, buf, buflen);
-+	spin_unlock_irqrestore(&kernfs_rename_lock, flags);
-+	return ret;
-+}
-+EXPORT_SYMBOL_GPL(kernfs_path_from_node);
-+
-+/**
-  * kernfs_path - build full path of a given node
-  * @kn: kernfs_node of interest
-  * @buf: buffer to copy @kn's name into
-@@ -127,13 +250,12 @@ size_t kernfs_path_len(struct kernfs_node *kn)
-  */
- char *kernfs_path(struct kernfs_node *kn, char *buf, size_t buflen)
- {
--	unsigned long flags;
--	char *p;
-+	int ret;
- 
--	spin_lock_irqsave(&kernfs_rename_lock, flags);
--	p = kernfs_path_locked(kn, buf, buflen);
--	spin_unlock_irqrestore(&kernfs_rename_lock, flags);
--	return p;
-+	ret = kernfs_path_from_node(kn, NULL, buf, buflen);
-+	if (ret < 0 || ret >= buflen)
-+		return NULL;
-+	return buf;
- }
- EXPORT_SYMBOL_GPL(kernfs_path);
- 
-@@ -164,18 +286,39 @@ void pr_cont_kernfs_name(struct kernfs_node *kn)
- void pr_cont_kernfs_path(struct kernfs_node *kn)
- {
- 	unsigned long flags;
--	char *p;
-+	char *p = NULL;
-+	int sz1, sz2;
- 
- 	spin_lock_irqsave(&kernfs_rename_lock, flags);
- 
--	p = kernfs_path_locked(kn, kernfs_pr_cont_buf,
--			       sizeof(kernfs_pr_cont_buf));
--	if (p)
--		pr_cont("%s", p);
--	else
--		pr_cont("<name too long>");
-+	sz1 = kernfs_path_from_node_locked(kn, NULL, kernfs_pr_cont_buf,
-+					   sizeof(kernfs_pr_cont_buf));
-+	if (sz1 < 0) {
-+		pr_cont("(error)");
-+		goto out;
-+	}
-+
-+	if (sz1 < sizeof(kernfs_pr_cont_buf)) {
-+		pr_cont("%s", kernfs_pr_cont_buf);
-+		goto out;
-+	}
-+
-+	p = kmalloc(sz1 + 1, GFP_NOFS);
-+	if (!p) {
-+		pr_cont("(out of memory)");
-+		goto out;
-+	}
-+	sz2 = kernfs_path_from_node_locked(kn, NULL, p, sz1 + 1);
-+	if (sz2 > sz1 || sz2 < 0) {
-+		pr_cont("(error)");
-+		goto out;
-+	}
-+
-+	pr_cont("%s", p);
- 
-+out:
- 	spin_unlock_irqrestore(&kernfs_rename_lock, flags);
-+	kfree(p);
- }
- 
- /**
-diff --git a/include/linux/kernfs.h b/include/linux/kernfs.h
-index af51df3..716bfde 100644
---- a/include/linux/kernfs.h
-+++ b/include/linux/kernfs.h
-@@ -267,8 +267,9 @@ static inline bool kernfs_ns_enabled(struct kernfs_node *kn)
- 
- int kernfs_name(struct kernfs_node *kn, char *buf, size_t buflen);
- size_t kernfs_path_len(struct kernfs_node *kn);
--char * __must_check kernfs_path(struct kernfs_node *kn, char *buf,
--				size_t buflen);
-+int kernfs_path_from_node(struct kernfs_node *root_kn, struct kernfs_node *kn,
-+			  char *buf, size_t buflen);
-+char *kernfs_path(struct kernfs_node *kn, char *buf, size_t buflen);
- void pr_cont_kernfs_name(struct kernfs_node *kn);
- void pr_cont_kernfs_path(struct kernfs_node *kn);
- struct kernfs_node *kernfs_get_parent(struct kernfs_node *kn);
-@@ -338,8 +339,8 @@ static inline int kernfs_name(struct kernfs_node *kn, char *buf, size_t buflen)
- static inline size_t kernfs_path_len(struct kernfs_node *kn)
- { return 0; }
- 
--static inline char * __must_check kernfs_path(struct kernfs_node *kn, char *buf,
--					      size_t buflen)
-+static inline char *kernfs_path(struct kernfs_node *kn, char *buf,
-+				size_t buflen)
- { return NULL; }
- 
- static inline void pr_cont_kernfs_name(struct kernfs_node *kn) { }
--- 
-1.7.9.5
+To summarize the semantics:
+
+1. CLONE_NEWCGROUP re-uses 0x02000000, which was previously CLONE_STOPPED
+
+2. unsharing a cgroup namespace makes all your current cgroups your new
+cgroup root.
+
+3. /proc/pid/cgroup always shows cgroup paths relative to the reader's
+cgroup namespce root.  A task outside of  your cgroup looks like
+
+	8:memory:/../../..
+
+4. when a task mounts a cgroupfs, the cgroup which shows up as root depends
+on the mounting task's  cgroup namespace.
+
+5. setns to a cgroup namespace switches your cgroup namespace but not
+your cgroups.
+
+With this, using github.com/hallyn/lxc #2015-11-09/cgns (and
+github.com/hallyn/lxcfs #2015-11-10/cgns) we can start a container in a full
+proper cgroup namespace, avoiding either cgmanager or lxcfs cgroup bind mounts.
+
+This is completely backward compatible and will be completely invisible
+to any existing cgroup users (except for those running inside a cgroup
+namespace and looking at /proc/pid/cgroup of tasks outside their
+namespace.)
+
+Changes from V7:
+1. Rework kernfs_path_from_node_locked to return the string length
+2. Rename and reorder args to kernfs_path_from_node
+3. cgroup.c: undo accidental conversoins to inline
+4. cgroup.h: move ns declarations to bottom.
+5. Rework the documentation to fit the style of the rest of cgroup.txt
+
+Changes from V6:
+1. Switch to some WARN_ONs to provide stack traces
+2. Rename kernfs_node_distance to kernfs_depth
+3. Make sure kernfs_common_ancestor() nodes are from same root
+4. Split kernfs changes for cgroup_mount into separate patch
+5. Rename kernfs_obtain_root to kernfs_node_dentry
+(And more, see patch changelogs)
+
+Changes from V5:
+1. To get a root dentry for cgroup namespace mount, walk the path from the
+   kernfs root dentry.
+
+Changes from V4:
+1. Move the FS_USERNS_MOUNT flag to last patch
+2. Rebase onto cgroup/for-4.5
+3. Don't non-init user namespaces to bind new subsystems when mounting.
+4. Address feedback from Tejun (thanks).  Specificaly, not addressed:
+   . kernfs_obtain_root - walking dentry from kernfs root.
+     (I think that's the only piece)
+5. Dropped unused get_task_cgroup fn/patch.
+6. Reworked kernfs_path_from_node_locked() to try to simplify the logic.
+   It now finds a common ancestor, walks from the source to it, then back
+   up to the target.
+
+Changes from V3:
+1. Rebased onto latest cgroup changes.  In particular switch to
+   css_set_lock and ns_common.
+2. Support all hierarchies.
+
+Changes from V2:
+1. Added documentation in Documentation/cgroups/namespace.txt
+2. Fixed a bug that caused crash
+3. Incorporated some other suggestions from last patchset:
+   - removed use of threadgroup_lock() while creating new cgroupns
+   - use task_lock() instead of rcu_read_lock() while accessing
+     task->nsproxy
+   - optimized setns() to own cgroupns
+   - simplified code around sane-behavior mount option parsing
+4. Restored ACKs from Serge Hallyn from v1 on few patches that have
+   not changed since then.
+
+Changes from V1:
+1. No pinning of processes within cgroupns. Tasks can be freely moved
+   across cgroups even outside of their cgroupns-root. Usual DAC/MAC policies
+   apply as before.
+2. Path in /proc/<pid>/cgroup is now always shown and is relative to
+   cgroupns-root. So path can contain '/..' strings depending on cgroupns-root
+   of the reader and cgroup of <pid>.
+3. setns() does not require the process to first move under target
+   cgroupns-root.
+
+Changes form RFC (V0):
+1. setns support for cgroupns
+2. 'mount -t cgroup cgroup <mntpt>' from inside a cgroupns now
+   mounts the cgroup hierarcy with cgroupns-root as the filesystem root.
+3. writes to cgroup files outside of cgroupns-root are not allowed
+4. visibility of /proc/<pid>/cgroup is further restricted by not showing
+   anything if the <pid> is in a sibling cgroupns and its cgroup falls outside
+   your cgroupns-root.
