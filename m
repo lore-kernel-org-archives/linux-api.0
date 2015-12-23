@@ -1,7 +1,7 @@
 From: serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
-Subject: [PATCH 8/8] Add FS_USERNS_FLAG to cgroup fs
-Date: Tue, 22 Dec 2015 22:23:29 -0600
-Message-ID: <1450844609-9194-9-git-send-email-serge.hallyn@ubuntu.com>
+Subject: [PATCH 6/8] cgroup: mount cgroupns-root when inside non-init cgroupns
+Date: Tue, 22 Dec 2015 22:23:27 -0600
+Message-ID: <1450844609-9194-7-git-send-email-serge.hallyn@ubuntu.com>
 References: <1450844609-9194-1-git-send-email-serge.hallyn@ubuntu.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,40 +23,111 @@ List-Id: linux-api@vger.kernel.org
 
 From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 
-allowing root in a non-init user namespace to mount it.  This should
-now be safe, because
-
-1. non-init-root cannot mount a previously unbound subsystem
-2. the task doing the mount must be privileged with respect to the
-   user namespace owning the cgroup namespace
-3. the mounted subsystem will have its current cgroup as the root dentry.
-   the permissions will be unchanged, so tasks will receive no new
-   privilege over the cgroups which they did not have on the original
-   mounts.
+This patch enables cgroup mounting inside userns when a process
+as appropriate privileges. The cgroup filesystem mounted is
+rooted at the cgroupns-root. Thus, in a container-setup, only
+the hierarchy under the cgroupns-root is exposed inside the container.
+This allows container management tools to run inside the containers
+without depending on any global state.
 
 Signed-off-by: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 ---
- kernel/cgroup.c |    2 ++
- 1 file changed, 2 insertions(+)
+Changelog:
+	20151116 - Don't allow user namespaces to bind new subsystems
+	20151118 - postpone the FS_USERNS_MOUNT flag until the
+	           last patch, until we can convince ourselves it
+		   is safe.
+	20151207 - Switch to walking up the kernfs path from kn root.
+		 - Group initialized variables
+		 - Explain the capable(CAP_SYS_ADMIN) check
+		 - Style fixes
+---
+ kernel/cgroup.c |   40 +++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 39 insertions(+), 1 deletion(-)
 
 diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-index 99c4443..587247e 100644
+index e85fbf9..99c4443 100644
 --- a/kernel/cgroup.c
 +++ b/kernel/cgroup.c
-@@ -2208,12 +2208,14 @@ static struct file_system_type cgroup_fs_type = {
- 	.name = "cgroup",
- 	.mount = cgroup_mount,
- 	.kill_sb = cgroup_kill_sb,
-+	.fs_flags = FS_USERNS_MOUNT,
- };
+@@ -1983,6 +1983,7 @@ static struct dentry *cgroup_mount(struct file_system_type *fs_type,
+ {
+ 	bool is_v2 = fs_type == &cgroup2_fs_type;
+ 	struct super_block *pinned_sb = NULL;
++	struct cgroup_namespace *ns = current->nsproxy->cgroup_ns;
+ 	struct cgroup_subsys *ss;
+ 	struct cgroup_root *root;
+ 	struct cgroup_sb_opts opts;
+@@ -1991,6 +1992,14 @@ static struct dentry *cgroup_mount(struct file_system_type *fs_type,
+ 	int i;
+ 	bool new_sb;
  
- static struct file_system_type cgroup2_fs_type = {
- 	.name = "cgroup2",
- 	.mount = cgroup_mount,
- 	.kill_sb = cgroup_kill_sb,
-+	.fs_flags = FS_USERNS_MOUNT,
- };
++	get_cgroup_ns(ns);
++
++	/* Check if the caller has permission to mount. */
++	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN)) {
++		put_cgroup_ns(ns);
++		return ERR_PTR(-EPERM);
++	}
++
+ 	/*
+ 	 * The first time anyone tries to mount a cgroup, enable the list
+ 	 * linking each css_set to its tasks and fix up all existing tasks.
+@@ -2106,6 +2115,16 @@ static struct dentry *cgroup_mount(struct file_system_type *fs_type,
+ 		goto out_unlock;
+ 	}
  
- static int cgroup_path_ns(struct cgroup *cgrp, char *buf, size_t buflen,
++	/*
++	 * We know this subsystem has not yet been bound.  Users in a non-init
++	 * user namespace may only mount hierarchies with no bound subsystems,
++	 * i.e. 'none,name=user1'
++	 */
++	if (!opts.none && !capable(CAP_SYS_ADMIN)) {
++		ret = -EPERM;
++		goto out_unlock;
++	}
++
+ 	root = kzalloc(sizeof(*root), GFP_KERNEL);
+ 	if (!root) {
+ 		ret = -ENOMEM;
+@@ -2124,12 +2143,30 @@ out_free:
+ 	kfree(opts.release_agent);
+ 	kfree(opts.name);
+ 
+-	if (ret)
++	if (ret) {
++		put_cgroup_ns(ns);
+ 		return ERR_PTR(ret);
++	}
+ out_mount:
+ 	dentry = kernfs_mount(fs_type, flags, root->kf_root,
+ 			      is_v2 ? CGROUP2_SUPER_MAGIC : CGROUP_SUPER_MAGIC,
+ 			      &new_sb);
++
++	/*
++	 * In non-init cgroup namespace, instead of root cgroup's
++	 * dentry, we return the dentry corresponding to the
++	 * cgroupns->root_cgrp.
++	 */
++	if (!IS_ERR(dentry) && ns != &init_cgroup_ns) {
++		struct dentry *nsdentry;
++		struct cgroup *cgrp;
++
++		cgrp = cset_cgroup_from_root(ns->root_cset, root);
++		nsdentry = kernfs_node_dentry(cgrp->kn, dentry->d_sb);
++		dput(dentry);
++		dentry = nsdentry;
++	}
++
+ 	if (IS_ERR(dentry) || !new_sb)
+ 		cgroup_put(&root->cgrp);
+ 
+@@ -2142,6 +2179,7 @@ out_mount:
+ 		deactivate_super(pinned_sb);
+ 	}
+ 
++	put_cgroup_ns(ns);
+ 	return dentry;
+ }
+ 
 -- 
 1.7.9.5
