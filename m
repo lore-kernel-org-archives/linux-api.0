@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 5/6] direct-io: only use block polling if explicitly requested
-Date: Thu, 24 Dec 2015 15:14:23 +0100
-Message-ID: <1450966464-6847-6-git-send-email-hch@lst.de>
+Subject: [PATCH 6/6] blk-mq: enable polling support by default
+Date: Thu, 24 Dec 2015 15:14:24 +0100
+Message-ID: <1450966464-6847-7-git-send-email-hch@lst.de>
 References: <1450966464-6847-1-git-send-email-hch@lst.de>
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
 In-Reply-To: <1450966464-6847-1-git-send-email-hch@lst.de>
@@ -10,25 +10,28 @@ To: viro@zeniv.linux.org.uk, axboe@fb.com
 Cc: milosz@adfin.com, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+Now that applications need to explicitly ask for polling we can enable it
+by default in blk-mq drivers.
+
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/direct-io.c | 3 ++-
+ include/linux/blkdev.h | 3 ++-
  1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/fs/direct-io.c b/fs/direct-io.c
-index cb5337d..904ff7f 100644
---- a/fs/direct-io.c
-+++ b/fs/direct-io.c
-@@ -445,7 +445,8 @@ static struct bio *dio_await_one(struct dio *dio)
- 		__set_current_state(TASK_UNINTERRUPTIBLE);
- 		dio->waiter = current;
- 		spin_unlock_irqrestore(&dio->bio_lock, flags);
--		if (!blk_poll(bdev_get_queue(dio->bio_bdev), dio->bio_cookie))
-+		if (!(dio->iocb->ki_flags & IOCB_HIPRI) ||
-+		    !blk_poll(bdev_get_queue(dio->bio_bdev), dio->bio_cookie))
- 			io_schedule();
- 		/* wake up sets us TASK_RUNNING */
- 		spin_lock_irqsave(&dio->bio_lock, flags);
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index e711f29..1b73222 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -496,7 +496,8 @@ struct request_queue {
+ 
+ #define QUEUE_FLAG_MQ_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
+ 				 (1 << QUEUE_FLAG_STACKABLE)	|	\
+-				 (1 << QUEUE_FLAG_SAME_COMP))
++				 (1 << QUEUE_FLAG_SAME_COMP)	|	\
++				 (1 << QUEUE_FLAG_POLL))
+ 
+ static inline void queue_lockdep_assert_held(struct request_queue *q)
+ {
 -- 
 1.9.1
 
