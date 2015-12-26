@@ -1,81 +1,171 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH v2 2/3] thread_local_abi: wire up x86 32/64 system
- call
-Date: Thu, 24 Dec 2015 15:17:17 +0000 (UTC)
-Message-ID: <713900690.290718.1450970237981.JavaMail.zimbra@efficios.com>
-References: <1450807333-22104-1-git-send-email-mathieu.desnoyers@efficios.com> <1450807333-22104-2-git-send-email-mathieu.desnoyers@efficios.com> <1ECDFB6F-7C34-4BBB-A45F-E0D9A4B70737@joshtriplett.org>
+From: Tadeusz Struk <tstruk@gmail.com>
+Subject: [PATCH v2] crypto: AF_ALG - add support for keys/asymmetric-type
+Date: Sat, 26 Dec 2015 07:50:14 -0800
+Message-ID: <20151226155014.27615.14985.stgit@desktop.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1ECDFB6F-7C34-4BBB-A45F-E0D9A4B70737-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Cc: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Sender: linux-crypto-owner@vger.kernel.org
+To: herbert@gondor.apana.org.au
+Cc: tadeusz.struk@intel.com, smueller@chronox.de, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, keyrings@vger.kernel.org, linux-crypto@vger.kernel.org, tstruk@gmail.com, zohar@linux.vnet.ibm.com, dwmw2@infradead.org
 List-Id: linux-api@vger.kernel.org
 
------ On Dec 23, 2015, at 10:42 PM, Josh Triplett josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org wrote:
+From: Tadeusz Struk <tadeusz.struk@intel.com>
 
-> On December 22, 2015 10:02:12 AM PST, Mathieu Desnoyers
-> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
->>Wire up the thread local ABI on x86 32/64. Call the
->>thread_local_abi_handle_notify_resume() function on return to
->>userspace if TIF_NOTIFY_RESUME thread flag is set.
->>
->>This provides an ABI improving the speed of a getcpu operation
->>on x86 by removing the need to perform a function call, "lsl"
->>instruction, or system call on the fast path.
->>
->>Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
->>CC: Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
->>CC: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
->>CC: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
->>CC: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
->>CC: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
->>CC: Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
->>CC: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
->>CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
->>CC: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
->>CC: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
->>CC: Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
->>CC: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->>CC: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>
->>CC: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
->>CC: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
->>CC: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
->>CC: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
->>CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
->>CC: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
->>CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->>---
->> arch/x86/entry/common.c                | 2 ++
->> arch/x86/entry/syscalls/syscall_32.tbl | 1 +
->> arch/x86/entry/syscalls/syscall_64.tbl | 1 +
->> 3 files changed, 4 insertions(+)
->>
->>diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
->>index a89fdbc..222cacf 100644
->>--- a/arch/x86/entry/common.c
->>+++ b/arch/x86/entry/common.c
->>@@ -249,6 +249,8 @@ static void exit_to_usermode_loop(struct pt_regs
->>*regs, u32 cached_flags)
->> 		if (cached_flags & _TIF_NOTIFY_RESUME) {
->> 			clear_thread_flag(TIF_NOTIFY_RESUME);
->> 			tracehook_notify_resume(regs);
->>+			if (thread_local_abi_active(current))
->>+				thread_local_abi_handle_notify_resume(current);
-> 
-> Every caller seems likely to duplicate this pattern; why not make the call
-> itself a static inline containing this check and call (or no-op if compiled
-> out)?
+Created on top of patchset from Stephan Mueller <smueller@chronox.de>
+https://patchwork.kernel.org/patch/7877921/
+https://patchwork.kernel.org/patch/7877971/
+https://patchwork.kernel.org/patch/7877961/
 
-Very good point, I'll do that.
+This patch adds support for asymmetric key type to AF_ALG.
+It will work as follows: A new PF_ALG socket options will be
+added on top of existing ALG_SET_KEY and ALG_SET_PUBKEY, namely
+ALG_SET_PUBKEY_ID and ALG_SET_KEY_ID for setting public and
+private keys respectively. When these new options will be used
+the user instead of providing the key material, will provide a
+key id and the key itself will be obtained from kernel keyring
+subsystem. The user will use the standard tools (keyctl tool
+or the keyctl syscall) for key instantiation and to obtain the
+key id. The key id can also be obtained by reading the
+/proc/keys file.
 
-Thanks!
+When a key will be found, the request_key() function will
+return a requested key. Next the asymmetric key subtype will be
+used to obtain the public_key, which can be either a public key
+or a private key from the cryptographic point of view, and the
+key payload will be passed to the akcipher pf_alg subtype.
+Pf_alg code will then call crypto API functions, either the
+crypto_akcipher_set_priv_key or the crypto_akcipher_set_pub_key,
+depending on the used option. Subsequently the asymmetric key
+will be freed and return code returned back to the user.
 
-Mathieu
+Currently the interface will be restricted only to asymmetric
+ciphers, but it can be extended later to work with symmetric
+ciphers if required.
 
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+The assumption is that access rights for a given user will be
+verified by the key subsystem so the pf_alg interface can call
+the request_key() without checking if the user has appropriate
+rights (Please verify this assumption).
+
+Changes in v2:
+Separate logic for setkey and setkey_id into two separate
+functions as proposed by Stephan.
+
+Signed-off-by: Tadeusz Struk <tadeusz.struk@intel.com>
+---
+ crypto/af_alg.c             |   49 +++++++++++++++++++++++++++++++++++++++----
+ include/uapi/linux/if_alg.h |    2 ++
+ 2 files changed, 47 insertions(+), 4 deletions(-)
+
+diff --git a/crypto/af_alg.c b/crypto/af_alg.c
+index 767a134..e96e8c9 100644
+--- a/crypto/af_alg.c
++++ b/crypto/af_alg.c
+@@ -22,6 +22,8 @@
+ #include <linux/net.h>
+ #include <linux/rwsem.h>
+ #include <linux/security.h>
++#include <crypto/public_key.h>
++#include <keys/asymmetric-type.h>
+ 
+ struct alg_type_list {
+ 	const struct af_alg_type *type;
+@@ -172,8 +174,38 @@ static int alg_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
+ 	return 0;
+ }
+ 
++static int alg_setkey_id(void *private, const u8 *key, unsigned int keylen,
++			 int (*setkey)(void *private, const u8 *key,
++				       unsigned int keylen))
++{
++	struct key *keyring;
++	struct public_key *pkey;
++	char key_name[12];
++	u32 keyid = *((u32 *)key);
++	int err;
++
++	sprintf(key_name, "id:%08x", keyid);
++	keyring = request_key(&key_type_asymmetric, key_name, NULL);
++
++	err = -ENOKEY;
++	if (IS_ERR(keyring))
++		goto out;
++
++	pkey = keyring->payload.data[asym_crypto];
++	if (!pkey) {
++		key_put(keyring);
++		goto out;
++	}
++
++	err = setkey(private, pkey->key, pkey->keylen);
++	key_put(keyring);
++
++out:
++	return err;
++}
++
+ static int alg_setkey(struct sock *sk, char __user *ukey,
+-		      unsigned int keylen,
++		      unsigned int keylen, bool key_id,
+ 		      int (*setkey)(void *private, const u8 *key,
+ 				    unsigned int keylen))
+ {
+@@ -192,7 +224,8 @@ static int alg_setkey(struct sock *sk, char __user *ukey,
+ 	if (copy_from_user(key, ukey, keylen))
+ 		goto out;
+ 
+-	err = setkey(ask->private, key, keylen);
++	err = key_id ? alg_setkey_id(ask->private, key, keylen, setkey) :
++		       setkey(ask->private, key, keylen);
+ 
+ out:
+ 	sock_kzfree_s(sk, key, keylen);
+@@ -207,6 +240,8 @@ static int alg_setsockopt(struct socket *sock, int level, int optname,
+ 	struct alg_sock *ask = alg_sk(sk);
+ 	const struct af_alg_type *type;
+ 	int err = -ENOPROTOOPT;
++	bool key_id = ((optname == ALG_SET_PUBKEY_ID) ||
++		       (optname == ALG_SET_KEY_ID));
+ 
+ 	lock_sock(sk);
+ 	type = ask->type;
+@@ -216,16 +251,22 @@ static int alg_setsockopt(struct socket *sock, int level, int optname,
+ 
+ 	switch (optname) {
+ 	case ALG_SET_KEY:
++	case ALG_SET_KEY_ID:
+ 		if (sock->state == SS_CONNECTED)
+ 			goto unlock;
+ 
+-		err = alg_setkey(sk, optval, optlen, type->setkey);
++		/* ALG_SET_KEY_ID is only for akcipher */
++		if (!strcmp(type->name, "akcipher") && key_id)
++			goto unlock;
++
++		err = alg_setkey(sk, optval, optlen, key_id, type->setkey);
+ 		break;
+ 	case ALG_SET_PUBKEY:
++	case ALG_SET_PUBKEY_ID:
+ 		if (sock->state == SS_CONNECTED)
+ 			goto unlock;
+ 
+-		err = alg_setkey(sk, optval, optlen, type->setpubkey);
++		err = alg_setkey(sk, optval, optlen, key_id, type->setpubkey);
+ 		break;
+ 	case ALG_SET_AEAD_AUTHSIZE:
+ 		if (sock->state == SS_CONNECTED)
+diff --git a/include/uapi/linux/if_alg.h b/include/uapi/linux/if_alg.h
+index 02e6162..0379766 100644
+--- a/include/uapi/linux/if_alg.h
++++ b/include/uapi/linux/if_alg.h
+@@ -35,6 +35,8 @@ struct af_alg_iv {
+ #define ALG_SET_AEAD_ASSOCLEN		4
+ #define ALG_SET_AEAD_AUTHSIZE		5
+ #define ALG_SET_PUBKEY			6
++#define ALG_SET_PUBKEY_ID		7
++#define ALG_SET_KEY_ID			8
+ 
+ /* Operations */
+ #define ALG_OP_DECRYPT			0
