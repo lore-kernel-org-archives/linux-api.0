@@ -1,60 +1,108 @@
-From: Peter Wu <peter@lekensteyn.nl>
-Subject: [PATCH] block: add start and size to ABI documentation
-Date: Sat, 26 Dec 2015 19:36:35 +0100
-Message-ID: <1451154995-4686-1-git-send-email-peter@lekensteyn.nl>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>
+From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: [PATCH RFC] [media] Postpone the addition of MEDIA_IOC_G_TOPOLOGY
+Date: Mon, 28 Dec 2015 11:57:05 -0200
+Message-ID: <d029047c76d6d3e5e6a531080ede83f6e063f7db.1451311015.git.mchehab@osg.samsung.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: media-workshop-dJidKbW2IEtAfugRpC6u6w@public.gmane.org
+Cc: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Document the start and size fields (which were introduced in commit
-v2.5.42-215-gb288f6a) to avoid guesswork on the unit.
+There are a few discussions left with regards to this ioctl:
 
-Signed-off-by: Peter Wu <peter@lekensteyn.nl>
+1) the name of the new structs will contain _v2_ on it?
+2) what's the best alternative to avoid compat32 issues?
+
+Due to that, let's postpone the addition of this new ioctl to
+the next Kernel version, to give people more time to discuss it.
+
+Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 ---
-Hi,
+ Documentation/DocBook/media/v4l/media-ioc-g-topology.xml | 3 +++
+ drivers/media/media-device.c                             | 5 ++++-
+ include/uapi/linux/media.h                               | 6 +++++-
+ 3 files changed, 12 insertions(+), 2 deletions(-)
 
-As the meaning has not changed for over 13 years, I would like to
-formalize these attributes such that users can rely on it[1][2].
-The sector definition was inspired by the block/stat.txt documentation.
-
-By the way, the ABI/README document is ambiguous on the meaning of
-"Date", is it the creation date of the documentation entry or the
-creation of the filesystem interface? I have chosen the latter here.
-
-Kind regards,
-Peter
-
- [1]: https://lkml.kernel.org/r/201012011729.18661.lists@egidy.de
- [2]: https://unix.stackexchange.com/questions/52215/determine-the-size-of-a-block-device#comment112867_52219
----
- Documentation/ABI/testing/sysfs-block | 17 +++++++++++++++++
- 1 file changed, 17 insertions(+)
-
-diff --git a/Documentation/ABI/testing/sysfs-block b/Documentation/ABI/testing/sysfs-block
-index 71d184d..b85a266 100644
---- a/Documentation/ABI/testing/sysfs-block
-+++ b/Documentation/ABI/testing/sysfs-block
-@@ -235,3 +235,20 @@ Description:
- 		write_same_max_bytes is 0, write same is not supported
- 		by the device.
+diff --git a/Documentation/DocBook/media/v4l/media-ioc-g-topology.xml b/Documentation/DocBook/media/v4l/media-ioc-g-topology.xml
+index e0d49fa329f0..63152ab9efba 100644
+--- a/Documentation/DocBook/media/v4l/media-ioc-g-topology.xml
++++ b/Documentation/DocBook/media/v4l/media-ioc-g-topology.xml
+@@ -48,6 +48,9 @@
  
-+What:		/sys/block/<disk>/<partition>/start
-+Date:		October 2002
-+Contact:	linux-block@vger.kernel.org
-+Kernel Version:	2.5.43
-+Description:
-+		Starting position of the partition within the disk.
-+		Measured in standard UNIX 512-byte sectors (not a
-+		device-specific block size).
+   <refsect1>
+     <title>Description</title>
 +
-+What:		/sys/block/<disk>/<partition>/size
-+Date:		October 2002
-+Contact:	linux-block@vger.kernel.org
-+Kernel Version:	2.5.43
-+Description:
-+		Size of the partition in standard UNIX 512-byte sectors
-+		(not a device-specific block size).
++    <para><emphasis role="bold">NOTE:</emphasis> This new ioctl is programmed to be added on Kernel 4.6. Its definition/arguments may change until its final version.</para>
 +
+     <para>The typical usage of this ioctl is to call it twice.
+     On the first call, the structure defined at &media-v2-topology; should
+     be zeroed. At return, if no errors happen, this ioctl will return the
+diff --git a/drivers/media/media-device.c b/drivers/media/media-device.c
+index 4d1c13de494b..900124c04e9a 100644
+--- a/drivers/media/media-device.c
++++ b/drivers/media/media-device.c
+@@ -234,6 +234,7 @@ static long media_device_setup_link(struct media_device *mdev,
+ 	return ret;
+ }
+ 
++#if 0 /* Let's postpone it to Kernel 4.6 */
+ static long __media_device_get_topology(struct media_device *mdev,
+ 				      struct media_v2_topology *topo)
+ {
+@@ -389,6 +390,7 @@ static long media_device_get_topology(struct media_device *mdev,
+ 
+ 	return 0;
+ }
++#endif
+ 
+ static long media_device_ioctl(struct file *filp, unsigned int cmd,
+ 			       unsigned long arg)
+@@ -422,13 +424,14 @@ static long media_device_ioctl(struct file *filp, unsigned int cmd,
+ 		mutex_unlock(&dev->graph_mutex);
+ 		break;
+ 
++#if 0 /* Let's postpone it to Kernel 4.6 */
+ 	case MEDIA_IOC_G_TOPOLOGY:
+ 		mutex_lock(&dev->graph_mutex);
+ 		ret = media_device_get_topology(dev,
+ 				(struct media_v2_topology __user *)arg);
+ 		mutex_unlock(&dev->graph_mutex);
+ 		break;
+-
++#endif
+ 	default:
+ 		ret = -ENOIOCTLCMD;
+ 	}
+diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
+index 5dbb208e5451..1e3c8cb43bd7 100644
+--- a/include/uapi/linux/media.h
++++ b/include/uapi/linux/media.h
+@@ -286,7 +286,7 @@ struct media_links_enum {
+  *	  later, before the adding this API upstream.
+  */
+ 
+-
++#if 0 /* Let's postpone it to Kernel 4.6 */
+ struct media_v2_entity {
+ 	__u32 id;
+ 	char name[64];		/* FIXME: move to a property? (RFC says so) */
+@@ -351,6 +351,7 @@ static inline void __user *media_get_uptr(__u64 arg)
+ {
+ 	return (void __user *)(uintptr_t)arg;
+ }
++#endif
+ 
+ /* ioctls */
+ 
+@@ -358,6 +359,9 @@ static inline void __user *media_get_uptr(__u64 arg)
+ #define MEDIA_IOC_ENUM_ENTITIES		_IOWR('|', 0x01, struct media_entity_desc)
+ #define MEDIA_IOC_ENUM_LINKS		_IOWR('|', 0x02, struct media_links_enum)
+ #define MEDIA_IOC_SETUP_LINK		_IOWR('|', 0x03, struct media_link_desc)
++
++#if 0 /* Let's postpone it to Kernel 4.6 */
+ #define MEDIA_IOC_G_TOPOLOGY		_IOWR('|', 0x04, struct media_v2_topology)
++#endif
+ 
+ #endif /* __LINUX_MEDIA_H */
 -- 
-2.6.4
+2.5.0
