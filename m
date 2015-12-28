@@ -1,11 +1,11 @@
 From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 Subject: [PATCH RFC] [media] Postpone the addition of MEDIA_IOC_G_TOPOLOGY
-Date: Mon, 28 Dec 2015 11:57:05 -0200
-Message-ID: <d029047c76d6d3e5e6a531080ede83f6e063f7db.1451311015.git.mchehab@osg.samsung.com>
+Date: Mon, 28 Dec 2015 12:03:47 -0200
+Message-ID: <d029047c76d6d3e5e6a531080ede83f6e063f7db.1451311244.git.mchehab@osg.samsung.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: media-workshop-dJidKbW2IEtAfugRpC6u6w@public.gmane.org
-Cc: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, Javier Martinez Canillas <javier-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Sakari Ailus <sakari.ailus-X3B1VOXEql0@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 There are a few discussions left with regards to this ioctl:
@@ -18,6 +18,10 @@ the next Kernel version, to give people more time to discuss it.
 
 Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 ---
+
+Resending the patch, as the first one were sent to the wrong ML. Also, add the
+relevant parties to the Cc of thiis patch.
+
  Documentation/DocBook/media/v4l/media-ioc-g-topology.xml | 3 +++
  drivers/media/media-device.c                             | 5 ++++-
  include/uapi/linux/media.h                               | 6 +++++-
