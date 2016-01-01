@@ -1,223 +1,133 @@
-From: Alex Williamson <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] drivers/char/mem.c: Add /dev/ioports, supporting 16-bit
- and 32-bit ports
-Date: Thu, 31 Dec 2015 08:41:58 -0700
-Message-ID: <1451576518.3223.9.camel@redhat.com>
-References: <20140509191914.GA7286@jtriplet-mobl1>
-	 <CA+iXiiNKiMz=9BJgu3g=LggXjTv61Uwu+ibNfKeih3rK328LSQ@mail.gmail.com>
-	 <CA+iXiiM+TrciHROfgTcN01mfGEYuUCvpNRU0Qqgrt56VdCcR8Q@mail.gmail.com>
-	 <1961979.Xhiud0jvNd@wuerfel>
-	 <CAAyOgsYuMWudLgbSNM+QAkSXpU_fp6Ue01r=Ufmf5MXUHMs4UQ@mail.gmail.com>
-	 <1451410269.18084.15.camel@redhat.com>
-	 <CAAyOgsaxEaQ5+BW6Rwmz4cEuzVUdswZAWyF0OrbdPpXduwESYg@mail.gmail.com>
+From: "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 6/8] cgroup: mount cgroupns-root when inside non-init
+	cgroupns
+Date: Thu, 31 Dec 2015 18:58:43 -0600
+Message-ID: <20160101005843.GA26243@mail.hallyn.com>
+References: <1450844609-9194-1-git-send-email-serge.hallyn@ubuntu.com>
+	<1450844609-9194-7-git-send-email-serge.hallyn@ubuntu.com>
+	<20151231133822.GA463@swordfish>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAAyOgsaxEaQ5+BW6Rwmz4cEuzVUdswZAWyF0OrbdPpXduwESYg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Santosh Shukla <sshukla-Igf4POYTYCDQT0dZR+AlfA@public.gmane.org>
-Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Santosh Shukla <santosh.shukla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Yuanhan Liu <yuanhan.liu-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20151231133822.GA463@swordfish>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Sergey Senozhatsky <sergey.senozhatsky-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-next-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2015-12-31 at 15:03 +0530, Santosh Shukla wrote:
-> On Tue, Dec 29, 2015 at 11:01 PM, Alex Williamson
-> <alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> > On Tue, 2015-12-29 at 22:00 +0530, Santosh Shukla wrote:
-> > > On Tue, Dec 29, 2015 at 9:50 PM, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-> > > wrote:
-> > > > On Tuesday 29 December 2015 21:25:15 Santosh Shukla wrote:
-> > > > > mistakenly added wrong email-id of alex, looping his correct
-> > > > > one.
-> > > > >=20
-> > > > > On 29 December 2015 at 21:23, Santosh Shukla <santosh.shukla@
-> > > > > lina
-> > > > > ro.org> wrote:
-> > > > > > On 29 December 2015 at 18:58, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-> > > > > > wrote:
-> > > > > > > On Wednesday 23 December 2015 17:04:40 Santosh Shukla
-> > > > > > > wrote:
-> > > > > > > > On 23 December 2015 at 03:26, Arnd Bergmann <arnd@arndb
-> > > > > > > > .de>
-> > > > > > > > wrote:
-> > > > > > > > > On Tuesday 22 December 2015, Santosh Shukla wrote:
-> > > > > > > > > > }
-> > > > > > > > > >=20
-> > > > > > > > > > So I care for /dev/ioport types interface who could
-> > > > > > > > > > do
-> > > > > > > > > > more than byte
-> > > > > > > > > > data copy to/from user-space. I tested this patch
-> > > > > > > > > > with
-> > > > > > > > > > little
-> > > > > > > > > > modification and could able to run pmd driver for
-> > > > > > > > > > arm/arm64 case.
-> > > > > > > > > >=20
-> > > > > > > > > > Like to know how to address pci_io region mapping
-> > > > > > > > > > problem for
-> > > > > > > > > > arm/arm64, in-case /dev/ioports approach is not
-> > > > > > > > > > acceptable or else I
-> > > > > > > > > > can spent time on restructuring the patch?
-> > > > > > > > > >=20
-> > > > > > > > >=20
-> > > > > > > > > For the use case you describe, can't you use the vfio
-> > > > > > > > > framework to
-> > > > > > > > > access the PCI BARs?
-> > > > > > > > >=20
-> > > > > > > >=20
-> > > > > > > > I looked at file: drivers/vfio/pci/vfio_pci.c, func
-> > > > > > > > vfio_pci_map() and
-> > > > > > > > it look to me that it only maps ioresource_mem pci
-> > > > > > > > region,
-> > > > > > > > pasting
-> > > > > > > > code snap:
-> > > > > > > >=20
-> > > > > > > > if (!(pci_resource_flags(pdev, index) &
-> > > > > > > > IORESOURCE_MEM))
-> > > > > > > > return -EINVAL;
-> > > > > > > > ....
-> > > > > > > >=20
-> > > > > > > > and I want to map ioresource_io pci region for arm
-> > > > > > > > platform
-> > > > > > > > in my
-> > > > > > > > use-case. Not sure vfio maps pci_iobar region?
-> > > > > > >=20
-> > > > > > > Mapping I/O BARs is not portable, notably it doesn't work
-> > > > > > > on
-> > > > > > > x86.
-> > > > > > >=20
-> > > > > > > You should be able access them using the read/write
-> > > > > > > interface
-> > > > > > > on
-> > > > > > > the vfio device.
-> > > > > > >=20
-> > > > > > Right, x86 doesn't care as iopl() could give userspace
-> > > > > > application
-> > > > > > direct access to ioports.
-> > > > > >=20
-> > > > > > Also, Alex in other dpdk thread [1] suggested someone to
-> > > > > > propose io
-> > > > > > bar mapping in vfio-pci, I guess in particular to non-x86
-> > > > > > arch
-> > > > > > so I
-> > > > > > started working on it.
-> > > > > >=20
-> > > > >=20
-> > > >=20
-> > > > So what's wrong with just using the existing read/write API on
-> > > > all
-> > > > architectures?
-> > > >=20
-> > >=20
-> > > nothing wrong, infact read/write api will still be used so to
-> > > access
-> > > mmaped io pci bar at userspace. But right now vfio_pci_map()
-> > > doesn't
-> >=20
-> > vfio_pci_mmap(), the read/write accessors fully support i/o port.
-> >=20
->=20
-> (Sorry for delayed response!)
-> Right.
-> > > map io pci bar in particular (i.e.. ioresource_io) so I guess
-> > > need to
-> > > add that bar mapping in vfio. pl. correct me if i misunderstood
-> > > anything.
-> >=20
-> > Maybe I misunderstood what you were asking for, it seemed like you
-> > specifically wanted to be able to mmap i/o port space, which is
-> > possible, just not something we can do on x86.=C2=A0=C2=A0Maybe I s=
-hould have
-> > asked why.=C2=A0=C2=A0The vfio API already supports read/write acce=
-ss to i/o
-> > port
->=20
-> Yes, I want to map io port pci space in vfio and reason for that is :
-> I want to access virto-net-pci device at userspace using vfio and for
-> that I am using vfio-noiommu latest linux-next patch. but I am not
-> able to mmap io port pci space in vfio because of below condition -
->=20
-> 1)
-> --- user space code snippet ----
-> reg.index =3D i; // where i is {0..1} i.e.. {BAR0..BAR1} such that BA=
-R0
-> =3D io port pci space and BAR1 =3D pci config space
->=20
-> ret =3D ioctl(vfio_dev_fd, VFIO_DEVICE_GET_REGION_INFO, &reg);
-> if ((reg.flags & VFIO_REGION_INFO_FLAG_MMAP) =3D=3D 0) {
-> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0return err;
-> }
-> now consider i =3D 0 case where pci_rersource_flag set to IORESOURCE_=
-IO
->=20
-> --- kernel / vfip-pci.c -------------
-> so vfio_pci_ioctl() wont set info.flag to VFIO_REGION_INFO_FLAG_MMAP.
-> And it won't set for two
-> 1) pci_resource_flag & IORESOURCE_MEM
-> 2) ioport size < PAZE_SIZE
->=20
-> The second one I addressed but first one is what I believe that need
-> to add support in vfio.
-> and Same applicable for vfio_pci_mmap() too..
->=20
-> This is why I am thinking to add IORESOURCE_IO space mapping support
-> in vfio; in particular non-x86 archs.. pl. correct my understanding
-> in
-> case wrong.
->=20
-> > space, so if you intend to mmap it only to use read/write on top of
-> > the
-> > mmap, I suppose you might see some performance improvement, but not
-> > really any new functionality.=C2=A0=C2=A0You'd also need to deal wi=
-th page
-> > size
-> > issues since i/o port ranges are generally quite a bit smaller than
-> > the
-> > host page size and they'd need to be mapped such that each devices
-> > does
-> > not share a host page of i/o port space with other devices.=C2=A0=C2=
-=A0On x86
-> > i/o
->=20
-> Yes. I have taken care size < PAZE_SIZE condition.
->=20
-> > port space is mostly considered legacy and not a performance
-> > critical
-> > path for most modern devices; PCI SR-IOV specifically excludes i/o
-> > port
-> > space.=C2=A0=C2=A0So what performance gains do you expect to see in=
- being
-> > able to
-> > mmap i/o port space and what hardware are you dealing with that
-> > relies
-> > on i/o port space rather than mmio for performance?=C2=A0=C2=A0Than=
-ks,
-> >=20
-> dpdk user space virtio-net pmd driver uses ioport space for driver
-> initialization, as because virtio-net header resides in ioport area
-> of
-> virtio-pxe.rom file, also it is inlined to virtio spec (<=3D 0.95).
-> Till
-> now virtio-net dpdk pmd driver for x86 using iopl() to access those
-> ioport for driver initialization but for non-x86 cases; we needed
-> alternative i.e.. kernel to someway map ioport pci region either by
-> architecture example powerpc does Or look in vfio for mapping. I hope
-> I made my use-case clear.
+On Thu, Dec 31, 2015 at 10:38:22PM +0900, Sergey Senozhatsky wrote:
+> On (12/22/15 22:23), serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org wrote:
+> [..]
+> >  	root = kzalloc(sizeof(*root), GFP_KERNEL);
+> >  	if (!root) {
+> >  		ret = -ENOMEM;
+> > @@ -2124,12 +2143,30 @@ out_free:
+> >  	kfree(opts.release_agent);
+> >  	kfree(opts.name);
+> >  
+> > -	if (ret)
+> > +	if (ret) {
+> > +		put_cgroup_ns(ns);
+> >  		return ERR_PTR(ret);
+> > +	}
+> >  out_mount:
+> >  	dentry = kernfs_mount(fs_type, flags, root->kf_root,
+> >  			      is_v2 ? CGROUP2_SUPER_MAGIC : CGROUP_SUPER_MAGIC,
+> >  			      &new_sb);
+> > +
+> > +	/*
+> > +	 * In non-init cgroup namespace, instead of root cgroup's
+> > +	 * dentry, we return the dentry corresponding to the
+> > +	 * cgroupns->root_cgrp.
+> > +	 */
+> > +	if (!IS_ERR(dentry) && ns != &init_cgroup_ns) {
+> > +		struct dentry *nsdentry;
+> > +		struct cgroup *cgrp;
+> > +
+> > +		cgrp = cset_cgroup_from_root(ns->root_cset, root);
+> > +		nsdentry = kernfs_node_dentry(cgrp->kn, dentry->d_sb);
+> > +		dput(dentry);
+> > +		dentry = nsdentry;
+> > +	}
+> > +
+> >  	if (IS_ERR(dentry) || !new_sb)
+> >  		cgroup_put(&root->cgrp);
+> >  
+> > @@ -2142,6 +2179,7 @@ out_mount:
+> >  		deactivate_super(pinned_sb);
+> >  	}
+> >  
+> > +	put_cgroup_ns(ns);
+> >  	return dentry;
+> >  }
+> 
+> Hello,
+> 
+> didn't investigate, just let you know that I'm seeing some warning on linux-next 20151231
+> 
+> 1159 is  lockdep_assert_held(&css_set_lock)
+> 
+> [    2.880978] WARNING: CPU: 1 PID: 198 at kernel/cgroup.c:1159 cset_cgroup_from_root+0xa8/0xaf()
+> [    2.880981] Modules linked in: mousedev arc4 nls_iso8859_1 nls_cp437 vfat fat serio_raw iwlmvm psmouse i915 atkbd mac80211 libps2 mxm_wmi i2c_algo_bit drm_kms_helper coretemp cfbfillrect iwlwifi syscopyarea hwmon cfbimgblt crc32c_intel sysfillrect sysimgblt fb_sys_fops cfg80211 ie31200_edac cfbcopyarea evdev r8169 lpc_ich drm i2c_i801 mii intel_gtt edac_core i2c_core mfd_core thermal video i8042 wmi serio button acpi_cpufreq ext4 crc16 mbcache jbd2 sd_mod ehci_pci ehci_hcd ahci libahci libata xhci_pci scsi_mod xhci_hcd usbcore usb_common
+> [    2.881040] CPU: 1 PID: 198 Comm: kworker/1:2 Tainted: G        W       4.4.0-rc7-next-20151231-dbg-00012-gc1e64b7-dirty #316
+> [    2.881045] Workqueue: events cgroup_release_agent
+> [    2.881048]  0000000000000000 ffff88041b7f3cb8 ffffffff811e8bc6 0000000000000000
+> [    2.881053]  ffff88041b7f3cf0 ffffffff81040889 ffffffff810b2d27 ffffffff8163f3c0
+> [    2.881057]  ffff88041cc84000 ffff88041b7c0000 ffff88042fa58a00 ffff88041b7f3d00
+> [    2.881062] Call Trace:
+> [    2.881068]  [<ffffffff811e8bc6>] dump_stack+0x4b/0x63
+> [    2.881073]  [<ffffffff81040889>] warn_slowpath_common+0x99/0xb2
+> [    2.881076]  [<ffffffff810b2d27>] ? cset_cgroup_from_root+0xa8/0xaf
+> [    2.881080]  [<ffffffff81040955>] warn_slowpath_null+0x1a/0x1c
+> [    2.881083]  [<ffffffff810b2d27>] cset_cgroup_from_root+0xa8/0xaf
+> [    2.881086]  [<ffffffff810b58a4>] cgroup_path+0x51/0x83
+> [    2.881090]  [<ffffffff810b59fa>] cgroup_release_agent+0x75/0xed
+> [    2.881094]  [<ffffffff810566ea>] process_one_work+0x292/0x54b
+> [    2.881098]  [<ffffffff81057826>] worker_thread+0x291/0x383
+> [    2.881102]  [<ffffffff81057595>] ? rescuer_thread+0x2cf/0x2cf
+> [    2.881105]  [<ffffffff8105c603>] kthread+0xf8/0x100
+> [    2.881108]  [<ffffffff8105c50b>] ? kthread_create_on_node+0x1c7/0x1c7
+> [    2.881114]  [<ffffffff813b71bf>] ret_from_fork+0x3f/0x70
+> [    2.881117]  [<ffffffff8105c50b>] ? kthread_create_on_node+0x1c7/0x1c7
+> [    2.881119] ---[ end trace aa407df654d6b05d ]---
 
-Not really. =C2=A0I still don't understand why you need to *mmap* iopor=
-t
-space rather than access it via read/write. =C2=A0vfio already supports
-assignment of numerous physical devices that rely on ioport space for
-the device rom, device initialization, and even runtime operation in
-QEMU using the accesses currently supported. =C2=A0Legacy x86 ioport sp=
-ace
-cannot be mmap'd on x86 hardware, it's only through sparse memory
-mapping and emulation of ioport space provided on some architectures
-that this is even possible, so you will not achieve
-platform/architecture neutral support for mmap'ing ioport space, which
-means that your userspace driver will not work universally if it
-depends on this support.
+Thanks!  Following trivial patch should fix this:
 
-If you were using iopl() and in*()/out*() before, simply drop the
-iopl() and use pread()/pwrite() instead. =C2=A0Thanks,
+>From fc54592077533ff2ff90ed54b72bf03b4378ca9f Mon Sep 17 00:00:00 2001
+From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Date: Thu, 31 Dec 2015 16:55:19 -0800
+Subject: [PATCH 1/1] cgroup_release_agent: grab css_set_lock around
+ cgroup_path()
 
-Alex=C2=A0
+Reported-by: Sergey Senozhatsky <sergey.senozhatsky-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+---
+ kernel/cgroup.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+index 4812f59..d10f127 100644
+--- a/kernel/cgroup.c
++++ b/kernel/cgroup.c
+@@ -5769,7 +5769,9 @@ static void cgroup_release_agent(struct work_struct *work)
+ 	if (!pathbuf || !agentbuf)
+ 		goto out;
+ 
++	spin_lock_bh(&css_set_lock);
+ 	path = cgroup_path(cgrp, pathbuf, PATH_MAX);
++	spin_unlock_bh(&css_set_lock);
+ 	if (!path)
+ 		goto out;
+ 
+-- 
+2.5.0
