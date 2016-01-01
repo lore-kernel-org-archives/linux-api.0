@@ -1,80 +1,76 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+From: "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 Subject: Re: CGroup Namespaces (v8)
-Date: Fri, 1 Jan 2016 01:42:57 -0800
-Message-ID: <CAPcyv4iig_sujK=p0TbNjTmtv39N7a0HSqpVe8mLnfX9Es7zNA@mail.gmail.com>
+Date: Fri, 1 Jan 2016 12:06:33 -0600
+Message-ID: <20160101180633.GA30941@mail.hallyn.com>
 References: <1450844609-9194-1-git-send-email-serge.hallyn@ubuntu.com>
 	<CAA9_cmcNeg4vR7Ft8YcPGZtacftDWjC=5mHs2ZRzu9yXoOAJiA@mail.gmail.com>
 	<20160101085911.GA28407@mail.hallyn.com>
+	<CAPcyv4iig_sujK=p0TbNjTmtv39N7a0HSqpVe8mLnfX9Es7zNA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160101085911.GA28407-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Cc: Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAPcyv4iig_sujK=p0TbNjTmtv39N7a0HSqpVe8mLnfX9Es7zNA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 1, 2016 at 12:59 AM, Serge E. Hallyn
-<serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> wrote:
-> On Fri, Jan 01, 2016 at 12:19:44AM -0800, Dan Williams wrote:
->> On Tue, Dec 22, 2015 at 8:23 PM,  <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> wrote:
->> > Hi,
->> >
->> > following is a revised set of the CGroup Namespace patchset which =
-Aditya
->> > Kali has previously sent.  The code can also be found in the cgrou=
-pns.v8
->> > branch of
->> >
->> > https://git.kernel.org/cgit/linux/kernel/git/sergeh/linux-security=
-=2Egit/
->>
->> Happy New Year!
->>
->> I'm hitting both a build and boot regression in -next with these
->> patches.  The bisect log reports:
->>
->> git bisect skip f176ae3a5df610e0373c39538cc7744c7788b3df
->> # bad: [54b39d263704b66cc8006ce8f7dd4743fdabae70] cgroup: cgroup
->> namespace setns support
->> git bisect bad 54b39d263704b66cc8006ce8f7dd4743fdabae70
->> # good: [bf9b3590879afbaa54148d817ed68a0b51180375] sched: new clone
->> flag CLONE_NEWCGROUP for c
->> group namespace
->> git bisect good bf9b3590879afbaa54148d817ed68a0b51180375
->> # only skipped commits left to test
->> # possible first bad commit:
->> [54b39d263704b66cc8006ce8f7dd4743fdabae70] cgroup: cgroup namespa
->> ce setns support
->> # possible first bad commit:
->> [f176ae3a5df610e0373c39538cc7744c7788b3df] cgroup: introduce cgro
->> up namespaces
->>
->> Where compiling "f176ae3a5df6"  fails with:
->>
->> kernel/cgroup.c: In function =E2=80=98cgroupns_put=E2=80=99:
->> kernel/cgroup.c:5956:2: error: implicit declaration of function
->> =E2=80=98to_cg_ns=E2=80=99 [-Werror=3Dimplicit-f
->> unction-declaration]
->>  put_cgroup_ns(to_cg_ns(ns));
->
-> Hi,
->
-> is it possible you have a bad tree?
-
-No, I don't believe so...
-
->  Looking at
-> https://git.kernel.org/cgit/linux/kernel/git/next/linux-next.git/tree=
-/kernel/cgroup.c?id=3Drefs/tags/next-20151231
-> to_cg_ns should definately be defined there.
->
-
-Right, but it's not defined until commit 54b39d263704 "cgroup: cgroup
-namespace setns support", however it is first used in the preceeding
-commit f176ae3a5df6 "cgroup: introduce cgroup namespaces".  The bad
-patch ordering breaks bisection.
-
-Commit 54b39d263704 "cgroup: cgroup namespace setns support" not
-booting is a separate issue.
+T24gRnJpLCBKYW4gMDEsIDIwMTYgYXQgMDE6NDI6NTdBTSAtMDgwMCwgRGFuIFdpbGxpYW1zIHdy
+b3RlOgo+IE9uIEZyaSwgSmFuIDEsIDIwMTYgYXQgMTI6NTkgQU0sIFNlcmdlIEUuIEhhbGx5bgo+
+IDxzZXJnZS5oYWxseW5AdWJ1bnR1LmNvbT4gd3JvdGU6Cj4gPiBPbiBGcmksIEphbiAwMSwgMjAx
+NiBhdCAxMjoxOTo0NEFNIC0wODAwLCBEYW4gV2lsbGlhbXMgd3JvdGU6Cj4gPj4gT24gVHVlLCBE
+ZWMgMjIsIDIwMTUgYXQgODoyMyBQTSwgIDxzZXJnZS5oYWxseW5AdWJ1bnR1LmNvbT4gd3JvdGU6
+Cj4gPj4gPiBIaSwKPiA+PiA+Cj4gPj4gPiBmb2xsb3dpbmcgaXMgYSByZXZpc2VkIHNldCBvZiB0
+aGUgQ0dyb3VwIE5hbWVzcGFjZSBwYXRjaHNldCB3aGljaCBBZGl0eWEKPiA+PiA+IEthbGkgaGFz
+IHByZXZpb3VzbHkgc2VudC4gIFRoZSBjb2RlIGNhbiBhbHNvIGJlIGZvdW5kIGluIHRoZSBjZ3Jv
+dXBucy52OAo+ID4+ID4gYnJhbmNoIG9mCj4gPj4gPgo+ID4+ID4gaHR0cHM6Ly9naXQua2VybmVs
+Lm9yZy9jZ2l0L2xpbnV4L2tlcm5lbC9naXQvc2VyZ2VoL2xpbnV4LXNlY3VyaXR5LmdpdC8KPiA+
+Pgo+ID4+IEhhcHB5IE5ldyBZZWFyIQo+ID4+Cj4gPj4gSSdtIGhpdHRpbmcgYm90aCBhIGJ1aWxk
+IGFuZCBib290IHJlZ3Jlc3Npb24gaW4gLW5leHQgd2l0aCB0aGVzZQo+ID4+IHBhdGNoZXMuICBU
+aGUgYmlzZWN0IGxvZyByZXBvcnRzOgo+ID4+Cj4gPj4gZ2l0IGJpc2VjdCBza2lwIGYxNzZhZTNh
+NWRmNjEwZTAzNzNjMzk1MzhjYzc3NDRjNzc4OGIzZGYKPiA+PiAjIGJhZDogWzU0YjM5ZDI2Mzcw
+NGI2NmNjODAwNmNlOGY3ZGQ0NzQzZmRhYmFlNzBdIGNncm91cDogY2dyb3VwCj4gPj4gbmFtZXNw
+YWNlIHNldG5zIHN1cHBvcnQKPiA+PiBnaXQgYmlzZWN0IGJhZCA1NGIzOWQyNjM3MDRiNjZjYzgw
+MDZjZThmN2RkNDc0M2ZkYWJhZTcwCj4gPj4gIyBnb29kOiBbYmY5YjM1OTA4NzlhZmJhYTU0MTQ4
+ZDgxN2VkNjhhMGI1MTE4MDM3NV0gc2NoZWQ6IG5ldyBjbG9uZQo+ID4+IGZsYWcgQ0xPTkVfTkVX
+Q0dST1VQIGZvciBjCj4gPj4gZ3JvdXAgbmFtZXNwYWNlCj4gPj4gZ2l0IGJpc2VjdCBnb29kIGJm
+OWIzNTkwODc5YWZiYWE1NDE0OGQ4MTdlZDY4YTBiNTExODAzNzUKPiA+PiAjIG9ubHkgc2tpcHBl
+ZCBjb21taXRzIGxlZnQgdG8gdGVzdAo+ID4+ICMgcG9zc2libGUgZmlyc3QgYmFkIGNvbW1pdDoK
+PiA+PiBbNTRiMzlkMjYzNzA0YjY2Y2M4MDA2Y2U4ZjdkZDQ3NDNmZGFiYWU3MF0gY2dyb3VwOiBj
+Z3JvdXAgbmFtZXNwYQo+ID4+IGNlIHNldG5zIHN1cHBvcnQKPiA+PiAjIHBvc3NpYmxlIGZpcnN0
+IGJhZCBjb21taXQ6Cj4gPj4gW2YxNzZhZTNhNWRmNjEwZTAzNzNjMzk1MzhjYzc3NDRjNzc4OGIz
+ZGZdIGNncm91cDogaW50cm9kdWNlIGNncm8KPiA+PiB1cCBuYW1lc3BhY2VzCj4gPj4KPiA+PiBX
+aGVyZSBjb21waWxpbmcgImYxNzZhZTNhNWRmNiIgIGZhaWxzIHdpdGg6Cj4gPj4KPiA+PiBrZXJu
+ZWwvY2dyb3VwLmM6IEluIGZ1bmN0aW9uIOKAmGNncm91cG5zX3B1dOKAmToKPiA+PiBrZXJuZWwv
+Y2dyb3VwLmM6NTk1NjoyOiBlcnJvcjogaW1wbGljaXQgZGVjbGFyYXRpb24gb2YgZnVuY3Rpb24K
+PiA+PiDigJh0b19jZ19uc+KAmSBbLVdlcnJvcj1pbXBsaWNpdC1mCj4gPj4gdW5jdGlvbi1kZWNs
+YXJhdGlvbl0KPiA+PiAgcHV0X2Nncm91cF9ucyh0b19jZ19ucyhucykpOwo+ID4KPiA+IEhpLAo+
+ID4KPiA+IGlzIGl0IHBvc3NpYmxlIHlvdSBoYXZlIGEgYmFkIHRyZWU/Cj4gCj4gTm8sIEkgZG9u
+J3QgYmVsaWV2ZSBzby4uLgo+IAo+ID4gIExvb2tpbmcgYXQKPiA+IGh0dHBzOi8vZ2l0Lmtlcm5l
+bC5vcmcvY2dpdC9saW51eC9rZXJuZWwvZ2l0L25leHQvbGludXgtbmV4dC5naXQvdHJlZS9rZXJu
+ZWwvY2dyb3VwLmM/aWQ9cmVmcy90YWdzL25leHQtMjAxNTEyMzEKPiA+IHRvX2NnX25zIHNob3Vs
+ZCBkZWZpbmF0ZWx5IGJlIGRlZmluZWQgdGhlcmUuCj4gPgo+IAo+IFJpZ2h0LCBidXQgaXQncyBu
+b3QgZGVmaW5lZCB1bnRpbCBjb21taXQgNTRiMzlkMjYzNzA0ICJjZ3JvdXA6IGNncm91cAo+IG5h
+bWVzcGFjZSBzZXRucyBzdXBwb3J0IiwgaG93ZXZlciBpdCBpcyBmaXJzdCB1c2VkIGluIHRoZSBw
+cmVjZWVkaW5nCj4gY29tbWl0IGYxNzZhZTNhNWRmNiAiY2dyb3VwOiBpbnRyb2R1Y2UgY2dyb3Vw
+IG5hbWVzcGFjZXMiLiAgVGhlIGJhZAo+IHBhdGNoIG9yZGVyaW5nIGJyZWFrcyBiaXNlY3Rpb24u
+Cj4gCj4gQ29tbWl0IDU0YjM5ZDI2MzcwNCAiY2dyb3VwOiBjZ3JvdXAgbmFtZXNwYWNlIHNldG5z
+IHN1cHBvcnQiIG5vdAo+IGJvb3RpbmcgaXMgYSBzZXBhcmF0ZSBpc3N1ZS4KCk9oIC0gYmVlbiB0
+aGVyZSBzaW5jZSBteSBmaXJzdCB2ZXJzaW9uIG9mIHRoZSBzZXQgKHY0KS4gIE9kZCwgSQp0aG91
+Z2h0IHRoYXQgdGhlIGF1dG9tYXRlZCBrb3JnIHRlc3RpbmcgY2F1Z2h0IHRob3NlLgoKV2hhdCBp
+cyB0aGUgc2ltcGxlc3Qgd2F5IHRvIGZpeCB0aGlzPyAgRG8gSSBzZW5kIG5ldyB2ZXJzaW9ucyBv
+ZgpwYXRjaGVzIHYzIGFuZCB2ND8gIERvZXMgVGVqdW4gb3IgU3RlcGhlbiBqdXN0IGRvIGl0IGlu
+bGluZSBpbiB0aGUKZ2l0IHRyZWU/ICBEbyB3ZSBsZWF2ZSBpdCBiZT8KX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KQ29udGFpbmVycyBtYWlsaW5nIGxpc3QK
+Q29udGFpbmVyc0BsaXN0cy5saW51eC1mb3VuZGF0aW9uLm9yZwpodHRwczovL2xpc3RzLmxpbnV4
+Zm91bmRhdGlvbi5vcmcvbWFpbG1hbi9saXN0aW5mby9jb250YWluZXJz
