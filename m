@@ -1,40 +1,52 @@
-From: Yang Zhang <yang.zhang.wz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH RFC] vhost: basic device IOTLB support
-Date: Mon, 4 Jan 2016 09:39:37 +0800
-Message-ID: <5689CD59.6030900@gmail.com>
-References: <1451546025-15955-1-git-send-email-jasowang@redhat.com>
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: Re: [PATCH v3 0/2] Create specific kconfig for kselftest
+Date: Mon, 04 Jan 2016 15:57:04 +1100
+Message-ID: <1451883424.14373.1.camel@ellerman.id.au>
+References: <1450346273-31633-1-git-send-email-bamvor.zhangjian@linaro.org>
+	 <1450395897.19696.0.camel@ellerman.id.au>
+	 <CAFy1USTM1B_pWuPUun+yrhcHspNUOm9_2giWwJgOaJvgWDsiEA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1451546025-15955-1-git-send-email-jasowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jason Wang <jasowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kbuild-owner@vger.kernel.org>
+In-Reply-To: <CAFy1USTM1B_pWuPUun+yrhcHspNUOm9_2giWwJgOaJvgWDsiEA@mail.gmail.com>
+Sender: linux-kbuild-owner@vger.kernel.org
+To: Bamvor Zhang Jian <bamvor.zhangjian@linaro.org>, linux-api <linux-api@vger.kernel.org>
+Cc: lkml <linux-kernel@vger.kernel.org>, linux-kbuild@vger.kernel.org, Shuah Khan <shuahkh@osg.samsung.com>, yann.morin.1998@free.fr, Kevin Hilman <khilman@linaro.org>, Tyler Baker <tyler.baker@linaro.org>, Mark Brown <broonie@kernel.org>, dvhart@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On 2015/12/31 15:13, Jason Wang wrote:
-> This patch tries to implement an device IOTLB for vhost. This could be
-> used with for co-operation with userspace(qemu) implementation of
-> iommu for a secure DMA environment in guest.
->
-> The idea is simple. When vhost meets an IOTLB miss, it will request
-> the assistance of userspace to do the translation, this is done
-> through:
->
-> - Fill the translation request in a preset userspace address (This
->    address is set through ioctl VHOST_SET_IOTLB_REQUEST_ENTRY).
-> - Notify userspace through eventfd (This eventfd was set through ioctl
->    VHOST_SET_IOTLB_FD).
->
-> When userspace finishes the translation, it will update the vhost
-> IOTLB through VHOST_UPDATE_IOTLB ioctl. Userspace is also in charge of
-> snooping the IOTLB invalidation of IOMMU IOTLB and use
-> VHOST_UPDATE_IOTLB to invalidate the possible entry in vhost.
+On Thu, 2015-12-24 at 18:17 +0800, Bamvor Zhang Jian wrote:
+> On 12/18/2015 07:44 AM, Michael Ellerman wrote:
+> > On Thu, 2015-12-17 at 17:57 +0800, Bamvor Jian Zhang wrote:
+> > > There is a discussion about improving the usability of kselftest by
+> > > creating test-specific kconfig in recent kernel Summit.
+> > > 
+> > > Patch 1 keep test-specific kconfig fragments inside each selftest so
+> > > that merge_configs.sh could build up a kernel that can test the
+> > > specific or all feature(s).
+> > > 
+> > > Patch 2 add config option(kselftest-mergeconfig) in make file as a
+> > > helper to merge all the test config dependecies to .config.
+> > > 
+> > > Changes since v2:
+> > > 1.  Fix the misuse of objtree and srctree in the
+> > >     kselftest-mergeconfig target.
+> > > 
+> > > Changes since v1:
+> > > 1.  Add kselftest-mergeconfig in scripts/kconfig/Makefile according
+> > >     to the suggestion from Michael.
+> > 
+> > Sorry I only just noticed you put it in scripts/kconfig/Makefile. I meant for
+> > it to go in Makefile, alongside the other kselftest targets.
+> 
+> Do you mean "tools/testing/selftest/Makefile"? I try to do it but I could not
+> get the objtree and srctree if it is called directly(objtree and srctree is
+> defined in toplevel Makefile)
 
-Is there any performance data shows the difference with IOTLB 
-supporting? I doubt we may see performance decrease since the flush code 
-path is longer than before.
+No I meant Makefile, the very top level Makefile.
 
--- 
-best regards
-yang
+There is already a kselftest target in there (line 1077), I meant we would add
+a kselftest-mergeconfig target in there.
+
+cheers
+
