@@ -1,29 +1,26 @@
-From: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>
-Subject: Re: [PATCH 3/8] cgroup: introduce cgroup namespaces
-Date: Mon, 4 Jan 2016 16:47:27 -0500
-Message-ID: <20160104214727.GA10618@cmpxchg.org>
-References: <1451937294-22589-1-git-send-email-serge.hallyn@ubuntu.com>
- <1451937294-22589-4-git-send-email-serge.hallyn@ubuntu.com>
- <20160104202053.GA23238@mail.hallyn.com>
+From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Subject: Re: [PATCH 1/1] include/uapi/linux/sockios.h: mark SIOCRTMSG unused
+Date: Mon, 04 Jan 2016 17:19:53 -0500 (EST)
+Message-ID: <20160104.171953.1963808714374349079.davem@davemloft.net>
+References: <1451427722-2672-1-git-send-email-xypron.glpk@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160104202053.GA23238-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1451427722-2672-1-git-send-email-xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: xypron.glpk-Mmb7MZpHnFY@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kuznet-v/Mj1YrvjDBInbfyfbPRSQ@public.gmane.org, jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org, yoshfuji-VfPWfsRibaP+Ru+s062T9g@public.gmane.org, kaber-dcUjhNyLwpNeoWH0uzbU5w@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 04, 2016 at 02:20:53PM -0600, Serge E. Hallyn wrote:
-> On Mon, Jan 04, 2016 at 01:54:48PM -0600, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org wrote:
-> > @@ -2166,6 +2178,43 @@ static struct file_system_type cgroup2_fs_type = {
-> >  	.kill_sb = cgroup_kill_sb,
-> >  };
-> >  
-> > +char *
-> 
-> Sorry, that one should be 'static char *'
+From: Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
+Date: Tue, 29 Dec 2015 23:22:02 +0100
 
-Lol, that took a while to find. Please don't quote over 500 lines to
-comment on a trivial issue of one line.
+> IOCTL SIOCRTMSG does nothing but return EINVAL.
+> 
+> So comment it as unused.
+> 
+> Signed-off-by: Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
+
+Please enhance your commit log message to include the analysis you
+provided in your reply to Michael Kerrisk.
