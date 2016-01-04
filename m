@@ -1,30 +1,174 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: Re: selective block polling and preadv2/pwritev2 revisited
-Date: Mon, 4 Jan 2016 17:39:50 +0100
-Message-ID: <20160104163949.GA17409@lst.de>
-References: <1450966464-6847-1-git-send-email-hch@lst.de> <568A889E.4020204@dev.mellanox.co.il>
+From: Chris Metcalf <cmetcalf@ezchip.com>
+Subject: [PATCH v9 00/13] support "task_isolation" mode for nohz_full
+Date: Mon, 4 Jan 2016 14:34:38 -0500
+Message-ID: <1451936091-29247-1-git-send-email-cmetcalf@ezchip.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <568A889E.4020204-LDSdmyG8hGV8YrgS2mwiifqBs+8SCbDb@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sagi Grimberg <sagig-LDSdmyG8hGV8YrgS2mwiifqBs+8SCbDb@public.gmane.org>
-Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, axboe-b10kYP2dOMg@public.gmane.org, milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: Chris Metcalf <cmetcalf@ezchip.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 04, 2016 at 04:58:38PM +0200, Sagi Grimberg wrote:
-> Hi Christoph,
->
->> Note that there are plenty of other use cases for preadv2/pwritev2 as well,
->> but I'd like to concentrate on this one for now.  Example are: non-blocking
->> reads (the original purpose), per-I/O O_SYNC, user space support for T10
->> DIF/DIX applications tags and probably some more.
->
-> So I'm trying to understand how can integrity metadata be used here.
-> Will the user-app append the meta-data to the data iovec (given there
-> is no metadata iovec)? If so, how will we separate data from metadata?
+It has been a couple of months since the v8 version of this patch,
+since various other priorities came up at work.  Since it's been
+a while I will try to summarize where I think we got to on the 
+various issues that were raised with v8.
 
-The idea that was floated aroud a few times was to have a flag where
-the first half of the vectors would be the data, and the second half
-the metadata.
+1. Andy Lutomirski raised the issue of whether it really made sense to
+   only attempt to set up the conditions for task isolation, ask the kernel
+   nicely for it, and then wait until it happened.  He wondered if a
+   SCHED_ISOLATED class might be a helpful abstraction.  Steven Rostedt
+   also suggested having an interface that would force everything else
+   off a core to enable SCHED_ISOLATED to succeed.  Frederick added 
+   some concerns about enforcing the test that the process was in a
+   good state to enter task isolation.
+
+   I tried to address the different design philosphies for what I called
+   the original "polite" mode and the reviewers' suggestions for an
+   "aggressive" mode in this email:
+
+   https://lkml.org/lkml/2015/10/26/625
+
+   As I said there, on balance I think the "polite" option is still
+   better.  Obviously folks are welcome to disagree and I'm happy to
+   continue that conversation (or perhaps I convinced everyone).
+
+2. Andy didn't like the idea of having a "STRICT" mode which
+   delivered a signal to a process for violating the contract that it
+   will promise to stay out of the kernel.  Gilad Ben Yossef argued that
+   it made sense to have a way for the kernel to enforce the requested
+   correctness guarantee of never being interrupted.  Andy pointed out
+   that we should then really deliver such a signal when the kernel
+   delivers an asynchronous interrupt to the core as well.  In particular
+   this is a concern for the application-error case of a process that
+   calls unmap() on one core while a thread on another core is running
+   STRICT, and thus gets an unexpected TLB flush.
+
+   This patch series addresses that concern by including support for
+   IRQs, IPIs, and similar asynchronous interrupts to also send the
+   STRICT signal to the process.  We don't try to send the signal if
+   we are in an NMI, and instead just force a console backtrace like
+   you would get in task_isolation_debug mode.
+
+3. Frederick nack'ed my patch for a boot flag to disable the 1Hz
+   periodic scheduler tick.
+
+   I'm still hoping he's open to changing his mind about that, but in
+   this patch series I have removed that boot flag.
+
+Various other changes have been introduced since v8:
+
+https://lkml.kernel.org/r/1445373372-6567-1-git-send-email-cmetcalf@ezchip.com
+
+- Rebased to Linux 4.4-rc5.
+
+- Since nohz_full and isolnodes have been separated back out again in
+  4.4, I introduced a new task_isolation=MASK boot argument that sets
+  both of them.  The task isolation support now requires that this
+  boot flag have been used; it intentionally doesn't work if you've
+  just enabled nohz_full and isolcpus separately.  I could be
+  convinced that doing it the other way around makes sense, though.
+
+- I folded the two STRICT mode patches together since there didn't
+  seem to be much value in having the second patch that just enabled
+  having a settable signal.  I also refactored the various routines
+  that report on interrupts/exceptions/etc to make it easier to hook
+  in from the case where we are interrupted asynchronously.
+
+- For the debug support, I moved most of the functionality into
+  kernel/isolation.c and out of kernel/sched/core.c, leaving only a
+  small hook to handle mapping a remote cpu to a task struct safely.
+  In addition to implementing Andy's suggestion of signalling a task
+  when it is interrupted asynchronously, I also added a ratelimit
+  hook so we won't spam the console if (for example) a timer interrupt
+  runs amok - particularly since when this happens without ratelimit,
+  it can end up self-perpetuating the timer interrupt.
+
+- I added a task_isolation_debug_cpumask() helper function to check
+  all the cpus in a mask to see if they are being interrupted
+  inappropriately.
+
+- I made the check for irq_enter() robust to architectures that
+  have already entered user mode context_tracking before calling
+  irq_enter() by testing user_mode(get_irq_regs()) instead of
+  context_tracking_in_user(), and split out the code to a separate
+  inlined function so I could comment it better.
+
+- For arm64, I added a task_isolation_debug_cpumask() hook for
+  smp_cross_call(), which I had missed in the earlier versions.
+
+- I generalized the fix for tile to set up a clockevents hook for
+  set_state_oneshot_stopped() to also apply to the arm_arch_timer,
+  which I realized was showing the same problem.  For both cases,
+  this seems to be what Viresh had in mind with commit 8fff52fd509345
+  ("clockevents: Introduce CLOCK_EVT_STATE_ONESHOT_STOPPED state").
+
+- For tile, I adopted the arm model of doing user_exit() calls in the
+  early assembly code (a new patch in this series).  I also added a
+  missing task_isolation_debug hook for tile's IPI and remote cache
+  flush code.
+
+Chris Metcalf (12):
+  vmstat: add vmstat_idle function
+  lru_add_drain_all: factor out lru_add_drain_needed
+  task_isolation: add initial support
+  task_isolation: support PR_TASK_ISOLATION_STRICT mode
+  task_isolation: add debug boot flag
+  arch/x86: enable task isolation functionality
+  arch/arm64: adopt prepare_exit_to_usermode() model from x86
+  arch/arm64: enable task isolation functionality
+  arch/tile: adopt prepare_exit_to_usermode() model from x86
+  arch/tile: move user_exit() to early kernel entry sequence
+  arch/tile: enable task isolation functionality
+  arm, tile: turn off timer tick for oneshot_stopped state
+
+Christoph Lameter (1):
+  vmstat: provide a function to quiet down the diff processing
+
+ Documentation/kernel-parameters.txt  |  16 +++
+ arch/arm64/include/asm/thread_info.h |  18 ++-
+ arch/arm64/kernel/entry.S            |   6 +-
+ arch/arm64/kernel/ptrace.c           |  12 +-
+ arch/arm64/kernel/signal.c           |  35 ++++--
+ arch/arm64/kernel/smp.c              |   2 +
+ arch/arm64/mm/fault.c                |   4 +
+ arch/tile/include/asm/processor.h    |   2 +-
+ arch/tile/include/asm/thread_info.h  |   8 +-
+ arch/tile/kernel/intvec_32.S         |  51 +++-----
+ arch/tile/kernel/intvec_64.S         |  54 +++------
+ arch/tile/kernel/process.c           |  83 +++++++------
+ arch/tile/kernel/ptrace.c            |  19 +--
+ arch/tile/kernel/single_step.c       |   8 +-
+ arch/tile/kernel/smp.c               |  26 ++--
+ arch/tile/kernel/time.c              |   1 +
+ arch/tile/kernel/traps.c             |  13 +-
+ arch/tile/kernel/unaligned.c         |  16 ++-
+ arch/tile/mm/fault.c                 |   6 +-
+ arch/tile/mm/homecache.c             |   2 +
+ arch/x86/entry/common.c              |  10 +-
+ arch/x86/kernel/traps.c              |   2 +
+ arch/x86/mm/fault.c                  |   2 +
+ drivers/clocksource/arm_arch_timer.c |   2 +
+ include/linux/isolation.h            |  80 +++++++++++++
+ include/linux/sched.h                |   3 +
+ include/linux/swap.h                 |   1 +
+ include/linux/vmstat.h               |   4 +
+ include/uapi/linux/prctl.h           |   8 ++
+ init/Kconfig                         |  20 ++++
+ kernel/Makefile                      |   1 +
+ kernel/irq_work.c                    |   5 +-
+ kernel/isolation.c                   | 225 +++++++++++++++++++++++++++++++++++
+ kernel/sched/core.c                  |  18 +++
+ kernel/signal.c                      |   5 +
+ kernel/smp.c                         |   6 +-
+ kernel/softirq.c                     |  33 +++++
+ kernel/sys.c                         |   9 ++
+ mm/swap.c                            |  13 +-
+ mm/vmstat.c                          |  24 ++++
+ 40 files changed, 665 insertions(+), 188 deletions(-)
+ create mode 100644 include/linux/isolation.h
+ create mode 100644 kernel/isolation.c
+
+-- 
+2.1.2
