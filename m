@@ -1,364 +1,563 @@
-From: Chris Metcalf <cmetcalf@ezchip.com>
-Subject: [PATCH v9 04/13] task_isolation: add initial support
-Date: Mon, 4 Jan 2016 14:34:42 -0500
-Message-ID: <1451936091-29247-5-git-send-email-cmetcalf@ezchip.com>
-References: <1451936091-29247-1-git-send-email-cmetcalf@ezchip.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1451936091-29247-1-git-send-email-cmetcalf@ezchip.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: Chris Metcalf <cmetcalf@ezchip.com>
+From: serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
+Subject: [PATCH 3/8] cgroup: introduce cgroup namespaces
+Date: Mon,  4 Jan 2016 13:54:48 -0600
+Message-ID: <1451937294-22589-4-git-send-email-serge.hallyn@ubuntu.com>
+References: <1451937294-22589-1-git-send-email-serge.hallyn@ubuntu.com>
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1451937294-22589-1-git-send-email-serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-The existing nohz_full mode is designed as a "soft" isolation mode
-that makes tradeoffs to minimize userspace interruptions while
-still attempting to avoid overheads in the kernel entry/exit path,
-to provide 100% kernel semantics, etc.
+From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-However, some applications require a "hard" commitment from the
-kernel to avoid interruptions, in particular userspace device driver
-style applications, such as high-speed networking code.
+Introduce the ability to create new cgroup namespace. The newly created
+cgroup namespace remembers the cgroup of the process at the point
+of creation of the cgroup namespace (referred as cgroupns-root).
+The main purpose of cgroup namespace is to virtualize the contents
+of /proc/self/cgroup file. Processes inside a cgroup namespace
+are only able to see paths relative to their namespace root
+(unless they are moved outside of their cgroupns-root, at which point
+ they will see a relative path from their cgroupns-root).
+For a correctly setup container this enables container-tools
+(like libcontainer, lxc, lmctfy, etc.) to create completely virtualized
+containers without leaking system level cgroup hierarchy to the task.
+This patch only implements the 'unshare' part of the cgroupns.
 
-This change introduces a framework to allow applications
-to elect to have the "hard" semantics as needed, specifying
-prctl(PR_SET_TASK_ISOLATION, PR_TASK_ISOLATION_ENABLE) to do so.
-Subsequent commits will add additional flags and additional
-semantics.
-
-The kernel must be built with the new TASK_ISOLATION Kconfig flag
-to enable this mode, and the kernel booted with an appropriate
-task_isolation=CPULIST boot argument, which enables nohz_full and
-isolcpus as well.  The "task_isolation" state is then indicated by
-setting a new task struct field, task_isolation_flag, to the value
-passed by prctl().  When the _ENABLE bit is set for a task, and it
-is returning to userspace on a task isolation core, it calls the
-new task_isolation_ready() / task_isolation_enter() routines to
-take additional actions to help the task avoid being interrupted
-in the future. 
-
-The task_isolation_ready() call plays an equivalent role to the
-TIF_xxx flags when returning to userspace, and should be checked
-in the loop check of the prepare_exit_to_usermode() routine or its
-architecture equivalent.  It is called with interrupts disabled and
-inspects the kernel state to determine if it is safe to return into
-an isolated state.  In particular, if it sees that the scheduler
-tick is still enabled, it sets the TIF_NEED_RESCHED bit to notify
-the scheduler to attempt to schedule a different task.
-
-Each time through the loop of TIF work to do, we call the new
-task_isolation_enter() routine, which takes any actions that might
-avoid a future interrupt to the core, such as a worker thread
-being scheduled that could be quiesced now (e.g. the vmstat worker)
-or a future IPI to the core to clean up some state that could be
-cleaned up now (e.g. the mm lru per-cpu cache).
-
-As a result of these tests on the "return to userspace" path, sys
-calls (and page faults, etc.) can be inordinately slow.  However,
-this quiescing guarantees that no unexpected interrupts will occur,
-even if the application intentionally calls into the kernel.
-
-Separate patches that follow provide these changes for x86, arm64,
-and tile.
-
-Signed-off-by: Chris Metcalf <cmetcalf@ezchip.com>
+Signed-off-by: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 ---
- Documentation/kernel-parameters.txt |   8 +++
- include/linux/isolation.h           |  50 +++++++++++++++++
- include/linux/sched.h               |   3 ++
- include/uapi/linux/prctl.h          |   5 ++
- init/Kconfig                        |  20 +++++++
- kernel/Makefile                     |   1 +
- kernel/isolation.c                  | 105 ++++++++++++++++++++++++++++++++++++
- kernel/sys.c                        |   9 ++++
- 8 files changed, 201 insertions(+)
- create mode 100644 include/linux/isolation.h
- create mode 100644 kernel/isolation.c
+Changelog: 2015-11-24
+	- move cgroup_namespace.c into cgroup.c (and .h)
+	- reformatting
+	- make get_cgroup_ns return void
+	- rename ns->root_cgrps to root_cset.
+Changelog: 2015-12-08
+	- Move init_cgroup_ns to other variable declarations
+	- Remove accidental conversion of put-css_set to inline
+	- Drop BUG_ON(NULL)
+	- Remove unneeded pre declaration of struct cgroupns_operations.
+	- cgroup.h: collect common ns declerations
+Changelog: 2015-12-09
+	- cgroup.h: move ns declarations to bottom
+	- cgroup.c: undo all accidental conversions to inline
+Changelog: 2015-12-22
+	- update for new kernfs_path_from_node() return value.  Since
+	  cgroup_path was already gpl-exported, I abstained from updating
+	  its return value.
+Changelog: 2015-12-23
+	- cgroup_path(): use init_cgroup_ns when in interupt context.
+Changelog: 2015-01-02
+	- move to_cg_ns definition forward in patch series
+	- cgroup_release_agent: grab css_set_lock around cgroup_path()
+	- leave cgroup_path non-namespaced, use cgroup_path_ns when
+	  namespaced path is desired.
+---
+ fs/proc/namespaces.c    |    3 +
+ include/linux/cgroup.h  |   56 +++++++++++++--
+ include/linux/nsproxy.h |    2 +
+ include/linux/proc_ns.h |    4 ++
+ kernel/cgroup.c         |  177 ++++++++++++++++++++++++++++++++++++++++++++++-
+ kernel/cpuset.c         |    3 +-
+ kernel/fork.c           |    2 +-
+ kernel/nsproxy.c        |   21 +++++-
+ kernel/sched/debug.c    |    3 +-
+ 9 files changed, 257 insertions(+), 14 deletions(-)
 
-diff --git a/Documentation/kernel-parameters.txt b/Documentation/kernel-parameters.txt
-index 742f69d18fc8..e035679e646e 100644
---- a/Documentation/kernel-parameters.txt
-+++ b/Documentation/kernel-parameters.txt
-@@ -3665,6 +3665,14 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
- 			neutralize any effect of /proc/sys/kernel/sysrq.
- 			Useful for debugging.
- 
-+	task_isolation=	[KNL]
-+			In kernels built with CONFIG_TASK_ISOLATION=y, set
-+			the specified list of CPUs where cpus will be able
-+			to use prctl(PR_SET_TASK_ISOLATION) to set up task
-+			isolation mode.  Setting this boot flag implicitly
-+			also sets up nohz_full and isolcpus mode for the
-+			listed set of cpus.
-+
- 	tcpmhash_entries= [KNL,NET]
- 			Set the number of tcp_metrics_hash slots.
- 			Default value is 8192 or 16384 depending on total
-diff --git a/include/linux/isolation.h b/include/linux/isolation.h
-new file mode 100644
-index 000000000000..ed1bfc793c5a
---- /dev/null
-+++ b/include/linux/isolation.h
-@@ -0,0 +1,50 @@
-+/*
-+ * Task isolation related global functions
-+ */
-+#ifndef _LINUX_ISOLATION_H
-+#define _LINUX_ISOLATION_H
-+
-+#include <linux/tick.h>
-+#include <linux/prctl.h>
-+
-+#ifdef CONFIG_TASK_ISOLATION
-+
-+/* cpus that are configured to support task isolation */
-+extern cpumask_var_t task_isolation_map;
-+
-+static inline bool task_isolation_possible(int cpu)
-+{
-+	return tick_nohz_full_enabled() &&
-+		cpumask_test_cpu(cpu, task_isolation_map);
-+}
-+
-+extern int task_isolation_set(unsigned int flags);
-+
-+static inline bool task_isolation_enabled(void)
-+{
-+	return task_isolation_possible(smp_processor_id()) &&
-+		(current->task_isolation_flags & PR_TASK_ISOLATION_ENABLE);
-+}
-+
-+extern bool _task_isolation_ready(void);
-+extern void _task_isolation_enter(void);
-+
-+static inline bool task_isolation_ready(void)
-+{
-+	return !task_isolation_enabled() || _task_isolation_ready();
-+}
-+
-+static inline void task_isolation_enter(void)
-+{
-+	if (task_isolation_enabled())
-+		_task_isolation_enter();
-+}
-+
-+#else
-+static inline bool task_isolation_possible(int cpu) { return false; }
-+static inline bool task_isolation_enabled(void) { return false; }
-+static inline bool task_isolation_ready(void) { return true; }
-+static inline void task_isolation_enter(void) { }
-+#endif
-+
-+#endif
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index edad7a43edea..d439ee4f2ce2 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1812,6 +1812,9 @@ struct task_struct {
- 	unsigned long	task_state_change;
+diff --git a/fs/proc/namespaces.c b/fs/proc/namespaces.c
+index f6e8354..bd61075 100644
+--- a/fs/proc/namespaces.c
++++ b/fs/proc/namespaces.c
+@@ -28,6 +28,9 @@ static const struct proc_ns_operations *ns_entries[] = {
+ 	&userns_operations,
  #endif
- 	int pagefault_disabled;
-+#ifdef CONFIG_TASK_ISOLATION
-+	unsigned int	task_isolation_flags;
+ 	&mntns_operations,
++#ifdef CONFIG_CGROUPS
++	&cgroupns_operations,
 +#endif
- /* CPU-specific state of this task */
- 	struct thread_struct thread;
- /*
-diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
-index a8d0759a9e40..67224df4b559 100644
---- a/include/uapi/linux/prctl.h
-+++ b/include/uapi/linux/prctl.h
-@@ -197,4 +197,9 @@ struct prctl_mm_map {
- # define PR_CAP_AMBIENT_LOWER		3
- # define PR_CAP_AMBIENT_CLEAR_ALL	4
+ };
  
-+/* Enable/disable or query task_isolation mode for NO_HZ_FULL kernels. */
-+#define PR_SET_TASK_ISOLATION		48
-+#define PR_GET_TASK_ISOLATION		49
-+# define PR_TASK_ISOLATION_ENABLE	(1 << 0)
-+
- #endif /* _LINUX_PRCTL_H */
-diff --git a/init/Kconfig b/init/Kconfig
-index 235c7a2c0d20..fb0c707e527f 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -787,6 +787,26 @@ config RCU_EXPEDITE_BOOT
+ static const char *proc_ns_follow_link(struct dentry *dentry, void **cookie)
+diff --git a/include/linux/cgroup.h b/include/linux/cgroup.h
+index 9d70b48..149ae0a 100644
+--- a/include/linux/cgroup.h
++++ b/include/linux/cgroup.h
+@@ -17,6 +17,11 @@
+ #include <linux/seq_file.h>
+ #include <linux/kernfs.h>
+ #include <linux/jump_label.h>
++#include <linux/nsproxy.h>
++#include <linux/types.h>
++#include <linux/ns_common.h>
++#include <linux/nsproxy.h>
++#include <linux/user_namespace.h>
  
- endmenu # "RCU Subsystem"
+ #include <linux/cgroup-defs.h>
  
-+config TASK_ISOLATION
-+	bool "Provide hard CPU isolation from the kernel on demand"
-+	depends on NO_HZ_FULL
-+	help
-+	 Allow userspace processes to place themselves on task_isolation
-+	 cores and run prctl(PR_SET_TASK_ISOLATION) to "isolate"
-+	 themselves from the kernel.  On return to userspace,
-+	 isolated tasks will first arrange that no future kernel
-+	 activity will interrupt the task while the task is running
-+	 in userspace.  This "hard" isolation from the kernel is
-+	 required for userspace tasks that are running hard real-time
-+	 tasks in userspace, such as a 10 Gbit network driver in userspace.
-+
-+	 Without this option, but with NO_HZ_FULL enabled, the kernel
-+	 will make a best-faith, "soft" effort to shield a single userspace
-+	 process from interrupts, but makes no guarantees.
-+
-+	 You should say "N" unless you are intending to run a
-+	 high-performance userspace driver or similar task.
-+
- config BUILD_BIN2C
- 	bool
- 	default n
-diff --git a/kernel/Makefile b/kernel/Makefile
-index 53abf008ecb3..693a2ba35679 100644
---- a/kernel/Makefile
-+++ b/kernel/Makefile
-@@ -103,6 +103,7 @@ obj-$(CONFIG_TORTURE_TEST) += torture.o
- obj-$(CONFIG_MEMBARRIER) += membarrier.o
+@@ -532,12 +537,6 @@ static inline int cgroup_name(struct cgroup *cgrp, char *buf, size_t buflen)
+ 	return kernfs_name(cgrp->kn, buf, buflen);
+ }
  
- obj-$(CONFIG_HAS_IOMEM) += memremap.o
-+obj-$(CONFIG_TASK_ISOLATION) += isolation.o
+-static inline char * __must_check cgroup_path(struct cgroup *cgrp, char *buf,
+-					      size_t buflen)
+-{
+-	return kernfs_path(cgrp->kn, buf, buflen);
+-}
+-
+ static inline void pr_cont_cgroup_name(struct cgroup *cgrp)
+ {
+ 	pr_cont_kernfs_name(cgrp->kn);
+@@ -570,4 +569,49 @@ static inline int cgroup_init(void) { return 0; }
  
- $(obj)/configs.o: $(obj)/config_data.h
+ #endif /* !CONFIG_CGROUPS */
  
-diff --git a/kernel/isolation.c b/kernel/isolation.c
-new file mode 100644
-index 000000000000..68a9f7457bc0
---- /dev/null
-+++ b/kernel/isolation.c
-@@ -0,0 +1,105 @@
-+/*
-+ *  linux/kernel/isolation.c
-+ *
-+ *  Implementation for task isolation.
-+ *
-+ *  Distributed under GPLv2.
-+ */
++struct cgroup_namespace {
++	atomic_t		count;
++	struct ns_common	ns;
++	struct user_namespace	*user_ns;
++	struct css_set          *root_cset;
++};
 +
-+#include <linux/mm.h>
-+#include <linux/swap.h>
-+#include <linux/vmstat.h>
-+#include <linux/isolation.h>
-+#include <linux/syscalls.h>
-+#include "time/tick-sched.h"
++extern struct cgroup_namespace init_cgroup_ns;
 +
-+cpumask_var_t task_isolation_map;
++#ifdef CONFIG_CGROUPS
 +
-+/*
-+ * Isolation requires both nohz and isolcpus support from the scheduler.
-+ * We provide a boot flag that enables both for now, and which we can
-+ * add other functionality to over time if needed.  Note that just
-+ * specifying "nohz_full=... isolcpus=..." does not enable task isolation.
-+ */
-+static int __init task_isolation_setup(char *str)
++void free_cgroup_ns(struct cgroup_namespace *ns);
++
++struct cgroup_namespace *
++copy_cgroup_ns(unsigned long flags, struct user_namespace *user_ns,
++	       struct cgroup_namespace *old_ns);
++
++char *cgroup_path_ns(struct cgroup *cgrp, char *buf, size_t buflen,
++		     struct cgroup_namespace *ns);
++char *cgroup_path(struct cgroup *cgrp, char *buf, size_t buflen);
++
++#else /* !CONFIG_CGROUPS */
++
++static inline void free_cgroup_ns(struct cgroup_namespace *ns) { }
++static inline struct cgroup_namespace *
++copy_cgroup_ns(unsigned long flags, struct user_namespace *user_ns,
++	       struct cgroup_namespace *old_ns)
 +{
-+	alloc_bootmem_cpumask_var(&task_isolation_map);
-+	if (cpulist_parse(str, task_isolation_map) < 0) {
-+		pr_warn("task_isolation: Incorrect cpumask '%s'\n", str);
-+		return 1;
++	return old_ns;
++}
++
++#endif /* !CONFIG_CGROUPS */
++
++static inline void get_cgroup_ns(struct cgroup_namespace *ns)
++{
++	if (ns)
++		atomic_inc(&ns->count);
++}
++
++static inline void put_cgroup_ns(struct cgroup_namespace *ns)
++{
++	if (ns && atomic_dec_and_test(&ns->count))
++		free_cgroup_ns(ns);
++}
++
+ #endif /* _LINUX_CGROUP_H */
+diff --git a/include/linux/nsproxy.h b/include/linux/nsproxy.h
+index 35fa08f..ac0d65b 100644
+--- a/include/linux/nsproxy.h
++++ b/include/linux/nsproxy.h
+@@ -8,6 +8,7 @@ struct mnt_namespace;
+ struct uts_namespace;
+ struct ipc_namespace;
+ struct pid_namespace;
++struct cgroup_namespace;
+ struct fs_struct;
+ 
+ /*
+@@ -33,6 +34,7 @@ struct nsproxy {
+ 	struct mnt_namespace *mnt_ns;
+ 	struct pid_namespace *pid_ns_for_children;
+ 	struct net 	     *net_ns;
++	struct cgroup_namespace *cgroup_ns;
+ };
+ extern struct nsproxy init_nsproxy;
+ 
+diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
+index 42dfc61..de0e771 100644
+--- a/include/linux/proc_ns.h
++++ b/include/linux/proc_ns.h
+@@ -9,6 +9,8 @@
+ struct pid_namespace;
+ struct nsproxy;
+ struct path;
++struct task_struct;
++struct inode;
+ 
+ struct proc_ns_operations {
+ 	const char *name;
+@@ -24,6 +26,7 @@ extern const struct proc_ns_operations ipcns_operations;
+ extern const struct proc_ns_operations pidns_operations;
+ extern const struct proc_ns_operations userns_operations;
+ extern const struct proc_ns_operations mntns_operations;
++extern const struct proc_ns_operations cgroupns_operations;
+ 
+ /*
+  * We always define these enumerators
+@@ -34,6 +37,7 @@ enum {
+ 	PROC_UTS_INIT_INO	= 0xEFFFFFFEU,
+ 	PROC_USER_INIT_INO	= 0xEFFFFFFDU,
+ 	PROC_PID_INIT_INO	= 0xEFFFFFFCU,
++	PROC_CGROUP_INIT_INO	= 0xEFFFFFFBU,
+ };
+ 
+ #ifdef CONFIG_PROC_FS
+diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+index 6b33631..60270b1 100644
+--- a/kernel/cgroup.c
++++ b/kernel/cgroup.c
+@@ -57,6 +57,9 @@
+ #include <linux/vmalloc.h> /* TODO: replace with more sophisticated array */
+ #include <linux/kthread.h>
+ #include <linux/delay.h>
++#include <linux/proc_ns.h>
++#include <linux/nsproxy.h>
++#include <linux/proc_ns.h>
+ 
+ #include <linux/atomic.h>
+ 
+@@ -208,6 +211,15 @@ static unsigned long have_fork_callback __read_mostly;
+ static unsigned long have_exit_callback __read_mostly;
+ static unsigned long have_free_callback __read_mostly;
+ 
++/* Cgroup namespace for init task */
++struct cgroup_namespace init_cgroup_ns = {
++	.count		= { .counter = 2, },
++	.user_ns	= &init_user_ns,
++	.ns.ops		= &cgroupns_operations,
++	.ns.inum	= PROC_CGROUP_INIT_INO,
++	.root_cset	= &init_css_set,
++};
++
+ /* Ditto for the can_fork callback. */
+ static unsigned long have_canfork_callback __read_mostly;
+ 
+@@ -2166,6 +2178,43 @@ static struct file_system_type cgroup2_fs_type = {
+ 	.kill_sb = cgroup_kill_sb,
+ };
+ 
++char *
++cgroup_path_ns_locked(struct cgroup *cgrp, char *buf, size_t buflen,
++		      struct cgroup_namespace *ns)
++{
++	int ret;
++	struct cgroup *root = cset_cgroup_from_root(ns->root_cset, cgrp->root);
++
++	ret = kernfs_path_from_node(cgrp->kn, root->kn, buf, buflen);
++	if (ret < 0 || ret >= buflen)
++		return NULL;
++	return buf;
++}
++
++char *cgroup_path_ns(struct cgroup *cgrp, char *buf, size_t buflen,
++		     struct cgroup_namespace *ns)
++{
++	char *ret;
++
++	mutex_lock(&cgroup_mutex);
++	spin_lock_bh(&css_set_lock);
++
++	ret = cgroup_path_ns_locked(cgrp, buf, buflen, ns);
++
++	spin_unlock_bh(&css_set_lock);
++	mutex_unlock(&cgroup_mutex);
++
++	return ret;
++}
++EXPORT_SYMBOL_GPL(cgroup_path_ns);
++
++char *cgroup_path(struct cgroup *cgrp, char *buf, size_t buflen)
++{
++	return cgroup_path_ns(cgrp, buf, buflen, &init_cgroup_ns);
++}
++
++EXPORT_SYMBOL_GPL(cgroup_path);
++
+ /**
+  * task_cgroup_path - cgroup path of a task in the first cgroup hierarchy
+  * @task: target task
+@@ -2193,7 +2242,8 @@ char *task_cgroup_path(struct task_struct *task, char *buf, size_t buflen)
+ 
+ 	if (root) {
+ 		cgrp = task_cgroup_from_root(task, root);
+-		path = cgroup_path(cgrp, buf, buflen);
++		path = cgroup_path_ns_locked(cgrp, buf, buflen,
++					     &init_cgroup_ns);
+ 	} else {
+ 		/* if no hierarchy exists, everyone is in "/" */
+ 		if (strlcpy(buf, "/", buflen) < buflen)
+@@ -5272,6 +5322,8 @@ int __init cgroup_init(void)
+ 	BUG_ON(cgroup_init_cftypes(NULL, cgroup_dfl_base_files));
+ 	BUG_ON(cgroup_init_cftypes(NULL, cgroup_legacy_base_files));
+ 
++	get_user_ns(init_cgroup_ns.user_ns);
++
+ 	mutex_lock(&cgroup_mutex);
+ 
+ 	/* Add init_css_set to the hash table */
+@@ -5409,7 +5461,8 @@ int proc_cgroup_show(struct seq_file *m, struct pid_namespace *ns,
+ 		 * " (deleted)" is appended to the cgroup path.
+ 		 */
+ 		if (cgroup_on_dfl(cgrp) || !(tsk->flags & PF_EXITING)) {
+-			path = cgroup_path(cgrp, buf, PATH_MAX);
++			path = cgroup_path_ns_locked(cgrp, buf, PATH_MAX,
++						     current->nsproxy->cgroup_ns);
+ 			if (!path) {
+ 				retval = -ENAMETOOLONG;
+ 				goto out_unlock;
+@@ -5691,7 +5744,10 @@ static void cgroup_release_agent(struct work_struct *work)
+ 	if (!pathbuf || !agentbuf)
+ 		goto out;
+ 
+-	path = cgroup_path(cgrp, pathbuf, PATH_MAX);
++	spin_lock_bh(&css_set_lock);
++	path = cgroup_path_ns_locked(cgrp, pathbuf, PATH_MAX,
++				     &init_cgroup_ns);
++	spin_unlock_bh(&css_set_lock);
+ 	if (!path)
+ 		goto out;
+ 
+@@ -5822,6 +5878,121 @@ struct cgroup *cgroup_get_from_path(const char *path)
+ }
+ EXPORT_SYMBOL_GPL(cgroup_get_from_path);
+ 
++/* cgroup namespaces */
++
++static struct cgroup_namespace *alloc_cgroup_ns(void)
++{
++	struct cgroup_namespace *new_ns;
++	int ret;
++
++	new_ns = kzalloc(sizeof(struct cgroup_namespace), GFP_KERNEL);
++	if (!new_ns)
++		return ERR_PTR(-ENOMEM);
++	ret = ns_alloc_inum(&new_ns->ns);
++	if (ret) {
++		kfree(new_ns);
++		return ERR_PTR(ret);
++	}
++	atomic_set(&new_ns->count, 1);
++	new_ns->ns.ops = &cgroupns_operations;
++	return new_ns;
++}
++
++void free_cgroup_ns(struct cgroup_namespace *ns)
++{
++	put_css_set(ns->root_cset);
++	put_user_ns(ns->user_ns);
++	ns_free_inum(&ns->ns);
++	kfree(ns);
++}
++EXPORT_SYMBOL(free_cgroup_ns);
++
++struct cgroup_namespace *
++copy_cgroup_ns(unsigned long flags, struct user_namespace *user_ns,
++	       struct cgroup_namespace *old_ns)
++{
++	struct cgroup_namespace *new_ns = NULL;
++	struct css_set *cset = NULL;
++	int err;
++
++	BUG_ON(!old_ns);
++
++	if (!(flags & CLONE_NEWCGROUP)) {
++		get_cgroup_ns(old_ns);
++		return old_ns;
 +	}
 +
-+	alloc_bootmem_cpumask_var(&cpu_isolated_map);
-+	cpumask_copy(cpu_isolated_map, task_isolation_map);
++	/* Allow only sysadmin to create cgroup namespace. */
++	err = -EPERM;
++	if (!ns_capable(user_ns, CAP_SYS_ADMIN))
++		goto err_out;
 +
-+	alloc_bootmem_cpumask_var(&tick_nohz_full_mask);
-+	cpumask_copy(tick_nohz_full_mask, task_isolation_map);
-+	tick_nohz_full_running = true;
++	cset = task_css_set(current);
++	get_css_set(cset);
 +
-+	return 1;
++	err = -ENOMEM;
++	new_ns = alloc_cgroup_ns();
++	if (!new_ns)
++		goto err_out;
++
++	new_ns->user_ns = get_user_ns(user_ns);
++	new_ns->root_cset = cset;
++
++	return new_ns;
++
++err_out:
++	if (cset)
++		put_css_set(cset);
++	kfree(new_ns);
++	return ERR_PTR(err);
 +}
-+__setup("task_isolation=", task_isolation_setup);
 +
-+/*
-+ * This routine controls whether we can enable task-isolation mode.
-+ * The task must be affinitized to a single task_isolation core or we will
-+ * return EINVAL.  Although the application could later re-affinitize
-+ * to a housekeeping core and lose task isolation semantics, this
-+ * initial test should catch 99% of bugs with task placement prior to
-+ * enabling task isolation.
-+ */
-+int task_isolation_set(unsigned int flags)
++static inline struct cgroup_namespace *to_cg_ns(struct ns_common *ns)
 +{
-+	if (cpumask_weight(tsk_cpus_allowed(current)) != 1 ||
-+	    !task_isolation_possible(smp_processor_id()))
-+		return -EINVAL;
++	return container_of(ns, struct cgroup_namespace, ns);
++}
 +
-+	current->task_isolation_flags = flags;
++static int cgroupns_install(struct nsproxy *nsproxy, void *ns)
++{
++	pr_info("setns not supported for cgroup namespace");
++	return -EINVAL;
++}
++
++static struct ns_common *cgroupns_get(struct task_struct *task)
++{
++	struct cgroup_namespace *ns = NULL;
++	struct nsproxy *nsproxy;
++
++	task_lock(task);
++	nsproxy = task->nsproxy;
++	if (nsproxy) {
++		ns = nsproxy->cgroup_ns;
++		get_cgroup_ns(ns);
++	}
++	task_unlock(task);
++
++	return ns ? &ns->ns : NULL;
++}
++
++static void cgroupns_put(struct ns_common *ns)
++{
++	put_cgroup_ns(to_cg_ns(ns));
++}
++
++const struct proc_ns_operations cgroupns_operations = {
++	.name		= "cgroup",
++	.type		= CLONE_NEWCGROUP,
++	.get		= cgroupns_get,
++	.put		= cgroupns_put,
++	.install	= cgroupns_install,
++};
++
++static __init int cgroup_namespaces_init(void)
++{
 +	return 0;
 +}
++subsys_initcall(cgroup_namespaces_init);
 +
-+/*
-+ * In task isolation mode we try to return to userspace only after
-+ * attempting to make sure we won't be interrupted again.  To handle
-+ * the periodic scheduler tick, we test to make sure that the tick is
-+ * stopped, and if it isn't yet, we request a reschedule so that if
-+ * another task needs to run to completion first, it can do so.
-+ * Similarly, if any other subsystems require quiescing, we will need
-+ * to do that before we return to userspace.
-+ */
-+bool _task_isolation_ready(void)
-+{
-+	WARN_ON_ONCE(!irqs_disabled());
-+
-+	/* If we need to drain the LRU cache, we're not ready. */
-+	if (lru_add_drain_needed(smp_processor_id()))
-+		return false;
-+
-+	/* If vmstats need updating, we're not ready. */
-+	if (!vmstat_idle())
-+		return false;
-+
-+	/* Request rescheduling unless we are in full dynticks mode. */
-+	if (!tick_nohz_tick_stopped()) {
-+		set_tsk_need_resched(current);
-+		return false;
+ #ifdef CONFIG_CGROUP_DEBUG
+ static struct cgroup_subsys_state *
+ debug_css_alloc(struct cgroup_subsys_state *parent_css)
+diff --git a/kernel/cpuset.c b/kernel/cpuset.c
+index 3e945fc..37c8eb0 100644
+--- a/kernel/cpuset.c
++++ b/kernel/cpuset.c
+@@ -2689,7 +2689,8 @@ int proc_cpuset_show(struct seq_file *m, struct pid_namespace *ns,
+ 	retval = -ENAMETOOLONG;
+ 	rcu_read_lock();
+ 	css = task_css(tsk, cpuset_cgrp_id);
+-	p = cgroup_path(css->cgroup, buf, PATH_MAX);
++	p = cgroup_path_ns(css->cgroup, buf, PATH_MAX,
++			   current->nsproxy->cgroup_ns);
+ 	rcu_read_unlock();
+ 	if (!p)
+ 		goto out_free;
+diff --git a/kernel/fork.c b/kernel/fork.c
+index ba7d1c0..7982fee 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1880,7 +1880,7 @@ static int check_unshare_flags(unsigned long unshare_flags)
+ 	if (unshare_flags & ~(CLONE_THREAD|CLONE_FS|CLONE_NEWNS|CLONE_SIGHAND|
+ 				CLONE_VM|CLONE_FILES|CLONE_SYSVSEM|
+ 				CLONE_NEWUTS|CLONE_NEWIPC|CLONE_NEWNET|
+-				CLONE_NEWUSER|CLONE_NEWPID))
++				CLONE_NEWUSER|CLONE_NEWPID|CLONE_NEWCGROUP))
+ 		return -EINVAL;
+ 	/*
+ 	 * Not implemented, but pretend it works if there is nothing
+diff --git a/kernel/nsproxy.c b/kernel/nsproxy.c
+index 49746c8..64fe865 100644
+--- a/kernel/nsproxy.c
++++ b/kernel/nsproxy.c
+@@ -25,6 +25,7 @@
+ #include <linux/proc_ns.h>
+ #include <linux/file.h>
+ #include <linux/syscalls.h>
++#include <linux/cgroup.h>
+ 
+ static struct kmem_cache *nsproxy_cachep;
+ 
+@@ -39,6 +40,9 @@ struct nsproxy init_nsproxy = {
+ #ifdef CONFIG_NET
+ 	.net_ns			= &init_net,
+ #endif
++#ifdef CONFIG_CGROUPS
++	.cgroup_ns		= &init_cgroup_ns,
++#endif
+ };
+ 
+ static inline struct nsproxy *create_nsproxy(void)
+@@ -92,6 +96,13 @@ static struct nsproxy *create_new_namespaces(unsigned long flags,
+ 		goto out_pid;
+ 	}
+ 
++	new_nsp->cgroup_ns = copy_cgroup_ns(flags, user_ns,
++					    tsk->nsproxy->cgroup_ns);
++	if (IS_ERR(new_nsp->cgroup_ns)) {
++		err = PTR_ERR(new_nsp->cgroup_ns);
++		goto out_cgroup;
 +	}
 +
-+	return true;
-+}
-+
-+/*
-+ * Each time we try to prepare for return to userspace in a process
-+ * with task isolation enabled, we run this code to quiesce whatever
-+ * subsystems we can readily quiesce to avoid later interrupts.
-+ */
-+void _task_isolation_enter(void)
-+{
-+	WARN_ON_ONCE(irqs_disabled());
-+
-+	/* Drain the pagevecs to avoid unnecessary IPI flushes later. */
-+	lru_add_drain();
-+
-+	/* Quieten the vmstat worker so it won't interrupt us. */
-+	quiet_vmstat();
-+}
-diff --git a/kernel/sys.c b/kernel/sys.c
-index 6af9212ab5aa..7c97227dfb39 100644
---- a/kernel/sys.c
-+++ b/kernel/sys.c
-@@ -41,6 +41,7 @@
- #include <linux/syscore_ops.h>
- #include <linux/version.h>
- #include <linux/ctype.h>
-+#include <linux/isolation.h>
+ 	new_nsp->net_ns = copy_net_ns(flags, user_ns, tsk->nsproxy->net_ns);
+ 	if (IS_ERR(new_nsp->net_ns)) {
+ 		err = PTR_ERR(new_nsp->net_ns);
+@@ -101,6 +112,9 @@ static struct nsproxy *create_new_namespaces(unsigned long flags,
+ 	return new_nsp;
  
- #include <linux/compat.h>
- #include <linux/syscalls.h>
-@@ -2266,6 +2267,14 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
- 	case PR_GET_FP_MODE:
- 		error = GET_FP_MODE(me);
- 		break;
-+#ifdef CONFIG_TASK_ISOLATION
-+	case PR_SET_TASK_ISOLATION:
-+		error = task_isolation_set(arg2);
-+		break;
-+	case PR_GET_TASK_ISOLATION:
-+		error = me->task_isolation_flags;
-+		break;
-+#endif
- 	default:
- 		error = -EINVAL;
- 		break;
+ out_net:
++	if (new_nsp->cgroup_ns)
++		put_cgroup_ns(new_nsp->cgroup_ns);
++out_cgroup:
+ 	if (new_nsp->pid_ns_for_children)
+ 		put_pid_ns(new_nsp->pid_ns_for_children);
+ out_pid:
+@@ -128,7 +142,8 @@ int copy_namespaces(unsigned long flags, struct task_struct *tsk)
+ 	struct nsproxy *new_ns;
+ 
+ 	if (likely(!(flags & (CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC |
+-			      CLONE_NEWPID | CLONE_NEWNET)))) {
++			      CLONE_NEWPID | CLONE_NEWNET |
++			      CLONE_NEWCGROUP)))) {
+ 		get_nsproxy(old_ns);
+ 		return 0;
+ 	}
+@@ -165,6 +180,8 @@ void free_nsproxy(struct nsproxy *ns)
+ 		put_ipc_ns(ns->ipc_ns);
+ 	if (ns->pid_ns_for_children)
+ 		put_pid_ns(ns->pid_ns_for_children);
++	if (ns->cgroup_ns)
++		put_cgroup_ns(ns->cgroup_ns);
+ 	put_net(ns->net_ns);
+ 	kmem_cache_free(nsproxy_cachep, ns);
+ }
+@@ -180,7 +197,7 @@ int unshare_nsproxy_namespaces(unsigned long unshare_flags,
+ 	int err = 0;
+ 
+ 	if (!(unshare_flags & (CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC |
+-			       CLONE_NEWNET | CLONE_NEWPID)))
++			       CLONE_NEWNET | CLONE_NEWPID | CLONE_NEWCGROUP)))
+ 		return 0;
+ 
+ 	user_ns = new_cred ? new_cred->user_ns : current_user_ns();
+diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
+index 6415117..4c28523 100644
+--- a/kernel/sched/debug.c
++++ b/kernel/sched/debug.c
+@@ -104,7 +104,8 @@ static char *task_group_path(struct task_group *tg)
+ 	if (autogroup_path(tg, group_path, PATH_MAX))
+ 		return group_path;
+ 
+-	return cgroup_path(tg->css.cgroup, group_path, PATH_MAX);
++	return cgroup_path_ns(tg->css.cgroup, group_path, PATH_MAX,
++			      current->nsproxy->cgroup_ns);
+ }
+ #endif
+ 
 -- 
-2.1.2
+1.7.9.5
