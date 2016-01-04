@@ -1,7 +1,7 @@
 From: serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
-Subject: [PATCH 5/8] kernfs: define kernfs_node_dentry
-Date: Mon,  4 Jan 2016 13:54:50 -0600
-Message-ID: <1451937294-22589-6-git-send-email-serge.hallyn@ubuntu.com>
+Subject: [PATCH 6/8] cgroup: mount cgroupns-root when inside non-init cgroupns
+Date: Mon,  4 Jan 2016 13:54:51 -0600
+Message-ID: <1451937294-22589-7-git-send-email-serge.hallyn@ubuntu.com>
 References: <1451937294-22589-1-git-send-email-serge.hallyn@ubuntu.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,17 +18,19 @@ List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
 Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Cc: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 
-Add a new kernfs api is added to lookup the dentry for a particular
-kernfs path.
+This patch enables cgroup mounting inside userns when a process
+as appropriate privileges. The cgroup filesystem mounted is
+rooted at the cgroupns-root. Thus, in a container-setup, only
+the hierarchy under the cgroupns-root is exposed inside the container.
+This allows container management tools to run inside the containers
+without depending on any global state.
 
-Signed-off-by: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Signed-off-by: Serge E. Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Acked-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Signed-off-by: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 ---
 Changelog:
 	20151116 - Don't allow user namespaces to bind new subsystems
@@ -36,113 +38,114 @@ Changelog:
 	           last patch, until we can convince ourselves it
 		   is safe.
 	20151207 - Switch to walking up the kernfs path from kn root.
-	20151208 - Split out the kernfs change
-		 - Style changes
-		 - Switch from pr_crit to WARN_ON
-		 - Reorder arguments to kernfs_obtain_root
-		 - rename kernfs_obtain_root to kernfs_node_dentry
+		 - Group initialized variables
+		 - Explain the capable(CAP_SYS_ADMIN) check
+		 - Style fixes
+	20160104 - kernfs_node_dentry: lock inode for lookup_one_len()
+
+Signed-off-by: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 ---
- fs/kernfs/mount.c      |   67 ++++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/kernfs.h |    2 ++
- 2 files changed, 69 insertions(+)
+ fs/kernfs/mount.c |    2 ++
+ kernel/cgroup.c   |   40 +++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 41 insertions(+), 1 deletion(-)
 
 diff --git a/fs/kernfs/mount.c b/fs/kernfs/mount.c
-index 8eaf417..7224296 100644
+index 7224296..074bb8b 100644
 --- a/fs/kernfs/mount.c
 +++ b/fs/kernfs/mount.c
-@@ -14,6 +14,7 @@
- #include <linux/magic.h>
- #include <linux/slab.h>
- #include <linux/pagemap.h>
-+#include <linux/namei.h>
+@@ -120,7 +120,9 @@ struct dentry *kernfs_node_dentry(struct kernfs_node *kn,
+ 		kntmp = find_next_ancestor(kn, knparent);
+ 		if (WARN_ON(!kntmp))
+ 			return ERR_PTR(-EINVAL);
++		mutex_lock(&d_inode(dentry)->i_mutex);
+ 		dtmp = lookup_one_len(kntmp->name, dentry, strlen(kntmp->name));
++		mutex_unlock(&d_inode(dentry)->i_mutex);
+ 		dput(dentry);
+ 		if (IS_ERR(dtmp))
+ 			return dtmp;
+diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+index 2bb58a1..d0bed8f 100644
+--- a/kernel/cgroup.c
++++ b/kernel/cgroup.c
+@@ -1983,6 +1983,7 @@ static struct dentry *cgroup_mount(struct file_system_type *fs_type,
+ {
+ 	bool is_v2 = fs_type == &cgroup2_fs_type;
+ 	struct super_block *pinned_sb = NULL;
++	struct cgroup_namespace *ns = current->nsproxy->cgroup_ns;
+ 	struct cgroup_subsys *ss;
+ 	struct cgroup_root *root;
+ 	struct cgroup_sb_opts opts;
+@@ -1991,6 +1992,14 @@ static struct dentry *cgroup_mount(struct file_system_type *fs_type,
+ 	int i;
+ 	bool new_sb;
  
- #include "kernfs-internal.h"
++	get_cgroup_ns(ns);
++
++	/* Check if the caller has permission to mount. */
++	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN)) {
++		put_cgroup_ns(ns);
++		return ERR_PTR(-EPERM);
++	}
++
+ 	/*
+ 	 * The first time anyone tries to mount a cgroup, enable the list
+ 	 * linking each css_set to its tasks and fix up all existing tasks.
+@@ -2106,6 +2115,16 @@ static struct dentry *cgroup_mount(struct file_system_type *fs_type,
+ 		goto out_unlock;
+ 	}
  
-@@ -62,6 +63,72 @@ struct kernfs_root *kernfs_root_from_sb(struct super_block *sb)
- 	return NULL;
++	/*
++	 * We know this subsystem has not yet been bound.  Users in a non-init
++	 * user namespace may only mount hierarchies with no bound subsystems,
++	 * i.e. 'none,name=user1'
++	 */
++	if (!opts.none && !capable(CAP_SYS_ADMIN)) {
++		ret = -EPERM;
++		goto out_unlock;
++	}
++
+ 	root = kzalloc(sizeof(*root), GFP_KERNEL);
+ 	if (!root) {
+ 		ret = -ENOMEM;
+@@ -2124,12 +2143,30 @@ out_free:
+ 	kfree(opts.release_agent);
+ 	kfree(opts.name);
+ 
+-	if (ret)
++	if (ret) {
++		put_cgroup_ns(ns);
+ 		return ERR_PTR(ret);
++	}
+ out_mount:
+ 	dentry = kernfs_mount(fs_type, flags, root->kf_root,
+ 			      is_v2 ? CGROUP2_SUPER_MAGIC : CGROUP_SUPER_MAGIC,
+ 			      &new_sb);
++
++	/*
++	 * In non-init cgroup namespace, instead of root cgroup's
++	 * dentry, we return the dentry corresponding to the
++	 * cgroupns->root_cgrp.
++	 */
++	if (!IS_ERR(dentry) && ns != &init_cgroup_ns) {
++		struct dentry *nsdentry;
++		struct cgroup *cgrp;
++
++		cgrp = cset_cgroup_from_root(ns->root_cset, root);
++		nsdentry = kernfs_node_dentry(cgrp->kn, dentry->d_sb);
++		dput(dentry);
++		dentry = nsdentry;
++	}
++
+ 	if (IS_ERR(dentry) || !new_sb)
+ 		cgroup_put(&root->cgrp);
+ 
+@@ -2142,6 +2179,7 @@ out_mount:
+ 		deactivate_super(pinned_sb);
+ 	}
+ 
++	put_cgroup_ns(ns);
+ 	return dentry;
  }
  
-+/*
-+ * find the next ancestor in the path down to @child, where @parent was the
-+ * ancestor whose descendant we want to find.
-+ *
-+ * Say the path is /a/b/c/d.  @child is d, @parent is NULL.  We return the root
-+ * node.  If @parent is b, then we return the node for c.
-+ * Passing in d as @parent is not ok.
-+ */
-+static struct kernfs_node *
-+find_next_ancestor(struct kernfs_node *child, struct kernfs_node *parent)
-+{
-+	if (child == parent) {
-+		pr_crit_once("BUG in find_next_ancestor: called with parent == child");
-+		return NULL;
-+	}
-+
-+	while (child->parent != parent) {
-+		if (!child->parent)
-+			return NULL;
-+		child = child->parent;
-+	}
-+
-+	return child;
-+}
-+
-+/**
-+ * kernfs_node_dentry - get a dentry for the given kernfs_node
-+ * @kn: kernfs_node for which a dentry is needed
-+ * @sb: the kernfs super_block
-+ */
-+struct dentry *kernfs_node_dentry(struct kernfs_node *kn,
-+				  struct super_block *sb)
-+{
-+	struct dentry *dentry;
-+	struct kernfs_node *knparent = NULL;
-+
-+	BUG_ON(sb->s_op != &kernfs_sops);
-+
-+	dentry = dget(sb->s_root);
-+
-+	/* Check if this is the root kernfs_node */
-+	if (!kn->parent)
-+		return dentry;
-+
-+	knparent = find_next_ancestor(kn, NULL);
-+	if (WARN_ON(!knparent))
-+		return ERR_PTR(-EINVAL);
-+
-+	do {
-+		struct dentry *dtmp;
-+		struct kernfs_node *kntmp;
-+
-+		if (kn == knparent)
-+			return dentry;
-+		kntmp = find_next_ancestor(kn, knparent);
-+		if (WARN_ON(!kntmp))
-+			return ERR_PTR(-EINVAL);
-+		dtmp = lookup_one_len(kntmp->name, dentry, strlen(kntmp->name));
-+		dput(dentry);
-+		if (IS_ERR(dtmp))
-+			return dtmp;
-+		knparent = kntmp;
-+		dentry = dtmp;
-+	} while (1);
-+}
-+
- static int kernfs_fill_super(struct super_block *sb, unsigned long magic)
- {
- 	struct kernfs_super_info *info = kernfs_info(sb);
-diff --git a/include/linux/kernfs.h b/include/linux/kernfs.h
-index 716bfde..c06c442 100644
---- a/include/linux/kernfs.h
-+++ b/include/linux/kernfs.h
-@@ -284,6 +284,8 @@ struct kernfs_node *kernfs_node_from_dentry(struct dentry *dentry);
- struct kernfs_root *kernfs_root_from_sb(struct super_block *sb);
- struct inode *kernfs_get_inode(struct super_block *sb, struct kernfs_node *kn);
- 
-+struct dentry *kernfs_node_dentry(struct kernfs_node *kn,
-+				  struct super_block *sb);
- struct kernfs_root *kernfs_create_root(struct kernfs_syscall_ops *scops,
- 				       unsigned int flags, void *priv);
- void kernfs_destroy_root(struct kernfs_root *root);
 -- 
 1.7.9.5
