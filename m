@@ -1,93 +1,73 @@
-From: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [RFC PATCH 1/3] getcpu_cache system call: cache CPU number of
- running thread
-Date: Tue, 5 Jan 2016 14:54:20 -0800
-Message-ID: <20160105225420.GF3818@linux.vnet.ibm.com>
-References: <1451977320-4886-1-git-send-email-mathieu.desnoyers@efficios.com>
- <1451977320-4886-2-git-send-email-mathieu.desnoyers@efficios.com>
- <20160105120400.GD10705@arm.com>
- <1079064730.338115.1452015105259.JavaMail.zimbra@efficios.com>
- <20160105174017.GY19062@n2100.arm.linux.org.uk>
- <20160105214717.GE3818@linux.vnet.ibm.com>
- <1777488643.338535.1452033244991.JavaMail.zimbra@efficios.com>
-Reply-To: paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Subject: Re: lazytime implementation questions
+Date: Wed, 6 Jan 2016 09:59:07 +1100
+Message-ID: <20160105225907.GE21461@dastard>
+References: <20160104062219.GB19802@dastard>
+ <20160105173604.GE18604@quack.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1777488643.338535.1452033244991.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+In-Reply-To: <20160105173604.GE18604-+0h/O2h83AeN3ZZ/Hiejyg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Russell King - ARM Linux <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 05, 2016 at 10:34:04PM +0000, Mathieu Desnoyers wrote:
-> ----- On Jan 5, 2016, at 4:47 PM, Paul E. McKenney paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org wrote:
+On Tue, Jan 05, 2016 at 06:36:04PM +0100, Jan Kara wrote:
+>   Hi,
 > 
-> > On Tue, Jan 05, 2016 at 05:40:18PM +0000, Russell King - ARM Linux wrote:
-> >> On Tue, Jan 05, 2016 at 05:31:45PM +0000, Mathieu Desnoyers wrote:
-> >> > For instance, an application could create a linked list or hash map
-> >> > of thread control structures, which could contain the current CPU
-> >> > number of each thread. A dispatch thread could then traverse or
-> >> > lookup this structure to see on which CPU each thread is running and
-> >> > do work queue dispatch or scheduling decisions accordingly.
-> >> 
-> >> So, what happens if the linked list is walked from thread X, and we
-> >> discover that thread Y is allegedly running on CPU1.  We decide that
-> >> we want to dispatch some work on that thread due to it being on CPU1,
-> >> so we send an event to thread Y.
-> >> 
-> >> Thread Y becomes runnable, and the scheduler decides to schedule the
-> >> thread on CPU3 instead of CPU1.
-> >> 
-> >> My point is that the above idea is inherently racy.  The only case
-> >> where it isn't racy is when thread Y is bound to CPU1, and so can't
-> >> move - but then you'd know that thread Y is on CPU1 and there
-> >> wouldn't be a need for the inherent complexity suggested above.
-> >> 
-> >> The behaviour I've seen on ARM from the scheduler (on a quad CPU
-> >> platform, observing the system activity with top reporting the last
-> >> CPU number used by each thread) is that threads often migrate
-> >> between CPUs - especially in the case of (eg) one or two threads
-> >> running in a quad-CPU system.
-> >> 
-> >> Given that, I'm really not sure what the use of reading and making
-> >> decisions on the current CPU number would be within a program -
-> >> unless the thread is bound to a particular CPU or group of CPUs,
-> >> it seems that you can't rely on being on the reported CPU by the
-> >> time the system call returns.
+> On Mon 04-01-16 17:22:19, Dave Chinner wrote:
+> > I've been looking at implementing the lazytime mount option for XFS,
+> > and I'm struggling to work out what it is supposed to mean.
 > > 
-> > As I understand it, the idea is -not- to eliminate synchronization
-> > like we do with per-CPU variables in the kernel, but rather to
-> > reduce the average cost of synchronization.  For example, there
-> > might be a separate data structure per CPU, each structure guarded
-> > by its own lock.  A thread could sample the current running CPU,
-> > acquire that CPU's corresponding lock, and operate on that CPU's
-> > structure.  This would work correctly even if there was an arbitrarily
-> > high number of preemptions/migrations, but would have improved
-> > performance (compared to a single global lock) in the common case
-> > where there were no preemptions/migrations.
+> > AFAICT, on ext4, lazytime means that pure timestamp updates are not
+> > journalled and they are only ever written back when the inode is
+> > otherwise dirtied and written, or they are timestamp dirty for 24
+> > hours which triggers writeback.
 > > 
-> > This approach can also be used in conjunction with Paul Turner's
-> > per-CPU atomics.
+> > This poses a couple of problems for XFS:
 > > 
-> > Make sense, or am I missing your point?
+> > 	1. we log every timestamp change, so there is no mechanism
+> > 	   for delayed/deferred update.
+> > 
+> > 	2. we track dirty metadata in the journal, not via the VFS
+> > 	   dirty inode lists, so all the infrastructure written for
+> > 	   ext4 to do periodic flushing is useless to us.
+> > 
+> > These are solvable problems, but what I'm not sure about is exactly
+> > what the intended semantics of lazytime durability are. That is,
+> > exactly what guaranteed are we giving userspace about timestamp
+> > updates when lazytime is used? The guarantees we have to give will
+> > greatly influence the XFS implementation, so I really need to nail
+> > down what we are expected to provide userspace. Can we:
+> > 
+> > 	a) just ignore all durability concerns?
+> > 	b) if not, do we only need to care about the 24 hour
+> > 	   writeback and unmount?
+> > 	c) if not, are fsync/sync/syncfs/freeze/unmount supposed
+> > 	   to provide durability of all metadata changes?
+> > 	d) do we have to care about ordering - if we fsync one inode
+> > 	   with 1 hour old timestamps, do we also need to guarantee
+> > 	   that all the inodes with older dirty timestamps also get
+> > 	   made durable?
 > 
-> Russell's point is more about accessing a given thread's cpu_cache
-> variable from other threads/cores, which is beyond what is needed
-> for restartable critical sections.
+> So the intended semantics is:
+> 1) fsync / sync / freeze / unmount will write the timestamp updates even
+>    with lazytime. So unless crash happens, timestamps are guaranteed to be
+>    consistent. Also sync / fsync guarantees all changes to get to disk.
+> 2) We periodically write back timestamps (once per 24 hours) to avoid too
+>    big timestamp inconsistencies in case of crash.
 
-Fair enough!
+Ok, so it's supposed to be a delayed timestamp update mechanism
+without any specific ordering guarantees, not an opportunistic
+timestamp update mechanism.
 
-> Independently of the usefulness of reading other thread's cpu_cache
-> to see their current CPU, I would advocate for checking the cpu_cache
-> natural alignment, and return EINVAL if it is not aligned. Even for
-> thread-local reads, we care about ensuring there is no load tearing
-> when reading this variable. The behavior of the kernel updating this
-> variable read by a user-space thread is very similar to having a
-> variable updated by a signal handler nested on top of a thread. This
-> makes it simpler and reduces the testing state space.
+I can work with that.
 
-Makes sense to me!
+Cheers,
 
-							Thanx, Paul
+Dave.
+-- 
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
