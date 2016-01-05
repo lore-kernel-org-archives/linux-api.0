@@ -1,71 +1,35 @@
-From: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
-Subject: Re: [PATCH v2 10/14] serial: pic32_uart: Add PIC32 UART driver
-Date: Tue, 5 Jan 2016 20:43:22 +0000
-Message-ID: <20160105204322.2dc5ab3f@lxorguk.ukuu.org.uk>
-References: <1450133093-7053-1-git-send-email-joshua.henderson@microchip.com>
-        <1450133093-7053-11-git-send-email-joshua.henderson@microchip.com>
+From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Subject: Re: [PATCH 1/1 v2] include/uapi/linux/sockios.h: mark SIOCRTMSG
+ unused
+Date: Tue, 05 Jan 2016 16:44:22 -0500 (EST)
+Message-ID: <20160105.164422.955902617951180797.davem@davemloft.net>
+References: <20160104.171953.1963808714374349079.davem@davemloft.net>
+	<1451985169-4622-1-git-send-email-xypron.glpk@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-mips-bounce@linux-mips.org>
-In-Reply-To: <1450133093-7053-11-git-send-email-joshua.henderson@microchip.com>
-Sender: linux-mips-bounce@linux-mips.org
-Errors-to: linux-mips-bounce@linux-mips.org
-List-help: <mailto:ecartis@linux-mips.org?Subject=help>
-List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
-List-software: Ecartis version 1.0.0
-List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
-List-owner: <mailto:ralf@linux-mips.org>
-List-post: <mailto:linux-mips@linux-mips.org>
-List-archive: <http://www.linux-mips.org/archives/linux-mips/>
-To: Joshua Henderson <joshua.henderson@microchip.com>
-Cc: linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, ralf@linux-mips.org, Andrei Pistirica <andrei.pistirica@microchip.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.com>, linux-serial@vger.kernel.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1451985169-4622-1-git-send-email-xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: xypron.glpk-Mmb7MZpHnFY@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, kuznet-v/Mj1YrvjDBInbfyfbPRSQ@public.gmane.org, jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org, yoshfuji-VfPWfsRibaP+Ru+s062T9g@public.gmane.org, kaber-dcUjhNyLwpNeoWH0uzbU5w@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+From: Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
+Date: Tue,  5 Jan 2016 10:12:49 +0100
 
-> +#define PIC32_SDEV_NAME		"ttyS"
-> +#define PIC32_SDEV_MAJOR	TTY_MAJOR
-> +#define PIC32_SDEV_MINOR	64
+> IOCTL SIOCRTMSG does nothing but return EINVAL.
+> 
+> So comment it as unused.
+> 
+> SIOCRTMSG is only used in:
+> * net/ipv4/af_inet.c
+> * include/uapi/linux/sockios.h
+> 
+> inet_ioctl calls ip_rt_ioctl.
+> ip_rt_ioctl only handles SIOCADDRT and SIOCDELRT and returns -EINVAL
+> otherwise.
+> 
+> Signed-off-by: Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
 
-No. Same goes for you as every one of the forty other people a year who
-try and claim their console is ttyS. If it's not an 8250 it isn't.
-
-ttyS is the 8250, use dynamic major and minor and a different name.
-
-
-> +/* serial core request to change current uart setting */
-> +static void pic32_uart_set_termios(struct uart_port *port,
-> +				   struct ktermios *new,
-> +				   struct ktermios *old)
-> +{
-
-You need to clear any termios features requested but not supported. In
-your case that appears to be CMSPAR, as you don't seem to support
-mark/space parity.
-
-Similarly if you only support 8N1 or 7E1/7O1 you need to force the CSIZE
-bits to match what you ended up setting the UART to do.
-
-> +	/* update baud */
-> +	baud = uart_get_baud_rate(port, new, old, 0, port->uartclk / 16);
-> +	quot = uart_get_divisor(port, baud) - 1;
-> +	pic32_uart_write(quot, sport, PIC32_UART_BRG);
-> +	uart_update_timeout(port, new->c_cflag, baud);
-
-See the 8250 driver for an example: you probably need to write back the
-actual rate you got.
-
-> +/* serial core request to release uart iomem */
-> +static void pic32_uart_release_port(struct uart_port *port)
-> +{
-> +	struct platform_device *pdev = to_platform_device(port->dev);
-> +	struct resource *res_mem;
-> +	unsigned int res_size;
-
-resource_size_t for resources. Or you could just avoid the pointless
-variable in the first place 8)
-
-Other oddments - things like kasprintf() returns should be checked
-
-
-Alan
+Applied, thanks.
