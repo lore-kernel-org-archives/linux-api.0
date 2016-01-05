@@ -1,44 +1,41 @@
-From: Heinrich Schuchardt <xypron.glpk@gmx.de>
-Subject: [PATCH 1/1 v2] include/uapi/linux/sockios.h: mark SIOCRTMSG unused
-Date: Tue,  5 Jan 2016 10:12:49 +0100
-Message-ID: <1451985169-4622-1-git-send-email-xypron.glpk@gmx.de>
-References: <20160104.171953.1963808714374349079.davem@davemloft.net>
+From: Will Deacon <will.deacon@arm.com>
+Subject: Re: [RFC PATCH 1/3] getcpu_cache system call: cache CPU number of
+ running thread
+Date: Tue, 5 Jan 2016 12:04:01 +0000
+Message-ID: <20160105120400.GD10705@arm.com>
+References: <1451977320-4886-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <1451977320-4886-2-git-send-email-mathieu.desnoyers@efficios.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160104.171953.1963808714374349079.davem@davemloft.net>
+Content-Disposition: inline
+In-Reply-To: <1451977320-4886-2-git-send-email-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "David S. Miller" <davem@davemloft.net>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>, James Morris <jmorris@namei.org>, Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>, Patrick McHardy <kaber@trash.net>, netdev@vger.kernel.org, Heinrich Schuchardt <xypron.glpk@gmx.de>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-IOCTL SIOCRTMSG does nothing but return EINVAL.
+Hi Mathieu,
 
-So comment it as unused.
+On Tue, Jan 05, 2016 at 02:01:58AM -0500, Mathieu Desnoyers wrote:
+> Expose a new system call allowing threads to register userspace memory
+> areas where to store the CPU number on which the calling thread is
+> running. Scheduler migration sets the TIF_NOTIFY_RESUME flag on the
+> current thread. Upon return to user-space, a notify-resume handler
+> updates the current CPU value within each registered user-space memory
+> area. User-space can then read the current CPU number directly from
+> memory.
 
-SIOCRTMSG is only used in:
-* net/ipv4/af_inet.c
-* include/uapi/linux/sockios.h
+What guarantees do you provide if a thread other than the one which
+registered the cache tries to access the value? Obviously, there's a
+potential data race here with the kernel issuing a parallel update, but
+are you intending to have single-copy atomicity semantics (like relaxed
+atomics in C11) or is this simply going to give you junk?
 
-inet_ioctl calls ip_rt_ioctl.
-ip_rt_ioctl only handles SIOCADDRT and SIOCDELRT and returns -EINVAL
-otherwise.
+I ask because, in the absence of alignment checks on the cache pointer,
+we can't guarantee single-copy atomicity on ARM when the kernel writes
+the current CPU value.
 
-Signed-off-by: Heinrich Schuchardt <xypron.glpk@gmx.de>
----
- include/uapi/linux/sockios.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Cheers,
 
-diff --git a/include/uapi/linux/sockios.h b/include/uapi/linux/sockios.h
-index e888b1a..8e7890b 100644
---- a/include/uapi/linux/sockios.h
-+++ b/include/uapi/linux/sockios.h
-@@ -27,7 +27,7 @@
- /* Routing table calls. */
- #define SIOCADDRT	0x890B		/* add routing table entry	*/
- #define SIOCDELRT	0x890C		/* delete routing table entry	*/
--#define SIOCRTMSG	0x890D		/* call to routing system	*/
-+#define SIOCRTMSG	0x890D		/* unused			*/
- 
- /* Socket configuration controls. */
- #define SIOCGIFNAME	0x8910		/* get iface name		*/
--- 
-2.1.4
+Will
