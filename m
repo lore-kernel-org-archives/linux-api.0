@@ -1,226 +1,94 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH 27/31] sound/usb: Create media mixer function and control interface entities
-Date: Wed,  6 Jan 2016 14:05:58 -0700
-Message-ID: <3158729d69f10ba904b41f5cb45a03aa1ea1efe8.1452105878.git.shuahkh@osg.samsung.com>
-References: <cover.1452105878.git.shuahkh@osg.samsung.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1452105878.git.shuahkh@osg.samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: mchehab@osg.samsung.com, tiwai@suse.com, clemens@ladisch.de, hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittgam.net, johan@oljud.se, linux-kernel@vger.kernel.org, linux-media@vger.kernel.org, linux-api@vger.kernel.orga
+From: <Paul.Thacker@microchip.com>
+Subject: Re: [PATCH v2 10/14] serial: pic32_uart: Add PIC32 UART driver
+Date: Wed, 6 Jan 2016 22:00:43 +0000
+Message-ID: <F2D704DDA6AE8B4A87FF87509480F4A449E46187@CHN-SV-EXMX01.mchp-main.com>
+References: <1450133093-7053-1-git-send-email-joshua.henderson@microchip.com>
+        <1450133093-7053-11-git-send-email-joshua.henderson@microchip.com>
+ <20160105204322.2dc5ab3f@lxorguk.ukuu.org.uk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-mips-bounce@linux-mips.org>
+Content-Language: en-US
+Sender: linux-mips-bounce@linux-mips.org
+Errors-to: linux-mips-bounce@linux-mips.org
+List-help: <mailto:ecartis@linux-mips.org?Subject=help>
+List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
+List-software: Ecartis version 1.0.0
+List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
+List-owner: <mailto:ralf@linux-mips.org>
+List-post: <mailto:linux-mips@linux-mips.org>
+List-archive: <http://www.linux-mips.org/archives/linux-mips/>
+To: gnomes@lxorguk.ukuu.org.uk, Joshua.Henderson@microchip.com
+Cc: linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, ralf@linux-mips.org, Andrei.Pistirica@microchip.com, gregkh@linuxfoundation.org, jslaby@suse.com, linux-serial@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Add support for creating MEDIA_ENT_F_AUDIO_MIXER entity for
-each mixer and a MEDIA_INTF_T_ALSA_CONTROL control interface
-entity that links to mixer entities. MEDIA_INTF_T_ALSA_CONTROL
-entity corresponds to the control device for the card.
+On 01/05/2016 03:50 PM, One Thousand Gnomes wrote:
+>
+>> +#define PIC32_SDEV_NAME		"ttyS"
+>> +#define PIC32_SDEV_MAJOR	TTY_MAJOR
+>> +#define PIC32_SDEV_MINOR	64
+>
+> No. Same goes for you as every one of the forty other people a year who
+> try and claim their console is ttyS. If it's not an 8250 it isn't.
+>
+> ttyS is the 8250, use dynamic major and minor and a different name.
 
-Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
----
- sound/usb/card.c     |  5 +++
- sound/usb/media.c    | 90 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- sound/usb/media.h    | 21 ++++++++++++
- sound/usb/mixer.h    |  1 +
- sound/usb/usbaudio.h |  1 +
- 5 files changed, 118 insertions(+)
+Ok. Is there a naming convention documented anywhere? How about ttyPIC?
 
-diff --git a/sound/usb/card.c b/sound/usb/card.c
-index 1a63851..e965982 100644
---- a/sound/usb/card.c
-+++ b/sound/usb/card.c
-@@ -562,6 +562,9 @@ static int usb_audio_probe(struct usb_interface *intf,
- 	if (err < 0)
- 		goto __error;
- 
-+	/* Create media entities for mixer and control dev */
-+	media_mixer_init(chip);
-+
- 	usb_chip[chip->index] = chip;
- 	chip->num_interfaces++;
- 	usb_set_intfdata(intf, chip);
-@@ -618,6 +621,8 @@ static void usb_audio_disconnect(struct usb_interface *intf)
- 		list_for_each(p, &chip->midi_list) {
- 			snd_usbmidi_disconnect(p);
- 		}
-+		/* delete mixer media resources */
-+		media_mixer_delete(chip);
- 		/* release mixer resources */
- 		list_for_each_entry(mixer, &chip->mixer_list, list) {
- 			snd_usb_mixer_disconnect(mixer);
-diff --git a/sound/usb/media.c b/sound/usb/media.c
-index 747a66a..4f99086 100644
---- a/sound/usb/media.c
-+++ b/sound/usb/media.c
-@@ -211,4 +211,94 @@ void media_stop_pipeline(struct snd_usb_substream *subs)
- 	if (mctl)
- 		media_disable_source(mctl);
- }
-+
-+int media_mixer_init(struct snd_usb_audio *chip)
-+{
-+	struct device *ctl_dev = &chip->card->ctl_dev;
-+	struct media_intf_devnode *ctl_intf;
-+	struct usb_mixer_interface *mixer;
-+	struct media_device *mdev;
-+	struct media_mixer_ctl *mctl;
-+	u32 intf_type = MEDIA_INTF_T_ALSA_CONTROL;
-+	int ret;
-+
-+	mdev = media_device_find_devres(&chip->dev->dev);
-+	if (!mdev)
-+		return -ENODEV;
-+
-+	ctl_intf = chip->ctl_intf_media_devnode;
-+	if (!ctl_intf) {
-+		ctl_intf = (void *) media_devnode_create(mdev,
-+							 intf_type, 0,
-+							 MAJOR(ctl_dev->devt),
-+							 MINOR(ctl_dev->devt));
-+		if (!ctl_intf)
-+			return -ENOMEM;
-+		chip->ctl_intf_media_devnode = ctl_intf;
-+	}
-+
-+	list_for_each_entry(mixer, &chip->mixer_list, list) {
-+
-+		if (mixer->media_mixer_ctl)
-+			continue;
-+
-+		/* allocate media_mixer_ctl */
-+		mctl = kzalloc(sizeof(*mctl), GFP_KERNEL);
-+		if (!mctl)
-+			return -ENOMEM;
-+
-+		mctl->media_dev = mdev;
-+		mctl->media_entity.function = MEDIA_ENT_F_AUDIO_MIXER;
-+		mctl->media_entity.name = chip->card->mixername;
-+		mctl->media_pad[0].flags = MEDIA_PAD_FL_SINK;
-+		mctl->media_pad[1].flags = MEDIA_PAD_FL_SOURCE;
-+		mctl->media_pad[2].flags = MEDIA_PAD_FL_SOURCE;
-+		media_entity_pads_init(&mctl->media_entity, MEDIA_MIXER_PAD_MAX,
-+				  mctl->media_pad);
-+		ret =  media_device_register_entity(mctl->media_dev,
-+						    &mctl->media_entity);
-+		if (ret) {
-+			kfree(mctl);
-+			return ret;
-+		}
-+
-+		mctl->intf_link = media_create_intf_link(&mctl->media_entity,
-+							 &ctl_intf->intf,
-+							 MEDIA_LNK_FL_ENABLED);
-+		if (!mctl->intf_link) {
-+			media_device_unregister_entity(&mctl->media_entity);
-+			media_entity_cleanup(&mctl->media_entity);
-+			kfree(mctl);
-+			return -ENOMEM;
-+		}
-+		mctl->intf_devnode = ctl_intf;
-+		mixer->media_mixer_ctl = (void *) mctl;
-+	}
-+	return 0;
-+}
-+
-+void media_mixer_delete(struct snd_usb_audio *chip)
-+{
-+	struct usb_mixer_interface *mixer;
-+	struct media_device *mdev;
-+
-+	mdev = media_device_find_devres(&chip->dev->dev);
-+	if (!mdev)
-+		return;
-+
-+	list_for_each_entry(mixer, &chip->mixer_list, list) {
-+		struct media_mixer_ctl *mctl;
-+
-+		mctl = (struct media_mixer_ctl *) mixer->media_mixer_ctl;
-+		if (!mixer->media_mixer_ctl)
-+			continue;
-+
-+		media_device_unregister_entity(&mctl->media_entity);
-+		media_entity_cleanup(&mctl->media_entity);
-+		kfree(mctl);
-+		mixer->media_mixer_ctl = NULL;
-+	}
-+	media_devnode_remove(chip->ctl_intf_media_devnode);
-+}
-+
- #endif
-diff --git a/sound/usb/media.h b/sound/usb/media.h
-index 4a93dbd..00884b5 100644
---- a/sound/usb/media.h
-+++ b/sound/usb/media.h
-@@ -20,6 +20,7 @@
- #ifdef USE_MEDIA_CONTROLLER
- #include <media/media-device.h>
- #include <media/media-entity.h>
-+#include <sound/asound.h>
- 
- struct media_ctl {
- 	struct media_device *media_dev;
-@@ -30,6 +31,22 @@ struct media_ctl {
- 	struct media_pipeline media_pipe;
- };
- 
-+/*
-+ * One source pad each for SNDRV_PCM_STREAM_CAPTURE and
-+ * SNDRV_PCM_STREAM_PLAYBACK. One for sink pad to link
-+ * to AUDIO Source
-+*/
-+#define MEDIA_MIXER_PAD_MAX    (SNDRV_PCM_STREAM_LAST + 2)
-+
-+struct media_mixer_ctl {
-+	struct media_device *media_dev;
-+	struct media_entity media_entity;
-+	struct media_intf_devnode *intf_devnode;
-+	struct media_link *intf_link;
-+	struct media_pad media_pad[MEDIA_MIXER_PAD_MAX];
-+	struct media_pipeline media_pipe;
-+};
-+
- int media_device_create(struct snd_usb_audio *chip,
- 			struct usb_interface *iface);
- void media_device_delete(struct usb_interface *iface);
-@@ -38,6 +55,8 @@ int media_stream_init(struct snd_usb_substream *subs, struct snd_pcm *pcm,
- void media_stream_delete(struct snd_usb_substream *subs);
- int media_start_pipeline(struct snd_usb_substream *subs);
- void media_stop_pipeline(struct snd_usb_substream *subs);
-+int media_mixer_init(struct snd_usb_audio *chip);
-+void media_mixer_delete(struct snd_usb_audio *chip);
- #else
- static inline int media_device_create(struct snd_usb_audio *chip,
- 				      struct usb_interface *iface)
-@@ -50,5 +69,7 @@ static inline void media_stream_delete(struct snd_usb_substream *subs) { }
- static inline int media_start_pipeline(struct snd_usb_substream *subs)
- 					{ return 0; }
- static inline void media_stop_pipeline(struct snd_usb_substream *subs) { }
-+static int media_mixer_init(struct snd_usb_audio *chip) { return 0; }
-+static void media_mixer_delete(struct snd_usb_audio *chip) { }
- #endif
- #endif /* __MEDIA_H */
-diff --git a/sound/usb/mixer.h b/sound/usb/mixer.h
-index 3417ef3..787b352 100644
---- a/sound/usb/mixer.h
-+++ b/sound/usb/mixer.h
-@@ -22,6 +22,7 @@ struct usb_mixer_interface {
- 	struct urb *rc_urb;
- 	struct usb_ctrlrequest *rc_setup_packet;
- 	u8 rc_buffer[6];
-+	void *media_mixer_ctl;
- };
- 
- #define MAX_CHANNELS	16	/* max logical channels */
-diff --git a/sound/usb/usbaudio.h b/sound/usb/usbaudio.h
-index e3fac29..490b16a 100644
---- a/sound/usb/usbaudio.h
-+++ b/sound/usb/usbaudio.h
-@@ -60,6 +60,7 @@ struct snd_usb_audio {
- 	bool autoclock;			/* from the 'autoclock' module param */
- 
- 	struct usb_host_interface *ctrl_intf;	/* the audio control interface */
-+	void *ctl_intf_media_devnode;
- };
- 
- #define usb_audio_err(chip, fmt, args...) \
--- 
-2.5.0
+>
+>
+>> +/* serial core request to change current uart setting */
+>> +static void pic32_uart_set_termios(struct uart_port *port,
+>> +				   struct ktermios *new,
+>> +				   struct ktermios *old)
+>> +{
+>
+> You need to clear any termios features requested but not supported. In
+> your case that appears to be CMSPAR, as you don't seem to support
+> mark/space parity.
+
+Ack.
+
+>
+> Similarly if you only support 8N1 or 7E1/7O1 you need to force the CSIZE
+> bits to match what you ended up setting the UART to do.
+
+Ack.
+
+>
+>> +	/* update baud */
+>> +	baud = uart_get_baud_rate(port, new, old, 0, port->uartclk / 16);
+>> +	quot = uart_get_divisor(port, baud) - 1;
+>> +	pic32_uart_write(quot, sport, PIC32_UART_BRG);
+>> +	uart_update_timeout(port, new->c_cflag, baud);
+>
+> See the 8250 driver for an example: you probably need to write back the
+> actual rate you got.
+
+Ack.
+
+>
+>> +/* serial core request to release uart iomem */
+>> +static void pic32_uart_release_port(struct uart_port *port)
+>> +{
+>> +	struct platform_device *pdev = to_platform_device(port->dev);
+>> +	struct resource *res_mem;
+>> +	unsigned int res_size;
+>
+> resource_size_t for resources. Or you could just avoid the pointless
+> variable in the first place 8)
+
+Pointless variable removed.
+
+>
+> Other oddments - things like kasprintf() returns should be checked
+
+Ack.
+
+>
+>
+> Alan
+
+Thanks,
+Paul
