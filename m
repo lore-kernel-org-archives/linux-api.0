@@ -1,7 +1,7 @@
 From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH 08/31] media: v4l-core add v4l_enable/disable_media_tuner() helper functions
-Date: Wed,  6 Jan 2016 13:26:57 -0700
-Message-ID: <e642fee6e443170b33a8c69fbc21b409f7be5583.1452105878.git.shuahkh@osg.samsung.com>
+Subject: [PATCH 01/31] uapi/media.h: Declare interface types for ALSA
+Date: Wed,  6 Jan 2016 13:26:50 -0700
+Message-ID: <b1d228cdcc9246f7bfe28877e9f6bff174e94993.1452105878.git.shuahkh@osg.samsung.com>
 References: <cover.1452105878.git.shuahkh@osg.samsung.com>
 Return-path: <linux-media-owner@vger.kernel.org>
 In-Reply-To: <cover.1452105878.git.shuahkh@osg.samsung.com>
@@ -9,83 +9,68 @@ In-Reply-To: <cover.1452105878.git.shuahkh@osg.samsung.com>
 References: <cover.1452105878.git.shuahkh@osg.samsung.com>
 Sender: linux-media-owner@vger.kernel.org
 To: mchehab@osg.samsung.com, tiwai@suse.com, clemens@ladisch.de, hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittgam.net, johan@oljud.se, linux-kernel@vger.kernel.org, linux-media@vger.kernel.org, linux-api@vger.kernel.orga
+Cc: pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittgam.net, johan@oljud.se, linux-kernel@vger.kernel.org, linux-media@vger.kernel.org, linux-api@vger.kernel.org, alsa-devel@alsa-project.org
 List-Id: linux-api@vger.kernel.org
 
-Add a new interfaces to be used by v4l-core to invoke enable
-source and disable_source handlers in the media_device. The
-enable_source helper function invokes the enable_source handler
-to find tuner entity connected to the decoder and check is it
-is available or busy. If tuner is available, link is activated
-and pipeline is started. The disable_source helper function
-invokes the disable_source handler to deactivate and stop the
-pipeline.
+From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
 
-Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
+Declare the interface types to be used on alsa for the new
+G_TOPOLOGY ioctl.
+
+Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
 ---
- drivers/media/v4l2-core/v4l2-dev.c | 27 +++++++++++++++++++++++++++
- include/media/v4l2-dev.h           |  4 ++++
- 2 files changed, 31 insertions(+)
+ drivers/media/media-entity.c | 12 ++++++++++++
+ include/uapi/linux/media.h   |  8 ++++++++
+ 2 files changed, 20 insertions(+)
 
-diff --git a/drivers/media/v4l2-core/v4l2-dev.c b/drivers/media/v4l2-core/v4l2-dev.c
-index d8e5994..f06da6e 100644
---- a/drivers/media/v4l2-core/v4l2-dev.c
-+++ b/drivers/media/v4l2-core/v4l2-dev.c
-@@ -233,6 +233,33 @@ struct video_device *video_devdata(struct file *file)
- }
- EXPORT_SYMBOL(video_devdata);
+diff --git a/drivers/media/media-entity.c b/drivers/media/media-entity.c
+index eb38bc3..6e02d19 100644
+--- a/drivers/media/media-entity.c
++++ b/drivers/media/media-entity.c
+@@ -65,6 +65,18 @@ static inline const char *intf_type(struct media_interface *intf)
+ 		return "v4l2-subdev";
+ 	case MEDIA_INTF_T_V4L_SWRADIO:
+ 		return "swradio";
++	case MEDIA_INTF_T_ALSA_PCM_CAPTURE:
++		return "pcm-capture";
++	case MEDIA_INTF_T_ALSA_PCM_PLAYBACK:
++		return "pcm-playback";
++	case MEDIA_INTF_T_ALSA_CONTROL:
++		return "alsa-control";
++	case MEDIA_INTF_T_ALSA_COMPRESS:
++		return "compress";
++	case MEDIA_INTF_T_ALSA_RAWMIDI:
++		return "rawmidi";
++	case MEDIA_INTF_T_ALSA_HWDEP:
++		return "hwdep";
+ 	default:
+ 		return "unknown-intf";
+ 	}
+diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
+index cacfceb..75cbe92 100644
+--- a/include/uapi/linux/media.h
++++ b/include/uapi/linux/media.h
+@@ -252,6 +252,7 @@ struct media_links_enum {
  
-+int v4l_enable_media_tuner(struct video_device *vdev)
-+{
-+#ifdef CONFIG_MEDIA_CONTROLLER
-+	struct media_device *mdev = vdev->entity.graph_obj.mdev;
-+	int ret;
+ #define MEDIA_INTF_T_DVB_BASE	0x00000100
+ #define MEDIA_INTF_T_V4L_BASE	0x00000200
++#define MEDIA_INTF_T_ALSA_BASE	0x00000300
+ 
+ /* Interface types */
+ 
+@@ -267,6 +268,13 @@ struct media_links_enum {
+ #define MEDIA_INTF_T_V4L_SUBDEV (MEDIA_INTF_T_V4L_BASE + 3)
+ #define MEDIA_INTF_T_V4L_SWRADIO (MEDIA_INTF_T_V4L_BASE + 4)
+ 
++#define MEDIA_INTF_T_ALSA_PCM_CAPTURE   (MEDIA_INTF_T_ALSA_BASE)
++#define MEDIA_INTF_T_ALSA_PCM_PLAYBACK  (MEDIA_INTF_T_ALSA_BASE + 1)
++#define MEDIA_INTF_T_ALSA_CONTROL       (MEDIA_INTF_T_ALSA_BASE + 2)
++#define MEDIA_INTF_T_ALSA_COMPRESS      (MEDIA_INTF_T_ALSA_BASE + 3)
++#define MEDIA_INTF_T_ALSA_RAWMIDI       (MEDIA_INTF_T_ALSA_BASE + 4)
++#define MEDIA_INTF_T_ALSA_HWDEP         (MEDIA_INTF_T_ALSA_BASE + 5)
 +
-+	if (!mdev || !mdev->enable_source)
-+		return 0;
-+	ret = mdev->enable_source(&vdev->entity, &vdev->pipe);
-+	if (ret)
-+		return -EBUSY;
-+	return 0;
-+#endif /* CONFIG_MEDIA_CONTROLLER */
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(v4l_enable_media_tuner);
-+
-+void v4l_disable_media_tuner(struct video_device *vdev)
-+{
-+#ifdef CONFIG_MEDIA_CONTROLLER
-+	struct media_device *mdev = vdev->entity.graph_obj.mdev;
-+
-+	if (mdev && mdev->disable_source)
-+		mdev->disable_source(&vdev->entity);
-+#endif /* CONFIG_MEDIA_CONTROLLER */
-+}
-+EXPORT_SYMBOL_GPL(v4l_disable_media_tuner);
- 
- /* Priority handling */
- 
-diff --git a/include/media/v4l2-dev.h b/include/media/v4l2-dev.h
-index eeabf20..68999a3 100644
---- a/include/media/v4l2-dev.h
-+++ b/include/media/v4l2-dev.h
-@@ -87,6 +87,7 @@ struct video_device
- #if defined(CONFIG_MEDIA_CONTROLLER)
- 	struct media_entity entity;
- 	struct media_intf_devnode *intf_devnode;
-+	struct media_pipeline pipe;
- #endif
- 	/* device ops */
- 	const struct v4l2_file_operations *fops;
-@@ -176,6 +177,9 @@ void video_unregister_device(struct video_device *vdev);
-    latter can also be used for video_device->release(). */
- struct video_device * __must_check video_device_alloc(void);
- 
-+int v4l_enable_media_tuner(struct video_device *vdev);
-+void v4l_disable_media_tuner(struct video_device *vdev);
-+
- /* this release function frees the vdev pointer */
- void video_device_release(struct video_device *vdev);
- 
+ /*
+  * MC next gen API definitions
+  *
 -- 
 2.5.0
