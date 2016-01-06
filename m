@@ -1,7 +1,7 @@
 From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH 14/31] media: Change v4l-core to check for tuner availability
-Date: Wed,  6 Jan 2016 13:27:03 -0700
-Message-ID: <8e31384a21e670e6b75dfbc1556f1e597a2184d8.1452105878.git.shuahkh@osg.samsung.com>
+Subject: [PATCH 15/31] media: dvb-frontend invoke enable/disable_source handlers
+Date: Wed,  6 Jan 2016 13:27:04 -0700
+Message-ID: <1591b6cf2025fa95a13e3b7dde52aa0e0bde0bb4.1452105878.git.shuahkh@osg.samsung.com>
 References: <cover.1452105878.git.shuahkh@osg.samsung.com>
 Return-path: <linux-media-owner@vger.kernel.org>
 In-Reply-To: <cover.1452105878.git.shuahkh@osg.samsung.com>
@@ -12,141 +12,240 @@ To: mchehab@osg.samsung.com, tiwai@suse.com, clemens@ladisch.de, hans.verkuil@ci
 Cc: Shuah Khan <shuahkh@osg.samsung.com>, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittgam.net, johan@oljud.se, linux-kernel@vger.kernel.org, linux-media@vger.kernel.org, linux-api@vger.kernel.orga
 List-Id: linux-api@vger.kernel.org
 
-Change s_input, s_fmt, s_tuner, s_frequency, querystd,
-s_hw_freq_seek, and vb2_core_streamon interfaces that
-alter the tuner configuration to check for tuner availability
-by calling v4l_enable_media_tuner(). If tuner isn't free,
-return -EBUSY. v4l_disable_media_tuner() is called from
-v4l2_fh_exit() to release the tuner. vb2_core_streamon()
-uses v4l_vb2q_enable_media_tuner().
+Checking for tuner availability from frontend thread start
+disrupts video stream. Change to check for tuner and start
+pipeline from frontend open instead and stop pipeline from
+frontend release. In addition, make a change to invoke
+enable_source and disable_source handlers to check for
+tuner availability. The enable_source handler finds tuner
+entity connected to the decoder and check is it is available
+or busy. If tuner is available, link is activated and pipeline
+is started. The disable_source handler to deactivate and stop
+the pipeline. dvb_enable_media_tuner() is removed as it is no
+longer necessary with dvb invoking enable_source and
+disable_source handlers. pipe_start_entity field is removed
+and pipe field is moved to dvb_frontend from dvb_frontend_private.
 
 Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
 ---
- drivers/media/v4l2-core/v4l2-fh.c        |  1 +
- drivers/media/v4l2-core/v4l2-ioctl.c     | 29 +++++++++++++++++++++++++++++
- drivers/media/v4l2-core/videobuf2-core.c |  4 ++++
- 3 files changed, 34 insertions(+)
+ drivers/media/dvb-core/dvb_frontend.c | 139 +++++-----------------------------
+ drivers/media/dvb-core/dvb_frontend.h |   3 +
+ 2 files changed, 24 insertions(+), 118 deletions(-)
 
-diff --git a/drivers/media/v4l2-core/v4l2-fh.c b/drivers/media/v4l2-core/v4l2-fh.c
-index c97067a..538db62 100644
---- a/drivers/media/v4l2-core/v4l2-fh.c
-+++ b/drivers/media/v4l2-core/v4l2-fh.c
-@@ -92,6 +92,7 @@ void v4l2_fh_exit(struct v4l2_fh *fh)
- {
- 	if (fh->vdev == NULL)
- 		return;
-+	v4l_disable_media_tuner(fh->vdev);
- 	v4l2_event_unsubscribe_all(fh);
- 	fh->vdev = NULL;
- }
-diff --git a/drivers/media/v4l2-core/v4l2-ioctl.c b/drivers/media/v4l2-core/v4l2-ioctl.c
-index 8a018c6..ed7f600 100644
---- a/drivers/media/v4l2-core/v4l2-ioctl.c
-+++ b/drivers/media/v4l2-core/v4l2-ioctl.c
-@@ -1041,6 +1041,12 @@ static int v4l_querycap(const struct v4l2_ioctl_ops *ops,
- static int v4l_s_input(const struct v4l2_ioctl_ops *ops,
- 				struct file *file, void *fh, void *arg)
- {
-+	struct video_device *vfd = video_devdata(file);
-+	int ret;
-+
-+	ret = v4l_enable_media_tuner(vfd);
-+	if (ret)
-+		return ret;
- 	return ops->vidioc_s_input(file, fh, *(unsigned int *)arg);
+diff --git a/drivers/media/dvb-core/dvb_frontend.c b/drivers/media/dvb-core/dvb_frontend.c
+index 4008064..c15f3d8 100644
+--- a/drivers/media/dvb-core/dvb_frontend.c
++++ b/drivers/media/dvb-core/dvb_frontend.c
+@@ -131,11 +131,6 @@ struct dvb_frontend_private {
+ 	int quality;
+ 	unsigned int check_wrapped;
+ 	enum dvbfe_search algo_status;
+-
+-#if defined(CONFIG_MEDIA_CONTROLLER_DVB)
+-	struct media_pipeline pipe;
+-	struct media_entity *pipe_start_entity;
+-#endif
+ };
+ 
+ static void dvb_frontend_wakeup(struct dvb_frontend *fe);
+@@ -596,104 +591,12 @@ static void dvb_frontend_wakeup(struct dvb_frontend *fe)
+ 	wake_up_interruptible(&fepriv->wait_queue);
  }
  
-@@ -1448,6 +1454,9 @@ static int v4l_s_fmt(const struct v4l2_ioctl_ops *ops,
- 	bool is_tx = vfd->vfl_dir != VFL_DIR_RX;
- 	int ret;
- 
-+	ret = v4l_enable_media_tuner(vfd);
-+	if (ret)
-+		return ret;
- 	v4l_sanitize_format(p);
- 
- 	switch (p->type) {
-@@ -1637,7 +1646,11 @@ static int v4l_s_tuner(const struct v4l2_ioctl_ops *ops,
+-/**
+- * dvb_enable_media_tuner() - tries to enable the DVB tuner
+- *
+- * @fe:		struct dvb_frontend pointer
+- *
+- * This function ensures that just one media tuner is enabled for a given
+- * frontend. It has two different behaviors:
+- * - For trivial devices with just one tuner:
+- *   it just enables the existing tuner->fe link
+- * - For devices with more than one tuner:
+- *   It is up to the driver to implement the logic that will enable one tuner
+- *   and disable the other ones. However, if more than one tuner is enabled for
+- *   the same frontend, it will print an error message and return -EINVAL.
+- *
+- * At return, it will return the error code returned by media_entity_setup_link,
+- * or 0 if everything is OK, if no tuner is linked to the frontend or if the
+- * mdev is NULL.
+- */
+-#ifdef CONFIG_MEDIA_CONTROLLER_DVB
+-static int dvb_enable_media_tuner(struct dvb_frontend *fe)
+-{
+-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
+-	struct dvb_adapter *adapter = fe->dvb;
+-	struct media_device *mdev = adapter->mdev;
+-	struct media_entity  *entity, *source;
+-	struct media_link *link, *found_link = NULL;
+-	int ret, n_links = 0, active_links = 0;
+-
+-	fepriv->pipe_start_entity = NULL;
+-
+-	if (!mdev)
+-		return 0;
+-
+-	entity = fepriv->dvbdev->entity;
+-	fepriv->pipe_start_entity = entity;
+-
+-	list_for_each_entry(link, &entity->links, list) {
+-		if (link->sink->entity == entity) {
+-			found_link = link;
+-			n_links++;
+-			if (link->flags & MEDIA_LNK_FL_ENABLED)
+-				active_links++;
+-		}
+-	}
+-
+-	if (!n_links || active_links == 1 || !found_link)
+-		return 0;
+-
+-	/*
+-	 * If a frontend has more than one tuner linked, it is up to the driver
+-	 * to select with one will be the active one, as the frontend core can't
+-	 * guess. If the driver doesn't do that, it is a bug.
+-	 */
+-	if (n_links > 1 && active_links != 1) {
+-		dev_err(fe->dvb->device,
+-			"WARNING: there are %d active links among %d tuners. This is a driver's bug!\n",
+-			active_links, n_links);
+-		return -EINVAL;
+-	}
+-
+-	source = found_link->source->entity;
+-	fepriv->pipe_start_entity = source;
+-	list_for_each_entry(link, &source->links, list) {
+-		struct media_entity *sink;
+-		int flags = 0;
+-
+-		sink = link->sink->entity;
+-		if (sink == entity)
+-			flags = MEDIA_LNK_FL_ENABLED;
+-
+-		ret = media_entity_setup_link(link, flags);
+-		if (ret) {
+-			dev_err(fe->dvb->device,
+-				"Couldn't change link %s->%s to %s. Error %d\n",
+-				source->name, sink->name,
+-				flags ? "enabled" : "disabled",
+-				ret);
+-			return ret;
+-		} else
+-			dev_dbg(fe->dvb->device,
+-				"link %s->%s was %s\n",
+-				source->name, sink->name,
+-				flags ? "ENABLED" : "disabled");
+-	}
+-	return 0;
+-}
+-#endif
+-
+ static int dvb_frontend_thread(void *data)
  {
- 	struct video_device *vfd = video_devdata(file);
- 	struct v4l2_tuner *p = arg;
-+	int ret;
+ 	struct dvb_frontend *fe = data;
+ 	struct dvb_frontend_private *fepriv = fe->frontend_priv;
+ 	enum fe_status s;
+ 	enum dvbfe_algo algo;
+-#ifdef CONFIG_MEDIA_CONTROLLER_DVB
+-	int ret;
+-#endif
+-
+ 	bool re_tune = false;
+ 	bool semheld = false;
  
-+	ret = v4l_enable_media_tuner(vfd);
-+	if (ret)
-+		return ret;
- 	p->type = (vfd->vfl_type == VFL_TYPE_RADIO) ?
- 			V4L2_TUNER_RADIO : V4L2_TUNER_ANALOG_TV;
- 	return ops->vidioc_s_tuner(file, fh, p);
-@@ -1691,7 +1704,11 @@ static int v4l_s_frequency(const struct v4l2_ioctl_ops *ops,
- 	struct video_device *vfd = video_devdata(file);
- 	const struct v4l2_frequency *p = arg;
- 	enum v4l2_tuner_type type;
-+	int ret;
+@@ -706,20 +609,6 @@ static int dvb_frontend_thread(void *data)
+ 	fepriv->wakeup = 0;
+ 	fepriv->reinitialise = 0;
  
-+	ret = v4l_enable_media_tuner(vfd);
-+	if (ret)
-+		return ret;
- 	if (vfd->vfl_type == VFL_TYPE_SDR) {
- 		if (p->type != V4L2_TUNER_SDR && p->type != V4L2_TUNER_RF)
- 			return -EINVAL;
-@@ -1746,7 +1763,11 @@ static int v4l_s_std(const struct v4l2_ioctl_ops *ops,
- {
- 	struct video_device *vfd = video_devdata(file);
- 	v4l2_std_id id = *(v4l2_std_id *)arg, norm;
-+	int ret;
+-#ifdef CONFIG_MEDIA_CONTROLLER_DVB
+-	ret = dvb_enable_media_tuner(fe);
+-	if (ret) {
+-		/* FIXME: return an error if it fails */
+-		dev_info(fe->dvb->device,
+-			"proceeding with FE task\n");
+-	} else if (fepriv->pipe_start_entity) {
+-		ret = media_entity_pipeline_start(fepriv->pipe_start_entity,
+-						  &fepriv->pipe);
+-		if (ret)
+-			return ret;
+-	}
+-#endif
+-
+ 	dvb_frontend_init(fe);
  
-+	ret = v4l_enable_media_tuner(vfd);
-+	if (ret)
-+		return ret;
- 	norm = id & vfd->tvnorms;
- 	if (vfd->tvnorms && !norm)	/* Check if std is supported */
- 		return -EINVAL;
-@@ -1760,7 +1781,11 @@ static int v4l_querystd(const struct v4l2_ioctl_ops *ops,
- {
- 	struct video_device *vfd = video_devdata(file);
- 	v4l2_std_id *p = arg;
-+	int ret;
+ 	set_freezable();
+@@ -829,12 +718,6 @@ restart:
+ 		}
+ 	}
  
-+	ret = v4l_enable_media_tuner(vfd);
-+	if (ret)
-+		return ret;
- 	/*
- 	 * If no signal is detected, then the driver should return
- 	 * V4L2_STD_UNKNOWN. Otherwise it should return tvnorms with
-@@ -1779,7 +1804,11 @@ static int v4l_s_hw_freq_seek(const struct v4l2_ioctl_ops *ops,
- 	struct video_device *vfd = video_devdata(file);
- 	struct v4l2_hw_freq_seek *p = arg;
- 	enum v4l2_tuner_type type;
-+	int ret;
+-#ifdef CONFIG_MEDIA_CONTROLLER_DVB
+-	if (fepriv->pipe_start_entity)
+-		media_entity_pipeline_stop(fepriv->pipe_start_entity);
+-	fepriv->pipe_start_entity = NULL;
+-#endif
+-
+ 	if (dvb_powerdown_on_sleep) {
+ 		if (fe->ops.set_voltage)
+ 			fe->ops.set_voltage(fe, SEC_VOLTAGE_OFF);
+@@ -2612,9 +2495,20 @@ static int dvb_frontend_open(struct inode *inode, struct file *file)
+ 		fepriv->tone = -1;
+ 		fepriv->voltage = -1;
  
-+	ret = v4l_enable_media_tuner(vfd);
-+	if (ret)
-+		return ret;
- 	/* s_hw_freq_seek is not supported for SDR for now */
- 	if (vfd->vfl_type == VFL_TYPE_SDR)
- 		return -EINVAL;
-diff --git a/drivers/media/v4l2-core/videobuf2-core.c b/drivers/media/v4l2-core/videobuf2-core.c
-index 33bdd81..c9bbb87 100644
---- a/drivers/media/v4l2-core/videobuf2-core.c
-+++ b/drivers/media/v4l2-core/videobuf2-core.c
-@@ -25,6 +25,7 @@
- #include <linux/kthread.h>
++#ifdef CONFIG_MEDIA_CONTROLLER_DVB
++		if (fe->dvb->mdev && fe->dvb->mdev->enable_source) {
++			ret = fe->dvb->mdev->enable_source(dvbdev->entity,
++							   &fe->pipe);
++			if (ret) {
++				dev_err(fe->dvb->device,
++					"Tuner is busy. Error %d\n", ret);
++				goto err2;
++			}
++		}
++#endif
+ 		ret = dvb_frontend_start (fe);
+ 		if (ret)
+-			goto err2;
++			goto err3;
  
- #include <media/videobuf2-core.h>
-+#include <media/v4l2-dev.h>
+ 		/*  empty event queue */
+ 		fepriv->events.eventr = fepriv->events.eventw = 0;
+@@ -2624,7 +2518,12 @@ static int dvb_frontend_open(struct inode *inode, struct file *file)
+ 		mutex_unlock (&adapter->mfe_lock);
+ 	return ret;
  
- #include <trace/events/vb2.h>
++err3:
++#ifdef CONFIG_MEDIA_CONTROLLER_DVB
++	if (fe->dvb->mdev && fe->dvb->mdev->disable_source)
++		fe->dvb->mdev->disable_source(dvbdev->entity);
+ err2:
++#endif
+ 	dvb_generic_release(inode, file);
+ err1:
+ 	if (dvbdev->users == -1 && fe->ops.ts_bus_ctrl)
+@@ -2653,6 +2552,10 @@ static int dvb_frontend_release(struct inode *inode, struct file *file)
  
-@@ -1742,6 +1743,9 @@ int vb2_core_streamon(struct vb2_queue *q, unsigned int type)
- 	 * are available.
- 	 */
- 	if (q->queued_count >= q->min_buffers_needed) {
-+		ret = v4l_vb2q_enable_media_tuner(q);
-+		if (ret)
-+			return ret;
- 		ret = vb2_start_streaming(q);
- 		if (ret) {
- 			__vb2_queue_cancel(q);
+ 	if (dvbdev->users == -1) {
+ 		wake_up(&fepriv->wait_queue);
++#ifdef CONFIG_MEDIA_CONTROLLER_DVB
++		if (fe->dvb->mdev && fe->dvb->mdev->disable_source)
++			fe->dvb->mdev->disable_source(dvbdev->entity);
++#endif
+ 		if (fe->exit != DVB_FE_NO_EXIT)
+ 			wake_up(&dvbdev->wait_queue);
+ 		if (fe->ops.ts_bus_ctrl)
+diff --git a/drivers/media/dvb-core/dvb_frontend.h b/drivers/media/dvb-core/dvb_frontend.h
+index 458bcce..9466906 100644
+--- a/drivers/media/dvb-core/dvb_frontend.h
++++ b/drivers/media/dvb-core/dvb_frontend.h
+@@ -686,6 +686,9 @@ struct dvb_frontend {
+ 	int (*callback)(void *adapter_priv, int component, int cmd, int arg);
+ 	int id;
+ 	unsigned int exit;
++#if defined(CONFIG_MEDIA_CONTROLLER_DVB)
++	struct media_pipeline pipe;
++#endif
+ };
+ 
+ /**
 -- 
 2.5.0
