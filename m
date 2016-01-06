@@ -1,7 +1,7 @@
 From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH 23/31] media: au0828 implement enable_source and disable_source handlers
-Date: Wed,  6 Jan 2016 13:27:12 -0700
-Message-ID: <6d1f10b616fc3c8b016cf0e335de569012400de8.1452105878.git.shuahkh@osg.samsung.com>
+Subject: [PATCH 16/31] media: au0828 video remove au0828_enable_analog_tuner()
+Date: Wed,  6 Jan 2016 13:27:05 -0700
+Message-ID: <b8df6a28c43cc6eab7488e4b1f7ba4bcbec17944.1452105878.git.shuahkh@osg.samsung.com>
 References: <cover.1452105878.git.shuahkh@osg.samsung.com>
 Return-path: <linux-media-owner@vger.kernel.org>
 In-Reply-To: <cover.1452105878.git.shuahkh@osg.samsung.com>
@@ -12,196 +12,95 @@ To: mchehab@osg.samsung.com, tiwai@suse.com, clemens@ladisch.de, hans.verkuil@ci
 Cc: Shuah Khan <shuahkh@osg.samsung.com>, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittgam.net, johan@oljud.se, linux-kernel@vger.kernel.org, linux-media@vger.kernel.org, linux-api@vger.kernel.orga
 List-Id: linux-api@vger.kernel.org
 
-Implements enable_source and disable_source handlers for other
-drivers (v4l2-core, dvb-core, and ALSA) to use to check for
-tuner connected to the decoder and activate the link if tuner
-is free, and deactivate and free the tuner when it is no longer
-needed.
+au0828_enable_analog_tuner() is no longer needed with
+v4l2-core and au0828-video invoking enable_source and
+disable_source handlers. In addition, it is unnecessary
+to check for tuner availability in queue_setup() as
+v4l2-core handles the tuner availability checks.
 
 Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
 ---
- drivers/media/usb/au0828/au0828-core.c | 148 +++++++++++++++++++++++++++++++++
- drivers/media/usb/au0828/au0828.h      |   2 +
- 2 files changed, 150 insertions(+)
+ drivers/media/usb/au0828/au0828-video.c | 61 ---------------------------------
+ 1 file changed, 61 deletions(-)
 
-diff --git a/drivers/media/usb/au0828/au0828-core.c b/drivers/media/usb/au0828/au0828-core.c
-index a15a61a..f8d2db3 100644
---- a/drivers/media/usb/au0828/au0828-core.c
-+++ b/drivers/media/usb/au0828/au0828-core.c
-@@ -370,6 +370,150 @@ static int au0828_create_media_graph(struct au0828_dev *dev)
- 	return 0;
+diff --git a/drivers/media/usb/au0828/au0828-video.c b/drivers/media/usb/au0828/au0828-video.c
+index 3ea9d4f..32bcc56 100644
+--- a/drivers/media/usb/au0828/au0828-video.c
++++ b/drivers/media/usb/au0828/au0828-video.c
+@@ -638,64 +638,6 @@ static inline int au0828_isoc_copy(struct au0828_dev *dev, struct urb *urb)
+ 	return rc;
  }
  
-+static int au0828_enable_source(struct media_entity *entity,
-+				struct media_pipeline *pipe)
-+{
-+#ifdef CONFIG_MEDIA_CONTROLLER
-+	struct media_entity  *source;
-+	struct media_entity *sink;
-+	struct media_link *link, *found_link = NULL;
-+	int ret = 0;
-+	struct media_device *mdev = entity->graph_obj.mdev;
-+	struct au0828_dev *dev;
-+
-+	if (!mdev)
-+		return -ENODEV;
-+
-+	/* for Audio and Video entities, source is the decoder */
-+	mutex_lock(&mdev->graph_mutex);
-+
-+	dev = mdev->source_priv;
-+	if (!dev->tuner || !dev->decoder) {
-+		ret = -ENODEV;
-+		goto end;
-+	}
-+
-+	/*
-+	 * For Audio and V4L2 entity, find the link to which decoder
-+	 * is the sink. Look for an active link between decoder and
-+	 * tuner, if one exists, nothing to do. If not, look for any
-+	 * active links between tuner and any other entity. If one
-+	 * exists, tuner is busy. If tuner is free, setup link and
-+	 * start pipeline from source (tuner).
-+	 * For DVB FE entity, the source for the link is the tuner.
-+	 * Check if tuner is available and setup link and start
-+	 * pipeline.
-+	*/
-+	if (entity->function != MEDIA_ENT_F_DTV_DEMOD)
-+		sink = dev->decoder;
-+	else
-+		sink = entity;
-+
-+	/* Is an active link between sink and tuner */
-+	if (dev->active_link) {
-+		if (dev->active_link->sink->entity == sink &&
-+		    dev->active_link->source->entity == dev->tuner) {
-+			ret = 0;
-+			goto end;
-+		} else {
-+			ret = -EBUSY;
-+			goto end;
-+		}
-+	}
-+
-+	list_for_each_entry(link, &sink->links, list) {
-+		/* Check sink, and source */
-+		if (link->sink->entity == sink &&
-+		    link->source->entity == dev->tuner) {
-+			found_link = link;
-+			break;
-+		}
-+	}
-+
-+	if (!found_link) {
-+		ret = -ENODEV;
-+		goto end;
-+	}
-+
-+	/* activate link between source and sink and start pipeline */
-+	source = found_link->source->entity;
-+	ret = __media_entity_setup_link(found_link, MEDIA_LNK_FL_ENABLED);
-+	if (ret) {
-+		pr_err(
-+			"Activate tuner link %s->%s. Error %d\n",
-+			source->name, sink->name, ret);
-+		goto end;
-+	}
-+
-+	ret = __media_entity_pipeline_start(entity, pipe);
-+	if (ret) {
-+		pr_err("Start Pipeline: %s->%s Error %d\n",
-+			source->name, entity->name, ret);
-+		ret = __media_entity_setup_link(found_link, 0);
-+		pr_err("Deactive link Error %d\n", ret);
-+		goto end;
-+	}
-+	/*
-+	 * save active link and active link owner to avoid audio
-+	 * deactivating video owned link from disable_source and
-+	 * vice versa
-+	*/
-+	dev->active_link = found_link;
-+	dev->active_link_owner = entity;
-+end:
-+	mutex_unlock(&mdev->graph_mutex);
-+	pr_debug("au0828_enable_source() end %s %d %d\n",
-+		entity->name, entity->function, ret);
-+	return ret;
-+#endif
-+	return 0;
-+}
-+
-+static void au0828_disable_source(struct media_entity *entity)
-+{
-+#ifdef CONFIG_MEDIA_CONTROLLER
-+	struct media_entity *sink;
-+	int ret = 0;
-+	struct media_device *mdev = entity->graph_obj.mdev;
-+	struct au0828_dev *dev;
-+
-+	if (!mdev)
-+		return;
-+
-+	mutex_lock(&mdev->graph_mutex);
-+	dev = mdev->source_priv;
-+	if (!dev->tuner || !dev->decoder || !dev->active_link) {
-+		ret = -ENODEV;
-+		goto end;
-+	}
-+
-+	if (entity->function != MEDIA_ENT_F_DTV_DEMOD)
-+		sink = dev->decoder;
-+	else
-+		sink = entity;
-+
-+	/* link is active - stop pipeline from source (tuner) */
-+	if (dev->active_link && dev->active_link->sink->entity == sink &&
-+	    dev->active_link->source->entity == dev->tuner) {
-+		/*
-+		 * prevent video from deactivating link when audio
-+		 * has active pipeline
-+		*/
-+		if (dev->active_link_owner != entity)
-+			goto end;
-+		__media_entity_pipeline_stop(entity);
-+		ret = __media_entity_setup_link(dev->active_link, 0);
-+		if (ret)
-+			pr_err("Deactive link Error %d\n", ret);
-+		dev->active_link = NULL;
-+		dev->active_link_owner = NULL;
-+	}
-+
-+end:
-+	mutex_unlock(&mdev->graph_mutex);
-+#endif
-+}
-+
- static int au0828_media_device_register(struct au0828_dev *dev,
- 					struct usb_device *udev)
- {
-@@ -400,6 +544,10 @@ static int au0828_media_device_register(struct au0828_dev *dev,
- 			ret);
- 		return ret;
- 	}
-+	/* set enable_source */
-+	dev->media_dev->source_priv = (void *) dev;
-+	dev->media_dev->enable_source = au0828_enable_source;
-+	dev->media_dev->disable_source = au0828_disable_source;
- #endif
+-static int au0828_enable_analog_tuner(struct au0828_dev *dev)
+-{
+-#ifdef CONFIG_MEDIA_CONTROLLER
+-	struct media_device *mdev = dev->media_dev;
+-	struct media_entity *source;
+-	struct media_link *link, *found_link = NULL;
+-	int ret, active_links = 0;
+-
+-	if (!mdev || !dev->decoder)
+-		return 0;
+-
+-	/*
+-	 * This will find the tuner that is connected into the decoder.
+-	 * Technically, this is not 100% correct, as the device may be
+-	 * using an analog input instead of the tuner. However, as we can't
+-	 * do DVB streaming while the DMA engine is being used for V4L2,
+-	 * this should be enough for the actual needs.
+-	 */
+-	list_for_each_entry(link, &dev->decoder->links, list) {
+-		if (link->sink->entity == dev->decoder) {
+-			found_link = link;
+-			if (link->flags & MEDIA_LNK_FL_ENABLED)
+-				active_links++;
+-			break;
+-		}
+-	}
+-
+-	if (active_links == 1 || !found_link)
+-		return 0;
+-
+-	source = found_link->source->entity;
+-	list_for_each_entry(link, &source->links, list) {
+-		struct media_entity *sink;
+-		int flags = 0;
+-
+-		sink = link->sink->entity;
+-
+-		if (sink == dev->decoder)
+-			flags = MEDIA_LNK_FL_ENABLED;
+-
+-		ret = media_entity_setup_link(link, flags);
+-		if (ret) {
+-			pr_err(
+-				"Couldn't change link %s->%s to %s. Error %d\n",
+-				source->name, sink->name,
+-				flags ? "enabled" : "disabled",
+-				ret);
+-			return ret;
+-		} else
+-			au0828_isocdbg(
+-				"link %s->%s was %s\n",
+-				source->name, sink->name,
+-				flags ? "ENABLED" : "disabled");
+-	}
+-#endif
+-	return 0;
+-}
+-
+ static int queue_setup(struct vb2_queue *vq, const void *parg,
+ 		       unsigned int *nbuffers, unsigned int *nplanes,
+ 		       unsigned int sizes[], void *alloc_ctxs[])
+@@ -711,9 +653,6 @@ static int queue_setup(struct vb2_queue *vq, const void *parg,
+ 
+ 	*nplanes = 1;
+ 	sizes[0] = size;
+-
+-	au0828_enable_analog_tuner(dev);
+-
  	return 0;
  }
-diff --git a/drivers/media/usb/au0828/au0828.h b/drivers/media/usb/au0828/au0828.h
-index cfb6d58..3707664 100644
---- a/drivers/media/usb/au0828/au0828.h
-+++ b/drivers/media/usb/au0828/au0828.h
-@@ -289,6 +289,8 @@ struct au0828_dev {
- 	bool vdev_linked;
- 	bool vbi_linked;
- 	bool audio_capture_linked;
-+	struct media_link *active_link;
-+	struct media_entity *active_link_owner;
- #endif
- };
  
 -- 
 2.5.0
