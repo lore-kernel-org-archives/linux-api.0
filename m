@@ -1,7 +1,7 @@
 From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH 16/31] media: au0828 video remove au0828_enable_analog_tuner()
-Date: Wed,  6 Jan 2016 13:27:05 -0700
-Message-ID: <b8df6a28c43cc6eab7488e4b1f7ba4bcbec17944.1452105878.git.shuahkh@osg.samsung.com>
+Subject: [PATCH 24/31] media: au0828 fix null pointer reference in au0828_create_media_graph()
+Date: Wed,  6 Jan 2016 13:27:13 -0700
+Message-ID: <33b9da8f01b1d94844ac677efd31a66c40c39ecb.1452105878.git.shuahkh@osg.samsung.com>
 References: <cover.1452105878.git.shuahkh@osg.samsung.com>
 Return-path: <linux-media-owner@vger.kernel.org>
 In-Reply-To: <cover.1452105878.git.shuahkh@osg.samsung.com>
@@ -12,95 +12,65 @@ To: mchehab@osg.samsung.com, tiwai@suse.com, clemens@ladisch.de, hans.verkuil@ci
 Cc: Shuah Khan <shuahkh@osg.samsung.com>, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittgam.net, johan@oljud.se, linux-kernel@vger.kernel.org, linux-media@vger.kernel.org, linux-api@vger.kernel.orga
 List-Id: linux-api@vger.kernel.org
 
-au0828_enable_analog_tuner() is no longer needed with
-v4l2-core and au0828-video invoking enable_source and
-disable_source handlers. In addition, it is unnecessary
-to check for tuner availability in queue_setup() as
-v4l2-core handles the tuner availability checks.
+Add a new wrapper function to au0828_create_media_graph()
+to be called as an entity_notify function to fix null
+pointer dereference. A rebasing mistake resulted in
+registering au0828_create_media_graph() without the
+correct parameters which lead to the following
+null pointer dereference:
+
+[   69.006164] Call Trace:
+[   69.006169]  [<ffffffff81a9a1b0>] dump_stack+0x44/0x64
+[   69.006175]  [<ffffffff81503af9>] print_trailer+0xf9/0x150
+[   69.006180]  [<ffffffff81509284>] object_err+0x34/0x40
+[   69.006185]  [<ffffffff815063c4>] ? ___slab_alloc+0x4c4/0x4e0
+[   69.006190]  [<ffffffff8150b732>] kasan_report_error+0x212/0x520
+[   69.006196]  [<ffffffff815063c4>] ? ___slab_alloc+0x4c4/0x4e0
+[   69.006201]  [<ffffffff8150ba83>] __asan_report_load1_noabort+0x43/0x50
+[   69.006208]  [<ffffffffa0d30991>] ? au0828_create_media_graph+0x641/0x730 [au0828]
+[   69.006215]  [<ffffffffa0d30991>] au0828_create_media_graph+0x641/0x730 [au0828]
+[   69.006221]  [<ffffffff82245c3d>] media_device_register_entity+0x33d/0x4f0
+[   69.006234]  [<ffffffffa0ebeb1c>] media_stream_init+0x2ac/0x610 [snd_usb_audio]
+[   69.006247]  [<ffffffffa0ea9a70>] snd_usb_pcm_open+0xcd0/0x1280 [snd_usb_audio]
 
 Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
 ---
- drivers/media/usb/au0828/au0828-video.c | 61 ---------------------------------
- 1 file changed, 61 deletions(-)
+ drivers/media/usb/au0828/au0828-core.c | 16 +++++++++++++++-
+ 1 file changed, 15 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/media/usb/au0828/au0828-video.c b/drivers/media/usb/au0828/au0828-video.c
-index 3ea9d4f..32bcc56 100644
---- a/drivers/media/usb/au0828/au0828-video.c
-+++ b/drivers/media/usb/au0828/au0828-video.c
-@@ -638,64 +638,6 @@ static inline int au0828_isoc_copy(struct au0828_dev *dev, struct urb *urb)
- 	return rc;
- }
- 
--static int au0828_enable_analog_tuner(struct au0828_dev *dev)
--{
--#ifdef CONFIG_MEDIA_CONTROLLER
--	struct media_device *mdev = dev->media_dev;
--	struct media_entity *source;
--	struct media_link *link, *found_link = NULL;
--	int ret, active_links = 0;
--
--	if (!mdev || !dev->decoder)
--		return 0;
--
--	/*
--	 * This will find the tuner that is connected into the decoder.
--	 * Technically, this is not 100% correct, as the device may be
--	 * using an analog input instead of the tuner. However, as we can't
--	 * do DVB streaming while the DMA engine is being used for V4L2,
--	 * this should be enough for the actual needs.
--	 */
--	list_for_each_entry(link, &dev->decoder->links, list) {
--		if (link->sink->entity == dev->decoder) {
--			found_link = link;
--			if (link->flags & MEDIA_LNK_FL_ENABLED)
--				active_links++;
--			break;
--		}
--	}
--
--	if (active_links == 1 || !found_link)
--		return 0;
--
--	source = found_link->source->entity;
--	list_for_each_entry(link, &source->links, list) {
--		struct media_entity *sink;
--		int flags = 0;
--
--		sink = link->sink->entity;
--
--		if (sink == dev->decoder)
--			flags = MEDIA_LNK_FL_ENABLED;
--
--		ret = media_entity_setup_link(link, flags);
--		if (ret) {
--			pr_err(
--				"Couldn't change link %s->%s to %s. Error %d\n",
--				source->name, sink->name,
--				flags ? "enabled" : "disabled",
--				ret);
--			return ret;
--		} else
--			au0828_isocdbg(
--				"link %s->%s was %s\n",
--				source->name, sink->name,
--				flags ? "ENABLED" : "disabled");
--	}
--#endif
--	return 0;
--}
--
- static int queue_setup(struct vb2_queue *vq, const void *parg,
- 		       unsigned int *nbuffers, unsigned int *nplanes,
- 		       unsigned int sizes[], void *alloc_ctxs[])
-@@ -711,9 +653,6 @@ static int queue_setup(struct vb2_queue *vq, const void *parg,
- 
- 	*nplanes = 1;
- 	sizes[0] = size;
--
--	au0828_enable_analog_tuner(dev);
--
+diff --git a/drivers/media/usb/au0828/au0828-core.c b/drivers/media/usb/au0828/au0828-core.c
+index f8d2db3..9497ad1 100644
+--- a/drivers/media/usb/au0828/au0828-core.c
++++ b/drivers/media/usb/au0828/au0828-core.c
+@@ -370,6 +370,20 @@ static int au0828_create_media_graph(struct au0828_dev *dev)
  	return 0;
  }
  
++void au0828_create_media_graph_notify(struct media_entity *new,
++				      void *notify_data)
++{
++#ifdef CONFIG_MEDIA_CONTROLLER
++	struct au0828_dev *dev = (struct au0828_dev *) notify_data;
++	int ret;
++
++	ret = au0828_create_media_graph(dev);
++	if (ret)
++		pr_err("%s() media graph create failed for new entity %s\n",
++		       __func__, new->name);
++#endif
++}
++
+ static int au0828_enable_source(struct media_entity *entity,
+ 				struct media_pipeline *pipe)
+ {
+@@ -535,7 +549,7 @@ static int au0828_media_device_register(struct au0828_dev *dev,
+ 	}
+ 	/* register entity_notify callback */
+ 	dev->entity_notify.notify_data = (void *) dev;
+-	dev->entity_notify.notify = (void *) au0828_create_media_graph;
++	dev->entity_notify.notify = au0828_create_media_graph_notify;
+ 	ret = media_device_register_entity_notify(dev->media_dev,
+ 						  &dev->entity_notify);
+ 	if (ret) {
 -- 
 2.5.0
