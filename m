@@ -1,189 +1,36 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH 30/31] sound/usb: Check media device unregister progress state
-Date: Wed,  6 Jan 2016 13:27:19 -0700
-Message-ID: <6787aacbea3c94ba42772928acaf590223e2445b.1452105878.git.shuahkh@osg.samsung.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: [PATCH 25/31] media: au0828 fix to not call media_device_unregister_entity_notify()
+Date: Wed,  6 Jan 2016 14:01:54 -0700
+Message-ID: <19782c8250ea1297271506e6558c089d4b25e026.1452105878.git.shuahkh@osg.samsung.com>
 References: <cover.1452105878.git.shuahkh@osg.samsung.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1452105878.git.shuahkh@osg.samsung.com>
-In-Reply-To: <cover.1452105878.git.shuahkh@osg.samsung.com>
-References: <cover.1452105878.git.shuahkh@osg.samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: mchehab@osg.samsung.com, tiwai@suse.com, clemens@ladisch.de, hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittgam.net, johan@oljud.se, linux-kernel@vger.kernel.org, linux-media@vger.kernel.org, linux-api@vger.kernel.orga
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <cover.1452105878.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, tiwai-IBi9RG/b67k@public.gmane.org, clemens-P6GI/4k7KOmELgA04lAiVw@public.gmane.org, hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org, laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org, sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, javier-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org
+Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org, m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, perex-/Fr2/VpizcU@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, tvboxspy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, crope-X3B1VOXEql0@public.gmane.org, ruchandani.tina-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, chehabrafael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, stefanr-MtYdepGKPcBMYopoZt5u/LNAH6kLmebB@public.gmane.org, inki.dae-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, jh1009.sung-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, elfring-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, sw0312.kim-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, ricardo.ribalda-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, labbott-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org, pierre-louis.bossart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, ricard.wanderlof-VrBV9hrLPhE@public.gmane.org, julian-SZMMDGyaqes@public.gmane.org, takamichiho-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dominic.sacre-Mmb7MZpHnFY@public.gmane.org, misterpib-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, gtmkramer-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org, normalperson-rMlxZR9MS24@public.gmane.org, joe-amhYAVlgbXj10XsdtD+oqA@public.gmane.org, linuxbugs-mcfjX3dozePR7s880joybQ@public.gmane.org, johan-v8HUHnYb0Yo@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.orga
 List-Id: linux-api@vger.kernel.org
 
-Change to release media resources for pcm streams
-and mixer before snd_card_disconnect() is done from
-usb_audio_disconnect(). The stream and mixer resource
-release interfaces access managed media resources
-(device resources) created on the usb device parent.
-These interfaces should be called before the last
-put_device() which releases all the device resources.
-In addition, changed the stream and mixer resource
-release interfaces to check if media device unregister
-is in progress and avoid calling Media Controller API
-to unregister entities and remove devnodes. Media device
-unregister takes care of all of this. This fixes the
-the general protection faults while snd-usb-audio was
-cleaning up media resources for pcm streams and mixers.
+entity_notify handlers are removed from media_device_unregister().
+There is no need to call media_device_unregister_entity_notify()
+to do that right before calling media_device_unregister().
 
-Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
+Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 ---
- sound/usb/card.c   |  8 ++++++--
- sound/usb/media.c  | 41 +++++++++++++++++++++++++++++++----------
- sound/usb/media.h  |  4 ++--
- sound/usb/stream.c |  1 -
- 4 files changed, 39 insertions(+), 15 deletions(-)
+ drivers/media/usb/au0828/au0828-core.c | 2 --
+ 1 file changed, 2 deletions(-)
 
-diff --git a/sound/usb/card.c b/sound/usb/card.c
-index e965982..8959ccb 100644
---- a/sound/usb/card.c
-+++ b/sound/usb/card.c
-@@ -608,6 +608,12 @@ static void usb_audio_disconnect(struct usb_interface *intf)
- 		 */
- 		wait_event(chip->shutdown_wait,
- 			   !atomic_read(&chip->usage_count));
-+
-+		/* release media pcm stream resources */
-+		media_stream_delete(chip);
-+		/* delete mixer media resources */
-+		media_mixer_delete(chip);
-+
- 		snd_card_disconnect(card);
- 		/* release the pcm resources */
- 		list_for_each_entry(as, &chip->pcm_list, list) {
-@@ -621,8 +627,6 @@ static void usb_audio_disconnect(struct usb_interface *intf)
- 		list_for_each(p, &chip->midi_list) {
- 			snd_usbmidi_disconnect(p);
- 		}
--		/* delete mixer media resources */
--		media_mixer_delete(chip);
- 		/* release mixer resources */
- 		list_for_each_entry(mixer, &chip->mixer_list, list) {
- 			snd_usb_mixer_disconnect(mixer);
-diff --git a/sound/usb/media.c b/sound/usb/media.c
-index 4f99086..9d29e1d 100644
---- a/sound/usb/media.c
-+++ b/sound/usb/media.c
-@@ -98,8 +98,11 @@ void media_device_delete(struct usb_interface *iface)
- 	struct usb_device *usbdev = interface_to_usbdev(iface);
- 
- 	mdev = media_device_find_devres(&usbdev->dev);
--	if (mdev && media_devnode_is_registered(&mdev->devnode))
--		media_device_unregister(mdev);
-+	if (mdev) {
-+		if (media_devnode_is_registered(&mdev->devnode) &&
-+		    !media_device_is_unregister_in_progress(mdev))
-+			media_device_unregister(mdev);
-+	}
- }
- 
- static int media_enable_source(struct media_ctl *mctl)
-@@ -177,7 +180,7 @@ int media_stream_init(struct snd_usb_substream *subs, struct snd_pcm *pcm,
- 	return 0;
- }
- 
--void media_stream_delete(struct snd_usb_substream *subs)
-+static void __media_stream_delete(struct snd_usb_substream *subs)
- {
- 	struct media_ctl *mctl = (struct media_ctl *) subs->media_ctl;
- 
-@@ -185,7 +188,7 @@ void media_stream_delete(struct snd_usb_substream *subs)
- 		struct media_device *mdev;
- 
- 		mdev = media_device_find_devres(&subs->dev->dev);
--		if (mdev) {
-+		if (mdev && !media_device_is_unregister_in_progress(mdev)) {
- 			media_devnode_remove(mctl->intf_devnode);
- 			media_device_unregister_entity(&mctl->media_entity);
- 			media_entity_cleanup(&mctl->media_entity);
-@@ -195,6 +198,21 @@ void media_stream_delete(struct snd_usb_substream *subs)
- 	}
- }
- 
-+void media_stream_delete(struct snd_usb_audio *chip)
-+{
-+	struct snd_usb_stream *as;
-+
-+	list_for_each_entry(as, &chip->pcm_list, list) {
-+		struct snd_usb_substream *subs;
-+		int idx;
-+
-+		for (idx = 0; idx < 2; idx++) {
-+			subs = &as->substream[idx];
-+			__media_stream_delete(subs);
-+		}
-+	}
-+}
-+
- int media_start_pipeline(struct snd_usb_substream *subs)
- {
- 	struct media_ctl *mctl = (struct media_ctl *) subs->media_ctl;
-@@ -283,22 +301,25 @@ void media_mixer_delete(struct snd_usb_audio *chip)
- 	struct media_device *mdev;
- 
- 	mdev = media_device_find_devres(&chip->dev->dev);
--	if (!mdev)
--		return;
- 
-+	if (chip->ctl_intf_media_devnode) {
-+		if (mdev && !media_device_is_unregister_in_progress(mdev))
-+			media_devnode_remove(chip->ctl_intf_media_devnode);
-+		chip->ctl_intf_media_devnode = NULL;
-+	}
- 	list_for_each_entry(mixer, &chip->mixer_list, list) {
- 		struct media_mixer_ctl *mctl;
- 
- 		mctl = (struct media_mixer_ctl *) mixer->media_mixer_ctl;
- 		if (!mixer->media_mixer_ctl)
- 			continue;
--
--		media_device_unregister_entity(&mctl->media_entity);
--		media_entity_cleanup(&mctl->media_entity);
-+		if (mdev && !media_device_is_unregister_in_progress(mdev)) {
-+			media_device_unregister_entity(&mctl->media_entity);
-+			media_entity_cleanup(&mctl->media_entity);
-+		}
- 		kfree(mctl);
- 		mixer->media_mixer_ctl = NULL;
- 	}
--	media_devnode_remove(chip->ctl_intf_media_devnode);
- }
- 
- #endif
-diff --git a/sound/usb/media.h b/sound/usb/media.h
-index 00884b5..bd1b1ec 100644
---- a/sound/usb/media.h
-+++ b/sound/usb/media.h
-@@ -52,7 +52,7 @@ int media_device_create(struct snd_usb_audio *chip,
- void media_device_delete(struct usb_interface *iface);
- int media_stream_init(struct snd_usb_substream *subs, struct snd_pcm *pcm,
- 			int stream);
--void media_stream_delete(struct snd_usb_substream *subs);
-+void media_stream_delete(struct snd_usb_audio *chip);
- int media_start_pipeline(struct snd_usb_substream *subs);
- void media_stop_pipeline(struct snd_usb_substream *subs);
- int media_mixer_init(struct snd_usb_audio *chip);
-@@ -65,7 +65,7 @@ static inline void media_device_delete(struct usb_interface *iface) { }
- static inline int media_stream_init(struct snd_usb_substream *subs,
- 					struct snd_pcm *pcm, int stream)
- 						{ return 0; }
--static inline void media_stream_delete(struct snd_usb_substream *subs) { }
-+static inline void media_stream_delete(struct snd_usb_audio *chip) { }
- static inline int media_start_pipeline(struct snd_usb_substream *subs)
- 					{ return 0; }
- static inline void media_stop_pipeline(struct snd_usb_substream *subs) { }
-diff --git a/sound/usb/stream.c b/sound/usb/stream.c
-index 789e515..f96f539 100644
---- a/sound/usb/stream.c
-+++ b/sound/usb/stream.c
-@@ -53,7 +53,6 @@ static void free_substream(struct snd_usb_substream *subs)
- 		kfree(fp);
- 	}
- 	kfree(subs->rate_list.list);
--	media_stream_delete(subs);
- }
- 
- 
+diff --git a/drivers/media/usb/au0828/au0828-core.c b/drivers/media/usb/au0828/au0828-core.c
+index 9497ad1..722e073 100644
+--- a/drivers/media/usb/au0828/au0828-core.c
++++ b/drivers/media/usb/au0828/au0828-core.c
+@@ -137,8 +137,6 @@ static void au0828_unregister_media_device(struct au0828_dev *dev)
+ #ifdef CONFIG_MEDIA_CONTROLLER
+ 	if (dev->media_dev &&
+ 		media_devnode_is_registered(&dev->media_dev->devnode)) {
+-		media_device_unregister_entity_notify(dev->media_dev,
+-						      &dev->entity_notify);
+ 		media_device_unregister(dev->media_dev);
+ 		media_device_cleanup(dev->media_dev);
+ 		dev->media_dev = NULL;
 -- 
 2.5.0
