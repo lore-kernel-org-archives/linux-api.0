@@ -1,53 +1,37 @@
-From: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
-Subject: Re: [PATCH v2 10/14] serial: pic32_uart: Add PIC32 UART driver
-Date: Wed, 6 Jan 2016 22:32:47 +0000
-Message-ID: <20160106223247.409a1d2b@lxorguk.ukuu.org.uk>
-References: <1450133093-7053-1-git-send-email-joshua.henderson@microchip.com>
-        <1450133093-7053-11-git-send-email-joshua.henderson@microchip.com>
-        <20160105204322.2dc5ab3f@lxorguk.ukuu.org.uk>
-        <F2D704DDA6AE8B4A87FF87509480F4A449E46187@CHN-SV-EXMX01.mchp-main.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: selective block polling and preadv2/pwritev2 revisited
+Date: Wed, 06 Jan 2016 17:49:21 -0500
+Message-ID: <yq1h9iqiary.fsf@sermon.lab.mkp.net>
+References: <1450966464-6847-1-git-send-email-hch@lst.de>
+	<568A889E.4020204@dev.mellanox.co.il> <20160104163949.GA17409@lst.de>
+	<568D4859.4010206@dev.mellanox.co.il>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-mips-bounce@linux-mips.org>
-In-Reply-To: <F2D704DDA6AE8B4A87FF87509480F4A449E46187@CHN-SV-EXMX01.mchp-main.com>
-Sender: linux-mips-bounce@linux-mips.org
-Errors-to: linux-mips-bounce@linux-mips.org
-List-help: <mailto:ecartis@linux-mips.org?Subject=help>
-List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
-List-software: Ecartis version 1.0.0
-List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
-List-owner: <mailto:ralf@linux-mips.org>
-List-post: <mailto:linux-mips@linux-mips.org>
-List-archive: <http://www.linux-mips.org/archives/linux-mips/>
-To: Paul.Thacker@microchip.com
-Cc: Joshua.Henderson@microchip.com, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, ralf@linux-mips.org, Andrei.Pistirica@microchip.com, gregkh@linuxfoundation.org, jslaby@suse.com, linux-serial@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <568D4859.4010206@dev.mellanox.co.il> (Sagi Grimberg's message of
+	"Wed, 6 Jan 2016 19:01:13 +0200")
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Sagi Grimberg <sagig@dev.mellanox.co.il>
+Cc: Christoph Hellwig <hch@lst.de>, viro@zeniv.linux.org.uk, axboe@fb.com, milosz@adfin.com, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 6 Jan 2016 22:00:43 +0000
-<Paul.Thacker@microchip.com> wrote:
+>>>>> "Sagi" == Sagi Grimberg <sagig@dev.mellanox.co.il> writes:
 
-> On 01/05/2016 03:50 PM, One Thousand Gnomes wrote:
-> >
-> >> +#define PIC32_SDEV_NAME		"ttyS"
-> >> +#define PIC32_SDEV_MAJOR	TTY_MAJOR
-> >> +#define PIC32_SDEV_MINOR	64
-> >
-> > No. Same goes for you as every one of the forty other people a year who
-> > try and claim their console is ttyS. If it's not an 8250 it isn't.
-> >
-> > ttyS is the 8250, use dynamic major and minor and a different name.
-> 
-> Ok. Is there a naming convention documented anywhere? How about ttyPIC?
+>> The idea that was floated aroud a few times was to have a flag where
+>> the first half of the vectors would be the data, and the second half
+>> the metadata.
 
-We used to document it but the document was always stale. ttyPIC sounds
-fine providing nobody else is using it (and I don't think they are but
-grep is your friend). We enforce the rule because in the early days lots
-of people re-used ttyS for their chip. Then their chip grew an external
-bus or turned into a SoC and a 16x50 got added and it all broke.
+Sagi> This means that the user would need to pass iovec entries of 8
+Sagi> bytes correct? Seems like a waste for large IOs (sorry for
+Sagi> diverging from the subject)
 
-ttyPIC ought to be fine because even if you get new PIC devices with a
-different uart you aren't likely to have both of the PIC cores on the
-same device.
+The assumption was that there would be a 1:1 mapping between the number
+of data buffers and the metadata ditto. But nothing says that a data
+iovec entry is limited in size to a single sector.
 
-Alan
+The other option to have a single iovec at the end representing the
+metadata for all data buffers. I think there are valid use cases for
+either approach and we may end up having to support both via a flag.
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
