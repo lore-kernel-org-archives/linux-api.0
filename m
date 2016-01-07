@@ -1,135 +1,181 @@
-From: Jacob Pan <jacob.jun.pan@linux.intel.com>
-Subject: Re: [PATCH v3 22/22] thermal/intel_powerclamp: Convert the kthread
- to kthread worker API
-Date: Thu, 7 Jan 2016 11:55:31 -0800
-Message-ID: <20160107115531.34279a9b@icelake>
-References: <1447853127-3461-1-git-send-email-pmladek@suse.com>
-	<1447853127-3461-23-git-send-email-pmladek@suse.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH 26/31] sound/usb: Update ALSA driver to use Managed Media
+ Controller API
+Date: Thu, 7 Jan 2016 13:27:52 -0700
+Message-ID: <568ECA48.1060908@osg.samsung.com>
+References: <cover.1452105878.git.shuahkh@osg.samsung.com>
+ <ebef788534aae7fa740665660e04bdf1523fdbfe.1452105878.git.shuahkh@osg.samsung.com>
+ <s5ha8ohfl7f.wl-tiwai@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1447853127-3461-23-git-send-email-pmladek@suse.com>
-Sender: owner-linux-mm@kvack.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Zhang Rui <rui.zhang@intel.com>, Eduardo Valentin <edubezval@gmail.com>, linux-pm@vger.kernel.org, jacob.jun.pan@linux.intel.com
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <s5ha8ohfl7f.wl-tiwai-l3A5Bk7waGM@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Takashi Iwai <tiwai-l3A5Bk7waGM@public.gmane.org>
+Cc: hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org, laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org, clemens-P6GI/4k7KOmELgA04lAiVw@public.gmane.org, sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, javier-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, alsa-devel-K7yf7f+aM1XWsZ/bQMPhNw@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, ricard.wanderlof-VrBV9hrLPhE@public.gmane.org, labbott-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org, chehabrafael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, misterpib-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ricardo.ribalda-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ruchandani.tina-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, takamichiho-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tvboxspy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dominic.sacre-Mmb7MZpHnFY@public.gmane.org, crope-X3B1VOXEql0@public.gmane.org, julian-SZMMDGyaqes@public.gmane.org, pierre-louis.bossart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, joe-amhYAVlgbXj10XsdtD+oqA@public.gmane.org, johan-v8HUHnYb0Yo@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org, p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, perex-/Fr2/VpizcU@public.gmane.org, stefanr-MtYdepGKPcBMYopoZt5u/LNAH6kLmebB@public.gmane.org, inki.dae-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, jh1009.sung-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, sw0312.kim-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, elfring-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-api-u79uwXL29TbrhsbdSgBK9A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 18 Nov 2015 14:25:27 +0100
-Petr Mladek <pmladek@suse.com> wrote:
-
-> From: Petr Mladek <pmladek@suse.com>
-> To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov
-> <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar
-> <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org> Cc: Steven
-> Rostedt <rostedt@goodmis.org>, "Paul E. McKenney"
-> <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>,
-> Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds
-> <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>,
-> Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>,
-> linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>,
-> linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek
-> <pmladek@suse.com>, Zhang Rui <rui.zhang@intel.com>, Eduardo Valentin
-> <edubezval@gmail.com>, Jacob Pan <jacob.jun.pan@linux.intel.com>,
-> linux-pm@vger.kernel.org Subject: [PATCH v3 22/22]
-> thermal/intel_powerclamp: Convert the kthread to kthread worker API
-> Date: Wed, 18 Nov 2015 14:25:27 +0100 X-Mailer: git-send-email 1.8.5.6
+On 01/07/2016 08:44 AM, Takashi Iwai wrote:
+> On Wed, 06 Jan 2016 22:05:35 +0100,
+> Shuah Khan wrote:
+>>
+>> diff --git a/sound/usb/Makefile b/sound/usb/Makefile
+>> index 2d2d122..665fdd9 100644
+>> --- a/sound/usb/Makefile
+>> +++ b/sound/usb/Makefile
+>> @@ -2,6 +2,18 @@
+>>  # Makefile for ALSA
+>>  #
+>>  
+>> +# Media Controller
+>> +ifeq ($(CONFIG_MEDIA_CONTROLLER),y)
+>> +  ifeq ($(CONFIG_MEDIA_SUPPORT),y)
+>> +        KBUILD_CFLAGS += -DUSE_MEDIA_CONTROLLER
+>> +  endif
+>> +  ifeq ($(CONFIG_MEDIA_SUPPORT_MODULE),y)
+>> +    ifeq ($(MODULE),y)
+>> +          KBUILD_CFLAGS += -DUSE_MEDIA_CONTROLLER
+>> +    endif
+>> +  endif
+>> +endif
 > 
-> Kthreads are currently implemented as an infinite loop. Each
-> has its own variant of checks for terminating, freezing,
-> awakening. In many cases it is unclear to say in which state
-> it is and sometimes it is done a wrong way.
+> Can't we define this rather via Kconfig?
+> Doing this in Makefile is way too tricky, and it's unclear to users
+> whether MC is actually enabled or not.
 > 
-> The plan is to convert kthreads into kthread_worker or workqueues
-> API. It allows to split the functionality into separate operations.
-> It helps to make a better structure. Also it defines a clean state
-> where no locks are taken, IRQs blocked, the kthread might sleep
-> or even be safely migrated.
+
+Yeah doing this in Makefile is a bit tricky
+and can lead to confusion.
+
+I can't think of any specific reason why I added
+this check to the Makefile instead of Kconfig.
+Looks like I added this in my second version
+of the patch series several months ago and didn't
+revisit. I will add this to Kconfig.
 > 
-> The kthread worker API is useful when we want to have a dedicated
-> single thread for the work. It helps to make sure that it is
-> available when needed. Also it allows a better control, e.g.
-> define a scheduling priority.
+>> diff --git a/sound/usb/media.c b/sound/usb/media.c
+>> new file mode 100644
+>> index 0000000..747a66a
+>> --- /dev/null
+>> +++ b/sound/usb/media.c
+>> @@ -0,0 +1,214 @@
+>> +/*
+>> + * media.c - Media Controller specific ALSA driver code
+>> + *
+>> + * Copyright (c) 2015 Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+>> + * Copyright (c) 2015 Samsung Electronics Co., Ltd.
+>> + *
+>> + * This file is released under the GPLv2.
+>> + */
+>> +
+>> +/*
+>> + * This file adds Media Controller support to ALSA driver
+>> + * to use the Media Controller API to share tuner with DVB
+>> + * and V4L2 drivers that control media device. Media device
+>> + * is created based on existing quirks framework. Using this
+>> + * approach, the media controller API usage can be added for
+>> + * a specific device.
+>> +*/
+>> +
+>> +#include <linux/init.h>
+>> +#include <linux/list.h>
+>> +#include <linux/slab.h>
+>> +#include <linux/string.h>
+>> +#include <linux/ctype.h>
+>> +#include <linux/usb.h>
+>> +#include <linux/moduleparam.h>
+>> +#include <linux/mutex.h>
+>> +#include <linux/usb/audio.h>
+>> +#include <linux/usb/audio-v2.h>
+>> +#include <linux/module.h>
+>> +
+>> +#include <sound/control.h>
+>> +#include <sound/core.h>
+>> +#include <sound/info.h>
+>> +#include <sound/pcm.h>
+>> +#include <sound/pcm_params.h>
+>> +#include <sound/initval.h>
+>> +
+>> +#include "usbaudio.h"
+>> +#include "card.h"
+>> +#include "midi.h"
+>> +#include "mixer.h"
+>> +#include "proc.h"
+>> +#include "quirks.h"
+>> +#include "endpoint.h"
+>> +#include "helper.h"
+>> +#include "debug.h"
+>> +#include "pcm.h"
+>> +#include "format.h"
+>> +#include "power.h"
+>> +#include "stream.h"
+>> +#include "media.h"
 > 
-> This patch converts the intel powerclamp kthreads into the kthread
-> worker because they need to have a good control over the assigned
-> CPUs.
+> I believe we can get rid of many include files just for MC support...
 > 
-I have tested this patchset and found no obvious issues in terms of
-functionality, power and performance. Tested CPU online/offline,
-suspend resume, freeze etc.
-Power numbers are comparable too. e.g. on IVB 8C system. Inject idle
-from 5 to 50% and read package power while running CPU bound workload.
-
-Before:
-IdlePct    Perf    RAPL    WallPower                               
-5 256.28 16.50 0.0                                                 
-10 248.86 15.64 0.0                                                
-15 209.01 14.57 0.0                                                
-20 176.17 13.88 0.0                                                
-25 161.25 13.37 0.0                                                
-30 165.62 13.38 0.0                                                
-35 150.94 12.89 0.0                                                
-40 137.45 12.47 0.0                                                
-45 123.80 11.83 0.0                                                
-50 137.59 11.80 0.0                                                
-
-After:
-
-(deb_chroot)root@ubuntu-jp-nfs:~/powercap-power# ./test.py -c 5
-IdlePct	Perf	RAPL	WallPower
-5 266.30 16.34 0.0
-10 226.32 15.27 0.0
-15 195.52 14.29 0.0
-20 200.96 13.98 0.0
-25 174.77 13.08 0.0
-30 162.05 13.04 0.0
-35 166.70 12.90 0.0
-40 134.78 12.12 0.0
-45 128.08 11.70 0.0
-50 117.74 11.74 0.0    
-
-
-
-> IMHO, the most natural way is to split one cycle into two works.
-> First one does some balancing and let the CPU work normal
-> way for some time. The second work checks what the CPU has done
-> in the meantime and put it into C-state to reach the required
-> idle time ratio. The delay between the two works is achieved
-> by the delayed kthread work.
 > 
-> The two works have to share some data that used to be local
-> variables of the single kthread function. This is achieved
-> by the new per-CPU struct kthread_worker_data. It might look
-> as a complication. On the other hand, the long original kthread
-> function was not nice either.
+>> +#ifdef USE_MEDIA_CONTROLLER
 > 
-> The patch tries to avoid extra init and cleanup works. All the
-> actions might be done outside the thread. They are moved
-> to the functions that create or destroy the worker. Especially,
-> I checked that the timers are assigned to the right CPU.
+> This ifdef can be removed once if we build this object file
+> conditionally in Makefile.
+
+Right.
+
 > 
-> The two works are queuing each other. It makes it a bit tricky to
-> break it when we want to stop the worker. We use the global and
-> per-worker "clamping" variables to make sure that the re-queuing
-> eventually stops. We also cancel the works to make it faster.
-> Note that the canceling is not reliable because the handling
-> of the two variables and queuing is not synchronized via a lock.
-> But it is not a big deal because it is just an optimization.
-> The job is stopped faster than before in most cases.
-I am not convinced this added complexity is necessary, here are my
-concerns by breaking down into two work items.
-- overhead of queuing, per cpu data as you already mentioned.
-- since we need to have very tight timing control, two items may limit
-  our turnaround time. Wouldn't it take one extra tick for the scheduler
-  to run the balance work then add delay? as opposed to just
-  schedule_timeout()?
-- vulnerable to future changes of queuing work
+> 
+>> @@ -1232,7 +1244,10 @@ static int snd_usb_pcm_open(struct snd_pcm_substream *substream, int direction)
+>>  	subs->dsd_dop.channel = 0;
+>>  	subs->dsd_dop.marker = 1;
+>>  
+>> -	return setup_hw_info(runtime, subs);
+>> +	ret = setup_hw_info(runtime, subs);
+>> +	if (ret == 0)
+>> +		ret = media_stream_init(subs, as->pcm, direction);
+> 
+> Need to call snd_usb_autosuspend() in the error path.
 
-Jacob
+I will add it.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> 
+> 
+>> --- a/sound/usb/quirks.c
+>> +++ b/sound/usb/quirks.c
+>> @@ -544,13 +545,19 @@ int snd_usb_create_quirk(struct snd_usb_audio *chip,
+>>  		[QUIRK_AUDIO_ALIGN_TRANSFER] = create_align_transfer_quirk,
+>>  		[QUIRK_AUDIO_STANDARD_MIXER] = create_standard_mixer_quirk,
+>>  	};
+>> +	int ret;
+>>  
+>> +	if (quirk->media_device) {
+>> +		/* don't want to fail when media_device_create() fails */
+>> +		media_device_create(chip, iface);
+>> +	}
+> 
+> So far, so good...
+> 
+>>  	if (quirk->type < QUIRK_TYPE_COUNT) {
+>> -		return quirk_funcs[quirk->type](chip, iface, driver, quirk);
+>> +		ret = quirk_funcs[quirk->type](chip, iface, driver, quirk);
+>>  	} else {
+>>  		usb_audio_err(chip, "invalid quirk type %d\n", quirk->type);
+>>  		return -ENXIO;
+>>  	}
+>> +	return ret;
+> 
+> Any reason to change this?
+
+Thanks for catching this. I think I might have
+added some debug code to print ret value and
+missed it when I cleaned up the debug code.
+I will fix it.
+
+thanks,
+-- Shuah
+
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
