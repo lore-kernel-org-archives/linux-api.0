@@ -1,14 +1,14 @@
 From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH 3/4] add ptrace/.gitignore
-Date: Thu, 7 Jan 2016 13:52:47 -0700
-Message-ID: <568ED01F.4040203@osg.samsung.com>
+Subject: Re: [PATCH 4/4] add breakpoints/.gitignore
+Date: Thu, 7 Jan 2016 13:53:06 -0700
+Message-ID: <568ED032.9000907@osg.samsung.com>
 References: <1452149642-7597-1-git-send-email-sunyuan3@huawei.com>
- <1452149642-7597-3-git-send-email-sunyuan3@huawei.com>
+ <1452149642-7597-4-git-send-email-sunyuan3@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1452149642-7597-3-git-send-email-sunyuan3-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <1452149642-7597-4-git-send-email-sunyuan3-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Yuan Sun <sunyuan3-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
@@ -17,17 +17,17 @@ List-Id: linux-api@vger.kernel.org
 On 01/06/2016 11:54 PM, Yuan Sun wrote:
 > Signed-off-by: Yuan Sun <sunyuan3-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 > ---
->  tools/testing/selftests/ptrace/.gitignore | 1 +
+>  tools/testing/selftests/breakpoints/.gitignore | 1 +
 >  1 file changed, 1 insertion(+)
->  create mode 100644 tools/testing/selftests/ptrace/.gitignore
+>  create mode 100644 tools/testing/selftests/breakpoints/.gitignore
 > 
-> diff --git a/tools/testing/selftests/ptrace/.gitignore b/tools/testing/selftests/ptrace/.gitignore
+> diff --git a/tools/testing/selftests/breakpoints/.gitignore b/tools/testing/selftests/breakpoints/.gitignore
 > new file mode 100644
-> index 0000000..b3e59d4
+> index 0000000..9b3193d0
 > --- /dev/null
-> +++ b/tools/testing/selftests/ptrace/.gitignore
+> +++ b/tools/testing/selftests/breakpoints/.gitignore
 > @@ -0,0 +1 @@
-> +peeksiginfo
+> +breakpoint_test
 > 
 
 Thanks for doing this. Applied to linux-kselftest next
