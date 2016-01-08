@@ -1,29 +1,74 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v5] fs: clear file privilege bits when mmap writing
-Date: Thu, 7 Jan 2016 16:30:33 -0800
-Message-ID: <CALCETrUMOPC_--4G59DTxS70FxE-hSBPrdvzjS+2xV8ywvx_Cg@mail.gmail.com>
-References: <20151210223314.GA14512@www.outflux.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20151210223314.GA14512@www.outflux.net>
-Sender: linux-arch-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>, yalin wang <yalin.wang2010@gmail.com>, Willy Tarreau <w@1wt.eu>, Andrew Morton <akpm@linux-foundation.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+From: Bamvor Jian Zhang <bamvor.zhangjian@linaro.org>
+Subject: [PATCH v4 0/2] Create specific kconfig for kselftest
+Date: Fri,  8 Jan 2016 15:27:32 +0800
+Message-ID: <1452238054-15482-1-git-send-email-bamvor.zhangjian@linaro.org>
+Return-path: <linux-kbuild-owner@vger.kernel.org>
+Sender: linux-kbuild-owner@vger.kernel.org
+To: linux-api@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-kbuild@vger.kernel.org, shuahkh@osg.samsung.com, yann.morin.1998@free.fr, khilman@linaro.org, tyler.baker@linaro.org, broonie@kernel.org, mpe@ellerman.id.au, dvhart@infradead.org, mmarek@suse.com, Bamvor Jian Zhang <bamvor.zhangjian@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Dec 10, 2015 at 2:33 PM, Kees Cook <keescook@chromium.org> wrote:
-> Instead, detect the need to clear the bits during the page fault, and
-> actually remove the bits during final fput. Since the file was open for
-> writing, it wouldn't have been possible to execute it yet.
+There is a discussion about improving the usability of kselftest by
+creating test-specific kconfig in recent kernel Summit. The first
+three versions could be found at [1], [2], [3].
 
-This is cute but mysterious.  Could you add a comment?
+Patch 1 keep test-specific kconfig fragments inside each selftest so
+that merge_configs.sh could build up a kernel configuration that can
+test the specific or all feature(s).
 
->
-> +       /*
-> +        * XXX: While avoiding mmap_sem, we've already been written to.
-> +        * We must ignore the return value, since we can't reject the
-> +        * write.
-> +        */
+Patch 2 add config option(kselftest-merge) in make file as a
+helper to merge all the test config dependecies to .config.
 
-e.g. here?
+Changes since v3:
+1.  move the target kselftest-mergeconfig from scripts/kconfig/Makfile
+    to toplevel Makefile. And rename to kselftest-merge to avoid the
+    conflict with "%config" target.
+
+Changes since v2:
+1.  Fix the misuse of objtree and srctree in the
+    kselftest-mergeconfig target.
+
+Changes since v1:
+1.  Add kselftest-mergeconfig in scripts/kconfig/Makefile according
+    to the suggestion from Michael.
+
+[1] http://www.spinics.net/lists/linux-api/msg15533.html
+[2] http://www.spinics.net/lists/linux-api/msg15593.html
+[3] http://comments.gmane.org/gmane.linux.kernel/2110565
+
+Bamvor Jian Zhang (2):
+  selftests: create test-specific kconfig fragments
+  Makefile: add kselftest-merge
+
+ Makefile                                      | 11 +++++++++++
+ tools/testing/selftests/cpu-hotplug/config    |  2 ++
+ tools/testing/selftests/firmware/config       |  1 +
+ tools/testing/selftests/ftrace/config         |  1 +
+ tools/testing/selftests/ipc/config            |  2 ++
+ tools/testing/selftests/memory-hotplug/config |  4 ++++
+ tools/testing/selftests/mount/config          |  2 ++
+ tools/testing/selftests/net/config            |  3 +++
+ tools/testing/selftests/pstore/config         |  4 ++++
+ tools/testing/selftests/seccomp/config        |  2 ++
+ tools/testing/selftests/static_keys/config    |  1 +
+ tools/testing/selftests/user/config           |  1 +
+ tools/testing/selftests/vm/config             |  1 +
+ tools/testing/selftests/zram/config           |  2 ++
+ 14 files changed, 37 insertions(+)
+ create mode 100644 tools/testing/selftests/cpu-hotplug/config
+ create mode 100644 tools/testing/selftests/firmware/config
+ create mode 100644 tools/testing/selftests/ftrace/config
+ create mode 100644 tools/testing/selftests/ipc/config
+ create mode 100644 tools/testing/selftests/memory-hotplug/config
+ create mode 100644 tools/testing/selftests/mount/config
+ create mode 100644 tools/testing/selftests/net/config
+ create mode 100644 tools/testing/selftests/pstore/config
+ create mode 100644 tools/testing/selftests/seccomp/config
+ create mode 100644 tools/testing/selftests/static_keys/config
+ create mode 100644 tools/testing/selftests/user/config
+ create mode 100644 tools/testing/selftests/vm/config
+ create mode 100644 tools/testing/selftests/zram/config
+
+-- 
+2.1.4
+
