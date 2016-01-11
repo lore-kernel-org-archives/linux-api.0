@@ -1,201 +1,381 @@
-From: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v9 00/13] support "task_isolation" mode for nohz_full
-Date: Mon, 11 Jan 2016 16:15:50 -0500
-Message-ID: <56941B86.9090009@ezchip.com>
-References: <1451936091-29247-1-git-send-email-cmetcalf@ezchip.com>
+From: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC PATCH v3 4/6] livepatch: reuse module loader code to write
+ relocations
+Date: Mon, 11 Jan 2016 15:33:49 -0600
+Message-ID: <20160111213349.GB17874@treble.redhat.com>
+References: <1452281304-28618-1-git-send-email-jeyu@redhat.com>
+ <1452281304-28618-5-git-send-email-jeyu@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1451936091-29247-1-git-send-email-cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1452281304-28618-5-git-send-email-jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Ping!  There has been no substantive feedback to this version of
-the patch in the week since I posted it, which optimistically suggests
-to me that people may be satisfied with it.  If that's true, Frederic,
-I assume this would be pulled into your tree?
+On Fri, Jan 08, 2016 at 02:28:22PM -0500, Jessica Yu wrote:
+> Reuse module loader code to write relocations, thereby eliminating the need
+> for architecture specific relocation code in livepatch. Namely, we reuse
+> apply_relocate_add() in the module loader to write relocations instead of
+> duplicating functionality in livepatch's klp_write_module_reloc(). To apply
+> relocation sections, remaining SHN_LIVEPATCH symbols referenced by relocs
+> are resolved and then apply_relocate_add() is called to apply those
+> relocations.
+> 
+> In addition, remove x86 livepatch relocation code. It is no longer needed
+> since symbol resolution and relocation work have been offloaded to module
+> loader.
+> 
+> Signed-off-by: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> ---
+>  arch/x86/include/asm/livepatch.h |   2 -
+>  arch/x86/kernel/Makefile         |   1 -
+>  arch/x86/kernel/livepatch.c      |  70 ---------------------------
+>  include/linux/livepatch.h        |  33 +++++--------
+>  kernel/livepatch/core.c          | 101 +++++++++++++++++++--------------------
+>  5 files changed, 62 insertions(+), 145 deletions(-)
+>  delete mode 100644 arch/x86/kernel/livepatch.c
+> 
+> diff --git a/arch/x86/include/asm/livepatch.h b/arch/x86/include/asm/livepatch.h
+> index 19c099a..7312e25 100644
+> --- a/arch/x86/include/asm/livepatch.h
+> +++ b/arch/x86/include/asm/livepatch.h
+> @@ -33,8 +33,6 @@ static inline int klp_check_compiler_support(void)
+>  #endif
+>  	return 0;
+>  }
+> -int klp_write_module_reloc(struct module *mod, unsigned long type,
+> -			   unsigned long loc, unsigned long value);
+>  
+>  static inline void klp_arch_set_pc(struct pt_regs *regs, unsigned long ip)
+>  {
+> diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+> index b1b78ff..c5e9a5c 100644
+> --- a/arch/x86/kernel/Makefile
+> +++ b/arch/x86/kernel/Makefile
+> @@ -67,7 +67,6 @@ obj-$(CONFIG_X86_MPPARSE)	+= mpparse.o
+>  obj-y				+= apic/
+>  obj-$(CONFIG_X86_REBOOTFIXUPS)	+= reboot_fixups_32.o
+>  obj-$(CONFIG_DYNAMIC_FTRACE)	+= ftrace.o
+> -obj-$(CONFIG_LIVEPATCH)		+= livepatch.o
+>  obj-$(CONFIG_FUNCTION_GRAPH_TRACER) += ftrace.o
+>  obj-$(CONFIG_FTRACE_SYSCALLS)	+= ftrace.o
+>  obj-$(CONFIG_X86_TSC)		+= trace_clock.o
+> diff --git a/arch/x86/kernel/livepatch.c b/arch/x86/kernel/livepatch.c
+> deleted file mode 100644
+> index 92fc1a5..0000000
+> --- a/arch/x86/kernel/livepatch.c
+> +++ /dev/null
+> @@ -1,70 +0,0 @@
+> -/*
+> - * livepatch.c - x86-specific Kernel Live Patching Core
+> - *
+> - * Copyright (C) 2014 Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> - * Copyright (C) 2014 SUSE
+> - *
+> - * This program is free software; you can redistribute it and/or
+> - * modify it under the terms of the GNU General Public License
+> - * as published by the Free Software Foundation; either version 2
+> - * of the License, or (at your option) any later version.
+> - *
+> - * This program is distributed in the hope that it will be useful,
+> - * but WITHOUT ANY WARRANTY; without even the implied warranty of
+> - * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> - * GNU General Public License for more details.
+> - *
+> - * You should have received a copy of the GNU General Public License
+> - * along with this program; if not, see <http://www.gnu.org/licenses/>.
+> - */
+> -
+> -#include <linux/module.h>
+> -#include <linux/uaccess.h>
+> -#include <asm/elf.h>
+> -#include <asm/livepatch.h>
+> -
+> -/**
+> - * klp_write_module_reloc() - write a relocation in a module
+> - * @mod:	module in which the section to be modified is found
+> - * @type:	ELF relocation type (see asm/elf.h)
+> - * @loc:	address that the relocation should be written to
+> - * @value:	relocation value (sym address + addend)
+> - *
+> - * This function writes a relocation to the specified location for
+> - * a particular module.
+> - */
+> -int klp_write_module_reloc(struct module *mod, unsigned long type,
+> -			   unsigned long loc, unsigned long value)
+> -{
+> -	size_t size = 4;
+> -	unsigned long val;
+> -	unsigned long core = (unsigned long)mod->core_layout.base;
+> -	unsigned long core_size = mod->core_layout.size;
+> -
+> -	switch (type) {
+> -	case R_X86_64_NONE:
+> -		return 0;
+> -	case R_X86_64_64:
+> -		val = value;
+> -		size = 8;
+> -		break;
+> -	case R_X86_64_32:
+> -		val = (u32)value;
+> -		break;
+> -	case R_X86_64_32S:
+> -		val = (s32)value;
+> -		break;
+> -	case R_X86_64_PC32:
+> -		val = (u32)(value - loc);
+> -		break;
+> -	default:
+> -		/* unsupported relocation type */
+> -		return -EINVAL;
+> -	}
+> -
+> -	if (loc < core || loc >= core + core_size)
+> -		/* loc does not point to any symbol inside the module */
+> -		return -EINVAL;
+> -
+> -	return probe_kernel_write((void *)loc, &val, size);
+> -}
+> diff --git a/include/linux/livepatch.h b/include/linux/livepatch.h
+> index a882865..2f12ce7 100644
+> --- a/include/linux/livepatch.h
+> +++ b/include/linux/livepatch.h
+> @@ -65,27 +65,8 @@ struct klp_func {
+>  };
+>  
+>  /**
+> - * struct klp_reloc - relocation structure for live patching
+> - * @loc:	address where the relocation will be written
+> - * @sympos:	position in kallsyms to disambiguate symbols (optional)
+> - * @type:	ELF relocation type
+> - * @name:	name of the referenced symbol (for lookup/verification)
+> - * @addend:	offset from the referenced symbol
+> - * @external:	symbol is either exported or within the live patch module itself
+> - */
+> -struct klp_reloc {
+> -	unsigned long loc;
+> -	unsigned long sympos;
+> -	unsigned long type;
+> -	const char *name;
+> -	int addend;
+> -	int external;
+> -};
+> -
+> -/**
+>   * struct klp_object - kernel object structure for live patching
+>   * @name:	module name (or NULL for vmlinux)
+> - * @relocs:	relocation entries to be applied at load time
+>   * @funcs:	function entries for functions to be patched in the object
+>   * @kobj:	kobject for sysfs resources
+>   * @mod:	kernel module associated with the patched object
+> @@ -95,7 +76,6 @@ struct klp_reloc {
+>  struct klp_object {
+>  	/* external */
+>  	const char *name;
+> -	struct klp_reloc *relocs;
+>  	struct klp_func *funcs;
+>  
+>  	/* internal */
+> @@ -123,6 +103,19 @@ struct klp_patch {
+>  	enum klp_state state;
+>  };
+>  
+> +/*
+> + * Livepatch-specific symbols and relocation
+> + * sections are prefixed with a tag:
+> + * .klp.rel. for relocation sections
+> + * .klp.sym. for livepatch symbols
+> + */
+> +#define KLP_TAG_LEN 9
+> +/*
+> + * Livepatch-specific bits for specifying symbol
+> + * positions in the Elf_Sym st_other field
+> + */
+> +#define KLP_SYMPOS(o) (o >> 2) & 0xff
+> +
 
-I have slightly updated the v9 patch series since this posting:
+Can st_value be used instead?  I think we ended up deciding that would
+be better:
 
-- Incorporated a fix to initialize cpu_isolation_mask early if no
-   cpu_isolation= boot argument was given, to avoid crashing on
-   CPUMASK_OFFSTACK platforms.
+  https://lkml.kernel.org/g/20151210213328.GA6553-N0bYjD2NfQ6k4hzjq3hgyGTy53QMssKEsp+A89P3RPuQWHG76I6BsA@public.gmane.org
 
-- Incorporated Mark Rutland's changes to convert arm64
-   assembly to C code instead of using my own version.
+Because:
 
-The updated patch series is available in the branch at
+- st_value is easily viewable in readelf
+- st_other has some arch-specific uses
 
-git://git.kernel.org/pub/scm/linux/kernel/git/cmetcalf/linux-tile.git 
-dataplane
+And another reason not previously discussed:
 
-I will post a v10 with those couple of small changes if I don't hear
-any other feedback, or of course feel free to pull from the git repo.
+- st_other is an unsigned char, which limits sympos to values < 64
 
-On 01/04/2016 02:34 PM, Chris Metcalf wrote:
-> It has been a couple of months since the v8 version of this patch,
-> since various other priorities came up at work.  Since it's been
-> a while I will try to summarize where I think we got to on the
-> various issues that were raised with v8.
->
-> 1. Andy Lutomirski raised the issue of whether it really made sense to
->     only attempt to set up the conditions for task isolation, ask the kernel
->     nicely for it, and then wait until it happened.  He wondered if a
->     SCHED_ISOLATED class might be a helpful abstraction.  Steven Rostedt
->     also suggested having an interface that would force everything else
->     off a core to enable SCHED_ISOLATED to succeed.  Frederick added
->     some concerns about enforcing the test that the process was in a
->     good state to enter task isolation.
->
->     I tried to address the different design philosphies for what I called
->     the original "polite" mode and the reviewers' suggestions for an
->     "aggressive" mode in this email:
->
->     https://lkml.org/lkml/2015/10/26/625
->
->     As I said there, on balance I think the "polite" option is still
->     better.  Obviously folks are welcome to disagree and I'm happy to
->     continue that conversation (or perhaps I convinced everyone).
->
-> 2. Andy didn't like the idea of having a "STRICT" mode which
->     delivered a signal to a process for violating the contract that it
->     will promise to stay out of the kernel.  Gilad Ben Yossef argued that
->     it made sense to have a way for the kernel to enforce the requested
->     correctness guarantee of never being interrupted.  Andy pointed out
->     that we should then really deliver such a signal when the kernel
->     delivers an asynchronous interrupt to the core as well.  In particular
->     this is a concern for the application-error case of a process that
->     calls unmap() on one core while a thread on another core is running
->     STRICT, and thus gets an unexpected TLB flush.
->
->     This patch series addresses that concern by including support for
->     IRQs, IPIs, and similar asynchronous interrupts to also send the
->     STRICT signal to the process.  We don't try to send the signal if
->     we are in an NMI, and instead just force a console backtrace like
->     you would get in task_isolation_debug mode.
->
-> 3. Frederick nack'ed my patch for a boot flag to disable the 1Hz
->     periodic scheduler tick.
->
->     I'm still hoping he's open to changing his mind about that, but in
->     this patch series I have removed that boot flag.
->
-> Various other changes have been introduced since v8:
->
-> https://lkml.kernel.org/r/1445373372-6567-1-git-send-email-cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org
->
-> - Rebased to Linux 4.4-rc5.
->
-> - Since nohz_full and isolnodes have been separated back out again in
->    4.4, I introduced a new task_isolation=MASK boot argument that sets
->    both of them.  The task isolation support now requires that this
->    boot flag have been used; it intentionally doesn't work if you've
->    just enabled nohz_full and isolcpus separately.  I could be
->    convinced that doing it the other way around makes sense, though.
->
-> - I folded the two STRICT mode patches together since there didn't
->    seem to be much value in having the second patch that just enabled
->    having a settable signal.  I also refactored the various routines
->    that report on interrupts/exceptions/etc to make it easier to hook
->    in from the case where we are interrupted asynchronously.
->
-> - For the debug support, I moved most of the functionality into
->    kernel/isolation.c and out of kernel/sched/core.c, leaving only a
->    small hook to handle mapping a remote cpu to a task struct safely.
->    In addition to implementing Andy's suggestion of signalling a task
->    when it is interrupted asynchronously, I also added a ratelimit
->    hook so we won't spam the console if (for example) a timer interrupt
->    runs amok - particularly since when this happens without ratelimit,
->    it can end up self-perpetuating the timer interrupt.
->
-> - I added a task_isolation_debug_cpumask() helper function to check
->    all the cpus in a mask to see if they are being interrupted
->    inappropriately.
->
-> - I made the check for irq_enter() robust to architectures that
->    have already entered user mode context_tracking before calling
->    irq_enter() by testing user_mode(get_irq_regs()) instead of
->    context_tracking_in_user(), and split out the code to a separate
->    inlined function so I could comment it better.
->
-> - For arm64, I added a task_isolation_debug_cpumask() hook for
->    smp_cross_call(), which I had missed in the earlier versions.
->
-> - I generalized the fix for tile to set up a clockevents hook for
->    set_state_oneshot_stopped() to also apply to the arm_arch_timer,
->    which I realized was showing the same problem.  For both cases,
->    this seems to be what Viresh had in mind with commit 8fff52fd509345
->    ("clockevents: Introduce CLOCK_EVT_STATE_ONESHOT_STOPPED state").
->
-> - For tile, I adopted the arm model of doing user_exit() calls in the
->    early assembly code (a new patch in this series).  I also added a
->    missing task_isolation_debug hook for tile's IPI and remote cache
->    flush code.
->
-> Chris Metcalf (12):
->    vmstat: add vmstat_idle function
->    lru_add_drain_all: factor out lru_add_drain_needed
->    task_isolation: add initial support
->    task_isolation: support PR_TASK_ISOLATION_STRICT mode
->    task_isolation: add debug boot flag
->    arch/x86: enable task isolation functionality
->    arch/arm64: adopt prepare_exit_to_usermode() model from x86
->    arch/arm64: enable task isolation functionality
->    arch/tile: adopt prepare_exit_to_usermode() model from x86
->    arch/tile: move user_exit() to early kernel entry sequence
->    arch/tile: enable task isolation functionality
->    arm, tile: turn off timer tick for oneshot_stopped state
->
-> Christoph Lameter (1):
->    vmstat: provide a function to quiet down the diff processing
->
->   Documentation/kernel-parameters.txt  |  16 +++
->   arch/arm64/include/asm/thread_info.h |  18 ++-
->   arch/arm64/kernel/entry.S            |   6 +-
->   arch/arm64/kernel/ptrace.c           |  12 +-
->   arch/arm64/kernel/signal.c           |  35 ++++--
->   arch/arm64/kernel/smp.c              |   2 +
->   arch/arm64/mm/fault.c                |   4 +
->   arch/tile/include/asm/processor.h    |   2 +-
->   arch/tile/include/asm/thread_info.h  |   8 +-
->   arch/tile/kernel/intvec_32.S         |  51 +++-----
->   arch/tile/kernel/intvec_64.S         |  54 +++------
->   arch/tile/kernel/process.c           |  83 +++++++------
->   arch/tile/kernel/ptrace.c            |  19 +--
->   arch/tile/kernel/single_step.c       |   8 +-
->   arch/tile/kernel/smp.c               |  26 ++--
->   arch/tile/kernel/time.c              |   1 +
->   arch/tile/kernel/traps.c             |  13 +-
->   arch/tile/kernel/unaligned.c         |  16 ++-
->   arch/tile/mm/fault.c                 |   6 +-
->   arch/tile/mm/homecache.c             |   2 +
->   arch/x86/entry/common.c              |  10 +-
->   arch/x86/kernel/traps.c              |   2 +
->   arch/x86/mm/fault.c                  |   2 +
->   drivers/clocksource/arm_arch_timer.c |   2 +
->   include/linux/isolation.h            |  80 +++++++++++++
->   include/linux/sched.h                |   3 +
->   include/linux/swap.h                 |   1 +
->   include/linux/vmstat.h               |   4 +
->   include/uapi/linux/prctl.h           |   8 ++
->   init/Kconfig                         |  20 ++++
->   kernel/Makefile                      |   1 +
->   kernel/irq_work.c                    |   5 +-
->   kernel/isolation.c                   | 225 +++++++++++++++++++++++++++++++++++
->   kernel/sched/core.c                  |  18 +++
->   kernel/signal.c                      |   5 +
->   kernel/smp.c                         |   6 +-
->   kernel/softirq.c                     |  33 +++++
->   kernel/sys.c                         |   9 ++
->   mm/swap.c                            |  13 +-
->   mm/vmstat.c                          |  24 ++++
->   40 files changed, 665 insertions(+), 188 deletions(-)
->   create mode 100644 include/linux/isolation.h
->   create mode 100644 kernel/isolation.c
->
+>  #define klp_for_each_object(patch, obj) \
+>  	for (obj = patch->objs; obj->funcs; obj++)
+>  
+> diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
+> index bc2c85c..64536a4 100644
+> --- a/kernel/livepatch/core.c
+> +++ b/kernel/livepatch/core.c
+> @@ -28,6 +28,9 @@
+>  #include <linux/list.h>
+>  #include <linux/kallsyms.h>
+>  #include <linux/livepatch.h>
+> +#include <linux/elf.h>
+> +#include <linux/string.h>
+> +#include <linux/moduleloader.h>
+>  #include <asm/cacheflush.h>
+>  
+>  /**
+> @@ -204,74 +207,70 @@ static int klp_find_object_symbol(const char *objname, const char *name,
+>  	return -EINVAL;
+>  }
+>  
+> -/*
+> - * external symbols are located outside the parent object (where the parent
+> - * object is either vmlinux or the kmod being patched).
+> - */
+> -static int klp_find_external_symbol(struct module *pmod, const char *name,
+> -				    unsigned long *addr)
+> +static int klp_resolve_symbols(Elf_Shdr *relsec, struct module *pmod)
+>  {
+> -	const struct kernel_symbol *sym;
+> +	int i, len, ret = 0;
+> +	Elf_Rela *relas;
+> +	Elf_Sym *sym;
+> +	char *symname, *sym_objname;
+>  
+> -	/* first, check if it's an exported symbol */
+> -	preempt_disable();
+> -	sym = find_symbol(name, NULL, NULL, true, true);
+> -	if (sym) {
+> -		*addr = sym->value;
+> -		preempt_enable();
+> -		return 0;
+> +	relas = (Elf_Rela *) relsec->sh_addr;
+> +	/* For each rela in this .klp.rel. section */
+> +	for (i = 0; i < relsec->sh_size / sizeof(Elf_Rela); i++) {
+> +		sym = pmod->core_symtab + ELF_R_SYM(relas[i].r_info);
+> +		symname = pmod->core_strtab + sym->st_name;
+> +
+> +		len = strcspn(symname + KLP_TAG_LEN, ".");
+
+It would be nice to have a comment here similar to the below one:
+
+		/* .klp.sym.[objname].symbol_name */
+
+> +		sym_objname = strncmp(symname + KLP_TAG_LEN, "vmlinux", len) ?
+
+I think there's a bug here in the (unlikely) case where the module's
+name is a subset of "vmlinux", e.g.  "vm".
+
+> +			kstrndup(symname + KLP_TAG_LEN, len, GFP_KERNEL) : NULL;
+> +		/* .klp.sym.objname.[symbol_name] */
+> +		symname += KLP_TAG_LEN + len + 1;
+> +
+> +		ret = klp_find_object_symbol(sym_objname, symname,
+> +					     KLP_SYMPOS(sym->st_other),
+> +					     (unsigned long *) &sym->st_value);
+> +		kfree(sym_objname);
+> +		if (ret)
+> +			return ret;
+>  	}
+> -	preempt_enable();
+>  
+> -	/*
+> -	 * Check if it's in another .o within the patch module. This also
+> -	 * checks that the external symbol is unique.
+> -	 */
+> -	return klp_find_object_symbol(pmod->name, name, 0, addr);
+> +	return ret;
+>  }
+>  
+>  static int klp_write_object_relocations(struct module *pmod,
+>  					struct klp_object *obj)
+>  {
+> -	int ret = 0;
+> -	unsigned long val;
+> -	struct klp_reloc *reloc;
+> +	int i, len, ret = 0;
+> +	char *secname;
+> +	const char *objname;
+>  
+>  	if (WARN_ON(!klp_is_object_loaded(obj)))
+>  		return -EINVAL;
+>  
+> -	if (WARN_ON(!obj->relocs))
+> -		return -EINVAL;
+> +	objname = klp_is_module(obj) ? obj->name : "vmlinux";
+>  
+>  	module_disable_ro(pmod);
+> +	/* For each klp rela section for this object */
+> +	for (i = 1; i < pmod->info->hdr->e_shnum; i++) {
+> +		if (!(pmod->info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH))
+> +			continue;
+> +
+> +		secname = pmod->info->secstrings + pmod->info->sechdrs[i].sh_name;
+> +		/* .klp.rel.[objname].section_name */
+> +		len = strcspn(secname + KLP_TAG_LEN, ".");
+> +
+> +		if (strncmp(objname, secname + KLP_TAG_LEN, len))
+> +			continue;
+
+Same problem here.  For ".klp.rel.foo.sym", an objname of "foobar" will
+give a false match.
+
+> -	for (reloc = obj->relocs; reloc->name; reloc++) {
+> -		/* discover the address of the referenced symbol */
+> -		if (reloc->external) {
+> -			if (reloc->sympos > 0) {
+> -				pr_err("non-zero sympos for external reloc symbol '%s' is not supported\n",
+> -				       reloc->name);
+> -				ret = -EINVAL;
+> -				goto out;
+> -			}
+> -			ret = klp_find_external_symbol(pmod, reloc->name, &val);
+> -		} else
+> -			ret = klp_find_object_symbol(obj->name,
+> -						     reloc->name,
+> -						     reloc->sympos,
+> -						     &val);
+> +		ret = klp_resolve_symbols(pmod->info->sechdrs + i, pmod);
+>  		if (ret)
+>  			goto out;
+>  
+> -		ret = klp_write_module_reloc(pmod, reloc->type, reloc->loc,
+> -					     val + reloc->addend);
+> -		if (ret) {
+> -			pr_err("relocation failed for symbol '%s' at 0x%016lx (%d)\n",
+> -			       reloc->name, val, ret);
+> +		ret = apply_relocate_add(pmod->info->sechdrs, pmod->core_strtab,
+> +					 pmod->info->index.sym, i, pmod);
+> +		if (ret)
+>  			goto out;
+> -		}
+>  	}
+> -
+>  out:
+>  	module_enable_ro(pmod);
+>  	return ret;
+> @@ -703,11 +702,9 @@ static int klp_init_object_loaded(struct klp_patch *patch,
+>  	struct klp_func *func;
+>  	int ret;
+>  
+> -	if (obj->relocs) {
+> -		ret = klp_write_object_relocations(patch->mod, obj);
+> -		if (ret)
+> -			return ret;
+> -	}
+> +	ret = klp_write_object_relocations(patch->mod, obj);
+> +	if (ret)
+> +		return ret;
+>  
+>  	klp_for_each_func(obj, func) {
+>  		ret = klp_find_object_symbol(obj->name, func->old_name,
+> -- 
+> 2.4.3
+> 
 
 -- 
-Chris Metcalf, EZChip Semiconductor
-http://www.ezchip.com
+Josh
