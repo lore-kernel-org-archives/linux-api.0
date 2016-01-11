@@ -1,51 +1,83 @@
-From: Konstantin Khlebnikov <koct9i@gmail.com>
-Subject: Re: [PATCH v6] fs: clear file privilege bits when mmap writing
-Date: Mon, 11 Jan 2016 01:30:48 +0300
-Message-ID: <CALYGNiMRhPFZACm6cFVQjUdef6bSSwC=ZZ-=N3fEzDjDrW2_ew@mail.gmail.com>
-References: <20160108232727.GA23490@www.outflux.net>
-	<CALYGNiOUL7ewU3+5Zoi_9qofYWwF0vpqMy=A0wS=jUFZ11haCg@mail.gmail.com>
-	<20160110193044.GG17997@ZenIV.linux.org.uk>
-	<CALYGNiOxyXX2dpiPoGQUz0CDsvZtH57CO7gE2rAmTQWLigeL1w@mail.gmail.com>
-	<20160110211051.GH17997@ZenIV.linux.org.uk>
+From: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>
+Subject: Re: [RFC PATCH v3 2/6] module: preserve Elf information for livepatch modules
+Date: Mon, 11 Jan 2016 11:55:04 +1030
+Message-ID: <87oacshpqn.fsf@rustcorp.com.au>
+References: <1452281304-28618-1-git-send-email-jeyu@redhat.com> <1452281304-28618-3-git-send-email-jeyu@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20160110211051.GH17997@ZenIV.linux.org.uk>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Jan Kara <jack@suse.cz>, yalin wang <yalin.wang2010@gmail.com>, Willy Tarreau <w@1wt.eu>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-arch@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1452281304-28618-3-git-send-email-jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 11, 2016 at 12:10 AM, Al Viro <viro@zeniv.linux.org.uk> wrote:
-> On Sun, Jan 10, 2016 at 10:51:52PM +0300, Konstantin Khlebnikov wrote:
->> On Sun, Jan 10, 2016 at 10:30 PM, Al Viro <viro@zeniv.linux.org.uk> wrote:
->> > On Sun, Jan 10, 2016 at 06:48:32PM +0300, Konstantin Khlebnikov wrote:
->> >> I think this should be done in mmap/mprotect. Code in sys_mmap is trivial.
->> >>
->> >> In sys_mprotect you can check file_needs_remove_privs() and VM_SHARED
->> >> under mmap_sem, then if needed grab reference to struct file from vma and
->> >> clear suid after unlocking mmap_sem.
->> >
->> > Which vma?  mprotect(2) can cover more than one mapping...  You'd have to
->> > play interesting games to collect the set of affected struct file; it
->> > _might_ be doable (e.g. by using task_work_add() to have the damn thing
->> > trigger on the way to userland), but it would require some care to avoid
->> > hitting the same file more than once - it might, after all, be mmapped
->> > in more than one process, so racing mprotect() would need to be taken
->> > into account.  Hell knows - might be doable, but I'm not sure it'll be
->> > any prettier.
->>
->> Ok, I didn't thought about that. mprotect don't have to be atomic for whole
->> range -- we could drop mmap_sem, clear suid from one file and restart it
->> for next vma and so on.
->
-> Won't be fun.  Even aside of the user-visible behaviour changes, you'll have
-> a lot of new corner cases, starting with the fact that you can't hold onto
-> vma - virtual address is the best you can do and vma you find after regaining
-> mmap_sem might start at lower address than one where you are restarting;
-> getting the splitting-related logics right will be interesting, to put it
-> mildly.
+Hi Jessica,
 
-I don't see any problems here -- in this case mprotect virtually turns
-into series of
-indendent mprotect calls. Yes, we have to find vma again. Not a big deal.
+        Nice patch series.  Minor issues below, but they're really
+just nits which can be patched afterwards if you're getting sick of
+rebasing :)
+
+> +#ifdef CONFIG_LIVEPATCH
+> +/*
+> + * copy_module_elf - preserve Elf information about a module
+> + *
+> + * Copy relevant Elf information from the load_info struct.
+> + * Note: not all fields from the original load_info are
+> + * copied into mod->info.
+
+This makes me nervous, to have a struct which is half-initialized.
+
+Better would be to have a separate type for this, eg:
+
+struct livepatch_modinfo {
+        Elf_Ehdr hdr;
+        Elf_Shdr *sechdrs;
+        char *secstrings;
+        /* FIXME: Which of these do you need? */
+        struct {
+        	unsigned int sym, str, mod, vers, info, pcpu;
+        } index;
+};
+
+This also avoids an extra allocation as hdr is no longer a ptr.
+
+> +	/*
+> +	 * Update symtab's sh_addr to point to a valid
+> +	 * symbol table, as the temporary symtab in module
+> +	 * init memory will be freed
+> +	 */
+> +	mod->info->sechdrs[mod->info->index.sym].sh_addr = (unsigned long)mod->core_symtab;
+
+This comment is a bit misleading: it's actually pointing into the
+temporary module copy, which will be discarded.  The init section is
+slightly different...
+
+> +#ifdef CONFIG_LIVEPATCH
+> +static int check_livepatch_modinfo(struct module *mod, struct load_info *info)
+> +{
+> +	mod->klp = get_modinfo(info, "livepatch") ? true : false;
+> +
+> +	return 0;
+> +}
+> +#else
+> +static int check_livepatch_modinfo(struct module *mod, struct load_info *info)
+> +{
+> +	if (get_modinfo(info, "livepatch"))
+> +		return -EINVAL;
+> +
+> +	return 0;
+> +}
+> +#endif
+
+The term "check" implies no side-effects; I'd usually call this
+int find_livepatch_modinfo(), and make sure you use the error code in
+the caller:
+
+> +	err = check_livepatch_modinfo(mod, info);
+> +	if (err)
+> +		return -ENOEXEC;
+> +
+
+Thanks,
+Rusty.
