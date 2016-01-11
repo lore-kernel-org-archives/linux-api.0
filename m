@@ -1,71 +1,100 @@
-From: "Seymour, Shane M" <shane.seymour-ZPxbGqLxI0U@public.gmane.org>
-Subject: RE: [RFC PATCH 0/3] Implement getcpu_cache system call
-Date: Mon, 11 Jan 2016 22:38:28 +0000
-Message-ID: <DDB9C85B850785449757F9914A034FCB4450ACF7@G9W0766.americas.hpqcorp.net>
-References: <1451977320-4886-1-git-send-email-mathieu.desnoyers@efficios.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH v6] fs: clear file privilege bits when mmap writing
+Date: Mon, 11 Jan 2016 14:45:57 -0800
+Message-ID: <CAGXu5j+UV39Q5reWOWBrtxuP6cLpweEF5e-KBV_K4moszCC24g@mail.gmail.com>
+References: <20160108232727.GA23490@www.outflux.net>
+	<CALYGNiOUL7ewU3+5Zoi_9qofYWwF0vpqMy=A0wS=jUFZ11haCg@mail.gmail.com>
+	<CAGXu5jJaoZC7WL=MndBr915XhEpn9n3HOOhB-ue1xqyKFWxxzQ@mail.gmail.com>
+	<CALYGNiPC224w7-xeo9NOX9nrHH84o+_KXBtKWtd4TPXQyQMq2w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1451977320-4886-1-git-send-email-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <CALYGNiPC224w7-xeo9NOX9nrHH84o+_KXBtKWtd4TPXQyQMq2w@mail.gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Konstantin Khlebnikov <koct9i@gmail.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@amacapital.net>, Jan Kara <jack@suse.cz>, yalin wang <yalin.wang2010@gmail.com>, Willy Tarreau <w@1wt.eu>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>
 List-Id: linux-api@vger.kernel.org
 
-SGkgTWF0aGlldSwNCg0KSSBoYXZlIHNvbWUgY29uY2VybnMgYW5kIHN1Z2dlc3Rpb25zIGZvciB5
-b3UgYWJvdXQgdGhpcy4NCg0KV2hhdCdzIHRvIHN0b3Agc29tZW9uZSBpbiB1c2VyIHNwYWNlIGZy
-b20gcmVxdWVzdGluZyBhbiBhcmJpdHJhcmlseSBsYXJnZSBudW1iZXIgb2YgQ1BVICMgY2FjaGUg
-bG9jYXRpb25zIHRoYXQgdGhlIGtlcm5lbCBuZWVkcyB0byBhbGxvY2F0ZSBtZW1vcnkgdG8gdHJh
-Y2sgYW5kIGVhY2ggdGltZSB0aGUgdGFzayBtaWdyYXRlcyB0byBhIG5ldyBDUFUgaXQgbmVlZHMg
-dG8gdXBkYXRlIHRoZW0gYWxsPyBDb3VsZCB5b3UgdXNlIGl0IHRvIGRyYW1hdGljYWxseSBzbG93
-IGRvd24gYSBzeXN0ZW0vdGFzayBzd2l0Y2hpbmc/IFNob3VsZCB0aGVyZSBiZSBhIHVsaW1pdCB0
-eXBlIHZhbHVlIG9yIGEgc3lzY3RsIHNldHRpbmcgdG8gbGltaXQgdGhlIG51bWJlciB0aGF0IHlv
-dSdyZSBhbGxvd2VkIHRvIHJlZ2lzdGVyIHBlci10YXNrPw0KDQpJZiB5b3UgY2FuIGp1c3QgcmVn
-aXN0ZXIgY29uc2VjdXRpdmUgYWRkcmVzc2VzIGVhY2ggNCBieXRlcyBhcGFydCB0aGUgc2l6ZSBv
-ZiB0aGUgc3RydWN0dXJlIHJlcXVpcmVkIHRvIGtlZXAgdHJhY2sgb2YgaXQgaW4gdGhlIGtlcm5l
-bCBsb29rcyB0byBiZSAyMCBvciAyNCBieXRlcyBsb25nIGRlcGVuZGluZyBvbiBrZXJuZWwgYml0
-bmVzcyAodXNpbmcga21hbGxvYyBpdCBzaG91bGQgYmUgMzIgYnl0ZXMgYWxsb2NhdGVkIGVpdGhl
-ciB3YXkpIHNvIGlmIHlvdSBkbyBzb21ldGhpbmcgbGlrZSB0aWUgdXAgMUdpQiBvZiBtZW1vcnkg
-aW4gdXNlciBzcGFjZSByZWdpc3RlcmVkIHdpdGggQ1BVIGNhY2hlIGxvY2F0aW9ucyBpdCB3aWxs
-IHRpZSB1cCA+OEdpQiBvZiBtZW1vcnkgaW4gdGhlIGtlcm5lbCBhbmQgdGhlcmUgd2lsbCBiZSBh
-IGh1Z2UgbGlua2VkIGxpc3QgdGhhdCB3aWxsIHRha2Ugc2lnbmlmaWNhbnQgYW1vdW50cyBvZiB0
-aW1lIHRvIHRyYXZlcnNlLiBZb3UgY291bGQgdXNlIGl0IGFzIGEgbG9jYWwgZGVuaWFsIG9mIHNl
-cnZpY2UgYXR0YWNrIHRvIHRyeSBhbmQgc29hayB1cCBtZW1vcnkgYW5kIGNhdXNlIGEga2VybmVs
-IE9PTSBiZWNhdXNlIHRoZSBrZXJuZWwgbmVlZHMgbW9yZSBtZW1vcnkgdG8ga2VlcCB0cmFjayBv
-ZiB0aGUgcmVxdWVzdCBjb21wYXJlZCB0byB0aGUgc2l6ZSBvZiB0aGUgbWVtb3J5IHVzZWQgYnkg
-dXNlciBzcGFjZSB0byBjcmVhdGUgaXQuIFRoZXJlIGRvZXNuJ3QgY3VycmVudGx5IGFwcGVhciB0
-byBiZSBhbnkgdXBwZXIgYm91bmRzIG9uIHRoZSBudW1iZXIgdGhhdCBjYW4gYmUgcmVnaXN0ZXJl
-ZC4NCg0KSW4gdGVybXMgb2YgdHJhY2tpbmcgd2hhdCBpdCdzIGRvaW5nIHdvdWxkIHlvdSBjb25z
-aWRlciBzb21lIHN5c2ZzIGF0dHJpYnV0ZSBmaWxlcyAob3Igc29tZXRoaW5nIGluIGRlYnVnZnMp
-IHRoYXQgdHJhY2tlZCAodGhlc2Ugd291bGQgYWxsIGJlIGluIHRoZSBhZGQgcGF0aCBzbyBpdCBz
-aG91bGRuJ3QgYmUgcGVyZm9ybWFuY2Ugc2Vuc2l0aXZlKToNCg0KMSkgVGhlIGxhcmdlc3QgbnVt
-YmVyIG9mIGVudHJpZXMgc29tZW9uZSBoYXMgY3JlYXRlZCBpbiB0aGUgbGlzdCBpbiBhbnkgdGFz
-aw0KMikgVGhlIG51bWJlciBvZiB0aW1lcyAoYXNzdW1pbmcgeW91IGltcGxlbWVudCBhbiB1cHBl
-ciBib3VuZCBvbiB0aGUgbnVtYmVyIGFsbG93ZWQpIHRoZSB1cHBlciBib3VuZCBpcyBiZWluZyBo
-aXQgKHRvIGFsbG93IHNvbWVvbmUgdG8gbW9uaXRvciBmb3IgaXNzdWVzIHdoZXJlIHRoZSB1cHBl
-ciBib3VuZCBpcyBiZWluZyBoaXQpDQoNCkFzc3VtaW5nIHRoYXQgc29tZXRoaW5nIChlLmcuIGds
-aWJjKSBpcyB3aWxsaW5nIHRvIHJlZ2lzdGVyIGFuZCBtYWtlIGFuIGVudHJ5IGF2YWlsYWJsZSBm
-b3IgdGhlIGxpZmUgb2YgdGhlIHRhc2sgY29uc2lkZXIgYWxsb3dpbmcgb25lIGZsYWcsIGZvciBl
-eGFtcGxlLCBHRVRDUFVfQ0FDSEVfUEVSU0lTVEVOVCB3aXRoIEdFVENQVV9DQUNIRV9DTURfUkVH
-SVNURVIgYW5kIGhhdmUgYSBuZXcgY29tbWFuZCBHRVRDUFVfQ0FDSEVfQ01EX0dFVF8gUEVSU0lT
-VEVOVCB0byBhbGxvdyBzb21lb25lIHRvIGFzayBmb3IgdGhlIHVzZXIgc3BhY2UgYWRkcmVzcyBv
-ZiBhbiBlbnRyeSB0aGF0IHNvbWV0aGluZyBoYXMgZ3VhcmFudGVlZCB3aWxsIGJlIHRoZXJlIHVu
-dGlsIHRoZSB0YXNrIGVuZHMuIElmIG5vbmUgZXhpc3QgdGhleSBjYW4gZmFsbCBiYWNrIGFuZCBh
-bGxvY2F0ZSBhIG5ldyBvbmUgLSBpdCBhbGxvd3MgZm9yIGJldHRlciByZXVzZSBvZiBhbiBleGlz
-dGluZyByZXNvdXJjZSBidXQgbG9nIGEgd2FybmluZyBpZiB5b3UncmUgZm9yY2VkIHRvIHJlbW92
-ZSBhIHBlcnNpc3RlbnQgZW50cnkgb3Igc29tZW9uZSBhdHRlbXB0cyB0byB1bnJlZ2lzdGVyIGl0
-ICh3aGljaCBzaG91bGQgYWx3YXlzIGZhaWwpIHNpbmNlIHNvbWVvbmUgaW4gdXNlciBzcGFjZSB3
-aWxsIGhhdmUgYnJva2VuIHRoZWlyIHByb21pc2UgdGhhdCBpdCB3aWxsIGFsd2F5cyBiZSB0aGVy
-ZSB1bnRpbCB0aGUgdGFzayBlbmRzICh0aGF0IG1lYW5zIHBlcnNpc3RlbnQgb25lcyBzaG91bGQg
-YmUgbGVmdCB0byBiZSB0b3JuIGRvd24gYnkgdGhlIGtlcm5lbCBub3QgdW5yZWdpc3RlcmVkIGZy
-b20gdXNlciBzcGFjZSkuIElmIHlvdSBkbyB0aGlzIHlvdSBtaWdodCBuZWVkIHRvIG9wdGltaXpl
-IHRoZSBmaW5kIHByb2Nlc3Mgc28gaXQncyBtb3JlIGxpa2VseSB0aGUgZmlyc3QgcGVyc2lzdGVu
-dCBvbmUgd2lsbCBiZSB0aGUgZmlyc3Qgb25lIGZvdW5kIGlmIHlvdSB0aGluayBzb21lb25lIGlz
-IG1vcmUgbGlrZWx5IHRvIHRha2UgdGhlIGFwcHJvYWNoIG9mIGFza2luZyBmb3IgdGhhdCBmaXJz
-dCBhbmQgZmFsbGluZyBiYWNrIHRvIGNyZWF0aW5nIGEgbmV3IG9uZSBpZiB0aGVyZSBpc24ndCBh
-bHJlYWR5IG9uZSBwcmVzZW50LiBIYXZpbmcgdGhpcyB3aWxsIGFsc28gdGVuZCB0byBsaW1pdCB0
-aGUgbnVtYmVyIG9mIHRoZXNlIHRoYXQgYW55b25lIHdpbGwgbmVlZCB0byBjcmVhdGUgaWYgbW9z
-dCBsaWJyYXJpZXMgYXNrIGZvciBhIHBlcnNpc3RlbnQgZW50cnkgZmlyc3QuDQoNClRoYW5rcw0K
-U2hhbmUNCg==
+On Mon, Jan 11, 2016 at 2:39 PM, Konstantin Khlebnikov <koct9i@gmail.com> wrote:
+> On Mon, Jan 11, 2016 at 10:38 PM, Kees Cook <keescook@chromium.org> wrote:
+>> On Sun, Jan 10, 2016 at 7:48 AM, Konstantin Khlebnikov <koct9i@gmail.com> wrote:
+>>> On Sat, Jan 9, 2016 at 2:27 AM, Kees Cook <keescook@chromium.org> wrote:
+>>>> Normally, when a user can modify a file that has setuid or setgid bits,
+>>>> those bits are cleared when they are not the file owner or a member
+>>>> of the group. This is enforced when using write and truncate but not
+>>>> when writing to a shared mmap on the file. This could allow the file
+>>>> writer to gain privileges by changing a binary without losing the
+>>>> setuid/setgid/caps bits.
+>>>>
+>>>> Changing the bits requires holding inode->i_mutex, so it cannot be done
+>>>> during the page fault (due to mmap_sem being held during the fault). We
+>>>> could do this during vm_mmap_pgoff, but that would need coverage in
+>>>> mprotect as well, but to check for MAP_SHARED, we'd need to hold mmap_sem
+>>>> again. We could clear at open() time, but it's possible things are
+>>>> accidentally opening with O_RDWR and only reading. Better to clear on
+>>>> close and error failures (i.e. an improvement over now, which is not
+>>>> clearing at all).
+>>>
+>>> I think this should be done in mmap/mprotect. Code in sys_mmap is trivial.
+>>>
+>>> In sys_mprotect you can check file_needs_remove_privs() and VM_SHARED
+>>> under mmap_sem, then if needed grab reference to struct file from vma and
+>>> clear suid after unlocking mmap_sem.
+>>>
+>>> I haven't seen previous iterations, probably this approach has known flaws.
+>>
+>> mmap_sem is still needed in mprotect (to find and hold the vma), so
+>> it's not possible. I'd love to be proven wrong, but I didn't see a
+>> way.
+>
+> something like this
+>
+> @@ -375,6 +376,7 @@ SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
+>
+>         vm_flags = calc_vm_prot_bits(prot);
+>
+> +restart:
+>         down_write(&current->mm->mmap_sem);
+>
+>         vma = find_vma(current->mm, start);
+> @@ -416,6 +418,21 @@ SYSCALL_DEFINE3(mprotect, unsigned long, start,
+> size_t, len,
+>                         goto out;
+>                 }
+>
+> +               if ((newflags & VM_WRITE) && !(vma->vm_flags & VM_WRITE) &&
+> +                   vma->vm_file && file_needs_remove_privs(vma->vm_file)) {
+> +                       struct file *file = get_file(vma->vm_file);
+> +
+> +                       start = vma->vm_start;
+> +                       up_write(&current->mm->mmap_sem);
+> +                       mutex_lock(&file_inode(file)->i_mutex);
+> +                       error = file_remove_privs(file);
+> +                       mutex_unlock(&file_inode(file)->i_mutex);
+> +                       fput(file);
+> +                       if (error)
+> +                               return error;
+> +                       goto restart;
+> +               }
+> +
+
+Is this safe against the things Al mentioned? I still don't like the
+mmap/mprotect approach because it makes the change before anything was
+actually written...
+
+-Kees
+
+>
+>
+>>
+>> -Kees
+>>
+>> --
+>> Kees Cook
+>> Chrome OS & Brillo Security
+
+
+
+-- 
+Kees Cook
+Chrome OS & Brillo Security
