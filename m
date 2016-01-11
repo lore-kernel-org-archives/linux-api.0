@@ -1,27 +1,88 @@
-From: Josh Triplett <josh@joshtriplett.org>
-Subject: Re: [RFC PATCH 0/3] Implement getcpu_cache system call
-Date: Mon, 11 Jan 2016 15:03:06 -0800
-Message-ID: <20160111230306.GC28717@cloud>
+From: "Seymour, Shane M" <shane.seymour-ZPxbGqLxI0U@public.gmane.org>
+Subject: RE: [RFC PATCH 0/3] Implement getcpu_cache system call
+Date: Mon, 11 Jan 2016 23:16:10 +0000
+Message-ID: <DDB9C85B850785449757F9914A034FCB4450ADD0@G9W0766.americas.hpqcorp.net>
 References: <1451977320-4886-1-git-send-email-mathieu.desnoyers@efficios.com>
  <DDB9C85B850785449757F9914A034FCB4450ACF7@G9W0766.americas.hpqcorp.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <DDB9C85B850785449757F9914A034FCB4450ACF7@G9W0766.americas.hpqcorp.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Seymour, Shane M" <shane.seymour@hpe.com>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Thomas Gleixner <tglx@linutronix.de>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <DDB9C85B850785449757F9914A034FCB4450ACF7-4I1V4pQFGigSZAcGdq5asR6epYMZPwEe5NbjCUgZEJk@public.gmane.org>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 11, 2016 at 10:38:28PM +0000, Seymour, Shane M wrote:
-> I have some concerns and suggestions for you about this.
-> 
-> What's to stop someone in user space from requesting an arbitrarily large number of CPU # cache locations that the kernel needs to allocate memory to track and each time the task migrates to a new CPU it needs to update them all? Could you use it to dramatically slow down a system/task switching? Should there be a ulimit type value or a sysctl setting to limit the number that you're allowed to register per-task?
-
-The documented behavior of the syscall allows only one location per
-thread, so the kernel can track that one and only address rather easily
-in the task_struct.  Allowing dynamic allocation definitely doesn't seem
-like a good idea.
-
-- Josh Triplett
+SWdub3JlIG15IGVtYWlsIEknZCBvdmVybG9va2VkIG9uZSBiaXQgb2YgY29kZSBtaXN1bmRlcnN0
+b29kIGhvdyBpdCB3b3JrZWQuDQoNCi0tLS0tT3JpZ2luYWwgTWVzc2FnZS0tLS0tDQpGcm9tOiBs
+aW51eC1hcGktb3duZXJAdmdlci5rZXJuZWwub3JnIFttYWlsdG86bGludXgtYXBpLW93bmVyQHZn
+ZXIua2VybmVsLm9yZ10gT24gQmVoYWxmIE9mIFNleW1vdXIsIFNoYW5lIE0NClNlbnQ6IFR1ZXNk
+YXksIEphbnVhcnkgMTIsIDIwMTYgOTozOCBBTQ0KVG86IE1hdGhpZXUgRGVzbm95ZXJzOyBUaG9t
+YXMgR2xlaXhuZXI7IFBhdWwgVHVybmVyOyBBbmRyZXcgSHVudGVyOyBQZXRlciBaaWpsc3RyYQ0K
+Q2M6IGxpbnV4LWtlcm5lbEB2Z2VyLmtlcm5lbC5vcmc7IGxpbnV4LWFwaUB2Z2VyLmtlcm5lbC5v
+cmc7IEFuZHkgTHV0b21pcnNraTsgQW5kaSBLbGVlbjsgRGF2ZSBXYXRzb247IENocmlzIExhbWV0
+ZXI7IEluZ28gTW9sbmFyOyBCZW4gTWF1cmVyOyBTdGV2ZW4gUm9zdGVkdDsgUGF1bCBFLiBNY0tl
+bm5leTsgSm9zaCBUcmlwbGV0dDsgTGludXMgVG9ydmFsZHM7IEFuZHJldyBNb3J0b247IFJ1c3Nl
+bGwgS2luZzsgQ2F0YWxpbiBNYXJpbmFzOyBXaWxsIERlYWNvbjsgTWljaGFlbCBLZXJyaXNrDQpT
+dWJqZWN0OiBSRTogW1JGQyBQQVRDSCAwLzNdIEltcGxlbWVudCBnZXRjcHVfY2FjaGUgc3lzdGVt
+IGNhbGwNCg0KSGkgTWF0aGlldSwNCg0KSSBoYXZlIHNvbWUgY29uY2VybnMgYW5kIHN1Z2dlc3Rp
+b25zIGZvciB5b3UgYWJvdXQgdGhpcy4NCg0KV2hhdCdzIHRvIHN0b3Agc29tZW9uZSBpbiB1c2Vy
+IHNwYWNlIGZyb20gcmVxdWVzdGluZyBhbiBhcmJpdHJhcmlseSBsYXJnZSBudW1iZXIgb2YgQ1BV
+ICMgY2FjaGUgbG9jYXRpb25zIHRoYXQgdGhlIGtlcm5lbCBuZWVkcyB0byBhbGxvY2F0ZSBtZW1v
+cnkgdG8gdHJhY2sgYW5kIGVhY2ggdGltZSB0aGUgdGFzayBtaWdyYXRlcyB0byBhIG5ldyBDUFUg
+aXQgbmVlZHMgdG8gdXBkYXRlIHRoZW0gYWxsPyBDb3VsZCB5b3UgdXNlIGl0IHRvIGRyYW1hdGlj
+YWxseSBzbG93IGRvd24gYSBzeXN0ZW0vdGFzayBzd2l0Y2hpbmc/IFNob3VsZCB0aGVyZSBiZSBh
+IHVsaW1pdCB0eXBlIHZhbHVlIG9yIGEgc3lzY3RsIHNldHRpbmcgdG8gbGltaXQgdGhlIG51bWJl
+ciB0aGF0IHlvdSdyZSBhbGxvd2VkIHRvIHJlZ2lzdGVyIHBlci10YXNrPw0KDQpJZiB5b3UgY2Fu
+IGp1c3QgcmVnaXN0ZXIgY29uc2VjdXRpdmUgYWRkcmVzc2VzIGVhY2ggNCBieXRlcyBhcGFydCB0
+aGUgc2l6ZSBvZiB0aGUgc3RydWN0dXJlIHJlcXVpcmVkIHRvIGtlZXAgdHJhY2sgb2YgaXQgaW4g
+dGhlIGtlcm5lbCBsb29rcyB0byBiZSAyMCBvciAyNCBieXRlcyBsb25nIGRlcGVuZGluZyBvbiBr
+ZXJuZWwgYml0bmVzcyAodXNpbmcga21hbGxvYyBpdCBzaG91bGQgYmUgMzIgYnl0ZXMgYWxsb2Nh
+dGVkIGVpdGhlciB3YXkpIHNvIGlmIHlvdSBkbyBzb21ldGhpbmcgbGlrZSB0aWUgdXAgMUdpQiBv
+ZiBtZW1vcnkgaW4gdXNlciBzcGFjZSByZWdpc3RlcmVkIHdpdGggQ1BVIGNhY2hlIGxvY2F0aW9u
+cyBpdCB3aWxsIHRpZSB1cCA+OEdpQiBvZiBtZW1vcnkgaW4gdGhlIGtlcm5lbCBhbmQgdGhlcmUg
+d2lsbCBiZSBhIGh1Z2UgbGlua2VkIGxpc3QgdGhhdCB3aWxsIHRha2Ugc2lnbmlmaWNhbnQgYW1v
+dW50cyBvZiB0aW1lIHRvIHRyYXZlcnNlLiBZb3UgY291bGQgdXNlIGl0IGFzIGEgbG9jYWwgZGVu
+aWFsIG9mIHNlcnZpY2UgYXR0YWNrIHRvIHRyeSBhbmQgc29hayB1cCBtZW1vcnkgYW5kIGNhdXNl
+IGEga2VybmVsIE9PTSBiZWNhdXNlIHRoZSBrZXJuZWwgbmVlZHMgbW9yZSBtZW1vcnkgdG8ga2Vl
+cCB0cmFjayBvZiB0aGUgcmVxdWVzdCBjb21wYXJlZCB0byB0aGUgc2l6ZSBvZiB0aGUgbWVtb3J5
+IHVzZWQgYnkgdXNlciBzcGFjZSB0byBjcmVhdGUgaXQuIFRoZXJlIGRvZXNuJ3QgY3VycmVudGx5
+IGFwcGVhciB0byBiZSBhbnkgdXBwZXIgYm91bmRzIG9uIHRoZSBudW1iZXIgdGhhdCBjYW4gYmUg
+cmVnaXN0ZXJlZC4NCg0KSW4gdGVybXMgb2YgdHJhY2tpbmcgd2hhdCBpdCdzIGRvaW5nIHdvdWxk
+IHlvdSBjb25zaWRlciBzb21lIHN5c2ZzIGF0dHJpYnV0ZSBmaWxlcyAob3Igc29tZXRoaW5nIGlu
+IGRlYnVnZnMpIHRoYXQgdHJhY2tlZCAodGhlc2Ugd291bGQgYWxsIGJlIGluIHRoZSBhZGQgcGF0
+aCBzbyBpdCBzaG91bGRuJ3QgYmUgcGVyZm9ybWFuY2Ugc2Vuc2l0aXZlKToNCg0KMSkgVGhlIGxh
+cmdlc3QgbnVtYmVyIG9mIGVudHJpZXMgc29tZW9uZSBoYXMgY3JlYXRlZCBpbiB0aGUgbGlzdCBp
+biBhbnkgdGFzaw0KMikgVGhlIG51bWJlciBvZiB0aW1lcyAoYXNzdW1pbmcgeW91IGltcGxlbWVu
+dCBhbiB1cHBlciBib3VuZCBvbiB0aGUgbnVtYmVyIGFsbG93ZWQpIHRoZSB1cHBlciBib3VuZCBp
+cyBiZWluZyBoaXQgKHRvIGFsbG93IHNvbWVvbmUgdG8gbW9uaXRvciBmb3IgaXNzdWVzIHdoZXJl
+IHRoZSB1cHBlciBib3VuZCBpcyBiZWluZyBoaXQpDQoNCkFzc3VtaW5nIHRoYXQgc29tZXRoaW5n
+IChlLmcuIGdsaWJjKSBpcyB3aWxsaW5nIHRvIHJlZ2lzdGVyIGFuZCBtYWtlIGFuIGVudHJ5IGF2
+YWlsYWJsZSBmb3IgdGhlIGxpZmUgb2YgdGhlIHRhc2sgY29uc2lkZXIgYWxsb3dpbmcgb25lIGZs
+YWcsIGZvciBleGFtcGxlLCBHRVRDUFVfQ0FDSEVfUEVSU0lTVEVOVCB3aXRoIEdFVENQVV9DQUNI
+RV9DTURfUkVHSVNURVIgYW5kIGhhdmUgYSBuZXcgY29tbWFuZCBHRVRDUFVfQ0FDSEVfQ01EX0dF
+VF8gUEVSU0lTVEVOVCB0byBhbGxvdyBzb21lb25lIHRvIGFzayBmb3IgdGhlIHVzZXIgc3BhY2Ug
+YWRkcmVzcyBvZiBhbiBlbnRyeSB0aGF0IHNvbWV0aGluZyBoYXMgZ3VhcmFudGVlZCB3aWxsIGJl
+IHRoZXJlIHVudGlsIHRoZSB0YXNrIGVuZHMuIElmIG5vbmUgZXhpc3QgdGhleSBjYW4gZmFsbCBi
+YWNrIGFuZCBhbGxvY2F0ZSBhIG5ldyBvbmUgLSBpdCBhbGxvd3MgZm9yIGJldHRlciByZXVzZSBv
+ZiBhbiBleGlzdGluZyByZXNvdXJjZSBidXQgbG9nIGEgd2FybmluZyBpZiB5b3UncmUgZm9yY2Vk
+IHRvIHJlbW92ZSBhIHBlcnNpc3RlbnQgZW50cnkgb3Igc29tZW9uZSBhdHRlbXB0cyB0byB1bnJl
+Z2lzdGVyIGl0ICh3aGljaCBzaG91bGQgYWx3YXlzIGZhaWwpIHNpbmNlIHNvbWVvbmUgaW4gdXNl
+ciBzcGFjZSB3aWxsIGhhdmUgYnJva2VuIHRoZWlyIHByb21pc2UgdGhhdCBpdCB3aWxsIGFsd2F5
+cyBiZSB0aGVyZSB1bnRpbCB0aGUgdGFzayBlbmRzICh0aGF0IG1lYW5zIHBlcnNpc3RlbnQgb25l
+cyBzaG91bGQgYmUgbGVmdCB0byBiZSB0b3JuIGRvd24gYnkgdGhlIGtlcm5lbCBub3QgdW5yZWdp
+c3RlcmVkIGZyb20gdXNlciBzcGFjZSkuIElmIHlvdSBkbyB0aGlzIHlvdSBtaWdodCBuZWVkIHRv
+IG9wdGltaXplIHRoZSBmaW5kIHByb2Nlc3Mgc28gaXQncyBtb3JlIGxpa2VseSB0aGUgZmlyc3Qg
+cGVyc2lzdGVudCBvbmUgd2lsbCBiZSB0aGUgZmlyc3Qgb25lIGZvdW5kIGlmIHlvdSB0aGluayBz
+b21lb25lIGlzIG1vcmUgbGlrZWx5IHRvIHRha2UgdGhlIGFwcHJvYWNoIG9mIGFza2luZyBmb3Ig
+dGhhdCBmaXJzdCBhbmQgZmFsbGluZyBiYWNrIHRvIGNyZWF0aW5nIGEgbmV3IG9uZSBpZiB0aGVy
+ZSBpc24ndCBhbHJlYWR5IG9uZSBwcmVzZW50LiBIYXZpbmcgdGhpcyB3aWxsIGFsc28gdGVuZCB0
+byBsaW1pdCB0aGUgbnVtYmVyIG9mIHRoZXNlIHRoYXQgYW55b25lIHdpbGwgbmVlZCB0byBjcmVh
+dGUgaWYgbW9zdCBsaWJyYXJpZXMgYXNrIGZvciBhIHBlcnNpc3RlbnQgZW50cnkgZmlyc3QuDQoN
+ClRoYW5rcw0KU2hhbmUNCgTvv717Lm7vv70r77+977+977+977+977+977+977+9KyXvv73vv71s
+endt77+977+9Yu+/veunsu+/ve+/vXLvv73vv716WO+/ve+/vRbvv73vv70p77+977+977+9dypq
+Z++/ve+/ve+/vR7vv73vv73vv73vv73vv73domov77+977+977+9eu+/vd6W77+977+9Mu+/vd6Z
+77+977+977+9Ju+/vSnfoe+/vWHvv73vv71/77+977+9Hu+/vUfvv73vv73vv71o77+9D++/vWo6
+K3bvv73vv73vv71377+92aUNCg==
