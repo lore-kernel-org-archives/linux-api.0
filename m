@@ -1,381 +1,157 @@
-From: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC PATCH v3 4/6] livepatch: reuse module loader code to write
- relocations
-Date: Mon, 11 Jan 2016 15:33:49 -0600
-Message-ID: <20160111213349.GB17874@treble.redhat.com>
-References: <1452281304-28618-1-git-send-email-jeyu@redhat.com>
- <1452281304-28618-5-git-send-email-jeyu@redhat.com>
+From: Benjamin LaHaise <bcrl@kvack.org>
+Subject: [PATCH 00/13] aio: thread (work queue) based aio and new aio functionality
+Date: Mon, 11 Jan 2016 17:06:15 -0500
+Message-ID: <cover.1452549431.git.bcrl@kvack.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <1452281304-28618-5-git-send-email-jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: owner-linux-mm@kvack.org
+To: linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 08, 2016 at 02:28:22PM -0500, Jessica Yu wrote:
-> Reuse module loader code to write relocations, thereby eliminating the need
-> for architecture specific relocation code in livepatch. Namely, we reuse
-> apply_relocate_add() in the module loader to write relocations instead of
-> duplicating functionality in livepatch's klp_write_module_reloc(). To apply
-> relocation sections, remaining SHN_LIVEPATCH symbols referenced by relocs
-> are resolved and then apply_relocate_add() is called to apply those
-> relocations.
-> 
-> In addition, remove x86 livepatch relocation code. It is no longer needed
-> since symbol resolution and relocation work have been offloaded to module
-> loader.
-> 
-> Signed-off-by: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> ---
->  arch/x86/include/asm/livepatch.h |   2 -
->  arch/x86/kernel/Makefile         |   1 -
->  arch/x86/kernel/livepatch.c      |  70 ---------------------------
->  include/linux/livepatch.h        |  33 +++++--------
->  kernel/livepatch/core.c          | 101 +++++++++++++++++++--------------------
->  5 files changed, 62 insertions(+), 145 deletions(-)
->  delete mode 100644 arch/x86/kernel/livepatch.c
-> 
-> diff --git a/arch/x86/include/asm/livepatch.h b/arch/x86/include/asm/livepatch.h
-> index 19c099a..7312e25 100644
-> --- a/arch/x86/include/asm/livepatch.h
-> +++ b/arch/x86/include/asm/livepatch.h
-> @@ -33,8 +33,6 @@ static inline int klp_check_compiler_support(void)
->  #endif
->  	return 0;
->  }
-> -int klp_write_module_reloc(struct module *mod, unsigned long type,
-> -			   unsigned long loc, unsigned long value);
->  
->  static inline void klp_arch_set_pc(struct pt_regs *regs, unsigned long ip)
->  {
-> diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
-> index b1b78ff..c5e9a5c 100644
-> --- a/arch/x86/kernel/Makefile
-> +++ b/arch/x86/kernel/Makefile
-> @@ -67,7 +67,6 @@ obj-$(CONFIG_X86_MPPARSE)	+= mpparse.o
->  obj-y				+= apic/
->  obj-$(CONFIG_X86_REBOOTFIXUPS)	+= reboot_fixups_32.o
->  obj-$(CONFIG_DYNAMIC_FTRACE)	+= ftrace.o
-> -obj-$(CONFIG_LIVEPATCH)		+= livepatch.o
->  obj-$(CONFIG_FUNCTION_GRAPH_TRACER) += ftrace.o
->  obj-$(CONFIG_FTRACE_SYSCALLS)	+= ftrace.o
->  obj-$(CONFIG_X86_TSC)		+= trace_clock.o
-> diff --git a/arch/x86/kernel/livepatch.c b/arch/x86/kernel/livepatch.c
-> deleted file mode 100644
-> index 92fc1a5..0000000
-> --- a/arch/x86/kernel/livepatch.c
-> +++ /dev/null
-> @@ -1,70 +0,0 @@
-> -/*
-> - * livepatch.c - x86-specific Kernel Live Patching Core
-> - *
-> - * Copyright (C) 2014 Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> - * Copyright (C) 2014 SUSE
-> - *
-> - * This program is free software; you can redistribute it and/or
-> - * modify it under the terms of the GNU General Public License
-> - * as published by the Free Software Foundation; either version 2
-> - * of the License, or (at your option) any later version.
-> - *
-> - * This program is distributed in the hope that it will be useful,
-> - * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> - * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> - * GNU General Public License for more details.
-> - *
-> - * You should have received a copy of the GNU General Public License
-> - * along with this program; if not, see <http://www.gnu.org/licenses/>.
-> - */
-> -
-> -#include <linux/module.h>
-> -#include <linux/uaccess.h>
-> -#include <asm/elf.h>
-> -#include <asm/livepatch.h>
-> -
-> -/**
-> - * klp_write_module_reloc() - write a relocation in a module
-> - * @mod:	module in which the section to be modified is found
-> - * @type:	ELF relocation type (see asm/elf.h)
-> - * @loc:	address that the relocation should be written to
-> - * @value:	relocation value (sym address + addend)
-> - *
-> - * This function writes a relocation to the specified location for
-> - * a particular module.
-> - */
-> -int klp_write_module_reloc(struct module *mod, unsigned long type,
-> -			   unsigned long loc, unsigned long value)
-> -{
-> -	size_t size = 4;
-> -	unsigned long val;
-> -	unsigned long core = (unsigned long)mod->core_layout.base;
-> -	unsigned long core_size = mod->core_layout.size;
-> -
-> -	switch (type) {
-> -	case R_X86_64_NONE:
-> -		return 0;
-> -	case R_X86_64_64:
-> -		val = value;
-> -		size = 8;
-> -		break;
-> -	case R_X86_64_32:
-> -		val = (u32)value;
-> -		break;
-> -	case R_X86_64_32S:
-> -		val = (s32)value;
-> -		break;
-> -	case R_X86_64_PC32:
-> -		val = (u32)(value - loc);
-> -		break;
-> -	default:
-> -		/* unsupported relocation type */
-> -		return -EINVAL;
-> -	}
-> -
-> -	if (loc < core || loc >= core + core_size)
-> -		/* loc does not point to any symbol inside the module */
-> -		return -EINVAL;
-> -
-> -	return probe_kernel_write((void *)loc, &val, size);
-> -}
-> diff --git a/include/linux/livepatch.h b/include/linux/livepatch.h
-> index a882865..2f12ce7 100644
-> --- a/include/linux/livepatch.h
-> +++ b/include/linux/livepatch.h
-> @@ -65,27 +65,8 @@ struct klp_func {
->  };
->  
->  /**
-> - * struct klp_reloc - relocation structure for live patching
-> - * @loc:	address where the relocation will be written
-> - * @sympos:	position in kallsyms to disambiguate symbols (optional)
-> - * @type:	ELF relocation type
-> - * @name:	name of the referenced symbol (for lookup/verification)
-> - * @addend:	offset from the referenced symbol
-> - * @external:	symbol is either exported or within the live patch module itself
-> - */
-> -struct klp_reloc {
-> -	unsigned long loc;
-> -	unsigned long sympos;
-> -	unsigned long type;
-> -	const char *name;
-> -	int addend;
-> -	int external;
-> -};
-> -
-> -/**
->   * struct klp_object - kernel object structure for live patching
->   * @name:	module name (or NULL for vmlinux)
-> - * @relocs:	relocation entries to be applied at load time
->   * @funcs:	function entries for functions to be patched in the object
->   * @kobj:	kobject for sysfs resources
->   * @mod:	kernel module associated with the patched object
-> @@ -95,7 +76,6 @@ struct klp_reloc {
->  struct klp_object {
->  	/* external */
->  	const char *name;
-> -	struct klp_reloc *relocs;
->  	struct klp_func *funcs;
->  
->  	/* internal */
-> @@ -123,6 +103,19 @@ struct klp_patch {
->  	enum klp_state state;
->  };
->  
-> +/*
-> + * Livepatch-specific symbols and relocation
-> + * sections are prefixed with a tag:
-> + * .klp.rel. for relocation sections
-> + * .klp.sym. for livepatch symbols
-> + */
-> +#define KLP_TAG_LEN 9
-> +/*
-> + * Livepatch-specific bits for specifying symbol
-> + * positions in the Elf_Sym st_other field
-> + */
-> +#define KLP_SYMPOS(o) (o >> 2) & 0xff
-> +
+Hello all,
 
-Can st_value be used instead?  I think we ended up deciding that would
-be better:
+First off, sorry for the wide reaching To and Cc, but this patch series
+touches the core kernel and also reaches across subsystems a bit.  If
+some of the people who read this can provide review feedback, I would
+very much appreciate it.
 
-  https://lkml.kernel.org/g/20151210213328.GA6553-N0bYjD2NfQ6k4hzjq3hgyGTy53QMssKEsp+A89P3RPuQWHG76I6BsA@public.gmane.org
+This series introduces new AIO functionality to make use of kernel
+threads (by way of queue_work()) to implement additional asynchronous
+operations.  The work came about as the result of various tuning done to
+the kernel for my employer (Solace Systems) that we ship in our
+products.
 
-Because:
+First off, the benefits: using kernel threads to implement AIO
+functionality has a significant benefit in our application.  Compared to
+a user space thread pool based AIO implementation, we see roughly a 25%
+performance improvement in our application by using this new kernel
+based AIO functionality.  This comes about as a consequence of fewer
+context switches, fewer transitions to/from userspace, and the ability
+to make certain optimizations in the kernel that are otherwise
+impossible in userspace (ie the new readahead functionality).
 
-- st_value is easily viewable in readelf
-- st_other has some arch-specific uses
+Now the downsides: when using queue_work(), code executes in the context
+of a different task that the submitter of the operation.  This means
+that there are significant security concerns if there are any bugs in
+the code that sets up the appropriate security credentials and related
+context in struct task.  There may well be DoS bugs in this
+implementation which have yet to be discovered.
 
-And another reason not previously discussed:
+Given the benefits, I am of the opinion that this patch series is a
+useful addition to the kernel.  Since this code will be experimental for
+some period of time as the interactions with other subsystems are
+reviewed and tested, I have implemented a config option to allow for
+this code to be compiled out and a sysctl (fs.aio-auto-threads) that
+must be explicitly set to 1 before this new functionality is available
+to userspace.  Hopefully this is enough to address the security concerns
+during the growing pains and allow other developers to safely explore
+the new functionality.
 
-- st_other is an unsigned char, which limits sympos to values < 64
+Caveats: the existing O_DIRECT AIO code path is currently bypassed when
+the new thread helpers are enabled.  I plan to do additional work in
+this area, but the fact that the dio code can block under certain
+conditions is not acceptable to the applications I am working on, as it
+leads to starvation of other requests the system is processing.  That
+said, this is what's ready today, and I hope that people can provide
+feedback to help drive further improvements.
 
->  #define klp_for_each_object(patch, obj) \
->  	for (obj = patch->objs; obj->funcs; obj++)
->  
-> diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
-> index bc2c85c..64536a4 100644
-> --- a/kernel/livepatch/core.c
-> +++ b/kernel/livepatch/core.c
-> @@ -28,6 +28,9 @@
->  #include <linux/list.h>
->  #include <linux/kallsyms.h>
->  #include <linux/livepatch.h>
-> +#include <linux/elf.h>
-> +#include <linux/string.h>
-> +#include <linux/moduleloader.h>
->  #include <asm/cacheflush.h>
->  
->  /**
-> @@ -204,74 +207,70 @@ static int klp_find_object_symbol(const char *objname, const char *name,
->  	return -EINVAL;
->  }
->  
-> -/*
-> - * external symbols are located outside the parent object (where the parent
-> - * object is either vmlinux or the kmod being patched).
-> - */
-> -static int klp_find_external_symbol(struct module *pmod, const char *name,
-> -				    unsigned long *addr)
-> +static int klp_resolve_symbols(Elf_Shdr *relsec, struct module *pmod)
->  {
-> -	const struct kernel_symbol *sym;
-> +	int i, len, ret = 0;
-> +	Elf_Rela *relas;
-> +	Elf_Sym *sym;
-> +	char *symname, *sym_objname;
->  
-> -	/* first, check if it's an exported symbol */
-> -	preempt_disable();
-> -	sym = find_symbol(name, NULL, NULL, true, true);
-> -	if (sym) {
-> -		*addr = sym->value;
-> -		preempt_enable();
-> -		return 0;
-> +	relas = (Elf_Rela *) relsec->sh_addr;
-> +	/* For each rela in this .klp.rel. section */
-> +	for (i = 0; i < relsec->sh_size / sizeof(Elf_Rela); i++) {
-> +		sym = pmod->core_symtab + ELF_R_SYM(relas[i].r_info);
-> +		symname = pmod->core_strtab + sym->st_name;
-> +
-> +		len = strcspn(symname + KLP_TAG_LEN, ".");
+I will be posting further documentation and test cases later this week
+for people to experiment with, but for those looking for a few test
+programs to exercise the new functionality, there is a collection of
+code at git://git.kvack.org/aio-testprogs.git/ .  Getting the code
+cleaned up from the internal implementation to something that is in
+reasonable condition for submission ended up taking longer than
+expected.  Thankfully, this kernel cycle lines up with some internal QA
+work, so there should be additional testing taking place over the next
+couple of months.
 
-It would be nice to have a comment here similar to the below one:
+Also, the libaio test harness has some bugs that the new functionality
+revealed.  A version with fixes for those tests can be fetched from
+git://git.kvack.org/~bcrl/libaio.git/ .  Wrappers for the new IOCB_CMD
+types should be posted there by the end of the day.
 
-		/* .klp.sym.[objname].symbol_name */
+Some notes on the new functionality: all operations are cancellable
+providing the kernel subsystem involved aborts operations when delivered
+a SIGKILL.  This ensures that async operations on pipe and sockets are
+cancelled when the process that issued the operations exits.  A couple
+of the test programs exercise this functionality on pipes.
 
-> +		sym_objname = strncmp(symname + KLP_TAG_LEN, "vmlinux", len) ?
+Signal handling is slightly impacted by this AIO functionality.
+Specifically, the first patch in the series introduces a new helper,
+io_send_sig() that delivers a signal intended for the performer of an io
+operation.  This is used to deliver signals like SIGXFS and SIGPIPE.  It
+is a straightforward replacement of send_sig(SIGXXX, current, 0) to
+io_send_sig(SIGXXX). 
 
-I think there's a bug here in the (unlikely) case where the module's
-name is a subset of "vmlinux", e.g.  "vm".
+As always, comments, bug reports and feedback are appreciated.
+Developers looking for a git pull can find one at
+git://git.kvack.org/aio-next.git/ .  Cheers!
 
-> +			kstrndup(symname + KLP_TAG_LEN, len, GFP_KERNEL) : NULL;
-> +		/* .klp.sym.objname.[symbol_name] */
-> +		symname += KLP_TAG_LEN + len + 1;
-> +
-> +		ret = klp_find_object_symbol(sym_objname, symname,
-> +					     KLP_SYMPOS(sym->st_other),
-> +					     (unsigned long *) &sym->st_value);
-> +		kfree(sym_objname);
-> +		if (ret)
-> +			return ret;
->  	}
-> -	preempt_enable();
->  
-> -	/*
-> -	 * Check if it's in another .o within the patch module. This also
-> -	 * checks that the external symbol is unique.
-> -	 */
-> -	return klp_find_object_symbol(pmod->name, name, 0, addr);
-> +	return ret;
->  }
->  
->  static int klp_write_object_relocations(struct module *pmod,
->  					struct klp_object *obj)
->  {
-> -	int ret = 0;
-> -	unsigned long val;
-> -	struct klp_reloc *reloc;
-> +	int i, len, ret = 0;
-> +	char *secname;
-> +	const char *objname;
->  
->  	if (WARN_ON(!klp_is_object_loaded(obj)))
->  		return -EINVAL;
->  
-> -	if (WARN_ON(!obj->relocs))
-> -		return -EINVAL;
-> +	objname = klp_is_module(obj) ? obj->name : "vmlinux";
->  
->  	module_disable_ro(pmod);
-> +	/* For each klp rela section for this object */
-> +	for (i = 1; i < pmod->info->hdr->e_shnum; i++) {
-> +		if (!(pmod->info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH))
-> +			continue;
-> +
-> +		secname = pmod->info->secstrings + pmod->info->sechdrs[i].sh_name;
-> +		/* .klp.rel.[objname].section_name */
-> +		len = strcspn(secname + KLP_TAG_LEN, ".");
-> +
-> +		if (strncmp(objname, secname + KLP_TAG_LEN, len))
-> +			continue;
+		-ben
 
-Same problem here.  For ".klp.rel.foo.sym", an objname of "foobar" will
-give a false match.
+Benjamin LaHaise (13):
+  signals: distinguish signals sent due to i/o via io_send_sig()
+  aio: add aio_get_mm() helper
+  aio: for async operations, make the iter argument persistent
+  signals: add and use aio_get_task() to direct signals sent via
+    io_send_sig()
+  fs: make do_loop_readv_writev() non-static
+  aio: add queue_work() based threaded aio support
+  aio: enabled thread based async fsync
+  aio: add support for aio poll via aio thread helper
+  aio: add support for async openat()
+  aio: add async unlinkat functionality
+  mm: enable __do_page_cache_readahead() to include present pages
+  aio: add support for aio readahead
+  aio: add support for aio renameat operation
 
-> -	for (reloc = obj->relocs; reloc->name; reloc++) {
-> -		/* discover the address of the referenced symbol */
-> -		if (reloc->external) {
-> -			if (reloc->sympos > 0) {
-> -				pr_err("non-zero sympos for external reloc symbol '%s' is not supported\n",
-> -				       reloc->name);
-> -				ret = -EINVAL;
-> -				goto out;
-> -			}
-> -			ret = klp_find_external_symbol(pmod, reloc->name, &val);
-> -		} else
-> -			ret = klp_find_object_symbol(obj->name,
-> -						     reloc->name,
-> -						     reloc->sympos,
-> -						     &val);
-> +		ret = klp_resolve_symbols(pmod->info->sechdrs + i, pmod);
->  		if (ret)
->  			goto out;
->  
-> -		ret = klp_write_module_reloc(pmod, reloc->type, reloc->loc,
-> -					     val + reloc->addend);
-> -		if (ret) {
-> -			pr_err("relocation failed for symbol '%s' at 0x%016lx (%d)\n",
-> -			       reloc->name, val, ret);
-> +		ret = apply_relocate_add(pmod->info->sechdrs, pmod->core_strtab,
-> +					 pmod->info->index.sym, i, pmod);
-> +		if (ret)
->  			goto out;
-> -		}
->  	}
-> -
->  out:
->  	module_enable_ro(pmod);
->  	return ret;
-> @@ -703,11 +702,9 @@ static int klp_init_object_loaded(struct klp_patch *patch,
->  	struct klp_func *func;
->  	int ret;
->  
-> -	if (obj->relocs) {
-> -		ret = klp_write_object_relocations(patch->mod, obj);
-> -		if (ret)
-> -			return ret;
-> -	}
-> +	ret = klp_write_object_relocations(patch->mod, obj);
-> +	if (ret)
-> +		return ret;
->  
->  	klp_for_each_func(obj, func) {
->  		ret = klp_find_object_symbol(obj->name, func->old_name,
-> -- 
-> 2.4.3
-> 
+ drivers/gpu/drm/drm_lock.c     |   2 +-
+ drivers/gpu/drm/ttm/ttm_lock.c |   6 +-
+ fs/aio.c                       | 727 ++++++++++++++++++++++++++++++++++++++---
+ fs/attr.c                      |   2 +-
+ fs/binfmt_flat.c               |   2 +-
+ fs/fuse/dev.c                  |   2 +-
+ fs/internal.h                  |   6 +
+ fs/namei.c                     |   2 +-
+ fs/pipe.c                      |   4 +-
+ fs/read_write.c                |   5 +-
+ fs/splice.c                    |   8 +-
+ include/linux/aio.h            |   9 +
+ include/linux/fs.h             |   3 +
+ include/linux/sched.h          |   6 +
+ include/uapi/linux/aio_abi.h   |  15 +-
+ init/Kconfig                   |  13 +
+ kernel/auditsc.c               |   6 +-
+ kernel/signal.c                |  20 ++
+ kernel/sysctl.c                |   9 +
+ mm/filemap.c                   |   6 +-
+ mm/internal.h                  |   4 +-
+ mm/readahead.c                 |  13 +-
+ net/atm/common.c               |   4 +-
+ net/ax25/af_ax25.c             |   2 +-
+ net/caif/caif_socket.c         |   2 +-
+ net/core/stream.c              |   2 +-
+ net/decnet/af_decnet.c         |   2 +-
+ net/irda/af_irda.c             |   4 +-
+ net/netrom/af_netrom.c         |   2 +-
+ net/rose/af_rose.c             |   2 +-
+ net/sctp/socket.c              |   2 +-
+ net/unix/af_unix.c             |   4 +-
+ net/x25/af_x25.c               |   2 +-
+ 33 files changed, 817 insertions(+), 81 deletions(-)
 
 -- 
-Josh
+2.5.0
+
+
+-- 
+"Thought is the essence of where you are now."
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
