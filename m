@@ -1,120 +1,136 @@
-From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Subject: [PATCH v2] [media] Postpone the addition of MEDIA_IOC_G_TOPOLOGY
-Date: Mon, 11 Jan 2016 12:41:02 -0200
-Message-ID: <be0270ec89e6b9b49de7e533dd1f3a89ad34d205.1452523228.git.mchehab@osg.samsung.com>
-Return-path: <linux-media-owner@vger.kernel.org>
-Sender: linux-media-owner@vger.kernel.org
-Cc: Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Linux Media Mailing List <linux-media@vger.kernel.org>, Mauro Carvalho Chehab <mchehab@infradead.org>, Hans Verkuil <hverkuil@xs4all.nl>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, Sakari Ailus <sakari.ailus@iki.fi>, Shuah Khan <shuahkh@osg.samsung.com>, linux-api@vger.kernel.org
+From: Andreas Gruenbacher <agruenba@redhat.com>
+Subject: [PATCH v17 00/22] Richacls (Core and Ext4)
+Date: Mon, 11 Jan 2016 16:21:31 +0100
+Message-ID: <1452525713-11348-1-git-send-email-agruenba@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Alexander Viro <viro@zeniv.linux.org.uk>
+Cc: "J. Bruce Fields" <bfields@fieldses.org>, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, Andreas Gruenbacher <agruenba@redhat.com>, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org, Trond Myklebust <trond.myklebust@primarydata.com>, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-fsdevel@vger.kernel.org, Jeff Layton <jlayton@poochiereds.net>, linux-ext4@vger.kernel.org, Anna Schumaker <anna.schumaker@netapp.com>
 List-Id: linux-api@vger.kernel.org
 
-There are a few discussions left with regards to this ioctl:
+Al,
 
-1) the name of the new structs will contain _v2_ on it?
-2) what's the best alternative to avoid compat32 issues?
+could you please merge the current richacl patch queue, up to and including
+the ext4 support?  The patches apply on top of your current xattr.work
+branch.
 
-Due to that, let's postpone the addition of this new ioctl to
-the next Kernel version, to give people more time to discuss it.
+Other than rebasing onto xattr.work, the patches haven't changed since
+November 9, 2015.  Previous posting: https://lwn.net/Articles/666596/.
 
-Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
----
 
-v2: Fix a compilation breakage
+The complete patch queue is available here:
 
- Documentation/DocBook/media/v4l/media-ioc-g-topology.xml | 3 +++
- drivers/media/media-device.c                             | 7 ++++++-
- include/uapi/linux/media.h                               | 6 +++++-
- 3 files changed, 14 insertions(+), 2 deletions(-)
+  git://git.kernel.org/pub/scm/linux/kernel/git/agruen/linux-richacl.git \
+        richacl-2015-12-15
 
-diff --git a/Documentation/DocBook/media/v4l/media-ioc-g-topology.xml b/Documentation/DocBook/media/v4l/media-ioc-g-topology.xml
-index e0d49fa329f0..63152ab9efba 100644
---- a/Documentation/DocBook/media/v4l/media-ioc-g-topology.xml
-+++ b/Documentation/DocBook/media/v4l/media-ioc-g-topology.xml
-@@ -48,6 +48,9 @@
- 
-   <refsect1>
-     <title>Description</title>
-+
-+    <para><emphasis role="bold">NOTE:</emphasis> This new ioctl is programmed to be added on Kernel 4.6. Its definition/arguments may change until its final version.</para>
-+
-     <para>The typical usage of this ioctl is to call it twice.
-     On the first call, the structure defined at &media-v2-topology; should
-     be zeroed. At return, if no errors happen, this ioctl will return the
-diff --git a/drivers/media/media-device.c b/drivers/media/media-device.c
-index 4d1c13de494b..7dae0ac0f3ae 100644
---- a/drivers/media/media-device.c
-+++ b/drivers/media/media-device.c
-@@ -234,6 +234,7 @@ static long media_device_setup_link(struct media_device *mdev,
- 	return ret;
- }
- 
-+#if 0 /* Let's postpone it to Kernel 4.6 */
- static long __media_device_get_topology(struct media_device *mdev,
- 				      struct media_v2_topology *topo)
- {
-@@ -389,6 +390,7 @@ static long media_device_get_topology(struct media_device *mdev,
- 
- 	return 0;
- }
-+#endif
- 
- static long media_device_ioctl(struct file *filp, unsigned int cmd,
- 			       unsigned long arg)
-@@ -422,13 +424,14 @@ static long media_device_ioctl(struct file *filp, unsigned int cmd,
- 		mutex_unlock(&dev->graph_mutex);
- 		break;
- 
-+#if 0 /* Let's postpone it to Kernel 4.6 */
- 	case MEDIA_IOC_G_TOPOLOGY:
- 		mutex_lock(&dev->graph_mutex);
- 		ret = media_device_get_topology(dev,
- 				(struct media_v2_topology __user *)arg);
- 		mutex_unlock(&dev->graph_mutex);
- 		break;
--
-+#endif
- 	default:
- 		ret = -ENOIOCTLCMD;
- 	}
-@@ -477,7 +480,9 @@ static long media_device_compat_ioctl(struct file *filp, unsigned int cmd,
- 	case MEDIA_IOC_DEVICE_INFO:
- 	case MEDIA_IOC_ENUM_ENTITIES:
- 	case MEDIA_IOC_SETUP_LINK:
-+#if 0 /* Let's postpone it to Kernel 4.6 */
- 	case MEDIA_IOC_G_TOPOLOGY:
-+#endif
- 		return media_device_ioctl(filp, cmd, arg);
- 
- 	case MEDIA_IOC_ENUM_LINKS32:
-diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
-index 5dbb208e5451..1e3c8cb43bd7 100644
---- a/include/uapi/linux/media.h
-+++ b/include/uapi/linux/media.h
-@@ -286,7 +286,7 @@ struct media_links_enum {
-  *	  later, before the adding this API upstream.
-  */
- 
--
-+#if 0 /* Let's postpone it to Kernel 4.6 */
- struct media_v2_entity {
- 	__u32 id;
- 	char name[64];		/* FIXME: move to a property? (RFC says so) */
-@@ -351,6 +351,7 @@ static inline void __user *media_get_uptr(__u64 arg)
- {
- 	return (void __user *)(uintptr_t)arg;
- }
-+#endif
- 
- /* ioctls */
- 
-@@ -358,6 +359,9 @@ static inline void __user *media_get_uptr(__u64 arg)
- #define MEDIA_IOC_ENUM_ENTITIES		_IOWR('|', 0x01, struct media_entity_desc)
- #define MEDIA_IOC_ENUM_LINKS		_IOWR('|', 0x02, struct media_links_enum)
- #define MEDIA_IOC_SETUP_LINK		_IOWR('|', 0x03, struct media_link_desc)
-+
-+#if 0 /* Let's postpone it to Kernel 4.6 */
- #define MEDIA_IOC_G_TOPOLOGY		_IOWR('|', 0x04, struct media_v2_topology)
-+#endif
- 
- #endif /* __LINUX_MEDIA_H */
+
+The richacl user-space utilitites, man pages, and test suite are available
+here:
+
+  https://github.com/andreas-gruenbacher/richacl
+
+
+Changes to other user-space packages for richacl:
+
+  https://github.com/andreas-gruenbacher/coreutils
+  https://github.com/andreas-gruenbacher/e2fsprogs
+  https://github.com/andreas-gruenbacher/xfsprogs-dev
+  https://github.com/andreas-gruenbacher/nfs-utils
+
+
+Please see the richacl homepage for more information:
+
+  http://www.bestbits.at/richacl/
+
+
+Thanks,
+Andreas
+
+Andreas Gruenbacher (20):
+  vfs: Add IS_ACL() and IS_RICHACL() tests
+  vfs: Add MAY_CREATE_FILE and MAY_CREATE_DIR permission flags
+  vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD permission flags
+  vfs: Make the inode passed to inode_change_ok non-const
+  vfs: Add permission flags for setting file attributes
+  richacl: In-memory representation and helper functions
+  richacl: Permission mapping functions
+  richacl: Compute maximum file masks from an acl
+  richacl: Permission check algorithm
+  posix_acl: Unexport acl_by_type and make it static
+  vfs: Cache base_acl objects in inodes
+  vfs: Add get_richacl and set_richacl inode operations
+  vfs: Cache richacl in struct inode
+  richacl: Update the file masks in chmod()
+  richacl: Check if an acl is equivalent to a file mode
+  richacl: Create-time inheritance
+  richacl: Automatic Inheritance
+  richacl: xattr mapping functions
+  richacl: Add richacl xattr handler
+  vfs: Add richacl permission checking
+
+Aneesh Kumar K.V (2):
+  ext4: Add richacl support
+  ext4: Add richacl feature flag
+
+ drivers/staging/lustre/lustre/llite/llite_lib.c |   2 +-
+ fs/Kconfig                                      |   3 +
+ fs/Makefile                                     |   2 +
+ fs/attr.c                                       |  81 +++-
+ fs/ext4/Kconfig                                 |  11 +
+ fs/ext4/Makefile                                |   1 +
+ fs/ext4/ext4.h                                  |   6 +-
+ fs/ext4/file.c                                  |   3 +
+ fs/ext4/ialloc.c                                |  11 +-
+ fs/ext4/inode.c                                 |  12 +-
+ fs/ext4/namei.c                                 |   5 +
+ fs/ext4/richacl.c                               | 142 ++++++
+ fs/ext4/richacl.h                               |  40 ++
+ fs/ext4/super.c                                 |  49 +-
+ fs/ext4/xattr.c                                 |   7 +
+ fs/f2fs/acl.c                                   |   4 +-
+ fs/inode.c                                      |  15 +-
+ fs/jffs2/acl.c                                  |  10 +-
+ fs/namei.c                                      | 118 +++--
+ fs/posix_acl.c                                  |  50 +--
+ fs/richacl_base.c                               | 564 ++++++++++++++++++++++++
+ fs/richacl_inode.c                              | 333 ++++++++++++++
+ fs/richacl_xattr.c                              | 298 +++++++++++++
+ fs/xattr.c                                      |  34 +-
+ include/linux/fs.h                              |  60 ++-
+ include/linux/posix_acl.h                       |  13 +-
+ include/linux/richacl.h                         | 208 +++++++++
+ include/linux/richacl_xattr.h                   |  44 ++
+ include/uapi/linux/Kbuild                       |   2 +
+ include/uapi/linux/fs.h                         |   3 +-
+ include/uapi/linux/richacl.h                    | 152 +++++++
+ include/uapi/linux/richacl_xattr.h              |  44 ++
+ include/uapi/linux/xattr.h                      |   2 +
+ 33 files changed, 2222 insertions(+), 107 deletions(-)
+ create mode 100644 fs/ext4/richacl.c
+ create mode 100644 fs/ext4/richacl.h
+ create mode 100644 fs/richacl_base.c
+ create mode 100644 fs/richacl_inode.c
+ create mode 100644 fs/richacl_xattr.c
+ create mode 100644 include/linux/richacl.h
+ create mode 100644 include/linux/richacl_xattr.h
+ create mode 100644 include/uapi/linux/richacl.h
+ create mode 100644 include/uapi/linux/richacl_xattr.h
+
 -- 
 2.5.0
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
