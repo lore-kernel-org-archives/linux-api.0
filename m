@@ -1,155 +1,166 @@
-From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v17 22/22] ext4: Add richacl feature flag
-Date: Mon, 11 Jan 2016 16:21:53 +0100
-Message-ID: <1452525713-11348-23-git-send-email-agruenba@redhat.com>
-References: <1452525713-11348-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1452525713-11348-1-git-send-email-agruenba@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alexander Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
-Cc: "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>, Andreas Gruenbacher <agruenba@redhat.com>
+From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
+Subject: Re: [RFC PATCH v3 4/6] livepatch: reuse module loader code to write
+ relocations
+Date: Mon, 11 Jan 2016 17:56:13 +0100
+Message-ID: <20160111165613.GL731@pathway.suse.cz>
+References: <1452281304-28618-1-git-send-email-jeyu@redhat.com>
+ <1452281304-28618-5-git-send-email-jeyu@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1452281304-28618-5-git-send-email-jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>
+On Fri 2016-01-08 14:28:22, Jessica Yu wrote:
+> Reuse module loader code to write relocations, thereby eliminating the need
+> for architecture specific relocation code in livepatch. Namely, we reuse
+> apply_relocate_add() in the module loader to write relocations instead of
+> duplicating functionality in livepatch's klp_write_module_reloc(). To apply
+> relocation sections, remaining SHN_LIVEPATCH symbols referenced by relocs
+> are resolved and then apply_relocate_add() is called to apply those
+> relocations.
+> 
+> In addition, remove x86 livepatch relocation code. It is no longer needed
+> since symbol resolution and relocation work have been offloaded to module
+> loader.
+> 
+> --- a/kernel/livepatch/core.c
+> +++ b/kernel/livepatch/core.c
+> @@ -204,74 +207,70 @@ static int klp_find_object_symbol(const char *objname, const char *name,
+>  	return -EINVAL;
+>  }
+>  
+> -/*
+> - * external symbols are located outside the parent object (where the parent
+> - * object is either vmlinux or the kmod being patched).
+> - */
+> -static int klp_find_external_symbol(struct module *pmod, const char *name,
+> -				    unsigned long *addr)
+> +static int klp_resolve_symbols(Elf_Shdr *relsec, struct module *pmod)
+>  {
+> -	const struct kernel_symbol *sym;
+> +	int i, len, ret = 0;
+> +	Elf_Rela *relas;
+> +	Elf_Sym *sym;
+> +	char *symname, *sym_objname;
+>  
+> -	/* first, check if it's an exported symbol */
+> -	preempt_disable();
+> -	sym = find_symbol(name, NULL, NULL, true, true);
+> -	if (sym) {
+> -		*addr = sym->value;
+> -		preempt_enable();
+> -		return 0;
+> +	relas = (Elf_Rela *) relsec->sh_addr;
+> +	/* For each rela in this .klp.rel. section */
+> +	for (i = 0; i < relsec->sh_size / sizeof(Elf_Rela); i++) {
+> +		sym = pmod->core_symtab + ELF_R_SYM(relas[i].r_info);
+> +		symname = pmod->core_strtab + sym->st_name;
+> +
+> +		len = strcspn(symname + KLP_TAG_LEN, ".");
 
-This feature flag selects richacl instead of POSIX ACL support on the
-filesystem.  When this feature is off, the "acl" and "noacl" mount options
-control whether POSIX ACLs are enabled.  When it is on, richacls are
-automatically enabled and using the "noacl" mount option leads to an error.
+We should check that len is non-zero. Otherwise, sym_objname might
+be empty string and symname might overflow below.
 
-Signed-off-by: Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
-Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
-Reviewed-by: Andreas Dilger <adilger@dilger.ca>
----
- fs/ext4/ext4.h  |  6 ++++--
- fs/ext4/super.c | 49 ++++++++++++++++++++++++++++++++++++++++---------
- 2 files changed, 44 insertions(+), 11 deletions(-)
+Also we should check that symname really starts with .klp.sym. to
+avoid invalid memory access.
 
-diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-index 750063f..7072ff5 100644
---- a/fs/ext4/ext4.h
-+++ b/fs/ext4/ext4.h
-@@ -995,7 +995,7 @@ struct ext4_inode_info {
- #define EXT4_MOUNT_UPDATE_JOURNAL	0x01000	/* Update the journal format */
- #define EXT4_MOUNT_NO_UID32		0x02000  /* Disable 32-bit UIDs */
- #define EXT4_MOUNT_XATTR_USER		0x04000	/* Extended user attributes */
--#define EXT4_MOUNT_POSIX_ACL		0x08000	/* POSIX Access Control Lists */
-+#define EXT4_MOUNT_ACL			0x08000	/* Access Control Lists */
- #define EXT4_MOUNT_NO_AUTO_DA_ALLOC	0x10000	/* No auto delalloc mapping */
- #define EXT4_MOUNT_BARRIER		0x20000 /* Use block barriers */
- #define EXT4_MOUNT_QUOTA		0x80000 /* Some quota option set */
-@@ -1593,6 +1593,7 @@ static inline int ext4_encrypted_inode(struct inode *inode)
- #define EXT4_FEATURE_INCOMPAT_LARGEDIR		0x4000 /* >2GB or 3-lvl htree */
- #define EXT4_FEATURE_INCOMPAT_INLINE_DATA	0x8000 /* data in inode */
- #define EXT4_FEATURE_INCOMPAT_ENCRYPT		0x10000
-+#define EXT4_FEATURE_INCOMPAT_RICHACL		0x20000
- 
- #define EXT4_FEATURE_COMPAT_FUNCS(name, flagname) \
- static inline bool ext4_has_feature_##name(struct super_block *sb) \
-@@ -1707,7 +1708,8 @@ EXT4_FEATURE_INCOMPAT_FUNCS(encrypt,		ENCRYPT)
- 					 EXT4_FEATURE_INCOMPAT_MMP | \
- 					 EXT4_FEATURE_INCOMPAT_INLINE_DATA | \
- 					 EXT4_FEATURE_INCOMPAT_ENCRYPT | \
--					 EXT4_FEATURE_INCOMPAT_CSUM_SEED)
-+					 EXT4_FEATURE_INCOMPAT_CSUM_SEED | \
-+					 EXT4_FEATURE_INCOMPAT_RICHACL)
- #define EXT4_FEATURE_RO_COMPAT_SUPP	(EXT4_FEATURE_RO_COMPAT_SPARSE_SUPER| \
- 					 EXT4_FEATURE_RO_COMPAT_LARGE_FILE| \
- 					 EXT4_FEATURE_RO_COMPAT_GDT_CSUM| \
-diff --git a/fs/ext4/super.c b/fs/ext4/super.c
-index c9ab67d..9486b8a 100644
---- a/fs/ext4/super.c
-+++ b/fs/ext4/super.c
-@@ -1273,6 +1273,28 @@ static ext4_fsblk_t get_sb_block(void **data)
- 	return sb_block;
- }
- 
-+static int enable_acl(struct super_block *sb)
-+{
-+	sb->s_flags &= ~(MS_POSIXACL | MS_RICHACL);
-+	if (test_opt(sb, ACL)) {
-+		if (EXT4_HAS_INCOMPAT_FEATURE(sb,
-+					      EXT4_FEATURE_INCOMPAT_RICHACL)) {
-+#ifdef CONFIG_EXT4_FS_RICHACL
-+			sb->s_flags |= MS_RICHACL;
-+#else
-+			return -EOPNOTSUPP;
-+#endif
-+		} else {
-+#ifdef CONFIG_EXT4_FS_POSIX_ACL
-+			sb->s_flags |= MS_POSIXACL;
-+#else
-+			return -EOPNOTSUPP;
-+#endif
-+		}
-+	}
-+	return 0;
-+}
-+
- #define DEFAULT_JOURNAL_IOPRIO (IOPRIO_PRIO_VALUE(IOPRIO_CLASS_BE, 3))
- static char deprecated_msg[] = "Mount option \"%s\" will be removed by %s\n"
- 	"Contact linux-ext4@vger.kernel.org if you think we should keep it.\n";
-@@ -1419,9 +1441,9 @@ static const struct mount_opts {
- 	 MOPT_NO_EXT2 | MOPT_DATAJ},
- 	{Opt_user_xattr, EXT4_MOUNT_XATTR_USER, MOPT_SET},
- 	{Opt_nouser_xattr, EXT4_MOUNT_XATTR_USER, MOPT_CLEAR},
--#ifdef CONFIG_EXT4_FS_POSIX_ACL
--	{Opt_acl, EXT4_MOUNT_POSIX_ACL, MOPT_SET},
--	{Opt_noacl, EXT4_MOUNT_POSIX_ACL, MOPT_CLEAR},
-+#if defined(CONFIG_EXT4_FS_POSIX_ACL) || defined(CONFIG_EXT4_FS_RICHACL)
-+	{Opt_acl, EXT4_MOUNT_ACL, MOPT_SET},
-+	{Opt_noacl, EXT4_MOUNT_ACL, MOPT_CLEAR},
- #else
- 	{Opt_acl, 0, MOPT_NOSUPPORT},
- 	{Opt_noacl, 0, MOPT_NOSUPPORT},
-@@ -1469,6 +1491,13 @@ static int handle_mount_opt(struct super_block *sb, char *opt, int token,
- #endif
- 	switch (token) {
- 	case Opt_noacl:
-+#ifdef CONFIG_EXT4_FS_RICHACL
-+	if (EXT4_HAS_INCOMPAT_FEATURE(sb, EXT4_FEATURE_INCOMPAT_RICHACL)) {
-+		ext4_msg(sb, KERN_ERR, "Mount option \"%s\" incompatible "
-+			 "with richacl feature", opt);
-+		return -1;
-+	}
-+#endif
- 	case Opt_nouser_xattr:
- 		ext4_msg(sb, KERN_WARNING, deprecated_msg, opt, "3.5");
- 		break;
-@@ -3229,8 +3258,8 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
- 		set_opt(sb, NO_UID32);
- 	/* xattr user namespace & acls are now defaulted on */
- 	set_opt(sb, XATTR_USER);
--#ifdef CONFIG_EXT4_FS_POSIX_ACL
--	set_opt(sb, POSIX_ACL);
-+#if defined(CONFIG_EXT4_FS_POSIX_ACL) || defined(CONFIG_EXT4_FS_RICHACL)
-+	set_opt(sb, ACL);
- #endif
- 	/* don't forget to enable journal_csum when metadata_csum is enabled. */
- 	if (ext4_has_metadata_csum(sb))
-@@ -3313,8 +3342,9 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
- 		sb->s_iflags |= SB_I_CGROUPWB;
- 	}
- 
--	sb->s_flags = (sb->s_flags & ~MS_POSIXACL) |
--		(test_opt(sb, POSIX_ACL) ? MS_POSIXACL : 0);
-+	err = enable_acl(sb);
-+	if (err)
-+		goto failed_mount;
- 
- 	if (le32_to_cpu(es->s_rev_level) == EXT4_GOOD_OLD_REV &&
- 	    (ext4_has_compat_features(sb) ||
-@@ -4630,8 +4660,9 @@ static int ext4_remount(struct super_block *sb, int *flags, char *data)
- 	if (sbi->s_mount_flags & EXT4_MF_FS_ABORTED)
- 		ext4_abort(sb, "Abort forced by user");
- 
--	sb->s_flags = (sb->s_flags & ~MS_POSIXACL) |
--		(test_opt(sb, POSIX_ACL) ? MS_POSIXACL : 0);
-+	err = enable_acl(sb);
-+	if (err)
-+		goto restore_opts;
- 
- 	es = sbi->s_es;
- 
--- 
-2.5.0
+> +		sym_objname = strncmp(symname + KLP_TAG_LEN, "vmlinux", len) ?
+> +			kstrndup(symname + KLP_TAG_LEN, len, GFP_KERNEL) : NULL;
+> +		/* .klp.sym.objname.[symbol_name] */
+> +		symname += KLP_TAG_LEN + len + 1;
+> +
+> +		ret = klp_find_object_symbol(sym_objname, symname,
+> +					     KLP_SYMPOS(sym->st_other),
+> +					     (unsigned long *) &sym->st_value);
+> +		kfree(sym_objname);
+> +		if (ret)
+> +			return ret;
+>  	}
+> -	preempt_enable();
+>  
+> -	/*
+> -	 * Check if it's in another .o within the patch module. This also
+> -	 * checks that the external symbol is unique.
+> -	 */
+> -	return klp_find_object_symbol(pmod->name, name, 0, addr);
+> +	return ret;
+>  }
+>  
+>  static int klp_write_object_relocations(struct module *pmod,
+>  					struct klp_object *obj)
+>  {
+> -	int ret = 0;
+> -	unsigned long val;
+> -	struct klp_reloc *reloc;
+> +	int i, len, ret = 0;
+> +	char *secname;
+> +	const char *objname;
+>  
+>  	if (WARN_ON(!klp_is_object_loaded(obj)))
+>  		return -EINVAL;
+>  
+> -	if (WARN_ON(!obj->relocs))
+> -		return -EINVAL;
+> +	objname = klp_is_module(obj) ? obj->name : "vmlinux";
+>  
+>  	module_disable_ro(pmod);
+> +	/* For each klp rela section for this object */
+> +	for (i = 1; i < pmod->info->hdr->e_shnum; i++) {
+> +		if (!(pmod->info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH))
+> +			continue;
+> +
+> +		secname = pmod->info->secstrings + pmod->info->sechdrs[i].sh_name;
+> +		/* .klp.rel.[objname].section_name */
+> +		len = strcspn(secname + KLP_TAG_LEN, ".");
+
+We should check that secname realy starts with .klp.rel. string
+to avoid access out of memmory.
+
+Otherwise, nice work.
+
+Thanks,
+Petr.
+
+> +
+> +		if (strncmp(objname, secname + KLP_TAG_LEN, len))
+> +			continue;
+>  
+> -	for (reloc = obj->relocs; reloc->name; reloc++) {
+> -		/* discover the address of the referenced symbol */
+> -		if (reloc->external) {
+> -			if (reloc->sympos > 0) {
+> -				pr_err("non-zero sympos for external reloc symbol '%s' is not supported\n",
+> -				       reloc->name);
+> -				ret = -EINVAL;
+> -				goto out;
+> -			}
+> -			ret = klp_find_external_symbol(pmod, reloc->name, &val);
+> -		} else
+> -			ret = klp_find_object_symbol(obj->name,
+> -						     reloc->name,
+> -						     reloc->sympos,
+> -						     &val);
+> +		ret = klp_resolve_symbols(pmod->info->sechdrs + i, pmod);
+>  		if (ret)
+>  			goto out;
+>  
+> -		ret = klp_write_module_reloc(pmod, reloc->type, reloc->loc,
+> -					     val + reloc->addend);
+> -		if (ret) {
+> -			pr_err("relocation failed for symbol '%s' at 0x%016lx (%d)\n",
+> -			       reloc->name, val, ret);
+> +		ret = apply_relocate_add(pmod->info->sechdrs, pmod->core_strtab,
+> +					 pmod->info->index.sym, i, pmod);
+> +		if (ret)
+>  			goto out;
+> -		}
+>  	}
+> -
+>  out:
+>  	module_enable_ro(pmod);
+>  	return ret;
