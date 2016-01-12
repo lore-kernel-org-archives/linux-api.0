@@ -1,100 +1,58 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH 09/13] aio: add support for async openat()
-Date: Mon, 11 Jan 2016 16:22:28 -0800
-Message-ID: <CA+55aFw8j_3Vkb=HVoMwWTPD=5ve8RpNZeL31CcKQZ+HRSbfTA@mail.gmail.com>
-References: <cover.1452549431.git.bcrl@kvack.org>
-	<150a0b4905f1d7274b4c2c7f5e3f4d8df5dda1d7.1452549431.git.bcrl@kvack.org>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH 0/3] Implement getcpu_cache system call
+Date: Tue, 12 Jan 2016 00:49:18 +0000 (UTC)
+Message-ID: <137700396.343696.1452559758752.JavaMail.zimbra@efficios.com>
+References: <1451977320-4886-1-git-send-email-mathieu.desnoyers@efficios.com> <DDB9C85B850785449757F9914A034FCB4450ACF7@G9W0766.americas.hpqcorp.net> <20160111230306.GC28717@cloud>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <150a0b4905f1d7274b4c2c7f5e3f4d8df5dda1d7.1452549431.git.bcrl@kvack.org>
-Sender: owner-linux-mm@kvack.org
-To: Benjamin LaHaise <bcrl@kvack.org>, Ingo Molnar <mingo@kernel.org>
-Cc: linux-aio@kvack.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160111230306.GC28717@cloud>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Cc: Shane M Seymour <shane.seymour-ZPxbGqLxI0U@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 11, 2016 at 2:07 PM, Benjamin LaHaise <bcrl@kvack.org> wrote:
-> Another blocking operation used by applications that want aio
-> functionality is that of opening files that are not resident in memory.
-> Using the thread based aio helper, add support for IOCB_CMD_OPENAT.
+----- On Jan 11, 2016, at 6:03 PM, Josh Triplett josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org wrote:
 
-So I think this is ridiculously ugly.
+> On Mon, Jan 11, 2016 at 10:38:28PM +0000, Seymour, Shane M wrote:
+>> I have some concerns and suggestions for you about this.
+>> 
+>> What's to stop someone in user space from requesting an arbitrarily large number
+>> of CPU # cache locations that the kernel needs to allocate memory to track and
+>> each time the task migrates to a new CPU it needs to update them all? Could you
+>> use it to dramatically slow down a system/task switching? Should there be a
+>> ulimit type value or a sysctl setting to limit the number that you're allowed
+>> to register per-task?
+> 
+> The documented behavior of the syscall allows only one location per
+> thread, so the kernel can track that one and only address rather easily
+> in the task_struct.  Allowing dynamic allocation definitely doesn't seem
+> like a good idea.
 
-AIO is a horrible ad-hoc design, with the main excuse being "other,
-less gifted people, made that design, and we are implementing it for
-compatibility because database people - who seldom have any shred of
-taste - actually use it".
+The current implementation now allows more than one location per
+thread. Which piece of documentation states that only one location
+per thread is allowed ? This was indeed the case for the prior
+implementations, but I moved to implementing a linked-list of
+cpu_cache areas per thread to allow the getcpu_cache system call to
+be used by more than a single shared object within a given program.
 
-But AIO was always really really ugly.
+Without the linked list, as soon as more than one shared object try
+to register their cache, the first one will prohibit all others from
+doing so.
 
-Now you introduce the notion of doing almost arbitrary system calls
-asynchronously in threads, but then you use that ass-backwards nasty
-interface to do so.
+We could perhaps try to document that this system call should only
+ever be used by *libc, and all libraries and applications should
+then use the libc TLS cache variable, but it seems rather fragile,
+and any app/lib could try to register its own cache.
 
-Why?
+Thoughts ?
 
-If you want to do arbitrary asynchronous system calls, just *do* it.
-But do _that_, not "let's extend this horrible interface in arbitrary
-random ways one special system call at a time".
+Thanks,
 
-In other words, why is the interface not simply: "do arbitrary system
-call X with arguments A, B, C, D asynchronously using a kernel
-thread".
+Mathieu
 
-That's something that a lot of people might use. In fact, if they can
-avoid the nasty AIO interface, maybe they'll even use it for things
-like read() and write().
-
-So I really think it would be a nice thing to allow some kind of
-arbitrary "queue up asynchronous system call" model.
-
-But I do not think the AIO model should be the model used for that,
-even if I think there might be some shared infrastructure.
-
-So I would seriously suggest:
-
- - how about we add a true "asynchronous system call" interface
-
- - make it be a list of system calls with a futex completion for each
-list entry, so that you can easily wait for the end result that way.
-
- - maybe (and this is where it gets really iffy) you could even pass
-in the result of one system call to the next, so that you can do
-things like
-
-       fd = openat(..)
-       ret = read(fd, ..)
-
-   asynchronously and then just wait for the read() to complete.
-
-and let us *not* tie this to the aio interface.
-
-In fact, if we do it well, we can go the other way, and try to
-implement the nasty AIO interface on top of the generic "just do
-things asynchronously".
-
-And I actually think many of your kernel thread parts are good for a
-generic implementation. That whole "AIO_THREAD_NEED_CRED" etc logic
-all makes sense, although I do suspect you could just make it
-unconditional. The cost of a few atomics shouldn't be excessive when
-we're talking "use a thread to do op X".
-
-What do you think? Do you think it might be possible to aim for a
-generic "do system call asynchronously" model instead?
-
-I'm adding Ingo the to cc, because I think Ingo had a "run this list
-of system calls" patch at one point - in order to avoid system call
-overhead. I don't think that was very interesting (because system call
-overhead is seldom all that noticeable for any interesting system
-calls), but with the "let's do the list asynchronously" addition it
-might be much more intriguing. Ingo, do I remember correctly that it
-was you? I might be confused about who wrote that patch, and I can't
-find it now.
-
-               Linus
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
