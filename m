@@ -1,82 +1,30 @@
-From: Petr Mladek <pmladek@suse.com>
-Subject: Re: [PATCH v3 22/22] thermal/intel_powerclamp: Convert the kthread
- to kthread worker API
-Date: Tue, 12 Jan 2016 11:11:29 +0100
-Message-ID: <20160112101129.GN731@pathway.suse.cz>
-References: <1447853127-3461-1-git-send-email-pmladek@suse.com>
- <1447853127-3461-23-git-send-email-pmladek@suse.com>
- <20160107115531.34279a9b@icelake>
- <20160108164931.GT3178@pathway.suse.cz>
- <20160111181718.0ace4a58@yairi>
+From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v9 00/13] support "task_isolation" mode for nohz_full
+Date: Tue, 12 Jan 2016 11:53:04 +0100
+Message-ID: <20160112105304.GA12675@gmail.com>
+References: <1451936091-29247-1-git-send-email-cmetcalf@ezchip.com>
+ <56941B86.9090009@ezchip.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20160111181718.0ace4a58@yairi>
-Sender: owner-linux-mm@kvack.org
-To: Jacob Pan <jacob.jun.pan@linux.intel.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Zhang Rui <rui.zhang@intel.com>, Eduardo Valentin <edubezval@gmail.com>, linux-pm@vger.kernel.org
+In-Reply-To: <56941B86.9090009-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Cc: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon 2016-01-11 18:17:18, Jacob Pan wrote:
-> On Fri, 8 Jan 2016 17:49:31 +0100
-> Petr Mladek <pmladek@suse.com> wrote:
-> 
-> > Is the __preempt_schedule() a problem? It allows to switch the process
-> > when needed. I thought that it was safe because try_to_freeze() might
-> > have slept as well.
-> > 
-> not a problem. i originally thought queue_kthread_work() may add
-> delay but it doesn't since there is no other work on this kthread.
 
-Great.
- 
-> > > - vulnerable to future changes of queuing work  
-> > 
-> > The question is if it is safe to sleep, freeze, or even migrate
-> > the system between the works. It looks like because of the
-> > try_to_freeze() and schedule_interrupt() calls in the original code.
-> > 
-> > BTW: I wonder if the original code correctly handle freezing after
-> > the schedule_timeout(). It does not call try_to_freeze()
-> > there and the forced idle states might block freezing.
-> > I think that the small overhead of kthread works is worth
-> > solving such bugs. It makes it easier to maintain these
-> > sleeping states.
-> it is in a while loop, so try_to_freeze() gets called. Am I missing
-> something?
+* Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org> wrote:
 
-But it might take some time until try_to_freeze() is called.
-If I get it correctly. try_to_freeze_tasks() wakes freezable
-tasks to get them into the fridge. If clamp_thread() is waken
-from that schedule_timeout_interruptible(), it still might inject
-the idle state before calling try_to_freeze(). It means that freezer
-needs to wait "quite" some time until the kthread ends up in the
-fridge.
+> Ping!  There has been no substantive feedback to this version of
+> the patch in the week since I posted it, which optimistically suggests
+> to me that people may be satisfied with it.  If that's true, Frederic,
+> I assume this would be pulled into your tree?
 
-Hmm, even my conversion does not solve this entirely. We might
-need to call freezing(current) in the
+We are right before (and into) the merge window, don't expect substantial feedback 
+in those timeframes, as most kernel maintainers are very busy.
 
-   while (time_before(jiffies, target_jiffies)) {
+Thanks,
 
-cycle. And break injecting the idle state when freezing is requested.
-
-Or do I miss something, please?
-
-Best Regards,
-Petr
-
-
-
-
-
-
-
-Best Regards,
-Petr
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+	Ingo
