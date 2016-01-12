@@ -1,53 +1,84 @@
-From: Jacob Pan <jacob.jun.pan@linux.intel.com>
-Subject: Re: [PATCH v3 22/22] thermal/intel_powerclamp: Convert the kthread
- to kthread worker API
-Date: Tue, 12 Jan 2016 08:20:21 -0800
-Message-ID: <20160112082021.6a28dc66@icelake>
-References: <1447853127-3461-1-git-send-email-pmladek@suse.com>
-	<1447853127-3461-23-git-send-email-pmladek@suse.com>
-	<20160107115531.34279a9b@icelake>
-	<20160108164931.GT3178@pathway.suse.cz>
-	<20160111181718.0ace4a58@yairi>
-	<20160112101129.GN731@pathway.suse.cz>
+From: Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [RFC PATCH v3 4/6] livepatch: reuse module loader code to write
+ relocations
+Date: Tue, 12 Jan 2016 17:40:06 +0100 (CET)
+Message-ID: <alpine.LNX.2.00.1601121729480.15984@pobox.suse.cz>
+References: <1452281304-28618-1-git-send-email-jeyu@redhat.com> <1452281304-28618-5-git-send-email-jeyu@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-pm-owner@vger.kernel.org>
-In-Reply-To: <20160112101129.GN731@pathway.suse.cz>
-Sender: linux-pm-owner@vger.kernel.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Zhang Rui <rui.zhang@intel.com>, Eduardo Valentin <edubezval@gmail.com>, linux-pm@vger.kernel.org, jacob.jun.pan@linux.intel.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1452281304-28618-5-git-send-email-jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 12 Jan 2016 11:11:29 +0100
-Petr Mladek <pmladek@suse.com> wrote:
 
-> > > BTW: I wonder if the original code correctly handle freezing after
-> > > the schedule_timeout(). It does not call try_to_freeze()
-> > > there and the forced idle states might block freezing.
-> > > I think that the small overhead of kthread works is worth
-> > > solving such bugs. It makes it easier to maintain these
-> > > sleeping states.  
-> > it is in a while loop, so try_to_freeze() gets called. Am I missing
-> > something?  
-> 
-> But it might take some time until try_to_freeze() is called.
-> If I get it correctly. try_to_freeze_tasks() wakes freezable
-> tasks to get them into the fridge. If clamp_thread() is waken
-> from that schedule_timeout_interruptible(), it still might inject
-> the idle state before calling try_to_freeze(). It means that freezer
-> needs to wait "quite" some time until the kthread ends up in the
-> fridge.
-> 
-> Hmm, even my conversion does not solve this entirely. We might
-> need to call freezing(current) in the
-> 
->    while (time_before(jiffies, target_jiffies)) {
-> 
-> cycle. And break injecting the idle state when freezing is requested.
+Hi Jessica,
 
-The injection time for each period is very short, default 6ms. While on
-the other side the default freeze timeout is 20 sec. So I think task
-freeze can wait :)
-i.e.
-unsigned int __read_mostly freeze_timeout_msecs = 20 * MSEC_PER_SEC;
+I walked through the series and it looks really nice. Others have already 
+pointed out the issues I also found, so only few minor things below.
+
+First thing, could you copy&paste the information and reasoning from the 
+cover letter to the changelogs where appropriate? It is very detailed and 
+it would be a pity to lost it.
+
+On Fri, 8 Jan 2016, Jessica Yu wrote:
+
+> diff --git a/arch/x86/include/asm/livepatch.h b/arch/x86/include/asm/livepatch.h
+> index 19c099a..7312e25 100644
+> --- a/arch/x86/include/asm/livepatch.h
+> +++ b/arch/x86/include/asm/livepatch.h
+> @@ -33,8 +33,6 @@ static inline int klp_check_compiler_support(void)
+>  #endif
+>  	return 0;
+>  }
+> -int klp_write_module_reloc(struct module *mod, unsigned long type,
+> -			   unsigned long loc, unsigned long value);
+
+You left klp_write_module_reloc() in arch/s390/include/asm/livepatch.h I'm 
+afraid. Anyway it would be really great if you managed to test the series 
+on s390 somehow. Just to know that all the roadblocks are really gone.
+
+> -/*
+> - * external symbols are located outside the parent object (where the parent
+> - * object is either vmlinux or the kmod being patched).
+> - */
+> -static int klp_find_external_symbol(struct module *pmod, const char *name,
+> -				    unsigned long *addr)
+> +static int klp_resolve_symbols(Elf_Shdr *relsec, struct module *pmod)
+>  {
+> -	const struct kernel_symbol *sym;
+> +	int i, len, ret = 0;
+> +	Elf_Rela *relas;
+> +	Elf_Sym *sym;
+> +	char *symname, *sym_objname;
+>  
+> -	/* first, check if it's an exported symbol */
+> -	preempt_disable();
+> -	sym = find_symbol(name, NULL, NULL, true, true);
+> -	if (sym) {
+> -		*addr = sym->value;
+> -		preempt_enable();
+> -		return 0;
+> +	relas = (Elf_Rela *) relsec->sh_addr;
+> +	/* For each rela in this .klp.rel. section */
+> +	for (i = 0; i < relsec->sh_size / sizeof(Elf_Rela); i++) {
+> +		sym = pmod->core_symtab + ELF_R_SYM(relas[i].r_info);
+> +		symname = pmod->core_strtab + sym->st_name;
+
+Maybe it would be better to use pmod->symtab and pmod->strtab everywhere. 
+It should be the same, but core_* versions are only helpers used in 
+load_module and friends. There is even a comment in 
+include/linux/module.h.
+
+	/*
+	 * We keep the symbol and string tables for kallsyms.
+	 * The core_* fields below are temporary, loader-only (they
+	 * could really be discarded after module init).
+	 */
+
+We should respect that.
+
+Thanks,
+Miroslav
