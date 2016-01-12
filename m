@@ -1,57 +1,50 @@
-From: Chris Mason <clm@fb.com>
-Subject: Re: [PATCH 09/13] aio: add support for async openat()
-Date: Mon, 11 Jan 2016 20:45:09 -0500
-Message-ID: <20160112014509.z6xefgc2rrkytmvk@ret.masoncoding.com>
-References: <cover.1452549431.git.bcrl@kvack.org>
- <150a0b4905f1d7274b4c2c7f5e3f4d8df5dda1d7.1452549431.git.bcrl@kvack.org>
- <CA+55aFw8j_3Vkb=HVoMwWTPD=5ve8RpNZeL31CcKQZ+HRSbfTA@mail.gmail.com>
+From: Jacob Pan <jacob.jun.pan@linux.intel.com>
+Subject: Re: [PATCH v3 22/22] thermal/intel_powerclamp: Convert the kthread
+ to kthread worker API
+Date: Mon, 11 Jan 2016 18:17:18 -0800
+Message-ID: <20160111181718.0ace4a58@yairi>
+References: <1447853127-3461-1-git-send-email-pmladek@suse.com>
+	<1447853127-3461-23-git-send-email-pmladek@suse.com>
+	<20160107115531.34279a9b@icelake>
+	<20160108164931.GT3178@pathway.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <CA+55aFw8j_3Vkb=HVoMwWTPD=5ve8RpNZeL31CcKQZ+HRSbfTA@mail.gmail.com>
+In-Reply-To: <20160108164931.GT3178@pathway.suse.cz>
 Sender: owner-linux-mm@kvack.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Benjamin LaHaise <bcrl@kvack.org>, Ingo Molnar <mingo@kernel.org>, linux-aio@kvack.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>
+To: Petr Mladek <pmladek@suse.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Zhang Rui <rui.zhang@intel.com>, Eduardo Valentin <edubezval@gmail.com>, linux-pm@vger.kernel.org, jacob.jun.pan@linux.intel.com
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 11, 2016 at 04:22:28PM -0800, Linus Torvalds wrote:
-> On Mon, Jan 11, 2016 at 2:07 PM, Benjamin LaHaise <bcrl@kvack.org> wrote:
-> > Another blocking operation used by applications that want aio
-> > functionality is that of opening files that are not resident in memory.
-> > Using the thread based aio helper, add support for IOCB_CMD_OPENAT.
+On Fri, 8 Jan 2016 17:49:31 +0100
+Petr Mladek <pmladek@suse.com> wrote:
+
+> Is the __preempt_schedule() a problem? It allows to switch the process
+> when needed. I thought that it was safe because try_to_freeze() might
+> have slept as well.
 > 
-> So I think this is ridiculously ugly.
+not a problem. i originally thought queue_kthread_work() may add
+delay but it doesn't since there is no other work on this kthread.
 > 
-> AIO is a horrible ad-hoc design, with the main excuse being "other,
-> less gifted people, made that design, and we are implementing it for
-> compatibility because database people - who seldom have any shred of
-> taste - actually use it".
+> > - vulnerable to future changes of queuing work  
 > 
-> But AIO was always really really ugly.
+> The question is if it is safe to sleep, freeze, or even migrate
+> the system between the works. It looks like because of the
+> try_to_freeze() and schedule_interrupt() calls in the original code.
 > 
-> Now you introduce the notion of doing almost arbitrary system calls
-> asynchronously in threads, but then you use that ass-backwards nasty
-> interface to do so.
+> BTW: I wonder if the original code correctly handle freezing after
+> the schedule_timeout(). It does not call try_to_freeze()
+> there and the forced idle states might block freezing.
+> I think that the small overhead of kthread works is worth
+> solving such bugs. It makes it easier to maintain these
+> sleeping states.
+it is in a while loop, so try_to_freeze() gets called. Am I missing
+something?
 
-[ ... ]
+Thanks,
 
-> I'm adding Ingo the to cc, because I think Ingo had a "run this list
-> of system calls" patch at one point - in order to avoid system call
-> overhead. I don't think that was very interesting (because system call
-> overhead is seldom all that noticeable for any interesting system
-> calls), but with the "let's do the list asynchronously" addition it
-> might be much more intriguing. Ingo, do I remember correctly that it
-> was you? I might be confused about who wrote that patch, and I can't
-> find it now.
-
-Zach Brown and Ingo traded a bunch of ideas.  There were chicklets and
-syslets?  A little search, it looks like acall was a slightly different
-iteration, but the patches didn't make it off oss.oracle.com:
-
-https://lwn.net/Articles/316806/
-
--chris
+Jacob
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
