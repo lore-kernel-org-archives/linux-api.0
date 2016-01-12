@@ -1,53 +1,71 @@
-From: Jacob Pan <jacob.jun.pan@linux.intel.com>
-Subject: Re: [PATCH v3 22/22] thermal/intel_powerclamp: Convert the kthread
- to kthread worker API
-Date: Mon, 11 Jan 2016 18:17:18 -0800
-Message-ID: <20160111181718.0ace4a58@yairi>
-References: <1447853127-3461-1-git-send-email-pmladek@suse.com>
-	<1447853127-3461-23-git-send-email-pmladek@suse.com>
-	<20160107115531.34279a9b@icelake>
-	<20160108164931.GT3178@pathway.suse.cz>
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Subject: Re: [PATCH 07/13] aio: enabled thread based async fsync
+Date: Tue, 12 Jan 2016 13:25:48 +1100
+Message-ID: <20160112022548.GD6033@dastard>
+References: <cover.1452549431.git.bcrl@kvack.org>
+ <80934665e0dd2360e2583522c7c7569e5a92be0e.1452549431.git.bcrl@kvack.org>
+ <20160112011128.GC6033@dastard>
+ <CA+55aFxtvMqHgHmHCcszV_QKQ2BY0wzenmrvc6BYN+tLFxesMA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20160108164931.GT3178@pathway.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Zhang Rui <rui.zhang@intel.com>, Eduardo Valentin <edubezval@gmail.com>, linux-pm@vger.kernel.org, jacob.jun.pan@linux.intel.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CA+55aFxtvMqHgHmHCcszV_QKQ2BY0wzenmrvc6BYN+tLFxesMA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Benjamin LaHaise <bcrl-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-aio-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 8 Jan 2016 17:49:31 +0100
-Petr Mladek <pmladek@suse.com> wrote:
-
-> Is the __preempt_schedule() a problem? It allows to switch the process
-> when needed. I thought that it was safe because try_to_freeze() might
-> have slept as well.
+On Mon, Jan 11, 2016 at 05:20:42PM -0800, Linus Torvalds wrote:
+> On Mon, Jan 11, 2016 at 5:11 PM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
+> >
+> > Insufficient. Needs the range to be passed through and call
+> > vfs_fsync_range(), as I implemented here:
 > 
-not a problem. i originally thought queue_kthread_work() may add
-delay but it doesn't since there is no other work on this kthread.
+> And I think that's insufficient *also*.
 > 
-> > - vulnerable to future changes of queuing work  
-> 
-> The question is if it is safe to sleep, freeze, or even migrate
-> the system between the works. It looks like because of the
-> try_to_freeze() and schedule_interrupt() calls in the original code.
-> 
-> BTW: I wonder if the original code correctly handle freezing after
-> the schedule_timeout(). It does not call try_to_freeze()
-> there and the forced idle states might block freezing.
-> I think that the small overhead of kthread works is worth
-> solving such bugs. It makes it easier to maintain these
-> sleeping states.
-it is in a while loop, so try_to_freeze() gets called. Am I missing
-something?
+> What you actually want is "sync_file_range()", with the full set of arguments.
 
-Thanks,
+That's a different interface. the aio fsync interface has been
+exposed to userspace for years, we just haven't implemented it in
+the kernel. That's a major difference to everything else being
+proposed in this patch set, especially this one.
 
-Jacob
+FYI sync_file_range() is definitely not a fsync/fdatasync
+replacement as it does not guarantee data durability in any way.
+i.e. you can call sync_file_range, have it wait for data to be
+written, return to userspace, then lose power and lose the data that
+sync_file_range said it wrote. That's because sync_file_range()
+does not:
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+	a) write the metadata needed to reference the data to disk;
+	   and
+	b) flush volatile storage caches after data and metadata is
+	   written.
+
+Hence sync_file_range is useless to applications that need to
+guarantee data durability. Not to mention that most AIO applications
+use direct IO, and so have no use for fine grained control over page
+cache writeback semantics. They only require a) and b) above, so
+implementing the AIO fsync primitive is exactly what they want.
+
+> Yes, really. Sometimes you want to start the writeback, sometimes you
+> want to wait for it. Sometimes you want both.
+
+Without durability guarantees such application level optimisations
+are pretty much worthless.
+
+> I think this only strengthens my "stop with the idiotic
+> special-case-AIO magic already" argument.  If we want something more
+> generic than the usual aio, then we should go all in. Not "let's make
+> more limited special cases".
+
+No, I don't think this specific case does, because the AIO fsync
+interface already exists....
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
