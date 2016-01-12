@@ -1,101 +1,216 @@
-From: "Seymour, Shane M" <shane.seymour@hpe.com>
-Subject: RE: [RFC PATCH 0/3] Implement getcpu_cache system call
-Date: Tue, 12 Jan 2016 06:40:24 +0000
-Message-ID: <DDB9C85B850785449757F9914A034FCB4450B0A2@G9W0766.americas.hpqcorp.net>
-References: <1451977320-4886-1-git-send-email-mathieu.desnoyers@efficios.com>
- <DDB9C85B850785449757F9914A034FCB4450ACF7@G9W0766.americas.hpqcorp.net>
- <20160111230306.GC28717@cloud>
- <137700396.343696.1452559758752.JavaMail.zimbra@efficios.com>,<20160112024549.GA6488@x>
- <9F8D25C2-B5EE-479D-BD61-0FE466962B9E@fb.com>
+From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
+Subject: Re: livepatch: reuse module loader code to write relocations
+Date: Tue, 12 Jan 2016 10:12:07 +0100
+Message-ID: <20160112091207.GM731@pathway.suse.cz>
+References: <1452281304-28618-1-git-send-email-jeyu@redhat.com>
+ <1452281304-28618-5-git-send-email-jeyu@redhat.com>
+ <20160111213349.GB17874@treble.redhat.com>
+ <20160111223513.GA10796@packer-debian-8-amd64.digitalocean.com>
+ <20160112030552.GC17874@treble.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <9F8D25C2-B5EE-479D-BD61-0FE466962B9E@fb.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ben Maurer <bmaurer@fb.com>, Josh Triplett <josh@joshtriplett.org>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Thomas Gleixner <tglx@linutronix.de>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160112030552.GC17874-8wJ5/zUtDR0XGNroddHbYwC/G2K4zDHf@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On Mon 2016-01-11 21:05:52, Josh Poimboeuf wrote:
+> On Mon, Jan 11, 2016 at 05:35:13PM -0500, Jessica Yu wrote:
+> > +++ Josh Poimboeuf [11/01/16 15:33 -0600]:
+> > >On Fri, Jan 08, 2016 at 02:28:22PM -0500, Jessica Yu wrote:
+> > >>Reuse module loader code to write relocations, thereby eliminating the need
+> > >>for architecture specific relocation code in livepatch. Namely, we reuse
+> > >>apply_relocate_add() in the module loader to write relocations instead of
+> > >>duplicating functionality in livepatch's klp_write_module_reloc(). To apply
+> > >>relocation sections, remaining SHN_LIVEPATCH symbols referenced by relocs
+> > >>are resolved and then apply_relocate_add() is called to apply those
+> > >>relocations.
+> > >>
+> > >>In addition, remove x86 livepatch relocation code. It is no longer needed
+> > >>since symbol resolution and relocation work have been offloaded to module
+> > >>loader.
+> > >>
+> > >>Signed-off-by: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> > >>---
+> > >> arch/x86/include/asm/livepatch.h |   2 -
+> > >> arch/x86/kernel/Makefile         |   1 -
+> > >> arch/x86/kernel/livepatch.c      |  70 ---------------------------
+> > >> include/linux/livepatch.h        |  33 +++++--------
+> > >> kernel/livepatch/core.c          | 101 +++++++++++++++++++--------------------
+> > >> 5 files changed, 62 insertions(+), 145 deletions(-)
+> > >> delete mode 100644 arch/x86/kernel/livepatch.c
+> > >>
+> > >>diff --git a/arch/x86/include/asm/livepatch.h b/arch/x86/include/asm/livepatch.h
+> > >>index 19c099a..7312e25 100644
+> > >>--- a/arch/x86/include/asm/livepatch.h
+> > >>+++ b/arch/x86/include/asm/livepatch.h
+> > >>@@ -33,8 +33,6 @@ static inline int klp_check_compiler_support(void)
+> > >> #endif
+> > >> 	return 0;
+> > >> }
+> > >>-int klp_write_module_reloc(struct module *mod, unsigned long type,
+> > >>-			   unsigned long loc, unsigned long value);
+> > >>
+> > >> static inline void klp_arch_set_pc(struct pt_regs *regs, unsigned long ip)
+> > >> {
+> > >>diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+> > >>index b1b78ff..c5e9a5c 100644
+> > >>--- a/arch/x86/kernel/Makefile
+> > >>+++ b/arch/x86/kernel/Makefile
+> > >>@@ -67,7 +67,6 @@ obj-$(CONFIG_X86_MPPARSE)	+= mpparse.o
+> > >> obj-y				+= apic/
+> > >> obj-$(CONFIG_X86_REBOOTFIXUPS)	+= reboot_fixups_32.o
+> > >> obj-$(CONFIG_DYNAMIC_FTRACE)	+= ftrace.o
+> > >>-obj-$(CONFIG_LIVEPATCH)		+= livepatch.o
+> > >> obj-$(CONFIG_FUNCTION_GRAPH_TRACER) += ftrace.o
+> > >> obj-$(CONFIG_FTRACE_SYSCALLS)	+= ftrace.o
+> > >> obj-$(CONFIG_X86_TSC)		+= trace_clock.o
+> > >>diff --git a/arch/x86/kernel/livepatch.c b/arch/x86/kernel/livepatch.c
+> > >>deleted file mode 100644
+> > >>index 92fc1a5..0000000
+> > >>--- a/arch/x86/kernel/livepatch.c
+> > >>+++ /dev/null
+> > >>@@ -1,70 +0,0 @@
+> > >>-/*
+> > >>- * livepatch.c - x86-specific Kernel Live Patching Core
+> > >>- *
+> > >>- * Copyright (C) 2014 Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> > >>- * Copyright (C) 2014 SUSE
+> > >>- *
+> > >>- * This program is free software; you can redistribute it and/or
+> > >>- * modify it under the terms of the GNU General Public License
+> > >>- * as published by the Free Software Foundation; either version 2
+> > >>- * of the License, or (at your option) any later version.
+> > >>- *
+> > >>- * This program is distributed in the hope that it will be useful,
+> > >>- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+> > >>- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> > >>- * GNU General Public License for more details.
+> > >>- *
+> > >>- * You should have received a copy of the GNU General Public License
+> > >>- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+> > >>- */
+> > >>-
+> > >>-#include <linux/module.h>
+> > >>-#include <linux/uaccess.h>
+> > >>-#include <asm/elf.h>
+> > >>-#include <asm/livepatch.h>
+> > >>-
+> > >>-/**
+> > >>- * klp_write_module_reloc() - write a relocation in a module
+> > >>- * @mod:	module in which the section to be modified is found
+> > >>- * @type:	ELF relocation type (see asm/elf.h)
+> > >>- * @loc:	address that the relocation should be written to
+> > >>- * @value:	relocation value (sym address + addend)
+> > >>- *
+> > >>- * This function writes a relocation to the specified location for
+> > >>- * a particular module.
+> > >>- */
+> > >>-int klp_write_module_reloc(struct module *mod, unsigned long type,
+> > >>-			   unsigned long loc, unsigned long value)
+> > >>-{
+> > >>-	size_t size = 4;
+> > >>-	unsigned long val;
+> > >>-	unsigned long core = (unsigned long)mod->core_layout.base;
+> > >>-	unsigned long core_size = mod->core_layout.size;
+> > >>-
+> > >>-	switch (type) {
+> > >>-	case R_X86_64_NONE:
+> > >>-		return 0;
+> > >>-	case R_X86_64_64:
+> > >>-		val = value;
+> > >>-		size = 8;
+> > >>-		break;
+> > >>-	case R_X86_64_32:
+> > >>-		val = (u32)value;
+> > >>-		break;
+> > >>-	case R_X86_64_32S:
+> > >>-		val = (s32)value;
+> > >>-		break;
+> > >>-	case R_X86_64_PC32:
+> > >>-		val = (u32)(value - loc);
+> > >>-		break;
+> > >>-	default:
+> > >>-		/* unsupported relocation type */
+> > >>-		return -EINVAL;
+> > >>-	}
+> > >>-
+> > >>-	if (loc < core || loc >= core + core_size)
+> > >>-		/* loc does not point to any symbol inside the module */
+> > >>-		return -EINVAL;
+> > >>-
+> > >>-	return probe_kernel_write((void *)loc, &val, size);
+> > >>-}
+> > >>diff --git a/include/linux/livepatch.h b/include/linux/livepatch.h
+> > >>index a882865..2f12ce7 100644
+> > >>--- a/include/linux/livepatch.h
+> > >>+++ b/include/linux/livepatch.h
+> > >>@@ -65,27 +65,8 @@ struct klp_func {
+> > >> };
+> > >>
+> > >> /**
+> > >>- * struct klp_reloc - relocation structure for live patching
+> > >>- * @loc:	address where the relocation will be written
+> > >>- * @sympos:	position in kallsyms to disambiguate symbols (optional)
+> > >>- * @type:	ELF relocation type
+> > >>- * @name:	name of the referenced symbol (for lookup/verification)
+> > >>- * @addend:	offset from the referenced symbol
+> > >>- * @external:	symbol is either exported or within the live patch module itself
+> > >>- */
+> > >>-struct klp_reloc {
+> > >>-	unsigned long loc;
+> > >>-	unsigned long sympos;
+> > >>-	unsigned long type;
+> > >>-	const char *name;
+> > >>-	int addend;
+> > >>-	int external;
+> > >>-};
+> > >>-
+> > >>-/**
+> > >>  * struct klp_object - kernel object structure for live patching
+> > >>  * @name:	module name (or NULL for vmlinux)
+> > >>- * @relocs:	relocation entries to be applied at load time
+> > >>  * @funcs:	function entries for functions to be patched in the object
+> > >>  * @kobj:	kobject for sysfs resources
+> > >>  * @mod:	kernel module associated with the patched object
+> > >>@@ -95,7 +76,6 @@ struct klp_reloc {
+> > >> struct klp_object {
+> > >> 	/* external */
+> > >> 	const char *name;
+> > >>-	struct klp_reloc *relocs;
+> > >> 	struct klp_func *funcs;
+> > >>
+> > >> 	/* internal */
+> > >>@@ -123,6 +103,19 @@ struct klp_patch {
+> > >> 	enum klp_state state;
+> > >> };
+> > >>
+> > >>+/*
+> > >>+ * Livepatch-specific symbols and relocation
+> > >>+ * sections are prefixed with a tag:
+> > >>+ * .klp.rel. for relocation sections
+> > >>+ * .klp.sym. for livepatch symbols
+> > >>+ */
+> > >>+#define KLP_TAG_LEN 9
+> > >>+/*
+> > >>+ * Livepatch-specific bits for specifying symbol
+> > >>+ * positions in the Elf_Sym st_other field
+> > >>+ */
+> > >>+#define KLP_SYMPOS(o) (o >> 2) & 0xff
+> > >>+
+> > >Can st_value be used instead?  I think we ended up deciding that would
+> > >be better:
+>
+> Maybe encoding it in the sym name is the safest bet.  Why not, we've
+> already got a bunch of other stuff there anyway :-)  One idea would be
+> to append it with ',<sympos>' to be consistent with the sysfs entries:
+>
+>   .klp.sym.vmlinux.symname,1
 
-> -----Original Message-----
-> From: Ben Maurer [mailto:bmaurer@fb.com]
-> Sent: Tuesday, January 12, 2016 3:28 PM
-> 
-> One disadvantage of only allowing one is that high performance server
-> applications tend to statically link. It'd suck to have to go through what ever
-> type of relocation we'd need to pull this out of glibc. But if there's only one
-> registration allowed a statically linked app couldn't create its own if glibc
-> might use it some day.
-> 
+This looks like the most safe solution to me as well.
 
-If there was a new command like GETCPU_CACHE_CMD_ADDRESS that returned the address that is currently registered for that task that wouldn't be an issue (the kernel knows the address it's going to write to for that task there's no reason not to make it available back to user space on request). The main limitation of only allowing one address is that whomever registered that address would be providing an (unenforceable implicit) guarantee that it would always be there until the task ended (GETCPU_CACHE_CMD_UNREGISTER would have to go away with only one registerable address). It's highly likely that anyone registering an address would keep it for the life of the task but it's hard to guarantee it.
-
-There only two impacts that I can think of quickly are:
-
-1) if multiple shared libraries wanted to register an address that were dynamically loaded after a program starts using an explicit dlopen (in a process that didn't already have an address registered). They shouldn't register an address - they should only ask for an already existing one and have a fallback if there isn't one currently. If it did register something and was unloaded and the memory is freed/unmapped anyone else using the address isn't going to be happy since you could either have non-existent addresses or use after free happening. The library that registered it would need to leak the address so anyone using it can still do so or have some other method of doing cleanup when the task ends after it's been unloaded. The potential impact of that depends on if anyone thinks that is
-  at all likely to happen.
-2) There could be ordering issues for shared libraries with initializers and finalizers if an cpu cache address is registered in an initializer and used in a finalizer of another library that is ran after the finalizer of the library that registered it (if it's in memory that is no longer available or it's possible to unregister an address). 
-
-> 
-> 
-> Sent from my iPhone
-> 
-> > On Jan 11, 2016, at 6:46 PM, Josh Triplett <josh@joshtriplett.org> wrote:
-> >
-> >> On Tue, Jan 12, 2016 at 12:49:18AM +0000, Mathieu Desnoyers wrote:
-> >> ----- On Jan 11, 2016, at 6:03 PM, Josh Triplett josh@joshtriplett.org wrote:
-> >>
-> >>>> On Mon, Jan 11, 2016 at 10:38:28PM +0000, Seymour, Shane M wrote:
-> >>>> I have some concerns and suggestions for you about this.
-> >>>>
-> >>>> What's to stop someone in user space from requesting an arbitrarily
-> >>>> large number of CPU # cache locations that the kernel needs to
-> >>>> allocate memory to track and each time the task migrates to a new
-> >>>> CPU it needs to update them all? Could you use it to dramatically
-> >>>> slow down a system/task switching? Should there be a ulimit type
-> >>>> value or a sysctl setting to limit the number that you're allowed to
-> register per-task?
-> >>>
-> >>> The documented behavior of the syscall allows only one location per
-> >>> thread, so the kernel can track that one and only address rather
-> >>> easily in the task_struct.  Allowing dynamic allocation definitely
-> >>> doesn't seem like a good idea.
-> >>
-> >> The current implementation now allows more than one location per
-> >> thread. Which piece of documentation states that only one location
-> >> per thread is allowed ? This was indeed the case for the prior
-> >> implementations, but I moved to implementing a linked-list of
-> >> cpu_cache areas per thread to allow the getcpu_cache system call to
-> >> be used by more than a single shared object within a given program.
-> >
-> > Ah, I missed that change.
-> >
-> >> Without the linked list, as soon as more than one shared object try
-> >> to register their cache, the first one will prohibit all others from
-> >> doing so.
-> >>
-> >> We could perhaps try to document that this system call should only
-> >> ever be used by *libc, and all libraries and applications should then
-> >> use the libc TLS cache variable, but it seems rather fragile, and any
-> >> app/lib could try to register its own cache.
-> >
-> > That does seem a bit fragile, true; on the other hand, the linked-list
-> > approach would allow userspace to allocate an unbounded amount of
-> > kernel memory, without any particular control on it.  That doesn't
-> > seem reasonable.  Introducing an rlimit or similar for this seems like
-> > massive overkill, and hardcoding a fixed limit breaks the 0-1-infinity
-> > rule.
-> >
-> > Given that any registered location will always provide the same value,
-> > allowing only a single registration doesn't seem *too* problematic;
-> > libc-based programs can use the libc implementation, and
-> > non-libc-based programs can register a location themselves.  And users
-> > of this API will already likely want to use some TLS mechanism, which
-> > already interacts heavily with libc (set_thread_area/clone).
-> >
-> > Allowing only one registration at a time seems preferable to
-> > introducing another way to allocate kernel resources on a process's behalf.
-> >
-> > - Josh Triplett
+Best Regards,
+Petr
