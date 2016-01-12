@@ -1,51 +1,60 @@
-From: Benjamin LaHaise <bcrl@kvack.org>
-Subject: Re: [PATCH 07/13] aio: enabled thread based async fsync
-Date: Mon, 11 Jan 2016 20:30:18 -0500
-Message-ID: <20160112013018.GE16499@kvack.org>
-References: <cover.1452549431.git.bcrl@kvack.org> <80934665e0dd2360e2583522c7c7569e5a92be0e.1452549431.git.bcrl@kvack.org> <20160112011128.GC6033@dastard>
+From: Chris Mason <clm@fb.com>
+Subject: Re: [PATCH 09/13] aio: add support for async openat()
+Date: Mon, 11 Jan 2016 20:45:09 -0500
+Message-ID: <20160112014509.z6xefgc2rrkytmvk@ret.masoncoding.com>
+References: <cover.1452549431.git.bcrl@kvack.org>
+ <150a0b4905f1d7274b4c2c7f5e3f4d8df5dda1d7.1452549431.git.bcrl@kvack.org>
+ <CA+55aFw8j_3Vkb=HVoMwWTPD=5ve8RpNZeL31CcKQZ+HRSbfTA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-aio@kvack.org>
+Content-Type: text/plain; charset="us-ascii"
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20160112011128.GC6033@dastard>
-Sender: owner-linux-aio@kvack.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>
+In-Reply-To: <CA+55aFw8j_3Vkb=HVoMwWTPD=5ve8RpNZeL31CcKQZ+HRSbfTA@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Benjamin LaHaise <bcrl@kvack.org>, Ingo Molnar <mingo@kernel.org>, linux-aio@kvack.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 12, 2016 at 12:11:28PM +1100, Dave Chinner wrote:
-> On Mon, Jan 11, 2016 at 05:07:23PM -0500, Benjamin LaHaise wrote:
-> > Enable a fully asynchronous fsync and fdatasync operations in aio using
-> > the aio thread queuing mechanism.
-> > 
-> > Signed-off-by: Benjamin LaHaise <ben.lahaise@solacesystems.com>
-> > Signed-off-by: Benjamin LaHaise <bcrl@kvack.org>
+On Mon, Jan 11, 2016 at 04:22:28PM -0800, Linus Torvalds wrote:
+> On Mon, Jan 11, 2016 at 2:07 PM, Benjamin LaHaise <bcrl@kvack.org> wrote:
+> > Another blocking operation used by applications that want aio
+> > functionality is that of opening files that are not resident in memory.
+> > Using the thread based aio helper, add support for IOCB_CMD_OPENAT.
 > 
-> Insufficient. Needs the range to be passed through and call
-> vfs_fsync_range(), as I implemented here:
-
-Noted.
-
-> https://lkml.org/lkml/2015/10/28/878
-
-Please at least Cc the aio list in the future on aio patches, as I do
-not have the time to read linux-kernel these days unless prodded to do
-so...
-
-		-ben
-
-> Cheers,
+> So I think this is ridiculously ugly.
 > 
-> Dave.
-> -- 
-> Dave Chinner
-> david@fromorbit.com
+> AIO is a horrible ad-hoc design, with the main excuse being "other,
+> less gifted people, made that design, and we are implementing it for
+> compatibility because database people - who seldom have any shred of
+> taste - actually use it".
+> 
+> But AIO was always really really ugly.
+> 
+> Now you introduce the notion of doing almost arbitrary system calls
+> asynchronously in threads, but then you use that ass-backwards nasty
+> interface to do so.
 
--- 
-"Thought is the essence of where you are now."
+[ ... ]
+
+> I'm adding Ingo the to cc, because I think Ingo had a "run this list
+> of system calls" patch at one point - in order to avoid system call
+> overhead. I don't think that was very interesting (because system call
+> overhead is seldom all that noticeable for any interesting system
+> calls), but with the "let's do the list asynchronously" addition it
+> might be much more intriguing. Ingo, do I remember correctly that it
+> was you? I might be confused about who wrote that patch, and I can't
+> find it now.
+
+Zach Brown and Ingo traded a bunch of ideas.  There were chicklets and
+syslets?  A little search, it looks like acall was a slightly different
+iteration, but the patches didn't make it off oss.oracle.com:
+
+https://lwn.net/Articles/316806/
+
+-chris
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
