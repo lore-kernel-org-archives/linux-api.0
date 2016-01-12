@@ -1,96 +1,101 @@
-From: Eric Biggers <ebiggers3@gmail.com>
-Subject: Re: [PATCH 8/9] vfs: hoist the btrfs deduplication ioctl to the vfs
-Date: Tue, 12 Jan 2016 00:07:14 -0600
-Message-ID: <20160112060714.GA4980@zzz>
-References: <20151219085505.12478.71157.stgit@birch.djwong.org>
-	<20151219085559.12478.33700.stgit@birch.djwong.org>
+From: "Seymour, Shane M" <shane.seymour@hpe.com>
+Subject: RE: [RFC PATCH 0/3] Implement getcpu_cache system call
+Date: Tue, 12 Jan 2016 06:40:24 +0000
+Message-ID: <DDB9C85B850785449757F9914A034FCB4450B0A2@G9W0766.americas.hpqcorp.net>
+References: <1451977320-4886-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <DDB9C85B850785449757F9914A034FCB4450ACF7@G9W0766.americas.hpqcorp.net>
+ <20160111230306.GC28717@cloud>
+ <137700396.343696.1452559758752.JavaMail.zimbra@efficios.com>,<20160112024549.GA6488@x>
+ <9F8D25C2-B5EE-479D-BD61-0FE466962B9E@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-Content-Disposition: inline
-In-Reply-To: <20151219085559.12478.33700.stgit@birch.djwong.org>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, xfs@oss.sgi.com
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <9F8D25C2-B5EE-479D-BD61-0FE466962B9E@fb.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ben Maurer <bmaurer@fb.com>, Josh Triplett <josh@joshtriplett.org>
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Thomas Gleixner <tglx@linutronix.de>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Some feedback on the VFS portion of the FIDEDUPERANGE ioctl and its man page...
-(note: I realize the patch is mostly just moving the code that already existed
-in btrfs, but in the VFS it deserves a more thorough review):
 
-At high level, I am confused about what is meant by the "source" and
-"destination" files.  I understand that with more than two files, you
-effectively have to choose one file to treat specially and dedupe with all the
-other files (an NxN comparison isn't realistic).  But with just two files, a
-deduplication operation should be completely symmetric, should it not?  The end
-result should be that the data is deduplicated, regardless of the order in which
-I gave the file descriptors.  So why is there some non-symmetric behavior?
-There are several examples but one is that the VFS is checking !S_ISREG() on the
-"source" file descriptor but not on the "destination" file descriptor.  Another
-is that different permissions are required on the source versus on the
-destination.  If there are good reasons for the nonsymmetry then this needs to
-be clearly explained in the man page; otherwise it may not be clear what to use
-as the "source" and what to use as the "destination".
+> -----Original Message-----
+> From: Ben Maurer [mailto:bmaurer@fb.com]
+> Sent: Tuesday, January 12, 2016 3:28 PM
+> 
+> One disadvantage of only allowing one is that high performance server
+> applications tend to statically link. It'd suck to have to go through what ever
+> type of relocation we'd need to pull this out of glibc. But if there's only one
+> registration allowed a statically linked app couldn't create its own if glibc
+> might use it some day.
+> 
 
-It seems odd to be adding "copy" as a system call but then have "dedupe" and
-"clone" as ioctls rather than system calls... it seems that they should all be
-one or the other (at least, if we put aside the fact that the ioctls already
-exist in btrfs).
+If there was a new command like GETCPU_CACHE_CMD_ADDRESS that returned the address that is currently registered for that task that wouldn't be an issue (the kernel knows the address it's going to write to for that task there's no reason not to make it available back to user space on request). The main limitation of only allowing one address is that whomever registered that address would be providing an (unenforceable implicit) guarantee that it would always be there until the task ended (GETCPU_CACHE_CMD_UNREGISTER would have to go away with only one registerable address). It's highly likely that anyone registering an address would keep it for the life of the task but it's hard to guarantee it.
 
-The range checking in clone_verify_area() appears incomplete.  Someone could
-provide len=UINT64_MAX and all the checks would still pass even though 'pos+len'
-would overflow.
+There only two impacts that I can think of quickly are:
 
-Should the ioctl be interruptible?  Right now it always goes through *all* the
-'struct file_dedupe_range_info's you passed in --- potentially up to 65535 of
-them.
+1) if multiple shared libraries wanted to register an address that were dynamically loaded after a program starts using an explicit dlopen (in a process that didn't already have an address registered). They shouldn't register an address - they should only ask for an already existing one and have a fallback if there isn't one currently. If it did register something and was unloaded and the memory is freed/unmapped anyone else using the address isn't going to be happy since you could either have non-existent addresses or use after free happening. The library that registered it would need to leak the address so anyone using it can still do so or have some other method of doing cleanup when the task ends after it's been unloaded. The potential impact of that depends on if anyone thinks that is
+  at all likely to happen.
+2) There could be ordering issues for shared libraries with initializers and finalizers if an cpu cache address is registered in an initializer and used in a finalizer of another library that is ran after the finalizer of the library that registered it (if it's in memory that is no longer available or it's possible to unregister an address). 
 
-Why 'info->bytes_deduped += deduped' rather than 'info->bytes_deduped =
-deduped'?  'bytes_deduped' is per file descriptor, not for the operation as a
-whole.
-
-What permissions do you need on the destination file descriptors?  The man page
-implies they must be open for writing and not appending.  The implementation
-differs: it requires FMODE_WRITE only for non-admin users, and it doesn't check
-for O_APPEND at all.  The man page also says you get EPERM if "dest_fd is
-immutable" and ETXTBSY if "one of the files is a swap file", which I don't see
-actually happening in the implementation; it seems those error codes perhaps
-exist at all for this ioctl but rather be left to open(..., O_WRONLY).
-
-If the filesystem doesn't support deduplication, or I pass in a strange file
-descriptor such as one for a named pipe, do I get EINVAL or EOPNOTSUPP?  The man
-page isn't clear.
-
-Under what circumstances will 'bytes_deduped' differ from the count that was
-passed in?  If short counts are allowed, what will be the 'status' be in that
-case: FILE_DEDUP_RANGE_DIFFERS, FILE_DEDUPE_RANGE_SAME, or something else?  Can
-data be deduped even if only a prefix of the data region matches?
-
-The man page doesn't mention FILE_DEDUPE_RANGE_SAME at all, instead calling it
-0; it only mentions FILE_DEDUPE_RANGE_DIFFERS.
-
-The man page isn't clear about whether the ioctl stops early if an error occurs
-or always processes all the 'struct file_dedupe_range_info's you pass in.  And
-if it were, hypothetically, to stop early, how is the user meant to know on
-which file it stopped?
-
-The man page says "logical_offset" but in the struct it is called "dest_offset".
-
-There are some variables named "same" which don't really make sense now that the
-ioctl is called FIDEDUPERANGE instead of EXTENT_SAME.
-
-Eric
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+> 
+> 
+> Sent from my iPhone
+> 
+> > On Jan 11, 2016, at 6:46 PM, Josh Triplett <josh@joshtriplett.org> wrote:
+> >
+> >> On Tue, Jan 12, 2016 at 12:49:18AM +0000, Mathieu Desnoyers wrote:
+> >> ----- On Jan 11, 2016, at 6:03 PM, Josh Triplett josh@joshtriplett.org wrote:
+> >>
+> >>>> On Mon, Jan 11, 2016 at 10:38:28PM +0000, Seymour, Shane M wrote:
+> >>>> I have some concerns and suggestions for you about this.
+> >>>>
+> >>>> What's to stop someone in user space from requesting an arbitrarily
+> >>>> large number of CPU # cache locations that the kernel needs to
+> >>>> allocate memory to track and each time the task migrates to a new
+> >>>> CPU it needs to update them all? Could you use it to dramatically
+> >>>> slow down a system/task switching? Should there be a ulimit type
+> >>>> value or a sysctl setting to limit the number that you're allowed to
+> register per-task?
+> >>>
+> >>> The documented behavior of the syscall allows only one location per
+> >>> thread, so the kernel can track that one and only address rather
+> >>> easily in the task_struct.  Allowing dynamic allocation definitely
+> >>> doesn't seem like a good idea.
+> >>
+> >> The current implementation now allows more than one location per
+> >> thread. Which piece of documentation states that only one location
+> >> per thread is allowed ? This was indeed the case for the prior
+> >> implementations, but I moved to implementing a linked-list of
+> >> cpu_cache areas per thread to allow the getcpu_cache system call to
+> >> be used by more than a single shared object within a given program.
+> >
+> > Ah, I missed that change.
+> >
+> >> Without the linked list, as soon as more than one shared object try
+> >> to register their cache, the first one will prohibit all others from
+> >> doing so.
+> >>
+> >> We could perhaps try to document that this system call should only
+> >> ever be used by *libc, and all libraries and applications should then
+> >> use the libc TLS cache variable, but it seems rather fragile, and any
+> >> app/lib could try to register its own cache.
+> >
+> > That does seem a bit fragile, true; on the other hand, the linked-list
+> > approach would allow userspace to allocate an unbounded amount of
+> > kernel memory, without any particular control on it.  That doesn't
+> > seem reasonable.  Introducing an rlimit or similar for this seems like
+> > massive overkill, and hardcoding a fixed limit breaks the 0-1-infinity
+> > rule.
+> >
+> > Given that any registered location will always provide the same value,
+> > allowing only a single registration doesn't seem *too* problematic;
+> > libc-based programs can use the libc implementation, and
+> > non-libc-based programs can register a location themselves.  And users
+> > of this API will already likely want to use some TLS mechanism, which
+> > already interacts heavily with libc (set_thread_area/clone).
+> >
+> > Allowing only one registration at a time seems preferable to
+> > introducing another way to allocate kernel resources on a process's behalf.
+> >
+> > - Josh Triplett
