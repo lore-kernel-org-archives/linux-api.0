@@ -1,106 +1,81 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH 07/13] aio: enabled thread based async fsync
-Date: Mon, 11 Jan 2016 20:03:41 -0800
-Message-ID: <CA+55aFyLb8scNSYb19rK4iT_Vx5=hKxqPwRHVnETzAhEev0aHw@mail.gmail.com>
-References: <cover.1452549431.git.bcrl@kvack.org>
-	<80934665e0dd2360e2583522c7c7569e5a92be0e.1452549431.git.bcrl@kvack.org>
-	<20160112011128.GC6033@dastard>
-	<CA+55aFxtvMqHgHmHCcszV_QKQ2BY0wzenmrvc6BYN+tLFxesMA@mail.gmail.com>
-	<20160112022548.GD6033@dastard>
-	<CA+55aFzxSrLhOyV3VtO=Cv_J+npD8ubEP74CCF+rdt=CRipzxA@mail.gmail.com>
-	<20160112033708.GE6033@dastard>
+From: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>
+Subject: Re: [RFC PATCH 0/3] Implement getcpu_cache system call
+Date: Tue, 12 Jan 2016 04:27:52 +0000
+Message-ID: <9F8D25C2-B5EE-479D-BD61-0FE466962B9E@fb.com>
+References: <1451977320-4886-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <DDB9C85B850785449757F9914A034FCB4450ACF7@G9W0766.americas.hpqcorp.net>
+ <20160111230306.GC28717@cloud>
+ <137700396.343696.1452559758752.JavaMail.zimbra@efficios.com>,<20160112024549.GA6488@x>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20160112033708.GE6033@dastard>
-Sender: owner-linux-mm@kvack.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: Benjamin LaHaise <bcrl@kvack.org>, linux-aio@kvack.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160112024549.GA6488@x>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Shane M Seymour <shane.seymour-ZPxbGqLxI0U@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 11, 2016 at 7:37 PM, Dave Chinner <david@fromorbit.com> wrote:
->
-> Yes, I heard you the first time, but you haven't acknowledged that
-> the aio fsync interface is indeed different because it already
-> exists. What's the problem with implementing an AIO call that we've
-> advertised as supported for many years now that people are asking us
-> to implement it?
+One disadvantage of only allowing one is that high performance server applications tend to statically link. It'd suck to have to go through what ever type of relocation we'd need to pull this out of glibc. But if there's only one registration allowed a statically linked app couldn't create its own if glibc might use it some day. 
 
-Oh, I don't disagree with that. I think it should be exposed, my point
-was that that too was not enough.
 
-I don't see why you argue. You said "that's not enough". And I jjust
-said that your expansion wasn't sufficient either, and that I think we
-should strive to expand things even more.
 
-And preferably not in some ad-hoc manner. Expand it to *everything* we can do.
+Sent from my iPhone
 
-> As for a generic async syscall interface, why not just add
-> IOCB_CMD_SYSCALL that encodes the syscall number and parameters
-> into the iovec structure and let the existing aio subsystem handle
-> demultiplexing it and handing them off to threads/workqueues/etc?
-
-That would likely be the simplest approach, yes.
-
-There's a few arguments against it, though:
-
- - doing the indirect system call thing does end up being
-architecture-specific, so now you do need the AIO code to call into
-some arch wrapper.
-
-   Not a huge deal, since the arch wrapper will be pretty simple (and
-we can have a default one that just returns ENOSYS, so that we don't
-have to synchronize all architectures)
-
- - the aio interface really is horrible crap. Really really.
-
-   For example, the whole "send signal as a completion model" is so
-f*cking broken that I really don't want to extend the aio interface
-too much. I think it's unfixable.
-
-So I really think we'd be *much* better off with a new interface
-entirely - preferably one that allows the old aio interfaces to fall
-out fairly naturally.
-
-Ben mentioned lio_listio() as a reason for why he wanted to extend the
-AIO interface, but I think it works the other way around: yes, we
-should look at lio_listio(), but we should look at it mainly as a way
-to ask ourselves: "can we implement a new aynchronous system call
-submission model that would also make it possible to implement
-lio_listio() as a user space wrapper around it".
-
-For example, if we had an actual _good_ way to queue up things, you
-could probably make that "struct sigevent" completion for lio_listio()
-just be another asynchronous system call at the end of the list - a
-system call that sends the completion signal.  And the aiocb_list[]
-itself? Maybe those could just be done as normal (individual) aio
-calls (so that you end up having the aiocb that you can wait on with
-aio_suspend() etc).
-
-But then people who do *not* want the crazy aiocb, and do *not* want
-some SIGIO or whatever, could just fire off asynchronous system calls
-without that cruddy interface.
-
-So my argument is really that I think it would be better to at least
-look into maybe creating something less crapulent, and striving to
-make it easy to make the old legacy interfaces be just wrappers around
-a more capable model.
-
-And hey, it may be that in the end nobody cares enough, and the right
-thing (or at least the prudent thing) to do is to just pile the crap
-on deeper and higher, and just add a single IOCB_CMD_SYSCALL
-indirection entry.
-
-So I'm not dismissing that as a solution - I just don't think it's a
-particularly clean one.
-
-It does have the advantage of likely being a fairly simple hack. But
-it smells like a hack.
-
-                Linus
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> On Jan 11, 2016, at 6:46 PM, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> wrote:
+> 
+>> On Tue, Jan 12, 2016 at 12:49:18AM +0000, Mathieu Desnoyers wrote:
+>> ----- On Jan 11, 2016, at 6:03 PM, Josh Triplett josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org wrote:
+>> 
+>>>> On Mon, Jan 11, 2016 at 10:38:28PM +0000, Seymour, Shane M wrote:
+>>>> I have some concerns and suggestions for you about this.
+>>>> 
+>>>> What's to stop someone in user space from requesting an arbitrarily large number
+>>>> of CPU # cache locations that the kernel needs to allocate memory to track and
+>>>> each time the task migrates to a new CPU it needs to update them all? Could you
+>>>> use it to dramatically slow down a system/task switching? Should there be a
+>>>> ulimit type value or a sysctl setting to limit the number that you're allowed
+>>>> to register per-task?
+>>> 
+>>> The documented behavior of the syscall allows only one location per
+>>> thread, so the kernel can track that one and only address rather easily
+>>> in the task_struct.  Allowing dynamic allocation definitely doesn't seem
+>>> like a good idea.
+>> 
+>> The current implementation now allows more than one location per
+>> thread. Which piece of documentation states that only one location
+>> per thread is allowed ? This was indeed the case for the prior
+>> implementations, but I moved to implementing a linked-list of
+>> cpu_cache areas per thread to allow the getcpu_cache system call to
+>> be used by more than a single shared object within a given program.
+> 
+> Ah, I missed that change.
+> 
+>> Without the linked list, as soon as more than one shared object try
+>> to register their cache, the first one will prohibit all others from
+>> doing so.
+>> 
+>> We could perhaps try to document that this system call should only
+>> ever be used by *libc, and all libraries and applications should
+>> then use the libc TLS cache variable, but it seems rather fragile,
+>> and any app/lib could try to register its own cache.
+> 
+> That does seem a bit fragile, true; on the other hand, the linked-list
+> approach would allow userspace to allocate an unbounded amount of kernel
+> memory, without any particular control on it.  That doesn't seem
+> reasonable.  Introducing an rlimit or similar for this seems like
+> massive overkill, and hardcoding a fixed limit breaks the 0-1-infinity
+> rule.
+> 
+> Given that any registered location will always provide the same value,
+> allowing only a single registration doesn't seem *too* problematic;
+> libc-based programs can use the libc implementation, and non-libc-based
+> programs can register a location themselves.  And users of this API will
+> already likely want to use some TLS mechanism, which already interacts
+> heavily with libc (set_thread_area/clone).
+> 
+> Allowing only one registration at a time seems preferable to introducing
+> another way to allocate kernel resources on a process's behalf.
+> 
+> - Josh Triplett
