@@ -1,216 +1,216 @@
-From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Subject: Re: livepatch: reuse module loader code to write relocations
-Date: Tue, 12 Jan 2016 10:12:07 +0100
-Message-ID: <20160112091207.GM731@pathway.suse.cz>
-References: <1452281304-28618-1-git-send-email-jeyu@redhat.com>
- <1452281304-28618-5-git-send-email-jeyu@redhat.com>
- <20160111213349.GB17874@treble.redhat.com>
- <20160111223513.GA10796@packer-debian-8-amd64.digitalocean.com>
- <20160112030552.GC17874@treble.redhat.com>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: [PATCH 8/9] vfs: hoist the btrfs deduplication ioctl to the vfs
+Date: Tue, 12 Jan 2016 01:14:32 -0800
+Message-ID: <20160112091432.GB7832@birch.djwong.org>
+References: <20151219085505.12478.71157.stgit@birch.djwong.org>
+	<20151219085559.12478.33700.stgit@birch.djwong.org>
+	<20160112060714.GA4980@zzz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
 Content-Disposition: inline
-In-Reply-To: <20160112030552.GC17874-8wJ5/zUtDR0XGNroddHbYwC/G2K4zDHf@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <20160112060714.GA4980@zzz>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Eric Biggers <ebiggers3@gmail.com>
+Cc: linux-api@vger.kernel.org, xfs@oss.sgi.com, hch@infradead.org, linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon 2016-01-11 21:05:52, Josh Poimboeuf wrote:
-> On Mon, Jan 11, 2016 at 05:35:13PM -0500, Jessica Yu wrote:
-> > +++ Josh Poimboeuf [11/01/16 15:33 -0600]:
-> > >On Fri, Jan 08, 2016 at 02:28:22PM -0500, Jessica Yu wrote:
-> > >>Reuse module loader code to write relocations, thereby eliminating the need
-> > >>for architecture specific relocation code in livepatch. Namely, we reuse
-> > >>apply_relocate_add() in the module loader to write relocations instead of
-> > >>duplicating functionality in livepatch's klp_write_module_reloc(). To apply
-> > >>relocation sections, remaining SHN_LIVEPATCH symbols referenced by relocs
-> > >>are resolved and then apply_relocate_add() is called to apply those
-> > >>relocations.
-> > >>
-> > >>In addition, remove x86 livepatch relocation code. It is no longer needed
-> > >>since symbol resolution and relocation work have been offloaded to module
-> > >>loader.
-> > >>
-> > >>Signed-off-by: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> > >>---
-> > >> arch/x86/include/asm/livepatch.h |   2 -
-> > >> arch/x86/kernel/Makefile         |   1 -
-> > >> arch/x86/kernel/livepatch.c      |  70 ---------------------------
-> > >> include/linux/livepatch.h        |  33 +++++--------
-> > >> kernel/livepatch/core.c          | 101 +++++++++++++++++++--------------------
-> > >> 5 files changed, 62 insertions(+), 145 deletions(-)
-> > >> delete mode 100644 arch/x86/kernel/livepatch.c
-> > >>
-> > >>diff --git a/arch/x86/include/asm/livepatch.h b/arch/x86/include/asm/livepatch.h
-> > >>index 19c099a..7312e25 100644
-> > >>--- a/arch/x86/include/asm/livepatch.h
-> > >>+++ b/arch/x86/include/asm/livepatch.h
-> > >>@@ -33,8 +33,6 @@ static inline int klp_check_compiler_support(void)
-> > >> #endif
-> > >> 	return 0;
-> > >> }
-> > >>-int klp_write_module_reloc(struct module *mod, unsigned long type,
-> > >>-			   unsigned long loc, unsigned long value);
-> > >>
-> > >> static inline void klp_arch_set_pc(struct pt_regs *regs, unsigned long ip)
-> > >> {
-> > >>diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
-> > >>index b1b78ff..c5e9a5c 100644
-> > >>--- a/arch/x86/kernel/Makefile
-> > >>+++ b/arch/x86/kernel/Makefile
-> > >>@@ -67,7 +67,6 @@ obj-$(CONFIG_X86_MPPARSE)	+= mpparse.o
-> > >> obj-y				+= apic/
-> > >> obj-$(CONFIG_X86_REBOOTFIXUPS)	+= reboot_fixups_32.o
-> > >> obj-$(CONFIG_DYNAMIC_FTRACE)	+= ftrace.o
-> > >>-obj-$(CONFIG_LIVEPATCH)		+= livepatch.o
-> > >> obj-$(CONFIG_FUNCTION_GRAPH_TRACER) += ftrace.o
-> > >> obj-$(CONFIG_FTRACE_SYSCALLS)	+= ftrace.o
-> > >> obj-$(CONFIG_X86_TSC)		+= trace_clock.o
-> > >>diff --git a/arch/x86/kernel/livepatch.c b/arch/x86/kernel/livepatch.c
-> > >>deleted file mode 100644
-> > >>index 92fc1a5..0000000
-> > >>--- a/arch/x86/kernel/livepatch.c
-> > >>+++ /dev/null
-> > >>@@ -1,70 +0,0 @@
-> > >>-/*
-> > >>- * livepatch.c - x86-specific Kernel Live Patching Core
-> > >>- *
-> > >>- * Copyright (C) 2014 Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> > >>- * Copyright (C) 2014 SUSE
-> > >>- *
-> > >>- * This program is free software; you can redistribute it and/or
-> > >>- * modify it under the terms of the GNU General Public License
-> > >>- * as published by the Free Software Foundation; either version 2
-> > >>- * of the License, or (at your option) any later version.
-> > >>- *
-> > >>- * This program is distributed in the hope that it will be useful,
-> > >>- * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> > >>- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> > >>- * GNU General Public License for more details.
-> > >>- *
-> > >>- * You should have received a copy of the GNU General Public License
-> > >>- * along with this program; if not, see <http://www.gnu.org/licenses/>.
-> > >>- */
-> > >>-
-> > >>-#include <linux/module.h>
-> > >>-#include <linux/uaccess.h>
-> > >>-#include <asm/elf.h>
-> > >>-#include <asm/livepatch.h>
-> > >>-
-> > >>-/**
-> > >>- * klp_write_module_reloc() - write a relocation in a module
-> > >>- * @mod:	module in which the section to be modified is found
-> > >>- * @type:	ELF relocation type (see asm/elf.h)
-> > >>- * @loc:	address that the relocation should be written to
-> > >>- * @value:	relocation value (sym address + addend)
-> > >>- *
-> > >>- * This function writes a relocation to the specified location for
-> > >>- * a particular module.
-> > >>- */
-> > >>-int klp_write_module_reloc(struct module *mod, unsigned long type,
-> > >>-			   unsigned long loc, unsigned long value)
-> > >>-{
-> > >>-	size_t size = 4;
-> > >>-	unsigned long val;
-> > >>-	unsigned long core = (unsigned long)mod->core_layout.base;
-> > >>-	unsigned long core_size = mod->core_layout.size;
-> > >>-
-> > >>-	switch (type) {
-> > >>-	case R_X86_64_NONE:
-> > >>-		return 0;
-> > >>-	case R_X86_64_64:
-> > >>-		val = value;
-> > >>-		size = 8;
-> > >>-		break;
-> > >>-	case R_X86_64_32:
-> > >>-		val = (u32)value;
-> > >>-		break;
-> > >>-	case R_X86_64_32S:
-> > >>-		val = (s32)value;
-> > >>-		break;
-> > >>-	case R_X86_64_PC32:
-> > >>-		val = (u32)(value - loc);
-> > >>-		break;
-> > >>-	default:
-> > >>-		/* unsupported relocation type */
-> > >>-		return -EINVAL;
-> > >>-	}
-> > >>-
-> > >>-	if (loc < core || loc >= core + core_size)
-> > >>-		/* loc does not point to any symbol inside the module */
-> > >>-		return -EINVAL;
-> > >>-
-> > >>-	return probe_kernel_write((void *)loc, &val, size);
-> > >>-}
-> > >>diff --git a/include/linux/livepatch.h b/include/linux/livepatch.h
-> > >>index a882865..2f12ce7 100644
-> > >>--- a/include/linux/livepatch.h
-> > >>+++ b/include/linux/livepatch.h
-> > >>@@ -65,27 +65,8 @@ struct klp_func {
-> > >> };
-> > >>
-> > >> /**
-> > >>- * struct klp_reloc - relocation structure for live patching
-> > >>- * @loc:	address where the relocation will be written
-> > >>- * @sympos:	position in kallsyms to disambiguate symbols (optional)
-> > >>- * @type:	ELF relocation type
-> > >>- * @name:	name of the referenced symbol (for lookup/verification)
-> > >>- * @addend:	offset from the referenced symbol
-> > >>- * @external:	symbol is either exported or within the live patch module itself
-> > >>- */
-> > >>-struct klp_reloc {
-> > >>-	unsigned long loc;
-> > >>-	unsigned long sympos;
-> > >>-	unsigned long type;
-> > >>-	const char *name;
-> > >>-	int addend;
-> > >>-	int external;
-> > >>-};
-> > >>-
-> > >>-/**
-> > >>  * struct klp_object - kernel object structure for live patching
-> > >>  * @name:	module name (or NULL for vmlinux)
-> > >>- * @relocs:	relocation entries to be applied at load time
-> > >>  * @funcs:	function entries for functions to be patched in the object
-> > >>  * @kobj:	kobject for sysfs resources
-> > >>  * @mod:	kernel module associated with the patched object
-> > >>@@ -95,7 +76,6 @@ struct klp_reloc {
-> > >> struct klp_object {
-> > >> 	/* external */
-> > >> 	const char *name;
-> > >>-	struct klp_reloc *relocs;
-> > >> 	struct klp_func *funcs;
-> > >>
-> > >> 	/* internal */
-> > >>@@ -123,6 +103,19 @@ struct klp_patch {
-> > >> 	enum klp_state state;
-> > >> };
-> > >>
-> > >>+/*
-> > >>+ * Livepatch-specific symbols and relocation
-> > >>+ * sections are prefixed with a tag:
-> > >>+ * .klp.rel. for relocation sections
-> > >>+ * .klp.sym. for livepatch symbols
-> > >>+ */
-> > >>+#define KLP_TAG_LEN 9
-> > >>+/*
-> > >>+ * Livepatch-specific bits for specifying symbol
-> > >>+ * positions in the Elf_Sym st_other field
-> > >>+ */
-> > >>+#define KLP_SYMPOS(o) (o >> 2) & 0xff
-> > >>+
-> > >Can st_value be used instead?  I think we ended up deciding that would
-> > >be better:
->
-> Maybe encoding it in the sym name is the safest bet.  Why not, we've
-> already got a bunch of other stuff there anyway :-)  One idea would be
-> to append it with ',<sympos>' to be consistent with the sysfs entries:
->
->   .klp.sym.vmlinux.symname,1
+[adding btrfs to the cc since we're talking about a whole new dedupe interface]
 
-This looks like the most safe solution to me as well.
+On Tue, Jan 12, 2016 at 12:07:14AM -0600, Eric Biggers wrote:
+> Some feedback on the VFS portion of the FIDEDUPERANGE ioctl and its man page...
+> (note: I realize the patch is mostly just moving the code that already existed
+> in btrfs, but in the VFS it deserves a more thorough review):
 
-Best Regards,
-Petr
+Wheee. :)
+
+Yes, let's discuss the concerns about the btrfs extent same ioctl.
+
+I believe Christoph dislikes about the odd return mechanism (i.e. status and
+bytes_deduped) and doubts that the vectorization is really necessary.  There's
+not a lot of documentation to go on aside from "Do whatever the BTRFS ioctl
+does".  I suspect that will leave my explanations lackng, since I neither
+designed the btrfs interface nor know all that much about the decisions made to
+arrive at what we have now.
+
+(I agree with both of hch's complaints.)
+
+Really, the best argument for keeping this ioctl is to avoid breaking
+duperemove.  Even then, given that current duperemove checks for btrfs before
+trying to use BTRFS_IOC_EXTENT_SAME, we could very well design a new dedupe
+ioctl for the VFS, hook the new dedupers (XFS) into the new VFS ioctl
+leaving the old btrfs ioctl intact, and train duperemove to try the new
+ioctl and fall back on the btrfs one if the VFS ioctl isn't supported.
+
+Frankly, I also wouldn't mind changing the VFS dedupe ioctl that to something
+that resembles the clone_range interface:
+
+int ioctl(int dest_fd, FIDEDUPERANGE, struct file_dedupe_range * arg);
+
+struct file_dedupe_range {
+    __s64 src_fd;
+    __u64 src_offset;
+    __u64 length;
+    __u64 dest_offset;
+    __u64 flags;
+};
+
+"See if the byte range src_offset:length in src_fd matches all of
+dest_offset:length in dest_fd; if so, share src_fd's physical storage with
+dest_fd.  Both fds must be files; if they are the same file the ranges cannot
+overlap; src_fd must be readable; dest_fd must be writable or append-only.
+Offsets and lengths probably need to be block-aligned, but that is filesystem
+dependent."
+
+The error conditions would be superset of the ones we know about today.  I'd
+return EOVERFLOW or something if length is longer than the FS wants to deal
+with.
+
+Now all the vectorization problems go away, and since it's a new VFS interface
+we can define everything from the start.
+
+Christoph, if this new interface solves your complaints I think I'd like to get
+started on the code/docs soon.
+
+> At high level, I am confused about what is meant by the "source" and
+> "destination" files.  I understand that with more than two files, you
+> effectively have to choose one file to treat specially and dedupe with all
+> the other files (an NxN comparison isn't realistic).  But with just two
+> files, a deduplication operation should be completely symmetric, should it
+> not?  The end
+
+Not sure what you mean by 'symmetric', but in any case the convention seems
+to be that src_fd's storage is shared with dest_fd if there's a match.
+
+> result should be that the data is deduplicated, regardless of the order in
+> which I gave the file descriptors.  So why is there some non-symmetric
+> behavior?  There are several examples but one is that the VFS is checking
+> !S_ISREG() on the "source" file descriptor but not on the "destination" file
+> descriptor.
+
+The dedupe_range function pointer should only be supplied for regular files.
+
+> Another is that different permissions are required on the source versus on
+> the destination.  If there are good reasons for the nonsymmetry then this
+> needs to be clearly explained in the man page; otherwise it may not be clear
+> what to use as the "source" and what to use as the "destination".
+> 
+> It seems odd to be adding "copy" as a system call but then have "dedupe" and
+> "clone" as ioctls rather than system calls... it seems that they should all
+> be one or the other (at least, if we put aside the fact that the ioctls
+> already exist in btrfs).
+
+We can't put the clone ioctl aside; coreutils has already started using it.
+
+I'm not sure if clone_range or extent_same are all that popular, though.
+AFAIK duperemove is the only program using extent_same, and I don't know
+of anything using clone_range.
+
+(Well, xfs_io does...)
+
+> The range checking in clone_verify_area() appears incomplete.  Someone could
+> provide len=UINT64_MAX and all the checks would still pass even though
+> 'pos+len' would overflow.
+
+Yeah...
+
+> Should the ioctl be interruptible?  Right now it always goes through *all*
+> the 'struct file_dedupe_range_info's you passed in --- potentially up to
+> 65535 of them.
+
+There probably ought to be explicit signal checks, or we could just get rid
+of the vectorization entirely. :)
+
+> Why 'info->bytes_deduped += deduped' rather than 'info->bytes_deduped =
+> deduped'?  'bytes_deduped' is per file descriptor, not for the operation as a
+> whole.
+
+Right, because bytes_deduped is a part of file_dedup_range_info, not
+file_dedupe_range.
+
+(Note the bytes_deduped = 0 earlier in the function.)
+
+> What permissions do you need on the destination file descriptors?  The man
+> page implies they must be open for writing and not appending.  The
+> implementation differs: it requires FMODE_WRITE only for non-admin users, and
+> it doesn't check for O_APPEND at all.
+
+I think the result of an earlier discussion was that src_fd must be readable,
+and dest_fd must be writable or appendable.
+
+> The man page also says you get EPERM if "dest_fd is immutable" and ETXTBSY if
+> "one of the files is a swap file", which I don't see actually happening in
+> the implementation; it seems those error codes perhaps exist at all for this
+> ioctl but rather be left to open(..., O_WRONLY).
+
+Those could be hoisted to the VFS (from the XFS implementation), I think.
+
+> If the filesystem doesn't support deduplication, or I pass in a strange file
+> descriptor such as one for a named pipe, do I get EINVAL or EOPNOTSUPP?  The
+> man page isn't clear.
+
+Should be EOPNOTSUPP if dest_fd isn't a regular file; EISDIR if either are
+directories; and EINVAL for any other kind of non-file fd.  I suspect the
+clone* manpages don't make this too clear either.
+
+> Under what circumstances will 'bytes_deduped' differ from the count that was
+> passed in?
+
+btrfs/xfs will only compare the first 16MB.  Not documented anywhere. :(
+
+> If short counts are allowed, what will be the 'status' be in that case:
+> FILE_DEDUP_RANGE_DIFFERS, FILE_DEDUPE_RANGE_SAME, or something else?
+
+One of those two.
+
+> Can data be deduped even if only a prefix of the data region matches?
+
+No.
+
+> The man page doesn't mention FILE_DEDUPE_RANGE_SAME at all, instead calling it
+> 0; it only mentions FILE_DEDUPE_RANGE_DIFFERS.
+
+Oops, good catch. :(
+
+> The man page isn't clear about whether the ioctl stops early if an error
+> occurs or always processes all the 'struct file_dedupe_range_info's you pass
+> in.  And if it were, hypothetically, to stop early, how is the user meant to
+> know on which file it stopped?
+
+I don't know if this should be the official behavior, but it stopped at
+whichever file_dedupe_range_info has both status and bytes_deduped set to zero.
+
+> The man page says "logical_offset" but in the struct it is called
+> "dest_offset".
+
+Oops.
+
+> There are some variables named "same" which don't really make sense now that
+> the ioctl is called FIDEDUPERANGE instead of EXTENT_SAME.
+
+Perhaps not.
+
+I'll later take a look at how many of these issues apply to clone/clone_range.
+
+--D
+
+> 
+> Eric
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
