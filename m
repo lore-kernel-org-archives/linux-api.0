@@ -1,48 +1,40 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH 09/13] aio: add support for async openat()
-Date: Tue, 12 Jan 2016 10:53:19 +0100
-Message-ID: <20160112095319.GA20597@gmail.com>
-References: <cover.1452549431.git.bcrl@kvack.org>
- <150a0b4905f1d7274b4c2c7f5e3f4d8df5dda1d7.1452549431.git.bcrl@kvack.org>
- <CA+55aFw8j_3Vkb=HVoMwWTPD=5ve8RpNZeL31CcKQZ+HRSbfTA@mail.gmail.com>
+From: Will Deacon <will.deacon@arm.com>
+Subject: Re: [PATCH v9 00/13] support "task_isolation" mode for nohz_full
+Date: Tue, 12 Jan 2016 10:07:09 +0000
+Message-ID: <20160112100708.GA15737@arm.com>
+References: <1451936091-29247-1-git-send-email-cmetcalf@ezchip.com>
+ <56941B86.9090009@ezchip.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-aio@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CA+55aFw8j_3Vkb=HVoMwWTPD=5ve8RpNZeL31CcKQZ+HRSbfTA@mail.gmail.com>
-Sender: owner-linux-aio@kvack.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Benjamin LaHaise <bcrl@kvack.org>, linux-aio@kvack.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>
+In-Reply-To: <56941B86.9090009@ezchip.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Chris Metcalf <cmetcalf@ezchip.com>
+Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-
-* Linus Torvalds <torvalds@linux-foundation.org> wrote:
-
-> What do you think? Do you think it might be possible to aim for a generic "do 
-> system call asynchronously" model instead?
+On Mon, Jan 11, 2016 at 04:15:50PM -0500, Chris Metcalf wrote:
+> Ping!  There has been no substantive feedback to this version of
+> the patch in the week since I posted it, which optimistically suggests
+> to me that people may be satisfied with it.  If that's true, Frederic,
+> I assume this would be pulled into your tree?
 > 
-> I'm adding Ingo the to cc, because I think Ingo had a "run this list of system 
-> calls" patch at one point - in order to avoid system call overhead. I don't 
-> think that was very interesting (because system call overhead is seldom all that 
-> noticeable for any interesting system calls), but with the "let's do the list 
-> asynchronously" addition it might be much more intriguing. Ingo, do I remember 
-> correctly that it was you? I might be confused about who wrote that patch, and I 
-> can't find it now.
+> I have slightly updated the v9 patch series since this posting:
+> 
+> - Incorporated a fix to initialize cpu_isolation_mask early if no
+>   cpu_isolation= boot argument was given, to avoid crashing on
+>   CPUMASK_OFFSTACK platforms.
+> 
+> - Incorporated Mark Rutland's changes to convert arm64
+>   assembly to C code instead of using my own version.
 
-Yeah, it was the whole 'syslets' and 'threadlets' stuff - I had both implemented 
-and prototyped into a 'list directory entries asynchronously' testcase.
+Please avoid queuing these patches -- the first is already in the arm64
+queue for 4.5 and the second was found to introduce a substantial
+performance regression on the syscall entry/exit path. I think Mark had
+an updated version to address that, so it would be easier not to have
+an old version sitting in some other queue!
 
-Threadlets was pretty close to what you are suggesting now. Here's a very good (as 
-usual!) writeup from LWN:
+Cheers,
 
-  https://lwn.net/Articles/223899/
-
-Thanks,
-
-	Ingo
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Will
