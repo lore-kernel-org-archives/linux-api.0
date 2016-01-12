@@ -1,105 +1,100 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH v6] fs: clear file privilege bits when mmap writing
-Date: Mon, 11 Jan 2016 15:19:46 -0800
-Message-ID: <CAGXu5jKn8_LqR=oESz4QXxV7G-niD4rEmDpLepHqq50-zUrxcw@mail.gmail.com>
-References: <20160108232727.GA23490@www.outflux.net>
-	<CALYGNiOUL7ewU3+5Zoi_9qofYWwF0vpqMy=A0wS=jUFZ11haCg@mail.gmail.com>
-	<CAGXu5jJaoZC7WL=MndBr915XhEpn9n3HOOhB-ue1xqyKFWxxzQ@mail.gmail.com>
-	<CALYGNiPC224w7-xeo9NOX9nrHH84o+_KXBtKWtd4TPXQyQMq2w@mail.gmail.com>
-	<CAGXu5j+UV39Q5reWOWBrtxuP6cLpweEF5e-KBV_K4moszCC24g@mail.gmail.com>
-	<CALYGNiO73NfhqrBoCwfdbMg5kNMC1nrNGeT9rUisBDHXTYY-Gg@mail.gmail.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH 09/13] aio: add support for async openat()
+Date: Mon, 11 Jan 2016 16:22:28 -0800
+Message-ID: <CA+55aFw8j_3Vkb=HVoMwWTPD=5ve8RpNZeL31CcKQZ+HRSbfTA@mail.gmail.com>
+References: <cover.1452549431.git.bcrl@kvack.org>
+	<150a0b4905f1d7274b4c2c7f5e3f4d8df5dda1d7.1452549431.git.bcrl@kvack.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <CALYGNiO73NfhqrBoCwfdbMg5kNMC1nrNGeT9rUisBDHXTYY-Gg@mail.gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Konstantin Khlebnikov <koct9i@gmail.com>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@amacapital.net>, Jan Kara <jack@suse.cz>, yalin wang <yalin.wang2010@gmail.com>, Willy Tarreau <w@1wt.eu>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <150a0b4905f1d7274b4c2c7f5e3f4d8df5dda1d7.1452549431.git.bcrl@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: Benjamin LaHaise <bcrl@kvack.org>, Ingo Molnar <mingo@kernel.org>
+Cc: linux-aio@kvack.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 11, 2016 at 3:16 PM, Konstantin Khlebnikov <koct9i@gmail.com> wrote:
-> On Tue, Jan 12, 2016 at 1:45 AM, Kees Cook <keescook@chromium.org> wrote:
->> On Mon, Jan 11, 2016 at 2:39 PM, Konstantin Khlebnikov <koct9i@gmail.com> wrote:
->>> On Mon, Jan 11, 2016 at 10:38 PM, Kees Cook <keescook@chromium.org> wrote:
->>>> On Sun, Jan 10, 2016 at 7:48 AM, Konstantin Khlebnikov <koct9i@gmail.com> wrote:
->>>>> On Sat, Jan 9, 2016 at 2:27 AM, Kees Cook <keescook@chromium.org> wrote:
->>>>>> Normally, when a user can modify a file that has setuid or setgid bits,
->>>>>> those bits are cleared when they are not the file owner or a member
->>>>>> of the group. This is enforced when using write and truncate but not
->>>>>> when writing to a shared mmap on the file. This could allow the file
->>>>>> writer to gain privileges by changing a binary without losing the
->>>>>> setuid/setgid/caps bits.
->>>>>>
->>>>>> Changing the bits requires holding inode->i_mutex, so it cannot be done
->>>>>> during the page fault (due to mmap_sem being held during the fault). We
->>>>>> could do this during vm_mmap_pgoff, but that would need coverage in
->>>>>> mprotect as well, but to check for MAP_SHARED, we'd need to hold mmap_sem
->>>>>> again. We could clear at open() time, but it's possible things are
->>>>>> accidentally opening with O_RDWR and only reading. Better to clear on
->>>>>> close and error failures (i.e. an improvement over now, which is not
->>>>>> clearing at all).
->>>>>
->>>>> I think this should be done in mmap/mprotect. Code in sys_mmap is trivial.
->>>>>
->>>>> In sys_mprotect you can check file_needs_remove_privs() and VM_SHARED
->>>>> under mmap_sem, then if needed grab reference to struct file from vma and
->>>>> clear suid after unlocking mmap_sem.
->>>>>
->>>>> I haven't seen previous iterations, probably this approach has known flaws.
->>>>
->>>> mmap_sem is still needed in mprotect (to find and hold the vma), so
->>>> it's not possible. I'd love to be proven wrong, but I didn't see a
->>>> way.
->>>
->>> something like this
->>>
->>> @@ -375,6 +376,7 @@ SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
->>>
->>>         vm_flags = calc_vm_prot_bits(prot);
->>>
->>> +restart:
->>>         down_write(&current->mm->mmap_sem);
->>>
->>>         vma = find_vma(current->mm, start);
->>> @@ -416,6 +418,21 @@ SYSCALL_DEFINE3(mprotect, unsigned long, start,
->>> size_t, len,
->>>                         goto out;
->>>                 }
->>>
->>> +               if ((newflags & VM_WRITE) && !(vma->vm_flags & VM_WRITE) &&
->>> +                   vma->vm_file && file_needs_remove_privs(vma->vm_file)) {
->>> +                       struct file *file = get_file(vma->vm_file);
->>> +
->>> +                       start = vma->vm_start;
->>> +                       up_write(&current->mm->mmap_sem);
->>> +                       mutex_lock(&file_inode(file)->i_mutex);
->>> +                       error = file_remove_privs(file);
->>> +                       mutex_unlock(&file_inode(file)->i_mutex);
->>> +                       fput(file);
->>> +                       if (error)
->>> +                               return error;
->>> +                       goto restart;
->>> +               }
->>> +
->>
->> Is this safe against the things Al mentioned? I still don't like the
->> mmap/mprotect approach because it makes the change before anything was
->> actually written...
->
-> (I forgot to check VM_SHARED)
->
-> Yep, this should be safe.
->
-> I think suid should be cleared before any possible change of data.
-> New content could hit the disk but suid never be cleared,
-> for example if system suddenly crashed or rebooted.
+On Mon, Jan 11, 2016 at 2:07 PM, Benjamin LaHaise <bcrl@kvack.org> wrote:
+> Another blocking operation used by applications that want aio
+> functionality is that of opening files that are not resident in memory.
+> Using the thread based aio helper, add support for IOCB_CMD_OPENAT.
 
-Oooh, very good point. Yeah, that's enough to convince me. :) Ignore my v7...
+So I think this is ridiculously ugly.
 
-Al, are you okay with this semantic change?
+AIO is a horrible ad-hoc design, with the main excuse being "other,
+less gifted people, made that design, and we are implementing it for
+compatibility because database people - who seldom have any shred of
+taste - actually use it".
 
--Kees
+But AIO was always really really ugly.
 
--- 
-Kees Cook
-Chrome OS & Brillo Security
+Now you introduce the notion of doing almost arbitrary system calls
+asynchronously in threads, but then you use that ass-backwards nasty
+interface to do so.
+
+Why?
+
+If you want to do arbitrary asynchronous system calls, just *do* it.
+But do _that_, not "let's extend this horrible interface in arbitrary
+random ways one special system call at a time".
+
+In other words, why is the interface not simply: "do arbitrary system
+call X with arguments A, B, C, D asynchronously using a kernel
+thread".
+
+That's something that a lot of people might use. In fact, if they can
+avoid the nasty AIO interface, maybe they'll even use it for things
+like read() and write().
+
+So I really think it would be a nice thing to allow some kind of
+arbitrary "queue up asynchronous system call" model.
+
+But I do not think the AIO model should be the model used for that,
+even if I think there might be some shared infrastructure.
+
+So I would seriously suggest:
+
+ - how about we add a true "asynchronous system call" interface
+
+ - make it be a list of system calls with a futex completion for each
+list entry, so that you can easily wait for the end result that way.
+
+ - maybe (and this is where it gets really iffy) you could even pass
+in the result of one system call to the next, so that you can do
+things like
+
+       fd = openat(..)
+       ret = read(fd, ..)
+
+   asynchronously and then just wait for the read() to complete.
+
+and let us *not* tie this to the aio interface.
+
+In fact, if we do it well, we can go the other way, and try to
+implement the nasty AIO interface on top of the generic "just do
+things asynchronously".
+
+And I actually think many of your kernel thread parts are good for a
+generic implementation. That whole "AIO_THREAD_NEED_CRED" etc logic
+all makes sense, although I do suspect you could just make it
+unconditional. The cost of a few atomics shouldn't be excessive when
+we're talking "use a thread to do op X".
+
+What do you think? Do you think it might be possible to aim for a
+generic "do system call asynchronously" model instead?
+
+I'm adding Ingo the to cc, because I think Ingo had a "run this list
+of system calls" patch at one point - in order to avoid system call
+overhead. I don't think that was very interesting (because system call
+overhead is seldom all that noticeable for any interesting system
+calls), but with the "let's do the list asynchronously" addition it
+might be much more intriguing. Ingo, do I remember correctly that it
+was you? I might be confused about who wrote that patch, and I can't
+find it now.
+
+               Linus
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
