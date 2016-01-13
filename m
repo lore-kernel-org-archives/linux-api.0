@@ -1,193 +1,49 @@
-From: Kamil Debski <k.debski@samsung.com>
-Subject: RE: [PATCH] v4l: add V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE.
-Date: Wed, 13 Jan 2016 17:43:02 +0100
-Message-ID: <003f01d14e21$78f7ad40$6ae707c0$@samsung.com>
-References: <1452686611-145620-1-git-send-email-wuchengli@chromium.org>
- <1452686611-145620-2-git-send-email-wuchengli@chromium.org>
+From: Jacob Pan <jacob.jun.pan@linux.intel.com>
+Subject: Re: [PATCH v3 22/22] thermal/intel_powerclamp: Convert the kthread
+ to kthread worker API
+Date: Wed, 13 Jan 2016 09:53:53 -0800
+Message-ID: <20160113095353.5231c28f@yairi>
+References: <1447853127-3461-1-git-send-email-pmladek@suse.com>
+	<1447853127-3461-23-git-send-email-pmladek@suse.com>
+	<20160107115531.34279a9b@icelake>
+	<20160108164931.GT3178@pathway.suse.cz>
+	<20160111181718.0ace4a58@yairi>
+	<20160112101129.GN731@pathway.suse.cz>
+	<20160112082021.6a28dc66@icelake>
+	<20160113101831.GQ731@pathway.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-media-owner@vger.kernel.org>
-In-reply-to: <1452686611-145620-2-git-send-email-wuchengli@chromium.org>
-Content-language: pl
-Sender: linux-media-owner@vger.kernel.org
-To: 'Wu-Cheng Li' <wuchengli@chromium.org>, pawel@osciak.com, mchehab@osg.samsung.com, hverkuil@xs4all.nl, crope@iki.fi, standby24x7@gmail.com, nicolas.dufresne@collabora.com, ricardo.ribalda@gmail.com, ao2@ao2.it, bparrot@ti.com
-Cc: linux-media@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20160113101831.GQ731@pathway.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Petr Mladek <pmladek@suse.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Zhang Rui <rui.zhang@intel.com>, Eduardo Valentin <edubezval@gmail.com>, linux-pm@vger.kernel.org, jacob.jun.pan@linux.intel.com
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+On Wed, 13 Jan 2016 11:18:31 +0100
+Petr Mladek <pmladek@suse.com> wrote:
 
-> From: Wu-Cheng Li [mailto:wuchengli@chromium.org]
-> Sent: Wednesday, January 13, 2016 1:04 PM
-> To: pawel@osciak.com; mchehab@osg.samsung.com; hverkuil@xs4all.nl;
-> k.debski@samsung.com; crope@iki.fi; standby24x7@gmail.com;
-> wuchengli@chromium.org; nicolas.dufresne@collabora.com;
-> ricardo.ribalda@gmail.com; ao2@ao2.it; bparrot@ti.com
-> Cc: linux-media@vger.kernel.org; linux-kernel@vger.kernel.org; linux-
-> api@vger.kernel.org
-> Subject: [PATCH] v4l: add V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE.
+> > unsigned int __read_mostly freeze_timeout_msecs = 20 *
+> > MSEC_PER_SEC;  
 > 
-> Some drivers also need a control like
-> V4L2_CID_MPEG_MFC51_VIDEO_FORCE_FRAME_TYPE to force an encoder
-> frame type. Add a general V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE
-> so the new drivers and applications can use it.
-
-Good to hear that there are new codecs to use the V4L2 codec API :)
-
-My two cents are following - when you add a control that does the same work
-as a driver specific control then it would be great if you modified the
-driver that
-uses the specific control to also support the newly added control.
-This way future applications  could use the control you added for both new
-and
-old drivers.
-
-In future versions of this patch set please include modification of the
-s5p-mfc
-diver, this shouldn't be much work. 
-
-Regarding the changes in the API I would like to hear also Hans Verkuil's
-opinion, as he was a great help when I introduced the changes in the codec
-API.
-
-Any comments Hans?
-
-Best wishes,
--- 
-Kamil Debski
-Samsung R&D Institute Poland
-
+> You are right. And it does not make sense to add an extra
+> freezer-specific code if not really necessary.
 > 
-> Signed-off-by: Wu-Cheng Li <wuchengli@chromium.org>
-> ---
->  Documentation/DocBook/media/v4l/controls.xml | 23
-> +++++++++++++++++++++++
->  drivers/media/v4l2-core/v4l2-ctrls.c         | 13 +++++++++++++
->  include/uapi/linux/v4l2-controls.h           |  5 +++++
->  3 files changed, 41 insertions(+)
-> 
-> diff --git a/Documentation/DocBook/media/v4l/controls.xml
-> b/Documentation/DocBook/media/v4l/controls.xml
-> index f13a429..326947c 100644
-> --- a/Documentation/DocBook/media/v4l/controls.xml
-> +++ b/Documentation/DocBook/media/v4l/controls.xml
-> @@ -2330,6 +2330,29 @@ vertical search range for motion estimation
-> module in video encoder.</entry>
->  	      </row>
-> 
->  	      <row><entry></entry></row>
-> +	      <row id="v4l2-mpeg-video-force-frame-type">
-> +		<entry
-> spanname="id"><constant>V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE<
-> /constant>&nbsp;</entry>
-> +
-> 	<entry>enum&nbsp;v4l2_mpeg_video_force_frame_type</entry>
-> +	      </row>
-> +	      <row><entry spanname="descr">Force a frame type for the next
-> queued buffer. Applicable to encoders.
-> +This is a general, codec-agnostic keyframe control. This is a write-only
-and
-> execute-on-write control. Possible values are:</entry>
-> +	      </row>
-> +	      <row>
-> +		<entrytbl spanname="descr" cols="2">
-> +		  <tbody valign="top">
-> +		    <row>
-> +
-> <entry><constant>V4L2_MPEG_FORCE_FRAME_TYPE_DISABLED</constant
-> >&nbsp;</entry>
-> +		      <entry>Force a specific frame type disabled.</entry>
-> +		    </row>
-> +		    <row>
-> +
-> <entry><constant>V4L2_MPEG_FORCE_FRAME_TYPE_I_FRAME</constant>
-> &nbsp;</entry>
-> +		      <entry>Force an I-frame.</entry>
-> +		    </row>
-> +		  </tbody>
-> +		</entrytbl>
-> +	      </row>
-> +
-> +	      <row><entry></entry></row>
->  	      <row>
->  		<entry
-> spanname="id"><constant>V4L2_CID_MPEG_VIDEO_H264_CPB_SIZE</cons
-> tant>&nbsp;</entry>
->  		<entry>integer</entry>
-> diff --git a/drivers/media/v4l2-core/v4l2-ctrls.c b/drivers/media/v4l2-
-> core/v4l2-ctrls.c
-> index c9d5537..53a8f72 100644
-> --- a/drivers/media/v4l2-core/v4l2-ctrls.c
-> +++ b/drivers/media/v4l2-core/v4l2-ctrls.c
-> @@ -315,6 +315,11 @@ const char * const *v4l2_ctrl_get_menu(u32 id)
->  		"Max Bytes",
->  		NULL,
->  	};
-> +	static const char * const force_frame_type[] = {
-> +		"Disabled",
-> +		"I Frame",
-> +		NULL,
-> +	};
->  	static const char * const entropy_mode[] = {
->  		"CAVLC",
->  		"CABAC",
-> @@ -533,6 +538,8 @@ const char * const *v4l2_ctrl_get_menu(u32 id)
->  		return header_mode;
->  	case V4L2_CID_MPEG_VIDEO_MULTI_SLICE_MODE:
->  		return multi_slice;
-> +	case V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE:
-> +		return force_frame_type;
->  	case V4L2_CID_MPEG_VIDEO_H264_ENTROPY_MODE:
->  		return entropy_mode;
->  	case V4L2_CID_MPEG_VIDEO_H264_LEVEL:
-> @@ -747,6 +754,7 @@ const char *v4l2_ctrl_get_name(u32 id)
->  	case V4L2_CID_MPEG_VIDEO_MV_H_SEARCH_RANGE:
-> 	return "Horizontal MV Search Range";
->  	case V4L2_CID_MPEG_VIDEO_MV_V_SEARCH_RANGE:
-> 	return "Vertical MV Search Range";
->  	case V4L2_CID_MPEG_VIDEO_REPEAT_SEQ_HEADER:
-> 	return "Repeat Sequence Header";
-> +	case V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE:		return
-> "Force an encoded frame type";
-> 
->  	/* VPX controls */
->  	case V4L2_CID_MPEG_VIDEO_VPX_NUM_PARTITIONS:
-> 	return "VPX Number of Partitions";
-> @@ -1045,6 +1053,11 @@ void v4l2_ctrl_fill(u32 id, const char **name,
-> enum v4l2_ctrl_type *type,
->  	case V4L2_CID_DETECT_MD_MODE:
->  		*type = V4L2_CTRL_TYPE_MENU;
->  		break;
-> +	case V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE:
-> +		*type = V4L2_CTRL_TYPE_MENU;
-> +		*flags |= V4L2_CTRL_FLAG_WRITE_ONLY |
-> +			  V4L2_CTRL_FLAG_EXECUTE_ON_WRITE;
-> +		break;
->  	case V4L2_CID_LINK_FREQ:
->  		*type = V4L2_CTRL_TYPE_INTEGER_MENU;
->  		break;
-> diff --git a/include/uapi/linux/v4l2-controls.h b/include/uapi/linux/v4l2-
-> controls.h
-> index 2d225bc..c2be60c 100644
-> --- a/include/uapi/linux/v4l2-controls.h
-> +++ b/include/uapi/linux/v4l2-controls.h
-> @@ -390,6 +390,11 @@ enum v4l2_mpeg_video_multi_slice_mode {
->  #define V4L2_CID_MPEG_VIDEO_REPEAT_SEQ_HEADER
-> 	(V4L2_CID_MPEG_BASE+226)
->  #define V4L2_CID_MPEG_VIDEO_MV_H_SEARCH_RANGE
-> 	(V4L2_CID_MPEG_BASE+227)
->  #define V4L2_CID_MPEG_VIDEO_MV_V_SEARCH_RANGE
-> 	(V4L2_CID_MPEG_BASE+228)
-> +#define V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE
-> 	(V4L2_CID_MPEG_BASE+229)
-> +enum v4l2_mpeg_video_force_frame_type {
-> +	V4L2_MPEG_VIDEO_FORCE_FRAME_TYPE_DISABLED	= 0,
-> +	V4L2_MPEG_VIDEO_FORCE_FRAME_TYPE_I_FRAME	= 1,
-> +};
-> 
->  #define V4L2_CID_MPEG_VIDEO_H263_I_FRAME_QP
-> 	(V4L2_CID_MPEG_BASE+300)
->  #define V4L2_CID_MPEG_VIDEO_H263_P_FRAME_QP
-> 	(V4L2_CID_MPEG_BASE+301)
-> --
-> 2.6.0.rc2.230.g3dd15c0
+> Otherwise, I will keep the conversion into the kthread worker as is
+> for now. Please, let me know if you are strongly against the split
+> into the two works.
+I am fine with the split now.
+
+Another question, are you planning to convert acpi_pad.c as well? It
+uses kthread similar way.
+
+
+Jacob
+
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
