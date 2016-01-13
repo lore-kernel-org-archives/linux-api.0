@@ -1,63 +1,58 @@
-From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: livepatch: reuse module loader code to write relocations
-Date: Wed, 13 Jan 2016 13:39:25 -0500
-Message-ID: <20160113183924.GA980@packer-debian-8-amd64.digitalocean.com>
-References: <1452281304-28618-1-git-send-email-jeyu@redhat.com>
- <1452281304-28618-5-git-send-email-jeyu@redhat.com>
- <alpine.LNX.2.00.1601131012340.10011@pobox.suse.cz>
+From: Chris Metcalf <cmetcalf@ezchip.com>
+Subject: Re: [PATCH v9 00/13] support "task_isolation" mode for nohz_full
+Date: Wed, 13 Jan 2016 16:19:56 -0500
+Message-ID: <5696BF7C.2080800@ezchip.com>
+References: <1451936091-29247-1-git-send-email-cmetcalf@ezchip.com>
+ <56941B86.9090009@ezchip.com> <20160112100708.GA15737@arm.com>
+ <56953CBA.9090208@ezchip.com> <20160113104453.GB9854@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LNX.2.00.1601131012340.10011-ztGlSCb7Y1iN3ZZ/Hiejyg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
-Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20160113104453.GB9854@gmail.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Ingo Molnar <mingo@kernel.org>, Mark Rutland <mark.rutland@arm.com>
+Cc: Will Deacon <will.deacon@arm.com>, Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-+++ Miroslav Benes [13/01/16 10:19 +0100]:
->On Fri, 8 Jan 2016, Jessica Yu wrote:
+On 01/13/2016 05:44 AM, Ingo Molnar wrote:
+> * Chris Metcalf <cmetcalf@ezchip.com> wrote:
 >
->>  static int klp_write_object_relocations(struct module *pmod,
->>  					struct klp_object *obj)
->>  {
->> -	int ret = 0;
->> -	unsigned long val;
->> -	struct klp_reloc *reloc;
->> +	int i, len, ret = 0;
->> +	char *secname;
->> +	const char *objname;
+>> (Adding Mark to cc's)
 >>
->>  	if (WARN_ON(!klp_is_object_loaded(obj)))
->>  		return -EINVAL;
->>
->> -	if (WARN_ON(!obj->relocs))
->> -		return -EINVAL;
->> +	objname = klp_is_module(obj) ? obj->name : "vmlinux";
->>
->>  	module_disable_ro(pmod);
->> +	/* For each klp rela section for this object */
->> +	for (i = 1; i < pmod->info->hdr->e_shnum; i++) {
->> +		if (!(pmod->info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH))
->> +			continue;
->
->One more thing. If the module does not specify it is a live patch module
->in modinfo (with MODULE_INFO(livepatch, "Y")), but it is a perfect live
->patch module otherwise (it calls klp_register_patch in its init function),
->the kernel crashes here. pmod->info is not initialized at all. This should
->be fixed. Perhaps the easiest would be to call
->klp_write_object_relocations() in klp_init_object_loaded() only if
->is_livepatch_module() returns true. Similar to a check for obj->relocs
->before.
+>> On 01/12/2016 05:07 AM, Will Deacon wrote:
+>>> On Mon, Jan 11, 2016 at 04:15:50PM -0500, Chris Metcalf wrote:
+>>>> Ping!  There has been no substantive feedback to this version of
+>>>> the patch in the week since I posted it, which optimistically suggests
+>>>> to me that people may be satisfied with it.  If that's true, Frederic,
+>>>> I assume this would be pulled into your tree?
+>>>>
+>>>> I have slightly updated the v9 patch series since this posting:
+>>>>
+>>>> [...]
+>>>>
+>>>> - Incorporated Mark Rutland's changes to convert arm64
+>>>>    assembly to C code instead of using my own version.
+>>> Please avoid queuing these patches -- the first is already in the arm64
+>>> queue for 4.5 and the second was found to introduce a substantial
+>>> performance regression on the syscall entry/exit path. I think Mark had
+>>> an updated version to address that, so it would be easier not to have
+>>> an old version sitting in some other queue!
+>> I am not formally queueing them anywhere (like linux-next), though
+>> now that you mention it, that's a pretty good idea - I'll talk to Steven
+>> about that, assuming this merge window closes without the task
+>> isolation stuff going in.
+> NAK. Given the controversy, no way should this stuff go outside the primary trees
+> it affects: the scheduler, timer, irq, etc. trees.
 
-Hm yes, that's a problem. To remedy this, I think it makes sense to
-require all livepatch modules to identify themselves with the modinfo
-attribute, since it is a very simple requirement. If some module calls
-klp_register_patch() and it does not have the livepatch attribute,
-klp_register_patch() can just return an error. We can call
-is_livepatch_module() at the beginning of klp_register_patch(), and
-proceed only if the check succeeds, since we'll then know that the
-required structures have been properly initialized in the module
-loader. What do you think?
+Fair enough.  I'll plan to do v10 once the merge window closes.
 
-Jessica
+Mark, let me know when/if you get a new version of the de-asm stuff
+for do_notify_resume() - thanks.  Or, would it be helpful if I worked up
+the option I suggested, where we check the thread_info flags in the
+assembly code before calling out to the new loop in do_notify_resume()?
+
+-- 
+Chris Metcalf, EZChip Semiconductor
+http://www.ezchip.com
+
