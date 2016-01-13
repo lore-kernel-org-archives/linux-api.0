@@ -1,49 +1,63 @@
-From: Jacob Pan <jacob.jun.pan@linux.intel.com>
-Subject: Re: [PATCH v3 22/22] thermal/intel_powerclamp: Convert the kthread
- to kthread worker API
-Date: Wed, 13 Jan 2016 09:53:53 -0800
-Message-ID: <20160113095353.5231c28f@yairi>
-References: <1447853127-3461-1-git-send-email-pmladek@suse.com>
-	<1447853127-3461-23-git-send-email-pmladek@suse.com>
-	<20160107115531.34279a9b@icelake>
-	<20160108164931.GT3178@pathway.suse.cz>
-	<20160111181718.0ace4a58@yairi>
-	<20160112101129.GN731@pathway.suse.cz>
-	<20160112082021.6a28dc66@icelake>
-	<20160113101831.GQ731@pathway.suse.cz>
+From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: livepatch: reuse module loader code to write relocations
+Date: Wed, 13 Jan 2016 13:39:25 -0500
+Message-ID: <20160113183924.GA980@packer-debian-8-amd64.digitalocean.com>
+References: <1452281304-28618-1-git-send-email-jeyu@redhat.com>
+ <1452281304-28618-5-git-send-email-jeyu@redhat.com>
+ <alpine.LNX.2.00.1601131012340.10011@pobox.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20160113101831.GQ731@pathway.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Zhang Rui <rui.zhang@intel.com>, Eduardo Valentin <edubezval@gmail.com>, linux-pm@vger.kernel.org, jacob.jun.pan@linux.intel.com
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LNX.2.00.1601131012340.10011-ztGlSCb7Y1iN3ZZ/Hiejyg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
+Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 13 Jan 2016 11:18:31 +0100
-Petr Mladek <pmladek@suse.com> wrote:
++++ Miroslav Benes [13/01/16 10:19 +0100]:
+>On Fri, 8 Jan 2016, Jessica Yu wrote:
+>
+>>  static int klp_write_object_relocations(struct module *pmod,
+>>  					struct klp_object *obj)
+>>  {
+>> -	int ret = 0;
+>> -	unsigned long val;
+>> -	struct klp_reloc *reloc;
+>> +	int i, len, ret = 0;
+>> +	char *secname;
+>> +	const char *objname;
+>>
+>>  	if (WARN_ON(!klp_is_object_loaded(obj)))
+>>  		return -EINVAL;
+>>
+>> -	if (WARN_ON(!obj->relocs))
+>> -		return -EINVAL;
+>> +	objname = klp_is_module(obj) ? obj->name : "vmlinux";
+>>
+>>  	module_disable_ro(pmod);
+>> +	/* For each klp rela section for this object */
+>> +	for (i = 1; i < pmod->info->hdr->e_shnum; i++) {
+>> +		if (!(pmod->info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH))
+>> +			continue;
+>
+>One more thing. If the module does not specify it is a live patch module
+>in modinfo (with MODULE_INFO(livepatch, "Y")), but it is a perfect live
+>patch module otherwise (it calls klp_register_patch in its init function),
+>the kernel crashes here. pmod->info is not initialized at all. This should
+>be fixed. Perhaps the easiest would be to call
+>klp_write_object_relocations() in klp_init_object_loaded() only if
+>is_livepatch_module() returns true. Similar to a check for obj->relocs
+>before.
 
-> > unsigned int __read_mostly freeze_timeout_msecs = 20 *
-> > MSEC_PER_SEC;  
-> 
-> You are right. And it does not make sense to add an extra
-> freezer-specific code if not really necessary.
-> 
-> Otherwise, I will keep the conversion into the kthread worker as is
-> for now. Please, let me know if you are strongly against the split
-> into the two works.
-I am fine with the split now.
+Hm yes, that's a problem. To remedy this, I think it makes sense to
+require all livepatch modules to identify themselves with the modinfo
+attribute, since it is a very simple requirement. If some module calls
+klp_register_patch() and it does not have the livepatch attribute,
+klp_register_patch() can just return an error. We can call
+is_livepatch_module() at the beginning of klp_register_patch(), and
+proceed only if the check succeeds, since we'll then know that the
+required structures have been properly initialized in the module
+loader. What do you think?
 
-Another question, are you planning to convert acpi_pad.c as well? It
-uses kthread similar way.
-
-
-Jacob
-
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Jessica
