@@ -1,121 +1,161 @@
-From: Wu-Cheng Li <wuchengli@chromium.org>
-Subject: [PATCH] v4l: add V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE.
-Date: Wed, 13 Jan 2016 20:03:31 +0800
-Message-ID: <1452686611-145620-2-git-send-email-wuchengli@chromium.org>
-References: <1452686611-145620-1-git-send-email-wuchengli@chromium.org>
-Return-path: <linux-media-owner@vger.kernel.org>
-In-Reply-To: <1452686611-145620-1-git-send-email-wuchengli@chromium.org>
-Sender: linux-media-owner@vger.kernel.org
-To: pawel@osciak.com, mchehab@osg.samsung.com, hverkuil@xs4all.nl, k.debski@samsung.com, crope@iki.fi, standby24x7@gmail.com, wuchengli@chromium.org, nicolas.dufresne@collabora.com, ricardo.ribalda@gmail.com, ao2@ao2.it, bparrot@ti.com
-Cc: linux-media@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+From: David Woodhouse <dwmw2@infradead.org>
+Subject: Re: [PATCH v2] crypto: AF_ALG - add support for keys/asymmetric-type
+Date: Wed, 13 Jan 2016 12:27:42 +0000
+Message-ID: <1452688062.88154.32.camel@infradead.org>
+References: <20151226155014.27615.14985.stgit@desktop.home>
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg="sha-1"; protocol="application/x-pkcs7-signature";
+	boundary="=-Yabtkvd6es2gFs9p/slz"
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <20151226155014.27615.14985.stgit@desktop.home>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Tadeusz Struk <tstruk@gmail.com>, herbert@gondor.apana.org.au
+Cc: tadeusz.struk@intel.com, smueller@chronox.de, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, keyrings@vger.kernel.org, linux-crypto@vger.kernel.org, zohar@linux.vnet.ibm.com
 List-Id: linux-api@vger.kernel.org
 
-Some drivers also need a control like
-V4L2_CID_MPEG_MFC51_VIDEO_FORCE_FRAME_TYPE to force an encoder
-frame type. Add a general V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE
-so the new drivers and applications can use it.
 
-Signed-off-by: Wu-Cheng Li <wuchengli@chromium.org>
----
- Documentation/DocBook/media/v4l/controls.xml | 23 +++++++++++++++++++++++
- drivers/media/v4l2-core/v4l2-ctrls.c         | 13 +++++++++++++
- include/uapi/linux/v4l2-controls.h           |  5 +++++
- 3 files changed, 41 insertions(+)
+--=-Yabtkvd6es2gFs9p/slz
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: base64
 
-diff --git a/Documentation/DocBook/media/v4l/controls.xml b/Documentation/DocBook/media/v4l/controls.xml
-index f13a429..326947c 100644
---- a/Documentation/DocBook/media/v4l/controls.xml
-+++ b/Documentation/DocBook/media/v4l/controls.xml
-@@ -2330,6 +2330,29 @@ vertical search range for motion estimation module in video encoder.</entry>
- 	      </row>
- 
- 	      <row><entry></entry></row>
-+	      <row id="v4l2-mpeg-video-force-frame-type">
-+		<entry spanname="id"><constant>V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE</constant>&nbsp;</entry>
-+		<entry>enum&nbsp;v4l2_mpeg_video_force_frame_type</entry>
-+	      </row>
-+	      <row><entry spanname="descr">Force a frame type for the next queued buffer. Applicable to encoders.
-+This is a general, codec-agnostic keyframe control. This is a write-only and execute-on-write control. Possible values are:</entry>
-+	      </row>
-+	      <row>
-+		<entrytbl spanname="descr" cols="2">
-+		  <tbody valign="top">
-+		    <row>
-+		      <entry><constant>V4L2_MPEG_FORCE_FRAME_TYPE_DISABLED</constant>&nbsp;</entry>
-+		      <entry>Force a specific frame type disabled.</entry>
-+		    </row>
-+		    <row>
-+		      <entry><constant>V4L2_MPEG_FORCE_FRAME_TYPE_I_FRAME</constant>&nbsp;</entry>
-+		      <entry>Force an I-frame.</entry>
-+		    </row>
-+		  </tbody>
-+		</entrytbl>
-+	      </row>
-+
-+	      <row><entry></entry></row>
- 	      <row>
- 		<entry spanname="id"><constant>V4L2_CID_MPEG_VIDEO_H264_CPB_SIZE</constant>&nbsp;</entry>
- 		<entry>integer</entry>
-diff --git a/drivers/media/v4l2-core/v4l2-ctrls.c b/drivers/media/v4l2-core/v4l2-ctrls.c
-index c9d5537..53a8f72 100644
---- a/drivers/media/v4l2-core/v4l2-ctrls.c
-+++ b/drivers/media/v4l2-core/v4l2-ctrls.c
-@@ -315,6 +315,11 @@ const char * const *v4l2_ctrl_get_menu(u32 id)
- 		"Max Bytes",
- 		NULL,
- 	};
-+	static const char * const force_frame_type[] = {
-+		"Disabled",
-+		"I Frame",
-+		NULL,
-+	};
- 	static const char * const entropy_mode[] = {
- 		"CAVLC",
- 		"CABAC",
-@@ -533,6 +538,8 @@ const char * const *v4l2_ctrl_get_menu(u32 id)
- 		return header_mode;
- 	case V4L2_CID_MPEG_VIDEO_MULTI_SLICE_MODE:
- 		return multi_slice;
-+	case V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE:
-+		return force_frame_type;
- 	case V4L2_CID_MPEG_VIDEO_H264_ENTROPY_MODE:
- 		return entropy_mode;
- 	case V4L2_CID_MPEG_VIDEO_H264_LEVEL:
-@@ -747,6 +754,7 @@ const char *v4l2_ctrl_get_name(u32 id)
- 	case V4L2_CID_MPEG_VIDEO_MV_H_SEARCH_RANGE:		return "Horizontal MV Search Range";
- 	case V4L2_CID_MPEG_VIDEO_MV_V_SEARCH_RANGE:		return "Vertical MV Search Range";
- 	case V4L2_CID_MPEG_VIDEO_REPEAT_SEQ_HEADER:		return "Repeat Sequence Header";
-+	case V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE:		return "Force an encoded frame type";
- 
- 	/* VPX controls */
- 	case V4L2_CID_MPEG_VIDEO_VPX_NUM_PARTITIONS:		return "VPX Number of Partitions";
-@@ -1045,6 +1053,11 @@ void v4l2_ctrl_fill(u32 id, const char **name, enum v4l2_ctrl_type *type,
- 	case V4L2_CID_DETECT_MD_MODE:
- 		*type = V4L2_CTRL_TYPE_MENU;
- 		break;
-+	case V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE:
-+		*type = V4L2_CTRL_TYPE_MENU;
-+		*flags |= V4L2_CTRL_FLAG_WRITE_ONLY |
-+			  V4L2_CTRL_FLAG_EXECUTE_ON_WRITE;
-+		break;
- 	case V4L2_CID_LINK_FREQ:
- 		*type = V4L2_CTRL_TYPE_INTEGER_MENU;
- 		break;
-diff --git a/include/uapi/linux/v4l2-controls.h b/include/uapi/linux/v4l2-controls.h
-index 2d225bc..c2be60c 100644
---- a/include/uapi/linux/v4l2-controls.h
-+++ b/include/uapi/linux/v4l2-controls.h
-@@ -390,6 +390,11 @@ enum v4l2_mpeg_video_multi_slice_mode {
- #define V4L2_CID_MPEG_VIDEO_REPEAT_SEQ_HEADER		(V4L2_CID_MPEG_BASE+226)
- #define V4L2_CID_MPEG_VIDEO_MV_H_SEARCH_RANGE		(V4L2_CID_MPEG_BASE+227)
- #define V4L2_CID_MPEG_VIDEO_MV_V_SEARCH_RANGE		(V4L2_CID_MPEG_BASE+228)
-+#define V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE		(V4L2_CID_MPEG_BASE+229)
-+enum v4l2_mpeg_video_force_frame_type {
-+	V4L2_MPEG_VIDEO_FORCE_FRAME_TYPE_DISABLED	= 0,
-+	V4L2_MPEG_VIDEO_FORCE_FRAME_TYPE_I_FRAME	= 1,
-+};
- 
- #define V4L2_CID_MPEG_VIDEO_H263_I_FRAME_QP		(V4L2_CID_MPEG_BASE+300)
- #define V4L2_CID_MPEG_VIDEO_H263_P_FRAME_QP		(V4L2_CID_MPEG_BASE+301)
--- 
-2.6.0.rc2.230.g3dd15c0
+T24gU2F0LCAyMDE1LTEyLTI2IGF0IDA3OjUwIC0wODAwLCBUYWRldXN6IFN0cnVrIHdyb3RlOgo+
+ICtzdGF0aWMgaW50IGFsZ19zZXRrZXlfaWQodm9pZCAqcHJpdmF0ZSwgY29uc3QgdTggKmtleSwg
+dW5zaWduZWQgaW50IGtleWxlbiwKPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoCBpbnQgKCpzZXRrZXkpKHZvaWQgKnByaXZhdGUsIGNvbnN0IHU4ICprZXks
+Cj4gK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgIHVuc2lnbmVkIGludCBrZXlsZW4pKQo+ICt7Cj4gK8KgwqDC
+oMKgwqDCoMKgc3RydWN0IGtleSAqa2V5cmluZzsKPiArwqDCoMKgwqDCoMKgwqBzdHJ1Y3QgcHVi
+bGljX2tleSAqcGtleTsKPiArwqDCoMKgwqDCoMKgwqBjaGFyIGtleV9uYW1lWzEyXTsKPiArwqDC
+oMKgwqDCoMKgwqB1MzIga2V5aWQgPSAqKCh1MzIgKilrZXkpOwo+ICvCoMKgwqDCoMKgwqDCoGlu
+dCBlcnI7Cj4gKwo+ICvCoMKgwqDCoMKgwqDCoHNwcmludGYoa2V5X25hbWUsICJpZDolMDh4Iiwg
+a2V5aWQpOwo+ICvCoMKgwqDCoMKgwqDCoGtleXJpbmcgPSByZXF1ZXN0X2tleSgma2V5X3R5cGVf
+YXN5bW1ldHJpYywga2V5X25hbWUsIE5VTEwpOwo+ICsKPiArwqDCoMKgwqDCoMKgwqBlcnIgPSAt
+RU5PS0VZOwo+ICvCoMKgwqDCoMKgwqDCoGlmIChJU19FUlIoa2V5cmluZykpCj4gK8KgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoGdvdG8gb3V0Owo+ICsKPiArwqDCoMKgwqDCoMKgwqBwa2V5
+ID0ga2V5cmluZy0+cGF5bG9hZC5kYXRhW2FzeW1fY3J5cHRvXTsKPiArwqDCoMKgwqDCoMKgwqBp
+ZiAoIXBrZXkpIHsKPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKga2V5X3B1dChrZXly
+aW5nKTsKPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgZ290byBvdXQ7Cj4gK8KgwqDC
+oMKgwqDCoMKgfQo+ICsKPiArwqDCoMKgwqDCoMKgwqBlcnIgPSBzZXRrZXkocHJpdmF0ZSwgcGtl
+eS0+a2V5LCBwa2V5LT5rZXlsZW4pOwo+ICvCoMKgwqDCoMKgwqDCoGtleV9wdXQoa2V5cmluZyk7
+Cj4gKwo+ICtvdXQ6Cj4gK8KgwqDCoMKgwqDCoMKgcmV0dXJuIGVycjsKPiArfQoKVGhpcyBzZWVt
+cyBlbnRpcmVseSB3cm9uZyB0byBtZS4gWW91IGNhbm5vdCBqdXN0IGFzc3VtZSB0aGF0IHRoZQpw
+cml2YXRlIGtleSBkYXRhIGFyZSBhdmFpbGFibGUgaW4gc29mdHdhcmUgZm9ybSB0byB0aGUga2Vy
+bmVsIGFuZCBjYW4KYmUgZXh0cmFjdGVkLgoKUGxlYXNlIGVuc3VyZSB5b3UgdGVzdCB0aGlzIHdp
+dGggYSBrZXkgaW4gYSBUUE0sIG9yIGluIGEgU0dYIHNvZnR3YXJlCmVuY2xhdmUgb3Igc29tZXRo
+aW5nIGxpa2UgdGhhdC4KCkRhdmlkLCBpcyB0aGVyZSBhIHdheSB0byBkbyB0aGF0IHRlc3QgcHVy
+ZWx5IGluIHNvZnR3YXJlIHdpdGhvdXQKbmVlZGluZyBoYXJkd2FyZSBzdXBwb3J0PyBXZSBrbm93
+IHRoYXQgdGhlIGRhdGEgbWlnaHQgbm90IGFjdHVhbGx5IGJlCnByZXNlbnQgaW4gYWxsIGNhc2Vz
+Li4uIGlzIHRoZXJlIGFuIGVhc3kgdGVzdCBmb3IgdGhhdCBjYXNlPwoKLS0gCkRhdmlkIFdvb2Ro
+b3VzZSAgICAgICAgICAgICAgICAgICAgICAgICAgICBPcGVuIFNvdXJjZSBUZWNobm9sb2d5IENl
+bnRyZQpEYXZpZC5Xb29kaG91c2VAaW50ZWwuY29tICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgSW50ZWwgQ29ycG9yYXRpb24KCg==
+
+
+--=-Yabtkvd6es2gFs9p/slz
+Content-Type: application/x-pkcs7-signature; name="smime.p7s"
+Content-Disposition: attachment; filename="smime.p7s"
+Content-Transfer-Encoding: base64
+
+MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIISjjCCBicw
+ggUPoAMCAQICAw3vNzANBgkqhkiG9w0BAQUFADCBjDELMAkGA1UEBhMCSUwxFjAUBgNVBAoTDVN0
+YXJ0Q29tIEx0ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRlIFNpZ25pbmcx
+ODA2BgNVBAMTL1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUgQ2xpZW50IENB
+MB4XDTE1MDUwNTA5NDM0MVoXDTE2MDUwNTA5NTMzNlowQjEcMBoGA1UEAwwTZHdtdzJAaW5mcmFk
+ZWFkLm9yZzEiMCAGCSqGSIb3DQEJARYTZHdtdzJAaW5mcmFkZWFkLm9yZzCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBAMkbm9kPbx1j/X4RVyf/pPKSYwelcco69TvnQQbKM8m8xkWjXJI1
+jpJ1jMaGUZGFToINMSZi7lZawUozudWbXSKy1SikENSTJHffsdRAIlsp+hR8vWvjsKUry6sEdqPG
+doa5RY7+N4WRusWZDYW/RRWE6i9EL9qV86CVPYqw22UBOUw4/j/HVGCV6TSB8yE5iEwhk/hUuzRr
+FZm1MJMR7mCS7BCR8Lr5jFY61lWpBiXNXIxLZCvDc26KR5L5tYX43iUVO3fzES1GRVoYnxxk2tmz
+fcsZG5vK+Trc9L8OZJfkYrEHH3+Iw41MQ0w/djVtYr1+HYldx0QmYXAtnhIj+UMCAwEAAaOCAtkw
+ggLVMAkGA1UdEwQCMAAwCwYDVR0PBAQDAgSwMB0GA1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcD
+BDAdBgNVHQ4EFgQUszC96C3w5/2+d+atSr0IpT26YI4wHwYDVR0jBBgwFoAUU3Ltkpzg2ssBXHx+
+ljVO8tS4UYIwHgYDVR0RBBcwFYETZHdtdzJAaW5mcmFkZWFkLm9yZzCCAUwGA1UdIASCAUMwggE/
+MIIBOwYLKwYBBAGBtTcBAgMwggEqMC4GCCsGAQUFBwIBFiJodHRwOi8vd3d3LnN0YXJ0c3NsLmNv
+bS9wb2xpY3kucGRmMIH3BggrBgEFBQcCAjCB6jAnFiBTdGFydENvbSBDZXJ0aWZpY2F0aW9uIEF1
+dGhvcml0eTADAgEBGoG+VGhpcyBjZXJ0aWZpY2F0ZSB3YXMgaXNzdWVkIGFjY29yZGluZyB0byB0
+aGUgQ2xhc3MgMSBWYWxpZGF0aW9uIHJlcXVpcmVtZW50cyBvZiB0aGUgU3RhcnRDb20gQ0EgcG9s
+aWN5LCByZWxpYW5jZSBvbmx5IGZvciB0aGUgaW50ZW5kZWQgcHVycG9zZSBpbiBjb21wbGlhbmNl
+IG9mIHRoZSByZWx5aW5nIHBhcnR5IG9ibGlnYXRpb25zLjA2BgNVHR8ELzAtMCugKaAnhiVodHRw
+Oi8vY3JsLnN0YXJ0c3NsLmNvbS9jcnR1MS1jcmwuY3JsMIGOBggrBgEFBQcBAQSBgTB/MDkGCCsG
+AQUFBzABhi1odHRwOi8vb2NzcC5zdGFydHNzbC5jb20vc3ViL2NsYXNzMS9jbGllbnQvY2EwQgYI
+KwYBBQUHMAKGNmh0dHA6Ly9haWEuc3RhcnRzc2wuY29tL2NlcnRzL3N1Yi5jbGFzczEuY2xpZW50
+LmNhLmNydDAjBgNVHRIEHDAahhhodHRwOi8vd3d3LnN0YXJ0c3NsLmNvbS8wDQYJKoZIhvcNAQEF
+BQADggEBAHMQmxHHodpS85X8HRyxhvfkys7r+taCNOaNU9cxQu/cZ/6k5nS2qGNMzZ6jb7ueY/V7
+7p+4DW/9ZWODDTf4Fz00mh5SSVc20Bz7t+hhxwHd62PZgENh5i76Qq2tw48U8AsYo5damHby1epf
+neZafLpUkLLO7AGBJIiRVTevdvyXQ0qnixOmKMWyvrhSNGuVIKVdeqLP+102Dwf+dpFyw+j1hz28
+jEEKpHa+NR1b2kXuSPi/rMGhexwlJOh4tK8KQ6Ryr0rIN//NSbOgbyYZrzc/ZUWX9V5OA84ChFb2
+vkFl0OcYrttp/rhDBLITwffPxSZeoBh9H7zYzkbCXKL3BUIwggYnMIIFD6ADAgECAgMN7zcwDQYJ
+KoZIhvcNAQEFBQAwgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQKEw1TdGFydENvbSBMdGQuMSswKQYD
+VQQLEyJTZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWduaW5nMTgwNgYDVQQDEy9TdGFydENv
+bSBDbGFzcyAxIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVudCBDQTAeFw0xNTA1MDUwOTQzNDFa
+Fw0xNjA1MDUwOTUzMzZaMEIxHDAaBgNVBAMME2R3bXcyQGluZnJhZGVhZC5vcmcxIjAgBgkqhkiG
+9w0BCQEWE2R3bXcyQGluZnJhZGVhZC5vcmcwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIB
+AQDJG5vZD28dY/1+EVcn/6TykmMHpXHKOvU750EGyjPJvMZFo1ySNY6SdYzGhlGRhU6CDTEmYu5W
+WsFKM7nVm10istUopBDUkyR337HUQCJbKfoUfL1r47ClK8urBHajxnaGuUWO/jeFkbrFmQ2Fv0UV
+hOovRC/alfOglT2KsNtlATlMOP4/x1Rglek0gfMhOYhMIZP4VLs0axWZtTCTEe5gkuwQkfC6+YxW
+OtZVqQYlzVyMS2Qrw3NuikeS+bWF+N4lFTt38xEtRkVaGJ8cZNrZs33LGRubyvk63PS/DmSX5GKx
+Bx9/iMONTENMP3Y1bWK9fh2JXcdEJmFwLZ4SI/lDAgMBAAGjggLZMIIC1TAJBgNVHRMEAjAAMAsG
+A1UdDwQEAwIEsDAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwQwHQYDVR0OBBYEFLMwvegt
+8Of9vnfmrUq9CKU9umCOMB8GA1UdIwQYMBaAFFNy7ZKc4NrLAVx8fpY1TvLUuFGCMB4GA1UdEQQX
+MBWBE2R3bXcyQGluZnJhZGVhZC5vcmcwggFMBgNVHSAEggFDMIIBPzCCATsGCysGAQQBgbU3AQID
+MIIBKjAuBggrBgEFBQcCARYiaHR0cDovL3d3dy5zdGFydHNzbC5jb20vcG9saWN5LnBkZjCB9wYI
+KwYBBQUHAgIwgeowJxYgU3RhcnRDb20gQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwAwIBARqBvlRo
+aXMgY2VydGlmaWNhdGUgd2FzIGlzc3VlZCBhY2NvcmRpbmcgdG8gdGhlIENsYXNzIDEgVmFsaWRh
+dGlvbiByZXF1aXJlbWVudHMgb2YgdGhlIFN0YXJ0Q29tIENBIHBvbGljeSwgcmVsaWFuY2Ugb25s
+eSBmb3IgdGhlIGludGVuZGVkIHB1cnBvc2UgaW4gY29tcGxpYW5jZSBvZiB0aGUgcmVseWluZyBw
+YXJ0eSBvYmxpZ2F0aW9ucy4wNgYDVR0fBC8wLTAroCmgJ4YlaHR0cDovL2NybC5zdGFydHNzbC5j
+b20vY3J0dTEtY3JsLmNybDCBjgYIKwYBBQUHAQEEgYEwfzA5BggrBgEFBQcwAYYtaHR0cDovL29j
+c3Auc3RhcnRzc2wuY29tL3N1Yi9jbGFzczEvY2xpZW50L2NhMEIGCCsGAQUFBzAChjZodHRwOi8v
+YWlhLnN0YXJ0c3NsLmNvbS9jZXJ0cy9zdWIuY2xhc3MxLmNsaWVudC5jYS5jcnQwIwYDVR0SBBww
+GoYYaHR0cDovL3d3dy5zdGFydHNzbC5jb20vMA0GCSqGSIb3DQEBBQUAA4IBAQBzEJsRx6HaUvOV
+/B0csYb35MrO6/rWgjTmjVPXMULv3Gf+pOZ0tqhjTM2eo2+7nmP1e+6fuA1v/WVjgw03+Bc9NJoe
+UklXNtAc+7foYccB3etj2YBDYeYu+kKtrcOPFPALGKOXWph28tXqX53mWny6VJCyzuwBgSSIkVU3
+r3b8l0NKp4sTpijFsr64UjRrlSClXXqiz/tdNg8H/naRcsPo9Yc9vIxBCqR2vjUdW9pF7kj4v6zB
+oXscJSToeLSvCkOkcq9KyDf/zUmzoG8mGa83P2VFl/VeTgPOAoRW9r5BZdDnGK7baf64QwSyE8H3
+z8UmXqAYfR+82M5Gwlyi9wVCMIIGNDCCBBygAwIBAgIBHjANBgkqhkiG9w0BAQUFADB9MQswCQYD
+VQQGEwJJTDEWMBQGA1UEChMNU3RhcnRDb20gTHRkLjErMCkGA1UECxMiU2VjdXJlIERpZ2l0YWwg
+Q2VydGlmaWNhdGUgU2lnbmluZzEpMCcGA1UEAxMgU3RhcnRDb20gQ2VydGlmaWNhdGlvbiBBdXRo
+b3JpdHkwHhcNMDcxMDI0MjEwMTU1WhcNMTcxMDI0MjEwMTU1WjCBjDELMAkGA1UEBhMCSUwxFjAU
+BgNVBAoTDVN0YXJ0Q29tIEx0ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRl
+IFNpZ25pbmcxODA2BgNVBAMTL1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUg
+Q2xpZW50IENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxwmDzM4t2BqxKaQuE6uW
+vooyg4ymiEGWVUet1G8SD+rqvyNH4QrvnEIaFHxOhESip7vMz39ScLpNLbL1QpOlPW/tFIzNHS3q
+d2XRNYG5Sv9RcGE+T4qbLtsjjJbi6sL7Ls/f/X9ftTyhxvxWkf8KW37iKrueKsxw2HqolH7GM6FX
+5UfNAwAu4ZifkpmZzU1slBhyWwaQPEPPZRsWoTb7q8hmgv6Nv3Hg9rmA1/VPBIOQ6SKRkHXG0Hhm
+q1dOFoAFI411+a/9nWm5rcVjGcIWZ2v/43Yksq60jExipA4l5uv9/+Hm33mbgmCszdj/Dthf13tg
+Av2O83hLJ0exTqfrlwIDAQABo4IBrTCCAakwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC
+AQYwHQYDVR0OBBYEFFNy7ZKc4NrLAVx8fpY1TvLUuFGCMB8GA1UdIwQYMBaAFE4L7xqkQFulF2mH
+MMo0aEPQQa7yMGYGCCsGAQUFBwEBBFowWDAnBggrBgEFBQcwAYYbaHR0cDovL29jc3Auc3RhcnRz
+c2wuY29tL2NhMC0GCCsGAQUFBzAChiFodHRwOi8vd3d3LnN0YXJ0c3NsLmNvbS9zZnNjYS5jcnQw
+WwYDVR0fBFQwUjAnoCWgI4YhaHR0cDovL3d3dy5zdGFydHNzbC5jb20vc2ZzY2EuY3JsMCegJaAj
+hiFodHRwOi8vY3JsLnN0YXJ0c3NsLmNvbS9zZnNjYS5jcmwwgYAGA1UdIAR5MHcwdQYLKwYBBAGB
+tTcBAgEwZjAuBggrBgEFBQcCARYiaHR0cDovL3d3dy5zdGFydHNzbC5jb20vcG9saWN5LnBkZjA0
+BggrBgEFBQcCARYoaHR0cDovL3d3dy5zdGFydHNzbC5jb20vaW50ZXJtZWRpYXRlLnBkZjANBgkq
+hkiG9w0BAQUFAAOCAgEACoMIfXirLAZcuGOMXq4cuSN3TaFx2H2GvD5VSy/6rV55BYHbWNaPeQn3
+oBSU8KgQZn/Kck1JxbLpAxVCNtsxeW1R87ifhsYZ0qjdrA9anrW2MAWCtosmAOT4OxK9QPoSjCMx
+M3HbkZCDJgnlE8jMopH21BbyAYr7b5EfGRQJNtgWcvqSXwKHnTutR08+Kkn0KAkXCzeQNLeA5LlY
+UzFyM7kPAp8pIRMQ+seHunmyG642S2+y/qHEdMuGIwpfz3eDF1PdctL04qYK/zu+Qg1Bw0RwgigV
+Zs/0c5HP2/e9DBHh7eSwtzYlk4AUr6yxLlcwSjOfOmKEQ/Q8tzh0IFiNu9IPuTGAPBn4CPxD0+Ru
+8T2wg8/s43R/PT3kd1OEqOJUl7q+h+r6fpvU0Fzxd2tC8Ga6fDEPme+1Nbi+03pVjuZQKbGwKJ66
+gEn06WqaxVZC+J8hh/jR0k9mST1iAZPNYulcNJ8tKmVtjYsv0L1TSm2+NwON58tO+pIVzu3DWwSE
+XSf+qkDavQam+QtEOZxLBXI++aMUEapSn+k3Lxm48ZCYfAWLb/Xj7F5JQMbZvCexglAbYR0kIHqW
+5DnsYSdMD/IplJMojx0NBrxJ3fN9dvX2Y6BIXRsF1du4qESm4/3CKuyUV7p9DW3mPlHTGLvYxnyK
+Qy7VFBkoLINszBrOUeIxggNvMIIDawIBATCBlDCBjDELMAkGA1UEBhMCSUwxFjAUBgNVBAoTDVN0
+YXJ0Q29tIEx0ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRlIFNpZ25pbmcx
+ODA2BgNVBAMTL1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUgQ2xpZW50IENB
+AgMN7zcwCQYFKw4DAhoFAKCCAa8wGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0B
+CQUxDxcNMTYwMTEzMTIyNzQyWjAjBgkqhkiG9w0BCQQxFgQUqJ1QFVmER85u7o2h7ADN3gSJom8w
+gaUGCSsGAQQBgjcQBDGBlzCBlDCBjDELMAkGA1UEBhMCSUwxFjAUBgNVBAoTDVN0YXJ0Q29tIEx0
+ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRlIFNpZ25pbmcxODA2BgNVBAMT
+L1N0YXJ0Q29tIENsYXNzIDEgUHJpbWFyeSBJbnRlcm1lZGlhdGUgQ2xpZW50IENBAgMN7zcwgacG
+CyqGSIb3DQEJEAILMYGXoIGUMIGMMQswCQYDVQQGEwJJTDEWMBQGA1UEChMNU3RhcnRDb20gTHRk
+LjErMCkGA1UECxMiU2VjdXJlIERpZ2l0YWwgQ2VydGlmaWNhdGUgU2lnbmluZzE4MDYGA1UEAxMv
+U3RhcnRDb20gQ2xhc3MgMSBQcmltYXJ5IEludGVybWVkaWF0ZSBDbGllbnQgQ0ECAw3vNzANBgkq
+hkiG9w0BAQEFAASCAQCjUq+2IqV9eyr28K8XcVXsJ+8ASDeirLK/GjplKJv27ZpM3cDBiW26cK1M
+9KW3Awikje4+DLQzMTEQYcUF4c6yr9XjNilaWrZIxkd/z03kAdNuXJlo7O0hV8BdtCIUzh0uTrCu
+onhqA4cu8DUx2Qe9vT+otgvVvNjXWGPQcidPYAdcEF5L5Qvqu8ncy9m+7m6f0uOActApeib2fZ2z
+8XjgBk4DJva6ZUKWpf88/Pq6pj/y0oFeZBAbSog8x8gocf7SgXMrQ2vfVDODYhVRXXQBJgPCby0h
+2ffKaD1XWjC9JwEa+w0x19n+mBHqOCMjKlrBM+YTIc+su/GsdrtVY3JaAAAAAAAA
+
+
+--=-Yabtkvd6es2gFs9p/slz--
