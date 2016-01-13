@@ -1,46 +1,67 @@
-From: Tadeusz Struk <tadeusz.struk-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2] crypto: AF_ALG - add support for keys/asymmetric-type
-Date: Wed, 13 Jan 2016 06:05:32 -0800
-Message-ID: <569659AC.9070506@intel.com>
-References: <20151226155014.27615.14985.stgit@desktop.home>
- <10464.1452691882@warthog.procyon.org.uk>
+From: Nicolas Dufresne <nicolas.dufresne@collabora.com>
+Subject: Re: [PATCH] v4l: add V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE
+Date: Wed, 13 Jan 2016 10:02:42 -0500
+Message-ID: <1452697362.3605.8.camel@collabora.com>
+References: <1452686611-145620-1-git-send-email-wuchengli@chromium.org>
+Reply-To: Nicolas Dufresne <nicolas.dufresne@collabora.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <10464.1452691882-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tadeusz Struk <tstruk-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org, smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
+Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature";
+	boundary="=-vKIMJy40P+XVrjRqkvNp"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1452686611-145620-1-git-send-email-wuchengli@chromium.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Wu-Cheng Li <wuchengli@chromium.org>, pawel@osciak.com, mchehab@osg.samsung.com, hverkuil@xs4all.nl, k.debski@samsung.com, crope@iki.fi, standby24x7@gmail.com, ricardo.ribalda@gmail.com, ao2@ao2.it, bparrot@ti.com
+Cc: linux-media@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi David,
-On 01/13/2016 05:31 AM, David Howells wrote:
->> > +	pkey = keyring->payload.data[asym_crypto];
->> > +	if (!pkey) {
->> > +		key_put(keyring);
->> > +		goto out;
->> > +	}
->> > +
->> > +	err = setkey(private, pkey->key, pkey->keylen);
->> > +	key_put(keyring);
-> Note that you may not assume that there's data there that you can use in this
-> manner.  The key might be a pointer to some hardware device such as a TPM.  I
-> have a TPM asymmetric subtype in progress.
 
-So is there anything in place that can be used to tell what the key actually is?
-The security/integrity/digsig_asymmetric.c is using this api in a similar way, so
-if it is incorrect digsig_asymmetric shouldn't work neither.
+--=-vKIMJy40P+XVrjRqkvNp
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-> 
-> I think this really needs to be driven from a keyctl() because you need to let
-> the asymmetric subtype decide how it wants to handle this.  I would suggest
-> adding KEYCTL_{ASYM_GETINFO,SIGN,VERIFY,ENCRYPT,DECRYPT} - the problem is how
-> to pass sufficient arguments, how to decrypt the private key and what metadata
-> needs to be passed vs what is inline with the data.
+Le mercredi 13 janvier 2016 =C3=A0 20:03 +0800, Wu-Cheng Li a =C3=A9crit=C2=
+=A0:
+> Some drivers also need a control like
+> V4L2_CID_MPEG_MFC51_VIDEO_FORCE_FRAME_TYPE to force an encoder frame
+> type. This patch adds a general V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE.
+>=20
+> This control only affects the next queued buffer. There's no need to
+> clear the value after requesting an I frame. But all controls are set
+> in v4l2_ctrl_handler_setup. So a default DISABLED value is required.
+> Basically this control is like V4L2_CTRL_TYPE_BUTTON with parameters.
+> How to prevent a control from being set in v4l2_ctrl_handler_setup so
+> DISABLED value is not needed? Does it make sense not to set a control
+> if it is EXECUTE_ON_WRITE?
 
-I agree, ideally keyctl should do the job for all the cases and request_key()
-should just return a key data.
-Thanks,
--- 
-TS
+I don't like the way it's implemented. I don't know any decoder that
+have a frame type forcing feature other they I-Frame. It would be much
+more natural to use a toggle button control (and add more controls for
+other types when needed) then trying to merge hypothetical toggles into
+something that manually need to be set and disabled.
+
+>=20
+> Wu-Cheng Li (1):
+> =C2=A0 v4l: add V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE.
+>=20
+> =C2=A0Documentation/DocBook/media/v4l/controls.xml | 23
+> +++++++++++++++++++++++
+> =C2=A0drivers/media/v4l2-core/v4l2-ctrls.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0| 13 +++++++++++++
+> =C2=A0include/uapi/linux/v4l2-controls.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0|=C2=A0=C2=A05 +++++
+> =C2=A03 files changed, 41 insertions(+)
+>=20
+--=-vKIMJy40P+XVrjRqkvNp
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+Content-Transfer-Encoding: 7bit
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iEYEABECAAYFAlaWZxIACgkQcVMCLawGqBzOdACfahCCdLWKlusD7vegK9V1pmXh
+k7cAn20j2ILRehu+ZQFTnualQZ2iSi0V
+=9G5v
+-----END PGP SIGNATURE-----
+
+--=-vKIMJy40P+XVrjRqkvNp--
