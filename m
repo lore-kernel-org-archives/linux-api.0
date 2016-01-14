@@ -1,65 +1,65 @@
 From: Miroslav Benes <mbenes@suse.cz>
 Subject: Re: livepatch: reuse module loader code to write relocations
-Date: Thu, 14 Jan 2016 10:04:11 +0100 (CET)
-Message-ID: <alpine.LNX.2.00.1601140958300.7127@pobox.suse.cz>
-References: <1452281304-28618-1-git-send-email-jeyu@redhat.com> <1452281304-28618-5-git-send-email-jeyu@redhat.com> <alpine.LNX.2.00.1601121729480.15984@pobox.suse.cz> <20160114034933.GB980@packer-debian-8-amd64.digitalocean.com>
+Date: Thu, 14 Jan 2016 10:10:16 +0100 (CET)
+Message-ID: <alpine.LNX.2.00.1601141004590.7127@pobox.suse.cz>
+References: <1452281304-28618-1-git-send-email-jeyu@redhat.com> <1452281304-28618-5-git-send-email-jeyu@redhat.com> <alpine.LNX.2.00.1601131012340.10011@pobox.suse.cz> <20160113183924.GA980@packer-debian-8-amd64.digitalocean.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20160114034933.GB980@packer-debian-8-amd64.digitalocean.com>
-Sender: linux-doc-owner@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160113183924.GA980@packer-debian-8-amd64.digitalocean.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Jessica Yu <jeyu@redhat.com>
 Cc: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 On Wed, 13 Jan 2016, Jessica Yu wrote:
 
-> > Maybe it would be better to use pmod->symtab and pmod->strtab everywhere.
-> > It should be the same, but core_* versions are only helpers used in
-> > load_module and friends. There is even a comment in
-> > include/linux/module.h.
+> +++ Miroslav Benes [13/01/16 10:19 +0100]:
+> > On Fri, 8 Jan 2016, Jessica Yu wrote:
 > > 
-> > 	/*
-> > 	 * We keep the symbol and string tables for kallsyms.
-> > 	 * The core_* fields below are temporary, loader-only (they
-> > 	 * could really be discarded after module init).
-> > 	 */
+> > >  static int klp_write_object_relocations(struct module *pmod,
+> > >  					struct klp_object *obj)
+> > >  {
+> > > -	int ret = 0;
+> > > -	unsigned long val;
+> > > -	struct klp_reloc *reloc;
+> > > +	int i, len, ret = 0;
+> > > +	char *secname;
+> > > +	const char *objname;
+> > > 
+> > >  	if (WARN_ON(!klp_is_object_loaded(obj)))
+> > >  		return -EINVAL;
+> > > 
+> > > -	if (WARN_ON(!obj->relocs))
+> > > -		return -EINVAL;
+> > > +	objname = klp_is_module(obj) ? obj->name : "vmlinux";
+> > > 
+> > >  	module_disable_ro(pmod);
+> > > +	/* For each klp rela section for this object */
+> > > +	for (i = 1; i < pmod->info->hdr->e_shnum; i++) {
+> > > +		if (!(pmod->info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH))
+> > > +			continue;
 > > 
-> > We should respect that.
+> > One more thing. If the module does not specify it is a live patch module
+> > in modinfo (with MODULE_INFO(livepatch, "Y")), but it is a perfect live
+> > patch module otherwise (it calls klp_register_patch in its init function),
+> > the kernel crashes here. pmod->info is not initialized at all. This should
+> > be fixed. Perhaps the easiest would be to call
+> > klp_write_object_relocations() in klp_init_object_loaded() only if
+> > is_livepatch_module() returns true. Similar to a check for obj->relocs
+> > before.
 > 
-> I admit I'm a bit confused by the comment, I can't seem to find where
-> core_symtab and core_strtab are purportedly discarded after module
-> init (perhaps I'm missing something?). IMO it sounds more like it's
-> describing mod->symtab and mod->strtab instead, because these are in
-> module init memory and are freed later. 
+> Hm yes, that's a problem. To remedy this, I think it makes sense to
+> require all livepatch modules to identify themselves with the modinfo
+> attribute, since it is a very simple requirement. If some module calls
+> klp_register_patch() and it does not have the livepatch attribute,
+> klp_register_patch() can just return an error. We can call
+> is_livepatch_module() at the beginning of klp_register_patch(), and
+> proceed only if the check succeeds, since we'll then know that the
+> required structures have been properly initialized in the module
+> loader. What do you think?
 
-I think it just says that core_* symbols are used as temporary tables 
-during module loading. They are not discarded anywhere but they could be 
-(and maybe they'll be in the future). So it is better not to depend on 
-them.
+This is similar to what Jiri proposed in his mail. It is up to you. Both 
+ways (the warning and the check, or what you propose) are fine.
 
-> In any case, my reason for using
-> core_symtab is that the original symbol table (mod->symtab) is marked
-> with INIT_OFFSET_MASK in layout_symtab() (see kernel/module.c), and is
-> therefore in init memory. This memory is freed near the end of
-> do_init_module() with do_free_init(). Since core_symtab is in module core
-> memory, for livepatch modules I simply used core_symtab to hold a
-> full copy of the symbol table instead of the slimmed down version that
-> it was originally intended to hold.
-
-But both mod->symtab and mod->strtab are changed to point to their core_ 
-versions right before do_free_init is called in do_init_module. So they 
-should be the same. My remark was more of an academic question. I believe 
-it is not a functional thing, just the matter of taste. But maybe I am 
-missing something.
-
-> Alternatively, we can tweak layout_symtab() to *not* mark the symtab
-> with INIT_OFFSET_MASK and put it in core memory instead. I think
-> either way will work, but maybe it is cleaner to do it this way
-> instead.
-
-Yeah, I wouldn't do this. core_* symbols are ok from functional point of 
-view.
-
-Thanks,
 Miroslav
