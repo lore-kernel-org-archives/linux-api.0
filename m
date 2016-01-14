@@ -1,87 +1,66 @@
-From: Kamil Debski <k.debski@samsung.com>
-Subject: RE: [PATCH v3 2/2] s5p-mfc: add the support of
- V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME.
-Date: Thu, 14 Jan 2016 18:25:26 +0100
-Message-ID: <00b301d14ef0$8f51df00$adf59d00$@samsung.com>
-References: <1452783007-80883-1-git-send-email-wuchengli@chromium.org>
- <1452783007-80883-3-git-send-email-wuchengli@chromium.org>
+From: Nikhilesh Reddy <reddyn@codeaurora.org>
+Subject: Re: [PATCH] fuse: Add support for fuse stacked I/O
+Date: Thu, 14 Jan 2016 10:57:27 -0800
+Message-ID: <5697EF97.9020800@codeaurora.org>
+References: <565394BE.4040506@codeaurora.org> <5696E366.2080605@codeaurora.org> <20160114045716.GB8006@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-reply-to: <1452783007-80883-3-git-send-email-wuchengli@chromium.org>
-Content-language: pl
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: 'Wu-Cheng Li' <wuchengli@chromium.org>, pawel@osciak.com, mchehab@osg.samsung.com, hverkuil@xs4all.nl, crope@iki.fi, standby24x7@gmail.com, nicolas.dufresne@collabora.com, ricardo.ribalda@gmail.com, ao2@ao2.it, bparrot@ti.com, kyungmin.park@samsung.com, jtp.park@samsung.com
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, djkurtz@chromium.org, tiffany.lin@mediatek.com, linux-arm-kernel@lists.infradead.org, linux-media@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160114045716.GB8006@kroah.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Greg KH <gregkh@linuxfoundation.org>
+Cc: Miklos Szeredi <miklos@szeredi.hu>, fuse-devel <fuse-devel@lists.sourceforge.net>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, viro@zeniv.linux.org.uk, Theodore Ts'o <tytso@mit.edu>, jack@suse.cz, Antonio SJ Musumeci <trapexit@spawn.link>, sven.utcke@gmx.de, Nikolaus Rath <nikolaus@rath.org>, Richard Weinberger <richard@nod.at>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
 
-> From: Wu-Cheng Li [mailto:wuchengli@chromium.org]
-> Sent: Thursday, January 14, 2016 3:50 PM
-> To: pawel@osciak.com; mchehab@osg.samsung.com; hverkuil@xs4all.nl;
-> k.debski@samsung.com; crope@iki.fi; standby24x7@gmail.com;
-> wuchengli@chromium.org; nicolas.dufresne@collabora.com;
-> ricardo.ribalda@gmail.com; ao2@ao2.it; bparrot@ti.com;
-> kyungmin.park@samsung.com; jtp.park@samsung.com
-> Cc: linux-media@vger.kernel.org; linux-kernel@vger.kernel.org; linux-
-> api@vger.kernel.org; linux-arm-kernel@lists.infradead.org;
-> tiffany.lin@mediatek.com; djkurtz@chromium.org
-> Subject: [PATCH v3 2/2] s5p-mfc: add the support of
-> V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME.
+>
+> Your patch is line-wrapped and impossible to apply.
+>
+> And why cc: me?  This isn't my area of the kernel...
+>
+> greg k-h
+>
 
-However simple the patch is, please do provide a commit message.
-Please write something. 
+Thanks for trying to apply the patch
+and i am extremely  sorry for mangling the lines ( my config was broken)
+I cc-ed you and a few other ppl to help with the review and the merge.
+I am sorry if i bothered you.
+But i would still be grateful for your comments
 
-Best wishes,
-Kamil
 
-> Signed-off-by: Wu-Cheng Li <wuchengli@chromium.org>
-> ---
->  drivers/media/platform/s5p-mfc/s5p_mfc_enc.c | 12 ++++++++++++
->  1 file changed, 12 insertions(+)
-> 
-> diff --git a/drivers/media/platform/s5p-mfc/s5p_mfc_enc.c
-> b/drivers/media/platform/s5p-mfc/s5p_mfc_enc.c
-> index 0434f02..974b4c5 100644
-> --- a/drivers/media/platform/s5p-mfc/s5p_mfc_enc.c
-> +++ b/drivers/media/platform/s5p-mfc/s5p_mfc_enc.c
-> @@ -212,6 +212,14 @@ static struct mfc_control controls[] = {
->  		.menu_skip_mask = 0,
->  	},
->  	{
-> +		.id = V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME,
-> +		.type = V4L2_CTRL_TYPE_BUTTON,
-> +		.minimum = 0,
-> +		.maximum = 0,
-> +		.step = 0,
-> +		.default_value = 0,
-> +	},
-> +	{
->  		.id = V4L2_CID_MPEG_VIDEO_VBV_SIZE,
->  		.type = V4L2_CTRL_TYPE_INTEGER,
->  		.minimum = 0,
-> @@ -1423,6 +1431,10 @@ static int s5p_mfc_enc_s_ctrl(struct v4l2_ctrl
-*ctrl)
->  	case V4L2_CID_MPEG_MFC51_VIDEO_FORCE_FRAME_TYPE:
->  		ctx->force_frame_type = ctrl->val;
->  		break;
-> +	case V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME:
-> +		ctx->force_frame_type =
-> +
-> 	V4L2_MPEG_MFC51_VIDEO_FORCE_FRAME_TYPE_I_FRAME;
-> +		break;
->  	case V4L2_CID_MPEG_VIDEO_VBV_SIZE:
->  		p->vbv_size = ctrl->val;
->  		break;
-> --
-> 2.6.0.rc2.230.g3dd15c0
+*I will send out a properly formatted patch shortly.*
+
+To quote Nikolaus Rath
+(the current maintainer of fuse userspace[libfuse]) :
+
+[BEGIN QUOTE]
+"Officially Miklos is still the maintainer, but I understand he has
+almost no time for FUSE at the moment (neither kernel nor userspace). I
+have taken over the userspace components, but as far as I know no one
+stepped up for the kernel work.
+
+The FUSE kernel components are maintained in the mainline Linux kernel
+tree (and have been for quite some time), so nothing is being moved.
+
+The way to get changes into the FUSE kernel module is the same procedure
+as for any other kernel code: try to convince a maintainer to commit
+your code. This doesn't need to be Miklos. If there's really no
+maintainer available to review your patch, you can also try to send it
+to Linus directly."
+[END QUOTE]
+
+I am hoping for some help from the maintainers to help get the patch 
+merged. I have seen a lot of interest on the patch from the fuse 
+community and would like to work with the kernel maintainers to help get 
+the patch merged into the kernel.
+
+*I will send out a properly formatted patch shortly.* sorry for the bad 
+patch
+-- 
+Thanks
+Nikhilesh Reddy
+
+Qualcomm Innovation Center, Inc.
+The Qualcomm Innovation Center, Inc. is a member of the Code Aurora Forum,
+a Linux Foundation Collaborative Project.
