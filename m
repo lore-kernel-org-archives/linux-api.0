@@ -1,70 +1,30 @@
-From: Nicolas Dufresne <nicolas.dufresne-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org>
-Subject: Re: [PATCH] v4l: add V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE.
-Date: Thu, 14 Jan 2016 14:02:13 -0500
-Message-ID: <1452798133.3306.3.camel@collabora.com>
-References: <1452686611-145620-1-git-send-email-wuchengli@chromium.org>
-	 <1452686611-145620-2-git-send-email-wuchengli@chromium.org>
-	 <003f01d14e21$78f7ad40$6ae707c0$@samsung.com>
-	 <1452783743.10009.18.camel@collabora.com>
-	 <00ac01d14ef0$0702b2f0$150818d0$@samsung.com>
-Reply-To: Nicolas Dufresne <nicolas.dufresne-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org>
+From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [PATCH] fuse: Add support for fuse stacked I/O
+Date: Thu, 14 Jan 2016 11:19:31 -0800
+Message-ID: <CA+55aFwxaU0Y_UxyKFv6WaYsPWDDzZG-rhVtMuLSPcJ0WLLw2A@mail.gmail.com>
+References: <565394BE.4040506@codeaurora.org>
+	<5696E366.2080605@codeaurora.org>
+	<20160114045716.GB8006@kroah.com>
+	<5697EF97.9020800@codeaurora.org>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature";
-	boundary="=-brlVbyPf4xej2aoZ8DtX"
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <00ac01d14ef0$0702b2f0$150818d0$@samsung.com>
+In-Reply-To: <5697EF97.9020800-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kamil Debski <k.debski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, 'Wu-Cheng Li' <wuchengli-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org, mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org, crope-X3B1VOXEql0@public.gmane.org, standby24x7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ricardo.ribalda-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ao2-qKGr9MkilAE@public.gmane.org, bparrot-l0cyMroinI0@public.gmane.org, 'Andrzej Hajda' <a.hajda-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Cc: linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Nikhilesh Reddy <reddyn-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Cc: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, fuse-devel <fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Antonio SJ Musumeci <trapexit-wGTF+nt6ur047o9RxwvyTQ@public.gmane.org>, sven.utcke-Mmb7MZpHnFY@public.gmane.org, Nikolaus Rath <nikolaus-BTH8mxji4b0@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Thu, Jan 14, 2016 at 10:57 AM, Nikhilesh Reddy <reddyn-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org> wrote:
+>
+> *I will send out a properly formatted patch shortly.*
 
---=-brlVbyPf4xej2aoZ8DtX
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+So before you do that, can you explain in what cases fuse just wants
+to pass through the IO?
 
-Le jeudi 14 janvier 2016 =C3=A0 18:21 +0100, Kamil Debski a =C3=A9crit=C2=
-=A0:
-> I had a look into the documentation of MFC. It is possible to force
-> two types of a frame to be coded.
-> The one is a keyframe, the other is a not coded frame. As I
-> understand this is a type of frame that means that image did not
-> change from previous frame. I am sure I seen it in an MPEG4 stream in
-> a movie trailer. The initial board with the age rating is displayed
-> for a couple of seconds and remains static. Thus there is one I-frame=20
-> and a number of non-coded frames.
->=20
-> That is the reason why the control was implemented in MFC as a menu
-> and not a button. Thus the question remains - is it better to leave
-> it as a menu, or should there be two (maybe more in the future)
-> buttons?
+Why aren't such cases just using unionfs or something?
 
-Then I believe we need both. Because with the menu, setting I-Frame, I
-would expect to only receive keyframes from now-on. While the useful
-feature we are looking for here, is to get the next buffer (or nearby)
-to be a keyframe. It's the difference between creating an I-Frame only
-stream and requesting a key-frame manually for recovery (RTP use case).
-In this end, we should probably take that time to review the features
-we have as we need:
+In other words, I think that patch needs an explanation for the
+*reason* for the new functionality.
 
-- A way to trigger a key frame to be produce
-- A way to produce a I-Frame only stream
-- A way to set the key-frame distance (in frames) even though this
-could possibly be emulated using the trigger.
-
-cheers,
-Nicolas
---=-brlVbyPf4xej2aoZ8DtX
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-Content-Transfer-Encoding: 7bit
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iEYEABECAAYFAlaX8LUACgkQcVMCLawGqBy+NgCgz5q9VWw+FIGC6xKtcn0MSEWn
-e9AAn0NzyR4+QkHx8o160oqZcv92dGoM
-=7kPt
------END PGP SIGNATURE-----
-
---=-brlVbyPf4xej2aoZ8DtX--
+               Linus
