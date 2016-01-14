@@ -1,107 +1,87 @@
-From: Kamil Debski <k.debski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: RE: [PATCH] v4l: add V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE.
-Date: Thu, 14 Jan 2016 18:21:37 +0100
-Message-ID: <00ac01d14ef0$0702b2f0$150818d0$@samsung.com>
-References: <1452686611-145620-1-git-send-email-wuchengli@chromium.org>
- <1452686611-145620-2-git-send-email-wuchengli@chromium.org>
- <003f01d14e21$78f7ad40$6ae707c0$@samsung.com>
- <1452783743.10009.18.camel@collabora.com>
+From: Kamil Debski <k.debski@samsung.com>
+Subject: RE: [PATCH v3 2/2] s5p-mfc: add the support of
+ V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME.
+Date: Thu, 14 Jan 2016 18:25:26 +0100
+Message-ID: <00b301d14ef0$8f51df00$adf59d00$@samsung.com>
+References: <1452783007-80883-1-git-send-email-wuchengli@chromium.org>
+ <1452783007-80883-3-git-send-email-wuchengli@chromium.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <1452783743.10009.18.camel-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-reply-to: <1452783007-80883-3-git-send-email-wuchengli@chromium.org>
 Content-language: pl
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: 'Nicolas Dufresne' <nicolas.dufresne-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org>, 'Wu-Cheng Li' <wuchengli-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org, mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org, crope-X3B1VOXEql0@public.gmane.org, standby24x7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ricardo.ribalda-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ao2-qKGr9MkilAE@public.gmane.org, bparrot-l0cyMroinI0@public.gmane.org, 'Andrzej Hajda' <a.hajda-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Cc: linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: 'Wu-Cheng Li' <wuchengli@chromium.org>, pawel@osciak.com, mchehab@osg.samsung.com, hverkuil@xs4all.nl, crope@iki.fi, standby24x7@gmail.com, nicolas.dufresne@collabora.com, ricardo.ribalda@gmail.com, ao2@ao2.it, bparrot@ti.com, kyungmin.park@samsung.com, jtp.park@samsung.com
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, djkurtz@chromium.org, tiffany.lin@mediatek.com, linux-arm-kernel@lists.infradead.org, linux-media@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 Hi,
 
-> From: Nicolas Dufresne [mailto:nicolas.dufresne-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org]
-> Sent: Thursday, January 14, 2016 4:02 PM
-> To: Kamil Debski; 'Wu-Cheng Li'; pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org;
-> mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org; hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org; crope-X3B1VOXEql0@public.gmane.org;
-> standby24x7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org; ricardo.ribalda-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org; ao2-qKGr9MkilAE@public.gmane.org;
-> bparrot-l0cyMroinI0@public.gmane.org
-> Cc: linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; linux-
-> api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> Subject: Re: [PATCH] v4l: add
-> V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE.
->=20
-> Hi Kamil,
->=20
-> Le mercredi 13 janvier 2016 =C3=A0 17:43 +0100, Kamil Debski a =C3=A9=
-crit :
-> > Good to hear that there are new codecs to use the V4L2 codec API :)
-> >
-> > My two cents are following - when you add a control that does the s=
-ame
-> > work as a driver specific control then it would be great if you
-> > modified the driver that uses the specific control to also support =
-the
-> > newly added control.
-> > This way future applications  could use the control you added for b=
-oth
-> > new and old drivers.
->=20
-> When i first notice this MFC specific control, I believed it was use =
-to produce
-> I-Frame only streams (rather then a toggle, to produce one key- frame=
- on
-> demand). So I wanted to verify the implementation to make sure what W=
-u-
-> Cheng is doing make sense. Though, I found that we set:
->=20
->   ctx->force_frame_type =3D ctrl->val;
->=20
-> And never use that value anywhere else in the driver code. Hopefully =
-I'm just
-> missing something, but if it's not implemented, maybe it's better not=
- to
-> expose it. Otherwise, this may lead to hard to find streaming issues.=
- I do
-> hope we can add this feature though, as it's very useful feature for =
-real time
-> encoding.
+> From: Wu-Cheng Li [mailto:wuchengli@chromium.org]
+> Sent: Thursday, January 14, 2016 3:50 PM
+> To: pawel@osciak.com; mchehab@osg.samsung.com; hverkuil@xs4all.nl;
+> k.debski@samsung.com; crope@iki.fi; standby24x7@gmail.com;
+> wuchengli@chromium.org; nicolas.dufresne@collabora.com;
+> ricardo.ribalda@gmail.com; ao2@ao2.it; bparrot@ti.com;
+> kyungmin.park@samsung.com; jtp.park@samsung.com
+> Cc: linux-media@vger.kernel.org; linux-kernel@vger.kernel.org; linux-
+> api@vger.kernel.org; linux-arm-kernel@lists.infradead.org;
+> tiffany.lin@mediatek.com; djkurtz@chromium.org
+> Subject: [PATCH v3 2/2] s5p-mfc: add the support of
+> V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME.
 
-Ooops, you're right. It's not implemented. I am adding Andrzej Hajda to=
- the CC loop, he may know more about this. I think it may have been imp=
-lemented in some of our development branches, but somehow did not make =
-it into the mainline kernel. That's one thing.
-
-The other one is about your previous comment. I will quote it below, as=
- it is in another email.
-
-> I don't like the way it's implemented. I don't know any decoder that =
-have
-> a frame type forcing feature other they I-Frame. It would be much mor=
-e
-> natural to use a toggle button control (and add more controls for oth=
-er
-> types when needed) then trying to merge hypothetical toggles into
->something that manually need to be set and disabled.
-
-I had a look into the documentation of MFC. It is possible to force two=
- types of a frame to be coded.
-The one is a keyframe, the other is a not coded frame. As I understand =
-this is a type of frame that means that image did not change from previ=
-ous frame. I am sure I seen it in an MPEG4 stream in a movie trailer. T=
-he initial board with the age rating is displayed for a couple of secon=
-ds and remains static. Thus there is one I-frame and a number of non-co=
-ded frames.
-
-That is the reason why the control was implemented in MFC as a menu and=
- not a button. Thus the question remains - is it better to leave it as =
-a menu, or should there be two (maybe more in the future) buttons?=20
-
-Wu-Cheng, does your hardware also supports inserting such a non-coded f=
-rame? I can imagine that there could be hardware (in the future or some=
- current hardware that I am not aware of other than MFC) that could sup=
-port this.
+However simple the patch is, please do provide a commit message.
+Please write something. 
 
 Best wishes,
---=20
-Kamil Debski
-Samsung R&D Institute Poland
+Kamil
+
+> Signed-off-by: Wu-Cheng Li <wuchengli@chromium.org>
+> ---
+>  drivers/media/platform/s5p-mfc/s5p_mfc_enc.c | 12 ++++++++++++
+>  1 file changed, 12 insertions(+)
+> 
+> diff --git a/drivers/media/platform/s5p-mfc/s5p_mfc_enc.c
+> b/drivers/media/platform/s5p-mfc/s5p_mfc_enc.c
+> index 0434f02..974b4c5 100644
+> --- a/drivers/media/platform/s5p-mfc/s5p_mfc_enc.c
+> +++ b/drivers/media/platform/s5p-mfc/s5p_mfc_enc.c
+> @@ -212,6 +212,14 @@ static struct mfc_control controls[] = {
+>  		.menu_skip_mask = 0,
+>  	},
+>  	{
+> +		.id = V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME,
+> +		.type = V4L2_CTRL_TYPE_BUTTON,
+> +		.minimum = 0,
+> +		.maximum = 0,
+> +		.step = 0,
+> +		.default_value = 0,
+> +	},
+> +	{
+>  		.id = V4L2_CID_MPEG_VIDEO_VBV_SIZE,
+>  		.type = V4L2_CTRL_TYPE_INTEGER,
+>  		.minimum = 0,
+> @@ -1423,6 +1431,10 @@ static int s5p_mfc_enc_s_ctrl(struct v4l2_ctrl
+*ctrl)
+>  	case V4L2_CID_MPEG_MFC51_VIDEO_FORCE_FRAME_TYPE:
+>  		ctx->force_frame_type = ctrl->val;
+>  		break;
+> +	case V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME:
+> +		ctx->force_frame_type =
+> +
+> 	V4L2_MPEG_MFC51_VIDEO_FORCE_FRAME_TYPE_I_FRAME;
+> +		break;
+>  	case V4L2_CID_MPEG_VIDEO_VBV_SIZE:
+>  		p->vbv_size = ctrl->val;
+>  		break;
+> --
+> 2.6.0.rc2.230.g3dd15c0
