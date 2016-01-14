@@ -1,83 +1,83 @@
-From: Paolo Bonzini <pbonzini@redhat.com>
-Subject: Re: [PATCH 07/13] aio: enabled thread based async fsync
-Date: Thu, 14 Jan 2016 10:19:56 +0100
-Message-ID: <5697683C.5070402@redhat.com>
-References: <cover.1452549431.git.bcrl@kvack.org>
- <80934665e0dd2360e2583522c7c7569e5a92be0e.1452549431.git.bcrl@kvack.org>
- <20160112011128.GC6033@dastard>
- <CA+55aFxtvMqHgHmHCcszV_QKQ2BY0wzenmrvc6BYN+tLFxesMA@mail.gmail.com>
+From: Sudeep Holla <sudeep.holla-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [RFC PATCH] selftests: use INSTALL_HDR_PATH instead of relative
+ paths
+Date: Thu, 14 Jan 2016 11:17:43 +0000
+Message-ID: <569783D7.5000303@arm.com>
+References: <1452522172-16650-1-git-send-email-sudeep.holla@arm.com>
+ <1452742640.25808.1.camel@ellerman.id.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <CA+55aFxtvMqHgHmHCcszV_QKQ2BY0wzenmrvc6BYN+tLFxesMA@mail.gmail.com>
-Sender: owner-linux-aio@kvack.org
-To: Linus Torvalds <torvalds@linux-foundation.org>, Dave Chinner <david@fromorbit.com>
-Cc: Benjamin LaHaise <bcrl@kvack.org>, linux-aio@kvack.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1452742640.25808.1.camel-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Sudeep Holla <sudeep.holla-5wv7dgnIgG8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
 
-On 12/01/2016 02:20, Linus Torvalds wrote:
-> On Mon, Jan 11, 2016 at 5:11 PM, Dave Chinner <david@fromorbit.com> wro=
-te:
+On 14/01/16 03:37, Michael Ellerman wrote:
+> On Mon, 2016-01-11 at 14:22 +0000, Sudeep Holla wrote:
+>
+>> The selftests build fails or picks up wrong headers when cross-compiling
+>> and build directory is different from source as the headers are referred
+>> using the relative paths.
 >>
->> Insufficient. Needs the range to be passed through and call
->> vfs_fsync_range(), as I implemented here:
->=20
-> And I think that's insufficient *also*.
->=20
-> What you actually want is "sync_file_range()", with the full set of arg=
-uments.
->=20
-> Yes, really. Sometimes you want to start the writeback, sometimes you
-> want to wait for it. Sometimes you want both.
->=20
-> For example, if you are doing your own manual write-behind logic, it
-> is not sufficient for "wait for data". What you want is "start IO on
-> new data" followed by "wait for old data to have been written out".
->=20
-> I think this only strengthens my "stop with the idiotic
-> special-case-AIO magic already" argument.  If we want something more
-> generic than the usual aio, then we should go all in. Not "let's make
-> more limited special cases".
+>> This patch use $INSTALL_HDR_PATH to fix the compilation. It also removes
+>> installing the headers.
+>>
+>> Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+>> Signed-off-by: Sudeep Holla <sudeep.holla-5wv7dgnIgG8@public.gmane.org>
+>> ---
+>>   tools/testing/selftests/membarrier/Makefile | 2 +-
+>>   tools/testing/selftests/memfd/Makefile      | 2 +-
+>>   tools/testing/selftests/net/Makefile        | 2 +-
+>>   tools/testing/selftests/vm/Makefile         | 7 ++-----
+>>   4 files changed, 5 insertions(+), 8 deletions(-)
+>>
+>> Hi,
+>>
+>> When I was cross-compiling these tests for arm{32,64}, I faced issues.
+>> With limited knowledge I have on this build system, I came up with this
+>> patch. Please treat this as bug report if this approach makes no-sense
+>> and suggest on how to fix it.
+>
+> Yeah sorry that doesn't work.
+>
+> If $(INSTALL_HDR_PATH) isn't defined you end up with:
+>
+>    gcc -Wall -I /include  -o compaction_test compaction_test.c -lrt
+>                 ^
+>
 
-The question is, do we really want something more generic than the usual
-AIO?
+Ah OK, I got carried away by below in the main Makefile.
 
-Virt is one of the 10 (that's a binary number) users of AIO, and we
-don't even use it by default because in most cases it's really a wash.
+#Default location for installed headers
+export INSTALL_HDR_PATH = $(objtree)/usr
 
-Let's compare AIO with a simple userspace thread pool.
+> Which is wrong.
+>
+> INSTALL_HDR_PATH will not be defined when the tests are built standalone, ie.
+> like:
+>
+>    $ make -C tools/testing/selftests
+>
 
-AIO has the ability to submit and retrieve the results of multiple
-operations at once.  Thread pools do not have the ability to submit
-multiple operations at a time (you could play games with FUTEX_WAKE, but
-then all the threads in the pool would have cacheline bounces on the fute=
-x).
+Thanks for pointing this out. I had totally forgotten about that.
 
-The syscall overhead on the critical path is comparable.  For AIO it's
-io_submit+io_getevents, for a thread pool it's FUTEX_WAKE plus invoking
-the actual syscall.  Again, the only difference for AIO is batching.
+>
+> This has been on my todo list to fix, but it doesn't actually bother me so I
+> haven't got around to it.
+>
+> Does the patch below work for you? It uses INSTALL_HDR_PATH if it is defined,
+> or otherwise KERNEL_HEADERS if it is defined, or finally it guesses at
+> ../../../usr/include (ie. the base of the source tree).
+>
 
-Unless userspace is submitting tens of thousands of operations per
-second, which is pretty much the case only for read/write, there's no
-real benefit in asynchronous system calls over a userspace thread pool.
- That applies to openat, unlinkat, fadvise (for readahead).  It also
-applies to msync and fsync, etc. because if your workload is doing tons
-of those you'd better buy yourself a disk with a battery-backed cache,
-or an UPS, and remove the msync/fsync altogether.
+Yes it does work fine. So feel free to add my tested-by when you post
+the patch. Thanks for the quick and clean fix.
 
-So I'm really happy if we can move the thread creation overhead for such
-a thread pool to the kernel.  It keeps the benefits of batching, it uses
-the optimized kernel workqueues, it doesn't incur the cost of pthreads,
-it makes it easy to remove the cases where AIO is blocking, it makes it
-easy to add support for !O_DIRECT.  But everything else seems overkill.
-
-Paolo
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=3Dmailto:"aart@kvack.org">aart@kvack.org</a>
+-- 
+Regards,
+Sudeep
