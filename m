@@ -1,59 +1,42 @@
-From: Nicolas Dufresne <nicolas.dufresne-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org>
-Subject: Re: [PATCH v3 0/2] new control V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME
-Date: Thu, 14 Jan 2016 10:05:47 -0500
-Message-ID: <1452783947.10009.20.camel@collabora.com>
-References: <1452783007-80883-1-git-send-email-wuchengli@chromium.org>
-Reply-To: Nicolas Dufresne <nicolas.dufresne-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org>
+From: Petr Mladek <pmladek@suse.com>
+Subject: Re: [PATCH v3 22/22] thermal/intel_powerclamp: Convert the kthread
+ to kthread worker API
+Date: Thu, 14 Jan 2016 16:37:54 +0100
+Message-ID: <20160114153754.GU3178@pathway.suse.cz>
+References: <1447853127-3461-1-git-send-email-pmladek@suse.com>
+ <1447853127-3461-23-git-send-email-pmladek@suse.com>
+ <20160107115531.34279a9b@icelake>
+ <20160108164931.GT3178@pathway.suse.cz>
+ <20160111181718.0ace4a58@yairi>
+ <20160112101129.GN731@pathway.suse.cz>
+ <20160112082021.6a28dc66@icelake>
+ <20160113101831.GQ731@pathway.suse.cz>
+ <20160113095353.5231c28f@yairi>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature";
-	boundary="=-IqT+0WtcRMglZYlAmQ6U"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1452783007-80883-1-git-send-email-wuchengli-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Wu-Cheng Li <wuchengli-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org, mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org, k.debski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, crope-X3B1VOXEql0@public.gmane.org, standby24x7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ricardo.ribalda-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ao2-qKGr9MkilAE@public.gmane.org, bparrot-l0cyMroinI0@public.gmane.org, kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, jtp.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org
-Cc: linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, tiffany.lin-NuS5LvNUpcJWk0Htik3J/w@public.gmane.org, djkurtz-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20160113095353.5231c28f@yairi>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jacob Pan <jacob.jun.pan@linux.intel.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Zhang Rui <rui.zhang@intel.com>, Eduardo Valentin <edubezval@gmail.com>, linux-pm@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+On Wed 2016-01-13 09:53:53, Jacob Pan wrote:
+> On Wed, 13 Jan 2016 11:18:31 +0100
+> Petr Mladek <pmladek@suse.com> wrote:
+> > Otherwise, I will keep the conversion into the kthread worker as is
+> > for now. Please, let me know if you are strongly against the split
+> > into the two works.
+> I am fine with the split now.
 
---=-IqT+0WtcRMglZYlAmQ6U
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Great.
 
-Le jeudi 14 janvier 2016 =C3=A0 22:50 +0800, Wu-Cheng Li a =C3=A9crit=C2=A0=
-:
-> v3 addressed Hans' comment to remove the name of the control in s5p-
-> mfc.
->=20
-> Wu-Cheng Li (2):
-> =C2=A0 v4l: add V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME.
+> Another question, are you planning to convert acpi_pad.c as well? It
+> uses kthread similar way.
 
-Hans suggested to name it V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME.
+Yup. I would like to convert as many kthreads as possible either to
+the kthread worker or workqueue APIs in the long term.
 
-regards,
-Nicolas
-
-> =C2=A0 s5p-mfc: add the support of V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME.
->=20
-> =C2=A0Documentation/DocBook/media/v4l/controls.xml |=C2=A0=C2=A08 +++++++=
-+
-> =C2=A0drivers/media/platform/s5p-mfc/s5p_mfc_enc.c | 12 ++++++++++++
-> =C2=A0drivers/media/v4l2-core/v4l2-ctrls.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0|=C2=A0=C2=A02 ++
-> =C2=A0include/uapi/linux/v4l2-controls.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0|=C2=A0=C2=A01 +
-> =C2=A04 files changed, 23 insertions(+)
->=20
---=-IqT+0WtcRMglZYlAmQ6U
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-Content-Transfer-Encoding: 7bit
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iEYEABECAAYFAlaXuUwACgkQcVMCLawGqBzXfgCeIz0fR65AvnnGTy11y7FjdcsD
-ckgAoJMeBt3p4nG1az9Pwu03ManNkJfj
-=sAtU
------END PGP SIGNATURE-----
-
---=-IqT+0WtcRMglZYlAmQ6U--
+Best Regards,
+Petr
