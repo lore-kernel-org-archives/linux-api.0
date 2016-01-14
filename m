@@ -1,194 +1,109 @@
-From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Subject: Re: [RFC PATCH] selftests: use INSTALL_HDR_PATH instead of relative
- paths
-Date: Thu, 14 Jan 2016 14:37:20 +1100
-Message-ID: <1452742640.25808.1.camel@ellerman.id.au>
-References: <1452522172-16650-1-git-send-email-sudeep.holla@arm.com>
+From: Jessica Yu <jeyu@redhat.com>
+Subject: Re: livepatch: reuse module loader code to write relocations
+Date: Wed, 13 Jan 2016 22:49:33 -0500
+Message-ID: <20160114034933.GB980@packer-debian-8-amd64.digitalocean.com>
+References: <1452281304-28618-1-git-send-email-jeyu@redhat.com>
+ <1452281304-28618-5-git-send-email-jeyu@redhat.com>
+ <alpine.LNX.2.00.1601121729480.15984@pobox.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1452522172-16650-1-git-send-email-sudeep.holla-5wv7dgnIgG8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sudeep Holla <sudeep.holla-5wv7dgnIgG8@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LNX.2.00.1601121729480.15984@pobox.suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Miroslav Benes <mbenes@suse.cz>
+Cc: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2016-01-11 at 14:22 +0000, Sudeep Holla wrote:
++++ Miroslav Benes [12/01/16 17:40 +0100]:
+>
+>Hi Jessica,
+>
+>I walked through the series and it looks really nice. Others have already
+>pointed out the issues I also found, so only few minor things below.
+>
+>First thing, could you copy&paste the information and reasoning from the
+>cover letter to the changelogs where appropriate? It is very detailed and
+>it would be a pity to lost it.
 
-> The selftests build fails or picks up wrong headers when cross-compiling
-> and build directory is different from source as the headers are referred
-> using the relative paths.
-> 
-> This patch use $INSTALL_HDR_PATH to fix the compilation. It also removes
-> installing the headers.
-> 
-> Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-> Signed-off-by: Sudeep Holla <sudeep.holla-5wv7dgnIgG8@public.gmane.org>
-> ---
->  tools/testing/selftests/membarrier/Makefile | 2 +-
->  tools/testing/selftests/memfd/Makefile      | 2 +-
->  tools/testing/selftests/net/Makefile        | 2 +-
->  tools/testing/selftests/vm/Makefile         | 7 ++-----
->  4 files changed, 5 insertions(+), 8 deletions(-)
-> 
-> Hi,
-> 
-> When I was cross-compiling these tests for arm{32,64}, I faced issues.
-> With limited knowledge I have on this build system, I came up with this
-> patch. Please treat this as bug report if this approach makes no-sense
-> and suggest on how to fix it.
+Thanks Miroslav! I'll do that.
 
-Yeah sorry that doesn't work.
+>On Fri, 8 Jan 2016, Jessica Yu wrote:
+>
+>> diff --git a/arch/x86/include/asm/livepatch.h b/arch/x86/include/asm/livepatch.h
+>> index 19c099a..7312e25 100644
+>> --- a/arch/x86/include/asm/livepatch.h
+>> +++ b/arch/x86/include/asm/livepatch.h
+>> @@ -33,8 +33,6 @@ static inline int klp_check_compiler_support(void)
+>>  #endif
+>>  	return 0;
+>>  }
+>> -int klp_write_module_reloc(struct module *mod, unsigned long type,
+>> -			   unsigned long loc, unsigned long value);
+>
+>You left klp_write_module_reloc() in arch/s390/include/asm/livepatch.h I'm
+>afraid. Anyway it would be really great if you managed to test the series
+>on s390 somehow. Just to know that all the roadblocks are really gone.
 
-If $(INSTALL_HDR_PATH) isn't defined you end up with:
+Ah, thanks for catching that. I will also try testing the patchset on
+s390x and report back.
 
-  gcc -Wall -I /include  -o compaction_test compaction_test.c -lrt
-               ^
+>> -/*
+>> - * external symbols are located outside the parent object (where the parent
+>> - * object is either vmlinux or the kmod being patched).
+>> - */
+>> -static int klp_find_external_symbol(struct module *pmod, const char *name,
+>> -				    unsigned long *addr)
+>> +static int klp_resolve_symbols(Elf_Shdr *relsec, struct module *pmod)
+>>  {
+>> -	const struct kernel_symbol *sym;
+>> +	int i, len, ret = 0;
+>> +	Elf_Rela *relas;
+>> +	Elf_Sym *sym;
+>> +	char *symname, *sym_objname;
+>>
+>> -	/* first, check if it's an exported symbol */
+>> -	preempt_disable();
+>> -	sym = find_symbol(name, NULL, NULL, true, true);
+>> -	if (sym) {
+>> -		*addr = sym->value;
+>> -		preempt_enable();
+>> -		return 0;
+>> +	relas = (Elf_Rela *) relsec->sh_addr;
+>> +	/* For each rela in this .klp.rel. section */
+>> +	for (i = 0; i < relsec->sh_size / sizeof(Elf_Rela); i++) {
+>> +		sym = pmod->core_symtab + ELF_R_SYM(relas[i].r_info);
+>> +		symname = pmod->core_strtab + sym->st_name;
+>
+>Maybe it would be better to use pmod->symtab and pmod->strtab everywhere.
+>It should be the same, but core_* versions are only helpers used in
+>load_module and friends. There is even a comment in
+>include/linux/module.h.
+>
+>	/*
+>	 * We keep the symbol and string tables for kallsyms.
+>	 * The core_* fields below are temporary, loader-only (they
+>	 * could really be discarded after module init).
+>	 */
+>
+>We should respect that.
 
-Which is wrong.
+I admit I'm a bit confused by the comment, I can't seem to find where
+core_symtab and core_strtab are purportedly discarded after module
+init (perhaps I'm missing something?). IMO it sounds more like it's
+describing mod->symtab and mod->strtab instead, because these are in
+module init memory and are freed later. In any case, my reason for using
+core_symtab is that the original symbol table (mod->symtab) is marked
+with INIT_OFFSET_MASK in layout_symtab() (see kernel/module.c), and is
+therefore in init memory. This memory is freed near the end of
+do_init_module() with do_free_init(). Since core_symtab is in module core
+memory, for livepatch modules I simply used core_symtab to hold a
+full copy of the symbol table instead of the slimmed down version that
+it was originally intended to hold.
 
-INSTALL_HDR_PATH will not be defined when the tests are built standalone, ie.
-like:
+Alternatively, we can tweak layout_symtab() to *not* mark the symtab
+with INIT_OFFSET_MASK and put it in core memory instead. I think
+either way will work, but maybe it is cleaner to do it this way
+instead.
 
-  $ make -C tools/testing/selftests
-
-
-This has been on my todo list to fix, but it doesn't actually bother me so I
-haven't got around to it.
-
-Does the patch below work for you? It uses INSTALL_HDR_PATH if it is defined,
-or otherwise KERNEL_HEADERS if it is defined, or finally it guesses at
-../../../usr/include (ie. the base of the source tree).
-
-cheers
-
-
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index b04afc3295df..78e293829779 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -44,6 +44,13 @@ override LDFLAGS =
- override MAKEFLAGS =
- endif
- 
-+ifneq ($(INSTALL_HDR_PATH),)
-+KERNEL_HEADERS := $(INSTALL_HDR_PATH)/include
-+else
-+KERNEL_HEADERS ?= $(abspath ../../../usr/include)
-+endif
-+export KERNEL_HEADERS
-+
- all:
- 	for TARGET in $(TARGETS); do \
- 		make -C $$TARGET; \
-diff --git a/tools/testing/selftests/ipc/Makefile b/tools/testing/selftests/ipc/Makefile
-index 25d2e702c68a..67f5da755a69 100644
---- a/tools/testing/selftests/ipc/Makefile
-+++ b/tools/testing/selftests/ipc/Makefile
-@@ -9,7 +9,7 @@ ifeq ($(ARCH),x86_64)
- 	CFLAGS := -DCONFIG_X86_64 -D__x86_64__
- endif
- 
--CFLAGS += -I../../../../usr/include/
-+CFLAGS += -I $(KERNEL_HEADERS)
- 
- all:
- 	$(CC) $(CFLAGS) msgque.c -o msgque_test
-diff --git a/tools/testing/selftests/kcmp/Makefile b/tools/testing/selftests/kcmp/Makefile
-index 2ae7450a9a89..64455a77b7bc 100644
---- a/tools/testing/selftests/kcmp/Makefile
-+++ b/tools/testing/selftests/kcmp/Makefile
-@@ -1,4 +1,4 @@
--CFLAGS += -I../../../../usr/include/
-+CFLAGS += -I $(KERNEL_HEADERS)
- 
- all: kcmp_test
- 
-diff --git a/tools/testing/selftests/membarrier/Makefile b/tools/testing/selftests/membarrier/Makefile
-index a1a97085847d..155e92d297d6 100644
---- a/tools/testing/selftests/membarrier/Makefile
-+++ b/tools/testing/selftests/membarrier/Makefile
-@@ -1,4 +1,4 @@
--CFLAGS += -g -I../../../../usr/include/
-+CFLAGS += -g -I $(KERNEL_HEADERS)
- 
- TEST_PROGS := membarrier_test
- 
-diff --git a/tools/testing/selftests/memfd/Makefile b/tools/testing/selftests/memfd/Makefile
-index fd396ac811b6..e193537110ff 100644
---- a/tools/testing/selftests/memfd/Makefile
-+++ b/tools/testing/selftests/memfd/Makefile
-@@ -1,8 +1,6 @@
- CC = $(CROSS_COMPILE)gcc
- CFLAGS += -D_FILE_OFFSET_BITS=64
--CFLAGS += -I../../../../include/uapi/
--CFLAGS += -I../../../../include/
--CFLAGS += -I../../../../usr/include/
-+CFLAGS += -I$(KERNEL_HEADERS)
- 
- TEST_PROGS := memfd_test
- 
-diff --git a/tools/testing/selftests/net/Makefile b/tools/testing/selftests/net/Makefile
-index 41449b5ad0a9..dfe3c8935082 100644
---- a/tools/testing/selftests/net/Makefile
-+++ b/tools/testing/selftests/net/Makefile
-@@ -2,7 +2,7 @@
- 
- CFLAGS = -Wall -O2 -g
- 
--CFLAGS += -I../../../../usr/include/
-+CFLAGS += -I$(KERNEL_HEADERS)
- 
- NET_PROGS = socket psock_fanout psock_tpacket reuseport_bpf
- 
-diff --git a/tools/testing/selftests/powerpc/syscalls/Makefile b/tools/testing/selftests/powerpc/syscalls/Makefile
-index b35c7945bec5..5ea163b2cc91 100644
---- a/tools/testing/selftests/powerpc/syscalls/Makefile
-+++ b/tools/testing/selftests/powerpc/syscalls/Makefile
-@@ -1,6 +1,6 @@
- TEST_PROGS := ipc_unmuxed
- 
--CFLAGS += -I../../../../../usr/include
-+CFLAGS += -I $(KERNEL_HEADERS)
- 
- all: $(TEST_PROGS)
- 
-diff --git a/tools/testing/selftests/powerpc/tm/Makefile b/tools/testing/selftests/powerpc/tm/Makefile
-index 737f72c964e6..bb6cb5d4fc2d 100644
---- a/tools/testing/selftests/powerpc/tm/Makefile
-+++ b/tools/testing/selftests/powerpc/tm/Makefile
-@@ -5,7 +5,7 @@ all: $(TEST_PROGS)
- $(TEST_PROGS): ../harness.c ../utils.c
- 
- tm-syscall: tm-syscall-asm.S
--tm-syscall: CFLAGS += -mhtm -I../../../../../usr/include
-+tm-syscall: CFLAGS += -mhtm -I $(KERNEL_HEADERS)
- 
- include ../../lib.mk
- 
-diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selftests/vm/Makefile
-index e4bb1de1d526..4f45b9c8dd75 100644
---- a/tools/testing/selftests/vm/Makefile
-+++ b/tools/testing/selftests/vm/Makefile
-@@ -1,6 +1,6 @@
- # Makefile for vm selftests
- 
--CFLAGS = -Wall -I ../../../../usr/include $(EXTRA_CFLAGS)
-+CFLAGS = -Wall -I $(KERNEL_HEADERS) $(EXTRA_CFLAGS)
- BINARIES = compaction_test
- BINARIES += hugepage-mmap
- BINARIES += hugepage-shm
-@@ -14,12 +14,9 @@ BINARIES += userfaultfd
- all: $(BINARIES)
- %: %.c
- 	$(CC) $(CFLAGS) -o $@ $^ -lrt
--userfaultfd: userfaultfd.c ../../../../usr/include/linux/kernel.h
-+userfaultfd: userfaultfd.c $(KERNEL_HEADERS)/linux/kernel.h
- 	$(CC) $(CFLAGS) -O2 -o $@ $< -lpthread
- 
--../../../../usr/include/linux/kernel.h:
--	make -C ../../../.. headers_install
--
- TEST_PROGS := run_vmtests
- TEST_FILES := $(BINARIES)
- 
+Jessica
