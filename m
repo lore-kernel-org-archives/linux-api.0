@@ -1,63 +1,65 @@
-From: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Subject: Re: [PATCH v2 2/2] s5p-mfc: add the support of
- V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME.
-Date: Thu, 14 Jan 2016 09:56:46 +0100
-Message-ID: <569762CE.2000104@xs4all.nl>
-References: <1452760439-35564-1-git-send-email-wuchengli@chromium.org>
- <1452760439-35564-3-git-send-email-wuchengli@chromium.org>
+From: Miroslav Benes <mbenes@suse.cz>
+Subject: Re: livepatch: reuse module loader code to write relocations
+Date: Thu, 14 Jan 2016 10:04:11 +0100 (CET)
+Message-ID: <alpine.LNX.2.00.1601140958300.7127@pobox.suse.cz>
+References: <1452281304-28618-1-git-send-email-jeyu@redhat.com> <1452281304-28618-5-git-send-email-jeyu@redhat.com> <alpine.LNX.2.00.1601121729480.15984@pobox.suse.cz> <20160114034933.GB980@packer-debian-8-amd64.digitalocean.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1452760439-35564-3-git-send-email-wuchengli-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Wu-Cheng Li <wuchengli-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org, mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, k.debski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, crope-X3B1VOXEql0@public.gmane.org, standby24x7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, nicolas.dufresne-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org, ricardo.ribalda-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ao2-qKGr9MkilAE@public.gmane.org, bparrot-l0cyMroinI0@public.gmane.org, kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, jtp.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org
-Cc: linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, tiffany.lin-NuS5LvNUpcJWk0Htik3J/w@public.gmane.org, djkurtz-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20160114034933.GB980@packer-debian-8-amd64.digitalocean.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Jessica Yu <jeyu@redhat.com>
+Cc: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 01/14/16 09:33, Wu-Cheng Li wrote:
-> Signed-off-by: Wu-Cheng Li <wuchengli-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-> ---
->  drivers/media/platform/s5p-mfc/s5p_mfc_enc.c | 13 +++++++++++++
->  1 file changed, 13 insertions(+)
+On Wed, 13 Jan 2016, Jessica Yu wrote:
+
+> > Maybe it would be better to use pmod->symtab and pmod->strtab everywhere.
+> > It should be the same, but core_* versions are only helpers used in
+> > load_module and friends. There is even a comment in
+> > include/linux/module.h.
+> > 
+> > 	/*
+> > 	 * We keep the symbol and string tables for kallsyms.
+> > 	 * The core_* fields below are temporary, loader-only (they
+> > 	 * could really be discarded after module init).
+> > 	 */
+> > 
+> > We should respect that.
 > 
-> diff --git a/drivers/media/platform/s5p-mfc/s5p_mfc_enc.c b/drivers/media/platform/s5p-mfc/s5p_mfc_enc.c
-> index 0434f02..de1d68d 100644
-> --- a/drivers/media/platform/s5p-mfc/s5p_mfc_enc.c
-> +++ b/drivers/media/platform/s5p-mfc/s5p_mfc_enc.c
-> @@ -212,6 +212,15 @@ static struct mfc_control controls[] = {
->  		.menu_skip_mask = 0,
->  	},
->  	{
-> +		.id = V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME,
-> +		.type = V4L2_CTRL_TYPE_BUTTON,
-> +		.name = "Force an I frame",
+> I admit I'm a bit confused by the comment, I can't seem to find where
+> core_symtab and core_strtab are purportedly discarded after module
+> init (perhaps I'm missing something?). IMO it sounds more like it's
+> describing mod->symtab and mod->strtab instead, because these are in
+> module init memory and are freed later. 
 
-Drop the name: this is a standard control, so the name will be filled in from
-v4l2-ctrls.c.
+I think it just says that core_* symbols are used as temporary tables 
+during module loading. They are not discarded anywhere but they could be 
+(and maybe they'll be in the future). So it is better not to depend on 
+them.
 
-Regards,
+> In any case, my reason for using
+> core_symtab is that the original symbol table (mod->symtab) is marked
+> with INIT_OFFSET_MASK in layout_symtab() (see kernel/module.c), and is
+> therefore in init memory. This memory is freed near the end of
+> do_init_module() with do_free_init(). Since core_symtab is in module core
+> memory, for livepatch modules I simply used core_symtab to hold a
+> full copy of the symbol table instead of the slimmed down version that
+> it was originally intended to hold.
 
-	Hans
+But both mod->symtab and mod->strtab are changed to point to their core_ 
+versions right before do_free_init is called in do_init_module. So they 
+should be the same. My remark was more of an academic question. I believe 
+it is not a functional thing, just the matter of taste. But maybe I am 
+missing something.
 
-> +		.minimum = 0,
-> +		.maximum = 0,
-> +		.step = 0,
-> +		.default_value = 0,
-> +	},
-> +	{
->  		.id = V4L2_CID_MPEG_VIDEO_VBV_SIZE,
->  		.type = V4L2_CTRL_TYPE_INTEGER,
->  		.minimum = 0,
-> @@ -1423,6 +1432,10 @@ static int s5p_mfc_enc_s_ctrl(struct v4l2_ctrl *ctrl)
->  	case V4L2_CID_MPEG_MFC51_VIDEO_FORCE_FRAME_TYPE:
->  		ctx->force_frame_type = ctrl->val;
->  		break;
-> +	case V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME:
-> +		ctx->force_frame_type
-> +			= V4L2_MPEG_MFC51_VIDEO_FORCE_FRAME_TYPE_I_FRAME;
-> +		break;
->  	case V4L2_CID_MPEG_VIDEO_VBV_SIZE:
->  		p->vbv_size = ctrl->val;
->  		break;
-> 
+> Alternatively, we can tweak layout_symtab() to *not* mark the symtab
+> with INIT_OFFSET_MASK and put it in core memory instead. I think
+> either way will work, but maybe it is cleaner to do it this way
+> instead.
+
+Yeah, I wouldn't do this. core_* symbols are ok from functional point of 
+view.
+
+Thanks,
+Miroslav
