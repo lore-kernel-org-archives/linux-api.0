@@ -1,98 +1,92 @@
-From: Kamil Debski <k.debski@samsung.com>
-Subject: RE: [PATCH] v4l: add V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE.
-Date: Fri, 15 Jan 2016 18:01:21 +0100
-Message-ID: <000301d14fb6$5cdd6370$16982a50$@samsung.com>
+From: Nicolas Dufresne <nicolas.dufresne@collabora.com>
+Subject: Re: [PATCH] v4l: add V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE.
+Date: Fri, 15 Jan 2016 12:21:03 -0500
+Message-ID: <1452878463.11268.7.camel@collabora.com>
 References: <1452686611-145620-1-git-send-email-wuchengli@chromium.org>
- <1452686611-145620-2-git-send-email-wuchengli@chromium.org>
- <003f01d14e21$78f7ad40$6ae707c0$@samsung.com>
- <1452783743.10009.18.camel@collabora.com>
- <00ac01d14ef0$0702b2f0$150818d0$@samsung.com>
- <1452798133.3306.3.camel@collabora.com>
+	 <1452686611-145620-2-git-send-email-wuchengli@chromium.org>
+	 <003f01d14e21$78f7ad40$6ae707c0$@samsung.com>
+	 <1452783743.10009.18.camel@collabora.com>
+	 <00ac01d14ef0$0702b2f0$150818d0$@samsung.com>
+	 <1452798133.3306.3.camel@collabora.com>
+	 <000301d14fb6$5cdd6370$16982a50$@samsung.com>
+Reply-To: Nicolas Dufresne <nicolas.dufresne@collabora.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <1452798133.3306.3.camel@collabora.com>
-Content-language: pl
-Sender: linux-kernel-owner@vger.kernel.org
-To: 'Nicolas Dufresne' <nicolas.dufresne@collabora.com>, 'Wu-Cheng Li' <wuchengli@chromium.org>, pawel@osciak.com, mchehab@osg.samsung.com, hverkuil@xs4all.nl, crope@iki.fi, standby24x7@gmail.com, ricardo.ribalda@gmail.com, ao2@ao2.it, bparrot@ti.com, 'Andrzej Hajda' <a.hajda@samsung.com>
+Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature";
+	boundary="=-hz5Y20xuHJP7gARTHNOz"
+Return-path: <linux-media-owner@vger.kernel.org>
+In-Reply-To: <000301d14fb6$5cdd6370$16982a50$@samsung.com>
+Sender: linux-media-owner@vger.kernel.org
+To: Kamil Debski <k.debski@samsung.com>, 'Wu-Cheng Li' <wuchengli@chromium.org>, pawel@osciak.com, mchehab@osg.samsung.com, hverkuil@xs4all.nl, crope@iki.fi, standby24x7@gmail.com, ricardo.ribalda@gmail.com, ao2@ao2.it, bparrot@ti.com, 'Andrzej Hajda' <a.hajda@samsung.com>
 Cc: linux-media@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi,
 
-> From: Nicolas Dufresne [mailto:nicolas.dufresne@collabora.com]
-> Sent: Thursday, January 14, 2016 8:02 PM
-> To: Kamil Debski; 'Wu-Cheng Li'; pawel@osciak.com;
-> mchehab@osg.samsung.com; hverkuil@xs4all.nl; crope@iki.fi;
-> standby24x7@gmail.com; ricardo.ribalda@gmail.com; ao2@ao2.it;
-> bparrot@ti.com; 'Andrzej Hajda'
-> Cc: linux-media@vger.kernel.org; linux-kernel@vger.kernel.org; linux-
-> api@vger.kernel.org
-> Subject: Re: [PATCH] v4l: add
-> V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE.
->=20
-> Le jeudi 14 janvier 2016 =C3=A0 18:21 +0100, Kamil Debski a =C3=A9cri=
-t :
-> > I had a look into the documentation of MFC. It is possible to force
-> > two types of a frame to be coded.
-> > The one is a keyframe, the other is a not coded frame. As I underst=
-and
-> > this is a type of frame that means that image did not change from
-> > previous frame. I am sure I seen it in an MPEG4 stream in a movie
-> > trailer. The initial board with the age rating is displayed for a
-> > couple of seconds and remains static. Thus there is one I-frame and=
- a
-> > number of non-coded frames.
-> >
-> > That is the reason why the control was implemented in MFC as a menu
-> > and not a button. Thus the question remains - is it better to leave=
- it
-> > as a menu, or should there be two (maybe more in the future) button=
-s?
->=20
-> Then I believe we need both. Because with the menu, setting I-Frame, =
-I
-> would expect to only receive keyframes from now-on. While the useful
-> feature we are looking for here, is to get the next buffer (or nearby=
-) to be a
-> keyframe. It's the difference between creating an I-Frame only stream=
- and
-> requesting a key-frame manually for recovery (RTP use case).
-> In this end, we should probably take that time to review the features=
- we
-> have as we need:
+--=-hz5Y20xuHJP7gARTHNOz
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-I think we had a discussion about this long, long time ago. Should it b=
-e
-deterministic which frame Is encoded as a key frame? Should it be the
-next queued frame, or the next processed frame? How to achieve this?
-I vaguely remember that we discussed per buffer controls on the mailing
-list, but I am not sure where the discussion went from there.
+Le vendredi 15 janvier 2016 =C3=A0 18:01 +0100, Kamil Debski a =C3=A9crit=
+=C2=A0:
+> I think we had a discussion about this long, long time ago. Should it
+> be
+> deterministic which frame Is encoded as a key frame? Should it be the
+> next queued frame, or the next processed frame? How to achieve this?
+> I vaguely remember that we discussed per buffer controls on the
+> mailing
+> list, but I am not sure where the discussion went from there.
+
+In RTP use cases (and most streaming cases), all we care is that we
+have a key-frame produced somewhere nearby after the request. In those
+cases we use P frame only stream to reduce the bandwidth and only
+request a key frame for recovery. This I believe that most common case.
+
+Many decoders though also offer what they called an "automatic" key
+frame mode. In the case of x264, there is also hints you can give to
+the encoder about what type of video (film, anime, etc.) so it can
+optimize all this. I believe this is very advance and there is no
+particular need for it.
 
 >=20
-> - A way to trigger a key frame to be produce
-> - A way to produce a I-Frame only stream
-
-This control can be used to do this:
-- V4L2_CID_MPEG_VIDEO_GOP_SIZE (It is not well documented as I can see =
-;) )
-	+ If set to 0 the encoder produces a stream with P only frames
-	+ if set to 1 the encoder produces a stream with I only frames
-	+ other values indicate the GOP size (I-frame interval)
-
-> - A way to set the key-frame distance (in frames) even though this co=
-uld
-> possibly be emulated using the trigger.
-
-As described above V4L2_CID_MPEG_VIDEO_GOP_SIZE can be used to achieve =
-this.
-
+> >=C2=A0
+> > - A way to trigger a key frame to be produce
+> > - A way to produce a I-Frame only stream
 >=20
-> cheers,
->Nicolas
-=20
-Best wishes,
---=20
-Kamil Debski
-Samsung R&D Institute Poland
+> This control can be used to do this:
+> - V4L2_CID_MPEG_VIDEO_GOP_SIZE (It is not well documented as I can
+> see ;) )
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0+ If set to 0 the encoder=
+ produces a stream with P only
+> frames
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0+ if set to 1 the encoder=
+ produces a stream with I only
+> frames
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0+ other values indicate t=
+he GOP size (I-frame interval)
+>=20
+> > - A way to set the key-frame distance (in frames) even though this
+> could
+> > possibly be emulated using the trigger.
+>=20
+> As described above V4L2_CID_MPEG_VIDEO_GOP_SIZE can be used to
+> achieve this.
+
+Great, my memory failed on me, should have checked. This is exactly
+what I was thinking. So Wu-Cheng Li patch is really what we need in the
+immediate.
+
+regards,
+Nicolas
+--=-hz5Y20xuHJP7gARTHNOz
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+Content-Transfer-Encoding: 7bit
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iEYEABECAAYFAlaZKn8ACgkQcVMCLawGqBzHcgCeMj4GgiiTplazuQcfomJCmoDM
+mvoAn3v60f3q3wxft492QypxDjnseI5Z
+=uiT+
+-----END PGP SIGNATURE-----
+
+--=-hz5Y20xuHJP7gARTHNOz--
