@@ -1,47 +1,136 @@
-From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [PATCH] fuse: Add support for fuse stacked I/O
-Date: Fri, 15 Jan 2016 13:53:34 -0800
-Message-ID: <CA+55aFyFLEkAthR=aUV2noQspgpZ8ascNCCftNBdEGaLvi199A@mail.gmail.com>
+From: Hans Beckerus <hans.beckerus@gmail.com>
+Subject: Re: [fuse-devel] [PATCH] fuse: Add support for fuse stacked I/O
+Date: Fri, 15 Jan 2016 22:56:11 +0100
+Message-ID: <56996AFB.1070006@gmail.com>
 References: <565394BE.4040506@codeaurora.org>
-	<5696E366.2080605@codeaurora.org>
-	<20160114045716.GB8006@kroah.com>
-	<5697EF97.9020800@codeaurora.org>
-	<CA+55aFwxaU0Y_UxyKFv6WaYsPWDDzZG-rhVtMuLSPcJ0WLLw2A@mail.gmail.com>
-	<CALCETrWNQ9ytw1bCOOjFJRstauYc6DocQAmZCF61CErAJ5BF2g@mail.gmail.com>
-	<CAB3-ZyT+xcU-0BnNvq-+GsDe6W8=MCWwxguS-+KQ39gajmM5pw@mail.gmail.com>
-	<871t9i91e1.fsf@thinkpad.rath.org>
-	<56994884.9060002@codeaurora.org>
-	<CA+55aFw9N6Qt=5Q7z+rc_KsotiDgwizm-3Ym6Q70azkb2b3YOA@mail.gmail.com>
-	<CALCETrUA2veiBYYbN1hCSkHxBFyDpe3b=PXg=j53_ZuQBt1FUw@mail.gmail.com>
+ <5696E366.2080605@codeaurora.org> <20160114045716.GB8006@kroah.com>
+ <5697EF97.9020800@codeaurora.org>
+ <CA+55aFwxaU0Y_UxyKFv6WaYsPWDDzZG-rhVtMuLSPcJ0WLLw2A@mail.gmail.com>
+ <CALCETrWNQ9ytw1bCOOjFJRstauYc6DocQAmZCF61CErAJ5BF2g@mail.gmail.com>
+ <CAB3-ZyT+xcU-0BnNvq-+GsDe6W8=MCWwxguS-+KQ39gajmM5pw@mail.gmail.com>
+ <871t9i91e1.fsf@thinkpad.rath.org> <56994884.9060002@codeaurora.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrUA2veiBYYbN1hCSkHxBFyDpe3b=PXg=j53_ZuQBt1FUw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Nikhilesh Reddy <reddyn-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Nikolaus Rath <nikolaus-BTH8mxji4b0@public.gmane.org>, fuse-devel <fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, sven.utcke-Mmb7MZpHnFY@public.gmane.org, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Antonio SJ Musumeci <trapexit-wGTF+nt6ur047o9RxwvyTQ@public.gmane.org>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <56994884.9060002@codeaurora.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Nikhilesh Reddy <reddyn@codeaurora.org>, Nikolaus Rath <nikolaus@rath.org>
+Cc: Jan Kara <jack@suse.cz>, Richard Weinberger <richard@nod.at>, Miklos Szeredi <miklos@szeredi.hu>, fuse-devel <fuse-devel@lists.sourceforge.net>, Greg KH <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, sven.utcke@gmx.de, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 15, 2016 at 1:46 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+On 2016-01-15 8:29, Nikhilesh Reddy wrote:
+> On Fri 15 Jan 2016 09:51:50 AM PST, Nikolaus Rath wrote:
+>> On Jan 15 2016, Antonio SJ Musumeci <trapexit@spawn.link> wrote:
+>>> The idea is that you want to be able to reason about open, create, etc. but
+>>> don't care about the data transfer.
+>>>
+>>> I have N filesystems I wish to unionize. When I create a new file I want to
+>>> pick the drive with the most free space (or some other algo). creat is
+>>> called, succeeds, and now the application issuing this starts writing. The
+>>> FUSE fs doesn't care about the writes. It just wanted to pick the drive
+>>> this file should have been created on. Anything I'd do with the FD after
+>>> that I'm happy to short circuit. I don't need to be asked what to do when
+>>> fstat'ing this FD or anything which in FUSE hands over the 'fh'. It's just
+>>> a file descriptor for me and I'd simply be calling the same function.
+>>>
+>>> Ideally I think one would want to be able to select which functions to
+>>> short circuit and maybe even have it so that a short circuited function
+>>> could propagate back through FUSE on error. But the read and write short
+>>> circuiting is probably the biggest win given the overhead.
+>>
+>> I think you should avoid using the term "stacked" completely (which
+>> would also make Christoph happy). There have been several discussions in
+>> the past about adding a "fd delegation" function to FUSE. Generally, the
+>> idea is that the FUSE userspace code tells the FUSE kernel module to
+>> internally "delegate" to writes and reads for a given file (or even a
+>> range in that file) to a different file descriptor provided by
+>> userspace.
+>>
+>> I think that function would be useful, and not just for union file
+>> systems. There are many FUSE file systems that end up writing the data
+>> into some other file on the disk without doing any transformations on
+>> the data itself. Especially with the range feature, they would all
+>> benefit from the ability to delegate reads and writes.
+I agree with Nikolaus here. I do believe there might be use-cases that 
+could benefit from this.
+I have a typical example were a FUSE fs wish to handle reads but really 
+does not care about the writes other than
+it should transparently write to the underlying fs. Simply getting a 
+move of a file from the underlying fs to the
+FUSE mount point if located on e.g. the same physical partition would 
+result in a more or less instant operation, right?
+But this also requires that the operations are selectable. A user should 
+be able to choose which operation to bypass.
+I understand though that this will need adaptations to libfuse as well.
+Another question here is if an inotify write-type watch on the FUSE 
+mount point will be affected by this or not?
 
-> If mmap sets vm_file to the underlying thing, wouldn't CRIU and
-> anything else that uses map_files get confused?  Or did you have
-> something else in mind?
-
-Why would they care?
-
-Also, I don't think you actually need to change vm_file - we have this
-whole notion of "inode->i_data" vs "inode->i_mapping".
-
-So I think you could set the "i_mapping" of the fuse inode to be the
-i_mapping of the passed-through-to inode, and it should just work.
-
-And no, I didn't look into this very deeply, and maybe there is some
-annoying detail that would make that not work well. But that's part of
-the whole point of the i_mapping indirection: so that you can share
-the page cache when you have two separate anchor points. I think coda
-uses it for the local caching, and block devices use it to not have
-mapping aliases between different inodex that all are the same block
-device.
-
-                 Linus
+>> However, Miklos has said in the past that the performance gain from this
+>> is very small. You can get almost as good a result by splicing from one
+>> fd to the other in userspace. In that case this function could actually
+>> be implemented completely in libfuse.
+>>
+>>
+>> Do you have any benchmark results that compare a splice-in-userspace
+>> approach with your patch?
+>>
+>>
+>> Best,
+>> -Nikolaus
+>>
+>
+> Hi
+>
+> @Linus
+> Thanks for taking the time to reply to my email. It means a lot.
+>
+> FUSE allows users to implement extensions to filesystems ..such as enforcing policy or permissions without having to modify the kernel or maintain the policy in the kernel.
+>
+> One such example is what was quoted by Antonio above ..
+> Another example is a fuse based filesystem that tries to enforce additional permissions on a FAT based mount point.
+>
+> >From what i could google there are many FUSE based filesystems out there that do things during the open call but simply pass through the read/and write I/O calls to the local "lower" filesystem where they actually store the data.
+>
+> >From what i understand ...unionfs or overlayfs and similar filesystems are primarily used to support a merged or unified view of directories and do not offer mechanisms to add policy or other checks /extensions to the I/O operations without modifying the kernel..
+>
+> The main motivation is to make FUSE performance better in such usecases without loosing out on the ease of implementing and extending in the userspace.
+>
+>
+>
+> @Nikolaus
+> Our local benchmarks on embedded devices (where power and cpu usage is critical) show that splice doesnt help as much .. when running multiple cpu's results in increased power usage
+>
+> The below results are on a specific device model.
+>
+> Where IOPS is number of 4K based read or writes that could be performed each second.
+>
+>                                   regular         spliced         Stacked I/O
+> sequencial write (MiBPS)	56.55633333	100.34445       141.7096667
+> sequencial read (MiBPS)	        49.644	        60.43434        122.367
+>
+> random write (IOPS)	        2554.333333	4053.4545       8572
+> random read (IOPS)	        977.3333333	1223.34         1432.666667
+>
+> The above tests were performed using a file size of 1GB
+>
+> Using stacked I/O showed the best performance (almost the same as the native EXT4 filesystem that is storing the real file)
+>
+> Also we measured that there is a 5% saving of Power and the CPU timeslices used. ( Splice did not improve this at all compared to default fuse)
+>
+> Random I/O i.e seeking to random parts of a file and reading ( usecases such as elf and *.so loading from fuse based filesystems also improved
+>
+>
+> Similarly when using MMAPED I/O ( in an extended patch to this one.. still in progress) showed a significant improvement about a 400% improvement over default fuse.
+>
+> Also we can called it FUSE_DELEGATED_IO if that helps :).
+> I chose to call is stacked i/o since we are technically stacking the fuse read/writes on the ext4/fat or other filesystems.
+>
+> Please let me know if you have any questions.
+>
+> @everyone
+> Thanks so much for your comments and the interest.
+> Also many of you have shown support for the patch in private emails.
+> I would be grateful if you could voice the same support on the public thread so that everyone knows that there is interest in this patch.
+>
+>
