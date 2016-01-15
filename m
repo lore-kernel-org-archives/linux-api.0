@@ -1,31 +1,33 @@
-From: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>
-Subject: Re: module: preserve Elf information for livepatch modules
-Date: Fri, 15 Jan 2016 06:58:08 +1030
-Message-ID: <87a8o76h47.fsf@rustcorp.com.au>
-References: <1452281304-28618-1-git-send-email-jeyu@redhat.com> <1452281304-28618-3-git-send-email-jeyu@redhat.com> <87oacshpqn.fsf@rustcorp.com.au> <20160114044718.GC980@packer-debian-8-amd64.digitalocean.com>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH] fuse: Add support for fuse stacked I/O
+Date: Fri, 15 Jan 2016 01:29:49 -0800
+Message-ID: <20160115092949.GA11468@infradead.org>
+References: <565394BE.4040506@codeaurora.org>
+ <5696E366.2080605@codeaurora.org>
+ <20160114082554.GA12489@infradead.org>
+ <87mvs8qhun.fsf@thinkpad.rath.org>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160114044718.GC980-N0bYjD2NfQ6k4hzjq3hgyGTy53QMssKEsp+A89P3RPuQWHG76I6BsA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <87mvs8qhun.fsf-Zv899e0YUSYPWKMTL/zdXNi2O/JbrIOy@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Nikhilesh Reddy <reddyn-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, fuse-devel <fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, Richard Weinberger <richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, jack-AlSwsSmVLrQ@public.gmane.org, Antonio SJ Musumeci <trapexit-wGTF+nt6ur047o9RxwvyTQ@public.gmane.org>, sven.utcke-Mmb7MZpHnFY@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
-> +++ Rusty Russell [11/01/16 11:55 +1030]:
->>This comment is a bit misleading: it's actually pointing into the
->>temporary module copy, which will be discarded.  The init section is
->>slightly different...
->
-> Ah, perhaps I'm misunderstanding something..
->
-> Since copy_module_elf() is called after move_module(), my
-> understanding is that all the section sh_addr's should be pointing
-> to either module core memory or module init memory (instead of the
-> initial temporary copy of the module in info->hdr).
+On Thu, Jan 14, 2016 at 07:52:00AM -0800, Nikolaus Rath wrote:
+> > Please write your stacked features as kernel drivers.
+> 
+> Could you explain in more detail? I think I don't understand either the
+> why, the how, or what you mean with driver in this context (not sure
+> which one it is). 
+> 
+> 
+> (I'm not the original submitter but interested in this)
 
-You're absolutely correct; I'd forgotten that particular kallsyms twist.
 
-Sorry for the noise!
-Rusty.
+If someone is doing stacked pass through I/O, which basically is some
+form of unioning or file hiding it should be using overlayfs or a new
+kernel stackable file system.  That's not to say it could be prototyped
+entirely in userspace, but it's not something we should add any bypasses
+for.
