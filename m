@@ -1,37 +1,98 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH] fuse: Add support for fuse stacked I/O
-Date: Fri, 15 Jan 2016 08:31:25 -0800
-Message-ID: <CALCETrWNQ9ytw1bCOOjFJRstauYc6DocQAmZCF61CErAJ5BF2g@mail.gmail.com>
-References: <565394BE.4040506@codeaurora.org> <5696E366.2080605@codeaurora.org>
- <20160114045716.GB8006@kroah.com> <5697EF97.9020800@codeaurora.org> <CA+55aFwxaU0Y_UxyKFv6WaYsPWDDzZG-rhVtMuLSPcJ0WLLw2A@mail.gmail.com>
+From: Kamil Debski <k.debski@samsung.com>
+Subject: RE: [PATCH] v4l: add V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE.
+Date: Fri, 15 Jan 2016 18:01:21 +0100
+Message-ID: <000301d14fb6$5cdd6370$16982a50$@samsung.com>
+References: <1452686611-145620-1-git-send-email-wuchengli@chromium.org>
+ <1452686611-145620-2-git-send-email-wuchengli@chromium.org>
+ <003f01d14e21$78f7ad40$6ae707c0$@samsung.com>
+ <1452783743.10009.18.camel@collabora.com>
+ <00ac01d14ef0$0702b2f0$150818d0$@samsung.com>
+ <1452798133.3306.3.camel@collabora.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CA+55aFwxaU0Y_UxyKFv6WaYsPWDDzZG-rhVtMuLSPcJ0WLLw2A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: fuse-devel <fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Nikhilesh Reddy <reddyn-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Nikolaus Rath <nikolaus-BTH8mxji4b0@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, sven.utcke-Mmb7MZpHnFY@public.gmane.org, Antonio SJ Musumeci <trapexit-wGTF+nt6ur047o9RxwvyTQ@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-reply-to: <1452798133.3306.3.camel@collabora.com>
+Content-language: pl
+Sender: linux-kernel-owner@vger.kernel.org
+To: 'Nicolas Dufresne' <nicolas.dufresne@collabora.com>, 'Wu-Cheng Li' <wuchengli@chromium.org>, pawel@osciak.com, mchehab@osg.samsung.com, hverkuil@xs4all.nl, crope@iki.fi, standby24x7@gmail.com, ricardo.ribalda@gmail.com, ao2@ao2.it, bparrot@ti.com, 'Andrzej Hajda' <a.hajda@samsung.com>
+Cc: linux-media@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Jan 14, 2016 11:19 AM, "Linus Torvalds"
-<torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
->
-> On Thu, Jan 14, 2016 at 10:57 AM, Nikhilesh Reddy <reddyn-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org> wrote:
+Hi,
+
+> From: Nicolas Dufresne [mailto:nicolas.dufresne@collabora.com]
+> Sent: Thursday, January 14, 2016 8:02 PM
+> To: Kamil Debski; 'Wu-Cheng Li'; pawel@osciak.com;
+> mchehab@osg.samsung.com; hverkuil@xs4all.nl; crope@iki.fi;
+> standby24x7@gmail.com; ricardo.ribalda@gmail.com; ao2@ao2.it;
+> bparrot@ti.com; 'Andrzej Hajda'
+> Cc: linux-media@vger.kernel.org; linux-kernel@vger.kernel.org; linux-
+> api@vger.kernel.org
+> Subject: Re: [PATCH] v4l: add
+> V4L2_CID_MPEG_VIDEO_FORCE_FRAME_TYPE.
+>=20
+> Le jeudi 14 janvier 2016 =C3=A0 18:21 +0100, Kamil Debski a =C3=A9cri=
+t :
+> > I had a look into the documentation of MFC. It is possible to force
+> > two types of a frame to be coded.
+> > The one is a keyframe, the other is a not coded frame. As I underst=
+and
+> > this is a type of frame that means that image did not change from
+> > previous frame. I am sure I seen it in an MPEG4 stream in a movie
+> > trailer. The initial board with the age rating is displayed for a
+> > couple of seconds and remains static. Thus there is one I-frame and=
+ a
+> > number of non-coded frames.
 > >
-> > *I will send out a properly formatted patch shortly.*
->
-> So before you do that, can you explain in what cases fuse just wants
-> to pass through the IO?
->
-> Why aren't such cases just using unionfs or something?
->
-> In other words, I think that patch needs an explanation for the
-> *reason* for the new functionality.
+> > That is the reason why the control was implemented in MFC as a menu
+> > and not a button. Thus the question remains - is it better to leave=
+ it
+> > as a menu, or should there be two (maybe more in the future) button=
+s?
+>=20
+> Then I believe we need both. Because with the menu, setting I-Frame, =
+I
+> would expect to only receive keyframes from now-on. While the useful
+> feature we are looking for here, is to get the next buffer (or nearby=
+) to be a
+> keyframe. It's the difference between creating an I-Frame only stream=
+ and
+> requesting a key-frame manually for recovery (RTP use case).
+> In this end, we should probably take that time to review the features=
+ we
+> have as we need:
 
-Also, clarifying the functionality would be nice.  What is the
-"underlying" fs you speak of?  What f_cred gets used?  Who opens the
-underlying file, whatever that is?
+I think we had a discussion about this long, long time ago. Should it b=
+e
+deterministic which frame Is encoded as a key frame? Should it be the
+next queued frame, or the next processed frame? How to achieve this?
+I vaguely remember that we discussed per buffer controls on the mailing
+list, but I am not sure where the discussion went from there.
 
-Is the intent overlay-style stacking or is it something else entirely?
+>=20
+> - A way to trigger a key frame to be produce
+> - A way to produce a I-Frame only stream
 
---Andy
+This control can be used to do this:
+- V4L2_CID_MPEG_VIDEO_GOP_SIZE (It is not well documented as I can see =
+;) )
+	+ If set to 0 the encoder produces a stream with P only frames
+	+ if set to 1 the encoder produces a stream with I only frames
+	+ other values indicate the GOP size (I-frame interval)
+
+> - A way to set the key-frame distance (in frames) even though this co=
+uld
+> possibly be emulated using the trigger.
+
+As described above V4L2_CID_MPEG_VIDEO_GOP_SIZE can be used to achieve =
+this.
+
+>=20
+> cheers,
+>Nicolas
+=20
+Best wishes,
+--=20
+Kamil Debski
+Samsung R&D Institute Poland
