@@ -1,136 +1,401 @@
-From: Hans Beckerus <hans.beckerus@gmail.com>
-Subject: Re: [fuse-devel] [PATCH] fuse: Add support for fuse stacked I/O
-Date: Fri, 15 Jan 2016 22:56:11 +0100
-Message-ID: <56996AFB.1070006@gmail.com>
-References: <565394BE.4040506@codeaurora.org>
- <5696E366.2080605@codeaurora.org> <20160114045716.GB8006@kroah.com>
- <5697EF97.9020800@codeaurora.org>
- <CA+55aFwxaU0Y_UxyKFv6WaYsPWDDzZG-rhVtMuLSPcJ0WLLw2A@mail.gmail.com>
- <CALCETrWNQ9ytw1bCOOjFJRstauYc6DocQAmZCF61CErAJ5BF2g@mail.gmail.com>
- <CAB3-ZyT+xcU-0BnNvq-+GsDe6W8=MCWwxguS-+KQ39gajmM5pw@mail.gmail.com>
- <871t9i91e1.fsf@thinkpad.rath.org> <56994884.9060002@codeaurora.org>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: Re: [PATCH v2 26/31] sound/usb: Update ALSA driver to use Managed
+ Media Controller API
+Date: Fri, 15 Jan 2016 17:38:27 -0700
+Message-ID: <56999103.6000005@osg.samsung.com>
+References: <cover.1452800265.git.shuahkh@osg.samsung.com>
+ <fd72f02797d595fc1c53b16fccec4d204430995e.1452800273.git.shuahkh@osg.samsung.com>
+ <s5hmvs7t133.wl-tiwai@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <56994884.9060002@codeaurora.org>
+In-Reply-To: <s5hmvs7t133.wl-tiwai@suse.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Nikhilesh Reddy <reddyn@codeaurora.org>, Nikolaus Rath <nikolaus@rath.org>
-Cc: Jan Kara <jack@suse.cz>, Richard Weinberger <richard@nod.at>, Miklos Szeredi <miklos@szeredi.hu>, fuse-devel <fuse-devel@lists.sourceforge.net>, Greg KH <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, sven.utcke@gmx.de, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>, Linus Torvalds <torvalds@linux-foundation.org>
+To: Takashi Iwai <tiwai@suse.de>
+Cc: hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, clemens@ladisch.de, sakari.ailus@linux.intel.com, javier@osg.samsung.com, mchehab@osg.samsung.com, alsa-devel@alsa-project.org, arnd@arndb.de, ricard.wanderlof@axis.com, labbott@fedoraproject.org, chehabrafael@gmail.com, misterpib@gmail.com, prabhakar.csengg@gmail.com, ricardo.ribalda@gmail.com, ruchandani.tina@gmail.com, takamichiho@gmail.com, tvboxspy@gmail.com, dominic.sacre@gmx.de, crope@iki.fi, julian@jusst.de, pierre-louis.bossart@linux.intel.com, corbet@lwn.net, joe@oampo.co.uk, johan@oljud.se, dan.carpenter@oracle.com, pawel@osciak.com, p.zabel@pengutronix.de, perex@perex.cz, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, k.kozlowski@samsung.com, kyungmin.park@samsung.com, m.szyprowski@samsung.com, sw0312.kim@samsung.com, elfring@users.sourceforge.net, linux-api@vger.kernel.o
 List-Id: linux-api@vger.kernel.org
 
-On 2016-01-15 8:29, Nikhilesh Reddy wrote:
-> On Fri 15 Jan 2016 09:51:50 AM PST, Nikolaus Rath wrote:
->> On Jan 15 2016, Antonio SJ Musumeci <trapexit@spawn.link> wrote:
->>> The idea is that you want to be able to reason about open, create, etc. but
->>> don't care about the data transfer.
->>>
->>> I have N filesystems I wish to unionize. When I create a new file I want to
->>> pick the drive with the most free space (or some other algo). creat is
->>> called, succeeds, and now the application issuing this starts writing. The
->>> FUSE fs doesn't care about the writes. It just wanted to pick the drive
->>> this file should have been created on. Anything I'd do with the FD after
->>> that I'm happy to short circuit. I don't need to be asked what to do when
->>> fstat'ing this FD or anything which in FUSE hands over the 'fh'. It's just
->>> a file descriptor for me and I'd simply be calling the same function.
->>>
->>> Ideally I think one would want to be able to select which functions to
->>> short circuit and maybe even have it so that a short circuited function
->>> could propagate back through FUSE on error. But the read and write short
->>> circuiting is probably the biggest win given the overhead.
+On 01/15/2016 06:38 AM, Takashi Iwai wrote:
+> On Thu, 14 Jan 2016 20:52:28 +0100,
+> Shuah Khan wrote:
 >>
->> I think you should avoid using the term "stacked" completely (which
->> would also make Christoph happy). There have been several discussions in
->> the past about adding a "fd delegation" function to FUSE. Generally, the
->> idea is that the FUSE userspace code tells the FUSE kernel module to
->> internally "delegate" to writes and reads for a given file (or even a
->> range in that file) to a different file descriptor provided by
->> userspace.
+>> Change ALSA driver to use Managed Media Managed Controller
+>> API to share tuner with DVB and V4L2 drivers that control
+>> AU0828 media device.  Media device is created based on a
+>> newly added field value in the struct snd_usb_audio_quirk.
+>> Using this approach, the media controller API usage can be
+>> added for a specific device. In this patch, Media Controller
+>> API is enabled for AU0828 hw. snd_usb_create_quirk() will
+>> check this new field, if set will create a media device using
+>> media_device_get_devres() interface.
 >>
->> I think that function would be useful, and not just for union file
->> systems. There are many FUSE file systems that end up writing the data
->> into some other file on the disk without doing any transformations on
->> the data itself. Especially with the range feature, they would all
->> benefit from the ability to delegate reads and writes.
-I agree with Nikolaus here. I do believe there might be use-cases that 
-could benefit from this.
-I have a typical example were a FUSE fs wish to handle reads but really 
-does not care about the writes other than
-it should transparently write to the underlying fs. Simply getting a 
-move of a file from the underlying fs to the
-FUSE mount point if located on e.g. the same physical partition would 
-result in a more or less instant operation, right?
-But this also requires that the operations are selectable. A user should 
-be able to choose which operation to bypass.
-I understand though that this will need adaptations to libfuse as well.
-Another question here is if an inotify write-type watch on the FUSE 
-mount point will be affected by this or not?
+>> media_device_get_devres() will allocate a new media device
+>> devres or return an existing one, if it finds one.
+>>
+>> During probe, media usb driver could have created the media
+>> device devres. It will then initialze (if necessary) and
+>> register the media device if it isn't already initialized
+>> and registered. Media device unregister is done from
+>> usb_audio_disconnect().
+>>
+>> During probe, media usb driver could have created the
+>> media device devres. It will then register the media
+>> device if it isn't already registered. Media device
+>> unregister is done from usb_audio_disconnect().
+>>
+>> New structure media_ctl is added to group the new
+>> fields to support media entity and links. This new
+>> structure is added to struct snd_usb_substream.
+>>
+>> A new entity_notify hook and a new ALSA capture media
+>> entity are registered from snd_usb_pcm_open() after
+>> setting up hardware information for the PCM device.
+>>
+>> When a new entity is registered, Media Controller API
+>> interface media_device_register_entity() invokes all
+>> registered entity_notify hooks for the media device.
+>> ALSA entity_notify hook parses all the entity list to
+>> find a link from decoder it ALSA entity. This indicates
+>> that the bridge driver created a link from decoder to
+>> ALSA capture entity.
+>>
+>> ALSA will attempt to enable the tuner to link the tuner
+>> to the decoder calling enable_source handler if one is
+>> provided by the bridge driver prior to starting Media
+>> pipeline from snd_usb_hw_params(). If enable_source returns
+>> with tuner busy condition, then snd_usb_hw_params() will fail
+>> with -EBUSY. Media pipeline is stopped from snd_usb_hw_free().
+>>
+>> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
+>> ---
+>> Changes since v1: Addressed Takasi Iwai's comments on v1
+>> - Move config defines to Kconfig and add logic
+>>   to Makefile to conditionally compile media.c
+>> - Removed extra includes from media.c
+>> - Added snd_usb_autosuspend() in error leg
+>> - Removed debug related code that was missed in v1
+>>
+>>  sound/usb/Kconfig        |   7 ++
+>>  sound/usb/Makefile       |   4 +
+>>  sound/usb/card.c         |   7 ++
+>>  sound/usb/card.h         |   1 +
+>>  sound/usb/media.c        | 190 +++++++++++++++++++++++++++++++++++++++++++++++
+>>  sound/usb/media.h        |  56 ++++++++++++++
+>>  sound/usb/pcm.c          |  28 +++++--
+>>  sound/usb/quirks-table.h |   1 +
+>>  sound/usb/quirks.c       |   5 ++
+>>  sound/usb/stream.c       |   2 +
+>>  sound/usb/usbaudio.h     |   1 +
+>>  11 files changed, 297 insertions(+), 5 deletions(-)
+>>  create mode 100644 sound/usb/media.c
+>>  create mode 100644 sound/usb/media.h
+>>
+>> diff --git a/sound/usb/Kconfig b/sound/usb/Kconfig
+>> index a452ad7..8d5cdab 100644
+>> --- a/sound/usb/Kconfig
+>> +++ b/sound/usb/Kconfig
+>> @@ -15,6 +15,7 @@ config SND_USB_AUDIO
+>>  	select SND_RAWMIDI
+>>  	select SND_PCM
+>>  	select BITREVERSE
+>> +	select SND_USB_AUDIO_USE_MEDIA_CONTROLLER if MEDIA_CONTROLLER && (MEDIA_SUPPORT || MEDIA_SUPPORT_MODULE)
+> 
+> This looks wrong as a Kconfig syntax.  "... if MEDIA_CONTROLLER"
+> should work, I suppose?
 
->> However, Miklos has said in the past that the performance gain from this
->> is very small. You can get almost as good a result by splicing from one
->> fd to the other in userspace. In that case this function could actually
->> be implemented completely in libfuse.
->>
->>
->> Do you have any benchmark results that compare a splice-in-userspace
->> approach with your patch?
->>
->>
->> Best,
->> -Nikolaus
->>
->
-> Hi
->
-> @Linus
-> Thanks for taking the time to reply to my email. It means a lot.
->
-> FUSE allows users to implement extensions to filesystems ..such as enforcing policy or permissions without having to modify the kernel or maintain the policy in the kernel.
->
-> One such example is what was quoted by Antonio above ..
-> Another example is a fuse based filesystem that tries to enforce additional permissions on a FAT based mount point.
->
-> >From what i could google there are many FUSE based filesystems out there that do things during the open call but simply pass through the read/and write I/O calls to the local "lower" filesystem where they actually store the data.
->
-> >From what i understand ...unionfs or overlayfs and similar filesystems are primarily used to support a merged or unified view of directories and do not offer mechanisms to add policy or other checks /extensions to the I/O operations without modifying the kernel..
->
-> The main motivation is to make FUSE performance better in such usecases without loosing out on the ease of implementing and extending in the userspace.
->
->
->
-> @Nikolaus
-> Our local benchmarks on embedded devices (where power and cpu usage is critical) show that splice doesnt help as much .. when running multiple cpu's results in increased power usage
->
-> The below results are on a specific device model.
->
-> Where IOPS is number of 4K based read or writes that could be performed each second.
->
->                                   regular         spliced         Stacked I/O
-> sequencial write (MiBPS)	56.55633333	100.34445       141.7096667
-> sequencial read (MiBPS)	        49.644	        60.43434        122.367
->
-> random write (IOPS)	        2554.333333	4053.4545       8572
-> random read (IOPS)	        977.3333333	1223.34         1432.666667
->
-> The above tests were performed using a file size of 1GB
->
-> Using stacked I/O showed the best performance (almost the same as the native EXT4 filesystem that is storing the real file)
->
-> Also we measured that there is a 5% saving of Power and the CPU timeslices used. ( Splice did not improve this at all compared to default fuse)
->
-> Random I/O i.e seeking to random parts of a file and reading ( usecases such as elf and *.so loading from fuse based filesystems also improved
->
->
-> Similarly when using MMAPED I/O ( in an extended patch to this one.. still in progress) showed a significant improvement about a 400% improvement over default fuse.
->
-> Also we can called it FUSE_DELEGATED_IO if that helps :).
-> I chose to call is stacked i/o since we are technically stacking the fuse read/writes on the ext4/fat or other filesystems.
->
-> Please let me know if you have any questions.
->
-> @everyone
-> Thanks so much for your comments and the interest.
-> Also many of you have shown support for the patch in private emails.
-> I would be grateful if you could voice the same support on the public thread so that everyone knows that there is interest in this patch.
->
->
+The conditional select syntax is used in several Kconfig
+files. You are right about (MEDIA_SUPPORT || MEDIA_SUPPORT_MODULE)
+Adding checks for that is unnecessary.
+
+> 
+> Above all, can MEDIA_CONTROLLER be tristate?  It's currently a bool.
+> If it's a tristate, it causes a problem wrt dependency.  Imagine
+> USB-audio is built-in while MC is a module.
+
+I don't think MEDIA_CONTROLLER will evebr tristate. I have this
+logic to the following and it works with and without MEDIA_CONTROLLER
+
+diff --git a/sound/usb/Kconfig b/sound/usb/Kconfig
+index a452ad7..8ccbb35 100644
+--- a/sound/usb/Kconfig
++++ b/sound/usb/Kconfig
+@@ -15,6 +15,7 @@ config SND_USB_AUDIO
+        select SND_RAWMIDI
+        select SND_PCM
+        select BITREVERSE
++       select SND_USB_AUDIO_USE_MEDIA_CONTROLLER       if MEDIA_CONTROLLER
+        help
+          Say Y here to include support for USB audio and USB MIDI
+          devices.
+@@ -22,6 +23,11 @@ config SND_USB_AUDIO
+          To compile this driver as a module, choose M here: the module
+          will be called snd-usb-audio.
+
++config SND_USB_AUDIO_USE_MEDIA_CONTROLLER
++       bool "USB Audio/MIDI driver with Media Controller Support"
++       depends on MEDIA_CONTROLLER
++       default y
++
+
+> 
+>>  	help
+>>  	  Say Y here to include support for USB audio and USB MIDI
+>>  	  devices.
+>> @@ -22,6 +23,12 @@ config SND_USB_AUDIO
+>>  	  To compile this driver as a module, choose M here: the module
+>>  	  will be called snd-usb-audio.
+>>  
+>> +config SND_USB_AUDIO_USE_MEDIA_CONTROLLER
+>> +	bool "USB Audio/MIDI driver with Media Controller Support"
+>> +	depends on SND_USB_AUDIO && MEDIA_CONTROLLER
+>> +	depends on MEDIA_SUPPORT || MEDIA_SUPPORT_MODULE
+
+See above. I got rid of depends on for SND_USB_AUDIO
+
+> 
+> Hmm, it's superfluous to have both this depends and the reverse-select
+> of the above.  (And again MEDIA_SUPPORT_MODULE looks bogus.)
+> 
+>> +	default y
+>> +
+>>  config SND_USB_UA101
+>>  	tristate "Edirol UA-101/UA-1000 driver"
+>>  	select SND_PCM
+>> diff --git a/sound/usb/Makefile b/sound/usb/Makefile
+>> index 2d2d122..3113c45 100644
+>> --- a/sound/usb/Makefile
+>> +++ b/sound/usb/Makefile
+>> @@ -15,6 +15,10 @@ snd-usb-audio-objs := 	card.o \
+>>  			quirks.o \
+>>  			stream.o
+>>  
+>> +ifeq ($(CONFIG_SND_USB_AUDIO_USE_MEDIA_CONTROLLER),y)
+>> +  snd-usb-audio-objs += media.o
+>> +endif
+> 
+> A better form is like
+> 
+> snd-usb-audio-$(CONFIG_SND_USB_AUDIO_USE_MEDIA_CONTROLLER) += media.
+
+Got it. Fixed it now.
+
+> 
+> 
+>> +
+>>  snd-usbmidi-lib-objs := midi.o
+>>  
+>>  # Toplevel Module Dependency
+>> diff --git a/sound/usb/card.c b/sound/usb/card.c
+>> index 18f5664..1a63851 100644
+>> --- a/sound/usb/card.c
+>> +++ b/sound/usb/card.c
+>> @@ -66,6 +66,7 @@
+>>  #include "format.h"
+>>  #include "power.h"
+>>  #include "stream.h"
+>> +#include "media.h"
+>>  
+>>  MODULE_AUTHOR("Takashi Iwai <tiwai@suse.de>");
+>>  MODULE_DESCRIPTION("USB Audio");
+>> @@ -621,6 +622,12 @@ static void usb_audio_disconnect(struct usb_interface *intf)
+>>  		list_for_each_entry(mixer, &chip->mixer_list, list) {
+>>  			snd_usb_mixer_disconnect(mixer);
+>>  		}
+>> +		/*
+>> +		 * Nice to check quirk && quirk->media_device
+>> +		 * need some special handlings. Doesn't look like
+>> +		 * we have access to quirk here
+>> +		*/
+>> +		media_device_delete(intf);
+>>  	}
+>>  
+>>  	chip->num_interfaces--;
+>> diff --git a/sound/usb/card.h b/sound/usb/card.h
+>> index 71778ca..c15a03c 100644
+>> --- a/sound/usb/card.h
+>> +++ b/sound/usb/card.h
+>> @@ -156,6 +156,7 @@ struct snd_usb_substream {
+>>  	} dsd_dop;
+>>  
+>>  	bool trigger_tstamp_pending_update; /* trigger timestamp being updated from initial estimate */
+>> +	void *media_ctl;
+>>  };
+>>  
+>>  struct snd_usb_stream {
+>> diff --git a/sound/usb/media.c b/sound/usb/media.c
+>> new file mode 100644
+>> index 0000000..644b6e8
+>> --- /dev/null
+>> +++ b/sound/usb/media.c
+>> @@ -0,0 +1,190 @@
+>> +/*
+>> + * media.c - Media Controller specific ALSA driver code
+>> + *
+>> + * Copyright (c) 2015 Shuah Khan <shuahkh@osg.samsung.com>
+>> + * Copyright (c) 2015 Samsung Electronics Co., Ltd.
+>> + *
+>> + * This file is released under the GPLv2.
+>> + */
+>> +
+>> +/*
+>> + * This file adds Media Controller support to ALSA driver
+>> + * to use the Media Controller API to share tuner with DVB
+>> + * and V4L2 drivers that control media device. Media device
+>> + * is created based on existing quirks framework. Using this
+>> + * approach, the media controller API usage can be added for
+>> + * a specific device.
+>> +*/
+>> +
+>> +#include <linux/init.h>
+>> +#include <linux/list.h>
+>> +#include <linux/mutex.h>
+>> +#include <linux/slab.h>
+>> +#include <linux/usb.h>
+>> +
+>> +#include <sound/pcm.h>
+>> +
+>> +#include "usbaudio.h"
+>> +#include "card.h"
+>> +#include "media.h"
+>> +
+>> +int media_device_create(struct snd_usb_audio *chip,
+>> +			struct usb_interface *iface)
+>> +{
+>> +	struct media_device *mdev;
+>> +	struct usb_device *usbdev = interface_to_usbdev(iface);
+>> +	int ret;
+>> +
+>> +	mdev = media_device_get_devres(&usbdev->dev);
+>> +	if (!mdev)
+>> +		return -ENOMEM;
+>> +	if (!mdev->dev) {
+>> +		/* register media device */
+>> +		mdev->dev = &usbdev->dev;
+>> +		if (usbdev->product)
+>> +			strlcpy(mdev->model, usbdev->product,
+>> +				sizeof(mdev->model));
+>> +		if (usbdev->serial)
+>> +			strlcpy(mdev->serial, usbdev->serial,
+>> +				sizeof(mdev->serial));
+>> +		strcpy(mdev->bus_info, usbdev->devpath);
+>> +		mdev->hw_revision = le16_to_cpu(usbdev->descriptor.bcdDevice);
+>> +		ret = media_device_init(mdev);
+>> +		if (ret) {
+>> +			dev_err(&usbdev->dev,
+>> +				"Couldn't create a media device. Error: %d\n",
+>> +				ret);
+>> +			return ret;
+>> +		}
+>> +	}
+>> +	if (!media_devnode_is_registered(&mdev->devnode)) {
+>> +		ret = media_device_register(mdev);
+>> +		if (ret) {
+>> +			dev_err(&usbdev->dev,
+>> +				"Couldn't register media device. Error: %d\n",
+>> +				ret);
+>> +			return ret;
+>> +		}
+>> +	}
+>> +	return 0;
+>> +}
+>> +
+>> +void media_device_delete(struct usb_interface *iface)
+>> +{
+>> +	struct media_device *mdev;
+>> +	struct usb_device *usbdev = interface_to_usbdev(iface);
+>> +
+>> +	mdev = media_device_find_devres(&usbdev->dev);
+>> +	if (mdev && media_devnode_is_registered(&mdev->devnode))
+>> +		media_device_unregister(mdev);
+>> +}
+>> +
+>> +static int media_enable_source(struct media_ctl *mctl)
+>> +{
+>> +	if (mctl && mctl->media_dev->enable_source)
+>> +		return mctl->media_dev->enable_source(&mctl->media_entity,
+>> +						      &mctl->media_pipe);
+>> +	return 0;
+>> +}
+>> +
+>> +static void media_disable_source(struct media_ctl *mctl)
+>> +{
+>> +	if (mctl && mctl->media_dev->disable_source)
+>> +		mctl->media_dev->disable_source(&mctl->media_entity);
+>> +}
+>> +
+>> +int media_stream_init(struct snd_usb_substream *subs, struct snd_pcm *pcm,
+>> +			int stream)
+>> +{
+>> +	struct media_device *mdev;
+>> +	struct media_ctl *mctl;
+>> +	struct device *pcm_dev = &pcm->streams[stream].dev;
+>> +	u32 intf_type;
+>> +	int ret = 0;
+>> +
+>> +	mdev = media_device_find_devres(&subs->dev->dev);
+>> +	if (!mdev)
+>> +		return -ENODEV;
+>> +
+>> +	if (subs->media_ctl)
+>> +		return 0;
+>> +
+>> +	/* allocate media_ctl */
+>> +	mctl = kzalloc(sizeof(*mctl), GFP_KERNEL);
+>> +	if (!mctl)
+>> +		return -ENOMEM;
+>> +
+>> +	mctl->media_dev = mdev;
+>> +	if (stream == SNDRV_PCM_STREAM_PLAYBACK) {
+>> +		intf_type = MEDIA_INTF_T_ALSA_PCM_PLAYBACK;
+>> +		mctl->media_entity.function = MEDIA_ENT_F_AUDIO_PLAYBACK;
+>> +	} else {
+>> +		intf_type = MEDIA_INTF_T_ALSA_PCM_CAPTURE;
+>> +		mctl->media_entity.function = MEDIA_ENT_F_AUDIO_CAPTURE;
+>> +	}
+>> +	mctl->media_entity.name = pcm->name;
+>> +	mctl->media_entity.info.dev.major = MAJOR(pcm_dev->devt);
+>> +	mctl->media_entity.info.dev.minor = MINOR(pcm_dev->devt);
+>> +	mctl->media_pad.flags = MEDIA_PAD_FL_SINK;
+>> +	media_entity_pads_init(&mctl->media_entity, 1, &mctl->media_pad);
+>> +	ret =  media_device_register_entity(mctl->media_dev,
+>> +					    &mctl->media_entity);
+>> +	if (ret) {
+>> +		kfree(mctl);
+>> +		return ret;
+>> +	}
+>> +	mctl->intf_devnode = media_devnode_create(mdev, intf_type, 0,
+>> +						  MAJOR(pcm_dev->devt),
+>> +						  MINOR(pcm_dev->devt));
+>> +	if (!mctl->intf_devnode) {
+>> +		media_device_unregister_entity(&mctl->media_entity);
+>> +		kfree(mctl);
+>> +		return -ENOMEM;
+>> +	}
+>> +	mctl->intf_link = media_create_intf_link(&mctl->media_entity,
+>> +						 &mctl->intf_devnode->intf,
+>> +						 MEDIA_LNK_FL_ENABLED);
+>> +	if (!mctl->intf_link) {
+>> +		media_devnode_remove(mctl->intf_devnode);
+>> +		media_device_unregister_entity(&mctl->media_entity);
+>> +		kfree(mctl);
+>> +		return -ENOMEM;
+>> +	}
+>> +	subs->media_ctl = (void *) mctl;
+> 
+> The cast to a void pointer is superfluous.
+
+Right. Fixed it and couple of others like this
+one I found.
+
+Will send v3 shortly.
+
+thanks,
+-- Shuah
+
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh@osg.samsung.com | (970) 217-8978
