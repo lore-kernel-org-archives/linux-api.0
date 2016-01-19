@@ -1,127 +1,143 @@
-From: "Serge E. Hallyn" <serge.hallyn@ubuntu.com>
-Subject: Re: [PATCH RFC] Introduce new security.nscapability xattr
-Date: Tue, 19 Jan 2016 01:09:07 -0600
-Message-ID: <20160119070907.GA26867@mail.hallyn.com>
-References: <20151130224356.GA27972@mail.hallyn.com>
- <87two3w0el.fsf@x220.int.ebiederm.org>
- <20151204202116.GA4809@mail.hallyn.com>
+From: Russell King <rmk+kernel@arm.linux.org.uk>
+Subject: [PATCH 2/2] drm: etnaviv: add further minor features and varyings
+ count
+Date: Tue, 19 Jan 2016 09:18:32 +0000
+Message-ID: <E1aLSQq-0006sU-Ou@rmk-PC.arm.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
 Content-Disposition: inline
-In-Reply-To: <20151204202116.GA4809@mail.hallyn.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Serge E. Hallyn" <serge@hallyn.com>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, lkml <linux-kernel@vger.kernel.org>, Andrew Morgan <morgan@kernel.org>, Andy Lutomirski <luto@amacapital.net>, lxc-devel@lists.linuxcontainers.org, Richard Weinberger <richard@nod.at>, LSM <linux-security-module@vger.kernel.org>, linux-api@vger.kernel.org, keescook@chromium.org
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Lucas Stach <l.stach@pengutronix.de>
+Cc: linux-api@vger.kernel.org, dri-devel@lists.freedesktop.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Dec 04, 2015 at 02:21:16PM -0600, Serge E. Hallyn wrote:
-> Quoting Eric W. Biederman (ebiederm@xmission.com):
-> > "Serge E. Hallyn" <serge.hallyn@ubuntu.com> writes:
-> > 
-> > > A common way for daemons to run with minimal privilege is to start as root,
-> > > perhaps setuid-root, choose a desired capability set, set PR_SET_KEEPCAPS,
-> > > then change uid to non-root.  A simpler way to achieve this is to set file
-> > > capabilities on a not-setuid-root binary.  However, when installing a package
-> > > inside a (user-namespaced) container, packages cannot be installed with file
-> > > capabilities.  For this reason, containers must install ping setuid-root.
-> > 
-> > Don't ping sockets avoid that specific problem?
-> > 
-> > I expect the general case still holds.
-> > 
-> > > To achieve this, we would need for containers to be able to request file
-> > > capabilities be added to a file without causing these to be honored in the
-> > > initial user namespace.
-> > >
-> > > To this end, the patch below introduces a new capability xattr format.  The
-> > > main enhancement over the existing security.capability xattr is that we
-> > > tag capability sets with a uid - the uid of the root user in the namespace
-> > > where the capabilities are set.  The capabilities will be ignored in any
-> > > other namespace.  The special case of uid == -1 (which must only ever be
-> > > able to be set by kuid 0) means use the capabilities in all
-> > > namespaces.
-> 
-> really since security.capability xattrs are currently honored in all
-> namespaces this isn't really necessary.  Until and unless Seth's set
-> changes that.
-> 
-> > 
-> > A quick comment on this.
-> > 
-> > We currently allow capabilities that have been gained to be valid in all
-> > descendent user namespaces.
-> > 
-> > Applying this principle to the on-disk capabilities would make it so
-> > that uid 0 would mean capabilities in all namespaces.
-> > 
-> > It might be worth it to introduce a fixed sized array with a length
-> > parameter of perhaps 32 entries which is a path of root uids as seen by
-> > the initial user namespace.  That way the entire construction of the
-> > user namespace could be verified.  AKA verify the current user namespace
-> > and the parent and the parents parent.  Up to the user namespace the
-> > current filesystem is mounted in. We would look at how much space
-> > allows an xattr to be stored without causing filesystems a challenge
-> > to properly size such an array.
-> > 
-> > Given that uids are fundamentally flat that might not be particularly
-> > useful.  If we add an alternative way of identifying user namespaces
-> > say a privileged operation that set a uuid, then the complete path would
-> > be more interesting.
-> > 
-> > > An alternative format would use a pair of uids to indicate a range of rootids.
-> > > This would allow root in a user namespace with uids 100000-165536 mapped to
-> > > set the xattr once on a file, then launch nested containers wherein the file
-> > > could be used with privilege.  That's not what this patch does, but would be
-> > > a trivial change if people think it would be worthwhile.
-> > >
-> > > This patch does not actually address the real problem, which is setting the
-> > > xattrs from inside containers.  For that, I think the best solution is to
-> > > add a pair of new system calls, setfcap and getfcap. Userspace would for
-> > > instance call fsetfcap(fd, cap_user_header_t, cap_user_data_t), to which
-> > > the kernel would, if not in init_user_ns, react by writing an appropriate
-> > > security.nscapability xattr.
-> > 
-> > That feels hard to maintain, but you may be correct that we have a small
-> > enough userspace that it would not be a problem.
-> > 
-> > Eric
-> > 
-> > 
-> > > The libcap2 library's cap_set_file/cap_get_file could be switched over
-> > > transparently to use this to hide its use from all callers.
-> > >
-> > > Comments appreciated.
-> > >
-> > > Note - In this patch, file capabilities only work for containers which have
-> > > a root uid defined.  We may want to allow -1 uids to work in all
-> > > namespaces.  There certainly would be uses for this, but I'm a bit unsettled
-> > > about the implications of allowing a program privilege in a container where
-> > > there is no uid with privilege.  This needs more thought.
-> 
-> So for actually enabling (user-namespaced) containers to use these, there
-> are a few possibilities that come to mine.
-> 
-> 1. A new setfcap (/getfcap) syscall.  Uses mapped uid 0 from
-> current_user_ns() to write a value in the security.nscapability xattr.
-> Userspace doesn't need to worry at all about namespace issues.
-> 
-> 2. Just expect userspace to write a xattr;  kernel checks that no values
-> are changed for any other namespaces.  This could be a lot of parsing and
-> verifying in the kernel.
-> 
-> 3. Switch the xattr scheme - instead of one security.nscapability xattr
-> with multiple entries, use security.nscapability.$(rootid).  Now the
-> kernel only needs to verify that the $rootid is valid for the writing
-> task, and we don't need a new syscall.  OTOH userspace needs to know
-> what it's doing.  Of course we can still hide that behind libcap2's helpers.
-> 
-> Any opinions on which way seems best?  1 does seem cleanest (and supports
-> use of seccomp if we want to forbit its use by some containers), but
-> involves a new pair of syscalls.  2 seems to me to be right out, but
-> others might disagree...
-
-ok - I'm going to lean toward option 1 failing any convincing arguments
-otherwise.
-
--serge
+RXhwb3J0IGZ1cnRoZXIgbWlub3IgZmVhdHVyZSBiaXRtYXNrcyBhbmQgdGhlIHZhcnlpbmdzIGNv
+dW50IGZyb20KdGhlIEdQVSBzcGVjaWZpY2F0aW9ucyByZWdpc3RlcnMgdG8gdXNlcnNwYWNlLgoK
+U2lnbmVkLW9mZi1ieTogUnVzc2VsbCBLaW5nIDxybWsra2VybmVsQGFybS5saW51eC5vcmcudWs+
+Ci0tLQogZHJpdmVycy9ncHUvZHJtL2V0bmF2aXYvZXRuYXZpdl9ncHUuYyB8IDU3ICsrKysrKysr
+KysrKysrKysrKysrKysrKysrKysrKysrKystCiBkcml2ZXJzL2dwdS9kcm0vZXRuYXZpdi9ldG5h
+dml2X2dwdS5oIHwgIDkgKysrKysrCiBpbmNsdWRlL3VhcGkvZHJtL2V0bmF2aXZfZHJtLmggICAg
+ICAgIHwgIDMgKysKIDMgZmlsZXMgY2hhbmdlZCwgNjggaW5zZXJ0aW9ucygrKSwgMSBkZWxldGlv
+bigtKQoKZGlmZiAtLWdpdCBhL2RyaXZlcnMvZ3B1L2RybS9ldG5hdml2L2V0bmF2aXZfZ3B1LmMg
+Yi9kcml2ZXJzL2dwdS9kcm0vZXRuYXZpdi9ldG5hdml2X2dwdS5jCmluZGV4IDQ4M2FhMzRmYTk5
+MC4uNzQyNTQ3MjFiNDQ2IDEwMDY0NAotLS0gYS9kcml2ZXJzL2dwdS9kcm0vZXRuYXZpdi9ldG5h
+dml2X2dwdS5jCisrKyBiL2RyaXZlcnMvZ3B1L2RybS9ldG5hdml2L2V0bmF2aXZfZ3B1LmMKQEAg
+LTcyLDYgKzcyLDE0IEBAIGludCBldG5hdml2X2dwdV9nZXRfcGFyYW0oc3RydWN0IGV0bmF2aXZf
+Z3B1ICpncHUsIHUzMiBwYXJhbSwgdTY0ICp2YWx1ZSkKIAkJKnZhbHVlID0gZ3B1LT5pZGVudGl0
+eS5taW5vcl9mZWF0dXJlczM7CiAJCWJyZWFrOwogCisJY2FzZSBFVE5BVklWX1BBUkFNX0dQVV9G
+RUFUVVJFU181OgorCQkqdmFsdWUgPSBncHUtPmlkZW50aXR5Lm1pbm9yX2ZlYXR1cmVzNDsKKwkJ
+YnJlYWs7CisKKwljYXNlIEVUTkFWSVZfUEFSQU1fR1BVX0ZFQVRVUkVTXzY6CisJCSp2YWx1ZSA9
+IGdwdS0+aWRlbnRpdHkubWlub3JfZmVhdHVyZXM1OworCQlicmVhazsKKwogCWNhc2UgRVROQVZJ
+Vl9QQVJBTV9HUFVfU1RSRUFNX0NPVU5UOgogCQkqdmFsdWUgPSBncHUtPmlkZW50aXR5LnN0cmVh
+bV9jb3VudDsKIAkJYnJlYWs7CkBAIC0xMTIsNiArMTIwLDEwIEBAIGludCBldG5hdml2X2dwdV9n
+ZXRfcGFyYW0oc3RydWN0IGV0bmF2aXZfZ3B1ICpncHUsIHUzMiBwYXJhbSwgdTY0ICp2YWx1ZSkK
+IAkJKnZhbHVlID0gZ3B1LT5pZGVudGl0eS5udW1fY29uc3RhbnRzOwogCQlicmVhazsKIAorCWNh
+c2UgRVROQVZJVl9QQVJBTV9HUFVfTlVNX1ZBUllJTkdTOgorCQkqdmFsdWUgPSBncHUtPmlkZW50
+aXR5LnZhcnlpbmdzX2NvdW50OworCQlicmVhazsKKwogCWRlZmF1bHQ6CiAJCURCRygiJXM6IGlu
+dmFsaWQgcGFyYW06ICV1IiwgZGV2X25hbWUoZ3B1LT5kZXYpLCBwYXJhbSk7CiAJCXJldHVybiAt
+RUlOVkFMOwpAQCAtMTI0LDEwICsxMzYsMTMgQEAgc3RhdGljIHZvaWQgZXRuYXZpdl9od19zcGVj
+cyhzdHJ1Y3QgZXRuYXZpdl9ncHUgKmdwdSkKIHsKIAlpZiAoZ3B1LT5pZGVudGl0eS5taW5vcl9m
+ZWF0dXJlczAgJgogCSAgICBjaGlwTWlub3JGZWF0dXJlczBfTU9SRV9NSU5PUl9GRUFUVVJFUykg
+ewotCQl1MzIgc3BlY3NbMl07CisJCXUzMiBzcGVjc1s0XTsKKwkJdW5zaWduZWQgaW50IHN0cmVh
+bXM7CiAKIAkJc3BlY3NbMF0gPSBncHVfcmVhZChncHUsIFZJVlNfSElfQ0hJUF9TUEVDUyk7CiAJ
+CXNwZWNzWzFdID0gZ3B1X3JlYWQoZ3B1LCBWSVZTX0hJX0NISVBfU1BFQ1NfMik7CisJCXNwZWNz
+WzJdID0gZ3B1X3JlYWQoZ3B1LCBWSVZTX0hJX0NISVBfU1BFQ1NfMyk7CisJCXNwZWNzWzNdID0g
+Z3B1X3JlYWQoZ3B1LCBWSVZTX0hJX0NISVBfU1BFQ1NfNCk7CiAKIAkJZ3B1LT5pZGVudGl0eS5z
+dHJlYW1fY291bnQgPQogCQkJKHNwZWNzWzBdICYgVklWU19ISV9DSElQX1NQRUNTX1NUUkVBTV9D
+T1VOVF9fTUFTSykKQEAgLTE2MCw2ICsxNzUsMTcgQEAgc3RhdGljIHZvaWQgZXRuYXZpdl9od19z
+cGVjcyhzdHJ1Y3QgZXRuYXZpdl9ncHUgKmdwdSkKIAkJZ3B1LT5pZGVudGl0eS5udW1fY29uc3Rh
+bnRzID0KIAkJCShzcGVjc1sxXSAmIFZJVlNfSElfQ0hJUF9TUEVDU18yX05VTV9DT05TVEFOVFNf
+X01BU0spCiAJCQkJPj4gVklWU19ISV9DSElQX1NQRUNTXzJfTlVNX0NPTlNUQU5UU19fU0hJRlQ7
+CisKKwkJZ3B1LT5pZGVudGl0eS52YXJ5aW5nc19jb3VudCA9CisJCQkoc3BlY3NbMl0gJiBWSVZT
+X0hJX0NISVBfU1BFQ1NfM19WQVJZSU5HU19DT1VOVF9fTUFTSykKKwkJCQk+PiBWSVZTX0hJX0NI
+SVBfU1BFQ1NfM19WQVJZSU5HU19DT1VOVF9fU0hJRlQ7CisKKwkJLyogVGhpcyBvdmVycmlkZXMg
+dGhlIHZhbHVlIGZyb20gb2xkZXIgcmVnaXN0ZXIgaWYgbm9uLXplcm8gKi8KKwkJc3RyZWFtcyA9
+CisJCQkoc3BlY3NbM10gJiBWSVZTX0hJX0NISVBfU1BFQ1NfNF9TVFJFQU1fQ09VTlRfX01BU0sp
+CisJCQkJPj4gVklWU19ISV9DSElQX1NQRUNTXzRfU1RSRUFNX0NPVU5UX19TSElGVDsKKwkJaWYg
+KHN0cmVhbXMpCisJCQlncHUtPmlkZW50aXR5LnN0cmVhbV9jb3VudCA9IHN0cmVhbXM7CiAJfQog
+CiAJLyogRmlsbCBpbiB0aGUgc3RyZWFtIGNvdW50IGlmIG5vdCBzcGVjaWZpZWQgKi8KQEAgLTI0
+Miw2ICsyNjgsMjMgQEAgc3RhdGljIHZvaWQgZXRuYXZpdl9od19zcGVjcyhzdHJ1Y3QgZXRuYXZp
+dl9ncHUgKmdwdSkKIAogCWlmIChncHUtPmlkZW50aXR5Lm51bV9jb25zdGFudHMgPT0gMCkKIAkJ
+Z3B1LT5pZGVudGl0eS5udW1fY29uc3RhbnRzID0gMTY4OworCisJaWYgKGdwdS0+aWRlbnRpdHku
+dmFyeWluZ3NfY291bnQgPT0gMCkgeworCQlpZiAoZ3B1LT5pZGVudGl0eS5taW5vcl9mZWF0dXJl
+czEgJiBjaGlwTWlub3JGZWF0dXJlczFfSEFMVEkwKQorCQkJZ3B1LT5pZGVudGl0eS52YXJ5aW5n
+c19jb3VudCA9IDEyOworCQllbHNlCisJCQlncHUtPmlkZW50aXR5LnZhcnlpbmdzX2NvdW50ID0g
+ODsKKwl9CisKKwkvKgorCSAqIEZvciBzb21lIGNvcmVzLCB0d28gdmFyeWluZ3MgYXJlIGNvbnN1
+bWVkIGZvciBwb3NpdGlvbiwgc28gdGhlCisJICogbWF4aW11bSB2YXJ5aW5nIGNvdW50IG5lZWRz
+IHRvIGJlIHJlZHVjZWQgYnkgb25lLgorCSAqLworCWlmICgoZ3B1LT5pZGVudGl0eS5tb2RlbCA9
+PSBjaGlwTW9kZWxfR0MyMDAwICYmCisJICAgICBncHUtPmlkZW50aXR5LnJldmlzaW9uID09IDB4
+NTEwOCkgfHwKKwkgICAgKGdwdS0+aWRlbnRpdHkubW9kZWwgPT0gY2hpcE1vZGVsX0dDODgwICYm
+CisJICAgICBncHUtPmlkZW50aXR5LnJldmlzaW9uID09IDB4NTEwNikpCisJCWdwdS0+aWRlbnRp
+dHkudmFyeWluZ3NfY291bnQgLT0gMTsKIH0KIAogc3RhdGljIHZvaWQgZXRuYXZpdl9od19pZGVu
+dGlmeShzdHJ1Y3QgZXRuYXZpdl9ncHUgKmdwdSkKQEAgLTMwNiw2ICszNDksOCBAQCBzdGF0aWMg
+dm9pZCBldG5hdml2X2h3X2lkZW50aWZ5KHN0cnVjdCBldG5hdml2X2dwdSAqZ3B1KQogCQlncHUt
+PmlkZW50aXR5Lm1pbm9yX2ZlYXR1cmVzMSA9IDA7CiAJCWdwdS0+aWRlbnRpdHkubWlub3JfZmVh
+dHVyZXMyID0gMDsKIAkJZ3B1LT5pZGVudGl0eS5taW5vcl9mZWF0dXJlczMgPSAwOworCQlncHUt
+PmlkZW50aXR5Lm1pbm9yX2ZlYXR1cmVzNCA9IDA7CisJCWdwdS0+aWRlbnRpdHkubWlub3JfZmVh
+dHVyZXM1ID0gMDsKIAl9IGVsc2UKIAkJZ3B1LT5pZGVudGl0eS5taW5vcl9mZWF0dXJlczAgPQog
+CQkJCWdwdV9yZWFkKGdwdSwgVklWU19ISV9DSElQX01JTk9SX0ZFQVRVUkVfMCk7CkBAIC0zMTgs
+NiArMzYzLDEwIEBAIHN0YXRpYyB2b2lkIGV0bmF2aXZfaHdfaWRlbnRpZnkoc3RydWN0IGV0bmF2
+aXZfZ3B1ICpncHUpCiAJCQkJZ3B1X3JlYWQoZ3B1LCBWSVZTX0hJX0NISVBfTUlOT1JfRkVBVFVS
+RV8yKTsKIAkJZ3B1LT5pZGVudGl0eS5taW5vcl9mZWF0dXJlczMgPQogCQkJCWdwdV9yZWFkKGdw
+dSwgVklWU19ISV9DSElQX01JTk9SX0ZFQVRVUkVfMyk7CisJCWdwdS0+aWRlbnRpdHkubWlub3Jf
+ZmVhdHVyZXM0ID0KKwkJCQlncHVfcmVhZChncHUsIFZJVlNfSElfQ0hJUF9NSU5PUl9GRUFUVVJF
+XzQpOworCQlncHUtPmlkZW50aXR5Lm1pbm9yX2ZlYXR1cmVzNSA9CisJCQkJZ3B1X3JlYWQoZ3B1
+LCBWSVZTX0hJX0NISVBfTUlOT1JfRkVBVFVSRV81KTsKIAl9CiAKIAkvKiBHQzYwMCBpZGxlIHJl
+Z2lzdGVyIHJlcG9ydHMgemVybyBiaXRzIHdoZXJlIG1vZHVsZXMgYXJlbid0IHByZXNlbnQgKi8K
+QEAgLTY4MCw2ICs3MjksMTAgQEAgaW50IGV0bmF2aXZfZ3B1X2RlYnVnZnMoc3RydWN0IGV0bmF2
+aXZfZ3B1ICpncHUsIHN0cnVjdCBzZXFfZmlsZSAqbSkKIAkJICAgZ3B1LT5pZGVudGl0eS5taW5v
+cl9mZWF0dXJlczIpOwogCXNlcV9wcmludGYobSwgIlx0IG1pbm9yX2ZlYXR1cmVzMzogMHglMDh4
+XG4iLAogCQkgICBncHUtPmlkZW50aXR5Lm1pbm9yX2ZlYXR1cmVzMyk7CisJc2VxX3ByaW50Ziht
+LCAiXHQgbWlub3JfZmVhdHVyZXM0OiAweCUwOHhcbiIsCisJCSAgIGdwdS0+aWRlbnRpdHkubWlu
+b3JfZmVhdHVyZXM0KTsKKwlzZXFfcHJpbnRmKG0sICJcdCBtaW5vcl9mZWF0dXJlczU6IDB4JTA4
+eFxuIiwKKwkJICAgZ3B1LT5pZGVudGl0eS5taW5vcl9mZWF0dXJlczUpOwogCiAJc2VxX3B1dHMo
+bSwgIlx0c3BlY3NcbiIpOwogCXNlcV9wcmludGYobSwgIlx0IHN0cmVhbV9jb3VudDogICVkXG4i
+LApAQCAtNzAyLDYgKzc1NSw4IEBAIGludCBldG5hdml2X2dwdV9kZWJ1Z2ZzKHN0cnVjdCBldG5h
+dml2X2dwdSAqZ3B1LCBzdHJ1Y3Qgc2VxX2ZpbGUgKm0pCiAJCQlncHUtPmlkZW50aXR5Lmluc3Ry
+dWN0aW9uX2NvdW50KTsKIAlzZXFfcHJpbnRmKG0sICJcdCBudW1fY29uc3RhbnRzOiAlZFxuIiwK
+IAkJCWdwdS0+aWRlbnRpdHkubnVtX2NvbnN0YW50cyk7CisJc2VxX3ByaW50ZihtLCAiXHQgdmFy
+eWluZ3NfY291bnQ6ICVkXG4iLAorCQkJZ3B1LT5pZGVudGl0eS52YXJ5aW5nc19jb3VudCk7CiAK
+IAlzZXFfcHJpbnRmKG0sICJcdGF4aTogMHglMDh4XG4iLCBheGkpOwogCXNlcV9wcmludGYobSwg
+Ilx0aWRsZTogMHglMDh4XG4iLCBpZGxlKTsKZGlmZiAtLWdpdCBhL2RyaXZlcnMvZ3B1L2RybS9l
+dG5hdml2L2V0bmF2aXZfZ3B1LmggYi9kcml2ZXJzL2dwdS9kcm0vZXRuYXZpdi9ldG5hdml2X2dw
+dS5oCmluZGV4IDRhNmZhYmEzODVhNi4uM2RkYTJhOTlkMTc0IDEwMDY0NAotLS0gYS9kcml2ZXJz
+L2dwdS9kcm0vZXRuYXZpdi9ldG5hdml2X2dwdS5oCisrKyBiL2RyaXZlcnMvZ3B1L2RybS9ldG5h
+dml2L2V0bmF2aXZfZ3B1LmgKQEAgLTQ3LDYgKzQ3LDEyIEBAIHN0cnVjdCBldG5hdml2X2NoaXBf
+aWRlbnRpdHkgewogCS8qIFN1cHBvcnRlZCBtaW5vciBmZWF0dXJlIDMgZmllbGRzLiAqLwogCXUz
+MiBtaW5vcl9mZWF0dXJlczM7CiAKKwkvKiBTdXBwb3J0ZWQgbWlub3IgZmVhdHVyZSA0IGZpZWxk
+cy4gKi8KKwl1MzIgbWlub3JfZmVhdHVyZXM0OworCisJLyogU3VwcG9ydGVkIG1pbm9yIGZlYXR1
+cmUgNSBmaWVsZHMuICovCisJdTMyIG1pbm9yX2ZlYXR1cmVzNTsKKwogCS8qIE51bWJlciBvZiBz
+dHJlYW1zIHN1cHBvcnRlZC4gKi8KIAl1MzIgc3RyZWFtX2NvdW50OwogCkBAIC03Niw2ICs4Miw5
+IEBAIHN0cnVjdCBldG5hdml2X2NoaXBfaWRlbnRpdHkgewogCiAJLyogQnVmZmVyIHNpemUgKi8K
+IAl1MzIgYnVmZmVyX3NpemU7CisKKwkvKiBOdW1iZXIgb2YgdmFyeWluZ3MgKi8KKwl1OCB2YXJ5
+aW5nc19jb3VudDsKIH07CiAKIHN0cnVjdCBldG5hdml2X2V2ZW50IHsKZGlmZiAtLWdpdCBhL2lu
+Y2x1ZGUvdWFwaS9kcm0vZXRuYXZpdl9kcm0uaCBiL2luY2x1ZGUvdWFwaS9kcm0vZXRuYXZpdl9k
+cm0uaAppbmRleCA0Y2M5ODlhZDY4NTEuLmY5NWUxYzQzYzNmYiAxMDA2NDQKLS0tIGEvaW5jbHVk
+ZS91YXBpL2RybS9ldG5hdml2X2RybS5oCisrKyBiL2luY2x1ZGUvdWFwaS9kcm0vZXRuYXZpdl9k
+cm0uaApAQCAtNDgsNiArNDgsOCBAQCBzdHJ1Y3QgZHJtX2V0bmF2aXZfdGltZXNwZWMgewogI2Rl
+ZmluZSBFVE5BVklWX1BBUkFNX0dQVV9GRUFUVVJFU18yICAgICAgICAgICAgICAgIDB4MDUKICNk
+ZWZpbmUgRVROQVZJVl9QQVJBTV9HUFVfRkVBVFVSRVNfMyAgICAgICAgICAgICAgICAweDA2CiAj
+ZGVmaW5lIEVUTkFWSVZfUEFSQU1fR1BVX0ZFQVRVUkVTXzQgICAgICAgICAgICAgICAgMHgwNwor
+I2RlZmluZSBFVE5BVklWX1BBUkFNX0dQVV9GRUFUVVJFU181ICAgICAgICAgICAgICAgIDB4MDgK
+KyNkZWZpbmUgRVROQVZJVl9QQVJBTV9HUFVfRkVBVFVSRVNfNiAgICAgICAgICAgICAgICAweDA5
+CiAKICNkZWZpbmUgRVROQVZJVl9QQVJBTV9HUFVfU1RSRUFNX0NPVU5UICAgICAgICAgICAgICAw
+eDEwCiAjZGVmaW5lIEVUTkFWSVZfUEFSQU1fR1BVX1JFR0lTVEVSX01BWCAgICAgICAgICAgICAg
+MHgxMQpAQCAtNTksNiArNjEsNyBAQCBzdHJ1Y3QgZHJtX2V0bmF2aXZfdGltZXNwZWMgewogI2Rl
+ZmluZSBFVE5BVklWX1BBUkFNX0dQVV9CVUZGRVJfU0laRSAgICAgICAgICAgICAgIDB4MTcKICNk
+ZWZpbmUgRVROQVZJVl9QQVJBTV9HUFVfSU5TVFJVQ1RJT05fQ09VTlQgICAgICAgICAweDE4CiAj
+ZGVmaW5lIEVUTkFWSVZfUEFSQU1fR1BVX05VTV9DT05TVEFOVFMgICAgICAgICAgICAgMHgxOQor
+I2RlZmluZSBFVE5BVklWX1BBUkFNX0dQVV9OVU1fVkFSWUlOR1MgICAgICAgICAgICAgIDB4MWEK
+IAogI2RlZmluZSBFVE5BX01BWF9QSVBFUyA0CiAKLS0gCjIuMS4wCgpfX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpkcmktZGV2ZWwgbWFpbGluZyBsaXN0CmRy
+aS1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cDovL2xpc3RzLmZyZWVkZXNrdG9wLm9y
+Zy9tYWlsbWFuL2xpc3RpbmZvL2RyaS1kZXZlbAo=
