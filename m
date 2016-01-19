@@ -1,1068 +1,3916 @@
-From: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+From: Johannes Thumshirn <jthumshirn-l3A5Bk7waGM@public.gmane.org>
 Subject: Re: [PATCH] drivers/scsi/emcctd: drivers/scsi/emcctd: Client driver
- implementation for EMC-Symmetrix GuestOS emulated Cut-Through Device
-Date: Tue, 19 Jan 2016 23:55:10 +0800
-Message-ID: <201601192312.H4GwxHcb%fengguang.wu@intel.com>
+ implementation for  EMC-Symmetrix GuestOS emulated Cut-Through Device
+Date: Tue, 19 Jan 2016 17:04:21 +0100
+Message-ID: <20160119160421.GM2742@c203.arch.suse.de>
 References: <82807C73E0BDBB498164AAE7B8F6A1481C61263E@MX105CL01.corp.emc.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="xHFwDpU9dbj6ez1V"
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
 In-Reply-To: <82807C73E0BDBB498164AAE7B8F6A1481C61263E-7nf3+EsVnp4EVr6dp/gChrOUoyqYp7Dr@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: "Singhal, Maneesh" <Maneesh.Singhal-mb1K0bWo544@public.gmane.org>
-Cc: kbuild-all-JC7UmRfGjtg@public.gmane.org, "linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "JBottomley-wo1vFcy6AUs@public.gmane.org" <JBottomley-wo1vFcy6AUs@public.gmane.org>, "martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: "linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "JBottomley-wo1vFcy6AUs@public.gmane.org" <JBottomley-wo1vFcy6AUs@public.gmane.org>, "martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Tue, Jan 19, 2016 at 11:58:06AM +0000, Singhal, Maneesh wrote:
+> Hello,
+> Kindly review the following patch for the following driver to be adde=
+d in SCSI subsystem -
+>=20
+> Regards
+> Maneesh
+>=20
+> ---------------------------------------------------------------------=
+-------
+> From f3c4b836d6f130b1d7ded618002c8164f8f4a06d Mon Sep 17 00:00:00 200=
+1
+> From: "maneesh.singhal" <maneesh.singhal-mb1K0bWo544@public.gmane.org>
+> Date: Tue, 19 Jan 2016 06:39:35 -0500
+> Subject: [PATCH] [PATCH] drivers/scsi/emcctd: Client driver implement=
+ation for
+>  EMC-Symmetrix GuestOS emulated Cut-Through Device.
+>=20
+> The patch is a driver implementation  EMC-Symmetrix GuestOS emulated =
+Cut-Through
+> Device. The Cut-Through Device PCI emulation is implemented for Guest=
+OS
+> environments in the HyperMax OS. GuestOS environments allows loading =
+of
+> any x86 compliant operating systems like Linux/FreeBSD etc.
+>=20
+> The client driver is a SCSI HBA implementation which interfaces with =
+SCSI
+> midlayer in the north-bound interfaces and connects with the emulated=
+ PCI device
+> on the south side.
+>=20
+> The PCI vendor ID:product ID for emulated Cut-Through Device is 0x112=
+0:0x1B00.
+>=20
+> Signed-off-by: maneesh.singhal <maneesh.singhal-mb1K0bWo544@public.gmane.org>
+> ---
+>  Documentation/scsi/emcctd.txt           |   57 +
+>  MAINTAINERS                             |    9 +
+>  drivers/scsi/Kconfig                    |    1 +
+>  drivers/scsi/Makefile                   |    1 +
+>  drivers/scsi/emcctd/Kconfig             |    7 +
+>  drivers/scsi/emcctd/Makefile            |    1 +
+>  drivers/scsi/emcctd/README              |   10 +
+>  drivers/scsi/emcctd/emc_ctd_interface.h |  386 +++++
+>  drivers/scsi/emcctd/emcctd.c            | 2840 +++++++++++++++++++++=
+++++++++++
+>  drivers/scsi/emcctd/emcctd.h            |  232 +++
+>  10 files changed, 3544 insertions(+)
+>  create mode 100644 Documentation/scsi/emcctd.txt
+>  create mode 100644 drivers/scsi/emcctd/Kconfig
+>  create mode 100644 drivers/scsi/emcctd/Makefile
+>  create mode 100644 drivers/scsi/emcctd/README
+>  create mode 100644 drivers/scsi/emcctd/emc_ctd_interface.h
+>  create mode 100644 drivers/scsi/emcctd/emcctd.c
+>  create mode 100644 drivers/scsi/emcctd/emcctd.h
+>=20
+> diff --git a/Documentation/scsi/emcctd.txt b/Documentation/scsi/emcct=
+d.txt
+> new file mode 100644
+> index 0000000..bcafc87
+> --- /dev/null
+> +++ b/Documentation/scsi/emcctd.txt
+> @@ -0,0 +1,56 @@
+> +This file contains brief information about the EMC Cut-Through Drive=
+r (emcctd).
+> +The driver is currently maintained by Singhal, Maneesh (maneesh.sing=
+hal-mb1K0bWo544@public.gmane.org)
+> +
+> +Last modified: Mon Jan 18 2016 by Maneesh Singhal
+> +
+> +BASICS
+> +
+> +Its a client driver implementation for EMC-Symmetrix GuestOS emulate=
+d
+> +Cut-Through Device. The Cut-Through Device PCI emulation is implemen=
+ted for
+> +GuestOS environments in the HyperMax OS. GuestOS environments allows=
+ loading of
+> +any x86 compliant operating systems like Linux/FreeBSD etc.
+> +
+> +The client driver is a SCSI HBA implementation which interfaces with=
+ SCSI
+> +midlayer in the north-bound interfaces and connects with the emulate=
+d PCI device
+> +on the south side.
+> +
+> +The PCI vendor ID:product ID for emulated Cut-Through Device is 0x11=
+20:0x1B00.
+> +
+> +VERSIONING
+> +
+> +The Version of the driver is maintained as 2.0.0.X, where 2 refers t=
+o the CTD
+> +protocol in use, and X refers to the ongoing version of the driver.
+> +
+> +
+> +SYSFS SUPPORT
+> +
+> +The driver creates the directory /sys/module/emcctd and populates it=
+ with
+> +version file and a directory for various parameters as described in =
+MODULE
+> +PARAMETERS section.
+> +
+> +PROCFS SUPPORT
+> +
+> +The driver creates the directory /proc/emc and creates files emcctd_=
+stats_x
+> +where 'x' refers to the PCI emulation number this client driver conn=
+ected to.
+> +These files cotains WWN information and IO statistics for the partic=
+ular PCI
+> +emulation.
+> +
+> +MODULE PARAMETERS
+> +
+> +The supported parameters which could add debuggability or change the=
+ runtime
+> +behavior of the driver are as following:
+> +
+> +ctd_debug=3D0 | 1		Enable driver debug messages(0=3Doff, 1=3Don)
+> +
+> +max_luns=3Dxx		Specify the maximum number of LUN's per
+> +			host(default=3D16384)
+> +
+> +cmd_per_lun=3Dxx		Specify the maximum commands per lun(default=3D16)
+> +
+> +DEBUGGING HINTS
+> +
+> +Debugging code is now compiled in by default but debugging is turned=
+ off
+> +with the kernel module parameter debug_flag defaulting to 0.  To ena=
+ble debug at
+> +module load time add ctd_debug=3D1 to the module load options.
+> +Debugging can also be enabled and disabled by writing a '0' (disable=
+) or '1'
+> +(enable) to the sysfs file /sys/module/emcctd/parameters/ctd_debug
+> diff --git a/MAINTAINERS b/MAINTAINERS
+> index 1d23f70..671173a 100644
+> --- a/MAINTAINERS
+> +++ b/MAINTAINERS
+> @@ -6601,6 +6601,15 @@ F:	drivers/message/fusion/
+>  F:	drivers/scsi/mpt2sas/
+>  F:	drivers/scsi/mpt3sas/
+>=20
+> +EMC Cut-Through Driver
+> +M:	fredette, matt <matt.fredette-mb1K0bWo544@public.gmane.org>
+> +M:	Pirotte, Serge <serge.pirotte-mb1K0bWo544@public.gmane.org>
+> +M:	Singh Animesh <Animesh.Singh-mb1K0bWo544@public.gmane.org>
+> +M:	Singhal, Maneesh <Maneesh.Singhal-mb1K0bWo544@public.gmane.org>
+> +L:	linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> +S:	Maintained
+> +F:	drivers/scsis/emcctd/
+> +
+>  LSILOGIC/SYMBIOS/NCR 53C8XX and 53C1010 PCI-SCSI drivers
+>  M:	Matthew Wilcox <matthew-Ztpu424NOJ8@public.gmane.org>
+>  L:	linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> diff --git a/drivers/scsi/Kconfig b/drivers/scsi/Kconfig
+> index c1fe0d2..cbc03d7 100644
+> --- a/drivers/scsi/Kconfig
+> +++ b/drivers/scsi/Kconfig
+> @@ -477,6 +477,7 @@ source "drivers/scsi/aic7xxx/Kconfig.aic79xx"
+>  source "drivers/scsi/aic94xx/Kconfig"
+>  source "drivers/scsi/hisi_sas/Kconfig"
+>  source "drivers/scsi/mvsas/Kconfig"
+> +source "drivers/scsi/emcctd/Kconfig"
+>=20
+>  config SCSI_MVUMI
+>  	tristate "Marvell UMI driver"
+> diff --git a/drivers/scsi/Makefile b/drivers/scsi/Makefile
+> index 862ab4e..55bea65 100644
+> --- a/drivers/scsi/Makefile
+> +++ b/drivers/scsi/Makefile
+> @@ -132,6 +132,7 @@ obj-$(CONFIG_SCSI_IBMVFC)	+=3D ibmvscsi/
+>  obj-$(CONFIG_SCSI_HPTIOP)	+=3D hptiop.o
+>  obj-$(CONFIG_SCSI_STEX)		+=3D stex.o
+>  obj-$(CONFIG_SCSI_MVSAS)	+=3D mvsas/
+> +obj-$(CONFIG_SCSI_EMCCTD)	+=3D emcctd/
+>  obj-$(CONFIG_SCSI_MVUMI)	+=3D mvumi.o
+>  obj-$(CONFIG_PS3_ROM)		+=3D ps3rom.o
+>  obj-$(CONFIG_SCSI_CXGB3_ISCSI)	+=3D libiscsi.o libiscsi_tcp.o cxgbi/
+> diff --git a/drivers/scsi/emcctd/Kconfig b/drivers/scsi/emcctd/Kconfi=
+g
+> new file mode 100644
+> index 0000000..d995b53
+> --- /dev/null
+> +++ b/drivers/scsi/emcctd/Kconfig
+> @@ -0,0 +1,7 @@
+> +config SCSI_EMCCTD
+> +	tristate "EMC Cut-Through client driver"
+> +	depends on SCSI && PCI && X86
+> +	help
+> +		This driver supports EMC virtual PCI Cut-Through-Device.
+> +		To compile this driver as a module, choose M here: the
+> +		module will be called emcctd.
+> diff --git a/drivers/scsi/emcctd/Makefile b/drivers/scsi/emcctd/Makef=
+ile
+> new file mode 100644
+> index 0000000..74a070e
+> --- /dev/null
+> +++ b/drivers/scsi/emcctd/Makefile
+> @@ -0,0 +1 @@
+> +obj-$(CONFIG_SCSI_EMCCTD) +=3D emcctd.o
+> diff --git a/drivers/scsi/emcctd/README b/drivers/scsi/emcctd/README
+> new file mode 100644
+> index 0000000..496ce7f
+> --- /dev/null
+> +++ b/drivers/scsi/emcctd/README
+> @@ -0,0 +1,10 @@
+> +EMCCTD : Client driver implementation for EMC-Symmetrix GuestOS emul=
+ated
+> +Cut-Through Device. The Cut-Through Device PCI emulation is implemen=
+ted for
+> +GuestOS environments in the HyperMax OS. GuestOS environments allows=
+ loading of
+> +any x86 compliant operating systems like Linux/FreeBSD etc.
+> +
+> +The client driver is a SCSI HBA implementation which interfaces with=
+ SCSI
+> +midlayer in the north-bound interfaces and connects with the emulate=
+d PCI device
+> +on the south side.
+> +
+> +The PCI vendor ID:product ID for emulated Cut-Through Device is 0x11=
+20:0x1B00.
+> diff --git a/drivers/scsi/emcctd/emc_ctd_interface.h b/drivers/scsi/e=
+mcctd/emc_ctd_interface.h
+> new file mode 100644
+> index 0000000..58a0276
+> --- /dev/null
+> +++ b/drivers/scsi/emcctd/emc_ctd_interface.h
+> @@ -0,0 +1,386 @@
+> +/*
+> + * EMCCTD: EMC Cut-Through HBA Driver for SCSI subsystem.
+> + *
+> + * Copyright (C) 2015 by EMC Corporation, Hopkinton, MA.
+> + *
+> + * Authors:
+> + *	fredette, matt <matt.fredette-mb1K0bWo544@public.gmane.org>
+> + *	Pirotte, Serge <serge.pirotte-mb1K0bWo544@public.gmane.org>
+> + *	Singh Animesh <Animesh.Singh-mb1K0bWo544@public.gmane.org>
+> + *	Singhal, Maneesh <Maneesh.Singhal-mb1K0bWo544@public.gmane.org>
+> + *
+> + * This program is free software; you can redistribute it and/or
+> + * modify it under the terms of the GNU General Public License
+> + * as published by the Free Software Foundation; either version 2
+> + * of the License, or (at your option) any later version.
+> + *
+> + * This program is distributed in the hope that it will be useful,
+> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + * GNU General Public License for more details.
+> + *
+> + */
+> +
+> +#ifndef _EMC_CTD_INTERFACE_H
+> +#define _EMC_CTD_INTERFACE_H
+> +/*
+> + *
+> + * DESCRIPTION: Data structures used by the Cut-through subsystem.
+> + *
+> + * NOTES: Changes to any of these structures will mean that any Clie=
+nts that
+> + *        depend on them will also need to be modified. Since many o=
+f those
+> + *        Clients are not part of the Enginuity build process, this =
+will almost
+> + *        certainly require new versions of Guest OS CTD Client code=
+ to be
+> + *        released.
+> + *
+> + *        Before modifying any data structures in this file please d=
+iscuss the
+> + *        change with the maintainers.
+> + *
+> + */
+> +
+> +
+> +/* macros: */
+> +
+> +/* the PCI vendor ID for all devices: */
+> +#define EMC_CTD_PCI_VENDOR				(0x1120)
+> +
+> +/* the PCI product ID for all version 1.x devices: */
+> +#define EMC_CTD_V010_PCI_PRODUCT			(0x1b00)
+> +
+> +/* the PCI revision ID for the first version 1.0 device: */
+> +#define EMC_CTD_V010_PCI_REVISION			(1)
+> +
+> +/* the 64-bit BAR pair for the transmit and receive rings: */
+> +#define EMC_CTD_V010_BAR_RINGS				(0)
+> +
+> +/* the 64-bit BAR pair for the fast registers: */
+> +#define EMC_CTD_V010_BAR_FREGS				(2)
+> +
+> +/* the 32-bit BAR for the slow registers: */
+> +#define EMC_CTD_V010_BAR_SREGS				(4)
+> +
+> +/* the maximum number of immediate SGL entries: */
+> +#define EMC_CTD_V010_SGL_IMMEDIATE_MAX			(7)
+> +
+> +/* the CTD v010 whats: */
+> +#define EMC_CTD_V010_WHAT_DETECT			(0)
+> +#define EMC_CTD_V010_WHAT_SCSI_COMMAND			(1)
+> +#define EMC_CTD_V010_WHAT_SCSI_PHASE			(2)
+> +#define EMC_CTD_V010_WHAT_SCSI_RESPONSE			(3)
+> +
+> +/* the CTD v010 detect flags.  all undefined flags must be zero: */
+> +
+> +/* if this is set, the name is a SCSI target: */
+> +#define EMC_CTD_V010_DETECT_FLAG_SCSI_TARGET		(1 << 0)
+> +
+> +/* if this is set, the name is a SCSI initiator: */
+> +#define EMC_CTD_V010_DETECT_FLAG_SCSI_INITIATOR		(1 << 1)
+> +
+> +/* the CTD v010 SCSI command flags.  all undefined flags must be zer=
+o: */
+> +
+> +/* when the guest receives a SCSI command message, this flag is unde=
+fined.
+> + *
+> + * If this is set, at the beginning of any data phase the target is =
+the data
+> + * source.  if this is clear, at the beginning of any data phase the=
+ target is
+> + * the data sink.
+> + */
+> +#define EMC_CTD_V010_SCSI_COMMAND_FLAG_SOURCE		(1 << 0)
+> +
+> +/* when the guest receives a SCSI command message, this flag is unde=
+fined.
+> + *
+> + * if this is set, the first SGL entry in the message points to an e=
+xtended SGL,
+> + * and the remaining SGL entries in the message are undefined.  if t=
+his is
+> + * clear, the SGL entries in the message are used:
+> + */
+> +#define EMC_CTD_V010_SCSI_COMMAND_FLAG_ESGL		(1 << 1)
+> +
+> +/* the CTD v010 SCSI response flags.  all undefined flags must be ze=
+ro: */
+> +
+> +/* if this is set, the SCSI command failed.  if this is clear, the
+> + * command succeeded:
+> + */
+> +#define EMC_CTD_V010_SCSI_RESPONSE_FLAG_FAILED		(1 << 0)
+> +
+> +/* if this is set, any extra information is sense data.  if this is =
+clear, any
+> + * extra information is 64-bit timestamps:
+> + */
+> +#define EMC_CTD_V010_SCSI_RESPONSE_FLAG_SENSE		(1 << 1)
+> +
+> +/* the CTD v010 SCSI phase flags.  all undefined flags must be zero:=
+ */
+> +
+> +/* when the guest receives a SCSI phase message, this flag is undefi=
+ned.
+> + *
+> + * if this is set, at this point in the data phase the message recei=
+ver is the
+> + * data source.  if this is clear, at this point in the data phase t=
+he message
+> + * receiver is the data sink:
+> + */
+> +#define EMC_CTD_V010_SCSI_PHASE_FLAG_SOURCE		(1 << 0)
+> +
+> +/* when the guest receives a SCSI phase message, this flag is undefi=
+ned.
+> + *
+> + * if this is set, the first SGL entry in the message points to an e=
+xtended SGL,
+> + * and the remaining SGL entries in the message are undefined.  if t=
+his is
+> + * clear, the SGL entries in the message are used:
+> + */
+> +#define EMC_CTD_V010_SCSI_PHASE_FLAG_ESGL		(1 << 1)
+> +
+> +/* if this is set, the message receiver is the target.  if this is c=
+lear, the
+> + * message receiver is the initiator:
+> + */
+> +#define EMC_CTD_V010_SCSI_PHASE_FLAG_TARGET		(1 << 2)
+> +
+> +/* if this is set, the SCSI command is aborted: */
+> +#define EMC_CTD_V010_SCSI_PHASE_FLAG_ABORT		(1 << 3)
+> +
+> +/* the size of the log of errored transmit messages: */
+> +#define EMC_CTD_V010_LOG_ERROR_TX_SIZE			(4)
+> +
+> +/* errors: */
+> +
+> +/* no error: */
+> +#define EMC_CTD_V010_ERROR_NULL				(0)
+> +
+> +/* the guest tried to transmit a message on a disconnected channel: =
+*/
+> +#define EMC_CTD_V010_ERROR_TX_CHANNEL_DISCONNECTED	(1)
+> +
+> +/* the guest tried to transmit a message with a bad what: */
+> +#define EMC_CTD_V010_ERROR_TX_MESSAGE_WHAT		(2)
+> +
+> +/* the guest tried to transmit a message with a reserved field set t=
+o
+> + * the wrong value:
+> + */
+> +#define EMC_CTD_V010_ERROR_TX_MESSAGE_RESERVED		(3)
+> +
+> +/* the guest tried to transmit an out-of-order message: */
+> +#define EMC_CTD_V010_ERROR_TX_MESSAGE_ORDER		(4)
+> +
+> +/* the guest tried to transmit a message to an endpoint whose type
+> + * doesn't support it:
+> + */
+> +#define EMC_CTD_V010_ERROR_TX_ENDPOINT_TYPE		(5)
+> +
+> +/* the guest tried to transmit a message with an unknown message
+> + * receiver's opaque value:
+> + */
+> +#define EMC_CTD_V010_ERROR_TX_OPAQUE_RX_UNKNOWN		(6)
+> +
+> +/* types: */
+> +
+> +/* a CTD v010 scatter/gather list entry: */
+> +struct emc_ctd_v010_sgl {
+> +
+> +	/* the physical address of the buffer: */
+> +	emc_ctd_uint32_t emc_ctd_v010_sgl_paddr_0_31;
+> +	emc_ctd_uint32_t emc_ctd_v010_sgl_paddr_32_63;
+> +
+> +	/* the size of the buffer: */
+> +	emc_ctd_uint32_t emc_ctd_v010_sgl_size;
+> +};
+> +
+> +/* a CTD v010 header: */
+> +struct emc_ctd_v010_header {
+> +
+> +	/* the other address: */
+> +	emc_ctd_uint16_t emc_ctd_v010_header_address;
+> +
+> +	/* the minor version: */
+> +	emc_ctd_uint8_t emc_ctd_v010_header_minor;
+> +
+> +	/* the what: */
+> +	emc_ctd_uint8_t emc_ctd_v010_header_what;
+> +};
+> +
+> +/* a CTD v010 name: */
+> +struct emc_ctd_v010_name {
+> +
+> +	/* the name: */
+> +	emc_ctd_uint8_t emc_ctd_v010_name_bytes[8];
+> +};
+> +
+> +/* a CTD v010 detect message: */
+> +struct emc_ctd_v010_detect {
+> +
+> +	/* the header: */
+> +	struct emc_ctd_v010_header emc_ctd_v010_detect_header;
+> +
+> +	/* the flags: */
+> +	emc_ctd_uint32_t emc_ctd_v010_detect_flags;
+> +
+> +	/* the name: */
+> +	struct emc_ctd_v010_name emc_ctd_v010_detect_name;
+> +
+> +	/* the key: */
+> +	emc_ctd_uint64_t emc_ctd_v010_detect_key;
+> +};
+> +
+> +/* a CTD v010 SCSI command message: */
+> +struct emc_ctd_v010_scsi_command {
+> +
+> +	/* the header: */
+> +	struct emc_ctd_v010_header emc_ctd_v010_scsi_command_header;
+> +
+> +	/* the flags: */
+> +	emc_ctd_uint32_t emc_ctd_v010_scsi_command_flags;
+> +
+> +	/* the initiator's opaque value: */
+> +	emc_ctd_uint64_t emc_ctd_v010_scsi_command_opaque;
+> +
+> +	/* the SCSI LUN: */
+> +	emc_ctd_uint8_t emc_ctd_v010_scsi_command_lun[8];
+> +
+> +	/* the SCSI CDB: */
+> +	emc_ctd_uint8_t emc_ctd_v010_scsi_command_cdb[16];
+> +
+> +	/* the data size: */
+> +	emc_ctd_uint32_t emc_ctd_v010_scsi_command_data_size;
+> +
+> +	union {
+> +
+> +		/* any SGL entries: */
+> +		/* when received by the guest, these are undefined: */
+> +		struct emc_ctd_v010_sgl
+> +			emc_ctd_v010_scsi_command_sgl[EMC_CTD_V010_SGL_IMMEDIATE_MAX];
+> +
+> +	} emc_ctd_v010_scsi_command_u;
+> +};
+> +
+> +/* a CTD v010 SCSI response message: */
+> +struct emc_ctd_v010_scsi_response {
+> +
+> +	/* the header: */
+> +	struct emc_ctd_v010_header emc_ctd_v010_scsi_response_header;
+> +
+> +	/* the flags: */
+> +	emc_ctd_uint16_t emc_ctd_v010_scsi_response_flags;
+> +
+> +	/* the extra information size: */
+> +	emc_ctd_uint8_t emc_ctd_v010_scsi_response_extra_size;
+> +
+> +	/* the SCSI status: */
+> +	emc_ctd_uint8_t emc_ctd_v010_scsi_response_status;
+> +
+> +	/* the initiator's opaque value: */
+> +	emc_ctd_uint64_t emc_ctd_v010_scsi_response_opaque;
+> +
+> +	/* the data size: */
+> +	emc_ctd_uint32_t emc_ctd_v010_scsi_response_data_size;
+> +
+> +	union {
+> +
+> +		/* any extra information: */
+> +		emc_ctd_uint8_t emc_ctd_v010_scsi_response_extra[108];
+> +
+> +	} emc_ctd_v010_scsi_response_u;
+> +};
+> +
+> +/* a CTD v010 SCSI phase message: */
+> +struct emc_ctd_v010_scsi_phase {
+> +
+> +	/* the header: */
+> +	struct emc_ctd_v010_header emc_ctd_v010_scsi_phase_header;
+> +
+> +	/* the flags: */
+> +	emc_ctd_uint32_t emc_ctd_v010_scsi_phase_flags;
+> +
+> +	/* the message receiver's opaque value: */
+> +	emc_ctd_uint64_t emc_ctd_v010_scsi_phase_opaque_rx;
+> +
+> +	/* the message transmitter's opaque value: */
+> +	emc_ctd_uint64_t emc_ctd_v010_scsi_phase_opaque_tx;
+> +
+> +	union {
+> +
+> +		/* any SGL entries: */
+> +		/* when received by the guest, these are undefined: */
+> +		struct emc_ctd_v010_sgl
+> +			emc_ctd_v010_scsi_phase_sgl[EMC_CTD_V010_SGL_IMMEDIATE_MAX];
+> +
+> +	} emc_ctd_v010_scsi_phase_u;
+> +};
+> +
+> +/* a CTD v010 message: */
+> +union emc_ctd_v010_message {
+> +
+> +	/* the header: */
+> +	struct emc_ctd_v010_header emc_ctd_v010_message_header;
+> +
+> +	/* a detect message: */
+> +	struct emc_ctd_v010_detect emc_ctd_v010_message_detect;
+> +
+> +	/* a SCSI command message: */
+> +	struct emc_ctd_v010_scsi_command emc_ctd_v010_message_scsi_command;
+> +
+> +	/* a SCSI response message: */
+> +	struct emc_ctd_v010_scsi_response emc_ctd_v010_message_scsi_respons=
+e;
+> +
+> +	/* a SCSI phase message: */
+> +	struct emc_ctd_v010_scsi_phase emc_ctd_v010_message_scsi_phase;
+> +
+> +	/* padding: */
+> +	emc_ctd_uint8_t emc_ctd_v010_message_padding[128];
+> +};
+> +
+> +/* the fast registers: */
+> +struct emc_ctd_v010_fregs {
+> +
+> +	/* the transmit ring producer index (TPI): */
+> +	volatile emc_ctd_uint32_t emc_ctd_v010_fregs_tx_index_producer;
+> +
+> +	/* the error flag: */
+> +	volatile emc_ctd_uint32_t emc_ctd_v010_fregs_error_flag;
+> +
+> +	/* errors 1..14: */
+> +	volatile emc_ctd_uint32_t emc_ctd_v010_fregs_errors_1_14[14];
+> +
+> +	/* the transmit ring consumer index (TCI): */
+> +	volatile emc_ctd_uint32_t emc_ctd_v010_fregs_tx_index_consumer;
+> +
+> +	/* the device name: */
+> +	struct emc_ctd_v010_name emc_ctd_v010_fregs_device_name;
+> +
+> +	/* padding: */
+> +	emc_ctd_uint8_t
+> +		emc_ctd_v010_fregs_pad_07f[64 -
+> +			(sizeof(emc_ctd_uint32_t) +
+> +				sizeof(struct emc_ctd_v010_name))];
+> +
+> +	/* the receive ring producer index (RPI): */
+> +	volatile emc_ctd_uint32_t emc_ctd_v010_fregs_rx_index_producer;
+> +
+> +	/* the interrupt throttle, in units of nanoseconds.  zero disables
+> +	 * the throttle:
+> +	 */
+> +	emc_ctd_uint32_t emc_ctd_v010_fregs_interrupt_throttle_nsecs;
+> +
+> +	/* padding: */
+> +	emc_ctd_uint8_t
+> +		emc_ctd_v010_fregs_pad_0bf[64 -
+> +			(sizeof(emc_ctd_uint32_t) + sizeof(emc_ctd_uint32_t))];
+> +
+> +	/* the receive ring consumer index (RCI): */
+> +	volatile emc_ctd_uint32_t emc_ctd_v010_fregs_rx_index_consumer;
+> +
+> +	/* padding: */
+> +	emc_ctd_uint8_t
+> +		emc_ctd_v010_fregs_pad_0ff[64 -
+> +			(sizeof(emc_ctd_uint32_t) +
+> +				(sizeof(emc_ctd_uint32_t) *
+> +					EMC_CTD_V010_LOG_ERROR_TX_SIZE))];
+> +
+> +	/* the errors for the log of errored transmit messages: */
+> +	volatile emc_ctd_uint32_t
+> +		emc_ctd_v010_fregs_log_error_tx_error[EMC_CTD_V010_LOG_ERROR_TX_SI=
+ZE];
+> +
+> +	/* the log of errored transmit messages: */
+> +	union emc_ctd_v010_message
+> +		emc_ctd_v010_fregs_log_error_tx_message[EMC_CTD_V010_LOG_ERROR_TX_=
+SIZE];
+> +};
+> +
+> +/* the slow registers: */
+> +struct emc_ctd_v010_sregs {
+> +
+> +	/* the reset register: */
+> +	emc_ctd_uint32_t emc_ctd_v010_sregs_reset;
+> +};
+> +
+> +#endif /* _EMC_CTD_INTERFACE_H */
+> diff --git a/drivers/scsi/emcctd/emcctd.c b/drivers/scsi/emcctd/emcct=
+d.c
+> new file mode 100644
+> index 0000000..aa6dd0e
+> --- /dev/null
+> +++ b/drivers/scsi/emcctd/emcctd.c
+> @@ -0,0 +1,2840 @@
+> +/*
+> + * EMCCTD: EMC Cut-Through HBA Driver for SCSI subsystem.
+> + *
+> + * Copyright (C) 2015 by EMC Corporation, Hopkinton, MA.
+> + *
+> + * Authors:
+> + *	fredette, matt <matt.fredette-mb1K0bWo544@public.gmane.org>
+> + *	Pirotte, Serge <serge.pirotte-mb1K0bWo544@public.gmane.org>
+> + *	Singh Animesh <Animesh.Singh-mb1K0bWo544@public.gmane.org>
+> + *	Singhal, Maneesh <Maneesh.Singhal-mb1K0bWo544@public.gmane.org>
+> + *
+> + * This program is free software; you can redistribute it and/or
+> + * modify it under the terms of the GNU General Public License
+> + * as published by the Free Software Foundation; either version 2
+> + * of the License, or (at your option) any later version.
+> + *
+> + * This program is distributed in the hope that it will be useful,
+> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + * GNU General Public License for more details.
+> + *
+> + */
+> +
+> +#include <linux/init.h>
+> +#include <linux/kernel.h>
+> +#include <linux/kthread.h>
+> +#include <linux/slab.h>
+> +#include <linux/list.h>
+> +#include <linux/module.h>
+> +#include <linux/spinlock.h>
+> +#include <linux/pci.h>
+> +#include <linux/interrupt.h>
+> +#include <linux/proc_fs.h>
+> +#include <linux/version.h>
+> +#include <linux/delay.h>
+> +#include <linux/blkdev.h>
+> +#include <linux/atomic.h>
+> +
+> +#include <linux/cache.h>
+> +
+> +#include <linux/seq_file.h>
+> +
+> +#include <scsi/scsi.h>
+> +#include <scsi/scsi_cmnd.h>
+> +#include <scsi/scsi_device.h>
+> +#include <scsi/scsi_host.h>
+> +#include <scsi/scsi_transport.h>
+> +#include <scsi/scsi_dbg.h>
+> +
+> +#define emc_ctd_uint8_t u8
+> +#define emc_ctd_uint16_t u16
+> +#define emc_ctd_uint32_t u32
+> +#define emc_ctd_uint64_t u64
+> +
+> +#include "emc_ctd_interface.h"
+> +
+> +#include "emcctd.h"
+> +
+> +#include <scsi/scsi_dbg.h>
+> +
+> +/* nomenclature for versioning
+> + * MAJOR:MINOR:SUBVERSION:PATCH
+> + */
+> +
+> +#define EMCCTD_MODULE_VERSION "2.0.0.24"
+> +
+> +MODULE_LICENSE("GPL");
+> +MODULE_AUTHOR("EMC");
+> +MODULE_DESCRIPTION("EMC CTD V1 - Build 18-Jan-2016");
+> +MODULE_VERSION(EMCCTD_MODULE_VERSION);
+> +
+> +int ctd_debug;
+> +module_param_named(ctd_debug, ctd_debug, int, S_IRUGO | S_IWUSR);
+> +MODULE_PARM_DESC(ctd_debug, "Enable driver debug messages(0=3Doff, 1=
+=3Don)");
+> +
+> +static int emcctd_max_luns =3D EMCCTD_MAX_LUN;
+> +module_param_named(max_luns, emcctd_max_luns, int, S_IRUGO | S_IWUSR=
+);
+> +MODULE_PARM_DESC(max_luns,
+> +	"Specify the maximum number of LUN's per host(default=3D16384)");
+> +
+> +static int emcctd_cmd_per_lun =3D EMCCTD_CMD_PER_LUN;
+> +module_param_named(cmd_per_lun, emcctd_cmd_per_lun, int, S_IRUGO | S=
+_IWUSR);
+> +MODULE_PARM_DESC(cmd_per_lun,
+> +		"Specify the maximum commands per lun(default=3D64)");
+> +
+> +/*
+> + * routines to handle scsi cmd buffer
+> + */
+> +static int ctd_xmit_command(struct scsi_cmnd *cmnd,
+> +					struct ctd_pci_private *ctd_private);
+> +static void ctd_handle_scsi_response(
+> +		struct emc_ctd_v010_scsi_response *io_response,
+> +		struct ctd_pci_private *ctd_private);
+> +
+> +static int ctd_hw_enqueue_request(union emc_ctd_v010_message *ctd_re=
+quest,
+> +					struct ctd_pci_private *ctd_private);
+> +static int ctd_hw_dequeue_response(union emc_ctd_v010_message *ctd_r=
+esponse,
+> +					struct ctd_pci_private *ctd_private);
+> +static int ctd_scsi_response_sanity_check(
+> +			struct ctd_request_private *request_private,
+> +			struct ctd_pci_private *ctd_private);
+> +
+> +/*
+> + * routines to handle memory and queue management between client and=
+ server
+> + */
+> +static int ctd_hw_execute_command(struct scsi_cmnd *cmnd,
+> +				struct ctd_pci_private *ctd_private);
+> +static int ctd_initiator_translate_sgl(struct scsi_cmnd *cmnd,
+> +				struct emc_ctd_v010_scsi_command *ctd_request,
+> +				struct ctd_pci_private *ctd_private);
+> +static int ctd_initiator_translate_request(struct scsi_cmnd *cmnd,
+> +			struct emc_ctd_v010_scsi_command *ctd_request,
+> +			struct ctd_pci_private *ctd_private);
+> +static void ctd_initiator_translate_lun(struct scsi_cmnd *cmnd,
+> +			struct emc_ctd_v010_scsi_command *ctd_request);
+> +
+> +static struct ctd_request_private *ctd_acquire_request(
+> +				struct ctd_pci_private *ctd_private);
+> +static void ctd_release_request(struct ctd_request_private *ctd_requ=
+est,
+> +					struct ctd_pci_private *ctd_private);
+> +static void ctd_release_io_pool(struct ctd_pci_private *ctd_private)=
+;
+> +static int ctd_alloc_io_pool(struct ctd_pci_private *ctd_private,
+> +						unsigned int pool_size);
+> +static void ctd_check_error_condition(struct pci_dev *pci_dev);
+> +static int ctd_init_event_thread(struct ctd_pci_private *ctd_private=
+);
+> +static void ctd_destroy_event_thread(struct ctd_pci_private *ctd_pri=
+vate);
+> +/*
+> + * routines related to tasklet functionality
+> + */
+> +static void ctd_check_response_queue(unsigned long instance_addr);
+> +
+> +static int ctd_ITnexus_handler(struct ctd_pci_private *ctd_private);
+> +/*
+> + * routines related to internal representation of scsi targets
+> + */
+> +static int ctd_target_alloc(struct scsi_target *starget);
+> +static void ctd_target_destroy(struct scsi_target *starget);
+> +/*
+> + * routines registered with the linux scsi midlayer
+> + */
+> +static int ctd_queuecommand_lck(struct scsi_cmnd *cmnd,
+> +				void (*done)(struct scsi_cmnd *));
+> +static DEF_SCSI_QCMD(ctd_queuecommand)
+> +static int ctd_slave_configure(struct scsi_device *sdp);
+> +static int ctd_slave_alloc(struct scsi_device *sdev);
+> +static void ctd_slave_destroy(struct scsi_device *sdev);
+> +static int ctd_abort_handler(struct scsi_cmnd *cmd);
+> +
+> +static enum blk_eh_timer_return ctd_timeout_handler(struct scsi_cmnd=
+ *scmd);
+> +
+> +
+> +/*
+> + * routines related to initialization of the pseudo hardware
+> + */
+> +static void ctd_init_scsi_host_private(struct Scsi_Host *shost,
+> +						struct pci_dev *pci_dev);
+> +
+> +static int ctd_scsi_layer_init(struct pci_dev *pci_dev);
+> +static int ctd_scsi_layer_cleanup(struct pci_dev *pci_dev);
+> +
+> +#ifdef CONFIG_PM
+> +static int ctd_pci_suspend(struct pci_dev *pci_dev, pm_message_t sta=
+te);
+> +static int ctd_pci_resume(struct pci_dev *pci_dev);
+> +#endif
+> +
+> +static void ctd_pci_remove(struct pci_dev *pci_dev);
+> +static int ctd_request_msi(struct pci_dev *pci_dev);
+> +static int ctd_pci_probe(struct pci_dev *pci_dev,
+> +				const struct pci_device_id *id);
+> +static void ctd_clear_io_queue(struct ctd_pci_private *ctd_private);
+> +
+> +#if !defined(__VMKLNX__)
+> +static int ctd_proc_init(struct pci_dev *pci_dev);
+> +static void ctd_proc_remove(struct pci_dev *pci_dev);
+> +
+> +static int ctd_proc_open(struct inode *inode, struct file *file);
+> +#endif
+> +
+> +static int ctd_post_event(union emc_ctd_v010_message *io_msg,
+> +				struct ctd_pci_private *ctd_private);
+> +static int ctd_event_handler(void *ctd_thread_args);
+> +
+> +unsigned int lun_discovery_complete;
+> +wait_queue_head_t lun_discovery_event_barrier;
+> +
+> +static const struct pci_device_id ctd_pci_id_table[] =3D {
+> +	{ EMC_CTD_PCI_VENDOR, EMC_CTD_V010_PCI_PRODUCT,
+> +	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+> +	{ 0 },
+> +};
+> +
+> +MODULE_DEVICE_TABLE(pci, ctd_pci_id_table);
+> +
+> +static struct pci_driver ctd_pci_driver =3D {
+> +	.name           =3D "emcctd",
+> +	.id_table       =3D ctd_pci_id_table,
+> +	.probe          =3D ctd_pci_probe,
+> +	.remove         =3D ctd_pci_remove,
+> +#ifdef CONFIG_PM
+> +	.suspend        =3D ctd_pci_suspend,
+> +	.resume         =3D ctd_pci_resume,
+> +#endif
+> +};
+> +
+> +static struct scsi_host_template scsi_ctd_template =3D {
+> +	.name =3D DRV_NAME,
+> +	.proc_name =3D DRV_NAME,
+> +	.queuecommand =3D ctd_queuecommand,
+> +
+> +	.eh_timed_out =3D ctd_timeout_handler,
+> +
+> +	.slave_alloc =3D ctd_slave_alloc,
+> +	.slave_configure =3D ctd_slave_configure,
+> +	.slave_destroy =3D ctd_slave_destroy,
+> +	.eh_abort_handler =3D ctd_abort_handler,
+> +	.target_alloc =3D ctd_target_alloc,
+> +	.target_destroy =3D ctd_target_destroy,
+> +	.can_queue =3D EMCCTD_CMD_PER_LUN,
+> +	.this_id =3D EMCCTD_THIS_ID,
+> +	.sg_tablesize =3D SG_ALL,
+> +	.max_sectors =3D SCSI_DEFAULT_MAX_SECTORS,
+> +	.cmd_per_lun =3D EMCCTD_CMD_PER_LUN,
+> +	.use_clustering =3D DISABLE_CLUSTERING,
+> +	.module =3D THIS_MODULE,
+> +};
+> +
+> +
+> +#if !defined(__VMKLNX__)
+> +static struct proc_dir_entry *ctd_proc_directory;
+> +
+> +static int
+> +ctd_proc_show(struct seq_file *m, void *v)
+> +{
+> +	int i;
+> +	struct ctd_pci_private *ctd_private =3D
+> +		(struct ctd_pci_private *)m->private;
+> +
+> +	seq_printf(m,
+> +			"number interrupts: %ld\n"
+> +			"requests queued: %ld\n"
+> +			"responses received: %ld\n"
+> +			"pending IO count: %ld\n"
+> +			"Abort Sent: %ld\n"
+> +			"Abort received: %ld\n"
+> +			"What received: %ld\n"
+> +			"What sent: %ld\n"
+> +			"free IO entries : %ld\n"
+> +			"CTD WWN: %x.%x.%x.%x.%x.%x.%x.%x\n",
+> +			ctd_private->hw_stats.interrupts.counter,
+> +			ctd_private->hw_stats.requests_sent.counter,
+> +			ctd_private->hw_stats.responses_received.counter,
+> +			ctd_private->hw_stats.active_io_count.counter,
+> +			ctd_private->hw_stats.abort_sent.counter,
+> +			ctd_private->hw_stats.abort_received.counter,
+> +			ctd_private->hw_stats.what_in.counter,
+> +			ctd_private->hw_stats.what_out.counter,
+> +			ctd_private->hw_stats.free_io_entries.counter,
+> +			ctd_private->pci_fast_registers->emc_ctd_v010_fregs_device_name.e=
+mc_ctd_v010_name_bytes[0],
+> +			ctd_private->pci_fast_registers->emc_ctd_v010_fregs_device_name.e=
+mc_ctd_v010_name_bytes[1],
+> +			ctd_private->pci_fast_registers->emc_ctd_v010_fregs_device_name.e=
+mc_ctd_v010_name_bytes[2],
+> +			ctd_private->pci_fast_registers->emc_ctd_v010_fregs_device_name.e=
+mc_ctd_v010_name_bytes[3],
+> +			ctd_private->pci_fast_registers->emc_ctd_v010_fregs_device_name.e=
+mc_ctd_v010_name_bytes[4],
+> +			ctd_private->pci_fast_registers->emc_ctd_v010_fregs_device_name.e=
+mc_ctd_v010_name_bytes[5],
+> +			ctd_private->pci_fast_registers->emc_ctd_v010_fregs_device_name.e=
+mc_ctd_v010_name_bytes[6],
+> +			ctd_private->pci_fast_registers->emc_ctd_v010_fregs_device_name.e=
+mc_ctd_v010_name_bytes[7]);
+> +
+> +#define MAX_ENTRIES_IN_LINE		10
+> +	seq_puts(m, "\nIO Latency (in tsc) for last 200 IOs:\n");
+> +
+> +	for (i =3D 0; i < CTD_MAX_IO_STATS; i++) {
+> +		if (0 =3D=3D (i % MAX_ENTRIES_IN_LINE))
+> +			seq_puts(m, "\n");
+> +
+> +		seq_printf(m, "%lld \t", ctd_private->hw_stats.io_stats[i]);
+> +	}
+> +	seq_puts(m, "\n");
+> +
+> +	return 0;
+> +
+> +}
+> +
+> +#endif
+> +
+> +static void
+> +scsi_translate_sam_code(struct scsi_cmnd *cmnd, unsigned char ScsiSt=
+atus)
+> +{
+> +	unsigned char host_status;
+> +	unsigned char driver_status;
+> +
+> +	host_status =3D DID_OK;
+> +	driver_status =3D DRIVER_OK;
+> +	cmnd->result |=3D ScsiStatus & 0xff;
+> +
+> +	switch (ScsiStatus) {
+> +
+> +	case SAM_STAT_GOOD:
+> +	case SAM_STAT_CONDITION_MET:
+> +	case SAM_STAT_INTERMEDIATE_CONDITION_MET:
+> +	case SAM_STAT_INTERMEDIATE:
+> +		break;
+> +	case SAM_STAT_CHECK_CONDITION:
+> +	case SAM_STAT_RESERVATION_CONFLICT:
+> +	case SAM_STAT_ACA_ACTIVE:
+> +		driver_status =3D DRIVER_SENSE;
+> +		break;
+> +	case SAM_STAT_TASK_SET_FULL:
+> +	case SAM_STAT_BUSY:
+> +		driver_status =3D DRIVER_BUSY;
+> +		host_status =3D DID_REQUEUE;
+> +		break;
+> +	case SAM_STAT_TASK_ABORTED:
+> +		driver_status =3D DRIVER_ERROR;
+> +		host_status =3D DID_ABORT;
+> +		break;
+> +	case SAM_STAT_COMMAND_TERMINATED:
+> +	default:
+> +		ctd_dprintk_crit(
+> +			"cmnd =3D %p [ channel:%d id:%d lun:%lld] INVALID SAM =3D %x\n",
+> +				cmnd, cmnd->device->channel, cmnd->device->id,
+> +				cmnd->device->lun, ScsiStatus);
+> +
+> +		driver_status =3D DRIVER_INVALID;
+> +		host_status =3D DID_ABORT;
+> +		break;
+> +	}
+> +	set_driver_byte(cmnd, driver_status);
+> +	set_host_byte(cmnd, host_status);
+> +}
+> +
+> +static void
+> +scsi_free_ctd_request_private(struct ctd_request_private *request_pr=
+ivate,
+> +				struct ctd_pci_private *ctd_private)
+> +{
+> +
+> +	if (request_private->cdb_page) {
+> +		__free_pages(request_private->cdb_page,
+> +				request_private->cdb_page_order);
+> +	}
+> +	if (request_private->sgllist_page) {
+> +		__free_pages(request_private->sgllist_page,
+> +				request_private->sgllist_page_order);
+> +	}
+> +
+> +	ctd_release_request(request_private, ctd_private);
+> +}
+> +
+> +static int
+> +ctd_handle_disconnect(struct emc_ctd_v010_detect *io_detect,
+> +			struct ctd_pci_private *ctd_private)
+> +{
+> +	int i;
+> +	int error;
+> +	struct ctd_target_info *ctd_target;
+> +	struct ctd_host_info *ctd_host;
+> +
+> +	error =3D -ENODEV;
+> +
+> +	ctd_dprintk_crit("\n");
+> +
+> +	ctd_host =3D ctd_private->host_private;
+> +
+> +	/* Current implementation only handles the disconnect of
+> +	 * the target and not initiators
+> +	 */
+> +	for (i =3D 0; i < EMCCTD_MAX_ID; i++) {
+> +		ctd_target =3D &ctd_host->target[i];
+> +
+> +		/* detect header address is used to uniquely identify the target
+> +		 * for which the disconnect event has been posted by the server
+> +		 */
+> +
+> +		if (ctd_target->ctd_detect.emc_ctd_detect_header_address =3D=3D
+> +			io_detect->emc_ctd_detect_header_address) {
+> +			/* check the current link status of the target */
+> +			if (ctd_target->ctd_detect.emc_ctd_v010_detect_flags) {
+> +				ctd_dprintk_crit("\n");
+> +
+> +				ctd_target->ctd_detect.emc_ctd_v010_detect_flags =3D
+> +					io_detect->emc_ctd_v010_detect_flags;
+> +
+> +				ctd_check_error_condition(ctd_private->pci_dev);
+> +			} else {
+> +				ctd_dprintk_crit(
+> +					"target %llx already in disconnect state\n",
+> +					(emc_ctd_uint64_t)ctd_target->ctd_detect_name_bytes[0]);
+> +			}
+> +			error =3D 0;
+> +			break;
+> +		}
+> +	}
+> +
+> +	if (error)
+> +		ctd_dprintk_crit("Error\n");
+> +
+> +	return error;
+> +}
+> +
+> +static int
+> +ctd_handle_target_addition(struct emc_ctd_v010_detect *io_detect,
+> +				struct ctd_pci_private *ctd_private)
+> +{
+> +	int i;
+> +	int error;
+> +	struct ctd_target_info *ctd_target;
+> +	struct ctd_host_info *ctd_host;
+> +
+> +	error =3D -ENOMEM;
+> +	ctd_host =3D ctd_private->host_private;
+> +
+> +	ctd_dprintk("header addr -> %x key -> %llx\n",
+> +		io_detect->emc_ctd_detect_header_address,
+> +		io_detect->emc_ctd_v010_detect_key);
+> +
+> +	for (i =3D 0; i < EMCCTD_MAX_ID; i++) {
+> +		ctd_target =3D &ctd_host->target[i];
+> +
+> +		/* detect header address is used to uniquely identify the target
+> +		 * for which the connect event has been posted by the server
+> +		 * check if this particular target is already recorded with the
+> +		 * client check if the recorded target is in the correct state
+> +		 * and if not found record this particular target in the list of
+> +		 * the detected targets
+> +		 */
+> +
+> +		if (ctd_target->ctd_detect.emc_ctd_v010_detect_key =3D=3D
+> +			io_detect->emc_ctd_v010_detect_key) {
+> +			error =3D 0;
+> +			ctd_dprintk("\n");
+> +
+> +			scsi_target_unblock(&ctd_target->starget->dev,
+> +					SDEV_RUNNING);
+> +			ctd_target->ctd_detect.emc_ctd_v010_detect_flags =3D
+> +					io_detect->emc_ctd_v010_detect_flags;
+> +			break;
+> +		}
+> +
+> +		/* End of list for the recorded targets in the client, so the
+> +		 * reported target is a new target being reported by the server
+> +		 * thus needs to be added to the list
+> +		 */
+> +		if (ctd_target->ctd_detect.emc_ctd_v010_detect_flags =3D=3D 0x0) {
+> +			error =3D 0;
+> +			ctd_dprintk("\n");
+> +			ctd_target->ctd_detect =3D *io_detect;
+> +			break;
+> +		}
+> +	}
+> +	if (error)
+> +		ctd_dprintk_crit("Error\n");
+> +
+> +	return error;
+> +}
+> +
+> +static int
+> +ctd_handle_source_addition(struct emc_ctd_v010_detect *io_detect,
+> +				struct ctd_pci_private *ctd_private)
+> +{
+> +	ctd_dprintk("functionality not supported\n");
+> +	return -ENODEV;
+> +}
+> +
+> +static int
+> +ctd_handle_detect(struct emc_ctd_v010_detect *io_detect,
+> +				struct ctd_pci_private *ctd_private)
+> +{
+> +	int error;
+> +
+> +	/*
+> +	 * We post the detect event in the event queue and return. While
+> +	 * ctd_event_thread actually consumes the requests in the event que=
+ue.
+> +	 * This is done to serialize the consecutive detect requests (disco=
+nnect
+> +	 * followed by connect).  This mechanism handles the situation when
+> +	 * multiple detect comes in a quick succession.  Also, there is a
+> +	 * seperate thread and its queue for each adapter, so detect reques=
+ts
+> +	 * for different adapters shall be handled seperately.
+> +	 */
+> +	error =3D ctd_post_event((union emc_ctd_v010_message *)io_detect,
+> +								ctd_private);
+> +
+> +	if (!error)
+> +		atomic_long_inc(&ctd_private->hw_stats.what_in);
+> +
+> +	return error;
+> +
+> +}
+> +
+> +static void
+> +ctd_handle_scsi_command(struct emc_ctd_v010_scsi_command *io_command=
+,
+> +					struct ctd_pci_private *ctd_private)
+> +{
+> +	ctd_dprintk_crit("unsupported\n");
+> +}
+> +
+> +static void
+> +ctd_handle_scsi_phase(struct emc_ctd_v010_scsi_phase *io_phase,
+> +				struct ctd_pci_private *ctd_private)
+> +{
+> +	int error;
+> +	unsigned long flags;
+> +	struct scsi_cmnd *cmnd;
+> +	struct ctd_request_private *request_private;
+> +
+> +	/* check the phase flag to confirm we have received correct phase m=
+sg */
+> +	if (io_phase->emc_ctd_v010_scsi_phase_flags &
+> +				EMC_CTD_V010_SCSI_PHASE_FLAG_TARGET) {
+> +		ctd_dprintk_crit("SCSI_PHASE_FLAG_TARGET not supported\n");
+> +		return;
+> +	}
+> +
+> +	if (!(io_phase->emc_ctd_v010_scsi_phase_flags &
+> +				EMC_CTD_V010_SCSI_PHASE_FLAG_ABORT)) {
+> +		ctd_dprintk_crit("scsi_phase_flags %x invalid\n",
+> +			io_phase->emc_ctd_v010_scsi_phase_flags);
+> +		return;
+> +	}
+> +
+> +	request_private =3D (struct ctd_request_private *)
+> +		((uintptr_t)(io_phase->emc_ctd_v010_scsi_phase_opaque_rx));
+> +
+> +	error =3D ctd_scsi_response_sanity_check(request_private, ctd_priva=
+te);
+> +
+> +	if (error)
+> +		return;
+> +
+> +	cmnd =3D request_private->cmnd;
+> +
+> +	ctd_dprintk_crit("SCSI_PHASE_FLAG_ABORT cmnd-> %p request -> %p\n",
+> +		cmnd, request_private);
+> +
+> +	atomic_long_inc(&ctd_private->hw_stats.abort_received);
+> +
+> +	switch (request_private->io_state) {
+> +
+> +	case CTD_IO_REQUEST_QUEUED:
+> +	case CTD_IO_REQUEST_REQUEUED:
+> +		spin_lock_irqsave(&ctd_private->io_mgmt_lock, flags);
+> +
+> +		list_del(&request_private->list);
+> +		atomic_long_dec(&ctd_private->hw_stats.active_io_count);
+> +
+> +		spin_unlock_irqrestore(&ctd_private->io_mgmt_lock, flags);
+> +		break;
+> +
+> +	case CTD_IO_REQUEST_ABORTED:
+> +		spin_lock_irqsave(&ctd_private->io_mgmt_lock, flags);
+> +
+> +		list_del(&request_private->list);
+> +
+> +		spin_unlock_irqrestore(&ctd_private->io_mgmt_lock, flags);
+> +
+> +	case CTD_IO_REQUEST_REPLY_AWAITED:
+> +		scsi_free_ctd_request_private(request_private, ctd_private);
+> +		return;
+> +
+> +	case CTD_IO_REQUEST_FREE:
+> +	case CTD_IO_REQUEST_INVALID:
+> +	default:
+> +		ctd_dprintk_crit("opaque @ %p in unknown state %x\n",
+> +			request_private, request_private->io_state);
+> +		return;
+> +	}
+> +
+> +	cmnd->host_scribble =3D NULL;
+> +	request_private->cmnd =3D NULL;
+> +	request_private->io_state =3D CTD_IO_REQUEST_COMPLETED;
+> +	scsi_free_ctd_request_private(request_private, ctd_private);
+> +
+> +	/* error propagation to the SCSI midlayer */
+> +	scsi_translate_sam_code(cmnd, SAM_STAT_TASK_ABORTED);
+> +	scsi_set_resid(cmnd, scsi_bufflen(cmnd));
+> +	cmnd->scsi_done(cmnd);
+> +}
+> +
+> +static void
+> +ctd_handle_response(union emc_ctd_v010_message *io_message,
+> +				struct ctd_pci_private *ctd_private)
+> +{
+> +	struct emc_ctd_v010_header *msg_header;
+> +
+> +	msg_header =3D &io_message->emc_ctd_v010_message_header;
+> +
+> +	switch (msg_header->emc_ctd_v010_header_what) {
+> +
+> +	case EMC_CTD_V010_WHAT_DETECT:
+> +		ctd_handle_detect((struct emc_ctd_v010_detect *)io_message,
+> +						ctd_private);
+> +		break;
+> +	case EMC_CTD_V010_WHAT_SCSI_COMMAND:
+> +		ctd_handle_scsi_command(
+> +				(struct emc_ctd_v010_scsi_command *)io_message,
+> +				ctd_private);
+> +		break;
+> +	case EMC_CTD_V010_WHAT_SCSI_PHASE:
+> +		ctd_handle_scsi_phase(
+> +				(struct emc_ctd_v010_scsi_phase *) io_message,
+> +				ctd_private);
+> +		break;
+> +	case EMC_CTD_V010_WHAT_SCSI_RESPONSE:
+> +		ctd_handle_scsi_response(
+> +				(struct emc_ctd_v010_scsi_response *)io_message,
+> +				ctd_private);
+> +		break;
+> +	default:
+> +		ctd_dprintk_crit("unknown what -> %x ctd_private -> %p",
+> +			msg_header->emc_ctd_v010_header_what, ctd_private);
+> +	}
+> +}
+> +
+> +
+> +static int
+> +ctd_scsi_response_sanity_check(struct ctd_request_private *request_p=
+rivate,
+> +					struct ctd_pci_private *ctd_private)
+> +{
+> +	int rc;
+> +	unsigned long flags;
+> +	struct scsi_cmnd *cmnd;
+> +	struct ctd_request_private *request, *request_next;
+> +	int outstanding_io_count =3D 0;
+> +
+> +	rc =3D -EFAULT;
+> +
+> +	/* check if the opaque is within the valid range */
+> +	if (!((request_private >=3D ctd_private->io_map) &&
+> +		(request_private < ctd_private->io_map_end))) {
+> +		ctd_dprintk_crit(
+> +			"ERROR request_private -> %p in invalid range\n",
+> +				request_private);
+> +		goto ctd_scsi_response_sanity_check_complete;
+> +	}
+> +
+> +	if (request_private) {
+> +		cmnd =3D request_private->cmnd;
+> +		if (cmnd) {
+> +			/* check if the back pointer is valid before we declare
+> +			 * request sane
+> +			 */
+> +			if ((request_private =3D=3D (struct ctd_request_private
+> +				*)cmnd->host_scribble)) {
+> +				rc =3D 0;
+> +				goto ctd_scsi_response_sanity_check_complete;
+> +			}
+> +		}
+> +		/* check if the request has already been completed to the SCSI
+> +		 * Midlayer
+> +		 */
+> +		else if ((request_private->io_state =3D=3D
+> +				CTD_IO_REQUEST_ABORTED) ||
+> +					(request_private->io_state =3D=3D
+> +						CTD_IO_REQUEST_REPLY_AWAITED)) {
+> +			rc =3D 0;
+> +			goto ctd_scsi_response_sanity_check_complete;
+> +		}
+> +
 
---xHFwDpU9dbj6ez1V
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+You don't do any cleanup work at ctd_scsi_response_sanity_check_complet=
+e. You
+could just reutrn 0 here as well.
 
-Hi Maneesh,
+> +
+> +		ctd_dprintk_crit(
+> +			"ERROR cmnd -> %p mismatched request_private -> %p host_scribble =
+-> %p requests send -> %ld responses received -> %ld state -> %s\n",
+> +				cmnd, request_private,
+> +				(cmnd ? cmnd->host_scribble : 0x0),
+> +				ctd_private->hw_stats.requests_sent.counter,
+> +				ctd_private->hw_stats.responses_received.counter,
+> +				(request_private->io_state =3D=3D
+> +					CTD_IO_REQUEST_QUEUED ?
+> +						"CTD_IO_REQUEST_QUEUED" :
+> +				 (request_private->io_state =3D=3D
+> +					CTD_IO_REQUEST_REQUEUED ?
+> +						"CTD_IO_REQUEST_REQUEUED" :
+> +				  (request_private->io_state =3D=3D
+> +					CTD_IO_REQUEST_ABORTED ?
+> +						"CTD_IO_REQUEST_ABORTED" :
+> +				   (request_private->io_state =3D=3D
+> +					CTD_IO_REQUEST_FREE ?
+> +						"CTD_IO_REQUEST_FREE" :
+> +				    (request_private->io_state =3D=3D
+> +					CTD_IO_REQUEST_INVALID ?
+> +						"CTD_IO_REQUEST_INVALID" :
+> +				     (request_private->io_state =3D=3D
+> +					CTD_IO_REQUEST_COMPLETED ?
+> +						"CTD_IO_REQUEST_COMPLETED" :
+> +				      (request_private->io_state =3D=3D
+> +					CTD_IO_REQUEST_REPLY_AWAITED ?
+> +						"CTD_IO_REQUEST_REPLY_AWAITED" :
+> +				       "UNKNOWN"))))))));
+> +
+> +		spin_lock_irqsave(&ctd_private->io_mgmt_lock, flags);
+> +
+> +		list_for_each_entry_safe(request, request_next,
+> +					&ctd_private->aborted_io_list, list) {
+> +			if (request =3D=3D request_private) {
+> +				ctd_dprintk_crit(
+> +					"request_private -> %p in aborted_io_list\n",
+> +						request_private);
+> +				break;
+> +			}
+> +		}
+> +
+> +		list_for_each_entry_safe(request, request_next,
+> +					&ctd_private->queued_io_list, list) {
+> +			if (request =3D=3D request_private) {
+> +				ctd_dprintk_crit(
+> +					"request_private -> %p in queued_io_list\n",
+> +						request_private);
+> +			}
+> +			outstanding_io_count++;
+> +		}
+> +		ctd_dprintk_crit("outstanding_io_count =3D %d\n",
+> +				outstanding_io_count);
+> +
+> +		list_for_each_entry_safe(request, request_next,
+> +					&ctd_private->requeued_io_list, list) {
+> +			if (request =3D=3D request_private) {
+> +				ctd_dprintk_crit(
+> +					"request_private -> %p in requeued_io_list\n",
+> +						request_private);
+> +				break;
+> +			}
+> +		}
+> +
+> +		list_for_each_entry_safe(request, request_next,
+> +					&ctd_private->io_pool, list) {
+> +			if (request =3D=3D request_private) {
+> +				ctd_dprintk_crit(
+> +					"request_private -> %p in free io_pool\n",
+> +						request_private);
+> +				break;
+> +			}
+> +		}
+> +
+> +		spin_unlock_irqrestore(&ctd_private->io_mgmt_lock, flags);
+> +	} else {
+> +		ctd_dprintk_crit("ERROR request_private -> NULL\n");
+> +	}
+> +
+> +ctd_scsi_response_sanity_check_complete:
+> +	return rc;
+> +}
+> +
+> +static void
+> +ctd_handle_scsi_response(struct emc_ctd_v010_scsi_response *io_respo=
+nse,
+> +			struct ctd_pci_private *ctd_private)
+> +{
+> +	int error;
+> +	unsigned long flags;
+> +	struct scsi_cmnd *cmnd;
+> +	struct ctd_request_private *request_private;
+> +	unsigned long long io_stats;
+> +
+> +	request_private =3D (struct ctd_request_private *)
+> +		((uintptr_t)(io_response->emc_ctd_v010_scsi_response_opaque));
+> +
+> +	error =3D ctd_scsi_response_sanity_check(request_private, ctd_priva=
+te);
+> +
+> +	if (error)
+> +		return;
+> +
+> +	io_stats =3D ctd_read_tsc();
+> +
+> +	io_stats -=3D request_private->io_start_time;
+> +
+> +	ctd_private->hw_stats.io_stats[ctd_private->hw_stats.io_stats_index=
+++] =3D
+> +						io_stats;
+> +
+> +	if (ctd_private->hw_stats.io_stats_index =3D=3D CTD_MAX_IO_STATS)
+> +		ctd_private->hw_stats.io_stats_index =3D 0;
+> +	/*
+> +	 * check if the IO context is in the aborted IO list
+> +	 */
+> +
+> +	/* Increment the responses_received stats */
+> +	atomic_long_inc(&ctd_private->hw_stats.responses_received);
+> +
+> +	switch (request_private->io_state) {
+> +
+> +	/*
+> +	 * The state of the request is important
+> +	 * CTD_IO_REQUEST_QUEUED : cmnd is still alive and valid in kernel
+> +	 * CTD_IO_REQUEST_ABORTED : cmnd has already been handled before
+> +	 *				the response from the device and
+> +	 *				only request needs to be cleaned
+> +	 *				up from the abort list
+> +	 * CTD_IO_REQUEST_FREE : represents a state which is unhandled (unk=
+nown)
+> +	 * CTD_IO_REQUEST_REPLY_AWAITED : represents a state where abort
+> +	 *			could not be sent by the timeout handler
+> +	 * CTD_IO_REQUEST_INVALID : represents a state which is
+> +	 *				unhandled (unknown)
+> +	 */
+> +
+> +	case CTD_IO_REQUEST_QUEUED:
+> +	case CTD_IO_REQUEST_REQUEUED:
+> +		spin_lock_irqsave(&ctd_private->io_mgmt_lock, flags);
+> +
+> +		list_del(&request_private->list);
+> +		request_private->io_state =3D CTD_IO_REQUEST_COMPLETED;
+> +
+> +		spin_unlock_irqrestore(&ctd_private->io_mgmt_lock, flags);
+> +		break;
+> +
+> +	case CTD_IO_REQUEST_ABORTED:
+> +		/*
+> +		 * cmnd is already disassociated from the request private and IO
+> +		 * completed to the SCSI Midlayer by the timeout|abort handler
+> +		 * delink the request private from the aborted list and cleanup
+> +		 */
+> +		spin_lock_irqsave(&ctd_private->io_mgmt_lock, flags);
+> +		list_del(&request_private->list);
+> +		spin_unlock_irqrestore(&ctd_private->io_mgmt_lock, flags);
+> +
+> +	case CTD_IO_REQUEST_REPLY_AWAITED:
+> +		/*
+> +		 * return the context back to the io_pool for its reuse
+> +		 */
+> +		request_private->io_state =3D CTD_IO_REQUEST_COMPLETED;
+> +		scsi_free_ctd_request_private(request_private, ctd_private);
+> +		/* IO already completed to the Midlayer */
+> +		return;
+> +
+> +	case CTD_IO_REQUEST_FREE:
+> +	case CTD_IO_REQUEST_INVALID:
+> +	default:
+> +		ctd_dprintk_crit(
+> +			"opaque @ %p in unknown state %x\n",
+> +			request_private, request_private->io_state);
+> +		return;
+> +
+> +	}
+> +
+> +	/* Decrement active_io_count only when request is still queued. */
+> +	atomic_long_dec(&ctd_private->hw_stats.active_io_count);
+> +
+> +	cmnd =3D request_private->cmnd;
+> +
+> +	cmnd->result =3D 0;
+> +
+> +	scsi_translate_sam_code(cmnd,
+> +			io_response->emc_ctd_v010_scsi_response_status);
+> +
+> +	scsi_set_resid(cmnd, scsi_bufflen(cmnd) -
+> +			io_response->emc_ctd_v010_scsi_response_data_size);
+> +
+> +	if (io_response->emc_ctd_v010_scsi_response_flags &
+> +			EMC_CTD_V010_SCSI_RESPONSE_FLAG_FAILED) {
+> +		ctd_dprintk_crit(
+> +			"cmnd =3D %p CTDCM_FAILED channel:%d id:%d lun:%lld] status =3D %=
+x\n",
+> +			cmnd, cmnd->device->channel, cmnd->device->id,
+> +			cmnd->device->lun,
+> +			io_response->emc_ctd_v010_scsi_response_status);
+> +
+> +		set_host_byte(cmnd, DID_ERROR);
+> +		if (ctd_debug) {
+> +			scsi_print_command(cmnd);
+> +			scsi_print_result(cmnd, NULL, FAILED);
+> +			scsi_print_sense(cmnd);
+> +		}
+> +	}
+> +	if (io_response->emc_ctd_v010_scsi_response_flags &
+> +			EMC_CTD_V010_SCSI_RESPONSE_FLAG_SENSE) {
+> +		unsigned char *sense_data;
+> +		unsigned char sense_data_length;
+> +
+> +		sense_data =3D io_response->emc_ctd_scsi_response_extra;
+> +		sense_data_length =3D
+> +			io_response->emc_ctd_v010_scsi_response_extra_size;
+> +
+> +		memcpy(cmnd->sense_buffer, sense_data, sense_data_length);
+> +
+> +		set_driver_byte(cmnd, DRIVER_SENSE);
+> +		if (ctd_debug) {
+> +			scsi_print_command(cmnd);
+> +			scsi_print_result(cmnd, "emcctd sense", SUCCESS);
+> +			scsi_print_sense(cmnd);
+> +		}
+> +	}
+> +
+> +	if ((io_response->emc_ctd_v010_scsi_response_status =3D=3D
+> +						SAM_STAT_TASK_SET_FULL) ||
+> +		(io_response->emc_ctd_v010_scsi_response_status =3D=3D
+> +							SAM_STAT_BUSY)) {
+> +
+> +		ctd_dprintk(
+> +			"QUEUE DEPTH change for channel:%d id:%d lun:%lld] active io coun=
+t =3D %lx\n",
+> +			cmnd->device->channel, cmnd->device->id,
+> +			cmnd->device->lun,
+> +			ctd_private->hw_stats.active_io_count.counter);
+> +
+> +		scsi_track_queue_full(cmnd->device,
+> +			ctd_private->hw_stats.active_io_count.counter);
+> +	}
+> +
+> +
+> +	cmnd->host_scribble =3D NULL;
+> +
+> +	scsi_free_ctd_request_private(request_private, ctd_private);
+> +
+> +	cmnd->scsi_done(cmnd);
+> +}
+> +
+> +static void
+> +ctd_scsi_transfer_info(unsigned char *cmd, unsigned long long *lba,
+> +		unsigned int *num, unsigned int *ei_lba)
+> +{
+> +	*ei_lba =3D 0;
+> +
+> +	switch (*cmd) {
+> +
+> +	case VARIABLE_LENGTH_CMD:
+> +		*lba =3D (u64)cmd[19] | (u64)cmd[18] << 8 |
+> +			(u64)cmd[17] << 16 | (u64)cmd[16] << 24 |
+> +			(u64)cmd[15] << 32 | (u64)cmd[14] << 40 |
+> +			(u64)cmd[13] << 48 | (u64)cmd[12] << 56;
+> +
+> +		*ei_lba =3D (u32)cmd[23] | (u32)cmd[22] << 8 |
+> +			(u32)cmd[21] << 16 | (u32)cmd[20] << 24;
+> +
+> +		*num =3D (u32)cmd[31] | (u32)cmd[30] << 8 | (u32)cmd[29] << 16 |
+> +			(u32)cmd[28] << 24;
+> +		break;
+> +
+> +	case WRITE_SAME_16:
+> +	case WRITE_16:
+> +	case READ_16:
+> +		*lba =3D (u64)cmd[9] | (u64)cmd[8] << 8 |
+> +			(u64)cmd[7] << 16 | (u64)cmd[6] << 24 |
+> +			(u64)cmd[5] << 32 | (u64)cmd[4] << 40 |
+> +			(u64)cmd[3] << 48 | (u64)cmd[2] << 56;
+> +
+> +		*num =3D (u32)cmd[13] | (u32)cmd[12] << 8 | (u32)cmd[11] << 16 |
+> +			(u32)cmd[10] << 24;
+> +		break;
+> +	case WRITE_12:
+> +	case READ_12:
+> +		*lba =3D (u32)cmd[5] | (u32)cmd[4] << 8 | (u32)cmd[3] << 16 |
+> +			(u32)cmd[2] << 24;
+> +
+> +		*num =3D (u32)cmd[9] | (u32)cmd[8] << 8 | (u32)cmd[7] << 16 |
+> +			(u32)cmd[6] << 24;
+> +		break;
+> +	case WRITE_SAME:
+> +	case WRITE_10:
+> +	case READ_10:
+> +	case XDWRITEREAD_10:
+> +		*lba =3D (u32)cmd[5] | (u32)cmd[4] << 8 |	(u32)cmd[3] << 16 |
+> +			(u32)cmd[2] << 24;
+> +
+> +		*num =3D (u32)cmd[8] | (u32)cmd[7] << 8;
+> +		break;
+> +	case WRITE_6:
+> +	case READ_6:
+> +		*lba =3D (u32)cmd[3] | (u32)cmd[2] << 8 |
+> +			(u32)(cmd[1] & 0x1f) << 16;
+> +		*num =3D (cmd[4] =3D=3D 0) ? 256 : cmd[4];
+> +		break;
+> +	default:
+> +		break;
+> +	}
+> +}
+> +
+> +
+> +static int
+> +ctd_initiator_validate_sgl(struct scsi_cmnd *cmnd,
+> +			   struct emc_ctd_v010_scsi_command *ctd_request,
+> +			   struct ctd_pci_private *ctd_private)
+> +{
+> +	int i;
+> +	int error;
+> +	struct emc_ctd_v010_sgl *sgl_current;
+> +	struct emc_ctd_v010_sgl *sgl_extended;
+> +	emc_ctd_uint64_t sgl_count;
+> +	unsigned int sgl_buffersize;
+> +	unsigned long long lba;
+> +	unsigned int num;
+> +	unsigned int ei_lba;
+> +
+> +	lba =3D 0;
+> +	num =3D 0;
+> +	ei_lba =3D 0;
+> +	error =3D -EINVAL;
+> +	sgl_count =3D 0;
+> +	sgl_extended =3D &ctd_request->emc_ctd_scsi_command_sgl[0];
+> +
+> +	if (ctd_request->emc_ctd_v010_scsi_command_flags &
+> +				EMC_CTD_V010_SCSI_COMMAND_FLAG_ESGL) {
+> +		emc_ctd_uint64_t extented_sgl_size;
+> +
+> +		sgl_current =3D phys_to_virt(
+> +			((emc_ctd_uint64_t)sgl_extended->emc_ctd_v010_sgl_paddr_32_63 << =
+32) |
+> +			((emc_ctd_uint64_t)sgl_extended->emc_ctd_v010_sgl_paddr_0_31 & 0x=
+=46FFFFFFF));
+> +
+> +		extented_sgl_size =3D sgl_extended->emc_ctd_v010_sgl_size;
+> +
+> +		do_div(extented_sgl_size, sizeof(struct emc_ctd_v010_sgl));
+> +
+> +		sgl_count =3D extented_sgl_size;
+> +	} else {
+> +		sgl_current =3D sgl_extended;
+> +		while (sgl_current < sgl_extended +
+> +				EMC_CTD_V010_SGL_IMMEDIATE_MAX) {
+> +			if (sgl_current->emc_ctd_v010_sgl_size =3D=3D 0)
+> +				break;
+> +
+> +			sgl_current++;
+> +			sgl_count++;
+> +		}
+> +		sgl_current =3D sgl_extended;
+> +	}
+> +
+> +	if (scsi_sg_count(cmnd) !=3D sgl_count) {
+> +		scsi_print_command(cmnd);
+> +		 ctd_dprintk_crit(
+> +			 "Mismatched cmnd_sgl_count %d sgl_count =3D %lld sgl_size =3D %d=
+\n",
+> +			scsi_sg_count(cmnd),
+> +			sgl_count, sgl_extended->emc_ctd_v010_sgl_size);
+> +	}
+> +
+> +	if (sgl_count) {
+> +		struct scatterlist *cmnd_sg;
+> +		int cmnd_sg_count =3D scsi_sg_count(cmnd);
+> +
+> +		if (cmnd_sg_count > EMC_CTD_V010_SGL_IMMEDIATE_MAX) {
+> +			if ((ctd_request->emc_ctd_v010_scsi_command_flags &
+> +				EMC_CTD_V010_SCSI_COMMAND_FLAG_ESGL) =3D=3D 0) {
+> +				scsi_print_command(cmnd);
+> +				ctd_dprintk_crit(
+> +					"scsi_sg_count =3D %d but EMC_CTD_V010_SCSI_COMMAND_FLAG_ESGL n=
+ot set\n",
+> +					scsi_sg_count(cmnd));
+> +
+> +				cmnd_sg_count =3D EMC_CTD_V010_SGL_IMMEDIATE_MAX;
+> +			}
+> +		}
+> +
+> +		scsi_for_each_sg(cmnd, cmnd_sg, cmnd_sg_count, i) {
+> +			int cmnd_sg_size;
+> +			emc_ctd_uint64_t cmnd_buffer_pfn;
+> +			struct page *cmnd_page;
+> +			emc_ctd_uint32_t cmnd_offset;
+> +			emc_ctd_uint32_t sgl_size;
+> +			emc_ctd_uint64_t buffer_pfn;
+> +
+> +			cmnd_page =3D sg_page(cmnd_sg);
+> +			cmnd_buffer_pfn =3D page_to_phys(cmnd_page);
+> +			cmnd_sg_size =3D cmnd_sg->length;
+> +			cmnd_offset =3D cmnd_sg->offset;
+> +
+> +
+> +			sgl_size =3D (sgl_current + i)->emc_ctd_v010_sgl_size;
+> +			buffer_pfn =3D (((emc_ctd_uint64_t)
+> +				((sgl_current + i)->emc_ctd_v010_sgl_paddr_32_63) << 32) |
+> +				((emc_ctd_uint64_t)((sgl_current + i)->emc_ctd_v010_sgl_paddr_0_=
+31) & 0xFFFFFFFF));
+> +
+> +			if ((sgl_size !=3D cmnd_sg_size) ||
+> +					(buffer_pfn !=3D (cmnd_buffer_pfn +
+> +							cmnd_offset))) {
+> +				scsi_print_command(cmnd);
+> +				ctd_dprintk_crit(
+> +					"Mismatch @ i =3D %d cmnd_sg_size =3D %d cmnd_buffer_pfn =3D %l=
+lx sgl_size =3D %d buffer_pfn =3D %llx\n",
+> +					i, cmnd_sg_size, cmnd_buffer_pfn,
+> +					sgl_size, buffer_pfn);
+> +			}
+> +		}
+> +		goto ctd_initiator_validate_sgl_end;
+> +	}
+> +
+> +	for (i =3D 0, sgl_buffersize =3D 0; i < sgl_count; i++, sgl_current=
+++)
+> +		sgl_buffersize +=3D sgl_current->emc_ctd_v010_sgl_size;
+> +
+> +	if (scsi_bufflen(cmnd) && (sgl_buffersize !=3D scsi_bufflen(cmnd)))=
+ {
+> +		scsi_print_command(cmnd);
+> +		ctd_dprintk_crit("Mismatched buffer size %d %d\n",
+> +				scsi_bufflen(cmnd), sgl_buffersize);
+> +		goto ctd_initiator_validate_sgl_end;
+> +	}
+> +
+> +	ctd_scsi_transfer_info((unsigned char *)cmnd->cmnd, &lba,
+> +				&num, &ei_lba);
+> +
+> +	if (num && (sgl_buffersize  !=3D (num * 512))) {
+> +		scsi_print_command(cmnd);
+> +		ctd_dprintk_crit("Mismatched buffer size %d %d\n",
+> +			(num * 512), sgl_buffersize);
+> +		goto ctd_initiator_validate_sgl_end;
+> +	}
+> +	error =3D 0;
 
-[auto build test WARNING on scsi/for-next]
-[also build test WARNING on v4.4 next-20160119]
-[if your patch is applied to the wrong git tree, please drop us a note to help improving the system]
+There is no cleanup done at this label so no need to jump here. Reutrn =
+directly
+from the jumping position.
 
-url:    https://github.com/0day-ci/linux/commits/Singhal-Maneesh/drivers-scsi-emcctd-drivers-scsi-emcctd-Client-driver-implementation-for-EMC-Symmetrix-GuestOS-emulated-Cut-Through-Device/20160119-200115
-base:   https://git.kernel.org/pub/scm/linux/kernel/git/jejb/scsi.git for-next
-config: i386-allyesconfig (attached as .config)
-reproduce:
-        # save the attached .config to linux build tree
-        make ARCH=i386 
+> +ctd_initiator_validate_sgl_end:
+> +	return error;
+> +}
+> +
+> +static int
+> +ctd_initiator_translate_sgl(struct scsi_cmnd *cmnd,
+> +			    struct emc_ctd_v010_scsi_command *ctd_request,
+> +			    struct ctd_pci_private *ctd_private)
+> +{
+> +	int i;
+> +	int size;
+> +	int error;
+> +	int sg_count;
+> +	int rq_count;
+> +	int embedded_sgl_count;
+> +	int embedded_sgl_index;
+> +	struct ctd_request_private *request_private;
+> +	emc_ctd_uint64_t buffer_pfn;
+> +
+> +	error =3D FAILED;
+> +	i =3D size =3D 0;
+> +	embedded_sgl_index =3D 0;
+> +	embedded_sgl_count =3D EMC_CTD_V010_SGL_IMMEDIATE_MAX;
+> +	rq_count =3D 0;
+> +
+> +	request_private =3D (struct ctd_request_private *)cmnd->host_scribb=
+le;
+> +	sg_count =3D scsi_sg_count(cmnd);
+> +
+> +	if (sg_count > embedded_sgl_count) {
+> +		struct scatterlist *sg;
+> +		struct emc_ctd_v010_sgl *sgl_current;
+> +		struct emc_ctd_v010_sgl *sgl_extended;
+> +
+> +		request_private->sgllist_page_order =3D
+> +			get_order((sizeof(struct emc_ctd_v010_sgl) * sg_count));
+> +		request_private->sgllist_page =3D
+> +			alloc_pages(GFP_ATOMIC | __GFP_COMP | __GFP_NOWARN,
+> +				request_private->sgllist_page_order);
+> +
+> +		if (!request_private->sgllist_page) {
+> +			ctd_dprintk_crit("alloc_page failure\n");
+> +			goto scsi_initiator_translate_sgl_end;
+> +		}
+> +
+> +		sgl_current =3D (struct emc_ctd_v010_sgl *)
+> +			page_address(request_private->sgllist_page);
+> +
+> +		scsi_for_each_sg(cmnd, sg, sg_count, i) {
+> +#if defined(__VMKLNX__)
+> +			sgl_current->emc_ctd_v010_sgl_paddr_0_31 =3D
+> +					sg->cursgel->addr & 0xFFFFFFFF;
+> +			sgl_current->emc_ctd_v010_sgl_paddr_32_63 =3D
+> +						sg->cursgel->addr >> 32;
+> +			sgl_current->emc_ctd_v010_sgl_size =3D sg_dma_len(sg);
+> +#else
+> +			struct page *page;
+> +
+> +			page =3D sg_page(sg);
+> +			buffer_pfn =3D page_to_phys(page);
+> +			size +=3D sg->length;
+> +
+> +			sgl_current->emc_ctd_v010_sgl_paddr_0_31 =3D
+> +				(buffer_pfn + sg->offset) & 0xFFFFFFFF;
+> +			sgl_current->emc_ctd_v010_sgl_paddr_32_63 =3D
+> +					(buffer_pfn + sg->offset) >> 32;
+> +			sgl_current->emc_ctd_v010_sgl_size =3D sg->length;
+> +#endif
+> +			sgl_current++;
+> +			rq_count++;
+> +		}
+> +		sgl_extended =3D &ctd_request->emc_ctd_scsi_command_sgl[0];
+> +		buffer_pfn =3D page_to_phys(request_private->sgllist_page);
+> +
+> +		sgl_extended->emc_ctd_v010_sgl_paddr_0_31 =3D
+> +					buffer_pfn & 0xFFFFFFFF;
+> +		sgl_extended->emc_ctd_v010_sgl_paddr_32_63 =3D buffer_pfn >> 32;
+> +		sgl_extended->emc_ctd_v010_sgl_size =3D
+> +				rq_count * sizeof(struct emc_ctd_v010_sgl);
+> +		ctd_request->emc_ctd_v010_scsi_command_flags |=3D
+> +					EMC_CTD_V010_SCSI_COMMAND_FLAG_ESGL;
+> +	} else {
+> +		struct scatterlist *sg;
+> +		struct emc_ctd_v010_sgl *sgl_current;
+> +
+> +		sgl_current =3D &ctd_request->emc_ctd_scsi_command_sgl[0];
+> +
+> +		scsi_for_each_sg(cmnd, sg, sg_count, i) {
+> +#if defined(__VMKLNX__)
+> +			sgl_current->emc_ctd_v010_sgl_paddr_0_31 =3D
+> +					sg->cursgel->addr & 0xFFFFFFFF;
+> +			sgl_current->emc_ctd_v010_sgl_paddr_32_63 =3D
+> +						sg->cursgel->addr >> 32;
+> +			sgl_current->emc_ctd_v010_sgl_size =3D sg_dma_len(sg);
+> +#else
+> +			struct page *page;
+> +
+> +			size +=3D sg->length;
+> +			page =3D sg_page(sg);
+> +			buffer_pfn =3D page_to_phys(page);
+> +
+> +			sgl_current->emc_ctd_v010_sgl_paddr_0_31 =3D
+> +				(buffer_pfn + sg->offset) & 0xFFFFFFFF;
+> +			sgl_current->emc_ctd_v010_sgl_paddr_32_63 =3D
+> +					(buffer_pfn + sg->offset) >> 32;
+> +			sgl_current->emc_ctd_v010_sgl_size =3D sg->length;
+> +#endif
+> +
+> +			sgl_current++;
+> +			rq_count++;
+> +		}
+> +	}
+> +	error =3D SUCCESS;
+> +
+> +	if (ctd_debug)
+> +		ctd_initiator_validate_sgl(cmnd, ctd_request, ctd_private);
+> +
+> +scsi_initiator_translate_sgl_end:
+> +	return error;
+> +}
+> +
+> +
+> +void
+> +ctd_initiator_translate_lun(struct scsi_cmnd *cmnd,
+> +			    struct emc_ctd_v010_scsi_command *ctd_request)
+> +{
+> +
+> +	int i;
+> +	union ctd_scsi_lun {
+> +		emc_ctd_uint64_t scsi_lun_64;
+> +		emc_ctd_uint8_t scsi_lun_8[8];
+> +	} ctd_scsi_lun_conversion;
+> +
+> +	ctd_scsi_lun_conversion.scsi_lun_64 =3D cpu_to_be64(cmnd->device->l=
+un);
+> +	for (i =3D 0; i < sizeof(ctd_scsi_lun_conversion); i++) {
+> +		ctd_request->emc_ctd_v010_scsi_command_lun[i] =3D
+> +				ctd_scsi_lun_conversion.scsi_lun_8[i];
+> +	}
+> +}
+> +
+> +static int
+> +ctd_initiator_translate_request(struct scsi_cmnd *cmnd,
+> +				struct emc_ctd_v010_scsi_command *ctd_request,
+> +				struct ctd_pci_private *ctd_private)
+> +{
+> +	int error;
+> +	struct ctd_dev_info *ctd_device;
+> +	struct ctd_request_private *request_private;
+> +	int scsi_cdb_size;
+> +
+> +	error =3D FAILED;
+> +	request_private =3D NULL;
+> +	ctd_device =3D cmnd->device->hostdata;
+> +
+> +	if (!(ctd_device->ctd_target_detect->emc_ctd_v010_detect_flags &
+> +				EMC_CTD_V010_DETECT_FLAG_SCSI_TARGET)) {
+> +		goto scsi_initiator_translate_request_end;
+> +	}
+> +	memset(ctd_request, 0x0, sizeof(struct emc_ctd_v010_scsi_command));
+> +
+> +	ctd_request->emc_ctd_scsi_command_header_address =3D
+> +		ctd_device->ctd_target_detect->emc_ctd_detect_header_address;
+> +	ctd_request->emc_ctd_v010_scsi_command_header.emc_ctd_v010_header_m=
+inor =3D
+> +					EMCCTD_V010_PROTOCOL_MINOR_VERSION;
+> +	ctd_request->emc_ctd_v010_scsi_command_header.emc_ctd_v010_header_w=
+hat =3D
+> +						EMC_CTD_V010_WHAT_SCSI_COMMAND;
+> +	ctd_request->emc_ctd_v010_scsi_command_flags |=3D
+> +			((cmnd->sc_data_direction =3D=3D DMA_FROM_DEVICE) ?
+> +				EMC_CTD_V010_SCSI_COMMAND_FLAG_SOURCE :
+> +					((cmnd->sc_data_direction =3D=3D
+> +						DMA_TO_DEVICE) ?  0 : 0));
+> +
+> +	request_private =3D ctd_acquire_request(ctd_private);
+> +
+> +	if (request_private =3D=3D NULL) {
+> +		ctd_dprintk_crit("ctd_acquire_request failure\n");
+> +		goto scsi_initiator_translate_request_end;
+> +	}
+> +
+> +	request_private->cmnd =3D cmnd;
+> +
+> +	cmnd->host_scribble =3D (unsigned char *)request_private;
+> +
+> +	ctd_request->emc_ctd_v010_scsi_command_data_size =3D scsi_bufflen(c=
+mnd);
+> +
+> +	ctd_request->emc_ctd_v010_scsi_command_opaque =3D
+> +				(uintptr_t)request_private;
+> +
+> +	ctd_initiator_translate_lun(cmnd, ctd_request);
+> +
+> +	scsi_cdb_size =3D cmnd->cmd_len;
+> +
+> +	if (scsi_cdb_size <=3D
+> +			sizeof(ctd_request->emc_ctd_v010_scsi_command_cdb)) {
+> +		memcpy(ctd_request->emc_ctd_v010_scsi_command_cdb,
+> +						cmnd->cmnd, scsi_cdb_size);
+> +	} else {
+> +		ctd_dprintk_crit("unsupported scsi cdb size =3D %d\n",
+> +				scsi_cdb_size);
+> +		goto scsi_initiator_translate_request_end;
+> +	}
+> +
+> +	error =3D ctd_initiator_translate_sgl(cmnd, ctd_request, ctd_privat=
+e);
+> +
+> +scsi_initiator_translate_request_end:
+> +	if (error =3D=3D FAILED) {
+> +		cmnd->host_scribble =3D NULL;
+> +		if (request_private) {
+> +			scsi_free_ctd_request_private(request_private,
+> +								ctd_private);
+> +		}
+> +	}
+> +	return error;
+> +}
+> +
+> +
+> +static int
+> +ctd_hw_execute_command(struct scsi_cmnd *cmnd,
+> +		struct ctd_pci_private *ctd_private)
+> +{
+> +	int error;
+> +	unsigned long flags;
+> +	struct emc_ctd_v010_scsi_command ctd_request;
+> +
+> +	error =3D ctd_initiator_translate_request(cmnd, &ctd_request,
+> +							ctd_private);
+> +
+> +	if (error =3D=3D SUCCESS) {
+> +		struct ctd_request_private *request_private;
+> +
+> +		request_private =3D
+> +			(struct ctd_request_private *)cmnd->host_scribble;
+> +
+> +		/* lock ordering ... io_mgmt_lock followed by isr_lock
+> +		 * ensures that request placed in legitimate queue ...
+> +		 * so that response finds in the correct queue
+> +		 */
+> +		spin_lock_irqsave(&ctd_private->io_mgmt_lock, flags);
+> +
+> +		request_private->io_start_time =3D ctd_read_tsc();
+> +
+> +		error =3D ctd_hw_enqueue_request(
+> +				(union emc_ctd_v010_message *)&ctd_request,
+> +				ctd_private);
+> +		if (error =3D=3D SUCCESS) {
+> +			list_add_tail(&request_private->list,
+> +					&ctd_private->queued_io_list);
+> +			atomic_long_inc(&ctd_private->hw_stats.requests_sent);
+> +			atomic_long_inc(&ctd_private->hw_stats.active_io_count);
+> +		}
+> +
+> +		spin_unlock_irqrestore(&ctd_private->io_mgmt_lock, flags);
+> +
+> +		if (error !=3D SUCCESS) {
+> +			ctd_dprintk_crit("ctd_hw_enqueue_request error\n");
+> +			scsi_free_ctd_request_private(
+> +					(struct ctd_request_private *)
+> +						(uintptr_t)
+> +						(ctd_request.emc_ctd_v010_scsi_command_opaque),
+> +							ctd_private);
+> +		}
+> +	}
+> +
+> +	return error;
+> +}
+> +
+> +static int
+> +ctd_hw_enqueue_request(union emc_ctd_v010_message *ctd_request,
+> +			struct ctd_pci_private *ctd_private)
+> +{
+> +	int error;
+> +	unsigned long flags;
+> +	union emc_ctd_v010_message *ctd_request_block;
+> +
+> +	spin_lock_irqsave(&ctd_private->isr_lock, flags);
+> +
+> +	/*
+> +	 * check if any space is available in the array
+> +	 */
+> +	ctd_request_block =3D
+> +		((((ctd_private->request_producer_index + 1) %
+> +		   ctd_private->pci_request_queue_size) =3D=3D
+> +			ctd_private->request_consumer_index) ?
+> +				NULL :
+> +				(ctd_private->pci_request_array +
+> +					ctd_private->request_producer_index));
+> +
+> +
+> +	error =3D (ctd_request_block ? SUCCESS : FAILED);
+> +
+> +	if (error =3D=3D SUCCESS) {
+> +		*ctd_request_block =3D *ctd_request;
+> +
+> +		ctd_private->request_producer_index =3D
+> +			((ctd_private->request_producer_index + 1) %
+> +				ctd_private->pci_request_queue_size);
+> +
+> +	}
+> +
+> +	spin_unlock_irqrestore(&ctd_private->isr_lock, flags);
+> +
+> +	return error;
+> +}
+> +
+> +static int
+> +ctd_hw_dequeue_response(union emc_ctd_v010_message *ctd_response,
+> +			struct ctd_pci_private *ctd_private)
+> +{
+> +	int rc;
+> +	unsigned long flags;
+> +	union emc_ctd_v010_message *ctd_response_block;
+> +
+> +	/* protect ourselves from another instance */
+> +	spin_lock_irqsave(&ctd_private->isr_lock, flags);
+> +
+> +	ctd_response_block =3D
+> +		((ctd_private->response_consumer_index =3D=3D
+> +			ctd_private->response_producer_index) ?  NULL :
+> +				(ctd_private->pci_response_array +
+> +					ctd_private->response_consumer_index));
+> +
+> +	rc =3D ctd_response_block ? SUCCESS : FAILED;
+> +
+> +	if (rc =3D=3D SUCCESS) {
+> +		*ctd_response =3D *ctd_response_block;
+> +		ctd_private->response_consumer_index =3D
+> +			((ctd_private->response_consumer_index + 1) %
+> +			 ctd_private->pci_response_queue_size);
+> +	} else {
+> +		ctd_check_error_condition(ctd_private->pci_dev);
+> +	}
+> +
+> +	spin_unlock_irqrestore(&ctd_private->isr_lock, flags);
+> +
+> +	return rc;
+> +
+> +}
+> +
+> +static int
+> +ctd_xmit_command(struct scsi_cmnd *cmnd,
+> +			struct ctd_pci_private *ctd_private)
+> +{
+> +	int error;
+> +
+> +	cmnd->result =3D DID_OK;
+> +	error =3D ctd_hw_execute_command(cmnd, ctd_private);
+> +	return error;
+> +}
+> +
+> +
+> +static int
+> +ctd_queuecommand_lck(struct scsi_cmnd *cmnd, void (*done)(struct scs=
+i_cmnd *))
+> +{
+> +	int error;
+> +	struct ctd_host_info *ctd_host;
+> +	struct ctd_pci_private *ctd_private;
+> +
+> +	error =3D 0;
+> +	ctd_host =3D shost_priv(cmnd->device->host);
+> +	ctd_private =3D pci_get_drvdata(ctd_host->pci_dev);
+> +
+> +	switch (ctd_private->hw_state) {
+> +
+> +	case CTD_HW_STATE_INITIALIZED:
+> +		cmnd->scsi_done =3D done;
+> +		if (ctd_xmit_command(cmnd, ctd_private) =3D=3D SUCCESS)
+> +			break;
+> +
+> +	case CTD_HW_STATE_DISABLED:
+> +		cmnd->scsi_done =3D done;
+> +		scsi_translate_sam_code(cmnd, SAM_STAT_TASK_ABORTED);
+> +		scsi_set_resid(cmnd, scsi_bufflen(cmnd));
+> +		cmnd->scsi_done(cmnd);
+> +		break;
+> +	default:
+> +		error =3D SCSI_MLQUEUE_HOST_BUSY;
+> +	}
+> +
+> +	return error;
+> +}
+> +
+> +static int
+> +ctd_abort_handler(struct scsi_cmnd *cmnd)
+> +{
+> +	ctd_dprintk_crit("SCSI cmnd -> %p ERROR\n",
+> +			cmnd);
+> +	return SUCCESS;
+> +}
+> +
+> +
+> +static int
+> +ctd_target_alloc(struct scsi_target *starget)
+> +{
+> +	int error;
+> +	struct ctd_target_info *ctd_target;
+> +	struct ctd_host_info *ctd_host;
+> +
+> +	error =3D -ENODEV;
+> +	ctd_host =3D shost_priv(dev_to_shost(&starget->dev));
+> +
+> +	ctd_dprintk("starget -> %p id -> %x\n",
+> +		starget, starget->id);
+> +
+> +	ctd_target =3D &ctd_host->target[starget->id];
+> +
+> +	/* check for the connection status in the detect flag
+> +	 * also check if the target already registered with the SCSI midlay=
+er
+> +	 */
+> +	if (ctd_target->starget =3D=3D NULL &&
+> +			(ctd_target->ctd_detect.emc_ctd_v010_detect_flags &
+> +			 EMC_CTD_V010_DETECT_FLAG_SCSI_TARGET)) {
+> +		error =3D 0;
+> +		ctd_target->starget =3D starget;
+> +		starget->hostdata =3D ctd_target;
+> +	} else {
+> +		if (ctd_target->starget !=3D starget) {
+> +			ctd_dprintk_crit(
+> +				"failure ctd_target->starget %p and starget %p dissimilar\n",
+> +				ctd_target->starget, starget);
+> +		} else {
+> +			ctd_dprintk_crit("failure starget %p unexpected\n",
+> +				starget);
+> +		}
+> +	}
+> +
+> +	return error;
+> +}
+> +
+> +void
+> +ctd_target_destroy(struct scsi_target *starget)
+> +{
+> +	int i;
+> +	int error;
+> +	struct ctd_target_info *ctd_target;
+> +	struct ctd_host_info *ctd_host;
+> +
+> +	error =3D -ENODEV;
+> +	ctd_host =3D shost_priv(dev_to_shost(&starget->dev));
+> +
+> +	ctd_dprintk_crit("starget @ id =3D %x\n", starget->id);
+> +
+> +	for (i =3D 0; i < EMCCTD_MAX_ID; i++) {
+> +		ctd_target =3D &ctd_host->target[i];
+> +		if (ctd_target->starget =3D=3D starget) {
+> +			ctd_target->starget =3D NULL;
+> +			error =3D 0;
+> +			break;
+> +		}
+> +	}
+> +
+> +	if (error) {
+> +		ctd_dprintk_crit("failure for starget @ id =3D %x\n",
+> +				starget->id);
+> +	}
+> +}
+> +
+> +static int
+> +ctd_slave_configure(struct scsi_device *sdevice)
+> +{
+> +	int error;
+> +	struct ctd_dev_info *ctd_device;
+> +	struct ctd_host_info *ctd_host;
+> +
+> +	error =3D 0;
+> +	ctd_host =3D shost_priv(sdevice->host);
+> +	ctd_device =3D sdevice->hostdata;
+> +
+> +	/* tune the block layer to generate timout
+> +	 * for the requests queued and reply is awaited
+> +	 */
+> +	blk_queue_rq_timeout(sdevice->request_queue, EMCCTD_REQUEST_TIMEOUT=
+);
+> +
 
-All warnings (new ones prefixed by >>):
+static int ctd_slave_configure(struct scsi_device *sdev)
+{
+=09
+	/* tune the block layer to generate timout
+	 * for the requests queued and reply is awaited
+	 */
+	blk_queue_rq_timeout(sdevice->request_queue, EMCCTD_REQUEST_TIMEOUT);
+}
 
-   drivers/scsi/emcctd/emcctd.c: In function 'ctd_proc_show':
-   drivers/scsi/emcctd/emcctd.c:239:4: warning: format '%ld' expects argument of type 'long int', but argument 3 has type 'int' [-Wformat=]
-       "number interrupts: %ld\n"
-       ^
-   drivers/scsi/emcctd/emcctd.c:239:4: warning: format '%ld' expects argument of type 'long int', but argument 4 has type 'int' [-Wformat=]
-   drivers/scsi/emcctd/emcctd.c:239:4: warning: format '%ld' expects argument of type 'long int', but argument 5 has type 'int' [-Wformat=]
-   drivers/scsi/emcctd/emcctd.c:239:4: warning: format '%ld' expects argument of type 'long int', but argument 6 has type 'int' [-Wformat=]
-   drivers/scsi/emcctd/emcctd.c:239:4: warning: format '%ld' expects argument of type 'long int', but argument 7 has type 'int' [-Wformat=]
-   drivers/scsi/emcctd/emcctd.c:239:4: warning: format '%ld' expects argument of type 'long int', but argument 8 has type 'int' [-Wformat=]
-   drivers/scsi/emcctd/emcctd.c:239:4: warning: format '%ld' expects argument of type 'long int', but argument 9 has type 'int' [-Wformat=]
-   drivers/scsi/emcctd/emcctd.c:239:4: warning: format '%ld' expects argument of type 'long int', but argument 10 has type 'int' [-Wformat=]
-   drivers/scsi/emcctd/emcctd.c:239:4: warning: format '%ld' expects argument of type 'long int', but argument 11 has type 'int' [-Wformat=]
-   drivers/scsi/emcctd/emcctd.c: In function 'ctd_scsi_response_sanity_check':
-   drivers/scsi/emcctd/emcctd.c:655:10: warning: format '%ld' expects argument of type 'long int', but argument 7 has type 'int' [-Wformat=]
-      ctd_dprintk_crit(
-             ^
-   drivers/scsi/emcctd/emcctd.c:655:10: warning: format '%ld' expects argument of type 'long int', but argument 8 has type 'int' [-Wformat=]
-   drivers/scsi/emcctd/emcctd.c: In function 'ctd_handle_scsi_response':
->> drivers/scsi/emcctd/emcctd.c:878:30: warning: format '%lx' expects argument of type 'long unsigned int', but argument 7 has type 'int' [-Wformat=]
-   drivers/scsi/emcctd/emcctd.c: In function 'ctd_pci_probe':
->> drivers/scsi/emcctd/emcctd.c:2588:10: warning: format '%llx' expects argument of type 'long long unsigned int', but argument 4 has type 'resource_size_t {aka unsigned int}' [-Wformat=]
-      ctd_dprintk_crit(
-             ^
-   drivers/scsi/emcctd/emcctd.c:2616:10: warning: format '%llx' expects argument of type 'long long unsigned int', but argument 4 has type 'resource_size_t {aka unsigned int}' [-Wformat=]
-      ctd_dprintk_crit(
-             ^
-   drivers/scsi/emcctd/emcctd.c:2638:10: warning: format '%llx' expects argument of type 'long long unsigned int', but argument 4 has type 'resource_size_t {aka unsigned int}' [-Wformat=]
-      ctd_dprintk_crit(
-             ^
+> +	return error;
+> +}
+> +
+> +
+> +
+> +static int
+> +ctd_slave_alloc(struct scsi_device *sdev)
+> +{
+> +	int error;
+> +	struct ctd_host_info *ctd_host;
+> +	struct ctd_target_info *ctd_target;
+> +	struct ctd_dev_info *ctd_device;
+> +
+> +	error =3D -ENOMEM;
+> +	ctd_host =3D shost_priv(sdev->host);
+> +	sdev->host->max_cmd_len =3D EMCCTD_V010_MAX_CDB_SIZE;
+> +
+> +	ctd_device =3D (struct ctd_dev_info *)
+> +			kzalloc(sizeof(struct ctd_dev_info), GFP_ATOMIC);
 
-vim +878 drivers/scsi/emcctd/emcctd.c
+Please don't cast the return value of kzalloc()
 
-   862	
-   863			memcpy(cmnd->sense_buffer, sense_data, sense_data_length);
-   864	
-   865			set_driver_byte(cmnd, DRIVER_SENSE);
-   866			if (ctd_debug) {
-   867				scsi_print_command(cmnd);
-   868				scsi_print_result(cmnd, "emcctd sense", SUCCESS);
-   869				scsi_print_sense(cmnd);
-   870			}
-   871		}
-   872	
-   873		if ((io_response->emc_ctd_v010_scsi_response_status ==
-   874							SAM_STAT_TASK_SET_FULL) ||
-   875			(io_response->emc_ctd_v010_scsi_response_status ==
-   876								SAM_STAT_BUSY)) {
-   877	
- > 878			ctd_dprintk(
-   879				"QUEUE DEPTH change for channel:%d id:%d lun:%lld] active io count = %lx\n",
-   880				cmnd->device->channel, cmnd->device->id,
-   881				cmnd->device->lun,
-   882				ctd_private->hw_stats.active_io_count.counter);
-   883	
-   884			scsi_track_queue_full(cmnd->device,
-   885				ctd_private->hw_stats.active_io_count.counter);
-   886		}
+> +	if (ctd_device =3D=3D NULL)
 
----
-0-DAY kernel test infrastructure                Open Source Technology Center
-https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
+		return -ENOMEM;
 
---xHFwDpU9dbj6ez1V
-Content-Type: application/octet-stream
-Content-Disposition: attachment; filename=".config.gz"
-Content-Transfer-Encoding: base64
+> +		goto ctd_slave_alloc_end;
+> +
+> +	ctd_target =3D &ctd_host->target[sdev->id];
+> +	if (ctd_target->starget)
+> +		ctd_device->ctd_target_detect =3D &ctd_target->ctd_detect;
+> +
+> +	if (ctd_device->ctd_target_detect) {
+> +		error =3D 0;
+> +		ctd_device->ctd_host =3D ctd_host;
+> +		ctd_device->ctd_target =3D ctd_target;
+> +		sdev->hostdata =3D ctd_device;
+> +		queue_flag_set_unlocked(QUEUE_FLAG_BIDI, sdev->request_queue);
+> +	} else {
+> +		kfree(ctd_device);
+> +		error =3D -ENODEV;
+> +	}
+> +
+> +ctd_slave_alloc_end:
+> +
+> +	if (error) {
+> +		ctd_dprintk_crit("channel =3D %x id=3D %x error =3D %x\n",
+> +				sdev->channel, sdev->id, error);
+> +	}
+> +	return error;
+> +}
+> +
+> +static void
+> +ctd_slave_destroy(struct scsi_device *sdev)
+> +{
+> +	struct ctd_dev_info *dev_info;
+> +
+> +	dev_info =3D sdev->hostdata;
+> +	kfree(dev_info);
+> +}
+> +
+> +static enum blk_eh_timer_return
+> +ctd_timeout_handler(struct scsi_cmnd *cmd)
+> +{
+> +	int requeue_error;
+> +	unsigned long flags;
+> +	enum blk_eh_timer_return error;
+> +	struct ctd_host_info *ctd_host;
+> +	struct ctd_pci_private *ctd_private;
+> +	struct ctd_request_private *request;
 
-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
+This variable's name is a bit of confusing (struct request *request ;-)=
+=2E
+Maybe ctd_privreq?
 
---xHFwDpU9dbj6ez1V--
+> +	unsigned long long tsc_val;
+> +
+> +	requeue_error =3D FAILED;
+> +	error =3D BLK_EH_NOT_HANDLED;
+> +	ctd_host =3D shost_priv(cmd->device->host);
+> +	ctd_private =3D pci_get_drvdata(ctd_host->pci_dev);
+> +
+> +
+> +	request =3D (struct ctd_request_private *)cmd->host_scribble;
+> +
+> +	tsc_val =3D ctd_read_tsc();
+> +
+> +	tsc_val -=3D request->io_start_time;
+> +
+> +	ctd_dprintk_crit("cmnd -> %p request -> %p, tsc -> %lld\n",
+> +			cmd, request, tsc_val);
+> +
+> +	spin_lock_irqsave(&ctd_private->io_mgmt_lock, flags);
+> +
+> +	if (request && request->io_timeout < EMCCTD_MAX_RETRY) {
+
+The following block is a bit long and therefore it's hard to spot an ev=
+entual
+error of handling the io_mgmt_lock. Can't it be factored out in a helpe=
+r
+function?
+
+> +		struct ctd_dev_info *ctd_device;
+> +
+> +		switch (request->io_state) {
+> +
+> +		/* check if the IO in the queued_io_list */
+> +		case CTD_IO_REQUEST_QUEUED:
+> +		/* check if the IO is already requeued */
+> +		case CTD_IO_REQUEST_REQUEUED:
+> +			/* remove the old IO context from the requeued_io_list
+> +			 * or queued_io_list
+> +			 */
+> +			list_del(&request->list);
+> +			atomic_long_dec(&ctd_private->hw_stats.active_io_count);
+> +
+> +			ctd_device =3D cmd->device->hostdata;
+> +
+> +			if (!(ctd_device->ctd_target_detect->emc_ctd_v010_detect_flags &
+> +				EMC_CTD_V010_DETECT_FLAG_SCSI_TARGET)) {
+> +				ctd_dprintk_crit("device diconnected\n");
+> +			} else {
+> +				union emc_ctd_v010_message ctd_message;
+> +				struct emc_ctd_v010_scsi_phase *ctd_phase;
+> +
+> +				memset(&ctd_message, 0x0,
+> +					sizeof(union emc_ctd_v010_message));
+> +				ctd_phase =3D
+> +					(struct emc_ctd_v010_scsi_phase *) &
+> +						ctd_message.emc_ctd_v010_message_scsi_phase;
+> +
+> +				/* Need to acertain if this is how an IO is
+> +				 * aborted by the  specification
+> +				 */
+> +
+> +				/*
+> +				 * OPT-438489  the phase flag needs to be
+> +				 * initialized with PHASE_FLAG_TARGET If  EMC
+> +				 * CTD V010 SCSI PHASE FLAG TARGET is set, the
+> +				 * message receiver is the target, otherwise the
+> +				 * message receiver is the initiator. If EMC CTD
+> +				 * V010 SCSI PHASE FLAG ABORT is set, the SCSI
+> +				 * command is aborted.
+> +				 */
+> +				ctd_phase->emc_ctd_v010_scsi_phase_flags =3D
+> +					EMC_CTD_V010_SCSI_PHASE_FLAG_ABORT |
+> +					EMC_CTD_V010_SCSI_PHASE_FLAG_TARGET;
+> +
+> +				ctd_phase->emc_ctd_v010_scsi_phase_opaque_tx =3D
+> +							(uintptr_t)request;
+> +				ctd_phase->emc_ctd_v010_scsi_phase_opaque_rx =3D
+> +									(-1);
+> +				ctd_phase->emc_ctd_scsi_phase_header_what =3D
+> +						EMC_CTD_V010_WHAT_SCSI_PHASE;
+> +				ctd_phase->emc_ctd_scsi_phase_header_minor =3D
+> +					EMCCTD_V010_PROTOCOL_MINOR_VERSION;
+> +				ctd_phase->emc_ctd_scsi_phase_header_address =3D
+> +					ctd_device->ctd_target_detect->emc_ctd_detect_header_address;
+> +
+> +				requeue_error =3D
+> +					ctd_hw_enqueue_request(&ctd_message,
+> +								ctd_private);
+> +			}
+> +
+> +
+> +			if (requeue_error !=3D SUCCESS) {
+> +				/* add the IO context to requeued_io_list */
+> +				/* Client would try to abort the request in next
+> +				 * timeout (after 20 seconds)
+> +				 */
+> +				request->io_state =3D CTD_IO_REQUEST_REQUEUED;
+> +				list_add_tail(&request->list,
+> +						&ctd_private->requeued_io_list);
+> +				request->io_timeout++;
+> +				error =3D BLK_EH_RESET_TIMER;
+> +			} else {
+> +				request->cmnd =3D NULL;
+> +				cmd->host_scribble =3D NULL;
+> +
+> +				request->io_state =3D CTD_IO_REQUEST_ABORTED;
+> +				request->purge_lifetime =3D
+> +					jiffies + EMCCTD_OPAQUE_PURGE_WAITTIME;
+> +				list_add_tail(&request->list,
+> +						&ctd_private->aborted_io_list);
+> +				atomic_long_inc(&ctd_private->hw_stats.abort_sent);
+> +
+> +				/* error propagation to the SCSI midlayer */
+> +				scsi_translate_sam_code(cmd,
+> +						SAM_STAT_TASK_ABORTED);
+> +				scsi_set_resid(cmd, scsi_bufflen(cmd));
+> +
+> +				/* indicate no more requeue of this particular
+> +				 * IO is needed
+> +				 */
+> +				error =3D BLK_EH_HANDLED;
+> +			}
+> +			break;
+> +
+> +		default:
+> +			ctd_dprintk_crit(
+> +				"request @ %p in unexpected state %x\n",
+> +				request, request->io_state);
+> +			break;
+> +		}
+> +	} else if (request) {
+> +		ctd_dprintk_crit("cmd %p timeout completed io_state %x\n",
+> +				cmd, request->io_state);
+> +
+> +		/* remove the old IO context from the requeued_io_list */
+> +		list_del(&request->list);
+> +
+> +		/*
+> +		 * break the context between the cmnd and the request and
+> +		 * request on the requeue_io_list cannot be reused until
+> +		 * server replies for the same
+> +		 */
+> +		request->cmnd =3D NULL;
+> +		cmd->host_scribble =3D NULL;
+> +
+> +		/* error propagation to the SCSI midlayer */
+> +		scsi_translate_sam_code(cmd, SAM_STAT_TASK_ABORTED);
+> +		scsi_set_resid(cmd, scsi_bufflen(cmd));
+> +
+> +		/* we can deallocate the context only once we receive
+> +		 * any reply from the server
+> +		 */
+> +		request->io_state =3D CTD_IO_REQUEST_REPLY_AWAITED;
+> +
+> +		/* indicate no more requeue of this particular IO is needed */
+> +		error =3D BLK_EH_HANDLED;
+> +	} else {
+> +		ctd_dprintk_crit(
+> +			"cmnd -> %p request -> NULL error !!!\n", cmd);
+> +	}
+> +
+> +	spin_unlock_irqrestore(&ctd_private->io_mgmt_lock, flags);
+> +
+> +	return error;
+> +}
+> +
+> +
+> +static int
+> +ctd_ITnexus_handler(struct ctd_pci_private *ctd_private)
+> +{
+> +	int i;
+> +	int error;
+> +	struct ctd_target_info *ctd_target;
+> +	struct ctd_host_info *ctd_host;
+> +
+> +	error =3D 0;
+> +
+> +	ctd_host =3D (struct ctd_host_info *)ctd_private->host_private;
+> +
+> +	ctd_dprintk_crit("ctd_private -> %p\n", ctd_private);
+> +
+> +	for (i =3D 0; i < EMCCTD_MAX_ID; i++) {
+> +		union emc_ctd_v010_message ctd_message;
+> +		struct emc_ctd_v010_detect *ctd_detect;
+> +
+> +		ctd_target =3D &ctd_host->target[i];
+> +
+> +		switch (ctd_target->detect_completed) {
+> +
+> +		case EMCCTD_TARGET_DETECT_NOT_COMPLETED:
+> +			if (!ctd_target->ctd_detect.emc_ctd_v010_detect_flags)
+> +				break;
+> +
+> +			/* The id defined by the SCSI Midlayer should match the
+> +			 * index as this routine is indirectly invoked by the
+> +			 * delayed work mechanism
+> +			 */
+> +
+> +			ctd_dprintk_crit("ctd_target -> %p index =3D %x\n",
+> +					ctd_target, i);
+> +			ctd_dprintk_crit("key -> %llx header -> %x\n",
+> +				ctd_target->ctd_detect.emc_ctd_v010_detect_key,
+> +				ctd_target->ctd_detect.emc_ctd_detect_header_address);
+> +
+> +			memset(&ctd_message, 0x0,
+> +					sizeof(union emc_ctd_v010_message));
+> +
+> +			ctd_detect =3D &ctd_message.emc_ctd_v010_message_detect;
+> +			ctd_detect->emc_ctd_v010_detect_flags =3D 0x0;
+> +			ctd_detect->emc_ctd_v010_detect_key =3D
+> +				ctd_target->ctd_detect.emc_ctd_v010_detect_key;
+> +			ctd_detect->emc_ctd_detect_header_what =3D
+> +				EMC_CTD_V010_WHAT_DETECT;
+> +			ctd_detect->emc_ctd_detect_header_minor =3D
+> +				EMCCTD_V010_PROTOCOL_MINOR_VERSION;
+> +			ctd_detect->emc_ctd_detect_header_address =3D
+> +				ctd_target->ctd_detect.emc_ctd_detect_header_address;
+> +
+> +			if (ctd_hw_enqueue_request(&ctd_message,
+> +						ctd_private) =3D=3D SUCCESS) {
+> +				ctd_dprintk_crit("ctd_target -> %p\n",
+> +						ctd_target);
+> +				ctd_target->detect_completed =3D
+> +					EMCCTD_TARGET_DETECT_COMPLETED;
+> +
+> +				atomic_long_inc(
+> +					&ctd_private->hw_stats.what_out);
+> +			} else {
+> +				ctd_dprintk_crit(
+> +					"ctd_target -> %p ctd_hw_enqueue_request failure\n",
+> +					ctd_target);
+> +				error =3D -EAGAIN;
+> +				break;
+> +			}
+> +
+> +		case EMCCTD_TARGET_DETECT_COMPLETED:
+> +			/* Disconnect case ... we need to remove the associated
+> +			 * objects from SCSI midlayer
+> +			 */
+> +			if (!ctd_target->ctd_detect.emc_ctd_v010_detect_flags) {
+> +				ctd_dprintk_crit("ctd_target -> %p\n",
+> +						ctd_target);
+> +
+> +				ctd_clear_io_queue(ctd_private);
+> +
+> +				if (ctd_target->starget) {
+> +				/* the following attempts to clean the SCSI
+> +				 * midlayer objects
+> +				 */
+> +					scsi_target_block(
+> +						&ctd_target->starget->dev);
+> +					scsi_target_unblock(
+> +						&ctd_target->starget->dev,
+> +						SDEV_TRANSPORT_OFFLINE);
+> +					/*
+> +					 * Target object might still be active
+> +					 * in case its not reaped completely (as
+> +					 * with LVM) thus might be reused when
+> +					 * the link reconnects back (OPT 443532)
+> +					 */
+> +					scsi_remove_target(
+> +						&ctd_target->starget->dev);
+> +				} else {
+> +					ctd_dprintk_crit(
+> +						"starget already null\n");
+> +				}
+> +
+> +				/* declare the link dead and buried */
+> +				ctd_target->detect_completed =3D
+> +					EMCCTD_TARGET_DETECT_NOT_COMPLETED;
+> +				memset(&ctd_target->ctd_detect, 0x0,
+> +					sizeof(struct emc_ctd_v010_detect));
+> +
+> +				wake_up(&lun_discovery_event_barrier);
+> +			}
+> +			/* Connect case ... need to scan and create the needed
+> +			 * objects in the SCSI midlayer
+> +			 */
+> +			else {
+> +				ctd_dprintk_crit("ctd_target -> %p\n",
+> +						ctd_target);
+> +				scsi_scan_target(&ctd_host->shost->shost_gendev,
+> +						0, i, SCAN_WILD_CARD, 1);
+> +				lun_discovery_complete =3D 1;
+> +				wake_up(&lun_discovery_event_barrier);
+> +			}
+> +			break;
+> +		default:
+> +			ctd_dprintk_crit("ctd_target -> %p detect unknown -> %x\n",
+> +				ctd_target, ctd_target->detect_completed);
+> +	}
+> +	}
+> +
+> +	return error;
+> +}
+> +
+> +/* This function posts the detect event into adapter specific list *=
+/
+> +static int
+> +ctd_post_event(union emc_ctd_v010_message *io_msg,
+> +		struct ctd_pci_private *ctd_private)
+> +{
+> +	int error;
+> +	struct ctd_event_io_element *event;
+> +
+> +	error =3D -ENOMEM;
+> +
+> +	event =3D (struct ctd_event_io_element *)
+> +			kzalloc(sizeof(struct ctd_event_io_element),
+> +								GFP_ATOMIC);
+
+No cast for kzalloc() return
+
+> +	if (event) {
+> +		error =3D 0;
+> +		event->io_msg =3D *io_msg;
+> +		spin_lock(&ctd_private->event_io_lock);
+> +		list_add_tail(&event->list, &ctd_private->event_io_list);
+> +		spin_unlock(&ctd_private->event_io_lock);
+> +	} else {
+> +		ctd_dprintk_crit("kzalloc failure\n");
+
+Please no out of memory error messages.
+
+> +	}
+> +	return error;
+> +}
+> +
+> +/* Thread Handler Function. This consumes the events posted into its=
+ queue, and
+> + * takes respective action
+> + */
+> +static int
+> +ctd_event_handler(void *ctd_thread_args)
+> +{
+> +	struct ctd_event_io_element *event;
+> +	struct ctd_pci_private *ctd_private;
+> +
+> +	ctd_private =3D (struct ctd_pci_private *)ctd_thread_args;
+> +
+> +	while (!kthread_should_stop()) {
+> +		schedule_timeout_interruptible(HZ);
+> +
+> +		event =3D NULL;
+> +
+> +		spin_lock(&ctd_private->event_io_lock);
+> +		if (!list_empty(&ctd_private->event_io_list)) {
+> +			event =3D list_first_entry(&ctd_private->event_io_list,
+> +					struct ctd_event_io_element, list);
+> +			list_del(&event->list);
+> +		}
+> +		spin_unlock(&ctd_private->event_io_lock);
+> +
+> +
+> +		if (event) {
+> +			int error;
+> +			emc_ctd_uint8_t what;
+> +			union emc_ctd_v010_message *io_msg;
+> +			struct emc_ctd_v010_detect *io_detect;
+> +
+> +			io_msg =3D &event->io_msg;
+> +			what =3D io_msg->emc_ctd_scsi_message_header_what;
+> +
+> +			if (what !=3D EMC_CTD_V010_WHAT_DETECT) {
+> +				ctd_dprintk_crit("event -> %p what -> %x\n",
+> +						event, what);
+> +			} else {
+> +				error =3D -ENODEV;
+> +				io_detect =3D
+> +					&io_msg->emc_ctd_v010_message_detect;
+> +
+> +				if (io_detect->emc_ctd_v010_detect_flags =3D=3D
+> +								0x0) {
+> +					error =3D ctd_handle_disconnect(
+> +							io_detect, ctd_private);
+> +				} else {
+> +					if (io_detect->emc_ctd_v010_detect_flags &
+> +							EMC_CTD_V010_DETECT_FLAG_SCSI_TARGET) {
+> +						ctd_dprintk(
+> +							"header addr -> %x key -> %llx\n",
+> +							io_detect->emc_ctd_detect_header_address,
+> +							io_detect->emc_ctd_v010_detect_key);
+> +						error =3D ctd_handle_target_addition(io_detect,
+> +								ctd_private);
+> +					}
+> +					if (io_detect->emc_ctd_v010_detect_flags &
+> +							EMC_CTD_V010_DETECT_FLAG_SCSI_INITIATOR) {
+> +						ctd_dprintk("\n");
+> +						error =3D ctd_handle_source_addition(io_detect,
+> +								ctd_private);
+> +					}
+> +				}
+> +				if (!error) {
+> +					int retry =3D EMCCTD_DETECT_RETRY_MAX;
+> +
+> +					error =3D ctd_ITnexus_handler(ctd_private);
+> +					/* In case of ITnexus_handler failure,
+> +					 * pause for 2 seconds before retrying
+> +					 * the operation again
+> +					 */
+> +					while (error && retry) {
+> +						schedule_timeout_interruptible(HZ * 2);
+> +						error =3D ctd_ITnexus_handler(ctd_private);
+> +						retry--;
+> +					} while (error && retry);
+> +
+> +				}
+> +			}
+> +			kfree(event);
+> +		}
+> +	}
+> +	return 0;
+> +}
+> +
+> +static int
+> +ctd_init_event_thread(struct ctd_pci_private *ctd_private)
+> +{
+> +	int error;
+> +
+> +	INIT_LIST_HEAD(&ctd_private->event_io_list);
+> +	spin_lock_init(&ctd_private->event_io_lock);
+> +
+> +	/* Create the daemon thread to handle detect requests */
+> +	ctd_private->ctd_event_thread =3D kthread_create(ctd_event_handler,
+> +				(void *)ctd_private, "emcctd_event_thread");
+> +	error =3D (!IS_ERR(ctd_private->ctd_event_thread)) ? 0 : -EBUSY;
+> +	if (!error) {
+> +		wake_up_process(ctd_private->ctd_event_thread);
+> +	} else {
+> +		ctd_dprintk_crit(
+> +			"FAILURE, ctd_private -> %p\n", ctd_private);
+> +	}
+> +	return error;
+> +}
+> +
+> +static void
+> +ctd_destroy_event_thread(struct ctd_pci_private *ctd_private)
+> +{
+> +	if (ctd_private->ctd_event_thread)
+> +		kthread_stop(ctd_private->ctd_event_thread);
+> +}
+> +
+> +static void
+> +ctd_init_scsi_host_private(struct Scsi_Host *shost, struct pci_dev *=
+pci_dev)
+> +{
+> +	int i;
+> +	struct ctd_host_info *ctd_host_info;
+> +	struct ctd_pci_private *ctd_private;
+> +
+> +	ctd_private =3D pci_get_drvdata(pci_dev);
+> +
+> +	ctd_dprintk("ctd_private -> %p\n", ctd_private);
+> +
+> +	ctd_host_info =3D shost_priv(shost);
+> +	memset(ctd_host_info, 0x0, sizeof(struct ctd_host_info));
+> +	for (i =3D 0; i < EMCCTD_MAX_ID; i++) {
+> +		struct ctd_target_info *ctd_target;
+> +
+> +		ctd_target =3D &ctd_host_info->target[i];
+> +		/* nothing to do;
+> +		 * ctd_target->ctd_detect.emc_ctd_v010_detect_flags already zero
+> +		 */
+> +	}
+> +
+> +
+> +	ctd_host_info->shost =3D shost;
+> +	ctd_host_info->pci_dev =3D pci_dev;
+> +
+> +	shost->can_queue =3D ctd_private->pci_request_queue_size;
+> +	shost->cmd_per_lun =3D min(emcctd_cmd_per_lun, shost->can_queue);
+> +	shost->max_lun =3D emcctd_max_luns;
+> +	shost->max_id =3D EMCCTD_MAX_ID;
+> +
+> +	ctd_private->host_private =3D ctd_host_info;
+> +
+> +	ctd_dprintk("scsi_ctd_host =3D %p\n", ctd_host_info);
+> +}
+> +
+> +
+> +static int
+> +ctd_scsi_layer_init(struct pci_dev *pci_dev)
+> +{
+> +	int error;
+> +	struct Scsi_Host	*scsi_ctd_host;
+> +	struct ctd_pci_private *ctd_private =3D NULL;
+> +
+> +	ctd_dprintk("pci_dev -> %p\n", pci_dev);
+> +
+> +	scsi_ctd_host =3D scsi_host_alloc(&scsi_ctd_template,
+> +			sizeof(struct ctd_host_info));
+> +	if (scsi_ctd_host =3D=3D NULL) {
+> +		error =3D -ENOMEM;
+> +		goto ctd_scsi_layer_init_complete;
+		return -ENOMEM;
+> +	}
+> +
+> +	ctd_init_scsi_host_private(scsi_ctd_host, pci_dev);
+> +
+> +	ctd_private =3D pci_get_drvdata(pci_dev);
+
+Maybe:
+
+> +
+> +	error =3D ctd_init_event_thread(ctd_private);
+> +	if (error)
+> +		goto ctd_scsi_layer_init_complete;
+		goto out_put_scsi_host;
+> +
+> +	/*
+> +	 * register the HBA to the Linux SCSI stack
+> +	 */
+> +	error =3D scsi_add_host(scsi_ctd_host, &pci_dev->dev);
+	if (error)
+		goto out_destroy_thread;
+
+	reutrn 0;
+
+out_put_scsi_host:
+	scsi_host_put(scsi_ctd_host);
+out_destroy_thread:
+	ctd_destroy_event_thread(ctd_private);
+
+	return error;
+> +
+> +ctd_scsi_layer_init_complete:
+> +	if (error) {
+> +		ctd_dprintk_crit("failure, error =3D %x\n", error);
+> +		if (scsi_ctd_host !=3D NULL)
+> +			scsi_host_put(scsi_ctd_host);
+> +
+> +		if (ctd_private)
+> +			ctd_destroy_event_thread(ctd_private);
+> +	}
+> +	return error;
+> +}
+> +
+> +static void
+> +ctd_clear_io_queue(struct ctd_pci_private *ctd_private)
+> +{
+> +	struct list_head iochain;
+> +	unsigned long flags;
+> +	struct ctd_request_private *request, *request_next;
+> +
+> +	ctd_dprintk_crit("ctd_private -> %p\n", ctd_private);
+> +
+> +	INIT_LIST_HEAD(&iochain);
+> +	spin_lock_irqsave(&ctd_private->io_mgmt_lock, flags);
+> +
+> +	/* post reset need to cleanup the aborted io
+> +	 * as no reply is expected on them
+> +	 */
+> +	/* request is still kept as REPLY_AWAITED to
+> +	 * handle any response post connect
+> +	 */
+> +	list_for_each_entry_safe(request, request_next,
+> +			&ctd_private->aborted_io_list, list) {
+> +		list_del(&request->list);
+> +		request->io_state =3D CTD_IO_REQUEST_REPLY_AWAITED;
+> +	}
+> +
+> +	/* rifle thru queued and requeued IO list and mark them for abort,
+> +	 * the completion to the upper layers is handled by the timeout log=
+ic
+> +	 * invoked from the SCSI midlayer
+> +	 */
+> +	/* request is still kept as REPLY_AWAITED to handle any response po=
+st
+> +	 * connect
+> +	 */
+> +	list_for_each_entry_safe(request, request_next,
+> +			&ctd_private->queued_io_list, list) {
+> +		list_del(&request->list);
+> +		list_add(&request->list, &iochain);
+> +		request->cmnd->host_scribble =3D NULL;
+> +		request->io_state =3D CTD_IO_REQUEST_REPLY_AWAITED;
+> +
+> +		/* These requests shall be aborted to upper layer, so treat them
+> +		 * as abort_sent
+> +		 */
+> +		atomic_long_inc(&ctd_private->hw_stats.abort_sent);
+> +		atomic_long_dec(&ctd_private->hw_stats.active_io_count);
+> +	}
+> +
+> +	list_for_each_entry_safe(request, request_next,
+> +			&ctd_private->requeued_io_list, list) {
+> +		list_del(&request->list);
+> +		list_add(&request->list, &iochain);
+> +		request->cmnd->host_scribble =3D NULL;
+> +		request->io_state =3D CTD_IO_REQUEST_REPLY_AWAITED;
+> +
+> +		/* These requests shall be aborted to upper layer, so treat them
+> +		 * as abort_sent
+> +		 */
+> +		atomic_long_inc(&ctd_private->hw_stats.abort_sent);
+> +		atomic_long_dec(&ctd_private->hw_stats.active_io_count);
+> +	}
+> +	spin_unlock_irqrestore(&ctd_private->io_mgmt_lock, flags);
+> +
+> +	list_for_each_entry_safe(request, request_next,
+> +			&iochain, list) {
+> +		struct scsi_cmnd *cmnd;
+> +
+> +		list_del(&request->list);
+> +
+> +		ctd_dprintk_crit(
+> +			"cmnd -> %p request -> %p CTD_IO_REQUEST_REPLY_AWAITED\n",
+> +			request->cmnd, request);
+> +
+> +		cmnd =3D request->cmnd;
+> +		request->cmnd =3D NULL;
+> +
+> +		/* error propagation to the SCSI midlayer */
+> +		scsi_translate_sam_code(cmnd, SAM_STAT_TASK_ABORTED);
+> +		scsi_set_resid(cmnd, scsi_bufflen(cmnd));
+> +		cmnd->scsi_done(cmnd);
+> +	}
+> +	ctd_dprintk("ctd_private -> %p\n", ctd_private);
+> +}
+> +
+> +static int
+> +ctd_scsi_layer_cleanup(struct pci_dev *pci_dev)
+> +{
+> +	int error;
+> +	struct ctd_pci_private *ctd_private;
+> +	struct ctd_host_info *ctd_host_info;
+> +
+> +	error =3D 0;
+> +
+> +	ctd_private =3D pci_get_drvdata(pci_dev);
+> +
+> +	ctd_dprintk("ctd_private pci_dev -> %p %p\n", ctd_private, pci_dev)=
+;
+> +
+> +	ctd_check_response_queue((unsigned long)pci_dev);
+> +
+> +	ctd_clear_io_queue(ctd_private);
+> +
+> +	ctd_destroy_event_thread(ctd_private);
+> +
+> +	flush_scheduled_work();
+> +
+> +	ctd_host_info =3D ctd_private->host_private;
+> +
+> +	scsi_remove_host(ctd_host_info->shost);
+> +
+> +	scsi_host_put(ctd_host_info->shost);
+> +
+> +	return error;
+> +}
+> +
+> +#ifdef CONFIG_PM
+> +static int
+> +ctd_pci_suspend(struct pci_dev *pci_dev, pm_message_t state)
+> +{
+> +	pci_save_state(pci_dev);
+> +	pci_set_power_state(pci_dev, PCI_D3hot);
+> +	return 0;
+> +}
+> +
+> +static int
+> +ctd_pci_resume(struct pci_dev *pci_dev)
+> +{
+> +	pci_restore_state(pci_dev);
+> +	pci_set_power_state(pci_dev, PCI_D0);
+> +	return 0;
+> +}
+> +#endif
+> +
+> +static void
+> +ctd_pci_remove(struct pci_dev *pci_dev)
+> +{
+> +	struct ctd_pci_private *ctd_private;
+> +
+> +	ctd_dprintk("pic_dev -> %p\n", pci_dev);
+> +
+> +	ctd_private =3D pci_get_drvdata(pci_dev);
+> +
+> +	ctd_private->hw_state =3D CTD_HW_STATE_DISABLED;
+> +
+> +	ctd_scsi_layer_cleanup(pci_dev);
+> +
+> +#if !defined(__VMKLNX__)
+> +	ctd_proc_remove(pci_dev);
+> +#endif
+> +	free_irq(pci_dev->irq, pci_dev);
+> +
+> +	pci_disable_msi(pci_dev);
+> +
+> +	if (ctd_private->ioaddr_txrx_rings)
+> +		pci_iounmap(pci_dev, ctd_private->ioaddr_txrx_rings);
+> +
+> +	if (ctd_private->ioaddr_fast_registers)
+> +		pci_iounmap(pci_dev, ctd_private->ioaddr_fast_registers);
+> +
+> +	if (ctd_private->ioaddr_slow_registers)
+> +		pci_iounmap(pci_dev, ctd_private->ioaddr_slow_registers);
+> +
+> +	tasklet_kill(&ctd_private->isr_tasklet);
+> +
+> +	ctd_release_io_pool(ctd_private);
+> +
+> +	kfree(ctd_private);
+> +
+> +	pci_release_regions(pci_dev);
+> +	pci_set_drvdata(pci_dev, NULL);
+> +	pci_disable_device(pci_dev);
+> +}
+> +
+> +static void
+> +ctd_check_error_condition(struct pci_dev *pci_dev)
+> +{
+> +#define EMCCTD_MAX_CACHED_ERROR	14
+> +	int i, j;
+> +	int error;
+> +	union emc_ctd_v010_message message;
+> +	static emc_ctd_uint32_t internal_errors_1_14[EMCCTD_MAX_CACHED_ERRO=
+R];
+> +	struct ctd_pci_private *ctd_private =3D pci_get_drvdata(pci_dev);
+> +
+> +	if (ctd_private->pci_fast_registers->emc_ctd_v010_fregs_error_flag)=
+ {
+> +		for (i =3D 0; i <  EMCCTD_MAX_CACHED_ERROR; i++) {
+> +			if (internal_errors_1_14[i] !=3D
+> +				ctd_private->pci_fast_registers->emc_ctd_v010_fregs_errors_1_14[=
+i]) {
+> +
+> +				internal_errors_1_14[i] =3D
+> +					ctd_private->pci_fast_registers->emc_ctd_v010_fregs_errors_1_14=
+[i];
+> +
+> +				error =3D i + 1;
+> +
+> +				for (j =3D 0; j < EMC_CTD_V010_LOG_ERROR_TX_SIZE; j++) {
+> +					if (ctd_private->pci_fast_registers->emc_ctd_v010_fregs_log_err=
+or_tx_error[j] =3D=3D
+> +							error) {
+> +						memcpy(&message,
+> +							&ctd_private->pci_fast_registers->emc_ctd_v010_fregs_log_erro=
+r_tx_message[j],
+> +							sizeof(message));
+> +						ctd_dprintk_crit(
+> +							"header addr -> %x error -> %s\n",
+> +							message.emc_ctd_scsi_message_header_address,
+> +							(error =3D=3D
+> +								EMC_CTD_V010_ERROR_TX_CHANNEL_DISCONNECTED ?
+> +									"EMC_CTD_V010_ERROR_TX_CHANNEL_DISCONNECTED" :
+> +								error =3D=3D
+> +									EMC_CTD_V010_ERROR_TX_MESSAGE_WHAT ?
+> +										 "EMC_CTD_V010_ERROR_TX_MESSAGE_WHAT" :
+> +								error =3D=3D
+> +									EMC_CTD_V010_ERROR_TX_MESSAGE_RESERVED ?
+> +										"EMC_CTD_V010_ERROR_TX_MESSAGE_RESERVED" :
+> +								error =3D=3D
+> +									EMC_CTD_V010_ERROR_TX_MESSAGE_ORDER ?
+> +										"EMC_CTD_V010_ERROR_TX_MESSAGE_ORDER" :
+> +								error =3D=3D
+> +									EMC_CTD_V010_ERROR_TX_ENDPOINT_TYPE ?
+> +										"EMC_CTD_V010_ERROR_TX_ENDPOINT_TYPE" :
+> +								error =3D=3D
+> +									EMC_CTD_V010_ERROR_TX_OPAQUE_RX_UNKNOWN ?
+> +										"EMC_CTD_V010_ERROR_TX_OPAQUE_RX_UNKNOWN" :
+> +											"EMC_CTD_V010_ERROR_NULL"));
+> +					}
+> +				}
+> +			}
+> +		}
+> +	}
+> +}
+> +/*
+> + * ctd_check_response_queue
+> + *
+> + * Bottom half of interrupt handler.
+> + */
+> +static void
+> +ctd_check_response_queue(unsigned long instance_addr)
+> +{
+> +	struct pci_dev *pci_dev =3D (struct pci_dev *)instance_addr;
+> +	struct ctd_pci_private *ctd_private =3D pci_get_drvdata(pci_dev);
+> +	union emc_ctd_v010_message io_response;
+> +
+> +
+> +		/* empty response queue */
+> +		while (ctd_hw_dequeue_response(&io_response, ctd_private) =3D=3D
+> +							SUCCESS) {
+> +			/* handle the response */
+> +			ctd_handle_response(&io_response, ctd_private);
+> +		}
+> +}
+> +
+> +
+> +static irqreturn_t
+> +ctd_isr(int irq, void *opaque)
+> +{
+> +	struct pci_dev *pci_dev =3D (struct pci_dev *)opaque;
+> +	struct ctd_pci_private *ctd_private =3D pci_get_drvdata(pci_dev);
+> +
+> +	atomic_long_inc(&ctd_private->hw_stats.interrupts);
+> +
+> +	/* schedule work for later */
+> +	tasklet_schedule(&ctd_private->isr_tasklet);
+> +
+> +	return IRQ_HANDLED;
+> +}
+> +
+> +static int
+> +ctd_request_msi(struct pci_dev *pci_dev)
+> +{
+> +	int err =3D -EFAULT;
+> +
+> +	if (pci_dev->irq) {
+> +		err =3D pci_enable_msi(pci_dev);
+> +		if (!err) {
+> +			err =3D request_irq(pci_dev->irq, ctd_isr,
+> +					IRQF_SHARED,
+> +					pci_name(pci_dev), pci_dev);
+> +			if (err < 0) {
+> +				ctd_dprintk_crit("request_irq failure !!!\n");
+> +				pci_disable_msi(pci_dev);
+> +				err =3D -EBUSY;
+> +			}
+> +		}
+> +	}
+> +	return err;
+> +}
+> +
+> +static struct ctd_request_private *
+> +ctd_acquire_request(struct ctd_pci_private *ctd_private)
+> +{
+> +	unsigned long flags;
+> +	struct ctd_request_private *ctd_request;
+> +
+> +	ctd_request =3D NULL;
+> +
+> +	spin_lock_irqsave(&ctd_private->io_mgmt_lock, flags);
+> +
+> +	/* check if any request in the aborted io list can be reused */
+> +	if (!list_empty(&ctd_private->aborted_io_list)) {
+> +		struct ctd_request_private *request, *request_next;
+> +
+> +		list_for_each_entry_safe(request, request_next,
+> +					&ctd_private->aborted_io_list, list) {
+> +			/* aborted_io_list is in chronologically order thus
+> +			 * failure of time_after() indicates any request after
+> +			 * this point is not in the kill zone
+> +			 */
+> +			if (time_before(jiffies, request->purge_lifetime))
+> +				break;
+> +
+> +			list_del(&request->list);
+> +			if (request->cdb_page) {
+> +				__free_pages(request->cdb_page,
+> +						request->cdb_page_order);
+> +			}
+> +			if (request->sgllist_page) {
+> +				__free_pages(request->sgllist_page,
+> +						request->sgllist_page_order);
+> +			}
+> +			memset(request, 0x0,
+> +					sizeof(struct ctd_request_private));
+> +			list_add(&request->list, &ctd_private->io_pool);
+> +			atomic_long_inc(&ctd_private->hw_stats.free_io_entries);
+> +		}
+> +	}
+> +
+> +	if (!list_empty(&ctd_private->io_pool)) {
+> +		ctd_request =3D list_first_entry(&ctd_private->io_pool,
+> +					struct ctd_request_private, list);
+> +		list_del(&ctd_request->list);
+> +		ctd_request->io_state =3D CTD_IO_REQUEST_QUEUED;
+> +	}
+> +
+> +	if (ctd_request)
+> +		atomic_long_dec(&ctd_private->hw_stats.free_io_entries);
+> +
+> +	spin_unlock_irqrestore(&ctd_private->io_mgmt_lock, flags);
+> +
+> +	return ctd_request;
+> +}
+> +
+> +static void
+> +ctd_release_request(struct ctd_request_private *ctd_request,
+> +			struct ctd_pci_private *ctd_private)
+> +{
+> +	unsigned long flags;
+> +
+> +	spin_lock_irqsave(&ctd_private->io_mgmt_lock, flags);
+> +	memset(ctd_request, 0x0, sizeof(struct ctd_request_private));
+> +	list_add(&ctd_request->list, &ctd_private->io_pool);
+> +
+> +	atomic_long_inc(&ctd_private->hw_stats.free_io_entries);
+> +
+> +	spin_unlock_irqrestore(&ctd_private->io_mgmt_lock, flags);
+> +}
+> +
+> +static void
+> +ctd_release_io_pool(struct ctd_pci_private *ctd_private)
+> +{
+> +	kfree(ctd_private->io_map);
+> +}
+> +
+> +static int
+> +ctd_alloc_io_pool(struct ctd_pci_private *ctd_private, unsigned int =
+pool_size)
+> +{
+> +	int i;
+> +	int error;
+> +
+> +	error =3D -ENOMEM;
+> +
+> +	INIT_LIST_HEAD(&ctd_private->io_pool);
+> +	INIT_LIST_HEAD(&ctd_private->queued_io_list);
+> +	INIT_LIST_HEAD(&ctd_private->aborted_io_list);
+> +	INIT_LIST_HEAD(&ctd_private->requeued_io_list);
+> +
+> +	spin_lock_init(&ctd_private->io_mgmt_lock);
+> +
+> +	ctd_private->io_map =3D kcalloc(pool_size,
+> +				sizeof(struct ctd_request_private), GFP_KERNEL);
+> +
+> +	/*
+> +	 * in case of allocation failure try with one fourth the size befor=
+e
+> +	 * throwing the towel
+> +	 */
+> +
+> +	if (ctd_private->io_map =3D=3D NULL) {
+> +		pool_size =3D pool_size >> 2;
+> +		ctd_private->io_map =3D kcalloc(pool_size,
+> +			sizeof(struct ctd_request_private), GFP_KERNEL);
+> +		if (ctd_private->io_map =3D=3D NULL) {
+> +			ctd_dprintk_crit(
+> +				"io_pool allocation failure for pool_size -> %d\n",
+> +				pool_size);
+
+No OOM messages.
+
+> +			goto ctd_alloc_io_pool_complete;
+> +		}
+> +	}
+> +
+> +	ctd_private->io_map_end =3D ctd_private->io_map + pool_size;
+> +
+> +	for (i =3D 0; i < pool_size; i++) {
+> +		struct ctd_request_private  *request_context =3D
+> +						ctd_private->io_map + i;
+> +		memset(request_context, 0x0,
+> +				sizeof(struct ctd_request_private));
+> +		list_add(&request_context->list, &ctd_private->io_pool);
+> +	}
+> +	ctd_dprintk_crit(
+> +		"ctd_private -> %p, pool_size -> %x, io_map -> %p, io_map_end-> %p=
+\n",
+> +			ctd_private, pool_size,
+> +			ctd_private->io_map, ctd_private->io_map_end);
+> +	error =3D 0;
+> +	ctd_private->hw_stats.free_io_entries.counter =3D pool_size;
+> +ctd_alloc_io_pool_complete:
+> +	return error;
+> +}
+> +
+> +static int
+> +ctd_pci_probe(
+> +	struct pci_dev *pci_dev,
+> +	const struct pci_device_id *id
+> +)
+> +{
+> +	struct ctd_pci_private *ctd_private;
+> +	int ctd_proc_initialized;
+> +	int ctd_scsi_initialized;
+> +	int ctd_regions_initialized;
+> +	int err;
+> +
+> +	err =3D -ENODEV;
+> +	ctd_proc_initialized =3D FAILED;
+> +	ctd_scsi_initialized =3D FAILED;
+> +	ctd_regions_initialized =3D FAILED;
+> +
+> +	ctd_private =3D (struct ctd_pci_private *)
+> +			kzalloc(sizeof(struct ctd_pci_private), GFP_ATOMIC);
+> +
+> +	if (ctd_private =3D=3D NULL) {
+> +		ctd_dprintk_crit("kzalloc Failure\n");
+> +		goto ctd_pci_probe_complete;
+> +	}
+
+No cast and no OOM messages.
+
+> +
+> +	ctd_private->pci_dev =3D pci_dev;
+> +
+> +	/* enable the device */
+> +	err =3D pci_enable_device(pci_dev);
+> +	if (err) {
+> +		ctd_dprintk_crit("pci_enable_device Failure\n");
+
+I'd prefere dev_err() here, as you'll have the information which device=
+ enable
+failed.
+
+> +		goto ctd_pci_probe_complete;
+> +	}
+> +	pci_set_master(pci_dev);
+> +
+> +	err =3D pci_request_regions(pci_dev, "ctd-pci");
+> +	if (err) {
+> +		ctd_dprintk_crit("pci_request_regions Failure\n");
+
+Same here.
+
+> +		goto ctd_pci_probe_complete;
+> +	}
+> +
+> +	ctd_regions_initialized =3D SUCCESS;
+> +
+> +	ctd_dprintk("ctd_private pci_dev -> %p %p\n", ctd_private, pci_dev)=
+;
+> +
+> +#define EMC_CTD_TXRX_MSG_SIZE 128
+> +
+> +	if (pci_resource_start(pci_dev, EMC_CTD_V010_BAR_RINGS)) {
+> +		ctd_private->ioaddr_txrx_rings =3D ioremap(
+> +				pci_resource_start(pci_dev,
+> +					EMC_CTD_V010_BAR_RINGS),
+> +				pci_resource_len(pci_dev,
+> +					EMC_CTD_V010_BAR_RINGS)
+> +				);
+> +		ctd_private->txrx_ringsize =3D
+> +			(pci_resource_len(pci_dev,
+> +				  EMC_CTD_V010_BAR_RINGS) >> 1)
+> +					/ EMC_CTD_TXRX_MSG_SIZE;
+> +
+> +		ctd_dprintk_crit(
+> +			"physical addr =3D %llx ioaddr_txrx_rings =3D %p , ring size =3D =
+%x\n",
+> +				pci_resource_start(pci_dev,
+> +					EMC_CTD_V010_BAR_RINGS),
+> +				ctd_private->ioaddr_txrx_rings,
+> +					ctd_private->txrx_ringsize);
+> +
+> +	}
+> +	if (ctd_private->ioaddr_txrx_rings =3D=3D NULL) {
+> +		err =3D -ENOMEM;
+> +		ctd_dprintk_crit("ioremap failure\n");
+> +		goto ctd_pci_probe_complete;
+> +	} else {
+> +		ctd_private->pci_request_array =3D ctd_private->ioaddr_txrx_rings;
+> +		ctd_private->pci_response_array =3D
+> +			ctd_private->ioaddr_txrx_rings +
+> +				((pci_resource_len(pci_dev,
+> +					   EMC_CTD_V010_BAR_RINGS)) >> 1);
+> +	}
+> +
+> +
+> +	if (pci_resource_start(pci_dev, EMC_CTD_V010_BAR_FREGS)) {
+> +		ctd_private->ioaddr_fast_registers =3D
+> +			ioremap(pci_resource_start(pci_dev,
+> +					EMC_CTD_V010_BAR_FREGS),
+> +				pci_resource_len(pci_dev,
+> +				EMC_CTD_V010_BAR_FREGS));
+> +
+> +		ctd_dprintk_crit(
+> +			"physical addr =3D %llx ioaddr_fast_registers =3D %p\n",
+> +				pci_resource_start(pci_dev,
+> +					EMC_CTD_V010_BAR_FREGS),
+> +				ctd_private->ioaddr_fast_registers);
+> +	}
+> +	if (ctd_private->ioaddr_fast_registers =3D=3D NULL) {
+> +		err =3D -ENOMEM;
+> +		ctd_dprintk_crit("ioremap failure\n");
+> +		goto ctd_pci_probe_complete;
+> +	} else {
+> +		ctd_private->pci_fast_registers =3D
+> +			ctd_private->ioaddr_fast_registers;
+> +	}
+> +
+> +	if (pci_resource_start(pci_dev, EMC_CTD_V010_BAR_SREGS)) {
+> +		ctd_private->ioaddr_slow_registers =3D
+> +			ioremap(pci_resource_start(pci_dev,
+> +						EMC_CTD_V010_BAR_SREGS),
+> +				pci_resource_len(pci_dev,
+> +					EMC_CTD_V010_BAR_SREGS));
+> +
+> +		ctd_dprintk_crit(
+> +			"physical addr =3D %llx ioaddr_slow_registers =3D %p\n",
+> +				pci_resource_start(pci_dev,
+> +					EMC_CTD_V010_BAR_SREGS),
+> +				ctd_private->ioaddr_slow_registers);
+> +	}
+> +	if (ctd_private->ioaddr_slow_registers =3D=3D NULL) {
+> +		err =3D -ENOMEM;
+> +		ctd_dprintk_crit("ioremap failure\n");
+> +		goto ctd_pci_probe_complete;
+> +	} else {
+> +		ctd_private->pci_slow_registers =3D
+> +			ctd_private->ioaddr_slow_registers;
+> +	}
+> +
+> +	/* reset the device */
+> +	ctd_private->pci_device_reset_register =3D 0XFF;
+> +
+> +	ctd_private->pci_request_queue_size =3D ctd_private->txrx_ringsize;
+> +	ctd_private->pci_response_queue_size =3D ctd_private->txrx_ringsize=
+;
+> +
+> +	err =3D ctd_alloc_io_pool(ctd_private,
+> +			ctd_private->pci_request_queue_size);
+> +	if (err) {
+> +		ctd_dprintk_crit("ctd_alloc_io_pool failure\n");
+> +		goto ctd_pci_probe_complete;
+> +	}
+> +
+> +	pci_set_drvdata(pci_dev, ctd_private);
+> +
+> +	spin_lock_init(&ctd_private->isr_lock);
+> +
+> +	/* setup tasklet for scanning response queue */
+> +	tasklet_init(&ctd_private->isr_tasklet,
+> +			ctd_check_response_queue, (unsigned long)pci_dev);
+> +
+> +	ctd_private->hw_state =3D CTD_HW_STATE_INITIALIZED;
+> +
+> +	pci_set_master(pci_dev);
+> +
+> +#if !defined(__VMKLNX__)
+> +	err =3D ctd_proc_init(pci_dev);
+> +	if (err) {
+> +		ctd_dprintk_crit("ctd_proc_init failure\n");
+> +		goto ctd_pci_probe_complete;
+> +	}
+> +	ctd_proc_initialized =3D SUCCESS;
+> +#endif
+> +	err =3D ctd_scsi_layer_init(pci_dev);
+> +	if (err) {
+> +		ctd_dprintk_crit("ctd_scsi_layer_init failure\n");
+> +		goto ctd_pci_probe_complete;
+> +	}
+> +	ctd_scsi_initialized =3D SUCCESS;
+> +
+> +	err =3D ctd_request_msi(pci_dev);
+> +	if (err) {
+> +		ctd_dprintk_crit("ctd_request_msi failure\n");
+> +		goto ctd_pci_probe_complete;
+> +	}
+> +
+> +	/* after we reset the device, but before we enabled MSI, some messa=
+ges
+> +	 * may have been received.  check for them
+> +	 */
+> +	tasklet_schedule(&ctd_private->isr_tasklet);
+> +
+> +ctd_pci_probe_complete:
+> +	if (err) {
+> +		if (ctd_private) {
+> +			tasklet_kill(&ctd_private->isr_tasklet);
+> +
+> +			if (ctd_scsi_initialized =3D=3D SUCCESS)
+> +				ctd_scsi_layer_cleanup(pci_dev);
+> +
+> +			if (ctd_proc_initialized =3D=3D SUCCESS)
+> +				ctd_proc_remove(pci_dev);
+> +
+> +			if (ctd_private->ioaddr_txrx_rings)
+> +				pci_iounmap(pci_dev,
+> +					ctd_private->ioaddr_txrx_rings);
+> +
+> +			if (ctd_private->ioaddr_fast_registers)
+> +				pci_iounmap(pci_dev,
+> +					ctd_private->ioaddr_fast_registers);
+> +
+> +			if (ctd_private->ioaddr_slow_registers)
+> +				pci_iounmap(pci_dev,
+> +					ctd_private->ioaddr_slow_registers);
+> +
+> +			if (ctd_regions_initialized =3D=3D SUCCESS)
+> +				pci_release_regions(pci_dev);
+> +
+> +			ctd_release_io_pool(ctd_private);
+> +			kfree(ctd_private);
+> +		}
+> +		pci_set_drvdata(pci_dev, NULL);
+> +		pci_disable_device(pci_dev);
+> +	}
+> +	return err;
+> +}
+> +
+> +#if !defined(__VMKLNX__)
+> +static const struct file_operations ctd_proc_fops =3D {
+> +	.open		=3D ctd_proc_open,
+> +	.read		=3D seq_read,
+> +	.llseek		=3D seq_lseek,
+> +	.release	=3D seq_release,
+> +};
+> +static int
+> +ctd_proc_open(struct inode *inode, struct file *file)
+> +{
+> +	return single_open(file, ctd_proc_show, PDE_DATA(inode));
+> +}
+> +
+> +int
+> +ctd_proc_init(struct pci_dev *pci_dev)
+> +{
+> +	int err;
+> +	static int hw_index;
+> +	char hw_name[MAX_PROC_FILE_NAMELEN];
+> +	struct ctd_pci_private *ctd_private;
+> +	struct proc_dir_entry *pde;
+> +
+> +	ctd_private =3D (struct ctd_pci_private *) pci_get_drvdata(pci_dev)=
+;
+> +	ctd_private->hw_index =3D hw_index;
+> +
+> +	memset(hw_name, 0x0, sizeof(hw_name));
+> +	snprintf(hw_name, sizeof(hw_name), "emcctd_stats_%d", hw_index++);
+> +
+> +	err =3D -EPERM;
+> +
+> +	do {
+> +		if (ctd_proc_directory =3D=3D NULL)
+> +			break;
+> +		pde =3D proc_create_data(hw_name, S_IFREG | S_IRUGO | S_IWUSR,
+> +				ctd_proc_directory,
+> +				&ctd_proc_fops,
+> +				ctd_private);
+> +
+> +		if (pde =3D=3D NULL) {
+> +			ctd_dprintk_crit(
+> +				"create_proc_read_entry failure for %s\n",
+> +				hw_name);
+> +			break;
+> +		}
+> +		err =3D 0;
+> +	} while (0);
+> +	return err;
+> +}
+> +
+> +void
+> +ctd_proc_remove(struct pci_dev *pci_dev)
+> +{
+> +	int hw_index;
+> +	char hw_name[MAX_PROC_FILE_NAMELEN];
+> +	struct ctd_pci_private *ctd_private;
+> +
+> +	ctd_private =3D (struct ctd_pci_private *) pci_get_drvdata(pci_dev)=
+;
+> +
+> +	hw_index =3D ctd_private->hw_index;
+> +	memset(hw_name, 0x0, sizeof(hw_name));
+> +	snprintf(hw_name, sizeof(hw_name), "emc/emcctd_stats_%d", hw_index)=
+;
+> +
+> +	ctd_dprintk("removing %s\n", hw_name);
+> +
+> +	remove_proc_entry(hw_name, NULL);
+> +
+> +}
+> +#endif
+> +
+> +static int __init ctd_pci_init(void)
+> +{
+> +	int err;
+> +
+> +	ctd_dprintk_crit("Loading emcctd\n");
+> +	init_waitqueue_head(&lun_discovery_event_barrier);
+> +
+> +	ctd_proc_directory =3D proc_mkdir("emc", NULL);
+> +
+> +	err =3D pci_register_driver(&ctd_pci_driver);
+> +
+> +	if (err) {
+> +		remove_proc_entry("emc", NULL);
+> +	} else {
+> +		/* wait for 20 seconds or less to allow the luns to appear
+> +		 * before exiting from insmod
+> +		 */
+> +		wait_event_interruptible_timeout(lun_discovery_event_barrier,
+> +					lun_discovery_complete, ((HZ) * 20));
+> +	}
+> +
+> +	return err;
+> +}
+> +
+> +module_init(ctd_pci_init);
+> +
+> +static void __exit ctd_pci_exit(void)
+> +{
+> +	pci_unregister_driver(&ctd_pci_driver);
+> +	remove_proc_entry("emc", NULL);
+> +}
+> +
+> +module_exit(ctd_pci_exit);
+> diff --git a/drivers/scsi/emcctd/emcctd.h b/drivers/scsi/emcctd/emcct=
+d.h
+> new file mode 100644
+> index 0000000..3fba931
+> --- /dev/null
+> +++ b/drivers/scsi/emcctd/emcctd.h
+> @@ -0,0 +1,232 @@
+> +/*
+> + * EMCCTD: EMC Cut-Through HBA Driver for SCSI subsystem.
+> + *
+> + * Copyright (C) 2015 by EMC Corporation, Hopkinton, MA.
+> + *
+> + * Authors:
+> + *	fredette, matt <matt.fredette-mb1K0bWo544@public.gmane.org>
+> + *	Pirotte, Serge <serge.pirotte-mb1K0bWo544@public.gmane.org>
+> + *	Singh Animesh <Animesh.Singh-mb1K0bWo544@public.gmane.org>
+> + *	Singhal, Maneesh <Maneesh.Singhal-mb1K0bWo544@public.gmane.org>
+> + *
+> + * This program is free software; you can redistribute it and/or
+> + * modify it under the terms of the GNU General Public License
+> + * as published by the Free Software Foundation; either version 2
+> + * of the License, or (at your option) any later version.
+> + *
+> + * This program is distributed in the hope that it will be useful,
+> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + * GNU General Public License for more details.
+> + *
+> + */
+> +
+> +#ifndef _EMCCTD_H_
+> +#define _EMCCTD_H_
+> +
+> +#define DRV_NAME	"emcctd"
+> +
+> +#define EMCCTD_V010_PROTOCOL_MINOR_VERSION	0x0
+> +
+> +/* please refer to emc_ctd_v010_scsi_command_cdb in emc_ctd_interfac=
+e.h */
+> +#define EMCCTD_V010_MAX_CDB_SIZE		16
+> +
+> +#define EMCCTD_MAX_LUN			16384
+> +#define EMCCTD_MAX_ID			16
+> +#define EMCCTD_MAX_RETRY		5
+> +#define EMCCTD_CMD_PER_LUN		16
+> +#define EMCCTD_THIS_ID			(-1)
+> +#define EMCCTD_REQUEST_TIMEOUT		(60 * HZ)
+> +#define EMCCTD_OPAQUE_PURGE_WAITTIME	(10 * HZ)
+> +
+> +#define EMCCTD_DEVICE_RESET_PAUSE	3
+> +#define EMCCTD_DETECT_RETRY_MAX		3
+> +
+> +#define ctd_dprintk(__m_fmt, ...)		\
+> +do {				\
+> +	if (ctd_debug)		\
+> +		pr_info("%s:%d:"__m_fmt, __func__, __LINE__, ##__VA_ARGS__); \
+> +} while (0)
+> +
+> +#define ctd_dprintk_crit(__m_fmt, ...)		\
+> +		pr_crit("%s:%d:"__m_fmt, __func__, __LINE__, ##__VA_ARGS__)
+> +
+> +#define EMCCTD_TARGET_DETECT_COMPLETED		1
+> +#define EMCCTD_TARGET_DETECT_NOT_COMPLETED	0
+> +
+> +struct ctd_target_info {
+> +	unsigned int detect_completed;
+> +	struct scsi_target *starget;
+> +	struct emc_ctd_v010_detect ctd_detect;
+> +};
+> +
+> +#define emc_ctd_detect_header_address           \
+> +		emc_ctd_v010_detect_header.emc_ctd_v010_header_address
+> +#define emc_ctd_detect_header_minor             \
+> +		emc_ctd_v010_detect_header.emc_ctd_v010_header_minor
+> +#define emc_ctd_detect_header_what              \
+> +		emc_ctd_v010_detect_header.emc_ctd_v010_header_what
+> +
+> +#define emc_ctd_scsi_command_header_address     \
+> +		emc_ctd_v010_scsi_command_header.emc_ctd_v010_header_address
+> +#define emc_ctd_scsi_command_header_minor       \
+> +		emc_ctd_v010_scsi_command_header.emc_ctd_v010_header_minor
+> +#define emc_ctd_scsi_command_header_what        \
+> +		emc_ctd_v010_scsi_command_header.emc_ctd_v010_header_what
+> +
+> +#define emc_ctd_scsi_response_header_address    \
+> +		emc_ctd_v010_scsi_response_header.emc_ctd_v010_header_address
+> +#define emc_ctd_scsi_response_header_minor      \
+> +		emc_ctd_v010_scsi_response_header.emc_ctd_v010_header_minor
+> +#define emc_ctd_scsi_response_header_what       \
+> +		emc_ctd_v010_scsi_response_header.emc_ctd_v010_header_what
+> +
+> +#define emc_ctd_scsi_phase_header_address       \
+> +		emc_ctd_v010_scsi_phase_header.emc_ctd_v010_header_address
+> +#define emc_ctd_scsi_phase_header_minor         \
+> +		emc_ctd_v010_scsi_phase_header.emc_ctd_v010_header_minor
+> +#define emc_ctd_scsi_phase_header_what          \
+> +		emc_ctd_v010_scsi_phase_header.emc_ctd_v010_header_what
+> +
+> +#define emc_ctd_scsi_message_header_address     \
+> +		emc_ctd_v010_message_header.emc_ctd_v010_header_address
+> +#define emc_ctd_scsi_message_header_minor       \
+> +		emc_ctd_v010_message_header.emc_ctd_v010_header_minor
+> +#define emc_ctd_scsi_message_header_what        \
+> +		emc_ctd_v010_message_header.emc_ctd_v010_header_what
+> +
+> +#define emc_ctd_scsi_command_sgl                \
+> +		emc_ctd_v010_scsi_command_u.emc_ctd_v010_scsi_command_sgl
+> +#define emc_ctd_scsi_response_extra             \
+> +		emc_ctd_v010_scsi_response_u.emc_ctd_v010_scsi_response_extra
+> +
+> +#define ctd_detect_name_bytes		\
+> +	ctd_detect.emc_ctd_v010_detect_name.emc_ctd_v010_name_bytes
+> +
+> +struct ctd_host_info {
+> +	struct Scsi_Host *shost;
+> +	struct pci_dev *pci_dev;
+> +	struct ctd_target_info target[EMCCTD_MAX_ID];
+> +};
+> +
+> +struct ctd_dev_info {
+> +	struct ctd_host_info *ctd_host;
+> +	struct ctd_target_info *ctd_target;
+> +	struct emc_ctd_v010_detect *ctd_target_detect;
+> +};
+> +
+> +#define PROC_STAT_SCSI_TS_MAX   10
+> +#define MAX_PROC_FILE_NAMELEN	128
+> +#define CTD_MAX_IO_STATS	200
+> +
+> +struct ctd_hw_stats {
+> +	atomic_long_t			interrupts;
+> +	atomic_long_t			requests_sent;
+> +	atomic_long_t			responses_received;
+> +	atomic_long_t			active_io_count;
+> +	atomic_long_t			abort_sent;
+> +	atomic_long_t			abort_received;
+> +	atomic_long_t			what_in;
+> +	atomic_long_t			what_out;
+> +	atomic_long_t			free_io_entries;
+> +	unsigned long long		io_stats[CTD_MAX_IO_STATS];
+> +	unsigned int			io_stats_index;
+> +};
+> +
+> +enum ctd_io_request_state {
+> +	CTD_IO_REQUEST_FREE,
+> +	CTD_IO_REQUEST_QUEUED,
+> +	CTD_IO_REQUEST_REQUEUED,
+> +	CTD_IO_REQUEST_ABORTED,
+> +	CTD_IO_REQUEST_COMPLETED,
+> +	CTD_IO_REQUEST_REPLY_AWAITED,
+> +	CTD_IO_REQUEST_INVALID
+> +};
+> +
+> +enum ctd_hw_state {
+> +	CTD_HW_STATE_UNINITIALIZED,
+> +	CTD_HW_STATE_INITIALIZED,
+> +	CTD_HW_STATE_UNDER_RESET,
+> +	CTD_HW_STATE_DISABLED,
+> +	CTD_HW_STATE_INVALID
+> +};
+> +
+> +struct ctd_request_private {
+> +	struct list_head		list;
+> +	enum ctd_io_request_state	io_requeue_state;
+> +	unsigned int			io_timeout;
+> +	enum ctd_io_request_state	io_state;
+> +	struct scsi_cmnd		*cmnd;
+> +	struct page			*cdb_page;
+> +	unsigned int			cdb_page_order;
+> +	struct page			*sgllist_page;
+> +	unsigned int			sgllist_page_order;
+> +	unsigned long			purge_lifetime;
+> +	unsigned long long		io_start_time;
+> +};
+> +
+> +struct ctd_pci_private {
+> +	struct pci_dev			*pci_dev;
+> +	void				*host_private;
+> +
+> +	void __iomem			*ioaddr_txrx_rings;
+> +	void __iomem			*ioaddr_fast_registers;
+> +	void __iomem			*ioaddr_slow_registers;
+> +
+> +	emc_ctd_uint32_t		txrx_ringsize;
+> +	emc_ctd_uint32_t		pci_request_queue_size;
+> +	emc_ctd_uint32_t		pci_response_queue_size;
+> +	struct emc_ctd_v010_fregs	*pci_fast_registers;
+> +	struct emc_ctd_v010_sregs	*pci_slow_registers;
+> +	union emc_ctd_v010_message	*pci_response_array;
+> +	union emc_ctd_v010_message	*pci_request_array;
+> +
+> +	struct tasklet_struct		isr_tasklet;
+> +	spinlock_t			isr_lock;
+> +	unsigned int			hw_index;
+> +	struct ctd_hw_stats		hw_stats;
+> +	enum ctd_hw_state		hw_state;
+> +	struct list_head		queued_io_list;
+> +	struct list_head		aborted_io_list;
+> +	struct list_head		requeued_io_list;
+> +	struct list_head		io_pool;
+> +	struct ctd_request_private	*io_map;
+> +	struct ctd_request_private	*io_map_end;
+> +	spinlock_t			io_mgmt_lock;
+> +
+> +	struct task_struct		*ctd_event_thread;
+> +	struct list_head		event_io_list;
+> +	spinlock_t			event_io_lock;
+> +};
+> +
+> +#define request_producer_index		\
+> +		pci_fast_registers->emc_ctd_v010_fregs_tx_index_producer
+> +#define request_consumer_index		\
+> +		pci_fast_registers->emc_ctd_v010_fregs_tx_index_consumer
+> +#define response_producer_index		\
+> +		pci_fast_registers->emc_ctd_v010_fregs_rx_index_producer
+> +#define response_consumer_index		\
+> +		pci_fast_registers->emc_ctd_v010_fregs_rx_index_consumer
+> +#define pci_device_reset_register	\
+> +		pci_slow_registers->emc_ctd_v010_sregs_reset
+> +
+> +#define pci_device_name_bytes		\
+> +	pci_fast_registers->emc_ctd_v010_fregs_device_name.emc_ctd_v010_nam=
+e_bytes
+> +
+> +struct ctd_event_io_element {
+> +	struct list_head		list;
+> +	union emc_ctd_v010_message	io_msg;
+> +};
+> +
+> +static inline unsigned long long ctd_read_tsc(void)
+> +{
+> +	unsigned long long local_tsc;
+> +
+> +	local_tsc =3D rdtsc();
+> +
+> +	return local_tsc;
+> +}
+> +
+> +#endif /* _EMCCTD_H_ */
+> +
+> +/* vi: set ts=3D8 sw=3D8 noet: */
+> --
+> 1.8.5.2
+>=20
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi"=
+ in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+--=20
+Johannes Thumshirn                                          Storage
+jthumshirn-l3A5Bk7waGM@public.gmane.org                                +49 911 74053 689
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+HRB 21284 (AG N=FCrnberg)
+Key fingerprint =3D EC38 9CAB C2C4 F25D 8600 D0D0 0393 969D 2D76 0850
