@@ -1,115 +1,127 @@
-From: =?UTF-8?B?V3UtQ2hlbmcgTGkgKOadjuWLmeiqoCk=?=
-	<wuchengli@chromium.org>
-Subject: Re: [PATCH v2 1/2] v4l: add V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME.
-Date: Mon, 18 Jan 2016 23:08:37 -0800
-Message-ID: <CAOMLVLhZGstnwCTj1XXs19_HHcDuaX7mUVEznxfgxHAW36_viQ@mail.gmail.com>
-References: <1452760439-35564-1-git-send-email-wuchengli@chromium.org>
- <1452760439-35564-2-git-send-email-wuchengli@chromium.org>
- <56976263.4050902@xs4all.nl> <5697B85F.7080303@xs4all.nl>
+From: "Serge E. Hallyn" <serge.hallyn@ubuntu.com>
+Subject: Re: [PATCH RFC] Introduce new security.nscapability xattr
+Date: Tue, 19 Jan 2016 01:09:07 -0600
+Message-ID: <20160119070907.GA26867@mail.hallyn.com>
+References: <20151130224356.GA27972@mail.hallyn.com>
+ <87two3w0el.fsf@x220.int.ebiederm.org>
+ <20151204202116.GA4809@mail.hallyn.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5697B85F.7080303@xs4all.nl>
+Content-Disposition: inline
+In-Reply-To: <20151204202116.GA4809@mail.hallyn.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Hans Verkuil <hverkuil@xs4all.nl>
-Cc: Wu-Cheng Li <wuchengli@chromium.org>, pawel@osciak.com, mchehab@osg.samsung.com, k.debski@samsung.com, Antti Palosaari <crope@iki.fi>, Masanari Iida <standby24x7@gmail.com>, Nicolas Dufresne <nicolas.dufresne@collabora.com>, Ricardo Ribalda Delgado <ricardo.ribalda@gmail.com>, ao2@ao2.it, bparrot@ti.com, kyungmin.park@samsung.com, jtp.park@samsung.com, linux-media@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, Tiffany Lin <tiffany.lin@mediatek.com>, Daniel Kurtz <djkurtz@chromium.org>
+To: "Serge E. Hallyn" <serge@hallyn.com>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, lkml <linux-kernel@vger.kernel.org>, Andrew Morgan <morgan@kernel.org>, Andy Lutomirski <luto@amacapital.net>, lxc-devel@lists.linuxcontainers.org, Richard Weinberger <richard@nod.at>, LSM <linux-security-module@vger.kernel.org>, linux-api@vger.kernel.org, keescook@chromium.org
 List-Id: linux-api@vger.kernel.org
 
-Sorry. I missed the email because of wrong email client configuration.
-I've uploaded v4 to address the comments.
+On Fri, Dec 04, 2015 at 02:21:16PM -0600, Serge E. Hallyn wrote:
+> Quoting Eric W. Biederman (ebiederm@xmission.com):
+> > "Serge E. Hallyn" <serge.hallyn@ubuntu.com> writes:
+> > 
+> > > A common way for daemons to run with minimal privilege is to start as root,
+> > > perhaps setuid-root, choose a desired capability set, set PR_SET_KEEPCAPS,
+> > > then change uid to non-root.  A simpler way to achieve this is to set file
+> > > capabilities on a not-setuid-root binary.  However, when installing a package
+> > > inside a (user-namespaced) container, packages cannot be installed with file
+> > > capabilities.  For this reason, containers must install ping setuid-root.
+> > 
+> > Don't ping sockets avoid that specific problem?
+> > 
+> > I expect the general case still holds.
+> > 
+> > > To achieve this, we would need for containers to be able to request file
+> > > capabilities be added to a file without causing these to be honored in the
+> > > initial user namespace.
+> > >
+> > > To this end, the patch below introduces a new capability xattr format.  The
+> > > main enhancement over the existing security.capability xattr is that we
+> > > tag capability sets with a uid - the uid of the root user in the namespace
+> > > where the capabilities are set.  The capabilities will be ignored in any
+> > > other namespace.  The special case of uid == -1 (which must only ever be
+> > > able to be set by kuid 0) means use the capabilities in all
+> > > namespaces.
+> 
+> really since security.capability xattrs are currently honored in all
+> namespaces this isn't really necessary.  Until and unless Seth's set
+> changes that.
+> 
+> > 
+> > A quick comment on this.
+> > 
+> > We currently allow capabilities that have been gained to be valid in all
+> > descendent user namespaces.
+> > 
+> > Applying this principle to the on-disk capabilities would make it so
+> > that uid 0 would mean capabilities in all namespaces.
+> > 
+> > It might be worth it to introduce a fixed sized array with a length
+> > parameter of perhaps 32 entries which is a path of root uids as seen by
+> > the initial user namespace.  That way the entire construction of the
+> > user namespace could be verified.  AKA verify the current user namespace
+> > and the parent and the parents parent.  Up to the user namespace the
+> > current filesystem is mounted in. We would look at how much space
+> > allows an xattr to be stored without causing filesystems a challenge
+> > to properly size such an array.
+> > 
+> > Given that uids are fundamentally flat that might not be particularly
+> > useful.  If we add an alternative way of identifying user namespaces
+> > say a privileged operation that set a uuid, then the complete path would
+> > be more interesting.
+> > 
+> > > An alternative format would use a pair of uids to indicate a range of rootids.
+> > > This would allow root in a user namespace with uids 100000-165536 mapped to
+> > > set the xattr once on a file, then launch nested containers wherein the file
+> > > could be used with privilege.  That's not what this patch does, but would be
+> > > a trivial change if people think it would be worthwhile.
+> > >
+> > > This patch does not actually address the real problem, which is setting the
+> > > xattrs from inside containers.  For that, I think the best solution is to
+> > > add a pair of new system calls, setfcap and getfcap. Userspace would for
+> > > instance call fsetfcap(fd, cap_user_header_t, cap_user_data_t), to which
+> > > the kernel would, if not in init_user_ns, react by writing an appropriate
+> > > security.nscapability xattr.
+> > 
+> > That feels hard to maintain, but you may be correct that we have a small
+> > enough userspace that it would not be a problem.
+> > 
+> > Eric
+> > 
+> > 
+> > > The libcap2 library's cap_set_file/cap_get_file could be switched over
+> > > transparently to use this to hide its use from all callers.
+> > >
+> > > Comments appreciated.
+> > >
+> > > Note - In this patch, file capabilities only work for containers which have
+> > > a root uid defined.  We may want to allow -1 uids to work in all
+> > > namespaces.  There certainly would be uses for this, but I'm a bit unsettled
+> > > about the implications of allowing a program privilege in a container where
+> > > there is no uid with privilege.  This needs more thought.
+> 
+> So for actually enabling (user-namespaced) containers to use these, there
+> are a few possibilities that come to mine.
+> 
+> 1. A new setfcap (/getfcap) syscall.  Uses mapped uid 0 from
+> current_user_ns() to write a value in the security.nscapability xattr.
+> Userspace doesn't need to worry at all about namespace issues.
+> 
+> 2. Just expect userspace to write a xattr;  kernel checks that no values
+> are changed for any other namespaces.  This could be a lot of parsing and
+> verifying in the kernel.
+> 
+> 3. Switch the xattr scheme - instead of one security.nscapability xattr
+> with multiple entries, use security.nscapability.$(rootid).  Now the
+> kernel only needs to verify that the $rootid is valid for the writing
+> task, and we don't need a new syscall.  OTOH userspace needs to know
+> what it's doing.  Of course we can still hide that behind libcap2's helpers.
+> 
+> Any opinions on which way seems best?  1 does seem cleanest (and supports
+> use of seccomp if we want to forbit its use by some containers), but
+> involves a new pair of syscalls.  2 seems to me to be right out, but
+> others might disagree...
 
-On Thu, Jan 14, 2016 at 7:01 AM, Hans Verkuil <hverkuil@xs4all.nl> wrote:
->
-> Hi Wu-Cheng,
->
-> Your v3 didn't address these comments. Any reason for that or did you just miss this
-> email?
->
-> Just wondering,
->
->         Hans
->
-> On 01/14/16 09:54, Hans Verkuil wrote:
-> > On 01/14/16 09:33, Wu-Cheng Li wrote:
-> >> Some drivers also need a control like
-> >> V4L2_CID_MPEG_MFC51_VIDEO_FORCE_FRAME_TYPE to force an encoder
-> >> I frame. Add a general V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME
-> >> so the new drivers and applications can use it.
-> >>
-> >> Signed-off-by: Wu-Cheng Li <wuchengli@chromium.org>
-> >> ---
-> >>  Documentation/DocBook/media/v4l/controls.xml | 8 ++++++++
-> >>  drivers/media/v4l2-core/v4l2-ctrls.c         | 2 ++
-> >>  include/uapi/linux/v4l2-controls.h           | 1 +
-> >>  3 files changed, 11 insertions(+)
-> >>
-> >> diff --git a/Documentation/DocBook/media/v4l/controls.xml b/Documentation/DocBook/media/v4l/controls.xml
-> >> index f13a429..6760cf5 100644
-> >> --- a/Documentation/DocBook/media/v4l/controls.xml
-> >> +++ b/Documentation/DocBook/media/v4l/controls.xml
-> >> @@ -2330,6 +2330,14 @@ vertical search range for motion estimation module in video encoder.</entry>
-> >>            </row>
-> >>
-> >>            <row><entry></entry></row>
-> >> +          <row id="v4l2-mpeg-video-force-i-frame">
-> >> +            <entry spanname="id"><constant>V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME</constant>&nbsp;</entry>
-> >> +            <entry>button</entry>
-> >> +          </row><row><entry spanname="descr">Force an I frame for the next queued buffer. Applicable to encoders.
-> >> +This is a general, codec-agnostic keyframe control.</entry>
-> >> +          </row>
-> >> +
-> >> +          <row><entry></entry></row>
-> >>            <row>
-> >>              <entry spanname="id"><constant>V4L2_CID_MPEG_VIDEO_H264_CPB_SIZE</constant>&nbsp;</entry>
-> >>              <entry>integer</entry>
-> >> diff --git a/drivers/media/v4l2-core/v4l2-ctrls.c b/drivers/media/v4l2-core/v4l2-ctrls.c
-> >> index c9d5537..33ecb7b 100644
-> >> --- a/drivers/media/v4l2-core/v4l2-ctrls.c
-> >> +++ b/drivers/media/v4l2-core/v4l2-ctrls.c
-> >> @@ -747,6 +747,7 @@ const char *v4l2_ctrl_get_name(u32 id)
-> >>      case V4L2_CID_MPEG_VIDEO_MV_H_SEARCH_RANGE:             return "Horizontal MV Search Range";
-> >>      case V4L2_CID_MPEG_VIDEO_MV_V_SEARCH_RANGE:             return "Vertical MV Search Range";
-> >>      case V4L2_CID_MPEG_VIDEO_REPEAT_SEQ_HEADER:             return "Repeat Sequence Header";
-> >> +    case V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME:                 return "Force an I frame";
-> >
-> > I would suggest renaming this to Key Frame. This is consistent with the V4L2_BUF_FLAG_KEYFRAME
-> > flag and, I think, also more generic than 'I Frame'.
-> >
-> > So the define would become V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME and the control
-> > description "Force Key Frame". The docbook text needs to be updated as well.
-> >
-> > With those changes this looks good to me.
-> >
-> > Regards,
-> >
-> >       Hans
-> >
-> >>
-> >>      /* VPX controls */
-> >>      case V4L2_CID_MPEG_VIDEO_VPX_NUM_PARTITIONS:            return "VPX Number of Partitions";
-> >> @@ -985,6 +986,7 @@ void v4l2_ctrl_fill(u32 id, const char **name, enum v4l2_ctrl_type *type,
-> >>      case V4L2_CID_MPEG_VIDEO_MV_V_SEARCH_RANGE:
-> >>              *type = V4L2_CTRL_TYPE_INTEGER;
-> >>              break;
-> >> +    case V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME:
-> >>      case V4L2_CID_PAN_RESET:
-> >>      case V4L2_CID_TILT_RESET:
-> >>      case V4L2_CID_FLASH_STROBE:
-> >> diff --git a/include/uapi/linux/v4l2-controls.h b/include/uapi/linux/v4l2-controls.h
-> >> index 2d225bc..1c911b8 100644
-> >> --- a/include/uapi/linux/v4l2-controls.h
-> >> +++ b/include/uapi/linux/v4l2-controls.h
-> >> @@ -390,6 +390,7 @@ enum v4l2_mpeg_video_multi_slice_mode {
-> >>  #define V4L2_CID_MPEG_VIDEO_REPEAT_SEQ_HEADER               (V4L2_CID_MPEG_BASE+226)
-> >>  #define V4L2_CID_MPEG_VIDEO_MV_H_SEARCH_RANGE               (V4L2_CID_MPEG_BASE+227)
-> >>  #define V4L2_CID_MPEG_VIDEO_MV_V_SEARCH_RANGE               (V4L2_CID_MPEG_BASE+228)
-> >> +#define V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME           (V4L2_CID_MPEG_BASE+229)
-> >>
-> >>  #define V4L2_CID_MPEG_VIDEO_H263_I_FRAME_QP         (V4L2_CID_MPEG_BASE+300)
-> >>  #define V4L2_CID_MPEG_VIDEO_H263_P_FRAME_QP         (V4L2_CID_MPEG_BASE+301)
-> >>
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe linux-media" in
-> > the body of a message to majordomo@vger.kernel.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> >
+ok - I'm going to lean toward option 1 failing any convincing arguments
+otherwise.
+
+-serge
