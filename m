@@ -1,143 +1,218 @@
-From: Russell King <rmk+kernel@arm.linux.org.uk>
-Subject: [PATCH 2/2] drm: etnaviv: add further minor features and varyings
- count
-Date: Tue, 19 Jan 2016 09:18:32 +0000
-Message-ID: <E1aLSQq-0006sU-Ou@rmk-PC.arm.linux.org.uk>
+From: Christian Gmeiner <christian.gmeiner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 2/2] drm: etnaviv: add further minor features and varyings count
+Date: Tue, 19 Jan 2016 11:09:57 +0100
+Message-ID: <CAH9NwWdr+=hLKiJGM=m_dDWppEX=D+Qu5yhfjE6B3+2T1nE3BA@mail.gmail.com>
+References: <E1aLSQq-0006sU-Ou@rmk-PC.arm.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-Content-Disposition: inline
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Lucas Stach <l.stach@pengutronix.de>
-Cc: linux-api@vger.kernel.org, dri-devel@lists.freedesktop.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <E1aLSQq-0006sU-Ou-eh5Bv4kxaXIANfyc6IWni62ZND6+EDdj@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Russell King <rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
+Cc: Lucas Stach <l.stach-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, DRI mailing list <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-RXhwb3J0IGZ1cnRoZXIgbWlub3IgZmVhdHVyZSBiaXRtYXNrcyBhbmQgdGhlIHZhcnlpbmdzIGNv
-dW50IGZyb20KdGhlIEdQVSBzcGVjaWZpY2F0aW9ucyByZWdpc3RlcnMgdG8gdXNlcnNwYWNlLgoK
-U2lnbmVkLW9mZi1ieTogUnVzc2VsbCBLaW5nIDxybWsra2VybmVsQGFybS5saW51eC5vcmcudWs+
-Ci0tLQogZHJpdmVycy9ncHUvZHJtL2V0bmF2aXYvZXRuYXZpdl9ncHUuYyB8IDU3ICsrKysrKysr
-KysrKysrKysrKysrKysrKysrKysrKysrKystCiBkcml2ZXJzL2dwdS9kcm0vZXRuYXZpdi9ldG5h
-dml2X2dwdS5oIHwgIDkgKysrKysrCiBpbmNsdWRlL3VhcGkvZHJtL2V0bmF2aXZfZHJtLmggICAg
-ICAgIHwgIDMgKysKIDMgZmlsZXMgY2hhbmdlZCwgNjggaW5zZXJ0aW9ucygrKSwgMSBkZWxldGlv
-bigtKQoKZGlmZiAtLWdpdCBhL2RyaXZlcnMvZ3B1L2RybS9ldG5hdml2L2V0bmF2aXZfZ3B1LmMg
-Yi9kcml2ZXJzL2dwdS9kcm0vZXRuYXZpdi9ldG5hdml2X2dwdS5jCmluZGV4IDQ4M2FhMzRmYTk5
-MC4uNzQyNTQ3MjFiNDQ2IDEwMDY0NAotLS0gYS9kcml2ZXJzL2dwdS9kcm0vZXRuYXZpdi9ldG5h
-dml2X2dwdS5jCisrKyBiL2RyaXZlcnMvZ3B1L2RybS9ldG5hdml2L2V0bmF2aXZfZ3B1LmMKQEAg
-LTcyLDYgKzcyLDE0IEBAIGludCBldG5hdml2X2dwdV9nZXRfcGFyYW0oc3RydWN0IGV0bmF2aXZf
-Z3B1ICpncHUsIHUzMiBwYXJhbSwgdTY0ICp2YWx1ZSkKIAkJKnZhbHVlID0gZ3B1LT5pZGVudGl0
-eS5taW5vcl9mZWF0dXJlczM7CiAJCWJyZWFrOwogCisJY2FzZSBFVE5BVklWX1BBUkFNX0dQVV9G
-RUFUVVJFU181OgorCQkqdmFsdWUgPSBncHUtPmlkZW50aXR5Lm1pbm9yX2ZlYXR1cmVzNDsKKwkJ
-YnJlYWs7CisKKwljYXNlIEVUTkFWSVZfUEFSQU1fR1BVX0ZFQVRVUkVTXzY6CisJCSp2YWx1ZSA9
-IGdwdS0+aWRlbnRpdHkubWlub3JfZmVhdHVyZXM1OworCQlicmVhazsKKwogCWNhc2UgRVROQVZJ
-Vl9QQVJBTV9HUFVfU1RSRUFNX0NPVU5UOgogCQkqdmFsdWUgPSBncHUtPmlkZW50aXR5LnN0cmVh
-bV9jb3VudDsKIAkJYnJlYWs7CkBAIC0xMTIsNiArMTIwLDEwIEBAIGludCBldG5hdml2X2dwdV9n
-ZXRfcGFyYW0oc3RydWN0IGV0bmF2aXZfZ3B1ICpncHUsIHUzMiBwYXJhbSwgdTY0ICp2YWx1ZSkK
-IAkJKnZhbHVlID0gZ3B1LT5pZGVudGl0eS5udW1fY29uc3RhbnRzOwogCQlicmVhazsKIAorCWNh
-c2UgRVROQVZJVl9QQVJBTV9HUFVfTlVNX1ZBUllJTkdTOgorCQkqdmFsdWUgPSBncHUtPmlkZW50
-aXR5LnZhcnlpbmdzX2NvdW50OworCQlicmVhazsKKwogCWRlZmF1bHQ6CiAJCURCRygiJXM6IGlu
-dmFsaWQgcGFyYW06ICV1IiwgZGV2X25hbWUoZ3B1LT5kZXYpLCBwYXJhbSk7CiAJCXJldHVybiAt
-RUlOVkFMOwpAQCAtMTI0LDEwICsxMzYsMTMgQEAgc3RhdGljIHZvaWQgZXRuYXZpdl9od19zcGVj
-cyhzdHJ1Y3QgZXRuYXZpdl9ncHUgKmdwdSkKIHsKIAlpZiAoZ3B1LT5pZGVudGl0eS5taW5vcl9m
-ZWF0dXJlczAgJgogCSAgICBjaGlwTWlub3JGZWF0dXJlczBfTU9SRV9NSU5PUl9GRUFUVVJFUykg
-ewotCQl1MzIgc3BlY3NbMl07CisJCXUzMiBzcGVjc1s0XTsKKwkJdW5zaWduZWQgaW50IHN0cmVh
-bXM7CiAKIAkJc3BlY3NbMF0gPSBncHVfcmVhZChncHUsIFZJVlNfSElfQ0hJUF9TUEVDUyk7CiAJ
-CXNwZWNzWzFdID0gZ3B1X3JlYWQoZ3B1LCBWSVZTX0hJX0NISVBfU1BFQ1NfMik7CisJCXNwZWNz
-WzJdID0gZ3B1X3JlYWQoZ3B1LCBWSVZTX0hJX0NISVBfU1BFQ1NfMyk7CisJCXNwZWNzWzNdID0g
-Z3B1X3JlYWQoZ3B1LCBWSVZTX0hJX0NISVBfU1BFQ1NfNCk7CiAKIAkJZ3B1LT5pZGVudGl0eS5z
-dHJlYW1fY291bnQgPQogCQkJKHNwZWNzWzBdICYgVklWU19ISV9DSElQX1NQRUNTX1NUUkVBTV9D
-T1VOVF9fTUFTSykKQEAgLTE2MCw2ICsxNzUsMTcgQEAgc3RhdGljIHZvaWQgZXRuYXZpdl9od19z
-cGVjcyhzdHJ1Y3QgZXRuYXZpdl9ncHUgKmdwdSkKIAkJZ3B1LT5pZGVudGl0eS5udW1fY29uc3Rh
-bnRzID0KIAkJCShzcGVjc1sxXSAmIFZJVlNfSElfQ0hJUF9TUEVDU18yX05VTV9DT05TVEFOVFNf
-X01BU0spCiAJCQkJPj4gVklWU19ISV9DSElQX1NQRUNTXzJfTlVNX0NPTlNUQU5UU19fU0hJRlQ7
-CisKKwkJZ3B1LT5pZGVudGl0eS52YXJ5aW5nc19jb3VudCA9CisJCQkoc3BlY3NbMl0gJiBWSVZT
-X0hJX0NISVBfU1BFQ1NfM19WQVJZSU5HU19DT1VOVF9fTUFTSykKKwkJCQk+PiBWSVZTX0hJX0NI
-SVBfU1BFQ1NfM19WQVJZSU5HU19DT1VOVF9fU0hJRlQ7CisKKwkJLyogVGhpcyBvdmVycmlkZXMg
-dGhlIHZhbHVlIGZyb20gb2xkZXIgcmVnaXN0ZXIgaWYgbm9uLXplcm8gKi8KKwkJc3RyZWFtcyA9
-CisJCQkoc3BlY3NbM10gJiBWSVZTX0hJX0NISVBfU1BFQ1NfNF9TVFJFQU1fQ09VTlRfX01BU0sp
-CisJCQkJPj4gVklWU19ISV9DSElQX1NQRUNTXzRfU1RSRUFNX0NPVU5UX19TSElGVDsKKwkJaWYg
-KHN0cmVhbXMpCisJCQlncHUtPmlkZW50aXR5LnN0cmVhbV9jb3VudCA9IHN0cmVhbXM7CiAJfQog
-CiAJLyogRmlsbCBpbiB0aGUgc3RyZWFtIGNvdW50IGlmIG5vdCBzcGVjaWZpZWQgKi8KQEAgLTI0
-Miw2ICsyNjgsMjMgQEAgc3RhdGljIHZvaWQgZXRuYXZpdl9od19zcGVjcyhzdHJ1Y3QgZXRuYXZp
-dl9ncHUgKmdwdSkKIAogCWlmIChncHUtPmlkZW50aXR5Lm51bV9jb25zdGFudHMgPT0gMCkKIAkJ
-Z3B1LT5pZGVudGl0eS5udW1fY29uc3RhbnRzID0gMTY4OworCisJaWYgKGdwdS0+aWRlbnRpdHku
-dmFyeWluZ3NfY291bnQgPT0gMCkgeworCQlpZiAoZ3B1LT5pZGVudGl0eS5taW5vcl9mZWF0dXJl
-czEgJiBjaGlwTWlub3JGZWF0dXJlczFfSEFMVEkwKQorCQkJZ3B1LT5pZGVudGl0eS52YXJ5aW5n
-c19jb3VudCA9IDEyOworCQllbHNlCisJCQlncHUtPmlkZW50aXR5LnZhcnlpbmdzX2NvdW50ID0g
-ODsKKwl9CisKKwkvKgorCSAqIEZvciBzb21lIGNvcmVzLCB0d28gdmFyeWluZ3MgYXJlIGNvbnN1
-bWVkIGZvciBwb3NpdGlvbiwgc28gdGhlCisJICogbWF4aW11bSB2YXJ5aW5nIGNvdW50IG5lZWRz
-IHRvIGJlIHJlZHVjZWQgYnkgb25lLgorCSAqLworCWlmICgoZ3B1LT5pZGVudGl0eS5tb2RlbCA9
-PSBjaGlwTW9kZWxfR0MyMDAwICYmCisJICAgICBncHUtPmlkZW50aXR5LnJldmlzaW9uID09IDB4
-NTEwOCkgfHwKKwkgICAgKGdwdS0+aWRlbnRpdHkubW9kZWwgPT0gY2hpcE1vZGVsX0dDODgwICYm
-CisJICAgICBncHUtPmlkZW50aXR5LnJldmlzaW9uID09IDB4NTEwNikpCisJCWdwdS0+aWRlbnRp
-dHkudmFyeWluZ3NfY291bnQgLT0gMTsKIH0KIAogc3RhdGljIHZvaWQgZXRuYXZpdl9od19pZGVu
-dGlmeShzdHJ1Y3QgZXRuYXZpdl9ncHUgKmdwdSkKQEAgLTMwNiw2ICszNDksOCBAQCBzdGF0aWMg
-dm9pZCBldG5hdml2X2h3X2lkZW50aWZ5KHN0cnVjdCBldG5hdml2X2dwdSAqZ3B1KQogCQlncHUt
-PmlkZW50aXR5Lm1pbm9yX2ZlYXR1cmVzMSA9IDA7CiAJCWdwdS0+aWRlbnRpdHkubWlub3JfZmVh
-dHVyZXMyID0gMDsKIAkJZ3B1LT5pZGVudGl0eS5taW5vcl9mZWF0dXJlczMgPSAwOworCQlncHUt
-PmlkZW50aXR5Lm1pbm9yX2ZlYXR1cmVzNCA9IDA7CisJCWdwdS0+aWRlbnRpdHkubWlub3JfZmVh
-dHVyZXM1ID0gMDsKIAl9IGVsc2UKIAkJZ3B1LT5pZGVudGl0eS5taW5vcl9mZWF0dXJlczAgPQog
-CQkJCWdwdV9yZWFkKGdwdSwgVklWU19ISV9DSElQX01JTk9SX0ZFQVRVUkVfMCk7CkBAIC0zMTgs
-NiArMzYzLDEwIEBAIHN0YXRpYyB2b2lkIGV0bmF2aXZfaHdfaWRlbnRpZnkoc3RydWN0IGV0bmF2
-aXZfZ3B1ICpncHUpCiAJCQkJZ3B1X3JlYWQoZ3B1LCBWSVZTX0hJX0NISVBfTUlOT1JfRkVBVFVS
-RV8yKTsKIAkJZ3B1LT5pZGVudGl0eS5taW5vcl9mZWF0dXJlczMgPQogCQkJCWdwdV9yZWFkKGdw
-dSwgVklWU19ISV9DSElQX01JTk9SX0ZFQVRVUkVfMyk7CisJCWdwdS0+aWRlbnRpdHkubWlub3Jf
-ZmVhdHVyZXM0ID0KKwkJCQlncHVfcmVhZChncHUsIFZJVlNfSElfQ0hJUF9NSU5PUl9GRUFUVVJF
-XzQpOworCQlncHUtPmlkZW50aXR5Lm1pbm9yX2ZlYXR1cmVzNSA9CisJCQkJZ3B1X3JlYWQoZ3B1
-LCBWSVZTX0hJX0NISVBfTUlOT1JfRkVBVFVSRV81KTsKIAl9CiAKIAkvKiBHQzYwMCBpZGxlIHJl
-Z2lzdGVyIHJlcG9ydHMgemVybyBiaXRzIHdoZXJlIG1vZHVsZXMgYXJlbid0IHByZXNlbnQgKi8K
-QEAgLTY4MCw2ICs3MjksMTAgQEAgaW50IGV0bmF2aXZfZ3B1X2RlYnVnZnMoc3RydWN0IGV0bmF2
-aXZfZ3B1ICpncHUsIHN0cnVjdCBzZXFfZmlsZSAqbSkKIAkJICAgZ3B1LT5pZGVudGl0eS5taW5v
-cl9mZWF0dXJlczIpOwogCXNlcV9wcmludGYobSwgIlx0IG1pbm9yX2ZlYXR1cmVzMzogMHglMDh4
-XG4iLAogCQkgICBncHUtPmlkZW50aXR5Lm1pbm9yX2ZlYXR1cmVzMyk7CisJc2VxX3ByaW50Ziht
-LCAiXHQgbWlub3JfZmVhdHVyZXM0OiAweCUwOHhcbiIsCisJCSAgIGdwdS0+aWRlbnRpdHkubWlu
-b3JfZmVhdHVyZXM0KTsKKwlzZXFfcHJpbnRmKG0sICJcdCBtaW5vcl9mZWF0dXJlczU6IDB4JTA4
-eFxuIiwKKwkJICAgZ3B1LT5pZGVudGl0eS5taW5vcl9mZWF0dXJlczUpOwogCiAJc2VxX3B1dHMo
-bSwgIlx0c3BlY3NcbiIpOwogCXNlcV9wcmludGYobSwgIlx0IHN0cmVhbV9jb3VudDogICVkXG4i
-LApAQCAtNzAyLDYgKzc1NSw4IEBAIGludCBldG5hdml2X2dwdV9kZWJ1Z2ZzKHN0cnVjdCBldG5h
-dml2X2dwdSAqZ3B1LCBzdHJ1Y3Qgc2VxX2ZpbGUgKm0pCiAJCQlncHUtPmlkZW50aXR5Lmluc3Ry
-dWN0aW9uX2NvdW50KTsKIAlzZXFfcHJpbnRmKG0sICJcdCBudW1fY29uc3RhbnRzOiAlZFxuIiwK
-IAkJCWdwdS0+aWRlbnRpdHkubnVtX2NvbnN0YW50cyk7CisJc2VxX3ByaW50ZihtLCAiXHQgdmFy
-eWluZ3NfY291bnQ6ICVkXG4iLAorCQkJZ3B1LT5pZGVudGl0eS52YXJ5aW5nc19jb3VudCk7CiAK
-IAlzZXFfcHJpbnRmKG0sICJcdGF4aTogMHglMDh4XG4iLCBheGkpOwogCXNlcV9wcmludGYobSwg
-Ilx0aWRsZTogMHglMDh4XG4iLCBpZGxlKTsKZGlmZiAtLWdpdCBhL2RyaXZlcnMvZ3B1L2RybS9l
-dG5hdml2L2V0bmF2aXZfZ3B1LmggYi9kcml2ZXJzL2dwdS9kcm0vZXRuYXZpdi9ldG5hdml2X2dw
-dS5oCmluZGV4IDRhNmZhYmEzODVhNi4uM2RkYTJhOTlkMTc0IDEwMDY0NAotLS0gYS9kcml2ZXJz
-L2dwdS9kcm0vZXRuYXZpdi9ldG5hdml2X2dwdS5oCisrKyBiL2RyaXZlcnMvZ3B1L2RybS9ldG5h
-dml2L2V0bmF2aXZfZ3B1LmgKQEAgLTQ3LDYgKzQ3LDEyIEBAIHN0cnVjdCBldG5hdml2X2NoaXBf
-aWRlbnRpdHkgewogCS8qIFN1cHBvcnRlZCBtaW5vciBmZWF0dXJlIDMgZmllbGRzLiAqLwogCXUz
-MiBtaW5vcl9mZWF0dXJlczM7CiAKKwkvKiBTdXBwb3J0ZWQgbWlub3IgZmVhdHVyZSA0IGZpZWxk
-cy4gKi8KKwl1MzIgbWlub3JfZmVhdHVyZXM0OworCisJLyogU3VwcG9ydGVkIG1pbm9yIGZlYXR1
-cmUgNSBmaWVsZHMuICovCisJdTMyIG1pbm9yX2ZlYXR1cmVzNTsKKwogCS8qIE51bWJlciBvZiBz
-dHJlYW1zIHN1cHBvcnRlZC4gKi8KIAl1MzIgc3RyZWFtX2NvdW50OwogCkBAIC03Niw2ICs4Miw5
-IEBAIHN0cnVjdCBldG5hdml2X2NoaXBfaWRlbnRpdHkgewogCiAJLyogQnVmZmVyIHNpemUgKi8K
-IAl1MzIgYnVmZmVyX3NpemU7CisKKwkvKiBOdW1iZXIgb2YgdmFyeWluZ3MgKi8KKwl1OCB2YXJ5
-aW5nc19jb3VudDsKIH07CiAKIHN0cnVjdCBldG5hdml2X2V2ZW50IHsKZGlmZiAtLWdpdCBhL2lu
-Y2x1ZGUvdWFwaS9kcm0vZXRuYXZpdl9kcm0uaCBiL2luY2x1ZGUvdWFwaS9kcm0vZXRuYXZpdl9k
-cm0uaAppbmRleCA0Y2M5ODlhZDY4NTEuLmY5NWUxYzQzYzNmYiAxMDA2NDQKLS0tIGEvaW5jbHVk
-ZS91YXBpL2RybS9ldG5hdml2X2RybS5oCisrKyBiL2luY2x1ZGUvdWFwaS9kcm0vZXRuYXZpdl9k
-cm0uaApAQCAtNDgsNiArNDgsOCBAQCBzdHJ1Y3QgZHJtX2V0bmF2aXZfdGltZXNwZWMgewogI2Rl
-ZmluZSBFVE5BVklWX1BBUkFNX0dQVV9GRUFUVVJFU18yICAgICAgICAgICAgICAgIDB4MDUKICNk
-ZWZpbmUgRVROQVZJVl9QQVJBTV9HUFVfRkVBVFVSRVNfMyAgICAgICAgICAgICAgICAweDA2CiAj
-ZGVmaW5lIEVUTkFWSVZfUEFSQU1fR1BVX0ZFQVRVUkVTXzQgICAgICAgICAgICAgICAgMHgwNwor
-I2RlZmluZSBFVE5BVklWX1BBUkFNX0dQVV9GRUFUVVJFU181ICAgICAgICAgICAgICAgIDB4MDgK
-KyNkZWZpbmUgRVROQVZJVl9QQVJBTV9HUFVfRkVBVFVSRVNfNiAgICAgICAgICAgICAgICAweDA5
-CiAKICNkZWZpbmUgRVROQVZJVl9QQVJBTV9HUFVfU1RSRUFNX0NPVU5UICAgICAgICAgICAgICAw
-eDEwCiAjZGVmaW5lIEVUTkFWSVZfUEFSQU1fR1BVX1JFR0lTVEVSX01BWCAgICAgICAgICAgICAg
-MHgxMQpAQCAtNTksNiArNjEsNyBAQCBzdHJ1Y3QgZHJtX2V0bmF2aXZfdGltZXNwZWMgewogI2Rl
-ZmluZSBFVE5BVklWX1BBUkFNX0dQVV9CVUZGRVJfU0laRSAgICAgICAgICAgICAgIDB4MTcKICNk
-ZWZpbmUgRVROQVZJVl9QQVJBTV9HUFVfSU5TVFJVQ1RJT05fQ09VTlQgICAgICAgICAweDE4CiAj
-ZGVmaW5lIEVUTkFWSVZfUEFSQU1fR1BVX05VTV9DT05TVEFOVFMgICAgICAgICAgICAgMHgxOQor
-I2RlZmluZSBFVE5BVklWX1BBUkFNX0dQVV9OVU1fVkFSWUlOR1MgICAgICAgICAgICAgIDB4MWEK
-IAogI2RlZmluZSBFVE5BX01BWF9QSVBFUyA0CiAKLS0gCjIuMS4wCgpfX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpkcmktZGV2ZWwgbWFpbGluZyBsaXN0CmRy
-aS1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cDovL2xpc3RzLmZyZWVkZXNrdG9wLm9y
-Zy9tYWlsbWFuL2xpc3RpbmZvL2RyaS1kZXZlbAo=
+Hi Russell,
+
+2016-01-19 10:18 GMT+01:00 Russell King <rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>:
+> Export further minor feature bitmasks and the varyings count from
+> the GPU specifications registers to userspace.
+>
+> Signed-off-by: Russell King <rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
+> ---
+>  drivers/gpu/drm/etnaviv/etnaviv_gpu.c | 57 ++++++++++++++++++++++++++++++++++-
+>  drivers/gpu/drm/etnaviv/etnaviv_gpu.h |  9 ++++++
+>  include/uapi/drm/etnaviv_drm.h        |  3 ++
+>  3 files changed, 68 insertions(+), 1 deletion(-)
+>
+> diff --git a/drivers/gpu/drm/etnaviv/etnaviv_gpu.c b/drivers/gpu/drm/etnaviv/etnaviv_gpu.c
+> index 483aa34fa990..74254721b446 100644
+> --- a/drivers/gpu/drm/etnaviv/etnaviv_gpu.c
+> +++ b/drivers/gpu/drm/etnaviv/etnaviv_gpu.c
+> @@ -72,6 +72,14 @@ int etnaviv_gpu_get_param(struct etnaviv_gpu *gpu, u32 param, u64 *value)
+>                 *value = gpu->identity.minor_features3;
+>                 break;
+>
+> +       case ETNAVIV_PARAM_GPU_FEATURES_5:
+> +               *value = gpu->identity.minor_features4;
+> +               break;
+> +
+> +       case ETNAVIV_PARAM_GPU_FEATURES_6:
+> +               *value = gpu->identity.minor_features5;
+> +               break;
+> +
+>         case ETNAVIV_PARAM_GPU_STREAM_COUNT:
+>                 *value = gpu->identity.stream_count;
+>                 break;
+> @@ -112,6 +120,10 @@ int etnaviv_gpu_get_param(struct etnaviv_gpu *gpu, u32 param, u64 *value)
+>                 *value = gpu->identity.num_constants;
+>                 break;
+>
+> +       case ETNAVIV_PARAM_GPU_NUM_VARYINGS:
+> +               *value = gpu->identity.varyings_count;
+> +               break;
+> +
+>         default:
+>                 DBG("%s: invalid param: %u", dev_name(gpu->dev), param);
+>                 return -EINVAL;
+> @@ -124,10 +136,13 @@ static void etnaviv_hw_specs(struct etnaviv_gpu *gpu)
+>  {
+>         if (gpu->identity.minor_features0 &
+>             chipMinorFeatures0_MORE_MINOR_FEATURES) {
+> -               u32 specs[2];
+> +               u32 specs[4];
+> +               unsigned int streams;
+>
+>                 specs[0] = gpu_read(gpu, VIVS_HI_CHIP_SPECS);
+>                 specs[1] = gpu_read(gpu, VIVS_HI_CHIP_SPECS_2);
+> +               specs[2] = gpu_read(gpu, VIVS_HI_CHIP_SPECS_3);
+> +               specs[3] = gpu_read(gpu, VIVS_HI_CHIP_SPECS_4);
+>
+>                 gpu->identity.stream_count =
+>                         (specs[0] & VIVS_HI_CHIP_SPECS_STREAM_COUNT__MASK)
+> @@ -160,6 +175,17 @@ static void etnaviv_hw_specs(struct etnaviv_gpu *gpu)
+>                 gpu->identity.num_constants =
+>                         (specs[1] & VIVS_HI_CHIP_SPECS_2_NUM_CONSTANTS__MASK)
+>                                 >> VIVS_HI_CHIP_SPECS_2_NUM_CONSTANTS__SHIFT;
+> +
+> +               gpu->identity.varyings_count =
+> +                       (specs[2] & VIVS_HI_CHIP_SPECS_3_VARYINGS_COUNT__MASK)
+> +                               >> VIVS_HI_CHIP_SPECS_3_VARYINGS_COUNT__SHIFT;
+> +
+> +               /* This overrides the value from older register if non-zero */
+> +               streams =
+> +                       (specs[3] & VIVS_HI_CHIP_SPECS_4_STREAM_COUNT__MASK)
+> +                               >> VIVS_HI_CHIP_SPECS_4_STREAM_COUNT__SHIFT;
+> +               if (streams)
+> +                       gpu->identity.stream_count = streams;
+>         }
+>
+>         /* Fill in the stream count if not specified */
+> @@ -242,6 +268,23 @@ static void etnaviv_hw_specs(struct etnaviv_gpu *gpu)
+>
+>         if (gpu->identity.num_constants == 0)
+>                 gpu->identity.num_constants = 168;
+> +
+> +       if (gpu->identity.varyings_count == 0) {
+> +               if (gpu->identity.minor_features1 & chipMinorFeatures1_HALTI0)
+> +                       gpu->identity.varyings_count = 12;
+> +               else
+> +                       gpu->identity.varyings_count = 8;
+> +       }
+> +
+> +       /*
+> +        * For some cores, two varyings are consumed for position, so the
+> +        * maximum varying count needs to be reduced by one.
+> +        */
+> +       if ((gpu->identity.model == chipModel_GC2000 &&
+> +            gpu->identity.revision == 0x5108) ||
+> +           (gpu->identity.model == chipModel_GC880 &&
+> +            gpu->identity.revision == 0x5106))
+> +               gpu->identity.varyings_count -= 1;
+
+Should we not include the whole list of GPU cores with that special handling?
+See: https://github.com/Freescale/kernel-module-imx-gpu-viv/blob/master/kernel-module-imx-gpu-viv-src/hal/kernel/arch/gc_hal_kernel_hardware.c#L592
+
+
+>  }
+>
+>  static void etnaviv_hw_identify(struct etnaviv_gpu *gpu)
+> @@ -306,6 +349,8 @@ static void etnaviv_hw_identify(struct etnaviv_gpu *gpu)
+>                 gpu->identity.minor_features1 = 0;
+>                 gpu->identity.minor_features2 = 0;
+>                 gpu->identity.minor_features3 = 0;
+> +               gpu->identity.minor_features4 = 0;
+> +               gpu->identity.minor_features5 = 0;
+>         } else
+>                 gpu->identity.minor_features0 =
+>                                 gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_0);
+> @@ -318,6 +363,10 @@ static void etnaviv_hw_identify(struct etnaviv_gpu *gpu)
+>                                 gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_2);
+>                 gpu->identity.minor_features3 =
+>                                 gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_3);
+> +               gpu->identity.minor_features4 =
+> +                               gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_4);
+> +               gpu->identity.minor_features5 =
+> +                               gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_5);
+>         }
+>
+>         /* GC600 idle register reports zero bits where modules aren't present */
+> @@ -680,6 +729,10 @@ int etnaviv_gpu_debugfs(struct etnaviv_gpu *gpu, struct seq_file *m)
+>                    gpu->identity.minor_features2);
+>         seq_printf(m, "\t minor_features3: 0x%08x\n",
+>                    gpu->identity.minor_features3);
+> +       seq_printf(m, "\t minor_features4: 0x%08x\n",
+> +                  gpu->identity.minor_features4);
+> +       seq_printf(m, "\t minor_features5: 0x%08x\n",
+> +                  gpu->identity.minor_features5);
+>
+>         seq_puts(m, "\tspecs\n");
+>         seq_printf(m, "\t stream_count:  %d\n",
+> @@ -702,6 +755,8 @@ int etnaviv_gpu_debugfs(struct etnaviv_gpu *gpu, struct seq_file *m)
+>                         gpu->identity.instruction_count);
+>         seq_printf(m, "\t num_constants: %d\n",
+>                         gpu->identity.num_constants);
+> +       seq_printf(m, "\t varyings_count: %d\n",
+> +                       gpu->identity.varyings_count);
+>
+>         seq_printf(m, "\taxi: 0x%08x\n", axi);
+>         seq_printf(m, "\tidle: 0x%08x\n", idle);
+> diff --git a/drivers/gpu/drm/etnaviv/etnaviv_gpu.h b/drivers/gpu/drm/etnaviv/etnaviv_gpu.h
+> index 4a6faba385a6..3dda2a99d174 100644
+> --- a/drivers/gpu/drm/etnaviv/etnaviv_gpu.h
+> +++ b/drivers/gpu/drm/etnaviv/etnaviv_gpu.h
+> @@ -47,6 +47,12 @@ struct etnaviv_chip_identity {
+>         /* Supported minor feature 3 fields. */
+>         u32 minor_features3;
+>
+> +       /* Supported minor feature 4 fields. */
+> +       u32 minor_features4;
+> +
+> +       /* Supported minor feature 5 fields. */
+> +       u32 minor_features5;
+> +
+>         /* Number of streams supported. */
+>         u32 stream_count;
+>
+> @@ -76,6 +82,9 @@ struct etnaviv_chip_identity {
+>
+>         /* Buffer size */
+>         u32 buffer_size;
+> +
+> +       /* Number of varyings */
+> +       u8 varyings_count;
+>  };
+>
+>  struct etnaviv_event {
+> diff --git a/include/uapi/drm/etnaviv_drm.h b/include/uapi/drm/etnaviv_drm.h
+> index 4cc989ad6851..f95e1c43c3fb 100644
+> --- a/include/uapi/drm/etnaviv_drm.h
+> +++ b/include/uapi/drm/etnaviv_drm.h
+> @@ -48,6 +48,8 @@ struct drm_etnaviv_timespec {
+>  #define ETNAVIV_PARAM_GPU_FEATURES_2                0x05
+>  #define ETNAVIV_PARAM_GPU_FEATURES_3                0x06
+>  #define ETNAVIV_PARAM_GPU_FEATURES_4                0x07
+> +#define ETNAVIV_PARAM_GPU_FEATURES_5                0x08
+> +#define ETNAVIV_PARAM_GPU_FEATURES_6                0x09
+>
+>  #define ETNAVIV_PARAM_GPU_STREAM_COUNT              0x10
+>  #define ETNAVIV_PARAM_GPU_REGISTER_MAX              0x11
+> @@ -59,6 +61,7 @@ struct drm_etnaviv_timespec {
+>  #define ETNAVIV_PARAM_GPU_BUFFER_SIZE               0x17
+>  #define ETNAVIV_PARAM_GPU_INSTRUCTION_COUNT         0x18
+>  #define ETNAVIV_PARAM_GPU_NUM_CONSTANTS             0x19
+> +#define ETNAVIV_PARAM_GPU_NUM_VARYINGS              0x1a
+>
+>  #define ETNA_MAX_PIPES 4
+>
+> --
+> 2.1.0
+>
+
+Else the patch looks good!
+
+greets
+--
+Christian Gmeiner, MSc
+
+https://soundcloud.com/christian-gmeiner
