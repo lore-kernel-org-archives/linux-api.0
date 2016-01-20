@@ -1,39 +1,45 @@
-From: David Decotigny <ddecotig@gmail.com>
-Subject: [PATCH net-next v6 15/19] net: bridge: use __ethtool_get_ksettings
-Date: Tue, 19 Jan 2016 16:44:00 -0800
-Message-ID: <1453250644-14796-16-git-send-email-ddecotig@gmail.com>
-References: <1453250644-14796-1-git-send-email-ddecotig@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1453250644-14796-1-git-send-email-ddecotig@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "David S. Miller" <davem@davemloft.net>, Ben Hutchings <ben@decadent.org.uk>, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-mips@linux-mips.org, fcoe-devel@open-fcoe.org, Andrew Morton <akpm@linux-foundation.org>, Tejun Heo <tj@kernel.org>
-Cc: Eric Dumazet <edumazet@google.com>, Eugenia Emantayev <eugenia@mellanox.co.il>, Or Gerlitz <ogerlitz@mellanox.com>, Ido Shamay <idos@mellanox.com>, Joe Perches <joe@perches.com>, Saeed Mahameed <saeedm@mellanox.com>, Govindarajulu Varadarajan <_govind@gmx.com>, Venkata Duvvuru <VenkatKumar.Duvvuru@Emulex.Com>, Jeff Kirsher <jeffrey.t.kirsher@intel.com>, Pravin B Shelar <pshelar@nicira.com>, Ed Swierk <eswierk@skyportsystems.com>, Robert Love <robert.w.love@intel.com>, "James E.J. Bottomley" <JBottomley@parallels.com>, Yuval Mintz <Yuval.Mintz@qlogic.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, David Decotigny <decot@googlers.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH 07/13] aio: enabled thread based async fsync
+Date: Tue, 19 Jan 2016 19:59:35 -0800
+Message-ID: <CA+55aFzRo3yztEBBvJ4CMCvVHAo6qEDhTHTc_LGyqmxbcFyNYw@mail.gmail.com>
+References: <cover.1452549431.git.bcrl@kvack.org>
+	<80934665e0dd2360e2583522c7c7569e5a92be0e.1452549431.git.bcrl@kvack.org>
+	<20160112011128.GC6033@dastard>
+	<CA+55aFxtvMqHgHmHCcszV_QKQ2BY0wzenmrvc6BYN+tLFxesMA@mail.gmail.com>
+	<20160112022548.GD6033@dastard>
+	<CA+55aFzxSrLhOyV3VtO=Cv_J+npD8ubEP74CCF+rdt=CRipzxA@mail.gmail.com>
+	<20160112033708.GE6033@dastard>
+	<CA+55aFyLb8scNSYb19rK4iT_Vx5=hKxqPwRHVnETzAhEev0aHw@mail.gmail.com>
+	<CA+55aFxCM-xWVR4jC=q2wSk+-WC1Xuf+nZLoud8JwKZopnR_dQ@mail.gmail.com>
+	<20160115202131.GH6330@kvack.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20160115202131.GH6330@kvack.org>
+Sender: owner-linux-aio@kvack.org
+To: Benjamin LaHaise <bcrl@kvack.org>
+Cc: Dave Chinner <david@fromorbit.com>, linux-aio@kvack.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-From: David Decotigny <decot@googlers.com>
+On Fri, Jan 15, 2016 at 12:21 PM, Benjamin LaHaise <bcrl@kvack.org> wrote:
+>>
+>> I'll have to think about this some more.
+>
+> Any further thoughts on this after a few days worth of pondering?
 
-Signed-off-by: David Decotigny <decot@googlers.com>
----
- net/bridge/br_if.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+Sorry about the delay, with the merge window and me being sick for a
+couple of days I didn't get around to this.
 
-diff --git a/net/bridge/br_if.c b/net/bridge/br_if.c
-index c367b3e..cafe4e6 100644
---- a/net/bridge/br_if.c
-+++ b/net/bridge/br_if.c
-@@ -36,10 +36,10 @@
-  */
- static int port_cost(struct net_device *dev)
- {
--	struct ethtool_cmd ecmd;
-+	struct ethtool_ksettings ecmd;
- 
--	if (!__ethtool_get_settings(dev, &ecmd)) {
--		switch (ethtool_cmd_speed(&ecmd)) {
-+	if (!__ethtool_get_ksettings(dev, &ecmd)) {
-+		switch (ecmd.parent.speed) {
- 		case SPEED_10000:
- 			return 2;
- 		case SPEED_1000:
--- 
-2.7.0.rc3.207.g0ac5344
+After thinking it over some more, I guess I'm ok with your approach.
+The table-driven patch makes me a bit happier, and I guess not very
+many people end up ever wanting to do async system calls anyway.
+
+Are there other users outside of Solace? It would be good to get comments..
+
+            Linus
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
