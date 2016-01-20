@@ -1,80 +1,68 @@
-From: Nikhilesh Reddy <reddyn-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
-Subject: Re: [PATCH] fuse: Add support for fuse stacked I/O
-Date: Wed, 20 Jan 2016 15:24:12 -0800
-Message-ID: <56A0171C.6050108@codeaurora.org>
-References: <565394BE.4040506@codeaurora.org> <5696E366.2080605@codeaurora.org> <20160114045716.GB8006@kroah.com> <5697EF97.9020800@codeaurora.org> <CA+55aFwxaU0Y_UxyKFv6WaYsPWDDzZG-rhVtMuLSPcJ0WLLw2A@mail.gmail.com> <CALCETrWNQ9ytw1bCOOjFJRstauYc6DocQAmZCF61CErAJ5BF2g@mail.gmail.com> <CAB3-ZyT+xcU-0BnNvq-+GsDe6W8=MCWwxguS-+KQ39gajmM5pw@mail.gmail.com> <871t9i91e1.fsf@thinkpad.rath.org> <56994884.9060002@codeaurora.org> <CA+55aFw9N6Qt=5Q7z+rc_KsotiDgwizm-3Ym6Q70azkb2b3YOA@mail.gmail.com> <CALCETrUA2veiBYYbN1hCSkHxBFyDpe3b=PXg=j53_ZuQBt1FUw@mail.gmail.com> <CA+55aFyFLEkAthR=aUV2noQspgpZ8ascNCCftNBdEGaLvi199A@mail.gmail.com> <569DA62B.7070701@codeaurora.org>
+From: Jann Horn <jann@thejh.net>
+Subject: Re: [PATCH v3] fuse: Add support for passthrough read/write
+Date: Thu, 21 Jan 2016 00:38:41 +0100
+Message-ID: <20160120233841.GA16235@pc.thejh.net>
+References: <56A01642.7030806@codeaurora.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <569DA62B.7070701-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Nikolaus Rath <nikolaus-BTH8mxji4b0@public.gmane.org>, fuse-devel <fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, sven.utcke-Mmb7MZpHnFY@public.gmane.org, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Antonio SJ Musumeci <trapexit-wGTF+nt6ur047o9RxwvyTQ@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="jRHKVT23PllUwdXP"
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <56A01642.7030806@codeaurora.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Nikhilesh Reddy <reddyn@codeaurora.org>
+Cc: torvalds@linux-foundation.org, Miklos Szeredi <miklos@szeredi.hu>, fuse-devel <fuse-devel@lists.sourceforge.net>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, gregkh@linuxfoundation.org, linux-fsdevel@vger.kernel.org, viro@zeniv.linux.org.uk, Richard Weinberger <richard.weinberger@gmail.com>, Theodore Ts'o <tytso@mit.edu>, jack@suse.cz, Antonio SJ Musumeci <trapexit@spawn.link>, sven.utcke@gmx.de, Nikolaus Rath <nikolaus@rath.org>, Jann Horn <jannhorn@googlemail.com>
 List-Id: linux-api@vger.kernel.org
 
-On 01/18/2016 06:57 PM, Nikhilesh Reddy wrote:
-> On 01/15/2016 01:53 PM, Linus Torvalds wrote:
->> On Fri, Jan 15, 2016 at 1:46 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
->> wrote:
->>
->>> If mmap sets vm_file to the underlying thing, wouldn't CRIU and
->>> anything else that uses map_files get confused?  Or did you have
->>> something else in mind?
->>
->> Why would they care?
->>
->> Also, I don't think you actually need to change vm_file - we have this
->> whole notion of "inode->i_data" vs "inode->i_mapping".
->>
->> So I think you could set the "i_mapping" of the fuse inode to be the
->> i_mapping of the passed-through-to inode, and it should just work.
->>
->> And no, I didn't look into this very deeply, and maybe there is some
->> annoying detail that would make that not work well. But that's part of
->> the whole point of the i_mapping indirection: so that you can share
->> the page cache when you have two separate anchor points. I think coda
->> uses it for the local caching, and block devices use it to not have
->> mapping aliases between different inodex that all are the same block
->> device.
->>
->>                   Linus
->>
->
-> Hi
->
-> Thanks for your support.
->
-> I am looking  into adding the mmap by change the i_mmaping but seems to
-> be getting stuck for some stress tests.
->
-> Once i get that debugged and working i will definitely send out a new
-> patch with that functionality.
->
-> ( Sending it as a second patch will help make it easier to go through
-> the legal redtape and procedures i am forced to follow).
->
-> For now i am going to update the current patch and call it "passthrough"
-> as you suggested and also update the commit message giving  a clearer
-> explanation of the motivation.
->
-> Once i get it tested I can send it out for consideration and review
->
-> Please do let me know if you have any questions or concerns on this and
-> i will try my best to address them all.
->
->
-I have just sent out the latest version of the patch in the email with 
-the subject
-[PATCH v3] fuse: Add support for passthrough read/write
 
-Please do let me know if you have any questions or concerns on this and
-i will try my best to address them all.
+--jRHKVT23PllUwdXP
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
--- 
-Thanks
-Nikhilesh Reddy
+On Wed, Jan 20, 2016 at 03:20:34PM -0800, Nikhilesh Reddy wrote:
+> Add support for filesystem passthrough read/write of files
+> when enabled in userspace through the option FUSE_PASSTHROUGH.
+[...]
+> +	daemon_fd = (int)open_out->passthrough_fd;
+> +	if (daemon_fd < 0)
+> +		return;
+> +
+> +	passthrough_filp = fget_raw(daemon_fd);
+> +	if (!passthrough_filp)
+> +		return;
+> +
+> +	passthrough_inode = file_inode(passthrough_filp);
+> +	passthrough_sb = passthrough_inode->i_sb;
+> +	fs_stack_depth = passthrough_sb->s_stack_depth + 1;
+> +
+> +	/* If we reached the stacking limit go through regular io */
+> +	if (fs_stack_depth > FILESYSTEM_MAX_STACK_DEPTH) {
+> +		pr_err("FUSE: maximum fs stacking depth exceeded, cannot use passthrough for this file\n");
+> +		return;
+> +	}
 
-Qualcomm Innovation Center, Inc.
-The Qualcomm Innovation Center, Inc. is a member of the Code Aurora Forum,
-a Linux Foundation Collaborative Project.
+I think this needs an fput() in the error case to prevent a refcount leak.
+
+--jRHKVT23PllUwdXP
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBAgAGBQJWoBqBAAoJED4KNFJOeCOoysQP/RhUnDXn54/ikdhN9KEqKwuK
+9FgoLmdIUAWVMCWdZ36nvj2t5E+fgPAYTQ/YiSowSY+F/2nPz+6MuUOUw14r9d7j
+1LjOm6dIdjT35zDdVV6hGmuwZEE57lJL08gDNLFvbvlQm3Pe6+nWhaZG7DueUgrW
+KzB8/GTQybvYk0lZYopRfnlNf6jkSYEg31ZOzsxErlxJSuPTflVMSnSDCBblLhTJ
+03Za2+6hKGy97iWQyU0t3UvFFXJ5n7rSYvlClqMiJ4J+OdGaqucIs0VCHeTrjvuE
+9umCrpq0rz5E59DTORrQ9vVePTTg2qAT3Pvgkfh9dapY0FkdfJRzERChjK8SI8JM
+P3LkDbV51uRv+ctIPU78vXLB2R7HkUf32bqpT/noUKYOkHQ5DW33Cu+K5X8awBi6
+bugIGprCsHJz4A3e3CqSTo9yNmqKXkbPWAMUc2gtReUQFouaqQc+brHGU9GwD1Ic
+BkeGiLS03YcFykuxfv7wrE/XfaYoD4oDbNDJsuzOWByCxPR9oByCdiRx3fexuRL1
+3Tk7F60/N2bg7Vdgfo5X2+JvpaJi5rsi/dBR0Bb+xpAKnk3Z1vi91SIsEzcGOoSj
+Aa26iJpXj5eZ06bP3fRyHojX8zMe2qQVwXWyIKodNPpAWNivaYUEpgpSLXx70KwL
+VuDQOe7R9UNHYTsaIw/V
+=zkJj
+-----END PGP SIGNATURE-----
+
+--jRHKVT23PllUwdXP--
