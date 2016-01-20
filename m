@@ -1,72 +1,63 @@
-From: Mark Rutland <mark.rutland@arm.com>
-Subject: Re: [PATCH v9 00/13] support "task_isolation" mode for nohz_full
-Date: Wed, 20 Jan 2016 13:27:35 +0000
-Message-ID: <20160120132734.GF25829@leverpostej>
-References: <1451936091-29247-1-git-send-email-cmetcalf@ezchip.com>
- <56941B86.9090009@ezchip.com>
- <20160112100708.GA15737@arm.com>
- <56953CBA.9090208@ezchip.com>
- <20160113104453.GB9854@gmail.com>
- <5696BF7C.2080800@ezchip.com>
+From: Christian Gmeiner <christian.gmeiner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 2/2] drm: etnaviv: add further minor features and varyings count
+Date: Wed, 20 Jan 2016 19:01:36 +0100
+Message-ID: <CAH9NwWdcxEofKYcsSc6SvEW0ag=OHhqH=AYOBOPcsbGSk_DoXw@mail.gmail.com>
+References: <E1aLSQq-0006sU-Ou@rmk-PC.arm.linux.org.uk> <CAH9NwWdr+=hLKiJGM=m_dDWppEX=D+Qu5yhfjE6B3+2T1nE3BA@mail.gmail.com>
+ <20160119102103.GK19062@n2100.arm.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5696BF7C.2080800@ezchip.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@ezchip.com>
-Cc: Ingo Molnar <mingo@kernel.org>, Will Deacon <will.deacon@arm.com>, Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160119102103.GK19062-l+eeeJia6m9vn6HldHNs0ANdhmdF6hFW@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Russell King - ARM Linux <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
+Cc: Lucas Stach <l.stach-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, DRI mailing list <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Chris,
+Hi Russell
 
-Sorry for the delay. I had intended to take a look at this and so held
-off replying, but my time has been taken up elsewhere.
+2016-01-19 11:21 GMT+01:00 Russell King - ARM Linux <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>:
+> On Tue, Jan 19, 2016 at 11:09:57AM +0100, Christian Gmeiner wrote:
+>> Hi Russell,
+>>
+>> 2016-01-19 10:18 GMT+01:00 Russell King <rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>:
+>> > +       /*
+>> > +        * For some cores, two varyings are consumed for position, so the
+>> > +        * maximum varying count needs to be reduced by one.
+>> > +        */
+>> > +       if ((gpu->identity.model == chipModel_GC2000 &&
+>> > +            gpu->identity.revision == 0x5108) ||
+>> > +           (gpu->identity.model == chipModel_GC880 &&
+>> > +            gpu->identity.revision == 0x5106))
+>> > +               gpu->identity.varyings_count -= 1;
+>>
+>> Should we not include the whole list of GPU cores with that special handling?
+>> See: https://github.com/Freescale/kernel-module-imx-gpu-viv/blob/master/kernel-module-imx-gpu-viv-src/hal/kernel/arch/gc_hal_kernel_hardware.c#L592
+>
+> I was debating about that - but I think we need to come up with a better
+> way to do this sort of thing.  At the very least, I've been wondering
+> whether a macro such as:
+>
+> #define etnaviv_model_rev(gpu, mod, rev) \
+>         ((gpu)->identity.model == chipModel_##mod && \
+>          (gpu)->identity.revision == rev))
+>
+> would help make some of this code more readable.
+>
 
-On Wed, Jan 13, 2016 at 04:19:56PM -0500, Chris Metcalf wrote:
-> On 01/13/2016 05:44 AM, Ingo Molnar wrote:
-> >* Chris Metcalf <cmetcalf@ezchip.com> wrote:
-> >
-> >>(Adding Mark to cc's)
-> >>
-> >>On 01/12/2016 05:07 AM, Will Deacon wrote:
-> >>>On Mon, Jan 11, 2016 at 04:15:50PM -0500, Chris Metcalf wrote:
-> >>>>Ping!  There has been no substantive feedback to this version of
-> >>>>the patch in the week since I posted it, which optimistically suggests
-> >>>>to me that people may be satisfied with it.  If that's true, Frederic,
-> >>>>I assume this would be pulled into your tree?
-> >>>>
-> >>>>I have slightly updated the v9 patch series since this posting:
-> >>>>
-> >>>>[...]
-> >>>>
-> >>>>- Incorporated Mark Rutland's changes to convert arm64
-> >>>>   assembly to C code instead of using my own version.
-> >>>Please avoid queuing these patches -- the first is already in the arm64
-> >>>queue for 4.5 and the second was found to introduce a substantial
-> >>>performance regression on the syscall entry/exit path. I think Mark had
-> >>>an updated version to address that, so it would be easier not to have
-> >>>an old version sitting in some other queue!
-> >>I am not formally queueing them anywhere (like linux-next), though
-> >>now that you mention it, that's a pretty good idea - I'll talk to Steven
-> >>about that, assuming this merge window closes without the task
-> >>isolation stuff going in.
-> >NAK. Given the controversy, no way should this stuff go outside the primary trees
-> >it affects: the scheduler, timer, irq, etc. trees.
-> 
-> Fair enough.  I'll plan to do v10 once the merge window closes.
-> 
-> Mark, let me know when/if you get a new version of the de-asm stuff
-> for do_notify_resume() - thanks.
+Yep that makes the code more readable.
 
-If I get the chance soon, I will do, though I suspect I won't have the
-chance to give that the time it deserves over the next week or two. 
+> The other thing I've been wondering is whether a table looked up by GPU
+> model ID and/or revision ID quirks would simplify this.  However, the
+> downside with the tabular approach is that it becomes harder to compare
+> what we have against the galcore sources.
+>
 
-> Or, would it be helpful if I worked up the option I suggested, where
-> we check the thread_info flags in the assembly code before calling out
-> to the new loop in do_notify_resume()?
+The table driven approach could be a little heavy for the number of
+quirks we have
+currently. Maybe Lucas has an opinion about that?
 
-That would probably be for the best.
+greets
+--
+Christian Gmeiner, MSc
 
-Thanks,
-Mark.
+https://soundcloud.com/christian-gmeiner
