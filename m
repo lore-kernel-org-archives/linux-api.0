@@ -1,171 +1,157 @@
-From: Chris Metcalf <cmetcalf@ezchip.com>
-Subject: Re: [PATCH v9 04/13] task_isolation: add initial support
-Date: Tue, 19 Jan 2016 15:45:04 -0500
-Message-ID: <569EA050.5030106@ezchip.com>
-References: <1451936091-29247-1-git-send-email-cmetcalf@ezchip.com>
- <1451936091-29247-5-git-send-email-cmetcalf@ezchip.com>
- <20160119154214.GA2722@lerouge>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20160119154214.GA2722@lerouge>
-Sender: linux-doc-owner@vger.kernel.org
-To: Frederic Weisbecker <fweisbec@gmail.com>
-Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+From: David Decotigny <ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH net-next v6 00/19] new ETHTOOL_GSETTINGS/SSETTINGS API
+Date: Tue, 19 Jan 2016 16:43:45 -0800
+Message-ID: <1453250644-14796-1-git-send-email-ddecotig@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, fcoe-devel-s9riP+hp16TNLxjTenLetw@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eugenia Emantayev <eugenia-VPRAkNaXOzVS1MOuV/RT9w@public.gmane.org>, Or Gerlitz <ogerlitz-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Ido Shamay <idos-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Saeed Mahameed <saeedm-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Govindarajulu Varadarajan <_govind-KK0ffGbhmjU@public.gmane.org>, Venkata Duvvuru <VenkatKumar.Duvvuru-iH1Dq9VlAzfQT0dZR+AlfA@public.gmane.org>, Jeff Kirsher <jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Pravin B Shelar <pshelar-l0M0P4e3n4LQT0dZR+AlfA@public.gmane.org>, Ed Swierk <eswierk-FilZDy9cOaHkQYj/0HfcvtBPR1lH4CV8@public.gmane.org>, Robert Love <robert.w.love-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "James E.J. Bottomley" <JBottomley-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Yuval Mintz <Yuval.Mintz-h88ZbnxC6KDQT0dZR+AlfA@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, David Decotigny <decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 01/19/2016 10:42 AM, Frederic Weisbecker wrote:
-> On Mon, Jan 04, 2016 at 02:34:42PM -0500, Chris Metcalf wrote:
->> diff --git a/kernel/isolation.c b/kernel/isolation.c
->> new file mode 100644
->> index 000000000000..68a9f7457bc0
->> --- /dev/null
->> +++ b/kernel/isolation.c
->> @@ -0,0 +1,105 @@
->> +/*
->> + *  linux/kernel/isolation.c
->> + *
->> + *  Implementation for task isolation.
->> + *
->> + *  Distributed under GPLv2.
->> + */
->> +
->> +#include <linux/mm.h>
->> +#include <linux/swap.h>
->> +#include <linux/vmstat.h>
->> +#include <linux/isolation.h>
->> +#include <linux/syscalls.h>
->> +#include "time/tick-sched.h"
->> +
->> +cpumask_var_t task_isolation_map;
->> +
->> +/*
->> + * Isolation requires both nohz and isolcpus support from the scheduler.
->> + * We provide a boot flag that enables both for now, and which we can
->> + * add other functionality to over time if needed.  Note that just
->> + * specifying "nohz_full=... isolcpus=..." does not enable task isolation.
->> + */
->> +static int __init task_isolation_setup(char *str)
->> +{
->> +	alloc_bootmem_cpumask_var(&task_isolation_map);
->> +	if (cpulist_parse(str, task_isolation_map) < 0) {
->> +		pr_warn("task_isolation: Incorrect cpumask '%s'\n", str);
->> +		return 1;
->> +	}
->> +
->> +	alloc_bootmem_cpumask_var(&cpu_isolated_map);
->> +	cpumask_copy(cpu_isolated_map, task_isolation_map);
->> +
->> +	alloc_bootmem_cpumask_var(&tick_nohz_full_mask);
->> +	cpumask_copy(tick_nohz_full_mask, task_isolation_map);
->> +	tick_nohz_full_running = true;
-> How about calling tick_nohz_full_setup() instead? I'd rather prefer
-> that nohz full implementation details stay in tick-sched.c
->
-> Also what happens if nohz_full= is given as well as task_isolation= ?
-> Don't we risk a memory leak and maybe breaking the fact that
-> (nohz_full & task_isolation != task_isolation) which is really a requirement?
+From: David Decotigny <decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org>
 
-Yeah, this is a good point.  I'm not sure what the best way is to make
-this happen.  It's already true that we will leak memory if you
-specify "nohz_full=" more than once on the command line, but it's
-awkward to fix (assuming we want the last value to win) so maybe
-we can just ignore this problem - it's a pretty small amount of memory
-after all.  If so, then making tick_nohz_full_setup() and 
-isolated_cpu_setup()
-both non-static and calling them from task_isolation_setup() might
-be the cleanest approach.  What do you think?
 
-You asked what happens if nohz_full= is given as well, which is a very
-good question.  Perhaps the right answer is to have an early_initcall
-that suppresses task isolation on any cores that lost their nohz_full
-or isolcpus status due to later boot command line arguments (and
-generate a console warning, obviously).
+History:
+ v6
+ - fix copy_from_user in user/kernel handshake
+ v5
+ note: please see v4 bullets for a question regarding bitmap.c
+ - minor fix to make allyesconfig/allmodconfig
+ v4
+ - removed typedef for link mode bitmaps
+ - moved bitmap<->u32[] conversion routines to bitmap.c . This is the
+   naive implementation. I have an endian-aware version that uses
+   memcpy/memset as much as possible, but I find it harder to follow
+   (see http://paste.ubuntu.com/13863722/). Please let me know if I
+   should use it instead.
+ - fixes suggested by Ben Hutchings
+ v3
+ - rebased v2 on top of latest net-next, minor checkpatch/printf %*pb
+   updates
+ v2
+ - keep return 0 in get_settings when successful, instead of
+   propagating positive result from driver's get_settings callback.
+ v1
+ - original submission
 
->> +
->> +	return 1;
->> +}
->> +__setup("task_isolation=", task_isolation_setup);
->> +
->> +/*
->> + * This routine controls whether we can enable task-isolation mode.
->> + * The task must be affinitized to a single task_isolation core or we will
->> + * return EINVAL.  Although the application could later re-affinitize
->> + * to a housekeeping core and lose task isolation semantics, this
->> + * initial test should catch 99% of bugs with task placement prior to
->> + * enabling task isolation.
->> + */
->> +int task_isolation_set(unsigned int flags)
->> +{
->> +	if (cpumask_weight(tsk_cpus_allowed(current)) != 1 ||
->> +	    !task_isolation_possible(smp_processor_id()))
->> +		return -EINVAL;
->> +
->> +	current->task_isolation_flags = flags;
->> +	return 0;
->> +}
-> What if we concurrently change the task's affinity? Also it seems that preemption
-> isn't disabled, so we can also migrate concurrently. I'm surprised you haven't
-> seen warnings with smp_processor_id().
->
-> Also we should protect against task's affinity change when task_isolation_flags
-> is set.
 
-I talked about this a bit when you raised it for the v8 patch series:
+The main goal of this series is to support ethtool link mode masks
+larger than 32 bits. It implements a new ioctl pair
+(ETHTOOL_GSETTINGS/SSETTINGS), its associated callbacks
+(get/set_settings) and a new struct ethtool_settings, which should
+eventually replace legacy ethtool_cmd. Internally, the kernel uses
+fixed length link mode masks defined at compilation time in ethtool.h
+(for now: 31 bits), that can be increased by changing
+__ETHTOOL_LINK_MODE_LAST in ethtool.h (absolute max is 4064 bits,
+checked at compile time), and the user/kernel interface allows this
+length to be arbitrary within 1..4064. This should allow some
+flexibility without using too much heap/stack space, at the cost of
+a small kernel/user handshake for the user to determine the sizes of
+those bitmaps.
 
-   http://lkml.kernel.org/r/562FA8FD.8080502@ezchip.com
+Along the way, I chose to drop in the new structure the 3 ethtool_cmd
+fields marked "deprecated" (transceiver/maxrxpkt/maxtxpkt). They are
+still available for old drivers via the (old) ETHTOOL_GSET/SSET API,
+but are not available to drivers that switch to new API. Of those 3
+fields, ethtool_cmd::transceiver seems to be still actively used by
+several drivers, maybe we should not consider this field deprecated?
+The 2 other fields are basically not used. This transition requires
+some care in the way old and new ethtool talk to the kernel.
 
-I'd be curious to hear your take on the arguments I made there.
+More technical details provided in the description for main patch. In
+particular details about backward compatibility properties.
 
-You're absolutely right about the preemption warnings, which I only fixed
-a few days ago.  In this case I use raw_smp_processor_id() since with a
-fixed single-core cpu affinity, we're not going anywhere, so the warning
-from smp_processor_id() would be bogus.  And although technically it is
-still correct (racing with another task resetting the task affinity on this
-one), it is in any case equivalent to having that other task reset the 
-affinity
-on return from the prctl(), which I've already claimed isn't an interesting
-use case to try to handle.  But let me know what you think!
+Some questions to more experts than me:
+ - the kernel/interface multiplexes the "tell me the bitmap length"
+   handshake and the "give me the settings" inside the new
+   ETHTOOL_GSETTINGS cmd. I was thinking of making this into 2
+   separate cmds: 1 cmd ETHTOOL_GKERNELPROPERTIES which would be
+   kernel-wide rather than device-specific, would return properties
+   like "length of the link mode bitmaps", and possibly others. And
+   ETHTOOL_GSETTINGS would expect the proper bitmaps
+ - the link mode bitmaps are piggybacked at tail of the new struct
+   ethtool_settings. Since its user-visible definition does not assume
+   specific bitmap width, I am using a 0-length array as the publicly
+   visible placeholder. But then, the kernel needs to specialize it
+   (struct ethtool_ksettings) to specify its current link mode
+   masks. This means that kernel code is "littered" with
+   "ksettings->parent.field" to access "field" inside
+   ethtool_settings:
+   + I don't like the field name "parent", any suggestion welcome
+   + and/or: I could use ethtool_settings everywhere (instead of a new
+     ethtool_ksettings) and an accessor to retrieve the link mode
+     masks?
+   + or: we could decide to make the link mode masks statically
+     bounded again, ie. make their width public, but larger than
+     current 32, and unchangeable forever. This would make everything
+     straightforward, but we might hit limits later, or have an
+     unneeded memory/stack usage for unused bits.
+   any preference?
+ - I foresee bugs where people use the legacy/deprecated SUPPORTED_x
+   macros instead of the new ETHTOOL_LINK_MODE_x_BIT enums in the new
+   get/set__ksettings callbacks. Not sure how to prevent problems with
+   this.
 
->> +
->> +/*
->> + * In task isolation mode we try to return to userspace only after
->> + * attempting to make sure we won't be interrupted again.  To handle
->> + * the periodic scheduler tick, we test to make sure that the tick is
->> + * stopped, and if it isn't yet, we request a reschedule so that if
->> + * another task needs to run to completion first, it can do so.
->> + * Similarly, if any other subsystems require quiescing, we will need
->> + * to do that before we return to userspace.
->> + */
->> +bool _task_isolation_ready(void)
->> +{
->> +	WARN_ON_ONCE(!irqs_disabled());
->> +
->> +	/* If we need to drain the LRU cache, we're not ready. */
->> +	if (lru_add_drain_needed(smp_processor_id()))
->> +		return false;
->> +
->> +	/* If vmstats need updating, we're not ready. */
->> +	if (!vmstat_idle())
->> +		return false;
->> +
->> +	/* Request rescheduling unless we are in full dynticks mode. */
->> +	if (!tick_nohz_tick_stopped()) {
->> +		set_tsk_need_resched(current);
-> I'm not sure doing this will help getting the tick to get stopped.
+The only driver which was converted for now is mlx4. I am not
+considering fcoe as fully converted, but I updated it a minima to be
+able to remove __ethtool_get_settings, now known as
+__ethtool_get_ksettings.
 
-Well, I don't know that there is anything else we CAN do, right?  If there's
-another task that can run, great - it may be that that's why full dynticks
-isn't happening yet.  Or, it might be that we're waiting for an RCU tick and
-there's nothing else we can do, in which case we basically spend our time
-going around through the scheduler code and back out to the
-task_isolation_ready() test, but again, there's really nothing else more
-useful we can be doing at this point.  Once the RCU tick fires (or whatever
-it was that was preventing full dynticks from engaging), we will pass this
-test and return to user space.
+Tested with legacy and "future" ethtool on 64b x86 kernel and 32+64b
+ethtool, and on a 32b x86 kernel + 32b ethtool.
+
+############################################
+# Patch Set Summary:
+
+David Decotigny (19):
+  lib/bitmap.c: conversion routines to/from u32 array
+  test_bitmap: unit tests for lib/bitmap.c
+  net: usnic: remove unused call to ethtool_ops::get_settings
+  net: usnic: use __ethtool_get_settings
+  net: ethtool: add new ETHTOOL_GSETTINGS/SSETTINGS API
+  tx4939: use __ethtool_get_ksettings
+  net: usnic: use __ethtool_get_ksettings
+  net: bonding: use __ethtool_get_ksettings
+  net: ipvlan: use __ethtool_get_ksettings
+  net: macvlan: use __ethtool_get_ksettings
+  net: team: use __ethtool_get_ksettings
+  net: fcoe: use __ethtool_get_ksettings
+  net: rdma: use __ethtool_get_ksettings
+  net: 8021q: use __ethtool_get_ksettings
+  net: bridge: use __ethtool_get_ksettings
+  net: core: use __ethtool_get_ksettings
+  net: ethtool: remove unused __ethtool_get_settings
+  net: mlx4: convenience predicate for debug messages
+  net: mlx4: use new ETHTOOL_G/SSETTINGS API
+
+ arch/mips/txx9/generic/setup_tx4939.c           |   7 +-
+ drivers/infiniband/hw/usnic/usnic_ib_verbs.c    |  10 +-
+ drivers/net/bonding/bond_main.c                 |  14 +-
+ drivers/net/ethernet/mellanox/mlx4/en_ethtool.c | 344 ++++++++++----------
+ drivers/net/ethernet/mellanox/mlx4/en_main.c    |   1 +
+ drivers/net/ethernet/mellanox/mlx4/mlx4_en.h    |   5 +-
+ drivers/net/ipvlan/ipvlan_main.c                |   8 +-
+ drivers/net/macvlan.c                           |   8 +-
+ drivers/net/team/team.c                         |   8 +-
+ drivers/scsi/fcoe/fcoe_transport.c              |  36 ++-
+ include/linux/bitmap.h                          |   6 +
+ include/linux/ethtool.h                         |  84 ++++-
+ include/rdma/ib_addr.h                          |  14 +-
+ include/uapi/linux/ethtool.h                    | 320 ++++++++++++++----
+ lib/Kconfig.debug                               |   8 +
+ lib/Makefile                                    |   1 +
+ lib/bitmap.c                                    |  86 +++++
+ lib/test_bitmap.c                               | 343 ++++++++++++++++++++
+ net/8021q/vlan_dev.c                            |   8 +-
+ net/bridge/br_if.c                              |   6 +-
+ net/core/ethtool.c                              | 413 +++++++++++++++++++++++-
+ net/core/net-sysfs.c                            |  15 +-
+ net/packet/af_packet.c                          |  11 +-
+ tools/testing/selftests/lib/Makefile            |   2 +-
+ tools/testing/selftests/lib/bitmap.sh           |  10 +
+ 25 files changed, 1440 insertions(+), 328 deletions(-)
+ create mode 100644 lib/test_bitmap.c
+ create mode 100644 tools/testing/selftests/lib/bitmap.sh
 
 -- 
-Chris Metcalf, EZChip Semiconductor
-http://www.ezchip.com
-
+2.7.0.rc3.207.g0ac5344
