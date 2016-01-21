@@ -1,106 +1,81 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: [PATCH REBASE 4.5 16/31] media: au0828 video remove au0828_enable_analog_tuner()
-Date: Thu, 21 Jan 2016 11:09:47 -0700
-Message-ID: <ac29005e53f1dfec3bfdd5ba14d822d224ea5482.1453336831.git.shuahkh@osg.samsung.com>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: [PATCH REBASE 4.5 18/31] media: au0828 change to use Managed Media Controller API
+Date: Thu, 21 Jan 2016 11:09:48 -0700
+Message-ID: <a0c6c96b8dbb916752cfb2f2f34da3c3e0862bb3.1453336831.git.shuahkh@osg.samsung.com>
 References: <cover.1453336830.git.shuahkh@osg.samsung.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cover.1453336830.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-In-Reply-To: <cover.1453336830.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-References: <cover.1453336830.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, tiwai-IBi9RG/b67k@public.gmane.org, clemens-P6GI/4k7KOmELgA04lAiVw@public.gmane.org, hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org, laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org, sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, javier-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org, m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, perex-/Fr2/VpizcU@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, tvboxspy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, crope-X3B1VOXEql0@public.gmane.org, ruchandani.tina-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, chehabrafael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, stefanr-MtYdepGKPcBMYopoZt5u/LNAH6kLmebB@public.gmane.org, inki.dae-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, jh1009.sung-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, elfring-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, sw0312.kim-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, ricardo.ribalda-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, labbott-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org, pierre-louis.bossart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, ricard.wanderlof-VrBV9hrLPhE@public.gmane.org, julian-SZMMDGyaqes@public.gmane.org, takamichiho-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dominic.sacre-Mmb7MZpHnFY@public.gmane.org, misterpib-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, gtmkramer-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org, normalperson-rMlxZR9MS24@public.gmane.org, joe-amhYAVlgbXj10XsdtD+oqA@public.gmane.org, linuxbugs-mcfjX3dozePR7s880joybQ@public.gmane.org, johan-v8HUHnYb0Yo@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.orga
+Return-path: <linux-media-owner@vger.kernel.org>
+In-Reply-To: <cover.1453336830.git.shuahkh@osg.samsung.com>
+In-Reply-To: <cover.1453336830.git.shuahkh@osg.samsung.com>
+References: <cover.1453336830.git.shuahkh@osg.samsung.com>
+Sender: linux-media-owner@vger.kernel.org
+To: mchehab@osg.samsung.com, tiwai@suse.com, clemens@ladisch.de, hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittgam.net, johan@oljud.se, linux-kernel@vger.kernel.org, linux-media@vger.kernel.org, linux-api@vger.kernel.orga
 List-Id: linux-api@vger.kernel.org
 
-au0828_enable_analog_tuner() is no longer needed with
-v4l2-core and au0828-video invoking enable_source and
-disable_source handlers. In addition, it is unnecessary
-to check for tuner availability in queue_setup() as
-v4l2-core handles the tuner availability checks.
+Change au0828 to use Managed Media Controller API to coordinate
+creating/deleting media device on parent usb device it shares
+with the snd-usb-audio driver. With this change, au0828 uses
+media_device_get_devres() to allocate a new media device devres
+or return an existing one, if it finds one.
 
-Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
 ---
- drivers/media/usb/au0828/au0828-video.c | 61 ---------------------------------
- 1 file changed, 61 deletions(-)
+ drivers/media/usb/au0828/au0828-core.c | 29 +++++++++++++++--------------
+ 1 file changed, 15 insertions(+), 14 deletions(-)
 
-diff --git a/drivers/media/usb/au0828/au0828-video.c b/drivers/media/usb/au0828/au0828-video.c
-index 8c54fd2..81952c8 100644
---- a/drivers/media/usb/au0828/au0828-video.c
-+++ b/drivers/media/usb/au0828/au0828-video.c
-@@ -638,64 +638,6 @@ static inline int au0828_isoc_copy(struct au0828_dev *dev, struct urb *urb)
- 	return rc;
- }
+diff --git a/drivers/media/usb/au0828/au0828-core.c b/drivers/media/usb/au0828/au0828-core.c
+index d0fb40b..10c50f5 100644
+--- a/drivers/media/usb/au0828/au0828-core.c
++++ b/drivers/media/usb/au0828/au0828-core.c
+@@ -135,10 +135,10 @@ static void au0828_unregister_media_device(struct au0828_dev *dev)
+ {
  
--static int au0828_enable_analog_tuner(struct au0828_dev *dev)
--{
--#ifdef CONFIG_MEDIA_CONTROLLER
--	struct media_device *mdev = dev->media_dev;
--	struct media_entity *source;
--	struct media_link *link, *found_link = NULL;
--	int ret, active_links = 0;
--
--	if (!mdev || !dev->decoder)
--		return 0;
--
--	/*
--	 * This will find the tuner that is connected into the decoder.
--	 * Technically, this is not 100% correct, as the device may be
--	 * using an analog input instead of the tuner. However, as we can't
--	 * do DVB streaming while the DMA engine is being used for V4L2,
--	 * this should be enough for the actual needs.
--	 */
--	list_for_each_entry(link, &dev->decoder->links, list) {
--		if (link->sink->entity == dev->decoder) {
--			found_link = link;
--			if (link->flags & MEDIA_LNK_FL_ENABLED)
--				active_links++;
--			break;
--		}
--	}
--
--	if (active_links == 1 || !found_link)
--		return 0;
--
--	source = found_link->source->entity;
--	list_for_each_entry(link, &source->links, list) {
--		struct media_entity *sink;
--		int flags = 0;
--
--		sink = link->sink->entity;
--
--		if (sink == dev->decoder)
--			flags = MEDIA_LNK_FL_ENABLED;
--
--		ret = media_entity_setup_link(link, flags);
--		if (ret) {
--			pr_err(
--				"Couldn't change link %s->%s to %s. Error %d\n",
--				source->name, sink->name,
--				flags ? "enabled" : "disabled",
--				ret);
--			return ret;
--		} else
--			au0828_isocdbg(
--				"link %s->%s was %s\n",
--				source->name, sink->name,
--				flags ? "ENABLED" : "disabled");
--	}
--#endif
--	return 0;
--}
--
- static int queue_setup(struct vb2_queue *vq,
- 		       unsigned int *nbuffers, unsigned int *nplanes,
- 		       unsigned int sizes[], void *alloc_ctxs[])
-@@ -707,9 +649,6 @@ static int queue_setup(struct vb2_queue *vq,
- 		return sizes[0] < size ? -EINVAL : 0;
- 	*nplanes = 1;
- 	sizes[0] = size;
--
--	au0828_enable_analog_tuner(dev);
--
- 	return 0;
- }
+ #ifdef CONFIG_MEDIA_CONTROLLER
+-	if (dev->media_dev) {
++	if (dev->media_dev &&
++		media_devnode_is_registered(&dev->media_dev->devnode)) {
+ 		media_device_unregister(dev->media_dev);
+ 		media_device_cleanup(dev->media_dev);
+-		kfree(dev->media_dev);
+ 		dev->media_dev = NULL;
+ 	}
+ #endif
+@@ -224,23 +224,24 @@ static int au0828_media_device_init(struct au0828_dev *dev,
+ #ifdef CONFIG_MEDIA_CONTROLLER
+ 	struct media_device *mdev;
  
+-	mdev = kzalloc(sizeof(*mdev), GFP_KERNEL);
++	mdev = media_device_get_devres(&udev->dev);
+ 	if (!mdev)
+ 		return -ENOMEM;
+ 
+-	mdev->dev = &udev->dev;
++	if (!media_devnode_is_registered(&mdev->devnode)) {
++		mdev->dev = &udev->dev;
+ 
+-	if (!dev->board.name)
+-		strlcpy(mdev->model, "unknown au0828", sizeof(mdev->model));
+-	else
+-		strlcpy(mdev->model, dev->board.name, sizeof(mdev->model));
+-	if (udev->serial)
+-		strlcpy(mdev->serial, udev->serial, sizeof(mdev->serial));
+-	strcpy(mdev->bus_info, udev->devpath);
+-	mdev->hw_revision = le16_to_cpu(udev->descriptor.bcdDevice);
+-	mdev->driver_version = LINUX_VERSION_CODE;
++		if (udev->product)
++			strlcpy(mdev->model, udev->product,
++				sizeof(mdev->model));
++		if (udev->serial)
++			strlcpy(mdev->serial, udev->serial,
++				sizeof(mdev->serial));
++		strcpy(mdev->bus_info, udev->devpath);
++		mdev->hw_revision = le16_to_cpu(udev->descriptor.bcdDevice);
+ 
+-	media_device_init(mdev);
++		media_device_init(mdev);
++	}
+ 
+ 	dev->media_dev = mdev;
+ #endif
 -- 
 2.5.0
