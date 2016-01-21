@@ -1,98 +1,224 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH v7] fs: clear file privilege bits when mmap writing
-Date: Thu, 21 Jan 2016 15:41:43 -0800
-Message-ID: <CAGXu5jKFyCy=-=GvNJXw_uZeVZfcXRAXPcPZq-OqtORPtW97tA@mail.gmail.com>
-References: <20160111225750.GA4256@www.outflux.net>
-	<20160121232238.GA4616@pc.thejh.net>
+From: =?UTF-8?q?Emilio=20L=C3=B3pez?= <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
+Subject: [PATCH v2] usb: devio: Add ioctl to disallow detaching kernel USB drivers.
+Date: Thu, 21 Jan 2016 20:54:36 -0300
+Message-ID: <1453420476-26125-1-git-send-email-emilio.lopez@collabora.co.uk>
+References: <20160119180752.GA10487@kroah.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160121232238.GA4616-J1fxOzX/cBvk1uMJSBkQmQ@public.gmane.org>
+In-Reply-To: <20160119180752.GA10487-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, yalin wang <yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Willy Tarreau <w@1wt.eu>, Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org, kborer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org
+Cc: reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jorgelo-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, =?UTF-8?q?Emilio=20L=C3=B3pez?= <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 21, 2016 at 3:22 PM, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org> wrote:
-> On Mon, Jan 11, 2016 at 02:57:50PM -0800, Kees Cook wrote:
->> Normally, when a user can modify a file that has setuid or setgid bits,
->> those bits are cleared when they are not the file owner or a member
->> of the group. This is enforced when using write and truncate but not
->> when writing to a shared mmap on the file. This could allow the file
->> writer to gain privileges by changing a binary without losing the
->> setuid/setgid/caps bits.
->>
->> Changing the bits requires holding inode->i_mutex, so it cannot be done
->> during the page fault (due to mmap_sem being held during the fault). We
->> could do this during vm_mmap_pgoff, but that would need coverage in
->> mprotect as well, but to check for MAP_SHARED, we'd need to hold mmap_sem
->> again. We could clear at open() time, but it's possible things are
->> accidentally opening with O_RDWR and only reading. Better to clear on
->> close and error failures (i.e. an improvement over now, which is not
->> clearing at all).
->>
->> Instead, detect the need to clear the bits during the page fault, and
->> actually remove the bits during final fput. Since the file was open for
->> writing, it wouldn't have been possible to execute it yet (ETXTBSY).
->>
->> Signed-off-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
->> ---
-> [...]
->> diff --git a/fs/file_table.c b/fs/file_table.c
->> index ad17e05ebf95..ca11b86613cf 100644
->> --- a/fs/file_table.c
->> +++ b/fs/file_table.c
->> @@ -191,6 +191,21 @@ static void __fput(struct file *file)
->>
->>       might_sleep();
->>
->> +     /*
->> +      * XXX: This is a delayed removal of privs (we've already been
->> +      * written to), since we must avoid mmap_sem. But a race shouldn't
->> +      * be possible since when open for writing, execve() will fail
->> +      * with ETXTBSY (via deny_write_access()). A remaining problem
->> +      * is that since we've already been written to, we must ignore the
->> +      * return value of file_remove_privs(), since we can't reject the
->> +      * writes of the past.
->> +      */
->> +     if (unlikely(file->f_flags & O_REMOVEPRIV)) {
->> +             mutex_lock(&inode->i_mutex);
->> +             file_remove_privs(file);
->> +             mutex_unlock(&inode->i_mutex);
->> +     }
->> +
->
-> If there is any other setuid file I can run, can't I just do this?
->
-> pid_t child = fork();
-> if (child == 0) {
->   /* fd will be 3 or so */
->   int fd = open("setuid-file-with-bad-privs", O_WRONLY);
->   char *ptr = mmap(..., fd, 0);
->   memcpy(ptr, my_evil_code, sizeof(my_evil_code));
->   /* su --bad-option just prints usage and exits, without touching
->    * the fd - but since su has the last reference to the fd, __fput
->    * will run with its privileges */
->   execlp("su", "su", "--bad-option", NULL);
-> }
-> int status;
-> wait(&status);
-> execlp("setuid-file-with-bad-privs", "setuid-file-with-bad-privs", NULL);
->
-> I think that file_remove_privs() really needs to be changed to use f_cred
-> instead of current_cred(). That would also fix the known bypass where
-> you pass the fd to a setuid process as fd 1, causing the setuid process
-> to write more-or-less controlled data to a chosen offset, or similar
-> stuff (see
-> http://www.halfdog.net/Security/2015/SetgidDirectoryPrivilegeEscalation/).
->
-> Or was there already another patch that does this that I didn't see?
+=46rom: Reilly Grant <reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
 
-Andy brought it up as an issue, but I view it as a separate problem.
-Both things need to be fixed. :)
+The new USBDEVFS_DROP_PRIVILEGES ioctl allows a process to voluntarily
+relinquish the ability to issue other ioctls that may interfere with
+other processes and drivers that have claimed an interface on the
+device.
 
--Kees
+Signed-off-by: Reilly Grant <reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Signed-off-by: Emilio L=C3=B3pez <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
 
--- 
-Kees Cook
-Chrome OS & Brillo Security
+---
+
+I guess code talks more than words :) This patch is only build-tested,
+and is meant to showcase the approach. The basic idea is to allow
+limiting the interface claims via an extra parameter to resolve
+Krzysztof's worries.
+
+A longer paragraph explaining the idea can be seen at
+
+http://www.spinics.net/lists/linux-usb/msg135271.html
+
+Cheers!
+Emilio
+
+Changes in v2:
+- Added a parameter to the ioctl, a mask of interfaces an unprivileged
+  process is allowed to claim.
+- Drop Tested-by's
+
+ drivers/usb/core/devio.c          | 65 +++++++++++++++++++++++++++++++=
++++++---
+ include/uapi/linux/usbdevice_fs.h |  5 +++
+ 2 files changed, 66 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/usb/core/devio.c b/drivers/usb/core/devio.c
+index 38ae877c..bf40aa6 100644
+--- a/drivers/usb/core/devio.c
++++ b/drivers/usb/core/devio.c
+@@ -77,6 +77,8 @@ struct usb_dev_state {
+ 	unsigned long ifclaimed;
+ 	u32 secid;
+ 	u32 disabled_bulk_eps;
++	bool privileges_dropped;
++	unsigned long interface_allowed_mask;
+ };
+=20
+ struct async {
+@@ -641,6 +643,14 @@ static int claimintf(struct usb_dev_state *ps, uns=
+igned int ifnum)
+ 	if (test_bit(ifnum, &ps->ifclaimed))
+ 		return 0;
+=20
++	if (ps->privileges_dropped) {
++		if (ifnum >=3D 8*sizeof(ps->interface_allowed_mask))
++			return -EINVAL;
++
++		if (!test_bit(ifnum, &ps->interface_allowed_mask))
++			return -EACCES;
++	}
++
+ 	intf =3D usb_ifnum_to_if(dev, ifnum);
+ 	if (!intf)
+ 		err =3D -ENOENT;
+@@ -878,7 +888,7 @@ static int usbdev_open(struct inode *inode, struct =
+file *file)
+ 	int ret;
+=20
+ 	ret =3D -ENOMEM;
+-	ps =3D kmalloc(sizeof(struct usb_dev_state), GFP_KERNEL);
++	ps =3D kzalloc(sizeof(struct usb_dev_state), GFP_KERNEL);
+ 	if (!ps)
+ 		goto out_free_ps;
+=20
+@@ -911,11 +921,8 @@ static int usbdev_open(struct inode *inode, struct=
+ file *file)
+ 	INIT_LIST_HEAD(&ps->async_pending);
+ 	INIT_LIST_HEAD(&ps->async_completed);
+ 	init_waitqueue_head(&ps->wait);
+-	ps->discsignr =3D 0;
+ 	ps->disc_pid =3D get_pid(task_pid(current));
+ 	ps->cred =3D get_current_cred();
+-	ps->disccontext =3D NULL;
+-	ps->ifclaimed =3D 0;
+ 	security_task_getsecid(current, &ps->secid);
+ 	smp_wmb();
+ 	list_add_tail(&ps->list, &dev->filelist);
+@@ -1215,6 +1222,27 @@ static int proc_connectinfo(struct usb_dev_state=
+ *ps, void __user *arg)
+=20
+ static int proc_resetdevice(struct usb_dev_state *ps)
+ {
++	struct usb_host_config *actconfig =3D ps->dev->actconfig;
++	struct usb_interface *interface;
++	int i, number;
++
++	/* Don't touch the device if any interfaces are claimed. It
++	 * could interfere with other drivers' operations and this
++	 * process has dropped its privileges to do such things.
++	 */
++	if (ps->privileges_dropped && actconfig) {
++		for (i =3D 0; i < actconfig->desc.bNumInterfaces; ++i) {
++			interface =3D actconfig->interface[i];
++			number =3D interface->cur_altsetting->desc.bInterfaceNumber;
++			if (usb_interface_claimed(interface)) {
++				dev_warn(&ps->dev->dev,
++					"usbfs: interface %d claimed by %s while '%s' resets device\n",
++					number,	interface->dev.driver->name, current->comm);
++				return -EACCES;
++			}
++		}
++	}
++
+ 	return usb_reset_device(ps->dev);
+ }
+=20
+@@ -1922,6 +1950,9 @@ static int proc_ioctl(struct usb_dev_state *ps, s=
+truct usbdevfs_ioctl *ctl)
+ 	struct usb_interface    *intf =3D NULL;
+ 	struct usb_driver       *driver =3D NULL;
+=20
++	if (ps->privileges_dropped)
++		return -EACCES;
++
+ 	/* alloc buffer */
+ 	size =3D _IOC_SIZE(ctl->ioctl_code);
+ 	if (size > 0) {
+@@ -2074,6 +2105,9 @@ static int proc_disconnect_claim(struct usb_dev_s=
+tate *ps, void __user *arg)
+ 	if (intf->dev.driver) {
+ 		struct usb_driver *driver =3D to_usb_driver(intf->dev.driver);
+=20
++		if (ps->privileges_dropped)
++			return -EACCES;
++
+ 		if ((dc.flags & USBDEVFS_DISCONNECT_CLAIM_IF_DRIVER) &&
+ 				strncmp(dc.driver, intf->dev.driver->name,
+ 					sizeof(dc.driver)) !=3D 0)
+@@ -2130,6 +2164,26 @@ static int proc_free_streams(struct usb_dev_stat=
+e *ps, void __user *arg)
+ 	return r;
+ }
+=20
++static int proc_drop_privileges(struct usb_dev_state *ps, void __user =
+*arg)
++{
++	struct usbdevfs_drop_privs data;
++
++	if (copy_from_user(&data, arg, sizeof(data)))
++		return -EFAULT;
++
++	/* This is a one way operation. Once privileges were dropped,
++	 * you cannot do it again (Otherwise unprivileged processes
++	 * would be able to change their allowed interfaces mask)
++	 */
++	if (ps->privileges_dropped)
++		return -EACCES;
++
++	ps->interface_allowed_mask =3D data.interface_allowed_mask;
++	ps->privileges_dropped =3D true;
++
++	return 0;
++}
++
+ /*
+  * NOTE:  All requests here that have interface numbers as parameters
+  * are assuming that somehow the configuration has been prevented from
+@@ -2318,6 +2372,9 @@ static long usbdev_do_ioctl(struct file *file, un=
+signed int cmd,
+ 	case USBDEVFS_FREE_STREAMS:
+ 		ret =3D proc_free_streams(ps, p);
+ 		break;
++	case USBDEVFS_DROP_PRIVILEGES:
++		ret =3D proc_drop_privileges(ps, p);
++		break;
+ 	}
+=20
+  done:
+diff --git a/include/uapi/linux/usbdevice_fs.h b/include/uapi/linux/usb=
+device_fs.h
+index 019ba1e..9abcb34 100644
+--- a/include/uapi/linux/usbdevice_fs.h
++++ b/include/uapi/linux/usbdevice_fs.h
+@@ -154,6 +154,10 @@ struct usbdevfs_streams {
+ 	unsigned char eps[0];
+ };
+=20
++struct usbdevfs_drop_privs {
++	unsigned long interface_allowed_mask;
++};
++
+ #define USBDEVFS_CONTROL           _IOWR('U', 0, struct usbdevfs_ctrlt=
+ransfer)
+ #define USBDEVFS_CONTROL32           _IOWR('U', 0, struct usbdevfs_ctr=
+ltransfer32)
+ #define USBDEVFS_BULK              _IOWR('U', 2, struct usbdevfs_bulkt=
+ransfer)
+@@ -187,5 +191,6 @@ struct usbdevfs_streams {
+ #define USBDEVFS_DISCONNECT_CLAIM  _IOR('U', 27, struct usbdevfs_disco=
+nnect_claim)
+ #define USBDEVFS_ALLOC_STREAMS     _IOR('U', 28, struct usbdevfs_strea=
+ms)
+ #define USBDEVFS_FREE_STREAMS      _IOR('U', 29, struct usbdevfs_strea=
+ms)
++#define USBDEVFS_DROP_PRIVILEGES   _IOR('U', 30, struct usbdevfs_drop_=
+privs)
+=20
+ #endif /* _UAPI_LINUX_USBDEVICE_FS_H */
+--=20
+2.5.0
