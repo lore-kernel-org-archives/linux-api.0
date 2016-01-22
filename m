@@ -1,44 +1,71 @@
-From: Andres Freund <andres@anarazel.de>
-Subject: Re: [PATCH 07/13] aio: enabled thread based async fsync
-Date: Fri, 22 Jan 2016 16:41:08 +0100
-Message-ID: <20160122154108.GG4961@awork2.anarazel.de>
-References: <80934665e0dd2360e2583522c7c7569e5a92be0e.1452549431.git.bcrl@kvack.org>
- <20160112011128.GC6033@dastard>
- <CA+55aFxtvMqHgHmHCcszV_QKQ2BY0wzenmrvc6BYN+tLFxesMA@mail.gmail.com>
- <20160112022548.GD6033@dastard>
- <CA+55aFzxSrLhOyV3VtO=Cv_J+npD8ubEP74CCF+rdt=CRipzxA@mail.gmail.com>
- <20160112033708.GE6033@dastard>
- <CA+55aFyLb8scNSYb19rK4iT_Vx5=hKxqPwRHVnETzAhEev0aHw@mail.gmail.com>
- <CA+55aFxCM-xWVR4jC=q2wSk+-WC1Xuf+nZLoud8JwKZopnR_dQ@mail.gmail.com>
- <20160115202131.GH6330@kvack.org>
- <CA+55aFzRo3yztEBBvJ4CMCvVHAo6qEDhTHTc_LGyqmxbcFyNYw@mail.gmail.com>
+From: Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>
+Subject: Re: [PATCH v2] usb: devio: Add ioctl to disallow detaching kernel
+ USB drivers.
+Date: Fri, 22 Jan 2016 11:10:43 -0500 (EST)
+Message-ID: <Pine.LNX.4.44L0.1601221101490.1626-100000@iolanthe.rowland.org>
+References: <1453420476-26125-1-git-send-email-emilio.lopez@collabora.co.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <CA+55aFzRo3yztEBBvJ4CMCvVHAo6qEDhTHTc_LGyqmxbcFyNYw@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Benjamin LaHaise <bcrl@kvack.org>, Dave Chinner <david@fromorbit.com>, linux-aio@kvack.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>
+Content-Type: TEXT/PLAIN; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1453420476-26125-1-git-send-email-emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
+Sender: linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: =?UTF-8?q?Emilio=20L=C3=B3pez?= <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
+Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, kborer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jorgelo-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 2016-01-19 19:59:35 -0800, Linus Torvalds wrote:
-> Are there other users outside of Solace? It would be good to get comments..
+On Thu, 21 Jan 2016, Emilio L=C3=B3pez wrote:
 
-PostgreSQL is a potential user of async fdatasync, fsync,
-sync_file_range and potentially readahead, write, read. First tests with
-Dave's async fsync/fsync_range are positive, so are the results with a
-self-hacked async sync_file_range (although I'm kinda thinking that it
-shouldn't really require to be used asynchronously).
+> From: Reilly Grant <reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+>=20
+> The new USBDEVFS_DROP_PRIVILEGES ioctl allows a process to voluntaril=
+y
+> relinquish the ability to issue other ioctls that may interfere with
+> other processes and drivers that have claimed an interface on the
+> device.
+>=20
+> Signed-off-by: Reilly Grant <reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+> Signed-off-by: Emilio L=C3=B3pez <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
 
-I rather doubt openat, unlink et al are going to be interesting for
-*us*, the requires structural changes would be too bit. But obviously
-that doesn't mean anything for others.
 
-Andres
+>  static int proc_resetdevice(struct usb_dev_state *ps)
+>  {
+> +	struct usb_host_config *actconfig =3D ps->dev->actconfig;
+> +	struct usb_interface *interface;
+> +	int i, number;
+> +
+> +	/* Don't touch the device if any interfaces are claimed. It
+> +	 * could interfere with other drivers' operations and this
+> +	 * process has dropped its privileges to do such things.
+> +	 */
+
+This comment should be rephrased.  It should say something like:
+"Don't allow if the process has dropped its privilege to do such
+things and any of the interfaces are claimed."
+
+You also might consider allowing the reset if the interfaces are
+claimed only by the current process (or more precisely, by ps).
+
+> +static int proc_drop_privileges(struct usb_dev_state *ps, void __use=
+r *arg)
+> +{
+> +	struct usbdevfs_drop_privs data;
+> +
+> +	if (copy_from_user(&data, arg, sizeof(data)))
+> +		return -EFAULT;
+> +
+> +	/* This is a one way operation. Once privileges were dropped,
+> +	 * you cannot do it again (Otherwise unprivileged processes
+> +	 * would be able to change their allowed interfaces mask)
+> +	 */
+
+If you're going to keep a mask of claimable interfaces then there's no
+reason this has to be a one-time operation.  Processes should always be
+allowed to shrink the mask, just not to grow it.
+
+Alan Stern
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-usb" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
