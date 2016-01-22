@@ -1,98 +1,76 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [PATCH 3/7] quota: add new quotactl Q_GETNEXTQUOTA
-Date: Fri, 22 Jan 2016 10:28:22 +0100
-Message-ID: <20160122092822.GC16898@quack.suse.cz>
-References: <1453435644-32261-1-git-send-email-sandeen@redhat.com>
-	<1453435644-32261-4-git-send-email-sandeen@redhat.com>
+From: =?utf-8?Q?Bj=C3=B8rn_Mork?= <bjorn-yOkvZcmFvRU@public.gmane.org>
+Subject: Re: [PATCH v2] usb: devio: Add ioctl to disallow detaching kernel USB drivers.
+Date: Fri, 22 Jan 2016 10:41:11 +0100
+Message-ID: <8760ymdk94.fsf@nemi.mork.no>
+References: <20160119180752.GA10487@kroah.com>
+	<1453420476-26125-1-git-send-email-emilio.lopez@collabora.co.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-Content-Disposition: inline
-In-Reply-To: <1453435644-32261-4-git-send-email-sandeen@redhat.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Eric Sandeen <sandeen@redhat.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, jack@suse.cz, xfs@oss.sgi.com
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1453420476-26125-1-git-send-email-emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
+	("Emilio =?utf-8?Q?L=C3=B3pez=22's?= message of "Thu, 21 Jan 2016 20:54:36
+ -0300")
+Sender: linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Emilio =?utf-8?Q?L=C3=B3pez?= <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
+Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org, kborer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jorgelo-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu 21-01-16 22:07:20, Eric Sandeen wrote:
-> Q_GETNEXTQUOTA is exactly like Q_GETQUOTA, except that it
-> will return quota information for the id equal to or greater
-> than the id requested.  In other words, if the requested id has
-> no quota, the command will return quota information for the
-> next higher id which does have a quota set.  If no higher id
-> has an active quota, -ESRCH is returned.
-> 
-> This allows filesystems to do efficient iteration in kernelspace,
-> much like extN filesystems do in userspace when asked to report
-> all active quotas.
-> 
-> This does require a new data structure for userspace, as the
-> current structure does not include an ID for the returned quota
-> information.
-> 
-> Today, Ext4 with a hidden quota inode requires getpwent-style
-> iterations, and for systems which have i.e. LDAP backends,
-> this can be very slow, or even impossible if iteration is not
-> allowed in the configuration.
-> 
-> Signed-off-by: Eric Sandeen <sandeen@redhat.com>
+Emilio L=C3=B3pez <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org> writes:
 
-Same comments as for XFS version apply here. Furthermore:
-
-> diff --git a/fs/quota/compat.c b/fs/quota/compat.c
-> index fb1892f..80773a4 100644
-> --- a/fs/quota/compat.c
-> +++ b/fs/quota/compat.c
-> @@ -19,6 +19,19 @@ struct compat_if_dqblk {
->  	compat_uint_t dqb_valid;
+> diff --git a/drivers/usb/core/devio.c b/drivers/usb/core/devio.c
+> index 38ae877c..bf40aa6 100644
+> --- a/drivers/usb/core/devio.c
+> +++ b/drivers/usb/core/devio.c
+> @@ -77,6 +77,8 @@ struct usb_dev_state {
+>  	unsigned long ifclaimed;
+>  	u32 secid;
+>  	u32 disabled_bulk_eps;
+> +	bool privileges_dropped;
+> +	unsigned long interface_allowed_mask;
 >  };
->  
-> +struct compat_if_nextdqblk {
-> +	compat_u64 dqb_bhardlimit;
-> +	compat_u64 dqb_bsoftlimit;
-> +	compat_u64 dqb_curspace;
-> +	compat_u64 dqb_ihardlimit;
-> +	compat_u64 dqb_isoftlimit;
-> +	compat_u64 dqb_curinodes;
-> +	compat_u64 dqb_btime;
-> +	compat_u64 dqb_itime;
-> +	compat_uint_t dqb_valid;
-> +	compat_uint_t dqb_id;
+> =20
+>  struct async {
+> @@ -641,6 +643,14 @@ static int claimintf(struct usb_dev_state *ps, u=
+nsigned int ifnum)
+>  	if (test_bit(ifnum, &ps->ifclaimed))
+>  		return 0;
+> =20
+> +	if (ps->privileges_dropped) {
+> +		if (ifnum >=3D 8*sizeof(ps->interface_allowed_mask))
+> +			return -EINVAL;
+
+
+I don't think you need this runtime test. You can just make sure that
+sizeof(ps->interface_allowed_mask) =3D=3D sizeof(ps->ifclaimed) at buil=
+d
+time.
+
+I do find this variable and arbitrary limit a bit confusing, but that's
+not your fault - I guess it is an indication that ifnums > 31 are rare
+:)
+
+
+> diff --git a/include/uapi/linux/usbdevice_fs.h b/include/uapi/linux/u=
+sbdevice_fs.h
+> index 019ba1e..9abcb34 100644
+> --- a/include/uapi/linux/usbdevice_fs.h
+> +++ b/include/uapi/linux/usbdevice_fs.h
+> @@ -154,6 +154,10 @@ struct usbdevfs_streams {
+>  	unsigned char eps[0];
+>  };
+> =20
+> +struct usbdevfs_drop_privs {
+> +	unsigned long interface_allowed_mask;
 > +};
 > +
 
-Is there a need for compat version of this structure? Everything is
-naturally aligned and the size is a multiple of 8 bytes. But these things
-keep surprising me... Added CC to linux-api in a hope that there's someone
-who definitely knows.
-
-On a side note when I have API people attention: AFAIU we need
-struct compat_if_dqblk (defined in fs/quota/compat.c) because its size is
-not multiple of 8 bytes, right? But what is then then reason for get_user()
-/ put_user() when the structure is copied into userspace (see below)?
-copy_in_user() should have copied everything...
-
-               if (copy_in_user(compat_dqblk, dqblk, sizeof(*compat_dqblk)) ||
-                        get_user(data, &dqblk->dqb_valid) ||
-                        put_user(data, &compat_dqblk->dqb_valid))
-                        ret = -EFAULT;
+"unsigned long" isn't a very good choice here, is it?
 
 
-								Honza
--- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
 
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+Bj=C3=B8rn
+--
+To unsubscribe from this list: send the line "unsubscribe linux-usb" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
