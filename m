@@ -1,197 +1,100 @@
-From: "Singhal, Maneesh" <Maneesh.Singhal@emc.com>
-Subject: RE: [PATCH] drivers/scsi/emcctd: drivers/scsi/emcctd: Client driver
- implementation for  EMC-Symmetrix GuestOS emulated Cut-Through Device
-Date: Sat, 23 Jan 2016 06:04:23 +0000
-Message-ID: <82807C73E0BDBB498164AAE7B8F6A1481C6181E3@MX105CL01.corp.emc.com>
-References: <82807C73E0BDBB498164AAE7B8F6A1481C61263E@MX105CL01.corp.emc.com>
- <20160119181226.GB10487@kroah.com>
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Subject: Re: [PATCH 07/13] aio: enabled thread based async fsync
+Date: Sun, 24 Jan 2016 09:22:57 +1100
+Message-ID: <20160123222257.GG6033@dastard>
+References: <CA+55aFxCM-xWVR4jC=q2wSk+-WC1Xuf+nZLoud8JwKZopnR_dQ@mail.gmail.com>
+ <20160115202131.GH6330@kvack.org>
+ <CA+55aFzRo3yztEBBvJ4CMCvVHAo6qEDhTHTc_LGyqmxbcFyNYw@mail.gmail.com>
+ <20160120195957.GV6033@dastard>
+ <CA+55aFx4PzugV+wOKRqMEwo8XJ1QxP8r+s-mvn6H064FROnKdQ@mail.gmail.com>
+ <20160120204449.GC12249@kvack.org>
+ <20160120214546.GX6033@dastard>
+ <20160120215630.GD12249@kvack.org>
+ <20160123042449.GE6033@dastard>
+ <20160123045024.GA32488@kvack.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20160119181226.GB10487@kroah.com>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: Greg KH <greg@kroah.com>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160123045024.GA32488-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Benjamin LaHaise <bcrl-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>
+Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-aio-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Greg,
+On Fri, Jan 22, 2016 at 11:50:24PM -0500, Benjamin LaHaise wrote:
+> On Sat, Jan 23, 2016 at 03:24:49PM +1100, Dave Chinner wrote:
+> > On Wed, Jan 20, 2016 at 04:56:30PM -0500, Benjamin LaHaise wrote:
+> > > On Thu, Jan 21, 2016 at 08:45:46AM +1100, Dave Chinner wrote:
+> > > > Filesystems *must take locks* in the IO path. We have to serialise
+> > > > against truncate and other operations at some point in the IO path
+> > > > (e.g. block mapping vs concurrent allocation and/or removal), and
+> > > > that can only be done sanely with sleeping locks.  There is no way
+> > > > of knowing in advance if we are going to block, and so either we
+> > > > always use threads for IO submission or we accept that occasionally
+> > > > the AIO submission will block.
+> > > 
+> > > I never said we don't take locks.  Still, we can be more intelligent 
+> > > about when and where we do so.  With the nonblocking pread() and pwrite() 
+> > > changes being proposed elsewhere, we can do the part of the I/O that 
+> > > doesn't block in the submitter, which is a huge win when possible.
+> > > 
+> > > As it stands today, *every* buffered write takes i_mutex immediately 
+> > > on entering ->write().  That one issue alone accounts for a nearly 10x 
+> > > performance difference between an O_SYNC write and an O_DIRECT write, 
+> > 
+> > Yes, that locking is for correct behaviour, not for performance
+> > reasons.  The i_mutex is providing the required semantics for POSIX
+> > write(2) functionality - writes must serialise against other reads
+> > and writes so that they are completed atomically w.r.t. other IO.
+> > i.e. writes to the same offset must not interleave, not should reads
+> > be able to see partial data from a write in progress.
+> 
+> No, the locks are not *required* for POSIX semantics, they are a legacy
+> of how Linux filesystem code has been implemented and how we ensure the
+> necessary internal consistency needed inside our filesystems is
+> provided.
 
-Thanks for taking out time to review the patch. Please find my replies inlined...
-Will post the next patch for modifications soon.
+That may be the case, but I really don't see how you can provide
+such required functionality without some kind of exclusion barrier
+in place. No matter how you implement that exclusion, it can be seen
+effectively as a lock.
 
-> -----Original Message-----
-> From: Greg KH [mailto:greg@kroah.com]
-> Sent: Tuesday, January 19, 2016 11:42 PM
-> To: Singhal, Maneesh
-> Cc: linux-scsi@vger.kernel.org; linux-kernel@vger.kernel.org;
-> JBottomley@odin.com; martin.petersen@oracle.com; linux-
-> api@vger.kernel.org
-> Subject: Re: [PATCH] drivers/scsi/emcctd: drivers/scsi/emcctd: Client
-> driver implementation for EMC-Symmetrix GuestOS emulated Cut-
-> Through Device
-> 
-> On Tue, Jan 19, 2016 at 11:58:06AM +0000, Singhal, Maneesh wrote:
-> > Hello,
-> > Kindly review the following patch for the following driver to be
-> added
-> > in SCSI subsystem -
-> >
-> > Regards
-> > Maneesh
-> >
-> > ----------------------------------------------------------------------
-> > ------
-> > >From f3c4b836d6f130b1d7ded618002c8164f8f4a06d Mon Sep 17
-> 00:00:00
-> > >2001
-> > From: "maneesh.singhal" <maneesh.singhal@emc.com>
-> > Date: Tue, 19 Jan 2016 06:39:35 -0500
-> > Subject: [PATCH] [PATCH] drivers/scsi/emcctd: Client driver
-> > implementation for  EMC-Symmetrix GuestOS emulated Cut-
-> Through Device.
-> >
-> > The patch is a driver implementation  EMC-Symmetrix GuestOS
-> emulated
-> > Cut-Through Device. The Cut-Through Device PCI emulation is
-> > implemented for GuestOS environments in the HyperMax OS.
-> GuestOS
-> > environments allows loading of any x86 compliant operating systems
-> like Linux/FreeBSD etc.
-> >
-> > The client driver is a SCSI HBA implementation which interfaces with
-> > SCSI midlayer in the north-bound interfaces and connects with the
-> > emulated PCI device on the south side.
-> >
-> > The PCI vendor ID:product ID for emulated Cut-Through Device is
-> 0x1120:0x1B00.
-> >
-> > Signed-off-by: maneesh.singhal <maneesh.singhal@emc.com>
-> > ---
-> >  Documentation/scsi/emcctd.txt           |   57 +
-> >  MAINTAINERS                             |    9 +
-> >  drivers/scsi/Kconfig                    |    1 +
-> >  drivers/scsi/Makefile                   |    1 +
-> >  drivers/scsi/emcctd/Kconfig             |    7 +
-> >  drivers/scsi/emcctd/Makefile            |    1 +
-> >  drivers/scsi/emcctd/README              |   10 +
-> >  drivers/scsi/emcctd/emc_ctd_interface.h |  386 +++++
-> >  drivers/scsi/emcctd/emcctd.c            | 2840
-> +++++++++++++++++++++++++++++++
-> >  drivers/scsi/emcctd/emcctd.h            |  232 +++
-> >  10 files changed, 3544 insertions(+)
-> >  create mode 100644 Documentation/scsi/emcctd.txt  create mode
-> 100644
-> > drivers/scsi/emcctd/Kconfig  create mode 100644
-> > drivers/scsi/emcctd/Makefile  create mode 100644
-> > drivers/scsi/emcctd/README  create mode 100644
-> > drivers/scsi/emcctd/emc_ctd_interface.h
-> >  create mode 100644 drivers/scsi/emcctd/emcctd.c  create mode
-> 100644
-> > drivers/scsi/emcctd/emcctd.h
-> >
-> > diff --git a/Documentation/scsi/emcctd.txt
-> > b/Documentation/scsi/emcctd.txt new file mode 100644 index
-> > 0000000..bcafc87
-> > --- /dev/null
-> > +++ b/Documentation/scsi/emcctd.txt
-> > @@ -0,0 +1,56 @@
-> > +This file contains brief information about the EMC Cut-Through
-> Driver (emcctd).
-> > +The driver is currently maintained by Singhal, Maneesh
-> > +(maneesh.singhal@emc.com)
-> > +
-> > +Last modified: Mon Jan 18 2016 by Maneesh Singhal
-> > +
-> > +BASICS
-> > +
-> > +Its a client driver implementation for EMC-Symmetrix GuestOS
-> emulated
-> > +Cut-Through Device. The Cut-Through Device PCI emulation is
-> > +implemented for GuestOS environments in the HyperMax OS.
-> GuestOS
-> > +environments allows loading of any x86 compliant operating
-> systems like Linux/FreeBSD etc.
-> > +
-> > +The client driver is a SCSI HBA implementation which interfaces with
-> > +SCSI midlayer in the north-bound interfaces and connects with the
-> > +emulated PCI device on the south side.
-> > +
-> > +The PCI vendor ID:product ID for emulated Cut-Through Device is
-> 0x1120:0x1B00.
-> > +
-> > +VERSIONING
-> > +
-> > +The Version of the driver is maintained as 2.0.0.X, where 2 refers to
-> > +the CTD protocol in use, and X refers to the ongoing version of the
-> driver.
-> > +
-> > +
-> > +SYSFS SUPPORT
-> > +
-> > +The driver creates the directory /sys/module/emcctd and
-> populates it
-> > +with version file and a directory for various parameters as described
-> > +in MODULE PARAMETERS section.
-> > +
-> > +PROCFS SUPPORT
-> > +
-> > +The driver creates the directory /proc/emc and creates files
-> > +emcctd_stats_x where 'x' refers to the PCI emulation number this
-> client driver connected to.
-> > +These files cotains WWN information and IO statistics for the
-> > +particular PCI emulation.
-> 
-> No, no driver should be adding proc files, please use sysfs or debugfs
-> for debugging things.
-[MS>] Sure.
-> 
-> > +MODULE PARAMETERS
-> 
-> No driver should be using module parameters anymore, again, please
-> use the correct interfaces.
-> 
-[MS>] Yes got that
-> > +
-> > +The supported parameters which could add debuggability or change
-> the
-> > +runtime behavior of the driver are as following:
-> > +
-> > +ctd_debug=0 | 1		Enable driver debug messages(0=off,
-> 1=on)
-> 
-> Use the dynamic debugging interface, don't make a custom one just
-> for your tiny, single, driver.
-> 
-[MS>] Sure. Will fix this.
-> > +
-> > +max_luns=xx		Specify the maximum number of LUN's
-> per
-> > +			host(default=16384)
-> 
-> Why can't this be dynamic?  Why do you need a static number?
-[MS>] Will fix this
-> 
-> > +
-> > +cmd_per_lun=xx		Specify the maximum commands per
-> lun(default=16)
-> 
-> Why do you need to change this?  Why can't it be dynamic?
-[MS>] Yes it can be. Will fix
-> 
-> > +
-> > +DEBUGGING HINTS
-> > +
-> > +Debugging code is now compiled in by default but debugging is
-> turned
-> > +off with the kernel module parameter debug_flag defaulting to 0.
-> 
-> Again, no, use the dynamic debug interface, don't make something
-> "special" just for a single driver, we spent a lot of time trying to unify
-> everything, don't go backwards.
-[MS>] Sure. Thanks
-> 
-> thanks,
-> 
-> greg k-h
+Even if the filesystem doesn't use the i_mutex for exclusion to the
+page cache, it has to use some kind of lock as that IO still needs
+to be serialised against any truncate, hole punch or other extent
+manipulation that is currently in progress on the inode...
+
+> There are other ways to achieve the required semantics that
+> do not involve a single giant lock for the entire file/inode.
+
+Most performant filesystems don't have a "single giant lock"
+anymore. The problem is that the VFS expects the i_mutex to be held
+for certain operations in the IO path and the VFS lock order
+heirarchy makes it impossible to do anything but "get i_mutex
+first".  That's the problem that needs to be solved - the VFS
+enforces the "one giant lock" model, even when underlying
+filesystems do not require it.
+
+i.e. we could quite happily remove the i_mutex completely from the XFS
+buffered IO path without breaking anything, but we can't because
+that results in the VFS throwing warnings that we don't hold the
+i_mutex (e.g like when removing the SUID bits on write). So there's
+lots of VFS functionality that needs to be turned on it's head
+before the i_mutex can be removed from the IO path.
+
+> And no, I
+> am not saying that doing this is simple or easy to do.
+
+Sure. That's always been the problem. Even when a split IO/metadata
+locking strategy like what XFS uses (and other modern filesystems
+are moving to internally) is suggested as a model for solving
+these problems, the usual response instant dismissal with
+"no way, that's unworkable" and so nothing ever changes...
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
