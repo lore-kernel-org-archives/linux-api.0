@@ -1,28 +1,26 @@
 From: "Singhal, Maneesh" <Maneesh.Singhal-mb1K0bWo544@public.gmane.org>
 Subject: RE: [PATCH] drivers/scsi/emcctd: drivers/scsi/emcctd: Client driver
  implementation for  EMC-Symmetrix GuestOS emulated Cut-Through Device
-Date: Sat, 23 Jan 2016 05:33:31 +0000
-Message-ID: <82807C73E0BDBB498164AAE7B8F6A1481C618138@MX105CL01.corp.emc.com>
+Date: Sat, 23 Jan 2016 05:51:50 +0000
+Message-ID: <82807C73E0BDBB498164AAE7B8F6A1481C6181A4@MX105CL01.corp.emc.com>
 References: <82807C73E0BDBB498164AAE7B8F6A1481C61263E@MX105CL01.corp.emc.com>
- <20160119135016.GL2742@c203.arch.suse.de>
+ <20160119160421.GM2742@c203.arch.suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160119135016.GL2742-3LAbnSA0sDC4fIQPS+WK3rNAH6kLmebB@public.gmane.org>
+In-Reply-To: <20160119160421.GM2742-3LAbnSA0sDC4fIQPS+WK3rNAH6kLmebB@public.gmane.org>
 Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Johannes Thumshirn <jthumshirn-l3A5Bk7waGM@public.gmane.org>
 Cc: "linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "JBottomley-wo1vFcy6AUs@public.gmane.org" <JBottomley-wo1vFcy6AUs@public.gmane.org>, "martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Thumshirn.
-Thanks for taking out time to review the patch. I appreciate that. Plea=
-se find my comments inlined.
+Thanks for your time. My replies inlined...
 
 > -----Original Message-----
 > From: Johannes Thumshirn [mailto:jthumshirn-l3A5Bk7waGM@public.gmane.org]
-> Sent: Tuesday, January 19, 2016 7:20 PM
+> Sent: Tuesday, January 19, 2016 9:34 PM
 > To: Singhal, Maneesh
 > Cc: linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org;
 > JBottomley-wo1vFcy6AUs@public.gmane.org; martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org; linux-
@@ -39,17 +37,9 @@ se find my comments inlined.
 > > Regards
 > > Maneesh
 > >
->=20
-> Hi Maneesh,
->=20
-> Fery first round of review. No real functionallity yet just a bit on
-> readablility.
->=20
-> I'll do a more in depth review later.
->=20
 > > -------------------------------------------------------------------=
 ---------
->  From f3c4b836d6f130b1d7ded618002c8164f8f4a06d Mon Sep 17
+> > From f3c4b836d6f130b1d7ded618002c8164f8f4a06d Mon Sep 17
 > 00:00:00 2001
 > > From: "maneesh.singhal" <maneesh.singhal-mb1K0bWo544@public.gmane.org>
 > > Date: Tue, 19 Jan 2016 06:39:35 -0500
@@ -279,15 +269,6 @@ th
 > > +
 > > +The PCI vendor ID:product ID for emulated Cut-Through Device is
 > 0x1120:0x1B00.
->=20
-> Wouldn't it be nice to have this in the Kconfig file? No user will ev=
-er
-> look
-> at the README file in the driver directory.
-
-[MS>] Certainly, I will keep this README as it is (for someone who real=
-ly reads this) and also add these details in Kconfig as well.
->=20
 > > diff --git a/drivers/scsi/emcctd/emc_ctd_interface.h
 > b/drivers/scsi/emcctd/emc_ctd_interface.h
 > > new file mode 100644
@@ -483,10 +464,6 @@ eiver
 > > +#define EMC_CTD_V010_SCSI_PHASE_FLAG_ABORT
 > 	(1 << 3)
 > > +
->=20
-> Please use the BIT() macro for the above bit definitions.
-[MS>] Will do.
->=20
 > > +/* the size of the log of errored transmit messages: */
 > > +#define EMC_CTD_V010_LOG_ERROR_TX_SIZE
 > 	(4)
@@ -555,22 +532,6 @@ eiver
 > > +	/* the what: */
 > > +	emc_ctd_uint8_t emc_ctd_v010_header_what;
 > > +};
->=20
-> Well this is a matter of taste but you have (and not only in this str=
-uct,
-> just
-> an example)
->=20
-> emc_ctd_v010_header.emc_ctd_v010_header_address
->=20
-> all the emc_ctd_v010_header_ stuff is totally redundant and you
-> suffer from extremely
-> long lines in your dirver anyways. Just a hint.
-[MS>] Well, didn't actually get what you meant here, header_stuff is ge=
-tting used in the code, and is extremely useful as well.
-Also, I tried reducing long lines ... I don't think the left overs coul=
-d be reduced in a better way.
->=20
 > > +
 > > +/* a CTD v010 name: */
 > > +struct emc_ctd_v010_name {
@@ -743,15 +704,6 @@ d be reduced in a better way.
 > > +		emc_ctd_v010_fregs_pad_07f[64 -
 > > +			(sizeof(emc_ctd_uint32_t) +
 > > +				sizeof(struct emc_ctd_v010_name))];
->=20
-> Maybe:
->=20
-> #define PAD07F_SIZE (64 - sizeof(u32) + sizeof(struct
-> emc_ctd_v010_name))
-> u8 emc_ctd_v010_fregs_pad_07f[PAD07f_SIZE];
->=20
-[MS>] Yes, this is a good idea ... will do.
-
 > > +
 > > +	/* the receive ring producer index (RPI): */
 > > +	volatile emc_ctd_uint32_t
@@ -769,9 +721,6 @@ d be reduced in a better way.
 > > +		emc_ctd_v010_fregs_pad_0bf[64 -
 > > +			(sizeof(emc_ctd_uint32_t) +
 > sizeof(emc_ctd_uint32_t))];
->=20
-> Same applies here.
->=20
 > > +
 > > +	/* the receive ring consumer index (RCI): */
 > > +	volatile emc_ctd_uint32_t
@@ -784,9 +733,6 @@ d be reduced in a better way.
 > > +				(sizeof(emc_ctd_uint32_t) *
 > > +
 > 	EMC_CTD_V010_LOG_ERROR_TX_SIZE))];
->=20
-> And here.
->=20
 > > +
 > > +	/* the errors for the log of errored transmit messages: */
 > > +	volatile emc_ctd_uint32_t
@@ -871,11 +817,6 @@ d be reduced in a better way.
 > > +#define emc_ctd_uint16_t u16
 > > +#define emc_ctd_uint32_t u32
 > > +#define emc_ctd_uint64_t u64
->=20
-> Please don't define your own data types and use u8, u16, u32 and u64
-> directly.
->=20
-[MS>] Sure .. will do
 > > +
 > > +#include "emc_ctd_interface.h"
 > > +
@@ -892,13 +833,6 @@ d be reduced in a better way.
 > > +MODULE_LICENSE("GPL");
 > > +MODULE_AUTHOR("EMC");
 > > +MODULE_DESCRIPTION("EMC CTD V1 - Build 18-Jan-2016");
->=20
-> This is very misleading. If I was a user I'd think the kernel was bui=
-ld on
-> 18-Jan-2016. Anyways The version should be enough.
-[MS>] I actually wanted to understand when this driver was last touched=
-, and hence this description was added.
->=20
 > > +MODULE_VERSION(EMCCTD_MODULE_VERSION);
 > > +
 > > +int ctd_debug;
@@ -1029,13 +963,6 @@ ld on
 > *ctd_private);
 > > +
 > > +#if !defined(__VMKLNX__)
->=20
-> This is not VMWare's kernel but the upstream kernel, so please don't
-> use that
-> ifdefs here.
->=20
-[MS>] Yes I will do that
-
 > > +static int ctd_proc_init(struct pci_dev *pci_dev);
 > > +static void ctd_proc_remove(struct pci_dev *pci_dev);
 > > +
@@ -1091,10 +1018,6 @@ ld on
 > > +};
 > > +
 > > +
->=20
-> No proc interface please.
->=20
-[MS>] Yes I got that
 > > +#if !defined(__VMKLNX__)
 > > +static struct proc_dir_entry *ctd_proc_directory;
 > > +
@@ -1411,9 +1334,6 @@ ld on
 > > +	ctd_dprintk_crit("unsupported\n");
 > > +}
 > > +
->=20
-> See below.
->=20
 > > +static void
 > > +ctd_handle_scsi_phase(struct emc_ctd_v010_scsi_phase
 > *io_phase,
@@ -1531,11 +1451,6 @@ ld on
 > > +				(struct emc_ctd_v010_scsi_command
 > *)io_message,
 > > +				ctd_private);
->=20
-> Print the unsopported message right here if you want to print it at a=
-ll.
-[MS>] Hmmmmm... will see if this really make sense here.
->=20
 > > +		break;
 > > +	case EMC_CTD_V010_WHAT_SCSI_PHASE:
 > > +		ctd_handle_scsi_phase(
@@ -1611,6 +1526,12 @@ ll.
 > ctd_scsi_response_sanity_check_complete;
 > > +		}
 > > +
+>=20
+> You don't do any cleanup work at
+> ctd_scsi_response_sanity_check_complete. You
+> could just reutrn 0 here as well.=20
+[MS>] Just avoiding multiple exit points from the function
+>=20
 > > +
 > > +		ctd_dprintk_crit(
 > > +			"ERROR cmnd -> %p mismatched
@@ -2136,6 +2057,14 @@ nt++)
 > > +		goto ctd_initiator_validate_sgl_end;
 > > +	}
 > > +	error =3D 0;
+>=20
+> There is no cleanup done at this label so no need to jump here. Reutr=
+n
+> directly
+> from the jumping position.
+[MS>] Yes it could be done... we are just avoiding multiple returns fro=
+m the function.
+>=20
 > > +ctd_initiator_validate_sgl_end:
 > > +	return error;
 > > +}
@@ -2200,10 +2129,6 @@ nt++)
 > > +			sgl_current->emc_ctd_v010_sgl_size =3D
 > sg_dma_len(sg);
 > > +#else
->=20
-> __VMKLNX__ won't be defined here.
-[MS>] Yup
->=20
 > > +			struct page *page;
 > > +
 > > +			page =3D sg_page(sg);
@@ -2246,9 +2171,6 @@ nt++)
 > >emc_ctd_scsi_command_sgl[0];
 > > +
 > > +		scsi_for_each_sg(cmnd, sg, sg_count, i) {
->=20
-> Same here.
->=20
 > > +#if defined(__VMKLNX__)
 > > +			sgl_current->emc_ctd_v010_sgl_paddr_0_31 =3D
 > > +					sg->cursgel->addr &
@@ -2671,9 +2593,6 @@ nt++)
 > > +		ctd_dprintk_crit("failure for starget @ id =3D %x\n",
 > > +				starget->id);
 > > +	}
->=20
-> No need for the parentheses here.
-[MS>] Correct
 > > +}
 > > +
 > > +static int
@@ -2693,6 +2612,19 @@ nt++)
 > > +	blk_queue_rq_timeout(sdevice->request_queue,
 > EMCCTD_REQUEST_TIMEOUT);
 > > +
+>=20
+> static int ctd_slave_configure(struct scsi_device *sdev)
+> {
+>=20
+> 	/* tune the block layer to generate timout
+> 	 * for the requests queued and reply is awaited
+> 	 */
+> 	blk_queue_rq_timeout(sdevice->request_queue,
+> EMCCTD_REQUEST_TIMEOUT);
+> }
+[MS>] Yup right. I missed this.
+
+>=20
 > > +	return error;
 > > +}
 > > +
@@ -2713,7 +2645,15 @@ nt++)
 > > +	ctd_device =3D (struct ctd_dev_info *)
 > > +			kzalloc(sizeof(struct ctd_dev_info),
 > GFP_ATOMIC);
+>=20
+> Please don't cast the return value of kzalloc()
+>=20
+[MS>] Hmmmm
+
 > > +	if (ctd_device =3D=3D NULL)
+>=20
+> 		return -ENOMEM;
+>=20
 > > +		goto ctd_slave_alloc_end;
 > > +
 > > +	ctd_target =3D &ctd_host->target[sdev->id];
@@ -2739,12 +2679,6 @@ nt++)
 > > +		ctd_dprintk_crit("channel =3D %x id=3D %x error =3D %x\n",
 > > +				sdev->channel, sdev->id, error);
 > > +	}
->=20
-> Same goes here.
-[MS>] Fine
-
-
->=20
 > > +	return error;
 > > +}
 > > +
@@ -2766,6 +2700,12 @@ nt++)
 > > +	struct ctd_host_info *ctd_host;
 > > +	struct ctd_pci_private *ctd_private;
 > > +	struct ctd_request_private *request;
+>=20
+> This variable's name is a bit of confusing (struct request *request ;=
+-).
+> Maybe ctd_privreq?
+[MS>] Yes will fix.
+>=20
 > > +	unsigned long long tsc_val;
 > > +
 > > +	requeue_error =3D FAILED;
@@ -2786,6 +2726,16 @@ nt++)
 > > +	spin_lock_irqsave(&ctd_private->io_mgmt_lock, flags);
 > > +
 > > +	if (request && request->io_timeout < EMCCTD_MAX_RETRY) {
+>=20
+> The following block is a bit long and therefore it's hard to spot an
+> eventual
+> error of handling the io_mgmt_lock. Can't it be factored out in a hel=
+per
+> function?
+>=20
+[MS>] I know its little longer, but actually fits logically together...=
+ Will see if it can be factored. Not sure though.
+
 > > +		struct ctd_dev_info *ctd_device;
 > > +
 > > +		switch (request->io_state) {
@@ -3161,6 +3111,10 @@ nt++)
 > > +			kzalloc(sizeof(struct ctd_event_io_element),
 > > +
 > 	GFP_ATOMIC);
+>=20
+> No cast for kzalloc() return
+>=20
+[MS>] Ok sir.
 > > +	if (event) {
 > > +		error =3D 0;
 > > +		event->io_msg =3D *io_msg;
@@ -3170,6 +3124,9 @@ nt++)
 > > +		spin_unlock(&ctd_private->event_io_lock);
 > > +	} else {
 > > +		ctd_dprintk_crit("kzalloc failure\n");
+>=20
+> Please no out of memory error messages.
+>=20
 > > +	}
 > > +	return error;
 > > +}
@@ -3370,20 +3327,37 @@ nt++)
 > > +	if (scsi_ctd_host =3D=3D NULL) {
 > > +		error =3D -ENOMEM;
 > > +		goto ctd_scsi_layer_init_complete;
+> 		return -ENOMEM;
 > > +	}
 > > +
 > > +	ctd_init_scsi_host_private(scsi_ctd_host, pci_dev);
 > > +
 > > +	ctd_private =3D pci_get_drvdata(pci_dev);
+>=20
+> Maybe:
+>=20
 > > +
 > > +	error =3D ctd_init_event_thread(ctd_private);
 > > +	if (error)
 > > +		goto ctd_scsi_layer_init_complete;
+> 		goto out_put_scsi_host;
 > > +
 > > +	/*
 > > +	 * register the HBA to the Linux SCSI stack
 > > +	 */
 > > +	error =3D scsi_add_host(scsi_ctd_host, &pci_dev->dev);
+> 	if (error)
+> 		goto out_destroy_thread;
+>=20
+> 	reutrn 0;
+>=20
+> out_put_scsi_host:
+> 	scsi_host_put(scsi_ctd_host);
+> out_destroy_thread:
+> 	ctd_destroy_event_thread(ctd_private);
+>=20
+> 	return error;
+[MS>] Hmmm... will recheck this
 > > +
 > > +ctd_scsi_layer_init_complete:
 > > +	if (error) {
@@ -3665,102 +3639,6 @@ nt++)
 > > +		}
 > > +	}
 > > +}
->=20
-> Ugh...
->=20
-> What about:
-> --- 8< ---
-> if (!ctd_private->pci_fast_registers->emc_ctd_v010_fregs_error_flag)
-> 	return;
->=20
-> for (i =3D 0; i <  EMCCTD_MAX_CACHED_ERROR; i++) {
-> 	if (internal_errors_1_14[i] =3D=3D
-> 		ctd_private->pci_fast_registers-
-> >emc_ctd_v010_fregs_errors_1_14[i])
-> 		continue;
->=20
-> 	internal_errors_1_14[i] =3D
-> 		ctd_private->pci_fast_registers-
-> >emc_ctd_v010_fregs_errors_1_14[i];
->=20
-> 	error =3D i + 1;
->=20
-> 	for (j =3D 0; j < EMC_CTD_V010_LOG_ERROR_TX_SIZE; j++) {
-> 		if (ctd_private->pci_fast_registers-
-> >emc_ctd_v010_fregs_log_error_tx_error[j] !=3D
-> 				error)
-> 			continue;
->=20
-> 		memcpy(&message,
-> 			&ctd_private->pci_fast_registers-
-> >emc_ctd_v010_fregs_log_error_tx_message[j],
-> 			sizeof(message));
-> 		ctd_dprintk_crit(
-> 			"header addr -> %x error -> %s\n",
->=20
-> 	message.emc_ctd_scsi_message_header_address,
-> 			(error =3D=3D
->=20
-> 	EMC_CTD_V010_ERROR_TX_CHANNEL_DISCONNECTED ?
->=20
-> 	"EMC_CTD_V010_ERROR_TX_CHANNEL_DISCONNECTED" :
-> 				error =3D=3D
->=20
-> 	EMC_CTD_V010_ERROR_TX_MESSAGE_WHAT ?
->=20
-> "EMC_CTD_V010_ERROR_TX_MESSAGE_WHAT" :
-> 				error =3D=3D
->=20
-> 	EMC_CTD_V010_ERROR_TX_MESSAGE_RESERVED ?
->=20
-> 	"EMC_CTD_V010_ERROR_TX_MESSAGE_RESERVED" :
-> 				error =3D=3D
->=20
-> 	EMC_CTD_V010_ERROR_TX_MESSAGE_ORDER ?
->=20
-> 	"EMC_CTD_V010_ERROR_TX_MESSAGE_ORDER" :
-> 				error =3D=3D
->=20
-> 	EMC_CTD_V010_ERROR_TX_ENDPOINT_TYPE ?
->=20
-> 	"EMC_CTD_V010_ERROR_TX_ENDPOINT_TYPE" :
-> 				error =3D=3D
->=20
-> 	EMC_CTD_V010_ERROR_TX_OPAQUE_RX_UNKNOWN ?
->=20
-> 	"EMC_CTD_V010_ERROR_TX_OPAQUE_RX_UNKNOWN" :
->=20
-> 	"EMC_CTD_V010_ERROR_NULL"));
->=20
-> 	}
-> }
-> --- >8 ---
->=20
-> And that's only to save indedation levels.
->=20
-> This whole part can be made something like that:
->=20
-> char *msg[] =3D {
-> 	[EMC_CTD_V010_ERROR_TX_CHANNEL_DISCONNECTED] =3D
-> "EMC_CTD_V010_ERROR_TX_CHANNEL_DISCONNECTED",
-> 	[EMC_CTD_V010_ERROR_TX_MESSAGE_WHAT] =3D
-> "EMC_CTD_V010_ERROR_TX_MESSAGE_WHAT",
-> 	[EMC_CTD_V010_ERROR_TX_MESSAGE_RESERVED] =3D
-> "EMC_CTD_V010_ERROR_TX_MESSAGE_RESERVED",
-> 	[EMC_CTD_V010_ERROR_TX_MESSAGE_ORDER] =3D
-> "EMC_CTD_V010_ERROR_TX_MESSAGE_ORDER",
-> 	[EMC_CTD_V010_ERROR_TX_ENDPOINT_TYPE] =3D
-> "EMC_CTD_V010_ERROR_TX_ENDPOINT_TYPE",
-> 	[EMC_CTD_V010_ERROR_TX_OPAQUE_RX_UNKNOWN] =3D
-> "EMC_CTD_V010_ERROR_TX_OPAQUE_RX_UNKNOWN",
-> 	[EMC_CTD_V010_ERROR_NULL] =3D
-> "EMC_CTD_V010_ERROR_NULL",
-> }
->=20
-> You can probably even use __stringify() for that.
->=20
-[MS>] Thanks for the suggestion. I will see if this can really be done =
-this way.
 > > +/*
 > > + * ctd_check_response_queue
 > > + *
@@ -3784,10 +3662,6 @@ this way.
 > ctd_private);
 > > +		}
 > > +}
->=20
-> Wrong indendt here.
-[MS>] Hmmmm...
->=20
 > > +
 > > +
 > > +static irqreturn_t
@@ -3951,6 +3825,11 @@ t
 > > +				"io_pool allocation failure for pool_size
 > -> %d\n",
 > > +				pool_size);
+>=20
+> No OOM messages.
+[MS>] Just wanted to have a personalized OOM message... to take care of=
+ debugging... Will handle it other way round
+>=20
 > > +			goto ctd_alloc_io_pool_complete;
 > > +		}
 > > +	}
@@ -4003,6 +3882,10 @@ t
 > > +		ctd_dprintk_crit("kzalloc Failure\n");
 > > +		goto ctd_pci_probe_complete;
 > > +	}
+>=20
+> No cast and no OOM messages.
+[MS>] Fine.
+>=20
 > > +
 > > +	ctd_private->pci_dev =3D pci_dev;
 > > +
@@ -4010,6 +3893,13 @@ t
 > > +	err =3D pci_enable_device(pci_dev);
 > > +	if (err) {
 > > +		ctd_dprintk_crit("pci_enable_device Failure\n");
+>=20
+> I'd prefere dev_err() here, as you'll have the information which devi=
+ce
+> enable
+> failed.
+[MS>] ok
+>=20
 > > +		goto ctd_pci_probe_complete;
 > > +	}
 > > +	pci_set_master(pci_dev);
@@ -4017,6 +3907,9 @@ t
 > > +	err =3D pci_request_regions(pci_dev, "ctd-pci");
 > > +	if (err) {
 > > +		ctd_dprintk_crit("pci_request_regions Failure\n");
+>=20
+> Same here.
+>=20
 > > +		goto ctd_pci_probe_complete;
 > > +	}
 > > +
@@ -4071,10 +3964,6 @@ t
 > > +					EMC_CTD_V010_BAR_FREGS),
 > > +				pci_resource_len(pci_dev,
 > > +				EMC_CTD_V010_BAR_FREGS));
->=20
-> ioremap() can fail.
-[MS>] True. Will handle
->=20
 > > +
 > > +		ctd_dprintk_crit(
 > > +			"physical addr =3D %llx ioaddr_fast_registers =3D
@@ -4101,9 +3990,6 @@ t
 > > +				pci_resource_len(pci_dev,
 > > +					EMC_CTD_V010_BAR_SREGS));
 > > +
->=20
-> Same goes here.
->=20
 > > +		ctd_dprintk_crit(
 > > +			"physical addr =3D %llx ioaddr_slow_registers =3D
 > %p\n",
@@ -4148,9 +4034,6 @@ t
 > > +
 > > +	pci_set_master(pci_dev);
 > > +
->=20
-> See above.
->=20
 > > +#if !defined(__VMKLNX__)
 > > +	err =3D ctd_proc_init(pci_dev);
 > > +	if (err) {
@@ -4216,9 +4099,6 @@ t
 > > +	return err;
 > > +}
 > > +
->=20
-> No proc please.
->=20
 > > +#if !defined(__VMKLNX__)
 > > +static const struct file_operations ctd_proc_fops =3D {
 > > +	.open		=3D ctd_proc_open,
@@ -4391,21 +4271,10 @@ t
 > > +		pr_info("%s:%d:"__m_fmt, __func__, __LINE__,
 > ##__VA_ARGS__); \
 > > +} while (0)
->=20
-> Please use pr_debug() here.
-[MS>] Sure.
->=20
 > > +
 > > +#define ctd_dprintk_crit(__m_fmt, ...)		\
 > > +		pr_crit("%s:%d:"__m_fmt, __func__, __LINE__,
 > ##__VA_ARGS__)
->=20
-> File and line information is probably not of any interest for the use=
-rs
-> and
-> serves a debugging purpose only.
-[MS>] That's precisely why it is there...
->=20
 > > +
 > > +#define EMCCTD_TARGET_DETECT_COMPLETED		1
 > > +#define EMCCTD_TARGET_DETECT_NOT_COMPLETED	0
@@ -4613,18 +4482,6 @@ rs
 > > +	union emc_ctd_v010_message	io_msg;
 > > +};
 > > +
->=20
-> Though your driver depends on X86 this is not really protable. From
-> what I saw
-> in the code you're using it just for time differences. Please have a =
-look
-> at
-> the kernel's timer infrastructure.
-[MS>] Actually, we made this function to make the driver compiled for d=
-ifferent kernel versions from 2.6.x to 4.x ... Well,
-but for here, I think we just have to make it compatible with latest ke=
-rnel :),... this shall be removed.
->=20
 > > +static inline unsigned long long ctd_read_tsc(void)
 > > +{
 > > +	unsigned long long local_tsc;
