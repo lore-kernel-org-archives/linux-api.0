@@ -1,100 +1,33 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [PATCH 07/13] aio: enabled thread based async fsync
-Date: Sun, 24 Jan 2016 09:22:57 +1100
-Message-ID: <20160123222257.GG6033@dastard>
-References: <CA+55aFxCM-xWVR4jC=q2wSk+-WC1Xuf+nZLoud8JwKZopnR_dQ@mail.gmail.com>
- <20160115202131.GH6330@kvack.org>
- <CA+55aFzRo3yztEBBvJ4CMCvVHAo6qEDhTHTc_LGyqmxbcFyNYw@mail.gmail.com>
- <20160120195957.GV6033@dastard>
- <CA+55aFx4PzugV+wOKRqMEwo8XJ1QxP8r+s-mvn6H064FROnKdQ@mail.gmail.com>
- <20160120204449.GC12249@kvack.org>
- <20160120214546.GX6033@dastard>
- <20160120215630.GD12249@kvack.org>
- <20160123042449.GE6033@dastard>
- <20160123045024.GA32488@kvack.org>
+From: Russell King - ARM Linux <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
+Subject: [PATCH 0/5] Etnaviv updates
+Date: Sun, 24 Jan 2016 17:35:17 +0000
+Message-ID: <20160124173516.GH10826@n2100.arm.linux.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20160123045024.GA32488-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Benjamin LaHaise <bcrl-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>
-Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-aio-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+To: Lucas Stach <l.stach-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>
+Cc: Christian Gmeiner <christian.gmeiner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 22, 2016 at 11:50:24PM -0500, Benjamin LaHaise wrote:
-> On Sat, Jan 23, 2016 at 03:24:49PM +1100, Dave Chinner wrote:
-> > On Wed, Jan 20, 2016 at 04:56:30PM -0500, Benjamin LaHaise wrote:
-> > > On Thu, Jan 21, 2016 at 08:45:46AM +1100, Dave Chinner wrote:
-> > > > Filesystems *must take locks* in the IO path. We have to serialise
-> > > > against truncate and other operations at some point in the IO path
-> > > > (e.g. block mapping vs concurrent allocation and/or removal), and
-> > > > that can only be done sanely with sleeping locks.  There is no way
-> > > > of knowing in advance if we are going to block, and so either we
-> > > > always use threads for IO submission or we accept that occasionally
-> > > > the AIO submission will block.
-> > > 
-> > > I never said we don't take locks.  Still, we can be more intelligent 
-> > > about when and where we do so.  With the nonblocking pread() and pwrite() 
-> > > changes being proposed elsewhere, we can do the part of the I/O that 
-> > > doesn't block in the submitter, which is a huge win when possible.
-> > > 
-> > > As it stands today, *every* buffered write takes i_mutex immediately 
-> > > on entering ->write().  That one issue alone accounts for a nearly 10x 
-> > > performance difference between an O_SYNC write and an O_DIRECT write, 
-> > 
-> > Yes, that locking is for correct behaviour, not for performance
-> > reasons.  The i_mutex is providing the required semantics for POSIX
-> > write(2) functionality - writes must serialise against other reads
-> > and writes so that they are completed atomically w.r.t. other IO.
-> > i.e. writes to the same offset must not interleave, not should reads
-> > be able to see partial data from a write in progress.
-> 
-> No, the locks are not *required* for POSIX semantics, they are a legacy
-> of how Linux filesystem code has been implemented and how we ensure the
-> necessary internal consistency needed inside our filesystems is
-> provided.
+Here's some updates to etnaviv, which augment the features and GPU
+specifications which we export to userspace.  This will allow us to
+fix the (currently incorrect) number of varyings that GPUs such as
+GC880 and GC2000 supposedly have.
 
-That may be the case, but I really don't see how you can provide
-such required functionality without some kind of exclusion barrier
-in place. No matter how you implement that exclusion, it can be seen
-effectively as a lock.
+While making this change, I'm also increasing the number of feature
+words we export up to the largest number known from the current
+Vivante galcore code.
 
-Even if the filesystem doesn't use the i_mutex for exclusion to the
-page cache, it has to use some kind of lock as that IO still needs
-to be serialised against any truncate, hole punch or other extent
-manipulation that is currently in progress on the inode...
+ drivers/gpu/drm/etnaviv/common.xml.h   |  59 ++++++++++--
+ drivers/gpu/drm/etnaviv/etnaviv_gpu.c  | 161 ++++++++++++++++++++++-----------
+ drivers/gpu/drm/etnaviv/etnaviv_gpu.h  |   9 ++
+ drivers/gpu/drm/etnaviv/state_hi.xml.h |  26 +++++-
+ include/uapi/drm/etnaviv_drm.h         |   3 +
+ 5 files changed, 196 insertions(+), 62 deletions(-)
 
-> There are other ways to achieve the required semantics that
-> do not involve a single giant lock for the entire file/inode.
-
-Most performant filesystems don't have a "single giant lock"
-anymore. The problem is that the VFS expects the i_mutex to be held
-for certain operations in the IO path and the VFS lock order
-heirarchy makes it impossible to do anything but "get i_mutex
-first".  That's the problem that needs to be solved - the VFS
-enforces the "one giant lock" model, even when underlying
-filesystems do not require it.
-
-i.e. we could quite happily remove the i_mutex completely from the XFS
-buffered IO path without breaking anything, but we can't because
-that results in the VFS throwing warnings that we don't hold the
-i_mutex (e.g like when removing the SUID bits on write). So there's
-lots of VFS functionality that needs to be turned on it's head
-before the i_mutex can be removed from the IO path.
-
-> And no, I
-> am not saying that doing this is simple or easy to do.
-
-Sure. That's always been the problem. Even when a split IO/metadata
-locking strategy like what XFS uses (and other modern filesystems
-are moving to internally) is suggested as a model for solving
-these problems, the usual response instant dismissal with
-"no way, that's unworkable" and so nothing ever changes...
-
-Cheers,
-
-Dave.
 -- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+RMK's Patch system: http://www.arm.linux.org.uk/developer/patches/
+FTTC broadband for 0.8mile line: currently at 9.6Mbps down 400kbps up
+according to speedtest.net.
