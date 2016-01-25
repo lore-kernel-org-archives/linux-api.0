@@ -1,82 +1,99 @@
-From: =?UTF-8?Q?Emilio_L=c3=b3pez?= <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
+From: =?UTF-8?Q?Emilio_L=c3=b3pez?= <emilio.lopez@collabora.co.uk>
 Subject: Re: [PATCH v2] usb: devio: Add ioctl to disallow detaching kernel USB
  drivers.
-Date: Sun, 24 Jan 2016 22:40:28 -0300
-Message-ID: <56A57D0C.6030308@collabora.co.uk>
-References: <20160119180752.GA10487@kroah.com>
- <1453420476-26125-1-git-send-email-emilio.lopez@collabora.co.uk>
- <8760ymdk94.fsf@nemi.mork.no>
+Date: Sun, 24 Jan 2016 23:01:29 -0300
+Message-ID: <56A581F9.5070707@collabora.co.uk>
+References: <Pine.LNX.4.44L0.1601221101490.1626-100000@iolanthe.rowland.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8;
 	format=flowed
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <8760ymdk94.fsf-lbf33ChDnrE/G1V5fR+Y7Q@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: =?UTF-8?Q?Bj=c3=b8rn_Mork?= <bjorn-yOkvZcmFvRU@public.gmane.org>
-Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org, kborer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jorgelo-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <Pine.LNX.4.44L0.1601221101490.1626-100000@iolanthe.rowland.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alan Stern <stern@rowland.harvard.edu>
+Cc: gregkh@linuxfoundation.org, kborer@gmail.com, k.opasiak@samsung.com, reillyg@chromium.org, keescook@chromium.org, linux-api@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org, jorgelo@chromium.org, dan.carpenter@oracle.com
 List-Id: linux-api@vger.kernel.org
 
-Hi Bj=C3=B8rn,
+Hi Alan,
 
-El 22/01/16 a las 06:41, Bj=C3=B8rn Mork escribi=C3=B3:
-> Emilio L=C3=B3pez <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org> writes:
+El 22/01/16 a las 13:10, Alan Stern escribi=C3=B3:
+> On Thu, 21 Jan 2016, Emilio L=C3=B3pez wrote:
 >
->> diff --git a/drivers/usb/core/devio.c b/drivers/usb/core/devio.c
->> index 38ae877c..bf40aa6 100644
->> --- a/drivers/usb/core/devio.c
->> +++ b/drivers/usb/core/devio.c
->> @@ -77,6 +77,8 @@ struct usb_dev_state {
->>   	unsigned long ifclaimed;
->>   	u32 secid;
->>   	u32 disabled_bulk_eps;
->> +	bool privileges_dropped;
->> +	unsigned long interface_allowed_mask;
->>   };
+>> From: Reilly Grant <reillyg@chromium.org>
 >>
->>   struct async {
->> @@ -641,6 +643,14 @@ static int claimintf(struct usb_dev_state *ps, =
-unsigned int ifnum)
->>   	if (test_bit(ifnum, &ps->ifclaimed))
->>   		return 0;
+>> The new USBDEVFS_DROP_PRIVILEGES ioctl allows a process to voluntari=
+ly
+>> relinquish the ability to issue other ioctls that may interfere with
+>> other processes and drivers that have claimed an interface on the
+>> device.
 >>
->> +	if (ps->privileges_dropped) {
->> +		if (ifnum >=3D 8*sizeof(ps->interface_allowed_mask))
->> +			return -EINVAL;
+>> Signed-off-by: Reilly Grant <reillyg@chromium.org>
+>> Signed-off-by: Emilio L=C3=B3pez <emilio.lopez@collabora.co.uk>
 >
 >
-> I don't think you need this runtime test. You can just make sure that
-> sizeof(ps->interface_allowed_mask) =3D=3D sizeof(ps->ifclaimed) at bu=
-ild
-> time.
->
-> I do find this variable and arbitrary limit a bit confusing, but that=
-'s
-> not your fault - I guess it is an indication that ifnums > 31 are rar=
-e
-> :)
->
->
->> diff --git a/include/uapi/linux/usbdevice_fs.h b/include/uapi/linux/=
-usbdevice_fs.h
->> index 019ba1e..9abcb34 100644
->> --- a/include/uapi/linux/usbdevice_fs.h
->> +++ b/include/uapi/linux/usbdevice_fs.h
->> @@ -154,6 +154,10 @@ struct usbdevfs_streams {
->>   	unsigned char eps[0];
->>   };
->>
->> +struct usbdevfs_drop_privs {
->> +	unsigned long interface_allowed_mask;
->> +};
+>>   static int proc_resetdevice(struct usb_dev_state *ps)
+>>   {
+>> +	struct usb_host_config *actconfig =3D ps->dev->actconfig;
+>> +	struct usb_interface *interface;
+>> +	int i, number;
 >> +
+>> +	/* Don't touch the device if any interfaces are claimed. It
+>> +	 * could interfere with other drivers' operations and this
+>> +	 * process has dropped its privileges to do such things.
+>> +	 */
 >
-> "unsigned long" isn't a very good choice here, is it?
+> This comment should be rephrased.  It should say something like:
+> "Don't allow if the process has dropped its privilege to do such
+> things and any of the interfaces are claimed."
 
-I went with a type matching ifclaimed on struct usb_dev_state to keep=20
-the limit the same, but I guess it's not the best idea for an ioctl. I=20
-can switch it to __u32, keeping the runtime check above as is, or use=20
-__u64. Which one would you prefer?
+I have replaced it with the following now
 
-Thanks for the review!
+         /* Don't allow a device reset if the process has dropped the
+          * privilege to do such things and any of the interfaces are
+          * currently claimed.
+          */
+
+> You also might consider allowing the reset if the interfaces are
+> claimed only by the current process (or more precisely, by ps).
+>
+>> +static int proc_drop_privileges(struct usb_dev_state *ps, void __us=
+er *arg)
+>> +{
+>> +	struct usbdevfs_drop_privs data;
+>> +
+>> +	if (copy_from_user(&data, arg, sizeof(data)))
+>> +		return -EFAULT;
+>> +
+>> +	/* This is a one way operation. Once privileges were dropped,
+>> +	 * you cannot do it again (Otherwise unprivileged processes
+>> +	 * would be able to change their allowed interfaces mask)
+>> +	 */
+>
+> If you're going to keep a mask of claimable interfaces then there's n=
+o
+> reason this has to be a one-time operation.  Processes should always =
+be
+> allowed to shrink the mask, just not to grow it.
+
+Good point, I've changed this to look like the following
+
+         /* This is an one way operation. Once privileges are
+          * dropped, you cannot regain them. You may however reissue
+          * this ioctl to shrink the allowed interfaces mask.
+          */
+         if (ps->privileges_dropped)
+                 ps->interface_allowed_mask &=3D data.interface_allowed=
+_mask;
+         else
+                 ps->interface_allowed_mask =3D data.interface_allowed_=
+mask;
+
+         ps->privileges_dropped =3D true;
+
+Or maybe I could change the default mask to ~0 and simplify this a bit,=
+ hm.
+
+Thank you for the review!
+
 Emilio
