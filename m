@@ -1,54 +1,59 @@
-From: =?utf-8?Q?Bj=C3=B8rn_Mork?= <bjorn@mork.no>
-Subject: Re: [PATCH v2] usb: devio: Add ioctl to disallow detaching kernel USB drivers.
-Date: Mon, 25 Jan 2016 09:39:43 +0100
-Message-ID: <87powqrr1s.fsf@nemi.mork.no>
-References: <20160119180752.GA10487@kroah.com>
-	<1453420476-26125-1-git-send-email-emilio.lopez@collabora.co.uk>
-	<8760ymdk94.fsf@nemi.mork.no> <56A57D0C.6030308@collabora.co.uk>
+From: Hans Verkuil <hverkuil@xs4all.nl>
+Subject: Re: [PATCH v4 0/2] new control V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME
+Date: Mon, 25 Jan 2016 09:57:53 +0100
+Message-ID: <56A5E391.8050505@xs4all.nl>
+References: <1453187230-97231-1-git-send-email-wuchengli@chromium.org>
+ <CAOMLVLh7EnMgVfzV7JQy6DSKSaanqHn5kNkTLVrbTCihjphzYA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <56A57D0C.6030308@collabora.co.uk> ("Emilio =?utf-8?Q?L=C3=B3?=
- =?utf-8?Q?pez=22's?= message of
-	"Sun, 24 Jan 2016 22:40:28 -0300")
+In-Reply-To: <CAOMLVLh7EnMgVfzV7JQy6DSKSaanqHn5kNkTLVrbTCihjphzYA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Emilio =?utf-8?Q?L=C3=B3pez?= <emilio.lopez@collabora.co.uk>
-Cc: gregkh@linuxfoundation.org, stern@rowland.harvard.edu, kborer@gmail.com, k.opasiak@samsung.com, reillyg@chromium.org, keescook@chromium.org, linux-api@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org, jorgelo@chromium.org, dan.carpenter@oracle.com
+To: =?UTF-8?B?V3UtQ2hlbmcgTGkgKOadjuWLmeiqoCk=?= <wuchengli@chromium.org>
+Cc: pawel@osciak.com, mchehab@osg.samsung.com, k.debski@samsung.com, Antti Palosaari <crope@iki.fi>, Masanari Iida <standby24x7@gmail.com>, Nicolas Dufresne <nicolas.dufresne@collabora.com>, Ricardo Ribalda Delgado <ricardo.ribalda@gmail.com>, ao2@ao2.it, bparrot@ti.com, Kyungmin Park <kyungmin.park@samsung.com>, jtp.park@samsung.com, linux-media@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, Tiffany Lin <tiffany.lin@mediatek.com>, Daniel Kurtz <djkurtz@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-Emilio L=C3=B3pez <emilio.lopez@collabora.co.uk> writes:
+On 01/25/2016 05:46 AM, Wu-Cheng Li (=E6=9D=8E=E5=8B=99=E8=AA=A0) wrote=
+:
+> Hi Hans,
+> Can you look at the patch again? I've changed the name from
+> V4L2_CID_MPEG_VIDEO_FORCE_I_FRAME to
+> V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME. Thanks.
 
->>> diff --git a/include/uapi/linux/usbdevice_fs.h b/include/uapi/linux=
-/usbdevice_fs.h
->>> index 019ba1e..9abcb34 100644
->>> --- a/include/uapi/linux/usbdevice_fs.h
->>> +++ b/include/uapi/linux/usbdevice_fs.h
->>> @@ -154,6 +154,10 @@ struct usbdevfs_streams {
->>>   	unsigned char eps[0];
->>>   };
->>>
->>> +struct usbdevfs_drop_privs {
->>> +	unsigned long interface_allowed_mask;
->>> +};
->>> +
+Looks good to me. I'm planning to make a pull request for this once v4.=
+5-rc1 is
+merged into our media_tree repo.
+
+Regards,
+
+	Hans
+
+>=20
+> Wu-Cheng
+>=20
+> On Tue, Jan 19, 2016 at 3:07 PM, Wu-Cheng Li <wuchengli@chromium.org>=
+ wrote:
+>> v4 changes:
+>> - Change the name to V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME.
+>> - Add commit message to s5p-mfc patch.
 >>
->> "unsigned long" isn't a very good choice here, is it?
->
-> I went with a type matching ifclaimed on struct usb_dev_state to keep
-> the limit the same, but I guess it's not the best idea for an ioctl. =
-I
-> can switch it to __u32, keeping the runtime check above as is, or use
-> __u64. Which one would you prefer?
-
-I don't feel much like an expert here, but I can certainly make up an
-opinion anyway :)
-
-Since 64bits kernels allow usb devio with interface numbers up to 63, I
-guess you need __u64 to avoid limiting the range?  Limiting will create
-all sorts of followup problems, so it's definitely easiest to just go
-with __u64.
-
-
-
-Bj=C3=B8rn
+>> Wu-Cheng Li (2):
+>>   v4l: add V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME.
+>>   s5p-mfc: add the support of V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME.
+>>
+>>  Documentation/DocBook/media/v4l/controls.xml |  8 ++++++++
+>>  drivers/media/platform/s5p-mfc/s5p_mfc_enc.c | 12 ++++++++++++
+>>  drivers/media/v4l2-core/v4l2-ctrls.c         |  2 ++
+>>  include/uapi/linux/v4l2-controls.h           |  1 +
+>>  4 files changed, 23 insertions(+)
+>>
+>> --
+>> 2.6.0.rc2.230.g3dd15c0
+>>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-media=
+" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>=20
