@@ -1,121 +1,203 @@
-From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Subject: [PATCH v4 19/22] memstick/r592: Better synchronize debug messages in r592_io kthread
-Date: Mon, 25 Jan 2016 16:45:08 +0100
-Message-ID: <1453736711-6703-20-git-send-email-pmladek@suse.com>
+From: Petr Mladek <pmladek@suse.com>
+Subject: [PATCH v4 16/22] kmemleak: Convert kmemleak kthread into kthread worker API
+Date: Mon, 25 Jan 2016 16:45:05 +0100
+Message-ID: <1453736711-6703-17-git-send-email-pmladek@suse.com>
 References: <1453736711-6703-1-git-send-email-pmladek@suse.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1453736711-6703-1-git-send-email-pmladek-IBi9RG/b67k@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Maxim Levitsky <maximlevitsky-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1453736711-6703-1-git-send-email-pmladek@suse.com>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>, Catalin Marinas <catalin.marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-There is an attempt to print debug messages when the kthread is waken
-and when it goes into sleep. It does not work well because the spin lock
-does not guard all manipulations with the thread state.
+Kthreads are currently implemented as an infinite loop. Each
+has its own variant of checks for terminating, freezing,
+awakening. In many cases it is unclear to say in which state
+it is and sometimes it is done a wrong way.
 
-I did not find a way how to print a message when the kthread really
-goes into sleep. Instead, I added a state variable. It clearly marks
-when a series of IO requests is started and finished. It makes sure
-that we always have a pair of started/done messages.
+The plan is to convert kthreads into kthread_worker or workqueues
+API. It allows to split the functionality into separate operations.
+It helps to make a better structure. Also it defines a clean state
+where no locks are taken, IRQs blocked, the kthread might sleep
+or even be safely migrated.
 
-The only problem is that it will print these messages also when
-the kthread is created and there is no real work. We might want
-to use create_kthread() instead of run_kthread(). Then the kthread
-will stay stopped until the first request.
+The kthread worker API is useful when we want to have a dedicated
+single thread for the work. It helps to make sure that it is
+available when needed. Also it allows a better control, e.g.
+define a scheduling priority.
 
-Important: This change is only compile tested. I did not find an easy
-way how to test it. This is why I was conservative and did not modify
-the kthread creation.
+This patch converts the kmemleak kthread into the kthread worker
+API because it modifies the scheduling priority.
 
-Signed-off-by: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-CC: Maxim Levitsky <maximlevitsky-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+The result is a simple self-queuing work that just calls kmemleak_scan().
+
+The info messages and set_user_nice() are moved to the functions that
+start and stop the worker. These are also renamed to mention worker
+instead of thread.
+
+We do not longer need to handle a spurious wakeup and count the remaining
+timeout. It is handled by the worker. The delayed work is queued after
+the full timeout passes.
+
+Finally, the initial delay is done only when the kthread is started
+during the boot. For this we added a parameter to the start function.
+
+Signed-off-by: Petr Mladek <pmladek@suse.com>
+CC: Catalin Marinas <catalin.marinas@arm.com>
 ---
- drivers/memstick/host/r592.c | 19 +++++++++----------
- drivers/memstick/host/r592.h |  2 +-
- 2 files changed, 10 insertions(+), 11 deletions(-)
+ mm/kmemleak.c | 87 +++++++++++++++++++++++++++++------------------------------
+ 1 file changed, 43 insertions(+), 44 deletions(-)
 
-diff --git a/drivers/memstick/host/r592.c b/drivers/memstick/host/r592.c
-index ef09ba0289d7..dd73c5506fdf 100644
---- a/drivers/memstick/host/r592.c
-+++ b/drivers/memstick/host/r592.c
-@@ -568,21 +568,24 @@ static int r592_process_thread(void *data)
- {
- 	int error;
- 	struct r592_device *dev = (struct r592_device *)data;
--	unsigned long flags;
+diff --git a/mm/kmemleak.c b/mm/kmemleak.c
+index 25c0ad36fe38..16f1a7bb1697 100644
+--- a/mm/kmemleak.c
++++ b/mm/kmemleak.c
+@@ -216,7 +216,8 @@ static int kmemleak_error;
+ static unsigned long min_addr = ULONG_MAX;
+ static unsigned long max_addr;
  
- 	while (!kthread_should_stop()) {
--		spin_lock_irqsave(&dev->io_thread_lock, flags);
-+		if (!dev->io_started) {
-+			dbg_verbose("IO: started");
-+			dev->io_started = true;
-+		}
-+
- 		set_current_state(TASK_INTERRUPTIBLE);
- 		error = memstick_next_req(dev->host, &dev->req);
--		spin_unlock_irqrestore(&dev->io_thread_lock, flags);
- 
- 		if (error) {
- 			if (error == -ENXIO || error == -EAGAIN) {
--				dbg_verbose("IO: done IO, sleeping");
-+				dbg_verbose("IO: done");
- 			} else {
- 				dbg("IO: unknown error from "
- 					"memstick_next_req %d", error);
- 			}
-+			dev->io_started = false;
- 
- 			if (kthread_should_stop())
- 				set_current_state(TASK_RUNNING);
-@@ -714,15 +717,11 @@ static int r592_set_param(struct memstick_host *host,
- static void r592_submit_req(struct memstick_host *host)
- {
- 	struct r592_device *dev = memstick_priv(host);
--	unsigned long flags;
- 
- 	if (dev->req)
- 		return;
- 
--	spin_lock_irqsave(&dev->io_thread_lock, flags);
--	if (wake_up_process(dev->io_thread))
--		dbg_verbose("IO thread woken to process requests");
--	spin_unlock_irqrestore(&dev->io_thread_lock, flags);
-+	wake_up_process(dev->io_thread);
+-static struct task_struct *scan_thread;
++static struct kthread_worker *kmemleak_scan_worker;
++static struct delayed_kthread_work kmemleak_scan_work;
+ /* used to avoid reporting of recently allocated objects */
+ static unsigned long jiffies_min_age;
+ static unsigned long jiffies_last_scan;
+@@ -1470,54 +1471,48 @@ static void kmemleak_scan(void)
  }
  
- static const struct pci_device_id r592_pci_id_tbl[] = {
-@@ -768,7 +767,6 @@ static int r592_probe(struct pci_dev *pdev, const struct pci_device_id *id)
+ /*
+- * Thread function performing automatic memory scanning. Unreferenced objects
+- * at the end of a memory scan are reported but only the first time.
++ * Kthread worker function performing automatic memory scanning.
++ * Unreferenced objects at the end of a memory scan are reported
++ * but only the first time.
+  */
+-static int kmemleak_scan_thread(void *arg)
++static void kmemleak_scan_func(struct kthread_work *dummy)
+ {
+-	static int first_run = 1;
+-
+-	pr_info("Automatic memory scanning thread started\n");
+-	set_user_nice(current, 10);
+-
+-	/*
+-	 * Wait before the first scan to allow the system to fully initialize.
+-	 */
+-	if (first_run) {
+-		first_run = 0;
+-		ssleep(SECS_FIRST_SCAN);
+-	}
+-
+-	while (!kthread_should_stop()) {
+-		signed long timeout = jiffies_scan_wait;
+-
+-		mutex_lock(&scan_mutex);
+-		kmemleak_scan();
+-		mutex_unlock(&scan_mutex);
+-
+-		/* wait before the next scan */
+-		while (timeout && !kthread_should_stop())
+-			timeout = schedule_timeout_interruptible(timeout);
+-	}
+-
+-	pr_info("Automatic memory scanning thread ended\n");
++	mutex_lock(&scan_mutex);
++	kmemleak_scan();
++	mutex_unlock(&scan_mutex);
  
- 	dev->irq = pdev->irq;
- 	spin_lock_init(&dev->irq_lock);
--	spin_lock_init(&dev->io_thread_lock);
- 	init_completion(&dev->dma_done);
- 	INIT_KFIFO(dev->pio_fifo);
- 	setup_timer(&dev->detect_timer,
-@@ -780,6 +778,7 @@ static int r592_probe(struct pci_dev *pdev, const struct pci_device_id *id)
- 	host->set_param = r592_set_param;
- 	r592_check_dma(dev);
+-	return 0;
++	queue_delayed_kthread_work(kmemleak_scan_worker, &kmemleak_scan_work,
++				   jiffies_scan_wait);
+ }
  
-+	dev->io_started = false;
- 	dev->io_thread = kthread_run(r592_process_thread, dev, "r592_io");
- 	if (IS_ERR(dev->io_thread)) {
- 		error = PTR_ERR(dev->io_thread);
-diff --git a/drivers/memstick/host/r592.h b/drivers/memstick/host/r592.h
-index c5726c1e8832..aa8f0f22f4ce 100644
---- a/drivers/memstick/host/r592.h
-+++ b/drivers/memstick/host/r592.h
-@@ -137,10 +137,10 @@ struct r592_device {
- 	void __iomem *mmio;
- 	int irq;
- 	spinlock_t irq_lock;
--	spinlock_t io_thread_lock;
- 	struct timer_list detect_timer;
+ /*
+  * Start the automatic memory scanning thread. This function must be called
+  * with the scan_mutex held.
+  */
+-static void start_scan_thread(void)
++static void start_scan_thread(bool boot)
+ {
+-	if (scan_thread)
++	unsigned long timeout = 0;
++
++	if (kmemleak_scan_worker)
+ 		return;
+-	scan_thread = kthread_run(kmemleak_scan_thread, NULL, "kmemleak");
+-	if (IS_ERR(scan_thread)) {
+-		pr_warning("Failed to create the scan thread\n");
+-		scan_thread = NULL;
++
++	init_delayed_kthread_work(&kmemleak_scan_work, kmemleak_scan_func);
++	kmemleak_scan_worker = create_kthread_worker(0, "kmemleak");
++	if (IS_ERR(kmemleak_scan_worker)) {
++		pr_warn("Failed to create the memory scan worker\n");
++		kmemleak_scan_worker = NULL;
+ 	}
++	pr_info("Automatic memory scanning thread started\n");
++	set_user_nice(kmemleak_scan_worker->task, 10);
++
++	/*
++	 * Wait before the first scan to allow the system to fully initialize.
++	 */
++	if (boot)
++		timeout = msecs_to_jiffies(SECS_FIRST_SCAN * MSEC_PER_SEC);
++
++	queue_delayed_kthread_work(kmemleak_scan_worker, &kmemleak_scan_work,
++				   timeout);
+ }
  
- 	struct task_struct *io_thread;
-+	bool io_started;
- 	bool parallel_mode;
+ /*
+@@ -1526,10 +1521,14 @@ static void start_scan_thread(void)
+  */
+ static void stop_scan_thread(void)
+ {
+-	if (scan_thread) {
+-		kthread_stop(scan_thread);
+-		scan_thread = NULL;
+-	}
++	if (!kmemleak_scan_worker)
++		return;
++
++	cancel_delayed_kthread_work_sync(&kmemleak_scan_work);
++	destroy_kthread_worker(kmemleak_scan_worker);
++	kmemleak_scan_worker = NULL;
++
++	pr_info("Automatic memory scanning thread ended\n");
+ }
  
- 	DECLARE_KFIFO(pio_fifo, u8, sizeof(u32));
+ /*
+@@ -1726,7 +1725,7 @@ static ssize_t kmemleak_write(struct file *file, const char __user *user_buf,
+ 	else if (strncmp(buf, "stack=off", 9) == 0)
+ 		kmemleak_stack_scan = 0;
+ 	else if (strncmp(buf, "scan=on", 7) == 0)
+-		start_scan_thread();
++		start_scan_thread(false);
+ 	else if (strncmp(buf, "scan=off", 8) == 0)
+ 		stop_scan_thread();
+ 	else if (strncmp(buf, "scan=", 5) == 0) {
+@@ -1738,7 +1737,7 @@ static ssize_t kmemleak_write(struct file *file, const char __user *user_buf,
+ 		stop_scan_thread();
+ 		if (secs) {
+ 			jiffies_scan_wait = msecs_to_jiffies(secs * 1000);
+-			start_scan_thread();
++			start_scan_thread(false);
+ 		}
+ 	} else if (strncmp(buf, "scan", 4) == 0)
+ 		kmemleak_scan();
+@@ -1962,7 +1961,7 @@ static int __init kmemleak_late_init(void)
+ 	if (!dentry)
+ 		pr_warning("Failed to create the debugfs kmemleak file\n");
+ 	mutex_lock(&scan_mutex);
+-	start_scan_thread();
++	start_scan_thread(true);
+ 	mutex_unlock(&scan_mutex);
+ 
+ 	pr_info("Kernel memory leak detector initialized\n");
 -- 
 1.8.5.6
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
