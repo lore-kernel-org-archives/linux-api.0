@@ -1,72 +1,115 @@
 From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v4 07/22] kthread: Detect when a kthread work is used by
- more workers
-Date: Mon, 25 Jan 2016 13:57:47 -0500
-Message-ID: <20160125185747.GC3628@mtj.duckdns.org>
+Subject: Re: [PATCH v4 08/22] kthread: Initial support for delayed kthread
+ work
+Date: Mon, 25 Jan 2016 14:04:54 -0500
+Message-ID: <20160125190454.GD3628@mtj.duckdns.org>
 References: <1453736711-6703-1-git-send-email-pmladek@suse.com>
- <1453736711-6703-8-git-send-email-pmladek@suse.com>
+ <1453736711-6703-9-git-send-email-pmladek@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1453736711-6703-8-git-send-email-pmladek-IBi9RG/b67k@public.gmane.org>
+In-Reply-To: <1453736711-6703-9-git-send-email-pmladek-IBi9RG/b67k@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
 Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 25, 2016 at 04:44:56PM +0100, Petr Mladek wrote:
-> +static void insert_kthread_work_sanity_check(struct kthread_worker *worker,
-> +					       struct kthread_work *work)
+Hello,
+
+On Mon, Jan 25, 2016 at 04:44:57PM +0100, Petr Mladek wrote:
+> +/*
+> + * Returns true when there is a pending operation for this work.
+> + * In particular, it checks if the work is:
+> + *	- queued
+> + *	- a timer is running to queue this delayed work
+> + *
+> + * This function must be called with locked work.
+> + */
+> +static inline bool kthread_work_pending(const struct kthread_work *work)
 > +{
-> +	lockdep_assert_held(&worker->lock);
-> +	WARN_ON_ONCE(!irqs_disabled());
-
-Isn't worker->lock gonna be a irq-safe lock?  If so, why would this
-need to be tested separately?
-
-> +	WARN_ON_ONCE(!list_empty(&work->node));
-> +	/* Do not use a work with more workers, see queue_kthread_work() */
-> +	WARN_ON_ONCE(work->worker && work->worker != worker);
+> +	return !list_empty(&work->node) ||
+> +	       (work->timer && timer_active(work->timer));
 > +}
 
-Is this sanity check function gonna be used from multiple places?
+Why not just put the work item on a separate list so that
+lits_empty(&work->node) is always enough?  IOW, put delayed work items
+on timers on worker->delayed or sth.
 
->  /* insert @work before @pos in @worker */
->  static void insert_kthread_work(struct kthread_worker *worker,
-> -			       struct kthread_work *work,
-> -			       struct list_head *pos)
-> +				struct kthread_work *work,
-> +				struct list_head *pos)
->  {
-> -	lockdep_assert_held(&worker->lock);
-> +	insert_kthread_work_sanity_check(worker, work);
+> +/*
+> + * Queue @work right into the worker queue.
+> + */
+> +static void __queue_kthread_work(struct kthread_worker *worker,
+> +			  struct kthread_work *work)
+> +{
+> +	insert_kthread_work(worker, work, &worker->work_list);
+> +}
+
+Does this really need to be an inline function?  This sort of one
+liner helpers tend to be obfuscating more than anything else.
+
+> @@ -756,6 +779,121 @@ bool queue_kthread_work(struct kthread_worker *worker,
+>  }
+>  EXPORT_SYMBOL_GPL(queue_kthread_work);
 >  
->  	list_add_tail(&work->node, pos);
->  	work->worker = worker;
-> @@ -717,6 +730,15 @@ static void insert_kthread_work(struct kthread_worker *worker,
->   * Queue @work to work processor @task for async execution.  @task
->   * must have been created with kthread_worker_create().  Returns %true
->   * if @work was successfully queued, %false if it was already pending.
+> +static bool try_lock_kthread_work(struct kthread_work *work)
+> +{
+> +	struct kthread_worker *worker;
+> +	int ret = false;
+> +
+> +try_again:
+> +	worker = work->worker;
+> +
+> +	if (!worker)
+> +		goto out;
+
+		return false;
+
+> +
+> +	spin_lock(&worker->lock);
+> +	if (worker != work->worker) {
+> +		spin_unlock(&worker->lock);
+> +		goto try_again;
+> +	}
+
+	return true;
+
+> +	ret = true;
+> +
+> +out:
+> +	return ret;
+> +}
+
+Stop building unnecessary structures.  Keep it simple.
+
+> +static inline void unlock_kthread_work(struct kthread_work *work)
+> +{
+> +	spin_unlock(&work->worker->lock);
+> +}
+
+Ditto.  Just open code it.  It doesn't add anything.
+
+> +/**
+> + * delayed_kthread_work_timer_fn - callback that queues the associated delayed
+> + *	kthread work when the timer expires.
+> + * @__data: pointer to the data associated with the timer
 > + *
-> + * Never queue a work into a worker when it is being processed by another
-> + * one. Otherwise, some operations, e.g. cancel or flush, will not work
-> + * correctly or the work might run in parallel. This is not enforced
-> + * because it would make the code too complex. There are only warnings
-> + * printed when such a situation is detected.
+> + * The format of the function is defined by struct timer_list.
+> + * It should have been called from irqsafe timer with irq already off.
+> + */
+> +void delayed_kthread_work_timer_fn(unsigned long __data)
+> +{
+> +	struct delayed_kthread_work *dwork =
+> +		(struct delayed_kthread_work *)__data;
+> +	struct kthread_work *work = &dwork->work;
+> +
+> +	if (!try_lock_kthread_work(work))
 
-I'm not sure the above paragraph adds much.  It isn't that accurate to
-begin with as what's being disallowed is larger scope than the above.
-Isn't the paragraph below enough?
+Can you please explain why try_lock is necessary here?  That's the
+most important and non-obvious thing going on here and there's no
+explanation of that at all.
 
-> + * Reinitialize the work if it needs to be used by another worker.
-> + * For example, when the worker was stopped and started again.
->   */
->  bool queue_kthread_work(struct kthread_worker *worker,
->  			struct kthread_work *work)
-> -- 
-> 1.8.5.6
-> 
+Thanks.
 
 -- 
 tejun
