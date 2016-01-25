@@ -1,134 +1,121 @@
-From: Petr Mladek <pmladek@suse.com>
-Subject: [PATCH v4 15/22] hung_task: Convert hungtaskd into kthread worker API
-Date: Mon, 25 Jan 2016 16:45:04 +0100
-Message-ID: <1453736711-6703-16-git-send-email-pmladek@suse.com>
+From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
+Subject: [PATCH v4 19/22] memstick/r592: Better synchronize debug messages in r592_io kthread
+Date: Mon, 25 Jan 2016 16:45:08 +0100
+Message-ID: <1453736711-6703-20-git-send-email-pmladek@suse.com>
 References: <1453736711-6703-1-git-send-email-pmladek@suse.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1453736711-6703-1-git-send-email-pmladek@suse.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>, linux-watchdog@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1453736711-6703-1-git-send-email-pmladek-IBi9RG/b67k@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Maxim Levitsky <maximlevitsky-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Kthreads are currently implemented as an infinite loop. Each
-has its own variant of checks for terminating, freezing,
-awakening. In many cases it is unclear to say in which state
-it is and sometimes it is done a wrong way.
+There is an attempt to print debug messages when the kthread is waken
+and when it goes into sleep. It does not work well because the spin lock
+does not guard all manipulations with the thread state.
 
-The plan is to convert kthreads into kthread_worker or workqueues
-API. It allows to split the functionality into separate operations.
-It helps to make a better structure. Also it defines a clean state
-where no locks are taken, IRQs blocked, the kthread might sleep
-or even be safely migrated.
+I did not find a way how to print a message when the kthread really
+goes into sleep. Instead, I added a state variable. It clearly marks
+when a series of IO requests is started and finished. It makes sure
+that we always have a pair of started/done messages.
 
-The kthread worker API is useful when we want to have a dedicated
-single thread for the work. It helps to make sure that it is
-available when needed. Also it allows a better control, e.g.
-define a scheduling priority.
+The only problem is that it will print these messages also when
+the kthread is created and there is no real work. We might want
+to use create_kthread() instead of run_kthread(). Then the kthread
+will stay stopped until the first request.
 
-This patch converts hungtaskd() in kthread worker API because
-it modifies the priority.
+Important: This change is only compile tested. I did not find an easy
+way how to test it. This is why I was conservative and did not modify
+the kthread creation.
 
-The conversion is pretty straightforward. One iteration of the
-main cycle is transferred into a self-queuing delayed kthread work.
-We do not longer need to check if it was waken earlier. Instead,
-the work timeout is modified when the timeout value is changed.
-
-The user nice value is set from hung_task_init(). Otherwise, we
-would need to add an extra init_work.
-
-The patch also handles the error when the kthead worker could not
-be crated from some reasons. It was broken before. For example,
-wake_up_process would have failed if watchdog_task inclueded an error
-code instead of a valid pointer.
-
-Signed-off-by: Petr Mladek <pmladek@suse.com>
-CC: linux-watchdog@vger.kernel.org
+Signed-off-by: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
+CC: Maxim Levitsky <maximlevitsky-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 ---
- kernel/hung_task.c | 41 +++++++++++++++++++++++++----------------
- 1 file changed, 25 insertions(+), 16 deletions(-)
+ drivers/memstick/host/r592.c | 19 +++++++++----------
+ drivers/memstick/host/r592.h |  2 +-
+ 2 files changed, 10 insertions(+), 11 deletions(-)
 
-diff --git a/kernel/hung_task.c b/kernel/hung_task.c
-index e0f90c2b57aa..65026f8b750e 100644
---- a/kernel/hung_task.c
-+++ b/kernel/hung_task.c
-@@ -41,7 +41,9 @@ int __read_mostly sysctl_hung_task_warnings = 10;
- 
- static int __read_mostly did_panic;
- 
--static struct task_struct *watchdog_task;
-+static struct kthread_worker *watchdog_worker;
-+static void watchdog_func(struct kthread_work *dummy);
-+static DEFINE_DELAYED_KTHREAD_WORK(watchdog_work, watchdog_func);
- 
- /*
-  * Should we panic (and reboot, if panic_timeout= is set) when a
-@@ -205,7 +207,9 @@ int proc_dohung_task_timeout_secs(struct ctl_table *table, int write,
- 	if (ret || !write)
- 		goto out;
- 
--	wake_up_process(watchdog_task);
-+	if (watchdog_worker)
-+		mod_delayed_kthread_work(watchdog_worker, &watchdog_work,
-+			 timeout_jiffies(sysctl_hung_task_timeout_secs));
- 
-  out:
- 	return ret;
-@@ -222,30 +226,35 @@ EXPORT_SYMBOL_GPL(reset_hung_task_detector);
- /*
-  * kthread which checks for tasks stuck in D state
-  */
--static int watchdog(void *dummy)
-+static void watchdog_func(struct kthread_work *dummy)
+diff --git a/drivers/memstick/host/r592.c b/drivers/memstick/host/r592.c
+index ef09ba0289d7..dd73c5506fdf 100644
+--- a/drivers/memstick/host/r592.c
++++ b/drivers/memstick/host/r592.c
+@@ -568,21 +568,24 @@ static int r592_process_thread(void *data)
  {
--	set_user_nice(current, 0);
-+	unsigned long timeout = sysctl_hung_task_timeout_secs;
+ 	int error;
+ 	struct r592_device *dev = (struct r592_device *)data;
+-	unsigned long flags;
  
--	for ( ; ; ) {
--		unsigned long timeout = sysctl_hung_task_timeout_secs;
-+	if (atomic_xchg(&reset_hung_task, 0))
-+		goto next;
- 
--		while (schedule_timeout_interruptible(timeout_jiffies(timeout)))
--			timeout = sysctl_hung_task_timeout_secs;
-+	check_hung_uninterruptible_tasks(timeout);
- 
--		if (atomic_xchg(&reset_hung_task, 0))
--			continue;
--
--		check_hung_uninterruptible_tasks(timeout);
--	}
--
--	return 0;
-+next:
-+	queue_delayed_kthread_work(watchdog_worker, &watchdog_work,
-+				   timeout_jiffies(timeout));
- }
- 
- static int __init hung_task_init(void)
- {
-+	struct kthread_worker *worker;
+ 	while (!kthread_should_stop()) {
+-		spin_lock_irqsave(&dev->io_thread_lock, flags);
++		if (!dev->io_started) {
++			dbg_verbose("IO: started");
++			dev->io_started = true;
++		}
 +
- 	atomic_notifier_chain_register(&panic_notifier_list, &panic_block);
--	watchdog_task = kthread_run(watchdog, NULL, "khungtaskd");
-+	worker = create_kthread_worker(0, "khungtaskd");
-+	if (IS_ERR(worker)) {
-+		pr_warn("Failed to create khungtaskd\n");
-+		goto out;
-+	}
-+	watchdog_worker = worker;
-+	set_user_nice(worker->task, 0);
-+	queue_delayed_kthread_work(worker, &watchdog_work, 0);
+ 		set_current_state(TASK_INTERRUPTIBLE);
+ 		error = memstick_next_req(dev->host, &dev->req);
+-		spin_unlock_irqrestore(&dev->io_thread_lock, flags);
  
-+out:
- 	return 0;
+ 		if (error) {
+ 			if (error == -ENXIO || error == -EAGAIN) {
+-				dbg_verbose("IO: done IO, sleeping");
++				dbg_verbose("IO: done");
+ 			} else {
+ 				dbg("IO: unknown error from "
+ 					"memstick_next_req %d", error);
+ 			}
++			dev->io_started = false;
+ 
+ 			if (kthread_should_stop())
+ 				set_current_state(TASK_RUNNING);
+@@ -714,15 +717,11 @@ static int r592_set_param(struct memstick_host *host,
+ static void r592_submit_req(struct memstick_host *host)
+ {
+ 	struct r592_device *dev = memstick_priv(host);
+-	unsigned long flags;
+ 
+ 	if (dev->req)
+ 		return;
+ 
+-	spin_lock_irqsave(&dev->io_thread_lock, flags);
+-	if (wake_up_process(dev->io_thread))
+-		dbg_verbose("IO thread woken to process requests");
+-	spin_unlock_irqrestore(&dev->io_thread_lock, flags);
++	wake_up_process(dev->io_thread);
  }
- subsys_initcall(hung_task_init);
+ 
+ static const struct pci_device_id r592_pci_id_tbl[] = {
+@@ -768,7 +767,6 @@ static int r592_probe(struct pci_dev *pdev, const struct pci_device_id *id)
+ 
+ 	dev->irq = pdev->irq;
+ 	spin_lock_init(&dev->irq_lock);
+-	spin_lock_init(&dev->io_thread_lock);
+ 	init_completion(&dev->dma_done);
+ 	INIT_KFIFO(dev->pio_fifo);
+ 	setup_timer(&dev->detect_timer,
+@@ -780,6 +778,7 @@ static int r592_probe(struct pci_dev *pdev, const struct pci_device_id *id)
+ 	host->set_param = r592_set_param;
+ 	r592_check_dma(dev);
+ 
++	dev->io_started = false;
+ 	dev->io_thread = kthread_run(r592_process_thread, dev, "r592_io");
+ 	if (IS_ERR(dev->io_thread)) {
+ 		error = PTR_ERR(dev->io_thread);
+diff --git a/drivers/memstick/host/r592.h b/drivers/memstick/host/r592.h
+index c5726c1e8832..aa8f0f22f4ce 100644
+--- a/drivers/memstick/host/r592.h
++++ b/drivers/memstick/host/r592.h
+@@ -137,10 +137,10 @@ struct r592_device {
+ 	void __iomem *mmio;
+ 	int irq;
+ 	spinlock_t irq_lock;
+-	spinlock_t io_thread_lock;
+ 	struct timer_list detect_timer;
+ 
+ 	struct task_struct *io_thread;
++	bool io_started;
+ 	bool parallel_mode;
+ 
+ 	DECLARE_KFIFO(pio_fifo, u8, sizeof(u32));
 -- 
 1.8.5.6
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
