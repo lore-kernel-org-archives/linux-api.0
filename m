@@ -1,180 +1,272 @@
-From: Jann Horn <jannhorn@googlemail.com>
-Subject: RE: [RFC PATCH 1/1] seccomp: provide information
- about the previous syscall
-Date: Mon, 25 Jan 2016 12:51:55 +0100
-Message-ID: <CAK9i0=pYOy10u=f8AcY9NeATuVB-WRjFhPxZx9=6uncNga0pog@mail.gmail.com>
-References: <1453444200-8604-1-git-send-email-daniel.sangorrin@toshiba.co.jp>
-	<1453444200-8604-2-git-send-email-daniel.sangorrin@toshiba.co.jp>
-	<20160122104837.GA14440@pc.thejh.net>
-	<001701d15721$fb9888b0$f2c99a10$@toshiba.co.jp>
-Reply-To: kernel-hardening@lists.openwall.com
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v8 5/4] copy_file_range.2: New page documenting copy_file_range()
+Date: Mon, 25 Jan 2016 14:45:29 +0100
+Message-ID: <CAKgNAkgaEgQb5kJWRf12GQMSip81SL6LtLFxQvOq1yCGR6+HOg@mail.gmail.com>
+References: <1446844701-848-1-git-send-email-Anna.Schumaker@Netapp.com> <1446844701-848-6-git-send-email-Anna.Schumaker@Netapp.com>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: multipart/alternative; boundary=001a113ee6700e3d04052a27324c
-Return-path: <kernel-hardening-return-2464-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <001701d15721$fb9888b0$f2c99a10$@toshiba.co.jp>
-To: Daniel Sangorrin <daniel.sangorrin@toshiba.co.jp>
-Cc: linux-kernel@vger.kernel.org, wad@chromium.org, kernel-hardening@lists.openwall.com, keescook@chromium.org, Andy Lutomirski <luto@amacapital.net>, Alexei Starovoitov <alexei.starovoitov@gmail.com>, Paul Moore <paul@paul-moore.com>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1446844701-848-6-git-send-email-Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Cc: linux-nfs <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux btrfs Developers List <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Zach Brown <zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, andros-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
---001a113ee6700e3d04052a27324c
-Content-Type: text/plain; charset=UTF-8
+Hi Anna,
 
-Am 25.01.2016 4:40 vorm. schrieb "Daniel Sangorrin" <
-daniel.sangorrin@toshiba.co.jp>:
-> There were a few important points that I didn't mention but are critical
-to understand
-> what I was trying to do.  The focus of the patch was on protecting
-"real-time
-> embedded IoT devices" such as a PLC (programmable logic controller)
-inside a factory
-> assembly line .
+On 6 November 2015 at 22:18, Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org> wrote:
+> copy_file_range() is a new system call for copying ranges of data
+> completely in the kernel.  This gives filesystems an opportunity to
+> implement some kind of "copy acceleration", such as reflinks or
+> server-side-copy (in the case of NFS).
+
+I see that there was a V9 patch series, but this page that came
+with the V8 series is the most recent that I can find. Is it up to
+date, technically, with what has been merged into 4.5rc?
+
+Thanks,
+
+Michael
+
+> Signed-off-by: Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+> Reviewed-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+> Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+> ---
+> v8:
+> - Document that files can not be open with O_APPEND.
+> ---
+>  man2/copy_file_range.2 | 201 +++++++++++++++++++++++++++++++++++++++++++++++++
+>  man2/splice.2          |   1 +
+>  2 files changed, 202 insertions(+)
+>  create mode 100644 man2/copy_file_range.2
 >
-> They have a few important properties that I took into consideration:
-[...]
->     - Mimicry: as I mentioned in the cover letter (and Jann showed with
->        his ROP attack) if the attacker is able to emulate the system
-call's order
->        (plus its arguments  and the address from which the call was made)
->        this patch can be bypassed. However, note that this is not easy
-for several
->        reasons:
->                + the attacker may need a long stack to mimic all the
-system calls and their
->                    arguments.
-
-Note that in a ROP attack, the attacker will often set up his own stack
-anyway, so I'm not sure how much of a constraint a short stack really is.
-
->                + the stealthy attacker must make sure the real-time
-application does not
->                    crash, miss any of its deadlines or cause deadline
-misses in other apps
->                    [Note] Real-time application binaries are usually
-closed source so
->                     this might require quite a bit of effort.
->                + randomized system calls: applications could randomly
-activate dummy
->                    system calls each time they are instantiated (and
-adjust their BPF filter,
->                    which should later be zeroed).  In this case, the
-attacker (or virus)
->                    would need to figure out which dummy system calls have
-to
->                    be mimicked and prepare a stack accordingly. This
-seems challenging.
->                    [Note] under a brute force attack, the application may
-just raise an alarm,
->                     activate a redundant node (not connected to the
-network) and
->                     commit digital suicide :).
+> diff --git a/man2/copy_file_range.2 b/man2/copy_file_range.2
+> new file mode 100644
+> index 0000000..d9f76d1
+> --- /dev/null
+> +++ b/man2/copy_file_range.2
+> @@ -0,0 +1,201 @@
+> +.\"This manpage is Copyright (C) 2015 Anna Schumaker <Anna.Schumaker-ZwjVKphTwtPQT0dZR+AlfA@public.gmane.org>
+> +.\"
+> +.\" %%%LICENSE_START(VERBATIM)
+> +.\" Permission is granted to make and distribute verbatim copies of this
+> +.\" manual provided the copyright notice and this permission notice are
+> +.\" preserved on all copies.
+> +.\"
+> +.\" Permission is granted to copy and distribute modified versions of
+> +.\" this manual under the conditions for verbatim copying, provided that
+> +.\" the entire resulting derived work is distributed under the terms of
+> +.\" a permission notice identical to this one.
+> +.\"
+> +.\" Since the Linux kernel and libraries are constantly changing, this
+> +.\" manual page may be incorrect or out-of-date.  The author(s) assume
+> +.\" no responsibility for errors or omissions, or for damages resulting
+> +.\" from the use of the information contained herein.  The author(s) may
+> +.\" not have taken the same level of care in the production of this
+> +.\" manual, which is licensed free of charge, as they might when working
+> +.\" professionally.
+> +.\"
+> +.\" Formatted or processed versions of this manual, if unaccompanied by
+> +.\" the source, must acknowledge the copyright and authors of this work.
+> +.\" %%%LICENSE_END
+> +.\"
+> +.TH COPY 2 2015-11-06 "Linux" "Linux Programmer's Manual"
+> +.SH NAME
+> +copy_file_range \- Copy a range of data from one file to another
+> +.SH SYNOPSIS
+> +.nf
+> +.B #include <sys/syscall.h>
+> +.B #include <unistd.h>
+> +
+> +.BI "ssize_t copy_file_range(int " fd_in ", loff_t *" off_in ", int " fd_out ",
+> +.BI "                        loff_t *" off_out ", size_t " len \
+> +", unsigned int " flags );
+> +.fi
+> +.SH DESCRIPTION
+> +The
+> +.BR copy_file_range ()
+> +system call performs an in-kernel copy between two file descriptors
+> +without the additional cost of transferring data from the kernel to userspace
+> +and then back into the kernel.
+> +It copies up to
+> +.I len
+> +bytes of data from file descriptor
+> +.I fd_in
+> +to file descriptor
+> +.IR fd_out ,
+> +overwriting any data that exists within the requested range of the target file.
+> +
+> +The following semantics apply for
+> +.IR off_in ,
+> +and similar statements apply to
+> +.IR off_out :
+> +.IP * 3
+> +If
+> +.I off_in
+> +is NULL, then bytes are read from
+> +.I fd_in
+> +starting from the current file offset, and the offset is
+> +adjusted by the number of bytes copied.
+> +.IP *
+> +If
+> +.I off_in
+> +is not NULL, then
+> +.I off_in
+> +must point to a buffer that specifies the starting
+> +offset where bytes from
+> +.I fd_in
+> +will be read.  The current file offset of
+> +.I fd_in
+> +is not changed, but
+> +.I off_in
+> +is adjusted appropriately.
+> +.PP
+> +
+> +The
+> +.I flags
+> +argument must be set to 0.
+> +.SH RETURN VALUE
+> +Upon successful completion,
+> +.BR copy_file_range ()
+> +will return the number of bytes copied between files.
+> +This could be less than the length originally requested.
+> +
+> +On error,
+> +.BR copy_file_range ()
+> +returns \-1 and
+> +.I errno
+> +is set to indicate the error.
+> +.SH ERRORS
+> +.TP
+> +.B EBADF
+> +One or more file descriptors are not valid; or
+> +.I fd_in
+> +is not open for reading; or
+> +.I fd_out
+> +is not open for writing; or
+> +.I fd_out
+> +is open for appending.
+> +.TP
+> +.B EINVAL
+> +Requested range extends beyond the end of the source file; or the
+> +.I flags
+> +argument is not 0.
+> +.TP
+> +.B EIO
+> +A low level I/O error occurred while copying.
+> +.TP
+> +.B ENOMEM
+> +Out of memory.
+> +.TP
+> +.B ENOSPC
+> +There is not enough space on the target filesystem to complete the copy.
+> +.TP
+> +.B EXDEV
+> +.IR file_in " and " file_out
+> +are not on the same mounted filesystem.
+> +.SH VERSIONS
+> +The
+> +.BR copy_file_range ()
+> +system call first appeared in Linux 4.4.
+> +.SH CONFORMING TO
+> +The
+> +.BR copy_file_range ()
+> +system call is a nonstandard Linux extension.
+> +.SH NOTES
+> +If
+> +.I file_in
+> +is a sparse file, then
+> +.BR copy_file_range ()
+> +may expand any holes existing in the requested range.
+> +Users may benefit from calling
+> +.BR copy_file_range ()
+> +in a loop, and using
+> +.BR lseek (2)
+> +to find the locations of data segments.
+> +.SH EXAMPLE
+> +.nf
+> +#define _GNU_SOURCE
+> +#include <fcntl.h>
+> +#include <stdio.h>
+> +#include <stdlib.h>
+> +#include <sys/stat.h>
+> +#include <sys/syscall.h>
+> +#include <unistd.h>
+> +
+> +loff_t copy_file_range(int fd_in, loff_t *off_in, int fd_out,
+> +                       loff_t *off_out, size_t len, unsigned int flags)
+> +{
+> +    return syscall(__NR_copy_file_range, fd_in, off_in, fd_out,
+> +                   off_out, len, flags);
+> +}
+> +
+> +int main(int argc, char **argv)
+> +{
+> +    int fd_in, fd_out;
+> +    struct stat stat;
+> +    loff_t len, ret;
+> +    char buf[2];
+> +
+> +    if (argc != 3) {
+> +        fprintf(stderr, "Usage: %s <source> <destination>\\n", argv[0]);
+> +        exit(EXIT_FAILURE);
+> +    }
+> +
+> +    fd_in = open(argv[1], O_RDONLY);
+> +    if (fd_in == \-1) {
+> +        perror("open (argv[1])");
+> +        exit(EXIT_FAILURE);
+> +    }
+> +
+> +    if (fstat(fd_in, &stat) == \-1) {
+> +        perror("fstat");
+> +        exit(EXIT_FAILURE);
+> +    }
+> +    len = stat.st_size;
+> +
+> +    fd_out = open(argv[2], O_CREAT|O_WRONLY|O_TRUNC, 0644);
+> +    if (fd_out == \-1) {
+> +        perror("open (argv[2])");
+> +        exit(EXIT_FAILURE);
+> +    }
+> +
+> +    do {
+> +        ret = copy_file_range(fd_in, NULL, fd_out, NULL, len, 0);
+> +        if (ret == \-1) {
+> +            perror("copy_file_range");
+> +            exit(EXIT_FAILURE);
+> +        }
+> +
+> +        len \-= ret;
+> +    } while (len > 0);
+> +
+> +    close(fd_in);
+> +    close(fd_out);
+> +    exit(EXIT_SUCCESS);
+> +}
+> +.fi
+> +.SH SEE ALSO
+> +.BR splice (2)
+> diff --git a/man2/splice.2 b/man2/splice.2
+> index b9b4f42..5c162e0 100644
+> --- a/man2/splice.2
+> +++ b/man2/splice.2
+> @@ -238,6 +238,7 @@ only pointers are copied, not the pages of the buffer.
+>  See
+>  .BR tee (2).
+>  .SH SEE ALSO
+> +.BR copy_file_range (2),
+>  .BR sendfile (2),
+>  .BR tee (2),
+>  .BR vmsplice (2)
+> --
+> 2.6.2
 >
-> About the ABI, by all means I don't want to break it. If putting the
-field at
-> the end does not break it, as Alexei mentioned, I can change it. Also I
-would
-> be glad to review the SECCOMP_FILTER_FLAG_TSYNC flag mentioned by Jann
-> in case there is any interest.
->
-> However, I'll understand the NACK if you think that the maintenance is
-not worth it
-> as Andy mentioned; that it can be bypassed under certain conditions; or
-the fact
-> that it focuses on a particular type of systems. I will keep reading the
-> messages in the kernel-hardening list and see if I find another topic to
-> contribute :).
 
-You might want to look into CFI (control flow integrity) - that's probably
-a much stronger mitigation than this, and it does not require kernel
-support. It also works by verifying transitions, but it checks transitions
-of userspace code instead of syscall transitions.
 
---001a113ee6700e3d04052a27324c
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
 
-<p dir=3D"ltr">Am 25.01.2016 4:40 vorm. schrieb &quot;Daniel Sangorrin&quot=
-; &lt;<a href=3D"mailto:daniel.sangorrin@toshiba.co.jp">daniel.sangorrin@to=
-shiba.co.jp</a>&gt;:<br>
-&gt; There were a few important points that I didn&#39;t mention but are cr=
-itical to understand<br>
-&gt; what I was trying to do.=C2=A0 The focus of the patch was on protectin=
-g &quot;real-time<br>
-&gt; embedded IoT devices&quot; such as a PLC (programmable logic controlle=
-r) inside a factory<br>
-&gt; assembly line .<br>
-&gt;<br>
-&gt; They have a few important properties that I took into consideration:<b=
-r>
-[...]<br>
-&gt; =C2=A0 =C2=A0 - Mimicry: as I mentioned in the cover letter (and Jann =
-showed with<br>
-&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0his ROP attack) if the attacker is able to =
-emulate the system call&#39;s order<br>
-&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0(plus its arguments=C2=A0 and the address f=
-rom which the call was made)<br>
-&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0this patch can be bypassed. However, note t=
-hat this is not easy for several<br>
-&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0reasons:<br>
-&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0+ the attacker =
-may need a long stack to mimic all the system calls and their<br>
-&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0a=
-rguments.</p>
-<p dir=3D"ltr">Note that in a ROP attack, the attacker will often set up hi=
-s own stack anyway, so I&#39;m not sure how much of a constraint a short st=
-ack really is.<br></p>
-<p dir=3D"ltr">&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
-+ the stealthy attacker must make sure the real-time application does not<b=
-r>
-&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0c=
-rash, miss any of its deadlines or cause deadline misses in other apps<br>
-&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0[=
-Note] Real-time application binaries are usually closed source so<br>
-&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-this might require quite a bit of effort.<br>
-&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0+ randomized sy=
-stem calls: applications could randomly activate dummy<br>
-&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0s=
-ystem calls each time they are instantiated (and adjust their BPF filter,<b=
-r>
-&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0w=
-hich should later be zeroed).=C2=A0 In this case, the attacker (or virus)<b=
-r>
-&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0w=
-ould need to figure out which dummy system calls have to<br>
-&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0b=
-e mimicked and prepare a stack accordingly. This seems challenging.<br>
-&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0[=
-Note] under a brute force attack, the application may just raise an alarm,<=
-br>
-&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-activate a redundant node (not connected to the network) and<br>
-&gt; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-commit digital suicide :).<br>
-&gt;<br>
-&gt; About the ABI, by all means I don&#39;t want to break it. If putting t=
-he field at<br>
-&gt; the end does not break it, as Alexei mentioned, I can change it. Also =
-I would<br>
-&gt; be glad to review the SECCOMP_FILTER_FLAG_TSYNC flag mentioned by Jann=
-<br>
-&gt; in case there is any interest.<br>
-&gt;<br>
-&gt; However, I&#39;ll understand the NACK if you think that the maintenanc=
-e is not worth it<br>
-&gt; as Andy mentioned; that it can be bypassed under certain conditions; o=
-r the fact<br>
-&gt; that it focuses on a particular type of systems. I will keep reading t=
-he<br>
-&gt; messages in the kernel-hardening list and see if I find another topic =
-to<br>
-&gt; contribute :).</p>
-<p dir=3D"ltr">You might want to look into CFI (control flow integrity) - t=
-hat&#39;s probably a much stronger mitigation than this, and it does not re=
-quire kernel support. It also works by verifying transitions, but it checks=
- transitions of userspace code instead of syscall transitions.</p>
-
---001a113ee6700e3d04052a27324c--
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
