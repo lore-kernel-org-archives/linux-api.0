@@ -1,99 +1,87 @@
-From: =?UTF-8?Q?Emilio_L=c3=b3pez?= <emilio.lopez@collabora.co.uk>
-Subject: Re: [PATCH v2] usb: devio: Add ioctl to disallow detaching kernel USB
- drivers.
-Date: Sun, 24 Jan 2016 23:01:29 -0300
-Message-ID: <56A581F9.5070707@collabora.co.uk>
-References: <Pine.LNX.4.44L0.1601221101490.1626-100000@iolanthe.rowland.org>
+From: "Daniel Sangorrin" <daniel.sangorrin@toshiba.co.jp>
+Subject: RE: [RFC PATCH 1/1] seccomp: provide information about the previous syscall
+Date: Mon, 25 Jan 2016 12:39:23 +0900
+Message-ID: <001701d15721$fb9888b0$f2c99a10$@toshiba.co.jp>
+References: <1453444200-8604-1-git-send-email-daniel.sangorrin@toshiba.co.jp> <1453444200-8604-2-git-send-email-daniel.sangorrin@toshiba.co.jp> <20160122104837.GA14440@pc.thejh.net>
+Reply-To: kernel-hardening@lists.openwall.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.44L0.1601221101490.1626-100000@iolanthe.rowland.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alan Stern <stern@rowland.harvard.edu>
-Cc: gregkh@linuxfoundation.org, kborer@gmail.com, k.opasiak@samsung.com, reillyg@chromium.org, keescook@chromium.org, linux-api@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org, jorgelo@chromium.org, dan.carpenter@oracle.com
+Content-Type: text/plain;
+	charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <kernel-hardening-return-2463-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <20160122104837.GA14440@pc.thejh.net>
+Content-Language: ja
+To: 'Jann Horn' <jann@thejh.net>
+Cc: keescook@chromium.org, luto@amacapital.net, wad@chromium.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, kernel-hardening@lists.openwall.com, 'Alexei Starovoitov' <alexei.starovoitov@gmail.com>'Andy Lutomirski' <luto@amacapital.net>, 'Paul Moore' <paul@paul-moore.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Alan,
+Hi,
 
-El 22/01/16 a las 13:10, Alan Stern escribi=C3=B3:
-> On Thu, 21 Jan 2016, Emilio L=C3=B3pez wrote:
->
->> From: Reilly Grant <reillyg@chromium.org>
->>
->> The new USBDEVFS_DROP_PRIVILEGES ioctl allows a process to voluntari=
-ly
->> relinquish the ability to issue other ioctls that may interfere with
->> other processes and drivers that have claimed an interface on the
->> device.
->>
->> Signed-off-by: Reilly Grant <reillyg@chromium.org>
->> Signed-off-by: Emilio L=C3=B3pez <emilio.lopez@collabora.co.uk>
->
->
->>   static int proc_resetdevice(struct usb_dev_state *ps)
->>   {
->> +	struct usb_host_config *actconfig =3D ps->dev->actconfig;
->> +	struct usb_interface *interface;
->> +	int i, number;
->> +
->> +	/* Don't touch the device if any interfaces are claimed. It
->> +	 * could interfere with other drivers' operations and this
->> +	 * process has dropped its privileges to do such things.
->> +	 */
->
-> This comment should be rephrased.  It should say something like:
-> "Don't allow if the process has dropped its privilege to do such
-> things and any of the interfaces are claimed."
+Jann, Andy, Alexei, Kees and Paul: thanks a lot for your comments on my RFC!!.
 
-I have replaced it with the following now
+There were a few important points that I didn't mention but are critical to understand
+what I was trying to do.  The focus of the patch was on protecting "real-time 
+embedded IoT devices" such as a PLC (programmable logic controller) inside a factory 
+assembly line . 
 
-         /* Don't allow a device reset if the process has dropped the
-          * privilege to do such things and any of the interfaces are
-          * currently claimed.
-          */
+They have a few important properties that I took into consideration:
 
-> You also might consider allowing the reset if the interfaces are
-> claimed only by the current process (or more precisely, by ps).
->
->> +static int proc_drop_privileges(struct usb_dev_state *ps, void __us=
-er *arg)
->> +{
->> +	struct usbdevfs_drop_privs data;
->> +
->> +	if (copy_from_user(&data, arg, sizeof(data)))
->> +		return -EFAULT;
->> +
->> +	/* This is a one way operation. Once privileges were dropped,
->> +	 * you cannot do it again (Otherwise unprivileged processes
->> +	 * would be able to change their allowed interfaces mask)
->> +	 */
->
-> If you're going to keep a mask of claimable interfaces then there's n=
-o
-> reason this has to be a one-time operation.  Processes should always =
-be
-> allowed to shrink the mask, just not to grow it.
+    - They often rely on firewall technology, and are not updated for many 
+       years (~20 years). For that reason, I think that a white-list approach (define 
+       the correct behaviour) seems suitable. Note also that the typical problem
+       of white list approaches, false-positives, is unlikely to occur because they
+       are very deterministic systems.
 
-Good point, I've changed this to look like the following
+    - No asynchronous signal handlers: real-time applications need deterministic
+       response times. For that reason, signals are handled synchronously typically
+       by using 'sigtimedwait' on a separate thread.
 
-         /* This is an one way operation. Once privileges are
-          * dropped, you cannot regain them. You may however reissue
-          * this ioctl to shrink the allowed interfaces mask.
-          */
-         if (ps->privileges_dropped)
-                 ps->interface_allowed_mask &=3D data.interface_allowed=
-_mask;
-         else
-                 ps->interface_allowed_mask =3D data.interface_allowed_=
-mask;
+    - Initialization vs cycle: real-time applications usually have an initialization phase
+       where memory and stack are locked into RAM and threads are created. After
+       the initialization phase, threads typically loop through periodic cycles and 
+       perform their tasks. The important point here is that once the initialization 
+       is done we can ban any further calls to 'clone', 'execve', 'mprotect' and the like. 
+       This can be done already by installing an extra filter. For the cyclic phase, my
+       patch would allow enforcing the order of the system calls inside the cycles.
+       (e.g.: read sensor, send a message, and write to an actuator). Despite the
+       fact that the attacker cannot call 'clone' anymore, he could try to alter the 
+       control of an external actuator (e.g. a motor) by using the 'ioctl' system call
+       for example.
 
-         ps->privileges_dropped =3D true;
+    - Mimicry: as I mentioned in the cover letter (and Jann showed with
+       his ROP attack) if the attacker is able to emulate the system call's order
+       (plus its arguments  and the address from which the call was made)
+       this patch can be bypassed. However, note that this is not easy for several
+       reasons:
+               + the attacker may need a long stack to mimic all the system calls and their
+                   arguments.
+               + the stealthy attacker must make sure the real-time application does not
+                   crash, miss any of its deadlines or cause deadline misses in other apps
+                   [Note] Real-time application binaries are usually closed source so 
+                    this might require quite a bit of effort.
+               + randomized system calls: applications could randomly activate dummy 
+                   system calls each time they are instantiated (and adjust their BPF filter,
+                   which should later be zeroed).  In this case, the attacker (or virus) 
+                   would need to figure out which dummy system calls have to
+                   be mimicked and prepare a stack accordingly. This seems challenging.
+                   [Note] under a brute force attack, the application may just raise an alarm,
+                    activate a redundant node (not connected to the network) and 
+                    commit digital suicide :).
 
-Or maybe I could change the default mask to ~0 and simplify this a bit,=
- hm.
+About the ABI, by all means I don't want to break it. If putting the field at
+the end does not break it, as Alexei mentioned, I can change it. Also I would
+be glad to review the SECCOMP_FILTER_FLAG_TSYNC flag mentioned by Jann
+in case there is any interest.
 
-Thank you for the review!
+However, I'll understand the NACK if you think that the maintenance is not worth it
+as Andy mentioned; that it can be bypassed under certain conditions; or the fact 
+that it focuses on a particular type of systems. I will keep reading the
+messages in the kernel-hardening list and see if I find another topic to
+contribute :).
 
-Emilio
+Thanks a lot for your consideration and comments,
+Daniel
