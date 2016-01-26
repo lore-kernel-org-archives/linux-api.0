@@ -1,29 +1,28 @@
-From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH v5 10/14] serial: pic32_uart: Add PIC32 UART driver
-Date: Tue, 26 Jan 2016 09:33:22 -0800
-Message-ID: <20160126173322.GA1664@kroah.com>
-References: <1452734299-460-1-git-send-email-joshua.henderson@microchip.com>
- <1452734299-460-11-git-send-email-joshua.henderson@microchip.com>
- <56A7A729.10008@microchip.com>
+From: Kevin Hilman <khilman-rdvid1DuHRBWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFD] How to support KBUILD_OUTPUT for kselftest?
+Date: Tue, 26 Jan 2016 11:47:40 -0800
+Message-ID: <7hk2mwnmw3.fsf@baylibre.com>
+References: <56849D4B.6010008@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <56A7A729.10008-UWL1GkI3JZL3oGB3hsPCZA@public.gmane.org>
+In-Reply-To: <56849D4B.6010008-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> (Bamvor Jian Zhang's message of
+	"Thu, 31 Dec 2015 11:13:15 +0800")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Joshua Henderson <joshua.henderson-UWL1GkI3JZL3oGB3hsPCZA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jiri Slaby <jslaby-IBi9RG/b67k@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Andrei Pistirica <andrei.pistirica-UWL1GkI3JZL3oGB3hsPCZA@public.gmane.org>, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Tyler Baker <tyler.baker-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 26, 2016 at 10:04:41AM -0700, Joshua Henderson wrote:
-> Hi Greg and Jiri,
-> 
-> Ping!  Need an ack for this or pull it upstream.
+Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> writes:
 
-The merge window _just_ ended, please give us a chance to catch up on
-patches to be reviewed.  There's no reason you need a response for this
-right away, it can't be merged until 4.6-rc1, right?
+> I am trying to improve cross compiling support for kselftest recently. Right
+> now I am stuck when I want to enable KBUILD_OUTPUT(O=xxx). It exist in wiki of
+> kselftest[1]. Hope it is not a duplicated work.
 
-thanks,
+Just want to echo the need for this feature because trying to build
+kselftests for a kernel built with KBUILD_OUTPUT is broken due to
+hard-coded assumptions about paths to headers, etc.
 
-greg k-h
+I haven't dug any deeper into how to fix it though...
+
+Kevin
