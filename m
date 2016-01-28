@@ -1,77 +1,102 @@
 From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Subject: Re: [PATCH 04/31] media: Media Controller enable/disable source
- handler API
-Date: Thu, 28 Jan 2016 13:19:22 -0200
-Message-ID: <20160128131922.29e2a504@recife.lan>
+Subject: Re: [PATCH 08/31] media: v4l-core add
+ v4l_enable/disable_media_tuner() helper functions
+Date: Thu, 28 Jan 2016 13:26:51 -0200
+Message-ID: <20160128132651.748a1271@recife.lan>
 References: <cover.1452105878.git.shuahkh@osg.samsung.com>
-	<d8d65a0188b05f3e799400c745584a02bc9b7548.1452105878.git.shuahkh@osg.samsung.com>
+	<e642fee6e443170b33a8c69fbc21b409f7be5583.1452105878.git.shuahkh@osg.samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <d8d65a0188b05f3e799400c745584a02bc9b7548.1452105878.git.shuahkh@osg.samsung.com>
+In-Reply-To: <e642fee6e443170b33a8c69fbc21b409f7be5583.1452105878.git.shuahkh@osg.samsung.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Shuah Khan <shuahkh@osg.samsung.com>
 Cc: tiwai@suse.com, clemens@ladisch.de, hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittga
 List-Id: linux-api@vger.kernel.org
 
-Em Wed,  6 Jan 2016 13:26:53 -0700
+Em Wed,  6 Jan 2016 13:26:57 -0700
 Shuah Khan <shuahkh@osg.samsung.com> escreveu:
 
-> Add new fields to struct media_device to add enable_source, and
-> disable_source handlers, and source_priv to stash driver private
-> data that is need to run these handlers. The enable_source handler
-> finds source entity for the passed in entity and check if it is
-> available, and activate the link using __media_entity_setup_link()
-> interface. Bridge driver is expected to implement and set these
-> handlers and private data when media_device is registered or when
-> bridge driver finds the media_device during probe. This is to enable
-> the use-case to find tuner entity connected to the decoder entity and
-> check if it is available, and activate it and start pipeline between
-> the source and the entity. The disable_source handler deactivates the
-> link and stops the pipeline. This handler can be invoked from the
-> media core (v4l-core, dvb-core) as well as other drivers such as ALSA
-> that control the media device.
+> Add a new interfaces to be used by v4l-core to invoke enable
+> source and disable_source handlers in the media_device. The
+> enable_source helper function invokes the enable_source handler
+> to find tuner entity connected to the decoder and check is it
+> is available or busy. If tuner is available, link is activated
+> and pipeline is started. The disable_source helper function
+> invokes the disable_source handler to deactivate and stop the
+> pipeline.
 > 
 > Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
 > ---
->  include/media/media-device.h | 19 +++++++++++++++++++
->  1 file changed, 19 insertions(+)
+>  drivers/media/v4l2-core/v4l2-dev.c | 27 +++++++++++++++++++++++++++
+>  include/media/v4l2-dev.h           |  4 ++++
+>  2 files changed, 31 insertions(+)
 > 
-> diff --git a/include/media/media-device.h b/include/media/media-device.h
-> index 6520d1c..04b6c2e 100644
-> --- a/include/media/media-device.h
-> +++ b/include/media/media-device.h
-> @@ -333,6 +333,25 @@ struct media_device {
->  	/* Serializes graph operations. */
->  	struct mutex graph_mutex;
+> diff --git a/drivers/media/v4l2-core/v4l2-dev.c b/drivers/media/v4l2-core/v4l2-dev.c
+> index d8e5994..f06da6e 100644
+> --- a/drivers/media/v4l2-core/v4l2-dev.c
+> +++ b/drivers/media/v4l2-core/v4l2-dev.c
+> @@ -233,6 +233,33 @@ struct video_device *video_devdata(struct file *file)
+>  }
+>  EXPORT_SYMBOL(video_devdata);
 >  
-> +	/* Handlers to find source entity for the sink entity and
-> +	 * check if it is available, and activate the link using
-> +	 * media_entity_setup_link() interface and start pipeline
-> +	 * from the source to the entity.
-> +	 * Bridge driver is expected to implement and set the
-> +	 * handler when media_device is registered or when
-> +	 * bridge driver finds the media_device during probe.
-> +	 * Bridge driver sets source_priv with information
-> +	 * necessary to run enable/disable source handlers.
-> +	 *
-> +	 * Use-case: find tuner entity connected to the decoder
-> +	 * entity and check if it is available, and activate the
-> +	 * using media_entity_setup_link() if it is available.
-> +	*/
-> +	void *source_priv;
-> +	int (*enable_source)(struct media_entity *entity,
-> +			     struct media_pipeline *pipe);
-> +	void (*disable_source)(struct media_entity *entity);
+> +int v4l_enable_media_tuner(struct video_device *vdev)
 
-Please document the new fields at the right place (Kernel-doc
-comment declared before the struct).
+IMHO, the better is to put those MC ancillary routines on a separate file.
+Hans suggested to add them at v4l2-mc.h and v4l2-mc.h.
 
-Is this used by the media core? If so, please but the implementation
-here, to make it clearer why we need those things.
+> +{
+> +#ifdef CONFIG_MEDIA_CONTROLLER
+> +	struct media_device *mdev = vdev->entity.graph_obj.mdev;
+> +	int ret;
+> +
+> +	if (!mdev || !mdev->enable_source)
+> +		return 0;
+> +	ret = mdev->enable_source(&vdev->entity, &vdev->pipe);
+> +	if (ret)
+> +		return -EBUSY;
+> +	return 0;
+> +#endif /* CONFIG_MEDIA_CONTROLLER */
+> +	return 0;
+> +}
+> +EXPORT_SYMBOL_GPL(v4l_enable_media_tuner);
+> +
+> +void v4l_disable_media_tuner(struct video_device *vdev)
+> +{
+> +#ifdef CONFIG_MEDIA_CONTROLLER
+> +	struct media_device *mdev = vdev->entity.graph_obj.mdev;
+> +
+> +	if (mdev && mdev->disable_source)
+> +		mdev->disable_source(&vdev->entity);
+> +#endif /* CONFIG_MEDIA_CONTROLLER */
+> +}
+> +EXPORT_SYMBOL_GPL(v4l_disable_media_tuner);
+>  
+>  /* Priority handling */
+>  
+> diff --git a/include/media/v4l2-dev.h b/include/media/v4l2-dev.h
+> index eeabf20..68999a3 100644
+> --- a/include/media/v4l2-dev.h
+> +++ b/include/media/v4l2-dev.h
+> @@ -87,6 +87,7 @@ struct video_device
+>  #if defined(CONFIG_MEDIA_CONTROLLER)
+>  	struct media_entity entity;
+>  	struct media_intf_devnode *intf_devnode;
+> +	struct media_pipeline pipe;
+>  #endif
+>  	/* device ops */
+>  	const struct v4l2_file_operations *fops;
+> @@ -176,6 +177,9 @@ void video_unregister_device(struct video_device *vdev);
+>     latter can also be used for video_device->release(). */
+>  struct video_device * __must_check video_device_alloc(void);
+>  
+> +int v4l_enable_media_tuner(struct video_device *vdev);
+> +void v4l_disable_media_tuner(struct video_device *vdev);
+
+Documentation?
 
 > +
->  	int (*link_notify)(struct media_link *link, u32 flags,
->  			   unsigned int notification);
->  };
+>  /* this release function frees the vdev pointer */
+>  void video_device_release(struct video_device *vdev);
+>  
