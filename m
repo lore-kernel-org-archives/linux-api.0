@@ -1,72 +1,84 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH v2 1/3] getcpu_cache system call: cache CPU number
- of running thread
-Date: Thu, 28 Jan 2016 13:33:39 +0000 (UTC)
-Message-ID: <1417988425.6630.1453988019806.JavaMail.zimbra@efficios.com>
-References: <1453913683-28915-1-git-send-email-mathieu.desnoyers@efficios.com> <671969438.6129.1453915918933.JavaMail.zimbra@efficios.com> <alpine.DEB.2.11.1601271832330.3886@nanos> <alpine.DEB.2.11.1601271836510.3886@nanos> <974364259.6329.1453930475174.JavaMail.zimbra@efficios.com> <20160127221142.GA8935@cloud> <75735238.6347.1453934857246.JavaMail.zimbra@efficios.com> <20160128111238.GA5418@osiris>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160128111238.GA5418@osiris>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: heiko carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
-Cc: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
+Subject: [PATCH v8 4/4] devicetree: update documentation for fw_cfg ARM bindings
+Date: Thu, 28 Jan 2016 09:23:14 -0500
+Message-ID: <1453990994-17801-5-git-send-email-somlo@cmu.edu>
+References: <1453990994-17801-1-git-send-email-somlo@cmu.edu>
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1453990994-17801-1-git-send-email-somlo-D+Gtc/HYRWM@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, eric-WhKQ6XTQaPysTnJN9+BGXg@public.gmane.org, hanjun.guo-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, sudeep.holla-5wv7dgnIgG8@public.gmane.org, agross-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, imammedo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ehabkost-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, stefanha-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, revol-GANU6spQydw@public.gmane.org, matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org, rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
------ On Jan 28, 2016, at 6:12 AM, heiko carstens heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org wrote:
+From: Gabriel Somlo <somlo-D+Gtc/HYRWM@public.gmane.org>
 
-> On Wed, Jan 27, 2016 at 10:47:37PM +0000, Mathieu Desnoyers wrote:
->> ----- On Jan 27, 2016, at 5:11 PM, Josh Triplett josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org wrote:
->> 
->> > On Wed, Jan 27, 2016 at 09:34:35PM +0000, Mathieu Desnoyers wrote:
->> >> ----- On Jan 27, 2016, at 12:37 PM, Thomas Gleixner tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org wrote:
->> >> 
->> >> > On Wed, 27 Jan 2016, Thomas Gleixner wrote:
->> >> > 
->> >> >> On Wed, 27 Jan 2016, Mathieu Desnoyers wrote:
->> >> >> > ----- On Jan 27, 2016, at 12:22 PM, Thomas Gleixner tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org wrote:
->> >> >> > Sounds fair. What is the recommended typing for "ptr" then ?
->> >> >> > uint32_t ** or uint32_t * ?
->> >> >> > 
->> >> >> > It would be expected to pass a "uint32_t *" for the set
->> >> >> > operation, but the "get" operation requires a "uint32_t **".
->> >> >> 
->> >> >> Well, you can't change the types depending on the opcode, so you need to stick
->> >> >> with **.
->> >> > 
->> >> > Alternatively you make it:
->> >> > 
->> >> >  (opcode, *newptr, **oldptr, flags);
->> >> 
->> >> I'm tempted to stick to (opcode, **ptr, flags), because
->> >> other syscalls that have "*newptr", "**oldptr"
->> >> typically have them because they save the current state
->> >> into oldptr, and set the new state, which is really
->> >> not the case here. To eliminate any risk of confusion,
->> >> I am tempted to keep a single "**ptr".
->> >> 
->> >> Unless someone has a better idea...
->> > 
->> > Either that or you could define it as "void *" and interpret it based on
->> > flags, but that seems unfortunate; let's not imitate ioctl-style
->> > typeless parameters.  I'd stick with the double pointer and the current
->> > behavior.
->> 
->> Allright, will do! Thanks for the feedback :)
-> 
-> Please don't forget that you also need to implement compat handling since
-> the size of the pointer that is being pointed to is only four bytes for
-> compat tasks.
+Remove fw_cfg hardware interface details from
+Documentation/devicetree/bindings/arm/fw-cfg.txt,
+and replace them with a pointer to the authoritative
+documentation in the QEMU source tree.
 
-Oops, forgot about that. Will update my upcoming v3 to handle this properly.
+Signed-off-by: Gabriel Somlo <somlo-D+Gtc/HYRWM@public.gmane.org>
+Cc: Laszlo Ersek <lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Acked-by: Rob Herring <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Reviewed-by: Laszlo Ersek <lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+---
+ Documentation/devicetree/bindings/arm/fw-cfg.txt | 38 ++----------------------
+ 1 file changed, 2 insertions(+), 36 deletions(-)
 
-Well spotted ! Thanks!
-
-Mathieu
-
-
+diff --git a/Documentation/devicetree/bindings/arm/fw-cfg.txt b/Documentation/devicetree/bindings/arm/fw-cfg.txt
+index 953fb64..fd54e1d 100644
+--- a/Documentation/devicetree/bindings/arm/fw-cfg.txt
++++ b/Documentation/devicetree/bindings/arm/fw-cfg.txt
+@@ -11,43 +11,9 @@ QEMU exposes the control and data register to ARM guests as memory mapped
+ registers; their location is communicated to the guest's UEFI firmware in the
+ DTB that QEMU places at the bottom of the guest's DRAM.
+ 
+-The guest writes a selector value (a key) to the selector register, and then
+-can read the corresponding data (produced by QEMU) via the data register. If
+-the selected entry is writable, the guest can rewrite it through the data
+-register.
++The authoritative guest-side hardware interface documentation to the fw_cfg
++device can be found in "docs/specs/fw_cfg.txt" in the QEMU source tree.
+ 
+-The selector register takes keys in big endian byte order.
+-
+-The data register allows accesses with 8, 16, 32 and 64-bit width (only at
+-offset 0 of the register). Accesses larger than a byte are interpreted as
+-arrays, bundled together only for better performance. The bytes constituting
+-such a word, in increasing address order, correspond to the bytes that would
+-have been transferred by byte-wide accesses in chronological order.
+-
+-The interface allows guest firmware to download various parameters and blobs
+-that affect how the firmware works and what tables it installs for the guest
+-OS. For example, boot order of devices, ACPI tables, SMBIOS tables, kernel and
+-initrd images for direct kernel booting, virtual machine UUID, SMP information,
+-virtual NUMA topology, and so on.
+-
+-The authoritative registry of the valid selector values and their meanings is
+-the QEMU source code; the structure of the data blobs corresponding to the
+-individual key values is also defined in the QEMU source code.
+-
+-The presence of the registers can be verified by selecting the "signature" blob
+-with key 0x0000, and reading four bytes from the data register. The returned
+-signature is "QEMU".
+-
+-The outermost protocol (involving the write / read sequences of the control and
+-data registers) is expected to be versioned, and/or described by feature bits.
+-The interface revision / feature bitmap can be retrieved with key 0x0001. The
+-blob to be read from the data register has size 4, and it is to be interpreted
+-as a uint32_t value in little endian byte order. The current value
+-(corresponding to the above outer protocol) is zero.
+-
+-The guest kernel is not expected to use these registers (although it is
+-certainly allowed to); the device tree bindings are documented here because
+-this is where device tree bindings reside in general.
+ 
+ Required properties:
+ 
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+2.4.3
+
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
