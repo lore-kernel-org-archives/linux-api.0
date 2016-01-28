@@ -1,68 +1,96 @@
-From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 1/2] man2: document FICLONE and FICLONERANGE
-Date: Thu, 28 Jan 2016 11:18:14 -0800
-Message-ID: <20160128191814.GA5849@birch.djwong.org>
-References: <20151219085607.12660.75196.stgit@birch.djwong.org>
- <20151219085613.12660.75735.stgit@birch.djwong.org>
- <20160128133329.GA7610@infradead.org>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: Re: [PATCH 17/31] media: au0828 video change to use
+ v4l_enable_media_tuner()
+Date: Thu, 28 Jan 2016 12:21:14 -0700
+Message-ID: <56AA6A2A.1020801@osg.samsung.com>
+References: <cover.1452105878.git.shuahkh@osg.samsung.com>
+ <2d2392f96a7f10a8d94a4d7fa6d5657b56b75593.1452105878.git.shuahkh@osg.samsung.com>
+ <20160128135752.536e909e@recife.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160128133329.GA7610-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-media-owner@vger.kernel.org>
+In-Reply-To: <20160128135752.536e909e@recife.lan>
+Sender: linux-media-owner@vger.kernel.org
+To: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+Cc: tiwai@suse.com, clemens@ladisch.de, hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittga
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 28, 2016 at 05:33:29AM -0800, Christoph Hellwig wrote:
-> Now that we have this in 4.5-rc1 let's get this into man-pages as well.
+On 01/28/2016 08:57 AM, Mauro Carvalho Chehab wrote:
+> Em Wed,  6 Jan 2016 13:27:06 -0700
+> Shuah Khan <shuahkh@osg.samsung.com> escreveu:
 > 
-> > --- /dev/null
-> > +++ b/man2/ioctl_ficlone.2
+>> au0828 is changed to use v4l_enable_media_tuner() to check for
+>> tuner availability from vidioc_g_tuner(), and au0828_v4l2_close(),
+>> before changing tuner settings. If tuner isn't free, return busy
+>> condition from vidioc_g_tuner() and in au0828_v4l2_close() tuner
+>> is left untouched without powering down to save energy.
 > 
-> think this should be a link to the clone range man page, and the
-> both ioctls should be documented together.  Basically just document
-> FICLONERANGE and then mentiond that FICLONE does a whole file clone.
+> Did you test the code when the input is not a tuner, but, instead,
+> Composite or S-Video connector, as shown at:
+> 	https://mchehab.fedorapeople.org/mc-next-gen/au0828.png
 
-Ok, that's an easy switch to make.
+I am not sure if I did or not. I can double check this case.
+Do you have concerns that this won't work?
 
-> > +.B #include <sys/ioctl.h>
 > 
-> Don't we need uapi/linux/fs.h as well?
+> I guess calling it v4l-enable_media_tuner() is not right, specially
+> since there are hybrid devices that have DTV (via DVB API) and
+> S-Video and/or Composite/RCA capture via V4L2 API.
 
-Err... yes. :)
+How does  v4l-enable_media_source() sound?
 
-> > Not all filesystems support
-> > +overlapping reflink ranges in the same file.
+thanks,
+-- Shuah
+
 > 
-> Which one doesn't?
+>>
+>> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
+>> ---
+>>  drivers/media/usb/au0828/au0828-video.c | 14 ++++++++++++--
+>>  1 file changed, 12 insertions(+), 2 deletions(-)
+>>
+>> diff --git a/drivers/media/usb/au0828/au0828-video.c b/drivers/media/usb/au0828/au0828-video.c
+>> index 32bcc56..ed3ba05 100644
+>> --- a/drivers/media/usb/au0828/au0828-video.c
+>> +++ b/drivers/media/usb/au0828/au0828-video.c
+>> @@ -1010,8 +1010,12 @@ static int au0828_v4l2_close(struct file *filp)
+>>  		goto end;
+>>  
+>>  	if (dev->users == 1) {
+>> -		/* Save some power by putting tuner to sleep */
+>> -		v4l2_device_call_all(&dev->v4l2_dev, 0, core, s_power, 0);
+>> +		/* Save some power by putting tuner to sleep, if it is free */
+>> +		/* What happens when radio is using tuner?? */
+>> +		ret = v4l_enable_media_tuner(vdev);
+>> +		if (ret == 0)
+>> +			v4l2_device_call_all(&dev->v4l2_dev, 0, core,
+>> +					     s_power, 0);
+>>  		dev->std_set_in_tuner_core = 0;
+>>  
+>>  		/* When close the device, set the usb intf0 into alt0 to free
+>> @@ -1412,10 +1416,16 @@ static int vidioc_s_audio(struct file *file, void *priv, const struct v4l2_audio
+>>  static int vidioc_g_tuner(struct file *file, void *priv, struct v4l2_tuner *t)
+>>  {
+>>  	struct au0828_dev *dev = video_drvdata(file);
+>> +	struct video_device *vfd = video_devdata(file);
+>> +	int ret;
+>>  
+>>  	if (t->index != 0)
+>>  		return -EINVAL;
+>>  
+>> +	ret = v4l_enable_media_tuner(vfd);
+>> +	if (ret)
+>> +		return ret;
+>> +
+>>  	dprintk(1, "%s called std_set %d dev_state %d\n", __func__,
+>>  		dev->std_set_in_tuner_core, dev->dev_state);
+>>  
 
-At the moment, neither btrfs nor XFS support it.
 
-I don't think it'd be difficult for XFS (make a copy of the extent mappings in
-the source area, increase the refcounts of those blocks, do the usual
-punch-and-remap, then delete & decrement that copy of the mappings) but that
-can come later.
-
-> Also there should be a sentence that the clones are atomic vs
-> concurrent writes, so no locks need to be taken for a consistent
-> snapshot.
-
-<nod>
-
-I've updated the manpages and will repush the patchset ... optimistically,
-when XFS reflink RFCv5 comes out, but sooner if anyone requests it. :)
-
-Thank you for the review!
-
---D
-
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh@osg.samsung.com | (970) 217-8978
