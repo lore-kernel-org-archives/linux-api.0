@@ -1,34 +1,173 @@
-From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Subject: Re: [PATCH net-next v6 19/19] net: mlx4: use new
- ETHTOOL_G/SSETTINGS API
-Date: Thu, 28 Jan 2016 14:38:49 -0800 (PST)
-Message-ID: <20160128.143849.1063439968744271789.davem@davemloft.net>
-References: <1453250644-14796-1-git-send-email-ddecotig@gmail.com>
-	<1453250644-14796-20-git-send-email-ddecotig@gmail.com>
-	<CABqvoseo5UPNuNDjmP1PDhco7KGja2QzEVd5Aio+GD+UbaV0+g@mail.gmail.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH v3 1/5] getcpu_cache system call: cache CPU number
+ of running thread
+Date: Thu, 28 Jan 2016 22:44:04 +0000 (UTC)
+Message-ID: <950789004.7282.1454021044123.JavaMail.zimbra@efficios.com>
+References: <1454014885-29012-1-git-send-email-mathieu.desnoyers@efficios.com> <1454014885-29012-2-git-send-email-mathieu.desnoyers@efficios.com> <alpine.DEB.2.11.1601282205290.3886@nanos>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CABqvoseo5UPNuNDjmP1PDhco7KGja2QzEVd5Aio+GD+UbaV0+g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <alpine.DEB.2.11.1601282205290.3886@nanos>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: eugenia.emantayev-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, fcoe-devel-s9riP+hp16TNLxjTenLetw@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, eugenia-VPRAkNaXOzVS1MOuV/RT9w@public.gmane.org, ogerlitz-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, idos-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org, saeedm-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, _govind-KK0ffGbhmjU@public.gmane.org, VenkatKumar.Duvvuru-laKkSmNT4hbQT0dZR+AlfA@public.gmane.org, jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, pshelar-l0M0P4e3n4LQT0dZR+AlfA@public.gmane.org, eswierk-FilZDy9cOaHkQYj/0HfcvtBPR1lH4CV8@public.gmane.org, robert.w.love-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, JBottomley-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org, Yuval.Mintz-h88ZbnxC6KDQT0dZR+AlfA@public.gmane.org, linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org, decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org
+To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Eugenia Emantayev <eugenia.emantayev-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Date: Thu, 28 Jan 2016 10:21:53 +0200
+----- On Jan 28, 2016, at 4:52 PM, Thomas Gleixner tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org wrote:
 
-> Acked-by: Eugenia Emantayev <eugenia-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+> On Thu, 28 Jan 2016, Mathieu Desnoyers wrote:
+> 
+>> +static int __get_cpu_cache_ptr(int32_t __user **cpu_cache,
+> 
+> cpu_cache is __user ????
 
-Please don't quote an entire HUGE patch just to give your ACK.
+Note that I mimicked the "get_user()" macro: the first
+argument to "get_cpu_cache_ptr()" is a variable within the
+kernel address space, from which we take the address
+and pass it as first parameter of __get_cpu_cache_ptr().
 
-Only quote, at most, the commit message itself.
+int32_t __user **cpu_cache is therefore the right typing
+here. I had wrongfully assumed that compat_uptr_t contained
+an implicit __user tagging, which is my error. This patch
+addresses the current sparse warning:
 
-I know it's easy to be lazy, and I also realize that most email
-clients are terrible and make quick editing of quoted material a pain
-in the ass, but that's not an excuse to bomb the whole list
-unnecessarily like this.  You're causing problems for everyone who
-reads this list.
+diff --git a/kernel/getcpu_cache.c b/kernel/getcpu_cache.c
+index f1251d1..7053611 100644
+--- a/kernel/getcpu_cache.c
++++ b/kernel/getcpu_cache.c
+@@ -63,7 +63,7 @@ static int __get_cpu_cache_ptr(int32_t __user **cpu_cache,
+ {
+ #ifdef CONFIG_COMPAT
+        if (is_compat_task()) {
+-               compat_uptr_t *compat_cachep = (compat_uptr_t *) cpu_cachep;
++               compat_uptr_t __user *compat_cachep = (compat_uptr_t __user *) cpu_cachep;
+                compat_uptr_t compat_cache;
+ 
+                if (get_user(compat_cache, compat_cachep))
+@@ -84,7 +84,7 @@ static int put_cpu_cache_ptr(int32_t __user *cpu_cache,
+ #ifdef CONFIG_COMPAT
+        if (is_compat_task()) {
+                compat_uptr_t compat_cache = ptr_to_compat(cpu_cache);
+-               compat_uptr_t *compat_cachep = (compat_uptr_t *) cpu_cachep;
++               compat_uptr_t __user *compat_cachep = (compat_uptr_t __user *) cpu_cachep;
+ 
+                return put_user(compat_cache, compat_cachep);
+        }
 
-Thanks in advance for your cooperation.
+
+> 
+>> +		int32_t __user * __user *cpu_cachep)
+>> +{
+>> +#ifdef CONFIG_COMPAT
+>> +	if (is_compat_task()) {
+>> +		compat_uptr_t *compat_cachep = (compat_uptr_t *) cpu_cachep;
+>> +		compat_uptr_t compat_cache;
+>> +
+>> +		if (get_user(compat_cache, compat_cachep))
+>> +			return -EFAULT;
+>> +		*cpu_cache = compat_ptr(compat_cache);
+> 
+> sparse should have told you that :)
+> 
+>> +		return 0;
+>> +	}
+>> +#endif
+>> +	return get_user(*cpu_cache, cpu_cachep);
+>> +}
+>> +
+>> +#define get_cpu_cache_ptr(cpu_cache, cpu_cachep)	\
+>> +	__get_cpu_cache_ptr(&(cpu_cache), cpu_cachep)
+>> +
+>> +static int put_cpu_cache_ptr(int32_t __user *cpu_cache,
+> 
+> Ditto
+> 
+>> +		int32_t __user * __user *cpu_cachep)
+>> +{
+>> +#ifdef CONFIG_COMPAT
+>> +	if (is_compat_task()) {
+>> +		compat_uptr_t compat_cache = ptr_to_compat(cpu_cache);
+>> +		compat_uptr_t *compat_cachep = (compat_uptr_t *) cpu_cachep;
+>> +
+>> +		return put_user(compat_cache, compat_cachep);
+>> +	}
+>> +#endif
+>> +	return put_user(cpu_cache, cpu_cachep);
+>> +}
+>> +		current->cpu_cache = cpu_cache;
+>> +		/*
+>> +		 * Migration checks the getcpu cache to see whether the
+>> +		 * notify_resume flag should be set.
+>> +		 * Therefore, we need to ensure that the scheduler sees
+>> +		 * the getcpu cache pointer update before we update the getcpu
+>> +		 * cache content with the current CPU number.
+>> +		 */
+>> +		barrier();
+> 
+> And how does that barrier ensure this? Not at all. And why would the scheduler
+> care? All the scheduler cares about is tsk->cpu_cache.
+
+The case I want to ensure never happens is the following:
+
+Compiler reorders storing the address of current->cpu_cache after
+the getcpu_cache_update() store to *cpu_cache. In between, the
+scheduler preempts and migrates the task, but does not set the
+resume notifier thread flag because it still see a NULL
+current->cpu_cache. We therefore return to userspace with a
+wrong CPU number in the cache.
+
+The compiler barrier enforces ordering of the current->cpu_cache
+address store before updating the *cpu_cache.
+
+> 
+>> +		/*
+>> +		 * Do an initial cpu cache update to ensure we won't hit
+>> +		 * SIGSEGV if put_user() fails in the resume notifier.
+>> +		 */
+> 
+> If you get migrated before that call, then you SIGSEGV nevertheless.
+
+No, because the SIGSEGV is only triggered when returning to userspace.
+We are still in the system call here. All we care about in the migration
+schedule code is to check the current->cpu_cache to see if we need to
+raise the resume notifier flag. No userspace access there.
+
+> 
+> You need that call here for the case you are NOT migrated before returning to
+> user space because otherwise the variable is not updated.
+
+This call has two goals: indeed, populating the initial current CPU value,
+but also checking if the address is valid (and -EFAULT on error).
+
+> 
+> If you want to verify that user address without a potential SIGSEGV, then you
+> need to do this before setting current->cpu_cache. You still need the update
+> after setting current->cpu_cache.
+
+No, because the SIGSEGV can only be triggered by the resume
+notifier when returning to userspace from the getcpu_cache
+system call. All we need to do is to ensure the resume notifier
+sees a NULL current->cpu_cache, and we don't have any segfault.
+
+Does it make sense, or am I missing something ?
+
+Thanks,
+
+Mathieu
+
+> 
+>> +		if (getcpu_cache_update(cpu_cache)) {
+>> +			current->cpu_cache = NULL;
+>> +			return -EFAULT;
+>> +		}
+>> +		return 0;
+> 
+> Thanks,
+> 
+> 	tglx
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
