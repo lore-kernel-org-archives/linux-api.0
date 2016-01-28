@@ -1,81 +1,34 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH REBASE 4.5 00/31] Sharing media resources across ALSA and
- au0828 drivers
-Date: Thu, 28 Jan 2016 14:55:23 -0700
-Message-ID: <56AA8E4B.8080105@osg.samsung.com>
-References: <cover.1453336830.git.shuahkh@osg.samsung.com>
- <56AA2C37.3090309@osg.samsung.com> <s5h60yd7mwo.wl-tiwai@suse.de>
+From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Subject: Re: [PATCH net-next v6 19/19] net: mlx4: use new
+ ETHTOOL_G/SSETTINGS API
+Date: Thu, 28 Jan 2016 14:38:49 -0800 (PST)
+Message-ID: <20160128.143849.1063439968744271789.davem@davemloft.net>
+References: <1453250644-14796-1-git-send-email-ddecotig@gmail.com>
+	<1453250644-14796-20-git-send-email-ddecotig@gmail.com>
+	<CABqvoseo5UPNuNDjmP1PDhco7KGja2QzEVd5Aio+GD+UbaV0+g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <s5h60yd7mwo.wl-tiwai@suse.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Takashi Iwai <tiwai@suse.de>
-Cc: hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com, mchehab@osg.samsung.com, alsa-devel@alsa-project.org, arnd@arndb.de, ricard.wanderlof@axis.com, labbott@fedoraproject.org, chehabrafael@gmail.com, misterpib@gmail.com, prabhakar.csengg@gmail.com, ricardo.ribalda@gmail.com, ruchandani.tina@gmail.com, takamichiho@gmail.com, tvboxspy@gmail.com, dominic.sacre@gmx.de, crope@iki.fi, julian@jusst.de, clemens@ladisch.de, pierre-louis.bossart@linux.intel.com, corbet@lwn.net, joe@oampo.co.uk, johan@oljud.se, dan.carpenter@oracle.com, pawel@osciak.com, p.zabel@pengutronix.de, perex@perex.cz, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, k.kozlowski@samsung.com, kyungmin.park@samsung.com, m.szyprowski@samsung.com, sw0312.kim@samsung.com, elfring@users.sourceforge.net, linux-api@vger.kernel.o
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CABqvoseo5UPNuNDjmP1PDhco7KGja2QzEVd5Aio+GD+UbaV0+g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: eugenia.emantayev-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, fcoe-devel-s9riP+hp16TNLxjTenLetw@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, eugenia-VPRAkNaXOzVS1MOuV/RT9w@public.gmane.org, ogerlitz-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, idos-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org, saeedm-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, _govind-KK0ffGbhmjU@public.gmane.org, VenkatKumar.Duvvuru-laKkSmNT4hbQT0dZR+AlfA@public.gmane.org, jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, pshelar-l0M0P4e3n4LQT0dZR+AlfA@public.gmane.org, eswierk-FilZDy9cOaHkQYj/0HfcvtBPR1lH4CV8@public.gmane.org, robert.w.love-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, JBottomley-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org, Yuval.Mintz-h88ZbnxC6KDQT0dZR+AlfA@public.gmane.org, linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org, decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 01/28/2016 08:18 AM, Takashi Iwai wrote:
-> On Thu, 28 Jan 2016 15:56:55 +0100,
-> Shuah Khan wrote:
->>
->> On 01/21/2016 11:09 AM, Shuah Khan wrote:
->>> Please note that I am sending just the 4 patches that
->>> changed during series rebase to Linux 4.5. The rebase
->>> was pain free. media_device_init() type change required
->>> changes to patches 18 and 26. I re-tested the series
->>> and everything looks good.
->>>
->>> [PATCH 16/31] media: au0828 video remove au0828_enable_analog_tuner()
->>> [PATCH 18/31] media: au0828 change to use Managed Media Controller API
->>> [PATCH 22/31] media: dvb-core create tuner to demod pad link in disabled state
->>> [PATCH v3 26/31] sound/usb: Update ALSA driver to use Managed Media Controller API
->>>
->>> Links:
->>> PATCH Series that contains all 31 patches:
->>> https://lkml.org/lkml/2016/1/6/668
->>>
->>> ALSA patches went through reviews and links
->>> to PATCH V3 (ALSA):
->>> https://lkml.org/lkml/2016/1/18/556
->>> https://lkml.org/lkml/2016/1/18/557
->>> https://lkml.org/lkml/2016/1/18/558
->>>
->>> Compile warns patches:
->>> https://lkml.org/lkml/2016/1/19/520
->>> https://lkml.org/lkml/2016/1/19/518
->>> https://lkml.org/lkml/2016/1/19/519
->>>
->>> Mauro and Takashi:
->>> Please let me know if you would rather see the entire
->>> patch series generated for 4.5-rc1 and sent out in a
->>> complete series instead of just the rebased patches.
->>>
->>
->> Hi Takashi,
->>
->> Are you okay with this ALSA patch series?
-> 
-> Sorry, too little time until now.
-> I know there are still a few potential problems.  Will do detailed
-> reviews later.
-> 
+From: Eugenia Emantayev <eugenia.emantayev-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Date: Thu, 28 Jan 2016 10:21:53 +0200
 
-I would like to wrap this up and hopefully get this
-into 4.6. Please let me know if you will be able to
-review in time for that.
+> Acked-by: Eugenia Emantayev <eugenia-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 
-I have a few comments work on from Mauro and would
-like to address comments from you as well at the same
-time.
+Please don't quote an entire HUGE patch just to give your ACK.
 
-thanks,
--- Shuah
+Only quote, at most, the commit message itself.
 
+I know it's easy to be lazy, and I also realize that most email
+clients are terrible and make quick editing of quoted material a pain
+in the ass, but that's not an excuse to bomb the whole list
+unnecessarily like this.  You're causing problems for everyone who
+reads this list.
 
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+Thanks in advance for your cooperation.
