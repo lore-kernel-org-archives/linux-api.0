@@ -1,92 +1,62 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH 29/31] media: track media device unregister in progress
-Date: Thu, 28 Jan 2016 13:42:35 -0700
-Message-ID: <56AA7D3B.6090603@osg.samsung.com>
-References: <cover.1452105878.git.shuahkh@osg.samsung.com>
- <151cfbe0e59b3d5396951bdcc29666614575f5bc.1452105878.git.shuahkh@osg.samsung.com>
- <20160128150105.06a9a18d@recife.lan> <56AA4A18.8030303@osg.samsung.com>
- <20160128152843.5ce581fa@recife.lan>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: [RFC PATCH v3 0/5] getcpu_cache system call
+Date: Thu, 28 Jan 2016 16:01:20 -0500
+Message-ID: <1454014885-29012-1-git-send-email-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160128152843.5ce581fa@recife.lan>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Cc: tiwai@suse.com, clemens@ladisch.de, hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittga
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 01/28/2016 10:28 AM, Mauro Carvalho Chehab wrote:
-> Em Thu, 28 Jan 2016 10:04:24 -0700
-> Shuah Khan <shuahkh@osg.samsung.com> escreveu:
-> 
->> On 01/28/2016 10:01 AM, Mauro Carvalho Chehab wrote:
->>> Em Wed,  6 Jan 2016 13:27:18 -0700
->>> Shuah Khan <shuahkh@osg.samsung.com> escreveu:
->>>   
->>>> Add support to track media device unregister in progress
->>>> state to prevent more than one driver entering unregister.
->>>> This enables fixing the general protection faults while
->>>> snd-usb-audio was cleaning up media resources for pcm
->>>> streams and mixers. In this patch a new interface is added
->>>> to return the unregister in progress state. Subsequent
->>>> patches to snd-usb-audio and au0828-core use this interface
->>>> to avoid entering unregister and attempting to unregister
->>>> entities and remove devnodes while unregister is in progress.
->>>> Media device unregister removes entities and interface nodes.  
->>>
->>> Hmm... isn't the spinlock enough to serialize it? It seems weird the
->>> need of an extra bool here to warrant that this is really serialized.
->>>   
->>
->> The spinlock and check for media_devnode_is_registered(&mdev->devnode)
->> aren't enough to ensure only one driver enters the unregister. 
->>
->> Please
->> note that the devnode isn't marked unregistered until the end in
->> media_device_unregister().
-> 
-> I guess the call to:
-> 	device_remove_file(&mdev->devnode.dev, &dev_attr_model);
-> 
-> IMO, This should be, instead, at media_devnode_unregister().
-> 
-> Then, we can change the logic at media_devnode_unregister() to:
-> 
-> void media_devnode_unregister(struct media_devnode *mdev)
-> {
-> 	mutex_lock(&media_devnode_lock);
-> 
-> 	/* Check if mdev was ever registered at all */
-> 	if (!media_devnode_is_registered(mdev)) {
-> 		mutex_unlock(&media_devnode_lock);
-> 		return;
-> 	}
-> 
-> 	clear_bit(MEDIA_FLAG_REGISTERED, &mdev->flags);
-> 	mutex_unlock(&media_devnode_lock);
-> 	device_remove_file(&mdev->devnode.dev, &dev_attr_model);
-> 	device_unregister(&mdev->dev);
-> }
-> 
-> This sounds enough to avoid device_unregister() or device_remove_file()
-> to be called twice.
-> 
+Hi,
 
-I can give it a try. There might other problems that could
-result from media device being a devres in this case. The
-last put_device on the usbdev parent device (media device
-is created as devres for this), all device resources get
-released. That might have to be solved in a different way.
+Here is an update to the getcpu_cache system call following the v2 round
+of review. It implements a cache for the CPU number of the currently
+running thread in user-space.
 
-For now I will see if your solution works.
+Benchmarks comparing this approach to a getcpu based on system call on
+ARM show a 44x speedup. They show a 14x speedup on x86-64 compared to
+executing lsl from a vDSO through glibc.
 
-thanks,
--- Shuah
+This patchset is sent as RFC. It applies on Linux 4.4. It is submitted
+for feedback. I'm targeting the 4.6 merge window.
+
+Feedback is welcome,
+
+Thanks!
+
+Mathieu
+
+Mathieu Desnoyers (5):
+  getcpu_cache system call: cache CPU number of running thread
+  getcpu_cache: ARM resume notifier
+  getcpu_cache: wire up ARM system call
+  getcpu_cache: x86 32/64 resume notifier
+  getcpu_cache: wire up x86 32/64 system call
+
+ MAINTAINERS                            |   7 ++
+ arch/arm/include/uapi/asm/unistd.h     |   1 +
+ arch/arm/kernel/calls.S                |   1 +
+ arch/arm/kernel/signal.c               |   1 +
+ arch/x86/entry/common.c                |   1 +
+ arch/x86/entry/syscalls/syscall_32.tbl |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl |   1 +
+ fs/exec.c                              |   1 +
+ include/linux/sched.h                  |  36 ++++++++
+ include/uapi/linux/Kbuild              |   1 +
+ include/uapi/linux/getcpu_cache.h      |  42 +++++++++
+ init/Kconfig                           |  10 +++
+ kernel/Makefile                        |   1 +
+ kernel/fork.c                          |   4 +
+ kernel/getcpu_cache.c                  | 150 +++++++++++++++++++++++++++++++++
+ kernel/sched/sched.h                   |   1 +
+ kernel/sys_ni.c                        |   3 +
+ 17 files changed, 262 insertions(+)
+ create mode 100644 include/uapi/linux/getcpu_cache.h
+ create mode 100644 kernel/getcpu_cache.c
 
 -- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+2.1.4
