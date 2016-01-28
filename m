@@ -1,72 +1,83 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH REBASE 4.5 00/31] Sharing media resources across ALSA and
- au0828 drivers
-Date: Thu, 28 Jan 2016 07:56:55 -0700
-Message-ID: <56AA2C37.3090309@osg.samsung.com>
-References: <cover.1453336830.git.shuahkh@osg.samsung.com>
+From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+Subject: Re: [PATCH 01/31] uapi/media.h: Declare interface types for ALSA
+Date: Thu, 28 Jan 2016 12:59:41 -0200
+Message-ID: <20160128125941.143f67d0@recife.lan>
+References: <cover.1452105878.git.shuahkh@osg.samsung.com>
+	<b1d228cdcc9246f7bfe28877e9f6bff174e94993.1452105878.git.shuahkh@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1453336830.git.shuahkh@osg.samsung.com>
+In-Reply-To: <b1d228cdcc9246f7bfe28877e9f6bff174e94993.1452105878.git.shuahkh@osg.samsung.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: mchehab@osg.samsung.com, tiwai@suse.com, hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com
-Cc: clemens@ladisch.de, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittgam.net, johan@oljud.se, linux-kernel@vger.kernel.org, linux-media@vger.kernel.org, linux-api@vger.kernel.org, alsa-devel@alsa-pro
+To: Shuah Khan <shuahkh@osg.samsung.com>
+Cc: tiwai@suse.com, clemens@ladisch.de, hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittga
 List-Id: linux-api@vger.kernel.org
 
-On 01/21/2016 11:09 AM, Shuah Khan wrote:
-> Please note that I am sending just the 4 patches that
-> changed during series rebase to Linux 4.5. The rebase
-> was pain free. media_device_init() type change required
-> changes to patches 18 and 26. I re-tested the series
-> and everything looks good.
+Em Wed,  6 Jan 2016 13:26:50 -0700
+Shuah Khan <shuahkh@osg.samsung.com> escreveu:
+
+> From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
 > 
-> [PATCH 16/31] media: au0828 video remove au0828_enable_analog_tuner()
-> [PATCH 18/31] media: au0828 change to use Managed Media Controller API
-> [PATCH 22/31] media: dvb-core create tuner to demod pad link in disabled state
-> [PATCH v3 26/31] sound/usb: Update ALSA driver to use Managed Media Controller API
+> Declare the interface types to be used on alsa for the new
+> G_TOPOLOGY ioctl.
 > 
-> Links:
-> PATCH Series that contains all 31 patches:
-> https://lkml.org/lkml/2016/1/6/668
+> Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+> ---
+>  drivers/media/media-entity.c | 12 ++++++++++++
+>  include/uapi/linux/media.h   |  8 ++++++++
+>  2 files changed, 20 insertions(+)
 > 
-> ALSA patches went through reviews and links
-> to PATCH V3 (ALSA):
-> https://lkml.org/lkml/2016/1/18/556
-> https://lkml.org/lkml/2016/1/18/557
-> https://lkml.org/lkml/2016/1/18/558
-> 
-> Compile warns patches:
-> https://lkml.org/lkml/2016/1/19/520
-> https://lkml.org/lkml/2016/1/19/518
-> https://lkml.org/lkml/2016/1/19/519
-> 
-> Mauro and Takashi:
-> Please let me know if you would rather see the entire
-> patch series generated for 4.5-rc1 and sent out in a
-> complete series instead of just the rebased patches.
-> 
+> diff --git a/drivers/media/media-entity.c b/drivers/media/media-entity.c
+> index eb38bc3..6e02d19 100644
+> --- a/drivers/media/media-entity.c
+> +++ b/drivers/media/media-entity.c
+> @@ -65,6 +65,18 @@ static inline const char *intf_type(struct media_interface *intf)
+>  		return "v4l2-subdev";
+>  	case MEDIA_INTF_T_V4L_SWRADIO:
+>  		return "swradio";
+> +	case MEDIA_INTF_T_ALSA_PCM_CAPTURE:
+> +		return "pcm-capture";
+> +	case MEDIA_INTF_T_ALSA_PCM_PLAYBACK:
+> +		return "pcm-playback";
+> +	case MEDIA_INTF_T_ALSA_CONTROL:
+> +		return "alsa-control";
+> +	case MEDIA_INTF_T_ALSA_COMPRESS:
+> +		return "compress";
+> +	case MEDIA_INTF_T_ALSA_RAWMIDI:
+> +		return "rawmidi";
+> +	case MEDIA_INTF_T_ALSA_HWDEP:
+> +		return "hwdep";
+>  	default:
+>  		return "unknown-intf";
+>  	}
+> diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
+> index cacfceb..75cbe92 100644
+> --- a/include/uapi/linux/media.h
+> +++ b/include/uapi/linux/media.h
+> @@ -252,6 +252,7 @@ struct media_links_enum {
+>  
+>  #define MEDIA_INTF_T_DVB_BASE	0x00000100
+>  #define MEDIA_INTF_T_V4L_BASE	0x00000200
+> +#define MEDIA_INTF_T_ALSA_BASE	0x00000300
+>  
+>  /* Interface types */
+>  
+> @@ -267,6 +268,13 @@ struct media_links_enum {
+>  #define MEDIA_INTF_T_V4L_SUBDEV (MEDIA_INTF_T_V4L_BASE + 3)
+>  #define MEDIA_INTF_T_V4L_SWRADIO (MEDIA_INTF_T_V4L_BASE + 4)
+>  
+> +#define MEDIA_INTF_T_ALSA_PCM_CAPTURE   (MEDIA_INTF_T_ALSA_BASE)
+> +#define MEDIA_INTF_T_ALSA_PCM_PLAYBACK  (MEDIA_INTF_T_ALSA_BASE + 1)
+> +#define MEDIA_INTF_T_ALSA_CONTROL       (MEDIA_INTF_T_ALSA_BASE + 2)
+> +#define MEDIA_INTF_T_ALSA_COMPRESS      (MEDIA_INTF_T_ALSA_BASE + 3)
+> +#define MEDIA_INTF_T_ALSA_RAWMIDI       (MEDIA_INTF_T_ALSA_BASE + 4)
+> +#define MEDIA_INTF_T_ALSA_HWDEP         (MEDIA_INTF_T_ALSA_BASE + 5)
 
-Hi Takashi,
+Patch looks ok, but please document the new media interfaces at KernelDoc
+documentation.
 
-Are you okay with this ALSA patch series?
-If so could you please Ack these patches
-so they can be pulled into media tree.
-
-Mauro,
-
-Could you please look these over and give
-me feedback and let me know if you would
-like me to resend all the patches in final
-series.
-
-thanks,
--- Shuah
-
-
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+> +
+>  /*
+>   * MC next gen API definitions
+>   *
