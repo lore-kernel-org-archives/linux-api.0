@@ -1,78 +1,68 @@
-From: "Gabriel L. Somlo" <somlo@cmu.edu>
-Subject: [PATCH v6 4/5] acpi: arm: add fw_cfg device node to
-	dsdt
-Date: Wed, 27 Jan 2016 22:02:40 -0500
-Message-ID: <1453950161-13252-5-git-send-email-somlo@cmu.edu>
-References: <1453950161-13252-1-git-send-email-somlo@cmu.edu>
+From: Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH v2 1/3] getcpu_cache system call: cache CPU number of
+ running thread
+Date: Wed, 27 Jan 2016 19:12:16 -0800
+Message-ID: <20160128031213.GA55682@ast-mbp.thefacebook.com>
+References: <1453913683-28915-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <1453913683-28915-2-git-send-email-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org>
-In-Reply-To: <1453950161-13252-1-git-send-email-somlo@cmu.edu>
-List-Unsubscribe: <https://lists.nongnu.org/mailman/options/qemu-devel>,
-	<mailto:qemu-devel-request@nongnu.org?subject=unsubscribe>
-List-Archive: <http://lists.nongnu.org/archive/html/qemu-devel>
-List-Post: <mailto:qemu-devel@nongnu.org>
-List-Help: <mailto:qemu-devel-request@nongnu.org?subject=help>
-List-Subscribe: <https://lists.nongnu.org/mailman/listinfo/qemu-devel>,
-	<mailto:qemu-devel-request@nongnu.org?subject=subscribe>
-Errors-To: qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org
-Sender: qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org
-To: gregkh@linuxfoundation.org, robh+dt@kernel.org, pawel.moll@arm.com, mark.rutland@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, arnd@arndb.de, lersek@redhat.com, ralf@linux-mips.org, rmk+kernel@arm.linux.org.uk, eric@anholt.net, hanjun.guo@linaro.org, zajec5@gmail.com, sudeep.holla@arm.com, agross@codeaurora.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org
-Cc: peter.maydell@linaro.org, ehabkost@redhat.com, ard.biesheuvel@linaro.org, matt@codeblueprint.co.uk, stefanha@gmail.com, mst@redhat.com, qemu-devel@nongnu.org, leif.lindholm@linaro.org, luto@amacapital.net, kraxel@redhat.com, pbonzini@redhat.com, imammedo@redhat.com, revol@free.fr, rth@twiddle.net
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1453913683-28915-2-git-send-email-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Add a fw_cfg device node to the ACPI DSDT. This is mostly
-informational, as the authoritative fw_cfg MMIO region(s)
-are listed in the Device Tree. However, since we are building
-ACPI tables, we might as well be thorough while at it...
+On Wed, Jan 27, 2016 at 11:54:41AM -0500, Mathieu Desnoyers wrote:
+> Expose a new system call allowing threads to register one userspace
+> memory area where to store the CPU number on which the calling thread is
+> running. Scheduler migration sets the TIF_NOTIFY_RESUME flag on the
+> current thread. Upon return to user-space, a notify-resume handler
+> updates the current CPU value within each registered user-space memory
+> area. User-space can then read the current CPU number directly from
+> memory.
+> 
+> This getcpu cache is an improvement over current mechanisms available to
+> read the current CPU number, which has the following benefits:
+> 
+> - 44x speedup on ARM vs system call through glibc,
+> - 14x speedup on x86 compared to calling glibc, which calls vdso
+>   executing a "lsl" instruction,
+> - 11x speedup on x86 compared to inlined "lsl" instruction,
+> - Unlike vdso approaches, this cached value can be read from an inline
+>   assembly, which makes it a useful building block for restartable
+>   sequences.
+> - The getcpu cache approach is portable (e.g. ARM), which is not the
+>   case for the lsl-based x86 vdso.
+> 
+> On x86, yet another possible approach would be to use the gs segment
+> selector to point to user-space per-cpu data. This approach performs
+> similarly to the getcpu cache, but it has two disadvantages: it is
+> not portable, and it is incompatible with existing applications already
+> using the gs segment selector for other purposes.
 
-Signed-off-by: Gabriel Somlo <somlo@cmu.edu>
-Reviewed-by: Laszlo Ersek <lersek@redhat.com>
-Tested-by: Laszlo Ersek <lersek@redhat.com>
-Reviewed-by: Marc Mar=C3=AD <markmb@redhat.com>
----
- hw/arm/virt-acpi-build.c | 15 +++++++++++++++
- 1 file changed, 15 insertions(+)
-
-diff --git a/hw/arm/virt-acpi-build.c b/hw/arm/virt-acpi-build.c
-index 87fbe7c..20bbdf2 100644
---- a/hw/arm/virt-acpi-build.c
-+++ b/hw/arm/virt-acpi-build.c
-@@ -95,6 +95,20 @@ static void acpi_dsdt_add_uart(Aml *scope, const MemMa=
-pEntry *uart_memmap,
-     aml_append(scope, dev);
- }
-=20
-+static void acpi_dsdt_add_fw_cfg(Aml *scope, const MemMapEntry *fw_cfg_m=
-emmap)
-+{
-+    Aml *dev =3D aml_device("FWCF");
-+    aml_append(dev, aml_name_decl("_HID", aml_string("QEMU0002")));
-+    /* device present, functioning, decoding, not shown in UI */
-+    aml_append(dev, aml_name_decl("_STA", aml_int(0xB)));
-+
-+    Aml *crs =3D aml_resource_template();
-+    aml_append(crs, aml_memory32_fixed(fw_cfg_memmap->base,
-+                                       fw_cfg_memmap->size, AML_READ_WRI=
-TE));
-+    aml_append(dev, aml_name_decl("_CRS", crs));
-+    aml_append(scope, dev);
-+}
-+
- static void acpi_dsdt_add_flash(Aml *scope, const MemMapEntry *flash_mem=
-map)
- {
-     Aml *dev, *crs;
-@@ -565,6 +579,7 @@ build_dsdt(GArray *table_data, GArray *linker, VirtGu=
-estInfo *guest_info)
-     acpi_dsdt_add_uart(scope, &memmap[VIRT_UART],
-                        (irqmap[VIRT_UART] + ARM_SPI_BASE));
-     acpi_dsdt_add_flash(scope, &memmap[VIRT_FLASH]);
-+    acpi_dsdt_add_fw_cfg(scope, &memmap[VIRT_FW_CFG]);
-     acpi_dsdt_add_virtio(scope, &memmap[VIRT_MMIO],
-                     (irqmap[VIRT_MMIO] + ARM_SPI_BASE), NUM_VIRTIO_TRANS=
-PORTS);
-     acpi_dsdt_add_pci(scope, memmap, (irqmap[VIRT_PCIE] + ARM_SPI_BASE),
---=20
-2.4.3
+Great work! The only concern is that every arch has to implement
+a call to getcpu_cache_handle_notify_resume() to be able to do put_user()
+from the safe place which is not pretty.
+Can we do better?
+Here is one crazy idea:
+The kernel can allocate the memory that user space will mmap()
+(ideally reusing perf ring-buffer alloc/mmap mechanism).
+then the kernel can just write cpuid into it from any place.
+Then user space will register the 'offset' into this space for a given
+user space thread (or kernel will return it or ptr within this area)
+and in finish_task_switch() the kernel will do
+*task->offset_converted_to_ptr = smp_processor_id();
+At init time the user space will do:
+__thread int *cpuid;
+cpuid = (void*)addr_from_mmap + registered_offset;
+and at runtime the '*cpuid' will give userspace what it wants.
+It's two loads to get cpuid vs getcpu_cache approach, but
+probably still fast enough?
+And this way we can have a mechanism to return much bigger
+structures to userspace. Kernel can update such area from any
+place and user space only needs one extra load to get the base of
+such per-cpu area and another load to fetch cpuid.
+Thoughts?
