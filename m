@@ -1,127 +1,69 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH 09/31] media: v4l2-core add v4l_vb2q_enable_media_tuner()
- helper
-Date: Thu, 28 Jan 2016 10:31:21 -0700
-Message-ID: <56AA5069.4010402@osg.samsung.com>
+From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH 15/31] media: dvb-frontend invoke enable/disable_source
+ handlers
+Date: Thu, 28 Jan 2016 15:31:47 -0200
+Message-ID: <20160128153147.199ec4f6@recife.lan>
 References: <cover.1452105878.git.shuahkh@osg.samsung.com>
- <ac1ad6fc9832cb922ac02eba1f916a6fb4ef97a8.1452105878.git.shuahkh@osg.samsung.com>
- <20160128132937.3305eff3@recife.lan>
+	<1591b6cf2025fa95a13e3b7dde52aa0e0bde0bb4.1452105878.git.shuahkh@osg.samsung.com>
+	<20160128135304.3daa79f1@recife.lan>
+	<20160128160711.029f3faf@lxorguk.ukuu.org.uk>
+	<56AA48FA.7070203@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160128132937.3305eff3-+RedX5hVuTR+urZeOPWqwQ@public.gmane.org>
+In-Reply-To: <56AA48FA.7070203-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: tiwai-IBi9RG/b67k@public.gmane.org, clemens-P6GI/4k7KOmELgA04lAiVw@public.gmane.org, hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org, laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org, sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, javier-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org, m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, perex-/Fr2/VpizcU@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, tvboxspy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, crope-X3B1VOXEql0@public.gmane.org, ruchandani.tina-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, chehabrafael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, stefanr-MtYdepGKPcBMYopoZt5u/LNAH6kLmebB@public.gmane.org, inki.dae-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, jh1009.sung-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, elfring-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, sw0312.kim-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, ricardo.ribalda-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, labbott-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org, pierre-louis.bossart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, ricard.wanderlof-VrBV9hrLPhE@public.gmane.org, julian-SZMMDGyaqes@public.gmane.org, takamichiho-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dominic.sacre-Mmb7MZpHnFY@public.gmane.org, misterpib-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, gtmkramer-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org, normalperson-rMlxZR9MS24@public.gmane.org, joe-amhYAVlgbXj10XsdtD+oqA@public.gmane.org, linuxbugs@vittga
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, tiwai-IBi9RG/b67k@public.gmane.org, clemens-P6GI/4k7KOmELgA04lAiVw@public.gmane.org, hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org, laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org, sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, javier-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org, m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, perex-/Fr2/VpizcU@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, tvboxspy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, crope-X3B1VOXEql0@public.gmane.org, ruchandani.tina-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, chehabrafael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, stefanr-MtYdepGKPcBMYopoZt5u/LNAH6kLmebB@public.gmane.org, inki.dae-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, jh1009.sung-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, elfring-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, sw0312.kim-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, ricardo.ribalda-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, labbott-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org, pierre-louis.bossart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, ricard.wanderlof-VrBV9hrLPhE@public.gmane.org, julian-SZMMDGyaqes@public.gmane.org, takamichiho-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dominic.sacre-Mmb7MZpHnFY@public.gmane.org, misterpib-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, gtmkramer-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org, norma
 List-Id: linux-api@vger.kernel.org
 
-On 01/28/2016 08:29 AM, Mauro Carvalho Chehab wrote:
-> Em Wed,  6 Jan 2016 13:26:58 -0700
-> Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> escreveu:
+Em Thu, 28 Jan 2016 09:59:38 -0700
+Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> escreveu:
+
+> On 01/28/2016 09:07 AM, One Thousand Gnomes wrote:
+> > On Thu, 28 Jan 2016 13:53:04 -0200
+> > Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+> >   
+> >> Em Wed,  6 Jan 2016 13:27:04 -0700
+> >> Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> escreveu:
+> >>  
+> >>> Checking for tuner availability from frontend thread start
+> >>> disrupts video stream. Change to check for tuner and start
+> >>> pipeline from frontend open instead and stop pipeline from
+> >>> frontend release.    
+> >>
+> >> That's wrong, as DVB can be opened on read-only mode, where
+> >> it won't be changing anything.  
 > 
->> Add a new v4l_vb2q_enable_media_tuner() wrapper function
->> to be called from v4l2-core to enable the media tuner with
->> videobuf2 queue, when the calling frunction has the videobuf2
->> queue and doesn't have the struct video_device associated with
->> the queue handy as in the case of vb2_core_streamon(). This
->> function simply calls v4l_enable_media_tuner() passing in the
->> pointer to struct video_device.
->>
->> Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
->> ---
->>  drivers/media/v4l2-core/v4l2-dev.c | 21 +++++++++++++++++++++
->>  include/media/v4l2-dev.h           |  1 +
->>  2 files changed, 22 insertions(+)
->>
->> diff --git a/drivers/media/v4l2-core/v4l2-dev.c b/drivers/media/v4l2-core/v4l2-dev.c
->> index f06da6e..9ef675a 100644
->> --- a/drivers/media/v4l2-core/v4l2-dev.c
->> +++ b/drivers/media/v4l2-core/v4l2-dev.c
->> @@ -30,6 +30,7 @@
->>  #include <media/v4l2-common.h>
->>  #include <media/v4l2-device.h>
->>  #include <media/v4l2-ioctl.h>
->> +#include <media/videobuf2-core.h>
->>  
->>  #define VIDEO_NUM_DEVICES	256
->>  #define VIDEO_NAME              "video4linux"
->> @@ -261,6 +262,26 @@ void v4l_disable_media_tuner(struct video_device *vdev)
->>  }
->>  EXPORT_SYMBOL_GPL(v4l_disable_media_tuner);
->>  
->> +/**
->> + * v4l_vb2q_enable_media_tuner - Wrapper for v4l_enable_media_tuner()
->> + * @q:         videobuf2 queue
->> + *
->> + * This function is intended to be called from v4l2-core
->> + * to enable the media tuner with videobuf2 queue, when
->> + * the calling frunction has the videobuf2 queue and doesn't
+> Correct. Please check the code. Tuner availability check is
+> done when the device is opened in Write mode in the following
+> conditional.
 > 
-> 	typo: function
+>        if ((file->f_flags & O_ACCMODE) != O_RDONLY) {
 
-ok thanks
+OK.
 
+Thanks!
+Mauro
+, I don't think POSIX allows to return an error like EBUSY
+> >> on open:
+> >> 	http://pubs.opengroup.org/onlinepubs/9699919799/functions/open.html  
+> > 
+> > It doesn't document all the errors you may return. Quite a lot of
+> > kernel drivers return EBUSY when they are "single open" things.
+> > 
+> > POSIX documents certain cases that *must* error and what the error code
+> > is. It documents certain possible failures and what their error code is.
+> > Beyond that it's up to you.
+> >   
 > 
->> + * have the struct video_device associated with the
->> + * queue handy as in the case of vb2_core_streamon(). This
->> + * function simply calls v4l_enable_media_tuner() passing
->> + * in the pointer to struct video_device.
+> Returning EBUSY clearly indicates the reason why the device
+> can't be opened in this case.
 > 
-> The hole description seems confusing. I'm not seeing the light
-> about why this is needed.
-
-Sorry if the description isn't clear. During videobuf2
-work, owner field in struct vb2_queue is changed from
-struct v4l2_fh * to void. Prior to this work, I could
-call v4l_enable_media_tuner(). 
-
-+               ret = v4l_enable_media_tuner(q->owner->vdev);
-+               if (ret)
-+                       return ret;
-
-As you can see with the videobuf2, to be able to call
-v4l_enable_media_tuner() from vb2_core_streamon(), I have
-had to this wrapper to maintain the abstraction introduced
-in videobuf2 work.
-
-Hope this helps the need for this wrapper.
-
-thanks,
--- Shuah
+> thanks,
+> -- Shuah
 > 
->> + */
->> +int v4l_vb2q_enable_media_tuner(struct vb2_queue *q)
->> +{
->> +	struct v4l2_fh *fh = q->owner;
->> +
->> +	return v4l_enable_media_tuner(fh->vdev);
->> +}
->> +EXPORT_SYMBOL_GPL(v4l_vb2q_enable_media_tuner);
->> +
->>  /* Priority handling */
->>  
->>  static inline bool prio_is_valid(enum v4l2_priority prio)
->> diff --git a/include/media/v4l2-dev.h b/include/media/v4l2-dev.h
->> index 68999a3..1948097 100644
->> --- a/include/media/v4l2-dev.h
->> +++ b/include/media/v4l2-dev.h
->> @@ -179,6 +179,7 @@ struct video_device * __must_check video_device_alloc(void);
->>  
->>  int v4l_enable_media_tuner(struct video_device *vdev);
->>  void v4l_disable_media_tuner(struct video_device *vdev);
->> +int v4l_vb2q_enable_media_tuner(struct vb2_queue *q);
 > 
-> Documentation?
-> 
->>  
->>  /* this release function frees the vdev pointer */
->>  void video_device_release(struct video_device *vdev);
-
-
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+Thanks!
+Mauro
