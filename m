@@ -1,8 +1,8 @@
 From: "Gabriel L. Somlo" <somlo@cmu.edu>
-Subject: [PATCH v7 4/4] devicetree: update documentation for
-	fw_cfg ARM bindings
-Date: Wed, 27 Jan 2016 21:57:30 -0500
-Message-ID: <1453949850-13076-5-git-send-email-somlo@cmu.edu>
+Subject: [PATCH v7 2/4] kobject: export kset_find_obj() for
+	module use
+Date: Wed, 27 Jan 2016 21:57:28 -0500
+Message-ID: <1453949850-13076-3-git-send-email-somlo@cmu.edu>
 References: <1453949850-13076-1-git-send-email-somlo@cmu.edu>
 Return-path: <qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org>
 In-Reply-To: <1453949850-13076-1-git-send-email-somlo@cmu.edu>
@@ -21,68 +21,22 @@ List-Id: linux-api@vger.kernel.org
 
 From: Gabriel Somlo <somlo@cmu.edu>
 
-Remove fw_cfg hardware interface details from
-Documentation/devicetree/bindings/arm/fw-cfg.txt,
-and replace them with a pointer to the authoritative
-documentation in the QEMU source tree.
-
 Signed-off-by: Gabriel Somlo <somlo@cmu.edu>
-Cc: Laszlo Ersek <lersek@redhat.com>
-Acked-by: Rob Herring <robh@kernel.org>
-Reviewed-by: Laszlo Ersek <lersek@redhat.com>
 ---
- Documentation/devicetree/bindings/arm/fw-cfg.txt | 38 ++----------------------
- 1 file changed, 2 insertions(+), 36 deletions(-)
+ lib/kobject.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/Documentation/devicetree/bindings/arm/fw-cfg.txt b/Documentation/devicetree/bindings/arm/fw-cfg.txt
-index 953fb64..fd54e1d 100644
---- a/Documentation/devicetree/bindings/arm/fw-cfg.txt
-+++ b/Documentation/devicetree/bindings/arm/fw-cfg.txt
-@@ -11,43 +11,9 @@ QEMU exposes the control and data register to ARM guests as memory mapped
- registers; their location is communicated to the guest's UEFI firmware in the
- DTB that QEMU places at the bottom of the guest's DRAM.
+diff --git a/lib/kobject.c b/lib/kobject.c
+index 7cbccd2..90d1be6 100644
+--- a/lib/kobject.c
++++ b/lib/kobject.c
+@@ -861,6 +861,7 @@ struct kobject *kset_find_obj(struct kset *kset, const char *name)
+ 	spin_unlock(&kset->list_lock);
+ 	return ret;
+ }
++EXPORT_SYMBOL(kset_find_obj);
  
--The guest writes a selector value (a key) to the selector register, and then
--can read the corresponding data (produced by QEMU) via the data register. If
--the selected entry is writable, the guest can rewrite it through the data
--register.
-+The authoritative guest-side hardware interface documentation to the fw_cfg
-+device can be found in "docs/specs/fw_cfg.txt" in the QEMU source tree.
- 
--The selector register takes keys in big endian byte order.
--
--The data register allows accesses with 8, 16, 32 and 64-bit width (only at
--offset 0 of the register). Accesses larger than a byte are interpreted as
--arrays, bundled together only for better performance. The bytes constituting
--such a word, in increasing address order, correspond to the bytes that would
--have been transferred by byte-wide accesses in chronological order.
--
--The interface allows guest firmware to download various parameters and blobs
--that affect how the firmware works and what tables it installs for the guest
--OS. For example, boot order of devices, ACPI tables, SMBIOS tables, kernel and
--initrd images for direct kernel booting, virtual machine UUID, SMP information,
--virtual NUMA topology, and so on.
--
--The authoritative registry of the valid selector values and their meanings is
--the QEMU source code; the structure of the data blobs corresponding to the
--individual key values is also defined in the QEMU source code.
--
--The presence of the registers can be verified by selecting the "signature" blob
--with key 0x0000, and reading four bytes from the data register. The returned
--signature is "QEMU".
--
--The outermost protocol (involving the write / read sequences of the control and
--data registers) is expected to be versioned, and/or described by feature bits.
--The interface revision / feature bitmap can be retrieved with key 0x0001. The
--blob to be read from the data register has size 4, and it is to be interpreted
--as a uint32_t value in little endian byte order. The current value
--(corresponding to the above outer protocol) is zero.
--
--The guest kernel is not expected to use these registers (although it is
--certainly allowed to); the device tree bindings are documented here because
--this is where device tree bindings reside in general.
- 
- Required properties:
- 
+ static void kset_release(struct kobject *kobj)
+ {
 -- 
 2.4.3
