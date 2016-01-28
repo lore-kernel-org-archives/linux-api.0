@@ -1,28 +1,31 @@
-From: Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+From: Shilpasri G Bhat <shilpa.bhat@linux.vnet.ibm.com>
 Subject: Re: [PATCH v7 6/6] cpufreq: powernv: Add sysfs attributes to show
  throttle stats
-Date: Thu, 28 Jan 2016 15:11:46 +0530
-Message-ID: <20160128094146.GO3935@vireshk>
-References: <1453965941-7363-1-git-send-email-shilpa.bhat@linux.vnet.ibm.com>
- <1453965941-7363-7-git-send-email-shilpa.bhat@linux.vnet.ibm.com>
- <20160128084041.GK3935@vireshk>
- <56A9E136.8090900@linux.vnet.ibm.com>
+Date: Thu, 28 Jan 2016 15:24:52 +0530
+Message-ID: <56A9E56C.1050505@linux.vnet.ibm.com>
+References: <1453965941-7363-1-git-send-email-shilpa.bhat@linux.vnet.ibm.com> <1453965941-7363-7-git-send-email-shilpa.bhat@linux.vnet.ibm.com> <20160128084041.GK3935@vireshk> <56A9E136.8090900@linux.vnet.ibm.com> <20160128094146.GO3935@vireshk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <56A9E136.8090900-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shilpasri G Bhat <shilpa.bhat-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Cc: linuxppc-dev-mnsaURCQ41sdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, pc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org, anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org, ego-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, shreyas-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, bsingharora-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160128094146.GO3935@vireshk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Viresh Kumar <viresh.kumar@linaro.org>
+Cc: linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org, rjw@rjwysocki.net, linux-pm@vger.kernel.org, pc@us.ibm.com, anton@samba.org, ego@linux.vnet.ibm.com, shreyas@linux.vnet.ibm.com, bsingharora@gmail.com, mpe@ellerman.id.au, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 28-01-16, 15:06, Shilpasri G Bhat wrote:
-> No these stats are not per-policy. They are per-chip. The throttle event is
-> common for all cores in the chip.
 
-How do you define a chip? And how is it different then the group of
-CPUs represented by the policy ?
 
--- 
-viresh
+On 01/28/2016 03:11 PM, Viresh Kumar wrote:
+> On 28-01-16, 15:06, Shilpasri G Bhat wrote:
+>> No these stats are not per-policy. They are per-chip. The throttle event is
+>> common for all cores in the chip.
+> 
+> How do you define a chip? And how is it different then the group of
+> CPUs represented by the policy ?
+> 
+
+Chip is a group of policies.
+Hmm yes I see your point. We anyways maintain frequency stats which is
+per-policy. We might as well have throttle stats exported per-policy which
+points to per-chip data.
