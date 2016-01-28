@@ -1,33 +1,38 @@
-From: Michael Ellerman <michael-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+From: Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>
 Subject: Re: [PATCH] tools: Add a selftests_run target
-Date: Fri, 29 Jan 2016 08:22:10 +1100
-Message-ID: <1454016130.25145.1.camel@ellerman.id.au>
+Date: Thu, 28 Jan 2016 22:30:27 +0100
+Message-ID: <20160128213027.GL14274@pd.tnic>
 References: <1453969215-26532-1-git-send-email-bp@alien8.de>
+ <1454016130.25145.1.camel@ellerman.id.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1453969215-26532-1-git-send-email-bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1454016130.25145.1.camel-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Michael Ellerman <michael-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2016-01-28 at 09:20 +0100, Borislav Petkov wrote:
-> From: Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>
+On Fri, Jan 29, 2016 at 08:22:10AM +1100, Michael Ellerman wrote:
+> OK. You can already do:
 > 
-> With it, you can do
+>   $ make kselftest
 > 
-> $ make tools/selftests_run
 > 
-> from the toplevel kernel repo and it'll run all selftests. Don't forget
-> the -j.
+> Is this better for some reason?
 
-OK. You can already do:
+No, I missed that there is even one in the top-level Makefile. And doing
 
-  $ make kselftest
+make tools/help
 
+shows only the "selftests" one. I should add kselftest to
+tools/Makefile's help instead.
 
-Is this better for some reason?
+Thanks.
 
-cheers
+-- 
+Regards/Gruss,
+    Boris.
+
+ECO tip #101: Trim your mails when you reply.
