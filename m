@@ -1,293 +1,114 @@
-From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Subject: Re: [PATCH 20/31] media: au0828 change to register/unregister
- entity_notify hook
-Date: Thu, 28 Jan 2016 14:36:10 -0200
-Message-ID: <20160128143610.154ce103@recife.lan>
-References: <cover.1452105878.git.shuahkh@osg.samsung.com>
-	<8ba7a2bcf7cde4d9361205c08ef5fca116b3973f.1452105878.git.shuahkh@osg.samsung.com>
+From: Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v8 04/14] task_isolation: add initial support
+Date: Thu, 28 Jan 2016 17:38:24 +0100
+Message-ID: <20160128163822.GD25866@lerouge>
+References: <1445373372-6567-1-git-send-email-cmetcalf@ezchip.com>
+ <1445373372-6567-5-git-send-email-cmetcalf@ezchip.com>
+ <20151021161247.GA19764@lerouge>
+ <562FA8FD.8080502@ezchip.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-media-owner@vger.kernel.org>
-In-Reply-To: <8ba7a2bcf7cde4d9361205c08ef5fca116b3973f.1452105878.git.shuahkh@osg.samsung.com>
-Sender: linux-media-owner@vger.kernel.org
-To: Shuah Khan <shuahkh@osg.samsung.com>
-Cc: tiwai@suse.com, clemens@ladisch.de, hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittga
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <562FA8FD.8080502-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Cc: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Em Wed,  6 Jan 2016 13:27:09 -0700
-Shuah Khan <shuahkh@osg.samsung.com> escreveu:
+On Tue, Oct 27, 2015 at 12:40:29PM -0400, Chris Metcalf wrote:
+> On 10/21/2015 12:12 PM, Frederic Weisbecker wrote:
+> >On Tue, Oct 20, 2015 at 04:36:02PM -0400, Chris Metcalf wrote:
+> >>+/*
+> >>+ * This routine controls whether we can enable task-isolation mode.
+> >>+ * The task must be affinitized to a single nohz_full core or we will
+> >>+ * return EINVAL.  Although the application could later re-affinitize
+> >>+ * to a housekeeping core and lose task isolation semantics, this
+> >>+ * initial test should catch 99% of bugs with task placement prior to
+> >>+ * enabling task isolation.
+> >>+ */
+> >>+int task_isolation_set(unsigned int flags)
+> >>+{
+> >>+	if (cpumask_weight(tsk_cpus_allowed(current)) != 1 ||
+> >I think you'll have to make sure the task can not be concurrently reaffined
+> >to more CPUs. This may involve setting task_isolation_flags under the runqueue
+> >lock and thus move that tiny part to the scheduler code. And then we must forbid
+> >changing the affinity while the task has the isolation flag, or deactivate the flag.
+> >
+> >In any case this needs some synchronization.
+> 
+> Well, as the comment says, this is not intended as a hard guarantee.
+> As written, it might race with a concurrent sched_setaffinity(), but
+> then again, it also is totally OK as written for sched_setaffinity() to
+> change it away after the prctl() is complete, so it's not necessary to
+> do any explicit synchronization.
+> 
+> This harks back again to the whole "polite vs aggressive" issue with
+> how we envision task isolation.
+> 
+> The "polite" model basically allows you to set up the conditions for
+> task isolation to be useful, and then if they are useful, great! What
+> you're suggesting here is a bit more of the "aggressive" model, where
+> we actually fail sched_setaffinity() either for any cpumask after
+> task isolation is set, or perhaps just for resetting it to housekeeping
+> cores.  (Note that we could in principle use PF_NO_SETAFFINITY to
+> just hard fail all attempts to call sched_setaffinity once we enable
+> task isolation, so we don't have to add more mechanism on that path.)
+> 
+> I'm a little reluctant to ever fail sched_setaffinity() based on the
+> task isolation status with the current "polite" model, since an
+> unprivileged application can set up for task isolation, and then
+> presumably no one can override it via sched_setaffinity() from another
+> task.  (I suppose you could do some kind of permissions-based thing
+> where root can always override it, or some suitable capability, etc.,
+> but I feel like that gets complicated quickly, for little benefit.)
+> 
+> The alternative you mention is that if the task is re-affinitized, it
+> loses its task-isolation status, and that also seems like an unfortunate
+> API, since if you are setting it with prctl(), it's really cleanest just to
+> only be able to unset it with prctl() as well.
+> 
+> I think given the current "polite" API, the only question is whether in
+> fact *no* initial test is the best thing, or if an initial test (as
+> introduced
+> in the v8 version) is defensible just as a help for catching an obvious
+> mistake in setting up your task isolation.  I decided the advantage
+> of catching the mistake were more important than the "API purity"
+> of being 100% consistent in how we handled the interactions between
+> affinity and isolation, but I am certainly open to argument on that one.
+> 
+> Meanwhile I think it still feels like the v8 code is the best compromise.
 
-> au0828 registers entity_notify hook to create media graph for
-> the device. This handler runs whenvere a new entity gets added
-
-typo: whenever.
-
-> to the media device. It creates necessary links from video, vbi,
-> and ALSA entities to decoder and links tuner and decoder entities.
-> As this handler runs as entities get added, it has to maintain
-> state on the links it already created. New fields are added to
-> au0828_dev to keep this state information. entity_notify gets
-> unregistered before media_device unregister.
-
-Bty, please avoid long paragraphs at the patch description, 
-and please try to be clearer on your patch descriptions... That
-makes boring to read everything. :-;
+So what is the way to deal with a migration for example? When the task wakes
+up on the non-isolated CPU, it gets warned or killed?
 
 > 
-> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
-> ---
->  drivers/media/usb/au0828/au0828-core.c | 104 +++++++++++++++++++++++----------
->  drivers/media/usb/au0828/au0828.h      |   6 ++
->  2 files changed, 78 insertions(+), 32 deletions(-)
+> >>+	/* If the tick is running, request rescheduling; we're not ready. */
+> >>+	if (!tick_nohz_tick_stopped()) {
+> >Note that this function tells whether the tick is in dynticks mode, which means
+> >the tick currently only run on-demand. But it's not necessarily completely stopped.
 > 
-> diff --git a/drivers/media/usb/au0828/au0828-core.c b/drivers/media/usb/au0828/au0828-core.c
-> index 6ef177c..a381660 100644
-> --- a/drivers/media/usb/au0828/au0828-core.c
-> +++ b/drivers/media/usb/au0828/au0828-core.c
-> @@ -137,6 +137,8 @@ static void au0828_unregister_media_device(struct au0828_dev *dev)
->  #ifdef CONFIG_MEDIA_CONTROLLER
->  	if (dev->media_dev &&
->  		media_devnode_is_registered(&dev->media_dev->devnode)) {
-> +		media_device_unregister_entity_notify(dev->media_dev,
-> +						      &dev->entity_notify);
->  		media_device_unregister(dev->media_dev);
->  		media_device_cleanup(dev->media_dev);
->  		dev->media_dev = NULL;
-> @@ -263,11 +265,16 @@ static int au0828_create_media_graph(struct au0828_dev *dev)
->  	struct media_device *mdev = dev->media_dev;
->  	struct media_entity *entity;
->  	struct media_entity *tuner = NULL, *decoder = NULL;
-> +	struct media_entity *audio_capture = NULL;
->  	int i, ret;
->  
->  	if (!mdev)
->  		return 0;
->  
-> +	if (dev->tuner_linked && dev->vdev_linked && dev->vbi_linked &&
-> +	    dev->audio_capture_linked)
-> +		return 0;
-> +
->  	media_device_for_each_entity(entity, mdev) {
->  		switch (entity->function) {
->  		case MEDIA_ENT_F_TUNER:
-> @@ -276,6 +283,9 @@ static int au0828_create_media_graph(struct au0828_dev *dev)
->  		case MEDIA_ENT_F_ATV_DECODER:
->  			decoder = entity;
->  			break;
-> +		case MEDIA_ENT_F_AUDIO_CAPTURE:
-> +			audio_capture = entity;
-> +			break;
->  		}
->  	}
->  
-> @@ -285,60 +295,77 @@ static int au0828_create_media_graph(struct au0828_dev *dev)
->  	if (!decoder)
->  		return -EINVAL;
->  
-> -	if (tuner) {
-> +	if (tuner  && !dev->tuner_linked) {
-> +		dev->tuner = tuner;
->  		ret = media_create_pad_link(tuner, TUNER_PAD_IF_OUTPUT,
->  					    decoder, 0,
->  					    MEDIA_LNK_FL_ENABLED);
->  		if (ret)
->  			return ret;
-> +		dev->tuner_linked = 1;
->  	}
-> -	if (dev->vdev.entity.graph_obj.mdev) {
-> +	if (dev->vdev.entity.graph_obj.mdev && !dev->vdev_linked) {
->  		ret = media_create_pad_link(decoder, AU8522_PAD_VID_OUT,
->  					    &dev->vdev.entity, 0,
->  					    MEDIA_LNK_FL_ENABLED);
->  		if (ret)
->  			return ret;
-> +		dev->vdev_linked = 1;
->  	}
-> -	if (dev->vbi_dev.entity.graph_obj.mdev) {
-> +	if (dev->vbi_dev.entity.graph_obj.mdev && !dev->vbi_linked) {
->  		ret = media_create_pad_link(decoder, AU8522_PAD_VBI_OUT,
->  					    &dev->vbi_dev.entity, 0,
->  					    MEDIA_LNK_FL_ENABLED);
->  		if (ret)
->  			return ret;
-> -	}
-> -
-> -	for (i = 0; i < AU0828_MAX_INPUT; i++) {
-> -		struct media_entity *ent = &dev->input_ent[i];
-> +		dev->vbi_linked = 1;
->  
-> -		if (!ent->graph_obj.mdev)
-> -			continue;
-> +		/*
-> +		 * Input entities are registered before vbi entity,
-> +		 * create graph nodes for them after vbi is created
-> +		*/
-> +		for (i = 0; i < AU0828_MAX_INPUT; i++) {
-> +			struct media_entity *ent = &dev->input_ent[i];
->  
-> -		if (AUVI_INPUT(i).type == AU0828_VMUX_UNDEFINED)
-> -			break;
-> +			if (!ent->graph_obj.mdev)
-> +				continue;
->  
-> -		switch (AUVI_INPUT(i).type) {
-> -		case AU0828_VMUX_CABLE:
-> -		case AU0828_VMUX_TELEVISION:
-> -		case AU0828_VMUX_DVB:
-> -			if (!tuner)
-> +			if (AUVI_INPUT(i).type == AU0828_VMUX_UNDEFINED)
->  				break;
->  
-> -			ret = media_create_pad_link(ent, 0, tuner,
-> -						    TUNER_PAD_RF_INPUT,
-> -						    MEDIA_LNK_FL_ENABLED);
-> -			if (ret)
-> -				return ret;
-> -			break;
-> -		case AU0828_VMUX_COMPOSITE:
-> -		case AU0828_VMUX_SVIDEO:
-> -		default: /* AU0828_VMUX_DEBUG */
-> -			/* FIXME: fix the decoder PAD */
-> -			ret = media_create_pad_link(ent, 0, decoder, 0, 0);
-> -			if (ret)
-> -				return ret;
-> -			break;
-> +			switch (AUVI_INPUT(i).type) {
-> +			case AU0828_VMUX_CABLE:
-> +			case AU0828_VMUX_TELEVISION:
-> +			case AU0828_VMUX_DVB:
-> +				if (!tuner)
-> +					break;
-> +
-> +				ret = media_create_pad_link(ent, 0, tuner,
-> +							TUNER_PAD_RF_INPUT,
-> +							MEDIA_LNK_FL_ENABLED);
-> +				if (ret)
-> +					return ret;
-> +				break;
-> +			case AU0828_VMUX_COMPOSITE:
-> +			case AU0828_VMUX_SVIDEO:
-> +			default: /* AU0828_VMUX_DEBUG */
-> +				/* FIXME: fix the decoder PAD */
-> +				ret = media_create_pad_link(ent, 0, decoder,
-> +							    0, 0);
-> +				if (ret)
-> +					return ret;
-> +				break;
-> +			}
->  		}
->  	}
-> +	if (audio_capture && !dev->audio_capture_linked) {
-> +		ret = media_create_pad_link(decoder, AU8522_PAD_AUDIO_OUT,
-> +					    audio_capture, 0,
-> +					    MEDIA_LNK_FL_ENABLED);
-> +		if (ret)
-> +			return ret;
-> +		dev->audio_capture_linked = 1;
-> +	}
->  #endif
->  	return 0;
->  }
-> @@ -349,8 +376,10 @@ static int au0828_media_device_register(struct au0828_dev *dev,
->  #ifdef CONFIG_MEDIA_CONTROLLER
->  	int ret;
->  
-> -	if (dev->media_dev &&
-> -		!media_devnode_is_registered(&dev->media_dev->devnode)) {
-> +	if (!dev->media_dev)
-> +		return 0;
-> +
-> +	if (!media_devnode_is_registered(&dev->media_dev->devnode)) {
->  
->  		/* register media device */
->  		ret = media_device_register(dev->media_dev);
-> @@ -360,6 +389,17 @@ static int au0828_media_device_register(struct au0828_dev *dev,
->  			return ret;
->  		}
->  	}
-> +	/* register entity_notify callback */
-> +	dev->entity_notify.notify_data = (void *) dev;
-> +	dev->entity_notify.notify = (void *) au0828_create_media_graph;
-> +	ret = media_device_register_entity_notify(dev->media_dev,
-> +						  &dev->entity_notify);
-> +	if (ret) {
-> +		dev_err(&udev->dev,
-> +			"Media Device register entity_notify Error: %d\n",
-> +			ret);
-> +		return ret;
-> +	}
->  #endif
->  	return 0;
->  }
-> diff --git a/drivers/media/usb/au0828/au0828.h b/drivers/media/usb/au0828/au0828.h
-> index 8276072..cfb6d58 100644
-> --- a/drivers/media/usb/au0828/au0828.h
-> +++ b/drivers/media/usb/au0828/au0828.h
-> @@ -283,6 +283,12 @@ struct au0828_dev {
->  	struct media_entity *decoder;
->  	struct media_entity input_ent[AU0828_MAX_INPUT];
->  	struct media_pad input_pad[AU0828_MAX_INPUT];
-> +	struct media_entity_notify entity_notify;
-> +	struct media_entity *tuner;
-> +	bool tuner_linked;
-> +	bool vdev_linked;
-> +	bool vbi_linked;
-> +	bool audio_capture_linked;
+> I think in fact this is the semantics we want (and that people requested),
+> e.g. if the user requests an alarm(), we may still be ticking even though
+> tick_nohz_tick_stopped() is true, but that test is still the right condition
+> to use to return to user space, since the user explicitly requested the
+> alarm.
 
-Hmm... now I understood why you did the changes on patch 13/31.
+It seems to break the initial purpose. If your task really doesn't want to be
+disturbed, it simply can't arm a timer. tick_nohz_tick_stopped() is really no
+other indication than the CPU trying to do its best to delay the next tick. But
+that next tick could be re-armed every two msecs for example. Worse yet, if the
+tick has been stopped and finally issues a timer that rearms itself every 1 msec,
+tick_nohz_tick_stopped() will still be true.
 
-I see what you're doing, but not sure if this is a good idea
-to have one bool for each possible device. On au0828, the
-topology is actually simpler than on other devices, as it
-currently supports a very few set of I2C devices, but on other
-drivers, things can be messier.
+Thanks.
 
-See, for example, two graphs for em28xx-based devices:
-	https://mchehab.fedorapeople.org/mc-next-gen/wintv_usb2.png
-	https://mchehab.fedorapeople.org/mc-next-gen/hvr_950.png
-
-On the first graph, the tuner is not connected directly to the
-analog demod, but, instead, to two other elements:
-	- tda9887 - for video
-	- msp3400 - for audio
-
-IMHO, the best way to handle graph setup is that each driver
-should handle the links that belong only to them synchronously,
-after creating/registering all the entities.
-
-So, only the links between two drivers would be asynchronously
-created. So, In the case of au0828:
-
-- au0828 core will create the connector entities;
-
-- I2C drivers will create their own entities;
-
-- DVB core will create the DVB entities/interfaces;
-
-- V4L core will create V4L interfaces and I/O entities;
-
-- au0828 V4L driver will create all V4L links, after
-  ensuring that the needed I2C drivers were bound;
-
-- snd-usb-audio will create all ALSA-specific entities links;
-
-The V4L->ALSA links will either be created by au0828-core,
-via the notification handler.
-
-With that in mind, I don't see any need to touch at
-au0828_create_media_graph(). It will need an extra function
-to handle the notification when ALSA gets registered
-(or when the entities there are added, whatever works best).
-
-Regards,
-Mauro
-
-
-
-
-
-
->  #endif
->  };
->  
+> 
+> >I think we should rename that function and the field it refers to.
+> 
+> Sounds like a good idea.
+> 
+> -- 
+> Chris Metcalf, EZChip Semiconductor
+> http://www.ezchip.com
+> 
