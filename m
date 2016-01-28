@@ -1,132 +1,119 @@
-From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH 09/31] media: v4l2-core add
- v4l_vb2q_enable_media_tuner() helper
-Date: Thu, 28 Jan 2016 15:34:39 -0200
-Message-ID: <20160128153439.4bdfe6fe@recife.lan>
-References: <cover.1452105878.git.shuahkh@osg.samsung.com>
-	<ac1ad6fc9832cb922ac02eba1f916a6fb4ef97a8.1452105878.git.shuahkh@osg.samsung.com>
-	<20160128132937.3305eff3@recife.lan>
-	<56AA5069.4010402@osg.samsung.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH v2 1/3] getcpu_cache system call: cache CPU number
+ of running thread
+Date: Thu, 28 Jan 2016 17:41:10 +0000 (UTC)
+Message-ID: <95352831.6907.1454002870641.JavaMail.zimbra@efficios.com>
+References: <1453913683-28915-1-git-send-email-mathieu.desnoyers@efficios.com> <1453913683-28915-2-git-send-email-mathieu.desnoyers@efficios.com> <20160128031213.GA55682@ast-mbp.thefacebook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <56AA5069.4010402-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <20160128031213.GA55682-+o4/htvd0TDFYCXBM6kdu7fOX0fSgVTm@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: tiwai-IBi9RG/b67k@public.gmane.org, clemens-P6GI/4k7KOmELgA04lAiVw@public.gmane.org, hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org, laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org, sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, javier-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org, m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, perex-/Fr2/VpizcU@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, tvboxspy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, crope-X3B1VOXEql0@public.gmane.org, ruchandani.tina-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, chehabrafael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, stefanr-MtYdepGKPcBMYopoZt5u/LNAH6kLmebB@public.gmane.org, inki.dae-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, jh1009.sung-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, elfring-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, sw0312.kim-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, ricardo.ribalda-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, labbott-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org, pierre-louis.bossart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, ricard.wanderlof-VrBV9hrLPhE@public.gmane.org, julian-SZMMDGyaqes@public.gmane.org, takamichiho-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dominic.sacre-Mmb7MZpHnFY@public.gmane.org, misterpib-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, gtmkramer-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org, normalperson-rMlxZR9MS24@public.gmane.org, joe-amhYAVlgbXj10XsdtD+oqA@public.gmane.org, linuxbugs@vittga
+To: Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Em Thu, 28 Jan 2016 10:31:21 -0700
-Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> escreveu:
+----- On Jan 27, 2016, at 10:12 PM, Alexei Starovoitov alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
 
-> On 01/28/2016 08:29 AM, Mauro Carvalho Chehab wrote:
-> > Em Wed,  6 Jan 2016 13:26:58 -0700
-> > Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> escreveu:
-> >   
-> >> Add a new v4l_vb2q_enable_media_tuner() wrapper function
-> >> to be called from v4l2-core to enable the media tuner with
-> >> videobuf2 queue, when the calling frunction has the videobuf2
-> >> queue and doesn't have the struct video_device associated with
-> >> the queue handy as in the case of vb2_core_streamon(). This
-> >> function simply calls v4l_enable_media_tuner() passing in the
-> >> pointer to struct video_device.
-> >>
-> >> Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-> >> ---
-> >>  drivers/media/v4l2-core/v4l2-dev.c | 21 +++++++++++++++++++++
-> >>  include/media/v4l2-dev.h           |  1 +
-> >>  2 files changed, 22 insertions(+)
-> >>
-> >> diff --git a/drivers/media/v4l2-core/v4l2-dev.c b/drivers/media/v4l2-core/v4l2-dev.c
-> >> index f06da6e..9ef675a 100644
-> >> --- a/drivers/media/v4l2-core/v4l2-dev.c
-> >> +++ b/drivers/media/v4l2-core/v4l2-dev.c
-> >> @@ -30,6 +30,7 @@
-> >>  #include <media/v4l2-common.h>
-> >>  #include <media/v4l2-device.h>
-> >>  #include <media/v4l2-ioctl.h>
-> >> +#include <media/videobuf2-core.h>
-> >>  
-> >>  #define VIDEO_NUM_DEVICES	256
-> >>  #define VIDEO_NAME              "video4linux"
-> >> @@ -261,6 +262,26 @@ void v4l_disable_media_tuner(struct video_device *vdev)
-> >>  }
-> >>  EXPORT_SYMBOL_GPL(v4l_disable_media_tuner);
-> >>  
-> >> +/**
-> >> + * v4l_vb2q_enable_media_tuner - Wrapper for v4l_enable_media_tuner()
-> >> + * @q:         videobuf2 queue
-> >> + *
-> >> + * This function is intended to be called from v4l2-core
-> >> + * to enable the media tuner with videobuf2 queue, when
-> >> + * the calling frunction has the videobuf2 queue and doesn't  
-> > 
-> > 	typo: function  
+> On Wed, Jan 27, 2016 at 11:54:41AM -0500, Mathieu Desnoyers wrote:
+>> Expose a new system call allowing threads to register one userspace
+>> memory area where to store the CPU number on which the calling thread is
+>> running. Scheduler migration sets the TIF_NOTIFY_RESUME flag on the
+>> current thread. Upon return to user-space, a notify-resume handler
+>> updates the current CPU value within each registered user-space memory
+>> area. User-space can then read the current CPU number directly from
+>> memory.
+>> 
+>> This getcpu cache is an improvement over current mechanisms available to
+>> read the current CPU number, which has the following benefits:
+>> 
+>> - 44x speedup on ARM vs system call through glibc,
+>> - 14x speedup on x86 compared to calling glibc, which calls vdso
+>>   executing a "lsl" instruction,
+>> - 11x speedup on x86 compared to inlined "lsl" instruction,
+>> - Unlike vdso approaches, this cached value can be read from an inline
+>>   assembly, which makes it a useful building block for restartable
+>>   sequences.
+>> - The getcpu cache approach is portable (e.g. ARM), which is not the
+>>   case for the lsl-based x86 vdso.
+>> 
+>> On x86, yet another possible approach would be to use the gs segment
+>> selector to point to user-space per-cpu data. This approach performs
+>> similarly to the getcpu cache, but it has two disadvantages: it is
+>> not portable, and it is incompatible with existing applications already
+>> using the gs segment selector for other purposes.
 > 
-> ok thanks
-> 
-> >   
-> >> + * have the struct video_device associated with the
-> >> + * queue handy as in the case of vb2_core_streamon(). This
-> >> + * function simply calls v4l_enable_media_tuner() passing
-> >> + * in the pointer to struct video_device.  
-> > 
-> > The hole description seems confusing. I'm not seeing the light
-> > about why this is needed.  
-> 
-> Sorry if the description isn't clear. During videobuf2
-> work, owner field in struct vb2_queue is changed from
-> struct v4l2_fh * to void. Prior to this work, I could
-> call v4l_enable_media_tuner(). 
-> 
-> +               ret = v4l_enable_media_tuner(q->owner->vdev);
-> +               if (ret)
-> +                       return ret;
-> 
-> As you can see with the videobuf2, to be able to call
-> v4l_enable_media_tuner() from vb2_core_streamon(), I have
-> had to this wrapper to maintain the abstraction introduced
-> in videobuf2 work.
-> 
-> Hope this helps the need for this wrapper.
+> Great work!
 
+Thanks!
 
-It is clearer now. Please improve the description of the patch
-on the next version for us to remember ;)
+> The only concern is that every arch has to implement
+> a call to getcpu_cache_handle_notify_resume() to be able to do put_user()
+> from the safe place which is not pretty.
 
-Regards,
-Mauro
-> 
-> thanks,
-> -- Shuah
-> >   
-> >> + */
-> >> +int v4l_vb2q_enable_media_tuner(struct vb2_queue *q)
-> >> +{
-> >> +	struct v4l2_fh *fh = q->owner;
-> >> +
-> >> +	return v4l_enable_media_tuner(fh->vdev);
-> >> +}
-> >> +EXPORT_SYMBOL_GPL(v4l_vb2q_enable_media_tuner);
-> >> +
-> >>  /* Priority handling */
-> >>  
-> >>  static inline bool prio_is_valid(enum v4l2_priority prio)
-> >> diff --git a/include/media/v4l2-dev.h b/include/media/v4l2-dev.h
-> >> index 68999a3..1948097 100644
-> >> --- a/include/media/v4l2-dev.h
-> >> +++ b/include/media/v4l2-dev.h
-> >> @@ -179,6 +179,7 @@ struct video_device * __must_check video_device_alloc(void);
-> >>  
-> >>  int v4l_enable_media_tuner(struct video_device *vdev);
-> >>  void v4l_disable_media_tuner(struct video_device *vdev);
-> >> +int v4l_vb2q_enable_media_tuner(struct vb2_queue *q);  
-> > 
-> > Documentation?
-> >   
-> >>  
-> >>  /* this release function frees the vdev pointer */
-> >>  void video_device_release(struct video_device *vdev);  
-> 
-> 
+Indeed, I've considered the alternatives before going down that
+route. The idea you propose below was among those I eventually
+rejected. Here is why:
+
+> Can we do better?
+> Here is one crazy idea:
+> The kernel can allocate the memory that user space will mmap()
+> (ideally reusing perf ring-buffer alloc/mmap mechanism).
+> then the kernel can just write cpuid into it from any place.
+
+This requires the memory to be "mlock'd" or equivalent, because the
+kernel cannot page fault when writing to it. That memory then becomes
+impossible to swap out.
+
+Also, how large should this mmap() area be ? Since there can be a
+very large amount of threads created within a process, it would
+probably need to be extended at some point. Then how do you manage
+memory fragmentation, e.g. if there is no room left to extend the
+mapping when a thread appears ?
+
+> Then user space will register the 'offset' into this space for a given
+> user space thread (or kernel will return it or ptr within this area)
+
+This seems to require a "thread ID allocation" mechanism which allocates
+IDs for threads starting from 0, with re-use of IDs when thread go away.
+So we're adding a free-list of IDs per process or something similar.
+
+In order to eliminate false-sharing, each "entry" in this array
+would need to be at least cacheline-sized, which leads to wasted
+memory space and cache compared to the TLS approach.
+
+> and in finish_task_switch() the kernel will do
+> *task->offset_converted_to_ptr = smp_processor_id();
+> At init time the user space will do:
+> __thread int *cpuid;
+> cpuid = (void*)addr_from_mmap + registered_offset;
+> and at runtime the '*cpuid' will give userspace what it wants.
+> It's two loads to get cpuid vs getcpu_cache approach, but
+> probably still fast enough?
+
+Those per-cpu fast paths are extremely fast (they run in a couple
+of nanoseconds). Adding a pointer dereference on the fast path
+will likely be measurable.
+
+> And this way we can have a mechanism to return much bigger
+> structures to userspace. Kernel can update such area from any
+> place and user space only needs one extra load to get the base of
+> such per-cpu area and another load to fetch cpuid.
+> Thoughts?
+
+>From my understanding, your mmap-array proposal adds more complexity
+than the one call in each architecture's resume notifier it's trying
+to remove. It requires unswappable memory, a thread ID allocator, and
+leads to a slower fast-path due to the extra pointer dereference. I
+don't see this approach as a net gain over the call in the arch
+resume notifier.
+
+Thanks for the feedback!
+
+Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
