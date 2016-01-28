@@ -1,119 +1,111 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH v2 1/3] getcpu_cache system call: cache CPU number
- of running thread
-Date: Thu, 28 Jan 2016 17:41:10 +0000 (UTC)
-Message-ID: <95352831.6907.1454002870641.JavaMail.zimbra@efficios.com>
-References: <1453913683-28915-1-git-send-email-mathieu.desnoyers@efficios.com> <1453913683-28915-2-git-send-email-mathieu.desnoyers@efficios.com> <20160128031213.GA55682@ast-mbp.thefacebook.com>
+From: Jason Baron <jbaron@akamai.com>
+Subject: Re: [PATCH] epoll: add exclusive wakeups flag
+Date: Thu, 28 Jan 2016 12:57:54 -0500
+Message-ID: <56AA56A2.3000700@akamai.com>
+References: <cover.1449523436.git.jbaron@akamai.com>
+ <56A9C03B.7020104@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160128031213.GA55682-+o4/htvd0TDFYCXBM6kdu7fOX0fSgVTm@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <56A9C03B.7020104@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, akpm@linux-foundation.org
+Cc: mingo@kernel.org, peterz@infradead.org, viro@ftp.linux.org.uk, normalperson@yhbt.net, m@silodev.com, corbet@lwn.net, luto@amacapital.net, torvalds@linux-foundation.org, hagen@jauu.net, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
------ On Jan 27, 2016, at 10:12 PM, Alexei Starovoitov alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
+Hi,
 
-> On Wed, Jan 27, 2016 at 11:54:41AM -0500, Mathieu Desnoyers wrote:
->> Expose a new system call allowing threads to register one userspace
->> memory area where to store the CPU number on which the calling thread is
->> running. Scheduler migration sets the TIF_NOTIFY_RESUME flag on the
->> current thread. Upon return to user-space, a notify-resume handler
->> updates the current CPU value within each registered user-space memory
->> area. User-space can then read the current CPU number directly from
->> memory.
->> 
->> This getcpu cache is an improvement over current mechanisms available to
->> read the current CPU number, which has the following benefits:
->> 
->> - 44x speedup on ARM vs system call through glibc,
->> - 14x speedup on x86 compared to calling glibc, which calls vdso
->>   executing a "lsl" instruction,
->> - 11x speedup on x86 compared to inlined "lsl" instruction,
->> - Unlike vdso approaches, this cached value can be read from an inline
->>   assembly, which makes it a useful building block for restartable
->>   sequences.
->> - The getcpu cache approach is portable (e.g. ARM), which is not the
->>   case for the lsl-based x86 vdso.
->> 
->> On x86, yet another possible approach would be to use the gs segment
->> selector to point to user-space per-cpu data. This approach performs
->> similarly to the getcpu cache, but it has two disadvantages: it is
->> not portable, and it is incompatible with existing applications already
->> using the gs segment selector for other purposes.
+On 01/28/2016 02:16 AM, Michael Kerrisk (man-pages) wrote:
+> Hi Jason,
 > 
-> Great work!
+> On 12/08/2015 04:23 AM, Jason Baron wrote:
+>> Hi,
+>>
+>> Re-post of an old series addressing thundering herd issues when sharing
+>> an event source fd amongst multiple epoll fds. Last posting was here
+>> for reference: https://lkml.org/lkml/2015/2/25/56
+>>  
+>> The patch herein drops the core scheduler 'rotate' changes I had previously
+>> proposed as this patch seems performant without those.
+>>
+>> I was prompted to re-post this because Madars Vitolins reported some good
+>> speedups with this patch using Enduro/X application. His writeup is here:
+>> https://mvitolin.wordpress.com/2015/12/05/endurox-testing-epollexclusive-flag/
+>>
+>> Thanks,
+>>
+>> -Jason
+>>
+>> Sample epoll_clt text:
+> 
+> Thanks for the proposed text. I have some questions about points
+> that are not quite clear to me.
+> 
+>> EPOLLEXCLUSIVE
+>>         Sets an exclusive wakeup mode for the epfd file descriptor that is
+>> 	being attached to the target file descriptor, fd. Thus, when an
+>> 	event occurs and multiple epfd file descriptors are attached to the
+>> 	same target file using EPOLLEXCLUSIVE, one or more epfds will receive
+>> 	an event with epoll_wait(2). The default in this scenario (when
+>> 	EPOLLEXCLUSIVE is not set) is for all epfds to receive an event.
+>> 	EPOLLEXLUSVIE may only be specified with the op EPOLL_CTL_ADD.
+> 
+> So, assuming an FD is present in the interest list of multiple (say 6)
+> epoll FDs, and some (say 3) of those attachments were done using
+> EPOLLEXCLUSVE. Which of the following statements are correct:
+> 
+> (a) It's guaranteed that *none* of the epoll FDs that did NOT specify
+>     EPOLLEXCLUSIVE will receive an event.
+> 
+> (b) It's guaranteed that *all* of the epoll FDs that did NOT specify
+>     EPOLLEXCLUSIVE will receive an event.
+> 
+> (c) From 1 to 3 of the epoll FDs that did specify EPOLLEXCLUSIVE
+>     will receive an event.
+> 
+> (d) Exactly one epoll FD that did specify EPOLLEXCLUSIVE will get
+>     an event, and it is indeterminate which one.
+> 
 
-Thanks!
+So b and c. All the non-exclusive adds will get it and at least 1 of the
+exclusive adds will as well.
 
-> The only concern is that every arch has to implement
-> a call to getcpu_cache_handle_notify_resume() to be able to do put_user()
-> from the safe place which is not pretty.
+> I suppose one point I'm trying to uncover in the above is: what is
+> the scope of EPOLLEXCLUSIVE? Is it just applicable for one process's
+> FD, or is it setting an attribute in the epoll "interest list" record
+> for that FD that affects notification behavior across all processes?
+>
 
-Indeed, I've considered the alternatives before going down that
-route. The idea you propose below was among those I eventually
-rejected. Here is why:
+Right - so 'EPOLLEXCLUSIVE' will affect other epoll sets that are also
+using 'EPOLLEXCLUSIVE' against the the same fd, but will have no affect
+on epoll sets connected to fd that do not specify it.
 
-> Can we do better?
-> Here is one crazy idea:
-> The kernel can allocate the memory that user space will mmap()
-> (ideally reusing perf ring-buffer alloc/mmap mechanism).
-> then the kernel can just write cpuid into it from any place.
 
-This requires the memory to be "mlock'd" or equivalent, because the
-kernel cannot page fault when writing to it. That memory then becomes
-impossible to swap out.
+> And then:
+> 
+> (1) What are the semantics of EPOLLEXCLUSIVE if the added FD becomes
+>     disabled via EPOLLONESHOT (or explicitly via EPOLL_CTL_MOD with
+>     the 'events' field set to 0)?
+>
 
-Also, how large should this mmap() area be ? Since there can be a
-very large amount of threads created within a process, it would
-probably need to be extended at some point. Then how do you manage
-memory fragmentation, e.g. if there is no room left to extend the
-mapping when a thread appears ?
+In the case of EPOLLEXCLUSIVE and EPOLLONESHOT, one would have to re-arm
+at least 1 of threads that was woken up by doing EPOLL_CTL_MOD to
+guarantee further wakeups.
 
-> Then user space will register the 'offset' into this space for a given
-> user space thread (or kernel will return it or ptr within this area)
+And like-wise with an EPOLL_CTL_MOD with 'events' all set to 0, one
+would need to either re-arm the thread that set the 'events' field to 0
+(by setting back to non-zero), or re-arm in at least one other thread
+via EPOLL_CTL_MOD (or delete and add).
 
-This seems to require a "thread ID allocation" mechanism which allocates
-IDs for threads starting from 0, with re-use of IDs when thread go away.
-So we're adding a free-list of IDs per process or something similar.
+> (2) The source code contains a comment "we do not currently supported 
+>     nested exclusive wakeups". Could you elaborate on this point? It
+>     sounds like something that should be documented.
 
-In order to eliminate false-sharing, each "entry" in this array
-would need to be at least cacheline-sized, which leads to wasted
-memory space and cache compared to the TLS approach.
+So I was just trying to say that we return -EINVAL if you try to do and
+EPOLL_CTL_ADD with EPOLLEXCLUSIVE and the 'fd' argument is a epoll fd
+returned via epoll_create().
 
-> and in finish_task_switch() the kernel will do
-> *task->offset_converted_to_ptr = smp_processor_id();
-> At init time the user space will do:
-> __thread int *cpuid;
-> cpuid = (void*)addr_from_mmap + registered_offset;
-> and at runtime the '*cpuid' will give userspace what it wants.
-> It's two loads to get cpuid vs getcpu_cache approach, but
-> probably still fast enough?
+Thanks,
 
-Those per-cpu fast paths are extremely fast (they run in a couple
-of nanoseconds). Adding a pointer dereference on the fast path
-will likely be measurable.
-
-> And this way we can have a mechanism to return much bigger
-> structures to userspace. Kernel can update such area from any
-> place and user space only needs one extra load to get the base of
-> such per-cpu area and another load to fetch cpuid.
-> Thoughts?
-
->From my understanding, your mmap-array proposal adds more complexity
-than the one call in each architecture's resume notifier it's trying
-to remove. It requires unswappable memory, a thread ID allocator, and
-leads to a slower fast-path due to the extra pointer dereference. I
-don't see this approach as a net gain over the call in the arch
-resume notifier.
-
-Thanks for the feedback!
-
-Mathieu
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+-Jason
