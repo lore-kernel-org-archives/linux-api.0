@@ -1,7 +1,8 @@
 From: "Gabriel L. Somlo" <somlo@cmu.edu>
-Subject: [PATCH v6 3/5] acpi: pc: add fw_cfg device node to ssdt
-Date: Wed, 27 Jan 2016 22:02:39 -0500
-Message-ID: <1453950161-13252-4-git-send-email-somlo@cmu.edu>
+Subject: [PATCH v6 1/5] fw_cfg: expose control register size in
+	fw_cfg.h
+Date: Wed, 27 Jan 2016 22:02:37 -0500
+Message-ID: <1453950161-13252-2-git-send-email-somlo@cmu.edu>
 References: <1453950161-13252-1-git-send-email-somlo@cmu.edu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -21,65 +22,59 @@ To: gregkh@linuxfoundation.org, robh+dt@kernel.org, pawel.moll@arm.com, mark.rut
 Cc: peter.maydell@linaro.org, ehabkost@redhat.com, ard.biesheuvel@linaro.org, matt@codeblueprint.co.uk, stefanha@gmail.com, mst@redhat.com, qemu-devel@nongnu.org, leif.lindholm@linaro.org, luto@amacapital.net, kraxel@redhat.com, pbonzini@redhat.com, imammedo@redhat.com, revol@free.fr, rth@twiddle.net
 List-Id: linux-api@vger.kernel.org
 
-Add a fw_cfg device node to the ACPI SSDT. While the guest-side
-firmware can't utilize this information (since it has to access
-the hard-coded fw_cfg device to extract ACPI tables to begin with),
-having fw_cfg listed in ACPI will help the guest kernel keep a more
-accurate inventory of in-use IO port regions.
+Expose the size of the control register (FW_CFG_CTL_SIZE) in fw_cfg.h.
+Add comment to fw_cfg_io_realize() pointing out that since the
+8-bit data register is always subsumed by the 16-bit control
+register in the port I/O case, we use the control register width
+as the *total* width of the (classic, non-DMA) port I/O region reserved
+for the device.
 
+Cc: Marc Mar=C3=AD <markmb@redhat.com>
 Signed-off-by: Gabriel Somlo <somlo@cmu.edu>
 Reviewed-by: Laszlo Ersek <lersek@redhat.com>
 Reviewed-by: Marc Mar=C3=AD <markmb@redhat.com>
 ---
- hw/i386/acpi-build.c | 29 +++++++++++++++++++++++++++++
- 1 file changed, 29 insertions(+)
+ hw/nvram/fw_cfg.c         | 4 +++-
+ include/hw/nvram/fw_cfg.h | 3 +++
+ 2 files changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/hw/i386/acpi-build.c b/hw/i386/acpi-build.c
-index 78758e2..8a9ae9d 100644
---- a/hw/i386/acpi-build.c
-+++ b/hw/i386/acpi-build.c
-@@ -2100,6 +2100,35 @@ build_ssdt(GArray *table_data, GArray *linker,
-     aml_append(scope, aml_name_decl("_S5", pkg));
-     aml_append(ssdt, scope);
+diff --git a/hw/nvram/fw_cfg.c b/hw/nvram/fw_cfg.c
+index a1d650d..06a4ff0 100644
+--- a/hw/nvram/fw_cfg.c
++++ b/hw/nvram/fw_cfg.c
+@@ -31,7 +31,6 @@
+ #include "qemu/error-report.h"
+ #include "qemu/config-file.h"
 =20
-+    /* create fw_cfg node, unconditionally */
-+    {
-+        /* when using port i/o, the 8-bit data register *always* overlap=
-s
-+         * with half of the 16-bit control register. Hence, the total si=
-ze
-+         * of the i/o region used is FW_CFG_CTL_SIZE; when using DMA, th=
-e
-+         * DMA control register is located at FW_CFG_DMA_IO_BASE + 4 */
-+        uint8_t io_size =3D object_property_get_bool(OBJECT(guest_info->=
-fw_cfg),
-+                                                   "dma_enabled", NULL) =
-?
-+                          ROUND_UP(FW_CFG_CTL_SIZE, 4) + sizeof(dma_addr=
-_t) :
-+                          FW_CFG_CTL_SIZE;
+-#define FW_CFG_CTL_SIZE 2
+ #define FW_CFG_NAME "fw_cfg"
+ #define FW_CFG_PATH "/machine/" FW_CFG_NAME
+=20
+@@ -881,6 +880,9 @@ static void fw_cfg_io_realize(DeviceState *dev, Error=
+ **errp)
+     FWCfgIoState *s =3D FW_CFG_IO(dev);
+     SysBusDevice *sbd =3D SYS_BUS_DEVICE(dev);
+=20
++    /* when using port i/o, the 8-bit data register ALWAYS overlaps
++     * with half of the 16-bit control register. Hence, the total size
++     * of the i/o region used is FW_CFG_CTL_SIZE */
+     memory_region_init_io(&s->comb_iomem, OBJECT(s), &fw_cfg_comb_mem_op=
+s,
+                           FW_CFG(s), "fwcfg", FW_CFG_CTL_SIZE);
+     sysbus_add_io(sbd, s->iobase, &s->comb_iomem);
+diff --git a/include/hw/nvram/fw_cfg.h b/include/hw/nvram/fw_cfg.h
+index 664eaf6..2667ca9 100644
+--- a/include/hw/nvram/fw_cfg.h
++++ b/include/hw/nvram/fw_cfg.h
+@@ -46,6 +46,9 @@
+=20
+ #define FW_CFG_INVALID          0xffff
+=20
++/* width in bytes of fw_cfg control register */
++#define FW_CFG_CTL_SIZE         0x02
 +
-+        scope =3D aml_scope("\\_SB");
-+        dev =3D aml_device("FWCF");
-+
-+        aml_append(dev, aml_name_decl("_HID", aml_string("QEMU0002")));
-+
-+        /* device present, functioning, decoding, not shown in UI */
-+        aml_append(dev, aml_name_decl("_STA", aml_int(0xB)));
-+
-+        crs =3D aml_resource_template();
-+        aml_append(crs,
-+            aml_io(AML_DECODE16, FW_CFG_IO_BASE, FW_CFG_IO_BASE, 0x01, i=
-o_size)
-+        );
-+        aml_append(dev, aml_name_decl("_CRS", crs));
-+
-+        aml_append(scope, dev);
-+        aml_append(ssdt, scope);
-+    }
-+
-     if (misc->applesmc_io_base) {
-         scope =3D aml_scope("\\_SB.PCI0.ISA");
-         dev =3D aml_device("SMC");
+ #define FW_CFG_MAX_FILE_PATH    56
+=20
+ #ifndef NO_QEMU_PROTOS
 --=20
 2.4.3
