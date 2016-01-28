@@ -1,95 +1,81 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: [RFC PATCH v3 1/5] getcpu_cache system call: cache CPU number
- of running thread
-Date: Thu, 28 Jan 2016 22:52:13 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1601282205290.3886@nanos>
-References: <1454014885-29012-1-git-send-email-mathieu.desnoyers@efficios.com> <1454014885-29012-2-git-send-email-mathieu.desnoyers@efficios.com>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: Re: [PATCH REBASE 4.5 00/31] Sharing media resources across ALSA and
+ au0828 drivers
+Date: Thu, 28 Jan 2016 14:55:23 -0700
+Message-ID: <56AA8E4B.8080105@osg.samsung.com>
+References: <cover.1453336830.git.shuahkh@osg.samsung.com>
+ <56AA2C37.3090309@osg.samsung.com> <s5h60yd7mwo.wl-tiwai@suse.de>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1454014885-29012-2-git-send-email-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <s5h60yd7mwo.wl-tiwai@suse.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Takashi Iwai <tiwai@suse.de>
+Cc: hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com, mchehab@osg.samsung.com, alsa-devel@alsa-project.org, arnd@arndb.de, ricard.wanderlof@axis.com, labbott@fedoraproject.org, chehabrafael@gmail.com, misterpib@gmail.com, prabhakar.csengg@gmail.com, ricardo.ribalda@gmail.com, ruchandani.tina@gmail.com, takamichiho@gmail.com, tvboxspy@gmail.com, dominic.sacre@gmx.de, crope@iki.fi, julian@jusst.de, clemens@ladisch.de, pierre-louis.bossart@linux.intel.com, corbet@lwn.net, joe@oampo.co.uk, johan@oljud.se, dan.carpenter@oracle.com, pawel@osciak.com, p.zabel@pengutronix.de, perex@perex.cz, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, k.kozlowski@samsung.com, kyungmin.park@samsung.com, m.szyprowski@samsung.com, sw0312.kim@samsung.com, elfring@users.sourceforge.net, linux-api@vger.kernel.o
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 28 Jan 2016, Mathieu Desnoyers wrote:
+On 01/28/2016 08:18 AM, Takashi Iwai wrote:
+> On Thu, 28 Jan 2016 15:56:55 +0100,
+> Shuah Khan wrote:
+>>
+>> On 01/21/2016 11:09 AM, Shuah Khan wrote:
+>>> Please note that I am sending just the 4 patches that
+>>> changed during series rebase to Linux 4.5. The rebase
+>>> was pain free. media_device_init() type change required
+>>> changes to patches 18 and 26. I re-tested the series
+>>> and everything looks good.
+>>>
+>>> [PATCH 16/31] media: au0828 video remove au0828_enable_analog_tuner()
+>>> [PATCH 18/31] media: au0828 change to use Managed Media Controller API
+>>> [PATCH 22/31] media: dvb-core create tuner to demod pad link in disabled state
+>>> [PATCH v3 26/31] sound/usb: Update ALSA driver to use Managed Media Controller API
+>>>
+>>> Links:
+>>> PATCH Series that contains all 31 patches:
+>>> https://lkml.org/lkml/2016/1/6/668
+>>>
+>>> ALSA patches went through reviews and links
+>>> to PATCH V3 (ALSA):
+>>> https://lkml.org/lkml/2016/1/18/556
+>>> https://lkml.org/lkml/2016/1/18/557
+>>> https://lkml.org/lkml/2016/1/18/558
+>>>
+>>> Compile warns patches:
+>>> https://lkml.org/lkml/2016/1/19/520
+>>> https://lkml.org/lkml/2016/1/19/518
+>>> https://lkml.org/lkml/2016/1/19/519
+>>>
+>>> Mauro and Takashi:
+>>> Please let me know if you would rather see the entire
+>>> patch series generated for 4.5-rc1 and sent out in a
+>>> complete series instead of just the rebased patches.
+>>>
+>>
+>> Hi Takashi,
+>>
+>> Are you okay with this ALSA patch series?
+> 
+> Sorry, too little time until now.
+> I know there are still a few potential problems.  Will do detailed
+> reviews later.
+> 
 
-> +static int __get_cpu_cache_ptr(int32_t __user **cpu_cache,
+I would like to wrap this up and hopefully get this
+into 4.6. Please let me know if you will be able to
+review in time for that.
 
-cpu_cache is __user ????
+I have a few comments work on from Mauro and would
+like to address comments from you as well at the same
+time.
 
-> +		int32_t __user * __user *cpu_cachep)
-> +{
-> +#ifdef CONFIG_COMPAT
-> +	if (is_compat_task()) {
-> +		compat_uptr_t *compat_cachep = (compat_uptr_t *) cpu_cachep;
-> +		compat_uptr_t compat_cache;
-> +
-> +		if (get_user(compat_cache, compat_cachep))
-> +			return -EFAULT;
-> +		*cpu_cache = compat_ptr(compat_cache);
+thanks,
+-- Shuah
 
-sparse should have told you that :)
 
-> +		return 0;
-> +	}
-> +#endif
-> +	return get_user(*cpu_cache, cpu_cachep);
-> +}
-> +
-> +#define get_cpu_cache_ptr(cpu_cache, cpu_cachep)	\
-> +	__get_cpu_cache_ptr(&(cpu_cache), cpu_cachep)
-> +
-> +static int put_cpu_cache_ptr(int32_t __user *cpu_cache,
-
-Ditto
-
-> +		int32_t __user * __user *cpu_cachep)
-> +{
-> +#ifdef CONFIG_COMPAT
-> +	if (is_compat_task()) {
-> +		compat_uptr_t compat_cache = ptr_to_compat(cpu_cache);
-> +		compat_uptr_t *compat_cachep = (compat_uptr_t *) cpu_cachep;
-> +
-> +		return put_user(compat_cache, compat_cachep);
-> +	}
-> +#endif
-> +	return put_user(cpu_cache, cpu_cachep);
-> +}
-> +		current->cpu_cache = cpu_cache;
-> +		/*
-> +		 * Migration checks the getcpu cache to see whether the
-> +		 * notify_resume flag should be set.
-> +		 * Therefore, we need to ensure that the scheduler sees
-> +		 * the getcpu cache pointer update before we update the getcpu
-> +		 * cache content with the current CPU number.
-> +		 */
-> +		barrier();
-
-And how does that barrier ensure this? Not at all. And why would the scheduler
-care? All the scheduler cares about is tsk->cpu_cache.
-
-> +		/*
-> +		 * Do an initial cpu cache update to ensure we won't hit
-> +		 * SIGSEGV if put_user() fails in the resume notifier.
-> +		 */
-
-If you get migrated before that call, then you SIGSEGV nevertheless.
-
-You need that call here for the case you are NOT migrated before returning to
-user space because otherwise the variable is not updated.
-
-If you want to verify that user address without a potential SIGSEGV, then you
-need to do this before setting current->cpu_cache. You still need the update
-after setting current->cpu_cache.
-
-> +		if (getcpu_cache_update(cpu_cache)) {
-> +			current->cpu_cache = NULL;
-> +			return -EFAULT;
-> +		}
-> +		return 0;
-
-Thanks,
-
-	tglx
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh@osg.samsung.com | (970) 217-8978
