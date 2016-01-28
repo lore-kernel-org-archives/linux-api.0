@@ -1,237 +1,93 @@
 From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH 23/31] media: au0828 implement enable_source and
- disable_source handlers
-Date: Thu, 28 Jan 2016 13:14:25 -0700
-Message-ID: <56AA76A1.7040107@osg.samsung.com>
+Subject: Re: [PATCH 24/31] media: au0828 fix null pointer reference in
+ au0828_create_media_graph()
+Date: Thu, 28 Jan 2016 13:15:28 -0700
+Message-ID: <56AA76E0.2080208@osg.samsung.com>
 References: <cover.1452105878.git.shuahkh@osg.samsung.com>
- <6d1f10b616fc3c8b016cf0e335de569012400de8.1452105878.git.shuahkh@osg.samsung.com>
- <20160128144332.39dc8b4b@recife.lan>
+ <33b9da8f01b1d94844ac677efd31a66c40c39ecb.1452105878.git.shuahkh@osg.samsung.com>
+ <20160128144443.6a8b08a7@recife.lan>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-media-owner@vger.kernel.org>
-In-Reply-To: <20160128144332.39dc8b4b@recife.lan>
+In-Reply-To: <20160128144443.6a8b08a7@recife.lan>
 Sender: linux-media-owner@vger.kernel.org
-To: Mauro Carvalho Chehab <mchehab@osg.samsung.com>, hans.verkuil@cisco.com
-Cc: tiwai@suse.com, clemens@ladisch.de, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittgam.net, johan@oljud.se
+To: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+Cc: tiwai@suse.com, clemens@ladisch.de, hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittga
 List-Id: linux-api@vger.kernel.org
 
-On 01/28/2016 09:43 AM, Mauro Carvalho Chehab wrote:
-> Em Wed,  6 Jan 2016 13:27:12 -0700
+On 01/28/2016 09:44 AM, Mauro Carvalho Chehab wrote:
+> Em Wed,  6 Jan 2016 13:27:13 -0700
 > Shuah Khan <shuahkh@osg.samsung.com> escreveu:
 > 
->> Implements enable_source and disable_source handlers for other
->> drivers (v4l2-core, dvb-core, and ALSA) to use to check for
->> tuner connected to the decoder and activate the link if tuner
->> is free, and deactivate and free the tuner when it is no longer
->> needed.
+>> Add a new wrapper function to au0828_create_media_graph()
+>> to be called as an entity_notify function to fix null
+>> pointer dereference. A rebasing mistake resulted in
+>> registering au0828_create_media_graph() without the
+>> correct parameters which lead to the following
+>> null pointer dereference:
 >>
->> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
->> ---
->>  drivers/media/usb/au0828/au0828-core.c | 148 +++++++++++++++++++++++++++++++++
->>  drivers/media/usb/au0828/au0828.h      |   2 +
->>  2 files changed, 150 insertions(+)
->>
->> diff --git a/drivers/media/usb/au0828/au0828-core.c b/drivers/media/usb/au0828/au0828-core.c
->> index a15a61a..f8d2db3 100644
->> --- a/drivers/media/usb/au0828/au0828-core.c
->> +++ b/drivers/media/usb/au0828/au0828-core.c
->> @@ -370,6 +370,150 @@ static int au0828_create_media_graph(struct au0828_dev *dev)
->>  	return 0;
->>  }
->>  
->> +static int au0828_enable_source(struct media_entity *entity,
->> +				struct media_pipeline *pipe)
->> +{
+>> [   69.006164] Call Trace:
+>> [   69.006169]  [<ffffffff81a9a1b0>] dump_stack+0x44/0x64
+>> [   69.006175]  [<ffffffff81503af9>] print_trailer+0xf9/0x150
+>> [   69.006180]  [<ffffffff81509284>] object_err+0x34/0x40
+>> [   69.006185]  [<ffffffff815063c4>] ? ___slab_alloc+0x4c4/0x4e0
+>> [   69.006190]  [<ffffffff8150b732>] kasan_report_error+0x212/0x520
+>> [   69.006196]  [<ffffffff815063c4>] ? ___slab_alloc+0x4c4/0x4e0
+>> [   69.006201]  [<ffffffff8150ba83>] __asan_report_load1_noabort+0x43/0x50
+>> [   69.006208]  [<ffffffffa0d30991>] ? au0828_create_media_graph+0x641/0x730 [au0828]
+>> [   69.006215]  [<ffffffffa0d30991>] au0828_create_media_graph+0x641/0x730 [au0828]
+>> [   69.006221]  [<ffffffff82245c3d>] media_device_register_entity+0x33d/0x4f0
+>> [   69.006234]  [<ffffffffa0ebeb1c>] media_stream_init+0x2ac/0x610 [snd_usb_audio]
+>> [   69.006247]  [<ffffffffa0ea9a70>] snd_usb_pcm_open+0xcd0/0x1280 [snd_usb_audio]
 > 
-> The best would be to put those enable source stuff at the core, in a way
-> that other drivers could share it.
+> Please merge the fix with the patch that caused the regression.
 
-Hans and I discussed this at the Media Summit in Finland.
-It will be very difficult to make this work in a generic
-way. Besides, bridge driver knows the hardware it has and
-it would make sense for it to implement enable and disable
-source handlers.
-
-> 
-> Not sure about the implementation, as this requires testing ;)
-> Did you consider the cases where the source connector is S-Video
-> or Composite?
-
-I think you asked this question on another patch and Devin
-responded to that thread. Let's discuss it there.
+ok will merge it.
 
 thanks,
 -- Shuah
 > 
->> +#ifdef CONFIG_MEDIA_CONTROLLER
->> +	struct media_entity  *source;
->> +	struct media_entity *sink;
->> +	struct media_link *link, *found_link = NULL;
->> +	int ret = 0;
->> +	struct media_device *mdev = entity->graph_obj.mdev;
->> +	struct au0828_dev *dev;
->> +
->> +	if (!mdev)
->> +		return -ENODEV;
->> +
->> +	/* for Audio and Video entities, source is the decoder */
->> +	mutex_lock(&mdev->graph_mutex);
->> +
->> +	dev = mdev->source_priv;
->> +	if (!dev->tuner || !dev->decoder) {
->> +		ret = -ENODEV;
->> +		goto end;
->> +	}
->> +
->> +	/*
->> +	 * For Audio and V4L2 entity, find the link to which decoder
->> +	 * is the sink. Look for an active link between decoder and
->> +	 * tuner, if one exists, nothing to do. If not, look for any
->> +	 * active links between tuner and any other entity. If one
->> +	 * exists, tuner is busy. If tuner is free, setup link and
->> +	 * start pipeline from source (tuner).
->> +	 * For DVB FE entity, the source for the link is the tuner.
->> +	 * Check if tuner is available and setup link and start
->> +	 * pipeline.
->> +	*/
->> +	if (entity->function != MEDIA_ENT_F_DTV_DEMOD)
->> +		sink = dev->decoder;
->> +	else
->> +		sink = entity;
->> +
->> +	/* Is an active link between sink and tuner */
->> +	if (dev->active_link) {
->> +		if (dev->active_link->sink->entity == sink &&
->> +		    dev->active_link->source->entity == dev->tuner) {
->> +			ret = 0;
->> +			goto end;
->> +		} else {
->> +			ret = -EBUSY;
->> +			goto end;
->> +		}
->> +	}
->> +
->> +	list_for_each_entry(link, &sink->links, list) {
->> +		/* Check sink, and source */
->> +		if (link->sink->entity == sink &&
->> +		    link->source->entity == dev->tuner) {
->> +			found_link = link;
->> +			break;
->> +		}
->> +	}
->> +
->> +	if (!found_link) {
->> +		ret = -ENODEV;
->> +		goto end;
->> +	}
->> +
->> +	/* activate link between source and sink and start pipeline */
->> +	source = found_link->source->entity;
->> +	ret = __media_entity_setup_link(found_link, MEDIA_LNK_FL_ENABLED);
->> +	if (ret) {
->> +		pr_err(
->> +			"Activate tuner link %s->%s. Error %d\n",
->> +			source->name, sink->name, ret);
->> +		goto end;
->> +	}
->> +
->> +	ret = __media_entity_pipeline_start(entity, pipe);
->> +	if (ret) {
->> +		pr_err("Start Pipeline: %s->%s Error %d\n",
->> +			source->name, entity->name, ret);
->> +		ret = __media_entity_setup_link(found_link, 0);
->> +		pr_err("Deactive link Error %d\n", ret);
->> +		goto end;
->> +	}
->> +	/*
->> +	 * save active link and active link owner to avoid audio
->> +	 * deactivating video owned link from disable_source and
->> +	 * vice versa
->> +	*/
->> +	dev->active_link = found_link;
->> +	dev->active_link_owner = entity;
->> +end:
->> +	mutex_unlock(&mdev->graph_mutex);
->> +	pr_debug("au0828_enable_source() end %s %d %d\n",
->> +		entity->name, entity->function, ret);
->> +	return ret;
->> +#endif
->> +	return 0;
->> +}
->> +
->> +static void au0828_disable_source(struct media_entity *entity)
->> +{
->> +#ifdef CONFIG_MEDIA_CONTROLLER
->> +	struct media_entity *sink;
->> +	int ret = 0;
->> +	struct media_device *mdev = entity->graph_obj.mdev;
->> +	struct au0828_dev *dev;
->> +
->> +	if (!mdev)
->> +		return;
->> +
->> +	mutex_lock(&mdev->graph_mutex);
->> +	dev = mdev->source_priv;
->> +	if (!dev->tuner || !dev->decoder || !dev->active_link) {
->> +		ret = -ENODEV;
->> +		goto end;
->> +	}
->> +
->> +	if (entity->function != MEDIA_ENT_F_DTV_DEMOD)
->> +		sink = dev->decoder;
->> +	else
->> +		sink = entity;
->> +
->> +	/* link is active - stop pipeline from source (tuner) */
->> +	if (dev->active_link && dev->active_link->sink->entity == sink &&
->> +	    dev->active_link->source->entity == dev->tuner) {
->> +		/*
->> +		 * prevent video from deactivating link when audio
->> +		 * has active pipeline
->> +		*/
->> +		if (dev->active_link_owner != entity)
->> +			goto end;
->> +		__media_entity_pipeline_stop(entity);
->> +		ret = __media_entity_setup_link(dev->active_link, 0);
->> +		if (ret)
->> +			pr_err("Deactive link Error %d\n", ret);
->> +		dev->active_link = NULL;
->> +		dev->active_link_owner = NULL;
->> +	}
->> +
->> +end:
->> +	mutex_unlock(&mdev->graph_mutex);
->> +#endif
->> +}
->> +
->>  static int au0828_media_device_register(struct au0828_dev *dev,
->>  					struct usb_device *udev)
->>  {
->> @@ -400,6 +544,10 @@ static int au0828_media_device_register(struct au0828_dev *dev,
->>  			ret);
->>  		return ret;
->>  	}
->> +	/* set enable_source */
->> +	dev->media_dev->source_priv = (void *) dev;
->> +	dev->media_dev->enable_source = au0828_enable_source;
->> +	dev->media_dev->disable_source = au0828_disable_source;
->>  #endif
+>>
+>> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
+>> ---
+>>  drivers/media/usb/au0828/au0828-core.c | 16 +++++++++++++++-
+>>  1 file changed, 15 insertions(+), 1 deletion(-)
+>>
+>> diff --git a/drivers/media/usb/au0828/au0828-core.c b/drivers/media/usb/au0828/au0828-core.c
+>> index f8d2db3..9497ad1 100644
+>> --- a/drivers/media/usb/au0828/au0828-core.c
+>> +++ b/drivers/media/usb/au0828/au0828-core.c
+>> @@ -370,6 +370,20 @@ static int au0828_create_media_graph(struct au0828_dev *dev)
 >>  	return 0;
 >>  }
->> diff --git a/drivers/media/usb/au0828/au0828.h b/drivers/media/usb/au0828/au0828.h
->> index cfb6d58..3707664 100644
->> --- a/drivers/media/usb/au0828/au0828.h
->> +++ b/drivers/media/usb/au0828/au0828.h
->> @@ -289,6 +289,8 @@ struct au0828_dev {
->>  	bool vdev_linked;
->>  	bool vbi_linked;
->>  	bool audio_capture_linked;
->> +	struct media_link *active_link;
->> +	struct media_entity *active_link_owner;
->>  #endif
->>  };
 >>  
+>> +void au0828_create_media_graph_notify(struct media_entity *new,
+>> +				      void *notify_data)
+>> +{
+>> +#ifdef CONFIG_MEDIA_CONTROLLER
+>> +	struct au0828_dev *dev = (struct au0828_dev *) notify_data;
+>> +	int ret;
+>> +
+>> +	ret = au0828_create_media_graph(dev);
+>> +	if (ret)
+>> +		pr_err("%s() media graph create failed for new entity %s\n",
+>> +		       __func__, new->name);
+>> +#endif
+>> +}
+>> +
+>>  static int au0828_enable_source(struct media_entity *entity,
+>>  				struct media_pipeline *pipe)
+>>  {
+>> @@ -535,7 +549,7 @@ static int au0828_media_device_register(struct au0828_dev *dev,
+>>  	}
+>>  	/* register entity_notify callback */
+>>  	dev->entity_notify.notify_data = (void *) dev;
+>> -	dev->entity_notify.notify = (void *) au0828_create_media_graph;
+>> +	dev->entity_notify.notify = au0828_create_media_graph_notify;
+>>  	ret = media_device_register_entity_notify(dev->media_dev,
+>>  						  &dev->entity_notify);
+>>  	if (ret) {
 
 
 -- 
