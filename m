@@ -1,76 +1,88 @@
-From: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
-Subject: Re: [PATCH v1] mm/madvise: pass return code of memory_failure() to
- userspace
-Date: Thu, 28 Jan 2016 05:49:11 +0000
-Message-ID: <20160128054910.GA5512@hori1.linux.bs1.fc.nec.co.jp>
-References: <1453451277-20979-1-git-send-email-n-horiguchi@ah.jp.nec.com>
- <56A8CD2F.5080903@suse.cz>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] epoll: add exclusive wakeups flag
+Date: Thu, 28 Jan 2016 08:16:11 +0100
+Message-ID: <56A9C03B.7020104@gmail.com>
+References: <cover.1449523436.git.jbaron@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-2022-jp"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <56A8CD2F.5080903@suse.cz>
-Content-Language: ja-JP
-Content-ID: <660470AA4C6CBE4BBBE0AA15FAA87D66@gisp.nec.co.jp>
-Sender: owner-linux-mm@kvack.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Chen Gong <gong.chen@linux.intel.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Naoya Horiguchi <nao.horiguchi@gmail.com>, Linux API <linux-api@vger.kernel.org>, "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <cover.1449523436.git.jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, viro-rfM+Q5joDG/XmaaqVzeoHQ@public.gmane.org, normalperson-rMlxZR9MS24@public.gmane.org, m@silodev.com, corbet-T1hC0tSOHrs@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, hagen-GvnIQ6b/HdU@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jan 27, 2016 at 02:59:11PM +0100, Vlastimil Babka wrote:
-> [CC +=3D linux-api, linux-man]
->=20
-> On 01/22/2016 09:27 AM, Naoya Horiguchi wrote:
-> > Currently the return value of memory_failure() is not passed to userspa=
-ce, which
-> > is inconvenient for test programs that want to know the result of error=
- handling.
-> > So let's return it to the caller as we already do in MADV_SOFT_OFFLINE =
-case.
-> >=20
-> > Signed-off-by: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
-> > ---
-> >  mm/madvise.c | 5 +++--
-> >  1 file changed, 3 insertions(+), 2 deletions(-)
-> >=20
-> > diff --git v4.4-mmotm-2016-01-20-16-10/mm/madvise.c v4.4-mmotm-2016-01-=
-20-16-10_patched/mm/madvise.c
-> > index f56825b..6a77114 100644
-> > --- v4.4-mmotm-2016-01-20-16-10/mm/madvise.c
-> > +++ v4.4-mmotm-2016-01-20-16-10_patched/mm/madvise.c
-> > @@ -555,8 +555,9 @@ static int madvise_hwpoison(int bhv, unsigned long =
-start, unsigned long end)
-> >  		}
-> >  		pr_info("Injecting memory failure for page %#lx at %#lx\n",
-> >  		       page_to_pfn(p), start);
-> > -		/* Ignore return value for now */
-> > -		memory_failure(page_to_pfn(p), 0, MF_COUNT_INCREASED);
-> > +		ret =3D memory_failure(page_to_pfn(p), 0, MF_COUNT_INCREASED);
-> > +		if (ret)
-> > +			return ret;
->=20
-> Can you explain what madvise can newly return for MADV_HWPOISON in which
-> situations, for the purposes of updated man page?
+Hi Jason,
 
-OK, this patch newly allows madvise(MADV_HWPOISON) to return EBUSY when
-error handling failed due to 2 major reasons:
- - the target page is a page type which memory error handler doesn't suppor=
-t
-   (like slab pages, kernel-reserved pages)
- - the memory error handler failed to isolate the target page (for example,
-   due to failure in unmapping)
+On 12/08/2015 04:23 AM, Jason Baron wrote:
+> Hi,
+> 
+> Re-post of an old series addressing thundering herd issues when sharing
+> an event source fd amongst multiple epoll fds. Last posting was here
+> for reference: https://lkml.org/lkml/2015/2/25/56
+>  
+> The patch herein drops the core scheduler 'rotate' changes I had previously
+> proposed as this patch seems performant without those.
+> 
+> I was prompted to re-post this because Madars Vitolins reported some good
+> speedups with this patch using Enduro/X application. His writeup is here:
+> https://mvitolin.wordpress.com/2015/12/05/endurox-testing-epollexclusive-flag/
+> 
+> Thanks,
+> 
+> -Jason
+> 
+> Sample epoll_clt text:
 
-And for man page purpose, errnos of MADV_SOFT_OFFLINE is not documented eit=
-her.
-So let me refer to 2 possible error code from madvise(MADV_SOFT_OFFLINE):
- - EBUSY: failed to isolate from lru list,
- - EIO: failed to migrate the target page to another page.
+Thanks for the proposed text. I have some questions about points
+that are not quite clear to me.
+
+> EPOLLEXCLUSIVE
+>         Sets an exclusive wakeup mode for the epfd file descriptor that is
+> 	being attached to the target file descriptor, fd. Thus, when an
+> 	event occurs and multiple epfd file descriptors are attached to the
+> 	same target file using EPOLLEXCLUSIVE, one or more epfds will receive
+> 	an event with epoll_wait(2). The default in this scenario (when
+> 	EPOLLEXCLUSIVE is not set) is for all epfds to receive an event.
+> 	EPOLLEXLUSVIE may only be specified with the op EPOLL_CTL_ADD.
+
+So, assuming an FD is present in the interest list of multiple (say 6)
+epoll FDs, and some (say 3) of those attachments were done using
+EPOLLEXCLUSVE. Which of the following statements are correct:
+
+(a) It's guaranteed that *none* of the epoll FDs that did NOT specify
+    EPOLLEXCLUSIVE will receive an event.
+
+(b) It's guaranteed that *all* of the epoll FDs that did NOT specify
+    EPOLLEXCLUSIVE will receive an event.
+
+(c) From 1 to 3 of the epoll FDs that did specify EPOLLEXCLUSIVE
+    will receive an event.
+
+(d) Exactly one epoll FD that did specify EPOLLEXCLUSIVE will get
+    an event, and it is indeterminate which one.
+
+I suppose one point I'm trying to uncover in the above is: what is
+the scope of EPOLLEXCLUSIVE? Is it just applicable for one process's
+FD, or is it setting an attribute in the epoll "interest list" record
+for that FD that affects notification behavior across all processes?
+
+And then:
+
+(1) What are the semantics of EPOLLEXCLUSIVE if the added FD becomes
+    disabled via EPOLLONESHOT (or explicitly via EPOLL_CTL_MOD with
+    the 'events' field set to 0)?
+
+(2) The source code contains a comment "we do not currently supported 
+    nested exclusive wakeups". Could you elaborate on this point? It
+    sounds like something that should be documented.
 
 Thanks,
-Naoya Horiguchi=
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Michael
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
