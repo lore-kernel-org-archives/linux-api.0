@@ -1,66 +1,114 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH 15/31] media: dvb-frontend invoke enable/disable_source
- handlers
-Date: Thu, 28 Jan 2016 09:59:38 -0700
-Message-ID: <56AA48FA.7070203@osg.samsung.com>
+From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+Subject: Re: [PATCH 29/31] media: track media device unregister in progress
+Date: Thu, 28 Jan 2016 15:01:05 -0200
+Message-ID: <20160128150105.06a9a18d@recife.lan>
 References: <cover.1452105878.git.shuahkh@osg.samsung.com>
- <1591b6cf2025fa95a13e3b7dde52aa0e0bde0bb4.1452105878.git.shuahkh@osg.samsung.com>
- <20160128135304.3daa79f1@recife.lan>
- <20160128160711.029f3faf@lxorguk.ukuu.org.uk>
+	<151cfbe0e59b3d5396951bdcc29666614575f5bc.1452105878.git.shuahkh@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160128160711.029f3faf-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: tiwai-IBi9RG/b67k@public.gmane.org, clemens-P6GI/4k7KOmELgA04lAiVw@public.gmane.org, hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org, laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org, sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, javier-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org, m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, perex-/Fr2/VpizcU@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, tvboxspy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, crope-X3B1VOXEql0@public.gmane.org, ruchandani.tina-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, chehabrafael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, stefanr-MtYdepGKPcBMYopoZt5u/LNAH6kLmebB@public.gmane.org, inki.dae-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, jh1009.sung-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, elfring-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, sw0312.kim-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, ricardo.ribalda-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, labbott-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org, pierre-louis.bossart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, ricard.wanderlof-VrBV9hrLPhE@public.gmane.org, julian-SZMMDGyaqes@public.gmane.org, takamichiho-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dominic.sacre-Mmb7MZpHnFY@public.gmane.org, misterpib-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, gtmkramer-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org, normalperson-rMlxZR9MS24@public.gmane.org, joe-amhYAVlgbXj10XsdtD+oqA@public.gmane.org, linuxbugs@vittga
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <151cfbe0e59b3d5396951bdcc29666614575f5bc.1452105878.git.shuahkh@osg.samsung.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Shuah Khan <shuahkh@osg.samsung.com>
+Cc: tiwai@suse.com, clemens@ladisch.de, hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittga
 List-Id: linux-api@vger.kernel.org
 
-On 01/28/2016 09:07 AM, One Thousand Gnomes wrote:
-> On Thu, 28 Jan 2016 13:53:04 -0200
-> Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+Em Wed,  6 Jan 2016 13:27:18 -0700
+Shuah Khan <shuahkh@osg.samsung.com> escreveu:
+
+> Add support to track media device unregister in progress
+> state to prevent more than one driver entering unregister.
+> This enables fixing the general protection faults while
+> snd-usb-audio was cleaning up media resources for pcm
+> streams and mixers. In this patch a new interface is added
+> to return the unregister in progress state. Subsequent
+> patches to snd-usb-audio and au0828-core use this interface
+> to avoid entering unregister and attempting to unregister
+> entities and remove devnodes while unregister is in progress.
+> Media device unregister removes entities and interface nodes.
+
+Hmm... isn't the spinlock enough to serialize it? It seems weird the
+need of an extra bool here to warrant that this is really serialized.
+
 > 
->> Em Wed,  6 Jan 2016 13:27:04 -0700
->> Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> escreveu:
->>
->>> Checking for tuner availability from frontend thread start
->>> disrupts video stream. Change to check for tuner and start
->>> pipeline from frontend open instead and stop pipeline from
->>> frontend release.  
->>
->> That's wrong, as DVB can be opened on read-only mode, where
->> it won't be changing anything.
-
-Correct. Please check the code. Tuner availability check is
-done when the device is opened in Write mode in the following
-conditional.
-
-       if ((file->f_flags & O_ACCMODE) != O_RDONLY) {
-
->>
->> Also, I don't think POSIX allows to return an error like EBUSY
->> on open:
->> 	http://pubs.opengroup.org/onlinepubs/9699919799/functions/open.html
+> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
+> ---
+>  drivers/media/media-device.c |  5 ++++-
+>  include/media/media-device.h | 17 +++++++++++++++++
+>  2 files changed, 21 insertions(+), 1 deletion(-)
 > 
-> It doesn't document all the errors you may return. Quite a lot of
-> kernel drivers return EBUSY when they are "single open" things.
-> 
-> POSIX documents certain cases that *must* error and what the error code
-> is. It documents certain possible failures and what their error code is.
-> Beyond that it's up to you.
-> 
-
-Returning EBUSY clearly indicates the reason why the device
-can't be opened in this case.
-
-thanks,
--- Shuah
-
-
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+> diff --git a/drivers/media/media-device.c b/drivers/media/media-device.c
+> index 20c85a9..1bb9a5f 100644
+> --- a/drivers/media/media-device.c
+> +++ b/drivers/media/media-device.c
+> @@ -749,10 +749,13 @@ void media_device_unregister(struct media_device *mdev)
+>  	spin_lock(&mdev->lock);
+>  
+>  	/* Check if mdev was ever registered at all */
+> -	if (!media_devnode_is_registered(&mdev->devnode)) {
+> +	/* check if unregister is in progress */
+> +	if (!media_devnode_is_registered(&mdev->devnode) ||
+> +	    mdev->unregister_in_progress) {
+>  		spin_unlock(&mdev->lock);
+>  		return;
+>  	}
+> +	mdev->unregister_in_progress = true;
+>  
+>  	/* Remove all entities from the media device */
+>  	list_for_each_entry_safe(entity, next, &mdev->entities, graph_obj.list)
+> diff --git a/include/media/media-device.h b/include/media/media-device.h
+> index 04b6c2e..0807292 100644
+> --- a/include/media/media-device.h
+> +++ b/include/media/media-device.h
+> @@ -332,6 +332,10 @@ struct media_device {
+>  	spinlock_t lock;
+>  	/* Serializes graph operations. */
+>  	struct mutex graph_mutex;
+> +	/* Tracks unregister in progress state to prevent
+> +	 * more than one driver entering unregister
+> +	*/
+> +	bool unregister_in_progress;
+>  
+>  	/* Handlers to find source entity for the sink entity and
+>  	 * check if it is available, and activate the link using
+> @@ -365,6 +369,7 @@ struct media_device {
+>  /* media_devnode to media_device */
+>  #define to_media_device(node) container_of(node, struct media_device, devnode)
+>  
+> +
+>  /**
+>   * media_entity_enum_init - Initialise an entity enumeration
+>   *
+> @@ -553,6 +558,12 @@ struct media_device *media_device_get_devres(struct device *dev);
+>   * @dev: pointer to struct &device.
+>   */
+>  struct media_device *media_device_find_devres(struct device *dev);
+> +/* return unregister in progress state */
+> +static inline bool media_device_is_unregister_in_progress(
+> +					struct media_device *mdev)
+> +{
+> +	return mdev->unregister_in_progress;
+> +}
+>  
+>  /* Iterate over all entities. */
+>  #define media_device_for_each_entity(entity, mdev)			\
+> @@ -569,6 +580,7 @@ struct media_device *media_device_find_devres(struct device *dev);
+>  /* Iterate over all links. */
+>  #define media_device_for_each_link(link, mdev)			\
+>  	list_for_each_entry(link, &(mdev)->links, graph_obj.list)
+> +
+>  #else
+>  static inline int media_device_register(struct media_device *mdev)
+>  {
+> @@ -604,5 +616,10 @@ static inline struct media_device *media_device_find_devres(struct device *dev)
+>  {
+>  	return NULL;
+>  }
+> +static inline bool media_device_is_unregister_in_progress(
+> +					struct media_device *mdev)
+> +{
+> +	return false;
+> +}
+>  #endif /* CONFIG_MEDIA_CONTROLLER */
+>  #endif
