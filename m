@@ -1,8 +1,7 @@
 From: "Gabriel L. Somlo" <somlo@cmu.edu>
-Subject: [PATCH v6 2/5] pc: fw_cfg: move ioport base constant
-	to pc.h
-Date: Wed, 27 Jan 2016 22:02:38 -0500
-Message-ID: <1453950161-13252-3-git-send-email-somlo@cmu.edu>
+Subject: [PATCH v6 3/5] acpi: pc: add fw_cfg device node to ssdt
+Date: Wed, 27 Jan 2016 22:02:39 -0500
+Message-ID: <1453950161-13252-4-git-send-email-somlo@cmu.edu>
 References: <1453950161-13252-1-git-send-email-somlo@cmu.edu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -22,63 +21,65 @@ To: gregkh@linuxfoundation.org, robh+dt@kernel.org, pawel.moll@arm.com, mark.rut
 Cc: peter.maydell@linaro.org, ehabkost@redhat.com, ard.biesheuvel@linaro.org, matt@codeblueprint.co.uk, stefanha@gmail.com, mst@redhat.com, qemu-devel@nongnu.org, leif.lindholm@linaro.org, luto@amacapital.net, kraxel@redhat.com, pbonzini@redhat.com, imammedo@redhat.com, revol@free.fr, rth@twiddle.net
 List-Id: linux-api@vger.kernel.org
 
-Move BIOS_CFG_IOPORT define from pc.c to pc.h, and rename
-it to FW_CFG_IO_BASE.
+Add a fw_cfg device node to the ACPI SSDT. While the guest-side
+firmware can't utilize this information (since it has to access
+the hard-coded fw_cfg device to extract ACPI tables to begin with),
+having fw_cfg listed in ACPI will help the guest kernel keep a more
+accurate inventory of in-use IO port regions.
 
-Cc: Marc Mar=C3=AD <markmb@redhat.com>
 Signed-off-by: Gabriel Somlo <somlo@cmu.edu>
 Reviewed-by: Laszlo Ersek <lersek@redhat.com>
 Reviewed-by: Marc Mar=C3=AD <markmb@redhat.com>
 ---
- hw/i386/pc.c         | 5 ++---
- include/hw/i386/pc.h | 2 ++
- 2 files changed, 4 insertions(+), 3 deletions(-)
+ hw/i386/acpi-build.c | 29 +++++++++++++++++++++++++++++
+ 1 file changed, 29 insertions(+)
 
-diff --git a/hw/i386/pc.c b/hw/i386/pc.c
-index 78cf8fa..aa79dd1 100644
---- a/hw/i386/pc.c
-+++ b/hw/i386/pc.c
-@@ -77,7 +77,6 @@
- #define DPRINTF(fmt, ...)
- #endif
+diff --git a/hw/i386/acpi-build.c b/hw/i386/acpi-build.c
+index 78758e2..8a9ae9d 100644
+--- a/hw/i386/acpi-build.c
++++ b/hw/i386/acpi-build.c
+@@ -2100,6 +2100,35 @@ build_ssdt(GArray *table_data, GArray *linker,
+     aml_append(scope, aml_name_decl("_S5", pkg));
+     aml_append(ssdt, scope);
 =20
--#define BIOS_CFG_IOPORT 0x510
- #define FW_CFG_ACPI_TABLES (FW_CFG_ARCH_LOCAL + 0)
- #define FW_CFG_SMBIOS_ENTRIES (FW_CFG_ARCH_LOCAL + 1)
- #define FW_CFG_IRQ0_OVERRIDE (FW_CFG_ARCH_LOCAL + 2)
-@@ -755,7 +754,7 @@ static FWCfgState *bochs_bios_init(AddressSpace *as)
-     int i, j;
-     unsigned int apic_id_limit =3D pc_apic_id_limit(max_cpus);
-=20
--    fw_cfg =3D fw_cfg_init_io_dma(BIOS_CFG_IOPORT, BIOS_CFG_IOPORT + 4, =
-as);
-+    fw_cfg =3D fw_cfg_init_io_dma(FW_CFG_IO_BASE, FW_CFG_IO_BASE + 4, as=
-);
-=20
-     /* FW_CFG_MAX_CPUS is a bit confusing/problematic on x86:
-      *
-@@ -1269,7 +1268,7 @@ FWCfgState *xen_load_linux(PCMachineState *pcms,
-=20
-     assert(MACHINE(pcms)->kernel_filename !=3D NULL);
-=20
--    fw_cfg =3D fw_cfg_init_io(BIOS_CFG_IOPORT);
-+    fw_cfg =3D fw_cfg_init_io(FW_CFG_IO_BASE);
-     rom_set_fw(fw_cfg);
-=20
-     load_linux(pcms, fw_cfg);
-diff --git a/include/hw/i386/pc.h b/include/hw/i386/pc.h
-index 65e8f24..0a4e0da 100644
---- a/include/hw/i386/pc.h
-+++ b/include/hw/i386/pc.h
-@@ -272,6 +272,8 @@ void ioapic_init_gsi(GSIState *gsi_state, const char =
-*parent_name);
-=20
- ISADevice *pc_find_fdc0(void);
-=20
-+#define FW_CFG_IO_BASE     0x510
++    /* create fw_cfg node, unconditionally */
++    {
++        /* when using port i/o, the 8-bit data register *always* overlap=
+s
++         * with half of the 16-bit control register. Hence, the total si=
+ze
++         * of the i/o region used is FW_CFG_CTL_SIZE; when using DMA, th=
+e
++         * DMA control register is located at FW_CFG_DMA_IO_BASE + 4 */
++        uint8_t io_size =3D object_property_get_bool(OBJECT(guest_info->=
+fw_cfg),
++                                                   "dma_enabled", NULL) =
+?
++                          ROUND_UP(FW_CFG_CTL_SIZE, 4) + sizeof(dma_addr=
+_t) :
++                          FW_CFG_CTL_SIZE;
 +
- /* acpi_piix.c */
-=20
- I2CBus *piix4_pm_init(PCIBus *bus, int devfn, uint32_t smb_io_base,
++        scope =3D aml_scope("\\_SB");
++        dev =3D aml_device("FWCF");
++
++        aml_append(dev, aml_name_decl("_HID", aml_string("QEMU0002")));
++
++        /* device present, functioning, decoding, not shown in UI */
++        aml_append(dev, aml_name_decl("_STA", aml_int(0xB)));
++
++        crs =3D aml_resource_template();
++        aml_append(crs,
++            aml_io(AML_DECODE16, FW_CFG_IO_BASE, FW_CFG_IO_BASE, 0x01, i=
+o_size)
++        );
++        aml_append(dev, aml_name_decl("_CRS", crs));
++
++        aml_append(scope, dev);
++        aml_append(ssdt, scope);
++    }
++
+     if (misc->applesmc_io_base) {
+         scope =3D aml_scope("\\_SB.PCI0.ISA");
+         dev =3D aml_device("SMC");
 --=20
 2.4.3
