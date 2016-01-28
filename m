@@ -1,96 +1,37 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH 17/31] media: au0828 video change to use
- v4l_enable_media_tuner()
-Date: Thu, 28 Jan 2016 12:21:14 -0700
-Message-ID: <56AA6A2A.1020801@osg.samsung.com>
+From: Devin Heitmueller <dheitmueller-eb9eJ82Ua7k9XoPSrs7Ehg@public.gmane.org>
+Subject: Re: [PATCH 17/31] media: au0828 video change to use v4l_enable_media_tuner()
+Date: Thu, 28 Jan 2016 14:33:05 -0500
+Message-ID: <CAGoCfiwaFEWhCD9Bf61CAUiKJnFu3WKd=X2-QFBH1yERXuFRpQ@mail.gmail.com>
 References: <cover.1452105878.git.shuahkh@osg.samsung.com>
- <2d2392f96a7f10a8d94a4d7fa6d5657b56b75593.1452105878.git.shuahkh@osg.samsung.com>
- <20160128135752.536e909e@recife.lan>
+	<2d2392f96a7f10a8d94a4d7fa6d5657b56b75593.1452105878.git.shuahkh@osg.samsung.com>
+	<20160128135752.536e909e@recife.lan>
+	<56AA6A2A.1020801@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-media-owner@vger.kernel.org>
-In-Reply-To: <20160128135752.536e909e@recife.lan>
-Sender: linux-media-owner@vger.kernel.org
-To: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Cc: tiwai@suse.com, clemens@ladisch.de, hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittga
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <56AA6A2A.1020801-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, tiwai-IBi9RG/b67k@public.gmane.org, Clemens Ladisch <clemens-P6GI/4k7KOmELgA04lAiVw@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, "sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org" <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, javier-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, Pawel Osciak <pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Jaroslav Kysela <perex-/Fr2/VpizcU@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, Malcolm Priestley <tvboxspy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Antti Palosaari <crope-X3B1VOXEql0@public.gmane.org>, ruchandani.tina-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, chehabrafael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, Stefan Richter <stefanr-MtYdepGKPcBMYopoZt5u/LNAH6kLmebB@public.gmane.org>, inki.dae-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, jh1009.sung-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, SF Markus Elfring <elfring-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, Prabhakar Lad <prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, sw0312.kim-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, p.zabel@pe
 List-Id: linux-api@vger.kernel.org
 
-On 01/28/2016 08:57 AM, Mauro Carvalho Chehab wrote:
-> Em Wed,  6 Jan 2016 13:27:06 -0700
-> Shuah Khan <shuahkh@osg.samsung.com> escreveu:
-> 
->> au0828 is changed to use v4l_enable_media_tuner() to check for
->> tuner availability from vidioc_g_tuner(), and au0828_v4l2_close(),
->> before changing tuner settings. If tuner isn't free, return busy
->> condition from vidioc_g_tuner() and in au0828_v4l2_close() tuner
->> is left untouched without powering down to save energy.
-> 
-> Did you test the code when the input is not a tuner, but, instead,
-> Composite or S-Video connector, as shown at:
-> 	https://mchehab.fedorapeople.org/mc-next-gen/au0828.png
+Hi Shuah, Mauro,
 
-I am not sure if I did or not. I can double check this case.
-Do you have concerns that this won't work?
+>> Did you test the code when the input is not a tuner, but, instead,
+>> Composite or S-Video connector, as shown at:
+>>       https://mchehab.fedorapeople.org/mc-next-gen/au0828.png
+>
+> I am not sure if I did or not. I can double check this case.
+> Do you have concerns that this won't work?
 
-> 
-> I guess calling it v4l-enable_media_tuner() is not right, specially
-> since there are hybrid devices that have DTV (via DVB API) and
-> S-Video and/or Composite/RCA capture via V4L2 API.
+I'm not sure how you expect the MC framework to be handling this case,
+but I can tell you that the hardware will *not* support simultaneous
+streaming of the DVB feed at the same time as the analog feed, even if
+you're using the composite/s-video input and not actually using the
+xc5000 tuner in analog mode.
 
-How does  v4l-enable_media_source() sound?
-
-thanks,
--- Shuah
-
-> 
->>
->> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
->> ---
->>  drivers/media/usb/au0828/au0828-video.c | 14 ++++++++++++--
->>  1 file changed, 12 insertions(+), 2 deletions(-)
->>
->> diff --git a/drivers/media/usb/au0828/au0828-video.c b/drivers/media/usb/au0828/au0828-video.c
->> index 32bcc56..ed3ba05 100644
->> --- a/drivers/media/usb/au0828/au0828-video.c
->> +++ b/drivers/media/usb/au0828/au0828-video.c
->> @@ -1010,8 +1010,12 @@ static int au0828_v4l2_close(struct file *filp)
->>  		goto end;
->>  
->>  	if (dev->users == 1) {
->> -		/* Save some power by putting tuner to sleep */
->> -		v4l2_device_call_all(&dev->v4l2_dev, 0, core, s_power, 0);
->> +		/* Save some power by putting tuner to sleep, if it is free */
->> +		/* What happens when radio is using tuner?? */
->> +		ret = v4l_enable_media_tuner(vdev);
->> +		if (ret == 0)
->> +			v4l2_device_call_all(&dev->v4l2_dev, 0, core,
->> +					     s_power, 0);
->>  		dev->std_set_in_tuner_core = 0;
->>  
->>  		/* When close the device, set the usb intf0 into alt0 to free
->> @@ -1412,10 +1416,16 @@ static int vidioc_s_audio(struct file *file, void *priv, const struct v4l2_audio
->>  static int vidioc_g_tuner(struct file *file, void *priv, struct v4l2_tuner *t)
->>  {
->>  	struct au0828_dev *dev = video_drvdata(file);
->> +	struct video_device *vfd = video_devdata(file);
->> +	int ret;
->>  
->>  	if (t->index != 0)
->>  		return -EINVAL;
->>  
->> +	ret = v4l_enable_media_tuner(vfd);
->> +	if (ret)
->> +		return ret;
->> +
->>  	dprintk(1, "%s called std_set %d dev_state %d\n", __func__,
->>  		dev->std_set_in_tuner_core, dev->dev_state);
->>  
-
+Devin
 
 -- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+Devin J. Heitmueller - Kernel Labs
+http://www.kernellabs.com
