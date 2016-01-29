@@ -1,132 +1,70 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH] epoll: add exclusive wakeups flag
-Date: Fri, 29 Jan 2016 09:14:36 +0100
-Message-ID: <56AB1F6C.7000609@gmail.com>
-References: <cover.1449523436.git.jbaron@akamai.com>
- <56A9C03B.7020104@gmail.com> <56AA56A2.3000700@akamai.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [RFC PATCH v3 1/5] getcpu_cache system call: cache CPU number
+ of running thread
+Date: Fri, 29 Jan 2016 09:39:53 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1601290934020.3886@nanos>
+References: <1454014885-29012-1-git-send-email-mathieu.desnoyers@efficios.com> <1454014885-29012-2-git-send-email-mathieu.desnoyers@efficios.com> <alpine.DEB.2.11.1601282205290.3886@nanos> <950789004.7282.1454021044123.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <56AA56A2.3000700@akamai.com>
+In-Reply-To: <950789004.7282.1454021044123.JavaMail.zimbra@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jason Baron <jbaron@akamai.com>, akpm@linux-foundation.org
-Cc: mtk.manpages@gmail.com, mingo@kernel.org, peterz@infradead.org, viro@ftp.linux.org.uk, normalperson@yhbt.net, m@silodev.com, corbet@lwn.net, luto@amacapital.net, torvalds@linux-foundation.org, hagen@jauu.net, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, linux-kernel@vger.kernel.org, linux-api <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Hello Jason,
-On 01/28/2016 06:57 PM, Jason Baron wrote:
-> Hi,
+On Thu, 28 Jan 2016, Mathieu Desnoyers wrote:
+> ----- On Jan 28, 2016, at 4:52 PM, Thomas Gleixner tglx@linutronix.de wrote:
+> >> +		current->cpu_cache = cpu_cache;
+> >> +		/*
+> >> +		 * Migration checks the getcpu cache to see whether the
+> >> +		 * notify_resume flag should be set.
+> >> +		 * Therefore, we need to ensure that the scheduler sees
+> >> +		 * the getcpu cache pointer update before we update the getcpu
+> >> +		 * cache content with the current CPU number.
+> >> +		 */
+> >> +		barrier();
+> > 
+> > And how does that barrier ensure this? Not at all. And why would the scheduler
+> > care? All the scheduler cares about is tsk->cpu_cache.
 > 
-> On 01/28/2016 02:16 AM, Michael Kerrisk (man-pages) wrote:
->> Hi Jason,
->>
->> On 12/08/2015 04:23 AM, Jason Baron wrote:
->>> Hi,
->>>
->>> Re-post of an old series addressing thundering herd issues when sharing
->>> an event source fd amongst multiple epoll fds. Last posting was here
->>> for reference: https://lkml.org/lkml/2015/2/25/56
->>>  
->>> The patch herein drops the core scheduler 'rotate' changes I had previously
->>> proposed as this patch seems performant without those.
->>>
->>> I was prompted to re-post this because Madars Vitolins reported some good
->>> speedups with this patch using Enduro/X application. His writeup is here:
->>> https://mvitolin.wordpress.com/2015/12/05/endurox-testing-epollexclusive-flag/
->>>
->>> Thanks,
->>>
->>> -Jason
->>>
->>> Sample epoll_clt text:
->>
->> Thanks for the proposed text. I have some questions about points
->> that are not quite clear to me.
->>
->>> EPOLLEXCLUSIVE
->>>         Sets an exclusive wakeup mode for the epfd file descriptor that is
->>> 	being attached to the target file descriptor, fd. Thus, when an
->>> 	event occurs and multiple epfd file descriptors are attached to the
->>> 	same target file using EPOLLEXCLUSIVE, one or more epfds will receive
->>> 	an event with epoll_wait(2). The default in this scenario (when
->>> 	EPOLLEXCLUSIVE is not set) is for all epfds to receive an event.
->>> 	EPOLLEXLUSVIE may only be specified with the op EPOLL_CTL_ADD.
->>
->> So, assuming an FD is present in the interest list of multiple (say 6)
->> epoll FDs, and some (say 3) of those attachments were done using
->> EPOLLEXCLUSVE. Which of the following statements are correct:
->>
->> (a) It's guaranteed that *none* of the epoll FDs that did NOT specify
->>     EPOLLEXCLUSIVE will receive an event.
->>
->> (b) It's guaranteed that *all* of the epoll FDs that did NOT specify
->>     EPOLLEXCLUSIVE will receive an event.
->>
->> (c) From 1 to 3 of the epoll FDs that did specify EPOLLEXCLUSIVE
->>     will receive an event.
->>
->> (d) Exactly one epoll FD that did specify EPOLLEXCLUSIVE will get
->>     an event, and it is indeterminate which one.
->>
+> The case I want to ensure never happens is the following:
 > 
-> So b and c. All the non-exclusive adds will get it and at least 1 of the
-> exclusive adds will as well.
-
-So is it fair to say that the expected use case is that all epoll sets
-would use EPOLLEXCLUSIVE?
-
->> I suppose one point I'm trying to uncover in the above is: what is
->> the scope of EPOLLEXCLUSIVE? Is it just applicable for one process's
->> FD, or is it setting an attribute in the epoll "interest list" record
->> for that FD that affects notification behavior across all processes?
->>
+> Compiler reorders storing the address of current->cpu_cache after
+> the getcpu_cache_update() store to *cpu_cache. In between, the
+> scheduler preempts and migrates the task, but does not set the
+> resume notifier thread flag because it still see a NULL
+> current->cpu_cache. We therefore return to userspace with a
+> wrong CPU number in the cache.
 > 
-> Right - so 'EPOLLEXCLUSIVE' will affect other epoll sets that are also
-> using 'EPOLLEXCLUSIVE' against the the same fd, but will have no affect
-> on epoll sets connected to fd that do not specify it.
+> The compiler barrier enforces ordering of the current->cpu_cache
+> address store before updating the *cpu_cache.
+
+Fair enough. Updating the comment might help.
+
+> > 
+> >> +		/*
+> >> +		 * Do an initial cpu cache update to ensure we won't hit
+> >> +		 * SIGSEGV if put_user() fails in the resume notifier.
+> >> +		 */
+> > 
+> > If you get migrated before that call, then you SIGSEGV nevertheless.
 > 
+> No, because the SIGSEGV is only triggered when returning to userspace.
+> We are still in the system call here. All we care about in the migration
+> schedule code is to check the current->cpu_cache to see if we need to
+> raise the resume notifier flag. No userspace access there.
+
+True. Should have went to bed instead of staring at that code tired :)
+ 
+> > You need that call here for the case you are NOT migrated before returning to
+> > user space because otherwise the variable is not updated.
 > 
->> And then:
->>
->> (1) What are the semantics of EPOLLEXCLUSIVE if the added FD becomes
->>     disabled via EPOLLONESHOT (or explicitly via EPOLL_CTL_MOD with
->>     the 'events' field set to 0)?
->>
-> 
-> In the case of EPOLLEXCLUSIVE and EPOLLONESHOT, one would have to re-arm
-> at least 1 of threads that was woken up by doing EPOLL_CTL_MOD to
-> guarantee further wakeups.
-> 
-> And like-wise with an EPOLL_CTL_MOD with 'events' all set to 0, one
-> would need to either re-arm the thread that set the 'events' field to 0
-> (by setting back to non-zero), or re-arm in at least one other thread
-> via EPOLL_CTL_MOD (or delete and add).
+> This call has two goals: indeed, populating the initial current CPU value,
+> but also checking if the address is valid (and -EFAULT on error).
 
-Okay -- so when an EPOLLEXCLUSIVE FD becomes disarmed it is possible
-to re-enable rith EPOLL_CTL_MOD; one doesn't need to delete and re-add
-the FD.
+Right. So the comment should mention both.
+ 
+Thanks,
 
->> (2) The source code contains a comment "we do not currently supported 
->>     nested exclusive wakeups". Could you elaborate on this point? It
->>     sounds like something that should be documented.
-> 
-> So I was just trying to say that we return -EINVAL if you try to do and
-> EPOLL_CTL_ADD with EPOLLEXCLUSIVE and the 'fd' argument is a epoll fd
-> returned via epoll_create().
-
-Okay -- that definitely belongs in the man page.
-
-I'll work up a text, but would like to get input about the "use case"
-question above.
-
-Cheers,
-
-Michael
-
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+	tglx
