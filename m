@@ -1,71 +1,104 @@
 From: serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
-Subject: [PATCH 4/8] cgroup: cgroup namespace setns support
-Date: Fri, 29 Jan 2016 02:54:07 -0600
-Message-ID: <1454057651-23959-5-git-send-email-serge.hallyn@ubuntu.com>
-References: <1454057651-23959-1-git-send-email-serge.hallyn@ubuntu.com>
+Subject: CGroup Namespaces (v10)
+Date: Fri, 29 Jan 2016 02:54:03 -0600
+Message-ID: <1454057651-23959-1-git-send-email-serge.hallyn@ubuntu.com>
+Reply-To: LXC development mailing-list <lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <1454057651-23959-1-git-send-email-serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <lxc-devel-bounces-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
+List-Unsubscribe: <http://lists.linuxcontainers.org/options/lxc-devel>,
+ <mailto:lxc-devel-request-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxcontainers.org/pipermail/lxc-devel/>
+List-Post: <mailto:lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
+List-Help: <mailto:lxc-devel-request-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linuxcontainers.org/listinfo/lxc-devel>,
+ <mailto:lxc-devel-request-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org?subject=subscribe>
+Errors-To: lxc-devel-bounces-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org
+Sender: "lxc-devel" <lxc-devel-bounces-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Cc: adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-
-setns on a cgroup namespace is allowed only if
-task has CAP_SYS_ADMIN in its current user-namespace and
-over the user-namespace associated with target cgroupns.
-No implicit cgroup changes happen with attaching to another
-cgroupns. It is expected that the somone moves the attaching
-process under the target cgroupns-root.
-
-Signed-off-by: Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Signed-off-by: Serge E. Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
----
- kernel/cgroup.c |   19 ++++++++++++++++---
- 1 file changed, 16 insertions(+), 3 deletions(-)
-
-diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-index d828e1f..96e3dab 100644
---- a/kernel/cgroup.c
-+++ b/kernel/cgroup.c
-@@ -6004,10 +6004,23 @@ static inline struct cgroup_namespace *to_cg_ns(struct ns_common *ns)
- 	return container_of(ns, struct cgroup_namespace, ns);
- }
- 
--static int cgroupns_install(struct nsproxy *nsproxy, void *ns)
-+static int cgroupns_install(struct nsproxy *nsproxy, struct ns_common *ns)
- {
--	pr_info("setns not supported for cgroup namespace");
--	return -EINVAL;
-+	struct cgroup_namespace *cgroup_ns = to_cg_ns(ns);
-+
-+	if (!ns_capable(current_user_ns(), CAP_SYS_ADMIN) ||
-+	    !ns_capable(cgroup_ns->user_ns, CAP_SYS_ADMIN))
-+		return -EPERM;
-+
-+	/* Don't need to do anything if we are attaching to our own cgroupns. */
-+	if (cgroup_ns == nsproxy->cgroup_ns)
-+		return 0;
-+
-+	get_cgroup_ns(cgroup_ns);
-+	put_cgroup_ns(nsproxy->cgroup_ns);
-+	nsproxy->cgroup_ns = cgroup_ns;
-+
-+	return 0;
- }
- 
- static struct ns_common *cgroupns_get(struct task_struct *task)
--- 
-1.7.9.5
+SGksCgpmb2xsb3dpbmcgaXMgYSByZXZpc2VkIHNldCBvZiB0aGUgQ0dyb3VwIE5hbWVzcGFjZSBw
+YXRjaHNldCB3aGljaCBBZGl0eWEKS2FsaSBoYXMgcHJldmlvdXNseSBzZW50LiAgVGhlIGNvZGUg
+Y2FuIGFsc28gYmUgZm91bmQgaW4gdGhlIGNncm91cG5zLnYxMApicmFuY2ggb2YKCmh0dHBzOi8v
+Z2l0Lmtlcm5lbC5vcmcvY2dpdC9saW51eC9rZXJuZWwvZ2l0L3NlcmdlaC9saW51eC1zZWN1cml0
+eS5naXQvCgpUbyBzdW1tYXJpemUgdGhlIHNlbWFudGljczoKCjEuIENMT05FX05FV0NHUk9VUCBy
+ZS11c2VzIDB4MDIwMDAwMDAsIHdoaWNoIHdhcyBwcmV2aW91c2x5IENMT05FX1NUT1BQRUQKCjIu
+IHVuc2hhcmluZyBhIGNncm91cCBuYW1lc3BhY2UgbWFrZXMgYWxsIHlvdXIgY3VycmVudCBjZ3Jv
+dXBzIHlvdXIgbmV3CmNncm91cCByb290LgoKMy4gL3Byb2MvcGlkL2Nncm91cCBhbHdheXMgc2hv
+d3MgY2dyb3VwIHBhdGhzIHJlbGF0aXZlIHRvIHRoZSByZWFkZXIncwpjZ3JvdXAgbmFtZXNwY2Ug
+cm9vdC4gIEEgdGFzayBvdXRzaWRlIG9mICB5b3VyIGNncm91cCBsb29rcyBsaWtlCgoJODptZW1v
+cnk6Ly4uLy4uLy4uCgo0LiB3aGVuIGEgdGFzayBtb3VudHMgYSBjZ3JvdXBmcywgdGhlIGNncm91
+cCB3aGljaCBzaG93cyB1cCBhcyByb290IGRlcGVuZHMKb24gdGhlIG1vdW50aW5nIHRhc2sncyAg
+Y2dyb3VwIG5hbWVzcGFjZS4KCjUuIHNldG5zIHRvIGEgY2dyb3VwIG5hbWVzcGFjZSBzd2l0Y2hl
+cyB5b3VyIGNncm91cCBuYW1lc3BhY2UgYnV0IG5vdAp5b3VyIGNncm91cHMuCgpXaXRoIHRoaXMs
+IHVzaW5nIGdpdGh1Yi5jb20vaGFsbHluL2x4YyAjMjAxNS0xMS0wOS9jZ25zIChhbmQKZ2l0aHVi
+LmNvbS9oYWxseW4vbHhjZnMgIzIwMTUtMTEtMTAvY2ducykgd2UgY2FuIHN0YXJ0IGEgY29udGFp
+bmVyIGluIGEgZnVsbApwcm9wZXIgY2dyb3VwIG5hbWVzcGFjZSwgYXZvaWRpbmcgZWl0aGVyIGNn
+bWFuYWdlciBvciBseGNmcyBjZ3JvdXAgYmluZCBtb3VudHMuCgpUaGlzIGlzIGNvbXBsZXRlbHkg
+YmFja3dhcmQgY29tcGF0aWJsZSBhbmQgd2lsbCBiZSBjb21wbGV0ZWx5IGludmlzaWJsZQp0byBh
+bnkgZXhpc3RpbmcgY2dyb3VwIHVzZXJzIChleGNlcHQgZm9yIHRob3NlIHJ1bm5pbmcgaW5zaWRl
+IGEgY2dyb3VwCm5hbWVzcGFjZSBhbmQgbG9va2luZyBhdCAvcHJvYy9waWQvY2dyb3VwIG9mIHRh
+c2tzIG91dHNpZGUgdGhlaXIKbmFtZXNwYWNlLikKCkNoYW5nZXMgZnJvbSBWOToKMS4gVXBkYXRl
+IHRvIGxhdGVzdCBMaW51cyB0cmVlCjIuIEEgZmV3IGxvY2tpbmcgZml4ZXMKCkNoYW5nZXMgZnJv
+bSBWODoKMS4gSW5jb3Jwb3JhdGUgdXBkYXRlZCBkb2N1bWVudGF0aW9uIGZyb20gdGouCjIuIFB1
+dCBsb29rdXBfb25lX2xlbigpIHVuZGVyIGlub2RlIGxvY2sKMy4gTWFrZSBjZ3JvdXBfcGF0aCBu
+b24tbmFtZXNwYWNlZCwgc28gb25seSBjYWxscyB0byBjZ3JvdXBfcGF0aF9ucygpIGFyZQogICBu
+YW1lc3BhY2VkLgo0LiBNYWtlIGNncm91cF9wYXRoeyxfbnN9IHRha2UgdGhlIG5lZWRlZCBsb2Nr
+cywgc2luY2UgZXh0ZXJuYWwgY2FsbGVycyBjYW5ub3QKICAgZG8gc28uCjUuIEZpeCB0aGUgYmlz
+ZWN0YWJpbGl0eSBwcm9ibGVtIG9mIHRvX2NnX25zKCkgYmVpbmcgZGVmaW5lZCBhZnRlciB1c2UK
+CkNoYW5nZXMgZnJvbSBWNzoKMS4gUmV3b3JrIGtlcm5mc19wYXRoX2Zyb21fbm9kZV9sb2NrZWQg
+dG8gcmV0dXJuIHRoZSBzdHJpbmcgbGVuZ3RoCjIuIFJlbmFtZSBhbmQgcmVvcmRlciBhcmdzIHRv
+IGtlcm5mc19wYXRoX2Zyb21fbm9kZQozLiBjZ3JvdXAuYzogdW5kbyBhY2NpZGVudGFsIGNvbnZl
+cnNvaW5zIHRvIGlubGluZQo0LiBjZ3JvdXAuaDogbW92ZSBucyBkZWNsYXJhdGlvbnMgdG8gYm90
+dG9tLgo1LiBSZXdvcmsgdGhlIGRvY3VtZW50YXRpb24gdG8gZml0IHRoZSBzdHlsZSBvZiB0aGUg
+cmVzdCBvZiBjZ3JvdXAudHh0CgpDaGFuZ2VzIGZyb20gVjY6CjEuIFN3aXRjaCB0byBzb21lIFdB
+Uk5fT05zIHRvIHByb3ZpZGUgc3RhY2sgdHJhY2VzCjIuIFJlbmFtZSBrZXJuZnNfbm9kZV9kaXN0
+YW5jZSB0byBrZXJuZnNfZGVwdGgKMy4gTWFrZSBzdXJlIGtlcm5mc19jb21tb25fYW5jZXN0b3Io
+KSBub2RlcyBhcmUgZnJvbSBzYW1lIHJvb3QKNC4gU3BsaXQga2VybmZzIGNoYW5nZXMgZm9yIGNn
+cm91cF9tb3VudCBpbnRvIHNlcGFyYXRlIHBhdGNoCjUuIFJlbmFtZSBrZXJuZnNfb2J0YWluX3Jv
+b3QgdG8ga2VybmZzX25vZGVfZGVudHJ5CihBbmQgbW9yZSwgc2VlIHBhdGNoIGNoYW5nZWxvZ3Mp
+CgpDaGFuZ2VzIGZyb20gVjU6CjEuIFRvIGdldCBhIHJvb3QgZGVudHJ5IGZvciBjZ3JvdXAgbmFt
+ZXNwYWNlIG1vdW50LCB3YWxrIHRoZSBwYXRoIGZyb20gdGhlCiAgIGtlcm5mcyByb290IGRlbnRy
+eS4KCkNoYW5nZXMgZnJvbSBWNDoKMS4gTW92ZSB0aGUgRlNfVVNFUk5TX01PVU5UIGZsYWcgdG8g
+bGFzdCBwYXRjaAoyLiBSZWJhc2Ugb250byBjZ3JvdXAvZm9yLTQuNQozLiBEb24ndCBub24taW5p
+dCB1c2VyIG5hbWVzcGFjZXMgdG8gYmluZCBuZXcgc3Vic3lzdGVtcyB3aGVuIG1vdW50aW5nLgo0
+LiBBZGRyZXNzIGZlZWRiYWNrIGZyb20gVGVqdW4gKHRoYW5rcykuICBTcGVjaWZpY2FseSwgbm90
+IGFkZHJlc3NlZDoKICAgLiBrZXJuZnNfb2J0YWluX3Jvb3QgLSB3YWxraW5nIGRlbnRyeSBmcm9t
+IGtlcm5mcyByb290LgogICAgIChJIHRoaW5rIHRoYXQncyB0aGUgb25seSBwaWVjZSkKNS4gRHJv
+cHBlZCB1bnVzZWQgZ2V0X3Rhc2tfY2dyb3VwIGZuL3BhdGNoLgo2LiBSZXdvcmtlZCBrZXJuZnNf
+cGF0aF9mcm9tX25vZGVfbG9ja2VkKCkgdG8gdHJ5IHRvIHNpbXBsaWZ5IHRoZSBsb2dpYy4KICAg
+SXQgbm93IGZpbmRzIGEgY29tbW9uIGFuY2VzdG9yLCB3YWxrcyBmcm9tIHRoZSBzb3VyY2UgdG8g
+aXQsIHRoZW4gYmFjawogICB1cCB0byB0aGUgdGFyZ2V0LgoKQ2hhbmdlcyBmcm9tIFYzOgoxLiBS
+ZWJhc2VkIG9udG8gbGF0ZXN0IGNncm91cCBjaGFuZ2VzLiAgSW4gcGFydGljdWxhciBzd2l0Y2gg
+dG8KICAgY3NzX3NldF9sb2NrIGFuZCBuc19jb21tb24uCjIuIFN1cHBvcnQgYWxsIGhpZXJhcmNo
+aWVzLgoKQ2hhbmdlcyBmcm9tIFYyOgoxLiBBZGRlZCBkb2N1bWVudGF0aW9uIGluIERvY3VtZW50
+YXRpb24vY2dyb3Vwcy9uYW1lc3BhY2UudHh0CjIuIEZpeGVkIGEgYnVnIHRoYXQgY2F1c2VkIGNy
+YXNoCjMuIEluY29ycG9yYXRlZCBzb21lIG90aGVyIHN1Z2dlc3Rpb25zIGZyb20gbGFzdCBwYXRj
+aHNldDoKICAgLSByZW1vdmVkIHVzZSBvZiB0aHJlYWRncm91cF9sb2NrKCkgd2hpbGUgY3JlYXRp
+bmcgbmV3IGNncm91cG5zCiAgIC0gdXNlIHRhc2tfbG9jaygpIGluc3RlYWQgb2YgcmN1X3JlYWRf
+bG9jaygpIHdoaWxlIGFjY2Vzc2luZwogICAgIHRhc2stPm5zcHJveHkKICAgLSBvcHRpbWl6ZWQg
+c2V0bnMoKSB0byBvd24gY2dyb3VwbnMKICAgLSBzaW1wbGlmaWVkIGNvZGUgYXJvdW5kIHNhbmUt
+YmVoYXZpb3IgbW91bnQgb3B0aW9uIHBhcnNpbmcKNC4gUmVzdG9yZWQgQUNLcyBmcm9tIFNlcmdl
+IEhhbGx5biBmcm9tIHYxIG9uIGZldyBwYXRjaGVzIHRoYXQgaGF2ZQogICBub3QgY2hhbmdlZCBz
+aW5jZSB0aGVuLgoKQ2hhbmdlcyBmcm9tIFYxOgoxLiBObyBwaW5uaW5nIG9mIHByb2Nlc3NlcyB3
+aXRoaW4gY2dyb3VwbnMuIFRhc2tzIGNhbiBiZSBmcmVlbHkgbW92ZWQKICAgYWNyb3NzIGNncm91
+cHMgZXZlbiBvdXRzaWRlIG9mIHRoZWlyIGNncm91cG5zLXJvb3QuIFVzdWFsIERBQy9NQUMgcG9s
+aWNpZXMKICAgYXBwbHkgYXMgYmVmb3JlLgoyLiBQYXRoIGluIC9wcm9jLzxwaWQ+L2Nncm91cCBp
+cyBub3cgYWx3YXlzIHNob3duIGFuZCBpcyByZWxhdGl2ZSB0bwogICBjZ3JvdXBucy1yb290LiBT
+byBwYXRoIGNhbiBjb250YWluICcvLi4nIHN0cmluZ3MgZGVwZW5kaW5nIG9uIGNncm91cG5zLXJv
+b3QKICAgb2YgdGhlIHJlYWRlciBhbmQgY2dyb3VwIG9mIDxwaWQ+LgozLiBzZXRucygpIGRvZXMg
+bm90IHJlcXVpcmUgdGhlIHByb2Nlc3MgdG8gZmlyc3QgbW92ZSB1bmRlciB0YXJnZXQKICAgY2dy
+b3VwbnMtcm9vdC4KCkNoYW5nZXMgZm9ybSBSRkMgKFYwKToKMS4gc2V0bnMgc3VwcG9ydCBmb3Ig
+Y2dyb3VwbnMKMi4gJ21vdW50IC10IGNncm91cCBjZ3JvdXAgPG1udHB0PicgZnJvbSBpbnNpZGUg
+YSBjZ3JvdXBucyBub3cKICAgbW91bnRzIHRoZSBjZ3JvdXAgaGllcmFyY3kgd2l0aCBjZ3JvdXBu
+cy1yb290IGFzIHRoZSBmaWxlc3lzdGVtIHJvb3QuCjMuIHdyaXRlcyB0byBjZ3JvdXAgZmlsZXMg
+b3V0c2lkZSBvZiBjZ3JvdXBucy1yb290IGFyZSBub3QgYWxsb3dlZAo0LiB2aXNpYmlsaXR5IG9m
+IC9wcm9jLzxwaWQ+L2Nncm91cCBpcyBmdXJ0aGVyIHJlc3RyaWN0ZWQgYnkgbm90IHNob3dpbmcK
+ICAgYW55dGhpbmcgaWYgdGhlIDxwaWQ+IGlzIGluIGEgc2libGluZyBjZ3JvdXBucyBhbmQgaXRz
+IGNncm91cCBmYWxscyBvdXRzaWRlCiAgIHlvdXIgY2dyb3VwbnMtcm9vdC4KCgpfX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpseGMtZGV2ZWwgbWFpbGluZyBs
+aXN0Cmx4Yy1kZXZlbEBsaXN0cy5saW51eGNvbnRhaW5lcnMub3JnCmh0dHA6Ly9saXN0cy5saW51
+eGNvbnRhaW5lcnMub3JnL2xpc3RpbmZvL2x4Yy1kZXZlbAo=
