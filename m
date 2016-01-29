@@ -1,51 +1,95 @@
-From: serge.hallyn@ubuntu.com
-Subject: [PATCH 8/8] Add FS_USERNS_FLAG to cgroup fs
-Date: Fri, 29 Jan 2016 02:54:11 -0600
-Message-ID: <1454057651-23959-9-git-send-email-serge.hallyn@ubuntu.com>
+From: serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
+Subject: [PATCH 6/8] cgroup: mount cgroupns-root when inside
+	non-init cgroupns
+Date: Fri, 29 Jan 2016 02:54:09 -0600
+Message-ID: <1454057651-23959-7-git-send-email-serge.hallyn@ubuntu.com>
 References: <1454057651-23959-1-git-send-email-serge.hallyn@ubuntu.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1454057651-23959-1-git-send-email-serge.hallyn@ubuntu.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: adityakali@google.com, tj@kernel.org, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, cgroups@vger.kernel.org, lxc-devel@lists.linuxcontainers.org, akpm@linux-foundation.org, ebiederm@xmission.com, gregkh@linuxfoundation.org, lizefan@huawei.com, hannes@cmpxchg.org, Serge Hallyn <serge.hallyn@ubuntu.com>, Serge Hallyn <serge.hallyn@canonical.com>
+Reply-To: LXC development mailing-list <lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <lxc-devel-bounces-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
+In-Reply-To: <1454057651-23959-1-git-send-email-serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <http://lists.linuxcontainers.org/options/lxc-devel>,
+ <mailto:lxc-devel-request-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxcontainers.org/pipermail/lxc-devel/>
+List-Post: <mailto:lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
+List-Help: <mailto:lxc-devel-request-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linuxcontainers.org/listinfo/lxc-devel>,
+ <mailto:lxc-devel-request-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org?subject=subscribe>
+Errors-To: lxc-devel-bounces-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org
+Sender: "lxc-devel" <lxc-devel-bounces-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Serge Hallyn <serge.hallyn@ubuntu.com>
-
-allowing root in a non-init user namespace to mount it.  This should
-now be safe, because
-
-1. non-init-root cannot mount a previously unbound subsystem
-2. the task doing the mount must be privileged with respect to the
-   user namespace owning the cgroup namespace
-3. the mounted subsystem will have its current cgroup as the root dentry.
-   the permissions will be unchanged, so tasks will receive no new
-   privilege over the cgroups which they did not have on the original
-   mounts.
-
-Signed-off-by: Serge Hallyn <serge.hallyn@canonical.com>
----
- kernel/cgroup.c |    2 ++
- 1 file changed, 2 insertions(+)
-
-diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-index 3e04df0..7a58749 100644
---- a/kernel/cgroup.c
-+++ b/kernel/cgroup.c
-@@ -2216,12 +2216,14 @@ static struct file_system_type cgroup_fs_type = {
- 	.name = "cgroup",
- 	.mount = cgroup_mount,
- 	.kill_sb = cgroup_kill_sb,
-+	.fs_flags = FS_USERNS_MOUNT,
- };
- 
- static struct file_system_type cgroup2_fs_type = {
- 	.name = "cgroup2",
- 	.mount = cgroup_mount,
- 	.kill_sb = cgroup_kill_sb,
-+	.fs_flags = FS_USERNS_MOUNT,
- };
- 
- static char *
--- 
-1.7.9.5
+RnJvbTogU2VyZ2UgSGFsbHluIDxzZXJnZS5oYWxseW5AdWJ1bnR1LmNvbT4KClRoaXMgcGF0Y2gg
+ZW5hYmxlcyBjZ3JvdXAgbW91bnRpbmcgaW5zaWRlIHVzZXJucyB3aGVuIGEgcHJvY2VzcwphcyBh
+cHByb3ByaWF0ZSBwcml2aWxlZ2VzLiBUaGUgY2dyb3VwIGZpbGVzeXN0ZW0gbW91bnRlZCBpcwpy
+b290ZWQgYXQgdGhlIGNncm91cG5zLXJvb3QuIFRodXMsIGluIGEgY29udGFpbmVyLXNldHVwLCBv
+bmx5CnRoZSBoaWVyYXJjaHkgdW5kZXIgdGhlIGNncm91cG5zLXJvb3QgaXMgZXhwb3NlZCBpbnNp
+ZGUgdGhlIGNvbnRhaW5lci4KVGhpcyBhbGxvd3MgY29udGFpbmVyIG1hbmFnZW1lbnQgdG9vbHMg
+dG8gcnVuIGluc2lkZSB0aGUgY29udGFpbmVycwp3aXRob3V0IGRlcGVuZGluZyBvbiBhbnkgZ2xv
+YmFsIHN0YXRlLgoKU2lnbmVkLW9mZi1ieTogU2VyZ2UgSGFsbHluIDxzZXJnZS5oYWxseW5AY2Fu
+b25pY2FsLmNvbT4KLS0tCkNoYW5nZWxvZzoKCTIwMTUxMTE2IC0gRG9uJ3QgYWxsb3cgdXNlciBu
+YW1lc3BhY2VzIHRvIGJpbmQgbmV3IHN1YnN5c3RlbXMKCTIwMTUxMTE4IC0gcG9zdHBvbmUgdGhl
+IEZTX1VTRVJOU19NT1VOVCBmbGFnIHVudGlsIHRoZQoJICAgICAgICAgICBsYXN0IHBhdGNoLCB1
+bnRpbCB3ZSBjYW4gY29udmluY2Ugb3Vyc2VsdmVzIGl0CgkJICAgaXMgc2FmZS4KCTIwMTUxMjA3
+IC0gU3dpdGNoIHRvIHdhbGtpbmcgdXAgdGhlIGtlcm5mcyBwYXRoIGZyb20ga24gcm9vdC4KCQkg
+LSBHcm91cCBpbml0aWFsaXplZCB2YXJpYWJsZXMKCQkgLSBFeHBsYWluIHRoZSBjYXBhYmxlKENB
+UF9TWVNfQURNSU4pIGNoZWNrCgkJIC0gU3R5bGUgZml4ZXMKCTIwMTYwMTA0IC0ga2VybmZzX25v
+ZGVfZGVudHJ5OiBsb2NrIGlub2RlIGZvciBsb29rdXBfb25lX2xlbigpCgkyMDE2MDEyOCAtIGdy
+YWIgbmVlZGVkIGxvY2sgaW4gbW91bnQKClNpZ25lZC1vZmYtYnk6IFNlcmdlIEhhbGx5biA8c2Vy
+Z2UuaGFsbHluQHVidW50dS5jb20+Ci0tLQoga2VybmVsL2Nncm91cC5jIHwgICA0OCArKysrKysr
+KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKy0KIDEgZmlsZSBjaGFuZ2Vk
+LCA0NyBpbnNlcnRpb25zKCspLCAxIGRlbGV0aW9uKC0pCgpkaWZmIC0tZ2l0IGEva2VybmVsL2Nn
+cm91cC5jIGIva2VybmVsL2Nncm91cC5jCmluZGV4IDk2ZTNkYWIuLjNlMDRkZjAgMTAwNjQ0Ci0t
+LSBhL2tlcm5lbC9jZ3JvdXAuYworKysgYi9rZXJuZWwvY2dyb3VwLmMKQEAgLTE5ODMsNiArMTk4
+Myw3IEBAIHN0YXRpYyBzdHJ1Y3QgZGVudHJ5ICpjZ3JvdXBfbW91bnQoc3RydWN0IGZpbGVfc3lz
+dGVtX3R5cGUgKmZzX3R5cGUsCiB7CiAJYm9vbCBpc192MiA9IGZzX3R5cGUgPT0gJmNncm91cDJf
+ZnNfdHlwZTsKIAlzdHJ1Y3Qgc3VwZXJfYmxvY2sgKnBpbm5lZF9zYiA9IE5VTEw7CisJc3RydWN0
+IGNncm91cF9uYW1lc3BhY2UgKm5zID0gY3VycmVudC0+bnNwcm94eS0+Y2dyb3VwX25zOwogCXN0
+cnVjdCBjZ3JvdXBfc3Vic3lzICpzczsKIAlzdHJ1Y3QgY2dyb3VwX3Jvb3QgKnJvb3Q7CiAJc3Ry
+dWN0IGNncm91cF9zYl9vcHRzIG9wdHM7CkBAIC0xOTkxLDYgKzE5OTIsMTQgQEAgc3RhdGljIHN0
+cnVjdCBkZW50cnkgKmNncm91cF9tb3VudChzdHJ1Y3QgZmlsZV9zeXN0ZW1fdHlwZSAqZnNfdHlw
+ZSwKIAlpbnQgaTsKIAlib29sIG5ld19zYjsKIAorCWdldF9jZ3JvdXBfbnMobnMpOworCisJLyog
+Q2hlY2sgaWYgdGhlIGNhbGxlciBoYXMgcGVybWlzc2lvbiB0byBtb3VudC4gKi8KKwlpZiAoIW5z
+X2NhcGFibGUobnMtPnVzZXJfbnMsIENBUF9TWVNfQURNSU4pKSB7CisJCXB1dF9jZ3JvdXBfbnMo
+bnMpOworCQlyZXR1cm4gRVJSX1BUUigtRVBFUk0pOworCX0KKwogCS8qCiAJICogVGhlIGZpcnN0
+IHRpbWUgYW55b25lIHRyaWVzIHRvIG1vdW50IGEgY2dyb3VwLCBlbmFibGUgdGhlIGxpc3QKIAkg
+KiBsaW5raW5nIGVhY2ggY3NzX3NldCB0byBpdHMgdGFza3MgYW5kIGZpeCB1cCBhbGwgZXhpc3Rp
+bmcgdGFza3MuCkBAIC0yMDAxLDYgKzIwMTAsNyBAQCBzdGF0aWMgc3RydWN0IGRlbnRyeSAqY2dy
+b3VwX21vdW50KHN0cnVjdCBmaWxlX3N5c3RlbV90eXBlICpmc190eXBlLAogCWlmIChpc192Mikg
+ewogCQlpZiAoZGF0YSkgewogCQkJcHJfZXJyKCJjZ3JvdXAyOiB1bmtub3duIG9wdGlvbiBcIiVz
+XCJcbiIsIChjaGFyICopZGF0YSk7CisJCQlwdXRfY2dyb3VwX25zKG5zKTsKIAkJCXJldHVybiBF
+UlJfUFRSKC1FSU5WQUwpOwogCQl9CiAJCWNncnBfZGZsX3Jvb3RfdmlzaWJsZSA9IHRydWU7CkBA
+IC0yMTA2LDYgKzIxMTYsMTYgQEAgc3RhdGljIHN0cnVjdCBkZW50cnkgKmNncm91cF9tb3VudChz
+dHJ1Y3QgZmlsZV9zeXN0ZW1fdHlwZSAqZnNfdHlwZSwKIAkJZ290byBvdXRfdW5sb2NrOwogCX0K
+IAorCS8qCisJICogV2Uga25vdyB0aGlzIHN1YnN5c3RlbSBoYXMgbm90IHlldCBiZWVuIGJvdW5k
+LiAgVXNlcnMgaW4gYSBub24taW5pdAorCSAqIHVzZXIgbmFtZXNwYWNlIG1heSBvbmx5IG1vdW50
+IGhpZXJhcmNoaWVzIHdpdGggbm8gYm91bmQgc3Vic3lzdGVtcywKKwkgKiBpLmUuICdub25lLG5h
+bWU9dXNlcjEnCisJICovCisJaWYgKCFvcHRzLm5vbmUgJiYgIWNhcGFibGUoQ0FQX1NZU19BRE1J
+TikpIHsKKwkJcmV0ID0gLUVQRVJNOworCQlnb3RvIG91dF91bmxvY2s7CisJfQorCiAJcm9vdCA9
+IGt6YWxsb2Moc2l6ZW9mKCpyb290KSwgR0ZQX0tFUk5FTCk7CiAJaWYgKCFyb290KSB7CiAJCXJl
+dCA9IC1FTk9NRU07CkBAIC0yMTI0LDEyICsyMTQ0LDM3IEBAIG91dF9mcmVlOgogCWtmcmVlKG9w
+dHMucmVsZWFzZV9hZ2VudCk7CiAJa2ZyZWUob3B0cy5uYW1lKTsKIAotCWlmIChyZXQpCisJaWYg
+KHJldCkgeworCQlwdXRfY2dyb3VwX25zKG5zKTsKIAkJcmV0dXJuIEVSUl9QVFIocmV0KTsKKwl9
+CiBvdXRfbW91bnQ6CiAJZGVudHJ5ID0ga2VybmZzX21vdW50KGZzX3R5cGUsIGZsYWdzLCByb290
+LT5rZl9yb290LAogCQkJICAgICAgaXNfdjIgPyBDR1JPVVAyX1NVUEVSX01BR0lDIDogQ0dST1VQ
+X1NVUEVSX01BR0lDLAogCQkJICAgICAgJm5ld19zYik7CisKKwkvKgorCSAqIEluIG5vbi1pbml0
+IGNncm91cCBuYW1lc3BhY2UsIGluc3RlYWQgb2Ygcm9vdCBjZ3JvdXAncworCSAqIGRlbnRyeSwg
+d2UgcmV0dXJuIHRoZSBkZW50cnkgY29ycmVzcG9uZGluZyB0byB0aGUKKwkgKiBjZ3JvdXBucy0+
+cm9vdF9jZ3JwLgorCSAqLworCWlmICghSVNfRVJSKGRlbnRyeSkgJiYgbnMgIT0gJmluaXRfY2dy
+b3VwX25zKSB7CisJCXN0cnVjdCBkZW50cnkgKm5zZGVudHJ5OworCQlzdHJ1Y3QgY2dyb3VwICpj
+Z3JwOworCisJCW11dGV4X2xvY2soJmNncm91cF9tdXRleCk7CisJCXNwaW5fbG9ja19iaCgmY3Nz
+X3NldF9sb2NrKTsKKworCQljZ3JwID0gY3NldF9jZ3JvdXBfZnJvbV9yb290KG5zLT5yb290X2Nz
+ZXQsIHJvb3QpOworCisJCXNwaW5fdW5sb2NrX2JoKCZjc3Nfc2V0X2xvY2spOworCQltdXRleF91
+bmxvY2soJmNncm91cF9tdXRleCk7CisKKwkJbnNkZW50cnkgPSBrZXJuZnNfbm9kZV9kZW50cnko
+Y2dycC0+a24sIGRlbnRyeS0+ZF9zYik7CisJCWRwdXQoZGVudHJ5KTsKKwkJZGVudHJ5ID0gbnNk
+ZW50cnk7CisJfQorCiAJaWYgKElTX0VSUihkZW50cnkpIHx8ICFuZXdfc2IpCiAJCWNncm91cF9w
+dXQoJnJvb3QtPmNncnApOwogCkBAIC0yMTQyLDYgKzIxODcsNyBAQCBvdXRfbW91bnQ6CiAJCWRl
+YWN0aXZhdGVfc3VwZXIocGlubmVkX3NiKTsKIAl9CiAKKwlwdXRfY2dyb3VwX25zKG5zKTsKIAly
+ZXR1cm4gZGVudHJ5OwogfQogCi0tIAoxLjcuOS41CgpfX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fXwpseGMtZGV2ZWwgbWFpbGluZyBsaXN0Cmx4Yy1kZXZlbEBs
+aXN0cy5saW51eGNvbnRhaW5lcnMub3JnCmh0dHA6Ly9saXN0cy5saW51eGNvbnRhaW5lcnMub3Jn
+L2xpc3RpbmZvL2x4Yy1kZXZlbAo=
