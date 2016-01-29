@@ -1,95 +1,121 @@
-From: serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
-Subject: [PATCH 6/8] cgroup: mount cgroupns-root when inside
-	non-init cgroupns
-Date: Fri, 29 Jan 2016 02:54:09 -0600
-Message-ID: <1454057651-23959-7-git-send-email-serge.hallyn@ubuntu.com>
-References: <1454057651-23959-1-git-send-email-serge.hallyn@ubuntu.com>
-Reply-To: LXC development mailing-list <lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <lxc-devel-bounces-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
-In-Reply-To: <1454057651-23959-1-git-send-email-serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <http://lists.linuxcontainers.org/options/lxc-devel>,
- <mailto:lxc-devel-request-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxcontainers.org/pipermail/lxc-devel/>
-List-Post: <mailto:lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
-List-Help: <mailto:lxc-devel-request-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.linuxcontainers.org/listinfo/lxc-devel>,
- <mailto:lxc-devel-request-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org?subject=subscribe>
-Errors-To: lxc-devel-bounces-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org
-Sender: "lxc-devel" <lxc-devel-bounces-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: [PATCH 06/13] [media] media.h: add support for IF-PLL video/sound decoder
+Date: Fri, 29 Jan 2016 10:10:56 -0200
+Message-ID: <bc031d38ffa4a9505af2eaa8d7a91bf4e4721884.1454067262.git.mchehab@osg.samsung.com>
+References: <cover.1454067262.git.mchehab@osg.samsung.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <cover.1454067262.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <cover.1454067262.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+References: <cover.1454067262.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-RnJvbTogU2VyZ2UgSGFsbHluIDxzZXJnZS5oYWxseW5AdWJ1bnR1LmNvbT4KClRoaXMgcGF0Y2gg
-ZW5hYmxlcyBjZ3JvdXAgbW91bnRpbmcgaW5zaWRlIHVzZXJucyB3aGVuIGEgcHJvY2VzcwphcyBh
-cHByb3ByaWF0ZSBwcml2aWxlZ2VzLiBUaGUgY2dyb3VwIGZpbGVzeXN0ZW0gbW91bnRlZCBpcwpy
-b290ZWQgYXQgdGhlIGNncm91cG5zLXJvb3QuIFRodXMsIGluIGEgY29udGFpbmVyLXNldHVwLCBv
-bmx5CnRoZSBoaWVyYXJjaHkgdW5kZXIgdGhlIGNncm91cG5zLXJvb3QgaXMgZXhwb3NlZCBpbnNp
-ZGUgdGhlIGNvbnRhaW5lci4KVGhpcyBhbGxvd3MgY29udGFpbmVyIG1hbmFnZW1lbnQgdG9vbHMg
-dG8gcnVuIGluc2lkZSB0aGUgY29udGFpbmVycwp3aXRob3V0IGRlcGVuZGluZyBvbiBhbnkgZ2xv
-YmFsIHN0YXRlLgoKU2lnbmVkLW9mZi1ieTogU2VyZ2UgSGFsbHluIDxzZXJnZS5oYWxseW5AY2Fu
-b25pY2FsLmNvbT4KLS0tCkNoYW5nZWxvZzoKCTIwMTUxMTE2IC0gRG9uJ3QgYWxsb3cgdXNlciBu
-YW1lc3BhY2VzIHRvIGJpbmQgbmV3IHN1YnN5c3RlbXMKCTIwMTUxMTE4IC0gcG9zdHBvbmUgdGhl
-IEZTX1VTRVJOU19NT1VOVCBmbGFnIHVudGlsIHRoZQoJICAgICAgICAgICBsYXN0IHBhdGNoLCB1
-bnRpbCB3ZSBjYW4gY29udmluY2Ugb3Vyc2VsdmVzIGl0CgkJICAgaXMgc2FmZS4KCTIwMTUxMjA3
-IC0gU3dpdGNoIHRvIHdhbGtpbmcgdXAgdGhlIGtlcm5mcyBwYXRoIGZyb20ga24gcm9vdC4KCQkg
-LSBHcm91cCBpbml0aWFsaXplZCB2YXJpYWJsZXMKCQkgLSBFeHBsYWluIHRoZSBjYXBhYmxlKENB
-UF9TWVNfQURNSU4pIGNoZWNrCgkJIC0gU3R5bGUgZml4ZXMKCTIwMTYwMTA0IC0ga2VybmZzX25v
-ZGVfZGVudHJ5OiBsb2NrIGlub2RlIGZvciBsb29rdXBfb25lX2xlbigpCgkyMDE2MDEyOCAtIGdy
-YWIgbmVlZGVkIGxvY2sgaW4gbW91bnQKClNpZ25lZC1vZmYtYnk6IFNlcmdlIEhhbGx5biA8c2Vy
-Z2UuaGFsbHluQHVidW50dS5jb20+Ci0tLQoga2VybmVsL2Nncm91cC5jIHwgICA0OCArKysrKysr
-KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKy0KIDEgZmlsZSBjaGFuZ2Vk
-LCA0NyBpbnNlcnRpb25zKCspLCAxIGRlbGV0aW9uKC0pCgpkaWZmIC0tZ2l0IGEva2VybmVsL2Nn
-cm91cC5jIGIva2VybmVsL2Nncm91cC5jCmluZGV4IDk2ZTNkYWIuLjNlMDRkZjAgMTAwNjQ0Ci0t
-LSBhL2tlcm5lbC9jZ3JvdXAuYworKysgYi9rZXJuZWwvY2dyb3VwLmMKQEAgLTE5ODMsNiArMTk4
-Myw3IEBAIHN0YXRpYyBzdHJ1Y3QgZGVudHJ5ICpjZ3JvdXBfbW91bnQoc3RydWN0IGZpbGVfc3lz
-dGVtX3R5cGUgKmZzX3R5cGUsCiB7CiAJYm9vbCBpc192MiA9IGZzX3R5cGUgPT0gJmNncm91cDJf
-ZnNfdHlwZTsKIAlzdHJ1Y3Qgc3VwZXJfYmxvY2sgKnBpbm5lZF9zYiA9IE5VTEw7CisJc3RydWN0
-IGNncm91cF9uYW1lc3BhY2UgKm5zID0gY3VycmVudC0+bnNwcm94eS0+Y2dyb3VwX25zOwogCXN0
-cnVjdCBjZ3JvdXBfc3Vic3lzICpzczsKIAlzdHJ1Y3QgY2dyb3VwX3Jvb3QgKnJvb3Q7CiAJc3Ry
-dWN0IGNncm91cF9zYl9vcHRzIG9wdHM7CkBAIC0xOTkxLDYgKzE5OTIsMTQgQEAgc3RhdGljIHN0
-cnVjdCBkZW50cnkgKmNncm91cF9tb3VudChzdHJ1Y3QgZmlsZV9zeXN0ZW1fdHlwZSAqZnNfdHlw
-ZSwKIAlpbnQgaTsKIAlib29sIG5ld19zYjsKIAorCWdldF9jZ3JvdXBfbnMobnMpOworCisJLyog
-Q2hlY2sgaWYgdGhlIGNhbGxlciBoYXMgcGVybWlzc2lvbiB0byBtb3VudC4gKi8KKwlpZiAoIW5z
-X2NhcGFibGUobnMtPnVzZXJfbnMsIENBUF9TWVNfQURNSU4pKSB7CisJCXB1dF9jZ3JvdXBfbnMo
-bnMpOworCQlyZXR1cm4gRVJSX1BUUigtRVBFUk0pOworCX0KKwogCS8qCiAJICogVGhlIGZpcnN0
-IHRpbWUgYW55b25lIHRyaWVzIHRvIG1vdW50IGEgY2dyb3VwLCBlbmFibGUgdGhlIGxpc3QKIAkg
-KiBsaW5raW5nIGVhY2ggY3NzX3NldCB0byBpdHMgdGFza3MgYW5kIGZpeCB1cCBhbGwgZXhpc3Rp
-bmcgdGFza3MuCkBAIC0yMDAxLDYgKzIwMTAsNyBAQCBzdGF0aWMgc3RydWN0IGRlbnRyeSAqY2dy
-b3VwX21vdW50KHN0cnVjdCBmaWxlX3N5c3RlbV90eXBlICpmc190eXBlLAogCWlmIChpc192Mikg
-ewogCQlpZiAoZGF0YSkgewogCQkJcHJfZXJyKCJjZ3JvdXAyOiB1bmtub3duIG9wdGlvbiBcIiVz
-XCJcbiIsIChjaGFyICopZGF0YSk7CisJCQlwdXRfY2dyb3VwX25zKG5zKTsKIAkJCXJldHVybiBF
-UlJfUFRSKC1FSU5WQUwpOwogCQl9CiAJCWNncnBfZGZsX3Jvb3RfdmlzaWJsZSA9IHRydWU7CkBA
-IC0yMTA2LDYgKzIxMTYsMTYgQEAgc3RhdGljIHN0cnVjdCBkZW50cnkgKmNncm91cF9tb3VudChz
-dHJ1Y3QgZmlsZV9zeXN0ZW1fdHlwZSAqZnNfdHlwZSwKIAkJZ290byBvdXRfdW5sb2NrOwogCX0K
-IAorCS8qCisJICogV2Uga25vdyB0aGlzIHN1YnN5c3RlbSBoYXMgbm90IHlldCBiZWVuIGJvdW5k
-LiAgVXNlcnMgaW4gYSBub24taW5pdAorCSAqIHVzZXIgbmFtZXNwYWNlIG1heSBvbmx5IG1vdW50
-IGhpZXJhcmNoaWVzIHdpdGggbm8gYm91bmQgc3Vic3lzdGVtcywKKwkgKiBpLmUuICdub25lLG5h
-bWU9dXNlcjEnCisJICovCisJaWYgKCFvcHRzLm5vbmUgJiYgIWNhcGFibGUoQ0FQX1NZU19BRE1J
-TikpIHsKKwkJcmV0ID0gLUVQRVJNOworCQlnb3RvIG91dF91bmxvY2s7CisJfQorCiAJcm9vdCA9
-IGt6YWxsb2Moc2l6ZW9mKCpyb290KSwgR0ZQX0tFUk5FTCk7CiAJaWYgKCFyb290KSB7CiAJCXJl
-dCA9IC1FTk9NRU07CkBAIC0yMTI0LDEyICsyMTQ0LDM3IEBAIG91dF9mcmVlOgogCWtmcmVlKG9w
-dHMucmVsZWFzZV9hZ2VudCk7CiAJa2ZyZWUob3B0cy5uYW1lKTsKIAotCWlmIChyZXQpCisJaWYg
-KHJldCkgeworCQlwdXRfY2dyb3VwX25zKG5zKTsKIAkJcmV0dXJuIEVSUl9QVFIocmV0KTsKKwl9
-CiBvdXRfbW91bnQ6CiAJZGVudHJ5ID0ga2VybmZzX21vdW50KGZzX3R5cGUsIGZsYWdzLCByb290
-LT5rZl9yb290LAogCQkJICAgICAgaXNfdjIgPyBDR1JPVVAyX1NVUEVSX01BR0lDIDogQ0dST1VQ
-X1NVUEVSX01BR0lDLAogCQkJICAgICAgJm5ld19zYik7CisKKwkvKgorCSAqIEluIG5vbi1pbml0
-IGNncm91cCBuYW1lc3BhY2UsIGluc3RlYWQgb2Ygcm9vdCBjZ3JvdXAncworCSAqIGRlbnRyeSwg
-d2UgcmV0dXJuIHRoZSBkZW50cnkgY29ycmVzcG9uZGluZyB0byB0aGUKKwkgKiBjZ3JvdXBucy0+
-cm9vdF9jZ3JwLgorCSAqLworCWlmICghSVNfRVJSKGRlbnRyeSkgJiYgbnMgIT0gJmluaXRfY2dy
-b3VwX25zKSB7CisJCXN0cnVjdCBkZW50cnkgKm5zZGVudHJ5OworCQlzdHJ1Y3QgY2dyb3VwICpj
-Z3JwOworCisJCW11dGV4X2xvY2soJmNncm91cF9tdXRleCk7CisJCXNwaW5fbG9ja19iaCgmY3Nz
-X3NldF9sb2NrKTsKKworCQljZ3JwID0gY3NldF9jZ3JvdXBfZnJvbV9yb290KG5zLT5yb290X2Nz
-ZXQsIHJvb3QpOworCisJCXNwaW5fdW5sb2NrX2JoKCZjc3Nfc2V0X2xvY2spOworCQltdXRleF91
-bmxvY2soJmNncm91cF9tdXRleCk7CisKKwkJbnNkZW50cnkgPSBrZXJuZnNfbm9kZV9kZW50cnko
-Y2dycC0+a24sIGRlbnRyeS0+ZF9zYik7CisJCWRwdXQoZGVudHJ5KTsKKwkJZGVudHJ5ID0gbnNk
-ZW50cnk7CisJfQorCiAJaWYgKElTX0VSUihkZW50cnkpIHx8ICFuZXdfc2IpCiAJCWNncm91cF9w
-dXQoJnJvb3QtPmNncnApOwogCkBAIC0yMTQyLDYgKzIxODcsNyBAQCBvdXRfbW91bnQ6CiAJCWRl
-YWN0aXZhdGVfc3VwZXIocGlubmVkX3NiKTsKIAl9CiAKKwlwdXRfY2dyb3VwX25zKG5zKTsKIAly
-ZXR1cm4gZGVudHJ5OwogfQogCi0tIAoxLjcuOS41CgpfX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fXwpseGMtZGV2ZWwgbWFpbGluZyBsaXN0Cmx4Yy1kZXZlbEBs
-aXN0cy5saW51eGNvbnRhaW5lcnMub3JnCmh0dHA6Ly9saXN0cy5saW51eGNvbnRhaW5lcnMub3Jn
-L2xpc3RpbmZvL2x4Yy1kZXZlbAo=
+Very old hardware may have an analog stage tuner. Those hardware
+consists of a PLL that converts a RF signal into IF signals.
+
+Depending on the hardware, those video IF signal can be
+decoded directly by the bridge chipset. Most Conexant
+chips (bt8x8, cx2388x, etc) have internally the decoders
+for that. Yet, even on such hardware, the tuner may have
+internally its own TV multi-standard decoder like tda9887.
+
+The same happens with the audio IF signal, where some bridges
+are capable of receiving it, while others require an external
+IF-PLL sound decoder, like msp3400.
+
+Those external IF-PLL audio and video decoders have their own
+I2C address, and use different drivers to handle them. So, they're
+mapped as different subdevices on Linux.
+
+Thankfully, all modern hardware comes with an IC chip that
+has both the RF and the IF stages on it, being capable of
+decoding audio and video IF signals internally.
+
+Yet, as we need to support drivers that can work with either
+analog or silicon tuners, we need to add two entity types
+for those old hardware.
+
+Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+---
+ Documentation/DocBook/media/v4l/media-types.xml | 29 ++++++++++++++++++++++++-
+ include/uapi/linux/media.h                      | 17 +++++++++++++--
+ 2 files changed, 43 insertions(+), 3 deletions(-)
+
+diff --git a/Documentation/DocBook/media/v4l/media-types.xml b/Documentation/DocBook/media/v4l/media-types.xml
+index 1af384250910..751c3d027103 100644
+--- a/Documentation/DocBook/media/v4l/media-types.xml
++++ b/Documentation/DocBook/media/v4l/media-types.xml
+@@ -84,7 +84,34 @@
+ 	  </row>
+ 	  <row>
+ 	    <entry><constant>MEDIA_ENT_F_TUNER</constant></entry>
+-	    <entry>Digital TV, analog TV, radio and/or software radio tuner.</entry>
++	    <entry>Digital TV, analog TV, radio and/or software radio tuner,
++		   with consists on a PLL tuning stage that converts radio
++		   frequency (RF) signal into an Intermediate Frequency (IF).
++		   Modern tuners have internally IF-PLL decoders for audio
++		   and video, but older models have those stages implemented
++		   on separate entities.
++	    </entry>
++	  </row>
++	  <row>
++	    <entry><constant>MEDIA_ENT_F_IF_VID_DECODER</constant></entry>
++	    <entry>IF-PLL video decoder. It receives the IF from a PLL
++		   and decodes the analog TV video signal. This is commonly
++		   found on some very old analog tuners, like Philips MK3
++		   designs. They all contain a tda9887 (or some software
++		   compatible similar chip, like tda9885). Those devices
++		   use a different I2C address than the tuner PLL.
++	    </entry>
++	  </row>
++	  <row>
++	    <entry><constant>MEDIA_ENT_F_IF_AUD_DECODER</constant></entry>
++	    <entry>IF-PLL sound decoder. It receives the IF from a PLL
++		   and decodes the analog TV audio signal. This is commonly
++		   found on some very old analog hardware, like Micronas
++		   msp3400, Philips tda9840, tda985x, etc. Those devices
++		   use a different I2C address than the tuner PLL and
++		   should be controlled together with the IF-PLL video
++		   decoder.
++	    </entry>
+ 	  </row>
+ 	</tbody>
+       </tgroup>
+diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
+index 5dbb208e5451..c9eb42a6c021 100644
+--- a/include/uapi/linux/media.h
++++ b/include/uapi/linux/media.h
+@@ -89,6 +89,15 @@ struct media_device_info {
+ #define MEDIA_ENT_F_IO_SWRADIO		(MEDIA_ENT_F_BASE + 33)
+ 
+ /*
++ * Analog TV IF-PLL decoders
++ *
++ * It is a responsibility of the master/bridge drivers to create links
++ * for MEDIA_ENT_F_IF_VID_DECODER and MEDIA_ENT_F_IF_AUD_DECODER.
++ */
++#define MEDIA_ENT_F_IF_VID_DECODER	(MEDIA_ENT_F_BASE + 41)
++#define MEDIA_ENT_F_IF_AUD_DECODER	(MEDIA_ENT_F_BASE + 42)
++
++/*
+  * Don't touch on those. The ranges MEDIA_ENT_F_OLD_BASE and
+  * MEDIA_ENT_F_OLD_SUBDEV_BASE are kept to keep backward compatibility
+  * with the legacy v1 API.The number range is out of range by purpose:
+@@ -107,8 +116,12 @@ struct media_device_info {
+ #define MEDIA_ENT_F_LENS		(MEDIA_ENT_F_OLD_SUBDEV_BASE + 3)
+ #define MEDIA_ENT_F_ATV_DECODER		(MEDIA_ENT_F_OLD_SUBDEV_BASE + 4)
+ /*
+- * It is a responsibility of the entity drivers to add connectors and links
+- *	for the tuner entities.
++ * It is a responsibility of the master/bridge drivers to add connectors
++ * and links for MEDIA_ENT_F_TUNER. Please notice that some old tuners
++ * may require the usage of separate I2C chips to decode analog TV signals,
++ * when the master/bridge chipset doesn't have its own TV standard decoder.
++ * On such cases, the IF-PLL staging is mapped via one or two entities:
++ * MEDIA_ENT_F_IF_VID_DECODER and/or MEDIA_ENT_F_IF_AUD_DECODER.
+  */
+ #define MEDIA_ENT_F_TUNER		(MEDIA_ENT_F_OLD_SUBDEV_BASE + 5)
+ 
+-- 
+2.5.0
