@@ -1,53 +1,104 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: [PATCH v2 01/10] selftests/x86: Extend Makefile to allow 64-bit-only tests
-Date: Thu, 28 Jan 2016 15:11:19 -0800
-Message-ID: <99789bfe65706e6df32cc7e13f656e8c9fa92031.1454022279.git.luto@kernel.org>
-References: <cover.1454022279.git.luto@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1454022279.git.luto@kernel.org>
-In-Reply-To: <cover.1454022279.git.luto@kernel.org>
-References: <cover.1454022279.git.luto@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: x86@kernel.org
-Cc: linux-kernel@vger.kernel.org, Brian Gerst <brgerst@gmail.com>, Borislav Petkov <bp@alien8.de>, =?UTF-8?q?Fr=C3=A9d=C3=A9ric=20Weisbecker?= <fweisbec@gmail.com>, Denys Vlasenko <dvlasenk@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Shuah Khan <shuahkhan@gmail.com>, linux-api@vger.kernel.org
+From: Kees Cook <keescook@chromium.org>
+Subject: [RFC][PATCH] seccomp: add SECCOMP_RET_ACK for non-fatal SIGSYS
+Date: Thu, 28 Jan 2016 17:06:51 -0800
+Message-ID: <20160129010651.GA13228@www.outflux.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-doc-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: jeffv@google.com, Andy Lutomirski <luto@amacapital.net>, oleg@redhat.com, Will Drewry <wad@chromium.org>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, kernel-hardening@lists.openwall.com
 List-Id: linux-api@vger.kernel.org
 
-Previously the Makefile supported 32-bit-only tests and tests that
-were 32-bit and 64-bit.  This adds the support for tests that are
-only built as 64-bit binaries.
+Tracing processes for syscall usage can be done one step at a time with
+SECCOMP_RET_TRAP, but this will block the syscall. Alternatively, using
+a ptrace manager to handle SECCOMP_RET_TRACE returns can be used but is
+heavy weight and depends on the ptrace infrastructure. A light-weight
+method to learn syscalls is needed, which can reuse the existing delivery
+of SIGSYS but without skipping the syscall. This is implemented as
+SECCOMP_RET_ACK which is as permissive as SECCOMP_RET_ALLOW but delivers
+SIGSYS after syscall completion, as long as the SECCOMP_RET_DATA is
+non-zero. A signal handler can install a new rule for each syscall as
+they are signaled with SECCOMP_RET_DATA set to 0 to disable reporting
+for that syscall in the future (which is required for restarting syscalls
+that are signal-sensitive like nanosleep).
 
-There aren't any yet, but there might be a few some day.
+Registers from the signal will reflect registers after the syscall returns
+rather than before. Signal-sensitive syscalls will trigger EINTR, so they
+must be whitelisted before they are resumed. Not allowing the sigreturn
+syscall (and likely prctl to whitelist) will make using SECCOMP_RET_ACK
+useless.
 
-Cc: Shuah Khan <shuahkhan@gmail.com>
-Cc: linux-api@vger.kernel.org
-Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Signed-off-by: Kees Cook <keescook@chromium.org>
 ---
- tools/testing/selftests/x86/Makefile | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+I don't like the name SECCOMP_RET_ACK, and SECCOMP_RET_ALLOW_SIGSYS
+seems too long. SECCOMP_RET_RAISE? SECCOMP_RET_SIGSYS?
+---
+ Documentation/prctl/seccomp_filter.txt | 16 ++++++++++++++++
+ include/uapi/linux/seccomp.h           |  1 +
+ kernel/seccomp.c                       |  5 +++++
+ 3 files changed, 22 insertions(+)
 
-diff --git a/tools/testing/selftests/x86/Makefile b/tools/testing/selftests/x86/Makefile
-index d0c473f65850..9c81f263a396 100644
---- a/tools/testing/selftests/x86/Makefile
-+++ b/tools/testing/selftests/x86/Makefile
-@@ -11,8 +11,9 @@ TARGETS_C_32BIT_ONLY := entry_from_vm86 syscall_arg_fault sigreturn test_syscall
- 			vdso_restorer
+diff --git a/Documentation/prctl/seccomp_filter.txt b/Documentation/prctl/seccomp_filter.txt
+index 1e469ef75778..847da72d94f4 100644
+--- a/Documentation/prctl/seccomp_filter.txt
++++ b/Documentation/prctl/seccomp_filter.txt
+@@ -138,6 +138,22 @@ SECCOMP_RET_TRACE:
+ 	allow use of ptrace, even of other sandboxed processes, without
+ 	extreme care; ptracers can use this mechanism to escape.)
  
- TARGETS_C_32BIT_ALL := $(TARGETS_C_BOTHBITS) $(TARGETS_C_32BIT_ONLY)
-+TARGETS_C_64BIT_ALL := $(TARGETS_C_BOTHBITS) $(TARGETS_C_64BIT_ONLY)
- BINARIES_32 := $(TARGETS_C_32BIT_ALL:%=%_32)
--BINARIES_64 := $(TARGETS_C_BOTHBITS:%=%_64)
-+BINARIES_64 := $(TARGETS_C_64BIT_ALL:%=%_64)
++SECCOMP_RET_ACK:
++	When the SECCOMP_RET_DATA portion is 0, this is the same
++	as SECCOMP_RET_ALLOW. When non-zero, this is the same as
++	SECCOMP_RET_TRAP except the syscall is executed normally
++	and register contents will show the state after the syscall.
++
++	For syscalls that are sensitive to pending signals, the
++	raised signal will interrupt the syscall. If these syscalls
++	are restarted immediately, they will loop forever. Users of
++	SECCOMP_RET_ACK need to add a new filter for each syscall
++	that sets a zero SECCOMP_RET_DATA to disable these kinds of
++	syscalls if they are not explicitly whitelisted to being with.
++
++	Whitelisting sigreturn (and likely prctl) is needed to use
++	SECCOMP_RET_ACK in a meaningful way.
++
+ SECCOMP_RET_ALLOW:
+ 	Results in the system call being executed.
  
- CFLAGS := -O2 -g -std=gnu99 -pthread -Wall
+diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
+index 0f238a43ff1e..285cd3a04052 100644
+--- a/include/uapi/linux/seccomp.h
++++ b/include/uapi/linux/seccomp.h
+@@ -29,6 +29,7 @@
+ #define SECCOMP_RET_TRAP	0x00030000U /* disallow and force a SIGSYS */
+ #define SECCOMP_RET_ERRNO	0x00050000U /* returns an errno */
+ #define SECCOMP_RET_TRACE	0x7ff00000U /* pass to a tracer or disallow */
++#define SECCOMP_RET_ACK		0x7ffc0000U /* allow and send SIGSYS */
+ #define SECCOMP_RET_ALLOW	0x7fff0000U /* allow */
  
-@@ -40,7 +41,7 @@ clean:
- $(TARGETS_C_32BIT_ALL:%=%_32): %_32: %.c
- 	$(CC) -m32 -o $@ $(CFLAGS) $(EXTRA_CFLAGS) $^ -lrt -ldl -lm
+ /* Masks for the return value sections. */
+diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+index 580ac2d4024f..6eefbb2060d8 100644
+--- a/kernel/seccomp.c
++++ b/kernel/seccomp.c
+@@ -608,6 +608,11 @@ static u32 __seccomp_phase1_filter(int this_syscall, struct seccomp_data *sd)
+ 	case SECCOMP_RET_TRACE:
+ 		return filter_ret;  /* Save the rest for phase 2. */
  
--$(TARGETS_C_BOTHBITS:%=%_64): %_64: %.c
-+$(TARGETS_C_64BIT_ALL:%=%_64): %_64: %.c
- 	$(CC) -m64 -o $@ $(CFLAGS) $(EXTRA_CFLAGS) $^ -lrt -ldl
++	case SECCOMP_RET_ACK:
++		/* Post SIGSYS on syscall return, with 16 bits of data. */
++		if (data)
++			seccomp_send_sigsys(this_syscall, data);
++		/* Fall through. */
+ 	case SECCOMP_RET_ALLOW:
+ 		return SECCOMP_PHASE1_OK;
  
- # x86_64 users should be encouraged to install 32-bit libraries
 -- 
-2.5.0
+2.6.3
+
+
+-- 
+Kees Cook
+Chrome OS & Brillo Security
