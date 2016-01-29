@@ -1,83 +1,148 @@
-From: Chris Metcalf <cmetcalf@ezchip.com>
-Subject: Re: [PATCH v9 04/13] task_isolation: add initial support
-Date: Fri, 29 Jan 2016 13:18:05 -0500
-Message-ID: <56ABACDD.5090500@ezchip.com>
-References: <1451936091-29247-1-git-send-email-cmetcalf@ezchip.com>
- <1451936091-29247-5-git-send-email-cmetcalf@ezchip.com>
- <20160119154214.GA2722@lerouge> <569EA050.5030106@ezchip.com>
- <20160128002801.GA14313@lerouge>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160128002801.GA14313@lerouge>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Frederic Weisbecker <fweisbec@gmail.com>
-Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Dave Hansen <dave@sr71.net>
+Subject: [PATCH 25/31] mm, multi-arch: pass a protection key in to calc_vm_flag_bits()
+Date: Fri, 29 Jan 2016 10:17:18 -0800
+Message-ID: <20160129181718.3A3D9E79@viggo.jf.intel.com>
+References: <20160129181642.98E7D468@viggo.jf.intel.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20160129181642.98E7D468@viggo.jf.intel.com>
+Sender: owner-linux-mm@kvack.org
+To: linux-kernel@vger.kernel.org
+Cc: linux-mm@kvack.org, x86@kernel.org, torvalds@linux-foundation.org, Dave Hansen <dave@sr71.net>, dave.hansen@linux.intel.com, linux-api@vger.kernel.org, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 01/27/2016 07:28 PM, Frederic Weisbecker wrote:
-> On Tue, Jan 19, 2016 at 03:45:04PM -0500, Chris Metcalf wrote:
->> You asked what happens if nohz_full= is given as well, which is a very
->> good question.  Perhaps the right answer is to have an early_initcall
->> that suppresses task isolation on any cores that lost their nohz_full
->> or isolcpus status due to later boot command line arguments (and
->> generate a console warning, obviously).
-> I'd rather imagine that the final nohz full cpumask is "nohz_full=" | "task_isolation="
-> That's the easiest way to deal with and both nohz and task isolation can call
-> a common initializer that takes care of the allocation and add the cpus to the mask.
 
-I like it!
+From: Dave Hansen <dave.hansen@linux.intel.com>
 
-And by the same token, the final isolcpus cpumask is "isolcpus=" | 
-"task_isolation="?
-That seems like we'd want to do it to keep things parallel.
+This plumbs a protection key through calc_vm_flag_bits().  We
+could have done this in calc_vm_prot_bits(), but I did not feel
+super strongly which way to go.  It was pretty arbitrary which
+one to use.
 
->>>> +bool _task_isolation_ready(void)
->>>> +{
->>>> +	WARN_ON_ONCE(!irqs_disabled());
->>>> +
->>>> +	/* If we need to drain the LRU cache, we're not ready. */
->>>> +	if (lru_add_drain_needed(smp_processor_id()))
->>>> +		return false;
->>>> +
->>>> +	/* If vmstats need updating, we're not ready. */
->>>> +	if (!vmstat_idle())
->>>> +		return false;
->>>> +
->>>> +	/* Request rescheduling unless we are in full dynticks mode. */
->>>> +	if (!tick_nohz_tick_stopped()) {
->>>> +		set_tsk_need_resched(current);
->>> I'm not sure doing this will help getting the tick to get stopped.
->> Well, I don't know that there is anything else we CAN do, right?  If there's
->> another task that can run, great - it may be that that's why full dynticks
->> isn't happening yet.  Or, it might be that we're waiting for an RCU tick and
->> there's nothing else we can do, in which case we basically spend our time
->> going around through the scheduler code and back out to the
->> task_isolation_ready() test, but again, there's really nothing else more
->> useful we can be doing at this point.  Once the RCU tick fires (or whatever
->> it was that was preventing full dynticks from engaging), we will pass this
->> test and return to user space.
-> There is nothing at all you can do and setting TIF_RESCHED won't help either.
-> If there is another task that can run, the scheduler takes care of resched
-> by itself :-)
+Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: linux-api@vger.kernel.org
+Cc: linux-arch@vger.kernel.org
+---
 
-The problem is that the scheduler will only take care of resched at a
-later time, typically when we get a timer interrupt later.  By invoking the
-scheduler here, we allow any tasks that are ready to run to run
-immediately, rather than waiting for an interrupt to wake the scheduler.
-Plenty of places in the kernel just call schedule() directly when they are
-waiting.  Since we're waiting here regardless, we might as well
-immediately get any other runnable tasks dealt with.
+ b/arch/powerpc/include/asm/mman.h  |    5 +++--
+ b/drivers/char/agp/frontend.c      |    2 +-
+ b/drivers/staging/android/ashmem.c |    4 ++--
+ b/include/linux/mman.h             |    6 +++---
+ b/mm/mmap.c                        |    2 +-
+ b/mm/mprotect.c                    |    2 +-
+ b/mm/nommu.c                       |    2 +-
+ 7 files changed, 12 insertions(+), 11 deletions(-)
 
-We could also just return "false" in _task_isolation_ready(), and then
-check tick_nohz_tick_stopped() in _task_isolation_enter() and if false,
-call schedule() explicitly there, but that seems a little more roundabout.
-Admittedly it's more usual to see kernel code call schedule() directly
-to yield the processor, but in this case I'm not convinced it's cleaner
-given we're already in a loop where the caller is checking TIF_RESCHED
-and then calling schedule() when it's set.
+diff -puN arch/powerpc/include/asm/mman.h~pkeys-70-calc_vm_prot_bits arch/powerpc/include/asm/mman.h
+--- a/arch/powerpc/include/asm/mman.h~pkeys-70-calc_vm_prot_bits	2016-01-28 15:52:27.723741498 -0800
++++ b/arch/powerpc/include/asm/mman.h	2016-01-28 15:52:27.736742094 -0800
+@@ -18,11 +18,12 @@
+  * This file is included by linux/mman.h, so we can't use cacl_vm_prot_bits()
+  * here.  How important is the optimization?
+  */
+-static inline unsigned long arch_calc_vm_prot_bits(unsigned long prot)
++static inline unsigned long arch_calc_vm_prot_bits(unsigned long prot,
++		unsigned long pkey)
+ {
+ 	return (prot & PROT_SAO) ? VM_SAO : 0;
+ }
+-#define arch_calc_vm_prot_bits(prot) arch_calc_vm_prot_bits(prot)
++#define arch_calc_vm_prot_bits(prot, pkey) arch_calc_vm_prot_bits(prot, pkey)
+ 
+ static inline pgprot_t arch_vm_get_page_prot(unsigned long vm_flags)
+ {
+diff -puN drivers/char/agp/frontend.c~pkeys-70-calc_vm_prot_bits drivers/char/agp/frontend.c
+--- a/drivers/char/agp/frontend.c~pkeys-70-calc_vm_prot_bits	2016-01-28 15:52:27.725741589 -0800
++++ b/drivers/char/agp/frontend.c	2016-01-28 15:52:27.737742140 -0800
+@@ -156,7 +156,7 @@ static pgprot_t agp_convert_mmap_flags(i
+ {
+ 	unsigned long prot_bits;
+ 
+-	prot_bits = calc_vm_prot_bits(prot) | VM_SHARED;
++	prot_bits = calc_vm_prot_bits(prot, 0) | VM_SHARED;
+ 	return vm_get_page_prot(prot_bits);
+ }
+ 
+diff -puN drivers/staging/android/ashmem.c~pkeys-70-calc_vm_prot_bits drivers/staging/android/ashmem.c
+--- a/drivers/staging/android/ashmem.c~pkeys-70-calc_vm_prot_bits	2016-01-28 15:52:27.726741635 -0800
++++ b/drivers/staging/android/ashmem.c	2016-01-28 15:52:27.737742140 -0800
+@@ -372,8 +372,8 @@ static int ashmem_mmap(struct file *file
+ 	}
+ 
+ 	/* requested protection bits must match our allowed protection mask */
+-	if (unlikely((vma->vm_flags & ~calc_vm_prot_bits(asma->prot_mask)) &
+-		     calc_vm_prot_bits(PROT_MASK))) {
++	if (unlikely((vma->vm_flags & ~calc_vm_prot_bits(asma->prot_mask, 0)) &
++		     calc_vm_prot_bits(PROT_MASK, 0))) {
+ 		ret = -EPERM;
+ 		goto out;
+ 	}
+diff -puN include/linux/mman.h~pkeys-70-calc_vm_prot_bits include/linux/mman.h
+--- a/include/linux/mman.h~pkeys-70-calc_vm_prot_bits	2016-01-28 15:52:27.728741727 -0800
++++ b/include/linux/mman.h	2016-01-28 15:52:27.738742186 -0800
+@@ -35,7 +35,7 @@ static inline void vm_unacct_memory(long
+  */
+ 
+ #ifndef arch_calc_vm_prot_bits
+-#define arch_calc_vm_prot_bits(prot) 0
++#define arch_calc_vm_prot_bits(prot, pkey) 0
+ #endif
+ 
+ #ifndef arch_vm_get_page_prot
+@@ -70,12 +70,12 @@ static inline int arch_validate_prot(uns
+  * Combine the mmap "prot" argument into "vm_flags" used internally.
+  */
+ static inline unsigned long
+-calc_vm_prot_bits(unsigned long prot)
++calc_vm_prot_bits(unsigned long prot, unsigned long pkey)
+ {
+ 	return _calc_vm_trans(prot, PROT_READ,  VM_READ ) |
+ 	       _calc_vm_trans(prot, PROT_WRITE, VM_WRITE) |
+ 	       _calc_vm_trans(prot, PROT_EXEC,  VM_EXEC) |
+-	       arch_calc_vm_prot_bits(prot);
++	       arch_calc_vm_prot_bits(prot, pkey);
+ }
+ 
+ /*
+diff -puN mm/mmap.c~pkeys-70-calc_vm_prot_bits mm/mmap.c
+--- a/mm/mmap.c~pkeys-70-calc_vm_prot_bits	2016-01-28 15:52:27.730741819 -0800
++++ b/mm/mmap.c	2016-01-28 15:52:27.739742231 -0800
+@@ -1303,7 +1303,7 @@ unsigned long do_mmap(struct file *file,
+ 	 * to. we assume access permissions have been handled by the open
+ 	 * of the memory object, so we don't do any here.
+ 	 */
+-	vm_flags |= calc_vm_prot_bits(prot) | calc_vm_flag_bits(flags) |
++	vm_flags |= calc_vm_prot_bits(prot, 0) | calc_vm_flag_bits(flags) |
+ 			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
+ 
+ 	if (flags & MAP_LOCKED)
+diff -puN mm/mprotect.c~pkeys-70-calc_vm_prot_bits mm/mprotect.c
+--- a/mm/mprotect.c~pkeys-70-calc_vm_prot_bits	2016-01-28 15:52:27.731741865 -0800
++++ b/mm/mprotect.c	2016-01-28 15:52:27.739742231 -0800
+@@ -378,7 +378,7 @@ SYSCALL_DEFINE3(mprotect, unsigned long,
+ 	if ((prot & PROT_READ) && (current->personality & READ_IMPLIES_EXEC))
+ 		prot |= PROT_EXEC;
+ 
+-	vm_flags = calc_vm_prot_bits(prot);
++	vm_flags = calc_vm_prot_bits(prot, 0);
+ 
+ 	down_write(&current->mm->mmap_sem);
+ 
+diff -puN mm/nommu.c~pkeys-70-calc_vm_prot_bits mm/nommu.c
+--- a/mm/nommu.c~pkeys-70-calc_vm_prot_bits	2016-01-28 15:52:27.733741956 -0800
++++ b/mm/nommu.c	2016-01-28 15:52:27.740742277 -0800
+@@ -1090,7 +1090,7 @@ static unsigned long determine_vm_flags(
+ {
+ 	unsigned long vm_flags;
+ 
+-	vm_flags = calc_vm_prot_bits(prot) | calc_vm_flag_bits(flags);
++	vm_flags = calc_vm_prot_bits(prot, 0) | calc_vm_flag_bits(flags);
+ 	/* vm_flags |= mm->def_flags; */
+ 
+ 	if (!(capabilities & NOMMU_MAP_DIRECT)) {
+_
 
--- 
-Chris Metcalf, EZChip Semiconductor
-http://www.ezchip.com
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
