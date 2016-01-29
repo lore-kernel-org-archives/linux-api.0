@@ -1,237 +1,83 @@
-From: Dave Hansen <dave@sr71.net>
-Subject: [PATCH 00/31] x86: Memory Protection Keys (v9)
-Date: Fri, 29 Jan 2016 10:16:42 -0800
-Message-ID: <20160129181642.98E7D468@viggo.jf.intel.com>
-Return-path: <linux-arch-owner@vger.kernel.org>
-Sender: linux-arch-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-mm@kvack.org, x86@kernel.org, torvalds@linux-foundation.org, Dave Hansen <dave@sr71.net>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, aarcange@redhat.com, akpm@linux-foundation.org, jack@suse.cz, kirill.shutemov@linux.intel.com, n-horiguchi@ah.jp.nec.com, vbabka@suse.cz
+From: Chris Metcalf <cmetcalf@ezchip.com>
+Subject: Re: [PATCH v9 04/13] task_isolation: add initial support
+Date: Fri, 29 Jan 2016 13:18:05 -0500
+Message-ID: <56ABACDD.5090500@ezchip.com>
+References: <1451936091-29247-1-git-send-email-cmetcalf@ezchip.com>
+ <1451936091-29247-5-git-send-email-cmetcalf@ezchip.com>
+ <20160119154214.GA2722@lerouge> <569EA050.5030106@ezchip.com>
+ <20160128002801.GA14313@lerouge>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160128002801.GA14313@lerouge>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Frederic Weisbecker <fweisbec@gmail.com>
+Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Memory Protection Keys for User pages is a CPU feature which will
-first appear on Skylake Servers, but will also be supported on
-future non-server parts (there is also a QEMU implementation).  It
-provides a mechanism for enforcing page-based protections, but
-without requiring modification of the page tables when an
-application changes wishes to change permissions.
+On 01/27/2016 07:28 PM, Frederic Weisbecker wrote:
+> On Tue, Jan 19, 2016 at 03:45:04PM -0500, Chris Metcalf wrote:
+>> You asked what happens if nohz_full= is given as well, which is a very
+>> good question.  Perhaps the right answer is to have an early_initcall
+>> that suppresses task isolation on any cores that lost their nohz_full
+>> or isolcpus status due to later boot command line arguments (and
+>> generate a console warning, obviously).
+> I'd rather imagine that the final nohz full cpumask is "nohz_full=" | "task_isolation="
+> That's the easiest way to deal with and both nohz and task isolation can call
+> a common initializer that takes care of the allocation and add the cpus to the mask.
 
-This set introduces supported limited to:
-1. Allows "execute-only" memory
-2. Enables KVM to run Protection-Key-enabled guests
+I like it!
 
-This set contains the vast majority of of the code, with the
-small but tricky explicit user interface parts left off.  We can
-have a more focused review on those at a later time in a (much
-smaller) follow-on series.
+And by the same token, the final isolcpus cpumask is "isolcpus=" | 
+"task_isolation="?
+That seems like we'd want to do it to keep things parallel.
 
-Changes from v8:
- * Reorganization of get_user_pages() patch with awesome feedback
-   from Vlastimil Babka and suggestions from Jan Kara.
- * fix EXPORT_SYMBOL() and use get_current_user_page() in nommu.c
+>>>> +bool _task_isolation_ready(void)
+>>>> +{
+>>>> +	WARN_ON_ONCE(!irqs_disabled());
+>>>> +
+>>>> +	/* If we need to drain the LRU cache, we're not ready. */
+>>>> +	if (lru_add_drain_needed(smp_processor_id()))
+>>>> +		return false;
+>>>> +
+>>>> +	/* If vmstats need updating, we're not ready. */
+>>>> +	if (!vmstat_idle())
+>>>> +		return false;
+>>>> +
+>>>> +	/* Request rescheduling unless we are in full dynticks mode. */
+>>>> +	if (!tick_nohz_tick_stopped()) {
+>>>> +		set_tsk_need_resched(current);
+>>> I'm not sure doing this will help getting the tick to get stopped.
+>> Well, I don't know that there is anything else we CAN do, right?  If there's
+>> another task that can run, great - it may be that that's why full dynticks
+>> isn't happening yet.  Or, it might be that we're waiting for an RCU tick and
+>> there's nothing else we can do, in which case we basically spend our time
+>> going around through the scheduler code and back out to the
+>> task_isolation_ready() test, but again, there's really nothing else more
+>> useful we can be doing at this point.  Once the RCU tick fires (or whatever
+>> it was that was preventing full dynticks from engaging), we will pass this
+>> test and return to user space.
+> There is nothing at all you can do and setting TIF_RESCHED won't help either.
+> If there is another task that can run, the scheduler takes care of resched
+> by itself :-)
 
-Changes from v7:
- * Fixed merge issue with cpu feature bitmap definitions
- * Fixed up some comments in get_user_pages() and smaps patches
-   (thanks Vlastimil!)
+The problem is that the scheduler will only take care of resched at a
+later time, typically when we get a timer interrupt later.  By invoking the
+scheduler here, we allow any tasks that are ready to run to run
+immediately, rather than waiting for an interrupt to wake the scheduler.
+Plenty of places in the kernel just call schedule() directly when they are
+waiting.  Since we're waiting here regardless, we might as well
+immediately get any other runnable tasks dealt with.
 
-Changes from v6:
- * fix up ??'s showing up in in smaps' VmFlags field
- * added execute-only support
- * removed all the new syscalls from this set.  We can discuss
-   them in detail after this is merged.
+We could also just return "false" in _task_isolation_ready(), and then
+check tick_nohz_tick_stopped() in _task_isolation_enter() and if false,
+call schedule() explicitly there, but that seems a little more roundabout.
+Admittedly it's more usual to see kernel code call schedule() directly
+to yield the processor, but in this case I'm not convinced it's cleaner
+given we're already in a loop where the caller is checking TIF_RESCHED
+and then calling schedule() when it's set.
 
-Changes from v5:
-
- * make types in read_pkru() u32's, not ints
- * rework VM_* bits to avoid using __ffsl() and clean up
-   vma_pkey()
- * rework pte_allows_gup() to use p??_val() instead of passing
-   around p{te,md,ud}_t types.
- * Fix up some inconsistent bool vs. int usage
- * corrected name of ARCH_VM_PKEY_FLAGS in patch description
- * remove NR_PKEYS... config option.  Just define it directly
-
-Changes from v4:
-
- * Made "allow setting of XSAVE state" safe if we got preempted
-   between when we saved our FPU state and when we restore it.
-   (I would appreciate a look from Ingo on this patch).
- * Fixed up a few things from Thomas's latest comments: splt up
-   siginfo in to x86 and generic, removed extra 'eax' variable
-   in rdpkru function, reworked vm_flags assignment, reworded
-   a comment in pte_allows_gup()
- * Add missing DISABLED/REQUIRED_MASK14 in cpufeature.h
- * Added comment about compile optimization in fault path
- * Left get_user_pages_locked() alone.  Andrea thinks we need it.
-
-Changes from RFCv3:
-
- * Added 'current' and 'foreign' variants of get_user_pages() to
-   help indicate whether protection keys should be enforced.
-   Thanks to Jerome Glisse for pointing out this issue.
- * Added "allocation" and set/get system calls so that we can do
-   management of proection keys in the kernel.  This opens the
-   door to use of specific protection keys for kernel use in the
-   future, such as for execute-only memory.
- * Removed the kselftest code for the moment.  It will be
-   submitted separately.
-
-Thanks Ingo and Thomas for most of these):
-Changes from RFCv2 (Thanks Ingo and Thomas for most of these):
-
- * few minor compile warnings
- * changed 'nopku' interaction with cpuid bits.  Now, we do not
-   clear the PKU cpuid bit, we just skip enabling it.
- * changed __pkru_allows_write() to also check access disable bit
- * removed the unused write_pkru()
- * made si_pkey a u64 and added some patch description details.
-   Also made it share space in siginfo with MPX and clarified
-   comments.
- * give some real text for the Processor Trace xsave state
- * made vma_pkey() less ugly (and much more optimized actually)
- * added SEGV_PKUERR to copy_siginfo_to_user()
- * remove page table walk when filling in si_pkey, added some
-   big fat comments about it being inherently racy.
- * added self test code
-
-This code is not runnable to anyone outside of Intel unless they
-have some special hardware or a fancy simulator.  There is a qemu
-model to emulate the feature, but it is not currently implemented
-fully enough to be usable.  If you are interested in running this
-for real, please get in touch with me.  Hardware is available to a
-very small but nonzero number of people.
-
-This set is also available here:
-
-	git://git.kernel.org/pub/scm/linux/kernel/git/daveh/x86-pkeys.git pkeys-v021.1
-
-=== diffstat ===
-
-Dave Hansen (31):
-      mm, gup: introduce concept of "foreign" get_user_pages()
-      x86, fpu: add placeholder for Processor Trace XSAVE state
-      x86, pkeys: Add Kconfig option
-      x86, pkeys: cpuid bit definition
-      x86, pkeys: define new CR4 bit
-      x86, pkeys: add PKRU xsave fields and data structure(s)
-      x86, pkeys: PTE bits for storing protection key
-      x86, pkeys: new page fault error code bit: PF_PK
-      x86, pkeys: store protection in high VMA flags
-      x86, pkeys: arch-specific protection bits
-      x86, pkeys: pass VMA down in to fault signal generation code
-      signals, pkeys: notify userspace about protection key faults
-      x86, pkeys: fill in pkey field in siginfo
-      x86, pkeys: add functions to fetch PKRU
-      mm: factor out VMA fault permission checking
-      x86, mm: simplify get_user_pages() PTE bit handling
-      x86, pkeys: check VMAs and PTEs for protection keys
-      mm: do not enforce PKEY permissions on "foreign" mm access
-      x86, pkeys: optimize fault handling in access_error()
-      x86, pkeys: differentiate instruction fetches
-      x86, pkeys: dump PKRU with other kernel registers
-      x86, pkeys: dump pkey from VMA in /proc/pid/smaps
-      x86, pkeys: add Kconfig prompt to existing config option
-      x86, pkeys: actually enable Memory Protection Keys in CPU
-      mm, multi-arch: pass a protection key in to calc_vm_flag_bits()
-      x86, pkeys: add arch_validate_pkey()
-      x86: separate out LDT init from context init
-      x86, fpu: allow setting of XSAVE state
-      x86, pkeys: allow kernel to modify user pkey rights register
-      x86, pkeys: create an x86 arch_calc_vm_prot_bits() for VMA flags
-      x86, pkeys: execute-only support
-
- Documentation/kernel-parameters.txt           |   3 +
- arch/cris/arch-v32/drivers/cryptocop.c        |   8 +-
- arch/ia64/kernel/err_inject.c                 |   3 +-
- arch/mips/mm/gup.c                            |   3 +-
- arch/powerpc/include/asm/mman.h               |   5 +-
- arch/powerpc/include/asm/mmu_context.h        |  12 ++
- arch/s390/include/asm/mmu_context.h           |  12 ++
- arch/s390/mm/gup.c                            |   4 +-
- arch/sh/mm/gup.c                              |   2 +-
- arch/sparc/mm/gup.c                           |   2 +-
- arch/unicore32/include/asm/mmu_context.h      |  12 ++
- arch/x86/Kconfig                              |  16 ++
- arch/x86/include/asm/cpufeature.h             |  61 ++++--
- arch/x86/include/asm/disabled-features.h      |  15 ++
- arch/x86/include/asm/fpu/internal.h           |   2 +
- arch/x86/include/asm/fpu/types.h              |  12 ++
- arch/x86/include/asm/fpu/xstate.h             |   4 +-
- arch/x86/include/asm/mmu_context.h            |  85 +++++++-
- arch/x86/include/asm/pgtable.h                |  38 ++++
- arch/x86/include/asm/pgtable_types.h          |  39 +++-
- arch/x86/include/asm/pkeys.h                  |  34 ++++
- arch/x86/include/asm/required-features.h      |   7 +
- arch/x86/include/asm/special_insns.h          |  22 +++
- arch/x86/include/uapi/asm/mman.h              |  22 +++
- arch/x86/include/uapi/asm/processor-flags.h   |   2 +
- arch/x86/kernel/cpu/common.c                  |  42 ++++
- arch/x86/kernel/fpu/core.c                    |  63 ++++++
- arch/x86/kernel/fpu/xstate.c                  | 185 +++++++++++++++++-
- arch/x86/kernel/ldt.c                         |   4 +-
- arch/x86/kernel/process_64.c                  |   2 +
- arch/x86/kernel/setup.c                       |   9 +
- arch/x86/mm/Makefile                          |   2 +
- arch/x86/mm/fault.c                           | 168 +++++++++++++---
- arch/x86/mm/gup.c                             |  45 +++--
- arch/x86/mm/mpx.c                             |   4 +-
- arch/x86/mm/pkeys.c                           | 101 ++++++++++
- drivers/char/agp/frontend.c                   |   2 +-
- drivers/gpu/drm/amd/amdgpu/amdgpu_ttm.c       |   3 +-
- drivers/gpu/drm/i915/i915_gem_userptr.c       |   2 +-
- drivers/gpu/drm/radeon/radeon_ttm.c           |   3 +-
- drivers/gpu/drm/via/via_dmablit.c             |   3 +-
- drivers/infiniband/core/umem.c                |   2 +-
- drivers/infiniband/core/umem_odp.c            |   8 +-
- drivers/infiniband/hw/mthca/mthca_memfree.c   |   3 +-
- drivers/infiniband/hw/qib/qib_user_pages.c    |   3 +-
- drivers/infiniband/hw/usnic/usnic_uiom.c      |   2 +-
- drivers/iommu/amd_iommu_v2.c                  |   1 +
- drivers/media/pci/ivtv/ivtv-udma.c            |   4 +-
- drivers/media/pci/ivtv/ivtv-yuv.c             |  10 +-
- drivers/media/v4l2-core/videobuf-dma-sg.c     |   3 +-
- drivers/misc/mic/scif/scif_rma.c              |   2 -
- drivers/misc/sgi-gru/grufault.c               |   3 +-
- drivers/scsi/st.c                             |   2 -
- drivers/staging/android/ashmem.c              |   4 +-
- drivers/staging/rdma/ipath/ipath_user_pages.c |   3 +-
- drivers/video/fbdev/pvr2fb.c                  |   4 +-
- drivers/virt/fsl_hypervisor.c                 |   5 +-
- fs/exec.c                                     |   8 +-
- fs/proc/task_mmu.c                            |  14 ++
- include/asm-generic/mm_hooks.h                |  12 ++
- include/linux/mm.h                            |  41 +++-
- include/linux/mman.h                          |   6 +-
- include/linux/pkeys.h                         |  33 ++++
- include/uapi/asm-generic/siginfo.h            |  17 +-
- kernel/events/uprobes.c                       |  10 +-
- kernel/signal.c                               |   4 +
- mm/Kconfig                                    |   5 +
- mm/frame_vector.c                             |   2 +-
- mm/gup.c                                      |  94 ++++++---
- mm/ksm.c                                      |  12 +-
- mm/memory.c                                   |   8 +-
- mm/mempolicy.c                                |   6 +-
- mm/mmap.c                                     |  10 +-
- mm/mprotect.c                                 |   8 +-
- mm/nommu.c                                    |  32 +--
- mm/process_vm_access.c                        |  11 +-
- mm/util.c                                     |   4 +-
- net/ceph/pagevec.c                            |   2 +-
- security/tomoyo/domain.c                      |   9 +-
- virt/kvm/async_pf.c                           |   7 +-
- virt/kvm/kvm_main.c                           |  10 +-
- 81 files changed, 1264 insertions(+), 223 deletions(-)
-
-Cc: linux-api@vger.kernel.org
-Cc: linux-arch@vger.kernel.org
-Cc: aarcange@redhat.com
-Cc: akpm@linux-foundation.org
-Cc: jack@suse.cz
-Cc: kirill.shutemov@linux.intel.com
-Cc: linux-api@vger.kernel.org
-Cc: linux-arch@vger.kernel.org
-Cc: n-horiguchi@ah.jp.nec.com
-Cc: x86@kernel.org
-Cc: torvalds@linux-foundation.org
-Cc: vbabka@suse.cz
+-- 
+Chris Metcalf, EZChip Semiconductor
+http://www.ezchip.com
