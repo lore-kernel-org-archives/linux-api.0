@@ -1,794 +1,117 @@
-From: Jonathan Cameron <jic23@kernel.org>
-Subject: Re: [PATCH v4 4/4] iio: health: Add driver for the TI AFE4403 heart
- monitor
-Date: Sat, 30 Jan 2016 15:10:06 +0000
-Message-ID: <56ACD24E.3050308@kernel.org>
-References: <1453742941-12086-1-git-send-email-afd@ti.com>
- <1453742941-12086-5-git-send-email-afd@ti.com>
+From: Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v9 04/13] task_isolation: add initial support
+Date: Sat, 30 Jan 2016 22:11:27 +0100
+Message-ID: <20160130211125.GB7856@lerouge>
+References: <1451936091-29247-1-git-send-email-cmetcalf@ezchip.com>
+ <1451936091-29247-5-git-send-email-cmetcalf@ezchip.com>
+ <20160119154214.GA2722@lerouge>
+ <569EA050.5030106@ezchip.com>
+ <20160128002801.GA14313@lerouge>
+ <56ABACDD.5090500@ezchip.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1453742941-12086-5-git-send-email-afd@ti.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Andrew F. Davis" <afd@ti.com>, Hartmut Knaack <knaack.h@gmx.de>, Lars-Peter Clausen <lars@metafoo.de>, Peter Meerwald <pmeerw@pmeerw.net>, Dan Murphy <dmurphy@ti.com>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>
-Cc: linux-iio@vger.kernel.org, linux-api@vger.kernel.org, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <56ABACDD.5090500-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Cc: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 25/01/16 17:29, Andrew F. Davis wrote:
-> Add driver for the TI AFE4403 heart rate monitor and pulse oximeter.
-> This device detects reflected LED light fluctuations and presents an ADC
-> value to the user space for further signal processing.
+On Fri, Jan 29, 2016 at 01:18:05PM -0500, Chris Metcalf wrote:
+> On 01/27/2016 07:28 PM, Frederic Weisbecker wrote:
+> >On Tue, Jan 19, 2016 at 03:45:04PM -0500, Chris Metcalf wrote:
+> >>You asked what happens if nohz_full= is given as well, which is a very
+> >>good question.  Perhaps the right answer is to have an early_initcall
+> >>that suppresses task isolation on any cores that lost their nohz_full
+> >>or isolcpus status due to later boot command line arguments (and
+> >>generate a console warning, obviously).
+> >I'd rather imagine that the final nohz full cpumask is "nohz_full=" | "task_isolation="
+> >That's the easiest way to deal with and both nohz and task isolation can call
+> >a common initializer that takes care of the allocation and add the cpus to the mask.
 > 
-> Data sheet located here:
-> http://www.ti.com/product/AFE4403/datasheet
+> I like it!
 > 
-> Signed-off-by: Andrew F. Davis <afd@ti.com>
-Hi Andrew,
+> And by the same token, the final isolcpus cpumask is "isolcpus=" |
+> "task_isolation="?
+> That seems like we'd want to do it to keep things parallel.
 
-As expected, the comment in here are pretty similar to in the previous
-driver.  I'm fairly sure you can't use ___cacheline_aligned as you have
-here as I don't believe it has any effect on data store on the stack - or
-at least not how you need it to (which is to ensure only the spi buffers
-are in the relevant cacheline to avoid corruption of other memory in there).
+We have reverted the patch that made isolcpus |= nohz_full. Too
+many people complained about unusable machines with NO_HZ_FULL_ALL
 
-Otherwise, looks pretty good.
+But the user can still set that parameter manually.
 
-Jonathan
-> ---
->  drivers/iio/health/Kconfig   |  12 +
->  drivers/iio/health/Makefile  |   1 +
->  drivers/iio/health/afe4403.c | 698 +++++++++++++++++++++++++++++++++++++++++++
->  3 files changed, 711 insertions(+)
->  create mode 100644 drivers/iio/health/afe4403.c
 > 
-> diff --git a/drivers/iio/health/Kconfig b/drivers/iio/health/Kconfig
-> index 632a14b..f0c1977 100644
-> --- a/drivers/iio/health/Kconfig
-> +++ b/drivers/iio/health/Kconfig
-> @@ -7,6 +7,18 @@ menu "Health Sensors"
->  
->  menu "Heart Rate Monitors"
->  
-> +config AFE4403
-> +	tristate "TI AFE4403 Heart Rate Monitor"
-> +	depends on SPI_MASTER
-> +	select IIO_BUFFER
-> +	select IIO_TRIGGERED_BUFFER
-> +	help
-> +	  Say yes to choose the Texas Instruments AFE4403
-> +	  heart rate monitor and low-cost pulse oximeter.
-> +
-> +	  To compile this driver as a module, choose M here: the
-> +	  module will be called afe4403.
-> +
->  config AFE4404
->  	tristate "TI AFE4404 heart rate and pulse oximeter sensor"
->  	depends on I2C
-> diff --git a/drivers/iio/health/Makefile b/drivers/iio/health/Makefile
-> index b37c0d5..9955a2a 100644
-> --- a/drivers/iio/health/Makefile
-> +++ b/drivers/iio/health/Makefile
-> @@ -4,5 +4,6 @@
->  
->  # When adding new entries keep the list in alphabetical order
->  
-> +obj-$(CONFIG_AFE4403)		+= afe4403.o
->  obj-$(CONFIG_AFE4404)		+= afe4404.o
->  obj-$(CONFIG_MAX30100)		+= max30100.o
-> diff --git a/drivers/iio/health/afe4403.c b/drivers/iio/health/afe4403.c
-> new file mode 100644
-> index 0000000..2c8565f
-> --- /dev/null
-> +++ b/drivers/iio/health/afe4403.c
-> @@ -0,0 +1,698 @@
-> +/*
-> + * AFE4403 Heart Rate Monitors and Low-Cost Pulse Oximeters
-> + *
-> + * Copyright (C) 2015 Texas Instruments Incorporated - http://www.ti.com/
-> + *	Andrew F. Davis <afd@ti.com>
-> + *
-> + * This program is free software; you can redistribute it and/or modify
-> + * it under the terms of the GNU General Public License version 2 as
-> + * published by the Free Software Foundation.
-> + *
-> + * This program is distributed in the hope that it will be useful, but
-> + * WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-> + * General Public License for more details.
-> + */
-> +
-> +#include <linux/device.h>
-> +#include <linux/err.h>
-> +#include <linux/interrupt.h>
-> +#include <linux/kernel.h>
-> +#include <linux/module.h>
-> +#include <linux/regmap.h>
-> +#include <linux/spi/spi.h>
-> +#include <linux/sysfs.h>
-> +#include <linux/regulator/consumer.h>
-> +
-> +#include <linux/iio/iio.h>
-> +#include <linux/iio/sysfs.h>
-> +#include <linux/iio/buffer.h>
-> +#include <linux/iio/trigger.h>
-> +#include <linux/iio/triggered_buffer.h>
-> +#include <linux/iio/trigger_consumer.h>
-> +
-> +#include "afe440x.h"
-> +
-> +#define AFE4403_DRIVER_NAME		"afe4403"
-> +
-> +/* AFE4403 Registers */
-> +#define AFE4403_TIAGAIN			0x20
-> +#define AFE4403_TIA_AMB_GAIN		0x21
-> +
-> +/* AFE4403 GAIN register fields */
-> +#define AFE4403_TIAGAIN_RES_MASK	GENMASK(2, 0)
-> +#define AFE4403_TIAGAIN_RES_SHIFT	0
-> +#define AFE4403_TIAGAIN_CAP_MASK	GENMASK(7, 3)
-> +#define AFE4403_TIAGAIN_CAP_SHIFT	3
-> +
-> +/* AFE4403 LEDCNTRL register fields */
-> +#define AFE440X_LEDCNTRL_LED1_MASK		GENMASK(15, 8)
-> +#define AFE440X_LEDCNTRL_LED1_SHIFT		8
-> +#define AFE440X_LEDCNTRL_LED2_MASK		GENMASK(7, 0)
-> +#define AFE440X_LEDCNTRL_LED2_SHIFT		0
-> +#define AFE440X_LEDCNTRL_LED_RANGE_MASK		GENMASK(17, 16)
-> +#define AFE440X_LEDCNTRL_LED_RANGE_SHIFT	16
-> +
-> +/* AFE4403 CONTROL2 register fields */
-> +#define AFE440X_CONTROL2_PWR_DWN_TX	BIT(2)
-> +#define AFE440X_CONTROL2_EN_SLOW_DIAG	BIT(8)
-> +#define AFE440X_CONTROL2_DIAG_OUT_TRI	BIT(10)
-> +#define AFE440X_CONTROL2_TX_BRDG_MOD	BIT(11)
-> +#define AFE440X_CONTROL2_TX_REF_MASK	GENMASK(18, 17)
-> +#define AFE440X_CONTROL2_TX_REF_SHIFT	17
-> +
-> +/* AFE4404 NULL fields */
-> +#define NULL_MASK	0
-> +#define NULL_SHIFT	0
-> +
-> +/* AFE4403 LEDCNTRL values */
-> +#define AFE440X_LEDCNTRL_RANGE_TX_HALF	0x1
-> +#define AFE440X_LEDCNTRL_RANGE_TX_FULL	0x2
-> +#define AFE440X_LEDCNTRL_RANGE_TX_OFF	0x3
-> +
-> +/* AFE4403 CONTROL2 values */
-> +#define AFE440X_CONTROL2_TX_REF_025	0x0
-> +#define AFE440X_CONTROL2_TX_REF_050	0x1
-> +#define AFE440X_CONTROL2_TX_REF_100	0x2
-> +#define AFE440X_CONTROL2_TX_REF_075	0x3
-> +
-> +/* AFE4403 CONTROL3 values */
-> +#define AFE440X_CONTROL3_CLK_DIV_2	0x0
-> +#define AFE440X_CONTROL3_CLK_DIV_4	0x2
-> +#define AFE440X_CONTROL3_CLK_DIV_6	0x3
-> +#define AFE440X_CONTROL3_CLK_DIV_8	0x4
-> +#define AFE440X_CONTROL3_CLK_DIV_12	0x5
-> +#define AFE440X_CONTROL3_CLK_DIV_1	0x7
-> +
-> +/* AFE4403 TIAGAIN_CAP values */
-> +#define AFE4403_TIAGAIN_CAP_5_P		0x0
-> +#define AFE4403_TIAGAIN_CAP_10_P	0x1
-> +#define AFE4403_TIAGAIN_CAP_20_P	0x2
-> +#define AFE4403_TIAGAIN_CAP_30_P	0x3
-> +#define AFE4403_TIAGAIN_CAP_55_P	0x8
-> +#define AFE4403_TIAGAIN_CAP_155_P	0x10
-> +
-> +/* AFE4403 TIAGAIN_RES values */
-> +#define AFE4403_TIAGAIN_RES_500_K	0x0
-> +#define AFE4403_TIAGAIN_RES_250_K	0x1
-> +#define AFE4403_TIAGAIN_RES_100_K	0x2
-> +#define AFE4403_TIAGAIN_RES_50_K	0x3
-> +#define AFE4403_TIAGAIN_RES_25_K	0x4
-> +#define AFE4403_TIAGAIN_RES_10_K	0x5
-> +#define AFE4403_TIAGAIN_RES_1_M		0x6
-> +#define AFE4403_TIAGAIN_RES_NONE	0x7
-> +
-> +/**
-> + * struct afe4403_data
-> + * @dev - Device structure
-> + * @spi - SPI device handle
-> + * @regmap - Register map of the device
-> + * @regulator - Pointer to the regulator for the IC
-> + * @trig - IIO trigger for this device
-> + * @irq - ADC_RDY line interrupt number
-> + */
-> +struct afe4403_data {
-> +	struct device *dev;
-> +	struct spi_device *spi;
-> +	struct regmap *regmap;
-> +	struct regulator *regulator;
-> +	struct iio_trigger *trig;
-> +	int irq;
-> +};
-> +
-> +enum afe4403_chan_id {
-> +	LED1,
-> +	ALED1,
-> +	LED2,
-> +	ALED2,
-> +	LED1_ALED1,
-> +	LED2_ALED2,
-> +	ILED1,
-> +	ILED2,
-> +};
-> +
-> +static const struct afe440x_reg_info afe4403_reg_info[] = {
-> +	AFE440X_REG_INFO(LED1, AFE440X_LED1VAL, 0, NULL),
-> +	AFE440X_REG_INFO(ALED1, AFE440X_ALED1VAL, 0, NULL),
-> +	AFE440X_REG_INFO(LED2, AFE440X_LED2VAL, 0, NULL),
-> +	AFE440X_REG_INFO(ALED2, AFE440X_ALED2VAL, 0, NULL),
-> +	AFE440X_REG_INFO(LED1_ALED1, AFE440X_LED1_ALED1VAL, 0, NULL),
-> +	AFE440X_REG_INFO(LED2_ALED2, AFE440X_LED2_ALED2VAL, 0, NULL),
-> +	AFE440X_REG_INFO(ILED1, AFE440X_LEDCNTRL, 0, AFE440X_LEDCNTRL_LED1),
-> +	AFE440X_REG_INFO(ILED2, AFE440X_LEDCNTRL, 0, AFE440X_LEDCNTRL_LED2),
-> +};
-> +
-> +static const struct iio_chan_spec afe4403_channels[] = {
-> +	/* ADC values */
-> +	AFE440X_INTENSITY_CHAN(LED1, "led1", 0),
-> +	AFE440X_INTENSITY_CHAN(ALED1, "led1_ambient", 0),
-> +	AFE440X_INTENSITY_CHAN(LED2, "led2", 0),
-> +	AFE440X_INTENSITY_CHAN(ALED2, "led2_ambient", 0),
-> +	AFE440X_INTENSITY_CHAN(LED1_ALED1, "led1-led1_ambient", 0),
-> +	AFE440X_INTENSITY_CHAN(LED2_ALED2, "led2-led2_ambient", 0),
-> +	/* LED current */
-> +	AFE440X_CURRENT_CHAN(ILED1, "led1"),
-> +	AFE440X_CURRENT_CHAN(ILED2, "led2"),
-> +};
-> +
-> +static const struct afe440x_val_table afe4403_res_table[] = {
-> +	{ 500000 }, { 250000 }, { 100000 }, { 50000 },
-> +	{ 25000 }, { 10000 }, { 1000000 }, { 0 },
-> +};
-> +AFE440X_TABLE_ATTR(tia_resistance_available, afe4403_res_table);
-> +
-> +static const struct afe440x_val_table afe4403_cap_table[] = {
-> +	{ 0, 5000 }, { 0, 10000 }, { 0, 20000 }, { 0, 25000 },
-> +	{ 0, 30000 }, { 0, 35000 }, { 0, 45000 }, { 0, 50000 },
-> +	{ 0, 55000 }, { 0, 60000 }, { 0, 70000 }, { 0, 75000 },
-> +	{ 0, 80000 }, { 0, 85000 }, { 0, 95000 }, { 0, 100000 },
-> +	{ 0, 155000 }, { 0, 160000 }, { 0, 170000 }, { 0, 175000 },
-> +	{ 0, 180000 }, { 0, 185000 }, { 0, 195000 }, { 0, 200000 },
-> +	{ 0, 205000 }, { 0, 210000 }, { 0, 220000 }, { 0, 225000 },
-> +	{ 0, 230000 }, { 0, 235000 }, { 0, 245000 }, { 0, 250000 },
-> +};
-> +AFE440X_TABLE_ATTR(tia_capacitance_available, afe4403_cap_table);
-1> +
-> +static ssize_t afe440x_show_register(struct device *dev,
-> +				     struct device_attribute *attr,
-> +				     char *buf)
-> +{
-> +	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
-> +	struct afe4403_data *afe = iio_priv(indio_dev);
-> +	struct afe440x_attr *afe440x_attr = to_afe440x_attr(attr);
-> +	unsigned int reg_val, type;
-> +	int vals[2];
-> +	int ret, val_len;
-> +
-> +	ret = regmap_read(afe->regmap, afe440x_attr->reg, &reg_val);
-> +	if (ret)
-> +		return ret;
-> +
-> +	reg_val &= afe440x_attr->mask;
-> +	reg_val >>= afe440x_attr->shift;
-> +
-> +	switch (afe440x_attr->type) {
-> +	case SIMPLE:
-> +		type = IIO_VAL_INT;
-> +		val_len = 1;
-> +		vals[0] = reg_val;
-> +		break;
-> +	case RESISTANCE:
-> +	case CAPACITANCE:
-> +		type = IIO_VAL_INT_PLUS_MICRO;
-> +		val_len = 2;
-> +		if (reg_val < afe440x_attr->table_size) {
-> +			vals[0] = afe440x_attr->val_table[reg_val].integer;
-> +			vals[1] = afe440x_attr->val_table[reg_val].fract;
-> +			break;
-> +		}
-> +		return -EINVAL;
-> +	default:
-> +		return -EINVAL;
-> +	}
-> +
-> +	return iio_format_value(buf, type, val_len, vals);
-> +}
-> +
-> +static ssize_t afe440x_store_register(struct device *dev,
-> +				      struct device_attribute *attr,
-> +				      const char *buf, size_t count)
-> +{
-> +	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
-> +	struct afe4403_data *afe = iio_priv(indio_dev);
-> +	struct afe440x_attr *afe440x_attr = to_afe440x_attr(attr);
-> +	int val, integer, fract, ret;
-> +
-> +	ret = iio_str_to_fixpoint(buf, 100000, &integer, &fract);
-> +	if (ret)
-> +		return ret;
-> +
-> +	switch (afe440x_attr->type) {
-> +	case SIMPLE:
-> +		val = integer;
-> +		break;
-> +	case RESISTANCE:
-> +	case CAPACITANCE:
-> +		for (val = 0; val < afe440x_attr->table_size; val++)
-> +			if (afe440x_attr->val_table[val].integer == integer &&
-> +			    afe440x_attr->val_table[val].fract == fract)
-> +				break;
-> +		if (val == afe440x_attr->table_size)
-> +			return -EINVAL;
-> +		break;
-> +	default:
-> +		return -EINVAL;
-> +	}
-> +
-> +	ret = regmap_update_bits(afe->regmap, afe440x_attr->reg,
-> +				 afe440x_attr->mask,
-> +				 (val << afe440x_attr->shift));
-> +	if (ret)
-> +		return ret;
-> +
-> +	return count;
-> +}
-> +
-> +static AFE440X_ATTR(tia_separate_en, AFE4403_TIAGAIN, AFE440X_TIAGAIN_ENSEPGAIN, SIMPLE, NULL, 0);
-> +
-> +static AFE440X_ATTR(tia_resistance1, AFE4403_TIAGAIN, AFE4403_TIAGAIN_RES, RESISTANCE, afe4403_res_table, ARRAY_SIZE(afe4403_res_table));
-> +static AFE440X_ATTR(tia_capacitance1, AFE4403_TIAGAIN, AFE4403_TIAGAIN_CAP, CAPACITANCE, afe4403_cap_table, ARRAY_SIZE(afe4403_cap_table));
-> +
-> +static AFE440X_ATTR(tia_resistance2, AFE4403_TIA_AMB_GAIN, AFE4403_TIAGAIN_RES, RESISTANCE, afe4403_res_table, ARRAY_SIZE(afe4403_res_table));
-> +static AFE440X_ATTR(tia_capacitance2, AFE4403_TIA_AMB_GAIN, AFE4403_TIAGAIN_RES, CAPACITANCE, afe4403_cap_table, ARRAY_SIZE(afe4403_cap_table));
-> +
-> +static struct attribute *afe440x_attributes[] = {
-> +	&afe440x_attr_tia_separate_en.dev_attr.attr,
-> +	&afe440x_attr_tia_resistance1.dev_attr.attr,
-> +	&afe440x_attr_tia_capacitance1.dev_attr.attr,
-> +	&afe440x_attr_tia_resistance2.dev_attr.attr,
-> +	&afe440x_attr_tia_capacitance2.dev_attr.attr,
-> +	&dev_attr_tia_resistance_available.attr,
-> +	&dev_attr_tia_capacitance_available.attr,
-> +	NULL
-> +};
-> +
-> +static const struct attribute_group afe440x_attribute_group = {
-> +	.attrs = afe440x_attributes
-> +};
-> +
-> +static int afe4403_read(struct afe4403_data *afe, unsigned int reg, u32 *val)
-> +{
-> +	u8 tx[4] ____cacheline_aligned = {AFE440X_CONTROL0, 0x0, 0x0,
-> +					  AFE440X_CONTROL0_READ};
-hmm. Can you do this on the stack?  Don't think so but maybe I'm wrong..
-The cachline aligned trick relies on the start of the allocation on the
-heap being aligned and then pads to ensure that the element so tagged
-is also aligned appropriately.
-> +	u8 rx[3];
-> +	int ret;
-Even if this were possible, ret is in the same cacheline as tx and rx so
-chaos may well occur.
+> >>>>+bool _task_isolation_ready(void)
+> >>>>+{
+> >>>>+	WARN_ON_ONCE(!irqs_disabled());
+> >>>>+
+> >>>>+	/* If we need to drain the LRU cache, we're not ready. */
+> >>>>+	if (lru_add_drain_needed(smp_processor_id()))
+> >>>>+		return false;
+> >>>>+
+> >>>>+	/* If vmstats need updating, we're not ready. */
+> >>>>+	if (!vmstat_idle())
+> >>>>+		return false;
+> >>>>+
+> >>>>+	/* Request rescheduling unless we are in full dynticks mode. */
+> >>>>+	if (!tick_nohz_tick_stopped()) {
+> >>>>+		set_tsk_need_resched(current);
+> >>>I'm not sure doing this will help getting the tick to get stopped.
+> >>Well, I don't know that there is anything else we CAN do, right?  If there's
+> >>another task that can run, great - it may be that that's why full dynticks
+> >>isn't happening yet.  Or, it might be that we're waiting for an RCU tick and
+> >>there's nothing else we can do, in which case we basically spend our time
+> >>going around through the scheduler code and back out to the
+> >>task_isolation_ready() test, but again, there's really nothing else more
+> >>useful we can be doing at this point.  Once the RCU tick fires (or whatever
+> >>it was that was preventing full dynticks from engaging), we will pass this
+> >>test and return to user space.
+> >There is nothing at all you can do and setting TIF_RESCHED won't help either.
+> >If there is another task that can run, the scheduler takes care of resched
+> >by itself :-)
+> 
+> The problem is that the scheduler will only take care of resched at a
+> later time, typically when we get a timer interrupt later.
 
-If you really want to avoid having allocations elsewhere, just use
-spi_write_then_read(afe->spi, tx, 4, NULL, 0) and you should be fine
-as spi_write_then_read uses safe bounce buffers.
-> +
-> +	/* Enable reading from the device */
-> +	ret = spi_write(afe->spi, tx, 4);
-> +	if (ret)
-> +		goto out;
-> +
-> +	ret = spi_write_then_read(afe->spi, &reg, 1, rx, 3);
-> +	if (ret)
-> +		goto out;
-> +
-> +	*val = (rx[0] << 16) |
-> +		(rx[1] << 8) |
-> +		(rx[2]);
-> +
-> +	/* Disable reading from the device */
-> +	tx[3] = AFE440X_CONTROL0_WRITE;
-> +	ret = spi_write(afe->spi, tx, 4);
-> +	if (ret)
-> +		goto out;
-> +
-> +out:
-> +
-> +	return ret;
-> +}
-> +
-> +static int afe4403_read_raw(struct iio_dev *indio_dev,
-> +			    struct iio_chan_spec const *chan,
-> +			    int *val, int *val2, long mask)
-> +{
-> +	struct afe4403_data *afe = iio_priv(indio_dev);
-> +	const struct afe440x_reg_info reg_info = afe4403_reg_info[chan->address];
-> +	int ret;
-> +
-> +	switch (chan->type) {
-> +	case IIO_INTENSITY:
-> +		switch (mask) {
-> +		case IIO_CHAN_INFO_RAW:
-> +			ret = afe4403_read(afe, reg_info.reg, val);
-> +			if (ret)
-> +				return ret;
-> +			return IIO_VAL_INT;
-> +		case IIO_CHAN_INFO_OFFSET:
-> +			ret = regmap_read(afe->regmap, reg_info.offreg,
-> +					  val);
-> +			if (ret)
-> +				return ret;
-> +			*val &= reg_info.mask;
-> +			*val >>= reg_info.shift;
-> +			return IIO_VAL_INT;
-> +		}
-> +		break;
-> +	case IIO_CURRENT:
-> +		switch (mask) {
-> +		case IIO_CHAN_INFO_RAW:
-> +			ret = regmap_read(afe->regmap, reg_info.reg, val);
-> +			if (ret)
-> +				return ret;
-> +			*val &= reg_info.mask;
-> +			*val >>= reg_info.shift;
-> +			return IIO_VAL_INT;
-> +		case IIO_CHAN_INFO_SCALE:
-> +			*val = 0;
-> +			*val2 = 800000;
-> +			return IIO_VAL_INT_PLUS_MICRO;
-> +		}
-> +		break;
-> +	default:
-> +		break;
-> +	}
-> +
-> +	return -EINVAL;
-> +}
-> +
-> +static int afe4403_write_raw(struct iio_dev *indio_dev,
-> +			     struct iio_chan_spec const *chan,
-> +			     int val, int val2, long mask)
-> +{
-> +	struct afe4403_data *afe = iio_priv(indio_dev);
-> +	const struct afe440x_reg_info reg_info = afe4403_reg_info[chan->address];
-> +
-> +	switch (chan->type) {
-> +	case IIO_INTENSITY:
-> +		switch (mask) {
-> +		case IIO_CHAN_INFO_OFFSET:
-> +			return regmap_update_bits(afe->regmap,
-> +				reg_info.offreg,
-> +				reg_info.mask,
-> +				(val << reg_info.shift));
-> +		}
-> +		break;
-> +	case IIO_CURRENT:
-> +		switch (mask) {
-> +		case IIO_CHAN_INFO_RAW:
-> +			return regmap_update_bits(afe->regmap,
-> +				reg_info.reg,
-> +				reg_info.mask,
-> +				(val << reg_info.shift));
-> +		}
-> +		break;
-> +	default:
-> +		break;
-> +	}
-> +
-> +	return -EINVAL;
-> +}
-> +
-> +static const struct iio_info afe4403_iio_info = {
-> +	.attrs = &afe440x_attribute_group,
-> +	.read_raw = afe4403_read_raw,
-> +	.write_raw = afe4403_write_raw,
-> +	.driver_module = THIS_MODULE,
-> +};
-> +
-> +static irqreturn_t afe4403_trigger_handler(int irq, void *private)
-> +{
-> +	struct iio_poll_func *pf = private;
-> +	struct iio_dev *indio_dev = pf->indio_dev;
-> +	struct afe4403_data *afe = iio_priv(indio_dev);
-> +	int ret, bit, i = 0;
-> +	s32 buffer[8];
-> +	u8 tx[4] ____cacheline_aligned = {AFE440X_CONTROL0, 0x0, 0x0,
-> +					  AFE440X_CONTROL0_READ};
-> +	u8 rx[3];
-> +
-> +	/* Enable reading from the device */
-> +	ret = spi_write(afe->spi, tx, 4);
-> +	if (ret)
-> +		goto err;
-> +
-> +	for_each_set_bit(bit, indio_dev->active_scan_mask,
-> +			 indio_dev->masklength) {
-> +		ret = spi_write_then_read(afe->spi,
-> +					  &afe4403_reg_info[bit].reg, 1,
-> +					  rx, 3);
-> +		if (ret)
-> +			goto err;
-> +
-> +		buffer[i++] = (rx[0] << 16) |
-> +				(rx[1] << 8) |
-> +				(rx[2]);
-> +	}
-> +
-> +	/* Disable reading from the device */
-> +	tx[3] = AFE440X_CONTROL0_WRITE;
-> +	ret = spi_write(afe->spi, tx, 4);
-> +	if (ret)
-> +		goto err;
-> +
-> +	iio_push_to_buffers_with_timestamp(indio_dev, buffer, pf->timestamp);
-> +err:
-> +	iio_trigger_notify_done(indio_dev->trig);
-> +
-> +	return IRQ_HANDLED;
-> +}
-> +
-> +static const struct iio_trigger_ops afe4403_trigger_ops = {
-> +	.owner = THIS_MODULE,
-> +};
-> +
-> +#define AFE4403_TIMING_PAIRS			\
-> +	{ AFE440X_LED2STC,	0x000050 },	\
-> +	{ AFE440X_LED2ENDC,	0x0003e7 },	\
-> +	{ AFE440X_LED1LEDSTC,	0x0007d0 },	\
-> +	{ AFE440X_LED1LEDENDC,	0x000bb7 },	\
-> +	{ AFE440X_ALED2STC,	0x000438 },	\
-> +	{ AFE440X_ALED2ENDC,	0x0007cf },	\
-> +	{ AFE440X_LED1STC,	0x000820 },	\
-> +	{ AFE440X_LED1ENDC,	0x000bb7 },	\
-> +	{ AFE440X_LED2LEDSTC,	0x000000 },	\
-> +	{ AFE440X_LED2LEDENDC,	0x0003e7 },	\
-> +	{ AFE440X_ALED1STC,	0x000c08 },	\
-> +	{ AFE440X_ALED1ENDC,	0x000f9f },	\
-> +	{ AFE440X_LED2CONVST,	0x0003ef },	\
-> +	{ AFE440X_LED2CONVEND,	0x0007cf },	\
-> +	{ AFE440X_ALED2CONVST,	0x0007d7 },	\
-> +	{ AFE440X_ALED2CONVEND,	0x000bb7 },	\
-> +	{ AFE440X_LED1CONVST,	0x000bbf },	\
-> +	{ AFE440X_LED1CONVEND,	0x009c3f },	\
-> +	{ AFE440X_ALED1CONVST,	0x000fa7 },	\
-> +	{ AFE440X_ALED1CONVEND,	0x001387 },	\
-> +	{ AFE440X_ADCRSTSTCT0,	0x0003e8 },	\
-> +	{ AFE440X_ADCRSTENDCT0,	0x0003eb },	\
-> +	{ AFE440X_ADCRSTSTCT1,	0x0007d0 },	\
-> +	{ AFE440X_ADCRSTENDCT1,	0x0007d3 },	\
-> +	{ AFE440X_ADCRSTSTCT2,	0x000bb8 },	\
-> +	{ AFE440X_ADCRSTENDCT2,	0x000bbb },	\
-> +	{ AFE440X_ADCRSTSTCT3,	0x000fa0 },	\
-> +	{ AFE440X_ADCRSTENDCT3,	0x000fa3 },	\
-> +	{ AFE440X_PRPCOUNT,	0x009c3f },	\
-> +	{ AFE440X_PDNCYCLESTC,	0x001518 },	\
-> +	{ AFE440X_PDNCYCLEENDC,	0x00991f }
-> +
-> +static const struct reg_sequence afe4403_reg_sequences[] = {
-> +	AFE4403_TIMING_PAIRS,
-> +	{ AFE440X_CONTROL1, AFE440X_CONTROL1_TIMEREN | 0x000007},
-> +	{ AFE4403_TIA_AMB_GAIN, AFE4403_TIAGAIN_RES_1_M },
-> +	{ AFE440X_LEDCNTRL, (0x14 << AFE440X_LEDCNTRL_LED1_SHIFT) |
-> +			    (0x14 << AFE440X_LEDCNTRL_LED2_SHIFT) },
-> +	{ AFE440X_CONTROL2, AFE440X_CONTROL2_TX_REF_050 <<
-> +			    AFE440X_CONTROL2_TX_REF_SHIFT },
-> +};
-> +
-> +static const struct regmap_range afe4403_yes_ranges[] = {
-> +	regmap_reg_range(AFE440X_LED2VAL, AFE440X_LED1_ALED1VAL),
-> +};
-> +
-> +static const struct regmap_access_table afe4403_volatile_table = {
-> +	.yes_ranges = afe4403_yes_ranges,
-> +	.n_yes_ranges = ARRAY_SIZE(afe4403_yes_ranges),
-> +};
-> +
-> +static const struct regmap_config afe4403_regmap_config = {
-> +	.reg_bits = 8,
-> +	.val_bits = 24,
-> +
-> +	.max_register = AFE440X_PDNCYCLEENDC,
-> +	.cache_type = REGCACHE_RBTREE,
-> +	.volatile_table = &afe4403_volatile_table,
-> +};
-> +
-> +#ifdef CONFIG_OF
-> +static const struct of_device_id afe4403_of_match[] = {
-> +	{ .compatible = "ti,afe4403", },
-> +	{ /* sentinel */ }
-> +};
-> +MODULE_DEVICE_TABLE(of, afe4403_of_match);
-> +#endif
-> +
-> +static int afe4403_suspend(struct device *dev)
-> +{
-> +	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
-> +	struct afe4403_data *afe = iio_priv(indio_dev);
-> +	int ret;
-> +
-> +	ret = regmap_update_bits(afe->regmap, AFE440X_CONTROL2,
-> +				 AFE440X_CONTROL2_PDN_AFE,
-> +				 AFE440X_CONTROL2_PDN_AFE);
-> +	if (ret)
-> +		return ret;
-> +
-> +	ret = regulator_disable(afe->regulator);
-> +	if (ret) {
-> +		dev_err(dev, "Unable to disable regulator\n");
-> +		return ret;
-> +	}
-> +
-> +	return 0;
-> +}
-> +
-> +static int afe4403_resume(struct device *dev)
-> +{
-> +	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
-> +	struct afe4403_data *afe = iio_priv(indio_dev);
-> +	int ret;
-> +
-> +	ret = regulator_enable(afe->regulator);
-> +	if (ret) {
-> +		dev_err(dev, "Unable to enable regulator\n");
-> +		return ret;
-> +	}
-> +
-> +	ret = regmap_update_bits(afe->regmap, AFE440X_CONTROL2,
-> +				 AFE440X_CONTROL2_PDN_AFE, 0);
-> +	if (ret)
-> +		return ret;
-> +
-> +	return 0;
-> +}
-> +
-> +static SIMPLE_DEV_PM_OPS(afe4403_pm_ops, afe4403_suspend, afe4403_resume);
-> +
-> +static int afe4403_probe(struct spi_device *spi)
-> +{
-> +	struct iio_dev *indio_dev;
-> +	struct afe4403_data *afe;
-> +	int ret;
-> +
-> +	indio_dev = devm_iio_device_alloc(&spi->dev, sizeof(*afe));
-> +	if (!indio_dev)
-> +		return -ENOMEM;
-> +
-> +	afe = iio_priv(indio_dev);
-> +	spi_set_drvdata(spi, indio_dev);
-> +
-> +	afe->dev = &spi->dev;
-> +	afe->spi = spi;
-> +	afe->irq = spi->irq;
-> +
-> +	afe->regmap = devm_regmap_init_spi(spi, &afe4403_regmap_config);
-> +	if (IS_ERR(afe->regmap)) {
-> +		dev_err(afe->dev, "Unable to allocate register map\n");
-> +		return PTR_ERR(afe->regmap);
-> +	}
-> +
-> +	afe->regulator = devm_regulator_get(afe->dev, "tx_sup");
-> +	if (IS_ERR(afe->regulator)) {
-> +		dev_err(afe->dev, "Unable to get regulator\n");
-> +		return PTR_ERR(afe->regulator);
-> +	}
-> +	ret = regulator_enable(afe->regulator);
-> +	if (ret) {
-> +		dev_err(afe->dev, "Unable to enable regulator\n");
-> +		return ret;
-> +	}
-> +
-> +	ret = regmap_write(afe->regmap, AFE440X_CONTROL0,
-> +			   AFE440X_CONTROL0_SW_RESET);
-> +	if (ret) {
-> +		dev_err(afe->dev, "Unable to reset device\n");
-> +		return ret;
-> +	}
-> +
-> +	ret = regmap_multi_reg_write(afe->regmap, afe4403_reg_sequences,
-> +				     ARRAY_SIZE(afe4403_reg_sequences));
-> +	if (ret) {
-> +		dev_err(afe->dev, "Unable to set register defaults\n");
-> +		return ret;
-> +	}
-> +
-> +	indio_dev->modes = INDIO_DIRECT_MODE;
-> +	indio_dev->dev.parent = afe->dev;
-> +	indio_dev->channels = afe4403_channels;
-> +	indio_dev->num_channels = ARRAY_SIZE(afe4403_channels);
-> +	indio_dev->name = AFE4403_DRIVER_NAME;
-> +	indio_dev->info = &afe4403_iio_info;
-> +
-> +	if (afe->irq > 0) {
-> +		afe->trig = devm_iio_trigger_alloc(afe->dev,
-> +						   "%s-dev%d",
-> +						   indio_dev->name,
-> +						   indio_dev->id);
-> +		if (!afe->trig) {
-> +			dev_err(afe->dev, "Unable to allocate IIO trigger\n");
-> +			return -ENOMEM;
-> +		}
-> +
-> +		iio_trigger_set_drvdata(afe->trig, indio_dev);
-> +
-> +		afe->trig->ops = &afe4403_trigger_ops;
-> +		afe->trig->dev.parent = afe->dev;
-> +
-> +		ret = iio_trigger_register(afe->trig);
-> +		if (ret) {
-> +			dev_err(afe->dev, "Unable to register IIO trigger\n");
-> +			return ret;
-> +		}
-> +
-> +		ret = devm_request_threaded_irq(afe->dev, afe->irq,
-> +						iio_trigger_generic_data_rdy_poll,
-> +						NULL, IRQF_ONESHOT,
-> +						AFE4403_DRIVER_NAME,
-> +						afe->trig);
-> +		if (ret) {
-> +			dev_err(afe->dev, "Unable to request IRQ\n");
-> +			return ret;
-> +		}
-> +	}
-> +
-> +	ret = iio_triggered_buffer_setup(indio_dev, &iio_pollfunc_store_time,
-> +					 afe4403_trigger_handler, NULL);
-> +	if (ret) {
-> +		dev_err(afe->dev, "Unable to setup buffer\n");
-> +		return ret;
-> +	}
-> +
-> +	ret = iio_device_register(indio_dev);
-> +	if (ret) {
-> +		dev_err(afe->dev, "Unable to register IIO device\n");
-> +		return ret;
-> +	}
-> +
-> +	return 0;
-> +}
-> +
-> +static int afe4403_remove(struct spi_device *spi)
-> +{
-> +	struct iio_dev *indio_dev = spi_get_drvdata(spi);
-> +	struct afe4403_data *afe = iio_priv(indio_dev);
-> +	int ret;
-> +
-> +	iio_device_unregister(indio_dev);
-> +
-iio_triggered_buffer_cleanup()
-> +	iio_trigger_unregister(afe->trig);
-> +
-> +	ret = regulator_disable(afe->regulator);
-> +	if (ret) {
-> +		dev_err(afe->dev, "Unable to disable regulator\n");
-> +		return ret;
-> +	}
-> +
-> +	return 0;
-> +}
-> +
-> +static const struct spi_device_id afe4403_ids[] = {
-> +	{ "afe4403", 0 },
-> +	{ /* sentinel */ }
-> +};
-> +MODULE_DEVICE_TABLE(spi, afe4403_ids);
-> +
-> +static struct spi_driver afe4403_spi_driver = {
-> +	.driver = {
-> +		.name = AFE4403_DRIVER_NAME,
-> +		.of_match_table = of_match_ptr(afe4403_of_match),
-> +		.pm = &afe4403_pm_ops,
-> +	},
-> +	.probe = afe4403_probe,
-> +	.remove = afe4403_remove,
-> +	.id_table = afe4403_ids,
-> +};
-> +module_spi_driver(afe4403_spi_driver);
-> +
-> +MODULE_AUTHOR("Andrew F. Davis <afd@ti.com>");
-> +MODULE_DESCRIPTION("TI AFE4403 Heart Rate and Pulse Oximeter");
-> +MODULE_LICENSE("GPL v2");
+When a task is enqueued, the scheduler sets TIF_RESCHED on the target. If the
+target is remote it sends an IPI, if it's local then we wait the next reschedule
+point (preemption points, voluntary reschedule, interrupts). There is just nothing
+you can do to accelerate that.
+
+
+> By invoking the scheduler here, we allow any tasks that are ready to run to run
+> immediately, rather than waiting for an interrupt to wake the scheduler.
+
+Well, in this case here we are interested in the current CPU. And if a task
+got awoken and waits for the current CPU, it will have an opportunity to get
+schedule on syscall exit.
+
+> Plenty of places in the kernel just call schedule() directly when they are
+> waiting.  Since we're waiting here regardless, we might as well
+> immediately get any other runnable tasks dealt with.
+> 
+> We could also just return "false" in _task_isolation_ready(), and then
+> check tick_nohz_tick_stopped() in _task_isolation_enter() and if false,
+> call schedule() explicitly there, but that seems a little more roundabout.
+> Admittedly it's more usual to see kernel code call schedule() directly
+> to yield the processor, but in this case I'm not convinced it's cleaner
+> given we're already in a loop where the caller is checking TIF_RESCHED
+> and then calling schedule() when it's set.
+
+You could call cond_resched(), but really syscall exit is enough for what
+you want. And the problem here if a task prevents the CPU from stopping the
+tick is that task itself, not the fact it doesn't get scheduled. If we have
+other tasks than the current isolated one on the CPU, it means that the
+environment is not ready for hard isolation.
+
+And in general: we shouldn't loop at all there: if something depends on the tick,
+the CPU is not ready for isolation and something needs to be done: setting
+some task affinity, etc... So we should just fail the prctl and let the user
+deal with it.
+
+> 
+> -- 
+> Chris Metcalf, EZChip Semiconductor
+> http://www.ezchip.com
 > 
