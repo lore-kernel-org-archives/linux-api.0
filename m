@@ -1,8 +1,8 @@
 From: Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>
 Subject: Re: [PATCH 2/2] sigaltstack: remove EPERM check to make swapcontext()
  usable
-Date: Sun, 31 Jan 2016 05:45:56 +0300
-Message-ID: <56AD7564.7030303@list.ru>
+Date: Sun, 31 Jan 2016 05:53:56 +0300
+Message-ID: <56AD7744.5020804@list.ru>
 References: <56905B90.6060505@list.ru> <56905FF0.4040406@list.ru>
  <CALCETrUAPqhrt9UjKt5=n=R-Ao7g-emDtt34YXZgyhr3TuFu9w@mail.gmail.com>
  <56907546.2050706@list.ru>
@@ -17,43 +17,56 @@ To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 Cc: Linux kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Amanieu d'Antras <amanieu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>, Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+[re-sending with better formatting]
+
 09.01.2016 05:49, Stas Sergeev =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
-> 09.01.2016 05:03, Andy Lutomirski =D0=BF=D0=B8=D1=88=D0=B5=D1=82:  >>=
- On Fri, Jan 8, 2016 at 5:18 PM, Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org> wrote:=20
- >>> linux implements the sigaltstack() in a way that makes it=20
-impossible to >>> use with swapcontext(). Per the man page, sigaltstack=
-=20
-is allowed to return >>> EPERM if the process is altering its=20
-sigaltstack while running on >>> sigaltstack. >>> This is likely needed=
-=20
-to consistently return oss->ss_flags, that indicates >>> whether the=20
-process is being on sigaltstack or not. >>> Unfortunately, linux takes=20
-that permission to return EPERM too literally: >>> it returns EPERM eve=
-n=20
-if you don't want to change to another sigaltstack, >>> but only want t=
-o=20
-disable sigaltstack with SS_DISABLE. >>> You can't use swapcontext()=20
-without disabling sigaltstack first, or the >>> stack will be re-used=20
-and overwritten by a subsequent signal. >>> >>> With this patch,=20
-disabling sigaltstack inside a signal handler became >>> possible, and=20
-the swapcontext() can then be used safely. The oss->ss_flags >>> will=20
-then return SS_DISABLE, which doesn't seem to contradict the >>> (very=20
-ambiguous) man page wording, namely: >>>         SS_ONSTACK=20
- >>>                The process is currently executing on the alternate=
-=20
-signal >>>                stack. (Note that it is not possible to chang=
-e=20
-the alternate >>>                signal stack if the process is=20
-currently executing on it.) >> You're definitely contradicting the=20
-"Note" part, though.  POSIX is >> quite clear, too: >> >> "Attempts to=20
-modify the alternate signal stack while the process is >> executing on=20
-it fail." > "modify" may not include "disable". > You don't modify the=20
-stack's location or size, just temporary disable its use. > So I believ=
-e=20
-SS_DISABLE should be fine. > Of course this is just one of the possible=
-=20
-interpretations. > But it is the one that looks simple and satisfies=20
-everyone.
+> 09.01.2016 05:03, Andy Lutomirski =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+>> On Fri, Jan 8, 2016 at 5:18 PM, Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org> wrote:
+>>> linux implements the sigaltstack() in a way that makes it
+ >>> impossible to
+ >>> use with swapcontext(). Per the man page, sigaltstack is allowed t=
+o
+ >>> return
+ >>> EPERM if the process is altering its sigaltstack while running on
+ >>> sigaltstack.
+ >>> This is likely needed to consistently return oss->ss_flags, that
+ >>> indicates
+ >>> whether the process is being on sigaltstack or not.
+ >>> Unfortunately, linux takes that permission to return EPERM too
+ >>> literally:
+ >>> it returns EPERM even if you don't want to change to another
+ >>> sigaltstack,
+ >>> but only want to disable sigaltstack with SS_DISABLE.
+ >>> You can't use swapcontext() without disabling sigaltstack first, o=
+r
+ >>> the
+ >>> stack will be re-used and overwritten by a subsequent signal.
+ >>> With this patch, disabling sigaltstack inside a signal handler
+ >>> became
+ >>> possible, and the swapcontext() can then be used safely. The
+ >>> oss->ss_flags
+ >>> will then return SS_DISABLE, which doesn't seem to contradict the
+ >>> (very ambiguous) man page wording, namely:
+ >>>         SS_ONSTACK
+ >>>                The process is currently executing on the alternate
+ >>> signal
+ >>>                stack. (Note that it is not possible to change the
+ >>> alternate
+ >>>                signal stack if the process is currently executing
+ >>> on it.)
+ >>>
+ >> You're definitely contradicting the "Note" part, though.  POSIX is
+ >> quite clear, too:
+ >> "Attempts to modify the alternate signal stack while the process is
+ >> executing on it fail."
+ > "modify" may not include "disable".
+ > You don't modify the stack's location or size, just temporary disabl=
+e
+ > its use.
+ > So I believe SS_DISABLE should be fine.
+ > Of course this is just one of the possible interpretations.
+ > But it is the one that looks simple and satisfies everyone.
+
 I've finally made the patch to demonstrate that.
 It has the nasty disadvantage of touching the arch-specific
 code, but it has the advantages too:
