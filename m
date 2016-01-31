@@ -1,117 +1,254 @@
-From: Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v9 04/13] task_isolation: add initial support
-Date: Sat, 30 Jan 2016 22:11:27 +0100
-Message-ID: <20160130211125.GB7856@lerouge>
-References: <1451936091-29247-1-git-send-email-cmetcalf@ezchip.com>
- <1451936091-29247-5-git-send-email-cmetcalf@ezchip.com>
- <20160119154214.GA2722@lerouge>
- <569EA050.5030106@ezchip.com>
- <20160128002801.GA14313@lerouge>
- <56ABACDD.5090500@ezchip.com>
+From: Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>
+Subject: Re: [PATCH 2/2] sigaltstack: remove EPERM check to make swapcontext()
+ usable
+Date: Sun, 31 Jan 2016 05:45:56 +0300
+Message-ID: <56AD7564.7030303@list.ru>
+References: <56905B90.6060505@list.ru> <56905FF0.4040406@list.ru>
+ <CALCETrUAPqhrt9UjKt5=n=R-Ao7g-emDtt34YXZgyhr3TuFu9w@mail.gmail.com>
+ <56907546.2050706@list.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <56ABACDD.5090500-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <56907546.2050706-cmBhpYW9OiY@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
-Cc: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Linux kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Amanieu d'Antras <amanieu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>, Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 29, 2016 at 01:18:05PM -0500, Chris Metcalf wrote:
-> On 01/27/2016 07:28 PM, Frederic Weisbecker wrote:
-> >On Tue, Jan 19, 2016 at 03:45:04PM -0500, Chris Metcalf wrote:
-> >>You asked what happens if nohz_full= is given as well, which is a very
-> >>good question.  Perhaps the right answer is to have an early_initcall
-> >>that suppresses task isolation on any cores that lost their nohz_full
-> >>or isolcpus status due to later boot command line arguments (and
-> >>generate a console warning, obviously).
-> >I'd rather imagine that the final nohz full cpumask is "nohz_full=" | "task_isolation="
-> >That's the easiest way to deal with and both nohz and task isolation can call
-> >a common initializer that takes care of the allocation and add the cpus to the mask.
-> 
-> I like it!
-> 
-> And by the same token, the final isolcpus cpumask is "isolcpus=" |
-> "task_isolation="?
-> That seems like we'd want to do it to keep things parallel.
+09.01.2016 05:49, Stas Sergeev =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+> 09.01.2016 05:03, Andy Lutomirski =D0=BF=D0=B8=D1=88=D0=B5=D1=82:  >>=
+ On Fri, Jan 8, 2016 at 5:18 PM, Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org> wrote:=20
+ >>> linux implements the sigaltstack() in a way that makes it=20
+impossible to >>> use with swapcontext(). Per the man page, sigaltstack=
+=20
+is allowed to return >>> EPERM if the process is altering its=20
+sigaltstack while running on >>> sigaltstack. >>> This is likely needed=
+=20
+to consistently return oss->ss_flags, that indicates >>> whether the=20
+process is being on sigaltstack or not. >>> Unfortunately, linux takes=20
+that permission to return EPERM too literally: >>> it returns EPERM eve=
+n=20
+if you don't want to change to another sigaltstack, >>> but only want t=
+o=20
+disable sigaltstack with SS_DISABLE. >>> You can't use swapcontext()=20
+without disabling sigaltstack first, or the >>> stack will be re-used=20
+and overwritten by a subsequent signal. >>> >>> With this patch,=20
+disabling sigaltstack inside a signal handler became >>> possible, and=20
+the swapcontext() can then be used safely. The oss->ss_flags >>> will=20
+then return SS_DISABLE, which doesn't seem to contradict the >>> (very=20
+ambiguous) man page wording, namely: >>>         SS_ONSTACK=20
+ >>>                The process is currently executing on the alternate=
+=20
+signal >>>                stack. (Note that it is not possible to chang=
+e=20
+the alternate >>>                signal stack if the process is=20
+currently executing on it.) >> You're definitely contradicting the=20
+"Note" part, though.  POSIX is >> quite clear, too: >> >> "Attempts to=20
+modify the alternate signal stack while the process is >> executing on=20
+it fail." > "modify" may not include "disable". > You don't modify the=20
+stack's location or size, just temporary disable its use. > So I believ=
+e=20
+SS_DISABLE should be fine. > Of course this is just one of the possible=
+=20
+interpretations. > But it is the one that looks simple and satisfies=20
+everyone.
+I've finally made the patch to demonstrate that.
+It has the nasty disadvantage of touching the arch-specific
+code, but it has the advantages too:
+- seems compatible with both posix and swapcontext()
+   (before using swapcontext() in a sighandler, the sigaltstack
+   have to be disabled - this is what this patch makes possible)
+- doesn't require the new flag to paper around one of the
+   possible posix interpretation
+- consistently returns oss->ss_flags=3D=3DSS_ONSTACK while in
+   sighandler, even after setting flags to SS_DISABLE
+- allows someone (like glibc), if need be, to implement the old
+   behaviour: it can check for oss->ss_flags first, and if it is
+   SS_ONSTACK, return EPERM without trying to set the new value.
 
-We have reverted the patch that made isolcpus |= nohz_full. Too
-many people complained about unusable machines with NO_HZ_FULL_ALL
+So since this patch demonstrates the way of solving the
+swapcontext() problem without adding the SS_FORCE flag
+to sigaltstack(), I believe we shouldn't be adding it. That flag
+will only allow us to have a smaller patch that doesn't touch
+the arch code, but is that a good enough justification?
 
-But the user can still set that parameter manually.
-
-> 
-> >>>>+bool _task_isolation_ready(void)
-> >>>>+{
-> >>>>+	WARN_ON_ONCE(!irqs_disabled());
-> >>>>+
-> >>>>+	/* If we need to drain the LRU cache, we're not ready. */
-> >>>>+	if (lru_add_drain_needed(smp_processor_id()))
-> >>>>+		return false;
-> >>>>+
-> >>>>+	/* If vmstats need updating, we're not ready. */
-> >>>>+	if (!vmstat_idle())
-> >>>>+		return false;
-> >>>>+
-> >>>>+	/* Request rescheduling unless we are in full dynticks mode. */
-> >>>>+	if (!tick_nohz_tick_stopped()) {
-> >>>>+		set_tsk_need_resched(current);
-> >>>I'm not sure doing this will help getting the tick to get stopped.
-> >>Well, I don't know that there is anything else we CAN do, right?  If there's
-> >>another task that can run, great - it may be that that's why full dynticks
-> >>isn't happening yet.  Or, it might be that we're waiting for an RCU tick and
-> >>there's nothing else we can do, in which case we basically spend our time
-> >>going around through the scheduler code and back out to the
-> >>task_isolation_ready() test, but again, there's really nothing else more
-> >>useful we can be doing at this point.  Once the RCU tick fires (or whatever
-> >>it was that was preventing full dynticks from engaging), we will pass this
-> >>test and return to user space.
-> >There is nothing at all you can do and setting TIF_RESCHED won't help either.
-> >If there is another task that can run, the scheduler takes care of resched
-> >by itself :-)
-> 
-> The problem is that the scheduler will only take care of resched at a
-> later time, typically when we get a timer interrupt later.
-
-When a task is enqueued, the scheduler sets TIF_RESCHED on the target. If the
-target is remote it sends an IPI, if it's local then we wait the next reschedule
-point (preemption points, voluntary reschedule, interrupts). There is just nothing
-you can do to accelerate that.
+So if there are no objections, I'll probably have to add an
+arch-specific ifdefs to this patch to make other arches
+unaffected, and submit it.
+Of course we can still just remove the EPERM check.
+Thoughts?
 
 
-> By invoking the scheduler here, we allow any tasks that are ready to run to run
-> immediately, rather than waiting for an interrupt to wake the scheduler.
+diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
+index cb6282c..06e2591 100644
+--- a/arch/x86/kernel/signal.c
++++ b/arch/x86/kernel/signal.c
+@@ -216,7 +216,7 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs=
+=20
+*regs, size_t frame_size,
+      if (!onsigstack) {
+          /* This is the X/Open sanctioned signal stack switching. */
+          if (ka->sa.sa_flags & SA_ONSTACK) {
+-            if (current->sas_ss_size)
++            if (sas_ss_enabled())
+                  sp =3D current->sas_ss_sp + current->sas_ss_size;
+          } else if (config_enabled(CONFIG_X86_32) &&
+                 (regs->ss & 0xffff) !=3D __USER_DS &&
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index edad7a4..f7e7026 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1572,6 +1572,7 @@ struct task_struct {
 
-Well, in this case here we are interested in the current CPU. And if a task
-got awoken and waits for the current CPU, it will have an opportunity to get
-schedule on syscall exit.
+      unsigned long sas_ss_sp;
+      size_t sas_ss_size;
++    int sas_ss_flags;
 
-> Plenty of places in the kernel just call schedule() directly when they are
-> waiting.  Since we're waiting here regardless, we might as well
-> immediately get any other runnable tasks dealt with.
-> 
-> We could also just return "false" in _task_isolation_ready(), and then
-> check tick_nohz_tick_stopped() in _task_isolation_enter() and if false,
-> call schedule() explicitly there, but that seems a little more roundabout.
-> Admittedly it's more usual to see kernel code call schedule() directly
-> to yield the processor, but in this case I'm not convinced it's cleaner
-> given we're already in a loop where the caller is checking TIF_RESCHED
-> and then calling schedule() when it's set.
+      struct callback_head *task_works;
 
-You could call cond_resched(), but really syscall exit is enough for what
-you want. And the problem here if a task prevents the CPU from stopping the
-tick is that task itself, not the fact it doesn't get scheduled. If we have
-other tasks than the current isolated one on the CPU, it means that the
-environment is not ready for hard isolation.
+@@ -2550,8 +2551,16 @@ static inline int sas_ss_flags(unsigned long sp)
+  {
+      if (!current->sas_ss_size)
+          return SS_DISABLE;
++    if (on_sig_stack(sp))
++        return SS_ONSTACK;
++    if (current->sas_ss_flags =3D=3D SS_DISABLE)
++        return SS_DISABLE;
++    return 0;
++}
 
-And in general: we shouldn't loop at all there: if something depends on the tick,
-the CPU is not ready for isolation and something needs to be done: setting
-some task affinity, etc... So we should just fail the prctl and let the user
-deal with it.
+-    return on_sig_stack(sp) ? SS_ONSTACK : 0;
++static inline int sas_ss_enabled(void)
++{
++    return (current->sas_ss_size && current->sas_ss_flags !=3D SS_DISA=
+BLE);
+  }
 
-> 
-> -- 
-> Chris Metcalf, EZChip Semiconductor
-> http://www.ezchip.com
-> 
+  static inline unsigned long sigsp(unsigned long sp, struct ksignal *k=
+sig)
+diff --git a/include/linux/signal.h b/include/linux/signal.h
+index 92557bb..844b113 100644
+--- a/include/linux/signal.h
++++ b/include/linux/signal.h
+@@ -432,7 +432,7 @@ int __save_altstack(stack_t __user *, unsigned long=
+);
+      stack_t __user *__uss =3D uss; \
+      struct task_struct *t =3D current; \
+      put_user_ex((void __user *)t->sas_ss_sp, &__uss->ss_sp); \
+-    put_user_ex(sas_ss_flags(sp), &__uss->ss_flags); \
++    put_user_ex(t->sas_ss_flags, &__uss->ss_flags); \
+      put_user_ex(t->sas_ss_size, &__uss->ss_size); \
+  } while (0);
+
+diff --git a/kernel/fork.c b/kernel/fork.c
+index fce002e..e5edc5c 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1483,8 +1483,10 @@ static struct task_struct *copy_process(unsigned=
+=20
+long clone_flags,
+      /*
+       * sigaltstack should be cleared when sharing the same VM
+       */
+-    if ((clone_flags & (CLONE_VM|CLONE_VFORK)) =3D=3D CLONE_VM)
++    if ((clone_flags & (CLONE_VM|CLONE_VFORK)) =3D=3D CLONE_VM) {
+          p->sas_ss_sp =3D p->sas_ss_size =3D 0;
++        p->sas_ss_flags =3D SS_DISABLE;
++    }
+
+      /*
+       * Syscall tracing and stepping should be turned off in the
+diff --git a/kernel/signal.c b/kernel/signal.c
+index f3f1f7a..ef537d8 100644
+--- a/kernel/signal.c
++++ b/kernel/signal.c
+@@ -3101,6 +3101,7 @@ do_sigaltstack (const stack_t __user *uss, stack_=
+t=20
+__user *uoss, unsigned long s
+          void __user *ss_sp;
+          size_t ss_size;
+          int ss_flags;
++        int onsigstack;
+
+          error =3D -EFAULT;
+          if (!access_ok(VERIFY_READ, uss, sizeof(*uss)))
+@@ -3111,32 +3112,48 @@ do_sigaltstack (const stack_t __user *uss,=20
+stack_t __user *uoss, unsigned long s
+          if (error)
+              goto out;
+
+-        error =3D -EPERM;
+-        if (on_sig_stack(sp))
+-            goto out;
+-
+          error =3D -EINVAL;
+-        /*
+-         * Note - this code used to test ss_flags incorrectly:
+-         *        old code may have been written using ss_flags=3D=3D0
+-         *      to mean ss_flags=3D=3DSS_ONSTACK (as this was the only
+-         *      way that worked) - this fix preserves that older
+-         *      mechanism.
+-         */
+          if (ss_flags !=3D SS_DISABLE && ss_flags !=3D SS_ONSTACK &&=20
+ss_flags !=3D 0)
+              goto out;
+
+-        if (ss_flags =3D=3D SS_DISABLE) {
+-            ss_size =3D 0;
+-            ss_sp =3D NULL;
+-        } else {
++        onsigstack =3D on_sig_stack(sp);
++        if (ss_size =3D=3D 0) {
++            switch (ss_flags) {
++            case 0:
++                error =3D -EPERM;
++                if (onsigstack)
++                    goto out;
++                current->sas_ss_sp =3D 0;
++                current->sas_ss_size =3D 0;
++                current->sas_ss_flags =3D SS_DISABLE;
++                break;
++            case SS_ONSTACK:
++                /* re-enable previously disabled sas */
++                error =3D -EINVAL;
++                if (current->sas_ss_size =3D=3D 0)
++                    goto out;
++                break;
++            default:
++                break;
++            }
++        } else if (ss_flags !=3D SS_DISABLE) {
++            error =3D -EPERM;
++            if (onsigstack)
++                goto out;
+              error =3D -ENOMEM;
+              if (ss_size < MINSIGSTKSZ)
+                  goto out;
++            current->sas_ss_sp =3D (unsigned long) ss_sp;
++            current->sas_ss_size =3D ss_size;
++            /* unfortunately POSIX forces us to treat 0
++             * as SS_ONSTACK here, and some legacy apps
++             * perhaps used that... */
++            if (ss_flags =3D=3D 0)
++                ss_flags =3D SS_ONSTACK;
+          }
+
+-        current->sas_ss_sp =3D (unsigned long) ss_sp;
+-        current->sas_ss_size =3D ss_size;
++        if (ss_flags !=3D 0)
++            current->sas_ss_flags =3D ss_flags;
+      }
+
+      error =3D 0;
+@@ -3168,7 +3185,7 @@ int __save_altstack(stack_t __user *uss, unsigned=
+=20
+long sp)
+  {
+      struct task_struct *t =3D current;
+      return  __put_user((void __user *)t->sas_ss_sp, &uss->ss_sp) |
+-        __put_user(sas_ss_flags(sp), &uss->ss_flags) |
++        __put_user(t->sas_ss_flags, &uss->ss_flags) |
+          __put_user(t->sas_ss_size, &uss->ss_size);
+  }
