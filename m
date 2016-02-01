@@ -1,87 +1,87 @@
-From: Nikhilesh Reddy <reddyn-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
-Subject: Re: [PATCH v5] fuse: Add support for passthrough read/write
-Date: Mon, 01 Feb 2016 11:28:51 -0800
-Message-ID: <56AFB1F3.8090902@codeaurora.org>
-References: <56AFAA5B.3000006@codeaurora.org> <20160201191555.GA3524@pc.thejh.net>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH 4/4] sigaltstack: allow disabling and re-enabling sas
+ within sighandler
+Date: Mon, 1 Feb 2016 20:29:36 +0100
+Message-ID: <20160201192936.GA21214@redhat.com>
+References: <56AE3369.2090709@list.ru>
+ <56AE3626.7080706@list.ru>
+ <20160201160625.GA18276@redhat.com>
+ <20160201170958.GA20735@redhat.com>
+ <56AF955D.7060601@list.ru>
+ <20160201180443.GA21064@redhat.com>
+ <56AFA0E2.1030302@list.ru>
+ <20160201185223.GA21136@redhat.com>
+ <56AFAB9D.4070007@list.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160201191555.GA3524-J1fxOzX/cBvk1uMJSBkQmQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>
-Cc: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, fuse-devel <fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, jack-AlSwsSmVLrQ@public.gmane.org, Antonio SJ Musumeci <trapexit-wGTF+nt6ur047o9RxwvyTQ@public.gmane.org>, sven.utcke-Mmb7MZpHnFY@public.gmane.org, Nikolaus Rath <nikolaus-BTH8mxji4b0@public.gmane.org>, Jann Horn <jannhorn-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Mike Shal <marfey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <56AFAB9D.4070007@list.ru>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Stas Sergeev <stsp@list.ru>
+Cc: Linux kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Amanieu d'Antras <amanieu@gmail.com>, Richard Weinberger <richard@nod.at>, Tejun Heo <tj@kernel.org>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Jason Low <jason.low2@hp.com>, Heinrich Schuchardt <xypron.glpk@gmx.de>, Andrea Arcangeli <aarcange@redhat.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Josh Triplett <josh@joshtriplett.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Aleksa Sarai <cyphar@cyphar.com>, Paul Moore <pmoore@redhat.com>, Palmer Dabbelt <palmer@dabbelt.com>, Vladimir Davydov <vdavydov@parallels.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon 01 Feb 2016 11:15:56 AM PST, Jann Horn wrote:
-> On Mon, Feb 01, 2016 at 10:56:27AM -0800, Nikhilesh Reddy wrote:
->> diff --git a/fs/fuse/passthrough.c b/fs/fuse/passthrough.c
-> [...]
->> +static ssize_t fuse_passthrough_read_write_iter(struct kiocb *iocb,
->> +					    struct iov_iter *iter, int do_write)
->> +{
->> +	ssize_t ret_val;
->> +	struct fuse_file *ff;
->> +	struct file *fuse_file, *passthrough_filp;
->> +	struct inode *fuse_inode, *passthrough_inode;
->> +
->> +	ff = iocb->ki_filp->private_data;
->> +	fuse_file = iocb->ki_filp;
->> +	passthrough_filp = ff->passthrough_filp;
->> +
->> +	/* lock passthrough file to prevent it from being released */
->> +	get_file(passthrough_filp);
->> +	iocb->ki_filp = passthrough_filp;
->> +	fuse_inode = fuse_file->f_path.dentry->d_inode;
->> +	passthrough_inode = file_inode(passthrough_filp);
->> +
->> +	if (do_write) {
->> +		if (!passthrough_filp->f_op->write_iter)
->> +			return -EIO;
->> +		ret_val = passthrough_filp->f_op->write_iter(iocb, iter);
->> +
->> +		if (ret_val >= 0 || ret_val == -EIOCBQUEUED) {
->> +			fsstack_copy_inode_size(fuse_inode, passthrough_inode);
->> +			fsstack_copy_attr_times(fuse_inode, passthrough_inode);
->> +		}
->> +	} else {
->> +		if (!passthrough_filp->f_op->read_iter)
->> +			return -EIO;
->> +		ret_val = passthrough_filp->f_op->read_iter(iocb, iter);
->> +		if (ret_val >= 0 || ret_val == -EIOCBQUEUED)
->> +			fsstack_copy_attr_atime(fuse_inode, passthrough_inode);
->> +	}
->> +
->> +	iocb->ki_filp = fuse_file;
->> +
->> +	/* unlock passthrough file */
->> +	fput(passthrough_filp);
+On 02/01, Stas Sergeev wrote:
 >
-> Why the get_file() and fput() in this method? This doesn't look right. There
-> is no lock you're releasing between get_file() and fput(). What are they
-> intended for?
+> 01.02.2016 21:52, Oleg Nesterov =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+> >Stas, I probably missed something, but I don't understand your conce=
+rns,
+> >
+> >On 02/01, Stas Sergeev wrote:
+> >>01.02.2016 21:04, Oleg Nesterov =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+> >>>Yes, and SS_FORCE means "I know what I do", looks very simple.
+> >>But to me its not because I don't know what to do with
+> >>uc_stack after SS_FORCE is applied.
+> >Nothing? restore_sigaltstack() should work as expected?
+> That's likely the reason for EPERM: restore_sigaltstack()
+> does the job, so manual modifications are disallowed.
+> Allowing them will bring in the surprises where the changes
+> done by the user are ignored.
 
-Hi
+Unlikely. Suppose you do sigalstack() and then a non SA_ONSTACK signal =
+handler
+runs and calls sigaltstack() again. This won't fail, but restore_sigalt=
+stack()
+will restore the old alt stack after return.
 
-Thanks for reviewing the code.
+I too do not know why uc_stack exists, in fact I do not know about it u=
+ntil
+today when I read your patch ;) But it is here, and I do not think SS_F=
+ORCE
+can add more confusion than we already have.
 
-The passthrough file could be released under our feet say  if the 
-userspace fuse daemon crashed or was killed  ( while we are processing 
-the read or the write) causing bad things to happen.
-The calls here are to increase the count temporarily  and then decrease 
-it so that we dont release in the middle of a write and everything is 
-gracefully handled...
+> >Yes, or
+> >
+> >	sigaltstack({ DISABLE | FORCE}, &old_ss);
+> >	swapcontext();
+> >	sigaltstack(&old_ss, NULL);
+> >	rt_sigreturn();
+> >
+> >and if you are going to return from sighandler you do not even need =
+the 2nd
+> >sigaltstack(), you can rely on sigreturn.
+> Yes, that's what I do in my app already.
+> But its only there when SA_SIGINFO is used.
 
-I have a comment right before the get_file call above saying the same 
-thing.
-Please let me know if you have any more questions.
+Hmm. how this connects to SA_SIGINFO ?
 
+> >>What's at the end? Do we want a surprise for the user
+> >>that he's new_sas got ignored?
+> >Can't understand.... do you mean "set up new_sas" will be ignored be=
+cause
+> >rt_sigreturn() does restore_sigaltstack() ? I see no problem here...
+> Allowing the modifications that were previously EPERMed
+> but will now be silently ignored, may be seen as a problem.
+> But if it isn't - fine, lets code that.
 
---
-Thanks
-Nikhilesh Reddy
+Still can't understand. The 2nd sigaltstack() is no longer EPERMed beca=
+use
+application used SS_FORCED before that and disabled altstack.
 
-Qualcomm Innovation Center, Inc.
-The Qualcomm Innovation Center, Inc. is a member of the Code Aurora 
-Forum,
-a Linux Foundation Collaborative Project.
+And it is not ignored, it actually changes alt stack. Until we return f=
+rom
+handler.
+
+Oleg.
