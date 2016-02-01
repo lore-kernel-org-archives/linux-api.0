@@ -1,127 +1,71 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH 01/31] uapi/media.h: Declare interface types for ALSA
-Date: Mon, 1 Feb 2016 10:04:38 -0700
-Message-ID: <56AF9026.9080102@osg.samsung.com>
-References: <cover.1452105878.git.shuahkh@osg.samsung.com>
- <b1d228cdcc9246f7bfe28877e9f6bff174e94993.1452105878.git.shuahkh@osg.samsung.com>
- <20160128125941.143f67d0@recife.lan> <56AF82D7.1020900@osg.samsung.com>
- <s5hr3gwl7zz.wl-tiwai@suse.de>
+From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 4/4] sigaltstack: allow disabling and re-enabling sas
+ within sighandler
+Date: Mon, 1 Feb 2016 18:09:58 +0100
+Message-ID: <20160201170958.GA20735@redhat.com>
+References: <56AE3369.2090709@list.ru>
+ <56AE3626.7080706@list.ru>
+ <20160201160625.GA18276@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-media-owner@vger.kernel.org>
-In-Reply-To: <s5hr3gwl7zz.wl-tiwai@suse.de>
-Sender: linux-media-owner@vger.kernel.org
-To: Takashi Iwai <tiwai@suse.de>
-Cc: Mauro Carvalho Chehab <mchehab@osg.samsung.com>, alsa-devel@alsa-project.org, arnd@arndb.de, ricard.wanderlof@axis.com, hans.verkuil@cisco.com, labbott@fedoraproject.org, chehabrafael@gmail.com, misterpib@gmail.com, prabhakar.csengg@gmail.com, ricardo.ribalda@gmail.com, ruchandani.tina@gmail.com, takamichiho@gmail.com, tvboxspy@gmail.com, dominic.sacre@gmx.de, laurent.pinchart@ideasonboard.com, crope@iki.fi, julian@jusst.de, clemens@ladisch.de, pierre-louis.bossart@linux.intel.com, sakari.ailus@linux.intel.com, corbet@lwn.net, joe@oampo.co.uk, johan@oljud.se, dan.carpenter@oracle.com, pawel@osciak.com, javier@osg.samsung.com, p.zabel@pengutronix.de, perex@perex.cz, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, k.kozlowski@samsung.com, kyungmin.park@samsung.com, m.szyprowski@samsung.com, sw0312.kim@samsung.com, elfring@users.sourceforge.net
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160201160625.GA18276-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>
+Cc: Linux kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Amanieu d'Antras <amanieu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jason Low <jason.low2-VXdhtT5mjnY@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>, Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 02/01/2016 09:18 AM, Takashi Iwai wrote:
-> On Mon, 01 Feb 2016 17:07:51 +0100,
-> Shuah Khan wrote:
->>
->> On 01/28/2016 07:59 AM, Mauro Carvalho Chehab wrote:
->>> Em Wed,  6 Jan 2016 13:26:50 -0700
->>> Shuah Khan <shuahkh@osg.samsung.com> escreveu:
->>>
->>>> From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
->>>>
->>>> Declare the interface types to be used on alsa for the new
->>>> G_TOPOLOGY ioctl.
->>>>
->>>> Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
->>>> ---
->>>>  drivers/media/media-entity.c | 12 ++++++++++++
->>>>  include/uapi/linux/media.h   |  8 ++++++++
->>>>  2 files changed, 20 insertions(+)
->>>>
->>>> diff --git a/drivers/media/media-entity.c b/drivers/media/media-entity.c
->>>> index eb38bc3..6e02d19 100644
->>>> --- a/drivers/media/media-entity.c
->>>> +++ b/drivers/media/media-entity.c
->>>> @@ -65,6 +65,18 @@ static inline const char *intf_type(struct media_interface *intf)
->>>>  		return "v4l2-subdev";
->>>>  	case MEDIA_INTF_T_V4L_SWRADIO:
->>>>  		return "swradio";
->>>> +	case MEDIA_INTF_T_ALSA_PCM_CAPTURE:
->>>> +		return "pcm-capture";
->>>> +	case MEDIA_INTF_T_ALSA_PCM_PLAYBACK:
->>>> +		return "pcm-playback";
->>>> +	case MEDIA_INTF_T_ALSA_CONTROL:
->>>> +		return "alsa-control";
->>>> +	case MEDIA_INTF_T_ALSA_COMPRESS:
->>>> +		return "compress";
->>>> +	case MEDIA_INTF_T_ALSA_RAWMIDI:
->>>> +		return "rawmidi";
->>>> +	case MEDIA_INTF_T_ALSA_HWDEP:
->>>> +		return "hwdep";
->>>>  	default:
->>>>  		return "unknown-intf";
->>>>  	}
->>>> diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
->>>> index cacfceb..75cbe92 100644
->>>> --- a/include/uapi/linux/media.h
->>>> +++ b/include/uapi/linux/media.h
->>>> @@ -252,6 +252,7 @@ struct media_links_enum {
->>>>  
->>>>  #define MEDIA_INTF_T_DVB_BASE	0x00000100
->>>>  #define MEDIA_INTF_T_V4L_BASE	0x00000200
->>>> +#define MEDIA_INTF_T_ALSA_BASE	0x00000300
->>>>  
->>>>  /* Interface types */
->>>>  
->>>> @@ -267,6 +268,13 @@ struct media_links_enum {
->>>>  #define MEDIA_INTF_T_V4L_SUBDEV (MEDIA_INTF_T_V4L_BASE + 3)
->>>>  #define MEDIA_INTF_T_V4L_SWRADIO (MEDIA_INTF_T_V4L_BASE + 4)
->>>>  
->>>> +#define MEDIA_INTF_T_ALSA_PCM_CAPTURE   (MEDIA_INTF_T_ALSA_BASE)
->>>> +#define MEDIA_INTF_T_ALSA_PCM_PLAYBACK  (MEDIA_INTF_T_ALSA_BASE + 1)
->>>> +#define MEDIA_INTF_T_ALSA_CONTROL       (MEDIA_INTF_T_ALSA_BASE + 2)
->>>> +#define MEDIA_INTF_T_ALSA_COMPRESS      (MEDIA_INTF_T_ALSA_BASE + 3)
->>>> +#define MEDIA_INTF_T_ALSA_RAWMIDI       (MEDIA_INTF_T_ALSA_BASE + 4)
->>>> +#define MEDIA_INTF_T_ALSA_HWDEP         (MEDIA_INTF_T_ALSA_BASE + 5)
->>>
->>> Patch looks ok, but please document the new media interfaces at KernelDoc
->>> documentation.
->>>
->>
->> Hi Takashi,
->>
->> If you are okay with these changes, could you please
->> Ack this patch. I am addressing documentation comment
->> from Mauro.
-> 
-> Well, the available ALSA devices are:
-> 
-> CONTROL
-> SEQUENCER
-> TIMER
-> COMPRESS
-> HWDEP
-> RAWMIDI
-> PCM_PLAYBACK
-> PCM_CAPTURE
-> 
-> as found in sound/minors.h.
-> 
-> Any reason not to define for some of them?
+On 02/01, Oleg Nesterov wrote:
+>
+> > +        onsigstack = on_sig_stack(sp);
+> > +        if (ss_size == 0) {
+> > +            switch (ss_flags) {
+> > +            case 0:
+> > +                error = -EPERM;
+> > +                if (onsigstack)
+> > +                    goto out;
+> > +                current->sas_ss_sp = 0;
+> > +                current->sas_ss_size = 0;
+> > +                current->sas_ss_flags = SS_DISABLE;
+> > +                break;
+> > +            case SS_ONSTACK:
+> > +                /* re-enable previously disabled sas */
+> > +                error = -EINVAL;
+> > +                if (current->sas_ss_size == 0)
+> > +                    goto out;
+> > +                break;
+> > +            default:
+> > +                break;
+> > +            }
+>
+> and iiuc the "default" case allows you to write SS_DISABLE into ->sas_ss_flags
+> even if on_sig_stack().
+>
+> So the sequence is
+>
+> 	// running on alt stack
+>
+> 	sigaltstack(SS_DISABLE);
+>
+> 	temporary_run_on_another_stack();
+>
+> 	sigaltstack(SS_ONSTACK);
+>
+> and SS_DISABLE saves us from another SA_ONSTACK signal, right?
+>
+> But afaics it can only help after we change the stack. Suppose that SA_ONSTACK signal
+> comess before temporary_run_on_another_stack(). get_sigframe() should be fine after
+> your changes (afaics), it won't pick the alt stack after SS_DISABLE.
+>
+> However, unless I missed something save_altstack_ex() will record SS_ONSTACK in
+> uc_stack->ss_flags, and after return from signal handler restore_altstack() will
+> enable alt stack again?
 
-Looks like SEQUENCER and TIMER are missing in
-the MC defines. I can see how SEQUENCER could
-be relevant as an MC node, however not sure
-about TIMER use-case. That said, I don't see
-any reason for not including it.
+OK, I didn't notice you modified save_altstack_ex() to use ->sas_ss_flags instead
+of sas_ss_flags()... still doesn't look right, in this case restore_altstack() will
+not restore sas_ss_size/sas_ss_sp and they can be changed by signal handler.
 
-I will add Media Interface Types for both
-of these missing ones.
+Anyway, whatever I missed I agree with Andy, SS_FORCE looks simpler and better to me.
 
-thanks,
--- Shuah
-
-
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+Oleg.
