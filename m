@@ -1,89 +1,60 @@
-From: Stas Sergeev <stsp@list.ru>
+From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [PATCH 4/4] sigaltstack: allow disabling and re-enabling sas
  within sighandler
-Date: Mon, 1 Feb 2016 20:26:53 +0300
-Message-ID: <56AF955D.7060601@list.ru>
-References: <56AE3369.2090709@list.ru> <56AE3626.7080706@list.ru>
- <20160201160625.GA18276@redhat.com> <20160201170958.GA20735@redhat.com>
+Date: Mon, 1 Feb 2016 18:27:33 +0100
+Message-ID: <20160201172733.GA20831@redhat.com>
+References: <56AE3369.2090709@list.ru>
+ <56AE3626.7080706@list.ru>
+ <20160201160625.GA18276@redhat.com>
+ <56AF8E89.5090400@list.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160201170958.GA20735@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: Linux kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Amanieu d'Antras <amanieu@gmail.com>, Richard Weinberger <richard@nod.at>, Tejun Heo <tj@kernel.org>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Jason Low <jason.low2@hp.com>, Heinrich Schuchardt <xypron.glpk@gmx.de>, Andrea Arcangeli <aarcange@redhat.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Josh Triplett <josh@joshtriplett.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Aleksa Sarai <cyphar@cyphar.com>, Paul Moore <pmoore@redhat.com>, Palmer Dabbelt <palmer@dabbelt.com>, Vladimir Davydov <vdavydov@parallels.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <56AF8E89.5090400-cmBhpYW9OiY@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>
+Cc: Linux kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Amanieu d'Antras <amanieu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jason Low <jason.low2-VXdhtT5mjnY@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>, Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-01.02.2016 20:09, Oleg Nesterov =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
-> On 02/01, Oleg Nesterov wrote:
->>> +        onsigstack =3D on_sig_stack(sp);
->>> +        if (ss_size =3D=3D 0) {
->>> +            switch (ss_flags) {
->>> +            case 0:
->>> +                error =3D -EPERM;
->>> +                if (onsigstack)
->>> +                    goto out;
->>> +                current->sas_ss_sp =3D 0;
->>> +                current->sas_ss_size =3D 0;
->>> +                current->sas_ss_flags =3D SS_DISABLE;
->>> +                break;
->>> +            case SS_ONSTACK:
->>> +                /* re-enable previously disabled sas */
->>> +                error =3D -EINVAL;
->>> +                if (current->sas_ss_size =3D=3D 0)
->>> +                    goto out;
->>> +                break;
->>> +            default:
->>> +                break;
->>> +            }
->> and iiuc the "default" case allows you to write SS_DISABLE into ->sa=
-s_ss_flags
->> even if on_sig_stack().
->>
->> So the sequence is
->>
->> 	// running on alt stack
->>
->> 	sigaltstack(SS_DISABLE);
->>
->> 	temporary_run_on_another_stack();
->>
->> 	sigaltstack(SS_ONSTACK);
->>
->> and SS_DISABLE saves us from another SA_ONSTACK signal, right?
->>
->> But afaics it can only help after we change the stack. Suppose that =
-SA_ONSTACK signal
->> comess before temporary_run_on_another_stack(). get_sigframe() shoul=
-d be fine after
->> your changes (afaics), it won't pick the alt stack after SS_DISABLE.
->>
->> However, unless I missed something save_altstack_ex() will record SS=
-_ONSTACK in
->> uc_stack->ss_flags, and after return from signal handler restore_alt=
-stack() will
->> enable alt stack again?
-> OK, I didn't notice you modified save_altstack_ex() to use ->sas_ss_f=
-lags instead
-> of sas_ss_flags()... still doesn't look right, in this case restore_a=
-ltstack() will
-> not restore sas_ss_size/sas_ss_sp and they can be changed by signal h=
-andler.
-How?
-Trying to change them in a sighandler with sigaltstack()
-will get EPERM. And if you change them in uc_stack without
-setting ss_flags back to SS_ONSTACK, they should better be ignored.
+On 02/01, Stas Sergeev wrote:
+>
+> >So the sequence is
+> >
+> >	// running on alt stack
+> >
+> >	sigaltstack(SS_DISABLE);
+> >
+> >	temporary_run_on_another_stack();
+> >
+> >	sigaltstack(SS_ONSTACK);
+> >
+> >and SS_DISABLE saves us from another SA_ONSTACK signal, right?
+> Yes.
+> Note: there is a test-case in that patch serie from which
+> you can see or copy/paste the sample code.
 
-> Anyway, whatever I missed I agree with Andy, SS_FORCE looks simpler a=
-nd better to me.
-But perhaps you missed the most important thing, that
-it is not possible to change the altstack in sighandler - you'll
-get EPERM, even with my patch. But with SS_FORCE this is
-exactly not the case. So I'd like you to confirm your opinion
-after all the implementation details are understood.
-Also it would be interesting to know what do you think about
-just removing the EPERM check instead of this all. There are
-3 possibilities to choose from, not 2. Removing EPERM looks
-simplest.
+OK, I wasn't cc'ed
+
+> >But afaics it can only help after we change the stack. Suppose that SA_ONSTACK signal
+> >comess before temporary_run_on_another_stack(). get_sigframe() should be fine after
+> >your changes (afaics), it won't pick the alt stack after SS_DISABLE.
+> >
+> >However, unless I missed something save_altstack_ex() will record SS_ONSTACK in
+> >uc_stack->ss_flags, and after return from signal handler restore_altstack() will
+> >enable alt stack again?
+> I don't think so. Please see the following hunk:
+
+Yes, see another email, I already noticed this change.
+
+> So I understand this is very confusing, but I think the patch
+> is correct.
+
+Not sure, but I can hardly read this patch and I can't apply it.
+
+> Do you think adding the SS_FORCE flag would be a better solution?
+
+Yes, certainly. I see no point to remember that a thread actually has the alt stack
+but it was disabled.
+
+Oleg.
