@@ -1,174 +1,114 @@
-From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: Re: [PATCH v2 02/10] clockevents/drivers: add MPS2 Timer driver
-Date: Tue, 02 Feb 2016 14:06:59 +0000
-Message-ID: <56B0B803.8010003@arm.com>
-References: <1454413199-26573-1-git-send-email-vladimir.murzin@arm.com>
- <1454413199-26573-3-git-send-email-vladimir.murzin@arm.com>
- <alpine.DEB.2.11.1602021351440.25254@nanos>
+From: "Andrew F. Davis" <afd-l0cyMroinI0@public.gmane.org>
+Subject: Re: [PATCH v4 2/4] iio: health: Add driver for the TI AFE4404 heart
+ monitor
+Date: Tue, 2 Feb 2016 09:50:35 -0600
+Message-ID: <56B0D04B.1090208@ti.com>
+References: <1453742941-12086-1-git-send-email-afd@ti.com>
+ <1453742941-12086-3-git-send-email-afd@ti.com> <56ACCFC6.2000700@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <alpine.DEB.2.11.1602021351440.25254@nanos>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: mark.rutland@arm.com, devicetree@vger.kernel.org, linux@arm.linux.org.uk, pawel.moll@arm.com, arnd@arndb.de, ijc+devicetree@hellion.org.uk, gregkh@linuxfoundation.org, daniel.lezcano@linaro.org, linux-kernel@vger.kernel.org, robh+dt@kernel.org, andy.shevchenko@gmail.com, galak@codeaurora.org, linux-serial@vger.kernel.org, u.kleine-koenig@pengutronix.de, linux-api@vger.kernel.org, jslaby@suse.cz, linux-arm-kernel@lists.infradead.org
+Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <56ACCFC6.2000700-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Dan Murphy <dmurphy-l0cyMroinI0@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Cc: linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 02/02/16 13:04, Thomas Gleixner wrote:
-> On Tue, 2 Feb 2016, Vladimir Murzin wrote:
->> +static int __init mps2_clockevent_init(struct device_node *np)
->> +{
->> +	void __iomem *base;
->> +	struct clk *clk;
->> +	struct clockevent_mps2 *ce;
->> +	u32 rate;
->> +	int irq, ret;
->> +	const char *name = "mps2-clkevt";
->> +
->> +	ret = of_property_read_u32(np, "clock-frequency", &rate);
->> +	if (ret) {
->> +		clk = of_clk_get(np, 0);
->> +		if (IS_ERR(clk)) {
->> +			ret = PTR_ERR(clk);
->> +			pr_err("failed to get clock for clockevent: %d\n", ret);
->> +			goto err_clk_get;
->> +		}
->> +
->> +		ret = clk_prepare_enable(clk);
->> +		if (ret) {
->> +			pr_err("failed to enable clock for clockevent: %d\n", ret);
->> +			clk_put(clk);
->> +			goto err_clk_enable;
->> +		}
->> +
->> +		rate = clk_get_rate(clk);
->> +	}
-> 
-> So in case that "clock-frequency" is available in DT, what enables and
-> configures the clock?
+On 01/30/2016 08:59 AM, Jonathan Cameron wrote:
+> On 25/01/16 17:28, Andrew F. Davis wrote:
+>> Add driver for the TI AFE4404 heart rate monitor and pulse oximeter.
+>> This device detects reflected LED light fluctuations and presents an ADC
+>> value to the user space for further signal processing.
+>>
+>> Datasheet: http://www.ti.com/product/AFE4404/datasheet
+>>
+>> Signed-off-by: Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
+> Hi Andrew,
+>
+> This changed rather more than I was expecting, but fair enough.
+>
+> A few bits are missing from remove.  Few other little bits inline,
+> though mostly those are about readability rather than what the code
+> is doing.
+>
+> I was a little suprised to see no control over whether the trigger is
+> enabled or not.  I'm trying to get my head around what the result of this will
+> be.  I guess we'll have interrupts pinging away merilly doing nothing until
+> the buffer is attached then the demux will get set up to actually do
+> something with the data.
+>
+> hmm. Might be fine, if I ususual.  Normally devices have some means of
+> masking the interrupt.
 
-They are fixed-clock, so I ended up this *cough* mess *cough* shortcut.
-I'd be glad if you share your thoughts what is preferred way to cope
-with it (is it worth to do at all?)
+I wasn't sure about this ether, but it doesn't seem to break anything.
 
-> 
->> +err_ia_alloc:
->> +	kfree(ce);
->> +err_ce_alloc:
->> +err_get_irq:
->> +	iounmap(base);
->> +err_iomap:
->> +	clk_disable_unprepare(clk);
-> 
-> clk is not initialized when "clock-frequency" is available in DT. The compiler
-> should have told you ....
+>
+> Jonathan
+>
+>> ---
+>>   .../ABI/testing/sysfs-bus-iio-health-afe440x       |  54 ++
+>>   drivers/iio/health/Kconfig                         |  19 +-
 
-Shame on me, I've completely messed it up :( Thanks for pointing at it,
-I'll fix this an other places you pointed at...
+[...]
 
-> 
->> +err_clk_enable:
->> +	clk_put(clk);
-> 
-> Put without get ....
-
-or double clk_put() if clk_prepare_enable() failed... shame, shame, shame
-
-> 
->> +static int __init mps2_clocksource_init(struct device_node *np)
->> +{
->> +	void __iomem *base;
->> +	struct clk *clk;
->> +	u32 rate;
->> +	int ret;
->> +	const char *name = "mps2-clksrc";
 >> +
->> +	ret = of_property_read_u32(np, "clock-frequency", &rate);
->> +	if (ret) {
->> +		clk = of_clk_get(np, 0);
->> +		if (IS_ERR(clk)) {
->> +			ret = PTR_ERR(clk);
->> +			pr_err("failed to get clock for clocksource: %d\n", ret);
->> +			goto err_clk_get;
->> +		}
->> +
->> +		ret = clk_prepare_enable(clk);
->> +		if (ret) {
->> +			pr_err("failed to enable clock for clocksource: %d\n", ret);
->> +			clk_put(clk);
->> +			goto err_clk_enable;
->> +		}
->> +
->> +		rate = clk_get_rate(clk);
->> +	}
-> 
-> Same problem as above.
-> 
->> +err_clocksource_init:
->> +	iounmap(base);
->> +err_iomap:
->> +	clk_disable_unprepare(clk);
-> 
-> Ditto.
-> 
->> +err_clk_enable:
->> +	clk_put(clk);
-> 
-> Ditto.
-> 
->> +err_clk_get:
->> +	return ret;
->> +}
->> +
->> +static void __init mps2_timer_init(struct device_node *np)
->> +{
->> +	static int has_clocksource, has_clockevent;
+>> +static const struct afe440x_reg_info afe4404_reg_info[] = {
+>
+> As noted below, I'd find
+> [LED1] = AFE440X_REG_INFO(AFE440_LED1VAL...
+> more readable.
+>
+
+ACK
+
+[...]
+
 >> +	int ret;
 >> +
->> +	if (!has_clocksource) {
->> +		ret = mps2_clocksource_init(np);
->> +		if (!ret) {
->> +			has_clocksource = 1;
->> +			return;
->> +		}
->> +	}
+>> +	iio_device_unregister(indio_dev);
 >> +
->> +	if (!has_clockevent) {
->> +		ret = mps2_clockevent_init(np);
->> +		if (!ret) {
->> +			has_clockevent = 1;
->> +			return;
->> +		}
->> +	}
-> 
-> You take randomly the first timer as clocksource and the second one as
-> clockevent. If clocksource init fails, you try to install it as clockevent.
-> 
-> Sorry, but I really cannot follow the logic here.
-> 
+> Would expect unwinding of the triggered_buffer here.
+> iio_triggered_buffer_cleanup()
+>
 
-It has been done as a response on Daniel's comment [1]. I'm quite happy
-to get known what init sequence is expected here.
+ACK
 
-[1]
-http://lists.infradead.org/pipermail/linux-arm-kernel/2015-November/388223.html
+>> +	iio_trigger_unregister(afe->trig);
+> This should be protected by a check on afe->irq as for the register in probe.
+> There is no protection against afe->trig == NULL in iio_trigger_unregister.
+> That is kind of deliberate as it makes sure the probe / remove in drivers
+> are balanced unlike here.
+>
 
-Thanks for your time, Thomas!
+Makes sense, will add.
 
-Vladimir
+[...]
 
-> Thanks,
-> 
-> 	tglx
-> 
-> 
-> 
+> I'm not overly keen on the hiding fo the indexing.  I'd prefer
+> this was just the bit {...} and you had the fact it was filling in an
+> indexed element explicit where used.
+
+That works.
+
+[...]
+
+> I'd prefix reg_type to avoid possible name clashes in future.
+>> +enum reg_type {
+>> +	SIMPLE,
+>> +	RESISTANCE,
+>> +	CAPACITANCE,
+>> +};
+
+ACK
+
+>> +
+>> +/* this could be made more general for other IIO drivers if needed --------- */
+>
+> Yes, but lets do that at as a follow up.
+>
+
+Sure.
+
+Thanks,
+Andrew
