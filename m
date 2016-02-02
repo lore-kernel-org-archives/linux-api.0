@@ -1,87 +1,136 @@
-From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: [PATCH v2 05/10] serial: mps2-uart: add support for early console
-Date: Tue,  2 Feb 2016 11:39:54 +0000
-Message-ID: <1454413199-26573-6-git-send-email-vladimir.murzin@arm.com>
-References: <1454413199-26573-1-git-send-email-vladimir.murzin@arm.com>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: [PATCH v2 02/10] clockevents/drivers: add MPS2 Timer driver
+Date: Tue, 2 Feb 2016 14:04:29 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1602021351440.25254@nanos>
+References: <1454413199-26573-1-git-send-email-vladimir.murzin@arm.com> <1454413199-26573-3-git-send-email-vladimir.murzin@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <1454413199-26573-1-git-send-email-vladimir.murzin@arm.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: arnd@arndb.de, linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.lezcano@linaro.org, tglx@linutronix.de, u.kleine-koenig@pengutronix.de
-Cc: mark.rutland@arm.com, devicetree@vger.kernel.org, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, andy.shevchenko@gmail.com, robh+dt@kernel.org, linux-serial@vger.kernel.org, galak@codeaurora.org, jslaby@suse.cz, linux-arm-kernel@lists.infradead.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1454413199-26573-3-git-send-email-vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+Cc: arnd-r2nGTMty4D4@public.gmane.org, linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This adds support early console for MPS2 UART which can be enabled via
-earlycon=mps2,0x40004000
+On Tue, 2 Feb 2016, Vladimir Murzin wrote:
+> +static int __init mps2_clockevent_init(struct device_node *np)
+> +{
+> +	void __iomem *base;
+> +	struct clk *clk;
+> +	struct clockevent_mps2 *ce;
+> +	u32 rate;
+> +	int irq, ret;
+> +	const char *name = "mps2-clkevt";
+> +
+> +	ret = of_property_read_u32(np, "clock-frequency", &rate);
+> +	if (ret) {
+> +		clk = of_clk_get(np, 0);
+> +		if (IS_ERR(clk)) {
+> +			ret = PTR_ERR(clk);
+> +			pr_err("failed to get clock for clockevent: %d\n", ret);
+> +			goto err_clk_get;
+> +		}
+> +
+> +		ret = clk_prepare_enable(clk);
+> +		if (ret) {
+> +			pr_err("failed to enable clock for clockevent: %d\n", ret);
+> +			clk_put(clk);
+> +			goto err_clk_enable;
+> +		}
+> +
+> +		rate = clk_get_rate(clk);
+> +	}
 
-Signed-off-by: Vladimir Murzin <vladimir.murzin@arm.com>
----
- drivers/tty/serial/Kconfig     |    1 +
- drivers/tty/serial/mps2-uart.c |   30 ++++++++++++++++++++++++++++++
- 2 files changed, 31 insertions(+)
+So in case that "clock-frequency" is available in DT, what enables and
+configures the clock?
 
-diff --git a/drivers/tty/serial/Kconfig b/drivers/tty/serial/Kconfig
-index 3a248be..4ed6e51 100644
---- a/drivers/tty/serial/Kconfig
-+++ b/drivers/tty/serial/Kconfig
-@@ -1454,6 +1454,7 @@ config SERIAL_MPS2_UART_CONSOLE
- 	bool "MPS2 UART console support"
- 	depends on SERIAL_MPS2_UART
- 	select SERIAL_CORE_CONSOLE
-+	select SERIAL_EARLYCON
- 
- config SERIAL_MPS2_UART
- 	bool "MPS2 UART port"
-diff --git a/drivers/tty/serial/mps2-uart.c b/drivers/tty/serial/mps2-uart.c
-index 4d113ec..530dcab 100644
---- a/drivers/tty/serial/mps2-uart.c
-+++ b/drivers/tty/serial/mps2-uart.c
-@@ -435,6 +435,36 @@ static struct console mps2_uart_console = {
- 
- #define MPS2_SERIAL_CONSOLE (&mps2_uart_console)
- 
-+static void mps2_early_putchar(struct uart_port *port, int ch)
-+{
-+
-+	while (readb(port->membase + UARTn_STATE) & UARTn_STATE_TX_FULL)
-+		cpu_relax();
-+
-+	writeb((unsigned char)ch, port->membase + UARTn_DATA);
-+}
-+
-+
-+static void mps2_early_write(struct console *con, const char *s, unsigned n)
-+{
-+	struct earlycon_device *dev = con->data;
-+
-+	uart_console_write(&dev->port, s, n, mps2_early_putchar);
-+}
-+
-+static int __init mps2_early_console_setup(struct earlycon_device *device,
-+					   const char *opt)
-+{
-+	if (!device->port.membase)
-+		return -ENODEV;
-+
-+	device->con->write = mps2_early_write;
-+
-+	return 0;
-+}
-+EARLYCON_DECLARE(mps2, mps2_early_console_setup);
-+OF_EARLYCON_DECLARE(mps2, "arm,mps2-uart", mps2_early_console_setup);
-+
- #else
- #define MPS2_SERIAL_CONSOLE NULL
- #endif
--- 
-1.7.9.5
+> +err_ia_alloc:
+> +	kfree(ce);
+> +err_ce_alloc:
+> +err_get_irq:
+> +	iounmap(base);
+> +err_iomap:
+> +	clk_disable_unprepare(clk);
+
+clk is not initialized when "clock-frequency" is available in DT. The compiler
+should have told you ....
+
+> +err_clk_enable:
+> +	clk_put(clk);
+
+Put without get ....
+
+> +static int __init mps2_clocksource_init(struct device_node *np)
+> +{
+> +	void __iomem *base;
+> +	struct clk *clk;
+> +	u32 rate;
+> +	int ret;
+> +	const char *name = "mps2-clksrc";
+> +
+> +	ret = of_property_read_u32(np, "clock-frequency", &rate);
+> +	if (ret) {
+> +		clk = of_clk_get(np, 0);
+> +		if (IS_ERR(clk)) {
+> +			ret = PTR_ERR(clk);
+> +			pr_err("failed to get clock for clocksource: %d\n", ret);
+> +			goto err_clk_get;
+> +		}
+> +
+> +		ret = clk_prepare_enable(clk);
+> +		if (ret) {
+> +			pr_err("failed to enable clock for clocksource: %d\n", ret);
+> +			clk_put(clk);
+> +			goto err_clk_enable;
+> +		}
+> +
+> +		rate = clk_get_rate(clk);
+> +	}
+
+Same problem as above.
+
+> +err_clocksource_init:
+> +	iounmap(base);
+> +err_iomap:
+> +	clk_disable_unprepare(clk);
+
+Ditto.
+
+> +err_clk_enable:
+> +	clk_put(clk);
+
+Ditto.
+
+> +err_clk_get:
+> +	return ret;
+> +}
+> +
+> +static void __init mps2_timer_init(struct device_node *np)
+> +{
+> +	static int has_clocksource, has_clockevent;
+> +	int ret;
+> +
+> +	if (!has_clocksource) {
+> +		ret = mps2_clocksource_init(np);
+> +		if (!ret) {
+> +			has_clocksource = 1;
+> +			return;
+> +		}
+> +	}
+> +
+> +	if (!has_clockevent) {
+> +		ret = mps2_clockevent_init(np);
+> +		if (!ret) {
+> +			has_clockevent = 1;
+> +			return;
+> +		}
+> +	}
+
+You take randomly the first timer as clocksource and the second one as
+clockevent. If clocksource init fails, you try to install it as clockevent.
+
+Sorry, but I really cannot follow the logic here.
+
+Thanks,
+
+	tglx
