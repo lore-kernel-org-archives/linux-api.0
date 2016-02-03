@@ -1,164 +1,113 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH 29/31] media: track media device unregister in progress
-Date: Wed, 3 Feb 2016 12:32:38 -0700
-Message-ID: <56B255D6.9080908@osg.samsung.com>
-References: <cover.1452105878.git.shuahkh@osg.samsung.com>
- <151cfbe0e59b3d5396951bdcc29666614575f5bc.1452105878.git.shuahkh@osg.samsung.com>
- <20160128150105.06a9a18d@recife.lan> <56AA4A18.8030303@osg.samsung.com>
- <20160128152843.5ce581fa@recife.lan> <56AA7D3B.6090603@osg.samsung.com>
+From: Jann Horn <jann@thejh.net>
+Subject: Re: [PATCH v5] fuse: Add support for passthrough read/write
+Date: Wed, 3 Feb 2016 20:53:03 +0100
+Message-ID: <20160203195303.GA991@pc.thejh.net>
+References: <56AFAA5B.3000006@codeaurora.org>
+ <20160202081035.GA18246@pc.thejh.net>
+ <56B24F95.9040702@codeaurora.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <56AA7D3B.6090603@osg.samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Cc: tiwai@suse.com, clemens@ladisch.de, hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittga
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="1yeeQ81UyVL57Vl7"
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <56B24F95.9040702@codeaurora.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Nikhilesh Reddy <reddyn@codeaurora.org>
+Cc: torvalds@linux-foundation.org, Miklos Szeredi <miklos@szeredi.hu>, fuse-devel <fuse-devel@lists.sourceforge.net>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, gregkh@linuxfoundation.org, linux-fsdevel@vger.kernel.org, viro@zeniv.linux.org.uk, Richard Weinberger <richard@nod.at>, Theodore Ts'o <tytso@mit.edu>, jack@suse.cz, Antonio SJ Musumeci <trapexit@spawn.link>, sven.utcke@gmx.de, Nikolaus Rath <nikolaus@rath.org>, Jann Horn <jannhorn@googlemail.com>, Mike Shal <marfey@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On 01/28/2016 01:42 PM, Shuah Khan wrote:
-> On 01/28/2016 10:28 AM, Mauro Carvalho Chehab wrote:
->> Em Thu, 28 Jan 2016 10:04:24 -0700
->> Shuah Khan <shuahkh@osg.samsung.com> escreveu:
->>
->>> On 01/28/2016 10:01 AM, Mauro Carvalho Chehab wrote:
->>>> Em Wed,  6 Jan 2016 13:27:18 -0700
->>>> Shuah Khan <shuahkh@osg.samsung.com> escreveu:
->>>>   
->>>>> Add support to track media device unregister in progress
->>>>> state to prevent more than one driver entering unregister.
->>>>> This enables fixing the general protection faults while
->>>>> snd-usb-audio was cleaning up media resources for pcm
->>>>> streams and mixers. In this patch a new interface is added
->>>>> to return the unregister in progress state. Subsequent
->>>>> patches to snd-usb-audio and au0828-core use this interface
->>>>> to avoid entering unregister and attempting to unregister
->>>>> entities and remove devnodes while unregister is in progress.
->>>>> Media device unregister removes entities and interface nodes.  
->>>>
->>>> Hmm... isn't the spinlock enough to serialize it? It seems weird the
->>>> need of an extra bool here to warrant that this is really serialized.
->>>>   
->>>
->>> The spinlock and check for media_devnode_is_registered(&mdev->devnode)
->>> aren't enough to ensure only one driver enters the unregister. 
->>>
->>> Please
->>> note that the devnode isn't marked unregistered until the end in
->>> media_device_unregister().
->>
->> I guess the call to:
->> 	device_remove_file(&mdev->devnode.dev, &dev_attr_model);
->>
->> IMO, This should be, instead, at media_devnode_unregister().
->>
->> Then, we can change the logic at media_devnode_unregister() to:
->>
->> void media_devnode_unregister(struct media_devnode *mdev)
->> {
->> 	mutex_lock(&media_devnode_lock);
->>
->> 	/* Check if mdev was ever registered at all */
->> 	if (!media_devnode_is_registered(mdev)) {
->> 		mutex_unlock(&media_devnode_lock);
->> 		return;
->> 	}
->>
->> 	clear_bit(MEDIA_FLAG_REGISTERED, &mdev->flags);
->> 	mutex_unlock(&media_devnode_lock);
->> 	device_remove_file(&mdev->devnode.dev, &dev_attr_model);
->> 	device_unregister(&mdev->dev);
->> }
->>
->> This sounds enough to avoid device_unregister() or device_remove_file()
->> to be called twice.
->>
-> 
-> I can give it a try. There might other problems that could
-> result from media device being a devres in this case. The
-> last put_device on the usbdev parent device (media device
-> is created as devres for this), all device resources get
-> released. That might have to be solved in a different way.
-> 
-> For now I will see if your solution works.
 
-Hi Mauro,
+--1yeeQ81UyVL57Vl7
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Moving device_remove_file() won't be easy without
-making more changes. The file is created in
-media_device_regsiter() and all the attributes are
-handled in media-device.c
+On Wed, Feb 03, 2016 at 11:05:57AM -0800, Nikhilesh Reddy wrote:
+> Hi
+> Thanks for your review again :)
+> >
+> >Uh... how do you know at this point that the file is actually writable?
+> >Normally, e.g. vfs_write() will ensure that the file is writable, and
+> >e.g. generic_file_write_iter() won't check for writability as far as I
+> >can tell. This might allow someone to use the passthrough mechanism to
+> >overwrite a file he is only allowed to read, but not write, like
+> >/etc/passwd.
+>=20
+> I considered adding the checks ( the same ones that VFS does)  but not su=
+re
+> if we need to.
+> So the user will need to construct a fuse filesystem ( that opens for
+> O_READONLY even though the user asks for a O_RDWR from the FUSE open) and
+> then mount it , with CAP_SYS_ADMIN  for which you need to be root but  on=
+ce
+> he has that he should be able to easily get to the files without needing =
+to
+> go through FUSE  right using CAP_DAC_OVERRIDE?
+>=20
+> Am i missing something? Please do help me understand.
+>=20
+> But yes if really needed I can add additional checks once i understand it
 
-One solution I can think of is clearing the
-MEDIA_FLAG_REGISTERED bit very early in
-media_device_unregister()
+On most Linux desktop systems, and on many servers, the userland "fuse"
+package is installed, which ships with a setuid root helper "fusermount":
 
---- a/drivers/media/media-device.c
-+++ b/drivers/media/media-device.c
-@@ -759,6 +759,9 @@ void media_device_unregister(struct media_device *mdev)
-                return;
-        }
- 
-+       /* Protect unregister path - clear MEDIA_FLAG_REGISTERED */
-+       clear_bit(MEDIA_FLAG_REGISTERED, &mdev->devnode.flags);
-+
-        /* Remove all entities from the media device */
-        list_for_each_entry_safe(entity, next, &mdev->entities, graph_obj.list)
-                __media_device_unregister_entity(entity);
+$ ls -l /bin/fusermount
+-rwsr-xr-x 1 root root 30800 May 21  2015 /bin/fusermount
 
-and changing media_devnode_unregister() to simply call
-device_unregister(&mdev->dev);
+This setuid helper allows any user to mount FUSE filesystems anywhere he
+wants. This works as follows: main() calls mount_fuse(), which opens
+/dev/fuse by calling open_fuse_device(). mount_fuse() then makes sure
+that the caller has write access to the directory he is about to mount
+over using check_perm(), then calls mount() via do_mount(). mount_fuse()
+returns the /dev/fuse fd, which is then sent to the invoker of fusermount
+through a unix domain socket.
 
-Again clearing MEDIA_FLAG_REGISTERED bit in
-media_device_unregister() some problems.
-For one thing clearing this bit should be
-done holding media_devnode_lock. It can be
-done cleanly if we do the following:
+(What the setuid binary does control are the mount options; those are
+used to enforce that the user can't mount filesystems that are
+accessible for other users.)
 
-How about if we split media_devnode_unregister()
-into twp ohases:
+Note that at no point, any data is sent to or read from the FUSE control
+fd by fusermount. Therefore, the init reply that is processed in
+process_init_reply() and determines whether passthrough will be enabled
+is controlled by the unprivileged caller.
 
-media_devnode_start_unregister()
-to clear this bit. It can do:
+This fusermount mechanism is used by pseudo-filesystems like sshfs in
+order to allow unprivileged users to use them.
 
-media_devnode_start_unregister()
-{
-	mutex_lock(&media_devnode_lock);
-	if (!media_devnode_is_registered(mdev)) {
-		mutex_unlock(&media_devnode_lock);
-		return;
-	}
-	clear_bit(MEDIA_FLAG_REGISTERED, &mdev->flags);
-	mutex_unlock(&media_devnode_lock);
-}
+fusermount aside, there is also an (as far as I know) pending patch with
+the intent to make FUSE usable in user namespaces, which is going to
+allow unprivileged users to mount FUSE filesystems even without a
+userspace helper: https://lkml.org/lkml/2015/12/2/472
 
-then:media_device_unregister(struct media_device *mdev)
-will call this first thing and then hold mdev->lock
-do the rest and the call media_devnode_unregister()
-and which will be changed to as follows:
+(Note that this is very different from CUSE, which by design must never
+be exposed to non-root code.)
 
---- a/drivers/media/media-devnode.c
-+++ b/drivers/media/media-devnode.c
-@@ -274,13 +274,6 @@ error:
- 
- void media_devnode_unregister(struct media_devnode *mdev)
- {
--       /* Check if mdev was ever registered at all */
--       if (!media_devnode_is_registered(mdev))
--               return;
--
--       mutex_lock(&media_devnode_lock);
--       clear_bit(MEDIA_FLAG_REGISTERED, &mdev->flags);
--       mutex_unlock(&media_devnode_lock);
-        device_unregister(&mdev->dev);
- }
+> >Also, I think this might bypass mandatory locks, the
+> >security_file_permission hook (which seems like a bad idea anyway
+> >though), inotify/fsnotify and sb_start_write.
+> >
+> Can you please elaborate/clarify further? I am am not sure what you mean.
 
-thanks,
--- Shuah
+--1yeeQ81UyVL57Vl7
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
 
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBAgAGBQJWslqfAAoJED4KNFJOeCOolEEQAKxK/3+QtJMwTlJgayLIZV5x
+IRnQzBnQROtQgXf3fSSsObLE8/TmEJRspVwo3zUQg/r1vvW5G8fTxcFCe5PPpDG5
+4kTwU0BlGzUyqHSkKoa/4IxmsarfGMgfjlh5lT5VacjEPzeRCUWUE2P9A89cLEb1
+5V3ahYOhEx8pzaMgIeHrEjtD57BKP8NQmdt7dMcjEbXmPGXDKyraliJB+Mb7xxX0
+dzFQzfrzrQKQrx8ehtTUO81bjR6r5gSDO/yIoi08BMRjXLSUlDO6ysjBLTgrSMN6
+/HONtLlWwdnCmiejDswg7sypkgAlSlMHqz38jFzACJlY/1xh9bI5+1OkkKFWRMej
+8PxrFK3dW+3Xktf4qepFPMg+ul36AFXZTTEydpfPsw3SRUiS9QIylGshNpPVb/Sh
+dpFpe73Py1P4fA0vYx9nwbvouRVH4dmQxU5YFu1PSPpIKFToQYdEiRViDy51ZPXm
+Ze7tV5ib90jdZrsUMBpsgALpaMffbJZBR5XvBSkcNMqgTk8zvqPXOXq5FLB+xqQM
+lOB1O9tTQW+uqtWu+duNlJlFEoIJIQIIUwEslqJDo5goWP71a3HEmsl8v/00oAmr
+dq4WRPAF0h6ENDnIPh6h3ERjwCcRML+ZcCaGZqkTKWGB1LMD/uEw/JOJbwYpVyr5
+vhll4wK5Zmsj+Jc81CIb
+=lSPQ
+-----END PGP SIGNATURE-----
+
+--1yeeQ81UyVL57Vl7--
