@@ -1,11 +1,11 @@
-From: Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+From: Chunyan Zhang <zhang.chunyan@linaro.org>
 Subject: [PATCH V2 0/6] Introduce CoreSight STM support
-Date: Wed,  3 Feb 2016 16:10:24 +0800
-Message-ID: <1454487030-30053-1-git-send-email-zhang.chunyan@linaro.org>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org
-Cc: robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, nicolas.guion-qxv4g6HH51o@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, mike.leach-5wv7dgnIgG8@public.gmane.org, tor-l0cyMroinI0@public.gmane.org, al.grant-5wv7dgnIgG8@public.gmane.org, zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Date: Wed,  3 Feb 2016 16:15:31 +0800
+Message-ID: <1454487337-30184-1-git-send-email-zhang.chunyan@linaro.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: mathieu.poirier@linaro.org, alexander.shishkin@linux.intel.com
+Cc: robh@kernel.org, broonie@kernel.org, pratikp@codeaurora.org, nicolas.guion@st.com, corbet@lwn.net, mark.rutland@arm.com, mike.leach@arm.com, tor@ti.com, al.grant@arm.com, zhang.lyra@gmail.com, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 This patchset adds support for CoreSight STM IP block. It also makes
@@ -17,7 +17,7 @@ Changes from v1:
    avoid the kbuild test robot error for the time being.  This
    modification will be removed when merging the code in which the
    coresight_simple_func() has been moved to the header file.
-
+ - Calculate the channel number according to the channel memory space size.
 
 Thanks,
 Chunyan
@@ -56,3 +56,4 @@ Pratik Patel (1):
 
 -- 
 1.9.1
+
