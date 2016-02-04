@@ -1,7 +1,7 @@
 From: Jessica Yu <jeyu@redhat.com>
-Subject: [RFC PATCH v4 5/6] samples: livepatch: mark as livepatch module
-Date: Wed,  3 Feb 2016 20:11:10 -0500
-Message-ID: <1454548271-24923-6-git-send-email-jeyu@redhat.com>
+Subject: [RFC PATCH v4 3/6] module: s390: keep mod_arch_specific for livepatch modules
+Date: Wed,  3 Feb 2016 20:11:08 -0500
+Message-ID: <1454548271-24923-4-git-send-email-jeyu@redhat.com>
 References: <1454548271-24923-1-git-send-email-jeyu@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1454548271-24923-1-git-send-email-jeyu@redhat.com>
@@ -10,22 +10,43 @@ To: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>,
 Cc: linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org, Jessica Yu <jeyu@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Mark the module as a livepatch module so that the module loader can
-appropriately identify and initialize it.
+Livepatch needs to utilize the symbol information contained in the
+mod_arch_specific struct in order to be able to call the s390
+apply_relocate_add() function to apply relocations. Keep a reference to
+syminfo if the module is a livepatch module. Remove the redundant vfree()
+in module_finalize() since module_arch_freeing_init() (which also frees
+those structures) is called in do_init_module(). If the module isn't a
+livepatch module, we free the structures in module_arch_freeing_init() as
+usual.
 
 Signed-off-by: Jessica Yu <jeyu@redhat.com>
 ---
- samples/livepatch/livepatch-sample.c | 1 +
- 1 file changed, 1 insertion(+)
+ arch/s390/kernel/module.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-diff --git a/samples/livepatch/livepatch-sample.c b/samples/livepatch/livepatch-sample.c
-index fb8c861..e34f871 100644
---- a/samples/livepatch/livepatch-sample.c
-+++ b/samples/livepatch/livepatch-sample.c
-@@ -89,3 +89,4 @@ static void livepatch_exit(void)
- module_init(livepatch_init);
- module_exit(livepatch_exit);
- MODULE_LICENSE("GPL");
-+MODULE_INFO(livepatch, "Y");
+diff --git a/arch/s390/kernel/module.c b/arch/s390/kernel/module.c
+index 7873e17..2bb6c68 100644
+--- a/arch/s390/kernel/module.c
++++ b/arch/s390/kernel/module.c
+@@ -51,6 +51,11 @@ void *module_alloc(unsigned long size)
+ 
+ void module_arch_freeing_init(struct module *mod)
+ {
++
++	if (is_livepatch_module(mod) &&
++	    mod->state == MODULE_STATE_LIVE)
++		return;
++
+ 	vfree(mod->arch.syminfo);
+ 	mod->arch.syminfo = NULL;
+ }
+@@ -425,7 +430,5 @@ int module_finalize(const Elf_Ehdr *hdr,
+ 		    struct module *me)
+ {
+ 	jump_label_apply_nops(me);
+-	vfree(me->arch.syminfo);
+-	me->arch.syminfo = NULL;
+ 	return 0;
+ }
 -- 
 2.4.3
