@@ -1,70 +1,49 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: linux-api scope (Re: [PATCH v2 11/22] media: dvb-frontend invoke
- enable/disable_source handlers)
-Date: Thu, 4 Feb 2016 20:48:50 +0100
-Message-ID: <CAKgNAkj-veqrgChhTwkOPOXTsA=wytha26aokMixVrZmAxNz6Q@mail.gmail.com>
-References: <CALCETrUNxPhcKiT+aswO5rr+ZpPPCkT30+Exd0iWwQnMN921Qg@mail.gmail.com>
- <CAKgNAkg+cjJS2G5TKvYAYizXWaPewVNtdBQN1x0otbPM7huy5g@mail.gmail.com> <56B361C5.8000101@osg.samsung.com>
-Reply-To: mtk.manpages@gmail.com
+From: Joe Perches <joe@perches.com>
+Subject: Re: [patch] MAINTAINERS: trim the file triggers for ABI/API
+Date: Thu, 04 Feb 2016 12:55:28 -0800
+Message-ID: <1454619328.3263.4.camel@perches.com>
+References: <56B35A9F.1080303@gmail.com> <20160204153415.GB6066@x>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <56B361C5.8000101@osg.samsung.com>
+In-Reply-To: <20160204153415.GB6066@x>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Shuah Khan <shuahkh@osg.samsung.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-media@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, ALSA development <alsa-devel@alsa-project.org>, Josh Triplett <josh@joshtriplett.org>, Steven Rostedt <rostedt@goodmis.org>, Andrew Morton <akpm@linux-foundation.org>
+To: Josh Triplett <josh@joshtriplett.org>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Shuah Khan <shuahkh@osg.samsung.com>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Shuah,
+On Thu, 2016-02-04 at 07:34 -0800, Josh Triplett wrote:
+> On Thu, Feb 04, 2016 at 03:05:19PM +0100, Michael Kerrisk (man-pages)=
+ wrote:
 
-On 4 February 2016 at 15:35, Shuah Khan <shuahkh@osg.samsung.com> wrote:
-> On 02/04/2016 07:04 AM, Michael Kerrisk (man-pages) wrote:
->> [expanding the CC a little]
->>
->> Hi Andy, (and Shuah)
->>
->> On 4 February 2016 at 05:51, Andy Lutomirski <luto@kernel.org> wrote:
->>> [cc list heavily trimmed]
->>>
->>> On Wed, Feb 3, 2016 at 8:03 PM, Shuah Khan <shuahkh@osg.samsung.com> wrote:
->>>> Change dvb frontend to check if tuner is free when
->>>> device opened in RW mode. Call to enable_source
->>>> handler either returns with an active pipeline to
->>>> tuner or error if tuner is busy. Tuner is released
->>>> when frontend is released calling the disable_source
->>>> handler.
->>>
->>> As an actual subscriber to linux-api, I prefer for the linux-api list
->>> to be lowish-volume and mostly limited to API-related things.  Is this
->>> API related?  Do people think that these series should be sent to
->>> linux-api?
->>
->> I think not, and I'd like to stem the flood of mail to the list.
->> There's two things that we could do:
->
-> I simply followed the getmaintainers generate3d list.
-> A bit surprised to see linux-api, but didn't want to
-> leave it out.
+> Might I suggest an alternate commit message?
+>=20
+> """
+> Commit ea8f8fc8631 ("MAINTAINERS: add linux-api for review of API/ABI
+> changes") added file triggers for various paths that likely indicated
+> API/ABI changes.=A0=A0However, catching all changes in Documentation/=
+ABI/
+> and include/uapi/ produces a large volume of mail to linux-api, rathe=
+r
+> than only API/ABI changes.=A0=A0Drop those two entries, but leave
+> include/linux/syscalls.h and kernel/sys_ni.c to catch syscall-related
+> changes.
+> """
+[]
+> > diff --git a/MAINTAINERS b/MAINTAINERS
+[]
+> > @@ -223,9 +223,7 @@ F:=A0=A0drivers/scsi/aacraid/
+> >=20
+> > =A0ABI/API
+> > =A0L:=A0=A0=A0=A0=A0linux-api@vger.kernel.org
+> > -F:=A0=A0=A0=A0=A0Documentation/ABI/
+> > =A0F:=A0=A0=A0=A0=A0include/linux/syscalls.h
+> > -F:=A0=A0=A0=A0=A0include/uapi/
+> > =A0F:=A0=A0=A0=A0=A0kernel/sys_ni.c
 
-Yep -- you and many others. That's the problem with automated solutions ;-).
+Maybe add a keyword entry like:
 
->> 1. Shuah, I know we talked about this in the past, and it made some
->> sense to me at the time for kselftest to use linux-api@, but maybe
->> it's time to create a dedicated list, and move the traffic there? It'd
->> help focus the traffic of linux-api more on its original purpose.
->
-> Yes that is a good plan - I will request a new mailing list and
-> send in a patch to Kselftest MAINTIANER's entry.
+K:	(?i)syscall
 
-Thanks, and sorry for the inconvenience. I guess a prominent mail onto
-linux-api@ advertising the new list, once it has been created, would
-not go amiss.
-
-Cheers,
-
-Michael
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+to see all actual changes of syscalls too?
