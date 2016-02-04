@@ -1,204 +1,255 @@
 From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH v2 07/22] media: v4l-core add enable/disable source
- common interfaces
-Date: Thu, 4 Feb 2016 07:25:13 -0200
-Message-ID: <20160204072513.02619079@recife.lan>
+Subject: Re: [PATCH v2 11/22] media: dvb-frontend invoke
+ enable/disable_source handlers
+Date: Thu, 4 Feb 2016 07:35:46 -0200
+Message-ID: <20160204073546.6150cd81@recife.lan>
 References: <cover.1454557589.git.shuahkh@osg.samsung.com>
-	<7df34ecdf35d473535abefa6643b2db24457b8e6.1454557589.git.shuahkh@osg.samsung.com>
+	<a404ddaef8fbfbc291d5afa013888fbc239cde8e.1454557589.git.shuahkh@osg.samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <7df34ecdf35d473535abefa6643b2db24457b8e6.1454557589.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <a404ddaef8fbfbc291d5afa013888fbc239cde8e.1454557589.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 Cc: tiwai-IBi9RG/b67k@public.gmane.org, clemens-P6GI/4k7KOmELgA04lAiVw@public.gmane.org, hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org, laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org, sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, javier-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org, m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, perex-/Fr2/VpizcU@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, tvboxspy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, crope-X3B1VOXEql0@public.gmane.org, ruchandani.tina-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, chehabrafael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, stefanr-MtYdepGKPcBMYopoZt5u/LNAH6kLmebB@public.gmane.org, inki.dae-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, jh1009.sung-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, elfring-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, sw0312.kim-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, ricardo.ribalda-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, labbott-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org, pierre-louis.bossart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, ricard.wanderlof-VrBV9hrLPhE@public.gmane.org, julian-SZMMDGyaqes@public.gmane.org, takamichiho-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dominic.sacre-Mmb7MZpHnFY@public.gmane.org, misterpib-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, gtmkramer-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org, normalperson-rMlxZR9MS24@public.gmane.org, joe-amhYAVlgbXj10XsdtD+oqA@public.gmane.org, linuxbugs@vittga
 List-Id: linux-api@vger.kernel.org
 
-Em Wed, 03 Feb 2016 21:03:39 -0700
+Em Wed, 03 Feb 2016 21:03:43 -0700
 Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> escreveu:
 
-> Add a new interfaces to be used by v4l-core to invoke enable
-> source and disable_source handlers in the media_device. The
-> enable_source helper function invokes the enable_source handler
-> to find media source entity connected to the entity and check
-> is it is available or busy. If source is available, link is
-> activated and pipeline is started. The disable_source helper
-> function invokes the disable_source handler to deactivate and
-> stop the pipeline.
+> Change dvb frontend to check if tuner is free when
+> device opened in RW mode. Call to enable_source
+> handler either returns with an active pipeline to
+> tuner or error if tuner is busy. Tuner is released
+> when frontend is released calling the disable_source
+> handler.
+
+This patch seems too early in the series, as I'm not seeing any patch
+providing a replacement for the removed code yet.
+
 > 
 > Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 > ---
->  drivers/media/v4l2-core/Makefile  |  2 +-
->  drivers/media/v4l2-core/v4l2-mc.c | 60 +++++++++++++++++++++++++++++++++++++++
->  include/media/v4l2-dev.h          |  1 +
->  include/media/v4l2-mc.h           | 52 +++++++++++++++++++++++++++++++++
->  4 files changed, 114 insertions(+), 1 deletion(-)
->  create mode 100644 drivers/media/v4l2-core/v4l2-mc.c
+>  drivers/media/dvb-core/dvb_frontend.c | 139 +++++-----------------------------
+>  drivers/media/dvb-core/dvb_frontend.h |   3 +
+>  2 files changed, 24 insertions(+), 118 deletions(-)
 > 
-> diff --git a/drivers/media/v4l2-core/Makefile b/drivers/media/v4l2-core/Makefile
-> index 1dc8bba..c6acc01 100644
-> --- a/drivers/media/v4l2-core/Makefile
-> +++ b/drivers/media/v4l2-core/Makefile
-> @@ -6,7 +6,7 @@ tuner-objs	:=	tuner-core.o
->  
->  videodev-objs	:=	v4l2-dev.o v4l2-ioctl.o v4l2-device.o v4l2-fh.o \
->  			v4l2-event.o v4l2-ctrls.o v4l2-subdev.o v4l2-clk.o \
-> -			v4l2-async.o
-> +			v4l2-async.o v4l2-mc.o
->  ifeq ($(CONFIG_COMPAT),y)
->    videodev-objs += v4l2-compat-ioctl32.o
->  endif
-> diff --git a/drivers/media/v4l2-core/v4l2-mc.c b/drivers/media/v4l2-core/v4l2-mc.c
-> new file mode 100644
-> index 0000000..87416df
-> --- /dev/null
-> +++ b/drivers/media/v4l2-core/v4l2-mc.c
-> @@ -0,0 +1,60 @@
-> +/*
-> + * v4l2-mc.c - Media Controller V4L2 Common Interfaces
-> + *
-> + * Copyright (C) 2016 Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-> + *
-> + * This program is free software; you can redistribute it and/or modify
-> + * it under the terms of the GNU General Public License as published by
-> + * the Free Software Foundation; either version 2 of the License, or
-> + * (at your option) any later version.
-> + *
-> + * This program is distributed in the hope that it will be useful,
-> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + * GNU General Public License for more details.
-> + */
-> +
-> +#include <media/v4l2-mc.h>
-> +#include <media/media-device.h>
-> +#include <media/videobuf2-core.h>
-> +#include <media/v4l2-fh.h>
-> +
-> +int v4l_enable_media_source(struct video_device *vdev)
-> +{
-> +#ifdef CONFIG_MEDIA_CONTROLLER
-> +	struct media_device *mdev = vdev->entity.graph_obj.mdev;
-> +	int ret;
-> +
-> +	if (!mdev || !mdev->enable_source)
-> +		return 0;
-> +	ret = mdev->enable_source(&vdev->entity, &vdev->pipe);
-> +	if (ret)
-> +		return -EBUSY;
-> +	return 0;
-> +#endif /* CONFIG_MEDIA_CONTROLLER */
-> +	return 0;
-> +}
-> +EXPORT_SYMBOL_GPL(v4l_enable_media_source);
-> +
-> +void v4l_disable_media_source(struct video_device *vdev)
-> +{
-> +#ifdef CONFIG_MEDIA_CONTROLLER
-> +	struct media_device *mdev = vdev->entity.graph_obj.mdev;
-> +
-> +	if (mdev && mdev->disable_source)
-> +		mdev->disable_source(&vdev->entity);
-> +#endif /* CONFIG_MEDIA_CONTROLLER */
-> +}
-> +EXPORT_SYMBOL_GPL(v4l_disable_media_source);
-> +
-> +int v4l_vb2q_enable_media_source(struct vb2_queue *q)
-> +{
-> +#ifdef CONFIG_MEDIA_CONTROLLER
-> +	struct v4l2_fh *fh = q->owner;
-> +
-> +	return v4l_enable_media_source(fh->vdev);
-> +#endif /* CONFIG_MEDIA_CONTROLLER */
-> +	return 0;
-> +}
-> +EXPORT_SYMBOL_GPL(v4l_vb2q_enable_media_source);
-> +
-
-The code itself is ok. However, the above code would work better if you
-declare them as static inline at the header file (v4l2-mc.h). That would
-allow the compiler to optimize them with the caller codr (where the
-declared structs like mdev, fh are likely already stored on some registers), 
-and even removing the function completely if compiled without the media
-controller.
-
-> diff --git a/include/media/v4l2-dev.h b/include/media/v4l2-dev.h
-> index eeabf20..76056ab 100644
-> --- a/include/media/v4l2-dev.h
-> +++ b/include/media/v4l2-dev.h
-> @@ -87,6 +87,7 @@ struct video_device
->  #if defined(CONFIG_MEDIA_CONTROLLER)
->  	struct media_entity entity;
->  	struct media_intf_devnode *intf_devnode;
-> +	struct media_pipeline pipe;
->  #endif
->  	/* device ops */
->  	const struct v4l2_file_operations *fops;
-> diff --git a/include/media/v4l2-mc.h b/include/media/v4l2-mc.h
-> index df11519..df1a98f 100644
-> --- a/include/media/v4l2-mc.h
-> +++ b/include/media/v4l2-mc.h
-> @@ -14,6 +14,11 @@
->   * GNU General Public License for more details.
->   */
->  
-> +#ifndef _V4L2_MC_H
-> +#define _V4L2_MC_H
-> +
-> +#include <media/v4l2-dev.h>
-> +
->  /**
->   * enum tuner_pad_index - tuner pad index for MEDIA_ENT_F_TUNER
->   *
-> @@ -89,3 +94,50 @@ enum demod_pad_index {
->  	DEMOD_PAD_VBI_OUT,
->  	DEMOD_NUM_PADS
+> diff --git a/drivers/media/dvb-core/dvb_frontend.c b/drivers/media/dvb-core/dvb_frontend.c
+> index 03cc508..2b17e8b 100644
+> --- a/drivers/media/dvb-core/dvb_frontend.c
+> +++ b/drivers/media/dvb-core/dvb_frontend.c
+> @@ -131,11 +131,6 @@ struct dvb_frontend_private {
+>  	int quality;
+>  	unsigned int check_wrapped;
+>  	enum dvbfe_search algo_status;
+> -
+> -#if defined(CONFIG_MEDIA_CONTROLLER_DVB)
+> -	struct media_pipeline pipe;
+> -	struct media_entity *pipe_start_entity;
+> -#endif
 >  };
-> +
-> +/**
-> + * v4l_enable_media_source() -	Hold media source for exclusive use
-> + *				if free
-> + *
-> + * @vdev - poniter to struct video_device
-> + *
-> + * This interface calls enable_source handler to determine if
-> + * media source is free for use. The enable_source handler is
-> + * responsible for checking is the media source is free and
-> + * start a pipeline between the media source and the media
-> + * entity associated with the video device. This interface
-> + * should be called from v4l2-core and dvb-core interfaces
-> + * that change the source configuration.
-> + *
-> + * Return: returns zero on success or a negative error code.
-> + */
-> +int v4l_enable_media_source(struct video_device *vdev);
-> +
-> +/**
-> + * v4l_disable_media_source() -	Release media source
-> + *
-> + * @vdev - poniter to struct video_device
-> + *
-> + * This interface calls disable_source handler to release
-> + * the media source. The disable_source handler stops the
-> + * active media pipeline between the media source and the
-> + * media entity associated with the video device.
-> + *
-> + * Return: returns zero on success or a negative error code.
-> + */
-> +void v4l_disable_media_source(struct video_device *vdev);
-> +/*
-> + * v4l_vb2q_enable_media_tuner -  Hold media source for exclusive use
-> + *				  if free.
-> + * @q - pointer to struct vb2_queue
-> + *
-> + * Wrapper for v4l_enable_media_source(). This function should
-> + * be called from v4l2-core to enable the media source with
-> + * pointer to struct vb2_queue as the input argument. Some
-> + * v4l2-core interfaces don't have access to video device and
-> + * this interface finds the struct video_device for the q and
-> + * calls v4l_enable_media_source().
-> + */
-> +int v4l_vb2q_enable_media_source(struct vb2_queue *q);
-> +
-> +#endif /* _V4L2_MC_H */
+>  
+>  static void dvb_frontend_wakeup(struct dvb_frontend *fe);
+> @@ -596,104 +591,12 @@ static void dvb_frontend_wakeup(struct dvb_frontend *fe)
+>  	wake_up_interruptible(&fepriv->wait_queue);
+>  }
+>  
+> -/**
+> - * dvb_enable_media_tuner() - tries to enable the DVB tuner
+> - *
+> - * @fe:		struct dvb_frontend pointer
+> - *
+> - * This function ensures that just one media tuner is enabled for a given
+> - * frontend. It has two different behaviors:
+> - * - For trivial devices with just one tuner:
+> - *   it just enables the existing tuner->fe link
+> - * - For devices with more than one tuner:
+> - *   It is up to the driver to implement the logic that will enable one tuner
+> - *   and disable the other ones. However, if more than one tuner is enabled for
+> - *   the same frontend, it will print an error message and return -EINVAL.
+> - *
+> - * At return, it will return the error code returned by media_entity_setup_link,
+> - * or 0 if everything is OK, if no tuner is linked to the frontend or if the
+> - * mdev is NULL.
+> - */
+> -#ifdef CONFIG_MEDIA_CONTROLLER_DVB
+> -static int dvb_enable_media_tuner(struct dvb_frontend *fe)
+> -{
+> -	struct dvb_frontend_private *fepriv = fe->frontend_priv;
+> -	struct dvb_adapter *adapter = fe->dvb;
+> -	struct media_device *mdev = adapter->mdev;
+> -	struct media_entity  *entity, *source;
+> -	struct media_link *link, *found_link = NULL;
+> -	int ret, n_links = 0, active_links = 0;
+> -
+> -	fepriv->pipe_start_entity = NULL;
+> -
+> -	if (!mdev)
+> -		return 0;
+> -
+> -	entity = fepriv->dvbdev->entity;
+> -	fepriv->pipe_start_entity = entity;
+> -
+> -	list_for_each_entry(link, &entity->links, list) {
+> -		if (link->sink->entity == entity) {
+> -			found_link = link;
+> -			n_links++;
+> -			if (link->flags & MEDIA_LNK_FL_ENABLED)
+> -				active_links++;
+> -		}
+> -	}
+> -
+> -	if (!n_links || active_links == 1 || !found_link)
+> -		return 0;
+> -
+> -	/*
+> -	 * If a frontend has more than one tuner linked, it is up to the driver
+> -	 * to select with one will be the active one, as the frontend core can't
+> -	 * guess. If the driver doesn't do that, it is a bug.
+> -	 */
+> -	if (n_links > 1 && active_links != 1) {
+> -		dev_err(fe->dvb->device,
+> -			"WARNING: there are %d active links among %d tuners. This is a driver's bug!\n",
+> -			active_links, n_links);
+> -		return -EINVAL;
+> -	}
+> -
+> -	source = found_link->source->entity;
+> -	fepriv->pipe_start_entity = source;
+> -	list_for_each_entry(link, &source->links, list) {
+> -		struct media_entity *sink;
+> -		int flags = 0;
+> -
+> -		sink = link->sink->entity;
+> -		if (sink == entity)
+> -			flags = MEDIA_LNK_FL_ENABLED;
+> -
+> -		ret = media_entity_setup_link(link, flags);
+> -		if (ret) {
+> -			dev_err(fe->dvb->device,
+> -				"Couldn't change link %s->%s to %s. Error %d\n",
+> -				source->name, sink->name,
+> -				flags ? "enabled" : "disabled",
+> -				ret);
+> -			return ret;
+> -		} else
+> -			dev_dbg(fe->dvb->device,
+> -				"link %s->%s was %s\n",
+> -				source->name, sink->name,
+> -				flags ? "ENABLED" : "disabled");
+> -	}
+> -	return 0;
+> -}
+> -#endif
+> -
+>  static int dvb_frontend_thread(void *data)
+>  {
+>  	struct dvb_frontend *fe = data;
+>  	struct dvb_frontend_private *fepriv = fe->frontend_priv;
+>  	enum fe_status s;
+>  	enum dvbfe_algo algo;
+> -#ifdef CONFIG_MEDIA_CONTROLLER_DVB
+> -	int ret;
+> -#endif
+> -
+>  	bool re_tune = false;
+>  	bool semheld = false;
+>  
+> @@ -706,20 +609,6 @@ static int dvb_frontend_thread(void *data)
+>  	fepriv->wakeup = 0;
+>  	fepriv->reinitialise = 0;
+>  
+> -#ifdef CONFIG_MEDIA_CONTROLLER_DVB
+> -	ret = dvb_enable_media_tuner(fe);
+> -	if (ret) {
+> -		/* FIXME: return an error if it fails */
+> -		dev_info(fe->dvb->device,
+> -			"proceeding with FE task\n");
+> -	} else if (fepriv->pipe_start_entity) {
+> -		ret = media_entity_pipeline_start(fepriv->pipe_start_entity,
+> -						  &fepriv->pipe);
+> -		if (ret)
+> -			return ret;
+> -	}
+> -#endif
+> -
+>  	dvb_frontend_init(fe);
+>  
+>  	set_freezable();
+> @@ -829,12 +718,6 @@ restart:
+>  		}
+>  	}
+>  
+> -#ifdef CONFIG_MEDIA_CONTROLLER_DVB
+> -	if (fepriv->pipe_start_entity)
+> -		media_entity_pipeline_stop(fepriv->pipe_start_entity);
+> -	fepriv->pipe_start_entity = NULL;
+> -#endif
+> -
+>  	if (dvb_powerdown_on_sleep) {
+>  		if (fe->ops.set_voltage)
+>  			fe->ops.set_voltage(fe, SEC_VOLTAGE_OFF);
+> @@ -2612,9 +2495,20 @@ static int dvb_frontend_open(struct inode *inode, struct file *file)
+>  		fepriv->tone = -1;
+>  		fepriv->voltage = -1;
+>  
+> +#ifdef CONFIG_MEDIA_CONTROLLER_DVB
+> +		if (fe->dvb->mdev && fe->dvb->mdev->enable_source) {
+> +			ret = fe->dvb->mdev->enable_source(dvbdev->entity,
+> +							   &fe->pipe);
+> +			if (ret) {
+> +				dev_err(fe->dvb->device,
+> +					"Tuner is busy. Error %d\n", ret);
+> +				goto err2;
+> +			}
+> +		}
+> +#endif
+>  		ret = dvb_frontend_start (fe);
+>  		if (ret)
+> -			goto err2;
+> +			goto err3;
+>  
+>  		/*  empty event queue */
+>  		fepriv->events.eventr = fepriv->events.eventw = 0;
+> @@ -2624,7 +2518,12 @@ static int dvb_frontend_open(struct inode *inode, struct file *file)
+>  		mutex_unlock (&adapter->mfe_lock);
+>  	return ret;
+>  
+> +err3:
+> +#ifdef CONFIG_MEDIA_CONTROLLER_DVB
+> +	if (fe->dvb->mdev && fe->dvb->mdev->disable_source)
+> +		fe->dvb->mdev->disable_source(dvbdev->entity);
+>  err2:
+> +#endif
+>  	dvb_generic_release(inode, file);
+>  err1:
+>  	if (dvbdev->users == -1 && fe->ops.ts_bus_ctrl)
+> @@ -2653,6 +2552,10 @@ static int dvb_frontend_release(struct inode *inode, struct file *file)
+>  
+>  	if (dvbdev->users == -1) {
+>  		wake_up(&fepriv->wait_queue);
+> +#ifdef CONFIG_MEDIA_CONTROLLER_DVB
+> +		if (fe->dvb->mdev && fe->dvb->mdev->disable_source)
+> +			fe->dvb->mdev->disable_source(dvbdev->entity);
+> +#endif
+>  		if (fe->exit != DVB_FE_NO_EXIT)
+>  			wake_up(&dvbdev->wait_queue);
+>  		if (fe->ops.ts_bus_ctrl)
+> diff --git a/drivers/media/dvb-core/dvb_frontend.h b/drivers/media/dvb-core/dvb_frontend.h
+> index 458bcce..9466906 100644
+> --- a/drivers/media/dvb-core/dvb_frontend.h
+> +++ b/drivers/media/dvb-core/dvb_frontend.h
+> @@ -686,6 +686,9 @@ struct dvb_frontend {
+>  	int (*callback)(void *adapter_priv, int component, int cmd, int arg);
+>  	int id;
+>  	unsigned int exit;
+> +#if defined(CONFIG_MEDIA_CONTROLLER_DVB)
+> +	struct media_pipeline pipe;
+> +#endif
+
+Why moving this to the non-private part of the data?
+
+>  };
+>  
+>  /**
