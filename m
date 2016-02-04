@@ -1,138 +1,82 @@
-From: Alexander Shishkin <alexander.shishkin@linux.intel.com>
-Subject: Re: [PATCH V2 2/6] stm class: adds a loop to extract the first valid STM device name
-Date: Thu, 04 Feb 2016 19:30:43 +0200
-Message-ID: <871t8se62k.fsf@ashishki-desk.ger.corp.intel.com>
-References: <1454487337-30184-3-git-send-email-zhang.chunyan@linaro.org> <1454576179-27224-1-git-send-email-zhang.chunyan@linaro.org>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [patch] MAINTAINERS: trim the file triggers for ABI/API
+Date: Thu, 4 Feb 2016 20:44:42 +0100
+Message-ID: <CAKgNAkidh-kMLbVDcH-+fsnx2ajHVJFpdzEZqf_F=DVKSfwNMA@mail.gmail.com>
+References: <56B35A9F.1080303@gmail.com> <20160204153415.GB6066@x>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1454576179-27224-1-git-send-email-zhang.chunyan@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Chunyan Zhang <zhang.chunyan@linaro.org>, mathieu.poirier@linaro.org
-Cc: robh@kernel.org, broonie@kernel.org, pratikp@codeaurora.org, nicolas.guion@st.com, corbet@lwn.net, mark.rutland@arm.com, mike.leach@arm.com, tor@ti.com, al.grant@arm.com, zhang.lyra@gmail.com, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160204153415.GB6066@x>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Chunyan Zhang <zhang.chunyan@linaro.org> writes:
+Hi Josh,
 
-I few comments below:
-
-> The node name of STM master management policy is a concatenation of an
-> STM device name to which this policy applies and following an arbitrary
-> string, these two strings are concatenated with a dot.
-
-This is true.
-
-> This patch adds a loop for extracting the STM device name when an
-> arbitrary number of dot(s) are found in this STM device name.
-
-It's not very easy to tell what's going on here from this
-description. The reader be left curious as to why an arbitrary number of
-dots is a reason to run a loop. When in doubt, try to imagine as if
-you're seeing this patch for the first time and ask yourself, does the
-message give a clear explanation of what's going on in it.
-
-> Signed-off-by: Chunyan Zhang <zhang.chunyan@linaro.org>
-> ---
->  drivers/hwtracing/stm/policy.c | 27 ++++++++++++++++-----------
->  1 file changed, 16 insertions(+), 11 deletions(-)
+On 4 February 2016 at 16:34, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> wrote:
+> On Thu, Feb 04, 2016 at 03:05:19PM +0100, Michael Kerrisk (man-pages) wrote:
+>> Josh Tripplett's commit ea8f8fc8631d9f890580a94d57a18bfeb827fa2e
 >
-> diff --git a/drivers/hwtracing/stm/policy.c b/drivers/hwtracing/stm/policy.c
-> index 11ab6d0..691686e 100644
-> --- a/drivers/hwtracing/stm/policy.c
-> +++ b/drivers/hwtracing/stm/policy.c
-> @@ -321,21 +321,26 @@ stp_policies_make(struct config_group *group, const char *name)
->  	/*
->  	 * node must look like <device_name>.<policy_name>, where
->  	 * <device_name> is the name of an existing stm device and
-> -	 * <policy_name> is an arbitrary string
-> +	 * <policy_name> is an arbitrary string, when an arbitrary
-> +	 * number of dot(s) are found in the <device_name>, the
-> +	 * first matched STM device name would be extracted.
->  	 */
+> s/Tripplett/Triplett/
+>
+>> was well intentioned (I even Acked it), but in practice it has mostly
+>> generated (a lot of) useless noise on linux-api as developers of
+>> drivers and implementers of other uninteresting changes run
+>> scripts/get-maintainers.pl and unthinkingly paste the results
+>> into their email clients. And that commit didn't really
+>> help catch the really important API changes (new system calls,
+>> new options to existing system calls, new pseudofile entries,
+>> and so on). So, trim the 'F:' triggers for the "ABI/API" entry
+>> in MAINTAINERS right back to the minimum.
+>
+> This change makes sense, but I don't think this commit message explains
+> the specific changes to the file triggers.  (Also, there's a convention
+> for referencing past commits.)  Might I suggest an alternate commit
+> message?
+>
+> """
+> Commit ea8f8fc8631 ("MAINTAINERS: add linux-api for review of API/ABI
+> changes") added file triggers for various paths that likely indicated
+> API/ABI changes.  However, catching all changes in Documentation/ABI/
+> and include/uapi/ produces a large volume of mail to linux-api, rather
+> than only API/ABI changes.  Drop those two entries, but leave
+> include/linux/syscalls.h and kernel/sys_ni.c to catch syscall-related
+> changes.
+> """
 
-This leaves room for a number of suspicious situations. What if both
-"xyz" and "xyz.0" are stm devices, how would you create a policy for the
-latter, for example?
+Thanks. Looks like Andrew picked your version of the commit message up.
 
-The rules should be such that you can tell exactly what the intended stm
-device is from a policy directory name, otherwise it's just asking for
-trouble.
+Cheers,
 
-> -	p = strchr(devname, '.');
-> -	if (!p) {
-> -		kfree(devname);
-> -		return ERR_PTR(-EINVAL);
-> -	}
-> +	for (p = devname; ; p++) {
-> +		p = strchr(p, '.');
-> +		if (!p) {
-> +			kfree(devname);
-> +			return ERR_PTR(-EINVAL);
-> +		}
->  
-> -	*p++ = '\0';
-> +		*p = '\0';
->  
-> -	stm = stm_find_device(devname);
-> -	kfree(devname);
-> +		stm = stm_find_device(devname);
-> +		if (stm)
-> +			break;
-> +		*p = '.';
-> +	}
->  
-> -	if (!stm)
-> -		return ERR_PTR(-ENODEV);
-> +	kfree(devname);
+Michael
 
-In the existing code there is a clear distinction between -ENODEV, which
-is to say "we didn't find the device" and -EINVAL, "directory name
-breaks rules/is badly formatted". After the change, it's all -EINVAL,
-which also becomes "we tried everything, sorry".
+>> Signed-off-by: Michael Kerrisk <mtk.man-pages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>> ---
+>>  MAINTAINERS | 2 --
+>>  1 file changed, 2 deletions(-)
+>>
+>> diff --git a/MAINTAINERS b/MAINTAINERS
+>> index f678c37..56f7a4f 100644
+>> --- a/MAINTAINERS
+>> +++ b/MAINTAINERS
+>> @@ -223,9 +223,7 @@ F:  drivers/scsi/aacraid/
+>>
+>>  ABI/API
+>>  L:     linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>> -F:     Documentation/ABI/
+>>  F:     include/linux/syscalls.h
+>> -F:     include/uapi/
+>>  F:     kernel/sys_ni.c
+>>
+>>  ABIT UGURU 1,2 HARDWARE MONITOR DRIVER
+>> --
+>> 2.5.0
 
-So, having said all that, does the following patch solve your problem:
 
->From 870dc5fefa5623c39552511d31e0fa0da984d581 Mon Sep 17 00:00:00 2001
-From: Alexander Shishkin <alexander.shishkin@linux.intel.com>
-Date: Thu, 4 Feb 2016 18:56:34 +0200
-Subject: [PATCH] stm class: Support devices with multiple instances
 
-By convention, the name of the stm policy directory in configfs consists of
-the device name to which it applies and the actual policy name, separated
-by a dot. Now, some devices already have dots in their names that separate
-name of the actual device from its instance identifier. Such devices will
-result in two (or more, who can tell) dots in the policy directory name.
-
-Existing policy code, however, will treat the first dot as the one that
-separates device name from policy name, therefore failing the above case.
-
-This patch makes the last dot in the directory name be the separator, thus
-prohibiting dots from being used in policy names.
-
-Suggested-by: Chunyan Zhang <zhang.chunyan@linaro.org>
-Signed-off-by: Alexander Shishkin <alexander.shishkin@linux.intel.com>
----
- drivers/hwtracing/stm/policy.c | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
-
-diff --git a/drivers/hwtracing/stm/policy.c b/drivers/hwtracing/stm/policy.c
-index 94d3abfb73..1db189657b 100644
---- a/drivers/hwtracing/stm/policy.c
-+++ b/drivers/hwtracing/stm/policy.c
-@@ -332,10 +332,11 @@ stp_policies_make(struct config_group *group, const char *name)
- 
- 	/*
- 	 * node must look like <device_name>.<policy_name>, where
--	 * <device_name> is the name of an existing stm device and
--	 * <policy_name> is an arbitrary string
-+	 * <device_name> is the name of an existing stm device; may
-+	 *               contain dots;
-+	 * <policy_name> is an arbitrary string; may not contain dots
- 	 */
--	p = strchr(devname, '.');
-+	p = strrchr(devname, '.');
- 	if (!p) {
- 		kfree(devname);
- 		return ERR_PTR(-EINVAL);
 -- 
-2.7.0
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
