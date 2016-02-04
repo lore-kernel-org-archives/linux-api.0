@@ -1,7 +1,7 @@
 From: Joonsoo Kim <js1304@gmail.com>
-Subject: [PATCH 1/5] mm/vmalloc: query dynamic DEBUG_PAGEALLOC setting
-Date: Thu,  4 Feb 2016 14:56:22 +0900
-Message-ID: <1454565386-10489-2-git-send-email-iamjoonsoo.kim@lge.com>
+Subject: [PATCH 2/5] mm/slub: query dynamic DEBUG_PAGEALLOC setting
+Date: Thu,  4 Feb 2016 14:56:23 +0900
+Message-ID: <1454565386-10489-3-git-send-email-iamjoonsoo.kim@lge.com>
 References: <1454565386-10489-1-git-send-email-iamjoonsoo.kim@lge.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1454565386-10489-1-git-send-email-iamjoonsoo.kim@lge.com>
@@ -16,28 +16,31 @@ whether it is enabled or not in runtime.
 
 Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 ---
- mm/vmalloc.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ mm/slub.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
 
-diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index fb42a5b..e0e51bd 100644
---- a/mm/vmalloc.c
-+++ b/mm/vmalloc.c
-@@ -543,10 +543,10 @@ static void vmap_debug_free_range(unsigned long start, unsigned long end)
- 	 * debugging doesn't do a broadcast TLB flush so it is a lot
- 	 * faster).
- 	 */
+diff --git a/mm/slub.c b/mm/slub.c
+index 7d4da68..7b5a965 100644
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -256,11 +256,12 @@ static inline void *get_freepointer_safe(struct kmem_cache *s, void *object)
+ {
+ 	void *p;
+ 
 -#ifdef CONFIG_DEBUG_PAGEALLOC
--	vunmap_page_range(start, end);
--	flush_tlb_kernel_range(start, end);
+-	probe_kernel_read(&p, (void **)(object + s->offset), sizeof(p));
+-#else
+-	p = get_freepointer(s, object);
 -#endif
 +	if (debug_pagealloc_enabled()) {
-+		vunmap_page_range(start, end);
-+		flush_tlb_kernel_range(start, end);
-+	}
++		probe_kernel_read(&p,
++			(void **)(object + s->offset), sizeof(p));
++	} else
++		p = get_freepointer(s, object);
++
+ 	return p;
  }
  
- /*
 -- 
 1.9.1
 
