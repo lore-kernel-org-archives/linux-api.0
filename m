@@ -1,559 +1,340 @@
 From: Jessica Yu <jeyu@redhat.com>
-Subject: [RFC PATCH v4 4/6] livepatch: reuse module loader code to write relocations
-Date: Wed,  3 Feb 2016 20:11:09 -0500
-Message-ID: <1454548271-24923-5-git-send-email-jeyu@redhat.com>
+Subject: [RFC PATCH v4 6/6] Documentation: livepatch: outline Elf format and requirements for patch modules
+Date: Wed,  3 Feb 2016 20:11:11 -0500
+Message-ID: <1454548271-24923-7-git-send-email-jeyu@redhat.com>
 References: <1454548271-24923-1-git-send-email-jeyu@redhat.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1454548271-24923-1-git-send-email-jeyu@redhat.com>
-Sender: linux-doc-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>
 Cc: linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org, Jessica Yu <jeyu@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Reuse module loader code to write relocations, thereby eliminating the need
-for architecture specific relocation code in livepatch. Specifically, reuse
-the apply_relocate_add() function in the module loader to write relocations
-instead of duplicating functionality in livepatch's arch-dependent
-klp_write_module_reloc() function.
-
-In order to accomplish this, livepatch modules manage their own relocation
-sections (marked with the SHF_RELA_LIVEPATCH section flag) and
-livepatch-specific symbols (marked with SHN_LIVEPATCH symbol section
-index). To apply livepatch relocation sections, livepatch symbols
-referenced by relocs are resolved and then apply_relocate_add() is called
-to apply those relocations.
-
-In addition, remove x86 livepatch relocation code and the s390
-klp_write_module_reloc() function stub. They are no longer needed since
-relocation work has been offloaded to module loader.
+Document livepatch module requirements and the special Elf constants patch
+modules use.
 
 Signed-off-by: Jessica Yu <jeyu@redhat.com>
 ---
- arch/s390/include/asm/livepatch.h |   7 -
- arch/x86/include/asm/livepatch.h  |   2 -
- arch/x86/kernel/Makefile          |   1 -
- arch/x86/kernel/livepatch.c       |  70 ----------
- include/linux/livepatch.h         |  30 ++--
- kernel/livepatch/core.c           | 283 ++++++++++++++++++++++++++++++--------
- 6 files changed, 238 insertions(+), 155 deletions(-)
- delete mode 100644 arch/x86/kernel/livepatch.c
+ Documentation/livepatch/module-elf-format.txt | 311 ++++++++++++++++++++++++++
+ 1 file changed, 311 insertions(+)
+ create mode 100644 Documentation/livepatch/module-elf-format.txt
 
-diff --git a/arch/s390/include/asm/livepatch.h b/arch/s390/include/asm/livepatch.h
-index a52b6cc..350a751 100644
---- a/arch/s390/include/asm/livepatch.h
-+++ b/arch/s390/include/asm/livepatch.h
-@@ -25,13 +25,6 @@ static inline int klp_check_compiler_support(void)
- 	return 0;
- }
- 
--static inline int klp_write_module_reloc(struct module *mod, unsigned long
--		type, unsigned long loc, unsigned long value)
--{
--	/* not supported yet */
--	return -ENOSYS;
--}
--
- static inline void klp_arch_set_pc(struct pt_regs *regs, unsigned long ip)
- {
- 	regs->psw.addr = ip;
-diff --git a/arch/x86/include/asm/livepatch.h b/arch/x86/include/asm/livepatch.h
-index e795f52..d7c2b57 100644
---- a/arch/x86/include/asm/livepatch.h
-+++ b/arch/x86/include/asm/livepatch.h
-@@ -33,8 +33,6 @@ static inline int klp_check_compiler_support(void)
- #endif
- 	return 0;
- }
--int klp_write_module_reloc(struct module *mod, unsigned long type,
--			   unsigned long loc, unsigned long value);
- 
- static inline void klp_arch_set_pc(struct pt_regs *regs, unsigned long ip)
- {
-diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
-index b1b78ff..c5e9a5c 100644
---- a/arch/x86/kernel/Makefile
-+++ b/arch/x86/kernel/Makefile
-@@ -67,7 +67,6 @@ obj-$(CONFIG_X86_MPPARSE)	+= mpparse.o
- obj-y				+= apic/
- obj-$(CONFIG_X86_REBOOTFIXUPS)	+= reboot_fixups_32.o
- obj-$(CONFIG_DYNAMIC_FTRACE)	+= ftrace.o
--obj-$(CONFIG_LIVEPATCH)		+= livepatch.o
- obj-$(CONFIG_FUNCTION_GRAPH_TRACER) += ftrace.o
- obj-$(CONFIG_FTRACE_SYSCALLS)	+= ftrace.o
- obj-$(CONFIG_X86_TSC)		+= trace_clock.o
-diff --git a/arch/x86/kernel/livepatch.c b/arch/x86/kernel/livepatch.c
-deleted file mode 100644
-index 92fc1a5..0000000
---- a/arch/x86/kernel/livepatch.c
-+++ /dev/null
-@@ -1,70 +0,0 @@
--/*
-- * livepatch.c - x86-specific Kernel Live Patching Core
-- *
-- * Copyright (C) 2014 Seth Jennings <sjenning@redhat.com>
-- * Copyright (C) 2014 SUSE
-- *
-- * This program is free software; you can redistribute it and/or
-- * modify it under the terms of the GNU General Public License
-- * as published by the Free Software Foundation; either version 2
-- * of the License, or (at your option) any later version.
-- *
-- * This program is distributed in the hope that it will be useful,
-- * but WITHOUT ANY WARRANTY; without even the implied warranty of
-- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-- * GNU General Public License for more details.
-- *
-- * You should have received a copy of the GNU General Public License
-- * along with this program; if not, see <http://www.gnu.org/licenses/>.
-- */
--
--#include <linux/module.h>
--#include <linux/uaccess.h>
--#include <asm/elf.h>
--#include <asm/livepatch.h>
--
--/**
-- * klp_write_module_reloc() - write a relocation in a module
-- * @mod:	module in which the section to be modified is found
-- * @type:	ELF relocation type (see asm/elf.h)
-- * @loc:	address that the relocation should be written to
-- * @value:	relocation value (sym address + addend)
-- *
-- * This function writes a relocation to the specified location for
-- * a particular module.
-- */
--int klp_write_module_reloc(struct module *mod, unsigned long type,
--			   unsigned long loc, unsigned long value)
--{
--	size_t size = 4;
--	unsigned long val;
--	unsigned long core = (unsigned long)mod->core_layout.base;
--	unsigned long core_size = mod->core_layout.size;
--
--	switch (type) {
--	case R_X86_64_NONE:
--		return 0;
--	case R_X86_64_64:
--		val = value;
--		size = 8;
--		break;
--	case R_X86_64_32:
--		val = (u32)value;
--		break;
--	case R_X86_64_32S:
--		val = (s32)value;
--		break;
--	case R_X86_64_PC32:
--		val = (u32)(value - loc);
--		break;
--	default:
--		/* unsupported relocation type */
--		return -EINVAL;
--	}
--
--	if (loc < core || loc >= core + core_size)
--		/* loc does not point to any symbol inside the module */
--		return -EINVAL;
--
--	return probe_kernel_write((void *)loc, &val, size);
--}
-diff --git a/include/linux/livepatch.h b/include/linux/livepatch.h
-index fdd5f1c..1a40a72 100644
---- a/include/linux/livepatch.h
-+++ b/include/linux/livepatch.h
-@@ -65,27 +65,8 @@ struct klp_func {
- };
- 
- /**
-- * struct klp_reloc - relocation structure for live patching
-- * @loc:	address where the relocation will be written
-- * @sympos:	position in kallsyms to disambiguate symbols (optional)
-- * @type:	ELF relocation type
-- * @name:	name of the referenced symbol (for lookup/verification)
-- * @addend:	offset from the referenced symbol
-- * @external:	symbol is either exported or within the live patch module itself
-- */
--struct klp_reloc {
--	unsigned long loc;
--	unsigned long sympos;
--	unsigned long type;
--	const char *name;
--	int addend;
--	int external;
--};
--
--/**
-  * struct klp_object - kernel object structure for live patching
-  * @name:	module name (or NULL for vmlinux)
-- * @relocs:	relocation entries to be applied at load time
-  * @funcs:	function entries for functions to be patched in the object
-  * @kobj:	kobject for sysfs resources
-  * @mod:	kernel module associated with the patched object
-@@ -95,7 +76,6 @@ struct klp_reloc {
- struct klp_object {
- 	/* external */
- 	const char *name;
--	struct klp_reloc *relocs;
- 	struct klp_func *funcs;
- 
- 	/* internal */
-@@ -123,6 +103,16 @@ struct klp_patch {
- 	enum klp_state state;
- };
- 
-+/*
-+ * Livepatch symbol and relocation section prefixes:
-+ * ".klp.rela." for relocation sections
-+ * ".klp.sym." for livepatch symbols
-+ */
-+#define KLP_SYM_PREFIX ".klp.sym."
-+#define KLP_SYM_PREFIX_LEN 9
-+#define KLP_RELASEC_PREFIX ".klp.rela."
-+#define KLP_RELASEC_PREFIX_LEN 10
+diff --git a/Documentation/livepatch/module-elf-format.txt b/Documentation/livepatch/module-elf-format.txt
+new file mode 100644
+index 0000000..736b620
+--- /dev/null
++++ b/Documentation/livepatch/module-elf-format.txt
+@@ -0,0 +1,311 @@
++===========================
++Livepatch module Elf format
++===========================
 +
- #define klp_for_each_object(patch, obj) \
- 	for (obj = patch->objs; obj->funcs; obj++)
- 
-diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
-index 7aa975d..c1fe57c 100644
---- a/kernel/livepatch/core.c
-+++ b/kernel/livepatch/core.c
-@@ -28,6 +28,9 @@
- #include <linux/list.h>
- #include <linux/kallsyms.h>
- #include <linux/livepatch.h>
-+#include <linux/elf.h>
-+#include <linux/string.h>
-+#include <linux/moduleloader.h>
- #include <asm/cacheflush.h>
- 
- /**
-@@ -87,6 +90,166 @@ static bool klp_is_object_loaded(struct klp_object *obj)
- 	return !obj->name || obj->mod;
- }
- 
-+/*
-+ * Check if a livepatch symbol is formatted properly.
-+ *
-+ * See Documentation/livepatch/module-elf-format.txt for a
-+ * detailed outline of requirements.
-+ */
-+static int klp_check_symbol_format(struct module *pmod, Elf_Sym *sym)
-+{
-+	size_t len;
-+	char *s, *objname, *symname;
++This document outlines the Elf format requirements that livepatch modules must follow.
 +
-+	if (sym->st_shndx != SHN_LIVEPATCH)
-+		return -EINVAL;
++-----------------
++Table of Contents
++-----------------
++0. Background and motivation
++1. Livepatch modinfo field
++2. Livepatch relocation sections
++   2.1 What are livepatch relocation sections?
++   2.2 Livepatch relocation section format
++       2.2.1 Required flags
++       2.2.2 Required name format
++       2.2.3 Example livepatch relocation section names
++       2.2.4 Example `readelf --sections` output
++       2.2.5 Example `readelf --relocs` output
++3. Livepatch symbols
++   3.1 What are livepatch symbols?
++   3.2 A livepatch module's symbol table
++   3.3 Livepatch symbol format
++       3.3.1 Required flags
++       3.3.2 Required name format
++       3.3.3 Example livepatch symbol names
++       3.3.4 Example `readelf --symbols` output
++4. Symbol table and Elf section access
 +
-+	/*
-+	 * Livepatch symbol names must follow this format:
-+	 * .klp.sym.objname.symbol_name,sympos
-+	 */
-+	s = pmod->strtab + sym->st_name;
-+	/* [.klp.sym.]objname.symbol_name,sympos */
-+	if (!s || strncmp(s, KLP_SYM_PREFIX, KLP_SYM_PREFIX_LEN))
-+		return -EINVAL;
++----------------------------
++0. Background and motivation
++----------------------------
 +
-+	/* .klp.sym.[objname].symbol_name,sympos */
-+	objname = s + KLP_SYM_PREFIX_LEN;
-+	len = strcspn(objname, ".");
-+	if (!(len > 0))
-+		return -EINVAL;
++Formerly, livepatch required separate architecture-specific code to write
++relocations. However, arch-specific code to write relocations already
++exists in the module loader, so this former approach produced redundant
++code. So, instead of duplicating code and re-implementing what the module
++loader can already do, livepatch leverages existing code in the module
++loader to perform the all the arch-specific relocation work. Specifically,
++livepatch reuses the apply_relocate_add() function in the module loader to
++write relocations. The patch module Elf format described in this document
++enables livepatch to be able to do this. The hope is that this will make
++livepatch more easily portable to other architectures and reduce the amount
++of arch-specific code required to port livepatch to a particular
++architecture.
 +
-+	/* .klp.sym.objname.symbol_name,[sympos] */
-+	if (!strchr(s, ','))
-+		return -EINVAL;
++Since apply_relocate_add() requires access to a module's section header
++table, symbol table, and relocation section indices, Elf information is
++preserved for livepatch modules (see section 4). Livepatch manages its own
++relocation sections and symbols, which are described in this document. The
++Elf constants used to mark livepatch symbols and relocation sections were
++selected from OS-specific ranges according to the definitions from glibc.
 +
-+	/* .klp.sym.objname.[symbol_name],sympos */
-+	symname = objname + len + 1;
-+	len = strcspn(symname, ",");
-+	if (!(len > 0))
-+		return -EINVAL;
++0.1 Why does livepatch need to write its own relocations?
++---------------------------------------------------------
++A typical livepatch module contains patched versions of functions that can
++reference non-exported global symbols and non-included local symbols.
++Relocations referencing these types of symbols cannot be left in as-is
++since the kernel module loader cannot resolve them and will therefore
++reject the livepatch module. Furthermore, we cannot apply relocations that
++affect modules not yet loaded at patch module load time (e.g. a patch to a
++driver that is not loaded). Formerly, livepatch solved this problem by
++embedding special "dynrela" (dynamic rela) sections in the resulting patch
++module Elf output. Using these dynrela sections, livepatch could resolve
++symbols while taking into account its scope and what module the symbol
++belongs to, and then manually apply the dynamic relocations. However this
++approach required livepatch to supply arch-specific code in order to write
++these relocations. In the new format, livepatch manages its own SHT_RELA
++relocation sections in place of dynrela sections, and the symbols that the
++relas reference are special livepatch symbols (see section 2 and 3). The
++arch-specific livepatch relocation code is replaced by a call to
++apply_relocate_add().
 +
-+	return 0;
-+}
++================================
++PATCH MODULE FORMAT REQUIREMENTS
++================================
 +
-+/*
-+ * Check if a livepatch relocation section is formatted properly.
-+ *
-+ * See Documentation/livepatch/module-elf-format.txt for a
-+ * detailed outline of requirements.
-+ */
-+static int klp_check_relasec_format(struct module *pmod, Elf_Shdr *relasec)
-+{
-+	char *secname;
-+	size_t len;
++--------------------------
++1. Livepatch modinfo field
++--------------------------
 +
-+	secname = pmod->klp_info->secstrings + relasec->sh_name;
-+	/* [.klp.rela.]objname.section_name */
-+	if (!secname || strncmp(secname, KLP_RELASEC_PREFIX,
-+				KLP_RELASEC_PREFIX_LEN))
-+		return -EINVAL;
++Livepatch modules are required to have the "livepatch" modinfo attribute.
++See the sample livepatch module in samples/livepatch/ for how this is done.
 +
-+	/* .klp.rela.[objname].section_name */
-+	len = strcspn(secname + KLP_RELASEC_PREFIX_LEN, ".");
-+	if (!(len > 0))
-+		return -EINVAL;
++Livepatch modules can be identified by users by using the 'modinfo' command
++and looking for the presence of the "livepatch" field. This field is also
++used by the kernel module loader to identify livepatch modules.
 +
-+	return 0;
-+}
++Example modinfo output:
++-----------------------
++% modinfo livepatch-meminfo.ko
++filename:		livepatch-meminfo.ko
++livepatch:		Y
++license:		GPL
++depends:
++vermagic:		4.3.0+ SMP mod_unload
 +
-+/*
-+ * Check if obj->name matches the objname encoded in the rela
-+ * section name (.klp.rela.[objname].section_name)
-+ *
-+ * Must pass klp_check_relasec_format() before calling this.
-+ */
-+static bool klp_relasec_matches_object(struct module *pmod, Elf_Shdr *relasec,
-+				       struct klp_object *obj)
-+{
-+	size_t len;
-+	const char *obj_objname, *sec_objname, *secname;
++--------------------------------
++2. Livepatch relocation sections
++--------------------------------
 +
-+	secname = pmod->klp_info->secstrings + relasec->sh_name;
-+	/* .klp.rela.[objname].section_name */
-+	sec_objname = secname + KLP_RELASEC_PREFIX_LEN;
-+	obj_objname = klp_is_module(obj) ? obj->name : "vmlinux";
++-------------------------------------------
++2.1 What are livepatch relocation sections?
++-------------------------------------------
++A livepatch module manages its own Elf relocation sections to apply
++relocations to modules as well as to the kernel (vmlinux) at the
++appropriate time. For example, if a patch module patches a driver that is
++not currently loaded, livepatch will apply the corresponding livepatch
++relocation section(s) to the driver once it loads.
 +
-+	/* Get length of the objname encoded in the section name */
-+	len = strcspn(sec_objname, ".");
++Each "object" (e.g. vmlinux, or a module) within a patch module may have
++multiple livepatch relocation sections associated with it (e.g. patches to
++multiple functions within the same object). There is a 1-1 correspondence
++between a livepatch relocation section and the target section (usually the
++text section of a function) to which the relocation(s) apply. It is
++also possible for a livepatch module to have no livepatch relocation
++sections, as in the case of the sample livepatch module (see
++samples/livepatch).
 +
-+	if (strlen(obj_objname) != len)
-+		return false;
++Since Elf information is preserved for livepatch modules (see Section 4), a
++livepatch relocation section can be applied simply by passing in the
++appropriate section index to apply_relocate_add(), which then uses it to
++access the relocation section and apply the relocations.
 +
-+	return strncmp(sec_objname, obj_objname, len) ? false : true;
-+}
++Every symbol referenced by a rela in a livepatch relocation section is a
++livepatch symbol. These must be resolved before livepatch can call
++apply_relocate_add(). See Section 3 for more information.
 +
-+/*
-+ * klp_get_* helper functions
-+ *
-+ * klp_get_* functions extract different components of the name
-+ * of a livepatch symbol. The full symbol name from the strtab
-+ * is passed in as parameter @s, and @result is filled in with
-+ * the extracted component.
-+ *
-+ * These functions assume a correctly formatted symbol and the
-+ * klp_check_symbol_format() test *must* pass before calling any
-+ * of these functions.
-+ */
++---------------------------------------
++2.2 Livepatch relocation section format
++---------------------------------------
 +
-+/* .klp.sym.[objname].symbol_name,sympos */
-+static int klp_get_sym_objname(char *s, char **result)
-+{
-+	size_t len;
-+	char *objname, *objname_start;
++2.2.1 Required flags
++--------------------
++Livepatch relocation sections must be marked with the SHF_RELA_LIVEPATCH
++section flag. See include/uapi/linux/elf.h for the definition. The module
++loader recognizes this flag and will avoid applying those relocation sections
++at patch module load time. These sections must also be marked with SHF_ALLOC,
++so that the module loader doesn't discard them on module load (i.e. they will
++be copied into memory along with the other SHF_ALLOC sections).
 +
-+	/* .klp.sym.[objname].symbol_name,sympos */
-+	objname_start = s + KLP_SYM_PREFIX_LEN;
-+	len = strcspn(objname_start, ".");
-+	objname = kstrndup(objname_start, len, GFP_KERNEL);
-+	if (objname == NULL)
-+		return -ENOMEM;
++2.2.2 Required name format
++--------------------------
++The name of a livepatch relocation section must conform to the following format:
 +
-+	/* klp_find_object_symbol() treats NULL as vmlinux */
-+	if (!strcmp(objname, "vmlinux")) {
-+		*result = NULL;
-+		kfree(objname);
-+	} else
-+		*result = objname;
++.klp.rela.objname.section_name
++^        ^^     ^ ^          ^
++|________||_____| |__________|
++   [A]      [B]        [C]
 +
-+	return 0;
-+}
++[A] The relocation section name is prefixed with the string ".klp.rela."
++[B] The name of the object (i.e. "vmlinux" or name of module) to
++    which the relocation section belongs follows immediately after the prefix.
++[C] The actual name of the section to which this relocation section applies.
 +
-+/* .klp.sym.objname.[symbol_name],sympos */
-+static int klp_get_symbol_name(char *s, char **result)
-+{
-+	size_t len;
-+	char *objname, *symname;
++2.2.3 Example livepatch relocation section names:
++-------------------------------------------------
++.klp.rela.ext4.text.ext4_attr_store
++.klp.rela.vmlinux.text.cmdline_proc_show
 +
-+	/* .klp.sym.[objname].symbol_name,sympos */
-+	objname = s + KLP_SYM_PREFIX_LEN;
-+	len = strcspn(objname, ".");
++2.2.4 Example `readelf --sections` output for a patch
++module that patches vmlinux and modules 9p, btrfs, ext4:
++--------------------------------------------------------
++  Section Headers:
++  [Nr] Name                          Type                    Address          Off    Size   ES Flg Lk Inf Al
++  [ snip ]
++  [29] .klp.rela.9p.text.caches.show RELA                    0000000000000000 002d58 0000c0 18 AIo 64   9  8
++  [30] .klp.rela.btrfs.text.btrfs.feature.attr.show RELA     0000000000000000 002e18 000060 18 AIo 64  11  8
++  [ snip ]
++  [34] .klp.rela.ext4.text.ext4.attr.store RELA              0000000000000000 002fd8 0000d8 18 AIo 64  13  8
++  [35] .klp.rela.ext4.text.ext4.attr.show RELA               0000000000000000 0030b0 000150 18 AIo 64  15  8
++  [36] .klp.rela.vmlinux.text.cmdline.proc.show RELA         0000000000000000 003200 000018 18 AIo 64  17  8
++  [37] .klp.rela.vmlinux.text.meminfo.proc.show RELA         0000000000000000 003218 0000f0 18 AIo 64  19  8
++  [ snip ]                                       ^                                             ^
++                                                 |                                             |
++                                                [*]                                           [*]
++[*] Livepatch relocation sections are SHT_RELA sections but with a few special
++characteristics. Notice that they are marked SHF_ALLOC ("A") so that they will
++not be discarded when the module is loaded into memory, as well as with the
++SHF_RELA_LIVEPATCH flag ("o" - for OS-specific).
 +
-+	/* .klp.sym.objname.[symbol_name],sympos */
-+	symname = objname + len + 1;
-+	len = strcspn(symname, ",");
++2.2.5 Example `readelf --relocs` output for a patch module:
++-----------------------------------------------------------
++Relocation section '.klp.rela.btrfs.text.btrfs_feature_attr_show' at offset 0x2ba0 contains 4 entries:
++    Offset             Info             Type               Symbol's Value  Symbol's Name + Addend
++000000000000001f  0000005e00000002 R_X86_64_PC32          0000000000000000 .klp.sym.vmlinux.printk,0 - 4
++0000000000000028  0000003d0000000b R_X86_64_32S           0000000000000000 .klp.sym.btrfs.btrfs_ktype,0 + 0
++0000000000000036  0000003b00000002 R_X86_64_PC32          0000000000000000 .klp.sym.btrfs.can_modify_feature.isra.3,0 - 4
++000000000000004c  0000004900000002 R_X86_64_PC32          0000000000000000 .klp.sym.vmlinux.snprintf,0 - 4
++[ snip ]                                                                   ^
++                                                                           |
++                                                                          [*]
++[*] Every symbol referenced by a relocation is a livepatch symbol.
 +
-+	*result = kstrndup(symname, len, GFP_KERNEL);
-+	if (*result == NULL)
-+		return -ENOMEM;
++--------------------
++3. Livepatch symbols
++--------------------
 +
-+	return 0;
-+}
++-------------------------------
++3.1 What are livepatch symbols?
++-------------------------------
++Livepatch symbols are symbols referred to by livepatch relocation sections.
++These are symbols accessed from new versions of functions for patched
++objects, whose addresses cannot be resolved by the module loader (because
++they are local or unexported global syms). Since the module loader only
++resolves exported syms, and not every symbol referenced by the new patched
++functions is exported, livepatch symbols were introduced. They are used
++also in cases where we cannot immediately know the address of a symbol when
++a patch module loads. For example, this is the case when livepatch patches
++a module that is not loaded yet. In this case, the relevant livepatch
++symbols are resolved simply when the target module loads. In any case, for
++any livepatch relocation section, all livepatch symbols referenced by that
++section must be resolved before livepatch can call apply_relocate_add() for
++that reloc section.
 +
-+/* .klp.sym.objname.symbol_name,[sympos] */
-+static int klp_get_sympos(char *s, unsigned long *result)
-+{
-+	char *sympos;
++Livepatch symbols must be marked with SHN_LIVEPATCH so that the module
++loader can identify and ignore them. Livepatch modules keep these symbols
++in their symbol tables, and the symbol table is made accessible through
++module->symtab.
 +
-+	/* .klp.sym.symbol_name,[sympos] */
-+	sympos = strchr(s, ',') + 1;
-+	return kstrtol(sympos, 10, result);
-+}
++-------------------------------------
++3.2 A livepatch module's symbol table
++-------------------------------------
++Normally, a stripped down copy of a module's symbol table (containing only
++"core" symbols) is made available through module->symtab (See layout_symtab()
++in kernel/module.c). For livepatch modules, the symbol table copied into memory
++on module load must be exactly the same as the symbol table produced when the
++patch module was compiled. This is because the relocations in each livepatch
++relocation section refer to their respective symbols with their symbol indices,
++and the original symbol indices (and thus the symtab ordering) must be
++preserved in order for apply_relocate_add() to find the right symbol.
 +
- /* sets obj->mod if object is not vmlinux and module is found */
- static void klp_find_object_module(struct klp_object *obj)
- {
-@@ -204,74 +367,83 @@ static int klp_find_object_symbol(const char *objname, const char *name,
- 	return -EINVAL;
- }
- 
--/*
-- * external symbols are located outside the parent object (where the parent
-- * object is either vmlinux or the kmod being patched).
-- */
--static int klp_find_external_symbol(struct module *pmod, const char *name,
--				    unsigned long *addr)
-+static int klp_resolve_symbols(Elf_Shdr *relasec, struct module *pmod)
- {
--	const struct kernel_symbol *sym;
--
--	/* first, check if it's an exported symbol */
--	preempt_disable();
--	sym = find_symbol(name, NULL, NULL, true, true);
--	if (sym) {
--		*addr = sym->value;
--		preempt_enable();
--		return 0;
-+	int i, ret = 0;
-+	Elf_Rela *relas;
-+	Elf_Sym *sym;
-+	char *s, *symbol_name, *sym_objname;
-+	unsigned long sympos;
++For example, take this particular rela from a livepatch module:
++Relocation section '.klp.rela.btrfs.text.btrfs_feature_attr_show' at offset 0x2ba0 contains 4 entries:
++    Offset             Info             Type               Symbol's Value  Symbol's Name + Addend
++000000000000001f  0000005e00000002 R_X86_64_PC32          0000000000000000 .klp.sym.vmlinux.printk,0 - 4
 +
-+	relas = (Elf_Rela *) relasec->sh_addr;
-+	/* For each rela in this .klp.rela. section */
-+	for (i = 0; i < relasec->sh_size / sizeof(Elf_Rela); i++) {
-+		sym = pmod->symtab + ELF_R_SYM(relas[i].r_info);
++This rela refers to the symbol '.klp.sym.vmlinux.printk,0', and the symbol index is encoded
++in 'Info'. Here its symbol index is 0x5e, which is 94 in decimal, which refers to the
++symbol index 94.
++And in this patch module's corresponding symbol table, symbol index 94 refers to that very symbol:
++[ snip ]
++94: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT OS [0xff20] .klp.sym.vmlinux.printk,0
++[ snip ]
 +
-+		/* Check if the symbol is formatted correctly */
-+		ret = klp_check_symbol_format(pmod, sym);
-+		if (ret)
-+			goto out;
-+		/* Format: .klp.sym.objname.symbol_name,sympos */
-+		s = pmod->strtab + sym->st_name;
-+		ret = klp_get_symbol_name(s, &symbol_name);
-+		if (ret)
-+			goto out;
-+		ret = klp_get_sym_objname(s, &sym_objname);
-+		if (ret)
-+			goto free_symbol_name;
-+		ret = klp_get_sympos(s, &sympos);
-+		if (ret)
-+			goto free_objname;
++---------------------------
++3.3 Livepatch symbol format
++---------------------------
 +
-+		ret = klp_find_object_symbol(sym_objname, symbol_name, sympos,
-+					     (unsigned long *) &sym->st_value);
-+free_objname:
-+		kfree(sym_objname);
-+free_symbol_name:
-+		kfree(symbol_name);
-+		if (ret)
-+			goto out;
- 	}
--	preempt_enable();
--
--	/*
--	 * Check if it's in another .o within the patch module. This also
--	 * checks that the external symbol is unique.
--	 */
--	return klp_find_object_symbol(pmod->name, name, 0, addr);
-+out:
-+	return ret;
- }
- 
- static int klp_write_object_relocations(struct module *pmod,
- 					struct klp_object *obj)
- {
--	int ret = 0;
--	unsigned long val;
--	struct klp_reloc *reloc;
-+	int i, ret = 0;
-+	Elf_Shdr *sec;
- 
- 	if (WARN_ON(!klp_is_object_loaded(obj)))
- 		return -EINVAL;
- 
--	if (WARN_ON(!obj->relocs))
--		return -EINVAL;
--
- 	module_disable_ro(pmod);
-+	/* For each klp relocation section */
-+	for (i = 1; i < pmod->klp_info->hdr.e_shnum; i++) {
-+		sec = pmod->klp_info->sechdrs + i;
-+		if (!(sec->sh_flags & SHF_RELA_LIVEPATCH))
-+			continue;
- 
--	for (reloc = obj->relocs; reloc->name; reloc++) {
--		/* discover the address of the referenced symbol */
--		if (reloc->external) {
--			if (reloc->sympos > 0) {
--				pr_err("non-zero sympos for external reloc symbol '%s' is not supported\n",
--				       reloc->name);
--				ret = -EINVAL;
--				goto out;
--			}
--			ret = klp_find_external_symbol(pmod, reloc->name, &val);
--		} else
--			ret = klp_find_object_symbol(obj->name,
--						     reloc->name,
--						     reloc->sympos,
--						     &val);
-+		/* Check if the klp section is formatted correctly */
-+		ret = klp_check_relasec_format(pmod, sec);
- 		if (ret)
- 			goto out;
- 
--		ret = klp_write_module_reloc(pmod, reloc->type, reloc->loc,
--					     val + reloc->addend);
--		if (ret) {
--			pr_err("relocation failed for symbol '%s' at 0x%016lx (%d)\n",
--			       reloc->name, val, ret);
-+		/* Check if the klp section belongs to obj */
-+		if (!klp_relasec_matches_object(pmod, sec, obj))
-+			continue;
++3.3.1 Required flags
++--------------------
++Livepatch symbols must have their section index marked as SHN_LIVEPATCH, so
++that the module loader can identify them and not attempt to resolve them.
++See include/uapi/linux/elf.h for the actual definitions.
 +
-+		/* Resolve all livepatch syms referenced in this rela section */
-+		ret = klp_resolve_symbols(sec, pmod);
-+		if (ret)
- 			goto out;
--		}
--	}
- 
-+		ret = apply_relocate_add(pmod->klp_info->sechdrs, pmod->strtab,
-+					 pmod->klp_info->symndx, i, pmod);
-+		if (ret)
-+			goto out;
-+	}
- out:
- 	module_enable_ro(pmod);
- 	return ret;
-@@ -703,11 +875,9 @@ static int klp_init_object_loaded(struct klp_patch *patch,
- 	struct klp_func *func;
- 	int ret;
- 
--	if (obj->relocs) {
--		ret = klp_write_object_relocations(patch->mod, obj);
--		if (ret)
--			return ret;
--	}
-+	ret = klp_write_object_relocations(patch->mod, obj);
-+	if (ret)
-+		return ret;
- 
- 	klp_for_each_func(obj, func) {
- 		ret = klp_find_object_symbol(obj->name, func->old_name,
-@@ -842,6 +1012,9 @@ int klp_register_patch(struct klp_patch *patch)
- {
- 	int ret;
- 
-+	if (!is_livepatch_module(patch->mod))
-+		return -EINVAL;
++3.3.2 Required name format
++--------------------------
++Livepatch symbol names must conform to the following format:
 +
- 	if (!klp_initialized())
- 		return -ENODEV;
- 
++.klp.sym.objname.symbol_name,sympos
++^       ^^     ^ ^         ^ ^
++|_______||_____| |_________| |
++   [A]     [B]       [C]    [D]
++
++[A] The symbol name is prefixed with the string ".klp.sym."
++[B] The name of the object (i.e. "vmlinux" or name of module) to
++    which the symbol belongs follows immediately after the prefix.
++[C] The actual name of the symbol.
++[D] The position of the symbol in the object (as according to kallsyms)
++    This is used to differentiate duplicate symbols within the same
++    object. The symbol position is expressed numerically (0, 1, 2...).
++    The symbol position of a unique symbol is 0.
++
++3.3.3 Example livepatch symbol names:
++-------------------------------------
++.klp.sym.vmlinux.snprintf,0
++.klp.sym.vmlinux.printk,0
++.klp.sym.btrfs.btrfs_ktype,0
++
++3.3.4 Example `readelf --symbols` output for a patch module:
++------------------------------------------------------------
++Symbol table '.symtab' contains 127 entries:
++   Num:    Value          Size Type    Bind   Vis     Ndx         Name
++   [ snip ]
++    73: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT OS [0xff20] .klp.sym.vmlinux.snprintf,0
++    74: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT OS [0xff20] .klp.sym.vmlinux.capable,0
++    75: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT OS [0xff20] .klp.sym.vmlinux.find_next_bit,0
++    76: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT OS [0xff20] .klp.sym.vmlinux.si_swapinfo,0
++  [ snip ]                                               ^
++                                                         |
++                                                        [*]
++[*] Note that the 'Ndx' (Section index) for these symbols is SHN_LIVEPATCH (0xff20).
++    "OS" means OS-specific.
++
++--------------------------------------
++4. Symbol table and Elf section access
++--------------------------------------
++A livepatch module's symbol table is accessible through module->symtab.
++
++Since apply_relocate_add() requires access to a module's section headers,
++symbol table, and relocation section indices, Elf information is preserved for
++livepatch modules and is made accessible by the module loader through
++module->klp_info, which is a klp_modinfo struct. When a livepatch module loads,
++this struct is filled in by the module loader. Its fields are documented below:
++
++struct klp_modinfo {
++	Elf_Ehdr hdr; /* Elf header */
++	Elf_Shdr *sechdrs; /* Section header table */
++	char *secstrings; /* String table for the section headers */
++	unsigned int symndx; /* The symbol table section index */
++};
 -- 
 2.4.3
-
