@@ -1,81 +1,125 @@
 From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH v2 14/22] media: au0828 change to use Managed Media Controller API
-Date: Wed,  3 Feb 2016 21:03:46 -0700
-Message-ID: <94d3a1146cea1999dea2a7a55c18f848897f4e6d.1454557589.git.shuahkh@osg.samsung.com>
+Subject: [PATCH v2 22/22] media: Ensure media device unregister is done only once
+Date: Wed,  3 Feb 2016 21:03:54 -0700
+Message-ID: <9c22d4395f92102051383110cae9de09494d7257.1454557589.git.shuahkh@osg.samsung.com>
 References: <cover.1454557589.git.shuahkh@osg.samsung.com>
-Return-path: <linux-media-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1454557589.git.shuahkh@osg.samsung.com>
 In-Reply-To: <cover.1454557589.git.shuahkh@osg.samsung.com>
 References: <cover.1454557589.git.shuahkh@osg.samsung.com>
-Sender: linux-media-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: mchehab@osg.samsung.com, tiwai@suse.com, clemens@ladisch.de, hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com
 Cc: Shuah Khan <shuahkh@osg.samsung.com>, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittgam.net, johan@oljud.se, klock.android@gmail.com, nenggun.kim@samsung.com, j.anaszewski@samsung.com, geliangtang
 List-Id: linux-api@vger.kernel.org
 
-Change au0828 to use Managed Media Controller API to
-share media device and coordinate creating/deleting
-the shared media device with the snd-usb-audio driver.
-The shared media device is created as device resource
-of the parent usb device of the two drivers.
+media_device_unregister() checks if the media device
+is registered or not as the first step. However, the
+MEDIA_FLAG_REGISTERED bit doesn't get cleared until
+the end leaving a large window for two drivers to
+attempt media device unregister.
+
+The above leads to general protection faults when
+device is removed.
+
+Fix the problem with two phase media device unregister.
+Add a new interface media_devnode_start_unregister()
+to clear the MEDIA_FLAG_REGISTERED bit. Change
+media_device_unregister() call this interface to mark
+the start of unregister. This will ensure that media
+device unregister is done only once.
 
 Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
 ---
- drivers/media/usb/au0828/au0828-core.c | 29 +++++++++++++++--------------
- 1 file changed, 15 insertions(+), 14 deletions(-)
+ drivers/media/media-device.c  | 12 ++++++------
+ drivers/media/media-devnode.c | 15 ++++++++++-----
+ include/media/media-devnode.h | 17 +++++++++++++++++
+ 3 files changed, 33 insertions(+), 11 deletions(-)
 
-diff --git a/drivers/media/usb/au0828/au0828-core.c b/drivers/media/usb/au0828/au0828-core.c
-index df2bc3f..b8c4bdd 100644
---- a/drivers/media/usb/au0828/au0828-core.c
-+++ b/drivers/media/usb/au0828/au0828-core.c
-@@ -134,10 +134,10 @@ static void au0828_unregister_media_device(struct au0828_dev *dev)
+diff --git a/drivers/media/media-device.c b/drivers/media/media-device.c
+index 1f5d67e..584d46e 100644
+--- a/drivers/media/media-device.c
++++ b/drivers/media/media-device.c
+@@ -747,17 +747,17 @@ void media_device_unregister(struct media_device *mdev)
+ 	struct media_entity *next;
+ 	struct media_interface *intf, *tmp_intf;
+ 	struct media_entity_notify *notify, *nextp;
++	int ret;
+ 
+ 	if (mdev == NULL)
+ 		return;
+ 
+-	spin_lock(&mdev->lock);
+-
+-	/* Check if mdev was ever registered at all */
+-	if (!media_devnode_is_registered(&mdev->devnode)) {
+-		spin_unlock(&mdev->lock);
++	/* Start unregister - continue if necessary */
++	ret = media_devnode_start_unregister(&mdev->devnode);
++	if (ret)
+ 		return;
+-	}
++
++	spin_lock(&mdev->lock);
+ 
+ 	/* Remove all entities from the media device */
+ 	list_for_each_entry_safe(entity, next, &mdev->entities, graph_obj.list)
+diff --git a/drivers/media/media-devnode.c b/drivers/media/media-devnode.c
+index 29409f4..c27f9e7 100644
+--- a/drivers/media/media-devnode.c
++++ b/drivers/media/media-devnode.c
+@@ -272,15 +272,20 @@ error:
+ 	return ret;
+ }
+ 
+-void media_devnode_unregister(struct media_devnode *mdev)
++int __must_check media_devnode_start_unregister(struct media_devnode *mdev)
  {
- 
- #ifdef CONFIG_MEDIA_CONTROLLER
--	if (dev->media_dev) {
-+	if (dev->media_dev &&
-+		media_devnode_is_registered(&dev->media_dev->devnode)) {
- 		media_device_unregister(dev->media_dev);
- 		media_device_cleanup(dev->media_dev);
--		kfree(dev->media_dev);
- 		dev->media_dev = NULL;
- 	}
- #endif
-@@ -223,23 +223,24 @@ static int au0828_media_device_init(struct au0828_dev *dev,
- #ifdef CONFIG_MEDIA_CONTROLLER
- 	struct media_device *mdev;
- 
--	mdev = kzalloc(sizeof(*mdev), GFP_KERNEL);
-+	mdev = media_device_get_devres(&udev->dev);
- 	if (!mdev)
- 		return -ENOMEM;
- 
--	mdev->dev = &udev->dev;
-+	if (!media_devnode_is_registered(&mdev->devnode)) {
-+		mdev->dev = &udev->dev;
- 
--	if (!dev->board.name)
--		strlcpy(mdev->model, "unknown au0828", sizeof(mdev->model));
--	else
--		strlcpy(mdev->model, dev->board.name, sizeof(mdev->model));
--	if (udev->serial)
--		strlcpy(mdev->serial, udev->serial, sizeof(mdev->serial));
--	strcpy(mdev->bus_info, udev->devpath);
--	mdev->hw_revision = le16_to_cpu(udev->descriptor.bcdDevice);
--	mdev->driver_version = LINUX_VERSION_CODE;
-+		if (udev->product)
-+			strlcpy(mdev->model, udev->product,
-+				sizeof(mdev->model));
-+		if (udev->serial)
-+			strlcpy(mdev->serial, udev->serial,
-+				sizeof(mdev->serial));
-+		strcpy(mdev->bus_info, udev->devpath);
-+		mdev->hw_revision = le16_to_cpu(udev->descriptor.bcdDevice);
- 
--	media_device_init(mdev);
-+		media_device_init(mdev);
+-	/* Check if mdev was ever registered at all */
+-	if (!media_devnode_is_registered(mdev))
+-		return;
+-
+ 	mutex_lock(&media_devnode_lock);
++	if (!media_devnode_is_registered(mdev)) {
++		mutex_unlock(&media_devnode_lock);
++		return -EINVAL;
 +	}
+ 	clear_bit(MEDIA_FLAG_REGISTERED, &mdev->flags);
+ 	mutex_unlock(&media_devnode_lock);
++	return 0;
++}
++
++void media_devnode_unregister(struct media_devnode *mdev)
++{
+ 	device_unregister(&mdev->dev);
+ }
  
- 	dev->media_dev = mdev;
- #endif
+diff --git a/include/media/media-devnode.h b/include/media/media-devnode.h
+index fe42f08..6f08677 100644
+--- a/include/media/media-devnode.h
++++ b/include/media/media-devnode.h
+@@ -120,6 +120,23 @@ int __must_check media_devnode_register(struct media_devnode *mdev,
+ 					struct module *owner);
+ 
+ /**
++ * media_devnode_start_unregister - start unregister on a media device node
++ * @mdev: the device node to start unregister
++ *
++ * This clears the MEDIA_FLAG_REGISTERED bit to indicate that unregister
++ * is in progress.
++ *
++ * This function can safely be called if the device node has never been
++ * registered or has already been unregistered.
++ *
++ * Zero is returned on success.
++ *
++ * -EINVAL is returned if the device node has never been
++ * registered or has already been unregistered.
++ */
++int __must_check media_devnode_start_unregister(struct media_devnode *mdev);
++
++/**
+  * media_devnode_unregister - unregister a media device node
+  * @mdev: the device node to unregister
+  *
 -- 
 2.5.0
