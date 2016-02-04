@@ -1,80 +1,68 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [patch] MAINTAINERS: trim the file triggers for ABI/API
-Date: Thu, 4 Feb 2016 20:44:42 +0100
-Message-ID: <CAKgNAkidh-kMLbVDcH-+fsnx2ajHVJFpdzEZqf_F=DVKSfwNMA@mail.gmail.com>
-References: <56B35A9F.1080303@gmail.com> <20160204153415.GB6066@x>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: linux-api scope (Re: [PATCH v2 11/22] media: dvb-frontend invoke
+ enable/disable_source handlers)
+Date: Thu, 4 Feb 2016 20:48:50 +0100
+Message-ID: <CAKgNAkj-veqrgChhTwkOPOXTsA=wytha26aokMixVrZmAxNz6Q@mail.gmail.com>
+References: <CALCETrUNxPhcKiT+aswO5rr+ZpPPCkT30+Exd0iWwQnMN921Qg@mail.gmail.com>
+ <CAKgNAkg+cjJS2G5TKvYAYizXWaPewVNtdBQN1x0otbPM7huy5g@mail.gmail.com> <56B361C5.8000101@osg.samsung.com>
+Reply-To: mtk.manpages@gmail.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160204153415.GB6066@x>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <56B361C5.8000101@osg.samsung.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Shuah Khan <shuahkh@osg.samsung.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-media@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, ALSA development <alsa-devel@alsa-project.org>, Josh Triplett <josh@joshtriplett.org>, Steven Rostedt <rostedt@goodmis.org>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Josh,
+Hi Shuah,
 
-On 4 February 2016 at 16:34, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> wrote:
-> On Thu, Feb 04, 2016 at 03:05:19PM +0100, Michael Kerrisk (man-pages) wrote:
->> Josh Tripplett's commit ea8f8fc8631d9f890580a94d57a18bfeb827fa2e
+On 4 February 2016 at 15:35, Shuah Khan <shuahkh@osg.samsung.com> wrote:
+> On 02/04/2016 07:04 AM, Michael Kerrisk (man-pages) wrote:
+>> [expanding the CC a little]
+>>
+>> Hi Andy, (and Shuah)
+>>
+>> On 4 February 2016 at 05:51, Andy Lutomirski <luto@kernel.org> wrote:
+>>> [cc list heavily trimmed]
+>>>
+>>> On Wed, Feb 3, 2016 at 8:03 PM, Shuah Khan <shuahkh@osg.samsung.com> wrote:
+>>>> Change dvb frontend to check if tuner is free when
+>>>> device opened in RW mode. Call to enable_source
+>>>> handler either returns with an active pipeline to
+>>>> tuner or error if tuner is busy. Tuner is released
+>>>> when frontend is released calling the disable_source
+>>>> handler.
+>>>
+>>> As an actual subscriber to linux-api, I prefer for the linux-api list
+>>> to be lowish-volume and mostly limited to API-related things.  Is this
+>>> API related?  Do people think that these series should be sent to
+>>> linux-api?
+>>
+>> I think not, and I'd like to stem the flood of mail to the list.
+>> There's two things that we could do:
 >
-> s/Tripplett/Triplett/
->
->> was well intentioned (I even Acked it), but in practice it has mostly
->> generated (a lot of) useless noise on linux-api as developers of
->> drivers and implementers of other uninteresting changes run
->> scripts/get-maintainers.pl and unthinkingly paste the results
->> into their email clients. And that commit didn't really
->> help catch the really important API changes (new system calls,
->> new options to existing system calls, new pseudofile entries,
->> and so on). So, trim the 'F:' triggers for the "ABI/API" entry
->> in MAINTAINERS right back to the minimum.
->
-> This change makes sense, but I don't think this commit message explains
-> the specific changes to the file triggers.  (Also, there's a convention
-> for referencing past commits.)  Might I suggest an alternate commit
-> message?
->
-> """
-> Commit ea8f8fc8631 ("MAINTAINERS: add linux-api for review of API/ABI
-> changes") added file triggers for various paths that likely indicated
-> API/ABI changes.  However, catching all changes in Documentation/ABI/
-> and include/uapi/ produces a large volume of mail to linux-api, rather
-> than only API/ABI changes.  Drop those two entries, but leave
-> include/linux/syscalls.h and kernel/sys_ni.c to catch syscall-related
-> changes.
-> """
+> I simply followed the getmaintainers generate3d list.
+> A bit surprised to see linux-api, but didn't want to
+> leave it out.
 
-Thanks. Looks like Andrew picked your version of the commit message up.
+Yep -- you and many others. That's the problem with automated solutions ;-).
+
+>> 1. Shuah, I know we talked about this in the past, and it made some
+>> sense to me at the time for kselftest to use linux-api@, but maybe
+>> it's time to create a dedicated list, and move the traffic there? It'd
+>> help focus the traffic of linux-api more on its original purpose.
+>
+> Yes that is a good plan - I will request a new mailing list and
+> send in a patch to Kselftest MAINTIANER's entry.
+
+Thanks, and sorry for the inconvenience. I guess a prominent mail onto
+linux-api@ advertising the new list, once it has been created, would
+not go amiss.
 
 Cheers,
 
 Michael
-
->> Signed-off-by: Michael Kerrisk <mtk.man-pages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->> ---
->>  MAINTAINERS | 2 --
->>  1 file changed, 2 deletions(-)
->>
->> diff --git a/MAINTAINERS b/MAINTAINERS
->> index f678c37..56f7a4f 100644
->> --- a/MAINTAINERS
->> +++ b/MAINTAINERS
->> @@ -223,9 +223,7 @@ F:  drivers/scsi/aacraid/
->>
->>  ABI/API
->>  L:     linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->> -F:     Documentation/ABI/
->>  F:     include/linux/syscalls.h
->> -F:     include/uapi/
->>  F:     kernel/sys_ni.c
->>
->>  ABIT UGURU 1,2 HARDWARE MONITOR DRIVER
->> --
->> 2.5.0
-
-
 
 -- 
 Michael Kerrisk
