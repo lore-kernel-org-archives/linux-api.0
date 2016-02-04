@@ -1,47 +1,48 @@
-From: Joonsoo Kim <js1304-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 0/5] follow-up "Optimize CONFIG_DEBUG_PAGEALLOC"
-Date: Thu,  4 Feb 2016 14:56:21 +0900
-Message-ID: <1454565386-10489-1-git-send-email-iamjoonsoo.kim@lge.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christian Borntraeger <borntraeger-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Takashi Iwai <tiwai-IBi9RG/b67k@public.gmane.org>, Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
+From: Joonsoo Kim <js1304@gmail.com>
+Subject: [PATCH 1/5] mm/vmalloc: query dynamic DEBUG_PAGEALLOC setting
+Date: Thu,  4 Feb 2016 14:56:22 +0900
+Message-ID: <1454565386-10489-2-git-send-email-iamjoonsoo.kim@lge.com>
+References: <1454565386-10489-1-git-send-email-iamjoonsoo.kim@lge.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1454565386-10489-1-git-send-email-iamjoonsoo.kim@lge.com>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: David Rientjes <rientjes@google.com>, Christian Borntraeger <borntraeger@de.ibm.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Takashi Iwai <tiwai@suse.com>, Chris Metcalf <cmetcalf@ezchip.com>, Christoph Lameter <cl@linux.com>, linux-api@vger.kernel.org, Joonsoo Kim <iamjoonsoo.kim@lge.com>
 List-Id: linux-api@vger.kernel.org
 
-As CONFIG_DEBUG_PAGEALLOC can be enabled/disabled via kernel
-parameters we can optimize some cases by checking the enablement
-state.
+We can disable debug_pagealloc processing even if the code is complied
+with CONFIG_DEBUG_PAGEALLOC. This patch changes the code to query
+whether it is enabled or not in runtime.
 
-This is follow-up work for Christian's Optimize CONFIG_DEBUG_PAGEALLOC.
+Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+---
+ mm/vmalloc.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-https://lkml.org/lkml/2016/1/27/194
-
-I can't test patches for sound, power and tile,
-so please review them, maintainers. :)
-
-Remaining work is to make sparc to be aware of this but it looks
-not easy for me so I skip that in this series.
-
-It would be the best that these paches are routed through Andrew's tree,
-because there is a dependency to MM.
-
-Thanks.
-
-Joonsoo Kim (5):
-  mm/vmalloc: query dynamic DEBUG_PAGEALLOC setting
-  mm/slub: query dynamic DEBUG_PAGEALLOC setting
-  sound: query dynamic DEBUG_PAGEALLOC setting
-  powerpc: query dynamic DEBUG_PAGEALLOC setting
-  tile: query dynamic DEBUG_PAGEALLOC setting
-
- arch/powerpc/kernel/traps.c     |  5 ++---
- arch/powerpc/mm/hash_utils_64.c | 40 ++++++++++++++++++++--------------------
- arch/powerpc/mm/init_32.c       |  8 ++++----
- arch/tile/mm/init.c             | 11 +++++++----
- mm/slub.c                       | 11 ++++++-----
- mm/vmalloc.c                    |  8 ++++----
- sound/drivers/pcsp/pcsp.c       |  9 +++++----
- 7 files changed, 48 insertions(+), 44 deletions(-)
-
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index fb42a5b..e0e51bd 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -543,10 +543,10 @@ static void vmap_debug_free_range(unsigned long start, unsigned long end)
+ 	 * debugging doesn't do a broadcast TLB flush so it is a lot
+ 	 * faster).
+ 	 */
+-#ifdef CONFIG_DEBUG_PAGEALLOC
+-	vunmap_page_range(start, end);
+-	flush_tlb_kernel_range(start, end);
+-#endif
++	if (debug_pagealloc_enabled()) {
++		vunmap_page_range(start, end);
++		flush_tlb_kernel_range(start, end);
++	}
+ }
+ 
+ /*
 -- 
 1.9.1
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
