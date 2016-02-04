@@ -1,7 +1,7 @@
 From: Joonsoo Kim <js1304@gmail.com>
-Subject: [PATCH 3/5] sound: query dynamic DEBUG_PAGEALLOC setting
-Date: Thu,  4 Feb 2016 14:56:24 +0900
-Message-ID: <1454565386-10489-4-git-send-email-iamjoonsoo.kim@lge.com>
+Subject: [PATCH 4/5] powerpc: query dynamic DEBUG_PAGEALLOC setting
+Date: Thu,  4 Feb 2016 14:56:25 +0900
+Message-ID: <1454565386-10489-5-git-send-email-iamjoonsoo.kim@lge.com>
 References: <1454565386-10489-1-git-send-email-iamjoonsoo.kim@lge.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1454565386-10489-1-git-send-email-iamjoonsoo.kim@lge.com>
@@ -16,37 +16,112 @@ whether it is enabled or not in runtime.
 
 Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 ---
- sound/drivers/pcsp/pcsp.c | 9 +++++----
- 1 file changed, 5 insertions(+), 4 deletions(-)
+ arch/powerpc/kernel/traps.c     |  5 ++---
+ arch/powerpc/mm/hash_utils_64.c | 40 ++++++++++++++++++++--------------------
+ arch/powerpc/mm/init_32.c       |  8 ++++----
+ 3 files changed, 26 insertions(+), 27 deletions(-)
 
-diff --git a/sound/drivers/pcsp/pcsp.c b/sound/drivers/pcsp/pcsp.c
-index 27e25bb..72e2d00 100644
---- a/sound/drivers/pcsp/pcsp.c
-+++ b/sound/drivers/pcsp/pcsp.c
-@@ -14,6 +14,7 @@
- #include <linux/input.h>
- #include <linux/delay.h>
- #include <linux/bitops.h>
-+#include <linux/mm.h>
- #include "pcsp_input.h"
- #include "pcsp.h"
- 
-@@ -148,11 +149,11 @@ static int alsa_card_pcsp_init(struct device *dev)
- 		return err;
- 	}
- 
+diff --git a/arch/powerpc/kernel/traps.c b/arch/powerpc/kernel/traps.c
+index b6becc7..33c47fc 100644
+--- a/arch/powerpc/kernel/traps.c
++++ b/arch/powerpc/kernel/traps.c
+@@ -203,9 +203,8 @@ static int __kprobes __die(const char *str, struct pt_regs *regs, long err)
+ #ifdef CONFIG_SMP
+ 	printk("SMP NR_CPUS=%d ", NR_CPUS);
+ #endif
 -#ifdef CONFIG_DEBUG_PAGEALLOC
- 	/* Well, CONFIG_DEBUG_PAGEALLOC makes the sound horrible. Lets alert */
--	printk(KERN_WARNING "PCSP: CONFIG_DEBUG_PAGEALLOC is enabled, "
--	       "which may make the sound noisy.\n");
+-	printk("DEBUG_PAGEALLOC ");
 -#endif
-+	if (debug_pagealloc_enabled()) {
-+		printk(KERN_WARNING "PCSP: CONFIG_DEBUG_PAGEALLOC is enabled, "
-+		       "which may make the sound noisy.\n");
++	if (debug_pagealloc_enabled())
++		printk("DEBUG_PAGEALLOC ");
+ #ifdef CONFIG_NUMA
+ 	printk("NUMA ");
+ #endif
+diff --git a/arch/powerpc/mm/hash_utils_64.c b/arch/powerpc/mm/hash_utils_64.c
+index ba59d59..03a622b 100644
+--- a/arch/powerpc/mm/hash_utils_64.c
++++ b/arch/powerpc/mm/hash_utils_64.c
+@@ -255,10 +255,10 @@ int htab_bolt_mapping(unsigned long vstart, unsigned long vend,
+ 
+ 		if (ret < 0)
+ 			break;
+-#ifdef CONFIG_DEBUG_PAGEALLOC
+-		if ((paddr >> PAGE_SHIFT) < linear_map_hash_count)
++
++		if (debug_pagealloc_enabled() &&
++			(paddr >> PAGE_SHIFT) < linear_map_hash_count)
+ 			linear_map_hash_slots[paddr >> PAGE_SHIFT] = ret | 0x80;
+-#endif /* CONFIG_DEBUG_PAGEALLOC */
+ 	}
+ 	return ret < 0 ? ret : 0;
+ }
+@@ -512,17 +512,17 @@ static void __init htab_init_page_sizes(void)
+ 	if (mmu_has_feature(MMU_FTR_16M_PAGE))
+ 		memcpy(mmu_psize_defs, mmu_psize_defaults_gp,
+ 		       sizeof(mmu_psize_defaults_gp));
+- found:
+-#ifndef CONFIG_DEBUG_PAGEALLOC
+-	/*
+-	 * Pick a size for the linear mapping. Currently, we only support
+-	 * 16M, 1M and 4K which is the default
+-	 */
+-	if (mmu_psize_defs[MMU_PAGE_16M].shift)
+-		mmu_linear_psize = MMU_PAGE_16M;
+-	else if (mmu_psize_defs[MMU_PAGE_1M].shift)
+-		mmu_linear_psize = MMU_PAGE_1M;
+-#endif /* CONFIG_DEBUG_PAGEALLOC */
++found:
++	if (!debug_pagealloc_enabled()) {
++		/*
++		 * Pick a size for the linear mapping. Currently, we only
++		 * support 16M, 1M and 4K which is the default
++		 */
++		if (mmu_psize_defs[MMU_PAGE_16M].shift)
++			mmu_linear_psize = MMU_PAGE_16M;
++		else if (mmu_psize_defs[MMU_PAGE_1M].shift)
++			mmu_linear_psize = MMU_PAGE_1M;
 +	}
  
- 	return 0;
+ #ifdef CONFIG_PPC_64K_PAGES
+ 	/*
+@@ -720,12 +720,12 @@ static void __init htab_initialize(void)
+ 
+ 	prot = pgprot_val(PAGE_KERNEL);
+ 
+-#ifdef CONFIG_DEBUG_PAGEALLOC
+-	linear_map_hash_count = memblock_end_of_DRAM() >> PAGE_SHIFT;
+-	linear_map_hash_slots = __va(memblock_alloc_base(linear_map_hash_count,
+-						    1, ppc64_rma_size));
+-	memset(linear_map_hash_slots, 0, linear_map_hash_count);
+-#endif /* CONFIG_DEBUG_PAGEALLOC */
++	if (debug_pagealloc_enabled()) {
++		linear_map_hash_count = memblock_end_of_DRAM() >> PAGE_SHIFT;
++		linear_map_hash_slots = __va(memblock_alloc_base(
++				linear_map_hash_count, 1, ppc64_rma_size));
++		memset(linear_map_hash_slots, 0, linear_map_hash_count);
++	}
+ 
+ 	/* On U3 based machines, we need to reserve the DART area and
+ 	 * _NOT_ map it to avoid cache paradoxes as it's remapped non
+diff --git a/arch/powerpc/mm/init_32.c b/arch/powerpc/mm/init_32.c
+index a10be66..c2b7716 100644
+--- a/arch/powerpc/mm/init_32.c
++++ b/arch/powerpc/mm/init_32.c
+@@ -112,10 +112,10 @@ void __init MMU_setup(void)
+ 	if (strstr(boot_command_line, "noltlbs")) {
+ 		__map_without_ltlbs = 1;
+ 	}
+-#ifdef CONFIG_DEBUG_PAGEALLOC
+-	__map_without_bats = 1;
+-	__map_without_ltlbs = 1;
+-#endif
++	if (debug_pagealloc_enabled()) {
++		__map_without_bats = 1;
++		__map_without_ltlbs = 1;
++	}
  }
+ 
+ /*
 -- 
 1.9.1
 
