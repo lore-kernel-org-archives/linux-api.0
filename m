@@ -1,53 +1,69 @@
-From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Subject: Re: [PATCH v2 02/22] media: Add ALSA Media Controller function
- entities
-Date: Thu, 4 Feb 2016 06:40:00 -0200
-Message-ID: <20160204064000.3bdd9418@recife.lan>
-References: <cover.1454557589.git.shuahkh@osg.samsung.com>
-	<7e6aa938056da01e75f1e9d844f621baf47ffa74.1454557589.git.shuahkh@osg.samsung.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-media-owner@vger.kernel.org>
-In-Reply-To: <7e6aa938056da01e75f1e9d844f621baf47ffa74.1454557589.git.shuahkh@osg.samsung.com>
-Sender: linux-media-owner@vger.kernel.org
-To: Shuah Khan <shuahkh@osg.samsung.com>
-Cc: tiwai@suse.com, clemens@ladisch.de, hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittga
+From: Chunyan Zhang <zhang.chunyan@linaro.org>
+Subject: [PATCH V2 2/6] stm class: adds a loop to extract the first valid STM device name
+Date: Thu,  4 Feb 2016 16:56:19 +0800
+Message-ID: <1454576179-27224-1-git-send-email-zhang.chunyan@linaro.org>
+References: <1454487337-30184-3-git-send-email-zhang.chunyan@linaro.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1454487337-30184-3-git-send-email-zhang.chunyan@linaro.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: mathieu.poirier@linaro.org, alexander.shishkin@linux.intel.com
+Cc: robh@kernel.org, broonie@kernel.org, pratikp@codeaurora.org, nicolas.guion@st.com, corbet@lwn.net, mark.rutland@arm.com, mike.leach@arm.com, tor@ti.com, al.grant@arm.com, zhang.lyra@gmail.com, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Em Wed, 03 Feb 2016 21:03:34 -0700
-Shuah Khan <shuahkh@osg.samsung.com> escreveu:
+The node name of STM master management policy is a concatenation of an
+STM device name to which this policy applies and following an arbitrary
+string, these two strings are concatenated with a dot.
 
-> Add ALSA Media Controller capture, playback, and mixer
-> function entity defines.
-> 
-> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
-> ---
->  include/uapi/linux/media.h | 11 +++++++++++
->  1 file changed, 11 insertions(+)
-> 
-> diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
-> index ee020e8..7d50480 100644
-> --- a/include/uapi/linux/media.h
-> +++ b/include/uapi/linux/media.h
-> @@ -98,6 +98,17 @@ struct media_device_info {
->  #define MEDIA_ENT_F_IF_AUD_DECODER	(MEDIA_ENT_F_BASE + 42)
->  
->  /*
-> + * DOC: Media Controller Next Generation ALSA Function Entities
-> + *
-> + * MEDIA_ENT_F_AUDIO_CAPTURE - Audio Capture Function
-> + * MEDIA_ENT_F_AUDIO_PLAYBACK - Audio Play Back Function
-> + * MEDIA_ENT_F_AUDIO_MIXER - Audio Mixer Function
-> +*/
+This patch adds a loop for extracting the STM device name when an
+arbitrary number of dot(s) are found in this STM device name.
 
-Wrong way to document it. Please see my comments to patch 01/22.
+Signed-off-by: Chunyan Zhang <zhang.chunyan@linaro.org>
+---
+ drivers/hwtracing/stm/policy.c | 27 ++++++++++++++++-----------
+ 1 file changed, 16 insertions(+), 11 deletions(-)
 
-> +#define MEDIA_ENT_F_AUDIO_CAPTURE	(MEDIA_ENT_F_BASE + 200)
-> +#define MEDIA_ENT_F_AUDIO_PLAYBACK	(MEDIA_ENT_F_BASE + 201)
-> +#define MEDIA_ENT_F_AUDIO_MIXER		(MEDIA_ENT_F_BASE + 202)
-> +
-> +/*
->   * Don't touch on those. The ranges MEDIA_ENT_F_OLD_BASE and
->   * MEDIA_ENT_F_OLD_SUBDEV_BASE are kept to keep backward compatibility
->   * with the legacy v1 API.The number range is out of range by purpose:
+diff --git a/drivers/hwtracing/stm/policy.c b/drivers/hwtracing/stm/policy.c
+index 11ab6d0..691686e 100644
+--- a/drivers/hwtracing/stm/policy.c
++++ b/drivers/hwtracing/stm/policy.c
+@@ -321,21 +321,26 @@ stp_policies_make(struct config_group *group, const char *name)
+ 	/*
+ 	 * node must look like <device_name>.<policy_name>, where
+ 	 * <device_name> is the name of an existing stm device and
+-	 * <policy_name> is an arbitrary string
++	 * <policy_name> is an arbitrary string, when an arbitrary
++	 * number of dot(s) are found in the <device_name>, the
++	 * first matched STM device name would be extracted.
+ 	 */
+-	p = strchr(devname, '.');
+-	if (!p) {
+-		kfree(devname);
+-		return ERR_PTR(-EINVAL);
+-	}
++	for (p = devname; ; p++) {
++		p = strchr(p, '.');
++		if (!p) {
++			kfree(devname);
++			return ERR_PTR(-EINVAL);
++		}
+ 
+-	*p++ = '\0';
++		*p = '\0';
+ 
+-	stm = stm_find_device(devname);
+-	kfree(devname);
++		stm = stm_find_device(devname);
++		if (stm)
++			break;
++		*p = '.';
++	}
+ 
+-	if (!stm)
+-		return ERR_PTR(-ENODEV);
++	kfree(devname);
+ 
+ 	mutex_lock(&stm->policy_mutex);
+ 	if (stm->policy) {
+-- 
+1.9.1
+
