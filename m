@@ -1,49 +1,49 @@
-From: Joe Perches <joe@perches.com>
-Subject: Re: [patch] MAINTAINERS: trim the file triggers for ABI/API
-Date: Thu, 04 Feb 2016 12:55:28 -0800
-Message-ID: <1454619328.3263.4.camel@perches.com>
-References: <56B35A9F.1080303@gmail.com> <20160204153415.GB6066@x>
+From: Josh Poimboeuf <jpoimboe@redhat.com>
+Subject: Re: module: s390: keep mod_arch_specific for livepatch modules
+Date: Thu, 4 Feb 2016 15:03:18 -0600
+Message-ID: <20160204210318.GP22854@treble.redhat.com>
+References: <1454548271-24923-1-git-send-email-jeyu@redhat.com>
+ <1454548271-24923-4-git-send-email-jeyu@redhat.com>
+ <20160204013751.GB22860@packer-debian-8-amd64.digitalocean.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160204153415.GB6066@x>
+Content-Disposition: inline
+In-Reply-To: <20160204013751.GB22860@packer-debian-8-amd64.digitalocean.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Josh Triplett <josh@joshtriplett.org>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Shuah Khan <shuahkh@osg.samsung.com>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+To: Jessica Yu <jeyu@redhat.com>
+Cc: Rusty Russell <rusty@rustcorp.com.au>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2016-02-04 at 07:34 -0800, Josh Triplett wrote:
-> On Thu, Feb 04, 2016 at 03:05:19PM +0100, Michael Kerrisk (man-pages)=
- wrote:
+On Wed, Feb 03, 2016 at 08:37:52PM -0500, Jessica Yu wrote:
+> +++ Jessica Yu [03/02/16 20:11 -0500]:
+> >Livepatch needs to utilize the symbol information contained in the
+> >mod_arch_specific struct in order to be able to call the s390
+> >apply_relocate_add() function to apply relocations. Keep a reference to
+> >syminfo if the module is a livepatch module. Remove the redundant vfree()
+> >in module_finalize() since module_arch_freeing_init() (which also frees
+> >those structures) is called in do_init_module(). If the module isn't a
+> >livepatch module, we free the structures in module_arch_freeing_init() as
+> >usual.
+> >
+> >Signed-off-by: Jessica Yu <jeyu@redhat.com>
+> >---
+> >arch/s390/kernel/module.c | 7 +++++--
+> >1 file changed, 5 insertions(+), 2 deletions(-)
+> 
+> I must note that I have verified that the patchset boots on s390 and
+> that the sample livepatch module still works ...so that's good, but
+> not saying much since what we really want is to test the relocation
+> code. The kpatch build scripts however currently only support x86, so
+> the next step is for me to port the kpatch scripts to s390 before I
+> can really test this patchset. This in itself might take a while, so
+> in the meantime I'd like to just collect another round of comments and
+> feedback for v4.
 
-> Might I suggest an alternate commit message?
->=20
-> """
-> Commit ea8f8fc8631 ("MAINTAINERS: add linux-api for review of API/ABI
-> changes") added file triggers for various paths that likely indicated
-> API/ABI changes.=A0=A0However, catching all changes in Documentation/=
-ABI/
-> and include/uapi/ produces a large volume of mail to linux-api, rathe=
-r
-> than only API/ABI changes.=A0=A0Drop those two entries, but leave
-> include/linux/syscalls.h and kernel/sys_ni.c to catch syscall-related
-> changes.
-> """
-[]
-> > diff --git a/MAINTAINERS b/MAINTAINERS
-[]
-> > @@ -223,9 +223,7 @@ F:=A0=A0drivers/scsi/aacraid/
-> >=20
-> > =A0ABI/API
-> > =A0L:=A0=A0=A0=A0=A0linux-api@vger.kernel.org
-> > -F:=A0=A0=A0=A0=A0Documentation/ABI/
-> > =A0F:=A0=A0=A0=A0=A0include/linux/syscalls.h
-> > -F:=A0=A0=A0=A0=A0include/uapi/
-> > =A0F:=A0=A0=A0=A0=A0kernel/sys_ni.c
+I haven't reviewed the code yet, but otherwise I'm thinking it would
+actually be fine to merge this patch set before testing with s390
+relocations.  They aren't implemented on s390 today anyway, so there
+can't be a regression if nobody is using it.
 
-Maybe add a keyword entry like:
-
-K:	(?i)syscall
-
-to see all actual changes of syscalls too?
+-- 
+Josh
