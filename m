@@ -1,7 +1,7 @@
 From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH v2 12/22] media: au0828 video remove au0828_enable_analog_tuner()
-Date: Wed,  3 Feb 2016 21:03:44 -0700
-Message-ID: <8d43a2cfe4dcdf843d2e587e35a4bd4681eebe36.1454557589.git.shuahkh@osg.samsung.com>
+Subject: [PATCH v2 06/22] media: Media Controller non-locking __media_entity_pipeline_start/stop()
+Date: Wed,  3 Feb 2016 21:03:38 -0700
+Message-ID: <5c5a74a0d87db11dd1519248d8fda5c8fa9826be.1454557589.git.shuahkh@osg.samsung.com>
 References: <cover.1454557589.git.shuahkh@osg.samsung.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1454557589.git.shuahkh@osg.samsung.com>
@@ -12,97 +12,134 @@ To: mchehab@osg.samsung.com, tiwai@suse.com, clemens@ladisch.de, hans.verkuil@ci
 Cc: Shuah Khan <shuahkh@osg.samsung.com>, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittgam.net, johan@oljud.se, klock.android@gmail.com, nenggun.kim@samsung.com, j.anaszewski@samsung.com, geliangtang
 List-Id: linux-api@vger.kernel.org
 
-Remove au0828_enable_analog_tuner() as it is
-no longer needed because v4l2-core implements
-common interfaces to check for media source
-availability.
-
-In addition, queue_setup() no longer needs the
-tuner availability check since v4l2-core does it.
+Add non-locking __media_entity_pipeline_start/stop() interfaces
+to be called from code paths that hold the graph_mutex. For this
+change, the media_entity_pipeline_start() routine is renamed to
+__media_entity_pipeline_start() minus the graph_mutex lock and
+unlock. media_entity_pipeline_start() now calls the non-locking
+__media_entity_pipeline_start() holding the graph_lock. The stop
+interface, media_entity_pipeline_stop() routine is renamed to
+__media_entity_pipeline_stop() minus the graph_mutex lock and
+unlock. media_entity_pipeline_stop() now calls the non-locking
+__media_entity_pipeline_stop() holding the graph_lock.
 
 Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
 ---
- drivers/media/usb/au0828/au0828-video.c | 61 ---------------------------------
- 1 file changed, 61 deletions(-)
+ drivers/media/media-entity.c | 34 ++++++++++++++++++++++++----------
+ include/media/media-entity.h | 12 ++++++++++++
+ 2 files changed, 36 insertions(+), 10 deletions(-)
 
-diff --git a/drivers/media/usb/au0828/au0828-video.c b/drivers/media/usb/au0828/au0828-video.c
-index 8c54fd2..81952c8 100644
---- a/drivers/media/usb/au0828/au0828-video.c
-+++ b/drivers/media/usb/au0828/au0828-video.c
-@@ -638,64 +638,6 @@ static inline int au0828_isoc_copy(struct au0828_dev *dev, struct urb *urb)
- 	return rc;
- }
+diff --git a/drivers/media/media-entity.c b/drivers/media/media-entity.c
+index 9b4d712..b78e4c2 100644
+--- a/drivers/media/media-entity.c
++++ b/drivers/media/media-entity.c
+@@ -365,8 +365,8 @@ EXPORT_SYMBOL_GPL(media_entity_graph_walk_next);
+  * Pipeline management
+  */
  
--static int au0828_enable_analog_tuner(struct au0828_dev *dev)
--{
--#ifdef CONFIG_MEDIA_CONTROLLER
--	struct media_device *mdev = dev->media_dev;
--	struct media_entity *source;
--	struct media_link *link, *found_link = NULL;
--	int ret, active_links = 0;
+-__must_check int media_entity_pipeline_start(struct media_entity *entity,
+-					     struct media_pipeline *pipe)
++__must_check int __media_entity_pipeline_start(struct media_entity *entity,
++					       struct media_pipeline *pipe)
+ {
+ 	struct media_device *mdev = entity->graph_obj.mdev;
+ 	struct media_entity_graph *graph = &pipe->graph;
+@@ -374,8 +374,6 @@ __must_check int media_entity_pipeline_start(struct media_entity *entity,
+ 	struct media_link *link;
+ 	int ret;
+ 
+-	mutex_lock(&mdev->graph_mutex);
 -
--	if (!mdev || !dev->decoder)
--		return 0;
--
--	/*
--	 * This will find the tuner that is connected into the decoder.
--	 * Technically, this is not 100% correct, as the device may be
--	 * using an analog input instead of the tuner. However, as we can't
--	 * do DVB streaming while the DMA engine is being used for V4L2,
--	 * this should be enough for the actual needs.
--	 */
--	list_for_each_entry(link, &dev->decoder->links, list) {
--		if (link->sink->entity == dev->decoder) {
--			found_link = link;
--			if (link->flags & MEDIA_LNK_FL_ENABLED)
--				active_links++;
--			break;
--		}
--	}
--
--	if (active_links == 1 || !found_link)
--		return 0;
--
--	source = found_link->source->entity;
--	list_for_each_entry(link, &source->links, list) {
--		struct media_entity *sink;
--		int flags = 0;
--
--		sink = link->sink->entity;
--
--		if (sink == dev->decoder)
--			flags = MEDIA_LNK_FL_ENABLED;
--
--		ret = media_entity_setup_link(link, flags);
--		if (ret) {
--			pr_err(
--				"Couldn't change link %s->%s to %s. Error %d\n",
--				source->name, sink->name,
--				flags ? "enabled" : "disabled",
--				ret);
--			return ret;
--		} else
--			au0828_isocdbg(
--				"link %s->%s was %s\n",
--				source->name, sink->name,
--				flags ? "ENABLED" : "disabled");
--	}
--#endif
--	return 0;
--}
--
- static int queue_setup(struct vb2_queue *vq,
- 		       unsigned int *nbuffers, unsigned int *nplanes,
- 		       unsigned int sizes[], void *alloc_ctxs[])
-@@ -707,9 +649,6 @@ static int queue_setup(struct vb2_queue *vq,
- 		return sizes[0] < size ? -EINVAL : 0;
- 	*nplanes = 1;
- 	sizes[0] = size;
--
--	au0828_enable_analog_tuner(dev);
+ 	if (!pipe->streaming_count++) {
+ 		ret = media_entity_graph_walk_init(&pipe->graph, mdev);
+ 		if (ret)
+@@ -456,8 +454,6 @@ __must_check int media_entity_pipeline_start(struct media_entity *entity,
+ 		}
+ 	}
+ 
+-	mutex_unlock(&mdev->graph_mutex);
 -
  	return 0;
- }
  
+ error:
+@@ -487,19 +483,28 @@ error_graph_walk_start:
+ 	if (!--pipe->streaming_count)
+ 		media_entity_graph_walk_cleanup(graph);
+ 
+-	mutex_unlock(&mdev->graph_mutex);
++	return ret;
++}
++EXPORT_SYMBOL_GPL(__media_entity_pipeline_start);
+ 
++__must_check int media_entity_pipeline_start(struct media_entity *entity,
++					     struct media_pipeline *pipe)
++{
++	struct media_device *mdev = entity->graph_obj.mdev;
++	int ret;
++
++	mutex_lock(&mdev->graph_mutex);
++	ret = __media_entity_pipeline_start(entity, pipe);
++	mutex_unlock(&mdev->graph_mutex);
+ 	return ret;
+ }
+ EXPORT_SYMBOL_GPL(media_entity_pipeline_start);
+ 
+-void media_entity_pipeline_stop(struct media_entity *entity)
++void __media_entity_pipeline_stop(struct media_entity *entity)
+ {
+-	struct media_device *mdev = entity->graph_obj.mdev;
+ 	struct media_entity_graph *graph = &entity->pipe->graph;
+ 	struct media_pipeline *pipe = entity->pipe;
+ 
+-	mutex_lock(&mdev->graph_mutex);
+ 
+ 	WARN_ON(!pipe->streaming_count);
+ 	media_entity_graph_walk_start(graph, entity);
+@@ -516,6 +521,15 @@ void media_entity_pipeline_stop(struct media_entity *entity)
+ 	if (!--pipe->streaming_count)
+ 		media_entity_graph_walk_cleanup(graph);
+ 
++}
++EXPORT_SYMBOL_GPL(__media_entity_pipeline_stop);
++
++void media_entity_pipeline_stop(struct media_entity *entity)
++{
++	struct media_device *mdev = entity->graph_obj.mdev;
++
++	mutex_lock(&mdev->graph_mutex);
++	__media_entity_pipeline_stop(entity);
+ 	mutex_unlock(&mdev->graph_mutex);
+ }
+ EXPORT_SYMBOL_GPL(media_entity_pipeline_stop);
+diff --git a/include/media/media-entity.h b/include/media/media-entity.h
+index fe485d3..c7583db 100644
+--- a/include/media/media-entity.h
++++ b/include/media/media-entity.h
+@@ -832,6 +832,12 @@ media_entity_graph_walk_next(struct media_entity_graph *graph);
+  */
+ __must_check int media_entity_pipeline_start(struct media_entity *entity,
+ 					     struct media_pipeline *pipe);
++/**
++ * non-locking __media_entity_pipeline_start() can be called from
++ * code paths that hold the graph_mutex
++ */
++__must_check int __media_entity_pipeline_start(struct media_entity *entity,
++					       struct media_pipeline *pipe);
+ 
+ /**
+  * media_entity_pipeline_stop - Mark a pipeline as not streaming
+@@ -848,6 +854,12 @@ __must_check int media_entity_pipeline_start(struct media_entity *entity,
+ void media_entity_pipeline_stop(struct media_entity *entity);
+ 
+ /**
++ * non-locking __media_entity_pipeline_stop() can be called from
++ * code paths that hold the graph_mutex
++ */
++void __media_entity_pipeline_stop(struct media_entity *entity);
++
++/**
+  * media_devnode_create() - creates and initializes a device node interface
+  *
+  * @mdev:	pointer to struct &media_device
 -- 
 2.5.0
