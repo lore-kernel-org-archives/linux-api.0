@@ -1,275 +1,179 @@
-From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Subject: Re: [PATCH v2 03/22] media: Media Controller register/unregister
- entity_notify API
-Date: Thu, 4 Feb 2016 07:03:04 -0200
-Message-ID: <20160204070304.2a61f1d1@recife.lan>
+From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH v2 06/22] media: Media Controller non-locking
+ __media_entity_pipeline_start/stop()
+Date: Thu, 4 Feb 2016 07:18:03 -0200
+Message-ID: <20160204071803.29d3682d@recife.lan>
 References: <cover.1454557589.git.shuahkh@osg.samsung.com>
-	<1ab0510de0a73669409523c1cee2984f4688f14c.1454557589.git.shuahkh@osg.samsung.com>
+	<5c5a74a0d87db11dd1519248d8fda5c8fa9826be.1454557589.git.shuahkh@osg.samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-media-owner@vger.kernel.org>
-In-Reply-To: <1ab0510de0a73669409523c1cee2984f4688f14c.1454557589.git.shuahkh@osg.samsung.com>
-Sender: linux-media-owner@vger.kernel.org
-To: Shuah Khan <shuahkh@osg.samsung.com>
-Cc: tiwai@suse.com, clemens@ladisch.de, hans.verkuil@cisco.com, laurent.pinchart@ideasonboard.com, sakari.ailus@linux.intel.com, javier@osg.samsung.com, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittga
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5c5a74a0d87db11dd1519248d8fda5c8fa9826be.1454557589.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: tiwai-IBi9RG/b67k@public.gmane.org, clemens-P6GI/4k7KOmELgA04lAiVw@public.gmane.org, hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org, laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org, sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, javier-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org, m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, perex-/Fr2/VpizcU@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, tvboxspy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, crope-X3B1VOXEql0@public.gmane.org, ruchandani.tina-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, chehabrafael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, stefanr-MtYdepGKPcBMYopoZt5u/LNAH6kLmebB@public.gmane.org, inki.dae-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, jh1009.sung-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, elfring-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, sw0312.kim-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, ricardo.ribalda-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, labbott-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org, pierre-louis.bossart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, ricard.wanderlof-VrBV9hrLPhE@public.gmane.org, julian-SZMMDGyaqes@public.gmane.org, takamichiho-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dominic.sacre-Mmb7MZpHnFY@public.gmane.org, misterpib-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, gtmkramer-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org, normalperson-rMlxZR9MS24@public.gmane.org, joe-amhYAVlgbXj10XsdtD+oqA@public.gmane.org, linuxbugs@vittga
 List-Id: linux-api@vger.kernel.org
 
-Em Wed, 03 Feb 2016 21:03:35 -0700
-Shuah Khan <shuahkh@osg.samsung.com> escreveu:
+Em Wed, 03 Feb 2016 21:03:38 -0700
+Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> escreveu:
 
-> Add new interfaces to register and unregister entity_notify
-> hook to media device. These interfaces allow drivers to add
-> hooks to take appropriate actions when new entities get added
-> to a shared media device. For example, au0828 bridge driver
-> registers an entity_notify hook to create links as needed
-> between media graph nodes.
+> Add non-locking __media_entity_pipeline_start/stop() interfaces
+> to be called from code paths that hold the graph_mutex. For this
+> change, the media_entity_pipeline_start() routine is renamed to
+> __media_entity_pipeline_start() minus the graph_mutex lock and
+> unlock. media_entity_pipeline_start() now calls the non-locking
+> __media_entity_pipeline_start() holding the graph_lock. The stop
+> interface, media_entity_pipeline_stop() routine is renamed to
+> __media_entity_pipeline_stop() minus the graph_mutex lock and
+> unlock. media_entity_pipeline_stop() now calls the non-locking
+> __media_entity_pipeline_stop() holding the graph_lock.
 
-Shuah,
+Please write a better patch descriptions. The above could easily
+be split into 3 or 4 paragraphs, with would make it easier to
+read.
 
-It seems you didn't address the documentation issues I pointed on the
-last review. While not ideal, I'll accept, in this specific case,
-although this requires an extra time for me (as I want to read the
-documentation *before* actually reviewing the patches), I'm OK
-if you send the documentation a the end of the series, but please
-send it *together* with the patch series.
+Also, too much details, written on a spaghetti style;)
 
-That affect not only me, but others that build documentation and
-gets lots of errors if something is not documented at the right
-place.
+It is obvious by anyone that looked at the patch that
+"media_entity_pipeline_start() routine is renamed to 
+__media_entity_pipeline_start() minus the graph_mutex lock and
+unlock."
 
-See below for some notes. I won't be commenting documentation on
-the rest of this patch series.
+I read exactly the same thing at the C code, *and* at the
+subject of the e-mail. Patch subject/description should tell
+what, why and how (but you should not repeat what can easily
+be inferred from looking at the diff).
+
+I would describe it as:
+
+   Currently, media pipeline graph traversal routines take
+   the graph_mutex lock.
+
+   While this works for the current code, we'll need 
+   unlocked versions of them because
+   (some explanation *why* you need it, with is the main
+    thing that should be at the description).
+
+   So, add non-locking media_entity_pipeline_start/stop()
+   variations.
 
 > 
-> Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
+> Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 > ---
->  drivers/media/media-device.c | 61 ++++++++++++++++++++++++++++++++++++++++++++
->  include/media/media-device.h | 25 ++++++++++++++++++
->  2 files changed, 86 insertions(+)
+>  drivers/media/media-entity.c | 34 ++++++++++++++++++++++++----------
+>  include/media/media-entity.h | 12 ++++++++++++
+>  2 files changed, 36 insertions(+), 10 deletions(-)
 > 
-> diff --git a/drivers/media/media-device.c b/drivers/media/media-device.c
-> index 4d1c13d..1f5d67e 100644
-> --- a/drivers/media/media-device.c
-> +++ b/drivers/media/media-device.c
-> @@ -536,6 +536,7 @@ static void media_device_release(struct media_devnode *mdev)
->  int __must_check media_device_register_entity(struct media_device *mdev,
->  					      struct media_entity *entity)
+> diff --git a/drivers/media/media-entity.c b/drivers/media/media-entity.c
+> index 9b4d712..b78e4c2 100644
+> --- a/drivers/media/media-entity.c
+> +++ b/drivers/media/media-entity.c
+> @@ -365,8 +365,8 @@ EXPORT_SYMBOL_GPL(media_entity_graph_walk_next);
+>   * Pipeline management
+>   */
+>  
+> -__must_check int media_entity_pipeline_start(struct media_entity *entity,
+> -					     struct media_pipeline *pipe)
+> +__must_check int __media_entity_pipeline_start(struct media_entity *entity,
+> +					       struct media_pipeline *pipe)
 >  {
-> +	struct media_entity_notify *notify, *next;
->  	unsigned int i;
+>  	struct media_device *mdev = entity->graph_obj.mdev;
+>  	struct media_entity_graph *graph = &pipe->graph;
+> @@ -374,8 +374,6 @@ __must_check int media_entity_pipeline_start(struct media_entity *entity,
+>  	struct media_link *link;
 >  	int ret;
 >  
-> @@ -575,6 +576,11 @@ int __must_check media_device_register_entity(struct media_device *mdev,
->  		media_gobj_create(mdev, MEDIA_GRAPH_PAD,
->  			       &entity->pads[i].graph_obj);
+> -	mutex_lock(&mdev->graph_mutex);
+> -
+>  	if (!pipe->streaming_count++) {
+>  		ret = media_entity_graph_walk_init(&pipe->graph, mdev);
+>  		if (ret)
+> @@ -456,8 +454,6 @@ __must_check int media_entity_pipeline_start(struct media_entity *entity,
+>  		}
+>  	}
 >  
-> +	/* invoke entity_notify callbacks */
-> +	list_for_each_entry_safe(notify, next, &mdev->entity_notify, list) {
-> +		(notify)->notify(entity, notify->notify_data);
-> +	}
-> +
->  	spin_unlock(&mdev->lock);
->  
+> -	mutex_unlock(&mdev->graph_mutex);
+> -
 >  	return 0;
-> @@ -608,6 +614,8 @@ static void __media_device_unregister_entity(struct media_entity *entity)
->  	/* Remove the entity */
->  	media_gobj_destroy(&entity->graph_obj);
 >  
-> +	/* invoke entity_notify callbacks to handle entity removal?? */
+>  error:
+> @@ -487,19 +483,28 @@ error_graph_walk_start:
+>  	if (!--pipe->streaming_count)
+>  		media_entity_graph_walk_cleanup(graph);
+>  
+> -	mutex_unlock(&mdev->graph_mutex);
+> +	return ret;
+> +}
+> +EXPORT_SYMBOL_GPL(__media_entity_pipeline_start);
+>  
+> +__must_check int media_entity_pipeline_start(struct media_entity *entity,
+> +					     struct media_pipeline *pipe)
+> +{
+> +	struct media_device *mdev = entity->graph_obj.mdev;
+> +	int ret;
 > +
->  	entity->graph_obj.mdev = NULL;
+> +	mutex_lock(&mdev->graph_mutex);
+> +	ret = __media_entity_pipeline_start(entity, pipe);
+> +	mutex_unlock(&mdev->graph_mutex);
+>  	return ret;
 >  }
+>  EXPORT_SYMBOL_GPL(media_entity_pipeline_start);
 >  
-> @@ -640,6 +648,7 @@ void media_device_init(struct media_device *mdev)
->  	INIT_LIST_HEAD(&mdev->interfaces);
->  	INIT_LIST_HEAD(&mdev->pads);
->  	INIT_LIST_HEAD(&mdev->links);
-> +	INIT_LIST_HEAD(&mdev->entity_notify);
->  	spin_lock_init(&mdev->lock);
->  	mutex_init(&mdev->graph_mutex);
->  	ida_init(&mdev->entity_internal_idx);
-> @@ -685,11 +694,59 @@ int __must_check __media_device_register(struct media_device *mdev,
->  }
->  EXPORT_SYMBOL_GPL(__media_device_register);
->  
-> +/**
-> + * media_device_register_entity_notify - Register a media entity notify
-> + * callback with a media device. When a new entity is registered, all
-> + * the registered media_entity_notify callbacks are invoked.
-> + * @mdev:      The media device
-> + * @nptr:      The media_entity_notify
-> + */
-
-
-Please split the comments into a short description and a detailed
-description, and add blank lines to make it easier to be read by
-mortals.
-
-The short description appears at the index of the html page:
-	https://linuxtv.org/downloads/v4l-dvb-internals/device-drivers/ch06s04.html
-
-So, we want it to be short ;)
-
-The detailed description appears at the end:
-	https://linuxtv.org/downloads/v4l-dvb-internals/device-drivers/API-dvb-create-media-graph.html
-
-Btw, in the above comment, you don't have actually a detailed description,
-but, instead, a note. So, the best would be do to it as:
-
-/**
- * media_device_register_entity_notify() - Register a media entity notify
- *	 callback with a media device.
- *
- * @mdev:      The media device
- * @nptr:      The media_entity_notify
- *
- * NOTE: When a new entity is registered, all the registered
- * media_entity_notify callbacks are invoked.
- */
-
-The "NOTE: foo" will appear as:
-	https://linuxtv.org/downloads/v4l-dvb-internals/device-drivers/API-media-device-register-entity.html
-
-P.S.: Don't forget to test if everything is OK with:
-	rm Documentation/DocBook/device-drivers.aux.xml  Documentation/DocBook/device-drivers.xml
-	LC_ALL=en_US.UTF-8 make DOCBOOKS=device-drivers.xml htmldocs
-
-The same note applied to the other DocBook tags you added.
-
-Btw, add the documentation *only* at the .h.
-
-> +int __must_check media_device_register_entity_notify(struct media_device *mdev,
-> +					struct media_entity_notify *nptr)
-> +{
-> +	spin_lock(&mdev->lock);
-> +	list_add_tail(&nptr->list, &mdev->entity_notify);
-> +	spin_unlock(&mdev->lock);
-> +	return 0;
-> +}
-> +EXPORT_SYMBOL_GPL(media_device_register_entity_notify);
-> +
-> +/**
-> + * __media_device_unregister_entity_notify - Unregister a media entity notify
-> + * callback with a media device. When a new entity is registered, all
-> + * the registered media_entity_notify callbacks are invoked.
-> + * @mdev:      The media device
-> + * @nptr:      The media_entity_notify
-> + * Non-locking version. Should be called with mdev->lock held.
-> + */
-> +static void __media_device_unregister_entity_notify(struct media_device *mdev,
-> +					struct media_entity_notify *nptr)
-> +{
-> +	list_del(&nptr->list);
-> +}
-> +
-> +/**
-> + * media_device_unregister_entity_notify - Unregister a media entity notify
-> + * callback with a media device. When a new entity is registered, all
-> + * the registered media_entity_notify callbacks are invoked.
-> + * @mdev:      The media device
-> + * @nptr:      The media_entity_notify
-> + */
-> +void media_device_unregister_entity_notify(struct media_device *mdev,
-> +					struct media_entity_notify *nptr)
-> +{
-> +	spin_lock(&mdev->lock);
-> +	__media_device_unregister_entity_notify(mdev, nptr);
-> +	spin_unlock(&mdev->lock);
-> +}
-> +EXPORT_SYMBOL_GPL(media_device_unregister_entity_notify);
-> +
->  void media_device_unregister(struct media_device *mdev)
+> -void media_entity_pipeline_stop(struct media_entity *entity)
+> +void __media_entity_pipeline_stop(struct media_entity *entity)
 >  {
->  	struct media_entity *entity;
->  	struct media_entity *next;
->  	struct media_interface *intf, *tmp_intf;
-> +	struct media_entity_notify *notify, *nextp;
+> -	struct media_device *mdev = entity->graph_obj.mdev;
+>  	struct media_entity_graph *graph = &entity->pipe->graph;
+>  	struct media_pipeline *pipe = entity->pipe;
 >  
->  	if (mdev == NULL)
->  		return;
-> @@ -706,6 +763,10 @@ void media_device_unregister(struct media_device *mdev)
->  	list_for_each_entry_safe(entity, next, &mdev->entities, graph_obj.list)
->  		__media_device_unregister_entity(entity);
+> -	mutex_lock(&mdev->graph_mutex);
 >  
-> +	/* Remove all entity_notify callbacks from the media device */
-> +	list_for_each_entry_safe(notify, nextp, &mdev->entity_notify, list)
-> +		__media_device_unregister_entity_notify(mdev, notify);
+>  	WARN_ON(!pipe->streaming_count);
+>  	media_entity_graph_walk_start(graph, entity);
+> @@ -516,6 +521,15 @@ void media_entity_pipeline_stop(struct media_entity *entity)
+>  	if (!--pipe->streaming_count)
+>  		media_entity_graph_walk_cleanup(graph);
+>  
+> +}
+> +EXPORT_SYMBOL_GPL(__media_entity_pipeline_stop);
 > +
->  	/* Remove all interfaces from the media device */
->  	list_for_each_entry_safe(intf, tmp_intf, &mdev->interfaces,
->  				 graph_obj.list) {
-> diff --git a/include/media/media-device.h b/include/media/media-device.h
-> index d385589..bad8242a 100644
-> --- a/include/media/media-device.h
-> +++ b/include/media/media-device.h
-> @@ -264,6 +264,12 @@
->  struct ida;
->  struct device;
->  
-> +struct media_entity_notify {
-> +	struct list_head list;
-> +	void *notify_data;
-> +	void (*notify)(struct media_entity *entity, void *notify_data);
-> +};
+> +void media_entity_pipeline_stop(struct media_entity *entity)
+> +{
+> +	struct media_device *mdev = entity->graph_obj.mdev;
 > +
-
-Documentation is missing.
-
->  /**
->   * struct media_device - Media device
->   * @dev:	Parent device
-> @@ -319,6 +325,9 @@ struct media_device {
->  	struct list_head pads;
->  	struct list_head links;
->  
-> +	/* notify callback list invoked when a new entity is registered */
-> +	struct list_head entity_notify;
-> +
-
-Documentation is missing. You should have noticed if you tried to
-generate the docbook, as it would produce an error like:
-
-   include/media/media-device.h:357: warning: No description found for parameter 'entity_notify'
-
-as reported by kbuild test robot.
-
->  	/* Protects the graph objects creation/removal */
->  	spinlock_t lock;
->  	/* Serializes graph operations. */
-> @@ -497,6 +506,11 @@ int __must_check media_device_register_entity(struct media_device *mdev,
+> +	mutex_lock(&mdev->graph_mutex);
+> +	__media_entity_pipeline_stop(entity);
+>  	mutex_unlock(&mdev->graph_mutex);
+>  }
+>  EXPORT_SYMBOL_GPL(media_entity_pipeline_stop);
+> diff --git a/include/media/media-entity.h b/include/media/media-entity.h
+> index fe485d3..c7583db 100644
+> --- a/include/media/media-entity.h
+> +++ b/include/media/media-entity.h
+> @@ -832,6 +832,12 @@ media_entity_graph_walk_next(struct media_entity_graph *graph);
 >   */
->  void media_device_unregister_entity(struct media_entity *entity);
+>  __must_check int media_entity_pipeline_start(struct media_entity *entity,
+>  					     struct media_pipeline *pipe);
+> +/**
+> + * non-locking __media_entity_pipeline_start() can be called from
+> + * code paths that hold the graph_mutex
+> + */
+> +__must_check int __media_entity_pipeline_start(struct media_entity *entity,
+> +					       struct media_pipeline *pipe);
 >  
-> +int __must_check media_device_register_entity_notify(struct media_device *mdev,
-> +					struct media_entity_notify *nptr);
-> +void media_device_unregister_entity_notify(struct media_device *mdev,
-> +					struct media_entity_notify *nptr);
-> +
-
-Documentation is missing.
-
 >  /**
->   * media_device_get_devres() -	get media device as device resource
->   *				creates if one doesn't exist
-> @@ -552,6 +566,17 @@ static inline int media_device_register_entity(struct media_device *mdev,
->  static inline void media_device_unregister_entity(struct media_entity *entity)
->  {
->  }
-> +static inline int media_device_register_entity_notify(
-> +					struct media_device *mdev,
-> +					struct media_entity_notify *nptr)
-> +{
-> +	return 0;
-> +}
-> +static inline void media_device_unregister_entity_notify(
-> +					struct media_device *mdev,
-> +					struct media_entity_notify *nptr)
-> +{
-> +}
-
-Documentation is missing.
-
->  static inline struct media_device *media_device_get_devres(struct device *dev)
->  {
->  	return NULL;
+>   * media_entity_pipeline_stop - Mark a pipeline as not streaming
+> @@ -848,6 +854,12 @@ __must_check int media_entity_pipeline_start(struct media_entity *entity,
+>  void media_entity_pipeline_stop(struct media_entity *entity);
+>  
+>  /**
+> + * non-locking __media_entity_pipeline_stop() can be called from
+> + * code paths that hold the graph_mutex
+> + */
+> +void __media_entity_pipeline_stop(struct media_entity *entity);
+> +
+> +/**
+>   * media_devnode_create() - creates and initializes a device node interface
+>   *
+>   * @mdev:	pointer to struct &media_device
