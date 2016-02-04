@@ -1,7 +1,7 @@
 From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH v2 10/22] media: Change v4l-core to check if source is free
-Date: Wed,  3 Feb 2016 21:03:42 -0700
-Message-ID: <a2cb324f737fad4d594b9aa18cf5448ac9352217.1454557589.git.shuahkh@osg.samsung.com>
+Subject: [PATCH v2 07/22] media: v4l-core add enable/disable source common interfaces
+Date: Wed,  3 Feb 2016 21:03:39 -0700
+Message-ID: <7df34ecdf35d473535abefa6643b2db24457b8e6.1454557589.git.shuahkh@osg.samsung.com>
 References: <cover.1454557589.git.shuahkh@osg.samsung.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1454557589.git.shuahkh@osg.samsung.com>
@@ -12,157 +12,181 @@ To: mchehab@osg.samsung.com, tiwai@suse.com, clemens@ladisch.de, hans.verkuil@ci
 Cc: Shuah Khan <shuahkh@osg.samsung.com>, pawel@osciak.com, m.szyprowski@samsung.com, kyungmin.park@samsung.com, perex@perex.cz, arnd@arndb.de, dan.carpenter@oracle.com, tvboxspy@gmail.com, crope@iki.fi, ruchandani.tina@gmail.com, corbet@lwn.net, chehabrafael@gmail.com, k.kozlowski@samsung.com, stefanr@s5r6.in-berlin.de, inki.dae@samsung.com, jh1009.sung@samsung.com, elfring@users.sourceforge.net, prabhakar.csengg@gmail.com, sw0312.kim@samsung.com, p.zabel@pengutronix.de, ricardo.ribalda@gmail.com, labbott@fedoraproject.org, pierre-louis.bossart@linux.intel.com, ricard.wanderlof@axis.com, julian@jusst.de, takamichiho@gmail.com, dominic.sacre@gmx.de, misterpib@gmail.com, daniel@zonque.org, gtmkramer@xs4all.nl, normalperson@yhbt.net, joe@oampo.co.uk, linuxbugs@vittgam.net, johan@oljud.se, klock.android@gmail.com, nenggun.kim@samsung.com, j.anaszewski@samsung.com, geliangtang
 List-Id: linux-api@vger.kernel.org
 
-Change s_input, s_fmt, s_tuner, s_frequency, querystd,
-s_hw_freq_seek, and vb2_core_streamon interfaces that
-alter the tuner configuration to check if it is free,
-by calling v4l_enable_media_source(). If source isn't
-free, return -EBUSY. v4l_disable_media_source() is
-called from v4l2_fh_exit() to release tuner (source).
-vb2_core_streamon() uses v4l_vb2q_enable_media_source().
+Add a new interfaces to be used by v4l-core to invoke enable
+source and disable_source handlers in the media_device. The
+enable_source helper function invokes the enable_source handler
+to find media source entity connected to the entity and check
+is it is available or busy. If source is available, link is
+activated and pipeline is started. The disable_source helper
+function invokes the disable_source handler to deactivate and
+stop the pipeline.
 
 Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
 ---
- drivers/media/v4l2-core/v4l2-fh.c        |  2 ++
- drivers/media/v4l2-core/v4l2-ioctl.c     | 30 ++++++++++++++++++++++++++++++
- drivers/media/v4l2-core/videobuf2-core.c |  4 ++++
- 3 files changed, 36 insertions(+)
+ drivers/media/v4l2-core/Makefile  |  2 +-
+ drivers/media/v4l2-core/v4l2-mc.c | 60 +++++++++++++++++++++++++++++++++++++++
+ include/media/v4l2-dev.h          |  1 +
+ include/media/v4l2-mc.h           | 52 +++++++++++++++++++++++++++++++++
+ 4 files changed, 114 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/media/v4l2-core/v4l2-mc.c
 
-diff --git a/drivers/media/v4l2-core/v4l2-fh.c b/drivers/media/v4l2-core/v4l2-fh.c
-index c97067a..c183f09 100644
---- a/drivers/media/v4l2-core/v4l2-fh.c
-+++ b/drivers/media/v4l2-core/v4l2-fh.c
-@@ -29,6 +29,7 @@
- #include <media/v4l2-fh.h>
- #include <media/v4l2-event.h>
- #include <media/v4l2-ioctl.h>
+diff --git a/drivers/media/v4l2-core/Makefile b/drivers/media/v4l2-core/Makefile
+index 1dc8bba..c6acc01 100644
+--- a/drivers/media/v4l2-core/Makefile
++++ b/drivers/media/v4l2-core/Makefile
+@@ -6,7 +6,7 @@ tuner-objs	:=	tuner-core.o
+ 
+ videodev-objs	:=	v4l2-dev.o v4l2-ioctl.o v4l2-device.o v4l2-fh.o \
+ 			v4l2-event.o v4l2-ctrls.o v4l2-subdev.o v4l2-clk.o \
+-			v4l2-async.o
++			v4l2-async.o v4l2-mc.o
+ ifeq ($(CONFIG_COMPAT),y)
+   videodev-objs += v4l2-compat-ioctl32.o
+ endif
+diff --git a/drivers/media/v4l2-core/v4l2-mc.c b/drivers/media/v4l2-core/v4l2-mc.c
+new file mode 100644
+index 0000000..87416df
+--- /dev/null
++++ b/drivers/media/v4l2-core/v4l2-mc.c
+@@ -0,0 +1,60 @@
++/*
++ * v4l2-mc.c - Media Controller V4L2 Common Interfaces
++ *
++ * Copyright (C) 2016 Shuah Khan <shuahkh@osg.samsung.com>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
 +#include <media/v4l2-mc.h>
- 
- void v4l2_fh_init(struct v4l2_fh *fh, struct video_device *vdev)
- {
-@@ -92,6 +93,7 @@ void v4l2_fh_exit(struct v4l2_fh *fh)
- {
- 	if (fh->vdev == NULL)
- 		return;
-+	v4l_disable_media_source(fh->vdev);
- 	v4l2_event_unsubscribe_all(fh);
- 	fh->vdev = NULL;
- }
-diff --git a/drivers/media/v4l2-core/v4l2-ioctl.c b/drivers/media/v4l2-core/v4l2-ioctl.c
-index 8a018c6..ceaa44a 100644
---- a/drivers/media/v4l2-core/v4l2-ioctl.c
-+++ b/drivers/media/v4l2-core/v4l2-ioctl.c
-@@ -27,6 +27,7 @@
- #include <media/v4l2-event.h>
- #include <media/v4l2-device.h>
- #include <media/videobuf2-v4l2.h>
-+#include <media/v4l2-mc.h>
- 
- #include <trace/events/v4l2.h>
- 
-@@ -1041,6 +1042,12 @@ static int v4l_querycap(const struct v4l2_ioctl_ops *ops,
- static int v4l_s_input(const struct v4l2_ioctl_ops *ops,
- 				struct file *file, void *fh, void *arg)
- {
-+	struct video_device *vfd = video_devdata(file);
++#include <media/media-device.h>
++#include <media/videobuf2-core.h>
++#include <media/v4l2-fh.h>
++
++int v4l_enable_media_source(struct video_device *vdev)
++{
++#ifdef CONFIG_MEDIA_CONTROLLER
++	struct media_device *mdev = vdev->entity.graph_obj.mdev;
 +	int ret;
 +
-+	ret = v4l_enable_media_source(vfd);
++	if (!mdev || !mdev->enable_source)
++		return 0;
++	ret = mdev->enable_source(&vdev->entity, &vdev->pipe);
 +	if (ret)
-+		return ret;
- 	return ops->vidioc_s_input(file, fh, *(unsigned int *)arg);
- }
++		return -EBUSY;
++	return 0;
++#endif /* CONFIG_MEDIA_CONTROLLER */
++	return 0;
++}
++EXPORT_SYMBOL_GPL(v4l_enable_media_source);
++
++void v4l_disable_media_source(struct video_device *vdev)
++{
++#ifdef CONFIG_MEDIA_CONTROLLER
++	struct media_device *mdev = vdev->entity.graph_obj.mdev;
++
++	if (mdev && mdev->disable_source)
++		mdev->disable_source(&vdev->entity);
++#endif /* CONFIG_MEDIA_CONTROLLER */
++}
++EXPORT_SYMBOL_GPL(v4l_disable_media_source);
++
++int v4l_vb2q_enable_media_source(struct vb2_queue *q)
++{
++#ifdef CONFIG_MEDIA_CONTROLLER
++	struct v4l2_fh *fh = q->owner;
++
++	return v4l_enable_media_source(fh->vdev);
++#endif /* CONFIG_MEDIA_CONTROLLER */
++	return 0;
++}
++EXPORT_SYMBOL_GPL(v4l_vb2q_enable_media_source);
++
+diff --git a/include/media/v4l2-dev.h b/include/media/v4l2-dev.h
+index eeabf20..76056ab 100644
+--- a/include/media/v4l2-dev.h
++++ b/include/media/v4l2-dev.h
+@@ -87,6 +87,7 @@ struct video_device
+ #if defined(CONFIG_MEDIA_CONTROLLER)
+ 	struct media_entity entity;
+ 	struct media_intf_devnode *intf_devnode;
++	struct media_pipeline pipe;
+ #endif
+ 	/* device ops */
+ 	const struct v4l2_file_operations *fops;
+diff --git a/include/media/v4l2-mc.h b/include/media/v4l2-mc.h
+index df11519..df1a98f 100644
+--- a/include/media/v4l2-mc.h
++++ b/include/media/v4l2-mc.h
+@@ -14,6 +14,11 @@
+  * GNU General Public License for more details.
+  */
  
-@@ -1448,6 +1455,9 @@ static int v4l_s_fmt(const struct v4l2_ioctl_ops *ops,
- 	bool is_tx = vfd->vfl_dir != VFL_DIR_RX;
- 	int ret;
- 
-+	ret = v4l_enable_media_source(vfd);
-+	if (ret)
-+		return ret;
- 	v4l_sanitize_format(p);
- 
- 	switch (p->type) {
-@@ -1637,7 +1647,11 @@ static int v4l_s_tuner(const struct v4l2_ioctl_ops *ops,
- {
- 	struct video_device *vfd = video_devdata(file);
- 	struct v4l2_tuner *p = arg;
-+	int ret;
- 
-+	ret = v4l_enable_media_source(vfd);
-+	if (ret)
-+		return ret;
- 	p->type = (vfd->vfl_type == VFL_TYPE_RADIO) ?
- 			V4L2_TUNER_RADIO : V4L2_TUNER_ANALOG_TV;
- 	return ops->vidioc_s_tuner(file, fh, p);
-@@ -1691,7 +1705,11 @@ static int v4l_s_frequency(const struct v4l2_ioctl_ops *ops,
- 	struct video_device *vfd = video_devdata(file);
- 	const struct v4l2_frequency *p = arg;
- 	enum v4l2_tuner_type type;
-+	int ret;
- 
-+	ret = v4l_enable_media_source(vfd);
-+	if (ret)
-+		return ret;
- 	if (vfd->vfl_type == VFL_TYPE_SDR) {
- 		if (p->type != V4L2_TUNER_SDR && p->type != V4L2_TUNER_RF)
- 			return -EINVAL;
-@@ -1746,7 +1764,11 @@ static int v4l_s_std(const struct v4l2_ioctl_ops *ops,
- {
- 	struct video_device *vfd = video_devdata(file);
- 	v4l2_std_id id = *(v4l2_std_id *)arg, norm;
-+	int ret;
- 
-+	ret = v4l_enable_media_source(vfd);
-+	if (ret)
-+		return ret;
- 	norm = id & vfd->tvnorms;
- 	if (vfd->tvnorms && !norm)	/* Check if std is supported */
- 		return -EINVAL;
-@@ -1760,7 +1782,11 @@ static int v4l_querystd(const struct v4l2_ioctl_ops *ops,
- {
- 	struct video_device *vfd = video_devdata(file);
- 	v4l2_std_id *p = arg;
-+	int ret;
- 
-+	ret = v4l_enable_media_source(vfd);
-+	if (ret)
-+		return ret;
- 	/*
- 	 * If no signal is detected, then the driver should return
- 	 * V4L2_STD_UNKNOWN. Otherwise it should return tvnorms with
-@@ -1779,7 +1805,11 @@ static int v4l_s_hw_freq_seek(const struct v4l2_ioctl_ops *ops,
- 	struct video_device *vfd = video_devdata(file);
- 	struct v4l2_hw_freq_seek *p = arg;
- 	enum v4l2_tuner_type type;
-+	int ret;
- 
-+	ret = v4l_enable_media_source(vfd);
-+	if (ret)
-+		return ret;
- 	/* s_hw_freq_seek is not supported for SDR for now */
- 	if (vfd->vfl_type == VFL_TYPE_SDR)
- 		return -EINVAL;
-diff --git a/drivers/media/v4l2-core/videobuf2-core.c b/drivers/media/v4l2-core/videobuf2-core.c
-index ec5b78e..d381478 100644
---- a/drivers/media/v4l2-core/videobuf2-core.c
-+++ b/drivers/media/v4l2-core/videobuf2-core.c
-@@ -25,6 +25,7 @@
- #include <linux/kthread.h>
- 
- #include <media/videobuf2-core.h>
-+#include <media/v4l2-mc.h>
- 
- #include <trace/events/vb2.h>
- 
-@@ -1873,6 +1874,9 @@ int vb2_core_streamon(struct vb2_queue *q, unsigned int type)
- 	 * are available.
- 	 */
- 	if (q->queued_count >= q->min_buffers_needed) {
-+		ret = v4l_vb2q_enable_media_source(q);
-+		if (ret)
-+			return ret;
- 		ret = vb2_start_streaming(q);
- 		if (ret) {
- 			__vb2_queue_cancel(q);
++#ifndef _V4L2_MC_H
++#define _V4L2_MC_H
++
++#include <media/v4l2-dev.h>
++
+ /**
+  * enum tuner_pad_index - tuner pad index for MEDIA_ENT_F_TUNER
+  *
+@@ -89,3 +94,50 @@ enum demod_pad_index {
+ 	DEMOD_PAD_VBI_OUT,
+ 	DEMOD_NUM_PADS
+ };
++
++/**
++ * v4l_enable_media_source() -	Hold media source for exclusive use
++ *				if free
++ *
++ * @vdev - poniter to struct video_device
++ *
++ * This interface calls enable_source handler to determine if
++ * media source is free for use. The enable_source handler is
++ * responsible for checking is the media source is free and
++ * start a pipeline between the media source and the media
++ * entity associated with the video device. This interface
++ * should be called from v4l2-core and dvb-core interfaces
++ * that change the source configuration.
++ *
++ * Return: returns zero on success or a negative error code.
++ */
++int v4l_enable_media_source(struct video_device *vdev);
++
++/**
++ * v4l_disable_media_source() -	Release media source
++ *
++ * @vdev - poniter to struct video_device
++ *
++ * This interface calls disable_source handler to release
++ * the media source. The disable_source handler stops the
++ * active media pipeline between the media source and the
++ * media entity associated with the video device.
++ *
++ * Return: returns zero on success or a negative error code.
++ */
++void v4l_disable_media_source(struct video_device *vdev);
++/*
++ * v4l_vb2q_enable_media_tuner -  Hold media source for exclusive use
++ *				  if free.
++ * @q - pointer to struct vb2_queue
++ *
++ * Wrapper for v4l_enable_media_source(). This function should
++ * be called from v4l2-core to enable the media source with
++ * pointer to struct vb2_queue as the input argument. Some
++ * v4l2-core interfaces don't have access to video device and
++ * this interface finds the struct video_device for the q and
++ * calls v4l_enable_media_source().
++ */
++int v4l_vb2q_enable_media_source(struct vb2_queue *q);
++
++#endif /* _V4L2_MC_H */
 -- 
 2.5.0
