@@ -1,7 +1,7 @@
 From: Joonsoo Kim <js1304@gmail.com>
-Subject: [PATCH 2/5] mm/slub: query dynamic DEBUG_PAGEALLOC setting
-Date: Thu,  4 Feb 2016 14:56:23 +0900
-Message-ID: <1454565386-10489-3-git-send-email-iamjoonsoo.kim@lge.com>
+Subject: [PATCH 3/5] sound: query dynamic DEBUG_PAGEALLOC setting
+Date: Thu,  4 Feb 2016 14:56:24 +0900
+Message-ID: <1454565386-10489-4-git-send-email-iamjoonsoo.kim@lge.com>
 References: <1454565386-10489-1-git-send-email-iamjoonsoo.kim@lge.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1454565386-10489-1-git-send-email-iamjoonsoo.kim@lge.com>
@@ -16,31 +16,37 @@ whether it is enabled or not in runtime.
 
 Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 ---
- mm/slub.c | 11 ++++++-----
- 1 file changed, 6 insertions(+), 5 deletions(-)
+ sound/drivers/pcsp/pcsp.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
 
-diff --git a/mm/slub.c b/mm/slub.c
-index 7d4da68..7b5a965 100644
---- a/mm/slub.c
-+++ b/mm/slub.c
-@@ -256,11 +256,12 @@ static inline void *get_freepointer_safe(struct kmem_cache *s, void *object)
- {
- 	void *p;
+diff --git a/sound/drivers/pcsp/pcsp.c b/sound/drivers/pcsp/pcsp.c
+index 27e25bb..72e2d00 100644
+--- a/sound/drivers/pcsp/pcsp.c
++++ b/sound/drivers/pcsp/pcsp.c
+@@ -14,6 +14,7 @@
+ #include <linux/input.h>
+ #include <linux/delay.h>
+ #include <linux/bitops.h>
++#include <linux/mm.h>
+ #include "pcsp_input.h"
+ #include "pcsp.h"
+ 
+@@ -148,11 +149,11 @@ static int alsa_card_pcsp_init(struct device *dev)
+ 		return err;
+ 	}
  
 -#ifdef CONFIG_DEBUG_PAGEALLOC
--	probe_kernel_read(&p, (void **)(object + s->offset), sizeof(p));
--#else
--	p = get_freepointer(s, object);
+ 	/* Well, CONFIG_DEBUG_PAGEALLOC makes the sound horrible. Lets alert */
+-	printk(KERN_WARNING "PCSP: CONFIG_DEBUG_PAGEALLOC is enabled, "
+-	       "which may make the sound noisy.\n");
 -#endif
 +	if (debug_pagealloc_enabled()) {
-+		probe_kernel_read(&p,
-+			(void **)(object + s->offset), sizeof(p));
-+	} else
-+		p = get_freepointer(s, object);
-+
- 	return p;
- }
++		printk(KERN_WARNING "PCSP: CONFIG_DEBUG_PAGEALLOC is enabled, "
++		       "which may make the sound noisy.\n");
++	}
  
+ 	return 0;
+ }
 -- 
 1.9.1
 
