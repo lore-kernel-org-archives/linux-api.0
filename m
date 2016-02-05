@@ -1,58 +1,90 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH] epoll: restrict EPOLLEXCLUSIVE to POLLIN and POLLOUT
-Date: Thu, 4 Feb 2016 14:59:52 -0800
-Message-ID: <20160204145952.53f536f5d4cdef96844104b7@linux-foundation.org>
-References: <1454600344-23655-1-git-send-email-jbaron@akamai.com>
-	<00ac7df620d4d0500b18af4a30034815@silodev.com>
+From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v5 00/12] MADV_FREE support
+Date: Fri, 5 Feb 2016 11:15:57 +0900
+Message-ID: <20160205021557.GA11598@bbox>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <00ac7df620d4d0500b18af4a30034815@silodev.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Madars Vitolins <m@silodev.com>
-Cc: Jason Baron <jbaron@akamai.com>, torvalds@linux-foundation.org, mtk.manpages@gmail.com, mingo@kernel.org, peterz@infradead.org, viro@ftp.linux.org.uk, normalperson@yhbt.net, corbet@lwn.net, luto@amacapital.net, hagen@jauu.net, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, yalin.wang2010-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 04 Feb 2016 23:44:05 +0200 Madars Vitolins <m@silodev.com> wrote:
-
-> Hi Jason,
+On Thu, Jan 28, 2016 at 08:16:25AM +0100, Michael Kerrisk (man-pages) wrote:
+> Hello Minchan,
 > 
+> On 11/30/2015 07:39 AM, Minchan Kim wrote:
+> > In v4, Andrew wanted to settle in old basic MADV_FREE and introduces
+> > new stuffs(ie, lazyfree LRU, swapless support and lazyfreeness) later
+> > so this version doesn't include them.
+> > 
+> > I have been tested it on mmotm-2015-11-25-17-08 with additional
+> > patch[1] from Kirill to prevent BUG_ON which he didn't send to
+> > linux-mm yet as formal patch. With it, I couldn't find any
+> > problem so far.
+> > 
+> > Note that this version is based on THP refcount redesign so
+> > I needed some modification on MADV_FREE because split_huge_pmd
+> > doesn't split a THP page any more and pmd_trans_huge(pmd) is not
+> > enough to guarantee the page is not THP page.
+> > As well, for MAVD_FREE lazy-split, THP split should respect
+> > pmd's dirtiness rather than marking ptes of all subpages dirty
+> > unconditionally. Please, review last patch in this patchset.
 > 
-> Just run off the original tests with this patch (eventpoll.c from 
-> 4.5-rc2 + patch bellow). Got the same good results, no regression.
-> 
-> $ time ./bankcl
-> Account balance is: 1359856158.04 USD
-> Account balance is: 1359856158.04 USD
-> Account balance is: 1359856158.04 USD
-> Account balance is: 1359856158.04 USD
-> Account balance is: 1359856158.04 USD
-> Account balance is: 1359856158.04 USD
-> Account balance is: 1359856158.04 USD
-> Account balance is: 1359856158.04 USD
-> Account balance is: 1359856158.04 USD
-> Account balance is: 101528948.40 USD
-> 
-> real	0m41.826s
-> user	0m29.513s
-> sys	0m6.490s
-> 
-> 
-> Test case: 
-> https://mvitolin.wordpress.com/2015/12/05/endurox-testing-epollexclusive-flag/
-> 
-> PS,
-> 
-> Original cases 0m24.953s vs 0m41.826s now probably is related with my pc 
-> setup. As I just now re-run test with original patch, got the same ~41 
-> sec.
-> 
-> So I am fine with this patch!
+> Now that MADV_FREE has been merged, would you be willing to write
+> patch to the madvise(2) man page that describes the semantics, 
+> noes limitations and restrictions, and (ideally) has some sentences
+> describing use cases?
 > 
 
-Thanks, I shall add your Tested-by:
+Hello Michael,
 
-One thing we're sorely missing is an epoll test suite, in
-tools/testing/selftests.  If anyone has anything which we can use to
-kick things off, please hand it over ;)
+Could you review this patch?
+
+Thanks.
+
+>From 203372f901f574e991215fdff6907608ba53f932 Mon Sep 17 00:00:00 2001
+From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Date: Fri, 5 Feb 2016 11:09:54 +0900
+Subject: [PATCH] madvise.2: Add MADV_FREE
+
+Document the MADV_FREE flags added to madvise() in Linux 4.5
+
+Signed-off-by: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+---
+ man2/madvise.2 | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/man2/madvise.2 b/man2/madvise.2
+index c1df67c..4704304 100644
+--- a/man2/madvise.2
++++ b/man2/madvise.2
+@@ -143,6 +143,25 @@ flag are special memory areas that are not managed
+ by the virtual memory subsystem.
+ Such pages are typically created by device drivers that
+ map the pages into user space.)
++.TP
++.B MADV_FREE " (since Linux 4.5)"
++Application is finished with the given range, so kernel can free
++resources associated with it but the freeing could be delayed until
++memory pressure happens or canceld by write operation by user.
++
++After a successful MADV_FREE operation, user shouldn't expect kernel
++keeps stale data on the page. However, subsequent write of pages
++in the range will succeed and then kernel cannot free those dirtied pages
++so user can always see just written data. If there was no subsequent
++write, kernel can free those clean pages any time. In such case,
++user can see zero-fill-on-demand pages.
++
++Note that, it works only with private anonymous pages (see
++.BR mmap (2)).
++On swapless system, freeing pages in given range happens instantly
++regardless of memory pressure.
++
++
+ .\"
+ .\" ======================================================================
+ .\"
+-- 
+1.9.1
