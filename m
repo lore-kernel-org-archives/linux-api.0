@@ -1,54 +1,36 @@
-From: Miroslav Benes <mbenes@suse.cz>
-Subject: Re: module: s390: keep mod_arch_specific for livepatch modules
-Date: Fri, 5 Feb 2016 16:32:05 +0100 (CET)
-Message-ID: <alpine.LNX.2.00.1602051622260.26647@pobox.suse.cz>
-References: <1454548271-24923-1-git-send-email-jeyu@redhat.com> <1454548271-24923-4-git-send-email-jeyu@redhat.com> <20160204013751.GB22860@packer-debian-8-amd64.digitalocean.com> <20160204210318.GP22854@treble.redhat.com>
+From: Joonsoo Kim <js1304-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 1/5] mm/vmalloc: query dynamic DEBUG_PAGEALLOC setting
+Date: Sat, 6 Feb 2016 01:13:15 +0900
+Message-ID: <CAAmzW4P-09yqdCiZJpYbpueih7+gq0Qcg302nsaHLZASHUki9w@mail.gmail.com>
+References: <1454565386-10489-1-git-send-email-iamjoonsoo.kim@lge.com>
+	<1454565386-10489-2-git-send-email-iamjoonsoo.kim@lge.com>
+	<alpine.DEB.2.10.1602041417330.29117@chino.kir.corp.google.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160204210318.GP22854@treble.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Josh Poimboeuf <jpoimboe@redhat.com>
-Cc: Jessica Yu <jeyu@redhat.com>, Rusty Russell <rusty@rustcorp.com.au>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <alpine.DEB.2.10.1602041417330.29117-X6Q0R45D7oAcqpCFd4KODRPsWskHk0ljAL8bYrjMMd8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Christian Borntraeger <borntraeger-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Memory Management List <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Takashi Iwai <tiwai-IBi9RG/b67k@public.gmane.org>, Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 4 Feb 2016, Josh Poimboeuf wrote:
+2016-02-05 7:18 GMT+09:00 David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>:
+> On Thu, 4 Feb 2016, Joonsoo Kim wrote:
+>
+>> We can disable debug_pagealloc processing even if the code is complied
+>> with CONFIG_DEBUG_PAGEALLOC. This patch changes the code to query
+>> whether it is enabled or not in runtime.
+>>
+>> Signed-off-by: Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
+>
+> I think the comment immediately before this code referencing
+> CONFIG_DEBUG_PAGEALLOC should be changed to refer to pagealloc debugging
+> being enabled.
 
-> On Wed, Feb 03, 2016 at 08:37:52PM -0500, Jessica Yu wrote:
-> > +++ Jessica Yu [03/02/16 20:11 -0500]:
-> > >Livepatch needs to utilize the symbol information contained in the
-> > >mod_arch_specific struct in order to be able to call the s390
-> > >apply_relocate_add() function to apply relocations. Keep a reference to
-> > >syminfo if the module is a livepatch module. Remove the redundant vfree()
-> > >in module_finalize() since module_arch_freeing_init() (which also frees
-> > >those structures) is called in do_init_module(). If the module isn't a
-> > >livepatch module, we free the structures in module_arch_freeing_init() as
-> > >usual.
-> > >
-> > >Signed-off-by: Jessica Yu <jeyu@redhat.com>
-> > >---
-> > >arch/s390/kernel/module.c | 7 +++++--
-> > >1 file changed, 5 insertions(+), 2 deletions(-)
-> > 
-> > I must note that I have verified that the patchset boots on s390 and
-> > that the sample livepatch module still works ...so that's good, but
-> > not saying much since what we really want is to test the relocation
-> > code. The kpatch build scripts however currently only support x86, so
-> > the next step is for me to port the kpatch scripts to s390 before I
-> > can really test this patchset. This in itself might take a while, so
-> > in the meantime I'd like to just collect another round of comments and
-> > feedback for v4.
-> 
-> I haven't reviewed the code yet, but otherwise I'm thinking it would
-> actually be fine to merge this patch set before testing with s390
-> relocations.  They aren't implemented on s390 today anyway, so there
-> can't be a regression if nobody is using it.
+Andrew kindly did it. Thanks, Andrew.
 
-I asked Jessica to test it with s390 relocations. It would be great to 
-know it works on an architecture which originally inspired this patch set. 
-However it should not be a blocker. There are advantages apart from this 
-and we can happily merge it before testing.
+> After that:
+>
+>         Acked-by: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-I am going to review the patch set early next week...
-
-Miroslav
+Thanks.
