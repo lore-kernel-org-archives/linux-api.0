@@ -1,40 +1,54 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH V2 6/6] coresight-stm: adding driver for CoreSight STM component
-Date: Fri, 05 Feb 2016 15:30:19 +0100
-Message-ID: <1481791.6NqBhgWcKU@wuerfel>
-References: <1454487337-30184-1-git-send-email-zhang.chunyan@linaro.org> <1454487337-30184-7-git-send-email-zhang.chunyan@linaro.org> <87h9hn5msz.fsf@ashishki-desk.ger.corp.intel.com>
+From: Miroslav Benes <mbenes@suse.cz>
+Subject: Re: module: s390: keep mod_arch_specific for livepatch modules
+Date: Fri, 5 Feb 2016 16:32:05 +0100 (CET)
+Message-ID: <alpine.LNX.2.00.1602051622260.26647@pobox.suse.cz>
+References: <1454548271-24923-1-git-send-email-jeyu@redhat.com> <1454548271-24923-4-git-send-email-jeyu@redhat.com> <20160204013751.GB22860@packer-debian-8-amd64.digitalocean.com> <20160204210318.GP22854@treble.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87h9hn5msz.fsf-qxRn5AmX6ZD9BXuAQUXR0fooFf0ArEBIu+b9c/7xato@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
-Cc: Alexander Shishkin <alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, al.grant-5wv7dgnIgG8@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tor-l0cyMroinI0@public.gmane.org, broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mike.leach-5wv7dgnIgG8@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, nicolas.guion-qxv4g6HH51o@public.gmane.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160204210318.GP22854@treble.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Jessica Yu <jeyu@redhat.com>, Rusty Russell <rusty@rustcorp.com.au>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Friday 05 February 2016 15:06:20 Alexander Shishkin wrote:
-> Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> writes:
+On Thu, 4 Feb 2016, Josh Poimboeuf wrote:
+
+> On Wed, Feb 03, 2016 at 08:37:52PM -0500, Jessica Yu wrote:
+> > +++ Jessica Yu [03/02/16 20:11 -0500]:
+> > >Livepatch needs to utilize the symbol information contained in the
+> > >mod_arch_specific struct in order to be able to call the s390
+> > >apply_relocate_add() function to apply relocations. Keep a reference to
+> > >syminfo if the module is a livepatch module. Remove the redundant vfree()
+> > >in module_finalize() since module_arch_freeing_init() (which also frees
+> > >those structures) is called in do_init_module(). If the module isn't a
+> > >livepatch module, we free the structures in module_arch_freeing_init() as
+> > >usual.
+> > >
+> > >Signed-off-by: Jessica Yu <jeyu@redhat.com>
+> > >---
+> > >arch/s390/kernel/module.c | 7 +++++--
+> > >1 file changed, 5 insertions(+), 2 deletions(-)
+> > 
+> > I must note that I have verified that the patchset boots on s390 and
+> > that the sample livepatch module still works ...so that's good, but
+> > not saying much since what we really want is to test the relocation
+> > code. The kpatch build scripts however currently only support x86, so
+> > the next step is for me to port the kpatch scripts to s390 before I
+> > can really test this patchset. This in itself might take a while, so
+> > in the meantime I'd like to just collect another round of comments and
+> > feedback for v4.
 > 
-> > +#ifndef CONFIG_64BIT
-> > +static inline void __raw_writeq(u64 val, volatile void __iomem *addr)
-> > +{
-> > +     asm volatile("strd %1, %0"
-> > +                  : "+Qo" (*(volatile u64 __force *)addr)
-> > +                  : "r" (val));
-> > +}
-> 
-> Is it really ok to do this for all !64bit arms, inside a driver, just
-> like that? I'm not an expert, but I'm pretty sure there's more to it.
+> I haven't reviewed the code yet, but otherwise I'm thinking it would
+> actually be fine to merge this patch set before testing with s390
+> relocations.  They aren't implemented on s390 today anyway, so there
+> can't be a regression if nobody is using it.
 
-It's normally device dependent whether this works or not, on 32-bit
-architectures, a 64-bit access to an I/O bus tends to get split into
-two 32 bit accesses and the order might not be the as what was
-intended.
+I asked Jessica to test it with s390 relocations. It would be great to 
+know it works on an architecture which originally inspired this patch set. 
+However it should not be a blocker. There are advantages apart from this 
+and we can happily merge it before testing.
 
-We have functions in include/linux/io-64-nonatomic-hi-lo.h
-and include/linux/io-64-nonatomic-lo-hi.h that are meant to
-do this right. Maybe the driver can be changed to use whichever
-one is correct for it.
+I am going to review the patch set early next week...
 
-	Arnd
+Miroslav
