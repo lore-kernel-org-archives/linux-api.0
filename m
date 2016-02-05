@@ -1,63 +1,51 @@
-From: Alexander Shishkin <alexander.shishkin@linux.intel.com>
-Subject: Re: [PATCH V2 3/6] stm class: provision for statically assigned masterIDs
-Date: Fri, 05 Feb 2016 14:52:10 +0200
-Message-ID: <87mvrf5ngl.fsf@ashishki-desk.ger.corp.intel.com>
-References: <1454487337-30184-1-git-send-email-zhang.chunyan@linaro.org> <1454487337-30184-4-git-send-email-zhang.chunyan@linaro.org>
+From: Alexander Shishkin <alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [PATCH V2 1/6] stm class: Add ioctl get_options interface
+Date: Fri, 05 Feb 2016 14:55:31 +0200
+Message-ID: <87k2mj5nb0.fsf@ashishki-desk.ger.corp.intel.com>
+References: <1454487337-30184-1-git-send-email-zhang.chunyan@linaro.org> <1454487337-30184-2-git-send-email-zhang.chunyan@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1454487337-30184-4-git-send-email-zhang.chunyan@linaro.org>
-Sender: linux-doc-owner@vger.kernel.org
-To: Chunyan Zhang <zhang.chunyan@linaro.org>, mathieu.poirier@linaro.org
-Cc: robh@kernel.org, broonie@kernel.org, pratikp@codeaurora.org, nicolas.guion@st.com, corbet@lwn.net, mark.rutland@arm.com, mike.leach@arm.com, tor@ti.com, al.grant@arm.com, zhang.lyra@gmail.com, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1454487337-30184-2-git-send-email-zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
+Cc: robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, nicolas.guion-qxv4g6HH51o@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, mike.leach-5wv7dgnIgG8@public.gmane.org, tor-l0cyMroinI0@public.gmane.org, al.grant-5wv7dgnIgG8@public.gmane.org, zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Chunyan Zhang <zhang.chunyan@linaro.org> writes:
+Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> writes:
 
-> From: Mathieu Poirier <mathieu.poirier@linaro.org>
+> There is already an interface of set_options, but no get_options yet.
+> Before setting any options, one would may want to see the current
+> status of that option by means of get_options interface. This
+> interface has been used in CoreSight STM driver.
 >
-> Some architecture like ARM assign masterIDs statically at the HW design
-> phase, making masterID manipulation in the generic STM core irrelevant.
+> Signed-off-by: Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+> ---
+>  drivers/hwtracing/stm/core.c | 11 +++++++++++
+>  include/linux/stm.h          |  3 +++
+>  include/uapi/linux/stm.h     |  1 +
+>  3 files changed, 15 insertions(+)
 >
-> This patch adds a new 'mstatic' flag to struct stm_data that tells the
-> core that this specific STM device doesn't need explicit masterID
-> management.
+> diff --git a/drivers/hwtracing/stm/core.c b/drivers/hwtracing/stm/core.c
+> index b6445d9..86bb4e3 100644
+> --- a/drivers/hwtracing/stm/core.c
+> +++ b/drivers/hwtracing/stm/core.c
+> @@ -571,6 +571,17 @@ stm_char_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+>  						    options);
+>  
+>  		break;
+> +
+> +	case STP_GET_OPTIONS:
+> +		if (stm_data->get_options)
+> +			err = stm_data->get_options(stm_data,
+> +						    stmf->output.master,
+> +						    stmf->output.channel,
+> +						    stmf->output.nr_chans,
+> +						    &options);
+> +
+> +		return copy_to_user((void __user *)arg, &options, sizeof(u64));
 
-So why do we need this patch? If your STM only has master 42 allocated
-for software sources, simply set sw_start = 42, sw_end = 42 and you're
-good to go, software will have exactly one channel to choose from. See
-also the comment from <linux/stm.h>:
-
- * @sw_start:           first STP master available to software
- * @sw_end:             last STP master available to software
-
-particularly the "available to software" part. Any other kinds of
-masters the STM class code doesn't care about (yet).
-
-> In the core sw_start/end of masterID are set to '1',
-> i.e there is only one masterID to deal with.
-
-This is also a completely arbitrary and unnecessary requirement. Again,
-you can set both to 42 and it will still work.
-
-> Also this patch depends on [1], so that the number of masterID
-> is '1' too.
->
-> Finally the lower and upper bound for masterIDs as presented
-> in ($SYSFS)/class/stm/XYZ.stm/masters and
-> ($SYSFS)/../stp-policy/XYZ.stm.my_policy/some_device/masters
-> are set to '-1'.  That way users can't confuse them with
-> architecture where masterID management is required (where any
-> other value would be valid).
-
-Why is this a good idea? Having the actual master there will allow
-software to know what it is and also tell the decoding side what it is
-(assuming you have more than one source in the STP stream, it might not
-be easy to figure out, unless you know it in advance).
-
-I don't see how one master statically assigned to software sources is
-different from two masters or 32 masters. And I don't see any benefit of
-hiding the master id from userspace. Am I missing something?
+The return value of copy_to_user() is not what you assume it is.
 
 Regards,
 --
