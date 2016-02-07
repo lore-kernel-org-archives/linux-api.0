@@ -1,7 +1,7 @@
 From: Cristina Moraru <cristina.moraru09@gmail.com>
-Subject: [PATCH 4/5] iio: hmc5843: Fix comment style warnings
-Date: Mon,  8 Feb 2016 00:21:50 +0200
-Message-ID: <1454883711-15489-5-git-send-email-cristina.moraru09@gmail.com>
+Subject: [PATCH 3/5] iio: hmc5843: Add ABI documentation file for hmc5843
+Date: Mon,  8 Feb 2016 00:21:49 +0200
+Message-ID: <1454883711-15489-4-git-send-email-cristina.moraru09@gmail.com>
 References: <1454883711-15489-1-git-send-email-cristina.moraru09@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,66 +21,36 @@ To: jic23@kernel.org, knaack.h@gmx.de, lars@metafoo.de, pmeerw@pmeerw.net, gregk
 Cc: Cristina Moraru <cristina.moraru09@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Fix comment style warnings in order to comply with Coding Style
-standard provided by Documentation/CodingStyle.
-
-This patch solves following issue found with checkpatch:
-WARNING: Block comments use a trailing */ on a separate line
+Add ABI file documenting hmc5843 non-standard attributes
+meas_conf and meas_conf_available for bias current
+configuration.
 
 Signed-off-by: Cristina Moraru <cristina.moraru09@gmail.com>
 ---
- drivers/staging/iio/magnetometer/hmc5843.h     | 4 ++--
- drivers/staging/iio/magnetometer/hmc5843_i2c.c | 2 +-
- drivers/staging/iio/magnetometer/hmc5843_spi.c | 2 +-
- 3 files changed, 4 insertions(+), 4 deletions(-)
+ .../ABI/testing/sysfs-bus-iio-magnetometer-hmc5843        | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+ create mode 100644 Documentation/ABI/testing/sysfs-bus-iio-magnetometer-hmc5843
 
-diff --git a/drivers/staging/iio/magnetometer/hmc5843.h b/drivers/staging/iio/magnetometer/hmc5843.h
-index 06f35d3..cb284cf 100644
---- a/drivers/staging/iio/magnetometer/hmc5843.h
-+++ b/drivers/staging/iio/magnetometer/hmc5843.h
-@@ -8,7 +8,7 @@
-  * it under the terms of the GNU General Public License version 2 as
-  * published by the Free Software Foundation.
-  *
-- * */
-+ */
- 
- #ifndef HMC5843_CORE_H
- #define HMC5843_CORE_H
-@@ -38,7 +38,7 @@ enum hmc5843_ids {
-  * @regmap:		hardware access register maps
-  * @variant:		describe chip variants
-  * @buffer:		3x 16-bit channels + padding + 64-bit timestamp
-- **/
-+ */
- struct hmc5843_data {
- 	struct device *dev;
- 	struct mutex lock;
-diff --git a/drivers/staging/iio/magnetometer/hmc5843_i2c.c b/drivers/staging/iio/magnetometer/hmc5843_i2c.c
-index 3e06ceb..6f7b8fb 100644
---- a/drivers/staging/iio/magnetometer/hmc5843_i2c.c
-+++ b/drivers/staging/iio/magnetometer/hmc5843_i2c.c
-@@ -8,7 +8,7 @@
-  * it under the terms of the GNU General Public License version 2 as
-  * published by the Free Software Foundation.
-  *
-- * */
-+ */
- 
- #include <linux/module.h>
- #include <linux/i2c.h>
-diff --git a/drivers/staging/iio/magnetometer/hmc5843_spi.c b/drivers/staging/iio/magnetometer/hmc5843_spi.c
-index 1549192..85adcdd 100644
---- a/drivers/staging/iio/magnetometer/hmc5843_spi.c
-+++ b/drivers/staging/iio/magnetometer/hmc5843_spi.c
-@@ -7,7 +7,7 @@
-  * it under the terms of the GNU General Public License version 2 as
-  * published by the Free Software Foundation.
-  *
-- * */
-+ */
- 
- #include <linux/module.h>
- #include <linux/spi/spi.h>
+diff --git a/Documentation/ABI/testing/sysfs-bus-iio-magnetometer-hmc5843 b/Documentation/ABI/testing/sysfs-bus-iio-magnetometer-hmc5843
+new file mode 100644
+index 0000000..7c3fc4c
+--- /dev/null
++++ b/Documentation/ABI/testing/sysfs-bus-iio-magnetometer-hmc5843
+@@ -0,0 +1,15 @@
++What:           /sys/bus/iio/devices/iio:deviceX/meas_conf
++What:           /sys/bus/iio/devices/iio:deviceX/meas_conf_available
++KernelVersion:  4.3.0
++Contact:        linux-iio@vger.kernel.org
++Description:
++                Current configuration and available configurations
++		for the bias current.
++		0 - Normal measurement configurations (default)
++		1 - Positive bias configuration
++		2 - Negative bias configuration
++		3 - Only available on HMC5983. Disables magnetic
++		sensor and enables temperature sensor.
++		Note: The effect of this configuration may vary
++		according to the device. For exact documentation
++		check the device's datasheet.
 -- 
 1.9.1
