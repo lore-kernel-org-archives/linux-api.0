@@ -1,44 +1,51 @@
-From: Martin Steigerwald <martin@lichtvoll.de>
-Subject: Re: getrichacl(1) man page review comments
-Date: Sun, 07 Feb 2016 19:16:40 +0100
-Message-ID: <1505883.O2zQ69A2Zb@merkaba>
-References: <56B770B6.7040803@gmail.com> <56B77139.4080209@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <56B77139.4080209@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: Andreas Gruenbacher <agruenba@redhat.com>, "J. Bruce Fields" <bfields@fieldses.org>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, lkml <linux-kernel@vger.kernel.org>, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Dave Chinner <david@fromorbit.com>, Christoph Hellwig <hch@infradead.org>, Anna Schumaker <anna.schumaker@netapp.com>, Trond Myklebust <trond.myklebust@primarydata.com>, Jeff Layton <jlayton@poochiereds.net>, Andreas Dilger <adilger@dilger.ca>
+From: Cristina Moraru <cristina.moraru09-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH 0/5] iio: hmc5843: Fix issues and move out of staging
+Date: Mon,  8 Feb 2016 00:21:46 +0200
+Message-ID: <1454883711-15489-1-git-send-email-cristina.moraru09@gmail.com>
+Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, knaack.h-Mmb7MZpHnFY@public.gmane.org, lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org, pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, cristina.opriceana-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, marek-xXXSsgcRVICgSpxsJD1C4w@public.gmane.org, sdliyong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tolga.ceylan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, javier-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org, irina.tirdea-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, octavia.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
+Cc: Cristina Moraru <cristina.moraru09-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Am Sonntag, 7. Februar 2016, 17:30:49 CET schrieb Michael Kerrisk (man-=
-pages):
-> Hello Andreas,
->=20
-> Here, some comments on the getrichacl(1) page.
+Fix driver issues and add completions.
+Add custom attribute to display available values for bias
+current, add documentation for undocumented custom attributes,
+swap implementation of two functions that have been inversed,
+fix checkpatch warnings and, move the driver from the staging
+directory to drivers/iio/magnetometer updating corresponding
+Makefile and Kconfig files.
 
-I know that the command names are based on setfacl and getfacl. But som=
-etimes=20
-I still wonder about these names. They just don=C2=B4t fit.
+Cristina Moraru (5):
+  iio: hmc5843: Add attribute for available measurement config
+  iio: hmc5843: Swap suspend and resume implementations
+  iio: hmc5843: Add ABI documentation file for hmc5843
+  iio: hmc5843: Fix comment style warnings
+  iio: hmc5843: Move hmc5843 out of staging
 
-Its chsomething for changing things in Unix traditionally =E2=80=93 cho=
-wn, chmod,=20
-chattr, chage chsh, you name it =E2=80=93, but there is nothing for que=
-rying things.=20
-So I get where this is coming from, yet I always found setfacl and getf=
-acl=20
-command names cumbersome.
+ .../ABI/testing/sysfs-bus-iio-magnetometer-hmc5843 |  15 +
+ drivers/iio/magnetometer/Kconfig                   |  33 +
+ drivers/iio/magnetometer/Makefile                  |   4 +
+ drivers/iio/magnetometer/hmc5843.h                 |  66 ++
+ drivers/iio/magnetometer/hmc5843_core.c            | 693 +++++++++++++++++++++
+ drivers/iio/magnetometer/hmc5843_i2c.c             | 104 ++++
+ drivers/iio/magnetometer/hmc5843_spi.c             | 102 +++
+ drivers/staging/iio/magnetometer/Kconfig           |  32 -
+ drivers/staging/iio/magnetometer/Makefile          |   4 +-
+ drivers/staging/iio/magnetometer/hmc5843.h         |  66 --
+ drivers/staging/iio/magnetometer/hmc5843_core.c    | 646 -------------------
+ drivers/staging/iio/magnetometer/hmc5843_i2c.c     | 104 ----
+ drivers/staging/iio/magnetometer/hmc5843_spi.c     | 102 ---
+ 13 files changed, 1018 insertions(+), 953 deletions(-)
+ create mode 100644 Documentation/ABI/testing/sysfs-bus-iio-magnetometer-hmc5843
+ create mode 100644 drivers/iio/magnetometer/hmc5843.h
+ create mode 100644 drivers/iio/magnetometer/hmc5843_core.c
+ create mode 100644 drivers/iio/magnetometer/hmc5843_i2c.c
+ create mode 100644 drivers/iio/magnetometer/hmc5843_spi.c
+ delete mode 100644 drivers/staging/iio/magnetometer/hmc5843.h
+ delete mode 100644 drivers/staging/iio/magnetometer/hmc5843_core.c
+ delete mode 100644 drivers/staging/iio/magnetometer/hmc5843_i2c.c
+ delete mode 100644 drivers/staging/iio/magnetometer/hmc5843_spi.c
 
-Sorry, for posting here instead of a previous richacl implementation pa=
-tchset.=20
-I fully appreciate that it may be too late to change anything regarding=
-=20
-command names. Also considering usermod and groupmod the command naming=
- in=20
-Unix / Linux appears to be a big mess anyway.
-
-Thanks,
---=20
-Martin
+-- 
+1.9.1
