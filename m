@@ -1,21 +1,21 @@
 From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: RichACLs man-pages review
-Date: Sun, 7 Feb 2016 17:29:46 +0100
-Message-ID: <56B770FA.2050107@gmail.com>
+Subject: getrichacl(1) man page review comments
+Date: Sun, 7 Feb 2016 17:30:49 +0100
+Message-ID: <56B77139.4080209@gmail.com>
 References: <56B770B6.7040803@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <56B770B6.7040803-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 Hello Andreas,
 
-Here, some comments on the setrichacl(1) page.
+Here, some comments on the getrichacl(1) page.
 
 > .\"
 > .\" Richacl Manual Pages
@@ -41,13 +41,13 @@ Here, some comments on the setrichacl(1) page.
 > .\" License along with this manual.  If not, see
 > .\" <http://www.gnu.org/licenses/>.
 > .\"
-> .TH SETRICHACL 7 2015-09-01 "Linux" "Rich Access Control Lists"
+> .TH GETRICHACL 7 2015-09-01 "Linux" "Rich Access Control Lists"
 >=20
 > .SH NAME
-> setrichacl \- Set Rich Access Control Lists
+> getrichacl \- Get Rich Access Control Lists
 >=20
 > .SH SYNOPSIS
-> .B setrichacl
+> .B getrichacl
 > .RI [ OPTION "]... [" FILE ]...
 
 In man-pages, at least, the convention is to use lower case for these
@@ -55,137 +55,172 @@ pieces (and thus through the remainder of the page), so:
 
 > .RI [ option "]... [" file ]...
 
->=20
 > .SH DESCRIPTION
-> The setrichacl utility sets or modifies Rich Access Control Lists (ri=
-chacls) of
+> For each file, getrichacl displays the file name and Rich Access Cont=
+rol List
 
-=2EBR setrichacl
+=46or man-pages, at least, the convention is that the references to the
+function/command name explained in the page are bold, do:
 
-> files and directories.
+=2EBR getrichacl
+
+> (richacl).
+
+=46or what it's worth, I think it would be worthwhile to start with
+a consistent abbreviation comment here (and use it throughout all of th=
+e
+man pages): "RichACL" (or "richACL"), rather than "richacl"; that seems
+more consistent with the traditional abbreviation "ACL".
+
 >=20
-> The
-> .B \-m
-> and
-> .B \-s
-> options expect an ACL or parts of an ACL on the command line. The
-> .B \-M
-> and
-> .B \-S
-> options read an ACL or parts of an ACL from a file. In either case, t=
-he entry
-> format is described in section
-> .I TEXT FORM
-> of the richacl(7) manual page. The single-letter or long forms of fla=
-gs and
+> By default, getrichacl displays the effective permissions remaining a=
+fter
+
+=2EBR getrichacl
+
+> applying the file masks to the ACL.  The file masks and underlying NF=
+Sv4 ACL
+> can be displayed with the \-\-raw option.
+
+Use
+=2EBR \-\-raw
+
+>=20
+> The output format of getrichacl is as follows:
+
+=2EBR getrichacl
+
+> .fam C
+> .RS
+> .nf
+>  1:  file:
+>  2:      flags:a
+>  3:      owner:rwp-------------::mask
+>  4:      group:r-p-------------::mask
+>  5:      other:r---------------::mask
+>  6:     owner@:rwp-------------::allow
+>  7:   user:foo:r-p-------------::allow
+>  8:     group@:r-p-------------::allow
+>  9:  group:bar:r-p-------------::allow
+> 10:  everyone@:r---------------::allow
+> 11:
+> .fi
+> .RE
+> .fam T
+>=20
+> Line 1 contains the file name, followed by a colon.
+>=20
+> Line 2 contains the ACL flags. This line is omitted if no flags are s=
+et.
+>=20
+> Lines 3--5 indicate the owner, group, and other file masks, which are=
+ only
+> shown if the \-\-raw option is specified.
+>=20
+> Lines 6--10 indicate different ACL entries for the file owner
+> .RB ( owner@ ),
+> user foo, the owning group
+> .RB ( group@ ),
+> group bar, and for everyone
+
+=2EIR bar ,
+
+> .RB ( everyone@ ).
+>=20
+> A blank line follows at the end.
+>=20
+> By default, getrichacl displays the the single-letter forms of flags =
+and
+
+=2EBR getrichacl
+
+s/the the/the/
+
+> permissions, the identifiers of ACL entryies are right justified, the
+
+s/entryies/entries/
+
+> permissions are vertically aligned, and permissions which are always
+> granted
+> .RB ( read_attributes ", " read_acl ", " synchronize )
+> are omitted. See the richacl(7) manual page for the defined flags and
 
 Use
 =2EBR richachl (7)
 for page cross references.
 
-> permissions can be mixed arbitrarily. Multiple entries are separated =
-by
-> whitespace, newlines or commas.
+> permissions.
 >=20
-> Note that the order of ACL entries matters, and that changing the ord=
-er may
-> grant different permissions.
->=20
-> The use of
-> .B deny
-> entries is discouraged. If
-> .B deny
-> entries are used, they should be placed ahead of
-> .B allow
-> entries for improved interoperability with Windows where possible.
->=20
-> When the file masks are not specified, they are computed automaticall=
-y.
->=20
-> When the ACL to be set is simple enough that the traditional file per=
-mission
-> bits can express the same permissions, setrichacl instead only sets t=
-he file
+> When getrichacl is used on a file that does not have a richacl or on =
+a
 
-=2EBR setrichacl
+=2EBR getrichacl
 
-> permission bits. Minor differences that do not have an influence on t=
-he
-> permissions granted by the acl are not preserved.  When setrichacl's
+> filesystem that does not support richacls, getrichacl displays the ac=
+cess
 
-s/acl/ACL/
+=2EBR getrichacl
 
-=2EBR setrichacl 's
+> permissions defined by the traditional file permission bits as a rich=
+acl. When
+> getrichacl is used on a file that has a POSIX ACL, it prints an error=
+ message.
 
-> counterpart utility, getrichacl, is used on a file or directory that =
-does not
+=2EBR getrichacl
 
-=2EBR getrichacl ,
+And then:
 
-> have a richacl, it displays the access permissions defined by the fil=
-e
-> permission bits as a richacl.
->=20
-> .SS Permissions
->=20
-> Setting ACLs or changing the file permission bits is allowed to the f=
-ile owner,
-> to processes which have the write_acl permission, and to processes wh=
-ich have
-
-=2EB write_acl
-
-> the CAP_FOWNER capability.
-
-=2EB CAP_FOWNER
-
+[...] has a POSIX ACL (see
+=2EBR acl (7)), it prints [...]
 >=20
 > .SH OPTIONS
 > .TP
-> \-\-\fBmodify\fR \fIacl\fR, \fB\-m\fR \fIacl\fR
-> Modify the ACL of \fIFILE\fR by replacing existing entries with the e=
-ntries in
-> \fIacl\fR, and adding all new entries. When the permissions of an ent=
-ry are
-> empty, remove the entry.
+> \fB\-\-long\fR, \fB\-l\fR
+> Display access masks and flags in their long form.
 > .TP
-> \fB\-\-modify\-file\fR \fIacl_file\fR, \fB\-M\fR \fIacl_file\fR
-> Identical to \-\-modify, but read the ACL from \fIacl_file\fR instead=
-=2E If the
-
-=2EB \-\-modify
-
-> file is \(lq\-\(rq, read from standard input.
+> \fB\-\-full\fR
+> Also show permissions which are always implicitly allowed.
 > .TP
-> \fB\-\-set\fR \fIacl\fR, \fB\-s\fR \fIacl\fR
-> Set the ACL of \fIFILE\fR to \fIacl\fR. Any previous ACL is replaced.
-> ACL entries are separated by whitespace, newlines, or commas.
-> .TP
-> \fB\-\-set\-file\fR \fIacl_file\fR, \fB\-S\fR \fIacl_file\fR
-> Identical to \-\-set, but read the ACL from \fIacl_file\fR instead. I=
-f the
+> \fB\-\-raw\fR
+> Show acls as stored on the file system including the file masks. Impl=
+ies
 
-=2EBR \-\-set ,
+s/axls/ACLs/
 
-> file is \(lq\-\(rq, read from standard input.
+> \fB\-\-full\fR.
 > .TP
-> \fB\-\-remove\fR, \fB\-b\fR
-> Remove all extended permissions and revert to the file permission bit=
-s only.
+> \fB\-\-unaligned\fR
+> Do not align ACL entries or pad missing permissions with '-'.
+> .TP
+> \fB\-\-numeric-ids\fR
+> Display numeric user and group IDs instead of names.
+> .TP
+> \fB\-\-access\fR [=3D\fIuser\fR[:\fIgroup\fR:...]}, \fB\-a\fR[\fIuser=
+\fR[:\fIgroup\fR:...]}
+> Instead of the ACL, show which permissions the caller or a specified =
+user has
+
+"caller"? "the user running the command, "
+
+> for file(s).  When a list of groups is given, this overrides the grou=
+ps the
+
+s/file(s)/specified file(s)/
+
+> user is in.
+
+The preceding text is not very clear.
+
 > .TP
 > \fB\-\-version\fR, \fB\-v\fR
-> Display the version of setrichacl and exit.
+> Display the version of getrichacl and exit.
 
-=2EBR setrichacl
+=2EBR getrichacl
 
 > .TP
 > \fB\-\-help\fR, \fB\-h\fR
 > Display command-line usage help text.
 >=20
-> .\" .SH EXAMPLES
-
-Yes please!
-
 > .SH AUTHOR
 > Written by Andreas Gr=C3=BCnbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>.
 >=20
@@ -196,7 +231,7 @@ above address.
 > Rich Access Control Lists are Linux-specific.
 >=20
 > .SH SEE ALSO
-> .BR getrichacl (1),
+> .BR setrichacl (1),
 > .BR richacl (7)
 
 Cheers,
@@ -204,8 +239,11 @@ Cheers,
 Michael
 
 
-
 --=20
 Michael Kerrisk
 Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
 Linux/UNIX System Programming Training: http://man7.org/training/
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
