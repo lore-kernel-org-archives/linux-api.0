@@ -1,8 +1,7 @@
 From: Cristina Moraru <cristina.moraru09@gmail.com>
-Subject: [PATCH 1/5] iio: hmc5843: Add attribute for available measurement
- config
-Date: Mon,  8 Feb 2016 00:21:47 +0200
-Message-ID: <1454883711-15489-2-git-send-email-cristina.moraru09@gmail.com>
+Subject: [PATCH 4/5] iio: hmc5843: Fix comment style warnings
+Date: Mon,  8 Feb 2016 00:21:50 +0200
+Message-ID: <1454883711-15489-5-git-send-email-cristina.moraru09@gmail.com>
 References: <1454883711-15489-1-git-send-email-cristina.moraru09@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,180 +21,66 @@ To: jic23@kernel.org, knaack.h@gmx.de, lars@metafoo.de, pmeerw@pmeerw.net, gregk
 Cc: Cristina Moraru <cristina.moraru09@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Add static attribute meas_conf_available to show available
-configurations for the bias current.
+Fix comment style warnings in order to comply with Coding Style
+standard provided by Documentation/CodingStyle.
 
-API for setting bias measurement configuration:
-
-0 - Normal measurement configuration (default): In normal measurement
-    configuration the device follows normal measurement flow. Pins BP
-    and BN are left floating and high impedance.
-
-1 - Positive bias configuration: In positive bias configuration, a
-    positive current is forced across the resistive load on pins BP
-    and BN.
-
-2 - Negative bias configuration. In negative bias configuration, a
-    negative current is forced across the resistive load on pins BP
-    and BN.
-
-3 - Only available on HMC5983. Magnetic sensor is disabled.
-    Temperature sensor is enabled.
+This patch solves following issue found with checkpatch:
+WARNING: Block comments use a trailing */ on a separate line
 
 Signed-off-by: Cristina Moraru <cristina.moraru09@gmail.com>
 ---
- drivers/staging/iio/magnetometer/hmc5843_core.c | 83 +++++++++++++++++++------
- 1 file changed, 65 insertions(+), 18 deletions(-)
+ drivers/staging/iio/magnetometer/hmc5843.h     | 4 ++--
+ drivers/staging/iio/magnetometer/hmc5843_i2c.c | 2 +-
+ drivers/staging/iio/magnetometer/hmc5843_spi.c | 2 +-
+ 3 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/staging/iio/magnetometer/hmc5843_core.c b/drivers/staging/iio/magnetometer/hmc5843_core.c
-index 4aab022..4e2a7ec 100644
---- a/drivers/staging/iio/magnetometer/hmc5843_core.c
-+++ b/drivers/staging/iio/magnetometer/hmc5843_core.c
-@@ -66,6 +66,34 @@
- #define HMC5843_MEAS_CONF_NEGATIVE_BIAS		0x02
- #define HMC5843_MEAS_CONF_MASK			0x03
- 
-+/*
-+ * API for setting the measurement configuration to
-+ * Normal, Positive bias and Negative bias
-+ *
-+ * From the datasheet:
-+ * 0 - Normal measurement configuration (default): In normal measurement
-+ *     configuration the device follows normal measurement flow. Pins BP
-+ *     and BN are left floating and high impedance.
-+ *
-+ * 1 - Positive bias configuration: In positive bias configuration, a
-+ *     positive current is forced across the resistive load on pins BP
-+ *     and BN.
-+ *
-+ * 2 - Negative bias configuration. In negative bias configuration, a
-+ *     negative current is forced across the resistive load on pins BP
-+ *     and BN.
-+ *
-+ * 3 - Only available on HMC5983. Magnetic sensor is disabled.
-+ *     Temperature sensor is enabled.
+diff --git a/drivers/staging/iio/magnetometer/hmc5843.h b/drivers/staging/iio/magnetometer/hmc5843.h
+index 06f35d3..cb284cf 100644
+--- a/drivers/staging/iio/magnetometer/hmc5843.h
++++ b/drivers/staging/iio/magnetometer/hmc5843.h
+@@ -8,7 +8,7 @@
+  * it under the terms of the GNU General Public License version 2 as
+  * published by the Free Software Foundation.
+  *
+- * */
 + */
-+static const int hmc5843_regval_to_meas_conf[] = {
-+	0, 1, 2
-+};
-+
-+static const int hmc5983_regval_to_meas_conf[] = {
-+	0, 1, 2, 3
-+};
-+
- /* Scaling factors: 10000000/Gain */
- static const int hmc5843_regval_to_nanoscale[] = {
- 	6173, 7692, 10309, 12821, 18868, 21739, 25641, 35714
-@@ -109,6 +137,8 @@ static const int hmc5983_regval_to_samp_freq[][2] = {
- /* Describe chip variants */
- struct hmc5843_chip_info {
- 	const struct iio_chan_spec *channels;
-+	const int *regval_to_meas_conf;
-+	const int n_regval_to_meas_conf;
- 	const int (*regval_to_samp_freq)[2];
- 	const int n_regval_to_samp_freq;
- 	const int *regval_to_nanoscale;
-@@ -174,24 +204,6 @@ static int hmc5843_read_measurement(struct hmc5843_data *data,
- 	return IIO_VAL_INT;
- }
  
--/*
-- * API for setting the measurement configuration to
-- * Normal, Positive bias and Negative bias
-- *
-- * From the datasheet:
-- * 0 - Normal measurement configuration (default): In normal measurement
-- *     configuration the device follows normal measurement flow. Pins BP
-- *     and BN are left floating and high impedance.
-- *
-- * 1 - Positive bias configuration: In positive bias configuration, a
-- *     positive current is forced across the resistive load on pins BP
-- *     and BN.
-- *
-- * 2 - Negative bias configuration. In negative bias configuration, a
-- *     negative current is forced across the resistive load on pins BP
-- *     and BN.
-- *
-- */
- static int hmc5843_set_meas_conf(struct hmc5843_data *data, u8 meas_conf)
- {
- 	int ret;
-@@ -248,6 +260,28 @@ static IIO_DEVICE_ATTR(meas_conf,
- 			hmc5843_set_measurement_configuration,
- 			0);
+ #ifndef HMC5843_CORE_H
+ #define HMC5843_CORE_H
+@@ -38,7 +38,7 @@ enum hmc5843_ids {
+  * @regmap:		hardware access register maps
+  * @variant:		describe chip variants
+  * @buffer:		3x 16-bit channels + padding + 64-bit timestamp
+- **/
++ */
+ struct hmc5843_data {
+ 	struct device *dev;
+ 	struct mutex lock;
+diff --git a/drivers/staging/iio/magnetometer/hmc5843_i2c.c b/drivers/staging/iio/magnetometer/hmc5843_i2c.c
+index 3e06ceb..6f7b8fb 100644
+--- a/drivers/staging/iio/magnetometer/hmc5843_i2c.c
++++ b/drivers/staging/iio/magnetometer/hmc5843_i2c.c
+@@ -8,7 +8,7 @@
+  * it under the terms of the GNU General Public License version 2 as
+  * published by the Free Software Foundation.
+  *
+- * */
++ */
  
-+static ssize_t hmc5843_show_meas_conf_avail(struct device *dev,
-+					    struct device_attribute *attr,
-+					    char *buf)
-+{
-+	struct hmc5843_data *data = iio_priv(dev_to_iio_dev(dev));
-+
-+	size_t len = 0;
-+	int i;
-+
-+	for (i = 0; i < data->variant->n_regval_to_meas_conf; i++)
-+		len += scnprintf(buf + len, PAGE_SIZE - len,
-+			"%d ", data->variant->regval_to_meas_conf[i]);
-+
-+	/* replace trailing space by newline */
-+	buf[len - 1] = '\n';
-+
-+	return len;
-+}
-+
-+static IIO_DEVICE_ATTR(meas_conf_available, S_IRUGO,
-+	hmc5843_show_meas_conf_avail, NULL, 0);
-+
- static
- ssize_t hmc5843_show_samp_freq_avail(struct device *dev,
- 				     struct device_attribute *attr, char *buf)
-@@ -478,6 +512,7 @@ static const struct iio_chan_spec hmc5883_channels[] = {
+ #include <linux/module.h>
+ #include <linux/i2c.h>
+diff --git a/drivers/staging/iio/magnetometer/hmc5843_spi.c b/drivers/staging/iio/magnetometer/hmc5843_spi.c
+index 1549192..85adcdd 100644
+--- a/drivers/staging/iio/magnetometer/hmc5843_spi.c
++++ b/drivers/staging/iio/magnetometer/hmc5843_spi.c
+@@ -7,7 +7,7 @@
+  * it under the terms of the GNU General Public License version 2 as
+  * published by the Free Software Foundation.
+  *
+- * */
++ */
  
- static struct attribute *hmc5843_attributes[] = {
- 	&iio_dev_attr_meas_conf.dev_attr.attr,
-+	&iio_dev_attr_meas_conf_available.dev_attr.attr,
- 	&iio_dev_attr_scale_available.dev_attr.attr,
- 	&iio_dev_attr_sampling_frequency_available.dev_attr.attr,
- 	NULL
-@@ -490,6 +525,9 @@ static const struct attribute_group hmc5843_group = {
- static const struct hmc5843_chip_info hmc5843_chip_info_tbl[] = {
- 	[HMC5843_ID] = {
- 		.channels = hmc5843_channels,
-+		.regval_to_meas_conf = hmc5843_regval_to_meas_conf,
-+		.n_regval_to_meas_conf =
-+				ARRAY_SIZE(hmc5843_regval_to_meas_conf),
- 		.regval_to_samp_freq = hmc5843_regval_to_samp_freq,
- 		.n_regval_to_samp_freq =
- 				ARRAY_SIZE(hmc5843_regval_to_samp_freq),
-@@ -499,6 +537,9 @@ static const struct hmc5843_chip_info hmc5843_chip_info_tbl[] = {
- 	},
- 	[HMC5883_ID] = {
- 		.channels = hmc5883_channels,
-+		.regval_to_meas_conf = hmc5843_regval_to_meas_conf,
-+		.n_regval_to_meas_conf =
-+				ARRAY_SIZE(hmc5843_regval_to_meas_conf),
- 		.regval_to_samp_freq = hmc5883_regval_to_samp_freq,
- 		.n_regval_to_samp_freq =
- 				ARRAY_SIZE(hmc5883_regval_to_samp_freq),
-@@ -508,6 +549,9 @@ static const struct hmc5843_chip_info hmc5843_chip_info_tbl[] = {
- 	},
- 	[HMC5883L_ID] = {
- 		.channels = hmc5883_channels,
-+		.regval_to_meas_conf = hmc5843_regval_to_meas_conf,
-+		.n_regval_to_meas_conf =
-+				ARRAY_SIZE(hmc5843_regval_to_meas_conf),
- 		.regval_to_samp_freq = hmc5883_regval_to_samp_freq,
- 		.n_regval_to_samp_freq =
- 				ARRAY_SIZE(hmc5883_regval_to_samp_freq),
-@@ -517,6 +561,9 @@ static const struct hmc5843_chip_info hmc5843_chip_info_tbl[] = {
- 	},
- 	[HMC5983_ID] = {
- 		.channels = hmc5883_channels,
-+		.regval_to_meas_conf = hmc5983_regval_to_meas_conf,
-+		.n_regval_to_meas_conf =
-+				ARRAY_SIZE(hmc5983_regval_to_meas_conf),
- 		.regval_to_samp_freq = hmc5983_regval_to_samp_freq,
- 		.n_regval_to_samp_freq =
- 				ARRAY_SIZE(hmc5983_regval_to_samp_freq),
+ #include <linux/module.h>
+ #include <linux/spi/spi.h>
 -- 
 1.9.1
