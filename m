@@ -1,127 +1,67 @@
-From: Julian Calaby <julian.calaby@gmail.com>
-Subject: Re: [PATCH 8/9] rfkill: Userspace control for airplane mode
-Date: Tue, 9 Feb 2016 09:53:06 +1100
-Message-ID: <CAGRGNgVuwrh5unUoQ0P+ow55ChOQ+qsRRjfD1bb7DC6PcrCO2g@mail.gmail.com>
-References: <1454946096-9752-1-git-send-email-jprvita@endlessm.com> <1454946096-9752-9-git-send-email-jprvita@endlessm.com>
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [PATCH net-next v7 01/19] lib/bitmap.c: conversion routines
+ to/from u32 array
+Date: Mon, 8 Feb 2016 15:36:35 -0800
+Message-ID: <20160208153635.67df5ac2576138088a859087@linux-foundation.org>
+References: <1454893743-6285-1-git-send-email-ddecotig@gmail.com>
+	<1454893743-6285-2-git-send-email-ddecotig@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1454946096-9752-9-git-send-email-jprvita@endlessm.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: =?UTF-8?Q?Jo=C3=A3o_Paulo_Rechi_Vita?= <jprvita@gmail.com>
-Cc: Johannes Berg <johannes@sipsolutions.net>, "David S. Miller" <davem@davemloft.net>, Darren Hart <dvhart@infradead.org>, linux-wireless <linux-wireless@vger.kernel.org>, netdev <netdev@vger.kernel.org>, platform-driver-x86@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux@endlessm.com, =?UTF-8?Q?Jo=C3=A3o_Paulo_Rechi_Vita?= <jprvita@endlessm.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1454893743-6285-2-git-send-email-ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Decotigny <ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, fcoe-devel-s9riP+hp16TNLxjTenLetw@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eugenia Emantayev <eugenia-VPRAkNaXOzVS1MOuV/RT9w@public.gmane.org>, Or Gerlitz <ogerlitz-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Ido Shamay <idos-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Saeed Mahameed <saeedm-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Govindarajulu Varadarajan <_govind-KK0ffGbhmjU@public.gmane.org>, Venkata Duvvuru <VenkatKumar.Duvvuru-iH1Dq9VlAzfQT0dZR+AlfA@public.gmane.org>, Jeff Kirsher <jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Pravin B Shelar <pshelar-l0M0P4e3n4LQT0dZR+AlfA@public.gmane.org>, Ed Swierk <eswierk-FilZDy9cOaHkQYj/0HfcvtBPR1lH4CV8@public.gmane.org>, Robert Love <robert.w.love-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "James E.J. Bottomley" <JBottomley-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Yuval Mintz <Yuval.Mintz-h88ZbnxC6KDQT0dZR+AlfA@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, David Decotigny <decot@googlers>
 List-Id: linux-api@vger.kernel.org
 
-Hi Jo=C3=A3o,
+On Sun,  7 Feb 2016 17:08:45 -0800 David Decotigny <ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
 
-On Tue, Feb 9, 2016 at 2:41 AM, Jo=C3=A3o Paulo Rechi Vita <jprvita@gma=
-il.com> wrote:
-> Provide an interface for the airplane-mode indicator be controlled fr=
-om
-> userspace. User has to first acquire the control through
-> RFKILL_OP_AIRPLANE_MODE_ACQUIRE and keep the fd open for the whole ti=
-me
-> it wants to be in control of the indicator. Closing the fd or using
-> RFKILL_OP_AIRPLANE_MODE_RELEASE restores the default policy.
->
-> To change state of the indicator, the RFKILL_OP_AIRPLANE_MODE_CHANGE
-> operation is used, passing the value on "struct rfkill_event.soft". I=
-f
-> the caller has not acquired the airplane-mode control beforehand, the
-> operation fails.
->
-> Signed-off-by: Jo=C3=A3o Paulo Rechi Vita <jprvita@endlessm.com>
-> ---
->  Documentation/rfkill.txt    | 10 ++++++++++
->  include/uapi/linux/rfkill.h |  3 +++
->  net/rfkill/core.c           | 47 +++++++++++++++++++++++++++++++++++=
-+++++++---
->  3 files changed, 57 insertions(+), 3 deletions(-)
->
-> diff --git a/net/rfkill/core.c b/net/rfkill/core.c
-> index fb11547..8067701 100644
-> --- a/net/rfkill/core.c
-> +++ b/net/rfkill/core.c
-> @@ -1207,6 +1210,34 @@ static ssize_t rfkill_fop_write(struct file *f=
-ile, const char __user *buf,
->
->         mutex_lock(&rfkill_global_mutex);
->
-> +       if (ev.op =3D=3D RFKILL_OP_AIRPLANE_MODE_ACQUIRE) {
-> +               if (rfkill_apm_owned && !data->is_apm_owner) {
-> +                       count =3D -EACCES;
-> +               } else {
-> +                       rfkill_apm_owned =3D true;
-> +                       data->is_apm_owner =3D true;
-> +               }
-> +       }
-> +
-> +       if (ev.op =3D=3D RFKILL_OP_AIRPLANE_MODE_RELEASE) {
-> +               if (rfkill_apm_owned && !data->is_apm_owner) {
+> From: David Decotigny <decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org>
+> 
+> Aimed at transferring bitmaps to/from user-space in a 32/64-bit agnostic
+> way.
+> 
+> Tested:
+>   unit tests (next patch) on qemu i386, x86_64, ppc, ppc64 BE and LE,
+>   ARM.
+> 
+> @@ -1060,6 +1062,90 @@ int bitmap_allocate_region(unsigned long *bitmap, unsigned int pos, int order)
+>  EXPORT_SYMBOL(bitmap_allocate_region);
+>  
+>  /**
+> + * bitmap_from_u32array - copy the contents of a u32 array of bits to bitmap
+> + *	@bitmap: array of unsigned longs, the destination bitmap, non NULL
+> + *	@nbits: number of bits in @bitmap
+> + *	@buf: array of u32 (in host byte order), the source bitmap, non NULL
+> + *	@nwords: number of u32 words in @buf
+> + *
+> + * copy min(nbits, 32*nwords) bits from @buf to @bitmap, remaining
+> + * bits between nword and nbits in @bitmap (if any) are cleared. In
+> + * last word of @bitmap, the bits beyond nbits (if any) are kept
+> + * unchanged.
+> + */
 
-Are you sure this is correct?
+This will leave the caller not knowing how many valid bits are actually
+present in the resulting bitmap.  To determine that, the caller will
+need to perform (duplicated) math on `nbits' and `nwords'.
 
-In the case that airplane mode isn't owned, the
-rfkill_apm_led_trigger_event() call will be a noop, so we should
-arguably not be calling it.
+> +void bitmap_from_u32array(unsigned long *bitmap, unsigned int nbits,
+> +			  const u32 *buf, unsigned int nwords)
 
-Also, should we just fail silently if we're not the owner? I.e. what
-does userspace learn from this op failing and is that useful?
+So how about we make this return the number of valid bits in *bitmap?
 
-> +                       count =3D -EACCES;
-> +               } else {
-> +                       bool state =3D rfkill_global_states[RFKILL_TY=
-PE_ALL].cur;
-> +
-> +                       rfkill_apm_owned =3D false;
-> +                       data->is_apm_owner =3D false;
-> +                       rfkill_apm_led_trigger_event(state);
-> +               }
-> +       }
-> +
-> +       if (ev.op =3D=3D RFKILL_OP_AIRPLANE_MODE_CHANGE) {
-> +               if (rfkill_apm_owned && data->is_apm_owner)
-> +                       rfkill_apm_led_trigger_event(ev.soft);
-> +               else
-> +                       count =3D -EACCES;
-> +       }
-> +
->         if (ev.op =3D=3D RFKILL_OP_CHANGE_ALL)
->                 rfkill_update_global_state(ev.type, ev.soft);
->
-> @@ -1230,7 +1261,17 @@ static int rfkill_fop_release(struct inode *in=
-ode, struct file *file)
->         struct rfkill_int_event *ev, *tmp;
->
->         mutex_lock(&rfkill_global_mutex);
-> +
-> +       if (data->is_apm_owner) {
-> +               bool state =3D rfkill_global_states[RFKILL_TYPE_ALL].=
-cur;
-> +
-> +               rfkill_apm_owned =3D false;
-> +               data->is_apm_owner =3D false;
-> +               rfkill_apm_led_trigger_event(state);
+> +/**
+> + * bitmap_to_u32array - copy the contents of bitmap to a u32 array of bits
+> + *	@buf: array of u32 (in host byte order), the dest bitmap, non NULL
+> + *	@nwords: number of u32 words in @buf
+> + *	@bitmap: array of unsigned longs, the source bitmap, non NULL
+> + *	@nbits: number of bits in @bitmap
+> + *
+> + * copy min(nbits, 32*nwords) bits from @bitmap to @buf. Remaining
+> + * bits after nbits in @buf (if any) are cleared.
+> + */
+> +void bitmap_to_u32array(u32 *buf, unsigned int nwords,
+> +			const unsigned long *bitmap, unsigned int nbits)
 
-Also, this code is duplicated from the _RELEASE op above. Would it
-make sense to factor it out into a separate function?
-
-> +       }
-> +
->         list_del(&data->list);
-> +
-
-(extra line)
-
->         mutex_unlock(&rfkill_global_mutex);
->
->         mutex_destroy(&data->mtx);
-
-Thanks,
-
---=20
-Julian Calaby
-
-Email: julian.calaby@gmail.com
-Profile: http://www.google.com/profiles/julian.calaby/
+Ditto.
