@@ -1,56 +1,46 @@
-From: =?UTF-8?Q?Jo=C3=A3o_Paulo_Rechi_Vita?= <jprvita@gmail.com>
-Subject: Re: [PATCH 8/9] rfkill: Userspace control for airplane mode
-Date: Mon, 8 Feb 2016 12:22:32 -0500
-Message-ID: <CA+A7VXVrbixa+DqiOfzuBkCTVy+f0GOTqiMqXs1sekXu1Q7ekQ@mail.gmail.com>
-References: <1454946096-9752-1-git-send-email-jprvita@endlessm.com>
- <1454946096-9752-9-git-send-email-jprvita@endlessm.com> <1454947887.5325.8.camel@redhat.com>
+From: Al Grant <Al.Grant-5wv7dgnIgG8@public.gmane.org>
+Subject: RE: [PATCH V2 3/6] stm class: provision for statically assigned
+ masterIDs
+Date: Mon, 8 Feb 2016 17:44:49 +0000
+Message-ID: <AM4PR08MB0785EAA2B628765D7EA3FDA086D50@AM4PR08MB0785.eurprd08.prod.outlook.com>
+References: <1454487337-30184-1-git-send-email-zhang.chunyan@linaro.org>
+	<1454487337-30184-4-git-send-email-zhang.chunyan@linaro.org>
+	<87mvrf5ngl.fsf@ashishki-desk.ger.corp.intel.com>
+	<CANLsYky2twQ98u241YyHD=atYRp1N56YVHUQNY2E2Ljsq0cseA@mail.gmail.com>
+	<87twlj49k7.fsf@ashishki-desk.ger.corp.intel.com>
+ <CANLsYkw=mG+ch8QzxmbwWs9o+mndVNo1MuqXcrPrNJYj_SQcHQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <platform-driver-x86-owner@vger.kernel.org>
-In-Reply-To: <1454947887.5325.8.camel@redhat.com>
-Sender: platform-driver-x86-owner@vger.kernel.org
-To: Dan Williams <dcbw@redhat.com>
-Cc: Johannes Berg <johannes@sipsolutions.net>, "David S. Miller" <davem@davemloft.net>, Darren Hart <dvhart@infradead.org>, linux-wireless <linux-wireless@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, platform-driver-x86@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux@endlessm.com, =?UTF-8?Q?Jo=C3=A3o_Paulo_Rechi_Vita?= <jprvita@endlessm.com>
+Content-Transfer-Encoding: base64
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CANLsYkw=mG+ch8QzxmbwWs9o+mndVNo1MuqXcrPrNJYj_SQcHQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Alexander Shishkin <alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pratik Patel <pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Nicolas GUION <nicolas.guion-qxv4g6HH51o@public.gmane.org>, Jon Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Mark Rutland <Mark.Rutland-5wv7dgnIgG8@public.gmane.org>, Mike Leach <Mike.Leach-5wv7dgnIgG8@public.gmane.org>, "Jeremiassen, Tor" <tor-l0cyMroinI0@public.gmane.org>, Lyra Zhang <zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 8 February 2016 at 11:11, Dan Williams <dcbw@redhat.com> wrote:
-> On Mon, 2016-02-08 at 10:41 -0500, Jo=C3=A3o Paulo Rechi Vita wrote:
->> Provide an interface for the airplane-mode indicator be controlled
->> from
->> userspace. User has to first acquire the control through
->> RFKILL_OP_AIRPLANE_MODE_ACQUIRE and keep the fd open for the whole
->> time
->> it wants to be in control of the indicator. Closing the fd or using
->> RFKILL_OP_AIRPLANE_MODE_RELEASE restores the default policy.
->>
->> To change state of the indicator, the RFKILL_OP_AIRPLANE_MODE_CHANGE
->> operation is used, passing the value on "struct rfkill_event.soft".
->> If
->> the caller has not acquired the airplane-mode control beforehand, th=
-e
->> operation fails.
->
-> I'd like to clarify a bit, so tell me if I'm correct or not.  Using
-> RFKILL_OP_AIRPLANE_MODE_CHANGE does not actually change any device
-> state. It's just an indicator with no relationship to any of the
-> registered rfkill switches, right?
->
-
-Yes, that's correct, and it is the intended behavior.
-
-> I wonder if setting RFKILL_OP_AIRPLANE_MODE_CHANGE(true) shouldn't al=
-so
-> softblock all switches, otherwise you can set airplane mode all day
-> long with RFKILL_OP_AIRPLANE_MODE_CHANGE and it doesn't actually enab=
-le
-> airplane mode at all?
->
-
-The idea behind it is to just provide the mechanism for userspace to
-decide what exactly being in airplane mode means, so it would
-set/unset the indicator in the right moment.
-
---
-Jo=C3=A3o Paulo Rechi Vita
-http://about.me/jprvita
+PiBNaWtlIGRpZCB3cml0ZSAibWFzdGVyIElEcyBhcmUgaGFyZHdpcmVkIHRvIGluZGl2aWR1YWwg
+Y29yZXMgYW5kIGNvcmUgc2VjdXJpdHkNCj4gc3RhdGVzIiwgd2hpY2ggbWFrZSBhc3NpZ25tZW50
+IGZvciBvbmUgcGxhdGZvcm0gdmVyeSBzdGF0aWMuDQo+IE9uIHRoZSBmbGlwIHNpZGUgdGhvc2Ug
+d2lsbCBjaGFuZ2UgZnJvbSBvbmUgc3lzdGVtIHRvIGFub3RoZXIuDQoNCkl0IGRlcGVuZHMgb24g
+eW91ciBwZXJzcGVjdGl2ZS4gIEZyb20gdGhlIHBlcnNwZWN0aXZlIG9mIGEgdXNlcnNwYWNlDQpw
+cm9jZXNzIG5vdCBwaW5uZWQgdG8gYSBjb3JlLCB0aGUgbWFzdGVyIGlkIHdpbGwgYXBwZWFyIHRv
+IHZhcnkNCmR5bmFtaWNhbGx5IGFuZCB1bnByZWRpY3RhYmx5IGFzIHRoZSB0aHJlYWQgbWlncmF0
+ZXMgZnJvbSBvbmUNCmNvcmUgdG8gYW5vdGhlci4gIChUaGF0J3MgYWN0dWFsbHkgdXNlZnVsIGlm
+IHRoZSBkZWNvZGVyIHdhbnRzIHRvIGtub3cNCndoZXJlIHRoZSB0aHJlYWQgaXMgcnVubmluZyBh
+dCBhbnkgZ2l2ZW4gcG9pbnQsIGFzIGl0IGNhbiBmaW5kIHRoYXQgb3V0DQpmb3IgZnJlZSwgd2l0
+aG91dCB0aGUgbmVlZCB0byB0cmFjayBtaWdyYXRpb24gZXZlbnRzLikNCg0KT24gdGhlIG90aGVy
+IGhhbmQgaWYgeW91IGFyZSBwaW5uZWQgKGUuZy4geW91J3JlIHRoZSBrZXJuZWwgb24gYQ0KcGFy
+dGljdWxhciBjb3JlLCBvciB5b3UncmUgYSBwZXItY29yZSB3b3JrZXIgdGhyZWFkIGluIHNvbWUg
+dGhyZWFkDQpwb29saW5nIHN5c3RlbSkgdGhlbiB5b3UgaGF2ZSBhIGZpeGVkIG1hc3RlciBpZCwg
+YW5kIHRoZW4geW91IGNhbg0KaGF2ZSBvbmUgaW5zdGFuY2UgcGVyIGNvcmUgYWxsIHVzaW5nIHRo
+ZSBzYW1lIHJhbmdlIG9mIGNoYW5uZWwNCm51bWJlcnMsIHdpdGggdGhlIG1hc3RlciBpZCBpbmRp
+Y2F0aW5nIHRoZSBjb3JlIC0gdGhpcyBzYXZlcyBvbg0KY2hhbm5lbCBzcGFjZSBjb21wYXJlZCB0
+byBoYXZpbmcgdG8gZ2l2ZSBlYWNoIGNvcmUgaXRzIG93bg0KcmFuZ2Ugb2YgY2hhbm5lbCBzcGFj
+ZS4NCg0KQWwNCklNUE9SVEFOVCBOT1RJQ0U6IFRoZSBjb250ZW50cyBvZiB0aGlzIGVtYWlsIGFu
+ZCBhbnkgYXR0YWNobWVudHMgYXJlIGNvbmZpZGVudGlhbCBhbmQgbWF5IGFsc28gYmUgcHJpdmls
+ZWdlZC4gSWYgeW91IGFyZSBub3QgdGhlIGludGVuZGVkIHJlY2lwaWVudCwgcGxlYXNlIG5vdGlm
+eSB0aGUgc2VuZGVyIGltbWVkaWF0ZWx5IGFuZCBkbyBub3QgZGlzY2xvc2UgdGhlIGNvbnRlbnRz
+IHRvIGFueSBvdGhlciBwZXJzb24sIHVzZSBpdCBmb3IgYW55IHB1cnBvc2UsIG9yIHN0b3JlIG9y
+IGNvcHkgdGhlIGluZm9ybWF0aW9uIGluIGFueSBtZWRpdW0uIFRoYW5rIHlvdS4NCg==
