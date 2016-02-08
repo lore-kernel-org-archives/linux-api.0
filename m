@@ -1,47 +1,28 @@
-From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: Re: [PATCH v2 04/10] serial: mps2-uart: add MPS2 UART driver
-Date: Mon, 08 Feb 2016 17:17:57 +0000
-Message-ID: <56B8CDC5.5010504@arm.com>
-References: <1454413199-26573-1-git-send-email-vladimir.murzin@arm.com> <1454413199-26573-5-git-send-email-vladimir.murzin@arm.com> <20160207071154.GA32017@kroah.com> <56B87928.7020803@arm.com> <20160208165226.GA11593@kroah.com>
+From: Johannes Berg <johannes@sipsolutions.net>
+Subject: Re: [PATCH 8/9] rfkill: Userspace control for airplane mode
+Date: Mon, 08 Feb 2016 18:18:39 +0100
+Message-ID: <186fb54a85083fe6aebe83763aa029c4@sipsolutions.net>
+References: <1454946096-9752-1-git-send-email-jprvita@endlessm.com>
+ <1454946096-9752-9-git-send-email-jprvita@endlessm.com>
+ <F8D31DB3-94AF-47CC-8091-7B6478983B53@holtmann.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=US-ASCII;
+ format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160208165226.GA11593@kroah.com>
+In-Reply-To: <F8D31DB3-94AF-47CC-8091-7B6478983B53@holtmann.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Greg KH <gregkh@linuxfoundation.org>
-Cc: arnd@arndb.de, linux@arm.linux.org.uk, daniel.lezcano@linaro.org, tglx@linutronix.de, u.kleine-koenig@pengutronix.de, andy.shevchenko@gmail.com, mark.rutland@arm.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, jslaby@suse.cz, robh+dt@kernel.org, devicetree@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
+To: Marcel Holtmann <marcel@holtmann.org>
+Cc: =?UTF-8?Q?Jo=C3=A3o_Paulo_Rechi_Vita?= <jprvita@gmail.com>, "David S. Miller" <davem@davemloft.net>, Darren Hart <dvhart@infradead.org>, linux-wireless <linux-wireless@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, platform-driver-x86@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux@endlessm.com, =?UTF-8?Q?Jo?= =?UTF-8?Q?=C3=A3o_Paulo_Rechi_Vita?= <jprvita@endlessm.com>
 List-Id: linux-api@vger.kernel.org
 
-On 08/02/16 16:52, Greg KH wrote:
-> On Mon, Feb 08, 2016 at 11:16:56AM +0000, Vladimir Murzin wrote:
->> On 07/02/16 07:11, Greg KH wrote:
->>>> +
->>>> +#define SERIAL_NAME "ttyS"
->>>
->>> You can't be "ttyS", there's already a serial port named that, please
->>> use a unique name and a new major/minor number (dynamic ideally).
->>>
->>
->> Hi Greg,
->>
->> I did s/ttyMPS/ttyS per your request for v1 [1]. I'm fine to change it
->> back if you prefer that, but I'd be glad to know what I've been missing?
->>
->> [1] https://lkml.org/lkml/2015/12/13/8
-> 
-> Yeah, I was wrong, sorry about that, my fault.
-> 
+On 2016-02-08 17:20, Marcel Holtmann wrote:
 
-I got -EDOUBT from my parser. What should I stick with "ttyS" or "ttyMPS"?
+> as explained in an earlier response, the concept Airplane Mode seems
+> to be imposing policy into the kernel. Do we really want have this as
+> a kernel exposed API.
 
-P.S.
-Any chance you could look at the rest of the patch?
+This patch is the one that *solves* that problem ... please read it more 
+carefully?
 
-Cheers
-Vladimir
-
-> greg k-h
-> 
-> 
-> 
+johannes
