@@ -1,33 +1,41 @@
-From: Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH 8/9] rfkill: Userspace control for airplane mode
-Date: Mon, 8 Feb 2016 11:20:24 -0500
-Message-ID: <F8D31DB3-94AF-47CC-8091-7B6478983B53@holtmann.org>
-References: <1454946096-9752-1-git-send-email-jprvita@endlessm.com> <1454946096-9752-9-git-send-email-jprvita@endlessm.com>
-Mime-Version: 1.0 (Mac OS X Mail 9.2 \(3112\))
+From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [PATCH v2 04/10] serial: mps2-uart: add MPS2 UART driver
+Date: Mon, 8 Feb 2016 08:52:26 -0800
+Message-ID: <20160208165226.GA11593@kroah.com>
+References: <1454413199-26573-1-git-send-email-vladimir.murzin@arm.com>
+ <1454413199-26573-5-git-send-email-vladimir.murzin@arm.com>
+ <20160207071154.GA32017@kroah.com>
+ <56B87928.7020803@arm.com>
+Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1454946096-9752-9-git-send-email-jprvita-6IF/jdPJHihWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: =?utf-8?Q?Jo=C3=A3o_Paulo_Rechi_Vita?= <jprvita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Johannes Berg <johannes-cdvu00un1VgdHxzADdlk8Q@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-wireless <linux-wireless-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, platform-driver-x86-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-6IF/jdPJHihWk0Htik3J/w@public.gmane.org, =?utf-8?Q?Jo=C3=A3o_Paulo_Rechi_Vita?= <jprvita-6IF/jdPJHihWk0Htik3J/w@public.gmane.org>
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <56B87928.7020803-5wv7dgnIgG8@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+Cc: arnd-r2nGTMty4D4@public.gmane.org, linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Joa Paulo,
-
-> Provide an interface for the airplane-mode indicator be controlled from
-> userspace. User has to first acquire the control through
-> RFKILL_OP_AIRPLANE_MODE_ACQUIRE and keep the fd open for the whole time
-> it wants to be in control of the indicator. Closing the fd or using
-> RFKILL_OP_AIRPLANE_MODE_RELEASE restores the default policy.
+On Mon, Feb 08, 2016 at 11:16:56AM +0000, Vladimir Murzin wrote:
+> On 07/02/16 07:11, Greg KH wrote:
+> >> +
+> >> +#define SERIAL_NAME "ttyS"
+> > 
+> > You can't be "ttyS", there's already a serial port named that, please
+> > use a unique name and a new major/minor number (dynamic ideally).
+> > 
 > 
-> To change state of the indicator, the RFKILL_OP_AIRPLANE_MODE_CHANGE
-> operation is used, passing the value on "struct rfkill_event.soft". If
-> the caller has not acquired the airplane-mode control beforehand, the
-> operation fails.
+> Hi Greg,
+> 
+> I did s/ttyMPS/ttyS per your request for v1 [1]. I'm fine to change it
+> back if you prefer that, but I'd be glad to know what I've been missing?
+> 
+> [1] https://lkml.org/lkml/2015/12/13/8
 
-as explained in an earlier response, the concept Airplane Mode seems to be imposing policy into the kernel. Do we really want have this as a kernel exposed API.
+Yeah, I was wrong, sorry about that, my fault.
 
-Regards
-
-Marcel
+greg k-h
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
