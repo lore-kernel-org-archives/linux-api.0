@@ -1,82 +1,27 @@
-From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Subject: Re: [RFC PATCH v4 2/6] module: preserve Elf information for
- livepatch modules
-Date: Tue, 9 Feb 2016 13:31:48 +0100
-Message-ID: <20160209123148.GB12548@pathway.suse.cz>
-References: <1454548271-24923-1-git-send-email-jeyu@redhat.com>
- <1454548271-24923-3-git-send-email-jeyu@redhat.com>
- <20160209084443.GA12548@pathway.suse.cz>
- <alpine.LNX.2.00.1602091131510.22727@cbobk.fhfr.pm>
+From: Miroslav Benes <mbenes@suse.cz>
+Subject: Re: [RFC PATCH v4 4/6] livepatch: reuse module loader code to write
+ relocations
+Date: Tue, 9 Feb 2016 14:32:05 +0100 (CET)
+Message-ID: <alpine.LNX.2.00.1602091431080.13193@pobox.suse.cz>
+References: <1454548271-24923-1-git-send-email-jeyu@redhat.com> <1454548271-24923-5-git-send-email-jeyu@redhat.com> <alpine.LNX.2.00.1602081554320.12964@pobox.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LNX.2.00.1602091131510.22727-YHPUNQjx9ReKbouaWp301Q@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <alpine.LNX.2.00.1602081554320.12964@pobox.suse.cz>
+Sender: linux-doc-owner@vger.kernel.org
+To: Jessica Yu <jeyu@redhat.com>
+Cc: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue 2016-02-09 11:33:07, Jiri Kosina wrote:
-> On Tue, 9 Feb 2016, Petr Mladek wrote:
+
+> > +/* .klp.sym.[objname].symbol_name,sympos */
+> > +static int klp_get_sym_objname(char *s, char **result)
+> > +{
 > 
-> > > +#ifdef CONFIG_KALLSYMS
-> > > +	/* Make symtab and strtab available prior to module init call */
-> > > +	mod->num_symtab = mod->core_num_syms;
-> > > +	mod->symtab = mod->core_symtab;
-> > > +	mod->strtab = mod->core_strtab;
-> > > +#endif
-> > 
-> > This should be done with module_mutex. Otherwise, it looks racy at least 
-> > against module_kallsyms_on_each_symbol().
-> 
-> Hmm, if this is the case, the comment describing the locking rules for 
-> module_mutex should be updated.
-> 
-> > BTW: I wonder why even the original code is not racy for example against 
-> > module_get_kallsym. It is called without the mutex. This code sets the 
-> > number of entries before the pointer to the entries.
-> > 
-> > Note that the module is in the list even in the UNFORMED state.
-> 
-> module_kallsyms_on_each_symbol() gives up in such case though.
+> Do we need result to be a double-pointer? If I am not mistaken just 'char 
+> *result' could be sufficient. You check the return value, so result could 
+> be NULL or objname as found. No?
 
-The problem is that we set the three values above in the COMMING
-state. They were even set in the LIVE state before this patch.
+Um, no. We need this. Sorry for the noise.
 
-IMHO, we should reorder the writes and add a write barrier.
-
-
-#ifdef CONFIG_KALLSYMS
-	/* Make symtab and strtab available prior to module init call */
-	mod->strtab = mod->core_strtab;
-	mod->symtab = mod->core_symtab;
-	/* Tables must be availabe before the number is set */
-	smp_wmb();
-	mod->num_symtab = mod->core_num_syms;
-#endif
-
-
-Then we should add the corresponding read barrier to
-the read functions that are protected only by
-the disabled preeption. For example:
-
-
-static unsigned long mod_find_symname(struct module *mod, const char *name)
-{
-	unsigned int i;
-
-	for (i = 0; i < mod->num_symtab; i++)
-		/* Make sure that tables are set for the read num_symtab */
-		smp_rmb();
-		if (strcmp(name, mod->strtab+mod->symtab[i].st_name) == 0 &&
-		    mod->symtab[i].st_info != 'U')
-			return mod->symtab[i].st_value;
-	return 0;
-}
-
-
-Or am I too paranoid, please?
-
-Best Regards,
-Petr
+Miroslav
