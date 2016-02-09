@@ -1,214 +1,57 @@
-From: Jonathan Cameron <jic23@kernel.org>
-Subject: Re: [PATCH 1/5] iio: hmc5843: Add attribute for available measurement
- config
-Date: Tue, 9 Feb 2016 22:10:26 +0000
-Message-ID: <56BA63D2.1060209@kernel.org>
+From: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 2/5] iio: hmc5843: Swap suspend and resume implementations
+Date: Tue, 9 Feb 2016 22:14:17 +0000
+Message-ID: <56BA64B9.2090903@kernel.org>
 References: <1454883711-15489-1-git-send-email-cristina.moraru09@gmail.com>
- <1454883711-15489-2-git-send-email-cristina.moraru09@gmail.com>
+ <1454883711-15489-3-git-send-email-cristina.moraru09@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-In-Reply-To: <1454883711-15489-2-git-send-email-cristina.moraru09@gmail.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: Cristina Moraru <cristina.moraru09@gmail.com>, knaack.h@gmx.de, lars@metafoo.de, pmeerw@pmeerw.net, gregkh@linuxfoundation.org, cristina.opriceana@gmail.com, marek@goldelico.com, sdliyong@gmail.com, linux-iio@vger.kernel.org, devel@driverdev.osuosl.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, tolga.ceylan@gmail.com, k.kozlowski@samsung.com, javier@osg.samsung.com, arnd@arndb.de, geert@linux-m68k.org, irina.tirdea@intel.com, daniel.baluta@intel.com, octavia.purdila@intel.com
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1454883711-15489-3-git-send-email-cristina.moraru09-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Cristina Moraru <cristina.moraru09-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, knaack.h-Mmb7MZpHnFY@public.gmane.org, lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org, pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, cristina.opriceana-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, marek-xXXSsgcRVICgSpxsJD1C4w@public.gmane.org, sdliyong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tolga.ceylan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, javier-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org, irina.tirdea-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, octavia.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 On 07/02/16 22:21, Cristina Moraru wrote:
-> Add static attribute meas_conf_available to show available
-> configurations for the bias current.
+> Swap implementations of hmc5843_common_suspend and
+> hmc5843_common_resume functions for they have been
+> inversed. Device should go on SLEEP mode on suspend
+> and on CONTINUOUS mode on resume.
 > 
-> API for setting bias measurement configuration:
-> 
-> 0 - Normal measurement configuration (default): In normal measurement
->     configuration the device follows normal measurement flow. Pins BP
->     and BN are left floating and high impedance.
-> 
-> 1 - Positive bias configuration: In positive bias configuration, a
->     positive current is forced across the resistive load on pins BP
->     and BN.
-> 
-> 2 - Negative bias configuration. In negative bias configuration, a
->     negative current is forced across the resistive load on pins BP
->     and BN.
-> 
-> 3 - Only available on HMC5983. Magnetic sensor is disabled.
->     Temperature sensor is enabled.
-> 
-> Signed-off-by: Cristina Moraru <cristina.moraru09@gmail.com>
-I'd much prefer to see this done using the iio_enum magic, giving
-something like.
+> Signed-off-by: Cristina Moraru <cristina.moraru09-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+I'd normally apply this as a fix, but to keep things simple with
+the move out of staging I've just applied it to the togreg branch
+of iio.git - initially pushed out as testing for the autobuilders
+to play with it.
 
-cat meas_conf_available 
-normal, positivebias, negativebias, disabled
-
-then have meas_conf read as one of these strings and take one as a write.
-
-This abi is never going to make all that much sense to someone who
-hasn't read the datasheet / docs, but if possible it is nice to
-give them a hint by using informative strings as the values.
+It's been there a long time an no one has noticed, so I'm guessing
+any hardware platforms with this on aren't going in for power management!
 
 Jonathan
 > ---
->  drivers/staging/iio/magnetometer/hmc5843_core.c | 83 +++++++++++++++++++------
->  1 file changed, 65 insertions(+), 18 deletions(-)
+>  drivers/staging/iio/magnetometer/hmc5843_core.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
 > 
 > diff --git a/drivers/staging/iio/magnetometer/hmc5843_core.c b/drivers/staging/iio/magnetometer/hmc5843_core.c
-> index 4aab022..4e2a7ec 100644
+> index 4e2a7ec..dca8d64 100644
 > --- a/drivers/staging/iio/magnetometer/hmc5843_core.c
 > +++ b/drivers/staging/iio/magnetometer/hmc5843_core.c
-> @@ -66,6 +66,34 @@
->  #define HMC5843_MEAS_CONF_NEGATIVE_BIAS		0x02
->  #define HMC5843_MEAS_CONF_MASK			0x03
->  
-> +/*
-> + * API for setting the measurement configuration to
-> + * Normal, Positive bias and Negative bias
-> + *
-> + * From the datasheet:
-> + * 0 - Normal measurement configuration (default): In normal measurement
-> + *     configuration the device follows normal measurement flow. Pins BP
-> + *     and BN are left floating and high impedance.
-> + *
-> + * 1 - Positive bias configuration: In positive bias configuration, a
-> + *     positive current is forced across the resistive load on pins BP
-> + *     and BN.
-> + *
-> + * 2 - Negative bias configuration. In negative bias configuration, a
-> + *     negative current is forced across the resistive load on pins BP
-> + *     and BN.
-> + *
-> + * 3 - Only available on HMC5983. Magnetic sensor is disabled.
-> + *     Temperature sensor is enabled.
-> + */
-> +static const int hmc5843_regval_to_meas_conf[] = {
-> +	0, 1, 2
-> +};
-> +
-> +static const int hmc5983_regval_to_meas_conf[] = {
-> +	0, 1, 2, 3
-> +};
-> +
->  /* Scaling factors: 10000000/Gain */
->  static const int hmc5843_regval_to_nanoscale[] = {
->  	6173, 7692, 10309, 12821, 18868, 21739, 25641, 35714
-> @@ -109,6 +137,8 @@ static const int hmc5983_regval_to_samp_freq[][2] = {
->  /* Describe chip variants */
->  struct hmc5843_chip_info {
->  	const struct iio_chan_spec *channels;
-> +	const int *regval_to_meas_conf;
-> +	const int n_regval_to_meas_conf;
->  	const int (*regval_to_samp_freq)[2];
->  	const int n_regval_to_samp_freq;
->  	const int *regval_to_nanoscale;
-> @@ -174,24 +204,6 @@ static int hmc5843_read_measurement(struct hmc5843_data *data,
->  	return IIO_VAL_INT;
->  }
->  
-> -/*
-> - * API for setting the measurement configuration to
-> - * Normal, Positive bias and Negative bias
-> - *
-> - * From the datasheet:
-> - * 0 - Normal measurement configuration (default): In normal measurement
-> - *     configuration the device follows normal measurement flow. Pins BP
-> - *     and BN are left floating and high impedance.
-> - *
-> - * 1 - Positive bias configuration: In positive bias configuration, a
-> - *     positive current is forced across the resistive load on pins BP
-> - *     and BN.
-> - *
-> - * 2 - Negative bias configuration. In negative bias configuration, a
-> - *     negative current is forced across the resistive load on pins BP
-> - *     and BN.
-> - *
-> - */
->  static int hmc5843_set_meas_conf(struct hmc5843_data *data, u8 meas_conf)
+> @@ -612,14 +612,14 @@ static const unsigned long hmc5843_scan_masks[] = {0x7, 0};
+>  int hmc5843_common_suspend(struct device *dev)
 >  {
->  	int ret;
-> @@ -248,6 +260,28 @@ static IIO_DEVICE_ATTR(meas_conf,
->  			hmc5843_set_measurement_configuration,
->  			0);
+>  	return hmc5843_set_mode(iio_priv(dev_get_drvdata(dev)),
+> -			HMC5843_MODE_CONVERSION_CONTINUOUS);
+> +				HMC5843_MODE_SLEEP);
+>  }
+>  EXPORT_SYMBOL(hmc5843_common_suspend);
 >  
-> +static ssize_t hmc5843_show_meas_conf_avail(struct device *dev,
-> +					    struct device_attribute *attr,
-> +					    char *buf)
-> +{
-> +	struct hmc5843_data *data = iio_priv(dev_to_iio_dev(dev));
-> +
-> +	size_t len = 0;
-> +	int i;
-> +
-> +	for (i = 0; i < data->variant->n_regval_to_meas_conf; i++)
-> +		len += scnprintf(buf + len, PAGE_SIZE - len,
-> +			"%d ", data->variant->regval_to_meas_conf[i]);
-> +
-> +	/* replace trailing space by newline */
-> +	buf[len - 1] = '\n';
-> +
-> +	return len;
-> +}
-> +
-> +static IIO_DEVICE_ATTR(meas_conf_available, S_IRUGO,
-> +	hmc5843_show_meas_conf_avail, NULL, 0);
-> +
->  static
->  ssize_t hmc5843_show_samp_freq_avail(struct device *dev,
->  				     struct device_attribute *attr, char *buf)
-> @@ -478,6 +512,7 @@ static const struct iio_chan_spec hmc5883_channels[] = {
+>  int hmc5843_common_resume(struct device *dev)
+>  {
+>  	return hmc5843_set_mode(iio_priv(dev_get_drvdata(dev)),
+> -				HMC5843_MODE_SLEEP);
+> +		HMC5843_MODE_CONVERSION_CONTINUOUS);
+>  }
+>  EXPORT_SYMBOL(hmc5843_common_resume);
 >  
->  static struct attribute *hmc5843_attributes[] = {
->  	&iio_dev_attr_meas_conf.dev_attr.attr,
-> +	&iio_dev_attr_meas_conf_available.dev_attr.attr,
->  	&iio_dev_attr_scale_available.dev_attr.attr,
->  	&iio_dev_attr_sampling_frequency_available.dev_attr.attr,
->  	NULL
-> @@ -490,6 +525,9 @@ static const struct attribute_group hmc5843_group = {
->  static const struct hmc5843_chip_info hmc5843_chip_info_tbl[] = {
->  	[HMC5843_ID] = {
->  		.channels = hmc5843_channels,
-> +		.regval_to_meas_conf = hmc5843_regval_to_meas_conf,
-> +		.n_regval_to_meas_conf =
-> +				ARRAY_SIZE(hmc5843_regval_to_meas_conf),
->  		.regval_to_samp_freq = hmc5843_regval_to_samp_freq,
->  		.n_regval_to_samp_freq =
->  				ARRAY_SIZE(hmc5843_regval_to_samp_freq),
-> @@ -499,6 +537,9 @@ static const struct hmc5843_chip_info hmc5843_chip_info_tbl[] = {
->  	},
->  	[HMC5883_ID] = {
->  		.channels = hmc5883_channels,
-> +		.regval_to_meas_conf = hmc5843_regval_to_meas_conf,
-> +		.n_regval_to_meas_conf =
-> +				ARRAY_SIZE(hmc5843_regval_to_meas_conf),
->  		.regval_to_samp_freq = hmc5883_regval_to_samp_freq,
->  		.n_regval_to_samp_freq =
->  				ARRAY_SIZE(hmc5883_regval_to_samp_freq),
-> @@ -508,6 +549,9 @@ static const struct hmc5843_chip_info hmc5843_chip_info_tbl[] = {
->  	},
->  	[HMC5883L_ID] = {
->  		.channels = hmc5883_channels,
-> +		.regval_to_meas_conf = hmc5843_regval_to_meas_conf,
-> +		.n_regval_to_meas_conf =
-> +				ARRAY_SIZE(hmc5843_regval_to_meas_conf),
->  		.regval_to_samp_freq = hmc5883_regval_to_samp_freq,
->  		.n_regval_to_samp_freq =
->  				ARRAY_SIZE(hmc5883_regval_to_samp_freq),
-> @@ -517,6 +561,9 @@ static const struct hmc5843_chip_info hmc5843_chip_info_tbl[] = {
->  	},
->  	[HMC5983_ID] = {
->  		.channels = hmc5883_channels,
-> +		.regval_to_meas_conf = hmc5983_regval_to_meas_conf,
-> +		.n_regval_to_meas_conf =
-> +				ARRAY_SIZE(hmc5983_regval_to_meas_conf),
->  		.regval_to_samp_freq = hmc5983_regval_to_samp_freq,
->  		.n_regval_to_samp_freq =
->  				ARRAY_SIZE(hmc5983_regval_to_samp_freq),
 > 
