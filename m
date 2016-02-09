@@ -1,90 +1,84 @@
-From: Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v9] cpufreq: powernv: Add sysfs attributes to show
- throttle stats
-Date: Tue, 9 Feb 2016 10:50:04 +0530
-Message-ID: <20160209052004.GA15734@vireshk>
-References: <1454942667-13424-1-git-send-email-shilpa.bhat@linux.vnet.ibm.com>
+From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
+Subject: Re: [RFC PATCH v4 2/6] module: preserve Elf information for
+ livepatch modules
+Date: Tue, 9 Feb 2016 09:44:43 +0100
+Message-ID: <20160209084443.GA12548@pathway.suse.cz>
+References: <1454548271-24923-1-git-send-email-jeyu@redhat.com>
+ <1454548271-24923-3-git-send-email-jeyu@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1454942667-13424-1-git-send-email-shilpa.bhat-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+In-Reply-To: <1454548271-24923-3-git-send-email-jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shilpasri G Bhat <shilpa.bhat-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Cc: linuxppc-dev-mnsaURCQ41sdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, pc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org, anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org, ego-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, shreyas-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, bsingharora-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 08-02-16, 20:14, Shilpasri G Bhat wrote:
-> Create sysfs attributes to export throttle information in
-> /sys/devices/system/cpu/cpuX/cpufreq/throttle_stats directory. The
-> newly added sysfs files are as follows:
+On Wed 2016-02-03 20:11:07, Jessica Yu wrote:
+> For livepatch modules, copy Elf section, symbol, and string information
+> from the load_info struct in the module loader. Persist copies of the
+> original symbol table and string table.
 > 
-> 1)/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/turbo_stat
-> 2)/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/sub-turbo_stat
-> 3)/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/unthrottle
-> 4)/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/powercap
-> 5)/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/overtemp
-> 6)/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/supply_fault
-> 7)/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/overcurrent
-> 8)/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/occ_reset
+> Livepatch manages its own relocation sections in order to reuse module
+> loader code to write relocations. Livepatch modules must preserve Elf
+> information such as section indices in order to apply livepatch relocation
+> sections using the module loader's apply_relocate_add() function.
 > 
-> Detailed explanation of each attribute is added to
-> Documentation/ABI/testing/sysfs-devices-system-cpu
+> In order to apply livepatch relocation sections, livepatch modules must
+> keep a complete copy of their original symbol table in memory. Normally, a
+> stripped down copy of a module's symbol table (containing only "core"
+> symbols) is made available through module->core_symtab. But for livepatch
+> modules, the symbol table copied into memory on module load must be exactly
+> the same as the symbol table produced when the patch module was compiled.
+> This is because the relocations in each livepatch relocation section refer
+> to their respective symbols with their symbol indices, and the original
+> symbol indices (and thus the symtab ordering) must be preserved in order
+> for apply_relocate_add() to find the right symbol.
 > 
-> Signed-off-by: Shilpasri G Bhat <shilpa.bhat-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-> ---
-> Changes from v8:
-> - Moved the sysfs attributes from cpu/cpufreq/chipX to cpuX/cpufreq/throttle_stats
-> - Adhering to one-value-per-file, replace throttle_table with multiple
->   sysfs files.
-> - Using CPUFREQ_POLICY_NOTIFIER to add/remove attribute_group.
-
-Looks far better and sensible, but there are few bugs we have to fix
-first.
-
->  static void powernv_cpufreq_stop_cpu(struct cpufreq_policy *policy)
->  {
->  	struct powernv_smp_call_data freq_data;
-> @@ -589,6 +694,7 @@ static int init_chip_info(void)
->  	}
+> diff --git a/kernel/module.c b/kernel/module.c
+> index 71c77ed..9c16eb2 100644
+> --- a/kernel/module.c
+> +++ b/kernel/module.c
+> @@ -3222,6 +3331,12 @@ static noinline int do_init_module(struct module *mod)
+>  	 */
+>  	current->flags &= ~PF_USED_ASYNC;
 >  
->  	return 0;
-> +
+> +#ifdef CONFIG_KALLSYMS
+> +	/* Make symtab and strtab available prior to module init call */
+> +	mod->num_symtab = mod->core_num_syms;
+> +	mod->symtab = mod->core_symtab;
+> +	mod->strtab = mod->core_strtab;
+> +#endif
 
-Unrelated change.
+This should be done with module_mutex. Otherwise, it looks racy
+at least against module_kallsyms_on_each_symbol().
 
->  free_chip_map:
->  	kfree(core_to_chip_map);
->  out:
-> @@ -615,6 +721,8 @@ static int __init powernv_cpufreq_init(void)
->  	if (rc)
->  		return rc;
->  
-> +	cpufreq_register_notifier(&powernv_cpufreq_policy_nb,
-> +				  CPUFREQ_POLICY_NOTIFIER);
->  	register_reboot_notifier(&powernv_cpufreq_reboot_nb);
->  	opal_message_notifier_register(OPAL_MSG_OCC, &powernv_cpufreq_opal_nb);
->  	return cpufreq_register_driver(&powernv_cpufreq_driver);
+BTW: I wonder why even the original code is not racy
+for example against module_get_kallsym. It is called
+without the mutex. This code sets the number of entries
+before the pointer to the entries.
 
-If this fails, you don't unregister the notifiers. Actually, the BUG
-is already there, and you must fix that first.
+Note that the module is in the list even in the UNFORMED state.
 
-> @@ -626,6 +734,8 @@ static void __exit powernv_cpufreq_exit(void)
->  	unregister_reboot_notifier(&powernv_cpufreq_reboot_nb);
->  	opal_message_notifier_unregister(OPAL_MSG_OCC,
->  					 &powernv_cpufreq_opal_nb);
-> +	cpufreq_unregister_notifier(&powernv_cpufreq_policy_nb,
-> +				    CPUFREQ_POLICY_NOTIFIER);
->  	kfree(chips);
->  	kfree(core_to_chip_map);
->  	cpufreq_unregister_driver(&powernv_cpufreq_driver);
 
-This is even more stupid. You remove the driver after freeing all
-resources :)
+>  	do_mod_ctors(mod);
+>  	/* Start the module */
+>  	if (mod->init != NULL)
+> @@ -3266,11 +3381,6 @@ static noinline int do_init_module(struct module *mod)
+>  	/* Drop initial reference. */
+>  	module_put(mod);
+>  	trim_init_extable(mod);
+> -#ifdef CONFIG_KALLSYMS
+> -	mod->num_symtab = mod->core_num_syms;
+> -	mod->symtab = mod->core_symtab;
+> -	mod->strtab = mod->core_strtab;
+> -#endif
+>  	mod_tree_remove_init(mod);
+>  	disable_ro_nx(&mod->init_layout);
+>  	module_arch_freeing_init(mod);
 
-Make this reverse of init..
+In each case, it was called with the mutex here.
 
-Fix existing issues first and then apply this patch on the top.
-
--- 
-viresh
+Best Regards,
+Petr
