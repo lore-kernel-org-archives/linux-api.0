@@ -1,54 +1,37 @@
-From: Petr Mladek <pmladek@suse.com>
-Subject: Re: [RFC PATCH v4 2/6] module: preserve Elf information for
- livepatch modules
-Date: Wed, 10 Feb 2016 16:53:13 +0100
-Message-ID: <20160210155313.GI3305@pathway.suse.cz>
-References: <1454548271-24923-1-git-send-email-jeyu@redhat.com>
- <1454548271-24923-3-git-send-email-jeyu@redhat.com>
+From: Johannes Berg <johannes-cdvu00un1VgdHxzADdlk8Q@public.gmane.org>
+Subject: Re: [PATCH 8/9] rfkill: Userspace control for airplane mode
+Date: Wed, 10 Feb 2016 17:07:24 +0100
+Message-ID: <1455120444.4991.1.camel@sipsolutions.net>
+References: <1454946096-9752-1-git-send-email-jprvita@endlessm.com>
+	 <1454946096-9752-9-git-send-email-jprvita@endlessm.com>
+	 <1454947887.5325.8.camel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1454548271-24923-3-git-send-email-jeyu@redhat.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Jessica Yu <jeyu@redhat.com>
-Cc: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Jiri Kosina <jikos@kernel.org>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1454947887.5325.8.camel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dan Williams <dcbw-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?ISO-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-wireless-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, platform-driver-x86-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-6IF/jdPJHihWk0Htik3J/w@public.gmane.org, =?ISO-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita-6IF/jdPJHihWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 2016-02-03 20:11:07, Jessica Yu wrote:
-> diff --git a/kernel/module.c b/kernel/module.c
-> index 71c77ed..9c16eb2 100644
-> --- a/kernel/module.c
-> +++ b/kernel/module.c
-> @@ -2676,6 +2764,23 @@ static int copy_module_from_user(const void __user *umod, unsigned long len,
->  	return 0;
->  }
->  
-> +#ifdef CONFIG_LIVEPATCH
-> +static int find_livepatch_modinfo(struct module *mod, struct load_info *info)
-> +{
-> +	mod->klp = get_modinfo(info, "livepatch") ? true : false;
-> +
-> +	return 0;
-> +}
-> +#else /* !CONFIG_LIVEPATCH */
-> +static int find_livepatch_modinfo(struct module *mod, struct load_info *info)
-> +{
-> +	if (get_modinfo(info, "livepatch"))
+On Mon, 2016-02-08 at 10:11 -0600, Dan Williams wrote:
+> I'd like to clarify a bit, so tell me if I'm correct or not.=C2=A0=C2=
+=A0Using
+> RFKILL_OP_AIRPLANE_MODE_CHANGE does not actually change any device
+> state. It's just an indicator with no relationship to any of the
+> registered rfkill switches, right?
 
-One more thing. I suggest to write a friendly message here. For example:
+Yes. I'm not sure I'm totally happy with this userspace API.
 
-	pr_err("LifePatch support is not available. Rejecting the module: s\n",
-	       mod->name);
+> I wonder if setting RFKILL_OP_AIRPLANE_MODE_CHANGE(true) shouldn't
+> also
+> softblock all switches, otherwise you can set airplane mode all day
+> long with RFKILL_OP_AIRPLANE_MODE_CHANGE and it doesn't actually
+> enable
+> airplane mode at all?
 
-It might safe some debugging a poor user or developer.
+No, this is kinda the point that you could implement your policy in
+userspace now.
 
-> +		return -ENOEXEC;
-> +
-> +	return 0;
-> +}
-> +#endif /* CONFIG_LIVEPATCH */
-> +
-
-Best Regards,
-Petr
+johannes
