@@ -1,50 +1,428 @@
-From: David Decotigny <ddecotig@gmail.com>
-Subject: [PATCH net-next v8 11/19] net: team: use __ethtool_get_ksettings
-Date: Tue,  9 Feb 2016 16:29:20 -0800
-Message-ID: <1455064168-5102-12-git-send-email-ddecotig@gmail.com>
-References: <1455064168-5102-1-git-send-email-ddecotig@gmail.com>
-Return-path: <linux-mips-bounce@linux-mips.org>
-In-Reply-To: <1455064168-5102-1-git-send-email-ddecotig@gmail.com>
-Sender: linux-mips-bounce@linux-mips.org
-Errors-to: linux-mips-bounce@linux-mips.org
-List-help: <mailto:ecartis@linux-mips.org?Subject=help>
-List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
-List-software: Ecartis version 1.0.0
-List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
-List-owner: <mailto:ralf@linux-mips.org>
-List-post: <mailto:linux-mips@linux-mips.org>
-List-archive: <http://www.linux-mips.org/archives/linux-mips/>
-To: "David S. Miller" <davem@davemloft.net>, Ben Hutchings <ben@decadent.org.uk>, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-mips@linux-mips.org, fcoe-devel@open-fcoe.org, Andrew Morton <akpm@linux-foundation.org>, Tejun Heo <tj@kernel.org>
-Cc: Eric Dumazet <edumazet@google.com>, Eugenia Emantayev <eugenia@mellanox.co.il>, Or Gerlitz <ogerlitz@mellanox.com>, Ido Shamay <idos@mellanox.com>, Joe Perches <joe@perches.com>, Saeed Mahameed <saeedm@mellanox.com>, Govindarajulu Varadarajan <_govind@gmx.com>, Venkata Duvvuru <VenkatKumar.Duvvuru@Emulex.Com>, Jeff Kirsher <jeffrey.t.kirsher@intel.com>, Pravin B Shelar <pshelar@nicira.com>, Ed Swierk <eswierk@skyportsystems.com>, Robert Love <robert.w.love@intel.com>, "James E.J. Bottomley" <JBottomley@parallels.com>, Yuval Mintz <Yuval.Mintz@qlogic.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, David Decotigny <decot@googlers.com>
+From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: livepatch: reuse module loader code to write relocations
+Date: Tue, 9 Feb 2016 19:56:42 -0500
+Message-ID: <20160210005641.GA32304@packer-debian-8-amd64.digitalocean.com>
+References: <1454548271-24923-1-git-send-email-jeyu@redhat.com>
+ <1454548271-24923-5-git-send-email-jeyu@redhat.com>
+ <20160208202606.GD23106@treble.redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160208202606.GD23106-8wJ5/zUtDR0XGNroddHbYwC/G2K4zDHf@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vojtech Pavlik <vojtech-IBi9RG/b67k@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: David Decotigny <decot@googlers.com>
++++ Josh Poimboeuf [08/02/16 14:26 -0600]:
+>On Wed, Feb 03, 2016 at 08:11:09PM -0500, Jessica Yu wrote:
+>> Reuse module loader code to write relocations, thereby eliminating the need
+>> for architecture specific relocation code in livepatch. Specifically, reuse
+>> the apply_relocate_add() function in the module loader to write relocations
+>> instead of duplicating functionality in livepatch's arch-dependent
+>> klp_write_module_reloc() function.
+>>
+>> In order to accomplish this, livepatch modules manage their own relocation
+>> sections (marked with the SHF_RELA_LIVEPATCH section flag) and
+>> livepatch-specific symbols (marked with SHN_LIVEPATCH symbol section
+>> index). To apply livepatch relocation sections, livepatch symbols
+>> referenced by relocs are resolved and then apply_relocate_add() is called
+>> to apply those relocations.
+>>
+>> In addition, remove x86 livepatch relocation code and the s390
+>> klp_write_module_reloc() function stub. They are no longer needed since
+>> relocation work has been offloaded to module loader.
+>>
+>> Signed-off-by: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>> ---
+>>  arch/s390/include/asm/livepatch.h |   7 -
+>>  arch/x86/include/asm/livepatch.h  |   2 -
+>>  arch/x86/kernel/Makefile          |   1 -
+>>  arch/x86/kernel/livepatch.c       |  70 ----------
+>>  include/linux/livepatch.h         |  30 ++--
+>>  kernel/livepatch/core.c           | 283 ++++++++++++++++++++++++++++++--------
+>>  6 files changed, 238 insertions(+), 155 deletions(-)
+>>  delete mode 100644 arch/x86/kernel/livepatch.c
+>>
+>> diff --git a/arch/s390/include/asm/livepatch.h b/arch/s390/include/asm/livepatch.h
+>> index a52b6cc..350a751 100644
+>> --- a/arch/s390/include/asm/livepatch.h
+>> +++ b/arch/s390/include/asm/livepatch.h
+>> @@ -25,13 +25,6 @@ static inline int klp_check_compiler_support(void)
+>>  	return 0;
+>>  }
+>>
+>> -static inline int klp_write_module_reloc(struct module *mod, unsigned long
+>> -		type, unsigned long loc, unsigned long value)
+>> -{
+>> -	/* not supported yet */
+>> -	return -ENOSYS;
+>> -}
+>> -
+>>  static inline void klp_arch_set_pc(struct pt_regs *regs, unsigned long ip)
+>>  {
+>>  	regs->psw.addr = ip;
+>> diff --git a/arch/x86/include/asm/livepatch.h b/arch/x86/include/asm/livepatch.h
+>> index e795f52..d7c2b57 100644
+>> --- a/arch/x86/include/asm/livepatch.h
+>> +++ b/arch/x86/include/asm/livepatch.h
+>> @@ -33,8 +33,6 @@ static inline int klp_check_compiler_support(void)
+>>  #endif
+>>  	return 0;
+>>  }
+>> -int klp_write_module_reloc(struct module *mod, unsigned long type,
+>> -			   unsigned long loc, unsigned long value);
+>>
+>>  static inline void klp_arch_set_pc(struct pt_regs *regs, unsigned long ip)
+>>  {
+>> diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+>> index b1b78ff..c5e9a5c 100644
+>> --- a/arch/x86/kernel/Makefile
+>> +++ b/arch/x86/kernel/Makefile
+>> @@ -67,7 +67,6 @@ obj-$(CONFIG_X86_MPPARSE)	+= mpparse.o
+>>  obj-y				+= apic/
+>>  obj-$(CONFIG_X86_REBOOTFIXUPS)	+= reboot_fixups_32.o
+>>  obj-$(CONFIG_DYNAMIC_FTRACE)	+= ftrace.o
+>> -obj-$(CONFIG_LIVEPATCH)		+= livepatch.o
+>>  obj-$(CONFIG_FUNCTION_GRAPH_TRACER) += ftrace.o
+>>  obj-$(CONFIG_FTRACE_SYSCALLS)	+= ftrace.o
+>>  obj-$(CONFIG_X86_TSC)		+= trace_clock.o
+>> diff --git a/arch/x86/kernel/livepatch.c b/arch/x86/kernel/livepatch.c
+>> deleted file mode 100644
+>> index 92fc1a5..0000000
+>> --- a/arch/x86/kernel/livepatch.c
+>> +++ /dev/null
+>> @@ -1,70 +0,0 @@
+>> -/*
+>> - * livepatch.c - x86-specific Kernel Live Patching Core
+>> - *
+>> - * Copyright (C) 2014 Seth Jennings <sjenning-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>> - * Copyright (C) 2014 SUSE
+>> - *
+>> - * This program is free software; you can redistribute it and/or
+>> - * modify it under the terms of the GNU General Public License
+>> - * as published by the Free Software Foundation; either version 2
+>> - * of the License, or (at your option) any later version.
+>> - *
+>> - * This program is distributed in the hope that it will be useful,
+>> - * but WITHOUT ANY WARRANTY; without even the implied warranty of
+>> - * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+>> - * GNU General Public License for more details.
+>> - *
+>> - * You should have received a copy of the GNU General Public License
+>> - * along with this program; if not, see <http://www.gnu.org/licenses/>.
+>> - */
+>> -
+>> -#include <linux/module.h>
+>> -#include <linux/uaccess.h>
+>> -#include <asm/elf.h>
+>> -#include <asm/livepatch.h>
+>> -
+>> -/**
+>> - * klp_write_module_reloc() - write a relocation in a module
+>> - * @mod:	module in which the section to be modified is found
+>> - * @type:	ELF relocation type (see asm/elf.h)
+>> - * @loc:	address that the relocation should be written to
+>> - * @value:	relocation value (sym address + addend)
+>> - *
+>> - * This function writes a relocation to the specified location for
+>> - * a particular module.
+>> - */
+>> -int klp_write_module_reloc(struct module *mod, unsigned long type,
+>> -			   unsigned long loc, unsigned long value)
+>> -{
+>> -	size_t size = 4;
+>> -	unsigned long val;
+>> -	unsigned long core = (unsigned long)mod->core_layout.base;
+>> -	unsigned long core_size = mod->core_layout.size;
+>> -
+>> -	switch (type) {
+>> -	case R_X86_64_NONE:
+>> -		return 0;
+>> -	case R_X86_64_64:
+>> -		val = value;
+>> -		size = 8;
+>> -		break;
+>> -	case R_X86_64_32:
+>> -		val = (u32)value;
+>> -		break;
+>> -	case R_X86_64_32S:
+>> -		val = (s32)value;
+>> -		break;
+>> -	case R_X86_64_PC32:
+>> -		val = (u32)(value - loc);
+>> -		break;
+>> -	default:
+>> -		/* unsupported relocation type */
+>> -		return -EINVAL;
+>> -	}
+>> -
+>> -	if (loc < core || loc >= core + core_size)
+>> -		/* loc does not point to any symbol inside the module */
+>> -		return -EINVAL;
+>> -
+>> -	return probe_kernel_write((void *)loc, &val, size);
+>> -}
+>> diff --git a/include/linux/livepatch.h b/include/linux/livepatch.h
+>> index fdd5f1c..1a40a72 100644
+>> --- a/include/linux/livepatch.h
+>> +++ b/include/linux/livepatch.h
+>> @@ -65,27 +65,8 @@ struct klp_func {
+>>  };
+>>
+>>  /**
+>> - * struct klp_reloc - relocation structure for live patching
+>> - * @loc:	address where the relocation will be written
+>> - * @sympos:	position in kallsyms to disambiguate symbols (optional)
+>> - * @type:	ELF relocation type
+>> - * @name:	name of the referenced symbol (for lookup/verification)
+>> - * @addend:	offset from the referenced symbol
+>> - * @external:	symbol is either exported or within the live patch module itself
+>> - */
+>> -struct klp_reloc {
+>> -	unsigned long loc;
+>> -	unsigned long sympos;
+>> -	unsigned long type;
+>> -	const char *name;
+>> -	int addend;
+>> -	int external;
+>> -};
+>> -
+>> -/**
+>>   * struct klp_object - kernel object structure for live patching
+>>   * @name:	module name (or NULL for vmlinux)
+>> - * @relocs:	relocation entries to be applied at load time
+>>   * @funcs:	function entries for functions to be patched in the object
+>>   * @kobj:	kobject for sysfs resources
+>>   * @mod:	kernel module associated with the patched object
+>> @@ -95,7 +76,6 @@ struct klp_reloc {
+>>  struct klp_object {
+>>  	/* external */
+>>  	const char *name;
+>> -	struct klp_reloc *relocs;
+>>  	struct klp_func *funcs;
+>>
+>>  	/* internal */
+>> @@ -123,6 +103,16 @@ struct klp_patch {
+>>  	enum klp_state state;
+>>  };
+>>
+>> +/*
+>> + * Livepatch symbol and relocation section prefixes:
+>> + * ".klp.rela." for relocation sections
+>> + * ".klp.sym." for livepatch symbols
+>> + */
+>> +#define KLP_SYM_PREFIX ".klp.sym."
+>> +#define KLP_SYM_PREFIX_LEN 9
+>> +#define KLP_RELASEC_PREFIX ".klp.rela."
+>> +#define KLP_RELASEC_PREFIX_LEN 10
+>> +
+>>  #define klp_for_each_object(patch, obj) \
+>>  	for (obj = patch->objs; obj->funcs; obj++)
+>>
+>> diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
+>> index 7aa975d..c1fe57c 100644
+>> --- a/kernel/livepatch/core.c
+>> +++ b/kernel/livepatch/core.c
+>> @@ -28,6 +28,9 @@
+>>  #include <linux/list.h>
+>>  #include <linux/kallsyms.h>
+>>  #include <linux/livepatch.h>
+>> +#include <linux/elf.h>
+>> +#include <linux/string.h>
+>> +#include <linux/moduleloader.h>
+>>  #include <asm/cacheflush.h>
+>>
+>>  /**
+>> @@ -87,6 +90,166 @@ static bool klp_is_object_loaded(struct klp_object *obj)
+>>  	return !obj->name || obj->mod;
+>>  }
+>>
+>> +/*
+>> + * Check if a livepatch symbol is formatted properly.
+>> + *
+>> + * See Documentation/livepatch/module-elf-format.txt for a
+>> + * detailed outline of requirements.
+>> + */
+>> +static int klp_check_symbol_format(struct module *pmod, Elf_Sym *sym)
+>> +{
+>> +	size_t len;
+>> +	char *s, *objname, *symname;
+>> +
+>> +	if (sym->st_shndx != SHN_LIVEPATCH)
+>> +		return -EINVAL;
+>> +
+>> +	/*
+>> +	 * Livepatch symbol names must follow this format:
+>> +	 * .klp.sym.objname.symbol_name,sympos
+>> +	 */
+>> +	s = pmod->strtab + sym->st_name;
+>> +	/* [.klp.sym.]objname.symbol_name,sympos */
+>> +	if (!s || strncmp(s, KLP_SYM_PREFIX, KLP_SYM_PREFIX_LEN))
+>> +		return -EINVAL;
+>> +
+>> +	/* .klp.sym.[objname].symbol_name,sympos */
+>> +	objname = s + KLP_SYM_PREFIX_LEN;
+>> +	len = strcspn(objname, ".");
+>> +	if (!(len > 0))
+>> +		return -EINVAL;
+>> +
+>> +	/* .klp.sym.objname.symbol_name,[sympos] */
+>> +	if (!strchr(s, ','))
+>> +		return -EINVAL;
+>> +
+>> +	/* .klp.sym.objname.[symbol_name],sympos */
+>> +	symname = objname + len + 1;
+>> +	len = strcspn(symname, ",");
+>> +	if (!(len > 0))
+>> +		return -EINVAL;
+>> +
+>> +	return 0;
+>> +}
+>> +
+>> +/*
+>> + * Check if a livepatch relocation section is formatted properly.
+>> + *
+>> + * See Documentation/livepatch/module-elf-format.txt for a
+>> + * detailed outline of requirements.
+>> + */
+>> +static int klp_check_relasec_format(struct module *pmod, Elf_Shdr *relasec)
+>> +{
+>> +	char *secname;
+>> +	size_t len;
+>> +
+>> +	secname = pmod->klp_info->secstrings + relasec->sh_name;
+>> +	/* [.klp.rela.]objname.section_name */
+>> +	if (!secname || strncmp(secname, KLP_RELASEC_PREFIX,
+>> +				KLP_RELASEC_PREFIX_LEN))
+>> +		return -EINVAL;
+>> +
+>> +	/* .klp.rela.[objname].section_name */
+>> +	len = strcspn(secname + KLP_RELASEC_PREFIX_LEN, ".");
+>> +	if (!(len > 0))
+>> +		return -EINVAL;
+>> +
+>> +	return 0;
+>> +}
+>> +
+>> +/*
+>> + * Check if obj->name matches the objname encoded in the rela
+>> + * section name (.klp.rela.[objname].section_name)
+>> + *
+>> + * Must pass klp_check_relasec_format() before calling this.
+>> + */
+>> +static bool klp_relasec_matches_object(struct module *pmod, Elf_Shdr *relasec,
+>> +				       struct klp_object *obj)
+>> +{
+>> +	size_t len;
+>> +	const char *obj_objname, *sec_objname, *secname;
+>> +
+>> +	secname = pmod->klp_info->secstrings + relasec->sh_name;
+>> +	/* .klp.rela.[objname].section_name */
+>> +	sec_objname = secname + KLP_RELASEC_PREFIX_LEN;
+>> +	obj_objname = klp_is_module(obj) ? obj->name : "vmlinux";
+>> +
+>> +	/* Get length of the objname encoded in the section name */
+>> +	len = strcspn(sec_objname, ".");
+>> +
+>> +	if (strlen(obj_objname) != len)
+>> +		return false;
+>> +
+>> +	return strncmp(sec_objname, obj_objname, len) ? false : true;
+>> +}
+>> +
+>> +/*
+>> + * klp_get_* helper functions
+>> + *
+>> + * klp_get_* functions extract different components of the name
+>> + * of a livepatch symbol. The full symbol name from the strtab
+>> + * is passed in as parameter @s, and @result is filled in with
+>> + * the extracted component.
+>> + *
+>> + * These functions assume a correctly formatted symbol and the
+>> + * klp_check_symbol_format() test *must* pass before calling any
+>> + * of these functions.
+>> + */
+>> +
+>> +/* .klp.sym.[objname].symbol_name,sympos */
+>> +static int klp_get_sym_objname(char *s, char **result)
+>> +{
+>> +	size_t len;
+>> +	char *objname, *objname_start;
+>> +
+>> +	/* .klp.sym.[objname].symbol_name,sympos */
+>> +	objname_start = s + KLP_SYM_PREFIX_LEN;
+>> +	len = strcspn(objname_start, ".");
+>> +	objname = kstrndup(objname_start, len, GFP_KERNEL);
+>> +	if (objname == NULL)
+>> +		return -ENOMEM;
+>> +
+>> +	/* klp_find_object_symbol() treats NULL as vmlinux */
+>> +	if (!strcmp(objname, "vmlinux")) {
+>> +		*result = NULL;
+>> +		kfree(objname);
+>> +	} else
+>> +		*result = objname;
+>> +
+>> +	return 0;
+>> +}
+>> +
+>> +/* .klp.sym.objname.[symbol_name],sympos */
+>> +static int klp_get_symbol_name(char *s, char **result)
+>> +{
+>> +	size_t len;
+>> +	char *objname, *symname;
+>> +
+>> +	/* .klp.sym.[objname].symbol_name,sympos */
+>> +	objname = s + KLP_SYM_PREFIX_LEN;
+>> +	len = strcspn(objname, ".");
+>> +
+>> +	/* .klp.sym.objname.[symbol_name],sympos */
+>> +	symname = objname + len + 1;
+>> +	len = strcspn(symname, ",");
+>> +
+>> +	*result = kstrndup(symname, len, GFP_KERNEL);
+>> +	if (*result == NULL)
+>> +		return -ENOMEM;
+>> +
+>> +	return 0;
+>> +}
+>> +
+>> +/* .klp.sym.objname.symbol_name,[sympos] */
+>> +static int klp_get_sympos(char *s, unsigned long *result)
+>> +{
+>> +	char *sympos;
+>> +
+>> +	/* .klp.sym.symbol_name,[sympos] */
+>> +	sympos = strchr(s, ',') + 1;
+>> +	return kstrtol(sympos, 10, result);
+>> +}
+>> +
+>>  /* sets obj->mod if object is not vmlinux and module is found */
+>>  static void klp_find_object_module(struct klp_object *obj)
+>>  {
+>
+>I think all the above string parsing code could be replaced with a
+>couple of sscanf() calls.
+>
+>For example:
+>
+>	char objname[64], symname[256];
+>
+>	ret = sscanf(s, ".klp.sym.%63[^.].%255[^,],%u", objname, symname, &sympos);
+>	if (ret < 3)
+>		// string doesn't match expected format
+>
+>That would be much simpler.
+>
+>Only problem is, the kernel version of sscanf() doesn't seem to support
+>the '[' conversion specifier.  At least not yet ;-)  Adding support for
+>that would be a win-win: less code overall, and the addition of a useful
+>scanf feature which could be used by other code.
 
-Signed-off-by: David Decotigny <decot@googlers.com>
----
- drivers/net/team/team.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+Ah, I had completely forgotten that we have sscanf() in the kernel :-)
+That would look *much* nicer, assuming we can get kernel sscanf() to
+support the bracket character classes..
 
-diff --git a/drivers/net/team/team.c b/drivers/net/team/team.c
-index 00558e1..7f96eca7 100644
---- a/drivers/net/team/team.c
-+++ b/drivers/net/team/team.c
-@@ -2813,12 +2813,12 @@ static void __team_port_change_send(struct team_port *port, bool linkup)
- 	port->state.linkup = linkup;
- 	team_refresh_port_linkup(port);
- 	if (linkup) {
--		struct ethtool_cmd ecmd;
-+		struct ethtool_ksettings ecmd;
- 
--		err = __ethtool_get_settings(port->dev, &ecmd);
-+		err = __ethtool_get_ksettings(port->dev, &ecmd);
- 		if (!err) {
--			port->state.speed = ethtool_cmd_speed(&ecmd);
--			port->state.duplex = ecmd.duplex;
-+			port->state.speed = ecmd.parent.speed;
-+			port->state.duplex = ecmd.parent.duplex;
- 			goto send_event;
- 		}
- 	}
--- 
-2.7.0.rc3.207.g0ac5344
+Jessica
