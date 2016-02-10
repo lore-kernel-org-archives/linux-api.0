@@ -1,83 +1,348 @@
-From: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 4/5] iio: hmc5843: Fix comment style warnings
-Date: Tue, 9 Feb 2016 22:17:01 +0000
-Message-ID: <56BA655D.4000407@kernel.org>
-References: <1454883711-15489-1-git-send-email-cristina.moraru09@gmail.com>
- <1454883711-15489-5-git-send-email-cristina.moraru09@gmail.com>
+From: Rusty Russell <rusty@rustcorp.com.au>
+Subject: Re: [RFC PATCH v4 2/6] module: preserve Elf information for livepatch modules
+Date: Wed, 10 Feb 2016 10:48:00 +1030
+Message-ID: <87io1xzadj.fsf@rustcorp.com.au>
+References: <1454548271-24923-1-git-send-email-jeyu@redhat.com> <1454548271-24923-3-git-send-email-jeyu@redhat.com> <20160209084443.GA12548@pathway.suse.cz> <alpine.LNX.2.00.1602091131510.22727@cbobk.fhfr.pm> <20160209123148.GB12548@pathway.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1454883711-15489-5-git-send-email-cristina.moraru09-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Cristina Moraru <cristina.moraru09-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, knaack.h-Mmb7MZpHnFY@public.gmane.org, lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org, pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, cristina.opriceana-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, marek-xXXSsgcRVICgSpxsJD1C4w@public.gmane.org, sdliyong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tolga.ceylan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, javier-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org, irina.tirdea-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, octavia.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160209123148.GB12548@pathway.suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Petr Mladek <pmladek@suse.com>, Jiri Kosina <jikos@kernel.org>
+Cc: Jessica Yu <jeyu@redhat.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 07/02/16 22:21, Cristina Moraru wrote:
-> Fix comment style warnings in order to comply with Coding Style
-> standard provided by Documentation/CodingStyle.
-> 
-> This patch solves following issue found with checkpatch:
-> WARNING: Block comments use a trailing */ on a separate line
-> 
-> Signed-off-by: Cristina Moraru <cristina.moraru09-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-I've applied this, but with a few additions... see inline.
-> ---
->  drivers/staging/iio/magnetometer/hmc5843.h     | 4 ++--
->  drivers/staging/iio/magnetometer/hmc5843_i2c.c | 2 +-
->  drivers/staging/iio/magnetometer/hmc5843_spi.c | 2 +-
->  3 files changed, 4 insertions(+), 4 deletions(-)
-> 
-> diff --git a/drivers/staging/iio/magnetometer/hmc5843.h b/drivers/staging/iio/magnetometer/hmc5843.h
-> index 06f35d3..cb284cf 100644
-> --- a/drivers/staging/iio/magnetometer/hmc5843.h
-> +++ b/drivers/staging/iio/magnetometer/hmc5843.h
-> @@ -8,7 +8,7 @@
->   * it under the terms of the GNU General Public License version 2 as
->   * published by the Free Software Foundation.
->   *
-Dropped the unwanted empty comment line as it doesn't add anything and we
-might as well clean it up whilst here.
-> - * */
-> + */
->  
->  #ifndef HMC5843_CORE_H
->  #define HMC5843_CORE_H
-> @@ -38,7 +38,7 @@ enum hmc5843_ids {
->   * @regmap:		hardware access register maps
->   * @variant:		describe chip variants
->   * @buffer:		3x 16-bit channels + padding + 64-bit timestamp
-> - **/
-> + */
->  struct hmc5843_data {
->  	struct device *dev;
->  	struct mutex lock;
-> diff --git a/drivers/staging/iio/magnetometer/hmc5843_i2c.c b/drivers/staging/iio/magnetometer/hmc5843_i2c.c
-> index 3e06ceb..6f7b8fb 100644
-> --- a/drivers/staging/iio/magnetometer/hmc5843_i2c.c
-> +++ b/drivers/staging/iio/magnetometer/hmc5843_i2c.c
-> @@ -8,7 +8,7 @@
->   * it under the terms of the GNU General Public License version 2 as
->   * published by the Free Software Foundation.
->   *
-snap
-> - * */
-> + */
->  
->  #include <linux/module.h>
->  #include <linux/i2c.h>
-> diff --git a/drivers/staging/iio/magnetometer/hmc5843_spi.c b/drivers/staging/iio/magnetometer/hmc5843_spi.c
-> index 1549192..85adcdd 100644
-> --- a/drivers/staging/iio/magnetometer/hmc5843_spi.c
-> +++ b/drivers/staging/iio/magnetometer/hmc5843_spi.c
-> @@ -7,7 +7,7 @@
->   * it under the terms of the GNU General Public License version 2 as
->   * published by the Free Software Foundation.
->   *
-snap.
-> - * */
-> + */
->  
->  #include <linux/module.h>
->  #include <linux/spi/spi.h>
-> 
+Petr Mladek <pmladek@suse.com> writes:
+> On Tue 2016-02-09 11:33:07, Jiri Kosina wrote:
+>> On Tue, 9 Feb 2016, Petr Mladek wrote:
+>> 
+>> > > +#ifdef CONFIG_KALLSYMS
+>> > > +	/* Make symtab and strtab available prior to module init call */
+>> > > +	mod->num_symtab = mod->core_num_syms;
+>> > > +	mod->symtab = mod->core_symtab;
+>> > > +	mod->strtab = mod->core_strtab;
+>> > > +#endif
+>> > 
+>> > This should be done with module_mutex. Otherwise, it looks racy at least 
+>> > against module_kallsyms_on_each_symbol().
+>> 
+>> Hmm, if this is the case, the comment describing the locking rules for 
+>> module_mutex should be updated.
+>> 
+>> > BTW: I wonder why even the original code is not racy for example against 
+>> > module_get_kallsym. It is called without the mutex. This code sets the 
+>> > number of entries before the pointer to the entries.
+>> > 
+>> > Note that the module is in the list even in the UNFORMED state.
+>> 
+>> module_kallsyms_on_each_symbol() gives up in such case though.
+>
+> The problem is that we set the three values above in the COMMING
+> state. They were even set in the LIVE state before this patch.
+
+True.  Indeed, I have a fix for exactly this queued in my fixes tree,
+and am about to send Linus a pull req.
+
+Below is the fix I went with, for your reference (part of a series, but
+you get the idea).
+
+Thanks!
+Rusty.
+
+commit 8244062ef1e54502ef55f54cced659913f244c3e
+Author: Rusty Russell <rusty@rustcorp.com.au>
+Date:   Wed Feb 3 16:55:26 2016 +1030
+
+    modules: fix longstanding /proc/kallsyms vs module insertion race.
+    
+    For CONFIG_KALLSYMS, we keep two symbol tables and two string tables.
+    There's one full copy, marked SHF_ALLOC and laid out at the end of the
+    module's init section.  There's also a cut-down version that only
+    contains core symbols and strings, and lives in the module's core
+    section.
+    
+    After module init (and before we free the module memory), we switch
+    the mod->symtab, mod->num_symtab and mod->strtab to point to the core
+    versions.  We do this under the module_mutex.
+    
+    However, kallsyms doesn't take the module_mutex: it uses
+    preempt_disable() and rcu tricks to walk through the modules, because
+    it's used in the oops path.  It's also used in /proc/kallsyms.
+    There's nothing atomic about the change of these variables, so we can
+    get the old (larger!) num_symtab and the new symtab pointer; in fact
+    this is what I saw when trying to reproduce.
+    
+    By grouping these variables together, we can use a
+    carefully-dereferenced pointer to ensure we always get one or the
+    other (the free of the module init section is already done in an RCU
+    callback, so that's safe).  We allocate the init one at the end of the
+    module init section, and keep the core one inside the struct module
+    itself (it could also have been allocated at the end of the module
+    core, but that's probably overkill).
+    
+    Reported-by: Weilong Chen <chenweilong@huawei.com>
+    Bugzilla: https://bugzilla.kernel.org/show_bug.cgi?id=111541
+    Cc: stable@kernel.org
+    Signed-off-by: Rusty Russell <rusty@rustcorp.com.au>
+
+diff --git a/include/linux/module.h b/include/linux/module.h
+index 4560d8f1545d..2bb0c3085706 100644
+--- a/include/linux/module.h
++++ b/include/linux/module.h
+@@ -324,6 +324,12 @@ struct module_layout {
+ #define __module_layout_align
+ #endif
+ 
++struct mod_kallsyms {
++	Elf_Sym *symtab;
++	unsigned int num_symtab;
++	char *strtab;
++};
++
+ struct module {
+ 	enum module_state state;
+ 
+@@ -405,15 +411,10 @@ struct module {
+ #endif
+ 
+ #ifdef CONFIG_KALLSYMS
+-	/*
+-	 * We keep the symbol and string tables for kallsyms.
+-	 * The core_* fields below are temporary, loader-only (they
+-	 * could really be discarded after module init).
+-	 */
+-	Elf_Sym *symtab, *core_symtab;
+-	unsigned int num_symtab, core_num_syms;
+-	char *strtab, *core_strtab;
+-
++	/* Protected by RCU and/or module_mutex: use rcu_dereference() */
++	struct mod_kallsyms *kallsyms;
++	struct mod_kallsyms core_kallsyms;
++	
+ 	/* Section attributes */
+ 	struct module_sect_attrs *sect_attrs;
+ 
+diff --git a/kernel/module.c b/kernel/module.c
+index 1e79d8157712..9537da37ce87 100644
+--- a/kernel/module.c
++++ b/kernel/module.c
+@@ -303,6 +303,9 @@ struct load_info {
+ 	struct _ddebug *debug;
+ 	unsigned int num_debug;
+ 	bool sig_ok;
++#ifdef CONFIG_KALLSYMS
++	unsigned long mod_kallsyms_init_off;
++#endif
+ 	struct {
+ 		unsigned int sym, str, mod, vers, info, pcpu;
+ 	} index;
+@@ -2480,10 +2483,21 @@ static void layout_symtab(struct module *mod, struct load_info *info)
+ 	strsect->sh_flags |= SHF_ALLOC;
+ 	strsect->sh_entsize = get_offset(mod, &mod->init_layout.size, strsect,
+ 					 info->index.str) | INIT_OFFSET_MASK;
+-	mod->init_layout.size = debug_align(mod->init_layout.size);
+ 	pr_debug("\t%s\n", info->secstrings + strsect->sh_name);
++
++	/* We'll tack temporary mod_kallsyms on the end. */
++	mod->init_layout.size = ALIGN(mod->init_layout.size,
++				      __alignof__(struct mod_kallsyms));
++	info->mod_kallsyms_init_off = mod->init_layout.size;
++	mod->init_layout.size += sizeof(struct mod_kallsyms);
++	mod->init_layout.size = debug_align(mod->init_layout.size);
+ }
+ 
++/*
++ * We use the full symtab and strtab which layout_symtab arranged to
++ * be appended to the init section.  Later we switch to the cut-down
++ * core-only ones.
++ */
+ static void add_kallsyms(struct module *mod, const struct load_info *info)
+ {
+ 	unsigned int i, ndst;
+@@ -2492,29 +2506,34 @@ static void add_kallsyms(struct module *mod, const struct load_info *info)
+ 	char *s;
+ 	Elf_Shdr *symsec = &info->sechdrs[info->index.sym];
+ 
+-	mod->symtab = (void *)symsec->sh_addr;
+-	mod->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
++	/* Set up to point into init section. */
++	mod->kallsyms = mod->init_layout.base + info->mod_kallsyms_init_off;
++
++	mod->kallsyms->symtab = (void *)symsec->sh_addr;
++	mod->kallsyms->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
+ 	/* Make sure we get permanent strtab: don't use info->strtab. */
+-	mod->strtab = (void *)info->sechdrs[info->index.str].sh_addr;
++	mod->kallsyms->strtab = (void *)info->sechdrs[info->index.str].sh_addr;
+ 
+ 	/* Set types up while we still have access to sections. */
+-	for (i = 0; i < mod->num_symtab; i++)
+-		mod->symtab[i].st_info = elf_type(&mod->symtab[i], info);
+-
+-	mod->core_symtab = dst = mod->core_layout.base + info->symoffs;
+-	mod->core_strtab = s = mod->core_layout.base + info->stroffs;
+-	src = mod->symtab;
+-	for (ndst = i = 0; i < mod->num_symtab; i++) {
++	for (i = 0; i < mod->kallsyms->num_symtab; i++)
++		mod->kallsyms->symtab[i].st_info
++			= elf_type(&mod->kallsyms->symtab[i], info);
++
++	/* Now populate the cut down core kallsyms for after init. */
++	mod->core_kallsyms.symtab = dst = mod->core_layout.base + info->symoffs;
++	mod->core_kallsyms.strtab = s = mod->core_layout.base + info->stroffs;
++	src = mod->kallsyms->symtab;
++	for (ndst = i = 0; i < mod->kallsyms->num_symtab; i++) {
+ 		if (i == 0 ||
+ 		    is_core_symbol(src+i, info->sechdrs, info->hdr->e_shnum,
+ 				   info->index.pcpu)) {
+ 			dst[ndst] = src[i];
+-			dst[ndst++].st_name = s - mod->core_strtab;
+-			s += strlcpy(s, &mod->strtab[src[i].st_name],
++			dst[ndst++].st_name = s - mod->core_kallsyms.strtab;
++			s += strlcpy(s, &mod->kallsyms->strtab[src[i].st_name],
+ 				     KSYM_NAME_LEN) + 1;
+ 		}
+ 	}
+-	mod->core_num_syms = ndst;
++	mod->core_kallsyms.num_symtab = ndst;
+ }
+ #else
+ static inline void layout_symtab(struct module *mod, struct load_info *info)
+@@ -3263,9 +3282,8 @@ static noinline int do_init_module(struct module *mod)
+ 	module_put(mod);
+ 	trim_init_extable(mod);
+ #ifdef CONFIG_KALLSYMS
+-	mod->num_symtab = mod->core_num_syms;
+-	mod->symtab = mod->core_symtab;
+-	mod->strtab = mod->core_strtab;
++	/* Switch to core kallsyms now init is done: kallsyms may be walking! */
++	rcu_assign_pointer(mod->kallsyms, &mod->core_kallsyms);
+ #endif
+ 	mod_tree_remove_init(mod);
+ 	disable_ro_nx(&mod->init_layout);
+@@ -3627,9 +3645,9 @@ static inline int is_arm_mapping_symbol(const char *str)
+ 	       && (str[2] == '\0' || str[2] == '.');
+ }
+ 
+-static const char *symname(struct module *mod, unsigned int symnum)
++static const char *symname(struct mod_kallsyms *kallsyms, unsigned int symnum)
+ {
+-	return mod->strtab + mod->symtab[symnum].st_name;
++	return kallsyms->strtab + kallsyms->symtab[symnum].st_name;
+ }
+ 
+ static const char *get_ksymbol(struct module *mod,
+@@ -3639,6 +3657,7 @@ static const char *get_ksymbol(struct module *mod,
+ {
+ 	unsigned int i, best = 0;
+ 	unsigned long nextval;
++	struct mod_kallsyms *kallsyms = rcu_dereference_sched(mod->kallsyms);
+ 
+ 	/* At worse, next value is at end of module */
+ 	if (within_module_init(addr, mod))
+@@ -3648,32 +3667,32 @@ static const char *get_ksymbol(struct module *mod,
+ 
+ 	/* Scan for closest preceding symbol, and next symbol. (ELF
+ 	   starts real symbols at 1). */
+-	for (i = 1; i < mod->num_symtab; i++) {
+-		if (mod->symtab[i].st_shndx == SHN_UNDEF)
++	for (i = 1; i < kallsyms->num_symtab; i++) {
++		if (kallsyms->symtab[i].st_shndx == SHN_UNDEF)
+ 			continue;
+ 
+ 		/* We ignore unnamed symbols: they're uninformative
+ 		 * and inserted at a whim. */
+-		if (*symname(mod, i) == '\0'
+-		    || is_arm_mapping_symbol(symname(mod, i)))
++		if (*symname(kallsyms, i) == '\0'
++		    || is_arm_mapping_symbol(symname(kallsyms, i)))
+ 			continue;
+ 
+-		if (mod->symtab[i].st_value <= addr
+-		    && mod->symtab[i].st_value > mod->symtab[best].st_value)
++		if (kallsyms->symtab[i].st_value <= addr
++		    && kallsyms->symtab[i].st_value > kallsyms->symtab[best].st_value)
+ 			best = i;
+-		if (mod->symtab[i].st_value > addr
+-		    && mod->symtab[i].st_value < nextval)
+-			nextval = mod->symtab[i].st_value;
++		if (kallsyms->symtab[i].st_value > addr
++		    && kallsyms->symtab[i].st_value < nextval)
++			nextval = kallsyms->symtab[i].st_value;
+ 	}
+ 
+ 	if (!best)
+ 		return NULL;
+ 
+ 	if (size)
+-		*size = nextval - mod->symtab[best].st_value;
++		*size = nextval - kallsyms->symtab[best].st_value;
+ 	if (offset)
+-		*offset = addr - mod->symtab[best].st_value;
+-	return symname(mod, best);
++		*offset = addr - kallsyms->symtab[best].st_value;
++	return symname(kallsyms, best);
+ }
+ 
+ /* For kallsyms to ask for address resolution.  NULL means not found.  Careful
+@@ -3763,18 +3782,21 @@ int module_get_kallsym(unsigned int symnum, unsigned long *value, char *type,
+ 
+ 	preempt_disable();
+ 	list_for_each_entry_rcu(mod, &modules, list) {
++		struct mod_kallsyms *kallsyms;
++
+ 		if (mod->state == MODULE_STATE_UNFORMED)
+ 			continue;
+-		if (symnum < mod->num_symtab) {
+-			*value = mod->symtab[symnum].st_value;
+-			*type = mod->symtab[symnum].st_info;
+-			strlcpy(name, symname(mod, symnum), KSYM_NAME_LEN);
++		kallsyms = rcu_dereference_sched(mod->kallsyms);
++		if (symnum < kallsyms->num_symtab) {
++			*value = kallsyms->symtab[symnum].st_value;
++			*type = kallsyms->symtab[symnum].st_info;
++			strlcpy(name, symname(kallsyms, symnum), KSYM_NAME_LEN);
+ 			strlcpy(module_name, mod->name, MODULE_NAME_LEN);
+ 			*exported = is_exported(name, *value, mod);
+ 			preempt_enable();
+ 			return 0;
+ 		}
+-		symnum -= mod->num_symtab;
++		symnum -= kallsyms->num_symtab;
+ 	}
+ 	preempt_enable();
+ 	return -ERANGE;
+@@ -3783,11 +3805,12 @@ int module_get_kallsym(unsigned int symnum, unsigned long *value, char *type,
+ static unsigned long mod_find_symname(struct module *mod, const char *name)
+ {
+ 	unsigned int i;
++	struct mod_kallsyms *kallsyms = rcu_dereference_sched(mod->kallsyms);
+ 
+-	for (i = 0; i < mod->num_symtab; i++)
+-		if (strcmp(name, symname(mod, i)) == 0 &&
+-		    mod->symtab[i].st_info != 'U')
+-			return mod->symtab[i].st_value;
++	for (i = 0; i < kallsyms->num_symtab; i++)
++		if (strcmp(name, symname(kallsyms, i)) == 0 &&
++		    kallsyms->symtab[i].st_info != 'U')
++			return kallsyms->symtab[i].st_value;
+ 	return 0;
+ }
+ 
+@@ -3826,11 +3849,14 @@ int module_kallsyms_on_each_symbol(int (*fn)(void *, const char *,
+ 	module_assert_mutex();
+ 
+ 	list_for_each_entry(mod, &modules, list) {
++		/* We hold module_mutex: no need for rcu_dereference_sched */
++		struct mod_kallsyms *kallsyms = mod->kallsyms;
++
+ 		if (mod->state == MODULE_STATE_UNFORMED)
+ 			continue;
+-		for (i = 0; i < mod->num_symtab; i++) {
+-			ret = fn(data, symname(mod, i),
+-				 mod, mod->symtab[i].st_value);
++		for (i = 0; i < kallsyms->num_symtab; i++) {
++			ret = fn(data, symname(kallsyms, i),
++				 mod, kallsyms->symtab[i].st_value);
+ 			if (ret != 0)
+ 				return ret;
+ 		}
