@@ -1,348 +1,161 @@
-From: Rusty Russell <rusty@rustcorp.com.au>
-Subject: Re: [RFC PATCH v4 2/6] module: preserve Elf information for livepatch modules
-Date: Wed, 10 Feb 2016 10:48:00 +1030
-Message-ID: <87io1xzadj.fsf@rustcorp.com.au>
-References: <1454548271-24923-1-git-send-email-jeyu@redhat.com> <1454548271-24923-3-git-send-email-jeyu@redhat.com> <20160209084443.GA12548@pathway.suse.cz> <alpine.LNX.2.00.1602091131510.22727@cbobk.fhfr.pm> <20160209123148.GB12548@pathway.suse.cz>
-Mime-Version: 1.0
-Content-Type: text/plain
+From: David Decotigny <ddecotig@gmail.com>
+Subject: [PATCH net-next v8 00/19] new ETHTOOL_GSETTINGS/SSETTINGS API
+Date: Tue,  9 Feb 2016 16:29:09 -0800
+Message-ID: <1455064168-5102-1-git-send-email-ddecotig@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160209123148.GB12548@pathway.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Petr Mladek <pmladek@suse.com>, Jiri Kosina <jikos@kernel.org>
-Cc: Jessica Yu <jeyu@redhat.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Seth Jennings <sjenning@redhat.com>, Vojtech Pavlik <vojtech@suse.com>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
+To: "David S. Miller" <davem@davemloft.net>, Ben Hutchings <ben@decadent.org.uk>, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-mips@linux-mips.org, fcoe-devel@open-fcoe.org, Andrew Morton <akpm@linux-foundation.org>, Tejun Heo <tj@kernel.org>
+Cc: Eric Dumazet <edumazet@google.com>, Eugenia Emantayev <eugenia@mellanox.co.il>, Or Gerlitz <ogerlitz@mellanox.com>, Ido Shamay <idos@mellanox.com>, Joe Perches <joe@perches.com>, Saeed Mahameed <saeedm@mellanox.com>, Govindarajulu Varadarajan <_govind@gmx.com>, Venkata Duvvuru <VenkatKumar.Duvvuru@Emulex.Com>, Jeff Kirsher <jeffrey.t.kirsher@intel.com>, Pravin B Shelar <pshelar@nicira.com>, Ed Swierk <eswierk@skyportsystems.com>, Robert Love <robert.w.love@intel.com>, "James E.J. Bottomley" <JBottomley@parallels.com>, Yuval Mintz <Yuval.Mintz@qlogic.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, David Decotigny <decot@googlers.com>
 List-Id: linux-api@vger.kernel.org
 
-Petr Mladek <pmladek@suse.com> writes:
-> On Tue 2016-02-09 11:33:07, Jiri Kosina wrote:
->> On Tue, 9 Feb 2016, Petr Mladek wrote:
->> 
->> > > +#ifdef CONFIG_KALLSYMS
->> > > +	/* Make symtab and strtab available prior to module init call */
->> > > +	mod->num_symtab = mod->core_num_syms;
->> > > +	mod->symtab = mod->core_symtab;
->> > > +	mod->strtab = mod->core_strtab;
->> > > +#endif
->> > 
->> > This should be done with module_mutex. Otherwise, it looks racy at least 
->> > against module_kallsyms_on_each_symbol().
->> 
->> Hmm, if this is the case, the comment describing the locking rules for 
->> module_mutex should be updated.
->> 
->> > BTW: I wonder why even the original code is not racy for example against 
->> > module_get_kallsym. It is called without the mutex. This code sets the 
->> > number of entries before the pointer to the entries.
->> > 
->> > Note that the module is in the list even in the UNFORMED state.
->> 
->> module_kallsyms_on_each_symbol() gives up in such case though.
->
-> The problem is that we set the three values above in the COMMING
-> state. They were even set in the LIVE state before this patch.
+From: David Decotigny <decot@googlers.com>
 
-True.  Indeed, I have a fix for exactly this queued in my fixes tree,
-and am about to send Linus a pull req.
 
-Below is the fix I went with, for your reference (part of a series, but
-you get the idea).
+History:
+ v8
+ - bitmap u32 API returns number of bits copied, unit tests updated
+ v7
+ - module_exit in test_bitmap
+ v6
+ - fix copy_from_user in user/kernel handshake
+ v5
+ note: please see v4 bullets for a question regarding bitmap.c
+ - minor fix to make allyesconfig/allmodconfig
+ v4
+ - removed typedef for link mode bitmaps
+ - moved bitmap<->u32[] conversion routines to bitmap.c . This is the
+   naive implementation. I have an endian-aware version that uses
+   memcpy/memset as much as possible, but I find it harder to follow
+   (see http://paste.ubuntu.com/13863722/). Please let me know if I
+   should use it instead.
+ - fixes suggested by Ben Hutchings
+ v3
+ - rebased v2 on top of latest net-next, minor checkpatch/printf %*pb
+   updates
+ v2
+ - keep return 0 in get_settings when successful, instead of
+   propagating positive result from driver's get_settings callback.
+ v1
+ - original submission
 
-Thanks!
-Rusty.
 
-commit 8244062ef1e54502ef55f54cced659913f244c3e
-Author: Rusty Russell <rusty@rustcorp.com.au>
-Date:   Wed Feb 3 16:55:26 2016 +1030
+The main goal of this series is to support ethtool link mode masks
+larger than 32 bits. It implements a new ioctl pair
+(ETHTOOL_GSETTINGS/SSETTINGS), its associated callbacks
+(get/set_settings) and a new struct ethtool_settings, which should
+eventually replace legacy ethtool_cmd. Internally, the kernel uses
+fixed length link mode masks defined at compilation time in ethtool.h
+(for now: 31 bits), that can be increased by changing
+__ETHTOOL_LINK_MODE_LAST in ethtool.h (absolute max is 4064 bits,
+checked at compile time), and the user/kernel interface allows this
+length to be arbitrary within 1..4064. This should allow some
+flexibility without using too much heap/stack space, at the cost of
+a small kernel/user handshake for the user to determine the sizes of
+those bitmaps.
 
-    modules: fix longstanding /proc/kallsyms vs module insertion race.
-    
-    For CONFIG_KALLSYMS, we keep two symbol tables and two string tables.
-    There's one full copy, marked SHF_ALLOC and laid out at the end of the
-    module's init section.  There's also a cut-down version that only
-    contains core symbols and strings, and lives in the module's core
-    section.
-    
-    After module init (and before we free the module memory), we switch
-    the mod->symtab, mod->num_symtab and mod->strtab to point to the core
-    versions.  We do this under the module_mutex.
-    
-    However, kallsyms doesn't take the module_mutex: it uses
-    preempt_disable() and rcu tricks to walk through the modules, because
-    it's used in the oops path.  It's also used in /proc/kallsyms.
-    There's nothing atomic about the change of these variables, so we can
-    get the old (larger!) num_symtab and the new symtab pointer; in fact
-    this is what I saw when trying to reproduce.
-    
-    By grouping these variables together, we can use a
-    carefully-dereferenced pointer to ensure we always get one or the
-    other (the free of the module init section is already done in an RCU
-    callback, so that's safe).  We allocate the init one at the end of the
-    module init section, and keep the core one inside the struct module
-    itself (it could also have been allocated at the end of the module
-    core, but that's probably overkill).
-    
-    Reported-by: Weilong Chen <chenweilong@huawei.com>
-    Bugzilla: https://bugzilla.kernel.org/show_bug.cgi?id=111541
-    Cc: stable@kernel.org
-    Signed-off-by: Rusty Russell <rusty@rustcorp.com.au>
+Along the way, I chose to drop in the new structure the 3 ethtool_cmd
+fields marked "deprecated" (transceiver/maxrxpkt/maxtxpkt). They are
+still available for old drivers via the (old) ETHTOOL_GSET/SSET API,
+but are not available to drivers that switch to new API. Of those 3
+fields, ethtool_cmd::transceiver seems to be still actively used by
+several drivers, maybe we should not consider this field deprecated?
+The 2 other fields are basically not used. This transition requires
+some care in the way old and new ethtool talk to the kernel.
 
-diff --git a/include/linux/module.h b/include/linux/module.h
-index 4560d8f1545d..2bb0c3085706 100644
---- a/include/linux/module.h
-+++ b/include/linux/module.h
-@@ -324,6 +324,12 @@ struct module_layout {
- #define __module_layout_align
- #endif
- 
-+struct mod_kallsyms {
-+	Elf_Sym *symtab;
-+	unsigned int num_symtab;
-+	char *strtab;
-+};
-+
- struct module {
- 	enum module_state state;
- 
-@@ -405,15 +411,10 @@ struct module {
- #endif
- 
- #ifdef CONFIG_KALLSYMS
--	/*
--	 * We keep the symbol and string tables for kallsyms.
--	 * The core_* fields below are temporary, loader-only (they
--	 * could really be discarded after module init).
--	 */
--	Elf_Sym *symtab, *core_symtab;
--	unsigned int num_symtab, core_num_syms;
--	char *strtab, *core_strtab;
--
-+	/* Protected by RCU and/or module_mutex: use rcu_dereference() */
-+	struct mod_kallsyms *kallsyms;
-+	struct mod_kallsyms core_kallsyms;
-+	
- 	/* Section attributes */
- 	struct module_sect_attrs *sect_attrs;
- 
-diff --git a/kernel/module.c b/kernel/module.c
-index 1e79d8157712..9537da37ce87 100644
---- a/kernel/module.c
-+++ b/kernel/module.c
-@@ -303,6 +303,9 @@ struct load_info {
- 	struct _ddebug *debug;
- 	unsigned int num_debug;
- 	bool sig_ok;
-+#ifdef CONFIG_KALLSYMS
-+	unsigned long mod_kallsyms_init_off;
-+#endif
- 	struct {
- 		unsigned int sym, str, mod, vers, info, pcpu;
- 	} index;
-@@ -2480,10 +2483,21 @@ static void layout_symtab(struct module *mod, struct load_info *info)
- 	strsect->sh_flags |= SHF_ALLOC;
- 	strsect->sh_entsize = get_offset(mod, &mod->init_layout.size, strsect,
- 					 info->index.str) | INIT_OFFSET_MASK;
--	mod->init_layout.size = debug_align(mod->init_layout.size);
- 	pr_debug("\t%s\n", info->secstrings + strsect->sh_name);
-+
-+	/* We'll tack temporary mod_kallsyms on the end. */
-+	mod->init_layout.size = ALIGN(mod->init_layout.size,
-+				      __alignof__(struct mod_kallsyms));
-+	info->mod_kallsyms_init_off = mod->init_layout.size;
-+	mod->init_layout.size += sizeof(struct mod_kallsyms);
-+	mod->init_layout.size = debug_align(mod->init_layout.size);
- }
- 
-+/*
-+ * We use the full symtab and strtab which layout_symtab arranged to
-+ * be appended to the init section.  Later we switch to the cut-down
-+ * core-only ones.
-+ */
- static void add_kallsyms(struct module *mod, const struct load_info *info)
- {
- 	unsigned int i, ndst;
-@@ -2492,29 +2506,34 @@ static void add_kallsyms(struct module *mod, const struct load_info *info)
- 	char *s;
- 	Elf_Shdr *symsec = &info->sechdrs[info->index.sym];
- 
--	mod->symtab = (void *)symsec->sh_addr;
--	mod->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
-+	/* Set up to point into init section. */
-+	mod->kallsyms = mod->init_layout.base + info->mod_kallsyms_init_off;
-+
-+	mod->kallsyms->symtab = (void *)symsec->sh_addr;
-+	mod->kallsyms->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
- 	/* Make sure we get permanent strtab: don't use info->strtab. */
--	mod->strtab = (void *)info->sechdrs[info->index.str].sh_addr;
-+	mod->kallsyms->strtab = (void *)info->sechdrs[info->index.str].sh_addr;
- 
- 	/* Set types up while we still have access to sections. */
--	for (i = 0; i < mod->num_symtab; i++)
--		mod->symtab[i].st_info = elf_type(&mod->symtab[i], info);
--
--	mod->core_symtab = dst = mod->core_layout.base + info->symoffs;
--	mod->core_strtab = s = mod->core_layout.base + info->stroffs;
--	src = mod->symtab;
--	for (ndst = i = 0; i < mod->num_symtab; i++) {
-+	for (i = 0; i < mod->kallsyms->num_symtab; i++)
-+		mod->kallsyms->symtab[i].st_info
-+			= elf_type(&mod->kallsyms->symtab[i], info);
-+
-+	/* Now populate the cut down core kallsyms for after init. */
-+	mod->core_kallsyms.symtab = dst = mod->core_layout.base + info->symoffs;
-+	mod->core_kallsyms.strtab = s = mod->core_layout.base + info->stroffs;
-+	src = mod->kallsyms->symtab;
-+	for (ndst = i = 0; i < mod->kallsyms->num_symtab; i++) {
- 		if (i == 0 ||
- 		    is_core_symbol(src+i, info->sechdrs, info->hdr->e_shnum,
- 				   info->index.pcpu)) {
- 			dst[ndst] = src[i];
--			dst[ndst++].st_name = s - mod->core_strtab;
--			s += strlcpy(s, &mod->strtab[src[i].st_name],
-+			dst[ndst++].st_name = s - mod->core_kallsyms.strtab;
-+			s += strlcpy(s, &mod->kallsyms->strtab[src[i].st_name],
- 				     KSYM_NAME_LEN) + 1;
- 		}
- 	}
--	mod->core_num_syms = ndst;
-+	mod->core_kallsyms.num_symtab = ndst;
- }
- #else
- static inline void layout_symtab(struct module *mod, struct load_info *info)
-@@ -3263,9 +3282,8 @@ static noinline int do_init_module(struct module *mod)
- 	module_put(mod);
- 	trim_init_extable(mod);
- #ifdef CONFIG_KALLSYMS
--	mod->num_symtab = mod->core_num_syms;
--	mod->symtab = mod->core_symtab;
--	mod->strtab = mod->core_strtab;
-+	/* Switch to core kallsyms now init is done: kallsyms may be walking! */
-+	rcu_assign_pointer(mod->kallsyms, &mod->core_kallsyms);
- #endif
- 	mod_tree_remove_init(mod);
- 	disable_ro_nx(&mod->init_layout);
-@@ -3627,9 +3645,9 @@ static inline int is_arm_mapping_symbol(const char *str)
- 	       && (str[2] == '\0' || str[2] == '.');
- }
- 
--static const char *symname(struct module *mod, unsigned int symnum)
-+static const char *symname(struct mod_kallsyms *kallsyms, unsigned int symnum)
- {
--	return mod->strtab + mod->symtab[symnum].st_name;
-+	return kallsyms->strtab + kallsyms->symtab[symnum].st_name;
- }
- 
- static const char *get_ksymbol(struct module *mod,
-@@ -3639,6 +3657,7 @@ static const char *get_ksymbol(struct module *mod,
- {
- 	unsigned int i, best = 0;
- 	unsigned long nextval;
-+	struct mod_kallsyms *kallsyms = rcu_dereference_sched(mod->kallsyms);
- 
- 	/* At worse, next value is at end of module */
- 	if (within_module_init(addr, mod))
-@@ -3648,32 +3667,32 @@ static const char *get_ksymbol(struct module *mod,
- 
- 	/* Scan for closest preceding symbol, and next symbol. (ELF
- 	   starts real symbols at 1). */
--	for (i = 1; i < mod->num_symtab; i++) {
--		if (mod->symtab[i].st_shndx == SHN_UNDEF)
-+	for (i = 1; i < kallsyms->num_symtab; i++) {
-+		if (kallsyms->symtab[i].st_shndx == SHN_UNDEF)
- 			continue;
- 
- 		/* We ignore unnamed symbols: they're uninformative
- 		 * and inserted at a whim. */
--		if (*symname(mod, i) == '\0'
--		    || is_arm_mapping_symbol(symname(mod, i)))
-+		if (*symname(kallsyms, i) == '\0'
-+		    || is_arm_mapping_symbol(symname(kallsyms, i)))
- 			continue;
- 
--		if (mod->symtab[i].st_value <= addr
--		    && mod->symtab[i].st_value > mod->symtab[best].st_value)
-+		if (kallsyms->symtab[i].st_value <= addr
-+		    && kallsyms->symtab[i].st_value > kallsyms->symtab[best].st_value)
- 			best = i;
--		if (mod->symtab[i].st_value > addr
--		    && mod->symtab[i].st_value < nextval)
--			nextval = mod->symtab[i].st_value;
-+		if (kallsyms->symtab[i].st_value > addr
-+		    && kallsyms->symtab[i].st_value < nextval)
-+			nextval = kallsyms->symtab[i].st_value;
- 	}
- 
- 	if (!best)
- 		return NULL;
- 
- 	if (size)
--		*size = nextval - mod->symtab[best].st_value;
-+		*size = nextval - kallsyms->symtab[best].st_value;
- 	if (offset)
--		*offset = addr - mod->symtab[best].st_value;
--	return symname(mod, best);
-+		*offset = addr - kallsyms->symtab[best].st_value;
-+	return symname(kallsyms, best);
- }
- 
- /* For kallsyms to ask for address resolution.  NULL means not found.  Careful
-@@ -3763,18 +3782,21 @@ int module_get_kallsym(unsigned int symnum, unsigned long *value, char *type,
- 
- 	preempt_disable();
- 	list_for_each_entry_rcu(mod, &modules, list) {
-+		struct mod_kallsyms *kallsyms;
-+
- 		if (mod->state == MODULE_STATE_UNFORMED)
- 			continue;
--		if (symnum < mod->num_symtab) {
--			*value = mod->symtab[symnum].st_value;
--			*type = mod->symtab[symnum].st_info;
--			strlcpy(name, symname(mod, symnum), KSYM_NAME_LEN);
-+		kallsyms = rcu_dereference_sched(mod->kallsyms);
-+		if (symnum < kallsyms->num_symtab) {
-+			*value = kallsyms->symtab[symnum].st_value;
-+			*type = kallsyms->symtab[symnum].st_info;
-+			strlcpy(name, symname(kallsyms, symnum), KSYM_NAME_LEN);
- 			strlcpy(module_name, mod->name, MODULE_NAME_LEN);
- 			*exported = is_exported(name, *value, mod);
- 			preempt_enable();
- 			return 0;
- 		}
--		symnum -= mod->num_symtab;
-+		symnum -= kallsyms->num_symtab;
- 	}
- 	preempt_enable();
- 	return -ERANGE;
-@@ -3783,11 +3805,12 @@ int module_get_kallsym(unsigned int symnum, unsigned long *value, char *type,
- static unsigned long mod_find_symname(struct module *mod, const char *name)
- {
- 	unsigned int i;
-+	struct mod_kallsyms *kallsyms = rcu_dereference_sched(mod->kallsyms);
- 
--	for (i = 0; i < mod->num_symtab; i++)
--		if (strcmp(name, symname(mod, i)) == 0 &&
--		    mod->symtab[i].st_info != 'U')
--			return mod->symtab[i].st_value;
-+	for (i = 0; i < kallsyms->num_symtab; i++)
-+		if (strcmp(name, symname(kallsyms, i)) == 0 &&
-+		    kallsyms->symtab[i].st_info != 'U')
-+			return kallsyms->symtab[i].st_value;
- 	return 0;
- }
- 
-@@ -3826,11 +3849,14 @@ int module_kallsyms_on_each_symbol(int (*fn)(void *, const char *,
- 	module_assert_mutex();
- 
- 	list_for_each_entry(mod, &modules, list) {
-+		/* We hold module_mutex: no need for rcu_dereference_sched */
-+		struct mod_kallsyms *kallsyms = mod->kallsyms;
-+
- 		if (mod->state == MODULE_STATE_UNFORMED)
- 			continue;
--		for (i = 0; i < mod->num_symtab; i++) {
--			ret = fn(data, symname(mod, i),
--				 mod, mod->symtab[i].st_value);
-+		for (i = 0; i < kallsyms->num_symtab; i++) {
-+			ret = fn(data, symname(kallsyms, i),
-+				 mod, kallsyms->symtab[i].st_value);
- 			if (ret != 0)
- 				return ret;
- 		}
+More technical details provided in the description for main patch. In
+particular details about backward compatibility properties.
+
+Some questions to more experts than me:
+ - the kernel/interface multiplexes the "tell me the bitmap length"
+   handshake and the "give me the settings" inside the new
+   ETHTOOL_GSETTINGS cmd. I was thinking of making this into 2
+   separate cmds: 1 cmd ETHTOOL_GKERNELPROPERTIES which would be
+   kernel-wide rather than device-specific, would return properties
+   like "length of the link mode bitmaps", and possibly others. And
+   ETHTOOL_GSETTINGS would expect the proper bitmaps
+ - the link mode bitmaps are piggybacked at tail of the new struct
+   ethtool_settings. Since its user-visible definition does not assume
+   specific bitmap width, I am using a 0-length array as the publicly
+   visible placeholder. But then, the kernel needs to specialize it
+   (struct ethtool_ksettings) to specify its current link mode
+   masks. This means that kernel code is "littered" with
+   "ksettings->parent.field" to access "field" inside
+   ethtool_settings:
+   + I don't like the field name "parent", any suggestion welcome
+   + and/or: I could use ethtool_settings everywhere (instead of a new
+     ethtool_ksettings) and an accessor to retrieve the link mode
+     masks?
+   + or: we could decide to make the link mode masks statically
+     bounded again, ie. make their width public, but larger than
+     current 32, and unchangeable forever. This would make everything
+     straightforward, but we might hit limits later, or have an
+     unneeded memory/stack usage for unused bits.
+   any preference?
+ - I foresee bugs where people use the legacy/deprecated SUPPORTED_x
+   macros instead of the new ETHTOOL_LINK_MODE_x_BIT enums in the new
+   get/set__ksettings callbacks. Not sure how to prevent problems with
+   this.
+
+The only driver which was converted for now is mlx4. I am not
+considering fcoe as fully converted, but I updated it a minima to be
+able to remove __ethtool_get_settings, now known as
+__ethtool_get_ksettings.
+
+Tested with legacy and "future" ethtool on 64b x86 kernel and 32+64b
+ethtool, and on a 32b x86 kernel + 32b ethtool.
+
+############################################
+# Patch Set Summary:
+
+David Decotigny (19):
+  lib/bitmap.c: conversion routines to/from u32 array
+  test_bitmap: unit tests for lib/bitmap.c
+  net: usnic: remove unused call to ethtool_ops::get_settings
+  net: usnic: use __ethtool_get_settings
+  net: ethtool: add new ETHTOOL_GSETTINGS/SSETTINGS API
+  tx4939: use __ethtool_get_ksettings
+  net: usnic: use __ethtool_get_ksettings
+  net: bonding: use __ethtool_get_ksettings
+  net: ipvlan: use __ethtool_get_ksettings
+  net: macvlan: use __ethtool_get_ksettings
+  net: team: use __ethtool_get_ksettings
+  net: fcoe: use __ethtool_get_ksettings
+  net: rdma: use __ethtool_get_ksettings
+  net: 8021q: use __ethtool_get_ksettings
+  net: bridge: use __ethtool_get_ksettings
+  net: core: use __ethtool_get_ksettings
+  net: ethtool: remove unused __ethtool_get_settings
+  net: mlx4: convenience predicate for debug messages
+  net: mlx4: use new ETHTOOL_G/SSETTINGS API
+
+ arch/mips/txx9/generic/setup_tx4939.c           |   7 +-
+ drivers/infiniband/hw/usnic/usnic_ib_verbs.c    |  10 +-
+ drivers/net/bonding/bond_main.c                 |  14 +-
+ drivers/net/ethernet/mellanox/mlx4/en_ethtool.c | 344 ++++++++++----------
+ drivers/net/ethernet/mellanox/mlx4/en_main.c    |   1 +
+ drivers/net/ethernet/mellanox/mlx4/mlx4_en.h    |   5 +-
+ drivers/net/ipvlan/ipvlan_main.c                |   8 +-
+ drivers/net/macvlan.c                           |   8 +-
+ drivers/net/team/team.c                         |   8 +-
+ drivers/scsi/fcoe/fcoe_transport.c              |  36 ++-
+ include/linux/bitmap.h                          |  10 +
+ include/linux/ethtool.h                         |  84 ++++-
+ include/rdma/ib_addr.h                          |  14 +-
+ include/uapi/linux/ethtool.h                    | 320 ++++++++++++++----
+ lib/Kconfig.debug                               |   8 +
+ lib/Makefile                                    |   1 +
+ lib/bitmap.c                                    |  89 +++++
+ lib/test_bitmap.c                               | 358 ++++++++++++++++++++
+ net/8021q/vlan_dev.c                            |   8 +-
+ net/bridge/br_if.c                              |   6 +-
+ net/core/ethtool.c                              | 413 +++++++++++++++++++++++-
+ net/core/net-sysfs.c                            |  15 +-
+ net/packet/af_packet.c                          |  11 +-
+ tools/testing/selftests/lib/Makefile            |   2 +-
+ tools/testing/selftests/lib/bitmap.sh           |  10 +
+ 25 files changed, 1462 insertions(+), 328 deletions(-)
+ create mode 100644 lib/test_bitmap.c
+ create mode 100644 tools/testing/selftests/lib/bitmap.sh
+
+-- 
+2.7.0.rc3.207.g0ac5344
