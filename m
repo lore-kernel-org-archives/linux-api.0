@@ -1,82 +1,29 @@
-From: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Subject: Re: richacl(7) man page review comments
-Date: Wed, 10 Feb 2016 14:34:04 -0500
-Message-ID: <20160210193404.GA13989@fieldses.org>
-References: <56B770B6.7040803@gmail.com>
- <56B77262.7090107@gmail.com>
+From: Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>
+Subject: Re: [PATCH net-next v8 00/19] new ETHTOOL_GSETTINGS/SSETTINGS API
+Date: Wed, 10 Feb 2016 16:56:42 -0800
+Message-ID: <20160210165642.6f8576d2@xeon-e3>
+References: <1455064168-5102-1-git-send-email-ddecotig@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <56B77262.7090107-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1455064168-5102-1-git-send-email-ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Decotigny <ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, fcoe-devel-s9riP+hp16TNLxjTenLetw@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eugenia Emantayev <eugenia-VPRAkNaXOzVS1MOuV/RT9w@public.gmane.org>, Or Gerlitz <ogerlitz-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Ido Shamay <idos-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Saeed Mahameed <saeedm-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Govindarajulu Varadarajan <_govind-KK0ffGbhmjU@public.gmane.org>, Venkata Duvvuru <VenkatKumar.Duvvuru-iH1Dq9VlAzfQT0dZR+AlfA@public.gmane.org>, Jeff Kirsher <jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Pravin B Shelar <pshelar-l0M0P4e3n4LQT0dZR+AlfA@public.gmane.org>, Ed Swierk <eswierk-FilZDy9cOaHkQYj/0HfcvtBPR1lH4CV8@public.gmane.org>, Robert Love <robert.w.love-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "James E.J. Bottomley" <JBottomley-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Yuval Mintz <Yuval.Mintz-h88ZbnxC6KDQT0dZR+AlfA@public.gmane.org>, Rasmus Villemoes <linux@rasmusvil>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Feb 07, 2016 at 05:35:46PM +0100, Michael Kerrisk (man-pages) wrote:
-> > This permission is always implicitly granted.
-> > .HP
-> > .B write_attributes
-> > .RB ( A ):
-> > Change the times associated with a file or directory to an arbitrary value.
-> > This permission is always implicitly granted to the file owner.
-> > .HP
-> > .B read_acl
-> > .RB ( c ):
-> > Read the ACL of a file or directory. This permission is always
-> > implicitly granted.
-> > .HP
-> > .B write_acl
-> > .RB ( C ):
-> > Change the ACL or file mode of a file or directory.
-> > .HP
-> > .B write_owner
-> > .RB ( o ):
-> > Take ownership of a file or directory.  Change the owning group of a file or
-> > directory to a group of which the calling process is a member.
-> > .HP
-> > .B read_named_attrs
-> > .RB ( R ),
-> > .B write_named_attrs
-> > .RB ( W ),
-> > .B synchronize
-> > .RB ( S ),
-> > .B write_retention
-> > .RB ( e ),
-> > .B write_retention_hold
-> > .RB ( E ):
-> > These permissions can be stored, but do not have a local meaning.
-> 
-> So, I thenk that a sentence here should explain why these permissions
-> exist. Is if for future extension, because they are meaningful in NFS,
-> or something else?
+On Tue,  9 Feb 2016 16:29:09 -0800
+David Decotigny <ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
 
-Yeah, "synchronize" is something only Windows clients care about, as I
-understand it.  The others are for NFS features that nobody has tried to
-implement yet.  It's useful to store those bits but they don't do
-anything at this point.  We could provie FC references, I guess, but
-it's probably not worth going into much detail about.
+> Along the way, I chose to drop in the new structure the 3 ethtool_cmd
+> fields marked "deprecated" (transceiver/maxrxpkt/maxtxpkt). They are
+> still available for old drivers via the (old) ETHTOOL_GSET/SSET API,
+> but are not available to drivers that switch to new API. Of those 3
+> fields, ethtool_cmd::transceiver seems to be still actively used by
+> several drivers, maybe we should not consider this field deprecated?
+> The 2 other fields are basically not used. This transition requires
+> some care in the way old and new ethtool talk to the kernel.
 
-> > Automatic Inheritance allows permission changes to propagate from a directory
-> > to files and subdirectories inside that directory, recursively.  Carrying out
-> > this propagation of permissions is the responsibility of the process changing
-> > the directory permissions (usually, setrichacl(1)).
-> 
-> I'm confused by the previous sentence. the feature is labeled "Automatic
-> Inheritance", implying that the user/process need do nothing. The next
-> sentence says "propagation ... is the responsibility of the process".
-> These two points seem contradictory. I think something more needs to be
-> said here.
-
-Yeah, the "automatic" name is probably misleading, but I think we're
-stuck with that name and just need to make the point a bit more
-forcefully.
-
-Userland utilities take responsibility for the actual recursive
-propagation of changes, all the kernel does is provide a few bits which
-help to do it correctly (e.g. to distinguish between ACEs that ewre
-inherited inherited (and can be blown away by propagation) and those
-that were added locally).
-
---b.
+Please just fix old drivers. It is perfectly acceptable to break any
+out of tree drivers.
