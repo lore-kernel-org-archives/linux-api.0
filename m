@@ -1,1179 +1,170 @@
-From: Mathieu Poirier <mathieu.poirier@linaro.org>
-Subject: Re: [PATCH V3 6/6] coresight-stm: adding driver for CoreSight STM component
-Date: Thu, 11 Feb 2016 09:59:51 -0700
-Message-ID: <CANLsYkxvLFu1C+_H9c0EoMebLQu1gnwt9bqY6_R3j+ua2w+xMg@mail.gmail.com>
-References: <1454756672-12790-1-git-send-email-zhang.chunyan@linaro.org>
-	<1454756672-12790-7-git-send-email-zhang.chunyan@linaro.org>
+From: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v9 04/13] task_isolation: add initial support
+Date: Thu, 11 Feb 2016 14:24:25 -0500
+Message-ID: <56BCDFE9.10200@ezchip.com>
+References: <1451936091-29247-1-git-send-email-cmetcalf@ezchip.com>
+ <1451936091-29247-5-git-send-email-cmetcalf@ezchip.com>
+ <20160119154214.GA2722@lerouge> <569EA050.5030106@ezchip.com>
+ <20160128002801.GA14313@lerouge> <56ABACDD.5090500@ezchip.com>
+ <20160130211125.GB7856@lerouge>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1454756672-12790-7-git-send-email-zhang.chunyan@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Chunyan Zhang <zhang.chunyan@linaro.org>
-Cc: Alexander Shishkin <alexander.shishkin@linux.intel.com>, Mike Leach <mike.leach@arm.com>, Michael Williams <Michael.Williams@arm.com>, Al Grant <al.grant@arm.com>, "Jeremiassen, Tor" <tor@ti.com>, Nicolas GUION <nicolas.guion@st.com>, Mark Brown <broonie@kernel.org>, Rob Herring <robh@kernel.org>, Pratik Patel <pratikp@codeaurora.org>, Jon Corbet <corbet@lwn.net>, Mark Rutland <mark.rutland@arm.com>, Lyra Zhang <zhang.lyra@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org
+Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160130211125.GB7856@lerouge>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 6 February 2016 at 04:04, Chunyan Zhang <zhang.chunyan@linaro.org> wrote:
-> From: Pratik Patel <pratikp@codeaurora.org>
+On 01/30/2016 04:11 PM, Frederic Weisbecker wrote:
+> On Fri, Jan 29, 2016 at 01:18:05PM -0500, Chris Metcalf wrote:
+>> On 01/27/2016 07:28 PM, Frederic Weisbecker wrote:
+>>> On Tue, Jan 19, 2016 at 03:45:04PM -0500, Chris Metcalf wrote:
+>>>> You asked what happens if nohz_full= is given as well, which is a very
+>>>> good question.  Perhaps the right answer is to have an early_initcall
+>>>> that suppresses task isolation on any cores that lost their nohz_full
+>>>> or isolcpus status due to later boot command line arguments (and
+>>>> generate a console warning, obviously).
+>>> I'd rather imagine that the final nohz full cpumask is "nohz_full=" | "task_isolation="
+>>> That's the easiest way to deal with and both nohz and task isolation can call
+>>> a common initializer that takes care of the allocation and add the cpus to the mask.
+>> I like it!
+>>
+>> And by the same token, the final isolcpus cpumask is "isolcpus=" |
+>> "task_isolation="?
+>> That seems like we'd want to do it to keep things parallel.
+> We have reverted the patch that made isolcpus |= nohz_full. Too
+> many people complained about unusable machines with NO_HZ_FULL_ALL
 >
-> This driver adds support for the STM CoreSight IP block, allowing any
-> system compoment (HW or SW) to log and aggregate messages via a
-> single entity.
->
-> The CoreSight STM exposes an application defined number of channels
-> called stimulus port.  Configuration is done using entries in sysfs
-> and channels made available to userspace via configfs.
->
-> Signed-off-by: Pratik Patel <pratikp@codeaurora.org>
-> Signed-off-by: Mathieu Poirier <mathieu.poirier@linaro.org>
-> Signed-off-by: Chunyan Zhang <zhang.chunyan@linaro.org>
-> ---
->  .../ABI/testing/sysfs-bus-coresight-devices-stm    |  53 ++
->  Documentation/trace/coresight.txt                  |  37 +-
->  drivers/hwtracing/coresight/Kconfig                |  11 +
->  drivers/hwtracing/coresight/Makefile               |   1 +
->  drivers/hwtracing/coresight/coresight-stm.c        | 928 +++++++++++++++++++++
->  include/linux/coresight-stm.h                      |   6 +
->  include/uapi/linux/coresight-stm.h                 |  12 +
->  7 files changed, 1046 insertions(+), 2 deletions(-)
->  create mode 100644 Documentation/ABI/testing/sysfs-bus-coresight-devices-stm
->  create mode 100644 drivers/hwtracing/coresight/coresight-stm.c
->  create mode 100644 include/linux/coresight-stm.h
->  create mode 100644 include/uapi/linux/coresight-stm.h
->
-> diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-stm b/Documentation/ABI/testing/sysfs-bus-coresight-devices-stm
-> new file mode 100644
-> index 0000000..a1d7022
-> --- /dev/null
-> +++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-stm
-> @@ -0,0 +1,53 @@
-> +What:          /sys/bus/coresight/devices/<memory_map>.stm/enable_source
-> +Date:          February 2016
-> +KernelVersion: 4.5
-> +Contact:       Mathieu Poirier <mathieu.poirier@linaro.org>
-> +Description:   (RW) Enable/disable tracing on this specific trace macrocell.
-> +               Enabling the trace macrocell implies it has been configured
-> +               properly and a sink has been identidifed for it.  The path
-> +               of coresight components linking the source to the sink is
-> +               configured and managed automatically by the coresight framework.
-> +
-> +What:          /sys/bus/coresight/devices/<memory_map>.stm/hwevent_enable
-> +Date:          February 2016
-> +KernelVersion: 4.5
-> +Contact:       Mathieu Poirier <mathieu.poirier@linaro.org>
-> +Description:   (RW) Provides access to the HW event enable register, used in
-> +               conjunction with HW event bank select register.
-> +
-> +What:          /sys/bus/coresight/devices/<memory_map>.stm/hwevent_select
-> +Date:          February 2016
-> +KernelVersion: 4.5
-> +Contact:       Mathieu Poirier <mathieu.poirier@linaro.org>
-> +Description:   (RW) Gives access to the HW event block select register
-> +               (STMHEBSR) in order to configure up to 256 channels.  Used in
-> +               conjunction with "hwevent_enable" register as described above.
-> +
-> +What:          /sys/bus/coresight/devices/<memory_map>.stm/port_enable
-> +Date:          February 2016
-> +KernelVersion: 4.5
-> +Contact:       Mathieu Poirier <mathieu.poirier@linaro.org>
-> +Description:   (RW) Provides access to the stimlus port enable register
-> +               (STMSPER).  Used in conjunction with "port_select" described
-> +               below.
-> +
-> +What:          /sys/bus/coresight/devices/<memory_map>.stm/port_select
-> +Date:          February 2016
-> +KernelVersion: 4.5
-> +Contact:       Mathieu Poirier <mathieu.poirier@linaro.org>
-> +Description:   (RW) Used to determine which bank of stimulus port bit in
-> +               register STMSPER (see above) apply to.
-> +
-> +What:          /sys/bus/coresight/devices/<memory_map>.stm/status
-> +Date:          February 2016
-> +KernelVersion: 4.5
-> +Contact:       Mathieu Poirier <mathieu.poirier@linaro.org>
-> +Description:   (R) List various control and status registers.  The specific
-> +               layout and content is driver specific.
-> +
-> +What:          /sys/bus/coresight/devices/<memory_map>.stm/traceid
-> +Date:          February 2016
-> +KernelVersion: 4.5
-> +Contact:       Mathieu Poirier <mathieu.poirier@linaro.org>
-> +Description:   (RW) Holds the trace ID that will appear in the trace stream
-> +               coming from this trace entity.
-> diff --git a/Documentation/trace/coresight.txt b/Documentation/trace/coresight.txt
-> index 0a5c329..a33c88c 100644
-> --- a/Documentation/trace/coresight.txt
-> +++ b/Documentation/trace/coresight.txt
-> @@ -190,8 +190,8 @@ expected to be accessed and controlled using those entries.
->  Last but not least, "struct module *owner" is expected to be set to reflect
->  the information carried in "THIS_MODULE".
->
-> -How to use
-> -----------
-> +How to use the tracer modules
-> +-----------------------------
->
->  Before trace collection can start, a coresight sink needs to be identify.
->  There is no limit on the amount of sinks (nor sources) that can be enabled at
-> @@ -297,3 +297,36 @@ Info                                    Tracing enabled
->  Instruction     13570831        0x8026B584      E28DD00C        false   ADD      sp,sp,#0xc
->  Instruction     0       0x8026B588      E8BD8000        true    LDM      sp!,{pc}
->  Timestamp                                       Timestamp: 17107041535
-> +
-> +How to use the STM module
-> +-------------------------
-> +
-> +Using the System Trace Macrocell module is the same as the tracers - the only
-> +difference is that clients are driving the trace capture rather
-> +than the program flow through the code.
-> +
-> +As with any other CoreSight component, specifics about the STM tracer can be
-> +found in sysfs with more information on each entry being found in [1]:
-> +
-> +root@genericarmv8:~# ls /sys/bus/coresight/devices/20100000.stm
-> +enable_source   hwevent_select  port_enable     subsystem       uevent
-> +hwevent_enable  mgmt            port_select     traceid
-> +root@genericarmv8:~#
-> +
-> +Like any other source a sink needs to be identified and the STM enabled before
-> +being used:
-> +
-> +root@genericarmv8:~# echo 1 > /sys/bus/coresight/devices/20010000.etf/enable_sink
-> +root@genericarmv8:~# echo 1 > /sys/bus/coresight/devices/20100000.stm/enable_source
-> +
-> +From there user space applications can request and use channels using the devfs
-> +interface provided for that purpose by the generic STM API:
-> +
-> +root@genericarmv8:~# ls -l /dev/20100000.stm
-> +crw-------    1 root     root       10,  61 Jan  3 18:11 /dev/20100000.stm
-> +root@genericarmv8:~#
-> +
-> +Details on how to use the generic STM API can be found here [2].
-> +
-> +[1]. Documentation/ABI/testing/sysfs-bus-coresight-devices-stm
-> +[2]. Documentation/trace/stm.txt
-> diff --git a/drivers/hwtracing/coresight/Kconfig b/drivers/hwtracing/coresight/Kconfig
-> index c85935f..f4a8bfa 100644
-> --- a/drivers/hwtracing/coresight/Kconfig
-> +++ b/drivers/hwtracing/coresight/Kconfig
-> @@ -77,4 +77,15 @@ config CORESIGHT_QCOM_REPLICATOR
->           programmable ATB replicator sends the ATB trace stream from the
->           ETB/ETF to the TPIUi and ETR.
->
-> +config CORESIGHT_STM
-> +       bool "CoreSight System Trace Macrocell driver"
-> +       depends on (ARM && !(CPU_32v3 || CPU_32v4 || CPU_32v4T)) || ARM64
-> +       select CORESIGHT_LINKS_AND_SINKS
-> +       select STM
-> +       help
-> +         This driver provides support for hardware assisted software
-> +         instrumentation based tracing. This is primarily used for
-> +         logging useful software events or data coming from various entities
-> +         in the system, possibly running different OSs
-> +
->  endif
-> diff --git a/drivers/hwtracing/coresight/Makefile b/drivers/hwtracing/coresight/Makefile
-> index 99f8e5f..1f6eaec 100644
-> --- a/drivers/hwtracing/coresight/Makefile
-> +++ b/drivers/hwtracing/coresight/Makefile
-> @@ -11,3 +11,4 @@ obj-$(CONFIG_CORESIGHT_LINKS_AND_SINKS) += coresight-funnel.o \
->  obj-$(CONFIG_CORESIGHT_SOURCE_ETM3X) += coresight-etm3x.o coresight-etm-cp14.o
->  obj-$(CONFIG_CORESIGHT_SOURCE_ETM4X) += coresight-etm4x.o
->  obj-$(CONFIG_CORESIGHT_QCOM_REPLICATOR) += coresight-replicator-qcom.o
-> +obj-$(CONFIG_CORESIGHT_STM) += coresight-stm.o
-> diff --git a/drivers/hwtracing/coresight/coresight-stm.c b/drivers/hwtracing/coresight/coresight-stm.c
-> new file mode 100644
-> index 0000000..01b3521
-> --- /dev/null
-> +++ b/drivers/hwtracing/coresight/coresight-stm.c
-> @@ -0,0 +1,928 @@
-> +/* Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
-> + *
-> + * This program is free software; you can redistribute it and/or modify
-> + * it under the terms of the GNU General Public License version 2 and
-> + * only version 2 as published by the Free Software Foundation.
-> + *
-> + * This program is distributed in the hope that it will be useful,
-> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + * GNU General Public License for more details.
-> + *
-> + * Initial implementation by Pratik Patel
-> + * (C) 2014-2015 Pratik Patel <pratikp@codeaurora.org>
-> + *
-> + * Serious refactoring, code cleanup and upgrading to the Coresight upstream
-> + * framework by Mathieu Poirier
-> + * (C) 2015-2016 Mathieu Poirier <mathieu.poirier@linaro.org>
-> + *
-> + * Guaranteed timing and support for various packet type coming from the
-> + * generic STM API by Chunyan Zhang
-> + * (C) 2015-2016 Chunyan Zhang <zhang.chunyan@linaro.org>
-> + */
-> +#include <linux/amba/bus.h>
-> +#include <linux/bitmap.h>
-> +#include <linux/clk.h>
-> +#include <linux/coresight.h>
-> +#include <linux/coresight-stm.h>
-> +#include <linux/err.h>
-> +#include <linux/kernel.h>
-> +#include <linux/module.h>
-> +#include <linux/of_address.h>
-> +#include <linux/pm_runtime.h>
-> +#include <linux/stm.h>
-> +
-> +#include "coresight-priv.h"
-> +
-> +#define STMDMASTARTR                   0xc04
-> +#define STMDMASTOPR                    0xc08
-> +#define STMDMASTATR                    0xc0c
-> +#define STMDMACTLR                     0xc10
-> +#define STMDMAIDR                      0xcfc
-> +#define STMHEER                                0xd00
-> +#define STMHETER                       0xd20
-> +#define STMHEBSR                       0xd60
-> +#define STMHEMCR                       0xd64
-> +#define STMHEMASTR                     0xdf4
-> +#define STMHEFEAT1R                    0xdf8
-> +#define STMHEIDR                       0xdfc
-> +#define STMSPER                                0xe00
-> +#define STMSPTER                       0xe20
-> +#define STMPRIVMASKR                   0xe40
-> +#define STMSPSCR                       0xe60
-> +#define STMSPMSCR                      0xe64
-> +#define STMSPOVERRIDER                 0xe68
-> +#define STMSPMOVERRIDER                        0xe6c
-> +#define STMSPTRIGCSR                   0xe70
-> +#define STMTCSR                                0xe80
-> +#define STMTSSTIMR                     0xe84
-> +#define STMTSFREQR                     0xe8c
-> +#define STMSYNCR                       0xe90
-> +#define STMAUXCR                       0xe94
-> +#define STMSPFEAT1R                    0xea0
-> +#define STMSPFEAT2R                    0xea4
-> +#define STMSPFEAT3R                    0xea8
-> +#define STMITTRIGGER                   0xee8
-> +#define STMITATBDATA0                  0xeec
-> +#define STMITATBCTR2                   0xef0
-> +#define STMITATBID                     0xef4
-> +#define STMITATBCTR0                   0xef8
-> +
-> +#define STM_32_CHANNEL                 32
-> +#define BYTES_PER_CHANNEL              256
-> +#define STM_TRACE_BUF_SIZE             4096
-> +#define STM_SW_MASTER_END              127
-> +
-> +/* Register bit definition */
-> +#define STMTCSR_BUSY_BIT               23
-> +/* Reserve the first 10 channels for kernel usage */
-> +#define STM_CHANNEL_OFFSET             0
-> +
-> +enum stm_pkt_type {
-> +       STM_PKT_TYPE_DATA       = 0x98,
-> +       STM_PKT_TYPE_FLAG       = 0xE8,
-> +       STM_PKT_TYPE_TRIG       = 0xF8,
-> +};
-> +
-> +#define stm_channel_addr(drvdata, ch)  (drvdata->chs.base +    \
-> +                                       (ch * BYTES_PER_CHANNEL))
-> +#define stm_channel_off(type, opts)    (type & ~opts)
-> +
-> +static int boot_nr_channel;
-> +
-> +module_param_named(
-> +       boot_nr_channel, boot_nr_channel, int, S_IRUGO
-> +);
-> +
-> +/**
-> + * struct channel_space - central management entity for extended ports
-> + * @base:              memory mapped base address where channels start.
-> + * @guaraneed:         is the channel delivery guaranteed.
-> + */
-> +struct channel_space {
-> +       void __iomem            *base;
-> +       unsigned long           *guaranteed;
-> +};
-> +
-> +/**
-> + * struct stm_drvdata - specifics associated to an STM component
-> + * @base:              memory mapped base address for this component.
-> + * @dev:               the device entity associated to this component.
-> + * @atclk:             optional clock for the core parts of the STM.
-> + * @csdev:             component vitals needed by the framework.
-> + * @spinlock:          only one at a time pls.
-> + * @chs:               the channels accociated to this STM.
-> + * @stm:               structure associated to the generic STM interface.
-> + * @enable:            this STM is being used.
-> + * @traceid:           value of the current ID for this component.
-> + * @write_max:         Maximus bytes this STM can write at a time.
-> + * @write_64bit:       whether this STM supports 64 bit access.
-> + * @stmsper:           settings for register STMSPER.
-> + * @stmspscr:          settings for register STMSPSCR.
-> + * @numsp:             the total number of stimulus port support by this STM.
-> + * @stmheer:           settings for register STMHEER.
-> + * @stmheter:          settings for register STMHETER.
-> + * @stmhebsr:          settings for register STMHEBSR.
-> + */
-> +struct stm_drvdata {
-> +       void __iomem            *base;
-> +       struct device           *dev;
-> +       struct clk              *atclk;
-> +       struct coresight_device *csdev;
-> +       spinlock_t              spinlock;
-> +       struct channel_space    chs;
-> +       struct stm_data         stm;
-> +       bool                    enable;
-> +       u8                      traceid;
-> +       u8                      write_max;
-> +       u32                     write_64bit;
-> +       u32                     stmsper;
-> +       u32                     stmspscr;
-> +       u32                     numsp;
-> +       u32                     stmheer;
-> +       u32                     stmheter;
-> +       u32                     stmhebsr;
-> +};
-> +
-> +static void stm_hwevent_enable_hw(struct stm_drvdata *drvdata)
-> +{
-> +       CS_UNLOCK(drvdata->base);
-> +
-> +       writel_relaxed(drvdata->stmhebsr, drvdata->base + STMHEBSR);
-> +       writel_relaxed(drvdata->stmheter, drvdata->base + STMHETER);
-> +       writel_relaxed(drvdata->stmheer, drvdata->base + STMHEER);
-> +       writel_relaxed(0x01 |   /* Enable HW event tracing */
-> +                      0x04,    /* Error detection on event tracing */
-> +                      drvdata->base + STMHEMCR);
-> +
-> +       CS_LOCK(drvdata->base);
-> +}
-> +
-> +static void stm_port_enable_hw(struct stm_drvdata *drvdata)
-> +{
-> +       CS_UNLOCK(drvdata->base);
-> +       /* ATB trigger enable on direct writes to TRIG locations */
-> +       writel_relaxed(0x10,
-> +                      drvdata->base + STMSPTRIGCSR);
-> +       writel_relaxed(drvdata->stmspscr, drvdata->base + STMSPSCR);
-> +       writel_relaxed(drvdata->stmsper, drvdata->base + STMSPER);
-> +
-> +       CS_LOCK(drvdata->base);
-> +}
-> +
-> +static void stm_enable_hw(struct stm_drvdata *drvdata)
-> +{
-> +       if (drvdata->stmheer)
-> +               stm_hwevent_enable_hw(drvdata);
-> +
-> +       stm_port_enable_hw(drvdata);
-> +
-> +       CS_UNLOCK(drvdata->base);
-> +
-> +       /* 4096 byte between synchronisation packets */
-> +       writel_relaxed(0xFFF, drvdata->base + STMSYNCR);
-> +       writel_relaxed((drvdata->traceid << 16 | /* trace id */
-> +                       0x02 |                   /* timestamp enable */
-> +                       0x01),                   /* global STM enable */
-> +                       drvdata->base + STMTCSR);
-> +
-> +       CS_LOCK(drvdata->base);
-> +}
-> +
-> +static int stm_enable(struct coresight_device *csdev)
-> +{
-> +       struct stm_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
-> +
-> +       pm_runtime_get_sync(drvdata->dev);
-> +
-> +       spin_lock(&drvdata->spinlock);
-> +       stm_enable_hw(drvdata);
-> +       drvdata->enable = true;
-> +       spin_unlock(&drvdata->spinlock);
-> +
-> +       dev_info(drvdata->dev, "STM tracing enabled\n");
-> +       return 0;
-> +}
-> +
-> +static void stm_hwevent_disable_hw(struct stm_drvdata *drvdata)
-> +{
-> +       CS_UNLOCK(drvdata->base);
-> +
-> +       writel_relaxed(0x0, drvdata->base + STMHEMCR);
-> +       writel_relaxed(0x0, drvdata->base + STMHEER);
-> +       writel_relaxed(0x0, drvdata->base + STMHETER);
-> +
-> +       CS_LOCK(drvdata->base);
-> +}
-> +
-> +static void stm_port_disable_hw(struct stm_drvdata *drvdata)
-> +{
-> +       CS_UNLOCK(drvdata->base);
-> +
-> +       writel_relaxed(0x0, drvdata->base + STMSPER);
-> +       writel_relaxed(0x0, drvdata->base + STMSPTRIGCSR);
-> +
-> +       CS_LOCK(drvdata->base);
-> +}
-> +
-> +static void stm_disable_hw(struct stm_drvdata *drvdata)
-> +{
-> +       u32 val;
-> +
-> +       CS_UNLOCK(drvdata->base);
-> +
-> +       val = readl_relaxed(drvdata->base + STMTCSR);
-> +       val &= ~0x1; /* clear global STM enable [0] */
-> +       writel_relaxed(val, drvdata->base + STMTCSR);
-> +
-> +       CS_LOCK(drvdata->base);
-> +
-> +       stm_port_disable_hw(drvdata);
-> +       if (drvdata->stmheer)
-> +               stm_hwevent_disable_hw(drvdata);
-> +}
-> +
-> +static void stm_disable(struct coresight_device *csdev)
-> +{
-> +       struct stm_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
-> +
-> +       spin_lock(&drvdata->spinlock);
-> +       stm_disable_hw(drvdata);
-> +       drvdata->enable = false;
-> +       spin_unlock(&drvdata->spinlock);
-> +
-> +       /* Wait until the engine has completely stopped */
-> +       coresight_timeout(drvdata, STMTCSR, STMTCSR_BUSY_BIT, 0);
-> +
-> +       pm_runtime_put(drvdata->dev);
-> +
-> +       dev_info(drvdata->dev, "STM tracing disabled\n");
-> +}
-> +
-> +static int stm_trace_id(struct coresight_device *csdev)
-> +{
-> +       struct stm_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
-> +
-> +       return drvdata->traceid;
-> +}
-> +
-> +static const struct coresight_ops_source stm_source_ops = {
-> +       .trace_id       = stm_trace_id,
-> +       .enable         = stm_enable,
-> +       .disable        = stm_disable,
-> +};
-> +
-> +static const struct coresight_ops stm_cs_ops = {
-> +       .source_ops     = &stm_source_ops,
-> +};
-> +
-> +static inline bool stm_addr_unaligned(const void *addr, u8 max)
-> +{
-> +       return ((unsigned long)addr & (max - 1));
-> +}
-> +
-> +static int stm_send(void *addr, const void *data, u32 size, u8 max)
-> +{
-> +       u32 len = size;
-> +       u8 paload[8];
-> +
-> +       if (stm_addr_unaligned(data, max)) {
-> +               memcpy(paload, data, size);
-> +               data = paload;
-> +       }
-> +
-> +       /* now we are 64bit/32bit aligned */
-> +#ifdef CONFIG_64BIT
-> +       if (size == 8)
-> +               writeq_relaxed(*(u64 *)data, addr);
-> +#endif
+> But the user can still set that parameter manually.
 
-We probably don't need an #ifdef here.  Checking the size of the
-transfer against the fundamental data size will result in the same
-outcome, i.e preventing 64 bit transfers on a 32 bit architecture.  An
-error (understandable by the caller) should probably be returned in
-this case.
+Yes.  What I was suggesting is that if the user specifies task_isolation=X-Y
+we should add cpus X-Y to both the nohz_full set and the isolcpus set.
+I've changed it to work that way for the v10 patch series.
 
-> +       if (size >= 4) {
-> +               writel_relaxed(*(u32 *)data, addr);
-> +               data += 4;
-> +               size -= 4;
-> +       }
-> +
-> +       if (size >= 2) {
-> +               writew_relaxed(*(u16 *)data, addr);
-> +               data += 2;
-> +               size -= 2;
-> +       }
-> +
-> +       if (size == 1)
-> +               writeb_relaxed(*(u8 *)data, addr);
-> +
-> +       return len;
-> +}
-> +
-> +static int stm_generic_link(struct stm_data *stm_data,
-> +                           unsigned int master,  unsigned int channel)
-> +{
-> +       struct stm_drvdata *drvdata = container_of(stm_data,
-> +                                                  struct stm_drvdata, stm);
-> +       if (!drvdata || !drvdata->csdev)
-> +               return -EINVAL;
-> +
-> +       return coresight_enable(drvdata->csdev);
-> +}
-> +
-> +static void stm_generic_unlink(struct stm_data *stm_data,
-> +                              unsigned int master,  unsigned int channel)
-> +{
-> +       struct stm_drvdata *drvdata = container_of(stm_data,
-> +                                                  struct stm_drvdata, stm);
-> +       if (!drvdata || !drvdata->csdev)
-> +               return;
-> +
-> +       stm_disable(drvdata->csdev);
-> +}
-> +
-> +static long stm_generic_set_options(struct stm_data *stm_data,
-> +                                   unsigned int master,
-> +                                   unsigned int channel,
-> +                                   unsigned int nr_chans,
-> +                                   unsigned long options)
-> +{
-> +       struct stm_drvdata *drvdata = container_of(stm_data,
-> +                                                  struct stm_drvdata, stm);
-> +       if (!(drvdata && drvdata->enable))
-> +               return -EINVAL;
-> +
-> +       if (channel >= drvdata->numsp)
-> +               return -EINVAL;
-> +
-> +       switch (options) {
-> +       case STM_OPTION_GUARANTEED:
-> +               set_bit(channel, drvdata->chs.guaranteed);
-> +               break;
-> +
-> +       case STM_OPTION_INVARIANT:
-> +               clear_bit(channel, drvdata->chs.guaranteed);
-> +               break;
-> +
-> +       default:
-> +               return -EINVAL;
-> +       }
-> +
-> +       return 0;
-> +}
-> +
-> +static long stm_generic_get_options(struct stm_data *stm_data,
-> +                                   unsigned int master,
-> +                                   unsigned int channel,
-> +                                   unsigned int nr_chans,
-> +                                   u64 *options)
-> +{
-> +       struct stm_drvdata *drvdata = container_of(stm_data,
-> +                                                  struct stm_drvdata, stm);
-> +       if (!(drvdata && drvdata->enable))
-> +               return -EINVAL;
-> +
-> +       if (channel >= drvdata->numsp)
-> +               return -EINVAL;
-> +
-> +       switch (*options) {
-> +       case STM_OPTION_GUARANTEED:
-> +               *options = test_bit(channel, drvdata->chs.guaranteed);
-> +               break;
-> +
-> +       default:
-> +               return -EINVAL;
-> +       }
-> +
-> +       return 0;
-> +}
-> +
-> +static ssize_t stm_generic_packet(struct stm_data *stm_data,
-> +                                 unsigned int master,
-> +                                 unsigned int channel,
-> +                                 unsigned int packet,
-> +                                 unsigned int flags,
-> +                                 unsigned int size,
-> +                                 const unsigned char *payload)
-> +{
-> +       unsigned long ch_addr;
-> +       struct stm_drvdata *drvdata = container_of(stm_data,
-> +                                                  struct stm_drvdata, stm);
-> +
-> +       if (!(drvdata && drvdata->enable))
-> +               return 0;
-> +
-> +       if (channel >= drvdata->numsp)
-> +               return 0;
-> +
-> +       ch_addr = (unsigned long)stm_channel_addr(drvdata, channel);
-> +
-> +       flags = (flags == STP_PACKET_TIMESTAMPED) ? STM_FLAG_TIMESTAMPED : 0;
-> +       flags |= test_bit(channel, drvdata->chs.guaranteed) ?
-> +                          STM_FLAG_GUARANTEED : 0;
-> +
-> +       if (size > drvdata->write_max)
-> +               size = drvdata->write_max;
-> +
-> +       switch (packet) {
-> +       case STP_PACKET_FLAG:
-> +               ch_addr |= stm_channel_off(STM_PKT_TYPE_FLAG, flags);
-> +
-> +               /* the generic STM API set a size of zero on flag packets. */
-> +               size = 1;
-> +               break;
-> +
-> +       case STP_PACKET_DATA:
-> +               ch_addr |= stm_channel_off(STM_PKT_TYPE_DATA, flags);
-> +               break;
-> +
-> +       default:
-> +               return 0;
-> +       }
-> +
-> +       return stm_send((void *)ch_addr, payload, size, drvdata->write_max);
-> +}
-> +
-> +static ssize_t hwevent_enable_show(struct device *dev,
-> +                                  struct device_attribute *attr, char *buf)
-> +{
-> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-> +       unsigned long val = drvdata->stmheer;
-> +
-> +       return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-> +}
-> +
-> +static ssize_t hwevent_enable_store(struct device *dev,
-> +                                   struct device_attribute *attr,
-> +                                   const char *buf, size_t size)
-> +{
-> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-> +       unsigned long val;
-> +       int ret = 0;
-> +
-> +       ret = kstrtoul(buf, 16, &val);
-> +       if (ret)
-> +               return -EINVAL;
-> +
-> +       drvdata->stmheer = val;
-> +       /* HW event enable and trigger go hand in hand */
-> +       drvdata->stmheter = val;
-> +
-> +       return size;
-> +}
-> +static DEVICE_ATTR_RW(hwevent_enable);
-> +
-> +static ssize_t hwevent_select_show(struct device *dev,
-> +                                  struct device_attribute *attr, char *buf)
-> +{
-> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-> +       unsigned long val = drvdata->stmhebsr;
-> +
-> +       return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-> +}
-> +
-> +static ssize_t hwevent_select_store(struct device *dev,
-> +                                   struct device_attribute *attr,
-> +                                   const char *buf, size_t size)
-> +{
-> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-> +       unsigned long val;
-> +       int ret = 0;
-> +
-> +       ret = kstrtoul(buf, 16, &val);
-> +       if (ret)
-> +               return -EINVAL;
-> +
-> +       drvdata->stmhebsr = val;
-> +
-> +       return size;
-> +}
-> +static DEVICE_ATTR_RW(hwevent_select);
-> +
-> +static ssize_t port_select_show(struct device *dev,
-> +                               struct device_attribute *attr, char *buf)
-> +{
-> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-> +       unsigned long val;
-> +
-> +       if (!drvdata->enable) {
-> +               val = drvdata->stmspscr;
-> +       } else {
-> +               spin_lock(&drvdata->spinlock);
-> +               val = readl_relaxed(drvdata->base + STMSPSCR);
-> +               spin_unlock(&drvdata->spinlock);
-> +       }
-> +
-> +       return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-> +}
-> +
-> +static ssize_t port_select_store(struct device *dev,
-> +                                struct device_attribute *attr,
-> +                                const char *buf, size_t size)
-> +{
-> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-> +       unsigned long val, stmsper;
-> +       int ret = 0;
-> +
-> +       ret = kstrtoul(buf, 16, &val);
-> +       if (ret)
-> +               return ret;
-> +
-> +       spin_lock(&drvdata->spinlock);
-> +       drvdata->stmspscr = val;
-> +
-> +       if (drvdata->enable) {
-> +               CS_UNLOCK(drvdata->base);
-> +               /* Process as per ARM's TRM recommendation */
-> +               stmsper = readl_relaxed(drvdata->base + STMSPER);
-> +               writel_relaxed(0x0, drvdata->base + STMSPER);
-> +               writel_relaxed(drvdata->stmspscr, drvdata->base + STMSPSCR);
-> +               writel_relaxed(stmsper, drvdata->base + STMSPER);
-> +               CS_LOCK(drvdata->base);
-> +       }
-> +       spin_unlock(&drvdata->spinlock);
-> +
-> +       return size;
-> +}
-> +static DEVICE_ATTR_RW(port_select);
-> +
-> +static ssize_t port_enable_show(struct device *dev,
-> +                               struct device_attribute *attr, char *buf)
-> +{
-> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-> +       unsigned long val;
-> +
-> +       if (!drvdata->enable) {
-> +               val = drvdata->stmsper;
-> +       } else {
-> +               spin_lock(&drvdata->spinlock);
-> +               val = readl_relaxed(drvdata->base + STMSPER);
-> +               spin_unlock(&drvdata->spinlock);
-> +       }
-> +
-> +       return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-> +}
-> +
-> +static ssize_t port_enable_store(struct device *dev,
-> +                                struct device_attribute *attr,
-> +                                const char *buf, size_t size)
-> +{
-> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-> +       unsigned long val;
-> +       int ret = 0;
-> +
-> +       ret = kstrtoul(buf, 16, &val);
-> +       if (ret)
-> +               return ret;
-> +
-> +       spin_lock(&drvdata->spinlock);
-> +       drvdata->stmsper = val;
-> +
-> +       if (drvdata->enable) {
-> +               CS_UNLOCK(drvdata->base);
-> +               writel_relaxed(drvdata->stmsper, drvdata->base + STMSPER);
-> +               CS_LOCK(drvdata->base);
-> +       }
-> +       spin_unlock(&drvdata->spinlock);
-> +
-> +       return size;
-> +}
-> +static DEVICE_ATTR_RW(port_enable);
-> +
-> +static ssize_t traceid_show(struct device *dev,
-> +                           struct device_attribute *attr, char *buf)
-> +{
-> +       unsigned long val;
-> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-> +
-> +       val = drvdata->traceid;
-> +       return sprintf(buf, "%#lx\n", val);
-> +}
-> +
-> +static ssize_t traceid_store(struct device *dev,
-> +                            struct device_attribute *attr,
-> +                            const char *buf, size_t size)
-> +{
-> +       int ret;
-> +       unsigned long val;
-> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-> +
-> +       ret = kstrtoul(buf, 16, &val);
-> +       if (ret)
-> +               return ret;
-> +
-> +       /* traceid field is 7bit wide on STM32 */
-> +       drvdata->traceid = val & 0x7f;
-> +       return size;
-> +}
-> +static DEVICE_ATTR_RW(traceid);
-> +
-> +#define coresight_simple_func(type, name, offset)                      \
-> +static ssize_t name##_show(struct device *_dev,                                \
-> +                          struct device_attribute *attr, char *buf)    \
-> +{                                                                      \
-> +       type *drvdata = dev_get_drvdata(_dev->parent);                  \
-> +       return scnprintf(buf, PAGE_SIZE, "0x%08x\n",                    \
-> +                        readl_relaxed(drvdata->base + offset));        \
-> +}                                                                      \
-> +DEVICE_ATTR_RO(name)
-> +
-> +#define coresight_stm_simple_func(name, offset)        \
-> +       coresight_simple_func(struct stm_drvdata, name, offset)
-> +
-> +coresight_stm_simple_func(tcsr, STMTCSR);
-> +coresight_stm_simple_func(tsfreqr, STMTSFREQR);
-> +coresight_stm_simple_func(syncr, STMSYNCR);
-> +coresight_stm_simple_func(sper, STMSPER);
-> +coresight_stm_simple_func(spter, STMSPTER);
-> +coresight_stm_simple_func(privmaskr, STMPRIVMASKR);
-> +coresight_stm_simple_func(spscr, STMSPSCR);
-> +coresight_stm_simple_func(spmscr, STMSPMSCR);
-> +coresight_stm_simple_func(spfeat1r, STMSPFEAT1R);
-> +coresight_stm_simple_func(spfeat2r, STMSPFEAT2R);
-> +coresight_stm_simple_func(spfeat3r, STMSPFEAT3R);
-> +coresight_stm_simple_func(devid, CORESIGHT_DEVID);
-> +
-> +static struct attribute *coresight_stm_attrs[] = {
-> +       &dev_attr_hwevent_enable.attr,
-> +       &dev_attr_hwevent_select.attr,
-> +       &dev_attr_port_enable.attr,
-> +       &dev_attr_port_select.attr,
-> +       &dev_attr_traceid.attr,
-> +       NULL,
-> +};
-> +
-> +static struct attribute *coresight_stm_mgmt_attrs[] = {
-> +       &dev_attr_tcsr.attr,
-> +       &dev_attr_tsfreqr.attr,
-> +       &dev_attr_syncr.attr,
-> +       &dev_attr_sper.attr,
-> +       &dev_attr_spter.attr,
-> +       &dev_attr_privmaskr.attr,
-> +       &dev_attr_spscr.attr,
-> +       &dev_attr_spmscr.attr,
-> +       &dev_attr_spfeat1r.attr,
-> +       &dev_attr_spfeat2r.attr,
-> +       &dev_attr_spfeat3r.attr,
-> +       &dev_attr_devid.attr,
-> +       NULL,
-> +};
-> +
-> +static const struct attribute_group coresight_stm_group = {
-> +       .attrs = coresight_stm_attrs,
-> +};
-> +
-> +static const struct attribute_group coresight_stm_mgmt_group = {
-> +       .attrs = coresight_stm_mgmt_attrs,
-> +       .name = "mgmt",
-> +};
-> +
-> +static const struct attribute_group *coresight_stm_groups[] = {
-> +       &coresight_stm_group,
-> +       &coresight_stm_mgmt_group,
-> +       NULL,
-> +};
-> +
-> +static int stm_get_resource_byname(struct device_node *np,
-> +                                  char *ch_base, struct resource *res)
-> +{
-> +       const char *name = NULL;
-> +       int index = 0, found = 0;
-> +
-> +       while (!of_property_read_string_index(np, "reg-names", index, &name)) {
-> +               if (strcmp(ch_base, name)) {
-> +                       index++;
-> +                       continue;
-> +               }
-> +
-> +               /* We have a match and @index is where it's at */
-> +               found = 1;
-> +               break;
-> +       }
-> +
-> +       if (!found)
-> +               return -EINVAL;
-> +
-> +       return of_address_to_resource(np, index, res);
-> +}
-> +
-> +static u32 stm_fundamental_data_size(struct stm_drvdata *drvdata)
-> +{
-> +       u32 stmspfeat2r;
-> +
-> +       stmspfeat2r = readl_relaxed(drvdata->base + STMSPFEAT2R);
-> +       return BMVAL(stmspfeat2r, 12, 15);
-> +}
-> +
-> +static u32 stm_num_stimulus_port(struct stm_drvdata *drvdata)
-> +{
-> +       u32 numsp;
-> +
-> +       numsp = readl_relaxed(drvdata->base + CORESIGHT_DEVID);
-> +       /*
-> +        * NUMPS in STMDEVID is 17 bit long and if equal to 0x0,
-> +        * 32 stimulus ports are supported.
-> +        */
-> +       numsp &= 0x1ffff;
-> +       if (!numsp)
-> +               numsp = STM_32_CHANNEL;
-> +       return numsp;
-> +}
-> +
-> +static void stm_init_default_data(struct stm_drvdata *drvdata)
-> +{
-> +       /* Don't use port selection */
-> +       drvdata->stmspscr = 0x0;
-> +       /*
-> +        * Enable all channel regardless of their number.  When port
-> +        * selection isn't used (see above) STMSPER applies to all
-> +        * 32 channel group available, hence setting all 32 bits to 1
-> +        */
-> +       drvdata->stmsper = ~0x0;
-> +
-> +       /*
-> +        * Select arbitrary value to start with.  If there is a conflict
-> +        * with other tracers the framework will deal with it.
-> +        */
-> +       drvdata->traceid = 0x20;
-> +
-> +       /* Set invariant transaction timing on all channels */
-> +       bitmap_clear(drvdata->chs.guaranteed, 0, drvdata->numsp);
-> +}
-> +
-> +static void stm_init_generic_data(struct stm_drvdata *drvdata)
-> +{
-> +       drvdata->stm.name = dev_name(drvdata->dev);
-> +       drvdata->stm.mstatic = true;
-> +       drvdata->stm.sw_nchannels = drvdata->numsp;
-> +       drvdata->stm.packet = stm_generic_packet;
-> +       drvdata->stm.link = stm_generic_link;
-> +       drvdata->stm.unlink = stm_generic_unlink;
-> +       drvdata->stm.set_options = stm_generic_set_options;
-> +       drvdata->stm.get_options = stm_generic_get_options;
-> +}
-> +
-> +static int stm_probe(struct amba_device *adev, const struct amba_id *id)
-> +{
-> +       int ret;
-> +       void __iomem *base;
-> +       unsigned long *guaranteed;
-> +       struct device *dev = &adev->dev;
-> +       struct coresight_platform_data *pdata = NULL;
-> +       struct stm_drvdata *drvdata;
-> +       struct resource *res = &adev->res;
-> +       struct resource ch_res;
-> +       size_t res_size, bitmap_size;
-> +       struct coresight_desc *desc;
-> +       struct device_node *np = adev->dev.of_node;
-> +
-> +       if (np) {
-> +               pdata = of_get_coresight_platform_data(dev, np);
-> +               if (IS_ERR(pdata))
-> +                       return PTR_ERR(pdata);
-> +               adev->dev.platform_data = pdata;
-> +       }
-> +       drvdata = devm_kzalloc(dev, sizeof(*drvdata), GFP_KERNEL);
-> +       if (!drvdata)
-> +               return -ENOMEM;
-> +
-> +       drvdata->dev = &adev->dev;
-> +       drvdata->atclk = devm_clk_get(&adev->dev, "atclk"); /* optional */
-> +       if (!IS_ERR(drvdata->atclk)) {
-> +               ret = clk_prepare_enable(drvdata->atclk);
-> +               if (ret)
-> +                       return ret;
-> +       }
-> +       dev_set_drvdata(dev, drvdata);
-> +
-> +       base = devm_ioremap_resource(dev, res);
-> +       if (IS_ERR(base))
-> +               return PTR_ERR(base);
-> +       drvdata->base = base;
-> +
-> +       ret = stm_get_resource_byname(np, "stm-stimulus-base", &ch_res);
-> +       if (ret)
-> +               return ret;
-> +
-> +       base = devm_ioremap_resource(dev, &ch_res);
-> +       if (IS_ERR(base))
-> +               return PTR_ERR(base);
-> +       drvdata->chs.base = base;
-> +
-> +       drvdata->write_max = sizeof(u32);
 
-Isn't the fundamental data size the maximum an architecture can stand?
- Why not simply use that rather than adding another variable?
+>>>>>> +bool _task_isolation_ready(void)
+>>>>>> +{
+>>>>>> +	WARN_ON_ONCE(!irqs_disabled());
+>>>>>> +
+>>>>>> +	/* If we need to drain the LRU cache, we're not ready. */
+>>>>>> +	if (lru_add_drain_needed(smp_processor_id()))
+>>>>>> +		return false;
+>>>>>> +
+>>>>>> +	/* If vmstats need updating, we're not ready. */
+>>>>>> +	if (!vmstat_idle())
+>>>>>> +		return false;
+>>>>>> +
+>>>>>> +	/* Request rescheduling unless we are in full dynticks mode. */
+>>>>>> +	if (!tick_nohz_tick_stopped()) {
+>>>>>> +		set_tsk_need_resched(current);
+>>>>> I'm not sure doing this will help getting the tick to get stopped.
+>>>> Well, I don't know that there is anything else we CAN do, right?  If there's
+>>>> another task that can run, great - it may be that that's why full dynticks
+>>>> isn't happening yet.  Or, it might be that we're waiting for an RCU tick and
+>>>> there's nothing else we can do, in which case we basically spend our time
+>>>> going around through the scheduler code and back out to the
+>>>> task_isolation_ready() test, but again, there's really nothing else more
+>>>> useful we can be doing at this point.  Once the RCU tick fires (or whatever
+>>>> it was that was preventing full dynticks from engaging), we will pass this
+>>>> test and return to user space.
+>>> There is nothing at all you can do and setting TIF_RESCHED won't help either.
+>>> If there is another task that can run, the scheduler takes care of resched
+>>> by itself :-)
+>> The problem is that the scheduler will only take care of resched at a
+>> later time, typically when we get a timer interrupt later.
+> When a task is enqueued, the scheduler sets TIF_RESCHED on the target. If the
+> target is remote it sends an IPI, if it's local then we wait the next reschedule
+> point (preemption points, voluntary reschedule, interrupts). There is just nothing
+> you can do to accelerate that.
 
-> +       drvdata->write_64bit = stm_fundamental_data_size(drvdata);
-> +
-> +#ifndef CONFIG_64BIT
-> +       if (drvdata->write_64bit)
-> +               drvdata->write_max = sizeof(u64);
-> +#endif
+But that's exactly what I'm saying.  If we're sitting in a loop here waiting
+for some short-lived process (maybe kernel thread) to run and get out of
+the way, we don't want to just spin sitting in prepare_exit_to_usermode().
+We want to call schedule(), get the short-lived process to run, then when
+it calls schedule() again, we're back in prepare_exit_to_usermode but now
+we can return to userspace.
 
-In most cases the fundamental data size will follow the architecture
-size, i.e, 32 bit architecture with 32 bit fundamental data size, 64
-bit architecture with 64 bit fundamental data size.  A fundamental
-data size of 32 is also possible on a 64 bit architecture.
+We don't want to wait for preemption points or interrupts, and there are
+no other voluntary reschedules in the prepare_exit_to_usermode() loop.
 
-What needs to be prevented is a 32 bit architecture with a fundamental
-data size of 64.  In those cases the fundamental data size should be
-adjusted to be 32 bit.  To do that I suggest to modify
-stm_fundamental_data_size() to probe the STM's fundamental data size
-but to adjust it down if on a 32 bit system.  Knowing whether running
-on a 32/64 bit system is easy when using the IS_ENABLED() macro.
+If the other task had been woken up for some completion, then yes we would
+already have had TIF_RESCHED set, but if the other runnable task was (for
+example) pre-empted on a timer tick, we wouldn't have TIF_RESCHED set at
+this point, and thus we might need to call schedule() explicitly.
 
-> +
-> +       if (boot_nr_channel) {
-> +               drvdata->numsp = boot_nr_channel;
-> +               res_size = min((resource_size_t)(boot_nr_channel *
-> +                                 BYTES_PER_CHANNEL), resource_size(res));
-> +       } else {
-> +               drvdata->numsp = stm_num_stimulus_port(drvdata);
-> +               res_size = min((resource_size_t)(drvdata->numsp *
-> +                                BYTES_PER_CHANNEL), resource_size(res));
-> +       }
-> +       bitmap_size = BITS_TO_LONGS(drvdata->numsp) * sizeof(long);
-> +
-> +       guaranteed = devm_kzalloc(dev, bitmap_size, GFP_KERNEL);
-> +       if (!guaranteed)
-> +               return -ENOMEM;
-> +       drvdata->chs.guaranteed = guaranteed;
-> +
-> +       spin_lock_init(&drvdata->spinlock);
-> +
-> +       stm_init_default_data(drvdata);
-> +       stm_init_generic_data(drvdata);
-> +
-> +       if (stm_register_device(dev, &drvdata->stm, THIS_MODULE)) {
-> +               dev_info(dev,
-> +                        "stm_register_device failed, probing deffered\n");
-> +               return -EPROBE_DEFER;
-> +       }
-> +
-> +       desc = devm_kzalloc(dev, sizeof(*desc), GFP_KERNEL);
-> +       if (!desc) {
-> +               ret = -ENOMEM;
-> +               goto stm_unregister;
-> +       }
-> +
-> +       desc->type = CORESIGHT_DEV_TYPE_SOURCE;
-> +       desc->subtype.source_subtype = CORESIGHT_DEV_SUBTYPE_SOURCE_SOFTWARE;
-> +       desc->ops = &stm_cs_ops;
-> +       desc->pdata = pdata;
-> +       desc->dev = dev;
-> +       desc->groups = coresight_stm_groups;
-> +       drvdata->csdev = coresight_register(desc);
-> +       if (IS_ERR(drvdata->csdev)) {
-> +               ret = PTR_ERR(drvdata->csdev);
-> +               goto stm_unregister;
-> +       }
-> +
-> +       pm_runtime_put(&adev->dev);
-> +
-> +       dev_info(dev, "%s initialized\n", (char *)id->data);
-> +       return 0;
-> +
-> +stm_unregister:
-> +       stm_unregister_device(&drvdata->stm);
-> +       return ret;
-> +}
-> +
-> +static int stm_remove(struct amba_device *adev)
-> +{
-> +       struct stm_drvdata *drvdata = amba_get_drvdata(adev);
-> +
-> +       stm_unregister_device(&drvdata->stm);
-> +       coresight_unregister(drvdata->csdev);
-> +       return 0;
-> +}
+Note that the prepare_exit_to_usermode() loop is exactly the point at
+which we normally call schedule() if we are in syscall exit, so we are
+just encouraging that schedule() to happen if otherwise it might not.
 
-The xyz_remove() functions is not needed for coresight devices -
-unbinding a device from its driver will no longer be possible in the
-4.6 cycle.
+>> By invoking the scheduler here, we allow any tasks that are ready to run to run
+>> immediately, rather than waiting for an interrupt to wake the scheduler.
+> Well, in this case here we are interested in the current CPU. And if a task
+> got awoken and waits for the current CPU, it will have an opportunity to get
+> schedule on syscall exit.
 
-> +
-> +#ifdef CONFIG_PM
-> +static int stm_runtime_suspend(struct device *dev)
-> +{
-> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev);
-> +
-> +       if (drvdata && !IS_ERR(drvdata->atclk))
-> +               clk_disable_unprepare(drvdata->atclk);
-> +
-> +       return 0;
-> +}
-> +
-> +static int stm_runtime_resume(struct device *dev)
-> +{
-> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev);
-> +
-> +       if (drvdata && !IS_ERR(drvdata->atclk))
-> +               clk_prepare_enable(drvdata->atclk);
-> +
-> +       return 0;
-> +}
-> +#endif
-> +
-> +static const struct dev_pm_ops stm_dev_pm_ops = {
-> +       SET_RUNTIME_PM_OPS(stm_runtime_suspend, stm_runtime_resume, NULL)
-> +};
-> +
-> +static struct amba_id stm_ids[] = {
-> +       {
-> +               .id     = 0x0003b962,
-> +               .mask   = 0x0003ffff,
-> +               .data   = "STM32",
-> +       },
-> +       { 0, 0},
-> +};
-> +
-> +static struct amba_driver stm_driver = {
-> +       .drv = {
-> +               .name   = "coresight-stm",
-> +               .owner  = THIS_MODULE,
-> +               .pm     = &stm_dev_pm_ops,
-> +       },
-> +       .probe          = stm_probe,
-> +       .remove         = stm_remove,
-> +       .id_table       = stm_ids,
-> +};
-> +
-> +module_amba_driver(stm_driver);
-> +
-> +MODULE_LICENSE("GPL v2");
-> +MODULE_DESCRIPTION("CoreSight System Trace Macrocell driver");
-> diff --git a/include/linux/coresight-stm.h b/include/linux/coresight-stm.h
-> new file mode 100644
-> index 0000000..a978bb8
-> --- /dev/null
-> +++ b/include/linux/coresight-stm.h
-> @@ -0,0 +1,6 @@
-> +#ifndef __LINUX_CORESIGHT_STM_H_
-> +#define __LINUX_CORESIGHT_STM_H_
-> +
-> +#include <uapi/linux/coresight-stm.h>
-> +
-> +#endif
-> diff --git a/include/uapi/linux/coresight-stm.h b/include/uapi/linux/coresight-stm.h
-> new file mode 100644
-> index 0000000..fa35f0b
-> --- /dev/null
-> +++ b/include/uapi/linux/coresight-stm.h
-> @@ -0,0 +1,12 @@
-> +#ifndef __UAPI_CORESIGHT_STM_H_
-> +#define __UAPI_CORESIGHT_STM_H_
-> +
-> +#define STM_FLAG_TIMESTAMPED   BIT(3)
-> +#define STM_FLAG_GUARANTEED    BIT(7)
-> +
-> +enum {
-> +       STM_OPTION_GUARANTEED = 0,
-> +       STM_OPTION_INVARIANT,
-> +};
-> +
-> +#endif
-> --
-> 1.9.1
->
+That's true if TIF_RESCHED was set because a completion occurred that
+the other task was waiting for.  But there might not be any such completion
+and the task just got preempted earlier and is still ready to run.
+
+My point is that setting TIF_RESCHED is never harmful, and there are
+cases like involuntary preemption where it might help.
+
+
+>> Plenty of places in the kernel just call schedule() directly when they are
+>> waiting.  Since we're waiting here regardless, we might as well
+>> immediately get any other runnable tasks dealt with.
+>>
+>> We could also just return "false" in _task_isolation_ready(), and then
+>> check tick_nohz_tick_stopped() in _task_isolation_enter() and if false,
+>> call schedule() explicitly there, but that seems a little more roundabout.
+>> Admittedly it's more usual to see kernel code call schedule() directly
+>> to yield the processor, but in this case I'm not convinced it's cleaner
+>> given we're already in a loop where the caller is checking TIF_RESCHED
+>> and then calling schedule() when it's set.
+> You could call cond_resched(), but really syscall exit is enough for what
+> you want. And the problem here if a task prevents the CPU from stopping the
+> tick is that task itself, not the fact it doesn't get scheduled.
+
+True, although in that case we just need to wait (e.g. for an RCU tick
+to occur to quiesce); we could spin, but spinning through the scheduler
+seems no better or worse in that case then just spinning with
+interrupts enabled in a loop.  And (as I said above) it could help.
+
+> If we have
+> other tasks than the current isolated one on the CPU, it means that the
+> environment is not ready for hard isolation.
+
+Right.  But the model is that in that case, the task that wants hard
+isolation is just going to have to wait to return to userspace.
+
+
+> And in general: we shouldn't loop at all there: if something depends on the tick,
+> the CPU is not ready for isolation and something needs to be done: setting
+> some task affinity, etc... So we should just fail the prctl and let the user
+> deal with it.
+
+So there are potentially two cases here:
+
+(1) When we initially do the prctl(), should we check to see if there are
+other schedulable tasks, etc., and fail the prctl() if so?  You could make a
+case for this, but I think in practice userspace would just end up looping
+back to retry the prctl if we created that semantic in the kernel.
+
+(2) What about times when we are leaving the kernel after already
+doing the prctl()?  For example a core doing packet forwarding might
+want to report some error condition up to the kernel, and remove itself
+from the set of cores handling packets, then do some syscall(s) to generate
+logging data, and then go back and continue handling packets.  Or, the
+process might have created some large anonymous mapping where
+every now and then it needs to cross a page boundary for some structure
+and touch a new page, and it knows to expect a page fault in that case.
+In those cases we are returning from the kernel, not at prctl() time, and
+we still want to enforce the semantics that no further interrupts will
+occur to disturb the task.  These kinds of use cases are why we have
+as general-purpose a mechanism as we do for task isolation.
+
+-- 
+Chris Metcalf, EZChip Semiconductor
+http://www.ezchip.com
