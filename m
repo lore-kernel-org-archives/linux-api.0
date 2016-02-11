@@ -1,145 +1,143 @@
-From: Chris Metcalf <cmetcalf@ezchip.com>
-Subject: Re: [PATCH v8 04/14] task_isolation: add initial support
-Date: Thu, 11 Feb 2016 14:58:12 -0500
-Message-ID: <56BCE7D4.1010504@ezchip.com>
-References: <1445373372-6567-1-git-send-email-cmetcalf@ezchip.com>
- <1445373372-6567-5-git-send-email-cmetcalf@ezchip.com>
- <20151021161247.GA19764@lerouge> <562FA8FD.8080502@ezchip.com>
- <20160128163822.GD25866@lerouge>
+From: Alban Crequy <alban.crequy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [lxc-devel] CGroup Namespaces (v10)
+Date: Fri, 12 Feb 2016 00:18:28 +0100
+Message-ID: <CAMXgnP6eSQjsuPXdrbaHytujVSkizPd4cJJQwQcuSCLAgVcYJw@mail.gmail.com>
+References: <1454057651-23959-1-git-send-email-serge.hallyn@ubuntu.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20160128163822.GD25866@lerouge>
-Sender: linux-doc-owner@vger.kernel.org
-To: Frederic Weisbecker <fweisbec@gmail.com>
-Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1454057651-23959-1-git-send-email-serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: LXC development mailing-list <lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aditya Kali <adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 01/28/2016 11:38 AM, Frederic Weisbecker wrote:
-> On Tue, Oct 27, 2015 at 12:40:29PM -0400, Chris Metcalf wrote:
->> On 10/21/2015 12:12 PM, Frederic Weisbecker wrote:
->>> On Tue, Oct 20, 2015 at 04:36:02PM -0400, Chris Metcalf wrote:
->>>> +/*
->>>> + * This routine controls whether we can enable task-isolation mode.
->>>> + * The task must be affinitized to a single nohz_full core or we will
->>>> + * return EINVAL.  Although the application could later re-affinitize
->>>> + * to a housekeeping core and lose task isolation semantics, this
->>>> + * initial test should catch 99% of bugs with task placement prior to
->>>> + * enabling task isolation.
->>>> + */
->>>> +int task_isolation_set(unsigned int flags)
->>>> +{
->>>> +	if (cpumask_weight(tsk_cpus_allowed(current)) != 1 ||
->>> I think you'll have to make sure the task can not be concurrently reaffined
->>> to more CPUs. This may involve setting task_isolation_flags under the runqueue
->>> lock and thus move that tiny part to the scheduler code. And then we must forbid
->>> changing the affinity while the task has the isolation flag, or deactivate the flag.
->>>
->>> In any case this needs some synchronization.
->> Well, as the comment says, this is not intended as a hard guarantee.
->> As written, it might race with a concurrent sched_setaffinity(), but
->> then again, it also is totally OK as written for sched_setaffinity() to
->> change it away after the prctl() is complete, so it's not necessary to
->> do any explicit synchronization.
->>
->> This harks back again to the whole "polite vs aggressive" issue with
->> how we envision task isolation.
->>
->> The "polite" model basically allows you to set up the conditions for
->> task isolation to be useful, and then if they are useful, great! What
->> you're suggesting here is a bit more of the "aggressive" model, where
->> we actually fail sched_setaffinity() either for any cpumask after
->> task isolation is set, or perhaps just for resetting it to housekeeping
->> cores.  (Note that we could in principle use PF_NO_SETAFFINITY to
->> just hard fail all attempts to call sched_setaffinity once we enable
->> task isolation, so we don't have to add more mechanism on that path.)
->>
->> I'm a little reluctant to ever fail sched_setaffinity() based on the
->> task isolation status with the current "polite" model, since an
->> unprivileged application can set up for task isolation, and then
->> presumably no one can override it via sched_setaffinity() from another
->> task.  (I suppose you could do some kind of permissions-based thing
->> where root can always override it, or some suitable capability, etc.,
->> but I feel like that gets complicated quickly, for little benefit.)
->>
->> The alternative you mention is that if the task is re-affinitized, it
->> loses its task-isolation status, and that also seems like an unfortunate
->> API, since if you are setting it with prctl(), it's really cleanest just to
->> only be able to unset it with prctl() as well.
->>
->> I think given the current "polite" API, the only question is whether in
->> fact *no* initial test is the best thing, or if an initial test (as
->> introduced
->> in the v8 version) is defensible just as a help for catching an obvious
->> mistake in setting up your task isolation.  I decided the advantage
->> of catching the mistake were more important than the "API purity"
->> of being 100% consistent in how we handled the interactions between
->> affinity and isolation, but I am certainly open to argument on that one.
->>
->> Meanwhile I think it still feels like the v8 code is the best compromise.
-> So what is the way to deal with a migration for example? When the task wakes
-> up on the non-isolated CPU, it gets warned or killed?
-
-Good question!  We can only enable task isolation on an isolcpus core,
-so it must be a manual migration, either externally, or by the program
-itself calling sched_setaffinity().  So at some level, it's just an
-application bug.  In the current code, if you have enabled STRICT mode task
-isolation, the process will get killed since it has to go through the kernel
-to migrate.  If not in STRICT mode, then it will hang until it is manually
-killed since full dynticks will never get turned on once it wakes up on a
-non-isolated CPU - unless it is then manually migrated back to a proper
-task-isolation cpu.  And, perhaps the intent was to do some cpu offlining
-and rearrange the task isolation tasks, and therefore that makes sense?
-
-So, maybe that semantics is good enough!?  I'm not completely sure, but
-I think I'm willing to claim that for something this much of a corner
-case, it's probably reasonable.
-
->>>> +	/* If the tick is running, request rescheduling; we're not ready. */
->>>> +	if (!tick_nohz_tick_stopped()) {
->>> Note that this function tells whether the tick is in dynticks mode, which means
->>> the tick currently only run on-demand. But it's not necessarily completely stopped.
->> I think in fact this is the semantics we want (and that people requested),
->> e.g. if the user requests an alarm(), we may still be ticking even though
->> tick_nohz_tick_stopped() is true, but that test is still the right condition
->> to use to return to user space, since the user explicitly requested the
->> alarm.
-> It seems to break the initial purpose. If your task really doesn't want to be
-> disturbed, it simply can't arm a timer. tick_nohz_tick_stopped() is really no
-> other indication than the CPU trying to do its best to delay the next tick. But
-> that next tick could be re-armed every two msecs for example. Worse yet, if the
-> tick has been stopped and finally issues a timer that rearms itself every 1 msec,
-> tick_nohz_tick_stopped() will still be true.
-
-This is definitely another grey area.  Certainly if there's a kernel timer that
-rearms itself every 1 ms, we're in trouble.  (And the existing mechanisms of STRICT
-mode and task_isolation_debug would help.)  But as far as just regular userspace
-arming a timer via syscall, then if your hardware had a 64-bit down counter
-for timer interrupts, for example, you might well be able to do something like
-say "every night at midnight, I can stop driving packets and do system maintenance,
-so I'd like the kernel to interrupt me".  In this case some kind of alarm() would
-not be incompatible with task isolation.  I admit this is kind of an extreme
-case; and certainly in STRICT mode, as currently written, you'd get a signal if
-you tried to do this, so you'd have to run with STRICT mode off.
-
-However, the reason I specifically decided to do this is community feedback.  In
-http://lkml.kernel.org/r/CALCETrVdZxkEeQd3=V6p_yLYL7T83Y3WfnhfVGi3GwTxF+vPQg@mail.gmail.com,
-on 9/28/2015, Andy Lutomirski wrote:
-
-> Why are we treating alarms as something that should defer entry to
-> userspace?  I think it would be entirely reasonable to set an alarm
-> for ten minutes, ask for isolation, and then think hard for ten
-> minutes.
+On 29 January 2016 at 09:54,  <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> wrote:
+> Hi,
 >
-> [...]
+> following is a revised set of the CGroup Namespace patchset which Aditya
+> Kali has previously sent.  The code can also be found in the cgroupns.v10
+> branch of
 >
-> ISTM something's suboptimal with the inner workings of all this if
-> task_isolation_enter needs to sleep to wait for an event that isn't
-> scheduled for the immediate future (e.g. already queued up as an
-> interrupt).
+> https://git.kernel.org/cgit/linux/kernel/git/sergeh/linux-security.git/
+>
+> To summarize the semantics:
+>
+> 1. CLONE_NEWCGROUP re-uses 0x02000000, which was previously CLONE_STOPPED
+>
+> 2. unsharing a cgroup namespace makes all your current cgroups your new
+> cgroup root.
+>
+> 3. /proc/pid/cgroup always shows cgroup paths relative to the reader's
+> cgroup namespce root.  A task outside of  your cgroup looks like
+>
+>         8:memory:/../../..
+>
+> 4. when a task mounts a cgroupfs, the cgroup which shows up as root depends
+> on the mounting task's  cgroup namespace.
+>
+> 5. setns to a cgroup namespace switches your cgroup namespace but not
+> your cgroups.
+>
+> With this, using github.com/hallyn/lxc #2015-11-09/cgns (and
+> github.com/hallyn/lxcfs #2015-11-10/cgns) we can start a container in a full
+> proper cgroup namespace, avoiding either cgmanager or lxcfs cgroup bind mounts.
+>
+> This is completely backward compatible and will be completely invisible
+> to any existing cgroup users (except for those running inside a cgroup
+> namespace and looking at /proc/pid/cgroup of tasks outside their
+> namespace.)
 
--- 
-Chris Metcalf, EZChip Semiconductor
-http://www.ezchip.com
+Hi,
 
+I just noticed commit c38c4597e4bf ("netfilter: implement xt_cgroup
+cgroup2 path match") which, as far as I understand, introduces a new
+userland facing API containing the full cgroup path. Does it mean that
+the cgroupns patchset should include cgroup path translation in
+xt_cgroup?
+
+> Changes from V9:
+> 1. Update to latest Linus tree
+> 2. A few locking fixes
+>
+> Changes from V8:
+> 1. Incorporate updated documentation from tj.
+> 2. Put lookup_one_len() under inode lock
+> 3. Make cgroup_path non-namespaced, so only calls to cgroup_path_ns() are
+>    namespaced.
+> 4. Make cgroup_path{,_ns} take the needed locks, since external callers cannot
+>    do so.
+> 5. Fix the bisectability problem of to_cg_ns() being defined after use
+>
+> Changes from V7:
+> 1. Rework kernfs_path_from_node_locked to return the string length
+> 2. Rename and reorder args to kernfs_path_from_node
+> 3. cgroup.c: undo accidental conversoins to inline
+> 4. cgroup.h: move ns declarations to bottom.
+> 5. Rework the documentation to fit the style of the rest of cgroup.txt
+>
+> Changes from V6:
+> 1. Switch to some WARN_ONs to provide stack traces
+> 2. Rename kernfs_node_distance to kernfs_depth
+> 3. Make sure kernfs_common_ancestor() nodes are from same root
+> 4. Split kernfs changes for cgroup_mount into separate patch
+> 5. Rename kernfs_obtain_root to kernfs_node_dentry
+> (And more, see patch changelogs)
+>
+> Changes from V5:
+> 1. To get a root dentry for cgroup namespace mount, walk the path from the
+>    kernfs root dentry.
+>
+> Changes from V4:
+> 1. Move the FS_USERNS_MOUNT flag to last patch
+> 2. Rebase onto cgroup/for-4.5
+> 3. Don't non-init user namespaces to bind new subsystems when mounting.
+> 4. Address feedback from Tejun (thanks).  Specificaly, not addressed:
+>    . kernfs_obtain_root - walking dentry from kernfs root.
+>      (I think that's the only piece)
+> 5. Dropped unused get_task_cgroup fn/patch.
+> 6. Reworked kernfs_path_from_node_locked() to try to simplify the logic.
+>    It now finds a common ancestor, walks from the source to it, then back
+>    up to the target.
+>
+> Changes from V3:
+> 1. Rebased onto latest cgroup changes.  In particular switch to
+>    css_set_lock and ns_common.
+> 2. Support all hierarchies.
+>
+> Changes from V2:
+> 1. Added documentation in Documentation/cgroups/namespace.txt
+> 2. Fixed a bug that caused crash
+> 3. Incorporated some other suggestions from last patchset:
+>    - removed use of threadgroup_lock() while creating new cgroupns
+>    - use task_lock() instead of rcu_read_lock() while accessing
+>      task->nsproxy
+>    - optimized setns() to own cgroupns
+>    - simplified code around sane-behavior mount option parsing
+> 4. Restored ACKs from Serge Hallyn from v1 on few patches that have
+>    not changed since then.
+>
+> Changes from V1:
+> 1. No pinning of processes within cgroupns. Tasks can be freely moved
+>    across cgroups even outside of their cgroupns-root. Usual DAC/MAC policies
+>    apply as before.
+> 2. Path in /proc/<pid>/cgroup is now always shown and is relative to
+>    cgroupns-root. So path can contain '/..' strings depending on cgroupns-root
+>    of the reader and cgroup of <pid>.
+> 3. setns() does not require the process to first move under target
+>    cgroupns-root.
+>
+> Changes form RFC (V0):
+> 1. setns support for cgroupns
+> 2. 'mount -t cgroup cgroup <mntpt>' from inside a cgroupns now
+>    mounts the cgroup hierarcy with cgroupns-root as the filesystem root.
+> 3. writes to cgroup files outside of cgroupns-root are not allowed
+> 4. visibility of /proc/<pid>/cgroup is further restricted by not showing
+>    anything if the <pid> is in a sibling cgroupns and its cgroup falls outside
+>    your cgroupns-root.
+>
+>
+> _______________________________________________
+> lxc-devel mailing list
+> lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org
+> http://lists.linuxcontainers.org/listinfo/lxc-devel
