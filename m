@@ -1,59 +1,75 @@
-From: js1304-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Subject: [PATCH v2 0/5] follow-up "Optimize CONFIG_DEBUG_PAGEALLOC"
-Date: Thu, 11 Feb 2016 13:04:56 +0900
-Message-ID: <1455163501-9341-1-git-send-email-iamjoonsoo.kim@lge.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christian Borntraeger <borntraeger-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Takashi Iwai <tiwai-IBi9RG/b67k@public.gmane.org>, Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
+From: js1304@gmail.com
+Subject: [PATCH v2 1/5] mm/vmalloc: query dynamic DEBUG_PAGEALLOC setting
+Date: Thu, 11 Feb 2016 13:04:57 +0900
+Message-ID: <1455163501-9341-2-git-send-email-iamjoonsoo.kim@lge.com>
+References: <1455163501-9341-1-git-send-email-iamjoonsoo.kim@lge.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1455163501-9341-1-git-send-email-iamjoonsoo.kim@lge.com>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: David Rientjes <rientjes@google.com>, Christian Borntraeger <borntraeger@de.ibm.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Takashi Iwai <tiwai@suse.com>, Chris Metcalf <cmetcalf@ezchip.com>, Christoph Lameter <cl@linux.com>, linux-api@vger.kernel.org, Joonsoo Kim <iamjoonsoo.kim@lge.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
+From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 
-v2) Changes
-o fix powerpc build failure (basic build test done)
-o export symbol for module build
-o change comment and clean up code
+We can disable debug_pagealloc processing even if the code is compiled
+with CONFIG_DEBUG_PAGEALLOC. This patch changes the code to query
+whether it is enabled or not in runtime.
 
-As CONFIG_DEBUG_PAGEALLOC can be enabled/disabled via kernel
-parameters we can optimize some cases by checking the enablement
-state.
+v2: update comment, per David.
+adjust comment to use 80 cols, per Andrew.
 
-This is follow-up work for Christian's Optimize CONFIG_DEBUG_PAGEALLOC.
+Reviewed-by: Christian Borntraeger <borntraeger@de.ibm.com>
+Acked-by: David Rientjes <rientjes@google.com>
+Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+---
+ mm/vmalloc.c | 25 ++++++++++++-------------
+ 1 file changed, 12 insertions(+), 13 deletions(-)
 
-https://lkml.org/lkml/2016/1/27/194
-
-I can't test patches for sound, power and tile,
-so please review them, maintainers. :)
-
-Remaining work is to make sparc to be aware of this but it looks
-not easy for me so I skip that in this series.
-
-It would be the best that these paches are routed through Andrew's tree,
-because there is a dependency to MM.
-
-Andrew, there is mis-spelled word (compliled -> compiled) in commit
-description so I re-send all. Except powerpc one, others are basically
-same with the patches on your tree.
-
-Thanks.
-
-Joonsoo Kim (5):
-  mm/vmalloc: query dynamic DEBUG_PAGEALLOC setting
-  mm/slub: query dynamic DEBUG_PAGEALLOC setting
-  sound: query dynamic DEBUG_PAGEALLOC setting
-  powerpc: query dynamic DEBUG_PAGEALLOC setting
-  tile: query dynamic DEBUG_PAGEALLOC setting
-
- arch/powerpc/kernel/traps.c     |  5 ++---
- arch/powerpc/mm/hash_utils_64.c | 36 ++++++++++++++++++++----------------
- arch/powerpc/mm/init_32.c       |  8 ++++----
- arch/tile/mm/init.c             | 11 +++++++----
- mm/page_alloc.c                 |  1 +
- mm/slub.c                       |  7 +++----
- mm/vmalloc.c                    | 25 ++++++++++++-------------
- sound/drivers/pcsp/pcsp.c       |  9 +++++----
- 8 files changed, 54 insertions(+), 48 deletions(-)
-
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index fb42a5b..d4b2e34 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -531,22 +531,21 @@ static void unmap_vmap_area(struct vmap_area *va)
+ static void vmap_debug_free_range(unsigned long start, unsigned long end)
+ {
+ 	/*
+-	 * Unmap page tables and force a TLB flush immediately if
+-	 * CONFIG_DEBUG_PAGEALLOC is set. This catches use after free
+-	 * bugs similarly to those in linear kernel virtual address
+-	 * space after a page has been freed.
++	 * Unmap page tables and force a TLB flush immediately if pagealloc
++	 * debugging is enabled.  This catches use after free bugs similarly to
++	 * those in linear kernel virtual address space after a page has been
++	 * freed.
+ 	 *
+-	 * All the lazy freeing logic is still retained, in order to
+-	 * minimise intrusiveness of this debugging feature.
++	 * All the lazy freeing logic is still retained, in order to minimise
++	 * intrusiveness of this debugging feature.
+ 	 *
+-	 * This is going to be *slow* (linear kernel virtual address
+-	 * debugging doesn't do a broadcast TLB flush so it is a lot
+-	 * faster).
++	 * This is going to be *slow* (linear kernel virtual address debugging
++	 * doesn't do a broadcast TLB flush so it is a lot faster).
+ 	 */
+-#ifdef CONFIG_DEBUG_PAGEALLOC
+-	vunmap_page_range(start, end);
+-	flush_tlb_kernel_range(start, end);
+-#endif
++	if (debug_pagealloc_enabled()) {
++		vunmap_page_range(start, end);
++		flush_tlb_kernel_range(start, end);
++	}
+ }
+ 
+ /*
 -- 
 1.9.1
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
