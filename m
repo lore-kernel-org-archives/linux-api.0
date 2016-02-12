@@ -1,89 +1,253 @@
-From: Mathieu Poirier <mathieu.poirier@linaro.org>
-Subject: Re: [PATCH V2 3/6] stm class: provision for statically assigned masterIDs
-Date: Fri, 12 Feb 2016 13:33:58 -0700
-Message-ID: <CANLsYkz1nNYdcTXrkZ+HAMHexNandm93EpM7auvYE4CY43hy6w@mail.gmail.com>
-References: <1454487337-30184-1-git-send-email-zhang.chunyan@linaro.org>
-	<1454487337-30184-4-git-send-email-zhang.chunyan@linaro.org>
-	<87mvrf5ngl.fsf@ashishki-desk.ger.corp.intel.com>
-	<CANLsYky2twQ98u241YyHD=atYRp1N56YVHUQNY2E2Ljsq0cseA@mail.gmail.com>
-	<87twlj49k7.fsf@ashishki-desk.ger.corp.intel.com>
-	<CANLsYkw=mG+ch8QzxmbwWs9o+mndVNo1MuqXcrPrNJYj_SQcHQ@mail.gmail.com>
-	<87r3gh3nd7.fsf@ashishki-desk.ger.corp.intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <87r3gh3nd7.fsf@ashishki-desk.ger.corp.intel.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Alexander Shishkin <alexander.shishkin@linux.intel.com>
-Cc: Chunyan Zhang <zhang.chunyan@linaro.org>, Rob Herring <robh@kernel.org>, Mark Brown <broonie@kernel.org>, Pratik Patel <pratikp@codeaurora.org>, Nicolas GUION <nicolas.guion@st.com>, Jon Corbet <corbet@lwn.net>, Mark Rutland <mark.rutland@arm.com>, Mike Leach <mike.leach@arm.com>, "Jeremiassen, Tor" <tor@ti.com>, Al Grant <al.grant@arm.com>, Lyra Zhang <zhang.lyra@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org
+From: Dave Hansen <dave@sr71.net>
+Subject: [PATCH 00/33] x86: Memory Protection Keys (v10)
+Date: Fri, 12 Feb 2016 13:01:52 -0800
+Message-ID: <20160212210152.9CAD15B0@viggo.jf.intel.com>
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: linux-kernel@vger.kernel.org
+Cc: linux-mm@kvack.org, x86@kernel.org, torvalds@linux-foundation.org, Dave Hansen <dave@sr71.net>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, aarcange@redhat.com, akpm@linux-foundation.org, jack@suse.cz, kirill.shutemov@linux.intel.com, n-horiguchi@ah.jp.nec.com, vbabka@suse.cz
 List-Id: linux-api@vger.kernel.org
 
-On 12 February 2016 at 09:27, Alexander Shishkin
-<alexander.shishkin@linux.intel.com> wrote:
-> Mathieu Poirier <mathieu.poirier@linaro.org> writes:
->
->> On 8 February 2016 at 06:26, Alexander Shishkin
->> <alexander.shishkin@linux.intel.com> wrote:
->>> This $end==$start situation itself may be ambiguous and can be
->>> interpreted either as having just one *static* master ID fixed for all
->>> SW writers (what I assumed from your commit message) or as having a
->>> floating master ID, which changes of its own accord and is not
->>> controllable by software.
->>
->> Some clarification here.
->>
->> On ARM from a SW point of view $end == $start and that doesn't change
->> (with regards to masterIDs) .  The ambiguity comes from the fact that
->> on other platforms where masterID configuration does change and is
->> important, the condition $end == $start could also be valid.
->
-> Yes, that's what I was saying. The thing is, on the system-under-tracing
-> side these two situations are not very different from one
-> another. Master IDs are really just numbers without any semantics
-> attached to them in the sense that they are not covered by the mipi spec
-> or any other standard (to my knowledge).
+Memory Protection Keys for User pages is a CPU feature which will
+first appear on Skylake Servers, but will also be supported on
+future non-server parts (there is also a QEMU implementation).  It
+provides a mechanism for enforcing page-based protections, but
+without requiring modification of the page tables when an
+application changes wishes to change permissions.
 
-We are definitely on the same page here, just using slightly different terms.
+This set introduces supported limited to:
+1. Allows "execute-only" memory
+2. Enables KVM to run Protection-Key-enabled guests
 
->
-> The difference is in the way we map channels to masters. One way is to
-> allocate a distinct set of channels for each master (the way Intel Trace
-> Hub does it); another way is to share the same set of channels between
-> multiple masters.
+This set contains the vast majority of of the code, with the
+small but tricky explicit user interface parts left off.  We can
+have a more focused review on those at a later time in a (much
+smaller) follow-on series.
 
-We are in total agreement.
+Changes from v9:
+ * Added macros to allow some source-level backward compatability
+   between the old-style get_user_pages*() calls taking tsk/mm and
+   the new-style which assumes the current tsk/mm.
+ * renamed the new gup variant to get_user_pages_remote() instead
+   of get_user_pages_foreign()
+ * rebased against 4.5-rc3
 
-> So we can describe this as "hardware implements the
-> same set of channels across multiple masters" or something along those
-> lines.
+Changes from v8:
+ * Reorganization of get_user_pages() patch with awesome feedback
+   from Vlastimil Babka and suggestions from Jan Kara.
+ * fix EXPORT_SYMBOL() and use get_current_user_page() in nommu.c
 
-I suggest "Shared channels"?  In the end, that's really what it is...
+Changes from v7:
+ * Fixed merge issue with cpu feature bitmap definitions
+ * Fixed up some comments in get_user_pages() and smaps patches
+   (thanks Vlastimil!)
 
-The outstanding issue is still how to represent these to different way
-of mapping things in the STM core.  I suggested a flag, called
-"mstatic" (but that can be changed), and a representation of '-1' in
-for masterIDs sysFS.  Whether we stick with that or not is irrelevant,
-I'd be fine with another mechanism.  What I am keen on is that from
-sysFS users can quickly tell which heuristic is enacted on that
-specific architecture.
+Changes from v6:
+ * fix up ??'s showing up in in smaps' VmFlags field
+ * added execute-only support
+ * removed all the new syscalls from this set.  We can discuss
+   them in detail after this is merged.
 
->
-> Actually, in the latter scheme of things you can also have multiple
-> masters, at least theoretically. Say, you have masters [0..15], each
-> with distinct set of channels, but depending on hardware state these
-> masters actually end up as $state*16+$masterID in the STP stream.
->
-> So we might also think about differentiating between the hardware
-> masters (0 though 15 in the above example) and STP masters.
+Changes from v5:
 
-I'm not sure I get what you mean here.  On ARM the masterIDs assigned
-in HW, which will depend on the state, will show up in the STP stream.
-But again, I might be missing your point.
+ * make types in read_pkru() u32's, not ints
+ * rework VM_* bits to avoid using __ffsl() and clean up
+   vma_pkey()
+ * rework pte_allows_gup() to use p??_val() instead of passing
+   around p{te,md,ud}_t types.
+ * Fix up some inconsistent bool vs. int usage
+ * corrected name of ARCH_VM_PKEY_FLAGS in patch description
+ * remove NR_PKEYS... config option.  Just define it directly
 
-Thanks,
-Mathieu
+Changes from v4:
 
->
-> Regards,
-> --
-> Alex
+ * Made "allow setting of XSAVE state" safe if we got preempted
+   between when we saved our FPU state and when we restore it.
+   (I would appreciate a look from Ingo on this patch).
+ * Fixed up a few things from Thomas's latest comments: splt up
+   siginfo in to x86 and generic, removed extra 'eax' variable
+   in rdpkru function, reworked vm_flags assignment, reworded
+   a comment in pte_allows_gup()
+ * Add missing DISABLED/REQUIRED_MASK14 in cpufeature.h
+ * Added comment about compile optimization in fault path
+ * Left get_user_pages_locked() alone.  Andrea thinks we need it.
+
+Changes from RFCv3:
+
+ * Added 'current' and 'foreign' variants of get_user_pages() to
+   help indicate whether protection keys should be enforced.
+   Thanks to Jerome Glisse for pointing out this issue.
+ * Added "allocation" and set/get system calls so that we can do
+   management of proection keys in the kernel.  This opens the
+   door to use of specific protection keys for kernel use in the
+   future, such as for execute-only memory.
+ * Removed the kselftest code for the moment.  It will be
+   submitted separately.
+
+Thanks Ingo and Thomas for most of these):
+Changes from RFCv2 (Thanks Ingo and Thomas for most of these):
+
+ * few minor compile warnings
+ * changed 'nopku' interaction with cpuid bits.  Now, we do not
+   clear the PKU cpuid bit, we just skip enabling it.
+ * changed __pkru_allows_write() to also check access disable bit
+ * removed the unused write_pkru()
+ * made si_pkey a u64 and added some patch description details.
+   Also made it share space in siginfo with MPX and clarified
+   comments.
+ * give some real text for the Processor Trace xsave state
+ * made vma_pkey() less ugly (and much more optimized actually)
+ * added SEGV_PKUERR to copy_siginfo_to_user()
+ * remove page table walk when filling in si_pkey, added some
+   big fat comments about it being inherently racy.
+ * added self test code
+
+This code is not runnable to anyone outside of Intel unless they
+have some special hardware or a fancy simulator.  There is a qemu
+model to emulate the feature, but it is not currently implemented
+fully enough to be usable.  If you are interested in running this
+for real, please get in touch with me.  Hardware is available to a
+very small but nonzero number of people.
+
+This set is also available here:
+
+	git://git.kernel.org/pub/scm/linux/kernel/git/daveh/x86-pkeys.git pkeys-v024
+
+=== diffstat ===
+
+Dave Hansen (33):
+      mm: introduce get_user_pages_remote()
+      mm: overload get_user_pages() functions
+      mm, gup: switch callers of get_user_pages() to not pass tsk/mm
+      x86, fpu: add placeholder for Processor Trace XSAVE state
+      x86, pkeys: Add Kconfig option
+      x86, pkeys: cpuid bit definition
+      x86, pkeys: define new CR4 bit
+      x86, pkeys: add PKRU xsave fields and data structure(s)
+      x86, pkeys: PTE bits for storing protection key
+      x86, pkeys: new page fault error code bit: PF_PK
+      x86, pkeys: store protection in high VMA flags
+      x86, pkeys: arch-specific protection bits
+      x86, pkeys: pass VMA down in to fault signal generation code
+      signals, pkeys: notify userspace about protection key faults
+      x86, pkeys: fill in pkey field in siginfo
+      x86, pkeys: add functions to fetch PKRU
+      mm: factor out VMA fault permission checking
+      x86, mm: simplify get_user_pages() PTE bit handling
+      x86, pkeys: check VMAs and PTEs for protection keys
+      mm: do not enforce PKEY permissions on "foreign" mm access
+      x86, pkeys: optimize fault handling in access_error()
+      x86, pkeys: differentiate instruction fetches
+      x86, pkeys: dump PKRU with other kernel registers
+      x86, pkeys: dump pkey from VMA in /proc/pid/smaps
+      x86, pkeys: add Kconfig prompt to existing config option
+      x86, pkeys: actually enable Memory Protection Keys in CPU
+      mm, multi-arch: pass a protection key in to calc_vm_flag_bits()
+      x86, pkeys: add arch_validate_pkey()
+      x86: separate out LDT init from context init
+      x86, fpu: allow setting of XSAVE state
+      x86, pkeys: allow kernel to modify user pkey rights register
+      x86, pkeys: create an x86 arch_calc_vm_prot_bits() for VMA flags
+      x86, pkeys: execute-only support
+
+ Documentation/kernel-parameters.txt         |   3 +
+ arch/cris/arch-v32/drivers/cryptocop.c      |   8 +-
+ arch/ia64/kernel/err_inject.c               |   3 +-
+ arch/mips/mm/gup.c                          |   3 +-
+ arch/powerpc/include/asm/mman.h             |   5 +-
+ arch/powerpc/include/asm/mmu_context.h      |  12 ++
+ arch/s390/include/asm/mmu_context.h         |  12 ++
+ arch/s390/mm/gup.c                          |   4 +-
+ arch/sh/mm/gup.c                            |   2 +-
+ arch/sparc/mm/gup.c                         |   2 +-
+ arch/unicore32/include/asm/mmu_context.h    |  12 ++
+ arch/x86/Kconfig                            |  16 ++
+ arch/x86/include/asm/cpufeature.h           |  61 ++++---
+ arch/x86/include/asm/disabled-features.h    |  15 ++
+ arch/x86/include/asm/fpu/internal.h         |   2 +
+ arch/x86/include/asm/fpu/types.h            |  12 ++
+ arch/x86/include/asm/fpu/xstate.h           |   3 +-
+ arch/x86/include/asm/mmu_context.h          |  85 ++++++++-
+ arch/x86/include/asm/pgtable.h              |  38 ++++
+ arch/x86/include/asm/pgtable_types.h        |  39 ++++-
+ arch/x86/include/asm/pkeys.h                |  34 ++++
+ arch/x86/include/asm/required-features.h    |   7 +
+ arch/x86/include/asm/special_insns.h        |  22 +++
+ arch/x86/include/uapi/asm/mman.h            |  22 +++
+ arch/x86/include/uapi/asm/processor-flags.h |   2 +
+ arch/x86/kernel/cpu/common.c                |  42 +++++
+ arch/x86/kernel/fpu/core.c                  |  63 +++++++
+ arch/x86/kernel/fpu/xstate.c                | 185 +++++++++++++++++++-
+ arch/x86/kernel/ldt.c                       |   4 +-
+ arch/x86/kernel/process_64.c                |   2 +
+ arch/x86/kernel/setup.c                     |   9 +
+ arch/x86/mm/Makefile                        |   2 +
+ arch/x86/mm/fault.c                         | 168 +++++++++++++++---
+ arch/x86/mm/gup.c                           |  45 +++--
+ arch/x86/mm/mpx.c                           |   4 +-
+ arch/x86/mm/pkeys.c                         | 101 +++++++++++
+ drivers/char/agp/frontend.c                 |   2 +-
+ drivers/gpu/drm/amd/amdgpu/amdgpu_ttm.c     |   3 +-
+ drivers/gpu/drm/etnaviv/etnaviv_gem.c       |   6 +-
+ drivers/gpu/drm/i915/i915_gem_userptr.c     |  10 +-
+ drivers/gpu/drm/radeon/radeon_ttm.c         |   3 +-
+ drivers/gpu/drm/via/via_dmablit.c           |   3 +-
+ drivers/infiniband/core/umem.c              |   2 +-
+ drivers/infiniband/core/umem_odp.c          |   8 +-
+ drivers/infiniband/hw/mthca/mthca_memfree.c |   3 +-
+ drivers/infiniband/hw/qib/qib_user_pages.c  |   3 +-
+ drivers/infiniband/hw/usnic/usnic_uiom.c    |   2 +-
+ drivers/iommu/amd_iommu_v2.c                |   1 +
+ drivers/media/pci/ivtv/ivtv-udma.c          |   4 +-
+ drivers/media/pci/ivtv/ivtv-yuv.c           |  10 +-
+ drivers/media/v4l2-core/videobuf-dma-sg.c   |   3 +-
+ drivers/misc/mic/scif/scif_rma.c            |   2 -
+ drivers/misc/sgi-gru/grufault.c             |   3 +-
+ drivers/scsi/st.c                           |   2 -
+ drivers/staging/android/ashmem.c            |   4 +-
+ drivers/video/fbdev/pvr2fb.c                |   4 +-
+ drivers/virt/fsl_hypervisor.c               |   5 +-
+ fs/exec.c                                   |   8 +-
+ fs/proc/task_mmu.c                          |  14 ++
+ include/asm-generic/mm_hooks.h              |  12 ++
+ include/linux/mm.h                          | 102 +++++++++--
+ include/linux/mman.h                        |   6 +-
+ include/linux/pkeys.h                       |  33 ++++
+ include/uapi/asm-generic/siginfo.h          |  17 +-
+ kernel/events/uprobes.c                     |  10 +-
+ kernel/signal.c                             |   4 +
+ mm/Kconfig                                  |   5 +
+ mm/frame_vector.c                           |   2 +-
+ mm/gup.c                                    | 127 +++++++++++---
+ mm/ksm.c                                    |  12 +-
+ mm/memory.c                                 |   8 +-
+ mm/mempolicy.c                              |   6 +-
+ mm/mmap.c                                   |  10 +-
+ mm/mprotect.c                               |   8 +-
+ mm/nommu.c                                  |  66 ++++---
+ mm/process_vm_access.c                      |  11 +-
+ mm/util.c                                   |   4 +-
+ net/ceph/pagevec.c                          |   2 +-
+ security/tomoyo/domain.c                    |   9 +-
+ virt/kvm/async_pf.c                         |   8 +-
+ virt/kvm/kvm_main.c                         |  10 +-
+ 81 files changed, 1393 insertions(+), 233 deletions(-)
+
+Cc: linux-api@vger.kernel.org
+Cc: linux-arch@vger.kernel.org
+Cc: aarcange@redhat.com
+Cc: akpm@linux-foundation.org
+Cc: jack@suse.cz
+Cc: kirill.shutemov@linux.intel.com
+Cc: linux-api@vger.kernel.org
+Cc: linux-arch@vger.kernel.org
+Cc: n-horiguchi@ah.jp.nec.com
+Cc: x86@kernel.org
+Cc: torvalds@linux-foundation.org
+Cc: vbabka@suse.cz
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
