@@ -1,155 +1,67 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: [PATCH] selftests: add a new test for Media Controller API
-Date: Fri, 12 Feb 2016 18:39:54 -0700
-Message-ID: <1455327594-8498-1-git-send-email-shuahkh@osg.samsung.com>
+From: Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>
+Subject: Re: [PATCH net-next v8 05/19] net: ethtool: add new
+ ETHTOOL_GSETTINGS/SSETTINGS API
+Date: Sat, 13 Feb 2016 01:49:09 +0000
+Message-ID: <1455328149.2801.82.camel@decadent.org.uk>
+References: <1455064168-5102-1-git-send-email-ddecotig@gmail.com>
+	 <1455064168-5102-6-git-send-email-ddecotig@gmail.com>
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg="pgp-sha512";
+	protocol="application/pgp-signature"; boundary="=-NCwJIfUL82hmdvCgSQ0U"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1455064168-5102-6-git-send-email-ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Decotigny <ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, fcoe-devel-s9riP+hp16TNLxjTenLetw@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eugenia Emantayev <eugenia-VPRAkNaXOzVS1MOuV/RT9w@public.gmane.org>, Or Gerlitz <ogerlitz-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Ido Shamay <idos-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Saeed Mahameed <saeedm-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Govindarajulu Varadarajan <_govind-KK0ffGbhmjU@public.gmane.org>, Venkata Duvvuru <VenkatKumar.Duvvuru-iH1Dq9VlAzfQT0dZR+AlfA@public.gmane.org>, Jeff Kirsher <jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Pravin B Shelar <pshelar-l0M0P4e3n4LQT0dZR+AlfA@public.gmane.org>, Ed Swierk <eswierk-FilZDy9cOaHkQYj/0HfcvtBPR1lH4CV8@public.gmane.org>, Robert Love <robert.w.love-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "James E.Yuval Mintz" <Yuval.Mintz-h88ZbnxC6KDQT0dZR+AlfA@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, David Decotigny <decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This test opens user specified Media Device and calls
-MEDIA_IOC_DEVICE_INFO ioctl in a loop once every 10
-seconds. This test is for detecting errors in device
-removal path.
 
-Usage:
-    sudo ./media_devkref_test -d /dev/mediaX
+--=-NCwJIfUL82hmdvCgSQ0U
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-While test is running, remove the device and
-ensure there are no use after free errors and
-other Oops in the dmesg. Enable KaSan kernel
-config option for use-after-free error detection.
+On Tue, 2016-02-09 at 16:29 -0800, David Decotigny wrote:
+> From: David Decotigny <decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org>
+>=20
+> This patch defines a new ETHTOOL_GSETTINGS/SSETTINGS API, handled by
+> the new get_ksettings/set_ksettings callbacks. This API provides
+> support for most legacy ethtool_cmd fields, adds support for larger
+> link mode masks (up to 4064 bits, variable length), and removes
+> ethtool_cmd deprecated fields (transceiver/maxrxpkt/maxtxpkt).
+[...]
 
-Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
----
- tools/testing/selftests/media_tests/.gitignore     |  1 +
- tools/testing/selftests/media_tests/Makefile       |  7 ++
- .../selftests/media_tests/media_device_test.c      | 94 ++++++++++++++++++++++
- 3 files changed, 102 insertions(+)
- create mode 100644 tools/testing/selftests/media_tests/.gitignore
- create mode 100644 tools/testing/selftests/media_tests/Makefile
- create mode 100644 tools/testing/selftests/media_tests/media_device_test.c
+I previously asked you to include 'link' in the command names and
+structure name. =C2=A0This would clarify that these are now only for link
+settings and reduce the risk of confusion between old and new commands.
+However, you didn't reply to that review. =C2=A0Do you have any objection t=
+o
+doing this?
 
-diff --git a/tools/testing/selftests/media_tests/.gitignore b/tools/testing/selftests/media_tests/.gitignore
-new file mode 100644
-index 0000000..1c07117
---- /dev/null
-+++ b/tools/testing/selftests/media_tests/.gitignore
-@@ -0,0 +1 @@
-+media_device_test
-diff --git a/tools/testing/selftests/media_tests/Makefile b/tools/testing/selftests/media_tests/Makefile
-new file mode 100644
-index 0000000..7071bcc
---- /dev/null
-+++ b/tools/testing/selftests/media_tests/Makefile
-@@ -0,0 +1,7 @@
-+TEST_PROGS := media_device_test
-+all: $(TEST_PROGS)
-+
-+include ../lib.mk
-+
-+clean:
-+	rm -fr media_device_test
-diff --git a/tools/testing/selftests/media_tests/media_device_test.c b/tools/testing/selftests/media_tests/media_device_test.c
-new file mode 100644
-index 0000000..a47880b
---- /dev/null
-+++ b/tools/testing/selftests/media_tests/media_device_test.c
-@@ -0,0 +1,94 @@
-+/*
-+ * media_devkref_test.c - Media Controller Device Kref API Test
-+ *
-+ * Copyright (c) 2016 Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-+ * Copyright (c) 2016 Samsung Electronics Co., Ltd.
-+ *
-+ * This file is released under the GPLv2.
-+ */
-+
-+/*
-+ * This file adds a test for Media Controller API.
-+ * This test should be run as root and should not be
-+ * included in the Kselftest run. This test should be
-+ * run when hardware and driver that makes use Media
-+ * Controller API are present in the system.
-+ *
-+ * This test opens user specified Media Device and calls
-+ * MEDIA_IOC_DEVICE_INFO ioctl in a loop once every 10
-+ * seconds.
-+ *
-+ * Usage:
-+ *	sudo ./media_devkref_test -d /dev/mediaX
-+ *
-+ *	While test is running, remove the device and
-+ *	ensure there are no use after free errors and
-+ *	other Oops in the dmesg. Enable KaSan kernel
-+ *	config option for use-after-free error detection.
-+*/
-+
-+#include <stdio.h>
-+#include <unistd.h>
-+#include <stdlib.h>
-+#include <errno.h>
-+#include <string.h>
-+#include <fcntl.h>
-+#include <sys/ioctl.h>
-+#include <sys/stat.h>
-+#include <linux/media.h>
-+
-+int main(int argc, char **argv)
-+{
-+	int opt;
-+	char media_device[256];
-+	int count = 0;
-+	struct media_device_info mdi;
-+	int ret;
-+	int fd;
-+
-+	if (argc < 2) {
-+		printf("Usage: %s [-d </dev/mediaX>]\n", argv[0]);
-+		exit(-1);
-+	}
-+
-+	/* Process arguments */
-+	while ((opt = getopt(argc, argv, "d:")) != -1) {
-+		switch (opt) {
-+		case 'd':
-+			strncpy(media_device, optarg, sizeof(media_device) - 1);
-+			media_device[sizeof(media_device)-1] = '\0';
-+			break;
-+		default:
-+			printf("Usage: %s [-d </dev/mediaX>]\n", argv[0]);
-+			exit(-1);
-+		}
-+	}
-+
-+	if (getuid() != 0) {
-+		printf("Please run the test as root - Exiting.\n");
-+		exit(-1);
-+	}
-+
-+	/* Open Media device and keep it open */
-+	fd = open(media_device, O_RDWR);
-+	if (fd == -1) {
-+		printf("Media Device open errno %s\n", strerror(errno));
-+		exit(-1);
-+	}
-+
-+	printf("\nNote:\n"
-+	       "While test is running, remove the device and\n"
-+	       "ensure there are no use after free errors and\n"
-+	       "other Oops in the dmesg. Enable KaSan kernel\n"
-+	       "config option for use-after-free error detection.\n\n");
-+
-+	while (count < 100) {
-+		ret = ioctl(fd, MEDIA_IOC_DEVICE_INFO, &mdi);
-+		if (ret < 0)
-+			printf("Media Device Info errno %s\n", strerror(errno));
-+		printf("Media device model %s driver %s\n",
-+			mdi.model, mdi.driver);
-+		sleep(10);
-+		count++;
-+	}
-+}
--- 
-2.5.0
+Ben.
+
+--=20
+Ben Hutchings
+Sturgeon's Law: Ninety percent of everything is crap.
+--=-NCwJIfUL82hmdvCgSQ0U
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIVAwUAVr6Llee/yOyVhhEJAQptQxAAqHw6JCPN3b1UNtl5CkykMq9sgZ+j8VOi
+9b6BaMefBawGFNaPzk6xQBpnwfrGdcofFw+r3Y+OThloB1NB5orhWTnX8citmnlA
+zFuKYE0Si1YC23nlITS+n3U8xJnQKyjwN4jB+acYc3YqELGg6qXvLGQYYpRXKBa0
+rwlYT13ZjTF9oar0dpEXJo9Y3uUsWDVnAeG1E3AAqel5llKzr0n+bUdjO76rdNMQ
+/B2IOq2H09ufZdRKJl9Mtd0LrcvNXZzFepfRqW86kd9NqClwwLsHsinlUVttYaz2
+I5DprGRLIC2CCh82aqLwBMqvnwcR2erOANIPdGpnHS8vUpkgCdClxEXujB3IOzcs
++CYF4FMZjjVZp0fsedds4hkTKdgn1ALKurMoyfWPKbzFBdgJR8qGbpzAdR2uz3Vg
++AzeRqLv9EP3VnctF9Cmndlmy0ycmpb1Vd3sU3x+2MNFy1lPavzmbXULtB1T+GsN
+TRnfUfvWQ2T+dadHpqH+tVElNivQoiaKOpL2FVWUPZEs+0ngI9I74VKQuMG2RbBu
+3EzolbI3XfCt+kMbvnkJuCXHdvt63OOcVGy6QBfQW+Hy64aUaDB7ojau+/3NJjwl
+K9F+jJF07SRDWToWHNO2h98fnZt2/9dxazlELgwAnyU7PpK1RieS9huDeHvXG8Ge
+QM9yzxMhV4s=
+=aMKY
+-----END PGP SIGNATURE-----
+
+--=-NCwJIfUL82hmdvCgSQ0U--
