@@ -1,67 +1,57 @@
-From: Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>
-Subject: Re: [PATCH net-next v8 05/19] net: ethtool: add new
- ETHTOOL_GSETTINGS/SSETTINGS API
-Date: Sat, 13 Feb 2016 01:49:09 +0000
-Message-ID: <1455328149.2801.82.camel@decadent.org.uk>
-References: <1455064168-5102-1-git-send-email-ddecotig@gmail.com>
-	 <1455064168-5102-6-git-send-email-ddecotig@gmail.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: richacl(7) man page review comments
+Date: Sun, 14 Feb 2016 22:27:44 +0100
+Message-ID: <56C0F150.60008@gmail.com>
+References: <56B770B6.7040803@gmail.com> <56B77262.7090107@gmail.com>
+ <CAHc6FU5__xbKm4mg8+fK_ZW5ZYsDoQcYBBvQg573Eq4ERDsROw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha512";
-	protocol="application/pgp-signature"; boundary="=-NCwJIfUL82hmdvCgSQ0U"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1455064168-5102-6-git-send-email-ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Decotigny <ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, fcoe-devel-s9riP+hp16TNLxjTenLetw@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eugenia Emantayev <eugenia-VPRAkNaXOzVS1MOuV/RT9w@public.gmane.org>, Or Gerlitz <ogerlitz-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Ido Shamay <idos-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Saeed Mahameed <saeedm-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Govindarajulu Varadarajan <_govind-KK0ffGbhmjU@public.gmane.org>, Venkata Duvvuru <VenkatKumar.Duvvuru-iH1Dq9VlAzfQT0dZR+AlfA@public.gmane.org>, Jeff Kirsher <jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Pravin B Shelar <pshelar-l0M0P4e3n4LQT0dZR+AlfA@public.gmane.org>, Ed Swierk <eswierk-FilZDy9cOaHkQYj/0HfcvtBPR1lH4CV8@public.gmane.org>, Robert Love <robert.w.love-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "James E.Yuval Mintz" <Yuval.Mintz-h88ZbnxC6KDQT0dZR+AlfA@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, David Decotigny <decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAHc6FU5__xbKm4mg8+fK_ZW5ZYsDoQcYBBvQg573Eq4ERDsROw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On 02/12/2016 11:25 PM, Andreas Gruenbacher wrote:
+> Hi Michael,
+> 
+> On Sun, Feb 7, 2016 at 5:35 PM, Michael Kerrisk (man-pages)
+> <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>> Hi Andreas,
+>>
+>> I'll probably have quite a few more comments on this page as I get to
+>> understand RichACLs better. Here's some comments from an initial
+>> reading.
+> 
+> thanks a lot for all the feedback to the man-pages. I've more or less
+> made all the suggested changes but didn't get to adding examples yet
+> (that's not so easy).
+> 
+> The changes are here:
+> 
+>   https://github.com/andreas-gruenbacher/richacl
 
---=-NCwJIfUL82hmdvCgSQ0U
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Thanks. I'll send a few further comments. But I hope to send
+more in the future.
 
-On Tue, 2016-02-09 at 16:29 -0800, David Decotigny wrote:
-> From: David Decotigny <decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org>
->=20
-> This patch defines a new ETHTOOL_GSETTINGS/SSETTINGS API, handled by
-> the new get_ksettings/set_ksettings callbacks. This API provides
-> support for most legacy ethtool_cmd fields, adds support for larger
-> link mode masks (up to 4064 bits, variable length), and removes
-> ethtool_cmd deprecated fields (transceiver/maxrxpkt/maxtxpkt).
-[...]
+>> So, an initial comment. It seems to me to that this page (but
+>> not setrichacl(1) and getrichacl(1)) should ultimately land in
+>> man-pages (just like acl(7)), since we're talking about a kernel
+>> feature. Make sense?
+> 
+> We could sure move acl(5) and richacl(7) there.
 
-I previously asked you to include 'link' in the command names and
-structure name. =C2=A0This would clarify that these are now only for link
-settings and reduce the risk of confusion between old and new commands.
-However, you didn't reply to that review. =C2=A0Do you have any objection t=
-o
-doing this?
+We already have acl(5) (now "acl(7)" in man pages) ;-).
 
-Ben.
+Cheers,
 
---=20
-Ben Hutchings
-Sturgeon's Law: Ninety percent of everything is crap.
---=-NCwJIfUL82hmdvCgSQ0U
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
+Michael
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
 
-iQIVAwUAVr6Llee/yOyVhhEJAQptQxAAqHw6JCPN3b1UNtl5CkykMq9sgZ+j8VOi
-9b6BaMefBawGFNaPzk6xQBpnwfrGdcofFw+r3Y+OThloB1NB5orhWTnX8citmnlA
-zFuKYE0Si1YC23nlITS+n3U8xJnQKyjwN4jB+acYc3YqELGg6qXvLGQYYpRXKBa0
-rwlYT13ZjTF9oar0dpEXJo9Y3uUsWDVnAeG1E3AAqel5llKzr0n+bUdjO76rdNMQ
-/B2IOq2H09ufZdRKJl9Mtd0LrcvNXZzFepfRqW86kd9NqClwwLsHsinlUVttYaz2
-I5DprGRLIC2CCh82aqLwBMqvnwcR2erOANIPdGpnHS8vUpkgCdClxEXujB3IOzcs
-+CYF4FMZjjVZp0fsedds4hkTKdgn1ALKurMoyfWPKbzFBdgJR8qGbpzAdR2uz3Vg
-+AzeRqLv9EP3VnctF9Cmndlmy0ycmpb1Vd3sU3x+2MNFy1lPavzmbXULtB1T+GsN
-TRnfUfvWQ2T+dadHpqH+tVElNivQoiaKOpL2FVWUPZEs+0ngI9I74VKQuMG2RbBu
-3EzolbI3XfCt+kMbvnkJuCXHdvt63OOcVGy6QBfQW+Hy64aUaDB7ojau+/3NJjwl
-K9F+jJF07SRDWToWHNO2h98fnZt2/9dxazlELgwAnyU7PpK1RieS9huDeHvXG8Ge
-QM9yzxMhV4s=
-=aMKY
------END PGP SIGNATURE-----
 
---=-NCwJIfUL82hmdvCgSQ0U--
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
