@@ -1,49 +1,59 @@
-From: Cristina Moraru <cristina.moraru09-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v2 0/3] iio: hmc5843: Fix issues and move out of staging
-Date: Mon, 15 Feb 2016 00:37:36 +0200
-Message-ID: <1455489459-20422-1-git-send-email-cristina.moraru09@gmail.com>
-Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, knaack.h-Mmb7MZpHnFY@public.gmane.org, lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org, pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, cristina.opriceana-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, marek-xXXSsgcRVICgSpxsJD1C4w@public.gmane.org, sdliyong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, irina.tirdea-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, afd-l0cyMroinI0@public.gmane.org, javier-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
-Cc: Cristina Moraru <cristina.moraru09-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Cristina Moraru <cristina.moraru09@gmail.com>
+Subject: [PATCH v2 2/3] iio: hmc5843: Add ABI documentation file for hmc5843
+Date: Mon, 15 Feb 2016 00:37:38 +0200
+Message-ID: <1455489459-20422-3-git-send-email-cristina.moraru09@gmail.com>
+References: <1455489459-20422-1-git-send-email-cristina.moraru09@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <1455489459-20422-1-git-send-email-cristina.moraru09@gmail.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+To: jic23@kernel.org, knaack.h@gmx.de, lars@metafoo.de, pmeerw@pmeerw.net, gregkh@linuxfoundation.org, cristina.opriceana@gmail.com, marek@goldelico.com, sdliyong@gmail.com, linux-iio@vger.kernel.org, devel@driverdev.osuosl.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, geert@linux-m68k.org, arnd@arndb.de, irina.tirdea@intel.com, k.kozlowski@samsung.com, broonie@kernel.org, afd@ti.com, javier@osg.samsung.com, daniel.baluta@intel.com, octavian.purdila@intel.com
+Cc: Cristina Moraru <cristina.moraru09@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Fix driver issues and add completions.
-Add custom attribute to display available values for bias
-current, changed implementation to iio_enum in order to make
-it more suggestive to the user, add documentation for undocumented
-custom attributes and move the driver from the staging directory to
-drivers/iio/magnetometer updating corresponding Makefile and Kconfig
-files.
+Add ABI file documenting hmc5843 non-standard attributes
+meas_conf and meas_conf_available for bias current
+configuration.
 
-Cristina Moraru (3):
-  iio: hmc5843: Add attributes for measurement config of bias current
-  iio: hmc5843: Add ABI documentation file for hmc5843
-  iio: hmc5843: Move hmc5843 out of staging
-
- .../ABI/testing/sysfs-bus-iio-magnetometer-hmc5843 |  15 +
- drivers/iio/magnetometer/Kconfig                   |  33 +
- drivers/iio/magnetometer/Makefile                  |   4 +
- drivers/iio/magnetometer/hmc5843.h                 |  65 ++
- drivers/iio/magnetometer/hmc5843_core.c            | 686 +++++++++++++++++++++
- drivers/iio/magnetometer/hmc5843_i2c.c             | 103 ++++
- drivers/iio/magnetometer/hmc5843_spi.c             | 100 +++
- drivers/staging/iio/magnetometer/Kconfig           |  32 -
- drivers/staging/iio/magnetometer/Makefile          |   4 +-
- drivers/staging/iio/magnetometer/hmc5843.h         |  65 --
- drivers/staging/iio/magnetometer/hmc5843_core.c    | 645 -------------------
- drivers/staging/iio/magnetometer/hmc5843_i2c.c     | 103 ----
- drivers/staging/iio/magnetometer/hmc5843_spi.c     | 100 ---
- 13 files changed, 1007 insertions(+), 948 deletions(-)
+Signed-off-by: Cristina Moraru <cristina.moraru09@gmail.com>
+Cc: Daniel Baluta <daniel.baluta@intel.com>
+---
+Changes since v1:
+        Changed API from integer values to string values
+ .../ABI/testing/sysfs-bus-iio-magnetometer-hmc5843        | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
  create mode 100644 Documentation/ABI/testing/sysfs-bus-iio-magnetometer-hmc5843
- create mode 100644 drivers/iio/magnetometer/hmc5843.h
- create mode 100644 drivers/iio/magnetometer/hmc5843_core.c
- create mode 100644 drivers/iio/magnetometer/hmc5843_i2c.c
- create mode 100644 drivers/iio/magnetometer/hmc5843_spi.c
- delete mode 100644 drivers/staging/iio/magnetometer/hmc5843.h
- delete mode 100644 drivers/staging/iio/magnetometer/hmc5843_core.c
- delete mode 100644 drivers/staging/iio/magnetometer/hmc5843_i2c.c
- delete mode 100644 drivers/staging/iio/magnetometer/hmc5843_spi.c
 
+diff --git a/Documentation/ABI/testing/sysfs-bus-iio-magnetometer-hmc5843 b/Documentation/ABI/testing/sysfs-bus-iio-magnetometer-hmc5843
+new file mode 100644
+index 0000000..6275e9f
+--- /dev/null
++++ b/Documentation/ABI/testing/sysfs-bus-iio-magnetometer-hmc5843
+@@ -0,0 +1,15 @@
++What:           /sys/bus/iio/devices/iio:deviceX/meas_conf
++What:           /sys/bus/iio/devices/iio:deviceX/meas_conf_available
++KernelVersion:  4.5
++Contact:        linux-iio@vger.kernel.org
++Description:
++                Current configuration and available configurations
++		for the bias current.
++		normal		- Normal measurement configurations (default)
++		positivebias	- Positive bias configuration
++		negativebias	- Negative bias configuration
++		disabled	- Only available on HMC5983. Disables magnetic
++				  sensor and enables temperature sensor.
++		Note: The effect of this configuration may vary
++		according to the device. For exact documentation
++		check the device's datasheet.
 -- 
 1.9.1
