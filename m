@@ -1,53 +1,51 @@
-From: Sergey Senozhatsky <sergey.senozhatsky.work-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 2/2] mm/page_ref: add tracepoint to track down page
- reference manipulation
-Date: Mon, 15 Feb 2016 14:28:55 +0900
-Message-ID: <20160215052855.GA2010@swordfish>
-References: <1455505490-12376-1-git-send-email-iamjoonsoo.kim@lge.com>
- <1455505490-12376-2-git-send-email-iamjoonsoo.kim@lge.com>
- <20160215050858.GA556@swordfish>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: richacl(7) man page review comments
+Date: Mon, 15 Feb 2016 11:25:12 +0100
+Message-ID: <56C1A788.9020008@gmail.com>
+References: <56B770B6.7040803@gmail.com> <56B77262.7090107@gmail.com>
+ <CAHc6FU5__xbKm4mg8+fK_ZW5ZYsDoQcYBBvQg573Eq4ERDsROw@mail.gmail.com>
+ <56C0F150.60008@gmail.com>
+ <CAHc6FU49uRb11HhO655jimn_CzLrDyGHAB2iDAv92cftCCXkEA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160215050858.GA556@swordfish>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sergey Senozhatsky <sergey.senozhatsky.work-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: js1304-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Michal Nazarewicz <mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <CAHc6FU49uRb11HhO655jimn_CzLrDyGHAB2iDAv92cftCCXkEA@mail.gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Andreas Gruenbacher <agruenba@redhat.com>
+Cc: mtk.manpages@gmail.com, "J. Bruce Fields" <bfields@fieldses.org>, linux-ext4 <linux-ext4@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, lkml <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, linux-cifs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Dave Chinner <david@fromorbit.com>, Christoph Hellwig <hch@infradead.org>, Anna Schumaker <anna.schumaker@netapp.com>, Trond Myklebust <trond.myklebust@primarydata.com>, Jeff Layton <jlayton@poochiereds.net>, Andreas Dilger <adilger@dilger.ca>
 List-Id: linux-api@vger.kernel.org
 
-On (02/15/16 14:08), Sergey Senozhatsky wrote:
+Hi Andreas,
+
+On 02/15/2016 12:12 AM, Andreas Gruenbacher wrote:
+> On Sun, Feb 14, 2016 at 10:27 PM, Michael Kerrisk (man-pages)
+> <mtk.manpages@gmail.com> wrote:
+>> On 02/12/2016 11:25 PM, Andreas Gruenbacher wrote:
+>>> We could sure move acl(5) and richacl(7) there.
+>>
+>> We already have acl(5) (now "acl(7)" in man pages) ;-).
 > 
-> will this compile with !CONFIG_TRACEPOINTS config?
-> 
+> Hmm, I can't find that page either in
+> git://git.kernel.org/pub/scm/docs/man-pages/man-pages or on
+> http://man7.org/. Are you sure you don't mean xattr.7 == attr.5 which
+> documents the xattr syscall interface?
 
-uh.. sorry, was composed in email client. seems the correct way to do it is
+You're right. I was confusing with xattr(7). So, I think it might
+make some sense to eventually move both of these into man-pages (for 
+richacl(7), at least, it's probably worth delaying this for a bit), 
+since  they're describing kernel-user-space interfaces. I can see 
+counter-arguments too, such as these pages are closely related to 
+the corresponding user-space libraries you maintain. What do you
+think?
 
-+#if defined CONFIG_DEBUG_PAGE_REF && defined CONFIG_TRACEPOINTS
+Thanks,
 
- #include <linux/tracepoint-defs.h>
-
- #define page_ref_tracepoint_active(t) static_key_false(&(t).key)
-
- extern struct tracepoint __tracepoint_page_ref_set;
- ...
-
- extern void __page_ref_set(struct page *page, int v);
- ...
-
-#else
-
- #define page_ref_tracepoint_active(t) false
-
- static inline void __page_ref_set(struct page *page, int v)
- {
- }
- ...
-
-#endif
+Michael
 
 
 
-or add a dependency of PAGE_REF on CONFIG_TRACEPOINTS in Kconfig.
-
-	-ss
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
