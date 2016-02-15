@@ -1,446 +1,601 @@
-From: =?UTF-8?q?Emilio=20L=C3=B3pez?= <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
-Subject: [PATCH v4] usb: devio: Add ioctl to disallow detaching kernel USB drivers.
-Date: Sun, 14 Feb 2016 22:41:56 -0300
-Message-ID: <1455500516-21590-1-git-send-email-emilio.lopez@collabora.co.uk>
-References: <1454556057-18956-1-git-send-email-emilio.lopez@collabora.co.uk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+From: js1304-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Subject: [PATCH 1/2] mm: introduce page reference manipulation functions
+Date: Mon, 15 Feb 2016 12:04:49 +0900
+Message-ID: <1455505490-12376-1-git-send-email-iamjoonsoo.kim@lge.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1454556057-18956-1-git-send-email-emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org, kborer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jorgelo-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, =?UTF-8?q?Emilio=20L=C3=B3pez?= <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Michal Nazarewicz <mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Sergey Senozhatsky <sergey.senozhatsky.work-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-=46rom: Reilly Grant <reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+From: Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
 
-The new USBDEVFS_DROP_PRIVILEGES ioctl allows a process to voluntarily
-relinquish the ability to issue other ioctls that may interfere with
-other processes and drivers that have claimed an interface on the
-device.
+Success of CMA allocation largely depends on success of migration
+and key factor of it is page reference count. Until now, page reference
+is manipulated by direct calling atomic functions so we cannot follow up
+who and where manipulate it. Then, it is hard to find actual reason
+of CMA allocation failure. CMA allocation should be guaranteed to succeed
+so finding offending place is really important.
 
-This commit also includes a simple utility to be able to test the
-ioctl, located at Documentation/usb/usbdevfs-drop-permissions.c
+In this patch, call sites where page reference is manipulated are converted
+to introduced wrapper function. This is preparation step to add tracepoint
+to each page reference manipulation function. With this facility, we can
+easily find reason of CMA allocation failure. There is no functional change
+in this patch.
 
-Example (with qemu-kvm's input device):
-
-    $ lsusb
-    ...
-    Bus 001 Device 002: ID 0627:0001 Adomax Technology Co., Ltd
-
-    $ usb-devices
-    ...
-    C:  #Ifs=3D 1 Cfg#=3D 1 Atr=3Da0 MxPwr=3D100mA
-    I:  If#=3D 0 Alt=3D 0 #EPs=3D 1 Cls=3D03(HID  ) Sub=3D00 Prot=3D02 =
-Driver=3Dusbhid
-
-    $ sudo ./usbdevfs-drop-permissions /dev/bus/usb/001/002
-    OK: privileges dropped!
-    Available options:
-    [0] Exit now
-    [1] Reset device. Should fail if device is in use
-    [2] Claim 4 interfaces. Should succeed where not in use
-    [3] Narrow interface permission mask
-    Which option shall I run?: 1
-    ERROR: USBDEVFS_RESET failed! (1 - Operation not permitted)
-    Which test shall I run next?: 2
-    ERROR claiming if 0 (1 - Operation not permitted)
-    ERROR claiming if 1 (1 - Operation not permitted)
-    ERROR claiming if 2 (1 - Operation not permitted)
-    ERROR claiming if 3 (1 - Operation not permitted)
-    Which test shall I run next?: 0
-
-After unbinding usbhid:
-
-    $ usb-devices
-    ...
-    I:  If#=3D 0 Alt=3D 0 #EPs=3D 1 Cls=3D03(HID  ) Sub=3D00 Prot=3D02 =
-Driver=3D(none)
-
-    $ sudo ./usbdevfs-drop-permissions /dev/bus/usb/001/002
-    ...
-    Which option shall I run?: 2
-    OK: claimed if 0
-    ERROR claiming if 1 (1 - Operation not permitted)
-    ERROR claiming if 2 (1 - Operation not permitted)
-    ERROR claiming if 3 (1 - Operation not permitted)
-    Which test shall I run next?: 1
-    OK: USBDEVFS_RESET succeeded
-    Which test shall I run next?: 0
-
-After unbinding usbhid and restricting the mask:
-
-    $ sudo ./usbdevfs-drop-permissions /dev/bus/usb/001/002
-    ...
-    Which option shall I run?: 3
-    Insert new mask: 0
-    OK: privileges dropped!
-    Which test shall I run next?: 2
-    ERROR claiming if 0 (1 - Operation not permitted)
-    ERROR claiming if 1 (1 - Operation not permitted)
-    ERROR claiming if 2 (1 - Operation not permitted)
-    ERROR claiming if 3 (1 - Operation not permitted)
-
-Signed-off-by: Reilly Grant <reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Signed-off-by: Emilio L=C3=B3pez <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
-
+Acked-by: Michal Nazarewicz <mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
 ---
+ arch/mips/mm/gup.c                                |  2 +-
+ arch/powerpc/mm/mmu_context_hash64.c              |  3 +-
+ arch/powerpc/mm/pgtable_64.c                      |  2 +-
+ arch/x86/mm/gup.c                                 |  2 +-
+ drivers/block/aoe/aoecmd.c                        |  4 +-
+ drivers/net/ethernet/freescale/gianfar.c          |  2 +-
+ drivers/net/ethernet/intel/fm10k/fm10k_main.c     |  2 +-
+ drivers/net/ethernet/intel/igb/igb_main.c         |  2 +-
+ drivers/net/ethernet/intel/ixgbe/ixgbe_main.c     |  2 +-
+ drivers/net/ethernet/intel/ixgbevf/ixgbevf_main.c |  2 +-
+ drivers/net/ethernet/mellanox/mlx4/en_rx.c        |  7 +--
+ drivers/net/ethernet/sun/niu.c                    |  2 +-
+ include/linux/mm.h                                | 21 ++-----
+ include/linux/page_ref.h                          | 76 +++++++++++++++++++++++
+ include/linux/pagemap.h                           | 19 +-----
+ mm/huge_memory.c                                  |  4 +-
+ mm/internal.h                                     |  5 --
+ mm/memory_hotplug.c                               |  4 +-
+ mm/migrate.c                                      | 10 +--
+ mm/page_alloc.c                                   |  6 +-
+ mm/vmscan.c                                       |  6 +-
+ 21 files changed, 113 insertions(+), 70 deletions(-)
+ create mode 100644 include/linux/page_ref.h
 
-Changes in v4:
-- IOR -> IOW
-- Explain the new ioctl on usb Docbook
-- Small program to be able to test the new functionality
-- New capability flag
-- Allow people to reset devices if they are the only ones
-  claiming interfaces, as suggested by Alan
-
-Changes in v3:
-- Switch ioctl to use a __u32 given the iface qty is capped at 32
-- Reword comments as requested by Alan
-- Allow callers to shrink the allowed interfaces mask
-
-Changes in v2:
-- Added a parameter to the ioctl, a mask of interfaces an unprivileged
-  process is allowed to claim.
-- Drop Tested-by's
-
- Documentation/DocBook/usb.tmpl                |  12 +++
- Documentation/usb/usbdevfs-drop-permissions.c | 120 ++++++++++++++++++=
-++++++++
- drivers/usb/core/devio.c                      |  63 ++++++++++++--
- include/uapi/linux/usbdevice_fs.h             |   2 +
- 4 files changed, 192 insertions(+), 5 deletions(-)
- create mode 100644 Documentation/usb/usbdevfs-drop-permissions.c
-
-diff --git a/Documentation/DocBook/usb.tmpl b/Documentation/DocBook/usb=
-=2Etmpl
-index 4cd5b2c..bc776be0 100644
---- a/Documentation/DocBook/usb.tmpl
-+++ b/Documentation/DocBook/usb.tmpl
-@@ -732,6 +732,18 @@ usbdev_ioctl (int fd, int ifno, unsigned request, =
-void *param)
- 		    or SET_INTERFACE.
- 		    </para></warning></listitem></varlistentry>
-=20
-+		<varlistentry><term>USBDEVFS_DROP_PRIVILEGES</term>
-+		    <listitem><para>This is used to relinquish the ability
-+		    to do certain operations which are considered to be
-+		    privileged on a usbfs file descriptor.
-+		    This includes claiming arbitrary interfaces, resetting
-+		    a device on which there are currently claimed interfaces
-+		    from other users, and issuing USBDEVFS_IOCTL calls.
-+		    The ioctl parameter is a 32 bit mask of interfaces
-+		    the user is allowed to claim on this file descriptor.
-+		    You may issue this ioctl more than one time to narrow
-+		    said mask.
-+		    </para></listitem></varlistentry>
- 		</variablelist>
-=20
- 		</sect2>
-diff --git a/Documentation/usb/usbdevfs-drop-permissions.c b/Documentat=
-ion/usb/usbdevfs-drop-permissions.c
-new file mode 100644
-index 0000000..efc948a
---- /dev/null
-+++ b/Documentation/usb/usbdevfs-drop-permissions.c
-@@ -0,0 +1,120 @@
-+#include <sys/ioctl.h>
-+#include <sys/types.h>
-+#include <sys/stat.h>
-+#include <fcntl.h>
-+#include <stdio.h>
-+#include <errno.h>
-+#include <string.h>
-+#include <inttypes.h>
-+#include <unistd.h>
-+
-+#include <linux/usbdevice_fs.h>
-+
-+/* For building without an updated set of headers */
-+#ifndef USBDEVFS_DROP_PRIVILEGES
-+#define USBDEVFS_DROP_PRIVILEGES		_IOW('U', 30, __u32)
-+#define USBDEVFS_CAP_DROP_PRIVILEGES		0x20
-+#endif
-+
-+void drop_privileges(int fd, uint32_t mask)
-+{
-+	int res;
-+
-+	res =3D ioctl(fd, USBDEVFS_DROP_PRIVILEGES, &mask);
-+	if (res)
-+		printf("ERROR: USBDEVFS_DROP_PRIVILEGES returned %d\n", res);
-+	else
-+		printf("OK: privileges dropped!\n");
-+}
-+
-+void reset_device(int fd)
-+{
-+	int res;
-+
-+	res =3D ioctl(fd, USBDEVFS_RESET);
-+	if (!res)
-+		printf("OK: USBDEVFS_RESET succeeded\n");
-+	else
-+		printf("ERROR: reset failed! (%d - %s)\n",
-+		       -res, strerror(-res));
-+}
-+
-+void claim_some_intf(int fd)
-+{
-+	int i, res;
-+
-+	for (i =3D 0; i < 4; i++) {
-+		res =3D ioctl(fd, USBDEVFS_CLAIMINTERFACE, &i);
-+		if (!res)
-+			printf("OK: claimed if %d\n", i);
-+		else
-+			printf("ERROR claiming if %d (%d - %s)\n",
-+			       i, -res, strerror(-res));
-+	}
-+}
-+
-+int main(int argc, char *argv[])
-+{
-+	uint32_t mask, caps;
-+	int c, fd;
-+
-+	fd =3D open(argv[1], O_RDWR);
-+	if (fd < 0) {
-+		printf("Failed to open file\n");
-+		goto err_fd;
-+	}
-+
-+	/*
-+	 * check if dropping privileges is supported,
-+	 * bail on systems where the capability is not present
-+	 */
-+	ioctl(fd, USBDEVFS_GET_CAPABILITIES, &caps);
-+	if (!(caps & USBDEVFS_CAP_DROP_PRIVILEGES)) {
-+		printf("DROP_PRIVILEGES not supported\n");
-+		goto err;
-+	}
-+
-+	/*
-+	 * Drop privileges but keep the ability to claim all
-+	 * free interfaces (i.e., those not used by kernel drivers)
-+	 */
-+	drop_privileges(fd, -1U);
-+
-+	printf("Available options:\n"
-+		"[0] Exit now\n"
-+		"[1] Reset device. Should fail if device is in use\n"
-+		"[2] Claim 4 interfaces. Should succeed where not in use\n"
-+		"[3] Narrow interface permission mask\n"
-+		"Which option shall I run?: ");
-+
-+	while (scanf("%d", &c) =3D=3D 1) {
-+		switch (c) {
-+		case 0:
-+			goto exit;
-+		case 1:
-+			reset_device(fd);
-+			break;
-+		case 2:
-+			claim_some_intf(fd);
-+			break;
-+		case 3:
-+			printf("Insert new mask: ");
-+			scanf("%x", &mask);
-+			drop_privileges(fd, mask);
-+			break;
-+		default:
-+			printf("I don't recognize that\n");
-+		}
-+
-+		printf("Which test shall I run next?: ");
-+	}
-+
-+exit:
-+	close(fd);
-+	return 0;
-+
-+err:
-+	close(fd);
-+err_fd:
-+	return 1;
-+}
-diff --git a/drivers/usb/core/devio.c b/drivers/usb/core/devio.c
-index 59e7a33..013484a 100644
---- a/drivers/usb/core/devio.c
-+++ b/drivers/usb/core/devio.c
-@@ -77,6 +77,8 @@ struct usb_dev_state {
- 	unsigned long ifclaimed;
- 	u32 secid;
- 	u32 disabled_bulk_eps;
-+	bool privileges_dropped;
-+	unsigned long interface_allowed_mask;
- };
-=20
- struct async {
-@@ -624,6 +626,10 @@ static int claimintf(struct usb_dev_state *ps, uns=
-igned int ifnum)
- 	if (test_bit(ifnum, &ps->ifclaimed))
- 		return 0;
-=20
-+	if (ps->privileges_dropped &&
-+			!test_bit(ifnum, &ps->interface_allowed_mask))
-+		return -EACCES;
-+
- 	intf =3D usb_ifnum_to_if(dev, ifnum);
- 	if (!intf)
- 		err =3D -ENOENT;
-@@ -861,7 +867,7 @@ static int usbdev_open(struct inode *inode, struct =
-file *file)
- 	int ret;
-=20
- 	ret =3D -ENOMEM;
--	ps =3D kmalloc(sizeof(struct usb_dev_state), GFP_KERNEL);
-+	ps =3D kzalloc(sizeof(struct usb_dev_state), GFP_KERNEL);
- 	if (!ps)
- 		goto out_free_ps;
-=20
-@@ -889,16 +895,14 @@ static int usbdev_open(struct inode *inode, struc=
-t file *file)
-=20
- 	ps->dev =3D dev;
- 	ps->file =3D file;
-+	ps->interface_allowed_mask =3D 0xFFFFFFFF; /* 32 bits */
- 	spin_lock_init(&ps->lock);
- 	INIT_LIST_HEAD(&ps->list);
- 	INIT_LIST_HEAD(&ps->async_pending);
- 	INIT_LIST_HEAD(&ps->async_completed);
- 	init_waitqueue_head(&ps->wait);
--	ps->discsignr =3D 0;
- 	ps->disc_pid =3D get_pid(task_pid(current));
- 	ps->cred =3D get_current_cred();
--	ps->disccontext =3D NULL;
--	ps->ifclaimed =3D 0;
- 	security_task_getsecid(current, &ps->secid);
- 	smp_wmb();
- 	list_add_tail(&ps->list, &dev->filelist);
-@@ -1198,6 +1202,28 @@ static int proc_connectinfo(struct usb_dev_state=
- *ps, void __user *arg)
-=20
- static int proc_resetdevice(struct usb_dev_state *ps)
+diff --git a/arch/mips/mm/gup.c b/arch/mips/mm/gup.c
+index 1afd87c..6cdffc7 100644
+--- a/arch/mips/mm/gup.c
++++ b/arch/mips/mm/gup.c
+@@ -64,7 +64,7 @@ static inline void get_head_page_multiple(struct page *page, int nr)
  {
-+	struct usb_host_config *actconfig =3D ps->dev->actconfig;
-+	struct usb_interface *interface;
-+	int i, number;
-+
-+	/* Don't allow a device reset if the process has dropped the
-+	 * privilege to do such things and any of the interfaces are
-+	 * currently claimed.
-+	 */
-+	if (ps->privileges_dropped && actconfig) {
-+		for (i =3D 0; i < actconfig->desc.bNumInterfaces; ++i) {
-+			interface =3D actconfig->interface[i];
-+			number =3D interface->cur_altsetting->desc.bInterfaceNumber;
-+			if (usb_interface_claimed(interface) &&
-+					!test_bit(number, &ps->ifclaimed)) {
-+				dev_warn(&ps->dev->dev,
-+					"usbfs: interface %d claimed by %s while '%s' resets device\n",
-+					number,	interface->dev.driver->name, current->comm);
-+				return -EACCES;
-+			}
-+		}
-+	}
-+
- 	return usb_reset_device(ps->dev);
+ 	VM_BUG_ON(page != compound_head(page));
+ 	VM_BUG_ON(page_count(page) == 0);
+-	atomic_add(nr, &page->_count);
++	page_ref_add(page, nr);
+ 	SetPageReferenced(page);
  }
-=20
-@@ -1915,6 +1941,9 @@ static int proc_ioctl(struct usb_dev_state *ps, s=
-truct usbdevfs_ioctl *ctl)
- 	struct usb_interface    *intf =3D NULL;
- 	struct usb_driver       *driver =3D NULL;
-=20
-+	if (ps->privileges_dropped)
-+		return -EACCES;
-+
- 	/* alloc buffer */
- 	size =3D _IOC_SIZE(ctl->ioctl_code);
- 	if (size > 0) {
-@@ -2040,7 +2069,8 @@ static int proc_get_capabilities(struct usb_dev_s=
-tate *ps, void __user *arg)
- 	__u32 caps;
-=20
- 	caps =3D USBDEVFS_CAP_ZERO_PACKET | USBDEVFS_CAP_NO_PACKET_SIZE_LIM |
--			USBDEVFS_CAP_REAP_AFTER_DISCONNECT;
-+			USBDEVFS_CAP_REAP_AFTER_DISCONNECT |
-+			USBDEVFS_CAP_DROP_PRIVILEGES;
- 	if (!ps->dev->bus->no_stop_on_short)
- 		caps |=3D USBDEVFS_CAP_BULK_CONTINUATION;
- 	if (ps->dev->bus->sg_tablesize)
-@@ -2067,6 +2097,9 @@ static int proc_disconnect_claim(struct usb_dev_s=
-tate *ps, void __user *arg)
- 	if (intf->dev.driver) {
- 		struct usb_driver *driver =3D to_usb_driver(intf->dev.driver);
-=20
-+		if (ps->privileges_dropped)
-+			return -EACCES;
-+
- 		if ((dc.flags & USBDEVFS_DISCONNECT_CLAIM_IF_DRIVER) &&
- 				strncmp(dc.driver, intf->dev.driver->name,
- 					sizeof(dc.driver)) !=3D 0)
-@@ -2123,6 +2156,23 @@ static int proc_free_streams(struct usb_dev_stat=
-e *ps, void __user *arg)
- 	return r;
+ 
+diff --git a/arch/powerpc/mm/mmu_context_hash64.c b/arch/powerpc/mm/mmu_context_hash64.c
+index 4e4efbc..9ca6fe1 100644
+--- a/arch/powerpc/mm/mmu_context_hash64.c
++++ b/arch/powerpc/mm/mmu_context_hash64.c
+@@ -118,8 +118,7 @@ static void destroy_pagetable_page(struct mm_struct *mm)
+ 	/* drop all the pending references */
+ 	count = ((unsigned long)pte_frag & ~PAGE_MASK) >> PTE_FRAG_SIZE_SHIFT;
+ 	/* We allow PTE_FRAG_NR fragments from a PTE page */
+-	count = atomic_sub_return(PTE_FRAG_NR - count, &page->_count);
+-	if (!count) {
++	if (page_ref_sub_and_test(page, PTE_FRAG_NR - count)) {
+ 		pgtable_page_dtor(page);
+ 		free_hot_cold_page(page, 0);
+ 	}
+diff --git a/arch/powerpc/mm/pgtable_64.c b/arch/powerpc/mm/pgtable_64.c
+index 593341f..1550e8c 100644
+--- a/arch/powerpc/mm/pgtable_64.c
++++ b/arch/powerpc/mm/pgtable_64.c
+@@ -403,7 +403,7 @@ static pte_t *__alloc_for_cache(struct mm_struct *mm, int kernel)
+ 	 * count.
+ 	 */
+ 	if (likely(!mm->context.pte_frag)) {
+-		atomic_set(&page->_count, PTE_FRAG_NR);
++		set_page_count(page, PTE_FRAG_NR);
+ 		mm->context.pte_frag = ret + PTE_FRAG_SIZE;
+ 	}
+ 	spin_unlock(&mm->page_table_lock);
+diff --git a/arch/x86/mm/gup.c b/arch/x86/mm/gup.c
+index 6d5eb59..492beee 100644
+--- a/arch/x86/mm/gup.c
++++ b/arch/x86/mm/gup.c
+@@ -131,7 +131,7 @@ static inline void get_head_page_multiple(struct page *page, int nr)
+ {
+ 	VM_BUG_ON_PAGE(page != compound_head(page), page);
+ 	VM_BUG_ON_PAGE(page_count(page) == 0, page);
+-	atomic_add(nr, &page->_count);
++	page_ref_add(page, nr);
+ 	SetPageReferenced(page);
  }
-=20
-+static int proc_drop_privileges(struct usb_dev_state *ps, void __user =
-*arg)
+ 
+diff --git a/drivers/block/aoe/aoecmd.c b/drivers/block/aoe/aoecmd.c
+index d048d20..437b3a8 100644
+--- a/drivers/block/aoe/aoecmd.c
++++ b/drivers/block/aoe/aoecmd.c
+@@ -875,7 +875,7 @@ bio_pageinc(struct bio *bio)
+ 		 * compound pages is no longer allowed by the kernel.
+ 		 */
+ 		page = compound_head(bv.bv_page);
+-		atomic_inc(&page->_count);
++		page_ref_inc(page);
+ 	}
+ }
+ 
+@@ -888,7 +888,7 @@ bio_pagedec(struct bio *bio)
+ 
+ 	bio_for_each_segment(bv, bio, iter) {
+ 		page = compound_head(bv.bv_page);
+-		atomic_dec(&page->_count);
++		page_ref_dec(page);
+ 	}
+ }
+ 
+diff --git a/drivers/net/ethernet/freescale/gianfar.c b/drivers/net/ethernet/freescale/gianfar.c
+index 2aa7b40..3b8d45a 100644
+--- a/drivers/net/ethernet/freescale/gianfar.c
++++ b/drivers/net/ethernet/freescale/gianfar.c
+@@ -2942,7 +2942,7 @@ static bool gfar_add_rx_frag(struct gfar_rx_buff *rxb, u32 lstatus,
+ 	/* change offset to the other half */
+ 	rxb->page_offset ^= GFAR_RXB_TRUESIZE;
+ 
+-	atomic_inc(&page->_count);
++	page_ref_inc(page);
+ 
+ 	return true;
+ }
+diff --git a/drivers/net/ethernet/intel/fm10k/fm10k_main.c b/drivers/net/ethernet/intel/fm10k/fm10k_main.c
+index b243c3c..b4547eb 100644
+--- a/drivers/net/ethernet/intel/fm10k/fm10k_main.c
++++ b/drivers/net/ethernet/intel/fm10k/fm10k_main.c
+@@ -243,7 +243,7 @@ static bool fm10k_can_reuse_rx_page(struct fm10k_rx_buffer *rx_buffer,
+ 	/* Even if we own the page, we are not allowed to use atomic_set()
+ 	 * This would break get_page_unless_zero() users.
+ 	 */
+-	atomic_inc(&page->_count);
++	page_ref_inc(page);
+ 
+ 	return true;
+ }
+diff --git a/drivers/net/ethernet/intel/igb/igb_main.c b/drivers/net/ethernet/intel/igb/igb_main.c
+index 31e5f39..5b4ad1a 100644
+--- a/drivers/net/ethernet/intel/igb/igb_main.c
++++ b/drivers/net/ethernet/intel/igb/igb_main.c
+@@ -6630,7 +6630,7 @@ static bool igb_can_reuse_rx_page(struct igb_rx_buffer *rx_buffer,
+ 	/* Even if we own the page, we are not allowed to use atomic_set()
+ 	 * This would break get_page_unless_zero() users.
+ 	 */
+-	atomic_inc(&page->_count);
++	page_ref_inc(page);
+ 
+ 	return true;
+ }
+diff --git a/drivers/net/ethernet/intel/ixgbe/ixgbe_main.c b/drivers/net/ethernet/intel/ixgbe/ixgbe_main.c
+index 0c701b8..b37c2ff 100644
+--- a/drivers/net/ethernet/intel/ixgbe/ixgbe_main.c
++++ b/drivers/net/ethernet/intel/ixgbe/ixgbe_main.c
+@@ -1942,7 +1942,7 @@ static bool ixgbe_add_rx_frag(struct ixgbe_ring *rx_ring,
+ 	/* Even if we own the page, we are not allowed to use atomic_set()
+ 	 * This would break get_page_unless_zero() users.
+ 	 */
+-	atomic_inc(&page->_count);
++	page_ref_inc(page);
+ 
+ 	return true;
+ }
+diff --git a/drivers/net/ethernet/intel/ixgbevf/ixgbevf_main.c b/drivers/net/ethernet/intel/ixgbevf/ixgbevf_main.c
+index 3558f01..0ea14c0 100644
+--- a/drivers/net/ethernet/intel/ixgbevf/ixgbevf_main.c
++++ b/drivers/net/ethernet/intel/ixgbevf/ixgbevf_main.c
+@@ -837,7 +837,7 @@ add_tail_frag:
+ 	/* Even if we own the page, we are not allowed to use atomic_set()
+ 	 * This would break get_page_unless_zero() users.
+ 	 */
+-	atomic_inc(&page->_count);
++	page_ref_inc(page);
+ 
+ 	return true;
+ }
+diff --git a/drivers/net/ethernet/mellanox/mlx4/en_rx.c b/drivers/net/ethernet/mellanox/mlx4/en_rx.c
+index 41440b2..04758f1 100644
+--- a/drivers/net/ethernet/mellanox/mlx4/en_rx.c
++++ b/drivers/net/ethernet/mellanox/mlx4/en_rx.c
+@@ -82,8 +82,7 @@ static int mlx4_alloc_pages(struct mlx4_en_priv *priv,
+ 	/* Not doing get_page() for each frag is a big win
+ 	 * on asymetric workloads. Note we can not use atomic_set().
+ 	 */
+-	atomic_add(page_alloc->page_size / frag_info->frag_stride - 1,
+-		   &page->_count);
++	page_ref_add(page, page_alloc->page_size / frag_info->frag_stride - 1);
+ 	return 0;
+ }
+ 
+@@ -127,7 +126,7 @@ out:
+ 			dma_unmap_page(priv->ddev, page_alloc[i].dma,
+ 				page_alloc[i].page_size, PCI_DMA_FROMDEVICE);
+ 			page = page_alloc[i].page;
+-			atomic_set(&page->_count, 1);
++			set_page_count(page, 1);
+ 			put_page(page);
+ 		}
+ 	}
+@@ -177,7 +176,7 @@ out:
+ 		dma_unmap_page(priv->ddev, page_alloc->dma,
+ 			       page_alloc->page_size, PCI_DMA_FROMDEVICE);
+ 		page = page_alloc->page;
+-		atomic_set(&page->_count, 1);
++		set_page_count(page, 1);
+ 		put_page(page);
+ 		page_alloc->page = NULL;
+ 	}
+diff --git a/drivers/net/ethernet/sun/niu.c b/drivers/net/ethernet/sun/niu.c
+index ab6051a..9cc4564 100644
+--- a/drivers/net/ethernet/sun/niu.c
++++ b/drivers/net/ethernet/sun/niu.c
+@@ -3341,7 +3341,7 @@ static int niu_rbr_add_page(struct niu *np, struct rx_ring_info *rp,
+ 
+ 	niu_hash_page(rp, page, addr);
+ 	if (rp->rbr_blocks_per_page > 1)
+-		atomic_add(rp->rbr_blocks_per_page - 1, &page->_count);
++		page_ref_add(page, rp->rbr_blocks_per_page - 1);
+ 
+ 	for (i = 0; i < rp->rbr_blocks_per_page; i++) {
+ 		__le32 *rbr = &rp->rbr[start_index + i];
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index a0ad7af..a0e4c10 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -22,6 +22,7 @@
+ #include <linux/resource.h>
+ #include <linux/page_ext.h>
+ #include <linux/err.h>
++#include <linux/page_ref.h>
+ 
+ struct mempolicy;
+ struct anon_vma;
+@@ -365,7 +366,7 @@ static inline int pmd_devmap(pmd_t pmd)
+ static inline int put_page_testzero(struct page *page)
+ {
+ 	VM_BUG_ON_PAGE(atomic_read(&page->_count) == 0, page);
+-	return atomic_dec_and_test(&page->_count);
++	return page_ref_dec_and_test(page);
+ }
+ 
+ /*
+@@ -376,7 +377,7 @@ static inline int put_page_testzero(struct page *page)
+  */
+ static inline int get_page_unless_zero(struct page *page)
+ {
+-	return atomic_inc_not_zero(&page->_count);
++	return page_ref_add_unless(page, 1, 0);
+ }
+ 
+ extern int page_is_ram(unsigned long pfn);
+@@ -464,11 +465,6 @@ static inline int total_mapcount(struct page *page)
+ }
+ #endif
+ 
+-static inline int page_count(struct page *page)
+-{
+-	return atomic_read(&compound_head(page)->_count);
+-}
+-
+ static inline struct page *virt_to_head_page(const void *x)
+ {
+ 	struct page *page = virt_to_page(x);
+@@ -476,15 +472,6 @@ static inline struct page *virt_to_head_page(const void *x)
+ 	return compound_head(page);
+ }
+ 
+-/*
+- * Setup the page count before being freed into the page allocator for
+- * the first time (boot or memory hotplug)
+- */
+-static inline void init_page_count(struct page *page)
+-{
+-	atomic_set(&page->_count, 1);
+-}
+-
+ void __put_page(struct page *page);
+ 
+ void put_pages_list(struct list_head *pages);
+@@ -695,7 +682,7 @@ static inline void get_page(struct page *page)
+ 	 * requires to already have an elevated page->_count.
+ 	 */
+ 	VM_BUG_ON_PAGE(atomic_read(&page->_count) <= 0, page);
+-	atomic_inc(&page->_count);
++	page_ref_inc(page);
+ 
+ 	if (unlikely(is_zone_device_page(page)))
+ 		get_zone_device_page(page);
+diff --git a/include/linux/page_ref.h b/include/linux/page_ref.h
+new file mode 100644
+index 0000000..534249c
+--- /dev/null
++++ b/include/linux/page_ref.h
+@@ -0,0 +1,76 @@
++#include <linux/atomic.h>
++#include <linux/mm_types.h>
++#include <linux/page-flags.h>
++
++static inline int page_count(struct page *page)
 +{
-+	u32 data;
-+
-+	if (copy_from_user(&data, arg, sizeof(data)))
-+		return -EFAULT;
-+
-+	/* This is an one way operation. Once privileges are
-+	 * dropped, you cannot regain them. You may however reissue
-+	 * this ioctl to shrink the allowed interfaces mask.
-+	 */
-+	ps->interface_allowed_mask &=3D data;
-+	ps->privileges_dropped =3D true;
-+
-+	return 0;
++	return atomic_read(&compound_head(page)->_count);
 +}
 +
- /*
-  * NOTE:  All requests here that have interface numbers as parameters
-  * are assuming that somehow the configuration has been prevented from
-@@ -2311,6 +2361,9 @@ static long usbdev_do_ioctl(struct file *file, un=
-signed int cmd,
- 	case USBDEVFS_FREE_STREAMS:
- 		ret =3D proc_free_streams(ps, p);
- 		break;
-+	case USBDEVFS_DROP_PRIVILEGES:
-+		ret =3D proc_drop_privileges(ps, p);
-+		break;
++static inline void set_page_count(struct page *page, int v)
++{
++	atomic_set(&page->_count, v);
++}
++
++/*
++ * Setup the page count before being freed into the page allocator for
++ * the first time (boot or memory hotplug)
++ */
++static inline void init_page_count(struct page *page)
++{
++	set_page_count(page, 1);
++}
++
++static inline void page_ref_add(struct page *page, int nr)
++{
++	atomic_add(nr, &page->_count);
++}
++
++static inline void page_ref_sub(struct page *page, int nr)
++{
++	atomic_sub(nr, &page->_count);
++}
++
++static inline void page_ref_inc(struct page *page)
++{
++	atomic_inc(&page->_count);
++}
++
++static inline void page_ref_dec(struct page *page)
++{
++	atomic_dec(&page->_count);
++}
++
++static inline int page_ref_sub_and_test(struct page *page, int nr)
++{
++	return atomic_sub_and_test(nr, &page->_count);
++}
++
++static inline int page_ref_dec_and_test(struct page *page)
++{
++	return atomic_dec_and_test(&page->_count);
++}
++
++static inline int page_ref_dec_return(struct page *page)
++{
++	return atomic_dec_return(&page->_count);
++}
++
++static inline int page_ref_add_unless(struct page *page, int nr, int u)
++{
++	return atomic_add_unless(&page->_count, nr, u);
++}
++
++static inline int page_ref_freeze(struct page *page, int count)
++{
++	return likely(atomic_cmpxchg(&page->_count, count, 0) == count);
++}
++
++static inline void page_ref_unfreeze(struct page *page, int count)
++{
++	VM_BUG_ON_PAGE(page_count(page) != 0, page);
++	VM_BUG_ON(count == 0);
++
++	atomic_set(&page->_count, count);
++}
++
+diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
+index 183b15e..1ebd65c 100644
+--- a/include/linux/pagemap.h
++++ b/include/linux/pagemap.h
+@@ -165,7 +165,7 @@ static inline int page_cache_get_speculative(struct page *page)
+ 	 * SMP requires.
+ 	 */
+ 	VM_BUG_ON_PAGE(page_count(page) == 0, page);
+-	atomic_inc(&page->_count);
++	page_ref_inc(page);
+ 
+ #else
+ 	if (unlikely(!get_page_unless_zero(page))) {
+@@ -194,10 +194,10 @@ static inline int page_cache_add_speculative(struct page *page, int count)
+ 	VM_BUG_ON(!in_atomic());
+ # endif
+ 	VM_BUG_ON_PAGE(page_count(page) == 0, page);
+-	atomic_add(count, &page->_count);
++	page_ref_add(page, count);
+ 
+ #else
+-	if (unlikely(!atomic_add_unless(&page->_count, count, 0)))
++	if (unlikely(!page_ref_add_unless(page, count, 0)))
+ 		return 0;
+ #endif
+ 	VM_BUG_ON_PAGE(PageCompound(page) && page != compound_head(page), page);
+@@ -205,19 +205,6 @@ static inline int page_cache_add_speculative(struct page *page, int count)
+ 	return 1;
+ }
+ 
+-static inline int page_freeze_refs(struct page *page, int count)
+-{
+-	return likely(atomic_cmpxchg(&page->_count, count, 0) == count);
+-}
+-
+-static inline void page_unfreeze_refs(struct page *page, int count)
+-{
+-	VM_BUG_ON_PAGE(page_count(page) != 0, page);
+-	VM_BUG_ON(count == 0);
+-
+-	atomic_set(&page->_count, count);
+-}
+-
+ #ifdef CONFIG_NUMA
+ extern struct page *__page_cache_alloc(gfp_t gfp);
+ #else
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index 3cda32c..75f777a 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -2931,7 +2931,7 @@ static void __split_huge_pmd_locked(struct vm_area_struct *vma, pmd_t *pmd,
+ 
+ 	page = pmd_page(*pmd);
+ 	VM_BUG_ON_PAGE(!page_count(page), page);
+-	atomic_add(HPAGE_PMD_NR - 1, &page->_count);
++	page_ref_add(page, HPAGE_PMD_NR - 1);
+ 	write = pmd_write(*pmd);
+ 	young = pmd_young(*pmd);
+ 	dirty = pmd_dirty(*pmd);
+@@ -3313,7 +3313,7 @@ static void __split_huge_page_tail(struct page *head, int tail,
+ 	 * atomic_set() here would be safe on all archs (and not only on x86),
+ 	 * it's safer to use atomic_inc().
+ 	 */
+-	atomic_inc(&page_tail->_count);
++	page_ref_inc(page_tail);
+ 
+ 	page_tail->flags &= ~PAGE_FLAGS_CHECK_AT_PREP;
+ 	page_tail->flags |= (head->flags &
+diff --git a/mm/internal.h b/mm/internal.h
+index f9153e5..72bbce3 100644
+--- a/mm/internal.h
++++ b/mm/internal.h
+@@ -47,11 +47,6 @@ void unmap_page_range(struct mmu_gather *tlb,
+ 			     unsigned long addr, unsigned long end,
+ 			     struct zap_details *details);
+ 
+-static inline void set_page_count(struct page *page, int v)
+-{
+-	atomic_set(&page->_count, v);
+-}
+-
+ extern int __do_page_cache_readahead(struct address_space *mapping,
+ 		struct file *filp, pgoff_t offset, unsigned long nr_to_read,
+ 		unsigned long lookahead_size);
+diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
+index 92402f8..3554b91 100644
+--- a/mm/memory_hotplug.c
++++ b/mm/memory_hotplug.c
+@@ -167,7 +167,7 @@ void get_page_bootmem(unsigned long info,  struct page *page,
+ 	page->lru.next = (struct list_head *) type;
+ 	SetPagePrivate(page);
+ 	set_page_private(page, info);
+-	atomic_inc(&page->_count);
++	page_ref_inc(page);
+ }
+ 
+ void put_page_bootmem(struct page *page)
+@@ -178,7 +178,7 @@ void put_page_bootmem(struct page *page)
+ 	BUG_ON(type < MEMORY_HOTPLUG_MIN_BOOTMEM_TYPE ||
+ 	       type > MEMORY_HOTPLUG_MAX_BOOTMEM_TYPE);
+ 
+-	if (atomic_dec_return(&page->_count) == 1) {
++	if (page_ref_dec_return(page) == 1) {
+ 		ClearPagePrivate(page);
+ 		set_page_private(page, 0);
+ 		INIT_LIST_HEAD(&page->lru);
+diff --git a/mm/migrate.c b/mm/migrate.c
+index 90cbf7c6..2dd15c0 100644
+--- a/mm/migrate.c
++++ b/mm/migrate.c
+@@ -349,7 +349,7 @@ int migrate_page_move_mapping(struct address_space *mapping,
+ 		return -EAGAIN;
  	}
-=20
-  done:
-diff --git a/include/uapi/linux/usbdevice_fs.h b/include/uapi/linux/usb=
-device_fs.h
-index 019ba1e..9b9d4be 100644
---- a/include/uapi/linux/usbdevice_fs.h
-+++ b/include/uapi/linux/usbdevice_fs.h
-@@ -134,6 +134,7 @@ struct usbdevfs_hub_portinfo {
- #define USBDEVFS_CAP_NO_PACKET_SIZE_LIM		0x04
- #define USBDEVFS_CAP_BULK_SCATTER_GATHER	0x08
- #define USBDEVFS_CAP_REAP_AFTER_DISCONNECT	0x10
-+#define USBDEVFS_CAP_DROP_PRIVILEGES		0x20
-=20
- /* USBDEVFS_DISCONNECT_CLAIM flags & struct */
-=20
-@@ -187,5 +188,6 @@ struct usbdevfs_streams {
- #define USBDEVFS_DISCONNECT_CLAIM  _IOR('U', 27, struct usbdevfs_disco=
-nnect_claim)
- #define USBDEVFS_ALLOC_STREAMS     _IOR('U', 28, struct usbdevfs_strea=
-ms)
- #define USBDEVFS_FREE_STREAMS      _IOR('U', 29, struct usbdevfs_strea=
-ms)
-+#define USBDEVFS_DROP_PRIVILEGES   _IOW('U', 30, __u32)
-=20
- #endif /* _UAPI_LINUX_USBDEVICE_FS_H */
---=20
-2.5.0
+ 
+-	if (!page_freeze_refs(page, expected_count)) {
++	if (!page_ref_freeze(page, expected_count)) {
+ 		spin_unlock_irq(&mapping->tree_lock);
+ 		return -EAGAIN;
+ 	}
+@@ -363,7 +363,7 @@ int migrate_page_move_mapping(struct address_space *mapping,
+ 	 */
+ 	if (mode == MIGRATE_ASYNC && head &&
+ 			!buffer_migrate_lock_buffers(head, mode)) {
+-		page_unfreeze_refs(page, expected_count);
++		page_ref_unfreeze(page, expected_count);
+ 		spin_unlock_irq(&mapping->tree_lock);
+ 		return -EAGAIN;
+ 	}
+@@ -397,7 +397,7 @@ int migrate_page_move_mapping(struct address_space *mapping,
+ 	 * to one less reference.
+ 	 * We know this isn't the last reference.
+ 	 */
+-	page_unfreeze_refs(page, expected_count - 1);
++	page_ref_unfreeze(page, expected_count - 1);
+ 
+ 	spin_unlock(&mapping->tree_lock);
+ 	/* Leave irq disabled to prevent preemption while updating stats */
+@@ -451,7 +451,7 @@ int migrate_huge_page_move_mapping(struct address_space *mapping,
+ 		return -EAGAIN;
+ 	}
+ 
+-	if (!page_freeze_refs(page, expected_count)) {
++	if (!page_ref_freeze(page, expected_count)) {
+ 		spin_unlock_irq(&mapping->tree_lock);
+ 		return -EAGAIN;
+ 	}
+@@ -463,7 +463,7 @@ int migrate_huge_page_move_mapping(struct address_space *mapping,
+ 
+ 	radix_tree_replace_slot(pslot, newpage);
+ 
+-	page_unfreeze_refs(page, expected_count - 1);
++	page_ref_unfreeze(page, expected_count - 1);
+ 
+ 	spin_unlock_irq(&mapping->tree_lock);
+ 
+diff --git a/mm/page_alloc.c b/mm/page_alloc.c
+index 00118fe..6ef7bb0 100644
+--- a/mm/page_alloc.c
++++ b/mm/page_alloc.c
+@@ -3587,7 +3587,7 @@ refill:
+ 		/* Even if we own the page, we do not use atomic_set().
+ 		 * This would break get_page_unless_zero() users.
+ 		 */
+-		atomic_add(size - 1, &page->_count);
++		page_ref_add(page, size - 1);
+ 
+ 		/* reset page count bias and offset to start of new frag */
+ 		nc->pfmemalloc = page_is_pfmemalloc(page);
+@@ -3599,7 +3599,7 @@ refill:
+ 	if (unlikely(offset < 0)) {
+ 		page = virt_to_page(nc->va);
+ 
+-		if (!atomic_sub_and_test(nc->pagecnt_bias, &page->_count))
++		if (!page_ref_sub_and_test(page, nc->pagecnt_bias))
+ 			goto refill;
+ 
+ #if (PAGE_SIZE < PAGE_FRAG_CACHE_MAX_SIZE)
+@@ -3607,7 +3607,7 @@ refill:
+ 		size = nc->size;
+ #endif
+ 		/* OK, page count is 0, we can safely set it */
+-		atomic_set(&page->_count, size);
++		set_page_count(page, size);
+ 
+ 		/* reset page count bias and offset to start of new frag */
+ 		nc->pagecnt_bias = size;
+diff --git a/mm/vmscan.c b/mm/vmscan.c
+index 86eb214..39e90e2 100644
+--- a/mm/vmscan.c
++++ b/mm/vmscan.c
+@@ -638,11 +638,11 @@ static int __remove_mapping(struct address_space *mapping, struct page *page,
+ 	 * Note that if SetPageDirty is always performed via set_page_dirty,
+ 	 * and thus under tree_lock, then this ordering is not required.
+ 	 */
+-	if (!page_freeze_refs(page, 2))
++	if (!page_ref_freeze(page, 2))
+ 		goto cannot_free;
+ 	/* note: atomic_cmpxchg in page_freeze_refs provides the smp_rmb */
+ 	if (unlikely(PageDirty(page))) {
+-		page_unfreeze_refs(page, 2);
++		page_ref_unfreeze(page, 2);
+ 		goto cannot_free;
+ 	}
+ 
+@@ -704,7 +704,7 @@ int remove_mapping(struct address_space *mapping, struct page *page)
+ 		 * drops the pagecache ref for us without requiring another
+ 		 * atomic operation.
+ 		 */
+-		page_unfreeze_refs(page, 1);
++		page_ref_unfreeze(page, 1);
+ 		return 1;
+ 	}
+ 	return 0;
+-- 
+1.9.1
