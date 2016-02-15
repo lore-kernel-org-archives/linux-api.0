@@ -1,51 +1,40 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Subject: Re: richacl(7) man page review comments
-Date: Mon, 15 Feb 2016 11:25:12 +0100
-Message-ID: <56C1A788.9020008@gmail.com>
-References: <56B770B6.7040803@gmail.com> <56B77262.7090107@gmail.com>
- <CAHc6FU5__xbKm4mg8+fK_ZW5ZYsDoQcYBBvQg573Eq4ERDsROw@mail.gmail.com>
- <56C0F150.60008@gmail.com>
- <CAHc6FU49uRb11HhO655jimn_CzLrDyGHAB2iDAv92cftCCXkEA@mail.gmail.com>
+Date: Mon, 15 Feb 2016 12:35:14 +0100
+Message-ID: <CAHc6FU69k2uRXjSSS+9K0cXzFs74DPsz6DDv8GN=hmh7RpPA-Q@mail.gmail.com>
+References: <56B770B6.7040803@gmail.com>
+	<56B77262.7090107@gmail.com>
+	<CAHc6FU5__xbKm4mg8+fK_ZW5ZYsDoQcYBBvQg573Eq4ERDsROw@mail.gmail.com>
+	<56C0F150.60008@gmail.com>
+	<CAHc6FU49uRb11HhO655jimn_CzLrDyGHAB2iDAv92cftCCXkEA@mail.gmail.com>
+	<56C1A788.9020008@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <CAHc6FU49uRb11HhO655jimn_CzLrDyGHAB2iDAv92cftCCXkEA@mail.gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Andreas Gruenbacher <agruenba@redhat.com>
-Cc: mtk.manpages@gmail.com, "J. Bruce Fields" <bfields@fieldses.org>, linux-ext4 <linux-ext4@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, lkml <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, linux-cifs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Dave Chinner <david@fromorbit.com>, Christoph Hellwig <hch@infradead.org>, Anna Schumaker <anna.schumaker@netapp.com>, Trond Myklebust <trond.myklebust@primarydata.com>, Jeff Layton <jlayton@poochiereds.net>, Andreas Dilger <adilger@dilger.ca>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <56C1A788.9020008-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Andreas,
+On Mon, Feb 15, 2016 at 11:25 AM, Michael Kerrisk (man-pages)
+<mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> You're right. I was confusing with xattr(7). So, I think it might
+> make some sense to eventually move both of these into man-pages (for
+> richacl(7), at least, it's probably worth delaying this for a bit),
+> since  they're describing kernel-user-space interfaces.
 
-On 02/15/2016 12:12 AM, Andreas Gruenbacher wrote:
-> On Sun, Feb 14, 2016 at 10:27 PM, Michael Kerrisk (man-pages)
-> <mtk.manpages@gmail.com> wrote:
->> On 02/12/2016 11:25 PM, Andreas Gruenbacher wrote:
->>> We could sure move acl(5) and richacl(7) there.
->>
->> We already have acl(5) (now "acl(7)" in man pages) ;-).
-> 
-> Hmm, I can't find that page either in
-> git://git.kernel.org/pub/scm/docs/man-pages/man-pages or on
-> http://man7.org/. Are you sure you don't mean xattr.7 == attr.5 which
-> documents the xattr syscall interface?
+Well, the actual user-space interface is xattrs in both cases.
 
-You're right. I was confusing with xattr(7). So, I think it might
-make some sense to eventually move both of these into man-pages (for 
-richacl(7), at least, it's probably worth delaying this for a bit), 
-since  they're describing kernel-user-space interfaces. I can see 
-counter-arguments too, such as these pages are closely related to 
-the corresponding user-space libraries you maintain. What do you
-think?
+> I can see counter-arguments too, such as these pages are closely
+> related to the corresponding user-space libraries you maintain.
+> What do you think?
 
-Thanks,
+I would keep the man-pages where they are right now, but I don't have
+a strong preference.
 
-Michael
-
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Andreas
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
