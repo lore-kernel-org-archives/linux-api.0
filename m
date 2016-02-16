@@ -1,48 +1,49 @@
-From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Subject: Re: [PATCH v4 04/22] kthread: Add create_kthread_worker*()
-Date: Tue, 16 Feb 2016 17:10:09 +0100
-Message-ID: <20160216161009.GO3305@pathway.suse.cz>
-References: <1453736711-6703-1-git-send-email-pmladek@suse.com>
- <1453736711-6703-5-git-send-email-pmladek@suse.com>
- <20160125185339.GB3628@mtj.duckdns.org>
- <20160216154443.GW12548@pathway.suse.cz>
+From: Vladimir Murzin <vladimir.murzin@arm.com>
+Subject: Re: [PATCH v3 09/10] ARM: dts: introduce MPS2 AN385/AN386
+Date: Tue, 16 Feb 2016 16:10:14 +0000
+Message-ID: <56C349E6.2000002@arm.com>
+References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com> <1455617295-23736-10-git-send-email-vladimir.murzin@arm.com> <7562697.iiO7rmWd7c@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160216154443.GW12548-KsEp0d+Q8qECVLCxKZUutA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <7562697.iiO7rmWd7c@wuerfel>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.lezcano@linaro.org, tglx@linutronix.de, u.kleine-koenig@pengutronix.de, mark.rutland@arm.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, jslaby@suse.cz, robh+dt@kernel.org, andy.shevchenko@gmail.com, devicetree@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue 2016-02-16 16:44:43, Petr Mladek wrote:
-> On Mon 2016-01-25 13:53:39, Tejun Heo wrote:
-> > On Mon, Jan 25, 2016 at 04:44:53PM +0100, Petr Mladek wrote:
-> > > +struct kthread_worker *
-> > > +create_kthread_worker_on_cpu(int cpu, const char namefmt[])
-> > > +{
-> > > +	if (cpu < 0 || cpu > num_possible_cpus())
-> > > +		return ERR_PTR(-EINVAL);
-> > 
-> > Comparing cpu ID to num_possible_cpus() doesn't make any sense.  It
-> > should either be testing against cpu_possible_mask or testing against
-> > nr_cpu_ids.  Does this test need to be in this function at all?
+On 16/02/16 11:01, Arnd Bergmann wrote:
+> On Tuesday 16 February 2016 10:08:14 Vladimir Murzin wrote:
+>> +
+>> +       ethernet@40200000 {
+>> +               compatible = "smsc,lan9220", "smsc,lan9115";
+>> +               reg = <0x40200000 0x10000>;
+>> +               interrupts = <13>;
+>> +               interrupt-parent = <&nvic>;
+>> +               smsc,irq-active-high;
+>> +       };
+>> +};
+>> +
+>>
 > 
-> I wanted to be sure. The cpu number is later passed to
-> cpu_to_node(cpu) in kthread_create_on_cpu().
+> This node seems slightly misplaced. Is there some external bus interface
+> that this is connected to? The address suggests that it should be somewhere
+> below the /soc node, and you probably want to list the external bus
+> interface with a "ranges" property that identifies the addresses visibile
+> there, and put the external chip under there.
 > 
-> I am going to replace this with a check against nr_cpu_ids in
-> kthread_create_on_cpu() which makes more sense.
-> 
-> I might be too paranoid. But this is slow path. People
-> do mistakes...
 
-I take it back. I will remove the check at all.
-Michal Hocko persuaded me offline that it does not make
-much sense. This function is used from kernel code.
-I need to believe that the usage is sane at this level.
-Also too many checks makes the code harder to read.
+I might messed it up since the MAC/PHY connects to the same 16-bit
+interface as the 16MB PSRAM external memory and both connected via AHB.
 
-Thanks,
-Petr
+Not sure how it should be expressed, so some help form DT camp would be
+appreciated.
+
+Cheers
+Vladimir
+
+> 	Arnd
+> 
+> 
+> 
