@@ -1,67 +1,46 @@
-From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: Re: [PATCH v3 09/10] ARM: dts: introduce MPS2 AN385/AN386
-Date: Tue, 16 Feb 2016 15:37:31 +0000
-Message-ID: <56C3423B.5070307@arm.com>
-References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com>	<1455617295-23736-10-git-send-email-vladimir.murzin@arm.com> <CACRpkdafDhT=1uJssVNAW+g05eXbRC1xUL+O0+SxcpdczUX0vQ@mail.gmail.com>
+From: Petr Mladek <pmladek@suse.com>
+Subject: Re: [PATCH v4 04/22] kthread: Add create_kthread_worker*()
+Date: Tue, 16 Feb 2016 16:44:43 +0100
+Message-ID: <20160216154443.GW12548@pathway.suse.cz>
+References: <1453736711-6703-1-git-send-email-pmladek@suse.com>
+ <1453736711-6703-5-git-send-email-pmladek@suse.com>
+ <20160125185339.GB3628@mtj.duckdns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CACRpkdafDhT=1uJssVNAW+g05eXbRC1xUL+O0+SxcpdczUX0vQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Walleij <linus.walleij@linaro.org>
-Cc: Arnd Bergmann <arnd@arndb.de>, Russell King - ARM Linux <linux@arm.linux.org.uk>, Greg KH <gregkh@linuxfoundation.org>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, =?UTF-8?B?VXdlIEtsZWluZS1Lw7ZuaWc=?= <u.kleine-koenig@pengutronix.de>, Mark Rutland <mark.rutland@arm.com>, =?UTF-8?B?UGF3ZcWCIE1vbGw=?= <pawel.moll@arm.com>, "ijc+devicetree@hellion.org.uk" <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Jiri Slaby <jslaby@suse.cz>, Rob Herring <robh+dt@kernel.org>, Andy Shevchenko <andy.shevchenko@gmail.com>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, "linux-serial@vger.kernel.org" <linux-serial@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20160125185339.GB3628@mtj.duckdns.org>
+Sender: owner-linux-mm@kvack.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 16/02/16 15:17, Linus Walleij wrote:
-> On Tue, Feb 16, 2016 at 11:08 AM, Vladimir Murzin
-> <vladimir.murzin@arm.com> wrote:
+On Mon 2016-01-25 13:53:39, Tejun Heo wrote:
+> On Mon, Jan 25, 2016 at 04:44:53PM +0100, Petr Mladek wrote:
+> > +struct kthread_worker *
+> > +create_kthread_worker_on_cpu(int cpu, const char namefmt[])
+> > +{
+> > +	if (cpu < 0 || cpu > num_possible_cpus())
+> > +		return ERR_PTR(-EINVAL);
 > 
->> Application Notes 385 and 386 shares the same memory map and features
->> except the CPU is used. AN385 is supplied with Cortex-M3 CPU and AN386
->> is supplied with Cortex-M4.
->>
->> Signed-off-by: Vladimir Murzin <vladimir.murzin@arm.com>
-> (...)
->> +               fpgaio {
->> +                       compatible = "syscon", "simple-mfd";
->> +                       reg = <0x40028000 0x10>;
->> +
->> +                       led@0 {
->> +                               compatible = "register-bit-led";
->> +                               offset = <0x0>;
->> +                               mask = <0x01>;
->> +                               label = "userled:0";
->> +                               linux,default-trigger = "heartbeat";
->> +                               default-state = "on";
->> +                       };
->> +
->> +                       led@1 {
->> +                               compatible = "register-bit-led";
->> +                               offset = <0x0>;
->> +                               mask = <0x02>;
->> +                               label = "userled:1";
->> +                               linux,default-trigger = "usr";
->> +                               default-state = "off";
->> +                       };
->> +               };
-> 
-> Thanks for using this. I worked hard to massage this into the
-> core.
-> 
+> Comparing cpu ID to num_possible_cpus() doesn't make any sense.  It
+> should either be testing against cpu_possible_mask or testing against
+> nr_cpu_ids.  Does this test need to be in this function at all?
 
-Thank you for pushing it, it cost me couple of minutes to make these
-tiny leds alive :)
+I wanted to be sure. The cpu number is later passed to
+cpu_to_node(cpu) in kthread_create_on_cpu().
 
-> Reviewed-by: Linus Walleij <linus.walleij@linaro.org>
-> 
+I am going to replace this with a check against nr_cpu_ids in
+kthread_create_on_cpu() which makes more sense.
 
-Cheers!
+I might be too paranoid. But this is slow path. People
+do mistakes...
 
-Vladimir
+Thanks,
+Petr
 
-> Yours,
-> Linus Walleij
-> 
-> 
-> 
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
