@@ -1,25 +1,66 @@
-From: Sylwester Nawrocki <s.nawrocki-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v4 2/2] s5p-mfc: add the support of
- V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME.
-Date: Tue, 16 Feb 2016 11:29:39 +0100
-Message-ID: <56C2FA13.3020106@samsung.com>
-References: <1453187230-97231-1-git-send-email-wuchengli@chromium.org>
- <1453187230-97231-3-git-send-email-wuchengli@chromium.org>
+From: Andy Shevchenko <andy.shevchenko@gmail.com>
+Subject: Re: [PATCH v3 05/10] serial: mps2-uart: add support for early console
+Date: Tue, 16 Feb 2016 12:36:09 +0200
+Message-ID: <CAHp75VdugAq0WnzLHmd9CJHCjBOdBwPqCmC3ARSaVF5XMYGoMw@mail.gmail.com>
+References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com>
+	<1455617295-23736-6-git-send-email-vladimir.murzin@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <1453187230-97231-3-git-send-email-wuchengli-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Wu-Cheng Li <wuchengli-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org
-Cc: pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org, mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, k.debski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, nicolas.dufresne-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org, jtp.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1455617295-23736-6-git-send-email-vladimir.murzin@arm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vladimir Murzin <vladimir.murzin@arm.com>
+Cc: Arnd Bergmann <arnd@arndb.de>, Russell King <linux@arm.linux.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, Mark Rutland <mark.rutland@arm.com>, Pawel Moll <pawel.moll@arm.com>, ijc+devicetree <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Jiri Slaby <jslaby@suse.cz>, Rob Herring <robh+dt@kernel.org>, devicetree <devicetree@vger.kernel.org>, "linux-serial@vger.kernel.org" <linux-serial@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, linux-arm Mailing List <linux-arm-kernel@lists.infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 19/01/16 08:07, Wu-Cheng Li wrote:
-> There is a new control V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME to
-> force an encoder key frame. It is the same as requesting
-> V4L2_MPEG_MFC51_VIDEO_FORCE_FRAME_TYPE_I_FRAME.
-> 
-> Signed-off-by: Wu-Cheng Li <wuchengli-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+On Tue, Feb 16, 2016 at 12:08 PM, Vladimir Murzin
+<vladimir.murzin@arm.com> wrote:
+> This adds support early console for MPS2 UART which can be enabled via
+> earlycon=mps2,0x40004000
 
-Acked-by: Sylwester Nawrocki <s.nawrocki-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+
+> --- a/drivers/tty/serial/mps2-uart.c
+> +++ b/drivers/tty/serial/mps2-uart.c
+> @@ -435,6 +435,36 @@ static struct console mps2_uart_console = {
+>
+>  #define MPS2_SERIAL_CONSOLE (&mps2_uart_console)
+>
+> +static void mps2_early_putchar(struct uart_port *port, int ch)
+> +{
+> +
+> +       while (readb(port->membase + UARTn_STATE) & UARTn_STATE_TX_FULL)
+> +               cpu_relax();
+
+Infinite busy loop?
+
+> +
+> +       writeb((unsigned char)ch, port->membase + UARTn_DATA);
+> +}
+> +
+> +
+> +static void mps2_early_write(struct console *con, const char *s, unsigned n)
+> +{
+> +       struct earlycon_device *dev = con->data;
+> +
+> +       uart_console_write(&dev->port, s, n, mps2_early_putchar);
+> +}
+> +
+> +static int __init mps2_early_console_setup(struct earlycon_device *device,
+> +                                          const char *opt)
+> +{
+> +       if (!device->port.membase)
+> +               return -ENODEV;
+> +
+> +       device->con->write = mps2_early_write;
+> +
+> +       return 0;
+> +}
+> +EARLYCON_DECLARE(mps2, mps2_early_console_setup);
+> +OF_EARLYCON_DECLARE(mps2, "arm,mps2-uart", mps2_early_console_setup);
+
+IIRC Peter Hurley mentioned you don't need to put both anymore, OF_
+one is enough.
+
+-- 
+With Best Regards,
+Andy Shevchenko
