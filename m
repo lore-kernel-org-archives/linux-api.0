@@ -1,37 +1,74 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v3 00/10] Support for Cortex-M Prototyping System
-Date: Tue, 16 Feb 2016 12:05:37 +0100
-Message-ID: <22011981.Gqc7zXAZ81@wuerfel>
-References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com>
+From: Vladimir Murzin <vladimir.murzin@arm.com>
+Subject: Re: [PATCH v3 05/10] serial: mps2-uart: add support for early console
+Date: Tue, 16 Feb 2016 13:09:51 +0000
+Message-ID: <56C31F9F.10000@arm.com>
+References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com>	<1455617295-23736-6-git-send-email-vladimir.murzin@arm.com> <CAHp75VdugAq0WnzLHmd9CJHCjBOdBwPqCmC3ARSaVF5XMYGoMw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com>
+In-Reply-To: <CAHp75VdugAq0WnzLHmd9CJHCjBOdBwPqCmC3ARSaVF5XMYGoMw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Vladimir Murzin <vladimir.murzin@arm.com>
-Cc: linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.lezcano@linaro.org, tglx@linutronix.de, u.kleine-koenig@pengutronix.de, mark.rutland@arm.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, jslaby@suse.cz, robh+dt@kernel.org, andy.shevchenko@gmail.com, devicetree@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, Liviu Dudau <liviu.dudau@arm.com>, Sudeep Holla <sudeep.holla@arm.com>, Lorenzo Pieralisi <lorenzo.pieralisi@arm.com>
+To: Andy Shevchenko <andy.shevchenko@gmail.com>
+Cc: Arnd Bergmann <arnd@arndb.de>, Russell King <linux@arm.linux.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, =?UTF-8?B?VXdlIEtsZWluZS1Lw7ZuaWc=?= <u.kleine-koenig@pengutronix.de>, Mark Rutland <mark.rutland@arm.com>, Pawel Moll <pawel.moll@arm.com>, ijc+devicetree <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Jiri Slaby <jslaby@suse.cz>, Rob Herring <robh+dt@kernel.org>, devicetree <devicetree@vger.kernel.org>, "linux-serial@vger.kernel.org" <linux-serial@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, linux-arm Mailing List <linux-arm-kernel@lists.infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tuesday 16 February 2016 10:08:05 Vladimir Murzin wrote:
-> Hi,
+On 16/02/16 10:36, Andy Shevchenko wrote:
+> On Tue, Feb 16, 2016 at 12:08 PM, Vladimir Murzin
+> <vladimir.murzin@arm.com> wrote:
+>> This adds support early console for MPS2 UART which can be enabled via
+>> earlycon=mps2,0x40004000
 > 
-> This patch series provide the basic support for running ucLinux on V2M-MPS2
-> platform.
 > 
-> With these patches applied ucLinux can be run on both HW and FVP models
-> with Cortex-M3/M4/M7 configurations.
+>> --- a/drivers/tty/serial/mps2-uart.c
+>> +++ b/drivers/tty/serial/mps2-uart.c
+>> @@ -435,6 +435,36 @@ static struct console mps2_uart_console = {
+>>
+>>  #define MPS2_SERIAL_CONSOLE (&mps2_uart_console)
+>>
+>> +static void mps2_early_putchar(struct uart_port *port, int ch)
+>> +{
+>> +
+>> +       while (readb(port->membase + UARTn_STATE) & UARTn_STATE_TX_FULL)
+>> +               cpu_relax();
+> 
+> Infinite busy loop?
 
-Looks very nice overall now. I have mentioned a few details that I noticed
-but no show-stoppers.
+In case of broken hw, yes, but I'm quite unsure how we can help to fix
+it. Do you have something in mind?
 
-Most important question for me is how this is going to be maintained
-in the long run. Can you add a patch to list the added files in
-MAINTAINERS?
+> 
+>> +
+>> +       writeb((unsigned char)ch, port->membase + UARTn_DATA);
+>> +}
+>> +
+>> +
+>> +static void mps2_early_write(struct console *con, const char *s, unsigned n)
+>> +{
+>> +       struct earlycon_device *dev = con->data;
+>> +
+>> +       uart_console_write(&dev->port, s, n, mps2_early_putchar);
+>> +}
+>> +
+>> +static int __init mps2_early_console_setup(struct earlycon_device *device,
+>> +                                          const char *opt)
+>> +{
+>> +       if (!device->port.membase)
+>> +               return -ENODEV;
+>> +
+>> +       device->con->write = mps2_early_write;
+>> +
+>> +       return 0;
+>> +}
+>> +EARLYCON_DECLARE(mps2, mps2_early_console_setup);
+>> +OF_EARLYCON_DECLARE(mps2, "arm,mps2-uart", mps2_early_console_setup);
+> 
+> IIRC Peter Hurley mentioned you don't need to put both anymore, OF_
+> one is enough.
+> 
 
-My preference from the arm-soc perspective would be to get pull requests for
-this together with vexpress and juno through the existing maintainers
-(Liviu, Sudeep, Lorenzo), and have you send your patches to them. Does
-that work for you all?
+I've just tried with OF_ only and seems it works fine. Thanks for
+pointing at it!
 
-	Arnd
+Cheers
+Vladimir
