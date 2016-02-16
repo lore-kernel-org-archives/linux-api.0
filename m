@@ -1,48 +1,32 @@
-From: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
-Subject: Re: [PATCH v3 00/10] Support for Cortex-M Prototyping System
-Date: Tue, 16 Feb 2016 16:14:01 +0000
-Message-ID: <56C34AC9.8080509@arm.com>
-References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com> <22011981.Gqc7zXAZ81@wuerfel>
+From: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
+Subject: Re: [PATCH v3 05/10] serial: mps2-uart: add support for early
+ console
+Date: Tue, 16 Feb 2016 16:12:56 +0000
+Message-ID: <20160216161256.234a2be8@lxorguk.ukuu.org.uk>
+References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com>
+	<1455617295-23736-6-git-send-email-vladimir.murzin@arm.com>
+	<CAHp75VdugAq0WnzLHmd9CJHCjBOdBwPqCmC3ARSaVF5XMYGoMw@mail.gmail.com>
+	<56C31F9F.10000@arm.com>
+	<CAHp75Vf_4MgdWunQy5hBMH5GGei+OkktFPYY-ZprY0qOEnD=wA@mail.gmail.com>
+	<56C32641.4020201@arm.com>
+	<CAHp75VecjR3sBcGmRHFwZPwUjXhPwV-2z4hYYJ7Y+iCOxi8_EA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <22011981.Gqc7zXAZ81@wuerfel>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Liviu Dudau <liviu.dudau-5wv7dgnIgG8@public.gmane.org>, Sudeep Holla <sudeep.holla-5wv7dgnIgG8@public.gmane.org>, Lorenzo Pieralisi <lorenzo.pieralisi-5wv7dgnIgG8@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAHp75VecjR3sBcGmRHFwZPwUjXhPwV-2z4hYYJ7Y+iCOxi8_EA@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Shevchenko <andy.shevchenko@gmail.com>
+Cc: Vladimir Murzin <vladimir.murzin@arm.com>, Arnd Bergmann <arnd@arndb.de>, Russell King <linux@arm.linux.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Uwe =?UTF-8?B?S2xlaW5lLUvDtm5pZw==?= <u.kleine-koenig@pengutronix.de>, Mark Rutland <mark.rutland@arm.com>, Pawel Moll <pawel.moll@arm.com>, ijc+devicetree <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Jiri Slaby <jslaby@suse.cz>, Rob Herring <robh+dt@kernel.org>, devicetree <devicetree@vger.kernel.org>, "linux-serial@vger.kernel.org" <linux-serial@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, linux-arm Mailing List <linux-arm-kernel@lists.infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 16/02/16 11:05, Arnd Bergmann wrote:
-> On Tuesday 16 February 2016 10:08:05 Vladimir Murzin wrote:
->> Hi,
->>
->> This patch series provide the basic support for running ucLinux on V2M-MPS2
->> platform.
->>
->> With these patches applied ucLinux can be run on both HW and FVP models
->> with Cortex-M3/M4/M7 configurations.
+> > If you do insist to have a counter I'll add one, but if you are not
+> > strong about it I'd prefer to leave it as is.  
 > 
-> Looks very nice overall now. I have mentioned a few details that I noticed
-> but no show-stoppers.
-> 
-> Most important question for me is how this is going to be maintained
-> in the long run. Can you add a patch to list the added files in
-> MAINTAINERS?
-> 
-> My preference from the arm-soc perspective would be to get pull requests for
-> this together with vexpress and juno through the existing maintainers
-> (Liviu, Sudeep, Lorenzo), and have you send your patches to them. Does
-> that work for you all?
-> 
+> I would wait for Peter Hurley, Alan, or other experienced guys to talk.
 
-I'm quite happy with either way. I'm not targeting for 4.6, so we have
-some time to sort it out.
+I would leave it. Some of the drivers have defensive code of this form,
+but mostly because they can be hot unplugged and we don't want to spin
+into oblivion because the user ejected a serial card adapter.
 
-Thanks
-Vladimir
-
-> 	Arnd
-> 
-> 
-> 
+Alan
