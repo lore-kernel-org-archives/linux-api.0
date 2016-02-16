@@ -1,139 +1,115 @@
 From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: [PATCH v3 10/10] ARM: dts: introduce MPS2 AN399/AN400
-Date: Tue, 16 Feb 2016 10:08:15 +0000
-Message-ID: <1455617295-23736-11-git-send-email-vladimir.murzin@arm.com>
-References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Subject: [PATCH v3 00/10] Support for Cortex-M Prototyping System
+Date: Tue, 16 Feb 2016 10:08:05 +0000
+Message-ID: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
 To: arnd@arndb.de, linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.lezcano@linaro.org, tglx@linutronix.de, u.kleine-koenig@pengutronix.de
-Cc: mark.rutland@arm.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, jslaby@suse.cz, robh+dt@kernel.org, andy.shevchenko@gmail.com, devicetree@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
+Cc: mark.rutland@arm.com, devicetree@vger.kernel.org, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, andy.shevchenko@gmail.com, robh+dt@kernel.org, linux-serial@vger.kernel.org, galak@codeaurora.org, jslaby@suse.cz, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-Application Notes 399 and 400 shares the same memory map and
-features. Both are shipped with Cortex-M7 and have the same  peripheral
-as AN385/AN386, but with different location of PSRAM and Ethernet
-controller.
+Hi,
 
-Signed-off-by: Vladimir Murzin <vladimir.murzin@arm.com>
----
- arch/arm/boot/dts/Makefile       |    4 +-
- arch/arm/boot/dts/mps2-an399.dts |   92 ++++++++++++++++++++++++++++++++++++++
- 2 files changed, 95 insertions(+), 1 deletion(-)
+This patch series provide the basic support for running ucLinux on V2M-MPS2
+platform.
+
+With these patches applied ucLinux can be run on both HW and FVP models
+with Cortex-M3/M4/M7 configurations.
+
+Board description:
+
+http://infocenter.arm.com/help/topic/com.arm.doc.100112_0100_03_en/arm_versatile_express_cortex_m_prototyping_system_(v2m_mps2)_technical_reference_manual_100112_0100_03_en.pdf
+
+Application notes (cover Cortex-M3/M4/M7):
+
+http://infocenter.arm.com/help/topic/com.arm.doc.dai0385a/DAI0385A_cortex_m3_on_v2m_mps2.pdf
+http://infocenter.arm.com/help/topic/com.arm.doc.dai0386a/DAI0386A_cortex_m4_on_v2m_mps2.pdf
+http://infocenter.arm.com/help/topic/com.arm.doc.dai0399a/DAI0399A_cortex_m7_on_v2m_mps2.pdf
+http://infocenter.arm.com/help/topic/com.arm.doc.dai0400a/DAI0400A_cortex_m7_on_v2m_mps2.pdf
+
+Cortex-M System Design Kit (referenced as CMDK from documents above):
+
+http://infocenter.arm.com/help/topic/com.arm.doc.ddi0479c/DDI0479C_cortex_m_system_design_kit_r1p0_trm.pdf
+
+I'd be happy to hear any feedback/comments on this series!
+
+Changelog:
+  v2  -> v3:
+      - rebased on 4.5-rc4
+      - fixes for mps2-timer per Thomas
+      - swicthed back to ttyMPS naming per Greg
+
+  v1  -> v2:
+      - rebased on 4.5-rc2
+      - fixes for mps2-timer per Daniel and Rob (added Ack from Daniel)
+      - fixes for mps2-uart per Greg and Andy
+
+  RFC -> v1:
+      - dropped RFC tag
+      - rebased on 4.4-rc3
+      - added Acks from Rob
+      - updated mps2-timer per Daniel
+      - fixed build failures reported by 0-DAY kernel test infrastructure
+
+Thanks!
+
+Vladimir Murzin (10):
+  dt-bindings: document the MPS2 timer bindings
+  clockevents/drivers: add MPS2 Timer driver
+  dt-bindings: document the MPS2 UART bindings
+  serial: mps2-uart: add MPS2 UART driver
+  serial: mps2-uart: add support for early console
+  ARM: mps2: introduce MPS2 platform
+  ARM: mps2: add low-level debug support
+  ARM: configs: add MPS2 defconfig
+  ARM: dts: introduce MPS2 AN385/AN386
+  ARM: dts: introduce MPS2 AN399/AN400
+
+ .../devicetree/bindings/serial/arm,mps2-uart.txt   |   22 +
+ .../devicetree/bindings/timer/arm,mps2-timer.txt   |   28 +
+ arch/arm/Kconfig                                   |    8 +
+ arch/arm/Kconfig.debug                             |   12 +-
+ arch/arm/Makefile                                  |    1 +
+ arch/arm/boot/dts/Makefile                         |    3 +
+ arch/arm/boot/dts/mps2-an385.dts                   |   90 +++
+ arch/arm/boot/dts/mps2-an399.dts                   |   92 +++
+ arch/arm/boot/dts/mps2.dtsi                        |  227 ++++++++
+ arch/arm/configs/mps2_defconfig                    |  112 ++++
+ arch/arm/include/debug/mps2.S                      |   27 +
+ arch/arm/mach-mps2/Makefile                        |    1 +
+ arch/arm/mach-mps2/Makefile.boot                   |    3 +
+ arch/arm/mach-mps2/dtmachine.c                     |   21 +
+ drivers/clocksource/Kconfig                        |    6 +
+ drivers/clocksource/Makefile                       |    1 +
+ drivers/clocksource/mps2-timer.c                   |  275 +++++++++
+ drivers/tty/serial/Kconfig                         |   13 +
+ drivers/tty/serial/Makefile                        |    1 +
+ drivers/tty/serial/mps2-uart.c                     |  614 ++++++++++++++++++++
+ include/uapi/linux/serial_core.h                   |    3 +
+ 21 files changed, 1559 insertions(+), 1 deletion(-)
+ create mode 100644 Documentation/devicetree/bindings/serial/arm,mps2-uart.txt
+ create mode 100644 Documentation/devicetree/bindings/timer/arm,mps2-timer.txt
+ create mode 100644 arch/arm/boot/dts/mps2-an385.dts
  create mode 100644 arch/arm/boot/dts/mps2-an399.dts
+ create mode 100644 arch/arm/boot/dts/mps2.dtsi
+ create mode 100644 arch/arm/configs/mps2_defconfig
+ create mode 100644 arch/arm/include/debug/mps2.S
+ create mode 100644 arch/arm/mach-mps2/Makefile
+ create mode 100644 arch/arm/mach-mps2/Makefile.boot
+ create mode 100644 arch/arm/mach-mps2/dtmachine.c
+ create mode 100644 drivers/clocksource/mps2-timer.c
+ create mode 100644 drivers/tty/serial/mps2-uart.c
 
-diff --git a/arch/arm/boot/dts/Makefile b/arch/arm/boot/dts/Makefile
-index 96418d2..ad5622b 100644
---- a/arch/arm/boot/dts/Makefile
-+++ b/arch/arm/boot/dts/Makefile
-@@ -245,7 +245,9 @@ dtb-$(CONFIG_ARCH_MMP) += \
- dtb-$(CONFIG_MACH_MESON8B) += \
- 	meson8b-mxq.dtb \
- 	meson8b-odroidc1.dtb
--dtb-$(CONFIG_ARCH_MPS2) += mps2-an385.dtb
-+dtb-$(CONFIG_ARCH_MPS2) += \
-+	mps2-an385.dtb \
-+	mps2-an399.dtb
- dtb-$(CONFIG_ARCH_MOXART) += \
- 	moxart-uc7112lx.dtb
- dtb-$(CONFIG_SOC_IMX1) += \
-diff --git a/arch/arm/boot/dts/mps2-an399.dts b/arch/arm/boot/dts/mps2-an399.dts
-new file mode 100644
-index 0000000..e591d75
---- /dev/null
-+++ b/arch/arm/boot/dts/mps2-an399.dts
-@@ -0,0 +1,92 @@
-+/*
-+ * Copyright (C) 2015 ARM Limited
-+ *
-+ * Author: Vladimir Murzin <vladimir.murzin@arm.com>
-+ *
-+ * This file is dual-licensed: you can use it either under the terms
-+ * of the GPL or the X11 license, at your option. Note that this dual
-+ * licensing only applies to this file, and not this project as a
-+ * whole.
-+ *
-+ *  a) This file is free software; you can redistribute it and/or
-+ *     modify it under the terms of the GNU General Public License as
-+ *     published by the Free Software Foundation; either version 2 of the
-+ *     License, or (at your option) any later version.
-+ *
-+ *     This file is distributed in the hope that it will be useful,
-+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *     GNU General Public License for more details.
-+ *
-+ * Or, alternatively,
-+ *
-+ *  b) Permission is hereby granted, free of charge, to any person
-+ *     obtaining a copy of this software and associated documentation
-+ *     files (the "Software"), to deal in the Software without
-+ *     restriction, including without limitation the rights to use,
-+ *     copy, modify, merge, publish, distribute, sublicense, and/or
-+ *     sell copies of the Software, and to permit persons to whom the
-+ *     Software is furnished to do so, subject to the following
-+ *     conditions:
-+ *
-+ *     The above copyright notice and this permission notice shall be
-+ *     included in all copies or substantial portions of the Software.
-+ *
-+ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-+ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-+ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-+ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-+ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-+ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-+ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-+ *     OTHER DEALINGS IN THE SOFTWARE.
-+ */
-+
-+/dts-v1/;
-+
-+#include "mps2.dtsi"
-+
-+/ {
-+	model = "ARM MPS2 Application Note 399/400";
-+	compatible = "arm,mps2";
-+
-+	aliases {
-+		serial0 = &uart0;
-+	};
-+
-+	chosen {
-+		bootargs = "rdinit=/sbin/init earlycon";
-+		stdout-path = "serial0:9600n8";
-+	};
-+
-+	memory {
-+		device_type = "memory";
-+		reg = <0x60000000 0x1000000>;
-+	};
-+
-+
-+	ethernet@a0000000 {
-+		compatible = "smsc,lan9220", "smsc,lan9115";
-+		reg = <0xa0000000 0x10000>;
-+		interrupts = <13>;
-+		interrupt-parent = <&nvic>;
-+		smsc,irq-active-high;
-+	};
-+};
-+
-+&uart0 {
-+	status = "okay";
-+};
-+
-+
-+&timer0 {
-+	status = "okay";
-+};
-+
-+&timer1 {
-+	status = "okay";
-+};
-+
-+&wdt {
-+	status = "okay";
-+};
 -- 
 1.7.9.5
