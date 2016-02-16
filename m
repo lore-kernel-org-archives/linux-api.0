@@ -1,81 +1,38 @@
-From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Subject: Re: [PATCH v4 07/22] kthread: Detect when a kthread work is used by
- more workers
-Date: Tue, 16 Feb 2016 17:38:39 +0100
-Message-ID: <20160216163839.GP3305@pathway.suse.cz>
-References: <1453736711-6703-1-git-send-email-pmladek@suse.com>
- <1453736711-6703-8-git-send-email-pmladek@suse.com>
- <20160125185747.GC3628@mtj.duckdns.org>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 8/8] Add FS_USERNS_FLAG to cgroup fs
+Date: Tue, 16 Feb 2016 13:05:51 -0500
+Message-ID: <20160216180551.GN3741@mtj.duckdns.org>
+References: <1454057651-23959-1-git-send-email-serge.hallyn@ubuntu.com>
+ <1454057651-23959-9-git-send-email-serge.hallyn@ubuntu.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20160125185747.GC3628-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
+In-Reply-To: <1454057651-23959-9-git-send-email-serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon 2016-01-25 13:57:47, Tejun Heo wrote:
-> On Mon, Jan 25, 2016 at 04:44:56PM +0100, Petr Mladek wrote:
-> > +static void insert_kthread_work_sanity_check(struct kthread_worker *worker,
-> > +					       struct kthread_work *work)
-> > +{
-> > +	lockdep_assert_held(&worker->lock);
-> > +	WARN_ON_ONCE(!irqs_disabled());
+On Fri, Jan 29, 2016 at 02:54:11AM -0600, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org wrote:
+> From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 > 
-> Isn't worker->lock gonna be a irq-safe lock?  If so, why would this
-> need to be tested separately?
-
-I see. I'll remove it.
-
-> > +	WARN_ON_ONCE(!list_empty(&work->node));
-> > +	/* Do not use a work with more workers, see queue_kthread_work() */
-> > +	WARN_ON_ONCE(work->worker && work->worker != worker);
-> > +}
+> allowing root in a non-init user namespace to mount it.  This should
+> now be safe, because
 > 
-> Is this sanity check function gonna be used from multiple places?
-
-It will be reused when implementing __queue_delayed_kthread_work().
-We will want to do these checks also before setting the timer.
-See the 8th patch, e.g. at
-http://thread.gmane.org/gmane.linux.kernel.mm/144964/focus=144973
-
-
-> >  /* insert @work before @pos in @worker */
-> >  static void insert_kthread_work(struct kthread_worker *worker,
-> > -			       struct kthread_work *work,
-> > -			       struct list_head *pos)
-> > +				struct kthread_work *work,
-> > +				struct list_head *pos)
-> >  {
-> > -	lockdep_assert_held(&worker->lock);
-> > +	insert_kthread_work_sanity_check(worker, work);
-> >  
-> >  	list_add_tail(&work->node, pos);
-> >  	work->worker = worker;
-> > @@ -717,6 +730,15 @@ static void insert_kthread_work(struct kthread_worker *worker,
-> >   * Queue @work to work processor @task for async execution.  @task
-> >   * must have been created with kthread_worker_create().  Returns %true
-> >   * if @work was successfully queued, %false if it was already pending.
-> > + *
-> > + * Never queue a work into a worker when it is being processed by another
-> > + * one. Otherwise, some operations, e.g. cancel or flush, will not work
-> > + * correctly or the work might run in parallel. This is not enforced
-> > + * because it would make the code too complex. There are only warnings
-> > + * printed when such a situation is detected.
+> 1. non-init-root cannot mount a previously unbound subsystem
+> 2. the task doing the mount must be privileged with respect to the
+>    user namespace owning the cgroup namespace
+> 3. the mounted subsystem will have its current cgroup as the root dentry.
+>    the permissions will be unchanged, so tasks will receive no new
+>    privilege over the cgroups which they did not have on the original
+>    mounts.
 > 
-> I'm not sure the above paragraph adds much.  It isn't that accurate to
-> begin with as what's being disallowed is larger scope than the above.
-> Isn't the paragraph below enough?
+> Signed-off-by: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 
-Makes sense. I'll remove it.
+Applied 1-8 to cgroup/for-4.6-ns w/ trivial stylistic updates.
 
-> > + * Reinitialize the work if it needs to be used by another worker.
-> > + * For example, when the worker was stopped and started again.
-> >   */
-> >  bool queue_kthread_work(struct kthread_worker *worker,
-> >  			struct kthread_work *work)
+Thanks.
 
-Thanks,
-Petr
+-- 
+tejun
