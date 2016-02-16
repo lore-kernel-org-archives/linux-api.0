@@ -1,44 +1,48 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH v3 06/10] ARM: mps2: introduce MPS2 platform
-Date: Tue, 16 Feb 2016 11:56:08 +0100
-Message-ID: <29457600.xRDuy0uVjW@wuerfel>
-References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com> <1455617295-23736-7-git-send-email-vladimir.murzin@arm.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v3 08/10] ARM: configs: add MPS2 defconfig
+Date: Tue, 16 Feb 2016 11:58:42 +0100
+Message-ID: <2680417.bULLX3O66Y@wuerfel>
+References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com> <1455617295-23736-9-git-send-email-vladimir.murzin@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7Bit
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1455617295-23736-7-git-send-email-vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
-Cc: linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1455617295-23736-9-git-send-email-vladimir.murzin@arm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vladimir Murzin <vladimir.murzin@arm.com>
+Cc: linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.lezcano@linaro.org, tglx@linutronix.de, u.kleine-koenig@pengutronix.de, mark.rutland@arm.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, jslaby@suse.cz, robh+dt@kernel.org, andy.shevchenko@gmail.com, devicetree@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tuesday 16 February 2016 10:08:11 Vladimir Murzin wrote:
-> The Cortex-M Prototyping System (or V2M-MPS2) is designed for
-> prototyping and evaluation Cortex-M family of processors including the
-> latest Cortex-M7
+On Tuesday 16 February 2016 10:08:13 Vladimir Murzin wrote:
+> This patch adds a new config for MPS2 platform.
 > 
-> It comes with a range of useful peripherals including 8MB single cycle
-> SRAM, 16MB PSRAM, Ethernet, QSVGA touch screen panel, 4bit RGB VGA
-> connector, Audio, SPI and GPIO.
-> 
-> Signed-off-by: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+> Signed-off-by: Vladimir Murzin <vladimir.murzin@arm.com>
 > ---
->  arch/arm/Kconfig                 |    8 ++++++++
->  arch/arm/Makefile                |    1 +
->  arch/arm/mach-mps2/Makefile      |    1 +
->  arch/arm/mach-mps2/Makefile.boot |    3 +++
->  arch/arm/mach-mps2/dtmachine.c   |   21 +++++++++++++++++++++
+>  arch/arm/configs/mps2_defconfig |  112 +++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 112 insertions(+)
+>  create mode 100644 arch/arm/configs/mps2_defconfig
 > 
+> diff --git a/arch/arm/configs/mps2_defconfig b/arch/arm/configs/mps2_defconfig
+> new file mode 100644
+> index 0000000..c36c519
+> --- /dev/null
+> +++ b/arch/arm/configs/mps2_defconfig
+> @@ -0,0 +1,112 @@
+> +# CONFIG_USELIB is not set
+> +CONFIG_NO_HZ_IDLE=y
+> +CONFIG_HIGH_RES_TIMERS=y
+> +CONFIG_LOG_BUF_SHIFT=16
+> +CONFIG_CC_OPTIMIZE_FOR_SIZE=y
+> +# CONFIG_UID16 is not set
+> +# CONFIG_BASE_FULL is not set
+> +# CONFIG_FUTEX is not set
+> +# CONFIG_EPOLL is not set
+> +# CONFIG_SIGNALFD is not set
+> +# CONFIG_EVENTFD is not set
+> +# CONFIG_AIO is not set
+> +CONFIG_EMBEDDED=y
 
-We are in the (slow) process of consolidating the ARM reference platforms
-(versatile, integrator, realview, vexpress) into one place.
-
-I'd suggest adding all this to the mach-vexpress directory rather than
-a new directory, so we don't have another one to consolidate.
+Why CONFIG_EMBEDDED? You probably mean CONFIG_EXPERT, but then what do
+you need that for?
 
 	Arnd
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
