@@ -1,48 +1,35 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v3 08/10] ARM: configs: add MPS2 defconfig
-Date: Tue, 16 Feb 2016 11:58:42 +0100
-Message-ID: <2680417.bULLX3O66Y@wuerfel>
-References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com> <1455617295-23736-9-git-send-email-vladimir.murzin@arm.com>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Subject: Re: [PATCH v3 09/10] ARM: dts: introduce MPS2 AN385/AN386
+Date: Tue, 16 Feb 2016 12:01:16 +0100
+Message-ID: <7562697.iiO7rmWd7c@wuerfel>
+References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com> <1455617295-23736-10-git-send-email-vladimir.murzin@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1455617295-23736-9-git-send-email-vladimir.murzin@arm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vladimir Murzin <vladimir.murzin@arm.com>
-Cc: linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.lezcano@linaro.org, tglx@linutronix.de, u.kleine-koenig@pengutronix.de, mark.rutland@arm.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, jslaby@suse.cz, robh+dt@kernel.org, andy.shevchenko@gmail.com, devicetree@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1455617295-23736-10-git-send-email-vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+Cc: linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tuesday 16 February 2016 10:08:13 Vladimir Murzin wrote:
-> This patch adds a new config for MPS2 platform.
+On Tuesday 16 February 2016 10:08:14 Vladimir Murzin wrote:
+> +
+> +       ethernet@40200000 {
+> +               compatible = "smsc,lan9220", "smsc,lan9115";
+> +               reg = <0x40200000 0x10000>;
+> +               interrupts = <13>;
+> +               interrupt-parent = <&nvic>;
+> +               smsc,irq-active-high;
+> +       };
+> +};
+> +
 > 
-> Signed-off-by: Vladimir Murzin <vladimir.murzin@arm.com>
-> ---
->  arch/arm/configs/mps2_defconfig |  112 +++++++++++++++++++++++++++++++++++++++
->  1 file changed, 112 insertions(+)
->  create mode 100644 arch/arm/configs/mps2_defconfig
-> 
-> diff --git a/arch/arm/configs/mps2_defconfig b/arch/arm/configs/mps2_defconfig
-> new file mode 100644
-> index 0000000..c36c519
-> --- /dev/null
-> +++ b/arch/arm/configs/mps2_defconfig
-> @@ -0,0 +1,112 @@
-> +# CONFIG_USELIB is not set
-> +CONFIG_NO_HZ_IDLE=y
-> +CONFIG_HIGH_RES_TIMERS=y
-> +CONFIG_LOG_BUF_SHIFT=16
-> +CONFIG_CC_OPTIMIZE_FOR_SIZE=y
-> +# CONFIG_UID16 is not set
-> +# CONFIG_BASE_FULL is not set
-> +# CONFIG_FUTEX is not set
-> +# CONFIG_EPOLL is not set
-> +# CONFIG_SIGNALFD is not set
-> +# CONFIG_EVENTFD is not set
-> +# CONFIG_AIO is not set
-> +CONFIG_EMBEDDED=y
 
-Why CONFIG_EMBEDDED? You probably mean CONFIG_EXPERT, but then what do
-you need that for?
+This node seems slightly misplaced. Is there some external bus interface
+that this is connected to? The address suggests that it should be somewhere
+below the /soc node, and you probably want to list the external bus
+interface with a "ranges" property that identifies the addresses visibile
+there, and put the external chip under there.
 
 	Arnd
