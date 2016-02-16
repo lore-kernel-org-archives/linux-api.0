@@ -1,7 +1,7 @@
 From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: [PATCH v3 06/10] ARM: mps2: introduce MPS2 platform
-Date: Tue, 16 Feb 2016 10:08:11 +0000
-Message-ID: <1455617295-23736-7-git-send-email-vladimir.murzin@arm.com>
+Subject: [PATCH v3 08/10] ARM: configs: add MPS2 defconfig
+Date: Tue, 16 Feb 2016 10:08:13 +0000
+Message-ID: <1455617295-23736-9-git-send-email-vladimir.murzin@arm.com>
 References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com>
@@ -10,99 +10,131 @@ To: arnd@arndb.de, linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.le
 Cc: mark.rutland@arm.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, jslaby@suse.cz, robh+dt@kernel.org, andy.shevchenko@gmail.com, devicetree@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The Cortex-M Prototyping System (or V2M-MPS2) is designed for
-prototyping and evaluation Cortex-M family of processors including the
-latest Cortex-M7
-
-It comes with a range of useful peripherals including 8MB single cycle
-SRAM, 16MB PSRAM, Ethernet, QSVGA touch screen panel, 4bit RGB VGA
-connector, Audio, SPI and GPIO.
+This patch adds a new config for MPS2 platform.
 
 Signed-off-by: Vladimir Murzin <vladimir.murzin@arm.com>
 ---
- arch/arm/Kconfig                 |    8 ++++++++
- arch/arm/Makefile                |    1 +
- arch/arm/mach-mps2/Makefile      |    1 +
- arch/arm/mach-mps2/Makefile.boot |    3 +++
- arch/arm/mach-mps2/dtmachine.c   |   21 +++++++++++++++++++++
- 5 files changed, 34 insertions(+)
- create mode 100644 arch/arm/mach-mps2/Makefile
- create mode 100644 arch/arm/mach-mps2/Makefile.boot
- create mode 100644 arch/arm/mach-mps2/dtmachine.c
+ arch/arm/configs/mps2_defconfig |  112 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 112 insertions(+)
+ create mode 100644 arch/arm/configs/mps2_defconfig
 
-diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index 4f799e5..48fa6c4 100644
---- a/arch/arm/Kconfig
-+++ b/arch/arm/Kconfig
-@@ -883,6 +883,14 @@ config ARCH_STM32
- 	help
- 	  Support for STMicroelectronics STM32 processors.
- 
-+config ARCH_MPS2
-+	bool "ARM MPS2 paltform"
-+	depends on ARM_SINGLE_ARMV7M
-+	select ARM_AMBA
-+	select CLKSRC_MPS2
-+	help
-+	  Support for ARM MPS2 Cortex-M platform.
-+
- # Definitions to make life easier
- config ARCH_ACORN
- 	bool
-diff --git a/arch/arm/Makefile b/arch/arm/Makefile
-index fe25410..8cd9ec1 100644
---- a/arch/arm/Makefile
-+++ b/arch/arm/Makefile
-@@ -182,6 +182,7 @@ machine-$(CONFIG_ARCH_LPC18XX)		+= lpc18xx
- machine-$(CONFIG_ARCH_LPC32XX)		+= lpc32xx
- machine-$(CONFIG_ARCH_MESON)		+= meson
- machine-$(CONFIG_ARCH_MMP)		+= mmp
-+machine-$(CONFIG_ARCH_MPS2)		+= mps2
- machine-$(CONFIG_ARCH_MOXART)		+= moxart
- machine-$(CONFIG_ARCH_MV78XX0)		+= mv78xx0
- machine-$(CONFIG_ARCH_MVEBU)		+= mvebu
-diff --git a/arch/arm/mach-mps2/Makefile b/arch/arm/mach-mps2/Makefile
+diff --git a/arch/arm/configs/mps2_defconfig b/arch/arm/configs/mps2_defconfig
 new file mode 100644
-index 0000000..3a74af7
+index 0000000..c36c519
 --- /dev/null
-+++ b/arch/arm/mach-mps2/Makefile
-@@ -0,0 +1 @@
-+obj-y += dtmachine.o
-diff --git a/arch/arm/mach-mps2/Makefile.boot b/arch/arm/mach-mps2/Makefile.boot
-new file mode 100644
-index 0000000..eacfc3f
---- /dev/null
-+++ b/arch/arm/mach-mps2/Makefile.boot
-@@ -0,0 +1,3 @@
-+# Empty file waiting for deletion once Makefile.boot isn't needed any more.
-+# Patch waits for application at
-+# http://www.arm.linux.org.uk/developer/patches/viewpatch.php?id=7889/1 .
-diff --git a/arch/arm/mach-mps2/dtmachine.c b/arch/arm/mach-mps2/dtmachine.c
-new file mode 100644
-index 0000000..e7ad9c2
---- /dev/null
-+++ b/arch/arm/mach-mps2/dtmachine.c
-@@ -0,0 +1,21 @@
-+/*
-+ * Copyright (C) 2015 ARM Limited
-+ *
-+ * Author: Vladimir Murzin <vladimir.murzin@arm.com>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License version 2 as
-+ * published by the Free Software Foundation.
-+ *
-+ */
-+
-+#include <asm/mach/arch.h>
-+
-+static const char *const mps2_compat[] __initconst = {
-+	"arm,mps2",
-+	NULL
-+};
-+
-+DT_MACHINE_START(MPS2DT, "MPS2 (Device Tree Support)")
-+	.dt_compat = mps2_compat,
-+MACHINE_END
++++ b/arch/arm/configs/mps2_defconfig
+@@ -0,0 +1,112 @@
++# CONFIG_USELIB is not set
++CONFIG_NO_HZ_IDLE=y
++CONFIG_HIGH_RES_TIMERS=y
++CONFIG_LOG_BUF_SHIFT=16
++CONFIG_CC_OPTIMIZE_FOR_SIZE=y
++# CONFIG_UID16 is not set
++# CONFIG_BASE_FULL is not set
++# CONFIG_FUTEX is not set
++# CONFIG_EPOLL is not set
++# CONFIG_SIGNALFD is not set
++# CONFIG_EVENTFD is not set
++# CONFIG_AIO is not set
++CONFIG_EMBEDDED=y
++# CONFIG_VM_EVENT_COUNTERS is not set
++# CONFIG_SLUB_DEBUG is not set
++# CONFIG_BLOCK is not set
++# CONFIG_MMU is not set
++CONFIG_ARM_SINGLE_ARMV7M=y
++CONFIG_ARCH_MPS2=y
++CONFIG_SET_MEM_PARAM=y
++CONFIG_DRAM_BASE=0x21000000
++CONFIG_DRAM_SIZE=0x1000000
++CONFIG_PREEMPT_VOLUNTARY=y
++# CONFIG_ATAGS is not set
++CONFIG_ZBOOT_ROM_TEXT=0x0
++CONFIG_ZBOOT_ROM_BSS=0x0
++CONFIG_BINFMT_FLAT=y
++CONFIG_BINFMT_SHARED_FLAT=y
++# CONFIG_COREDUMP is not set
++# CONFIG_SUSPEND is not set
++CONFIG_NET=y
++CONFIG_PACKET=y
++CONFIG_UNIX=y
++CONFIG_INET=y
++CONFIG_IP_PNP=y
++CONFIG_IP_PNP_DHCP=y
++# CONFIG_INET_XFRM_MODE_TRANSPORT is not set
++# CONFIG_INET_XFRM_MODE_TUNNEL is not set
++# CONFIG_INET_XFRM_MODE_BEET is not set
++# CONFIG_INET_LRO is not set
++# CONFIG_INET_DIAG is not set
++# CONFIG_IPV6 is not set
++# CONFIG_WIRELESS is not set
++CONFIG_DEVTMPFS=y
++CONFIG_DEVTMPFS_MOUNT=y
++# CONFIG_FW_LOADER is not set
++CONFIG_NETDEVICES=y
++# CONFIG_NET_CORE is not set
++# CONFIG_NET_VENDOR_ARC is not set
++# CONFIG_NET_CADENCE is not set
++# CONFIG_NET_VENDOR_BROADCOM is not set
++# CONFIG_NET_VENDOR_CIRRUS is not set
++# CONFIG_NET_VENDOR_EZCHIP is not set
++# CONFIG_NET_VENDOR_FARADAY is not set
++# CONFIG_NET_VENDOR_HISILICON is not set
++# CONFIG_NET_VENDOR_INTEL is not set
++# CONFIG_NET_VENDOR_MARVELL is not set
++# CONFIG_NET_VENDOR_MICREL is not set
++# CONFIG_NET_VENDOR_NATSEMI is not set
++# CONFIG_NET_VENDOR_QUALCOMM is not set
++# CONFIG_NET_VENDOR_RENESAS is not set
++# CONFIG_NET_VENDOR_ROCKER is not set
++# CONFIG_NET_VENDOR_SAMSUNG is not set
++# CONFIG_NET_VENDOR_SEEQ is not set
++CONFIG_SMSC911X=y
++# CONFIG_NET_VENDOR_STMICRO is not set
++# CONFIG_NET_VENDOR_VIA is not set
++# CONFIG_NET_VENDOR_WIZNET is not set
++# CONFIG_WLAN is not set
++# CONFIG_INPUT is not set
++# CONFIG_SERIO is not set
++# CONFIG_VT is not set
++# CONFIG_LEGACY_PTYS is not set
++CONFIG_SERIAL_NONSTANDARD=y
++# CONFIG_DEVKMEM is not set
++CONFIG_SERIAL_MPS2_UART_CONSOLE=y
++CONFIG_SERIAL_MPS2_UART=y
++# CONFIG_HW_RANDOM is not set
++# CONFIG_HWMON is not set
++CONFIG_WATCHDOG=y
++CONFIG_ARM_SP805_WATCHDOG=y
++CONFIG_MFD_SYSCON=y
++# CONFIG_USB_SUPPORT is not set
++CONFIG_NEW_LEDS=y
++CONFIG_LEDS_CLASS=y
++CONFIG_LEDS_SYSCON=y
++CONFIG_LEDS_TRIGGERS=y
++CONFIG_LEDS_TRIGGER_TIMER=y
++CONFIG_LEDS_TRIGGER_ONESHOT=y
++CONFIG_LEDS_TRIGGER_HEARTBEAT=y
++CONFIG_LEDS_TRIGGER_BACKLIGHT=y
++CONFIG_LEDS_TRIGGER_CPU=y
++CONFIG_LEDS_TRIGGER_DEFAULT_ON=y
++CONFIG_ARM_TIMER_SP804=y
++# CONFIG_DNOTIFY is not set
++# CONFIG_INOTIFY_USER is not set
++# CONFIG_MISC_FILESYSTEMS is not set
++CONFIG_NFS_FS=y
++CONFIG_NFS_V4=y
++CONFIG_NFS_V4_1=y
++CONFIG_NFS_V4_2=y
++CONFIG_ROOT_NFS=y
++CONFIG_NLS=y
++CONFIG_PRINTK_TIME=y
++CONFIG_DEBUG_INFO=y
++# CONFIG_ENABLE_WARN_DEPRECATED is not set
++# CONFIG_ENABLE_MUST_CHECK is not set
++CONFIG_DEBUG_FS=y
++CONFIG_MAGIC_SYSRQ=y
++# CONFIG_SCHED_DEBUG is not set
++# CONFIG_DEBUG_BUGVERBOSE is not set
++CONFIG_MEMTEST=y
 -- 
 1.7.9.5
