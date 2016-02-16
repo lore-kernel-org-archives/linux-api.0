@@ -1,72 +1,65 @@
-From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: Re: [PATCH v3 04/10] serial: mps2-uart: add MPS2 UART driver
-Date: Tue, 16 Feb 2016 15:09:58 +0000
-Message-ID: <56C33BC6.1040801@arm.com>
-References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com> <1455617295-23736-5-git-send-email-vladimir.murzin@arm.com> <20160216110217.3de7c007@lxorguk.ukuu.org.uk>
+From: =?UTF-8?Q?Jo=C3=A3o_Paulo_Rechi_Vita?= <jprvita@gmail.com>
+Subject: Re: [PATCH 8/9] rfkill: Userspace control for airplane mode
+Date: Tue, 16 Feb 2016 10:12:45 -0500
+Message-ID: <CA+A7VXWuMfGpLCyv+veq1GxMzZe+P1F99470KT7B_Q3+6v9fdQ@mail.gmail.com>
+References: <1454946096-9752-1-git-send-email-jprvita@endlessm.com>
+ <1454946096-9752-9-git-send-email-jprvita@endlessm.com> <1454947887.5325.8.camel@redhat.com>
+ <1455120444.4991.1.camel@sipsolutions.net> <1455123205.19821.34.camel@redhat.com>
+ <ec4b7edcda0a62cd4e36e501f5ad56f9@sipsolutions.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160216110217.3de7c007@lxorguk.ukuu.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
-Cc: mark.rutland@arm.com, devicetree@vger.kernel.org, linux@arm.linux.org.uk, pawel.moll@arm.com, arnd@arndb.de, ijc+devicetree@hellion.org.uk, gregkh@linuxfoundation.org, daniel.lezcano@linaro.org, linux-kernel@vger.kernel.org, robh+dt@kernel.org, andy.shevchenko@gmail.com, galak@codeaurora.org, linux-serial@vger.kernel.org, u.kleine-koenig@pengutronix.de, tglx@linutronix.de, linux-api@vger.kernel.org, jslaby@suse.cz, linux-arm-kernel@lists.infradead.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <ec4b7edcda0a62cd4e36e501f5ad56f9@sipsolutions.net>
+Sender: linux-doc-owner@vger.kernel.org
+To: Johannes Berg <johannes@sipsolutions.net>
+Cc: Dan Williams <dcbw@redhat.com>, "David S. Miller" <davem@davemloft.net>, Darren Hart <dvhart@infradead.org>, linux-wireless <linux-wireless@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, platform-driver-x86@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux@endlessm.com, =?UTF-8?Q?Jo=C3=A3o_Paulo_Rechi_Vita?= <jprvita@endlessm.com>
 List-Id: linux-api@vger.kernel.org
 
-On 16/02/16 11:02, One Thousand Gnomes wrote:
-> 
->> +static void mps2_uart_set_termios(struct uart_port *port,
->> +	struct ktermios *new, struct ktermios *old)
-> 
-> Not that I care much but you might not want to call it "new". People get
-> upset when their syntax aware editors get confused by C++ keywords 8)
+On 10 February 2016 at 12:12, Johannes Berg <johannes@sipsolutions.net>=
+ wrote:
+> On 2016-02-10 17:53, Dan Williams wrote:
+>>
+>> Yeah, I get that now.  It's just that to me, something called
+>> "AIRPLANE_MODE_CHANGE" seems like it should actually change airplane
+>> mode on/off, which implies killing radios.  I wouldn't have had the
+>> problem if it was named AIRPLANE_MODE_INDICATOR_CHANGE, which makes =
+it
+>> clear this is simply an indicator and has no actual effect on anythi=
+ng
+>> other than a LED.
+>
 
-Just renamed it to have cpp suffix and looks like my editor falls under
-that category :)
+I also agree the AIRPLANE_MODE_INDICATOR_* prefix makes things more
+clear here. Thanks for the feedback, Dan!
 
-> 
->> +{
->> +	unsigned long flags;
->> +	unsigned int baud, bauddiv;
->> +
->> +	new->c_cflag &= ~(CRTSCTS | CMSPAR);
->> +	new->c_cflag &= ~CSIZE;
->> +	new->c_cflag |= CS8;
->> +	new->c_cflag &= ~PARENB;
->> +	new->c_cflag &= ~CSTOPB;
->> +
->> +	baud = uart_get_baud_rate(port, new, old,
->> +			DIV_ROUND_CLOSEST(port->uartclk, UARTn_BAUDDIV_MASK),
->> +			DIV_ROUND_CLOSEST(port->uartclk, 16));
->> +
->> +	bauddiv = DIV_ROUND_CLOSEST(port->uartclk, baud);
->> +
->> +	spin_lock_irqsave(&port->lock, flags);
->> +
->> +	uart_update_timeout(port, new->c_cflag, baud);
->> +	mps2_uart_write32(port, bauddiv, UARTn_BAUDDIV);
-> 
-> This should also set the baud bits back in the termios struct
-> accordingly. 
-> 
-> 	if (tty_termios_baud_rate(new))
-> 		tty_termios_encode_baud_rate(new, baud, baud);
-> 
-> 
-> Not a big deal and could certainly be a follow up patch after it's merged.
+>
+> Yeah, I agree. I'm not even sure that it's a good idea to subsume thi=
+s into
+> the regular operations in the API, although that's obviously the easi=
+est
+> extension. I'll need to think about that a bit more with the code at =
+hand
+> though.
+>
 
-I'll fold it in the next version.
+Initially I have thought about creating and additional RFKill switch
+for that, but I think it would be a bit hackish since we would have to
+treat it specially in sysfs attributes and probably other places, and
+userspace would also need a special case when going through the list
+of RFKill switches in the system. The proposed solution has equivalent
+semantics to an RFKill switch, is backward-compatible (users would
+only ignore the unknown operations and evens -- although gsd has a
+"default:" case to abort execution on an unknown event) and does not
+extend the RFKill event struct.
 
-Thanks
-Vladimir
+One alternative would be to move the control point to a separate
+device, like /dev/rfkill-airplane-mode, but I'm not sure this is a
+very elegant approach. Anyway, I'm open to work on changes to the API,
+but it would be great if you could at least pick or reject the
+non-polemical patches of the series, so I don't need to carry them
+anymore.
 
-> 
-> Alan
-> 
-> _______________________________________________
-> linux-arm-kernel mailing list
-> linux-arm-kernel@lists.infradead.org
-> http://lists.infradead.org/mailman/listinfo/linux-arm-kernel
-> 
-> 
-> 
+--
+Jo=C3=A3o Paulo Rechi Vita
+http://about.me/jprvita
