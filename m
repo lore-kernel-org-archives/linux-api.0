@@ -1,87 +1,101 @@
 From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: [PATCH v3 05/10] serial: mps2-uart: add support for early console
-Date: Tue, 16 Feb 2016 10:08:10 +0000
-Message-ID: <1455617295-23736-6-git-send-email-vladimir.murzin@arm.com>
+Subject: [PATCH v3 07/10] ARM: mps2: add low-level debug support
+Date: Tue, 16 Feb 2016 10:08:12 +0000
+Message-ID: <1455617295-23736-8-git-send-email-vladimir.murzin@arm.com>
 References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: arnd@arndb.de, linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.lezcano@linaro.org, tglx@linutronix.de, u.kleine-koenig@pengutronix.de
-Cc: mark.rutland@arm.com, devicetree@vger.kernel.org, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, andy.shevchenko@gmail.com, robh+dt@kernel.org, linux-serial@vger.kernel.org, galak@codeaurora.org, jslaby@suse.cz, linux-arm-kernel@lists.infradead.org
+Cc: mark.rutland@arm.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, jslaby@suse.cz, robh+dt@kernel.org, andy.shevchenko@gmail.com, devicetree@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This adds support early console for MPS2 UART which can be enabled via
-earlycon=mps2,0x40004000
+Add low-level debug support for MPS2, so that earlyprintk can be enabled
+for debugging early boot issues.
 
 Signed-off-by: Vladimir Murzin <vladimir.murzin@arm.com>
 ---
- drivers/tty/serial/Kconfig     |    1 +
- drivers/tty/serial/mps2-uart.c |   30 ++++++++++++++++++++++++++++++
- 2 files changed, 31 insertions(+)
+ arch/arm/Kconfig.debug        |   12 +++++++++++-
+ arch/arm/include/debug/mps2.S |   27 +++++++++++++++++++++++++++
+ 2 files changed, 38 insertions(+), 1 deletion(-)
+ create mode 100644 arch/arm/include/debug/mps2.S
 
-diff --git a/drivers/tty/serial/Kconfig b/drivers/tty/serial/Kconfig
-index 3a248be..4ed6e51 100644
---- a/drivers/tty/serial/Kconfig
-+++ b/drivers/tty/serial/Kconfig
-@@ -1454,6 +1454,7 @@ config SERIAL_MPS2_UART_CONSOLE
- 	bool "MPS2 UART console support"
- 	depends on SERIAL_MPS2_UART
- 	select SERIAL_CORE_CONSOLE
-+	select SERIAL_EARLYCON
+diff --git a/arch/arm/Kconfig.debug b/arch/arm/Kconfig.debug
+index c6b6175..fcd2e15 100644
+--- a/arch/arm/Kconfig.debug
++++ b/arch/arm/Kconfig.debug
+@@ -485,6 +485,13 @@ choice
+ 		  Say Y here if you want kernel low-level debugging support
+ 		  on MMP UART3.
  
- config SERIAL_MPS2_UART
- 	bool "MPS2 UART port"
-diff --git a/drivers/tty/serial/mps2-uart.c b/drivers/tty/serial/mps2-uart.c
-index d97f3a9..f3a3bd1 100644
---- a/drivers/tty/serial/mps2-uart.c
-+++ b/drivers/tty/serial/mps2-uart.c
-@@ -435,6 +435,36 @@ static struct console mps2_uart_console = {
++	config DEBUG_MPS2_UART
++		bool "Kernel low-level debugging message via MPS2 UART0"
++		depends on ARCH_MPS2
++		help
++		  Say Y here if you want kernel low-level debugging support
++		  on MPS2 based platforms.
++
+ 	config DEBUG_MVEBU_UART0
+ 		bool "Kernel low-level debugging messages via MVEBU UART0 (old bootloaders)"
+ 		depends on ARCH_MVEBU
+@@ -1415,6 +1422,7 @@ config DEBUG_LL_INCLUDE
+ 	default "debug/zynq.S" if DEBUG_ZYNQ_UART0 || DEBUG_ZYNQ_UART1
+ 	default "debug/bcm63xx.S" if DEBUG_BCM63XX_UART
+ 	default "debug/digicolor.S" if DEBUG_DIGICOLOR_UA0
++	default "debug/mps2.S" if DEBUG_MPS2_UART
+ 	default "mach/debug-macro.S"
  
- #define MPS2_SERIAL_CONSOLE (&mps2_uart_console)
+ # Compatibility options for PL01x
+@@ -1463,6 +1471,7 @@ config DEBUG_UART_PHYS
+ 	default 0x20201000 if DEBUG_BCM2835
+ 	default 0x3f201000 if DEBUG_BCM2836
+ 	default 0x3e000000 if DEBUG_BCM_KONA_UART
++	default 0x40004000 if DEBUG_MPS2_UART
+ 	default 0x4000e400 if DEBUG_LL_UART_EFM32
+ 	default 0x40081000 if DEBUG_LPC18XX_UART0
+ 	default 0x40090000 if DEBUG_LPC32XX
+@@ -1539,7 +1548,8 @@ config DEBUG_UART_PHYS
+ 		DEBUG_S3C64XX_UART || \
+ 		DEBUG_BCM63XX_UART || DEBUG_ASM9260_UART || \
+ 		DEBUG_SIRFSOC_UART || DEBUG_DIGICOLOR_UA0 || \
+-		DEBUG_AT91_UART
++		DEBUG_AT91_UART || \
++		DEBUG_MPS2_UART
  
-+static void mps2_early_putchar(struct uart_port *port, int ch)
-+{
+ config DEBUG_UART_VIRT
+ 	hex "Virtual base address of debug UART"
+diff --git a/arch/arm/include/debug/mps2.S b/arch/arm/include/debug/mps2.S
+new file mode 100644
+index 0000000..0ced0ce
+--- /dev/null
++++ b/arch/arm/include/debug/mps2.S
+@@ -0,0 +1,27 @@
++/*
++ * Copyright (C) 2015 ARM Limited
++ *
++ * Author: Vladimir Murzin <vladimir.murzin@arm.com>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ */
 +
-+	while (readb(port->membase + UARTn_STATE) & UARTn_STATE_TX_FULL)
-+		cpu_relax();
++	.macro	addruart, rp, tmp1, tmp2
++	ldr	\rp, =CONFIG_DEBUG_UART_PHYS
++	.endm
 +
-+	writeb((unsigned char)ch, port->membase + UARTn_DATA);
-+}
++	.macro	senduart, rd, rx
++	strb	\rd, [\rx]		@ Data Register
++	.endm
 +
++	.macro	busyuart, rd, rx
++1001:	ldrb	\rd, [\rx, #0x4]	@ State Register
++	tst	\rd, #1			@ busy
++	bne	1001b			@ wait until transmit done
++	.endm
 +
-+static void mps2_early_write(struct console *con, const char *s, unsigned n)
-+{
-+	struct earlycon_device *dev = con->data;
-+
-+	uart_console_write(&dev->port, s, n, mps2_early_putchar);
-+}
-+
-+static int __init mps2_early_console_setup(struct earlycon_device *device,
-+					   const char *opt)
-+{
-+	if (!device->port.membase)
-+		return -ENODEV;
-+
-+	device->con->write = mps2_early_write;
-+
-+	return 0;
-+}
-+EARLYCON_DECLARE(mps2, mps2_early_console_setup);
-+OF_EARLYCON_DECLARE(mps2, "arm,mps2-uart", mps2_early_console_setup);
-+
- #else
- #define MPS2_SERIAL_CONSOLE NULL
- #endif
++	.macro	waituart,rd,rx
++	.endm
 -- 
 1.7.9.5
