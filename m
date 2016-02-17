@@ -1,89 +1,240 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH v3 09/10] ARM: dts: introduce MPS2 AN385/AN386
-Date: Wed, 17 Feb 2016 17:58:09 +0100
-Message-ID: <7272921.u1gphgWzUn@wuerfel>
-References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com> <56C349E6.2000002@arm.com> <56C4A46C.50506@arm.com>
+From: Shaohua Li <shli@fb.com>
+Subject: Re: [PATCH V4][for-next]mm: add a new vector based madvise syscall
+Date: Wed, 17 Feb 2016 09:47:07 -0800
+Message-ID: <20160217174654.GA3505386@devbig084.prn1.facebook.com>
+References: <d01698140a51cf9b2ce233c7574c2ece9f6fa241.1449791762.git.shli@fb.com>
+ <20160216160802.50ceaf10aa16588e18b3d2c5@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <56C4A46C.50506-5wv7dgnIgG8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
-Cc: mark.rutland-5wv7dgnIgG8@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Content-Type: multipart/mixed; boundary="4bRzO86E/ozDv8r1"
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20160216160802.50ceaf10aa16588e18b3d2c5@linux-foundation.org>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-mm@kvack.org, linux-api@vger.kernel.org, Kernel-team@fb.com, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Andrea Arcangeli <aarcange@redhat.com>, Andi Kleen <andi@firstfloor.org>, Minchan Kim <minchan@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Jason Evans <je@fb.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wednesday 17 February 2016 16:48:44 Vladimir Murzin wrote:
-> On 16/02/16 16:10, Vladimir Murzin wrote:
-> > On 16/02/16 11:01, Arnd Bergmann wrote:
-> >> On Tuesday 16 February 2016 10:08:14 Vladimir Murzin wrote:
-> >>> +
-> >>> +       ethernet@40200000 {
-> >>> +               compatible = "smsc,lan9220", "smsc,lan9115";
-> >>> +               reg = <0x40200000 0x10000>;
-> >>> +               interrupts = <13>;
-> >>> +               interrupt-parent = <&nvic>;
-> >>> +               smsc,irq-active-high;
-> >>> +       };
-> >>> +};
-> >>> +
-> >>>
-> >>
-> >> This node seems slightly misplaced. Is there some external bus interface
-> >> that this is connected to? The address suggests that it should be somewhere
-> >> below the /soc node, and you probably want to list the external bus
-> >> interface with a "ranges" property that identifies the addresses visibile
-> >> there, and put the external chip under there.
-> >>
-> > 
-> > I might messed it up since the MAC/PHY connects to the same 16-bit
-> > interface as the 16MB PSRAM external memory and both connected via AHB.
-> > 
-> > Not sure how it should be expressed, so some help form DT camp would be
-> > appreciated.
+--4bRzO86E/ozDv8r1
+Content-Type: text/plain; charset="us-ascii"
+Content-Disposition: inline
+
+On Tue, Feb 16, 2016 at 04:08:02PM -0800, Andrew Morton wrote:
+> On Thu, 10 Dec 2015 16:03:37 -0800 Shaohua Li <shli@fb.com> wrote:
 > 
-> Does following fixup address your point on where/how ethernet node
-> should be placed?
-
-
-
-> diff --git a/arch/arm/boot/dts/mps2-an385.dts b/arch/arm/boot/dts/an385.dts
-> index 976f86d..50c8d24 100644
-> --- a/arch/arm/boot/dts/mps2-an385.dts
-> +++ b/arch/arm/boot/dts/mps2-an385.dts
-> @@ -63,14 +63,10 @@
->  		device_type = "memory";
->  		reg = <0x21000000 0x1000000>;
->  	};
-> +};
+> > In jemalloc, a free(3) doesn't immediately free the memory to OS even
+> > the memory is page aligned/size, and hope the memory can be reused soon.
+> > Later the virtual address becomes fragmented, and more and more free
+> > memory are aggregated. If the free memory size is large, jemalloc uses
+> > madvise(DONT_NEED) to actually free the memory back to OS.
+> > 
+> > The madvise has significantly overhead paritcularly because of TLB
+> > flush. jemalloc does madvise for several virtual address space ranges
+> > one time. Instead of calling madvise for each of the ranges, we
+> > introduce a new syscall to purge memory for several ranges one time. In
+> > this way, we can merge several TLB flush for the ranges to one big TLB
+> > flush. This also reduce mmap_sem locking and kernel/userspace switching.
+> > 
+> > I'm running a simple memory allocation benchmark. 32 threads do random
+> > malloc/free/realloc.
 > 
-> -	ethernet@40200000 {
-> -		compatible = "smsc,lan9220", "smsc,lan9115";
-> -		reg = <0x40200000 0x10000>;
-> -		interrupts = <13>;
-> -		interrupt-parent = <&nvic>;
-> -		smsc,irq-active-high;
-> -	};
-> +&mb {
-> +	ranges = <0 0x40200000 0x10000>;
->  };
+> CPU count?  (Does that matter much?)
 
-How is the range being set here? The way I read this is:
+32. It does. the tlb flush overhead depends on the cpu count. 
+> > Corresponding jemalloc patch to utilize this API is
+> > attached.
+> 
+> No it isn't ;)
 
-"There is an external bus controller whose single CPU physical
-address for MMIO is configurable. The chip always connects
-a lan9220 device to it (as that is in the dtsi file) and
-nothing else is possible, and the bootloader in this
-version of the machine has configured the window to be
-at address 0x40200000."
+Sorry, I attached it in first post, but not this one. Attached is the
+one I tested against this patch.
 
-Is that what the hardware does?
+> Who maintains jemalloc?  Are they signed up to actually apply the
+> patch?  It would be bad to add the patch to the kernel and then find
+> that the jemalloc maintainers choose not to use it!
 
-I would have expected the opposite, with the external bus
-interface being hardwired to one or more physical addresses
-(more than one if you have multiple chip-selects), and
-then allow to connect different devices, which are in the
-.dts file, while the bus controller is defined in the
-.dtsi file.
+Jason Evans (cced) is the author of jemalloc. I talked to him before, he
+is very positive to this new syscall.
 
-	Arnd
+> > Without patch:
+> > real    0m18.923s
+> > user    1m11.819s
+> > sys     7m44.626s
+> > each cpu gets around 3000K/s TLB flush interrupt. Perf shows TLB flush
+> > is hotest functions. mmap_sem read locking (because of page fault) is
+> > also heavy.
+> > 
+> > with patch:
+> > real    0m15.026s
+> > user    0m48.548s
+> > sys     6m41.153s
+> > each cpu gets around 140k/s TLB flush interrupt. TLB flush isn't hot at
+> > all. mmap_sem read locking (still because of page fault) becomes the
+> > sole hot spot.
+> 
+> This is a somewhat underwhelming improvement, given that it's a
+> synthetic microbenchmark.
+
+Yes, this test does malloc, free, calloc, realloc, so it doesn't only
+benchmark the madvisev.
+> > Another test malloc a bunch of memory in 48 threads, then all threads
+> > free the memory. I measure the time of the memory free.
+> > Without patch: 34.332s
+> > With patch:    17.429s
+> 
+> This is more whelming.
+> 
+> Do we have a feel for how much benefit this patch will have for
+> real-world workloads?  That's pretty important.
+
+Sure, we'll post some real-world data.
+> > MADV_FREE does the same TLB flush as MADV_NEED, this also applies to
+> 
+> I'll do s/MADV_NEED/MADV_DONTNEED/
+> 
+> > MADV_FREE. Other madvise type can have small benefits too, like reduce
+> > syscalls/mmap_sem locking.
+> 
+> Could we please get a testcase for the syscall(s) into
+> tools/testing/selftests/vm?  For long-term maintenance reasons and as a
+> service to arch maintainers - make it easy for them to check the
+> functionality without having to roll their own (possibly incomplete)
+> test app.
+> 
+> I'm not sure *how* we'd develop a test case.  Use mincore()?
+
+Ok, I'll add this later.
+> > --- a/mm/madvise.c
+> > +++ b/mm/madvise.c
+> > @@ -21,7 +21,10 @@
+> >  #include <linux/swap.h>
+> >  #include <linux/swapops.h>
+> >  #include <linux/mmu_notifier.h>
+> > -
+> > +#include <linux/uio.h>
+> > +#ifdef CONFIG_COMPAT
+> > +#include <linux/compat.h>
+> > +#endif
+> 
+> I'll nuke the ifdefs - compat.h already does that.
+> 
+> 
+> It would be good for us to have a look at the manpage before going too
+> far with the patch - this helps reviewers to think about the proposed
+> interface and behaviour.
+> 
+> I'll queue this up for a bit of testing, although it won't get tested
+> much.  The syscall fuzzers will presumably hit on it.
+
+Thanks!
+
+--4bRzO86E/ozDv8r1
+Content-Type: text/plain; charset="us-ascii"
+Content-Disposition: attachment; filename="je.patch"
+
+diff --git a/src/arena.c b/src/arena.c
+index 43733cc..5c1a3b3 100644
+--- a/src/arena.c
++++ b/src/arena.c
+@@ -1266,6 +1266,7 @@ arena_dirty_count(arena_t *arena)
+ 	return (ndirty);
+ }
+ 
++#define PURGE_VEC 1
+ static size_t
+ arena_compute_npurge(arena_t *arena, bool all)
+ {
+@@ -1280,6 +1281,10 @@ arena_compute_npurge(arena_t *arena, bool all)
+ 		threshold = threshold < chunk_npages ? chunk_npages : threshold;
+ 
+ 		npurge = arena->ndirty - threshold;
++#if PURGE_VEC
++		if (npurge < arena->ndirty / 2)
++			npurge = arena->ndirty / 2;
++#endif
+ 	} else
+ 		npurge = arena->ndirty;
+ 
+@@ -1366,6 +1371,31 @@ arena_stash_dirty(arena_t *arena, chunk_hooks_t *chunk_hooks, bool all,
+ 	return (nstashed);
+ }
+ 
++#if PURGE_VEC
++int mycomp(const void *a, const void *b)
++{
++	unsigned long a_b = (unsigned long)((struct iovec *)a)->iov_base;
++	unsigned long b_b = (unsigned long)((struct iovec *)b)->iov_base;
++
++	if (a_b < b_b)
++		return -1;
++	if (a_b > b_b)
++		return 1;
++	return 0;
++}
++
++#define MAX_IOVEC 32
++bool pages_purge_vec(struct iovec *iov, unsigned long nr_segs)
++{
++	int ret;
++
++	qsort(iov, nr_segs, sizeof(struct iovec), mycomp);
++	ret = syscall(327, iov, nr_segs, MADV_DONTNEED);
++
++	return !!ret;
++}
++#endif
++
+ static size_t
+ arena_purge_stashed(arena_t *arena, chunk_hooks_t *chunk_hooks,
+     arena_runs_dirty_link_t *purge_runs_sentinel,
+@@ -1374,6 +1404,10 @@ arena_purge_stashed(arena_t *arena, chunk_hooks_t *chunk_hooks,
+ 	size_t npurged, nmadvise;
+ 	arena_runs_dirty_link_t *rdelm;
+ 	extent_node_t *chunkselm;
++#if PURGE_VEC
++	struct iovec iovec[MAX_IOVEC];
++	int vec_index = 0;
++#endif
+ 
+ 	if (config_stats)
+ 		nmadvise = 0;
+@@ -1418,9 +1452,21 @@ arena_purge_stashed(arena_t *arena, chunk_hooks_t *chunk_hooks,
+ 				flag_unzeroed = 0;
+ 				flags = CHUNK_MAP_DECOMMITTED;
+ 			} else {
++#if !PURGE_VEC
+ 				flag_unzeroed = chunk_purge_wrapper(arena,
+ 				    chunk_hooks, chunk, chunksize, pageind <<
+ 				    LG_PAGE, run_size) ? CHUNK_MAP_UNZEROED : 0;
++#else
++				flag_unzeroed = 0;
++				iovec[vec_index].iov_base = (void *)((uintptr_t)chunk +
++					(pageind << LG_PAGE));
++				iovec[vec_index].iov_len = run_size;
++				vec_index++;
++				if (vec_index >= MAX_IOVEC) {
++					pages_purge_vec(iovec, vec_index);
++					vec_index = 0;
++				}
++#endif
+ 				flags = flag_unzeroed;
+ 			}
+ 			arena_mapbits_large_set(chunk, pageind+npages-1, 0,
+@@ -1449,6 +1495,10 @@ arena_purge_stashed(arena_t *arena, chunk_hooks_t *chunk_hooks,
+ 		if (config_stats)
+ 			nmadvise++;
+ 	}
++#if PURGE_VEC
++	if (vec_index > 0)
++		pages_purge_vec(iovec, vec_index);
++#endif
+ 	malloc_mutex_lock(&arena->lock);
+ 
+ 	if (config_stats) {
+
+--4bRzO86E/ozDv8r1--
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
