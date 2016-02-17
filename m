@@ -1,109 +1,793 @@
-From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [PATCH V4][for-next]mm: add a new vector based madvise syscall
-Date: Tue, 16 Feb 2016 16:08:02 -0800
-Message-ID: <20160216160802.50ceaf10aa16588e18b3d2c5@linux-foundation.org>
-References: <d01698140a51cf9b2ce233c7574c2ece9f6fa241.1449791762.git.shli@fb.com>
+From: Chunyan Zhang <zhang.chunyan@linaro.org>
+Subject: Re: [PATCH V3 6/6] coresight-stm: adding driver for CoreSight STM component
+Date: Wed, 17 Feb 2016 11:18:50 +0800
+Message-ID: <CAG2=9p9-c5z6yXm6VDkDeqZmpFGt3z88ccNQxZTwia=dm3_GNQ@mail.gmail.com>
+References: <1454756672-12790-1-git-send-email-zhang.chunyan@linaro.org>
+	<1454756672-12790-7-git-send-email-zhang.chunyan@linaro.org>
+	<CANLsYkxvLFu1C+_H9c0EoMebLQu1gnwt9bqY6_R3j+ua2w+xMg@mail.gmail.com>
+	<VI1PR08MB06708C5EA9DEE2D71C13FFAA8AA90@VI1PR08MB0670.eurprd08.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <d01698140a51cf9b2ce233c7574c2ece9f6fa241.1449791762.git.shli-b10kYP2dOMg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shaohua Li <shli-b10kYP2dOMg@public.gmane.org>
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kernel-team-b10kYP2dOMg@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <VI1PR08MB06708C5EA9DEE2D71C13FFAA8AA90@VI1PR08MB0670.eurprd08.prod.outlook.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Michael Williams <Michael.Williams@arm.com>
+Cc: Mathieu Poirier <mathieu.poirier@linaro.org>, Alexander Shishkin <alexander.shishkin@linux.intel.com>, Mike Leach <Mike.Leach@arm.com>, Al Grant <Al.Grant@arm.com>, "Jeremiassen, Tor" <tor@ti.com>, Nicolas GUION <nicolas.guion@st.com>, Mark Brown <broonie@kernel.org>, Rob Herring <robh@kernel.org>, Pratik Patel <pratikp@codeaurora.org>, Jon Corbet <corbet@lwn.net>, Mark Rutland <Mark.Rutland@arm.com>, Lyra Zhang <zhang.lyra@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 10 Dec 2015 16:03:37 -0800 Shaohua Li <shli-b10kYP2dOMg@public.gmane.org> wrote:
+Hi Michael,
 
-> In jemalloc, a free(3) doesn't immediately free the memory to OS even
-> the memory is page aligned/size, and hope the memory can be reused soon.
-> Later the virtual address becomes fragmented, and more and more free
-> memory are aggregated. If the free memory size is large, jemalloc uses
-> madvise(DONT_NEED) to actually free the memory back to OS.
-> 
-> The madvise has significantly overhead paritcularly because of TLB
-> flush. jemalloc does madvise for several virtual address space ranges
-> one time. Instead of calling madvise for each of the ranges, we
-> introduce a new syscall to purge memory for several ranges one time. In
-> this way, we can merge several TLB flush for the ranges to one big TLB
-> flush. This also reduce mmap_sem locking and kernel/userspace switching.
-> 
-> I'm running a simple memory allocation benchmark. 32 threads do random
-> malloc/free/realloc.
+One question below need to be clarified.
 
-CPU count?  (Does that matter much?)
+On Fri, Feb 12, 2016 at 10:55 PM, Michael Williams
+<Michael.Williams@arm.com> wrote:
+> Mathieu Poirier [mailto:mathieu.poirier@linaro.org] wrote:
+>> On 6 February 2016 at 04:04, Chunyan Zhang <zhang.chunyan@linaro.org> wrote:
+>>> From: Pratik Patel <pratikp@codeaurora.org>
+>>>
+>>> This driver adds support for the STM CoreSight IP block, allowing any
+>>> system compoment (HW or SW) to log and aggregate messages via a
+>>> single entity.
+>>>
+>>> The CoreSight STM exposes an application defined number of channels
+>>> called stimulus port.  Configuration is done using entries in sysfs
+>>> and channels made available to userspace via configfs.
+>>>
+>>> Signed-off-by: Pratik Patel <pratikp@codeaurora.org>
+>>> Signed-off-by: Mathieu Poirier <mathieu.poirier@linaro.org>
+>>> Signed-off-by: Chunyan Zhang <zhang.chunyan@linaro.org>
+>>> ---
+>>>  .../ABI/testing/sysfs-bus-coresight-devices-stm    |  53 ++
+>>>  Documentation/trace/coresight.txt                  |  37 +-
+>>>  drivers/hwtracing/coresight/Kconfig                |  11 +
+>>>  drivers/hwtracing/coresight/Makefile               |   1 +
+>>>  drivers/hwtracing/coresight/coresight-stm.c        | 928 +++++++++++++++++++++
+>>>  include/linux/coresight-stm.h                      |   6 +
+>>>  include/uapi/linux/coresight-stm.h                 |  12 +
+>>>  7 files changed, 1046 insertions(+), 2 deletions(-)
+>>>  create mode 100644 Documentation/ABI/testing/sysfs-bus-coresight-devices-stm
+>>>  create mode 100644 drivers/hwtracing/coresight/coresight-stm.c
+>>>  create mode 100644 include/linux/coresight-stm.h
+>>>  create mode 100644 include/uapi/linux/coresight-stm.h
+>>>
 
-> Corresponding jemalloc patch to utilize this API is
-> attached.
+[...]
 
-No it isn't ;)
+>>> +static int stm_send(void *addr, const void *data, u32 size, u8 max)
+>>> +{
+>>> +       u32 len = size;
+>>> +       u8 paload[8];
+>>> +
+>>> +       if (stm_addr_unaligned(data, max)) {
+>>> +               memcpy(paload, data, size);
+>>> +               data = paload;
+>>> +       }
+>>> +
+>>> +       /* now we are 64bit/32bit aligned */
+>>> +#ifdef CONFIG_64BIT
+>>> +       if (size == 8)
+>>> +               writeq_relaxed(*(u64 *)data, addr);
+>>> +#endif
+>>
+>> We probably don't need an #ifdef here.  Checking the size of the
+>> transfer against the fundamental data size will result in the same
+>> outcome, i.e preventing 64 bit transfers on a 32 bit architecture.  An
+>> error (understandable by the caller) should probably be returned in
+>> this case.
+>
+> In theory this is correct, but if the code is unreachable for non-32-bit architectures, why include it at all?
 
-Who maintains jemalloc?  Are they signed up to actually apply the
-patch?  It would be bad to add the patch to the kernel and then find
-that the jemalloc maintainers choose not to use it!
+                            ^^^^^^^
+I guess you mean the code is unreachable for "non-64-bit" architectures?
 
-> Without patch:
-> real    0m18.923s
-> user    1m11.819s
-> sys     7m44.626s
-> each cpu gets around 3000K/s TLB flush interrupt. Perf shows TLB flush
-> is hotest functions. mmap_sem read locking (because of page fault) is
-> also heavy.
-> 
-> with patch:
-> real    0m15.026s
-> user    0m48.548s
-> sys     6m41.153s
-> each cpu gets around 140k/s TLB flush interrupt. TLB flush isn't hot at
-> all. mmap_sem read locking (still because of page fault) becomes the
-> sole hot spot.
+>
+>>> +       if (size >= 4) {
+>>> +               writel_relaxed(*(u32 *)data, addr);
+>>> +               data += 4;
+>>> +               size -= 4;
+>>> +       }
+>>> +
+>>> +       if (size >= 2) {
+>>> +               writew_relaxed(*(u16 *)data, addr);
+>>> +               data += 2;
+>>> +               size -= 2;
+>>> +       }
+>>> +
+>>> +       if (size == 1)
+>>> +               writeb_relaxed(*(u8 *)data, addr);
+>>> +
+>>> +       return len;
+>>> +}
+>
+> The API for stm_data::packet (include/linux/stm.h) is not wholly clearly defined, but it does state "sends an STP packet," which I interpret as meaning exactly one packet and no more. This function (which is called from this module's implementation of stm_data::packet) will send multiple STP packets if called with a value that is not exactly 8, 4, 2, or 1.
 
-This is a somewhat underwhelming improvement, given that it's a
-synthetic microbenchmark.
+Yes, understand. Since the only first packet in one STM trace should
+be marked timestamp, others should not be(their timestamps are same),
+the function "stm_send" should indeed send one STP packet at a time.
 
-> Another test malloc a bunch of memory in 48 threads, then all threads
-> free the memory. I measure the time of the memory free.
-> Without patch: 34.332s
-> With patch:    17.429s
+I will address this in the next version.
 
-This is more whelming.
+Thanks for your time,
+Chunyan
 
-Do we have a feel for how much benefit this patch will have for
-real-world workloads?  That's pretty important.
-
-> MADV_FREE does the same TLB flush as MADV_NEED, this also applies to
-
-I'll do s/MADV_NEED/MADV_DONTNEED/
-
-> MADV_FREE. Other madvise type can have small benefits too, like reduce
-> syscalls/mmap_sem locking.
-
-Could we please get a testcase for the syscall(s) into
-tools/testing/selftests/vm?  For long-term maintenance reasons and as a
-service to arch maintainers - make it easy for them to check the
-functionality without having to roll their own (possibly incomplete)
-test app.
-
-I'm not sure *how* we'd develop a test case.  Use mincore()?
-
-> --- a/mm/madvise.c
-> +++ b/mm/madvise.c
-> @@ -21,7 +21,10 @@
->  #include <linux/swap.h>
->  #include <linux/swapops.h>
->  #include <linux/mmu_notifier.h>
-> -
-> +#include <linux/uio.h>
-> +#ifdef CONFIG_COMPAT
-> +#include <linux/compat.h>
-> +#endif
-
-I'll nuke the ifdefs - compat.h already does that.
-
-
-It would be good for us to have a look at the manpage before going too
-far with the patch - this helps reviewers to think about the proposed
-interface and behaviour.
-
-I'll queue this up for a bit of testing, although it won't get tested
-much.  The syscall fuzzers will presumably hit on it.
+>
+> To send only one packet, either:
+>
+> * These "if" statements are replaced with "else if" (as appropriate), and the function returns the size of data consumed; or
+> * The stm_generic_packet() function (below) forces "size" to a power-of-two (<= write_max) before calling stm_send().
+>
+>>> +static int stm_generic_link(struct stm_data *stm_data,
+>>> +                           unsigned int master,  unsigned int channel)
+>>> +{
+>>> +       struct stm_drvdata *drvdata = container_of(stm_data,
+>>> +                                                  struct stm_drvdata, stm);
+>>> +       if (!drvdata || !drvdata->csdev)
+>>> +               return -EINVAL;
+>>> +
+>>> +       return coresight_enable(drvdata->csdev);
+>>> +}
+>>> +
+>>> +static void stm_generic_unlink(struct stm_data *stm_data,
+>>> +                              unsigned int master,  unsigned int channel)
+>>> +{
+>>> +       struct stm_drvdata *drvdata = container_of(stm_data,
+>>> +                                                  struct stm_drvdata, stm);
+>>> +       if (!drvdata || !drvdata->csdev)
+>>> +               return;
+>>> +
+>>> +       stm_disable(drvdata->csdev);
+>>> +}
+>>> +
+>>> +static long stm_generic_set_options(struct stm_data *stm_data,
+>>> +                                   unsigned int master,
+>>> +                                   unsigned int channel,
+>>> +                                   unsigned int nr_chans,
+>>> +                                   unsigned long options)
+>>> +{
+>>> +       struct stm_drvdata *drvdata = container_of(stm_data,
+>>> +                                                  struct stm_drvdata, stm);
+>>> +       if (!(drvdata && drvdata->enable))
+>>> +               return -EINVAL;
+>>> +
+>>> +       if (channel >= drvdata->numsp)
+>>> +               return -EINVAL;
+>>> +
+>>> +       switch (options) {
+>>> +       case STM_OPTION_GUARANTEED:
+>>> +               set_bit(channel, drvdata->chs.guaranteed);
+>>> +               break;
+>>> +
+>>> +       case STM_OPTION_INVARIANT:
+>>> +               clear_bit(channel, drvdata->chs.guaranteed);
+>>> +               break;
+>>> +
+>>> +       default:
+>>> +               return -EINVAL;
+>>> +       }
+>>> +
+>>> +       return 0;
+>>> +}
+>>> +
+>>> +static long stm_generic_get_options(struct stm_data *stm_data,
+>>> +                                   unsigned int master,
+>>> +                                   unsigned int channel,
+>>> +                                   unsigned int nr_chans,
+>>> +                                   u64 *options)
+>>> +{
+>>> +       struct stm_drvdata *drvdata = container_of(stm_data,
+>>> +                                                  struct stm_drvdata, stm);
+>>> +       if (!(drvdata && drvdata->enable))
+>>> +               return -EINVAL;
+>>> +
+>>> +       if (channel >= drvdata->numsp)
+>>> +               return -EINVAL;
+>>> +
+>>> +       switch (*options) {
+>>> +       case STM_OPTION_GUARANTEED:
+>>> +               *options = test_bit(channel, drvdata->chs.guaranteed);
+>>> +               break;
+>>> +
+>>> +       default:
+>>> +               return -EINVAL;
+>>> +       }
+>>> +
+>>> +       return 0;
+>>> +}
+>>> +
+>>> +static ssize_t stm_generic_packet(struct stm_data *stm_data,
+>>> +                                 unsigned int master,
+>>> +                                 unsigned int channel,
+>>> +                                 unsigned int packet,
+>>> +                                 unsigned int flags,
+>>> +                                 unsigned int size,
+>>> +                                 const unsigned char *payload)
+>>> +{
+>>> +       unsigned long ch_addr;
+>>> +       struct stm_drvdata *drvdata = container_of(stm_data,
+>>> +                                                  struct stm_drvdata, stm);
+>>> +
+>>> +       if (!(drvdata && drvdata->enable))
+>>> +               return 0;
+>>> +
+>>> +       if (channel >= drvdata->numsp)
+>>> +               return 0;
+>>> +
+>>> +       ch_addr = (unsigned long)stm_channel_addr(drvdata, channel);
+>>> +
+>>> +       flags = (flags == STP_PACKET_TIMESTAMPED) ? STM_FLAG_TIMESTAMPED : 0;
+>>> +       flags |= test_bit(channel, drvdata->chs.guaranteed) ?
+>>> +                          STM_FLAG_GUARANTEED : 0;
+>>> +
+>>> +       if (size > drvdata->write_max)
+>>> +               size = drvdata->write_max;
+>>> +
+>>> +       switch (packet) {
+>>> +       case STP_PACKET_FLAG:
+>>> +               ch_addr |= stm_channel_off(STM_PKT_TYPE_FLAG, flags);
+>>> +
+>>> +               /* the generic STM API set a size of zero on flag packets. */
+>>> +               size = 1;
+>>> +               break;
+>>> +
+>>> +       case STP_PACKET_DATA:
+>>> +               ch_addr |= stm_channel_off(STM_PKT_TYPE_DATA, flags);
+>>> +               break;
+>>> +
+>>> +       default:
+>>> +               return 0;
+>>> +       }
+>>> +
+>>> +       return stm_send((void *)ch_addr, payload, size, drvdata->write_max);
+>>> +}
+>>> +
+>>> +static ssize_t hwevent_enable_show(struct device *dev,
+>>> +                                  struct device_attribute *attr, char *buf)
+>>> +{
+>>> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
+>>> +       unsigned long val = drvdata->stmheer;
+>>> +
+>>> +       return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
+>>> +}
+>>> +
+>>> +static ssize_t hwevent_enable_store(struct device *dev,
+>>> +                                   struct device_attribute *attr,
+>>> +                                   const char *buf, size_t size)
+>>> +{
+>>> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
+>>> +       unsigned long val;
+>>> +       int ret = 0;
+>>> +
+>>> +       ret = kstrtoul(buf, 16, &val);
+>>> +       if (ret)
+>>> +               return -EINVAL;
+>>> +
+>>> +       drvdata->stmheer = val;
+>>> +       /* HW event enable and trigger go hand in hand */
+>>> +       drvdata->stmheter = val;
+>>> +
+>>> +       return size;
+>>> +}
+>>> +static DEVICE_ATTR_RW(hwevent_enable);
+>>> +
+>>> +static ssize_t hwevent_select_show(struct device *dev,
+>>> +                                  struct device_attribute *attr, char *buf)
+>>> +{
+>>> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
+>>> +       unsigned long val = drvdata->stmhebsr;
+>>> +
+>>> +       return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
+>>> +}
+>>> +
+>>> +static ssize_t hwevent_select_store(struct device *dev,
+>>> +                                   struct device_attribute *attr,
+>>> +                                   const char *buf, size_t size)
+>>> +{
+>>> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
+>>> +       unsigned long val;
+>>> +       int ret = 0;
+>>> +
+>>> +       ret = kstrtoul(buf, 16, &val);
+>>> +       if (ret)
+>>> +               return -EINVAL;
+>>> +
+>>> +       drvdata->stmhebsr = val;
+>>> +
+>>> +       return size;
+>>> +}
+>>> +static DEVICE_ATTR_RW(hwevent_select);
+>>> +
+>>> +static ssize_t port_select_show(struct device *dev,
+>>> +                               struct device_attribute *attr, char *buf)
+>>> +{
+>>> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
+>>> +       unsigned long val;
+>>> +
+>>> +       if (!drvdata->enable) {
+>>> +               val = drvdata->stmspscr;
+>>> +       } else {
+>>> +               spin_lock(&drvdata->spinlock);
+>>> +               val = readl_relaxed(drvdata->base + STMSPSCR);
+>>> +               spin_unlock(&drvdata->spinlock);
+>>> +       }
+>>> +
+>>> +       return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
+>>> +}
+>>> +
+>>> +static ssize_t port_select_store(struct device *dev,
+>>> +                                struct device_attribute *attr,
+>>> +                                const char *buf, size_t size)
+>>> +{
+>>> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
+>>> +       unsigned long val, stmsper;
+>>> +       int ret = 0;
+>>> +
+>>> +       ret = kstrtoul(buf, 16, &val);
+>>> +       if (ret)
+>>> +               return ret;
+>>> +
+>>> +       spin_lock(&drvdata->spinlock);
+>>> +       drvdata->stmspscr = val;
+>>> +
+>>> +       if (drvdata->enable) {
+>>> +               CS_UNLOCK(drvdata->base);
+>>> +               /* Process as per ARM's TRM recommendation */
+>>> +               stmsper = readl_relaxed(drvdata->base + STMSPER);
+>>> +               writel_relaxed(0x0, drvdata->base + STMSPER);
+>>> +               writel_relaxed(drvdata->stmspscr, drvdata->base + STMSPSCR);
+>>> +               writel_relaxed(stmsper, drvdata->base + STMSPER);
+>>> +               CS_LOCK(drvdata->base);
+>>> +       }
+>>> +       spin_unlock(&drvdata->spinlock);
+>>> +
+>>> +       return size;
+>>> +}
+>>> +static DEVICE_ATTR_RW(port_select);
+>>> +
+>>> +static ssize_t port_enable_show(struct device *dev,
+>>> +                               struct device_attribute *attr, char *buf)
+>>> +{
+>>> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
+>>> +       unsigned long val;
+>>> +
+>>> +       if (!drvdata->enable) {
+>>> +               val = drvdata->stmsper;
+>>> +       } else {
+>>> +               spin_lock(&drvdata->spinlock);
+>>> +               val = readl_relaxed(drvdata->base + STMSPER);
+>>> +               spin_unlock(&drvdata->spinlock);
+>>> +       }
+>>> +
+>>> +       return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
+>>> +}
+>>> +
+>>> +static ssize_t port_enable_store(struct device *dev,
+>>> +                                struct device_attribute *attr,
+>>> +                                const char *buf, size_t size)
+>>> +{
+>>> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
+>>> +       unsigned long val;
+>>> +       int ret = 0;
+>>> +
+>>> +       ret = kstrtoul(buf, 16, &val);
+>>> +       if (ret)
+>>> +               return ret;
+>>> +
+>>> +       spin_lock(&drvdata->spinlock);
+>>> +       drvdata->stmsper = val;
+>>> +
+>>> +       if (drvdata->enable) {
+>>> +               CS_UNLOCK(drvdata->base);
+>>> +               writel_relaxed(drvdata->stmsper, drvdata->base + STMSPER);
+>>> +               CS_LOCK(drvdata->base);
+>>> +       }
+>>> +       spin_unlock(&drvdata->spinlock);
+>>> +
+>>> +       return size;
+>>> +}
+>>> +static DEVICE_ATTR_RW(port_enable);
+>>> +
+>>> +static ssize_t traceid_show(struct device *dev,
+>>> +                           struct device_attribute *attr, char *buf)
+>>> +{
+>>> +       unsigned long val;
+>>> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
+>>> +
+>>> +       val = drvdata->traceid;
+>>> +       return sprintf(buf, "%#lx\n", val);
+>>> +}
+>>> +
+>>> +static ssize_t traceid_store(struct device *dev,
+>>> +                            struct device_attribute *attr,
+>>> +                            const char *buf, size_t size)
+>>> +{
+>>> +       int ret;
+>>> +       unsigned long val;
+>>> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
+>>> +
+>>> +       ret = kstrtoul(buf, 16, &val);
+>>> +       if (ret)
+>>> +               return ret;
+>>> +
+>>> +       /* traceid field is 7bit wide on STM32 */
+>>> +       drvdata->traceid = val & 0x7f;
+>>> +       return size;
+>>> +}
+>>> +static DEVICE_ATTR_RW(traceid);
+>>> +
+>>> +#define coresight_simple_func(type, name, offset)                      \
+>>> +static ssize_t name##_show(struct device *_dev,                                \
+>>> +                          struct device_attribute *attr, char *buf)    \
+>>> +{                                                                      \
+>>> +       type *drvdata = dev_get_drvdata(_dev->parent);                  \
+>>> +       return scnprintf(buf, PAGE_SIZE, "0x%08x\n",                    \
+>>> +                        readl_relaxed(drvdata->base + offset));        \
+>>> +}                                                                      \
+>>> +DEVICE_ATTR_RO(name)
+>>> +
+>>> +#define coresight_stm_simple_func(name, offset)        \
+>>> +       coresight_simple_func(struct stm_drvdata, name, offset)
+>>> +
+>>> +coresight_stm_simple_func(tcsr, STMTCSR);
+>>> +coresight_stm_simple_func(tsfreqr, STMTSFREQR);
+>>> +coresight_stm_simple_func(syncr, STMSYNCR);
+>>> +coresight_stm_simple_func(sper, STMSPER);
+>>> +coresight_stm_simple_func(spter, STMSPTER);
+>>> +coresight_stm_simple_func(privmaskr, STMPRIVMASKR);
+>>> +coresight_stm_simple_func(spscr, STMSPSCR);
+>>> +coresight_stm_simple_func(spmscr, STMSPMSCR);
+>>> +coresight_stm_simple_func(spfeat1r, STMSPFEAT1R);
+>>> +coresight_stm_simple_func(spfeat2r, STMSPFEAT2R);
+>>> +coresight_stm_simple_func(spfeat3r, STMSPFEAT3R);
+>>> +coresight_stm_simple_func(devid, CORESIGHT_DEVID);
+>>> +
+>>> +static struct attribute *coresight_stm_attrs[] = {
+>>> +       &dev_attr_hwevent_enable.attr,
+>>> +       &dev_attr_hwevent_select.attr,
+>>> +       &dev_attr_port_enable.attr,
+>>> +       &dev_attr_port_select.attr,
+>>> +       &dev_attr_traceid.attr,
+>>> +       NULL,
+>>> +};
+>>> +
+>>> +static struct attribute *coresight_stm_mgmt_attrs[] = {
+>>> +       &dev_attr_tcsr.attr,
+>>> +       &dev_attr_tsfreqr.attr,
+>>> +       &dev_attr_syncr.attr,
+>>> +       &dev_attr_sper.attr,
+>>> +       &dev_attr_spter.attr,
+>>> +       &dev_attr_privmaskr.attr,
+>>> +       &dev_attr_spscr.attr,
+>>> +       &dev_attr_spmscr.attr,
+>>> +       &dev_attr_spfeat1r.attr,
+>>> +       &dev_attr_spfeat2r.attr,
+>>> +       &dev_attr_spfeat3r.attr,
+>>> +       &dev_attr_devid.attr,
+>>> +       NULL,
+>>> +};
+>>> +
+>>> +static const struct attribute_group coresight_stm_group = {
+>>> +       .attrs = coresight_stm_attrs,
+>>> +};
+>>> +
+>>> +static const struct attribute_group coresight_stm_mgmt_group = {
+>>> +       .attrs = coresight_stm_mgmt_attrs,
+>>> +       .name = "mgmt",
+>>> +};
+>>> +
+>>> +static const struct attribute_group *coresight_stm_groups[] = {
+>>> +       &coresight_stm_group,
+>>> +       &coresight_stm_mgmt_group,
+>>> +       NULL,
+>>> +};
+>>> +
+>>> +static int stm_get_resource_byname(struct device_node *np,
+>>> +                                  char *ch_base, struct resource *res)
+>>> +{
+>>> +       const char *name = NULL;
+>>> +       int index = 0, found = 0;
+>>> +
+>>> +       while (!of_property_read_string_index(np, "reg-names", index, &name)) {
+>>> +               if (strcmp(ch_base, name)) {
+>>> +                       index++;
+>>> +                       continue;
+>>> +               }
+>>> +
+>>> +               /* We have a match and @index is where it's at */
+>>> +               found = 1;
+>>> +               break;
+>>> +       }
+>>> +
+>>> +       if (!found)
+>>> +               return -EINVAL;
+>>> +
+>>> +       return of_address_to_resource(np, index, res);
+>>> +}
+>>> +
+>>> +static u32 stm_fundamental_data_size(struct stm_drvdata *drvdata)
+>>> +{
+>>> +       u32 stmspfeat2r;
+>>> +
+>>> +       stmspfeat2r = readl_relaxed(drvdata->base + STMSPFEAT2R);
+>>> +       return BMVAL(stmspfeat2r, 12, 15);
+>>> +}
+>>> +
+>>> +static u32 stm_num_stimulus_port(struct stm_drvdata *drvdata)
+>>> +{
+>>> +       u32 numsp;
+>>> +
+>>> +       numsp = readl_relaxed(drvdata->base + CORESIGHT_DEVID);
+>>> +       /*
+>>> +        * NUMPS in STMDEVID is 17 bit long and if equal to 0x0,
+>>> +        * 32 stimulus ports are supported.
+>>> +        */
+>>> +       numsp &= 0x1ffff;
+>>> +       if (!numsp)
+>>> +               numsp = STM_32_CHANNEL;
+>>> +       return numsp;
+>>> +}
+>>> +
+>>> +static void stm_init_default_data(struct stm_drvdata *drvdata)
+>>> +{
+>>> +       /* Don't use port selection */
+>>> +       drvdata->stmspscr = 0x0;
+>>> +       /*
+>>> +        * Enable all channel regardless of their number.  When port
+>>> +        * selection isn't used (see above) STMSPER applies to all
+>>> +        * 32 channel group available, hence setting all 32 bits to 1
+>>> +        */
+>>> +       drvdata->stmsper = ~0x0;
+>>> +
+>>> +       /*
+>>> +        * Select arbitrary value to start with.  If there is a conflict
+>>> +        * with other tracers the framework will deal with it.
+>>> +        */
+>>> +       drvdata->traceid = 0x20;
+>>> +
+>>> +       /* Set invariant transaction timing on all channels */
+>>> +       bitmap_clear(drvdata->chs.guaranteed, 0, drvdata->numsp);
+>>> +}
+>>> +
+>>> +static void stm_init_generic_data(struct stm_drvdata *drvdata)
+>>> +{
+>>> +       drvdata->stm.name = dev_name(drvdata->dev);
+>>> +       drvdata->stm.mstatic = true;
+>>> +       drvdata->stm.sw_nchannels = drvdata->numsp;
+>>> +       drvdata->stm.packet = stm_generic_packet;
+>>> +       drvdata->stm.link = stm_generic_link;
+>>> +       drvdata->stm.unlink = stm_generic_unlink;
+>>> +       drvdata->stm.set_options = stm_generic_set_options;
+>>> +       drvdata->stm.get_options = stm_generic_get_options;
+>>> +}
+>>> +
+>>> +static int stm_probe(struct amba_device *adev, const struct amba_id *id)
+>>> +{
+>>> +       int ret;
+>>> +       void __iomem *base;
+>>> +       unsigned long *guaranteed;
+>>> +       struct device *dev = &adev->dev;
+>>> +       struct coresight_platform_data *pdata = NULL;
+>>> +       struct stm_drvdata *drvdata;
+>>> +       struct resource *res = &adev->res;
+>>> +       struct resource ch_res;
+>>> +       size_t res_size, bitmap_size;
+>>> +       struct coresight_desc *desc;
+>>> +       struct device_node *np = adev->dev.of_node;
+>>> +
+>>> +       if (np) {
+>>> +               pdata = of_get_coresight_platform_data(dev, np);
+>>> +               if (IS_ERR(pdata))
+>>> +                       return PTR_ERR(pdata);
+>>> +               adev->dev.platform_data = pdata;
+>>> +       }
+>>> +       drvdata = devm_kzalloc(dev, sizeof(*drvdata), GFP_KERNEL);
+>>> +       if (!drvdata)
+>>> +               return -ENOMEM;
+>>> +
+>>> +       drvdata->dev = &adev->dev;
+>>> +       drvdata->atclk = devm_clk_get(&adev->dev, "atclk"); /* optional */
+>>> +       if (!IS_ERR(drvdata->atclk)) {
+>>> +               ret = clk_prepare_enable(drvdata->atclk);
+>>> +               if (ret)
+>>> +                       return ret;
+>>> +       }
+>>> +       dev_set_drvdata(dev, drvdata);
+>>> +
+>>> +       base = devm_ioremap_resource(dev, res);
+>>> +       if (IS_ERR(base))
+>>> +               return PTR_ERR(base);
+>>> +       drvdata->base = base;
+>>> +
+>>> +       ret = stm_get_resource_byname(np, "stm-stimulus-base", &ch_res);
+>>> +       if (ret)
+>>> +               return ret;
+>>> +
+>>> +       base = devm_ioremap_resource(dev, &ch_res);
+>>> +       if (IS_ERR(base))
+>>> +               return PTR_ERR(base);
+>>> +       drvdata->chs.base = base;
+>>> +
+>>> +       drvdata->write_max = sizeof(u32);
+>>
+>> Isn't the fundamental data size the maximum an architecture can stand?
+>>  Why not simply use that rather than adding another variable?
+>>
+>>> +       drvdata->write_64bit = stm_fundamental_data_size(drvdata);
+>>> +
+>>> +#ifndef CONFIG_64BIT
+>>> +       if (drvdata->write_64bit)
+>>> +               drvdata->write_max = sizeof(u64);
+>>> +#endif
+>
+> It is a bit odd that this code is using sizeof(u64) / sizeof(u32) here, when it is using 8 / 4 explicitly in the functions above.
+>
+>>
+>> In most cases the fundamental data size will follow the architecture
+>> size, i.e, 32 bit architecture with 32 bit fundamental data size, 64
+>> bit architecture with 64 bit fundamental data size.  A fundamental
+>> data size of 32 is also possible on a 64 bit architecture.
+>>
+>> What needs to be prevented is a 32 bit architecture with a fundamental
+>> data size of 64.  In those cases the fundamental data size should be
+>> adjusted to be 32 bit.  To do that I suggest to modify
+>> stm_fundamental_data_size() to probe the STM's fundamental data size
+>> but to adjust it down if on a 32 bit system.  Knowing whether running
+>> on a 32/64 bit system is easy when using the IS_ENABLED() macro.
+>
+> Agreed. For ARM, 64-bit writes to the STM are supported only if BOTH the STM supports 64-bit data and the processor is in 64-bit execution state. Otherwise, the largest size is 32 bits. You are likely to see both 64-bit STM from 32-bit execution state, and 32-bit STM on a SoC with a 64-bit ARM processor.
+>
+>>> +
+>>> +       if (boot_nr_channel) {
+>>> +               drvdata->numsp = boot_nr_channel;
+>>> +               res_size = min((resource_size_t)(boot_nr_channel *
+>>> +                                 BYTES_PER_CHANNEL), resource_size(res));
+>>> +       } else {
+>>> +               drvdata->numsp = stm_num_stimulus_port(drvdata);
+>>> +               res_size = min((resource_size_t)(drvdata->numsp *
+>>> +                                BYTES_PER_CHANNEL), resource_size(res));
+>>> +       }
+>>> +       bitmap_size = BITS_TO_LONGS(drvdata->numsp) * sizeof(long);
+>>> +
+>>> +       guaranteed = devm_kzalloc(dev, bitmap_size, GFP_KERNEL);
+>>> +       if (!guaranteed)
+>>> +               return -ENOMEM;
+>>> +       drvdata->chs.guaranteed = guaranteed;
+>>> +
+>>> +       spin_lock_init(&drvdata->spinlock);
+>>> +
+>>> +       stm_init_default_data(drvdata);
+>>> +       stm_init_generic_data(drvdata);
+>>> +
+>>> +       if (stm_register_device(dev, &drvdata->stm, THIS_MODULE)) {
+>>> +               dev_info(dev,
+>>> +                        "stm_register_device failed, probing deffered\n");
+>>> +               return -EPROBE_DEFER;
+>>> +       }
+>>> +
+>>> +       desc = devm_kzalloc(dev, sizeof(*desc), GFP_KERNEL);
+>>> +       if (!desc) {
+>>> +               ret = -ENOMEM;
+>>> +               goto stm_unregister;
+>>> +       }
+>>> +
+>>> +       desc->type = CORESIGHT_DEV_TYPE_SOURCE;
+>>> +       desc->subtype.source_subtype = CORESIGHT_DEV_SUBTYPE_SOURCE_SOFTWARE;
+>>> +       desc->ops = &stm_cs_ops;
+>>> +       desc->pdata = pdata;
+>>> +       desc->dev = dev;
+>>> +       desc->groups = coresight_stm_groups;
+>>> +       drvdata->csdev = coresight_register(desc);
+>>> +       if (IS_ERR(drvdata->csdev)) {
+>>> +               ret = PTR_ERR(drvdata->csdev);
+>>> +               goto stm_unregister;
+>>> +       }
+>>> +
+>>> +       pm_runtime_put(&adev->dev);
+>>> +
+>>> +       dev_info(dev, "%s initialized\n", (char *)id->data);
+>>> +       return 0;
+>>> +
+>>> +stm_unregister:
+>>> +       stm_unregister_device(&drvdata->stm);
+>>> +       return ret;
+>>> +}
+>>> +
+>>> +static int stm_remove(struct amba_device *adev)
+>>> +{
+>>> +       struct stm_drvdata *drvdata = amba_get_drvdata(adev);
+>>> +
+>>> +       stm_unregister_device(&drvdata->stm);
+>>> +       coresight_unregister(drvdata->csdev);
+>>> +       return 0;
+>>> +}
+>>
+>> The xyz_remove() functions is not needed for coresight devices -
+>> unbinding a device from its driver will no longer be possible in the
+>> 4.6 cycle.
+>>
+>>> +
+>>> +#ifdef CONFIG_PM
+>>> +static int stm_runtime_suspend(struct device *dev)
+>>> +{
+>>> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev);
+>>> +
+>>> +       if (drvdata && !IS_ERR(drvdata->atclk))
+>>> +               clk_disable_unprepare(drvdata->atclk);
+>>> +
+>>> +       return 0;
+>>> +}
+>>> +
+>>> +static int stm_runtime_resume(struct device *dev)
+>>> +{
+>>> +       struct stm_drvdata *drvdata = dev_get_drvdata(dev);
+>>> +
+>>> +       if (drvdata && !IS_ERR(drvdata->atclk))
+>>> +               clk_prepare_enable(drvdata->atclk);
+>>> +
+>>> +       return 0;
+>>> +}
+>>> +#endif
+>>> +
+>>> +static const struct dev_pm_ops stm_dev_pm_ops = {
+>>> +       SET_RUNTIME_PM_OPS(stm_runtime_suspend, stm_runtime_resume, NULL)
+>>> +};
+>>> +
+>>> +static struct amba_id stm_ids[] = {
+>>> +       {
+>>> +               .id     = 0x0003b962,
+>>> +               .mask   = 0x0003ffff,
+>>> +               .data   = "STM32",
+>>> +       },
+>>> +       { 0, 0},
+>>> +};
+>>> +
+>>> +static struct amba_driver stm_driver = {
+>>> +       .drv = {
+>>> +               .name   = "coresight-stm",
+>>> +               .owner  = THIS_MODULE,
+>>> +               .pm     = &stm_dev_pm_ops,
+>>> +       },
+>>> +       .probe          = stm_probe,
+>>> +       .remove         = stm_remove,
+>>> +       .id_table       = stm_ids,
+>>> +};
+>>> +
+>>> +module_amba_driver(stm_driver);
+>>> +
+>>> +MODULE_LICENSE("GPL v2");
+>>> +MODULE_DESCRIPTION("CoreSight System Trace Macrocell driver");
+>>> diff --git a/include/linux/coresight-stm.h b/include/linux/coresight-stm.h
+>>> new file mode 100644
+>>> index 0000000..a978bb8
+>>> --- /dev/null
+>>> +++ b/include/linux/coresight-stm.h
+>>> @@ -0,0 +1,6 @@
+>>> +#ifndef __LINUX_CORESIGHT_STM_H_
+>>> +#define __LINUX_CORESIGHT_STM_H_
+>>> +
+>>> +#include <uapi/linux/coresight-stm.h>
+>>> +
+>>> +#endif
+>>> diff --git a/include/uapi/linux/coresight-stm.h b/include/uapi/linux/coresight-stm.h
+>>> new file mode 100644
+>>> index 0000000..fa35f0b
+>>> --- /dev/null
+>>> +++ b/include/uapi/linux/coresight-stm.h
+>>> @@ -0,0 +1,12 @@
+>>> +#ifndef __UAPI_CORESIGHT_STM_H_
+>>> +#define __UAPI_CORESIGHT_STM_H_
+>>> +
+>>> +#define STM_FLAG_TIMESTAMPED   BIT(3)
+>>> +#define STM_FLAG_GUARANTEED    BIT(7)
+>>> +
+>>> +enum {
+>>> +       STM_OPTION_GUARANTEED = 0,
+>>> +       STM_OPTION_INVARIANT,
+>>> +};
+>>> +
+>>> +#endif
+>>> --
+>>> 1.9.1
+>>>
+>
+> IMPORTANT NOTICE: The contents of this email and any attachments are confidential and may also be privileged. If you are not the intended recipient, please notify the sender immediately and do not disclose the contents to any other person, use it for any purpose, or store or copy the information in any medium. Thank you.
