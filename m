@@ -1,94 +1,72 @@
-From: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v1 10/10] efivars: use generic UUID library
-Date: Wed, 17 Feb 2016 14:17:28 +0200
-Message-ID: <1455711448-124103-11-git-send-email-andriy.shevchenko@linux.intel.com>
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v1 08/10] sysctl: use generic UUID library
+Date: Wed, 17 Feb 2016 14:17:26 +0200
+Message-ID: <1455711448-124103-9-git-send-email-andriy.shevchenko@linux.intel.com>
 References: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1455711448-124103-1-git-send-email-andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jani Nikula <jani.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Benjamin Tissoires <benjamin.tissoires-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mathias Nyman <mathias.nyman-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Lv Zheng <lv.zheng-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Zhang Rui <rui.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mika Westerberg <mika.westerberg-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Return-path: <linux-acpi-owner@vger.kernel.org>
+In-Reply-To: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
+Sender: linux-acpi-owner@vger.kernel.org
+To: "Rafael J. Wysocki" <rjw@rjwysocki.net>, Theodore Ts'o <tytso@mit.edu>, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Jani Nikula <jani.nikula@linux.intel.com>, David Airlie <airlied@linux.ie>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Bjorn Helgaas <bhelgaas@google.com>, Mathias Nyman <mathias.nyman@intel.com>, Matt Fleming <matt@codeblueprint.co.uk>, Lv Zheng <lv.zheng@intel.com>, Mark Brown <broonie@kernel.org>, Zhang Rui <rui.zhang@intel.com>, Mika Westerberg <mika.westerberg@linux.intel.com>, Andrew Morton <akpm@linux-foundation.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, linux-acpi@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-efi@vger.kernel.org, linux-api@vger.kernel.org, linux-nvdimm@lists.01.org
+Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Instead of opencoding let's use generic UUID library functions here.
+UUID library provides uuid_be type and uuid_be_to_bin() function. This
+substitutes open coded variant by generic library calls.
 
-Signed-off-by: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 ---
- fs/efivarfs/inode.c | 40 +++-------------------------------------
- 1 file changed, 3 insertions(+), 37 deletions(-)
+ kernel/sysctl_binary.c | 20 ++++++--------------
+ 1 file changed, 6 insertions(+), 14 deletions(-)
 
-diff --git a/fs/efivarfs/inode.c b/fs/efivarfs/inode.c
-index 3381b9d..b579e3a 100644
---- a/fs/efivarfs/inode.c
-+++ b/fs/efivarfs/inode.c
-@@ -11,6 +11,7 @@
- #include <linux/fs.h>
+diff --git a/kernel/sysctl_binary.c b/kernel/sysctl_binary.c
+index 509abe4..4e5ca94 100644
+--- a/kernel/sysctl_binary.c
++++ b/kernel/sysctl_binary.c
+@@ -13,6 +13,7 @@
  #include <linux/ctype.h>
- #include <linux/slab.h>
+ #include <linux/netdevice.h>
+ #include <linux/kernel.h>
 +#include <linux/uuid.h>
+ #include <linux/slab.h>
+ #include <linux/compat.h>
  
- #include "internal.h"
+@@ -1117,9 +1118,8 @@ static ssize_t bin_uuid(struct file *file,
  
-@@ -44,11 +45,7 @@ struct inode *efivarfs_get_inode(struct super_block *sb,
-  */
- bool efivarfs_valid_name(const char *str, int len)
- {
--	static const char dashes[EFI_VARIABLE_GUID_LEN] = {
--		[8] = 1, [13] = 1, [18] = 1, [23] = 1
--	};
- 	const char *s = str + len - EFI_VARIABLE_GUID_LEN;
--	int i;
+ 	/* Only supports reads */
+ 	if (oldval && oldlen) {
+-		char buf[40], *str = buf;
+-		unsigned char uuid[16];
+-		int i;
++		char buf[UUID_STRING_LEN + 1];
++		uuid_be uuid;
  
- 	/*
- 	 * We need a GUID, plus at least one letter for the variable name,
-@@ -66,37 +63,7 @@ bool efivarfs_valid_name(const char *str, int len)
- 	 *
- 	 *	12345678-1234-1234-1234-123456789abc
- 	 */
--	for (i = 0; i < EFI_VARIABLE_GUID_LEN; i++) {
--		if (dashes[i]) {
--			if (*s++ != '-')
--				return false;
--		} else {
--			if (!isxdigit(*s++))
--				return false;
+ 		result = kernel_read(file, 0, buf, sizeof(buf) - 1);
+ 		if (result < 0)
+@@ -1128,21 +1128,13 @@ static ssize_t bin_uuid(struct file *file,
+ 		buf[result] = '\0';
+ 
+ 		/* Convert the uuid to from a string to binary */
+-		for (i = 0; i < 16; i++) {
+-			if (!isxdigit(str[0]) || !isxdigit(str[1]))
+-				return -EIO;
+-
+-			uuid[i] = (hex_to_bin(str[0]) << 4) |
+-					hex_to_bin(str[1]);
+-			str += 2;
+-			if (*str == '-')
+-				str++;
 -		}
--	}
--
--	return true;
--}
--
--static void efivarfs_hex_to_guid(const char *str, efi_guid_t *guid)
--{
--	guid->b[0] = hex_to_bin(str[6]) << 4 | hex_to_bin(str[7]);
--	guid->b[1] = hex_to_bin(str[4]) << 4 | hex_to_bin(str[5]);
--	guid->b[2] = hex_to_bin(str[2]) << 4 | hex_to_bin(str[3]);
--	guid->b[3] = hex_to_bin(str[0]) << 4 | hex_to_bin(str[1]);
--	guid->b[4] = hex_to_bin(str[11]) << 4 | hex_to_bin(str[12]);
--	guid->b[5] = hex_to_bin(str[9]) << 4 | hex_to_bin(str[10]);
--	guid->b[6] = hex_to_bin(str[16]) << 4 | hex_to_bin(str[17]);
--	guid->b[7] = hex_to_bin(str[14]) << 4 | hex_to_bin(str[15]);
--	guid->b[8] = hex_to_bin(str[19]) << 4 | hex_to_bin(str[20]);
--	guid->b[9] = hex_to_bin(str[21]) << 4 | hex_to_bin(str[22]);
--	guid->b[10] = hex_to_bin(str[24]) << 4 | hex_to_bin(str[25]);
--	guid->b[11] = hex_to_bin(str[26]) << 4 | hex_to_bin(str[27]);
--	guid->b[12] = hex_to_bin(str[28]) << 4 | hex_to_bin(str[29]);
--	guid->b[13] = hex_to_bin(str[30]) << 4 | hex_to_bin(str[31]);
--	guid->b[14] = hex_to_bin(str[32]) << 4 | hex_to_bin(str[33]);
--	guid->b[15] = hex_to_bin(str[34]) << 4 | hex_to_bin(str[35]);
-+	return uuid_is_valid(s);
- }
++		if (uuid_be_to_bin(buf, &uuid))
++			return -EIO;
  
- static int efivarfs_create(struct inode *dir, struct dentry *dentry,
-@@ -122,8 +89,7 @@ static int efivarfs_create(struct inode *dir, struct dentry *dentry,
- 	/* length of the variable name itself: remove GUID and separator */
- 	namelen = dentry->d_name.len - EFI_VARIABLE_GUID_LEN - 1;
+ 		if (oldlen > 16)
+ 			oldlen = 16;
  
--	efivarfs_hex_to_guid(dentry->d_name.name + namelen + 1,
--			&var->var.VendorGuid);
-+	uuid_le_to_bin(dentry->d_name.name + namelen + 1, &var->var.VendorGuid);
+-		if (copy_to_user(oldval, uuid, oldlen))
++		if (copy_to_user(oldval, &uuid, oldlen))
+ 			return -EFAULT;
  
- 	for (i = 0; i < namelen; i++)
- 		var->var.VariableName[i] = dentry->d_name.name[i];
+ 		copied = oldlen;
 -- 
 2.7.0
+
