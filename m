@@ -1,52 +1,78 @@
-From: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v1 01/10] lib/vsprintf: simplify UUID printing
-Date: Wed, 17 Feb 2016 14:17:19 +0200
-Message-ID: <1455711448-124103-2-git-send-email-andriy.shevchenko@linux.intel.com>
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v1 09/10] efi: redefine type, constant, macro from generic code
+Date: Wed, 17 Feb 2016 14:17:27 +0200
+Message-ID: <1455711448-124103-10-git-send-email-andriy.shevchenko@linux.intel.com>
 References: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1455711448-124103-1-git-send-email-andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jani Nikula <jani.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Benjamin Tissoires <benjamin.tissoires-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mathias Nyman <mathias.nyman-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Lv Zheng <lv.zheng-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Zhang Rui <rui.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mika Westerberg <mika.westerberg-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Rafael J. Wysocki" <rjw@rjwysocki.net>, Theodore Ts'o <tytso@mit.edu>, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Jani Nikula <jani.nikula@linux.intel.com>, David Airlie <airlied@linux.ie>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Bjorn Helgaas <bhelgaas@google.com>, Mathias Nyman <mathias.nyman@intel.com>, Matt Fleming <matt@codeblueprint.co.uk>, Lv Zheng <lv.zheng@intel.com>, Mark Brown <broonie@kernel.org>, Zhang Rui <rui.zhang@intel.com>, Mika Westerberg <mika.westerberg@linux.intel.com>, Andrew Morton <akpm@linux-foundation.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, linux-acpi@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-efi@vger.kernel.org, linux-api@vger.kernel.org, linux-nvdimm@lists.01.org
+Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Since we have hex_byte_pack_upper() we may use it directly and avoid second
-loop.
+Generic UUID library defines structure type, macro to define UUID, and the
+length of the UUID string. This patch removes duplicate data structure
+definition, UUID string length constant  as well as macro for UUID handling.
 
-Signed-off-by: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 ---
- lib/vsprintf.c | 12 ++++--------
- 1 file changed, 4 insertions(+), 8 deletions(-)
+ include/linux/efi.h  | 14 ++++----------
+ include/linux/uuid.h |  2 +-
+ 2 files changed, 5 insertions(+), 11 deletions(-)
 
-diff --git a/lib/vsprintf.c b/lib/vsprintf.c
-index 525c8e1..17d976b 100644
---- a/lib/vsprintf.c
-+++ b/lib/vsprintf.c
-@@ -1324,7 +1324,10 @@ char *uuid_string(char *buf, char *end, const u8 *addr,
- 	}
+diff --git a/include/linux/efi.h b/include/linux/efi.h
+index 3c6cbbd..1a0dad5 100644
+--- a/include/linux/efi.h
++++ b/include/linux/efi.h
+@@ -21,6 +21,7 @@
+ #include <linux/pfn.h>
+ #include <linux/pstore.h>
+ #include <linux/reboot.h>
++#include <linux/uuid.h>
  
- 	for (i = 0; i < 16; i++) {
--		p = hex_byte_pack(p, addr[index[i]]);
-+		if (uc)
-+			p = hex_byte_pack_upper(p, addr[index[i]]);
-+		else
-+			p = hex_byte_pack(p, addr[index[i]]);
- 		switch (i) {
- 		case 3:
- 		case 5:
-@@ -1337,13 +1340,6 @@ char *uuid_string(char *buf, char *end, const u8 *addr,
+ #include <asm/page.h>
  
- 	*p = 0;
+@@ -43,17 +44,10 @@ typedef u16 efi_char16_t;		/* UNICODE character */
+ typedef u64 efi_physical_addr_t;
+ typedef void *efi_handle_t;
  
--	if (uc) {
--		p = uuid;
--		do {
--			*p = toupper(*p);
--		} while (*(++p));
--	}
 -
- 	return string(buf, end, uuid, spec);
- }
+-typedef struct {
+-	u8 b[16];
+-} efi_guid_t;
++typedef uuid_le efi_guid_t;
+ 
+ #define EFI_GUID(a,b,c,d0,d1,d2,d3,d4,d5,d6,d7) \
+-((efi_guid_t) \
+-{{ (a) & 0xff, ((a) >> 8) & 0xff, ((a) >> 16) & 0xff, ((a) >> 24) & 0xff, \
+-  (b) & 0xff, ((b) >> 8) & 0xff, \
+-  (c) & 0xff, ((c) >> 8) & 0xff, \
+-  (d0), (d1), (d2), (d3), (d4), (d5), (d6), (d7) }})
++	UUID_LE(a, b, c, d0, d1, d2, d3, d4, d5, d6, d7)
+ 
+ /*
+  * Generic EFI table header
+@@ -1025,7 +1019,7 @@ efi_reboot(enum reboot_mode reboot_mode, const char *__unused) {}
+  * Length of a GUID string (strlen("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"))
+  * not including trailing NUL
+  */
+-#define EFI_VARIABLE_GUID_LEN 36
++#define EFI_VARIABLE_GUID_LEN	UUID_STRING_LEN
+ 
+ /*
+  * The type of search to perform when calling boottime->locate_handle
+diff --git a/include/linux/uuid.h b/include/linux/uuid.h
+index 6bd40d0..bb778a4 100644
+--- a/include/linux/uuid.h
++++ b/include/linux/uuid.h
+@@ -20,7 +20,7 @@
+ 
+ /*
+  * The length of a UUID string ("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+- * not including trailing NUL.
++ * excluding trailing NUL.
+  */
+ #define	UUID_STRING_LEN		36
  
 -- 
 2.7.0
