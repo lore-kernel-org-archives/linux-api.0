@@ -1,66 +1,60 @@
-From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: [PATCH v1 06/10] device property: switch to use UUID API
-Date: Wed, 17 Feb 2016 14:17:24 +0200
-Message-ID: <1455711448-124103-7-git-send-email-andriy.shevchenko@linux.intel.com>
-References: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Rafael J. Wysocki" <rjw@rjwysocki.net>, Theodore Ts'o <tytso@mit.edu>, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Jani Nikula <jani.nikula@linux.intel.com>, David Airlie <airlied@linux.ie>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Bjorn Helgaas <bhelgaas@google.com>, Mathias Nyman <mathias.nyman@intel.com>, Matt Fleming <matt@codeblueprint.co.uk>, Lv Zheng <lv.zheng@intel.com>, Mark Brown <broonie@kernel.org>, Zhang Rui <rui.zhang@intel.com>, Mika Westerberg <mika.westerberg@linux.intel.com>, Andrew Morton <akpm@linux-foundation.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, linux-acpi@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-efi@vger.kernel.org, linux-api@vger.kernel.org, linux-nvdimm@lists.01.org
-Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Subject: Re: [PATCH] uapi glibc compat: fix cases where glibc net/if.h is
+ included before linux/if.h
+Date: Wed, 17 Feb 2016 10:46:20 -0500 (EST)
+Message-ID: <20160217.104620.239734387234680136.davem@davemloft.net>
+References: <CA+5PVA4P2avVr+m=ittQUyBou9kT2nbK0-Jeo+3coAFyQXTT_A@mail.gmail.com>
+	<1454853801-18064-1-git-send-email-mikko.rapeli@iki.fi>
+Mime-Version: 1.0
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1454853801-18064-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: mikko.rapeli-X3B1VOXEql0@public.gmane.org
+Cc: shemming-43mecJUBy8ZBDgjK7y7TUQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jwboyer-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org, pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Switch to use a generic UUID API instead of custom approach. It allows to
-define UUIDs, compare them, and validate.
+From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Date: Sun,  7 Feb 2016 16:03:21 +0200
 
-Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
----
- drivers/acpi/property.c | 18 ++++++++----------
- 1 file changed, 8 insertions(+), 10 deletions(-)
+> @@ -68,6 +72,8 @@
+>   * @IFF_ECHO: echo sent packets. Volatile.
+>   */
+>  enum net_device_flags {
+> +/* for compatibility with glibc net/if.h */
+> +#if __UAPI_DEF_IF_NET_DEVICE_FLAGS
+>  	IFF_UP				= 1<<0,  /* sysfs */
+>  	IFF_BROADCAST			= 1<<1,  /* volatile */
+>  	IFF_DEBUG			= 1<<2,  /* sysfs */
+> @@ -84,11 +90,14 @@ enum net_device_flags {
+>  	IFF_PORTSEL			= 1<<13, /* sysfs */
+>  	IFF_AUTOMEDIA			= 1<<14, /* sysfs */
+>  	IFF_DYNAMIC			= 1<<15, /* sysfs */
+> +#endif /* __UAPI_DEF_IF_NET_DEVICE_FLAGS */
+>  	IFF_LOWER_UP			= 1<<16, /* volatile */
+>  	IFF_DORMANT			= 1<<17, /* volatile */
+>  	IFF_ECHO			= 1<<18, /* volatile */
+>  };
 
-diff --git a/drivers/acpi/property.c b/drivers/acpi/property.c
-index 2aee416..1e75305 100644
---- a/drivers/acpi/property.c
-+++ b/drivers/acpi/property.c
-@@ -25,15 +25,13 @@ static int acpi_data_get_property_array(struct acpi_device_data *data,
- 					const union acpi_object **obj);
- 
- /* ACPI _DSD device properties UUID: daffd814-6eba-4d8c-8a91-bc9bbf4aa301 */
--static const u8 prp_uuid[16] = {
--	0x14, 0xd8, 0xff, 0xda, 0xba, 0x6e, 0x8c, 0x4d,
--	0x8a, 0x91, 0xbc, 0x9b, 0xbf, 0x4a, 0xa3, 0x01
--};
-+static const uuid_le prp_uuid =
-+	UUID_LE(0xdaffd814, 0x6eba, 0x4d8c,
-+		0x8a, 0x91, 0xbc, 0x9b, 0xbf, 0x4a, 0xa3, 0x01);
- /* ACPI _DSD data subnodes UUID: dbb8e3e6-5886-4ba6-8795-1319f52a966b */
--static const u8 ads_uuid[16] = {
--	0xe6, 0xe3, 0xb8, 0xdb, 0x86, 0x58, 0xa6, 0x4b,
--	0x87, 0x95, 0x13, 0x19, 0xf5, 0x2a, 0x96, 0x6b
--};
-+static const uuid_le ads_uuid =
-+	UUID_LE(0xdbb8e3e6, 0x5886, 0x4ba6,
-+		0x87, 0x95, 0x13, 0x19, 0xf5, 0x2a, 0x96, 0x6b);
- 
- static bool acpi_enumerate_nondev_subnodes(acpi_handle scope,
- 					   const union acpi_object *desc,
-@@ -138,7 +136,7 @@ static bool acpi_enumerate_nondev_subnodes(acpi_handle scope,
- 		    || links->type != ACPI_TYPE_PACKAGE)
- 			break;
- 
--		if (memcmp(uuid->buffer.pointer, ads_uuid, sizeof(ads_uuid)))
-+		if (uuid_le_cmp(*(uuid_le *)uuid->buffer.pointer, ads_uuid))
- 			continue;
- 
- 		return acpi_add_nondev_subnodes(scope, links, &data->subnodes);
-@@ -245,7 +243,7 @@ static bool acpi_extract_properties(const union acpi_object *desc,
- 		    || properties->type != ACPI_TYPE_PACKAGE)
- 			break;
- 
--		if (memcmp(uuid->buffer.pointer, prp_uuid, sizeof(prp_uuid)))
-+		if (uuid_le_cmp(*(uuid_le *)uuid->buffer.pointer, prp_uuid))
- 			continue;
- 
- 		/*
--- 
-2.7.0
+This is going to get messy is IFF_LOWER_UP, IFF_DORMANT, and IFF_ECHO
+get added the the glibc header.  Why not just handle it now with
+another __UAPI_DEF_FOO guard so that the additions to net/if.h can
+deal with this case too.
+
+> +/* for compatibility with glibc net/if.h */
+> +#if __UAPI_DEF_IF_NET_DEVICE_FLAGS
+>  #define IFF_UP				IFF_UP
+>  #define IFF_BROADCAST			IFF_BROADCAST
+>  #define IFF_DEBUG			IFF_DEBUG
+> @@ -105,6 +114,8 @@ enum net_device_flags {
+>  #define IFF_PORTSEL			IFF_PORTSEL
+>  #define IFF_AUTOMEDIA			IFF_AUTOMEDIA
+>  #define IFF_DYNAMIC			IFF_DYNAMIC
+> +#endif /* __UAPI_DEF_IF_NET_DEVICE_FLAGS */
+> +
+>  #define IFF_LOWER_UP			IFF_LOWER_UP
+>  #define IFF_DORMANT			IFF_DORMANT
+>  #define IFF_ECHO			IFF_ECHO
+
+Likewise.
