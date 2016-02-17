@@ -1,240 +1,128 @@
-From: Shaohua Li <shli@fb.com>
-Subject: Re: [PATCH V4][for-next]mm: add a new vector based madvise syscall
-Date: Wed, 17 Feb 2016 09:47:07 -0800
-Message-ID: <20160217174654.GA3505386@devbig084.prn1.facebook.com>
-References: <d01698140a51cf9b2ce233c7574c2ece9f6fa241.1449791762.git.shli@fb.com>
- <20160216160802.50ceaf10aa16588e18b3d2c5@linux-foundation.org>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH v1 05/10] ACPI: switch to use generic UUID API
+Date: Wed, 17 Feb 2016 09:49:35 -0800
+Message-ID: <CAPcyv4inMjmt8eH_=bNE_=NMeYGmS75B5LxB=f7Cd762=3UKyQ@mail.gmail.com>
+References: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
+ <1455711448-124103-6-git-send-email-andriy.shevchenko@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="4bRzO86E/ozDv8r1"
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20160216160802.50ceaf10aa16588e18b3d2c5@linux-foundation.org>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-mm@kvack.org, linux-api@vger.kernel.org, Kernel-team@fb.com, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Andrea Arcangeli <aarcange@redhat.com>, Andi Kleen <andi@firstfloor.org>, Minchan Kim <minchan@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Jason Evans <je@fb.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <1455711448-124103-6-git-send-email-andriy.shevchenko@linux.intel.com>
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Cc: linux-efi@vger.kernel.org, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Maling list - DRI developers <dri-devel@lists.freedesktop.org>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Lv Zheng <lv.zheng@intel.com>, Matt Fleming <matt@codeblueprint.co.uk>, Arnd Bergmann <arnd@arndb.de>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Linux ACPI <linux-acpi@vger.kernel.org>, Zhang Rui <rui.zhang@intel.com>, Mathias Nyman <mathias.nyman@intel.com>, Mark Brown <broonie@kernel.org>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Bjorn Helgaas <bhelgaas@google.com>, Mika Westerberg <mika.westerberg@linux.intel.com>, Theodore Ts'o <tytso@mit.edu>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation>
 List-Id: linux-api@vger.kernel.org
 
---4bRzO86E/ozDv8r1
-Content-Type: text/plain; charset="us-ascii"
-Content-Disposition: inline
-
-On Tue, Feb 16, 2016 at 04:08:02PM -0800, Andrew Morton wrote:
-> On Thu, 10 Dec 2015 16:03:37 -0800 Shaohua Li <shli@fb.com> wrote:
-> 
-> > In jemalloc, a free(3) doesn't immediately free the memory to OS even
-> > the memory is page aligned/size, and hope the memory can be reused soon.
-> > Later the virtual address becomes fragmented, and more and more free
-> > memory are aggregated. If the free memory size is large, jemalloc uses
-> > madvise(DONT_NEED) to actually free the memory back to OS.
-> > 
-> > The madvise has significantly overhead paritcularly because of TLB
-> > flush. jemalloc does madvise for several virtual address space ranges
-> > one time. Instead of calling madvise for each of the ranges, we
-> > introduce a new syscall to purge memory for several ranges one time. In
-> > this way, we can merge several TLB flush for the ranges to one big TLB
-> > flush. This also reduce mmap_sem locking and kernel/userspace switching.
-> > 
-> > I'm running a simple memory allocation benchmark. 32 threads do random
-> > malloc/free/realloc.
-> 
-> CPU count?  (Does that matter much?)
-
-32. It does. the tlb flush overhead depends on the cpu count. 
-> > Corresponding jemalloc patch to utilize this API is
-> > attached.
-> 
-> No it isn't ;)
-
-Sorry, I attached it in first post, but not this one. Attached is the
-one I tested against this patch.
-
-> Who maintains jemalloc?  Are they signed up to actually apply the
-> patch?  It would be bad to add the patch to the kernel and then find
-> that the jemalloc maintainers choose not to use it!
-
-Jason Evans (cced) is the author of jemalloc. I talked to him before, he
-is very positive to this new syscall.
-
-> > Without patch:
-> > real    0m18.923s
-> > user    1m11.819s
-> > sys     7m44.626s
-> > each cpu gets around 3000K/s TLB flush interrupt. Perf shows TLB flush
-> > is hotest functions. mmap_sem read locking (because of page fault) is
-> > also heavy.
-> > 
-> > with patch:
-> > real    0m15.026s
-> > user    0m48.548s
-> > sys     6m41.153s
-> > each cpu gets around 140k/s TLB flush interrupt. TLB flush isn't hot at
-> > all. mmap_sem read locking (still because of page fault) becomes the
-> > sole hot spot.
-> 
-> This is a somewhat underwhelming improvement, given that it's a
-> synthetic microbenchmark.
-
-Yes, this test does malloc, free, calloc, realloc, so it doesn't only
-benchmark the madvisev.
-> > Another test malloc a bunch of memory in 48 threads, then all threads
-> > free the memory. I measure the time of the memory free.
-> > Without patch: 34.332s
-> > With patch:    17.429s
-> 
-> This is more whelming.
-> 
-> Do we have a feel for how much benefit this patch will have for
-> real-world workloads?  That's pretty important.
-
-Sure, we'll post some real-world data.
-> > MADV_FREE does the same TLB flush as MADV_NEED, this also applies to
-> 
-> I'll do s/MADV_NEED/MADV_DONTNEED/
-> 
-> > MADV_FREE. Other madvise type can have small benefits too, like reduce
-> > syscalls/mmap_sem locking.
-> 
-> Could we please get a testcase for the syscall(s) into
-> tools/testing/selftests/vm?  For long-term maintenance reasons and as a
-> service to arch maintainers - make it easy for them to check the
-> functionality without having to roll their own (possibly incomplete)
-> test app.
-> 
-> I'm not sure *how* we'd develop a test case.  Use mincore()?
-
-Ok, I'll add this later.
-> > --- a/mm/madvise.c
-> > +++ b/mm/madvise.c
-> > @@ -21,7 +21,10 @@
-> >  #include <linux/swap.h>
-> >  #include <linux/swapops.h>
-> >  #include <linux/mmu_notifier.h>
-> > -
-> > +#include <linux/uio.h>
-> > +#ifdef CONFIG_COMPAT
-> > +#include <linux/compat.h>
-> > +#endif
-> 
-> I'll nuke the ifdefs - compat.h already does that.
-> 
-> 
-> It would be good for us to have a look at the manpage before going too
-> far with the patch - this helps reviewers to think about the proposed
-> interface and behaviour.
-> 
-> I'll queue this up for a bit of testing, although it won't get tested
-> much.  The syscall fuzzers will presumably hit on it.
-
-Thanks!
-
---4bRzO86E/ozDv8r1
-Content-Type: text/plain; charset="us-ascii"
-Content-Disposition: attachment; filename="je.patch"
-
-diff --git a/src/arena.c b/src/arena.c
-index 43733cc..5c1a3b3 100644
---- a/src/arena.c
-+++ b/src/arena.c
-@@ -1266,6 +1266,7 @@ arena_dirty_count(arena_t *arena)
- 	return (ndirty);
- }
- 
-+#define PURGE_VEC 1
- static size_t
- arena_compute_npurge(arena_t *arena, bool all)
- {
-@@ -1280,6 +1281,10 @@ arena_compute_npurge(arena_t *arena, bool all)
- 		threshold = threshold < chunk_npages ? chunk_npages : threshold;
- 
- 		npurge = arena->ndirty - threshold;
-+#if PURGE_VEC
-+		if (npurge < arena->ndirty / 2)
-+			npurge = arena->ndirty / 2;
-+#endif
- 	} else
- 		npurge = arena->ndirty;
- 
-@@ -1366,6 +1371,31 @@ arena_stash_dirty(arena_t *arena, chunk_hooks_t *chunk_hooks, bool all,
- 	return (nstashed);
- }
- 
-+#if PURGE_VEC
-+int mycomp(const void *a, const void *b)
-+{
-+	unsigned long a_b = (unsigned long)((struct iovec *)a)->iov_base;
-+	unsigned long b_b = (unsigned long)((struct iovec *)b)->iov_base;
-+
-+	if (a_b < b_b)
-+		return -1;
-+	if (a_b > b_b)
-+		return 1;
-+	return 0;
-+}
-+
-+#define MAX_IOVEC 32
-+bool pages_purge_vec(struct iovec *iov, unsigned long nr_segs)
-+{
-+	int ret;
-+
-+	qsort(iov, nr_segs, sizeof(struct iovec), mycomp);
-+	ret = syscall(327, iov, nr_segs, MADV_DONTNEED);
-+
-+	return !!ret;
-+}
-+#endif
-+
- static size_t
- arena_purge_stashed(arena_t *arena, chunk_hooks_t *chunk_hooks,
-     arena_runs_dirty_link_t *purge_runs_sentinel,
-@@ -1374,6 +1404,10 @@ arena_purge_stashed(arena_t *arena, chunk_hooks_t *chunk_hooks,
- 	size_t npurged, nmadvise;
- 	arena_runs_dirty_link_t *rdelm;
- 	extent_node_t *chunkselm;
-+#if PURGE_VEC
-+	struct iovec iovec[MAX_IOVEC];
-+	int vec_index = 0;
-+#endif
- 
- 	if (config_stats)
- 		nmadvise = 0;
-@@ -1418,9 +1452,21 @@ arena_purge_stashed(arena_t *arena, chunk_hooks_t *chunk_hooks,
- 				flag_unzeroed = 0;
- 				flags = CHUNK_MAP_DECOMMITTED;
- 			} else {
-+#if !PURGE_VEC
- 				flag_unzeroed = chunk_purge_wrapper(arena,
- 				    chunk_hooks, chunk, chunksize, pageind <<
- 				    LG_PAGE, run_size) ? CHUNK_MAP_UNZEROED : 0;
-+#else
-+				flag_unzeroed = 0;
-+				iovec[vec_index].iov_base = (void *)((uintptr_t)chunk +
-+					(pageind << LG_PAGE));
-+				iovec[vec_index].iov_len = run_size;
-+				vec_index++;
-+				if (vec_index >= MAX_IOVEC) {
-+					pages_purge_vec(iovec, vec_index);
-+					vec_index = 0;
-+				}
-+#endif
- 				flags = flag_unzeroed;
- 			}
- 			arena_mapbits_large_set(chunk, pageind+npages-1, 0,
-@@ -1449,6 +1495,10 @@ arena_purge_stashed(arena_t *arena, chunk_hooks_t *chunk_hooks,
- 		if (config_stats)
- 			nmadvise++;
- 	}
-+#if PURGE_VEC
-+	if (vec_index > 0)
-+		pages_purge_vec(iovec, vec_index);
-+#endif
- 	malloc_mutex_lock(&arena->lock);
- 
- 	if (config_stats) {
-
---4bRzO86E/ozDv8r1--
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+T24gV2VkLCBGZWIgMTcsIDIwMTYgYXQgNDoxNyBBTSwgQW5keSBTaGV2Y2hlbmtvCjxhbmRyaXku
+c2hldmNoZW5rb0BsaW51eC5pbnRlbC5jb20+IHdyb3RlOgo+IEluc3RlYWQgb2Ygb3BlbmNvZGlu
+ZyB0aGUgZXhpc3RpbmcgbGlicmFyeSBmdW5jdGlvbnMgbGV0J3MgdXNlIHRoZW0gZGlyZWN0bHku
+Cj4KPiBUaGUgY29udmVyc2lvbiBmaXhlcyBhIHBvdGVudGlhbCBidWcgaW4gaW50MzQweF90aGVy
+bWFsIGFzIHdlbGwgc2luY2Ugd2UgaGF2ZQo+IHRvIHVzZSBtZW1jbXAoKSBvbiBiaW5hcnkgZGF0
+YS4KPgo+IFNpZ25lZC1vZmYtYnk6IEFuZHkgU2hldmNoZW5rbyA8YW5kcml5LnNoZXZjaGVua29A
+bGludXguaW50ZWwuY29tPgo+IC0tLQo+ICBkcml2ZXJzL2FjcGkvYWNwaV9leHRsb2cuYyAgICAg
+ICAgICAgICAgICAgICAgICAgIHwgIDggKysrLS0tCj4gIGRyaXZlcnMvYWNwaS9idXMuYyAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAyOSArKy0tLS0tLS0tLS0tLS0tLS0tCj4gIGRy
+aXZlcnMvYWNwaS9uZml0LmMgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAzNCArKysr
+KysrKysrKy0tLS0tLS0tLS0tLQo+ICBkcml2ZXJzL2FjcGkvbmZpdC5oICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgIHwgIDMgKy0KPiAgZHJpdmVycy9hY3BpL3V0aWxzLmMgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICB8ICA0ICstLQo+ICBkcml2ZXJzL2NoYXIvdHBtL3RwbV9jcmIu
+YyAgICAgICAgICAgICAgICAgICAgICAgIHwgIDkgKysrLS0tCj4gIGRyaXZlcnMvY2hhci90cG0v
+dHBtX3BwaS5jICAgICAgICAgICAgICAgICAgICAgICAgfCAyMCArKysrKystLS0tLS0tCj4gIGRy
+aXZlcnMvZ3B1L2RybS9pOTE1L2ludGVsX2FjcGkuYyAgICAgICAgICAgICAgICAgfCAxNCArKysr
+LS0tLS0tCj4gIGRyaXZlcnMvZ3B1L2RybS9ub3V2ZWF1L25vdXZlYXVfYWNwaS5jICAgICAgICAg
+ICAgfCAyMCArKysrKystLS0tLS0tCj4gIGRyaXZlcnMvZ3B1L2RybS9ub3V2ZWF1L252a20vc3Vi
+ZGV2L214bS9iYXNlLmMgICAgfCAgOSArKystLS0KPiAgZHJpdmVycy9oaWQvaTJjLWhpZC9pMmMt
+aGlkLmMgICAgICAgICAgICAgICAgICAgICB8ICA5ICsrKy0tLQo+ICBkcml2ZXJzL2lvbW11L2Rt
+YXIuYyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgMTEgKysrKy0tLS0KPiAgZHJpdmVy
+cy9wY2kvcGNpLWFjcGkuYyAgICAgICAgICAgICAgICAgICAgICAgICAgICB8IDExICsrKystLS0t
+Cj4gIGRyaXZlcnMvcGNpL3BjaS1sYWJlbC5jICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAg
+NCArLS0KPiAgZHJpdmVycy90aGVybWFsL2ludDM0MHhfdGhlcm1hbC9pbnQzNDAwX3RoZXJtYWwu
+YyB8ICA2ICsrLS0KPiAgZHJpdmVycy91c2IvaG9zdC94aGNpLXBjaS5jICAgICAgICAgICAgICAg
+ICAgICAgICB8ICA5ICsrKy0tLQo+ICBpbmNsdWRlL2FjcGkvYWNwaV9idXMuaCAgICAgICAgICAg
+ICAgICAgICAgICAgICAgIHwgMTAgKysrKy0tLQo+ICBpbmNsdWRlL2xpbnV4L2FjcGkuaCAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgIHwgIDIgKy0KPiAgaW5jbHVkZS9saW51eC9wY2ktYWNw
+aS5oICAgICAgICAgICAgICAgICAgICAgICAgICB8ICAyICstCj4gIHNvdW5kL3NvYy9pbnRlbC9z
+a3lsYWtlL3NrbC1uaGx0LmMgICAgICAgICAgICAgICAgfCAgNyArKystLQo+ICAyMCBmaWxlcyBj
+aGFuZ2VkLCA5MiBpbnNlcnRpb25zKCspLCAxMjkgZGVsZXRpb25zKC0pCj4KWy4uXQo+IGRpZmYg
+LS1naXQgYS9kcml2ZXJzL2FjcGkvbmZpdC5jIGIvZHJpdmVycy9hY3BpL25maXQuYwo+IGluZGV4
+IGFkNmQ4YzYuLjNiZWI5OWIgMTAwNjQ0Cj4gLS0tIGEvZHJpdmVycy9hY3BpL25maXQuYwo+ICsr
+KyBiL2RyaXZlcnMvYWNwaS9uZml0LmMKPiBAQCAtNDMsMTEgKzQzLDExIEBAIHN0cnVjdCBuZml0
+X3RhYmxlX3ByZXYgewo+ICAgICAgICAgc3RydWN0IGxpc3RfaGVhZCBmbHVzaGVzOwo+ICB9Owo+
+Cj4gLXN0YXRpYyB1OCBuZml0X3V1aWRbTkZJVF9VVUlEX01BWF1bMTZdOwo+ICtzdGF0aWMgdXVp
+ZF9sZSBuZml0X3V1aWRbTkZJVF9VVUlEX01BWF07Cj4KPiAtY29uc3QgdTggKnRvX25maXRfdXVp
+ZChlbnVtIG5maXRfdXVpZHMgaWQpCj4gK2NvbnN0IHV1aWRfbGUgKnRvX25maXRfdXVpZChlbnVt
+IG5maXRfdXVpZHMgaWQpCj4gIHsKPiAtICAgICAgIHJldHVybiBuZml0X3V1aWRbaWRdOwo+ICsg
+ICAgICAgcmV0dXJuICZuZml0X3V1aWRbaWRdOwo+ICB9Cj4gIEVYUE9SVF9TWU1CT0wodG9fbmZp
+dF91dWlkKTsKPgo+IEBAIC04Myw3ICs4Myw3IEBAIHN0YXRpYyBpbnQgYWNwaV9uZml0X2N0bChz
+dHJ1Y3QgbnZkaW1tX2J1c19kZXNjcmlwdG9yICpuZF9kZXNjLAo+ICAgICAgICAgY29uc3QgY2hh
+ciAqY21kX25hbWUsICogZGltbV9uYW1lOwo+ICAgICAgICAgdW5zaWduZWQgbG9uZyBkc21fbWFz
+azsKPiAgICAgICAgIGFjcGlfaGFuZGxlIGhhbmRsZTsKPiAtICAgICAgIGNvbnN0IHU4ICp1dWlk
+Owo+ICsgICAgICAgY29uc3QgdXVpZF9sZSAqdXVpZDsKPiAgICAgICAgIHUzMiBvZmZzZXQ7Cj4g
+ICAgICAgICBpbnQgcmMsIGk7Cj4KPiBAQCAtMjI1LDcgKzIyNSw3IEBAIHN0YXRpYyBpbnQgbmZp
+dF9zcGFfdHlwZShzdHJ1Y3QgYWNwaV9uZml0X3N5c3RlbV9hZGRyZXNzICpzcGEpCj4gICAgICAg
+ICBpbnQgaTsKPgo+ICAgICAgICAgZm9yIChpID0gMDsgaSA8IE5GSVRfVVVJRF9NQVg7IGkrKykK
+PiAtICAgICAgICAgICAgICAgaWYgKG1lbWNtcCh0b19uZml0X3V1aWQoaSksIHNwYS0+cmFuZ2Vf
+Z3VpZCwgMTYpID09IDApCj4gKyAgICAgICAgICAgICAgIGlmICghdXVpZF9sZV9jbXAoKnRvX25m
+aXRfdXVpZChpKSwgKih1dWlkX2xlICopc3BhLT5yYW5nZV9ndWlkKSkKPiAgICAgICAgICAgICAg
+ICAgICAgICAgICByZXR1cm4gaTsKPiAgICAgICAgIHJldHVybiAtMTsKPiAgfQo+IEBAIC04Mjks
+NyArODI5LDcgQEAgc3RhdGljIGludCBhY3BpX25maXRfYWRkX2RpbW0oc3RydWN0IGFjcGlfbmZp
+dF9kZXNjICphY3BpX2Rlc2MsCj4gIHsKPiAgICAgICAgIHN0cnVjdCBhY3BpX2RldmljZSAqYWRl
+diwgKmFkZXZfZGltbTsKPiAgICAgICAgIHN0cnVjdCBkZXZpY2UgKmRldiA9IGFjcGlfZGVzYy0+
+ZGV2Owo+IC0gICAgICAgY29uc3QgdTggKnV1aWQgPSB0b19uZml0X3V1aWQoTkZJVF9ERVZfRElN
+TSk7Cj4gKyAgICAgICBjb25zdCB1dWlkX2xlICp1dWlkID0gdG9fbmZpdF91dWlkKE5GSVRfREVW
+X0RJTU0pOwo+ICAgICAgICAgaW50IGk7Cj4KPiAgICAgICAgIG5maXRfbWVtLT5kc21fbWFzayA9
+IGFjcGlfZGVzYy0+ZGltbV9kc21fZm9yY2VfZW47Cj4gQEAgLTkwOSw3ICs5MDksNyBAQCBzdGF0
+aWMgaW50IGFjcGlfbmZpdF9yZWdpc3Rlcl9kaW1tcyhzdHJ1Y3QgYWNwaV9uZml0X2Rlc2MgKmFj
+cGlfZGVzYykKPiAgc3RhdGljIHZvaWQgYWNwaV9uZml0X2luaXRfZHNtcyhzdHJ1Y3QgYWNwaV9u
+Zml0X2Rlc2MgKmFjcGlfZGVzYykKPiAgewo+ICAgICAgICAgc3RydWN0IG52ZGltbV9idXNfZGVz
+Y3JpcHRvciAqbmRfZGVzYyA9ICZhY3BpX2Rlc2MtPm5kX2Rlc2M7Cj4gLSAgICAgICBjb25zdCB1
+OCAqdXVpZCA9IHRvX25maXRfdXVpZChORklUX0RFVl9CVVMpOwo+ICsgICAgICAgY29uc3QgdXVp
+ZF9sZSAqdXVpZCA9IHRvX25maXRfdXVpZChORklUX0RFVl9CVVMpOwo+ICAgICAgICAgc3RydWN0
+IGFjcGlfZGV2aWNlICphZGV2Owo+ICAgICAgICAgaW50IGk7Cj4KPiBAQCAtMjA3OSwxNiArMjA3
+OSwxNiBAQCBzdGF0aWMgX19pbml0IGludCBuZml0X2luaXQodm9pZCkKPiAgICAgICAgIEJVSUxE
+X0JVR19PTihzaXplb2Yoc3RydWN0IGFjcGlfbmZpdF9jb250cm9sX3JlZ2lvbikgIT0gODApOwo+
+ICAgICAgICAgQlVJTERfQlVHX09OKHNpemVvZihzdHJ1Y3QgYWNwaV9uZml0X2RhdGFfcmVnaW9u
+KSAhPSA0MCk7Cj4KPiAtICAgICAgIGFjcGlfc3RyX3RvX3V1aWQoVVVJRF9WT0xBVElMRV9NRU1P
+UlksIG5maXRfdXVpZFtORklUX1NQQV9WT0xBVElMRV0pOwo+IC0gICAgICAgYWNwaV9zdHJfdG9f
+dXVpZChVVUlEX1BFUlNJU1RFTlRfTUVNT1JZLCBuZml0X3V1aWRbTkZJVF9TUEFfUE1dKTsKPiAt
+ICAgICAgIGFjcGlfc3RyX3RvX3V1aWQoVVVJRF9DT05UUk9MX1JFR0lPTiwgbmZpdF91dWlkW05G
+SVRfU1BBX0RDUl0pOwo+IC0gICAgICAgYWNwaV9zdHJfdG9fdXVpZChVVUlEX0RBVEFfUkVHSU9O
+LCBuZml0X3V1aWRbTkZJVF9TUEFfQkRXXSk7Cj4gLSAgICAgICBhY3BpX3N0cl90b191dWlkKFVV
+SURfVk9MQVRJTEVfVklSVFVBTF9ESVNLLCBuZml0X3V1aWRbTkZJVF9TUEFfVkRJU0tdKTsKPiAt
+ICAgICAgIGFjcGlfc3RyX3RvX3V1aWQoVVVJRF9WT0xBVElMRV9WSVJUVUFMX0NELCBuZml0X3V1
+aWRbTkZJVF9TUEFfVkNEXSk7Cj4gLSAgICAgICBhY3BpX3N0cl90b191dWlkKFVVSURfUEVSU0lT
+VEVOVF9WSVJUVUFMX0RJU0ssIG5maXRfdXVpZFtORklUX1NQQV9QRElTS10pOwo+IC0gICAgICAg
+YWNwaV9zdHJfdG9fdXVpZChVVUlEX1BFUlNJU1RFTlRfVklSVFVBTF9DRCwgbmZpdF91dWlkW05G
+SVRfU1BBX1BDRF0pOwo+IC0gICAgICAgYWNwaV9zdHJfdG9fdXVpZChVVUlEX05GSVRfQlVTLCBu
+Zml0X3V1aWRbTkZJVF9ERVZfQlVTXSk7Cj4gLSAgICAgICBhY3BpX3N0cl90b191dWlkKFVVSURf
+TkZJVF9ESU1NLCBuZml0X3V1aWRbTkZJVF9ERVZfRElNTV0pOwo+ICsgICAgICAgdXVpZF9sZV90
+b19iaW4oVVVJRF9WT0xBVElMRV9NRU1PUlksICZuZml0X3V1aWRbTkZJVF9TUEFfVk9MQVRJTEVd
+KTsKPiArICAgICAgIHV1aWRfbGVfdG9fYmluKFVVSURfUEVSU0lTVEVOVF9NRU1PUlksICZuZml0
+X3V1aWRbTkZJVF9TUEFfUE1dKTsKPiArICAgICAgIHV1aWRfbGVfdG9fYmluKFVVSURfQ09OVFJP
+TF9SRUdJT04sICZuZml0X3V1aWRbTkZJVF9TUEFfRENSXSk7Cj4gKyAgICAgICB1dWlkX2xlX3Rv
+X2JpbihVVUlEX0RBVEFfUkVHSU9OLCAmbmZpdF91dWlkW05GSVRfU1BBX0JEV10pOwo+ICsgICAg
+ICAgdXVpZF9sZV90b19iaW4oVVVJRF9WT0xBVElMRV9WSVJUVUFMX0RJU0ssICZuZml0X3V1aWRb
+TkZJVF9TUEFfVkRJU0tdKTsKPiArICAgICAgIHV1aWRfbGVfdG9fYmluKFVVSURfVk9MQVRJTEVf
+VklSVFVBTF9DRCwgJm5maXRfdXVpZFtORklUX1NQQV9WQ0RdKTsKPiArICAgICAgIHV1aWRfbGVf
+dG9fYmluKFVVSURfUEVSU0lTVEVOVF9WSVJUVUFMX0RJU0ssICZuZml0X3V1aWRbTkZJVF9TUEFf
+UERJU0tdKTsKPiArICAgICAgIHV1aWRfbGVfdG9fYmluKFVVSURfUEVSU0lTVEVOVF9WSVJUVUFM
+X0NELCAmbmZpdF91dWlkW05GSVRfU1BBX1BDRF0pOwo+ICsgICAgICAgdXVpZF9sZV90b19iaW4o
+VVVJRF9ORklUX0JVUywgJm5maXRfdXVpZFtORklUX0RFVl9CVVNdKTsKPiArICAgICAgIHV1aWRf
+bGVfdG9fYmluKFVVSURfTkZJVF9ESU1NLCAmbmZpdF91dWlkW05GSVRfREVWX0RJTU1dKTsKCkkg
+ZG9uJ3Qgc2VlIHRoZSBiZW5lZml0IG9mIHRoaXMgY2hhbmdlLiAgRm9yIHRoZSBORklUIGRyaXZl
+ciB3ZSB3ZW50CnRocm91Z2ggYSBmaXJlIGRyaWxsIHRyeWluZyB0byBtYWtlIHN1cmUgdGhlIEFD
+UEkgc3BlYyBmb3JtYXQgb2YgYQpVVUlEIG1hdGNoZWQgdGhlIExpbnV4IGludGVycHJldGF0aW9u
+LCBhbmQgdGhpcyBjaGFuZ2UgbWFrZXMgdGhhdApoYXJkZXIgdG8gZGV0ZXJtaW5lLiAgQUNQSSBk
+cml2ZXJzIHNob3VsZCB1c2UgQUNQSUNBIHV1aWQgaGVscGVyCnJvdXRpbmVzIGluIG15IG9waW5p
+b24uCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCmRyaS1k
+ZXZlbCBtYWlsaW5nIGxpc3QKZHJpLWRldmVsQGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwczov
+L2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2RyaS1kZXZlbAo=
