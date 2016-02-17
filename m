@@ -1,78 +1,184 @@
-From: Michael Williams <Michael.Williams@arm.com>
-Subject: RE: [PATCH V3 6/6] coresight-stm: adding driver for CoreSight STM
- component
-Date: Wed, 17 Feb 2016 12:08:17 +0000
-Message-ID: <VI1PR08MB0670BF982CDE54DA7EE9B0BF8AAE0@VI1PR08MB0670.eurprd08.prod.outlook.com>
-References: <1454756672-12790-1-git-send-email-zhang.chunyan@linaro.org>
-	<1454756672-12790-7-git-send-email-zhang.chunyan@linaro.org>
-	<CANLsYkxvLFu1C+_H9c0EoMebLQu1gnwt9bqY6_R3j+ua2w+xMg@mail.gmail.com>
-	<VI1PR08MB06708C5EA9DEE2D71C13FFAA8AA90@VI1PR08MB0670.eurprd08.prod.outlook.com>
- <CAG2=9p9-c5z6yXm6VDkDeqZmpFGt3z88ccNQxZTwia=dm3_GNQ@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAG2=9p9-c5z6yXm6VDkDeqZmpFGt3z88ccNQxZTwia=dm3_GNQ@mail.gmail.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Chunyan Zhang <zhang.chunyan@linaro.org>
-Cc: Mathieu Poirier <mathieu.poirier@linaro.org>, Alexander Shishkin <alexander.shishkin@linux.intel.com>, Mike Leach <Mike.Leach@arm.com>, Al Grant <Al.Grant@arm.com>, "Jeremiassen, Tor" <tor@ti.com>, Nicolas GUION <nicolas.guion@st.com>, Mark Brown <broonie@kernel.org>, Rob Herring <robh@kernel.org>, Pratik Patel <pratikp@codeaurora.org>, Jon Corbet <corbet@lwn.net>, Mark Rutland <Mark.Rutland@arm.com>, Lyra Zhang <zhang.lyra@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>
+From: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: [PATCH v1 03/10] lib/uuid: introduce few more generic helpers for UUID
+Date: Wed, 17 Feb 2016 14:17:21 +0200
+Message-ID: <1455711448-124103-4-git-send-email-andriy.shevchenko@linux.intel.com>
+References: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
+Return-path: <linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1455711448-124103-1-git-send-email-andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jani Nikula <jani.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Benjamin Tissoires <benjamin.tissoires-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mathias Nyman <mathias.nyman-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Lv Zheng <lv.zheng-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Zhang Rui <rui.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mika Westerberg <mika.westerberg-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Cc: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-SGkgQ2h1bnlhbiwNCg0KQ2h1bnlhbiBaaGFuZyB3cm90ZSBvbiAyMDE2LTAyLTE3Og0KPiBIaSBN
-aWNoYWVsLA0KPg0KPiBPbmUgcXVlc3Rpb24gYmVsb3cgbmVlZCB0byBiZSBjbGFyaWZpZWQuDQo+
-DQo+IE9uIEZyaSwgRmViIDEyLCAyMDE2IGF0IDEwOjU1IFBNLCBNaWNoYWVsIFdpbGxpYW1zDQo+
-IDxNaWNoYWVsLldpbGxpYW1zQGFybS5jb20+IHdyb3RlOg0KPj4gTWF0aGlldSBQb2lyaWVyIFtt
-YWlsdG86bWF0aGlldS5wb2lyaWVyQGxpbmFyby5vcmddIHdyb3RlOg0KPj4+IE9uIDYgRmVicnVh
-cnkgMjAxNiBhdCAwNDowNCwgQ2h1bnlhbiBaaGFuZyA8emhhbmcuY2h1bnlhbkBsaW5hcm8ub3Jn
-PiB3cm90ZToNCj4+Pj4gRnJvbTogUHJhdGlrIFBhdGVsIDxwcmF0aWtwQGNvZGVhdXJvcmEub3Jn
-Pg0KPj4+Pg0KPj4+PiBUaGlzIGRyaXZlciBhZGRzIHN1cHBvcnQgZm9yIHRoZSBTVE0gQ29yZVNp
-Z2h0IElQIGJsb2NrLCBhbGxvd2luZyBhbnkNCj4+Pj4gc3lzdGVtIGNvbXBvbWVudCAoSFcgb3Ig
-U1cpIHRvIGxvZyBhbmQgYWdncmVnYXRlIG1lc3NhZ2VzIHZpYSBhDQo+Pj4+IHNpbmdsZSBlbnRp
-dHkuDQo+Pj4+DQo+Pj4+IFRoZSBDb3JlU2lnaHQgU1RNIGV4cG9zZXMgYW4gYXBwbGljYXRpb24g
-ZGVmaW5lZCBudW1iZXIgb2YgY2hhbm5lbHMNCj4+Pj4gY2FsbGVkIHN0aW11bHVzIHBvcnQuICBD
-b25maWd1cmF0aW9uIGlzIGRvbmUgdXNpbmcgZW50cmllcyBpbiBzeXNmcw0KPj4+PiBhbmQgY2hh
-bm5lbHMgbWFkZSBhdmFpbGFibGUgdG8gdXNlcnNwYWNlIHZpYSBjb25maWdmcy4NCj4+Pj4NCj4+
-Pj4gU2lnbmVkLW9mZi1ieTogUHJhdGlrIFBhdGVsIDxwcmF0aWtwQGNvZGVhdXJvcmEub3JnPg0K
-Pj4+PiBTaWduZWQtb2ZmLWJ5OiBNYXRoaWV1IFBvaXJpZXIgPG1hdGhpZXUucG9pcmllckBsaW5h
-cm8ub3JnPg0KPj4+PiBTaWduZWQtb2ZmLWJ5OiBDaHVueWFuIFpoYW5nIDx6aGFuZy5jaHVueWFu
-QGxpbmFyby5vcmc+DQo+Pj4+IC0tLQ0KPj4+PiAgLi4uL0FCSS90ZXN0aW5nL3N5c2ZzLWJ1cy1j
-b3Jlc2lnaHQtZGV2aWNlcy1zdG0gICAgfCAgNTMgKysNCj4+Pj4gIERvY3VtZW50YXRpb24vdHJh
-Y2UvY29yZXNpZ2h0LnR4dCAgICAgICAgICAgICAgICAgIHwgIDM3ICstDQo+Pj4+ICBkcml2ZXJz
-L2h3dHJhY2luZy9jb3Jlc2lnaHQvS2NvbmZpZyAgICAgICAgICAgICAgICB8ICAxMSArDQo+Pj4+
-ICBkcml2ZXJzL2h3dHJhY2luZy9jb3Jlc2lnaHQvTWFrZWZpbGUgICAgICAgICAgICAgICB8ICAg
-MSArDQo+Pj4+ICBkcml2ZXJzL2h3dHJhY2luZy9jb3Jlc2lnaHQvY29yZXNpZ2h0LXN0bS5jICAg
-ICAgICB8IDkyOCArKysrKysrKysrKysrKysrKysrKysNCj4+Pj4gIGluY2x1ZGUvbGludXgvY29y
-ZXNpZ2h0LXN0bS5oICAgICAgICAgICAgICAgICAgICAgIHwgICA2ICsNCj4+Pj4gIGluY2x1ZGUv
-dWFwaS9saW51eC9jb3Jlc2lnaHQtc3RtLmggICAgICAgICAgICAgICAgIHwgIDEyICsNCj4+Pj4g
-IDcgZmlsZXMgY2hhbmdlZCwgMTA0NiBpbnNlcnRpb25zKCspLCAyIGRlbGV0aW9ucygtKQ0KPj4+
-PiAgY3JlYXRlIG1vZGUgMTAwNjQ0IERvY3VtZW50YXRpb24vQUJJL3Rlc3Rpbmcvc3lzZnMtYnVz
-LWNvcmVzaWdodC1kZXZpY2VzLXN0bQ0KPj4+PiAgY3JlYXRlIG1vZGUgMTAwNjQ0IGRyaXZlcnMv
-aHd0cmFjaW5nL2NvcmVzaWdodC9jb3Jlc2lnaHQtc3RtLmMNCj4+Pj4gIGNyZWF0ZSBtb2RlIDEw
-MDY0NCBpbmNsdWRlL2xpbnV4L2NvcmVzaWdodC1zdG0uaA0KPj4+PiAgY3JlYXRlIG1vZGUgMTAw
-NjQ0IGluY2x1ZGUvdWFwaS9saW51eC9jb3Jlc2lnaHQtc3RtLmgNCj4NCj4gWy4uLl0NCj4NCj4+
-Pj4gK3N0YXRpYyBpbnQgc3RtX3NlbmQodm9pZCAqYWRkciwgY29uc3Qgdm9pZCAqZGF0YSwgdTMy
-IHNpemUsIHU4IG1heCkNCj4+Pj4gK3sNCj4+Pj4gKyAgICAgICB1MzIgbGVuID0gc2l6ZTsNCj4+
-Pj4gKyAgICAgICB1OCBwYWxvYWRbOF07DQo+Pj4+ICsNCj4+Pj4gKyAgICAgICBpZiAoc3RtX2Fk
-ZHJfdW5hbGlnbmVkKGRhdGEsIG1heCkpIHsNCj4+Pj4gKyAgICAgICAgICAgICAgIG1lbWNweShw
-YWxvYWQsIGRhdGEsIHNpemUpOw0KPj4+PiArICAgICAgICAgICAgICAgZGF0YSA9IHBhbG9hZDsN
-Cj4+Pj4gKyAgICAgICB9DQo+Pj4+ICsNCj4+Pj4gKyAgICAgICAvKiBub3cgd2UgYXJlIDY0Yml0
-LzMyYml0IGFsaWduZWQgKi8NCj4+Pj4gKyNpZmRlZiBDT05GSUdfNjRCSVQNCj4+Pj4gKyAgICAg
-ICBpZiAoc2l6ZSA9PSA4KQ0KPj4+PiArICAgICAgICAgICAgICAgd3JpdGVxX3JlbGF4ZWQoKih1
-NjQgKilkYXRhLCBhZGRyKTsNCj4+Pj4gKyNlbmRpZg0KPj4+DQo+Pj4gV2UgcHJvYmFibHkgZG9u
-J3QgbmVlZCBhbiAjaWZkZWYgaGVyZS4gIENoZWNraW5nIHRoZSBzaXplIG9mIHRoZQ0KPj4+IHRy
-YW5zZmVyIGFnYWluc3QgdGhlIGZ1bmRhbWVudGFsIGRhdGEgc2l6ZSB3aWxsIHJlc3VsdCBpbiB0
-aGUgc2FtZQ0KPj4+IG91dGNvbWUsIGkuZSBwcmV2ZW50aW5nIDY0IGJpdCB0cmFuc2ZlcnMgb24g
-YSAzMiBiaXQgYXJjaGl0ZWN0dXJlLiAgQW4NCj4+PiBlcnJvciAodW5kZXJzdGFuZGFibGUgYnkg
-dGhlIGNhbGxlcikgc2hvdWxkIHByb2JhYmx5IGJlIHJldHVybmVkIGluDQo+Pj4gdGhpcyBjYXNl
-Lg0KPj4NCj4+IEluIHRoZW9yeSB0aGlzIGlzIGNvcnJlY3QsIGJ1dCBpZiB0aGUgY29kZSBpcyB1
-bnJlYWNoYWJsZSBmb3Igbm9uLTMyLWJpdCBhcmNoaXRlY3R1cmVzLA0KPiB3aHkgaW5jbHVkZSBp
-dCBhdCBhbGw/DQo+DQo+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICBeXl5eXl5eDQo+IEkg
-Z3Vlc3MgeW91IG1lYW4gdGhlIGNvZGUgaXMgdW5yZWFjaGFibGUgZm9yICJub24tNjQtYml0IiBh
-cmNoaXRlY3R1cmVzPw0KDQpZZXM7IGFwb2xvZ2llcyBmb3IgbXkgbWlzdGFrZSENCg0KW3NuaXBd
-DQoNCk1pa2UNCg0KSU1QT1JUQU5UIE5PVElDRTogVGhlIGNvbnRlbnRzIG9mIHRoaXMgZW1haWwg
-YW5kIGFueSBhdHRhY2htZW50cyBhcmUgY29uZmlkZW50aWFsIGFuZCBtYXkgYWxzbyBiZSBwcml2
-aWxlZ2VkLiBJZiB5b3UgYXJlIG5vdCB0aGUgaW50ZW5kZWQgcmVjaXBpZW50LCBwbGVhc2Ugbm90
-aWZ5IHRoZSBzZW5kZXIgaW1tZWRpYXRlbHkgYW5kIGRvIG5vdCBkaXNjbG9zZSB0aGUgY29udGVu
-dHMgdG8gYW55IG90aGVyIHBlcnNvbiwgdXNlIGl0IGZvciBhbnkgcHVycG9zZSwgb3Igc3RvcmUg
-b3IgY29weSB0aGUgaW5mb3JtYXRpb24gaW4gYW55IG1lZGl1bS4gVGhhbmsgeW91Lg0K
+There are new helpers in this patch:
+
+uuid_is_valid		checks if a UUID is valid
+uuid_be_to_bin		converts from string to binary (big endian)
+uuid_le_to_bin		converts from string to binary (little endian)
+
+They will be used in future, i.e. in the following patches in the series.
+
+This also moves indices arrays to lib/uuid.c to be shared accross modules.
+
+Signed-off-by: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+---
+ include/linux/uuid.h | 13 ++++++++++
+ lib/uuid.c           | 70 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ lib/vsprintf.c       |  9 +++----
+ 3 files changed, 87 insertions(+), 5 deletions(-)
+
+diff --git a/include/linux/uuid.h b/include/linux/uuid.h
+index 91c2b6d..616347f 100644
+--- a/include/linux/uuid.h
++++ b/include/linux/uuid.h
+@@ -22,6 +22,11 @@
+ 
+ #include <uapi/linux/uuid.h>
+ 
++/*
++ * The length of a UUID string ("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
++ * not including trailing NUL.
++ */
++#define	UUID_STRING_LEN		36
+ 
+ static inline int uuid_le_cmp(const uuid_le u1, const uuid_le u2)
+ {
+@@ -38,4 +43,12 @@ void generate_random_uuid(unsigned char uuid[16]);
+ extern void uuid_le_gen(uuid_le *u);
+ extern void uuid_be_gen(uuid_be *u);
+ 
++int __must_check uuid_is_valid(const char *uuid);
++
++extern const u8 uuid_le_index[16];
++extern const u8 uuid_be_index[16];
++
++int uuid_le_to_bin(const char *uuid, uuid_le *u);
++int uuid_be_to_bin(const char *uuid, uuid_be *u);
++
+ #endif
+diff --git a/lib/uuid.c b/lib/uuid.c
+index 6c81c0b..995865c 100644
+--- a/lib/uuid.c
++++ b/lib/uuid.c
+@@ -19,10 +19,17 @@
+  */
+ 
+ #include <linux/kernel.h>
++#include <linux/ctype.h>
++#include <linux/errno.h>
+ #include <linux/export.h>
+ #include <linux/uuid.h>
+ #include <linux/random.h>
+ 
++const u8 uuid_le_index[16] = {3,2,1,0,5,4,7,6,8,9,10,11,12,13,14,15};
++EXPORT_SYMBOL(uuid_le_index);
++const u8 uuid_be_index[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
++EXPORT_SYMBOL(uuid_be_index);
++
+ /***************************************************************
+  * Random UUID interface
+  *
+@@ -65,3 +72,66 @@ void uuid_be_gen(uuid_be *bu)
+ 	bu->b[6] = (bu->b[6] & 0x0F) | 0x40;
+ }
+ EXPORT_SYMBOL_GPL(uuid_be_gen);
++
++/**
++  * uuid_is_valid - checks if UUID string valid
++  * @uuid:	UUID string to check
++  *
++  * Description:
++  * It checks if the UUID string is following the format:
++  *	xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
++  * where x is a hex digit.
++  *
++  * Return: 0 on success, %-EINVAL otherwise.
++  */
++int uuid_is_valid(const char *uuid)
++{
++	unsigned int i;
++
++	if (strnlen(uuid, UUID_STRING_LEN) < UUID_STRING_LEN)
++		return -EINVAL;
++
++	for (i = 0; i < UUID_STRING_LEN; i++) {
++		if (i == 8 || i == 13 || i == 18 || i == 23) {
++			if (uuid[i] != '-')
++				return -EINVAL;
++		} else if (!isxdigit(uuid[i])) {
++			return -EINVAL;
++		}
++	}
++
++	return 0;
++}
++EXPORT_SYMBOL(uuid_is_valid);
++
++static int __uuid_to_bin(const char *uuid, __u8 b[16], const u8 ei[16])
++{
++	static const u8 si[16] = {0,2,4,6,9,11,14,16,19,21,24,26,28,30,32,34};
++	unsigned int i;
++	int ret;
++
++	ret = uuid_is_valid(uuid);
++	if (ret)
++		return ret;
++
++	for (i = 0; i < 16; i++) {
++		int hi = hex_to_bin(uuid[si[i]] + 0);
++		int lo = hex_to_bin(uuid[si[i]] + 1);
++
++		b[ei[i]] = (hi << 4) | lo;
++	}
++
++	return 0;
++}
++
++int uuid_le_to_bin(const char *uuid, uuid_le *u)
++{
++	return __uuid_to_bin(uuid, u->b, uuid_le_index);
++}
++EXPORT_SYMBOL(uuid_le_to_bin);
++
++int uuid_be_to_bin(const char *uuid, uuid_be *u)
++{
++	return __uuid_to_bin(uuid, u->b, uuid_be_index);
++}
++EXPORT_SYMBOL(uuid_be_to_bin);
+diff --git a/lib/vsprintf.c b/lib/vsprintf.c
+index 17d976b..752e78d 100644
+--- a/lib/vsprintf.c
++++ b/lib/vsprintf.c
+@@ -30,6 +30,7 @@
+ #include <linux/ioport.h>
+ #include <linux/dcache.h>
+ #include <linux/cred.h>
++#include <linux/uuid.h>
+ #include <net/addrconf.h>
+ #ifdef CONFIG_BLOCK
+ #include <linux/blkdev.h>
+@@ -1304,19 +1305,17 @@ static noinline_for_stack
+ char *uuid_string(char *buf, char *end, const u8 *addr,
+ 		  struct printf_spec spec, const char *fmt)
+ {
+-	char uuid[sizeof("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")];
++	char uuid[UUID_STRING_LEN + 1];
+ 	char *p = uuid;
+ 	int i;
+-	static const u8 be[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+-	static const u8 le[16] = {3,2,1,0,5,4,7,6,8,9,10,11,12,13,14,15};
+-	const u8 *index = be;
++	const u8 *index = uuid_be_index;
+ 	bool uc = false;
+ 
+ 	switch (*(++fmt)) {
+ 	case 'L':
+ 		uc = true;		/* fall-through */
+ 	case 'l':
+-		index = le;
++		index = uuid_le_index;
+ 		break;
+ 	case 'B':
+ 		uc = true;
+-- 
+2.7.0
