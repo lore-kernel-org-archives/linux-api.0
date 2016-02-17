@@ -1,7 +1,7 @@
 From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: [PATCH v1 07/10] sysctl: drop away useless label
-Date: Wed, 17 Feb 2016 14:17:25 +0200
-Message-ID: <1455711448-124103-8-git-send-email-andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v1 06/10] device property: switch to use UUID API
+Date: Wed, 17 Feb 2016 14:17:24 +0200
+Message-ID: <1455711448-124103-7-git-send-email-andriy.shevchenko@linux.intel.com>
 References: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
@@ -10,53 +10,57 @@ To: "Rafael J. Wysocki" <rjw@rjwysocki.net>, Theodore Ts'o <tytso@mit.edu>, Arnd
 Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-We have no locking in bin_uuid(). Thus, we may remove the out label and use
-return statements directly.
+Switch to use a generic UUID API instead of custom approach. It allows to
+define UUIDs, compare them, and validate.
 
 Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 ---
- kernel/sysctl_binary.c | 12 ++++--------
- 1 file changed, 4 insertions(+), 8 deletions(-)
+ drivers/acpi/property.c | 18 ++++++++----------
+ 1 file changed, 8 insertions(+), 10 deletions(-)
 
-diff --git a/kernel/sysctl_binary.c b/kernel/sysctl_binary.c
-index 7e7746a..509abe4 100644
---- a/kernel/sysctl_binary.c
-+++ b/kernel/sysctl_binary.c
-@@ -1123,15 +1123,14 @@ static ssize_t bin_uuid(struct file *file,
+diff --git a/drivers/acpi/property.c b/drivers/acpi/property.c
+index 2aee416..1e75305 100644
+--- a/drivers/acpi/property.c
++++ b/drivers/acpi/property.c
+@@ -25,15 +25,13 @@ static int acpi_data_get_property_array(struct acpi_device_data *data,
+ 					const union acpi_object **obj);
  
- 		result = kernel_read(file, 0, buf, sizeof(buf) - 1);
- 		if (result < 0)
--			goto out;
-+			return result;
+ /* ACPI _DSD device properties UUID: daffd814-6eba-4d8c-8a91-bc9bbf4aa301 */
+-static const u8 prp_uuid[16] = {
+-	0x14, 0xd8, 0xff, 0xda, 0xba, 0x6e, 0x8c, 0x4d,
+-	0x8a, 0x91, 0xbc, 0x9b, 0xbf, 0x4a, 0xa3, 0x01
+-};
++static const uuid_le prp_uuid =
++	UUID_LE(0xdaffd814, 0x6eba, 0x4d8c,
++		0x8a, 0x91, 0xbc, 0x9b, 0xbf, 0x4a, 0xa3, 0x01);
+ /* ACPI _DSD data subnodes UUID: dbb8e3e6-5886-4ba6-8795-1319f52a966b */
+-static const u8 ads_uuid[16] = {
+-	0xe6, 0xe3, 0xb8, 0xdb, 0x86, 0x58, 0xa6, 0x4b,
+-	0x87, 0x95, 0x13, 0x19, 0xf5, 0x2a, 0x96, 0x6b
+-};
++static const uuid_le ads_uuid =
++	UUID_LE(0xdbb8e3e6, 0x5886, 0x4ba6,
++		0x87, 0x95, 0x13, 0x19, 0xf5, 0x2a, 0x96, 0x6b);
  
- 		buf[result] = '\0';
+ static bool acpi_enumerate_nondev_subnodes(acpi_handle scope,
+ 					   const union acpi_object *desc,
+@@ -138,7 +136,7 @@ static bool acpi_enumerate_nondev_subnodes(acpi_handle scope,
+ 		    || links->type != ACPI_TYPE_PACKAGE)
+ 			break;
  
- 		/* Convert the uuid to from a string to binary */
- 		for (i = 0; i < 16; i++) {
--			result = -EIO;
- 			if (!isxdigit(str[0]) || !isxdigit(str[1]))
--				goto out;
-+				return -EIO;
+-		if (memcmp(uuid->buffer.pointer, ads_uuid, sizeof(ads_uuid)))
++		if (uuid_le_cmp(*(uuid_le *)uuid->buffer.pointer, ads_uuid))
+ 			continue;
  
- 			uuid[i] = (hex_to_bin(str[0]) << 4) |
- 					hex_to_bin(str[1]);
-@@ -1143,15 +1142,12 @@ static ssize_t bin_uuid(struct file *file,
- 		if (oldlen > 16)
- 			oldlen = 16;
+ 		return acpi_add_nondev_subnodes(scope, links, &data->subnodes);
+@@ -245,7 +243,7 @@ static bool acpi_extract_properties(const union acpi_object *desc,
+ 		    || properties->type != ACPI_TYPE_PACKAGE)
+ 			break;
  
--		result = -EFAULT;
- 		if (copy_to_user(oldval, uuid, oldlen))
--			goto out;
-+			return -EFAULT;
+-		if (memcmp(uuid->buffer.pointer, prp_uuid, sizeof(prp_uuid)))
++		if (uuid_le_cmp(*(uuid_le *)uuid->buffer.pointer, prp_uuid))
+ 			continue;
  
- 		copied = oldlen;
- 	}
--	result = copied;
--out:
--	return result;
-+	return copied;
- }
- 
- static ssize_t bin_dn_node_address(struct file *file,
+ 		/*
 -- 
 2.7.0
