@@ -1,7 +1,7 @@
 From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: [PATCH v1 04/10] lib/uuid: remove FSF address
-Date: Wed, 17 Feb 2016 14:17:22 +0200
-Message-ID: <1455711448-124103-5-git-send-email-andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v1 07/10] sysctl: drop away useless label
+Date: Wed, 17 Feb 2016 14:17:25 +0200
+Message-ID: <1455711448-124103-8-git-send-email-andriy.shevchenko@linux.intel.com>
 References: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
@@ -10,80 +10,53 @@ To: "Rafael J. Wysocki" <rjw@rjwysocki.net>, Theodore Ts'o <tytso@mit.edu>, Arnd
 Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-There is no point to keep an address in the file since it's a subject to
-change.
-
-While here, update Intel Copyright years.
+We have no locking in bin_uuid(). Thus, we may remove the out label and use
+return statements directly.
 
 Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 ---
- include/linux/uuid.h      | 6 +-----
- include/uapi/linux/uuid.h | 4 ----
- lib/uuid.c                | 6 +-----
- 3 files changed, 2 insertions(+), 14 deletions(-)
+ kernel/sysctl_binary.c | 12 ++++--------
+ 1 file changed, 4 insertions(+), 8 deletions(-)
 
-diff --git a/include/linux/uuid.h b/include/linux/uuid.h
-index 616347f..6bd40d0 100644
---- a/include/linux/uuid.h
-+++ b/include/linux/uuid.h
-@@ -1,7 +1,7 @@
- /*
-  * UUID/GUID definition
-  *
-- * Copyright (C) 2010, Intel Corp.
-+ * Copyright (C) 2010, 2015 Intel Corp.
-  *	Huang Ying <ying.huang@intel.com>
-  *
-  * This program is free software; you can redistribute it and/or
-@@ -12,10 +12,6 @@
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-- *
-- * You should have received a copy of the GNU General Public License
-- * along with this program; if not, write to the Free Software
-- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-  */
- #ifndef _LINUX_UUID_H_
- #define _LINUX_UUID_H_
-diff --git a/include/uapi/linux/uuid.h b/include/uapi/linux/uuid.h
-index 786f077..3738e5f 100644
---- a/include/uapi/linux/uuid.h
-+++ b/include/uapi/linux/uuid.h
-@@ -12,10 +12,6 @@
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-- *
-- * You should have received a copy of the GNU General Public License
-- * along with this program; if not, write to the Free Software
-- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-  */
+diff --git a/kernel/sysctl_binary.c b/kernel/sysctl_binary.c
+index 7e7746a..509abe4 100644
+--- a/kernel/sysctl_binary.c
++++ b/kernel/sysctl_binary.c
+@@ -1123,15 +1123,14 @@ static ssize_t bin_uuid(struct file *file,
  
- #ifndef _UAPI_LINUX_UUID_H_
-diff --git a/lib/uuid.c b/lib/uuid.c
-index 995865c..0918232 100644
---- a/lib/uuid.c
-+++ b/lib/uuid.c
-@@ -1,7 +1,7 @@
- /*
-  * Unified UUID/GUID definition
-  *
-- * Copyright (C) 2009, Intel Corp.
-+ * Copyright (C) 2009, 2015 Intel Corp.
-  *	Huang Ying <ying.huang@intel.com>
-  *
-  * This program is free software; you can redistribute it and/or
-@@ -12,10 +12,6 @@
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-- *
-- * You should have received a copy of the GNU General Public License
-- * along with this program; if not, write to the Free Software
-- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-  */
+ 		result = kernel_read(file, 0, buf, sizeof(buf) - 1);
+ 		if (result < 0)
+-			goto out;
++			return result;
  
- #include <linux/kernel.h>
+ 		buf[result] = '\0';
+ 
+ 		/* Convert the uuid to from a string to binary */
+ 		for (i = 0; i < 16; i++) {
+-			result = -EIO;
+ 			if (!isxdigit(str[0]) || !isxdigit(str[1]))
+-				goto out;
++				return -EIO;
+ 
+ 			uuid[i] = (hex_to_bin(str[0]) << 4) |
+ 					hex_to_bin(str[1]);
+@@ -1143,15 +1142,12 @@ static ssize_t bin_uuid(struct file *file,
+ 		if (oldlen > 16)
+ 			oldlen = 16;
+ 
+-		result = -EFAULT;
+ 		if (copy_to_user(oldval, uuid, oldlen))
+-			goto out;
++			return -EFAULT;
+ 
+ 		copied = oldlen;
+ 	}
+-	result = copied;
+-out:
+-	return result;
++	return copied;
+ }
+ 
+ static ssize_t bin_dn_node_address(struct file *file,
 -- 
 2.7.0
