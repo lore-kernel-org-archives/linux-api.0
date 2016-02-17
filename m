@@ -1,60 +1,117 @@
-From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Subject: Re: [PATCH] uapi glibc compat: fix cases where glibc net/if.h is
- included before linux/if.h
-Date: Wed, 17 Feb 2016 10:46:20 -0500 (EST)
-Message-ID: <20160217.104620.239734387234680136.davem@davemloft.net>
-References: <CA+5PVA4P2avVr+m=ittQUyBou9kT2nbK0-Jeo+3coAFyQXTT_A@mail.gmail.com>
-	<1454853801-18064-1-git-send-email-mikko.rapeli@iki.fi>
+From: Vladimir Murzin <vladimir.murzin@arm.com>
+Subject: Re: [PATCH v3 09/10] ARM: dts: introduce MPS2 AN385/AN386
+Date: Wed, 17 Feb 2016 16:48:44 +0000
+Message-ID: <56C4A46C.50506@arm.com>
+References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com> <1455617295-23736-10-git-send-email-vladimir.murzin@arm.com> <7562697.iiO7rmWd7c@wuerfel> <56C349E6.2000002@arm.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1454853801-18064-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: mikko.rapeli-X3B1VOXEql0@public.gmane.org
-Cc: shemming-43mecJUBy8ZBDgjK7y7TUQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jwboyer-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org, pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <56C349E6.2000002@arm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: mark.rutland@arm.com, devicetree@vger.kernel.org, linux@arm.linux.org.uk, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, gregkh@linuxfoundation.org, daniel.lezcano@linaro.org, linux-kernel@vger.kernel.org, robh+dt@kernel.org, andy.shevchenko@gmail.com, galak@codeaurora.org, linux-serial@vger.kernel.org, u.kleine-koenig@pengutronix.de, tglx@linutronix.de, linux-api@vger.kernel.org, jslaby@suse.cz, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Date: Sun,  7 Feb 2016 16:03:21 +0200
+On 16/02/16 16:10, Vladimir Murzin wrote:
+> On 16/02/16 11:01, Arnd Bergmann wrote:
+>> On Tuesday 16 February 2016 10:08:14 Vladimir Murzin wrote:
+>>> +
+>>> +       ethernet@40200000 {
+>>> +               compatible = "smsc,lan9220", "smsc,lan9115";
+>>> +               reg = <0x40200000 0x10000>;
+>>> +               interrupts = <13>;
+>>> +               interrupt-parent = <&nvic>;
+>>> +               smsc,irq-active-high;
+>>> +       };
+>>> +};
+>>> +
+>>>
+>>
+>> This node seems slightly misplaced. Is there some external bus interface
+>> that this is connected to? The address suggests that it should be somewhere
+>> below the /soc node, and you probably want to list the external bus
+>> interface with a "ranges" property that identifies the addresses visibile
+>> there, and put the external chip under there.
+>>
+> 
+> I might messed it up since the MAC/PHY connects to the same 16-bit
+> interface as the 16MB PSRAM external memory and both connected via AHB.
+> 
+> Not sure how it should be expressed, so some help form DT camp would be
+> appreciated.
 
-> @@ -68,6 +72,8 @@
->   * @IFF_ECHO: echo sent packets. Volatile.
->   */
->  enum net_device_flags {
-> +/* for compatibility with glibc net/if.h */
-> +#if __UAPI_DEF_IF_NET_DEVICE_FLAGS
->  	IFF_UP				= 1<<0,  /* sysfs */
->  	IFF_BROADCAST			= 1<<1,  /* volatile */
->  	IFF_DEBUG			= 1<<2,  /* sysfs */
-> @@ -84,11 +90,14 @@ enum net_device_flags {
->  	IFF_PORTSEL			= 1<<13, /* sysfs */
->  	IFF_AUTOMEDIA			= 1<<14, /* sysfs */
->  	IFF_DYNAMIC			= 1<<15, /* sysfs */
-> +#endif /* __UAPI_DEF_IF_NET_DEVICE_FLAGS */
->  	IFF_LOWER_UP			= 1<<16, /* volatile */
->  	IFF_DORMANT			= 1<<17, /* volatile */
->  	IFF_ECHO			= 1<<18, /* volatile */
->  };
+Arnd,
 
-This is going to get messy is IFF_LOWER_UP, IFF_DORMANT, and IFF_ECHO
-get added the the glibc header.  Why not just handle it now with
-another __UAPI_DEF_FOO guard so that the additions to net/if.h can
-deal with this case too.
+Does following fixup address your point on where/how ethernet node
+should be placed?
 
-> +/* for compatibility with glibc net/if.h */
-> +#if __UAPI_DEF_IF_NET_DEVICE_FLAGS
->  #define IFF_UP				IFF_UP
->  #define IFF_BROADCAST			IFF_BROADCAST
->  #define IFF_DEBUG			IFF_DEBUG
-> @@ -105,6 +114,8 @@ enum net_device_flags {
->  #define IFF_PORTSEL			IFF_PORTSEL
->  #define IFF_AUTOMEDIA			IFF_AUTOMEDIA
->  #define IFF_DYNAMIC			IFF_DYNAMIC
-> +#endif /* __UAPI_DEF_IF_NET_DEVICE_FLAGS */
-> +
->  #define IFF_LOWER_UP			IFF_LOWER_UP
->  #define IFF_DORMANT			IFF_DORMANT
->  #define IFF_ECHO			IFF_ECHO
+diff --git a/arch/arm/boot/dts/mps2-an385.dts b/arch/arm/boot/dts/an385.dts
+index 976f86d..50c8d24 100644
+--- a/arch/arm/boot/dts/mps2-an385.dts
++++ b/arch/arm/boot/dts/mps2-an385.dts
+@@ -63,14 +63,10 @@
+ 		device_type = "memory";
+ 		reg = <0x21000000 0x1000000>;
+ 	};
++};
 
-Likewise.
+-	ethernet@40200000 {
+-		compatible = "smsc,lan9220", "smsc,lan9115";
+-		reg = <0x40200000 0x10000>;
+-		interrupts = <13>;
+-		interrupt-parent = <&nvic>;
+-		smsc,irq-active-high;
+-	};
++&mb {
++	ranges = <0 0x40200000 0x10000>;
+ };
+
+ &uart0 {
+diff --git a/arch/arm/boot/dts/mps2.dtsi b/arch/arm/boot/dts/mps2.dtsi
+index 5d2c539..1673472 100644
+--- a/arch/arm/boot/dts/mps2.dtsi
++++ b/arch/arm/boot/dts/mps2.dtsi
+@@ -223,5 +223,21 @@
+ 				default-state = "off";
+ 			};
+ 		};
++
++	};
++
++	mb: smb {
++		compatible = "simple-bus";
++		#address-cells = <1>;
++		#size-cells = <1>;
++		ranges;
++
++		ethernet@0 {
++			compatible = "smsc,lan9220", "smsc,lan9115";
++			reg = <0x0 0x10000>;
++			interrupts = <13>;
++			interrupt-parent = <&nvic>;
++			smsc,irq-active-high;
++		};
+ 	};
+ };
+
+Cheers
+Vladimir
+
+> 
+> Cheers
+> Vladimir
+> 
+>> 	Arnd
+>>
+>>
+>>
+> 
+> 
+> _______________________________________________
+> linux-arm-kernel mailing list
+> linux-arm-kernel@lists.infradead.org
+> http://lists.infradead.org/mailman/listinfo/linux-arm-kernel
+> 
+> 
+> 
