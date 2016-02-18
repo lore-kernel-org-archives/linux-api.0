@@ -1,63 +1,53 @@
-From: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
-Subject: Re: [PATCH v3 09/10] ARM: dts: introduce MPS2 AN385/AN386
-Date: Thu, 18 Feb 2016 12:47:18 +0000
-Message-ID: <56C5BD56.2050603@arm.com>
-References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com> <7245560.jfhuhtPsB8@wuerfel> <56C5A742.8010304@arm.com> <5567140.dIBhKTnriP@wuerfel>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 2/2] mm/page_ref: add tracepoint to track down page
+ reference manipulation
+Date: Thu, 18 Feb 2016 09:20:56 -0500
+Message-ID: <20160218092056.18a5af4a@gandalf.local.home>
+References: <1455505490-12376-1-git-send-email-iamjoonsoo.kim@lge.com>
+	<1455505490-12376-2-git-send-email-iamjoonsoo.kim@lge.com>
+	<20160215110741.7c0c5039@gandalf.local.home>
+	<20160216004720.GA1782@js1304-P5Q-DELUXE>
+	<20160215201602.350d73fa@gandalf.local.home>
+	<CAAmzW4M3efu7T-PGtBwN=uNZ+bYpWCX+DBQK_nS149O9yyUu0w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5567140.dIBhKTnriP@wuerfel>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: mark.rutland-5wv7dgnIgG8@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CAAmzW4M3efu7T-PGtBwN=uNZ+bYpWCX+DBQK_nS149O9yyUu0w@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Joonsoo Kim <js1304@gmail.com>
+Cc: Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, Vlastimil Babka <vbabka@suse.cz>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Linux Memory Management List <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 18/02/16 12:16, Arnd Bergmann wrote:
-> On Thursday 18 February 2016 11:13:06 Vladimir Murzin wrote:
->> On 18/02/16 10:45, Arnd Bergmann wrote:
->>> On Thursday 18 February 2016 10:11:37 Vladimir Murzin wrote:
->>>>
->>>> Right, I thought in a wrong way, in opposite it makes more sense now.
->>>>
->>>> .dtsi
->>>>
->>>> /* below the soc/ */
->>>> smb {
->>>>         compatible = "simple-bus";
->>>>         #address-cells = <2>;
->>>>         #size-cells = <1>;
->>>>         ranges = <0 0 0x40200000 0x10000>,
->>>>                  <1 0 0xa0000000 0x10000>;
->>>> };
->>>
->>> That looks good, yes.
->>>
->>> Is 0x10000 the correct maximum addressable size of the external bus
->>> in both cases?
->>>
->>> Intuitively, I would guess that the 0xa0000000 range might
->>> be much wider.
->>
->> There is only Ethernet connected to this bus (apart from PSRAM), so it
->> might be wider, but there is no indication of this in documentation.
-> 
-> I see this called "ahb_to_extmem16" in the documentation, which indicates
-> that it might be use 16 bits of address space, which would match
-> the 64K you listed.
-> 
-> For SSRAM1 / SSRAM2 / SSRAM3, a 8 MB address space is mentioned
-> and 16 MB for external PSRAM at 0x21000000.
-> 
+On Thu, 18 Feb 2016 16:46:08 +0900
+Joonsoo Kim <js1304@gmail.com> wrote:
 
-Right. I'll incorporate changes in the next version. Thanks for lessons
-given and your time!
+> 2016-02-16 10:16 GMT+09:00 Steven Rostedt <rostedt@goodmis.org>:
+> > On Tue, 16 Feb 2016 09:47:20 +0900
+> > Joonsoo Kim <iamjoonsoo.kim@lge.com> wrote:
+> >  
+> >> > They return true when CONFIG_TRACEPOINTS is configured in and the
+> >> > tracepoint is enabled, and false otherwise.  
+> >>
+> >> This implementation is what you proposed before. Please refer below
+> >> link and source.
+> >>
+> >> https://lkml.org/lkml/2015/12/9/699
+> >> arch/x86/include/asm/msr.h  
+> >
+> > That was a year ago, how am I suppose to remember ;-)  
+> 
+> I think you are smart enough to remember. :)
+> I will add it on commit description on next spin.
+> 
+>
 
-Cheers
-Vladimir
+Better yet, add it to the code. I'll reply to the patch.
 
-> 	Arnd
-> 
-> 
-> 
-> 
+-- Steve
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
