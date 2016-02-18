@@ -1,92 +1,92 @@
-From: Matt Fleming <matt@codeblueprint.co.uk>
-Subject: Re: [PATCH v1 10/10] efivars: use generic UUID library
-Date: Thu, 18 Feb 2016 15:07:27 +0000
-Message-ID: <20160218150727.GK2651@codeblueprint.co.uk>
-References: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
- <1455711448-124103-11-git-send-email-andriy.shevchenko@linux.intel.com>
+From: Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>
+Subject: Re: [PATCH v4] usb: devio: Add ioctl to disallow detaching kernel
+ USB drivers.
+Date: Thu, 18 Feb 2016 13:44:46 -0500 (EST)
+Message-ID: <Pine.LNX.4.44L0.1602181342370.1280-100000@iolanthe.rowland.org>
+References: <1455500516-21590-1-git-send-email-emilio.lopez@collabora.co.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-acpi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1455711448-124103-11-git-send-email-andriy.shevchenko@linux.intel.com>
-Sender: linux-acpi-owner@vger.kernel.org
-To: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Cc: "Rafael J. Wysocki" <rjw@rjwysocki.net>, Theodore Ts'o <tytso@mit.edu>, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Jani Nikula <jani.nikula@linux.intel.com>, David Airlie <airlied@linux.ie>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Bjorn Helgaas <bhelgaas@google.com>, Mathias Nyman <mathias.nyman@intel.com>, Lv Zheng <lv.zheng@intel.com>, Mark Brown <broonie@kernel.org>, Zhang Rui <rui.zhang@intel.com>, Mika Westerberg <mika.westerberg@linux.intel.com>, Andrew Morton <akpm@linux-foundation.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, linux-acpi@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-efi@vger.kernel.org, linux-api@vger.kernel.org, linux-nvdimm@lists.01.org
+Content-Type: TEXT/PLAIN; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1455500516-21590-1-git-send-email-emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: =?UTF-8?q?Emilio=20L=C3=B3pez?= <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
+Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, kborer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jorgelo-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 17 Feb, at 02:17:28PM, Andy Shevchenko wrote:
-> Instead of opencoding let's use generic UUID library functions here.
-> 
-> Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-> ---
->  fs/efivarfs/inode.c | 40 +++-------------------------------------
->  1 file changed, 3 insertions(+), 37 deletions(-)
-> 
-> diff --git a/fs/efivarfs/inode.c b/fs/efivarfs/inode.c
-> index 3381b9d..b579e3a 100644
-> --- a/fs/efivarfs/inode.c
-> +++ b/fs/efivarfs/inode.c
-> @@ -11,6 +11,7 @@
->  #include <linux/fs.h>
->  #include <linux/ctype.h>
->  #include <linux/slab.h>
-> +#include <linux/uuid.h>
->  
->  #include "internal.h"
->  
-> @@ -44,11 +45,7 @@ struct inode *efivarfs_get_inode(struct super_block *sb,
->   */
->  bool efivarfs_valid_name(const char *str, int len)
->  {
-> -	static const char dashes[EFI_VARIABLE_GUID_LEN] = {
-> -		[8] = 1, [13] = 1, [18] = 1, [23] = 1
-> -	};
->  	const char *s = str + len - EFI_VARIABLE_GUID_LEN;
-> -	int i;
->  
->  	/*
->  	 * We need a GUID, plus at least one letter for the variable name,
-> @@ -66,37 +63,7 @@ bool efivarfs_valid_name(const char *str, int len)
->  	 *
->  	 *	12345678-1234-1234-1234-123456789abc
->  	 */
-> -	for (i = 0; i < EFI_VARIABLE_GUID_LEN; i++) {
-> -		if (dashes[i]) {
-> -			if (*s++ != '-')
-> -				return false;
-> -		} else {
-> -			if (!isxdigit(*s++))
-> -				return false;
-> -		}
-> -	}
-> -
-> -	return true;
-> -}
-> -
-> -static void efivarfs_hex_to_guid(const char *str, efi_guid_t *guid)
-> -{
-> -	guid->b[0] = hex_to_bin(str[6]) << 4 | hex_to_bin(str[7]);
-> -	guid->b[1] = hex_to_bin(str[4]) << 4 | hex_to_bin(str[5]);
-> -	guid->b[2] = hex_to_bin(str[2]) << 4 | hex_to_bin(str[3]);
-> -	guid->b[3] = hex_to_bin(str[0]) << 4 | hex_to_bin(str[1]);
-> -	guid->b[4] = hex_to_bin(str[11]) << 4 | hex_to_bin(str[12]);
-> -	guid->b[5] = hex_to_bin(str[9]) << 4 | hex_to_bin(str[10]);
-> -	guid->b[6] = hex_to_bin(str[16]) << 4 | hex_to_bin(str[17]);
-> -	guid->b[7] = hex_to_bin(str[14]) << 4 | hex_to_bin(str[15]);
-> -	guid->b[8] = hex_to_bin(str[19]) << 4 | hex_to_bin(str[20]);
-> -	guid->b[9] = hex_to_bin(str[21]) << 4 | hex_to_bin(str[22]);
-> -	guid->b[10] = hex_to_bin(str[24]) << 4 | hex_to_bin(str[25]);
-> -	guid->b[11] = hex_to_bin(str[26]) << 4 | hex_to_bin(str[27]);
-> -	guid->b[12] = hex_to_bin(str[28]) << 4 | hex_to_bin(str[29]);
-> -	guid->b[13] = hex_to_bin(str[30]) << 4 | hex_to_bin(str[31]);
-> -	guid->b[14] = hex_to_bin(str[32]) << 4 | hex_to_bin(str[33]);
-> -	guid->b[15] = hex_to_bin(str[34]) << 4 | hex_to_bin(str[35]);
-> +	return uuid_is_valid(s);
->  }
+On Sun, 14 Feb 2016, Emilio L=C3=B3pez wrote:
 
-I think you've confused yourself here. You've inverted the return
-value meaning for efivarfs_valid_name().
+> From: Reilly Grant <reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+>=20
+> The new USBDEVFS_DROP_PRIVILEGES ioctl allows a process to voluntaril=
+y
+> relinquish the ability to issue other ioctls that may interfere with
+> other processes and drivers that have claimed an interface on the
+> device.
+>=20
+> This commit also includes a simple utility to be able to test the
+> ioctl, located at Documentation/usb/usbdevfs-drop-permissions.c
+>=20
+> Example (with qemu-kvm's input device):
+>=20
+>     $ lsusb
+>     ...
+>     Bus 001 Device 002: ID 0627:0001 Adomax Technology Co., Ltd
+>=20
+>     $ usb-devices
+>     ...
+>     C:  #Ifs=3D 1 Cfg#=3D 1 Atr=3Da0 MxPwr=3D100mA
+>     I:  If#=3D 0 Alt=3D 0 #EPs=3D 1 Cls=3D03(HID  ) Sub=3D00 Prot=3D0=
+2 Driver=3Dusbhid
+>=20
+>     $ sudo ./usbdevfs-drop-permissions /dev/bus/usb/001/002
+>     OK: privileges dropped!
+>     Available options:
+>     [0] Exit now
+>     [1] Reset device. Should fail if device is in use
+>     [2] Claim 4 interfaces. Should succeed where not in use
+>     [3] Narrow interface permission mask
+>     Which option shall I run?: 1
+>     ERROR: USBDEVFS_RESET failed! (1 - Operation not permitted)
+>     Which test shall I run next?: 2
+>     ERROR claiming if 0 (1 - Operation not permitted)
+>     ERROR claiming if 1 (1 - Operation not permitted)
+>     ERROR claiming if 2 (1 - Operation not permitted)
+>     ERROR claiming if 3 (1 - Operation not permitted)
+>     Which test shall I run next?: 0
+>=20
+> After unbinding usbhid:
+>=20
+>     $ usb-devices
+>     ...
+>     I:  If#=3D 0 Alt=3D 0 #EPs=3D 1 Cls=3D03(HID  ) Sub=3D00 Prot=3D0=
+2 Driver=3D(none)
+>=20
+>     $ sudo ./usbdevfs-drop-permissions /dev/bus/usb/001/002
+>     ...
+>     Which option shall I run?: 2
+>     OK: claimed if 0
+>     ERROR claiming if 1 (1 - Operation not permitted)
+>     ERROR claiming if 2 (1 - Operation not permitted)
+>     ERROR claiming if 3 (1 - Operation not permitted)
+>     Which test shall I run next?: 1
+>     OK: USBDEVFS_RESET succeeded
+>     Which test shall I run next?: 0
+>=20
+> After unbinding usbhid and restricting the mask:
+>=20
+>     $ sudo ./usbdevfs-drop-permissions /dev/bus/usb/001/002
+>     ...
+>     Which option shall I run?: 3
+>     Insert new mask: 0
+>     OK: privileges dropped!
+>     Which test shall I run next?: 2
+>     ERROR claiming if 0 (1 - Operation not permitted)
+>     ERROR claiming if 1 (1 - Operation not permitted)
+>     ERROR claiming if 2 (1 - Operation not permitted)
+>     ERROR claiming if 3 (1 - Operation not permitted)
+>=20
+> Signed-off-by: Reilly Grant <reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+> Signed-off-by: Emilio L=C3=B3pez <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
 
-Normally I would expect this change to be correct but uuid_is_valid()
-returns 0 for success, -EINVAL for failure. Either the function is
-misnamed or the return value semantics are wrong.
+Acked-by: Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>
