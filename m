@@ -1,97 +1,92 @@
-From: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Subject: Re: [PATCH 2/2] mm/page_ref: add tracepoint to track down page
- reference manipulation
-Date: Thu, 18 Feb 2016 09:29:26 -0500
-Message-ID: <20160218092926.083ca007@gandalf.local.home>
-References: <1455505490-12376-1-git-send-email-iamjoonsoo.kim@lge.com>
-	<1455505490-12376-2-git-send-email-iamjoonsoo.kim@lge.com>
+From: Matt Fleming <matt@codeblueprint.co.uk>
+Subject: Re: [PATCH v1 10/10] efivars: use generic UUID library
+Date: Thu, 18 Feb 2016 15:07:27 +0000
+Message-ID: <20160218150727.GK2651@codeblueprint.co.uk>
+References: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
+ <1455711448-124103-11-git-send-email-andriy.shevchenko@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1455505490-12376-2-git-send-email-iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: js1304-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Michal Nazarewicz <mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Sergey Senozhatsky <sergey.senozhatsky.work-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-acpi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1455711448-124103-11-git-send-email-andriy.shevchenko@linux.intel.com>
+Sender: linux-acpi-owner@vger.kernel.org
+To: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Cc: "Rafael J. Wysocki" <rjw@rjwysocki.net>, Theodore Ts'o <tytso@mit.edu>, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Jani Nikula <jani.nikula@linux.intel.com>, David Airlie <airlied@linux.ie>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Bjorn Helgaas <bhelgaas@google.com>, Mathias Nyman <mathias.nyman@intel.com>, Lv Zheng <lv.zheng@intel.com>, Mark Brown <broonie@kernel.org>, Zhang Rui <rui.zhang@intel.com>, Mika Westerberg <mika.westerberg@linux.intel.com>, Andrew Morton <akpm@linux-foundation.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, linux-acpi@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-efi@vger.kernel.org, linux-api@vger.kernel.org, linux-nvdimm@lists.01.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 15 Feb 2016 12:04:50 +0900
-js1304-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
-
-
-> diff --git a/include/linux/page_ref.h b/include/linux/page_ref.h
-> index 534249c..fd6d9a5 100644
-> --- a/include/linux/page_ref.h
-> +++ b/include/linux/page_ref.h
-> @@ -1,6 +1,54 @@
->  #include <linux/atomic.h>
->  #include <linux/mm_types.h>
->  #include <linux/page-flags.h>
-> +#include <linux/tracepoint-defs.h>
-> +
-> +extern struct tracepoint __tracepoint_page_ref_set;
-> +extern struct tracepoint __tracepoint_page_ref_mod;
-> +extern struct tracepoint __tracepoint_page_ref_mod_and_test;
-> +extern struct tracepoint __tracepoint_page_ref_mod_and_return;
-> +extern struct tracepoint __tracepoint_page_ref_mod_unless;
-> +extern struct tracepoint __tracepoint_page_ref_freeze;
-> +extern struct tracepoint __tracepoint_page_ref_unfreeze;
-> +
-> +#ifdef CONFIG_DEBUG_PAGE_REF
-
-Please add a comment here. Something to the effect of:
-
-/*
- * Ideally we would want to use the trace_<tracepoint>_enabled() helper
- * functions. But due to include header file issues, that is not
- * feasible. Instead we have to open code the static key functions.
- *
- * See trace_##name##_enabled(void) in include/linux/tracepoint.h
- */
-
-I may have to work on something that lets these helpers be defined in
-headers. I have some ideas on how to do that. But for now, this
-solution is fine.
-
--- Steve
-
-
-> +#define page_ref_tracepoint_active(t) static_key_false(&(t).key)
-> +
-> +extern void __page_ref_set(struct page *page, int v);
-> +extern void __page_ref_mod(struct page *page, int v);
-> +extern void __page_ref_mod_and_test(struct page *page, int v, int ret);
-> +extern void __page_ref_mod_and_return(struct page *page, int v, int ret);
-> +extern void __page_ref_mod_unless(struct page *page, int v, int u);
-> +extern void __page_ref_freeze(struct page *page, int v, int ret);
-> +extern void __page_ref_unfreeze(struct page *page, int v);
-> +
-> +#else
-> +
-> +#define page_ref_tracepoint_active(t) false
-> +
-> +static inline void __page_ref_set(struct page *page, int v)
-> +{
-> +}
-> +static inline void __page_ref_mod(struct page *page, int v)
-> +{
-> +}
-> +static inline void __page_ref_mod_and_test(struct page *page, int v, int ret)
-> +{
-> +}
-> +static inline void __page_ref_mod_and_return(struct page *page, int v, int ret)
-> +{
-> +}
-> +static inline void __page_ref_mod_unless(struct page *page, int v, int u)
-> +{
-> +}
-> +static inline void __page_ref_freeze(struct page *page, int v, int ret)
-> +{
-> +}
-> +static inline void __page_ref_unfreeze(struct page *page, int v)
-> +{
-> +}
-> +
-> +#endif
+On Wed, 17 Feb, at 02:17:28PM, Andy Shevchenko wrote:
+> Instead of opencoding let's use generic UUID library functions here.
+> 
+> Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+> ---
+>  fs/efivarfs/inode.c | 40 +++-------------------------------------
+>  1 file changed, 3 insertions(+), 37 deletions(-)
+> 
+> diff --git a/fs/efivarfs/inode.c b/fs/efivarfs/inode.c
+> index 3381b9d..b579e3a 100644
+> --- a/fs/efivarfs/inode.c
+> +++ b/fs/efivarfs/inode.c
+> @@ -11,6 +11,7 @@
+>  #include <linux/fs.h>
+>  #include <linux/ctype.h>
+>  #include <linux/slab.h>
+> +#include <linux/uuid.h>
 >  
->
+>  #include "internal.h"
+>  
+> @@ -44,11 +45,7 @@ struct inode *efivarfs_get_inode(struct super_block *sb,
+>   */
+>  bool efivarfs_valid_name(const char *str, int len)
+>  {
+> -	static const char dashes[EFI_VARIABLE_GUID_LEN] = {
+> -		[8] = 1, [13] = 1, [18] = 1, [23] = 1
+> -	};
+>  	const char *s = str + len - EFI_VARIABLE_GUID_LEN;
+> -	int i;
+>  
+>  	/*
+>  	 * We need a GUID, plus at least one letter for the variable name,
+> @@ -66,37 +63,7 @@ bool efivarfs_valid_name(const char *str, int len)
+>  	 *
+>  	 *	12345678-1234-1234-1234-123456789abc
+>  	 */
+> -	for (i = 0; i < EFI_VARIABLE_GUID_LEN; i++) {
+> -		if (dashes[i]) {
+> -			if (*s++ != '-')
+> -				return false;
+> -		} else {
+> -			if (!isxdigit(*s++))
+> -				return false;
+> -		}
+> -	}
+> -
+> -	return true;
+> -}
+> -
+> -static void efivarfs_hex_to_guid(const char *str, efi_guid_t *guid)
+> -{
+> -	guid->b[0] = hex_to_bin(str[6]) << 4 | hex_to_bin(str[7]);
+> -	guid->b[1] = hex_to_bin(str[4]) << 4 | hex_to_bin(str[5]);
+> -	guid->b[2] = hex_to_bin(str[2]) << 4 | hex_to_bin(str[3]);
+> -	guid->b[3] = hex_to_bin(str[0]) << 4 | hex_to_bin(str[1]);
+> -	guid->b[4] = hex_to_bin(str[11]) << 4 | hex_to_bin(str[12]);
+> -	guid->b[5] = hex_to_bin(str[9]) << 4 | hex_to_bin(str[10]);
+> -	guid->b[6] = hex_to_bin(str[16]) << 4 | hex_to_bin(str[17]);
+> -	guid->b[7] = hex_to_bin(str[14]) << 4 | hex_to_bin(str[15]);
+> -	guid->b[8] = hex_to_bin(str[19]) << 4 | hex_to_bin(str[20]);
+> -	guid->b[9] = hex_to_bin(str[21]) << 4 | hex_to_bin(str[22]);
+> -	guid->b[10] = hex_to_bin(str[24]) << 4 | hex_to_bin(str[25]);
+> -	guid->b[11] = hex_to_bin(str[26]) << 4 | hex_to_bin(str[27]);
+> -	guid->b[12] = hex_to_bin(str[28]) << 4 | hex_to_bin(str[29]);
+> -	guid->b[13] = hex_to_bin(str[30]) << 4 | hex_to_bin(str[31]);
+> -	guid->b[14] = hex_to_bin(str[32]) << 4 | hex_to_bin(str[33]);
+> -	guid->b[15] = hex_to_bin(str[34]) << 4 | hex_to_bin(str[35]);
+> +	return uuid_is_valid(s);
+>  }
+
+I think you've confused yourself here. You've inverted the return
+value meaning for efivarfs_valid_name().
+
+Normally I would expect this change to be correct but uuid_is_valid()
+returns 0 for success, -EINVAL for failure. Either the function is
+misnamed or the return value semantics are wrong.
