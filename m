@@ -1,67 +1,36 @@
-From: David Decotigny <ddecotig@gmail.com>
-Subject: Re: [PATCH net-next v8 05/19] net: ethtool: add new
- ETHTOOL_GSETTINGS/SSETTINGS API
-Date: Thu, 18 Feb 2016 11:49:55 -0800
-Message-ID: <CAG88wWZNB5bT7ywMbcfGbQS=f2gdbC6NpKVt5Opcs-oAbMUjLw@mail.gmail.com>
-References: <1455064168-5102-1-git-send-email-ddecotig@gmail.com>
- <1455064168-5102-6-git-send-email-ddecotig@gmail.com> <1455328149.2801.82.camel@decadent.org.uk>
+From: Johannes Berg <johannes@sipsolutions.net>
+Subject: Re: [PATCH 7/9] rfkill: Create "rfkill-airplane_mode" LED trigger
+Date: Thu, 18 Feb 2016 21:08:41 +0100
+Message-ID: <1455826121.2084.17.camel@sipsolutions.net>
+References: <1454946096-9752-1-git-send-email-jprvita@endlessm.com>
+	 <1454946096-9752-8-git-send-email-jprvita@endlessm.com>
+	 (sfid-20160208_164147_435264_67EE08E5)
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1455328149.2801.82.camel@decadent.org.uk>
+In-Reply-To: <1454946096-9752-8-git-send-email-jprvita@endlessm.com> (sfid-20160208_164147_435264_67EE08E5)
 Sender: linux-kernel-owner@vger.kernel.org
-To: Ben Hutchings <ben@decadent.org.uk>
-Cc: "David S. Miller" <davem@davemloft.net>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, linux-mips@linux-mips.org, fcoe-devel@open-fcoe.org, Andrew Morton <akpm@linux-foundation.org>, Tejun Heo <tj@kernel.org>, Eric Dumazet <edumazet@google.com>, Eugenia Emantayev <eugenia@mellanox.co.il>, Or Gerlitz <ogerlitz@mellanox.com>, Ido Shamay <idos@mellanox.com>, Joe Perches <joe@perches.com>, Saeed Mahameed <saeedm@mellanox.com>, Govindarajulu Varadarajan <_govind@gmx.com>, Venkata Duvvuru <VenkatKumar.Duvvuru@emulex.com>, Jeff Kirsher <jeffrey.t.kirsher@intel.com>, Pravin B Shelar <pshelar@nicira.com>, Ed Swierk <eswierk@skyportsystems.com>, Robert Love <robert.w.love@intel.com>, "James E.Yuval Mintz" <Yuval.Mintz@qlogic.com>Rasmus Villemoes <linu>
+To: =?ISO-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita@gmail.com>
+Cc: "David S. Miller" <davem@davemloft.net>, Darren Hart <dvhart@infradead.org>, linux-wireless@vger.kernel.org, netdev@vger.kernel.org, platform-driver-x86@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux@endlessm.com, =?ISO-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita@endlessm.com>
 List-Id: linux-api@vger.kernel.org
 
-Sure, I will send an update:
+On Mon, 2016-02-08 at 10:41 -0500, Jo=C3=A3o Paulo Rechi Vita wrote:
+> This creates a new LED trigger to be used by platform drivers as a
+> default trigger for airplane-mode indicator LEDs.
+>=20
+> By default this trigger will fire when RFKILL_OP_CHANGE_ALL is called
+> for all types (RFKILL_TYPE_ALL), setting the LED brightness to
+> LED_FULL
+> when the changing the state to blocked, and to LED_OFF when the
+> changing
+> the state to unblocked. In the future there will be a mechanism for
+> userspace to override the default policy, so it can implement its
+> own.
+>=20
+> This trigger will be used by the asus-wireless x86 platform driver.
 
-struct ethtool_link_settings {
-        __u32   cmd;
-        __u32   speed;
-        __u8    duplex;
-        __u8    port;
-        __u8    phy_address;
-        __u8    autoneg;
-        __u8    mdio_support;
-        __u8    eth_tp_mdix;
-        __u8    eth_tp_mdix_ctrl;
-        __s8    link_mode_masks_nwords;
-        __u32   reserved[8];
-        __u32   link_mode_masks[0];
-};
+Just one comment - I think you should be consistent with the _ vs - and
+just use "rfkill-airplane-mode" as the name.
 
-(+ same renaming for the ioctl sub-cmds)
-
-that would still replace GSET/SSET/ethtool_cmd.
-
-would that be ok?
-
-Or, just to make sure: would you rather keep GSET/SSET/ethtool_cmd as
-now for everything but the link mode masks (that would be marked as
-deprecated), and have only a new command G/SLINK_MODES + struct
-ethtool_link_mode_support that would only take care of the link mode
-masks?
-
-On Fri, Feb 12, 2016 at 5:49 PM, Ben Hutchings <ben@decadent.org.uk> wrote:
-> On Tue, 2016-02-09 at 16:29 -0800, David Decotigny wrote:
->> From: David Decotigny <decot@googlers.com>
->>
->> This patch defines a new ETHTOOL_GSETTINGS/SSETTINGS API, handled by
->> the new get_ksettings/set_ksettings callbacks. This API provides
->> support for most legacy ethtool_cmd fields, adds support for larger
->> link mode masks (up to 4064 bits, variable length), and removes
->> ethtool_cmd deprecated fields (transceiver/maxrxpkt/maxtxpkt).
-> [...]
->
-> I previously asked you to include 'link' in the command names and
-> structure name.  This would clarify that these are now only for link
-> settings and reduce the risk of confusion between old and new commands.
-> However, you didn't reply to that review.  Do you have any objection to
-> doing this?
->
-> Ben.
->
-> --
-> Ben Hutchings
-> Sturgeon's Law: Ninety percent of everything is crap.
+johannes
