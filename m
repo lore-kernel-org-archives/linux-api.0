@@ -1,92 +1,67 @@
-From: Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>
-Subject: Re: [PATCH v4] usb: devio: Add ioctl to disallow detaching kernel
- USB drivers.
-Date: Thu, 18 Feb 2016 13:44:46 -0500 (EST)
-Message-ID: <Pine.LNX.4.44L0.1602181342370.1280-100000@iolanthe.rowland.org>
-References: <1455500516-21590-1-git-send-email-emilio.lopez@collabora.co.uk>
+From: David Decotigny <ddecotig@gmail.com>
+Subject: Re: [PATCH net-next v8 05/19] net: ethtool: add new
+ ETHTOOL_GSETTINGS/SSETTINGS API
+Date: Thu, 18 Feb 2016 11:49:55 -0800
+Message-ID: <CAG88wWZNB5bT7ywMbcfGbQS=f2gdbC6NpKVt5Opcs-oAbMUjLw@mail.gmail.com>
+References: <1455064168-5102-1-git-send-email-ddecotig@gmail.com>
+ <1455064168-5102-6-git-send-email-ddecotig@gmail.com> <1455328149.2801.82.camel@decadent.org.uk>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1455500516-21590-1-git-send-email-emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: =?UTF-8?q?Emilio=20L=C3=B3pez?= <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
-Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, kborer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jorgelo-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1455328149.2801.82.camel@decadent.org.uk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ben Hutchings <ben@decadent.org.uk>
+Cc: "David S. Miller" <davem@davemloft.net>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, linux-mips@linux-mips.org, fcoe-devel@open-fcoe.org, Andrew Morton <akpm@linux-foundation.org>, Tejun Heo <tj@kernel.org>, Eric Dumazet <edumazet@google.com>, Eugenia Emantayev <eugenia@mellanox.co.il>, Or Gerlitz <ogerlitz@mellanox.com>, Ido Shamay <idos@mellanox.com>, Joe Perches <joe@perches.com>, Saeed Mahameed <saeedm@mellanox.com>, Govindarajulu Varadarajan <_govind@gmx.com>, Venkata Duvvuru <VenkatKumar.Duvvuru@emulex.com>, Jeff Kirsher <jeffrey.t.kirsher@intel.com>, Pravin B Shelar <pshelar@nicira.com>, Ed Swierk <eswierk@skyportsystems.com>, Robert Love <robert.w.love@intel.com>, "James E.Yuval Mintz" <Yuval.Mintz@qlogic.com>Rasmus Villemoes <linu>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, 14 Feb 2016, Emilio L=C3=B3pez wrote:
+Sure, I will send an update:
 
-> From: Reilly Grant <reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
->=20
-> The new USBDEVFS_DROP_PRIVILEGES ioctl allows a process to voluntaril=
-y
-> relinquish the ability to issue other ioctls that may interfere with
-> other processes and drivers that have claimed an interface on the
-> device.
->=20
-> This commit also includes a simple utility to be able to test the
-> ioctl, located at Documentation/usb/usbdevfs-drop-permissions.c
->=20
-> Example (with qemu-kvm's input device):
->=20
->     $ lsusb
->     ...
->     Bus 001 Device 002: ID 0627:0001 Adomax Technology Co., Ltd
->=20
->     $ usb-devices
->     ...
->     C:  #Ifs=3D 1 Cfg#=3D 1 Atr=3Da0 MxPwr=3D100mA
->     I:  If#=3D 0 Alt=3D 0 #EPs=3D 1 Cls=3D03(HID  ) Sub=3D00 Prot=3D0=
-2 Driver=3Dusbhid
->=20
->     $ sudo ./usbdevfs-drop-permissions /dev/bus/usb/001/002
->     OK: privileges dropped!
->     Available options:
->     [0] Exit now
->     [1] Reset device. Should fail if device is in use
->     [2] Claim 4 interfaces. Should succeed where not in use
->     [3] Narrow interface permission mask
->     Which option shall I run?: 1
->     ERROR: USBDEVFS_RESET failed! (1 - Operation not permitted)
->     Which test shall I run next?: 2
->     ERROR claiming if 0 (1 - Operation not permitted)
->     ERROR claiming if 1 (1 - Operation not permitted)
->     ERROR claiming if 2 (1 - Operation not permitted)
->     ERROR claiming if 3 (1 - Operation not permitted)
->     Which test shall I run next?: 0
->=20
-> After unbinding usbhid:
->=20
->     $ usb-devices
->     ...
->     I:  If#=3D 0 Alt=3D 0 #EPs=3D 1 Cls=3D03(HID  ) Sub=3D00 Prot=3D0=
-2 Driver=3D(none)
->=20
->     $ sudo ./usbdevfs-drop-permissions /dev/bus/usb/001/002
->     ...
->     Which option shall I run?: 2
->     OK: claimed if 0
->     ERROR claiming if 1 (1 - Operation not permitted)
->     ERROR claiming if 2 (1 - Operation not permitted)
->     ERROR claiming if 3 (1 - Operation not permitted)
->     Which test shall I run next?: 1
->     OK: USBDEVFS_RESET succeeded
->     Which test shall I run next?: 0
->=20
-> After unbinding usbhid and restricting the mask:
->=20
->     $ sudo ./usbdevfs-drop-permissions /dev/bus/usb/001/002
->     ...
->     Which option shall I run?: 3
->     Insert new mask: 0
->     OK: privileges dropped!
->     Which test shall I run next?: 2
->     ERROR claiming if 0 (1 - Operation not permitted)
->     ERROR claiming if 1 (1 - Operation not permitted)
->     ERROR claiming if 2 (1 - Operation not permitted)
->     ERROR claiming if 3 (1 - Operation not permitted)
->=20
-> Signed-off-by: Reilly Grant <reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-> Signed-off-by: Emilio L=C3=B3pez <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
+struct ethtool_link_settings {
+        __u32   cmd;
+        __u32   speed;
+        __u8    duplex;
+        __u8    port;
+        __u8    phy_address;
+        __u8    autoneg;
+        __u8    mdio_support;
+        __u8    eth_tp_mdix;
+        __u8    eth_tp_mdix_ctrl;
+        __s8    link_mode_masks_nwords;
+        __u32   reserved[8];
+        __u32   link_mode_masks[0];
+};
 
-Acked-by: Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>
+(+ same renaming for the ioctl sub-cmds)
+
+that would still replace GSET/SSET/ethtool_cmd.
+
+would that be ok?
+
+Or, just to make sure: would you rather keep GSET/SSET/ethtool_cmd as
+now for everything but the link mode masks (that would be marked as
+deprecated), and have only a new command G/SLINK_MODES + struct
+ethtool_link_mode_support that would only take care of the link mode
+masks?
+
+On Fri, Feb 12, 2016 at 5:49 PM, Ben Hutchings <ben@decadent.org.uk> wrote:
+> On Tue, 2016-02-09 at 16:29 -0800, David Decotigny wrote:
+>> From: David Decotigny <decot@googlers.com>
+>>
+>> This patch defines a new ETHTOOL_GSETTINGS/SSETTINGS API, handled by
+>> the new get_ksettings/set_ksettings callbacks. This API provides
+>> support for most legacy ethtool_cmd fields, adds support for larger
+>> link mode masks (up to 4064 bits, variable length), and removes
+>> ethtool_cmd deprecated fields (transceiver/maxrxpkt/maxtxpkt).
+> [...]
+>
+> I previously asked you to include 'link' in the command names and
+> structure name.  This would clarify that these are now only for link
+> settings and reduce the risk of confusion between old and new commands.
+> However, you didn't reply to that review.  Do you have any objection to
+> doing this?
+>
+> Ben.
+>
+> --
+> Ben Hutchings
+> Sturgeon's Law: Ninety percent of everything is crap.
