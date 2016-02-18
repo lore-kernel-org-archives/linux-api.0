@@ -1,128 +1,64 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH v1 05/10] ACPI: switch to use generic UUID API
-Date: Wed, 17 Feb 2016 09:49:35 -0800
-Message-ID: <CAPcyv4inMjmt8eH_=bNE_=NMeYGmS75B5LxB=f7Cd762=3UKyQ@mail.gmail.com>
-References: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
- <1455711448-124103-6-git-send-email-andriy.shevchenko@linux.intel.com>
+From: "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>
+Subject: Re: [PATCH v1 06/10] device property: switch to use UUID API
+Date: Thu, 18 Feb 2016 01:03:39 +0100
+Message-ID: <7544228.v4QPX4F7J7@vostro.rjw.lan>
+References: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com> <1455711448-124103-7-git-send-email-andriy.shevchenko@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <1455711448-124103-6-git-send-email-andriy.shevchenko@linux.intel.com>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Cc: linux-efi@vger.kernel.org, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Maling list - DRI developers <dri-devel@lists.freedesktop.org>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Lv Zheng <lv.zheng@intel.com>, Matt Fleming <matt@codeblueprint.co.uk>, Arnd Bergmann <arnd@arndb.de>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Linux ACPI <linux-acpi@vger.kernel.org>, Zhang Rui <rui.zhang@intel.com>, Mathias Nyman <mathias.nyman@intel.com>, Mark Brown <broonie@kernel.org>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Bjorn Helgaas <bhelgaas@google.com>, Mika Westerberg <mika.westerberg@linux.intel.com>, Theodore Ts'o <tytso@mit.edu>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation>
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1455711448-124103-7-git-send-email-andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jani Nikula <jani.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Benjamin Tissoires <benjamin.tissoires-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mathias Nyman <mathias.nyman-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Lv Zheng <lv.zheng-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Zhang Rui <rui.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mika Westerberg <mika.westerberg-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-T24gV2VkLCBGZWIgMTcsIDIwMTYgYXQgNDoxNyBBTSwgQW5keSBTaGV2Y2hlbmtvCjxhbmRyaXku
-c2hldmNoZW5rb0BsaW51eC5pbnRlbC5jb20+IHdyb3RlOgo+IEluc3RlYWQgb2Ygb3BlbmNvZGlu
-ZyB0aGUgZXhpc3RpbmcgbGlicmFyeSBmdW5jdGlvbnMgbGV0J3MgdXNlIHRoZW0gZGlyZWN0bHku
-Cj4KPiBUaGUgY29udmVyc2lvbiBmaXhlcyBhIHBvdGVudGlhbCBidWcgaW4gaW50MzQweF90aGVy
-bWFsIGFzIHdlbGwgc2luY2Ugd2UgaGF2ZQo+IHRvIHVzZSBtZW1jbXAoKSBvbiBiaW5hcnkgZGF0
-YS4KPgo+IFNpZ25lZC1vZmYtYnk6IEFuZHkgU2hldmNoZW5rbyA8YW5kcml5LnNoZXZjaGVua29A
-bGludXguaW50ZWwuY29tPgo+IC0tLQo+ICBkcml2ZXJzL2FjcGkvYWNwaV9leHRsb2cuYyAgICAg
-ICAgICAgICAgICAgICAgICAgIHwgIDggKysrLS0tCj4gIGRyaXZlcnMvYWNwaS9idXMuYyAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAyOSArKy0tLS0tLS0tLS0tLS0tLS0tCj4gIGRy
-aXZlcnMvYWNwaS9uZml0LmMgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAzNCArKysr
-KysrKysrKy0tLS0tLS0tLS0tLQo+ICBkcml2ZXJzL2FjcGkvbmZpdC5oICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgIHwgIDMgKy0KPiAgZHJpdmVycy9hY3BpL3V0aWxzLmMgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICB8ICA0ICstLQo+ICBkcml2ZXJzL2NoYXIvdHBtL3RwbV9jcmIu
-YyAgICAgICAgICAgICAgICAgICAgICAgIHwgIDkgKysrLS0tCj4gIGRyaXZlcnMvY2hhci90cG0v
-dHBtX3BwaS5jICAgICAgICAgICAgICAgICAgICAgICAgfCAyMCArKysrKystLS0tLS0tCj4gIGRy
-aXZlcnMvZ3B1L2RybS9pOTE1L2ludGVsX2FjcGkuYyAgICAgICAgICAgICAgICAgfCAxNCArKysr
-LS0tLS0tCj4gIGRyaXZlcnMvZ3B1L2RybS9ub3V2ZWF1L25vdXZlYXVfYWNwaS5jICAgICAgICAg
-ICAgfCAyMCArKysrKystLS0tLS0tCj4gIGRyaXZlcnMvZ3B1L2RybS9ub3V2ZWF1L252a20vc3Vi
-ZGV2L214bS9iYXNlLmMgICAgfCAgOSArKystLS0KPiAgZHJpdmVycy9oaWQvaTJjLWhpZC9pMmMt
-aGlkLmMgICAgICAgICAgICAgICAgICAgICB8ICA5ICsrKy0tLQo+ICBkcml2ZXJzL2lvbW11L2Rt
-YXIuYyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgMTEgKysrKy0tLS0KPiAgZHJpdmVy
-cy9wY2kvcGNpLWFjcGkuYyAgICAgICAgICAgICAgICAgICAgICAgICAgICB8IDExICsrKystLS0t
-Cj4gIGRyaXZlcnMvcGNpL3BjaS1sYWJlbC5jICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAg
-NCArLS0KPiAgZHJpdmVycy90aGVybWFsL2ludDM0MHhfdGhlcm1hbC9pbnQzNDAwX3RoZXJtYWwu
-YyB8ICA2ICsrLS0KPiAgZHJpdmVycy91c2IvaG9zdC94aGNpLXBjaS5jICAgICAgICAgICAgICAg
-ICAgICAgICB8ICA5ICsrKy0tLQo+ICBpbmNsdWRlL2FjcGkvYWNwaV9idXMuaCAgICAgICAgICAg
-ICAgICAgICAgICAgICAgIHwgMTAgKysrKy0tLQo+ICBpbmNsdWRlL2xpbnV4L2FjcGkuaCAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgIHwgIDIgKy0KPiAgaW5jbHVkZS9saW51eC9wY2ktYWNw
-aS5oICAgICAgICAgICAgICAgICAgICAgICAgICB8ICAyICstCj4gIHNvdW5kL3NvYy9pbnRlbC9z
-a3lsYWtlL3NrbC1uaGx0LmMgICAgICAgICAgICAgICAgfCAgNyArKystLQo+ICAyMCBmaWxlcyBj
-aGFuZ2VkLCA5MiBpbnNlcnRpb25zKCspLCAxMjkgZGVsZXRpb25zKC0pCj4KWy4uXQo+IGRpZmYg
-LS1naXQgYS9kcml2ZXJzL2FjcGkvbmZpdC5jIGIvZHJpdmVycy9hY3BpL25maXQuYwo+IGluZGV4
-IGFkNmQ4YzYuLjNiZWI5OWIgMTAwNjQ0Cj4gLS0tIGEvZHJpdmVycy9hY3BpL25maXQuYwo+ICsr
-KyBiL2RyaXZlcnMvYWNwaS9uZml0LmMKPiBAQCAtNDMsMTEgKzQzLDExIEBAIHN0cnVjdCBuZml0
-X3RhYmxlX3ByZXYgewo+ICAgICAgICAgc3RydWN0IGxpc3RfaGVhZCBmbHVzaGVzOwo+ICB9Owo+
-Cj4gLXN0YXRpYyB1OCBuZml0X3V1aWRbTkZJVF9VVUlEX01BWF1bMTZdOwo+ICtzdGF0aWMgdXVp
-ZF9sZSBuZml0X3V1aWRbTkZJVF9VVUlEX01BWF07Cj4KPiAtY29uc3QgdTggKnRvX25maXRfdXVp
-ZChlbnVtIG5maXRfdXVpZHMgaWQpCj4gK2NvbnN0IHV1aWRfbGUgKnRvX25maXRfdXVpZChlbnVt
-IG5maXRfdXVpZHMgaWQpCj4gIHsKPiAtICAgICAgIHJldHVybiBuZml0X3V1aWRbaWRdOwo+ICsg
-ICAgICAgcmV0dXJuICZuZml0X3V1aWRbaWRdOwo+ICB9Cj4gIEVYUE9SVF9TWU1CT0wodG9fbmZp
-dF91dWlkKTsKPgo+IEBAIC04Myw3ICs4Myw3IEBAIHN0YXRpYyBpbnQgYWNwaV9uZml0X2N0bChz
-dHJ1Y3QgbnZkaW1tX2J1c19kZXNjcmlwdG9yICpuZF9kZXNjLAo+ICAgICAgICAgY29uc3QgY2hh
-ciAqY21kX25hbWUsICogZGltbV9uYW1lOwo+ICAgICAgICAgdW5zaWduZWQgbG9uZyBkc21fbWFz
-azsKPiAgICAgICAgIGFjcGlfaGFuZGxlIGhhbmRsZTsKPiAtICAgICAgIGNvbnN0IHU4ICp1dWlk
-Owo+ICsgICAgICAgY29uc3QgdXVpZF9sZSAqdXVpZDsKPiAgICAgICAgIHUzMiBvZmZzZXQ7Cj4g
-ICAgICAgICBpbnQgcmMsIGk7Cj4KPiBAQCAtMjI1LDcgKzIyNSw3IEBAIHN0YXRpYyBpbnQgbmZp
-dF9zcGFfdHlwZShzdHJ1Y3QgYWNwaV9uZml0X3N5c3RlbV9hZGRyZXNzICpzcGEpCj4gICAgICAg
-ICBpbnQgaTsKPgo+ICAgICAgICAgZm9yIChpID0gMDsgaSA8IE5GSVRfVVVJRF9NQVg7IGkrKykK
-PiAtICAgICAgICAgICAgICAgaWYgKG1lbWNtcCh0b19uZml0X3V1aWQoaSksIHNwYS0+cmFuZ2Vf
-Z3VpZCwgMTYpID09IDApCj4gKyAgICAgICAgICAgICAgIGlmICghdXVpZF9sZV9jbXAoKnRvX25m
-aXRfdXVpZChpKSwgKih1dWlkX2xlICopc3BhLT5yYW5nZV9ndWlkKSkKPiAgICAgICAgICAgICAg
-ICAgICAgICAgICByZXR1cm4gaTsKPiAgICAgICAgIHJldHVybiAtMTsKPiAgfQo+IEBAIC04Mjks
-NyArODI5LDcgQEAgc3RhdGljIGludCBhY3BpX25maXRfYWRkX2RpbW0oc3RydWN0IGFjcGlfbmZp
-dF9kZXNjICphY3BpX2Rlc2MsCj4gIHsKPiAgICAgICAgIHN0cnVjdCBhY3BpX2RldmljZSAqYWRl
-diwgKmFkZXZfZGltbTsKPiAgICAgICAgIHN0cnVjdCBkZXZpY2UgKmRldiA9IGFjcGlfZGVzYy0+
-ZGV2Owo+IC0gICAgICAgY29uc3QgdTggKnV1aWQgPSB0b19uZml0X3V1aWQoTkZJVF9ERVZfRElN
-TSk7Cj4gKyAgICAgICBjb25zdCB1dWlkX2xlICp1dWlkID0gdG9fbmZpdF91dWlkKE5GSVRfREVW
-X0RJTU0pOwo+ICAgICAgICAgaW50IGk7Cj4KPiAgICAgICAgIG5maXRfbWVtLT5kc21fbWFzayA9
-IGFjcGlfZGVzYy0+ZGltbV9kc21fZm9yY2VfZW47Cj4gQEAgLTkwOSw3ICs5MDksNyBAQCBzdGF0
-aWMgaW50IGFjcGlfbmZpdF9yZWdpc3Rlcl9kaW1tcyhzdHJ1Y3QgYWNwaV9uZml0X2Rlc2MgKmFj
-cGlfZGVzYykKPiAgc3RhdGljIHZvaWQgYWNwaV9uZml0X2luaXRfZHNtcyhzdHJ1Y3QgYWNwaV9u
-Zml0X2Rlc2MgKmFjcGlfZGVzYykKPiAgewo+ICAgICAgICAgc3RydWN0IG52ZGltbV9idXNfZGVz
-Y3JpcHRvciAqbmRfZGVzYyA9ICZhY3BpX2Rlc2MtPm5kX2Rlc2M7Cj4gLSAgICAgICBjb25zdCB1
-OCAqdXVpZCA9IHRvX25maXRfdXVpZChORklUX0RFVl9CVVMpOwo+ICsgICAgICAgY29uc3QgdXVp
-ZF9sZSAqdXVpZCA9IHRvX25maXRfdXVpZChORklUX0RFVl9CVVMpOwo+ICAgICAgICAgc3RydWN0
-IGFjcGlfZGV2aWNlICphZGV2Owo+ICAgICAgICAgaW50IGk7Cj4KPiBAQCAtMjA3OSwxNiArMjA3
-OSwxNiBAQCBzdGF0aWMgX19pbml0IGludCBuZml0X2luaXQodm9pZCkKPiAgICAgICAgIEJVSUxE
-X0JVR19PTihzaXplb2Yoc3RydWN0IGFjcGlfbmZpdF9jb250cm9sX3JlZ2lvbikgIT0gODApOwo+
-ICAgICAgICAgQlVJTERfQlVHX09OKHNpemVvZihzdHJ1Y3QgYWNwaV9uZml0X2RhdGFfcmVnaW9u
-KSAhPSA0MCk7Cj4KPiAtICAgICAgIGFjcGlfc3RyX3RvX3V1aWQoVVVJRF9WT0xBVElMRV9NRU1P
-UlksIG5maXRfdXVpZFtORklUX1NQQV9WT0xBVElMRV0pOwo+IC0gICAgICAgYWNwaV9zdHJfdG9f
-dXVpZChVVUlEX1BFUlNJU1RFTlRfTUVNT1JZLCBuZml0X3V1aWRbTkZJVF9TUEFfUE1dKTsKPiAt
-ICAgICAgIGFjcGlfc3RyX3RvX3V1aWQoVVVJRF9DT05UUk9MX1JFR0lPTiwgbmZpdF91dWlkW05G
-SVRfU1BBX0RDUl0pOwo+IC0gICAgICAgYWNwaV9zdHJfdG9fdXVpZChVVUlEX0RBVEFfUkVHSU9O
-LCBuZml0X3V1aWRbTkZJVF9TUEFfQkRXXSk7Cj4gLSAgICAgICBhY3BpX3N0cl90b191dWlkKFVV
-SURfVk9MQVRJTEVfVklSVFVBTF9ESVNLLCBuZml0X3V1aWRbTkZJVF9TUEFfVkRJU0tdKTsKPiAt
-ICAgICAgIGFjcGlfc3RyX3RvX3V1aWQoVVVJRF9WT0xBVElMRV9WSVJUVUFMX0NELCBuZml0X3V1
-aWRbTkZJVF9TUEFfVkNEXSk7Cj4gLSAgICAgICBhY3BpX3N0cl90b191dWlkKFVVSURfUEVSU0lT
-VEVOVF9WSVJUVUFMX0RJU0ssIG5maXRfdXVpZFtORklUX1NQQV9QRElTS10pOwo+IC0gICAgICAg
-YWNwaV9zdHJfdG9fdXVpZChVVUlEX1BFUlNJU1RFTlRfVklSVFVBTF9DRCwgbmZpdF91dWlkW05G
-SVRfU1BBX1BDRF0pOwo+IC0gICAgICAgYWNwaV9zdHJfdG9fdXVpZChVVUlEX05GSVRfQlVTLCBu
-Zml0X3V1aWRbTkZJVF9ERVZfQlVTXSk7Cj4gLSAgICAgICBhY3BpX3N0cl90b191dWlkKFVVSURf
-TkZJVF9ESU1NLCBuZml0X3V1aWRbTkZJVF9ERVZfRElNTV0pOwo+ICsgICAgICAgdXVpZF9sZV90
-b19iaW4oVVVJRF9WT0xBVElMRV9NRU1PUlksICZuZml0X3V1aWRbTkZJVF9TUEFfVk9MQVRJTEVd
-KTsKPiArICAgICAgIHV1aWRfbGVfdG9fYmluKFVVSURfUEVSU0lTVEVOVF9NRU1PUlksICZuZml0
-X3V1aWRbTkZJVF9TUEFfUE1dKTsKPiArICAgICAgIHV1aWRfbGVfdG9fYmluKFVVSURfQ09OVFJP
-TF9SRUdJT04sICZuZml0X3V1aWRbTkZJVF9TUEFfRENSXSk7Cj4gKyAgICAgICB1dWlkX2xlX3Rv
-X2JpbihVVUlEX0RBVEFfUkVHSU9OLCAmbmZpdF91dWlkW05GSVRfU1BBX0JEV10pOwo+ICsgICAg
-ICAgdXVpZF9sZV90b19iaW4oVVVJRF9WT0xBVElMRV9WSVJUVUFMX0RJU0ssICZuZml0X3V1aWRb
-TkZJVF9TUEFfVkRJU0tdKTsKPiArICAgICAgIHV1aWRfbGVfdG9fYmluKFVVSURfVk9MQVRJTEVf
-VklSVFVBTF9DRCwgJm5maXRfdXVpZFtORklUX1NQQV9WQ0RdKTsKPiArICAgICAgIHV1aWRfbGVf
-dG9fYmluKFVVSURfUEVSU0lTVEVOVF9WSVJUVUFMX0RJU0ssICZuZml0X3V1aWRbTkZJVF9TUEFf
-UERJU0tdKTsKPiArICAgICAgIHV1aWRfbGVfdG9fYmluKFVVSURfUEVSU0lTVEVOVF9WSVJUVUFM
-X0NELCAmbmZpdF91dWlkW05GSVRfU1BBX1BDRF0pOwo+ICsgICAgICAgdXVpZF9sZV90b19iaW4o
-VVVJRF9ORklUX0JVUywgJm5maXRfdXVpZFtORklUX0RFVl9CVVNdKTsKPiArICAgICAgIHV1aWRf
-bGVfdG9fYmluKFVVSURfTkZJVF9ESU1NLCAmbmZpdF91dWlkW05GSVRfREVWX0RJTU1dKTsKCkkg
-ZG9uJ3Qgc2VlIHRoZSBiZW5lZml0IG9mIHRoaXMgY2hhbmdlLiAgRm9yIHRoZSBORklUIGRyaXZl
-ciB3ZSB3ZW50CnRocm91Z2ggYSBmaXJlIGRyaWxsIHRyeWluZyB0byBtYWtlIHN1cmUgdGhlIEFD
-UEkgc3BlYyBmb3JtYXQgb2YgYQpVVUlEIG1hdGNoZWQgdGhlIExpbnV4IGludGVycHJldGF0aW9u
-LCBhbmQgdGhpcyBjaGFuZ2UgbWFrZXMgdGhhdApoYXJkZXIgdG8gZGV0ZXJtaW5lLiAgQUNQSSBk
-cml2ZXJzIHNob3VsZCB1c2UgQUNQSUNBIHV1aWQgaGVscGVyCnJvdXRpbmVzIGluIG15IG9waW5p
-b24uCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCmRyaS1k
-ZXZlbCBtYWlsaW5nIGxpc3QKZHJpLWRldmVsQGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwczov
-L2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2RyaS1kZXZlbAo=
+On Wednesday, February 17, 2016 02:17:24 PM Andy Shevchenko wrote:
+> Switch to use a generic UUID API instead of custom approach. It allows to
+> define UUIDs, compare them, and validate.
+> 
+> Signed-off-by: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> ---
+>  drivers/acpi/property.c | 18 ++++++++----------
+>  1 file changed, 8 insertions(+), 10 deletions(-)
+> 
+> diff --git a/drivers/acpi/property.c b/drivers/acpi/property.c
+> index 2aee416..1e75305 100644
+> --- a/drivers/acpi/property.c
+> +++ b/drivers/acpi/property.c
+> @@ -25,15 +25,13 @@ static int acpi_data_get_property_array(struct acpi_device_data *data,
+>  					const union acpi_object **obj);
+>  
+>  /* ACPI _DSD device properties UUID: daffd814-6eba-4d8c-8a91-bc9bbf4aa301 */
+> -static const u8 prp_uuid[16] = {
+> -	0x14, 0xd8, 0xff, 0xda, 0xba, 0x6e, 0x8c, 0x4d,
+> -	0x8a, 0x91, 0xbc, 0x9b, 0xbf, 0x4a, 0xa3, 0x01
+> -};
+> +static const uuid_le prp_uuid =
+> +	UUID_LE(0xdaffd814, 0x6eba, 0x4d8c,
+> +		0x8a, 0x91, 0xbc, 0x9b, 0xbf, 0x4a, 0xa3, 0x01);
+>  /* ACPI _DSD data subnodes UUID: dbb8e3e6-5886-4ba6-8795-1319f52a966b */
+> -static const u8 ads_uuid[16] = {
+> -	0xe6, 0xe3, 0xb8, 0xdb, 0x86, 0x58, 0xa6, 0x4b,
+> -	0x87, 0x95, 0x13, 0x19, 0xf5, 0x2a, 0x96, 0x6b
+> -};
+> +static const uuid_le ads_uuid =
+> +	UUID_LE(0xdbb8e3e6, 0x5886, 0x4ba6,
+> +		0x87, 0x95, 0x13, 0x19, 0xf5, 0x2a, 0x96, 0x6b);
+>  
+>  static bool acpi_enumerate_nondev_subnodes(acpi_handle scope,
+>  					   const union acpi_object *desc,
+> @@ -138,7 +136,7 @@ static bool acpi_enumerate_nondev_subnodes(acpi_handle scope,
+>  		    || links->type != ACPI_TYPE_PACKAGE)
+>  			break;
+>  
+> -		if (memcmp(uuid->buffer.pointer, ads_uuid, sizeof(ads_uuid)))
+> +		if (uuid_le_cmp(*(uuid_le *)uuid->buffer.pointer, ads_uuid))
+
+Maybe it's too late, but I don't quite understand the pointer manipulations here.
+
+I can see why you need a type conversion (although it looks ugly), but why do you
+need to dereference it too?
+
+Thanks,
+Rafael
