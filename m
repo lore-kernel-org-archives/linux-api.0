@@ -1,51 +1,42 @@
-From: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>
-Subject: Re: [PATCH 2/2] mm/page_ref: add tracepoint to track down page
- reference manipulation
-Date: Fri, 19 Feb 2016 11:15:22 +0900
-Message-ID: <20160219021522.GA11625@swordfish>
-References: <1455505490-12376-1-git-send-email-iamjoonsoo.kim@lge.com>
- <1455505490-12376-2-git-send-email-iamjoonsoo.kim@lge.com>
- <20160218092926.083ca007@gandalf.local.home>
- <20160219003421.GA587@swordfish>
- <CAAmzW4Ni2uZ_J1dcfHPNPYDc0EDDDOL+_oKD-+OZ=Cmg=8sgGA@mail.gmail.com>
+From: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [PATCH v3 05/10] serial: mps2-uart: add support for early console
+Date: Fri, 19 Feb 2016 09:45:18 +0000
+Message-ID: <56C6E42E.5070601@arm.com>
+References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com>	<1455617295-23736-6-git-send-email-vladimir.murzin@arm.com> <CAHp75VdugAq0WnzLHmd9CJHCjBOdBwPqCmC3ARSaVF5XMYGoMw@mail.gmail.com> <56C31F9F.10000@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <CAAmzW4Ni2uZ_J1dcfHPNPYDc0EDDDOL+_oKD-+OZ=Cmg=8sgGA@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Joonsoo Kim <js1304@gmail.com>
-Cc: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Andrew Morton <akpm@linux-foundation.org>, Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, Vlastimil Babka <vbabka@suse.cz>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linux Memory Management List <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <56C31F9F.10000-5wv7dgnIgG8@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Shevchenko <andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, devicetree <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, ijc+devicetree <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, "linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, =?windows-1252?Q?Uwe_Kleine-K=F6nig?= <u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, linux-arm Mailing List <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On (02/19/16 10:39), Joonsoo Kim wrote:
-[..]
-> > not sure if it's worth mentioning in the comment, but the other
-> > concern here is the performance impact of an extra function call,
-> > I believe. otherwise, Joonsoo would just do:
+On 16/02/16 13:09, Vladimir Murzin wrote:
+>>> +EARLYCON_DECLARE(mps2, mps2_early_console_setup);
+>>> >> +OF_EARLYCON_DECLARE(mps2, "arm,mps2-uart", mps2_early_console_setup);
+>> > 
+>> > IIRC Peter Hurley mentioned you don't need to put both anymore, OF_
+>> > one is enough.
+>> > 
+> I've just tried with OF_ only and seems it works fine. Thanks for
+> pointing at it!
 > 
-> It's very natural thing so I'm not sure it is worth mentioning.
 
-agree.
+..and the reason for that was that I had stdout pointing at uart node.
+Now, while testing v4 I end-up with configuration:
 
-> > and in mm/debug_page_ref.c
-> >
-> > void __page_ref_set(struct page *page, int v)
-> > {
-> >         if (trace_page_ref_set_enabled())
-> >                 trace_page_ref_set(page, v);
-> > }
-> > EXPORT_SYMBOL(__page_ref_set);
-> > EXPORT_TRACEPOINT_SYMBOL(page_ref_set);
-> 
-> It is what I did in v1.
+1) no EARLYCON_DECLARE in mps2-uart.c
+2) stdout not set
+3) cmdline has "earlycon=mps2,0x40004000 console=/dev/ttyMPS"
 
-ah... indeed. well, "That was a year ago, how am I suppose to remember"
+and I don't see bootconsole, but if I avoid 1) everything works fine.
+So, I'd leave EARLYCON_DECLARE in this patch.
 
-	-ss
-
+Cheers
+Vladimir
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
