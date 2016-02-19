@@ -1,64 +1,69 @@
-From: Petr Mladek <pmladek@suse.com>
-Subject: Re: [PATCH v4 09/22] kthread: Allow to cancel kthread work
-Date: Fri, 19 Feb 2016 17:22:39 +0100
-Message-ID: <20160219162239.GT3305@pathway.suse.cz>
-References: <1453736711-6703-1-git-send-email-pmladek@suse.com>
- <1453736711-6703-10-git-send-email-pmladek@suse.com>
- <20160125191709.GE3628@mtj.duckdns.org>
+From: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [PATCH v3 05/10] serial: mps2-uart: add support for early console
+Date: Fri, 19 Feb 2016 16:27:16 +0000
+Message-ID: <56C74264.9070906@arm.com>
+References: <1455617295-23736-1-git-send-email-vladimir.murzin@arm.com>
+ <1455617295-23736-6-git-send-email-vladimir.murzin@arm.com>
+ <CAHp75VdugAq0WnzLHmd9CJHCjBOdBwPqCmC3ARSaVF5XMYGoMw@mail.gmail.com>
+ <56C31F9F.10000@arm.com> <56C6E42E.5070601@arm.com>
+ <CAHp75VcosaVcz_aYbpfL-nUH0kBf72SshXU5k95s48Z3wnA5nQ@mail.gmail.com>
+ <56C738F1.2070307@hurleysoftware.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20160125191709.GE3628@mtj.duckdns.org>
-Sender: owner-linux-mm@kvack.org
-To: Tejun Heo <tj@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <56C738F1.2070307-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>, Andy Shevchenko <andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, devicetree <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, ijc+devicetree <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, "linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, =?UTF-8?Q?Uwe_Kleine-K=c3=b6nig?= <u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, linux-arm Mailing List <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon 2016-01-25 14:17:09, Tejun Heo wrote:
-> On Mon, Jan 25, 2016 at 04:44:58PM +0100, Petr Mladek wrote:
-> > +static bool __cancel_kthread_work_sync(struct kthread_work *work)
-[...]
- > > +	work->canceling++;
-> > +	ret = try_to_cancel_kthread_work(work, &worker->lock, &flags);
-> > +
-> > +	if (worker->current_work != work)
-> > +		goto out_fast;
+On 19/02/16 15:46, Peter Hurley wrote:
+> On 02/19/2016 01:57 AM, Andy Shevchenko wrote:
+>> On Fri, Feb 19, 2016 at 11:45 AM, Vladimir Murzin
+>> <vladimir.murzin-5wv7dgnIgG8@public.gmane.org> wrote:
+>>> On 16/02/16 13:09, Vladimir Murzin wrote:
+>>>>>> +EARLYCON_DECLARE(mps2, mps2_early_console_setup);
+>>>>>>>> +OF_EARLYCON_DECLARE(mps2, "arm,mps2-uart", mps2_early_console_setup);
+>>>>>>
+>>>>>> IIRC Peter Hurley mentioned you don't need to put both anymore, OF_
+>>>>>> one is enough.
+>>>>>>
+>>>> I've just tried with OF_ only and seems it works fine. Thanks for
+>>>> pointing at it!
+>>>>
+>>>
+>>> ..and the reason for that was that I had stdout pointing at uart node.
+>>> Now, while testing v4 I end-up with configuration:
+>>>
+>>> 1) no EARLYCON_DECLARE in mps2-uart.c
+>>> 2) stdout not set
+>>> 3) cmdline has "earlycon=mps2,0x40004000 console=/dev/ttyMPS"
+>>>
+>>> and I don't see bootconsole, but if I avoid 1) everything works fine.
+>>> So, I'd leave EARLYCON_DECLARE in this patch.
+>>
+>> Peter, what is your comment on this?
 > 
-> If there are two racing cancellers, wouldn't this allow the losing one
-> to return while the work item is still running?
+> That Vladimir is not testing with linux-next.
+> 
+> linux-next has common framework for both command line and OF-defined
+> earlycons.
+> 
+> Vladimir, if you pull in Greg's tty-next branch, then just
+> 
+> OF_EARLYCON_DECLARE(mps2, "arm,mps2-uart", mps2_early_console_setup);
+> 
+> should enable both command-line and OF-defined earlycons.
 
-If the work is running, worker->current_work must point to it.
-All cancelers will see it and queue its own kthread_flush_work.
-It is a bit sub-optimal but it is trivial. I doubt that there
-will be many parallel cancelers in practice.
+Confirmed! No doubt now EARLYCON_DECLARE can be dropped from this patch
+safely.
 
-> > +	spin_unlock_irqrestore(&worker->lock, flags);
-> > +	flush_kthread_work(work);
-> > +	/*
-> > +	 * Nobody is allowed to switch the worker or queue the work
-> > +	 * when .canceling is set.
-> > +	 */
-> > +	spin_lock_irqsave(&worker->lock, flags);
-> > +
-> > +out_fast:
-> > +	work->canceling--;
-> > +	spin_unlock_irqrestore(&worker->lock, flags);
-> > +out:
-> > +	return ret;
+Thanks!
+Vladimir
 
-Best Regards,
-Petr
-
-PS: I have updated the patchset according to your other comments.
-In addition, I got rid of many try_lock games. We do not allow
-to queue the same work to different workers. Therefore it should
-be enough to warn if the worker changes unexpectedly. It makes
-the code even more simple. I still need to do some testing.
-I will send it next week, hopefully.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> 
+> Regards,
+> Peter Hurley
+> 
+> 
