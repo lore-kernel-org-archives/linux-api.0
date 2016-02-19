@@ -1,37 +1,48 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>
 Subject: Re: [PATCH 2/2] mm/page_ref: add tracepoint to track down page
  reference manipulation
-Date: Thu, 18 Feb 2016 20:46:02 -0500
-Message-ID: <20160218204602.1d771714@grimm.local.home>
+Date: Fri, 19 Feb 2016 11:15:22 +0900
+Message-ID: <20160219021522.GA11625@swordfish>
 References: <1455505490-12376-1-git-send-email-iamjoonsoo.kim@lge.com>
-	<1455505490-12376-2-git-send-email-iamjoonsoo.kim@lge.com>
-	<20160218092926.083ca007@gandalf.local.home>
-	<20160219003421.GA587@swordfish>
-	<CAAmzW4Ni2uZ_J1dcfHPNPYDc0EDDDOL+_oKD-+OZ=Cmg=8sgGA@mail.gmail.com>
+ <1455505490-12376-2-git-send-email-iamjoonsoo.kim@lge.com>
+ <20160218092926.083ca007@gandalf.local.home>
+ <20160219003421.GA587@swordfish>
+ <CAAmzW4Ni2uZ_J1dcfHPNPYDc0EDDDOL+_oKD-+OZ=Cmg=8sgGA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
 In-Reply-To: <CAAmzW4Ni2uZ_J1dcfHPNPYDc0EDDDOL+_oKD-+OZ=Cmg=8sgGA@mail.gmail.com>
 Sender: owner-linux-mm@kvack.org
 To: Joonsoo Kim <js1304@gmail.com>
-Cc: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, Vlastimil Babka <vbabka@suse.cz>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linux Memory Management List <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Cc: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Andrew Morton <akpm@linux-foundation.org>, Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, Vlastimil Babka <vbabka@suse.cz>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linux Memory Management List <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Joonsoo Kim <iamjoonsoo.kim@lge.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 19 Feb 2016 10:39:10 +0900
-Joonsoo Kim <js1304@gmail.com> wrote:
-
-
+On (02/19/16 10:39), Joonsoo Kim wrote:
+[..]
 > > not sure if it's worth mentioning in the comment, but the other
 > > concern here is the performance impact of an extra function call,
-> > I believe. otherwise, Joonsoo would just do:  
+> > I believe. otherwise, Joonsoo would just do:
 > 
 > It's very natural thing so I'm not sure it is worth mentioning.
+
+agree.
+
+> > and in mm/debug_page_ref.c
+> >
+> > void __page_ref_set(struct page *page, int v)
+> > {
+> >         if (trace_page_ref_set_enabled())
+> >                 trace_page_ref_set(page, v);
+> > }
+> > EXPORT_SYMBOL(__page_ref_set);
+> > EXPORT_TRACEPOINT_SYMBOL(page_ref_set);
 > 
+> It is what I did in v1.
 
-Agreed.
+ah... indeed. well, "That was a year ago, how am I suppose to remember"
 
--- Steve
+	-ss
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
