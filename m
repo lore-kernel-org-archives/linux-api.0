@@ -1,105 +1,77 @@
-From: Johannes Berg <johannes@sipsolutions.net>
-Subject: Re: [PATCH 8/9] rfkill: Userspace control for airplane mode
-Date: Thu, 18 Feb 2016 21:12:44 +0100
-Message-ID: <1455826364.2084.22.camel@sipsolutions.net>
-References: <1454946096-9752-1-git-send-email-jprvita@endlessm.com>
-	 <1454946096-9752-9-git-send-email-jprvita@endlessm.com>
-	 (sfid-20160208_164148_881936_346879EA)
+From: Sergey Senozhatsky <sergey.senozhatsky.work-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 2/2] mm/page_ref: add tracepoint to track down page
+ reference manipulation
+Date: Fri, 19 Feb 2016 09:34:21 +0900
+Message-ID: <20160219003421.GA587@swordfish>
+References: <1455505490-12376-1-git-send-email-iamjoonsoo.kim@lge.com>
+ <1455505490-12376-2-git-send-email-iamjoonsoo.kim@lge.com>
+ <20160218092926.083ca007@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1454946096-9752-9-git-send-email-jprvita@endlessm.com> (sfid-20160208_164148_881936_346879EA)
-Sender: linux-kernel-owner@vger.kernel.org
-To: =?ISO-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita@gmail.com>
-Cc: "David S. Miller" <davem@davemloft.net>, Darren Hart <dvhart@infradead.org>, linux-wireless@vger.kernel.org, netdev@vger.kernel.org, platform-driver-x86@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux@endlessm.com, =?ISO-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita@endlessm.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160218092926.083ca007-f9ZlEuEWxVcJvu8Pb33WZ0EMvNT87kid@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+Cc: js1304-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Michal Nazarewicz <mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Sergey Senozhatsky <sergey.senozhatsky.work-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+On (02/18/16 09:29), Steven Rostedt wrote:
+> > diff --git a/include/linux/page_ref.h b/include/linux/page_ref.h
+> > index 534249c..fd6d9a5 100644
+> > --- a/include/linux/page_ref.h
+> > +++ b/include/linux/page_ref.h
+> > @@ -1,6 +1,54 @@
+> >  #include <linux/atomic.h>
+> >  #include <linux/mm_types.h>
+> >  #include <linux/page-flags.h>
+> > +#include <linux/tracepoint-defs.h>
+> > +
+> > +extern struct tracepoint __tracepoint_page_ref_set;
+> > +extern struct tracepoint __tracepoint_page_ref_mod;
+> > +extern struct tracepoint __tracepoint_page_ref_mod_and_test;
+> > +extern struct tracepoint __tracepoint_page_ref_mod_and_return;
+> > +extern struct tracepoint __tracepoint_page_ref_mod_unless;
+> > +extern struct tracepoint __tracepoint_page_ref_freeze;
+> > +extern struct tracepoint __tracepoint_page_ref_unfreeze;
+> > +
+> > +#ifdef CONFIG_DEBUG_PAGE_REF
+> 
+> Please add a comment here. Something to the effect of:
+> 
+> /*
+>  * Ideally we would want to use the trace_<tracepoint>_enabled() helper
+>  * functions. But due to include header file issues, that is not
+>  * feasible. Instead we have to open code the static key functions.
+>  *
+>  * See trace_##name##_enabled(void) in include/linux/tracepoint.h
+>  */
+> 
 
-Sorry for the delay reviewing this.
+not sure if it's worth mentioning in the comment, but the other
+concern here is the performance impact of an extra function call,
+I believe. otherwise, Joonsoo would just do:
+
+in include/linux/page_ref.h
+
+static inline void set_page_count(struct page *page, int v)
+{
+	atomic_set(&page->_count, v);
+	__page_ref_set(page, v);
+}
+...
 
 
 
-On Mon, 2016-02-08 at 10:41 -0500, Jo=C3=A3o Paulo Rechi Vita wrote:
-> Provide an interface for the airplane-mode indicator be controlled
-> from
-> userspace. User has to first acquire the control through
-> RFKILL_OP_AIRPLANE_MODE_ACQUIRE and keep the fd open for the whole
-> time
-> it wants to be in control of the indicator. Closing the fd or using
-> RFKILL_OP_AIRPLANE_MODE_RELEASE restores the default policy.
+and in mm/debug_page_ref.c
 
-I've come to the conclusion that the new ops are probably the best
-thing to do here.
+void __page_ref_set(struct page *page, int v)
+{
+	if (trace_page_ref_set_enabled())
+		trace_page_ref_set(page, v);
+}
+EXPORT_SYMBOL(__page_ref_set);
+EXPORT_TRACEPOINT_SYMBOL(page_ref_set);
+...
 
-> +Userspace can also override the default airplane-mode indicator
-> policy through
-> +/dev/rfkill. Control of the airplane mode indicator has to be
-> acquired first,
-> +using RFKILL_OP_AIRPLANE_MODE_ACQUIRE, and is only available for one
-> userspace
-> +application at a time. Closing the fd or using
-> RFKILL_OP_AIRPLANE_MODE_RELEASE
-> +reverts the airplane-mode indicator back to the default kernel
-> policy and makes
-> +it available for other applications to take control. Changes to the
-> +airplane-mode indicator state can be made using
-> RFKILL_OP_AIRPLANE_MODE_CHANGE,
-> +passing the new value in the 'soft' field of 'struct rfkill_event'.
-
-I don't really see any value in _RELEASE, since an application can just
-close the fd? I'd prefer not having the duplicate functionality
-and=C2=A0force us to exercise the single code path every time.
-
-> =C2=A0For further details consult Documentation/ABI/stable/sysfs-clas=
-s-
-> rfkill.
-> diff --git a/include/uapi/linux/rfkill.h
-> b/include/uapi/linux/rfkill.h
-> index 2e00dce..9cb999b 100644
-> --- a/include/uapi/linux/rfkill.h
-> +++ b/include/uapi/linux/rfkill.h
-> @@ -67,6 +67,9 @@ enum rfkill_operation {
-> =C2=A0	RFKILL_OP_DEL,
-> =C2=A0	RFKILL_OP_CHANGE,
-> =C2=A0	RFKILL_OP_CHANGE_ALL,
-> +	RFKILL_OP_AIRPLANE_MODE_ACQUIRE,
-> +	RFKILL_OP_AIRPLANE_MODE_RELEASE,
-> +	RFKILL_OP_AIRPLANE_MODE_CHANGE,
-> =C2=A0};
-=C2=A0
-> @@ -1199,7 +1202,7 @@ static ssize_t rfkill_fop_write(struct file
-> *file, const char __user *buf,
-> =C2=A0	if (copy_from_user(&ev, buf, count))
-> =C2=A0		return -EFAULT;
-> =C2=A0
-> -	if (ev.op !=3D RFKILL_OP_CHANGE && ev.op !=3D
-> RFKILL_OP_CHANGE_ALL)
-> +	if (ev.op < RFKILL_OP_CHANGE)
-> =C2=A0		return -EINVAL;
-
-You need to also reject invalid high values, like 27.
-
-> =C2=A0	mutex_lock(&rfkill_global_mutex);
-> =C2=A0
-> +	if (ev.op =3D=3D RFKILL_OP_AIRPLANE_MODE_ACQUIRE) {
-> +		if (rfkill_apm_owned && !data->is_apm_owner) {
-> +			count =3D -EACCES;
-> +		} else {
-> +			rfkill_apm_owned =3D true;
-> +			data->is_apm_owner =3D true;
-> +		}
-> +	}
-> +
-> +	if (ev.op =3D=3D RFKILL_OP_AIRPLANE_MODE_RELEASE) {
-
-It would probably be better to simply use "switch (ev.op)" and make the
-default case do a reject.
-
-> =C2=A0	if (ev.op =3D=3D RFKILL_OP_CHANGE_ALL)
-> =C2=A0		rfkill_update_global_state(ev.type, ev.soft);
-
-Also moving the existing code inside the switch, of course.
-
-johannes
+	-ss
