@@ -1,8 +1,8 @@
 From: "Michael S. Tsirkin" <mst@redhat.com>
 Subject: Re: [PATCH v8 1/4] firmware: introduce sysfs driver
  for QEMU's fw_cfg device
-Date: Sun, 21 Feb 2016 15:10:30 +0200
-Message-ID: <20160221150904-mutt-send-email-mst@redhat.com>
+Date: Sun, 21 Feb 2016 15:14:00 +0200
+Message-ID: <20160221151050-mutt-send-email-mst@redhat.com>
 References: <1453990994-17801-1-git-send-email-somlo@cmu.edu>
 	<1453990994-17801-2-git-send-email-somlo@cmu.edu>
 	<20160221100557-mutt-send-email-mst@redhat.com>
@@ -26,42 +26,24 @@ Cc: mark.rutland@arm.com, peter.maydell@linaro.org, matt@codeblueprint.co.uk, st
 List-Id: linux-api@vger.kernel.org
 
 On Sun, Feb 21, 2016 at 08:06:17AM -0500, Gabriel L. Somlo wrote:
+> > So for all arches which support ACPI, I think this driver
+> > should just rely on ACPI.
 > 
-> > 
-> > > +#if !(defined(FW_CFG_CTRL_OFF) && defined(FW_CTRL_DATA_OFF))
-> > > +# if (defined(CONFIG_ARM) || defined(CONFIG_ARM64))
-> > > +#  define FW_CFG_CTRL_OFF 0x08
-> > > +#  define FW_CFG_DATA_OFF 0x00
-> > > +# elif (defined(CONFIG_PPC_PMAC) || defined(CONFIG_SPARC32)) /* ppc/mac,sun4m */
-> > > +#  define FW_CFG_CTRL_OFF 0x00
-> > > +#  define FW_CFG_DATA_OFF 0x02
-> > > +# elif (defined(CONFIG_X86) || defined(CONFIG_SPARC64)) /* x86, sun4u */
-> > > +#  define FW_CFG_CTRL_OFF 0x00
-> > > +#  define FW_CFG_DATA_OFF 0x01
-> > > +# else
-> > > +#  warning "QEMU FW_CFG may not be available on this architecture!"
-> > > +#  define FW_CFG_CTRL_OFF 0x00
-> > > +#  define FW_CFG_DATA_OFF 0x01
-> > 
-> > Better not try hacks like this, they are hard
-> > to support down the road. Please only list what is tested and
-> > actually exposed by QEMU.
+> There was a discussion about that a few versions ago, and IIRC the
+> conclusion was not to expect the firmware to contend for fw_cfg access
+> after the guest kernel boots:
 > 
-> I was looking for a standard way to advertise register offsets within
-> the ioport or mmio region assigned to fw_cfg, but right now the answer
-> is "there isn't one", and "register offsets are an arch specific
-> detail". As such, the only reasonable way I saw was to copy the same
-> values used in the QEMU source.
-> 
-> See also:
-> https://lists.gnu.org/archive/html/qemu-devel/2015-11/msg05037.html
->  
-> Thanks much,
-> --Gabriel
+> https://lkml.org/lkml/2015/10/5/283
 
-My point is you don't know what will qemu do on these
-other arches which do not at the moment have fw cfg.
-So don't try to guess!
+Interesting. Igor wanted to do this again recently ...
+I'll think it over and get back to you/list on this.
+
+> (I even had a prototype version doing what you suggested, but per the above
+> reference decided to drop it -- which IMHO is for the better, since otherwise
+> I'd have had to ifdef between ACPI and non-ACPI versions of the driver --
+> see https://lkml.org/lkml/2015/11/4/534 )
+
+I'm not sure I get it - won't you only ifdef the accessor function?
 
 -- 
 MST
