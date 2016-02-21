@@ -1,962 +1,835 @@
-From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: richacl(7) man page review comments
-Date: Sat, 20 Feb 2016 17:37:21 +0100
-Message-ID: <CAHc6FU4CCrcrA6=oCiq2A5rGd9CCGELaTZq6tGpmd2jcV_Zp4A@mail.gmail.com>
-References: <56B770B6.7040803@gmail.com>
-	<56B77262.7090107@gmail.com>
-	<CAHc6FU5__xbKm4mg8+fK_ZW5ZYsDoQcYBBvQg573Eq4ERDsROw@mail.gmail.com>
-	<56C0F23C.7030902@gmail.com>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: Re: [PATCH v8 1/4] firmware: introduce sysfs driver
+ for QEMU's fw_cfg device
+Date: Sun, 21 Feb 2016 10:30:26 +0200
+Message-ID: <20160221100557-mutt-send-email-mst@redhat.com>
+References: <1453990994-17801-1-git-send-email-somlo@cmu.edu>
+	<1453990994-17801-2-git-send-email-somlo@cmu.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <56C0F23C.7030902-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org>
+Content-Disposition: inline
+In-Reply-To: <1453990994-17801-2-git-send-email-somlo@cmu.edu>
+List-Unsubscribe: <https://lists.nongnu.org/mailman/options/qemu-devel>,
+	<mailto:qemu-devel-request@nongnu.org?subject=unsubscribe>
+List-Archive: <http://lists.nongnu.org/archive/html/qemu-devel>
+List-Post: <mailto:qemu-devel@nongnu.org>
+List-Help: <mailto:qemu-devel-request@nongnu.org?subject=help>
+List-Subscribe: <https://lists.nongnu.org/mailman/listinfo/qemu-devel>,
+	<mailto:qemu-devel-request@nongnu.org?subject=subscribe>
+Errors-To: qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org
+Sender: qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org
+To: "Gabriel L. Somlo" <somlo@cmu.edu>
+Cc: mark.rutland@arm.com, peter.maydell@linaro.org, matt@codeblueprint.co.uk, stefanha@gmail.com, qemu-devel@nongnu.org, eric@anholt.net, kraxel@redhat.com, linux-api@vger.kernel.org, agross@codeaurora.org, pawel.moll@arm.com, zajec5@gmail.com, rmk+kernel@arm.linux.org.uk, lersek@redhat.com, devicetree@vger.kernel.org, ehabkost@redhat.com, arnd@arndb.de, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, leif.lindholm@linaro.org, robh+dt@kernel.org, pbonzini@redhat.com, rth@twiddle.net, ard.biesheuvel@linaro.org, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, luto@amacapital.net, hanjun.guo@linaro.org, sudeep.holla@arm.com, imammedo@redhat.com, revol@free.fr
 List-Id: linux-api@vger.kernel.org
 
-Hi Michael,
+On Thu, Jan 28, 2016 at 09:23:11AM -0500, Gabriel L. Somlo wrote:
+> From: Gabriel Somlo <somlo@cmu.edu>
+> 
+> Make fw_cfg entries of type "file" available via sysfs. Entries
+> are listed under /sys/firmware/qemu_fw_cfg/by_key, in folders
+> named after each entry's selector key. Filename, selector value,
+> and size read-only attributes are included for each entry. Also,
+> a "raw" attribute allows retrieval of the full binary content of
+> each entry.
+> 
+> The fw_cfg device can be instantiated automatically from ACPI or
+> the Device Tree, or manually by using a kernel module (or command
+> line) parameter, with a syntax outlined in the documentation file.
+> 
+> Signed-off-by: Gabriel Somlo <somlo@cmu.edu>
+> ---
+>  .../ABI/testing/sysfs-firmware-qemu_fw_cfg         |  58 ++
+>  drivers/firmware/Kconfig                           |  19 +
+>  drivers/firmware/Makefile                          |   1 +
+>  drivers/firmware/qemu_fw_cfg.c                     | 648 +++++++++++++++++++++
+>  4 files changed, 726 insertions(+)
+>  create mode 100644 Documentation/ABI/testing/sysfs-firmware-qemu_fw_cfg
+>  create mode 100644 drivers/firmware/qemu_fw_cfg.c
+> 
+> diff --git a/Documentation/ABI/testing/sysfs-firmware-qemu_fw_cfg b/Documentation/ABI/testing/sysfs-firmware-qemu_fw_cfg
+> new file mode 100644
+> index 0000000..e9e58d4
+> --- /dev/null
+> +++ b/Documentation/ABI/testing/sysfs-firmware-qemu_fw_cfg
+> @@ -0,0 +1,58 @@
+> +What:		/sys/firmware/qemu_fw_cfg/
+> +Date:		August 2015
+> +Contact:	Gabriel Somlo <somlo@cmu.edu>
+> +Description:
+> +		Several different architectures supported by QEMU (x86, arm,
+> +		sun4*, ppc/mac) are provisioned with a firmware configuration
+> +		(fw_cfg) device, originally intended as a way for the host to
+> +		provide configuration data to the guest firmware. Starting
+> +		with QEMU v2.4, arbitrary fw_cfg file entries may be specified
+> +		by the user on the command line, which makes fw_cfg additionally
+> +		useful as an out-of-band, asynchronous mechanism for providing
+> +		configuration data to the guest userspace.
+> +
+> +		The authoritative guest-side hardware interface documentation
+> +		to the fw_cfg device can be found in "docs/specs/fw_cfg.txt"
+> +		in the QEMU source tree.
+> +
+> +		=== SysFS fw_cfg Interface ===
+> +
+> +		The fw_cfg sysfs interface described in this document is only
+> +		intended to display discoverable blobs (i.e., those registered
+> +		with the file directory), as there is no way to determine the
+> +		presence or size of "legacy" blobs (with selector keys between
+> +		0x0002 and 0x0018) programmatically.
+> +
+> +		All fw_cfg information is shown under:
+> +
+> +			/sys/firmware/qemu_fw_cfg/
+> +
+> +		The only legacy blob displayed is the fw_cfg device revision:
+> +
+> +			/sys/firmware/qemu_fw_cfg/rev
+> +
+> +		--- Discoverable fw_cfg blobs by selector key ---
+> +
+> +		All discoverable blobs listed in the fw_cfg file directory are
+> +		displayed as entries named after their unique selector key
+> +		value, e.g.:
+> +
+> +			/sys/firmware/qemu_fw_cfg/by_key/32
+> +			/sys/firmware/qemu_fw_cfg/by_key/33
+> +			/sys/firmware/qemu_fw_cfg/by_key/34
+> +			...
+> +
+> +		Each such fw_cfg sysfs entry has the following values exported
+> +		as attributes:
+> +
+> +		name  	: The 56-byte nul-terminated ASCII string used as the
+> +			  blob's 'file name' in the fw_cfg directory.
+> +		size  	: The length of the blob, as given in the fw_cfg
+> +			  directory.
+> +		key	: The value of the blob's selector key as given in the
+> +			  fw_cfg directory. This value is the same as used in
+> +			  the parent directory name.
+> +		raw	: The raw bytes of the blob, obtained by selecting the
+> +			  entry via the control register, and reading a number
+> +			  of bytes equal to the blob size from the data
+> +			  register.
+> diff --git a/drivers/firmware/Kconfig b/drivers/firmware/Kconfig
+> index 49a3a11..5130f74 100644
+> --- a/drivers/firmware/Kconfig
+> +++ b/drivers/firmware/Kconfig
+> @@ -161,6 +161,25 @@ config RASPBERRYPI_FIRMWARE
+>  	  This option enables support for communicating with the firmware on the
+>  	  Raspberry Pi.
+>  
+> +config FW_CFG_SYSFS
+> +	tristate "QEMU fw_cfg device support in sysfs"
+> +	depends on SYSFS && (ARM || ARM64 || PPC_PMAC || SPARC || X86)
+> +	default n
+> +	help
+> +	  Say Y or M here to enable the exporting of the QEMU firmware
+> +	  configuration (fw_cfg) file entries via sysfs. Entries are
+> +	  found under /sys/firmware/fw_cfg when this option is enabled
+> +	  and loaded.
+> +
+> +config FW_CFG_SYSFS_CMDLINE
+> +	bool "QEMU fw_cfg device parameter parsing"
+> +	depends on FW_CFG_SYSFS
+> +	help
+> +	  Allow the qemu_fw_cfg device to be initialized via the kernel
+> +	  command line or using a module parameter.
+> +	  WARNING: Using incorrect parameters (base address in particular)
+> +	  may crash your system.
+> +
+>  config QCOM_SCM
+>  	bool
+>  	depends on ARM || ARM64
+> diff --git a/drivers/firmware/Makefile b/drivers/firmware/Makefile
+> index 48dd417..474bada 100644
+> --- a/drivers/firmware/Makefile
+> +++ b/drivers/firmware/Makefile
+> @@ -14,6 +14,7 @@ obj-$(CONFIG_ISCSI_IBFT_FIND)	+= iscsi_ibft_find.o
+>  obj-$(CONFIG_ISCSI_IBFT)	+= iscsi_ibft.o
+>  obj-$(CONFIG_FIRMWARE_MEMMAP)	+= memmap.o
+>  obj-$(CONFIG_RASPBERRYPI_FIRMWARE) += raspberrypi.o
+> +obj-$(CONFIG_FW_CFG_SYSFS)	+= qemu_fw_cfg.o
+>  obj-$(CONFIG_QCOM_SCM)		+= qcom_scm.o
+>  obj-$(CONFIG_QCOM_SCM_64)	+= qcom_scm-64.o
+>  obj-$(CONFIG_QCOM_SCM_32)	+= qcom_scm-32.o
+> diff --git a/drivers/firmware/qemu_fw_cfg.c b/drivers/firmware/qemu_fw_cfg.c
+> new file mode 100644
+> index 0000000..83e8a5c
+> --- /dev/null
+> +++ b/drivers/firmware/qemu_fw_cfg.c
+> @@ -0,0 +1,648 @@
+> +/*
+> + * drivers/firmware/qemu_fw_cfg.c
+> + *
+> + * Copyright 2015 Carnegie Mellon University
+> + *
+> + * Expose entries from QEMU's firmware configuration (fw_cfg) device in
+> + * sysfs (read-only, under "/sys/firmware/qemu_fw_cfg/...").
+> + *
+> + * The fw_cfg device may be instantiated via either an ACPI node (on x86
+> + * and select subsets of aarch64), a Device Tree node (on arm), or using
+> + * a kernel module (or command line) parameter with the following syntax:
+> + *
+> + *      [fw_cfg.]ioport=<size>@<base>[:<ctrl_off>:<data_off>]
+> + * or
+> + *      [fw_cfg.]mmio=<size>@<base>[:<ctrl_off>:<data_off>]
+> + *
+> + * where:
+> + *      <size>     := size of ioport or mmio range
+> + *      <base>     := physical base address of ioport or mmio range
+> + *      <ctrl_off> := (optional) offset of control register
+> + *      <data_off> := (optional) offset of data register
+> + *
+> + * e.g.:
+> + *      fw_cfg.ioport=2@0x510:0:1		(the default on x86)
+> + * or
+> + *      fw_cfg.mmio=0xA@0x9020000:8:0		(the default on arm)
+> + */
+> +
+> +#include <linux/module.h>
+> +#include <linux/platform_device.h>
+> +#include <linux/acpi.h>
+> +#include <linux/slab.h>
+> +#include <linux/io.h>
+> +#include <linux/ioport.h>
+> +
+> +MODULE_AUTHOR("Gabriel L. Somlo <somlo@cmu.edu>");
+> +MODULE_DESCRIPTION("QEMU fw_cfg sysfs support");
+> +MODULE_LICENSE("GPL");
+> +
+> +/* selector key values for "well-known" fw_cfg entries */
+> +#define FW_CFG_SIGNATURE  0x00
+> +#define FW_CFG_ID         0x01
+> +#define FW_CFG_FILE_DIR   0x19
+> +
+> +/* size in bytes of fw_cfg signature */
+> +#define FW_CFG_SIG_SIZE 4
+> +
+> +/* fw_cfg "file name" is up to 56 characters (including terminating nul) */
+> +#define FW_CFG_MAX_FILE_PATH 56
+> +
+> +/* fw_cfg file directory entry type */
+> +struct fw_cfg_file {
+> +	u32 size;
+> +	u16 select;
+> +	u16 reserved;
+> +	char name[FW_CFG_MAX_FILE_PATH];
+> +};
+> +
+> +/* fw_cfg device i/o register addresses */
+> +static bool fw_cfg_is_mmio;
+> +static phys_addr_t fw_cfg_p_base;
+> +static resource_size_t fw_cfg_p_size;
+> +static void __iomem *fw_cfg_dev_base;
+> +static void __iomem *fw_cfg_reg_ctrl;
+> +static void __iomem *fw_cfg_reg_data;
+> +
+> +/* atomic access to fw_cfg device (potentially slow i/o, so using mutex) */
+> +static DEFINE_MUTEX(fw_cfg_dev_lock);
+> +
+> +/* pick appropriate endianness for selector key */
+> +static inline u16 fw_cfg_sel_endianness(u16 key)
+> +{
+> +	return fw_cfg_is_mmio ? cpu_to_be16(key) : cpu_to_le16(key);
+> +}
+> +
+> +/* read chunk of given fw_cfg blob (caller responsible for sanity-check) */
+> +static inline void fw_cfg_read_blob(u16 key,
+> +				    void *buf, loff_t pos, size_t count)
+> +{
+> +	mutex_lock(&fw_cfg_dev_lock);
+> +	iowrite16(fw_cfg_sel_endianness(key), fw_cfg_reg_ctrl);
+> +	while (pos-- > 0)
+> +		ioread8(fw_cfg_reg_data);
+> +	ioread8_rep(fw_cfg_reg_data, buf, count);
+> +	mutex_unlock(&fw_cfg_dev_lock);
+> +}
 
-thanks again for all the feedback. I've followed all your suggestions;
-again, please see the github repo for the latest version:
+This locking is not enough I think: ACPI might be
+accessing FW CFG meanwhile, and assuming it's
+the only owner.
 
-  https://github.com/andreas-gruenbacher/richacl
+I think that on systems that support ACPI,
+it would be better to use an ACPI interface
+to read blobs, instead of poking on _CRS and banging on registers directly.
 
-On Sun, Feb 14, 2016 at 10:31 PM, Michael Kerrisk (man-pages)
-<mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> Hi Andreas,
->
-> Here's a few more comments on the current richacl(7) page
-> that I fetched from the git repo.
->
->> .\"
->> .\" RichACL Manual Pages
->> .\"
->> .\" Copyright (C) 2015,2016  Red Hat, Inc.
->> .\" Written by Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->> .\" This is free documentation; you can redistribute it and/or
->> .\" modify it under the terms of the GNU General Public License as
->> .\" published by the Free Software Foundation; either version 2 of
->> .\" the License, or (at your option) any later version.
->> .\"
->> .\" The GNU General Public License's references to "object code"
->> .\" and "executables" are to be interpreted as the output of any
->> .\" document formatting or typesetting system, including
->> .\" intermediate and printed output.
->> .\"
->> .\" This manual is distributed in the hope that it will be useful,
->> .\" but WITHOUT ANY WARRANTY; without even the implied warranty of
->> .\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
->> .\" GNU General Public License for more details.
->> .\"
->> .\" You should have received a copy of the GNU General Public
->> .\" License along with this manual.  If not, see
->> .\" <http://www.gnu.org/licenses/>.
->> .\"
->> .de URL
->> \\$2 \(laURL: \\$1 \(ra\\$3
->> ..
->> .if \n[.g] .mso www.tmac
->> .TH RICHACL 7 2015-09-01 "Linux" "Rich Access Control Lists"
->> .SH NAME
->> richacl \- Rich Access Control Lists
->> .SH DESCRIPTION
->> Rich Access Control Lists (RichACLs) are an extension of the POSIX f=
-ile
->> permission model (see
->> .BR acl (5))
->> to support
->> .URL https://tools.ietf.org/rfc/rfc5661.txt "NFSv4 Access Control Li=
-sts"
->> on local and remote-mounted filesystems.
->
-> Having read the following paragraph a number of times (and being
-> ignorant of NFS ACLs), I find that I'm none the wiser about what you =
-are
-> trying to say. What does it mean to "apply a file mode to an... ACL"?
-> Likewise, how does "the file mode determine the values of the file
-> masks"? This isn't clear in the following paragraph, and doesn't seem=
- to
-> be elborated in the rest of the page. Could you add some text somehwe=
-re
-> to explain these points?
+This will also make it easier to extend the interface,
+and support DMA.
 
-I've removed this paragraph and I've tried to explain what the masks
-do in the Structure of RichACLs section.
 
->> RichACLs support file masks which can be used to apply a file mode t=
-o an existing
->> NFSv4 ACL without destructive side effects: the file mode determines=
- the values
->> of the file masks; the file masks restrict the permissions granted b=
-y the NFSv4
->> ACL.  When a less restrictive file mode is applied later, the file m=
-asks become
->> less restrictive, and more of the original permissions can become ef=
-fective.
->>
->> A RichACL can always be translated into an equivalent NFSv4 ACL whic=
-h grants
->> the same permissions.
->>
->> RichACLs can be enabled on supported filesystems. This disables POSI=
-X Access
->
-> I think it might be helpful here to list which filesystems so far
-> support RichACLs.
->
->> Control Lists; the two ACL models cannot coexist on the same filesys=
-tem.
->>
->> When used on a filesystem that does not support RichACLs, the
->> .BR getrichacl (1)
->> and
->> .BR setrichacl (1)
->> utilities will operate on the file permission bits instead:
->> .BR getrichacl (1)
->> will display the file permission bits as a RichACL; when a RichACL
->> is set with
->> .BR setrichacl (1)
->> which can be represented exactly by the file permission bits,
->> .BR setrichacl (1)
->> will set the file permission bits instead.  An attempt to set a Rich=
-ACL that
->> cannot be represented exactly by the file permission bits results in=
- an error.
->>
->> .SS Structure of RichACLs
->>
->> RichACLs consist of a number of ACL entries, three file masks, and s=
-ome flags
->> specifying attributes of the ACL as whole (by contrast with the per-=
-ACL-entry
->> flags described below).
->
-> Insert a blank line here, to start a new paragraph.
->
->> Each of the ACL entries allows or denies some permissions to a parti=
-cular user,
->> group, or special entity. Each entry consists of:
->
-> In the previous line you write "entity". In the lines below you use
-> "identifier". The terminology switch is confusing. Use just one
-> term.
->
->> .IP \(bu 4
->> A tag which specifies the user (with prefix
->> .B user:
->> or
->> .BR u: ),
->> group (with prefix
->> .B group:
->> or
->> .BR g: ),
->> or special identifier the entry applies to. Special
->> identifiers can be the file owner
->> .RB ( owner@ ),
->> the owning group
->> .RB ( group@ ),
->> or everyone
->> .RB ( everyone@ ).
->> .IP \(bu
->> A set of permissions the entry allows or denies.
->> .IP \(bu
->> A set of flags that indicate whether the user or group identifier is=
- mapped or
->> unmapped, and whether the entry has been and can be inherited.
->> .IP \(bu 4
->> A field indicating whether the entry allows or denies access.
->
-> Does this field have a name? It would make dicussing it easier
-> to give it a name. That is, an ACL entry consists of four fields:
->
-> * a tag
-> * permissions
-> * flags
-> * ??? ("type"?)
->
->> .PP
->> The owner, group, and other file masks further control which permiss=
-ions the
->> ACL grants, subject to the
->> .BR masked "\ (" m )
->> and
->> .BR write_through "\ (" w )
->> ACL flags.
->>
->> Note that entries with the identifier
->> .B everyone@
->> apply to all processes, whereas the \(lqother\(rq file permissions a=
-nd
->> \(lqother\(rq entries in POSIX ACLs apply to all processes which are=
- not the
->> owner, are not in the owning group, and do not match a user or group=
- mentioned
->> in the ACL.
->>
->> Unlike POSIX ACLs, RichACLs do not have separate \(lqaccess\(rq ACLs=
- that
->> define the access permissions and \(lqdefault\(rq ACLs that define t=
-he
->> inheritable permissions.  Instead, flags on each ACL entry determine=
- whether
->> the entry is effective during access checks and/or inheritable.
->>
->>
->> .SS ACL flags
->>
->> The following flags on ACLs are defined:
->>
->> .RS
->> .HP
->
-> I don't think the heavy indentation here is helpful, and it narrors t=
-he
-> text considerably. I suggest replacing the preceding .RS+.HP with .TP=
-,
-> and changing ewach .HP below to .TP, and remove the colon at the end =
-of
-> each line that follows the .TP lines.
 
-That's what I thought too, and that's why I had ".RS 4" and ".HP 4"
-here originally.
+> +
+> +/* clean up fw_cfg device i/o */
+> +static void fw_cfg_io_cleanup(void)
+> +{
+> +	if (fw_cfg_is_mmio) {
+> +		iounmap(fw_cfg_dev_base);
+> +		release_mem_region(fw_cfg_p_base, fw_cfg_p_size);
+> +	} else {
+> +		ioport_unmap(fw_cfg_dev_base);
+> +		release_region(fw_cfg_p_base, fw_cfg_p_size);
+> +	}
+> +}
+> +
+> +/* arch-specific ctrl & data register offsets are not available in ACPI, DT */
 
->> .BR masked "\ (" m ):
->> When set, the file masks define upper limits on the permissions the =
-ACL may
->> grant.
->> .HP
->> .BR write_through "\ (" w ):
->> When this flag and the
->> .B masked
->> flag are both set, the owner and other file masks define the actual =
-permissions
->> granted to the file owner and to others instead of an upper limit.
->
-> There needs to be a statement here about what 'write_through' does if
-> 'masked' is not set.
->
->> .HP
->> .BR auto_inherit "\ (" a ):
->> Automatic Inheritance is enabled for the file the ACL is
->> attached to. See
->> .IR "Automatic Inheritance" .
->> .HP
->> .BR protected "\ (" p ):
->> The ACL is protected from modification by Automatic
->> Inheritance.
->> .HP
->> .BR defaulted "\ (" d ):
->> The ACL has been assigned by default. Automatic Inheritance should c=
-ompletely
->
-> What does "assigned by default" mean? That it was inherited because o=
-f
-> 'dir_inherit' or 'file_inherit' in the pareent directory? This needs =
-to
-> be clearer.
->
->
->> replace the ACL.
->> .RE
->
-> If you follow my suggestion above, delete the preceding .RE
->
->> .SS ACL entry flags
->>
->> The following flags on ACL entries are defined:
->>
->> .RS
->> .HP
->
-> See above. Possibly change .RS+.HP to .TP
->
->> .BR file_inherit "\ (" f ):
->> The entry is inheritable for files.
->
-> Maybe this would be better as:
->
-> "When this flag appears in the ACL entry of a directory, then that en=
-try is
-> inherited by new files created in the directory."
->
-> Is that text that I propose correct?
->
->> .HP
->> .BR dir_inherit "\ (" d ):
->> The entry is inheritable for directories.
->
-> "When this flag appears in the ACL entry of a directory, then that en=
-try is
-> inherited by new subdirectories created in the directory."
->
-> Is that text that I propose correct?
+So for all arches which support ACPI, I think this driver
+should just rely on ACPI.
 
-It's not entirely wrong, but only a small part of the truth. Entries
-are inherited such that the permissions in file_inherit entries become
-effective for access checking for new files, and the permissions in
-dir_inherit entries become effective for access checking for new
-directories, recursively.
+> +#if !(defined(FW_CFG_CTRL_OFF) && defined(FW_CTRL_DATA_OFF))
+> +# if (defined(CONFIG_ARM) || defined(CONFIG_ARM64))
+> +#  define FW_CFG_CTRL_OFF 0x08
+> +#  define FW_CFG_DATA_OFF 0x00
+> +# elif (defined(CONFIG_PPC_PMAC) || defined(CONFIG_SPARC32)) /* ppc/mac,sun4m */
+> +#  define FW_CFG_CTRL_OFF 0x00
+> +#  define FW_CFG_DATA_OFF 0x02
+> +# elif (defined(CONFIG_X86) || defined(CONFIG_SPARC64)) /* x86, sun4u */
+> +#  define FW_CFG_CTRL_OFF 0x00
+> +#  define FW_CFG_DATA_OFF 0x01
+> +# else
+> +#  warning "QEMU FW_CFG may not be available on this architecture!"
+> +#  define FW_CFG_CTRL_OFF 0x00
+> +#  define FW_CFG_DATA_OFF 0x01
 
-Your feedback prompted me to look into the inheritance flag
-computation more closely once again, and I found bugs. The steps of
-the algorithm are explained in the section "Permissions at
-file-creation time", by the way.
+Better not try hacks like this, they are hard
+to support down the road. Please only list what is tested and
+actually exposed by QEMU.
 
->> .HP
->> .BR no_propagate "\ (" n ):
->> Inheritance stops at the next subdirectory level.
->> .HP
->> .BR inherit_only "\ (" i ):
->> The entry defines inheritable permissions only and is ignored for ac=
-cess
->> checking.
->> .HP
->> .BR inherited "\ (" a ):
->> The entry has been automatically inherited from the parent directory=
-; the
->> ACL's
->> .B auto_inherit
->> flag should be on.
->> .HP
->> .BR unmapped "\ (" u ):
->> The user or group identifier is a textual string and is not mapped t=
-o a numeric
->> user or group identifier.  ACLs with unmapped identifiers can occur =
-on NFSv4
->> mounted filesystems when the client cannot determine numeric user or=
- group
->> identifiers for some of the NFSv4 user@domain or group@domain who va=
-lues.  They
->> cannot be assigned to local files or directories.
->> .RE
->
-> If you follow my suggestion above, delete the preceding .RE
->
->>
->> .SS Permissions
->>
->> The following permissions are defined for RichACL entries and for th=
-e three
->> file masks:
->>
->> .RS
->> .HP
->
-> See above. Possibly change .RS+.HP yo .TP
->
->> .BR read_data " / " list_directory "\ (" r ):
->> For a file: read the data of the file.
->> For a directory: list the contents of the directory.
->> .HP
->> .BR write_data " / " add_file "\ (" w ):
->> For a file: modify the data of the file; does not include opening th=
-e file in
->> append mode.
->> For a directory: add a new file in the directory.
->> .HP
->> .BR append_data " / " add_subdirectory "\ (" p ):
->> For a file: open the file in append mode.
->> For a directory: create a subdirectory in the directory.
->> .HP
->> .BR execute "\ (" x ):
->> For a file: execute the file.
->> For a directory: traverse / search the directory.
->> .HP
->> .BR delete_child "\ (" d ):
->> Delete a file or directory within a directory.
->> .HP
->> .BR delete "\ (" D ):
->> Delete the file or directory.
->> .HP
->> .BR read_attributes "\ (" a ):
->> Read basic attributes of a file or directory (see
->> .BR stat (2)).
->> This permission is always implicitly granted.
->
-> So, can this permission ever be taken away? If yes, say so. If not, w=
-hy
-> does this permission exist? (And maybe say something about that.)
->
->> .HP
->> .BR write_attributes "\ (" A ):
->> Change the times associated with a file or directory to an arbitrary=
- value.
->> This permission is always implicitly granted to the file owner.
->> .HP
->> .BR read_acl "\ (" c ):
->> Read the ACL of a file or directory. This permission is always
->> implicitly granted.
->> .HP
->> .BR write_acl "\ (" C ):
->> Change the ACL or file mode of a file or directory.
->> .HP
->> .BR write_owner "\ (" o ):
->> Take ownership of a file or directory.  Change the owning group of a=
- file or
->> directory to a group of which the calling process is a member.
->> .HP
->> .BR read_named_attrs "\ (" R ),
->> .BR write_named_attrs "\ (" W ),
->> .BR synchronize "\ (" S ),
->> .BR write_retention "\ (" e ),
->> .BR write_retention_hold "\ (" E ):
->
-> If you follow my .TP suggestion above, then the above lines would nee=
-d
-> to be rewritten sometinh like:
->
-> .BR read_named_attrs "\ (" R "), " write_named_attrs "\ (" W "), " \
-> synchronize "\ (" S "), " write_retention "\ (" e "), " \
-> write_retention_hold "\ (" E )
->
->> These permissions are defined by NFSv4 / NFSv4.1.  They can be store=
-d, but are
->> not used.
->> .RE
->
-> If you follow my suggestion above, delete the preceding .RE and
-> add .PP
->
->>
->> For the
->> .BR r ", " w ", and " p
->> permissions which have different long forms for files and directorie=
-s, the
->> .BR getrichacl (1)
->> utility will output the appropriate form(s) depending on the context=
-=2E
->> The
->> .BR setrichacl (1)
->> utility will accept either form for any file type.
->>
->> .SS Text form
->> The common textual representation of a RichACL consists of the colon=
--separated
->> fields of the the ACL flags, file masks, and ACL entries in the foll=
-owing
->
-> s/the the/the/
->
->> format:
->> .TP
->> \fBflags:\fR\fIacl_flags\fR
->> The ACL flags.
->> .TP
->> \fBowner:\fR\fIperm\fR\fB::mask\fR, \fBgroup:\fR\fIperm\fR\fB::mask\=
-fR, \fBother:\fR\fIperm\fR\fB::mask\fR
->> The file masks and their permissions.
->> .TP
->> \fIwho\fR\fB:\fR\fIperm\fR\fB:\fR\fIflags\fR\fB:allow\fR, \fIwho\fR\=
-fB:\fR\fIperm\fR\fB:\fR\fIflags\fR\fB:deny\fR
->> For each ACL entry, who the entry applies to, the permissions of the=
- entry, the
->> entry flags, and whether the entry allows or denies permissions.  Th=
-e \fIwho\fR
->> field has no prefix for special identifiers, a
->> .B user:
->> or
->> .B u:
->> prefix for regular users, and a
->> .B group:
->> or
->> .B g:
->> prefix for regular groups.
->
-> I think the preceding sentence could be clearer. How about something
-> like the following (if correct):
->
-> [[
-> The who field is one of the following:
->
-> * One of the special identifiers: owner@, group@, or everyone@
-> * A user: or u: prefix followed by a [user name, user ID?] that desig=
-nates
->   s specific user
-> * A group: or g: prefix followed by a [group name, group ID?] that de=
-signates
->   s specific group
-> ]]
->
->> .PP
->> The entries are comma, whitespace, or newline separated.
->>
->> Flags and permissions have single-letter as well as long forms, as l=
-isted under
->> .IR "ACL flags" ,
->> .IR "ACL entry flags" ,
->> and
->> .IR Permissions .
->> When the single-letter forms are used, the flags or permissions are
->> concatenated. When the long forms are used, the flags or permissions=
- are
->> separated by slashes.  To align permissions or flags vertically, das=
-hes can be
->> used for padding.
->>
->> .SS Setting and modifying file permissions
->> The access permissions for a file can either be set by assigning an =
-access
->> control list
->> .RB ( setrichacl (1))
->> or by changing the file mode permission bits
->> .RB ( chmod (1)).
->> In addition, a file can inherit an ACL from its parent directory at =
-creation
->> time as described under
->> .IR "Permissions at file-creation time" .
->>
->> .SS Assigning an Access Control List
->> When assigning an ACL to a file, unless explicitly specified, the ow=
-ner, group,
->> and other file masks will be computed from the ACL entries as descri=
-bed in
->> the section
->> .IR "Computing the maximum file masks" .
->> The owner, group, and other file mode permission bits are then each =
-set from
->> the owner, group, and other file mask as follows:
->> .IP \(bu 4
->> If the file mask includes the
->> .B r
->> permission, the read
->> file mode permission bit will be set.
->> .IP \(bu
->> If the file mask includes the
->> .B w
->> or
->> .B p
->> permission, the write file mode permission bit will be set.
->> .IP \(bu
->> If the file mask includes the
->> .B x
->> permission, the execute file mode permission bit will be set.
->> .PP
->> If the ACL can be represented exactly by the file mode
->> permission bits, the file permission bits are set to match the ACL a=
-nd the ACL
->> is not stored.  (When the ACL of a file is requested which doesn't h=
-ave an ACL,
->> the file mode permission bits are converted into an equivalent ACL.)
->>
->> .SS Changing the file mode permission bits
->> When changing the file mode permission bits with
->> .BR chmod (1),
->> the owner, group,
->> and other file permission bits are set to the permission bits in the=
- new mode,
->> and the file masks each are set based on the new mode bits as follow=
-s:
->> .IP \(bu 4
->> If the read bit in a set of permissions is set, the
->> .B r
->> permission in the corresponding file mask will be set.
->> .IP \(bu
->> If the write bit in a set of permissions is set, the
->> .B w
->> and
->> .B p
->> permissions in the corresponding file mask will be set.
->> .IP \(bu
->> If the execute bit in a set of permissions is set, the
->> .B x
->> permission in the corresponding file mask will be set.
->> .PP
->> In addition, the
->> .B masked
->> and
->> .B write_through
->> ACL flags are set. This has the
->> effect of limiting the permissions granted by the ACL to the file mo=
-de
->> permission bits; in addition, the owner is granted the owner mode bi=
-ts and
->> others are granted the other mode bits. If the
->> .B auto_inherit
->> flag is set, the
->> .B protected
->> flag is also set to prevent the Automatic Inheritance algorithm from=
- modifying
->> the ACL.
->>
->> .SS Permissions at file-creation time
->> When a directory has inheritable ACL entries, the following
->> happens when a file or directory is created inside that directory:
->> .RS 4
->> .IP 1. 4
->> A file created inside that directory will inherit all of the ACL ent=
-ries that
->> have the
->> .B file_inherit
->> flag set, and all inheritance-related flags in the inherited entries=
- will be
->> cleared.
->>
->> A subdirectory created inside that directory will inherit all of the=
- ACL
->> entries that have the
->> .B file_inherit
->> or
->> .B dir_inherit
->> flag set.  Entries whose
->> .B no_propagate
->> flag is set will have all inheritance-related flags cleared.  Entrie=
-s whose
->> .B no_propagate
->> and
->> .B dir_inherit
->> flags are not set and whose
->> .B file_inherit
->> is set will have their
->> .B inherit_only
->> flag set.
->> .IP 2.
->> If the parent directory's ACL has the
->> .B auto_inherit
->> flag set, the inherited ACL will have its
->> .B auto_inherit
->> flag set, and all entries will have their
->> .B inherited
->> flag set.
->> .IP 3.
->> The three file masks are computed from the inherited ACL as describe=
-d in
->> the section
->> .IR "Computing the maximum file masks" .
->> .IP 4.
->> The three sets of permissions for the owner, the group, and for othe=
-rs in
->> the \fImode\fR parameter as given to
->> .BR open (2),
->> .BR mkdir (2),
->> and similar are converted into sets of RichACL permissions as descri=
-bed in
->> the section
->> .IR "Changing the file mode permission bits" .
->> Any RichACL permissions not included in those sets are
->> removed from the owner, group, and other file masks. The file mode p=
-ermission
->> bits are then computed from the file masks as described in the secti=
-on
->> .IR "Assigning an Access Control List" .
->> The process umask (see
->> .BR umask (2))
->> is ignored.
->> .IP 5.
->> The
->> .B masked
->> ACL flag is set. The
->> .B write_through
->> ACL flag remains cleared. In addition, if the
->> .B auto_inherit
->> flag of the inherited ACL is set, the
->> .B protected
->> flag is also set to prevent the Automatic Inheritance algorithm from=
- modifying
->> the ACL.
->> .RE
->> .PP
->> When a directory does not have inheritable ACL entries, files and di=
-rectories
->> created inside that directory will not be assigned access control li=
-sts and the
->> file mode permission bits will be set to (\fImode\fR\ &\ ~\fIumask\f=
-R) where
->> \fImode\fR is the mode argument of the relevant system call and \fIu=
-mask\fR is
->> the process umask (see
->> .BR umask (2)).
->>
->> .SS Automatic Inheritance
->> Automatic Inheritance is a mechanism that allows permission changes =
-to
->> propagate from a directory to files and subdirectories inside that d=
-irectory,
->> recursively.  Propagation is carried out by the process changing the=
- directory
->> permissions (usually,
->> .BR setrichacl (1));
->> it happens without user intervention albeit not entirely automatical=
-ly.
->>
->> A significant limitation is that this mechanism works only as long a=
-s files
->> are created without explicitly specifying the file permissions to us=
-e. The
->> standard system calls for creating files an directories (
->
-> s/an /and /
-> s/ ($//
->
->> .BR creat (2),
->
-> Make that last line:
->
-> .RM ( creat (2),
->
->> .BR open (2),
->> .BR mkdir (2),
->> .BR mknod (2))
->> all have mandatory mode parameters which define the maximum allowed =
-permissions
->> of the new files. To take account of this restriction, the
->> .B protected
->> ACL flag must be set if the
->> .B inherited
->> flag is set. This effectively disables Automatic Inheritance for tha=
-t
->> particular file.
->>
->> Automatic Inheritance still remains useful for network protocols lik=
-e NFSv4 and
->> SMB, which both support creating files and directories without defin=
-ing which
->
-> s/which$/their/
->
->> permissions: they can implement those operations by using the standa=
-rd system
->> calls and by then undoing the effect of applying the mode parameters=
-=2E
->>
->> When the ACL of a directory is changed, the following happens for ea=
-ch entry
->> (\(lqchild\(rq) inside that directory:
->> .IP 1. 4
->> If the entry is a symblic link, skip the child.
->> .IP 2.
->> If the
->> .B auto_inherit
->> flag of the entry's ACL is not set or the
->> .B protected
->> flag is set, skip the child.
->> .IP 3.
->> With the child's ACL:
->> .RS 4
->> .IP a) 4
->> If the
->> .B defaulted
->> flag is set, replace the ACL with an empty ACL
->> with the
->> .B auto_inherit
->> flag set.
->> .IP b)
->> Delete all entries which have the
->> .B inherited
->> flag set.
->> .IP c)
->> Append all entries inherited from the parent directory according to =
-step 1 of
->> the algorithm described under
->> .IR "Permissions at file-creation time".
->> Set the
->> .B inherited
->> flag of each of these entries.
->> .IP d)
->> Recompute the file masks.
->> .RE
->> .IP 4.
->> If the child is a directory, recursively apply this algorithm.
->>
->> .SS Access check algorithm
->>
->> When a process requests a particular kind of access (expressed as a =
-set of
->> RichACL permissions) to a file, the following algorithm determines w=
-hether the
->> access is granted or denied:
->>
->> .IP 1. 4
->> If the
->> .B masked
->> ACL flag is set, then:
->> .RS 4
->> .IP a) 4
->> If the
->> .B write_through
->> ACL flag is set, then:
->> .RS 4
->> .IP \(bu 4
->> If the requesting process is the file owner, then access is granted =
-if the
->> owner mask includes the requested permissions, and is otherwise deni=
-ed.
->> .IP \(bu
->> If the requesting process is not the file owner, is not in the ownin=
-g group,
->> and no ACL entries other than
->> .B everyone@
->> match the process, then access is granted if the other mask includes=
- the
->> requested permissions, and is otherwise denied.
->> .RE
->> .IP b)
->> If any of the following is true:
->> .RS 4
->> .IP \(bu 4
->> the requesting process is the file owner and the owner mask does not=
- include all
->> requested permissions,
->> .IP \(bu 4
->> the requesting process is not the file owner and it is in the owning=
- group or
->> matches any ACL entries other than
->> .BR everyone@ ,
->> and the group mask does not include all requested permissions,
->> .IP \(bu 4
->> the requesting process is not the file owner, not in the owning grou=
-p, it
->> matches no ACL entries other than
->> .BR everyone@ ,
->> and the other mask does not include all requested permissions,
->> .PP
->> then access is denied.
->> .RE
->> .RE
->> .IP 2.
->> Set the remaining permissions to the requested permissions.  Go thro=
-ugh all ACL
->> entries. For each entry:
->> .RS 4
->> .IP a) 4
->> If the
->> .B inherit_only
->> or
->> .B unmapped
->> flags are set, continue with the next ACL entry.
->> .IP b)
->> If any of the following is true:
->> .RS 4
->> .IP \(bu 4
->> the entry's identifier is
->> .B owner@
->> and the requesting process is the file owner,
->> .IP \(bu
->> the entry's identifier is
->> .B group@
->> and the requesting process is in the owning group,
->> .IP \(bu
->> the entry's identifier is a user and the requesting process is owned=
- by that
->> user,
->> .IP \(bu
->> the entry's identifier is a group and the requesting process is a me=
-mber in
->> that group,
->> .IP \(bu
->> the entry's identifier is
->> .BR everyone@ ,
->> .PP
->> then the entry matches the process; proceed to the next step. Otherw=
-ise,
->> continue with the next ACL entry.
->> .RE
->> .IP c)
->> If the entry denies any of the remaining permissions, access is deni=
-ed.
->> .IP d)
->> If the entry allows any of the remaining permissions, then:
->> .RS 4
->> .IP \(bu 4
->> If the
->> .B masked
->> ACL flag is set and the entry's identifier is not
->> .B owner@
->> or
->> .BR everyone@
->> or is a user entry matching the file owner, remove all permissions f=
-rom the
->> remaining permissions which are both allowed by the entry and includ=
-ed in the
->> group mask,
->> .IP \(bu
->> Otherwise, remove all permissions from the remaining permissions wic=
-h are
->> allowed by the entry.
->> .RE
->> .RE
->> .IP 3.
->> If there are no more remaining permissions, access is allowed. Other=
-wise,
->> access is denied.
->>
->> .SS Computing the maximum file masks
->> When setting an ACL and no file masks have been explicitly specified=
- and when
->> inheriting an ACL from the parent directory, the following algorithm=
- is used
->> for computing the file masks:
->>
->> .IP 1. 4
->> Clear the owner, group, and other file masks. Remember which permiss=
-ions have
->> already been processed (initially, the empty set).
->> .IP 2.
->> For each ACL entry:
->> .RS 4
->> .IP \(bu 4
->> If the
->> .B inherit_only
->> flag is set, skip the entry.
->> .IP \(bu 4
->> Otherwise, compute which permissions the entry allows or denies that=
- have not
->> been processed yet (the remaining permissions).
->> .IP \(bu
->> If the entry is an
->> .B owner@
->> entry, add the remaining permissions to the owner mask for
->> .B allow
->> entries, and remove the remaining permissions from the owner mask fo=
-r
->> .B deny
->> entries.
->> .IP \(bu
->> Otherwise, if the entry is an
->> .B everyone@
->> entry, proceed as with
->> .B owner@
->> entries but add or remove the remaining permissions from the owner, =
-group, and
->> other file masks.
->> .IP \(bu
->> Otherwise, proceed as with
->> .B owner@
->> entries but add or remove the remaining permissions from the owner a=
-nd group
->> file masks.
->> .IP \(bu
->> Add the entry's permissions to the processed permissions.
->> .RE
->> .PP
->> The resulting file masks represent the ACL as closely as possible. W=
-ith these
->> file masks, if the
->> .B masked
->> ACL flag is set, the effective permissions still stay the same.
->>
->> .\" .SH BUGS
->> .SH AUTHOR
->> Written by Andreas Gr=C3=BCnbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>.
->>
->> Please send your bug reports, suggested features and comments to the=
- above address.
->
-> Could we start with just a few simple examples already, and build up
-> over future iterations of this page?
->
->> .SH CONFORMING TO
->> Rich Access Control Lists are Linux-specific.
->> .SH SEE ALSO
->> .BR acl (5),
->> .BR chmod (1),
->> .BR getrichacl (1),
->> .BR ls (1),
->> .BR setrichacl (1)
->> .BR stat (2),
->> .BR umask (2)
->> .\" librichacl
 
-Thanks,
-Andreas
+> +# endif
+> +#endif
+> +
+> +/* initialize fw_cfg device i/o from platform data */
+> +static int fw_cfg_do_platform_probe(struct platform_device *pdev)
+> +{
+> +	char sig[FW_CFG_SIG_SIZE];
+> +	struct resource *range, *ctrl, *data;
+> +
+> +	/* acquire i/o range details */
+> +	fw_cfg_is_mmio = false;
+> +	range = platform_get_resource(pdev, IORESOURCE_IO, 0);
+> +	if (!range) {
+> +		fw_cfg_is_mmio = true;
+> +		range = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+> +		if (!range)
+> +			return -EINVAL;
+> +	}
+> +	fw_cfg_p_base = range->start;
+> +	fw_cfg_p_size = resource_size(range);
+> +
+> +	if (fw_cfg_is_mmio) {
+> +		if (!request_mem_region(fw_cfg_p_base,
+> +					fw_cfg_p_size, "fw_cfg_mem"))
+> +			return -EBUSY;
+> +		fw_cfg_dev_base = ioremap(fw_cfg_p_base, fw_cfg_p_size);
+> +		if (!fw_cfg_dev_base) {
+> +			release_mem_region(fw_cfg_p_base, fw_cfg_p_size);
+> +			return -EFAULT;
+> +		}
+> +	} else {
+> +		if (!request_region(fw_cfg_p_base,
+> +				    fw_cfg_p_size, "fw_cfg_io"))
+> +			return -EBUSY;
+> +		fw_cfg_dev_base = ioport_map(fw_cfg_p_base, fw_cfg_p_size);
+> +		if (!fw_cfg_dev_base) {
+> +			release_region(fw_cfg_p_base, fw_cfg_p_size);
+> +			return -EFAULT;
+> +		}
+> +	}
+> +
+> +	/* were custom register offsets provided (e.g. on the command line)? */
+> +	ctrl = platform_get_resource_byname(pdev, IORESOURCE_REG, "ctrl");
+> +	data = platform_get_resource_byname(pdev, IORESOURCE_REG, "data");
+> +	if (ctrl && data) {
+> +		fw_cfg_reg_ctrl = fw_cfg_dev_base + ctrl->start;
+> +		fw_cfg_reg_data = fw_cfg_dev_base + data->start;
+> +	} else {
+> +		/* use architecture-specific offsets */
+> +		fw_cfg_reg_ctrl = fw_cfg_dev_base + FW_CFG_CTRL_OFF;
+> +		fw_cfg_reg_data = fw_cfg_dev_base + FW_CFG_DATA_OFF;
+> +	}
+> +
+> +	/* verify fw_cfg device signature */
+> +	fw_cfg_read_blob(FW_CFG_SIGNATURE, sig, 0, FW_CFG_SIG_SIZE);
+> +	if (memcmp(sig, "QEMU", FW_CFG_SIG_SIZE) != 0) {
+> +		fw_cfg_io_cleanup();
+> +		return -ENODEV;
+> +	}
+> +
+> +	return 0;
+> +}
+> +
+> +/* fw_cfg revision attribute, in /sys/firmware/qemu_fw_cfg top-level dir. */
+> +static u32 fw_cfg_rev;
+> +
+> +static ssize_t fw_cfg_showrev(struct kobject *k, struct attribute *a, char *buf)
+> +{
+> +	return sprintf(buf, "%u\n", fw_cfg_rev);
+> +}
+> +
+> +static const struct {
+> +	struct attribute attr;
+> +	ssize_t (*show)(struct kobject *k, struct attribute *a, char *buf);
+> +} fw_cfg_rev_attr = {
+> +	.attr = { .name = "rev", .mode = S_IRUSR },
+> +	.show = fw_cfg_showrev,
+> +};
+> +
+> +/* fw_cfg_sysfs_entry type */
+> +struct fw_cfg_sysfs_entry {
+> +	struct kobject kobj;
+> +	struct fw_cfg_file f;
+> +	struct list_head list;
+> +};
+> +
+> +/* get fw_cfg_sysfs_entry from kobject member */
+> +static inline struct fw_cfg_sysfs_entry *to_entry(struct kobject *kobj)
+> +{
+> +	return container_of(kobj, struct fw_cfg_sysfs_entry, kobj);
+> +}
+> +
+> +/* fw_cfg_sysfs_attribute type */
+> +struct fw_cfg_sysfs_attribute {
+> +	struct attribute attr;
+> +	ssize_t (*show)(struct fw_cfg_sysfs_entry *entry, char *buf);
+> +};
+> +
+> +/* get fw_cfg_sysfs_attribute from attribute member */
+> +static inline struct fw_cfg_sysfs_attribute *to_attr(struct attribute *attr)
+> +{
+> +	return container_of(attr, struct fw_cfg_sysfs_attribute, attr);
+> +}
+> +
+> +/* global cache of fw_cfg_sysfs_entry objects */
+> +static LIST_HEAD(fw_cfg_entry_cache);
+> +
+> +/* kobjects removed lazily by kernel, mutual exclusion needed */
+> +static DEFINE_SPINLOCK(fw_cfg_cache_lock);
+> +
+> +static inline void fw_cfg_sysfs_cache_enlist(struct fw_cfg_sysfs_entry *entry)
+> +{
+> +	spin_lock(&fw_cfg_cache_lock);
+> +	list_add_tail(&entry->list, &fw_cfg_entry_cache);
+> +	spin_unlock(&fw_cfg_cache_lock);
+> +}
+> +
+> +static inline void fw_cfg_sysfs_cache_delist(struct fw_cfg_sysfs_entry *entry)
+> +{
+> +	spin_lock(&fw_cfg_cache_lock);
+> +	list_del(&entry->list);
+> +	spin_unlock(&fw_cfg_cache_lock);
+> +}
+> +
+> +static void fw_cfg_sysfs_cache_cleanup(void)
+> +{
+> +	struct fw_cfg_sysfs_entry *entry, *next;
+> +
+> +	list_for_each_entry_safe(entry, next, &fw_cfg_entry_cache, list) {
+> +		/* will end up invoking fw_cfg_sysfs_cache_delist()
+> +		 * via each object's release() method (i.e. destructor)
+> +		 */
+> +		kobject_put(&entry->kobj);
+> +	}
+> +}
+> +
+> +/* default_attrs: per-entry attributes and show methods */
+> +
+> +#define FW_CFG_SYSFS_ATTR(_attr) \
+> +struct fw_cfg_sysfs_attribute fw_cfg_sysfs_attr_##_attr = { \
+> +	.attr = { .name = __stringify(_attr), .mode = S_IRUSR }, \
+> +	.show = fw_cfg_sysfs_show_##_attr, \
+> +}
+> +
+> +static ssize_t fw_cfg_sysfs_show_size(struct fw_cfg_sysfs_entry *e, char *buf)
+> +{
+> +	return sprintf(buf, "%u\n", e->f.size);
+> +}
+> +
+> +static ssize_t fw_cfg_sysfs_show_key(struct fw_cfg_sysfs_entry *e, char *buf)
+> +{
+> +	return sprintf(buf, "%u\n", e->f.select);
+> +}
+> +
+> +static ssize_t fw_cfg_sysfs_show_name(struct fw_cfg_sysfs_entry *e, char *buf)
+> +{
+> +	return sprintf(buf, "%s\n", e->f.name);
+> +}
+> +
+> +static FW_CFG_SYSFS_ATTR(size);
+> +static FW_CFG_SYSFS_ATTR(key);
+> +static FW_CFG_SYSFS_ATTR(name);
+> +
+> +static struct attribute *fw_cfg_sysfs_entry_attrs[] = {
+> +	&fw_cfg_sysfs_attr_size.attr,
+> +	&fw_cfg_sysfs_attr_key.attr,
+> +	&fw_cfg_sysfs_attr_name.attr,
+> +	NULL,
+> +};
+> +
+> +/* sysfs_ops: find fw_cfg_[entry, attribute] and call appropriate show method */
+> +static ssize_t fw_cfg_sysfs_attr_show(struct kobject *kobj, struct attribute *a,
+> +				      char *buf)
+> +{
+> +	struct fw_cfg_sysfs_entry *entry = to_entry(kobj);
+> +	struct fw_cfg_sysfs_attribute *attr = to_attr(a);
+> +
+> +	return attr->show(entry, buf);
+> +}
+> +
+> +static const struct sysfs_ops fw_cfg_sysfs_attr_ops = {
+> +	.show = fw_cfg_sysfs_attr_show,
+> +};
+> +
+> +/* release: destructor, to be called via kobject_put() */
+> +static void fw_cfg_sysfs_release_entry(struct kobject *kobj)
+> +{
+> +	struct fw_cfg_sysfs_entry *entry = to_entry(kobj);
+> +
+> +	fw_cfg_sysfs_cache_delist(entry);
+> +	kfree(entry);
+> +}
+> +
+> +/* kobj_type: ties together all properties required to register an entry */
+> +static struct kobj_type fw_cfg_sysfs_entry_ktype = {
+> +	.default_attrs = fw_cfg_sysfs_entry_attrs,
+> +	.sysfs_ops = &fw_cfg_sysfs_attr_ops,
+> +	.release = fw_cfg_sysfs_release_entry,
+> +};
+> +
+> +/* raw-read method and attribute */
+> +static ssize_t fw_cfg_sysfs_read_raw(struct file *filp, struct kobject *kobj,
+> +				     struct bin_attribute *bin_attr,
+> +				     char *buf, loff_t pos, size_t count)
+> +{
+> +	struct fw_cfg_sysfs_entry *entry = to_entry(kobj);
+> +
+> +	if (pos > entry->f.size)
+> +		return -EINVAL;
+> +
+> +	if (count > entry->f.size - pos)
+> +		count = entry->f.size - pos;
+> +
+> +	fw_cfg_read_blob(entry->f.select, buf, pos, count);
+> +	return count;
+> +}
+> +
+> +static struct bin_attribute fw_cfg_sysfs_attr_raw = {
+> +	.attr = { .name = "raw", .mode = S_IRUSR },
+> +	.read = fw_cfg_sysfs_read_raw,
+> +};
+> +
+> +/* kobjects representing top-level and by_key folders */
+> +static struct kobject *fw_cfg_top_ko;
+> +static struct kobject *fw_cfg_sel_ko;
+> +
+> +/* register an individual fw_cfg file */
+> +static int fw_cfg_register_file(const struct fw_cfg_file *f)
+> +{
+> +	int err;
+> +	struct fw_cfg_sysfs_entry *entry;
+> +
+> +	/* allocate new entry */
+> +	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
+> +	if (!entry)
+> +		return -ENOMEM;
+> +
+> +	/* set file entry information */
+> +	memcpy(&entry->f, f, sizeof(struct fw_cfg_file));
+> +
+> +	/* register entry under "/sys/firmware/qemu_fw_cfg/by_key/" */
+> +	err = kobject_init_and_add(&entry->kobj, &fw_cfg_sysfs_entry_ktype,
+> +				   fw_cfg_sel_ko, "%d", entry->f.select);
+> +	if (err)
+> +		goto err_register;
+> +
+> +	/* add raw binary content access */
+> +	err = sysfs_create_bin_file(&entry->kobj, &fw_cfg_sysfs_attr_raw);
+> +	if (err)
+> +		goto err_add_raw;
+> +
+> +	/* success, add entry to global cache */
+> +	fw_cfg_sysfs_cache_enlist(entry);
+> +	return 0;
+> +
+> +err_add_raw:
+> +	kobject_del(&entry->kobj);
+> +err_register:
+> +	kfree(entry);
+> +	return err;
+> +}
+> +
+> +/* iterate over all fw_cfg directory entries, registering each one */
+> +static int fw_cfg_register_dir_entries(void)
+> +{
+> +	int ret = 0;
+> +	u32 count, i;
+> +	struct fw_cfg_file *dir;
+> +	size_t dir_size;
+> +
+> +	fw_cfg_read_blob(FW_CFG_FILE_DIR, &count, 0, sizeof(count));
+> +	count = be32_to_cpu(count);
+> +	dir_size = count * sizeof(struct fw_cfg_file);
+> +
+> +	dir = kmalloc(dir_size, GFP_KERNEL);
+> +	if (!dir)
+> +		return -ENOMEM;
+> +
+> +	fw_cfg_read_blob(FW_CFG_FILE_DIR, dir, sizeof(count), dir_size);
+> +
+> +	for (i = 0; i < count; i++) {
+> +		dir[i].size = be32_to_cpu(dir[i].size);
+> +		dir[i].select = be16_to_cpu(dir[i].select);
+> +		ret = fw_cfg_register_file(&dir[i]);
+> +		if (ret)
+> +			break;
+> +	}
+> +
+> +	kfree(dir);
+> +	return ret;
+> +}
+> +
+> +/* unregister top-level or by_key folder */
+> +static inline void fw_cfg_kobj_cleanup(struct kobject *kobj)
+> +{
+> +	kobject_del(kobj);
+> +	kobject_put(kobj);
+> +}
+> +
+> +static int fw_cfg_sysfs_probe(struct platform_device *pdev)
+> +{
+> +	int err;
+> +
+> +	/* NOTE: If we supported multiple fw_cfg devices, we'd first create
+> +	 * a subdirectory named after e.g. pdev->id, then hang per-device
+> +	 * by_key subdirectories underneath it. However, only
+> +	 * one fw_cfg device exist system-wide, so if one was already found
+> +	 * earlier, we might as well stop here.
+> +	 */
+> +	if (fw_cfg_sel_ko)
+> +		return -EBUSY;
+> +
+> +	/* create by_key subdirectory of /sys/firmware/qemu_fw_cfg/ */
+> +	err = -ENOMEM;
+> +	fw_cfg_sel_ko = kobject_create_and_add("by_key", fw_cfg_top_ko);
+> +	if (!fw_cfg_sel_ko)
+> +		goto err_sel;
+> +
+> +	/* initialize fw_cfg device i/o from platform data */
+> +	err = fw_cfg_do_platform_probe(pdev);
+> +	if (err)
+> +		goto err_probe;
+> +
+> +	/* get revision number, add matching top-level attribute */
+> +	fw_cfg_read_blob(FW_CFG_ID, &fw_cfg_rev, 0, sizeof(fw_cfg_rev));
+> +	fw_cfg_rev = le32_to_cpu(fw_cfg_rev);
+> +	err = sysfs_create_file(fw_cfg_top_ko, &fw_cfg_rev_attr.attr);
+> +	if (err)
+> +		goto err_rev;
+> +
+> +	/* process fw_cfg file directory entry, registering each file */
+> +	err = fw_cfg_register_dir_entries();
+> +	if (err)
+> +		goto err_dir;
+> +
+> +	/* success */
+> +	pr_debug("fw_cfg: loaded.\n");
+> +	return 0;
+> +
+> +err_dir:
+> +	fw_cfg_sysfs_cache_cleanup();
+> +	sysfs_remove_file(fw_cfg_top_ko, &fw_cfg_rev_attr.attr);
+> +err_rev:
+> +	fw_cfg_io_cleanup();
+> +err_probe:
+> +	fw_cfg_kobj_cleanup(fw_cfg_sel_ko);
+> +err_sel:
+> +	return err;
+> +}
+> +
+> +static int fw_cfg_sysfs_remove(struct platform_device *pdev)
+> +{
+> +	pr_debug("fw_cfg: unloading.\n");
+> +	fw_cfg_sysfs_cache_cleanup();
+> +	fw_cfg_kobj_cleanup(fw_cfg_sel_ko);
+> +	fw_cfg_io_cleanup();
+> +	return 0;
+> +}
+> +
+> +static const struct of_device_id fw_cfg_sysfs_mmio_match[] = {
+> +	{ .compatible = "qemu,fw-cfg-mmio", },
+> +	{},
+> +};
+> +MODULE_DEVICE_TABLE(of, fw_cfg_sysfs_mmio_match);
+> +
+> +#ifdef CONFIG_ACPI
+> +static const struct acpi_device_id fw_cfg_sysfs_acpi_match[] = {
+> +	{ "QEMU0002", },
+> +	{},
+> +};
+> +MODULE_DEVICE_TABLE(acpi, fw_cfg_sysfs_acpi_match);
+> +#endif
+> +
+> +static struct platform_driver fw_cfg_sysfs_driver = {
+> +	.probe = fw_cfg_sysfs_probe,
+> +	.remove = fw_cfg_sysfs_remove,
+> +	.driver = {
+> +		.name = "fw_cfg",
+> +		.of_match_table = fw_cfg_sysfs_mmio_match,
+> +		.acpi_match_table = ACPI_PTR(fw_cfg_sysfs_acpi_match),
+> +	},
+> +};
+> +
+> +#ifdef CONFIG_FW_CFG_SYSFS_CMDLINE
+> +
+> +static struct platform_device *fw_cfg_cmdline_dev;
+> +
+> +/* this probably belongs in e.g. include/linux/types.h,
+> + * but right now we are the only ones doing it...
+> + */
+> +#ifdef CONFIG_PHYS_ADDR_T_64BIT
+> +#define __PHYS_ADDR_PREFIX "ll"
+> +#else
+> +#define __PHYS_ADDR_PREFIX ""
+> +#endif
+> +
+> +/* use special scanf/printf modifier for phys_addr_t, resource_size_t */
+> +#define PH_ADDR_SCAN_FMT "@%" __PHYS_ADDR_PREFIX "i%n" \
+> +			 ":%" __PHYS_ADDR_PREFIX "i" \
+> +			 ":%" __PHYS_ADDR_PREFIX "i%n"
+> +
+> +#define PH_ADDR_PR_1_FMT "0x%" __PHYS_ADDR_PREFIX "x@" \
+> +			 "0x%" __PHYS_ADDR_PREFIX "x"
+> +
+> +#define PH_ADDR_PR_3_FMT PH_ADDR_PR_1_FMT \
+> +			 ":%" __PHYS_ADDR_PREFIX "u" \
+> +			 ":%" __PHYS_ADDR_PREFIX "u"
+> +
+> +static int fw_cfg_cmdline_set(const char *arg, const struct kernel_param *kp)
+> +{
+> +	struct resource res[3] = {};
+> +	char *str;
+> +	phys_addr_t base;
+> +	resource_size_t size, ctrl_off, data_off;
+> +	int processed, consumed = 0;
+> +
+> +	/* only one fw_cfg device can exist system-wide, so if one
+> +	 * was processed on the command line already, we might as
+> +	 * well stop here.
+> +	 */
+> +	if (fw_cfg_cmdline_dev) {
+> +		/* avoid leaking previously registered device */
+> +		platform_device_unregister(fw_cfg_cmdline_dev);
+> +		return -EINVAL;
+> +	}
+> +
+> +	/* consume "<size>" portion of command line argument */
+> +	size = memparse(arg, &str);
+> +
+> +	/* get "@<base>[:<ctrl_off>:<data_off>]" chunks */
+> +	processed = sscanf(str, PH_ADDR_SCAN_FMT,
+> +			   &base, &consumed,
+> +			   &ctrl_off, &data_off, &consumed);
+> +
+> +	/* sscanf() must process precisely 1 or 3 chunks:
+> +	 * <base> is mandatory, optionally followed by <ctrl_off>
+> +	 * and <data_off>;
+> +	 * there must be no extra characters after the last chunk,
+> +	 * so str[consumed] must be '\0'.
+> +	 */
+> +	if (str[consumed] ||
+> +	    (processed != 1 && processed != 3))
+> +		return -EINVAL;
+> +
+> +	res[0].start = base;
+> +	res[0].end = base + size - 1;
+> +	res[0].flags = !strcmp(kp->name, "mmio") ? IORESOURCE_MEM :
+> +						   IORESOURCE_IO;
+> +
+> +	/* insert register offsets, if provided */
+> +	if (processed > 1) {
+> +		res[1].name = "ctrl";
+> +		res[1].start = ctrl_off;
+> +		res[1].flags = IORESOURCE_REG;
+> +		res[2].name = "data";
+> +		res[2].start = data_off;
+> +		res[2].flags = IORESOURCE_REG;
+> +	}
+> +
+> +	/* "processed" happens to nicely match the number of resources
+> +	 * we need to pass in to this platform device.
+> +	 */
+> +	fw_cfg_cmdline_dev = platform_device_register_simple("fw_cfg",
+> +					PLATFORM_DEVID_NONE, res, processed);
+> +	if (IS_ERR(fw_cfg_cmdline_dev))
+> +		return PTR_ERR(fw_cfg_cmdline_dev);
+> +
+> +	return 0;
+> +}
+> +
+> +static int fw_cfg_cmdline_get(char *buf, const struct kernel_param *kp)
+> +{
+> +	/* stay silent if device was not configured via the command
+> +	 * line, or if the parameter name (ioport/mmio) doesn't match
+> +	 * the device setting
+> +	 */
+> +	if (!fw_cfg_cmdline_dev ||
+> +	    (!strcmp(kp->name, "mmio") ^
+> +	     (fw_cfg_cmdline_dev->resource[0].flags == IORESOURCE_MEM)))
+> +		return 0;
+> +
+> +	switch (fw_cfg_cmdline_dev->num_resources) {
+> +	case 1:
+> +		return snprintf(buf, PAGE_SIZE, PH_ADDR_PR_1_FMT,
+> +				resource_size(&fw_cfg_cmdline_dev->resource[0]),
+> +				fw_cfg_cmdline_dev->resource[0].start);
+> +	case 3:
+> +		return snprintf(buf, PAGE_SIZE, PH_ADDR_PR_3_FMT,
+> +				resource_size(&fw_cfg_cmdline_dev->resource[0]),
+> +				fw_cfg_cmdline_dev->resource[0].start,
+> +				fw_cfg_cmdline_dev->resource[1].start,
+> +				fw_cfg_cmdline_dev->resource[2].start);
+> +	}
+> +
+> +	/* Should never get here */
+> +	WARN(1, "Unexpected number of resources: %d\n",
+> +		fw_cfg_cmdline_dev->num_resources);
+> +	return 0;
+> +}
+> +
+> +static const struct kernel_param_ops fw_cfg_cmdline_param_ops = {
+> +	.set = fw_cfg_cmdline_set,
+> +	.get = fw_cfg_cmdline_get,
+> +};
+> +
+> +device_param_cb(ioport, &fw_cfg_cmdline_param_ops, NULL, S_IRUSR);
+> +device_param_cb(mmio, &fw_cfg_cmdline_param_ops, NULL, S_IRUSR);
+> +
+> +#endif /* CONFIG_FW_CFG_SYSFS_CMDLINE */
+> +
+> +static int __init fw_cfg_sysfs_init(void)
+> +{
+> +	/* create /sys/firmware/qemu_fw_cfg/ top level directory */
+> +	fw_cfg_top_ko = kobject_create_and_add("qemu_fw_cfg", firmware_kobj);
+> +	if (!fw_cfg_top_ko)
+> +		return -ENOMEM;
+> +
+> +	return platform_driver_register(&fw_cfg_sysfs_driver);
+> +}
+> +
+> +static void __exit fw_cfg_sysfs_exit(void)
+> +{
+> +	platform_driver_unregister(&fw_cfg_sysfs_driver);
+> +
+> +#ifdef CONFIG_FW_CFG_SYSFS_CMDLINE
+> +	platform_device_unregister(fw_cfg_cmdline_dev);
+> +#endif
+> +
+> +	/* clean up /sys/firmware/qemu_fw_cfg/ */
+> +	fw_cfg_kobj_cleanup(fw_cfg_top_ko);
+> +}
+> +
+> +module_init(fw_cfg_sysfs_init);
+> +module_exit(fw_cfg_sysfs_exit);
+> -- 
+> 2.4.3
