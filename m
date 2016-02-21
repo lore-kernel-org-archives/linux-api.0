@@ -1,453 +1,1096 @@
-From: =?UTF-8?q?Emilio=20L=C3=B3pez?= <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
-Subject: [PATCH v5] usb: devio: Add ioctl to disallow detaching kernel USB drivers.
-Date: Sun, 21 Feb 2016 18:38:01 -0300
-Message-ID: <1456090681-5537-1-git-send-email-emilio.lopez@collabora.co.uk>
-References: <20160221041643.GA29711@kroah.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: richacl(7) man page review comments
+Date: Sun, 21 Feb 2016 22:40:59 +0100
+Message-ID: <56CA2EEB.9080504@gmail.com>
+References: <56B770B6.7040803@gmail.com> <56B77262.7090107@gmail.com>
+ <CAHc6FU5__xbKm4mg8+fK_ZW5ZYsDoQcYBBvQg573Eq4ERDsROw@mail.gmail.com>
+ <56C0F23C.7030902@gmail.com>
+ <CAHc6FU4CCrcrA6=oCiq2A5rGd9CCGELaTZq6tGpmd2jcV_Zp4A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160221041643.GA29711-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <CAHc6FU4CCrcrA6=oCiq2A5rGd9CCGELaTZq6tGpmd2jcV_Zp4A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org, kborer-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jorgelo-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, =?UTF-8?q?Emilio=20L=C3=B3pez?= <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
+To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-=46rom: Reilly Grant <reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Hello Andreas,
 
-The new USBDEVFS_DROP_PRIVILEGES ioctl allows a process to voluntarily
-relinquish the ability to issue other ioctls that may interfere with
-other processes and drivers that have claimed an interface on the
-device.
+On 02/20/2016 05:37 PM, Andreas Gruenbacher wrote:
+> Hi Michael,
+>=20
+> thanks again for all the feedback. I've followed all your suggestions=
+;
+> again, please see the github repo for the latest version:
+>=20
+>   https://github.com/andreas-gruenbacher/richacl
 
-This commit also includes a simple utility to be able to test the
-ioctl, located at Documentation/usb/usbdevfs-drop-permissions.c
+I've once more pulled from the latest git; here's some more comments.
 
-Example (with qemu-kvm's input device):
+> .\"
+> .\" RichACL Manual Pages
+> .\"
+> .\" Copyright (C) 2015,2016  Red Hat, Inc.
+> .\" Written by Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> .\" This is free documentation; you can redistribute it and/or
+> .\" modify it under the terms of the GNU General Public License as
+> .\" published by the Free Software Foundation; either version 2 of
+> .\" the License, or (at your option) any later version.
+> .\"
+> .\" The GNU General Public License's references to "object code"
+> .\" and "executables" are to be interpreted as the output of any
+> .\" document formatting or typesetting system, including
+> .\" intermediate and printed output.
+> .\"
+> .\" This manual is distributed in the hope that it will be useful,
+> .\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+> .\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> .\" GNU General Public License for more details.
+> .\"
+> .\" You should have received a copy of the GNU General Public
+> .\" License along with this manual.  If not, see
+> .\" <http://www.gnu.org/licenses/>.
+> .\"
+> .de URL
+> \\$2 \(laURL: \\$1 \(ra\\$3
+> ..
+> .if \n[.g] .mso www.tmac
+> .TH RICHACL 7 2015-09-01 "Linux" "Rich Access Control Lists"
+> .SH NAME
+> richacl \- Rich Access Control Lists
+> .SH DESCRIPTION
+> Rich Access Control Lists (RichACLs) are an extension of the POSIX fi=
+le
+> permission model (see
+> .BR acl (5))
+> to support
+> .URL https://tools.ietf.org/rfc/rfc5661.txt "NFSv4 Access Control Lis=
+ts"
+> on local and remote-mounted filesystems.
+>=20
+> A RichACL can always be translated into an equivalent NFSv4 ACL which=
+ grants
+> the same permissions.
+>=20
+> RichACLs can be enabled on supported local filesystems (currently, ex=
+t4 and
+> XFS).  This disables POSIX Access Control Lists; the two ACL models c=
+annot
+> coexist on the same filesystem.
+>=20
+> The in-kernel NFSv4 server and client also include RichACL support.
 
-    $ lsusb
-    ...
-    Bus 001 Device 002: ID 0627:0001 Adomax Technology Co., Ltd
+Rewrite the preceding two paras in a better logical split and order:
 
-    $ usb-devices
-    ...
-    C:  #Ifs=3D 1 Cfg#=3D 1 Atr=3Da0 MxPwr=3D100mA
-    I:  If#=3D 0 Alt=3D 0 #EPs=3D 1 Cls=3D03(HID  ) Sub=3D00 Prot=3D02 =
-Driver=3Dusbhid
+[[
+RichACLs can be enabled on supported local filesystems (currently, ext4=
+ and
+XFS).  The in-kernel NFSv4 server and client also include RichACL suppo=
+rt.
 
-    $ sudo ./usbdevfs-drop-permissions /dev/bus/usb/001/002
-    OK: privileges dropped!
-    Available options:
-    [0] Exit now
-    [1] Reset device. Should fail if device is in use
-    [2] Claim 4 interfaces. Should succeed where not in use
-    [3] Narrow interface permission mask
-    Which option shall I run?: 1
-    ERROR: USBDEVFS_RESET failed! (1 - Operation not permitted)
-    Which test shall I run next?: 2
-    ERROR claiming if 0 (1 - Operation not permitted)
-    ERROR claiming if 1 (1 - Operation not permitted)
-    ERROR claiming if 2 (1 - Operation not permitted)
-    ERROR claiming if 3 (1 - Operation not permitted)
-    Which test shall I run next?: 0
+Enabling RichACLs disables POSIX Access Control Lists;
+the two ACL models cannot coexist on the same filesystem.
+]]
 
-After unbinding usbhid:
+>=20
+> When used on a filesystem that does not support RichACLs, the
+> .BR getrichacl (1)
+> and
+> .BR setrichacl (1)
+> utilities will operate on the file permission bits instead:
+> .BR getrichacl (1)
+> will display the file permission bits as a RichACL; when a RichACL
+> is set with
+> .BR setrichacl (1)
+> which can be represented exactly by the file permission bits,
+> .BR setrichacl (1)
+> will set the file permission bits instead.  An attempt to set a RichA=
+CL that
+> cannot be represented exactly by the file permission bits results in =
+an error.
+>=20
+> .SS Structure of RichACLs
+>=20
+> RichACLs consist of a number of ACL entries, three file masks, and so=
+me flags
 
-    $ usb-devices
-    ...
-    I:  If#=3D 0 Alt=3D 0 #EPs=3D 1 Cls=3D03(HID  ) Sub=3D00 Prot=3D02 =
-Driver=3D(none)
+s/some flags/a set of flags/
 
-    $ sudo ./usbdevfs-drop-permissions /dev/bus/usb/001/002
-    ...
-    Which option shall I run?: 2
-    OK: claimed if 0
-    ERROR claiming if 1 (1 - Operation not permitted)
-    ERROR claiming if 2 (1 - Operation not permitted)
-    ERROR claiming if 3 (1 - Operation not permitted)
-    Which test shall I run next?: 1
-    OK: USBDEVFS_RESET succeeded
-    Which test shall I run next?: 0
+> specifying attributes of the ACL as whole (by contrast with the per-A=
+CL-entry
 
-After unbinding usbhid and restricting the mask:
+s/whole/a whole/
 
-    $ sudo ./usbdevfs-drop-permissions /dev/bus/usb/001/002
-    ...
-    Which option shall I run?: 3
-    Insert new mask: 0
-    OK: privileges dropped!
-    Which test shall I run next?: 2
-    ERROR claiming if 0 (1 - Operation not permitted)
-    ERROR claiming if 1 (1 - Operation not permitted)
-    ERROR claiming if 2 (1 - Operation not permitted)
-    ERROR claiming if 3 (1 - Operation not permitted)
+> flags described below).
+>=20
+> Each of the ACL entries allows or denies some permissions to a partic=
+ular user,
+> group, or special identifier. An ACL entry consists of four fields:
+>=20
+> .IP \(bu 4
 
-Signed-off-by: Reilly Grant <reillyg-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Acked-by: Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>
-Signed-off-by: Emilio L=C3=B3pez <emilio.lopez-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
+s/4/2/
 
----
+> A tag which specifies the user, group, or special identifier the entr=
+y applies
+> to.  Special identifiers can be the file owner, the owning group, or =
+everyone.
 
-Changes in v5:
-- rebased on usb-next, changing the capability flag value to not collid=
+=3D=3D>
+Special identifiers correspond to one of three file masks for the file =
+owner
+=2ERB ( owner@ ),
+the owning group
+=2ERB ( group@ ),
+or everyone
+=2ERB ( everyone@ ).
+
+> .IP \(bu
+> A set of permissions the entry allows or denies.
+> .IP \(bu
+> A set of flags that indicate whether the user or group identifier is =
+mapped or
+> unmapped, and whether the entry has been and can be inherited.
+> .IP \(bu 4
+
+s/ 4//
+
+> A type field indicating whether the entry allows or denies access.
+
+s/access/the permissions specified in the second field/
+
+> .PP
+> The owner, group, and other file masks further control which permissi=
+ons the
+> ACL grants, subject to the
+> .BR masked "\ (" m )
+> and
+> .BR write_through "\ (" w )
+> ACL flags: when the permissions of a file or directory are changed wi=
+th
+> .BR chmod (2),
+> the file masks are set based on the new file mode, and the
+> .B masked
+> and
+> .B write_through
+> ACL flags are set. Likewise, when a new file or directory inherits an=
+ ACL from
+> its parent directory, the file masks are set to the intersection betw=
+een the
+> permissions granted by the inherited ACL and the
+> .I mode
+> parameter as given to
+> .BR open "(2), " mkdir (2),
+> and similar, and the
+> .B masked
+> ACL flag is set. In both cases, the file masks limit the permissions =
+that the
+> ACL will grant.
+>=20
+> The advantage of this approach over directly modifying the ACL entrie=
+s is that
+> permissions defined in ACL entries are not lot when the file masks ar=
+e later
+
+s/lot/lost/
+
+> set to be less restrictive.
+
+(I think) I know what you are trying to say in the previous paragraph,
+but "this approach" and "directly modifying the ACL entries" is a littl=
 e
-- Added Alan's ack
+vague.  Masks are about solving the hysteresis problem, right? So, how
+about some text along the following lines (I'm sure you can improve):
 
-Changes in v4:
-- IOR -> IOW
-- Explain the new ioctl on usb Docbook
-- Small program to be able to test the new functionality
-- New capability flag
-- Allow people to reset devices if they are the only ones
-  claiming interfaces, as suggested by Alan
+[[
+The purpose of the file masks is to allow applications that are unaware
+of RichACLs to place limits on the permissions granted by various
+classes of RichACL in a manner that corresponds to the traditional
+user/group/other semantics, without modifying the ACL entries in those
+classes.  Without the file masks, the only alternative would be for the
+kernel to directly modify the ACL entries in those classes. However,
+this latter approach could have a "hysteresis effect", whereby
+a RichACL-unaware application that performs a transition from one file
+mode to another file mode and then back to the original file mode
+could cause destruction of the permission information in ACL entries.
+]]
 
-Changes in v3:
-- Switch ioctl to use a __u32 given the iface qty is capped at 32
-- Reword comments as requested by Alan
-- Allow callers to shrink the allowed interfaces mask
+>=20
+> Note that entries with the identifier
+> .B everyone@
+> apply to all processes, whereas the \(lqother\(rq file permissions an=
+d
+> \(lqother\(rq entries in POSIX ACLs apply to all processes which are =
+not the
 
-Changes in v2:
-- Added a parameter to the ioctl, a mask of interfaces an unprivileged
-  process is allowed to claim.
-- Drop Tested-by's
+I'd be inclined to use (or add) \fBACL_OTHER\fP instead of "other"
+in the preceding line.  Things makes things IMO a little clearer when
+you try to distinguish from "other" file permissions.
 
- Documentation/DocBook/usb.tmpl                |  12 +++
- Documentation/usb/usbdevfs-drop-permissions.c | 120 ++++++++++++++++++=
-++++++++
- drivers/usb/core/devio.c                      |  63 ++++++++++++--
- include/uapi/linux/usbdevice_fs.h             |   2 +
- 4 files changed, 192 insertions(+), 5 deletions(-)
- create mode 100644 Documentation/usb/usbdevfs-drop-permissions.c
+> owner, are not in the owning group, and do not match a user or group =
+mentioned
+> in the ACL.
+>=20
+> Unlike POSIX ACLs, RichACLs do not have separate \(lqaccess\(rq ACLs =
+that
+> define the access permissions and \(lqdefault\(rq ACLs that define th=
+e
+> inheritable permissions.  Instead, flags on each ACL entry determine =
+whether
+> the entry is effective during access checks and/or inheritable.
+>=20
+>=20
+> .SS ACL flags
+>=20
+> The following flags on ACLs are defined:
 
-diff --git a/Documentation/DocBook/usb.tmpl b/Documentation/DocBook/usb=
-=2Etmpl
-index 4cd5b2c..bc776be0 100644
---- a/Documentation/DocBook/usb.tmpl
-+++ b/Documentation/DocBook/usb.tmpl
-@@ -732,6 +732,18 @@ usbdev_ioctl (int fd, int ifno, unsigned request, =
-void *param)
- 		    or SET_INTERFACE.
- 		    </para></warning></listitem></varlistentry>
-=20
-+		<varlistentry><term>USBDEVFS_DROP_PRIVILEGES</term>
-+		    <listitem><para>This is used to relinquish the ability
-+		    to do certain operations which are considered to be
-+		    privileged on a usbfs file descriptor.
-+		    This includes claiming arbitrary interfaces, resetting
-+		    a device on which there are currently claimed interfaces
-+		    from other users, and issuing USBDEVFS_IOCTL calls.
-+		    The ioctl parameter is a 32 bit mask of interfaces
-+		    the user is allowed to claim on this file descriptor.
-+		    You may issue this ioctl more than one time to narrow
-+		    said mask.
-+		    </para></listitem></varlistentry>
- 		</variablelist>
-=20
- 		</sect2>
-diff --git a/Documentation/usb/usbdevfs-drop-permissions.c b/Documentat=
-ion/usb/usbdevfs-drop-permissions.c
-new file mode 100644
-index 0000000..6b8da6e
---- /dev/null
-+++ b/Documentation/usb/usbdevfs-drop-permissions.c
-@@ -0,0 +1,120 @@
-+#include <sys/ioctl.h>
-+#include <sys/types.h>
-+#include <sys/stat.h>
-+#include <fcntl.h>
-+#include <stdio.h>
-+#include <errno.h>
-+#include <string.h>
-+#include <inttypes.h>
-+#include <unistd.h>
-+
-+#include <linux/usbdevice_fs.h>
-+
-+/* For building without an updated set of headers */
-+#ifndef USBDEVFS_DROP_PRIVILEGES
-+#define USBDEVFS_DROP_PRIVILEGES		_IOW('U', 30, __u32)
-+#define USBDEVFS_CAP_DROP_PRIVILEGES		0x40
-+#endif
-+
-+void drop_privileges(int fd, uint32_t mask)
-+{
-+	int res;
-+
-+	res =3D ioctl(fd, USBDEVFS_DROP_PRIVILEGES, &mask);
-+	if (res)
-+		printf("ERROR: USBDEVFS_DROP_PRIVILEGES returned %d\n", res);
-+	else
-+		printf("OK: privileges dropped!\n");
-+}
-+
-+void reset_device(int fd)
-+{
-+	int res;
-+
-+	res =3D ioctl(fd, USBDEVFS_RESET);
-+	if (!res)
-+		printf("OK: USBDEVFS_RESET succeeded\n");
-+	else
-+		printf("ERROR: reset failed! (%d - %s)\n",
-+		       -res, strerror(-res));
-+}
-+
-+void claim_some_intf(int fd)
-+{
-+	int i, res;
-+
-+	for (i =3D 0; i < 4; i++) {
-+		res =3D ioctl(fd, USBDEVFS_CLAIMINTERFACE, &i);
-+		if (!res)
-+			printf("OK: claimed if %d\n", i);
-+		else
-+			printf("ERROR claiming if %d (%d - %s)\n",
-+			       i, -res, strerror(-res));
-+	}
-+}
-+
-+int main(int argc, char *argv[])
-+{
-+	uint32_t mask, caps;
-+	int c, fd;
-+
-+	fd =3D open(argv[1], O_RDWR);
-+	if (fd < 0) {
-+		printf("Failed to open file\n");
-+		goto err_fd;
-+	}
-+
-+	/*
-+	 * check if dropping privileges is supported,
-+	 * bail on systems where the capability is not present
-+	 */
-+	ioctl(fd, USBDEVFS_GET_CAPABILITIES, &caps);
-+	if (!(caps & USBDEVFS_CAP_DROP_PRIVILEGES)) {
-+		printf("DROP_PRIVILEGES not supported\n");
-+		goto err;
-+	}
-+
-+	/*
-+	 * Drop privileges but keep the ability to claim all
-+	 * free interfaces (i.e., those not used by kernel drivers)
-+	 */
-+	drop_privileges(fd, -1U);
-+
-+	printf("Available options:\n"
-+		"[0] Exit now\n"
-+		"[1] Reset device. Should fail if device is in use\n"
-+		"[2] Claim 4 interfaces. Should succeed where not in use\n"
-+		"[3] Narrow interface permission mask\n"
-+		"Which option shall I run?: ");
-+
-+	while (scanf("%d", &c) =3D=3D 1) {
-+		switch (c) {
-+		case 0:
-+			goto exit;
-+		case 1:
-+			reset_device(fd);
-+			break;
-+		case 2:
-+			claim_some_intf(fd);
-+			break;
-+		case 3:
-+			printf("Insert new mask: ");
-+			scanf("%x", &mask);
-+			drop_privileges(fd, mask);
-+			break;
-+		default:
-+			printf("I don't recognize that\n");
-+		}
-+
-+		printf("Which test shall I run next?: ");
-+	}
-+
-+exit:
-+	close(fd);
-+	return 0;
-+
-+err:
-+	close(fd);
-+err_fd:
-+	return 1;
-+}
-diff --git a/drivers/usb/core/devio.c b/drivers/usb/core/devio.c
-index 39da166..52c4461 100644
---- a/drivers/usb/core/devio.c
-+++ b/drivers/usb/core/devio.c
-@@ -79,6 +79,8 @@ struct usb_dev_state {
- 	unsigned long ifclaimed;
- 	u32 secid;
- 	u32 disabled_bulk_eps;
-+	bool privileges_dropped;
-+	unsigned long interface_allowed_mask;
- };
-=20
- struct usb_memory {
-@@ -748,6 +750,10 @@ static int claimintf(struct usb_dev_state *ps, uns=
-igned int ifnum)
- 	if (test_bit(ifnum, &ps->ifclaimed))
- 		return 0;
-=20
-+	if (ps->privileges_dropped &&
-+			!test_bit(ifnum, &ps->interface_allowed_mask))
-+		return -EACCES;
-+
- 	intf =3D usb_ifnum_to_if(dev, ifnum);
- 	if (!intf)
- 		err =3D -ENOENT;
-@@ -985,7 +991,7 @@ static int usbdev_open(struct inode *inode, struct =
-file *file)
- 	int ret;
-=20
- 	ret =3D -ENOMEM;
--	ps =3D kmalloc(sizeof(struct usb_dev_state), GFP_KERNEL);
-+	ps =3D kzalloc(sizeof(struct usb_dev_state), GFP_KERNEL);
- 	if (!ps)
- 		goto out_free_ps;
-=20
-@@ -1013,17 +1019,15 @@ static int usbdev_open(struct inode *inode, str=
-uct file *file)
-=20
- 	ps->dev =3D dev;
- 	ps->file =3D file;
-+	ps->interface_allowed_mask =3D 0xFFFFFFFF; /* 32 bits */
- 	spin_lock_init(&ps->lock);
- 	INIT_LIST_HEAD(&ps->list);
- 	INIT_LIST_HEAD(&ps->async_pending);
- 	INIT_LIST_HEAD(&ps->async_completed);
- 	INIT_LIST_HEAD(&ps->memory_list);
- 	init_waitqueue_head(&ps->wait);
--	ps->discsignr =3D 0;
- 	ps->disc_pid =3D get_pid(task_pid(current));
- 	ps->cred =3D get_current_cred();
--	ps->disccontext =3D NULL;
--	ps->ifclaimed =3D 0;
- 	security_task_getsecid(current, &ps->secid);
- 	smp_wmb();
- 	list_add_tail(&ps->list, &dev->filelist);
-@@ -1324,6 +1328,28 @@ static int proc_connectinfo(struct usb_dev_state=
- *ps, void __user *arg)
-=20
- static int proc_resetdevice(struct usb_dev_state *ps)
- {
-+	struct usb_host_config *actconfig =3D ps->dev->actconfig;
-+	struct usb_interface *interface;
-+	int i, number;
-+
-+	/* Don't allow a device reset if the process has dropped the
-+	 * privilege to do such things and any of the interfaces are
-+	 * currently claimed.
-+	 */
-+	if (ps->privileges_dropped && actconfig) {
-+		for (i =3D 0; i < actconfig->desc.bNumInterfaces; ++i) {
-+			interface =3D actconfig->interface[i];
-+			number =3D interface->cur_altsetting->desc.bInterfaceNumber;
-+			if (usb_interface_claimed(interface) &&
-+					!test_bit(number, &ps->ifclaimed)) {
-+				dev_warn(&ps->dev->dev,
-+					"usbfs: interface %d claimed by %s while '%s' resets device\n",
-+					number,	interface->dev.driver->name, current->comm);
-+				return -EACCES;
-+			}
-+		}
-+	}
-+
- 	return usb_reset_device(ps->dev);
- }
-=20
-@@ -2090,6 +2116,9 @@ static int proc_ioctl(struct usb_dev_state *ps, s=
-truct usbdevfs_ioctl *ctl)
- 	struct usb_interface    *intf =3D NULL;
- 	struct usb_driver       *driver =3D NULL;
-=20
-+	if (ps->privileges_dropped)
-+		return -EACCES;
-+
- 	/* alloc buffer */
- 	size =3D _IOC_SIZE(ctl->ioctl_code);
- 	if (size > 0) {
-@@ -2215,7 +2244,8 @@ static int proc_get_capabilities(struct usb_dev_s=
-tate *ps, void __user *arg)
- 	__u32 caps;
-=20
- 	caps =3D USBDEVFS_CAP_ZERO_PACKET | USBDEVFS_CAP_NO_PACKET_SIZE_LIM |
--			USBDEVFS_CAP_REAP_AFTER_DISCONNECT | USBDEVFS_CAP_MMAP;
-+			USBDEVFS_CAP_REAP_AFTER_DISCONNECT | USBDEVFS_CAP_MMAP |
-+			USBDEVFS_CAP_DROP_PRIVILEGES;
- 	if (!ps->dev->bus->no_stop_on_short)
- 		caps |=3D USBDEVFS_CAP_BULK_CONTINUATION;
- 	if (ps->dev->bus->sg_tablesize)
-@@ -2242,6 +2272,9 @@ static int proc_disconnect_claim(struct usb_dev_s=
-tate *ps, void __user *arg)
- 	if (intf->dev.driver) {
- 		struct usb_driver *driver =3D to_usb_driver(intf->dev.driver);
-=20
-+		if (ps->privileges_dropped)
-+			return -EACCES;
-+
- 		if ((dc.flags & USBDEVFS_DISCONNECT_CLAIM_IF_DRIVER) &&
- 				strncmp(dc.driver, intf->dev.driver->name,
- 					sizeof(dc.driver)) !=3D 0)
-@@ -2298,6 +2331,23 @@ static int proc_free_streams(struct usb_dev_stat=
-e *ps, void __user *arg)
- 	return r;
- }
-=20
-+static int proc_drop_privileges(struct usb_dev_state *ps, void __user =
-*arg)
-+{
-+	u32 data;
-+
-+	if (copy_from_user(&data, arg, sizeof(data)))
-+		return -EFAULT;
-+
-+	/* This is an one way operation. Once privileges are
-+	 * dropped, you cannot regain them. You may however reissue
-+	 * this ioctl to shrink the allowed interfaces mask.
-+	 */
-+	ps->interface_allowed_mask &=3D data;
-+	ps->privileges_dropped =3D true;
-+
-+	return 0;
-+}
-+
- /*
-  * NOTE:  All requests here that have interface numbers as parameters
-  * are assuming that somehow the configuration has been prevented from
-@@ -2486,6 +2536,9 @@ static long usbdev_do_ioctl(struct file *file, un=
-signed int cmd,
- 	case USBDEVFS_FREE_STREAMS:
- 		ret =3D proc_free_streams(ps, p);
- 		break;
-+	case USBDEVFS_DROP_PRIVILEGES:
-+		ret =3D proc_drop_privileges(ps, p);
-+		break;
- 	}
-=20
-  done:
-diff --git a/include/uapi/linux/usbdevice_fs.h b/include/uapi/linux/usb=
-device_fs.h
-index ecbd176..a8653a6 100644
---- a/include/uapi/linux/usbdevice_fs.h
-+++ b/include/uapi/linux/usbdevice_fs.h
-@@ -135,6 +135,7 @@ struct usbdevfs_hub_portinfo {
- #define USBDEVFS_CAP_BULK_SCATTER_GATHER	0x08
- #define USBDEVFS_CAP_REAP_AFTER_DISCONNECT	0x10
- #define USBDEVFS_CAP_MMAP			0x20
-+#define USBDEVFS_CAP_DROP_PRIVILEGES		0x40
-=20
- /* USBDEVFS_DISCONNECT_CLAIM flags & struct */
-=20
-@@ -188,5 +189,6 @@ struct usbdevfs_streams {
- #define USBDEVFS_DISCONNECT_CLAIM  _IOR('U', 27, struct usbdevfs_disco=
-nnect_claim)
- #define USBDEVFS_ALLOC_STREAMS     _IOR('U', 28, struct usbdevfs_strea=
-ms)
- #define USBDEVFS_FREE_STREAMS      _IOR('U', 29, struct usbdevfs_strea=
-ms)
-+#define USBDEVFS_DROP_PRIVILEGES   _IOW('U', 30, __u32)
-=20
- #endif /* _UAPI_LINUX_USBDEVICE_FS_H */
+s/flags on ACLs/ACL flags/
+
+>=20
+> .TP
+> .BR masked "\ (" m )
+> When set, the file masks define upper limits on the permissions the A=
+CL may
+> grant.  When not set, the file masks are ignored.
+> .TP
+> .BR write_through "\ (" w )
+> When this flag and the
+> .B masked
+> flag are both set, the owner and other file masks define the actual p=
+ermissions
+> granted to the file owner and to others instead of defining an upper =
+limit.
+> When the
+> .B masked
+> flag is not set, the write_through flag has no effect.
+
+Use .BR write_through for preceding line
+
+> .TP
+> .BR auto_inherit "\ (" a )
+> Automatic Inheritance is enabled.  See
+> .IR "Automatic Inheritance" .
+> .TP
+> .BR protected "\ (" p )
+> The ACL is protected from modification by Automatic
+> Inheritance.
+> .TP
+> .BR defaulted "\ (" d )
+> Indicates that the ACL has been assigned in an application-dependent =
+way when
+> the file or directory was created; it has neither been inherited nor =
+set
+> explicitly. ACLs of files created on Linux will never have the
+> .B defaulted
+> flag set.=20
+
+The preceding sentence immediately triggers an obvious question for the
+reader.  So, do we need a sentence here to say when/where the "defaulte=
+d"
+flag is set?
+>           When this flag is set for an ACL, Automatic Inheritance wil=
+l
+> completely replace the ACL.
+>=20
+> .SS ACL entry flags
+>=20
+> The following flags on ACL entries are defined:
+>=20
+> .TP
+> .BR file_inherit "\ (" f )
+> When this flag appears in the ACL entry of a directory, then:
+> .RS
+> .IP \(bu 4
+> That entry is inherited by new files created in the directory such th=
+at the
+
+s/4/2/
+
+> permissions of the entry apply to the file (the inheritance flags of =
+the
+> inherited entry are cleared).
+> .IP \(bu 4
+> The entry is is inherited by new subdirectories created in the direct=
+ory such
+
+s/ 4//
+
+> that the permissions of the entry will apply to new files created in =
+the
+> subdirectory.
+> .RE
+> .TP
+> .BR dir_inherit "\ (" d )
+> When this flag appears in the ACL entry of a directory, then that ent=
+ry is
+> inherited by new subdirectories created in the directory such that th=
+e
+> permissions of the entry apply to the subdirectory (the
+> .B inherit_only
+> flag is cleared).
+> .TP
+> .BR no_propagate "\ (" n )
+> Inheritance stops at the next subdirectory level.  When a file or dir=
+ectory
+> inherits an entry that has this flag set, the
+> .BR file_inherit ", " dir_inherit ", " no_propagate ", and " inherit_=
+only
+> flags are cleared.
+> .TP
+> .BR inherit_only "\ (" i )
+> The entry defines inheritable permissions only and is ignored for acc=
+ess
+> checking.  When a file or directory inherits an entry that has this f=
+lag set,
+> the flag is cleared.
+> .TP
+> .BR inherited "\ (" a )
+> The entry has been automatically inherited from the parent directory;=
+ the
+> ACL's
+> .B auto_inherit
+> flag should be on.
+
+Why "should be" in the previous sentence? I think a little explanation
+is needed here...
+> .TP
+> .BR unmapped "\ (" u )
+> The user or group identifier is a textual string and is not mapped to=
+ a numeric
+> user or group identifier.  ACLs with unmapped identifiers can occur o=
+n NFSv4
+> mounted filesystems when the client cannot determine numeric user or =
+group
+> identifiers for some of the NFSv4 user@domain or group@domain who val=
+ues.  They
+> cannot be assigned to local files or directories.
+>=20
+> .SS Permissions
+>=20
+> The following permissions are defined for RichACL entries and for the=
+ three
+> file masks:
+>=20
+> .TP
+> .BR read_data " / " list_directory "\ (" r )
+> For a file: read the data of the file.
+> For a directory: list the contents of the directory.
+> .TP
+> .BR write_data " / " add_file "\ (" w )
+> For a file: modify the data of the file; does not include opening the=
+ file in
+> append mode.
+> For a directory: add a new file in the directory.
+> .TP
+> .BR append_data " / " add_subdirectory "\ (" p )
+> For a file: open the file in append mode.
+> For a directory: create a subdirectory in the directory.
+> .TP
+> .BR execute "\ (" x )
+> For a file: execute the file.
+> For a directory: traverse / search the directory.
+
+s%traverse / search%traverse (search)%
+> .TP
+> .BR delete_child "\ (" d )
+> Delete a file or directory within a directory.  This permission is me=
+aningless
+> for non-directories.
+
+=3D=3D> "This permission is meanungful only for directories."
+
+> .TP
+> .BR delete "\ (" D )
+> Delete the file or directory.
+> .TP
+> .BR read_attributes "\ (" a )
+> Read basic attributes of a file or directory (see
+> .BR stat (2)).
+> This permission is defined by NFSv4.  It is stored, but ignored.  Rea=
+ding basic
+> attributes of files and directories is always allowed on Linux.
+> .TP
+> .BR write_attributes "\ (" A )
+> Change the times associated with a file or directory to an arbitrary =
+value.
+> This permission is always implicitly granted to the file owner.
+> .TP
+> .BR read_acl "\ (" c )
+> Read the ACL of a file or directory. This permission is always
+> implicitly granted.
+
+So, I think a sentence explaining why "read_acl" exists would be
+helpful, since the reader is left a little puzzled about its purpose if
+it is always implicitly granted.
+
+> .TP
+> .BR write_acl "\ (" C )
+> Change the ACL or file mode of a file or directory.
+> .TP
+> .BR write_owner "\ (" o )
+> Take ownership of a file or directory.  Change the owning group of a =
+file or
+> directory to a group of which the calling process is a member.
+> .TP
+
+=46ormatting tweak: add ".ad l" before the following line amd ".ad" aft=
+er
+the line.
+
+> .BR read_named_attrs "\ (" R "), " write_named_attrs "\ (" W "), " sy=
+nchronize "\ (" S "), " write_retention "\ (" e "), " write_retention_h=
+old "\ (" E )
+> These permissions are defined by NFSv4 / NFSv4.1.  They are stored, b=
+ut ignored.
+
+s%/%and%
+
+> .PP
+> For the
+> .BR r ", " w ", and " p
+> permissions which have different long forms for files and directories=
+, the
+
+s/permissions/permissions,/
+
+> .BR getrichacl (1)
+> utility will output the appropriate form(s) depending on the context.
+> The
+> .BR setrichacl (1)
+> utility will accept either form for any file type.
+>=20
+> .SS Text form
+> The common textual representation of a RichACL consists of the colon-=
+separated
+> fields of the ACL flags, file masks, and ACL entries in the following
+> format:
+> .TP
+> \fBflags:\fR\fIacl_flags\fR
+> The ACL flags.
+> .TP
+> \fBowner:\fR\fIperm\fR\fB::mask\fR, \fBgroup:\fR\fIperm\fR\fB::mask\f=
+R, \fBother:\fR\fIperm\fR\fB::mask\fR
+> The file masks and their permissions.
+> .TP
+> \fIwho\fR\fB:\fR\fIperm\fR\fB:\fR\fIflags\fR\fB:allow\fR, \fIwho\fR\f=
+B:\fR\fIperm\fR\fB:\fR\fIflags\fR\fB:deny\fR
+> For each ACL entry, who the entry applies to, the permissions of the =
+entry, the
+> entry flags, and the entry type. The who field is one of the followin=
+g:
+
+s/who/\\fIwho\\fP/
+
+> .RS
+> .IP \(bu 4
+
+s/4/2/
+
+> One of the special identifiers:
+> .BR owner@ ", " group@ ", or " everyone@ ,
+> .IP \(bu
+> A
+> .BR user: " or " u:
+> prefix followed by a user name or user ID that designates a specific =
+user,
+> .IP \(bu
+> A
+> .BR group: " or " g:
+> prefix followed by a group name or group ID that designates a specifi=
+c group.
+> .RE
+> .PP
+> The entries are comma, whitespace, or newline separated.
+>=20
+> Flags and permissions have single-letter as well as long forms, as li=
+sted under
+> .IR "ACL flags" ,
+> .IR "ACL entry flags" ,
+> and
+> .IR Permissions .
+> When the single-letter forms are used, the flags or permissions are
+> concatenated. When the long forms are used, the flags or permissions =
+are
+> separated by slashes.  To align permissions or flags vertically, dash=
+es can be
+> used for padding.
+>=20
+> .SS Setting and modifying file permissions
+> The access permissions for a file can either be set by assigning an A=
+ccess
+> Control List
+> .RB ( setrichacl (1))
+> or by changing the file mode permission bits
+> .RB ( chmod (1)).
+> In addition, a file can inherit an ACL from its parent directory at c=
+reation
+> time as described under
+> .IR "Permissions at file-creation time" .
+>=20
+> .SS Assigning an Access Control List
+> When assigning an ACL to a file, unless explicitly specified, the own=
+er, group,
+> and other file masks will be computed from the ACL entries as describ=
+ed in
+> the section
+> .IR "Computing the maximum file masks" .
+> The owner, group, and other file mode permission bits are then each s=
+et from
+> the owner, group, and other file mask as follows:
+> .IP \(bu 4
+
+s/4/2/
+
+> If the file mask includes the
+> .B r
+> permission, the read
+> file mode permission bit will be set.
+> .IP \(bu
+> If the file mask includes the
+> .B w
+> or
+> .B p
+> permission, the write file mode permission bit will be set.
+> .IP \(bu
+> If the file mask includes the
+> .B x
+> permission, the execute file mode permission bit will be set.
+> .PP
+> If the ACL can be represented exactly by the file mode
+> permission bits, the file permission bits are set to match the ACL an=
+d the ACL
+> is not stored.
+
+Maybe better: "...and no ACL is stored"
+
+>                (When the ACL of a file is requested which doesn't hav=
+e an ACL,
+> the file mode permission bits are converted into an equivalent ACL.)
+>=20
+> .SS Changing the file mode permission bits
+> When changing the file mode permission bits with
+> .BR chmod (1),
+> the owner, group, and other file permission bits are set to the permi=
+ssion bits
+> in the new mode, and the owner, group, and other file masks are set b=
+ased on
+> the new mode bits as follows:
+> .IP \(bu 4
+
+s/4/2/
+
+> If the read bit in a set of permissions is set, the
+> .B r
+> permission in the corresponding file mask will be set.
+> .IP \(bu
+> If the write bit in a set of permissions is set, the
+> .B w
+> and
+> .B p
+> permissions in the corresponding file mask will be set.
+> .IP \(bu
+> If the execute bit in a set of permissions is set, the
+> .B x
+> permission in the corresponding file mask will be set.
+> .PP
+> In addition, the
+> .B masked
+> and
+> .B write_through
+> ACL flags are set. This has the
+> effect of limiting the permissions granted by the ACL to the file mod=
+e
+> permission bits; in addition, the owner is granted the owner mode bit=
+s and
+> others are granted the other mode bits. If the
+> .B auto_inherit
+> flag is set, the
+> .B protected
+> flag is also set to prevent the Automatic Inheritance algorithm from =
+modifying
+> the ACL.
+>=20
+> .SS Permissions at file-creation time
+> When a directory has inheritable ACL entries, the following
+
+s/has/has an/
+
+> happens when a file or directory is created inside that directory:
+> .RS 4
+> .IP 1. 4
+> A file created inside that directory will inherit all of the ACL entr=
+ies that
+> have the
+> .B file_inherit
+> flag set, and all inheritance-related flags in the inherited entries =
+flag will
+> be cleared.
+>=20
+> A subdirectory created inside that directory will inherit all of the =
+ACL
+> entries that either have the
+> .B dir_inherit
+> flag set, or the
+> .B file_inherit
+> flag set and the
+> .B no_propagate
+> flag not set.  Entries whose
+> .B dir_inherit
+> flag is set will have their
+> .B inherit_only
+> flag cleared, and entries whose
+> .B dir_inherit
+> flag is not set will have their
+> .B inherit_only
+> flag set.  Finally, entries whose
+> .B no_propagate
+> flag is set will have all inheritance-related flags cleared.
+> .IP 2.
+> If the parent directory's ACL has the
+> .B auto_inherit
+> flag set, the inherited ACL will have its
+> .B auto_inherit
+> flag set, and all entries will have their
+> .B inherited
+> flag set.  Otherwise, the
+> .B auto_inherit
+> and
+> .B inherited
+> flags are cleared.
+> .IP 3.
+> The three file masks are computed from the inherited ACL as described=
+ in
+> the section
+> .IR "Computing the maximum file masks" .
+> .IP 4.
+> The three sets of permissions for the owner, the group, and for other=
+s in
+> the \fImode\fR parameter as given to
+> .BR open (2),
+> .BR mkdir (2),
+> and similar are converted into sets of RichACL permissions. The corre=
+spondence
+> between mask flags and RichACL permission bits is described in the se=
+ction
+> .IR "Changing the file mode permission bits" .
+> Any RichACL permissions not included in those sets are
+> removed from the owner, group, and other file masks. The file mode pe=
+rmission
+> bits are then computed from the file masks as described in the sectio=
+n
+> .IR "Assigning an Access Control List" .
+> The process umask (see
+> .BR umask (2))
+> is ignored.
+> .IP 5.
+> The
+> .B masked
+> ACL flag is set. The
+> .B write_through
+> ACL flag remains cleared. In addition, if the
+> .B auto_inherit
+> flag of the inherited ACL is set, the
+> .B protected
+> flag is also set to prevent the Automatic Inheritance algorithm from =
+modifying
+> the ACL.
+> .RE
+> .PP
+> When a directory does not have inheritable ACL entries, files and dir=
+ectories
+> created inside that directory will not be assigned Access Control Lis=
+ts and the
+> file mode permission bits will be set to (\fImode\fR\ &\ ~\fIumask\fR=
+) where
+> \fImode\fR is the mode argument of the relevant system call and \fIum=
+ask\fR is
+> the process umask (see
+> .BR umask (2)).
+>=20
+> .SS Automatic Inheritance
+> Automatic Inheritance is a mechanism that allows permission changes t=
+o
+> propagate from a directory to files and subdirectories inside that di=
+rectory,
+> recursively.  Propagation is carried out by the process changing the =
+directory
+> permissions (usually,
+> .BR setrichacl (1));
+> it happens without user intervention albeit not entirely automaticall=
+y.
+>=20
+> A significant limitation is that this mechanism works only as long as=
+ files
+> are created without explicitly specifying the file permissions to use=
+=2E The
+> standard system calls for creating files and directories
+> .RB ( creat (2),
+> .BR open (2),
+> .BR mkdir (2),
+> .BR mknod (2))
+> all have mandatory mode parameters which define the maximum allowed p=
+ermissions
+> of the new files. To take account of this restriction, the
+> .B protected
+> ACL flag must be set if the
+> .B inherited
+> flag is set. This effectively disables Automatic Inheritance for that
+> particular file.
+>=20
+
+Add the following at the start of the next paragraph:
+
+"Motwithstanding the aforementioned limitation,"
+> Automatic Inheritance still remains useful for network protocols like=
+ NFSv4 and
+> SMB, which both support creating files and directories without defini=
+ng their
+> permissions: they can implement those operations by using the standar=
+d system
+
+s/: they/. These protocols/
+(To avoid an excessively long sentence.)
+
+> calls and by then undoing the effect of applying the mode parameters.
+>=20
+> When the ACL of a directory is changed, the following happens for eac=
+h entry
+> (\(lqchild\(rq) inside that directory:
+> .IP 1. 4
+> If the entry is a symblic link, skip the child.
+
+s/symblic/symbolic/
+
+> .IP 2.
+> If the
+> .B auto_inherit
+> flag of the entry's ACL is not set or the
+> .B protected
+> flag is set, skip the child.
+> .IP 3.
+> With the child's ACL:
+> .RS 4
+> .IP a) 4
+> If the
+> .B defaulted
+> flag is set, replace the ACL with an empty ACL
+> with the
+> .B auto_inherit
+> flag set.
+> .IP b)
+> Delete all entries which have the
+> .B inherited
+> flag set.
+> .IP c)
+> Append all entries inherited from the parent directory according to s=
+tep 1 of
+> the algorithm described under
+> .IR "Permissions at file-creation time".
+> Set the
+> .B inherited
+> flag of each of these entries.
+> .IP d)
+> Recompute the file masks.
+> .RE
+> .IP 4.
+> If the child is a directory, recursively apply this algorithm.
+>=20
+> .SS Access check algorithm
+>=20
+> When a process requests a particular kind of access (expressed as a s=
+et of
+> RichACL permissions) to a file, the following algorithm determines wh=
+ether the
+> access is granted or denied:
+>=20
+> .IP 1. 4
+> If the
+> .B masked
+> ACL flag is set, then:
+> .RS 4
+> .IP a) 4
+> If the
+> .B write_through
+> ACL flag is set, then:
+> .RS 4
+
+s/4/2/
+
+> .IP \(bu 4
+
+s/4/2/
+
+> If the requesting process is the file owner, then access is granted i=
+f the
+> owner mask includes the requested permissions, and is otherwise denie=
+d.
+> .IP \(bu
+> If the requesting process is not the file owner, is not in the owning=
+ group,
+> and no ACL entries other than
+> .B everyone@
+> match the process, then access is granted if the other mask includes =
+the
+> requested permissions, and is otherwise denied.
+
+So, in the above subcases, the following does not seem to be covered:
+        (1) "masked" ACL flag is set AND
+        (2) requesting process *is* in owning group *or* an ACL other
+            than "everyone@"matches the process.
+
+What happens in this case? I suspect that somehow we are supposed to
+fall through to part "b)" below (and possibly into clause "2."?), but
+the logical structure of the clauses does not reflect this.
+       =20
+> .RE
+> .IP b)
+> If any of the following is true:
+> .RS 4
+
+s/4/2/
+
+> .IP \(bu 4
+
+s/4/2/
+
+> the requesting process is the file owner and the owner mask does not =
+include all
+> requested permissions,
+> .IP \(bu 4
+
+s/ 4//
+
+> the requesting process is not the file owner and it is in the owning =
+group or
+> matches any ACL entries other than
+> .BR everyone@ ,
+> and the group mask does not include all requested permissions,
+> .IP \(bu 4
+
+s/ 4//
+
+> the requesting process is not the file owner, not in the owning group=
+, it
+> matches no ACL entries other than
+> .BR everyone@ ,
+> and the other mask does not include all requested permissions,
+> .PP
+> then access is denied.
+> .RE
+> .RE
+
+At some point, perhaps in the next paragraph, I think that it needs to
+be clarified that unlike POSIX ACLs, a process can gain the permissions
+it requires by accumulating them from multiple RichACL enties. (That's
+correct, is it not?)
+
+> .IP 2.
+> Set the remaining permissions to the requested permissions.  Go throu=
+gh all ACL
+> entries. For each entry:
+
+So, perhaps replace the preceding two lines with something like:
+
+[[
+Upon reaching this point, the determination of whether or not access is
+granted is made by scanning all ACL entries to see if one or more
+applicable entries together grant a cumulative set of permissions that
+matches the requested permissions or there is an applicable entry that
+explicitly denies one or more of the requested permissions.
+The scan of all ACL entries begins by
+first initializing the set of remaining permissions (i.e., those that h=
+ave
+not yet been satisfied during the scan) to be the set of requested
+permissions. Then the ACL entries are scanned
+=2EIR "in order" ,
+and for each entry:
+]]
+
+> .RS 4
+> .IP a) 4
+> If the
+> .B inherit_only
+> or
+> .B unmapped
+> flags are set, continue with the next ACL entry.
+> .IP b)
+> If any of the following is true:
+> .RS 4
+
+s/4/2/
+
+> .IP \(bu 4
+
+s/4/2/
+
+> the entry's identifier is
+> .B owner@
+> and the requesting process is the file owner,
+> .IP \(bu
+> the entry's identifier is
+> .B group@
+> and the requesting process is in the owning group,
+> .IP \(bu
+> the entry's identifier is a user and the requesting process is owned =
+by that
+> user,
+> .IP \(bu
+> the entry's identifier is a group and the requesting process is a mem=
+ber in
+> that group,
+> .IP \(bu
+> the entry's identifier is
+> .BR everyone@ ,
+> .PP
+> then the entry matches the process; proceed to the next step. Otherwi=
+se,
+> continue with the next ACL entry.
+> .RE
+> .IP c)
+> If the entry denies any of the remaining permissions, access is denie=
+d.
+> .IP d)
+> If the entry allows any of the remaining permissions, then:
+> .RS 4
+
+s/4/2/
+
+> .IP \(bu 4
+
+s/4/2/
+
+> If the
+> .B masked
+> ACL flag is set and the entry's identifier is not
+> .B owner@
+> or
+> .BR everyone@
+> or is a user entry matching the file owner, remove all permissions fr=
+om the
+> remaining permissions which are both allowed by the entry and include=
+d in the
+> group mask,
+> .IP \(bu
+> Otherwise, remove all permissions from the remaining permissions wich=
+ are
+
+s/wich/which=20
+
+> allowed by the entry.
+> .RE
+> .RE
+> .IP 3.
+> If there are no more remaining permissions, access is allowed. Otherw=
+ise,
+> access is denied.
+>=20
+> .SS Computing the maximum file masks
+> When setting an ACL and no file masks have been explicitly specified =
+and when
+> inheriting an ACL from the parent directory, the following algorithm =
+is used
+> for computing the file masks:
+>=20
+> .IP 1. 4
+> Clear the owner, group, and other file masks. Remember which permissi=
+ons have
+> already been processed (initially, the empty set).
+> .IP 2.
+> For each ACL entry:
+> .RS 4
+
+s/4/2/
+
+> .IP \(bu 4
+
+s/4/2/
+
+> If the
+> .B inherit_only
+> flag is set, skip the entry.
+> .IP \(bu 4
+
+s/ 4//
+
+> Otherwise, compute which permissions the entry allows or denies that =
+have not
+> been processed yet (the remaining permissions).
+> .IP \(bu
+> If the entry is an
+> .B owner@
+> entry, add the remaining permissions to the owner mask for
+> .B allow
+> entries, and remove the remaining permissions from the owner mask for
+> .B deny
+> entries.
+> .IP \(bu
+> Otherwise, if the entry is an
+> .B everyone@
+> entry, proceed as with
+> .B owner@
+> entries but add or remove the remaining permissions from the owner, g=
+roup, and
+> other file masks.
+> .IP \(bu
+> Otherwise, proceed as with
+> .B owner@
+> entries but add or remove the remaining permissions from the owner an=
+d group
+> file masks.
+> .IP \(bu
+> Add the entry's permissions to the processed permissions.
+> .RE
+> .PP
+> The resulting file masks represent the ACL as closely as possible. Wi=
+th these
+> file masks, if the
+> .B masked
+> ACL flag is set, the effective permissions still stay the same.
+
+The meaing of "will stay the same" is not quite clear "will stay the
+same *as what*"?). I suspect I know what you mean, but it needs to be
+made more obvious.
+
+>=20
+> .\" .SH BUGS
+> .SH AUTHOR
+> Written by Andreas Gr=C3=BCnbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>.
+>=20
+> Please send your bug reports, suggested features and comments to the =
+above address.
+>=20
+
+I'm going to play the broken record :-)
+
+Could we start with just a few simple examples already, and build up
+over future iterations of this page?
+
+> .SH CONFORMING TO
+> Rich Access Control Lists are Linux-specific.
+> .SH SEE ALSO
+> .BR acl (5),
+
+Move this entry to the point XXX below.
+
+> .BR chmod (1),
+> .BR getrichacl (1),
+> .BR ls (1),
+> .BR setrichacl (1)
+> .BR stat (2),
+> .BR umask (2)
+> .\" librichacl
+
+XXX
+
+By the way, are there already man pages for the librichacl functions?
+
+Cheers,
+
+Michael
+
 --=20
-2.5.0
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
