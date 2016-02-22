@@ -1,1096 +1,2169 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: richacl(7) man page review comments
-Date: Sun, 21 Feb 2016 22:40:59 +0100
-Message-ID: <56CA2EEB.9080504@gmail.com>
-References: <56B770B6.7040803@gmail.com> <56B77262.7090107@gmail.com>
- <CAHc6FU5__xbKm4mg8+fK_ZW5ZYsDoQcYBBvQg573Eq4ERDsROw@mail.gmail.com>
- <56C0F23C.7030902@gmail.com>
- <CAHc6FU4CCrcrA6=oCiq2A5rGd9CCGELaTZq6tGpmd2jcV_Zp4A@mail.gmail.com>
+From: Daniel Baluta <daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2 3/3] iio: hmc5843: Move hmc5843 out of staging
+Date: Mon, 22 Feb 2016 11:07:57 +0200
+Message-ID: <CAEnQRZDhC_v+hWxZNijZ1SMdwPG1R1ZFQ_hBtd_L8CgdU0pvug@mail.gmail.com>
+References: <1455489459-20422-1-git-send-email-cristina.moraru09@gmail.com>
+	<1455489459-20422-4-git-send-email-cristina.moraru09@gmail.com>
+	<56CA1E0D.30101@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAHc6FU4CCrcrA6=oCiq2A5rGd9CCGELaTZq6tGpmd2jcV_Zp4A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <56CA1E0D.30101-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, bhumirks-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: Cristina Moraru <cristina.moraru09-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>, Peter Meerwald-Stadler <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Cristina Georgiana Opriceana <cristina.opriceana-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, marek-xXXSsgcRVICgSpxsJD1C4w@public.gmane.org, Yong Li <sdliyong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, driverdev <devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Irina Tirdea <irina.tirdea-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, =?UTF-8?Q?Krzysztof_Koz=C5=82owski?= <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Andrew F . Davis" <afd-l0cyMroinI0@public.gmane.org>, javier-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, Daniel Baluta <daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Andreas,
-
-On 02/20/2016 05:37 PM, Andreas Gruenbacher wrote:
-> Hi Michael,
->=20
-> thanks again for all the feedback. I've followed all your suggestions=
-;
-> again, please see the github repo for the latest version:
->=20
->   https://github.com/andreas-gruenbacher/richacl
-
-I've once more pulled from the latest git; here's some more comments.
-
-> .\"
-> .\" RichACL Manual Pages
-> .\"
-> .\" Copyright (C) 2015,2016  Red Hat, Inc.
-> .\" Written by Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> .\" This is free documentation; you can redistribute it and/or
-> .\" modify it under the terms of the GNU General Public License as
-> .\" published by the Free Software Foundation; either version 2 of
-> .\" the License, or (at your option) any later version.
-> .\"
-> .\" The GNU General Public License's references to "object code"
-> .\" and "executables" are to be interpreted as the output of any
-> .\" document formatting or typesetting system, including
-> .\" intermediate and printed output.
-> .\"
-> .\" This manual is distributed in the hope that it will be useful,
-> .\" but WITHOUT ANY WARRANTY; without even the implied warranty of
-> .\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> .\" GNU General Public License for more details.
-> .\"
-> .\" You should have received a copy of the GNU General Public
-> .\" License along with this manual.  If not, see
-> .\" <http://www.gnu.org/licenses/>.
-> .\"
-> .de URL
-> \\$2 \(laURL: \\$1 \(ra\\$3
-> ..
-> .if \n[.g] .mso www.tmac
-> .TH RICHACL 7 2015-09-01 "Linux" "Rich Access Control Lists"
-> .SH NAME
-> richacl \- Rich Access Control Lists
-> .SH DESCRIPTION
-> Rich Access Control Lists (RichACLs) are an extension of the POSIX fi=
-le
-> permission model (see
-> .BR acl (5))
-> to support
-> .URL https://tools.ietf.org/rfc/rfc5661.txt "NFSv4 Access Control Lis=
-ts"
-> on local and remote-mounted filesystems.
->=20
-> A RichACL can always be translated into an equivalent NFSv4 ACL which=
- grants
-> the same permissions.
->=20
-> RichACLs can be enabled on supported local filesystems (currently, ex=
-t4 and
-> XFS).  This disables POSIX Access Control Lists; the two ACL models c=
-annot
-> coexist on the same filesystem.
->=20
-> The in-kernel NFSv4 server and client also include RichACL support.
-
-Rewrite the preceding two paras in a better logical split and order:
-
-[[
-RichACLs can be enabled on supported local filesystems (currently, ext4=
- and
-XFS).  The in-kernel NFSv4 server and client also include RichACL suppo=
-rt.
-
-Enabling RichACLs disables POSIX Access Control Lists;
-the two ACL models cannot coexist on the same filesystem.
-]]
-
->=20
-> When used on a filesystem that does not support RichACLs, the
-> .BR getrichacl (1)
-> and
-> .BR setrichacl (1)
-> utilities will operate on the file permission bits instead:
-> .BR getrichacl (1)
-> will display the file permission bits as a RichACL; when a RichACL
-> is set with
-> .BR setrichacl (1)
-> which can be represented exactly by the file permission bits,
-> .BR setrichacl (1)
-> will set the file permission bits instead.  An attempt to set a RichA=
-CL that
-> cannot be represented exactly by the file permission bits results in =
-an error.
->=20
-> .SS Structure of RichACLs
->=20
-> RichACLs consist of a number of ACL entries, three file masks, and so=
-me flags
-
-s/some flags/a set of flags/
-
-> specifying attributes of the ACL as whole (by contrast with the per-A=
-CL-entry
-
-s/whole/a whole/
-
-> flags described below).
->=20
-> Each of the ACL entries allows or denies some permissions to a partic=
-ular user,
-> group, or special identifier. An ACL entry consists of four fields:
->=20
-> .IP \(bu 4
-
-s/4/2/
-
-> A tag which specifies the user, group, or special identifier the entr=
-y applies
-> to.  Special identifiers can be the file owner, the owning group, or =
-everyone.
-
-=3D=3D>
-Special identifiers correspond to one of three file masks for the file =
-owner
-=2ERB ( owner@ ),
-the owning group
-=2ERB ( group@ ),
-or everyone
-=2ERB ( everyone@ ).
-
-> .IP \(bu
-> A set of permissions the entry allows or denies.
-> .IP \(bu
-> A set of flags that indicate whether the user or group identifier is =
-mapped or
-> unmapped, and whether the entry has been and can be inherited.
-> .IP \(bu 4
-
-s/ 4//
-
-> A type field indicating whether the entry allows or denies access.
-
-s/access/the permissions specified in the second field/
-
-> .PP
-> The owner, group, and other file masks further control which permissi=
-ons the
-> ACL grants, subject to the
-> .BR masked "\ (" m )
-> and
-> .BR write_through "\ (" w )
-> ACL flags: when the permissions of a file or directory are changed wi=
-th
-> .BR chmod (2),
-> the file masks are set based on the new file mode, and the
-> .B masked
-> and
-> .B write_through
-> ACL flags are set. Likewise, when a new file or directory inherits an=
- ACL from
-> its parent directory, the file masks are set to the intersection betw=
-een the
-> permissions granted by the inherited ACL and the
-> .I mode
-> parameter as given to
-> .BR open "(2), " mkdir (2),
-> and similar, and the
-> .B masked
-> ACL flag is set. In both cases, the file masks limit the permissions =
-that the
-> ACL will grant.
->=20
-> The advantage of this approach over directly modifying the ACL entrie=
-s is that
-> permissions defined in ACL entries are not lot when the file masks ar=
-e later
-
-s/lot/lost/
-
-> set to be less restrictive.
-
-(I think) I know what you are trying to say in the previous paragraph,
-but "this approach" and "directly modifying the ACL entries" is a littl=
-e
-vague.  Masks are about solving the hysteresis problem, right? So, how
-about some text along the following lines (I'm sure you can improve):
-
-[[
-The purpose of the file masks is to allow applications that are unaware
-of RichACLs to place limits on the permissions granted by various
-classes of RichACL in a manner that corresponds to the traditional
-user/group/other semantics, without modifying the ACL entries in those
-classes.  Without the file masks, the only alternative would be for the
-kernel to directly modify the ACL entries in those classes. However,
-this latter approach could have a "hysteresis effect", whereby
-a RichACL-unaware application that performs a transition from one file
-mode to another file mode and then back to the original file mode
-could cause destruction of the permission information in ACL entries.
-]]
-
->=20
-> Note that entries with the identifier
-> .B everyone@
-> apply to all processes, whereas the \(lqother\(rq file permissions an=
-d
-> \(lqother\(rq entries in POSIX ACLs apply to all processes which are =
-not the
-
-I'd be inclined to use (or add) \fBACL_OTHER\fP instead of "other"
-in the preceding line.  Things makes things IMO a little clearer when
-you try to distinguish from "other" file permissions.
-
-> owner, are not in the owning group, and do not match a user or group =
-mentioned
-> in the ACL.
->=20
-> Unlike POSIX ACLs, RichACLs do not have separate \(lqaccess\(rq ACLs =
-that
-> define the access permissions and \(lqdefault\(rq ACLs that define th=
-e
-> inheritable permissions.  Instead, flags on each ACL entry determine =
-whether
-> the entry is effective during access checks and/or inheritable.
->=20
->=20
-> .SS ACL flags
->=20
-> The following flags on ACLs are defined:
-
-s/flags on ACLs/ACL flags/
-
->=20
-> .TP
-> .BR masked "\ (" m )
-> When set, the file masks define upper limits on the permissions the A=
-CL may
-> grant.  When not set, the file masks are ignored.
-> .TP
-> .BR write_through "\ (" w )
-> When this flag and the
-> .B masked
-> flag are both set, the owner and other file masks define the actual p=
-ermissions
-> granted to the file owner and to others instead of defining an upper =
-limit.
-> When the
-> .B masked
-> flag is not set, the write_through flag has no effect.
-
-Use .BR write_through for preceding line
-
-> .TP
-> .BR auto_inherit "\ (" a )
-> Automatic Inheritance is enabled.  See
-> .IR "Automatic Inheritance" .
-> .TP
-> .BR protected "\ (" p )
-> The ACL is protected from modification by Automatic
-> Inheritance.
-> .TP
-> .BR defaulted "\ (" d )
-> Indicates that the ACL has been assigned in an application-dependent =
-way when
-> the file or directory was created; it has neither been inherited nor =
-set
-> explicitly. ACLs of files created on Linux will never have the
-> .B defaulted
-> flag set.=20
-
-The preceding sentence immediately triggers an obvious question for the
-reader.  So, do we need a sentence here to say when/where the "defaulte=
-d"
-flag is set?
->           When this flag is set for an ACL, Automatic Inheritance wil=
-l
-> completely replace the ACL.
->=20
-> .SS ACL entry flags
->=20
-> The following flags on ACL entries are defined:
->=20
-> .TP
-> .BR file_inherit "\ (" f )
-> When this flag appears in the ACL entry of a directory, then:
-> .RS
-> .IP \(bu 4
-> That entry is inherited by new files created in the directory such th=
-at the
-
-s/4/2/
-
-> permissions of the entry apply to the file (the inheritance flags of =
-the
-> inherited entry are cleared).
-> .IP \(bu 4
-> The entry is is inherited by new subdirectories created in the direct=
-ory such
-
-s/ 4//
-
-> that the permissions of the entry will apply to new files created in =
-the
-> subdirectory.
-> .RE
-> .TP
-> .BR dir_inherit "\ (" d )
-> When this flag appears in the ACL entry of a directory, then that ent=
-ry is
-> inherited by new subdirectories created in the directory such that th=
-e
-> permissions of the entry apply to the subdirectory (the
-> .B inherit_only
-> flag is cleared).
-> .TP
-> .BR no_propagate "\ (" n )
-> Inheritance stops at the next subdirectory level.  When a file or dir=
-ectory
-> inherits an entry that has this flag set, the
-> .BR file_inherit ", " dir_inherit ", " no_propagate ", and " inherit_=
-only
-> flags are cleared.
-> .TP
-> .BR inherit_only "\ (" i )
-> The entry defines inheritable permissions only and is ignored for acc=
-ess
-> checking.  When a file or directory inherits an entry that has this f=
-lag set,
-> the flag is cleared.
-> .TP
-> .BR inherited "\ (" a )
-> The entry has been automatically inherited from the parent directory;=
- the
-> ACL's
-> .B auto_inherit
-> flag should be on.
-
-Why "should be" in the previous sentence? I think a little explanation
-is needed here...
-> .TP
-> .BR unmapped "\ (" u )
-> The user or group identifier is a textual string and is not mapped to=
- a numeric
-> user or group identifier.  ACLs with unmapped identifiers can occur o=
-n NFSv4
-> mounted filesystems when the client cannot determine numeric user or =
-group
-> identifiers for some of the NFSv4 user@domain or group@domain who val=
-ues.  They
-> cannot be assigned to local files or directories.
->=20
-> .SS Permissions
->=20
-> The following permissions are defined for RichACL entries and for the=
- three
-> file masks:
->=20
-> .TP
-> .BR read_data " / " list_directory "\ (" r )
-> For a file: read the data of the file.
-> For a directory: list the contents of the directory.
-> .TP
-> .BR write_data " / " add_file "\ (" w )
-> For a file: modify the data of the file; does not include opening the=
- file in
-> append mode.
-> For a directory: add a new file in the directory.
-> .TP
-> .BR append_data " / " add_subdirectory "\ (" p )
-> For a file: open the file in append mode.
-> For a directory: create a subdirectory in the directory.
-> .TP
-> .BR execute "\ (" x )
-> For a file: execute the file.
-> For a directory: traverse / search the directory.
-
-s%traverse / search%traverse (search)%
-> .TP
-> .BR delete_child "\ (" d )
-> Delete a file or directory within a directory.  This permission is me=
-aningless
-> for non-directories.
-
-=3D=3D> "This permission is meanungful only for directories."
-
-> .TP
-> .BR delete "\ (" D )
-> Delete the file or directory.
-> .TP
-> .BR read_attributes "\ (" a )
-> Read basic attributes of a file or directory (see
-> .BR stat (2)).
-> This permission is defined by NFSv4.  It is stored, but ignored.  Rea=
-ding basic
-> attributes of files and directories is always allowed on Linux.
-> .TP
-> .BR write_attributes "\ (" A )
-> Change the times associated with a file or directory to an arbitrary =
-value.
-> This permission is always implicitly granted to the file owner.
-> .TP
-> .BR read_acl "\ (" c )
-> Read the ACL of a file or directory. This permission is always
-> implicitly granted.
-
-So, I think a sentence explaining why "read_acl" exists would be
-helpful, since the reader is left a little puzzled about its purpose if
-it is always implicitly granted.
-
-> .TP
-> .BR write_acl "\ (" C )
-> Change the ACL or file mode of a file or directory.
-> .TP
-> .BR write_owner "\ (" o )
-> Take ownership of a file or directory.  Change the owning group of a =
-file or
-> directory to a group of which the calling process is a member.
-> .TP
-
-=46ormatting tweak: add ".ad l" before the following line amd ".ad" aft=
-er
-the line.
-
-> .BR read_named_attrs "\ (" R "), " write_named_attrs "\ (" W "), " sy=
-nchronize "\ (" S "), " write_retention "\ (" e "), " write_retention_h=
-old "\ (" E )
-> These permissions are defined by NFSv4 / NFSv4.1.  They are stored, b=
-ut ignored.
-
-s%/%and%
-
-> .PP
-> For the
-> .BR r ", " w ", and " p
-> permissions which have different long forms for files and directories=
-, the
-
-s/permissions/permissions,/
-
-> .BR getrichacl (1)
-> utility will output the appropriate form(s) depending on the context.
-> The
-> .BR setrichacl (1)
-> utility will accept either form for any file type.
->=20
-> .SS Text form
-> The common textual representation of a RichACL consists of the colon-=
-separated
-> fields of the ACL flags, file masks, and ACL entries in the following
-> format:
-> .TP
-> \fBflags:\fR\fIacl_flags\fR
-> The ACL flags.
-> .TP
-> \fBowner:\fR\fIperm\fR\fB::mask\fR, \fBgroup:\fR\fIperm\fR\fB::mask\f=
-R, \fBother:\fR\fIperm\fR\fB::mask\fR
-> The file masks and their permissions.
-> .TP
-> \fIwho\fR\fB:\fR\fIperm\fR\fB:\fR\fIflags\fR\fB:allow\fR, \fIwho\fR\f=
-B:\fR\fIperm\fR\fB:\fR\fIflags\fR\fB:deny\fR
-> For each ACL entry, who the entry applies to, the permissions of the =
-entry, the
-> entry flags, and the entry type. The who field is one of the followin=
-g:
-
-s/who/\\fIwho\\fP/
-
-> .RS
-> .IP \(bu 4
-
-s/4/2/
-
-> One of the special identifiers:
-> .BR owner@ ", " group@ ", or " everyone@ ,
-> .IP \(bu
-> A
-> .BR user: " or " u:
-> prefix followed by a user name or user ID that designates a specific =
-user,
-> .IP \(bu
-> A
-> .BR group: " or " g:
-> prefix followed by a group name or group ID that designates a specifi=
-c group.
-> .RE
-> .PP
-> The entries are comma, whitespace, or newline separated.
->=20
-> Flags and permissions have single-letter as well as long forms, as li=
-sted under
-> .IR "ACL flags" ,
-> .IR "ACL entry flags" ,
-> and
-> .IR Permissions .
-> When the single-letter forms are used, the flags or permissions are
-> concatenated. When the long forms are used, the flags or permissions =
-are
-> separated by slashes.  To align permissions or flags vertically, dash=
-es can be
-> used for padding.
->=20
-> .SS Setting and modifying file permissions
-> The access permissions for a file can either be set by assigning an A=
-ccess
-> Control List
-> .RB ( setrichacl (1))
-> or by changing the file mode permission bits
-> .RB ( chmod (1)).
-> In addition, a file can inherit an ACL from its parent directory at c=
-reation
-> time as described under
-> .IR "Permissions at file-creation time" .
->=20
-> .SS Assigning an Access Control List
-> When assigning an ACL to a file, unless explicitly specified, the own=
-er, group,
-> and other file masks will be computed from the ACL entries as describ=
-ed in
-> the section
-> .IR "Computing the maximum file masks" .
-> The owner, group, and other file mode permission bits are then each s=
-et from
-> the owner, group, and other file mask as follows:
-> .IP \(bu 4
-
-s/4/2/
-
-> If the file mask includes the
-> .B r
-> permission, the read
-> file mode permission bit will be set.
-> .IP \(bu
-> If the file mask includes the
-> .B w
-> or
-> .B p
-> permission, the write file mode permission bit will be set.
-> .IP \(bu
-> If the file mask includes the
-> .B x
-> permission, the execute file mode permission bit will be set.
-> .PP
-> If the ACL can be represented exactly by the file mode
-> permission bits, the file permission bits are set to match the ACL an=
-d the ACL
-> is not stored.
-
-Maybe better: "...and no ACL is stored"
-
->                (When the ACL of a file is requested which doesn't hav=
-e an ACL,
-> the file mode permission bits are converted into an equivalent ACL.)
->=20
-> .SS Changing the file mode permission bits
-> When changing the file mode permission bits with
-> .BR chmod (1),
-> the owner, group, and other file permission bits are set to the permi=
-ssion bits
-> in the new mode, and the owner, group, and other file masks are set b=
-ased on
-> the new mode bits as follows:
-> .IP \(bu 4
-
-s/4/2/
-
-> If the read bit in a set of permissions is set, the
-> .B r
-> permission in the corresponding file mask will be set.
-> .IP \(bu
-> If the write bit in a set of permissions is set, the
-> .B w
-> and
-> .B p
-> permissions in the corresponding file mask will be set.
-> .IP \(bu
-> If the execute bit in a set of permissions is set, the
-> .B x
-> permission in the corresponding file mask will be set.
-> .PP
-> In addition, the
-> .B masked
-> and
-> .B write_through
-> ACL flags are set. This has the
-> effect of limiting the permissions granted by the ACL to the file mod=
-e
-> permission bits; in addition, the owner is granted the owner mode bit=
-s and
-> others are granted the other mode bits. If the
-> .B auto_inherit
-> flag is set, the
-> .B protected
-> flag is also set to prevent the Automatic Inheritance algorithm from =
-modifying
-> the ACL.
->=20
-> .SS Permissions at file-creation time
-> When a directory has inheritable ACL entries, the following
-
-s/has/has an/
-
-> happens when a file or directory is created inside that directory:
-> .RS 4
-> .IP 1. 4
-> A file created inside that directory will inherit all of the ACL entr=
-ies that
-> have the
-> .B file_inherit
-> flag set, and all inheritance-related flags in the inherited entries =
-flag will
-> be cleared.
->=20
-> A subdirectory created inside that directory will inherit all of the =
-ACL
-> entries that either have the
-> .B dir_inherit
-> flag set, or the
-> .B file_inherit
-> flag set and the
-> .B no_propagate
-> flag not set.  Entries whose
-> .B dir_inherit
-> flag is set will have their
-> .B inherit_only
-> flag cleared, and entries whose
-> .B dir_inherit
-> flag is not set will have their
-> .B inherit_only
-> flag set.  Finally, entries whose
-> .B no_propagate
-> flag is set will have all inheritance-related flags cleared.
-> .IP 2.
-> If the parent directory's ACL has the
-> .B auto_inherit
-> flag set, the inherited ACL will have its
-> .B auto_inherit
-> flag set, and all entries will have their
-> .B inherited
-> flag set.  Otherwise, the
-> .B auto_inherit
-> and
-> .B inherited
-> flags are cleared.
-> .IP 3.
-> The three file masks are computed from the inherited ACL as described=
- in
-> the section
-> .IR "Computing the maximum file masks" .
-> .IP 4.
-> The three sets of permissions for the owner, the group, and for other=
-s in
-> the \fImode\fR parameter as given to
-> .BR open (2),
-> .BR mkdir (2),
-> and similar are converted into sets of RichACL permissions. The corre=
-spondence
-> between mask flags and RichACL permission bits is described in the se=
-ction
-> .IR "Changing the file mode permission bits" .
-> Any RichACL permissions not included in those sets are
-> removed from the owner, group, and other file masks. The file mode pe=
-rmission
-> bits are then computed from the file masks as described in the sectio=
-n
-> .IR "Assigning an Access Control List" .
-> The process umask (see
-> .BR umask (2))
-> is ignored.
-> .IP 5.
-> The
-> .B masked
-> ACL flag is set. The
-> .B write_through
-> ACL flag remains cleared. In addition, if the
-> .B auto_inherit
-> flag of the inherited ACL is set, the
-> .B protected
-> flag is also set to prevent the Automatic Inheritance algorithm from =
-modifying
-> the ACL.
-> .RE
-> .PP
-> When a directory does not have inheritable ACL entries, files and dir=
-ectories
-> created inside that directory will not be assigned Access Control Lis=
-ts and the
-> file mode permission bits will be set to (\fImode\fR\ &\ ~\fIumask\fR=
-) where
-> \fImode\fR is the mode argument of the relevant system call and \fIum=
-ask\fR is
-> the process umask (see
-> .BR umask (2)).
->=20
-> .SS Automatic Inheritance
-> Automatic Inheritance is a mechanism that allows permission changes t=
-o
-> propagate from a directory to files and subdirectories inside that di=
-rectory,
-> recursively.  Propagation is carried out by the process changing the =
-directory
-> permissions (usually,
-> .BR setrichacl (1));
-> it happens without user intervention albeit not entirely automaticall=
-y.
->=20
-> A significant limitation is that this mechanism works only as long as=
- files
-> are created without explicitly specifying the file permissions to use=
-=2E The
-> standard system calls for creating files and directories
-> .RB ( creat (2),
-> .BR open (2),
-> .BR mkdir (2),
-> .BR mknod (2))
-> all have mandatory mode parameters which define the maximum allowed p=
-ermissions
-> of the new files. To take account of this restriction, the
-> .B protected
-> ACL flag must be set if the
-> .B inherited
-> flag is set. This effectively disables Automatic Inheritance for that
-> particular file.
->=20
-
-Add the following at the start of the next paragraph:
-
-"Motwithstanding the aforementioned limitation,"
-> Automatic Inheritance still remains useful for network protocols like=
- NFSv4 and
-> SMB, which both support creating files and directories without defini=
-ng their
-> permissions: they can implement those operations by using the standar=
-d system
-
-s/: they/. These protocols/
-(To avoid an excessively long sentence.)
-
-> calls and by then undoing the effect of applying the mode parameters.
->=20
-> When the ACL of a directory is changed, the following happens for eac=
-h entry
-> (\(lqchild\(rq) inside that directory:
-> .IP 1. 4
-> If the entry is a symblic link, skip the child.
-
-s/symblic/symbolic/
-
-> .IP 2.
-> If the
-> .B auto_inherit
-> flag of the entry's ACL is not set or the
-> .B protected
-> flag is set, skip the child.
-> .IP 3.
-> With the child's ACL:
-> .RS 4
-> .IP a) 4
-> If the
-> .B defaulted
-> flag is set, replace the ACL with an empty ACL
-> with the
-> .B auto_inherit
-> flag set.
-> .IP b)
-> Delete all entries which have the
-> .B inherited
-> flag set.
-> .IP c)
-> Append all entries inherited from the parent directory according to s=
-tep 1 of
-> the algorithm described under
-> .IR "Permissions at file-creation time".
-> Set the
-> .B inherited
-> flag of each of these entries.
-> .IP d)
-> Recompute the file masks.
-> .RE
-> .IP 4.
-> If the child is a directory, recursively apply this algorithm.
->=20
-> .SS Access check algorithm
->=20
-> When a process requests a particular kind of access (expressed as a s=
-et of
-> RichACL permissions) to a file, the following algorithm determines wh=
-ether the
-> access is granted or denied:
->=20
-> .IP 1. 4
-> If the
-> .B masked
-> ACL flag is set, then:
-> .RS 4
-> .IP a) 4
-> If the
-> .B write_through
-> ACL flag is set, then:
-> .RS 4
-
-s/4/2/
-
-> .IP \(bu 4
-
-s/4/2/
-
-> If the requesting process is the file owner, then access is granted i=
-f the
-> owner mask includes the requested permissions, and is otherwise denie=
-d.
-> .IP \(bu
-> If the requesting process is not the file owner, is not in the owning=
- group,
-> and no ACL entries other than
-> .B everyone@
-> match the process, then access is granted if the other mask includes =
-the
-> requested permissions, and is otherwise denied.
-
-So, in the above subcases, the following does not seem to be covered:
-        (1) "masked" ACL flag is set AND
-        (2) requesting process *is* in owning group *or* an ACL other
-            than "everyone@"matches the process.
-
-What happens in this case? I suspect that somehow we are supposed to
-fall through to part "b)" below (and possibly into clause "2."?), but
-the logical structure of the clauses does not reflect this.
-       =20
-> .RE
-> .IP b)
-> If any of the following is true:
-> .RS 4
-
-s/4/2/
-
-> .IP \(bu 4
-
-s/4/2/
-
-> the requesting process is the file owner and the owner mask does not =
-include all
-> requested permissions,
-> .IP \(bu 4
-
-s/ 4//
-
-> the requesting process is not the file owner and it is in the owning =
-group or
-> matches any ACL entries other than
-> .BR everyone@ ,
-> and the group mask does not include all requested permissions,
-> .IP \(bu 4
-
-s/ 4//
-
-> the requesting process is not the file owner, not in the owning group=
-, it
-> matches no ACL entries other than
-> .BR everyone@ ,
-> and the other mask does not include all requested permissions,
-> .PP
-> then access is denied.
-> .RE
-> .RE
-
-At some point, perhaps in the next paragraph, I think that it needs to
-be clarified that unlike POSIX ACLs, a process can gain the permissions
-it requires by accumulating them from multiple RichACL enties. (That's
-correct, is it not?)
-
-> .IP 2.
-> Set the remaining permissions to the requested permissions.  Go throu=
-gh all ACL
-> entries. For each entry:
-
-So, perhaps replace the preceding two lines with something like:
-
-[[
-Upon reaching this point, the determination of whether or not access is
-granted is made by scanning all ACL entries to see if one or more
-applicable entries together grant a cumulative set of permissions that
-matches the requested permissions or there is an applicable entry that
-explicitly denies one or more of the requested permissions.
-The scan of all ACL entries begins by
-first initializing the set of remaining permissions (i.e., those that h=
-ave
-not yet been satisfied during the scan) to be the set of requested
-permissions. Then the ACL entries are scanned
-=2EIR "in order" ,
-and for each entry:
-]]
-
-> .RS 4
-> .IP a) 4
-> If the
-> .B inherit_only
-> or
-> .B unmapped
-> flags are set, continue with the next ACL entry.
-> .IP b)
-> If any of the following is true:
-> .RS 4
-
-s/4/2/
-
-> .IP \(bu 4
-
-s/4/2/
-
-> the entry's identifier is
-> .B owner@
-> and the requesting process is the file owner,
-> .IP \(bu
-> the entry's identifier is
-> .B group@
-> and the requesting process is in the owning group,
-> .IP \(bu
-> the entry's identifier is a user and the requesting process is owned =
-by that
-> user,
-> .IP \(bu
-> the entry's identifier is a group and the requesting process is a mem=
-ber in
-> that group,
-> .IP \(bu
-> the entry's identifier is
-> .BR everyone@ ,
-> .PP
-> then the entry matches the process; proceed to the next step. Otherwi=
-se,
-> continue with the next ACL entry.
-> .RE
-> .IP c)
-> If the entry denies any of the remaining permissions, access is denie=
-d.
-> .IP d)
-> If the entry allows any of the remaining permissions, then:
-> .RS 4
-
-s/4/2/
-
-> .IP \(bu 4
-
-s/4/2/
-
-> If the
-> .B masked
-> ACL flag is set and the entry's identifier is not
-> .B owner@
-> or
-> .BR everyone@
-> or is a user entry matching the file owner, remove all permissions fr=
-om the
-> remaining permissions which are both allowed by the entry and include=
-d in the
-> group mask,
-> .IP \(bu
-> Otherwise, remove all permissions from the remaining permissions wich=
- are
-
-s/wich/which=20
-
-> allowed by the entry.
-> .RE
-> .RE
-> .IP 3.
-> If there are no more remaining permissions, access is allowed. Otherw=
-ise,
-> access is denied.
->=20
-> .SS Computing the maximum file masks
-> When setting an ACL and no file masks have been explicitly specified =
-and when
-> inheriting an ACL from the parent directory, the following algorithm =
-is used
-> for computing the file masks:
->=20
-> .IP 1. 4
-> Clear the owner, group, and other file masks. Remember which permissi=
-ons have
-> already been processed (initially, the empty set).
-> .IP 2.
-> For each ACL entry:
-> .RS 4
-
-s/4/2/
-
-> .IP \(bu 4
-
-s/4/2/
-
-> If the
-> .B inherit_only
-> flag is set, skip the entry.
-> .IP \(bu 4
-
-s/ 4//
-
-> Otherwise, compute which permissions the entry allows or denies that =
-have not
-> been processed yet (the remaining permissions).
-> .IP \(bu
-> If the entry is an
-> .B owner@
-> entry, add the remaining permissions to the owner mask for
-> .B allow
-> entries, and remove the remaining permissions from the owner mask for
-> .B deny
-> entries.
-> .IP \(bu
-> Otherwise, if the entry is an
-> .B everyone@
-> entry, proceed as with
-> .B owner@
-> entries but add or remove the remaining permissions from the owner, g=
-roup, and
-> other file masks.
-> .IP \(bu
-> Otherwise, proceed as with
-> .B owner@
-> entries but add or remove the remaining permissions from the owner an=
-d group
-> file masks.
-> .IP \(bu
-> Add the entry's permissions to the processed permissions.
-> .RE
-> .PP
-> The resulting file masks represent the ACL as closely as possible. Wi=
-th these
-> file masks, if the
-> .B masked
-> ACL flag is set, the effective permissions still stay the same.
-
-The meaing of "will stay the same" is not quite clear "will stay the
-same *as what*"?). I suspect I know what you mean, but it needs to be
-made more obvious.
-
->=20
-> .\" .SH BUGS
-> .SH AUTHOR
-> Written by Andreas Gr=C3=BCnbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>.
->=20
-> Please send your bug reports, suggested features and comments to the =
-above address.
->=20
-
-I'm going to play the broken record :-)
-
-Could we start with just a few simple examples already, and build up
-over future iterations of this page?
-
-> .SH CONFORMING TO
-> Rich Access Control Lists are Linux-specific.
-> .SH SEE ALSO
-> .BR acl (5),
-
-Move this entry to the point XXX below.
-
-> .BR chmod (1),
-> .BR getrichacl (1),
-> .BR ls (1),
-> .BR setrichacl (1)
-> .BR stat (2),
-> .BR umask (2)
-> .\" librichacl
-
-XXX
-
-By the way, are there already man pages for the librichacl functions?
-
-Cheers,
-
-Michael
-
---=20
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+On Sun, Feb 21, 2016 at 10:29 PM, Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> On 14/02/16 22:37, Cristina Moraru wrote:
+>> This patch moves hmc5843 driver from staging/iio/magnetometer
+>> to iio/magnetometer, updates the corresponding Makefiles and
+>> moves the hmc5843* entries to the 'Industrial I/O support ->
+>> Magnetometer sensors' menu.
+>>
+>> Signed-off-by: Cristina Moraru <cristina.moraru09-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>> Cc: Daniel Baluta <daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> For some reason I couldn't immediately identify this patch wouldn't
+> apply to my tree. I hand applied it and all seemed fine, but please do
+> sanity check the result - shortly to be in the testing branch of iio.git
+>
+> Applied.  Thanks,
+>
+
+Hi,
+
+Most likely is because of this patch:
+
+commit 343af6379e950266ee3d4f638a3ffe0b01b08eab
+Author: Bhumika Goyal <bhumirks-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Date:   Fri Feb 12 20:40:29 2016 +0530
+
+    Staging: iio: magnetometer: remove exceptional & on function name
+
+    In this file,function names are otherwise used as pointers without &.
+    Found using coccinelle.
+    // <smpl>
+    @r@
+    identifier f;
+    @@
+
+    f(...) { ... }
+    @@
+    identifier r.f;
+    @@
+
+    - &f
+    + f
+    // </smpl>
+
+    Signed-off-by: Bhumika Goyal <bhumirks-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+    Signed-off-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+
+
+This arrived in IIO tree via Greg's staging tree rebase. So, now the
+changes done be
+Bhumika are reverted.
+
+The simplest solution would be for Bhumika to resend her patch rebased
+on linux-iio
+tree on testing branch.
+
+
+
+> Jonathan
+>> ---
+>> Changes since v1:
+>>         No change since v1
+>>  drivers/iio/magnetometer/Kconfig                |  33 ++
+>>  drivers/iio/magnetometer/Makefile               |   4 +
+>>  drivers/iio/magnetometer/hmc5843.h              |  65 +++
+>>  drivers/iio/magnetometer/hmc5843_core.c         | 686 ++++++++++++++++++++++++
+>>  drivers/iio/magnetometer/hmc5843_i2c.c          | 103 ++++
+>>  drivers/iio/magnetometer/hmc5843_spi.c          | 100 ++++
+>>  drivers/staging/iio/magnetometer/Kconfig        |  32 --
+>>  drivers/staging/iio/magnetometer/Makefile       |   4 +-
+>>  drivers/staging/iio/magnetometer/hmc5843.h      |  65 ---
+>>  drivers/staging/iio/magnetometer/hmc5843_core.c | 686 ------------------------
+>>  drivers/staging/iio/magnetometer/hmc5843_i2c.c  | 103 ----
+>>  drivers/staging/iio/magnetometer/hmc5843_spi.c  | 100 ----
+>>  12 files changed, 992 insertions(+), 989 deletions(-)
+>>  create mode 100644 drivers/iio/magnetometer/hmc5843.h
+>>  create mode 100644 drivers/iio/magnetometer/hmc5843_core.c
+>>  create mode 100644 drivers/iio/magnetometer/hmc5843_i2c.c
+>>  create mode 100644 drivers/iio/magnetometer/hmc5843_spi.c
+>>  delete mode 100644 drivers/staging/iio/magnetometer/hmc5843.h
+>>  delete mode 100644 drivers/staging/iio/magnetometer/hmc5843_core.c
+>>  delete mode 100644 drivers/staging/iio/magnetometer/hmc5843_i2c.c
+>>  delete mode 100644 drivers/staging/iio/magnetometer/hmc5843_spi.c
+>>
+>> diff --git a/drivers/iio/magnetometer/Kconfig b/drivers/iio/magnetometer/Kconfig
+>> index 868abad..021dc53 100644
+>> --- a/drivers/iio/magnetometer/Kconfig
+>> +++ b/drivers/iio/magnetometer/Kconfig
+>> @@ -105,4 +105,37 @@ config IIO_ST_MAGN_SPI_3AXIS
+>>       depends on IIO_ST_MAGN_3AXIS
+>>       depends on IIO_ST_SENSORS_SPI
+>>
+>> +config SENSORS_HMC5843
+>> +     tristate
+>> +     select IIO_BUFFER
+>> +     select IIO_TRIGGERED_BUFFER
+>> +
+>> +config SENSORS_HMC5843_I2C
+>> +     tristate "Honeywell HMC5843/5883/5883L 3-Axis Magnetometer (I2C)"
+>> +     depends on I2C
+>> +     select SENSORS_HMC5843
+>> +     select REGMAP_I2C
+>> +     help
+>> +       Say Y here to add support for the Honeywell HMC5843, HMC5883 and
+>> +       HMC5883L 3-Axis Magnetometer (digital compass).
+>> +
+>> +       This driver can also be compiled as a set of modules.
+>> +       If so, these modules will be created:
+>> +       - hmc5843_core (core functions)
+>> +       - hmc5843_i2c (support for HMC5843, HMC5883, HMC5883L and HMC5983)
+>> +
+>> +config SENSORS_HMC5843_SPI
+>> +     tristate "Honeywell HMC5983 3-Axis Magnetometer (SPI)"
+>> +     depends on SPI_MASTER
+>> +     select SENSORS_HMC5843
+>> +     select REGMAP_SPI
+>> +     help
+>> +       Say Y here to add support for the Honeywell HMC5983 3-Axis Magnetometer
+>> +       (digital compass).
+>> +
+>> +       This driver can also be compiled as a set of modules.
+>> +       If so, these modules will be created:
+>> +       - hmc5843_core (core functions)
+>> +       - hmc5843_spi (support for HMC5983)
+>> +
+>>  endmenu
+>> diff --git a/drivers/iio/magnetometer/Makefile b/drivers/iio/magnetometer/Makefile
+>> index 2c72df4..dd03fe5 100644
+>> --- a/drivers/iio/magnetometer/Makefile
+>> +++ b/drivers/iio/magnetometer/Makefile
+>> @@ -15,3 +15,7 @@ st_magn-$(CONFIG_IIO_BUFFER) += st_magn_buffer.o
+>>
+>>  obj-$(CONFIG_IIO_ST_MAGN_I2C_3AXIS) += st_magn_i2c.o
+>>  obj-$(CONFIG_IIO_ST_MAGN_SPI_3AXIS) += st_magn_spi.o
+>> +
+>> +obj-$(CONFIG_SENSORS_HMC5843)                += hmc5843_core.o
+>> +obj-$(CONFIG_SENSORS_HMC5843_I2C)    += hmc5843_i2c.o
+>> +obj-$(CONFIG_SENSORS_HMC5843_SPI)    += hmc5843_spi.o
+>> diff --git a/drivers/iio/magnetometer/hmc5843.h b/drivers/iio/magnetometer/hmc5843.h
+>> new file mode 100644
+>> index 0000000..76a5d74
+>> --- /dev/null
+>> +++ b/drivers/iio/magnetometer/hmc5843.h
+>> @@ -0,0 +1,65 @@
+>> +/*
+>> + * Header file for hmc5843 driver
+>> + *
+>> + * Split from hmc5843.c
+>> + * Copyright (C) Josef Gajdusek <atx-MwjtXicnQwU@public.gmane.org>
+>> + *
+>> + * This program is free software; you can redistribute it and/or modify
+>> + * it under the terms of the GNU General Public License version 2 as
+>> + * published by the Free Software Foundation.
+>> + */
+>> +
+>> +#ifndef HMC5843_CORE_H
+>> +#define HMC5843_CORE_H
+>> +
+>> +#include <linux/regmap.h>
+>> +#include <linux/iio/iio.h>
+>> +
+>> +#define HMC5843_CONFIG_REG_A                 0x00
+>> +#define HMC5843_CONFIG_REG_B                 0x01
+>> +#define HMC5843_MODE_REG                     0x02
+>> +#define HMC5843_DATA_OUT_MSB_REGS            0x03
+>> +#define HMC5843_STATUS_REG                   0x09
+>> +#define HMC5843_ID_REG                               0x0a
+>> +#define HMC5843_ID_END                               0x0c
+>> +
+>> +enum hmc5843_ids {
+>> +     HMC5843_ID,
+>> +     HMC5883_ID,
+>> +     HMC5883L_ID,
+>> +     HMC5983_ID,
+>> +};
+>> +
+>> +/**
+>> + * struct hcm5843_data       - device specific data
+>> + * @dev:             actual device
+>> + * @lock:            update and read regmap data
+>> + * @regmap:          hardware access register maps
+>> + * @variant:         describe chip variants
+>> + * @buffer:          3x 16-bit channels + padding + 64-bit timestamp
+>> + */
+>> +struct hmc5843_data {
+>> +     struct device *dev;
+>> +     struct mutex lock;
+>> +     struct regmap *regmap;
+>> +     const struct hmc5843_chip_info *variant;
+>> +     __be16 buffer[8];
+>> +};
+>> +
+>> +int hmc5843_common_probe(struct device *dev, struct regmap *regmap,
+>> +                      enum hmc5843_ids id, const char *name);
+>> +int hmc5843_common_remove(struct device *dev);
+>> +
+>> +int hmc5843_common_suspend(struct device *dev);
+>> +int hmc5843_common_resume(struct device *dev);
+>> +
+>> +#ifdef CONFIG_PM_SLEEP
+>> +static SIMPLE_DEV_PM_OPS(hmc5843_pm_ops,
+>> +             hmc5843_common_suspend,
+>> +             hmc5843_common_resume);
+>> +#define HMC5843_PM_OPS (&hmc5843_pm_ops)
+>> +#else
+>> +#define HMC5843_PM_OPS NULL
+>> +#endif
+>> +
+>> +#endif /* HMC5843_CORE_H */
+>> diff --git a/drivers/iio/magnetometer/hmc5843_core.c b/drivers/iio/magnetometer/hmc5843_core.c
+>> new file mode 100644
+>> index 0000000..77882b4
+>> --- /dev/null
+>> +++ b/drivers/iio/magnetometer/hmc5843_core.c
+>> @@ -0,0 +1,686 @@
+>> +/*
+>> + * Device driver for the the HMC5843 multi-chip module designed
+>> + * for low field magnetic sensing.
+>> + *
+>> + * Copyright (C) 2010 Texas Instruments
+>> + *
+>> + * Author: Shubhrajyoti Datta <shubhrajyoti-l0cyMroinI0@public.gmane.org>
+>> + * Acknowledgment: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> for valuable inputs.
+>> + * Support for HMC5883 and HMC5883L by Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>.
+>> + * Split to multiple files by Josef Gajdusek <atx-MwjtXicnQwU@public.gmane.org> - 2014
+>> + *
+>> + * This program is free software; you can redistribute it and/or modify
+>> + * it under the terms of the GNU General Public License as published by
+>> + * the Free Software Foundation; either version 2 of the License, or
+>> + * (at your option) any later version.
+>> + *
+>> + * This program is distributed in the hope that it will be useful,
+>> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+>> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+>> + * GNU General Public License for more details.
+>> + */
+>> +
+>> +#include <linux/module.h>
+>> +#include <linux/regmap.h>
+>> +#include <linux/iio/iio.h>
+>> +#include <linux/iio/sysfs.h>
+>> +#include <linux/iio/trigger_consumer.h>
+>> +#include <linux/iio/buffer.h>
+>> +#include <linux/iio/triggered_buffer.h>
+>> +#include <linux/delay.h>
+>> +
+>> +#include "hmc5843.h"
+>> +
+>> +/*
+>> + * Range gain settings in (+-)Ga
+>> + * Beware: HMC5843 and HMC5883 have different recommended sensor field
+>> + * ranges; default corresponds to +-1.0 Ga and +-1.3 Ga, respectively
+>> + */
+>> +#define HMC5843_RANGE_GAIN_OFFSET            0x05
+>> +#define HMC5843_RANGE_GAIN_DEFAULT           0x01
+>> +#define HMC5843_RANGE_GAIN_MASK              0xe0
+>> +
+>> +/* Device status */
+>> +#define HMC5843_DATA_READY                   0x01
+>> +#define HMC5843_DATA_OUTPUT_LOCK             0x02
+>> +
+>> +/* Mode register configuration */
+>> +#define HMC5843_MODE_CONVERSION_CONTINUOUS   0x00
+>> +#define HMC5843_MODE_CONVERSION_SINGLE               0x01
+>> +#define HMC5843_MODE_IDLE                    0x02
+>> +#define HMC5843_MODE_SLEEP                   0x03
+>> +#define HMC5843_MODE_MASK                    0x03
+>> +
+>> +/*
+>> + * HMC5843: Minimum data output rate
+>> + * HMC5883: Typical data output rate
+>> + */
+>> +#define HMC5843_RATE_OFFSET                  0x02
+>> +#define HMC5843_RATE_DEFAULT                 0x04
+>> +#define HMC5843_RATE_MASK            0x1c
+>> +
+>> +/* Device measurement configuration */
+>> +#define HMC5843_MEAS_CONF_NORMAL             0x00
+>> +#define HMC5843_MEAS_CONF_POSITIVE_BIAS              0x01
+>> +#define HMC5843_MEAS_CONF_NEGATIVE_BIAS              0x02
+>> +#define HMC5843_MEAS_CONF_MASK                       0x03
+>> +
+>> +/*
+>> + * API for setting the measurement configuration to
+>> + * Normal, Positive bias and Negative bias
+>> + *
+>> + * From the datasheet:
+>> + * 0 - Normal measurement configuration (default): In normal measurement
+>> + *     configuration the device follows normal measurement flow. Pins BP
+>> + *     and BN are left floating and high impedance.
+>> + *
+>> + * 1 - Positive bias configuration: In positive bias configuration, a
+>> + *     positive current is forced across the resistive load on pins BP
+>> + *     and BN.
+>> + *
+>> + * 2 - Negative bias configuration. In negative bias configuration, a
+>> + *     negative current is forced across the resistive load on pins BP
+>> + *     and BN.
+>> + *
+>> + * 3 - Only available on HMC5983. Magnetic sensor is disabled.
+>> + *     Temperature sensor is enabled.
+>> + */
+>> +
+>> +static const char *const hmc5843_meas_conf_modes[] = {"normal", "positivebias",
+>> +                                                   "negativebias"};
+>> +
+>> +static const char *const hmc5983_meas_conf_modes[] = {"normal", "positivebias",
+>> +                                                   "negativebias",
+>> +                                                   "disabled"};
+>> +/* Scaling factors: 10000000/Gain */
+>> +static const int hmc5843_regval_to_nanoscale[] = {
+>> +     6173, 7692, 10309, 12821, 18868, 21739, 25641, 35714
+>> +};
+>> +
+>> +static const int hmc5883_regval_to_nanoscale[] = {
+>> +     7812, 9766, 13021, 16287, 24096, 27701, 32573, 45662
+>> +};
+>> +
+>> +static const int hmc5883l_regval_to_nanoscale[] = {
+>> +     7299, 9174, 12195, 15152, 22727, 25641, 30303, 43478
+>> +};
+>> +
+>> +/*
+>> + * From the datasheet:
+>> + * Value     | HMC5843               | HMC5883/HMC5883L
+>> + *           | Data output rate (Hz) | Data output rate (Hz)
+>> + * 0         | 0.5                   | 0.75
+>> + * 1         | 1                     | 1.5
+>> + * 2         | 2                     | 3
+>> + * 3         | 5                     | 7.5
+>> + * 4         | 10 (default)          | 15
+>> + * 5         | 20                    | 30
+>> + * 6         | 50                    | 75
+>> + * 7         | Not used              | Not used
+>> + */
+>> +static const int hmc5843_regval_to_samp_freq[][2] = {
+>> +     {0, 500000}, {1, 0}, {2, 0}, {5, 0}, {10, 0}, {20, 0}, {50, 0}
+>> +};
+>> +
+>> +static const int hmc5883_regval_to_samp_freq[][2] = {
+>> +     {0, 750000}, {1, 500000}, {3, 0}, {7, 500000}, {15, 0}, {30, 0},
+>> +     {75, 0}
+>> +};
+>> +
+>> +static const int hmc5983_regval_to_samp_freq[][2] = {
+>> +     {0, 750000}, {1, 500000}, {3, 0}, {7, 500000}, {15, 0}, {30, 0},
+>> +     {75, 0}, {220, 0}
+>> +};
+>> +
+>> +/* Describe chip variants */
+>> +struct hmc5843_chip_info {
+>> +     const struct iio_chan_spec *channels;
+>> +     const int (*regval_to_samp_freq)[2];
+>> +     const int n_regval_to_samp_freq;
+>> +     const int *regval_to_nanoscale;
+>> +     const int n_regval_to_nanoscale;
+>> +};
+>> +
+>> +/* The lower two bits contain the current conversion mode */
+>> +static s32 hmc5843_set_mode(struct hmc5843_data *data, u8 operating_mode)
+>> +{
+>> +     int ret;
+>> +
+>> +     mutex_lock(&data->lock);
+>> +     ret = regmap_update_bits(data->regmap, HMC5843_MODE_REG,
+>> +                              HMC5843_MODE_MASK, operating_mode);
+>> +     mutex_unlock(&data->lock);
+>> +
+>> +     return ret;
+>> +}
+>> +
+>> +static int hmc5843_wait_measurement(struct hmc5843_data *data)
+>> +{
+>> +     int tries = 150;
+>> +     unsigned int val;
+>> +     int ret;
+>> +
+>> +     while (tries-- > 0) {
+>> +             ret = regmap_read(data->regmap, HMC5843_STATUS_REG, &val);
+>> +             if (ret < 0)
+>> +                     return ret;
+>> +             if (val & HMC5843_DATA_READY)
+>> +                     break;
+>> +             msleep(20);
+>> +     }
+>> +
+>> +     if (tries < 0) {
+>> +             dev_err(data->dev, "data not ready\n");
+>> +             return -EIO;
+>> +     }
+>> +
+>> +     return 0;
+>> +}
+>> +
+>> +/* Return the measurement value from the specified channel */
+>> +static int hmc5843_read_measurement(struct hmc5843_data *data,
+>> +                                 int idx, int *val)
+>> +{
+>> +     __be16 values[3];
+>> +     int ret;
+>> +
+>> +     mutex_lock(&data->lock);
+>> +     ret = hmc5843_wait_measurement(data);
+>> +     if (ret < 0) {
+>> +             mutex_unlock(&data->lock);
+>> +             return ret;
+>> +     }
+>> +     ret = regmap_bulk_read(data->regmap, HMC5843_DATA_OUT_MSB_REGS,
+>> +                            values, sizeof(values));
+>> +     mutex_unlock(&data->lock);
+>> +     if (ret < 0)
+>> +             return ret;
+>> +
+>> +     *val = sign_extend32(be16_to_cpu(values[idx]), 15);
+>> +     return IIO_VAL_INT;
+>> +}
+>> +
+>> +static int hmc5843_set_meas_conf(struct hmc5843_data *data, u8 meas_conf)
+>> +{
+>> +     int ret;
+>> +
+>> +     mutex_lock(&data->lock);
+>> +     ret = regmap_update_bits(data->regmap, HMC5843_CONFIG_REG_A,
+>> +                              HMC5843_MEAS_CONF_MASK, meas_conf);
+>> +     mutex_unlock(&data->lock);
+>> +
+>> +     return ret;
+>> +}
+>> +
+>> +static
+>> +int hmc5843_show_measurement_configuration(struct iio_dev *indio_dev,
+>> +                                        const struct iio_chan_spec *chan)
+>> +{
+>> +     struct hmc5843_data *data = iio_priv(indio_dev);
+>> +     unsigned int val;
+>> +     int ret;
+>> +
+>> +     ret = regmap_read(data->regmap, HMC5843_CONFIG_REG_A, &val);
+>> +     if (ret)
+>> +             return ret;
+>> +
+>> +     return val & HMC5843_MEAS_CONF_MASK;
+>> +}
+>> +
+>> +static
+>> +int hmc5843_set_measurement_configuration(struct iio_dev *indio_dev,
+>> +                                       const struct iio_chan_spec *chan,
+>> +                                       unsigned int meas_conf)
+>> +{
+>> +     struct hmc5843_data *data = iio_priv(indio_dev);
+>> +
+>> +     return hmc5843_set_meas_conf(data, meas_conf);
+>> +}
+>> +
+>> +static const struct iio_enum hmc5843_meas_conf_enum = {
+>> +     .items = hmc5843_meas_conf_modes,
+>> +     .num_items = ARRAY_SIZE(hmc5843_meas_conf_modes),
+>> +     .get = hmc5843_show_measurement_configuration,
+>> +     .set = hmc5843_set_measurement_configuration,
+>> +};
+>> +
+>> +static const struct iio_chan_spec_ext_info hmc5843_ext_info[] = {
+>> +     IIO_ENUM("meas_conf", true, &hmc5843_meas_conf_enum),
+>> +     IIO_ENUM_AVAILABLE("meas_conf", &hmc5843_meas_conf_enum),
+>> +     { },
+>> +};
+>> +
+>> +static const struct iio_enum hmc5983_meas_conf_enum = {
+>> +     .items = hmc5983_meas_conf_modes,
+>> +     .num_items = ARRAY_SIZE(hmc5983_meas_conf_modes),
+>> +     .get = hmc5843_show_measurement_configuration,
+>> +     .set = hmc5843_set_measurement_configuration,
+>> +};
+>> +
+>> +static const struct iio_chan_spec_ext_info hmc5983_ext_info[] = {
+>> +     IIO_ENUM("meas_conf", true, &hmc5983_meas_conf_enum),
+>> +     IIO_ENUM_AVAILABLE("meas_conf", &hmc5983_meas_conf_enum),
+>> +     { },
+>> +};
+>> +
+>> +static
+>> +ssize_t hmc5843_show_samp_freq_avail(struct device *dev,
+>> +                                  struct device_attribute *attr, char *buf)
+>> +{
+>> +     struct hmc5843_data *data = iio_priv(dev_to_iio_dev(dev));
+>> +     size_t len = 0;
+>> +     int i;
+>> +
+>> +     for (i = 0; i < data->variant->n_regval_to_samp_freq; i++)
+>> +             len += scnprintf(buf + len, PAGE_SIZE - len,
+>> +                     "%d.%d ", data->variant->regval_to_samp_freq[i][0],
+>> +                     data->variant->regval_to_samp_freq[i][1]);
+>> +
+>> +     /* replace trailing space by newline */
+>> +     buf[len - 1] = '\n';
+>> +
+>> +     return len;
+>> +}
+>> +
+>> +static IIO_DEV_ATTR_SAMP_FREQ_AVAIL(hmc5843_show_samp_freq_avail);
+>> +
+>> +static int hmc5843_set_samp_freq(struct hmc5843_data *data, u8 rate)
+>> +{
+>> +     int ret;
+>> +
+>> +     mutex_lock(&data->lock);
+>> +     ret = regmap_update_bits(data->regmap, HMC5843_CONFIG_REG_A,
+>> +                              HMC5843_RATE_MASK,
+>> +                              rate << HMC5843_RATE_OFFSET);
+>> +     mutex_unlock(&data->lock);
+>> +
+>> +     return ret;
+>> +}
+>> +
+>> +static int hmc5843_get_samp_freq_index(struct hmc5843_data *data,
+>> +                                    int val, int val2)
+>> +{
+>> +     int i;
+>> +
+>> +     for (i = 0; i < data->variant->n_regval_to_samp_freq; i++)
+>> +             if (val == data->variant->regval_to_samp_freq[i][0] &&
+>> +                 val2 == data->variant->regval_to_samp_freq[i][1])
+>> +                     return i;
+>> +
+>> +     return -EINVAL;
+>> +}
+>> +
+>> +static int hmc5843_set_range_gain(struct hmc5843_data *data, u8 range)
+>> +{
+>> +     int ret;
+>> +
+>> +     mutex_lock(&data->lock);
+>> +     ret = regmap_update_bits(data->regmap, HMC5843_CONFIG_REG_B,
+>> +                              HMC5843_RANGE_GAIN_MASK,
+>> +                              range << HMC5843_RANGE_GAIN_OFFSET);
+>> +     mutex_unlock(&data->lock);
+>> +
+>> +     return ret;
+>> +}
+>> +
+>> +static ssize_t hmc5843_show_scale_avail(struct device *dev,
+>> +                                     struct device_attribute *attr,
+>> +                                     char *buf)
+>> +{
+>> +     struct hmc5843_data *data = iio_priv(dev_to_iio_dev(dev));
+>> +
+>> +     size_t len = 0;
+>> +     int i;
+>> +
+>> +     for (i = 0; i < data->variant->n_regval_to_nanoscale; i++)
+>> +             len += scnprintf(buf + len, PAGE_SIZE - len,
+>> +                     "0.%09d ", data->variant->regval_to_nanoscale[i]);
+>> +
+>> +     /* replace trailing space by newline */
+>> +     buf[len - 1] = '\n';
+>> +
+>> +     return len;
+>> +}
+>> +
+>> +static IIO_DEVICE_ATTR(scale_available, S_IRUGO,
+>> +     hmc5843_show_scale_avail, NULL, 0);
+>> +
+>> +static int hmc5843_get_scale_index(struct hmc5843_data *data, int val, int val2)
+>> +{
+>> +     int i;
+>> +
+>> +     if (val)
+>> +             return -EINVAL;
+>> +
+>> +     for (i = 0; i < data->variant->n_regval_to_nanoscale; i++)
+>> +             if (val2 == data->variant->regval_to_nanoscale[i])
+>> +                     return i;
+>> +
+>> +     return -EINVAL;
+>> +}
+>> +
+>> +static int hmc5843_read_raw(struct iio_dev *indio_dev,
+>> +                         struct iio_chan_spec const *chan,
+>> +                         int *val, int *val2, long mask)
+>> +{
+>> +     struct hmc5843_data *data = iio_priv(indio_dev);
+>> +     unsigned int rval;
+>> +     int ret;
+>> +
+>> +     switch (mask) {
+>> +     case IIO_CHAN_INFO_RAW:
+>> +             return hmc5843_read_measurement(data, chan->scan_index, val);
+>> +     case IIO_CHAN_INFO_SCALE:
+>> +             ret = regmap_read(data->regmap, HMC5843_CONFIG_REG_B, &rval);
+>> +             if (ret < 0)
+>> +                     return ret;
+>> +             rval >>= HMC5843_RANGE_GAIN_OFFSET;
+>> +             *val = 0;
+>> +             *val2 = data->variant->regval_to_nanoscale[rval];
+>> +             return IIO_VAL_INT_PLUS_NANO;
+>> +     case IIO_CHAN_INFO_SAMP_FREQ:
+>> +             ret = regmap_read(data->regmap, HMC5843_CONFIG_REG_A, &rval);
+>> +             if (ret < 0)
+>> +                     return ret;
+>> +             rval >>= HMC5843_RATE_OFFSET;
+>> +             *val = data->variant->regval_to_samp_freq[rval][0];
+>> +             *val2 = data->variant->regval_to_samp_freq[rval][1];
+>> +             return IIO_VAL_INT_PLUS_MICRO;
+>> +     }
+>> +     return -EINVAL;
+>> +}
+>> +
+>> +static int hmc5843_write_raw(struct iio_dev *indio_dev,
+>> +                          struct iio_chan_spec const *chan,
+>> +                          int val, int val2, long mask)
+>> +{
+>> +     struct hmc5843_data *data = iio_priv(indio_dev);
+>> +     int rate, range;
+>> +
+>> +     switch (mask) {
+>> +     case IIO_CHAN_INFO_SAMP_FREQ:
+>> +             rate = hmc5843_get_samp_freq_index(data, val, val2);
+>> +             if (rate < 0)
+>> +                     return -EINVAL;
+>> +
+>> +             return hmc5843_set_samp_freq(data, rate);
+>> +     case IIO_CHAN_INFO_SCALE:
+>> +             range = hmc5843_get_scale_index(data, val, val2);
+>> +             if (range < 0)
+>> +                     return -EINVAL;
+>> +
+>> +             return hmc5843_set_range_gain(data, range);
+>> +     default:
+>> +             return -EINVAL;
+>> +     }
+>> +}
+>> +
+>> +static int hmc5843_write_raw_get_fmt(struct iio_dev *indio_dev,
+>> +                                  struct iio_chan_spec const *chan,
+>> +                                  long mask)
+>> +{
+>> +     switch (mask) {
+>> +     case IIO_CHAN_INFO_SAMP_FREQ:
+>> +             return IIO_VAL_INT_PLUS_MICRO;
+>> +     case IIO_CHAN_INFO_SCALE:
+>> +             return IIO_VAL_INT_PLUS_NANO;
+>> +     default:
+>> +             return -EINVAL;
+>> +     }
+>> +}
+>> +
+>> +static irqreturn_t hmc5843_trigger_handler(int irq, void *p)
+>> +{
+>> +     struct iio_poll_func *pf = p;
+>> +     struct iio_dev *indio_dev = pf->indio_dev;
+>> +     struct hmc5843_data *data = iio_priv(indio_dev);
+>> +     int ret;
+>> +
+>> +     mutex_lock(&data->lock);
+>> +     ret = hmc5843_wait_measurement(data);
+>> +     if (ret < 0) {
+>> +             mutex_unlock(&data->lock);
+>> +             goto done;
+>> +     }
+>> +
+>> +     ret = regmap_bulk_read(data->regmap, HMC5843_DATA_OUT_MSB_REGS,
+>> +                            data->buffer, 3 * sizeof(__be16));
+>> +
+>> +     mutex_unlock(&data->lock);
+>> +     if (ret < 0)
+>> +             goto done;
+>> +
+>> +     iio_push_to_buffers_with_timestamp(indio_dev, data->buffer,
+>> +                                        iio_get_time_ns());
+>> +
+>> +done:
+>> +     iio_trigger_notify_done(indio_dev->trig);
+>> +
+>> +     return IRQ_HANDLED;
+>> +}
+>> +
+>> +#define HMC5843_CHANNEL(axis, idx)                                   \
+>> +     {                                                               \
+>> +             .type = IIO_MAGN,                                       \
+>> +             .modified = 1,                                          \
+>> +             .channel2 = IIO_MOD_##axis,                             \
+>> +             .info_mask_separate = BIT(IIO_CHAN_INFO_RAW),           \
+>> +             .info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE) |  \
+>> +                     BIT(IIO_CHAN_INFO_SAMP_FREQ),                   \
+>> +             .scan_index = idx,                                      \
+>> +             .scan_type = {                                          \
+>> +                     .sign = 's',                                    \
+>> +                     .realbits = 16,                                 \
+>> +                     .storagebits = 16,                              \
+>> +                     .endianness = IIO_BE,                           \
+>> +             },                                                      \
+>> +             .ext_info = hmc5843_ext_info,   \
+>> +     }
+>> +
+>> +#define HMC5983_CHANNEL(axis, idx)                                   \
+>> +     {                                                               \
+>> +             .type = IIO_MAGN,                                       \
+>> +             .modified = 1,                                          \
+>> +             .channel2 = IIO_MOD_##axis,                             \
+>> +             .info_mask_separate = BIT(IIO_CHAN_INFO_RAW),           \
+>> +             .info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE) |  \
+>> +                     BIT(IIO_CHAN_INFO_SAMP_FREQ),                   \
+>> +             .scan_index = idx,                                      \
+>> +             .scan_type = {                                          \
+>> +                     .sign = 's',                                    \
+>> +                     .realbits = 16,                                 \
+>> +                     .storagebits = 16,                              \
+>> +                     .endianness = IIO_BE,                           \
+>> +             },                                                      \
+>> +             .ext_info = hmc5983_ext_info,   \
+>> +     }
+>> +
+>> +static const struct iio_chan_spec hmc5843_channels[] = {
+>> +     HMC5843_CHANNEL(X, 0),
+>> +     HMC5843_CHANNEL(Y, 1),
+>> +     HMC5843_CHANNEL(Z, 2),
+>> +     IIO_CHAN_SOFT_TIMESTAMP(3),
+>> +};
+>> +
+>> +/* Beware: Y and Z are exchanged on HMC5883 and 5983 */
+>> +static const struct iio_chan_spec hmc5883_channels[] = {
+>> +     HMC5843_CHANNEL(X, 0),
+>> +     HMC5843_CHANNEL(Z, 1),
+>> +     HMC5843_CHANNEL(Y, 2),
+>> +     IIO_CHAN_SOFT_TIMESTAMP(3),
+>> +};
+>> +
+>> +static const struct iio_chan_spec hmc5983_channels[] = {
+>> +     HMC5983_CHANNEL(X, 0),
+>> +     HMC5983_CHANNEL(Z, 1),
+>> +     HMC5983_CHANNEL(Y, 2),
+>> +     IIO_CHAN_SOFT_TIMESTAMP(3),
+>> +};
+>> +
+>> +static struct attribute *hmc5843_attributes[] = {
+>> +     &iio_dev_attr_scale_available.dev_attr.attr,
+>> +     &iio_dev_attr_sampling_frequency_available.dev_attr.attr,
+>> +     NULL
+>> +};
+>> +
+>> +static const struct attribute_group hmc5843_group = {
+>> +     .attrs = hmc5843_attributes,
+>> +};
+>> +
+>> +static const struct hmc5843_chip_info hmc5843_chip_info_tbl[] = {
+>> +     [HMC5843_ID] = {
+>> +             .channels = hmc5843_channels,
+>> +             .regval_to_samp_freq = hmc5843_regval_to_samp_freq,
+>> +             .n_regval_to_samp_freq =
+>> +                             ARRAY_SIZE(hmc5843_regval_to_samp_freq),
+>> +             .regval_to_nanoscale = hmc5843_regval_to_nanoscale,
+>> +             .n_regval_to_nanoscale =
+>> +                             ARRAY_SIZE(hmc5843_regval_to_nanoscale),
+>> +     },
+>> +     [HMC5883_ID] = {
+>> +             .channels = hmc5883_channels,
+>> +             .regval_to_samp_freq = hmc5883_regval_to_samp_freq,
+>> +             .n_regval_to_samp_freq =
+>> +                             ARRAY_SIZE(hmc5883_regval_to_samp_freq),
+>> +             .regval_to_nanoscale = hmc5883_regval_to_nanoscale,
+>> +             .n_regval_to_nanoscale =
+>> +                             ARRAY_SIZE(hmc5883_regval_to_nanoscale),
+>> +     },
+>> +     [HMC5883L_ID] = {
+>> +             .channels = hmc5883_channels,
+>> +             .regval_to_samp_freq = hmc5883_regval_to_samp_freq,
+>> +             .n_regval_to_samp_freq =
+>> +                             ARRAY_SIZE(hmc5883_regval_to_samp_freq),
+>> +             .regval_to_nanoscale = hmc5883l_regval_to_nanoscale,
+>> +             .n_regval_to_nanoscale =
+>> +                             ARRAY_SIZE(hmc5883l_regval_to_nanoscale),
+>> +     },
+>> +     [HMC5983_ID] = {
+>> +             .channels = hmc5983_channels,
+>> +             .regval_to_samp_freq = hmc5983_regval_to_samp_freq,
+>> +             .n_regval_to_samp_freq =
+>> +                             ARRAY_SIZE(hmc5983_regval_to_samp_freq),
+>> +             .regval_to_nanoscale = hmc5883l_regval_to_nanoscale,
+>> +             .n_regval_to_nanoscale =
+>> +                             ARRAY_SIZE(hmc5883l_regval_to_nanoscale),
+>> +     }
+>> +};
+>> +
+>> +static int hmc5843_init(struct hmc5843_data *data)
+>> +{
+>> +     int ret;
+>> +     u8 id[3];
+>> +
+>> +     ret = regmap_bulk_read(data->regmap, HMC5843_ID_REG,
+>> +                            id, ARRAY_SIZE(id));
+>> +     if (ret < 0)
+>> +             return ret;
+>> +     if (id[0] != 'H' || id[1] != '4' || id[2] != '3') {
+>> +             dev_err(data->dev, "no HMC5843/5883/5883L/5983 sensor\n");
+>> +             return -ENODEV;
+>> +     }
+>> +
+>> +     ret = hmc5843_set_meas_conf(data, HMC5843_MEAS_CONF_NORMAL);
+>> +     if (ret < 0)
+>> +             return ret;
+>> +     ret = hmc5843_set_samp_freq(data, HMC5843_RATE_DEFAULT);
+>> +     if (ret < 0)
+>> +             return ret;
+>> +     ret = hmc5843_set_range_gain(data, HMC5843_RANGE_GAIN_DEFAULT);
+>> +     if (ret < 0)
+>> +             return ret;
+>> +     return hmc5843_set_mode(data, HMC5843_MODE_CONVERSION_CONTINUOUS);
+>> +}
+>> +
+>> +static const struct iio_info hmc5843_info = {
+>> +     .attrs = &hmc5843_group,
+>> +     .read_raw = &hmc5843_read_raw,
+>> +     .write_raw = &hmc5843_write_raw,
+>> +     .write_raw_get_fmt = &hmc5843_write_raw_get_fmt,
+>> +     .driver_module = THIS_MODULE,
+>> +};
+>> +
+>> +static const unsigned long hmc5843_scan_masks[] = {0x7, 0};
+>> +
+>> +int hmc5843_common_suspend(struct device *dev)
+>> +{
+>> +     return hmc5843_set_mode(iio_priv(dev_get_drvdata(dev)),
+>> +                             HMC5843_MODE_SLEEP);
+>> +}
+>> +EXPORT_SYMBOL(hmc5843_common_suspend);
+>> +
+>> +int hmc5843_common_resume(struct device *dev)
+>> +{
+>> +     return hmc5843_set_mode(iio_priv(dev_get_drvdata(dev)),
+>> +             HMC5843_MODE_CONVERSION_CONTINUOUS);
+>> +}
+>> +EXPORT_SYMBOL(hmc5843_common_resume);
+>> +
+>> +int hmc5843_common_probe(struct device *dev, struct regmap *regmap,
+>> +                      enum hmc5843_ids id, const char *name)
+>> +{
+>> +     struct hmc5843_data *data;
+>> +     struct iio_dev *indio_dev;
+>> +     int ret;
+>> +
+>> +     indio_dev = devm_iio_device_alloc(dev, sizeof(*data));
+>> +     if (!indio_dev)
+>> +             return -ENOMEM;
+>> +
+>> +     dev_set_drvdata(dev, indio_dev);
+>> +
+>> +     /* default settings at probe */
+>> +     data = iio_priv(indio_dev);
+>> +     data->dev = dev;
+>> +     data->regmap = regmap;
+>> +     data->variant = &hmc5843_chip_info_tbl[id];
+>> +     mutex_init(&data->lock);
+>> +
+>> +     indio_dev->dev.parent = dev;
+>> +     indio_dev->name = name;
+>> +     indio_dev->info = &hmc5843_info;
+>> +     indio_dev->modes = INDIO_DIRECT_MODE;
+>> +     indio_dev->channels = data->variant->channels;
+>> +     indio_dev->num_channels = 4;
+>> +     indio_dev->available_scan_masks = hmc5843_scan_masks;
+>> +
+>> +     ret = hmc5843_init(data);
+>> +     if (ret < 0)
+>> +             return ret;
+>> +
+>> +     ret = iio_triggered_buffer_setup(indio_dev, NULL,
+>> +                                      hmc5843_trigger_handler, NULL);
+>> +     if (ret < 0)
+>> +             goto buffer_setup_err;
+>> +
+>> +     ret = iio_device_register(indio_dev);
+>> +     if (ret < 0)
+>> +             goto buffer_cleanup;
+>> +
+>> +     return 0;
+>> +
+>> +buffer_cleanup:
+>> +     iio_triggered_buffer_cleanup(indio_dev);
+>> +buffer_setup_err:
+>> +     hmc5843_set_mode(iio_priv(indio_dev), HMC5843_MODE_SLEEP);
+>> +     return ret;
+>> +}
+>> +EXPORT_SYMBOL(hmc5843_common_probe);
+>> +
+>> +int hmc5843_common_remove(struct device *dev)
+>> +{
+>> +     struct iio_dev *indio_dev = dev_get_drvdata(dev);
+>> +
+>> +     iio_device_unregister(indio_dev);
+>> +     iio_triggered_buffer_cleanup(indio_dev);
+>> +
+>> +     /*  sleep mode to save power */
+>> +     hmc5843_set_mode(iio_priv(indio_dev), HMC5843_MODE_SLEEP);
+>> +
+>> +     return 0;
+>> +}
+>> +EXPORT_SYMBOL(hmc5843_common_remove);
+>> +
+>> +MODULE_AUTHOR("Shubhrajyoti Datta <shubhrajyoti-l0cyMroinI0@public.gmane.org>");
+>> +MODULE_DESCRIPTION("HMC5843/5883/5883L/5983 core driver");
+>> +MODULE_LICENSE("GPL");
+>> diff --git a/drivers/iio/magnetometer/hmc5843_i2c.c b/drivers/iio/magnetometer/hmc5843_i2c.c
+>> new file mode 100644
+>> index 0000000..3de7f44
+>> --- /dev/null
+>> +++ b/drivers/iio/magnetometer/hmc5843_i2c.c
+>> @@ -0,0 +1,103 @@
+>> +/*
+>> + * i2c driver for hmc5843/5843/5883/5883l/5983
+>> + *
+>> + * Split from hmc5843.c
+>> + * Copyright (C) Josef Gajdusek <atx-MwjtXicnQwU@public.gmane.org>
+>> + *
+>> + * This program is free software; you can redistribute it and/or modify
+>> + * it under the terms of the GNU General Public License version 2 as
+>> + * published by the Free Software Foundation.
+>> + */
+>> +
+>> +#include <linux/module.h>
+>> +#include <linux/i2c.h>
+>> +#include <linux/regmap.h>
+>> +#include <linux/iio/iio.h>
+>> +#include <linux/iio/triggered_buffer.h>
+>> +
+>> +#include "hmc5843.h"
+>> +
+>> +static const struct regmap_range hmc5843_readable_ranges[] = {
+>> +     regmap_reg_range(0, HMC5843_ID_END),
+>> +};
+>> +
+>> +static const struct regmap_access_table hmc5843_readable_table = {
+>> +     .yes_ranges = hmc5843_readable_ranges,
+>> +     .n_yes_ranges = ARRAY_SIZE(hmc5843_readable_ranges),
+>> +};
+>> +
+>> +static const struct regmap_range hmc5843_writable_ranges[] = {
+>> +     regmap_reg_range(0, HMC5843_MODE_REG),
+>> +};
+>> +
+>> +static const struct regmap_access_table hmc5843_writable_table = {
+>> +     .yes_ranges = hmc5843_writable_ranges,
+>> +     .n_yes_ranges = ARRAY_SIZE(hmc5843_writable_ranges),
+>> +};
+>> +
+>> +static const struct regmap_range hmc5843_volatile_ranges[] = {
+>> +     regmap_reg_range(HMC5843_DATA_OUT_MSB_REGS, HMC5843_STATUS_REG),
+>> +};
+>> +
+>> +static const struct regmap_access_table hmc5843_volatile_table = {
+>> +     .yes_ranges = hmc5843_volatile_ranges,
+>> +     .n_yes_ranges = ARRAY_SIZE(hmc5843_volatile_ranges),
+>> +};
+>> +
+>> +static const struct regmap_config hmc5843_i2c_regmap_config = {
+>> +     .reg_bits = 8,
+>> +     .val_bits = 8,
+>> +
+>> +     .rd_table = &hmc5843_readable_table,
+>> +     .wr_table = &hmc5843_writable_table,
+>> +     .volatile_table = &hmc5843_volatile_table,
+>> +
+>> +     .cache_type = REGCACHE_RBTREE,
+>> +};
+>> +
+>> +static int hmc5843_i2c_probe(struct i2c_client *cli,
+>> +                          const struct i2c_device_id *id)
+>> +{
+>> +     return hmc5843_common_probe(&cli->dev,
+>> +                     devm_regmap_init_i2c(cli, &hmc5843_i2c_regmap_config),
+>> +                     id->driver_data, id->name);
+>> +}
+>> +
+>> +static int hmc5843_i2c_remove(struct i2c_client *client)
+>> +{
+>> +     return hmc5843_common_remove(&client->dev);
+>> +}
+>> +
+>> +static const struct i2c_device_id hmc5843_id[] = {
+>> +     { "hmc5843", HMC5843_ID },
+>> +     { "hmc5883", HMC5883_ID },
+>> +     { "hmc5883l", HMC5883L_ID },
+>> +     { "hmc5983", HMC5983_ID },
+>> +     { }
+>> +};
+>> +MODULE_DEVICE_TABLE(i2c, hmc5843_id);
+>> +
+>> +static const struct of_device_id hmc5843_of_match[] = {
+>> +     { .compatible = "honeywell,hmc5843", .data = (void *)HMC5843_ID },
+>> +     { .compatible = "honeywell,hmc5883", .data = (void *)HMC5883_ID },
+>> +     { .compatible = "honeywell,hmc5883l", .data = (void *)HMC5883L_ID },
+>> +     { .compatible = "honeywell,hmc5983", .data = (void *)HMC5983_ID },
+>> +     {}
+>> +};
+>> +MODULE_DEVICE_TABLE(of, hmc5843_of_match);
+>> +
+>> +static struct i2c_driver hmc5843_driver = {
+>> +     .driver = {
+>> +             .name   = "hmc5843",
+>> +             .pm     = HMC5843_PM_OPS,
+>> +             .of_match_table = hmc5843_of_match,
+>> +     },
+>> +     .id_table       = hmc5843_id,
+>> +     .probe          = hmc5843_i2c_probe,
+>> +     .remove         = hmc5843_i2c_remove,
+>> +};
+>> +module_i2c_driver(hmc5843_driver);
+>> +
+>> +MODULE_AUTHOR("Josef Gajdusek <atx-MwjtXicnQwU@public.gmane.org>");
+>> +MODULE_DESCRIPTION("HMC5843/5883/5883L/5983 i2c driver");
+>> +MODULE_LICENSE("GPL");
+>> diff --git a/drivers/iio/magnetometer/hmc5843_spi.c b/drivers/iio/magnetometer/hmc5843_spi.c
+>> new file mode 100644
+>> index 0000000..535f03a
+>> --- /dev/null
+>> +++ b/drivers/iio/magnetometer/hmc5843_spi.c
+>> @@ -0,0 +1,100 @@
+>> +/*
+>> + * SPI driver for hmc5983
+>> + *
+>> + * Copyright (C) Josef Gajdusek <atx-MwjtXicnQwU@public.gmane.org>
+>> + *
+>> + * This program is free software; you can redistribute it and/or modify
+>> + * it under the terms of the GNU General Public License version 2 as
+>> + * published by the Free Software Foundation.
+>> + */
+>> +
+>> +#include <linux/module.h>
+>> +#include <linux/spi/spi.h>
+>> +#include <linux/iio/iio.h>
+>> +
+>> +#include "hmc5843.h"
+>> +
+>> +static const struct regmap_range hmc5843_readable_ranges[] = {
+>> +             regmap_reg_range(0, HMC5843_ID_END),
+>> +};
+>> +
+>> +static const struct regmap_access_table hmc5843_readable_table = {
+>> +             .yes_ranges = hmc5843_readable_ranges,
+>> +             .n_yes_ranges = ARRAY_SIZE(hmc5843_readable_ranges),
+>> +};
+>> +
+>> +static const struct regmap_range hmc5843_writable_ranges[] = {
+>> +             regmap_reg_range(0, HMC5843_MODE_REG),
+>> +};
+>> +
+>> +static const struct regmap_access_table hmc5843_writable_table = {
+>> +             .yes_ranges = hmc5843_writable_ranges,
+>> +             .n_yes_ranges = ARRAY_SIZE(hmc5843_writable_ranges),
+>> +};
+>> +
+>> +static const struct regmap_range hmc5843_volatile_ranges[] = {
+>> +             regmap_reg_range(HMC5843_DATA_OUT_MSB_REGS, HMC5843_STATUS_REG),
+>> +};
+>> +
+>> +static const struct regmap_access_table hmc5843_volatile_table = {
+>> +             .yes_ranges = hmc5843_volatile_ranges,
+>> +             .n_yes_ranges = ARRAY_SIZE(hmc5843_volatile_ranges),
+>> +};
+>> +
+>> +static const struct regmap_config hmc5843_spi_regmap_config = {
+>> +             .reg_bits = 8,
+>> +             .val_bits = 8,
+>> +
+>> +             .rd_table = &hmc5843_readable_table,
+>> +             .wr_table = &hmc5843_writable_table,
+>> +             .volatile_table = &hmc5843_volatile_table,
+>> +
+>> +             /* Autoincrement address pointer */
+>> +             .read_flag_mask = 0xc0,
+>> +
+>> +             .cache_type = REGCACHE_RBTREE,
+>> +};
+>> +
+>> +static int hmc5843_spi_probe(struct spi_device *spi)
+>> +{
+>> +     int ret;
+>> +     const struct spi_device_id *id = spi_get_device_id(spi);
+>> +
+>> +     spi->mode = SPI_MODE_3;
+>> +     spi->max_speed_hz = 8000000;
+>> +     spi->bits_per_word = 8;
+>> +     ret = spi_setup(spi);
+>> +     if (ret)
+>> +             return ret;
+>> +
+>> +     return hmc5843_common_probe(&spi->dev,
+>> +                     devm_regmap_init_spi(spi, &hmc5843_spi_regmap_config),
+>> +                     id->driver_data, id->name);
+>> +}
+>> +
+>> +static int hmc5843_spi_remove(struct spi_device *spi)
+>> +{
+>> +     return hmc5843_common_remove(&spi->dev);
+>> +}
+>> +
+>> +static const struct spi_device_id hmc5843_id[] = {
+>> +     { "hmc5983", HMC5983_ID },
+>> +     { }
+>> +};
+>> +MODULE_DEVICE_TABLE(spi, hmc5843_id);
+>> +
+>> +static struct spi_driver hmc5843_driver = {
+>> +             .driver = {
+>> +                             .name = "hmc5843",
+>> +                             .pm = HMC5843_PM_OPS,
+>> +             },
+>> +             .id_table = hmc5843_id,
+>> +             .probe = hmc5843_spi_probe,
+>> +             .remove = hmc5843_spi_remove,
+>> +};
+>> +
+>> +module_spi_driver(hmc5843_driver);
+>> +
+>> +MODULE_AUTHOR("Josef Gajdusek <atx-MwjtXicnQwU@public.gmane.org>");
+>> +MODULE_DESCRIPTION("HMC5983 SPI driver");
+>> +MODULE_LICENSE("GPL");
+>> diff --git a/drivers/staging/iio/magnetometer/Kconfig b/drivers/staging/iio/magnetometer/Kconfig
+>> index dec814a..f2f1abd 100644
+>> --- a/drivers/staging/iio/magnetometer/Kconfig
+>> +++ b/drivers/staging/iio/magnetometer/Kconfig
+>> @@ -3,38 +3,6 @@
+>>  #
+>>  menu "Magnetometer sensors"
+>>
+>> -config SENSORS_HMC5843
+>> -     tristate
+>> -     select IIO_BUFFER
+>> -     select IIO_TRIGGERED_BUFFER
+>> -
+>> -config SENSORS_HMC5843_I2C
+>> -     tristate "Honeywell HMC5843/5883/5883L 3-Axis Magnetometer (I2C)"
+>> -     depends on I2C
+>> -     select SENSORS_HMC5843
+>> -     select REGMAP_I2C
+>> -     help
+>> -       Say Y here to add support for the Honeywell HMC5843, HMC5883 and
+>> -       HMC5883L 3-Axis Magnetometer (digital compass).
+>> -
+>> -       This driver can also be compiled as a set of modules.
+>> -       If so, these modules will be created:
+>> -       - hmc5843_core (core functions)
+>> -       - hmc5843_i2c (support for HMC5843, HMC5883, HMC5883L and HMC5983)
+>> -
+>> -config SENSORS_HMC5843_SPI
+>> -     tristate "Honeywell HMC5983 3-Axis Magnetometer (SPI)"
+>> -     depends on SPI_MASTER
+>> -     select SENSORS_HMC5843
+>> -     select REGMAP_SPI
+>> -     help
+>> -       Say Y here to add support for the Honeywell HMC5983 3-Axis Magnetometer
+>> -       (digital compass).
+>> -
+>> -       This driver can also be compiled as a set of modules.
+>> -       If so, these modules will be created:
+>> -       - hmc5843_core (core functions)
+>> -       - hmc5843_spi (support for HMC5983)
+>>
+>>
+>>  endmenu
+>> diff --git a/drivers/staging/iio/magnetometer/Makefile b/drivers/staging/iio/magnetometer/Makefile
+>> index 33761a1..5e4a7e6 100644
+>> --- a/drivers/staging/iio/magnetometer/Makefile
+>> +++ b/drivers/staging/iio/magnetometer/Makefile
+>> @@ -2,6 +2,4 @@
+>>  # Makefile for industrial I/O Magnetometer sensors
+>>  #
+>>
+>> -obj-$(CONFIG_SENSORS_HMC5843)                += hmc5843_core.o
+>> -obj-$(CONFIG_SENSORS_HMC5843_I2C)    += hmc5843_i2c.o
+>> -obj-$(CONFIG_SENSORS_HMC5843_SPI)    += hmc5843_spi.o
+>> +
+>> diff --git a/drivers/staging/iio/magnetometer/hmc5843.h b/drivers/staging/iio/magnetometer/hmc5843.h
+>> deleted file mode 100644
+>> index 76a5d74..0000000
+>> --- a/drivers/staging/iio/magnetometer/hmc5843.h
+>> +++ /dev/null
+>> @@ -1,65 +0,0 @@
+>> -/*
+>> - * Header file for hmc5843 driver
+>> - *
+>> - * Split from hmc5843.c
+>> - * Copyright (C) Josef Gajdusek <atx-MwjtXicnQwU@public.gmane.org>
+>> - *
+>> - * This program is free software; you can redistribute it and/or modify
+>> - * it under the terms of the GNU General Public License version 2 as
+>> - * published by the Free Software Foundation.
+>> - */
+>> -
+>> -#ifndef HMC5843_CORE_H
+>> -#define HMC5843_CORE_H
+>> -
+>> -#include <linux/regmap.h>
+>> -#include <linux/iio/iio.h>
+>> -
+>> -#define HMC5843_CONFIG_REG_A                 0x00
+>> -#define HMC5843_CONFIG_REG_B                 0x01
+>> -#define HMC5843_MODE_REG                     0x02
+>> -#define HMC5843_DATA_OUT_MSB_REGS            0x03
+>> -#define HMC5843_STATUS_REG                   0x09
+>> -#define HMC5843_ID_REG                               0x0a
+>> -#define HMC5843_ID_END                               0x0c
+>> -
+>> -enum hmc5843_ids {
+>> -     HMC5843_ID,
+>> -     HMC5883_ID,
+>> -     HMC5883L_ID,
+>> -     HMC5983_ID,
+>> -};
+>> -
+>> -/**
+>> - * struct hcm5843_data       - device specific data
+>> - * @dev:             actual device
+>> - * @lock:            update and read regmap data
+>> - * @regmap:          hardware access register maps
+>> - * @variant:         describe chip variants
+>> - * @buffer:          3x 16-bit channels + padding + 64-bit timestamp
+>> - */
+>> -struct hmc5843_data {
+>> -     struct device *dev;
+>> -     struct mutex lock;
+>> -     struct regmap *regmap;
+>> -     const struct hmc5843_chip_info *variant;
+>> -     __be16 buffer[8];
+>> -};
+>> -
+>> -int hmc5843_common_probe(struct device *dev, struct regmap *regmap,
+>> -                      enum hmc5843_ids id, const char *name);
+>> -int hmc5843_common_remove(struct device *dev);
+>> -
+>> -int hmc5843_common_suspend(struct device *dev);
+>> -int hmc5843_common_resume(struct device *dev);
+>> -
+>> -#ifdef CONFIG_PM_SLEEP
+>> -static SIMPLE_DEV_PM_OPS(hmc5843_pm_ops,
+>> -             hmc5843_common_suspend,
+>> -             hmc5843_common_resume);
+>> -#define HMC5843_PM_OPS (&hmc5843_pm_ops)
+>> -#else
+>> -#define HMC5843_PM_OPS NULL
+>> -#endif
+>> -
+>> -#endif /* HMC5843_CORE_H */
+>> diff --git a/drivers/staging/iio/magnetometer/hmc5843_core.c b/drivers/staging/iio/magnetometer/hmc5843_core.c
+>> deleted file mode 100644
+>> index 77882b4..0000000
+>> --- a/drivers/staging/iio/magnetometer/hmc5843_core.c
+>> +++ /dev/null
+>> @@ -1,686 +0,0 @@
+>> -/*
+>> - * Device driver for the the HMC5843 multi-chip module designed
+>> - * for low field magnetic sensing.
+>> - *
+>> - * Copyright (C) 2010 Texas Instruments
+>> - *
+>> - * Author: Shubhrajyoti Datta <shubhrajyoti-l0cyMroinI0@public.gmane.org>
+>> - * Acknowledgment: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> for valuable inputs.
+>> - * Support for HMC5883 and HMC5883L by Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>.
+>> - * Split to multiple files by Josef Gajdusek <atx-MwjtXicnQwU@public.gmane.org> - 2014
+>> - *
+>> - * This program is free software; you can redistribute it and/or modify
+>> - * it under the terms of the GNU General Public License as published by
+>> - * the Free Software Foundation; either version 2 of the License, or
+>> - * (at your option) any later version.
+>> - *
+>> - * This program is distributed in the hope that it will be useful,
+>> - * but WITHOUT ANY WARRANTY; without even the implied warranty of
+>> - * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+>> - * GNU General Public License for more details.
+>> - */
+>> -
+>> -#include <linux/module.h>
+>> -#include <linux/regmap.h>
+>> -#include <linux/iio/iio.h>
+>> -#include <linux/iio/sysfs.h>
+>> -#include <linux/iio/trigger_consumer.h>
+>> -#include <linux/iio/buffer.h>
+>> -#include <linux/iio/triggered_buffer.h>
+>> -#include <linux/delay.h>
+>> -
+>> -#include "hmc5843.h"
+>> -
+>> -/*
+>> - * Range gain settings in (+-)Ga
+>> - * Beware: HMC5843 and HMC5883 have different recommended sensor field
+>> - * ranges; default corresponds to +-1.0 Ga and +-1.3 Ga, respectively
+>> - */
+>> -#define HMC5843_RANGE_GAIN_OFFSET            0x05
+>> -#define HMC5843_RANGE_GAIN_DEFAULT           0x01
+>> -#define HMC5843_RANGE_GAIN_MASK              0xe0
+>> -
+>> -/* Device status */
+>> -#define HMC5843_DATA_READY                   0x01
+>> -#define HMC5843_DATA_OUTPUT_LOCK             0x02
+>> -
+>> -/* Mode register configuration */
+>> -#define HMC5843_MODE_CONVERSION_CONTINUOUS   0x00
+>> -#define HMC5843_MODE_CONVERSION_SINGLE               0x01
+>> -#define HMC5843_MODE_IDLE                    0x02
+>> -#define HMC5843_MODE_SLEEP                   0x03
+>> -#define HMC5843_MODE_MASK                    0x03
+>> -
+>> -/*
+>> - * HMC5843: Minimum data output rate
+>> - * HMC5883: Typical data output rate
+>> - */
+>> -#define HMC5843_RATE_OFFSET                  0x02
+>> -#define HMC5843_RATE_DEFAULT                 0x04
+>> -#define HMC5843_RATE_MASK            0x1c
+>> -
+>> -/* Device measurement configuration */
+>> -#define HMC5843_MEAS_CONF_NORMAL             0x00
+>> -#define HMC5843_MEAS_CONF_POSITIVE_BIAS              0x01
+>> -#define HMC5843_MEAS_CONF_NEGATIVE_BIAS              0x02
+>> -#define HMC5843_MEAS_CONF_MASK                       0x03
+>> -
+>> -/*
+>> - * API for setting the measurement configuration to
+>> - * Normal, Positive bias and Negative bias
+>> - *
+>> - * From the datasheet:
+>> - * 0 - Normal measurement configuration (default): In normal measurement
+>> - *     configuration the device follows normal measurement flow. Pins BP
+>> - *     and BN are left floating and high impedance.
+>> - *
+>> - * 1 - Positive bias configuration: In positive bias configuration, a
+>> - *     positive current is forced across the resistive load on pins BP
+>> - *     and BN.
+>> - *
+>> - * 2 - Negative bias configuration. In negative bias configuration, a
+>> - *     negative current is forced across the resistive load on pins BP
+>> - *     and BN.
+>> - *
+>> - * 3 - Only available on HMC5983. Magnetic sensor is disabled.
+>> - *     Temperature sensor is enabled.
+>> - */
+>> -
+>> -static const char *const hmc5843_meas_conf_modes[] = {"normal", "positivebias",
+>> -                                                   "negativebias"};
+>> -
+>> -static const char *const hmc5983_meas_conf_modes[] = {"normal", "positivebias",
+>> -                                                   "negativebias",
+>> -                                                   "disabled"};
+>> -/* Scaling factors: 10000000/Gain */
+>> -static const int hmc5843_regval_to_nanoscale[] = {
+>> -     6173, 7692, 10309, 12821, 18868, 21739, 25641, 35714
+>> -};
+>> -
+>> -static const int hmc5883_regval_to_nanoscale[] = {
+>> -     7812, 9766, 13021, 16287, 24096, 27701, 32573, 45662
+>> -};
+>> -
+>> -static const int hmc5883l_regval_to_nanoscale[] = {
+>> -     7299, 9174, 12195, 15152, 22727, 25641, 30303, 43478
+>> -};
+>> -
+>> -/*
+>> - * From the datasheet:
+>> - * Value     | HMC5843               | HMC5883/HMC5883L
+>> - *           | Data output rate (Hz) | Data output rate (Hz)
+>> - * 0         | 0.5                   | 0.75
+>> - * 1         | 1                     | 1.5
+>> - * 2         | 2                     | 3
+>> - * 3         | 5                     | 7.5
+>> - * 4         | 10 (default)          | 15
+>> - * 5         | 20                    | 30
+>> - * 6         | 50                    | 75
+>> - * 7         | Not used              | Not used
+>> - */
+>> -static const int hmc5843_regval_to_samp_freq[][2] = {
+>> -     {0, 500000}, {1, 0}, {2, 0}, {5, 0}, {10, 0}, {20, 0}, {50, 0}
+>> -};
+>> -
+>> -static const int hmc5883_regval_to_samp_freq[][2] = {
+>> -     {0, 750000}, {1, 500000}, {3, 0}, {7, 500000}, {15, 0}, {30, 0},
+>> -     {75, 0}
+>> -};
+>> -
+>> -static const int hmc5983_regval_to_samp_freq[][2] = {
+>> -     {0, 750000}, {1, 500000}, {3, 0}, {7, 500000}, {15, 0}, {30, 0},
+>> -     {75, 0}, {220, 0}
+>> -};
+>> -
+>> -/* Describe chip variants */
+>> -struct hmc5843_chip_info {
+>> -     const struct iio_chan_spec *channels;
+>> -     const int (*regval_to_samp_freq)[2];
+>> -     const int n_regval_to_samp_freq;
+>> -     const int *regval_to_nanoscale;
+>> -     const int n_regval_to_nanoscale;
+>> -};
+>> -
+>> -/* The lower two bits contain the current conversion mode */
+>> -static s32 hmc5843_set_mode(struct hmc5843_data *data, u8 operating_mode)
+>> -{
+>> -     int ret;
+>> -
+>> -     mutex_lock(&data->lock);
+>> -     ret = regmap_update_bits(data->regmap, HMC5843_MODE_REG,
+>> -                              HMC5843_MODE_MASK, operating_mode);
+>> -     mutex_unlock(&data->lock);
+>> -
+>> -     return ret;
+>> -}
+>> -
+>> -static int hmc5843_wait_measurement(struct hmc5843_data *data)
+>> -{
+>> -     int tries = 150;
+>> -     unsigned int val;
+>> -     int ret;
+>> -
+>> -     while (tries-- > 0) {
+>> -             ret = regmap_read(data->regmap, HMC5843_STATUS_REG, &val);
+>> -             if (ret < 0)
+>> -                     return ret;
+>> -             if (val & HMC5843_DATA_READY)
+>> -                     break;
+>> -             msleep(20);
+>> -     }
+>> -
+>> -     if (tries < 0) {
+>> -             dev_err(data->dev, "data not ready\n");
+>> -             return -EIO;
+>> -     }
+>> -
+>> -     return 0;
+>> -}
+>> -
+>> -/* Return the measurement value from the specified channel */
+>> -static int hmc5843_read_measurement(struct hmc5843_data *data,
+>> -                                 int idx, int *val)
+>> -{
+>> -     __be16 values[3];
+>> -     int ret;
+>> -
+>> -     mutex_lock(&data->lock);
+>> -     ret = hmc5843_wait_measurement(data);
+>> -     if (ret < 0) {
+>> -             mutex_unlock(&data->lock);
+>> -             return ret;
+>> -     }
+>> -     ret = regmap_bulk_read(data->regmap, HMC5843_DATA_OUT_MSB_REGS,
+>> -                            values, sizeof(values));
+>> -     mutex_unlock(&data->lock);
+>> -     if (ret < 0)
+>> -             return ret;
+>> -
+>> -     *val = sign_extend32(be16_to_cpu(values[idx]), 15);
+>> -     return IIO_VAL_INT;
+>> -}
+>> -
+>> -static int hmc5843_set_meas_conf(struct hmc5843_data *data, u8 meas_conf)
+>> -{
+>> -     int ret;
+>> -
+>> -     mutex_lock(&data->lock);
+>> -     ret = regmap_update_bits(data->regmap, HMC5843_CONFIG_REG_A,
+>> -                              HMC5843_MEAS_CONF_MASK, meas_conf);
+>> -     mutex_unlock(&data->lock);
+>> -
+>> -     return ret;
+>> -}
+>> -
+>> -static
+>> -int hmc5843_show_measurement_configuration(struct iio_dev *indio_dev,
+>> -                                        const struct iio_chan_spec *chan)
+>> -{
+>> -     struct hmc5843_data *data = iio_priv(indio_dev);
+>> -     unsigned int val;
+>> -     int ret;
+>> -
+>> -     ret = regmap_read(data->regmap, HMC5843_CONFIG_REG_A, &val);
+>> -     if (ret)
+>> -             return ret;
+>> -
+>> -     return val & HMC5843_MEAS_CONF_MASK;
+>> -}
+>> -
+>> -static
+>> -int hmc5843_set_measurement_configuration(struct iio_dev *indio_dev,
+>> -                                       const struct iio_chan_spec *chan,
+>> -                                       unsigned int meas_conf)
+>> -{
+>> -     struct hmc5843_data *data = iio_priv(indio_dev);
+>> -
+>> -     return hmc5843_set_meas_conf(data, meas_conf);
+>> -}
+>> -
+>> -static const struct iio_enum hmc5843_meas_conf_enum = {
+>> -     .items = hmc5843_meas_conf_modes,
+>> -     .num_items = ARRAY_SIZE(hmc5843_meas_conf_modes),
+>> -     .get = hmc5843_show_measurement_configuration,
+>> -     .set = hmc5843_set_measurement_configuration,
+>> -};
+>> -
+>> -static const struct iio_chan_spec_ext_info hmc5843_ext_info[] = {
+>> -     IIO_ENUM("meas_conf", true, &hmc5843_meas_conf_enum),
+>> -     IIO_ENUM_AVAILABLE("meas_conf", &hmc5843_meas_conf_enum),
+>> -     { },
+>> -};
+>> -
+>> -static const struct iio_enum hmc5983_meas_conf_enum = {
+>> -     .items = hmc5983_meas_conf_modes,
+>> -     .num_items = ARRAY_SIZE(hmc5983_meas_conf_modes),
+>> -     .get = hmc5843_show_measurement_configuration,
+>> -     .set = hmc5843_set_measurement_configuration,
+>> -};
+>> -
+>> -static const struct iio_chan_spec_ext_info hmc5983_ext_info[] = {
+>> -     IIO_ENUM("meas_conf", true, &hmc5983_meas_conf_enum),
+>> -     IIO_ENUM_AVAILABLE("meas_conf", &hmc5983_meas_conf_enum),
+>> -     { },
+>> -};
+>> -
+>> -static
+>> -ssize_t hmc5843_show_samp_freq_avail(struct device *dev,
+>> -                                  struct device_attribute *attr, char *buf)
+>> -{
+>> -     struct hmc5843_data *data = iio_priv(dev_to_iio_dev(dev));
+>> -     size_t len = 0;
+>> -     int i;
+>> -
+>> -     for (i = 0; i < data->variant->n_regval_to_samp_freq; i++)
+>> -             len += scnprintf(buf + len, PAGE_SIZE - len,
+>> -                     "%d.%d ", data->variant->regval_to_samp_freq[i][0],
+>> -                     data->variant->regval_to_samp_freq[i][1]);
+>> -
+>> -     /* replace trailing space by newline */
+>> -     buf[len - 1] = '\n';
+>> -
+>> -     return len;
+>> -}
+>> -
+>> -static IIO_DEV_ATTR_SAMP_FREQ_AVAIL(hmc5843_show_samp_freq_avail);
+>> -
+>> -static int hmc5843_set_samp_freq(struct hmc5843_data *data, u8 rate)
+>> -{
+>> -     int ret;
+>> -
+>> -     mutex_lock(&data->lock);
+>> -     ret = regmap_update_bits(data->regmap, HMC5843_CONFIG_REG_A,
+>> -                              HMC5843_RATE_MASK,
+>> -                              rate << HMC5843_RATE_OFFSET);
+>> -     mutex_unlock(&data->lock);
+>> -
+>> -     return ret;
+>> -}
+>> -
+>> -static int hmc5843_get_samp_freq_index(struct hmc5843_data *data,
+>> -                                    int val, int val2)
+>> -{
+>> -     int i;
+>> -
+>> -     for (i = 0; i < data->variant->n_regval_to_samp_freq; i++)
+>> -             if (val == data->variant->regval_to_samp_freq[i][0] &&
+>> -                 val2 == data->variant->regval_to_samp_freq[i][1])
+>> -                     return i;
+>> -
+>> -     return -EINVAL;
+>> -}
+>> -
+>> -static int hmc5843_set_range_gain(struct hmc5843_data *data, u8 range)
+>> -{
+>> -     int ret;
+>> -
+>> -     mutex_lock(&data->lock);
+>> -     ret = regmap_update_bits(data->regmap, HMC5843_CONFIG_REG_B,
+>> -                              HMC5843_RANGE_GAIN_MASK,
+>> -                              range << HMC5843_RANGE_GAIN_OFFSET);
+>> -     mutex_unlock(&data->lock);
+>> -
+>> -     return ret;
+>> -}
+>> -
+>> -static ssize_t hmc5843_show_scale_avail(struct device *dev,
+>> -                                     struct device_attribute *attr,
+>> -                                     char *buf)
+>> -{
+>> -     struct hmc5843_data *data = iio_priv(dev_to_iio_dev(dev));
+>> -
+>> -     size_t len = 0;
+>> -     int i;
+>> -
+>> -     for (i = 0; i < data->variant->n_regval_to_nanoscale; i++)
+>> -             len += scnprintf(buf + len, PAGE_SIZE - len,
+>> -                     "0.%09d ", data->variant->regval_to_nanoscale[i]);
+>> -
+>> -     /* replace trailing space by newline */
+>> -     buf[len - 1] = '\n';
+>> -
+>> -     return len;
+>> -}
+>> -
+>> -static IIO_DEVICE_ATTR(scale_available, S_IRUGO,
+>> -     hmc5843_show_scale_avail, NULL, 0);
+>> -
+>> -static int hmc5843_get_scale_index(struct hmc5843_data *data, int val, int val2)
+>> -{
+>> -     int i;
+>> -
+>> -     if (val)
+>> -             return -EINVAL;
+>> -
+>> -     for (i = 0; i < data->variant->n_regval_to_nanoscale; i++)
+>> -             if (val2 == data->variant->regval_to_nanoscale[i])
+>> -                     return i;
+>> -
+>> -     return -EINVAL;
+>> -}
+>> -
+>> -static int hmc5843_read_raw(struct iio_dev *indio_dev,
+>> -                         struct iio_chan_spec const *chan,
+>> -                         int *val, int *val2, long mask)
+>> -{
+>> -     struct hmc5843_data *data = iio_priv(indio_dev);
+>> -     unsigned int rval;
+>> -     int ret;
+>> -
+>> -     switch (mask) {
+>> -     case IIO_CHAN_INFO_RAW:
+>> -             return hmc5843_read_measurement(data, chan->scan_index, val);
+>> -     case IIO_CHAN_INFO_SCALE:
+>> -             ret = regmap_read(data->regmap, HMC5843_CONFIG_REG_B, &rval);
+>> -             if (ret < 0)
+>> -                     return ret;
+>> -             rval >>= HMC5843_RANGE_GAIN_OFFSET;
+>> -             *val = 0;
+>> -             *val2 = data->variant->regval_to_nanoscale[rval];
+>> -             return IIO_VAL_INT_PLUS_NANO;
+>> -     case IIO_CHAN_INFO_SAMP_FREQ:
+>> -             ret = regmap_read(data->regmap, HMC5843_CONFIG_REG_A, &rval);
+>> -             if (ret < 0)
+>> -                     return ret;
+>> -             rval >>= HMC5843_RATE_OFFSET;
+>> -             *val = data->variant->regval_to_samp_freq[rval][0];
+>> -             *val2 = data->variant->regval_to_samp_freq[rval][1];
+>> -             return IIO_VAL_INT_PLUS_MICRO;
+>> -     }
+>> -     return -EINVAL;
+>> -}
+>> -
+>> -static int hmc5843_write_raw(struct iio_dev *indio_dev,
+>> -                          struct iio_chan_spec const *chan,
+>> -                          int val, int val2, long mask)
+>> -{
+>> -     struct hmc5843_data *data = iio_priv(indio_dev);
+>> -     int rate, range;
+>> -
+>> -     switch (mask) {
+>> -     case IIO_CHAN_INFO_SAMP_FREQ:
+>> -             rate = hmc5843_get_samp_freq_index(data, val, val2);
+>> -             if (rate < 0)
+>> -                     return -EINVAL;
+>> -
+>> -             return hmc5843_set_samp_freq(data, rate);
+>> -     case IIO_CHAN_INFO_SCALE:
+>> -             range = hmc5843_get_scale_index(data, val, val2);
+>> -             if (range < 0)
+>> -                     return -EINVAL;
+>> -
+>> -             return hmc5843_set_range_gain(data, range);
+>> -     default:
+>> -             return -EINVAL;
+>> -     }
+>> -}
+>> -
+>> -static int hmc5843_write_raw_get_fmt(struct iio_dev *indio_dev,
+>> -                                  struct iio_chan_spec const *chan,
+>> -                                  long mask)
+>> -{
+>> -     switch (mask) {
+>> -     case IIO_CHAN_INFO_SAMP_FREQ:
+>> -             return IIO_VAL_INT_PLUS_MICRO;
+>> -     case IIO_CHAN_INFO_SCALE:
+>> -             return IIO_VAL_INT_PLUS_NANO;
+>> -     default:
+>> -             return -EINVAL;
+>> -     }
+>> -}
+>> -
+>> -static irqreturn_t hmc5843_trigger_handler(int irq, void *p)
+>> -{
+>> -     struct iio_poll_func *pf = p;
+>> -     struct iio_dev *indio_dev = pf->indio_dev;
+>> -     struct hmc5843_data *data = iio_priv(indio_dev);
+>> -     int ret;
+>> -
+>> -     mutex_lock(&data->lock);
+>> -     ret = hmc5843_wait_measurement(data);
+>> -     if (ret < 0) {
+>> -             mutex_unlock(&data->lock);
+>> -             goto done;
+>> -     }
+>> -
+>> -     ret = regmap_bulk_read(data->regmap, HMC5843_DATA_OUT_MSB_REGS,
+>> -                            data->buffer, 3 * sizeof(__be16));
+>> -
+>> -     mutex_unlock(&data->lock);
+>> -     if (ret < 0)
+>> -             goto done;
+>> -
+>> -     iio_push_to_buffers_with_timestamp(indio_dev, data->buffer,
+>> -                                        iio_get_time_ns());
+>> -
+>> -done:
+>> -     iio_trigger_notify_done(indio_dev->trig);
+>> -
+>> -     return IRQ_HANDLED;
+>> -}
+>> -
+>> -#define HMC5843_CHANNEL(axis, idx)                                   \
+>> -     {                                                               \
+>> -             .type = IIO_MAGN,                                       \
+>> -             .modified = 1,                                          \
+>> -             .channel2 = IIO_MOD_##axis,                             \
+>> -             .info_mask_separate = BIT(IIO_CHAN_INFO_RAW),           \
+>> -             .info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE) |  \
+>> -                     BIT(IIO_CHAN_INFO_SAMP_FREQ),                   \
+>> -             .scan_index = idx,                                      \
+>> -             .scan_type = {                                          \
+>> -                     .sign = 's',                                    \
+>> -                     .realbits = 16,                                 \
+>> -                     .storagebits = 16,                              \
+>> -                     .endianness = IIO_BE,                           \
+>> -             },                                                      \
+>> -             .ext_info = hmc5843_ext_info,   \
+>> -     }
+>> -
+>> -#define HMC5983_CHANNEL(axis, idx)                                   \
+>> -     {                                                               \
+>> -             .type = IIO_MAGN,                                       \
+>> -             .modified = 1,                                          \
+>> -             .channel2 = IIO_MOD_##axis,                             \
+>> -             .info_mask_separate = BIT(IIO_CHAN_INFO_RAW),           \
+>> -             .info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE) |  \
+>> -                     BIT(IIO_CHAN_INFO_SAMP_FREQ),                   \
+>> -             .scan_index = idx,                                      \
+>> -             .scan_type = {                                          \
+>> -                     .sign = 's',                                    \
+>> -                     .realbits = 16,                                 \
+>> -                     .storagebits = 16,                              \
+>> -                     .endianness = IIO_BE,                           \
+>> -             },                                                      \
+>> -             .ext_info = hmc5983_ext_info,   \
+>> -     }
+>> -
+>> -static const struct iio_chan_spec hmc5843_channels[] = {
+>> -     HMC5843_CHANNEL(X, 0),
+>> -     HMC5843_CHANNEL(Y, 1),
+>> -     HMC5843_CHANNEL(Z, 2),
+>> -     IIO_CHAN_SOFT_TIMESTAMP(3),
+>> -};
+>> -
+>> -/* Beware: Y and Z are exchanged on HMC5883 and 5983 */
+>> -static const struct iio_chan_spec hmc5883_channels[] = {
+>> -     HMC5843_CHANNEL(X, 0),
+>> -     HMC5843_CHANNEL(Z, 1),
+>> -     HMC5843_CHANNEL(Y, 2),
+>> -     IIO_CHAN_SOFT_TIMESTAMP(3),
+>> -};
+>> -
+>> -static const struct iio_chan_spec hmc5983_channels[] = {
+>> -     HMC5983_CHANNEL(X, 0),
+>> -     HMC5983_CHANNEL(Z, 1),
+>> -     HMC5983_CHANNEL(Y, 2),
+>> -     IIO_CHAN_SOFT_TIMESTAMP(3),
+>> -};
+>> -
+>> -static struct attribute *hmc5843_attributes[] = {
+>> -     &iio_dev_attr_scale_available.dev_attr.attr,
+>> -     &iio_dev_attr_sampling_frequency_available.dev_attr.attr,
+>> -     NULL
+>> -};
+>> -
+>> -static const struct attribute_group hmc5843_group = {
+>> -     .attrs = hmc5843_attributes,
+>> -};
+>> -
+>> -static const struct hmc5843_chip_info hmc5843_chip_info_tbl[] = {
+>> -     [HMC5843_ID] = {
+>> -             .channels = hmc5843_channels,
+>> -             .regval_to_samp_freq = hmc5843_regval_to_samp_freq,
+>> -             .n_regval_to_samp_freq =
+>> -                             ARRAY_SIZE(hmc5843_regval_to_samp_freq),
+>> -             .regval_to_nanoscale = hmc5843_regval_to_nanoscale,
+>> -             .n_regval_to_nanoscale =
+>> -                             ARRAY_SIZE(hmc5843_regval_to_nanoscale),
+>> -     },
+>> -     [HMC5883_ID] = {
+>> -             .channels = hmc5883_channels,
+>> -             .regval_to_samp_freq = hmc5883_regval_to_samp_freq,
+>> -             .n_regval_to_samp_freq =
+>> -                             ARRAY_SIZE(hmc5883_regval_to_samp_freq),
+>> -             .regval_to_nanoscale = hmc5883_regval_to_nanoscale,
+>> -             .n_regval_to_nanoscale =
+>> -                             ARRAY_SIZE(hmc5883_regval_to_nanoscale),
+>> -     },
+>> -     [HMC5883L_ID] = {
+>> -             .channels = hmc5883_channels,
+>> -             .regval_to_samp_freq = hmc5883_regval_to_samp_freq,
+>> -             .n_regval_to_samp_freq =
+>> -                             ARRAY_SIZE(hmc5883_regval_to_samp_freq),
+>> -             .regval_to_nanoscale = hmc5883l_regval_to_nanoscale,
+>> -             .n_regval_to_nanoscale =
+>> -                             ARRAY_SIZE(hmc5883l_regval_to_nanoscale),
+>> -     },
+>> -     [HMC5983_ID] = {
+>> -             .channels = hmc5983_channels,
+>> -             .regval_to_samp_freq = hmc5983_regval_to_samp_freq,
+>> -             .n_regval_to_samp_freq =
+>> -                             ARRAY_SIZE(hmc5983_regval_to_samp_freq),
+>> -             .regval_to_nanoscale = hmc5883l_regval_to_nanoscale,
+>> -             .n_regval_to_nanoscale =
+>> -                             ARRAY_SIZE(hmc5883l_regval_to_nanoscale),
+>> -     }
+>> -};
+>> -
+>> -static int hmc5843_init(struct hmc5843_data *data)
+>> -{
+>> -     int ret;
+>> -     u8 id[3];
+>> -
+>> -     ret = regmap_bulk_read(data->regmap, HMC5843_ID_REG,
+>> -                            id, ARRAY_SIZE(id));
+>> -     if (ret < 0)
+>> -             return ret;
+>> -     if (id[0] != 'H' || id[1] != '4' || id[2] != '3') {
+>> -             dev_err(data->dev, "no HMC5843/5883/5883L/5983 sensor\n");
+>> -             return -ENODEV;
+>> -     }
+>> -
+>> -     ret = hmc5843_set_meas_conf(data, HMC5843_MEAS_CONF_NORMAL);
+>> -     if (ret < 0)
+>> -             return ret;
+>> -     ret = hmc5843_set_samp_freq(data, HMC5843_RATE_DEFAULT);
+>> -     if (ret < 0)
+>> -             return ret;
+>> -     ret = hmc5843_set_range_gain(data, HMC5843_RANGE_GAIN_DEFAULT);
+>> -     if (ret < 0)
+>> -             return ret;
+>> -     return hmc5843_set_mode(data, HMC5843_MODE_CONVERSION_CONTINUOUS);
+>> -}
+>> -
+>> -static const struct iio_info hmc5843_info = {
+>> -     .attrs = &hmc5843_group,
+>> -     .read_raw = &hmc5843_read_raw,
+>> -     .write_raw = &hmc5843_write_raw,
+>> -     .write_raw_get_fmt = &hmc5843_write_raw_get_fmt,
+>> -     .driver_module = THIS_MODULE,
+>> -};
+>> -
+>> -static const unsigned long hmc5843_scan_masks[] = {0x7, 0};
+>> -
+>> -int hmc5843_common_suspend(struct device *dev)
+>> -{
+>> -     return hmc5843_set_mode(iio_priv(dev_get_drvdata(dev)),
+>> -                             HMC5843_MODE_SLEEP);
+>> -}
+>> -EXPORT_SYMBOL(hmc5843_common_suspend);
+>> -
+>> -int hmc5843_common_resume(struct device *dev)
+>> -{
+>> -     return hmc5843_set_mode(iio_priv(dev_get_drvdata(dev)),
+>> -             HMC5843_MODE_CONVERSION_CONTINUOUS);
+>> -}
+>> -EXPORT_SYMBOL(hmc5843_common_resume);
+>> -
+>> -int hmc5843_common_probe(struct device *dev, struct regmap *regmap,
+>> -                      enum hmc5843_ids id, const char *name)
+>> -{
+>> -     struct hmc5843_data *data;
+>> -     struct iio_dev *indio_dev;
+>> -     int ret;
+>> -
+>> -     indio_dev = devm_iio_device_alloc(dev, sizeof(*data));
+>> -     if (!indio_dev)
+>> -             return -ENOMEM;
+>> -
+>> -     dev_set_drvdata(dev, indio_dev);
+>> -
+>> -     /* default settings at probe */
+>> -     data = iio_priv(indio_dev);
+>> -     data->dev = dev;
+>> -     data->regmap = regmap;
+>> -     data->variant = &hmc5843_chip_info_tbl[id];
+>> -     mutex_init(&data->lock);
+>> -
+>> -     indio_dev->dev.parent = dev;
+>> -     indio_dev->name = name;
+>> -     indio_dev->info = &hmc5843_info;
+>> -     indio_dev->modes = INDIO_DIRECT_MODE;
+>> -     indio_dev->channels = data->variant->channels;
+>> -     indio_dev->num_channels = 4;
+>> -     indio_dev->available_scan_masks = hmc5843_scan_masks;
+>> -
+>> -     ret = hmc5843_init(data);
+>> -     if (ret < 0)
+>> -             return ret;
+>> -
+>> -     ret = iio_triggered_buffer_setup(indio_dev, NULL,
+>> -                                      hmc5843_trigger_handler, NULL);
+>> -     if (ret < 0)
+>> -             goto buffer_setup_err;
+>> -
+>> -     ret = iio_device_register(indio_dev);
+>> -     if (ret < 0)
+>> -             goto buffer_cleanup;
+>> -
+>> -     return 0;
+>> -
+>> -buffer_cleanup:
+>> -     iio_triggered_buffer_cleanup(indio_dev);
+>> -buffer_setup_err:
+>> -     hmc5843_set_mode(iio_priv(indio_dev), HMC5843_MODE_SLEEP);
+>> -     return ret;
+>> -}
+>> -EXPORT_SYMBOL(hmc5843_common_probe);
+>> -
+>> -int hmc5843_common_remove(struct device *dev)
+>> -{
+>> -     struct iio_dev *indio_dev = dev_get_drvdata(dev);
+>> -
+>> -     iio_device_unregister(indio_dev);
+>> -     iio_triggered_buffer_cleanup(indio_dev);
+>> -
+>> -     /*  sleep mode to save power */
+>> -     hmc5843_set_mode(iio_priv(indio_dev), HMC5843_MODE_SLEEP);
+>> -
+>> -     return 0;
+>> -}
+>> -EXPORT_SYMBOL(hmc5843_common_remove);
+>> -
+>> -MODULE_AUTHOR("Shubhrajyoti Datta <shubhrajyoti-l0cyMroinI0@public.gmane.org>");
+>> -MODULE_DESCRIPTION("HMC5843/5883/5883L/5983 core driver");
+>> -MODULE_LICENSE("GPL");
+>> diff --git a/drivers/staging/iio/magnetometer/hmc5843_i2c.c b/drivers/staging/iio/magnetometer/hmc5843_i2c.c
+>> deleted file mode 100644
+>> index 3de7f44..0000000
+>> --- a/drivers/staging/iio/magnetometer/hmc5843_i2c.c
+>> +++ /dev/null
+>> @@ -1,103 +0,0 @@
+>> -/*
+>> - * i2c driver for hmc5843/5843/5883/5883l/5983
+>> - *
+>> - * Split from hmc5843.c
+>> - * Copyright (C) Josef Gajdusek <atx-MwjtXicnQwU@public.gmane.org>
+>> - *
+>> - * This program is free software; you can redistribute it and/or modify
+>> - * it under the terms of the GNU General Public License version 2 as
+>> - * published by the Free Software Foundation.
+>> - */
+>> -
+>> -#include <linux/module.h>
+>> -#include <linux/i2c.h>
+>> -#include <linux/regmap.h>
+>> -#include <linux/iio/iio.h>
+>> -#include <linux/iio/triggered_buffer.h>
+>> -
+>> -#include "hmc5843.h"
+>> -
+>> -static const struct regmap_range hmc5843_readable_ranges[] = {
+>> -     regmap_reg_range(0, HMC5843_ID_END),
+>> -};
+>> -
+>> -static const struct regmap_access_table hmc5843_readable_table = {
+>> -     .yes_ranges = hmc5843_readable_ranges,
+>> -     .n_yes_ranges = ARRAY_SIZE(hmc5843_readable_ranges),
+>> -};
+>> -
+>> -static const struct regmap_range hmc5843_writable_ranges[] = {
+>> -     regmap_reg_range(0, HMC5843_MODE_REG),
+>> -};
+>> -
+>> -static const struct regmap_access_table hmc5843_writable_table = {
+>> -     .yes_ranges = hmc5843_writable_ranges,
+>> -     .n_yes_ranges = ARRAY_SIZE(hmc5843_writable_ranges),
+>> -};
+>> -
+>> -static const struct regmap_range hmc5843_volatile_ranges[] = {
+>> -     regmap_reg_range(HMC5843_DATA_OUT_MSB_REGS, HMC5843_STATUS_REG),
+>> -};
+>> -
+>> -static const struct regmap_access_table hmc5843_volatile_table = {
+>> -     .yes_ranges = hmc5843_volatile_ranges,
+>> -     .n_yes_ranges = ARRAY_SIZE(hmc5843_volatile_ranges),
+>> -};
+>> -
+>> -static const struct regmap_config hmc5843_i2c_regmap_config = {
+>> -     .reg_bits = 8,
+>> -     .val_bits = 8,
+>> -
+>> -     .rd_table = &hmc5843_readable_table,
+>> -     .wr_table = &hmc5843_writable_table,
+>> -     .volatile_table = &hmc5843_volatile_table,
+>> -
+>> -     .cache_type = REGCACHE_RBTREE,
+>> -};
+>> -
+>> -static int hmc5843_i2c_probe(struct i2c_client *cli,
+>> -                          const struct i2c_device_id *id)
+>> -{
+>> -     return hmc5843_common_probe(&cli->dev,
+>> -                     devm_regmap_init_i2c(cli, &hmc5843_i2c_regmap_config),
+>> -                     id->driver_data, id->name);
+>> -}
+>> -
+>> -static int hmc5843_i2c_remove(struct i2c_client *client)
+>> -{
+>> -     return hmc5843_common_remove(&client->dev);
+>> -}
+>> -
+>> -static const struct i2c_device_id hmc5843_id[] = {
+>> -     { "hmc5843", HMC5843_ID },
+>> -     { "hmc5883", HMC5883_ID },
+>> -     { "hmc5883l", HMC5883L_ID },
+>> -     { "hmc5983", HMC5983_ID },
+>> -     { }
+>> -};
+>> -MODULE_DEVICE_TABLE(i2c, hmc5843_id);
+>> -
+>> -static const struct of_device_id hmc5843_of_match[] = {
+>> -     { .compatible = "honeywell,hmc5843", .data = (void *)HMC5843_ID },
+>> -     { .compatible = "honeywell,hmc5883", .data = (void *)HMC5883_ID },
+>> -     { .compatible = "honeywell,hmc5883l", .data = (void *)HMC5883L_ID },
+>> -     { .compatible = "honeywell,hmc5983", .data = (void *)HMC5983_ID },
+>> -     {}
+>> -};
+>> -MODULE_DEVICE_TABLE(of, hmc5843_of_match);
+>> -
+>> -static struct i2c_driver hmc5843_driver = {
+>> -     .driver = {
+>> -             .name   = "hmc5843",
+>> -             .pm     = HMC5843_PM_OPS,
+>> -             .of_match_table = hmc5843_of_match,
+>> -     },
+>> -     .id_table       = hmc5843_id,
+>> -     .probe          = hmc5843_i2c_probe,
+>> -     .remove         = hmc5843_i2c_remove,
+>> -};
+>> -module_i2c_driver(hmc5843_driver);
+>> -
+>> -MODULE_AUTHOR("Josef Gajdusek <atx-MwjtXicnQwU@public.gmane.org>");
+>> -MODULE_DESCRIPTION("HMC5843/5883/5883L/5983 i2c driver");
+>> -MODULE_LICENSE("GPL");
+>> diff --git a/drivers/staging/iio/magnetometer/hmc5843_spi.c b/drivers/staging/iio/magnetometer/hmc5843_spi.c
+>> deleted file mode 100644
+>> index 535f03a..0000000
+>> --- a/drivers/staging/iio/magnetometer/hmc5843_spi.c
+>> +++ /dev/null
+>> @@ -1,100 +0,0 @@
+>> -/*
+>> - * SPI driver for hmc5983
+>> - *
+>> - * Copyright (C) Josef Gajdusek <atx-MwjtXicnQwU@public.gmane.org>
+>> - *
+>> - * This program is free software; you can redistribute it and/or modify
+>> - * it under the terms of the GNU General Public License version 2 as
+>> - * published by the Free Software Foundation.
+>> - */
+>> -
+>> -#include <linux/module.h>
+>> -#include <linux/spi/spi.h>
+>> -#include <linux/iio/iio.h>
+>> -
+>> -#include "hmc5843.h"
+>> -
+>> -static const struct regmap_range hmc5843_readable_ranges[] = {
+>> -             regmap_reg_range(0, HMC5843_ID_END),
+>> -};
+>> -
+>> -static const struct regmap_access_table hmc5843_readable_table = {
+>> -             .yes_ranges = hmc5843_readable_ranges,
+>> -             .n_yes_ranges = ARRAY_SIZE(hmc5843_readable_ranges),
+>> -};
+>> -
+>> -static const struct regmap_range hmc5843_writable_ranges[] = {
+>> -             regmap_reg_range(0, HMC5843_MODE_REG),
+>> -};
+>> -
+>> -static const struct regmap_access_table hmc5843_writable_table = {
+>> -             .yes_ranges = hmc5843_writable_ranges,
+>> -             .n_yes_ranges = ARRAY_SIZE(hmc5843_writable_ranges),
+>> -};
+>> -
+>> -static const struct regmap_range hmc5843_volatile_ranges[] = {
+>> -             regmap_reg_range(HMC5843_DATA_OUT_MSB_REGS, HMC5843_STATUS_REG),
+>> -};
+>> -
+>> -static const struct regmap_access_table hmc5843_volatile_table = {
+>> -             .yes_ranges = hmc5843_volatile_ranges,
+>> -             .n_yes_ranges = ARRAY_SIZE(hmc5843_volatile_ranges),
+>> -};
+>> -
+>> -static const struct regmap_config hmc5843_spi_regmap_config = {
+>> -             .reg_bits = 8,
+>> -             .val_bits = 8,
+>> -
+>> -             .rd_table = &hmc5843_readable_table,
+>> -             .wr_table = &hmc5843_writable_table,
+>> -             .volatile_table = &hmc5843_volatile_table,
+>> -
+>> -             /* Autoincrement address pointer */
+>> -             .read_flag_mask = 0xc0,
+>> -
+>> -             .cache_type = REGCACHE_RBTREE,
+>> -};
+>> -
+>> -static int hmc5843_spi_probe(struct spi_device *spi)
+>> -{
+>> -     int ret;
+>> -     const struct spi_device_id *id = spi_get_device_id(spi);
+>> -
+>> -     spi->mode = SPI_MODE_3;
+>> -     spi->max_speed_hz = 8000000;
+>> -     spi->bits_per_word = 8;
+>> -     ret = spi_setup(spi);
+>> -     if (ret)
+>> -             return ret;
+>> -
+>> -     return hmc5843_common_probe(&spi->dev,
+>> -                     devm_regmap_init_spi(spi, &hmc5843_spi_regmap_config),
+>> -                     id->driver_data, id->name);
+>> -}
+>> -
+>> -static int hmc5843_spi_remove(struct spi_device *spi)
+>> -{
+>> -     return hmc5843_common_remove(&spi->dev);
+>> -}
+>> -
+>> -static const struct spi_device_id hmc5843_id[] = {
+>> -     { "hmc5983", HMC5983_ID },
+>> -     { }
+>> -};
+>> -MODULE_DEVICE_TABLE(spi, hmc5843_id);
+>> -
+>> -static struct spi_driver hmc5843_driver = {
+>> -             .driver = {
+>> -                             .name = "hmc5843",
+>> -                             .pm = HMC5843_PM_OPS,
+>> -             },
+>> -             .id_table = hmc5843_id,
+>> -             .probe = hmc5843_spi_probe,
+>> -             .remove = hmc5843_spi_remove,
+>> -};
+>> -
+>> -module_spi_driver(hmc5843_driver);
+>> -
+>> -MODULE_AUTHOR("Josef Gajdusek <atx-MwjtXicnQwU@public.gmane.org>");
+>> -MODULE_DESCRIPTION("HMC5983 SPI driver");
+>> -MODULE_LICENSE("GPL");
+>>
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-iio" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
