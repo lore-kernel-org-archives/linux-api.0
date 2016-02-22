@@ -1,35 +1,76 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: selective block polling and preadv2/pwritev2 revisited V2
-Date: Mon, 22 Feb 2016 18:07:49 +0100
-Message-ID: <1456160876-14560-1-git-send-email-hch@lst.de>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: viro@zeniv.linux.org.uk, axboe@fb.com
-Cc: milosz@adfin.com, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: [PATCH 4/7] vfs: add the RWF_HIPRI flag for preadv2/pwritev2
+Date: Mon, 22 Feb 2016 18:07:53 +0100
+Message-ID: <1456160876-14560-5-git-send-email-hch@lst.de>
+References: <1456160876-14560-1-git-send-email-hch@lst.de>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1456160876-14560-1-git-send-email-hch-jcswGhMUV9g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, axboe-b10kYP2dOMg@public.gmane.org
+Cc: milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This series allows to selectively enable/disable polling for completions
-in the block layer on a per-I/O basis.  For this it resurrects the
-preadv2/pwritev2 syscalls that Milosz prepared a while ago (and which
-are much simpler now due to VFS changes that happened in the meantime).
-That approach also had a man page update prepared, which I will resubmit
-with the current flags once this series makes it in.
+This adds a flag that tells the file system that this is a high priority
+request for which it's worth to poll the hardware.  The flag is purely
+advisory and can be ignored if not supported.
 
-Polling for block I/O is important to reduce the latency on flash and
-post-flash storage technologies.  On the fastest NVMe controller I have
-access to it almost halves latencies from over 7 microseconds to about 4
-microseonds.  But it only is usesful if we actually care for the latency
-of this particular I/O, and generally is a waste if enabled for all I/O
-to a given device.  This series uses the per-I/O flags in preadv2/pwritev2
-to control this behavior.  The alternative would be a new O_* flag set
-at open time or using fcntl, but this is still to corse-grained for some
-applications and we're starting to run out out of open flags.
+Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+---
+ fs/read_write.c         | 6 ++++--
+ include/linux/fs.h      | 1 +
+ include/uapi/linux/fs.h | 3 +++
+ 3 files changed, 8 insertions(+), 2 deletions(-)
 
-Note that there are plenty of other use cases for preadv2/pwritev2 as well,
-but I'd like to concentrate on this one for now.  Example are: non-blocking
-reads (the original purpose), per-I/O O_SYNC, user space support for T10
-DIF/DIX applications tags and probably some more.
-
-Changes since V1:
-  - rebased on top of Linux 4.5-rc5
-
+diff --git a/fs/read_write.c b/fs/read_write.c
+index 38b9afa..3b3fb22 100644
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -697,10 +697,12 @@ static ssize_t do_iter_readv_writev(struct file *filp, struct iov_iter *iter,
+ 	struct kiocb kiocb;
+ 	ssize_t ret;
+ 
+-	if (flags)
++	if (flags & ~RWF_HIPRI)
+ 		return -EOPNOTSUPP;
+ 
+ 	init_sync_kiocb(&kiocb, filp);
++	if (flags & RWF_HIPRI)
++		kiocb.ki_flags |= IOCB_HIPRI;
+ 	kiocb.ki_pos = *ppos;
+ 
+ 	ret = fn(&kiocb, iter);
+@@ -715,7 +717,7 @@ static ssize_t do_loop_readv_writev(struct file *filp, struct iov_iter *iter,
+ {
+ 	ssize_t ret = 0;
+ 
+-	if (flags)
++	if (flags & ~RWF_HIPRI)
+ 		return -EOPNOTSUPP;
+ 
+ 	while (iov_iter_count(iter)) {
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 875277a..a1f731c 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -320,6 +320,7 @@ struct writeback_control;
+ #define IOCB_EVENTFD		(1 << 0)
+ #define IOCB_APPEND		(1 << 1)
+ #define IOCB_DIRECT		(1 << 2)
++#define IOCB_HIPRI		(1 << 3)
+ 
+ struct kiocb {
+ 	struct file		*ki_filp;
+diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+index 149bec8..d246339 100644
+--- a/include/uapi/linux/fs.h
++++ b/include/uapi/linux/fs.h
+@@ -304,4 +304,7 @@ struct fsxattr {
+ #define SYNC_FILE_RANGE_WRITE		2
+ #define SYNC_FILE_RANGE_WAIT_AFTER	4
+ 
++/* flags for preadv2/pwritev2: */
++#define RWF_HIPRI			0x00000001 /* high priority request, poll if possible */
++
+ #endif /* _UAPI_LINUX_FS_H */
+-- 
+2.1.4
