@@ -1,77 +1,94 @@
-From: Dan Williams <dcbw@redhat.com>
-Subject: Re: [PATCHv2 00/10] RFKill airplane-mode indicator
-Date: Mon, 22 Feb 2016 11:00:20 -0600
-Message-ID: <1456160420.16083.3.camel@redhat.com>
-References: <1456159001-20307-1-git-send-email-jprvita@endlessm.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1456159001-20307-1-git-send-email-jprvita@endlessm.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: =?ISO-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita@gmail.com>, Johannes Berg <johannes@sipsolutions.net>
-Cc: "David S. Miller" <davem@davemloft.net>, Darren Hart <dvhart@infradead.org>, linux-wireless@vger.kernel.org, netdev@vger.kernel.org, platform-driver-x86@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux@endlessm.com, =?ISO-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita@endlessm.com>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: [PATCH 7/7] block, directio: set a REQ_POLL flag when submitting polled bios
+Date: Mon, 22 Feb 2016 18:07:56 +0100
+Message-ID: <1456160876-14560-8-git-send-email-hch@lst.de>
+References: <1456160876-14560-1-git-send-email-hch@lst.de>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1456160876-14560-1-git-send-email-hch-jcswGhMUV9g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, axboe-b10kYP2dOMg@public.gmane.org
+Cc: milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2016-02-22 at 11:36 -0500, Jo=C3=A3o Paulo Rechi Vita wrote:
-> This series implements an airplane-mode indicator LED trigger, which
-> can be
-> used by platform drivers. The default policy have have airplane-mode
-> set when
-> all the radios known by RFKill are OFF, and unset otherwise. This
-> policy can be
-> overwritten by one single userspace application at a time using the
-> operations
-> _AIRPLANE_MODE_INDICATOR_ACQUIRE and _AIRPLANE_MODE_INDICATOR_CHANGE.
->=20
-Double-check your commit messages on some of these patches; they didn't
-get updated to add INDICATOR.
-
-Dan
-
-> When the
-> airplane-mode indicator state changes, userspace gets notifications
-> through the
-> RFKill control misc device (/dev/rfkill).
->=20
-> The series also contains a few general fixes and improvements to the
-> subsystem.
->=20
-> Additionally, I have a couple of patches to have this feature
-> supported by the
-> userspace tool 'rfkill' [1]. Should I use a different subject prefix
-> to help
-> separate those from kernel patches in linux-wireless?
->=20
-> [1] https://wireless.wiki.kernel.org/en/users/documentation/rfkill
->=20
-> Jo=C3=A3o Paulo Rechi Vita (10):
-> =C2=A0 rfkill: Improve documentation language
-> =C2=A0 rfkill: Remove extra blank line
-> =C2=A0 rfkill: Point to the correct deprecated doc location
-> =C2=A0 rfkill: Move "state" sysfs file back to stable
-> =C2=A0 rfkill: Factor rfkill_global_states[].cur assignments
-> =C2=A0 rfkill: Add documentation about LED triggers
-> =C2=A0 rfkill: Create "rfkill-airplane-mode" LED trigger
-> =C2=A0 rfkill: Use switch to demux userspace operations
-> =C2=A0 rfkill: Userspace control for airplane mode
-> =C2=A0 rfkill: Notify userspace of airplane-mode state changes
->=20
-> =C2=A0Documentation/ABI/obsolete/sysfs-class-rfkill |=C2=A0=C2=A020 -=
+Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 ---
-> =C2=A0Documentation/ABI/stable/sysfs-class-rfkill=C2=A0=C2=A0=C2=A0|=C2=
-=A0=C2=A027 ++++-
-> =C2=A0Documentation/rfkill.txt=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0|=C2=A0=C2=A017 +++
-> =C2=A0include/uapi/linux/rfkill.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0|=C2=A0=C2=A0=C2=A06 +
-> =C2=A0net/rfkill/core.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0| 162
-> ++++++++++++++++++++------
-> =C2=A05 files changed, 173 insertions(+), 59 deletions(-)
-> =C2=A0delete mode 100644 Documentation/ABI/obsolete/sysfs-class-rfkil=
-l
->=20
+ block/blk-core.c          | 9 +++++++--
+ fs/direct-io.c            | 4 ++++
+ include/linux/blk_types.h | 2 ++
+ include/linux/blkdev.h    | 1 +
+ 4 files changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/block/blk-core.c b/block/blk-core.c
+index b83d297..81b4b8b 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -3335,13 +3335,18 @@ void blk_finish_plug(struct blk_plug *plug)
+ }
+ EXPORT_SYMBOL(blk_finish_plug);
+ 
++inline bool blk_queue_can_poll(struct request_queue *q)
++{
++	return q->mq_ops && q->mq_ops->poll &&
++		test_bit(QUEUE_FLAG_POLL, &q->queue_flags);
++}
++
+ bool blk_poll(struct request_queue *q, blk_qc_t cookie)
+ {
+ 	struct blk_plug *plug;
+ 	long state;
+ 
+-	if (!q->mq_ops || !q->mq_ops->poll || !blk_qc_t_valid(cookie) ||
+-	    !test_bit(QUEUE_FLAG_POLL, &q->queue_flags))
++	if (!blk_queue_can_poll(q) || !blk_qc_t_valid(cookie))
+ 		return false;
+ 
+ 	plug = current->plug;
+diff --git a/fs/direct-io.c b/fs/direct-io.c
+index 0a8d937..ba5ba7e 100644
+--- a/fs/direct-io.c
++++ b/fs/direct-io.c
+@@ -1197,6 +1197,10 @@ do_blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
+ 	dio->inode = inode;
+ 	dio->rw = iov_iter_rw(iter) == WRITE ? WRITE_ODIRECT : READ;
+ 
++	if ((iocb->ki_flags & IOCB_HIPRI) &&
++	    blk_queue_can_poll(bdev_get_queue(bdev)))
++		dio->rw |= REQ_POLL;
++
+ 	/*
+ 	 * For AIO O_(D)SYNC writes we need to defer completions to a workqueue
+ 	 * so that we can call ->fsync.
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index 86a38ea..d667bb4 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -161,6 +161,7 @@ enum rq_flag_bits {
+ 	__REQ_INTEGRITY,	/* I/O includes block integrity payload */
+ 	__REQ_FUA,		/* forced unit access */
+ 	__REQ_FLUSH,		/* request for cache flush */
++	__REQ_POLL,		/* request polling for completion */
+ 
+ 	/* bio only flags */
+ 	__REQ_RAHEAD,		/* read ahead, can fail anytime */
+@@ -202,6 +203,7 @@ enum rq_flag_bits {
+ #define REQ_WRITE_SAME		(1ULL << __REQ_WRITE_SAME)
+ #define REQ_NOIDLE		(1ULL << __REQ_NOIDLE)
+ #define REQ_INTEGRITY		(1ULL << __REQ_INTEGRITY)
++#define REQ_POLL		(1ULL << __REQ_POLL)
+ 
+ #define REQ_FAILFAST_MASK \
+ 	(REQ_FAILFAST_DEV | REQ_FAILFAST_TRANSPORT | REQ_FAILFAST_DRIVER)
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 458f6ef..d79353f 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -824,6 +824,7 @@ extern int blk_execute_rq(struct request_queue *, struct gendisk *,
+ extern void blk_execute_rq_nowait(struct request_queue *, struct gendisk *,
+ 				  struct request *, int, rq_end_io_fn *);
+ 
++bool blk_queue_can_poll(struct request_queue *q);
+ bool blk_poll(struct request_queue *q, blk_qc_t cookie);
+ 
+ static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
+-- 
+2.1.4
