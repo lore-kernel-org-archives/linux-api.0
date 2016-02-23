@@ -1,154 +1,110 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: Re: [PATCH v8 1/4] firmware: introduce sysfs driver
- for QEMU's fw_cfg device
-Date: Tue, 23 Feb 2016 16:14:46 +0200
-Message-ID: <20160223160555-mutt-send-email-mst@redhat.com>
-References: <1453990994-17801-1-git-send-email-somlo@cmu.edu>
-	<1453990994-17801-2-git-send-email-somlo@cmu.edu>
-	<20160221100557-mutt-send-email-mst@redhat.com>
-	<20160221130614.GA4511@GLSMBP.INI.CMU.EDU>
-	<20160222220756-mutt-send-email-mst@redhat.com>
-	<20160222202623.GI16357@HEDWIG.INI.CMU.EDU>
-	<20160223070541-mutt-send-email-mst@redhat.com>
-	<20160223134700.GL16357@HEDWIG.INI.CMU.EDU>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org>
-Content-Disposition: inline
-In-Reply-To: <20160223134700.GL16357@HEDWIG.INI.CMU.EDU>
-List-Unsubscribe: <https://lists.nongnu.org/mailman/options/qemu-devel>,
-	<mailto:qemu-devel-request@nongnu.org?subject=unsubscribe>
-List-Archive: <http://lists.nongnu.org/archive/html/qemu-devel>
-List-Post: <mailto:qemu-devel@nongnu.org>
-List-Help: <mailto:qemu-devel-request@nongnu.org?subject=help>
-List-Subscribe: <https://lists.nongnu.org/mailman/listinfo/qemu-devel>,
-	<mailto:qemu-devel-request@nongnu.org?subject=subscribe>
-Errors-To: qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org
-Sender: qemu-devel-bounces+gceq-qemu-devel=gmane.org@nongnu.org
-To: "Gabriel L. Somlo" <somlo@cmu.edu>
-Cc: mark.rutland@arm.com, peter.maydell@linaro.org, matt@codeblueprint.co.uk, stefanha@gmail.com, qemu-devel@nongnu.org, eric@anholt.net, kraxel@redhat.com, linux-api@vger.kernel.org, agross@codeaurora.org, pawel.moll@arm.com, zajec5@gmail.com, rmk+kernel@arm.linux.org.uk, lersek@redhat.com, devicetree@vger.kernel.org, ehabkost@redhat.com, arnd@arndb.de, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, leif.lindholm@linaro.org, robh+dt@kernel.org, pbonzini@redhat.com, rth@twiddle.net, ard.biesheuvel@linaro.org, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, luto@amacapital.net, hanjun.guo@linaro.org, sudeep.holla@arm.com, imammedo@redhat.com, revol@free.fr
+From: Vladimir Murzin <vladimir.murzin@arm.com>
+Subject: [PATCH v4 00/10] Support for Cortex-M Prototyping System
+Date: Tue, 23 Feb 2016 14:34:18 +0000
+Message-ID: <1456238068-25079-1-git-send-email-vladimir.murzin@arm.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: arnd@arndb.de, linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.lezcano@linaro.org, tglx@linutronix.de, u.kleine-koenig@pengutronix.de, liviu.dudau@arm.com, sudeep.holla@arm.com, lorenzo.pieralisi@arm.com
+Cc: mark.rutland@arm.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, jslaby@suse.cz, robh+dt@kernel.org, andy.shevchenko@gmail.com, gnomes@lxorguk.ukuu.org.uk, peter@hurleysoftware.com, devicetree@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 23, 2016 at 08:47:00AM -0500, Gabriel L. Somlo wrote:
-> On Tue, Feb 23, 2016 at 07:07:36AM +0200, Michael S. Tsirkin wrote:
-> > On Mon, Feb 22, 2016 at 03:26:23PM -0500, Gabriel L. Somlo wrote:
-> > > On Mon, Feb 22, 2016 at 10:14:50PM +0200, Michael S. Tsirkin wrote:
-> > > > On Sun, Feb 21, 2016 at 08:06:17AM -0500, Gabriel L. Somlo wrote:
-> > > > > > > +static void fw_cfg_io_cleanup(void)
-> > > > > > > +{
-> > > > > > > +	if (fw_cfg_is_mmio) {
-> > > > > > > +		iounmap(fw_cfg_dev_base);
-> > > > > > > +		release_mem_region(fw_cfg_p_base, fw_cfg_p_size);
-> > > > > > > +	} else {
-> > > > > > > +		ioport_unmap(fw_cfg_dev_base);
-> > > > > > > +		release_region(fw_cfg_p_base, fw_cfg_p_size);
-> > > > > > > +	}
-> > > > > > > +}
-> > > > > > > +
-> > > > > > > +/* arch-specific ctrl & data register offsets are not available in ACPI, DT */
-> > > > > > 
-> > > > > > So for all arches which support ACPI, I think this driver
-> > > > > > should just rely on ACPI.
-> > > > > 
-> > > > > There was a discussion about that a few versions ago, and IIRC the
-> > > > > conclusion was not to expect the firmware to contend for fw_cfg access
-> > > > > after the guest kernel boots:
-> > > > > 
-> > > > > https://lkml.org/lkml/2015/10/5/283
-> > > > > 
-> > > > 
-> > > > So it looks like NVDIMM at least wants to pass label data to guest -
-> > > > for which fw cfg might be a reasonable choice.
-> > > > 
-> > > > I suspect things changed - fw cfg used to be very slow but we now have
-> > > > DMA interface which makes it useful for a range of applications.
-> > 
-> > Comment on this? I'm really worried we'll release linux
-> > without a way to access fw cfg from aml.
-> > How about taking acpi lock around all accesses?
-> 
-> You mean something like this (haven't tried compiling it yet, so it
-> might be a bit more complicated, but just for the purpose of this
-> conversation):
-> 
-> diff --git a/drivers/firmware/qemu_fw_cfg.c
-> b/drivers/firmware/qemu_fw_cfg.c
-> index fedbff5..3462a2c 100644
-> --- a/drivers/firmware/qemu_fw_cfg.c
-> +++ b/drivers/firmware/qemu_fw_cfg.c
-> @@ -77,12 +77,18 @@ static inline u16 fw_cfg_sel_endianness(u16 key)
->  static inline void fw_cfg_read_blob(u16 key,
->                                     void *buf, loff_t pos, size_t
-> count)
->  {
-> +#ifdef CONFIG_ACPI
-> +       acpi_os_acquire_mutex(acpi_gbl_osi_mutex, ACPI_WAIT_FOREVER);
-> +#endif
->         mutex_lock(&fw_cfg_dev_lock);
->         iowrite16(fw_cfg_sel_endianness(key), fw_cfg_reg_ctrl);
->         while (pos-- > 0)
->                 ioread8(fw_cfg_reg_data);
->         ioread8_rep(fw_cfg_reg_data, buf, count);
->         mutex_unlock(&fw_cfg_dev_lock);
-> +#ifdef CONFIG_ACPI
-> +       acpi_os_release_mutex(acpi_gbl_osi_mutex);
-> +#endif
->  }
->  
->  /* clean up fw_cfg device i/o */
+Hi,
 
-Fundamentally yes.
+This patch series provide the basic support for running ucLinux on V2M-MPS2
+platform.
 
-> I wouldn't particularly *mind* doing that, but I'd still like to hear
-> from other QEMU devs on whether it's really necessary.
+With these patches applied ucLinux can be run on both HW and FVP models
+with Cortex-M3/M4/M7 configurations.
 
-It seems like a prudent thing to do IMHO, before this
-goes out to users.
+Board description:
 
-> > > > > (I even had a prototype version doing what you suggested, but per the above
-> > > > > reference decided to drop it -- which IMHO is for the better, since otherwise
-> > > > > I'd have had to ifdef between ACPI and non-ACPI versions of the driver --
-> > > > > see https://lkml.org/lkml/2015/11/4/534 )
-> > > > 
-> > > > I'm not sure why you have these ifdefs - they are on the host, are they
-> > > > not?
-> > > 
-> > > Think of those as "pseudocode" ifdefs, they're there to distinguish
-> > > between AML that would be generated on MMIO vs. IOPORT systems
-> > > (specifically, arm vs. x86, respectively)
-> > > 
-> > > Some of the AML is the same, but obviously the _CRS, and
-> > > OperationRegion + Field are different, and I wanted to point that out
-> > > somehow :)
-> > > 
-> > > Cheers,
-> > > --Gabriel
-> > 
-> > You can do ifs as well.
-> 
-> Yeah, but the AML is generated from arch-specific locations in QEMU,
-> so we'd be doing MMIO-only from e.g. hw/arm/virt-acpi-build.c, and
-> IOPORT-only from hw/i386/acpi-build.c, etc. I wouldnt need to write a
-> generic AML blob with 'if' statements and insert it the same way on
-> all architectures, or would I ? Not sure what the best practice would
-> be for that :)
+http://infocenter.arm.com/help/topic/com.arm.doc.100112_0100_03_en/arm_versatile_express_cortex_m_prototyping_system_(v2m_mps2)_technical_reference_manual_100112_0100_03_en.pdf
 
-Just regular C, put common code in a common function.
+Application notes (cover Cortex-M3/M4/M7):
 
-> Speaking of AML, if we were to implement a "RDBL" (read-blob) method
-> for fw_cfg in AML, and call it from the guest-side kernel module,
-> we'll never be able to make it use DMA on ACPI systems. The way
-> fw_cfg_read_blob is written now, we could patch that in at some later
-> point. So that's an argument in favor of *at most* wrapping
-> acpi_os_acquire_mutex() around the current fw_cfg_read_blob, rather
-> than including an acpi-specific version implemented on top of an
-> AML call.
-> 
-> Thanks,
-> --Gabriel
+http://infocenter.arm.com/help/topic/com.arm.doc.dai0385a/DAI0385A_cortex_m3_on_v2m_mps2.pdf
+http://infocenter.arm.com/help/topic/com.arm.doc.dai0386a/DAI0386A_cortex_m4_on_v2m_mps2.pdf
+http://infocenter.arm.com/help/topic/com.arm.doc.dai0399a/DAI0399A_cortex_m7_on_v2m_mps2.pdf
+http://infocenter.arm.com/help/topic/com.arm.doc.dai0400a/DAI0400A_cortex_m7_on_v2m_mps2.pdf
 
-On balance, I think locking ACPI solves most problems so
-if we just do that, I think what you did here is fine.
+Cortex-M System Design Kit (referenced as CMDK from documents above):
+
+http://infocenter.arm.com/help/topic/com.arm.doc.ddi0479c/DDI0479C_cortex_m_system_design_kit_r1p0_trm.pdf
+
+I'd be happy to hear any feedback/comments on this series!
+
+Changelog:
+
+  v3  -> v4:
+      - rebased on 4.5-rc5
+      - updated mps2-uart per Andy, Alan and Peter
+      - dropped "zombie" EMBEDDED from defconfg per Arnd
+      - moved mps2 under vexpress umbrella per Arnd
+      - updated device-tree sources per Arnd
+      - dropped low-level debug support, seems earlycon works well for that
+
+  v2  -> v3:
+      - rebased on 4.5-rc4
+      - fixes for mps2-timer per Thomas
+      - swicthed back to ttyMPS naming per Greg
+
+  v1  -> v2:
+      - rebased on 4.5-rc2
+      - fixes for mps2-timer per Daniel and Rob (added Ack from Daniel)
+      - fixes for mps2-uart per Greg and Andy
+
+  RFC -> v1:
+      - dropped RFC tag
+      - rebased on 4.4-rc3
+      - added Acks from Rob
+      - updated mps2-timer per Daniel
+      - fixed build failures reported by 0-DAY kernel test infrastructure
+
+Thanks!
+
+Vladimir Murzin (10):
+  dt-bindings: document the MPS2 timer bindings
+  clockevents/drivers: add MPS2 Timer driver
+  dt-bindings: document the MPS2 UART bindings
+  serial: mps2-uart: add MPS2 UART driver
+  serial: mps2-uart: add support for early console
+  ARM: vexpress/mps2: introduce MPS2 platform
+  ARM: configs: add MPS2 defconfig
+  ARM: dts: introduce MPS2 AN385/AN386
+  ARM: dts: introduce MPS2 AN399/AN400
+  MAINTAINERS: Update ARM Versatile Express platform entry
+
+ .../devicetree/bindings/serial/arm,mps2-uart.txt   |   19 +
+ .../devicetree/bindings/timer/arm,mps2-timer.txt   |   28 +
+ MAINTAINERS                                        |    1 +
+ arch/arm/Kconfig                                   |    8 +
+ arch/arm/Makefile                                  |    1 +
+ arch/arm/boot/dts/Makefile                         |    3 +
+ arch/arm/boot/dts/mps2-an385.dts                   |   92 +++
+ arch/arm/boot/dts/mps2-an399.dts                   |   92 +++
+ arch/arm/boot/dts/mps2.dtsi                        |  242 ++++++++
+ arch/arm/configs/mps2_defconfig                    |  109 ++++
+ arch/arm/mach-vexpress/Makefile                    |    4 +-
+ arch/arm/mach-vexpress/Makefile.boot               |    3 +
+ arch/arm/mach-vexpress/v2m-mps2.c                  |   21 +
+ drivers/clocksource/Kconfig                        |    6 +
+ drivers/clocksource/Makefile                       |    1 +
+ drivers/clocksource/mps2-timer.c                   |  275 +++++++++
+ drivers/tty/serial/Kconfig                         |   13 +
+ drivers/tty/serial/Makefile                        |    1 +
+ drivers/tty/serial/mps2-uart.c                     |  614 ++++++++++++++++++++
+ include/uapi/linux/serial_core.h                   |    3 +
+ 20 files changed, 1535 insertions(+), 1 deletion(-)
+ create mode 100644 Documentation/devicetree/bindings/serial/arm,mps2-uart.txt
+ create mode 100644 Documentation/devicetree/bindings/timer/arm,mps2-timer.txt
+ create mode 100644 arch/arm/boot/dts/mps2-an385.dts
+ create mode 100644 arch/arm/boot/dts/mps2-an399.dts
+ create mode 100644 arch/arm/boot/dts/mps2.dtsi
+ create mode 100644 arch/arm/configs/mps2_defconfig
+ create mode 100644 arch/arm/mach-vexpress/Makefile.boot
+ create mode 100644 arch/arm/mach-vexpress/v2m-mps2.c
+ create mode 100644 drivers/clocksource/mps2-timer.c
+ create mode 100644 drivers/tty/serial/mps2-uart.c
 
 -- 
-MST
+1.7.9.5
