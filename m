@@ -1,52 +1,43 @@
-From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] firmware: fw_cfg register offsets on supported
- architectures only
-Date: Tue, 23 Feb 2016 07:08:07 +0200
-Message-ID: <20160223070757-mutt-send-email-mst@redhat.com>
-References: <20160222211818.GJ16357@HEDWIG.INI.CMU.EDU>
+From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [RFC][PATCH 7/7] pkeys: add details of system call use to
+ Documentation/
+Date: Tue, 23 Feb 2016 07:38:25 +0100
+Message-ID: <20160223063824.GA21091@gmail.com>
+References: <20160223011107.FB9B8215@viggo.jf.intel.com>
+ <20160223011118.954E64B7@viggo.jf.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20160222211818.GJ16357-h65ZQ0r4j6KKUezXOiBB2eW1CriLhL8O@public.gmane.org>
+In-Reply-To: <20160223011118.954E64B7-LXbPSdftPKxrdx17CPfAsdBPR1lH4CV8@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Gabriel Somlo <somlo-D+Gtc/HYRWM@public.gmane.org>
-Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, eric-WhKQ6XTQaPysTnJN9+BGXg@public.gmane.org, hanjun.guo-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, sudeep.holla-5wv7dgnIgG8@public.gmane.org, agross-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, imammedo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ehabkost-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, stefanha-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, revol-GANU6spQydw@public.gmane.org, matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org, rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org
+To: Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 22, 2016 at 04:18:18PM -0500, Gabriel Somlo wrote:
-> Refrain from defining default fw_cfg register offsets on
-> unsupported architectures -- throw an error instead. If
-> QEMU were to add fw_cfg support on additional architectures,
-> we should add them to the FW_CFG_SYSFS depends statement in
-> drivers/firmware/Kconfig, and provide default values for
-> register offsets in drivers/firmware/qemu_fw_cfg.c at that
-> time.
+
+* Dave Hansen <dave-gkUM19QKKo4@public.gmane.org> wrote:
+
 > 
-> Suggested-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Signed-off-by: Gabriel Somlo <somlo-D+Gtc/HYRWM@public.gmane.org>
-
-Acked-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-
-
+> From: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> 
+> This spells out all of the pkey-related system calls that we have
+> and provides some example code fragments to demonstrate how we
+> expect them to be used.
+> 
+> Signed-off-by: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+> Cc: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+> Cc: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+> Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 > ---
->  drivers/firmware/qemu_fw_cfg.c | 4 +---
->  1 file changed, 1 insertion(+), 3 deletions(-)
 > 
-> diff --git a/drivers/firmware/qemu_fw_cfg.c b/drivers/firmware/qemu_fw_cfg.c
-> index fedbff5..79f6b7b 100644
-> --- a/drivers/firmware/qemu_fw_cfg.c
-> +++ b/drivers/firmware/qemu_fw_cfg.c
-> @@ -109,9 +109,7 @@ static void fw_cfg_io_cleanup(void)
->  #  define FW_CFG_CTRL_OFF 0x00
->  #  define FW_CFG_DATA_OFF 0x01
->  # else
-> -#  warning "QEMU FW_CFG may not be available on this architecture!"
-> -#  define FW_CFG_CTRL_OFF 0x00
-> -#  define FW_CFG_DATA_OFF 0x01
-> +#  error "QEMU FW_CFG not available on this architecture!"
->  # endif
->  #endif
->  
-> -- 
-> 2.4.3
+>  b/Documentation/x86/protection-keys.txt |   63 ++++++++++++++++++++++++++++++++
+>  1 file changed, 63 insertions(+)
+
+Please also add pkeys testcases to tools/tests/self-tests.
+
+Thanks,
+
+	Ingo
