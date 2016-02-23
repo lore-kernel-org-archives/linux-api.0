@@ -1,53 +1,63 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH v4 2/5] getcpu_cache: ARM resume notifier
-Date: Tue, 23 Feb 2016 18:28:37 -0500
-Message-ID: <1456270120-7560-3-git-send-email-mathieu.desnoyers@efficios.com>
-References: <1456270120-7560-1-git-send-email-mathieu.desnoyers@efficios.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1456270120-7560-1-git-send-email-mathieu.desnoyers@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH v3 1/2] mm: introduce page reference manipulation
+ functions
+Date: Tue, 23 Feb 2016 15:32:44 -0800
+Message-ID: <20160223153244.83a5c3ca430c4248a4a34cc0@linux-foundation.org>
+References: <1456212078-22732-1-git-send-email-iamjoonsoo.kim@lge.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1456212078-22732-1-git-send-email-iamjoonsoo.kim@lge.com>
+Sender: owner-linux-mm@kvack.org
+To: js1304@gmail.com
+Cc: Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, Vlastimil Babka <vbabka@suse.cz>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Joonsoo Kim <iamjoonsoo.kim@lge.com>
 List-Id: linux-api@vger.kernel.org
 
-Call the getcpu_cache_handle_notify_resume() function on return to
-userspace if TIF_NOTIFY_RESUME thread flag is set.
+On Tue, 23 Feb 2016 16:21:17 +0900 js1304@gmail.com wrote:
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC: Russell King <linux@arm.linux.org.uk>
-CC: Catalin Marinas <catalin.marinas@arm.com>
-CC: Will Deacon <will.deacon@arm.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Paul Turner <pjt@google.com>
-CC: Andrew Hunter <ahh@google.com>
-CC: Peter Zijlstra <peterz@infradead.org>
-CC: Andy Lutomirski <luto@amacapital.net>
-CC: Andi Kleen <andi@firstfloor.org>
-CC: Dave Watson <davejwatson@fb.com>
-CC: Chris Lameter <cl@linux.com>
-CC: Ingo Molnar <mingo@redhat.com>
-CC: Ben Maurer <bmaurer@fb.com>
-CC: Steven Rostedt <rostedt@goodmis.org>
-CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-CC: Josh Triplett <josh@joshtriplett.org>
-CC: Linus Torvalds <torvalds@linux-foundation.org>
-CC: Andrew Morton <akpm@linux-foundation.org>
-CC: linux-api@vger.kernel.org
----
- arch/arm/kernel/signal.c | 1 +
- 1 file changed, 1 insertion(+)
+> From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+> 
+> Success of CMA allocation largely depends on success of migration
+> and key factor of it is page reference count. Until now, page reference
+> is manipulated by direct calling atomic functions so we cannot follow up
+> who and where manipulate it. Then, it is hard to find actual reason
+> of CMA allocation failure. CMA allocation should be guaranteed to succeed
+> so finding offending place is really important.
+> 
+> In this patch, call sites where page reference is manipulated are converted
+> to introduced wrapper function. This is preparation step to add tracepoint
+> to each page reference manipulation function. With this facility, we can
+> easily find reason of CMA allocation failure. There is no functional change
+> in this patch.
+> 
+> ...
+>
+> --- a/arch/mips/mm/gup.c
+> +++ b/arch/mips/mm/gup.c
+> @@ -64,7 +64,7 @@ static inline void get_head_page_multiple(struct page *page, int nr)
+>  {
+>  	VM_BUG_ON(page != compound_head(page));
+>  	VM_BUG_ON(page_count(page) == 0);
+> -	atomic_add(nr, &page->_count);
+> +	page_ref_add(page, nr);
 
-diff --git a/arch/arm/kernel/signal.c b/arch/arm/kernel/signal.c
-index 7b8f214..ff5052c 100644
---- a/arch/arm/kernel/signal.c
-+++ b/arch/arm/kernel/signal.c
-@@ -594,6 +594,7 @@ do_work_pending(struct pt_regs *regs, unsigned int thread_flags, int syscall)
- 			} else {
- 				clear_thread_flag(TIF_NOTIFY_RESUME);
- 				tracehook_notify_resume(regs);
-+				getcpu_cache_handle_notify_resume(current);
- 			}
- 		}
- 		local_irq_disable();
--- 
-2.1.4
+Seems reasonable.  Those open-coded refcount manipulations have always
+bugged me.
+
+The patches will be a bit of a pain to maintain but surprisingly they
+apply OK at present.  It's possible that by the time they hit upstream,
+some direct ->_count references will still be present and it will
+require a second pass to complete the conversion.
+
+After that pass is completed I suggest we rename page._count to
+something else (page.ref_count_dont_use_this_directly_you_dope?).  That
+way, any attempts to later add direct page._count references will
+hopefully break, alerting the programmer to the new regime.
+
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
