@@ -1,85 +1,137 @@
 From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: [PATCH v4 05/10] serial: mps2-uart: add support for early console
-Date: Tue, 23 Feb 2016 14:34:23 +0000
-Message-ID: <1456238068-25079-6-git-send-email-vladimir.murzin@arm.com>
+Subject: [PATCH v4 07/10] ARM: configs: add MPS2 defconfig
+Date: Tue, 23 Feb 2016 14:34:25 +0000
+Message-ID: <1456238068-25079-8-git-send-email-vladimir.murzin@arm.com>
 References: <1456238068-25079-1-git-send-email-vladimir.murzin@arm.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1456238068-25079-1-git-send-email-vladimir.murzin@arm.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: arnd@arndb.de, linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.lezcano@linaro.org, tglx@linutronix.de, u.kleine-koenig@pengutronix.de, liviu.dudau@arm.com, sudeep.holla@arm.com, lorenzo.pieralisi@arm.com
-Cc: mark.rutland@arm.com, gnomes@lxorguk.ukuu.org.uk, peter@hurleysoftware.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, andy.shevchenko@gmail.com, robh+dt@kernel.org, linux-arm-kernel@lists.infradead.org, linux-serial@vger.kernel.org, galak@codeaurora.org, jslaby@suse.cz, devicetree@vger.kernel.org
+Cc: mark.rutland@arm.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, jslaby@suse.cz, robh+dt@kernel.org, andy.shevchenko@gmail.com, gnomes@lxorguk.ukuu.org.uk, peter@hurleysoftware.com, devicetree@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This adds support early console for MPS2 UART which can be enabled via
-earlycon=mps2,0x40004000
+This patch adds a new config for MPS2 platform.
 
 Signed-off-by: Vladimir Murzin <vladimir.murzin@arm.com>
 ---
- drivers/tty/serial/Kconfig     |    1 +
- drivers/tty/serial/mps2-uart.c |   28 ++++++++++++++++++++++++++++
- 2 files changed, 29 insertions(+)
+ arch/arm/configs/mps2_defconfig |  109 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 109 insertions(+)
+ create mode 100644 arch/arm/configs/mps2_defconfig
 
-diff --git a/drivers/tty/serial/Kconfig b/drivers/tty/serial/Kconfig
-index 3a248be..4ed6e51 100644
---- a/drivers/tty/serial/Kconfig
-+++ b/drivers/tty/serial/Kconfig
-@@ -1454,6 +1454,7 @@ config SERIAL_MPS2_UART_CONSOLE
- 	bool "MPS2 UART console support"
- 	depends on SERIAL_MPS2_UART
- 	select SERIAL_CORE_CONSOLE
-+	select SERIAL_EARLYCON
- 
- config SERIAL_MPS2_UART
- 	bool "MPS2 UART port"
-diff --git a/drivers/tty/serial/mps2-uart.c b/drivers/tty/serial/mps2-uart.c
-index 5a4e167..4f42326 100644
---- a/drivers/tty/serial/mps2-uart.c
-+++ b/drivers/tty/serial/mps2-uart.c
-@@ -439,6 +439,34 @@ static struct console mps2_uart_console = {
- 
- #define MPS2_SERIAL_CONSOLE (&mps2_uart_console)
- 
-+static void mps2_early_putchar(struct uart_port *port, int ch)
-+{
-+
-+	while (readb(port->membase + UARTn_STATE) & UARTn_STATE_TX_FULL)
-+		cpu_relax();
-+
-+	writeb((unsigned char)ch, port->membase + UARTn_DATA);
-+}
-+
-+static void mps2_early_write(struct console *con, const char *s, unsigned n)
-+{
-+	struct earlycon_device *dev = con->data;
-+
-+	uart_console_write(&dev->port, s, n, mps2_early_putchar);
-+}
-+
-+static int __init mps2_early_console_setup(struct earlycon_device *device,
-+					   const char *opt)
-+{
-+	if (!device->port.membase)
-+		return -ENODEV;
-+
-+	device->con->write = mps2_early_write;
-+
-+	return 0;
-+}
-+OF_EARLYCON_DECLARE(mps2, "arm,mps2-uart", mps2_early_console_setup);
-+
- #else
- #define MPS2_SERIAL_CONSOLE NULL
- #endif
+diff --git a/arch/arm/configs/mps2_defconfig b/arch/arm/configs/mps2_defconfig
+new file mode 100644
+index 0000000..19d119f
+--- /dev/null
++++ b/arch/arm/configs/mps2_defconfig
+@@ -0,0 +1,109 @@
++CONFIG_NO_HZ_IDLE=y
++CONFIG_HIGH_RES_TIMERS=y
++CONFIG_LOG_BUF_SHIFT=16
++CONFIG_CC_OPTIMIZE_FOR_SIZE=y
++CONFIG_EXPERT=y
++# CONFIG_UID16 is not set
++# CONFIG_BASE_FULL is not set
++# CONFIG_FUTEX is not set
++# CONFIG_EPOLL is not set
++# CONFIG_SIGNALFD is not set
++# CONFIG_EVENTFD is not set
++# CONFIG_AIO is not set
++# CONFIG_VM_EVENT_COUNTERS is not set
++# CONFIG_SLUB_DEBUG is not set
++# CONFIG_BLOCK is not set
++# CONFIG_MMU is not set
++CONFIG_ARCH_MPS2=y
++CONFIG_SET_MEM_PARAM=y
++CONFIG_DRAM_BASE=0x21000000
++CONFIG_DRAM_SIZE=0x1000000
++CONFIG_PREEMPT_VOLUNTARY=y
++# CONFIG_ATAGS is not set
++CONFIG_ZBOOT_ROM_TEXT=0x0
++CONFIG_ZBOOT_ROM_BSS=0x0
++CONFIG_BINFMT_FLAT=y
++CONFIG_BINFMT_SHARED_FLAT=y
++# CONFIG_COREDUMP is not set
++# CONFIG_SUSPEND is not set
++CONFIG_NET=y
++CONFIG_PACKET=y
++CONFIG_UNIX=y
++CONFIG_INET=y
++CONFIG_IP_PNP=y
++CONFIG_IP_PNP_DHCP=y
++# CONFIG_INET_XFRM_MODE_TRANSPORT is not set
++# CONFIG_INET_XFRM_MODE_TUNNEL is not set
++# CONFIG_INET_XFRM_MODE_BEET is not set
++# CONFIG_INET_LRO is not set
++# CONFIG_INET_DIAG is not set
++# CONFIG_IPV6 is not set
++# CONFIG_WIRELESS is not set
++CONFIG_DEVTMPFS=y
++CONFIG_DEVTMPFS_MOUNT=y
++# CONFIG_FW_LOADER is not set
++CONFIG_NETDEVICES=y
++# CONFIG_NET_CORE is not set
++# CONFIG_NET_VENDOR_ARC is not set
++# CONFIG_NET_CADENCE is not set
++# CONFIG_NET_VENDOR_BROADCOM is not set
++# CONFIG_NET_VENDOR_CIRRUS is not set
++# CONFIG_NET_VENDOR_EZCHIP is not set
++# CONFIG_NET_VENDOR_FARADAY is not set
++# CONFIG_NET_VENDOR_HISILICON is not set
++# CONFIG_NET_VENDOR_INTEL is not set
++# CONFIG_NET_VENDOR_MARVELL is not set
++# CONFIG_NET_VENDOR_MICREL is not set
++# CONFIG_NET_VENDOR_NATSEMI is not set
++# CONFIG_NET_VENDOR_QUALCOMM is not set
++# CONFIG_NET_VENDOR_RENESAS is not set
++# CONFIG_NET_VENDOR_ROCKER is not set
++# CONFIG_NET_VENDOR_SAMSUNG is not set
++# CONFIG_NET_VENDOR_SEEQ is not set
++CONFIG_SMSC911X=y
++# CONFIG_NET_VENDOR_STMICRO is not set
++# CONFIG_NET_VENDOR_VIA is not set
++# CONFIG_NET_VENDOR_WIZNET is not set
++# CONFIG_WLAN is not set
++# CONFIG_INPUT is not set
++# CONFIG_SERIO is not set
++# CONFIG_VT is not set
++# CONFIG_LEGACY_PTYS is not set
++CONFIG_SERIAL_NONSTANDARD=y
++# CONFIG_DEVKMEM is not set
++CONFIG_SERIAL_MPS2_UART_CONSOLE=y
++CONFIG_SERIAL_MPS2_UART=y
++# CONFIG_HW_RANDOM is not set
++# CONFIG_HWMON is not set
++CONFIG_WATCHDOG=y
++CONFIG_ARM_SP805_WATCHDOG=y
++CONFIG_MFD_SYSCON=y
++# CONFIG_USB_SUPPORT is not set
++CONFIG_NEW_LEDS=y
++CONFIG_LEDS_CLASS=y
++CONFIG_LEDS_SYSCON=y
++CONFIG_LEDS_TRIGGERS=y
++CONFIG_LEDS_TRIGGER_TIMER=y
++CONFIG_LEDS_TRIGGER_ONESHOT=y
++CONFIG_LEDS_TRIGGER_HEARTBEAT=y
++CONFIG_LEDS_TRIGGER_BACKLIGHT=y
++CONFIG_LEDS_TRIGGER_CPU=y
++CONFIG_LEDS_TRIGGER_DEFAULT_ON=y
++CONFIG_ARM_TIMER_SP804=y
++# CONFIG_DNOTIFY is not set
++# CONFIG_INOTIFY_USER is not set
++# CONFIG_MISC_FILESYSTEMS is not set
++CONFIG_NFS_FS=y
++CONFIG_NFS_V4=y
++CONFIG_NFS_V4_1=y
++CONFIG_NFS_V4_2=y
++CONFIG_ROOT_NFS=y
++CONFIG_NLS=y
++CONFIG_PRINTK_TIME=y
++CONFIG_DEBUG_INFO=y
++# CONFIG_ENABLE_WARN_DEPRECATED is not set
++# CONFIG_ENABLE_MUST_CHECK is not set
++CONFIG_DEBUG_FS=y
++# CONFIG_SCHED_DEBUG is not set
++# CONFIG_DEBUG_BUGVERBOSE is not set
++CONFIG_MEMTEST=y
 -- 
 1.7.9.5
