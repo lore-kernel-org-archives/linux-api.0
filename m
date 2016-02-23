@@ -1,110 +1,80 @@
-From: Dave Hansen <dave@sr71.net>
-Subject: [RFC][PATCH 7/7] pkeys: add details of system call use to Documentation/
-Date: Mon, 22 Feb 2016 17:11:18 -0800
-Message-ID: <20160223011118.954E64B7@viggo.jf.intel.com>
-References: <20160223011107.FB9B8215@viggo.jf.intel.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20160223011107.FB9B8215@viggo.jf.intel.com>
-Sender: owner-linux-mm@kvack.org
-To: linux-kernel@vger.kernel.org
-Cc: Dave Hansen <dave@sr71.net>, dave.hansen@linux.intel.com, linux-api@vger.kernel.org, linux-mm@kvack.org, x86@kernel.org, torvalds@linux-foundation.org, akpm@linux-foundation.org
+From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v8 1/4] firmware: introduce sysfs driver for QEMU's
+ fw_cfg device
+Date: Tue, 23 Feb 2016 07:07:36 +0200
+Message-ID: <20160223070541-mutt-send-email-mst@redhat.com>
+References: <1453990994-17801-1-git-send-email-somlo@cmu.edu>
+ <1453990994-17801-2-git-send-email-somlo@cmu.edu>
+ <20160221100557-mutt-send-email-mst@redhat.com>
+ <20160221130614.GA4511@GLSMBP.INI.CMU.EDU>
+ <20160222220756-mutt-send-email-mst@redhat.com>
+ <20160222202623.GI16357@HEDWIG.INI.CMU.EDU>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160222202623.GI16357-h65ZQ0r4j6KKUezXOiBB2eW1CriLhL8O@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
+Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, eric-WhKQ6XTQaPysTnJN9+BGXg@public.gmane.org, hanjun.guo-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, sudeep.holla-5wv7dgnIgG8@public.gmane.org, agross-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, imammedo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ehabkost-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, stefanha-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, revol-GANU6spQydw@public.gmane.org, matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org, rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On Mon, Feb 22, 2016 at 03:26:23PM -0500, Gabriel L. Somlo wrote:
+> On Mon, Feb 22, 2016 at 10:14:50PM +0200, Michael S. Tsirkin wrote:
+> > On Sun, Feb 21, 2016 at 08:06:17AM -0500, Gabriel L. Somlo wrote:
+> > > > > +static void fw_cfg_io_cleanup(void)
+> > > > > +{
+> > > > > +	if (fw_cfg_is_mmio) {
+> > > > > +		iounmap(fw_cfg_dev_base);
+> > > > > +		release_mem_region(fw_cfg_p_base, fw_cfg_p_size);
+> > > > > +	} else {
+> > > > > +		ioport_unmap(fw_cfg_dev_base);
+> > > > > +		release_region(fw_cfg_p_base, fw_cfg_p_size);
+> > > > > +	}
+> > > > > +}
+> > > > > +
+> > > > > +/* arch-specific ctrl & data register offsets are not available in ACPI, DT */
+> > > > 
+> > > > So for all arches which support ACPI, I think this driver
+> > > > should just rely on ACPI.
+> > > 
+> > > There was a discussion about that a few versions ago, and IIRC the
+> > > conclusion was not to expect the firmware to contend for fw_cfg access
+> > > after the guest kernel boots:
+> > > 
+> > > https://lkml.org/lkml/2015/10/5/283
+> > > 
+> > 
+> > So it looks like NVDIMM at least wants to pass label data to guest -
+> > for which fw cfg might be a reasonable choice.
+> > 
+> > I suspect things changed - fw cfg used to be very slow but we now have
+> > DMA interface which makes it useful for a range of applications.
 
-From: Dave Hansen <dave.hansen@linux.intel.com>
+Comment on this? I'm really worried we'll release linux
+without a way to access fw cfg from aml.
+How about taking acpi lock around all accesses?
 
-This spells out all of the pkey-related system calls that we have
-and provides some example code fragments to demonstrate how we
-expect them to be used.
+> > > (I even had a prototype version doing what you suggested, but per the above
+> > > reference decided to drop it -- which IMHO is for the better, since otherwise
+> > > I'd have had to ifdef between ACPI and non-ACPI versions of the driver --
+> > > see https://lkml.org/lkml/2015/11/4/534 )
+> > 
+> > I'm not sure why you have these ifdefs - they are on the host, are they
+> > not?
+> 
+> Think of those as "pseudocode" ifdefs, they're there to distinguish
+> between AML that would be generated on MMIO vs. IOPORT systems
+> (specifically, arm vs. x86, respectively)
+> 
+> Some of the AML is the same, but obviously the _CRS, and
+> OperationRegion + Field are different, and I wanted to point that out
+> somehow :)
+> 
+> Cheers,
+> --Gabriel
 
-Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
-Cc: linux-api@vger.kernel.org
-Cc: linux-mm@kvack.org
-Cc: x86@kernel.org
-Cc: torvalds@linux-foundation.org
-Cc: akpm@linux-foundation.org
----
+You can do ifs as well.
 
- b/Documentation/x86/protection-keys.txt |   63 ++++++++++++++++++++++++++++++++
- 1 file changed, 63 insertions(+)
-
-diff -puN Documentation/x86/protection-keys.txt~pkeys-98-syscall-docs Documentation/x86/protection-keys.txt
---- a/Documentation/x86/protection-keys.txt~pkeys-98-syscall-docs	2016-02-22 17:09:25.814409138 -0800
-+++ b/Documentation/x86/protection-keys.txt	2016-02-22 17:09:25.818409320 -0800
-@@ -19,6 +19,69 @@ even though there is theoretically space
- permissions are enforced on data access only and have no effect on
- instruction fetches.
- 
-+=========================== Syscalls ===========================
-+
-+There are 5 system calls which directly interact with pkeys:
-+
-+	int pkey_alloc(unsigned long flags, unsigned long init_access_rights)
-+	int pkey_free(int pkey);
-+	int sys_pkey_mprotect(unsigned long start, size_t len,
-+			      unsigned long prot, int pkey);
-+	unsigned long pkey_get(int pkey);
-+	int pkey_set(int pkey, unsigned long access_rights);
-+
-+Before a pkey can be used, it must first be allocated with
-+pkey_alloc().  An application may either call pkey_set() or the
-+WRPKRU instruction directly in order to change access permissions
-+to memory covered with a key.
-+
-+	int real_prot = PROT_READ|PROT_WRITE;
-+	pkey = pkey_alloc(0, PKEY_DENY_WRITE);
-+	ptr = mmap(NULL, PAGE_SIZE, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-+	ret = pkey_mprotect(ptr, PAGE_SIZE, real_prot, pkey);
-+	... application runs here
-+
-+Now, if the application needs to update the data at 'ptr', it can
-+gain access, do the update, then remove its write access:
-+
-+	pkey_set(pkey, 0); // clear PKEY_DENY_WRITE
-+	*ptr = foo; // assign something
-+	pkey_set(pkey, PKEY_DENY_WRITE); // set PKEY_DENY_WRITE again
-+
-+Now when it frees the memory, it will also free the pkey since it
-+is no longer in use:
-+
-+	munmap(ptr, PAGE_SIZE);
-+	pkey_free(pkey);
-+
-+=========================== Behavior ===========================
-+
-+The kernel attempts to make protection keys consistent with the
-+behavior of a plain mprotect().  For instance if you do this:
-+
-+	mprotect(ptr, size, PROT_NONE);
-+	something(ptr);
-+
-+you can expect the same effects with protection keys when doing this:
-+
-+	sys_pkey_alloc(0, PKEY_DISABLE_WRITE | PKEY_DISABLE_READ);
-+	sys_pkey_mprotect(ptr, size, PROT_READ|PROT_WRITE);
-+	something(ptr);
-+
-+That should be true whether something() is a direct access to 'ptr'
-+like:
-+
-+	*ptr = foo;
-+
-+or when the kernel does the access on the application's behalf like
-+with a read():
-+
-+	read(fd, ptr, 1);
-+
-+The kernel will send a SIGSEGV in both cases, but si_code will be set
-+to SEGV_PKERR when violating protection keys versus SEGV_ACCERR when
-+the plain mprotect() permissions are violated.
-+
- =========================== Config Option ===========================
- 
- This config option adds approximately 1.5kb of text. and 50 bytes of
-_
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+MST
