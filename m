@@ -1,69 +1,36 @@
 From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: [PATCH v4 01/10] dt-bindings: document the MPS2 timer bindings
-Date: Tue, 23 Feb 2016 14:34:19 +0000
-Message-ID: <1456238068-25079-2-git-send-email-vladimir.murzin@arm.com>
+Subject: [PATCH v4 10/10] MAINTAINERS: Update ARM Versatile Express platform entry
+Date: Tue, 23 Feb 2016 14:34:28 +0000
+Message-ID: <1456238068-25079-11-git-send-email-vladimir.murzin@arm.com>
 References: <1456238068-25079-1-git-send-email-vladimir.murzin@arm.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1456238068-25079-1-git-send-email-vladimir.murzin@arm.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: arnd@arndb.de, linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.lezcano@linaro.org, tglx@linutronix.de, u.kleine-koenig@pengutronix.de, liviu.dudau@arm.com, sudeep.holla@arm.com, lorenzo.pieralisi@arm.com
-Cc: mark.rutland@arm.com, gnomes@lxorguk.ukuu.org.uk, peter@hurleysoftware.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, andy.shevchenko@gmail.com, robh+dt@kernel.org, linux-arm-kernel@lists.infradead.org, linux-serial@vger.kernel.org, galak@codeaurora.org, jslaby@suse.cz, devicetree@vger.kernel.org
+Cc: mark.rutland@arm.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, jslaby@suse.cz, robh+dt@kernel.org, andy.shevchenko@gmail.com, gnomes@lxorguk.ukuu.org.uk, peter@hurleysoftware.com, devicetree@vger.kernel.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This adds documentation of device tree bindings for the
-timers found on ARM MPS2 platform.
+This patch update ARM Versatile Express entry to cover bits needed for
+Cortex-M Prototyping System (MPS2 platform). So patches for the latter
+are collected by existing Vexpress and Juno maintainers (Liviu, Sudeep,
+Lorenzo) and find their way upstream via Vexpess and/or Juno trees.
 
 Signed-off-by: Vladimir Murzin <vladimir.murzin@arm.com>
-Acked-by: Rob Herring <robh@kernel.org>
 ---
- .../devicetree/bindings/timer/arm,mps2-timer.txt   |   28 ++++++++++++++++++++
- 1 file changed, 28 insertions(+)
- create mode 100644 Documentation/devicetree/bindings/timer/arm,mps2-timer.txt
+ MAINTAINERS |    1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/Documentation/devicetree/bindings/timer/arm,mps2-timer.txt b/Documentation/devicetree/bindings/timer/arm,mps2-timer.txt
-new file mode 100644
-index 0000000..48f84d7
---- /dev/null
-+++ b/Documentation/devicetree/bindings/timer/arm,mps2-timer.txt
-@@ -0,0 +1,28 @@
-+ARM MPS2 timer
-+
-+The MPS2 platform has simple general-purpose 32 bits timers.
-+
-+Required properties:
-+- compatible	: Should be "arm,mps2-timer"
-+- reg		: Address and length of the register set
-+- interrupts	: Reference to the timer interrupt
-+
-+Required clocking property, have to be one of:
-+- clocks	  : The input clock of the timer
-+- clock-frequency : The rate in HZ in input of the ARM MPS2 timer
-+
-+Examples:
-+
-+timer1: mps2-timer@40000000 {
-+	compatible = "arm,mps2-timer";
-+	reg = <0x40000000 0x1000>;
-+	interrupts = <8>;
-+	clocks = <&sysclk>;
-+};
-+
-+timer2: mps2-timer@40001000 {
-+	compatible = "arm,mps2-timer";
-+	reg = <0x40001000 0x1000>;
-+	interrupts = <9>;
-+	clock-frequency = <25000000>;
-+};
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 4978dc1..e827e3b 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -1726,6 +1726,7 @@ F:	*/*/vexpress*
+ F:	*/*/*/vexpress*
+ F:	drivers/clk/versatile/clk-vexpress-osc.c
+ F:	drivers/clocksource/versatile.c
++N:	mps2
+ 
+ ARM/VFP SUPPORT
+ M:	Russell King <linux@arm.linux.org.uk>
 -- 
 1.7.9.5
