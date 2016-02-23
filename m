@@ -1,65 +1,64 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [PATCHv2 09/10] rfkill: Userspace control for airplane mode
-Date: Tue, 23 Feb 2016 22:45:02 +0100
-Message-ID: <20160223214501.GA22501@amd>
-References: <1456159001-20307-1-git-send-email-jprvita@endlessm.com>
- <1456159001-20307-10-git-send-email-jprvita@endlessm.com>
- <20160223204525.GC16961@amd>
- <1456260914.9910.34.camel@sipsolutions.net>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [PATCH v4 0/5] getcpu_cache system call for 4.6
+Date: Tue, 23 Feb 2016 18:28:35 -0500
+Message-ID: <1456270120-7560-1-git-send-email-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1456260914.9910.34.camel@sipsolutions.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Johannes Berg <johannes@sipsolutions.net>
-Cc: =?iso-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita@gmail.com>, "David S. Miller" <davem@davemloft.net>, Darren Hart <dvhart@infradead.org>, linux-wireless@vger.kernel.org, netdev@vger.kernel.org, platform-driver-x86@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux@endlessm.com, =?iso-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita@endlessm.com>
+To: Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue 2016-02-23 21:55:14, Johannes Berg wrote:
-> On Tue, 2016-02-23 at 21:45 +0100, Pavel Machek wrote:
-> 
-> > So... you add LED trigger to display the state of the airplane
-> > mode. Ok, why not.
-> 
-> Yes. However, consider that "the airplane mode" isn't a well-defined
-> concept; some systems may want to light up that LED even when wifi is
-> still enabled, since you're nowadays quite likely to be allowed to use
-> wifi (but not enable e.g. LTE) while in-flight.
+Hi,
 
-Well "the airplane mode" is well defined. It means no intentional
-transmitting at radio frequencies.
+Here is a patchset implementing a cache for the CPU number of the
+currently running thread in user-space.
 
-The fact that you are allowed to use WIFI on certain flights does not
-change anything.
+Benchmarks comparing this approach to a getcpu based on system call on
+ARM show a 44x speedup. They show a 14x speedup on x86-64 compared to
+executing lsl from a vDSO through glibc.
 
-> > But now you add an way to override it? Why? If someone wants to
-> > change
-> > the led state, he can just change trigger to none, and then control
-> > the LED manually...
-> 
-> Yes, but now you've forced every application that wants to deal with
-> this to know about every single LED that might be used with this
-> trigger... that won't work for some generic userland tool that might
-> want to implement an "airplane-mode policy".
+I'm added a man page in the changelog of patch 1/3, which shows an
+example usage of this new system call.
 
-I see that "airplane mode" trigger might be a tiny bit
-useful... dunno, for a LED near the airplane mode switch, when vendor
-replaced hardware toggle with a key. But policy should have nothing to
-do with that. If you argue additional "policy daemon" is needed for
-that... forget it, that's overdesigned.
+This series is based on v4.5-rc5, submitted for Linux 4.6.
 
-(Besides, finding all LEDs with given trigger is trivial
-operation. Besides... there should never be more than one).
+Feedback is welcome,
 
-> > BTW what happens when the device contains both radios controlled by
-> > kernel (wifi, bluetooth) and radios controlled by userspace (GSM
-> > modem)?
-> 
-> You'd better have the userspace to control the LED :)
+Thanks!
 
-Yes, so lets forget that and no additional triggers? Good ;-).
-									Pavel
+Mathieu
+
+
+Mathieu Desnoyers (5):
+  getcpu_cache system call: cache CPU number of running thread
+  getcpu_cache: ARM resume notifier
+  getcpu_cache: wire up ARM system call
+  getcpu_cache: x86 32/64 resume notifier
+  getcpu_cache: wire up x86 32/64 system call
+
+ MAINTAINERS                            |   7 ++
+ arch/arm/include/uapi/asm/unistd.h     |   1 +
+ arch/arm/kernel/calls.S                |   3 +-
+ arch/arm/kernel/signal.c               |   1 +
+ arch/x86/entry/common.c                |   1 +
+ arch/x86/entry/syscalls/syscall_32.tbl |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl |   1 +
+ fs/exec.c                              |   1 +
+ include/linux/sched.h                  |  36 ++++++++
+ include/uapi/linux/Kbuild              |   1 +
+ include/uapi/linux/getcpu_cache.h      |  42 +++++++++
+ init/Kconfig                           |  10 ++
+ kernel/Makefile                        |   1 +
+ kernel/fork.c                          |   4 +
+ kernel/getcpu_cache.c                  | 163 +++++++++++++++++++++++++++++++++
+ kernel/sched/sched.h                   |   1 +
+ kernel/sys_ni.c                        |   3 +
+ 17 files changed, 276 insertions(+), 1 deletion(-)
+ create mode 100644 include/uapi/linux/getcpu_cache.h
+ create mode 100644 kernel/getcpu_cache.c
+
 -- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+2.1.4
