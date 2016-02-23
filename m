@@ -1,21 +1,46 @@
-From: Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>
-Subject: Re: [PATCH v4 05/10] serial: mps2-uart: add support for early console
-Date: Tue, 23 Feb 2016 07:32:22 -0800
-Message-ID: <56CC7B86.5020307@hurleysoftware.com>
-References: <1456238068-25079-1-git-send-email-vladimir.murzin@arm.com>
- <1456238068-25079-6-git-send-email-vladimir.murzin@arm.com>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: Re: [PATCH v4 1/2] selftests: create test-specific kconfig fragments
+Date: Tue, 23 Feb 2016 11:28:44 -0700
+Message-ID: <56CCA4DC.4050508@osg.samsung.com>
+References: <1452238054-15482-1-git-send-email-bamvor.zhangjian@linaro.org>
+ <1452238054-15482-2-git-send-email-bamvor.zhangjian@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1456238068-25079-6-git-send-email-vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
-Cc: arnd-r2nGTMty4D4@public.gmane.org, linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, liviu.dudau-5wv7dgnIgG8@public.gmane.org, sudeep.holla-5wv7dgnIgG8@public.gmane.org, lorenzo.pieralisi-5wv7dgnIgG8@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kbuild-owner@vger.kernel.org>
+In-Reply-To: <1452238054-15482-2-git-send-email-bamvor.zhangjian@linaro.org>
+Sender: linux-kbuild-owner@vger.kernel.org
+To: Bamvor Jian Zhang <bamvor.zhangjian@linaro.org>, linux-api@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-kbuild@vger.kernel.org, yann.morin.1998@free.fr, khilman@linaro.org, tyler.baker@linaro.org, broonie@kernel.org, mpe@ellerman.id.au, dvhart@infradead.org, mmarek@suse.com, Shuah Khan <shuahkh@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-On 02/23/2016 06:34 AM, Vladimir Murzin wrote:
-> This adds support early console for MPS2 UART which can be enabled via
-> earlycon=mps2,0x40004000
+On 01/08/2016 12:27 AM, Bamvor Jian Zhang wrote:
+> Create the config file in each directory of testcase which need
+> more kernel configuration than the default defconfig. User could
+> use these configs with merge_config.sh script:
+> 
+> Enable config for specific testcase:
+> (export ARCH=xxx #for cross compiling)
+> ./scripts/kconfig/merge_config.sh .config \
+> 		tools/testing/selftests/xxx/config
+> 
+> Enable configs for all testcases:
+> (export ARCH=xxx #for cross compiling)
+> ./scripts/kconfig/merge_config.sh .config \
+> 		tools/testing/selftests/*/config
+> 
+> Signed-off-by: Bamvor Jian Zhang <bamvor.zhangjian@linaro.org>
+> Reviewed-by: Shuah Khan <shuahkh@osg.samsung.com>
 
-Reviewed-by: Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>
+Applied to linux-kselftest next for 4.6-rc1
+
+thanks,
+-- Shuah
+
+
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh@osg.samsung.com | (970) 217-8978
