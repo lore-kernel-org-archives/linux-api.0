@@ -1,241 +1,282 @@
 From: Petr Mladek <pmladek@suse.com>
-Subject: Re: [PATCH v5 03/20] kthread: Add create_kthread_worker*()
-Date: Wed, 24 Feb 2016 16:56:24 +0100
-Message-ID: <20160224155624.GZ3305@pathway.suse.cz>
-References: <1456153030-12400-4-git-send-email-pmladek@suse.com>
- <201602222335.d3Pey8SI%fengguang.wu@intel.com>
+Subject: Re: [PATCH v5 07/20] kthread: Initial support for delayed kthread
+ work
+Date: Wed, 24 Feb 2016 17:09:21 +0100
+Message-ID: <20160224160921.GA3305@pathway.suse.cz>
+References: <1456153030-12400-8-git-send-email-pmladek@suse.com>
+ <201602230028.qy3AtO8V%fengguang.wu@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <201602222335.d3Pey8SI%fengguang.wu@intel.com>
+In-Reply-To: <201602230028.qy3AtO8V%fengguang.wu@intel.com>
 Sender: owner-linux-mm@kvack.org
 To: kbuild test robot <lkp@intel.com>
 Cc: kbuild-all@01.org, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon 2016-02-22 23:48:53, kbuild test robot wrote:
+On Tue 2016-02-23 00:06:50, kbuild test robot wrote:
 > Hi Petr,
 > 
-> [auto build test ERROR on soc-thermal/next]
-> [also build test ERROR on v4.5-rc5 next-20160222]
+> [auto build test WARNING on soc-thermal/next]
+> [also build test WARNING on v4.5-rc5 next-20160222]
 > [if your patch is applied to the wrong git tree, please drop us a note to help improving the system]
 > 
 > url:    https://github.com/0day-ci/linux/commits/Petr-Mladek/kthread-Use-kthread-worker-API-more-widely/20160222-230250
 > base:   https://git.kernel.org/pub/scm/linux/kernel/git/evalenti/linux-soc-thermal next
-> config: xtensa-allyesconfig (attached as .config)
-> reproduce:
->         wget https://git.kernel.org/cgit/linux/kernel/git/wfg/lkp-tests.git/plain/sbin/make.cross -O ~/bin/make.cross
->         chmod +x ~/bin/make.cross
->         # save the attached .config to linux build tree
->         make.cross ARCH=xtensa 
+> reproduce: make htmldocs
 > 
-> All error/warnings (new ones prefixed by >>):
+> All warnings (new ones prefixed by >>):
 > 
->    kernel/kthread.c: In function 'create_kthread_worker_on_cpu':
-> >> kernel/kthread.c:691:9: error: incompatible type for argument 3 of '__create_kthread_worker'
->      return __create_kthread_worker(cpu, namefmt, NULL);
->             ^
->    kernel/kthread.c:622:1: note: expected 'va_list' but argument is of type 'void *'
->     __create_kthread_worker(int cpu, const char namefmt[], va_list args)
->     ^
-> >> kernel/kthread.c:692:1: warning: control reaches end of non-void function [-Wreturn-type]
->     }
->     ^
-> 
-> vim +/__create_kthread_worker +691 kernel/kthread.c
-> 
->    685	 * when the needed structures could not get allocated, and ERR_PTR(-EINTR)
->    686	 * when the worker was SIGKILLed.
->    687	 */
->    688	struct kthread_worker *
->    689	create_kthread_worker_on_cpu(int cpu, const char namefmt[])
->    690	{
->  > 691		return __create_kthread_worker(cpu, namefmt, NULL);
->  > 692	}
->    693	EXPORT_SYMBOL(create_kthread_worker_on_cpu);
->    694	
->    695	/* insert @work before @pos in @worker */
+>    include/linux/init.h:1: warning: no structured comments found
+> >> kernel/kthread.c:833: warning: No description found for parameter 'dwork'
+> >> kernel/kthread.c:833: warning: No description found for parameter 'delay'
+> >> kernel/kthread.c:833: warning: Excess function parameter 'work' description in 'queue_delayed_kthread_work'
+>    kernel/sys.c:1: warning: no structured comments found
 
-I can be fixed by passing a fake va_list. It is not used when
-__create_kthread_worker() is called with a valid CPU number.
-
-See below an updated patch that passes the build.
+Great catch. Please, find below a fixed version of the patch.
 
 
->From 5e6c252921c0370a88d2ce5f61370fef573afcaa Mon Sep 17 00:00:00 2001
+>From d20fa44b6a62a33098e4465c1bb0baf522b177f3 Mon Sep 17 00:00:00 2001
 From: Petr Mladek <pmladek@suse.com>
-Date: Tue, 23 Jun 2015 17:09:19 +0200
-Subject: [PATCH 3/3] kthread: Add create_kthread_worker*()
+Date: Wed, 9 Dec 2015 15:53:03 +0100
+Subject: [PATCH 7/7] kthread: Initial support for delayed kthread work
 
-Kthread workers are currently created using the classic kthread API,
-namely kthread_run(). kthread_worker_fn() is passed as the @threadfn
-parameter.
+We are going to use kthread_worker more widely and delayed works
+will be pretty useful.
 
-This patch defines create_kthread_worker() and
-create_kthread_worker_on_cpu() functions that hide implementation details.
+The implementation is inspired by workqueues. It uses a timer to
+queue the work after the requested delay. If the delay is zero,
+the work is queued immediately.
 
-They enforce using kthread_worker_fn() for the main thread. But I doubt
-that there are any plans to create any alternative. In fact, I think
-that we do not want any alternative main thread because it would be
-hard to support consistency with the rest of the kthread worker API.
+In compare with workqueues, each work is associated with a single
+worker (kthread). Therefore the implementation could be much easier.
+In particular, we use the worker->lock to synchronize all the
+operations with the work. We do not need any atomic operation
+with a flags variable.
 
-The naming and function is inspired by the workqueues API like the rest
-of the kthread worker API.
+In fact, we do not need any state variable at all. Instead, we
+add a list of delayed works into the worker. Then the pending
+work is listed either in the list of queued or delayed works.
+And the existing check of pending works is the same even for
+the delayed ones.
 
-Note that we need to bind per-CPU kthread workers already when they are
-created. It makes the life easier. kthread_bind() could not be used later
-for an already running worker.
-
-This patch does _not_ convert existing kthread workers. The kthread worker
-API need more improvements first, e.g. a function to destroy the worker.
+A work must not be assigned to another worker unless reinitialized.
+Therefore the timer handler might expect that dwork->work->worker
+is valid and it could simply take the lock. We just add some
+sanity checks to help with debugging a potential misuse.
 
 Signed-off-by: Petr Mladek <pmladek@suse.com>
 ---
- include/linux/kthread.h |  7 ++++
- kernel/kthread.c        | 97 ++++++++++++++++++++++++++++++++++++++++++++-----
- 2 files changed, 94 insertions(+), 10 deletions(-)
+ include/linux/kthread.h |  33 ++++++++++++++++
+ kernel/kthread.c        | 102 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 135 insertions(+)
 
 diff --git a/include/linux/kthread.h b/include/linux/kthread.h
-index e691b6a23f72..943900c7ce35 100644
+index c4a95a3ba500..6e37b169e8b6 100644
 --- a/include/linux/kthread.h
 +++ b/include/linux/kthread.h
-@@ -124,6 +124,13 @@ extern void __init_kthread_worker(struct kthread_worker *worker,
+@@ -63,10 +63,12 @@ extern int tsk_fork_get_node(struct task_struct *tsk);
+  */
+ struct kthread_work;
+ typedef void (*kthread_work_func_t)(struct kthread_work *work);
++void delayed_kthread_work_timer_fn(unsigned long __data);
  
+ struct kthread_worker {
+ 	spinlock_t		lock;
+ 	struct list_head	work_list;
++	struct list_head	delayed_work_list;
+ 	struct task_struct	*task;
+ 	struct kthread_work	*current_work;
+ };
+@@ -77,9 +79,15 @@ struct kthread_work {
+ 	struct kthread_worker	*worker;
+ };
+ 
++struct delayed_kthread_work {
++	struct kthread_work work;
++	struct timer_list timer;
++};
++
+ #define KTHREAD_WORKER_INIT(worker)	{				\
+ 	.lock = __SPIN_LOCK_UNLOCKED((worker).lock),			\
+ 	.work_list = LIST_HEAD_INIT((worker).work_list),		\
++	.delayed_work_list = LIST_HEAD_INIT((worker).delayed_work_list),\
+ 	}
+ 
+ #define KTHREAD_WORK_INIT(work, fn)	{				\
+@@ -87,12 +95,23 @@ struct kthread_work {
+ 	.func = (fn),							\
+ 	}
+ 
++#define DELAYED_KTHREAD_WORK_INIT(dwork, fn) {				\
++	.work = KTHREAD_WORK_INIT((dwork).work, (fn)),			\
++	.timer = __TIMER_INITIALIZER(delayed_kthread_work_timer_fn,	\
++				     0, (unsigned long)&(dwork),	\
++				     TIMER_IRQSAFE),			\
++	}
++
+ #define DEFINE_KTHREAD_WORKER(worker)					\
+ 	struct kthread_worker worker = KTHREAD_WORKER_INIT(worker)
+ 
+ #define DEFINE_KTHREAD_WORK(work, fn)					\
+ 	struct kthread_work work = KTHREAD_WORK_INIT(work, fn)
+ 
++#define DEFINE_DELAYED_KTHREAD_WORK(dwork, fn)				\
++	struct delayed_kthread_work dwork =				\
++		DELAYED_KTHREAD_WORK_INIT(dwork, fn)
++
+ /*
+  * kthread_worker.lock needs its own lockdep class key when defined on
+  * stack with lockdep enabled.  Use the following macros in such cases.
+@@ -122,6 +141,15 @@ extern void __init_kthread_worker(struct kthread_worker *worker,
+ 		(work)->func = (fn);					\
+ 	} while (0)
+ 
++#define init_delayed_kthread_work(dwork, fn)				\
++	do {								\
++		init_kthread_work(&(dwork)->work, (fn));		\
++		__setup_timer(&(dwork)->timer,				\
++			      delayed_kthread_work_timer_fn,		\
++			      (unsigned long)(dwork),			\
++			      TIMER_IRQSAFE);				\
++	} while (0)
++
  int kthread_worker_fn(void *worker_ptr);
  
-+__printf(1, 2)
-+struct kthread_worker *
-+create_kthread_worker(const char namefmt[], ...);
-+
-+struct kthread_worker *
-+create_kthread_worker_on_cpu(int cpu, const char namefmt[]);
-+
+ __printf(1, 2)
+@@ -133,6 +161,11 @@ create_kthread_worker_on_cpu(int cpu, const char namefmt[]);
+ 
  bool queue_kthread_work(struct kthread_worker *worker,
  			struct kthread_work *work);
++
++bool queue_delayed_kthread_work(struct kthread_worker *worker,
++				struct delayed_kthread_work *dwork,
++				unsigned long delay);
++
  void flush_kthread_work(struct kthread_work *work);
+ void flush_kthread_worker(struct kthread_worker *worker);
+ 
 diff --git a/kernel/kthread.c b/kernel/kthread.c
-index bfe8742c4217..cd46276f2690 100644
+index 10e3ee1df2e1..0db87d197e36 100644
 --- a/kernel/kthread.c
 +++ b/kernel/kthread.c
-@@ -567,23 +567,24 @@ EXPORT_SYMBOL_GPL(__init_kthread_worker);
-  * kthread_worker_fn - kthread function to process kthread_worker
-  * @worker_ptr: pointer to initialized kthread_worker
-  *
-- * This function can be used as @threadfn to kthread_create() or
-- * kthread_run() with @worker_ptr argument pointing to an initialized
-- * kthread_worker.  The started kthread will process work_list until
-- * the it is stopped with kthread_stop().  A kthread can also call
-- * this function directly after extra initialization.
-+ * This function implements the main cycle of kthread worker. It processes
-+ * work_list until it is stopped with kthread_stop(). It sleeps when the queue
-+ * is empty.
-  *
-- * Different kthreads can be used for the same kthread_worker as long
-- * as there's only one kthread attached to it at any given time.  A
-- * kthread_worker without an attached kthread simply collects queued
-- * kthread_works.
-+ * The works are not allowed to keep any locks, disable preemption or interrupts
-+ * when they finish. There is defined a safe point for freezing when one work
-+ * finishes and before a new one is started.
-  */
- int kthread_worker_fn(void *worker_ptr)
- {
- 	struct kthread_worker *worker = worker_ptr;
- 	struct kthread_work *work;
- 
--	WARN_ON(worker->task);
-+	/*
-+	 * FIXME: Update the check and remove the assignment when all kthread
-+	 * worker users are created using create_kthread_worker*() functions.
-+	 */
-+	WARN_ON(worker->task && worker->task != current);
- 	worker->task = current;
- repeat:
- 	set_current_state(TASK_INTERRUPTIBLE);	/* mb paired w/ kthread_stop */
-@@ -617,6 +618,82 @@ repeat:
+@@ -559,6 +559,7 @@ void __init_kthread_worker(struct kthread_worker *worker,
+ 	spin_lock_init(&worker->lock);
+ 	lockdep_set_class_and_name(&worker->lock, key, name);
+ 	INIT_LIST_HEAD(&worker->work_list);
++	INIT_LIST_HEAD(&worker->delayed_work_list);
+ 	worker->task = NULL;
  }
- EXPORT_SYMBOL_GPL(kthread_worker_fn);
+ EXPORT_SYMBOL_GPL(__init_kthread_worker);
+@@ -747,6 +748,107 @@ bool queue_kthread_work(struct kthread_worker *worker,
+ }
+ EXPORT_SYMBOL_GPL(queue_kthread_work);
  
-+static struct kthread_worker *
-+__create_kthread_worker(int cpu, const char namefmt[], va_list args)
++/**
++ * delayed_kthread_work_timer_fn - callback that queues the associated delayed
++ *	kthread work when the timer expires.
++ * @__data: pointer to the data associated with the timer
++ *
++ * The format of the function is defined by struct timer_list.
++ * It should have been called from irqsafe timer with irq already off.
++ */
++void delayed_kthread_work_timer_fn(unsigned long __data)
 +{
-+	struct kthread_worker *worker;
-+	struct task_struct *task;
++	struct delayed_kthread_work *dwork =
++		(struct delayed_kthread_work *)__data;
++	struct kthread_work *work = &dwork->work;
++	struct kthread_worker *worker = work->worker;
 +
-+	worker = kzalloc(sizeof(*worker), GFP_KERNEL);
-+	if (!worker)
-+		return ERR_PTR(-ENOMEM);
++	/*
++	 * This might happen when a pending work is reinitialized.
++	 * It means that it is used a wrong way.
++	 */
++	if (WARN_ON_ONCE(!worker))
++		return;
 +
-+	init_kthread_worker(worker);
++	spin_lock(&worker->lock);
++	/* Work must not be used with more workers, see queue_kthread_work(). */
++	WARN_ON_ONCE(work->worker != worker);
 +
-+	if (cpu >= 0)
-+		task = kthread_create_on_cpu(kthread_worker_fn, worker,
-+					     cpu, namefmt);
-+	else
-+		task = __kthread_create_on_node(kthread_worker_fn, worker,
-+						-1, namefmt, args);
-+	if (IS_ERR(task))
-+		goto fail_task;
++	/* Move the work from worker->delayed_work_list. */
++	WARN_ON_ONCE(list_empty(&work->node));
++	list_del_init(&work->node);
++	insert_kthread_work(worker, work, &worker->work_list);
 +
-+	worker->task = task;
-+	wake_up_process(task);
-+	return worker;
++	spin_unlock(&worker->lock);
++}
++EXPORT_SYMBOL(delayed_kthread_work_timer_fn);
 +
-+fail_task:
-+	kfree(worker);
-+	return ERR_CAST(task);
++void __queue_delayed_kthread_work(struct kthread_worker *worker,
++				struct delayed_kthread_work *dwork,
++				unsigned long delay)
++{
++	struct timer_list *timer = &dwork->timer;
++	struct kthread_work *work = &dwork->work;
++
++	WARN_ON_ONCE(timer->function != delayed_kthread_work_timer_fn ||
++		     timer->data != (unsigned long)dwork);
++
++	/*
++	 * If @delay is 0, queue @dwork->work immediately.  This is for
++	 * both optimization and correctness.  The earliest @timer can
++	 * expire is on the closest next tick and delayed_work users depend
++	 * on that there's no such delay when @delay is 0.
++	 */
++	if (!delay) {
++		insert_kthread_work(worker, work, &worker->work_list);
++		return;
++	}
++
++	/* Be paranoid and try to detect possible races already now. */
++	insert_kthread_work_sanity_check(worker, work);
++
++	list_add(&work->node, &worker->delayed_work_list);
++	work->worker = worker;
++	timer_stats_timer_set_start_info(&dwork->timer);
++	timer->expires = jiffies + delay;
++	add_timer(timer);
 +}
 +
 +/**
-+ * create_kthread_worker - create a kthread worker
-+ * @namefmt: printf-style name for the kthread worker (task).
++ * queue_delayed_kthread_work - queue the associated kthread work
++ *	after a delay.
++ * @worker: target kthread_worker
++ * @dwork: delayed_kthread_work to queue
++ * @delay: number of jiffies to wait before queuing
 + *
-+ * Returns a pointer to the allocated worker on success, ERR_PTR(-ENOMEM)
-+ * when the needed structures could not get allocated, and ERR_PTR(-EINTR)
-+ * when the worker was SIGKILLed.
++ * If the work has not been pending it starts a timer that will queue
++ * the work after the given @delay. If @delay is zero, it queues the
++ * work immediately.
++ *
++ * Return: %false if the @work has already been pending. It means that
++ * either the timer was running or the work was queued. It returns %true
++ * otherwise.
 + */
-+struct kthread_worker *
-+create_kthread_worker(const char namefmt[], ...)
++bool queue_delayed_kthread_work(struct kthread_worker *worker,
++				struct delayed_kthread_work *dwork,
++				unsigned long delay)
 +{
-+	struct kthread_worker *worker;
-+	va_list args;
++	struct kthread_work *work = &dwork->work;
++	unsigned long flags;
++	bool ret = false;
 +
-+	va_start(args, namefmt);
-+	worker = __create_kthread_worker(-1, namefmt, args);
-+	va_end(args);
++	spin_lock_irqsave(&worker->lock, flags);
 +
-+	return worker;
++	if (list_empty(&work->node)) {
++		__queue_delayed_kthread_work(worker, dwork, delay);
++		ret = true;
++	}
++
++	spin_unlock_irqrestore(&worker->lock, flags);
++	return ret;
 +}
-+EXPORT_SYMBOL(create_kthread_worker);
++EXPORT_SYMBOL_GPL(queue_delayed_kthread_work);
 +
-+/**
-+ * create_kthread_worker_on_cpu - create a kthread worker and bind it
-+ *	it to a given CPU and the associated NUMA node.
-+ * @cpu: CPU number
-+ * @namefmt: printf-style name for the kthread worker (task).
-+ *
-+ * Use a valid CPU number if you want to bind the kthread worker
-+ * to the given CPU and the associated NUMA node.
-+ *
-+ * @namefmt might include one "%d" that will get replaced by CPU number.
-+ *
-+ * Returns a pointer to the allocated worker on success, ERR_PTR(-ENOMEM)
-+ * when the needed structures could not get allocated, and ERR_PTR(-EINTR)
-+ * when the worker was SIGKILLed.
-+ */
-+struct kthread_worker *
-+create_kthread_worker_on_cpu(int cpu, const char namefmt[])
-+{
-+	va_list fake_args;
-+
-+	return __create_kthread_worker(cpu, namefmt, fake_args);
-+}
-+EXPORT_SYMBOL(create_kthread_worker_on_cpu);
-+
- /* insert @work before @pos in @worker */
- static void insert_kthread_work(struct kthread_worker *worker,
- 			       struct kthread_work *work,
+ struct kthread_flush_work {
+ 	struct kthread_work	work;
+ 	struct completion	done;
 -- 
 1.8.5.6
 
