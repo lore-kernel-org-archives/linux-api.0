@@ -1,58 +1,52 @@
-From: Johannes Berg <johannes@sipsolutions.net>
-Subject: Re: custom ioctl-based interface to control LED in networking (was
- Re: [PATCHv2 09/10] rfkill: Userspace control for airplane mode)
-Date: Wed, 24 Feb 2016 12:01:37 +0100
-Message-ID: <1456311697.2050.23.camel@sipsolutions.net>
-References: <1456159001-20307-1-git-send-email-jprvita@endlessm.com>
-	 <1456159001-20307-10-git-send-email-jprvita@endlessm.com>
-	 <20160223204525.GC16961@amd> <1456260914.9910.34.camel@sipsolutions.net>
-	 <20160223214501.GA22501@amd> <1456304509.2050.15.camel@sipsolutions.net>
-	 <20160224104611.GB31302@amd>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH v4 1/5] getcpu_cache system call: cache CPU number of
+ running thread
+Date: Wed, 24 Feb 2016 12:11:15 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1602241206020.3670@nanos>
+References: <1456270120-7560-1-git-send-email-mathieu.desnoyers@efficios.com> <1456270120-7560-2-git-send-email-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160224104611.GB31302@amd>
+In-Reply-To: <1456270120-7560-2-git-send-email-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Pavel Machek <pavel@ucw.cz>, rpurdie@rpsys.net, j.anaszewski@samsung.com, linux-leds@vger.kernel.org
-Cc: =?ISO-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita@gmail.com>, "David S. Miller" <davem@davemloft.net>, Darren Hart <dvhart@infradead.org>, linux-wireless@vger.kernel.org, netdev@vger.kernel.org, platform-driver-x86@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux@endlessm.com, =?ISO-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita@endlessm.com>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2016-02-24 at 11:46 +0100, Pavel Machek wrote:
+On Tue, 23 Feb 2016, Mathieu Desnoyers wrote:
+> +/*
+> + * If parent process has a thread-local ABI, the child inherits. Only applies
+> + * when forking a process, not a thread.
+> + */
+> +void getcpu_cache_fork(struct task_struct *t)
+> +{
+> +	t->cpu_cache = current->cpu_cache;
+> +}
+> +
+> +void getcpu_cache_execve(struct task_struct *t)
+> +{
+> +	t->cpu_cache = NULL;
+> +}
+> +
+> +void getcpu_cache_exit(struct task_struct *t)
+> +{
+> +	t->cpu_cache = NULL;
+> +}
 
-> If you want different trigger, implement different trigger. If you
-> want to indicate all but wifi, implement all but wifi, and then
-> userspace can select it by writing trigger name. 
+That's hardly worth a function call. Please inline.
 
-This is still mostly a strawman, since userspace cannot have a database
-of LEDs that indicate airplane mode.
+> +/*
+> + * sys_getcpu_cache - setup getcpu cache for caller thread
+> + */
+> +SYSCALL_DEFINE3(getcpu_cache, int, cmd, int32_t __user * __user *, cpu_cachep,
+> +		int, flags)
+> +{
+> +	if (unlikely(flags))
+> +		return -EINVAL;
 
-I'm sure you'd also not like to see 2**7 triggers implemented in rfkill
-to cover all the possibilities.
+New line for readability sake.
 
-> If you want complete
-> userspace control, fine, but we have standard interface and it is not
-> ioctl.
+> +	switch (cmd) {
+> +	case GETCPU_CACHE_GET:
 
-The "standard interface" is usable if you really just want to driver a
-single LED and you know which one.
-
-I think you're looking at this the wrong way, focusing too much on the
-LED aspect.
-
-Really what you have here is a concept of "airplane mode", and that
-concept is specific to the rfkill subsystem. This happens to affect
-mostly an LED trigger, today, but as a concept it's something that
-*should* be managed within the rfkill subsystem.
-
-> Besides, the series really should have been Cc-ed to LED
-> people, too.
-
-That's simply unreasonable, you're essentially saying that any user of
-any kernel infrastructure should be Cc'ed to the implementer of that
-infrastructure... 9/10 patches in this series aren't even LED specific,
-only the *previous* patch, the one that tied the "airplane mode"
-concept to an LED trigger in a very standard way had anything to do
-with LED triggers at all.
-
-johannes
+Other than that: Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
