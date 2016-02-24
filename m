@@ -1,1142 +1,1714 @@
-From: Kazimierz Krosman <k.krosman@samsung.com>
-Subject: [PATCH v6 8/8] kmsg: selftests
-Date: Wed, 24 Feb 2016 12:53:21 +0100
-Message-ID: <1456314801-32738-9-git-send-email-k.krosman@samsung.com>
+From: Kazimierz Krosman <k.krosman-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH v6 1/8] printk: extract kmsg-related routines from printk.c to
+ kmsg.c
+Date: Wed, 24 Feb 2016 12:53:14 +0100
+Message-ID: <1456314801-32738-2-git-send-email-k.krosman@samsung.com>
 References: <1456314801-32738-1-git-send-email-k.krosman@samsung.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <1456314801-32738-1-git-send-email-k.krosman@samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: akpm@linux-foundation.org, peter@hurleysoftware.com, tj@kernel.org, vvs@virtuozzo.com, corbet@lwn.net, arnd@arndb.de, pmladek@suse.cz, gregkh@linuxfoundation.org, daniel@zonque.org, kay.sievers@vrfy.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
-Cc: k.lewandowsk@samsung.com, k.krosman@samsung.com, m.niesluchow@samsung.com, richard.weinberger@gmail.com, b.zolnierkie@samsung.com, luto@amacapital.net, knhoon.baik@samsung.com
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-reply-to: <1456314801-32738-1-git-send-email-k.krosman-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, vvs-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, pmladek-AlSwsSmVLrQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, kay.sievers-tD+1rO4QERM@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, k.krosman-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, m.niesluchow-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, knhoon.baik-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Paul Osmialowski <p.osmialowsk@samsung.com>
+From: Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 
-This patch adds selftests framework and four test scenarios for kmsg.
+Following suggestions regarding printk.c code bloat, I prepared this
+patch which moves kmsg-related routines to new file, kmsg.c
 
-The framework shape and code was inspired by similar selftests framework
-for kdbus.
+This is premilinary step needed for an attempt to extent kmsg interface
+with ability to dynamically create (and destroy) kmsg-like devices.
 
-Signed-off-by: Paul Osmialowski <p.osmialowsk@samsung.com>
-[Fixed multithreaded test bug: buffer size > LOG_LINE_MAX]
-Signed-off-by: Kazimierz Krosman <k.krosman@samsung.com>
+Signed-off-by: Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+[Rebased kmsg patch v5 on Linux 4.5-rc5]
+Signed-off-by: Kazimierz Krosman <k.krosman-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 ---
- samples/kmsg/kmsg-api.h                            |  44 +++
- tools/testing/selftests/Makefile                   |   1 +
- tools/testing/selftests/kmsg/.gitignore            |   1 +
- tools/testing/selftests/kmsg/Makefile              |  30 ++
- tools/testing/selftests/kmsg/kmsg-test.c           | 344 +++++++++++++++++++++
- tools/testing/selftests/kmsg/kmsg-test.h           |  28 ++
- tools/testing/selftests/kmsg/test-buffer-add-del.c |  78 +++++
- .../kmsg/test-buffer-add-write-read-del.c          | 163 ++++++++++
- .../kmsg/test-buffer-buf-multithreaded-torture.c   | 201 ++++++++++++
- .../selftests/kmsg/test-buffer-buf-torture.c       | 141 +++++++++
- 10 files changed, 1031 insertions(+)
- create mode 100644 samples/kmsg/kmsg-api.h
- create mode 100644 tools/testing/selftests/kmsg/.gitignore
- create mode 100644 tools/testing/selftests/kmsg/Makefile
- create mode 100644 tools/testing/selftests/kmsg/kmsg-test.c
- create mode 100644 tools/testing/selftests/kmsg/kmsg-test.h
- create mode 100644 tools/testing/selftests/kmsg/test-buffer-add-del.c
- create mode 100644 tools/testing/selftests/kmsg/test-buffer-add-write-read-del.c
- create mode 100644 tools/testing/selftests/kmsg/test-buffer-buf-multithreaded-torture.c
- create mode 100644 tools/testing/selftests/kmsg/test-buffer-buf-torture.c
+ kernel/printk/Makefile |   1 +
+ kernel/printk/kmsg.c   | 575 ++++++++++++++++++++++++++++++++++++++
+ kernel/printk/printk.c | 743 +------------------------------------------------
+ kernel/printk/printk.h | 233 ++++++++++++++++
+ 4 files changed, 822 insertions(+), 730 deletions(-)
+ create mode 100644 kernel/printk/kmsg.c
+ create mode 100644 kernel/printk/printk.h
 
-diff --git a/samples/kmsg/kmsg-api.h b/samples/kmsg/kmsg-api.h
+diff --git a/kernel/printk/Makefile b/kernel/printk/Makefile
+index 85405bd..bd6a4ec 100644
+--- a/kernel/printk/Makefile
++++ b/kernel/printk/Makefile
+@@ -1,2 +1,3 @@
+ obj-y	= printk.o
++obj-$(CONFIG_PRINTK)			+= kmsg.o
+ obj-$(CONFIG_A11Y_BRAILLE_CONSOLE)	+= braille.o
+diff --git a/kernel/printk/kmsg.c b/kernel/printk/kmsg.c
 new file mode 100644
-index 0000000..9004acd
+index 0000000..4ee66f3
 --- /dev/null
-+++ b/samples/kmsg/kmsg-api.h
-@@ -0,0 +1,44 @@
-+#ifndef KMSG_API_H
-+#define KMSG_API_H
++++ b/kernel/printk/kmsg.c
+@@ -0,0 +1,575 @@
++#include <linux/printk.h>
++#include <linux/kernel.h>
++#include <linux/errno.h>
++#include <linux/sched.h>
++#include <linux/fcntl.h>
++#include <linux/fs.h>
++#include <linux/kmsg_dump.h>
++#include <linux/moduleparam.h>
++#include <linux/mutex.h>
++#include <linux/spinlock.h>
++#include <linux/slab.h>
++#include <linux/poll.h>
++#include <linux/rculist.h>
++#include <linux/rcupdate.h>
++#include <linux/stat.h>
++#include <linux/syslog.h>
++#include <linux/uio.h>
++#include <linux/wait.h>
 +
-+#include <stdint.h>
-+#include <errno.h>
-+#include <sys/ioctl.h>
-+#include <linux/kmsg_ioctl.h>
++#include <asm/uaccess.h>
 +
-+static inline int kmsg_cmd_buffer_add(int fd, struct kmsg_cmd_buffer_add *cmd)
-+{
-+	int ret = ioctl(fd, KMSG_CMD_BUFFER_ADD, cmd);
++#include "printk.h"
 +
-+	return (ret < 0) ? (errno > 0 ? -errno : -EINVAL) : 0;
-+}
-+
-+static inline int kmsg_cmd_buffer_del(int fd, int *minor)
-+{
-+	int ret = ioctl(fd, KMSG_CMD_BUFFER_DEL, minor);
-+
-+	return (ret < 0) ? (errno > 0 ? -errno : -EINVAL) : 0;
-+}
-+
-+static inline int kmsg_cmd_get_buf_size(int fd, uint32_t *size)
-+{
-+	int ret = ioctl(fd, KMSG_CMD_GET_BUF_SIZE, size);
-+
-+	return (ret < 0) ? (errno > 0 ? -errno : -EINVAL) : 0;
-+}
-+
-+static inline int kmsg_cmd_get_read_size_max(int fd, uint32_t *max_size)
-+{
-+	int ret = ioctl(fd, KMSG_CMD_GET_READ_SIZE_MAX, max_size);
-+
-+	return (ret < 0) ? (errno > 0 ? -errno : -EINVAL) : 0;
-+}
-+
-+static inline int kmsg_cmd_clear(int fd)
-+{
-+	int ret = ioctl(fd, KMSG_CMD_CLEAR);
-+
-+	return (ret < 0) ? (errno > 0 ? -errno : -EINVAL) : 0;
-+}
-+
-+#endif /* KMSG_API_H */
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index b04afc3..52b32da 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -8,6 +8,7 @@ TARGETS += ftrace
- TARGETS += futex
- TARGETS += ipc
- TARGETS += kcmp
-+TARGETS += kmsg
- TARGETS += lib
- TARGETS += membarrier
- TARGETS += memfd
-diff --git a/tools/testing/selftests/kmsg/.gitignore b/tools/testing/selftests/kmsg/.gitignore
-new file mode 100644
-index 0000000..687d517
---- /dev/null
-+++ b/tools/testing/selftests/kmsg/.gitignore
-@@ -0,0 +1 @@
-+kmsg-test
-diff --git a/tools/testing/selftests/kmsg/Makefile b/tools/testing/selftests/kmsg/Makefile
-new file mode 100644
-index 0000000..cee2e2b
---- /dev/null
-+++ b/tools/testing/selftests/kmsg/Makefile
-@@ -0,0 +1,30 @@
-+CFLAGS += -I../../../../usr/include/
-+CFLAGS += -I../../../../samples/kmsg/
-+CFLAGS += -I../../../../include/uapi/
-+CFLAGS += -std=gnu99 -Wall
-+CFLAGS += -DKBUILD_MODNAME=\"kmsg\" -D_GNU_SOURCE
-+CFLAGS += -pthread
-+LDLIBS += -pthread
-+
-+OBJS= \
-+	kmsg-test.o				\
-+	test-buffer-add-del.o			\
-+	test-buffer-add-write-read-del.o	\
-+	test-buffer-buf-torture.o		\
-+	test-buffer-buf-multithreaded-torture.o
-+
-+all: kmsg-test
-+
-+include ../lib.mk
-+
-+%.o: %.c kmsg-test.h
-+	$(CC) $(CFLAGS) -c $< -o $@
-+
-+kmsg-test: $(OBJS)
-+	$(CC) $(CFLAGS) $^ $(LDLIBS) -o $@
-+
-+run_tests:
-+	./kmsg-test
-+
-+clean:
-+	rm -f *.o kmsg-test
-diff --git a/tools/testing/selftests/kmsg/kmsg-test.c b/tools/testing/selftests/kmsg/kmsg-test.c
-new file mode 100644
-index 0000000..282ec1f
---- /dev/null
-+++ b/tools/testing/selftests/kmsg/kmsg-test.c
-@@ -0,0 +1,344 @@
-+#include <stddef.h>
-+#include <stdbool.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <time.h>
-+#include <fcntl.h>
-+#include <unistd.h>
-+#include <getopt.h>
-+#include <sys/types.h>
-+#include <sys/wait.h>
-+#include <sys/stat.h>
-+
-+#include "../kselftest.h"
-+
-+#include "kmsg-test.h"
-+
-+struct kmsg_test {
-+	const char	*name;
-+	const char	*desc;
-+	int (*func)(const struct kmsg_test_args *args);
++/* /dev/kmsg - userspace message inject/listen interface */
++struct devkmsg_user {
++	u64 seq;
++	u32 idx;
++	enum log_flags prev;
++	struct mutex lock;
++	char buf[CONSOLE_EXT_LOG_MAX];
 +};
 +
-+static const struct kmsg_test tests[] = {
-+	{
-+		.name	= "buffer-add-del",
-+		.desc	= "create and delete kmsg devices",
-+		.func	= kmsg_test_buffer_add_del,
-+	}, {
-+		.name	= "buffer-add-write-read-del",
-+		.desc	= "create w/r and del kmsg device",
-+		.func	= kmsg_test_buffer_add_write_read_del,
-+	}, {
-+		.name	= "buffer-buf-torture",
-+		.desc	= "fill more than whole buffer can hold",
-+		.func	= kmsg_test_buffer_buf_torture,
-+	}, {
-+		.name	= "buffer-buf-multithreaded-torture",
-+		.desc	= "fill from many threads",
-+		.func	= kmsg_test_buffer_buf_multithreaded_torture,
-+	},
-+};
-+
-+#define N_TESTS ARRAY_SIZE(tests)
-+
-+FILE *kmsg_get_device(int minor, const char *mode)
++static ssize_t devkmsg_write(struct kiocb *iocb, struct iov_iter *from)
 +{
-+	char path[80] = "";
-+	dev_t dev = makedev(1, minor);
++	char *buf, *line;
++	int level = default_message_loglevel;
++	int facility = 1;	/* LOG_USER */
++	size_t len = iov_iter_count(from);
++	ssize_t ret = len;
 +
-+	if (minor < 0) {
-+		printf("Invalid minor number %d\n", minor);
-+		return NULL;
++	if (len > LOG_LINE_MAX)
++		return -EINVAL;
++	buf = kmalloc(len+1, GFP_KERNEL);
++	if (buf == NULL)
++		return -ENOMEM;
++
++	buf[len] = '\0';
++	if (copy_from_iter(buf, len, from) != len) {
++		kfree(buf);
++		return -EFAULT;
 +	}
 +
-+	snprintf(path, sizeof(path), "/tmp/kmsg-%d", minor);
++	/*
++	 * Extract and skip the syslog prefix <[0-9]*>. Coming from userspace
++	 * the decimal value represents 32bit, the lower 3 bit are the log
++	 * level, the rest are the log facility.
++	 *
++	 * If no prefix or no userspace facility is specified, we
++	 * enforce LOG_USER, to be able to reliably distinguish
++	 * kernel-generated messages from userspace-injected ones.
++	 */
++	line = buf;
++	if (line[0] == '<') {
++		char *endp = NULL;
++                unsigned int u;
 +
-+	if (access(path, F_OK) < 0) {
-+		if (mknod(path, S_IFCHR | 0600, dev)) {
-+			printf("Cannot create device %s with minor %d\n",
-+								path, minor);
-+			return NULL;
++		u = simple_strtoul(line + 1, &endp, 10);
++		if (endp && endp[0] == '>') {
++			level = LOG_LEVEL(u);
++			if (LOG_FACILITY(u) != 0)
++				facility = LOG_FACILITY(u);
++			endp++;
++			len -= endp - line;
++			line = endp;
 +		}
 +	}
 +
-+	if (access(path, F_OK) < 0) {
-+		printf("Cannot access device %s\n", path);
-+		return NULL;
-+	}
-+
-+	return fopen(path, mode);
-+}
-+
-+int kmsg_drop_device(int minor)
-+{
-+	char path[80] = "";
-+
-+	if (minor < 0) {
-+		printf("Invalid minor number %d\n", minor);
-+		return -1;
-+	}
-+
-+	snprintf(path, sizeof(path), "/tmp/kmsg-%d", minor);
-+
-+	return unlink(path);
-+}
-+
-+static void usage(const char *argv0)
-+{
-+	unsigned int i, j;
-+
-+	printf("Usage: %s [options]\n"
-+	       "Options:\n"
-+	       "\t-x, --loop		Run in a loop\n"
-+	       "\t-f, --fork		Fork before running a test\n"
-+	       "\t-h, --help		Print this help\n"
-+	       "\t-t, --test <test-id>	Run one specific test only\n"
-+	       "\t-w, --wait <secs>	Wait <secs> before actually starting test\n"
-+	       "\n", argv0);
-+
-+	printf("By default, all test are run once, and a summary is printed.\n"
-+	       "Available tests for --test:\n\n");
-+
-+	for (i = 0; i < N_TESTS; i++) {
-+		const struct kmsg_test *t = tests + i;
-+
-+		printf("\t%s", t->name);
-+
-+		for (j = 0; j < 60 - strlen(t->name); j++)
-+			printf(" ");
-+
-+		printf("Test %s\n", t->desc);
-+	}
-+
-+	printf("\n");
-+	printf("Note that some tests may, if run specifically by --test, ");
-+	printf("behave differently, and not terminate by themselves.\n");
-+}
-+
-+static void print_test_result(int ret)
-+{
-+	switch (ret) {
-+	case KSFT_PASS:
-+		printf("OK");
-+		break;
-+	case KSFT_SKIP:
-+		printf("SKIPPED");
-+		break;
-+	case KSFT_FAIL:
-+		printf("ERROR");
-+		break;
-+	}
-+}
-+
-+static int test_run(const struct kmsg_test *t,
-+		    const struct kmsg_test_args *kmsg_args,
-+		    int wait)
-+{
-+	int ret;
-+
-+	if (wait > 0) {
-+		printf("Sleeping %d seconds before running test ...\n", wait);
-+		sleep(wait);
-+	}
-+
-+	ret = t->func(kmsg_args);
++	printk_emit(facility, level, NULL, 0, "%s", line);
++	kfree(buf);
 +	return ret;
 +}
 +
-+static int test_run_forked(const struct kmsg_test *t,
-+			   const struct kmsg_test_args *kmsg_args,
-+			   int wait)
++static ssize_t devkmsg_read(struct file *file, char __user *buf,
++			    size_t count, loff_t *ppos)
 +{
-+	int ret;
-+	pid_t pid;
++	struct devkmsg_user *user = file->private_data;
++	struct printk_log *msg;
++	size_t len;
++	ssize_t ret;
 +
-+	pid = fork();
-+	if (pid < 0) {
-+		return KSFT_FAIL;
-+	} else if (pid == 0) {
-+		ret = test_run(t, kmsg_args, wait);
-+		_exit(ret);
-+	}
++	if (!user)
++		return -EBADF;
 +
-+	pid = waitpid(pid, &ret, 0);
-+	if (pid <= 0)
-+		return KSFT_FAIL;
-+	else if (!WIFEXITED(ret))
-+		return KSFT_FAIL;
-+	else
-+		return WEXITSTATUS(ret);
-+}
-+
-+static int start_all_tests(const struct kmsg_test_args *kmsg_args)
-+{
-+	int retval;
-+	int ret = KSFT_PASS;
-+	unsigned int i, n;
-+	const struct kmsg_test *t;
-+
-+	for (i = 0; i < N_TESTS; i++) {
-+		t = tests + i;
-+
-+		printf("Testing %s (%s) ", t->desc, t->name);
-+		for (n = 0; n < 60 - strlen(t->desc) - strlen(t->name); n++)
-+			printf(".");
-+		printf(" ");
-+
-+		retval = test_run_forked(t, kmsg_args, 0);
-+		switch (retval) {
-+		case KSFT_PASS:
-+			ksft_inc_pass_cnt();
-+			break;
-+		case KSFT_SKIP:
-+			ksft_inc_xskip_cnt();
-+			break;
-+		case KSFT_FAIL:
-+		default:
-+			ret = KSFT_FAIL;
-+			ksft_inc_fail_cnt();
-+			break;
-+		}
-+
-+		print_test_result(retval);
-+		printf("\n");
-+	}
-+
-+	return ret;
-+}
-+
-+static int start_one_test(const struct kmsg_test_args *kmsg_args)
-+{
-+	int i, ret = KSFT_PASS;
-+	bool test_found = false;
-+	const struct kmsg_test *t;
-+
-+	for (i = 0; i < N_TESTS; i++) {
-+		t = tests + i;
-+
-+		if (strcmp(t->name, kmsg_args->test))
-+			continue;
-+
-+		do {
-+			test_found = true;
-+			if (kmsg_args->fork)
-+				ret = test_run_forked(t, kmsg_args,
-+						      kmsg_args->wait);
-+			else
-+				ret = test_run(t, kmsg_args,
-+					       kmsg_args->wait);
-+
-+			printf("Testing %s: ", t->desc);
-+			print_test_result(ret);
-+			printf("\n");
-+
-+			if ((ret != KSFT_PASS) && (ret != KSFT_SKIP))
-+				break;
-+		} while (kmsg_args->loop);
-+
++	ret = mutex_lock_interruptible(&user->lock);
++	if (ret)
 +		return ret;
++	raw_spin_lock_irq(&logbuf_lock);
++	while (user->seq == log_next_seq) {
++		if (file->f_flags & O_NONBLOCK) {
++			ret = -EAGAIN;
++			raw_spin_unlock_irq(&logbuf_lock);
++			goto out;
++		}
++
++		raw_spin_unlock_irq(&logbuf_lock);
++		ret = wait_event_interruptible(log_wait,
++					       user->seq != log_next_seq);
++		if (ret)
++			goto out;
++		raw_spin_lock_irq(&logbuf_lock);
 +	}
 +
-+	if (!test_found) {
-+		printf("Unknown test-id '%s'\n", kmsg_args->test);
-+		return KSFT_FAIL;
++	if (user->seq < log_first_seq) {
++		/* our last seen message is gone, return error and reset */
++		user->idx = log_first_idx;
++		user->seq = log_first_seq;
++		ret = -EPIPE;
++		raw_spin_unlock_irq(&logbuf_lock);
++		goto out;
 +	}
++
++	msg = log_from_idx(user->idx);
++	len = msg_print_ext_header(user->buf, sizeof(user->buf),
++				   msg, user->seq, user->prev);
++	len += msg_print_ext_body(user->buf + len, sizeof(user->buf) - len,
++				  log_dict(msg), msg->dict_len,
++				  log_text(msg), msg->text_len);
++
++	user->prev = msg->flags;
++	user->idx = log_next(user->idx);
++	user->seq++;
++	raw_spin_unlock_irq(&logbuf_lock);
++
++	if (len > count) {
++		ret = -EINVAL;
++		goto out;
++	}
++
++	if (copy_to_user(buf, user->buf, len)) {
++		ret = -EFAULT;
++		goto out;
++	}
++	ret = len;
++out:
++	mutex_unlock(&user->lock);
++	return ret;
++}
++
++static loff_t devkmsg_llseek(struct file *file, loff_t offset, int whence)
++{
++	struct devkmsg_user *user = file->private_data;
++	loff_t ret = 0;
++
++	if (!user)
++		return -EBADF;
++	if (offset)
++		return -ESPIPE;
++
++	raw_spin_lock_irq(&logbuf_lock);
++	switch (whence) {
++	case SEEK_SET:
++		/* the first record */
++		user->idx = log_first_idx;
++		user->seq = log_first_seq;
++		break;
++	case SEEK_DATA:
++		/*
++		 * The first record after the last SYSLOG_ACTION_CLEAR,
++		 * like issued by 'dmesg -c'. Reading /dev/kmsg itself
++		 * changes no global state, and does not clear anything.
++		 */
++		user->idx = clear_idx;
++		user->seq = clear_seq;
++		break;
++	case SEEK_END:
++		/* after the last record */
++		user->idx = log_next_idx;
++		user->seq = log_next_seq;
++		break;
++	default:
++		ret = -EINVAL;
++	}
++	raw_spin_unlock_irq(&logbuf_lock);
++	return ret;
++}
++
++static unsigned int devkmsg_poll(struct file *file, poll_table *wait)
++{
++	struct devkmsg_user *user = file->private_data;
++	int ret = 0;
++
++	if (!user)
++		return POLLERR|POLLNVAL;
++
++	poll_wait(file, &log_wait, wait);
++
++	raw_spin_lock_irq(&logbuf_lock);
++	if (user->seq < log_next_seq) {
++		/* return error when data has vanished underneath us */
++		if (user->seq < log_first_seq)
++			ret = POLLIN|POLLRDNORM|POLLERR|POLLPRI;
++		else
++			ret = POLLIN|POLLRDNORM;
++	}
++	raw_spin_unlock_irq(&logbuf_lock);
 +
 +	return ret;
 +}
 +
-+static int start_tests(const struct kmsg_test_args *kmsg_args)
++static int devkmsg_open(struct inode *inode, struct file *file)
 +{
-+	int retval;
-+	int ret = KSFT_PASS;
++	struct devkmsg_user *user;
++	int err;
 +
-+	if (kmsg_args->test) {
-+		retval = start_one_test(kmsg_args);
-+		switch (retval) {
-+		case KSFT_PASS:
-+			ksft_inc_pass_cnt();
-+			break;
-+		case KSFT_SKIP:
-+			ksft_inc_xskip_cnt();
-+			break;
-+		case KSFT_FAIL:
-+		default:
-+			ret = KSFT_FAIL;
-+			ksft_inc_fail_cnt();
-+			break;
-+		}
-+	} else  {
-+		do {
-+			ret = start_all_tests(kmsg_args);
-+			if ((ret != KSFT_PASS) && (ret != KSFT_SKIP))
-+				break;
-+		} while (kmsg_args->loop);
-+	}
++	/* write-only does not need any file context */
++	if ((file->f_flags & O_ACCMODE) == O_WRONLY)
++		return 0;
 +
-+	return ret;
++	err = check_syslog_permissions(SYSLOG_ACTION_READ_ALL,
++				       SYSLOG_FROM_READER);
++	if (err)
++		return err;
++
++	user = kmalloc(sizeof(struct devkmsg_user), GFP_KERNEL);
++	if (!user)
++		return -ENOMEM;
++
++	mutex_init(&user->lock);
++
++	raw_spin_lock_irq(&logbuf_lock);
++	user->idx = log_first_idx;
++	user->seq = log_first_seq;
++	raw_spin_unlock_irq(&logbuf_lock);
++
++	file->private_data = user;
++	return 0;
 +}
 +
-+int main(int argc, char *argv[])
++static int devkmsg_release(struct inode *inode, struct file *file)
 +{
-+	int t, ret = 0;
-+	struct kmsg_test_args *kmsg_args;
-+	char *exec = basename(argv[0]);
++	struct devkmsg_user *user = file->private_data;
 +
-+	kmsg_args = malloc(sizeof(*kmsg_args));
-+	if (!kmsg_args) {
-+		printf("unable to malloc() kmsg_args\n");
-+		return ksft_exit_fail();
-+	}
++	if (!user)
++		return 0;
 +
-+	memset(kmsg_args, 0, sizeof(*kmsg_args));
-+
-+	static const struct option options[] = {
-+		{ "loop",	no_argument,		NULL, 'x' },
-+		{ "help",	no_argument,		NULL, 'h' },
-+		{ "test",	required_argument,	NULL, 't' },
-+		{ "wait",	required_argument,	NULL, 'w' },
-+		{ "fork",	no_argument,		NULL, 'f' },
-+		{}
-+	};
-+
-+	if (strcmp(exec, "kmsg-test") != 0)
-+		kmsg_args->test = exec;
-+
-+	while ((t = getopt_long(argc, argv, "hxfm:r:t:b:w:a",
-+						options, NULL)) >= 0) {
-+		switch (t) {
-+		case 'x':
-+			kmsg_args->loop = 1;
-+			break;
-+
-+		case 't':
-+			kmsg_args->test = optarg;
-+			break;
-+
-+		case 'w':
-+			kmsg_args->wait = strtol(optarg, NULL, 10);
-+			break;
-+
-+		case 'f':
-+			kmsg_args->fork = 1;
-+			break;
-+
-+		default:
-+		case 'h':
-+			usage(argv[0]);
-+			return ksft_exit_fail();
-+		}
-+	}
-+
-+	ret = start_tests(kmsg_args);
-+
-+	free(kmsg_args);
-+
-+	ksft_print_cnts();
-+
-+	if ((ret != KSFT_PASS) && (ret != KSFT_SKIP))
-+		return ksft_exit_fail();
-+
-+	return ksft_exit_pass();
++	mutex_destroy(&user->lock);
++	kfree(user);
++	return 0;
 +}
-diff --git a/tools/testing/selftests/kmsg/kmsg-test.h b/tools/testing/selftests/kmsg/kmsg-test.h
-new file mode 100644
-index 0000000..d9f770c
---- /dev/null
-+++ b/tools/testing/selftests/kmsg/kmsg-test.h
-@@ -0,0 +1,28 @@
-+#ifndef _KMSG_TEST_H_
-+#define _KMSG_TEST_H_
 +
-+#include <stdio.h>
-+
-+#define DEV_KMSG "/dev/kmsg"
-+
-+#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
-+
-+#define KMSG_REQUESTED_BUF_SIZE (1024 * 256)
-+
-+struct kmsg_test_args {
-+	int loop;
-+	int wait;
-+	int fork;
-+	const char *test;
++const struct file_operations kmsg_fops = {
++	.open = devkmsg_open,
++	.read = devkmsg_read,
++	.write_iter = devkmsg_write,
++	.llseek = devkmsg_llseek,
++	.poll = devkmsg_poll,
++	.release = devkmsg_release,
 +};
 +
-+FILE *kmsg_get_device(int minor, const char *mode);
-+int kmsg_drop_device(int minor);
++static DEFINE_SPINLOCK(dump_list_lock);
++static LIST_HEAD(dump_list);
 +
-+int kmsg_test_buffer_add_del(const struct kmsg_test_args *args);
-+int kmsg_test_buffer_add_write_read_del(const struct kmsg_test_args *args);
-+int kmsg_test_buffer_buf_torture(const struct kmsg_test_args *args);
-+int kmsg_test_buffer_buf_multithreaded_torture(
-+					const struct kmsg_test_args *args);
-+
-+#endif /* _KMSG_TEST_H_ */
-diff --git a/tools/testing/selftests/kmsg/test-buffer-add-del.c b/tools/testing/selftests/kmsg/test-buffer-add-del.c
-new file mode 100644
-index 0000000..4acef53
---- /dev/null
-+++ b/tools/testing/selftests/kmsg/test-buffer-add-del.c
-@@ -0,0 +1,78 @@
-+#include <stddef.h>
-+#include <stdint.h>
-+#include <stdio.h>
-+#include <fcntl.h>
-+#include <unistd.h>
-+#include <kmsg-api.h>
-+
-+#include "../kselftest.h"
-+
-+#include "kmsg-test.h"
-+
-+int kmsg_test_buffer_add_del(const struct kmsg_test_args *args)
++/**
++ * kmsg_dump_register - register a kernel log dumper.
++ * @dumper: pointer to the kmsg_dumper structure
++ *
++ * Adds a kernel log dumper to the system. The dump callback in the
++ * structure will be called when the kernel oopses or panics and must be
++ * set. Returns zero on success and %-EINVAL or %-EBUSY otherwise.
++ */
++int kmsg_dump_register(struct kmsg_dumper *dumper)
 +{
-+	int i;
-+	int fd = open(DEV_KMSG, O_RDWR);
-+	struct kmsg_cmd_buffer_add cmd = { 0 };
-+	int minors[] = { -1, -1, -1, -1 };
-+	FILE *fds[ARRAY_SIZE(minors)];
-+	int retval = KSFT_PASS;
-+	uint32_t size;
++	unsigned long flags;
++	int err = -EBUSY;
 +
-+	if (fd < 0) {
-+		printf("Failed: cannot open %s\n", DEV_KMSG);
-+		return KSFT_FAIL;
++	/* The dump callback needs to be set */
++	if (!dumper->dump)
++		return -EINVAL;
++
++	spin_lock_irqsave(&dump_list_lock, flags);
++	/* Don't allow registering multiple times */
++	if (!dumper->registered) {
++		dumper->registered = 1;
++		list_add_tail_rcu(&dumper->list, &dump_list);
++		err = 0;
 +	}
++	spin_unlock_irqrestore(&dump_list_lock, flags);
 +
-+	for (i = 0; i < ARRAY_SIZE(minors); i++) {
-+		fds[i] = NULL;
-+		cmd.size = KMSG_REQUESTED_BUF_SIZE;
-+		cmd.mode = 0662;
-+		if (kmsg_cmd_buffer_add(fd, &cmd)) {
-+			printf("Failed to add buffer\n");
-+			goto error;
-+		}
-+		if (cmd.minor < 0) {
-+			printf("Minor number < 0\n");
-+			goto error;
-+		}
-+		minors[i] = cmd.minor;
-+		fds[i] = kmsg_get_device(minors[i], "r");
-+		if (!fds[i]) {
-+			printf("Cannot get device %d\n", i);
-+			goto error;
-+		}
-+		size = 0;
-+		if (kmsg_cmd_get_buf_size(fileno(fds[i]), &size)) {
-+			printf("Cannot get buf size on defice %d\n", i);
-+			goto error;
-+		}
-+		if (size != KMSG_REQUESTED_BUF_SIZE) {
-+			printf("Invalid buf size on device %d\n", i);
-+			goto error;
-+		}
++	return err;
++}
++EXPORT_SYMBOL_GPL(kmsg_dump_register);
++
++/**
++ * kmsg_dump_unregister - unregister a kmsg dumper.
++ * @dumper: pointer to the kmsg_dumper structure
++ *
++ * Removes a dump device from the system. Returns zero on success and
++ * %-EINVAL otherwise.
++ */
++int kmsg_dump_unregister(struct kmsg_dumper *dumper)
++{
++	unsigned long flags;
++	int err = -EINVAL;
++
++	spin_lock_irqsave(&dump_list_lock, flags);
++	if (dumper->registered) {
++		dumper->registered = 0;
++		list_del_rcu(&dumper->list);
++		err = 0;
 +	}
++	spin_unlock_irqrestore(&dump_list_lock, flags);
++	synchronize_rcu();
 +
-+	goto cleanup;
++	return err;
++}
++EXPORT_SYMBOL_GPL(kmsg_dump_unregister);
 +
-+error:
-+	retval = KSFT_FAIL;
++static bool always_kmsg_dump;
++module_param_named(always_kmsg_dump, always_kmsg_dump, bool, S_IRUGO | S_IWUSR);
 +
-+cleanup:
-+	for (i = 0; i < ARRAY_SIZE(minors); i++) {
-+		if (minors[i] < 0)
++/**
++ * kmsg_dump - dump kernel log to kernel message dumpers.
++ * @reason: the reason (oops, panic etc) for dumping
++ *
++ * Call each of the registered dumper's dump() callback, which can
++ * retrieve the kmsg records with kmsg_dump_get_line() or
++ * kmsg_dump_get_buffer().
++ */
++void kmsg_dump(enum kmsg_dump_reason reason)
++{
++	struct kmsg_dumper *dumper;
++	unsigned long flags;
++
++	if ((reason > KMSG_DUMP_OOPS) && !always_kmsg_dump)
++		return;
++
++	rcu_read_lock();
++	list_for_each_entry_rcu(dumper, &dump_list, list) {
++		if (dumper->max_reason && reason > dumper->max_reason)
 +			continue;
-+		if (fds[i])
-+			fclose(fds[i]);
-+		if (kmsg_drop_device(minors[i])) {
-+			printf("Failed to delete device file %d\n", i);
-+			retval = KSFT_FAIL;
-+		}
-+		if (kmsg_cmd_buffer_del(fd, &minors[i])) {
-+			printf("Failed to delete buffer %d\n", i);
-+			retval = KSFT_FAIL;
-+		}
++
++		/* initialize iterator with data about the stored records */
++		dumper->active = true;
++
++		raw_spin_lock_irqsave(&logbuf_lock, flags);
++		dumper->cur_seq = clear_seq;
++		dumper->cur_idx = clear_idx;
++		dumper->next_seq = log_next_seq;
++		dumper->next_idx = log_next_idx;
++		raw_spin_unlock_irqrestore(&logbuf_lock, flags);
++
++		/* invoke dumper which will iterate over records */
++		dumper->dump(dumper, reason);
++
++		/* reset iterator */
++		dumper->active = false;
 +	}
-+	close(fd);
-+	return retval;
++	rcu_read_unlock();
 +}
-diff --git a/tools/testing/selftests/kmsg/test-buffer-add-write-read-del.c b/tools/testing/selftests/kmsg/test-buffer-add-write-read-del.c
++
++/**
++ * kmsg_dump_get_line_nolock - retrieve one kmsg log line (unlocked version)
++ * @dumper: registered kmsg dumper
++ * @syslog: include the "<4>" prefixes
++ * @line: buffer to copy the line to
++ * @size: maximum size of the buffer
++ * @len: length of line placed into buffer
++ *
++ * Start at the beginning of the kmsg buffer, with the oldest kmsg
++ * record, and copy one record into the provided buffer.
++ *
++ * Consecutive calls will return the next available record moving
++ * towards the end of the buffer with the youngest messages.
++ *
++ * A return value of FALSE indicates that there are no more records to
++ * read.
++ *
++ * The function is similar to kmsg_dump_get_line(), but grabs no locks.
++ */
++bool kmsg_dump_get_line_nolock(struct kmsg_dumper *dumper, bool syslog,
++			       char *line, size_t size, size_t *len)
++{
++	struct printk_log *msg;
++	size_t l = 0;
++	bool ret = false;
++
++	if (!dumper->active)
++		goto out;
++
++	if (dumper->cur_seq < log_first_seq) {
++		/* messages are gone, move to first available one */
++		dumper->cur_seq = log_first_seq;
++		dumper->cur_idx = log_first_idx;
++	}
++
++	/* last entry */
++	if (dumper->cur_seq >= log_next_seq)
++		goto out;
++
++	msg = log_from_idx(dumper->cur_idx);
++	l = msg_print_text(msg, 0, syslog, line, size);
++
++	dumper->cur_idx = log_next(dumper->cur_idx);
++	dumper->cur_seq++;
++	ret = true;
++out:
++	if (len)
++		*len = l;
++	return ret;
++}
++
++/**
++ * kmsg_dump_get_line - retrieve one kmsg log line
++ * @dumper: registered kmsg dumper
++ * @syslog: include the "<4>" prefixes
++ * @line: buffer to copy the line to
++ * @size: maximum size of the buffer
++ * @len: length of line placed into buffer
++ *
++ * Start at the beginning of the kmsg buffer, with the oldest kmsg
++ * record, and copy one record into the provided buffer.
++ *
++ * Consecutive calls will return the next available record moving
++ * towards the end of the buffer with the youngest messages.
++ *
++ * A return value of FALSE indicates that there are no more records to
++ * read.
++ */
++bool kmsg_dump_get_line(struct kmsg_dumper *dumper, bool syslog,
++			char *line, size_t size, size_t *len)
++{
++	unsigned long flags;
++	bool ret;
++
++	raw_spin_lock_irqsave(&logbuf_lock, flags);
++	ret = kmsg_dump_get_line_nolock(dumper, syslog, line, size, len);
++	raw_spin_unlock_irqrestore(&logbuf_lock, flags);
++
++	return ret;
++}
++EXPORT_SYMBOL_GPL(kmsg_dump_get_line);
++
++/**
++ * kmsg_dump_get_buffer - copy kmsg log lines
++ * @dumper: registered kmsg dumper
++ * @syslog: include the "<4>" prefixes
++ * @buf: buffer to copy the line to
++ * @size: maximum size of the buffer
++ * @len: length of line placed into buffer
++ *
++ * Start at the end of the kmsg buffer and fill the provided buffer
++ * with as many of the the *youngest* kmsg records that fit into it.
++ * If the buffer is large enough, all available kmsg records will be
++ * copied with a single call.
++ *
++ * Consecutive calls will fill the buffer with the next block of
++ * available older records, not including the earlier retrieved ones.
++ *
++ * A return value of FALSE indicates that there are no more records to
++ * read.
++ */
++bool kmsg_dump_get_buffer(struct kmsg_dumper *dumper, bool syslog,
++			  char *buf, size_t size, size_t *len)
++{
++	unsigned long flags;
++	u64 seq;
++	u32 idx;
++	u64 next_seq;
++	u32 next_idx;
++	enum log_flags prev;
++	size_t l = 0;
++	bool ret = false;
++
++	if (!dumper->active)
++		goto out;
++
++	raw_spin_lock_irqsave(&logbuf_lock, flags);
++	if (dumper->cur_seq < log_first_seq) {
++		/* messages are gone, move to first available one */
++		dumper->cur_seq = log_first_seq;
++		dumper->cur_idx = log_first_idx;
++	}
++
++	/* last entry */
++	if (dumper->cur_seq >= dumper->next_seq) {
++		raw_spin_unlock_irqrestore(&logbuf_lock, flags);
++		goto out;
++	}
++
++	/* calculate length of entire buffer */
++	seq = dumper->cur_seq;
++	idx = dumper->cur_idx;
++	prev = 0;
++	while (seq < dumper->next_seq) {
++		struct printk_log *msg = log_from_idx(idx);
++
++		l += msg_print_text(msg, prev, true, NULL, 0);
++		idx = log_next(idx);
++		seq++;
++		prev = msg->flags;
++	}
++
++	/* move first record forward until length fits into the buffer */
++	seq = dumper->cur_seq;
++	idx = dumper->cur_idx;
++	prev = 0;
++	while (l > size && seq < dumper->next_seq) {
++		struct printk_log *msg = log_from_idx(idx);
++
++		l -= msg_print_text(msg, prev, true, NULL, 0);
++		idx = log_next(idx);
++		seq++;
++		prev = msg->flags;
++	}
++
++	/* last message in next interation */
++	next_seq = seq;
++	next_idx = idx;
++
++	l = 0;
++	while (seq < dumper->next_seq) {
++		struct printk_log *msg = log_from_idx(idx);
++
++		l += msg_print_text(msg, prev, syslog, buf + l, size - l);
++		idx = log_next(idx);
++		seq++;
++		prev = msg->flags;
++	}
++
++	dumper->next_seq = next_seq;
++	dumper->next_idx = next_idx;
++	ret = true;
++	raw_spin_unlock_irqrestore(&logbuf_lock, flags);
++out:
++	if (len)
++		*len = l;
++	return ret;
++}
++EXPORT_SYMBOL_GPL(kmsg_dump_get_buffer);
++
++/**
++ * kmsg_dump_rewind_nolock - reset the interator (unlocked version)
++ * @dumper: registered kmsg dumper
++ *
++ * Reset the dumper's iterator so that kmsg_dump_get_line() and
++ * kmsg_dump_get_buffer() can be called again and used multiple
++ * times within the same dumper.dump() callback.
++ *
++ * The function is similar to kmsg_dump_rewind(), but grabs no locks.
++ */
++void kmsg_dump_rewind_nolock(struct kmsg_dumper *dumper)
++{
++	dumper->cur_seq = clear_seq;
++	dumper->cur_idx = clear_idx;
++	dumper->next_seq = log_next_seq;
++	dumper->next_idx = log_next_idx;
++}
++
++/**
++ * kmsg_dump_rewind - reset the interator
++ * @dumper: registered kmsg dumper
++ *
++ * Reset the dumper's iterator so that kmsg_dump_get_line() and
++ * kmsg_dump_get_buffer() can be called again and used multiple
++ * times within the same dumper.dump() callback.
++ */
++void kmsg_dump_rewind(struct kmsg_dumper *dumper)
++{
++	unsigned long flags;
++
++	raw_spin_lock_irqsave(&logbuf_lock, flags);
++	kmsg_dump_rewind_nolock(dumper);
++	raw_spin_unlock_irqrestore(&logbuf_lock, flags);
++}
++EXPORT_SYMBOL_GPL(kmsg_dump_rewind);
+diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
+index c963ba5..2787bc7 100644
+--- a/kernel/printk/printk.c
++++ b/kernel/printk/printk.c
+@@ -25,7 +25,6 @@
+ #include <linux/jiffies.h>
+ #include <linux/nmi.h>
+ #include <linux/module.h>
+-#include <linux/moduleparam.h>
+ #include <linux/interrupt.h>			/* For in_interrupt() */
+ #include <linux/delay.h>
+ #include <linux/smp.h>
+@@ -40,12 +39,9 @@
+ #include <linux/syslog.h>
+ #include <linux/cpu.h>
+ #include <linux/notifier.h>
+-#include <linux/rculist.h>
+-#include <linux/poll.h>
+ #include <linux/irq_work.h>
+ #include <linux/utsname.h>
+ #include <linux/ctype.h>
+-#include <linux/uio.h>
+ 
+ #include <asm/uaccess.h>
+ #include <asm-generic/sections.h>
+@@ -53,6 +49,7 @@
+ #define CREATE_TRACE_POINTS
+ #include <trace/events/printk.h>
+ 
++#include "printk.h"
+ #include "console_cmdline.h"
+ #include "braille.h"
+ 
+@@ -151,100 +148,7 @@ EXPORT_SYMBOL(console_set_on_cmdline);
+ /* Flag: console code may call schedule() */
+ static int console_may_schedule;
+ 
+-/*
+- * The printk log buffer consists of a chain of concatenated variable
+- * length records. Every record starts with a record header, containing
+- * the overall length of the record.
+- *
+- * The heads to the first and last entry in the buffer, as well as the
+- * sequence numbers of these entries are maintained when messages are
+- * stored.
+- *
+- * If the heads indicate available messages, the length in the header
+- * tells the start next message. A length == 0 for the next message
+- * indicates a wrap-around to the beginning of the buffer.
+- *
+- * Every record carries the monotonic timestamp in microseconds, as well as
+- * the standard userspace syslog level and syslog facility. The usual
+- * kernel messages use LOG_KERN; userspace-injected messages always carry
+- * a matching syslog facility, by default LOG_USER. The origin of every
+- * message can be reliably determined that way.
+- *
+- * The human readable log message directly follows the message header. The
+- * length of the message text is stored in the header, the stored message
+- * is not terminated.
+- *
+- * Optionally, a message can carry a dictionary of properties (key/value pairs),
+- * to provide userspace with a machine-readable message context.
+- *
+- * Examples for well-defined, commonly used property names are:
+- *   DEVICE=b12:8               device identifier
+- *                                b12:8         block dev_t
+- *                                c127:3        char dev_t
+- *                                n8            netdev ifindex
+- *                                +sound:card0  subsystem:devname
+- *   SUBSYSTEM=pci              driver-core subsystem name
+- *
+- * Valid characters in property names are [a-zA-Z0-9.-_]. The plain text value
+- * follows directly after a '=' character. Every property is terminated by
+- * a '\0' character. The last property is not terminated.
+- *
+- * Example of a message structure:
+- *   0000  ff 8f 00 00 00 00 00 00      monotonic time in nsec
+- *   0008  34 00                        record is 52 bytes long
+- *   000a        0b 00                  text is 11 bytes long
+- *   000c              1f 00            dictionary is 23 bytes long
+- *   000e                    03 00      LOG_KERN (facility) LOG_ERR (level)
+- *   0010  69 74 27 73 20 61 20 6c      "it's a l"
+- *         69 6e 65                     "ine"
+- *   001b           44 45 56 49 43      "DEVIC"
+- *         45 3d 62 38 3a 32 00 44      "E=b8:2\0D"
+- *         52 49 56 45 52 3d 62 75      "RIVER=bu"
+- *         67                           "g"
+- *   0032     00 00 00                  padding to next message header
+- *
+- * The 'struct printk_log' buffer header must never be directly exported to
+- * userspace, it is a kernel-private implementation detail that might
+- * need to be changed in the future, when the requirements change.
+- *
+- * /dev/kmsg exports the structured data in the following line format:
+- *   "<level>,<sequnum>,<timestamp>,<contflag>[,additional_values, ... ];<message text>\n"
+- *
+- * Users of the export format should ignore possible additional values
+- * separated by ',', and find the message after the ';' character.
+- *
+- * The optional key/value pairs are attached as continuation lines starting
+- * with a space character and terminated by a newline. All possible
+- * non-prinatable characters are escaped in the "\xff" notation.
+- */
+-
+-enum log_flags {
+-	LOG_NOCONS	= 1,	/* already flushed, do not print to console */
+-	LOG_NEWLINE	= 2,	/* text ended with a newline */
+-	LOG_PREFIX	= 4,	/* text started with a prefix */
+-	LOG_CONT	= 8,	/* text is a fragment of a continuation line */
+-};
+-
+-struct printk_log {
+-	u64 ts_nsec;		/* timestamp in nanoseconds */
+-	u16 len;		/* length of entire record */
+-	u16 text_len;		/* length of text buffer */
+-	u16 dict_len;		/* length of dictionary buffer */
+-	u8 facility;		/* syslog facility */
+-	u8 flags:5;		/* internal record flags */
+-	u8 level:3;		/* syslog level */
+-}
+-#ifdef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+-__packed __aligned(4)
+-#endif
+-;
+-
+-/*
+- * The logbuf_lock protects kmsg buffer, indices, counters.  This can be taken
+- * within the scheduler's rq lock. It must be released before calling
+- * console_unlock() or anything else that might wake up a process.
+- */
+-static DEFINE_RAW_SPINLOCK(logbuf_lock);
++DEFINE_RAW_SPINLOCK(logbuf_lock);
+ 
+ #ifdef CONFIG_PRINTK
+ DECLARE_WAIT_QUEUE_HEAD(log_wait);
+@@ -254,28 +158,19 @@ static u32 syslog_idx;
+ static enum log_flags syslog_prev;
+ static size_t syslog_partial;
+ 
+-/* index and sequence number of the first record stored in the buffer */
+-static u64 log_first_seq;
+-static u32 log_first_idx;
+-
+-/* index and sequence number of the next record to store in the buffer */
+-static u64 log_next_seq;
+-static u32 log_next_idx;
+-
+ /* the next printk record to write to the console */
+ static u64 console_seq;
+ static u32 console_idx;
+ static enum log_flags console_prev;
+ 
+-/* the next printk record to read after the last 'clear' command */
+-static u64 clear_seq;
+-static u32 clear_idx;
++u64 log_first_seq;
++u32 log_first_idx;
+ 
+-#define PREFIX_MAX		32
+-#define LOG_LINE_MAX		(1024 - PREFIX_MAX)
++u64 log_next_seq;
++u32 log_next_idx;
+ 
+-#define LOG_LEVEL(v)		((v) & 0x07)
+-#define LOG_FACILITY(v)		((v) >> 3 & 0xff)
++u64 clear_seq;
++u32 clear_idx;
+ 
+ /* record buffer */
+ #define LOG_ALIGN __alignof__(struct printk_log)
+@@ -296,50 +191,6 @@ u32 log_buf_len_get(void)
+ 	return log_buf_len;
+ }
+ 
+-/* human readable text of the record */
+-static char *log_text(const struct printk_log *msg)
+-{
+-	return (char *)msg + sizeof(struct printk_log);
+-}
+-
+-/* optional key/value pair dictionary attached to the record */
+-static char *log_dict(const struct printk_log *msg)
+-{
+-	return (char *)msg + sizeof(struct printk_log) + msg->text_len;
+-}
+-
+-/* get record by index; idx must point to valid msg */
+-static struct printk_log *log_from_idx(u32 idx)
+-{
+-	struct printk_log *msg = (struct printk_log *)(log_buf + idx);
+-
+-	/*
+-	 * A length == 0 record is the end of buffer marker. Wrap around and
+-	 * read the message at the start of the buffer.
+-	 */
+-	if (!msg->len)
+-		return (struct printk_log *)log_buf;
+-	return msg;
+-}
+-
+-/* get next record; idx must point to valid msg */
+-static u32 log_next(u32 idx)
+-{
+-	struct printk_log *msg = (struct printk_log *)(log_buf + idx);
+-
+-	/* length == 0 indicates the end of the buffer; wrap */
+-	/*
+-	 * A length == 0 record is the end of buffer marker. Wrap around and
+-	 * read the message at the start of the buffer as *this* one, and
+-	 * return the one after that.
+-	 */
+-	if (!msg->len) {
+-		msg = (struct printk_log *)log_buf;
+-		return msg->len;
+-	}
+-	return idx + msg->len;
+-}
+-
+ /*
+  * Check whether there is enough free space for the given message.
+  *
+@@ -529,8 +380,8 @@ static void append_char(char **pp, char *e, char c)
+ 		*(*pp)++ = c;
+ }
+ 
+-static ssize_t msg_print_ext_header(char *buf, size_t size,
+-				    struct printk_log *msg, u64 seq,
++ssize_t msg_print_ext_header(char *buf, size_t size,
++			    struct printk_log *msg, u64 seq,
+ 				    enum log_flags prev_flags)
+ {
+ 	u64 ts_usec = msg->ts_nsec;
+@@ -556,7 +407,7 @@ static ssize_t msg_print_ext_header(char *buf, size_t size,
+ 		       (msg->facility << 3) | msg->level, seq, ts_usec, cont);
+ }
+ 
+-static ssize_t msg_print_ext_body(char *buf, size_t size,
++ssize_t msg_print_ext_body(char *buf, size_t size,
+ 				  char *dict, size_t dict_len,
+ 				  char *text, size_t text_len)
+ {
+@@ -604,242 +455,6 @@ static ssize_t msg_print_ext_body(char *buf, size_t size,
+ 	return p - buf;
+ }
+ 
+-/* /dev/kmsg - userspace message inject/listen interface */
+-struct devkmsg_user {
+-	u64 seq;
+-	u32 idx;
+-	enum log_flags prev;
+-	struct mutex lock;
+-	char buf[CONSOLE_EXT_LOG_MAX];
+-};
+-
+-static ssize_t devkmsg_write(struct kiocb *iocb, struct iov_iter *from)
+-{
+-	char *buf, *line;
+-	int level = default_message_loglevel;
+-	int facility = 1;	/* LOG_USER */
+-	size_t len = iov_iter_count(from);
+-	ssize_t ret = len;
+-
+-	if (len > LOG_LINE_MAX)
+-		return -EINVAL;
+-	buf = kmalloc(len+1, GFP_KERNEL);
+-	if (buf == NULL)
+-		return -ENOMEM;
+-
+-	buf[len] = '\0';
+-	if (copy_from_iter(buf, len, from) != len) {
+-		kfree(buf);
+-		return -EFAULT;
+-	}
+-
+-	/*
+-	 * Extract and skip the syslog prefix <[0-9]*>. Coming from userspace
+-	 * the decimal value represents 32bit, the lower 3 bit are the log
+-	 * level, the rest are the log facility.
+-	 *
+-	 * If no prefix or no userspace facility is specified, we
+-	 * enforce LOG_USER, to be able to reliably distinguish
+-	 * kernel-generated messages from userspace-injected ones.
+-	 */
+-	line = buf;
+-	if (line[0] == '<') {
+-		char *endp = NULL;
+-		unsigned int u;
+-
+-		u = simple_strtoul(line + 1, &endp, 10);
+-		if (endp && endp[0] == '>') {
+-			level = LOG_LEVEL(u);
+-			if (LOG_FACILITY(u) != 0)
+-				facility = LOG_FACILITY(u);
+-			endp++;
+-			len -= endp - line;
+-			line = endp;
+-		}
+-	}
+-
+-	printk_emit(facility, level, NULL, 0, "%s", line);
+-	kfree(buf);
+-	return ret;
+-}
+-
+-static ssize_t devkmsg_read(struct file *file, char __user *buf,
+-			    size_t count, loff_t *ppos)
+-{
+-	struct devkmsg_user *user = file->private_data;
+-	struct printk_log *msg;
+-	size_t len;
+-	ssize_t ret;
+-
+-	if (!user)
+-		return -EBADF;
+-
+-	ret = mutex_lock_interruptible(&user->lock);
+-	if (ret)
+-		return ret;
+-	raw_spin_lock_irq(&logbuf_lock);
+-	while (user->seq == log_next_seq) {
+-		if (file->f_flags & O_NONBLOCK) {
+-			ret = -EAGAIN;
+-			raw_spin_unlock_irq(&logbuf_lock);
+-			goto out;
+-		}
+-
+-		raw_spin_unlock_irq(&logbuf_lock);
+-		ret = wait_event_interruptible(log_wait,
+-					       user->seq != log_next_seq);
+-		if (ret)
+-			goto out;
+-		raw_spin_lock_irq(&logbuf_lock);
+-	}
+-
+-	if (user->seq < log_first_seq) {
+-		/* our last seen message is gone, return error and reset */
+-		user->idx = log_first_idx;
+-		user->seq = log_first_seq;
+-		ret = -EPIPE;
+-		raw_spin_unlock_irq(&logbuf_lock);
+-		goto out;
+-	}
+-
+-	msg = log_from_idx(user->idx);
+-	len = msg_print_ext_header(user->buf, sizeof(user->buf),
+-				   msg, user->seq, user->prev);
+-	len += msg_print_ext_body(user->buf + len, sizeof(user->buf) - len,
+-				  log_dict(msg), msg->dict_len,
+-				  log_text(msg), msg->text_len);
+-
+-	user->prev = msg->flags;
+-	user->idx = log_next(user->idx);
+-	user->seq++;
+-	raw_spin_unlock_irq(&logbuf_lock);
+-
+-	if (len > count) {
+-		ret = -EINVAL;
+-		goto out;
+-	}
+-
+-	if (copy_to_user(buf, user->buf, len)) {
+-		ret = -EFAULT;
+-		goto out;
+-	}
+-	ret = len;
+-out:
+-	mutex_unlock(&user->lock);
+-	return ret;
+-}
+-
+-static loff_t devkmsg_llseek(struct file *file, loff_t offset, int whence)
+-{
+-	struct devkmsg_user *user = file->private_data;
+-	loff_t ret = 0;
+-
+-	if (!user)
+-		return -EBADF;
+-	if (offset)
+-		return -ESPIPE;
+-
+-	raw_spin_lock_irq(&logbuf_lock);
+-	switch (whence) {
+-	case SEEK_SET:
+-		/* the first record */
+-		user->idx = log_first_idx;
+-		user->seq = log_first_seq;
+-		break;
+-	case SEEK_DATA:
+-		/*
+-		 * The first record after the last SYSLOG_ACTION_CLEAR,
+-		 * like issued by 'dmesg -c'. Reading /dev/kmsg itself
+-		 * changes no global state, and does not clear anything.
+-		 */
+-		user->idx = clear_idx;
+-		user->seq = clear_seq;
+-		break;
+-	case SEEK_END:
+-		/* after the last record */
+-		user->idx = log_next_idx;
+-		user->seq = log_next_seq;
+-		break;
+-	default:
+-		ret = -EINVAL;
+-	}
+-	raw_spin_unlock_irq(&logbuf_lock);
+-	return ret;
+-}
+-
+-static unsigned int devkmsg_poll(struct file *file, poll_table *wait)
+-{
+-	struct devkmsg_user *user = file->private_data;
+-	int ret = 0;
+-
+-	if (!user)
+-		return POLLERR|POLLNVAL;
+-
+-	poll_wait(file, &log_wait, wait);
+-
+-	raw_spin_lock_irq(&logbuf_lock);
+-	if (user->seq < log_next_seq) {
+-		/* return error when data has vanished underneath us */
+-		if (user->seq < log_first_seq)
+-			ret = POLLIN|POLLRDNORM|POLLERR|POLLPRI;
+-		else
+-			ret = POLLIN|POLLRDNORM;
+-	}
+-	raw_spin_unlock_irq(&logbuf_lock);
+-
+-	return ret;
+-}
+-
+-static int devkmsg_open(struct inode *inode, struct file *file)
+-{
+-	struct devkmsg_user *user;
+-	int err;
+-
+-	/* write-only does not need any file context */
+-	if ((file->f_flags & O_ACCMODE) == O_WRONLY)
+-		return 0;
+-
+-	err = check_syslog_permissions(SYSLOG_ACTION_READ_ALL,
+-				       SYSLOG_FROM_READER);
+-	if (err)
+-		return err;
+-
+-	user = kmalloc(sizeof(struct devkmsg_user), GFP_KERNEL);
+-	if (!user)
+-		return -ENOMEM;
+-
+-	mutex_init(&user->lock);
+-
+-	raw_spin_lock_irq(&logbuf_lock);
+-	user->idx = log_first_idx;
+-	user->seq = log_first_seq;
+-	raw_spin_unlock_irq(&logbuf_lock);
+-
+-	file->private_data = user;
+-	return 0;
+-}
+-
+-static int devkmsg_release(struct inode *inode, struct file *file)
+-{
+-	struct devkmsg_user *user = file->private_data;
+-
+-	if (!user)
+-		return 0;
+-
+-	mutex_destroy(&user->lock);
+-	kfree(user);
+-	return 0;
+-}
+-
+-const struct file_operations kmsg_fops = {
+-	.open = devkmsg_open,
+-	.read = devkmsg_read,
+-	.write_iter = devkmsg_write,
+-	.llseek = devkmsg_llseek,
+-	.poll = devkmsg_poll,
+-	.release = devkmsg_release,
+-};
+-
+ #ifdef CONFIG_KEXEC_CORE
+ /*
+  * This appends the listed symbols to /proc/vmcore
+@@ -1077,8 +692,8 @@ static size_t print_prefix(const struct printk_log *msg, bool syslog, char *buf)
+ 	return len;
+ }
+ 
+-static size_t msg_print_text(const struct printk_log *msg, enum log_flags prev,
+-			     bool syslog, char *buf, size_t size)
++size_t msg_print_text(const struct printk_log *msg, enum log_flags prev,
++		      bool syslog, char *buf, size_t size)
+ {
+ 	const char *text = log_text(msg);
+ 	size_t text_size = msg->text_len;
+@@ -1922,9 +1537,6 @@ EXPORT_SYMBOL(printk);
+ 
+ #else /* CONFIG_PRINTK */
+ 
+-#define LOG_LINE_MAX		0
+-#define PREFIX_MAX		0
+-
+ static u64 syslog_seq;
+ static u32 syslog_idx;
+ static u64 console_seq;
+@@ -1940,21 +1552,9 @@ static struct cont {
+ 	u8 level;
+ 	bool flushed:1;
+ } cont;
+-static char *log_text(const struct printk_log *msg) { return NULL; }
+-static char *log_dict(const struct printk_log *msg) { return NULL; }
+-static struct printk_log *log_from_idx(u32 idx) { return NULL; }
+-static u32 log_next(u32 idx) { return 0; }
+-static ssize_t msg_print_ext_header(char *buf, size_t size,
+-				    struct printk_log *msg, u64 seq,
+-				    enum log_flags prev_flags) { return 0; }
+-static ssize_t msg_print_ext_body(char *buf, size_t size,
+-				  char *dict, size_t dict_len,
+-				  char *text, size_t text_len) { return 0; }
+ static void call_console_drivers(int level,
+ 				 const char *ext_text, size_t ext_len,
+ 				 const char *text, size_t len) {}
+-static size_t msg_print_text(const struct printk_log *msg, enum log_flags prev,
+-			     bool syslog, char *buf, size_t size) { return 0; }
+ static size_t cont_print_text(char *text, size_t size) { return 0; }
+ 
+ /* Still needs to be defined for users */
+@@ -2820,323 +2420,6 @@ bool printk_timed_ratelimit(unsigned long *caller_jiffies,
+ }
+ EXPORT_SYMBOL(printk_timed_ratelimit);
+ 
+-static DEFINE_SPINLOCK(dump_list_lock);
+-static LIST_HEAD(dump_list);
+-
+-/**
+- * kmsg_dump_register - register a kernel log dumper.
+- * @dumper: pointer to the kmsg_dumper structure
+- *
+- * Adds a kernel log dumper to the system. The dump callback in the
+- * structure will be called when the kernel oopses or panics and must be
+- * set. Returns zero on success and %-EINVAL or %-EBUSY otherwise.
+- */
+-int kmsg_dump_register(struct kmsg_dumper *dumper)
+-{
+-	unsigned long flags;
+-	int err = -EBUSY;
+-
+-	/* The dump callback needs to be set */
+-	if (!dumper->dump)
+-		return -EINVAL;
+-
+-	spin_lock_irqsave(&dump_list_lock, flags);
+-	/* Don't allow registering multiple times */
+-	if (!dumper->registered) {
+-		dumper->registered = 1;
+-		list_add_tail_rcu(&dumper->list, &dump_list);
+-		err = 0;
+-	}
+-	spin_unlock_irqrestore(&dump_list_lock, flags);
+-
+-	return err;
+-}
+-EXPORT_SYMBOL_GPL(kmsg_dump_register);
+-
+-/**
+- * kmsg_dump_unregister - unregister a kmsg dumper.
+- * @dumper: pointer to the kmsg_dumper structure
+- *
+- * Removes a dump device from the system. Returns zero on success and
+- * %-EINVAL otherwise.
+- */
+-int kmsg_dump_unregister(struct kmsg_dumper *dumper)
+-{
+-	unsigned long flags;
+-	int err = -EINVAL;
+-
+-	spin_lock_irqsave(&dump_list_lock, flags);
+-	if (dumper->registered) {
+-		dumper->registered = 0;
+-		list_del_rcu(&dumper->list);
+-		err = 0;
+-	}
+-	spin_unlock_irqrestore(&dump_list_lock, flags);
+-	synchronize_rcu();
+-
+-	return err;
+-}
+-EXPORT_SYMBOL_GPL(kmsg_dump_unregister);
+-
+-static bool always_kmsg_dump;
+-module_param_named(always_kmsg_dump, always_kmsg_dump, bool, S_IRUGO | S_IWUSR);
+-
+-/**
+- * kmsg_dump - dump kernel log to kernel message dumpers.
+- * @reason: the reason (oops, panic etc) for dumping
+- *
+- * Call each of the registered dumper's dump() callback, which can
+- * retrieve the kmsg records with kmsg_dump_get_line() or
+- * kmsg_dump_get_buffer().
+- */
+-void kmsg_dump(enum kmsg_dump_reason reason)
+-{
+-	struct kmsg_dumper *dumper;
+-	unsigned long flags;
+-
+-	if ((reason > KMSG_DUMP_OOPS) && !always_kmsg_dump)
+-		return;
+-
+-	rcu_read_lock();
+-	list_for_each_entry_rcu(dumper, &dump_list, list) {
+-		if (dumper->max_reason && reason > dumper->max_reason)
+-			continue;
+-
+-		/* initialize iterator with data about the stored records */
+-		dumper->active = true;
+-
+-		raw_spin_lock_irqsave(&logbuf_lock, flags);
+-		dumper->cur_seq = clear_seq;
+-		dumper->cur_idx = clear_idx;
+-		dumper->next_seq = log_next_seq;
+-		dumper->next_idx = log_next_idx;
+-		raw_spin_unlock_irqrestore(&logbuf_lock, flags);
+-
+-		/* invoke dumper which will iterate over records */
+-		dumper->dump(dumper, reason);
+-
+-		/* reset iterator */
+-		dumper->active = false;
+-	}
+-	rcu_read_unlock();
+-}
+-
+-/**
+- * kmsg_dump_get_line_nolock - retrieve one kmsg log line (unlocked version)
+- * @dumper: registered kmsg dumper
+- * @syslog: include the "<4>" prefixes
+- * @line: buffer to copy the line to
+- * @size: maximum size of the buffer
+- * @len: length of line placed into buffer
+- *
+- * Start at the beginning of the kmsg buffer, with the oldest kmsg
+- * record, and copy one record into the provided buffer.
+- *
+- * Consecutive calls will return the next available record moving
+- * towards the end of the buffer with the youngest messages.
+- *
+- * A return value of FALSE indicates that there are no more records to
+- * read.
+- *
+- * The function is similar to kmsg_dump_get_line(), but grabs no locks.
+- */
+-bool kmsg_dump_get_line_nolock(struct kmsg_dumper *dumper, bool syslog,
+-			       char *line, size_t size, size_t *len)
+-{
+-	struct printk_log *msg;
+-	size_t l = 0;
+-	bool ret = false;
+-
+-	if (!dumper->active)
+-		goto out;
+-
+-	if (dumper->cur_seq < log_first_seq) {
+-		/* messages are gone, move to first available one */
+-		dumper->cur_seq = log_first_seq;
+-		dumper->cur_idx = log_first_idx;
+-	}
+-
+-	/* last entry */
+-	if (dumper->cur_seq >= log_next_seq)
+-		goto out;
+-
+-	msg = log_from_idx(dumper->cur_idx);
+-	l = msg_print_text(msg, 0, syslog, line, size);
+-
+-	dumper->cur_idx = log_next(dumper->cur_idx);
+-	dumper->cur_seq++;
+-	ret = true;
+-out:
+-	if (len)
+-		*len = l;
+-	return ret;
+-}
+-
+-/**
+- * kmsg_dump_get_line - retrieve one kmsg log line
+- * @dumper: registered kmsg dumper
+- * @syslog: include the "<4>" prefixes
+- * @line: buffer to copy the line to
+- * @size: maximum size of the buffer
+- * @len: length of line placed into buffer
+- *
+- * Start at the beginning of the kmsg buffer, with the oldest kmsg
+- * record, and copy one record into the provided buffer.
+- *
+- * Consecutive calls will return the next available record moving
+- * towards the end of the buffer with the youngest messages.
+- *
+- * A return value of FALSE indicates that there are no more records to
+- * read.
+- */
+-bool kmsg_dump_get_line(struct kmsg_dumper *dumper, bool syslog,
+-			char *line, size_t size, size_t *len)
+-{
+-	unsigned long flags;
+-	bool ret;
+-
+-	raw_spin_lock_irqsave(&logbuf_lock, flags);
+-	ret = kmsg_dump_get_line_nolock(dumper, syslog, line, size, len);
+-	raw_spin_unlock_irqrestore(&logbuf_lock, flags);
+-
+-	return ret;
+-}
+-EXPORT_SYMBOL_GPL(kmsg_dump_get_line);
+-
+-/**
+- * kmsg_dump_get_buffer - copy kmsg log lines
+- * @dumper: registered kmsg dumper
+- * @syslog: include the "<4>" prefixes
+- * @buf: buffer to copy the line to
+- * @size: maximum size of the buffer
+- * @len: length of line placed into buffer
+- *
+- * Start at the end of the kmsg buffer and fill the provided buffer
+- * with as many of the the *youngest* kmsg records that fit into it.
+- * If the buffer is large enough, all available kmsg records will be
+- * copied with a single call.
+- *
+- * Consecutive calls will fill the buffer with the next block of
+- * available older records, not including the earlier retrieved ones.
+- *
+- * A return value of FALSE indicates that there are no more records to
+- * read.
+- */
+-bool kmsg_dump_get_buffer(struct kmsg_dumper *dumper, bool syslog,
+-			  char *buf, size_t size, size_t *len)
+-{
+-	unsigned long flags;
+-	u64 seq;
+-	u32 idx;
+-	u64 next_seq;
+-	u32 next_idx;
+-	enum log_flags prev;
+-	size_t l = 0;
+-	bool ret = false;
+-
+-	if (!dumper->active)
+-		goto out;
+-
+-	raw_spin_lock_irqsave(&logbuf_lock, flags);
+-	if (dumper->cur_seq < log_first_seq) {
+-		/* messages are gone, move to first available one */
+-		dumper->cur_seq = log_first_seq;
+-		dumper->cur_idx = log_first_idx;
+-	}
+-
+-	/* last entry */
+-	if (dumper->cur_seq >= dumper->next_seq) {
+-		raw_spin_unlock_irqrestore(&logbuf_lock, flags);
+-		goto out;
+-	}
+-
+-	/* calculate length of entire buffer */
+-	seq = dumper->cur_seq;
+-	idx = dumper->cur_idx;
+-	prev = 0;
+-	while (seq < dumper->next_seq) {
+-		struct printk_log *msg = log_from_idx(idx);
+-
+-		l += msg_print_text(msg, prev, true, NULL, 0);
+-		idx = log_next(idx);
+-		seq++;
+-		prev = msg->flags;
+-	}
+-
+-	/* move first record forward until length fits into the buffer */
+-	seq = dumper->cur_seq;
+-	idx = dumper->cur_idx;
+-	prev = 0;
+-	while (l > size && seq < dumper->next_seq) {
+-		struct printk_log *msg = log_from_idx(idx);
+-
+-		l -= msg_print_text(msg, prev, true, NULL, 0);
+-		idx = log_next(idx);
+-		seq++;
+-		prev = msg->flags;
+-	}
+-
+-	/* last message in next interation */
+-	next_seq = seq;
+-	next_idx = idx;
+-
+-	l = 0;
+-	while (seq < dumper->next_seq) {
+-		struct printk_log *msg = log_from_idx(idx);
+-
+-		l += msg_print_text(msg, prev, syslog, buf + l, size - l);
+-		idx = log_next(idx);
+-		seq++;
+-		prev = msg->flags;
+-	}
+-
+-	dumper->next_seq = next_seq;
+-	dumper->next_idx = next_idx;
+-	ret = true;
+-	raw_spin_unlock_irqrestore(&logbuf_lock, flags);
+-out:
+-	if (len)
+-		*len = l;
+-	return ret;
+-}
+-EXPORT_SYMBOL_GPL(kmsg_dump_get_buffer);
+-
+-/**
+- * kmsg_dump_rewind_nolock - reset the interator (unlocked version)
+- * @dumper: registered kmsg dumper
+- *
+- * Reset the dumper's iterator so that kmsg_dump_get_line() and
+- * kmsg_dump_get_buffer() can be called again and used multiple
+- * times within the same dumper.dump() callback.
+- *
+- * The function is similar to kmsg_dump_rewind(), but grabs no locks.
+- */
+-void kmsg_dump_rewind_nolock(struct kmsg_dumper *dumper)
+-{
+-	dumper->cur_seq = clear_seq;
+-	dumper->cur_idx = clear_idx;
+-	dumper->next_seq = log_next_seq;
+-	dumper->next_idx = log_next_idx;
+-}
+-
+-/**
+- * kmsg_dump_rewind - reset the interator
+- * @dumper: registered kmsg dumper
+- *
+- * Reset the dumper's iterator so that kmsg_dump_get_line() and
+- * kmsg_dump_get_buffer() can be called again and used multiple
+- * times within the same dumper.dump() callback.
+- */
+-void kmsg_dump_rewind(struct kmsg_dumper *dumper)
+-{
+-	unsigned long flags;
+-
+-	raw_spin_lock_irqsave(&logbuf_lock, flags);
+-	kmsg_dump_rewind_nolock(dumper);
+-	raw_spin_unlock_irqrestore(&logbuf_lock, flags);
+-}
+-EXPORT_SYMBOL_GPL(kmsg_dump_rewind);
+-
+ static char dump_stack_arch_desc_str[128];
+ 
+ /**
+diff --git a/kernel/printk/printk.h b/kernel/printk/printk.h
 new file mode 100644
-index 0000000..2f21bce
+index 0000000..7bc12e7
 --- /dev/null
-+++ b/tools/testing/selftests/kmsg/test-buffer-add-write-read-del.c
-@@ -0,0 +1,163 @@
-+#include <stddef.h>
-+#include <stdint.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <fcntl.h>
-+#include <unistd.h>
-+#include <kmsg-api.h>
++++ b/kernel/printk/printk.h
+@@ -0,0 +1,233 @@
++#ifndef _PRINTK_PRINTK_H
++#define _PRINTK_PRINTK_H
 +
-+#include "../kselftest.h"
++#include <linux/printk.h>
++#include <linux/spinlock_types.h>
++#include <linux/types.h>
++#include <linux/wait.h>
 +
-+#include "kmsg-test.h"
++#ifdef CONFIG_PRINTK
 +
-+static const char *message(char *buff, size_t size, int i, int j)
++#define PREFIX_MAX		32
++#define LOG_LINE_MAX		(1024 - PREFIX_MAX)
++
++#define LOG_LEVEL(v)		((v) & 0x07)
++#define LOG_FACILITY(v)		((v) >> 3 & 0xff)
++
++#else
++
++#define LOG_LINE_MAX		0
++#define PREFIX_MAX		0
++
++#endif
++
++/*
++ * The printk log buffer consists of a chain of concatenated variable
++ * length records. Every record starts with a record header, containing
++ * the overall length of the record.
++ *
++ * The heads to the first and last entry in the buffer, as well as the
++ * sequence numbers of these entries are maintained when messages are
++ * stored.
++ *
++ * If the heads indicate available messages, the length in the header
++ * tells the start next message. A length == 0 for the next message
++ * indicates a wrap-around to the beginning of the buffer.
++ *
++ * Every record carries the monotonic timestamp in microseconds, as well as
++ * the standard userspace syslog level and syslog facility. The usual
++ * kernel messages use LOG_KERN; userspace-injected messages always carry
++ * a matching syslog facility, by default LOG_USER. The origin of every
++ * message can be reliably determined that way.
++ *
++ * The human readable log message directly follows the message header. The
++ * length of the message text is stored in the header, the stored message
++ * is not terminated.
++ *
++ * Optionally, a message can carry a dictionary of properties (key/value pairs),
++ * to provide userspace with a machine-readable message context.
++ *
++ * Examples for well-defined, commonly used property names are:
++ *   DEVICE=b12:8               device identifier
++ *                                b12:8         block dev_t
++ *                                c127:3        char dev_t
++ *                                n8            netdev ifindex
++ *                                +sound:card0  subsystem:devname
++ *   SUBSYSTEM=pci              driver-core subsystem name
++ *
++ * Valid characters in property names are [a-zA-Z0-9.-_]. The plain text value
++ * follows directly after a '=' character. Every property is terminated by
++ * a '\0' character. The last property is not terminated.
++ *
++ * Example of a message structure:
++ *   0000  ff 8f 00 00 00 00 00 00      monotonic time in nsec
++ *   0008  34 00                        record is 52 bytes long
++ *   000a        0b 00                  text is 11 bytes long
++ *   000c              1f 00            dictionary is 23 bytes long
++ *   000e                    03 00      LOG_KERN (facility) LOG_ERR (level)
++ *   0010  69 74 27 73 20 61 20 6c      "it's a l"
++ *         69 6e 65                     "ine"
++ *   001b           44 45 56 49 43      "DEVIC"
++ *         45 3d 62 38 3a 32 00 44      "E=b8:2\0D"
++ *         52 49 56 45 52 3d 62 75      "RIVER=bu"
++ *         67                           "g"
++ *   0032     00 00 00                  padding to next message header
++ *
++ * The 'struct printk_log' buffer header must never be directly exported to
++ * userspace, it is a kernel-private implementation detail that might
++ * need to be changed in the future, when the requirements change.
++ *
++ * /dev/kmsg exports the structured data in the following line format:
++ *   "<level>,<sequnum>,<tstamp>,<contflag>[,additional_vals, ... ];<msg txt>\n"
++ *
++ * Users of the export format should ignore possible additional values
++ * separated by ',', and find the message after the ';' character.
++ *
++ * The optional key/value pairs are attached as continuation lines starting
++ * with a space character and terminated by a newline. All possible
++ * non-prinatable characters are escaped in the "\xff" notation.
++ */
++
++enum log_flags {
++	LOG_NOCONS	= 1,	/* already flushed, do not print to console */
++	LOG_NEWLINE	= 2,	/* text ended with a newline */
++	LOG_PREFIX	= 4,	/* text started with a prefix */
++	LOG_CONT	= 8,	/* text is a fragment of a continuation line */
++};
++
++struct printk_log {
++	u64 ts_nsec;		/* timestamp in nanoseconds */
++	u16 len;		/* length of entire record */
++	u16 text_len;		/* length of text buffer */
++	u16 dict_len;		/* length of dictionary buffer */
++	u8 facility;		/* syslog facility */
++	u8 flags:5;		/* internal record flags */
++	u8 level:3;		/* syslog level */
++};
++
++/*
++ * The logbuf_lock protects kmsg buffer, indices, counters.  This can be taken
++ * within the scheduler's rq lock. It must be released before calling
++ * console_unlock() or anything else that might wake up a process.
++ */
++extern raw_spinlock_t logbuf_lock;
++
++#ifdef CONFIG_PRINTK
++
++extern wait_queue_head_t log_wait;
++
++/* index and sequence number of the first record stored in the buffer */
++extern u64 log_first_seq;
++extern u32 log_first_idx;
++
++/* index and sequence number of the next record to store in the buffer */
++extern u64 log_next_seq;
++extern u32 log_next_idx;
++
++/* the next printk record to read after the last 'clear' command */
++extern u64 clear_seq;
++extern u32 clear_idx;
++
++ssize_t msg_print_ext_header(char *buf, size_t size,
++				    struct printk_log *msg, u64 seq,
++				    enum log_flags prev_flags);
++
++ssize_t msg_print_ext_body(char *buf, size_t size,
++				  char *dict, size_t dict_len,
++				  char *text, size_t text_len);
++
++size_t msg_print_text(const struct printk_log *msg, enum log_flags prev,
++			bool syslog, char *buf, size_t size);
++
++/* get next record; idx must point to valid msg */
++static inline u32 log_next(u32 idx)
 +{
-+	snprintf(buff, size, "Test message (%d, %d)", i, j);
-+	return buff;
++	char *log_buf = log_buf_addr_get();
++	struct printk_log *msg = (struct printk_log *)(log_buf + idx);
++
++	/* length == 0 indicates the end of the buffer; wrap */
++	/*
++	 * A length == 0 record is the end of buffer marker. Wrap around and
++	 * read the message at the start of the buffer as *this* one, and
++	 * return the one after that.
++	 */
++	if (!msg->len) {
++		msg = (struct printk_log *)log_buf;
++		return msg->len;
++	}
++	return idx + msg->len;
 +}
 +
-+int kmsg_test_buffer_add_write_read_del(const struct kmsg_test_args *args)
++/* get record by index; idx must point to valid msg */
++static inline struct printk_log *log_from_idx(u32 idx)
 +{
-+	int i, j;
-+	int fd = open(DEV_KMSG, O_RDWR);
-+	struct kmsg_cmd_buffer_add cmd = { 0 };
-+	int minors[] = { -1, -1, -1, -1 };
-+	FILE *fds[ARRAY_SIZE(minors)];
-+	FILE *log[ARRAY_SIZE(minors)];
-+	int logfd;
-+	int retval = KSFT_PASS;
-+	uint32_t size;
-+	char txt[80] = "";
-+	char *buff = NULL;
-+	const char *msg;
-+	char *msgend;
++	char *log_buf = log_buf_addr_get();
++	struct printk_log *msg = (struct printk_log *)(log_buf + idx);
 +
-+	if (fd < 0) {
-+		printf("Failed: cannot open %s\n", DEV_KMSG);
-+		return KSFT_FAIL;
-+	}
-+
-+	for (i = 0; i < ARRAY_SIZE(minors); i++) {
-+		fds[i] = NULL;
-+		log[i] = NULL;
-+		cmd.size = KMSG_REQUESTED_BUF_SIZE;
-+		cmd.mode = 0662;
-+		if (kmsg_cmd_buffer_add(fd, &cmd)) {
-+			printf("Failed to add buffer\n");
-+			goto error;
-+		}
-+		if (cmd.minor < 0) {
-+			printf("Minor number < 0\n");
-+			goto error;
-+		}
-+		minors[i] = cmd.minor;
-+
-+		fds[i] = kmsg_get_device(minors[i], "w");
-+		if (!fds[i]) {
-+			printf("Cannot get device %d for write\n", i);
-+			goto error;
-+		}
-+		size = 0;
-+		if (kmsg_cmd_get_buf_size(fileno(fds[i]), &size)) {
-+			printf("Cannot get buf size on defice %d\n", i);
-+			goto error;
-+		}
-+		if (size != KMSG_REQUESTED_BUF_SIZE) {
-+			printf("Invalid buf size on device %d\n", i);
-+			goto error;
-+		}
-+		log[i] = kmsg_get_device(minors[i], "r");
-+		if (!log[i]) {
-+			printf("Cannot get device %d for read\n", i);
-+			goto error;
-+		}
-+		size = 0;
-+		if (kmsg_cmd_get_buf_size(fileno(log[i]), &size)) {
-+			printf("Cannot get buf size on defice %d\n", i);
-+			goto error;
-+		}
-+		if (size != KMSG_REQUESTED_BUF_SIZE) {
-+			printf("Invalid buf size on device %d\n", i);
-+			goto error;
-+		}
-+
-+		for (j = 0; j <= i; j++) {
-+			if (kmsg_cmd_clear(fileno(fds[j]))) {
-+				printf("Cannot clear buffer on device %d\n", j);
-+				goto error;
-+			}
-+			fprintf(fds[j], "%s\n", message(txt, ARRAY_SIZE(txt),
-+									i, j));
-+			fflush(fds[j]);
-+		}
-+
-+		for (j = 0; j <= i; j++) {
-+			logfd = fileno(log[j]);
-+			size = 0;
-+			if (kmsg_cmd_get_read_size_max(logfd, &size)) {
-+				printf("Cannot get buf size on device %d\n", j);
-+				goto error;
-+			}
-+			if (!size) {
-+				printf("Expected non-zero buf size on %d\n", j);
-+				goto error;
-+			}
-+			buff = malloc(size);
-+			if (!buff) {
-+				printf("Out of memory\n");
-+				goto error;
-+			}
-+			if (read(logfd, buff, size) <= 0) {
-+				printf("Could not read from buffer %d\n", j);
-+				goto error;
-+			}
-+			msg = strchr(buff, ';');
-+			msgend = strchr(buff, '\n');
-+			if ((!msg) || (!msgend)) {
-+				printf("Could not read stored log on %d\n", j);
-+				goto error;
-+			}
-+			msg++;
-+			*msgend = 0;
-+			if (strcmp(msg, message(txt, ARRAY_SIZE(txt), i, j))) {
-+				printf("Messages do not match on %d\n", j);
-+				goto error;
-+			}
-+			free(buff);
-+			buff = NULL;
-+		}
-+	}
-+
-+	goto cleanup;
-+
-+error:
-+	retval = KSFT_FAIL;
-+
-+cleanup:
-+	for (i = 0; i < ARRAY_SIZE(minors); i++) {
-+		if (minors[i] < 0)
-+			continue;
-+		if (fds[i])
-+			fclose(fds[i]);
-+		if (log[i]) {
-+			if (kmsg_cmd_clear(fileno(log[i]))) {
-+				printf("Failed to clear device %d\n", i);
-+				retval = KSFT_FAIL;
-+			}
-+			fclose(log[i]);
-+		}
-+		if (kmsg_drop_device(minors[i])) {
-+			printf("Failed to delete device file %d\n", i);
-+			retval = KSFT_FAIL;
-+		}
-+		if (kmsg_cmd_buffer_del(fd, &minors[i])) {
-+			printf("Failed to delete buffer %d\n", i);
-+			retval = KSFT_FAIL;
-+		}
-+	}
-+	close(fd);
-+	if (buff)
-+		free(buff);
-+	return retval;
-+}
-diff --git a/tools/testing/selftests/kmsg/test-buffer-buf-multithreaded-torture.c b/tools/testing/selftests/kmsg/test-buffer-buf-multithreaded-torture.c
-new file mode 100644
-index 0000000..8223a67
---- /dev/null
-+++ b/tools/testing/selftests/kmsg/test-buffer-buf-multithreaded-torture.c
-@@ -0,0 +1,201 @@
-+#include <stddef.h>
-+#include <stdbool.h>
-+#include <stdint.h>
-+#include <stdio.h>
-+#include <string.h>
-+#include <fcntl.h>
-+#include <unistd.h>
-+#include <pthread.h>
-+#include <kmsg-api.h>
-+
-+#include "../kselftest.h"
-+
-+#include "kmsg-test.h"
-+
-+#define SOME_BUFF_SIZE (900)
-+#define THREADS_PER_DEVICE 10
-+
-+static bool ok = true;
-+static bool nok = !true;
-+
-+static void *kmsg_test_thread_func(void *data)
-+{
-+	char buff[SOME_BUFF_SIZE];
-+	int minor = *((int *)data);
-+	FILE *f = kmsg_get_device(minor, "w");
-+	int fd;
-+	void *retval = &ok;
-+	int iter;
-+	ssize_t s;
-+	uint32_t size, done;
-+	uint32_t max_size;
-+
-+	memset(buff, 'A', ARRAY_SIZE(buff));
-+	buff[ARRAY_SIZE(buff) - 1] = 0;
-+
-+	if (!f) {
-+		printf("Cannot get device for write\n");
-+		return &nok;
-+	}
-+	fd = fileno(f);
-+
-+	size = 0;
-+	if (kmsg_cmd_get_buf_size(fd, &size)) {
-+		printf("Cannot get buf size\n");
-+		goto error;
-+	}
-+	if (size != KMSG_REQUESTED_BUF_SIZE) {
-+		printf("Invalid buf size\n");
-+		goto error;
-+	}
-+
-+	if (kmsg_cmd_clear(fd)) {
-+		printf("Cannot clear buffer\n");
-+		goto error;
-+	}
-+
-+	iter = 0;
-+	while (done < (KMSG_REQUESTED_BUF_SIZE * 2)) {
-+		s = write(fd, buff, ARRAY_SIZE(buff));
-+		if (s < 0) {
-+			printf("Cannot write iteration %d\n", iter);
-+			goto error;
-+		}
-+		done += s;
-+
-+		max_size = 0;
-+		if (kmsg_cmd_get_read_size_max(fd, &max_size)) {
-+			printf("Cannot get max_size\n");
-+			goto error;
-+		}
-+		if (!max_size) {
-+			printf("Expected non-zero max_size\n");
-+			goto error;
-+		}
-+
-+		iter++;
-+	}
-+
-+	goto cleanup;
-+
-+error:
-+	retval = &nok;
-+
-+cleanup:
-+	fclose(f);
-+
-+	return retval;
++	/*
++	 * A length == 0 record is the end of buffer marker. Wrap around and
++	 * read the message at the start of the buffer.
++	 */
++	if (!msg->len)
++		return (struct printk_log *)log_buf;
++	return msg;
 +}
 +
-+int kmsg_test_buffer_buf_multithreaded_torture(
-+					const struct kmsg_test_args *args)
++/* human readable text of the record */
++static inline char *log_text(const struct printk_log *msg)
 +{
-+	int i, j;
-+	int fd = open(DEV_KMSG, O_RDWR);
-+	struct kmsg_cmd_buffer_add cmd = { 0 };
-+	int minors[] = { -1, -1, -1, -1 };
-+	FILE *log[ARRAY_SIZE(minors)];
-+	int retval = KSFT_PASS;
-+	pthread_t threads[ARRAY_SIZE(minors)][THREADS_PER_DEVICE];
-+	bool started[ARRAY_SIZE(minors)][THREADS_PER_DEVICE];
-+	uint32_t size;
-+	uint32_t max_size;
-+	void *retptr;
-+
-+	for (i = 0; i < ARRAY_SIZE(minors); i++)
-+		for (j = 0; j < THREADS_PER_DEVICE; j++)
-+			started[i][j] = false;
-+
-+	if (fd < 0) {
-+		printf("Failed: cannot open %s\n", DEV_KMSG);
-+		return KSFT_FAIL;
-+	}
-+
-+	for (i = 0; i < ARRAY_SIZE(minors); i++) {
-+		log[i] = NULL;
-+		cmd.size = KMSG_REQUESTED_BUF_SIZE;
-+		cmd.mode = 0662;
-+		if (kmsg_cmd_buffer_add(fd, &cmd)) {
-+			printf("Failed to add buffer\n");
-+			goto error;
-+		}
-+		if (cmd.minor < 0) {
-+			printf("Minor number < 0\n");
-+			goto error;
-+		}
-+		minors[i] = cmd.minor;
-+
-+		log[i] = kmsg_get_device(minors[i], "r");
-+		if (!log[i]) {
-+			printf("Cannot get device %d for read\n", i);
-+			goto error;
-+		}
-+		size = 0;
-+		if (kmsg_cmd_get_buf_size(fileno(log[i]), &size)) {
-+			printf("Cannot get buf size on defice %d\n", i);
-+			goto error;
-+		}
-+		if (size != KMSG_REQUESTED_BUF_SIZE) {
-+			printf("Invalid buf size on device %d\n", i);
-+			goto error;
-+		}
-+
-+		for (j = 0; j < THREADS_PER_DEVICE; j++) {
-+			if (pthread_create(&threads[i][j], NULL,
-+					  kmsg_test_thread_func, &minors[i])) {
-+				printf("Cannot create thread %d for dev %d\n",
-+									j, i);
-+				goto error;
-+			}
-+			started[i][j] = true;
-+		}
-+	}
-+
-+	goto cleanup;
-+
-+error:
-+	retval = KSFT_FAIL;
-+
-+cleanup:
-+	for (i = 0; i < ARRAY_SIZE(minors); i++) {
-+		for (j = 0; j < THREADS_PER_DEVICE; j++)
-+			if (started[i][j]) {
-+				if (pthread_join(threads[i][j], &retptr)) {
-+					printf("pthread_join() failed %d:%d\n",
-+									i, j);
-+					retval = KSFT_FAIL;
-+				}
-+				if (!(*((bool *)retptr)))
-+					retval = KSFT_FAIL;
-+			}
-+		if (minors[i] < 0)
-+			continue;
-+		if (log[i]) {
-+			max_size = 0;
-+			if (kmsg_cmd_get_read_size_max(fileno(log[i]),
-+								&max_size)) {
-+				printf("Cannot get max_size\n");
-+				retval = KSFT_FAIL;
-+			}
-+			if (!max_size) {
-+				printf("Expected non-zero max_size\n");
-+				retval = KSFT_FAIL;
-+			}
-+			if (kmsg_cmd_clear(fileno(log[i]))) {
-+				printf("Failed to clear device %d\n", i);
-+				retval = KSFT_FAIL;
-+			}
-+			fclose(log[i]);
-+		}
-+		if (kmsg_drop_device(minors[i])) {
-+			printf("Failed to delete device file %d\n", i);
-+			retval = KSFT_FAIL;
-+		}
-+		if (kmsg_cmd_buffer_del(fd, &minors[i])) {
-+			printf("Failed to delete buffer %d\n", i);
-+			retval = KSFT_FAIL;
-+		}
-+	}
-+	close(fd);
-+	return retval;
++	return (char *)msg + sizeof(struct printk_log);
 +}
-diff --git a/tools/testing/selftests/kmsg/test-buffer-buf-torture.c b/tools/testing/selftests/kmsg/test-buffer-buf-torture.c
-new file mode 100644
-index 0000000..829b342
---- /dev/null
-+++ b/tools/testing/selftests/kmsg/test-buffer-buf-torture.c
-@@ -0,0 +1,141 @@
-+#include <stddef.h>
-+#include <stdint.h>
-+#include <stdio.h>
-+#include <string.h>
-+#include <fcntl.h>
-+#include <unistd.h>
-+#include <kmsg-api.h>
 +
-+#include "../kselftest.h"
-+
-+#include "kmsg-test.h"
-+
-+#define SOME_BUFF_SIZE 4096
-+
-+int kmsg_test_buffer_buf_torture(const struct kmsg_test_args *args)
++/* optional key/value pair dictionary attached to the record */
++static inline char *log_dict(const struct printk_log *msg)
 +{
-+	int i, iter;
-+	int fd = open(DEV_KMSG, O_RDWR);
-+	struct kmsg_cmd_buffer_add cmd = { 0 };
-+	int minors[] = { -1, -1, -1, -1 };
-+	FILE *fds[ARRAY_SIZE(minors)];
-+	FILE *log[ARRAY_SIZE(minors)];
-+	int retval = KSFT_PASS;
-+	char buff[SOME_BUFF_SIZE];
-+	ssize_t s;
-+	int logfd;
-+	uint32_t size, done;
-+	uint32_t max_size;
-+
-+	memset(buff, 'A', ARRAY_SIZE(buff));
-+	buff[ARRAY_SIZE(buff) - 1] = 0;
-+
-+	if (fd < 0) {
-+		printf("Failed: cannot open %s\n", DEV_KMSG);
-+		return KSFT_FAIL;
-+	}
-+
-+	for (i = 0; i < ARRAY_SIZE(minors); i++) {
-+		fds[i] = NULL;
-+		log[i] = NULL;
-+		cmd.size = KMSG_REQUESTED_BUF_SIZE;
-+		cmd.mode = 0662;
-+		if (kmsg_cmd_buffer_add(fd, &cmd)) {
-+			printf("Failed to add buffer\n");
-+			goto error;
-+		}
-+		if (cmd.minor < 0) {
-+			printf("Minor number < 0\n");
-+			goto error;
-+		}
-+		minors[i] = cmd.minor;
-+
-+		fds[i] = kmsg_get_device(minors[i], "w");
-+		if (!fds[i]) {
-+			printf("Cannot get device %d for write\n", i);
-+			goto error;
-+		}
-+		size = 0;
-+		if (kmsg_cmd_get_buf_size(fileno(fds[i]), &size)) {
-+			printf("Cannot get buf size on defice %d\n", i);
-+			goto error;
-+		}
-+		if (size != KMSG_REQUESTED_BUF_SIZE) {
-+			printf("Invalid buf size on device %d\n", i);
-+			goto error;
-+		}
-+		log[i] = kmsg_get_device(minors[i], "r");
-+		if (!log[i]) {
-+			printf("Cannot get device %d for read\n", i);
-+			goto error;
-+		}
-+		size = 0;
-+		if (kmsg_cmd_get_buf_size(fileno(log[i]), &size)) {
-+			printf("Cannot get buf size on defice %d\n", i);
-+			goto error;
-+		}
-+		if (size != KMSG_REQUESTED_BUF_SIZE) {
-+			printf("Invalid buf size on device %d\n", i);
-+			goto error;
-+		}
-+
-+		logfd = fileno(fds[i]);
-+		if (kmsg_cmd_clear(logfd)) {
-+			printf("Cannot clear buffer on device %d\n", i);
-+			goto error;
-+		}
-+
-+		iter = 0;
-+		while (done < (KMSG_REQUESTED_BUF_SIZE * 2)) {
-+			s = write(logfd, buff, ARRAY_SIZE(buff));
-+			if (s < 0) {
-+				printf("Cannot write %d to device %d, %s\n",
-+						    iter, i, strerror(errno));
-+				goto error;
-+			}
-+			done += s;
-+
-+			max_size = 0;
-+			if (kmsg_cmd_get_read_size_max(logfd, &max_size)) {
-+				printf("Cannot get max_size on device %d\n", i);
-+				goto error;
-+			}
-+			if (!max_size) {
-+				printf("Expected non-zero max_size on %d\n", i);
-+				goto error;
-+			}
-+
-+			iter++;
-+		}
-+	}
-+
-+	goto cleanup;
-+
-+error:
-+	retval = KSFT_FAIL;
-+
-+cleanup:
-+	for (i = 0; i < ARRAY_SIZE(minors); i++) {
-+		if (minors[i] < 0)
-+			continue;
-+		if (fds[i])
-+			fclose(fds[i]);
-+		if (log[i]) {
-+			if (kmsg_cmd_clear(fileno(log[i]))) {
-+				printf("Failed to clear device %d\n", i);
-+				retval = KSFT_FAIL;
-+			}
-+			fclose(log[i]);
-+		}
-+		if (kmsg_drop_device(minors[i])) {
-+			printf("Failed to delete device file %d\n", i);
-+			retval = KSFT_FAIL;
-+		}
-+		if (kmsg_cmd_buffer_del(fd, &minors[i])) {
-+			printf("Failed to delete buffer %d\n", i);
-+			retval = KSFT_FAIL;
-+		}
-+	}
-+	close(fd);
-+	return retval;
++	return (char *)msg + sizeof(struct printk_log) + msg->text_len;
 +}
++
++#else
++
++static inline ssize_t msg_print_ext_header(char *buf, size_t size,
++					    struct printk_log *msg, u64 seq,
++					    enum log_flags prev_flags)
++{
++	return 0;
++}
++
++static inline ssize_t msg_print_ext_body(char *buf, size_t size,
++					  char *dict, size_t dict_len,
++					  char *text, size_t text_len)
++{
++	return 0;
++}
++
++static inline size_t msg_print_text(const struct printk_log *msg,
++				    enum log_flags prev, bool syslog, char *buf,
++				    size_t size)
++{
++	return 0;
++}
++
++static inline u32 log_next(u32 idx)
++{
++	return 0;
++}
++
++static inline struct printk_log *log_from_idx(u32 idx)
++{
++	return NULL;
++}
++
++static inline char *log_text(const struct printk_log *msg)
++{
++	return NULL;
++}
++
++static inline char *log_dict(const struct printk_log *msg)
++{
++	return NULL;
++}
++
++#endif
++
++#endif /* _PRINTK_PRINTK_H */
 -- 
 1.9.1
