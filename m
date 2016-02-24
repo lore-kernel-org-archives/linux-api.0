@@ -1,8 +1,7 @@
 From: Kazimierz Krosman <k.krosman@samsung.com>
-Subject: [PATCH v6 5/8] kmsg: add function for adding and deleting additional
- buffers
-Date: Wed, 24 Feb 2016 12:53:18 +0100
-Message-ID: <1456314801-32738-6-git-send-email-k.krosman@samsung.com>
+Subject: [PATCH v6 4/8] kmsg: add additional buffers support to memory class
+Date: Wed, 24 Feb 2016 12:53:17 +0100
+Message-ID: <1456314801-32738-5-git-send-email-k.krosman@samsung.com>
 References: <1456314801-32738-1-git-send-email-k.krosman@samsung.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-reply-to: <1456314801-32738-1-git-send-email-k.krosman@samsung.com>
@@ -13,255 +12,218 @@ List-Id: linux-api@vger.kernel.org
 
 From: Marcin Niesluchowski <m.niesluchow@samsung.com>
 
-Additional kmsg buffers should be created and deleted dynamically.
+Memory class does not support additional kmsg buffers.
 
-Adding two functions
-* kmsg_sys_buffer_add() creates additional kmsg buffer returning minor
-* kmsg_sys_buffer_del() deletes one based on provided minor
+Add additional kmsg buffers support to:
+* devnode() callback of "mem" class
+* file operations of major "mem" character device
 
 Signed-off-by: Marcin Niesluchowski <m.niesluchow@samsung.com>
 Signed-off-by: Paul Osmialowski <p.osmialowsk@samsung.com>
 [Rebased kmsg patch v5 on Linux 4.5-rc5]
 Signed-off-by: Kazimierz Krosman <k.krosman@samsung.com>
 ---
- include/linux/printk.h |   9 +++++
- kernel/printk/kmsg.c   | 107 +++++++++++++++++++++++++++++++++++++++++++++++--
- kernel/printk/printk.c |  12 ++++++
- kernel/printk/printk.h |   4 ++
- 4 files changed, 129 insertions(+), 3 deletions(-)
+ drivers/char/mem.c     | 27 ++++++++++++++++++++-------
+ include/linux/printk.h | 32 ++++++++++++++++++++++++++++++++
+ kernel/printk/kmsg.c   | 42 ++++++++++++++++++++++++++++++++++++++++++
+ kernel/printk/printk.c |  1 +
+ kernel/printk/printk.h |  1 +
+ 5 files changed, 96 insertions(+), 7 deletions(-)
 
-diff --git a/include/linux/printk.h b/include/linux/printk.h
-index 342e9d0..c146ee4 100644
---- a/include/linux/printk.h
-+++ b/include/linux/printk.h
-@@ -431,6 +431,8 @@ extern const struct file_operations kmsg_fops;
- extern struct device *init_kmsg(int minor, umode_t mode);
- extern int kmsg_memory_open(struct inode *inode, struct file *filp);
- extern int kmsg_mode(int minor, umode_t *mode);
-+extern int kmsg_sys_buffer_add(size_t size, umode_t mode);
-+extern void kmsg_sys_buffer_del(int minor);
+diff --git a/drivers/char/mem.c b/drivers/char/mem.c
+index 4f6f94c..aa68923 100644
+--- a/drivers/char/mem.c
++++ b/drivers/char/mem.c
+@@ -799,9 +799,6 @@ static const struct memdev {
+ 	 [7] = { "full", 0666, &full_fops, 0 },
+ 	 [8] = { "random", 0666, &random_fops, 0 },
+ 	 [9] = { "urandom", 0666, &urandom_fops, 0 },
+-#ifdef CONFIG_PRINTK
+-	[11] = { "kmsg", 0644, &kmsg_fops, 0 },
+-#endif
+ };
  
- #else
+ static int memory_open(struct inode *inode, struct file *filp)
+@@ -811,7 +808,7 @@ static int memory_open(struct inode *inode, struct file *filp)
  
-@@ -449,6 +451,13 @@ static inline int kmsg_mode(int minor, umode_t *mode)
- 	return -ENXIO;
+ 	minor = iminor(inode);
+ 	if (minor >= ARRAY_SIZE(devlist))
+-		return -ENXIO;
++		return kmsg_memory_open(inode, filp);
+ 
+ 	dev = &devlist[minor];
+ 	if (!dev->fops)
+@@ -833,16 +830,28 @@ static const struct file_operations memory_fops = {
+ 
+ static char *mem_devnode(struct device *dev, umode_t *mode)
+ {
+-	if (mode && devlist[MINOR(dev->devt)].mode)
+-		*mode = devlist[MINOR(dev->devt)].mode;
++	int minor = MINOR(dev->devt);
++
++	if (!mode)
++		goto out;
++
++	if (minor >= ARRAY_SIZE(devlist)) {
++		kmsg_mode(minor, mode);
++		goto out;
++	}
++
++	if (devlist[minor].mode)
++		*mode = devlist[minor].mode;
++out:
+ 	return NULL;
  }
  
-+static inline int kmsg_sys_buffer_add(size_t size, umode_t mode)
+-static struct class *mem_class;
++struct class *mem_class;
+ 
+ static int __init chr_dev_init(void)
+ {
+ 	int minor;
++	struct device *kmsg;
+ 
+ 	if (register_chrdev(MEM_MAJOR, "mem", &memory_fops))
+ 		printk("unable to get major %d for memory devs\n", MEM_MAJOR);
+@@ -866,6 +875,10 @@ static int __init chr_dev_init(void)
+ 			      NULL, devlist[minor].name);
+ 	}
+ 
++	kmsg = init_kmsg(KMSG_MINOR, 0644);
++	if (IS_ERR(kmsg))
++		return PTR_ERR(kmsg);
++
+ 	return tty_init();
+ }
+ 
+diff --git a/include/linux/printk.h b/include/linux/printk.h
+index 9ccbdf2..342e9d0 100644
+--- a/include/linux/printk.h
++++ b/include/linux/printk.h
+@@ -417,8 +417,40 @@ do {									\
+ 	no_printk(KERN_DEBUG pr_fmt(fmt), ##__VA_ARGS__)
+ #endif
+ 
++#define KMSG_MINOR	11
++
++struct file;
++struct inode;
++
++#ifdef CONFIG_PRINTK
++
++extern struct class *mem_class;
++
+ extern const struct file_operations kmsg_fops;
+ 
++extern struct device *init_kmsg(int minor, umode_t mode);
++extern int kmsg_memory_open(struct inode *inode, struct file *filp);
++extern int kmsg_mode(int minor, umode_t *mode);
++
++#else
++
++static inline struct device *init_kmsg(int minor, umode_t mode)
++{
++	return NULL;
++}
++
++static inline int kmsg_memory_open(struct inode *inode, struct file *filp)
 +{
 +	return -ENXIO;
 +}
 +
-+static inline void kmsg_sys_buffer_del(int minor) {}
++static inline int kmsg_mode(int minor, umode_t *mode)
++{
++	return -ENXIO;
++}
 +
- #endif
- 
++#endif
++
  enum {
+ 	DUMP_PREFIX_NONE,
+ 	DUMP_PREFIX_ADDRESS,
 diff --git a/kernel/printk/kmsg.c b/kernel/printk/kmsg.c
-index b5e07ff..82bc282 100644
+index dbb4a6b..b5e07ff 100644
 --- a/kernel/printk/kmsg.c
 +++ b/kernel/printk/kmsg.c
-@@ -19,6 +19,7 @@
- #include <linux/device.h>
- #include <linux/major.h>
- #include <linux/kdev_t.h>
-+#include <linux/kref.h>
+@@ -16,6 +16,9 @@
+ #include <linux/syslog.h>
+ #include <linux/uio.h>
+ #include <linux/wait.h>
++#include <linux/device.h>
++#include <linux/major.h>
++#include <linux/kdev_t.h>
  
  #include <asm/uaccess.h>
  
-@@ -141,8 +142,20 @@ static ssize_t kmsg_read(struct log_buffer *log_b, struct file *file,
- 		}
+@@ -386,6 +389,45 @@ const struct file_operations kmsg_fops = {
+ 	.release = devkmsg_release,
+ };
  
- 		raw_spin_unlock_irq(&log_b->lock);
--		ret = wait_event_interruptible(log_b->wait,
--					       user->seq != log_b->next_seq);
-+		if (log_b == &log_buf) {
-+			ret = wait_event_interruptible(log_b->wait,
-+						user->seq != log_b->next_seq);
-+		} else {
-+			rcu_read_unlock();
-+			kref_get(&log_b->refcount);
-+			ret = wait_event_interruptible(log_b->wait,
-+						user->seq != log_b->next_seq);
-+			if (log_b->minor == -1)
-+				ret = -ENXIO;
-+			if (kref_put(&log_b->refcount, log_buf_release))
-+				ret = -ENXIO;
-+			rcu_read_lock();
-+		}
- 		if (ret)
- 			goto out;
- 		raw_spin_lock_irq(&log_b->lock);
-@@ -311,8 +324,14 @@ static unsigned int devkmsg_poll(struct file *file, poll_table *wait)
- 	rcu_read_lock();
- 	list_for_each_entry_rcu(log_b, &log_buf.list, list) {
- 		if (log_b->minor == minor) {
-+			kref_get(&log_b->refcount);
-+			rcu_read_unlock();
-+
- 			ret = kmsg_poll(log_b, file, wait);
--			break;
-+
-+			if (kref_put(&log_b->refcount, log_buf_release))
-+				return POLLERR|POLLNVAL;
-+			return ret;
- 		}
- 	}
- 	rcu_read_unlock();
-@@ -428,6 +447,88 @@ int kmsg_mode(int minor, umode_t *mode)
- 	return ret;
- }
- 
-+static DEFINE_SPINLOCK(kmsg_sys_list_lock);
-+
-+int kmsg_sys_buffer_add(size_t size, umode_t mode)
++/* Should be used for device registration */
++struct device *init_kmsg(int minor, umode_t mode)
 +{
-+	unsigned long flags;
-+	int minor = log_buf.minor;
-+	struct log_buffer *log_b;
-+	struct log_buffer *log_b_new;
-+
-+	if (size < LOG_LINE_MAX + PREFIX_MAX)
-+		return -EINVAL;
-+
-+	log_b_new = kzalloc(sizeof(struct log_buffer), GFP_KERNEL);
-+	if (!log_b_new)
-+		return -ENOMEM;
-+
-+	log_b_new->buf = kmalloc(size, GFP_KERNEL);
-+	if (!log_b_new->buf) {
-+		kfree(log_b_new);
-+		return -ENOMEM;
-+	}
-+
-+	log_b_new->len = size;
-+	log_b_new->lock = __RAW_SPIN_LOCK_UNLOCKED(log_b_new->lock);
-+	init_waitqueue_head(&log_b_new->wait);
-+	kref_init(&log_b_new->refcount);
-+	log_b_new->mode = mode;
-+
-+	kref_get(&log_b_new->refcount);
-+
-+	spin_lock_irqsave(&kmsg_sys_list_lock, flags);
-+
-+	list_for_each_entry(log_b, &log_buf.list, list) {
-+		if (log_b->minor - minor > 1)
-+			break;
-+
-+		minor = log_b->minor;
-+	}
-+
-+	if (!(minor & MINORMASK)) {
-+		kref_put(&log_b->refcount, log_buf_release);
-+		spin_unlock_irqrestore(&kmsg_sys_list_lock, flags);
-+		return -ERANGE;
-+	}
-+
-+	minor += 1;
-+	log_b_new->minor = minor;
-+
-+	list_add_tail_rcu(&log_b_new->list, &log_b->list);
-+
-+	spin_unlock_irqrestore(&kmsg_sys_list_lock, flags);
-+
-+	return minor;
++	log_buf.minor = minor;
++	log_buf.mode = mode;
++	return device_create(mem_class, NULL, MKDEV(MEM_MAJOR, minor),
++			NULL, "kmsg");
 +}
 +
-+void kmsg_sys_buffer_del(int minor)
++int kmsg_memory_open(struct inode *inode, struct file *filp)
 +{
-+	unsigned long flags;
++	filp->f_op = &kmsg_fops;
++
++	return kmsg_fops.open(inode, filp);
++}
++
++int kmsg_mode(int minor, umode_t *mode)
++{
++	int ret = -ENXIO;
 +	struct log_buffer *log_b;
 +
-+	spin_lock_irqsave(&kmsg_sys_list_lock, flags);
++	if (minor == log_buf.minor) {
++		*mode = log_buf.mode;
++		return 0;
++	}
 +
-+	list_for_each_entry(log_b, &log_buf.list, list) {
-+		if (log_b->minor == minor)
++	rcu_read_lock();
++	list_for_each_entry_rcu(log_b, &log_buf.list, list) {
++		if (log_b->minor == minor) {
++			*mode = log_b->mode;
++			ret = 0;
 +			break;
++		}
 +	}
++	rcu_read_unlock();
 +
-+	if (log_b == &log_buf) {
-+		spin_unlock_irqrestore(&kmsg_sys_list_lock, flags);
-+		return;
-+	}
-+
-+	list_del_rcu(&log_b->list);
-+
-+	spin_unlock_irqrestore(&kmsg_sys_list_lock, flags);
-+
-+	log_b->minor = -1;
-+	wake_up_interruptible(&log_b->wait);
-+
-+	kref_put(&log_b->refcount, log_buf_release);
++	return ret;
 +}
 +
  static DEFINE_SPINLOCK(dump_list_lock);
  static LIST_HEAD(dump_list);
  
 diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-index d8626ee..fd5991d 100644
+index b99403b..d8626ee 100644
 --- a/kernel/printk/printk.c
 +++ b/kernel/printk/printk.c
-@@ -42,6 +42,8 @@
- #include <linux/irq_work.h>
- #include <linux/utsname.h>
- #include <linux/ctype.h>
-+#include <linux/kref.h>
-+#include <linux/slab.h>
+@@ -177,6 +177,7 @@ struct log_buffer log_buf = {
+ 	.next_idx	= 0,
+ 	.clear_seq	= 0,
+ 	.clear_idx	= 0,
++	.mode		= 0,
+ 	.minor		= 0,
+ };
  
- #include <asm/uaccess.h>
- #include <asm-generic/sections.h>
-@@ -171,6 +173,7 @@ struct log_buffer log_buf = {
- 	.len		= __LOG_BUF_K_LEN,
- 	.lock		= __RAW_SPIN_LOCK_UNLOCKED(log_buf.lock),
- 	.wait		= __WAIT_QUEUE_HEAD_INITIALIZER(log_buf.wait),
-+	.refcount	= { .refcount = { .counter = 0 } },
- 	.first_seq	= 0,
- 	.first_idx	= 0,
- 	.next_seq	= 0,
-@@ -216,6 +219,15 @@ u32 log_buf_len_get(void)
- 	return log_buf.len;
- }
- 
-+void log_buf_release(struct kref *ref)
-+{
-+	struct log_buffer *log_b = container_of(ref, struct log_buffer,
-+						refcount);
-+
-+	kfree(log_b->buf);
-+	kfree(log_b);
-+}
-+
- /*
-  * Check whether there is enough free space for the given message.
-  *
 diff --git a/kernel/printk/printk.h b/kernel/printk/printk.h
-index e5c8a46..a873c27 100644
+index 4eefde5..e5c8a46 100644
 --- a/kernel/printk/printk.h
 +++ b/kernel/printk/printk.h
-@@ -5,6 +5,7 @@
- #include <linux/spinlock_types.h>
- #include <linux/types.h>
- #include <linux/wait.h>
-+#include <linux/kref.h>
+@@ -130,6 +130,7 @@ struct log_buffer {
+ 	u64 clear_seq;
+ 	u32 clear_idx;
  
- #ifdef CONFIG_PRINTK
- 
-@@ -111,6 +112,7 @@ struct log_buffer {
- 	char *buf;		/* cyclic log buffer */
- 	u32 len;		/* buffer length */
- 	wait_queue_head_t wait;	/* wait queue for kmsg buffer */
-+	struct kref refcount;	/* refcount for kmsg_sys buffers */
++	int mode;		/* mode of device */
+ 	int minor;		/* minor representing buffer device */
  #endif
- /*
-  * The lock protects kmsg buffer, indices, counters. This can be taken within
-@@ -139,6 +141,8 @@ struct log_buffer {
- 
- extern struct log_buffer log_buf;
- 
-+void log_buf_release(struct kref *ref);
-+
- ssize_t msg_print_ext_header(char *buf, size_t size,
- 				    struct printk_log *msg, u64 seq,
- 				    enum log_flags prev_flags);
+ };
 -- 
 1.9.1
