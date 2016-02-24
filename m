@@ -1,8 +1,8 @@
 From: Kazimierz Krosman <k.krosman@samsung.com>
-Subject: [PATCH v6 2/8] printk: add one function for storing log in proper
- format
-Date: Wed, 24 Feb 2016 12:53:15 +0100
-Message-ID: <1456314801-32738-3-git-send-email-k.krosman@samsung.com>
+Subject: [PATCH v6 5/8] kmsg: add function for adding and deleting additional
+ buffers
+Date: Wed, 24 Feb 2016 12:53:18 +0100
+Message-ID: <1456314801-32738-6-git-send-email-k.krosman@samsung.com>
 References: <1456314801-32738-1-git-send-email-k.krosman@samsung.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-reply-to: <1456314801-32738-1-git-send-email-k.krosman@samsung.com>
@@ -13,279 +13,255 @@ List-Id: linux-api@vger.kernel.org
 
 From: Marcin Niesluchowski <m.niesluchow@samsung.com>
 
-Preparation commit for future changes purpose.
+Additional kmsg buffers should be created and deleted dynamically.
 
-Separate code responsible for storing log message in proper format
-from operations on consoles by putting it in another function.
+Adding two functions
+* kmsg_sys_buffer_add() creates additional kmsg buffer returning minor
+* kmsg_sys_buffer_del() deletes one based on provided minor
 
 Signed-off-by: Marcin Niesluchowski <m.niesluchow@samsung.com>
 Signed-off-by: Paul Osmialowski <p.osmialowsk@samsung.com>
 [Rebased kmsg patch v5 on Linux 4.5-rc5]
 Signed-off-by: Kazimierz Krosman <k.krosman@samsung.com>
 ---
- kernel/printk/printk.c | 222 ++++++++++++++++++++++++++-----------------------
- 1 file changed, 119 insertions(+), 103 deletions(-)
+ include/linux/printk.h |   9 +++++
+ kernel/printk/kmsg.c   | 107 +++++++++++++++++++++++++++++++++++++++++++++++--
+ kernel/printk/printk.c |  12 ++++++
+ kernel/printk/printk.h |   4 ++
+ 4 files changed, 129 insertions(+), 3 deletions(-)
 
-diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-index 2787bc7..3653a8e 100644
---- a/kernel/printk/printk.c
-+++ b/kernel/printk/printk.c
-@@ -179,6 +179,27 @@ static char __log_buf[__LOG_BUF_LEN] __aligned(LOG_ALIGN);
- static char *log_buf = __log_buf;
- static u32 log_buf_len = __LOG_BUF_LEN;
+diff --git a/include/linux/printk.h b/include/linux/printk.h
+index 342e9d0..c146ee4 100644
+--- a/include/linux/printk.h
++++ b/include/linux/printk.h
+@@ -431,6 +431,8 @@ extern const struct file_operations kmsg_fops;
+ extern struct device *init_kmsg(int minor, umode_t mode);
+ extern int kmsg_memory_open(struct inode *inode, struct file *filp);
+ extern int kmsg_mode(int minor, umode_t *mode);
++extern int kmsg_sys_buffer_add(size_t size, umode_t mode);
++extern void kmsg_sys_buffer_del(int minor);
  
-+/*
-+ * Continuation lines are buffered, and not committed to the record buffer
-+ * until the line is complete, or a race forces it. The line fragments
-+ * though, are printed immediately to the consoles to ensure everything has
-+ * reached the console in case of a kernel crash.
-+ */
-+static struct cont {
-+	char buf[LOG_LINE_MAX];
-+	size_t len;			/* length == 0 means unused buffer */
-+	size_t cons;			/* bytes written to console */
-+	struct task_struct *owner;	/* task of first print*/
-+	u64 ts_nsec;			/* time of first print */
-+	u8 level;			/* log level of first message */
-+	u8 facility;			/* log facility of first message */
-+	enum log_flags flags;		/* prefix, newline flags */
-+	bool flushed:1;			/* buffer sealed and committed */
-+} cont;
-+
-+static void cont_flush(enum log_flags flags);
-+static bool cont_add(int facility, int level, const char *text, size_t len);
-+
- /* Return log buffer address */
- char *log_buf_addr_get(void)
- {
-@@ -330,6 +351,102 @@ static int log_store(int facility, int level,
- 	return msg->text_len;
+ #else
+ 
+@@ -449,6 +451,13 @@ static inline int kmsg_mode(int minor, umode_t *mode)
+ 	return -ENXIO;
  }
  
-+static int log_format_and_store(int facility, int level,
-+				const char *dict, size_t dictlen,
-+				const char *fmt, va_list args)
++static inline int kmsg_sys_buffer_add(size_t size, umode_t mode)
 +{
-+	static char textbuf[LOG_LINE_MAX];
-+	char *text = textbuf;
-+	size_t text_len = 0;
-+	enum log_flags lflags = 0;
-+	int printed_len = 0;
-+
-+	/*
-+	 * The printf needs to come first; we need the syslog
-+	 * prefix which might be passed-in as a parameter.
-+	 */
-+	text_len = vscnprintf(text, sizeof(textbuf), fmt, args);
-+
-+	/* mark and strip a trailing newline */
-+	if (text_len && text[text_len-1] == '\n') {
-+		text_len--;
-+		lflags |= LOG_NEWLINE;
-+	}
-+
-+	/* strip kernel syslog prefix and extract log level or control flags */
-+	if (facility == 0) {
-+		int kern_level = printk_get_level(text);
-+
-+		if (kern_level) {
-+			const char *end_of_header = printk_skip_level(text);
-+
-+			switch (kern_level) {
-+			case '0' ... '7':
-+				if (level == LOGLEVEL_DEFAULT)
-+					level = kern_level - '0';
-+				/* fallthrough */
-+			case 'd':	/* KERN_DEFAULT */
-+				lflags |= LOG_PREFIX;
-+			}
-+			/*
-+			 * No need to check length here because vscnprintf
-+			 * put '\0' at the end of the string. Only valid and
-+			 * newly printed level is detected.
-+			 */
-+			text_len -= end_of_header - text;
-+			text = (char *)end_of_header;
-+		}
-+	}
-+
-+	if (level == LOGLEVEL_DEFAULT)
-+		level = default_message_loglevel;
-+
-+	if (dict)
-+		lflags |= LOG_PREFIX|LOG_NEWLINE;
-+
-+	if (!(lflags & LOG_NEWLINE)) {
-+		/*
-+		 * Flush the conflicting buffer. An earlier newline was missing,
-+		 * or another task also prints continuation lines.
-+		 */
-+		if (cont.len && (lflags & LOG_PREFIX || cont.owner != current))
-+			cont_flush(LOG_NEWLINE);
-+
-+		/* buffer line if possible, otherwise store it right away */
-+		if (cont_add(facility, level, text, text_len))
-+			printed_len += text_len;
-+		else
-+			printed_len += log_store(facility, level,
-+						 lflags | LOG_CONT, 0,
-+						 dict, dictlen, text, text_len);
-+	} else {
-+		bool stored = false;
-+
-+		/*
-+		 * If an earlier newline was missing and it was the same task,
-+		 * either merge it with the current buffer and flush, or if
-+		 * there was a race with interrupts (prefix == true) then just
-+		 * flush it out and store this line separately.
-+		 * If the preceding printk was from a different task and missed
-+		 * a newline, flush and append the newline.
-+		 */
-+		if (cont.len) {
-+			if (cont.owner == current && !(lflags & LOG_PREFIX))
-+				stored = cont_add(facility, level, text,
-+						  text_len);
-+			cont_flush(LOG_NEWLINE);
-+		}
-+
-+		if (stored)
-+			printed_len += text_len;
-+		else
-+			printed_len += log_store(facility, level,
-+						 lflags, 0, dict, dictlen,
-+						 text, text_len);
-+	}
-+	return printed_len;
++	return -ENXIO;
 +}
 +
- int dmesg_restrict = IS_ENABLED(CONFIG_SECURITY_DMESG_RESTRICT);
++static inline void kmsg_sys_buffer_del(int minor) {}
++
+ #endif
  
- static int syslog_action_restricted(int type)
-@@ -1164,24 +1281,6 @@ static inline void printk_delay(void)
+ enum {
+diff --git a/kernel/printk/kmsg.c b/kernel/printk/kmsg.c
+index b5e07ff..82bc282 100644
+--- a/kernel/printk/kmsg.c
++++ b/kernel/printk/kmsg.c
+@@ -19,6 +19,7 @@
+ #include <linux/device.h>
+ #include <linux/major.h>
+ #include <linux/kdev_t.h>
++#include <linux/kref.h>
+ 
+ #include <asm/uaccess.h>
+ 
+@@ -141,8 +142,20 @@ static ssize_t kmsg_read(struct log_buffer *log_b, struct file *file,
+ 		}
+ 
+ 		raw_spin_unlock_irq(&log_b->lock);
+-		ret = wait_event_interruptible(log_b->wait,
+-					       user->seq != log_b->next_seq);
++		if (log_b == &log_buf) {
++			ret = wait_event_interruptible(log_b->wait,
++						user->seq != log_b->next_seq);
++		} else {
++			rcu_read_unlock();
++			kref_get(&log_b->refcount);
++			ret = wait_event_interruptible(log_b->wait,
++						user->seq != log_b->next_seq);
++			if (log_b->minor == -1)
++				ret = -ENXIO;
++			if (kref_put(&log_b->refcount, log_buf_release))
++				ret = -ENXIO;
++			rcu_read_lock();
++		}
+ 		if (ret)
+ 			goto out;
+ 		raw_spin_lock_irq(&log_b->lock);
+@@ -311,8 +324,14 @@ static unsigned int devkmsg_poll(struct file *file, poll_table *wait)
+ 	rcu_read_lock();
+ 	list_for_each_entry_rcu(log_b, &log_buf.list, list) {
+ 		if (log_b->minor == minor) {
++			kref_get(&log_b->refcount);
++			rcu_read_unlock();
++
+ 			ret = kmsg_poll(log_b, file, wait);
+-			break;
++
++			if (kref_put(&log_b->refcount, log_buf_release))
++				return POLLERR|POLLNVAL;
++			return ret;
+ 		}
  	}
+ 	rcu_read_unlock();
+@@ -428,6 +447,88 @@ int kmsg_mode(int minor, umode_t *mode)
+ 	return ret;
  }
  
--/*
-- * Continuation lines are buffered, and not committed to the record buffer
-- * until the line is complete, or a race forces it. The line fragments
-- * though, are printed immediately to the consoles to ensure everything has
-- * reached the console in case of a kernel crash.
-- */
--static struct cont {
--	char buf[LOG_LINE_MAX];
--	size_t len;			/* length == 0 means unused buffer */
--	size_t cons;			/* bytes written to console */
--	struct task_struct *owner;	/* task of first print*/
--	u64 ts_nsec;			/* time of first print */
--	u8 level;			/* log level of first message */
--	u8 facility;			/* log facility of first message */
--	enum log_flags flags;		/* prefix, newline flags */
--	bool flushed:1;			/* buffer sealed and committed */
--} cont;
--
- static void cont_flush(enum log_flags flags)
- {
- 	if (cont.flushed)
-@@ -1277,10 +1376,6 @@ asmlinkage int vprintk_emit(int facility, int level,
- 			    const char *fmt, va_list args)
- {
- 	static bool recursion_bug;
--	static char textbuf[LOG_LINE_MAX];
--	char *text = textbuf;
--	size_t text_len = 0;
--	enum log_flags lflags = 0;
- 	unsigned long flags;
- 	int this_cpu;
- 	int printed_len = 0;
-@@ -1334,87 +1429,8 @@ asmlinkage int vprintk_emit(int facility, int level,
- 					 strlen(recursion_msg));
- 	}
++static DEFINE_SPINLOCK(kmsg_sys_list_lock);
++
++int kmsg_sys_buffer_add(size_t size, umode_t mode)
++{
++	unsigned long flags;
++	int minor = log_buf.minor;
++	struct log_buffer *log_b;
++	struct log_buffer *log_b_new;
++
++	if (size < LOG_LINE_MAX + PREFIX_MAX)
++		return -EINVAL;
++
++	log_b_new = kzalloc(sizeof(struct log_buffer), GFP_KERNEL);
++	if (!log_b_new)
++		return -ENOMEM;
++
++	log_b_new->buf = kmalloc(size, GFP_KERNEL);
++	if (!log_b_new->buf) {
++		kfree(log_b_new);
++		return -ENOMEM;
++	}
++
++	log_b_new->len = size;
++	log_b_new->lock = __RAW_SPIN_LOCK_UNLOCKED(log_b_new->lock);
++	init_waitqueue_head(&log_b_new->wait);
++	kref_init(&log_b_new->refcount);
++	log_b_new->mode = mode;
++
++	kref_get(&log_b_new->refcount);
++
++	spin_lock_irqsave(&kmsg_sys_list_lock, flags);
++
++	list_for_each_entry(log_b, &log_buf.list, list) {
++		if (log_b->minor - minor > 1)
++			break;
++
++		minor = log_b->minor;
++	}
++
++	if (!(minor & MINORMASK)) {
++		kref_put(&log_b->refcount, log_buf_release);
++		spin_unlock_irqrestore(&kmsg_sys_list_lock, flags);
++		return -ERANGE;
++	}
++
++	minor += 1;
++	log_b_new->minor = minor;
++
++	list_add_tail_rcu(&log_b_new->list, &log_b->list);
++
++	spin_unlock_irqrestore(&kmsg_sys_list_lock, flags);
++
++	return minor;
++}
++
++void kmsg_sys_buffer_del(int minor)
++{
++	unsigned long flags;
++	struct log_buffer *log_b;
++
++	spin_lock_irqsave(&kmsg_sys_list_lock, flags);
++
++	list_for_each_entry(log_b, &log_buf.list, list) {
++		if (log_b->minor == minor)
++			break;
++	}
++
++	if (log_b == &log_buf) {
++		spin_unlock_irqrestore(&kmsg_sys_list_lock, flags);
++		return;
++	}
++
++	list_del_rcu(&log_b->list);
++
++	spin_unlock_irqrestore(&kmsg_sys_list_lock, flags);
++
++	log_b->minor = -1;
++	wake_up_interruptible(&log_b->wait);
++
++	kref_put(&log_b->refcount, log_buf_release);
++}
++
+ static DEFINE_SPINLOCK(dump_list_lock);
+ static LIST_HEAD(dump_list);
  
--	/*
--	 * The printf needs to come first; we need the syslog
--	 * prefix which might be passed-in as a parameter.
--	 */
--	text_len = vscnprintf(text, sizeof(textbuf), fmt, args);
--
--	/* mark and strip a trailing newline */
--	if (text_len && text[text_len-1] == '\n') {
--		text_len--;
--		lflags |= LOG_NEWLINE;
--	}
--
--	/* strip kernel syslog prefix and extract log level or control flags */
--	if (facility == 0) {
--		int kern_level = printk_get_level(text);
--
--		if (kern_level) {
--			const char *end_of_header = printk_skip_level(text);
--			switch (kern_level) {
--			case '0' ... '7':
--				if (level == LOGLEVEL_DEFAULT)
--					level = kern_level - '0';
--				/* fallthrough */
--			case 'd':	/* KERN_DEFAULT */
--				lflags |= LOG_PREFIX;
--			}
--			/*
--			 * No need to check length here because vscnprintf
--			 * put '\0' at the end of the string. Only valid and
--			 * newly printed level is detected.
--			 */
--			text_len -= end_of_header - text;
--			text = (char *)end_of_header;
--		}
--	}
--
--	if (level == LOGLEVEL_DEFAULT)
--		level = default_message_loglevel;
--
--	if (dict)
--		lflags |= LOG_PREFIX|LOG_NEWLINE;
--
--	if (!(lflags & LOG_NEWLINE)) {
--		/*
--		 * Flush the conflicting buffer. An earlier newline was missing,
--		 * or another task also prints continuation lines.
--		 */
--		if (cont.len && (lflags & LOG_PREFIX || cont.owner != current))
--			cont_flush(LOG_NEWLINE);
--
--		/* buffer line if possible, otherwise store it right away */
--		if (cont_add(facility, level, text, text_len))
--			printed_len += text_len;
--		else
--			printed_len += log_store(facility, level,
--						 lflags | LOG_CONT, 0,
--						 dict, dictlen, text, text_len);
--	} else {
--		bool stored = false;
--
--		/*
--		 * If an earlier newline was missing and it was the same task,
--		 * either merge it with the current buffer and flush, or if
--		 * there was a race with interrupts (prefix == true) then just
--		 * flush it out and store this line separately.
--		 * If the preceding printk was from a different task and missed
--		 * a newline, flush and append the newline.
--		 */
--		if (cont.len) {
--			if (cont.owner == current && !(lflags & LOG_PREFIX))
--				stored = cont_add(facility, level, text,
--						  text_len);
--			cont_flush(LOG_NEWLINE);
--		}
--
--		if (stored)
--			printed_len += text_len;
--		else
--			printed_len += log_store(facility, level, lflags, 0,
--						 dict, dictlen, text, text_len);
--	}
-+	printed_len += log_format_and_store(facility, level, dict, dictlen,
-+					    fmt, args);
+diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
+index d8626ee..fd5991d 100644
+--- a/kernel/printk/printk.c
++++ b/kernel/printk/printk.c
+@@ -42,6 +42,8 @@
+ #include <linux/irq_work.h>
+ #include <linux/utsname.h>
+ #include <linux/ctype.h>
++#include <linux/kref.h>
++#include <linux/slab.h>
  
- 	logbuf_cpu = UINT_MAX;
- 	raw_spin_unlock(&logbuf_lock);
+ #include <asm/uaccess.h>
+ #include <asm-generic/sections.h>
+@@ -171,6 +173,7 @@ struct log_buffer log_buf = {
+ 	.len		= __LOG_BUF_K_LEN,
+ 	.lock		= __RAW_SPIN_LOCK_UNLOCKED(log_buf.lock),
+ 	.wait		= __WAIT_QUEUE_HEAD_INITIALIZER(log_buf.wait),
++	.refcount	= { .refcount = { .counter = 0 } },
+ 	.first_seq	= 0,
+ 	.first_idx	= 0,
+ 	.next_seq	= 0,
+@@ -216,6 +219,15 @@ u32 log_buf_len_get(void)
+ 	return log_buf.len;
+ }
+ 
++void log_buf_release(struct kref *ref)
++{
++	struct log_buffer *log_b = container_of(ref, struct log_buffer,
++						refcount);
++
++	kfree(log_b->buf);
++	kfree(log_b);
++}
++
+ /*
+  * Check whether there is enough free space for the given message.
+  *
+diff --git a/kernel/printk/printk.h b/kernel/printk/printk.h
+index e5c8a46..a873c27 100644
+--- a/kernel/printk/printk.h
++++ b/kernel/printk/printk.h
+@@ -5,6 +5,7 @@
+ #include <linux/spinlock_types.h>
+ #include <linux/types.h>
+ #include <linux/wait.h>
++#include <linux/kref.h>
+ 
+ #ifdef CONFIG_PRINTK
+ 
+@@ -111,6 +112,7 @@ struct log_buffer {
+ 	char *buf;		/* cyclic log buffer */
+ 	u32 len;		/* buffer length */
+ 	wait_queue_head_t wait;	/* wait queue for kmsg buffer */
++	struct kref refcount;	/* refcount for kmsg_sys buffers */
+ #endif
+ /*
+  * The lock protects kmsg buffer, indices, counters. This can be taken within
+@@ -139,6 +141,8 @@ struct log_buffer {
+ 
+ extern struct log_buffer log_buf;
+ 
++void log_buf_release(struct kref *ref);
++
+ ssize_t msg_print_ext_header(char *buf, size_t size,
+ 				    struct printk_log *msg, u64 seq,
+ 				    enum log_flags prev_flags);
 -- 
 1.9.1
