@@ -1,90 +1,58 @@
-From: David Decotigny <ddecotig@gmail.com>
-Subject: [PATCH net-next v9 10/16] net: fcoe: use __ethtool_get_ksettings
-Date: Wed, 24 Feb 2016 10:58:06 -0800
-Message-ID: <1456340292-26003-11-git-send-email-ddecotig@gmail.com>
-References: <1456340292-26003-1-git-send-email-ddecotig@gmail.com>
-Return-path: <linux-mips-bounce@linux-mips.org>
-In-Reply-To: <1456340292-26003-1-git-send-email-ddecotig@gmail.com>
-Sender: linux-mips-bounce@linux-mips.org
-Errors-to: linux-mips-bounce@linux-mips.org
-List-help: <mailto:ecartis@linux-mips.org?Subject=help>
-List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
-List-software: Ecartis version 1.0.0
-List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
-List-owner: <mailto:ralf@linux-mips.org>
-List-post: <mailto:linux-mips@linux-mips.org>
-List-archive: <http://www.linux-mips.org/archives/linux-mips/>
-To: "David S. Miller" <davem@davemloft.net>, Ben Hutchings <ben@decadent.org.uk>, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-mips@linux-mips.org, fcoe-devel@open-fcoe.org, Andrew Morton <akpm@linux-foundation.org>, Tejun Heo <tj@kernel.org>
-Cc: Eric Dumazet <edumazet@google.com>, Eugenia Emantayev <eugenia@mellanox.co.il>, Or Gerlitz <ogerlitz@mellanox.com>, Ido Shamay <idos@mellanox.com>, Joe Perches <joe@perches.com>, Saeed Mahameed <saeedm@mellanox.com>, Govindarajulu Varadarajan <_govind@gmx.com>, Venkata Duvvuru <VenkatKumar.Duvvuru@Emulex.Com>, Jeff Kirsher <jeffrey.t.kirsher@intel.com>, Pravin B Shelar <pshelar@nicira.com>, Ed Swierk <eswierk@skyportsystems.com>, Robert Love <robert.w.love@intel.com>, "James E.J. Bottomley" <JBottomley@parallels.com>, Yuval Mintz <Yuval.Mintz@qlogic.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, kan.liang@intel.com, vidya@cumulusnetworks.com, David Decotigny <decot@googlers.com>
+From: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v4 0/5] getcpu_cache system call for 4.6
+Date: Wed, 24 Feb 2016 12:07:28 -0800
+Message-ID: <F6BC367F-127F-4254-8E4E-E7BF60A027F3@zytor.com>
+References: <1456270120-7560-1-git-send-email-mathieu.desnoyers@efficios.com> <56CD091A.4060009@zytor.com> <1452699925.6549.1456286963485.JavaMail.zimbra@efficios.com>
+Mime-Version: 1.0
+Content-Type: text/plain;
+ charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1452699925.6549.1456286963485.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: David Decotigny <decot@googlers.com>
+On February 23, 2016 8:09:23 PM PST, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
+>----- On Feb 23, 2016, at 8:36 PM, H. Peter Anvin hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org wrote:
+>
+>> On 02/23/2016 03:28 PM, Mathieu Desnoyers wrote:
+>>> Hi,
+>>> 
+>>> Here is a patchset implementing a cache for the CPU number of the
+>>> currently running thread in user-space.
+>>> 
+>>> Benchmarks comparing this approach to a getcpu based on system call
+>on
+>>> ARM show a 44x speedup. They show a 14x speedup on x86-64 compared
+>to
+>>> executing lsl from a vDSO through glibc.
+>>> 
+>>> I'm added a man page in the changelog of patch 1/3, which shows an
+>>> example usage of this new system call.
+>>> 
+>>> This series is based on v4.5-rc5, submitted for Linux 4.6.
+>>> 
+>>> Feedback is welcome,
+>>> 
+>> 
+>> What is the resulting context switch overhead?
+>
+>The getcpu_cache only adds code to the thread migration path,
+>and to the resume notifier. The context switch path per se is
+>untouched. I would therefore expect the overhead on context
+>switch to be within the noise, except if stuff like hackbench
+>would be so sensitive to the size of struct task_struct that
+>a single extra pointer added at the end of struct task_struct
+>would throw off the benchmarks.
+>
+>Is that what you are concerned about ?
+>
+>Thanks,
+>
+>Mathieu
 
-Signed-off-by: David Decotigny <decot@googlers.com>
----
- drivers/scsi/fcoe/fcoe_transport.c | 36 ++++++++++++++++++++----------------
- 1 file changed, 20 insertions(+), 16 deletions(-)
-
-diff --git a/drivers/scsi/fcoe/fcoe_transport.c b/drivers/scsi/fcoe/fcoe_transport.c
-index d7597c0..641c60e 100644
---- a/drivers/scsi/fcoe/fcoe_transport.c
-+++ b/drivers/scsi/fcoe/fcoe_transport.c
-@@ -93,36 +93,40 @@ static struct notifier_block libfcoe_notifier = {
- int fcoe_link_speed_update(struct fc_lport *lport)
- {
- 	struct net_device *netdev = fcoe_get_netdev(lport);
--	struct ethtool_cmd ecmd;
-+	struct ethtool_link_ksettings ecmd;
- 
--	if (!__ethtool_get_settings(netdev, &ecmd)) {
-+	if (!__ethtool_get_link_ksettings(netdev, &ecmd)) {
- 		lport->link_supported_speeds &= ~(FC_PORTSPEED_1GBIT  |
- 		                                  FC_PORTSPEED_10GBIT |
- 		                                  FC_PORTSPEED_20GBIT |
- 		                                  FC_PORTSPEED_40GBIT);
- 
--		if (ecmd.supported & (SUPPORTED_1000baseT_Half |
--		                      SUPPORTED_1000baseT_Full |
--		                      SUPPORTED_1000baseKX_Full))
-+		if (ecmd.link_modes.supported[0] & (
-+			    SUPPORTED_1000baseT_Half |
-+			    SUPPORTED_1000baseT_Full |
-+			    SUPPORTED_1000baseKX_Full))
- 			lport->link_supported_speeds |= FC_PORTSPEED_1GBIT;
- 
--		if (ecmd.supported & (SUPPORTED_10000baseT_Full   |
--		                      SUPPORTED_10000baseKX4_Full |
--		                      SUPPORTED_10000baseKR_Full  |
--		                      SUPPORTED_10000baseR_FEC))
-+		if (ecmd.link_modes.supported[0] & (
-+			    SUPPORTED_10000baseT_Full   |
-+			    SUPPORTED_10000baseKX4_Full |
-+			    SUPPORTED_10000baseKR_Full  |
-+			    SUPPORTED_10000baseR_FEC))
- 			lport->link_supported_speeds |= FC_PORTSPEED_10GBIT;
- 
--		if (ecmd.supported & (SUPPORTED_20000baseMLD2_Full |
--		                      SUPPORTED_20000baseKR2_Full))
-+		if (ecmd.link_modes.supported[0] & (
-+			    SUPPORTED_20000baseMLD2_Full |
-+			    SUPPORTED_20000baseKR2_Full))
- 			lport->link_supported_speeds |= FC_PORTSPEED_20GBIT;
- 
--		if (ecmd.supported & (SUPPORTED_40000baseKR4_Full |
--		                      SUPPORTED_40000baseCR4_Full |
--		                      SUPPORTED_40000baseSR4_Full |
--		                      SUPPORTED_40000baseLR4_Full))
-+		if (ecmd.link_modes.supported[0] & (
-+			    SUPPORTED_40000baseKR4_Full |
-+			    SUPPORTED_40000baseCR4_Full |
-+			    SUPPORTED_40000baseSR4_Full |
-+			    SUPPORTED_40000baseLR4_Full))
- 			lport->link_supported_speeds |= FC_PORTSPEED_40GBIT;
- 
--		switch (ethtool_cmd_speed(&ecmd)) {
-+		switch (ecmd.base.speed) {
- 		case SPEED_1000:
- 			lport->link_speed = FC_PORTSPEED_1GBIT;
- 			break;
+Yes, I'd like to see numbers.  It is way easy to handwave small changes away, but they add up over time.  Without numbers it is a bit hard to quantify the pro vs con.
 -- 
-2.7.0.rc3.207.g0ac5344
+Sent from my Android device with K-9 Mail. Please excuse brevity and formatting.
