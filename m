@@ -1,73 +1,246 @@
-From: Johannes Berg <johannes-cdvu00un1VgdHxzADdlk8Q@public.gmane.org>
-Subject: Re: custom ioctl-based interface to control LED in networking (was
- Re: [PATCHv2 09/10] rfkill: Userspace control for airplane mode)
-Date: Wed, 24 Feb 2016 14:31:33 +0100
-Message-ID: <1456320693.2050.30.camel@sipsolutions.net>
-References: <1456159001-20307-1-git-send-email-jprvita@endlessm.com>
-	 <1456159001-20307-10-git-send-email-jprvita@endlessm.com>
-	 <20160223204525.GC16961@amd> <1456260914.9910.34.camel@sipsolutions.net>
-	 <20160223214501.GA22501@amd> <1456304509.2050.15.camel@sipsolutions.net>
-	 <20160224104611.GB31302@amd> <1456311697.2050.23.camel@sipsolutions.net>
-	 <20160224121420.GA5627@amd>
+From: Petr Mladek <pmladek@suse.com>
+Subject: Re: [PATCH v5 03/20] kthread: Add create_kthread_worker*()
+Date: Wed, 24 Feb 2016 16:56:24 +0100
+Message-ID: <20160224155624.GZ3305@pathway.suse.cz>
+References: <1456153030-12400-4-git-send-email-pmladek@suse.com>
+ <201602222335.d3Pey8SI%fengguang.wu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160224121420.GA5627@amd>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
-Cc: rpurdie-Fm38FmjxZ/leoWH0uzbU5w@public.gmane.org, j.anaszewski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, linux-leds-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, =?ISO-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-wireless-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, platform-driver-x86-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-6IF/jdPJHihWk0Htik3J/w@public.gmane.org, =?ISO-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita-6IF/jdPJHihWk0Htik3J/w@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <201602222335.d3Pey8SI%fengguang.wu@intel.com>
+Sender: owner-linux-mm@kvack.org
+To: kbuild test robot <lkp@intel.com>
+Cc: kbuild-all@01.org, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2016-02-24 at 13:14 +0100, Pavel Machek wrote:
->=C2=A0
-> Why would it need to? It could look at default triggers for the led
-> if it really wanted to.
+On Mon 2016-02-22 23:48:53, kbuild test robot wrote:
+> Hi Petr,
+> 
+> [auto build test ERROR on soc-thermal/next]
+> [also build test ERROR on v4.5-rc5 next-20160222]
+> [if your patch is applied to the wrong git tree, please drop us a note to help improving the system]
+> 
+> url:    https://github.com/0day-ci/linux/commits/Petr-Mladek/kthread-Use-kthread-worker-API-more-widely/20160222-230250
+> base:   https://git.kernel.org/pub/scm/linux/kernel/git/evalenti/linux-soc-thermal next
+> config: xtensa-allyesconfig (attached as .config)
+> reproduce:
+>         wget https://git.kernel.org/cgit/linux/kernel/git/wfg/lkp-tests.git/plain/sbin/make.cross -O ~/bin/make.cross
+>         chmod +x ~/bin/make.cross
+>         # save the attached .config to linux build tree
+>         make.cross ARCH=xtensa 
+> 
+> All error/warnings (new ones prefixed by >>):
+> 
+>    kernel/kthread.c: In function 'create_kthread_worker_on_cpu':
+> >> kernel/kthread.c:691:9: error: incompatible type for argument 3 of '__create_kthread_worker'
+>      return __create_kthread_worker(cpu, namefmt, NULL);
+>             ^
+>    kernel/kthread.c:622:1: note: expected 'va_list' but argument is of type 'void *'
+>     __create_kthread_worker(int cpu, const char namefmt[], va_list args)
+>     ^
+> >> kernel/kthread.c:692:1: warning: control reaches end of non-void function [-Wreturn-type]
+>     }
+>     ^
+> 
+> vim +/__create_kthread_worker +691 kernel/kthread.c
+> 
+>    685	 * when the needed structures could not get allocated, and ERR_PTR(-EINTR)
+>    686	 * when the worker was SIGKILLed.
+>    687	 */
+>    688	struct kthread_worker *
+>    689	create_kthread_worker_on_cpu(int cpu, const char namefmt[])
+>    690	{
+>  > 691		return __create_kthread_worker(cpu, namefmt, NULL);
+>  > 692	}
+>    693	EXPORT_SYMBOL(create_kthread_worker_on_cpu);
+>    694	
+>    695	/* insert @work before @pos in @worker */
 
-And then it needs to change them; if anything goes wrong error recovery
-is practically impossible since the trigger information is lost
-forever.
+I can be fixed by passing a fake va_list. It is not used when
+__create_kthread_worker() is called with a valid CPU number.
 
-> > I'm sure you'd also not like to see 2**7 triggers implemented in
-> > rfkill
-> > to cover all the possibilities.
->=20
-> Are all the possibilities useful? I assumed about 2 are. If you need
-> 2**7 of them, LED triggers can have parameters.
+See below an updated patch that passes the build.
 
-It's not my position to decide which combinations some system
-integrator or userspace developer might find useful.
 
-Even when we add parameters to a trigger (I don't see a generic way to
-do that, but please do enlighten me), you're now ignoring the issue of
-the userspace controlled GSM modem...
+>From 5e6c252921c0370a88d2ce5f61370fef573afcaa Mon Sep 17 00:00:00 2001
+From: Petr Mladek <pmladek@suse.com>
+Date: Tue, 23 Jun 2015 17:09:19 +0200
+Subject: [PATCH 3/3] kthread: Add create_kthread_worker*()
 
-> > Really what you have here is a concept of "airplane mode", and that
-> > concept is specific to the rfkill subsystem. This happens to affect
-> > mostly an LED trigger, today, but as a concept it's something that
-> > *should* be managed within the rfkill subsystem.
->=20
-> How is that concept used outside the LEDs? What semantics does
-> "airplane mode" have? You tried to explain "airplane mode" is not
-> well defined up in this thread...
+Kthread workers are currently created using the classic kthread API,
+namely kthread_run(). kthread_worker_fn() is passed as the @threadfn
+parameter.
 
-I'd say it's well-defined for any given set of system software, so if
-e.g. NetworkManager decides to define it one way, and connman another
-way, there's a definition but the kernel need not interfere with it.
+This patch defines create_kthread_worker() and
+create_kthread_worker_on_cpu() functions that hide implementation details.
 
-> > > Besides, the series really should have been Cc-ed to LED
-> > > people, too.
-> >=20
-> > That's simply unreasonable, you're essentially saying that any user
-> > of any kernel infrastructure should be Cc'ed to the implementer of
-> > that infrastructure... 9/10 patches in this series aren't even LED
-> > specific,
->=20
-> I'm not saying that. I'm saying that LED maintainers should be Cced,
-> to keep the interfaces consistent.
+They enforce using kthread_worker_fn() for the main thread. But I doubt
+that there are any plans to create any alternative. In fact, I think
+that we do not want any alternative main thread because it would be
+hard to support consistency with the rest of the kthread worker API.
 
-I pretty much have to read it that way, since the LED API is in no way
-impacted by these changes. Here's a new trigger, with some magic inner
-working. No impact on the LED API.
+The naming and function is inspired by the workqueues API like the rest
+of the kthread worker API.
 
-johannes
+Note that we need to bind per-CPU kthread workers already when they are
+created. It makes the life easier. kthread_bind() could not be used later
+for an already running worker.
+
+This patch does _not_ convert existing kthread workers. The kthread worker
+API need more improvements first, e.g. a function to destroy the worker.
+
+Signed-off-by: Petr Mladek <pmladek@suse.com>
+---
+ include/linux/kthread.h |  7 ++++
+ kernel/kthread.c        | 97 ++++++++++++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 94 insertions(+), 10 deletions(-)
+
+diff --git a/include/linux/kthread.h b/include/linux/kthread.h
+index e691b6a23f72..943900c7ce35 100644
+--- a/include/linux/kthread.h
++++ b/include/linux/kthread.h
+@@ -124,6 +124,13 @@ extern void __init_kthread_worker(struct kthread_worker *worker,
+ 
+ int kthread_worker_fn(void *worker_ptr);
+ 
++__printf(1, 2)
++struct kthread_worker *
++create_kthread_worker(const char namefmt[], ...);
++
++struct kthread_worker *
++create_kthread_worker_on_cpu(int cpu, const char namefmt[]);
++
+ bool queue_kthread_work(struct kthread_worker *worker,
+ 			struct kthread_work *work);
+ void flush_kthread_work(struct kthread_work *work);
+diff --git a/kernel/kthread.c b/kernel/kthread.c
+index bfe8742c4217..cd46276f2690 100644
+--- a/kernel/kthread.c
++++ b/kernel/kthread.c
+@@ -567,23 +567,24 @@ EXPORT_SYMBOL_GPL(__init_kthread_worker);
+  * kthread_worker_fn - kthread function to process kthread_worker
+  * @worker_ptr: pointer to initialized kthread_worker
+  *
+- * This function can be used as @threadfn to kthread_create() or
+- * kthread_run() with @worker_ptr argument pointing to an initialized
+- * kthread_worker.  The started kthread will process work_list until
+- * the it is stopped with kthread_stop().  A kthread can also call
+- * this function directly after extra initialization.
++ * This function implements the main cycle of kthread worker. It processes
++ * work_list until it is stopped with kthread_stop(). It sleeps when the queue
++ * is empty.
+  *
+- * Different kthreads can be used for the same kthread_worker as long
+- * as there's only one kthread attached to it at any given time.  A
+- * kthread_worker without an attached kthread simply collects queued
+- * kthread_works.
++ * The works are not allowed to keep any locks, disable preemption or interrupts
++ * when they finish. There is defined a safe point for freezing when one work
++ * finishes and before a new one is started.
+  */
+ int kthread_worker_fn(void *worker_ptr)
+ {
+ 	struct kthread_worker *worker = worker_ptr;
+ 	struct kthread_work *work;
+ 
+-	WARN_ON(worker->task);
++	/*
++	 * FIXME: Update the check and remove the assignment when all kthread
++	 * worker users are created using create_kthread_worker*() functions.
++	 */
++	WARN_ON(worker->task && worker->task != current);
+ 	worker->task = current;
+ repeat:
+ 	set_current_state(TASK_INTERRUPTIBLE);	/* mb paired w/ kthread_stop */
+@@ -617,6 +618,82 @@ repeat:
+ }
+ EXPORT_SYMBOL_GPL(kthread_worker_fn);
+ 
++static struct kthread_worker *
++__create_kthread_worker(int cpu, const char namefmt[], va_list args)
++{
++	struct kthread_worker *worker;
++	struct task_struct *task;
++
++	worker = kzalloc(sizeof(*worker), GFP_KERNEL);
++	if (!worker)
++		return ERR_PTR(-ENOMEM);
++
++	init_kthread_worker(worker);
++
++	if (cpu >= 0)
++		task = kthread_create_on_cpu(kthread_worker_fn, worker,
++					     cpu, namefmt);
++	else
++		task = __kthread_create_on_node(kthread_worker_fn, worker,
++						-1, namefmt, args);
++	if (IS_ERR(task))
++		goto fail_task;
++
++	worker->task = task;
++	wake_up_process(task);
++	return worker;
++
++fail_task:
++	kfree(worker);
++	return ERR_CAST(task);
++}
++
++/**
++ * create_kthread_worker - create a kthread worker
++ * @namefmt: printf-style name for the kthread worker (task).
++ *
++ * Returns a pointer to the allocated worker on success, ERR_PTR(-ENOMEM)
++ * when the needed structures could not get allocated, and ERR_PTR(-EINTR)
++ * when the worker was SIGKILLed.
++ */
++struct kthread_worker *
++create_kthread_worker(const char namefmt[], ...)
++{
++	struct kthread_worker *worker;
++	va_list args;
++
++	va_start(args, namefmt);
++	worker = __create_kthread_worker(-1, namefmt, args);
++	va_end(args);
++
++	return worker;
++}
++EXPORT_SYMBOL(create_kthread_worker);
++
++/**
++ * create_kthread_worker_on_cpu - create a kthread worker and bind it
++ *	it to a given CPU and the associated NUMA node.
++ * @cpu: CPU number
++ * @namefmt: printf-style name for the kthread worker (task).
++ *
++ * Use a valid CPU number if you want to bind the kthread worker
++ * to the given CPU and the associated NUMA node.
++ *
++ * @namefmt might include one "%d" that will get replaced by CPU number.
++ *
++ * Returns a pointer to the allocated worker on success, ERR_PTR(-ENOMEM)
++ * when the needed structures could not get allocated, and ERR_PTR(-EINTR)
++ * when the worker was SIGKILLed.
++ */
++struct kthread_worker *
++create_kthread_worker_on_cpu(int cpu, const char namefmt[])
++{
++	va_list fake_args;
++
++	return __create_kthread_worker(cpu, namefmt, fake_args);
++}
++EXPORT_SYMBOL(create_kthread_worker_on_cpu);
++
+ /* insert @work before @pos in @worker */
+ static void insert_kthread_work(struct kthread_worker *worker,
+ 			       struct kthread_work *work,
+-- 
+1.8.5.6
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
