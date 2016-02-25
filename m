@@ -1,67 +1,22 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v5 04/20] kthread: Add drain_kthread_worker()
-Date: Thu, 25 Feb 2016 13:35:51 +0100
-Message-ID: <20160225123551.GG6357@twins.programming.kicks-ass.net>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH v5 05/20] kthread: Add destroy_kthread_worker()
+Date: Thu, 25 Feb 2016 13:36:41 +0100
+Message-ID: <20160225123641.GH6357@twins.programming.kicks-ass.net>
 References: <1456153030-12400-1-git-send-email-pmladek@suse.com>
- <1456153030-12400-5-git-send-email-pmladek@suse.com>
+ <1456153030-12400-6-git-send-email-pmladek@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1456153030-12400-5-git-send-email-pmladek@suse.com>
-Sender: owner-linux-mm@kvack.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <1456153030-12400-6-git-send-email-pmladek-IBi9RG/b67k@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 22, 2016 at 03:56:54PM +0100, Petr Mladek wrote:
-> +/**
-> + * drain_kthread_worker - drain a kthread worker
-> + * @worker: worker to be drained
-> + *
-> + * Wait until there is no work queued for the given kthread worker.
-> + * @worker is flushed repeatedly until it becomes empty.  The number
-> + * of flushing is determined by the depth of chaining and should
-> + * be relatively short.  Whine if it takes too long.
-> + *
-> + * The caller is responsible for blocking all users of this kthread
-> + * worker from queuing new works. Also it is responsible for blocking
-> + * the already queued works from an infinite re-queuing!
-> + */
-> +void drain_kthread_worker(struct kthread_worker *worker)
-> +{
-> +	int flush_cnt = 0;
-> +
-> +	spin_lock_irq(&worker->lock);
+On Mon, Feb 22, 2016 at 03:56:55PM +0100, Petr Mladek wrote:
+> Also note that drain() correctly handles self-queuing works in compare
+> with flush().
 
-Would it not make sense to set a flag here that inhibits (or warns)
-queueing new work?
-
-Otherwise this can, as you point out, last forever.
-
-And I think its a logic fail if you both want to drain it and keeping
-adding new work.
-
-> +	while (!list_empty(&worker->work_list)) {
-> +		spin_unlock_irq(&worker->lock);
-> +
-> +		flush_kthread_worker(worker);
-> +		WARN_ONCE(flush_cnt++ > 10,
-> +			  "kthread worker %s: drain_kthread_worker() isn't complete after %u tries\n",
-> +			  worker->task->comm, flush_cnt);
-> +
-> +		spin_lock_irq(&worker->lock);
-> +	}
-> +
-> +	spin_unlock_irq(&worker->lock);
-> +}
-> +EXPORT_SYMBOL(drain_kthread_worker);
-> -- 
-> 1.8.5.6
-> 
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Nothing seems to prevent adding more work after drain() observes
+list_empty().
