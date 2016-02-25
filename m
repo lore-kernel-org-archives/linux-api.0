@@ -1,48 +1,94 @@
-From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Subject: Re: [PATCH v3 1/2] mm: introduce page reference manipulation
- functions
-Date: Thu, 25 Feb 2016 11:11:34 +0900
-Message-ID: <20160225021134.GA14784@js1304-P5Q-DELUXE>
-References: <1456212078-22732-1-git-send-email-iamjoonsoo.kim@lge.com>
- <20160223153244.83a5c3ca430c4248a4a34cc0@linux-foundation.org>
- <20160225003454.GB9723@js1304-P5Q-DELUXE>
- <20160224175333.8957903d.akpm@linux-foundation.org>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: custom ioctl-based interface to control LED in networking (was
+ Re: [PATCHv2 09/10] rfkill: Userspace control for airplane mode)
+Date: Thu, 25 Feb 2016 10:06:36 +0100
+Message-ID: <20160225090636.GA32652@amd>
+References: <1456159001-20307-1-git-send-email-jprvita@endlessm.com>
+ <1456159001-20307-10-git-send-email-jprvita@endlessm.com>
+ <20160223204525.GC16961@amd>
+ <1456260914.9910.34.camel@sipsolutions.net>
+ <20160223214501.GA22501@amd>
+ <1456304509.2050.15.camel@sipsolutions.net>
+ <20160224104611.GB31302@amd>
+ <1456311697.2050.23.camel@sipsolutions.net>
+ <20160224121420.GA5627@amd>
+ <1456320693.2050.30.camel@sipsolutions.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20160224175333.8957903d.akpm@linux-foundation.org>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, Vlastimil Babka <vbabka@suse.cz>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+In-Reply-To: <1456320693.2050.30.camel@sipsolutions.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Johannes Berg <johannes@sipsolutions.net>
+Cc: rpurdie@rpsys.net, j.anaszewski@samsung.com, linux-leds@vger.kernel.org, =?iso-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita@gmail.com>, "David S. Miller" <davem@davemloft.net>, Darren Hart <dvhart@infradead.org>, linux-wireless@vger.kernel.org, netdev@vger.kernel.org, platform-driver-x86@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux@endlessm.com, =?iso-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita@endlessm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Feb 24, 2016 at 05:53:33PM -0800, Andrew Morton wrote:
-> On Thu, 25 Feb 2016 09:34:55 +0900 Joonsoo Kim <iamjoonsoo.kim@lge.com> wrote:
-> 
-> > > 
-> > > The patches will be a bit of a pain to maintain but surprisingly they
-> > > apply OK at present.  It's possible that by the time they hit upstream,
-> > > some direct ->_count references will still be present and it will
-> > > require a second pass to complete the conversion.
-> > 
-> > In fact, the patch doesn't change direct ->_count reference for
-> > *read*. That's the reason that it is surprisingly OK at present.
-> > 
-> > It's a good idea to change direct ->_count reference even for read.
-> > How about changing it in rc2 after mering this patch in rc1?
-> 
-> Sounds fair enough.
-> 
-> Although I'm counting only 11 such sites so perhaps we just go ahead
-> and do it?
+On Wed 2016-02-24 14:31:33, Johannes Berg wrote:
+> On Wed, 2016-02-24 at 13:14 +0100, Pavel Machek wrote:
+> >=A0
+> > Why would it need to? It could look at default triggers for the led
+> > if it really wanted to.
+>=20
+> And then it needs to change them; if anything goes wrong error recove=
+ry
+> is practically impossible since the trigger information is lost
+> forever.
 
-Okay. It's less than I thought. I will do it soon.
+Well, conventional way to solve this is to simply name the led
+"acer::airplane"... that way it is persistent. We already do that for
+display/keyboard backlights.
 
-Thanks.
+> It's not my position to decide which combinations some system
+> integrator or userspace developer might find useful.
+>=20
+> Even when we add parameters to a trigger (I don't see a generic way t=
+o
+> do that, but please do enlighten me), you're now ignoring the issue o=
+f
+> the userspace controlled GSM modem...
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Take a look at the blinking triggers.
+
+> > > Really what you have here is a concept of "airplane mode", and th=
+at
+> > > concept is specific to the rfkill subsystem. This happens to affe=
+ct
+> > > mostly an LED trigger, today, but as a concept it's something tha=
+t
+> > > *should* be managed within the rfkill subsystem.
+> >=20
+> > How is that concept used outside the LEDs? What semantics does
+> > "airplane mode" have? You tried to explain "airplane mode" is not
+> > well defined up in this thread...
+>=20
+> I'd say it's well-defined for any given set of system software, so if
+> e.g. NetworkManager decides to define it one way, and connman another
+> way, there's a definition but the kernel need not interfere with it.
+
+So... the LED changes meaning during boot? That's surely not a nice
+solution.
+
+So... you rather store bit in a kernel with unclear semantics,
+explaining "oh I need to leave the flexibility to userland"? Sorry,
+that's just ugly.
+
+> > I'm not saying that. I'm saying that LED maintainers should be Cced=
+,
+> > to keep the interfaces consistent.
+>=20
+> I pretty much have to read it that way, since the LED API is in no wa=
+y
+> impacted by these changes. Here's a new trigger, with some magic inne=
+r
+> working. No impact on the LED API.
+
+New LED trigger and new ioctl for LED control... not matching how LEDs
+are normally controlled.
+
+Best regards,
+									Pavel
+--=20
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses=
+/blog.html
