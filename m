@@ -1,34 +1,67 @@
-From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH v4 1/5] getcpu_cache system call: cache CPU number of
- running thread
-Date: Thu, 25 Feb 2016 10:56:35 +0100
-Message-ID: <20160225095635.GO6356@twins.programming.kicks-ass.net>
-References: <1456270120-7560-1-git-send-email-mathieu.desnoyers@efficios.com>
- <1456270120-7560-2-git-send-email-mathieu.desnoyers@efficios.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v5 04/20] kthread: Add drain_kthread_worker()
+Date: Thu, 25 Feb 2016 13:35:51 +0100
+Message-ID: <20160225123551.GG6357@twins.programming.kicks-ass.net>
+References: <1456153030-12400-1-git-send-email-pmladek@suse.com>
+ <1456153030-12400-5-git-send-email-pmladek@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <1456270120-7560-2-git-send-email-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <1456153030-12400-5-git-send-email-pmladek@suse.com>
+Sender: owner-linux-mm@kvack.org
+To: Petr Mladek <pmladek@suse.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 23, 2016 at 06:28:36PM -0500, Mathieu Desnoyers wrote:
-> This approach is inspired by Paul Turner and Andrew Hunter's work
-> on percpu atomics, which lets the kernel handle restart of critical
-> sections. [1] [2]
+On Mon, Feb 22, 2016 at 03:56:54PM +0100, Petr Mladek wrote:
+> +/**
+> + * drain_kthread_worker - drain a kthread worker
+> + * @worker: worker to be drained
+> + *
+> + * Wait until there is no work queued for the given kthread worker.
+> + * @worker is flushed repeatedly until it becomes empty.  The number
+> + * of flushing is determined by the depth of chaining and should
+> + * be relatively short.  Whine if it takes too long.
+> + *
+> + * The caller is responsible for blocking all users of this kthread
+> + * worker from queuing new works. Also it is responsible for blocking
+> + * the already queued works from an infinite re-queuing!
+> + */
+> +void drain_kthread_worker(struct kthread_worker *worker)
+> +{
+> +	int flush_cnt = 0;
+> +
+> +	spin_lock_irq(&worker->lock);
 
-So I'd like a few extra words on the intersection with that work.
+Would it not make sense to set a flag here that inhibits (or warns)
+queueing new work?
 
-Yes, that also needs a CPU number, but that needs a little extra as
-well. Can this work be extended to provide the little extra and is the
-getcpu name still sane in that case?
+Otherwise this can, as you point out, last forever.
 
-Alternatively, could you not, at equal speed, get the CPU number from
-the restartable sequence data?
+And I think its a logic fail if you both want to drain it and keeping
+adding new work.
 
-That is, do explain why we want both.
+> +	while (!list_empty(&worker->work_list)) {
+> +		spin_unlock_irq(&worker->lock);
+> +
+> +		flush_kthread_worker(worker);
+> +		WARN_ONCE(flush_cnt++ > 10,
+> +			  "kthread worker %s: drain_kthread_worker() isn't complete after %u tries\n",
+> +			  worker->task->comm, flush_cnt);
+> +
+> +		spin_lock_irq(&worker->lock);
+> +	}
+> +
+> +	spin_unlock_irq(&worker->lock);
+> +}
+> +EXPORT_SYMBOL(drain_kthread_worker);
+> -- 
+> 1.8.5.6
+> 
 
-(And remind Paul to keep pushing that)
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
