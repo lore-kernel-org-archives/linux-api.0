@@ -1,76 +1,97 @@
-From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Subject: Re: [PATCH v5 08/20] kthread: Allow to cancel kthread work
-Date: Fri, 26 Feb 2016 18:00:56 +0100
-Message-ID: <20160226170056.GA12548@pathway.suse.cz>
-References: <1456153030-12400-9-git-send-email-pmladek@suse.com>
- <201602230025.uuCAc4Tn%fengguang.wu@intel.com>
- <20160224161805.GB3305@pathway.suse.cz>
- <20160225125932.GI6357@twins.programming.kicks-ass.net>
- <20160226153818.GI3305@pathway.suse.cz>
- <20160226162552.GB6356@twins.programming.kicks-ass.net>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH v4 1/5] getcpu_cache system call: cache CPU number of
+ running thread
+Date: Fri, 26 Feb 2016 17:20:01 +0000 (UTC)
+Message-ID: <967083634.8940.1456507201156.JavaMail.zimbra@efficios.com>
+References: <1456270120-7560-1-git-send-email-mathieu.desnoyers@efficios.com> <1456270120-7560-2-git-send-email-mathieu.desnoyers@efficios.com> <20160225095635.GO6356@twins.programming.kicks-ass.net> <390571988.7745.1456419326288.JavaMail.zimbra@efficios.com> <20160225170416.GV6356@twins.programming.kicks-ass.net> <2135602720.7810.1456420671941.JavaMail.zimbra@efficios.com> <20160226113304.GA6356@twins.programming.kicks-ass.net> <alpine.DEB.2.11.1602261719440.3638@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160226162552.GB6356-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, kbuild-all-JC7UmRfGjtg@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.11.1602261719440.3638@nanos>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>, Peter Zijlstra <peterz@infradead.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, linux-kernel@vger.kernel.org, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri 2016-02-26 17:25:52, Peter Zijlstra wrote:
-> On Fri, Feb 26, 2016 at 04:38:18PM +0100, Petr Mladek wrote:
-> > On Thu 2016-02-25 13:59:32, Peter Zijlstra wrote:
-> > > On Wed, Feb 24, 2016 at 05:18:05PM +0100, Petr Mladek wrote:
-> > > > @@ -770,7 +782,22 @@ void delayed_kthread_work_timer_fn(unsigned long __data)
-> > > >  	if (WARN_ON_ONCE(!worker))
-> > > >  		return;
-> > > >  
-> > > > -	spin_lock(&worker->lock);
-> > > > +	/*
-> > > > +	 * We might be unable to take the lock if someone is trying to
-> > > > +	 * cancel this work and calls del_timer_sync() when this callback
-> > > > +	 * has already been removed from the timer list.
-> > > > +	 */
-> > > > +	while (!spin_trylock(&worker->lock)) {
-> > > > +		/*
-> > > > +		 * Busy wait with spin_is_locked() to avoid cache bouncing.
-> > > > +		 * Break when canceling is set to avoid a deadlock.
-> > > > +		 */
-> > > > +		do {
-> > > > +			if (work->canceling)
-> > > > +				return;
-> > > > +			cpu_relax();
-> > > > +		} while (spin_is_locked(&worker->lock));
-> > > > +	}
-> > > >  	/* Work must not be used with more workers, see queue_kthread_work(). */
-> > > >  	WARN_ON_ONCE(work->worker != worker);
-> > > >  
-> > > 
-> > > This is pretty vile; why can't you drop the lock over del_timer_sync() ?
-> > 
-> > We would need to take the lock later and check if nobody has set the timer
-> > again in the meantime.
+----- On Feb 26, 2016, at 11:29 AM, Thomas Gleixner tglx@linutronix.de wrote:
+
+> On Fri, 26 Feb 2016, Peter Zijlstra wrote:
+>> On Thu, Feb 25, 2016 at 05:17:51PM +0000, Mathieu Desnoyers wrote:
+>> > ----- On Feb 25, 2016, at 12:04 PM, Peter Zijlstra peterz@infradead.org wrote:
+>> > 
+>> > > On Thu, Feb 25, 2016 at 04:55:26PM +0000, Mathieu Desnoyers wrote:
+>> > >> ----- On Feb 25, 2016, at 4:56 AM, Peter Zijlstra peterz@infradead.org wrote:
+>> > >> The restartable sequences are intrinsically designed to work
+>> > >> on per-cpu data, so they need to fetch the current CPU number
+>> > >> within the rseq critical section. This is where the getcpu_cache
+>> > >> system call becomes very useful when combined with rseq:
+>> > >> getcpu_cache allows reading the current CPU number in a
+>> > >> fraction of cycle.
+>> > > 
+>> > > Yes yes, I know how restartable sequences work.
+>> > > 
+>> > > But what I worry about is that they want a cpu number and a sequence
+>> > > number, and for performance it would be very good if those live in the
+>> > > same cacheline.
+>> > > 
+>> > > That means either getcpu needs to grow a seq number, or restartable
+>> > > sequences need to _also_ provide the cpu number.
+>> > 
+>> > If we plan things well, we could have both the cpu number and the
+>> > seqnum in the same cache line, registered by two different system
+>> > calls. It's up to user-space to organize those two variables
+>> > to fit within the same cache-line.
+>> 
+>> I feel this is more fragile than needed. Why not do a single systemcall
+>> that does both?
 > 
-> Well, if ->cancelling is !0, nobody should be re-queueing, re-arming
-> timers etc.., right?
+> Right. There is no point in having two calls and two update mechanisms for a
+> very similar purpose.
+> 
+> So let userspace have one struct where cpu/seq and whatever is required for
+> rseq is located and flag at register time which parts of the struct need to be
+> updated.
 
-Which rings a bell. __cancel_kthread_work()/del_timer_sync() is used
-also from mod_timer_sync() and we do not increment ->canceling there.
-See the 9th patch. It is racy and I have to fix it.
+If we put both cpu/seq/other in that structure, why not plan ahead and make
+it extensible then ?
 
+That looks very much like the "Thread-local ABI" series I posted last year.
+See https://lkml.org/lkml/2015/12/22/464
 
-> And since you do add_timer() while holding the spinlock, this should all
-> work out, no?
+Here is why I ended up introducing the specialized "getcpu_cache" system call
+rather than the "generic" system call (quote from the getcpu_cache changelog):
 
-Interesting idea. Yes, it should work. But is this really easier? The
-try_again/relock/recheck code is not trivial either.
+    Rationale for the getcpu_cache system call rather than the thread-local
+    ABI system call proposed earlier:
+    
+    Rather than doing a "generic" thread-local ABI, specialize this system
+    call for a cpu number cache only. Anyway, the thread-local ABI approach
+    would have required that we introduce "feature" flags, which would have
+    ended up reimplementing multiplexing of features on top of a system
+    call. It seems better to introduce one system call per feature instead.
 
-I personally slightly more prefer the current code. I am open
-to use your version ff you persist on it. But I also do not want
-to end up in a ping-pong re-implementation as Tejun king of suggested
-the current code.
+If everyone end up preferring that we introduce a system call that implements
+many features at once, that's indeed something we can do, but I remember
+being told in the past that this is generally a bad idea.
 
+For one thing, it would make the interface more cumbersome to deal with
+from user-space in terms of feature detection: if we want to make this
+interface extensible, in addition to check -1, errno=ENOSYS, userspace
+would have to deal with a field containing the length of the structure
+as expected by user-space and kernel, and feature flags to see the common
+set of features supported by kernel and user-space.
 
-Thanks a lot,
-Petr
+Having one system call per feature seems simpler to handle in terms of
+feature availability detection from a userspace point of view.
+
+Thoughts ?
+
+Thanks,
+
+Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
