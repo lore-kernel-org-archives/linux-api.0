@@ -1,125 +1,109 @@
-From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: Re: [PATCH v1 10/10] efivars: use generic UUID library
-Date: Fri, 26 Feb 2016 16:29:11 +0200
-Message-ID: <1456496951.13244.147.camel@linux.intel.com>
-References: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
-	 <1455711448-124103-11-git-send-email-andriy.shevchenko@linux.intel.com>
-	 <20160218150727.GK2651@codeblueprint.co.uk>
+From: Harvey Hunt <harvey.hunt-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v3 07/52] mtd: nand: core: use
+ mtd_ooblayout_xxx() helpers where appropriate
+Date: Fri, 26 Feb 2016 14:35:08 +0000
+Message-ID: <56D0629C.9080805@imgtec.com>
+References: <1456448280-27788-1-git-send-email-boris.brezillon@free-electrons.com>
+ <1456448280-27788-8-git-send-email-boris.brezillon@free-electrons.com>
+Reply-To: harvey.hunt-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-acpi-owner@vger.kernel.org>
-In-Reply-To: <20160218150727.GK2651@codeblueprint.co.uk>
-Sender: linux-acpi-owner@vger.kernel.org
-To: Matt Fleming <matt@codeblueprint.co.uk>
-Cc: "Rafael J. Wysocki" <rjw@rjwysocki.net>, Theodore Ts'o <tytso@mit.edu>, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Jani Nikula <jani.nikula@linux.intel.com>, David Airlie <airlied@linux.ie>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Bjorn Helgaas <bhelgaas@google.com>, Mathias Nyman <mathias.nyman@intel.com>, Lv Zheng <lv.zheng@intel.com>, Mark Brown <broonie@kernel.org>, Zhang Rui <rui.zhang@intel.com>, Mika Westerberg <mika.westerberg@linux.intel.com>, Andrew Morton <akpm@linux-foundation.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, linux-acpi@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-efi@vger.kernel.org, linux-api@vger.kernel.org, linux-nvdimm@lists.01.org
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Return-path: <linux-sunxi+bncBDG6R4VLYILBBH6FYG3AKGQEZQXIQ4I-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+In-Reply-To: <1456448280-27788-8-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Archive: <https://groups.google.com/group/linux-sunxi
+Sender: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+List-Subscribe: <https://groups.google.com/group/linux-sunxi/subscribe>, <mailto:linux-sunxi+subscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Unsubscribe: <mailto:googlegroups-manage+1076902468213+unsubscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>,
+ <https://groups.google.com/group/linux-sunxi/subscribe>
+To: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Cc: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Haojian Zhuang <haojian.zhuang-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Robert Jarzmik <robert.jarzmik-GANU6spQydw@public.gmane.org>, Kukjin
+ Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Nicolas
+ Ferre <nicolas.ferre-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Alexandre Belloni <alexandre.belloni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Wenyou Yang <wenyou.yang-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Josh Wu <rainyfeeling-1ViLX0X+lBJBDgjK7y7TUQ@public.gmane.org>, Ezequiel Garcia <ezequiel.garcia-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Chen-Yu Tsai <wens-jdAy2FN1RRM@public.gmane.org>, linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, devel-gWbeCf7V1WBTFBTwSIRTng@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2016-02-18 at 15:07 +0000, Matt Fleming wrote:
-> On Wed, 17 Feb, at 02:17:28PM, Andy Shevchenko wrote:
-> > Instead of opencoding let's use generic UUID library functions
-> > here.
-> >=20
-> > Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-> > ---
-> > =C2=A0fs/efivarfs/inode.c | 40 +++---------------------------------=
-----
-> > =C2=A01 file changed, 3 insertions(+), 37 deletions(-)
-> >=20
-> > diff --git a/fs/efivarfs/inode.c b/fs/efivarfs/inode.c
-> > index 3381b9d..b579e3a 100644
-> > --- a/fs/efivarfs/inode.c
-> > +++ b/fs/efivarfs/inode.c
-> > @@ -11,6 +11,7 @@
-> > =C2=A0#include <linux/fs.h>
-> > =C2=A0#include <linux/ctype.h>
-> > =C2=A0#include <linux/slab.h>
-> > +#include <linux/uuid.h>
-> > =C2=A0
-> > =C2=A0#include "internal.h"
-> > =C2=A0
-> > @@ -44,11 +45,7 @@ struct inode *efivarfs_get_inode(struct
-> > super_block *sb,
-> > =C2=A0 */
-> > =C2=A0bool efivarfs_valid_name(const char *str, int len)
-> > =C2=A0{
-> > -	static const char dashes[EFI_VARIABLE_GUID_LEN] =3D {
-> > -		[8] =3D 1, [13] =3D 1, [18] =3D 1, [23] =3D 1
-> > -	};
-> > =C2=A0	const char *s =3D str + len - EFI_VARIABLE_GUID_LEN;
-> > -	int i;
-> > =C2=A0
-> > =C2=A0	/*
-> > =C2=A0	=C2=A0* We need a GUID, plus at least one letter for the
-> > variable name,
-> > @@ -66,37 +63,7 @@ bool efivarfs_valid_name(const char *str, int
-> > len)
-> > =C2=A0	=C2=A0*
-> > =C2=A0	=C2=A0*	12345678-1234-1234-1234-123456789abc
-> > =C2=A0	=C2=A0*/
-> > -	for (i =3D 0; i < EFI_VARIABLE_GUID_LEN; i++) {
-> > -		if (dashes[i]) {
-> > -			if (*s++ !=3D '-')
-> > -				return false;
-> > -		} else {
-> > -			if (!isxdigit(*s++))
-> > -				return false;
-> > -		}
-> > -	}
-> > -
-> > -	return true;
-> > -}
-> > -
-> > -static void efivarfs_hex_to_guid(const char *str, efi_guid_t
-> > *guid)
-> > -{
-> > -	guid->b[0] =3D hex_to_bin(str[6]) << 4 | hex_to_bin(str[7]);
-> > -	guid->b[1] =3D hex_to_bin(str[4]) << 4 | hex_to_bin(str[5]);
-> > -	guid->b[2] =3D hex_to_bin(str[2]) << 4 | hex_to_bin(str[3]);
-> > -	guid->b[3] =3D hex_to_bin(str[0]) << 4 | hex_to_bin(str[1]);
-> > -	guid->b[4] =3D hex_to_bin(str[11]) << 4 |
-> > hex_to_bin(str[12]);
-> > -	guid->b[5] =3D hex_to_bin(str[9]) << 4 |
-> > hex_to_bin(str[10]);
-> > -	guid->b[6] =3D hex_to_bin(str[16]) << 4 |
-> > hex_to_bin(str[17]);
-> > -	guid->b[7] =3D hex_to_bin(str[14]) << 4 |
-> > hex_to_bin(str[15]);
-> > -	guid->b[8] =3D hex_to_bin(str[19]) << 4 |
-> > hex_to_bin(str[20]);
-> > -	guid->b[9] =3D hex_to_bin(str[21]) << 4 |
-> > hex_to_bin(str[22]);
-> > -	guid->b[10] =3D hex_to_bin(str[24]) << 4 |
-> > hex_to_bin(str[25]);
-> > -	guid->b[11] =3D hex_to_bin(str[26]) << 4 |
-> > hex_to_bin(str[27]);
-> > -	guid->b[12] =3D hex_to_bin(str[28]) << 4 |
-> > hex_to_bin(str[29]);
-> > -	guid->b[13] =3D hex_to_bin(str[30]) << 4 |
-> > hex_to_bin(str[31]);
-> > -	guid->b[14] =3D hex_to_bin(str[32]) << 4 |
-> > hex_to_bin(str[33]);
-> > -	guid->b[15] =3D hex_to_bin(str[34]) << 4 |
-> > hex_to_bin(str[35]);
-> > +	return uuid_is_valid(s);
-> > =C2=A0}
->=20
-> I think you've confused yourself here. You've inverted the return
-> value meaning for efivarfs_valid_name().
->=20
-> Normally I would expect this change to be correct but uuid_is_valid()
-> returns 0 for success, -EINVAL for failure. Either the function is
-> misnamed or the return value semantics are wrong.
+Hi Boris,
 
-Oops, thanks for noticing this. Right the return value should be
-aligned.
+On 26/02/16 00:57, Boris Brezillon wrote:
+> The mtd_ooblayout_xxx() helper functions have been added to avoid direct
+> accesses to the ecclayout field, and thus ease for future reworks.
+> Use these helpers in all places where the oobfree[] and eccpos[] arrays
+> where directly accessed.
+>
+> Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+> ---
+>   drivers/mtd/nand/nand_base.c | 183 +++++++++++++++++++------------------------
+>   drivers/mtd/nand/nand_bch.c  |   3 +-
+>   2 files changed, 82 insertions(+), 104 deletions(-)
+>
+> diff --git a/drivers/mtd/nand/nand_base.c b/drivers/mtd/nand/nand_base.c
+> index 91672bf..17504f2 100644
+[...]
 
---=20
-Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Intel Finland Oy
+I just pulled your nand/ecclayout branch from github and tested out your 
+latest patchset "mtd: rework ECC layout definition" on a Ci20 
+(jz4780_{nand,bch}) and noticed that my board was failing to boot.
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-acpi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I bisected to this patch, here is the kernel's output during boot:
+
+479556d ("mtd: nand: core: use mtd_ooblayout_xxx() helpers where 
+appropriate"):
+
+[ 0.256349] nand: device found, Manufacturer ID: 0x2c, Chip ID: 0x88
+[ 0.262860] nand: Micron MT29F64G08CBAAAWP
+[ 0.266970] nand: 8192 MiB, MLC, erase size: 2048 KiB, page size: 8192, 
+OOB size: 448
+[ 0.274856] jz4780-nand 1b000000.nand-controller: using hardware BCH 
+(strength 24, size 1024, bytes 42)
+[ 0.288982] Bad block table not found for chip 0
+[ 0.297673] Bad block table not found for chip 0
+[ 0.302328] Scanning device for bad blocks
+[ 0.320135] Bad eraseblock 90 at 0x00000b400000
+[ 0.324829] Bad eraseblock 91 at 0x00000b600000
+[ 0.931085] Bad eraseblock 4092 at 0x0001ff800000
+[ 0.935947] Bad eraseblock 4093 at 0x0001ffa00000
+[ 0.944878] nand_bbt: error while writing bad block table -34
+[ 0.950666] jz4780-nand: probe of 1b000000.nand-controller failed with 
+error -34
+[ 0.958302] UBI error: cannot open mtd 3, error -19
+[ 0.963002] UBI error: cannot open mtd 4, error -19[ 0.970419] clk: Not 
+disabling unused clocks
+[ 0.975011] UBIFS error (pid: 1): cannot open "ubi1:root", error -19VFS: 
+Cannot open root device "ubi1:root" or unknown-block(0,0): error -19
+[ 0.987810] Please append a correct "root=" boot option; here are the 
+available partitions:
+[ 0.996210] Kernel panic - not syncing: VFS: Unable to mount root fs on 
+unknown-block(0,0)
+[ 1.004498] Rebooting in 10 seconds..
+
+6625d32 ("mtd: use mtd_ooblayout_xxx() helpers where appropriate"):
+
+[ 0.256232] nand: device found, Manufacturer ID: 0x2c, Chip ID: 0x88
+[ 0.262745] nand: Micron MT29F64G08CBAAAWP
+[ 0.266854] nand: 8192 MiB, MLC, erase size: 2048 KiB, page size: 8192, 
+OOB size: 448
+[ 0.274739] jz4780-nand 1b000000.nand-controller: using hardware BCH 
+(strength 24, size 1024, bytes 42)
+[ 0.285993] Bad block table found at page 1048320, version 0x01
+[ 0.294353] Bad block table found at page 1048064, version 0x01
+[ 0.301523] nand_read_bbt: bad block at 0x00000b400000
+[ 0.306677] nand_read_bbt: bad block at 0x00000b600000
+[ 0.312289] 5 ofpart partitions found on MTD device 
+1b000000.nand-controller.1
+[ 0.319553] Creating 5 MTD partitions on "1b000000.nand-controller.1":
+[ 0.326098] 0x000000000000-0x000000800000 : "u-boot-spl"
+[ 0.331757] 0x000000800000-0x000000a00000 : "u-boot"
+[ 0.337185] 0x000000a00000-0x000000c00000 : "u-boot-env"
+[ 0.342903] 0x000000c00000-0x000004c00000 : "boot"
+[ 0.348109] 0x000004c00000-0x000200000000 : "system"
+[ 0.354284] ubi0 error: ubi_attach_mtd_dev: More than 64 PEBs are needed 
+for fastmap, sorry.
+[...]
+
+I'll look into this more later today, but wanted to run it by you in 
+case you have any thoughts.
+
+Thanks,
+
+Harvey
