@@ -1,114 +1,88 @@
-From: Stefan Agner <stefan@agner.ch>
-Subject: Re: [PATCH v3 48/52] mtd: nand: vf610: switch to mtd_ooblayout_ops
-Date: Fri, 26 Feb 2016 11:43:46 -0800
-Message-ID: <43666dfa2308e6575d47c76b688174ef@agner.ch>
-References: <1456448280-27788-1-git-send-email-boris.brezillon@free-electrons.com>
- <1456448280-27788-49-git-send-email-boris.brezillon@free-electrons.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [PATCH v4 1/5] getcpu_cache system call: cache CPU number of
+ running thread
+Date: Fri, 26 Feb 2016 20:24:15 +0000 (UTC)
+Message-ID: <724964987.9217.1456518255392.JavaMail.zimbra@efficios.com>
+References: <1456270120-7560-1-git-send-email-mathieu.desnoyers@efficios.com> <390571988.7745.1456419326288.JavaMail.zimbra@efficios.com> <20160225170416.GV6356@twins.programming.kicks-ass.net> <2135602720.7810.1456420671941.JavaMail.zimbra@efficios.com> <20160226113304.GA6356@twins.programming.kicks-ass.net> <alpine.DEB.2.11.1602261719440.3638@nanos> <967083634.8940.1456507201156.JavaMail.zimbra@efficios.com> <alpine.DEB.2.11.1602261855100.3638@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-samsung-soc-owner@vger.kernel.org>
-In-Reply-To: <1456448280-27788-49-git-send-email-boris.brezillon@free-electrons.com>
-Sender: linux-samsung-soc-owner@vger.kernel.org
-To: Boris Brezillon <boris.brezillon@free-electrons.com>
-Cc: David Woodhouse <dwmw2@infradead.org>, Brian Norris <computersforpeace@gmail.com>, linux-mtd@lists.infradead.org, Daniel Mack <daniel@zonque.org>, Haojian Zhuang <haojian.zhuang@gmail.com>, Robert Jarzmik <robert.jarzmik@free.fr>, Kukjin Kim <kgene@kernel.org>, Krzysztof Kozlowski <k.kozlowski@samsung.com>, linux-samsung-soc@vger.kernel.org, linux-arm-kernel@lists.infradead.org, Ralf Baechle <ralf@linux-mips.org>, linux-mips@linux-mips.org, Nicolas Ferre <nicolas.ferre@atmel.com>, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>, Alexandre Belloni <alexandre.belloni@free-electrons.com>, Wenyou Yang <wenyou.yang@atmel.com>, Josh Wu <rainyfeeling@outlook.com>, Ezequiel Garcia <ezequiel.garcia@free-electrons.com>, Maxime Ripard <maxime.ripard@free-electrons.com>, Chen-Yu Tsai <wens@csie.org>, linux-sunxi@googlegroups.com, Kyungmin Park <kyungmin.park@samsung.co>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <alpine.DEB.2.11.1602261855100.3638@nanos>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Boris,
+----- On Feb 26, 2016, at 1:01 PM, Thomas Gleixner tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org wrote:
 
-On 2016-02-25 16:57, Boris Brezillon wrote:
-> Implementing the mtd_ooblayout_ops interface is the new way of exposing
-> ECC/OOB layout to MTD users.
+> On Fri, 26 Feb 2016, Mathieu Desnoyers wrote:
+>> ----- On Feb 26, 2016, at 11:29 AM, Thomas Gleixner tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org wrote:
+>> > Right. There is no point in having two calls and two update mechanisms for a
+>> > very similar purpose.
+>> > 
+>> > So let userspace have one struct where cpu/seq and whatever is required for
+>> > rseq is located and flag at register time which parts of the struct need to be
+>> > updated.
+>> 
+>> If we put both cpu/seq/other in that structure, why not plan ahead and make
+>> it extensible then ?
+>> 
+>> That looks very much like the "Thread-local ABI" series I posted last year.
+>> See https://lkml.org/lkml/2015/12/22/464
+>> 
+>> Here is why I ended up introducing the specialized "getcpu_cache" system call
+>> rather than the "generic" system call (quote from the getcpu_cache changelog):
+>> 
+>>     Rationale for the getcpu_cache system call rather than the thread-local
+>>     ABI system call proposed earlier:
+>>     
+>>     Rather than doing a "generic" thread-local ABI, specialize this system
+>>     call for a cpu number cache only. Anyway, the thread-local ABI approach
+>>     would have required that we introduce "feature" flags, which would have
+>>     ended up reimplementing multiplexing of features on top of a system
+>>     call. It seems better to introduce one system call per feature instead.
+>> 
+>> If everyone end up preferring that we introduce a system call that implements
+>> many features at once, that's indeed something we can do, but I remember
+>> being told in the past that this is generally a bad idea.
 > 
-> Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
-> ---
->  drivers/mtd/nand/vf610_nfc.c | 34 ++++------------------------------
->  1 file changed, 4 insertions(+), 30 deletions(-)
+> It's a bad idea if you mix stuff which does not belong together, but if you
+> have stuff which shares a substantial amount of things then it makes a lot of
+> sense. Especially if it adds similar stuff into hotpathes.
 > 
-> diff --git a/drivers/mtd/nand/vf610_nfc.c b/drivers/mtd/nand/vf610_nfc.c
-> index 293feb1..da34de1 100644
-> --- a/drivers/mtd/nand/vf610_nfc.c
-> +++ b/drivers/mtd/nand/vf610_nfc.c
-> @@ -175,34 +175,6 @@ static inline struct vf610_nfc *mtd_to_nfc(struct
-> mtd_info *mtd)
->  	return container_of(mtd_to_nand(mtd), struct vf610_nfc, chip);
->  }
->  
-> -static struct nand_ecclayout vf610_nfc_ecc45 = {
-> -	.eccbytes = 45,
-> -	.eccpos = {19, 20, 21, 22, 23,
-> -		   24, 25, 26, 27, 28, 29, 30, 31,
-> -		   32, 33, 34, 35, 36, 37, 38, 39,
-> -		   40, 41, 42, 43, 44, 45, 46, 47,
-> -		   48, 49, 50, 51, 52, 53, 54, 55,
-> -		   56, 57, 58, 59, 60, 61, 62, 63},
-> -	.oobfree = {
-> -		{.offset = 2,
-> -		 .length = 17} }
-> -};
-> -
-> -static struct nand_ecclayout vf610_nfc_ecc60 = {
-> -	.eccbytes = 60,
-> -	.eccpos = { 4,  5,  6,  7,  8,  9, 10, 11,
-> -		   12, 13, 14, 15, 16, 17, 18, 19,
-> -		   20, 21, 22, 23, 24, 25, 26, 27,
-> -		   28, 29, 30, 31, 32, 33, 34, 35,
-> -		   36, 37, 38, 39, 40, 41, 42, 43,
-> -		   44, 45, 46, 47, 48, 49, 50, 51,
-> -		   52, 53, 54, 55, 56, 57, 58, 59,
-> -		   60, 61, 62, 63 },
-> -	.oobfree = {
-> -		{.offset = 2,
-> -		 .length = 2} }
-> -};
-> -
->  static inline u32 vf610_nfc_read(struct vf610_nfc *nfc, uint reg)
->  {
->  	return readl(nfc->regs + reg);
-> @@ -781,14 +753,16 @@ static int vf610_nfc_probe(struct platform_device *pdev)
->  		if (mtd->oobsize > 64)
->  			mtd->oobsize = 64;
->  
-> +		/*
-> +		 * mtd->ecclayout is not specified here because we're using the
-> +		 * default large page ECC layout defined in NAND core.
-> +		 */
->  		if (chip->ecc.strength == 32) {
->  			nfc->ecc_mode = ECC_60_BYTE;
->  			chip->ecc.bytes = 60;
+>> For one thing, it would make the interface more cumbersome to deal with
+>> from user-space in terms of feature detection: if we want to make this
+>> interface extensible, in addition to check -1, errno=ENOSYS, userspace
+>> would have to deal with a field containing the length of the structure
+>> as expected by user-space and kernel, and feature flags to see the common
+>> set of features supported by kernel and user-space.
+>>
+>> Having one system call per feature seems simpler to handle in terms of
+>> feature availability detection from a userspace point of view.
+> 
+> That might well be, but that does not justify two fastpath updates, two
+> seperate pointers to handle, etc ....
 
+Keeping two separate pointers in the task_struct rather than a single one
+might indeed be unwelcome, but I'm not sure I fully grasp the fast path
+argument in this case: getcpu_cache only sets a notifier thread flag
+on thread migration, whereas AFAIU rseq adds code to context switch and signal
+delivery, which are prone to have a higher impact.
 
-When I add a printk in nand_ooblayout_free_lp, I get this values:
-free offset 2 lenth 62
+Indeed both will have their own code in the resume notifier, but is it really
+a fast path ?
 
-This seems wrong to me. It seems that nand_ooblayout_free_lp needs steps
-to be set to calculate the free bytes correctly. With chip->ecc.steps =
-1 the calculated values look good to me.
+>From my point of view, making it easy for userspace to just enable getcpu_cache
+without having the scheduler and signal delivery fast-path overhead of rseq seems
+like a good thing. I'm not all that sure that saving an extra pointer in
+task_struct justifies the added system call interface complexity.
 
-I quickly tried to run mtd_oobtest.ko test, however that faild:
-Kernel BUG at 80399764 [verbose debug info unavailable]
-Internal error: Oops - BUG: 0 [#1] ARM
-Modules linked in: mtd_oobtest(+)
-CPU: 0 PID: 676 Comm: insmod Tainted: G        W      
-4.5.0-rc1-00097-g4c60bde-dirty #320
-Hardware name: Freescale Vybrid VF5xx/VF6xx (Device Tree)
-task: 8db27180 ti: 8ce74000 task.ti: 8ce74000
-PC is at nand_fill_oob+0x48/0xac
-LR is at mtd_ooblayout_free+0x5c/0x74
+Thanks,
 
-mtd_ooblayout_set_databytes seems to return -ERANGE...
+Mathieu
 
-Do you know what is going on here?
-
---
-Stefan
-
-
-> -			chip->ecc.layout = &vf610_nfc_ecc60;
->  		} else if (chip->ecc.strength == 24) {
->  			nfc->ecc_mode = ECC_45_BYTE;
->  			chip->ecc.bytes = 45;
-> -			chip->ecc.layout = &vf610_nfc_ecc45;
->  		} else {
->  			dev_err(nfc->dev, "Unsupported ECC strength\n");
->  			err = -ENXIO;
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
