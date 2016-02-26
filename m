@@ -1,40 +1,37 @@
-From: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 5/7] direct-io: only use block polling if explicitly requested
-Date: Fri, 26 Feb 2016 16:58:28 -0500
-Message-ID: <x49k2lrkubf.fsf@segfault.boston.devel.redhat.com>
-References: <1456160876-14560-1-git-send-email-hch@lst.de>
-	<1456160876-14560-6-git-send-email-hch@lst.de>
+From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [lxc-devel] CGroup Namespaces (v10)
+Date: Fri, 26 Feb 2016 22:47:27 +0000
+Message-ID: <20160226224727.GB24680@ubuntumail>
+References: <1454057651-23959-1-git-send-email-serge.hallyn@ubuntu.com>
+ <CAMXgnP4Wss0ctx7mHzD0WHL4+-fC59iLZNkYONE5pAeHYr18+A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1456160876-14560-6-git-send-email-hch-jcswGhMUV9g@public.gmane.org> (Christoph
-	Hellwig's message of "Mon, 22 Feb 2016 18:07:54 +0100")
+Content-Disposition: inline
+In-Reply-To: <CAMXgnP4Wss0ctx7mHzD0WHL4+-fC59iLZNkYONE5pAeHYr18+A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, axboe-b10kYP2dOMg@public.gmane.org, milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alban Crequy <alban.crequy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: LXC development mailing-list <lxc-devel-cunTk1MwBs9qMoObBWhMNEqPaTDuhLve2LY78lusg7I@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> writes:
+Quoting Alban Crequy (alban.crequy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org):
+> Hi,
+> 
+> On 29 January 2016 at 09:54,  <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> wrote:
+> > Hi,
+> >
+> > following is a revised set of the CGroup Namespace patchset which Aditya
+> > Kali has previously sent.  The code can also be found in the cgroupns.v10
+> > branch of
+> >
+> > https://git.kernel.org/cgit/linux/kernel/git/sergeh/linux-security.git/
+> >
+> > To summarize the semantics:
+> >
+> > 1. CLONE_NEWCGROUP re-uses 0x02000000, which was previously CLONE_STOPPED
+> 
+> What's the best way for a userspace application to test at run-time
+> whether the kernel supports cgroup namespaces? Would you recommend to
+> test if the file /proc/self/ns/cgroup exists?
 
-> Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-
-Reviewed-by: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-
-> ---
->  fs/direct-io.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
->
-> diff --git a/fs/direct-io.c b/fs/direct-io.c
-> index d6a9012..0a8d937 100644
-> --- a/fs/direct-io.c
-> +++ b/fs/direct-io.c
-> @@ -445,7 +445,8 @@ static struct bio *dio_await_one(struct dio *dio)
->  		__set_current_state(TASK_UNINTERRUPTIBLE);
->  		dio->waiter = current;
->  		spin_unlock_irqrestore(&dio->bio_lock, flags);
-> -		if (!blk_poll(bdev_get_queue(dio->bio_bdev), dio->bio_cookie))
-> +		if (!(dio->iocb->ki_flags & IOCB_HIPRI) ||
-> +		    !blk_poll(bdev_get_queue(dio->bio_bdev), dio->bio_cookie))
->  			io_schedule();
->  		/* wake up sets us TASK_RUNNING */
->  		spin_lock_irqsave(&dio->bio_lock, flags);
+Yup.
