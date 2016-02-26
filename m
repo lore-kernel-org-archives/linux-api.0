@@ -1,74 +1,125 @@
-From: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: [PATCH v1 06/10] device property: switch to use UUID API
-Date: Fri, 26 Feb 2016 16:28:10 +0200
-Message-ID: <1456496890.13244.146.camel@linux.intel.com>
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Subject: Re: [PATCH v1 10/10] efivars: use generic UUID library
+Date: Fri, 26 Feb 2016 16:29:11 +0200
+Message-ID: <1456496951.13244.147.camel@linux.intel.com>
 References: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
-	 <1455711448-124103-7-git-send-email-andriy.shevchenko@linux.intel.com>
-	 <20160218110754.GG1742@lahna.fi.intel.com>
+	 <1455711448-124103-11-git-send-email-andriy.shevchenko@linux.intel.com>
+	 <20160218150727.GK2651@codeblueprint.co.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160218110754.GG1742-3PARRvDOhMZrdx17CPfAsdBPR1lH4CV8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mika Westerberg <mika.westerberg-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jani Nikula <jani.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Benjamin Tissoires <benjamin.tissoires-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mathias Nyman <mathias.nyman-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Lv Zheng <lv.zheng-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Zhang Rui <rui.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Return-path: <linux-acpi-owner@vger.kernel.org>
+In-Reply-To: <20160218150727.GK2651@codeblueprint.co.uk>
+Sender: linux-acpi-owner@vger.kernel.org
+To: Matt Fleming <matt@codeblueprint.co.uk>
+Cc: "Rafael J. Wysocki" <rjw@rjwysocki.net>, Theodore Ts'o <tytso@mit.edu>, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Jani Nikula <jani.nikula@linux.intel.com>, David Airlie <airlied@linux.ie>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Bjorn Helgaas <bhelgaas@google.com>, Mathias Nyman <mathias.nyman@intel.com>, Lv Zheng <lv.zheng@intel.com>, Mark Brown <broonie@kernel.org>, Zhang Rui <rui.zhang@intel.com>, Mika Westerberg <mika.westerberg@linux.intel.com>, Andrew Morton <akpm@linux-foundation.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, linux-acpi@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-efi@vger.kernel.org, linux-api@vger.kernel.org, linux-nvdimm@lists.01.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2016-02-18 at 13:07 +0200, Mika Westerberg wrote:
-> On Wed, Feb 17, 2016 at 02:17:24PM +0200, Andy Shevchenko wrote:
-> > Switch to use a generic UUID API instead of custom approach. It
-> > allows to
-> > define UUIDs, compare them, and validate.
+On Thu, 2016-02-18 at 15:07 +0000, Matt Fleming wrote:
+> On Wed, 17 Feb, at 02:17:28PM, Andy Shevchenko wrote:
+> > Instead of opencoding let's use generic UUID library functions
+> > here.
 > >=20
-> > Signed-off-by: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> > Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 > > ---
-> > =C2=A0drivers/acpi/property.c | 18 ++++++++----------
-> > =C2=A01 file changed, 8 insertions(+), 10 deletions(-)
+> > =C2=A0fs/efivarfs/inode.c | 40 +++---------------------------------=
+----
+> > =C2=A01 file changed, 3 insertions(+), 37 deletions(-)
 > >=20
-> > diff --git a/drivers/acpi/property.c b/drivers/acpi/property.c
-> > index 2aee416..1e75305 100644
-> > --- a/drivers/acpi/property.c
-> > +++ b/drivers/acpi/property.c
-> > @@ -25,15 +25,13 @@ static int acpi_data_get_property_array(struct
-> > acpi_device_data *data,
-> > =C2=A0					const union acpi_object
-> > **obj);
+> > diff --git a/fs/efivarfs/inode.c b/fs/efivarfs/inode.c
+> > index 3381b9d..b579e3a 100644
+> > --- a/fs/efivarfs/inode.c
+> > +++ b/fs/efivarfs/inode.c
+> > @@ -11,6 +11,7 @@
+> > =C2=A0#include <linux/fs.h>
+> > =C2=A0#include <linux/ctype.h>
+> > =C2=A0#include <linux/slab.h>
+> > +#include <linux/uuid.h>
 > > =C2=A0
-> > =C2=A0/* ACPI _DSD device properties UUID: daffd814-6eba-4d8c-8a91-
-> > bc9bbf4aa301 */
-> > -static const u8 prp_uuid[16] =3D {
-> > -	0x14, 0xd8, 0xff, 0xda, 0xba, 0x6e, 0x8c, 0x4d,
-> > -	0x8a, 0x91, 0xbc, 0x9b, 0xbf, 0x4a, 0xa3, 0x01
-> > -};
-> > +static const uuid_le prp_uuid =3D
-> > +	UUID_LE(0xdaffd814, 0x6eba, 0x4d8c,
-> > +		0x8a, 0x91, 0xbc, 0x9b, 0xbf, 0x4a, 0xa3, 0x01);
-> > =C2=A0/* ACPI _DSD data subnodes UUID: dbb8e3e6-5886-4ba6-8795-
-> > 1319f52a966b */
-> > -static const u8 ads_uuid[16] =3D {
-> > -	0xe6, 0xe3, 0xb8, 0xdb, 0x86, 0x58, 0xa6, 0x4b,
-> > -	0x87, 0x95, 0x13, 0x19, 0xf5, 0x2a, 0x96, 0x6b
-> > -};
-> > +static const uuid_le ads_uuid =3D
-> > +	UUID_LE(0xdbb8e3e6, 0x5886, 0x4ba6,
-> > +		0x87, 0x95, 0x13, 0x19, 0xf5, 0x2a, 0x96, 0x6b);
+> > =C2=A0#include "internal.h"
+> > =C2=A0
+> > @@ -44,11 +45,7 @@ struct inode *efivarfs_get_inode(struct
+> > super_block *sb,
+> > =C2=A0 */
+> > =C2=A0bool efivarfs_valid_name(const char *str, int len)
+> > =C2=A0{
+> > -	static const char dashes[EFI_VARIABLE_GUID_LEN] =3D {
+> > -		[8] =3D 1, [13] =3D 1, [18] =3D 1, [23] =3D 1
+> > -	};
+> > =C2=A0	const char *s =3D str + len - EFI_VARIABLE_GUID_LEN;
+> > -	int i;
+> > =C2=A0
+> > =C2=A0	/*
+> > =C2=A0	=C2=A0* We need a GUID, plus at least one letter for the
+> > variable name,
+> > @@ -66,37 +63,7 @@ bool efivarfs_valid_name(const char *str, int
+> > len)
+> > =C2=A0	=C2=A0*
+> > =C2=A0	=C2=A0*	12345678-1234-1234-1234-123456789abc
+> > =C2=A0	=C2=A0*/
+> > -	for (i =3D 0; i < EFI_VARIABLE_GUID_LEN; i++) {
+> > -		if (dashes[i]) {
+> > -			if (*s++ !=3D '-')
+> > -				return false;
+> > -		} else {
+> > -			if (!isxdigit(*s++))
+> > -				return false;
+> > -		}
+> > -	}
+> > -
+> > -	return true;
+> > -}
+> > -
+> > -static void efivarfs_hex_to_guid(const char *str, efi_guid_t
+> > *guid)
+> > -{
+> > -	guid->b[0] =3D hex_to_bin(str[6]) << 4 | hex_to_bin(str[7]);
+> > -	guid->b[1] =3D hex_to_bin(str[4]) << 4 | hex_to_bin(str[5]);
+> > -	guid->b[2] =3D hex_to_bin(str[2]) << 4 | hex_to_bin(str[3]);
+> > -	guid->b[3] =3D hex_to_bin(str[0]) << 4 | hex_to_bin(str[1]);
+> > -	guid->b[4] =3D hex_to_bin(str[11]) << 4 |
+> > hex_to_bin(str[12]);
+> > -	guid->b[5] =3D hex_to_bin(str[9]) << 4 |
+> > hex_to_bin(str[10]);
+> > -	guid->b[6] =3D hex_to_bin(str[16]) << 4 |
+> > hex_to_bin(str[17]);
+> > -	guid->b[7] =3D hex_to_bin(str[14]) << 4 |
+> > hex_to_bin(str[15]);
+> > -	guid->b[8] =3D hex_to_bin(str[19]) << 4 |
+> > hex_to_bin(str[20]);
+> > -	guid->b[9] =3D hex_to_bin(str[21]) << 4 |
+> > hex_to_bin(str[22]);
+> > -	guid->b[10] =3D hex_to_bin(str[24]) << 4 |
+> > hex_to_bin(str[25]);
+> > -	guid->b[11] =3D hex_to_bin(str[26]) << 4 |
+> > hex_to_bin(str[27]);
+> > -	guid->b[12] =3D hex_to_bin(str[28]) << 4 |
+> > hex_to_bin(str[29]);
+> > -	guid->b[13] =3D hex_to_bin(str[30]) << 4 |
+> > hex_to_bin(str[31]);
+> > -	guid->b[14] =3D hex_to_bin(str[32]) << 4 |
+> > hex_to_bin(str[33]);
+> > -	guid->b[15] =3D hex_to_bin(str[34]) << 4 |
+> > hex_to_bin(str[35]);
+> > +	return uuid_is_valid(s);
+> > =C2=A0}
 >=20
-> This looks better than the original but it is still not too readable.
+> I think you've confused yourself here. You've inverted the return
+> value meaning for efivarfs_valid_name().
 >=20
-> I think it would be better to have uuid as string like:
->=20
-> static const char *ads_uuid =3D "dbb8e3e6-5886-4ba6-8795-1319f52a966b=
-";
->=20
-> and then convert that to the right byte presentation when first time
-> used. That would match the uuid format in the ACPI (and device
-> properties) spec. and thus make it easier to read and understand.
+> Normally I would expect this change to be correct but uuid_is_valid()
+> returns 0 for success, -EINVAL for failure. Either the function is
+> misnamed or the return value semantics are wrong.
 
-Yes we can do this on slow paths. Or in cases where we know that
-conversion happens only once.
-
+Oops, thanks for noticing this. Right the return value should be
+aligned.
 
 --=20
-Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 Intel Finland Oy
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-acpi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
