@@ -1,12 +1,12 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v3 47/52] mtd: nand: sunxi: switch to mtd_ooblayout_ops
-Date: Fri, 26 Feb 2016 01:57:55 +0100
-Message-ID: <1456448280-27788-48-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v3 48/52] mtd: nand: vf610: switch to mtd_ooblayout_ops
+Date: Fri, 26 Feb 2016 01:57:56 +0100
+Message-ID: <1456448280-27788-49-git-send-email-boris.brezillon@free-electrons.com>
 References: <1456448280-27788-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBB5GLX23AKGQEVH5RSPQ-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBB5WLX23AKGQEG62TUWY-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 In-Reply-To: <1456448280-27788-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
@@ -24,206 +24,66 @@ ECC/OOB layout to MTD users.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- drivers/mtd/nand/sunxi_nand.c | 114 +++++++++++++++++++-----------------------
- 1 file changed, 52 insertions(+), 62 deletions(-)
+ drivers/mtd/nand/vf610_nfc.c | 34 ++++------------------------------
+ 1 file changed, 4 insertions(+), 30 deletions(-)
 
-diff --git a/drivers/mtd/nand/sunxi_nand.c b/drivers/mtd/nand/sunxi_nand.c
-index b5ea6b3..24cce87 100644
---- a/drivers/mtd/nand/sunxi_nand.c
-+++ b/drivers/mtd/nand/sunxi_nand.c
-@@ -212,12 +212,9 @@ struct sunxi_nand_chip_sel {
-  * sunxi HW ECC infos: stores information related to HW ECC support
-  *
-  * @mode:	the sunxi ECC mode field deduced from ECC requirements
-- * @layout:	the OOB layout depending on the ECC requirements and the
-- *		selected ECC mode
-  */
- struct sunxi_nand_hw_ecc {
- 	int mode;
--	struct nand_ecclayout layout;
- };
- 
- /*
-@@ -1257,6 +1254,57 @@ static int sunxi_nand_chip_init_timings(struct sunxi_nand_chip *chip,
- 	return sunxi_nand_chip_set_timings(chip, timings);
+diff --git a/drivers/mtd/nand/vf610_nfc.c b/drivers/mtd/nand/vf610_nfc.c
+index 293feb1..da34de1 100644
+--- a/drivers/mtd/nand/vf610_nfc.c
++++ b/drivers/mtd/nand/vf610_nfc.c
+@@ -175,34 +175,6 @@ static inline struct vf610_nfc *mtd_to_nfc(struct mtd_info *mtd)
+ 	return container_of(mtd_to_nand(mtd), struct vf610_nfc, chip);
  }
  
-+static int sunxi_nand_ooblayout_ecc(struct mtd_info *mtd, int section,
-+				    struct mtd_oob_region *oobregion)
-+{
-+	struct nand_chip *nand = mtd_to_nand(mtd);
-+	struct nand_ecc_ctrl *ecc = &nand->ecc;
-+
-+	if (section >= ecc->steps)
-+		return -ERANGE;
-+
-+	oobregion->offset = section * (ecc->bytes + 4) + 4;
-+	oobregion->length = ecc->bytes;
-+
-+	return 0;
-+}
-+
-+static int sunxi_nand_ooblayout_free(struct mtd_info *mtd, int section,
-+				     struct mtd_oob_region *oobregion)
-+{
-+	struct nand_chip *nand = mtd_to_nand(mtd);
-+	struct nand_ecc_ctrl *ecc = &nand->ecc;
-+
-+	if (section > ecc->steps)
-+		return -ERANGE;
-+
-+	/*
-+	 * The first 2 bytes are used for BB markers, hence we
-+	 * only have 2 bytes available in the first user data
-+	 * section.
-+	 */
-+	if (!section && ecc->mode == NAND_ECC_HW) {
-+		oobregion->offset = 2;
-+		oobregion->length = 2;
-+
-+		return 0;
-+	}
-+
-+	oobregion->offset = section * (ecc->bytes + 4);
-+
-+	if (section < ecc->steps)
-+		oobregion->length = 4;
-+	else
-+		oobregion->offset = mtd->oobsize - oobregion->offset;
-+
-+	return 0;
-+}
-+
-+static const struct mtd_ooblayout_ops sunxi_nand_ooblayout_ops = {
-+	.ecc = sunxi_nand_ooblayout_ecc,
-+	.free = sunxi_nand_ooblayout_free,
-+};
-+
- static int sunxi_nand_hw_common_ecc_ctrl_init(struct mtd_info *mtd,
- 					      struct nand_ecc_ctrl *ecc,
- 					      struct device_node *np)
-@@ -1266,7 +1314,6 @@ static int sunxi_nand_hw_common_ecc_ctrl_init(struct mtd_info *mtd,
- 	struct sunxi_nand_chip *sunxi_nand = to_sunxi_nand(nand);
- 	struct sunxi_nfc *nfc = to_sunxi_nfc(sunxi_nand->nand.controller);
- 	struct sunxi_nand_hw_ecc *data;
--	struct nand_ecclayout *layout;
- 	int nsectors;
- 	int ret;
- 	int i;
-@@ -1295,7 +1342,6 @@ static int sunxi_nand_hw_common_ecc_ctrl_init(struct mtd_info *mtd,
- 	/* HW ECC always work with even numbers of ECC bytes */
- 	ecc->bytes = ALIGN(ecc->bytes, 2);
- 
--	layout = &data->layout;
- 	nsectors = mtd->writesize / ecc->size;
- 
- 	if (mtd->oobsize < ((ecc->bytes + 4) * nsectors)) {
-@@ -1303,9 +1349,7 @@ static int sunxi_nand_hw_common_ecc_ctrl_init(struct mtd_info *mtd,
- 		goto err;
- 	}
- 
--	layout->eccbytes = (ecc->bytes * nsectors);
+-static struct nand_ecclayout vf610_nfc_ecc45 = {
+-	.eccbytes = 45,
+-	.eccpos = {19, 20, 21, 22, 23,
+-		   24, 25, 26, 27, 28, 29, 30, 31,
+-		   32, 33, 34, 35, 36, 37, 38, 39,
+-		   40, 41, 42, 43, 44, 45, 46, 47,
+-		   48, 49, 50, 51, 52, 53, 54, 55,
+-		   56, 57, 58, 59, 60, 61, 62, 63},
+-	.oobfree = {
+-		{.offset = 2,
+-		 .length = 17} }
+-};
 -
--	ecc->layout = layout;
-+	mtd_set_ooblayout(mtd, &sunxi_nand_ooblayout_ops);
- 	ecc->priv = data;
- 
- 	return 0;
-@@ -1325,9 +1369,6 @@ static int sunxi_nand_hw_ecc_ctrl_init(struct mtd_info *mtd,
- 				       struct nand_ecc_ctrl *ecc,
- 				       struct device_node *np)
+-static struct nand_ecclayout vf610_nfc_ecc60 = {
+-	.eccbytes = 60,
+-	.eccpos = { 4,  5,  6,  7,  8,  9, 10, 11,
+-		   12, 13, 14, 15, 16, 17, 18, 19,
+-		   20, 21, 22, 23, 24, 25, 26, 27,
+-		   28, 29, 30, 31, 32, 33, 34, 35,
+-		   36, 37, 38, 39, 40, 41, 42, 43,
+-		   44, 45, 46, 47, 48, 49, 50, 51,
+-		   52, 53, 54, 55, 56, 57, 58, 59,
+-		   60, 61, 62, 63 },
+-	.oobfree = {
+-		{.offset = 2,
+-		 .length = 2} }
+-};
+-
+ static inline u32 vf610_nfc_read(struct vf610_nfc *nfc, uint reg)
  {
--	struct nand_ecclayout *layout;
--	int nsectors;
--	int i, j;
- 	int ret;
+ 	return readl(nfc->regs + reg);
+@@ -781,14 +753,16 @@ static int vf610_nfc_probe(struct platform_device *pdev)
+ 		if (mtd->oobsize > 64)
+ 			mtd->oobsize = 64;
  
- 	ret = sunxi_nand_hw_common_ecc_ctrl_init(mtd, ecc, np);
-@@ -1336,40 +1377,6 @@ static int sunxi_nand_hw_ecc_ctrl_init(struct mtd_info *mtd,
- 
- 	ecc->read_page = sunxi_nfc_hw_ecc_read_page;
- 	ecc->write_page = sunxi_nfc_hw_ecc_write_page;
--	layout = ecc->layout;
--	nsectors = mtd->writesize / ecc->size;
--
--	for (i = 0; i < nsectors; i++) {
--		if (i) {
--			layout->oobfree[i].offset =
--				layout->oobfree[i - 1].offset +
--				layout->oobfree[i - 1].length +
--				ecc->bytes;
--			layout->oobfree[i].length = 4;
--		} else {
--			/*
--			 * The first 2 bytes are used for BB markers, hence we
--			 * only have 2 bytes available in the first user data
--			 * section.
--			 */
--			layout->oobfree[i].length = 2;
--			layout->oobfree[i].offset = 2;
--		}
--
--		for (j = 0; j < ecc->bytes; j++)
--			layout->eccpos[(ecc->bytes * i) + j] =
--					layout->oobfree[i].offset +
--					layout->oobfree[i].length + j;
--	}
--
--	if (mtd->oobsize > (ecc->bytes + 4) * nsectors) {
--		layout->oobfree[nsectors].offset =
--				layout->oobfree[nsectors - 1].offset +
--				layout->oobfree[nsectors - 1].length +
--				ecc->bytes;
--		layout->oobfree[nsectors].length = mtd->oobsize -
--				((ecc->bytes + 4) * nsectors);
--	}
- 
- 	return 0;
- }
-@@ -1378,9 +1385,6 @@ static int sunxi_nand_hw_syndrome_ecc_ctrl_init(struct mtd_info *mtd,
- 						struct nand_ecc_ctrl *ecc,
- 						struct device_node *np)
- {
--	struct nand_ecclayout *layout;
--	int nsectors;
--	int i;
- 	int ret;
- 
- 	ret = sunxi_nand_hw_common_ecc_ctrl_init(mtd, ecc, np);
-@@ -1391,15 +1395,6 @@ static int sunxi_nand_hw_syndrome_ecc_ctrl_init(struct mtd_info *mtd,
- 	ecc->read_page = sunxi_nfc_hw_syndrome_ecc_read_page;
- 	ecc->write_page = sunxi_nfc_hw_syndrome_ecc_write_page;
- 
--	layout = ecc->layout;
--	nsectors = mtd->writesize / ecc->size;
--
--	for (i = 0; i < (ecc->bytes * nsectors); i++)
--		layout->eccpos[i] = i;
--
--	layout->oobfree[0].length = mtd->oobsize - i;
--	layout->oobfree[0].offset = i;
--
- 	return 0;
- }
- 
-@@ -1411,7 +1406,6 @@ static void sunxi_nand_ecc_cleanup(struct nand_ecc_ctrl *ecc)
- 		sunxi_nand_hw_common_ecc_ctrl_cleanup(ecc);
- 		break;
- 	case NAND_ECC_NONE:
--		kfree(ecc->layout);
- 	default:
- 		break;
- 	}
-@@ -1445,10 +1439,6 @@ static int sunxi_nand_ecc_init(struct mtd_info *mtd, struct nand_ecc_ctrl *ecc,
- 			return ret;
- 		break;
- 	case NAND_ECC_NONE:
--		ecc->layout = kzalloc(sizeof(*ecc->layout), GFP_KERNEL);
--		if (!ecc->layout)
--			return -ENOMEM;
--		ecc->layout->oobfree[0].length = mtd->oobsize;
- 	case NAND_ECC_SOFT:
- 		break;
- 	default:
++		/*
++		 * mtd->ecclayout is not specified here because we're using the
++		 * default large page ECC layout defined in NAND core.
++		 */
+ 		if (chip->ecc.strength == 32) {
+ 			nfc->ecc_mode = ECC_60_BYTE;
+ 			chip->ecc.bytes = 60;
+-			chip->ecc.layout = &vf610_nfc_ecc60;
+ 		} else if (chip->ecc.strength == 24) {
+ 			nfc->ecc_mode = ECC_45_BYTE;
+ 			chip->ecc.bytes = 45;
+-			chip->ecc.layout = &vf610_nfc_ecc45;
+ 		} else {
+ 			dev_err(nfc->dev, "Unsupported ECC strength\n");
+ 			err = -ENXIO;
 -- 
 2.1.4
