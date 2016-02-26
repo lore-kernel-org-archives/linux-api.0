@@ -1,59 +1,70 @@
-From: Petr Mladek <pmladek@suse.com>
-Subject: Re: [PATCH v6 0/8] Additional kmsg devices
-Date: Fri, 26 Feb 2016 15:47:18 +0100
-Message-ID: <20160226144718.GF3305@pathway.suse.cz>
-References: <1456314801-32738-1-git-send-email-k.krosman@samsung.com>
- <20160225214714.GJ6092@mtj.duckdns.org>
- <56D051A2.6050106@samsung.com>
+From: Stephen Bates <Stephen.Bates@pmcs.com>
+Subject: RE: selective block polling and preadv2/pwritev2 revisited V2
+Date: Fri, 26 Feb 2016 15:06:45 +0000
+Message-ID: <36F6EBABA23FEF4391AF72944D228901EB714D26@BBYEXM01.pmc-sierra.internal>
+References: <1456160876-14560-1-git-send-email-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <56D051A2.6050106@samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kazimierz Krosman <k.krosman@samsung.com>
-Cc: Tejun Heo <tj@kernel.org>, akpm@linux-foundation.org, peter@hurleysoftware.com, vvs@virtuozzo.com, corbet@lwn.net, arnd@arndb.de, gregkh@linuxfoundation.org, daniel@zonque.org, kay.sievers@vrfy.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, k.lewandowsk@samsung.com, m.niesluchow@samsung.com, richard.weinberger@gmail.com, b.zolnierkie@samsung.com, luto@amacapital.net, knhoon.baik@samsung.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1456160876-14560-1-git-send-email-hch@lst.de>
+Content-Language: en-US
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "axboe@fb.com" <axboe@fb.com>
+Cc: "milosz@adfin.com" <milosz@adfin.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri 2016-02-26 14:22:42, Kazimierz Krosman wrote:
-> On 02/25/2016 10:47 PM, Tejun Heo wrote:
-> >I'm not sure this is the right layer to implement generic logging
-> >facility.
-> In general this patches add only one feature- possibility of adding
-> and deleting
-> new kmsg devices, so I think that it can be treated as kmsg upgrade.
-> >>2. Using kmsg can cause lower CPU utilisation in the real-word use case than
-> >>>userspace logging mechanisms.
-> >>>We created 2 tests: (1) 100 writer processes write to created kmsg buffer and
-> >>>(2) 100 writers write to socket (stream)- there is one reader to protect
-> >>>socket buffer against overflow. Tests show that cpu utilisation in case of first
-> >>>test is about 2.3 times lower (39.1%) than it is in second case (87.7%) (measured
-> >>>with top program; tests code is attached below). Tested on Odroid XU4.
-> >This sounds like a generic IPC problem than anything else.
 > 
-> For the test purpose I've written two tests (attached in cover
-> letter). I think that tests
-> show that in this use case (multiple writers) system with additional
-> kmsg devices
-> consumes less CPU time than system which use sockets for logging.
-> Logging system
-> based on sockets needs read process, that continuously reads socket
-> and protects
-> against socket buffers overflow and messages drop. It is one of
-> advantages of this
-> solution: no maintenance.
+> This series allows to selectively enable/disable polling for completions in the
+> block layer on a per-I/O basis.  For this it resurrects the
+> preadv2/pwritev2 syscalls that Milosz prepared a while ago (and which are
+> much simpler now due to VFS changes that happened in the meantime).
+> That approach also had a man page update prepared, which I will resubmit
+> with the current flags once this series makes it in.
+> 
+> Polling for block I/O is important to reduce the latency on flash and post-flash
+> storage technologies.  On the fastest NVMe controller I have access to it
+> almost halves latencies from over 7 microseconds to about 4 microseonds.
+> But it only is usesful if we actually care for the latency of this particular I/O,
+> and generally is a waste if enabled for all I/O to a given device.  This series
+> uses the per-I/O flags in preadv2/pwritev2 to control this behavior.  The
+> alternative would be a new O_* flag set at open time or using fcntl, but this is
+> still to corse-grained for some applications and we're starting to run out out
+> of open flags.
 
-Wait. The net addition of this patch set is 1755 lines out of it
-526 lines seems to be in non-test code. You added another level
-of complexity into the handling of the ring buffer(s). And it will
-require no maintenance?
+Thanks Christoph for re-submitting this. I for one am very supportive of being able to set priority (and other) flags on a per IO basis. I did some testing of this on a NVMe SSD that uses DRAM rather than NAND as its backing store. My performance absolutes are a bit worse than yours but the improvement of HIPRI over a normal IO was about the same with one thread (3-4us) and was a little bit more (6-7us) at a higher thread count. 
 
+I used a fork of fio with a (rather ugly) hack to enable the new syscalls [1]. I then tested this on a per-thread basis using the following simple shell script. 
 
-> Could you explain in more detail what did you mean by IPC problems?
+#!/bin/bash
 
-I guess that the idea was to make IPC more effective in general.
-You definitely could not move all functionality that needs IPC
-into the kernel.
+FIO=/home/mtr/batesste/fio-git/fio
+FILE=/dev/nvme0n1
+THREADS=5
+TIME=30
 
-Best Regards,
-Petr
+$FIO --name lowpri --filename=$FILE --size=1G --direct=1 \
+    --ioengine=pvsync --rw=randread --bs=4k --runtime=$TIME \
+    --numjobs=$THREADS --iodepth=1 --randrepeat=0 \
+    --refill_buffers \
+    --name hipri --filename=$FILE --size=1G --direct=1 \
+    --ioengine=pv2sync --rw=randread --bs=4k --runtime=$TIME \
+    --numjobs=$THREADS --iodepth=1 --randrepeat=0 \
+    --refill_buffers
+
+I also reviewed the code and it all looks good to me!
+
+For the series:
+
+Reviewed-by: Stephen Bates <stephen.bates@pmcs.com>
+Tested-by: Stephen Bates <stephen.bates@pmcs.com> 
+
+> Note that there are plenty of other use cases for preadv2/pwritev2 as well,
+> but I'd like to concentrate on this one for now.  Example are: non-blocking
+> reads (the original purpose), per-I/O O_SYNC, user space support for T10
+> DIF/DIX applications tags and probably some more.
+> 
+
+ Totally agree!
+
+[1] https://github.com/sbates130272/fio/tree/hipri
