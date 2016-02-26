@@ -1,12 +1,12 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v3 44/52] mtd: nand: s3c2410: switch to mtd_ooblayout_ops
-Date: Fri, 26 Feb 2016 01:57:52 +0100
-Message-ID: <1456448280-27788-45-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v3 45/52] mtd: nand: sh_flctl: switch to mtd_ooblayout_ops
+Date: Fri, 26 Feb 2016 01:57:53 +0100
+Message-ID: <1456448280-27788-46-git-send-email-boris.brezillon@free-electrons.com>
 References: <1456448280-27788-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBK6LX23AKGQEOBAOZIQ-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBQGLX23AKGQETXU4OJA-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 In-Reply-To: <1456448280-27788-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
@@ -24,59 +24,117 @@ ECC/OOB layout to MTD users.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- drivers/mtd/nand/s3c2410.c | 32 +++++++++++++++++++++++++++-----
- 1 file changed, 27 insertions(+), 5 deletions(-)
+ drivers/mtd/nand/sh_flctl.c | 87 ++++++++++++++++++++++++++++++++++-----------
+ 1 file changed, 67 insertions(+), 20 deletions(-)
 
-diff --git a/drivers/mtd/nand/s3c2410.c b/drivers/mtd/nand/s3c2410.c
-index 9c9397b..700c097 100644
---- a/drivers/mtd/nand/s3c2410.c
-+++ b/drivers/mtd/nand/s3c2410.c
-@@ -84,11 +84,33 @@
+diff --git a/drivers/mtd/nand/sh_flctl.c b/drivers/mtd/nand/sh_flctl.c
+index 4814402..fa46610 100644
+--- a/drivers/mtd/nand/sh_flctl.c
++++ b/drivers/mtd/nand/sh_flctl.c
+@@ -43,26 +43,73 @@
+ #include <linux/mtd/partitions.h>
+ #include <linux/mtd/sh_flctl.h>
  
- /* new oob placement block for use with hardware ecc generation
-  */
-+static int s3c2410_ooblayout_ecc(struct mtd_info *mtd, int section,
-+				 struct mtd_oob_region *oobregion)
+-static struct nand_ecclayout flctl_4secc_oob_16 = {
+-	.eccbytes = 10,
+-	.eccpos = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+-	.oobfree = {
+-		{.offset = 12,
+-		. length = 4} },
++static int flctl_4secc_ooblayout_sp_ecc(struct mtd_info *mtd, int section,
++					struct mtd_oob_region *oobregion)
 +{
++	struct nand_chip *chip = mtd_to_nand(mtd);
++
 +	if (section)
 +		return -ERANGE;
 +
 +	oobregion->offset = 0;
-+	oobregion->length = 3;
++	oobregion->length = chip->ecc.bytes;
 +
 +	return 0;
 +}
 +
-+static int s3c2410_ooblayout_free(struct mtd_info *mtd, int section,
-+				  struct mtd_oob_region *oobregion)
++static int flctl_4secc_ooblayout_sp_free(struct mtd_info *mtd, int section,
++					 struct mtd_oob_region *oobregion)
 +{
 +	if (section)
 +		return -ERANGE;
 +
-+	oobregion->offset = 8;
-+	oobregion->length = 8;
++	oobregion->offset = 12;
++	oobregion->length = 4;
 +
 +	return 0;
 +}
- 
--static struct nand_ecclayout nand_hw_eccoob = {
--	.eccbytes = 3,
--	.eccpos = {0, 1, 2},
--	.oobfree = {{8, 8}}
-+static const struct mtd_ooblayout_ops s3c2410_ooblayout_ops = {
-+	.ecc = s3c2410_ooblayout_ecc,
-+	.free = s3c2410_ooblayout_free,
++
++static const struct mtd_ooblayout_ops flctl_4secc_oob_smallpage_ops = {
++	.ecc = flctl_4secc_ooblayout_sp_ecc,
++	.free = flctl_4secc_ooblayout_sp_free,
  };
  
- /* controller and mtd information */
-@@ -919,7 +941,7 @@ static void s3c2410_nand_update_chip(struct s3c2410_nand_info *info,
- 	} else {
- 		chip->ecc.size	    = 512;
- 		chip->ecc.bytes	    = 3;
--		chip->ecc.layout    = &nand_hw_eccoob;
-+		mtd_set_ooblayout(nand_to_mtd(chip), &s3c2410_ooblayout_ops);
- 	}
- }
+-static struct nand_ecclayout flctl_4secc_oob_64 = {
+-	.eccbytes = 4 * 10,
+-	.eccpos = {
+-		 6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+-		22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+-		38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+-		54, 55, 56, 57, 58, 59, 60, 61, 62, 63 },
+-	.oobfree = {
+-		{.offset =  2, .length = 4},
+-		{.offset = 16, .length = 6},
+-		{.offset = 32, .length = 6},
+-		{.offset = 48, .length = 6} },
++static int flctl_4secc_ooblayout_lp_ecc(struct mtd_info *mtd, int section,
++					struct mtd_oob_region *oobregion)
++{
++	struct nand_chip *chip = mtd_to_nand(mtd);
++
++	if (section >= chip->ecc.steps)
++		return -ERANGE;
++
++	oobregion->offset = (section * 16) + 6;
++	oobregion->length = chip->ecc.bytes;
++
++	return 0;
++}
++
++static int flctl_4secc_ooblayout_lp_free(struct mtd_info *mtd, int section,
++					 struct mtd_oob_region *oobregion)
++{
++	struct nand_chip *chip = mtd_to_nand(mtd);
++
++	if (section >= chip->ecc.steps)
++		return -ERANGE;
++
++	oobregion->offset = section * 16;
++	oobregion->length = 6;
++
++	if (!section) {
++		oobregion->offset += 2;
++		oobregion->length -= 2;
++	}
++
++	return 0;
++}
++
++static const struct mtd_ooblayout_ops flctl_4secc_oob_largepage_ops = {
++	.ecc = flctl_4secc_ooblayout_lp_ecc,
++	.free = flctl_4secc_ooblayout_lp_free,
+ };
+ 
+ static uint8_t scan_ff_pattern[] = { 0xff, 0xff };
+@@ -987,10 +1034,10 @@ static int flctl_chip_init_tail(struct mtd_info *mtd)
+ 
+ 	if (flctl->hwecc) {
+ 		if (mtd->writesize == 512) {
+-			chip->ecc.layout = &flctl_4secc_oob_16;
++			mtd_set_ooblayout(mtd, &flctl_4secc_oob_smallpage_ops);
+ 			chip->badblock_pattern = &flctl_4secc_smallpage;
+ 		} else {
+-			chip->ecc.layout = &flctl_4secc_oob_64;
++			mtd_set_ooblayout(mtd, &flctl_4secc_oob_largepage_ops);
+ 			chip->badblock_pattern = &flctl_4secc_largepage;
+ 		}
  
 -- 
 2.1.4
