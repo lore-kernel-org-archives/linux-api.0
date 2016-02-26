@@ -1,79 +1,114 @@
-From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: Re: [PATCH v3 07/52] mtd: nand: core: use
- mtd_ooblayout_xxx() helpers where appropriate
-Date: Fri, 26 Feb 2016 19:33:25 +0100
-Message-ID: <20160226193325.2d84a8c8@bbrezillon>
+From: Stefan Agner <stefan@agner.ch>
+Subject: Re: [PATCH v3 48/52] mtd: nand: vf610: switch to mtd_ooblayout_ops
+Date: Fri, 26 Feb 2016 11:43:46 -0800
+Message-ID: <43666dfa2308e6575d47c76b688174ef@agner.ch>
 References: <1456448280-27788-1-git-send-email-boris.brezillon@free-electrons.com>
-	<1456448280-27788-8-git-send-email-boris.brezillon@free-electrons.com>
-	<56D0629C.9080805@imgtec.com>
-	<20160226161054.3477cd4b@bbrezillon>
-	<56D06C88.9080608@imgtec.com>
-Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
+ <1456448280-27788-49-git-send-email-boris.brezillon@free-electrons.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBANVYK3AKGQEYP7O2QQ-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-In-Reply-To: <56D06C88.9080608-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-List-Archive: <https://groups.google.com/group/linux-sunxi
-Sender: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
-List-Subscribe: <https://groups.google.com/group/linux-sunxi/subscribe>, <mailto:linux-sunxi+subscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-List-Unsubscribe: <mailto:googlegroups-manage+1076902468213+unsubscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>,
- <https://groups.google.com/group/linux-sunxi/subscribe>
-To: Harvey Hunt <harvey.hunt-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Cc: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Haojian Zhuang <haojian.zhuang-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Robert
- Jarzmik <robert.jarzmik-GANU6spQydw@public.gmane.org>, Kukjin Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Nicolas Ferre <nicolas.ferre-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Alexandre Belloni <alexandre.belloni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Wenyou Yang <wenyou.yang-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Josh Wu <rainyfeeling-1ViLX0X+lBJBDgjK7y7TUQ@public.gmane.org>, Ezequiel Garcia <ezequiel.garcia-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Chen-Yu Tsai <wens-jdAy2FN1RRM@public.gmane.org>, linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-samsung-soc-owner@vger.kernel.org>
+In-Reply-To: <1456448280-27788-49-git-send-email-boris.brezillon@free-electrons.com>
+Sender: linux-samsung-soc-owner@vger.kernel.org
+To: Boris Brezillon <boris.brezillon@free-electrons.com>
+Cc: David Woodhouse <dwmw2@infradead.org>, Brian Norris <computersforpeace@gmail.com>, linux-mtd@lists.infradead.org, Daniel Mack <daniel@zonque.org>, Haojian Zhuang <haojian.zhuang@gmail.com>, Robert Jarzmik <robert.jarzmik@free.fr>, Kukjin Kim <kgene@kernel.org>, Krzysztof Kozlowski <k.kozlowski@samsung.com>, linux-samsung-soc@vger.kernel.org, linux-arm-kernel@lists.infradead.org, Ralf Baechle <ralf@linux-mips.org>, linux-mips@linux-mips.org, Nicolas Ferre <nicolas.ferre@atmel.com>, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>, Alexandre Belloni <alexandre.belloni@free-electrons.com>, Wenyou Yang <wenyou.yang@atmel.com>, Josh Wu <rainyfeeling@outlook.com>, Ezequiel Garcia <ezequiel.garcia@free-electrons.com>, Maxime Ripard <maxime.ripard@free-electrons.com>, Chen-Yu Tsai <wens@csie.org>, linux-sunxi@googlegroups.com, Kyungmin Park <kyungmin.park@samsung.co>
 List-Id: linux-api@vger.kernel.org
 
-Hi Harvey,
+Hi Boris,
 
-On Fri, 26 Feb 2016 15:17:28 +0000
-Harvey Hunt <harvey.hunt-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org> wrote:
-
-> Hi Boris,
+On 2016-02-25 16:57, Boris Brezillon wrote:
+> Implementing the mtd_ooblayout_ops interface is the new way of exposing
+> ECC/OOB layout to MTD users.
 > 
-> On 26/02/16 15:10, Boris Brezillon wrote:
-> > Hi Harvey,
-> >
-> > On Fri, 26 Feb 2016 14:35:08 +0000
-> > Harvey Hunt <harvey.hunt-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org> wrote:
-> >
-> >> [...]
-> >> I'll look into this more later today, but wanted to run it by you in
-> >> case you have any thoughts.
-> >
-> > Can you apply this patch [1], and let me know if you see the additional
-> > trace?
+> Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
+> ---
+>  drivers/mtd/nand/vf610_nfc.c | 34 ++++------------------------------
+>  1 file changed, 4 insertions(+), 30 deletions(-)
 > 
-> I applied the patch, the following is the (unchanged) output:
-> 
-> [    0.256375] nand: device found, Manufacturer ID: 0x2c, Chip ID: 0x88
-> [    0.262887] nand: Micron MT29F64G08CBAAAWP
-> [    0.266995] nand: 8192 MiB, MLC, erase size: 2048 KiB, page size: 
-> 8192, OOB size: 448
-> [    0.274881] jz4780-nand 1b000000.nand-controller: using hardware BCH 
-> (strength 24, size 1024, bytes 42)
-> [    0.289046] Bad block table not found for chip 0
-> [    0.297769] Bad block table not found for chip 0
-> [    0.302425] Scanning device for bad blocks
-> [    0.320239] Bad eraseblock 90 at 0x00000b400000
-> [    0.324934] Bad eraseblock 91 at 0x00000b600000
-> [    0.931054] Bad eraseblock 4092 at 0x0001ff800000
-> [    0.935917] Bad eraseblock 4093 at 0x0001ffa00000
-> [    0.944660] nand_bbt: error while writing bad block table -34
-> [    0.950448] jz4780-nand: probe of 1b000000.nand-controller failed 
-> with error -34
-> [    0.958079] UBI error: cannot open mtd 3, error -19
-> [    0.962788] UBI error: cannot open mtd 4, error -19[    0.970229] 
-> clk: Not disabling unused clocks
-> 
+> diff --git a/drivers/mtd/nand/vf610_nfc.c b/drivers/mtd/nand/vf610_nfc.c
+> index 293feb1..da34de1 100644
+> --- a/drivers/mtd/nand/vf610_nfc.c
+> +++ b/drivers/mtd/nand/vf610_nfc.c
+> @@ -175,34 +175,6 @@ static inline struct vf610_nfc *mtd_to_nfc(struct
+> mtd_info *mtd)
+>  	return container_of(mtd_to_nand(mtd), struct vf610_nfc, chip);
+>  }
+>  
+> -static struct nand_ecclayout vf610_nfc_ecc45 = {
+> -	.eccbytes = 45,
+> -	.eccpos = {19, 20, 21, 22, 23,
+> -		   24, 25, 26, 27, 28, 29, 30, 31,
+> -		   32, 33, 34, 35, 36, 37, 38, 39,
+> -		   40, 41, 42, 43, 44, 45, 46, 47,
+> -		   48, 49, 50, 51, 52, 53, 54, 55,
+> -		   56, 57, 58, 59, 60, 61, 62, 63},
+> -	.oobfree = {
+> -		{.offset = 2,
+> -		 .length = 17} }
+> -};
+> -
+> -static struct nand_ecclayout vf610_nfc_ecc60 = {
+> -	.eccbytes = 60,
+> -	.eccpos = { 4,  5,  6,  7,  8,  9, 10, 11,
+> -		   12, 13, 14, 15, 16, 17, 18, 19,
+> -		   20, 21, 22, 23, 24, 25, 26, 27,
+> -		   28, 29, 30, 31, 32, 33, 34, 35,
+> -		   36, 37, 38, 39, 40, 41, 42, 43,
+> -		   44, 45, 46, 47, 48, 49, 50, 51,
+> -		   52, 53, 54, 55, 56, 57, 58, 59,
+> -		   60, 61, 62, 63 },
+> -	.oobfree = {
+> -		{.offset = 2,
+> -		 .length = 2} }
+> -};
+> -
+>  static inline u32 vf610_nfc_read(struct vf610_nfc *nfc, uint reg)
+>  {
+>  	return readl(nfc->regs + reg);
+> @@ -781,14 +753,16 @@ static int vf610_nfc_probe(struct platform_device *pdev)
+>  		if (mtd->oobsize > 64)
+>  			mtd->oobsize = 64;
+>  
+> +		/*
+> +		 * mtd->ecclayout is not specified here because we're using the
+> +		 * default large page ECC layout defined in NAND core.
+> +		 */
+>  		if (chip->ecc.strength == 32) {
+>  			nfc->ecc_mode = ECC_60_BYTE;
+>  			chip->ecc.bytes = 60;
 
-Can you test with this one [1]?
 
-[1]http://code.bulix.org/36oytz-91960
+When I add a printk in nand_ooblayout_free_lp, I get this values:
+free offset 2 lenth 62
+
+This seems wrong to me. It seems that nand_ooblayout_free_lp needs steps
+to be set to calculate the free bytes correctly. With chip->ecc.steps =
+1 the calculated values look good to me.
+
+I quickly tried to run mtd_oobtest.ko test, however that faild:
+Kernel BUG at 80399764 [verbose debug info unavailable]
+Internal error: Oops - BUG: 0 [#1] ARM
+Modules linked in: mtd_oobtest(+)
+CPU: 0 PID: 676 Comm: insmod Tainted: G        W      
+4.5.0-rc1-00097-g4c60bde-dirty #320
+Hardware name: Freescale Vybrid VF5xx/VF6xx (Device Tree)
+task: 8db27180 ti: 8ce74000 task.ti: 8ce74000
+PC is at nand_fill_oob+0x48/0xac
+LR is at mtd_ooblayout_free+0x5c/0x74
+
+mtd_ooblayout_set_databytes seems to return -ERANGE...
+
+Do you know what is going on here?
+
+--
+Stefan
 
 
--- 
-Boris Brezillon, Free Electrons
-Embedded Linux and Kernel engineering
-http://free-electrons.com
+> -			chip->ecc.layout = &vf610_nfc_ecc60;
+>  		} else if (chip->ecc.strength == 24) {
+>  			nfc->ecc_mode = ECC_45_BYTE;
+>  			chip->ecc.bytes = 45;
+> -			chip->ecc.layout = &vf610_nfc_ecc45;
+>  		} else {
+>  			dev_err(nfc->dev, "Unsupported ECC strength\n");
+>  			err = -ENXIO;
