@@ -1,51 +1,59 @@
-From: Petr Mladek <pmladek@suse.com>
-Subject: Re: [PATCH v6 3/8] kmsg: introduce additional kmsg devices support
-Date: Fri, 26 Feb 2016 15:05:10 +0100
-Message-ID: <20160226140510.GE3305@pathway.suse.cz>
-References: <1456314801-32738-1-git-send-email-k.krosman@samsung.com>
- <1456314801-32738-4-git-send-email-k.krosman@samsung.com>
+From: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [PATCH v1 06/10] device property: switch to use UUID API
+Date: Fri, 26 Feb 2016 16:11:37 +0200
+Message-ID: <1456495897.13244.144.camel@linux.intel.com>
+References: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
+	 <1455711448-124103-7-git-send-email-andriy.shevchenko@linux.intel.com>
+	 <7544228.v4QPX4F7J7@vostro.rjw.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1456314801-32738-4-git-send-email-k.krosman@samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kazimierz Krosman <k.krosman@samsung.com>
-Cc: akpm@linux-foundation.org, peter@hurleysoftware.com, tj@kernel.org, vvs@virtuozzo.com, corbet@lwn.net, arnd@arndb.de, gregkh@linuxfoundation.org, daniel@zonque.org, kay.sievers@vrfy.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, k.lewandowsk@samsung.com, m.niesluchow@samsung.com, richard.weinberger@gmail.com, b.zolnierkie@samsung.com, luto@amacapital.net, knhoon.baik@samsung.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <7544228.v4QPX4F7J7-sKB8Sp2ER+y1GS7QM15AGw@public.gmane.org>
+Sender: linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>
+Cc: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jani Nikula <jani.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Benjamin Tissoires <benjamin.tissoires-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mathias Nyman <mathias.nyman-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Lv Zheng <lv.zheng-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Zhang Rui <rui.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mika Westerberg <mika.westerberg-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed 2016-02-24 12:53:16, Kazimierz Krosman wrote:
-> From: Marcin Niesluchowski <m.niesluchow@samsung.com>
-> 
-> kmsg device provides operations on cyclic logging buffer used mainly
-> by kernel but also in userspace by privileged processes.
-> 
-> Additional kmsg devices keep the same log format but may be added
-> dynamically with custom size.
-> 
-> Signed-off-by: Marcin Niesluchowski <m.niesluchow@samsung.com>
-> Signed-off-by: Paul Osmialowski <p.osmialowsk@samsung.com>
-> [Rebased kmsg patch v5 on Linux 4.5-rc5]
-> Signed-off-by: Kazimierz Krosman <k.krosman@samsung.com>
-> diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-> index 3653a8e..b99403b 100644
-> --- a/kernel/printk/printk.c
-> +++ b/kernel/printk/printk.c
-> @@ -584,9 +595,11 @@ ssize_t msg_print_ext_body(char *buf, size_t size,
->  void log_buf_kexec_setup(void)
->  {
->  	VMCOREINFO_SYMBOL(log_buf);
-> -	VMCOREINFO_SYMBOL(log_buf_len);
-> -	VMCOREINFO_SYMBOL(log_first_idx);
-> -	VMCOREINFO_SYMBOL(log_next_idx);
-> +	VMCOREINFO_STRUCT_SIZE(log_buffer);
-> +	VMCOREINFO_OFFSET(log_buffer, buf);
-> +	VMCOREINFO_OFFSET(log_buffer, len);
-> +	VMCOREINFO_OFFSET(log_buffer, first_idx);
-> +	VMCOREINFO_OFFSET(log_buffer, next_idx);
+On Thu, 2016-02-18 at 01:03 +0100, Rafael J. Wysocki wrote:
+> On Wednesday, February 17, 2016 02:17:24 PM Andy Shevchenko wrote:
+> > Switch to use a generic UUID API instead of custom approach. It
+> > allows to
+> > define UUIDs, compare them, and validate.
 
-This breaks makedumpfile, crash and possibly other tools
-that use this information to access the log buffer.
+[]
 
-Best Regards,
-Petr
+> > +static const uuid_le ads_uuid =3D
+> > +	UUID_LE(0xdbb8e3e6, 0x5886, 0x4ba6,
+> > +		0x87, 0x95, 0x13, 0x19, 0xf5, 0x2a, 0x96, 0x6b);
+> > =C2=A0
+> > =C2=A0static bool acpi_enumerate_nondev_subnodes(acpi_handle scope,
+> > =C2=A0					=C2=A0=C2=A0=C2=A0const union acpi_object
+> > *desc,
+> > @@ -138,7 +136,7 @@ static bool
+> > acpi_enumerate_nondev_subnodes(acpi_handle scope,
+> > =C2=A0		=C2=A0=C2=A0=C2=A0=C2=A0|| links->type !=3D ACPI_TYPE_PACKA=
+GE)
+> > =C2=A0			break;
+> > =C2=A0
+> > -		if (memcmp(uuid->buffer.pointer, ads_uuid,
+> > sizeof(ads_uuid)))
+> > +		if (uuid_le_cmp(*(uuid_le *)uuid->buffer.pointer,
+> > ads_uuid))
+>=20
+> Maybe it's too late, but I don't quite understand the pointer
+> manipulations here.
+>=20
+> I can see why you need a type conversion (although it looks ugly),
+> but why do you
+> need to dereference it too?
+
+The function takes that kind of type on input. The other variants are
+not compiled.
+Perhaps we better change uuid_{lb}e_cmp() first to take normal
+pointers, though I think the initial idea was to get type checking at
+compile time.
+
+--=20
+Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Intel Finland Oy
