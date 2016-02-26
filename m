@@ -1,8 +1,8 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v3 12/52] mtd: nand: omap2: use
- mtd_ooblayout_xxx() helpers where appropriate
-Date: Fri, 26 Feb 2016 01:57:20 +0100
-Message-ID: <1456448280-27788-13-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v3 13/52] mtd: onenand: use mtd_ooblayout_xxx()
+ helpers where appropriate
+Date: Fri, 26 Feb 2016 01:57:21 +0100
+Message-ID: <1456448280-27788-14-git-send-email-boris.brezillon@free-electrons.com>
 References: <1456448280-27788-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
@@ -27,68 +27,108 @@ where directly accessed.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- drivers/mtd/nand/omap2.c | 23 ++++++++++++-----------
- 1 file changed, 12 insertions(+), 11 deletions(-)
+ drivers/mtd/onenand/onenand_base.c | 75 ++++++++------------------------------
+ 1 file changed, 15 insertions(+), 60 deletions(-)
 
-diff --git a/drivers/mtd/nand/omap2.c b/drivers/mtd/nand/omap2.c
-index 0749ca1..4ebf16b 100644
---- a/drivers/mtd/nand/omap2.c
-+++ b/drivers/mtd/nand/omap2.c
-@@ -1495,9 +1495,8 @@ static int omap_elm_correct_data(struct mtd_info *mtd, u_char *data,
- static int omap_write_page_bch(struct mtd_info *mtd, struct nand_chip *chip,
- 			       const uint8_t *buf, int oob_required, int page)
+diff --git a/drivers/mtd/onenand/onenand_base.c b/drivers/mtd/onenand/onenand_base.c
+index af28bb3..20fdf8c 100644
+--- a/drivers/mtd/onenand/onenand_base.c
++++ b/drivers/mtd/onenand/onenand_base.c
+@@ -1024,34 +1024,15 @@ static int onenand_transfer_auto_oob(struct mtd_info *mtd, uint8_t *buf, int col
+ 				int thislen)
  {
--	int i;
+ 	struct onenand_chip *this = mtd->priv;
+-	struct nand_oobfree *free;
+-	int readcol = column;
+-	int readend = column + thislen;
+-	int lastgap = 0;
+-	unsigned int i;
+-	uint8_t *oob_buf = this->oob_buf;
+-
+-	free = this->ecclayout->oobfree;
+-	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES && free->length; i++, free++) {
+-		if (readcol >= lastgap)
+-			readcol += free->offset - lastgap;
+-		if (readend >= lastgap)
+-			readend += free->offset - lastgap;
+-		lastgap = free->offset + free->length;
+-	}
+-	this->read_bufferram(mtd, ONENAND_SPARERAM, oob_buf, 0, mtd->oobsize);
+-	free = this->ecclayout->oobfree;
+-	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES && free->length; i++, free++) {
+-		int free_end = free->offset + free->length;
+-		if (free->offset < readend && free_end > readcol) {
+-			int st = max_t(int,free->offset,readcol);
+-			int ed = min_t(int,free_end,readend);
+-			int n = ed - st;
+-			memcpy(buf, oob_buf + st, n);
+-			buf += n;
+-		} else if (column == 0)
+-			break;
+-	}
 +	int ret;
- 	uint8_t *ecc_calc = chip->buffers->ecccalc;
--	uint32_t *eccpos = chip->ecc.layout->eccpos;
- 
- 	/* Enable GPMC ecc engine */
- 	chip->ecc.hwctl(mtd, NAND_ECC_WRITE);
-@@ -1508,8 +1507,10 @@ static int omap_write_page_bch(struct mtd_info *mtd, struct nand_chip *chip,
- 	/* Update ecc vector from GPMC result registers */
- 	chip->ecc.calculate(mtd, buf, &ecc_calc[0]);
- 
--	for (i = 0; i < chip->ecc.total; i++)
--		chip->oob_poi[eccpos[i]] = ecc_calc[i];
-+	ret = mtd_ooblayout_set_eccbytes(mtd, ecc_calc, chip->oob_poi, 0,
-+					 chip->ecc.total);
++
++	this->read_bufferram(mtd, ONENAND_SPARERAM, this->oob_buf, 0,
++			     mtd->oobsize);
++	ret = mtd_ooblayout_get_databytes(mtd, buf, this->oob_buf,
++					  column, thislen);
 +	if (ret)
 +		return ret;
++
+ 	return 0;
+ }
  
- 	/* Write ecc vector to OOB area */
- 	chip->write_buf(mtd, chip->oob_poi, mtd->oobsize);
-@@ -1536,10 +1537,7 @@ static int omap_read_page_bch(struct mtd_info *mtd, struct nand_chip *chip,
+@@ -1808,34 +1789,7 @@ static int onenand_panic_write(struct mtd_info *mtd, loff_t to, size_t len,
+ static int onenand_fill_auto_oob(struct mtd_info *mtd, u_char *oob_buf,
+ 				  const u_char *buf, int column, int thislen)
  {
- 	uint8_t *ecc_calc = chip->buffers->ecccalc;
- 	uint8_t *ecc_code = chip->buffers->ecccode;
--	uint32_t *eccpos = chip->ecc.layout->eccpos;
--	uint8_t *oob = &chip->oob_poi[eccpos[0]];
--	uint32_t oob_pos = mtd->writesize + chip->ecc.layout->eccpos[0];
--	int stat;
-+	int stat, ret;
- 	unsigned int max_bitflips = 0;
+-	struct onenand_chip *this = mtd->priv;
+-	struct nand_oobfree *free;
+-	int writecol = column;
+-	int writeend = column + thislen;
+-	int lastgap = 0;
+-	unsigned int i;
+-
+-	free = this->ecclayout->oobfree;
+-	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES && free->length; i++, free++) {
+-		if (writecol >= lastgap)
+-			writecol += free->offset - lastgap;
+-		if (writeend >= lastgap)
+-			writeend += free->offset - lastgap;
+-		lastgap = free->offset + free->length;
+-	}
+-	free = this->ecclayout->oobfree;
+-	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES && free->length; i++, free++) {
+-		int free_end = free->offset + free->length;
+-		if (free->offset < writeend && free_end > writecol) {
+-			int st = max_t(int,free->offset,writecol);
+-			int ed = min_t(int,free_end,writeend);
+-			int n = ed - st;
+-			memcpy(oob_buf + st, buf, n);
+-			buf += n;
+-		} else if (column == 0)
+-			break;
+-	}
+-	return 0;
++	return mtd_ooblayout_set_databytes(mtd, buf, oob_buf, column, thislen);
+ }
  
- 	/* Enable GPMC ecc engine */
-@@ -1549,13 +1547,16 @@ static int omap_read_page_bch(struct mtd_info *mtd, struct nand_chip *chip,
- 	chip->read_buf(mtd, buf, mtd->writesize);
+ /**
+@@ -4037,10 +3991,11 @@ int onenand_scan(struct mtd_info *mtd, int maxchips)
+ 	 * The number of bytes available for a client to place data into
+ 	 * the out of band area
+ 	 */
+-	mtd->oobavail = 0;
+-	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES &&
+-	    this->ecclayout->oobfree[i].length; i++)
+-		mtd->oobavail += this->ecclayout->oobfree[i].length;
++	ret = mtd_ooblayout_count_freebytes(mtd);
++	if (ret < 0)
++		ret = 0;
++
++	mtd->oobavail = ret;
  
- 	/* Read oob bytes */
--	chip->cmdfunc(mtd, NAND_CMD_RNDOUT, oob_pos, -1);
--	chip->read_buf(mtd, oob, chip->ecc.total);
-+	chip->cmdfunc(mtd, NAND_CMD_RNDOUT, mtd->writesize, -1);
-+	chip->read_buf(mtd, chip->oob_poi, mtd->oobsize);
- 
- 	/* Calculate ecc bytes */
- 	chip->ecc.calculate(mtd, buf, ecc_calc);
- 
--	memcpy(ecc_code, &chip->oob_poi[eccpos[0]], chip->ecc.total);
-+	ret = mtd_ooblayout_get_eccbytes(mtd, ecc_code, chip->oob_poi, 0,
-+					 chip->ecc.total);
-+	if (ret)
-+		return ret;
- 
- 	stat = chip->ecc.correct(mtd, buf, ecc_code, ecc_calc);
- 
+ 	mtd->ecclayout = this->ecclayout;
+ 	mtd->ecc_strength = 1;
 -- 
 2.1.4
