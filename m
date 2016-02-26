@@ -1,499 +1,171 @@
-From: js1304@gmail.com
-Subject: [PATCH v4 2/2] mm/page_ref: add tracepoint to track down page reference manipulation
-Date: Fri, 26 Feb 2016 09:58:02 +0900
-Message-ID: <1456448282-897-2-git-send-email-iamjoonsoo.kim@lge.com>
-References: <1456448282-897-1-git-send-email-iamjoonsoo.kim@lge.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1456448282-897-1-git-send-email-iamjoonsoo.kim@lge.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, Vlastimil Babka <vbabka@suse.cz>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Joonsoo Kim <iamjoonsoo.kim@lge.com>
+From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Subject: [PATCH v3 00/52] mtd: rework ECC layout definition
+Date: Fri, 26 Feb 2016 01:57:08 +0100
+Message-ID: <1456448280-27788-1-git-send-email-boris.brezillon@free-electrons.com>
+Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBLOGX23AKGQEDPLGAGQ-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Archive: <https://groups.google.com/group/linux-sunxi
+Sender: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+List-Subscribe: <https://groups.google.com/group/linux-sunxi/subscribe>, <mailto:linux-sunxi+subscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Unsubscribe: <mailto:googlegroups-manage+1076902468213+unsubscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>,
+ <https://groups.google.com/group/linux-sunxi/subscribe>
+To: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Cc: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Haojian Zhuang <haojian.zhuang-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Robert Jarzmik <robert.jarzmik-GANU6spQydw@public.gmane.org>, Kukjin Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Nicolas Ferre <nicolas.ferre-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Alexandre Belloni <alexandre.belloni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Wenyou Yang <wenyou.yang-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Josh Wu <rainyfeeling-1ViLX0X+lBJBDgjK7y7TUQ@public.gmane.org>, Ezequiel Garcia <ezequiel.garcia-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Chen-Yu Tsai <wens-jdAy2FN1RRM@public.gmane.org>, linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Hello,
 
-CMA allocation should be guaranteed to succeed by definition, but,
-unfortunately, it would be failed sometimes. It is hard to track down
-the problem, because it is related to page reference manipulation and
-we don't have any facility to analyze it.
+This patchset aims at getting rid of the nand_ecclayout limitations.
+struct nand_ecclayout is defining fixed eccpos and oobfree arrays which
+can only be increased by modifying the MTD_MAX_ECCPOS_ENTRIES_LARGE and
+MTD_MAX_OOBFREE_ENTRIES_LARGE macros.
+This approach forces us to modify the macro values each time we add a
+new NAND chip with a bigger OOB area, and increasing these arrays also
+penalize all platforms, even those who only support small NAND devices
+(with small OOB area).
 
-This patch adds tracepoints to track down page reference manipulation.
-With it, we can find exact reason of failure and can fix the problem.
-Following is an example of tracepoint output. (note: this example is
-stale version that printing flags as the number. Recent version will
-print it as human readable string.)
+The idea to overcome this limitation, is to define the ECC/OOB layout
+by the mean of two functions: ->ecc() and ->free(), which will
+basically return the same information has those stored in the
+nand_ecclayout struct.
 
-<...>-9018  [004]    92.678375: page_ref_set:         pfn=0x17ac9 flags=0x0 count=1 mapcount=0 mapping=(nil) mt=4 val=1
-<...>-9018  [004]    92.678378: kernel_stack:
- => get_page_from_freelist (ffffffff81176659)
- => __alloc_pages_nodemask (ffffffff81176d22)
- => alloc_pages_vma (ffffffff811bf675)
- => handle_mm_fault (ffffffff8119e693)
- => __do_page_fault (ffffffff810631ea)
- => trace_do_page_fault (ffffffff81063543)
- => do_async_page_fault (ffffffff8105c40a)
- => async_page_fault (ffffffff817581d8)
-[snip]
-<...>-9018  [004]    92.678379: page_ref_mod:         pfn=0x17ac9 flags=0x40048 count=2 mapcount=1 mapping=0xffff880015a78dc1 mt=4 val=1
-[snip]
-...
-...
-<...>-9131  [001]    93.174468: test_pages_isolated:  start_pfn=0x17800 end_pfn=0x17c00 fin_pfn=0x17ac9 ret=fail
-[snip]
-<...>-9018  [004]    93.174843: page_ref_mod_and_test: pfn=0x17ac9 flags=0x40068 count=0 mapcount=0 mapping=0xffff880015a78dc1 mt=4 val=-1 ret=1
- => release_pages (ffffffff8117c9e4)
- => free_pages_and_swap_cache (ffffffff811b0697)
- => tlb_flush_mmu_free (ffffffff81199616)
- => tlb_finish_mmu (ffffffff8119a62c)
- => exit_mmap (ffffffff811a53f7)
- => mmput (ffffffff81073f47)
- => do_exit (ffffffff810794e9)
- => do_group_exit (ffffffff81079def)
- => SyS_exit_group (ffffffff81079e74)
- => entry_SYSCALL_64_fastpath (ffffffff817560b6)
+Another advantage of this solution is that ECC layouts are usually
+following a repetitive pattern (i.e. leave X bytes free and put Y bytes
+of ECC per ECC chunk), which allows one to implement the ->ecc()
+and ->free() functions with a simple logic that can be applied
+to any size of OOB.
 
-This output shows that problem comes from exit path. In exit path,
-to improve performance, pages are not freed immediately. They are gathered
-and processed by batch. During this process, migration cannot be possible
-and CMA allocation is failed. This problem is hard to find without this
-page reference tracepoint facility.
+Patches 1 to 4 are just cleanups or trivial fixes that can be taken
+independently.
 
-Enabling this feature bloat kernel text 30 KB in my configuration.
+Also note that the last two commits are removing the nand_ecclayout
+definition, thus preventing any new driver to use this structure.
+Of course, this step can be delayed if some of the previous patches
+are not accepted.
 
-   text    data     bss     dec     hex filename
-12127327        2243616 1507328 15878271         f2487f vmlinux_disabled
-12157208        2258880 1507328 15923416         f2f8d8 vmlinux_enabled
+Best Regards,
 
-Note that, due to header file dependency problem between mm.h and
-tracepoint.h, this feature has to open code the static key functions
-for tracepoints. Proposed by Steven Rostedt in following link.
+Boris
 
-https://lkml.org/lkml/2015/12/9/699
+Changes since v2:
+- fixed a few bugs in the core and driver implementations
 
-v3:
-o Add commit description and code comment why this patch open code
-the static key functions for tracepoints.
-o Notify that example is stale version.
-o Add "depends on TRACEPOINTS".
+Changes since v1:
+- unified the way of defining ECC and free bytes
+- fixed a few bugs in some ->ecc()/->free() implementations
+- added new helpers to ease ECC and free bytes manipulation
+- separated driver changes in different commits to ease review
+- dropped already applied patches
 
-v2:
-o Use static key of each tracepoints to avoid function call overhead
-when tracepoints are disabled.
-o Print human-readable page flag thanks to newly introduced %pgp option.
-o Add more description to Kconfig.debug.
+*** BLURB HERE ***
 
-Acked-by: Michal Nazarewicz <mina86@mina86.com>
-Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
----
- include/linux/page_ref.h        |  98 +++++++++++++++++++++++++++--
- include/trace/events/page_ref.h | 134 ++++++++++++++++++++++++++++++++++++++++
- mm/Kconfig.debug                |  14 +++++
- mm/Makefile                     |   1 +
- mm/debug_page_ref.c             |  53 ++++++++++++++++
- 5 files changed, 295 insertions(+), 5 deletions(-)
- create mode 100644 include/trace/events/page_ref.h
- create mode 100644 mm/debug_page_ref.c
+Boris Brezillon (52):
+  mtd: kill the ecclayout->oobavail field
+  mtd: create an mtd_oobavail() helper and make use of it
+  mtd: mtdswap: remove useless if (!mtd->ecclayout) test
+  mtd: nand: simplify nand_bch_init() usage
+  mtd: add mtd_ooblayout_xxx() helper functions
+  mtd: use mtd_ooblayout_xxx() helpers where appropriate
+  mtd: nand: core: use mtd_ooblayout_xxx() helpers where appropriate
+  mtd: nand: atmel: use mtd_ooblayout_xxx() helpers where appropriate
+  mtd: nand: fsl_ifc: use mtd_ooblayout_xxx() helpers where appropriate
+  mtd: nand: gpmi: use mtd_ooblayout_xxx() helpers where appropriate
+  mtd: nand: lpc32xx: use mtd_ooblayout_xxx() helpers where appropriate
+  mtd: nand: omap2: use mtd_ooblayout_xxx() helpers where appropriate
+  mtd: onenand: use mtd_ooblayout_xxx() helpers where appropriate
+  mtd: add mtd_set_ecclayout() helper function
+  mtd: use mtd_set_ecclayout() where appropriate
+  mtd: nand: use mtd_set_ecclayout() where appropriate
+  mtd: onenand: use mtd_set_ecclayout() where appropriate
+  mtd: docg3: use mtd_set_ecclayout() where appropriate
+  mtd: create an mtd_ooblayout_ops struct to ease ECC layout definition
+  mtd: docg3: switch to mtd_ooblayout_ops
+  mtd: nand: implement the default mtd_ooblayout_ops
+  mtd: nand: bch: switch to mtd_ooblayout_ops
+  mtd: nand: sharpsl: switch to mtd_ooblayout_ops
+  mtd: nand: jz4740: switch to mtd_ooblayout_ops
+  mtd: nand: atmel: switch to mtd_ooblayout_ops
+  mtd: nand: bf5xx: switch to mtd_ooblayout_ops
+  mtd: nand: brcm: switch to mtd_ooblayout_ops
+  mtd: nand: cafe: switch to mtd_ooblayout_ops
+  mtd: nand: davinci: switch to mtd_ooblayout_ops
+  mtd: nand: denali: switch to mtd_ooblayout_ops
+  mtd: nand: diskonchip: switch to mtd_ooblayout_ops
+  mtd: nand: docg4: switch to mtd_ooblayout_ops
+  mtd: nand: fsl_elbc: switch to mtd_ooblayout_ops
+  mtd: nand: fsl_ifc: switch to mtd_ooblayout_ops
+  mtd: nand: fsmc: switch to mtd_ooblayout_ops
+  mtd: nand: fsmc: get rid of the fsmc_nand_eccplace struct
+  mtd: nand: gpmi: switch to mtd_ooblayout_ops
+  mtd: nand: hisi504: switch to mtd_ooblayout_ops
+  mtd: nand: jz4780: switch to mtd_ooblayout_ops
+  mtd: nand: lpc32xx: switch to mtd_ooblayout_ops
+  mtd: nand: mxc: switch to mtd_ooblayout_ops
+  mtd: nand: omap2: switch to mtd_ooblayout_ops
+  mtd: nand: pxa3xx: switch to mtd_ooblayout_ops
+  mtd: nand: s3c2410: switch to mtd_ooblayout_ops
+  mtd: nand: sh_flctl: switch to mtd_ooblayout_ops
+  mtd: nand: sm_common: switch to mtd_ooblayout_ops
+  mtd: nand: sunxi: switch to mtd_ooblayout_ops
+  mtd: nand: vf610: switch to mtd_ooblayout_ops
+  mtd: onenand: switch to mtd_ooblayout_ops
+  staging: mt29f_spinand: switch to mtd_ooblayout_ops
+  mtd: nand: kill the ecc->layout field
+  mtd: kill the nand_ecclayout struct
 
-diff --git a/include/linux/page_ref.h b/include/linux/page_ref.h
-index 30f5817..e596d5d9 100644
---- a/include/linux/page_ref.h
-+++ b/include/linux/page_ref.h
-@@ -4,6 +4,62 @@
- #include <linux/atomic.h>
- #include <linux/mm_types.h>
- #include <linux/page-flags.h>
-+#include <linux/tracepoint-defs.h>
-+
-+extern struct tracepoint __tracepoint_page_ref_set;
-+extern struct tracepoint __tracepoint_page_ref_mod;
-+extern struct tracepoint __tracepoint_page_ref_mod_and_test;
-+extern struct tracepoint __tracepoint_page_ref_mod_and_return;
-+extern struct tracepoint __tracepoint_page_ref_mod_unless;
-+extern struct tracepoint __tracepoint_page_ref_freeze;
-+extern struct tracepoint __tracepoint_page_ref_unfreeze;
-+
-+#ifdef CONFIG_DEBUG_PAGE_REF
-+
-+/*
-+ * Ideally we would want to use the trace_<tracepoint>_enabled() helper
-+ * functions. But due to include header file issues, that is not
-+ * feasible. Instead we have to open code the static key functions.
-+ *
-+ * See trace_##name##_enabled(void) in include/linux/tracepoint.h
-+ */
-+#define page_ref_tracepoint_active(t) static_key_false(&(t).key)
-+
-+extern void __page_ref_set(struct page *page, int v);
-+extern void __page_ref_mod(struct page *page, int v);
-+extern void __page_ref_mod_and_test(struct page *page, int v, int ret);
-+extern void __page_ref_mod_and_return(struct page *page, int v, int ret);
-+extern void __page_ref_mod_unless(struct page *page, int v, int u);
-+extern void __page_ref_freeze(struct page *page, int v, int ret);
-+extern void __page_ref_unfreeze(struct page *page, int v);
-+
-+#else
-+
-+#define page_ref_tracepoint_active(t) false
-+
-+static inline void __page_ref_set(struct page *page, int v)
-+{
-+}
-+static inline void __page_ref_mod(struct page *page, int v)
-+{
-+}
-+static inline void __page_ref_mod_and_test(struct page *page, int v, int ret)
-+{
-+}
-+static inline void __page_ref_mod_and_return(struct page *page, int v, int ret)
-+{
-+}
-+static inline void __page_ref_mod_unless(struct page *page, int v, int u)
-+{
-+}
-+static inline void __page_ref_freeze(struct page *page, int v, int ret)
-+{
-+}
-+static inline void __page_ref_unfreeze(struct page *page, int v)
-+{
-+}
-+
-+#endif
- 
- static inline int page_ref_count(struct page *page)
- {
-@@ -18,6 +74,8 @@ static inline int page_count(struct page *page)
- static inline void set_page_count(struct page *page, int v)
- {
- 	atomic_set(&page->_count, v);
-+	if (page_ref_tracepoint_active(__tracepoint_page_ref_set))
-+		__page_ref_set(page, v);
- }
- 
- /*
-@@ -32,46 +90,74 @@ static inline void init_page_count(struct page *page)
- static inline void page_ref_add(struct page *page, int nr)
- {
- 	atomic_add(nr, &page->_count);
-+	if (page_ref_tracepoint_active(__tracepoint_page_ref_mod))
-+		__page_ref_mod(page, nr);
- }
- 
- static inline void page_ref_sub(struct page *page, int nr)
- {
- 	atomic_sub(nr, &page->_count);
-+	if (page_ref_tracepoint_active(__tracepoint_page_ref_mod))
-+		__page_ref_mod(page, -nr);
- }
- 
- static inline void page_ref_inc(struct page *page)
- {
- 	atomic_inc(&page->_count);
-+	if (page_ref_tracepoint_active(__tracepoint_page_ref_mod))
-+		__page_ref_mod(page, 1);
- }
- 
- static inline void page_ref_dec(struct page *page)
- {
- 	atomic_dec(&page->_count);
-+	if (page_ref_tracepoint_active(__tracepoint_page_ref_mod))
-+		__page_ref_mod(page, -1);
- }
- 
- static inline int page_ref_sub_and_test(struct page *page, int nr)
- {
--	return atomic_sub_and_test(nr, &page->_count);
-+	int ret = atomic_sub_and_test(nr, &page->_count);
-+
-+	if (page_ref_tracepoint_active(__tracepoint_page_ref_mod_and_test))
-+		__page_ref_mod_and_test(page, -nr, ret);
-+	return ret;
- }
- 
- static inline int page_ref_dec_and_test(struct page *page)
- {
--	return atomic_dec_and_test(&page->_count);
-+	int ret = atomic_dec_and_test(&page->_count);
-+
-+	if (page_ref_tracepoint_active(__tracepoint_page_ref_mod_and_test))
-+		__page_ref_mod_and_test(page, -1, ret);
-+	return ret;
- }
- 
- static inline int page_ref_dec_return(struct page *page)
- {
--	return atomic_dec_return(&page->_count);
-+	int ret = atomic_dec_return(&page->_count);
-+
-+	if (page_ref_tracepoint_active(__tracepoint_page_ref_mod_and_return))
-+		__page_ref_mod_and_return(page, -1, ret);
-+	return ret;
- }
- 
- static inline int page_ref_add_unless(struct page *page, int nr, int u)
- {
--	return atomic_add_unless(&page->_count, nr, u);
-+	int ret = atomic_add_unless(&page->_count, nr, u);
-+
-+	if (page_ref_tracepoint_active(__tracepoint_page_ref_mod_unless))
-+		__page_ref_mod_unless(page, nr, ret);
-+	return ret;
- }
- 
- static inline int page_ref_freeze(struct page *page, int count)
- {
--	return likely(atomic_cmpxchg(&page->_count, count, 0) == count);
-+	int ret = likely(atomic_cmpxchg(&page->_count, count, 0) == count);
-+
-+	if (page_ref_tracepoint_active(__tracepoint_page_ref_freeze))
-+		__page_ref_freeze(page, count, ret);
-+	return ret;
- }
- 
- static inline void page_ref_unfreeze(struct page *page, int count)
-@@ -80,6 +166,8 @@ static inline void page_ref_unfreeze(struct page *page, int count)
- 	VM_BUG_ON(count == 0);
- 
- 	atomic_set(&page->_count, count);
-+	if (page_ref_tracepoint_active(__tracepoint_page_ref_unfreeze))
-+		__page_ref_unfreeze(page, count);
- }
- 
- #endif
-diff --git a/include/trace/events/page_ref.h b/include/trace/events/page_ref.h
-new file mode 100644
-index 0000000..81001f8
---- /dev/null
-+++ b/include/trace/events/page_ref.h
-@@ -0,0 +1,134 @@
-+#undef TRACE_SYSTEM
-+#define TRACE_SYSTEM page_ref
-+
-+#if !defined(_TRACE_PAGE_REF_H) || defined(TRACE_HEADER_MULTI_READ)
-+#define _TRACE_PAGE_REF_H
-+
-+#include <linux/types.h>
-+#include <linux/page_ref.h>
-+#include <linux/tracepoint.h>
-+#include <trace/events/mmflags.h>
-+
-+DECLARE_EVENT_CLASS(page_ref_mod_template,
-+
-+	TP_PROTO(struct page *page, int v),
-+
-+	TP_ARGS(page, v),
-+
-+	TP_STRUCT__entry(
-+		__field(unsigned long, pfn)
-+		__field(unsigned long, flags)
-+		__field(int, count)
-+		__field(int, mapcount)
-+		__field(void *, mapping)
-+		__field(int, mt)
-+		__field(int, val)
-+	),
-+
-+	TP_fast_assign(
-+		__entry->pfn = page_to_pfn(page);
-+		__entry->flags = page->flags;
-+		__entry->count = page_ref_count(page);
-+		__entry->mapcount = page_mapcount(page);
-+		__entry->mapping = page->mapping;
-+		__entry->mt = get_pageblock_migratetype(page);
-+		__entry->val = v;
-+	),
-+
-+	TP_printk("pfn=0x%lx flags=%s count=%d mapcount=%d mapping=%p mt=%d val=%d",
-+		__entry->pfn,
-+		show_page_flags(__entry->flags & ((1UL << NR_PAGEFLAGS) - 1)),
-+		__entry->count,
-+		__entry->mapcount, __entry->mapping, __entry->mt,
-+		__entry->val)
-+);
-+
-+DEFINE_EVENT(page_ref_mod_template, page_ref_set,
-+
-+	TP_PROTO(struct page *page, int v),
-+
-+	TP_ARGS(page, v)
-+);
-+
-+DEFINE_EVENT(page_ref_mod_template, page_ref_mod,
-+
-+	TP_PROTO(struct page *page, int v),
-+
-+	TP_ARGS(page, v)
-+);
-+
-+DECLARE_EVENT_CLASS(page_ref_mod_and_test_template,
-+
-+	TP_PROTO(struct page *page, int v, int ret),
-+
-+	TP_ARGS(page, v, ret),
-+
-+	TP_STRUCT__entry(
-+		__field(unsigned long, pfn)
-+		__field(unsigned long, flags)
-+		__field(int, count)
-+		__field(int, mapcount)
-+		__field(void *, mapping)
-+		__field(int, mt)
-+		__field(int, val)
-+		__field(int, ret)
-+	),
-+
-+	TP_fast_assign(
-+		__entry->pfn = page_to_pfn(page);
-+		__entry->flags = page->flags;
-+		__entry->count = page_ref_count(page);
-+		__entry->mapcount = page_mapcount(page);
-+		__entry->mapping = page->mapping;
-+		__entry->mt = get_pageblock_migratetype(page);
-+		__entry->val = v;
-+		__entry->ret = ret;
-+	),
-+
-+	TP_printk("pfn=0x%lx flags=%s count=%d mapcount=%d mapping=%p mt=%d val=%d ret=%d",
-+		__entry->pfn,
-+		show_page_flags(__entry->flags & ((1UL << NR_PAGEFLAGS) - 1)),
-+		__entry->count,
-+		__entry->mapcount, __entry->mapping, __entry->mt,
-+		__entry->val, __entry->ret)
-+);
-+
-+DEFINE_EVENT(page_ref_mod_and_test_template, page_ref_mod_and_test,
-+
-+	TP_PROTO(struct page *page, int v, int ret),
-+
-+	TP_ARGS(page, v, ret)
-+);
-+
-+DEFINE_EVENT(page_ref_mod_and_test_template, page_ref_mod_and_return,
-+
-+	TP_PROTO(struct page *page, int v, int ret),
-+
-+	TP_ARGS(page, v, ret)
-+);
-+
-+DEFINE_EVENT(page_ref_mod_and_test_template, page_ref_mod_unless,
-+
-+	TP_PROTO(struct page *page, int v, int ret),
-+
-+	TP_ARGS(page, v, ret)
-+);
-+
-+DEFINE_EVENT(page_ref_mod_and_test_template, page_ref_freeze,
-+
-+	TP_PROTO(struct page *page, int v, int ret),
-+
-+	TP_ARGS(page, v, ret)
-+);
-+
-+DEFINE_EVENT(page_ref_mod_template, page_ref_unfreeze,
-+
-+	TP_PROTO(struct page *page, int v),
-+
-+	TP_ARGS(page, v)
-+);
-+
-+#endif /* _TRACE_PAGE_COUNT_H */
-+
-+/* This part must be outside protection */
-+#include <trace/define_trace.h>
-diff --git a/mm/Kconfig.debug b/mm/Kconfig.debug
-index ee57dea..a68b654 100644
---- a/mm/Kconfig.debug
-+++ b/mm/Kconfig.debug
-@@ -75,3 +75,17 @@ config PAGE_POISONING_ZERO
- 	   allocation.
- 
- 	   If unsure, say N
-+	bool
-+
-+config DEBUG_PAGE_REF
-+	bool "Enable tracepoint to track down page reference manipulation"
-+	depends on DEBUG_KERNEL
-+	depends on TRACEPOINTS
-+	---help---
-+	  This is the feature to add tracepoint for tracking down page reference
-+	  manipulation. This tracking is useful to diagnosis functional failure
-+	  due to migration failure caused by page reference mismatch. Be
-+	  careful to turn on this feature because it could bloat some kernel
-+	  text. In my configuration, it bloats 30 KB. Although kernel text will
-+	  be bloated, there would be no runtime performance overhead if
-+	  tracepoint isn't enabled thanks to jump label.
-diff --git a/mm/Makefile b/mm/Makefile
-index fb1a794..4f0f135 100644
---- a/mm/Makefile
-+++ b/mm/Makefile
-@@ -99,3 +99,4 @@ obj-$(CONFIG_CMA_DEBUGFS) += cma_debug.o
- obj-$(CONFIG_USERFAULTFD) += userfaultfd.o
- obj-$(CONFIG_IDLE_PAGE_TRACKING) += page_idle.o
- obj-$(CONFIG_FRAME_VECTOR) += frame_vector.o
-+obj-$(CONFIG_DEBUG_PAGE_REF) += debug_page_ref.o
-diff --git a/mm/debug_page_ref.c b/mm/debug_page_ref.c
-new file mode 100644
-index 0000000..87e60e8
---- /dev/null
-+++ b/mm/debug_page_ref.c
-@@ -0,0 +1,53 @@
-+#include <linux/tracepoint.h>
-+
-+#define CREATE_TRACE_POINTS
-+#include <trace/events/page_ref.h>
-+
-+void __page_ref_set(struct page *page, int v)
-+{
-+	trace_page_ref_set(page, v);
-+}
-+EXPORT_SYMBOL(__page_ref_set);
-+EXPORT_TRACEPOINT_SYMBOL(page_ref_set);
-+
-+void __page_ref_mod(struct page *page, int v)
-+{
-+	trace_page_ref_mod(page, v);
-+}
-+EXPORT_SYMBOL(__page_ref_mod);
-+EXPORT_TRACEPOINT_SYMBOL(page_ref_mod);
-+
-+void __page_ref_mod_and_test(struct page *page, int v, int ret)
-+{
-+	trace_page_ref_mod_and_test(page, v, ret);
-+}
-+EXPORT_SYMBOL(__page_ref_mod_and_test);
-+EXPORT_TRACEPOINT_SYMBOL(page_ref_mod_and_test);
-+
-+void __page_ref_mod_and_return(struct page *page, int v, int ret)
-+{
-+	trace_page_ref_mod_and_return(page, v, ret);
-+}
-+EXPORT_SYMBOL(__page_ref_mod_and_return);
-+EXPORT_TRACEPOINT_SYMBOL(page_ref_mod_and_return);
-+
-+void __page_ref_mod_unless(struct page *page, int v, int u)
-+{
-+	trace_page_ref_mod_unless(page, v, u);
-+}
-+EXPORT_SYMBOL(__page_ref_mod_unless);
-+EXPORT_TRACEPOINT_SYMBOL(page_ref_mod_unless);
-+
-+void __page_ref_freeze(struct page *page, int v, int ret)
-+{
-+	trace_page_ref_freeze(page, v, ret);
-+}
-+EXPORT_SYMBOL(__page_ref_freeze);
-+EXPORT_TRACEPOINT_SYMBOL(page_ref_freeze);
-+
-+void __page_ref_unfreeze(struct page *page, int v)
-+{
-+	trace_page_ref_unfreeze(page, v);
-+}
-+EXPORT_SYMBOL(__page_ref_unfreeze);
-+EXPORT_TRACEPOINT_SYMBOL(page_ref_unfreeze);
+ arch/arm/mach-pxa/spitz.c                       |  55 +++-
+ arch/mips/include/asm/mach-jz4740/jz4740_nand.h |   2 +-
+ arch/mips/jz4740/board-qi_lb60.c                |  87 +++---
+ drivers/mtd/devices/docg3.c                     |  51 +++-
+ drivers/mtd/mtdchar.c                           | 123 ++++++--
+ drivers/mtd/mtdconcat.c                         |   2 +-
+ drivers/mtd/mtdcore.c                           | 358 ++++++++++++++++++++++++
+ drivers/mtd/mtdpart.c                           |  28 +-
+ drivers/mtd/mtdswap.c                           |  24 +-
+ drivers/mtd/nand/atmel_nand.c                   | 130 ++++-----
+ drivers/mtd/nand/bf5xx_nand.c                   |  51 ++--
+ drivers/mtd/nand/brcmnand/brcmnand.c            | 262 ++++++++++-------
+ drivers/mtd/nand/cafe_nand.c                    |  45 ++-
+ drivers/mtd/nand/davinci_nand.c                 | 118 +++-----
+ drivers/mtd/nand/denali.c                       |  51 +++-
+ drivers/mtd/nand/diskonchip.c                   |  60 +++-
+ drivers/mtd/nand/docg4.c                        |  34 ++-
+ drivers/mtd/nand/fsl_elbc_nand.c                |  83 +++---
+ drivers/mtd/nand/fsl_ifc_nand.c                 | 245 +++++-----------
+ drivers/mtd/nand/fsmc_nand.c                    | 322 ++++++---------------
+ drivers/mtd/nand/gpmi-nand/gpmi-nand.c          |  61 ++--
+ drivers/mtd/nand/hisi504_nand.c                 |  27 +-
+ drivers/mtd/nand/jz4740_nand.c                  |   2 +-
+ drivers/mtd/nand/jz4780_nand.c                  |  19 +-
+ drivers/mtd/nand/lpc32xx_mlc.c                  |  50 ++--
+ drivers/mtd/nand/lpc32xx_slc.c                  |  58 +++-
+ drivers/mtd/nand/mxc_nand.c                     | 212 +++++++-------
+ drivers/mtd/nand/nand_base.c                    | 344 ++++++++++++-----------
+ drivers/mtd/nand/nand_bch.c                     |  46 ++-
+ drivers/mtd/nand/omap2.c                        | 241 +++++++++-------
+ drivers/mtd/nand/pxa3xx_nand.c                  | 104 ++++---
+ drivers/mtd/nand/s3c2410.c                      |  32 ++-
+ drivers/mtd/nand/sh_flctl.c                     |  87 ++++--
+ drivers/mtd/nand/sharpsl.c                      |   2 +-
+ drivers/mtd/nand/sm_common.c                    |  93 ++++--
+ drivers/mtd/nand/sunxi_nand.c                   | 114 ++++----
+ drivers/mtd/nand/vf610_nfc.c                    |  34 +--
+ drivers/mtd/onenand/onenand_base.c              | 262 ++++++++---------
+ drivers/mtd/tests/oobtest.c                     |  49 ++--
+ drivers/staging/mt29f_spinand/mt29f_spinand.c   |  49 ++--
+ fs/jffs2/wbuf.c                                 |   6 +-
+ include/linux/mtd/fsmc.h                        |  18 --
+ include/linux/mtd/mtd.h                         |  69 ++++-
+ include/linux/mtd/nand.h                        |   5 +-
+ include/linux/mtd/nand_bch.h                    |   8 +-
+ include/linux/mtd/onenand.h                     |   2 -
+ include/linux/mtd/sharpsl.h                     |   2 +-
+ include/uapi/mtd/mtd-abi.h                      |   2 +-
+ 48 files changed, 2375 insertions(+), 1754 deletions(-)
+
 -- 
-1.9.1
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+2.1.4
