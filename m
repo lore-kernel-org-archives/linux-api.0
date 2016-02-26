@@ -1,12 +1,12 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v3 29/52] mtd: nand: davinci: switch to mtd_ooblayout_ops
-Date: Fri, 26 Feb 2016 01:57:37 +0100
-Message-ID: <1456448280-27788-30-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v3 30/52] mtd: nand: denali: switch to mtd_ooblayout_ops
+Date: Fri, 26 Feb 2016 01:57:38 +0100
+Message-ID: <1456448280-27788-31-git-send-email-boris.brezillon@free-electrons.com>
 References: <1456448280-27788-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBRWJX23AKGQEXUKKW3A-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBYOJX23AKGQE4SPCIPA-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 In-Reply-To: <1456448280-27788-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
@@ -24,155 +24,91 @@ ECC/OOB layout to MTD users.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- drivers/mtd/nand/davinci_nand.c | 118 +++++++++++++++-------------------------
- 1 file changed, 44 insertions(+), 74 deletions(-)
+ drivers/mtd/nand/denali.c | 51 +++++++++++++++++++++++++++++++++--------------
+ 1 file changed, 36 insertions(+), 15 deletions(-)
 
-diff --git a/drivers/mtd/nand/davinci_nand.c b/drivers/mtd/nand/davinci_nand.c
-index 8cb821b..fe3fd29 100644
---- a/drivers/mtd/nand/davinci_nand.c
-+++ b/drivers/mtd/nand/davinci_nand.c
-@@ -54,7 +54,6 @@
+diff --git a/drivers/mtd/nand/denali.c b/drivers/mtd/nand/denali.c
+index 30bf5f6..b832375 100644
+--- a/drivers/mtd/nand/denali.c
++++ b/drivers/mtd/nand/denali.c
+@@ -1374,13 +1374,42 @@ static void denali_hw_init(struct denali_nand_info *denali)
+  * correction
   */
- struct davinci_nand_info {
- 	struct nand_chip	chip;
--	struct nand_ecclayout	ecclayout;
- 
- 	struct device		*dev;
- 	struct clk		*clk;
-@@ -480,63 +479,46 @@ static int nand_davinci_dev_ready(struct mtd_info *mtd)
-  * ten ECC bytes plus the manufacturer's bad block marker byte, and
-  * and not overlapping the default BBT markers.
-  */
--static struct nand_ecclayout hwecc4_small = {
--	.eccbytes = 10,
--	.eccpos = { 0, 1, 2, 3, 4,
--		/* offset 5 holds the badblock marker */
--		6, 7,
--		13, 14, 15, },
--	.oobfree = {
--		{.offset = 8, .length = 5, },
--		{.offset = 16, },
--	},
+ #define ECC_8BITS	14
+-static struct nand_ecclayout nand_8bit_oob = {
+-	.eccbytes = 14,
 -};
-+static int hwecc4_ooblayout_small_ecc(struct mtd_info *mtd, int section,
-+				      struct mtd_oob_region *oobregion)
+-
+ #define ECC_15BITS	26
+-static struct nand_ecclayout nand_15bit_oob = {
+-	.eccbytes = 26,
++
++static int denali_ooblayout_ecc(struct mtd_info *mtd, int section,
++				struct mtd_oob_region *oobregion)
 +{
-+	if (section > 2)
++	struct denali_nand_info *denali = mtd_to_denali(mtd);
++	struct nand_chip *chip = mtd_to_nand(mtd);
++
++	if (section)
 +		return -ERANGE;
 +
-+	if (!section) {
-+		oobregion->offset = 0;
-+		oobregion->length = 5;
-+	} else if (section == 1) {
-+		oobregion->offset = 6;
-+		oobregion->length = 2;
-+	} else {
-+		oobregion->offset = 13;
-+		oobregion->length = 3;
-+	}
- 
--/* An ECC layout for using 4-bit ECC with large-page (2048bytes) flash,
-- * storing ten ECC bytes plus the manufacturer's bad block marker byte,
-- * and not overlapping the default BBT markers.
-- */
--static struct nand_ecclayout hwecc4_2048 = {
--	.eccbytes = 40,
--	.eccpos = {
--		/* at the end of spare sector */
--		24, 25, 26, 27, 28, 29,	30, 31, 32, 33,
--		34, 35, 36, 37, 38, 39,	40, 41, 42, 43,
--		44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
--		54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
--		},
--	.oobfree = {
--		/* 2 bytes at offset 0 hold manufacturer badblock markers */
--		{.offset = 2, .length = 22, },
--		/* 5 bytes at offset 8 hold BBT markers */
--		/* 8 bytes at offset 16 hold JFFS2 clean markers */
--	},
--};
-+	return 0;
-+}
- 
--/*
-- * An ECC layout for using 4-bit ECC with large-page (4096bytes) flash,
-- * storing ten ECC bytes plus the manufacturer's bad block marker byte,
-- * and not overlapping the default BBT markers.
-- */
--static struct nand_ecclayout hwecc4_4096 = {
--	.eccbytes = 80,
--	.eccpos = {
--		/* at the end of spare sector */
--		48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
--		58, 59, 60, 61, 62, 63, 64, 65, 66, 67,
--		68, 69, 70, 71, 72, 73, 74, 75, 76, 77,
--		78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
--		88, 89, 90, 91, 92, 93, 94, 95, 96, 97,
--		98, 99, 100, 101, 102, 103, 104, 105, 106, 107,
--		108, 109, 110, 111, 112, 113, 114, 115, 116, 117,
--		118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
--	},
--	.oobfree = {
--		/* 2 bytes at offset 0 hold manufacturer badblock markers */
--		{.offset = 2, .length = 46, },
--		/* 5 bytes at offset 8 hold BBT markers */
--		/* 8 bytes at offset 16 hold JFFS2 clean markers */
--	},
-+static int hwecc4_ooblayout_small_free(struct mtd_info *mtd, int section,
-+				       struct mtd_oob_region *oobregion)
-+{
-+	if (section > 1)
-+		return -ERANGE;
-+
-+	if (!section) {
-+		oobregion->offset = 8;
-+		oobregion->length = 5;
-+	} else {
-+		oobregion->offset = 16;
-+		oobregion->length = mtd->oobsize - 16;
-+	}
++	oobregion->offset = denali->bbtskipbytes;
++	oobregion->length = chip->ecc.bytes * chip->ecc.steps;
 +
 +	return 0;
 +}
 +
-+static const struct mtd_ooblayout_ops hwecc4_small_ooblayout_ops = {
-+	.ecc = hwecc4_ooblayout_small_ecc,
-+	.free = hwecc4_ooblayout_small_free,
++static int denali_ooblayout_free(struct mtd_info *mtd, int section,
++				 struct mtd_oob_region *oobregion)
++{
++	struct denali_nand_info *denali = mtd_to_denali(mtd);
++	struct nand_chip *chip = mtd_to_nand(mtd);
++	int eccbytes = chip->ecc.bytes * chip->ecc.steps;
++
++	if (section)
++		return -ERANGE;
++
++	oobregion->offset = eccbytes + denali->bbtskipbytes;
++	oobregion->length = mtd->oobsize - oobregion->offset;
++
++	return 0;
++}
++
++static const struct mtd_ooblayout_ops denali_ooblayout_ops = {
++	.ecc = denali_ooblayout_ecc,
++	.free = denali_ooblayout_free,
  };
  
- #if defined(CONFIG_OF)
-@@ -805,26 +787,14 @@ static int nand_davinci_probe(struct platform_device *pdev)
- 		 * table marker fits in the free bytes.
- 		 */
- 		if (chunks == 1) {
--			info->ecclayout = hwecc4_small;
--			info->ecclayout.oobfree[1].length = mtd->oobsize - 16;
--			goto syndrome_done;
--		}
--		if (chunks == 4) {
--			info->ecclayout = hwecc4_2048;
-+			mtd_set_ooblayout(mtd, &hwecc4_small_ooblayout_ops);
-+		} else if (chunks == 4 || chunks == 8) {
-+			mtd_set_ooblayout(mtd, &nand_ooblayout_lp_ops);
- 			info->chip.ecc.mode = NAND_ECC_HW_OOB_FIRST;
--			goto syndrome_done;
--		}
--		if (chunks == 8) {
--			info->ecclayout = hwecc4_4096;
--			info->chip.ecc.mode = NAND_ECC_HW_OOB_FIRST;
--			goto syndrome_done;
-+		} else {
-+			ret = -EIO;
-+			goto err;
- 		}
--
--		ret = -EIO;
--		goto err;
--
--syndrome_done:
--		info->chip.ecc.layout = &info->ecclayout;
+ static uint8_t bbt_pattern[] = {'B', 'b', 't', '0' };
+@@ -1561,7 +1590,6 @@ int denali_init(struct denali_nand_info *denali)
+ 			ECC_SECTOR_SIZE)))) {
+ 		/* if MLC OOB size is large enough, use 15bit ECC*/
+ 		denali->nand.ecc.strength = 15;
+-		denali->nand.ecc.layout = &nand_15bit_oob;
+ 		denali->nand.ecc.bytes = ECC_15BITS;
+ 		iowrite32(15, denali->flash_reg + ECC_CORRECTION);
+ 	} else if (mtd->oobsize < (denali->bbtskipbytes +
+@@ -1571,20 +1599,13 @@ int denali_init(struct denali_nand_info *denali)
+ 		goto failed_req_irq;
+ 	} else {
+ 		denali->nand.ecc.strength = 8;
+-		denali->nand.ecc.layout = &nand_8bit_oob;
+ 		denali->nand.ecc.bytes = ECC_8BITS;
+ 		iowrite32(8, denali->flash_reg + ECC_CORRECTION);
  	}
  
- 	ret = nand_scan_tail(mtd);
++	mtd_set_ooblayout(mtd, &denali_ooblayout_ops);
+ 	denali->nand.ecc.bytes *= denali->devnum;
+ 	denali->nand.ecc.strength *= denali->devnum;
+-	denali->nand.ecc.layout->eccbytes *=
+-		mtd->writesize / ECC_SECTOR_SIZE;
+-	denali->nand.ecc.layout->oobfree[0].offset =
+-		denali->bbtskipbytes + denali->nand.ecc.layout->eccbytes;
+-	denali->nand.ecc.layout->oobfree[0].length =
+-		mtd->oobsize - denali->nand.ecc.layout->eccbytes -
+-		denali->bbtskipbytes;
+ 
+ 	/*
+ 	 * Let driver know the total blocks number and how many blocks
 -- 
 2.1.4
