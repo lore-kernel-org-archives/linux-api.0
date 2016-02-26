@@ -1,72 +1,53 @@
-From: Boris Brezillon <boris.brezillon@free-electrons.com>
-Subject: Re: [PATCH v3 00/52] mtd: rework ECC layout definition
-Date: Fri, 26 Feb 2016 03:16:00 +0100
-Message-ID: <20160226031600.15ad27ba@bbrezillon>
-References: <1456448280-27788-1-git-send-email-boris.brezillon@free-electrons.com>
-	<d968b867f4d7f603581a0ff83e07c15c@agner.ch>
+From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Subject: Re: [PATCH] uapi glibc compat: fix cases where glibc net/if.h is
+ included before linux/if.h
+Date: Fri, 26 Feb 2016 09:25:13 +0200
+Message-ID: <20160226072513.GH6104@lakka.kapsi.fi>
+References: <CA+5PVA4P2avVr+m=ittQUyBou9kT2nbK0-Jeo+3coAFyQXTT_A@mail.gmail.com>
+ <1454853801-18064-1-git-send-email-mikko.rapeli@iki.fi>
+ <20160217.104620.239734387234680136.davem@davemloft.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-samsung-soc-owner@vger.kernel.org>
-In-Reply-To: <d968b867f4d7f603581a0ff83e07c15c@agner.ch>
-Sender: linux-samsung-soc-owner@vger.kernel.org
-To: Stefan Agner <stefan@agner.ch>
-Cc: David Woodhouse <dwmw2@infradead.org>, Brian Norris <computersforpeace@gmail.com>, linux-mtd@lists.infradead.org, Daniel Mack <daniel@zonque.org>, Haojian Zhuang <haojian.zhuang@gmail.com>, Robert Jarzmik <robert.jarzmik@free.fr>, Kukjin Kim <kgene@kernel.org>, Krzysztof Kozlowski <k.kozlowski@samsung.com>, linux-samsung-soc@vger.kernel.org, linux-arm-kernel@lists.infradead.org, Ralf Baechle <ralf@linux-mips.org>, linux-mips@linux-mips.org, Nicolas Ferre <nicolas.ferre@atmel.com>, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>, Alexandre Belloni <alexandre.belloni@free-electrons.com>, Wenyou Yang <wenyou.yang@atmel.com>, Josh Wu <rainyfeeling@outlook.com>, Ezequiel Garcia <ezequiel.garcia@free-electrons.com>, Maxime Ripard <maxime.ripard@free-electrons.com>, Chen-Yu Tsai <wens@csie.org>, linux-sunxi@googlegroups.com, Kyungmin Park <kyungmin.park@samsung.co>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160217.104620.239734387234680136.davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: shemming-43mecJUBy8ZBDgjK7y7TUQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jwboyer-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org, pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 25 Feb 2016 17:27:23 -0800
-Stefan Agner <stefan@agner.ch> wrote:
+(Adding libc-alpha list, review of https://lkml.org/lkml/2016/2/7/89 )
 
-> Hi Boris,
+On Wed, Feb 17, 2016 at 10:46:20AM -0500, David Miller wrote:
+> From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+> Date: Sun,  7 Feb 2016 16:03:21 +0200
 > 
-> On 2016-02-25 16:57, Boris Brezillon wrote:
-> > Hello,
-> > 
-> > This patchset aims at getting rid of the nand_ecclayout limitations.
-> > struct nand_ecclayout is defining fixed eccpos and oobfree arrays which
-> > can only be increased by modifying the MTD_MAX_ECCPOS_ENTRIES_LARGE and
-> > MTD_MAX_OOBFREE_ENTRIES_LARGE macros.
-> > This approach forces us to modify the macro values each time we add a
-> > new NAND chip with a bigger OOB area, and increasing these arrays also
-> > penalize all platforms, even those who only support small NAND devices
-> > (with small OOB area).
-> > 
-> > The idea to overcome this limitation, is to define the ECC/OOB layout
-> > by the mean of two functions: ->ecc() and ->free(), which will
-> > basically return the same information has those stored in the
-> > nand_ecclayout struct.
-> > 
-> > Another advantage of this solution is that ECC layouts are usually
-> > following a repetitive pattern (i.e. leave X bytes free and put Y bytes
-> > of ECC per ECC chunk), which allows one to implement the ->ecc()
-> > and ->free() functions with a simple logic that can be applied
-> > to any size of OOB.
-> > 
-> > Patches 1 to 4 are just cleanups or trivial fixes that can be taken
-> > independently.
-> > 
-> > Also note that the last two commits are removing the nand_ecclayout
-> > definition, thus preventing any new driver to use this structure.
-> > Of course, this step can be delayed if some of the previous patches
-> > are not accepted.
+> > @@ -68,6 +72,8 @@
+> >   * @IFF_ECHO: echo sent packets. Volatile.
+> >   */
+> >  enum net_device_flags {
+> > +/* for compatibility with glibc net/if.h */
+> > +#if __UAPI_DEF_IF_NET_DEVICE_FLAGS
+> >  	IFF_UP				= 1<<0,  /* sysfs */
+> >  	IFF_BROADCAST			= 1<<1,  /* volatile */
+> >  	IFF_DEBUG			= 1<<2,  /* sysfs */
+> > @@ -84,11 +90,14 @@ enum net_device_flags {
+> >  	IFF_PORTSEL			= 1<<13, /* sysfs */
+> >  	IFF_AUTOMEDIA			= 1<<14, /* sysfs */
+> >  	IFF_DYNAMIC			= 1<<15, /* sysfs */
+> > +#endif /* __UAPI_DEF_IF_NET_DEVICE_FLAGS */
+> >  	IFF_LOWER_UP			= 1<<16, /* volatile */
+> >  	IFF_DORMANT			= 1<<17, /* volatile */
+> >  	IFF_ECHO			= 1<<18, /* volatile */
+> >  };
 > 
-> Is the patch set somewhere available to pull from?
+> This is going to get messy is IFF_LOWER_UP, IFF_DORMANT, and IFF_ECHO
+> get added the the glibc header.  Why not just handle it now with
+> another __UAPI_DEF_FOO guard so that the additions to net/if.h can
+> deal with this case too.
 
-Yes, it's here [1].
+Do you mean that the enum should be protected with a single guard or
+should I have one guard for current conflicts and one for the future
+if glibc headers include IFF_LOWER_UP and others?
 
-> 
-> Do I see things right that patch 21/52 contains the crucial function
-> nand_ooblayout_ecc_lp which calculate the ECC position? (for those who
-> do not provide mtd_ooblayout_ops anyway...)
-
-You're correct. This implementation is here for NAND controller drivers
-relying on the linux default ECC layout (the one used when soft ECC is
-selected, or when not layout is specified). This layout is just putting
-all ECC bytes at the end of the OOB area.
-
-[1]https://github.com/bbrezillon/linux-0day/tree/nand/ecclayout
-
--- 
-Boris Brezillon, Free Electrons
-Embedded Linux and Kernel engineering
-http://free-electrons.com
+-Mikko
