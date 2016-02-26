@@ -1,12 +1,12 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v3 28/52] mtd: nand: cafe: switch to mtd_ooblayout_ops
-Date: Fri, 26 Feb 2016 01:57:36 +0100
-Message-ID: <1456448280-27788-29-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v3 29/52] mtd: nand: davinci: switch to mtd_ooblayout_ops
+Date: Fri, 26 Feb 2016 01:57:37 +0100
+Message-ID: <1456448280-27788-30-git-send-email-boris.brezillon@free-electrons.com>
 References: <1456448280-27788-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBFOJX23AKGQE6M26H7I-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBRWJX23AKGQEXUKKW3A-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 In-Reply-To: <1456448280-27788-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
@@ -24,82 +24,155 @@ ECC/OOB layout to MTD users.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- drivers/mtd/nand/cafe_nand.c | 45 ++++++++++++++++++++++++++++++++------------
- 1 file changed, 33 insertions(+), 12 deletions(-)
+ drivers/mtd/nand/davinci_nand.c | 118 +++++++++++++++-------------------------
+ 1 file changed, 44 insertions(+), 74 deletions(-)
 
-diff --git a/drivers/mtd/nand/cafe_nand.c b/drivers/mtd/nand/cafe_nand.c
-index aa1a616..0935b7c 100644
---- a/drivers/mtd/nand/cafe_nand.c
-+++ b/drivers/mtd/nand/cafe_nand.c
-@@ -459,10 +459,38 @@ static int cafe_nand_read_page(struct mtd_info *mtd, struct nand_chip *chip,
- 	return max_bitflips;
- }
+diff --git a/drivers/mtd/nand/davinci_nand.c b/drivers/mtd/nand/davinci_nand.c
+index 8cb821b..fe3fd29 100644
+--- a/drivers/mtd/nand/davinci_nand.c
++++ b/drivers/mtd/nand/davinci_nand.c
+@@ -54,7 +54,6 @@
+  */
+ struct davinci_nand_info {
+ 	struct nand_chip	chip;
+-	struct nand_ecclayout	ecclayout;
  
--static struct nand_ecclayout cafe_oobinfo_2048 = {
--	.eccbytes = 14,
--	.eccpos = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
--	.oobfree = {{14, 50}}
-+static int cafe_ooblayout_ecc(struct mtd_info *mtd, int section,
-+			      struct mtd_oob_region *oobregion)
-+{
-+	struct nand_chip *chip = mtd_to_nand(mtd);
-+
-+	if (section)
-+		return -ERANGE;
-+
-+	oobregion->offset = 0;
-+	oobregion->length = chip->ecc.steps * chip->ecc.bytes;
-+
-+	return 0;
-+}
-+
-+static int cafe_ooblayout_free(struct mtd_info *mtd, int section,
-+			       struct mtd_oob_region *oobregion)
-+{
-+	struct nand_chip *chip = mtd_to_nand(mtd);
-+	int eccbytes = chip->ecc.steps * chip->ecc.bytes;
-+
-+	if (section)
-+		return -ERANGE;
-+
-+	oobregion->offset = eccbytes;
-+	oobregion->length = mtd->oobsize - eccbytes;
-+
-+	return 0;
-+}
-+
-+static const struct mtd_ooblayout_ops cafe_ooblayout_ops = {
-+	.ecc = cafe_ooblayout_ecc,
-+	.free = cafe_ooblayout_free,
- };
- 
- /* Ick. The BBT code really ought to be able to work this bit out
-@@ -494,12 +522,6 @@ static struct nand_bbt_descr cafe_bbt_mirror_descr_2048 = {
- 	.pattern = cafe_mirror_pattern_2048
- };
- 
--static struct nand_ecclayout cafe_oobinfo_512 = {
--	.eccbytes = 14,
--	.eccpos = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
--	.oobfree = {{14, 2}}
+ 	struct device		*dev;
+ 	struct clk		*clk;
+@@ -480,63 +479,46 @@ static int nand_davinci_dev_ready(struct mtd_info *mtd)
+  * ten ECC bytes plus the manufacturer's bad block marker byte, and
+  * and not overlapping the default BBT markers.
+  */
+-static struct nand_ecclayout hwecc4_small = {
+-	.eccbytes = 10,
+-	.eccpos = { 0, 1, 2, 3, 4,
+-		/* offset 5 holds the badblock marker */
+-		6, 7,
+-		13, 14, 15, },
+-	.oobfree = {
+-		{.offset = 8, .length = 5, },
+-		{.offset = 16, },
+-	},
 -};
--
- static struct nand_bbt_descr cafe_bbt_main_descr_512 = {
- 	.options = NAND_BBT_LASTBLOCK | NAND_BBT_CREATE | NAND_BBT_WRITE
- 		| NAND_BBT_2BIT | NAND_BBT_VERSION,
-@@ -743,12 +765,11 @@ static int cafe_nand_probe(struct pci_dev *pdev,
- 		cafe->ctl2 |= 1<<29; /* 2KiB page size */
++static int hwecc4_ooblayout_small_ecc(struct mtd_info *mtd, int section,
++				      struct mtd_oob_region *oobregion)
++{
++	if (section > 2)
++		return -ERANGE;
++
++	if (!section) {
++		oobregion->offset = 0;
++		oobregion->length = 5;
++	} else if (section == 1) {
++		oobregion->offset = 6;
++		oobregion->length = 2;
++	} else {
++		oobregion->offset = 13;
++		oobregion->length = 3;
++	}
  
- 	/* Set up ECC according to the type of chip we found */
-+	mtd_set_ooblayout(mtd, &cafe_ooblayout_ops);
- 	if (mtd->writesize == 2048) {
--		cafe->nand.ecc.layout = &cafe_oobinfo_2048;
- 		cafe->nand.bbt_td = &cafe_bbt_main_descr_2048;
- 		cafe->nand.bbt_md = &cafe_bbt_mirror_descr_2048;
- 	} else if (mtd->writesize == 512) {
--		cafe->nand.ecc.layout = &cafe_oobinfo_512;
- 		cafe->nand.bbt_td = &cafe_bbt_main_descr_512;
- 		cafe->nand.bbt_md = &cafe_bbt_mirror_descr_512;
- 	} else {
+-/* An ECC layout for using 4-bit ECC with large-page (2048bytes) flash,
+- * storing ten ECC bytes plus the manufacturer's bad block marker byte,
+- * and not overlapping the default BBT markers.
+- */
+-static struct nand_ecclayout hwecc4_2048 = {
+-	.eccbytes = 40,
+-	.eccpos = {
+-		/* at the end of spare sector */
+-		24, 25, 26, 27, 28, 29,	30, 31, 32, 33,
+-		34, 35, 36, 37, 38, 39,	40, 41, 42, 43,
+-		44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+-		54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
+-		},
+-	.oobfree = {
+-		/* 2 bytes at offset 0 hold manufacturer badblock markers */
+-		{.offset = 2, .length = 22, },
+-		/* 5 bytes at offset 8 hold BBT markers */
+-		/* 8 bytes at offset 16 hold JFFS2 clean markers */
+-	},
+-};
++	return 0;
++}
+ 
+-/*
+- * An ECC layout for using 4-bit ECC with large-page (4096bytes) flash,
+- * storing ten ECC bytes plus the manufacturer's bad block marker byte,
+- * and not overlapping the default BBT markers.
+- */
+-static struct nand_ecclayout hwecc4_4096 = {
+-	.eccbytes = 80,
+-	.eccpos = {
+-		/* at the end of spare sector */
+-		48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+-		58, 59, 60, 61, 62, 63, 64, 65, 66, 67,
+-		68, 69, 70, 71, 72, 73, 74, 75, 76, 77,
+-		78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
+-		88, 89, 90, 91, 92, 93, 94, 95, 96, 97,
+-		98, 99, 100, 101, 102, 103, 104, 105, 106, 107,
+-		108, 109, 110, 111, 112, 113, 114, 115, 116, 117,
+-		118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
+-	},
+-	.oobfree = {
+-		/* 2 bytes at offset 0 hold manufacturer badblock markers */
+-		{.offset = 2, .length = 46, },
+-		/* 5 bytes at offset 8 hold BBT markers */
+-		/* 8 bytes at offset 16 hold JFFS2 clean markers */
+-	},
++static int hwecc4_ooblayout_small_free(struct mtd_info *mtd, int section,
++				       struct mtd_oob_region *oobregion)
++{
++	if (section > 1)
++		return -ERANGE;
++
++	if (!section) {
++		oobregion->offset = 8;
++		oobregion->length = 5;
++	} else {
++		oobregion->offset = 16;
++		oobregion->length = mtd->oobsize - 16;
++	}
++
++	return 0;
++}
++
++static const struct mtd_ooblayout_ops hwecc4_small_ooblayout_ops = {
++	.ecc = hwecc4_ooblayout_small_ecc,
++	.free = hwecc4_ooblayout_small_free,
+ };
+ 
+ #if defined(CONFIG_OF)
+@@ -805,26 +787,14 @@ static int nand_davinci_probe(struct platform_device *pdev)
+ 		 * table marker fits in the free bytes.
+ 		 */
+ 		if (chunks == 1) {
+-			info->ecclayout = hwecc4_small;
+-			info->ecclayout.oobfree[1].length = mtd->oobsize - 16;
+-			goto syndrome_done;
+-		}
+-		if (chunks == 4) {
+-			info->ecclayout = hwecc4_2048;
++			mtd_set_ooblayout(mtd, &hwecc4_small_ooblayout_ops);
++		} else if (chunks == 4 || chunks == 8) {
++			mtd_set_ooblayout(mtd, &nand_ooblayout_lp_ops);
+ 			info->chip.ecc.mode = NAND_ECC_HW_OOB_FIRST;
+-			goto syndrome_done;
+-		}
+-		if (chunks == 8) {
+-			info->ecclayout = hwecc4_4096;
+-			info->chip.ecc.mode = NAND_ECC_HW_OOB_FIRST;
+-			goto syndrome_done;
++		} else {
++			ret = -EIO;
++			goto err;
+ 		}
+-
+-		ret = -EIO;
+-		goto err;
+-
+-syndrome_done:
+-		info->chip.ecc.layout = &info->ecclayout;
+ 	}
+ 
+ 	ret = nand_scan_tail(mtd);
 -- 
 2.1.4
