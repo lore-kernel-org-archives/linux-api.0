@@ -1,12 +1,13 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v3 04/52] mtd: nand: simplify nand_bch_init() usage
-Date: Fri, 26 Feb 2016 01:57:12 +0100
-Message-ID: <1456448280-27788-5-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v3 06/52] mtd: use mtd_ooblayout_xxx() helpers
+ where appropriate
+Date: Fri, 26 Feb 2016 01:57:14 +0100
+Message-ID: <1456448280-27788-7-git-send-email-boris.brezillon@free-electrons.com>
 References: <1456448280-27788-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBROGX23AKGQE6N4MWWQ-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBU6GX23AKGQEAGGOUIQ-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 In-Reply-To: <1456448280-27788-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
@@ -19,210 +20,159 @@ To: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Brian Norri
 Cc: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Haojian Zhuang <haojian.zhuang-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Robert Jarzmik <robert.jarzmik-GANU6spQydw@public.gmane.org>, Kukjin Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Nicolas Ferre <nicolas.ferre-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Alexandre Belloni <alexandre.belloni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Wenyou Yang <wenyou.yang-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Josh Wu <rainyfeeling-1ViLX0X+lBJBDgjK7y7TUQ@public.gmane.org>, Ezequiel Garcia <ezequiel.garcia-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Chen-Yu Tsai <wens-jdAy2FN1RRM@public.gmane.org>, linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-nand_bch_init() requires several arguments which could directly be deduced
-from the mtd device. Get rid of those useless parameters.
-
-nand_bch_init() is also requiring the caller to provide a proper eccbytes
-value, while this value could be deduced from the ecc.size and
-ecc.strength value. Fallback to eccbytes calculation when it is set to 0.
+The mtd_ooblayout_xxx() helper functions have been added to avoid direct
+accesses to the ecclayout field, and thus ease for future reworks.
+Use these helpers in all places where the oobfree[] and eccpos[] arrays
+where directly accessed.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- drivers/mtd/nand/nand_base.c |  6 ++----
- drivers/mtd/nand/nand_bch.c  | 27 +++++++++++++++++----------
- drivers/mtd/nand/omap2.c     | 28 ++++++++++++----------------
- include/linux/mtd/nand_bch.h |  8 ++------
- 4 files changed, 33 insertions(+), 36 deletions(-)
+ drivers/mtd/mtdchar.c | 107 +++++++++++++++++++++++++++++++++++++++++---------
+ 1 file changed, 88 insertions(+), 19 deletions(-)
 
-diff --git a/drivers/mtd/nand/nand_base.c b/drivers/mtd/nand/nand_base.c
-index ee89195..91672bf 100644
---- a/drivers/mtd/nand/nand_base.c
-+++ b/drivers/mtd/nand/nand_base.c
-@@ -4279,10 +4279,8 @@ int nand_scan_tail(struct mtd_info *mtd)
- 		}
- 
- 		/* See nand_bch_init() for details. */
--		ecc->bytes = DIV_ROUND_UP(
--				ecc->strength * fls(8 * ecc->size), 8);
--		ecc->priv = nand_bch_init(mtd, ecc->size, ecc->bytes,
--					       &ecc->layout);
-+		ecc->bytes = 0;
-+		ecc->priv = nand_bch_init(mtd);
- 		if (!ecc->priv) {
- 			pr_warn("BCH ECC initialization failed!\n");
- 			BUG();
-diff --git a/drivers/mtd/nand/nand_bch.c b/drivers/mtd/nand/nand_bch.c
-index a87c1b6..b585bae 100644
---- a/drivers/mtd/nand/nand_bch.c
-+++ b/drivers/mtd/nand/nand_bch.c
-@@ -107,9 +107,6 @@ EXPORT_SYMBOL(nand_bch_correct_data);
- /**
-  * nand_bch_init - [NAND Interface] Initialize NAND BCH error correction
-  * @mtd:	MTD block structure
-- * @eccsize:	ecc block size in bytes
-- * @eccbytes:	ecc length in bytes
-- * @ecclayout:	output default layout
-  *
-  * Returns:
-  *  a pointer to a new NAND BCH control structure, or NULL upon failure
-@@ -123,14 +120,21 @@ EXPORT_SYMBOL(nand_bch_correct_data);
-  * @eccsize = 512  (thus, m=13 is the smallest integer such that 2^m-1 > 512*8)
-  * @eccbytes = 7   (7 bytes are required to store m*t = 13*4 = 52 bits)
+diff --git a/drivers/mtd/mtdchar.c b/drivers/mtd/mtdchar.c
+index 6d19835..cd64ab7 100644
+--- a/drivers/mtd/mtdchar.c
++++ b/drivers/mtd/mtdchar.c
+@@ -472,28 +472,101 @@ static int mtdchar_readoob(struct file *file, struct mtd_info *mtd,
+  * nand_ecclayout flexibly (i.e. the struct may change size in new
+  * releases without requiring major rewrites).
   */
--struct nand_bch_control *
--nand_bch_init(struct mtd_info *mtd, unsigned int eccsize, unsigned int eccbytes,
--	      struct nand_ecclayout **ecclayout)
-+struct nand_bch_control *nand_bch_init(struct mtd_info *mtd)
+-static int shrink_ecclayout(const struct nand_ecclayout *from,
+-		struct nand_ecclayout_user *to)
++static int shrink_ecclayout(struct mtd_info *mtd,
++			    struct nand_ecclayout_user *to)
  {
-+	struct nand_chip *nand = mtd_to_nand(mtd);
- 	unsigned int m, t, eccsteps, i;
--	struct nand_ecclayout *layout;
-+	struct nand_ecclayout *layout = nand->ecc.layout;
- 	struct nand_bch_control *nbc = NULL;
- 	unsigned char *erased_page;
-+	unsigned int eccsize = nand->ecc.size;
-+	unsigned int eccbytes = nand->ecc.bytes;
-+	unsigned int eccstrength = nand->ecc.strength;
+-	int i;
++	struct mtd_oob_region oobregion;
++	int i, section = 0, ret;
+ 
+-	if (!from || !to)
++	if (!mtd || !to)
+ 		return -EINVAL;
+ 
+ 	memset(to, 0, sizeof(*to));
+ 
+-	to->eccbytes = min((int)from->eccbytes, MTD_MAX_ECCPOS_ENTRIES);
+-	for (i = 0; i < to->eccbytes; i++)
+-		to->eccpos[i] = from->eccpos[i];
++	to->eccbytes = 0;
++	for (i = 0; i < MTD_MAX_ECCPOS_ENTRIES;) {
++		u32 eccpos;
 +
-+	if (!eccbytes && eccstrength) {
-+		eccbytes = DIV_ROUND_UP(eccstrength * fls(8 * eccsize), 8);
-+		nand->ecc.bytes = eccbytes;
++		ret = mtd_ooblayout_ecc(mtd, section, &oobregion);
++		if (ret < 0) {
++			if (ret != -ERANGE)
++				return ret;
++
++			break;
++		}
++
++		eccpos = oobregion.offset;
++		for (; i < MTD_MAX_ECCPOS_ENTRIES &&
++		       eccpos < oobregion.offset + oobregion.length; i++) {
++			to->eccpos[i] = eccpos++;
++			to->eccbytes++;
++		}
 +	}
  
- 	if (!eccsize || !eccbytes) {
- 		printk(KERN_WARNING "ecc parameters not supplied\n");
-@@ -158,7 +162,7 @@ nand_bch_init(struct mtd_info *mtd, unsigned int eccsize, unsigned int eccbytes,
- 	eccsteps = mtd->writesize/eccsize;
- 
- 	/* if no ecc placement scheme was provided, build one */
--	if (!*ecclayout) {
-+	if (!layout) {
- 
- 		/* handle large page devices only */
- 		if (mtd->oobsize < 64) {
-@@ -184,7 +188,7 @@ nand_bch_init(struct mtd_info *mtd, unsigned int eccsize, unsigned int eccbytes,
- 		layout->oobfree[0].offset = 2;
- 		layout->oobfree[0].length = mtd->oobsize-2-layout->eccbytes;
- 
--		*ecclayout = layout;
-+		nand->ecc.layout = layout;
- 	}
- 
- 	/* sanity checks */
-@@ -192,7 +196,7 @@ nand_bch_init(struct mtd_info *mtd, unsigned int eccsize, unsigned int eccbytes,
- 		printk(KERN_WARNING "eccsize %u is too large\n", eccsize);
- 		goto fail;
- 	}
--	if ((*ecclayout)->eccbytes != (eccsteps*eccbytes)) {
-+	if (layout->eccbytes != (eccsteps*eccbytes)) {
- 		printk(KERN_WARNING "invalid ecc layout\n");
- 		goto fail;
- 	}
-@@ -216,6 +220,9 @@ nand_bch_init(struct mtd_info *mtd, unsigned int eccsize, unsigned int eccbytes,
- 	for (i = 0; i < eccbytes; i++)
- 		nbc->eccmask[i] ^= 0xff;
- 
-+	if (!eccstrength)
-+		nand->ecc.strength = (eccbytes * 8) / fls(8 * eccsize);
+ 	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES; i++) {
+-		if (from->oobfree[i].length == 0 &&
+-				from->oobfree[i].offset == 0)
++		ret = mtd_ooblayout_free(mtd, i, &oobregion);
++		if (ret < 0) {
++			if (ret != -ERANGE)
++				return ret;
 +
- 	return nbc;
- fail:
- 	nand_bch_free(nbc);
-diff --git a/drivers/mtd/nand/omap2.c b/drivers/mtd/nand/omap2.c
-index c553f78..0749ca1 100644
---- a/drivers/mtd/nand/omap2.c
-+++ b/drivers/mtd/nand/omap2.c
-@@ -1807,13 +1807,19 @@ static int omap_nand_probe(struct platform_device *pdev)
- 		goto return_error;
- 	}
- 
-+	/*
-+	 * Bail out earlier to let NAND_ECC_SOFT code create its own
-+	 * ecclayout instead of using ours.
-+	 */
-+	if (info->ecc_opt == OMAP_ECC_HAM1_CODE_SW) {
-+		nand_chip->ecc.mode = NAND_ECC_SOFT;
-+		goto scan_tail;
++			break;
++		}
++
++		to->oobfree[i].offset = oobregion.offset;
++		to->oobfree[i].length = oobregion.length;
++		to->oobavail += to->oobfree[i].length;
 +	}
 +
- 	/* populate MTD interface based on ECC scheme */
- 	ecclayout		= &info->oobinfo;
-+	nand_chip->ecc.layout	= ecclayout;
- 	switch (info->ecc_opt) {
--	case OMAP_ECC_HAM1_CODE_SW:
--		nand_chip->ecc.mode = NAND_ECC_SOFT;
--		break;
--
- 	case OMAP_ECC_HAM1_CODE_HW:
- 		pr_info("nand: using OMAP_ECC_HAM1_CODE_HW\n");
- 		nand_chip->ecc.mode             = NAND_ECC_HW;
-@@ -1861,10 +1867,7 @@ static int omap_nand_probe(struct platform_device *pdev)
- 		ecclayout->oobfree->offset	= 1 +
- 				ecclayout->eccpos[ecclayout->eccbytes - 1] + 1;
- 		/* software bch library is used for locating errors */
--		nand_chip->ecc.priv		= nand_bch_init(mtd,
--							nand_chip->ecc.size,
--							nand_chip->ecc.bytes,
--							&ecclayout);
-+		nand_chip->ecc.priv		= nand_bch_init(mtd);
- 		if (!nand_chip->ecc.priv) {
- 			dev_err(&info->pdev->dev, "unable to use BCH library\n");
- 			err = -EINVAL;
-@@ -1925,10 +1928,7 @@ static int omap_nand_probe(struct platform_device *pdev)
- 		ecclayout->oobfree->offset	= 1 +
- 				ecclayout->eccpos[ecclayout->eccbytes - 1] + 1;
- 		/* software bch library is used for locating errors */
--		nand_chip->ecc.priv		= nand_bch_init(mtd,
--							nand_chip->ecc.size,
--							nand_chip->ecc.bytes,
--							&ecclayout);
-+		nand_chip->ecc.priv		= nand_bch_init(mtd);
- 		if (!nand_chip->ecc.priv) {
- 			dev_err(&info->pdev->dev, "unable to use BCH library\n");
- 			err = -EINVAL;
-@@ -2002,9 +2002,6 @@ static int omap_nand_probe(struct platform_device *pdev)
- 		goto return_error;
++	return 0;
++}
++
++static int get_oobinfo(struct mtd_info *mtd, struct nand_oobinfo *to)
++{
++	struct mtd_oob_region oobregion;
++	int i, section = 0, ret;
++
++	if (!mtd || !to)
++		return -EINVAL;
++
++	memset(to, 0, sizeof(*to));
++
++	to->eccbytes = 0;
++	for (i = 0; i < ARRAY_SIZE(to->eccpos);) {
++		u32 eccpos;
++
++		ret = mtd_ooblayout_ecc(mtd, section, &oobregion);
++		if (ret < 0) {
++			if (ret != -ERANGE)
++				return ret;
++
+ 			break;
+-		to->oobavail += from->oobfree[i].length;
+-		to->oobfree[i] = from->oobfree[i];
++		}
++
++		if (oobregion.length + i > ARRAY_SIZE(to->eccpos))
++			return -EINVAL;
++
++		eccpos = oobregion.offset;
++		for (; eccpos < oobregion.offset + oobregion.length; i++) {
++			to->eccpos[i] = eccpos++;
++			to->eccbytes++;
++		}
  	}
  
--	if (info->ecc_opt == OMAP_ECC_HAM1_CODE_SW)
--		goto scan_tail;
--
- 	/* all OOB bytes from oobfree->offset till end off OOB are free */
- 	ecclayout->oobfree->length = mtd->oobsize - ecclayout->oobfree->offset;
- 	/* check if NAND device's OOB is enough to store ECC signatures */
-@@ -2015,7 +2012,6 @@ static int omap_nand_probe(struct platform_device *pdev)
- 		err = -EINVAL;
- 		goto return_error;
- 	}
--	nand_chip->ecc.layout = ecclayout;
- 
- scan_tail:
- 	/* second phase scan */
-diff --git a/include/linux/mtd/nand_bch.h b/include/linux/mtd/nand_bch.h
-index fb0bc34..98f20ef 100644
---- a/include/linux/mtd/nand_bch.h
-+++ b/include/linux/mtd/nand_bch.h
-@@ -32,9 +32,7 @@ int nand_bch_correct_data(struct mtd_info *mtd, u_char *dat, u_char *read_ecc,
- /*
-  * Initialize BCH encoder/decoder
-  */
--struct nand_bch_control *
--nand_bch_init(struct mtd_info *mtd, unsigned int eccsize,
--	      unsigned int eccbytes, struct nand_ecclayout **ecclayout);
-+struct nand_bch_control *nand_bch_init(struct mtd_info *mtd);
- /*
-  * Release BCH encoder/decoder resources
-  */
-@@ -58,9 +56,7 @@ nand_bch_correct_data(struct mtd_info *mtd, unsigned char *buf,
- 	return -ENOTSUPP;
++	for (i = 0; i < 8; i++) {
++		ret = mtd_ooblayout_free(mtd, i, &oobregion);
++		if (ret < 0) {
++			if (ret != -ERANGE)
++				return ret;
++
++			break;
++		}
++
++		to->oobfree[i][0] = oobregion.offset;
++		to->oobfree[i][1] = oobregion.length;
++	}
++
++	to->useecc = MTD_NANDECC_AUTOPLACE;
++
+ 	return 0;
  }
  
--static inline struct nand_bch_control *
--nand_bch_init(struct mtd_info *mtd, unsigned int eccsize,
--	      unsigned int eccbytes, struct nand_ecclayout **ecclayout)
-+static inline struct nand_bch_control *nand_bch_init(struct mtd_info *mtd)
- {
- 	return NULL;
- }
+@@ -817,14 +890,10 @@ static int mtdchar_ioctl(struct file *file, u_int cmd, u_long arg)
+ 
+ 		if (!mtd->ecclayout)
+ 			return -EOPNOTSUPP;
+-		if (mtd->ecclayout->eccbytes > ARRAY_SIZE(oi.eccpos))
+-			return -EINVAL;
+ 
+-		oi.useecc = MTD_NANDECC_AUTOPLACE;
+-		memcpy(&oi.eccpos, mtd->ecclayout->eccpos, sizeof(oi.eccpos));
+-		memcpy(&oi.oobfree, mtd->ecclayout->oobfree,
+-		       sizeof(oi.oobfree));
+-		oi.eccbytes = mtd->ecclayout->eccbytes;
++		ret = get_oobinfo(mtd, &oi);
++		if (ret)
++			return ret;
+ 
+ 		if (copy_to_user(argp, &oi, sizeof(struct nand_oobinfo)))
+ 			return -EFAULT;
+@@ -920,7 +989,7 @@ static int mtdchar_ioctl(struct file *file, u_int cmd, u_long arg)
+ 		if (!usrlay)
+ 			return -ENOMEM;
+ 
+-		shrink_ecclayout(mtd->ecclayout, usrlay);
++		shrink_ecclayout(mtd, usrlay);
+ 
+ 		if (copy_to_user(argp, usrlay, sizeof(*usrlay)))
+ 			ret = -EFAULT;
 -- 
 2.1.4
