@@ -1,12 +1,12 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v3 45/52] mtd: nand: sh_flctl: switch to mtd_ooblayout_ops
-Date: Fri, 26 Feb 2016 01:57:53 +0100
-Message-ID: <1456448280-27788-46-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v3 46/52] mtd: nand: sm_common: switch to mtd_ooblayout_ops
+Date: Fri, 26 Feb 2016 01:57:54 +0100
+Message-ID: <1456448280-27788-47-git-send-email-boris.brezillon@free-electrons.com>
 References: <1456448280-27788-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBQGLX23AKGQETXU4OJA-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBB3GLX23AKGQEYD22LPI-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 In-Reply-To: <1456448280-27788-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
@@ -24,117 +24,130 @@ ECC/OOB layout to MTD users.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- drivers/mtd/nand/sh_flctl.c | 87 ++++++++++++++++++++++++++++++++++-----------
- 1 file changed, 67 insertions(+), 20 deletions(-)
+ drivers/mtd/nand/sm_common.c | 93 ++++++++++++++++++++++++++++++++++++--------
+ 1 file changed, 77 insertions(+), 16 deletions(-)
 
-diff --git a/drivers/mtd/nand/sh_flctl.c b/drivers/mtd/nand/sh_flctl.c
-index 4814402..fa46610 100644
---- a/drivers/mtd/nand/sh_flctl.c
-+++ b/drivers/mtd/nand/sh_flctl.c
-@@ -43,26 +43,73 @@
- #include <linux/mtd/partitions.h>
- #include <linux/mtd/sh_flctl.h>
+diff --git a/drivers/mtd/nand/sm_common.c b/drivers/mtd/nand/sm_common.c
+index c514740..5939dff 100644
+--- a/drivers/mtd/nand/sm_common.c
++++ b/drivers/mtd/nand/sm_common.c
+@@ -12,14 +12,47 @@
+ #include <linux/sizes.h>
+ #include "sm_common.h"
  
--static struct nand_ecclayout flctl_4secc_oob_16 = {
--	.eccbytes = 10,
--	.eccpos = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+-static struct nand_ecclayout nand_oob_sm = {
+-	.eccbytes = 6,
+-	.eccpos = {8, 9, 10, 13, 14, 15},
 -	.oobfree = {
--		{.offset = 12,
--		. length = 4} },
-+static int flctl_4secc_ooblayout_sp_ecc(struct mtd_info *mtd, int section,
-+					struct mtd_oob_region *oobregion)
+-		{.offset = 0 , .length = 4}, /* reserved */
+-		{.offset = 6 , .length = 2}, /* LBA1 */
+-		{.offset = 11, .length = 2}  /* LBA2 */
++static int oob_sm_ooblayout_ecc(struct mtd_info *mtd, int section,
++				struct mtd_oob_region *oobregion)
 +{
-+	struct nand_chip *chip = mtd_to_nand(mtd);
++	if (section > 1)
++		return -ERANGE;
 +
++	oobregion->length = 3;
++	oobregion->offset = ((section + 1) * 8) - 3;
++
++	return 0;
++}
++
++static int oob_sm_ooblayout_free(struct mtd_info *mtd, int section,
++				 struct mtd_oob_region *oobregion)
++{
++	switch (section) {
++	case 0:
++		/* reserved */
++		oobregion->offset = 0;
++		oobregion->length = 4;
++		break;
++	case 1:
++		/* LBA1 */
++		oobregion->offset = 6;
++		oobregion->length = 2;
++		break;
++	case 2:
++		/* LBA2 */
++		oobregion->offset = 11;
++		oobregion->length = 2;
++		break;
++	default:
++		return -ERANGE;
+ 	}
++
++	return 0;
++}
++
++static const struct mtd_ooblayout_ops oob_sm_ops = {
++	.ecc = oob_sm_ooblayout_ecc,
++	.free = oob_sm_ooblayout_free,
+ };
+ 
+ /* NOTE: This layout is is not compatabable with SmartMedia, */
+@@ -28,15 +61,43 @@ static struct nand_ecclayout nand_oob_sm = {
+ /* If you use smftl, it will bypass this and work correctly */
+ /* If you not, then you break SmartMedia compliance anyway */
+ 
+-static struct nand_ecclayout nand_oob_sm_small = {
+-	.eccbytes = 3,
+-	.eccpos = {0, 1, 2},
+-	.oobfree = {
+-		{.offset = 3 , .length = 2}, /* reserved */
+-		{.offset = 6 , .length = 2}, /* LBA1 */
++static int oob_sm_small_ooblayout_ecc(struct mtd_info *mtd, int section,
++				      struct mtd_oob_region *oobregion)
++{
 +	if (section)
 +		return -ERANGE;
 +
++	oobregion->length = 3;
 +	oobregion->offset = 0;
-+	oobregion->length = chip->ecc.bytes;
 +
 +	return 0;
 +}
 +
-+static int flctl_4secc_ooblayout_sp_free(struct mtd_info *mtd, int section,
-+					 struct mtd_oob_region *oobregion)
++static int oob_sm_small_ooblayout_free(struct mtd_info *mtd, int section,
++				       struct mtd_oob_region *oobregion)
 +{
-+	if (section)
++	switch (section) {
++	case 0:
++		/* reserved */
++		oobregion->offset = 3;
++		oobregion->length = 2;
++		break;
++	case 1:
++		/* LBA1 */
++		oobregion->offset = 6;
++		oobregion->length = 2;
++		break;
++	default:
 +		return -ERANGE;
-+
-+	oobregion->offset = 12;
-+	oobregion->length = 4;
-+
+ 	}
+-};
+ 
 +	return 0;
 +}
 +
-+static const struct mtd_ooblayout_ops flctl_4secc_oob_smallpage_ops = {
-+	.ecc = flctl_4secc_ooblayout_sp_ecc,
-+	.free = flctl_4secc_ooblayout_sp_free,
- };
++static const struct mtd_ooblayout_ops oob_sm_small_ops = {
++	.ecc = oob_sm_small_ooblayout_ecc,
++	.free = oob_sm_small_ooblayout_free,
++};
  
--static struct nand_ecclayout flctl_4secc_oob_64 = {
--	.eccbytes = 4 * 10,
--	.eccpos = {
--		 6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
--		22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
--		38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
--		54, 55, 56, 57, 58, 59, 60, 61, 62, 63 },
--	.oobfree = {
--		{.offset =  2, .length = 4},
--		{.offset = 16, .length = 6},
--		{.offset = 32, .length = 6},
--		{.offset = 48, .length = 6} },
-+static int flctl_4secc_ooblayout_lp_ecc(struct mtd_info *mtd, int section,
-+					struct mtd_oob_region *oobregion)
-+{
-+	struct nand_chip *chip = mtd_to_nand(mtd);
-+
-+	if (section >= chip->ecc.steps)
-+		return -ERANGE;
-+
-+	oobregion->offset = (section * 16) + 6;
-+	oobregion->length = chip->ecc.bytes;
-+
-+	return 0;
-+}
-+
-+static int flctl_4secc_ooblayout_lp_free(struct mtd_info *mtd, int section,
-+					 struct mtd_oob_region *oobregion)
-+{
-+	struct nand_chip *chip = mtd_to_nand(mtd);
-+
-+	if (section >= chip->ecc.steps)
-+		return -ERANGE;
-+
-+	oobregion->offset = section * 16;
-+	oobregion->length = 6;
-+
-+	if (!section) {
-+		oobregion->offset += 2;
-+		oobregion->length -= 2;
-+	}
-+
-+	return 0;
-+}
-+
-+static const struct mtd_ooblayout_ops flctl_4secc_oob_largepage_ops = {
-+	.ecc = flctl_4secc_ooblayout_lp_ecc,
-+	.free = flctl_4secc_ooblayout_lp_free,
- };
+ static int sm_block_markbad(struct mtd_info *mtd, loff_t ofs)
+ {
+@@ -121,9 +182,9 @@ int sm_register_device(struct mtd_info *mtd, int smartmedia)
  
- static uint8_t scan_ff_pattern[] = { 0xff, 0xff };
-@@ -987,10 +1034,10 @@ static int flctl_chip_init_tail(struct mtd_info *mtd)
- 
- 	if (flctl->hwecc) {
- 		if (mtd->writesize == 512) {
--			chip->ecc.layout = &flctl_4secc_oob_16;
-+			mtd_set_ooblayout(mtd, &flctl_4secc_oob_smallpage_ops);
- 			chip->badblock_pattern = &flctl_4secc_smallpage;
- 		} else {
--			chip->ecc.layout = &flctl_4secc_oob_64;
-+			mtd_set_ooblayout(mtd, &flctl_4secc_oob_largepage_ops);
- 			chip->badblock_pattern = &flctl_4secc_largepage;
- 		}
+ 	/* ECC layout */
+ 	if (mtd->writesize == SM_SECTOR_SIZE)
+-		chip->ecc.layout = &nand_oob_sm;
++		mtd_set_ooblayout(mtd, &oob_sm_ops);
+ 	else if (mtd->writesize == SM_SMALL_PAGE)
+-		chip->ecc.layout = &nand_oob_sm_small;
++		mtd_set_ooblayout(mtd, &oob_sm_small_ops);
+ 	else
+ 		return -ENODEV;
  
 -- 
 2.1.4
