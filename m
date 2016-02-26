@@ -1,62 +1,56 @@
-From: David Miller <davem@davemloft.net>
-Subject: Re: [PATCH] uapi glibc compat: fix cases where glibc net/if.h is
- included before linux/if.h
-Date: Fri, 26 Feb 2016 11:28:17 -0500 (EST)
-Message-ID: <20160226.112817.1495300719463061587.davem@davemloft.net>
-References: <1454853801-18064-1-git-send-email-mikko.rapeli@iki.fi>
-	<20160217.104620.239734387234680136.davem@davemloft.net>
-	<20160226072513.GH6104@lakka.kapsi.fi>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: [PATCH v4 1/5] getcpu_cache system call: cache CPU number of
+ running thread
+Date: Fri, 26 Feb 2016 17:29:55 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1602261719440.3638@nanos>
+References: <1456270120-7560-1-git-send-email-mathieu.desnoyers@efficios.com> <1456270120-7560-2-git-send-email-mathieu.desnoyers@efficios.com> <20160225095635.GO6356@twins.programming.kicks-ass.net> <390571988.7745.1456419326288.JavaMail.zimbra@efficios.com>
+ <20160225170416.GV6356@twins.programming.kicks-ass.net> <2135602720.7810.1456420671941.JavaMail.zimbra@efficios.com> <20160226113304.GA6356@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <libc-alpha-return-67666-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <20160226072513.GH6104@lakka.kapsi.fi>
-To: mikko.rapeli@iki.fi
-Cc: shemming@brocade.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, jwboyer@fedoraproject.org, pablo@netfilter.org, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, libc-alpha@sourceware.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160226113304.GA6356-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Date: Fri, 26 Feb 2016 09:25:13 +0200
-
-> (Adding libc-alpha list, review of https://lkml.org/lkml/2016/2/7/89 )
+On Fri, 26 Feb 2016, Peter Zijlstra wrote:
+> On Thu, Feb 25, 2016 at 05:17:51PM +0000, Mathieu Desnoyers wrote:
+> > ----- On Feb 25, 2016, at 12:04 PM, Peter Zijlstra peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org wrote:
+> > 
+> > > On Thu, Feb 25, 2016 at 04:55:26PM +0000, Mathieu Desnoyers wrote:
+> > >> ----- On Feb 25, 2016, at 4:56 AM, Peter Zijlstra peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org wrote:
+> > >> The restartable sequences are intrinsically designed to work
+> > >> on per-cpu data, so they need to fetch the current CPU number
+> > >> within the rseq critical section. This is where the getcpu_cache
+> > >> system call becomes very useful when combined with rseq:
+> > >> getcpu_cache allows reading the current CPU number in a
+> > >> fraction of cycle.
+> > > 
+> > > Yes yes, I know how restartable sequences work.
+> > > 
+> > > But what I worry about is that they want a cpu number and a sequence
+> > > number, and for performance it would be very good if those live in the
+> > > same cacheline.
+> > > 
+> > > That means either getcpu needs to grow a seq number, or restartable
+> > > sequences need to _also_ provide the cpu number.
+> > 
+> > If we plan things well, we could have both the cpu number and the
+> > seqnum in the same cache line, registered by two different system
+> > calls. It's up to user-space to organize those two variables
+> > to fit within the same cache-line.
 > 
-> On Wed, Feb 17, 2016 at 10:46:20AM -0500, David Miller wrote:
->> From: Mikko Rapeli <mikko.rapeli@iki.fi>
->> Date: Sun,  7 Feb 2016 16:03:21 +0200
->> 
->> > @@ -68,6 +72,8 @@
->> >   * @IFF_ECHO: echo sent packets. Volatile.
->> >   */
->> >  enum net_device_flags {
->> > +/* for compatibility with glibc net/if.h */
->> > +#if __UAPI_DEF_IF_NET_DEVICE_FLAGS
->> >  	IFF_UP				= 1<<0,  /* sysfs */
->> >  	IFF_BROADCAST			= 1<<1,  /* volatile */
->> >  	IFF_DEBUG			= 1<<2,  /* sysfs */
->> > @@ -84,11 +90,14 @@ enum net_device_flags {
->> >  	IFF_PORTSEL			= 1<<13, /* sysfs */
->> >  	IFF_AUTOMEDIA			= 1<<14, /* sysfs */
->> >  	IFF_DYNAMIC			= 1<<15, /* sysfs */
->> > +#endif /* __UAPI_DEF_IF_NET_DEVICE_FLAGS */
->> >  	IFF_LOWER_UP			= 1<<16, /* volatile */
->> >  	IFF_DORMANT			= 1<<17, /* volatile */
->> >  	IFF_ECHO			= 1<<18, /* volatile */
->> >  };
->> 
->> This is going to get messy is IFF_LOWER_UP, IFF_DORMANT, and IFF_ECHO
->> get added the the glibc header.  Why not just handle it now with
->> another __UAPI_DEF_FOO guard so that the additions to net/if.h can
->> deal with this case too.
-> 
-> Do you mean that the enum should be protected with a single guard or
-> should I have one guard for current conflicts and one for the future
-> if glibc headers include IFF_LOWER_UP and others?
+> I feel this is more fragile than needed. Why not do a single systemcall
+> that does both?
 
-I'm ambivalent about the mechanism, and I'm more concerned about covering
-those three values in your change rather than eliding them.
+Right. There is no point in having two calls and two update mechanisms for a
+very similar purpose.
+
+So let userspace have one struct where cpu/seq and whatever is required for
+rseq is located and flag at register time which parts of the struct need to be
+updated.
+
+Thanks,
+
+	tglx
