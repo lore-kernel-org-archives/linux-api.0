@@ -1,235 +1,183 @@
-From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v3 52/52] mtd: kill the nand_ecclayout struct
-Date: Fri, 26 Feb 2016 01:58:00 +0100
-Message-ID: <1456448280-27788-53-git-send-email-boris.brezillon@free-electrons.com>
+From: Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>
+Subject: Re: [PATCH v3 00/52] mtd: rework ECC layout definition
+Date: Thu, 25 Feb 2016 17:27:23 -0800
+Message-ID: <d968b867f4d7f603581a0ff83e07c15c@agner.ch>
 References: <1456448280-27788-1-git-send-email-boris.brezillon@free-electrons.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Reply-To: stefan-XLVq0VzYD2Y@public.gmane.org
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-sunxi+bncBCEJHTXX7MFBBHOVX23AKGQE2FACLXA-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 In-Reply-To: <1456448280-27788-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
-Cc: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Haojian Zhuang <haojian.zhuang-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Robert Jarzmik <robert.jarzmik-GANU6spQydw@public.gmane.org>, Kukjin Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Nicolas Ferre <nicolas.ferre-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Alexandre Belloni <alexandre.belloni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Wenyou Yang <wenyou.yang-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Josh Wu <rainyfeeling-1ViLX0X+lBJBDgjK7y7TUQ@public.gmane.org>, Ezequiel Garcia <ezequiel.garcia-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Chen-Yu Tsai <wens-jdAy2FN1RRM@public.gmane.org>, linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org
+List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Archive: <https://groups.google.com/group/linux-sunxi
+Sender: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+List-Subscribe: <https://groups.google.com/group/linux-sunxi/subscribe>, <mailto:linux-sunxi+subscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Unsubscribe: <mailto:googlegroups-manage+1076902468213+unsubscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>,
+ <https://groups.google.com/group/linux-sunxi/subscribe>
+To: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Cc: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Haojian Zhuang <haojian.zhuang-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Robert Jarzmik <robert.jarzmik-GANU6spQydw@public.gmane.org>, Kukjin Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Nicolas Ferre <nicolas.ferre-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Alexandre Belloni <alexandre.belloni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Wenyou Yang <wenyou.yang-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Josh Wu <rainyfeeling-1ViLX0X+lBJBDgjK7y7TUQ@public.gmane.org>, Ezequiel Garcia <ezequiel.garcia-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Chen-Yu Tsai <wens-jdAy2FN1RRM@public.gmane.org>, linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>G
 List-Id: linux-api@vger.kernel.org
 
-Now that all MTD drivers have moved to the mtd_ooblayout_ops model we can
-safely remove the struct nand_ecclayout definition, and all the remaining
-places where it was still used.
+Hi Boris,
 
-Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
----
- drivers/mtd/mtdchar.c      |  12 ++---
- drivers/mtd/mtdcore.c      | 117 ---------------------------------------------
- include/linux/mtd/mtd.h    |  20 --------
- include/uapi/mtd/mtd-abi.h |   2 +-
- 4 files changed, 7 insertions(+), 144 deletions(-)
+On 2016-02-25 16:57, Boris Brezillon wrote:
+> Hello,
+> 
+> This patchset aims at getting rid of the nand_ecclayout limitations.
+> struct nand_ecclayout is defining fixed eccpos and oobfree arrays which
+> can only be increased by modifying the MTD_MAX_ECCPOS_ENTRIES_LARGE and
+> MTD_MAX_OOBFREE_ENTRIES_LARGE macros.
+> This approach forces us to modify the macro values each time we add a
+> new NAND chip with a bigger OOB area, and increasing these arrays also
+> penalize all platforms, even those who only support small NAND devices
+> (with small OOB area).
+> 
+> The idea to overcome this limitation, is to define the ECC/OOB layout
+> by the mean of two functions: ->ecc() and ->free(), which will
+> basically return the same information has those stored in the
+> nand_ecclayout struct.
+> 
+> Another advantage of this solution is that ECC layouts are usually
+> following a repetitive pattern (i.e. leave X bytes free and put Y bytes
+> of ECC per ECC chunk), which allows one to implement the ->ecc()
+> and ->free() functions with a simple logic that can be applied
+> to any size of OOB.
+> 
+> Patches 1 to 4 are just cleanups or trivial fixes that can be taken
+> independently.
+> 
+> Also note that the last two commits are removing the nand_ecclayout
+> definition, thus preventing any new driver to use this structure.
+> Of course, this step can be delayed if some of the previous patches
+> are not accepted.
 
-diff --git a/drivers/mtd/mtdchar.c b/drivers/mtd/mtdchar.c
-index 3fad2c7..2a47a3f 100644
---- a/drivers/mtd/mtdchar.c
-+++ b/drivers/mtd/mtdchar.c
-@@ -465,12 +465,12 @@ static int mtdchar_readoob(struct file *file, struct mtd_info *mtd,
- }
- 
- /*
-- * Copies (and truncates, if necessary) data from the larger struct,
-- * nand_ecclayout, to the smaller, deprecated layout struct,
-- * nand_ecclayout_user. This is necessary only to support the deprecated
-- * API ioctl ECCGETLAYOUT while allowing all new functionality to use
-- * nand_ecclayout flexibly (i.e. the struct may change size in new
-- * releases without requiring major rewrites).
-+ * Copies (and truncates, if necessary) OOB layout information to the
-+ * deprecated layout struct, nand_ecclayout_user. This is necessary only to
-+ * support the deprecated API ioctl ECCGETLAYOUT while allowing all new
-+ * functionality to use mtd_ooblayout_ops flexibly (i.e. mtd_ooblayout_ops
-+ * can describe any kind of OOB layout with almost zero overhead from a
-+ * memory usage point of view).
-  */
- static int shrink_ecclayout(struct mtd_info *mtd,
- 			    struct nand_ecclayout_user *to)
-diff --git a/drivers/mtd/mtdcore.c b/drivers/mtd/mtdcore.c
-index 3b1dc09..c921bdbe 100644
---- a/drivers/mtd/mtdcore.c
-+++ b/drivers/mtd/mtdcore.c
-@@ -1355,123 +1355,6 @@ int mtd_ooblayout_count_eccbytes(struct mtd_info *mtd)
- }
- EXPORT_SYMBOL_GPL(mtd_ooblayout_count_eccbytes);
- 
--/**
-- * mtd_ecclayout_ecc - Default ooblayout_ecc iterator implementation
-- * @mtd: MTD device structure
-- * @section: ECC section. Depending on the layout you may have all the ECC
-- *	     bytes stored in a single contiguous section, or one section
-- *	     per ECC chunk (and sometime several sections for a single ECC
-- *	     ECC chunk)
-- * @oobecc: OOB region struct filled with the appropriate ECC position
-- *	    information
-- *
-- * This function is just a wrapper around the mtd->ecclayout field and is
-- * here to ease the transition to the mtd_ooblayout_ops approach.
-- * All it does is convert the layout->eccpos information into proper oob
-- * region definitions.
-- *
-- * Returns zero on success, a negative error code otherwise.
-- */
--static int mtd_ecclayout_ecc(struct mtd_info *mtd, int section,
--			     struct mtd_oob_region *oobecc)
--{
--	int eccbyte = 0, cursection = 0, length = 0, eccpos = 0;
--
--	if (!mtd->ecclayout)
--		return -ENOTSUPP;
--
--	/*
--	 * This logic allows us to reuse the ->ecclayout information and
--	 * expose them as ECC regions (as done for the OOB free regions).
--	 *
--	 * TODO: this should be dropped as soon as we get rid of the
--	 * ->ecclayout field.
--	 */
--	for (eccbyte = 0; eccbyte < mtd->ecclayout->eccbytes; eccbyte++) {
--		eccpos = mtd->ecclayout->eccpos[eccbyte];
--
--		if (eccbyte < mtd->ecclayout->eccbytes - 1) {
--			int neccpos = mtd->ecclayout->eccpos[eccbyte + 1];
--
--			if (eccpos + 1 == neccpos) {
--				length++;
--				continue;
--			}
--		}
--
--		if (section == cursection)
--			break;
--
--		length = 0;
--		cursection++;
--	}
--
--	if (cursection != section || eccbyte >= mtd->ecclayout->eccbytes)
--		return -ERANGE;
--
--	oobecc->length = length + 1;
--	oobecc->offset = eccpos - length;
--
--	return 0;
--}
--
--/**
-- * mtd_ecclayout_ecc - Default ooblayout_free iterator implementation
-- * @mtd: MTD device structure
-- * @section: Free section. Depending on the layout you may have all the free
-- *	     bytes stored in a single contiguous section, or one section
-- *	     per ECC chunk (and sometime several sections for a single ECC
-- *	     ECC chunk)
-- * @oobfree: OOB region struct filled with the appropriate free position
-- *	     information
-- *
-- * This function is just a wrapper around the mtd->ecclayout field and is
-- * here to ease the transition to the mtd_ooblayout_ops approach.
-- * All it does is convert the layout->oobfree information into proper oob
-- * region definitions.
-- *
-- * Returns zero on success, a negative error code otherwise.
-- */
--static int mtd_ecclayout_free(struct mtd_info *mtd, int section,
--			      struct mtd_oob_region *oobfree)
--{
--	struct nand_ecclayout *layout = mtd->ecclayout;
--
--	if (!layout)
--		return -ENOTSUPP;
--
--	if (section >= MTD_MAX_OOBFREE_ENTRIES_LARGE ||
--	    !layout->oobfree[section].length)
--		return -ERANGE;
--
--	oobfree->offset = layout->oobfree[section].offset;
--	oobfree->length = layout->oobfree[section].length;
--
--	return 0;
--}
--
--static const struct mtd_ooblayout_ops mtd_ecclayout_wrapper_ops = {
--	.ecc = mtd_ecclayout_ecc,
--	.free = mtd_ecclayout_free,
--};
--
--/**
-- * mtd_set_ecclayout - Attach an ecclayout to an MTD device
-- * @mtd: MTD device structure
-- * @ecclayout: The ecclayout to attach to the device
-- *
-- * Returns zero on success, a negative error code otherwise.
-- */
--void mtd_set_ecclayout(struct mtd_info *mtd, struct nand_ecclayout *ecclayout)
--{
--	if (!mtd || !ecclayout)
--		return;
--
--	mtd->ecclayout = ecclayout;
--	mtd_set_ooblayout(mtd, &mtd_ecclayout_wrapper_ops);
--}
--EXPORT_SYMBOL_GPL(mtd_set_ecclayout);
--
- /*
-  * Method to access the protection register area, present in some flash
-  * devices. The user data is one time programmable but the factory data is read
-diff --git a/include/linux/mtd/mtd.h b/include/linux/mtd/mtd.h
-index a38fe9a..df8c116 100644
---- a/include/linux/mtd/mtd.h
-+++ b/include/linux/mtd/mtd.h
-@@ -96,21 +96,6 @@ struct mtd_oob_ops {
- 
- #define MTD_MAX_OOBFREE_ENTRIES_LARGE	32
- #define MTD_MAX_ECCPOS_ENTRIES_LARGE	640
--/*
-- * Internal ECC layout control structure. For historical reasons, there is a
-- * similar, smaller struct nand_ecclayout_user (in mtd-abi.h) that is retained
-- * for export to user-space via the ECCGETLAYOUT ioctl.
-- * nand_ecclayout should be expandable in the future simply by the above macros.
-- *
-- * This structure is now deprecated, you should use struct nand_ecclayout_ops
-- * to describe your OOB layout.
-- */
--struct nand_ecclayout {
--	__u32 eccbytes;
--	__u32 eccpos[MTD_MAX_ECCPOS_ENTRIES_LARGE];
--	struct nand_oobfree oobfree[MTD_MAX_OOBFREE_ENTRIES_LARGE];
--};
--
- /**
-  * struct mtd_oob_region - oob region definition
-  * @offset: region offset
-@@ -200,9 +185,6 @@ struct mtd_info {
- 	const char *name;
- 	int index;
- 
--	/* [Deprecated] ECC layout structure pointer - read only! */
--	struct nand_ecclayout *ecclayout;
--
- 	/* OOB layout description */
- 	const struct mtd_ooblayout_ops *ooblayout;
- 
-@@ -308,8 +290,6 @@ int mtd_ooblayout_set_databytes(struct mtd_info *mtd, const u8 *databuf,
- int mtd_ooblayout_count_freebytes(struct mtd_info *mtd);
- int mtd_ooblayout_count_eccbytes(struct mtd_info *mtd);
- 
--void mtd_set_ecclayout(struct mtd_info *mtd, struct nand_ecclayout *ecclayout);
--
- static inline void mtd_set_ooblayout(struct mtd_info *mtd,
- 				     const struct mtd_ooblayout_ops *ooblayout)
- {
-diff --git a/include/uapi/mtd/mtd-abi.h b/include/uapi/mtd/mtd-abi.h
-index 763bb69..0ec1da2 100644
---- a/include/uapi/mtd/mtd-abi.h
-+++ b/include/uapi/mtd/mtd-abi.h
-@@ -228,7 +228,7 @@ struct nand_oobfree {
-  * complete set of ECC information. The ioctl truncates the larger internal
-  * structure to retain binary compatibility with the static declaration of the
-  * ioctl. Note that the "MTD_MAX_..._ENTRIES" macros represent the max size of
-- * the user struct, not the MAX size of the internal struct nand_ecclayout.
-+ * the user struct, not the MAX size of the internal OOB layout representation.
-  */
- struct nand_ecclayout_user {
- 	__u32 eccbytes;
--- 
-2.1.4
+Is the patch set somewhere available to pull from?
+
+Do I see things right that patch 21/52 contains the crucial function
+nand_ooblayout_ecc_lp which calculate the ECC position? (for those who
+do not provide mtd_ooblayout_ops anyway...)
+
+--
+Stefan
+
+> 
+> Best Regards,
+> 
+> Boris
+> 
+> Changes since v2:
+> - fixed a few bugs in the core and driver implementations
+> 
+> Changes since v1:
+> - unified the way of defining ECC and free bytes
+> - fixed a few bugs in some ->ecc()/->free() implementations
+> - added new helpers to ease ECC and free bytes manipulation
+> - separated driver changes in different commits to ease review
+> - dropped already applied patches
+> 
+> *** BLURB HERE ***
+> 
+> Boris Brezillon (52):
+>   mtd: kill the ecclayout->oobavail field
+>   mtd: create an mtd_oobavail() helper and make use of it
+>   mtd: mtdswap: remove useless if (!mtd->ecclayout) test
+>   mtd: nand: simplify nand_bch_init() usage
+>   mtd: add mtd_ooblayout_xxx() helper functions
+>   mtd: use mtd_ooblayout_xxx() helpers where appropriate
+>   mtd: nand: core: use mtd_ooblayout_xxx() helpers where appropriate
+>   mtd: nand: atmel: use mtd_ooblayout_xxx() helpers where appropriate
+>   mtd: nand: fsl_ifc: use mtd_ooblayout_xxx() helpers where appropriate
+>   mtd: nand: gpmi: use mtd_ooblayout_xxx() helpers where appropriate
+>   mtd: nand: lpc32xx: use mtd_ooblayout_xxx() helpers where appropriate
+>   mtd: nand: omap2: use mtd_ooblayout_xxx() helpers where appropriate
+>   mtd: onenand: use mtd_ooblayout_xxx() helpers where appropriate
+>   mtd: add mtd_set_ecclayout() helper function
+>   mtd: use mtd_set_ecclayout() where appropriate
+>   mtd: nand: use mtd_set_ecclayout() where appropriate
+>   mtd: onenand: use mtd_set_ecclayout() where appropriate
+>   mtd: docg3: use mtd_set_ecclayout() where appropriate
+>   mtd: create an mtd_ooblayout_ops struct to ease ECC layout definition
+>   mtd: docg3: switch to mtd_ooblayout_ops
+>   mtd: nand: implement the default mtd_ooblayout_ops
+>   mtd: nand: bch: switch to mtd_ooblayout_ops
+>   mtd: nand: sharpsl: switch to mtd_ooblayout_ops
+>   mtd: nand: jz4740: switch to mtd_ooblayout_ops
+>   mtd: nand: atmel: switch to mtd_ooblayout_ops
+>   mtd: nand: bf5xx: switch to mtd_ooblayout_ops
+>   mtd: nand: brcm: switch to mtd_ooblayout_ops
+>   mtd: nand: cafe: switch to mtd_ooblayout_ops
+>   mtd: nand: davinci: switch to mtd_ooblayout_ops
+>   mtd: nand: denali: switch to mtd_ooblayout_ops
+>   mtd: nand: diskonchip: switch to mtd_ooblayout_ops
+>   mtd: nand: docg4: switch to mtd_ooblayout_ops
+>   mtd: nand: fsl_elbc: switch to mtd_ooblayout_ops
+>   mtd: nand: fsl_ifc: switch to mtd_ooblayout_ops
+>   mtd: nand: fsmc: switch to mtd_ooblayout_ops
+>   mtd: nand: fsmc: get rid of the fsmc_nand_eccplace struct
+>   mtd: nand: gpmi: switch to mtd_ooblayout_ops
+>   mtd: nand: hisi504: switch to mtd_ooblayout_ops
+>   mtd: nand: jz4780: switch to mtd_ooblayout_ops
+>   mtd: nand: lpc32xx: switch to mtd_ooblayout_ops
+>   mtd: nand: mxc: switch to mtd_ooblayout_ops
+>   mtd: nand: omap2: switch to mtd_ooblayout_ops
+>   mtd: nand: pxa3xx: switch to mtd_ooblayout_ops
+>   mtd: nand: s3c2410: switch to mtd_ooblayout_ops
+>   mtd: nand: sh_flctl: switch to mtd_ooblayout_ops
+>   mtd: nand: sm_common: switch to mtd_ooblayout_ops
+>   mtd: nand: sunxi: switch to mtd_ooblayout_ops
+>   mtd: nand: vf610: switch to mtd_ooblayout_ops
+>   mtd: onenand: switch to mtd_ooblayout_ops
+>   staging: mt29f_spinand: switch to mtd_ooblayout_ops
+>   mtd: nand: kill the ecc->layout field
+>   mtd: kill the nand_ecclayout struct
+> 
+>  arch/arm/mach-pxa/spitz.c                       |  55 +++-
+>  arch/mips/include/asm/mach-jz4740/jz4740_nand.h |   2 +-
+>  arch/mips/jz4740/board-qi_lb60.c                |  87 +++---
+>  drivers/mtd/devices/docg3.c                     |  51 +++-
+>  drivers/mtd/mtdchar.c                           | 123 ++++++--
+>  drivers/mtd/mtdconcat.c                         |   2 +-
+>  drivers/mtd/mtdcore.c                           | 358 ++++++++++++++++++++++++
+>  drivers/mtd/mtdpart.c                           |  28 +-
+>  drivers/mtd/mtdswap.c                           |  24 +-
+>  drivers/mtd/nand/atmel_nand.c                   | 130 ++++-----
+>  drivers/mtd/nand/bf5xx_nand.c                   |  51 ++--
+>  drivers/mtd/nand/brcmnand/brcmnand.c            | 262 ++++++++++-------
+>  drivers/mtd/nand/cafe_nand.c                    |  45 ++-
+>  drivers/mtd/nand/davinci_nand.c                 | 118 +++-----
+>  drivers/mtd/nand/denali.c                       |  51 +++-
+>  drivers/mtd/nand/diskonchip.c                   |  60 +++-
+>  drivers/mtd/nand/docg4.c                        |  34 ++-
+>  drivers/mtd/nand/fsl_elbc_nand.c                |  83 +++---
+>  drivers/mtd/nand/fsl_ifc_nand.c                 | 245 +++++-----------
+>  drivers/mtd/nand/fsmc_nand.c                    | 322 ++++++---------------
+>  drivers/mtd/nand/gpmi-nand/gpmi-nand.c          |  61 ++--
+>  drivers/mtd/nand/hisi504_nand.c                 |  27 +-
+>  drivers/mtd/nand/jz4740_nand.c                  |   2 +-
+>  drivers/mtd/nand/jz4780_nand.c                  |  19 +-
+>  drivers/mtd/nand/lpc32xx_mlc.c                  |  50 ++--
+>  drivers/mtd/nand/lpc32xx_slc.c                  |  58 +++-
+>  drivers/mtd/nand/mxc_nand.c                     | 212 +++++++-------
+>  drivers/mtd/nand/nand_base.c                    | 344 ++++++++++++-----------
+>  drivers/mtd/nand/nand_bch.c                     |  46 ++-
+>  drivers/mtd/nand/omap2.c                        | 241 +++++++++-------
+>  drivers/mtd/nand/pxa3xx_nand.c                  | 104 ++++---
+>  drivers/mtd/nand/s3c2410.c                      |  32 ++-
+>  drivers/mtd/nand/sh_flctl.c                     |  87 ++++--
+>  drivers/mtd/nand/sharpsl.c                      |   2 +-
+>  drivers/mtd/nand/sm_common.c                    |  93 ++++--
+>  drivers/mtd/nand/sunxi_nand.c                   | 114 ++++----
+>  drivers/mtd/nand/vf610_nfc.c                    |  34 +--
+>  drivers/mtd/onenand/onenand_base.c              | 262 ++++++++---------
+>  drivers/mtd/tests/oobtest.c                     |  49 ++--
+>  drivers/staging/mt29f_spinand/mt29f_spinand.c   |  49 ++--
+>  fs/jffs2/wbuf.c                                 |   6 +-
+>  include/linux/mtd/fsmc.h                        |  18 --
+>  include/linux/mtd/mtd.h                         |  69 ++++-
+>  include/linux/mtd/nand.h                        |   5 +-
+>  include/linux/mtd/nand_bch.h                    |   8 +-
+>  include/linux/mtd/onenand.h                     |   2 -
+>  include/linux/mtd/sharpsl.h                     |   2 +-
+>  include/uapi/mtd/mtd-abi.h                      |   2 +-
+>  48 files changed, 2375 insertions(+), 1754 deletions(-)
