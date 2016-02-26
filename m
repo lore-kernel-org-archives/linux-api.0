@@ -1,68 +1,79 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: [PATCH v4 1/5] getcpu_cache system call: cache CPU number of
- running thread
-Date: Fri, 26 Feb 2016 19:01:55 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1602261855100.3638@nanos>
-References: <1456270120-7560-1-git-send-email-mathieu.desnoyers@efficios.com> <1456270120-7560-2-git-send-email-mathieu.desnoyers@efficios.com> <20160225095635.GO6356@twins.programming.kicks-ass.net> <390571988.7745.1456419326288.JavaMail.zimbra@efficios.com>
- <20160225170416.GV6356@twins.programming.kicks-ass.net> <2135602720.7810.1456420671941.JavaMail.zimbra@efficios.com> <20160226113304.GA6356@twins.programming.kicks-ass.net> <alpine.DEB.2.11.1602261719440.3638@nanos>
- <967083634.8940.1456507201156.JavaMail.zimbra@efficios.com>
+From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Subject: Re: [PATCH v3 07/52] mtd: nand: core: use
+ mtd_ooblayout_xxx() helpers where appropriate
+Date: Fri, 26 Feb 2016 19:33:25 +0100
+Message-ID: <20160226193325.2d84a8c8@bbrezillon>
+References: <1456448280-27788-1-git-send-email-boris.brezillon@free-electrons.com>
+	<1456448280-27788-8-git-send-email-boris.brezillon@free-electrons.com>
+	<56D0629C.9080805@imgtec.com>
+	<20160226161054.3477cd4b@bbrezillon>
+	<56D06C88.9080608@imgtec.com>
+Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <967083634.8940.1456507201156.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBANVYK3AKGQEYP7O2QQ-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+In-Reply-To: <56D06C88.9080608-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
+List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Archive: <https://groups.google.com/group/linux-sunxi
+Sender: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+List-Subscribe: <https://groups.google.com/group/linux-sunxi/subscribe>, <mailto:linux-sunxi+subscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Unsubscribe: <mailto:googlegroups-manage+1076902468213+unsubscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>,
+ <https://groups.google.com/group/linux-sunxi/subscribe>
+To: Harvey Hunt <harvey.hunt-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
+Cc: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Haojian Zhuang <haojian.zhuang-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Robert
+ Jarzmik <robert.jarzmik-GANU6spQydw@public.gmane.org>, Kukjin Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Nicolas Ferre <nicolas.ferre-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Alexandre Belloni <alexandre.belloni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Wenyou Yang <wenyou.yang-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Josh Wu <rainyfeeling-1ViLX0X+lBJBDgjK7y7TUQ@public.gmane.org>, Ezequiel Garcia <ezequiel.garcia-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Chen-Yu Tsai <wens-jdAy2FN1RRM@public.gmane.org>, linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 26 Feb 2016, Mathieu Desnoyers wrote:
-> ----- On Feb 26, 2016, at 11:29 AM, Thomas Gleixner tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org wrote:
-> > Right. There is no point in having two calls and two update mechanisms for a
-> > very similar purpose.
-> > 
-> > So let userspace have one struct where cpu/seq and whatever is required for
-> > rseq is located and flag at register time which parts of the struct need to be
-> > updated.
-> 
-> If we put both cpu/seq/other in that structure, why not plan ahead and make
-> it extensible then ?
-> 
-> That looks very much like the "Thread-local ABI" series I posted last year.
-> See https://lkml.org/lkml/2015/12/22/464
-> 
-> Here is why I ended up introducing the specialized "getcpu_cache" system call
-> rather than the "generic" system call (quote from the getcpu_cache changelog):
-> 
->     Rationale for the getcpu_cache system call rather than the thread-local
->     ABI system call proposed earlier:
->     
->     Rather than doing a "generic" thread-local ABI, specialize this system
->     call for a cpu number cache only. Anyway, the thread-local ABI approach
->     would have required that we introduce "feature" flags, which would have
->     ended up reimplementing multiplexing of features on top of a system
->     call. It seems better to introduce one system call per feature instead.
-> 
-> If everyone end up preferring that we introduce a system call that implements
-> many features at once, that's indeed something we can do, but I remember
-> being told in the past that this is generally a bad idea.
+Hi Harvey,
 
-It's a bad idea if you mix stuff which does not belong together, but if you
-have stuff which shares a substantial amount of things then it makes a lot of
-sense. Especially if it adds similar stuff into hotpathes.
- 
-> For one thing, it would make the interface more cumbersome to deal with
-> from user-space in terms of feature detection: if we want to make this
-> interface extensible, in addition to check -1, errno=ENOSYS, userspace
-> would have to deal with a field containing the length of the structure
-> as expected by user-space and kernel, and feature flags to see the common
-> set of features supported by kernel and user-space.
->
-> Having one system call per feature seems simpler to handle in terms of
-> feature availability detection from a userspace point of view.
+On Fri, 26 Feb 2016 15:17:28 +0000
+Harvey Hunt <harvey.hunt-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org> wrote:
 
-That might well be, but that does not justify two fastpath updates, two
-seperate pointers to handle, etc ....
+> Hi Boris,
+> 
+> On 26/02/16 15:10, Boris Brezillon wrote:
+> > Hi Harvey,
+> >
+> > On Fri, 26 Feb 2016 14:35:08 +0000
+> > Harvey Hunt <harvey.hunt-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org> wrote:
+> >
+> >> [...]
+> >> I'll look into this more later today, but wanted to run it by you in
+> >> case you have any thoughts.
+> >
+> > Can you apply this patch [1], and let me know if you see the additional
+> > trace?
+> 
+> I applied the patch, the following is the (unchanged) output:
+> 
+> [    0.256375] nand: device found, Manufacturer ID: 0x2c, Chip ID: 0x88
+> [    0.262887] nand: Micron MT29F64G08CBAAAWP
+> [    0.266995] nand: 8192 MiB, MLC, erase size: 2048 KiB, page size: 
+> 8192, OOB size: 448
+> [    0.274881] jz4780-nand 1b000000.nand-controller: using hardware BCH 
+> (strength 24, size 1024, bytes 42)
+> [    0.289046] Bad block table not found for chip 0
+> [    0.297769] Bad block table not found for chip 0
+> [    0.302425] Scanning device for bad blocks
+> [    0.320239] Bad eraseblock 90 at 0x00000b400000
+> [    0.324934] Bad eraseblock 91 at 0x00000b600000
+> [    0.931054] Bad eraseblock 4092 at 0x0001ff800000
+> [    0.935917] Bad eraseblock 4093 at 0x0001ffa00000
+> [    0.944660] nand_bbt: error while writing bad block table -34
+> [    0.950448] jz4780-nand: probe of 1b000000.nand-controller failed 
+> with error -34
+> [    0.958079] UBI error: cannot open mtd 3, error -19
+> [    0.962788] UBI error: cannot open mtd 4, error -19[    0.970229] 
+> clk: Not disabling unused clocks
+> 
 
-Thanks,
+Can you test with this one [1]?
 
-	tglx
+[1]http://code.bulix.org/36oytz-91960
+
+
+-- 
+Boris Brezillon, Free Electrons
+Embedded Linux and Kernel engineering
+http://free-electrons.com
