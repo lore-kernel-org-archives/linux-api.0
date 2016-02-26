@@ -1,12 +1,12 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v3 38/52] mtd: nand: hisi504: switch to mtd_ooblayout_ops
-Date: Fri, 26 Feb 2016 01:57:46 +0100
-Message-ID: <1456448280-27788-39-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v3 39/52] mtd: nand: jz4780: switch to mtd_ooblayout_ops
+Date: Fri, 26 Feb 2016 01:57:47 +0100
+Message-ID: <1456448280-27788-40-git-send-email-boris.brezillon@free-electrons.com>
 References: <1456448280-27788-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBTWKX23AKGQEBON5NLY-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBZOKX23AKGQEHXZHHAQ-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 In-Reply-To: <1456448280-27788-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
@@ -24,52 +24,59 @@ ECC/OOB layout to MTD users.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- drivers/mtd/nand/hisi504_nand.c | 26 +++++++++++++++++++++++---
- 1 file changed, 23 insertions(+), 3 deletions(-)
+ drivers/mtd/nand/jz4780_nand.c | 19 +++++--------------
+ 1 file changed, 5 insertions(+), 14 deletions(-)
 
-diff --git a/drivers/mtd/nand/hisi504_nand.c b/drivers/mtd/nand/hisi504_nand.c
-index 96502b6..7bf844c 100644
---- a/drivers/mtd/nand/hisi504_nand.c
-+++ b/drivers/mtd/nand/hisi504_nand.c
-@@ -631,8 +631,28 @@ static void hisi_nfc_host_init(struct hinfc_host *host)
- 	hinfc_write(host, HINFC504_INTEN_DMA, HINFC504_INTEN);
+diff --git a/drivers/mtd/nand/jz4780_nand.c b/drivers/mtd/nand/jz4780_nand.c
+index e1c016c..b86a579 100644
+--- a/drivers/mtd/nand/jz4780_nand.c
++++ b/drivers/mtd/nand/jz4780_nand.c
+@@ -56,8 +56,6 @@ struct jz4780_nand_chip {
+ 	struct nand_chip chip;
+ 	struct list_head chip_list;
+ 
+-	struct nand_ecclayout ecclayout;
+-
+ 	struct gpio_desc *busy_gpio;
+ 	struct gpio_desc *wp_gpio;
+ 	unsigned int reading: 1;
+@@ -165,8 +163,7 @@ static int jz4780_nand_init_ecc(struct jz4780_nand_chip *nand, struct device *de
+ 	struct nand_chip *chip = &nand->chip;
+ 	struct mtd_info *mtd = nand_to_mtd(chip);
+ 	struct jz4780_nand_controller *nfc = to_jz4780_nand_controller(chip->controller);
+-	struct nand_ecclayout *layout = &nand->ecclayout;
+-	u32 start, i;
++	int eccbytes;
+ 
+ 	chip->ecc.bytes = fls((1 + 8) * chip->ecc.size)	*
+ 				(chip->ecc.strength / 8);
+@@ -201,23 +198,17 @@ static int jz4780_nand_init_ecc(struct jz4780_nand_chip *nand, struct device *de
+ 		return 0;
+ 
+ 	/* Generate ECC layout. ECC codes are right aligned in the OOB area. */
+-	layout->eccbytes = mtd->writesize / chip->ecc.size * chip->ecc.bytes;
++	eccbytes = mtd->writesize / chip->ecc.size * chip->ecc.bytes;
+ 
+-	if (layout->eccbytes > mtd->oobsize - 2) {
++	if (eccbytes > mtd->oobsize - 2) {
+ 		dev_err(dev,
+ 			"invalid ECC config: required %d ECC bytes, but only %d are available",
+-			layout->eccbytes, mtd->oobsize - 2);
++			eccbytes, mtd->oobsize - 2);
+ 		return -EINVAL;
+ 	}
+ 
+-	start = mtd->oobsize - layout->eccbytes;
+-	for (i = 0; i < layout->eccbytes; i++)
+-		layout->eccpos[i] = start + i;
+-
+-	layout->oobfree[0].offset = 2;
+-	layout->oobfree[0].length = mtd->oobsize - layout->eccbytes - 2;
++	mtd->ooblayout = &nand_ooblayout_lp_ops;
+ 
+-	chip->ecc.layout = layout;
+ 	return 0;
  }
  
--static struct nand_ecclayout nand_ecc_2K_16bits = {
--	.oobfree = { {2, 6} },
-+static int hisi_ooblayout_ecc(struct mtd_info *mtd, int section,
-+			      struct mtd_oob_region *oobregion)
-+{
-+	/* FIXME: add ECC bytes position */
-+	return -ENOTSUPP;
-+}
-+
-+static int hisi_ooblayout_free(struct mtd_info *mtd, int section,
-+			       struct mtd_oob_region *oobregion)
-+{
-+	if (section)
-+		return -ERANGE;
-+
-+	oobregion->offset = 2;
-+	oobregion->length = 6;
-+
-+	return 0;
-+}
-+
-+static const struct mtd_ooblayout_ops hisi_ooblayout_ops = {
-+	.ecc = hisi_ooblayout_ecc,
-+	.free = hisi_ooblayout_free,
- };
- 
- static int hisi_nfc_ecc_probe(struct hinfc_host *host)
-@@ -668,7 +688,7 @@ static int hisi_nfc_ecc_probe(struct hinfc_host *host)
- 	case 16:
- 		ecc_bits = 6;
- 		if (mtd->writesize == 2048)
--			chip->ecc.layout = &nand_ecc_2K_16bits;
-+			mtd_set_ooblayout(mtd, &hisi_ooblayout_ops);
- 
- 		/* TODO: add more page size support */
- 		break;
 -- 
 2.1.4
