@@ -1,13 +1,13 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v3 10/52] mtd: nand: gpmi: use
+Subject: [PATCH v3 11/52] mtd: nand: lpc32xx: use
  mtd_ooblayout_xxx() helpers where appropriate
-Date: Fri, 26 Feb 2016 01:57:18 +0100
-Message-ID: <1456448280-27788-11-git-send-email-boris.brezillon@free-electrons.com>
+Date: Fri, 26 Feb 2016 01:57:19 +0100
+Message-ID: <1456448280-27788-12-git-send-email-boris.brezillon@free-electrons.com>
 References: <1456448280-27788-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBB5GGX23AKGQEALJA72A-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBA6HX23AKGQEQSHEY4Q-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 In-Reply-To: <1456448280-27788-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
@@ -27,36 +27,57 @@ where directly accessed.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- drivers/mtd/nand/gpmi-nand/gpmi-nand.c | 9 +++++----
- 1 file changed, 5 insertions(+), 4 deletions(-)
+ drivers/mtd/nand/lpc32xx_slc.c | 17 ++++++++++++++---
+ 1 file changed, 14 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/mtd/nand/gpmi-nand/gpmi-nand.c b/drivers/mtd/nand/gpmi-nand/gpmi-nand.c
-index 8122c69..3a29b65 100644
---- a/drivers/mtd/nand/gpmi-nand/gpmi-nand.c
-+++ b/drivers/mtd/nand/gpmi-nand/gpmi-nand.c
-@@ -1327,18 +1327,19 @@ static int gpmi_ecc_read_oob(struct mtd_info *mtd, struct nand_chip *chip,
- static int
- gpmi_ecc_write_oob(struct mtd_info *mtd, struct nand_chip *chip, int page)
+diff --git a/drivers/mtd/nand/lpc32xx_slc.c b/drivers/mtd/nand/lpc32xx_slc.c
+index 3b8f373..10cf8e62 100644
+--- a/drivers/mtd/nand/lpc32xx_slc.c
++++ b/drivers/mtd/nand/lpc32xx_slc.c
+@@ -604,7 +604,8 @@ static int lpc32xx_nand_read_page_syndrome(struct mtd_info *mtd,
+ 					   int oob_required, int page)
  {
--	struct nand_oobfree *of = mtd->ecclayout->oobfree;
-+	struct mtd_oob_region of = { };
- 	int status = 0;
+ 	struct lpc32xx_nand_host *host = nand_get_controller_data(chip);
+-	int stat, i, status;
++	struct mtd_oob_region oobregion = { };
++	int stat, i, status, error;
+ 	uint8_t *oobecc, tmpecc[LPC32XX_ECC_SAVE_SIZE];
  
- 	/* Do we have available oob area? */
--	if (!of->length)
-+	mtd_ooblayout_free(mtd, 0, &of);
-+	if (!of.length)
- 		return -EPERM;
+ 	/* Issue read command */
+@@ -620,7 +621,11 @@ static int lpc32xx_nand_read_page_syndrome(struct mtd_info *mtd,
+ 	lpc32xx_slc_ecc_copy(tmpecc, (uint32_t *) host->ecc_buf, chip->ecc.steps);
  
- 	if (!nand_is_slc(chip))
- 		return -EPERM;
+ 	/* Pointer to ECC data retrieved from NAND spare area */
+-	oobecc = chip->oob_poi + chip->ecc.layout->eccpos[0];
++	error = mtd_ooblayout_ecc(mtd, 0, &oobregion);
++	if (error)
++		return error;
++
++	oobecc = chip->oob_poi + oobregion.offset;
  
--	chip->cmdfunc(mtd, NAND_CMD_SEQIN, mtd->writesize + of->offset, page);
--	chip->write_buf(mtd, chip->oob_poi + of->offset, of->length);
-+	chip->cmdfunc(mtd, NAND_CMD_SEQIN, mtd->writesize + of.offset, page);
-+	chip->write_buf(mtd, chip->oob_poi + of.offset, of.length);
- 	chip->cmdfunc(mtd, NAND_CMD_PAGEPROG, -1, -1);
+ 	for (i = 0; i < chip->ecc.steps; i++) {
+ 		stat = chip->ecc.correct(mtd, buf, oobecc,
+@@ -666,7 +671,8 @@ static int lpc32xx_nand_write_page_syndrome(struct mtd_info *mtd,
+ 					    int oob_required, int page)
+ {
+ 	struct lpc32xx_nand_host *host = nand_get_controller_data(chip);
+-	uint8_t *pb = chip->oob_poi + chip->ecc.layout->eccpos[0];
++	struct mtd_oob_region oobregion = { };
++	uint8_t *pb;
+ 	int error;
  
- 	status = chip->waitfunc(mtd, chip);
+ 	/* Write data, calculate ECC on outbound data */
+@@ -678,6 +684,11 @@ static int lpc32xx_nand_write_page_syndrome(struct mtd_info *mtd,
+ 	 * The calculated ECC needs some manual work done to it before
+ 	 * committing it to NAND. Process the calculated ECC and place
+ 	 * the resultant values directly into the OOB buffer. */
++	error = mtd_ooblayout_ecc(mtd, 0, &oobregion);
++	if (error)
++		return error;
++
++	pb = chip->oob_poi + oobregion.offset;
+ 	lpc32xx_slc_ecc_copy(pb, (uint32_t *)host->ecc_buf, chip->ecc.steps);
+ 
+ 	/* Write ECC data to device */
 -- 
 2.1.4
