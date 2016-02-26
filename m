@@ -1,13 +1,13 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v3 09/52] mtd: nand: fsl_ifc: use
+Subject: [PATCH v3 10/52] mtd: nand: gpmi: use
  mtd_ooblayout_xxx() helpers where appropriate
-Date: Fri, 26 Feb 2016 01:57:17 +0100
-Message-ID: <1456448280-27788-10-git-send-email-boris.brezillon@free-electrons.com>
+Date: Fri, 26 Feb 2016 01:57:18 +0100
+Message-ID: <1456448280-27788-11-git-send-email-boris.brezillon@free-electrons.com>
 References: <1456448280-27788-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBB4GGX23AKGQEMHLIFPY-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBB5GGX23AKGQEALJA72A-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 In-Reply-To: <1456448280-27788-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
@@ -27,40 +27,36 @@ where directly accessed.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- drivers/mtd/nand/fsl_ifc_nand.c | 14 +++++++++-----
- 1 file changed, 9 insertions(+), 5 deletions(-)
+ drivers/mtd/nand/gpmi-nand/gpmi-nand.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/mtd/nand/fsl_ifc_nand.c b/drivers/mtd/nand/fsl_ifc_nand.c
-index 43f5a3a..2e970ac 100644
---- a/drivers/mtd/nand/fsl_ifc_nand.c
-+++ b/drivers/mtd/nand/fsl_ifc_nand.c
-@@ -257,18 +257,22 @@ static int is_blank(struct mtd_info *mtd, unsigned int bufnum)
- 	u8 __iomem *addr = priv->vbase + bufnum * (mtd->writesize * 2);
- 	u32 __iomem *mainarea = (u32 __iomem *)addr;
- 	u8 __iomem *oob = addr + mtd->writesize;
--	int i;
-+	struct mtd_oob_region oobregion = { };
-+	int i, section = 0;
+diff --git a/drivers/mtd/nand/gpmi-nand/gpmi-nand.c b/drivers/mtd/nand/gpmi-nand/gpmi-nand.c
+index 8122c69..3a29b65 100644
+--- a/drivers/mtd/nand/gpmi-nand/gpmi-nand.c
++++ b/drivers/mtd/nand/gpmi-nand/gpmi-nand.c
+@@ -1327,18 +1327,19 @@ static int gpmi_ecc_read_oob(struct mtd_info *mtd, struct nand_chip *chip,
+ static int
+ gpmi_ecc_write_oob(struct mtd_info *mtd, struct nand_chip *chip, int page)
+ {
+-	struct nand_oobfree *of = mtd->ecclayout->oobfree;
++	struct mtd_oob_region of = { };
+ 	int status = 0;
  
- 	for (i = 0; i < mtd->writesize / 4; i++) {
- 		if (__raw_readl(&mainarea[i]) != 0xffffffff)
- 			return 0;
- 	}
+ 	/* Do we have available oob area? */
+-	if (!of->length)
++	mtd_ooblayout_free(mtd, 0, &of);
++	if (!of.length)
+ 		return -EPERM;
  
--	for (i = 0; i < chip->ecc.layout->eccbytes; i++) {
--		int pos = chip->ecc.layout->eccpos[i];
-+	mtd_ooblayout_ecc(mtd, section++, &oobregion);
-+	while (oobregion.length) {
-+		for (i = 0; i < oobregion.length; i++) {
-+			if (__raw_readb(&oob[oobregion.offset + i]) != 0xff)
-+				return 0;
-+		}
+ 	if (!nand_is_slc(chip))
+ 		return -EPERM;
  
--		if (__raw_readb(&oob[pos]) != 0xff)
--			return 0;
-+		mtd_ooblayout_ecc(mtd, section++, &oobregion);
- 	}
+-	chip->cmdfunc(mtd, NAND_CMD_SEQIN, mtd->writesize + of->offset, page);
+-	chip->write_buf(mtd, chip->oob_poi + of->offset, of->length);
++	chip->cmdfunc(mtd, NAND_CMD_SEQIN, mtd->writesize + of.offset, page);
++	chip->write_buf(mtd, chip->oob_poi + of.offset, of.length);
+ 	chip->cmdfunc(mtd, NAND_CMD_PAGEPROG, -1, -1);
  
- 	return 1;
+ 	status = chip->waitfunc(mtd, chip);
 -- 
 2.1.4
