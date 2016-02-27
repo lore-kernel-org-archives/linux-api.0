@@ -1,27 +1,38 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 4/7] vfs: add the RWF_HIPRI flag for preadv2/pwritev2
-Date: Sat, 27 Feb 2016 09:58:49 +0100
-Message-ID: <20160227085849.GE4255@lst.de>
-References: <1456160876-14560-1-git-send-email-hch@lst.de> <1456160876-14560-5-git-send-email-hch@lst.de> <x49r3fzkufg.fsf@segfault.boston.devel.redhat.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH v6 0/8] Additional kmsg devices
+Date: Sat, 27 Feb 2016 06:54:15 -0500
+Message-ID: <20160227115415.GA3965@htj.duckdns.org>
+References: <1456314801-32738-1-git-send-email-k.krosman@samsung.com>
+ <20160225214714.GJ6092@mtj.duckdns.org>
+ <56D051A2.6050106@samsung.com>
+ <20160226144718.GF3305@pathway.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <x49r3fzkufg.fsf@segfault.boston.devel.redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Jeff Moyer <jmoyer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>, viro@zeniv.linux.org.uk, axboe@fb.com, milosz@adfin.com, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
+In-Reply-To: <20160226144718.GF3305@pathway.suse.cz>
+Sender: linux-doc-owner@vger.kernel.org
+To: Petr Mladek <pmladek@suse.com>
+Cc: Kazimierz Krosman <k.krosman@samsung.com>, akpm@linux-foundation.org, peter@hurleysoftware.com, vvs@virtuozzo.com, corbet@lwn.net, arnd@arndb.de, gregkh@linuxfoundation.org, daniel@zonque.org, kay.sievers@vrfy.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, k.lewandowsk@samsung.com, m.niesluchow@samsung.com, richard.weinberger@gmail.com, b.zolnierkie@samsung.com, luto@amacapital.net, knhoon.baik@samsung.com
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Feb 26, 2016 at 04:56:03PM -0500, Jeff Moyer wrote:
-> Christoph Hellwig <hch@lst.de> writes:
-> 
-> > This adds a flag that tells the file system that this is a high priority
-> > request for which it's worth to poll the hardware.  The flag is purely
-> > advisory and can be ignored if not supported.
-> 
-> I'm not in love with the HIGHPRI name, but I don't have a better one in
-> mind.  So...
+Hello,
 
-I don't really like it too much either.  So if someone else has a better
-suggestion: you're welcome!
+On Fri, Feb 26, 2016 at 03:47:18PM +0100, Petr Mladek wrote:
+> > Could you explain in more detail what did you mean by IPC problems?
+> 
+> I guess that the idea was to make IPC more effective in general.
+> You definitely could not move all functionality that needs IPC
+> into the kernel.
+
+1. There are multiple ways to do IPC and I don't think what was
+   implemented as the comparison is optimal.
+
+2. If that were optimal, we have an a lot larger general IPC problem
+   than logging.  We can't possibly implement custom solution for each
+   specific IPC use case in kernel.
+
+Thanks.
+
+-- 
+tejun
