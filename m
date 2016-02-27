@@ -1,22 +1,22 @@
-From: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v4 1/5] getcpu_cache system call: cache CPU number of running thread
-Date: Sat, 27 Feb 2016 11:01:49 -0800
-Message-ID: <B56AE370-98DE-4532-9F8C-4B9AFEFAED9B@zytor.com>
-References: <1456270120-7560-1-git-send-email-mathieu.desnoyers@efficios.com> <alpine.DEB.2.11.1602261719440.3638@nanos> <967083634.8940.1456507201156.JavaMail.zimbra@efficios.com> <alpine.DEB.2.11.1602261855100.3638@nanos> <724964987.9217.1456518255392.JavaMail.zimbra@efficios.com> <7096DA23-3908-40DC-A46B-C4CF2252CEE8@zytor.com> <1150363257.9781.1456533630895.JavaMail.zimbra@efficios.com> <56D14132.5050100@zytor.com> <2053850250.10158.1456582501604.JavaMail.zimbra@efficios.com> <20160227145809.GD6356@twins.programming.kicks-ass.net> <CA+55aFysWipEagSdgeXbLx+Au4vomvyttdNFJtM+HffmBECQiA@mail.gmail.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH v4 1/5] getcpu_cache system call: cache CPU number of
+ running thread
+Date: Sat, 27 Feb 2016 23:53:56 +0000 (UTC)
+Message-ID: <1401667361.10273.1456617236327.JavaMail.zimbra@efficios.com>
+References: <1456270120-7560-1-git-send-email-mathieu.desnoyers@efficios.com> <724964987.9217.1456518255392.JavaMail.zimbra@efficios.com> <7096DA23-3908-40DC-A46B-C4CF2252CEE8@zytor.com> <1150363257.9781.1456533630895.JavaMail.zimbra@efficios.com> <56D14132.5050100@zytor.com> <2053850250.10158.1456582501604.JavaMail.zimbra@efficios.com> <20160227145809.GD6356@twins.programming.kicks-ass.net> <CA+55aFysWipEagSdgeXbLx+Au4vomvyttdNFJtM+HffmBECQiA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
- charset=UTF-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CA+55aFysWipEagSdgeXbLx+Au4vomvyttdNFJtM+HffmBECQiA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CA+55aFysWipEagSdgeXbLx+Au4vomvyttdNFJtM+HffmBECQiA@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On February 27, 2016 10:35:28 AM PST, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
->On Sat, Feb 27, 2016 at 6:58 AM, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
->wrote:
+----- On Feb 27, 2016, at 1:35 PM, Linus Torvalds torvalds@linux-foundation.org wrote:
+
+> On Sat, Feb 27, 2016 at 6:58 AM, Peter Zijlstra <peterz@infradead.org> wrote:
 >>
 >> Paul's patches have the following structure:
 >>
@@ -30,15 +30,37 @@ On February 27, 2016 10:35:28 AM PST, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXv
 >>         };
 >>         unsigned long post_commit_ip;
 >> };
->
->Please don't do "unsigned long" in ABI structures any more.
->
->Make it u64, and make sure it is 64-bit aligned (which it would be in
->this case). Make it so that we don't have to have separate compat
->paths.
->
->               Linus
+> 
+> Please don't do "unsigned long" in ABI structures any more.
+> 
+> Make it u64, and make sure it is 64-bit aligned (which it would be in
+> this case). Make it so that we don't have to have separate compat
+> paths.
 
-Yes, if we have to do compat crap for this entire new ABI path I think I'll scream.
+AFAIU, this "post_commit_ip" field is expected to be updated
+with a single-copy-store by user-space. If we want to handle both
+32-bit and 64-bit processes, how do you recommend doing this
+without an unsigned long type ?
+
+A 64-bit integer would not be a single-copy store for
+32-bit processes, but a 32-bit integer would not be large
+enough for 64-bit processes.
+
+Would a
+
+union {
+    uint32_t val32;
+    uint64_t val64;
+} field;
+
+be an acceptable option ? Then the kernel could use
+one field or the other depending on the process bitness.
+
+Thanks,
+
+Mathieu
+
 -- 
-Sent from my Android device with K-9 Mail. Please excuse brevity and formatting.
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
