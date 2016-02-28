@@ -1,220 +1,49 @@
-From: Stas Sergeev <stsp@list.ru>
-Subject: [PATCH 2/2] selftests: Add test for sigaltstack(SS_AUTODISARM)
-Date: Mon, 29 Feb 2016 00:13:20 +0300
-Message-ID: <1456694000-16395-3-git-send-email-stsp@list.ru>
-References: <1456694000-16395-1-git-send-email-stsp@list.ru>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1456694000-16395-1-git-send-email-stsp@list.ru>
-Sender: linux-kernel-owner@vger.kernel.org
-To: stsp@list.ru
-Cc: Stas Sergeev <stsp@users.sourceforge.net>, Shuah Khan <shuahkh@osg.samsung.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: richacl(7) man page review comments
+Date: Sun, 28 Feb 2016 23:11:57 +0100
+Message-ID: <CAHc6FU4eOzNg0Tfb-29uQD9r1AzwZhZPMZnRnbjyYpkQxm=Cxw@mail.gmail.com>
+References: <56B770B6.7040803@gmail.com>
+	<56B77262.7090107@gmail.com>
+	<CAHc6FU5__xbKm4mg8+fK_ZW5ZYsDoQcYBBvQg573Eq4ERDsROw@mail.gmail.com>
+	<56C0F23C.7030902@gmail.com>
+	<CAHc6FU4CCrcrA6=oCiq2A5rGd9CCGELaTZq6tGpmd2jcV_Zp4A@mail.gmail.com>
+	<56CA2EEB.9080504@gmail.com>
+	<CAHc6FU46vO8NM3cvFH7b8X7U9R+m6wcYj8EQKVnSQkiY3Q051A@mail.gmail.com>
+	<56CC3174.2060207@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <56CC3174.2060207-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Stas Sergeev <stsp@users.sourceforge.net>
+On Tue, Feb 23, 2016 at 11:16 AM, Michael Kerrisk (man-pages)
+<mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> On 02/22/2016 03:46 PM, Andreas Gruenbacher wrote:
+>> On Sun, Feb 21, 2016 at 10:40 PM, Michael Kerrisk (man-pages) <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>>> I've once more pulled from the latest git; here's some more comments.
+>>
+>> thanks again. I've updated the repo with your changes.
+>
+> Thanks!
+>
+> [...]
+>
+>>> I'm going to play the broken record :-)
+>>>
+>>> Could we start with just a few simple examples already, and build up
+>>> over future iterations of this page?
+>>
+>> Yes, as soon as I'll get to it :)
+>
+> Sure. But, to press the point home, I'm interested to do further
+> review, but I feel like the lack of examples is limiting my ability to
+> understand what's going on and deepen the feedback that I provide in
+> future iterations. So, start please, even if only starting small :-).
 
-sigaltstack needs to be disabled before the signal handler can
-safely use swapcontext().
-This patch adds the SS_AUTODISARM flag.
-This flag disables the sigaltstack when entering the signal handler.
-When returning from signal handler, the sigaltstack is restored by
-uc_stack.
+I've added a richaclex(7) examples man page now. What did I miss to explain?
 
-CC: Shuah Khan <shuahkh@osg.samsung.com>
-CC: linux-kernel@vger.kernel.org
-CC: linux-api@vger.kernel.org
-CC: Andy Lutomirski <luto@amacapital.net>
-
-Signed-off-by: Stas Sergeev <stsp@users.sourceforge.net>
----
- tools/testing/selftests/Makefile             |   1 +
- tools/testing/selftests/sigaltstack/Makefile |   8 ++
- tools/testing/selftests/sigaltstack/sas.c    | 151 +++++++++++++++++++++++++++
- 3 files changed, 160 insertions(+)
- create mode 100644 tools/testing/selftests/sigaltstack/Makefile
- create mode 100644 tools/testing/selftests/sigaltstack/sas.c
-
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index b04afc3..ff9e5f2 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -19,6 +19,7 @@ TARGETS += powerpc
- TARGETS += pstore
- TARGETS += ptrace
- TARGETS += seccomp
-+TARGETS += sigaltstack
- TARGETS += size
- TARGETS += static_keys
- TARGETS += sysctl
-diff --git a/tools/testing/selftests/sigaltstack/Makefile b/tools/testing/selftests/sigaltstack/Makefile
-new file mode 100644
-index 0000000..56af56e
---- /dev/null
-+++ b/tools/testing/selftests/sigaltstack/Makefile
-@@ -0,0 +1,8 @@
-+CFLAGS = -Wall
-+BINARIES = sas
-+all: $(BINARIES)
-+
-+include ../lib.mk
-+
-+clean:
-+	rm -rf $(BINARIES)
-diff --git a/tools/testing/selftests/sigaltstack/sas.c b/tools/testing/selftests/sigaltstack/sas.c
-new file mode 100644
-index 0000000..bba149a
---- /dev/null
-+++ b/tools/testing/selftests/sigaltstack/sas.c
-@@ -0,0 +1,151 @@
-+/*
-+ * Stas Sergeev <stsp@users.sourceforge.net>
-+ *
-+ * test sigaltstack(SS_AUTODISARM)
-+ * If that succeeds, then swapcontext() can be used inside sighandler safely.
-+ *
-+ */
-+
-+#define _GNU_SOURCE
-+#include <signal.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <sys/mman.h>
-+#include <ucontext.h>
-+#include <alloca.h>
-+#include <string.h>
-+#include <assert.h>
-+
-+#ifndef SS_AUTODISARM
-+#define SS_AUTODISARM  (1 << 4)
-+#endif
-+
-+static void *sstack, *ustack;
-+static ucontext_t uc, sc;
-+static const char *msg = "[OK]\tStack preserved";
-+static const char *msg2 = "[FAIL]\tStack corrupted";
-+struct stk_data {
-+	char msg[128];
-+	int flag;
-+};
-+
-+void my_usr1(int sig, siginfo_t *si, void *u)
-+{
-+	char *aa;
-+	int err;
-+	stack_t stk;
-+	struct stk_data *p;
-+
-+	register unsigned long sp asm("sp");
-+
-+	if (sp < (unsigned long)sstack ||
-+			sp >= (unsigned long)sstack + SIGSTKSZ) {
-+		printf("[FAIL]\tSP is not on sigaltstack\n");
-+		exit(EXIT_FAILURE);
-+	}
-+	/* put some data on stack. other sighandler will try to overwrite it */
-+	aa = alloca(1024);
-+	assert(aa);
-+	p = (struct stk_data *)(aa + 512);
-+	strcpy(p->msg, msg);
-+	p->flag = 1;
-+	printf("[RUN]\tsignal USR1\n");
-+	err = sigaltstack(NULL, &stk);
-+	if (err) {
-+		perror("[FAIL]\tsigaltstack()");
-+		exit(EXIT_FAILURE);
-+	}
-+	if (stk.ss_flags != SS_DISABLE)
-+		printf("[FAIL]\tss_flags=%i, should be SS_DISABLE\n",
-+				stk.ss_flags);
-+	else
-+		printf("[OK]\tsigaltstack is disabled in sighandler\n");
-+	swapcontext(&sc, &uc);
-+	printf("%s\n", p->msg);
-+	if (!p->flag) {
-+		printf("[RUN]\tAborting\n");
-+		exit(EXIT_FAILURE);
-+	}
-+}
-+
-+void my_usr2(int sig, siginfo_t *si, void *u)
-+{
-+	char *aa;
-+	struct stk_data *p;
-+
-+	printf("[RUN]\tsignal USR2\n");
-+	aa = alloca(1024);
-+	/* dont run valgrind on this */
-+	/* try to find the data stored by previous sighandler */
-+	p = memmem(aa, 1024, msg, strlen(msg));
-+	if (p) {
-+		printf("[FAIL]\tsigaltstack re-used\n");
-+		/* corrupt the data */
-+		strcpy(p->msg, msg2);
-+		/* tell other sighandler that his data is corrupted */
-+		p->flag = 0;
-+	}
-+}
-+
-+static void switch_fn(void)
-+{
-+	printf("[RUN]\tswitched to user ctx\n");
-+	raise(SIGUSR2);
-+	setcontext(&sc);
-+}
-+
-+int main(void)
-+{
-+	struct sigaction act;
-+	stack_t stk;
-+	int err;
-+
-+	sigemptyset(&act.sa_mask);
-+	act.sa_flags = SA_ONSTACK | SA_SIGINFO;
-+	act.sa_sigaction = my_usr1;
-+	sigaction(SIGUSR1, &act, NULL);
-+	act.sa_sigaction = my_usr2;
-+	sigaction(SIGUSR2, &act, NULL);
-+	sstack = mmap(NULL, SIGSTKSZ, PROT_READ | PROT_WRITE,
-+		      MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
-+	if (sstack == MAP_FAILED) {
-+		perror("mmap()");
-+		return EXIT_FAILURE;
-+	}
-+	stk.ss_sp = sstack;
-+	stk.ss_size = SIGSTKSZ;
-+	stk.ss_flags = SS_ONSTACK | SS_AUTODISARM;
-+	err = sigaltstack(&stk, NULL);
-+	if (err) {
-+		perror("sigaltstack()");
-+		return EXIT_FAILURE;
-+	}
-+
-+	ustack = mmap(NULL, SIGSTKSZ, PROT_READ | PROT_WRITE,
-+		      MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
-+	if (ustack == MAP_FAILED) {
-+		perror("mmap()");
-+		return EXIT_FAILURE;
-+	}
-+	getcontext(&uc);
-+	uc.uc_link = NULL;
-+	uc.uc_stack.ss_sp = ustack;
-+	uc.uc_stack.ss_size = SIGSTKSZ;
-+	makecontext(&uc, switch_fn, 0);
-+	raise(SIGUSR1);
-+
-+	err = sigaltstack(NULL, &stk);
-+	if (err) {
-+		perror("[FAIL]\tsigaltstack()");
-+		exit(EXIT_FAILURE);
-+	}
-+	if (stk.ss_flags != 0) {
-+		printf("[FAIL]\tss_flags=%i, should be 0\n",
-+				stk.ss_flags);
-+		exit(EXIT_FAILURE);
-+	}
-+	printf("[OK]\tsigaltstack is enabled after signal\n");
-+
-+	printf("[OK]\tTest passed\n");
-+	return 0;
-+}
--- 
-2.7.2
+Thanks,
+Andreas
