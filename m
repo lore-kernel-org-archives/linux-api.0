@@ -1,47 +1,39 @@
-From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: selective block polling and preadv2/pwritev2 revisited V2
-Date: Mon, 29 Feb 2016 09:59:02 -0500
-Message-ID: <x49oaazmukp.fsf@segfault.boston.devel.redhat.com>
-References: <1456160876-14560-1-git-send-email-hch@lst.de>
-	<x497fhrmaps.fsf@segfault.boston.devel.redhat.com>
-	<20160227085744.GC4255@lst.de>
+From: "Mr. DOUGLAS" <douglascontact6048-EMRzualFZlQ@public.gmane.org>
+Subject: =?utf-8?q?INFORMA=C3=87=C3=83O_IMPORTANTE__RE=3A_Consultoria_de_Investime?=
+ =?utf-8?q?nto_em_sua_Localidade=2E?=
+Date: Sun, 28 Feb 2016 04:39:20 -0800
+Message-ID: <20160228133825.7B0CC8FAF21@webmail.cefet-rj.br>
+Reply-To: johnsondouglas8738-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20160227085744.GC4255@lst.de> (Christoph Hellwig's message of
-	"Sat, 27 Feb 2016 09:57:44 +0100")
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: viro@zeniv.linux.org.uk, axboe@fb.com, milosz@adfin.com, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Description: Mail message body
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Recipients <douglascontact6048-EMRzualFZlQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Christoph Hellwig <hch@lst.de> writes:
+Oi,
 
-> On Fri, Feb 26, 2016 at 04:18:55PM -0500, Jeff Moyer wrote:
->> Christoph Hellwig <hch@lst.de> writes:
->> 
->> > This series allows to selectively enable/disable polling for completions
->> > in the block layer on a per-I/O basis.  For this it resurrects the
->> > preadv2/pwritev2 syscalls that Milosz prepared a while ago (and which
->> > are much simpler now due to VFS changes that happened in the meantime).
->> > That approach also had a man page update prepared, which I will resubmit
->> > with the current flags once this series makes it in.
->> 
->> It would be helpful for reviewers if you submitted the man page at the
->> same time, in my opinion.
->
-> Ok.
->
->> Do you have any plans on adding polling support to the buffered path?
->
-> How would that even make sense?
+Temos planejado investir alguns fundos no seu pa=EDs.
 
-I admit I haven't looked into the implementation details, but I was
-thinking about O_SYNC writes or reads that missed the cache.
+Responder se voc=EA estiver interessado.
 
-Thinking about this some more, it occurs to me that a file opened with
-O_SYNC will still incur context switching.  Do you think we should add
-that to the NOTES section of the man page?
+Sauda=E7=F5es,
+Sir Henry Neville Lindley Keswick
+Presidente da Jardine Matheson Holdings Ltd
+https://en.wikipedia.org/wiki/Keswick_family
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D
 
-Cheers,
-Jeff
+Hi friend,
+
+Our family is interested in investing funds in your locality.
+
+More information for you interest .
+
+Greetings,
+Sir Henry Neville Lindley Keswick
+Chairman of Jardine Matheson Holdings Ltd
+https://en.wikipedia.org/wiki/Keswick_family
