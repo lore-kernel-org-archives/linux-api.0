@@ -1,16 +1,15 @@
 From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: [PATCH 7/7] block, directio: set a REQ_POLL flag when submitting polled bios
-Date: Mon, 29 Feb 2016 09:28:51 -0500
-Message-ID: <x49si0bmvz0.fsf@segfault.boston.devel.redhat.com>
+Subject: Re: selective block polling and preadv2/pwritev2 revisited V2
+Date: Mon, 29 Feb 2016 09:59:02 -0500
+Message-ID: <x49oaazmukp.fsf@segfault.boston.devel.redhat.com>
 References: <1456160876-14560-1-git-send-email-hch@lst.de>
-	<1456160876-14560-8-git-send-email-hch@lst.de>
-	<x49bn73mb38.fsf@segfault.boston.devel.redhat.com>
-	<20160227085722.GB4255@lst.de>
+	<x497fhrmaps.fsf@segfault.boston.devel.redhat.com>
+	<20160227085744.GC4255@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20160227085722.GB4255@lst.de> (Christoph Hellwig's message of
-	"Sat, 27 Feb 2016 09:57:22 +0100")
+In-Reply-To: <20160227085744.GC4255@lst.de> (Christoph Hellwig's message of
+	"Sat, 27 Feb 2016 09:57:44 +0100")
 Sender: linux-fsdevel-owner@vger.kernel.org
 To: Christoph Hellwig <hch@lst.de>
 Cc: viro@zeniv.linux.org.uk, axboe@fb.com, milosz@adfin.com, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
@@ -18,16 +17,31 @@ List-Id: linux-api@vger.kernel.org
 
 Christoph Hellwig <hch@lst.de> writes:
 
-> On Fri, Feb 26, 2016 at 04:10:51PM -0500, Jeff Moyer wrote:
->> Hi, Christoph,
+> On Fri, Feb 26, 2016 at 04:18:55PM -0500, Jeff Moyer wrote:
+>> Christoph Hellwig <hch@lst.de> writes:
 >> 
->> REQ_POLL is set but never checked.  Is part of the patch missing, or was
->> that intentional?
+>> > This series allows to selectively enable/disable polling for completions
+>> > in the block layer on a per-I/O basis.  For this it resurrects the
+>> > preadv2/pwritev2 syscalls that Milosz prepared a while ago (and which
+>> > are much simpler now due to VFS changes that happened in the meantime).
+>> > That approach also had a man page update prepared, which I will resubmit
+>> > with the current flags once this series makes it in.
+>> 
+>> It would be helpful for reviewers if you submitted the man page at the
+>> same time, in my opinion.
 >
-> Jens insisted that I add it, even if there aren't users.  I disagree,
-> but in the end he'll have to apply the series..
+> Ok.
+>
+>> Do you have any plans on adding polling support to the buffered path?
+>
+> How would that even make sense?
 
-OK.  I think it just adds confusion.
+I admit I haven't looked into the implementation details, but I was
+thinking about O_SYNC writes or reads that missed the cache.
+
+Thinking about this some more, it occurs to me that a file opened with
+O_SYNC will still incur context switching.  Do you think we should add
+that to the NOTES section of the man page?
 
 Cheers,
 Jeff
