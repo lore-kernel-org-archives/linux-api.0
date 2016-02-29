@@ -1,49 +1,61 @@
-From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: richacl(7) man page review comments
-Date: Sun, 28 Feb 2016 23:11:57 +0100
-Message-ID: <CAHc6FU4eOzNg0Tfb-29uQD9r1AzwZhZPMZnRnbjyYpkQxm=Cxw@mail.gmail.com>
-References: <56B770B6.7040803@gmail.com>
-	<56B77262.7090107@gmail.com>
-	<CAHc6FU5__xbKm4mg8+fK_ZW5ZYsDoQcYBBvQg573Eq4ERDsROw@mail.gmail.com>
-	<56C0F23C.7030902@gmail.com>
-	<CAHc6FU4CCrcrA6=oCiq2A5rGd9CCGELaTZq6tGpmd2jcV_Zp4A@mail.gmail.com>
-	<56CA2EEB.9080504@gmail.com>
-	<CAHc6FU46vO8NM3cvFH7b8X7U9R+m6wcYj8EQKVnSQkiY3Q051A@mail.gmail.com>
-	<56CC3174.2060207@gmail.com>
+From: Damien Le Moal <Damien.LeMoal-XckBA8eALwE@public.gmane.org>
+Subject: Re: selective block polling and preadv2/pwritev2 revisited V2
+Date: Mon, 29 Feb 2016 01:30:26 +0000
+Message-ID: <94DD528F-B0CC-4BA2-A7FC-8A9A11097BD8@hgst.com>
+References: <1456160876-14560-1-git-send-email-hch@lst.de>
+ <x497fhrmaps.fsf@segfault.boston.devel.redhat.com>
+ <20160227085744.GC4255@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <56CC3174.2060207-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160227085744.GC4255-jcswGhMUV9g@public.gmane.org>
+Content-Language: en-US
+Content-ID: <BDFAF8EAA110A5449B4302EBC56E9AB9-+cFlbfsKLD6cE4WynfumptQqCkab/8FMAL8bYrjMMd8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: "viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org" <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "axboe-b10kYP2dOMg@public.gmane.org" <axboe-b10kYP2dOMg@public.gmane.org>, "milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org" <milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 23, 2016 at 11:16 AM, Michael Kerrisk (man-pages)
-<mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On 02/22/2016 03:46 PM, Andreas Gruenbacher wrote:
->> On Sun, Feb 21, 2016 at 10:40 PM, Michael Kerrisk (man-pages) <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->>> I've once more pulled from the latest git; here's some more comments.
->>
->> thanks again. I've updated the repo with your changes.
->
-> Thanks!
->
-> [...]
->
->>> I'm going to play the broken record :-)
->>>
->>> Could we start with just a few simple examples already, and build up
->>> over future iterations of this page?
->>
->> Yes, as soon as I'll get to it :)
->
-> Sure. But, to press the point home, I'm interested to do further
-> review, but I feel like the lack of examples is limiting my ability to
-> understand what's going on and deepen the feedback that I provide in
-> future iterations. So, start please, even if only starting small :-).
-
-I've added a richaclex(7) examples man page now. What did I miss to explain?
-
-Thanks,
-Andreas
+DQo+T24gRnJpLCBGZWIgMjYsIDIwMTYgYXQgMDQ6MTg6NTVQTSAtMDUwMCwgSmVmZiBNb3llciB3
+cm90ZToNCj4+IENocmlzdG9waCBIZWxsd2lnIDxoY2hAbHN0LmRlPiB3cml0ZXM6DQo+PiANCj4+
+ID4gVGhpcyBzZXJpZXMgYWxsb3dzIHRvIHNlbGVjdGl2ZWx5IGVuYWJsZS9kaXNhYmxlIHBvbGxp
+bmcgZm9yIGNvbXBsZXRpb25zDQo+PiA+IGluIHRoZSBibG9jayBsYXllciBvbiBhIHBlci1JL08g
+YmFzaXMuICBGb3IgdGhpcyBpdCByZXN1cnJlY3RzIHRoZQ0KPj4gPiBwcmVhZHYyL3B3cml0ZXYy
+IHN5c2NhbGxzIHRoYXQgTWlsb3N6IHByZXBhcmVkIGEgd2hpbGUgYWdvIChhbmQgd2hpY2gNCj4+
+ID4gYXJlIG11Y2ggc2ltcGxlciBub3cgZHVlIHRvIFZGUyBjaGFuZ2VzIHRoYXQgaGFwcGVuZWQg
+aW4gdGhlIG1lYW50aW1lKS4NCj4+ID4gVGhhdCBhcHByb2FjaCBhbHNvIGhhZCBhIG1hbiBwYWdl
+IHVwZGF0ZSBwcmVwYXJlZCwgd2hpY2ggSSB3aWxsIHJlc3VibWl0DQo+PiA+IHdpdGggdGhlIGN1
+cnJlbnQgZmxhZ3Mgb25jZSB0aGlzIHNlcmllcyBtYWtlcyBpdCBpbi4NCj4+IA0KPj4gSXQgd291
+bGQgYmUgaGVscGZ1bCBmb3IgcmV2aWV3ZXJzIGlmIHlvdSBzdWJtaXR0ZWQgdGhlIG1hbiBwYWdl
+IGF0IHRoZQ0KPj4gc2FtZSB0aW1lLCBpbiBteSBvcGluaW9uLg0KPg0KPk9rLg0KPg0KPj4gRG8g
+eW91IGhhdmUgYW55IHBsYW5zIG9uIGFkZGluZyBwb2xsaW5nIHN1cHBvcnQgdG8gdGhlIGJ1ZmZl
+cmVkIHBhdGg/DQo+DQo+SG93IHdvdWxkIHRoYXQgZXZlbiBtYWtlIHNlbnNlPw0KDQpDaHJpc3Rv
+cGgsDQoNCk9uIGEgcGFnZSBjYWNoZSBtaXNzLCBwb2xsIGZvciB0aGUgQklPIHNlcnZpbmcgdGhl
+IHBhZ2UgcmVhZCBpbnN0ZWFkIG9mIHdhaXRpbmcgZm9yIHRoZSBwYWdlIGxvY2sgdG8gYmUgcmVs
+ZWFzZWQgKGZyb20gZGV2aWNlIElSUSBoYW5kbGVyKSA/IEFzIGxvbmcgYXMgdGhlIGFwcGxpY2F0
+aW9uIGlzIGx1Y2t5IHRvIGdldCBhIGZhc3QgcGFnZSBhbGxvY2F0aW9uLCBzaW1pbGFyIHBlcmZv
+cm1hbmNlIGltcHJvdmVtZW50cyBhcyBkaXJlY3QgSS9PcyBzaG91bGQgYmUgb2JzZXJ2ZWQsIHNo
+b3VsZG4ndCBpdCA/DQpCZW5lZml0IG1heSBiZSByZXN0cmljdGVkIHRvIHZlcnkgcmFuZG9tIGFj
+Y2Vzc2VzLiBGb3IgcmVhc29uYWJseSBzZXF1ZW50aWFsIGFjY2Vzc2VzLCByZWFkLWFoZWFkIHdv
+dWxkIGNvdmVyLCBhbmQgb2J2aW91c2x5LCBubyBwb2xsaW5nIHRoZXJlLg0KDQpTbyBtYXkgYmUg
+cG9sbGluZyBjb3VsZCBiZSBlbmFibGVkIG9ubHkgaWYgcmVhZC1haGVhZCBpcyBkaXNhYmxlZC4g
+SW50ZXJlc3RpbmdseSwgaWYgdGhlIGRldmljZStidXMgaXMgcmVhbGx5IHJlYWxseSBmYXN0LCB0
+aGF0IGNvdWxkIHJlc3VsdCBpbiBtaW5pbWFsIHBlcmZvcm1hbmNlIGRpZmZlcmVuY2UgYmV0d2Vl
+biBhIHBhZ2UgY2FjaGUgaGl0IGFuZCBhIG1pc3MuLi4NCg0KQmVzdC4NCj4NCg0KLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tDQpEYW1pZW4gTGUgTW9hbCwgUGguRC4NClNyLiBNYW5hZ2VyLCBTeXN0
+ZW0gU29mdHdhcmUgR3JvdXAsIEhHU1QgUmVzZWFyY2gsDQpIR1NULCBhIFdlc3Rlcm4gRGlnaXRh
+bCBjb21wYW55DQpEYW1pZW4uTGVNb2FsQGhnc3QuY29tDQooKzgxKSAwNDY2LTk4LTM1OTMgKGV4
+dC4gNTEzNTkzKQ0KMSBraXJpaGFyYS1jaG8sIEZ1amlzYXdhLCANCkthbmFnYXdhLCAyNTItMDg4
+OCBKYXBhbg0Kd3d3Lmhnc3QuY29tIA0KDQoNCg0KV2VzdGVybiBEaWdpdGFsIENvcnBvcmF0aW9u
+IChhbmQgaXRzIHN1YnNpZGlhcmllcykgRS1tYWlsIENvbmZpZGVudGlhbGl0eSBOb3RpY2UgJiBE
+aXNjbGFpbWVyOgoKVGhpcyBlLW1haWwgYW5kIGFueSBmaWxlcyB0cmFuc21pdHRlZCB3aXRoIGl0
+IG1heSBjb250YWluIGNvbmZpZGVudGlhbCBvciBsZWdhbGx5IHByaXZpbGVnZWQgaW5mb3JtYXRp
+b24gb2YgV0RDIGFuZC9vciBpdHMgYWZmaWxpYXRlcywgYW5kIGFyZSBpbnRlbmRlZCBzb2xlbHkg
+Zm9yIHRoZSB1c2Ugb2YgdGhlIGluZGl2aWR1YWwgb3IgZW50aXR5IHRvIHdoaWNoIHRoZXkgYXJl
+IGFkZHJlc3NlZC4gSWYgeW91IGFyZSBub3QgdGhlIGludGVuZGVkIHJlY2lwaWVudCwgYW55IGRp
+c2Nsb3N1cmUsIGNvcHlpbmcsIGRpc3RyaWJ1dGlvbiBvciBhbnkgYWN0aW9uIHRha2VuIG9yIG9t
+aXR0ZWQgdG8gYmUgdGFrZW4gaW4gcmVsaWFuY2Ugb24gaXQsIGlzIHByb2hpYml0ZWQuIElmIHlv
+dSBoYXZlIHJlY2VpdmVkIHRoaXMgZS1tYWlsIGluIGVycm9yLCBwbGVhc2Ugbm90aWZ5IHRoZSBz
+ZW5kZXIgaW1tZWRpYXRlbHkgYW5kIGRlbGV0ZSB0aGUgZS1tYWlsIGluIGl0cyBlbnRpcmV0eSBm
+cm9tIHlvdXIgc3lzdGVtLgo=
