@@ -1,61 +1,73 @@
-From: Damien Le Moal <Damien.LeMoal-XckBA8eALwE@public.gmane.org>
-Subject: Re: selective block polling and preadv2/pwritev2 revisited V2
-Date: Mon, 29 Feb 2016 01:30:26 +0000
-Message-ID: <94DD528F-B0CC-4BA2-A7FC-8A9A11097BD8@hgst.com>
-References: <1456160876-14560-1-git-send-email-hch@lst.de>
- <x497fhrmaps.fsf@segfault.boston.devel.redhat.com>
- <20160227085744.GC4255@lst.de>
+From: Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v10 2/2] cpufreq: powernv: Add sysfs attributes to show
+ throttle stats
+Date: Mon, 29 Feb 2016 12:09:17 +0530
+Message-ID: <20160229063917.GK2791@vireshk-i7>
+References: <1456483012-29466-1-git-send-email-shilpa.bhat@linux.vnet.ibm.com>
+ <1456483012-29466-3-git-send-email-shilpa.bhat@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160227085744.GC4255-jcswGhMUV9g@public.gmane.org>
-Content-Language: en-US
-Content-ID: <BDFAF8EAA110A5449B4302EBC56E9AB9-+cFlbfsKLD6cE4WynfumptQqCkab/8FMAL8bYrjMMd8@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1456483012-29466-3-git-send-email-shilpa.bhat-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: "viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org" <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "axboe-b10kYP2dOMg@public.gmane.org" <axboe-b10kYP2dOMg@public.gmane.org>, "milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org" <milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org, Shilpasri G Bhat <shilpa.bhat-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Cc: linuxppc-dev-mnsaURCQ41sdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ego-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, shreyas-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-DQo+T24gRnJpLCBGZWIgMjYsIDIwMTYgYXQgMDQ6MTg6NTVQTSAtMDUwMCwgSmVmZiBNb3llciB3
-cm90ZToNCj4+IENocmlzdG9waCBIZWxsd2lnIDxoY2hAbHN0LmRlPiB3cml0ZXM6DQo+PiANCj4+
-ID4gVGhpcyBzZXJpZXMgYWxsb3dzIHRvIHNlbGVjdGl2ZWx5IGVuYWJsZS9kaXNhYmxlIHBvbGxp
-bmcgZm9yIGNvbXBsZXRpb25zDQo+PiA+IGluIHRoZSBibG9jayBsYXllciBvbiBhIHBlci1JL08g
-YmFzaXMuICBGb3IgdGhpcyBpdCByZXN1cnJlY3RzIHRoZQ0KPj4gPiBwcmVhZHYyL3B3cml0ZXYy
-IHN5c2NhbGxzIHRoYXQgTWlsb3N6IHByZXBhcmVkIGEgd2hpbGUgYWdvIChhbmQgd2hpY2gNCj4+
-ID4gYXJlIG11Y2ggc2ltcGxlciBub3cgZHVlIHRvIFZGUyBjaGFuZ2VzIHRoYXQgaGFwcGVuZWQg
-aW4gdGhlIG1lYW50aW1lKS4NCj4+ID4gVGhhdCBhcHByb2FjaCBhbHNvIGhhZCBhIG1hbiBwYWdl
-IHVwZGF0ZSBwcmVwYXJlZCwgd2hpY2ggSSB3aWxsIHJlc3VibWl0DQo+PiA+IHdpdGggdGhlIGN1
-cnJlbnQgZmxhZ3Mgb25jZSB0aGlzIHNlcmllcyBtYWtlcyBpdCBpbi4NCj4+IA0KPj4gSXQgd291
-bGQgYmUgaGVscGZ1bCBmb3IgcmV2aWV3ZXJzIGlmIHlvdSBzdWJtaXR0ZWQgdGhlIG1hbiBwYWdl
-IGF0IHRoZQ0KPj4gc2FtZSB0aW1lLCBpbiBteSBvcGluaW9uLg0KPg0KPk9rLg0KPg0KPj4gRG8g
-eW91IGhhdmUgYW55IHBsYW5zIG9uIGFkZGluZyBwb2xsaW5nIHN1cHBvcnQgdG8gdGhlIGJ1ZmZl
-cmVkIHBhdGg/DQo+DQo+SG93IHdvdWxkIHRoYXQgZXZlbiBtYWtlIHNlbnNlPw0KDQpDaHJpc3Rv
-cGgsDQoNCk9uIGEgcGFnZSBjYWNoZSBtaXNzLCBwb2xsIGZvciB0aGUgQklPIHNlcnZpbmcgdGhl
-IHBhZ2UgcmVhZCBpbnN0ZWFkIG9mIHdhaXRpbmcgZm9yIHRoZSBwYWdlIGxvY2sgdG8gYmUgcmVs
-ZWFzZWQgKGZyb20gZGV2aWNlIElSUSBoYW5kbGVyKSA/IEFzIGxvbmcgYXMgdGhlIGFwcGxpY2F0
-aW9uIGlzIGx1Y2t5IHRvIGdldCBhIGZhc3QgcGFnZSBhbGxvY2F0aW9uLCBzaW1pbGFyIHBlcmZv
-cm1hbmNlIGltcHJvdmVtZW50cyBhcyBkaXJlY3QgSS9PcyBzaG91bGQgYmUgb2JzZXJ2ZWQsIHNo
-b3VsZG4ndCBpdCA/DQpCZW5lZml0IG1heSBiZSByZXN0cmljdGVkIHRvIHZlcnkgcmFuZG9tIGFj
-Y2Vzc2VzLiBGb3IgcmVhc29uYWJseSBzZXF1ZW50aWFsIGFjY2Vzc2VzLCByZWFkLWFoZWFkIHdv
-dWxkIGNvdmVyLCBhbmQgb2J2aW91c2x5LCBubyBwb2xsaW5nIHRoZXJlLg0KDQpTbyBtYXkgYmUg
-cG9sbGluZyBjb3VsZCBiZSBlbmFibGVkIG9ubHkgaWYgcmVhZC1haGVhZCBpcyBkaXNhYmxlZC4g
-SW50ZXJlc3RpbmdseSwgaWYgdGhlIGRldmljZStidXMgaXMgcmVhbGx5IHJlYWxseSBmYXN0LCB0
-aGF0IGNvdWxkIHJlc3VsdCBpbiBtaW5pbWFsIHBlcmZvcm1hbmNlIGRpZmZlcmVuY2UgYmV0d2Vl
-biBhIHBhZ2UgY2FjaGUgaGl0IGFuZCBhIG1pc3MuLi4NCg0KQmVzdC4NCj4NCg0KLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tDQpEYW1pZW4gTGUgTW9hbCwgUGguRC4NClNyLiBNYW5hZ2VyLCBTeXN0
-ZW0gU29mdHdhcmUgR3JvdXAsIEhHU1QgUmVzZWFyY2gsDQpIR1NULCBhIFdlc3Rlcm4gRGlnaXRh
-bCBjb21wYW55DQpEYW1pZW4uTGVNb2FsQGhnc3QuY29tDQooKzgxKSAwNDY2LTk4LTM1OTMgKGV4
-dC4gNTEzNTkzKQ0KMSBraXJpaGFyYS1jaG8sIEZ1amlzYXdhLCANCkthbmFnYXdhLCAyNTItMDg4
-OCBKYXBhbg0Kd3d3Lmhnc3QuY29tIA0KDQoNCg0KV2VzdGVybiBEaWdpdGFsIENvcnBvcmF0aW9u
-IChhbmQgaXRzIHN1YnNpZGlhcmllcykgRS1tYWlsIENvbmZpZGVudGlhbGl0eSBOb3RpY2UgJiBE
-aXNjbGFpbWVyOgoKVGhpcyBlLW1haWwgYW5kIGFueSBmaWxlcyB0cmFuc21pdHRlZCB3aXRoIGl0
-IG1heSBjb250YWluIGNvbmZpZGVudGlhbCBvciBsZWdhbGx5IHByaXZpbGVnZWQgaW5mb3JtYXRp
-b24gb2YgV0RDIGFuZC9vciBpdHMgYWZmaWxpYXRlcywgYW5kIGFyZSBpbnRlbmRlZCBzb2xlbHkg
-Zm9yIHRoZSB1c2Ugb2YgdGhlIGluZGl2aWR1YWwgb3IgZW50aXR5IHRvIHdoaWNoIHRoZXkgYXJl
-IGFkZHJlc3NlZC4gSWYgeW91IGFyZSBub3QgdGhlIGludGVuZGVkIHJlY2lwaWVudCwgYW55IGRp
-c2Nsb3N1cmUsIGNvcHlpbmcsIGRpc3RyaWJ1dGlvbiBvciBhbnkgYWN0aW9uIHRha2VuIG9yIG9t
-aXR0ZWQgdG8gYmUgdGFrZW4gaW4gcmVsaWFuY2Ugb24gaXQsIGlzIHByb2hpYml0ZWQuIElmIHlv
-dSBoYXZlIHJlY2VpdmVkIHRoaXMgZS1tYWlsIGluIGVycm9yLCBwbGVhc2Ugbm90aWZ5IHRoZSBz
-ZW5kZXIgaW1tZWRpYXRlbHkgYW5kIGRlbGV0ZSB0aGUgZS1tYWlsIGluIGl0cyBlbnRpcmV0eSBm
-cm9tIHlvdXIgc3lzdGVtLgo=
+On 26-02-16, 16:06, Shilpasri G Bhat wrote:
+> +static int powernv_cpufreq_policy_notifier(struct notifier_block *nb,
+> +					   unsigned long action, void *data)
+> +{
+> +	struct cpufreq_policy *policy = data;
+> +	int ret;
+> +
+> +	if (action == CPUFREQ_CREATE_POLICY) {
+> +		ret = sysfs_create_group(&policy->kobj, &throttle_attr_grp);
+> +		if (ret)
+> +			pr_info("Failed to create throttle stats directory for cpu %d\n",
+> +				policy->cpu);
+> +	} else if (action == CPUFREQ_REMOVE_POLICY) {
+> +		sysfs_remove_group(&policy->kobj, &throttle_attr_grp);
+> +	}
+> +
+> +	return NOTIFY_DONE;
+> +}
+> +
+> +static struct notifier_block powernv_cpufreq_policy_nb = {
+> +	.notifier_call	= powernv_cpufreq_policy_notifier,
+> +	.next		= NULL,
+> +};
+> +
+>  static void powernv_cpufreq_stop_cpu(struct cpufreq_policy *policy)
+>  {
+>  	struct powernv_smp_call_data freq_data;
+> @@ -603,6 +708,8 @@ static inline void clean_chip_info(void)
+>  
+>  static inline void unregister_all_notifiers(void)
+>  {
+> +	cpufreq_unregister_notifier(&powernv_cpufreq_policy_nb,
+> +				    CPUFREQ_POLICY_NOTIFIER);
+>  	opal_message_notifier_unregister(OPAL_MSG_OCC,
+>  					 &powernv_cpufreq_opal_nb);
+>  	unregister_reboot_notifier(&powernv_cpufreq_reboot_nb);
+> @@ -628,6 +735,8 @@ static int __init powernv_cpufreq_init(void)
+>  
+>  	register_reboot_notifier(&powernv_cpufreq_reboot_nb);
+>  	opal_message_notifier_register(OPAL_MSG_OCC, &powernv_cpufreq_opal_nb);
+> +	cpufreq_register_notifier(&powernv_cpufreq_policy_nb,
+> +				  CPUFREQ_POLICY_NOTIFIER);
+>  
+>  	rc = cpufreq_register_driver(&powernv_cpufreq_driver);
+>  	if (!rc)
+
+@Rafael: This driver needs to do this *ugly* notifier hack, just because we
+aren't doing kobject_add() for policy->kobj before ->init(). And we did that
+because, we wanted to create the policyX structure with the first CPU in
+policy->related_cpus mask and related_cpus mask isn't available until we call
+->init()..
+
+Should we do something in core to make this easier for this driver?
+
+-- 
+viresh
