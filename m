@@ -1,139 +1,49 @@
-From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v18 20/22] vfs: Add richacl permission checking
-Date: Mon, 29 Feb 2016 09:17:25 +0100
-Message-ID: <1456733847-17982-21-git-send-email-agruenba@redhat.com>
-References: <1456733847-17982-1-git-send-email-agruenba@redhat.com>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH v4 1/5] getcpu_cache system call: cache CPU number of
+ running thread
+Date: Mon, 29 Feb 2016 11:01:10 +0100
+Message-ID: <20160229100110.GH6356@twins.programming.kicks-ass.net>
+References: <alpine.DEB.2.11.1602261719440.3638@nanos>
+ <967083634.8940.1456507201156.JavaMail.zimbra@efficios.com>
+ <alpine.DEB.2.11.1602261855100.3638@nanos>
+ <724964987.9217.1456518255392.JavaMail.zimbra@efficios.com>
+ <7096DA23-3908-40DC-A46B-C4CF2252CEE8@zytor.com>
+ <1150363257.9781.1456533630895.JavaMail.zimbra@efficios.com>
+ <56D14132.5050100@zytor.com>
+ <2053850250.10158.1456582501604.JavaMail.zimbra@efficios.com>
+ <20160227145809.GD6356@twins.programming.kicks-ass.net>
+ <CA+55aFysWipEagSdgeXbLx+Au4vomvyttdNFJtM+HffmBECQiA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <1456733847-17982-1-git-send-email-agruenba@redhat.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: linux-cifs@vger.kernel.org, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, Christoph Hellwig <hch@infradead.org>, linux-api@vger.kernel.org, Trond Myklebust <trond.myklebust@primarydata.com>, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, "J. Bruce Fields" <bfields@fieldses.org>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-fsdevel@vger.kernel.org, Jeff Layton <jlayton@poochiereds.net>, linux-ext4@vger.kernel.org, Anna Schumaker <anna.schumaker@netapp.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CA+55aFysWipEagSdgeXbLx+Au4vomvyttdNFJtM+HffmBECQiA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hook the richacl permission checking function into the vfs.
+On Sat, Feb 27, 2016 at 10:35:28AM -0800, Linus Torvalds wrote:
+> On Sat, Feb 27, 2016 at 6:58 AM, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+> >
+> > Paul's patches have the following structure:
+> >
+> > struct thread_local_abi {
+> >         union {
+> >                 struct {
+> >                         u32     cpu_id;
+> >                         u32     seq;
+> >                 };
+> >                 u64 cpu_seq;
+> >         };
+> >         unsigned long post_commit_ip;
+> > };
+> 
+> Please don't do "unsigned long" in ABI structures any more.
+> 
+> Make it u64, and make sure it is 64-bit aligned (which it would be in
+> this case). Make it so that we don't have to have separate compat
+> paths.
 
-Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
----
- fs/namei.c     | 51 +++++++++++++++++++++++++++++++++++++++++++++++++--
- fs/posix_acl.c |  6 +++---
- 2 files changed, 52 insertions(+), 5 deletions(-)
-
-diff --git a/fs/namei.c b/fs/namei.c
-index 59b1da0..716c01d 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -35,6 +35,7 @@
- #include <linux/fs_struct.h>
- #include <linux/posix_acl.h>
- #include <linux/hash.h>
-+#include <linux/richacl.h>
- #include <asm/uaccess.h>
- 
- #include "internal.h"
-@@ -255,7 +256,40 @@ void putname(struct filename *name)
- 		__putname(name);
- }
- 
--static int check_acl(struct inode *inode, int mask)
-+static int check_richacl(struct inode *inode, int mask)
-+{
-+#ifdef CONFIG_FS_RICHACL
-+	struct richacl *acl;
-+
-+	if (mask & MAY_NOT_BLOCK) {
-+		acl = get_cached_richacl_rcu(inode);
-+		if (!acl)
-+			goto no_acl;
-+		/* no ->get_richacl() calls in RCU mode... */
-+		if (acl == ACL_NOT_CACHED)
-+			return -ECHILD;
-+		return richacl_permission(inode, acl, mask & ~MAY_NOT_BLOCK);
-+	}
-+
-+	acl = get_richacl(inode);
-+	if (IS_ERR(acl))
-+		return PTR_ERR(acl);
-+	if (acl) {
-+		int error = richacl_permission(inode, acl, mask);
-+		richacl_put(acl);
-+		return error;
-+	}
-+no_acl:
-+#endif
-+	if (mask & (MAY_DELETE_SELF | MAY_TAKE_OWNERSHIP |
-+		    MAY_CHMOD | MAY_SET_TIMES)) {
-+		/* File permission bits cannot grant this. */
-+		return -EACCES;
-+	}
-+	return -EAGAIN;
-+}
-+
-+static int check_posix_acl(struct inode *inode, int mask)
- {
- #ifdef CONFIG_FS_POSIX_ACL
- 	struct posix_acl *acl;
-@@ -290,11 +324,24 @@ static int acl_permission_check(struct inode *inode, int mask)
- {
- 	unsigned int mode = inode->i_mode;
- 
-+	/*
-+	 * With POSIX ACLs, the (mode & S_IRWXU) bits exactly match the owner
-+	 * permissions, and we can skip checking posix acls for the owner.
-+	 * With richacls, the owner may be granted fewer permissions than the
-+	 * mode bits seem to suggest (for example, append but not write), and
-+	 * we always need to check the richacl.
-+	 */
-+
-+	if (IS_RICHACL(inode)) {
-+		int error = check_richacl(inode, mask);
-+		if (error != -EAGAIN)
-+			return error;
-+	}
- 	if (likely(uid_eq(current_fsuid(), inode->i_uid)))
- 		mode >>= 6;
- 	else {
- 		if (IS_POSIXACL(inode) && (mode & S_IRWXG)) {
--			int error = check_acl(inode, mask);
-+			int error = check_posix_acl(inode, mask);
- 			if (error != -EAGAIN)
- 				return error;
- 		}
-diff --git a/fs/posix_acl.c b/fs/posix_acl.c
-index f24646e..7810c6f 100644
---- a/fs/posix_acl.c
-+++ b/fs/posix_acl.c
-@@ -100,13 +100,13 @@ struct posix_acl *get_acl(struct inode *inode, int type)
- {
- 	struct posix_acl *acl;
- 
-+	if (!IS_POSIXACL(inode))
-+		return NULL;
-+
- 	acl = get_cached_acl(inode, type);
- 	if (acl != ACL_NOT_CACHED)
- 		return acl;
- 
--	if (!IS_POSIXACL(inode))
--		return NULL;
--
- 	/*
- 	 * A filesystem can force a ACL callback by just never filling the
- 	 * ACL cache. But normally you'd fill the cache either at inode
--- 
-2.4.3
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+Yes, for sure. I was 'only' trying to reflect the state of the last rseq
+patches. But yes, I should have called that out and avoided 'confusion'.
