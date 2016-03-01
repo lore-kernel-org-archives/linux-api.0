@@ -1,118 +1,66 @@
-From: =?UTF-8?Q?Jo=C3=A3o_Paulo_Rechi_Vita?= <jprvita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCHv2 08/10] rfkill: Use switch to demux userspace operations
-Date: Tue, 1 Mar 2016 11:15:27 -0500
-Message-ID: <CA+A7VXWWQOti7pOre08QcXN9vgssQH3V1f6RjphaK0VwM27C7g@mail.gmail.com>
-References: <1456159001-20307-1-git-send-email-jprvita@endlessm.com>
- <1456159001-20307-9-git-send-email-jprvita@endlessm.com> <20160226175925.GA9331@w1.fi>
- <CA+A7VXUY=qVDQ-OqT+QJK8haN6AFX4Br=OPXi-6RCxpvH3=QRg@mail.gmail.com>
- <20160229223918.GA32464@w1.fi> <1456839787.3926.20.camel@sipsolutions.net>
+From: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v4 1/5] getcpu_cache system call: cache CPU number of
+ running thread
+Date: Tue, 1 Mar 2016 10:25:44 -0800
+Message-ID: <56D5DEA8.3040908@zytor.com>
+References: <1456270120-7560-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <1150363257.9781.1456533630895.JavaMail.zimbra@efficios.com>
+ <56D14132.5050100@zytor.com>
+ <2053850250.10158.1456582501604.JavaMail.zimbra@efficios.com>
+ <20160227145809.GD6356@twins.programming.kicks-ass.net>
+ <CA+55aFysWipEagSdgeXbLx+Au4vomvyttdNFJtM+HffmBECQiA@mail.gmail.com>
+ <1401667361.10273.1456617236327.JavaMail.zimbra@efficios.com>
+ <CA+55aFwcgwRxvVBz5kk_3O8dESXAGJ4KHBkf=pSXjiS7Xh4NwA@mail.gmail.com>
+ <1082926946.10326.1456619994590.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1456839787.3926.20.camel-cdvu00un1VgdHxzADdlk8Q@public.gmane.org>
+In-Reply-To: <1082926946.10326.1456619994590.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Johannes Berg <johannes-cdvu00un1VgdHxzADdlk8Q@public.gmane.org>
-Cc: Jouni Malinen <j@w1.fi>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-wireless <linux-wireless-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, platform-driver-x86-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-6IF/jdPJHihWk0Htik3J/w@public.gmane.org, =?UTF-8?Q?Jo=C3=A3o_Paulo_Rechi_Vita?= <jprvita-6IF/jdPJHihWk0Htik3J/w@public.gmane.org>
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 1 March 2016 at 08:43, Johannes Berg <johannes-cdvu00un1VgdHxzADdlk8Q@public.gmane.org> wro=
-te:
-> On Tue, 2016-03-01 at 00:39 +0200, Jouni Malinen wrote:
->
->> > I agree there is a difference in the logic here,
->
-> Gah. I thought I'd reviewed the logic and made sure there's no
-> difference ... :)
->
->> >  thanks for taking the
->> > time to point it out so clearly, and sorry for missing this. But A=
-=46AIU
->> > userspace should not call RFKILL_OP_CHANGE with ev.type =3D=3D
->> > RFKILL_TYPE_ALL, as RFKILL_OP_CHANGE is intended to be used to
->> > block/unblock one RFKill switch, and it is not possible to create =
-a
->> > RFKill switch with type =3D=3D RFKILL_TYPE_ALL (rfkill_alloc() wou=
-ld
->> > return NULL).
->
->> Interesting. Maybe Johannes can comment on that part since I think h=
-e
->> wrote the code that interacts with kernel for the rfkill test cases.
->
-> So first of all, it seems that this argument is invalid since we can'=
-t break the ABI/API here; although perhaps if it's only a test case ...
->
+On 02/27/16 16:39, Mathieu Desnoyers wrote:
+> 
+> Very good points! Would the following interfaces be acceptable ?
+> 
+> /* This structure needs to be aligned cache line size. */
+> struct thread_local_abi {
+>         int32_t cpu_id;                               /* Aligned on
+> 32-bit. */
+>         uint32_t rseq_seqnum;                 /* Aligned on 32-bit. */
+>         uint64_t rseq_post_commit_ip;   /* Aligned on 64-bit. */
+>         /* Add new fields at the end. */
+> } __attribute__((packed));
+> 
 
-Yep, that's an important point (not breaking the API/ABI).
+First of all, DO NOT use __attribute__((packed)).  First of all, it
+buggers up the alignment of the *entire structure* (the alignment of a
+packed structure defaults to 1, and gcc will assume the whole structure
+is misaligned, generating unaligned access instructions on architectures
+which need them.)
 
-> Oh. It took me a while, but I see now. The original intent (I think)
-> was that with RFKILL_OP_CHANGE, the type would be ignored entirely. I=
-t
-> seems that the (my) original intent wouldn't have been to force
-> userspace to specify *both* the index and the type, but instead do
->
-> OP_CHANGE_ALL -> use type (possibly TYPE_ALL, ignoring idx)
-> OP_CHANGE     -> use idx (ignoring type)
->
->
-> The original code implemented it as follows:
->
->                 if (rfkill->idx !=3D ev.idx && ev.op !=3D RFKILL_OP_C=
-HANGE_ALL)
->                         continue;
->
-> -> check the idx only for OP_CHANGE
->
->                 if (rfkill->type !=3D ev.type && ev.type !=3D RFKILL_=
-TYPE_ALL)
->                         continue;
->
-> -> check the type, allowing _ALL
->
-> Now, all userspace that I found sets the ev.type field to TYPE_ALL al=
-l
-> the time; and it had to given these checks.
->
-> e.g. from rfkill.py:
->
-> # idx, type, op, soft, hard
-> _event_struct =3D '@IBBBB'
->
-> [...]
->
->     def block(self):
->         rfk =3D open('/dev/rfkill', 'w')
->         s =3D struct.pack(_event_struct, self.idx, TYPE_ALL, _OP_CHAN=
-GE, 1, 0)
->         rfk.write(s)
->         rfk.close()
->
->
-> This check, originally, probably should've been
->
->                 if (rfkill->type !=3D ev.type && ev.type !=3D RFKILL_=
-TYPE_ALL &&
->                     ev.op !=3D RFKILL_OP_CHANGE)
->                         continue;
->
-> to ignore the type entirely.
->
-> I'm fine with Jouni's change, preserving the original behaviour of
-> requiring TYPE_ALL or the correct type, but I'm tempted to simply
-> remove the type check entirely.
->
-> Thoughts?
->
+Sadly gcc doesn't currently have an __attribute__ to express "error out
+on padding" which is what you actually want here.
 
-I think this patch should keep the original logic, as this is supposed
-to be a refactor only. If we decide to remove the check, we should to
-it in a separate patch, to make it clear for someone looking at the
-history later.
+You may, however, want to add an explicit alignment attribute to make
+sure it is cache line aligned.
 
-I'm fine with removing the type check (in a separate patch), but I
-don't see much gain in doing so.
+Second, as far as the 32/64 bit issue is concerned, you have to order
+the fields so you always access the LSB.  This is probably the best way
+to do it:
 
---
-Jo=C3=A3o Paulo Rechi Vita
-http://about.me/jprvita
+#ifdef __LP64__
+# define __FIELD_32_64(field,n)	uint64_t field;
+#elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+# define __FIELD_32_64(field,n) uint32_t field, _unused ## n;
+#else
+# define __FIELD_32_64(field,n) uint32_t _unused ## n, field;
+#endif
+
+All these macros are intrinsic to gcc (and hopefully to gcc-compatible
+compilers) so there are no header file dependencies.
+
+	-hpa
