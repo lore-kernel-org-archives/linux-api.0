@@ -1,91 +1,74 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH v4 2/2] mm/page_ref: add tracepoint to track down page
- reference manipulation
-Date: Wed, 2 Mar 2016 17:58:26 +0100
-Message-ID: <56D71BB2.5060503@suse.cz>
-References: <1456448282-897-1-git-send-email-iamjoonsoo.kim@lge.com>
- <1456448282-897-2-git-send-email-iamjoonsoo.kim@lge.com>
+From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of blocks
+Date: Wed, 2 Mar 2016 10:52:01 -0800
+Message-ID: <CA+55aFx_NPn0VYk=+Ad5S_r=D6J1xFmWmf7JzQ7RmkwKmdkYOg@mail.gmail.com>
+References: <20160302040932.16685.62789.stgit@birch.djwong.org>
+	<20160302040947.16685.42926.stgit@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1456448282-897-2-git-send-email-iamjoonsoo.kim@lge.com>
-Sender: owner-linux-mm@kvack.org
-To: js1304@gmail.com, Andrew Morton <akpm@linux-foundation.org>
-Cc: Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160302040947.16685.42926.stgit-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, shane.seymour-ZPxbGqLxI0U@public.gmane.org, Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 02/26/2016 01:58 AM, js1304@gmail.com wrote:
-> From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
->
-> CMA allocation should be guaranteed to succeed by definition, but,
-> unfortunately, it would be failed sometimes. It is hard to track down
-> the problem, because it is related to page reference manipulation and
-> we don't have any facility to analyze it.
->
-> This patch adds tracepoints to track down page reference manipulation.
-> With it, we can find exact reason of failure and can fix the problem.
-> Following is an example of tracepoint output. (note: this example is
-> stale version that printing flags as the number. Recent version will
-> print it as human readable string.)
->
-> Enabling this feature bloat kernel text 30 KB in my configuration.
->
->     text    data     bss     dec     hex filename
-> 12127327        2243616 1507328 15878271         f2487f vmlinux_disabled
-> 12157208        2258880 1507328 15923416         f2f8d8 vmlinux_enabled
->
+On Tue, Mar 1, 2016 at 8:09 PM, Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
+> Create a new ioctl to expose the block layer's newfound ability to
+> issue either a zeroing discard, a WRITE SAME with a zero page, or a
+> regular write with the zero page.  This BLKZEROOUT2 ioctl takes
+> {start, length, flags} as parameters.  So far, the only flag available
+> is to enable the zeroing discard part -- without it, the call invokes
+> the old BLKZEROOUT behavior.  start and length have the same meaning
+> as in BLKZEROOUT.
 
-That's not bad, and it's even configurable. Thanks for taking the extra 
-care about overhead since v1.
+NAK, just based on annoyance with the randomness of this interface:
 
-> Note that, due to header file dependency problem between mm.h and
-> tracepoint.h, this feature has to open code the static key functions
-> for tracepoints. Proposed by Steven Rostedt in following link.
->
-> https://lkml.org/lkml/2015/12/9/699
->
-> v3:
-> o Add commit description and code comment why this patch open code
-> the static key functions for tracepoints.
-> o Notify that example is stale version.
-> o Add "depends on TRACEPOINTS".
->
-> v2:
-> o Use static key of each tracepoints to avoid function call overhead
-> when tracepoints are disabled.
-> o Print human-readable page flag thanks to newly introduced %pgp option.
-> o Add more description to Kconfig.debug.
->
-> Acked-by: Michal Nazarewicz <mina86@mina86.com>
-> Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+ - without describing what the point of the new flag and lots of extra
+expansion room is, this should never be merged. We don't add padding
+just randomly.
 
-Acked-by: Vlastimil Babka <vbabka@suse.cz>
+ - Somewhat related to that: the flags are checked for zero, but the
+random expansion room isn't. So not only are the random expansion
+fields not explained, they will contain random garbage in the future.
 
-> +config DEBUG_PAGE_REF
-> +	bool "Enable tracepoint to track down page reference manipulation"
-> +	depends on DEBUG_KERNEL
-> +	depends on TRACEPOINTS
-> +	---help---
-> +	  This is the feature to add tracepoint for tracking down page reference
-> +	  manipulation. This tracking is useful to diagnosis functional failure
-> +	  due to migration failure caused by page reference mismatch. Be
+ - why is that "FMODE_WRITE" check not in the common code, but duplicated?
 
-OK.
+it all seems very ad-hoc. It makes a big deal about that idiotic
+"discard" behavior, which is entirely pointless.
 
-> +	  careful to turn on this feature because it could bloat some kernel
-> +	  text. In my configuration, it bloats 30 KB. Although kernel text will
-> +	  be bloated, there would be no runtime performance overhead if
-> +	  tracepoint isn't enabled thanks to jump label.
+Who cares about that discard behavior anyway? Why is it set to "false"
+in the current version of BLKZEROOUT in the first place? Why do we do
+that WRITE_SAME without questioning it, but "discard" is somehow so
+special that it has a flag, and it's turned off by default?
 
-I would just write something like:
+If this is some "security issue" where somebody believes that discard
+is not secure, then those people are full of shit. Discard and
+write-same have exactly the same semantics - they may just unmap the
+target range with the guarantee that you'll get zeroes on read.
 
-Enabling this feature adds about 30 KB to the kernel code, but runtime 
-performance overhead is virtually none until the tracepoints are 
-actually enabled.
+So quite frankly, right now it seems that
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+ (a) the *only* excuse for this patch is that people want to use "discard"
+
+ (b) the reason we already don't use "discard" for the old BLKZEROOUT
+is very questionable
+
+ (c) any future possible use of flags is not described and is questionable
+
+You'll find people who think that "write-same with some non-zero
+pattern" would be a real over-write and good for security. Those
+people will then argue that a sane extension would be to make that
+pattern part of the future expansion of BLKZEROOUT2. And those people
+are full of shit. Write-same with a non-zero pattern may well be just
+a discard with the pattern set in another table.
+
+So the whole patch looks pointless.
+
+Why isn't the patch just "change false to true in blk_ioctl_zeroout()
+when it calls blkdev_issue_zeroout()".
+
+No new interface, no new random padding, just a simple "it makes
+absolutely no sense to not allow discard".
+
+                    Linus
