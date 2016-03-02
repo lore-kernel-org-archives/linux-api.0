@@ -1,32 +1,44 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH v5.1 0/2] create BLKZEROOUT ioctl that invalidates page cache
-Date: Wed, 02 Mar 2016 11:55:12 +0100
-Message-ID: <3061888.dPHoQkWWFl@wuerfel>
-References: <20160302040932.16685.62789.stgit@birch.djwong.org> <1889689.0axyUkdxkf@wuerfel> <20160302094416.GA16631@infradead.org>
+From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH v4 1/2] mm: introduce page reference manipulation
+ functions
+Date: Wed, 2 Mar 2016 17:44:16 +0100
+Message-ID: <56D71860.7050108@suse.cz>
+References: <1456448282-897-1-git-send-email-iamjoonsoo.kim@lge.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160302094416.GA16631-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+In-Reply-To: <1456448282-897-1-git-send-email-iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, shane.seymour-ZPxbGqLxI0U@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org
+To: js1304-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Michal Nazarewicz <mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Sergey Senozhatsky <sergey.senozhatsky.work-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wednesday 02 March 2016 01:44:16 Christoph Hellwig wrote:
-> On Wed, Mar 02, 2016 at 10:15:02AM +0100, Arnd Bergmann wrote:
-> > I'm missing the background on this, just saw the patch fly by,
-> > so sorry if this has been asked before:
-> > 
-> > Why do you want to invalidate the cache? Is this to save RAM
-> > or is something else going to write here and you have to invalidate
-> > it for correctness?
-> 
-> BLKZEROOUT can be though as a direct I/O operation - it issues a 
-> WRITE SAME (or similar) command straight to the device to zero
-> the specified range.  If there was cached data for this range it would
-> now be stale.
+On 02/26/2016 01:58 AM, js1304-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
+> From: Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
+>
+> Success of CMA allocation largely depends on success of migration
+> and key factor of it is page reference count. Until now, page reference
+> is manipulated by direct calling atomic functions so we cannot follow up
+> who and where manipulate it. Then, it is hard to find actual reason
+> of CMA allocation failure. CMA allocation should be guaranteed to succeed
+> so finding offending place is really important.
+>
+> In this patch, call sites where page reference is manipulated are converted
+> to introduced wrapper function. This is preparation step to add tracepoint
+> to each page reference manipulation function. With this facility, we can
+> easily find reason of CMA allocation failure. There is no functional change
+> in this patch.
+>
+> In addition, this patch also converts reference read sites. It will help
+> a second step that renames page._count to something else and prevents later
+> attempt to direct access to it (Suggested by Andrew).
+>
+> Acked-by: Michal Nazarewicz <mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org>
+> Signed-off-by: Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
 
-Ok, got it. Thanks,
+Even without Patch 2/2 this is a nice improvement.
+Acked-by: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
 
-	Arnd
+Although somebody might be confused by page_ref_count() vs page_count(). 
+Oh well.
