@@ -1,169 +1,369 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of
- blocks
-Date: Wed, 2 Mar 2016 14:56:01 -0800
-Message-ID: <20160302225601.GB21890@birch.djwong.org>
-References: <20160302040932.16685.62789.stgit@birch.djwong.org>
- <20160302040947.16685.42926.stgit@birch.djwong.org>
- <CA+55aFx_NPn0VYk=+Ad5S_r=D6J1xFmWmf7JzQ7RmkwKmdkYOg@mail.gmail.com>
+From: Julian Calaby <julian.calaby@gmail.com>
+Subject: Re: [PATCH v2] sparc64: Add support for Application Data Integrity (ADI)
+Date: Thu, 3 Mar 2016 10:08:19 +1100
+Message-ID: <CAGRGNgXCcEmKU9f2XRpRv6By4QPZU7rxxTQPzSp+kahjmRTO5Q@mail.gmail.com>
+References: <1456951177-23579-1-git-send-email-khalid.aziz@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CA+55aFx_NPn0VYk=+Ad5S_r=D6J1xFmWmf7JzQ7RmkwKmdkYOg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, shane.seymour@hpe.com, Bruce Fields <bfields@fieldses.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <sparclinux-owner@vger.kernel.org>
+In-Reply-To: <1456951177-23579-1-git-send-email-khalid.aziz@oracle.com>
+Sender: sparclinux-owner@vger.kernel.org
+To: Khalid Aziz <khalid.aziz@oracle.com>
+Cc: "David S. Miller" <davem@davemloft.net>, corbet@lwn.net, Andrew Morton <akpm@linux-foundation.org>, dingel@linux.vnet.ibm.com, zhenzhang.zhang@huawei.com, bob.picco@oracle.com, kirill.shutemov@linux.intel.com, aneesh.kumar@linux.vnet.ibm.com, aarcange@redhat.com, Arnd Bergmann <arnd@arndb.de>, sparclinux <sparclinux@vger.kernel.org>, rob.gardner@oracle.com, mhocko@suse.cz, chris.hyser@oracle.com, richard@nod.at, vbabka@suse.cz, koct9i@gmail.com, oleg@redhat.com, gthelen@google.com, jack@suse.cz, xiexiuqi@huawei.com, Vineet.Gupta1@synopsys.com, Andy Lutomirski <luto@kernel.org>, ebiederm@xmission.com, bsegall@google.com, Geert Uytterhoeven <geert@linux-m68k.org>, dave@stgolabs.net, Alexey Dobriyan <adobriyan@gmail.com>, linux-doc@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vg
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 02, 2016 at 10:52:01AM -0800, Linus Torvalds wrote:
-> On Tue, Mar 1, 2016 at 8:09 PM, Darrick J. Wong <darrick.wong@oracle.com> wrote:
-> > Create a new ioctl to expose the block layer's newfound ability to
-> > issue either a zeroing discard, a WRITE SAME with a zero page, or a
-> > regular write with the zero page.  This BLKZEROOUT2 ioctl takes
-> > {start, length, flags} as parameters.  So far, the only flag available
-> > is to enable the zeroing discard part -- without it, the call invokes
-> > the old BLKZEROOUT behavior.  start and length have the same meaning
-> > as in BLKZEROOUT.
-> 
-> NAK, just based on annoyance with the randomness of this interface:
-> 
->  - without describing what the point of the new flag and lots of extra
+Hi Khalid,
 
-The new flag means "if the device supports discard and that discard zeroes data
-then it's ok to use discard".  The difference between discard/unmap and
-write-same is in thin-provisioned storage arrays -- UNMAP can release backing
-store, whereas WRITE SAME ensures that something's been written to media.
-
-So by default, BLKZEROOUT2 means "ensure subsequent reads return zeroes and
-make sure there's real space waiting for the next time I write to this".
-Passing in the flag changes that to "ensure subsequent reads return zeroes and
-I don't care what happens to the backing store".
-
-I'll grant that this distinction could be clarified in the header file,
-though anyone familiar with WS/UNMAP to want to use them from userspace
-ought to know that already.
-
-> expansion room is, this should never be merged. We don't add padding
-> just randomly.
-
-Oh yes we do.  Adding required-zero padding to allow for future increases of
-the expressiveness of an ioctl is very common. 
-
-$ egrep -rn '(reserved|padding).*;' include/uapi/ | wc -l
-564
-
-The size of the ioctl structure is embedded in the ioctl number definition,
-so we might as well reserve a lot of space ahead of time.  Better that than
-having to declare new ioctl numbers every time someone needs to add something.
-Both ext4 and XFS perform this sort of future proofing.
-
->  - Somewhat related to that: the flags are checked for zero, but the
-> random expansion room isn't. So not only are the random expansion
-> fields not explained, they will contain random garbage in the future.
-
-Wrong.  The padding fields /are/ checked, and the ioctl returns EINVAL
-if they aren't zero:
-
-static int blk_ioctl_zeroout2(struct block_device *bdev, fmode_t mode,
-               unsigned long arg)
-{
-...
-       if (p.padding || p.padding2)
-               return -EINVAL;
-...
-}
-
->  - why is that "FMODE_WRITE" check not in the common code, but duplicated?
-
-The old BLKZEROOUT checked FMODE_WRITE before copying the ioctl data from
-userspace, so the new BLKZEROOUT will behave the same way when possible to
-minimize porting hassle for userland.
-
-> it all seems very ad-hoc. It makes a big deal about that idiotic
-> "discard" behavior, which is entirely pointless.
-
-No.  This is not about enabling use of "that idiotic discard behavior", for
-that there's BLKDISCARD.  This ioctl does NOT use the handwavy old TRIM
-advisory request thing that could return "fuzzy wuzzy" without violating the
-specs.
-
-BLKZEROOUT is about telling a device "after this call I want subsequent reads
-to return zeroes".  The first patch fixes the problem that the pagecache isn't
-invalidated when we tell the device that we want to be able to read zeroes.
-Even if it behaves according to spec (and even if it doesn't) without that
-patch, userland programs can end up reading stale data out of the kernel.  That
-first patch is purely a bug fix.
-
-However, even once the cache coherence problem is fixed, there's still the
-problem that the old BLKZEROOUT didn't maintain page cache coherence and
-userspace has no way to figure out whether BLKZEROOUT on a given system
-actually will.  The reason for creating a new ioctl is to establish an ioctl
-that guarantees a page cache flush or returns an error code.  While we're
-defining a new number, we might as well allow for userspace to control the
-discard parameter to blkdev_issue_zeroout(), and reserve more space in the
-structure than we think we need.
-
-> Who cares about that discard behavior anyway? Why is it set to "false"
-> in the current version of BLKZEROOUT in the first place? Why do we do
-> that WRITE_SAME without questioning it, but "discard" is somehow so
-> special that it has a flag, and it's turned off by default?
-
-Some users want to use the SCSI command (WRITE SAME) that won't return
-GOOD status until blocks full of zeroes have been committed to stable storage
-that can be rewritten, and other users are fine with a zeroing TRIM/UNMAP which
-can release the storage and DMA back pages of zeroes without committing
-any stable storage to future rewrites.
-
-> If this is some "security issue" where somebody believes that discard
-> is not secure, then those people are full of shit. Discard and
-> write-same have exactly the same semantics - they may just unmap the
-> target range with the guarantee that you'll get zeroes on read.
-
-No.  The point is that mkfs can zero out filesystem metadata blocks with
-confidence that a subsequent re-read will always return zeroes.  We tried
-making mke2fs use BLKZEROOUT and the cache coherence problem bit us in the
-arse.
-
-If you care about securely deleting data, throw it into the sun.
-
-> So quite frankly, right now it seems that
-> 
->  (a) the *only* excuse for this patch is that people want to use "discard"
+On Thu, Mar 3, 2016 at 7:39 AM, Khalid Aziz <khalid.aziz@oracle.com> wrote:
 >
->  (b) the reason we already don't use "discard" for the old BLKZEROOUT
-> is very questionable
+> Enable Application Data Integrity (ADI) support in the sparc
+> kernel for applications to use ADI in userspace. ADI is a new
+> feature supported on sparc M7 and newer processors. ADI is supported
+> for data fetches only and not instruction fetches. This patch adds
+> prctl commands to enable and disable ADI (TSTATE.mcde), return ADI
+> parameters to userspace, enable/disable MCD (Memory Corruption
+> Detection) on selected memory ranges and enable TTE.mcd in PTEs. It
+> also adds handlers for all traps related to MCD. ADI is not enabled
+> by default for any task and a task must explicitly enable ADI
+> (TSTATE.mcde), turn MCD on on a memory range and set version tag
+> for ADI to be effective for the task. This patch adds support for
+> ADI for hugepages only. Addresses passed into system calls must be
+> non-ADI tagged addresses.
 
-See above.
+I can't comment on the actual functionality here, but I do see a few
+minor style issues in your patch.
 
->  (c) any future possible use of flags is not described and is questionable
+My big concern is that you're defining a lot of new code that is ADI
+specific but isn't inside a CONFIG_SPARC_ADI ifdef. (That said,
+handling ADI specific traps if ADI isn't enabled looks like a good
+idea to me, however most of the other stuff is just dead code if
+CONFIG_SPARC_ADI isn't enabled.)
 
-How?  If any of the other flag bits are set, it'll return -EINVAL.  Or do you
-mean that you think there will never be a need for any other flags?  Or are
-you complaining that you think there's too much padding and stuff in the
-structure?
+> Signed-off-by: Khalid Aziz <khalid.aziz@oracle.com>
+> ---
+> NOTES: ADI is a new feature added to M7 processor to allow hardware
+>         to catch rogue accesses to memory. An app can enable ADI on
+>         its data pages, set version tags on them and use versioned
+>         addresses (bits 63-60 of the address contain a version tag)
+>         to access the data pages. If a rogue app attempts to access
+>         ADI enabled data pages, its access is blocked and processor
+>         generates an exception. Enabling this functionality for all
+>         data pages of an app requires adding infrastructure to save
+>         version tags for any data pages that get swapped out and
+>         restoring those tags when pages are swapped back in. In this
+>         first implementation I am enabling ADI for hugepages only
+>         since these pages are locked in memory and hence avoid the
+>         issue of saving and restoring tags. Once this core functionality
+>         is stable, ADI for other memory pages can be enabled more
+>         easily.
+>
+> v2:
+>         - Fixed a build error
+>
+>  Documentation/prctl/sparc_adi.txt     |  62 ++++++++++
+>  Documentation/sparc/adi.txt           | 206 +++++++++++++++++++++++++++++++
+>  arch/sparc/Kconfig                    |  12 ++
+>  arch/sparc/include/asm/hugetlb.h      |  14 +++
+>  arch/sparc/include/asm/hypervisor.h   |   2 +
+>  arch/sparc/include/asm/mmu_64.h       |   1 +
+>  arch/sparc/include/asm/pgtable_64.h   |  15 +++
+>  arch/sparc/include/asm/processor_64.h |  19 +++
+>  arch/sparc/include/asm/ttable.h       |  10 ++
+>  arch/sparc/include/uapi/asm/asi.h     |   3 +
+>  arch/sparc/include/uapi/asm/pstate.h  |  10 ++
+>  arch/sparc/kernel/entry.h             |   3 +
+>  arch/sparc/kernel/head_64.S           |   1 +
+>  arch/sparc/kernel/mdesc.c             |  81 +++++++++++++
+>  arch/sparc/kernel/process_64.c        | 222 ++++++++++++++++++++++++++++++++++
+>  arch/sparc/kernel/sun4v_mcd.S         |  16 +++
+>  arch/sparc/kernel/traps_64.c          |  96 ++++++++++++++-
+>  arch/sparc/kernel/ttable_64.S         |   6 +-
+>  include/linux/mm.h                    |   2 +
+>  include/uapi/asm-generic/siginfo.h    |   5 +-
+>  include/uapi/linux/prctl.h            |  16 +++
+>  kernel/sys.c                          |  30 +++++
+>  22 files changed, 826 insertions(+), 6 deletions(-)
+>  create mode 100644 Documentation/prctl/sparc_adi.txt
+>  create mode 100644 Documentation/sparc/adi.txt
+>  create mode 100644 arch/sparc/kernel/sun4v_mcd.S
 
-> You'll find people who think that "write-same with some non-zero
-> pattern" would be a real over-write and good for security. Those
-> people will then argue that a sane extension would be to make that
-> pattern part of the future expansion of BLKZEROOUT2. And those people
-> are full of shit. Write-same with a non-zero pattern may well be just
-> a discard with the pattern set in another table.
-> 
-> So the whole patch looks pointless.
+I must admit that I'm slightly impressed that the documentation is
+over a quarter of the lines added. =)
 
-I disagree, obviously.
+> diff --git a/arch/sparc/Kconfig b/arch/sparc/Kconfig
+> index 56442d2..0aac0ae 100644
+> --- a/arch/sparc/Kconfig
+> +++ b/arch/sparc/Kconfig
+> @@ -80,6 +80,7 @@ config SPARC64
+>         select NO_BOOTMEM
+>         select HAVE_ARCH_AUDITSYSCALL
+>         select ARCH_SUPPORTS_ATOMIC_RMW
+> +       select SPARC_ADI
 
-> Why isn't the patch just "change false to true in blk_ioctl_zeroout()
-> when it calls blkdev_issue_zeroout()".
+This doesn't look right.
 
-Some people might want real storage blocks full of zeroes backing the LBAs they
-just wrote out, others might not care.
+>  config ARCH_DEFCONFIG
+>         string
+> @@ -314,6 +315,17 @@ if SPARC64
+>  source "kernel/power/Kconfig"
+>  endif
+>
+> +config SPARC_ADI
+> +       bool "Application Data Integrity support"
+> +       def_bool y if SPARC64
 
---D
+def_bool is for config options without names (i.e. "this is a boolean
+value and it's default is...")
 
-> 
-> No new interface, no new random padding, just a simple "it makes
-> absolutely no sense to not allow discard".
-> 
->                     Linus
+So if you want people to be able to disable this option, then you
+should remove the select above and just have:
+
+bool "Application Data Integrity support"
+default y if SPARC64
+
+If you don't want people disabling it, then there's no point in having
+a separate Kconfig symbol.
+
+> +       help
+> +         Support for Application Data Integrity (ADI). ADI feature allows
+> +         a process to tag memory blocks with version tags. Once ADI is
+> +         enabled and version tag is set on a memory block, any access to
+> +         it is allowed only if the correct version tag is presented by
+> +         a process. This feature is meant to help catch rogue accesses
+> +         to memory.
+> +
+
+You should probably mention that it's only available on newer
+processors and recommend that it's enabled on them.
+
+This code won't break anything on older processors, right? I haven't
+looked very closely, but I don't see anything that specifically
+disables the code if it's run on, say, a UltraSparc I.
+
+>  config SCHED_SMT
+>         bool "SMT (Hyperthreading) scheduler support"
+>         depends on SPARC64 && SMP
+> diff --git a/arch/sparc/include/asm/processor_64.h b/arch/sparc/include/asm/processor_64.h
+> index 6924bde..9a71701 100644
+> --- a/arch/sparc/include/asm/processor_64.h
+> +++ b/arch/sparc/include/asm/processor_64.h
+> @@ -97,6 +97,25 @@ struct thread_struct {
+>  struct task_struct;
+>  unsigned long thread_saved_pc(struct task_struct *);
+>
+> +#ifdef CONFIG_SPARC_ADI
+> +extern struct adi_caps *get_adi_caps(void);
+> +extern long get_sparc_adicaps(unsigned long);
+> +extern long set_sparc_pstate_mcde(unsigned long);
+> +extern long enable_sparc_adi(unsigned long, unsigned long);
+> +extern long disable_sparc_adi(unsigned long, unsigned long);
+> +extern long get_sparc_adi_status(unsigned long);
+> +extern bool adi_capable(void);
+> +
+> +#define GET_SPARC_ADICAPS(a)   get_sparc_adicaps(a)
+> +#define SET_SPARC_MCDE(a)      set_sparc_pstate_mcde(a)
+> +#define ENABLE_SPARC_ADI(a, b) enable_sparc_adi(a, b)
+> +#define DISABLE_SPARC_ADI(a, b)        disable_sparc_adi(a, b)
+> +#define GET_SPARC_ADI_STATUS(a)        get_sparc_adi_status(a)
+> +#define ADI_CAPABLE()          adi_capable()
+
+Get rid of the ADI_CAPABLE macro, the usual pattern here is to define
+a static inline function for the entire API when the symbol is
+disabled, i.e.
+
+#ifdef CONFIG_SPARC_ADI
+...
+extern bool adi_capable(void);
+#else
+...
+static inline bool adi_capable(void) {
+    return false;
+}
+#endif
+
+That way you get type checking on the arguments even if the option is
+disabled and modern compilers are smart enough to optimise all the
+no-op code away. (Not that the type checking is needed here.)
+
+Also, in all but one place you use the ADI_CAPABLE() macro when the
+adi_capable() function is defined and available.
+
+> +#else
+> +#define ADI_CAPABLE()          0
+> +#endif
+> +
+>  /* On Uniprocessor, even in RMO processes see TSO semantics */
+>  #ifdef CONFIG_SMP
+>  #define TSTATE_INITIAL_MM      TSTATE_TSO
+> diff --git a/arch/sparc/kernel/mdesc.c b/arch/sparc/kernel/mdesc.c
+> index 6f80936..79f981c 100644
+> --- a/arch/sparc/kernel/mdesc.c
+> +++ b/arch/sparc/kernel/mdesc.c
+> @@ -1007,6 +1013,80 @@ static int mdesc_open(struct inode *inode, struct file *file)
+>         return 0;
+>  }
+>
+> +bool adi_capable(void)
+> +{
+> +       return adi_state.enabled;
+> +}
+> +
+> +struct adi_caps *get_adi_caps(void)
+> +{
+> +       return &adi_state.caps;
+> +}
+> +
+> +void __init
+> +init_adi(void)
+> +{
+> +       struct mdesc_handle *hp = mdesc_grab();
+> +       const char *prop;
+> +       u64 pn, *val;
+> +       int len;
+> +
+> +       adi_state.enabled = false;
+> +
+> +       if (!hp)
+> +               return;
+> +
+> +       pn = mdesc_node_by_name(hp, MDESC_NODE_NULL, "cpu");
+> +       if (pn == MDESC_NODE_NULL)
+> +               goto out;
+> +
+> +       prop = mdesc_get_property(hp, pn, "hwcap-list", &len);
+> +       if (!prop)
+> +               goto out;
+> +
+> +       /*
+> +        * Look for "adp" keyword in hwcap-list which would indicate
+> +        * ADI support
+> +        */
+> +       while (len) {
+> +               int plen;
+> +
+> +               if (!strcmp(prop, "adp")) {
+> +                       adi_state.enabled = true;
+> +                       break;
+> +               }
+> +
+> +               plen = strlen(prop) + 1;
+> +               prop += plen;
+> +               len -= plen;
+> +       }
+> +
+> +       if (!adi_state.enabled)
+> +               goto out;
+> +
+> +       pn = mdesc_node_by_name(hp, MDESC_NODE_NULL, "platform");
+> +       if (pn == MDESC_NODE_NULL)
+> +               goto out;
+> +
+> +       val = (u64 *) mdesc_get_property(hp, pn, "adp-blksz", &len);
+> +       if (!val)
+> +               goto out;
+> +       adi_state.caps.blksz = *val;
+> +
+> +       val = (u64 *) mdesc_get_property(hp, pn, "adp-nbits", &len);
+> +       if (!val)
+> +               goto out;
+> +       adi_state.caps.nbits = *val;
+> +
+> +       val = (u64 *) mdesc_get_property(hp, pn, "ue-on-adp", &len);
+> +       if (!val)
+> +               goto out;
+> +       adi_state.caps.ue_on_adi = *val;
+> +
+> +out:
+> +       mdesc_release(hp);
+> +}
+> +
+
+Should all the ADI related functions above be within a #ifdef CONFIG_SPARC_ADI?
+
+>  static ssize_t mdesc_read(struct file *file, char __user *buf,
+>                           size_t len, loff_t *offp)
+>  {
+> diff --git a/arch/sparc/kernel/traps_64.c b/arch/sparc/kernel/traps_64.c
+> index d21cd62..29db583 100644
+> --- a/arch/sparc/kernel/traps_64.c
+> +++ b/arch/sparc/kernel/traps_64.c
+> @@ -2531,6 +2589,38 @@ void sun4v_do_mna(struct pt_regs *regs, unsigned long addr, unsigned long type_c
+>         force_sig_info(SIGBUS, &info, current);
+>  }
+>
+> +void sun4v_mem_corrupt_detect_precise(struct pt_regs *regs, unsigned long addr,
+> +                                     unsigned long context)
+> +{
+> +       siginfo_t info;
+> +
+> +       if (!ADI_CAPABLE()) {
+> +               bad_trap(regs, 0x1a);
+> +               return;
+> +       }
+> +
+> +       if (notify_die(DIE_TRAP, "memory corruption precise exception", regs,
+> +                      0, 0x8, SIGSEGV) == NOTIFY_STOP)
+> +               return;
+> +
+> +       if (regs->tstate & TSTATE_PRIV) {
+> +               pr_emerg("sun4v_mem_corrupt_detect_precise: ADDR[%016lx] "
+> +                       "CTX[%lx], going.\n", addr, context);
+> +               die_if_kernel("MCD precise", regs);
+> +       }
+> +
+> +       if (test_thread_flag(TIF_32BIT)) {
+> +               regs->tpc &= 0xffffffff;
+> +               regs->tnpc &= 0xffffffff;
+> +       }
+> +       info.si_signo = SIGSEGV;
+> +       info.si_code = SEGV_ADIPERR;
+> +       info.si_errno = 0;
+> +       info.si_addr = (void __user *) addr;
+> +       info.si_trapno = 0;
+> +       force_sig_info(SIGSEGV, &info, current);
+> +}
+> +
+
+Should this be ifdef'd too?
+
+>  void do_privop(struct pt_regs *regs)
+>  {
+>         enum ctx_state prev_state = exception_enter();
+> diff --git a/kernel/sys.c b/kernel/sys.c
+> index 6af9212..fa7b5d9 100644
+> --- a/kernel/sys.c
+> +++ b/kernel/sys.c
+> @@ -103,6 +103,21 @@
+>  #ifndef SET_FP_MODE
+>  # define SET_FP_MODE(a,b)      (-EINVAL)
+>  #endif
+> +#ifndef GET_SPARC_ADICAPS
+> +# define GET_SPARC_ADICAPS(a)          (-EINVAL)
+> +#endif
+> +#ifndef SET_SPARC_MCDE
+> +# define SET_SPARC_MCDE(a)             (-EINVAL)
+> +#endif
+> +#ifndef ENABLE_SPARC_ADI
+> +# define ENABLE_SPARC_ADI(a, b)                (-EINVAL)
+> +#endif
+> +#ifndef DISABLE_SPARC_ADI
+> +# define DISABLE_SPARC_ADI(a, b)       (-EINVAL)
+> +#endif
+> +#ifndef GET_SPARC_ADI_STATUS
+> +# define GET_SPARC_ADI_STATUS(a)       (-EINVAL)
+> +#endif
+
+Ah, I was wondering why you were defining macros in processor_64.h.
+
+>  /*
+>   * this is where the system-wide overflow UID and GID are defined, for
+
+I've got a couple more comments, I'll send another email with them shortly.
+
+Thanks,
+
+-- 
+Julian Calaby
+
+Email: julian.calaby@gmail.com
+Profile: http://www.google.com/profiles/julian.calaby/
