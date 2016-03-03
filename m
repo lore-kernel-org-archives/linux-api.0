@@ -1,57 +1,67 @@
-From: Joonsoo Kim <js1304-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v4 1/2] mm: introduce page reference manipulation functions
-Date: Thu, 3 Mar 2016 16:47:10 +0900
-Message-ID: <CAAmzW4Mj9NVEB5B6-RO-QKgb2Zn4u40vd1OJRCHBja32BWc_0A@mail.gmail.com>
-References: <1456448282-897-1-git-send-email-iamjoonsoo.kim@lge.com>
-	<56D71860.7050108@suse.cz>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC][PATCH 0/7] System Calls for Memory Protection Keys
+Date: Thu, 3 Mar 2016 09:05:06 +0100
+Message-ID: <CAKgNAkjaZvR-Csf5eEBVi+Eo1HjeXH7Kg0LUL=i1Q-HAJ1EP-A@mail.gmail.com>
+References: <20160223011107.FB9B8215@viggo.jf.intel.com>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <56D71860.7050108-AlSwsSmVLrQ@public.gmane.org>
+In-Reply-To: <20160223011107.FB9B8215-LXbPSdftPKxrdx17CPfAsdBPR1lH4CV8@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Michal Nazarewicz <mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Sergey Senozhatsky <sergey.senozhatsky.work-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linux Memory Management List <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
+To: Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
+Cc: lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-2016-03-03 1:44 GMT+09:00 Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>:
-> On 02/26/2016 01:58 AM, js1304-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
->>
->> From: Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
->>
->> Success of CMA allocation largely depends on success of migration
->> and key factor of it is page reference count. Until now, page reference
->> is manipulated by direct calling atomic functions so we cannot follow up
->> who and where manipulate it. Then, it is hard to find actual reason
->> of CMA allocation failure. CMA allocation should be guaranteed to succeed
->> so finding offending place is really important.
->>
->> In this patch, call sites where page reference is manipulated are
->> converted
->> to introduced wrapper function. This is preparation step to add tracepoint
->> to each page reference manipulation function. With this facility, we can
->> easily find reason of CMA allocation failure. There is no functional
->> change
->> in this patch.
->>
->> In addition, this patch also converts reference read sites. It will help
->> a second step that renames page._count to something else and prevents
->> later
->> attempt to direct access to it (Suggested by Andrew).
->>
->> Acked-by: Michal Nazarewicz <mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org>
->> Signed-off-by: Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>
->
->
-> Even without Patch 2/2 this is a nice improvement.
-> Acked-by: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
->
-> Although somebody might be confused by page_ref_count() vs page_count(). Oh
-> well.
+Hi Dave,
 
-Yes... it was pointed by Kirill before but consistency is not the purpose of
-this patchset so I skipped it. There are too many sites (roughly 100) so I'm not
-sure this code churn is worth doing now. If someone think it is really
-important,
-I will handle it after rc2.
+On 23 February 2016 at 02:11, Dave Hansen <dave-gkUM19QKKo4@public.gmane.org> wrote:
+> As promised, here are the proposed new Memory Protection Keys
+> interfaces.  These interfaces make it possible to do something
+> with pkeys other than execute-only support.
+>
+> There are 5 syscalls here.  I'm hoping for reviews of this set
+> which can help nail down what the final interfaces will be.
+>
+> You can find a high-level overview of the feature and the new
+> syscalls here:
+>
+>         https://www.sr71.net/~dave/intel/pkeys.txt
 
-Thanks.
+(That's pretty thin...)
+
+> ===============================================================
+>
+> To use memory protection keys (pkeys), an application absolutely
+> needs to be able to set the pkey field in the PTE (obviously has
+> to be done in-kernel) and make changes to the "rights" register
+> (using unprivileged instructions).
+>
+> An application also needs to have an an allocator for the keys
+> themselves.  If two different parts of an application both want
+> to protect their data with pkeys, they first need to know which
+> key to use for their individual purposes.
+>
+> This set introduces 5 system calls, in 3 logical groups:
+>
+> 1. PTE pkey setting (sys_pkey_mprotect(), patches #1-3)
+> 2. Key allocation (sys_pkey_alloc() / sys_pkey_free(), patch #4)
+> 3. Rights register manipulation (sys_pkey_set/get(), patch #5)
+>
+> These patches build on top of "core" support already in the tip tree,
+> specifically 62b5f7d013, which can currently be found at:
+>
+>         http://git.kernel.org/cgit/linux/kernel/git/tip/tip.git/log/?h=mm/pkeys
+>
+> I have manpages written for some of these syscalls, and I will
+> submit a full set of manpages once we've reached some consensus
+> on what the interfaces should be.
+
+Please don't do things in this order. Providing man pages up front
+make it easier for people to understand, review, and critique the API.
+Submitting man pages should be a foundational part of submitting a new
+set of interfaces and discussing their design.
+
+Thanks,
+
+Michael
