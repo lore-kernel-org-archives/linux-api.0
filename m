@@ -1,61 +1,50 @@
-From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+From: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of blocks
-Date: Thu, 3 Mar 2016 10:14:17 -0800
-Message-ID: <CA+55aFyf6QkH1Q-9S2FZpdzRyyJAHfxo81kO5wxp5q09Bu3vcw@mail.gmail.com>
+Date: Thu, 03 Mar 2016 13:14:12 -0500
+Message-ID: <yq14mcn8m4r.fsf@sermon.lab.mkp.net>
 References: <20160302040932.16685.62789.stgit@birch.djwong.org>
 	<20160302040947.16685.42926.stgit@birch.djwong.org>
 	<CA+55aFx_NPn0VYk=+Ad5S_r=D6J1xFmWmf7JzQ7RmkwKmdkYOg@mail.gmail.com>
 	<20160302225601.GB21890@birch.djwong.org>
 	<CA+55aFyNPnjJ-Nsu3bMr+HuLQnkj1B8FMddNnXW7HJqxdUzJmQ@mail.gmail.com>
-	<yq1bn6v8mqg.fsf@sermon.lab.mkp.net>
+	<20160303170205.GD24012@thunk.org>
+	<CA+55aFwPA1X8XGTdVZmP5uzkWMwj+X=bjkGVcEkZDme+qskrzQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <yq1bn6v8mqg.fsf-+q57XtR/GgMb6DWv4sQWN6xOck334EZe@public.gmane.org>
+In-Reply-To: <CA+55aFwPA1X8XGTdVZmP5uzkWMwj+X=bjkGVcEkZDme+qskrzQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+	(Linus Torvalds's message of "Thu, 3 Mar 2016 09:55:38 -0800")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, shane.seymour-ZPxbGqLxI0U@public.gmane.org, Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, shane.seymour-ZPxbGqLxI0U@public.gmane.org, Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 3, 2016 at 10:01 AM, Martin K. Petersen
-<martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
->>>>>> "Linus" == Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> writes:
->
-> Linus> .. but the flag doesn't even set that. Even if you avoid TRIM,
-> Linus> there is absolutely zero guarantees that WRITE_SAME would do
-> Linus> "real storage blocks full of zeroes backing the LBAs they just
-> Linus> wrote out".
->
-> That's not entirely true. Writing the blocks may cause them to be
-> allocated on the storage device (depending on which flags we feed it in
-> WRITE SAME).
+>>>>> "Linus" == Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> writes:
 
-Ok, so now we're getting somewhere, with actual _reasons_ why somebody
-would want to use one interface over another.
+Linus> On Thu, Mar 3, 2016 at 9:02 AM, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org> wrote:
+>> 
+>> There is a massive bug in the SATA specs about trim, which is that it
+>> is considered advisory.  So the storage device can throw it away
+>> whenever it feels like it.  (In practice, when it's too busy doing
+>> other things).
 
-> The filesystems people were wanted the following semantics:
->
->  - deallocate, don't care about contents for future reads (discard)
->  - deallocate, guarantee zeroes on future reads (zeroout)
->  - (re)allocate, guarantee zeroes on future reads (zeroout)
->
-> Maybe we just need a better naming scheme...
+Linus> Ugh.
 
-Yes.
+SCSI UNMAP provides similar semantics :(
 
-And this does make me think that Christoph is right: this would be so
-much better if the block layer just supported fallocate() instead,
-which already has those operations.
+Linus> But that essentially says that we shouldn't expose this interface
+Linus> at all (unless we trust our white-lists - I'm sure they are
+Linus> getting better, but if nobody has ever really _relied_ on the
+Linus> zeroing behavior of trim, then I guess there could be tons of
+Linus> bugs lurking).
 
-Right now we have
+We started out with the blacklist approach and it blew up. So now we're
+down to a whitelist of drives that have been sanctioned by their
+manufacturers to do the right thing.
 
-        if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode))
-                return -ENODEV;
+Occasionally a new SSD model messes things up but we haven't updated it
+since last summer. The drive vendors are much better at testing using
+Linux than they used to be.
 
-so right now the vfs_fallocate() code expliitly disallows block
-devices, but that would be easy to expand.
-
-Would people be happy with that kind of patch instead? It would
-certainly make all my objections go away..
-
-             Linus
+-- 
+Martin K. Petersen	Oracle Linux Engineering
