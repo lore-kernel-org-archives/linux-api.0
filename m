@@ -1,119 +1,105 @@
-From: <bear.yogi@gmx.de>
-Subject: Fw: new important message
-Date: Thu, 3 Mar 2016 05:37:11 +0300
-Message-ID: <0000073edf2f$53e14ef2$6fb257ae$@gmx.de>
+From: Joonsoo Kim <js1304@gmail.com>
+Subject: Re: [PATCH v4 2/2] mm/page_ref: add tracepoint to track down page
+ reference manipulation
+Date: Thu, 3 Mar 2016 16:43:49 +0900
+Message-ID: <CAAmzW4NwhSKw432qw0Ry+gi=yGpRU-MtC-zQGL27o+XEawLKrg@mail.gmail.com>
+References: <1456448282-897-1-git-send-email-iamjoonsoo.kim@lge.com>
+	<1456448282-897-2-git-send-email-iamjoonsoo.kim@lge.com>
+	<56D71BB2.5060503@suse.cz>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6150888954383039622=="
-Return-path: <kernelnewbies-bounces+glkk-kernelnewbies=gmane.org@kernelnewbies.org>
-Content-Language: en-us
-List-Unsubscribe: <http://lists.kernelnewbies.org/mailman/listinfo/kernelnewbies>,
-	<mailto:kernelnewbies-request@kernelnewbies.org?subject=unsubscribe>
-List-Archive: <http://lists.kernelnewbies.org/pipermail/kernelnewbies>
-List-Post: <mailto:kernelnewbies@kernelnewbies.org>
-List-Help: <mailto:kernelnewbies-request@kernelnewbies.org?subject=help>
-List-Subscribe: <http://lists.kernelnewbies.org/mailman/listinfo/kernelnewbies>,
-	<mailto:kernelnewbies-request@kernelnewbies.org?subject=subscribe>
-Sender: kernelnewbies-bounces+glkk-kernelnewbies=gmane.org@kernelnewbies.org
-Errors-To: kernelnewbies-bounces+glkk-kernelnewbies=gmane.org@kernelnewbies.org
-To: kernelnewbies <kernelnewbies@kernelnewbies.org>, leo kirotawa <kirotawa@gmail.com>, lifelong0811 <lifelong0811@126.com>, "lind.lampe@gmx.de" <lind.lampe@gmx.de>, linux-api <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <56D71BB2.5060503@suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Linux Memory Management List <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Joonsoo Kim <iamjoonsoo.kim@lge.com>
 List-Id: linux-api@vger.kernel.org
 
-This is a multipart message in MIME format.
+2016-03-03 1:58 GMT+09:00 Vlastimil Babka <vbabka@suse.cz>:
+> On 02/26/2016 01:58 AM, js1304@gmail.com wrote:
+>>
+>> From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+>>
+>> CMA allocation should be guaranteed to succeed by definition, but,
+>> unfortunately, it would be failed sometimes. It is hard to track down
+>> the problem, because it is related to page reference manipulation and
+>> we don't have any facility to analyze it.
+>>
+>> This patch adds tracepoints to track down page reference manipulation.
+>> With it, we can find exact reason of failure and can fix the problem.
+>> Following is an example of tracepoint output. (note: this example is
+>> stale version that printing flags as the number. Recent version will
+>> print it as human readable string.)
+>>
+>> Enabling this feature bloat kernel text 30 KB in my configuration.
+>>
+>>     text    data     bss     dec     hex filename
+>> 12127327        2243616 1507328 15878271         f2487f vmlinux_disabled
+>> 12157208        2258880 1507328 15923416         f2f8d8 vmlinux_enabled
+>>
+>
+> That's not bad, and it's even configurable. Thanks for taking the extra care
+> about overhead since v1.
+>
+>> Note that, due to header file dependency problem between mm.h and
+>> tracepoint.h, this feature has to open code the static key functions
+>> for tracepoints. Proposed by Steven Rostedt in following link.
+>>
+>> https://lkml.org/lkml/2015/12/9/699
+>>
+>> v3:
+>> o Add commit description and code comment why this patch open code
+>> the static key functions for tracepoints.
+>> o Notify that example is stale version.
+>> o Add "depends on TRACEPOINTS".
+>>
+>> v2:
+>> o Use static key of each tracepoints to avoid function call overhead
+>> when tracepoints are disabled.
+>> o Print human-readable page flag thanks to newly introduced %pgp option.
+>> o Add more description to Kconfig.debug.
+>>
+>> Acked-by: Michal Nazarewicz <mina86@mina86.com>
+>> Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+>
+>
+> Acked-by: Vlastimil Babka <vbabka@suse.cz>
+>
+>> +config DEBUG_PAGE_REF
+>> +       bool "Enable tracepoint to track down page reference manipulation"
+>> +       depends on DEBUG_KERNEL
+>> +       depends on TRACEPOINTS
+>> +       ---help---
+>> +         This is the feature to add tracepoint for tracking down page
+>> reference
+>> +         manipulation. This tracking is useful to diagnosis functional
+>> failure
+>> +         due to migration failure caused by page reference mismatch. Be
+>
+>
+> OK.
+>
+>> +         careful to turn on this feature because it could bloat some
+>> kernel
+>> +         text. In my configuration, it bloats 30 KB. Although kernel text
+>> will
+>> +         be bloated, there would be no runtime performance overhead if
+>> +         tracepoint isn't enabled thanks to jump label.
+>
+>
+> I would just write something like:
+>
+> Enabling this feature adds about 30 KB to the kernel code, but runtime
+> performance overhead is virtually none until the tracepoints are actually
+> enabled.
 
---===============6150888954383039622==
-Content-Type: multipart/alternative;
-	boundary="----=_NextPart_000_0001_5C2B5931.046AC7FC"
-Content-Language: en-us
+Okay, better!
+Andrew, do you want fixup patch from me or could you simply handle it?
 
-This is a multipart message in MIME format.
+Thanks.
 
-------=_NextPart_000_0001_5C2B5931.046AC7FC
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-
-Hello!
-
- 
-
-New message, please read <http://majorinvesting.com/longer.php?drpr>
-
- 
-
-bear.yogi@gmx.de
-
-
-------=_NextPart_000_0001_5C2B5931.046AC7FC
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas=
--microsoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:off=
-ice:word" xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml"=
- xmlns=3D"http://www.w3.org/TR/REC-html40"><head><META HTTP-EQUIV=3D"C=
-ontent-Type" CONTENT=3D"text/html; charset=3Dus-ascii"><meta name=3DGe=
-nerator content=3D"Microsoft Word 15 (filtered medium)"><style><!--
-/* Font Definitions */
-@font-face
-	{font-family:"Cambria Math";
-	panose-1:2 4 5 3 5 4 6 3 2 4;}
-@font-face
-	{font-family:Calibri;
-	panose-1:2 15 5 2 2 2 4 3 2 4;}
-/* Style Definitions */
-p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0cm;
-	margin-bottom:.0001pt;
-	font-size:11.0pt;
-	font-family:"Calibri",sans-serif;
-	mso-fareast-language:EN-US;}
-a:link, span.MsoHyperlink
-	{mso-style-priority:99;
-	color:#0563C1;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{mso-style-priority:99;
-	color:#954F72;
-	text-decoration:underline;}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	font-family:"Calibri",sans-serif;
-	color:windowtext;}
-=2EMsoChpDefault
-	{mso-style-type:export-only;
-	font-family:"Calibri",sans-serif;
-	mso-fareast-language:EN-US;}
-@page WordSection1
-	{size:612.0pt 792.0pt;
-	margin:2.0cm 42.5pt 2.0cm 3.0cm;}
-div.WordSection1
-	{page:WordSection1;}
---></style><!--[if gte mso 9]><xml>
-<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
-</xml><![endif]--><!--[if gte mso 9]><xml>
-<o:shapelayout v:ext=3D"edit">
-<o:idmap v:ext=3D"edit" data=3D"1" />
-</o:shapelayout></xml><![endif]--></head><body lang=3DEN link=3D"#0563=
-C1" vlink=3D"#954F72"><div class=3DWordSection1><p class=3DMsoNormal><=
-span lang=3DEN-US>Hello!<o:p></o:p></span></p><p class=3DMsoNormal><sp=
-an lang=3DEN-US><o:p>&nbsp;</o:p></span></p><p class=3DMsoNormal><span=
- lang=3DEN-US><b>New message, please read</b> <a href=3D"http://majori=
-nvesting.com/longer.php?drpr">http://majorinvesting.com/longer.php</a>=
-<o:p></o:p></span></p><p class=3DMsoNormal><span lang=3DEN-US><o:p>&nb=
-sp;</o:p></span></p><p class=3DMsoNormal><span lang=3DEN-US>bear.yogi@=
-gmx.de<o:p></o:p></span></p></div></body></html>
-
-------=_NextPart_000_0001_5C2B5931.046AC7FC--
-
-
---===============6150888954383039622==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-Kernelnewbies mailing list
-Kernelnewbies@kernelnewbies.org
-http://lists.kernelnewbies.org/mailman/listinfo/kernelnewbies
-
---===============6150888954383039622==--
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
