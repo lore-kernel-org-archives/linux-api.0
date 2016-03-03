@@ -1,23 +1,45 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: selective block polling and preadv2/pwritev2 revisited V3
-Date: Thu, 3 Mar 2016 17:11:40 +0100
-Message-ID: <20160303161140.GA26015@lst.de>
-References: <1457017443-17662-1-git-send-email-hch@lst.de> <56D853B5.9000906@dev.mellanox.co.il> <20160303151116.GA24614@lst.de> <2369295.6CpmrvqZVS@wuerfel>
+From: Theodore Ts'o <tytso@mit.edu>
+Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of
+ blocks
+Date: Thu, 3 Mar 2016 12:02:05 -0500
+Message-ID: <20160303170205.GD24012@thunk.org>
+References: <20160302040932.16685.62789.stgit@birch.djwong.org>
+ <20160302040947.16685.42926.stgit@birch.djwong.org>
+ <CA+55aFx_NPn0VYk=+Ad5S_r=D6J1xFmWmf7JzQ7RmkwKmdkYOg@mail.gmail.com>
+ <20160302225601.GB21890@birch.djwong.org>
+ <CA+55aFyNPnjJ-Nsu3bMr+HuLQnkj1B8FMddNnXW7HJqxdUzJmQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <2369295.6CpmrvqZVS@wuerfel>
+In-Reply-To: <CA+55aFyNPnjJ-Nsu3bMr+HuLQnkj1B8FMddNnXW7HJqxdUzJmQ@mail.gmail.com>
 Sender: linux-fsdevel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagig@dev.mellanox.co.il>, viro@zeniv.linux.org.uk, axboe@fb.com, milosz@adfin.com, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: "Darrick J. Wong" <darrick.wong@oracle.com>, Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, shane.seymour@hpe.com, Bruce Fields <bfields@fieldses.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 03, 2016 at 04:52:55PM +0100, Arnd Bergmann wrote:
-> If we decide to revise the asm-generic/unistd.h system call list
-> for future architecture ports, can the syscalls replace all of
-> read/write/readv/writev/pread64/write64/preadv/pwritev, or would
-> it be better to keep all of them around indefinitely?
+On Wed, Mar 02, 2016 at 03:49:53PM -0800, Linus Torvalds wrote:
+> > No.  This is not about enabling use of "that idiotic discard behavior", for
+> > that there's BLKDISCARD.  This ioctl does NOT use the handwavy old TRIM
+> > advisory request thing that could return "fuzzy wuzzy" without violating the
+> > specs.
+> 
+> So you agree that we could just make BLKZEROOUT always use trim?
 
-It does replace all off them fully.  I never quite understood
-why having the wrappers is better in libc than the kernel, though.
+There is a massive bug in the SATA specs about trim, which is that it
+is considered advisory.  So the storage device can throw it away
+whenever it feels like it.  (In practice, when it's too busy doing
+other things).
+
+The thing is, this fuzzy wuzzy definition of trim in the SATA specs is
+more and more a SATA-specific bug.  The eMMC 5.1 spec has a reliable
+trim, and SCSI has WRITE SAME.  So it's just SATA which has this crazy
+definition of trim.
+
+(In practice there is no real difference between trim and discard;
+it's just a matter of terminology; in order to determine whether or
+not trim/discard is reliable you really have to pay close attention to
+the specs, on in the case of SATA, use a whitelist of drive models,
+which is crazy.)
+
+					- Ted
