@@ -1,8 +1,8 @@
-From: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+From: Dave Chinner <david@fromorbit.com>
 Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of
  blocks
-Date: Thu, 3 Mar 2016 17:39:52 -0500
-Message-ID: <20160303223952.GE24012@thunk.org>
+Date: Fri, 4 Mar 2016 09:56:46 +1100
+Message-ID: <20160303225646.GT29057@dastard>
 References: <20160302040932.16685.62789.stgit@birch.djwong.org>
  <20160302040947.16685.42926.stgit@birch.djwong.org>
  <CA+55aFx_NPn0VYk=+Ad5S_r=D6J1xFmWmf7JzQ7RmkwKmdkYOg@mail.gmail.com>
@@ -13,16 +13,16 @@ References: <20160302040932.16685.62789.stgit@birch.djwong.org>
  <yq1vb5375oh.fsf@sermon.lab.mkp.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <yq1vb5375oh.fsf-+q57XtR/GgMb6DWv4sQWN6xOck334EZe@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, shane.seymour-ZPxbGqLxI0U@public.gmane.org, Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>
+In-Reply-To: <yq1vb5375oh.fsf@sermon.lab.mkp.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Linus Torvalds <torvalds@linux-foundation.org>, "Darrick J. Wong" <darrick.wong@oracle.com>, Jens Axboe <axboe@kernel.dk>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, shane.seymour@hpe.com, Bruce Fields <bfields@fieldses.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>
 List-Id: linux-api@vger.kernel.org
 
 On Thu, Mar 03, 2016 at 01:54:54PM -0500, Martin K. Petersen wrote:
-> >>>>> "Christoph" == Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> writes:
+> >>>>> "Christoph" == Christoph Hellwig <hch@infradead.org> writes:
 > 
 > Christoph>  - FALLOC_FL_PUNCH_HOLE assures zeroes are returned, but
 > Christoph> space is deallocated as much as possible -
@@ -32,30 +32,44 @@ On Thu, Mar 03, 2016 at 01:54:54PM -0500, Martin K. Petersen wrote:
 > That works for me. I think it would be great if we could have consistent
 > interfaces for fs and block. The more commonality the merrier.
 
-So a question I have is do we want to add a "discard-as-a-hint" analog
-for fallocate?  In the past we've said no because we don't trust
-userspace.  (We seem to have as a core held belief that application
-programmers are idiots and are not to be trusted with anything
-dangerous, even if it would be highly useful in certain use cases.)
+Absolutely in agreement here. it would be much nicer if filesystems
+could just call bdev->ops->fallocate(PUNCH_HOLE, off, len) and
+bdev->ops->fallocate(ZERO_RANGE, off, len) than all the weird
+"technology specific" blkdev_issue_foo() functions we have grown
+over time. Let the block device implement them as it sees fit - the
+higher levels don't need to care about protocol/technology details.
 
-As a result I'm carrying an out-of-tree patch in our Google kernels so
-that ext4 will honor BLKDISCARD on files.  I can't remember if I
-floated it on linux-fsdevel, or I didn't bother because I knew it
-would instantly shot down.  I believe it was the former, but I can't
-be 100% sure.
+---
 
-It would be kind of nice, though, if we had some kind of agreement on
-a consistent, unified interface for all three kinds of
-"discard-as-a-hint", "zeroout", and "zeroout with deallocation" that
-worked on block devices and files.  Whether it's via fallocate(2) or
-BLK* ioctls, I'm agnostic.
+FWIW, this reminds me of a "bigger picture" I think we should
+be working towards. Does anyone remember this:
 
-							- Ted
+https://lwn.net/Articles/592091/
 
-P.S.  Speaking of things that are powerful and too dangerous for
-application programmers, after the Linux FAST workshop, I was having
-dinner with the Ceph developers and Ric Wheeler, and we were talking
-about things they really needed.  Turns out they also could use an
-FALLOC_FL_NO_HIDE_STALE functionality.  I told them I had an
-out-of-tree patch that had that functionality, and even Ric Wheeler
-started getting tempted....  :-)
+(Splitting filesytems in two)
+
+i.e. if we add fallocate support to punch holes, zero ranges and
+*allocate blocks* to a block device, we're mostly at the point where
+we can offload all freespace management that the filesystem
+currently does to the underlying block device.
+
+There's really only a small extension we'd need - the block
+allocation done by the block device needs to be able to return the
+the sector and length of the newly allocated extent. Indeed, this is
+something we talked about last year at LSFMM as a solution to the
+SMR write ordering problem:
+
+https://lwn.net/Articles/637035/
+
+(near the end, paragraph talking about a "new kind of write command")
+
+That "new kind of write command" would enable delayed allocation
+algorithms to continue to work at the filesystem level on block
+devices that freespace management completely is offloaded to...
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
