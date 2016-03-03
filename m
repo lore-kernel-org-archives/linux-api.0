@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: [PATCH 3/6] x86: wire up preadv2 and pwritev2
-Date: Thu,  3 Mar 2016 16:04:00 +0100
-Message-ID: <1457017443-17662-4-git-send-email-hch@lst.de>
+Subject: [PATCH 4/6] vfs: add the RWF_HIPRI flag for preadv2/pwritev2
+Date: Thu,  3 Mar 2016 16:04:01 +0100
+Message-ID: <1457017443-17662-5-git-send-email-hch@lst.de>
 References: <1457017443-17662-1-git-send-email-hch@lst.de>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1457017443-17662-1-git-send-email-hch-jcswGhMUV9g@public.gmane.org>
@@ -10,38 +10,70 @@ To: viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, axboe-b10kYP2dOMg@pu
 Cc: milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Milosz Tanski <milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org>
-[hch: rebased due to newly added syscalls]
+This adds a flag that tells the file system that this is a high priority
+request for which it's worth to poll the hardware.  The flag is purely
+advisory and can be ignored if not supported.
+
+Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 Reviewed-by: Stephen Bates <stephen.bates-PwyqCcigF0Q@public.gmane.org>
 Tested-by: Stephen Bates <stephen.bates-PwyqCcigF0Q@public.gmane.org>
-Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Acked-by: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- arch/x86/entry/syscalls/syscall_32.tbl | 2 ++
- arch/x86/entry/syscalls/syscall_64.tbl | 2 ++
- 2 files changed, 4 insertions(+)
+ fs/read_write.c         | 6 ++++--
+ include/linux/fs.h      | 1 +
+ include/uapi/linux/fs.h | 3 +++
+ 3 files changed, 8 insertions(+), 2 deletions(-)
 
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index cb713df..b30dd81 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -384,3 +384,5 @@
- 375	i386	membarrier		sys_membarrier
- 376	i386	mlock2			sys_mlock2
- 377	i386	copy_file_range		sys_copy_file_range
-+378	i386	preadv2			sys_preadv2
-+379	i386	pwritev2		sys_pwritev2
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index dc1040a..31cec92 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -333,6 +333,8 @@
- 324	common	membarrier		sys_membarrier
- 325	common	mlock2			sys_mlock2
- 326	common	copy_file_range		sys_copy_file_range
-+327	64	preadv2			sys_preadv2
-+328	64	pwritev2		sys_pwritev2
+diff --git a/fs/read_write.c b/fs/read_write.c
+index 799d25f..cf377cf 100644
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -698,10 +698,12 @@ static ssize_t do_iter_readv_writev(struct file *filp, struct iov_iter *iter,
+ 	struct kiocb kiocb;
+ 	ssize_t ret;
  
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
+-	if (flags)
++	if (flags & ~RWF_HIPRI)
+ 		return -EOPNOTSUPP;
+ 
+ 	init_sync_kiocb(&kiocb, filp);
++	if (flags & RWF_HIPRI)
++		kiocb.ki_flags |= IOCB_HIPRI;
+ 	kiocb.ki_pos = *ppos;
+ 
+ 	ret = fn(&kiocb, iter);
+@@ -716,7 +718,7 @@ static ssize_t do_loop_readv_writev(struct file *filp, struct iov_iter *iter,
+ {
+ 	ssize_t ret = 0;
+ 
+-	if (flags)
++	if (flags & ~RWF_HIPRI)
+ 		return -EOPNOTSUPP;
+ 
+ 	while (iov_iter_count(iter)) {
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 875277a..a1f731c 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -320,6 +320,7 @@ struct writeback_control;
+ #define IOCB_EVENTFD		(1 << 0)
+ #define IOCB_APPEND		(1 << 1)
+ #define IOCB_DIRECT		(1 << 2)
++#define IOCB_HIPRI		(1 << 3)
+ 
+ struct kiocb {
+ 	struct file		*ki_filp;
+diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+index 149bec8..d246339 100644
+--- a/include/uapi/linux/fs.h
++++ b/include/uapi/linux/fs.h
+@@ -304,4 +304,7 @@ struct fsxattr {
+ #define SYNC_FILE_RANGE_WRITE		2
+ #define SYNC_FILE_RANGE_WAIT_AFTER	4
+ 
++/* flags for preadv2/pwritev2: */
++#define RWF_HIPRI			0x00000001 /* high priority request, poll if possible */
++
+ #endif /* _UAPI_LINUX_FS_H */
 -- 
 2.1.4
