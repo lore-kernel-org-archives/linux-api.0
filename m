@@ -1,19 +1,19 @@
-From: "Kirill A. Shutemov" <kirill@shutemov.name>
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
 Subject: Re: THP-enabled filesystem vs. FALLOC_FL_PUNCH_HOLE
-Date: Sat, 5 Mar 2016 01:48:23 +0300
-Message-ID: <20160304224823.GA12498@node.shutemov.name>
+Date: Sat, 5 Mar 2016 10:05:48 +1100
+Message-ID: <20160304230548.GC11282@dastard>
 References: <1457023939-98083-1-git-send-email-kirill.shutemov@linux.intel.com>
  <20160304112603.GA9790@node.shutemov.name>
  <56D9C882.3040808@intel.com>
  <alpine.LSU.2.11.1603041100320.6011@eggly.anvils>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.LSU.2.11.1603041100320.6011@eggly.anvils>
-Sender: owner-linux-mm@kvack.org
-To: Hugh Dickins <hughd@google.com>
-Cc: Dave Hansen <dave.hansen@intel.com>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Andrea Arcangeli <aarcange@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Christoph Lameter <cl@gentwo.org>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, Jerome Marchand <jmarchan@redhat.com>, Yang Shi <yang.shi@linaro.org>, Sasha Levin <sasha.levin@oracle.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org
+In-Reply-To: <alpine.LSU.2.11.1603041100320.6011-fupSdm12i1nKWymIFiNcPA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Christoph Lameter <cl-gkYfJU5Cukgdnm+yROfE0A@public.gmane.org>, Naoya Horiguchi <n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org>, Jerome Marchand <jmarchan-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Yang Shi <yang.shi-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 On Fri, Mar 04, 2016 at 11:38:47AM -0800, Hugh Dickins wrote:
@@ -45,49 +45,40 @@ On Fri, Mar 04, 2016 at 11:38:47AM -0800, Hugh Dickins wrote:
 > 
 > At risk of addressing the tip of an iceberg, before diving down to
 > scope out the rest of the iceberg...
-> 
-> So far as the behaviour of lseek(,,SEEK_HOLE) goes, I agree with Kirill:
-> I don't think it matters to anyone if it skips some zeroed small pages
-> within a hugepage.  It may cause some artificial tests of holepunch and
-> SEEK_HOLE to fail, and it ought to be documented as a limitation from
-> choosing to enable THP (Kirill's way) on a filesystem, but I don't think
-> it's an ABI break to worry about: anyone who cares just shouldn't enable.
-> 
+....
+
 > (Though in the case of my huge tmpfs, it's the reverse: the small hole
 > punch splits the hugepage; but it's natural that Kirill's way would try
 > to hold on to its compound pages for longer than I do, and that's fine
 > so long as it's all consistent.)
-> 
-> But I may disagree with "we effectively have 2M filesystem block size",
-> beyond the SEEK_HOLE case.  If we're emulating hugetlbfs in tmpfs, sure,
-> we would have 2M filesystem block size.  But if we're enabling THP
-> (emphasis on T for Transparent) in tmpfs (or another filesystem), then
-> when it matters it must act as if the block size is the 4k (or whatever)
-> it usually is.  When it matters?  Approaching memcg limit or ENOSPC
-> spring to mind.
-> 
+....
 > Ah, but suppose someone holepunches out most of each 2M page: they would
 > expect the memcg not to be charged for those holes (just as when they
 > munmap most of an anonymous THP) - that does suggest splitting is needed.
 
-Hmm.. As split_huge_pages() can fail, we wound need to propagate this
-error to userspace. This potentially triggers some other user-visible
-effect. EBUSY is not on list of fallocate(2) errror codes.
+I think filesystems will expect splitting to happen. They call
+truncate_pagecache_range() on the region that the hole is being
+punched out of, and they expect page cache pages over this range to
+be unmapped, invalidated and then removed from the mapping tree as a
+result. Also, most filesystems think the page cache only contains
+PAGE_CACHE_SIZE mappings, so they are completely unaware of the
+limitations THP might have when it comes to invalidation.
 
-I think we can invent a way to track if a THP has punch-holed subpages and
-prevent the compound page from being mapped as PMD or mapping these
-subpages.
+IOWs, if this range is not aligned to huge page boundaries, then it
+implies the huge page is either split into PAGE_SIZE mappings and
+then the range is invalidated as expected, or it is completely
+invalidated and then refaulted on future accesses which determine if
+THP or normal pages are used for the page being faulted....
 
-But I'm reluctant doing it upfront until real users emerge.
+Just to complicate things, keep in mind that some filesystems may
+have a PAGE_SIZE block size, but can be convinced to only
+allocate/punch/truncate/etc extents on larger alignments on a
+per-inode basis. IOWs, THP vs hole punch behaviour is not actually
+a filesystem type specific behaviour - it's per-inode specific...
 
-I would propose to see what user demands will be. May be we overthink the
-situation.
+Cheers,
 
+Dave.
 -- 
- Kirill A. Shutemov
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
