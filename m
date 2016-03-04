@@ -1,29 +1,93 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH 1/2] sigaltstack: implement SS_AUTODISARM flag
-Date: Fri, 4 Mar 2016 14:22:24 -0800
-Message-ID: <CALCETrWMJ-2xovNnPgsKZtmBWZpqBERCTzne2L81x0tcm0BhbQ@mail.gmail.com>
-References: <1456781345-8243-1-git-send-email-stsp@list.ru> <1456781345-8243-2-git-send-email-stsp@list.ru>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
+Subject: Re: THP-enabled filesystem vs. FALLOC_FL_PUNCH_HOLE
+Date: Sat, 5 Mar 2016 01:48:23 +0300
+Message-ID: <20160304224823.GA12498@node.shutemov.name>
+References: <1457023939-98083-1-git-send-email-kirill.shutemov@linux.intel.com>
+ <20160304112603.GA9790@node.shutemov.name>
+ <56D9C882.3040808@intel.com>
+ <alpine.LSU.2.11.1603041100320.6011@eggly.anvils>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1456781345-8243-2-git-send-email-stsp-cmBhpYW9OiY@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>
-Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>, Jason Low <jason.low2-VXdhtT5mjnY@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>, Amanieu d'Antras <amanieu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>, Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Stas Sergeev <stsp-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LSU.2.11.1603041100320.6011@eggly.anvils>
+Sender: owner-linux-mm@kvack.org
+To: Hugh Dickins <hughd@google.com>
+Cc: Dave Hansen <dave.hansen@intel.com>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Andrea Arcangeli <aarcange@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Christoph Lameter <cl@gentwo.org>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, Jerome Marchand <jmarchan@redhat.com>, Yang Shi <yang.shi@linaro.org>, Sasha Levin <sasha.levin@oracle.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 29, 2016 at 1:29 PM, Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org> wrote:
-> This patch implements the SS_AUTODISARM flag that can be ORed with
-> SS_ONSTACK when forming ss_flags.
-> When this flag is set, sigaltstack will be disabled when entering
-> the signal handler; more precisely, after saving sas to uc_stack.
-> When leaving the signal handler, the sigaltstack is restored by
-> uc_stack.
-> When this flag is used, it is safe to switch from sighandler with
-> swapcontext(). Without this flag, the subsequent signal will corrupt
-> the state of the switched-away sighandler.
->
+On Fri, Mar 04, 2016 at 11:38:47AM -0800, Hugh Dickins wrote:
+> On Fri, 4 Mar 2016, Dave Hansen wrote:
+> > On 03/04/2016 03:26 AM, Kirill A. Shutemov wrote:
+> > > On Thu, Mar 03, 2016 at 07:51:50PM +0300, Kirill A. Shutemov wrote:
+> > >> Truncate and punch hole that only cover part of THP range is implemented
+> > >> by zero out this part of THP.
+> > >>
+> > >> This have visible effect on fallocate(FALLOC_FL_PUNCH_HOLE) behaviour.
+> > >> As we don't really create hole in this case, lseek(SEEK_HOLE) may have
+> > >> inconsistent results depending what pages happened to be allocated.
+> > >> Not sure if it should be considered ABI break or not.
+> > > 
+> > > Looks like this shouldn't be a problem. man 2 fallocate:
+> > > 
+> > > 	Within the specified range, partial filesystem blocks are zeroed,
+> > > 	and whole filesystem blocks are removed from the file.  After a
+> > > 	successful call, subsequent reads from this range will return
+> > > 	zeroes.
+> > > 
+> > > It means we effectively have 2M filesystem block size.
+> > 
+> > The question is still whether this will case problems for apps.
+> > 
+> > Isn't 2MB a quote unusual block size?  Wouldn't some files on a tmpfs
+> > filesystem act like they have a 2M blocksize and others like they have
+> > 4k?  Would that confuse apps?
+> 
+> At risk of addressing the tip of an iceberg, before diving down to
+> scope out the rest of the iceberg...
+> 
+> So far as the behaviour of lseek(,,SEEK_HOLE) goes, I agree with Kirill:
+> I don't think it matters to anyone if it skips some zeroed small pages
+> within a hugepage.  It may cause some artificial tests of holepunch and
+> SEEK_HOLE to fail, and it ought to be documented as a limitation from
+> choosing to enable THP (Kirill's way) on a filesystem, but I don't think
+> it's an ABI break to worry about: anyone who cares just shouldn't enable.
+> 
+> (Though in the case of my huge tmpfs, it's the reverse: the small hole
+> punch splits the hugepage; but it's natural that Kirill's way would try
+> to hold on to its compound pages for longer than I do, and that's fine
+> so long as it's all consistent.)
+> 
+> But I may disagree with "we effectively have 2M filesystem block size",
+> beyond the SEEK_HOLE case.  If we're emulating hugetlbfs in tmpfs, sure,
+> we would have 2M filesystem block size.  But if we're enabling THP
+> (emphasis on T for Transparent) in tmpfs (or another filesystem), then
+> when it matters it must act as if the block size is the 4k (or whatever)
+> it usually is.  When it matters?  Approaching memcg limit or ENOSPC
+> spring to mind.
+> 
+> Ah, but suppose someone holepunches out most of each 2M page: they would
+> expect the memcg not to be charged for those holes (just as when they
+> munmap most of an anonymous THP) - that does suggest splitting is needed.
 
-This looks reasonable to me with one exception: how does a user
-program detect the presence of this feature?  Anyone else have any
-thoughts?
+Hmm.. As split_huge_pages() can fail, we wound need to propagate this
+error to userspace. This potentially triggers some other user-visible
+effect. EBUSY is not on list of fallocate(2) errror codes.
+
+I think we can invent a way to track if a THP has punch-holed subpages and
+prevent the compound page from being mapped as PMD or mapping these
+subpages.
+
+But I'm reluctant doing it upfront until real users emerge.
+
+I would propose to see what user demands will be. May be we overthink the
+situation.
+
+-- 
+ Kirill A. Shutemov
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
