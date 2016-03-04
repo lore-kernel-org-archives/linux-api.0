@@ -1,37 +1,44 @@
-From: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
-Subject: THP-enabled filesystem vs. FALLOC_FL_PUNCH_HOLE
-Date: Fri, 4 Mar 2016 14:26:03 +0300
-Message-ID: <20160304112603.GA9790@node.shutemov.name>
-References: <1457023939-98083-1-git-send-email-kirill.shutemov@linux.intel.com>
+From: "Andrew Karpow" <andy-AJ3FZg74QxY@public.gmane.org>
+Subject: =?utf-8?q?Re=3A?==?utf-8?q?_=5Bfuse-devel=5D?==?utf-8?q?_=5BPATCH?=
+ =?utf-8?q?_v5=5D?==?utf-8?q?_fuse=3A?= Add support for passthrough
+ =?utf-8?q?read=2Fwrite?=
+Date: Fri, 04 Mar 2016 13:23:48 +0100
+Message-ID: <3ee-56d97e80-3b-4a1d2580@40597794>
+References: <56AFAA5B.3000006@codeaurora.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1457023939-98083-1-git-send-email-kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+in-reply-to: <56AFAA5B.3000006-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Christoph Lameter <cl-gkYfJU5Cukgdnm+yROfE0A@public.gmane.org>, Naoya Horiguchi <n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org>, Jerome Marchand <jmarchan-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Yang Shi <yang.shi-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+To: Nikhilesh Reddy <reddyn-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Cc: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, fuse-devel <fuse-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Theodore Tso <tytso-3s7WtUTddSA@public.gmane.org>, jack-AlSwsSmVLrQ@public.gmane.org, Antonio SJ Musumeci <trapexit-wGTF+nt6ur047o9RxwvyTQ@public.gmane.org>, sven.utcke-Mmb7MZpHnFY@public.gmane.org, Nikolaus Rath <nikolaus-BTH8mxji4b0@public.gmane.org>, Jann Horn <jannhorn-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Mike Shal <marfey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 03, 2016 at 07:51:50PM +0300, Kirill A. Shutemov wrote:
-> Truncate and punch hole that only cover part of THP range is implemented
-> by zero out this part of THP.
-> 
-> This have visible effect on fallocate(FALLOC_FL_PUNCH_HOLE) behaviour.
-> As we don't really create hole in this case, lseek(SEEK_HOLE) may have
-> inconsistent results depending what pages happened to be allocated.
-> Not sure if it should be considered ABI break or not.
+Hi!
 
-Looks like this shouldn't be a problem. man 2 fallocate:
+Thanks for the passthrough patch, exactly what I was searching for.
+I'am currently trying to port your code to a prehistoric RedHat 6 Kernel, but I wonder about some implementation details...
+ 
+> +++ b/fs/fuse/passthrough.c
+...
+> +void fuse_setup_passthrough(struct fuse_conn *fc, struct fuse_req *req)
+..
+> +	daemon_fd = (int)open_out->passthrough_fd;
+...
 
-	Within the specified range, partial filesystem blocks are zeroed,
-	and whole filesystem blocks are removed from the file.  After a
-	successful call, subsequent reads from this range will return
-	zeroes.
+> +++ b/include/uapi/linux/fuse.h
+...
+> @@ -480,7 +481,7 @@ struct fuse_create_in {
+>  struct fuse_open_out {
+>  	uint64_t	fh;
+>  	uint32_t	open_flags;
+> -	uint32_t	padding;
+> +	int32_t         passthrough_fd;
+>  };
+ 
+I don't get where the passthrough_fd struct member is ever set?
 
-It means we effectively have 2M filesystem block size.
+with best regards,
 
-And I don't see any guarantee about subsequent lseek(SEEK_HOLE) beheviour.
-
--- 
- Kirill A. Shutemov
+Andy
