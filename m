@@ -1,7 +1,7 @@
 From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Subject: Re: [PATCH 3/3] block: implement (some of) fallocate for block devices
-Date: Fri, 4 Mar 2016 19:06:38 -0800
-Message-ID: <CA+55aFyY+oDoK8C6C++PG=N+vtY-r1Y6fYO_3skDTzkP_SXC-A@mail.gmail.com>
+Date: Fri, 4 Mar 2016 19:13:25 -0800
+Message-ID: <CA+55aFzJW70YApg8ra-c79E-j1ujOXbh=26k2dvyYX+qZuu_8A@mail.gmail.com>
 References: <20160305005556.29738.66782.stgit@birch.djwong.org>
 	<20160305005617.29738.85316.stgit@birch.djwong.org>
 Mime-Version: 1.0
@@ -14,14 +14,22 @@ Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwi
 List-Id: linux-api@vger.kernel.org
 
 On Fri, Mar 4, 2016 at 4:56 PM, Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
-> +       /* Only punch if the device can do zeroing discard. */
-> +       if ((mode & FALLOC_FL_PUNCH_HOLE) &&
-> +           (!blk_queue_discard(q) || !q->limits.discard_zeroes_data))
+> +
+> +       /* We can't change the bdev size from here */
+> +       if (!(mode & FALLOC_FL_KEEP_SIZE))
 > +               return -EOPNOTSUPP;
 
-I'm ok with this, but suspect that some users would prefer to just
-turn this into ZERO_RANGE silently.
+Oh, and this I think is wrong.
 
-Comments from people who would be expected to use this?
+The thing is, FALLOC_FL_KEEP_SIZE is only supposed to matter if the
+region is outside the existing length.
 
-            Linus
+So if y ou punch a hole in the middle of a file, you don't need
+FALLOC_FL_KEEP_SIZE.
+
+I would suggest removing this check entirely, since you already check
+that people don't try to punch holes past the end of the device. So
+FALLOC_FL_KEEP_SIZE is simply a non-issue, and shouldn't even be
+checked.
+
+              Linus
