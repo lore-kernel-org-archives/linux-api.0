@@ -1,140 +1,64 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 3/3] block: implement (some of) fallocate for block devices
-Date: Fri, 04 Mar 2016 16:56:17 -0800
-Message-ID: <20160305005617.29738.85316.stgit@birch.djwong.org>
-References: <20160305005556.29738.66782.stgit@birch.djwong.org>
+From: Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v3 16/52] mtd: nand: use mtd_set_ecclayout()
+ where appropriate
+Date: Fri, 4 Mar 2016 18:26:21 -0800
+Message-ID: <20160305022621.GN55664@google.com>
+References: <1456448280-27788-1-git-send-email-boris.brezillon@free-electrons.com>
+ <1456448280-27788-17-git-send-email-boris.brezillon@free-electrons.com>
+Reply-To: computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160305005556.29738.66782.stgit@birch.djwong.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: axboe@kernel.dk, torvalds@linux-foundation.org, darrick.wong@oracle.com
-Cc: hch@infradead.org, tytso@mit.edu, martin.petersen@oracle.com, linux-api@vger.kernel.org, david@fromorbit.com, linux-kernel@vger.kernel.org, shane.seymour@hpe.com, bfields@fieldses.org, linux-fsdevel@vger.kernel.org, jlayton@poochiereds.net, akpm@linux-foundation.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-sunxi+bncBCZ6PSPVXMNBBUEH5G3AKGQEPFCMDXA-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1456448280-27788-17-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Archive: <https://groups.google.com/group/linux-sunxi
+Sender: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+List-Subscribe: <https://groups.google.com/group/linux-sunxi/subscribe>, <mailto:linux-sunxi+subscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Unsubscribe: <mailto:googlegroups-manage+1076902468213+unsubscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>,
+ <https://groups.google.com/group/linux-sunxi/subscribe>
+To: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Cc: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Haojian Zhuang <haojian.zhuang-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Robert Jarzmik <robert.jarzmik-GANU6spQydw@public.gmane.org>, Kukjin Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Nicolas Ferre <nicolas.ferre-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Alexandre Belloni <alexandre.belloni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Wenyou Yang <wenyou.yang-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Josh Wu <rainyfeeling-1ViLX0X+lBJBDgjK7y7TUQ@public.gmane.org>, Ezequiel Garcia <ezequiel.garcia-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Chen-Yu Tsai <wens-jdAy2FN1RRM@public.gmane.org>, linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Greg
 List-Id: linux-api@vger.kernel.org
 
-After much discussion, it seems that the fallocate feature flag
-FALLOC_FL_ZERO_RANGE maps nicely to SCSI WRITE SAME; and the feature
-FALLOC_FL_PUNCH_HOLE maps nicely to the devices that have been
-whitelisted for zeroing SCSI UNMAP.  Both flags require that
-FALLOC_FL_KEEP_SIZE are set, both return EINVAL if one tries
-to write past the end of the device, and both require that the
-offset and length be aligned at least to 512-byte offsets.q
+On Fri, Feb 26, 2016 at 01:57:24AM +0100, Boris Brezillon wrote:
+> Use the mtd_set_ecclayout() helper instead of directly assigning the
+> mtd->ecclayout field.
+> 
+> Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+> ---
+>  drivers/mtd/nand/nand_base.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/drivers/mtd/nand/nand_base.c b/drivers/mtd/nand/nand_base.c
+> index 17504f2..5093a3c 100644
+> --- a/drivers/mtd/nand/nand_base.c
+> +++ b/drivers/mtd/nand/nand_base.c
+> @@ -4288,7 +4288,7 @@ int nand_scan_tail(struct mtd_info *mtd)
+>  		ecc->write_oob_raw = ecc->write_oob;
+>  
+>  	/* propagate ecc info to mtd_info */
+> -	mtd->ecclayout = ecc->layout;
+> +	mtd_set_ecclayout(mtd, ecc->layout);
 
-Since the semantics of fallocate are fairly well established already,
-wire up the two pieces.  The other fallocate variants (collapse range,
-insert range, and allocate blocks) are not supported.
+I'm having trouble applying this one. For the life of me, I can't figure
+out where you got this context from. This block only appears much later
+in nand_scan_tail()...
 
-Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
----
- fs/block_dev.c |   67 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- fs/open.c      |    3 ++-
- 2 files changed, 69 insertions(+), 1 deletion(-)
+Do you think you could post a git tree with your intended changes? I may
+just try to pull something in like that instead.
 
+BTW, I'm not sure the OMAP refactorings are going to come in time, but I
+was planning to pull those directly from the TI folks (i.e., they won't
+be rebased on l2-mtd.git), since there's some intermingling of platform
+changes there. I think I can fix the conflicts fine, but FYI.
 
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 826b164..c9c9421 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -30,6 +30,7 @@
- #include <linux/cleancache.h>
- #include <linux/dax.h>
- #include <asm/uaccess.h>
-+#include <linux/falloc.h>
- #include "internal.h"
- 
- struct bdev_inode {
-@@ -1786,6 +1787,71 @@ static int blkdev_mmap(struct file *file, struct vm_area_struct *vma)
- #define blkdev_mmap generic_file_mmap
- #endif
- 
-+#define	BLKDEV_FALLOC_FL_SUPPORTED					\
-+		(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |		\
-+		 FALLOC_FL_ZERO_RANGE)
-+
-+long blkdev_fallocate(struct file *file, int mode, loff_t start, loff_t len)
-+{
-+	struct block_device *bdev = I_BDEV(bdev_file_inode(file));
-+	struct request_queue *q = bdev_get_queue(bdev);
-+	struct address_space *mapping;
-+	loff_t end = start + len - 1;
-+	loff_t bs_mask;
-+	int error;
-+
-+	/* We only support zero range and punch hole. */
-+	if (mode & ~BLKDEV_FALLOC_FL_SUPPORTED)
-+		return -EOPNOTSUPP;
-+
-+	/* We can't change the bdev size from here */
-+	if (!(mode & FALLOC_FL_KEEP_SIZE))
-+		return -EOPNOTSUPP;
-+
-+	/* We haven't a primitive for "ensure space exists" right now. */
-+	if (mode == FALLOC_FL_KEEP_SIZE)
-+		return -EOPNOTSUPP;
-+
-+	/* Only punch if the device can do zeroing discard. */
-+	if ((mode & FALLOC_FL_PUNCH_HOLE) &&
-+	    (!blk_queue_discard(q) || !q->limits.discard_zeroes_data))
-+		return -EOPNOTSUPP;
-+
-+	/* Don't allow IO that isn't aligned to logical block size */
-+	bs_mask = bdev_logical_block_size(bdev) - 1;
-+	if ((start & bs_mask) || ((start + len) & bs_mask))
-+		return -EINVAL;
-+
-+	/* Don't go off the end of the device */
-+	if (end > i_size_read(bdev->bd_inode))
-+		return -EINVAL;
-+	if (end < start)
-+		return -EINVAL;
-+
-+	/* Invalidate the page cache, including dirty pages. */
-+	mapping = bdev->bd_inode->i_mapping;
-+	truncate_inode_pages_range(mapping, start, end);
-+
-+	error = -EINVAL;
-+	if (mode & FALLOC_FL_ZERO_RANGE)
-+		error = blkdev_issue_zeroout(bdev, start >> 9, len >> 9,
-+					    GFP_KERNEL, false);
-+	else if (mode & FALLOC_FL_PUNCH_HOLE)
-+		error = blkdev_issue_discard(bdev, start >> 9, len >> 9,
-+					     GFP_KERNEL, 0);
-+	if (error)
-+		return error;
-+
-+	/*
-+	 * Invalidate again; if someone wandered in and dirtied a page,
-+	 * the caller will be given -EBUSY;
-+	 */
-+	return invalidate_inode_pages2_range(mapping,
-+					     start >> PAGE_CACHE_SHIFT,
-+					     end >> PAGE_CACHE_SHIFT);
-+}
-+EXPORT_SYMBOL_GPL(blkdev_fallocate);
-+
- const struct file_operations def_blk_fops = {
- 	.open		= blkdev_open,
- 	.release	= blkdev_close,
-@@ -1800,6 +1866,7 @@ const struct file_operations def_blk_fops = {
- #endif
- 	.splice_read	= generic_file_splice_read,
- 	.splice_write	= iter_file_splice_write,
-+	.fallocate	= blkdev_fallocate,
- };
- 
- int ioctl_by_bdev(struct block_device *bdev, unsigned cmd, unsigned long arg)
-diff --git a/fs/open.c b/fs/open.c
-index 55bdc75..4f99adc 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -289,7 +289,8 @@ int vfs_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
- 	 * Let individual file system decide if it supports preallocation
- 	 * for directories or not.
- 	 */
--	if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode))
-+	if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode) &&
-+	    !S_ISBLK(inode->i_mode))
- 		return -ENODEV;
- 
- 	/* Check for wrap through zero too */
+Brian
+
+>  	mtd->ecc_strength = ecc->strength;
+>  	mtd->ecc_step_size = ecc->size;
+>  
+> -- 
+> 2.1.4
+> 
