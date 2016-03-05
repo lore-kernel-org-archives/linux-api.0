@@ -1,37 +1,50 @@
-From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [PATCH v6 0/3] fallocate for block devices to provide zero-out
-Date: Fri, 4 Mar 2016 19:17:24 -0800
-Message-ID: <CA+55aFxcXOL+sqWN1yze7d5fQZmTa_6Tg6D6hJ+ReYyKMFxzSg@mail.gmail.com>
-References: <20160305005556.29738.66782.stgit@birch.djwong.org>
+From: Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>
+Subject: Re: [PATCH 1/2] sigaltstack: implement SS_AUTODISARM flag
+Date: Sat, 5 Mar 2016 10:39:17 +0300
+Message-ID: <56DA8D25.20600@list.ru>
+References: <1456781345-8243-1-git-send-email-stsp@list.ru>
+ <1456781345-8243-2-git-send-email-stsp@list.ru>
+ <CALCETrWMJ-2xovNnPgsKZtmBWZpqBERCTzne2L81x0tcm0BhbQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160305005556.29738.66782.stgit-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
+In-Reply-To: <CALCETrWMJ-2xovNnPgsKZtmBWZpqBERCTzne2L81x0tcm0BhbQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, shane.seymour-ZPxbGqLxI0U@public.gmane.org, Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>, Jason Low <jason.low2-VXdhtT5mjnY@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>, Amanieu d'Antras <amanieu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>, Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Stas Sergeev <stsp-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 4, 2016 at 4:55 PM, Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
->
-> This is a redesign of the patch series that fixes various interface
-> problems with the existing "zero out this part of a block device"
-> code.  BLKZEROOUT2 is gone.
+05.03.2016 01:22, Andy Lutomirski =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+> On Mon, Feb 29, 2016 at 1:29 PM, Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org> wrote:
+>> This patch implements the SS_AUTODISARM flag that can be ORed with
+>> SS_ONSTACK when forming ss_flags.
+>> When this flag is set, sigaltstack will be disabled when entering
+>> the signal handler; more precisely, after saving sas to uc_stack.
+>> When leaving the signal handler, the sigaltstack is restored by
+>> uc_stack.
+>> When this flag is used, it is safe to switch from sighandler with
+>> swapcontext(). Without this flag, the subsequent signal will corrupt
+>> the state of the switched-away sighandler.
+>>
+> This looks reasonable to me with one exception: how does a user
+> program detect the presence of this feature?
+Compile-time detection:
+#ifdef SS_AUTODISARM
+   # I have this feature
+   ...
+#endif
 
-I replied to two of the patches with small nits, but on the whole I
-like it. The only nit that I think is serious is that you shouldn't be
-requiring people to have to use FALLOC_FL_KEEP_SIZE.
+Run-time detection:
+int err =3D sigaltstack(SS_ONSTACK | SS_AUTODISARM);
+if (err =3D=3D EINVAL) {
+   i_dont_have_this_feature =3D 1;
+   err =3D sigaltstack(SS_ONSTACK);
+}
 
-If anything, you might just change that logic to say: If
-FALLOC_FL_KEEP_SIZE is set, then we truncate the hole punching/zeroing
-to the size of the device. So people could do something like
-
-  fallocate(fd,
-        FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE,
-        0, ~0);
-
-to trim the whole device (and if FALLOC_FL_KEEP_SIZE isn't set, then
-the above would be an error simply because the requested hole was
-bigger than the device)
-
-            Linus
+Note: if you want to keep such detection for the future
+additions, the mask can be enlarged to, say, ((1 << 24) - 1),
+and whenever someone adds a new flag, he can lower the
+mask by one bit.
+But I think this would be an overkill in that particular case.
