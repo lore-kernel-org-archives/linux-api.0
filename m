@@ -1,50 +1,27 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH 2/3] block: require write_same and discard requests align
- to logical block size
-Date: Fri, 4 Mar 2016 19:02:19 -0800
-Message-ID: <CA+55aFwVUs29-GPcVBtGQ=fjZbYTJz4KFc=C7Ej+V8UKvmBBhA@mail.gmail.com>
+From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [PATCH 3/3] block: implement (some of) fallocate for block devices
+Date: Fri, 4 Mar 2016 19:06:38 -0800
+Message-ID: <CA+55aFyY+oDoK8C6C++PG=N+vtY-r1Y6fYO_3skDTzkP_SXC-A@mail.gmail.com>
 References: <20160305005556.29738.66782.stgit@birch.djwong.org>
-	<20160305005610.29738.18727.stgit@birch.djwong.org>
+	<20160305005617.29738.85316.stgit@birch.djwong.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20160305005610.29738.18727.stgit@birch.djwong.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, Theodore Ts'o <tytso@mit.edu>, "Martin K. Petersen" <martin.petersen@oracle.com>, Linux API <linux-api@vger.kernel.org>, Dave Chinner <david@fromorbit.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, shane.seymour@hpe.com, Bruce Fields <bfields@fieldses.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, Andrew Morton <akpm@linux-foundation.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160305005617.29738.85316.stgit-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, shane.seymour-ZPxbGqLxI0U@public.gmane.org, Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 4, 2016 at 4:56 PM, Darrick J. Wong <darrick.wong@oracle.com> wrote:
->
-> +       bs_mask = (bdev_logical_block_size(bdev) >> 9) - 1;
-> +       if ((sector & bs_mask) || ((sector + nr_sects) & bs_mask))
-> +               return -EINVAL;
+On Fri, Mar 4, 2016 at 4:56 PM, Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
+> +       /* Only punch if the device can do zeroing discard. */
+> +       if ((mode & FALLOC_FL_PUNCH_HOLE) &&
+> +           (!blk_queue_discard(q) || !q->limits.discard_zeroes_data))
+> +               return -EOPNOTSUPP;
 
-This test may _work_, but it's kind of crazily overly complicated.
+I'm ok with this, but suspect that some users would prefer to just
+turn this into ZERO_RANGE silently.
 
-The sane test would be just "are the start and length aligned":
-
-        if ((sector & bs_mask) || (nr_sects & bs_mask))
-                return -EINVAL;
-
-and the *smart* test is simpler still, and asks "are there invalid
-bits in either the start or the length":
-
-        if ((sector | nr_sects) & bs_mask)
-                return -EINVAL:
-
-I suspect either of these would be fine, and the compiler may even
-notice that there's the smart way of doing it.
-
-The compiler *might* even notice that the original version can be
-simplified and generate sane code.
-
-But I think that original version is not only overly complicated, it's
-also actually less obvious than the simpler versions, if only because
-the whole conditional is so big that you have to actively parse it.
-
-That last shortest form is actually so simple that I think it's the
-easiest to understand too - the conditional is simply so small that it
-doesn't take a lot of effort to see what it does.
+Comments from people who would be expected to use this?
 
             Linus
