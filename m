@@ -1,154 +1,71 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH 1/2] sigaltstack: implement SS_AUTODISARM flag
-Date: Sun, 6 Mar 2016 12:55:19 -0800
-Message-ID: <CALCETrWYb1iaaWs1k9=ef1UUVvN-TFTE8L+mZdW9t3yyGDsXdA@mail.gmail.com>
-References: <1456781345-8243-1-git-send-email-stsp@list.ru>
- <1456781345-8243-2-git-send-email-stsp@list.ru> <CALCETrVhtHdiS_W3WuCi1bTH78uoTSCHW2MN9hA36=h56-A3oA@mail.gmail.com>
- <CALCETrW=M1=n6R6dwOj-ks_=+14vf4rz0S3SFty-_GuwFFZU5A@mail.gmail.com> <56DC904C.2060708@list.ru>
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Subject: Re: THP-enabled filesystem vs. FALLOC_FL_PUNCH_HOLE
+Date: Mon, 7 Mar 2016 10:03:36 +1100
+Message-ID: <20160306230336.GE11282@dastard>
+References: <1457023939-98083-1-git-send-email-kirill.shutemov@linux.intel.com>
+ <20160304112603.GA9790@node.shutemov.name>
+ <56D9C882.3040808@intel.com>
+ <alpine.LSU.2.11.1603041100320.6011@eggly.anvils>
+ <20160304230548.GC11282@dastard>
+ <20160304232412.GC12498@node.shutemov.name>
+ <20160305223811.GD11282@dastard>
+ <20160306003034.GA13704@node.shutemov.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <56DC904C.2060708-cmBhpYW9OiY@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160306003034.GA13704-sVvlyX1904swdBt8bTSxpkEMvNT87kid@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>
-Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>, Jason Low <jason.low2-VXdhtT5mjnY@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>, Amanieu d'Antras <amanieu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>, Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Stas Sergeev <stsp-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+To: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
+Cc: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Christoph Lameter <cl-gkYfJU5Cukgdnm+yROfE0A@public.gmane.org>, Naoya Horiguchi <n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org>, Jerome Marchand <jmarchan-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Yang Shi <yang.shi-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Mar 6, 2016 at 12:17 PM, Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org> wrote:
-> 06.03.2016 23:10, Andy Lutomirski =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
->
->> On Sun, Mar 6, 2016 at 12:07 PM, Andy Lutomirski <luto-kltTT9wpgjKXcx/E+B78Qg@public.gmane.org=
-t>
->> wrote:
->>>
->>> On Mon, Feb 29, 2016 at 1:29 PM, Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org> wrote:
->>>>
->>>> This patch implements the SS_AUTODISARM flag that can be ORed with
->>>> SS_ONSTACK when forming ss_flags.
->>>> When this flag is set, sigaltstack will be disabled when entering
->>>> the signal handler; more precisely, after saving sas to uc_stack.
->>>> When leaving the signal handler, the sigaltstack is restored by
->>>> uc_stack.
->>>> When this flag is used, it is safe to switch from sighandler with
->>>> swapcontext(). Without this flag, the subsequent signal will corru=
-pt
->>>> the state of the switched-away sighandler.
->>>>
->>>> CC: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->>>> CC: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
->>>> CC: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
->>>> CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
->>>> CC: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->>>> CC: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
->>>> CC: Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
->>>> CC: Jason Low <jason.low2-VXdhtT5mjnY@public.gmane.org>
->>>> CC: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->>>> CC: Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->>>> CC: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
->>>> CC: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
->>>> CC: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
->>>> CC: Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>
->>>> CC: "Amanieu d'Antras" <amanieu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->>>> CC: Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->>>> CC: Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
->>>> CC: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
->>>> CC: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
->>>> CC: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->>>> CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->>>> CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
->>>>
->>>> Signed-off-by: Stas Sergeev <stsp-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
->>>> ---
->>>>   include/linux/sched.h       |  8 ++++++++
->>>>   include/linux/signal.h      |  4 +++-
->>>>   include/uapi/linux/signal.h |  3 +++
->>>>   kernel/fork.c               |  2 +-
->>>>   kernel/signal.c             | 23 ++++++++++++-----------
->>>>   5 files changed, 27 insertions(+), 13 deletions(-)
->>>>
->>>> diff --git a/include/linux/sched.h b/include/linux/sched.h
->>>> index a10494a..26201cd 100644
->>>> --- a/include/linux/sched.h
->>>> +++ b/include/linux/sched.h
->>>> @@ -1587,6 +1587,7 @@ struct task_struct {
->>>>
->>>>          unsigned long sas_ss_sp;
->>>>          size_t sas_ss_size;
->>>> +       unsigned sas_ss_flags;
->>>>
->>>>          struct callback_head *task_works;
->>>>
->>>> @@ -2573,6 +2574,13 @@ static inline int sas_ss_flags(unsigned lon=
-g sp)
->>>>          return on_sig_stack(sp) ? SS_ONSTACK : 0;
->>>>   }
->>>>
->>>> +static inline void sas_ss_reset(struct task_struct *p)
->>>> +{
->>>> +       p->sas_ss_sp =3D 0;
->>>> +       p->sas_ss_size =3D 0;
->>>> +       p->sas_ss_flags =3D SS_DISABLE;
->>>> +}
->>>> +
->>>>   static inline unsigned long sigsp(unsigned long sp, struct ksign=
-al
->>>> *ksig)
->>>>   {
->>>>          if (unlikely((ksig->ka.sa.sa_flags & SA_ONSTACK)) && !
->>>> sas_ss_flags(sp))
->>>> diff --git a/include/linux/signal.h b/include/linux/signal.h
->>>> index 92557bb..3fbe814 100644
->>>> --- a/include/linux/signal.h
->>>> +++ b/include/linux/signal.h
->>>> @@ -432,8 +432,10 @@ int __save_altstack(stack_t __user *, unsigne=
-d
->>>> long);
->>>>          stack_t __user *__uss =3D uss; \
->>>>          struct task_struct *t =3D current; \
->>>>          put_user_ex((void __user *)t->sas_ss_sp, &__uss->ss_sp); =
-\
->>>> -       put_user_ex(sas_ss_flags(sp), &__uss->ss_flags); \
->>>> +       put_user_ex(t->sas_ss_flags, &__uss->ss_flags); \
->>>>          put_user_ex(t->sas_ss_size, &__uss->ss_size); \
->>>> +       if (t->sas_ss_flags & SS_AUTODISARM) \
->>>> +               sas_ss_reset(t); \
->>>>   } while (0);
->>>>
->>>>   #ifdef CONFIG_PROC_FS
->>>> diff --git a/include/uapi/linux/signal.h b/include/uapi/linux/sign=
-al.h
->>>> index e1bd50c2..4691bc5 100644
->>>> --- a/include/uapi/linux/signal.h
->>>> +++ b/include/uapi/linux/signal.h
->>>> @@ -6,5 +6,8 @@
->>>>
->>>>   #define SS_ONSTACK     1
->>>>   #define SS_DISABLE     2
->>>> +#define SS_VALMASK     0xf
->>>
->>> SS_MODE_MASK, perhaps?
->>
->> Actually, let's invert that.
->>
->> #define SS_AUTODISARM (1U << 31)
->> #define SS_FLAG_BITS SS_AUTODISARM
->>
->> ss_mode =3D ss_flags & ~SS_FLAG_BITS;
->>
->> this way flag bits that are currently undefined will continue to tri=
-gger
->> EINVAL.
->
-> OK, will do.
-> Though I am still going to keep SS_AUTODISARM =3D(1 << 4) -
-> it doesn't matter from what side we add new flags, does it?
+On Sun, Mar 06, 2016 at 03:30:34AM +0300, Kirill A. Shutemov wrote:
+> On Sun, Mar 06, 2016 at 09:38:11AM +1100, Dave Chinner wrote:
+> > On Sat, Mar 05, 2016 at 02:24:12AM +0300, Kirill A. Shutemov wrote:
+> > > Would it be acceptable for fallocate(FALLOC_FL_PUNCH_HOLE) to return
+> > > -EBUSY (or other errno on your choice), if we cannot split the page
+> > > right away?
+> > 
+> > Which means THP are not transparent any more. What does an
+> > application do when it gets an EBUSY, anyway?
+> 
+> I guess it's reasonable to expect from an application to handle EOPNOTSUPP
+> as FALLOC_FL_PUNCH_HOLE is not supported by some filesystems.
 
-Adding them starting with a high bit means that more low bits are
-available for use as mode numbers.  Admittedly, this barely matters.
+Yes, but this is usually done as a check at the program
+initialisation to determine whether to issue hole punches at all.
+It's not suppose to be a dynamic error.
 
---Andy
+> Although, non-consistent result from the same fd can be confusing.
 
---=20
-Andy Lutomirski
-AMA Capital Management, LLC
+Exactly.
+
+> > And it's not just hole punching that has this problem. Direct IO is
+> > going to have the same issue with invalidation of the mapped ranges
+> > over the IO being done. XFS already WARNs when page cache
+> > invalidation fails with EBUSY in direct IO, because that is
+> > indicative of an application with a potential data corruption vector
+> > and there's nothing we can do in the kernel code to prevent it.
+> 
+> My current understanding is that for filesystems with persistent storage,
+> in order to make THP any useful, we would need to implement writeback
+> without splitting the huge page.
+
+Algorithmically it is no different to filesytem block size < page
+size writeback.
+
+> At the moment, I have no idea how hard it would be..
+
+THP support would effectively require us to remove PAGE_CACHE_SIZE
+assumptions from all of the filesystem and buffer code. That's a
+large chunk of work e.g.  fs/buffer.c and any filesystem that uses
+bufferheads for tracking filesystem block state through the page
+cache.
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
