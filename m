@@ -1,147 +1,173 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
 Subject: Re: THP-enabled filesystem vs. FALLOC_FL_PUNCH_HOLE
-Date: Sun, 6 Mar 2016 09:38:11 +1100
-Message-ID: <20160305223811.GD11282@dastard>
+Date: Sun, 6 Mar 2016 03:30:34 +0300
+Message-ID: <20160306003034.GA13704@node.shutemov.name>
 References: <1457023939-98083-1-git-send-email-kirill.shutemov@linux.intel.com>
  <20160304112603.GA9790@node.shutemov.name>
  <56D9C882.3040808@intel.com>
  <alpine.LSU.2.11.1603041100320.6011@eggly.anvils>
  <20160304230548.GC11282@dastard>
  <20160304232412.GC12498@node.shutemov.name>
+ <20160305223811.GD11282@dastard>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20160304232412.GC12498-sVvlyX1904swdBt8bTSxpkEMvNT87kid@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
-Cc: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Christoph Lameter <cl-gkYfJU5Cukgdnm+yROfE0A@public.gmane.org>, Naoya Horiguchi <n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org>, Jerome Marchand <jmarchan-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Yang Shi <yang.shi-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+In-Reply-To: <20160305223811.GD11282@dastard>
+Sender: owner-linux-mm@kvack.org
+To: Dave Chinner <david@fromorbit.com>
+Cc: Hugh Dickins <hughd@google.com>, Dave Hansen <dave.hansen@intel.com>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Andrea Arcangeli <aarcange@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Christoph Lameter <cl@gentwo.org>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, Jerome Marchand <jmarchan@redhat.com>, Yang Shi <yang.shi@linaro.org>, Sasha Levin <sasha.levin@oracle.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Mar 05, 2016 at 02:24:12AM +0300, Kirill A. Shutemov wrote:
-> On Sat, Mar 05, 2016 at 10:05:48AM +1100, Dave Chinner wrote:
-> > On Fri, Mar 04, 2016 at 11:38:47AM -0800, Hugh Dickins wrote:
-> > > On Fri, 4 Mar 2016, Dave Hansen wrote:
-> > > > On 03/04/2016 03:26 AM, Kirill A. Shutemov wrote:
-> > > > > On Thu, Mar 03, 2016 at 07:51:50PM +0300, Kirill A. Shutemov wrote:
-> > > > >> Truncate and punch hole that only cover part of THP range is implemented
-> > > > >> by zero out this part of THP.
-> > > > >>
-> > > > >> This have visible effect on fallocate(FALLOC_FL_PUNCH_HOLE) behaviour.
-> > > > >> As we don't really create hole in this case, lseek(SEEK_HOLE) may have
-> > > > >> inconsistent results depending what pages happened to be allocated.
-> > > > >> Not sure if it should be considered ABI break or not.
+On Sun, Mar 06, 2016 at 09:38:11AM +1100, Dave Chinner wrote:
+> On Sat, Mar 05, 2016 at 02:24:12AM +0300, Kirill A. Shutemov wrote:
+> > On Sat, Mar 05, 2016 at 10:05:48AM +1100, Dave Chinner wrote:
+> > > On Fri, Mar 04, 2016 at 11:38:47AM -0800, Hugh Dickins wrote:
+> > > > On Fri, 4 Mar 2016, Dave Hansen wrote:
+> > > > > On 03/04/2016 03:26 AM, Kirill A. Shutemov wrote:
+> > > > > > On Thu, Mar 03, 2016 at 07:51:50PM +0300, Kirill A. Shutemov wrote:
+> > > > > >> Truncate and punch hole that only cover part of THP range is implemented
+> > > > > >> by zero out this part of THP.
+> > > > > >>
+> > > > > >> This have visible effect on fallocate(FALLOC_FL_PUNCH_HOLE) behaviour.
+> > > > > >> As we don't really create hole in this case, lseek(SEEK_HOLE) may have
+> > > > > >> inconsistent results depending what pages happened to be allocated.
+> > > > > >> Not sure if it should be considered ABI break or not.
+> > > > > > 
+> > > > > > Looks like this shouldn't be a problem. man 2 fallocate:
+> > > > > > 
+> > > > > > 	Within the specified range, partial filesystem blocks are zeroed,
+> > > > > > 	and whole filesystem blocks are removed from the file.  After a
+> > > > > > 	successful call, subsequent reads from this range will return
+> > > > > > 	zeroes.
+> > > > > > 
+> > > > > > It means we effectively have 2M filesystem block size.
 > > > > > 
-> > > > > Looks like this shouldn't be a problem. man 2 fallocate:
+> > > > > The question is still whether this will case problems for apps.
 > > > > > 
-> > > > > 	Within the specified range, partial filesystem blocks are zeroed,
-> > > > > 	and whole filesystem blocks are removed from the file.  After a
-> > > > > 	successful call, subsequent reads from this range will return
-> > > > > 	zeroes.
-> > > > > 
-> > > > > It means we effectively have 2M filesystem block size.
+> > > > > Isn't 2MB a quote unusual block size?  Wouldn't some files on a tmpfs
+> > > > > filesystem act like they have a 2M blocksize and others like they have
+> > > > > 4k?  Would that confuse apps?
 > > > > 
-> > > > The question is still whether this will case problems for apps.
-> > > > 
-> > > > Isn't 2MB a quote unusual block size?  Wouldn't some files on a tmpfs
-> > > > filesystem act like they have a 2M blocksize and others like they have
-> > > > 4k?  Would that confuse apps?
+> > > > At risk of addressing the tip of an iceberg, before diving down to
+> > > > scope out the rest of the iceberg...
+> > > ....
 > > > 
-> > > At risk of addressing the tip of an iceberg, before diving down to
-> > > scope out the rest of the iceberg...
-> > ....
+> > > > (Though in the case of my huge tmpfs, it's the reverse: the small hole
+> > > > punch splits the hugepage; but it's natural that Kirill's way would try
+> > > > to hold on to its compound pages for longer than I do, and that's fine
+> > > > so long as it's all consistent.)
+> > > ....
+> > > > Ah, but suppose someone holepunches out most of each 2M page: they would
+> > > > expect the memcg not to be charged for those holes (just as when they
+> > > > munmap most of an anonymous THP) - that does suggest splitting is needed.
+> > > 
+> > > I think filesystems will expect splitting to happen. They call
+> > > truncate_pagecache_range() on the region that the hole is being
+> > > punched out of, and they expect page cache pages over this range to
+> > > be unmapped, invalidated and then removed from the mapping tree as a
+> > > result. Also, most filesystems think the page cache only contains
+> > > PAGE_CACHE_SIZE mappings, so they are completely unaware of the
+> > > limitations THP might have when it comes to invalidation.
+> > > 
+> > > IOWs, if this range is not aligned to huge page boundaries, then it
+> > > implies the huge page is either split into PAGE_SIZE mappings and
+> > > then the range is invalidated as expected, or it is completely
+> > > invalidated and then refaulted on future accesses which determine if
+> > > THP or normal pages are used for the page being faulted....
 > > 
-> > > (Though in the case of my huge tmpfs, it's the reverse: the small hole
-> > > punch splits the hugepage; but it's natural that Kirill's way would try
-> > > to hold on to its compound pages for longer than I do, and that's fine
-> > > so long as it's all consistent.)
-> > ....
-> > > Ah, but suppose someone holepunches out most of each 2M page: they would
-> > > expect the memcg not to be charged for those holes (just as when they
-> > > munmap most of an anonymous THP) - that does suggest splitting is needed.
+> > The filesystem in question is tmpfs and complete invalidation is not
+> > always an option.
+> 
+> Then your two options are: splitting the page and rerunning the hole
+> punch, or simply zeroing the sections of the THP rather than trying
+> to punch out the backing store.
+
+The second option is implemented at the moment as splitting can fail.
+
+> > For other filesystems it also can be unavailable
+> > immediately if the page is dirty (the dirty flag is tracked on per-THP
+> > basis at the moment).
+> 
+> Filesystems with persistent storage flush the range being punched
+> first to ensure that partial blocks are correctly written before we
+> start freeing the backing store. This is needed on XFS to ensure
+> hole punch plays nicely with delayed allocation and other extent
+> based operations. Hence we know that we have clean pages over the
+> hole we are about to punch and so there is no reason the
+> invalidation should *ever* fail.
+
+Okay. It means we have other option to consider on THP-enabling for a
+filesystem with persistent storage.
+
+> tmpfs is a special snowflake when it comes to these fallocate based
+> filesystem layout manipulation functions - it does not have
+> persistent storage, so you have to do things very differently to
+> ensure that data is not lost.
+> 
+> > Would it be acceptable for fallocate(FALLOC_FL_PUNCH_HOLE) to return
+> > -EBUSY (or other errno on your choice), if we cannot split the page
+> > right away?
+> 
+> Which means THP are not transparent any more. What does an
+> application do when it gets an EBUSY, anyway?
+
+I guess it's reasonable to expect from an application to handle EOPNOTSUPP
+as FALLOC_FL_PUNCH_HOLE is not supported by some filesystems.
+Although, non-consistent result from the same fd can be confusing.
+
+For now, I would stick with clearing part of THP on partial truncate or
+punch hole.
+
+We can consider some other options, like deferred split, later.
+
+> And it's not just hole punching that has this problem. Direct IO is
+> going to have the same issue with invalidation of the mapped ranges
+> over the IO being done. XFS already WARNs when page cache
+> invalidation fails with EBUSY in direct IO, because that is
+> indicative of an application with a potential data corruption vector
+> and there's nothing we can do in the kernel code to prevent it.
+
+My current understanding is that for filesystems with persistent storage,
+in order to make THP any useful, we would need to implement writeback
+without splitting the huge page.
+At the moment, I have no idea how hard it would be..
+
+But it means we shouldn't be required to split a page in order to
+invalidate page cache. Therefore no risk of split failure.
+
+> I think the same issues also exist with DAX using huge (and giant)
+> pages. Hence it seems like we need to think about these interactions
+> carefully, because they will no longer are isolated to tmpfs and
+> THP...
+> 
+> > > Just to complicate things, keep in mind that some filesystems may
+> > > have a PAGE_SIZE block size, but can be convinced to only
+> > > allocate/punch/truncate/etc extents on larger alignments on a
+> > > per-inode basis. IOWs, THP vs hole punch behaviour is not actually
+> > > a filesystem type specific behaviour - it's per-inode specific...
 > > 
-> > I think filesystems will expect splitting to happen. They call
-> > truncate_pagecache_range() on the region that the hole is being
-> > punched out of, and they expect page cache pages over this range to
-> > be unmapped, invalidated and then removed from the mapping tree as a
-> > result. Also, most filesystems think the page cache only contains
-> > PAGE_CACHE_SIZE mappings, so they are completely unaware of the
-> > limitations THP might have when it comes to invalidation.
+> > There is also similar question about THP vs. i_size vs. SIGBUS.
 > > 
-> > IOWs, if this range is not aligned to huge page boundaries, then it
-> > implies the huge page is either split into PAGE_SIZE mappings and
-> > then the range is invalidated as expected, or it is completely
-> > invalidated and then refaulted on future accesses which determine if
-> > THP or normal pages are used for the page being faulted....
+> > For small pages an application will not get SIGBUS on mmap()ed file, until
+> > it wouldn't try to access beyond round_up(i_size, PAGE_CACHE_SIZE) - 1.
+> > 
+> > For THP it would be round_up(i_size, HPAGE_PMD_SIZE) - 1.
+> > 
+> > Is it a problem?
 > 
-> The filesystem in question is tmpfs and complete invalidation is not
-> always an option.
+> No idea. I'm guessing that there may be significant stale data
+> exposure issues here as filesystems do not guarantee that blocks
+> completely beyond EOF contain zeros.
 
-Then your two options are: splitting the page and rerunning the hole
-punch, or simply zeroing the sections of the THP rather than trying
-to punch out the backing store.
+I don't know about blocks, but I think we can provide this guarantee on
+page cache level, as we do for small pages.
 
-> For other filesystems it also can be unavailable
-> immediately if the page is dirty (the dirty flag is tracked on per-THP
-> basis at the moment).
-
-Filesystems with persistent storage flush the range being punched
-first to ensure that partial blocks are correctly written before we
-start freeing the backing store. This is needed on XFS to ensure
-hole punch plays nicely with delayed allocation and other extent
-based operations. Hence we know that we have clean pages over the
-hole we are about to punch and so there is no reason the
-invalidation should *ever* fail.
-
-tmpfs is a special snowflake when it comes to these fallocate based
-filesystem layout manipulation functions - it does not have
-persistent storage, so you have to do things very differently to
-ensure that data is not lost.
-
-> Would it be acceptable for fallocate(FALLOC_FL_PUNCH_HOLE) to return
-> -EBUSY (or other errno on your choice), if we cannot split the page
-> right away?
-
-Which means THP are not transparent any more. What does an
-application do when it gets an EBUSY, anyway? It needs to punch a
-hole, and failure to do so could result in data corruption or stale
-data exposure if the hole isn't punched and the data purged from the
-range.
-
-And it's not just hole punching that has this problem. Direct IO is
-going to have the same issue with invalidation of the mapped ranges
-over the IO being done. XFS already WARNs when page cache
-invalidation fails with EBUSY in direct IO, because that is
-indicative of an application with a potential data corruption vector
-and there's nothing we can do in the kernel code to prevent it.
-
-I think the same issues also exist with DAX using huge (and giant)
-pages. Hence it seems like we need to think about these interactions
-carefully, because they will no longer are isolated to tmpfs and
-THP...
-
-> > Just to complicate things, keep in mind that some filesystems may
-> > have a PAGE_SIZE block size, but can be convinced to only
-> > allocate/punch/truncate/etc extents on larger alignments on a
-> > per-inode basis. IOWs, THP vs hole punch behaviour is not actually
-> > a filesystem type specific behaviour - it's per-inode specific...
-> 
-> There is also similar question about THP vs. i_size vs. SIGBUS.
-> 
-> For small pages an application will not get SIGBUS on mmap()ed file, until
-> it wouldn't try to access beyond round_up(i_size, PAGE_CACHE_SIZE) - 1.
-> 
-> For THP it would be round_up(i_size, HPAGE_PMD_SIZE) - 1.
-> 
-> Is it a problem?
-
-No idea. I'm guessing that there may be significant stale data
-exposure issues here as filesystems do not guarantee that blocks
-completely beyond EOF contain zeros.
-
-Cheers,
-
-Dave.
 -- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+ Kirill A. Shutemov
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
