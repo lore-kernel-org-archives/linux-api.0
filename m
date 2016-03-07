@@ -1,31 +1,34 @@
-From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+From: Dave Hansen <dave.hansen@intel.com>
 Subject: Re: [PATCH v2] sparc64: Add support for Application Data Integrity
  (ADI)
-Date: Mon, 07 Mar 2016 11:56:26 -0500 (EST)
-Message-ID: <20160307.115626.807716799249471744.davem@davemloft.net>
+Date: Mon, 7 Mar 2016 09:32:08 -0800
+Message-ID: <56DDBB18.6030505@intel.com>
 References: <1456951177-23579-1-git-send-email-khalid.aziz@oracle.com>
-	<20160305.230702.1325379875282120281.davem@davemloft.net>
-	<56DD9949.1000106@oracle.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <56DD9949.1000106-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: khalid.aziz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
-Cc: corbet-T1hC0tSOHrs@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, dingel-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, zhenzhang.zhang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, bob.picco-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, sparclinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, rob.gardner-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mhocko-AlSwsSmVLrQ@public.gmane.org, chris.hyser-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, richard-/L3Ra7n9ekc@public.gmane.org, vbabka-AlSwsSmVLrQ@public.gmane.org, koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, xiexiuqi-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, Vineet.Gupta1-HKixBCOQz3hWk0Htik3J/w@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, bsegall-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org, dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org, adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <1456951177-23579-1-git-send-email-khalid.aziz@oracle.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Khalid Aziz <khalid.aziz@oracle.com>, davem@davemloft.net, corbet@lwn.net, akpm@linux-foundation.org, dingel@linux.vnet.ibm.com, zhenzhang.zhang@huawei.com, bob.picco@oracle.com, kirill.shutemov@linux.intel.com, aneesh.kumar@linux.vnet.ibm.com, aarcange@redhat.com, arnd@arndb.de, sparclinux@vger.kernel.org
+Cc: rob.gardner@oracle.com, mhocko@suse.cz, chris.hyser@oracle.com, richard@nod.at, vbabka@suse.cz, koct9i@gmail.com, oleg@redhat.com, gthelen@google.com, jack@suse.cz, xiexiuqi@huawei.com, Vineet.Gupta1@synopsys.com, luto@kernel.org, ebiederm@xmission.com, bsegall@google.com, geert@linux-m68k.org, dave@stgolabs.net, adobriyan@gmail.com, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Khalid Aziz <khalid.aziz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Date: Mon, 7 Mar 2016 08:07:53 -0700
+On 03/02/2016 12:39 PM, Khalid Aziz wrote:
+> --- a/include/uapi/asm-generic/siginfo.h
+> +++ b/include/uapi/asm-generic/siginfo.h
+> @@ -206,7 +206,10 @@ typedef struct siginfo {
+>  #define SEGV_MAPERR	(__SI_FAULT|1)	/* address not mapped to object */
+>  #define SEGV_ACCERR	(__SI_FAULT|2)	/* invalid permissions for mapped object */
+>  #define SEGV_BNDERR	(__SI_FAULT|3)  /* failed address bound checks */
+> -#define NSIGSEGV	3
+> +#define SEGV_ACCADI	(__SI_FAULT|4)	/* ADI not enabled for mapped object */
+> +#define SEGV_ADIDERR	(__SI_FAULT|5)	/* Disrupting MCD error */
+> +#define SEGV_ADIPERR	(__SI_FAULT|6)	/* Precise MCD exception */
+> +#define NSIGSEGV	6
 
-> PR_GET_SPARC_ADICAPS
+FYI, this will conflict with code in -tip right now:
 
-Put this into a new ELF auxiliary vector entry via ARCH_DLINFO.
+> http://git.kernel.org/cgit/linux/kernel/git/tip/tip.git/commit/?h=mm/pkeys&id=cd0ea35ff5511cde299a61c21a95889b4a71464e
 
-So now all that's left is supposedly the TAG stuff, please explain
-that to me so I can direct you to the correct existing interface to
-provide that as well.
-
-Really, try to avoid prtctl, it's poorly typed and almost worse than
-ioctl().
+It's not a big deal to resolve, of course.
