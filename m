@@ -1,7 +1,7 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v4 28/52] mtd: nand: cafe: switch to mtd_ooblayout_ops
-Date: Mon,  7 Mar 2016 10:47:18 +0100
-Message-ID: <1457344062-11633-29-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v4 26/52] mtd: nand: bf5xx: switch to mtd_ooblayout_ops
+Date: Mon,  7 Mar 2016 10:47:16 +0100
+Message-ID: <1457344062-11633-27-git-send-email-boris.brezillon@free-electrons.com>
 References: <1457344062-11633-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
@@ -24,81 +24,77 @@ ECC/OOB layout to MTD users.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- drivers/mtd/nand/cafe_nand.c | 44 ++++++++++++++++++++++++++++++++------------
- 1 file changed, 32 insertions(+), 12 deletions(-)
+ drivers/mtd/nand/bf5xx_nand.c | 51 ++++++++++++++++++++++++-------------------
+ 1 file changed, 28 insertions(+), 23 deletions(-)
 
-diff --git a/drivers/mtd/nand/cafe_nand.c b/drivers/mtd/nand/cafe_nand.c
-index aa1a616..3d59330 100644
---- a/drivers/mtd/nand/cafe_nand.c
-+++ b/drivers/mtd/nand/cafe_nand.c
-@@ -459,10 +459,37 @@ static int cafe_nand_read_page(struct mtd_info *mtd, struct nand_chip *chip,
- 	return max_bitflips;
- }
+diff --git a/drivers/mtd/nand/bf5xx_nand.c b/drivers/mtd/nand/bf5xx_nand.c
+index 7f6b30e..b38f414 100644
+--- a/drivers/mtd/nand/bf5xx_nand.c
++++ b/drivers/mtd/nand/bf5xx_nand.c
+@@ -109,28 +109,33 @@ static const unsigned short bfin_nfc_pin_req[] =
+ 	 0};
  
--static struct nand_ecclayout cafe_oobinfo_2048 = {
--	.eccbytes = 14,
--	.eccpos = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
--	.oobfree = {{14, 50}}
-+static int cafe_ooblayout_ecc(struct mtd_info *mtd, int section,
-+			      struct mtd_oob_region *oobregion)
+ #ifdef CONFIG_MTD_NAND_BF5XX_BOOTROM_ECC
+-static struct nand_ecclayout bootrom_ecclayout = {
+-	.eccbytes = 24,
+-	.eccpos = {
+-		0x8 * 0, 0x8 * 0 + 1, 0x8 * 0 + 2,
+-		0x8 * 1, 0x8 * 1 + 1, 0x8 * 1 + 2,
+-		0x8 * 2, 0x8 * 2 + 1, 0x8 * 2 + 2,
+-		0x8 * 3, 0x8 * 3 + 1, 0x8 * 3 + 2,
+-		0x8 * 4, 0x8 * 4 + 1, 0x8 * 4 + 2,
+-		0x8 * 5, 0x8 * 5 + 1, 0x8 * 5 + 2,
+-		0x8 * 6, 0x8 * 6 + 1, 0x8 * 6 + 2,
+-		0x8 * 7, 0x8 * 7 + 1, 0x8 * 7 + 2
+-	},
+-	.oobfree = {
+-		{ 0x8 * 0 + 3, 5 },
+-		{ 0x8 * 1 + 3, 5 },
+-		{ 0x8 * 2 + 3, 5 },
+-		{ 0x8 * 3 + 3, 5 },
+-		{ 0x8 * 4 + 3, 5 },
+-		{ 0x8 * 5 + 3, 5 },
+-		{ 0x8 * 6 + 3, 5 },
+-		{ 0x8 * 7 + 3, 5 },
+-	}
++static int bootrom_ooblayout_ecc(struct mtd_info *mtd, int section,
++				 struct mtd_oob_region *oobregion)
 +{
-+	struct nand_chip *chip = mtd_to_nand(mtd);
-+
-+	if (section)
++	if (section > 7)
 +		return -ERANGE;
 +
-+	oobregion->offset = 0;
-+	oobregion->length = chip->ecc.total;
++	oobregion->offset = section * 8;
++	oobregion->length = 3;
 +
 +	return 0;
 +}
 +
-+static int cafe_ooblayout_free(struct mtd_info *mtd, int section,
-+			       struct mtd_oob_region *oobregion)
++static int bootrom_ooblayout_free(struct mtd_info *mtd, int section,
++				  struct mtd_oob_region *oobregion)
 +{
-+	struct nand_chip *chip = mtd_to_nand(mtd);
-+
-+	if (section)
++	if (section > 7)
 +		return -ERANGE;
 +
-+	oobregion->offset = chip->ecc.total;
-+	oobregion->length = mtd->oobsize - chip->ecc.total;
++	oobregion->offset = (section * 8) + 3;
++	oobregion->length = 5;
 +
 +	return 0;
 +}
 +
-+static const struct mtd_ooblayout_ops cafe_ooblayout_ops = {
-+	.ecc = cafe_ooblayout_ecc,
-+	.free = cafe_ooblayout_free,
++static const struct mtd_ooblayout_ops bootrom_ooblayout_ops = {
++	.ecc = bootrom_ooblayout_ecc,
++	.free = bootrom_ooblayout_free,
  };
+ #endif
  
- /* Ick. The BBT code really ought to be able to work this bit out
-@@ -494,12 +521,6 @@ static struct nand_bbt_descr cafe_bbt_mirror_descr_2048 = {
- 	.pattern = cafe_mirror_pattern_2048
- };
- 
--static struct nand_ecclayout cafe_oobinfo_512 = {
--	.eccbytes = 14,
--	.eccpos = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
--	.oobfree = {{14, 2}}
--};
--
- static struct nand_bbt_descr cafe_bbt_main_descr_512 = {
- 	.options = NAND_BBT_LASTBLOCK | NAND_BBT_CREATE | NAND_BBT_WRITE
- 		| NAND_BBT_2BIT | NAND_BBT_VERSION,
-@@ -743,12 +764,11 @@ static int cafe_nand_probe(struct pci_dev *pdev,
- 		cafe->ctl2 |= 1<<29; /* 2KiB page size */
- 
- 	/* Set up ECC according to the type of chip we found */
-+	mtd_set_ooblayout(mtd, &cafe_ooblayout_ops);
- 	if (mtd->writesize == 2048) {
--		cafe->nand.ecc.layout = &cafe_oobinfo_2048;
- 		cafe->nand.bbt_td = &cafe_bbt_main_descr_2048;
- 		cafe->nand.bbt_md = &cafe_bbt_mirror_descr_2048;
- 	} else if (mtd->writesize == 512) {
--		cafe->nand.ecc.layout = &cafe_oobinfo_512;
- 		cafe->nand.bbt_td = &cafe_bbt_main_descr_512;
- 		cafe->nand.bbt_md = &cafe_bbt_mirror_descr_512;
- 	} else {
+@@ -800,7 +805,7 @@ static int bf5xx_nand_probe(struct platform_device *pdev)
+ 	/* setup hardware ECC data struct */
+ 	if (hardware_ecc) {
+ #ifdef CONFIG_MTD_NAND_BF5XX_BOOTROM_ECC
+-		chip->ecc.layout = &bootrom_ecclayout;
++		mtd_set_ooblayout(mtd, &bootrom_ooblayout_ops);
+ #endif
+ 		chip->read_buf      = bf5xx_nand_dma_read_buf;
+ 		chip->write_buf     = bf5xx_nand_dma_write_buf;
 -- 
 2.1.4
