@@ -1,31 +1,27 @@
 From: David Miller <davem@davemloft.net>
 Subject: Re: [PATCH v2] sparc64: Add support for Application Data Integrity
  (ADI)
-Date: Mon, 07 Mar 2016 14:16:00 -0500 (EST)
-Message-ID: <20160307.141600.1873883635480850431.davem@davemloft.net>
-References: <56DDC2B6.6020009@oracle.com>
-	<56DDC3EB.8060909@oracle.com>
-	<56DDC776.3040003@oracle.com>
+Date: Mon, 07 Mar 2016 14:19:50 -0500 (EST)
+Message-ID: <20160307.141950.2225098078054843052.davem@davemloft.net>
+References: <CALCETrXN43nT4zq2MpO90VrgK3k+DKHjOHWf7iOhS7TSBmdCPQ@mail.gmail.com>
+	<56DDC6E0.4000907@oracle.com>
+	<CALCETrU5NCzh3b7We8903G0_Tm-oycgP3+gS9fG+vC_rdgTddw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <56DDC776.3040003@oracle.com>
+In-Reply-To: <CALCETrU5NCzh3b7We8903G0_Tm-oycgP3+gS9fG+vC_rdgTddw@mail.gmail.com>
 Sender: linux-arch-owner@vger.kernel.org
-To: khalid.aziz@oracle.com
-Cc: rob.gardner@oracle.com, corbet@lwn.net, akpm@linux-foundation.org, dingel@linux.vnet.ibm.com, bob.picco@oracle.com, kirill.shutemov@linux.intel.com, aneesh.kumar@linux.vnet.ibm.com, aarcange@redhat.com, arnd@arndb.de, sparclinux@vger.kernel.org, mhocko@suse.cz, chris.hyser@oracle.com, richard@nod.at, vbabka@suse.cz, koct9i@gmail.com, oleg@redhat.com, gthelen@google.com, jack@suse.cz, xiexiuqi@huawei.com, Vineet.Gupta1@synopsys.com, luto@kernel.org, ebiederm@xmission.com, bsegall@google.com, geert@linux-m68k.org, dave@stgolabs.net, adobriyan@gmail.com, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+To: luto@amacapital.net
+Cc: khalid.aziz@oracle.com, corbet@lwn.net, akpm@linux-foundation.org, dingel@linux.vnet.ibm.com, bob.picco@oracle.com, kirill.shutemov@linux.intel.com, aneesh.kumar@linux.vnet.ibm.com, aarcange@redhat.com, arnd@arndb.de, sparclinux@vger.kernel.org, rob.gardner@oracle.com, mhocko@suse.cz, chris.hyser@oracle.com, richard@nod.at, vbabka@suse.cz, koct9i@gmail.com, oleg@redhat.com, gthelen@google.com, jack@suse.cz, xiexiuqi@huawei.com, Vineet.Gupta1@synopsys.com, luto@kernel.org, ebiederm@xmission.com, bsegall@google.com, geert@linux-m68k.org, dave@stgolabs.net, adobriyan@gmail.com, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Khalid Aziz <khalid.aziz@oracle.com>
-Date: Mon, 7 Mar 2016 11:24:54 -0700
+From: Andy Lutomirski <luto@amacapital.net>
+Date: Mon, 7 Mar 2016 10:49:57 -0800
 
-> Tags can be cleared by user by setting tag to 0. Tags are
-> automatically cleared by the hardware when the mapping for a virtual
-> address is removed from TSB (which is why swappable pages are a
-> problem), so kernel does not have to do it as part of clean up.
+> What data structure or structures changes when this stxa instruction happens?
 
-You might be able to crib some bits for the Tag in the swp_entry_t, it's
-64-bit and you can therefore steal bits from the offset field.
+An internal table, maintained by the CPU and/or hypervisor, and if in physical
+addresses then in a region which is only accessible by the hypervisor.
 
-That way you'll have the ADI tag in the page tables, ready to re-install
-at swapin time.
+The table is not accessible by the kernel at all via loads or stores.
