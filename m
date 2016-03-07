@@ -1,42 +1,93 @@
-From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+From: Khalid Aziz <khalid.aziz@oracle.com>
 Subject: Re: [PATCH v2] sparc64: Add support for Application Data Integrity
  (ADI)
-Date: Mon, 07 Mar 2016 14:22:45 -0500 (EST)
-Message-ID: <20160307.142245.846579748692522977.davem@davemloft.net>
-References: <56DDC47C.8010206@linux.intel.com>
-	<56DDCAD3.3090106@oracle.com>
-	<CALCETrVNM7ZcN7WnmLRMDqGrcYXn9xYWJfjMVwFLdiQS63-TcA@mail.gmail.com>
+Date: Mon, 7 Mar 2016 12:44:49 -0700
+Message-ID: <56DDDA31.9090105@oracle.com>
+References: <1456951177-23579-1-git-send-email-khalid.aziz@oracle.com>
+ <20160305.230702.1325379875282120281.davem@davemloft.net>
+ <56DD9949.1000106@oracle.com>
+ <20160307.115626.807716799249471744.davem@davemloft.net>
+ <56DDC2B6.6020009@oracle.com>
+ <CALCETrXN43nT4zq2MpO90VrgK3k+DKHjOHWf7iOhS7TSBmdCPQ@mail.gmail.com>
+ <56DDC6E0.4000907@oracle.com>
+ <CALCETrU5NCzh3b7We8903G0_Tm-oycgP3+gS9fG+vC_rdgTddw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrVNM7ZcN7WnmLRMDqGrcYXn9xYWJfjMVwFLdiQS63-TcA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org
-Cc: khalid.aziz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, rob.gardner-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, dingel-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, bob.picco-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, sparclinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mhocko-AlSwsSmVLrQ@public.gmane.org, chris.hyser-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, richard-/L3Ra7n9ekc@public.gmane.org, vbabka-AlSwsSmVLrQ@public.gmane.org, koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, xiexiuqi-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, Vineet.Gupta1-HKixBCOQz3hWk0Htik3J/w@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, bsegall-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org, dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org, adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CALCETrU5NCzh3b7We8903G0_Tm-oycgP3+gS9fG+vC_rdgTddw@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: David Miller <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, dingel@linux.vnet.ibm.com, bob.picco@oracle.com, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>, Andrea Arcangeli <aarcange@redhat.com>, Arnd Bergmann <arnd@arndb.de>, sparclinux@vger.kernel.org, Rob Gardner <rob.gardner@oracle.com>, Michal Hocko <mhocko@suse.cz>, chris.hyser@oracle.com, Richard Weinberger <richard@nod.at>, Vlastimil Babka <vbabka@suse.cz>, Konstantin Khlebnikov <koct9i@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Greg Thelen <gthelen@google.com>, Jan Kara <jack@suse.cz>, xiexiuqi@huawei.com, Vineet.Gupta1@synopsys.com, Andrew Lutomirski <luto@kernel.org>, "Eric W. Biederman" <ebiederm@xmissi>
 List-Id: linux-api@vger.kernel.org
 
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Date: Mon, 7 Mar 2016 10:53:23 -0800
+On 03/07/2016 11:49 AM, Andy Lutomirski wrote:
+> On Mon, Mar 7, 2016 at 10:22 AM, Khalid Aziz <khalid.aziz@oracle.com> wrote:
+>> No, it changes the tag associated with the virtual address for the caller.
+>> Physical page backing this virtual address is unaffected. Tag checking is
+>> done for virtual addresses. The one restriction where physical address is
+>> relevant is when two processes map the same physical page, they both have to
+>> use the same tag for the virtual addresses that map on to the shared
+>> physical pages.
+>
+> Slow down, please.  *Why* do the tags for two different VAs that map
+> to the same PA have to match?  What goes wrong if they don't, and why
+> is requiring them to be the same a good idea?
+>
 
-> x86 has an upcoming feature called protection keys.  A page of virtual
-> memory has a protection key, which is a number from 0 through 16.  The
-> master copy is in the PTE, i.e. page table entry, which is a
-> software-managed data structure in memory and is exactly the thing
-> that Linux calls "pte".  The processor can cache that value in the TLB
-> (translation lookaside buffer), which is a hardware cache that caches
-> PTEs.  On access to a page of virtual memory, the processor does a
-> certain calculation involving a new register called PKRU and the
-> protection key and may deny access.
+Consider this scenario:
 
-ADI is similar, except the "keys" (or "tags") are stored externally
-rather than in the PTEs.  A bit in the PTE is used to enable tag match
-checking.
+1. Process A creates a shm and attaches to it.
+2. Process A fills shm with data it wants to share with only known 
+processes. It enables ADI and sets tags on the shm.
+3. Hacker triggers something like stack overflow on process A, exec's a 
+new rogue binary and manages to attach to this shm. MMU knows tags were 
+set on the virtual address mapping to the physical pages hosting the 
+shm. If MMU does not require the rogue process to set the exact same 
+tags on its mapping of the same shm, rogue process has defeated the ADI 
+protection easily.
 
-The tags live in an external table, which is populated by ASI store
-instructions.  The location of the table is implementation specific,
-it could be hypervisor or CPU managed, but if stored in memory it is
-to a region of memory accessible only to the hypervisor at best.
+Does this make sense?
 
-Khalid, maybe you should share notes with the folks working on x86
-protection keys.
+>>
+>>>
+>>> I sense DoS issues in your future.
+>>>
+>>
+>> Are you concerned about DoS even if the tag is associated with virtual
+>> address, not physical address?
+>
+> Yes, absolutely.
+>
+> fd = open("/lib/ld.so");
+> mmap(fd)
+> stxa to write the tag
+>
+> *boom*, presumably, because the tags apparently have to match for all mappings.
+>
+
+A process can not just write version tags and make the file inaccessible 
+to others. It takes three steps to enable ADI:
+
+1. Set PSTATE.mcde for the process.
+2. Set TTE.mcd on all PTEs for the virtual addresses ADI is being 
+enabled on.
+3. Set version tags.
+
+Unless all three steps are taken, tag checking will not be done. stxa 
+will fail unless step 2 is completed. In your example, the step of 
+setting TTE.mcd will force sharing to stop for the process through 
+change_protection(), right?
+
+Thanks for asking these tough questions. These are very helpful in 
+refining my implementation and avoiding silly bugs.
+
+--
+Khalid
+
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
