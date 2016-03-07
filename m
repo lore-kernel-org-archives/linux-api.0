@@ -1,56 +1,93 @@
-From: "Kirill A. Shutemov" <kirill@shutemov.name>
-Subject: Re: THP-enabled filesystem vs. FALLOC_FL_PUNCH_HOLE
-Date: Mon, 7 Mar 2016 02:33:30 +0300
-Message-ID: <20160306233330.GA23851@node.shutemov.name>
-References: <1457023939-98083-1-git-send-email-kirill.shutemov@linux.intel.com>
- <20160304112603.GA9790@node.shutemov.name>
- <56D9C882.3040808@intel.com>
- <alpine.LSU.2.11.1603041100320.6011@eggly.anvils>
- <20160304230548.GC11282@dastard>
- <20160304232412.GC12498@node.shutemov.name>
- <20160305223811.GD11282@dastard>
- <20160306003034.GA13704@node.shutemov.name>
- <20160306230336.GE11282@dastard>
+From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Subject: Re: [PATCH v4 2/2] mm/page_ref: add tracepoint to track down page
+ reference manipulation
+Date: Mon, 7 Mar 2016 13:20:55 +0900
+Message-ID: <20160307042054.GA24602@js1304-P5Q-DELUXE>
+References: <1456448282-897-1-git-send-email-iamjoonsoo.kim@lge.com>
+ <1456448282-897-2-git-send-email-iamjoonsoo.kim@lge.com>
+ <56D71BB2.5060503@suse.cz>
+ <CAAmzW4NwhSKw432qw0Ry+gi=yGpRU-MtC-zQGL27o+XEawLKrg@mail.gmail.com>
+ <20160304120439.a38a15e0fe5b989fe5b8edfc@linux-foundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20160306230336.GE11282@dastard>
+In-Reply-To: <20160304120439.a38a15e0fe5b989fe5b8edfc@linux-foundation.org>
 Sender: owner-linux-mm@kvack.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: Hugh Dickins <hughd@google.com>, Dave Hansen <dave.hansen@intel.com>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Andrea Arcangeli <aarcange@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Christoph Lameter <cl@gentwo.org>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, Jerome Marchand <jmarchan@redhat.com>, Yang Shi <yang.shi@linaro.org>, Sasha Levin <sasha.levin@oracle.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Vlastimil Babka <vbabka@suse.cz>, Michal Nazarewicz <mina86@mina86.com>, Minchan Kim <minchan@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Linux Memory Management List <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 07, 2016 at 10:03:36AM +1100, Dave Chinner wrote:
-> On Sun, Mar 06, 2016 at 03:30:34AM +0300, Kirill A. Shutemov wrote:
-> > On Sun, Mar 06, 2016 at 09:38:11AM +1100, Dave Chinner wrote:
-> > > And it's not just hole punching that has this problem. Direct IO is
-> > > going to have the same issue with invalidation of the mapped ranges
-> > > over the IO being done. XFS already WARNs when page cache
-> > > invalidation fails with EBUSY in direct IO, because that is
-> > > indicative of an application with a potential data corruption vector
-> > > and there's nothing we can do in the kernel code to prevent it.
+On Fri, Mar 04, 2016 at 12:04:39PM -0800, Andrew Morton wrote:
+> On Thu, 3 Mar 2016 16:43:49 +0900 Joonsoo Kim <js1304@gmail.com> wrote:
+> 
+> > > Acked-by: Vlastimil Babka <vbabka@suse.cz>
+> > >
+> > >> +config DEBUG_PAGE_REF
+> > >> +       bool "Enable tracepoint to track down page reference manipulation"
+> > >> +       depends on DEBUG_KERNEL
+> > >> +       depends on TRACEPOINTS
+> > >> +       ---help---
+> > >> +         This is the feature to add tracepoint for tracking down page
+> > >> reference
+> > >> +         manipulation. This tracking is useful to diagnosis functional
+> > >> failure
+> > >> +         due to migration failure caused by page reference mismatch. Be
+> > >
+> > >
+> > > OK.
+> > >
+> > >> +         careful to turn on this feature because it could bloat some
+> > >> kernel
+> > >> +         text. In my configuration, it bloats 30 KB. Although kernel text
+> > >> will
+> > >> +         be bloated, there would be no runtime performance overhead if
+> > >> +         tracepoint isn't enabled thanks to jump label.
+> > >
+> > >
+> > > I would just write something like:
+> > >
+> > > Enabling this feature adds about 30 KB to the kernel code, but runtime
+> > > performance overhead is virtually none until the tracepoints are actually
+> > > enabled.
 > > 
-> > My current understanding is that for filesystems with persistent storage,
-> > in order to make THP any useful, we would need to implement writeback
-> > without splitting the huge page.
+> > Okay, better!
+> > Andrew, do you want fixup patch from me or could you simply handle it?
+> > 
 > 
-> Algorithmically it is no different to filesytem block size < page
-> size writeback.
-> 
-> > At the moment, I have no idea how hard it would be..
-> 
-> THP support would effectively require us to remove PAGE_CACHE_SIZE
-> assumptions from all of the filesystem and buffer code. That's a
-> large chunk of work e.g.  fs/buffer.c and any filesystem that uses
-> bufferheads for tracking filesystem block state through the page
-> cache.
+> This?
 
-I'll try to learn more about the code before the summit.
-I guess it's something worth descussion in person.
+Yep!
 
--- 
- Kirill A. Shutemov
+Thanks!
+
+> 
+> --- a/mm/Kconfig.debug~mm-page_ref-add-tracepoint-to-track-down-page-reference-manipulation-fix-3-fix
+> +++ a/mm/Kconfig.debug
+> @@ -82,10 +82,9 @@ config DEBUG_PAGE_REF
+>  	depends on DEBUG_KERNEL
+>  	depends on TRACEPOINTS
+>  	---help---
+> -	  This is the feature to add tracepoint for tracking down page reference
+> -	  manipulation. This tracking is useful to diagnosis functional failure
+> -	  due to migration failure caused by page reference mismatch. Be
+> -	  careful to turn on this feature because it could bloat some kernel
+> -	  text. In my configuration, it bloats 30 KB. Although kernel text will
+> -	  be bloated, there would be no runtime performance overhead if
+> -	  tracepoint isn't enabled thanks to jump label.
+> +	  This is a feature to add tracepoint for tracking down page reference
+> +	  manipulation. This tracking is useful to diagnose functional failure
+> +	  due to migration failures caused by page reference mismatches.  Be
+> +	  careful when enabling this feature because it adds about 30 KB to the
+> +	  kernel code.  However the runtime performance overhead is virtually
+> +	  nil until the tracepoints are actually enabled.
+> _
+> 
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo@kvack.org.  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
