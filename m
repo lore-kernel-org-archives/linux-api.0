@@ -1,13 +1,13 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v4 02/52] mtd: create an mtd_oobavail() helper
- and make use of it
-Date: Mon,  7 Mar 2016 10:46:52 +0100
-Message-ID: <1457344062-11633-3-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v4 06/52] mtd: use mtd_ooblayout_xxx() helpers
+ where appropriate
+Date: Mon,  7 Mar 2016 10:46:56 +0100
+Message-ID: <1457344062-11633-7-git-send-email-boris.brezillon@free-electrons.com>
 References: <1457344062-11633-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBRU46W3AKGQERERIMGA-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBSM46W3AKGQEZMVVCBY-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 In-Reply-To: <1457344062-11633-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
@@ -20,143 +20,159 @@ To: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Brian Norri
 Cc: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Haojian Zhuang <haojian.zhuang-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Robert Jarzmik <robert.jarzmik-GANU6spQydw@public.gmane.org>, Kukjin Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Nicolas Ferre <nicolas.ferre-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Alexandre Belloni <alexandre.belloni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Wenyou Yang <wenyou.yang-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Josh Wu <rainyfeeling-1ViLX0X+lBJBDgjK7y7TUQ@public.gmane.org>, Ezequiel Garcia <ezequiel.garcia-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Chen-Yu Tsai <wens-jdAy2FN1RRM@public.gmane.org>, linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Currently, all MTD drivers/sublayers exposing an OOB area are
-doing the same kind of test to extract the available OOB size
-based on the mtd_info and mtd_oob_ops structures.
-Move this common logic into an inline function and make use of it.
+The mtd_ooblayout_xxx() helper functions have been added to avoid direct
+accesses to the ecclayout field, and thus ease for future reworks.
+Use these helpers in all places where the oobfree[] and eccpos[] arrays
+where directly accessed.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Suggested-by: Priit Laes <plaes-q/aMd4JkU83YtjvyW6yDsg@public.gmane.org>
 ---
- drivers/mtd/mtdpart.c              |  5 +----
- drivers/mtd/nand/nand_base.c       | 16 ++++------------
- drivers/mtd/onenand/onenand_base.c | 19 +++----------------
- include/linux/mtd/mtd.h            |  5 +++++
- 4 files changed, 13 insertions(+), 32 deletions(-)
+ drivers/mtd/mtdchar.c | 107 +++++++++++++++++++++++++++++++++++++++++---------
+ 1 file changed, 88 insertions(+), 19 deletions(-)
 
-diff --git a/drivers/mtd/mtdpart.c b/drivers/mtd/mtdpart.c
-index 10bf304..08de4b2 100644
---- a/drivers/mtd/mtdpart.c
-+++ b/drivers/mtd/mtdpart.c
-@@ -126,10 +126,7 @@ static int part_read_oob(struct mtd_info *mtd, loff_t from,
- 	if (ops->oobbuf) {
- 		size_t len, pages;
+diff --git a/drivers/mtd/mtdchar.c b/drivers/mtd/mtdchar.c
+index 6d19835..cd64ab7 100644
+--- a/drivers/mtd/mtdchar.c
++++ b/drivers/mtd/mtdchar.c
+@@ -472,28 +472,101 @@ static int mtdchar_readoob(struct file *file, struct mtd_info *mtd,
+  * nand_ecclayout flexibly (i.e. the struct may change size in new
+  * releases without requiring major rewrites).
+  */
+-static int shrink_ecclayout(const struct nand_ecclayout *from,
+-		struct nand_ecclayout_user *to)
++static int shrink_ecclayout(struct mtd_info *mtd,
++			    struct nand_ecclayout_user *to)
+ {
+-	int i;
++	struct mtd_oob_region oobregion;
++	int i, section = 0, ret;
  
--		if (ops->mode == MTD_OPS_AUTO_OOB)
--			len = mtd->oobavail;
--		else
--			len = mtd->oobsize;
-+		len = mtd_oobavail(mtd, ops);
- 		pages = mtd_div_by_ws(mtd->size, mtd);
- 		pages -= mtd_div_by_ws(from, mtd);
- 		if (ops->ooboffs + ops->ooblen > pages * len)
-diff --git a/drivers/mtd/nand/nand_base.c b/drivers/mtd/nand/nand_base.c
-index 9f49d3e..ee89195 100644
---- a/drivers/mtd/nand/nand_base.c
-+++ b/drivers/mtd/nand/nand_base.c
-@@ -1723,8 +1723,7 @@ static int nand_do_read_ops(struct mtd_info *mtd, loff_t from,
- 	int ret = 0;
- 	uint32_t readlen = ops->len;
- 	uint32_t oobreadlen = ops->ooblen;
--	uint32_t max_oobsize = ops->mode == MTD_OPS_AUTO_OOB ?
--		mtd->oobavail : mtd->oobsize;
-+	uint32_t max_oobsize = mtd_oobavail(mtd, ops);
+-	if (!from || !to)
++	if (!mtd || !to)
+ 		return -EINVAL;
  
- 	uint8_t *bufpoi, *oob, *buf;
- 	int use_bufpoi;
-@@ -2075,10 +2074,7 @@ static int nand_do_read_oob(struct mtd_info *mtd, loff_t from,
+ 	memset(to, 0, sizeof(*to));
  
- 	stats = mtd->ecc_stats;
+-	to->eccbytes = min((int)from->eccbytes, MTD_MAX_ECCPOS_ENTRIES);
+-	for (i = 0; i < to->eccbytes; i++)
+-		to->eccpos[i] = from->eccpos[i];
++	to->eccbytes = 0;
++	for (i = 0; i < MTD_MAX_ECCPOS_ENTRIES;) {
++		u32 eccpos;
++
++		ret = mtd_ooblayout_ecc(mtd, section, &oobregion);
++		if (ret < 0) {
++			if (ret != -ERANGE)
++				return ret;
++
++			break;
++		}
++
++		eccpos = oobregion.offset;
++		for (; i < MTD_MAX_ECCPOS_ENTRIES &&
++		       eccpos < oobregion.offset + oobregion.length; i++) {
++			to->eccpos[i] = eccpos++;
++			to->eccbytes++;
++		}
++	}
  
--	if (ops->mode == MTD_OPS_AUTO_OOB)
--		len = mtd->oobavail;
--	else
--		len = mtd->oobsize;
-+	len = mtd_oobavail(mtd, ops);
- 
- 	if (unlikely(ops->ooboffs >= len)) {
- 		pr_debug("%s: attempt to start read outside oob\n",
-@@ -2575,8 +2571,7 @@ static int nand_do_write_ops(struct mtd_info *mtd, loff_t to,
- 	uint32_t writelen = ops->len;
- 
- 	uint32_t oobwritelen = ops->ooblen;
--	uint32_t oobmaxlen = ops->mode == MTD_OPS_AUTO_OOB ?
--				mtd->oobavail : mtd->oobsize;
-+	uint32_t oobmaxlen = mtd_oobavail(mtd, ops);
- 
- 	uint8_t *oob = ops->oobbuf;
- 	uint8_t *buf = ops->datbuf;
-@@ -2766,10 +2761,7 @@ static int nand_do_write_oob(struct mtd_info *mtd, loff_t to,
- 	pr_debug("%s: to = 0x%08x, len = %i\n",
- 			 __func__, (unsigned int)to, (int)ops->ooblen);
- 
--	if (ops->mode == MTD_OPS_AUTO_OOB)
--		len = mtd->oobavail;
--	else
--		len = mtd->oobsize;
-+	len = mtd_oobavail(mtd, ops);
- 
- 	/* Do not allow write past end of page */
- 	if ((ops->ooboffs + ops->ooblen) > len) {
-diff --git a/drivers/mtd/onenand/onenand_base.c b/drivers/mtd/onenand/onenand_base.c
-index df47537..af28bb3 100644
---- a/drivers/mtd/onenand/onenand_base.c
-+++ b/drivers/mtd/onenand/onenand_base.c
-@@ -1124,11 +1124,7 @@ static int onenand_mlc_read_ops_nolock(struct mtd_info *mtd, loff_t from,
- 	pr_debug("%s: from = 0x%08x, len = %i\n", __func__, (unsigned int)from,
- 			(int)len);
- 
--	if (ops->mode == MTD_OPS_AUTO_OOB)
--		oobsize = mtd->oobavail;
--	else
--		oobsize = mtd->oobsize;
--
-+	oobsize = mtd_oobavail(mtd, ops);
- 	oobcolumn = from & (mtd->oobsize - 1);
- 
- 	/* Do not allow reads past end of device */
-@@ -1229,11 +1225,7 @@ static int onenand_read_ops_nolock(struct mtd_info *mtd, loff_t from,
- 	pr_debug("%s: from = 0x%08x, len = %i\n", __func__, (unsigned int)from,
- 			(int)len);
- 
--	if (ops->mode == MTD_OPS_AUTO_OOB)
--		oobsize = mtd->oobavail;
--	else
--		oobsize = mtd->oobsize;
--
-+	oobsize = mtd_oobavail(mtd, ops);
- 	oobcolumn = from & (mtd->oobsize - 1);
- 
- 	/* Do not allow reads past end of device */
-@@ -1885,12 +1877,7 @@ static int onenand_write_ops_nolock(struct mtd_info *mtd, loff_t to,
- 	/* Check zero length */
- 	if (!len)
- 		return 0;
--
--	if (ops->mode == MTD_OPS_AUTO_OOB)
--		oobsize = mtd->oobavail;
--	else
--		oobsize = mtd->oobsize;
--
-+	oobsize = mtd_oobavail(mtd, ops);
- 	oobcolumn = to & (mtd->oobsize - 1);
- 
- 	column = to & (mtd->writesize - 1);
-diff --git a/include/linux/mtd/mtd.h b/include/linux/mtd/mtd.h
-index 9cf13c4..7712721 100644
---- a/include/linux/mtd/mtd.h
-+++ b/include/linux/mtd/mtd.h
-@@ -264,6 +264,11 @@ static inline struct device_node *mtd_get_of_node(struct mtd_info *mtd)
- 	return mtd->dev.of_node;
- }
- 
-+static inline int mtd_oobavail(struct mtd_info *mtd, struct mtd_oob_ops *ops)
-+{
-+	return ops->mode == MTD_OPS_AUTO_OOB ? mtd->oobavail : mtd->oobsize;
+ 	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES; i++) {
+-		if (from->oobfree[i].length == 0 &&
+-				from->oobfree[i].offset == 0)
++		ret = mtd_ooblayout_free(mtd, i, &oobregion);
++		if (ret < 0) {
++			if (ret != -ERANGE)
++				return ret;
++
++			break;
++		}
++
++		to->oobfree[i].offset = oobregion.offset;
++		to->oobfree[i].length = oobregion.length;
++		to->oobavail += to->oobfree[i].length;
++	}
++
++	return 0;
 +}
 +
- int mtd_erase(struct mtd_info *mtd, struct erase_info *instr);
- int mtd_point(struct mtd_info *mtd, loff_t from, size_t len, size_t *retlen,
- 	      void **virt, resource_size_t *phys);
++static int get_oobinfo(struct mtd_info *mtd, struct nand_oobinfo *to)
++{
++	struct mtd_oob_region oobregion;
++	int i, section = 0, ret;
++
++	if (!mtd || !to)
++		return -EINVAL;
++
++	memset(to, 0, sizeof(*to));
++
++	to->eccbytes = 0;
++	for (i = 0; i < ARRAY_SIZE(to->eccpos);) {
++		u32 eccpos;
++
++		ret = mtd_ooblayout_ecc(mtd, section, &oobregion);
++		if (ret < 0) {
++			if (ret != -ERANGE)
++				return ret;
++
+ 			break;
+-		to->oobavail += from->oobfree[i].length;
+-		to->oobfree[i] = from->oobfree[i];
++		}
++
++		if (oobregion.length + i > ARRAY_SIZE(to->eccpos))
++			return -EINVAL;
++
++		eccpos = oobregion.offset;
++		for (; eccpos < oobregion.offset + oobregion.length; i++) {
++			to->eccpos[i] = eccpos++;
++			to->eccbytes++;
++		}
+ 	}
+ 
++	for (i = 0; i < 8; i++) {
++		ret = mtd_ooblayout_free(mtd, i, &oobregion);
++		if (ret < 0) {
++			if (ret != -ERANGE)
++				return ret;
++
++			break;
++		}
++
++		to->oobfree[i][0] = oobregion.offset;
++		to->oobfree[i][1] = oobregion.length;
++	}
++
++	to->useecc = MTD_NANDECC_AUTOPLACE;
++
+ 	return 0;
+ }
+ 
+@@ -817,14 +890,10 @@ static int mtdchar_ioctl(struct file *file, u_int cmd, u_long arg)
+ 
+ 		if (!mtd->ecclayout)
+ 			return -EOPNOTSUPP;
+-		if (mtd->ecclayout->eccbytes > ARRAY_SIZE(oi.eccpos))
+-			return -EINVAL;
+ 
+-		oi.useecc = MTD_NANDECC_AUTOPLACE;
+-		memcpy(&oi.eccpos, mtd->ecclayout->eccpos, sizeof(oi.eccpos));
+-		memcpy(&oi.oobfree, mtd->ecclayout->oobfree,
+-		       sizeof(oi.oobfree));
+-		oi.eccbytes = mtd->ecclayout->eccbytes;
++		ret = get_oobinfo(mtd, &oi);
++		if (ret)
++			return ret;
+ 
+ 		if (copy_to_user(argp, &oi, sizeof(struct nand_oobinfo)))
+ 			return -EFAULT;
+@@ -920,7 +989,7 @@ static int mtdchar_ioctl(struct file *file, u_int cmd, u_long arg)
+ 		if (!usrlay)
+ 			return -ENOMEM;
+ 
+-		shrink_ecclayout(mtd->ecclayout, usrlay);
++		shrink_ecclayout(mtd, usrlay);
+ 
+ 		if (copy_to_user(argp, usrlay, sizeof(*usrlay)))
+ 			ret = -EFAULT;
 -- 
 2.1.4
