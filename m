@@ -1,129 +1,55 @@
-From: Khalid Aziz <khalid.aziz@oracle.com>
-Subject: Re: [PATCH v2] sparc64: Add support for Application Data Integrity
- (ADI)
-Date: Mon, 7 Mar 2016 09:06:21 -0700
-Message-ID: <56DDA6FD.4040404@oracle.com>
-References: <1456951177-23579-1-git-send-email-khalid.aziz@oracle.com>
- <20160305.230702.1325379875282120281.davem@davemloft.net>
- <56DD9949.1000106@oracle.com> <56DD9E94.70201@oracle.com>
- <CALCETrXey2_xEXhzjgHtZmf-dLp-9pec===d-8chLxrp8wgRXg@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <CALCETrXey2_xEXhzjgHtZmf-dLp-9pec===d-8chLxrp8wgRXg@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Andy Lutomirski <luto@amacapital.net>, Rob Gardner <rob.gardner@oracle.com>
-Cc: David Miller <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, dingel@linux.vnet.ibm.com, zhenzhang.zhang@huawei.com, bob.picco@oracle.com, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>, Andrea Arcangeli <aarcange@redhat.com>, Arnd Bergmann <arnd@arndb.de>, sparclinux@vger.kernel.org, Michal Hocko <mhocko@suse.cz>, chris.hyser@oracle.com, Richard Weinberger <richard@nod.at>, Vlastimil Babka <vbabka@suse.cz>, Konstantin Khlebnikov <koct9i@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Greg Thelen <gthelen@google.com>, Jan Kara <jack@suse.cz>, xiexiuqi@huawei.com, Vineet.Gupta1@synopsys.com, Andrew Lutomirski <luto@kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, bs
+From: Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>
+Subject: [PATCH v5 0/4] make sigaltstack() compatible with swapcontext()
+Date: Mon,  7 Mar 2016 19:39:40 +0300
+Message-ID: <1457368784-11090-1-git-send-email-stsp@list.ru>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: stsp-cmBhpYW9OiY@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 03/07/2016 08:43 AM, Andy Lutomirski wrote:
-> On Mon, Mar 7, 2016 at 7:30 AM, Rob Gardner <rob.gardner@oracle.com> wrote:
->> On 03/07/2016 07:07 AM, Khalid Aziz wrote:
->>>
->>> On 03/05/2016 09:07 PM, David Miller wrote:
->>>>
->>>> From: Khalid Aziz <khalid.aziz@oracle.com>
->>>> Date: Wed,  2 Mar 2016 13:39:37 -0700
->>>>
->>>>>      In this
->>>>>      first implementation I am enabling ADI for hugepages only
->>>>>      since these pages are locked in memory and hence avoid the
->>>>>      issue of saving and restoring tags.
->>>>
->>>>
->>>> This makes the feature almost entire useless.
->>>>
->>>> Non-hugepages must be in the initial implementation.
->>>
->>>
->>> Hi David,
->>>
->>> Thanks for the feedback. I will get this working for non-hugepages as
->>> well. ADI state of each VMA region is already stored in the VMA itself in my
->>> first implementation, so I do not lose it when the page is swapped out. The
->>> trouble is ADI version tags for each VMA region have to be stored on the
->>> swapped out pages since the ADI version tags are flushed when TLB entry for
->>> a page is flushed.
->>
->>
->>
->> Khalid,
->>
->> Are you sure about that last statement? My understanding is that the tags
->> are stored in physical memory, and remain there until explicitly changed or
->> removed, and so flushing a TLB entry has no effect on the ADI tags. If it
->> worked the way you think, then somebody would have to potentially reload a
->> long list of ADI tags on every TLB miss.
->>
->
-> I'll bite, since this was sent to linux-api:
->
-> Can someone explain what this feature does for the benefit of people
-> who haven't read the manual (and who don't even know where to find the
-> manual)?
->
-> Are the top few bits of a sparc64 virtual address currently
-> must-be-zero?  Does this feature change the semantics so that those
-> bits are ignored for address resolution and instead must match
-> whatever the ADI tag is determined to be during address resolution?
->
-> Is this enforced for both user and kernel accesses?
->
-> Is the actual ADI tag associated with a "page" associated with the
-> page of physical memory or is it associated with a mapping?  That is,
-> if there are two virtual aliases of the same physical page (in the
-> same process or otherwise), does the hardware require them to have the
-> same ADI tag?  If the answer is no, then IMO this is definitely
-> something that should use mprotect and you should seriously consider
-> using something like mprotect_key (new syscall, not in Linus' tree
-> yet) for it.  In fact, you might consider a possible extra parameter
-> to that syscall for this purpose.
->
-> Cc: Dave Hansen.  It seems to be the zeitgeist to throw tag bits at
-> PTEs these days.
->
+The following patches make it possible to use swapcontext()
+in a sighandler that works on sigaltstack.
+The approach is inspired by Andy Lutomirski's suggestion that
+sigaltstack should disarm itself after saving into uc_stack:
+https://lkml.org/lkml/2016/2/1/594
 
-Hi Andy,
+I add the SS_AUTODISARM flag that does exactly that.
+On sighandler exit, the sigaltstack is restored from uc_stack.
+Another possible name could be SS_ONESHOT, but, since it gets
+always re-enabled, I choose SS_AUTODISARM.
 
-The primary purpose of this feature is to prevent rogue accesses to 
-memory regions. If a database were to allocate memory pages to cache 
-database, it can enable ADI on those pages and set version tags. Version 
-tag for a memory address is encoded in bits 63-60 in the virtual 
-address. When accessing an ADI enabled memory region, top 4 bits of the 
-virtual address presented to the MMU must match the version tag set 
-earlier. When these bits do not match a tag, an MCD (Memory Corruption 
-Detected) exception is raised. Kernel sends a SIGBUS to the offending 
-process in response. There is some more info on ADI at 
-<https://swisdev.oracle.com/_files/What-Is-ADI.html>.
+Change since v4:
+- Implement this Andy Lutomirski's suggestion:
+https://lkml.org/lkml/2016/3/6/158
+that allows the run-time probing of the existence of the
+flags added in the future.
 
-Top 4-bits of sparc64 virtual address are used for version tag only when 
-a process has its PSTATE.mcde bit set and it is accessing a memory 
-region that has ADI enabled on it (TTE.mcd set) and a version tag was 
-set on the virtual address being accessed. These 4-bits retain their 
-original semantics in all other cases.
+[PATCH 1/4] [Cleanup] x86: signal: unify the sigaltstack check with
+	A clean-up patch that unifies x86's sigaltstack handling with
+	other arches.
+[PATCH 2/4] sigaltstack: preparations for adding new SS_xxx flags
+	Andy's suggested changes
+[PATCH 3/4] sigaltstack: implement SS_AUTODISARM flag
+	This patch implements SS_AUTODISARM flag
+[PATCH 4/4] selftests: Add test for sigaltstack(SS_ONSTACK |
+	This patch adds the selftest code for new functionality
 
-ADI version tags are checked for data fetches only. My implementation 
-enforces this for userspace addresses only. Expanding this to include 
-kernel data addresses as well will be a good thing to do to protect 
-kernel data but I want to try to do this incrementally - (1) ADI for 
-userspace addresses only for mlock'd pages, (2) expand support to 
-swappable pages, (3) ADI for kernel data pages, (4)......whatever else 
-makes sense...
+CC: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+CC: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+CC: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+CC: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 
-ADI version tag applies to virtual addresses only. If two processes have 
-virtual addresses mapping to the same physical page, they must use the 
-same tag. Hardware will send MCD exception if the tags do not match. 
-This was done to ensure a hack does not bypass ADI protection by simply 
-inserting another VA-to-PA mapping. I do like the idea of mprotect() as 
-David suggested and it can be done with existing mprotect() call. I will 
-have to add a new key PROT_ADI to support this.
-
-Thanks,
-Khalid
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Diffstat:
+ arch/x86/kernel/signal.c                     |   23 +--
+ include/linux/sched.h                        |    8 +
+ include/linux/signal.h                       |    4 
+ include/uapi/linux/signal.h                  |    7 +
+ kernel/fork.c                                |    2 
+ kernel/signal.c                              |   26 ++--
+ tools/testing/selftests/Makefile             |    1 
+ tools/testing/selftests/sigaltstack/Makefile |    8 +
+ tools/testing/selftests/sigaltstack/sas.c    |  156 +++++++++++++++++++++++++++
+ 9 files changed, 208 insertions(+), 27 deletions(-)
