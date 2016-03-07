@@ -1,93 +1,104 @@
-From: Boris Brezillon <boris.brezillon@free-electrons.com>
-Subject: [PATCH v4 22/52] mtd: nand: bch: switch to mtd_ooblayout_ops
-Date: Mon,  7 Mar 2016 10:47:12 +0100
-Message-ID: <1457344062-11633-23-git-send-email-boris.brezillon@free-electrons.com>
+From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Subject: [PATCH v4 28/52] mtd: nand: cafe: switch to mtd_ooblayout_ops
+Date: Mon,  7 Mar 2016 10:47:18 +0100
+Message-ID: <1457344062-11633-29-git-send-email-boris.brezillon@free-electrons.com>
 References: <1457344062-11633-1-git-send-email-boris.brezillon@free-electrons.com>
-Return-path: <linux-samsung-soc-owner@vger.kernel.org>
-In-Reply-To: <1457344062-11633-1-git-send-email-boris.brezillon@free-electrons.com>
-Sender: linux-samsung-soc-owner@vger.kernel.org
-To: David Woodhouse <dwmw2@infradead.org>, Brian Norris <computersforpeace@gmail.com>, linux-mtd@lists.infradead.org
-Cc: Daniel Mack <daniel@zonque.org>, Haojian Zhuang <haojian.zhuang@gmail.com>, Robert Jarzmik <robert.jarzmik@free.fr>, Kukjin Kim <kgene@kernel.org>, Krzysztof Kozlowski <k.kozlowski@samsung.com>, linux-samsung-soc@vger.kernel.org, linux-arm-kernel@lists.infradead.org, Ralf Baechle <ralf@linux-mips.org>, linux-mips@linux-mips.org, Nicolas Ferre <nicolas.ferre@atmel.com>, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>, Alexandre Belloni <alexandre.belloni@free-electrons.com>, Wenyou Yang <wenyou.yang@atmel.com>, Josh Wu <rainyfeeling@outlook.com>, Ezequiel Garcia <ezequiel.garcia@free-electrons.com>, Maxime Ripard <maxime.ripard@free-electrons.com>, Chen-Yu Tsai <wens@csie.org>, linux-sunxi@googlegroups.com, Stefan Agner <stefan@agner.ch>, Kyungmin Park <kyungmin.park@samsung.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, devel@driverdev.osuosl.org
+Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBB7E46W3AKGQEBXIODKI-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+In-Reply-To: <1457344062-11633-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Archive: <https://groups.google.com/group/linux-sunxi
+Sender: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+List-Subscribe: <https://groups.google.com/group/linux-sunxi/subscribe>, <mailto:linux-sunxi+subscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Unsubscribe: <mailto:googlegroups-manage+1076902468213+unsubscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>,
+ <https://groups.google.com/group/linux-sunxi/subscribe>
+To: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Cc: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Haojian Zhuang <haojian.zhuang-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Robert Jarzmik <robert.jarzmik-GANU6spQydw@public.gmane.org>, Kukjin Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Nicolas Ferre <nicolas.ferre-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Alexandre Belloni <alexandre.belloni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Wenyou Yang <wenyou.yang-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Josh Wu <rainyfeeling-1ViLX0X+lBJBDgjK7y7TUQ@public.gmane.org>, Ezequiel Garcia <ezequiel.garcia-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Chen-Yu Tsai <wens-jdAy2FN1RRM@public.gmane.org>, linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Replace the nand_ecclayout definition by the equivalent mtd_ooblayout_ops
-definition.
+Implementing the mtd_ooblayout_ops interface is the new way of exposing
+ECC/OOB layout to MTD users.
 
-Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
+Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- drivers/mtd/nand/nand_bch.c | 33 +++++++++++----------------------
- 1 file changed, 11 insertions(+), 22 deletions(-)
+ drivers/mtd/nand/cafe_nand.c | 44 ++++++++++++++++++++++++++++++++------------
+ 1 file changed, 32 insertions(+), 12 deletions(-)
 
-diff --git a/drivers/mtd/nand/nand_bch.c b/drivers/mtd/nand/nand_bch.c
-index b3039de..e29e75f 100644
---- a/drivers/mtd/nand/nand_bch.c
-+++ b/drivers/mtd/nand/nand_bch.c
-@@ -32,13 +32,11 @@
- /**
-  * struct nand_bch_control - private NAND BCH control structure
-  * @bch:       BCH control structure
-- * @ecclayout: private ecc layout for this BCH configuration
-  * @errloc:    error location array
-  * @eccmask:   XOR ecc mask, allows erased pages to be decoded as valid
-  */
- struct nand_bch_control {
- 	struct bch_control   *bch;
--	struct nand_ecclayout ecclayout;
- 	unsigned int         *errloc;
- 	unsigned char        *eccmask;
- };
-@@ -124,7 +122,6 @@ struct nand_bch_control *nand_bch_init(struct mtd_info *mtd)
- {
- 	struct nand_chip *nand = mtd_to_nand(mtd);
- 	unsigned int m, t, eccsteps, i;
--	struct nand_ecclayout *layout = nand->ecc.layout;
- 	struct nand_bch_control *nbc = NULL;
- 	unsigned char *erased_page;
- 	unsigned int eccsize = nand->ecc.size;
-@@ -161,8 +158,17 @@ struct nand_bch_control *nand_bch_init(struct mtd_info *mtd)
+diff --git a/drivers/mtd/nand/cafe_nand.c b/drivers/mtd/nand/cafe_nand.c
+index aa1a616..3d59330 100644
+--- a/drivers/mtd/nand/cafe_nand.c
++++ b/drivers/mtd/nand/cafe_nand.c
+@@ -459,10 +459,37 @@ static int cafe_nand_read_page(struct mtd_info *mtd, struct nand_chip *chip,
+ 	return max_bitflips;
+ }
  
- 	eccsteps = mtd->writesize/eccsize;
- 
-+	/*
-+	 * Rely on the default ecclayout to ooblayout wrapper provided by MTD
-+	 * core if ecc.layout is not NULL.
-+	 * FIXME: this should be removed when all callers have moved to the
-+	 * mtd_ooblayout_ops approach.
-+	 */
-+	if (nand->ecc.layout)
-+		mtd_set_ecclayout(mtd, nand->ecc.layout);
+-static struct nand_ecclayout cafe_oobinfo_2048 = {
+-	.eccbytes = 14,
+-	.eccpos = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+-	.oobfree = {{14, 50}}
++static int cafe_ooblayout_ecc(struct mtd_info *mtd, int section,
++			      struct mtd_oob_region *oobregion)
++{
++	struct nand_chip *chip = mtd_to_nand(mtd);
 +
- 	/* if no ecc placement scheme was provided, build one */
--	if (!layout) {
-+	if (!mtd->ooblayout) {
++	if (section)
++		return -ERANGE;
++
++	oobregion->offset = 0;
++	oobregion->length = chip->ecc.total;
++
++	return 0;
++}
++
++static int cafe_ooblayout_free(struct mtd_info *mtd, int section,
++			       struct mtd_oob_region *oobregion)
++{
++	struct nand_chip *chip = mtd_to_nand(mtd);
++
++	if (section)
++		return -ERANGE;
++
++	oobregion->offset = chip->ecc.total;
++	oobregion->length = mtd->oobsize - chip->ecc.total;
++
++	return 0;
++}
++
++static const struct mtd_ooblayout_ops cafe_ooblayout_ops = {
++	.ecc = cafe_ooblayout_ecc,
++	.free = cafe_ooblayout_free,
+ };
  
- 		/* handle large page devices only */
- 		if (mtd->oobsize < 64) {
-@@ -171,24 +177,7 @@ struct nand_bch_control *nand_bch_init(struct mtd_info *mtd)
- 			goto fail;
- 		}
+ /* Ick. The BBT code really ought to be able to work this bit out
+@@ -494,12 +521,6 @@ static struct nand_bbt_descr cafe_bbt_mirror_descr_2048 = {
+ 	.pattern = cafe_mirror_pattern_2048
+ };
  
--		layout = &nbc->ecclayout;
--		layout->eccbytes = eccsteps*eccbytes;
+-static struct nand_ecclayout cafe_oobinfo_512 = {
+-	.eccbytes = 14,
+-	.eccpos = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+-	.oobfree = {{14, 2}}
+-};
 -
--		/* reserve 2 bytes for bad block marker */
--		if (layout->eccbytes+2 > mtd->oobsize) {
--			printk(KERN_WARNING "no suitable oob scheme available "
--			       "for oobsize %d eccbytes %u\n", mtd->oobsize,
--			       eccbytes);
--			goto fail;
--		}
--		/* put ecc bytes at oob tail */
--		for (i = 0; i < layout->eccbytes; i++)
--			layout->eccpos[i] = mtd->oobsize-layout->eccbytes+i;
--
--		layout->oobfree[0].offset = 2;
--		layout->oobfree[0].length = mtd->oobsize-2-layout->eccbytes;
--
--		nand->ecc.layout = layout;
-+		mtd_set_ooblayout(mtd, &nand_ooblayout_lp_ops);
- 	}
+ static struct nand_bbt_descr cafe_bbt_main_descr_512 = {
+ 	.options = NAND_BBT_LASTBLOCK | NAND_BBT_CREATE | NAND_BBT_WRITE
+ 		| NAND_BBT_2BIT | NAND_BBT_VERSION,
+@@ -743,12 +764,11 @@ static int cafe_nand_probe(struct pci_dev *pdev,
+ 		cafe->ctl2 |= 1<<29; /* 2KiB page size */
  
- 	/* sanity checks */
+ 	/* Set up ECC according to the type of chip we found */
++	mtd_set_ooblayout(mtd, &cafe_ooblayout_ops);
+ 	if (mtd->writesize == 2048) {
+-		cafe->nand.ecc.layout = &cafe_oobinfo_2048;
+ 		cafe->nand.bbt_td = &cafe_bbt_main_descr_2048;
+ 		cafe->nand.bbt_md = &cafe_bbt_mirror_descr_2048;
+ 	} else if (mtd->writesize == 512) {
+-		cafe->nand.ecc.layout = &cafe_oobinfo_512;
+ 		cafe->nand.bbt_td = &cafe_bbt_main_descr_512;
+ 		cafe->nand.bbt_md = &cafe_bbt_mirror_descr_512;
+ 	} else {
 -- 
 2.1.4
