@@ -1,7 +1,7 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v4 26/52] mtd: nand: bf5xx: switch to mtd_ooblayout_ops
-Date: Mon,  7 Mar 2016 10:47:16 +0100
-Message-ID: <1457344062-11633-27-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v4 29/52] mtd: nand: davinci: switch to mtd_ooblayout_ops
+Date: Mon,  7 Mar 2016 10:47:19 +0100
+Message-ID: <1457344062-11633-30-git-send-email-boris.brezillon@free-electrons.com>
 References: <1457344062-11633-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
@@ -24,77 +24,155 @@ ECC/OOB layout to MTD users.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- drivers/mtd/nand/bf5xx_nand.c | 51 ++++++++++++++++++++++++-------------------
- 1 file changed, 28 insertions(+), 23 deletions(-)
+ drivers/mtd/nand/davinci_nand.c | 118 +++++++++++++++-------------------------
+ 1 file changed, 44 insertions(+), 74 deletions(-)
 
-diff --git a/drivers/mtd/nand/bf5xx_nand.c b/drivers/mtd/nand/bf5xx_nand.c
-index 7f6b30e..b38f414 100644
---- a/drivers/mtd/nand/bf5xx_nand.c
-+++ b/drivers/mtd/nand/bf5xx_nand.c
-@@ -109,28 +109,33 @@ static const unsigned short bfin_nfc_pin_req[] =
- 	 0};
+diff --git a/drivers/mtd/nand/davinci_nand.c b/drivers/mtd/nand/davinci_nand.c
+index 8cb821b..fe3fd29 100644
+--- a/drivers/mtd/nand/davinci_nand.c
++++ b/drivers/mtd/nand/davinci_nand.c
+@@ -54,7 +54,6 @@
+  */
+ struct davinci_nand_info {
+ 	struct nand_chip	chip;
+-	struct nand_ecclayout	ecclayout;
  
- #ifdef CONFIG_MTD_NAND_BF5XX_BOOTROM_ECC
--static struct nand_ecclayout bootrom_ecclayout = {
--	.eccbytes = 24,
+ 	struct device		*dev;
+ 	struct clk		*clk;
+@@ -480,63 +479,46 @@ static int nand_davinci_dev_ready(struct mtd_info *mtd)
+  * ten ECC bytes plus the manufacturer's bad block marker byte, and
+  * and not overlapping the default BBT markers.
+  */
+-static struct nand_ecclayout hwecc4_small = {
+-	.eccbytes = 10,
+-	.eccpos = { 0, 1, 2, 3, 4,
+-		/* offset 5 holds the badblock marker */
+-		6, 7,
+-		13, 14, 15, },
+-	.oobfree = {
+-		{.offset = 8, .length = 5, },
+-		{.offset = 16, },
+-	},
+-};
++static int hwecc4_ooblayout_small_ecc(struct mtd_info *mtd, int section,
++				      struct mtd_oob_region *oobregion)
++{
++	if (section > 2)
++		return -ERANGE;
++
++	if (!section) {
++		oobregion->offset = 0;
++		oobregion->length = 5;
++	} else if (section == 1) {
++		oobregion->offset = 6;
++		oobregion->length = 2;
++	} else {
++		oobregion->offset = 13;
++		oobregion->length = 3;
++	}
+ 
+-/* An ECC layout for using 4-bit ECC with large-page (2048bytes) flash,
+- * storing ten ECC bytes plus the manufacturer's bad block marker byte,
+- * and not overlapping the default BBT markers.
+- */
+-static struct nand_ecclayout hwecc4_2048 = {
+-	.eccbytes = 40,
 -	.eccpos = {
--		0x8 * 0, 0x8 * 0 + 1, 0x8 * 0 + 2,
--		0x8 * 1, 0x8 * 1 + 1, 0x8 * 1 + 2,
--		0x8 * 2, 0x8 * 2 + 1, 0x8 * 2 + 2,
--		0x8 * 3, 0x8 * 3 + 1, 0x8 * 3 + 2,
--		0x8 * 4, 0x8 * 4 + 1, 0x8 * 4 + 2,
--		0x8 * 5, 0x8 * 5 + 1, 0x8 * 5 + 2,
--		0x8 * 6, 0x8 * 6 + 1, 0x8 * 6 + 2,
--		0x8 * 7, 0x8 * 7 + 1, 0x8 * 7 + 2
+-		/* at the end of spare sector */
+-		24, 25, 26, 27, 28, 29,	30, 31, 32, 33,
+-		34, 35, 36, 37, 38, 39,	40, 41, 42, 43,
+-		44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+-		54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
+-		},
+-	.oobfree = {
+-		/* 2 bytes at offset 0 hold manufacturer badblock markers */
+-		{.offset = 2, .length = 22, },
+-		/* 5 bytes at offset 8 hold BBT markers */
+-		/* 8 bytes at offset 16 hold JFFS2 clean markers */
+-	},
+-};
++	return 0;
++}
+ 
+-/*
+- * An ECC layout for using 4-bit ECC with large-page (4096bytes) flash,
+- * storing ten ECC bytes plus the manufacturer's bad block marker byte,
+- * and not overlapping the default BBT markers.
+- */
+-static struct nand_ecclayout hwecc4_4096 = {
+-	.eccbytes = 80,
+-	.eccpos = {
+-		/* at the end of spare sector */
+-		48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+-		58, 59, 60, 61, 62, 63, 64, 65, 66, 67,
+-		68, 69, 70, 71, 72, 73, 74, 75, 76, 77,
+-		78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
+-		88, 89, 90, 91, 92, 93, 94, 95, 96, 97,
+-		98, 99, 100, 101, 102, 103, 104, 105, 106, 107,
+-		108, 109, 110, 111, 112, 113, 114, 115, 116, 117,
+-		118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
 -	},
 -	.oobfree = {
--		{ 0x8 * 0 + 3, 5 },
--		{ 0x8 * 1 + 3, 5 },
--		{ 0x8 * 2 + 3, 5 },
--		{ 0x8 * 3 + 3, 5 },
--		{ 0x8 * 4 + 3, 5 },
--		{ 0x8 * 5 + 3, 5 },
--		{ 0x8 * 6 + 3, 5 },
--		{ 0x8 * 7 + 3, 5 },
--	}
-+static int bootrom_ooblayout_ecc(struct mtd_info *mtd, int section,
-+				 struct mtd_oob_region *oobregion)
+-		/* 2 bytes at offset 0 hold manufacturer badblock markers */
+-		{.offset = 2, .length = 46, },
+-		/* 5 bytes at offset 8 hold BBT markers */
+-		/* 8 bytes at offset 16 hold JFFS2 clean markers */
+-	},
++static int hwecc4_ooblayout_small_free(struct mtd_info *mtd, int section,
++				       struct mtd_oob_region *oobregion)
 +{
-+	if (section > 7)
++	if (section > 1)
 +		return -ERANGE;
 +
-+	oobregion->offset = section * 8;
-+	oobregion->length = 3;
++	if (!section) {
++		oobregion->offset = 8;
++		oobregion->length = 5;
++	} else {
++		oobregion->offset = 16;
++		oobregion->length = mtd->oobsize - 16;
++	}
 +
 +	return 0;
 +}
 +
-+static int bootrom_ooblayout_free(struct mtd_info *mtd, int section,
-+				  struct mtd_oob_region *oobregion)
-+{
-+	if (section > 7)
-+		return -ERANGE;
-+
-+	oobregion->offset = (section * 8) + 3;
-+	oobregion->length = 5;
-+
-+	return 0;
-+}
-+
-+static const struct mtd_ooblayout_ops bootrom_ooblayout_ops = {
-+	.ecc = bootrom_ooblayout_ecc,
-+	.free = bootrom_ooblayout_free,
++static const struct mtd_ooblayout_ops hwecc4_small_ooblayout_ops = {
++	.ecc = hwecc4_ooblayout_small_ecc,
++	.free = hwecc4_ooblayout_small_free,
  };
- #endif
  
-@@ -800,7 +805,7 @@ static int bf5xx_nand_probe(struct platform_device *pdev)
- 	/* setup hardware ECC data struct */
- 	if (hardware_ecc) {
- #ifdef CONFIG_MTD_NAND_BF5XX_BOOTROM_ECC
--		chip->ecc.layout = &bootrom_ecclayout;
-+		mtd_set_ooblayout(mtd, &bootrom_ooblayout_ops);
- #endif
- 		chip->read_buf      = bf5xx_nand_dma_read_buf;
- 		chip->write_buf     = bf5xx_nand_dma_write_buf;
+ #if defined(CONFIG_OF)
+@@ -805,26 +787,14 @@ static int nand_davinci_probe(struct platform_device *pdev)
+ 		 * table marker fits in the free bytes.
+ 		 */
+ 		if (chunks == 1) {
+-			info->ecclayout = hwecc4_small;
+-			info->ecclayout.oobfree[1].length = mtd->oobsize - 16;
+-			goto syndrome_done;
+-		}
+-		if (chunks == 4) {
+-			info->ecclayout = hwecc4_2048;
++			mtd_set_ooblayout(mtd, &hwecc4_small_ooblayout_ops);
++		} else if (chunks == 4 || chunks == 8) {
++			mtd_set_ooblayout(mtd, &nand_ooblayout_lp_ops);
+ 			info->chip.ecc.mode = NAND_ECC_HW_OOB_FIRST;
+-			goto syndrome_done;
+-		}
+-		if (chunks == 8) {
+-			info->ecclayout = hwecc4_4096;
+-			info->chip.ecc.mode = NAND_ECC_HW_OOB_FIRST;
+-			goto syndrome_done;
++		} else {
++			ret = -EIO;
++			goto err;
+ 		}
+-
+-		ret = -EIO;
+-		goto err;
+-
+-syndrome_done:
+-		info->chip.ecc.layout = &info->ecclayout;
+ 	}
+ 
+ 	ret = nand_scan_tail(mtd);
 -- 
 2.1.4
