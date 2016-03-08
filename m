@@ -1,44 +1,52 @@
-From: Khalid Aziz <khalid.aziz@oracle.com>
+From: Rob Gardner <rob.gardner@oracle.com>
 Subject: Re: [PATCH v2] sparc64: Add support for Application Data Integrity
  (ADI)
-Date: Mon, 7 Mar 2016 17:21:05 -0700
-Message-ID: <56DE1AF1.40107@oracle.com>
-References: <56DDC2B6.6020009@oracle.com> <56DDC3EB.8060909@oracle.com>
- <56DDC776.3040003@oracle.com>
- <20160307.141600.1873883635480850431.davem@davemloft.net>
+Date: Mon, 7 Mar 2016 17:31:23 -0800
+Message-ID: <56DE2B6B.3050503@oracle.com>
+References: <1456951177-23579-1-git-send-email-khalid.aziz@oracle.com>
+ <20160305.230702.1325379875282120281.davem@davemloft.net>
+ <56DD9949.1000106@oracle.com> <56DD9E94.70201@oracle.com>
+ <CALCETrXey2_xEXhzjgHtZmf-dLp-9pec===d-8chLxrp8wgRXg@mail.gmail.com>
+ <56DDA6FD.4040404@oracle.com> <56DDBE68.6080709@linux.intel.com>
+ <CALCETrWPeFsyGsDNyehMpub1QrjZxyWpG_x_2A0yKqROXYfJ5A@mail.gmail.com>
+ <56DDC47C.8010206@linux.intel.com> <56DDCAD3.3090106@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20160307.141600.1873883635480850431.davem@davemloft.net>
+In-Reply-To: <56DDCAD3.3090106@oracle.com>
 Sender: owner-linux-mm@kvack.org
-To: David Miller <davem@davemloft.net>
-Cc: rob.gardner@oracle.com, corbet@lwn.net, akpm@linux-foundation.org, dingel@linux.vnet.ibm.com, bob.picco@oracle.com, kirill.shutemov@linux.intel.com, aneesh.kumar@linux.vnet.ibm.com, aarcange@redhat.com, arnd@arndb.de, sparclinux@vger.kernel.org, mhocko@suse.cz, chris.hyser@oracle.com, richard@nod.at, vbabka@suse.cz, koct9i@gmail.com, oleg@redhat.com, gthelen@google.com, jack@suse.cz, xiexiuqi@huawei.com, Vineet.Gupta1@synopsys.com, luto@kernel.org, ebiederm@xmission.com, bsegall@google.com, geert@linux-m68k.org, dave@stgolabs.net, adobriyan@gmail.com, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+To: Khalid Aziz <khalid.aziz@oracle.com>, Dave Hansen <dave.hansen@linux.intel.com>, Andy Lutomirski <luto@amacapital.net>
+Cc: David Miller <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, dingel@linux.vnet.ibm.com, bob.picco@oracle.com, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>, Andrea Arcangeli <aarcange@redhat.com>, Arnd Bergmann <arnd@arndb.de>, sparclinux@vger.kernel.org, Michal Hocko <mhocko@suse.cz>, chris.hyser@oracle.com, Richard Weinberger <richard@nod.at>, Vlastimil Babka <vbabka@suse.cz>, Konstantin Khlebnikov <koct9i@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Greg Thelen <gthelen@google.com>, Jan Kara <jack@suse.cz>, xiexiuqi@huawei.com, Vineet.Gupta1@synopsys.com, Andrew Lutomirski <luto@kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, bsegall@google.comG
 List-Id: linux-api@vger.kernel.org
 
-On 03/07/2016 12:16 PM, David Miller wrote:
-> From: Khalid Aziz <khalid.aziz@oracle.com>
-> Date: Mon, 7 Mar 2016 11:24:54 -0700
+On 03/07/2016 10:39 AM, Khalid Aziz wrote:
+> On 03/07/2016 11:12 AM, Dave Hansen wrote:
+>> On 03/07/2016 09:53 AM, Andy Lutomirski wrote:
+>>> Also, what am I missing?  Tying these tags to the physical page seems
+>>> like a poor design to me.  This seems really awkward to use.
+>>
+>> Yeah, can you describe the structures that store these things? Surely
+>> the hardware has some kind of lookup tables for them and stores them in
+>> memory _somewhere_.
+>>
 >
->> Tags can be cleared by user by setting tag to 0. Tags are
->> automatically cleared by the hardware when the mapping for a virtual
->> address is removed from TSB (which is why swappable pages are a
->> problem), so kernel does not have to do it as part of clean up.
+> Version tags are tied to virtual addresses, not physical pages.
 >
-> You might be able to crib some bits for the Tag in the swp_entry_t, it's
-> 64-bit and you can therefore steal bits from the offset field.
->
-> That way you'll have the ADI tag in the page tables, ready to re-install
-> at swapin time.
->
+> Where exactly are the tags stored is part of processor architecture 
+> and I am not privy to that. MMU stores these lookup tables somewhere 
+> and uses it to authenticate access to virtual addresses. It really is 
+> irrelevant to kernel how MMU implements access controls as long as we 
+> have access to the knowledge of how to use it.
 
-Hi Dave,
+The tags are stored in physical memory, and you can write a tag directly 
+to that memory via stxa with ASI_MCD_REAL and completely bypass the MMU. 
+When you do that, the tag will still be seen by any virtual address that 
+maps to that physical address.
 
-Can we enable ADI support for swappable pages in a subsequent update 
-after the core functionality is stable on mlock'd pages?
+Rob
 
-Thanks,
-Khalid
+
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
