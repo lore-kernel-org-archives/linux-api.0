@@ -1,113 +1,52 @@
-From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC PATCH] firmware: qemu_fw_cfg.c: hold ACPI global lock
- during device access
-Date: Tue, 8 Mar 2016 11:21:37 +0200
-Message-ID: <20160308110716-mutt-send-email-mst@redhat.com>
-References: <20160307235543.GD2049@HEDWIG.INI.CMU.EDU>
- <20160308000215.GA11917@kroah.com>
+From: James Morris <james.l.morris@oracle.com>
+Subject: Re: [PATCH v2] sparc64: Add support for Application Data Integrity
+ (ADI)
+Date: Tue, 08 Mar 2016 20:33:01 +1100
+Message-ID: <56DE9C4D.8000709@oracle.com>
+References: <1456951177-23579-1-git-send-email-khalid.aziz@oracle.com> <20160305.230702.1325379875282120281.davem@davemloft.net> <56DD9949.1000106@oracle.com> <20160307.115626.807716799249471744.davem@davemloft.net> <56DDC2B6.6020009@oracle.com> <CALCETrXN43nT4zq2MpO90VrgK3k+DKHjOHWf7iOhS7TSBmdCPQ@mail.gmail.com> <56DDC6E0.4000907@oracle.com> <CALCETrU5NCzh3b7We8903G0_Tm-oycgP3+gS9fG+vC_rdgTddw@mail.gmail.com> <56DDDA31.9090105@oracle.com> <CALCETrXXU0fs2ezq+Wn_kr4dZTO=0RJmt6b=XBSA-wM7W_9j9A@mail.gmail.com> <56DE1341.4080206@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160308000215.GA11917-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Gabriel Somlo <somlo-D+Gtc/HYRWM@public.gmane.org>, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, eric-WhKQ6XTQaPysTnJN9+BGXg@public.gmane.org, hanjun.guo-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, sudeep.holla-5wv7dgnIgG8@public.gmane.org, agross-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, imammedo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ehabkost-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, stefanha-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, revol-GANU6spQydw@public.gmane.org, matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org, rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <56DE1341.4080206@oracle.com>
+Sender: owner-linux-mm@kvack.org
+To: Andy Lutomirski <luto@amacapital.net>, Khalid Aziz <khalid.aziz@oracle.com>
+Cc: David Miller <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, dingel@linux.vnet.ibm.com, bob.picco@oracle.com, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>, Andrea Arcangeli <aarcange@redhat.com>, Arnd Bergmann <arnd@arndb.de>, sparclinux@vger.kernel.org, Rob Gardner <rob.gardner@oracle.com>, Michal Hocko <mhocko@suse.cz>, chris.hyser@oracle.com, Richard Weinberger <richard@nod.at>, Vlastimil Babka <vbabka@suse.cz>, Konstantin Khlebnikov <koct9i@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Greg Thelen <gthelen@google.com>, Jan Kara <jack@suse.cz>, xiexiuqi@huawei.com, Vineet.Gupta1@synopsys.com, Andrew Lutomirski <luto@kernel.org>, "Eric W. Biederman" <ebiederm@xmissio>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 07, 2016 at 04:02:15PM -0800, Greg KH wrote:
-> On Mon, Mar 07, 2016 at 06:55:43PM -0500, Gabriel Somlo wrote:
-> > Allowing for the future possibility of implementing AML-based
-> > (i.e., firmware-triggered) access to the QEMU fw_cfg device,
-> > acquire the global ACPI lock when accessing the device on behalf
-> > of the guest-side sysfs driver, to prevent any potential race
-> > conditions.
-> > 
-> > Suggested-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> > Signed-off-by: Gabriel Somlo <somlo-D+Gtc/HYRWM@public.gmane.org>
+On 03/08/2016 10:48 AM, James Morris wrote:
+> On 03/08/2016 06:54 AM, Andy Lutomirski wrote:
+>>
+>> This makes sense, but I still think the design is poor.  If the hacker
+>> gets code execution, then they can trivially brute force the ADI bits.
+>>
+>
+> ADI in this scenario is intended to prevent the attacker from gaining
+> code execution in the first place.
 
-ACK, except for Gerd's comments below.
+Here's some more background from Enrico Perla (who literally wrote the 
+book on kernel exploitation):
 
-> > ---
-> > 
-> > Turns out, there *is* a way to acquire a global ACPI lock from within
-> > a "random" kernel driver after all. Luckily I have a healthy dose of
-> > respect for Michael's opinions :) so I kept circling back through
-> > existing kernel sources for an example I can use, and I think this
-> > might be it.
-> > 
-> > I'm posting as RFC because I'm not really confident about assessing
-> > the likelihood of there ever being a race condition between the kernel
-> > fw_cfg sysfs driver and firmware on my own. Obviously Michael has
-> > concerns about it, but any additional opinions from the QEMU camp would
-> > be much appreciated.
-> > 
-> > Thanks again,
-> >  --Gabriel
-> > 
-> >  drivers/firmware/qemu_fw_cfg.c | 14 ++++++++++++++
-> >  1 file changed, 14 insertions(+)
-> > 
-> > diff --git a/drivers/firmware/qemu_fw_cfg.c b/drivers/firmware/qemu_fw_cfg.c
-> > index 7bba76c..cc4c27a 100644
-> > --- a/drivers/firmware/qemu_fw_cfg.c
-> > +++ b/drivers/firmware/qemu_fw_cfg.c
-> > @@ -77,12 +77,26 @@ static inline u16 fw_cfg_sel_endianness(u16 key)
-> >  static inline void fw_cfg_read_blob(u16 key,
-> >  				    void *buf, loff_t pos, size_t count)
-> >  {
-> > +#ifdef CONFIG_ACPI
+https://blogs.oracle.com/enrico/entry/hardening_allocators_with_adi
 
-You should include linux/acpi.h if you use this,
-do not rely on some other header to pull this in.
+Probably the most significant advantage from a security point of view is 
+the ability to eliminate an entire class of vulnerability: adjacent heap 
+overflows, as discussed above, where, for example, adjacent heap objects 
+are tagged differently.  Classic linear buffer overflows can be eliminated.
 
-> > +	u32 glk;
-> > +	int status;
-> > +	status = acpi_acquire_global_lock(ACPI_WAIT_FOREVER, &glk);
-> 
-> Why not fix up the ACPI api to not require #ifdef here?  It should be
-> added to a .h file somewhere instead.
+As Kees Cook outlined at the 2015 kernel summit, it's best to mitigate 
+classes of vulnerabilities rather than patch each instance:
 
-Indeed. In fact include/acpi/platform/aclinux.h already has
-this code:
+https://outflux.net/slides/2011/defcon/kernel-exploitation.pdf
 
-#ifndef CONFIG_ACPI
+The Linux ADI implementation is currently very rudimentary, and we 
+definitely welcome continued feedback from the community and ideas as it 
+evolves.
 
-/* External globals for __KERNEL__, stubs is needed */
+- James
 
-#define ACPI_GLOBAL(t,a)
-#define ACPI_INIT_GLOBAL(t,a,b)
-
-/* Generating stubs for configurable ACPICA macros */
-
-#define ACPI_NO_MEM_ALLOCATIONS
-
-/* Generating stubs for configurable ACPICA functions */
-
-#define ACPI_NO_ERROR_MESSAGES
-#undef ACPI_DEBUG_OUTPUT
-
-/* External interface for __KERNEL__, stub is needed */
-
-#define ACPI_EXTERNAL_RETURN_STATUS(prototype) \
-        static ACPI_INLINE prototype {return(AE_NOT_CONFIGURED);}
-#define ACPI_EXTERNAL_RETURN_OK(prototype) \
-        static ACPI_INLINE prototype {return(AE_OK);}
-#define ACPI_EXTERNAL_RETURN_VOID(prototype) \
-        static ACPI_INLINE prototype {return;}
-#define ACPI_EXTERNAL_RETURN_UINT32(prototype) \
-        static ACPI_INLINE prototype {return(0);}
-#define ACPI_EXTERNAL_RETURN_PTR(prototype) \
-        static ACPI_INLINE prototype {return(NULL);}
-
-#endif                          /* CONFIG_ACPI */
-
-
-so it's just a question of testing the return code for AE_NOT_CONFIGURED.
-
--- 
-MST
 --
-To unsubscribe from this list: send the line "unsubscribe devicetree" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
