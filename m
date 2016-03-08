@@ -1,52 +1,47 @@
-From: James Morris <james.l.morris@oracle.com>
-Subject: Re: [PATCH v2] sparc64: Add support for Application Data Integrity
- (ADI)
-Date: Tue, 08 Mar 2016 20:33:01 +1100
-Message-ID: <56DE9C4D.8000709@oracle.com>
-References: <1456951177-23579-1-git-send-email-khalid.aziz@oracle.com> <20160305.230702.1325379875282120281.davem@davemloft.net> <56DD9949.1000106@oracle.com> <20160307.115626.807716799249471744.davem@davemloft.net> <56DDC2B6.6020009@oracle.com> <CALCETrXN43nT4zq2MpO90VrgK3k+DKHjOHWf7iOhS7TSBmdCPQ@mail.gmail.com> <56DDC6E0.4000907@oracle.com> <CALCETrU5NCzh3b7We8903G0_Tm-oycgP3+gS9fG+vC_rdgTddw@mail.gmail.com> <56DDDA31.9090105@oracle.com> <CALCETrXXU0fs2ezq+Wn_kr4dZTO=0RJmt6b=XBSA-wM7W_9j9A@mail.gmail.com> <56DE1341.4080206@oracle.com>
+From: =?UTF-8?Q?Jo=C3=A3o_Paulo_Rechi_Vita?= <jprvita@gmail.com>
+Subject: Re: [PATCHv2 08/10] rfkill: Use switch to demux userspace operations
+Date: Tue, 8 Mar 2016 09:01:06 -0500
+Message-ID: <CA+A7VXXd0SONVPi2BOokL13YevR0+hmFz4KE-U1MvXT0qqWN_A@mail.gmail.com>
+References: <1456159001-20307-1-git-send-email-jprvita@endlessm.com>
+ <1456159001-20307-9-git-send-email-jprvita@endlessm.com> <20160226175925.GA9331@w1.fi>
+ <CA+A7VXUY=qVDQ-OqT+QJK8haN6AFX4Br=OPXi-6RCxpvH3=QRg@mail.gmail.com>
+ <20160229223918.GA32464@w1.fi> <1456839787.3926.20.camel@sipsolutions.net> <CA+A7VXWWQOti7pOre08QcXN9vgssQH3V1f6RjphaK0VwM27C7g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <56DE1341.4080206@oracle.com>
-Sender: owner-linux-mm@kvack.org
-To: Andy Lutomirski <luto@amacapital.net>, Khalid Aziz <khalid.aziz@oracle.com>
-Cc: David Miller <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, dingel@linux.vnet.ibm.com, bob.picco@oracle.com, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>, Andrea Arcangeli <aarcange@redhat.com>, Arnd Bergmann <arnd@arndb.de>, sparclinux@vger.kernel.org, Rob Gardner <rob.gardner@oracle.com>, Michal Hocko <mhocko@suse.cz>, chris.hyser@oracle.com, Richard Weinberger <richard@nod.at>, Vlastimil Babka <vbabka@suse.cz>, Konstantin Khlebnikov <koct9i@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Greg Thelen <gthelen@google.com>, Jan Kara <jack@suse.cz>, xiexiuqi@huawei.com, Vineet.Gupta1@synopsys.com, Andrew Lutomirski <luto@kernel.org>, "Eric W. Biederman" <ebiederm@xmissio>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <CA+A7VXWWQOti7pOre08QcXN9vgssQH3V1f6RjphaK0VwM27C7g@mail.gmail.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Johannes Berg <johannes@sipsolutions.net>
+Cc: Jouni Malinen <j@w1.fi>, "David S. Miller" <davem@davemloft.net>, Darren Hart <dvhart@infradead.org>, linux-wireless <linux-wireless@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, platform-driver-x86@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux@endlessm.com, =?UTF-8?Q?Jo=C3=A3o_Paulo_Rechi_Vita?= <jprvita@endlessm.com>
 List-Id: linux-api@vger.kernel.org
 
-On 03/08/2016 10:48 AM, James Morris wrote:
-> On 03/08/2016 06:54 AM, Andy Lutomirski wrote:
+Hello Johannes,
+
+On 1 March 2016 at 11:15, Jo=C3=A3o Paulo Rechi Vita <jprvita@gmail.com=
+> wrote:
+> On 1 March 2016 at 08:43, Johannes Berg <johannes@sipsolutions.net> w=
+rote:
 >>
->> This makes sense, but I still think the design is poor.  If the hacker
->> gets code execution, then they can trivially brute force the ADI bits.
+>> I'm fine with Jouni's change, preserving the original behaviour of
+>> requiring TYPE_ALL or the correct type, but I'm tempted to simply
+>> remove the type check entirely.
+>>
+>> Thoughts?
 >>
 >
-> ADI in this scenario is intended to prevent the attacker from gaining
-> code execution in the first place.
+> I think this patch should keep the original logic, as this is suppose=
+d
+> to be a refactor only. If we decide to remove the check, we should to
+> it in a separate patch, to make it clear for someone looking at the
+> history later.
+>
+> I'm fine with removing the type check (in a separate patch), but I
+> don't see much gain in doing so.
+>
 
-Here's some more background from Enrico Perla (who literally wrote the 
-book on kernel exploitation):
-
-https://blogs.oracle.com/enrico/entry/hardening_allocators_with_adi
-
-Probably the most significant advantage from a security point of view is 
-the ability to eliminate an entire class of vulnerability: adjacent heap 
-overflows, as discussed above, where, for example, adjacent heap objects 
-are tagged differently.  Classic linear buffer overflows can be eliminated.
-
-As Kees Cook outlined at the 2015 kernel summit, it's best to mitigate 
-classes of vulnerabilities rather than patch each instance:
-
-https://outflux.net/slides/2011/defcon/kernel-exploitation.pdf
-
-The Linux ADI implementation is currently very rudimentary, and we 
-definitely welcome continued feedback from the community and ideas as it 
-evolves.
-
-- James
+I just saw you picked this patch with Jouni's fix, thanks!
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Jo=C3=A3o Paulo Rechi Vita
+http://about.me/jprvita
