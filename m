@@ -1,31 +1,91 @@
-From: David Miller <davem@davemloft.net>
-Subject: Re: [PATCH v2] sparc64: Add support for Application Data Integrity
- (ADI)
-Date: Mon, 07 Mar 2016 23:24:18 -0500 (EST)
-Message-ID: <20160307.232418.1734056188463866385.davem@davemloft.net>
-References: <56DDC776.3040003@oracle.com>
-	<20160307.141600.1873883635480850431.davem@davemloft.net>
-	<56DE1AF1.40107@oracle.com>
-Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <56DE1AF1.40107@oracle.com>
-Sender: owner-linux-mm@kvack.org
-To: khalid.aziz@oracle.com
-Cc: rob.gardner@oracle.com, corbet@lwn.net, akpm@linux-foundation.org, dingel@linux.vnet.ibm.com, bob.picco@oracle.com, kirill.shutemov@linux.intel.com, aneesh.kumar@linux.vnet.ibm.com, aarcange@redhat.com, arnd@arndb.de, sparclinux@vger.kernel.org, mhocko@suse.cz, chris.hyser@oracle.com, richard@nod.at, vbabka@suse.cz, koct9i@gmail.com, oleg@redhat.com, gthelen@google.com, jack@suse.cz, xiexiuqi@huawei.com, Vineet.Gupta1@synopsys.com, luto@kernel.org, ebiederm@xmission.com, bsegall@google.com, geert@linux-m68k.org, dave@stgolabs.net, adobriyan@gmail.com, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+From: Chunyan Zhang <zhang.chunyan@linaro.org>
+Subject: [RESEND PATCH V4 0/4] Introduce CoreSight STM support
+Date: Tue,  8 Mar 2016 14:33:51 +0800
+Message-ID: <1457418835-31417-1-git-send-email-zhang.chunyan@linaro.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: mathieu.poirier@linaro.org, alexander.shishkin@linux.intel.com
+Cc: mike.leach@arm.com, Michael.Williams@arm.com, al.grant@arm.com, tor@ti.com, nicolas.guion@st.com, pratikp@codeaurora.org, zhang.lyra@gmail.com, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Khalid Aziz <khalid.aziz@oracle.com>
-Date: Mon, 7 Mar 2016 17:21:05 -0700
+This patchset adds support for the CoreSight STM IP block.
 
-> Can we enable ADI support for swappable pages in a subsequent update
-> after the core functionality is stable on mlock'd pages?
+In the fourth version, comments from various people have been
+addressed.  Representing configurations where channels are shared
+between multiple masterIDs has been kept unchanged from the previous
+version because a viable alternative hasn't been suggested.
 
-I already said no.
+This RESEND PATCH 1/4 depends on the patch [3] which has been
+merged into linux-next.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Changes from V3:
+ - Removed ioctl get_options interface from the generic STM code and CoreSight STM driver.
+ - Removed 'write_max' from the structure 'stm_drvdata', and changed 'write_64bit' to 'write_bytes'.
+ - Revised stm_fundamental_data_size() to return the fundamental data size instead of 0/1.
+ - Removed stm_remove() from the driver.
+ - Revised the return value of ::packet() callback function according to [2].
+ - Modified stm_send() to send one STP packet at a time.
+ - Added comments to invariant/guaranteed CoreSight STM transaction mode.
+
+Changes from V2:
+ - Changed to return -EFAULT if failed on the command STP_GET_OPTIONS.
+ - Used Alex's patch [1] instead of the last 2/6.
+ - Removed the while loop from stm_send(), since the packet size passed
+   to it isn't larger than 4 bytes on 32-bit system and 8 bytes on
+   64-bit system.
+ - Removed stm_send_64bit(), since the process of packets on 64-bit
+   CS-STM should be basically the same with on 32-bit system, except the 
+   maximum length of writing STM at a time.
+ - Removed the support of writing 64-bit to CoreSight STM buffer at a time
+   on 32-bit ARM architecture according to an ARM engineer suggestion.  As
+   he said that the STM might receive a 64-bit write, or might receive a
+   pair of 32-bit writes to the two addressed words in either order.
+   So 64-bit write isn't guaranteed to work on the ARM 32-bit architecture.
+
+Changes from v1:
+ - Added a definition of coresight_simple_func() in CS-STM driver to
+   avoid the kbuild test robot error for the time being.  This
+   modification will be removed when merging the code in which the
+   coresight_simple_func() has been moved to the header file.
+ - Calculate the channel number according to the channel memory space size.
+
+
+Thanks,
+Chunyan
+
+[1] https://lkml.org/lkml/2016/2/4/652
+[2] https://lkml.org/lkml/2016/2/12/397
+[3] https://lkml.org/lkml/2015/12/22/348
+
+Chunyan Zhang (1):
+  Documentations: Add explanations of the case for non-configurable
+    masters
+
+Mathieu Poirier (2):
+  stm class: provision for statically assigned masterIDs
+  coresight-stm: Bindings for System Trace Macrocell
+
+Pratik Patel (1):
+  coresight-stm: adding driver for CoreSight STM component
+
+ .../ABI/testing/sysfs-bus-coresight-devices-stm    |  53 ++
+ .../devicetree/bindings/arm/coresight.txt          |  28 +
+ Documentation/trace/coresight.txt                  |  37 +-
+ Documentation/trace/stm.txt                        |   6 +
+ drivers/hwtracing/coresight/Kconfig                |  11 +
+ drivers/hwtracing/coresight/Makefile               |   1 +
+ drivers/hwtracing/coresight/coresight-stm.c        | 890 +++++++++++++++++++++
+ drivers/hwtracing/stm/core.c                       |  17 +-
+ drivers/hwtracing/stm/policy.c                     |  18 +-
+ include/linux/coresight-stm.h                      |   6 +
+ include/linux/stm.h                                |   8 +
+ include/uapi/linux/coresight-stm.h                 |  21 +
+ 12 files changed, 1090 insertions(+), 6 deletions(-)
+ create mode 100644 Documentation/ABI/testing/sysfs-bus-coresight-devices-stm
+ create mode 100644 drivers/hwtracing/coresight/coresight-stm.c
+ create mode 100644 include/linux/coresight-stm.h
+ create mode 100644 include/uapi/linux/coresight-stm.h
+
+-- 
+1.9.1
+
