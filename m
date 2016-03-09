@@ -1,24 +1,22 @@
 From: Yaniv Gardi <ygardi@codeaurora.org>
-Subject: [PATCH v6] scsi: ufs: add ioctl interface for query request
-Date: Wed,  9 Mar 2016 15:44:55 +0200
-Message-ID: <1457531101-3464-1-git-send-email-ygardi@codeaurora.org>
+Subject: [PATCH v7] scsi: ufs: add ioctl interface for query request
+Date: Wed,  9 Mar 2016 16:11:33 +0200
+Message-ID: <1457532699-11487-1-git-send-email-ygardi@codeaurora.org>
 Return-path: <linux-arm-msm-owner@vger.kernel.org>
 Sender: linux-arm-msm-owner@vger.kernel.org
 To: James.Bottomley@HansenPartnership.com
-Cc: linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-arm-msm@vger.kernel.org, santoshsy@gmail.com, linux-scsi-owner@vger.kernel.org, ygardi@codeaurora.org, Dolev Raviv <draviv@codeaurora.org>, Noa Rubens <noag@codeaurora.org>, Raviv Shvili <rshvili@codeaurora.org>, Gilad Broner <gbroner@codeaurora.org>, Vinayak Holikatti <vinholikatti@gmail.com>, "James E.J. Bottomley" <JBottomley@odin.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Michael Neuling <mikey@neuling.org>, "Matthew R. Ochs" <mrochs@linux.vnet.ibm.com>, Subhash Jadavani <subhashj@codeaurora.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
+Cc: linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-arm-msm@vger.kernel.org, santoshsy@gmail.com, linux-scsi-owner@vger.kernel.org, ygardi@codeaurora.org, Dolev Raviv <draviv@codeaurora.org>, Gilad Broner <gbroner@codeaurora.org>, Vinayak Holikatti <vinholikatti@gmail.com>, "James E.J. Bottomley" <JBottomley@odin.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Michael Neuling <mikey@neuling.org>, "Matthew R. Ochs" <mrochs@linux.vnet.ibm.com>, Wen Xiong <wenxiong@linux.vnet.ibm.com>, Subhash Jadavani <subhashj@codeaurora.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
 This patch exposes the ioctl interface for UFS driver via SCSI device
 ioctl interface. As of now UFS driver would provide the ioctl for query
 interface to connected UFS device.
 
-Reviewed-by: Arnd Bergmann <arnd@arndb.de>
 Reviewed-by: Subhash Jadavani <subhashj@codeaurora.org>
 Signed-off-by: Dolev Raviv <draviv@codeaurora.org>
-Signed-off-by: Noa Rubens <noag@codeaurora.org>
-Signed-off-by: Raviv Shvili <rshvili@codeaurora.org>
 Signed-off-by: Gilad Broner <gbroner@codeaurora.org>
 Signed-off-by: Yaniv Gardi <ygardi@codeaurora.org>
+
 ---
  drivers/scsi/ufs/ufs.h        |  53 +++--------
  drivers/scsi/ufs/ufshcd.c     | 208 +++++++++++++++++++++++++++++++++++++++++-
@@ -117,7 +115,7 @@ index b291fa6..d39410f 100644
  enum {
  	QUERY_RESULT_SUCCESS                    = 0x00,
 diff --git a/drivers/scsi/ufs/ufshcd.c b/drivers/scsi/ufs/ufshcd.c
-index da882cf..42f1e7f 100644
+index da882cf..65a9d39 100644
 --- a/drivers/scsi/ufs/ufshcd.c
 +++ b/drivers/scsi/ufs/ufshcd.c
 @@ -38,6 +38,7 @@
@@ -206,7 +204,7 @@ index da882cf..42f1e7f 100644
 +		}
 +
 +		length = ioctl_data.buf_size;
-+		err = ufshcd_query_descriptor(hba, ioctl_data.opcode,
++		err = ufshcd_query_descriptor_retry(hba, ioctl_data.opcode,
 +				ioctl_data.idn, index, 0, desc, &length);
 +		break;
 +	case UPIU_QUERY_OPCODE_READ_ATTR:
@@ -515,3 +513,6 @@ index 0000000..8e4baff
 +#endif /* UAPI_UFS_H_ */
 -- 
 1.8.5.2
+
+-- 
+QUALCOMM ISRAEL, on behalf of Qualcomm Innovation Center, Inc. is a member of Code Aurora Forum, hosted by The Linux Foundation
