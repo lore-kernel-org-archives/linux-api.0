@@ -1,66 +1,80 @@
-From: ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org
-Subject: Re: [PATCH v7] scsi: ufs: add ioctl interface for query request
-Date: Wed, 9 Mar 2016 20:52:59 -0000
-Message-ID: <551d9d1ae5418dd2dfa91aa6db69deb9.squirrel@us.codeaurora.org>
-References: <1457532699-11487-1-git-send-email-ygardi@codeaurora.org>
-    <20160309162943.GC21181@kroah.com>
-    <43117fbc4f3a305acd0f4975a633934a.squirrel@us.codeaurora.org>
-    <20160309201808.GA24568@kroah.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160309201808.GA24568-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, james.bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, santoshsy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-scsi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dolev Raviv <draviv-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Gilad Broner <gbroner-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Vinayak Holikatti <vinholikatti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "James E.J. Bottomley" <jbottomley-wo1vFcy6AUs@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Michael Neuling <mikey-/owAOxkjmzZAfugRpC6u6w@public.gmane.org>, "Matthew R. Ochs" <mrochs-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Wen Xiong <wenxiong-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Subhash Jadavani <subhashj-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: Dave Hansen <dave@sr71.net>
+Subject: [PATCH 0/9] System Calls for Memory Protection Keys
+Date: Wed, 09 Mar 2016 14:00:08 -0800
+Message-ID: <20160309220008.D61AF421@viggo.jf.intel.com>
+Return-path: <linux-arch-owner@vger.kernel.org>
+Sender: linux-arch-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Dave Hansen <dave@sr71.net>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, x86@kernel.org, torvalds@linux-foundation.org, akpm@linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-> On Wed, Mar 09, 2016 at 07:09:49PM -0000, ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org wrote:
->> > On Wed, Mar 09, 2016 at 04:11:33PM +0200, Yaniv Gardi wrote:
->> >> This patch exposes the ioctl interface for UFS driver via SCSI device
->> >> ioctl interface. As of now UFS driver would provide the ioctl for
->> query
->> >> interface to connected UFS device.
->> >>
->> >> Reviewed-by: Subhash Jadavani <subhashj-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
->> >> Signed-off-by: Dolev Raviv <draviv-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
->> >> Signed-off-by: Gilad Broner <gbroner-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
->> >> Signed-off-by: Yaniv Gardi <ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
->> >
->> > What tool is going to use this ioctl?  Why does userspcae want to do
->> > something "special" with UFS devices?  Shouldn't they just be treated
->> > like any other normal block device?
->> >
->>
->> Any userspace application can be a tool.
->> We already implemented and used a user space application, that sent
->> queries to the UFS devices in order to get information and descriptors.
->
-> But do you want to do with that information?  Why does userspace care?
->
+To use memory protection keys (pkeys), an application absolutely
+needs to be able to set the pkey field in the PTE (obviously has
+to be done in-kernel) and make changes to the "rights" register
+(using unprivileged instructions).
 
-i don't really understand the subtext of your question -
-as ANY ioctl cb, we decided to implement the ioctl callback of this scsi
-device in order to get information like UNIT DESC, DEVICE DESC, FLAGs,
-ATTRIBUTES.
-When dealing with UFS devices, one should be able to read the
-characteristics of the device. why ? well, why not ?
-during development of this driver, it was useful in many cases to be able
-to communicate with the device, by simple IOCTL command, rather than
-implementing ad-hock.
+An application also needs to have an an allocator for the keys
+themselves.  If two different parts of an application both want
+to protect their data with pkeys, they first need to know which
+key to use for their individual purposes.
 
-regards,
-Yaniv
+This set introduces 5 system calls, in 3 logical groups:
 
->> Not only ioctl interface is a useful way to interact with the device,
->> we used it, and found it very helpful in varies cases.
->
-> In what case was it helpful?  Why does userspace care about ufs
-> specifics, it should just treat it like any other block device and not
-> care at all.
->
-> thanks,
->
-> greg k-h
->
+1. PTE pkey setting (sys_pkey_mprotect(), patches #1-3)
+2. Key allocation (sys_pkey_alloc() / sys_pkey_free(), patch #4)
+3. Rights register manipulation (sys_pkey_set/get(), patch #5)
+
+These patches build on top of "core" pkeys support already in the
+tip tree.  This set is specifically built on 3055e4444.
+
+I have manpages written for some of these syscalls, and have
+submitted them for review to the manpages list.
+
+This set is also available here:
+
+	git://git.kernel.org/pub/scm/linux/kernel/git/daveh/x86-pkeys.git pkeys-v028
+
+I've written a set of unit tests for these interfaces, which is
+available as the last patch in the series and integrated in to
+kselftests.
+
+=== diffstat ===
+
+Dave Hansen (9):
+      x86, pkeys: Documentation
+      x86, pkeys: add fault handling for PF_PK page fault bit
+      mm: implement new pkey_mprotect() system call
+      x86, pkeys: make mprotect_key() mask off additional vm_flags
+      x86: wire up mprotect_key() system call
+      x86, pkeys: allocation/free syscalls
+      x86, pkeys: add pkey set/get syscalls
+      pkeys: add details of system call use to Documentation/
+      x86, pkeys: add self-tests
+
+ Documentation/x86/protection-keys.txt         |   91 ++
+ arch/alpha/include/uapi/asm/mman.h            |    5 +
+ arch/mips/include/uapi/asm/mman.h             |    5 +
+ arch/parisc/include/uapi/asm/mman.h           |    5 +
+ arch/x86/entry/syscalls/syscall_32.tbl        |    5 +
+ arch/x86/entry/syscalls/syscall_64.tbl        |    5 +
+ arch/x86/include/asm/mmu.h                    |    8 +
+ arch/x86/include/asm/mmu_context.h            |   25 +-
+ arch/x86/include/asm/pkeys.h                  |   83 +-
+ arch/x86/kernel/fpu/xstate.c                  |   73 +-
+ arch/x86/mm/fault.c                           |    9 +
+ arch/x86/mm/pkeys.c                           |   40 +-
+ arch/xtensa/include/uapi/asm/mman.h           |    5 +
+ include/linux/pkeys.h                         |   39 +-
+ include/uapi/asm-generic/mman-common.h        |    5 +
+ mm/mprotect.c                                 |  133 +-
+ tools/testing/selftests/x86/Makefile          |    2 +-
+ tools/testing/selftests/x86/pkey-helpers.h    |  186 +++
+ tools/testing/selftests/x86/protection_keys.c | 1098 +++++++++++++++++
+ 19 files changed, 1790 insertions(+), 32 deletions(-)
+
+Cc: linux-api@vger.kernel.org
+Cc: linux-arch@vger.kernel.org
+Cc: linux-mm@kvack.org
+Cc: x86@kernel.org
+Cc: torvalds@linux-foundation.org
+Cc: akpm@linux-foundation.org
