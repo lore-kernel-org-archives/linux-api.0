@@ -1,8 +1,8 @@
 From: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v6 10/11] tpm: Add documentation for the
-	tpm_vtpm device driver
-Date: Wed,  9 Mar 2016 12:39:29 -0500
-Message-ID: <1457545170-30120-11-git-send-email-stefanb@linux.vnet.ibm.com>
+Subject: [PATCH v6 09/11] tpm: Initialize TPM and get
+	durations and timeouts
+Date: Wed,  9 Mar 2016 12:39:28 -0500
+Message-ID: <1457545170-30120-10-git-send-email-stefanb@linux.vnet.ibm.com>
 References: <1457545170-30120-1-git-send-email-stefanb@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,81 +21,192 @@ To: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 Cc: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Add documentation for the tpm_vtpm device driver that implements
-support for providing TPM functionality to Linux containers.
-
-Parts of this documentation were recycled from the Xen vTPM
-device driver documentation.
+Add the retrieval of TPM 1.2 durations and timeouts. Since this requires
+the startup of the TPM, do this for TPM 1.2 and TPM 2.
 
 Signed-off-by: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 CC: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 CC: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 ---
- Documentation/tpm/tpm_vtpm.txt | 54 ++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 54 insertions(+)
- create mode 100644 Documentation/tpm/tpm_vtpm.txt
+ drivers/char/tpm/tpm_vtpm.c | 94 ++++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 85 insertions(+), 9 deletions(-)
 
-diff --git a/Documentation/tpm/tpm_vtpm.txt b/Documentation/tpm/tpm_vtpm.txt
-new file mode 100644
-index 0000000..d193573
---- /dev/null
-+++ b/Documentation/tpm/tpm_vtpm.txt
-@@ -0,0 +1,54 @@
-+Virtual TPM Device Driver for Linux Containers
+diff --git a/drivers/char/tpm/tpm_vtpm.c b/drivers/char/tpm/tpm_vtpm.c
+index 0da311b..4f75248 100644
+--- a/drivers/char/tpm/tpm_vtpm.c
++++ b/drivers/char/tpm/tpm_vtpm.c
+@@ -45,8 +45,11 @@ struct vtpm_dev {
+ 	size_t req_len;              /* length of queued TPM request */
+ 	size_t resp_len;             /* length of queued TPM response */
+ 	u8 buffer[TPM_BUFSIZE];      /* request/response buffer */
 +
-+Authors: Stefan Berger (IBM)
++	struct work_struct work;     /* task that retrieves TPM timeouts */
+ };
+ 
++static struct workqueue_struct *workqueue;
+ 
+ static void vtpm_delete_device(struct vtpm_dev *vtpm_dev);
+ 
+@@ -67,6 +70,15 @@ static ssize_t vtpm_fops_read(struct file *filp, char __user *buf,
+ 	size_t len;
+ 	int sig, rc;
+ 
++	mutex_lock(&vtpm_dev->buf_lock);
 +
-+This document describes the virtual Trusted Platform Module (vTPM) device
-+driver for Linux containers.
++	if (!(vtpm_dev->state & STATE_OPENED_FLAG)) {
++		mutex_unlock(&vtpm_dev->buf_lock);
++		return -EPIPE;
++	}
 +
-+INTRODUCTION
-+------------
++	mutex_unlock(&vtpm_dev->buf_lock);
 +
-+The goal of this work is to provide TPM functionality to each Linux
-+container. This allows programs to interact with a TPM in a container
-+the same way they interact with a TPM on the physical system. Each
-+container gets its own unique, emulated, software TPM.
+ 	sig = wait_event_interruptible(vtpm_dev->wq, vtpm_dev->req_len != 0);
+ 	if (sig)
+ 		return -EINTR;
+@@ -110,6 +122,11 @@ static ssize_t vtpm_fops_write(struct file *filp, const char __user *buf,
+ 
+ 	mutex_lock(&vtpm_dev->buf_lock);
+ 
++	if (!(vtpm_dev->state & STATE_OPENED_FLAG)) {
++		mutex_unlock(&vtpm_dev->buf_lock);
++		return -EPIPE;
++	}
 +
+ 	if (count > sizeof(vtpm_dev->buffer) ||
+ 	    !(vtpm_dev->state & STATE_WAIT_RESPONSE_FLAG)) {
+ 		mutex_unlock(&vtpm_dev->buf_lock);
+@@ -154,6 +171,9 @@ static unsigned int vtpm_fops_poll(struct file *filp, poll_table *wait)
+ 	if (vtpm_dev->req_len)
+ 		ret |= POLLIN | POLLRDNORM;
+ 
++	if (!(vtpm_dev->state & STATE_OPENED_FLAG))
++		ret |= POLLHUP;
 +
-+DESIGN
-+------
+ 	mutex_unlock(&vtpm_dev->buf_lock);
+ 
+ 	return ret;
+@@ -341,6 +361,54 @@ static const struct tpm_class_ops vtpm_tpm_ops = {
+ };
+ 
+ /*
++ * Code related to the startup of the TPM 2 and startup of TPM 1.2 +
++ * retrieval of timeouts and durations.
++ */
 +
-+To make an emulated software TPM available to each container, the container
-+management stack needs to create a device pair consisting of a client TPM
-+character device /dev/tpmX (with X=0,1,2...) and a 'server side' file
-+descriptor. The former is moved into the container by creating a character
-+device with the appropriate major and minor numbers while the file descriptor
-+is passed to the TPM emulator. Software inside the container can then send
-+TPM commands using the character device and the emulator will receive the
-+commands via the file descriptor and use it for sending back responses.
++static void vtpm_dev_work(struct work_struct *work)
++{
++	struct vtpm_dev *vtpm_dev = container_of(work, struct vtpm_dev, work);
++	int rc;
 +
-+To support this, the virtual TPM device driver provides a device /dev/vtpmx
-+that is used to create device pairs using an ioctl. The ioctl takes as
-+an input flags for configuring the device. The flags  for example indicate
-+whether TPM 1.2 or TPM 2 functionality is supported by the TPM emulator.
-+The result of the ioctl are the file descriptor for the 'server side'
-+as well as the major and minor numbers of the character device that was created.
-+Besides that the number of the TPM character device is return. If for
-+example /dev/tpm10 was created, the number (dev_num) 10 is returned.
++	if (vtpm_dev->flags & VTPM_FLAG_TPM2)
++		rc = tpm2_startup(vtpm_dev->chip, TPM2_SU_CLEAR);
++	else
++		rc = tpm_get_timeouts(vtpm_dev->chip);
 +
-+The following is the data structure of the VTPM_NEW_DEV ioctl:
++	if (rc)
++		goto err;
 +
-+struct vtpm_new_dev {
-+	__u32 flags;         /* input */
-+	__u32 dev_num;       /* output */
-+	__u32 fd;            /* output */
-+	__u32 major;         /* output */
-+	__u32 minor;         /* output */
-+};
++	rc = tpm_chip_register(vtpm_dev->chip);
++	if (rc)
++		goto err;
 +
-+Note that if unsupported flags are passed to the device driver, the ioctl will
-+fail and errno will be set to EOPNOTSUPP. Similarly, if an unsupported ioctl is
-+called on the device driver, the ioctl will fail and errno will be set to
-+ENOTTY.
++	return;
 +
-+See /usr/include/linux/vtpm.h for definitions related to the public interface
-+of this vTPM device driver.
++err:
++	vtpm_fops_undo_open(vtpm_dev);
++}
++
++/*
++ * vtpm_dev_work_stop: make sure the work has finished
++ *
++ * This function is useful when user space closed the fd
++ * while the driver still determines timeouts.
++ */
++static void vtpm_dev_work_stop(struct vtpm_dev *vtpm_dev)
++{
++	vtpm_fops_undo_open(vtpm_dev);
++	flush_work(&vtpm_dev->work);
++}
++
++/*
++ * vtpm_dev_work_start: Schedule the work for TPM 1.2 & 2 initialization
++ */
++static inline void vtpm_dev_work_start(struct vtpm_dev *vtpm_dev)
++{
++	queue_work(workqueue, &vtpm_dev->work);
++}
++
++/*
+  * Code related to creation and deletion of device pairs
+  */
+ static struct vtpm_dev *vtpm_create_vtpm_dev(void)
+@@ -355,6 +423,7 @@ static struct vtpm_dev *vtpm_create_vtpm_dev(void)
+ 
+ 	init_waitqueue_head(&vtpm_dev->wq);
+ 	mutex_init(&vtpm_dev->buf_lock);
++	INIT_WORK(&vtpm_dev->work, vtpm_dev_work);
+ 
+ 	chip = tpm_chip_alloc(NULL, &vtpm_tpm_ops);
+ 	if (IS_ERR(chip)) {
+@@ -424,9 +493,7 @@ static struct file *vtpm_create_device(
+ 	if (vtpm_dev->flags & VTPM_FLAG_TPM2)
+ 		vtpm_dev->chip->flags |= TPM_CHIP_FLAG_TPM2;
+ 
+-	rc = tpm_chip_register(vtpm_dev->chip);
+-	if (rc)
+-		goto err_vtpm_fput;
++	vtpm_dev_work_start(vtpm_dev);
+ 
+ 	vtpm_new_dev->fd = fd;
+ 	vtpm_new_dev->major = MAJOR(vtpm_dev->chip->dev.devt);
+@@ -435,12 +502,6 @@ static struct file *vtpm_create_device(
+ 
+ 	return file;
+ 
+-err_vtpm_fput:
+-	put_unused_fd(fd);
+-	fput(file);
+-
+-	return ERR_PTR(rc);
+-
+ err_put_unused_fd:
+ 	put_unused_fd(fd);
+ 
+@@ -455,6 +516,8 @@ err_delete_vtpm_dev:
+  */
+ static void vtpm_delete_device(struct vtpm_dev *vtpm_dev)
+ {
++	vtpm_dev_work_stop(vtpm_dev);
++
+ 	tpm_chip_unregister(vtpm_dev->chip);
+ 
+ 	vtpm_fops_undo_open(vtpm_dev);
+@@ -549,11 +612,24 @@ static int __init vtpm_module_init(void)
+ 		return rc;
+ 	}
+ 
++	workqueue = create_workqueue("tpm-vtpm");
++	if (!workqueue) {
++		pr_err("couldn't create workqueue\n");
++		rc = -ENOMEM;
++		goto err_vtpmx_cleanup;
++	}
++
+ 	return 0;
++
++err_vtpmx_cleanup:
++	vtpmx_cleanup();
++
++	return rc;
+ }
+ 
+ static void __exit vtpm_module_exit(void)
+ {
++	destroy_workqueue(workqueue);
+ 	vtpmx_cleanup();
+ }
+ 
 -- 
 2.4.3
 
