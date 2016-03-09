@@ -1,7 +1,7 @@
 From: ygardi@codeaurora.org
 Subject: Re: [PATCH v7] scsi: ufs: add ioctl interface for query request
-Date: Wed, 9 Mar 2016 19:09:46 -0000
-Message-ID: <046fc2d00e51f331a6bbc00553cc1f9c.squirrel@us.codeaurora.org>
+Date: Wed, 9 Mar 2016 19:09:49 -0000
+Message-ID: <43117fbc4f3a305acd0f4975a633934a.squirrel@us.codeaurora.org>
 References: <1457532699-11487-1-git-send-email-ygardi@codeaurora.org>
     <20160309162943.GC21181@kroah.com>
 Mime-Version: 1.0
