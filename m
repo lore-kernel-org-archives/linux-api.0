@@ -1,67 +1,50 @@
-From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH v7] scsi: ufs: add ioctl interface for query request
-Date: Wed, 9 Mar 2016 14:47:16 -0800
-Message-ID: <20160309224716.GA30523@kroah.com>
-References: <1457532699-11487-1-git-send-email-ygardi@codeaurora.org>
- <20160309162943.GC21181@kroah.com>
- <43117fbc4f3a305acd0f4975a633934a.squirrel@us.codeaurora.org>
- <20160309201808.GA24568@kroah.com>
- <551d9d1ae5418dd2dfa91aa6db69deb9.squirrel@us.codeaurora.org>
+From: Theodore Ts'o <tytso@mit.edu>
+Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of
+ blocks
+Date: Wed, 9 Mar 2016 18:08:19 -0500
+Message-ID: <20160309230819.GB3949@thunk.org>
+References: <20160302040947.16685.42926.stgit@birch.djwong.org>
+ <CA+55aFx_NPn0VYk=+Ad5S_r=D6J1xFmWmf7JzQ7RmkwKmdkYOg@mail.gmail.com>
+ <20160302225601.GB21890@birch.djwong.org>
+ <CA+55aFyNPnjJ-Nsu3bMr+HuLQnkj1B8FMddNnXW7HJqxdUzJmQ@mail.gmail.com>
+ <yq1bn6v8mqg.fsf@sermon.lab.mkp.net>
+ <20160303180924.GA4116@infradead.org>
+ <yq1vb5375oh.fsf@sermon.lab.mkp.net>
+ <20160303223952.GE24012@thunk.org>
+ <20160303231050.GU29057@dastard>
+ <CAC6JEv-HeAoRxSmVghGvbX7G92yH00k-5F-48qEW13vAB1Q99g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <551d9d1ae5418dd2dfa91aa6db69deb9.squirrel-tfvNlV/SBG3LzYW4gMljz9i2O/JbrIOy@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org
-Cc: james.bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, santoshsy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-scsi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dolev Raviv <draviv-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Gilad Broner <gbroner-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Vinayak Holikatti <vinholikatti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "James E.J. Bottomley" <jbottomley-wo1vFcy6AUs@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Michael Neuling <mikey-/owAOxkjmzZAfugRpC6u6w@public.gmane.org>, "Matthew R. Ochs" <mrochs-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Wen Xiong <wenxiong-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Subhash Jadavani <subhashj-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAC6JEv-HeAoRxSmVghGvbX7G92yH00k-5F-48qEW13vAB1Q99g@mail.gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Gregory Farnum <greg@gregs42.com>
+Cc: Dave Chinner <david@fromorbit.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Christoph Hellwig <hch@infradead.org>, Linus Torvalds <torvalds@linux-foundation.org>, "Darrick J. Wong" <darrick.wong@oracle.com>, Jens Axboe <axboe@kernel.dk>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, shane.seymour@hpe.com, Bruce Fields <bfields@fieldses.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 09, 2016 at 08:52:59PM -0000, ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org wrote:
-> > On Wed, Mar 09, 2016 at 07:09:49PM -0000, ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org wrote:
-> >> > On Wed, Mar 09, 2016 at 04:11:33PM +0200, Yaniv Gardi wrote:
-> >> >> This patch exposes the ioctl interface for UFS driver via SCSI device
-> >> >> ioctl interface. As of now UFS driver would provide the ioctl for
-> >> query
-> >> >> interface to connected UFS device.
-> >> >>
-> >> >> Reviewed-by: Subhash Jadavani <subhashj-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
-> >> >> Signed-off-by: Dolev Raviv <draviv-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
-> >> >> Signed-off-by: Gilad Broner <gbroner-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
-> >> >> Signed-off-by: Yaniv Gardi <ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
-> >> >
-> >> > What tool is going to use this ioctl?  Why does userspcae want to do
-> >> > something "special" with UFS devices?  Shouldn't they just be treated
-> >> > like any other normal block device?
-> >> >
-> >>
-> >> Any userspace application can be a tool.
-> >> We already implemented and used a user space application, that sent
-> >> queries to the UFS devices in order to get information and descriptors.
-> >
-> > But do you want to do with that information?  Why does userspace care?
-> >
-> 
-> i don't really understand the subtext of your question -
-> as ANY ioctl cb, we decided to implement the ioctl callback of this scsi
-> device in order to get information like UNIT DESC, DEVICE DESC, FLAGs,
-> ATTRIBUTES.
-> When dealing with UFS devices, one should be able to read the
-> characteristics of the device. why ? well, why not ?
+On Wed, Mar 09, 2016 at 02:20:31PM -0800, Gregory Farnum wrote:
+> I really am sensitive to the security concerns, just know that if it's
+> a permanent blocker you're essentially blocking out a growing category
+> of disk users (who run on an awfully large number of disks!).
 
-Why aren't those characteristics just exported as sysfs attributes under
-control by the UFS controller driver?  Why do you need/want an ioctl for
-this?
+Or they just have to use kernels with out-of-tree patches installed.  :-P
 
-> during development of this driver, it was useful in many cases to be able
-> to communicate with the device, by simple IOCTL command, rather than
-> implementing ad-hock.
+If you want to consider how many disks Google has that are using this
+patch, I probably could have appealed to Linus and asked him to accept
+the patch if I forced the issue.  The only reason why I didn't was
+that people like Ric Wheeler threatened to have distro-specific
+patches to disable the feature, and at the end of the day, I didn't
+care that much.  After all, if it makes it harder for large scale
+cloud companies besides Google to create more efficient userspace
+cluster file systems, it's not like I was keeping the patch a secret.
 
-Do other storage busses have these types of "custom" ioctls for their
-bus-type alone?  For simple attributes like this, shouldn't you be using
-sysfs instead so that it is much easier for userspace tools to get
-access to them?
+So ultimately, if the Ceph developers want to make a case to Red Hat
+management that this is important, great.  If not, it's not that hard
+for those people who need the patch and who are running large cloud
+infrastructures to simply apply the out-of-tree patch if they need it.
 
-thanks,
+Cheers,
 
-greg k-h
+   	     	     	 	      		  - Ted
+
