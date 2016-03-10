@@ -1,142 +1,107 @@
-From: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] [RFC] add manpages for Memory Protection Keys
-Date: Thu, 10 Mar 2016 11:43:24 -0800
-Message-ID: <56E1CE5C.4070206@intel.com>
-References: <1457559619-16510-1-git-send-email-dave.hansen@intel.com>
- <56E1A9CD.9030903@gmail.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] epoll: add exclusive wakeups flag
+Date: Thu, 10 Mar 2016 20:47:01 +0100
+Message-ID: <56E1CF35.2070005@gmail.com>
+References: <cover.1449523436.git.jbaron@akamai.com>
+ <56A9C03B.7020104@gmail.com> <56AA56A2.3000700@akamai.com>
+ <56AB1F6C.7000609@gmail.com> <56E1C2B5.2040905@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <56E1A9CD.9030903-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, dave-gkUM19QKKo4@public.gmane.org
-Cc: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <56E1C2B5.2040905-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, viro-rfM+Q5joDG/XmaaqVzeoHQ@public.gmane.org, normalperson-rMlxZR9MS24@public.gmane.org, m@silodev.com, corbet-T1hC0tSOHrs@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, hagen-GvnIQ6b/HdU@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Michael, thanks again for the detailed review.  I've tried to respond to
-all your comments.  Here's an incremental patch from the last one.  I'll
-also resend the entire thing shortly.
+Hi Jason,
 
-	https://www.sr71.net/~dave/intel/pkey-man-20160310.0.patch
+> Ok, here's some updated text:
+>=20
+> EPOLLEXCLUSIVE
+>=20
+> Sets an exclusive wakeup mode for the epfd file descriptor that is be=
+ing
+> attached to the target file descriptor, fd. When a wakeup event occur=
+s
+> and multiple epfd file descriptors are attached to the same target fi=
+le
+> using EPOLLEXCLUSIVE, one or more epfds will receive an event with
+> epoll_wait(2). The default in this scenario (when EPOLLEXCLUSIVE is n=
+ot
+> set) is for all epfds to receive an event.
+>=20
+> The events supported by EPOLLEXCLUSIVE are: EPOLLIN, EPOLLOUT, EPOLLE=
+RR,
+> EPOLLHUP, EPOLLWAKEUP, and EPOLLET. epoll_wait(2) will always wait fo=
+r
+> EPOLLERR and EPOLLHUP; it is not necessary to set it in events. If
+> EPOLLEXCLUSIVE is set using epoll_ctl(2), then a subsequent
+> EPOLL_CTL_MOD on the same epfd, fd pair will retrun -EINVAL. An
+> epoll_ctl(2) that specifies EPOLLEXCLUSIVE in events and specifies th=
+e
+> target file descriptor fd as an epoll instance will return -EINVAL
+> as well.
 
-Just a few questions to clarify some of your review comments below...
+So, I worked that up into the following text:
 
-On 03/10/2016 09:07 AM, Michael Kerrisk (man-pages) wrote:
-> On 03/09/2016 10:40 PM, Dave Hansen wrote:
->> +.PP
->> +.I flags
->> +may contain zero or more disable operations:
->> +.TP
->> +.B PKEY_DISABLE_ACCESS
->> +Disable all data access to memory covered by the returned protection key.
->> +.TP
->> +.B PKEY_DISABLE_WRITE
->> +Disable write access to memory covered by the returned protection key.
->> +.SH RETURN VALUE
->> +On success,
->> +.BR pkey_alloc ()
->> +returns a positive protection key value.
->> +.BR pkey_free ()
->> +returns zero.
->> +On error, \-1 is returned, and
->> +.I errno
->> +is set appropriately.
->> +.SH ERRORS
->> +.TP
->> +.B EINVAL
->> +.IR pkey ,
->> +.IR flags ,
->> +or
->> +.I access_rights
->> +is invalid.
->> +.TP
->> +.B ENOSPC
-> 
-> At the start of the following paragraph, add
-> 
-> .(RB pkey_alloc ())
-> 
-> so that the reader knows that this error applies only for that syscall.
+       EPOLLEXCLUSIVE (since Linux 4.5)
+              Sets  an  exclusive  wakeup  mode  for  the  epoll  file
+              descriptor  that  is  being  attached to the target file
+              descriptor, fd.  When a wakeup event occurs and multiple
+              epoll  file  descriptors are attached to the same target
+              file using EPOLLEXCLUSIVE, one or more of the epoll file
+              descriptors  will  receive  an event with epoll_wait(2).
+              The default in this scenario (when EPOLLEXCLUSIVE is not
+              set)  is  for  all  epoll file descriptors to receive an
+              event.  EPOLLEXCLUSIVE is thus useful for avoiding thun=E2=
+=80=90
+              dering herd problems in certain scenarios.
 
-I'm not seeing that actually affect the formatting in the resulting
-manpage as I view it.  Is that really the syntax you want?  Is there
-another example bit of syntax I should be looking for?
+              If  the  same  file  descriptor  is  in  multiple  epoll
+              instances, some with the EPOLLEXCLUSIVE flag, and others
+              without,   then   events  will  provided  to  all  epoll
+              instances that did not specify  EPOLLEXCLUSIVE,  and  at
+              least  one  of  the  epoll  instances  that  did specify
+              EPOLLEXCLUSIVE.
 
-...
-> In a previous review of the pages, I asked:
-> 
-> [[
-> And I have a question (and the answer probably should 
-> be documented in the manual page).  What happens when 
-> one signal handler interrupts the execution of another? 
-> Do pkey_set() calls in the first handler persist into the 
-> second handler? I presume not, but it would be good to 
-> be a little more explicit about this.
-> ]]
-> 
-> I think this point does need to be covered in the man page.
+              The following values may  be  specified  in  conjunction
+              with EPOLLEXCLUSIVE: EPOLLIN, EPOLLOUT, EPOLLWAKEUP, and
+              EPOLLET.  EPOLLHUP and EPOLLERR can also  be  specified,
+              but  are  ignored (as usual).  Attempts to specify other
+              values in events yield an error.  EPOLLEXCLUSIVE may  be
+              used  only  in  an  EPOLL_CTL_ADD operation; attempts to
+              employ  it  with  EPOLL_CTL_MOD  yield  an  error.    If
+              EPOLLEXCLUSIVE has set using epoll_ctl(2), then a subse=E2=
+=80=90
+              quent EPOLL_CTL_MOD on the same epfd, fd pair yields  an
+              error.  An epoll_ctl(2) that specifies EPOLLEXCLUSIVE in
+              events and specifies the target file descriptor fd as an
+              epoll  instance will likewise fail.  The error in all of
+              these cases is EINVAL.
 
-I did reword some things in response to this review comment, but not
-thoroughly enough. :)
+   ERRORS
+       EINVAL An invalid event type was specified along with  EPOLLEX=E2=
+=80=90
+              CLUSIVE in events.
 
-How about the following as a change to the existing second paragraph?
+       EINVAL op was EPOLL_CTL_MOD and events included EPOLLEXCLUSIVE.
 
-The effects of a call to
-.BR pkey_set ()
-from a signal handler will not persist when the signal handler
-returns.  This is true whether the return is to a normal,
-non-signal context, or to another signal handler.
+       EINVAL op  was  EPOLL_CTL_MOD  and  the EPOLLEXCLUSIVE flag has
+              previously been applied to this epfd, fd pair.
 
-...
->> +
->> +To use this feature, the processor must support it, and Linux
->> +must contain support for the feature on a given processor.  As of
->> +early 2016 only future Intel x86 processors are supported, and this
->> +hardware supports 16 protection keys in each process.  However,
->> +pkey 0 is used as the default key, so a maximum of 15 are available
->> +for actual application use.
-> 
-> Is there a recommended way for an application to discover whether the
-> system supports pkeys? If so, that should be documented here.
+       EINVAL EPOLLEXCLUSIVE was specified in event and fd  is  refers
+              to an epoll instance.
 
-I've added the following text:
+Is there anything that needs to be fixed in the above text?
 
-Any application wanting to use protection keys needs to be able
-to function without them.  They might be unavailable because the
-hardware the application runs on does not support them, the
-kernel code does not contain support, the kernel support has been
-disabled, or because the keys have all been allocated, perhaps by
-a library the application is using.  It is recommended that
-applications wanting to use protection keys should simply call
-.BR pkey_alloc()
-instead of attempting to detect support for the
-feature in any other way.
+Cheers,
 
-Hardware support for protection keys may be enumerated with
-the cpuid instruction.  Details on how to do this can be
-found in the Intel Software Developers Manual.  The kernel
-performs this enumeration and exposes the information in
-/proc/cpuinfo under the "flags" field.  "pku" in this field
-indicates hardware support for protection keys and "ospke"
-indicates that the kernel contains and has enabled protection
-keys support,.
+Michael
 
-...
->> +.BR pkey_mprotect (2),
->> +.BR pkey_alloc (2),
->> +.BR pkey_free (2),
->> +.BR pkey_set (2),
->> +.BR pkey_get (2),
-> 
-> Would it be possible to get a small, complete working example program
-> in one of these pages? The axample could show how pkeys override
-> traditional memory protections. I appreciate that the rest of us do
-> not yet have suitable hardware, but presumably you do.
 
-Sure, I'll include one in pkey(7).
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--=20
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
