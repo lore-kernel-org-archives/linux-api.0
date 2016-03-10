@@ -1,70 +1,91 @@
-From: Ric Wheeler <ricwheeler@gmail.com>
-Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of
- blocks
-Date: Thu, 10 Mar 2016 20:28:35 +0530
-Message-ID: <56E18B9B.5070503@gmail.com>
-References: <20160302040947.16685.42926.stgit@birch.djwong.org>
- <CA+55aFx_NPn0VYk=+Ad5S_r=D6J1xFmWmf7JzQ7RmkwKmdkYOg@mail.gmail.com>
- <20160302225601.GB21890@birch.djwong.org>
- <CA+55aFyNPnjJ-Nsu3bMr+HuLQnkj1B8FMddNnXW7HJqxdUzJmQ@mail.gmail.com>
- <yq1bn6v8mqg.fsf@sermon.lab.mkp.net> <20160303180924.GA4116@infradead.org>
- <yq1vb5375oh.fsf@sermon.lab.mkp.net> <20160303223952.GE24012@thunk.org>
- <20160303231050.GU29057@dastard>
- <CAC6JEv-HeAoRxSmVghGvbX7G92yH00k-5F-48qEW13vAB1Q99g@mail.gmail.com>
- <20160309230819.GB3949@thunk.org>
+From: ygardi@codeaurora.org
+Subject: Re: [PATCH v7] scsi: ufs: add ioctl interface for query request
+Date: Thu, 10 Mar 2016 15:52:54 -0000
+Message-ID: <5da84d4088cfc5db4e620d884e1c2920.squirrel@us.codeaurora.org>
+References: <1457532699-11487-1-git-send-email-ygardi@codeaurora.org>
+    <20160309162943.GC21181@kroah.com>
+    <43117fbc4f3a305acd0f4975a633934a.squirrel@us.codeaurora.org>
+    <20160309201808.GA24568@kroah.com>
+    <551d9d1ae5418dd2dfa91aa6db69deb9.squirrel@us.codeaurora.org>
+    <20160309224716.GA30523@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20160309230819.GB3949@thunk.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Theodore Ts'o <tytso@mit.edu>, Gregory Farnum <greg@gregs42.com>, Dave Chinner <david@fromorbit.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Christoph Hellwig <hch@infradead.org>, Linus Torvalds <torvalds@linux-foundation.org>, "Darrick J. Wong" <darrick.wong@oracle.com>, Jens Axboe <axboe@kernel.dk>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, shane.seymour@hpe.com, Bruce Fields <bfields@fieldses.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, Eric Sandeen <esandeen@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20160309224716.GA30523@kroah.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Greg KH <gregkh@linuxfoundation.org>
+Cc: ygardi@codeaurora.org, james.bottomley@hansenpartnership.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-arm-msm@vger.kernel.org, santoshsy@gmail.com, linux-scsi-owner@vger.kernel.org, Dolev Raviv <draviv@codeaurora.org>, Gilad Broner <gbroner@codeaurora.org>, Vinayak Holikatti <vinholikatti@gmail.com>, "James E.J. Bottomley" <jbottomley@odin.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Michael Neuling <mikey@neuling.org>, "Matthew R. Ochs" <mrochs@linux.vnet.ibm.com>, Wen Xiong <wenxiong@linux.vnet.ibm.com>, Subhash Jadavani <subhashj@codeaurora.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 03/10/2016 04:38 AM, Theodore Ts'o wrote:
-> On Wed, Mar 09, 2016 at 02:20:31PM -0800, Gregory Farnum wrote:
->> I really am sensitive to the security concerns, just know that if it's
->> a permanent blocker you're essentially blocking out a growing category
->> of disk users (who run on an awfully large number of disks!).
-> Or they just have to use kernels with out-of-tree patches installed.  :-P
+> On Wed, Mar 09, 2016 at 08:52:59PM -0000, ygardi@codeaurora.org wrote:
+>> > On Wed, Mar 09, 2016 at 07:09:49PM -0000, ygardi@codeaurora.org wrote:
+>> >> > On Wed, Mar 09, 2016 at 04:11:33PM +0200, Yaniv Gardi wrote:
+>> >> >> This patch exposes the ioctl interface for UFS driver via SCSI
+>> device
+>> >> >> ioctl interface. As of now UFS driver would provide the ioctl for
+>> >> query
+>> >> >> interface to connected UFS device.
+>> >> >>
+>> >> >> Reviewed-by: Subhash Jadavani <subhashj@codeaurora.org>
+>> >> >> Signed-off-by: Dolev Raviv <draviv@codeaurora.org>
+>> >> >> Signed-off-by: Gilad Broner <gbroner@codeaurora.org>
+>> >> >> Signed-off-by: Yaniv Gardi <ygardi@codeaurora.org>
+>> >> >
+>> >> > What tool is going to use this ioctl?  Why does userspcae want to
+>> do
+>> >> > something "special" with UFS devices?  Shouldn't they just be
+>> treated
+>> >> > like any other normal block device?
+>> >> >
+>> >>
+>> >> Any userspace application can be a tool.
+>> >> We already implemented and used a user space application, that sent
+>> >> queries to the UFS devices in order to get information and
+>> descriptors.
+>> >
+>> > But do you want to do with that information?  Why does userspace care?
+>> >
+>>
+>> i don't really understand the subtext of your question -
+>> as ANY ioctl cb, we decided to implement the ioctl callback of this scsi
+>> device in order to get information like UNIT DESC, DEVICE DESC, FLAGs,
+>> ATTRIBUTES.
+>> When dealing with UFS devices, one should be able to read the
+>> characteristics of the device. why ? well, why not ?
 >
-> If you want to consider how many disks Google has that are using this
-> patch, I probably could have appealed to Linus and asked him to accept
-> the patch if I forced the issue.  The only reason why I didn't was
-> that people like Ric Wheeler threatened to have distro-specific
-> patches to disable the feature, and at the end of the day, I didn't
-> care that much.  After all, if it makes it harder for large scale
-> cloud companies besides Google to create more efficient userspace
-> cluster file systems, it's not like I was keeping the patch a secret.
->
-> So ultimately, if the Ceph developers want to make a case to Red Hat
-> management that this is important, great.  If not, it's not that hard
-> for those people who need the patch and who are running large cloud
-> infrastructures to simply apply the out-of-tree patch if they need it.
->
-> Cheers,
->
->     	     	     	 	      		  - Ted
+> Why aren't those characteristics just exported as sysfs attributes under
+> control by the UFS controller driver?  Why do you need/want an ioctl for
+> this?
 >
 
-What was objectionable at the time this patch was raised years back (not just to 
-me, but to pretty much every fs developer at LSF/MM that year) centered on the 
-concern that this would be viewed as a "performance" mode and we get pressure to 
-support this for non-priveleged users. It gives any user effectively the ability 
-to read the block device content for previously allocated data without restriction.
+Hi greg k-h,
 
-At the time, I also don't recall seeing the patch posted on upstream lists for 
-debate or justification.
+in our code, we used the IOCTL during runtime, in order to determine some
+information about the RPMB well known lun.
+with the rpmb lun ID we could then go to /dev/sgX and issue
+UFS_IOCTL_QUERY to this lun and get the data -
+reading the QUERY_DESC_IDN_GEOMETRY descriptor and reading the
+QUERY_DESC_IDN_UNIT descriptor.
 
-As we discussed a few weeks back, I don't object to having support for doing 
-this in carefully controlled ways for things like user space file systems. In 
-effect, the problem of preventing other people's data being handed over to the 
-end user is taken on by that layer of code. I suspect that fits the use case at 
-google and Ceph both.
+this was crucial to the work we do in RPMB.
 
-Regards,
+thanks,
+Yaniv
 
-Ric
-
+>> during development of this driver, it was useful in many cases to be
+>> able
+>> to communicate with the device, by simple IOCTL command, rather than
+>> implementing ad-hock.
+>
+> Do other storage busses have these types of "custom" ioctls for their
+> bus-type alone?  For simple attributes like this, shouldn't you be using
+> sysfs instead so that it is much easier for userspace tools to get
+> access to them?
+>
+> thanks,
+>
+> greg k-h
+>
 
 
