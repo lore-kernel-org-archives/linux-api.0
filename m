@@ -1,48 +1,140 @@
-From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of blocks
-Date: Thu, 10 Mar 2016 10:33:49 -0800
-Message-ID: <CA+55aFyw1nN4ze3-AGGE27evOZuXnkJC9C-W5QRUR=zKHqObGg@mail.gmail.com>
-References: <20160302040947.16685.42926.stgit@birch.djwong.org>
-	<CA+55aFx_NPn0VYk=+Ad5S_r=D6J1xFmWmf7JzQ7RmkwKmdkYOg@mail.gmail.com>
-	<20160302225601.GB21890@birch.djwong.org>
-	<CA+55aFyNPnjJ-Nsu3bMr+HuLQnkj1B8FMddNnXW7HJqxdUzJmQ@mail.gmail.com>
-	<yq1bn6v8mqg.fsf@sermon.lab.mkp.net>
-	<20160303180924.GA4116@infradead.org>
-	<yq1vb5375oh.fsf@sermon.lab.mkp.net>
-	<20160303223952.GE24012@thunk.org>
-	<20160303231050.GU29057@dastard>
-	<CAC6JEv-HeAoRxSmVghGvbX7G92yH00k-5F-48qEW13vAB1Q99g@mail.gmail.com>
-	<20160309230819.GB3949@thunk.org>
-	<56E18B9B.5070503@gmail.com>
+From: ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org
+Subject: Re: [PATCH v7] scsi: ufs: add ioctl interface for query request
+Date: Thu, 10 Mar 2016 18:48:54 -0000
+Message-ID: <da1a5ccfb94345403fc4c19d0674e3d1.squirrel@us.codeaurora.org>
+References: <1457532699-11487-1-git-send-email-ygardi@codeaurora.org>
+    <20160309162943.GC21181@kroah.com>
+    <43117fbc4f3a305acd0f4975a633934a.squirrel@us.codeaurora.org>
+    <20160309201808.GA24568@kroah.com>
+    <551d9d1ae5418dd2dfa91aa6db69deb9.squirrel@us.codeaurora.org>
+    <20160309224716.GA30523@kroah.com>
+    <5da84d4088cfc5db4e620d884e1c2920.squirrel@us.codeaurora.org>
+    <20160310162429.GA29242@kroah.com>
+    <3164792fec2d8f37f48f6224a145fc1e.squirrel@us.codeaurora.org>
+    <20160310163910.GA30247@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <56E18B9B.5070503-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <20160310163910.GA30247-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Ric Wheeler <ricwheeler-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Gregory Farnum <greg-3KCAGdo1P2hBDgjK7y7TUQ@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, shane.seymour-ZPxbGqLxI0U@public.gmane.org, Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Eric Sandeen <esandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, james.bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, santoshsy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-scsi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dolev Raviv <draviv-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Gilad Broner <gbroner-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Vinayak Holikatti <vinholikatti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "James E.J. Bottomley" <jbottomley-wo1vFcy6AUs@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Michael Neuling <mikey-/owAOxkjmzZAfugRpC6u6w@public.gmane.org>, "Matthew R. Ochs" <mrochs-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Wen Xiong <wenxiong-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Subhash Jadavani <subhashj-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 10, 2016 at 6:58 AM, Ric Wheeler <ricwheeler-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> On Thu, Mar 10, 2016 at 04:29:55PM -0000, ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org wrote:
+>> > On Thu, Mar 10, 2016 at 03:52:54PM -0000, ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org wrote:
+>> >> > On Wed, Mar 09, 2016 at 08:52:59PM -0000, ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org
+>> wrote:
+>> >> >> > On Wed, Mar 09, 2016 at 07:09:49PM -0000, ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org
+>> >> wrote:
+>> >> >> >> > On Wed, Mar 09, 2016 at 04:11:33PM +0200, Yaniv Gardi wrote:
+>> >> >> >> >> This patch exposes the ioctl interface for UFS driver via
+>> SCSI
+>> >> >> device
+>> >> >> >> >> ioctl interface. As of now UFS driver would provide the
+>> ioctl
+>> >> for
+>> >> >> >> query
+>> >> >> >> >> interface to connected UFS device.
+>> >> >> >> >>
+>> >> >> >> >> Reviewed-by: Subhash Jadavani <subhashj-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+>> >> >> >> >> Signed-off-by: Dolev Raviv <draviv-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+>> >> >> >> >> Signed-off-by: Gilad Broner <gbroner-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+>> >> >> >> >> Signed-off-by: Yaniv Gardi <ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+>> >> >> >> >
+>> >> >> >> > What tool is going to use this ioctl?  Why does userspcae
+>> want
+>> >> to
+>> >> >> do
+>> >> >> >> > something "special" with UFS devices?  Shouldn't they just be
+>> >> >> treated
+>> >> >> >> > like any other normal block device?
+>> >> >> >> >
+>> >> >> >>
+>> >> >> >> Any userspace application can be a tool.
+>> >> >> >> We already implemented and used a user space application, that
+>> >> sent
+>> >> >> >> queries to the UFS devices in order to get information and
+>> >> >> descriptors.
+>> >> >> >
+>> >> >> > But do you want to do with that information?  Why does userspace
+>> >> care?
+>> >> >> >
+>> >> >>
+>> >> >> i don't really understand the subtext of your question -
+>> >> >> as ANY ioctl cb, we decided to implement the ioctl callback of
+>> this
+>> >> scsi
+>> >> >> device in order to get information like UNIT DESC, DEVICE DESC,
+>> >> FLAGs,
+>> >> >> ATTRIBUTES.
+>> >> >> When dealing with UFS devices, one should be able to read the
+>> >> >> characteristics of the device. why ? well, why not ?
+>> >> >
+>> >> > Why aren't those characteristics just exported as sysfs attributes
+>> >> under
+>> >> > control by the UFS controller driver?  Why do you need/want an
+>> ioctl
+>> >> for
+>> >> > this?
+>> >> >
+>> >>
+>> >> Hi greg k-h,
+>> >>
+>> >> in our code, we used the IOCTL during runtime, in order to determine
+>> >> some
+>> >> information about the RPMB well known lun.
+>> >> with the rpmb lun ID we could then go to /dev/sgX and issue
+>> >> UFS_IOCTL_QUERY to this lun and get the data -
+>> >> reading the QUERY_DESC_IDN_GEOMETRY descriptor and reading the
+>> >> QUERY_DESC_IDN_UNIT descriptor.
+>> >>
+>> >> this was crucial to the work we do in RPMB.
+>> >
+>> > What is RPMB?
+>> >
+>> > And again, why not just use sysfs attributes on your host controller
+>> > device?  Why does this have to be a custom ioctl?
+>> >
+>> > greg k-h
+>> >
+>>
+>> RPMB is spcial Logical Unit in the UFS device. you can read about it in
+>> the UFS spec. Greg, you are insisting on sysfs, but i can't implement it
+>> now, as i don't have the Hardware anymore, or the time.
 >
-> What was objectionable at the time this patch was raised years back (not
-> just to me, but to pretty much every fs developer at LSF/MM that year)
-> centered on the concern that this would be viewed as a "performance" mode
-> and we get pressure to support this for non-priveleged users. It gives any
-> user effectively the ability to read the block device content for previously
-> allocated data without restriction.
+> If you don't have the hardware, how are you testing this patch?
 
-The sane way to do it would be to just check permissions of the
-underlying block device.
+This patch is already tested and verified, and also was much helpful
+during development.
+Also, this patch is a few months old and was tested when previous version
+were uploaded.
+Currently HW is not available.
+>
+> And if you don't have the hardware I guess you don't need this change :)
+>
+>> This is a tested and verified code that was accepted and reviewed
+>> already,
+>> so i'm not sure what is wrong with this solution, not to say, it's
+>> already
+>> implemented, tested and verified.
+>> hope you are help us push it.
+>
+> That's a horrible reason to merge a patch that someone else is going to
+> have to support for 20+ years with an api that doesn't make much sense.
+>
+> If you don't have the hardware, then this isn't needed.  But if you do,
 
-That way, people can just set the permissions for that to whatever
-they want. If google right now uses some magical group for this, they
-could make the underlying block device be writable for that group.
+Even if currently HW is not available it doesn't mean this is not needed
+in the future again.
 
-We can do the security check at the filesystem level, because we have
-sb->s_bdev->bd_inode, and if you have read and write permissions to
-that inode, you might as well have permission to create a unsafe hole.
+> then please look into using sysfs for this, as I think that should be
+> the correct interface here, again, not some random ioctl.
+>
 
-That doesn't sound very hacky to me.
+Why sysfs makes more sense than this one ?
 
-               Linus
+
+> greg k-h
+>
