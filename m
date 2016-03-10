@@ -1,186 +1,81 @@
-From: Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] epoll: add exclusive wakeups flag
-Date: Thu, 10 Mar 2016 15:40:34 -0500
-Message-ID: <56E1DBC2.6040109@akamai.com>
-References: <cover.1449523436.git.jbaron@akamai.com>
- <56A9C03B.7020104@gmail.com> <56AA56A2.3000700@akamai.com>
- <56AB1F6C.7000609@gmail.com> <56E1C2B5.2040905@akamai.com>
- <56E1D1D7.8040000@gmail.com>
+From: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of
+ blocks
+Date: Thu, 10 Mar 2016 16:47:04 -0500
+Message-ID: <20160310214704.GA8890@thunk.org>
+References: <CA+55aFyNPnjJ-Nsu3bMr+HuLQnkj1B8FMddNnXW7HJqxdUzJmQ@mail.gmail.com>
+ <yq1bn6v8mqg.fsf@sermon.lab.mkp.net>
+ <20160303180924.GA4116@infradead.org>
+ <yq1vb5375oh.fsf@sermon.lab.mkp.net>
+ <20160303223952.GE24012@thunk.org>
+ <20160303231050.GU29057@dastard>
+ <CAC6JEv-HeAoRxSmVghGvbX7G92yH00k-5F-48qEW13vAB1Q99g@mail.gmail.com>
+ <20160309230819.GB3949@thunk.org>
+ <56E18B9B.5070503@gmail.com>
+ <CA+55aFyw1nN4ze3-AGGE27evOZuXnkJC9C-W5QRUR=zKHqObGg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <56E1D1D7.8040000-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CA+55aFyw1nN4ze3-AGGE27evOZuXnkJC9C-W5QRUR=zKHqObGg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
-Cc: mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, viro-rfM+Q5joDG/XmaaqVzeoHQ@public.gmane.org, normalperson-rMlxZR9MS24@public.gmane.org, m@silodev.com, corbet-T1hC0tSOHrs@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, hagen-GvnIQ6b/HdU@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Ric Wheeler <ricwheeler-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Gregory Farnum <greg-3KCAGdo1P2hBDgjK7y7TUQ@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, shane.seymour-ZPxbGqLxI0U@public.gmane.org, Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Eric Sandeen <esandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Thu, Mar 10, 2016 at 10:33:49AM -0800, Linus Torvalds wrote:
+> On Thu, Mar 10, 2016 at 6:58 AM, Ric Wheeler <ricwheeler-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> >
+> > What was objectionable at the time this patch was raised years back (not
+> > just to me, but to pretty much every fs developer at LSF/MM that year)
+> > centered on the concern that this would be viewed as a "performance" mode
+> > and we get pressure to support this for non-priveleged users. It gives any
+> > user effectively the ability to read the block device content for previously
+> > allocated data without restriction.
+
+Sure, but it was never "any user".  We always had group-based
+permissions from the beginning.  Sure, we passed it in via a mount
+option which was a bit hacky, but we never got to the point of
+discussing the way that we would modulate the access --- the complaint
+seemed to be that if it was a non-root user, it was an unacceptable
+security hole.  And the pushback I got was more in the way of a
+religious objection more than anything else.  Heck, even reserving a
+code point for the out-of-tree patch received a huge amount of
+pushback.
+
+> The sane way to do it would be to just check permissions of the
+> underlying block device.
+> 
+> That way, people can just set the permissions for that to whatever
+> they want. If google right now uses some magical group for this, they
+> could make the underlying block device be writable for that group.
+
+I'd suggest making it be if you had *read* access to the block device.
+After all, the risk that everyone was all excited about was the risk
+of being able to read stale (deleted) data from old files.  And
+there's no point giving the userspace cluster file system daemon the
+ability to corrupt the file system or set the setuid bit on some
+arbitrary executable.
+
+And if we are going to go this far, then I'd also suggest using this
+permission check to the user the ability to issue BLKDISCARD on a
+file.  Allowing BLKDISCARD on files is one that should have been even
+more of a no-brainer, since it could never reveal stale data, but
+simply wasn't guaranteed to have reliable results because it was a
+hint to the underlying storage device.  But this has also received a
+huge amount of religious pushback, which is why this is also an
+out-of-tree patch in the Google kernel.  (If that means that our
+competitors have a higher flash TCO than us, again, no skin off my
+nose.  I tried to get it upstream, and cost of forward porting the
+patch each time we rebase the kernel isn't _that_ annoying.)
+
+						- Ted
 
 
-On 03/10/2016 02:58 PM, Michael Kerrisk (man-pages) wrote:
-> On 03/10/2016 07:53 PM, Jason Baron wrote:
->> Hi Michael,
->>
->> On 01/29/2016 03:14 AM, Michael Kerrisk (man-pages) wrote:
->>> Hello Jason,
->>> On 01/28/2016 06:57 PM, Jason Baron wrote:
->>>> Hi,
->>>>
->>>> On 01/28/2016 02:16 AM, Michael Kerrisk (man-pages) wrote:
->>>>> Hi Jason,
->>>>>
->>>>> On 12/08/2015 04:23 AM, Jason Baron wrote:
->>>>>> Hi,
->>>>>>
->>>>>> Re-post of an old series addressing thundering herd issues when sharing
->>>>>> an event source fd amongst multiple epoll fds. Last posting was here
->>>>>> for reference: https://lkml.org/lkml/2015/2/25/56
->>>>>>  
->>>>>> The patch herein drops the core scheduler 'rotate' changes I had previously
->>>>>> proposed as this patch seems performant without those.
->>>>>>
->>>>>> I was prompted to re-post this because Madars Vitolins reported some good
->>>>>> speedups with this patch using Enduro/X application. His writeup is here:
->>>>>> https://mvitolin.wordpress.com/2015/12/05/endurox-testing-epollexclusive-flag/
->>>>>>
->>>>>> Thanks,
->>>>>>
->>>>>> -Jason
->>>>>>
->>>>>> Sample epoll_clt text:
->>>>>
->>>>> Thanks for the proposed text. I have some questions about points
->>>>> that are not quite clear to me.
->>>>>
->>>>>> EPOLLEXCLUSIVE
->>>>>>         Sets an exclusive wakeup mode for the epfd file descriptor that is
->>>>>> 	being attached to the target file descriptor, fd. Thus, when an
->>>>>> 	event occurs and multiple epfd file descriptors are attached to the
->>>>>> 	same target file using EPOLLEXCLUSIVE, one or more epfds will receive
->>>>>> 	an event with epoll_wait(2). The default in this scenario (when
->>>>>> 	EPOLLEXCLUSIVE is not set) is for all epfds to receive an event.
->>>>>> 	EPOLLEXLUSVIE may only be specified with the op EPOLL_CTL_ADD.
->>>>>
->>>>> So, assuming an FD is present in the interest list of multiple (say 6)
->>>>> epoll FDs, and some (say 3) of those attachments were done using
->>>>> EPOLLEXCLUSVE. Which of the following statements are correct:
->>>>>
->>>>> (a) It's guaranteed that *none* of the epoll FDs that did NOT specify
->>>>>     EPOLLEXCLUSIVE will receive an event.
->>>>>
->>>>> (b) It's guaranteed that *all* of the epoll FDs that did NOT specify
->>>>>     EPOLLEXCLUSIVE will receive an event.
->>>>>
->>>>> (c) From 1 to 3 of the epoll FDs that did specify EPOLLEXCLUSIVE
->>>>>     will receive an event.
->>>>>
->>>>> (d) Exactly one epoll FD that did specify EPOLLEXCLUSIVE will get
->>>>>     an event, and it is indeterminate which one.
->>>>>
->>>>
->>>> So b and c. All the non-exclusive adds will get it and at least 1 of the
->>>> exclusive adds will as well.
->>>
->>> So is it fair to say that the expected use case is that all epoll sets
->>> would use EPOLLEXCLUSIVE?
->>>
->>>>> I suppose one point I'm trying to uncover in the above is: what is
->>>>> the scope of EPOLLEXCLUSIVE? Is it just applicable for one process's
->>>>> FD, or is it setting an attribute in the epoll "interest list" record
->>>>> for that FD that affects notification behavior across all processes?
->>>>>
->>>>
->>>> Right - so 'EPOLLEXCLUSIVE' will affect other epoll sets that are also
->>>> using 'EPOLLEXCLUSIVE' against the the same fd, but will have no affect
->>>> on epoll sets connected to fd that do not specify it.
->>>>
->>>>
->>>>> And then:
->>>>>
->>>>> (1) What are the semantics of EPOLLEXCLUSIVE if the added FD becomes
->>>>>     disabled via EPOLLONESHOT (or explicitly via EPOLL_CTL_MOD with
->>>>>     the 'events' field set to 0)?
->>>>>
->>>>
->>>> In the case of EPOLLEXCLUSIVE and EPOLLONESHOT, one would have to re-arm
->>>> at least 1 of threads that was woken up by doing EPOLL_CTL_MOD to
->>>> guarantee further wakeups.
->>>>
->>>> And like-wise with an EPOLL_CTL_MOD with 'events' all set to 0, one
->>>> would need to either re-arm the thread that set the 'events' field to 0
->>>> (by setting back to non-zero), or re-arm in at least one other thread
->>>> via EPOLL_CTL_MOD (or delete and add).
->>>
->>> Okay -- so when an EPOLLEXCLUSIVE FD becomes disarmed it is possible
->>> to re-enable rith EPOLL_CTL_MOD; one doesn't need to delete and re-add
->>> the FD.
->>>
->>>>> (2) The source code contains a comment "we do not currently supported 
->>>>>     nested exclusive wakeups". Could you elaborate on this point? It
->>>>>     sounds like something that should be documented.
->>>>
->>>> So I was just trying to say that we return -EINVAL if you try to do and
->>>> EPOLL_CTL_ADD with EPOLLEXCLUSIVE and the 'fd' argument is a epoll fd
->>>> returned via epoll_create().
->>>
->>> Okay -- that definitely belongs in the man page.
->>>
->>> I'll work up a text, but would like to get input about the "use case"
->>> question above.
->>>
->>> Cheers,
->>>
->>> Michael
->>>
->>>
->>>
->>
->> Ok, here's some updated text:
->>
->> EPOLLEXCLUSIVE
->>
->> Sets an exclusive wakeup mode for the epfd file descriptor that is being
->> attached to the target file descriptor, fd. When a wakeup event occurs
->> and multiple epfd file descriptors are attached to the same target file
->> using EPOLLEXCLUSIVE, one or more epfds will receive an event with
->> epoll_wait(2). The default in this scenario (when EPOLLEXCLUSIVE is not
->> set) is for all epfds to receive an event.
->>
->> The events supported by EPOLLEXCLUSIVE are: EPOLLIN, EPOLLOUT, EPOLLERR,
->> EPOLLHUP, EPOLLWAKEUP, and EPOLLET. epoll_wait(2) will always wait for
->> EPOLLERR and EPOLLHUP; it is not necessary to set it in events. If
->> EPOLLEXCLUSIVE is set using epoll_ctl(2), then a subsequent
->> EPOLL_CTL_MOD on the same epfd, fd pair will retrun -EINVAL. An
->> epoll_ctl(2) that specifies EPOLLEXCLUSIVE in events and specifies the
->> target file descriptor fd as an epoll instance will return -EINVAL
->> as well.
+> We can do the security check at the filesystem level, because we have
+> sb->s_bdev->bd_inode, and if you have read and write permissions to
+> that inode, you might as well have permission to create a unsafe hole.
 > 
-> By the way, in the code you have
+> That doesn't sound very hacky to me.
 > 
->         case EPOLL_CTL_MOD:
->                 if (epi) { 
->                         if (!(epi->event.events & EPOLLEXCLUSIVE)) {
->                                 epds.events |= POLLERR | POLLHUP;
->                                 error = ep_modify(ep, epi, &epds);
->                         }
-> 
-> I think the "if" here is redundant. IIUC, earlier in the code you
-> disallow EPOLL_CTL_MOD with EPOLLEXCLUSIVE.
-> 
-> Cheers,
-> 
-> Michael
-> 
-> 
-
-Hi Michael,
-
-So the previous check ensures that you can not add the EPOLLEXCLUSIVE
-flag to the events via an EPOLL_CTL_MOD operation, where EPOLLEXCLUSIVE
-may not be the existing events set. While this check here ensure you
-can't modify an existing set that already has the EPOLLEXCLUSIVE flag.
-
-Thanks,
-
--Jason
+>                Linus
