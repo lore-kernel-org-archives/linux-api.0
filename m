@@ -1,50 +1,56 @@
-From: Theodore Ts'o <tytso@mit.edu>
-Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of
- blocks
-Date: Wed, 9 Mar 2016 18:08:19 -0500
-Message-ID: <20160309230819.GB3949@thunk.org>
-References: <20160302040947.16685.42926.stgit@birch.djwong.org>
- <CA+55aFx_NPn0VYk=+Ad5S_r=D6J1xFmWmf7JzQ7RmkwKmdkYOg@mail.gmail.com>
- <20160302225601.GB21890@birch.djwong.org>
- <CA+55aFyNPnjJ-Nsu3bMr+HuLQnkj1B8FMddNnXW7HJqxdUzJmQ@mail.gmail.com>
- <yq1bn6v8mqg.fsf@sermon.lab.mkp.net>
- <20160303180924.GA4116@infradead.org>
- <yq1vb5375oh.fsf@sermon.lab.mkp.net>
- <20160303223952.GE24012@thunk.org>
- <20160303231050.GU29057@dastard>
- <CAC6JEv-HeAoRxSmVghGvbX7G92yH00k-5F-48qEW13vAB1Q99g@mail.gmail.com>
+From: Stefan Berger <stefanb@linux.vnet.ibm.com>
+Subject: Re: [PATCH v6 08/11] tpm: Driver for supporting multiple emulated
+ TPMs
+Date: Wed, 9 Mar 2016 21:34:47 -0500
+Message-ID: <56E0DD47.50208@linux.vnet.ibm.com>
+References: <1457545170-30120-1-git-send-email-stefanb@linux.vnet.ibm.com>
+ <1457545170-30120-9-git-send-email-stefanb@linux.vnet.ibm.com>
+ <CALCETrXDfHRdFnqK15o1yD8106sn4e6Susr9j7=GGi4sb-p0qQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAC6JEv-HeAoRxSmVghGvbX7G92yH00k-5F-48qEW13vAB1Q99g@mail.gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Gregory Farnum <greg@gregs42.com>
-Cc: Dave Chinner <david@fromorbit.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Christoph Hellwig <hch@infradead.org>, Linus Torvalds <torvalds@linux-foundation.org>, "Darrick J. Wong" <darrick.wong@oracle.com>, Jens Axboe <axboe@kernel.dk>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, shane.seymour@hpe.com, Bruce Fields <bfields@fieldses.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CALCETrXDfHRdFnqK15o1yD8106sn4e6Susr9j7=GGi4sb-p0qQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Jason Gunthorpe <jgunthorpe@obsidianresearch.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 09, 2016 at 02:20:31PM -0800, Gregory Farnum wrote:
-> I really am sensitive to the security concerns, just know that if it's
-> a permanent blocker you're essentially blocking out a growing category
-> of disk users (who run on an awfully large number of disks!).
+On 03/09/2016 01:01 PM, Andy Lutomirski wrote:
+> On Wed, Mar 9, 2016 at 9:39 AM, Stefan Berger
+> <stefanb@linux.vnet.ibm.com> wrote:
+>> This patch implements a driver for supporting multiple emulated TPMs in a
+>> system.
+>>
+>> The driver implements a device /dev/vtpmx that is used to created
+>> a client device pair /dev/tpmX (e.g., /dev/tpm10) and a server side that
+>> is accessed using a file descriptor returned by an ioctl.
+>> The device /dev/tpmX is the usual TPM device created by the core TPM
+>> driver. Applications or kernel subsystems can send TPM commands to it
+>> and the corresponding server-side file descriptor receives these
+>> commands and delivers them to an emulated TPM.
+> Nifty!
+>
+> Is anyone considering writing a modification or replacement of
+> trousers that creates claims the real tpm and exposes a vtpm that
+> handles multiplexing internally?  Does the vtpm driver intelligently
+> support multiple simultaneous clients?
 
-Or they just have to use kernels with out-of-tree patches installed.  :-P
+The vtpm driver allows to use an independent trousers instance in each 
+container.
 
-If you want to consider how many disks Google has that are using this
-patch, I probably could have appealed to Linus and asked him to accept
-the patch if I forced the issue.  The only reason why I didn't was
-that people like Ric Wheeler threatened to have distro-specific
-patches to disable the feature, and at the end of the day, I didn't
-care that much.  After all, if it makes it harder for large scale
-cloud companies besides Google to create more efficient userspace
-cluster file systems, it's not like I was keeping the patch a secret.
+Using the VTPM_NEW_DEV ioctl the container mgmt. stack can create a 
+/dev/tpmX (X=0,1,2,...) device and a file descriptor. The file 
+descriptor is passed to a vTPM instance, the /dev/tpmX is moved into the 
+container, meaning a device with the same major/minor numbers is created 
+in the container. This then allows each container to talk to an 
+independent vTPM. The vTPM can either be 1.2 or 2.
 
-So ultimately, if the Ceph developers want to make a case to Red Hat
-management that this is important, great.  If not, it's not that hard
-for those people who need the patch and who are running large cloud
-infrastructures to simply apply the out-of-tree patch if they need it.
-
-Cheers,
-
-   	     	     	 	      		  - Ted
-
+    Stefan
+>
+> --Andy
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-doc" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
