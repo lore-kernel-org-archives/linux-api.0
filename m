@@ -1,59 +1,142 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH v7] scsi: ufs: add ioctl interface for query request
-Date: Thu, 10 Mar 2016 20:19:32 +0100
-Message-ID: <201603102019.32467.arnd@arndb.de>
-References: <1457532699-11487-1-git-send-email-ygardi@codeaurora.org> <046fc2d00e51f331a6bbc00553cc1f9c.squirrel@us.codeaurora.org> <201603101818.33826.arnd@arndb.de>
+From: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] [RFC] add manpages for Memory Protection Keys
+Date: Thu, 10 Mar 2016 11:43:24 -0800
+Message-ID: <56E1CE5C.4070206@intel.com>
+References: <1457559619-16510-1-git-send-email-dave.hansen@intel.com>
+ <56E1A9CD.9030903@gmail.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-1"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <201603101818.33826.arnd-r2nGTMty4D4@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org
-Cc: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, james.bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, santoshsy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-scsi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dolev Raviv <draviv-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Gilad Broner <gbroner-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Vinayak Holikatti <vinholikatti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "James E.J. Bottomley" <jbottomley-wo1vFcy6AUs@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Michael Neuling <mikey-/owAOxkjmzZAfugRpC6u6w@public.gmane.org>, "Matthew R. Ochs" <mrochs-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Wen Xiong <wenxiong-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Subhash Jadavani <subhashj-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <56E1A9CD.9030903-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, dave-gkUM19QKKo4@public.gmane.org
+Cc: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thursday 10 March 2016, Arnd Bergmann wrote:
-> On Wednesday 09 March 2016, ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org wrote:
-> > Any userspace application can be a tool.
-> > We already implemented and used a user space application, that sent
-> > queries to the UFS devices in order to get information and descriptors.
-> > Not only ioctl interface is a useful way to interact with the device,
-> > we used it, and found it very helpful in varies cases.
-> > hence, this patch.
-> > This patch has been already addressed all comments of Arnd Bergman from 5
-> > months ago, and now, re-uploaded again.
+Michael, thanks again for the detailed review.  I've tried to respond to
+all your comments.  Here's an incremental patch from the last one.  I'll
+also resend the entire thing shortly.
+
+	https://www.sr71.net/~dave/intel/pkey-man-20160310.0.patch
+
+Just a few questions to clarify some of your review comments below...
+
+On 03/10/2016 09:07 AM, Michael Kerrisk (man-pages) wrote:
+> On 03/09/2016 10:40 PM, Dave Hansen wrote:
+>> +.PP
+>> +.I flags
+>> +may contain zero or more disable operations:
+>> +.TP
+>> +.B PKEY_DISABLE_ACCESS
+>> +Disable all data access to memory covered by the returned protection key.
+>> +.TP
+>> +.B PKEY_DISABLE_WRITE
+>> +Disable write access to memory covered by the returned protection key.
+>> +.SH RETURN VALUE
+>> +On success,
+>> +.BR pkey_alloc ()
+>> +returns a positive protection key value.
+>> +.BR pkey_free ()
+>> +returns zero.
+>> +On error, \-1 is returned, and
+>> +.I errno
+>> +is set appropriately.
+>> +.SH ERRORS
+>> +.TP
+>> +.B EINVAL
+>> +.IR pkey ,
+>> +.IR flags ,
+>> +or
+>> +.I access_rights
+>> +is invalid.
+>> +.TP
+>> +.B ENOSPC
 > 
-> Do you have a pointer to that review? It's been a long while, so I
-> have completely forgotten what issues I raised and how it got resolved.
+> At the start of the following paragraph, add
+> 
+> .(RB pkey_alloc ())
+> 
+> so that the reader knows that this error applies only for that syscall.
 
-I got your link in private message and read up on it again now.
+I'm not seeing that actually affect the formatting in the resulting
+manpage as I view it.  Is that really the syntax you want?  Is there
+another example bit of syntax I should be looking for?
 
-To clarify: I commented on the formal API definition, and you indeed addressed
-all my concerns, so this is now an ioctl command that follows our usual
-calling conventions.
+...
+> In a previous review of the pages, I asked:
+> 
+> [[
+> And I have a question (and the answer probably should 
+> be documented in the manual page).  What happens when 
+> one signal handler interrupts the execution of another? 
+> Do pkey_set() calls in the first handler persist into the 
+> second handler? I presume not, but it would be good to 
+> be a little more explicit about this.
+> ]]
+> 
+> I think this point does need to be covered in the man page.
 
-However, this is orthogonal to the question of whether it is a good idea
-to have this interface implemented as an ioctl as asked by Greg, and who
-is actually using it. 
+I did reword some things in response to this review comment, but not
+thoroughly enough. :)
 
-I'm lacking the detailed subsystem knowledge to answer this, but
-I note that other block drivers have similar passthrough interfaces.
+How about the following as a change to the existing second paragraph?
 
-Looking through what other drivers do, I've found a couple of patterns
-now. n particular, most use the SG_IO ioctl to pass down commands
-from user space into a device specific command queue. Have you looked
-at that interface in the past to see if it would fit your use case?
+The effects of a call to
+.BR pkey_set ()
+from a signal handler will not persist when the signal handler
+returns.  This is true whether the return is to a normal,
+non-signal context, or to another signal handler.
 
-There is also a 'bsg' API that some drivers implement, which I think
-would be another alternative.
+...
+>> +
+>> +To use this feature, the processor must support it, and Linux
+>> +must contain support for the feature on a given processor.  As of
+>> +early 2016 only future Intel x86 processors are supported, and this
+>> +hardware supports 16 protection keys in each process.  However,
+>> +pkey 0 is used as the default key, so a maximum of 15 are available
+>> +for actual application use.
+> 
+> Is there a recommended way for an application to discover whether the
+> system supports pkeys? If so, that should be documented here.
 
-Could any of the SCSI experts comment on what they expect a driver
-to use out of those three alternatives (if any): 
+I've added the following text:
 
-* private ioctl
-* bsg
-* sg_io
+Any application wanting to use protection keys needs to be able
+to function without them.  They might be unavailable because the
+hardware the application runs on does not support them, the
+kernel code does not contain support, the kernel support has been
+disabled, or because the keys have all been allocated, perhaps by
+a library the application is using.  It is recommended that
+applications wanting to use protection keys should simply call
+.BR pkey_alloc()
+instead of attempting to detect support for the
+feature in any other way.
 
-	Arnd
+Hardware support for protection keys may be enumerated with
+the cpuid instruction.  Details on how to do this can be
+found in the Intel Software Developers Manual.  The kernel
+performs this enumeration and exposes the information in
+/proc/cpuinfo under the "flags" field.  "pku" in this field
+indicates hardware support for protection keys and "ospke"
+indicates that the kernel contains and has enabled protection
+keys support,.
+
+...
+>> +.BR pkey_mprotect (2),
+>> +.BR pkey_alloc (2),
+>> +.BR pkey_free (2),
+>> +.BR pkey_set (2),
+>> +.BR pkey_get (2),
+> 
+> Would it be possible to get a small, complete working example program
+> in one of these pages? The axample could show how pkeys override
+> traditional memory protections. I appreciate that the rest of us do
+> not yet have suitable hardware, but presumably you do.
+
+Sure, I'll include one in pkey(7).
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
