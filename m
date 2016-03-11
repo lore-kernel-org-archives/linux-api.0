@@ -1,7 +1,7 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 09/10] cgroup: implement rgroup subtree migration
-Date: Fri, 11 Mar 2016 10:41:27 -0500
-Message-ID: <1457710888-31182-10-git-send-email-tj@kernel.org>
+Subject: [PATCH 06/10] cgroup, fork: add @child and @clone_flags to threadgroup_change_begin/end()
+Date: Fri, 11 Mar 2016 10:41:24 -0500
+Message-ID: <1457710888-31182-7-git-send-email-tj@kernel.org>
 References: <1457710888-31182-1-git-send-email-tj@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1457710888-31182-1-git-send-email-tj@kernel.org>
@@ -10,268 +10,307 @@ To: torvalds@linux-foundation.org, akpm@linux-foundation.org, a.p.zijlstra@chell
 Cc: linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@fb.com, Tejun Heo <tj@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Oleg Nesterov <oleg@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Currently, when a process with rgroups is migrated, rgroup subtrees
-are not preserved and all threads are put directly under the migration
-destination cgroup.  This patch implements rgroup subtree migration so
-that rgroup subtrees are preserved across process migration.
+When threadgroup_change_begin/end() are called from fork path, pass in
+@child and @clone_flags so that fork path can be distinguished and
+fork related information is available.
 
-Early during process migration, cgroup_migrate_copy_rgrps() duplicates
-rgroup subtrees of a process under the destination cgroup and links
-the counterparts with newly added src_cgrp->rgrp_target.  Also,
-subsystems can implement css_copy() method to copy over settings and
-whatever states necessary.  Once copying is complete, the actual
-migration uses ->rgrp_target as destination.
+While at it, un-inline cgroup_threadgroup_change_begin/end() and fold
+cgroup_fork() into cgroup_threadgroup_change_begin().  These changes
+will be used to imlement in-process resource control.
 
 Signed-off-by: Tejun Heo <tj@kernel.org>
 Cc: Ingo Molnar <mingo@redhat.com>
 Cc: Peter Zijlstra <peterz@infradead.org>
 Cc: Oleg Nesterov <oleg@redhat.com>
-Cc: Paul Turner <pjt@google.com>
 ---
- include/linux/cgroup-defs.h |   5 ++
- kernel/cgroup.c             | 157 +++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 159 insertions(+), 3 deletions(-)
+ fs/exec.c                   |  6 +++---
+ include/linux/cgroup-defs.h | 39 ++++++++++++-------------------------
+ include/linux/cgroup.h      |  2 --
+ include/linux/sched.h       | 16 +++++++++++----
+ kernel/cgroup.c             | 47 ++++++++++++++++++++++++++++++++++++---------
+ kernel/fork.c               |  7 +++----
+ kernel/signal.c             |  6 +++---
+ 7 files changed, 71 insertions(+), 52 deletions(-)
 
+diff --git a/fs/exec.c b/fs/exec.c
+index 828ec5f..5b81bbb 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -936,7 +936,7 @@ static int de_thread(struct task_struct *tsk)
+ 		struct task_struct *leader = tsk->group_leader;
+ 
+ 		for (;;) {
+-			threadgroup_change_begin(tsk);
++			threadgroup_change_begin(tsk, NULL, 0);
+ 			write_lock_irq(&tasklist_lock);
+ 			/*
+ 			 * Do this under tasklist_lock to ensure that
+@@ -947,7 +947,7 @@ static int de_thread(struct task_struct *tsk)
+ 				break;
+ 			__set_current_state(TASK_KILLABLE);
+ 			write_unlock_irq(&tasklist_lock);
+-			threadgroup_change_end(tsk);
++			threadgroup_change_end(tsk, NULL, 0);
+ 			schedule();
+ 			if (unlikely(__fatal_signal_pending(tsk)))
+ 				goto killed;
+@@ -1005,7 +1005,7 @@ static int de_thread(struct task_struct *tsk)
+ 		if (unlikely(leader->ptrace))
+ 			__wake_up_parent(leader, leader->parent);
+ 		write_unlock_irq(&tasklist_lock);
+-		threadgroup_change_end(tsk);
++		threadgroup_change_end(tsk, NULL, 0);
+ 
+ 		release_task(leader);
+ 	}
 diff --git a/include/linux/cgroup-defs.h b/include/linux/cgroup-defs.h
-index f1ee756..9ffa2d8 100644
+index d3d1f92..3c4a75b 100644
 --- a/include/linux/cgroup-defs.h
 +++ b/include/linux/cgroup-defs.h
-@@ -310,6 +310,9 @@ struct cgroup {
- 	/* signal structs with rgroups below this cgroup */
- 	struct list_head rgrp_child_sigs;
+@@ -514,31 +514,12 @@ struct cgroup_subsys {
+ 	unsigned int depends_on;
+ };
  
-+	/* target rgroup, used during rgroup subtree migration */
-+	struct cgroup *rgrp_target;
-+
- 	/*
- 	 * list of pidlists, up to two for each namespace (one for procs, one
- 	 * for tasks); created on demand.
-@@ -462,6 +465,8 @@ struct cgroup_subsys {
- 	void (*css_offline)(struct cgroup_subsys_state *css);
- 	void (*css_released)(struct cgroup_subsys_state *css);
- 	void (*css_free)(struct cgroup_subsys_state *css);
-+	int (*css_copy)(struct cgroup_subsys_state *to,
-+			struct cgroup_subsys_state *from);
- 	void (*css_reset)(struct cgroup_subsys_state *css);
+-extern struct percpu_rw_semaphore cgroup_threadgroup_rwsem;
+-
+-/**
+- * cgroup_threadgroup_change_begin - threadgroup exclusion for cgroups
+- * @tsk: target task
+- *
+- * Called from threadgroup_change_begin() and allows cgroup operations to
+- * synchronize against threadgroup changes using a percpu_rw_semaphore.
+- */
+-static inline void cgroup_threadgroup_change_begin(struct task_struct *tsk)
+-{
+-	percpu_down_read(&cgroup_threadgroup_rwsem);
+-}
+-
+-/**
+- * cgroup_threadgroup_change_end - threadgroup exclusion for cgroups
+- * @tsk: target task
+- *
+- * Called from threadgroup_change_end().  Counterpart of
+- * cgroup_threadcgroup_change_begin().
+- */
+-static inline void cgroup_threadgroup_change_end(struct task_struct *tsk)
+-{
+-	percpu_up_read(&cgroup_threadgroup_rwsem);
+-}
++void cgroup_threadgroup_change_begin(struct task_struct *tsk,
++				     struct task_struct *child,
++				     unsigned long clone_flags);
++void cgroup_threadgroup_change_end(struct task_struct *tsk,
++				   struct task_struct *child,
++				   unsigned long clone_flags);
  
- 	int (*can_attach)(struct cgroup_taskset *tset);
+ #else	/* CONFIG_CGROUPS */
+ 
+@@ -546,8 +527,12 @@ struct css_set;
+ 
+ #define CGROUP_SUBSYS_COUNT 0
+ 
+-static inline void cgroup_threadgroup_change_begin(struct task_struct *tsk) {}
+-static inline void cgroup_threadgroup_change_end(struct task_struct *tsk) {}
++static inline void cgroup_threadgroup_change_begin(struct task_struct *tsk,
++						   struct task_struct *child,
++						   unsigned long clone_flags) {}
++static inline void cgroup_threadgroup_change_end(struct task_struct *tsk,
++						 struct task_struct *child,
++						 unsigned long clone_flags) {}
+ 
+ #endif	/* CONFIG_CGROUPS */
+ 
+diff --git a/include/linux/cgroup.h b/include/linux/cgroup.h
+index ebcf21f..1e00fc0 100644
+--- a/include/linux/cgroup.h
++++ b/include/linux/cgroup.h
+@@ -101,7 +101,6 @@ int cgroupstats_build(struct cgroupstats *stats, struct dentry *dentry);
+ int proc_cgroup_show(struct seq_file *m, struct pid_namespace *ns,
+ 		     struct pid *pid, struct task_struct *tsk);
+ 
+-void cgroup_fork(struct task_struct *p);
+ extern int cgroup_can_fork(struct task_struct *p, unsigned long clone_flags,
+ 			   struct css_set **new_rgrp_csetp);
+ extern void cgroup_cancel_fork(struct task_struct *p, unsigned long clone_flags,
+@@ -540,7 +539,6 @@ static inline int cgroup_attach_task_all(struct task_struct *from,
+ static inline int cgroupstats_build(struct cgroupstats *stats,
+ 				    struct dentry *dentry) { return -EINVAL; }
+ 
+-static inline void cgroup_fork(struct task_struct *p) {}
+ static inline int cgroup_can_fork(struct task_struct *p,
+ 				  unsigned long clone_flags,
+ 				  struct css_set **new_rgrp_csetp) { return 0; }
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 80d6ed1..d4ae795 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -2783,6 +2783,8 @@ static inline void unlock_task_sighand(struct task_struct *tsk,
+ /**
+  * threadgroup_change_begin - mark the beginning of changes to a threadgroup
+  * @tsk: task causing the changes
++ * @child: child task if forking, NULL otherwise
++ * @clone_flags: clone flags if forking
+  *
+  * All operations which modify a threadgroup - a new thread joining the
+  * group, death of a member thread (the assertion of PF_EXITING) and
+@@ -2791,21 +2793,27 @@ static inline void unlock_task_sighand(struct task_struct *tsk,
+  * subsystems needing threadgroup stability can hook into for
+  * synchronization.
+  */
+-static inline void threadgroup_change_begin(struct task_struct *tsk)
++static inline void threadgroup_change_begin(struct task_struct *tsk,
++					    struct task_struct *child,
++					    unsigned long clone_flags)
+ {
+ 	might_sleep();
+-	cgroup_threadgroup_change_begin(tsk);
++	cgroup_threadgroup_change_begin(tsk, child, clone_flags);
+ }
+ 
+ /**
+  * threadgroup_change_end - mark the end of changes to a threadgroup
+  * @tsk: task causing the changes
++ * @child: child task if forking, NULL otherwise
++ * @clone_flags: clone flags if forking
+  *
+  * See threadgroup_change_begin().
+  */
+-static inline void threadgroup_change_end(struct task_struct *tsk)
++static inline void threadgroup_change_end(struct task_struct *tsk,
++					  struct task_struct *child,
++					  unsigned long clone_flags)
+ {
+-	cgroup_threadgroup_change_end(tsk);
++	cgroup_threadgroup_change_end(tsk, child, clone_flags);
+ }
+ 
+ #ifndef __HAVE_THREAD_FUNCTIONS
 diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-index 283b7ed..6107a1f 100644
+index ac207ae..70f9985 100644
 --- a/kernel/cgroup.c
 +++ b/kernel/cgroup.c
-@@ -229,8 +229,12 @@ static struct file_system_type cgroup2_fs_type;
- static struct cftype cgroup_dfl_base_files[];
- static struct cftype cgroup_legacy_base_files[];
+@@ -110,7 +110,7 @@ static DEFINE_SPINLOCK(cgroup_file_kn_lock);
+  */
+ static DEFINE_SPINLOCK(release_agent_path_lock);
  
-+static struct cgroup *rgroup_create(struct cgroup *parent, struct signal_struct *sig);
- static int rebind_subsystems(struct cgroup_root *dst_root, u16 ss_mask);
- static void cgroup_lock_and_drain_offline(struct cgroup *cgrp);
-+static void cgroup_save_control(struct cgroup *cgrp);
-+static void cgroup_propagate_control(struct cgroup *cgrp);
-+static void cgroup_restore_control(struct cgroup *cgrp);
- static int cgroup_apply_control(struct cgroup *cgrp);
- static void cgroup_finalize_control(struct cgroup *cgrp, int ret);
- static void css_task_iter_advance(struct css_task_iter *it);
-@@ -2478,6 +2482,7 @@ struct task_struct *cgroup_taskset_next(struct cgroup_taskset *tset,
+-struct percpu_rw_semaphore cgroup_threadgroup_rwsem;
++static struct percpu_rw_semaphore cgroup_threadgroup_rwsem;
  
- enum {
- 	CGRP_MIGRATE_PROCESS	= (1 << 0), /* migrate the whole process */
-+	CGRP_MIGRATE_COPY_RGRPS	= (1 << 1), /* copy rgroup subtree */
+ #define cgroup_assert_mutex_or_rcu_locked()				\
+ 	RCU_LOCKDEP_WARN(!rcu_read_lock_held() &&			\
+@@ -5688,17 +5688,46 @@ static const struct file_operations proc_cgroupstats_operations = {
  };
  
  /**
-@@ -2752,6 +2757,132 @@ static int cgroup_migrate(struct task_struct *leader, unsigned mflags,
+- * cgroup_fork - initialize cgroup related fields during copy_process()
+- * @child: pointer to task_struct of forking parent process.
++ * cgroup_threadgroup_change_begin - threadgroup exclusion for cgroups
++ * @tsk: target task
++ * @child: child task if forking, NULL otherwise
++ * @clone_flags: clone flags if forking
+  *
+- * A task is associated with the init_css_set until cgroup_post_fork()
+- * attaches it to the parent's css_set.  Empty cg_list indicates that
+- * @child isn't holding reference to its css_set.
++ * Called from threadgroup_change_begin() and allows cgroup operations to
++ * synchronize against threadgroup changes using a percpu_rw_semaphore.
+  */
+-void cgroup_fork(struct task_struct *child)
++void cgroup_threadgroup_change_begin(struct task_struct *tsk,
++				     struct task_struct *child,
++				     unsigned long clone_flags)
+ {
+-	RCU_INIT_POINTER(child->cgroups, &init_css_set);
+-	INIT_LIST_HEAD(&child->cg_list);
++	if (child) {
++		/*
++		 * A task is associated with the init_css_set until
++		 * cgroup_post_fork() attaches it to the parent's css_set.
++		 * Empty cg_list indicates that @child isn't holding
++		 * reference to its css_set.
++		 */
++		RCU_INIT_POINTER(child->cgroups, &init_css_set);
++		INIT_LIST_HEAD(&child->cg_list);
++	}
++
++	percpu_down_read(&cgroup_threadgroup_rwsem);
++}
++
++/**
++ * cgroup_threadgroup_change_end - threadgroup exclusion for cgroups
++ * @tsk: target task
++ * @child: child task if forking, NULL otherwise
++ * @clone_flags: clone flags if forking
++ *
++ * Called from threadgroup_change_end().  Counterpart of
++ * cgroup_threadcgroup_change_begin().
++ */
++void cgroup_threadgroup_change_end(struct task_struct *tsk,
++				   struct task_struct *child,
++				   unsigned long clone_flags)
++{
++	percpu_up_read(&cgroup_threadgroup_rwsem);
  }
  
  /**
-+ * cgroup_migrate_uncopy_rgrps - cancel in-flight rgroup subtree copying
-+ * @dst_cgrp: migration target cgroup
-+ * @leader: leader of process being migrated
-+ *
-+ * Undo cgroup_migrate_copy_rgrps().
-+ */
-+static void cgroup_migrate_uncopy_rgrps(struct cgroup *dst_cgrp,
-+					struct task_struct *leader)
-+{
-+	struct signal_struct *sig = leader->signal;
-+	struct cgroup *sgrp = nearest_sgroup(task_css_set(leader)->dfl_cgrp);
-+	struct cgroup *rgrp, *dsct;
-+	struct cgroup_subsys_state *d_css;
-+
-+	/* destroy rgroup copies */
-+	list_for_each_entry(rgrp, &sig->rgrps, rgrp_node) {
-+		cgroup_for_each_live_descendant_post(dsct, d_css, rgrp) {
-+			if (dsct->rgrp_target) {
-+				rgroup_destroy_schedule(dsct->rgrp_target);
-+				dsct->rgrp_target = NULL;
-+			}
-+		}
-+	}
-+
-+	/* move back @sig under the original nearest sgroup */
-+	if (!list_empty(&sig->rgrp_node))
-+		list_move_tail(&sig->rgrp_node, &sgrp->rgrp_child_sigs);
-+
-+	sgrp->rgrp_target = NULL;
-+	cgroup_restore_control(sgrp);
-+}
-+
-+/**
-+ * cgroup_migrate_copy_rgrps - copy a process's rgroup subtrees
-+ * @dst_cgrp: migration target cgroup
-+ * @leader: leader of process being migrated
-+ *
-+ * @leader and its threads are being migrated under @dst_cgrp.  Copy the
-+ * process's rgroup subtrees under @dst_cgrp and make the source rgroups
-+ * and their nearest sgroup point to the counterpart in the copied subtrees
-+ * via ->rgrp_target.
-+ *
-+ * Before process migration is complete, this operation can be canceled
-+ * using cgroup_migrate_uncopy_rgrps().
-+ */
-+static int cgroup_migrate_copy_rgrps(struct cgroup *dst_cgrp,
-+				     struct task_struct *leader)
-+{
-+	struct signal_struct *sig = leader->signal;
-+	struct cgroup *sgrp = nearest_sgroup(task_css_set(leader)->dfl_cgrp);
-+	struct cgroup *rgrp, *dsct;
-+	struct cgroup_subsys_state *d_css;
-+	int ret;
-+
-+	if (WARN_ON_ONCE(!cgroup_on_dfl(dst_cgrp)))
-+		return -EINVAL;
-+
-+	/* save for uncopy */
-+	cgroup_save_control(sgrp);
-+	sgrp->rgrp_target = dst_cgrp;
-+
-+	/*
-+	 * Move @sig under @dst_cgrp for correct control propagation and
-+	 * update its control masks.
-+	 */
-+	if (!list_empty(&sig->rgrp_node))
-+		list_move_tail(&sig->rgrp_node, &dst_cgrp->rgrp_child_sigs);
-+
-+	cgroup_propagate_control(dst_cgrp);
-+
-+	/*
-+	 * Walk and copy each rgroup.  As top-level copies are appended to
-+	 * &sig->rgrps, terminate on encountering one.
-+	 */
-+	list_for_each_entry(rgrp, &sig->rgrps, rgrp_node) {
-+		if (cgroup_parent(rgrp) == dst_cgrp)
-+			break;
-+
-+		cgroup_for_each_live_descendant_pre(dsct, d_css, rgrp) {
-+			struct cgroup *parent = cgroup_parent(dsct);
-+			struct cgroup *copy;
-+			struct cgroup_subsys_state *copy_css;
-+			int ssid;
-+
-+			if (WARN_ON_ONCE(!parent->rgrp_target) ||
-+			    WARN_ON_ONCE(dsct->rgrp_target)) {
-+				ret = -EINVAL;
-+				goto out_uncopy;
-+			}
-+
-+			/* create a copy and refresh its control masks */
-+			copy = rgroup_create(parent->rgrp_target, sig);
-+			if (IS_ERR(copy)) {
-+				ret = PTR_ERR(copy);
-+				goto out_uncopy;
-+			}
-+
-+			copy->subtree_control = dsct->subtree_control;
-+			cgroup_propagate_control(copy);
-+
-+			dsct->rgrp_target = copy;
-+
-+			/* copy subsystem states */
-+			for_each_css(copy_css, ssid, copy) {
-+				struct cgroup_subsys *ss = copy_css->ss;
-+				struct cgroup_subsys_state *css =
-+					cgroup_css(dsct, ss);
-+
-+				if (!ss->css_copy || !css)
-+					continue;
-+
-+				ret = ss->css_copy(copy_css, css);
-+				if (ret)
-+					goto out_uncopy;
-+			}
-+		}
-+	}
-+
-+	return 0;
-+
-+out_uncopy:
-+	cgroup_migrate_uncopy_rgrps(dst_cgrp, leader);
-+	return ret;
-+}
-+
-+/**
-  * cgroup_attach_task - attach a task or a whole threadgroup to a cgroup
-  * @dst_cgrp: the cgroup to attach to
-  * @leader: the task or the leader of the threadgroup to be attached
-@@ -2762,6 +2893,7 @@ static int cgroup_migrate(struct task_struct *leader, unsigned mflags,
- static int cgroup_attach_task(struct cgroup *dst_cgrp,
- 			      struct task_struct *leader, unsigned mflags)
- {
-+	bool copy_rgrps = mflags & CGRP_MIGRATE_COPY_RGRPS;
- 	LIST_HEAD(preloaded_csets);
- 	struct task_struct *task;
- 	int ret;
-@@ -2769,13 +2901,25 @@ static int cgroup_attach_task(struct cgroup *dst_cgrp,
- 	if (!cgroup_may_migrate_to(dst_cgrp))
- 		return -EBUSY;
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 812d477..840b662 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1368,8 +1368,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ 	p->real_start_time = ktime_get_boot_ns();
+ 	p->io_context = NULL;
+ 	p->audit_context = NULL;
+-	threadgroup_change_begin(current);
+-	cgroup_fork(p);
++	threadgroup_change_begin(current, p, clone_flags);
+ #ifdef CONFIG_NUMA
+ 	p->mempolicy = mpol_dup(p->mempolicy);
+ 	if (IS_ERR(p->mempolicy)) {
+@@ -1609,7 +1608,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
  
-+	if (copy_rgrps) {
-+		ret = cgroup_migrate_copy_rgrps(dst_cgrp, leader);
-+		if (ret)
-+			return ret;
-+	}
-+
- 	/* look up all src csets */
- 	spin_lock_bh(&css_set_lock);
- 	rcu_read_lock();
- 	task = leader;
- 	do {
--		cgroup_migrate_add_src(task_css_set(task), dst_cgrp,
--				       &preloaded_csets);
-+		struct css_set *src_cset = task_css_set(task);
-+		struct cgroup *dfl_cgrp = src_cset->dfl_cgrp;
-+		struct cgroup *target_cgrp = dst_cgrp;
-+
-+		if (copy_rgrps)
-+			target_cgrp = dfl_cgrp->rgrp_target;
-+
-+		cgroup_migrate_add_src(src_cset, target_cgrp, &preloaded_csets);
- 		if (!(mflags & CGRP_MIGRATE_PROCESS))
- 			break;
- 	} while_each_thread(leader, task);
-@@ -2788,6 +2932,10 @@ static int cgroup_attach_task(struct cgroup *dst_cgrp,
- 		ret = cgroup_migrate(leader, mflags, dst_cgrp->root);
+ 	proc_fork_connector(p);
+ 	cgroup_post_fork(p, clone_flags, new_rgrp_cset);
+-	threadgroup_change_end(current);
++	threadgroup_change_end(current, p, clone_flags);
+ 	perf_event_fork(p);
  
- 	cgroup_migrate_finish(&preloaded_csets);
-+
-+	if (copy_rgrps && ret)
-+		cgroup_migrate_uncopy_rgrps(dst_cgrp, leader);
-+
- 	return ret;
- }
+ 	trace_task_newtask(p, clone_flags);
+@@ -1650,7 +1649,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ 	mpol_put(p->mempolicy);
+ bad_fork_cleanup_threadgroup_lock:
+ #endif
+-	threadgroup_change_end(current);
++	threadgroup_change_end(current, p, clone_flags);
+ 	delayacct_tsk_free(p);
+ bad_fork_cleanup_count:
+ 	atomic_dec(&p->cred->user->processes);
+diff --git a/kernel/signal.c b/kernel/signal.c
+index f3f1f7a..1679c02 100644
+--- a/kernel/signal.c
++++ b/kernel/signal.c
+@@ -2389,11 +2389,11 @@ void exit_signals(struct task_struct *tsk)
+ 	 * @tsk is about to have PF_EXITING set - lock out users which
+ 	 * expect stable threadgroup.
+ 	 */
+-	threadgroup_change_begin(tsk);
++	threadgroup_change_begin(tsk, NULL, 0);
  
-@@ -2864,8 +3012,11 @@ static ssize_t __cgroup_procs_write(struct kernfs_open_file *of, char *buf,
- 		tsk = current;
+ 	if (thread_group_empty(tsk) || signal_group_exit(tsk->signal)) {
+ 		tsk->flags |= PF_EXITING;
+-		threadgroup_change_end(tsk);
++		threadgroup_change_end(tsk, NULL, 0);
+ 		return;
  	}
  
--	if (mflags & CGRP_MIGRATE_PROCESS)
-+	if (mflags & CGRP_MIGRATE_PROCESS) {
- 		tsk = tsk->group_leader;
-+		if (cgroup_on_dfl(cgrp))
-+			mflags |= CGRP_MIGRATE_COPY_RGRPS;
-+	}
+@@ -2404,7 +2404,7 @@ void exit_signals(struct task_struct *tsk)
+ 	 */
+ 	tsk->flags |= PF_EXITING;
  
- 	/*
- 	 * Workqueue threads may acquire PF_NO_SETAFFINITY and become
+-	threadgroup_change_end(tsk);
++	threadgroup_change_end(tsk, NULL, 0);
+ 
+ 	if (!signal_pending(tsk))
+ 		goto out;
 -- 
 2.5.0
