@@ -1,96 +1,62 @@
-From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v18 18/22] richacl: xattr mapping functions
-Date: Fri, 11 Mar 2016 18:03:11 +0100
-Message-ID: <CAHc6FU7gH54C-hfV8VQzgpYv=PYNvpA9dc8stgVf2_khF7dUdg@mail.gmail.com>
-References: <1456733847-17982-1-git-send-email-agruenba@redhat.com>
-	<1456733847-17982-19-git-send-email-agruenba@redhat.com>
-	<20160311141701.GE14808@infradead.org>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of blocks
+Date: Fri, 11 Mar 2016 09:23:50 -0800
+Message-ID: <CA+55aFwX2GYYN53E9qaTym=gp1aRjSA5f1G+N5WEiRd1dOJhFA@mail.gmail.com>
+References: <20160302040947.16685.42926.stgit@birch.djwong.org>
+	<CA+55aFx_NPn0VYk=+Ad5S_r=D6J1xFmWmf7JzQ7RmkwKmdkYOg@mail.gmail.com>
+	<20160302225601.GB21890@birch.djwong.org>
+	<CA+55aFyNPnjJ-Nsu3bMr+HuLQnkj1B8FMddNnXW7HJqxdUzJmQ@mail.gmail.com>
+	<yq1bn6v8mqg.fsf@sermon.lab.mkp.net>
+	<20160303180924.GA4116@infradead.org>
+	<yq1vb5375oh.fsf@sermon.lab.mkp.net>
+	<20160303223952.GE24012@thunk.org>
+	<20160303231050.GU29057@dastard>
+	<CAC6JEv-HeAoRxSmVghGvbX7G92yH00k-5F-48qEW13vAB1Q99g@mail.gmail.com>
+	<20160309230819.GB3949@thunk.org>
+	<56E18B9B.5070503@gmail.com>
+	<CA+55aFyw1nN4ze3-AGGE27evOZuXnkJC9C-W5QRUR=zKHqObGg@mail.gmail.com>
+	<56E24CA5.3030702@redhat.com>
+	<20160311135952.57a44931@lxorguk.ukuu.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160311141701.GE14808-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20160311135952.57a44931@lxorguk.ukuu.org.uk>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
+Cc: Ric Wheeler <rwheeler@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Gregory Farnum <greg@gregs42.com>, Dave Chinner <david@fromorbit.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Christoph Hellwig <hch@infradead.org>, "Darrick J. Wong" <darrick.wong@oracle.com>, Jens Axboe <axboe@kernel.dk>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, shane.seymour@hpe.com, Bruce Fields <bfields@fieldses.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, Eric Sandeen <esandeen@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 11, 2016 at 3:17 PM, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
->> +#include <linux/richacl_xattr.h>
->> +
->> +MODULE_LICENSE("GPL");
+On Fri, Mar 11, 2016 at 5:59 AM, One Thousand Gnomes
+<gnomes@lxorguk.ukuu.org.uk> wrote:
 >
-> what's the point given that the code isn't even modolar?
-
-A leftover, removed now.
-
->> +static void
->> +fix_xattr_from_user(const char *kname, void *kvalue, size_t size)
->> +{
->> +     if (strncmp(kname, XATTR_SYSTEM_PREFIX, XATTR_SYSTEM_PREFIX_LEN))
->> +             return;
->> +     kname += XATTR_SYSTEM_PREFIX_LEN;
->> +     if (!strcmp(kname, XATTR_POSIX_ACL_ACCESS) ||
->> +         !strcmp(kname, XATTR_POSIX_ACL_DEFAULT))
->> +             posix_acl_fix_xattr_from_user(kvalue, size);
->> +}
->>
->>  /*
->>   * Extended attribute SET operations
->> @@ -329,9 +339,7 @@ setxattr(struct dentry *d, const char __user *name, const void __user *value,
->>                       error = -EFAULT;
->>                       goto out;
->>               }
->> -             if ((strcmp(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
->> -                 (strcmp(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
->> -                     posix_acl_fix_xattr_from_user(kvalue, size);
->> +             fix_xattr_from_user(kname, kvalue, size);
->>       }
->>
->>       error = vfs_setxattr(d, kname, kvalue, size, flags);
->> @@ -396,6 +404,17 @@ SYSCALL_DEFINE5(fsetxattr, int, fd, const char __user *, name,
->>       return error;
->>  }
->>
->> +static void
->> +fix_xattr_to_user(const char *kname, void *kvalue, size_t size)
->> +{
->> +     if (strncmp(kname, XATTR_SYSTEM_PREFIX, XATTR_SYSTEM_PREFIX_LEN))
->> +             return;
->> +     kname += XATTR_SYSTEM_PREFIX_LEN;
->> +     if (!strcmp(kname, XATTR_POSIX_ACL_ACCESS) ||
->> +         !strcmp(kname, XATTR_POSIX_ACL_DEFAULT))
->> +             posix_acl_fix_xattr_to_user(kvalue, size);
->> +}
->> +
->>  /*
->>   * Extended attribute GET operations
->>   */
->> @@ -426,9 +445,7 @@ getxattr(struct dentry *d, const char __user *name, void __user *value,
->>
->>       error = vfs_getxattr(d, kname, kvalue, size);
->>       if (error > 0) {
->> -             if ((strcmp(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
->> -                 (strcmp(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
->> -                     posix_acl_fix_xattr_to_user(kvalue, size);
->> +             fix_xattr_to_user(kname, kvalue, size);
+> > > We can do the security check at the filesystem level, because we have
+> > > sb->s_bdev->bd_inode, and if you have read and write permissions to
+> > > that inode, you might as well have permission to create a unsafe hole.
 >
-> I don't see how this is related to the rest of the patch.
+> Not if you don't have access to a block device node to open it, or there
+> are SELinux rules that control the access. There are cases it isn't
+> entirely the same thing as far as I can see. Consider within a container
+> for example.
 
-Indeed, this is unrelated now. I'll split it off.
+I agree that it's not the same thing, but I don't think it really ends
+up mattering.
 
->> +++ b/include/linux/richacl_xattr.h
->
-> What's the point in splitting this from the richacl.h header?
->
-> Same for the uapi versions.
->
->> +struct richacl_xattr {
->> +     unsigned char   a_version;
->> +     unsigned char   a_flags;
->
-> Explicit __u8 for uapi headers, please.
+Either the container is properly separated and set up - in which case
+the uid mapping is what protects you - or it isn't - in which case the
+container could just mknod whatever hell node it wants anyway.
 
-Okay.
+So we do pretty much have the permission model.
 
-Thanks,
-Andreas
+> The paranoid approach would IMHO to have a mount option so you can
+> explicitly declare a file system mount should trust its owner/group and
+> then that can also be used to wire up any other "unsafe" activities in a
+> general "mounted for a special use" option.
+
+I think that a mount option to enable it isn't a bad idea, but the
+mount option should be something generic and not be about "this group
+is special" which it sounds like google is currently using.
+
+More like "enable hole punching" - which doesn't enable it
+unconditionally, you'd still have the security checks.
+
+             Linus
