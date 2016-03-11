@@ -1,61 +1,40 @@
-From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: [PATCH v6 08/11] tpm: Driver for supporting
- multiple emulated TPMs
-Date: Fri, 11 Mar 2016 12:20:58 +0200
-Message-ID: <20160311102058.GB10270@intel.com>
-References: <1457545170-30120-1-git-send-email-stefanb@linux.vnet.ibm.com>
-	<1457545170-30120-9-git-send-email-stefanb@linux.vnet.ibm.com>
-	<20160310163915.GA4863@intel.com>
-	<56E1AF9F.3010409@linux.vnet.ibm.com>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH v18 00/22] Richacls (Core and Ext4)
+Date: Fri, 11 Mar 2016 06:01:34 -0800
+Message-ID: <20160311140134.GA14808@infradead.org>
+References: <1456733847-17982-1-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <tpmdd-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <56E1AF9F.3010409-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/tpmdd-devel>,
-	<mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=tpmdd-devel>
-List-Post: <mailto:tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-List-Help: <mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/tpmdd-devel>,
-	<mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
-Errors-To: tpmdd-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-To: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <1456733847-17982-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 10, 2016 at 12:32:15PM -0500, Stefan Berger wrote:
-> On 03/10/2016 11:39 AM, Jarkko Sakkinen wrote:
-> >+/* above flags */
-> >+#define VTPM_FLAG_TPM2           1  /* emulator is TPM 2 */
-> >+
-> >+/* all supported flags */
-> >+#define VTPM_FLAGS_ALL  (VTPM_FLAG_TPM2)
-> >+
-> >+#define VTPM_TPM 0xa0
-
-A better name would be VTPM_IOC_MAGIC. You should also update
-Documentation/ioctl/ioctl-number.txt.
-
-> >+
-> >+#define VTPM_NEW_DEV         _IOW(VTPM_TPM, 0x00, struct vtpm_new_dev)
-> >I'd rather use VTPM_IOC_NEW_DEV.
+On Mon, Feb 29, 2016 at 09:17:05AM +0100, Andreas Gruenbacher wrote:
+> Al,
 > 
-> What about the name of the structure ? vtpm_ioc_new_dev?
+> could you please make sure you are happy with the current version of the
+> richacl patch queue for the next merge window?
 
-If I look at other subsystems like drm the common practice is either
-name the ioctl as VTPM_NEW_DEV_IOCTL or VTPM_IOC_NEW_DEV and not have
-suffix or postfix in the parameter struct. I would just copy that
-convention here.
+I'm still not happy.
 
->    Stefan
+For one I still see no reason to merge this broken ACL model at all.
+It provides our actualy Linux users no benefit at all, while breaking
+a lot of assumptions, especially by adding allow and deny ACE at the
+same sime.
 
-/Jarkko
+It also doesn't help with the issue that the main thing it's trying
+to be compatible with (Windows) actually uses a fundamentally different
+identifier to apply the ACLs to - as long as you're still limited
+to users and groups and not guids we'll still have that mapping problem
+anyway.
 
-------------------------------------------------------------------------------
-Transform Data into Opportunity.
-Accelerate data analysis in your applications with
-Intel Data Analytics Acceleration Library.
-Click to learn more.
-http://pubads.g.doubleclick.net/gampad/clk?id=278785111&iu=/4140
+But besides that fundamental question on the purpose of it I also
+don't think the code is suitable, more in the individual patches.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
