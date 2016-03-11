@@ -1,67 +1,43 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of
- blocks
-Date: Sat, 12 Mar 2016 09:30:47 +1100
-Message-ID: <20160311223047.GZ30721@dastard>
-References: <20160303231050.GU29057@dastard>
- <CAC6JEv-HeAoRxSmVghGvbX7G92yH00k-5F-48qEW13vAB1Q99g@mail.gmail.com>
- <20160309230819.GB3949@thunk.org>
- <56E18B9B.5070503@gmail.com>
- <CA+55aFyw1nN4ze3-AGGE27evOZuXnkJC9C-W5QRUR=zKHqObGg@mail.gmail.com>
- <56E24CA5.3030702@redhat.com>
- <20160311135952.57a44931@lxorguk.ukuu.org.uk>
- <CA+55aFwX2GYYN53E9qaTym=gp1aRjSA5f1G+N5WEiRd1dOJhFA@mail.gmail.com>
- <CALCETrX5Hr6=yWPrNrh2u3YZNYmmv5ZdOQXcgNX5xr54N+Cfvw@mail.gmail.com>
- <CA+55aFxQOgDjL643J33d-3q7gYGvyN84vCn4qJq-Ox8E-WRx9w@mail.gmail.com>
+From: Jeremy Allison <jra@samba.org>
+Subject: Re: [PATCH v18 00/22] Richacls (Core and Ext4)
+Date: Fri, 11 Mar 2016 15:02:54 -0800
+Message-ID: <20160311230254.GG2792@jra3>
+References: <1456733847-17982-1-git-send-email-agruenba@redhat.com>
+	<20160311140134.GA14808@infradead.org>
+	<CAHc6FU4t3yisCM=MXrHRmCja_A8eZOpVa1smJ0gUhv+vuUAuXA@mail.gmail.com>
+	<CAH2r5mv3OTmPOQBV7xc-uZmB0gWxykXOCEVOcybx3tbHiViTZg@mail.gmail.com>
+Reply-To: Jeremy Allison <jra@samba.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
 Content-Disposition: inline
-In-Reply-To: <CA+55aFxQOgDjL643J33d-3q7gYGvyN84vCn4qJq-Ox8E-WRx9w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Ric Wheeler <rwheeler-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Gregory Farnum <greg-3KCAGdo1P2hBDgjK7y7TUQ@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, shane.seymour-ZPxbGqLxI0U@public.gmane.org, Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Eric Sandeen <esandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <CAH2r5mv3OTmPOQBV7xc-uZmB0gWxykXOCEVOcybx3tbHiViTZg@mail.gmail.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Steve French <smfrench@gmail.com>
+Cc: "J. Bruce Fields" <bfields@fieldses.org>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>, Andreas Gruenbacher <agruenba@redhat.com>, "linux-cifs@vger.kernel.org" <linux-cifs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Trond Myklebust <trond.myklebust@primarydata.com>, LKML <linux-kernel@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, linux-ext4 <linux-ext4@vger.kernel.org>, Anna Schumaker <anna.schumaker@netapp.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 11, 2016 at 10:25:30AM -0800, Linus Torvalds wrote:
-> On Fri, Mar 11, 2016 at 9:30 AM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
-> >
-> > What if we had an ioctl to do these data-leaking operations that took,
-> > as an extra parameter, an fd to the block device node.  They allow
-> > access if the fd points to the right inode and has FMODE_READ (and LSM
-> > checks say it's okay).  Sure, it's awkward, but it's much safer.
+On Fri, Mar 11, 2016 at 02:05:16PM -0600, Steve French wrote:
+> Sounds like I need to quickly rework the SMB3 ACL helper functions
+> for cifs.ko
 > 
-> That sounds absolutely horrible.
-> 
-> I'd *much* prefer the suggestion from Alan to simply have a mount-time
-> option to enable it. That way, you will never get any surprises, and
-> no "subtle new behavior for somebody who set their system up in a way
-> that doesn't allow for this".
-> 
-> So you'd have to explicitly say "my setup is ok with hole punching".
+> Also do you know where is the current version of the corresponding
+> vfs_richacl for
+> Samba which works with the current RichACL format?
 
-Except it's not hole punching that is the problem. Hoel punching
-makes sure that the underlying blocksare removed and so whatever
-data is in them cannot be accessed any more. The problem here is
-preallocation of unwritten blocks that expose the stale data if the
-filesystem skips marking those blocks as unwritten.
+I have a patch for a new vfs_richacl somewhere. I remember
+sending it to Andreas for testing...
 
-And, so, what happens when a file that is preallocated with the
-unwritten bit so it exposes stale data then has it's owner/group
-changed? Or copied by root/user in privileged group to a different
-location that other users can access? Or any of the other vectors
-that can result in the stale data being copied/made available to
-unprivileged users?
-
-It's all well and good to restrict access to the fallocate() call to
-limit who can expose stale data, but it doesn't remove the fact it
-is easy for stale data to unintentionally escape the privileged
-group once it has been exposed because there is no record of the
-fact the file contains uninitialised blocks....
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
