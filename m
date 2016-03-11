@@ -1,162 +1,186 @@
 From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: [PATCH 03/10] cgroup: introduce CGRP_MIGRATE_* flags
-Date: Fri, 11 Mar 2016 10:41:21 -0500
-Message-ID: <1457710888-31182-4-git-send-email-tj@kernel.org>
+Subject: [PATCH 08/10] cgroup: implement rgroup control mask handling
+Date: Fri, 11 Mar 2016 10:41:26 -0500
+Message-ID: <1457710888-31182-9-git-send-email-tj@kernel.org>
 References: <1457710888-31182-1-git-send-email-tj@kernel.org>
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1457710888-31182-1-git-send-email-tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Currently, the only migration modifier is boolean @threadgroup.  Make
-the functions pass around unsigned flag mask instead and replace
-@threadgroup with CGRP_MIGRATE_PROCESS.  This will allow addition of
-other modifiers.
+To support in-process resource control, the previous patch implemented
+the basic rgroup infrastructure which allows creating rgroups by
+specifying CLONE_NEWRGRP during clone(2).  This patch implements
+control mask handling for rgroups so that controllers can be enabled
+on them.
 
-This patch doesn't introduce any behavior changes.
+There can be multiple top-level rgroups per process, all nested right
+below the sgroup that the process belongs to.  They should share the
+same control masks which can be different from those of top-level
+rgroups belonging to different processes or peer tasks.  These
+top-level rgroup control masks are added to signal_struct and all
+control mask handling functions are updated accordingly.
+
+Note that a top-level rgroup should behave the same as a peer task
+rather than a peer sibling cgroup.  As such, the set of controllers
+avaialble to a rgroup should be the same as the set for peer tasks.
+To satisfy this requirement, controller availability for a top-level
+rgroup is constrainted by cgroup_{control|ss_mask}(nearest_sgrp)
+instead of nearest_sgrp->subtree_{control|ss_mask}.
+
+After this change, csses can be created on rgroups.  The
+css_{clear|populate}_dir() are updated to become noops for csses on
+rgroups.
 
 Signed-off-by: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 ---
- kernel/cgroup.c | 32 ++++++++++++++++++--------------
- 1 file changed, 18 insertions(+), 14 deletions(-)
+ include/linux/sched.h |  4 ++++
+ kernel/cgroup.c       | 49 +++++++++++++++++++++++++++++++++++++++++++------
+ 2 files changed, 47 insertions(+), 6 deletions(-)
 
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 7886919..d3849ad 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -781,6 +781,10 @@ struct signal_struct {
+ #ifdef CONFIG_CGROUPS
+ 	struct list_head rgrps;		/* top-level rgroups under this sig */
+ 	struct list_head rgrp_node;	/* parent_sgrp->child_rgrp_sigs list */
++	u16 rgrp_subtree_control;	/* control for top-level rgroups */
++	u16 rgrp_subtree_ss_mask;	/* ss_mask for top-level rgroups */
++	u16 rgrp_old_subtree_control;	/* used during control updates */
++	u16 rgrp_old_subtree_ss_mask;	/* used during control updates */
+ #endif
+ 
+ 	oom_flags_t oom_flags;
 diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-index 4c3c43e..8ecb8d6 100644
+index 53f479c..283b7ed 100644
 --- a/kernel/cgroup.c
 +++ b/kernel/cgroup.c
-@@ -2403,6 +2403,10 @@ struct task_struct *cgroup_taskset_next(struct cgroup_taskset *tset,
- 	return NULL;
- }
+@@ -413,8 +413,8 @@ static u16 cgroup_control(struct cgroup *cgrp)
+ 	struct cgroup *parent = cgroup_parent(cgrp);
+ 	u16 root_ss_mask = cgrp->root->subsys_mask;
  
-+enum {
-+	CGRP_MIGRATE_PROCESS	= (1 << 0), /* migrate the whole process */
-+};
+-	if (is_rgroup(cgrp))
+-		return 0;
++	if (is_rgroup(cgrp) && !is_rgroup(parent))
++		return cgrp->rgrp_sig->rgrp_subtree_control;
+ 
+ 	if (parent)
+ 		return parent->subtree_control;
+@@ -430,8 +430,8 @@ static u16 cgroup_ss_mask(struct cgroup *cgrp)
+ {
+ 	struct cgroup *parent = cgroup_parent(cgrp);
+ 
+-	if (is_rgroup(cgrp))
+-		return 0;
++	if (is_rgroup(cgrp) && !is_rgroup(parent))
++		return cgrp->rgrp_sig->rgrp_subtree_ss_mask;
+ 
+ 	if (parent)
+ 		return parent->subtree_ss_mask;
+@@ -1565,6 +1565,9 @@ static void css_clear_dir(struct cgroup_subsys_state *css)
+ 
+ 	css->flags &= ~CSS_VISIBLE;
+ 
++	if (is_rgroup(cgrp))
++		return;
 +
- /**
-  * cgroup_taskset_migrate - migrate a taskset
-  * @tset: taget taskset
-@@ -2634,7 +2638,7 @@ static int cgroup_migrate_prepare_dst(struct list_head *preloaded_csets)
- /**
-  * cgroup_migrate - migrate a process or task to a cgroup
-  * @leader: the leader of the process or the task to migrate
-- * @threadgroup: whether @leader points to the whole process or a single task
-+ * @mflags: CGRP_MIGRATE_* flags
-  * @root: cgroup root migration is taking place on
-  *
-  * Migrate a process or task denoted by @leader.  If migrating a process,
-@@ -2649,7 +2653,7 @@ static int cgroup_migrate_prepare_dst(struct list_head *preloaded_csets)
-  * decided for all targets by invoking group_migrate_prepare_dst() before
-  * actually starting migrating.
-  */
--static int cgroup_migrate(struct task_struct *leader, bool threadgroup,
-+static int cgroup_migrate(struct task_struct *leader, unsigned mflags,
- 			  struct cgroup_root *root)
- {
- 	struct cgroup_taskset tset = CGROUP_TASKSET_INIT(tset);
-@@ -2665,7 +2669,7 @@ static int cgroup_migrate(struct task_struct *leader, bool threadgroup,
- 	task = leader;
- 	do {
- 		cgroup_taskset_add(task, &tset);
--		if (!threadgroup)
-+		if (!(mflags & CGRP_MIGRATE_PROCESS))
- 			break;
- 	} while_each_thread(leader, task);
- 	rcu_read_unlock();
-@@ -2678,12 +2682,12 @@ static int cgroup_migrate(struct task_struct *leader, bool threadgroup,
-  * cgroup_attach_task - attach a task or a whole threadgroup to a cgroup
-  * @dst_cgrp: the cgroup to attach to
-  * @leader: the task or the leader of the threadgroup to be attached
-- * @threadgroup: attach the whole threadgroup?
-+ * @mflags: CGRP_MIGRATE_* flags
-  *
-  * Call holding cgroup_mutex and cgroup_threadgroup_rwsem.
-  */
- static int cgroup_attach_task(struct cgroup *dst_cgrp,
--			      struct task_struct *leader, bool threadgroup)
-+			      struct task_struct *leader, unsigned mflags)
- {
- 	LIST_HEAD(preloaded_csets);
- 	struct task_struct *task;
-@@ -2699,7 +2703,7 @@ static int cgroup_attach_task(struct cgroup *dst_cgrp,
- 	do {
- 		cgroup_migrate_add_src(task_css_set(task), dst_cgrp,
- 				       &preloaded_csets);
--		if (!threadgroup)
-+		if (!(mflags & CGRP_MIGRATE_PROCESS))
- 			break;
- 	} while_each_thread(leader, task);
- 	rcu_read_unlock();
-@@ -2708,7 +2712,7 @@ static int cgroup_attach_task(struct cgroup *dst_cgrp,
- 	/* prepare dst csets and commit */
- 	ret = cgroup_migrate_prepare_dst(&preloaded_csets);
- 	if (!ret)
--		ret = cgroup_migrate(leader, threadgroup, dst_cgrp->root);
-+		ret = cgroup_migrate(leader, mflags, dst_cgrp->root);
- 
- 	cgroup_migrate_finish(&preloaded_csets);
- 	return ret;
-@@ -2761,7 +2765,7 @@ static int cgroup_procs_write_permission(struct task_struct *task,
-  * cgroup_mutex and threadgroup.
-  */
- static ssize_t __cgroup_procs_write(struct kernfs_open_file *of, char *buf,
--				    size_t nbytes, loff_t off, bool threadgroup)
-+				    size_t nbytes, loff_t off, unsigned mflags)
- {
- 	struct task_struct *tsk;
- 	struct cgroup *cgrp;
-@@ -2787,7 +2791,7 @@ static ssize_t __cgroup_procs_write(struct kernfs_open_file *of, char *buf,
- 		tsk = current;
- 	}
- 
--	if (threadgroup)
-+	if (mflags & CGRP_MIGRATE_PROCESS)
- 		tsk = tsk->group_leader;
- 
- 	/*
-@@ -2805,7 +2809,7 @@ static ssize_t __cgroup_procs_write(struct kernfs_open_file *of, char *buf,
- 
- 	ret = cgroup_procs_write_permission(tsk, cgrp, of);
- 	if (!ret)
--		ret = cgroup_attach_task(cgrp, tsk, threadgroup);
-+		ret = cgroup_attach_task(cgrp, tsk, mflags);
- 
- 	put_task_struct(tsk);
- 	goto out_unlock_threadgroup;
-@@ -2840,7 +2844,7 @@ int cgroup_attach_task_all(struct task_struct *from, struct task_struct *tsk)
- 		from_cgrp = task_cgroup_from_root(from, root);
- 		spin_unlock_bh(&css_set_lock);
- 
--		retval = cgroup_attach_task(from_cgrp, tsk, false);
-+		retval = cgroup_attach_task(from_cgrp, tsk, 0);
- 		if (retval)
- 			break;
- 	}
-@@ -2853,13 +2857,13 @@ EXPORT_SYMBOL_GPL(cgroup_attach_task_all);
- static ssize_t cgroup_tasks_write(struct kernfs_open_file *of,
- 				  char *buf, size_t nbytes, loff_t off)
- {
--	return __cgroup_procs_write(of, buf, nbytes, off, false);
-+	return __cgroup_procs_write(of, buf, nbytes, off, 0);
+ 	list_for_each_entry(cfts, &css->ss->cfts, node)
+ 		cgroup_addrm_files(css, cgrp, cfts, false);
  }
+@@ -1584,6 +1587,9 @@ static int css_populate_dir(struct cgroup_subsys_state *css)
+ 	if ((css->flags & CSS_VISIBLE) || !cgrp->kn)
+ 		return 0;
  
- static ssize_t cgroup_procs_write(struct kernfs_open_file *of,
- 				  char *buf, size_t nbytes, loff_t off)
- {
--	return __cgroup_procs_write(of, buf, nbytes, off, true);
-+	return __cgroup_procs_write(of, buf, nbytes, off, CGRP_MIGRATE_PROCESS);
- }
- 
- static ssize_t cgroup_release_agent_write(struct kernfs_open_file *of,
-@@ -4233,7 +4237,7 @@ int cgroup_transfer_tasks(struct cgroup *to, struct cgroup *from)
- 		css_task_iter_end(&it);
- 
- 		if (task) {
--			ret = cgroup_migrate(task, false, to->root);
-+			ret = cgroup_migrate(task, 0, to->root);
- 			put_task_struct(task);
++	if (is_rgroup(cgrp))
++		goto done;
++
+ 	if (!css->ss) {
+ 		if (cgroup_on_dfl(cgrp))
+ 			cfts = cgroup_dfl_base_files;
+@@ -1600,9 +1606,8 @@ static int css_populate_dir(struct cgroup_subsys_state *css)
+ 			goto err;
  		}
- 	} while (task && !ret);
+ 	}
+-
++done:
+ 	css->flags |= CSS_VISIBLE;
+-
+ 	return 0;
+ err:
+ 	list_for_each_entry(cfts, &css->ss->cfts, node) {
+@@ -3116,8 +3121,15 @@ static void cgroup_save_control(struct cgroup *cgrp)
+ 	struct cgroup_subsys_state *d_css;
+ 
+ 	cgroup_for_each_live_descendant_pre(dsct, d_css, cgrp) {
++		struct signal_struct *sig;
++
+ 		dsct->old_subtree_control = dsct->subtree_control;
+ 		dsct->old_subtree_ss_mask = dsct->subtree_ss_mask;
++
++		list_for_each_entry(sig, &dsct->rgrp_child_sigs, rgrp_node) {
++			sig->rgrp_old_subtree_control = sig->rgrp_subtree_control;
++			sig->rgrp_old_subtree_ss_mask = sig->rgrp_subtree_ss_mask;
++		}
+ 	}
+ }
+ 
+@@ -3135,10 +3147,19 @@ static void cgroup_propagate_control(struct cgroup *cgrp)
+ 	struct cgroup_subsys_state *d_css;
+ 
+ 	cgroup_for_each_live_descendant_pre(dsct, d_css, cgrp) {
++		struct signal_struct *sig;
++
+ 		dsct->subtree_control &= cgroup_control(dsct);
+ 		dsct->subtree_ss_mask =
+ 			cgroup_calc_subtree_ss_mask(dsct->subtree_control,
+ 						    cgroup_ss_mask(dsct));
++
++		list_for_each_entry(sig, &dsct->rgrp_child_sigs, rgrp_node) {
++			sig->rgrp_subtree_control &= cgroup_control(dsct);
++			sig->rgrp_subtree_ss_mask =
++				cgroup_calc_subtree_ss_mask(sig->rgrp_subtree_control,
++							    cgroup_ss_mask(dsct));
++		}
+ 	}
+ }
+ 
+@@ -3155,6 +3176,13 @@ static void cgroup_restore_control(struct cgroup *cgrp)
+ 	struct cgroup_subsys_state *d_css;
+ 
+ 	cgroup_for_each_live_descendant_post(dsct, d_css, cgrp) {
++		struct signal_struct *sig;
++
++		list_for_each_entry(sig, &dsct->rgrp_child_sigs, rgrp_node) {
++			sig->rgrp_subtree_control = sig->rgrp_old_subtree_control;
++			sig->rgrp_subtree_ss_mask = sig->rgrp_old_subtree_ss_mask;
++		}
++
+ 		dsct->subtree_control = dsct->old_subtree_control;
+ 		dsct->subtree_ss_mask = dsct->old_subtree_ss_mask;
+ 	}
+@@ -5326,6 +5354,15 @@ static struct cgroup *rgroup_create(struct cgroup *parent,
+ 
+ 	lockdep_assert_held(&cgroup_mutex);
+ 
++	if (list_empty(&sig->rgrps)) {
++		WARN_ON_ONCE(is_rgroup(parent));
++
++		sig->rgrp_subtree_control = 0;
++		sig->rgrp_subtree_ss_mask =
++			cgroup_calc_subtree_ss_mask(sig->rgrp_subtree_control,
++						    cgroup_ss_mask(parent));
++	}
++
+ 	rgrp = cgroup_create(parent, sig);
+ 	if (IS_ERR(rgrp))
+ 		return rgrp;
 -- 
 2.5.0
